@@ -115,7 +115,14 @@ struct cmdtab {
 	int (*ct_func)();
 };
 
+#if 1
+int f_test_bomb_hook(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
+#endif
+
 static struct cmdtab cmdtab[] = {
+#if 1
+	{"test_bomb_hook", f_test_bomb_hook},
+#endif
 	{"%", f_comm},
 	{"35,25",	bv_35_25},
 	{"3ptarb", f_3ptarb},
@@ -730,6 +737,17 @@ mged_setup()
 	if (Tcl_Import(interp, Tcl_GetGlobalNamespace(interp),
 		       "::itcl::*", /* allowOverwrite */ 1) != TCL_OK)
 	  bu_log("Tcl_Import error %s\n", interp->result);
+
+	/* Initialize libbu */
+	Bu_Init(interp);
+
+	/* Initialize libbn */
+	Bn_Init(interp);
+
+	/* Initialize librt */
+	if (Rt_Init(interp) == TCL_ERROR) {
+		bu_log("Rt_Init error %s\n", interp->result);
+	}
 
 	/* register commands */
 	cmd_setup();
@@ -2295,3 +2313,18 @@ f_bot_condense(clientData, interp, argc, argv)
 	}
 	return TCL_OK;
 }
+
+#if 1
+int
+f_test_bomb_hook(clientData, interp, argc, argv)
+	ClientData clientData;
+	Tcl_Interp *interp;
+	int     argc;
+	char    **argv;
+{
+	bu_bomb("\nTesting MGED's bomb hook!\n");
+
+	/* This is never reached */
+	return TCL_OK;
+}
+#endif
