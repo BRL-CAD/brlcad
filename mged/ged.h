@@ -469,6 +469,7 @@ MGED_EXTERN(int f_cat, (int argc, char **argv));
 MGED_EXTERN(int f_center, (int argc, char **argv));
 MGED_EXTERN(int f_color, (int argc, char **argv));
 MGED_EXTERN(int f_comb, (int argc, char **argv));
+MGED_EXTERN(int f_comb_color, (int argc, char **argv));
 MGED_EXTERN(int f_comb_std, (int argc, char **argv));
 MGED_EXTERN(int f_comm, (int argc, char **argv));
 MGED_EXTERN(int f_concat, (int argc, char **argv));
@@ -517,7 +518,7 @@ MGED_EXTERN(int f_killall, (int argc, char **argv));
 MGED_EXTERN(int f_killtree, (int argc, char **argv));
 MGED_EXTERN(int f_knob, (int argc, char **argv));
 MGED_EXTERN(int f_labelvert, (int argc, char **argv));
-MGED_EXTERN(int f_list, (int argc, char **argv));
+/* MGED_EXTERN(int f_list, (int argc, char **argv)); */
 MGED_EXTERN(int f_make, (int argc, char **argv));
 MGED_EXTERN(int f_mater, (int argc, char **argv));
 MGED_EXTERN(int f_matpick, (int argc, char **argv));

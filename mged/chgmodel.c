@@ -331,6 +331,58 @@ out:
 }
 
 /*
+ *			F _ C O M B _ C O L O R
+ *
+ *  Simple command-line way to set object color
+ *  Usage: ocolor combination R G B
+ */
+int
+f_comb_color( argc, argv )
+
+int	argc;
+char	**argv;
+
+{
+    int				i;
+    int				val;
+    register struct directory	*dp;
+    union record		record;
+
+    if ((dp = db_lookup(dbip,  argv[1], LOOKUP_NOISY)) == DIR_NULL)
+	return CMD_BAD;
+
+    if (db_get(dbip,  dp, &record, 0 , 1) < 0)
+    {
+	READ_ERR;
+	return CMD_BAD;
+    }
+
+    if (record.u_id != ID_COMB)
+    {
+	rt_log("%s: not a combination\n", dp->d_namep);
+	return CMD_BAD;
+    }
+
+    for (i = 0; i < 3; ++i)
+	if (((val = atoi(argv[i + 2])) < 0) || (val > 255))
+	{
+	    rt_log("RGB value out of range: %d\n", val);
+	    return CMD_BAD;
+	}
+	else
+	    record.c.c_rgb[i] = val;
+    record.c.c_override = 1;
+
+    if (db_put( dbip, dp, &record, 0, 1) < 0)
+    {
+	WRITE_ERR;
+	return CMD_BAD;
+    }
+
+    return CMD_OK;
+}
+
+/*
  *			F _ S H A D E R
  *
  *  Simpler, command-line version of 'mater' command.

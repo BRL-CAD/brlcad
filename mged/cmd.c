@@ -447,6 +447,8 @@ static struct funtab funtab[] = {
 	f_mvall, 3, 3,FALSE,
 "nirt", "", "trace a single ray from current view",
 	f_nirt,1,MAXARGS,FALSE,
+"comb_color", "comb R G B", "assign a color to a combination (like 'mater')",
+	f_comb_color, 5,5,FALSE,
 "oed", "path_lhs path_rhs", "Go from view to object_edit of path_lhs/path_rhs",
 	cmd_oed, 3, 3, TRUE,
 "opendb", "database.g", "Close current .g file, and open new .g file",
