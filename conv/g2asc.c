@@ -68,7 +68,7 @@ char *name();
 char *strchop();
 #define CH(x)	strchop(x,sizeof(x))
 
-int	rt_pipe_import(), rt_part_import(), rt_arbn_import();
+int	_rt_pipe_import(), _rt_part_import(), _rt_arbn_import();
 void	combdump();
 void	idendump(), polyhead(), polydata();
 void	soldump();
@@ -236,12 +236,12 @@ pipe_dump()	/* Print out Pipe record information */
 		exit(-1);
 	}
 
-	/* Send this off to rt_pipe_import() for conversion into machine
+	/* Send this off to _rt_pipe_import() for conversion into machine
 	 * dependent format and making of a doubly linked list.  rt_pipe_internal()
 	 * fills in the "pipe_internal" structure.
 	 */
 
-	if( (ret = (rt_pipe_import(&pipe, rp, id_mat) ) !=0 ) )   {
+	if( (ret = (_rt_pipe_import(&pipe, rp, id_mat) ) !=0 ) )   {
 		fprintf(stderr, "g2asc: pipe_import failure\n" );
 		exit(-1);
 	}
@@ -312,7 +312,7 @@ particle_dump()	/* Print out Particle record information */
 	char			*type;
 	struct part_internal 	part;	/* head for the structure */
 	
-	if( (ret = (rt_part_import(&part, &record, id_mat)) ) != 0)  {
+	if( (ret = (_rt_part_import(&part, &record, id_mat)) ) != 0)  {
 		fprintf(stderr, "g2asc: particle import failure\n");
 		exit(-1);
 	}
@@ -387,7 +387,7 @@ arbn_dump()
 	}
 
 	/* Hand off the rt's arbn_import() routine */
-	if( ret = (rt_arbn_import(&arbn, rp, id_mat) ) != 0)  {
+	if( ret = (_rt_arbn_import(&arbn, rp, id_mat) ) != 0)  {
 		fprintf(stderr, "g2asc: arbn import failure\n");
 		exit(-1);
 	}
@@ -707,7 +707,7 @@ char *str;
  *			R T _ P I P E _ I M P O R T
  */
 int
-rt_pipe_import( pipe, rp, mat )
+_rt_pipe_import( pipe, rp, mat )
 struct pipe_internal	*pipe;
 union record		*rp;
 register mat_t		mat;
@@ -718,7 +718,7 @@ register mat_t		mat;
 
 	/* Check record type */
 	if( rp->u_id != DBID_PIPE )  {
-		fprintf(stderr,"rt_pipe_import: defective record\n");
+		fprintf(stderr,"_rt_pipe_import: defective record\n");
 		return(-1);
 	}
 
@@ -774,7 +774,7 @@ done:	;
  *
  */
 int
-rt_part_import( part, rp, mat )
+_rt_part_import( part, rp, mat )
 struct part_internal	  *part;
 union record		  *rp;
 register mat_t		  mat;
@@ -787,7 +787,7 @@ register mat_t		  mat;
 
 	/* Check record type */
 	if( rp->u_id != DBID_PARTICLE )  {
-		fprintf(stderr,"rt_part_import: defective record\n");
+		fprintf(stderr,"_rt_part_import: defective record\n");
 		return(-1);
 	}
 
@@ -843,7 +843,7 @@ register mat_t		  mat;
  */
 
 int
-rt_arbn_import( aip, rp, mat )
+_rt_arbn_import( aip, rp, mat )
 struct arbn_internal	*aip;
 union record		*rp;
 register mat_t		mat;
@@ -852,14 +852,14 @@ register mat_t		mat;
 	register int	i;
 
 	if( rp->u_id != DBID_ARBN )  {
-		rt_log("rt_arbn_import: defective record, id=x%x\n", rp->u_id);
+		rt_log("_rt_arbn_import: defective record, id=x%x\n", rp->u_id);
 		return(-1);
 	}
 
 	aip->neqn = rp->n.n_neqn;
 	if( aip->neqn <= 0 )
 		return( -1 );
-	aip->eqn = (plane_t *)rt_malloc( aip->neqn * sizeof(plane_t), "rt_arbn_import() planes");
+	aip->eqn = (plane_t *)rt_malloc( aip->neqn * sizeof(plane_t), "_rt_arbn_import() planes");
 	
 
 	ntohd( (char *)aip->eqn, (char *)(&rp[1]), aip->neqn*4 );
