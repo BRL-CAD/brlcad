@@ -756,20 +756,16 @@ XXX which edge to use?  Or at least, which direction?
 	VSUB2( eu2_dir, eu2_end, eu2_start );
 
 	dist[0] = dist[1] = 0;	/* for clean prints, below */
-#define PROPER_2D	0
-#if PROPER_2D
+
 	/* The "proper" thing to do is intersect two line segments.
 	 * However, this means that none of the intersections of edge "line"
 	 * with the exterior of the loop are computed, and that
 	 * violates the strategy assumptions of the face-cutter.
 	 */
-	status = rt_isect_lseg2_lseg2(&dist[0], eu1_start, eu1_dir,
-			eu2_start, eu2_dir, &is->tol );
-#else
 	/* To pick up ALL intersection points, the source edge is a line */
 	status = rt_isect_line2_lseg2( dist, eu1_start, eu1_dir,
 			eu2_start, eu2_dir, &is->tol );
-#endif
+
 	if (rt_g.NMG_debug & DEBUG_POLYSECT) {
 		rt_log("\trt_isect_lseg2_lseg2()=%d, dist: %g, %g\n",
 			status, dist[0], dist[1] );
@@ -928,7 +924,7 @@ rt_log("ptol = %g, eu2dist=%g, %g\n", ptol, eu2dist[0], eu2dist[1]);
 		struct loopuse *plu;
 		if (rt_g.NMG_debug & DEBUG_POLYSECT)
 			rt_log("\tIntersect point on eu2 is outside vu1a...vu1b.  Break eu2 anyway.\n");
-#if !PROPER_2D
+
 		if( dist[1] == 0 )  {
 			if( vu = nmg_find_v_in_face( vu2a->v_p, fu1 ) )  {
 				if (rt_g.NMG_debug & DEBUG_POLYSECT)
@@ -978,7 +974,7 @@ rt_log("ptol = %g, eu2dist=%g, %g\n", ptol, eu2dist[0], eu2dist[1]);
 			nmg_ck_face_worthless_edges( fu2 );
 			return;
 		}
-#endif
+
 		/* Ray misses eu2, nothing to do */
 		return;
 	}
