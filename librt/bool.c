@@ -1588,9 +1588,11 @@ CONST struct bu_bitv	*solidbits;
 			    lastregion == lastpp->pt_regionp &&
 			    NEAR_ZERO( newpp->pt_inhit->hit_dist -
 				lastpp->pt_outhit->hit_dist,
-				ap->a_rt_i->rti_tol.dist )
+				ap->a_rt_i->rti_tol.dist ) &&
+			    lastpp->pt_overlap_reg == newpp->pt_overlap_reg
 			)  {
 				/* same region, extend last final partition */
+				if(rt_g.debug&DEBUG_PARTITION)bu_log("rt_boolfinal 'exact match', extending last partition, discarding x%x\n", newpp);
 				RT_CK_PT(lastpp);
 				RT_CHECK_SEG(lastpp->pt_inseg);	/* sanity */
 				RT_CHECK_SEG(lastpp->pt_outseg);/* sanity */
