@@ -149,7 +149,7 @@ struct rt_tess_tol  {
 struct rt_db_internal  {
 	long		idb_magic;
 	int		idb_type;		/* ID_xxx */
-	struct rt_functab *idb_meth;		/* for ft_ifree(), etc. */
+	CONST struct rt_functab *idb_meth;	/* for ft_ifree(), etc. */
 	genptr_t	idb_ptr;
 };
 #define RT_DB_INTERNAL_MAGIC	0x0dbbd867
@@ -377,7 +377,7 @@ struct seg {
 struct soltab {
 	struct bu_list	l;		/* links, headed by rti_headsolid */
 	struct bu_list	l2;		/* links, headed by st_dp->d_use_hd */
-	struct rt_functab *st_meth;	/* pointer to per-solid methods */
+	CONST struct rt_functab *st_meth; /* pointer to per-solid methods */
 	struct rt_i	*st_rtip;	/* "up" pointer to rt_i */
 	int		st_uses;	/* Usage count, for instanced solids */
 	int		st_id;		/* Solid ident */
@@ -1379,7 +1379,8 @@ struct nurb_seg		/* NURB curve segment */
  */
 struct rt_functab {
 	long	magic;
-	char	*ft_name;
+	char	ft_name[16];
+	char	ft_label[8];
 	int	ft_use_rpp;
 	int	(*ft_prep) BU_ARGS((struct soltab * /*stp*/,
 			struct rt_db_internal * /*ip*/,
@@ -1456,8 +1457,8 @@ struct rt_functab {
 			CONST mat_t /*mat*/, struct rt_db_internal * /*ip*/,
 			int /*free*/));
 };
-extern struct rt_functab rt_functab[];
-extern int rt_nfunctab;
+extern CONST struct rt_functab rt_functab[];
+extern CONST int rt_nfunctab;
 #define RT_FUNCTAB_MAGIC		0x46754e63	/* FuNc */
 #define RT_CK_FUNCTAB(_p)	BU_CKMAG(_p, RT_FUNCTAB_MAGIC, "functab" );
 
