@@ -582,7 +582,7 @@ int inside;
 	VSET(D, cell[X]+1, cell[Y]+1, DSP(isect->dsp, cell[X]+1, cell[Y]+1));
 
 	RES_ACQUIRE( &rt_g.res_model);
-	sprintf(buf, "dsp%d.pl", plot_file_num++);
+	sprintf(buf, "dsp%02d.pl", plot_file_num++);
 	RES_RELEASE( &rt_g.res_model);
 	bu_log("%s\n", buf);
 
@@ -1005,6 +1005,17 @@ done:
 	if (rt_g.debug & DEBUG_HF && plot_em)
 		plot_cell_ray(isect, cell, curr_pt, next_pt, hit1, dist1, hit2, dist2, *inside);
 
+	if (hit1 && hit2 && ((NdotD1 < 0) == (NdotD2 < 0)) &&
+	    BN_APPROXEQUAL(dist1, dist2, isect->tol) ) {
+		/* hit a seam, eg. between two triangles of a flat plate. */
+		if (rt_g.debug & DEBUG_HF) {
+			bu_log("ss_dist1:%g N1:%g %d\n", dist1);
+			bu_log("ss_dist2:%g N2:%g %d\n", dist2);
+			bu_log("hit seam, skipping hit2\n");
+		}
+
+		hit2 = 0;
+	}
 
 
 	/* sort the hit distances and add the hits to the segment list */
@@ -1015,9 +1026,10 @@ done:
 		double *firstN, *secondN;
 
 		/* hit both */
+
 		if (dist1 < dist2) {
 			if (rt_g.debug & DEBUG_HF)
-				bu_log("hit triangles: ss_dist1:%g ss_dist2:%g \n", dist1, dist2);
+				bu_log("hit triangles: ss_dist1:%g ss_dist2:%g line:%d\n", dist1, dist2, __LINE__);
 			first_tri = tri1;
 			firstND = NdotD1;
 			first = dist1;
@@ -1028,7 +1040,7 @@ done:
 			secondN = N2;
 		} else {
 			if (rt_g.debug & DEBUG_HF)
-				bu_log("hit triangles: ss_dist2:%g ss_dist1:%g \n", dist2, dist1);
+				bu_log("hit triangles: ss_dist2:%g ss_dist1:%g line:%d\n", dist2, dist1, __LINE__);
 			first_tri = tri2;
 			firstND = NdotD2;
 			first = dist2;
@@ -1151,8 +1163,10 @@ done:
 
 }
 
-
-
+/*
+ *	Intersect the ray with a wall of a "cell" of the DSP.  In particular,
+ *	a wall perpendicular to the X axis.
+ */
 static int
 isect_cell_x_wall(isect, cell, surf, dist, pt)
 struct isect_stuff *isect;
@@ -1202,6 +1216,10 @@ point_t pt;
 
 
 
+/*
+ *	Intersect the ray with a wall of a "cell" of the DSP.  In particular,
+ *	a wall perpendicular to the Y axis.
+ */
 static int
 isect_cell_y_wall(isect, cell, surf, dist, pt)
 struct isect_stuff *isect;
@@ -1250,7 +1268,10 @@ point_t pt;
 }
 
 
-
+/*
+ * A bag of pointers and info that cell_isect needs.  We package it
+ * up for convenient parameter passing.
+ */
 struct cell_stuff {
 	pointp_t bbin_pt;
 	double bbin_dist;
@@ -1259,6 +1280,12 @@ struct cell_stuff {
 	int *curr_surf;
 	pointp_t curr_pt;
 };
+
+/*
+ *	Intersect a ray with a single "cell" (bounded by 4 values) of 
+ *	the DSP.  This consists of 2 triangles for the top and 5 quadrilateral
+ *	plates for the sides and bottom.
+ */
 
 static void
 cell_isect(isect, dt, next_surf, cs, inside, rising, isect_wall)
@@ -1400,6 +1427,10 @@ int (*isect_wall)();
 	*cs->curr_dist = dt;
 }
 
+/*
+ *	Intersect a ray with the whole DSP
+ *
+ */
 static void
 isect_ray_dsp(isect)
 struct isect_stuff *isect;
@@ -1429,11 +1460,6 @@ struct isect_stuff *isect;
 
 	double	tX, tY;	/* dist along ray from hit pt. to next cell boundary */
 	struct cell_stuff cs;
-
-	/* since we're probably starting in the middle of a cell, we need
-	 * to compute the distance along the ray to the initial
-	 * X and Y boundaries.
-	 */
 
 	if (rt_g.debug & DEBUG_HF) {
 		bu_log("isect_ray_dsp()\n");
@@ -1495,7 +1521,9 @@ struct isect_stuff *isect;
 
 	rising = (isect->r.r_dir[Z] > 0.); /* compute Z direction */
 
-
+	/* Compute stepping directions and distances for both
+	 * X and Y axes
+	 */
 	if (isect->r.r_dir[X] < 0.0) {
 		stepX = -1;	/* cell delta for stepping X dir on ray */
 		insurfX = BBSURF(XMAX);
@@ -1574,6 +1602,8 @@ bu_log("cell(%d,%d) tX:%g tY:%g  inside=%d\n\t  curr_pt (%g %g %g) surf:%d  ss_d
 grid_cell[X], grid_cell[Y], tX, tY, inside, V3ARGS(t), curr_surf, curr_dist);
 		}
 
+		if (tX > out_dist) tX = out_dist;
+		if (tY > out_dist) tY = out_dist;
 
 		if (tX < tY) {
 
@@ -1845,7 +1875,7 @@ int x, y;
 		MAT4X3PNT(B, dsp->dsp_i.dsp_stom, tmp);
 
 		RES_ACQUIRE( &rt_g.res_model);
-		sprintf(buf, "dsp%d.pl", plot_file_num++);
+		sprintf(buf, "dsp%02d.pl", plot_file_num++);
 		RES_RELEASE( &rt_g.res_model);
 		bu_log("%s\n", buf);
 
@@ -1963,7 +1993,7 @@ register struct xray	*rp;
 				bu_log("Xfrac:%g Yfrac:%g\n", Xfrac, Yfrac);
 
 				RES_ACQUIRE( &rt_g.res_model);
-				sprintf(buf, "dsp%d.pl", plot_file_num++);
+				sprintf(buf, "dsp%02d.pl", plot_file_num++);
 				RES_RELEASE( &rt_g.res_model);
 				bu_log("plotting normal in %s\n", buf);
 
@@ -2103,7 +2133,7 @@ register struct xray	*rp;
 				V3ARGS(N));
 		}
 		RES_ACQUIRE( &rt_g.res_model);
-		sprintf(buf, "dsp%d.pl", plot_file_num++);
+		sprintf(buf, "dsp%02d.pl", plot_file_num++);
 		RES_RELEASE( &rt_g.res_model);
 		bu_log("plotting normal in %s\n", buf);
 
