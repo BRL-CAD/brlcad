@@ -1,7 +1,7 @@
 /*
-	SCCS id:	@(#) librle.c	1.12
-	Last edit: 	3/7/86 at 15:56:58	G S M
-	Retrieved: 	8/13/86 at 10:29:26
+	SCCS id:	@(#) librle.c	1.13
+	Last edit: 	3/12/86 at 16:48:37	G S M
+	Retrieved: 	8/13/86 at 10:29:40
 	SCCS archive:	/m/cad/librle/RCS/s.librle.c
 
 	Author : Gary S. Moss, BRL.
@@ -15,7 +15,7 @@
  */
 #if ! defined( lint )
 static
-char	sccsTag[] = "@(#) librle.c	1.12	last edit 3/7/86 at 15:56:58";
+char	sccsTag[] = "@(#) librle.c	1.13	last edit 3/12/86 at 16:48:37";
 #endif
 #include <stdio.h>
 #include <fb.h>
@@ -867,18 +867,17 @@ HIDDEN
 _get_Color_Map_Seg( fp, cmap_seg )
 FILE	*fp;
 register u_char	*cmap_seg;
-	{
-	static short	rle_cmap[256];
-	register short	*cm = rle_cmap;
-	register int	i;
-
+	{	static short	rle_cmap[256];
+		register short	*cm = rle_cmap;
+		register int	i;
 	if( fread( (char *) rle_cmap, sizeof(short), 256, fp ) != 256 )
 		{
 		(void) fprintf( stderr,	"Failed to read color map!\n" );
 		return	-1;
 		}
-	for( i = 0; i < 256; ++i )
+	for( i = 0; i < 256; i++ )
 		{
+		SWAB( *cm );
 		*cmap_seg++ = (u_char) *cm++;
 		}
 	return	0;
@@ -891,14 +890,13 @@ HIDDEN
 _put_Color_Map_Seg( fp, cmap_seg )
 FILE	*fp;
 register u_char	*cmap_seg;
-	{
-	static short	rle_cmap[256];
-	register short	*cm = rle_cmap;
-	register int	i;
-
-	for( i = 0; i < 256; ++i )
+	{	static short	rle_cmap[256];
+		register short	*cm = rle_cmap;
+		register int	i;
+	for( i = 0; i < 256; i++, cm++ )
 		{
-		*cm++ = (short) *cmap_seg++;
+		*cm = (short) *cmap_seg++;
+		SWAB( *cm );
 		}
 	if( fwrite( (char *) rle_cmap, sizeof(rle_cmap), 1, fp ) != 1 )
 		{
@@ -916,15 +914,14 @@ register u_char	*cmap_seg;
 HIDDEN
 _put_Std_Map( fp )
 FILE	*fp;
-	{
-	static short	rle_cmap[256*3];
-	register short	*cm = rle_cmap;
-	register int	i, segment;
-
+	{	static short	rle_cmap[256*3];
+		register short	*cm = rle_cmap;
+		register int	i, segment;
 	for( segment = 0; segment < 3; segment++ )
-		for( i = 0; i < 256; ++i )
+		for( i = 0; i < 256; i++, cm++ )
 			{
-			*cm++ = (short) i;
+			*cm = (short) i;
+			SWAB( *cm );
 			}
 	if( fwrite( (char *) rle_cmap, sizeof(rle_cmap), 1, fp ) != 1 )
 		{
