@@ -21,6 +21,12 @@
  *	All rights reserved.
  *
  *  Include Sequencing -
+ *	#include "conf.h"	/_* Must come before system <> includes *_/
+ *	#ifdef USE_STRING_H	/_* OPTIONAL, for strcmp() etc. *_/
+ *	#  include <string.h>
+ *	#else
+ *	#  include <strings.h>
+ *	#endif
  *	#include <stdio.h>
  *	#include <math.h>
  *	#include "machine.h"	/_* For fastf_t definition on this machine *_/
