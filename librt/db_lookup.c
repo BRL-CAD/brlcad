@@ -130,13 +130,19 @@ int			flags;
 {
 	register struct directory **headp;
 	register struct directory *dp;
-	char local[NAMESIZE+2];
+	struct directory	*dupdp;
+	char			local[NAMESIZE+2];
 
 	if( dbip->dbi_magic != DBI_MAGIC )  rt_bomb("db_diradd:  bad dbip\n");
 
-/**
-	rt_log("db_diradd( x%x, %s, addr=x%x, len=%d, flags=x%x\n", dbip, name, laddr, len, flags);
-**/
+	if(rt_g.debug&DEBUG_DB) rt_log("db_diradd( x%x, %s, addr=x%x, len=%d, flags=x%x)\n", dbip, name, laddr, len, flags);
+
+	if( (dupdp = db_lookup( dbip, name, 0 )) != DIR_NULL )  {
+		rt_log("db_diradd( x%x, %s, addr=x%x, len=%d, flags=x%x) duplicates entry x%x d_addr=x%x\n",
+			dbip, name, laddr, len, flags,
+			dupdp, dupdp->d_addr );
+		return( DIR_NULL );
+	}
 
 	GETSTRUCT( dp, directory );
 	if( dp == DIR_NULL )
