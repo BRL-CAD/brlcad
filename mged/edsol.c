@@ -3039,6 +3039,8 @@ sedit()
 		/* rot solid about vertex */
 		{
 			mat_t	mat;
+			mat_t	mat1;
+			mat_t	edit;
 
 			es_eu = (struct edgeuse *)NULL;	/* Reset es_eu */
 			es_pipept = (struct wdb_pipept *)NULL; /* Reset es_pipept */
@@ -3069,11 +3071,20 @@ sedit()
 			}
 			/* Apply changes to solid */
 			/* xlate keypoint to origin, rotate, then put back. */
-#ifdef TRY_EDIT_NEW_WAY
+#if 0
 			MAT4X3PNT(work, es_invmat, es_keypoint);
 			mat_xform_about_pt( mat, incr_change, work );
 #else
-			mat_xform_about_pt( mat, incr_change, es_keypoint );
+			/* calculate rotations about keypoint */
+			mat_xform_about_pt( edit, incr_change, es_keypoint );
+
+			/* We want our final matrix (mat) to xform the original solid
+			 * to the position of this instance of the solid, perform the
+			 * current edit operations, then xform back.
+			 *	mat = es_invmat * edit * es_mat
+			 */
+			mat_mul( mat1, edit, es_mat );
+			mat_mul( mat, es_invmat, mat1 );
 #endif
 			transform_editing_solid(&es_int, mat, &es_int, 1);
 
