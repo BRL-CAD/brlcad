@@ -191,6 +191,7 @@ struct	xinfo {
 	Window		xi_win;		/* Window ID */
 	int		xi_screen;	/* Our screen selection */
 	Visual		*xi_visual;	/* Our visual selection */
+	XVisualInfo	xi_visinfo;	/* Visual Info */
 	int		xi_depth;	/* Depth of our window */
 	GC		xi_gc;		/* current graphics context */
 	GC		xi_cgc;		/* graphics context for clipping */
@@ -624,6 +625,7 @@ GC gc;
   xi->xi_screen = DefaultScreen(xi->xi_dpy);
 
   xi->xi_flags = FLG_VT24 | FLG_XCMAP;
+  xi->xi_visinfo = *vip;		/* struct copy */
   xi->xi_visual = vip->visual;
   xi->xi_depth = vip->depth;
   xi->xi_cmap = cmap;
@@ -1303,6 +1305,7 @@ static int
 X24_help(ifp)
 FBIO	*ifp;
 {
+	struct xinfo *xi = XI(ifp);
 	struct	modeflags *mfp;
 
 #if X_DBG
@@ -1321,6 +1324,52 @@ printf("X24_help(ifp:0x%x) entered\n", ifp);
 	for(mfp = modeflags; mfp->c != '\0'; mfp++) {
 		fb_log("   %c   %s\n", mfp->c, mfp->help);
 	}
+
+	fb_log( "\nCurrent internal state:\n");
+	fb_log( "	xi_depth=%d\n", xi->xi_depth );
+	fb_log( "	xi_mode=%d\n", xi->xi_mode );
+	fb_log( "	xi_flags=%d\n", xi->xi_flags );
+	fb_log( "	xi_xwidth=%d\n", xi->xi_xwidth );
+	fb_log( "	xi_xheight=%d\n", xi->xi_xheight );
+
+	fb_log("X11 Visual:\n");
+	fb_log( "	class=%d\n", xi->xi_visinfo.class );
+
+	switch(xi->xi_visinfo.class) {
+	case DirectColor:
+		fb_log("\tDirectColor: Alterable RGB maps, pixel RGB subfield indicies\n");
+		fb_log("\tRGB Masks: 0x%x 0x%x 0x%x\n", xi->xi_visinfo.red_mask,
+		       xi->xi_visinfo.green_mask, xi->xi_visinfo.blue_mask);
+		break;
+	case TrueColor:
+		fb_log("\tTrueColor: Fixed RGB maps, pixel RGB subfield indicies\n");
+		fb_log("\tRGB Masks: 0x%x 0x%x 0x%x\n", xi->xi_visinfo.red_mask,
+		       xi->xi_visinfo.green_mask, xi->xi_visinfo.blue_mask);
+		break;
+	case PseudoColor:
+		fb_log("\tPseudoColor: Alterable RGB maps, single index\n");
+		break;
+	case StaticColor:
+		fb_log("\tStaticColor: Fixed RGB maps, single index\n");
+		break;
+	case GrayScale:
+		fb_log("\tGrayScale: Alterable map (R=G=B), single index\n");
+		break;
+	case StaticGray:
+		fb_log("\tStaticGray: Fixed map (R=G=B), single index\n");
+		break;
+	default:
+		fb_log("\tUnknown visual class %d\n",
+		       xi->xi_visinfo.class);
+		break;
+	}
+	fb_log("\tColormap Size: %d\n", xi->xi_visinfo.colormap_size);
+	fb_log("\tBits per RGB: %d\n", xi->xi_visinfo.bits_per_rgb);
+	fb_log("\tscreen: %d\n", xi->xi_visinfo.screen);
+	fb_log("\tdepth (total bits per pixel): %d\n", xi->xi_visinfo.depth);
+	if( xi->xi_visinfo.depth < 24 )
+		fb_log("\tWARNING: unable to obtain full 24-bits of color, image will be quantized.\n");
+
 	return(0);
 }
 
@@ -1374,56 +1423,56 @@ printf("xsetup(ifp:0x%x, width:%d, height:%d) entered\n", ifp, width, height);
 	default:
 	case FLG_VD24:
 		if (XMatchVisualInfo(xi->xi_dpy, xi->xi_screen, 24, DirectColor,
-		    &visinfo)) {
+		    &xi->xi_visinfo)) {
 			xi->xi_flags |= FLG_XCMAP | FLG_VD24;
 			break;
 		}
 		/*FALLTHROUGH*/
 	case FLG_VT24:
 		if (XMatchVisualInfo(xi->xi_dpy, xi->xi_screen, 24, TrueColor,
-		    &visinfo)) {
+		    &xi->xi_visinfo)) {
 			xi->xi_flags |= FLG_VT24;
 			break;
 		}
 		/*FALLTHROUGH*/
 	case FLG_VD16:
 		if (XMatchVisualInfo(xi->xi_dpy, xi->xi_screen, 16, DirectColor,
-		    &visinfo)) {
+		    &xi->xi_visinfo)) {
 			xi->xi_flags |= FLG_XCMAP | FLG_VD16;
 			break;
 		}
 		/*FALLTHROUGH*/
 	case FLG_VT16:
 		if (XMatchVisualInfo(xi->xi_dpy, xi->xi_screen, 16, TrueColor,
-		    &visinfo)) {
+		    &xi->xi_visinfo)) {
 			xi->xi_flags |= FLG_VT16;
 			break;
 		}
 		/*FALLTHROUGH*/
 	case FLG_VP8:
 		if (XMatchVisualInfo(xi->xi_dpy, xi->xi_screen, 8, PseudoColor,
-		    &visinfo)) {
+		    &xi->xi_visinfo)) {
 			xi->xi_flags |= FLG_VP8;
 			break;
 		}
 		/*FALLTHROUGH*/
 	case FLG_VS8:
 		if (XMatchVisualInfo(xi->xi_dpy, xi->xi_screen, 8, StaticGray,
-		    &visinfo)) {
+		    &xi->xi_visinfo)) {
 			xi->xi_flags |= FLG_VS8;
 			break;
 		}
 		/*FALLTHROUGH*/
 	case FLG_VG8:
 		if (XMatchVisualInfo(xi->xi_dpy, xi->xi_screen, 8, GrayScale,
-		    &visinfo)) {
+		    &xi->xi_visinfo)) {
 			xi->xi_flags |= FLG_VG8;
 			break;
 		}
 		/*FALLTHROUGH*/
 	case FLG_VS1:
 		if (XMatchVisualInfo(xi->xi_dpy, xi->xi_screen, 1, StaticGray,
-		    &visinfo)) {
+		    &xi->xi_visinfo)) {
 			xi->xi_flags |= FLG_VS1;
 			break;
 		}
@@ -1434,8 +1483,8 @@ printf("xsetup(ifp:0x%x, width:%d, height:%d) entered\n", ifp, width, height);
 		return (-1);
 	}
 
-	xi->xi_visual = visinfo.visual;
-	xi->xi_depth = visinfo.depth;
+	xi->xi_visual = xi->xi_visinfo.visual;
+	xi->xi_depth = xi->xi_visinfo.depth;
 
 	/* Set up colormaps, white/black pixels */
 
