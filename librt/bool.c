@@ -53,7 +53,6 @@ struct application	*ap;
 	register struct partition *pp;
 	struct resource		*res = ap->a_resource;
 	struct rt_i		*rtip = ap->a_rt_i;
-	FAST fastf_t		diff;
 	FAST fastf_t		tol_dist;
 
 	tol_dist = rtip->rti_tol.dist;
@@ -644,7 +643,7 @@ fastf_t startdist, enddist;
 bitv_t *regionbits;
 struct application *ap;
 {
-	LOCAL struct region *lastregion;
+	LOCAL struct region *lastregion = (struct region *)NULL;
 	LOCAL struct region *TrueRg[2];
 	register struct partition *pp;
 	register int	claiming_regions;
