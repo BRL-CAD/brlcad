@@ -19,6 +19,12 @@
 
 /* Explicit composition of each product */
 
+g-sgp: g-sgp.o LIBRT_DEP LIBBN_DEP LIBBU_DEP LIBWDB_DEP
+	CC LDFLAGS g-sgp.o LIBWDB LIBRT LIBBN LIBBU LIBBU_LIBES LIBES -o g-sgp
+
+nmg-sgp: nmg-sgp.o LIBRT_DEP LIBBN_DEP LIBBU_DEP LIBWDB_DEP
+	CC LDFLAGS nmg-sgp.o LIBWDB LIBRT LIBBN LIBBU LIBBU_LIBES LIBES -lgen -o nmg-sgp
+
 nastran-g: nastran-g.o LIBRT_DEP LIBBN_DEP LIBBU_DEP LIBWDB_DEP
 	CC LDFLAGS nastran-g.o LIBWDB LIBRT LIBBN LIBBU LIBBU_LIBES LIBES -lgen -o nastran-g
 
