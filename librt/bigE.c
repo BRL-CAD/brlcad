@@ -28,6 +28,7 @@ static const char RCSid[] = "";
 #	include <strings.h>
 #endif
 #include <errno.h>
+#include <time.h>
 
 #include "machine.h"
 #include "bu.h"
@@ -363,7 +364,7 @@ struct bu_list *seg;
 				else if( ptr->seg_stp == IN_SOL )
 					bu_log( "\t %g to %g (IN)\n", ptr->seg_in.hit_dist, ptr->seg_out.hit_dist );
 				else
-					bu_log( "\t %g to %g (??)\n", ptr->seg_in.hit_dist, ptr->seg_out.hit_dist );
+					bu_log( "\t %g to %g (?)\n", ptr->seg_in.hit_dist, ptr->seg_out.hit_dist );
 			}
 		}
 	}
