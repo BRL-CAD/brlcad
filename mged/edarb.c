@@ -288,7 +288,7 @@ printf("moving edge: %d%d  bound planes: %d %d\n",pt1+1,pt2+1,bp1+1,bp2+1);
 			p1 = *iptr++;
 			p2 = *iptr++;
 			p3 = *iptr++;
-			*iptr++;
+			iptr++;
 /*
 printf("REDO plane %d with points %d %d %d\n",i+1,p1+1,p2+1,p3+1);
 */
