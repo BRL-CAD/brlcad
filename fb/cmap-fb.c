@@ -114,10 +114,10 @@ register char *cp;
 	while( isspace(*cp) )
 		cp++;
 
-	while( *cp != NULL && !isspace(*cp) )
+	while( *cp != '\0' && !isspace(*cp) )
 		*b++ = *cp++;
 
-	*b = NULL;
+	*b = '\0';
 	return( cp );
 }
 
@@ -135,7 +135,7 @@ register char *s;
 
 	i = 0;
 
-	while( *s != NULL ) {
+	while( *s != '\0' ) {
 		i <<= 4;	/* times 16 */
 		if( *s == 'x' || *s == 'X' )
 			i = 0;

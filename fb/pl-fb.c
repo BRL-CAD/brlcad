@@ -233,7 +233,7 @@ STATIC struct vectorchar {
    '.', 4,7,   3,7,   3,6,   4,6,   4,7,   END,   NIL,   NIL,   NIL,   NIL,
    ',', 4,6,   3,6,   3,5,   4,5,   4,8,   END,   NIL,   NIL,   NIL,   NIL,
 
-   NULL
+   '\0'
 };
 
 STATIC int	Nscanlines = 512;
