@@ -1758,7 +1758,6 @@ rt_log("DANGER: nmg_classify_pt_loop() is calling nmg_class_pt_l(), which does n
  *  Called by -
  *	nmg_misc.c / nmg_split_loops_handler()
  *
- *  XXX DANGER:  Calls nmg_class_pt_l(), which does not work well.
  */
 int
 nmg_classify_lu_lu( lu1 , lu2 , tol )
@@ -1767,7 +1766,6 @@ CONST struct rt_tol *tol;
 {
 	struct faceuse *fu1,*fu2;
 	struct edgeuse *eu;
-	struct neighbor	closest;
 	int same_loop;
 
 	NMG_CK_LOOPUSE( lu1 );
@@ -1776,7 +1774,6 @@ CONST struct rt_tol *tol;
 
 	if( rt_g.NMG_debug & DEBUG_CLASSIFY )
 		rt_log( "nmg_classify_lu_lu( lu1=x%x , lu2=x%x )\n", lu1, lu2 );
-rt_log("DANGER: nmg_classify_lu_lu() is calling nmg_class_pt_l(), which does not work well\n");
 
 	if( lu1 == lu2 || lu1 == lu2->lumate_p )
 		return( NMG_CLASS_AonBshared );
@@ -1876,11 +1873,6 @@ rt_log("DANGER: nmg_classify_lu_lu() is calling nmg_class_pt_l(), which does not
 			return( NMG_CLASS_AoutB );
 	}
 
-	/* initialize the "closest" structure */
-	closest.dist = MAX_FASTF;
-	closest.p.eu = (struct edgeuse *)NULL;
-	closest.class = NMG_CLASS_AoutB;	/* default return */
-
 	if( RT_LIST_FIRST_MAGIC( &lu1->down_hd ) == NMG_VERTEXUSE_MAGIC )
 	{
 		struct vertexuse *vu;
@@ -1891,30 +1883,22 @@ rt_log("DANGER: nmg_classify_lu_lu() is calling nmg_class_pt_l(), which does not
 		vg = vu->v_p->vg_p;
 		NMG_CK_VERTEX_G( vg );
 
-		nmg_class_pt_l( &closest , vg->coord , lu2 , tol );
-
-		return( closest.class );
-		
+		return( nmg_class_pt_lu_except( vg->coord, lu2, (struct edgeuse *)NULL, tol ));
 	}
 
 	for( RT_LIST_FOR( eu , edgeuse , &lu1->down_hd ) )
 	{
 		struct vertex_g *vg;
+		int class;
 
 		NMG_CK_EDGEUSE( eu );
 
 		vg = eu->vu_p->v_p->vg_p;
 		NMG_CK_VERTEX_G( vg );
 
-		/* reset the closest structure for each call */
-		closest.dist = MAX_FASTF;
-		closest.p.eu = (struct edgeuse *)NULL;
-		closest.class = NMG_CLASS_AoutB;	/* default return */
-
-		nmg_class_pt_l( &closest , vg->coord , lu2 , tol );
-
-		if( closest.class != NMG_CLASS_AonBshared )
-			return( closest.class );
+		class = nmg_class_pt_lu_except( vg->coord, lu2, (struct edgeuse *)NULL, tol);
+		if( class != NMG_CLASS_AonBshared )
+			return( class );
 	}
 
 	return( NMG_CLASS_AonBshared );
