@@ -730,6 +730,8 @@ CONST struct rt_tol	*tol;
 	plane_t			plane;
 	struct vertex		*a, *b, *c;
 
+	RT_CK_TOL(tol);
+
 	NMG_CK_FACEUSE(fu);
 	lu = RT_LIST_FIRST(loopuse, &fu->lu_hd);
 	NMG_CK_LOOPUSE(lu);
@@ -738,16 +740,20 @@ CONST struct rt_tol	*tol;
 		return -1;
 	eu = RT_LIST_FIRST(edgeuse, &lu->down_hd);
 	NMG_CK_EDGEUSE(eu);
+	NMG_CK_VERTEXUSE(eu->vu_p);
 	a = eu->vu_p->v_p;
 	NMG_CK_VERTEX(a);
+	NMG_CK_VERTEX_G(a->vg_p);
 
 	eu_next = eu;
 	do {
 		eu_next = RT_LIST_PNEXT_CIRC(edgeuse, eu_next);
 		NMG_CK_EDGEUSE(eu_next);
 		if( eu_next == eu )  return -1;
+		NMG_CK_VERTEXUSE(eu_next->vu_p);
 		b = eu_next->vu_p->v_p;
 		NMG_CK_VERTEX(b);
+		NMG_CK_VERTEX_G(b->vg_p);
 	} while( (b == a
 		|| VAPPROXEQUAL(a->vg_p->coord, b->vg_p->coord, tol->dist))
 		&& eu_next->vu_p != eu->vu_p );
@@ -757,8 +763,10 @@ CONST struct rt_tol	*tol;
 		eu_final = RT_LIST_PNEXT_CIRC(edgeuse, eu_final);
 		NMG_CK_EDGEUSE(eu_final);
 		if( eu_final == eu )  return -1;
+		NMG_CK_VERTEXUSE(eu_final->vu_p);
 		c = eu_final->vu_p->v_p;
 		NMG_CK_VERTEX(c);
+		NMG_CK_VERTEX_G(c->vg_p);
 	} while( (c == b
 		|| VAPPROXEQUAL(a->vg_p->coord, c->vg_p->coord, tol->dist)
 		|| VAPPROXEQUAL(b->vg_p->coord, c->vg_p->coord, tol->dist)
