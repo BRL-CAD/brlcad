@@ -301,7 +301,7 @@ wdb_put_internal(
 		}
 		db_wrap_v4_external( &ext, name );
 	} else {
-		if( rt_db_cvt_to_external5( &ext, name, ip, local2mm, wdbp->dbip, &rt_uniresource, DB5_MAJORTYPE_BRLCAD ) < 0 )  {
+		if( rt_db_cvt_to_external5( &ext, name, ip, local2mm, wdbp->dbip, &rt_uniresource, ip->idb_major_type ) < 0 )  {
 			bu_log("wdb_export(%s): solid export failure\n",
 				name );
 			ret = -2;
