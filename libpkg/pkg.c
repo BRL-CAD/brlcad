@@ -225,7 +225,7 @@ void (*errlog)();
 		addr_tmp = inet_addr(host);
 		sinhim.sin_addr = addr_tmp;
 #else
-		sinhim.sin_addr.s_addr = addr_tmp;
+		sinhim.sin_addr.s_addr = inet_addr(host);
 #endif
 	} else {
 #ifdef BSD
