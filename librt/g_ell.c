@@ -1235,7 +1235,10 @@ double			mm2local;
 {
 	register struct ell_internal	*tip =
 		(struct ell_internal *)ip->idb_ptr;
+	fastf_t	mag_a, mag_b, mag_c;
 	char	buf[256];
+	double	angles[5];
+	vect_t	unitv;
 
 	RT_ELL_CK_MAGIC(tip);
 	rt_vls_strcat( str, "ellipsoid (ELL)\n");
@@ -1246,26 +1249,44 @@ double			mm2local;
 		tip->v[Z] * mm2local );
 	rt_vls_strcat( str, buf );
 
+	mag_a = MAGNITUDE(tip->a);
+	mag_b = MAGNITUDE(tip->b);
+	mag_c = MAGNITUDE(tip->c);
+
 	sprintf(buf, "\tA (%g, %g, %g) mag=%g\n",
 		tip->a[X] * mm2local,
 		tip->a[Y] * mm2local,
 		tip->a[Z] * mm2local,
-		MAGNITUDE(tip->a) );
+		mag_a );
 	rt_vls_strcat( str, buf );
 
 	sprintf(buf, "\tB (%g, %g, %g) mag=%g\n",
 		tip->b[X] * mm2local,
 		tip->b[Y] * mm2local,
 		tip->b[Z] * mm2local,
-		MAGNITUDE(tip->b) );
+		mag_b );
 	rt_vls_strcat( str, buf );
 
 	sprintf(buf, "\tC (%g, %g, %g) mag=%g\n",
 		tip->c[X] * mm2local,
 		tip->c[Y] * mm2local,
 		tip->c[Z] * mm2local,
-		MAGNITUDE(tip->c) );
+		mag_c );
 	rt_vls_strcat( str, buf );
+
+	if( !verbose )  return(0);
+
+	VSCALE( unitv, tip->a, 1/mag_a );
+	rt_find_fallback_angle( angles, unitv );
+	rt_pr_fallback_angle( str, "\tA", angles );
+
+	VSCALE( unitv, tip->b, 1/mag_b );
+	rt_find_fallback_angle( angles, unitv );
+	rt_pr_fallback_angle( str, "\tB", angles );
+
+	VSCALE( unitv, tip->c, 1/mag_c );
+	rt_find_fallback_angle( angles, unitv );
+	rt_pr_fallback_angle( str, "\tC", angles );
 
 	return(0);
 }
