@@ -86,6 +86,7 @@ struct dm dm_T49 = {
 	T49_colorchange,
 	T49_window, T49_debug,
 	0,				/* no displaylist */
+	0,				/* can't rt to this */
 	TEKBOUND,
 	"tek4109", "Tektronix 4109"		/* NRTC */
 };

@@ -62,6 +62,7 @@ struct dm dm_Tek = {
 	Tek_colorchange,
 	Tek_window, Tek_debug,
 	0,				/* no displaylist */
+	0,				/* can't rt to this */
 	TEKBOUND,
 	"tek", "Tektronix 4014"
 };

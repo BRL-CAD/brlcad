@@ -66,7 +66,8 @@ struct dm dm_Plot = {
 	Plot_viewchange,
 	Plot_colorchange,
 	Plot_window, Plot_debug,
-	0,				/* no displaylist */
+	0,			/* no displaylist */
+	1,			/* play it safe (could be frame buffer) */
 	PLOTBOUND,
 	"plot", "Screen to UNIX-Plot"
 };

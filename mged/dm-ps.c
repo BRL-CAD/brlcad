@@ -65,6 +65,7 @@ struct dm dm_PS = {
 	PS_colorchange,
 	PS_window, PS_debug,
 	0,				/* no displaylist */
+	0,				/* no display to release! */
 	PLOTBOUND,
 	"ps", "Screen to PostScript"
 };
