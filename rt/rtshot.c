@@ -189,15 +189,20 @@ struct partition *PartHeadp;
 	struct curvature cur;
 
 	for( pp=PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw )  {
-		hitp = pp->pt_inhit;
 		stp = pp->pt_inseg->seg_stp;
 		rt_log("\n--- Hit %s\n", stp->st_name);
+
+		hitp = pp->pt_inhit;
 		RT_HIT_NORM( hitp, stp, &(ap->a_ray) );
 		rt_pr_hit( "  In", hitp );
 		RT_CURVE( &cur, hitp, stp );
 		VPRINT("PDir", cur.crv_pdir );
 		rt_log(" c1=%g\n", cur.crv_c1);
 		rt_log(" c2=%g\n", cur.crv_c2);
+
+		hitp = pp->pt_outhit;
+		RT_HIT_NORM( hitp, stp, &(ap->a_ray) );
+		rt_pr_hit( " Out", hitp );
 	}
 }
 
