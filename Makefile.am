@@ -61,3 +61,15 @@ SUBDIRS=\
 	vas4\
 	vdeck\
 	vfont
+
+EXTRA_DIST=ChangeLog $(PACKAGE).spec.in
+ 
+.PHONY : rpm
+rpm: dist
+	cp $(PACKAGE)-$(VERSION).tar.gz /usr/src/redhat/SOURCES/
+	rpm -ba $(PACKAGE).spec
+	cp /usr/src/redhat/RPMS/i386/$(PACKAGE)-$(VERSION)-*.i386.rpm .
+	cp /usr/src/redhat/SRPMS/$(PACKAGE)-$(VERSION)-*.src.rpm .
+ 
+packages: rpm
+

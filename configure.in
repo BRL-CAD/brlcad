@@ -353,4 +353,5 @@ AC_OUTPUT([
 	vas4/Makefile
 	vdeck/Makefile
 	vfont/Makefile
+	brlcad.spec
 ])
