@@ -51,55 +51,54 @@ char	*str;
 int	count;
 double	*loc;
 {
-	register int i;
-	register char *cp;
-	int dot_seen;
-	char *numstart;
-	double tmp_double;
-	
+	int	i;
+	int	dot_seen;
+	char	*numstart;
+	double	tmp_double;
+	char	buf[128];	
+	int	len;
 
 	for (i=0 ; i < count && *str ; ++i){
-		tmp_double = atof( str );
-
-		/* skip text of float # */
 		numstart = str;
 
 		/* skip sign */
-		if (*numstart == '-' || *numstart == '+') numstart++;
-
-		cp = numstart;
+		if (*str == '-' || *str == '+') str++;
 
 		/* skip matissa */
-		for (dot_seen = 0; *cp ; cp++ ) {
-			if (*cp == '.' && !dot_seen) {
+		dot_seen = 0;
+		for ( ; *str ; str++ ) {
+			if (*str == '.' && !dot_seen) {
 				dot_seen = 1;
 				continue;
 			}
-			if (!isdigit(*cp))
+			if (!isdigit(*str))
 				break;
 			
 		}
 
-		/* no mantissa, no float str */
-		if (cp == numstart + dot_seen)
+		/* If no mantissa seen, then there is no float here */
+		if (str == (numstart + dot_seen) )
+			return;
+
+		/* there was a mantissa, so we may have an exponent */
+		if  (*str == 'E' || *str == 'e') {
+			str++;
+
+			/* skip exponent sign */
+		    	if (*str == '+' || *str == '-') str++;
+
+			while (isdigit(*str)) str++;
+		}
+
+		len = str - numstart;
+		if( len > sizeof(buf)-1 )  len = sizeof(buf)-1;
+		strncpy( buf, numstart, len );
+		buf[len] = '\0';
+
+		if( sscanf( buf, "%lf", &tmp_double ) != 1 )
 			return;
 
 		*loc++ = tmp_double;
-		str = cp;
-
-		/* there was a mantissa, so we may have an exponent */
-		if  (*cp == 'E' || *cp == 'e') {
-			numstart = ++cp;
-
-			/* skip exponent sign */
-		    	if (*numstart == '+' || *numstart == '-') numstart++;
-
-			while (isdigit(*cp)) cp++;
-
-			/* if there was a mantissa, skip over it */
-			if (cp != numstart)
-				str = cp;
-		}
 
 		/* skip the separator */
 		if (*str) str++;
