@@ -31,6 +31,13 @@ angles of azimuth and elevation.
 
 .SS Options
 .TP
+.B -A attribute_name
+Adds the named attributes to the list of attributes that will be reported
+with the %A action.
+See the 
+.B attr
+command below.
+.TP
 .B -M
 causes
 .I nirt
@@ -266,6 +273,16 @@ and
 output items.
 Default is ``resolve''.
 .TP 12
+.BI "attr {-f|-p|attr_names...}"
+When used with one or more attribute names, adds them to the list
+of attributes that will be printed for each invokation of the %A action
+directive.
+The
+.B "-p"
+option to the attr command causes it to print the list of attributes that will
+be reported.  The 
+.B "-f"
+option clears the attributes table.
 .BI "units [" u "]"
 Causes
 .I nirt
@@ -471,6 +488,12 @@ elevation of view (i.e., of ray direction).
 
 .ce
 Partition Information
+.TP 18
+.B attributes
+print the attributes specified in the attribute list.  Note that this
+uses the special action directive 
+.B %A 
+in the format string.  For example: '"The attr are: %A\n" attributes'
 .TP 18
 .B x_in
 \fIx\fR coordinate of entry into current region.
