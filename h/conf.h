@@ -92,7 +92,11 @@
  *
  *	HAVE_GETHOSTNAME	A BSD thang.
  *
+ *	HAVE_GETOPT
+ *
  *	HAVE_MATHERR		XXX ?
+ *
+ *	HAVE_REGEX
  *
  *	HAVE_STRCHR		Usually for folks who have strings.h
  *
@@ -116,8 +120,16 @@
 #	define HAVE_GETHOSTNAME	1
 #endif
 
+#if defined(SYSV) || defined(__NetBSD__) || defined(__bsdi__) || defined(__stardent)
+#	define HAVE_GETOPT	1
+#endif
+
 #if (defined(SYSV) || BSD >= 43) && !__STDC__
 #	define HAVE_MATHERR	1
+#endif
+
+#if defined(BSD)
+#	define HAVE_REGEX	1
 #endif
 
 #if !defined(SYSV)
