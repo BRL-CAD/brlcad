@@ -56,6 +56,10 @@ struct half_specific  {
 };
 #define HALF_NULL	((struct half_specific *)0)
 
+struct bu_structparse rt_half_parse[] = {
+    { "%f", 3, "N", offsetof(struct rt_half_internal, eqn[X]), BU_STRUCTPARSE_FUNC_NULL },
+    { "%f", 1, "d", offsetof(struct rt_half_internal, eqn[3]), BU_STRUCTPARSE_FUNC_NULL },
+    {0} };
 /*
  *  			R T _ H L F _ P R E P
  */
