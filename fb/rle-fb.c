@@ -30,7 +30,7 @@ extern char	*getenv();
 
 extern char	*malloc();
 
-static FILE	*infp = stdin;
+static FILE	*infp;
 static char	*infile;
 
 static int	background[3];
@@ -158,6 +158,7 @@ char ** argv;
 		exit( 1 );
 	}
 
+	infp = stdin;
 	rle_dflt_hdr.rle_file = infp;
 	if( rle_get_setup( &rle_dflt_hdr ) < 0 )  {
 		fprintf(stderr, "rle-fb: Error reading setup information\n");

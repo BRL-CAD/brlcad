@@ -34,7 +34,7 @@ static char	*usage[] =
 	};
 
 static FBIO	*fbp;
-static FILE	*fp = stdin;
+static FILE	*fp;
 static RGBpixel	bgpixel;
 static int	bgflag = 0;
 static int	cmflag = 0;
@@ -63,6 +63,7 @@ char	*argv[];
 		static ColorMap	cmap;
 		int		get_flags;
 
+	fp = stdin;
 	if( ! pars_Argv( argc, argv ) || isatty(fileno(fp)) )
 		{
 		prnt_Usage();
