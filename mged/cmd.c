@@ -93,6 +93,7 @@ void	f_adc();
 void	f_set();
 void	f_zoom();
 void	f_mouse();
+void	f_fracture();
 
 static struct funtab {
 	char *ft_name;
@@ -180,6 +181,8 @@ static struct funtab {
 	f_find, 1, MAXARGS,
 "fix", "", "fix display after hardware error",
 	f_fix,1,1,
+"fracture", "NMGsolid [prefix]", "fracture an NMG solid into many NMG solids, each containing one face\n",
+	f_fracture, 2, 3,
 "g", "groupname <objects>", "group objects",
 	f_group,3,MAXARGS,
 #ifdef HIDELINE
