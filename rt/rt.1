@@ -335,7 +335,7 @@ be specified as either a fraction or a colon-separated ratio.
 For example, the NTSC aspect ratio can be specified by either
 .B \-V1.33
 or
-.B \V4:3
+.B \-V4:3
 .TP
 .B \-X#
 Turns on the
@@ -350,6 +350,40 @@ which can be invoked directly, or via the
 .B rt
 command in
 .IR mged (1).
+.SH "ANIMATION SCRIPTS"
+.PP
+For information on the animation script language accepted by
+.B rt
+please refer to the manual pages for
+.IR tabinterp (1),
+.IR tabsub (1),
+and
+.IR anim_script (1).
+Also please consult the HTML documentation for a complete animation
+tutorial.
+.SH "NTSC ANIMATION TIPS"
+.PP
+When using
+.B rt
+to create an animation sequence destined for NTSC video,
+it is useful to give all these options in conjunction:
+.B \-V4:3
+.B \-c
+"set gamma=2.2"
+.B \-w1440
+.B \-n972
+.B \-J1
+and then post-proces the output using
+.IR pixhalve (1)
+for final display.
+Performing the gamma correction inside
+.B rt
+instead of post-processing the
+.IR pix (5)
+file with
+.IR bwmod (1)
+avoids Mach-bands in dark regions of the image, and retains the
+maximum amount of image detail.
 .SH "SEE ALSO"
 brlcad(1), mged(1), lgt(1), pix-fb(1), rtray(1), rtpp(1),
 librt(3), ray(5V), pix(5).

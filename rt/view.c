@@ -125,10 +125,12 @@ static int	pwidth;			/* Width of each pixel (in bytes) */
 
 struct mfuncs *mfHead = MF_NULL;	/* Head of list of shaders */
 
+fastf_t	gamma_corr = 0.0;			/* gamma correction if !0 */
 
 /* Viewing module specific "set" variables */
 struct bu_structparse view_parse[] = {
 #if !defined(__alpha)   /* XXX Alpha does not support this initialization! */
+	{"%f",	1, "gamma",	bu_byteoffset(gamma_corr),		BU_STRUCTPARSE_FUNC_NULL },
 	{"%d",	1, "bounces",	bu_byteoffset(max_bounces),		BU_STRUCTPARSE_FUNC_NULL },
 	{"%d",	1, "ireflect",	bu_byteoffset(max_ireflect),		BU_STRUCTPARSE_FUNC_NULL },
 	{"%f", ELEMENTS_PER_VECT, "background",bu_byteoffset(background[0]),	BU_STRUCTPARSE_FUNC_NULL },
@@ -169,9 +171,24 @@ register struct application *ap;
 		 *  that integer valued colors (eg, from texture maps)
 		 *  retain their original values.
 		 */
-		r = ap->a_color[0]*255.+rand0to1(ap->a_resource->re_randptr);
-		g = ap->a_color[1]*255.+rand0to1(ap->a_resource->re_randptr);
-		b = ap->a_color[2]*255.+rand0to1(ap->a_resource->re_randptr);
+		if( gamma_corr != 0 )  {
+			/*
+			 * Perform gamma correction in floating-point space,
+			 * and avoid nasty mach bands in dark areas
+			 * from doing it in 0..255 space later.
+			 */
+			double ex = 1.0/gamma_corr;
+			r = pow(ap->a_color[0], ex)*255.+
+				rand0to1(ap->a_resource->re_randptr);
+			g = pow(ap->a_color[1], ex)*255.+
+				rand0to1(ap->a_resource->re_randptr);
+			b = pow(ap->a_color[2], ex)*255.+
+				rand0to1(ap->a_resource->re_randptr);
+		} else {
+			r = ap->a_color[0]*255.+rand0to1(ap->a_resource->re_randptr);
+			g = ap->a_color[1]*255.+rand0to1(ap->a_resource->re_randptr);
+			b = ap->a_color[2]*255.+rand0to1(ap->a_resource->re_randptr);
+		}
 		if( r > 255 ) r = 255;
 		else if( r < 0 )  r = 0;
 		if( g > 255 ) g = 255;
