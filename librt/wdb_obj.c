@@ -58,6 +58,7 @@ extern void rt_generic_make();
 /* from librt/dg_obj.c */
 extern void dgo_eraseobjall_callback();
 extern void dgo_impending_wdb_close();
+extern void dgo_zapall();
 
 /* from librt/wdb_comb_std.c */
 extern int wdb_comb_std_tcl();
@@ -107,6 +108,7 @@ static int wdb_keep_tcl();
 static int wdb_cat_tcl();
 static int wdb_instance_tcl();
 static int wdb_observer_tcl();
+static int wdb_reopen_tcl();
 
 static void wdb_deleteProc();
 static void wdb_deleteProc_rt();
@@ -184,6 +186,7 @@ static struct bu_cmdtab wdb_cmds[] = {
 #endif
 	"close",	wdb_close_tcl,
 	"observer",	wdb_observer_tcl,
+	"open",		wdb_reopen_tcl,
 	(char *)0,	(int (*)())0
 };
 
@@ -354,6 +357,9 @@ Usage: wdb_open\n\
 				return TCL_ERROR;
 			RT_CK_DBI_TCL(interp,dbip);
 
+			/* --- Scan geometry database and build in-memory directory --- */
+			db_scan(dbip, (int (*)())db_diradd, 1, NULL);
+
 			wdbp = wdb_dbopen(dbip, RT_WDB_TYPE_DB_DISK);
 		} else {
 			if (wdb_decode_dbip(interp, argv[3], &dbip) != TCL_OK)
@@ -445,8 +451,8 @@ wdb_prep_dbip(interp, filename)
 	struct db_i *dbip;
 
 	/* open database */
-	if (((dbip = db_open(filename, "r+w")) == DBI_NULL ) &&
-	    ((dbip = db_open(filename, "r"  )) == DBI_NULL )) {
+	if (((dbip = db_open(filename, "r+w")) == DBI_NULL) &&
+	    ((dbip = db_open(filename, "r"  )) == DBI_NULL)) {
 		/*
 		 * Check to see if we can access the database
 		 */
@@ -468,13 +474,60 @@ wdb_prep_dbip(interp, filename)
 		}
 	}
 
-	/* --- Scan geometry database and build in-memory directory --- */
-	db_scan(dbip, (int (*)())db_diradd, 1, NULL);
-
 	return dbip;
 }
 
 /****************** Database Object Methods ********************/
+/*
+ *
+ * Usage:
+ *        procname open [filename]
+ */
+static int
+wdb_reopen_tcl( clientData, interp, argc, argv )
+     ClientData	clientData;
+     Tcl_Interp     *interp;
+     int		argc;
+     char	      **argv;
+{
+	struct rt_wdb *wdbp = (struct rt_wdb *)clientData;
+	struct db_i *dbip;
+	struct bu_vls vls;
+
+	/* get database filename */
+	if (argc == 2) {
+		Tcl_AppendResult(interp, wdbp->dbip->dbi_filename, (char *)NULL);
+		return TCL_OK;
+	}
+
+	/* set database filename */
+	if (argc == 3) {
+		if ((dbip = wdb_prep_dbip(interp, argv[2])) == DBI_NULL) {
+			return TCL_ERROR;
+		}
+
+		/* XXXnotify observers */
+		/* notify drawable geometry objects associated with this database */
+		dgo_zapall(wdbp, interp);
+
+		/* close current database */
+		db_close(wdbp->dbip);
+
+		wdbp->dbip = dbip;
+
+		/* --- Scan geometry database and build in-memory directory --- */
+		db_scan(wdbp->dbip, (int (*)())db_diradd, 1, NULL);
+
+		return TCL_OK;
+	}
+
+	bu_vls_init(&vls);
+	bu_vls_printf(&vls, "helplib wdb_reopen");
+	Tcl_Eval(interp, bu_vls_addr(&vls));
+	bu_vls_free(&vls);
+	return TCL_ERROR;
+}
+
 /*
  *			W D B _ M A T C H _ T C L
  *
