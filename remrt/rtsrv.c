@@ -19,6 +19,10 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "conf.h"
 
+#if IRIX == 4
+#define _BSD_COMPAT	1
+#endif
+
 #include <stdio.h>
 #ifdef HAVE_STDARG_H
 # include <stdarg.h>
@@ -53,8 +57,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "./list.h"
 #include "./protocol.h"
-
-extern char	*sbrk();
 
 struct list	*FreeList;
 struct list	WorkHead;
