@@ -7,11 +7,6 @@
 #
 ##
 
-#	
-# REMOVE THIS LINE:
-#
-catch {delete class pattern_control}
-
 class pattern_control {
     inherit itk::Toplevel
     
