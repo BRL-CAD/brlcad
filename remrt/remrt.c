@@ -299,7 +299,7 @@ char	**argv;
 
 	/* Listen for our PKG connections */
 	if( (tcp_listen_fd = pkg_permserver("rtsrv", "tcp", 8, rt_log)) < 0 &&
-	    (tcp_listen_fd = pkg_permserver("20210", "tcp", 8, rt_log)) < 0 )
+	    (tcp_listen_fd = pkg_permserver("4446", "tcp", 8, rt_log)) < 0 )
 		exit(1);
 	/* Now, pkg_permport has tcp port number */
 
@@ -1124,7 +1124,7 @@ struct timeval	*nowp;
 
 	/* Look for finished frames */
 	fr = FrameHead.fr_forw;
-	while( fr != &FrameHead )  {
+	while( fr && fr != &FrameHead )  {
 		if( fr->fr_todo.li_forw != &(fr->fr_todo) )
 			goto next_frame;	/* unassigned work remains */
 
@@ -1149,6 +1149,10 @@ next_frame: ;
 
 	/* Keep assigning work until all servers are fully loaded */
 	for( fr = FrameHead.fr_forw; fr != &FrameHead; fr = fr->fr_forw)  {
+		if( fr == FRAME_NULL )  {
+			rt_log("fr=NULL, aborting\n");
+			abort();
+		}
 		do {
 			another_pass = 0;
 			if( fr->fr_todo.li_forw == &(fr->fr_todo) )
