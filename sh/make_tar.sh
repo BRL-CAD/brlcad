@@ -34,6 +34,63 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 ###
+#
+# Script for generating an uncompressed tape archive binary
+# distribution.
+#
+# Author: Christopher Sean Morrison
+#
+######################################################################
+
+NAME="$1"
+MAJOR_VERSION="$2"
+MINOR_VERSION="$3"
+PATCH_VERSION="$4"
+ARCHIVE="$5"
+if [ "x$NAME" = "x" ] ; then
+    echo "Usage: $0 name major_version minor_version patch_version archive_dir"
+    echo "ERROR: must specify a package name"
+    exit 1
+fi
+if [ "x$MINOR_VERSION" = "x" ] ; then
+    echo "Usage: $0 name major_version minor_version patch_version archive_dir"
+    echo "ERROR: must specify a major package version"
+    exit 1
+fi
+if [ "x$MINOR_VERSION" = "x" ] ; then
+    echo "ERROR: must specify a minor package version"
+    echo "Usage: $0 name major_version minor_version patch_version archive_dir"
+    exit 1
+fi
+if [ "x$PATCH_VERSION" = "x" ] ; then
+    echo "Usage: $0 name major_version minor_version patch_version archive_dir"
+    echo "ERROR: must specify a patch package version"
+    exit 1
+fi
+if [ "x$ARCHIVE" = "x" ] ; then
+    echo "Usage: $0 name major_version minor_version patch_version archive_dir"
+    echo "ERROR: must specify an archive directory"
+    exit 1
+fi
+if [ ! -d "$ARCHIVE" ] ; then
+    echo "ERROR: specified archive path (${ARCHIVE}) is not a directory"
+    exit 1
+fi
+
+VERSION="${MAJOR_VERSION}.${MINOR_VERSION}.${PATCH_VERSION}"
+PKG_NAME="${NAME}-${VERSION}"
+TAR_NAME="${PKG_NAME}.bin.tar"
+
+tar cvf  "${TAR_NAME}" "${ARCHIVE}"
+if [ $? != 0 ] ; then
+    echo "ERROR: unable to successfully create a tape archive of $ARCHIVE"
+    exit 1
+fi
+if [ ! -f "${TAR_NAME}" ] ; then
+    echo "ERROR: tape archive \"${TAR_NAME}\" does not exist"
+    exit 1
+fi
+
 
 # Local Variables:
 # mode: sh
