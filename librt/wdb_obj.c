@@ -31,6 +31,7 @@
 #endif
 #include <math.h>
 #if unix
+# include <fcntl.h>
 # include <sys/errno.h>
 #endif
 #include "tcl.h"
