@@ -300,6 +300,7 @@ static struct cmdtab cmdtab[] = {
 	"rm", f_rm,
 	"rmater", f_rmater,
 	"rmats", f_rmats,
+	"rot", f_rot,
 	"rotobj", f_rot_obj,
 	"rrt", f_rrt,
 	"rt", f_rt,
@@ -309,6 +310,7 @@ static struct cmdtab cmdtab[] = {
 #endif
 	"savekey", f_savekey,
 	"saveview", f_saveview,
+	"sca", f_sca,
 	"showmats", f_showmats,
 	"sed", f_sed,
 	"setview", f_setview,
@@ -331,8 +333,8 @@ static struct cmdtab cmdtab[] = {
 	"toggle_view", f_toggle_view,
 	"tol", f_tol,
 	"tops", f_tops,
+	"tra", f_tra,
 	"track", f_amtrack,
-	"tran", f_tran,
 	"translate", f_tr_obj,
 	"tree", f_tree,
 	"unaim", f_unaim,
@@ -696,16 +698,10 @@ mged_setup()
 	/* register commands */
 	cmd_setup();
 
-#if 0
-	/* Initialize the menu mechanism to be off, but ready. */
-	mmenu_init();
-	btn_head_menu(0,0,0);		/* unlabeled menu */
-#else
 	(void)Tcl_CreateCommand(interp, "mmenu_set", cmd_nop, (ClientData)NULL,
 				(Tcl_CmdDeleteProc *)NULL);
 	(void)Tcl_CreateCommand(interp, "mmenu_get", cmd_mmenu_get,
 				(ClientData)NULL, (Tcl_CmdDeleteProc *)NULL);
-#endif
 
 	history_setup();
 #if !TRY_NEW_MGED_VARS
@@ -715,63 +711,135 @@ mged_setup()
 	Tcl_LinkVar(interp, "edit_class", (char *)&es_edclass, TCL_LINK_INT);
 
 	bu_vls_init(&edit_info_vls);
-	bu_vls_init(&edit_rate_tran_vls[X]);
-	bu_vls_init(&edit_rate_tran_vls[Y]);
-	bu_vls_init(&edit_rate_tran_vls[Z]);
-	bu_vls_init(&edit_rate_rotate_vls[X]);
-	bu_vls_init(&edit_rate_rotate_vls[Y]);
-	bu_vls_init(&edit_rate_rotate_vls[Z]);
+	bu_vls_init(&edit_rate_model_tran_vls[X]);
+	bu_vls_init(&edit_rate_model_tran_vls[Y]);
+	bu_vls_init(&edit_rate_model_tran_vls[Z]);
+	bu_vls_init(&edit_rate_view_tran_vls[X]);
+	bu_vls_init(&edit_rate_view_tran_vls[Y]);
+	bu_vls_init(&edit_rate_view_tran_vls[Z]);
+	bu_vls_init(&edit_rate_model_rotate_vls[X]);
+	bu_vls_init(&edit_rate_model_rotate_vls[Y]);
+	bu_vls_init(&edit_rate_model_rotate_vls[Z]);
+	bu_vls_init(&edit_rate_object_rotate_vls[X]);
+	bu_vls_init(&edit_rate_object_rotate_vls[Y]);
+	bu_vls_init(&edit_rate_object_rotate_vls[Z]);
+	bu_vls_init(&edit_rate_view_rotate_vls[X]);
+	bu_vls_init(&edit_rate_view_rotate_vls[Y]);
+	bu_vls_init(&edit_rate_view_rotate_vls[Z]);
 	bu_vls_init(&edit_rate_scale_vls);
-	bu_vls_init(&edit_absolute_tran_vls[X]);
-	bu_vls_init(&edit_absolute_tran_vls[Y]);
-	bu_vls_init(&edit_absolute_tran_vls[Z]);
-	bu_vls_init(&edit_absolute_rotate_vls[X]);
-	bu_vls_init(&edit_absolute_rotate_vls[Y]);
-	bu_vls_init(&edit_absolute_rotate_vls[Z]);
+	bu_vls_init(&edit_absolute_model_tran_vls[X]);
+	bu_vls_init(&edit_absolute_model_tran_vls[Y]);
+	bu_vls_init(&edit_absolute_model_tran_vls[Z]);
+	bu_vls_init(&edit_absolute_view_tran_vls[X]);
+	bu_vls_init(&edit_absolute_view_tran_vls[Y]);
+	bu_vls_init(&edit_absolute_view_tran_vls[Z]);
+	bu_vls_init(&edit_absolute_model_rotate_vls[X]);
+	bu_vls_init(&edit_absolute_model_rotate_vls[Y]);
+	bu_vls_init(&edit_absolute_model_rotate_vls[Z]);
+	bu_vls_init(&edit_absolute_object_rotate_vls[X]);
+	bu_vls_init(&edit_absolute_object_rotate_vls[Y]);
+	bu_vls_init(&edit_absolute_object_rotate_vls[Z]);
+	bu_vls_init(&edit_absolute_view_rotate_vls[X]);
+	bu_vls_init(&edit_absolute_view_rotate_vls[Y]);
+	bu_vls_init(&edit_absolute_view_rotate_vls[Z]);
 	bu_vls_init(&edit_absolute_scale_vls);
 
 	bu_vls_strcpy(&edit_info_vls, "edit_info");
-	bu_vls_strcpy(&edit_rate_tran_vls[X], "edit_rate_tran(X)");
-	bu_vls_strcpy(&edit_rate_tran_vls[Y], "edit_rate_tran(Y)");
-	bu_vls_strcpy(&edit_rate_tran_vls[Z], "edit_rate_tran(Z)");
-	bu_vls_strcpy(&edit_rate_rotate_vls[X], "edit_rate_rotate(X)");
-	bu_vls_strcpy(&edit_rate_rotate_vls[Y], "edit_rate_rotate(Y)");
-	bu_vls_strcpy(&edit_rate_rotate_vls[Z], "edit_rate_rotate(Z)");
+	bu_vls_strcpy(&edit_rate_model_tran_vls[X], "edit_rate_model_tran(X)");
+	bu_vls_strcpy(&edit_rate_model_tran_vls[Y], "edit_rate_model_tran(Y)");
+	bu_vls_strcpy(&edit_rate_model_tran_vls[Z], "edit_rate_model_tran(Z)");
+	bu_vls_strcpy(&edit_rate_view_tran_vls[X], "edit_rate_view_tran(X)");
+	bu_vls_strcpy(&edit_rate_view_tran_vls[Y], "edit_rate_view_tran(Y)");
+	bu_vls_strcpy(&edit_rate_view_tran_vls[Z], "edit_rate_view_tran(Z)");
+	bu_vls_strcpy(&edit_rate_model_rotate_vls[X], "edit_rate_model_rotate(X)");
+	bu_vls_strcpy(&edit_rate_model_rotate_vls[Y], "edit_rate_model_rotate(Y)");
+	bu_vls_strcpy(&edit_rate_model_rotate_vls[Z], "edit_rate_model_rotate(Z)");
+	bu_vls_strcpy(&edit_rate_object_rotate_vls[X], "edit_rate_object_rotate(X)");
+	bu_vls_strcpy(&edit_rate_object_rotate_vls[Y], "edit_rate_object_rotate(Y)");
+	bu_vls_strcpy(&edit_rate_object_rotate_vls[Z], "edit_rate_object_rotate(Z)");
+	bu_vls_strcpy(&edit_rate_view_rotate_vls[X], "edit_rate_view_rotate(X)");
+	bu_vls_strcpy(&edit_rate_view_rotate_vls[Y], "edit_rate_view_rotate(Y)");
+	bu_vls_strcpy(&edit_rate_view_rotate_vls[Z], "edit_rate_view_rotate(Z)");
 	bu_vls_strcpy(&edit_rate_scale_vls, "edit_rate_scale");
-	bu_vls_strcpy(&edit_absolute_tran_vls[X], "edit_abs_tran(X)");
-	bu_vls_strcpy(&edit_absolute_tran_vls[Y], "edit_abs_tran(Y)");
-	bu_vls_strcpy(&edit_absolute_tran_vls[Z], "edit_abs_tran(Z)");
-	bu_vls_strcpy(&edit_absolute_rotate_vls[X], "edit_abs_rotate(X)");
-	bu_vls_strcpy(&edit_absolute_rotate_vls[Y], "edit_abs_rotate(Y)");
-	bu_vls_strcpy(&edit_absolute_rotate_vls[Z], "edit_abs_rotate(Z)");
+	bu_vls_strcpy(&edit_absolute_model_tran_vls[X], "edit_abs_model_tran(X)");
+	bu_vls_strcpy(&edit_absolute_model_tran_vls[Y], "edit_abs_model_tran(Y)");
+	bu_vls_strcpy(&edit_absolute_model_tran_vls[Z], "edit_abs_model_tran(Z)");
+	bu_vls_strcpy(&edit_absolute_view_tran_vls[X], "edit_abs_view_tran(X)");
+	bu_vls_strcpy(&edit_absolute_view_tran_vls[Y], "edit_abs_view_tran(Y)");
+	bu_vls_strcpy(&edit_absolute_view_tran_vls[Z], "edit_abs_view_tran(Z)");
+	bu_vls_strcpy(&edit_absolute_model_rotate_vls[X], "edit_abs_model_rotate(X)");
+	bu_vls_strcpy(&edit_absolute_model_rotate_vls[Y], "edit_abs_model_rotate(Y)");
+	bu_vls_strcpy(&edit_absolute_model_rotate_vls[Z], "edit_abs_model_rotate(Z)");
+	bu_vls_strcpy(&edit_absolute_object_rotate_vls[X], "edit_abs_object_rotate(X)");
+	bu_vls_strcpy(&edit_absolute_object_rotate_vls[Y], "edit_abs_object_rotate(Y)");
+	bu_vls_strcpy(&edit_absolute_object_rotate_vls[Z], "edit_abs_object_rotate(Z)");
+	bu_vls_strcpy(&edit_absolute_view_rotate_vls[X], "edit_abs_view_rotate(X)");
+	bu_vls_strcpy(&edit_absolute_view_rotate_vls[Y], "edit_abs_view_rotate(Y)");
+	bu_vls_strcpy(&edit_absolute_view_rotate_vls[Z], "edit_abs_view_rotate(Z)");
 	bu_vls_strcpy(&edit_absolute_scale_vls, "edit_abs_scale");
 
-	Tcl_LinkVar(interp, bu_vls_addr(&edit_rate_tran_vls[X]),
-		    (char *)&edit_rate_tran[X], TCL_LINK_DOUBLE);
-	Tcl_LinkVar(interp, bu_vls_addr(&edit_rate_tran_vls[Y]),
-		    (char *)&edit_rate_tran[Y], TCL_LINK_DOUBLE);
-	Tcl_LinkVar(interp, bu_vls_addr(&edit_rate_tran_vls[Z]),
-		    (char *)&edit_rate_tran[Z], TCL_LINK_DOUBLE);
-	Tcl_LinkVar(interp, bu_vls_addr(&edit_rate_rotate_vls[X]),
-		    (char *)&edit_rate_rotate[X], TCL_LINK_DOUBLE);
-	Tcl_LinkVar(interp, bu_vls_addr(&edit_rate_rotate_vls[Y]),
-		    (char *)&edit_rate_rotate[Y], TCL_LINK_DOUBLE);
-	Tcl_LinkVar(interp, bu_vls_addr(&edit_rate_rotate_vls[Z]),
-		    (char *)&edit_rate_rotate[Z], TCL_LINK_DOUBLE);
+	Tcl_LinkVar(interp, bu_vls_addr(&edit_rate_model_tran_vls[X]),
+		    (char *)&edit_rate_model_tran[X], TCL_LINK_DOUBLE);
+	Tcl_LinkVar(interp, bu_vls_addr(&edit_rate_model_tran_vls[Y]),
+		    (char *)&edit_rate_model_tran[Y], TCL_LINK_DOUBLE);
+	Tcl_LinkVar(interp, bu_vls_addr(&edit_rate_model_tran_vls[Z]),
+		    (char *)&edit_rate_model_tran[Z], TCL_LINK_DOUBLE);
+	Tcl_LinkVar(interp, bu_vls_addr(&edit_rate_view_tran_vls[X]),
+		    (char *)&edit_rate_view_tran[X], TCL_LINK_DOUBLE);
+	Tcl_LinkVar(interp, bu_vls_addr(&edit_rate_view_tran_vls[Y]),
+		    (char *)&edit_rate_view_tran[Y], TCL_LINK_DOUBLE);
+	Tcl_LinkVar(interp, bu_vls_addr(&edit_rate_view_tran_vls[Z]),
+		    (char *)&edit_rate_view_tran[Z], TCL_LINK_DOUBLE);
+	Tcl_LinkVar(interp, bu_vls_addr(&edit_rate_model_rotate_vls[X]),
+		    (char *)&edit_rate_model_rotate[X], TCL_LINK_DOUBLE);
+	Tcl_LinkVar(interp, bu_vls_addr(&edit_rate_model_rotate_vls[Y]),
+		    (char *)&edit_rate_model_rotate[Y], TCL_LINK_DOUBLE);
+	Tcl_LinkVar(interp, bu_vls_addr(&edit_rate_model_rotate_vls[Z]),
+		    (char *)&edit_rate_model_rotate[Z], TCL_LINK_DOUBLE);
+	Tcl_LinkVar(interp, bu_vls_addr(&edit_rate_object_rotate_vls[X]),
+		    (char *)&edit_rate_object_rotate[X], TCL_LINK_DOUBLE);
+	Tcl_LinkVar(interp, bu_vls_addr(&edit_rate_object_rotate_vls[Y]),
+		    (char *)&edit_rate_object_rotate[Y], TCL_LINK_DOUBLE);
+	Tcl_LinkVar(interp, bu_vls_addr(&edit_rate_object_rotate_vls[Z]),
+		    (char *)&edit_rate_object_rotate[Z], TCL_LINK_DOUBLE);
+	Tcl_LinkVar(interp, bu_vls_addr(&edit_rate_view_rotate_vls[X]),
+		    (char *)&edit_rate_view_rotate[X], TCL_LINK_DOUBLE);
+	Tcl_LinkVar(interp, bu_vls_addr(&edit_rate_view_rotate_vls[Y]),
+		    (char *)&edit_rate_view_rotate[Y], TCL_LINK_DOUBLE);
+	Tcl_LinkVar(interp, bu_vls_addr(&edit_rate_view_rotate_vls[Z]),
+		    (char *)&edit_rate_view_rotate[Z], TCL_LINK_DOUBLE);
 	Tcl_LinkVar(interp, bu_vls_addr(&edit_rate_scale_vls),
 		    (char *)&edit_rate_scale, TCL_LINK_DOUBLE);
-	Tcl_LinkVar(interp, bu_vls_addr(&edit_absolute_tran_vls[X]),
-		    (char *)&edit_absolute_tran[X], TCL_LINK_DOUBLE);
-	Tcl_LinkVar(interp, bu_vls_addr(&edit_absolute_tran_vls[Y]),
-		    (char *)&edit_absolute_tran[Y], TCL_LINK_DOUBLE);
-	Tcl_LinkVar(interp, bu_vls_addr(&edit_absolute_tran_vls[Z]),
-		    (char *)&edit_absolute_tran[Z], TCL_LINK_DOUBLE);
-	Tcl_LinkVar(interp, bu_vls_addr(&edit_absolute_rotate_vls[X]),
-		    (char *)&edit_absolute_rotate[X], TCL_LINK_DOUBLE);
-	Tcl_LinkVar(interp, bu_vls_addr(&edit_absolute_rotate_vls[Y]),
-		    (char *)&edit_absolute_rotate[Y], TCL_LINK_DOUBLE);
-	Tcl_LinkVar(interp, bu_vls_addr(&edit_absolute_rotate_vls[Z]),
-		    (char *)&edit_absolute_rotate[Z], TCL_LINK_DOUBLE);
+	Tcl_LinkVar(interp, bu_vls_addr(&edit_absolute_model_tran_vls[X]),
+		    (char *)&edit_absolute_model_tran[X], TCL_LINK_DOUBLE);
+	Tcl_LinkVar(interp, bu_vls_addr(&edit_absolute_model_tran_vls[Y]),
+		    (char *)&edit_absolute_model_tran[Y], TCL_LINK_DOUBLE);
+	Tcl_LinkVar(interp, bu_vls_addr(&edit_absolute_model_tran_vls[Z]),
+		    (char *)&edit_absolute_model_tran[Z], TCL_LINK_DOUBLE);
+	Tcl_LinkVar(interp, bu_vls_addr(&edit_absolute_view_tran_vls[X]),
+		    (char *)&edit_absolute_view_tran[X], TCL_LINK_DOUBLE);
+	Tcl_LinkVar(interp, bu_vls_addr(&edit_absolute_view_tran_vls[Y]),
+		    (char *)&edit_absolute_view_tran[Y], TCL_LINK_DOUBLE);
+	Tcl_LinkVar(interp, bu_vls_addr(&edit_absolute_view_tran_vls[Z]),
+		    (char *)&edit_absolute_view_tran[Z], TCL_LINK_DOUBLE);
+	Tcl_LinkVar(interp, bu_vls_addr(&edit_absolute_model_rotate_vls[X]),
+		    (char *)&edit_absolute_model_rotate[X], TCL_LINK_DOUBLE);
+	Tcl_LinkVar(interp, bu_vls_addr(&edit_absolute_model_rotate_vls[Y]),
+		    (char *)&edit_absolute_model_rotate[Y], TCL_LINK_DOUBLE);
+	Tcl_LinkVar(interp, bu_vls_addr(&edit_absolute_model_rotate_vls[Z]),
+		    (char *)&edit_absolute_model_rotate[Z], TCL_LINK_DOUBLE);
+	Tcl_LinkVar(interp, bu_vls_addr(&edit_absolute_object_rotate_vls[X]),
+		    (char *)&edit_absolute_object_rotate[X], TCL_LINK_DOUBLE);
+	Tcl_LinkVar(interp, bu_vls_addr(&edit_absolute_object_rotate_vls[Y]),
+		    (char *)&edit_absolute_object_rotate[Y], TCL_LINK_DOUBLE);
+	Tcl_LinkVar(interp, bu_vls_addr(&edit_absolute_object_rotate_vls[Z]),
+		    (char *)&edit_absolute_object_rotate[Z], TCL_LINK_DOUBLE);
+	Tcl_LinkVar(interp, bu_vls_addr(&edit_absolute_view_rotate_vls[X]),
+		    (char *)&edit_absolute_view_rotate[X], TCL_LINK_DOUBLE);
+	Tcl_LinkVar(interp, bu_vls_addr(&edit_absolute_view_rotate_vls[Y]),
+		    (char *)&edit_absolute_view_rotate[Y], TCL_LINK_DOUBLE);
+	Tcl_LinkVar(interp, bu_vls_addr(&edit_absolute_view_rotate_vls[Z]),
+		    (char *)&edit_absolute_view_rotate[Z], TCL_LINK_DOUBLE);
 	Tcl_LinkVar(interp, bu_vls_addr(&edit_absolute_scale_vls),
 		    (char *)&edit_absolute_scale, TCL_LINK_DOUBLE);
 
@@ -2118,5 +2186,3 @@ f_winset(clientData, interp, argc, argv)
 			 "\n", (char *)NULL);
 	return TCL_ERROR;
 }
-
-
