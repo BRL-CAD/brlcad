@@ -58,11 +58,6 @@ struct _mged_variables default_mged_variables = {
 /* difference lexeme */		"-"
 };
 
-
-#define VIEW_TABLE_SIZE 7
-static int current_view = 0;
-static mat_t view_table[VIEW_TABLE_SIZE];
-static fastf_t view_scale_table[VIEW_TABLE_SIZE];
 static void set_view();
 static void set_scroll();
 
@@ -233,12 +228,6 @@ Tcl_Interp *interp;
 	Tcl_TraceVar( interp, sp->sp_name, TCL_TRACE_UNSETS|TCL_GLOBAL_ONLY,
 		      unset_var, (ClientData)sp );
     }
-
-    /* Initialize view_table and view_scale_table */
-    for(i = 0; i < VIEW_TABLE_SIZE; ++i){
-      mat_idn(view_table[i]);
-      view_scale_table[i] = 1;
-    }
 }
 
 int
@@ -281,10 +270,10 @@ static void
 set_view()
 {
   /* save current view */
-  mat_copy(view_table[current_view], Viewrot);
+  mat_copy(viewrot_table[current_view], Viewrot);
 
   /* save current Viewscale */
-  view_scale_table[current_view] = Viewscale;
+  viewscale_table[current_view] = Viewscale;
 
   /* toggle forward */
   if(mged_variables.view){
@@ -297,8 +286,8 @@ set_view()
   }
 
   /* restore previously saved view and Viewscale */
-  mat_copy(Viewrot, view_table[current_view]);
-  Viewscale = view_scale_table[current_view];
+  mat_copy(Viewrot, viewrot_table[current_view]);
+  Viewscale = viewscale_table[current_view];
   new_mats();
 }
 
