@@ -79,10 +79,32 @@ create_vert_tree()
 
 	tree = (struct vert_root *)bu_calloc( 1, sizeof( struct vert_root ), "vert_tree_root" );
 	tree->magic = VERT_TREE_MAGIC;
+	tree->tree_type = TREE_TYPE_VERTS;
 	tree->the_tree = (union vert_tree *)NULL;
 	tree->curr_vert = 0;
 	tree->max_vert = VERT_BLOCK;
 	tree->the_array = (fastf_t *)bu_malloc( tree->max_vert * 3 * sizeof( fastf_t ), "vert tree array" );
+
+	return( tree );
+}
+
+/*		C R E A T E _ V E R T _ T R E E _ W _ N O R M S
+ *
+ *	routine to create a vertex tree.
+ *	Possible refinements include specifying an initial size
+ */
+struct vert_root *
+create_vert_tree_w_norms()
+{
+	struct vert_root *tree;
+
+	tree = (struct vert_root *)bu_calloc( 1, sizeof( struct vert_root ), "vert_tree_root" );
+	tree->magic = VERT_TREE_MAGIC;
+	tree->tree_type = TREE_TYPE_VERTS_AND_NORMS;
+	tree->the_tree = (union vert_tree *)NULL;
+	tree->curr_vert = 0;
+	tree->max_vert = VERT_BLOCK;
+	tree->the_array = (fastf_t *)bu_malloc( tree->max_vert * 6 * sizeof( fastf_t ), "vert tree array" );
 
 	return( tree );
 }
@@ -182,6 +204,10 @@ Add_vert( double x, double y, double z, struct vert_root *vert_root, fastf_t loc
 
 	BN_CK_VERT_TREE( vert_root );
 
+	if( vert_root->tree_type != TREE_TYPE_VERTS ) {
+		bu_bomb( "Error: Add_vert() called for a tree containing vertices and normals\n" );
+	}
+
 	VSET( vertex, x, y, z );
 
 	/* look for this vertex already in the list */
@@ -242,6 +268,148 @@ Add_vert( double x, double y, double z, struct vert_root *vert_root, fastf_t loc
 		}
 
 		/* set the cut value to the mid value between the two vertices */
+		new_node->vnode.cut_val = (vertex[new_node->vnode.coord] +
+					   vert_root->the_array[ptr->vleaf.index * 3 + new_node->vnode.coord]) * 0.5;
+
+		/* set the node "lower" nad "higher" pointers */
+		if( vertex[new_node->vnode.coord] >= 
+		    vert_root->the_array[ptr->vleaf.index * 3 + new_node->vnode.coord] ) {
+			new_node->vnode.higher = new_leaf;
+			new_node->vnode.lower = ptr;
+		} else {
+			new_node->vnode.higher = ptr;
+			new_node->vnode.lower = new_leaf;
+		}
+
+		if( ptr == vert_root->the_tree ) {
+			/* if the above search ended at the root, redefine the root */
+			vert_root->the_tree =  new_node;
+		} else {
+			/* set the previous node to point to our new one */
+			if( prev->vnode.higher == ptr ) {
+				prev->vnode.higher = new_node;
+			} else {
+				prev->vnode.lower = new_node;
+			}
+		}
+	} else if( ptr && ptr->type == VERT_NODE ) {
+		/* above search ended at a node, just add the new leaf */
+		prev = ptr;
+		if( vertex[prev->vnode.coord] >= prev->vnode.cut_val ) {
+			if( prev->vnode.higher ) {
+				exit(1);
+			}
+			prev->vnode.higher = new_leaf;
+		} else {
+			if( prev->vnode.lower ) {
+				exit(1);
+			}
+			prev->vnode.lower = new_leaf;
+		}
+	} else {
+		fprintf( stderr, "*********ERROR********\n" );
+	}
+
+	/* return the index into the vertex array */
+	return( new_leaf->vleaf.index );
+}
+
+/*		A D D _ V E R T _ A N D _ N O R M
+ *
+ *	Routine to add a vertex and a normal to the current list of part vertices.
+ *	The array is re-alloc'd if needed.
+ *	Returns index into the array of vertices where this vertex and normal is stored
+ */
+int
+Add_vert_and_norm( double x, double y, double z, double nx, double ny, double nz, struct vert_root *vert_root, fastf_t local_tol_sq )
+{
+	union vert_tree *ptr, *prev=NULL, *new_leaf, *new_node;
+	fastf_t diff[6];
+	fastf_t vertex[6];
+	double d1_sq, d2_sq;
+
+	BN_CK_VERT_TREE( vert_root );
+
+	if( vert_root->tree_type != TREE_TYPE_VERTS_AND_NORMS ) {
+		bu_bomb( "Error: Add_vert_and_norm() called for a tree containing just vertices\n" );
+	}
+
+	VSET( vertex, x, y, z );
+	VSET( &vertex[3], nx, ny, nz );
+
+	/* look for this vertex and normal already in the list */
+	ptr = vert_root->the_tree;
+	while( ptr ) {
+		int i;
+
+		if( ptr->type == VERT_NODE ) {
+			prev = ptr;
+			if( vertex[ptr->vnode.coord] >= ptr->vnode.cut_val ) {
+				ptr = ptr->vnode.higher;
+			} else {
+				ptr = ptr->vnode.lower;
+			}
+		} else {
+			int ij;
+
+			ij = ptr->vleaf.index*6;
+			for( i=0 ; i<6 ; i++ ) {
+				diff[i] = fabs( vertex[i] - vert_root->the_array[ij+i] ); 
+			}
+			d1_sq = VDOT( diff, diff );
+			d2_sq = VDOT( &diff[3], &diff[3] );
+			if( d1_sq <= local_tol_sq && d2_sq <= 0.0001 ) {
+				/* close enough, use this vertex and normal again */
+				return( ptr->vleaf.index );
+			}
+			break;
+		}
+	}
+
+	/* add this vertex and normal to the list */
+	if( vert_root->curr_vert >= vert_root->max_vert ) {
+		/* allocate more memory for vertices */
+		vert_root->max_vert += VERT_BLOCK;
+
+		vert_root->the_array = (fastf_t *)bu_realloc( vert_root->the_array,
+					 sizeof( fastf_t ) * vert_root->max_vert * 6,
+					 "vert_root->the_array" );
+	}
+
+	VMOVE( &vert_root->the_array[vert_root->curr_vert*6], vertex );
+	VMOVE( &vert_root->the_array[vert_root->curr_vert*6+3], &vertex[3] );
+
+	/* add to the tree also */
+	new_leaf = (union vert_tree *)bu_malloc( sizeof( union vert_tree ), "new_leaf" );
+	new_leaf->vleaf.type = VERT_LEAF;
+	new_leaf->vleaf.index = vert_root->curr_vert++;
+	if( !vert_root->the_tree ) {
+		/* first vertex, it becomes the root */
+		vert_root->the_tree = new_leaf;
+	} else if( ptr && ptr->type == VERT_LEAF ) {
+		fastf_t max;
+		int i;
+
+		/* search above ended at a leaf, need to add a node above this leaf and the new leaf */
+		new_node = (union vert_tree *)bu_malloc( sizeof( union vert_tree ), "new_node" );
+		new_node->vnode.type = VERT_NODE;
+
+		/* select the cutting coord based on the biggest difference */
+		if( d1_sq <= local_tol_sq ) {
+			/* cut based on normal */
+			new_node->vnode.coord = 3;
+		} else {
+			new_node->vnode.coord = 0;
+		}
+		max = diff[new_node->vnode.coord];
+		for( i=new_node->vnode.coord+1 ; i<6 ; i++ ) {
+			if( diff[i] > max ) {
+				new_node->vnode.coord = i;
+				max = diff[i];
+			}
+		}
+
+		/* set the cut value to the mid value between the two vertices or normals */
 		new_node->vnode.cut_val = (vertex[new_node->vnode.coord] +
 					   vert_root->the_array[ptr->vleaf.index * 3 + new_node->vnode.coord]) * 0.5;
 
