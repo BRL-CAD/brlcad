@@ -37,9 +37,9 @@ extern void	arb_center();
 
 static void	do_anal();
 static void	arb_anal();
-static void	anal_face();
+static double	anal_face();
 static void	anal_edge();
-static void	find_vol();
+static double	find_vol();
 static void	tgc_anal();
 static void	ell_anal();
 static void	tor_anal();
@@ -140,8 +140,6 @@ struct rt_db_internal	*ip;
  */
 
 static union record temp_rec;		/* local copy of es_rec */
-fastf_t	tot_vol, tot_area;
-int type;	/* comgeom type */
 
 void
 f_analyze(argc, argv)
@@ -269,12 +267,16 @@ static int nedge[5][24] = {
 	{0,1, 1,2, 2,3, 0,3, 0,4, 4,5, 1,5, 5,6, 6,7, 4,7, 3,7, 2,6},
 };
 
+static int	type;	/* comgeom type, for ARB subs */
+
 static void
 arb_anal(vp)
 struct rt_vls	*vp;
 {
 	register int i;
-	static vect_t cpt;
+	point_t		cpt;
+	double		tot_vol;
+	double		tot_area;
 
 	/* find the specific arb type, in GIFT order. */
 	if( (type = type_arb( &temp_rec )) == 0 ) {
@@ -303,7 +305,7 @@ struct rt_vls	*vp;
 	rt_vls_printf(vp,"|------|---------------|----------------------------------|------------------|\n");
 	arb_center( cpt, temp_rec.s.s_values, type+4 );
 	for(i=0; i<6; i++) 
-		anal_face( vp, i, cpt  );
+		tot_area += anal_face( vp, i, cpt  );
 
 	rt_vls_printf(vp,"------------------------------------------------------------------------------\n");
 
@@ -335,12 +337,13 @@ struct rt_vls	*vp;
 	}
 	/* find the volume - break arb8 into 6 arb4s */
 	for(i=0; i<6; i++)
-		find_vol( i );
+		tot_vol += find_vol( i );
 
 	rt_vls_printf(vp,"      | Volume = %18.3f    Surface Area = %15.3f |\n",
 			tot_vol*base2local*base2local*base2local,
 			tot_area*base2local*base2local);
-	rt_vls_printf(vp,"      |          %18.3f gal                               |\n",tot_vol/3787878.79);
+	rt_vls_printf(vp,"      |          %18.3f gal                               |\n",
+		tot_vol/3787878.79);
 	rt_vls_printf(vp,"      -----------------------------------------------------------------\n");
 
 	return;
@@ -367,7 +370,7 @@ static int farb4[6][4] = {
 
 /* 	Analyzes an arb face
  */
-static void
+static double
 anal_face( vp, face, cpt )
 struct rt_vls	*vp;
 int face;
@@ -378,6 +381,7 @@ vect_t cpt;				/* reference center point */
 	static fastf_t angles[5];	/* direction cosines, rot, fb */
 	static fastf_t temp, area[2], len[6];
 	static vect_t v_temp;
+	double	face_area = 0;
 
 	a = arb_faces[type][face*4+0];
 	b = arb_faces[type][face*4+1];
@@ -385,13 +389,13 @@ vect_t cpt;				/* reference center point */
 	d = arb_faces[type][face*4+3];
 
 	if(a == -1)
-		return;
+		return 0;
 
 	/* find plane eqn for this face */
 	if( planeqn(6, a, b, c, &temp_rec.s) ) {
 		rt_vls_printf(vp,"| %d%d%d%d    ***NOT A PLANE***                                          |\n",
 				a+1,b+1,c+1,d+1);
-		return;
+		return 0;
 	}
 
 	/* the plane equations returned by planeqn above do not
@@ -431,7 +435,7 @@ vect_t cpt;				/* reference center point */
 		j = i*3;
 		temp = .5 * (len[j] + len[j+1] + len[j+2]);
 		area[i] = sqrt(temp * (temp - len[j]) * (temp - len[j+1]) * (temp - len[j+2]));
-		tot_area += area[i];
+		face_area += area[i];
 	}
 
 	rt_vls_printf(vp,"| %4d |",prface[type][face]);
@@ -441,6 +445,7 @@ vect_t cpt;				/* reference center point */
 		es_peqn[6][3]*base2local);
 	rt_vls_printf(vp,"   %13.3f  |\n",
 		(area[0]+area[1])*base2local*base2local);
+	return face_area;
 }
 
 /*	Analyzes arb edges - finds lengths */
@@ -481,7 +486,7 @@ int edge;
 
 
 /*	Finds volume of an arb4 defined by farb4[loc][] 	*/
-static void
+static double
 find_vol( loc )
 int loc;
 {
@@ -497,22 +502,21 @@ int loc;
 	/* d = "top" point of arb4 */
 	d = farb4[loc][3];
 
-	vol = 0.0;	/* volume of this arb */
+	if( planeqn(6, a, b, c, &temp_rec.s) != 0 )
+		return 0.0;
 
-	if( planeqn(6, a, b, c, &temp_rec.s) == 0 ) {
-		/* have a good arb4 - find its volume */
-		height = fabs(es_peqn[6][3] - VDOT(&es_peqn[6][0], &temp_rec.s.s_values[d*3]));
-		VSUB2(v_temp, &temp_rec.s.s_values[b*3], &temp_rec.s.s_values[a*3]);
-		len[0] = MAGNITUDE(v_temp);
-		VSUB2(v_temp, &temp_rec.s.s_values[c*3], &temp_rec.s.s_values[a*3]);
-		len[1] = MAGNITUDE(v_temp);
-		VSUB2(v_temp, &temp_rec.s.s_values[c*3], &temp_rec.s.s_values[b*3]);
-		len[2] = MAGNITUDE(v_temp);
-		temp = 0.5 * (len[0] + len[1] + len[2]);
-		areabase = sqrt(temp * (temp-len[0]) * (temp-len[1]) * (temp-len[2]));
-		vol = areabase * height / 3.0;
-	}
-	tot_vol += vol;
+	/* have a good arb4 - find its volume */
+	height = fabs(es_peqn[6][3] - VDOT(&es_peqn[6][0], &temp_rec.s.s_values[d*3]));
+	VSUB2(v_temp, &temp_rec.s.s_values[b*3], &temp_rec.s.s_values[a*3]);
+	len[0] = MAGNITUDE(v_temp);
+	VSUB2(v_temp, &temp_rec.s.s_values[c*3], &temp_rec.s.s_values[a*3]);
+	len[1] = MAGNITUDE(v_temp);
+	VSUB2(v_temp, &temp_rec.s.s_values[c*3], &temp_rec.s.s_values[b*3]);
+	len[2] = MAGNITUDE(v_temp);
+	temp = 0.5 * (len[0] + len[1] + len[2]);
+	areabase = sqrt(temp * (temp-len[0]) * (temp-len[1]) * (temp-len[2]));
+	vol = areabase * height / 3.0;
+	return vol;
 }
 
 static double pi = 3.1415926535898;
@@ -556,6 +560,7 @@ struct rt_db_internal	*ip;
 	fastf_t ma, mb, mc;
 	fastf_t ecc, major, minor;
 	fastf_t vol, sur_area;
+	int	type;
 
 	RT_ELL_CK_MAGIC( ell );
 
