@@ -239,6 +239,8 @@ static struct funtab {
 	f_push, 2, MAXARGS,
 "q", "", "quit",
 	f_quit,1,1,
+"quit", "", "quit",
+	f_quit,1,1,
 "r", "region <operation solid>", "create or extend a Region combination",
 	f_region,4,MAXARGS,
 "refresh", "", "send new control list",
