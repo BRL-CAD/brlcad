@@ -73,6 +73,7 @@ fastf_t	zoomout=1;	/* >0 zoom out, 0..1 zoom in */
 
 #ifdef PARALLEL
 char *scanbuf;		/*** Output buffering, for parallelism */
+extern char *sbrk();
 #endif
 
 /* Eventually, npsw = MAX_PSW by default */
