@@ -4,6 +4,9 @@
  * $Revision$
  *
  * $Log$
+ * Revision 10.4  1994/09/17  04:57:35  butler
+ * changed all calls to bcopy to be memcpy instead.  Useful for Solaris 5.2
+ *
  * Revision 10.3  1993/10/26  06:31:25  mike
  * Modified to use tempnam(), so that $TMPDIR from user's environment
  * will be honored if set
@@ -604,7 +607,11 @@ InsFile()
 
 void
 dolseek(fd, offset, whence)
+#if defined(__bsdi__) || defined(__NetBSD__)
+off_t	offset;
+#else
 long	offset;
+#endif
 {
 	if (lseek(fd, offset, whence) == -1)
 		complain("lseek failed");
