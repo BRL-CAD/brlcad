@@ -290,6 +290,20 @@ flags.
 .BI \-X\  screen_x_offset
 .TP
 .BI \-Y\  screen_y_offset
+.TP
+.BI \-#\  bytes_per_sample
+specifies the number of bytes per sample, where the
+flag, where the
+.B #
+character is a literal ``pound'' or ``sharp'' sign character,
+typically found over the numeral ``3'' on ANSI keyboards.
+Several programs (like pixrect)
+can operate on data samples of arbitrary width.
+For example, a
+.BR pix (5)
+format file can often be treated like a
+.BR bw (5)
+format file with a width of three bytes per sample.
 .SH "TAPE FORMAT"
 When dealing with large collections of images, as might be
 needed for making a movie,
