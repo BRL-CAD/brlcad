@@ -41,6 +41,7 @@ static char RCShalf[] = "@(#)$Header$ (BRL)";
 #include "machine.h"
 #include "vmath.h"
 #include "raytrace.h"
+#include "nmg.h"
 #include "db.h"
 #include "rtgeom.h"
 #include "./debug.h"
