@@ -630,6 +630,6 @@ got:
 	  init_objedit();
 	}
 
-	dmaflag++;
+	update_views = 1;
 	return TCL_OK;
 }
