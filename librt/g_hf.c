@@ -57,8 +57,8 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #include "./debug.h"
 
 /* ====================================================================== */
-/* XXX Move this to some other file */
-struct rt_list		rt_mapped_file_head;
+/* XXX Move to raytrace.h */
+struct rt_list		rt_mapped_file_head;	/* XXX move to rt_g */
 struct rt_mapped_file {
 	struct rt_list	l;
 	char		name[512];	/* Copy of file name */
@@ -89,9 +89,11 @@ CONST char	*appl;		/* non-null only when app. will use 'apbuf' */
 #ifdef HAVE_UNIX_IO
 	struct stat		sb;
 #endif
+	int			ret;
 	int			fd;	/* unix file descriptor */
 	FILE			*fp;	/* stdio file pointer */
 
+	RES_ACQUIRE( &rt_g.res_model );
 	if( RT_LIST_UNINITIALIZED( &rt_mapped_file_head ) )  {
 		RT_LIST_INIT( &rt_mapped_file_head );
 	}
@@ -101,11 +103,16 @@ CONST char	*appl;		/* non-null only when app. will use 'apbuf' */
 		if( appl && strncmp( appl, mp->appl, sizeof(mp->appl) ) )
 			continue;
 		/* File is already mapped */
+		RES_RELEASE( &rt_g.res_model );
 		return mp;
 	}
+	RES_RELEASE( &rt_g.res_model );
 	/* File is not yet mapped, open file read only. */
 #ifdef HAVE_UNIX_IO
-	if( stat( name, &sb ) < 0 )  {
+	RES_ACQUIRE( &rt_g.res_syscall );
+	ret = stat( name, &sb );
+	RES_RELEASE( &rt_g.res_syscall );
+	if( ret < 0 )  {
 		perror(name);
 		goto fail;
 	}
@@ -113,7 +120,10 @@ CONST char	*appl;		/* non-null only when app. will use 'apbuf' */
 		rt_log("rt_open_mapped_file(%s) 0-length file\n", name);
 		goto fail;
 	}
-	if( (fd = open( name, O_RDONLY )) < 0 )  {
+	RES_ACQUIRE( &rt_g.res_syscall );
+	fd = open( name, O_RDONLY );
+	RES_RELEASE( &rt_g.res_syscall );
+	if( fd < 0 )  {
 		perror(name);
 		goto fail;
 	}
@@ -128,9 +138,12 @@ CONST char	*appl;		/* non-null only when app. will use 'apbuf' */
 	mp->buflen = sb.st_size;
 #  ifdef HAVE_SYS_MMAN_H
 	/* Attempt to access as memory-mapped file */
-	if( (mp->buf = mmap(
-	    (caddr_t)0, sb.st_size, PROT_READ, MAP_PRIVATE,
-	    fd, (off_t)0 )) != (caddr_t)-1 )  {
+	RES_ACQUIRE( &rt_g.res_syscall );
+	mp->buf = mmap(
+		(caddr_t)0, sb.st_size, PROT_READ, MAP_PRIVATE,
+		fd, (off_t)0 );
+	RES_RELEASE( &rt_g.res_syscall );
+	if( mp->buf != (caddr_t)-1 )  {
 	    	/* OK, it's memory mapped in! */
 	    	mp->is_mapped = 1;
 	    	/* It's safe to close the fd now, the manuals say */
@@ -139,16 +152,24 @@ CONST char	*appl;		/* non-null only when app. will use 'apbuf' */
 	{
 		/* Allocate a local buffer, and slurp it in */
 		mp->buf = rt_malloc( sb.st_size, mp->name );
-		if( read( fd, mp->buf, sb.st_size ) != sb.st_size )  {
+		RES_ACQUIRE( &rt_g.res_syscall );
+		ret = read( fd, mp->buf, sb.st_size );
+		RES_RELEASE( &rt_g.res_syscall );
+		if( ret != sb.st_size )  {
 			perror("read");
 			rt_free( (char *)mp->buf, mp->name );
 			goto fail;
 		}
 	}
+	RES_ACQUIRE( &rt_g.res_syscall );
 	close(fd);
+	RES_RELEASE( &rt_g.res_syscall );
 #else /* !HAVE_UNIX_IO */
 	/* Read it in with stdio, with no clue how big it is */
-	if( (fp = fopen( name, "r")) == NULL )  {
+	RES_ACQUIRE( &rt_g.res_syscall );
+	fp = fopen( name, "r");
+	RES_RELEASE( &rt_g.res_syscall );
+	if( fp == NULL )  {
 		perror(name);
 		goto fail;
 	}
@@ -157,26 +178,38 @@ CONST char	*appl;		/* non-null only when app. will use 'apbuf' */
 		char	buf[10240];
 		int	got;
 		mp->buflen = 0;
+		RES_ACQUIRE( &rt_g.res_syscall );
 		while( (got = fread( buf, 1, sizeof(buf), fp )) > 0 )
 			mp->buflen += got;
 		rewind(fp);
+		RES_RELEASE( &rt_g.res_syscall );
 	}
 	/* Malloc the necessary buffer */
 	mp->buf = rt_malloc( mp->buflen, mp->name );
 
 	/* Read it again into the buffer */
-	if( fread( mp->buf, mp->buflen, 1, fp ) != 1 )  {
+	RES_ACQUIRE( &rt_g.res_syscall );
+	ret = fread( mp->buf, mp->buflen, 1, fp );
+	RES_RELEASE( &rt_g.res_syscall );
+	if( ret != 1 )  {
+		RES_ACQUIRE( &rt_g.res_syscall );
 		perror("fread");
+		fclose(fp);
+		RES_RELEASE( &rt_g.res_syscall );
 		rt_log("rt_open_mapped_file() 2nd fread failed? len=%d\n", mp->buflen);
 		rt_free( (char *)mp->buf, "non-unix fread buf" );
-		fclose(fp);
 		goto fail;
 	}
+	RES_ACQUIRE( &rt_g.res_syscall );
 	fclose(fp);
+	RES_RELEASE( &rt_g.res_syscall );
 #endif
 
 	mp->uses = 1;
 	mp->l.magic = RT_MAPPED_FILE_MAGIC;
+	RES_ACQUIRE( &rt_g.res_model );
+	RT_LIST_APPEND( &rt_mapped_file_head, &mp->l );
+	RES_RELEASE( &rt_g.res_model );
 	return mp;
 
 fail:
@@ -191,19 +224,31 @@ void
 rt_close_mapped_file( mp )
 struct rt_mapped_file	*mp;
 {
+	int	ret;
+
 	RT_CK_MAPPED_FILE(mp);
-	if( --mp->uses > 0 )  return;
+	RES_ACQUIRE( &rt_g.res_model );
+	if( --mp->uses > 0 )  {
+		RES_RELEASE( &rt_g.res_model );
+		return;
+	}
+	RT_LIST_DEQUEUE( &mp->l );
+	RES_RELEASE( &rt_g.res_model );
 #ifdef HAVE_SYS_MMAN_H
 	if( mp->is_mapped )  {
-		if( munmap( mp->buf, mp->buflen ) < 0 )  perror("munmap");
+		RES_ACQUIRE( &rt_g.res_syscall );
+		ret = munmap( mp->buf, mp->buflen );
+		RES_RELEASE( &rt_g.res_syscall );
+		if( ret < 0 )  perror("munmap");
 	} else
 #endif
 	{
 		rt_free( (char *)mp->buf, mp->name );
 	}
+	mp->buf = (genptr_t)NULL;		/* sanity */
 	if( mp->apbuf )  {
 		rt_free( (char *)mp->apbuf, "rt_close_mapped_file() apbuf[]" );
-		mp->apbuf = (genptr_t)NULL;
+		mp->apbuf = (genptr_t)NULL;	/* sanity */
 	}
 	rt_free( (char *)mp, "struct rt_mapped_file" );
 }
@@ -218,13 +263,14 @@ struct rt_hf_internal {
 	char	fmt[8];			/* CV style file format descriptor */
 	int	w;			/* # samples wide of data file.  ("i", "x") */
 	int	n;			/* nlines of data file.  ("j", "y") */
-	int	shorts;			/* !0 --> memory array is short, not double */
+	int	shorts;			/* !0 --> memory array is short, not float */
 	fastf_t	file2mm;		/* scale factor to cvt file units to mm */
 	vect_t	v;			/* origin of HT in model space */
 	vect_t	x;			/* model vect corresponding to "w" dir (will be unitized) */
 	vect_t	y;			/* model vect corresponding to "n" dir (will be unitized) */
-	fastf_t	xlen;			/* model len of HT in "w" dir */
-	fastf_t	ylen;			/* model len of HT in "n" dir */
+	fastf_t	xlen;			/* model len of HT rpp in "w" dir */
+	fastf_t	ylen;			/* model len of HT rpp in "n" dir */
+	fastf_t	zlen;			/* model len of HT rpp in ''up'' dir */
 	/* END USER SETABLE VARIABLES, BEGIN INTERNAL STUFF */
 	struct rt_mapped_file	*mp;	/* actual data */
 };
@@ -234,6 +280,16 @@ struct rt_hf_internal {
 
 /*
  *  Description of the external string description of the HF.
+ *
+ *  There are two versions of this parse table.
+ *  The string solid in the .g file can set any parameter.
+ *  The indirect control file (cfile) can only set parameters
+ *  relating to dfile parameters, and not to the geometric
+ *  position, orientation, and scale of the HF's bounding RPP.
+ *
+ *  The string solid is parsed first.  If a cfile is present, it is
+ *  parsed second, and any parameters specified in the cfile override
+ *  the values taken from the string solid.
  */
 CONST struct structparse rt_hf_parse[] = {
 	{"%s",	128,	"cfile",	offsetofarray(struct rt_hf_internal, cfile), FUNC_NULL},
@@ -248,6 +304,16 @@ CONST struct structparse rt_hf_parse[] = {
 	{"%f",	3,	"y",		HF_O(y[0]),		FUNC_NULL },
 	{"%f",	1,	"xlen",		HF_O(xlen),		FUNC_NULL },
 	{"%f",	1,	"ylen",		HF_O(ylen),		FUNC_NULL },
+	{"%f",	1,	"zlen",		HF_O(zlen),		FUNC_NULL },
+	{"",	0,	(char *)0,	0,			FUNC_NULL }
+};
+CONST struct structparse rt_hf_cparse[] = {
+	{"%s",	128,	"dfile",	offsetofarray(struct rt_hf_internal, dfile), FUNC_NULL},
+	{"%s",	8,	"fmt",		offsetofarray(struct rt_hf_internal, fmt), FUNC_NULL},
+	{"%d",	1,	"w",		HF_O(w),		FUNC_NULL },
+	{"%d",	1,	"n",		HF_O(n),		FUNC_NULL },
+	{"%d",	1,	"shorts",	HF_O(shorts),		FUNC_NULL },
+	{"%f",	1,	"file2mm",	HF_O(file2mm),		FUNC_NULL },
 	{"",	0,	(char *)0,	0,			FUNC_NULL }
 };
 
@@ -416,8 +482,12 @@ struct rt_tol		*tol;
 	vect_t		ybasis;
 	vect_t		zbasis;
 	point_t		start;
+	point_t		cur;
+	int		x;
 	int		y;
-	int		stride;
+	int		cmd;
+	int		step;
+	int		goal;
 
 	RT_CK_DB_INTERNAL(ip);
 	xip = (struct rt_hf_internal *)ip->idb_ptr;
@@ -425,38 +495,108 @@ struct rt_tol		*tol;
 
 	if( !xip->shorts )  rt_bomb("rt_hf_plot() does shorts only, for now\n");
 
-	sp = (unsigned short *)xip->mp->apbuf;
 	VSCALE( xbasis, xip->x, xip->xlen / (xip->w - 1) );
 	VSCALE( ybasis, xip->y, xip->ylen / (xip->n - 1) );
 	VCROSS( zbasis, xip->x, xip->y );
-	VSCALE( zbasis, zbasis, xip->file2mm );
+	VSCALE( zbasis, zbasis, xip->zlen * xip->file2mm );
+
+	/* XXX This should be set from the tessellation tolerance */
+	goal = 50000;
 
 	/* Draw the 4 corners of the base plate */
 	RT_ADD_VLIST( vhead, xip->v, RT_VLIST_LINE_MOVE );
+
 	VJOIN1( start, xip->v, xip->xlen, xip->x );
 	RT_ADD_VLIST( vhead, start, RT_VLIST_LINE_DRAW );
+
 	VJOIN2( start, xip->v, xip->xlen, xip->x, xip->ylen, xip->y );
 	RT_ADD_VLIST( vhead, start, RT_VLIST_LINE_DRAW );
+
 	VJOIN1( start, xip->v, xip->ylen, xip->y );
 	RT_ADD_VLIST( vhead, start, RT_VLIST_LINE_DRAW );
+
 	RT_ADD_VLIST( vhead, xip->v, RT_VLIST_LINE_DRAW );
+	goal -= 5;
+
+#define HF_GET(_p,_x,_y)	((_p)[(_y)*xip->w+(_x)])
+	/* Draw the four "ridge lines" at full resolution, for edge matching */
+	/* X direction, Y=0, with edges down to base */
+	RT_ADD_VLIST( vhead, xip->v, RT_VLIST_LINE_MOVE );
+	sp = &HF_GET((unsigned short *)xip->mp->apbuf, 0, 0 );
+	for( x = 0; x < xip->w; x++ )  {
+		VJOIN2( cur, xip->v, x, xbasis, *sp, zbasis );
+		RT_ADD_VLIST(vhead, cur, RT_VLIST_LINE_DRAW );
+		sp++;
+	}
+	VJOIN1( cur, xip->v, xip->xlen, xip->x );
+	RT_ADD_VLIST( vhead, cur, RT_VLIST_LINE_DRAW );
+
+	/* X direction, Y=n-1, with edges down to base */
+	VJOIN1( start, xip->v, xip->ylen, xip->y );
+	RT_ADD_VLIST( vhead, start, RT_VLIST_LINE_MOVE );
+	sp = &HF_GET((unsigned short *)xip->mp->apbuf, xip->n - 1, 0 );
+	VJOIN1( start, xip->v, xip->ylen, xip->y );
+	for( x = 0; x < xip->w; x++ )  {
+		VJOIN2( cur, start, x, xbasis, *sp, zbasis );
+		RT_ADD_VLIST(vhead, cur, RT_VLIST_LINE_DRAW );
+		sp++;
+	}
+	VJOIN2( cur, xip->v, xip->xlen, xip->x, xip->ylen, xip->y );
+	RT_ADD_VLIST( vhead, cur, RT_VLIST_LINE_DRAW );
+
+	/* Y direction, X=0 */
+	cmd = RT_VLIST_LINE_MOVE;
+	sp = &HF_GET((unsigned short *)xip->mp->apbuf, 0, 0 );
+	for( y = 0; y < xip->n; y++ )  {
+		VJOIN2( cur, xip->v, y, ybasis, *sp, zbasis );
+		RT_ADD_VLIST(vhead, cur, cmd );
+		cmd = RT_VLIST_LINE_DRAW;
+		sp += xip->w;
+	}
+
+	/* Y direction, X=w-1 */
+	cmd = RT_VLIST_LINE_MOVE;
+	sp = &HF_GET((unsigned short *)xip->mp->apbuf, 0, xip->w - 1 );
+	VJOIN1( start, xip->v, xip->xlen, xip->x );
+	for( y = 0; y < xip->n; y++ )  {
+		VJOIN2( cur, start, y, ybasis, *sp, zbasis );
+		RT_ADD_VLIST(vhead, cur, cmd );
+		cmd = RT_VLIST_LINE_DRAW;
+		sp += xip->w;
+	}
+	goal -= 4 + 2 * (xip->w + xip->n);
+	if( goal <= 0 )  return 0;		/* no vectors for interior */
+
+	/* Compute data stride based upon producing no more than 'goal' vectors */
+	step = ceil(sqrt( 2*(xip->w-1)*(xip->n-1) / (double)goal ));
+	if( step < 1 )  step = 1;
 
 	/* Draw the contour lines in W direction only */
-	for( y = 0; y < xip->n; y++ )  {
+	for( y = 0; y < xip->n; y += step )  {
 		register int	x;
 		point_t		cur;
 		int		cmd;
 
 		VJOIN1( start, xip->v, y, ybasis );
 		cmd = RT_VLIST_LINE_MOVE;
-		for( x = 0; x < xip->w; x++ )  {
+		sp = &HF_GET((unsigned short *)xip->mp->apbuf, y, 0 );
+		for( x = 0; x < xip->w; x += step )  {
 			VJOIN2( cur, start, x, xbasis, *sp, zbasis );
 			RT_ADD_VLIST(vhead, cur, cmd );
 			cmd = RT_VLIST_LINE_DRAW;
 			sp++;
+			goal--;
+		}
+		if( x < xip->w-1 )  {
+			sp = &HF_GET((unsigned short *)xip->mp->apbuf, y, xip->w-1 );
+			VJOIN2( cur, cur, x, xbasis, *sp, zbasis );
+			RT_ADD_VLIST(vhead, cur, RT_VLIST_LINE_DRAW );
+			goal--;
 		}
 	}
 
+
+rt_log("vector count overshoot = %d, negative is good\n", goal);
 	return 0;
 }
 
@@ -529,6 +669,7 @@ register CONST mat_t		mat;
 	VSET( xip->y, 0, 1, 0 );
 	xip->xlen = 1000;
 	xip->ylen = 1000;
+	xip->zlen = 1000;
 	strcpy( xip->fmt, "nd" );
 
 	/* Process parameters found in .g file */
@@ -572,6 +713,7 @@ err1:
 
 	/* Check for reasonable values */
 	if( !xip->dfile[0] )  {
+		/* XXX Should create 2x2 data file instead, for positioning use (FPO) */
 		rt_log("rt_hf_import() no dfile specified\n");
 		goto err1;
 	}
@@ -591,7 +733,9 @@ err1:
 	VMOVE( xip->x, tmp );
 	MAT4X3VEC( tmp, mat, xip->y );
 	VMOVE( xip->y, tmp );
-	xip->file2mm /= mat[15];
+	xip->xlen /= mat[15];
+	xip->ylen /= mat[15];
+	xip->zlen /= mat[15];
 
 	VUNITIZE(xip->x);
 	VUNITIZE(xip->y);
@@ -616,13 +760,13 @@ err1:
 	/* If this data has already been mapped, all done */
 	if( mp->apbuf )  return 0;		/* OK */
 
-	/* Transform external data to internal format */
+	/* Transform external data to internal format -- short or float */
 	if( xip->shorts )  {
 		mp->apbuflen = sizeof(unsigned short) * count;
 		out_cookie = cv_cookie("hus");
 	} else {
-		mp->apbuflen = sizeof(double) * count;
-		out_cookie = cv_cookie("hd");
+		mp->apbuflen = sizeof(float) * count;
+		out_cookie = cv_cookie("hf");
 	}
 	mp->apbuf = (genptr_t)rt_malloc( mp->apbuflen, "rt_hf_import apbuf[]" );
 	got = cv_w_cookie( mp->apbuf, out_cookie, mp->apbuflen,
@@ -631,8 +775,6 @@ err1:
 		rt_log("rt_hf_import(%s) cv_w_cookie count=%d, got=%d\n",
 			xip->dfile, count, got );
 	}
-
-	/* Find min and max? */
 
 	return(0);			/* OK */
 }
@@ -658,7 +800,9 @@ double				local2mm;
 	RT_HF_CK_MAGIC(xip);
 
 	/* Apply any scale transformation */
-	xip->file2mm /= local2mm;		/* xform */
+	xip->xlen /= local2mm;
+	xip->ylen /= local2mm;
+	xip->zlen /= local2mm;
 
 	RT_INIT_EXTERNAL(ep);
 	ep->ext_nbytes = sizeof(union record) * DB_SS_NGRAN;
