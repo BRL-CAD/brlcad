@@ -190,7 +190,7 @@ struct rt_functab rt_functab[ID_MAXIMUM+2] = {
 	"ID_TGC",	1,		/* 2 */
 		rt_tgc_prep,	rt_tgc_shot,	rt_tgc_print,	rt_tgc_norm,
 		rt_tgc_uv,	rt_tgc_curve,	rt_tgc_class,	rt_tgc_free,
-		rt_tgc_plot,	rt_tgc_vshot,	rt_tgc_tess,	rt_nul_tnurb,
+		rt_tgc_plot,	rt_tgc_vshot,	rt_tgc_tess,	rt_tgc_tnurb,
 		rt_tgc_import,	rt_tgc_export,	rt_tgc_ifree,
 		rt_tgc_describe,rt_tgc_xform,
 
