@@ -3789,9 +3789,9 @@ find_closest_face( fastf_t **centers, int *piece, int *old_faces, int num_faces,
 		}
 	}
 
-	v0 = &vertices[old_faces[piece[0]*3]];
-	v1 = &vertices[old_faces[piece[0]*3]+1];
-	v2 = &vertices[old_faces[piece[0]*3]+2];
+	v0 = &vertices[piece[0]*3];
+	v1 = &vertices[piece[1]*3];
+	v2 = &vertices[piece[2]*3];
 
 	VADD3( center, v0, v1, v2 );
 	VSCALE( center, center, one_third );
