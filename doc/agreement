@@ -208,7 +208,6 @@ BRL-CAD on (check all that are appropriate):
 
     Vendor	   CPU Model		OS Revision
     ======	   =========		===========
- [ ] DEC	     _____		___________
  [ ] IBM	     _____		___________
  [ ] Linux	     _____		___________
  [ ] FreeBSD	     _____		___________
@@ -230,6 +229,10 @@ BRL-CAD on (check all that are appropriate):
 
 12. Please specify which edition of BRL-CAD you desire:
 
+ [ ]	6.0 Binary executable edition (versions exist for SGI-IRIX-6,
+	RedHat Linux-i386, FreeBSD-i386, Solaris(SPARC), and
+	MacOS-X architectures).
+ [ ]	6.0 Source code edition (please answer question 13 below).
  [ ]	5.0 Binary executable edition (versions exist for SGI-IRIX-6,
 	RedHat Linux-86, and FreeBSD-86 architectures).
  [ ]	5.0 Source code edition (please answer question 13 below).
