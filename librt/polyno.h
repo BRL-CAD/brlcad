@@ -19,4 +19,5 @@ typedef  struct {
 
 /* library functions:				*/
 extern poly	*polyAdd(), *polySub(), *polyMul(), *polyScal();
-extern void	quadratic(), cubic(), quartic(), synDiv(), prntpoly();
+extern void	quadratic(), synDiv(), prntpoly(), pr_poly();
+extern int	quartic(), cubic();
