@@ -510,11 +510,12 @@ struct seg		*seghead;
 	LOCAL vect_t		work;
 	LOCAL fastf_t		k[4], pt[2];
 	LOCAL fastf_t		t, b, zval, dir;
-	LOCAL fastf_t		t_scale, alf1, alf2;
+	LOCAL fastf_t		t_scale;
+	LOCAL fastf_t		alf1, alf2;
 	LOCAL int		npts;
 	LOCAL int		intersect;
 	LOCAL vect_t		cor_pprime;	/* corrected P prime */
-	LOCAL fastf_t		cor_proj;	/* corrected projected dist */
+	LOCAL fastf_t		cor_proj = 0;	/* corrected projected dist */
 	LOCAL int		i;
 	LOCAL poly		C;	/*  final equation	*/
 	LOCAL poly		Xsqr, Ysqr;
@@ -846,11 +847,12 @@ struct resource         *resp; /* pointer to a list of free segs */
 	LOCAL vect_t		work;
 	LOCAL fastf_t		k[4], pt[2];
 	LOCAL fastf_t		t, b, zval, dir;
-	LOCAL fastf_t		t_scale, alf1, alf2;
+	LOCAL fastf_t		t_scale = 0;
+	LOCAL fastf_t		alf1, alf2;
 	LOCAL int		npts;
 	LOCAL int		intersect;
 	LOCAL vect_t		cor_pprime;	/* corrected P prime */
-	LOCAL fastf_t		cor_proj;	/* corrected projected dist */
+	LOCAL fastf_t		cor_proj = 0;	/* corrected projected dist */
 	LOCAL int		i;
 	LOCAL poly		*C;	/*  final equation	*/
 	LOCAL poly		Xsqr, Ysqr;

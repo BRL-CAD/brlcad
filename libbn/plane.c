@@ -600,7 +600,9 @@ point_t		b;
 	 *  reject the intersection, because it falls outside
 	 *  the line segment A--B.
 	 */
-	if( u < -SQRT_SMALL_FASTF || (f=(u-1)) > SQRT_SMALL_FASTF )
+	if( u < -SQRT_SMALL_FASTF )
+		return(-2);		/* Intersection outside of A--B */
+	if( (f=(u-1)) > SQRT_SMALL_FASTF )
 		return(-2);		/* Intersection outside of A--B */
 
 	/* Check for fuzzy intersection with one of the verticies */
