@@ -205,6 +205,7 @@ _LOCAL_ void		view_pix(), view_bol(), view_eol(), view_end();
 
 void			cons_Vector();
 void			render_Model();
+void			render_Scan();
 
 #if defined( cray ) && 0
 #define BYTE_OFFSET(p)	(((long)(p)&0xE000000000000000)>>61)
@@ -353,6 +354,7 @@ int	frame;
 	return;
 	}
 
+void
 render_Scan()
 	{	fastf_t		grid_y_inc[3], grid_x_inc[3];
 		RGBpixel	scanbuf[1024];
