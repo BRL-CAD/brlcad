@@ -686,7 +686,14 @@ int	width, height;
 		setvideo( DE_R1, DER1_30HZ);	/* 4-wire RS-343 */
 	} else if( (ifp->if_mode & MODE_5MASK) == MODE_5GENLOCK )  {
 		MIPS(ifp)->mi_der1 = getvideo(DE_R1);
-		if( getvideo(CG_MODE) != -1 )  {
+		if( (MIPS(ifp)->mi_der1 & DER1_VMASK) == DER1_170 )  {
+			/* 
+			 *  Current mode is DE3 board internal NTSC sync.
+			 *  Doing a setmonitor(NTSC) again will cause the
+			 *  sync generator to drop out for a moment.
+			 *  So, in this case, do nothing.
+			 */
+		} else if( getvideo(CG_MODE) != -1 )  {
 		    	/*
 			 *  Optional CG2 GENLOCK boark is installed.
 			 *
@@ -728,8 +735,9 @@ int	width, height;
 #else
 				/* Just use DE3 sync generator.
 				 * For this case, GENLOCK board does nothing!
+				 * Equiv to setmonitor(NTSC);
 				 */
-				setmonitor(NTSC);
+				setvideo(DE_R1, DER1_170);
 #endif
 			}
 		} else {
@@ -737,9 +745,9 @@ int	width, height;
 			 *  No genlock board is installed, produce RS-170
 			 *  video at NTSC rates with separate sync,
 			 *  and hope that they have an outboard NTSC
-			 *  encoder device.
+			 *  encoder device.  Equiv to setmonitor(NTSC);
 			 */
-			setmonitor(NTSC);
+			setvideo(DE_R1, DER1_170);
 		}
 	}
 
