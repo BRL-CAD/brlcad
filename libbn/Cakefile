@@ -20,6 +20,7 @@
 	rand \
 	wavelet \
 	asize \
+	anim \
 	plot3 fortran \
 	axis list marker number \
 	scale vectfont symbol vector \
