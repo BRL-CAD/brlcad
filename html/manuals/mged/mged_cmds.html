@@ -2667,15 +2667,16 @@ a similar function, but moves the eye_pt without changing the viewing direction.
 
 <DD>The ``ls'' command with no <I>object</I> argument lists the name of
      every object in the
-     database (in alphabetical order). If the <I>object</I> argument is supplied,
+     database (in alphabetical order), except for those marked as hidden with the
+     <a href="#hide">hide</a> command . If the <I>object</I> argument is supplied,
      only those <I>objects</I> are listed. The <I>object</I> argument may include
      regular expressions
      for matching. The following options are also allowed:
      <ul>
        <li> a - list all objects in the database
-       <li> c - list all combinations in the database
-       <li> r - list all regions in the database
-       <li> s - list all solids in the database
+       <li> c - list all non-hidden combinations in the database
+       <li> r - list all non-hidden regions in the database
+       <li> s - list all non-hidden solids in the database
        <li> l - use long format showing object name, object type, major type, minor type, and length
      </ul>
 
