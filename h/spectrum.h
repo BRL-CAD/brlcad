@@ -155,6 +155,9 @@ RT_EXTERN( int			rt_pr_table_and_tabdata, (CONST char *filename,
 					CONST struct rt_tabdata *data));
 RT_EXTERN( struct rt_tabdata	*rt_read_table_and_tabdata, (
 					CONST char *filename));
+RT_EXTERN( struct rt_tabdata	*rt_tabdata_binary_read, (CONST char *filename,
+					int num,
+					CONST struct rt_table *tabp));
 RT_EXTERN( struct rt_tabdata	*rt_tabdata_malloc_array, (
 					CONST struct rt_table *tabp,
 					int num));
