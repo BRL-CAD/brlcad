@@ -8,16 +8,7 @@
 stuffdir = $(SAMPLE_APPLICATIONS_DIR)
  
 stuff_DATA = \
-	debug.h \
-	pl-dm.c
+	debug.h
 
 EXTRA_DIST = \
-	$(stuff_DATA) \
-	mk.in
-
-install-data-hook:
-	$(stuffDATA_INSTALL) mk $(DESTDIR)$(stuffdir)/makefile
-
-# I don't think this works
-uninstall-hook:
-	${RM} ${stuffdir}/makefile
+	$(stuff_DATA)
