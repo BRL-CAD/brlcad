@@ -1908,8 +1908,12 @@ fastf_t			*mag2;
 			nmg_pl_comb_fu( 0, 2, rs1->fu2 );
 		}
 
+#if 0
 		rt_log("nmg_face_combine() bad ending state, pushing on\n");
-/*		rt_bomb("nmg_face_combine() bad ending state\n"); */
+#else
+		/* This is the production setting */
+		rt_bomb("nmg_face_combine() bad ending state\n");
+#endif
 	}
 }
 
