@@ -44,12 +44,14 @@ static long gdist, rdist, cdist;
 static long cbinc, cginc, crinc;
 static unsigned long *gdp, *rdp, *cdp;
 static unsigned char *grgbp, *rrgbp, *crgbp;
-static gstride, rstride;
+static int gstride, rstride;
 static long x, xsqr, colormax;
 static int cindex;
 #ifdef INSTRUMENT_IT
 static long outercount = 0, innercount = 0;
 #endif
+
+void	maxfill();
 
 /*****************************************************************
  * TAG( inv_cmap )
@@ -751,6 +753,7 @@ blueloop( restart )
     return detect;
 }
 
+void
 maxfill( buffer, side )
 unsigned long *buffer;
 long side;
