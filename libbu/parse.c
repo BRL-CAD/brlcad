@@ -741,8 +741,14 @@ CONST char				*value;	/* string containing value */
 					    value[i+1] == '"')
 					    	++i;
 
-				if (sdp->sp_count > 1)
-					loc[sdp->sp_count-1] = '\0';
+				/* Don't null terminate chars, only strings */
+				if (sdp->sp_count > 1)  {
+					/* OK, it's a string */
+					if( j < sdp->sp_count-1 )
+						loc[j] = '\0';
+					else
+						loc[sdp->sp_count-1] = '\0';
+				}
 			}
 			break;
 		case 'S':
