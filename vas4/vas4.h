@@ -18,6 +18,8 @@
 #define C_REGISTER	'('
 #define C_REPLACE	'/'
 #define C_STOP		' '
+#define C_SEARCH	'?'
+#define C_RESET_TAPETIME '<'
 
 #ifdef USNA
 #define C_FFORWARD	'!'
@@ -33,6 +35,8 @@
 #define C_INIT		'I'
 #define C_NO		'0'
 #define C_ACTIVITY	'A'
+#define C_SEND_TAPE_POS	'B'
+#define C_SEND_FRAME_CODE 'C'
 #define C_VTR_STATUS	'V'
 
 /* Result codes */
