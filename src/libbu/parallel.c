@@ -33,7 +33,6 @@ static const char RCSparallel[] = "@(#)$Header$ (ARL)";
 #include <strings.h>
 #endif
 #include "machine.h"
-#include "externs.h"
 #include "bu.h"
 
 #ifdef linux
@@ -147,15 +146,17 @@ static struct sched_param bu_param;
 /*
  * multithread support built on POSIX Threads (pthread) library.
  */
-#ifdef HAS_POSIX_THREADS
-#ifdef __sp3__
+#ifdef HAVE_UNISTD_H
 #	include	<unistd.h>
 #else
+#  ifdef HAVE_SYS_UNISTD_H
 #	include <sys/unistd.h>
+#  endif
 #endif
+#ifdef HAVE_PTHREAD_H
 #	include <pthread.h>
-#define rt_thread_t	pthread_t
-#endif	/* HAS_POSIX_THREADS */
+#	define rt_thread_t	pthread_t
+#endif
 
 #ifdef CRAY
 struct taskcontrol {
@@ -450,12 +451,12 @@ bu_avail_cpus(void)
 DONE_NCPU:  ; /* allows debug and final validity check */
 
 
-#if defined(HAS_POSIX_THREADS)
-	/* if they have threading and we could not detect properly, use two */
+#if defined(HAVE_PTHREAD_H)
+	/* if they have threading and we could not detect properly, claim two */
 	if (ncpu < 0) {
 		ncpu = 2;
 	}
-#endif /* HAS_POSIX_THREADS */
+#endif
 
 	if (bu_debug & BU_DEBUG_PARALLEL) {
 		/* do not use bu_log() here, this can get called before semaphores are initialized */
@@ -660,7 +661,7 @@ bu_parallel_interface(void)
 	register int	cpu;		/* our CPU (thread) number */
 
 #if 0
-#ifdef HAS_POSIX_THREADS
+#ifdef HAVE_PTHREAD_H
 	{
 		pthread_t	pt;
 		pt = pthread_self();
@@ -754,8 +755,6 @@ genptr_t	arg;
 	long	stdin_pos;
 	FILE	stdin_save;
 	int	worker_pid_tbl[MAX_PSW];
-
-	bzero(worker_pid_tbl, sizeof(worker_pid_tbl) );
 #  endif
 
 /*
@@ -764,13 +763,17 @@ genptr_t	arg;
 #  if defined(SUNOS) && SUNOS >= 52
 	static int	concurrency = 0; /* Max concurrency we have set */
 #  endif
-#  if (defined(SUNOS) && SUNOS >= 52) || defined(HAS_POSIX_THREADS)
+#  if (defined(SUNOS) && SUNOS >= 52) || defined(HAVE_PTHREAD_H)
 	int		nthreadc;
 	int		nthreade;
 	rt_thread_t	thread;
 	rt_thread_t	thread_tbl[MAX_PSW];
 	int		i;
 #  endif	/* SUNOS */
+
+#  ifdef sgi
+	bzero(worker_pid_tbl, sizeof(worker_pid_tbl) );
+#  endif
 
 	if( bu_debug & BU_DEBUG_PARALLEL )
 		bu_log("bu_parallel(0x%lx, %d, x%lx)\n", (long)func, ncpu, (long)arg );
@@ -1093,7 +1096,7 @@ genptr_t	arg;
 		       nthreadc, nthreade);
 #  endif	/* SUNOS */
 
-#  if defined(HAS_POSIX_THREADS)
+#  if defined(HAVE_PTHREAD_H) && !defined(sgi)
 
 	thread = 0;
 	nthreadc = 0;

@@ -37,7 +37,6 @@ static const char RCSsemaphore[] = "@(#)$Header$ (ARL)";
 #include <ctype.h>
 #include <math.h>
 #include "machine.h"
-#include "externs.h"
 #include "bu.h"
 
 #ifdef CRAY
@@ -141,19 +140,27 @@ struct bu_semaphores {
 # define DEFINED_BU_SEMAPHORES	1
 #endif	/* SUNOS */
 
-#if defined(HAS_POSIX_THREADS)
-#ifdef __sp3__
+/*
+ * multithread support built on POSIX Threads (pthread) library.
+ */
+#ifdef HAVE_UNISTD_H
 #	include	<unistd.h>
 #else
+#  ifdef HAVE_SYS_UNISTD_H
 #	include <sys/unistd.h>
+#  endif
 #endif
+#ifdef HAVE_PTHREAD_H
 #	include <pthread.h>
+#  if !defined(sgi)
 struct bu_semaphores {
 	long	magic;
 	pthread_mutex_t	mu;
 };
-# define DEFINED_BU_SEMAPHORES	1
-#endif	/* HAS_POSIX_THREADS */
+#	define DEFINED_BU_SEMAPHORES	1
+#  endif
+#endif
+
 
 #define	BU_SEMAPHORE_MAGIC		0x62757365
 
@@ -321,7 +328,7 @@ bu_semaphore_init(unsigned int nsemaphores)
 		
 	}
 #	endif
-#	if HAS_POSIX_THREADS
+#	if defined(HAVE_PTHREAD_H) && !defined(sgi)
 	for( i=0; i < nsemaphores; i++ )  {
 		bu_semaphores[i].magic = BU_SEMAPHORE_MAGIC;
 		if (pthread_mutex_init( &bu_semaphores[i].mu,  NULL)) {
@@ -401,7 +408,7 @@ bu_semaphore_acquire(unsigned int i)
 		abort();
 	}
 #	endif
-#	if HAS_POSIX_THREADS
+#	if defined(HAVE_PTHREAD_H) && !defined(sgi)
 	if( pthread_mutex_lock( &bu_semaphores[i].mu ) )  {
 		fprintf(stderr, "bu_semaphore_acquire(): pthread_mutex_lock() failed on %d\n", i);
 		abort();
@@ -469,7 +476,7 @@ bu_semaphore_release(unsigned int i)
 		abort();
 	}
 #	endif
-#	if HAS_POSIX_THREADS
+#	if defined(HAVE_PTHREAD_H) && !defined (sgi)
 	if( pthread_mutex_unlock( &bu_semaphores[i].mu ) )  {
 		fprintf(stderr, "bu_semaphore_acquire(): pthread_mutex_unlock() failed on %d\n", i);
 		abort();
