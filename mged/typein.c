@@ -523,7 +523,17 @@ char **argv;
 		menu = p_half;
 		fn_in = half_in;
 	} else if( strncmp( argv[2], "arb", 3 ) == 0 )  {
-		nvals = 3*atoi(&argv[2][3]);
+		int n = atoi(&argv[2][3]);
+
+		if(n < 4 || 8 < n){
+			Tcl_AppendResult(interp, "ERROR: \"", argv[2],
+					 "\" not supported!\n", (char *)0);
+			Tcl_AppendResult(interp, "supported arbs: arb4 arb5 arb6 arb7 arb8\n",
+						 (char *)0);
+			return TCL_ERROR;
+		}
+
+		nvals = 3*n;
 		menu = p_arb;
 		fn_in = arb_in;
 	} else if( strcmp( argv[2], "sph" ) == 0 )  {
