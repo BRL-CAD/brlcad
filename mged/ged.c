@@ -55,6 +55,7 @@ char MGEDCopyRight_Notice[] = "@(#) Copyright (C) 1985,1987 by the United States
 #include "db.h"
 #include "raytrace.h"
 #include "./ged.h"
+#include "./titles.h"
 #include "./solid.h"
 #include "./sedit.h"
 #include "./dm.h"
