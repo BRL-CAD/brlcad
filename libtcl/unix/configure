@@ -3679,7 +3679,7 @@ fi
 	;;
     IRIX64-6.*)
 	SHLIB_CFLAGS=""
-	SHLIB_LD="ld -32 -shared -rdata_shared -rpath /usr/local/lib"
+	SHLIB_LD="ld -64 -shared -rdata_shared -rpath /usr/local/lib"
 	SHLIB_LD_LIBS=""
 	SHLIB_SUFFIX=".so"
 	DL_OBJS="tclLoadDl.o"
