@@ -235,15 +235,7 @@ CONST struct rt_tol	*tol;
 	 * Note that "pca" can be one of the edge endpoints,
 	 * even if "pt" is far, far away.  This can be confusing.
 	 */
-	{
-		struct rt_tol	xtol;
-		/*XXXX HACK:  To keep from hitting vertices & edges,
-		 *XXXX  use ultra-strict hard-coded tolerance here */
-		xtol = *tol;	/* struct copy */
-		xtol.dist = 0.0005;
-		xtol.dist_sq = xtol.dist_sq * xtol.dist_sq;
-		code = rt_dist_pt3_lseg3( &dist, pca, eupt, matept, pt, &xtol);
-	}
+	code = rt_dist_pt3_lseg3( &dist, pca, eupt, matept, pt, tol);
 	if( code <= 0 )  dist = 0;
 	if (rt_g.NMG_debug & DEBUG_CLASSIFY) {
 		rt_log("          \tcode=%d, dist: %g\n", code, dist);
