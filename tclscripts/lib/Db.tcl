@@ -21,18 +21,21 @@
 #
 class Db {
     protected variable db ""
-    protected variable name ""
+    private variable initializing 1
+    public variable name ""
 
     constructor {filename} {
 	set name $filename
 	set db [subst $this]_db
 	wdb_open $db db $name
+	set initializing 0
     }
 
     destructor {
 	$db close
     }
 
+    public method open {args}
     public method observer {args}
     public method match {args}
     public method get {args}
@@ -74,6 +77,22 @@ class Db {
     public method keep {args}
     public method cat {args}
     public method i {args}
+    public method get_name {}
+}
+
+configbody Db::name {
+    if {!$initializing} {
+	Db::open $name
+    }
+}
+
+body Db::open {args} {
+    if {$args == ""} {
+	return $name
+    } else {
+	$db open $args
+	set name $args
+    }
 }
 
 body Db::observer {args} {
@@ -238,4 +257,8 @@ body Db::cat {args} {
 
 body Db::i {args} {
     eval $db i $args
+}
+
+body Db::get_name {} {
+    return $db
 }
