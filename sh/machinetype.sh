@@ -83,7 +83,7 @@ cat << EOF > ${IN_FILE}
 
 
 
-#if defined(unix) && defined(i386) && !defined(__bsdi__) && !defined(__386BSD__)
+#if defined(unix) && defined(i386) && !defined(__bsdi__) && !defined(__386BSD__) && !defined(__NetBSD__)
 /* PC/AT with Interactive Systems Unix V/386 3.2 */
 #	undef	at
 	MACHINE=at;
@@ -95,6 +95,14 @@ cat << EOF > ${IN_FILE}
 #if defined(__unix__) && defined(__i386__) && defined(__386BSD__)
 /* IBM PC with 386BSD from William Jolitz */
 	MACHINE=386
+	UNIXTYPE=BSD
+	HAS_TCP=1
+	HAS_SYMLINKS=1
+#endif
+
+#if defined(__NetBSD__)
+/* NetBSD from Chris Demetriou and friends */
+	MACHINE=nb
 	UNIXTYPE=BSD
 	HAS_TCP=1
 	HAS_SYMLINKS=1
