@@ -258,7 +258,7 @@ struct seg		*segHeadp;
 	struct seg		*segp;
 
 	RT_CK_PT_HD(PartHeadp);
-	RT_AP_CK(oap);
+	RT_AP_CHECK(oap);
 	RT_CK_RTI(oap->a_rt_i);
 
 	/* Steal & xform the segment list */
@@ -549,14 +549,23 @@ CONST struct bn_tol	*tol;
 	state = rt_initial_tree_state;	/* struct copy */
 	state.ts_ttol = ttol;
 	state.ts_tol = tol;
+	mat_copy( state.ts_mat, sip->root2leaf );
 
 	state.ts_m = (struct model **)&good;	/* hack */
 	good.vheadp = vhead;
 
-	/* Any good way to cache good.dbip's ? */
-	if( (good.dbip = db_open( sip->file, "r" )) == DBI_NULL )
+	if( sip->file[0] != '\0' )  {
+		/* Any good way to cache good.dbip's ? */
+		if( (good.dbip = db_open( sip->file, "r" )) == DBI_NULL )  {
+			bu_log("rt_submodel_plot() db_open(%s) failure\n", sip->file);
+			return -1;
+		}
+	} else {
+		bu_log("rt_submodel_plot(): no source of DBIP yet?!?\n");
 		return -1;
+	}
 	if( db_scan( good.dbip, (int (*)())db_diradd, 1 ) < 0 )  {
+		bu_log("rt_submodel_plot() db_scan() failure\n");
 		db_close(good.dbip);
 		return -1;
 	}
@@ -570,6 +579,7 @@ CONST struct bn_tol	*tol;
 		NULL,			/* rt_submodel_wireframe_region_end */
 		rt_submodel_wireframe_leaf );
 
+	if( ret < 0 )  bu_log("rt_submodel_plot() db_walk_tree(%s) failure\n", sip->treetop);
 	db_close(good.dbip);
 	return ret;
 }
@@ -629,8 +639,11 @@ CONST struct db_i		*dbip;
 	sip = (struct rt_submodel_internal *)ip->idb_ptr;
 	sip->magic = RT_SUBMODEL_INTERNAL_MAGIC;
 
+	bn_mat_copy( sip->root2leaf, mat );
+
 	bu_vls_init( &str );
 	bu_vls_strcpy( &str, rp->ss.ss_args );
+bu_log("rt_submodel_import: '%s'\n", rp->ss.ss_args);
 	if( bu_struct_parse( &str, rt_submodel_parse, (char *)sip ) < 0 )  {
 		bu_vls_free( &str );
 fail:
@@ -646,6 +659,8 @@ fail:
 		bu_log("rt_submodel_import() treetop= must be specified\n");
 		goto fail;
 	}
+bu_log("import: file='%s', treetop='%s', meth=%d\n", sip->file, sip->treetop, sip->meth);
+bn_mat_print("root2leaf", sip->root2leaf );
 
 	return(0);			/* OK */
 }
@@ -664,37 +679,29 @@ CONST struct db_i		*dbip;
 {
 	struct rt_submodel_internal	*sip;
 	union record		*rec;
+	struct bu_vls		str;
 
 	RT_CK_DB_INTERNAL(ip);
 	if( ip->idb_type != ID_SUBMODEL )  return(-1);
 	sip = (struct rt_submodel_internal *)ip->idb_ptr;
 	RT_SUBMODEL_CK_MAGIC(sip);
+bu_log("export: file='%s', treetop='%s', meth=%d\n", sip->file, sip->treetop, sip->meth);
 
-bu_bomb("rt_submodel_export()\n");
+	/* Ignores scale factor */
 
-#if 0
 	RT_INIT_EXTERNAL(ep);
-	ep->ext_nbytes = sizeof(union record);
-	ep->ext_buf = (genptr_t)rt_calloc( 1, ep->ext_nbytes, "submodel external");
+	ep->ext_nbytes = sizeof(union record)*DB_SS_NGRAN;
+	ep->ext_buf = bu_calloc( 1, ep->ext_nbytes, "submodel external");
 	rec = (union record *)ep->ext_buf;
 
-	rec->s.s_id = ID_SOLID;
-	rec->s.s_type = SUBMODEL;	/* GED primitive type from db.h */
+	bu_vls_init( &str );
+	bu_vls_struct_print( &str, rt_submodel_parse, (char *)sip );
 
-	/* Since libwdb users may want to operate in units other
-	 * than mm, we offer the opportunity to scale the solid
-	 * (to get it into mm) on the way out.
-	 */
-
-
-	/* convert from local editing units to mm and export
-	 * to database record format
-	 *
-	 * Warning: type conversion: double to float
-	 */
-	VSCALE( &rec->s.s_values[0], sip->submodel_V, local2mm );
-	rec->s.s_values[3] = sip->submodel_radius * local2mm;
-#endif
+	rec->ss.ss_id = DBID_STRSOL;
+	strncpy( rec->ss.ss_keyword, "submodel", NAMESIZE-1 );
+	strncpy( rec->ss.ss_args, bu_vls_addr(&str), DB_SS_LEN-1 );
+	bu_vls_free( &str );
+bu_log("rt_submodel_export: '%s'\n", rec->ss.ss_args);
 
 	return(0);
 }
