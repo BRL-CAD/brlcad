@@ -22,7 +22,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "conf.h"
 
-#include <stdio.h>
 #include <sys/time.h>		/* for struct timeval */
 #include <X11/X.h>
 #ifdef HAVE_XOSDEFS_H
@@ -34,11 +33,9 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #	undef   X_NOT_POSIX
 #endif
 #define XLIB_ILLEGAL_ACCESS	/* necessary on facist SGI 5.0.1 */
-#include <X11/Xlib.h>
+#include "tk.h"
 #include <X11/Xutil.h>
 
-#include "tcl.h"
-#include "tk.h"
 
 #include "machine.h"
 #include "externs.h"
@@ -67,6 +64,7 @@ int	X_object();
 unsigned X_cvtvecs(), X_load();
 void	X_statechange(), X_viewchange(), X_colorchange();
 void	X_window(), X_debug(), X_selectargs();
+int     X_dm();
 
 struct dm dm_X = {
 	X_open, X_close,
@@ -86,10 +84,12 @@ struct dm dm_X = {
 	PLOTBOUND,
 	"X", "X Window System (X11)",
 	0,
-	0
+	X_dm
 };
 
 extern struct device_values dm_values;	/* values read from devices */
+extern Tcl_Interp *interp;
+extern Tk_Window tkwin;
 
 static int height, width;
 static Tcl_Interp *xinterp;
@@ -167,7 +167,11 @@ X_close()
 {
     XFreeGC(dpy, gc);
     Tk_DestroyWindow(xtkwin);
+#if 0
     Tcl_DeleteInterp(xinterp);
+#else
+    Tcl_DeleteInterp(interp);
+#endif
 	/* to prevent events being processed after window destroyed */
 	win = -1;
 }
@@ -725,6 +729,45 @@ register int w[];
 #endif
 }
 
+int
+X_dm(argc, argv)
+int argc;
+char *argv[];
+{
+/* Experimental */
+
+  int x,y;
+
+  if(argc < 3)
+    return CMD_BAD;
+
+  if(sscanf(argv[1], "%d", &x) != 1)
+    return CMD_BAD;
+
+  if(sscanf(argv[2], "%d", &y) != 1)
+    return CMD_BAD;
+  
+  x = (x/(double)width - 0.5) * 4095;
+  y = (0.5 - y/(double)height) * 4095;
+
+  switch(*argv[0]){
+  /* Buttonpress 1,2,3 */
+  case '1':
+    rt_vls_printf( &dm_values.dv_string, "L 1 %d %d\n", x, y);
+    break;
+  case '2':
+    rt_vls_printf( &dm_values.dv_string, "M 1 %d %d\n", x, y);
+    break;
+  case '3':
+    rt_vls_printf( &dm_values.dv_string, "R 1 %d %d\n", x, y);
+    break;
+  default:
+    return CMD_BAD;
+  }
+
+  return CMD_OK;
+}
+
 /*********XXX**********/
 /*
  *  Called for 2d_line, and dot at center of screen.
@@ -787,11 +830,21 @@ char	*name;
     Visual *a_visual;
     int a_screen;
     Colormap  a_cmap;
+    struct rt_vls str;
 
     width = height = 512;
 
+#if 0
     xinterp = Tcl_CreateInterp(); /* Dummy interpreter */
     xtkwin = Tk_CreateMainWindow(xinterp, name, "MGED", "MGED");
+#else
+    rt_vls_init(&str);
+    rt_vls_strcpy(&str, "loadtk\n");
+    cmdline(&str, FALSE);
+    rt_vls_free(&str);
+
+    xtkwin = Tk_CreateWindow(interp, tkwin, "mged", name);
+#endif
 
     /* Open the display - XXX see what NULL does now */
     if( xtkwin == NULL ) {
@@ -904,7 +957,13 @@ char	*name;
 			  (void (*)())Xdoevent, (ClientData)NULL);
 
 #else
+#if 0
     Tk_CreateGenericHandler(Xdoevent, (ClientData)NULL);
+#else
+    Tk_CreateEventHandler(xtkwin, ExposureMask|PointerMotionMask|
+			  StructureNotifyMask,
+			  (void (*)())Xdoevent, (ClientData)NULL);
+#endif
 #endif
 
     Tk_SetWindowBackground(xtkwin, bg);
