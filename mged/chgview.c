@@ -17,6 +17,7 @@
  *	f_fix		fix display processor after hardware error
  *	f_refresh	request display refresh
  *	f_rt		ray-trace
+ *	f_rrt		ray-trace using any program
  *	f_saveview	save the current view parameters
  *	f_attach	attach display device
  *	f_release	release display device
@@ -501,18 +502,18 @@ f_rt()
 	int retcode;
 	int o_pipe[2];
 	char *vec[LEN];
+	char *dm;
 	FILE *fp;
 
 	if( not_state( ST_VIEW, "Ray-trace of current view" ) )
 		return;
 
 	/*
-	 * If this is a workstation where RT and MGED have to share the
-	 * display, let it go.  User must reattach.
+	 * This may be a workstation where RT and MGED have to share the
+	 * display, so let display go.  We will try to reattach at the end.
 	 */
-#ifdef DM_IR
+	dm = dmp->dmr_name;
 	release();
-#endif
 
 	vp = &vec[0];
 	*vp++ = "rt";
@@ -585,7 +586,124 @@ f_rt()
 
 	FOR_ALL_SOLIDS( sp )
 		sp->s_iflag = DOWN;
+
+	if( retcode == 0 )  {
+		/* Wait for a return, then reattach display */
+		printf("Press RETURN to reattach\007\n");
+		while( getchar() != '\n' )
+			/* NIL */  ;
+	}
+	attach( dm );
 }
+
+/*
+ *			F _ R R T
+ *
+ *  Invoke any program with the current view & stuff, just like
+ *  an "rt" command (above).
+ *  Typically used to invoke a remote RT (hence the name).
+ */
+void
+f_rrt()
+{
+	register char **vp;
+	register struct solid *sp;
+	register int i;
+	int pid, rpid;
+	int retcode;
+	int o_pipe[2];
+	char *vec[LEN];
+	char *dm;
+	FILE *fp;
+
+	if( not_state( ST_VIEW, "Ray-trace of current view" ) )
+		return;
+
+	/*
+	 * This may be a workstation where RT and MGED have to share the
+	 * display, so let display go.  We will try to reattach at the end.
+	 */
+	dm = dmp->dmr_name;
+	release();
+
+	vp = &vec[0];
+	for( i=1; i < numargs; i++ )
+		*vp++ = cmd_args[i];
+	*vp++ = filename;
+
+	/* Find all unique top-level entrys.
+	 *  Mark ones already done with s_iflag == UP
+	 */
+	FOR_ALL_SOLIDS( sp )
+		sp->s_iflag = DOWN;
+	FOR_ALL_SOLIDS( sp )  {
+		register struct solid *forw;	/* XXX */
+
+		if( sp->s_iflag == UP )
+			continue;
+		if( vp < &vec[LEN] )
+			*vp++ = sp->s_path[0]->d_namep;
+		else
+			(void)printf("ran out of vec for %s\n",
+				sp->s_path[0]->d_namep );
+		sp->s_iflag = UP;
+		for( forw=sp->s_forw; forw != &HeadSolid; forw=forw->s_forw) {
+			if( forw->s_path[0] == sp->s_path[0] )
+				forw->s_iflag = UP;
+		}
+	}
+	*vp = (char *)0;
+
+	vp = &vec[0];
+	while( *vp )
+		(void)printf("%s ", *vp++ );
+	(void)printf("\n");
+
+	(void)pipe( o_pipe );
+	(void)signal( SIGINT, SIG_IGN );
+	if ( ( pid = fork()) == 0 )  {
+		(void)close(0);
+		(void)dup( o_pipe[0] );
+		for( i=3; i < 20; i++ )
+			(void)close(i);
+
+		(void)signal( SIGINT, SIG_DFL );
+		(void)execvp( cmd_args[1], vec );
+		perror( cmd_args[1] );
+		exit(42);
+	}
+	/* Connect up to pipe */
+	(void)close( o_pipe[0] );
+	fp = fdopen( o_pipe[1], "w" );
+	{
+		vect_t temp;
+		vect_t eye_model;
+
+		VSET( temp, 0, 0, 1 );
+		MAT4X3PNT( eye_model, view2model, temp );
+		rt_write(fp, eye_model );
+	}
+	(void)fclose( fp );
+	
+	/* Wait for rt to finish */
+	while ((rpid = wait(&retcode)) != pid && rpid != -1)
+		;	/* NULL */
+	if( retcode != 0 )
+		(void)printf("Abnormal exit status x%x\n", retcode);
+	(void)signal(SIGINT, cur_sigint);
+
+	FOR_ALL_SOLIDS( sp )
+		sp->s_iflag = DOWN;
+
+	if( retcode == 0 )  {
+		/* Wait for a return, then reattach display */
+		printf("Press RETURN to reattach\007\n");
+		while( getchar() != '\n' )
+			/* NIL */  ;
+	}
+	attach( dm );
+}
+
 /*
  *  				B A S E N A M E
  *  
