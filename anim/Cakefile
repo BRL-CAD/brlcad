@@ -1,0 +1,20 @@
+/*
+ *			tab/Cakefile
+ */
+
+#define SRCDIR	anim
+#define PRODUCTS	qinterp
+#define	SRCSUFF	.c
+#define MANSECTION	1
+
+#include "../Cakefile.defs"
+#include "../Cakefile.prog"
+
+#define FILES	qinterp anim
+
+/* Explicit composition of each product */
+
+qinterp: qinterp.o 
+	CC LDFLAGS qinterp.o LIBES -o qinterp
+
+#include "../Cakefile.rules"
