@@ -115,6 +115,7 @@ typedef long	bitv_t;		/* largest integer type */
 #define DEFAULT_PSW	1
 #define PARALLEL	1
 
+#define USE_STRING_H
 /**#define CRAY_COS	1	/* Running on Cray under COS w/bugs */
 #endif
 
@@ -174,7 +175,7 @@ typedef long	bitv_t;		/* largest integer type */
 #define MAX_PSW		8
 #define DEFAULT_PSW	MAX_PSW
 #define PARALLEL	1
-#define USE_PROTOTYPES	/**/	/* not ANSI, but prototypes supported */
+#define USE_PROTOTYPES	1	/* not ANSI, but prototypes supported */
 
 #endif
 
@@ -288,10 +289,9 @@ typedef long	bitv_t;		/* largest integer type */
  *  worry about machines where (int *) might be wider than (char *),
  *  so here is the clean way of handling it.
  */
-#if !defined(GENPTR_H_SEEN)
+#if !defined(GENPTR_NULL)
 #  if __STDC__
 	typedef void	*genptr_t;
-#	define VOID_STAR		/* for the Utah Raster Toolkit */
 #  else
 	typedef char	*genptr_t;
 #  endif
@@ -299,7 +299,7 @@ typedef long	bitv_t;		/* largest integer type */
 #endif
 
 /* A portable way of handling the ANSI C const keyword */
-#if __STDC__ && !defined(CONST)
+#if (__STDC__ || (sgi && mips)) && !defined(CONST)
 #	define	CONST	const
 #else
 #	define	CONST	/**/
@@ -321,13 +321,8 @@ typedef long	bitv_t;		/* largest integer type */
 #endif
 
 /* some stuff the Utah Raster Toolkit wants */
-#define CONST_DECL CONST
-#ifdef __STDC__
-#define USE_PROTOTYPES
+#if __STDC__ && !defined(USE_PROTOTYPES)
+#	define USE_PROTOTYPES 1
 #endif
-#if BSD && !SYSV
-#  define SYS_TIME_H	/* time_t is defined through sys/time.h not time.h */
-#endif
-
 
 #endif
