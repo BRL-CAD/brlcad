@@ -366,7 +366,7 @@ adc_reset()
 static char	adc_syntax[] = "\
  adc			toggle display of angle/distance cursor\n\
  adc vars		print a list of all variables (i.e. var = val)\n\
- adc draw [#]		set or get the draw parameter\n\
+ adc draw [0|1]		set or get the draw parameter\n\
  adc a1 [#]		set or get angle1\n\
  adc a2 [#]		set or get angle2\n\
  adc dst [#]		set or get radius (distance) of tick\n\
@@ -380,10 +380,10 @@ static char	adc_syntax[] = "\
  adc dx #		add to X position (model coordinates)\n\
  adc dy #		add to Y position (model coordinates)\n\
  adc dz #		add to Z position (model coordinates)\n\
- adc anchor_pos		anchor ADC to current position in model coordinates\n\
- adc anchor_a1		anchor angle1 to go through anchorpoint_a1\n\
- adc anchor_a2		anchor angle2 to go through anchorpoint_a2\n\
- adc anchor_dst		anchor tick distance to go through anchorpoint_dst\n\
+ adc anchor_pos	[0|1]	anchor ADC to current position in model coordinates\n\
+ adc anchor_a1	[0|1]	anchor angle1 to go through anchorpoint_a1\n\
+ adc anchor_a2	[0|1]	anchor angle2 to go through anchorpoint_a2\n\
+ adc anchor_dst	[0|1]	anchor tick distance to go through anchorpoint_dst\n\
  adc anchorpoint_a1 [# # #]	set or get anchor point for angle1\n\
  adc anchorpoint_a2 [# # #]	set or get anchor point for angle2\n\
  adc anchorpoint_dst [# # #]	set or get anchor point for tick distance\n\
@@ -1025,16 +1025,33 @@ adc_print_vars()
   bu_vls_printf(&vls, "draw = %d\n", adc_state->adc_draw);
   bu_vls_printf(&vls, "a1 = %.15e\n", adc_state->adc_a1);
   bu_vls_printf(&vls, "a2 = %.15e\n", adc_state->adc_a2);
-  bu_vls_printf(&vls, "dst = %.15e\n", adc_state->adc_dst);
-  bu_vls_printf(&vls, "hv = %.15e %.15e\n", adc_state->adc_pos_grid[X], adc_state->adc_pos_grid[Y]);
-  bu_vls_printf(&vls, "xyz = %.15e %.15e %.15e\n", V3ARGS(adc_state->adc_pos_model));
+  bu_vls_printf(&vls, "dst = %.15e\n", adc_state->adc_dst * view_state->vs_Viewscale * base2local);
+  bu_vls_printf(&vls, "odst = %d\n", adc_state->adc_dv_dist);
+  bu_vls_printf(&vls, "hv = %.15e %.15e\n",
+		adc_state->adc_pos_grid[X] * view_state->vs_Viewscale * base2local,
+		adc_state->adc_pos_grid[Y] * view_state->vs_Viewscale * base2local);
+  bu_vls_printf(&vls, "xyz = %.15e %.15e %.15e\n",
+		adc_state->adc_pos_model[X] * base2local,
+		adc_state->adc_pos_model[Y] * base2local,
+		adc_state->adc_pos_model[Z] * base2local);
+  bu_vls_printf(&vls, "x = %d\n", adc_state->adc_dv_x);
+  bu_vls_printf(&vls, "y = %d\n", adc_state->adc_dv_y);
   bu_vls_printf(&vls, "anchor_pos = %d\n", adc_state->adc_anchor_pos);
   bu_vls_printf(&vls, "anchor_a1 = %d\n", adc_state->adc_anchor_a1);
   bu_vls_printf(&vls, "anchor_a2 = %d\n", adc_state->adc_anchor_a2);
   bu_vls_printf(&vls, "anchor_dst = %d\n", adc_state->adc_anchor_dst);
-  bu_vls_printf(&vls, "anchorpoint_a1 = %.15e %.15e %.15e\n", V3ARGS(adc_state->adc_anchor_pt_a1));
-  bu_vls_printf(&vls, "anchorpoint_a2 = %.15e %.15e %.15e\n", V3ARGS(adc_state->adc_anchor_pt_a2));
-  bu_vls_printf(&vls, "anchorpoint_dst = %.15e %.15e %.15e\n", V3ARGS(adc_state->adc_anchor_pt_dst));
+  bu_vls_printf(&vls, "anchorpoint_a1 = %.15e %.15e %.15e\n",
+		adc_state->adc_anchor_pt_a1[X] * base2local,
+		adc_state->adc_anchor_pt_a1[Y] * base2local,
+		adc_state->adc_anchor_pt_a1[Z] * base2local);
+  bu_vls_printf(&vls, "anchorpoint_a2 = %.15e %.15e %.15e\n",
+		adc_state->adc_anchor_pt_a2[X] * base2local,
+		adc_state->adc_anchor_pt_a2[Y] * base2local,
+		adc_state->adc_anchor_pt_a2[Z] * base2local);
+  bu_vls_printf(&vls, "anchorpoint_dst = %.15e %.15e %.15e\n",
+		adc_state->adc_anchor_pt_dst[X] * base2local,
+		adc_state->adc_anchor_pt_dst[Y] * base2local,
+		adc_state->adc_anchor_pt_dst[Z] * base2local);
   Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
   bu_vls_free(&vls);
 }
