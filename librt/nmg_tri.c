@@ -423,6 +423,7 @@ mat_t		TformMat;
 	struct vertexuse *vu;
 	struct loopuse *lu;
 	struct edgeuse *eu;
+	plane_t Normal;
 
 	NMG_CK_FACEUSE(fu);
 
@@ -437,7 +438,8 @@ mat_t		TformMat;
 	RT_LIST_INIT( tbl2d );
 
 	/* construct the matrix that maps the 3D coordinates into 2D space */
-	mat_fromto( TformMat, fu->f_p->fg_p->N, twoDspace );
+	NMG_GET_FU_NORMAL(Normal, fu);
+	mat_fromto( TformMat, Normal, twoDspace );
 
 	if (flatten_debug)
 		mat_print( "TformMat", TformMat );
