@@ -4,6 +4,9 @@
  * $Revision$
  *
  * $Log$
+ * Revision 10.4  93/12/10  04:25:35  mike
+ * Added FindCursorTag(), bound to M-t.
+ * 
  * Revision 10.3  93/12/10  03:47:46  mike
  * Fixed the "FindTag" support to be able to search "tags" files
  * that include ANSI function declarations.
@@ -1056,6 +1059,7 @@ int	c;
 }
 
 /* Called from user typing M-t */
+int
 FindCursorTag()
 {
 	register int	c;
@@ -1067,7 +1071,7 @@ FindCursorTag()
 
 	if( !isfuncname(linebuf[curchar]) )  {
 		message("Cursor is not over a word, FindCursorTag aborted.");
-		return;
+		return -1;
 	}
 
 	/* Find beginning of current word, going backward in line. */
@@ -1087,4 +1091,5 @@ FindCursorTag()
 	buf[len] = '\0';
 
 	find_tag(buf);
+	return 0;
 }
