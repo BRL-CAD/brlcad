@@ -37,7 +37,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <sys/time.h>
 #include <time.h>
 
-#define XLIB_ILLEGAL_ACCESS	/* necessary on facist SGI 5.0.1 */
 #include "tcl.h"
 #include "tk.h"
 
@@ -53,6 +52,8 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./solid.h"
 #include "./dm.h"
 #include "./sedit.h"
+
+#include "./mgedtcl.h"
 
 #define MORE_ARGS_STR    "more arguments needed::"
 
@@ -147,14 +148,7 @@ int	inpara;			/* parameter input from keyboard */
 int glob_compat_mode = 1;
 int output_as_return = 0;
 
-extern Tcl_CmdProc cmd_expand, cmd_db, cmd_prev, cmd_next, f_echo;
-extern Tcl_CmdProc cmd_solids_on_ray;
-extern Tcl_CmdProc cmd_pathlist;
-extern Tcl_CmdProc cmd_oed;
-
-int	mged_cmd();
-int	cmd_gui(), cmd_tk(), cmd_getknob();
-
+int mged_cmd();
 struct rt_vls tcl_output_hook;
 
 Tcl_Interp *interp;
@@ -192,6 +186,8 @@ static struct funtab funtab[] = {
 #endif
 "analyze", "[arbname]", "analyze faces of ARB",
 	f_analyze,1,MAXARGS,FALSE,
+"apropos", "keyword", "finds commands whose descriptions contain the given keyword",
+        cmd_apropos, 2, 2, TRUE,
 "arb", "name rot fb", "make arb8, rotation + fallback",
 	f_arbdef,4,4,FALSE,
 "arced", "a/b ...anim_command...", "edit matrix or materials on combination's arc",
@@ -260,7 +256,7 @@ static struct funtab funtab[] = {
 "e", "<objects>", "edit objects",
 	f_edit,2,MAXARGS,FALSE,
 "echo", "[text]", "echo arguments back",
-	f_echo, 1, MAXARGS, TRUE,
+	cmd_echo, 1, MAXARGS, TRUE,
 "edcodes", "object(s)", "edit region ident codes",
 	f_edcodes, 2, MAXARGS, FALSE,
 "edcolor", "", "text edit color table",
@@ -291,12 +287,11 @@ static struct funtab funtab[] = {
 	f_fracture, 2, 3, FALSE,
 "g", "groupname <objects>", "group objects",
 	f_group,3,MAXARGS,FALSE,
-#ifndef XMGED
 "getknob", "knobname", "Gets the current setting of the given knob",
         cmd_getknob, 2, 2, TRUE,
-"gui", "output_hook", "Sends all output to the \"output_hook\" routine",
-	cmd_gui, 1, 2, TRUE,
-#endif
+"output_hook", "output_hook_name",
+       "All output is sent to the Tcl procedure \"output_hook_name\"",
+	cmd_output_hook, 1, 2, TRUE,
 #ifdef HIDELINE
 "H", "plotfile [step_size %epsilon]", "produce hidden-line unix-plot",
 	f_hideline,2,4,FALSE,
@@ -309,8 +304,12 @@ static struct funtab funtab[] = {
 #else
 "history", "[-delays]", "list command history",
 	f_history, 1, 4,FALSE,
-"prev", "", "Returns previous command",
+"hist_prev", "", "Returns previous command in history",
         cmd_prev, 1, 1, TRUE,
+"hist_next", "", "Returns next command in history",
+        cmd_next, 1, 1, TRUE,
+"hist_add", "", "Adds command to the history (without executing it)",
+        cmd_hist_add, 1, 1, TRUE,
 #endif
 "i", "obj combination [operation]", "add instance of obj to comb",
 	f_instance,3,4,FALSE,
@@ -367,10 +366,8 @@ static struct funtab funtab[] = {
 #endif
 "listeval", "", "lists 'evaluated' path solids",
 	f_pathsum, 1, MAXARGS, FALSE,
-#ifndef XMGED
 "loadtk", "", "Initializes Tk",
         cmd_tk, 1, 1, TRUE,
-#endif
 "ls", "", "table of contents",
 	dir_print,1,MAXARGS, FALSE,
 "M", "1|0 xpos ypos", "handle a mouse event",
@@ -487,13 +484,8 @@ static struct funtab funtab[] = {
 	f_sc_obj,2,2,FALSE,
 "sed", "<path>", "solid-edit named solid",
 	f_sed,2,2,FALSE,
-#ifndef XMGED
 "vars",	"[var=opt]", "assign/display mged variables",
 	f_set,1,2,FALSE,
-#else
-"set",	"[var=opt]", "assign/display mged variables",
-	f_set,1,2,FALSE,
-#endif
 "shells", "nmg_model", "breaks model into seperate shells",
 	f_shells, 2,2,FALSE,
 "shader", "comb material [arg(s)]", "assign materials (like 'mater')",
@@ -504,6 +496,8 @@ static struct funtab funtab[] = {
 "slider", "slider number, value", "adjust sliders using keyboard",
 	f_slider, 3,3,FALSE,
 #endif
+"sliders", "[{on|off}]", "turns the sliders on or off, or reads current state",
+        cmd_sliders, 1, 2, TRUE,
 "solids", "file object(s)", "make ascii summary of solid parameters",
 	f_tables, 3, MAXARGS,FALSE,
 "solids_on_ray", "h v", "List all displayed solids along a ray",
@@ -903,29 +897,25 @@ gui_output(clientData, str)
 genptr_t clientData;
 char *str;
 {
-    struct rt_vls tclcommand;
+    Tcl_DString tclcommand;
     static int level = 0;
 
     if (level > 50) {
-	/* Uh-oh... some bonehead probably typed "gui mged" and all output
-	   is being redirected back into input... they deserve a core dump,
-	   but we'll be slightly more polite... */
 	rt_delete_hook(gui_output, clientData);
-	/* Now safe to run rt_log */
+	/* Now safe to run rt_log? */
     	rt_log("Ack! Something horrible just happened recursively.\n");
 	return 0;
     }
-    rt_vls_init(&tclcommand);
-    rt_vls_vlscat(&tclcommand, &tcl_output_hook);
-    rt_vls_strcat(&tclcommand, " \"");
-    rt_vls_strcat(&tclcommand, str);
-    rt_vls_strcat(&tclcommand, "\"");
+
+    Tcl_DStringInit(&tclcommand);
+    (void)Tcl_DStringAppendElement(&tclcommand, rt_vls_addr(&tcl_output_hook));
+    (void)Tcl_DStringAppendElement(&tclcommand, str);
 
     ++level;
-    Tcl_Eval((Tcl_Interp *)clientData, rt_vls_addr(&tclcommand));
+    Tcl_Eval((Tcl_Interp *)clientData, Tcl_DStringValue(&tclcommand));
     --level;
 
-    rt_vls_free(&tclcommand);
+    Tcl_DStringFree(&tclcommand);
     return strlen(str);
 }
 
@@ -1019,15 +1009,14 @@ char **argv;
 }
 
 /*
- *   C M D _ G U I
+ *   C M D _ O U T P U T _ H O O K
  *
- *   Hooks the output to the given output hook.  (Maybe it shouldn't be called
- *   "gui". Misleading name, although it is used to build up guis.)
- *   Deletes the existing GUI hook!
+ *   Hooks the output to the given output hook.
+ *   Removes the existing output hook!
  */
 
 int
-cmd_gui(clientData, interp, argc, argv)
+cmd_output_hook(clientData, interp, argc, argv)
 ClientData clientData;
 Tcl_Interp *interp;    
 int argc;
@@ -1037,7 +1026,8 @@ char **argv;
     int status;
 
     if (argc > 2) {
-	Tcl_SetResult(interp, "too many args: should be \"gui [hookName]\"",
+	Tcl_SetResult(interp,
+		      "too many args: should be \"output_hook [hookName]\"",
 		      TCL_STATIC);
 	return TCL_ERROR;
     }
@@ -1755,7 +1745,7 @@ int record;
        You never know who might change the string (append to it...)
        (f_mouse is notorious for adding things to the input string)
        If it were to change while it was still being evaluated, Horrible Things
-       would happen.
+       could happen.
     */
 
     
@@ -1832,7 +1822,7 @@ int
 mged_cmd(argc, argv, functions)
 int argc;
 char **argv;
-struct funtab *functions;
+struct funtab functions[];
 {
     register struct funtab *ftp;
 #ifdef XMGED
@@ -1873,7 +1863,7 @@ struct funtab *functions;
     }
 #endif
 
-    for (ftp = functions+1; ftp->ft_name; ftp++) {
+    for (ftp = &functions[1]; ftp->ft_name; ftp++) {
 	if (strcmp(ftp->ft_name, argv[0]) != 0)
 	    continue;
 	/* We have a match */
@@ -1908,14 +1898,46 @@ struct funtab *functions;
 	    }
 #endif
 	}
-	rt_log("Usage: %s%s %s\n\t(%s)\n",functions->ft_name,
+	rt_log("Usage: %s%s %s\n\t(%s)\n",functions[0].ft_name,
 	       ftp->ft_name, ftp->ft_parms, ftp->ft_comment);
 	return CMD_BAD;
     }
     rt_log("%s%s: no such command, type '%s?' for help\n",
-	   functions->ft_name, argv[0], functions->ft_name);
+	   functions[0].ft_name, argv[0], functions[0].ft_name);
     return CMD_BAD;
 }
+
+
+/*
+ *               C M D _ A P R O P O S
+ *
+ * Returns a list of commands whose descriptions contain the given keyword
+ * contained in argv[1].  This version is case-sensitive.
+ */
+
+int
+cmd_apropos(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
+int argc;
+char **argv;
+{
+    register struct funtab *ftp;
+    char *keyword;
+
+    keyword = argv[1];
+    if (keyword == NULL)
+	keyword = "";
+    
+    for (ftp = funtab+1; ftp->ft_name != NULL; ftp++)
+	if (strstr(ftp->ft_name, keyword) != NULL ||
+	    strstr(ftp->ft_parms, keyword) != NULL ||
+	    strstr(ftp->ft_comment, keyword) != NULL)
+	    Tcl_AppendElement(interp, ftp->ft_name);
+	
+    return TCL_OK;
+}
+
 
 /* Let the user temporarily escape from the editor */
 /* Format: %	*/
@@ -2228,12 +2250,13 @@ char option;
 #endif
 
 /*
- * F _ E C H O
- *      
+ *                          C M D _ E C H O
+ *
+ * Concatenates its arguments and "rt_log"s the resulting string.
  */
 
 int
-f_echo(clientData, interp, argc, argv)
+cmd_echo(clientData, interp, argc, argv)
 ClientData clientData;
 Tcl_Interp *interp;
 int	argc;
