@@ -1,6 +1,7 @@
 # $Id$
 
 AUTOMAKE_OPTIONS = 1.6
+ACLOCAL_AMFLAGS = -I m4
 
 required_dirs = \
 	include \
@@ -13,6 +14,7 @@ bench_dirs = \
 
 other_dirs = \
 	doc \
+	m4 \
 	misc \
 	regress \
 	sh
