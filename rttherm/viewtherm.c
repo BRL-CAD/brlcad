@@ -203,7 +203,6 @@ void
 view_pixel(ap)
 register struct application *ap;
 {
-	register int	r,g,b;
 	register struct scanline	*slp;
 	register int	do_eol = 0;
 
@@ -491,12 +490,6 @@ struct seg *finished_segs;
 #if NO_MATER
 	struct shadework sw;
 #endif
-	fastf_t		degK;
-	fastf_t		cm2;
-	fastf_t		cosine;
-	fastf_t		powerfrac;
-	struct bn_tabdata	*pixelp;
-	vect_t		normal;
 
 #if NO_MATER
 	sw.msw_color = BN_TABDATA_NULL;
@@ -778,9 +771,6 @@ register struct application *ap;
 char	*framename;
 {
 	register int i;
-#ifdef HAVE_UNIX_IO
-	struct stat sb;
-#endif
 
 	ap->a_refrac_index = 1.0;	/* RI_AIR -- might be water? */
 	ap->a_cumlen = 0.0;
