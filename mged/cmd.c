@@ -50,6 +50,7 @@ void	f_tedit(), f_memprint();
 void	f_mirface(), f_units(), f_title();
 void	f_rot_obj(), f_tr_obj(), f_sc_obj();
 void	f_analyze();
+void	f_ill(), f_knob();
 
 static struct funtab {
 	char *ft_name;
@@ -87,11 +88,13 @@ static struct funtab {
 	"translate",f_tr_obj,4,4,"translate x y z (trans object to x,y,z)",
 	"scale",f_sc_obj,2,2,"scale factor (scale object by factor)",
 	"analyze",f_analyze,1,2,"analyze [arbname] (list much info about arb)",
+	"ill",f_ill,2,2,"ill name (illuminate object)",
 	"\n",f_return,1,1,"NOP",
 	"%",f_comm,1,1,"% (escape to interactive shell)",
 	"q",f_quit,1,1,"q (quit)",
 	"center",f_center,4,4,"center x y z (debug, set view center)",
 	"press",f_press,2,20,"press button (emulate button press)",
+	"knob",f_knob,3,3,"knob id val (emulate knob twist)",
 	"size",f_view,2,2,"size size (debug, set view size)",
 	"x",f_debug,1,1,"x (debug, list drawn objects)",
 	"regdump",f_regdebug,1,1,"regdump (debug, toggle register print)",

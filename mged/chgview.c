@@ -481,3 +481,92 @@ struct solid *startp;
 		sp = sp->s_forw;
 	}
 }
+
+/* Illuminate the named object */
+/* TODO:  allow path specification on cmd line */
+void
+f_ill()
+{
+	register struct directory *dp;
+	register struct solid *sp;
+	struct solid *lastfound;
+	register int i;
+	int nmatch;
+
+	if( (dp = lookup( cmd_args[1], LOOKUP_NOISY )) == DIR_NULL )
+		return;
+	if( state != ST_O_PICK && state != ST_S_PICK )  {
+		state_err("keyboard illuminate pick");
+		return;
+	}
+	nmatch = 0;
+	FOR_ALL_SOLIDS( sp )  {
+		for( i=0; i<=sp->s_last; i++ )  {
+			if( sp->s_path[i] == dp )  {
+				lastfound = sp;
+				nmatch++;
+				break;
+			}
+		}
+		sp->s_iflag = DOWN;
+	}
+	if( nmatch <= 0 )  {
+		(void)printf("%s not being displayed\n", cmd_args[1]);
+		return;
+	}
+	if( nmatch > 1 )  {
+		(void)printf("%s multiply referenced\n", cmd_args[1]);
+		return;
+	}
+	if( lastfound->s_flag != UP )  {
+		printf("%s not visible\n", cmd_args[1]);
+		return;
+	}
+	/* Make the specified solid the illuminated solid */
+	illump = lastfound;
+	illump->s_iflag = UP;
+	if( state == ST_O_PICK )  {
+		ipathpos = 0;
+		state = ST_O_PATH;
+	} else {
+		/* Check details, Init menu, set state=ST_S_EDIT */
+		init_sedit();
+	}
+	dmaflag = 1;
+}
+
+/* Simulate a knob twist.  "knob id val" */
+void
+f_knob()
+{
+	float f;
+
+	f = atof(cmd_args[2]);
+	if( f < -1.0 )
+		f = -1.0;
+	else if( f > 1.0 )
+		f = 1.0;
+	switch( cmd_args[1][0] )  {
+	case 'x':
+		dm_values.dv_xjoy = f;
+		break;
+	case 'y':
+		dm_values.dv_yjoy = f;
+		break;
+	case 'z':
+		dm_values.dv_zjoy = f;
+		break;
+	case 'Z':
+		dm_values.dv_zoom = f;
+		break;
+	case 'X':
+		dm_values.dv_xslew = f;
+		break;
+	case 'Y':
+		dm_values.dv_yslew = f;
+		break;
+	default:
+		printf("x,y,z for joystick, Z for zoom, X,Y for slew\n");
+		return;
+	}
+}
