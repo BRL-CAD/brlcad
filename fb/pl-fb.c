@@ -1343,7 +1343,7 @@ register struct band *np;	/* *np -> next band 1st descr */
 		}  else  {
 			register unsigned char *pp;
 
-			pp = (unsigned char *)&buffer[(dy*Npixels) + vp->pixel.x];
+			pp = (unsigned char *)&buffer[((dy*Npixels) + vp->pixel.x)*sizeof(RGBpixel)];
 			COPYRGB( pp, vp->col );
 		}
 
