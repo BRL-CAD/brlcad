@@ -546,7 +546,10 @@ register struct application *ap;
 	register union cutter	*cutp;
 	int			end_free_len;
 	AUTO struct rt_i	*rtip;
-	int			debug_shoot = rt_g.debug & DEBUG_SHOOT;
+	CONST int		debug_shoot = rt_g.debug & DEBUG_SHOOT;
+	int			l_nshots = 0;
+	int			l_nmiss = 0;
+	int			l_nhits = 0;
 
 	RT_AP_CHECK(ap);
 	if( ap->a_resource == RESOURCE_NULL )  {
@@ -568,11 +571,6 @@ register struct application *ap;
 		VPRINT("Pnt", ap->a_ray.r_pt);
 		VPRINT("Dir", ap->a_ray.r_dir);
 	}
-
-	/* Since this count provides the RTFM, it must be semaphored */
-	RES_ACQUIRE( &rt_g.res_stats );
-	rtip->rti_nrays++;
-	RES_RELEASE( &rt_g.res_stats );
 
 	if( rtip->needprep )
 		rt_prep(rtip);
@@ -652,14 +650,14 @@ register struct application *ap;
 			/* Shoot a ray */
 			if(debug_shoot)rt_log("shooting %s\n", stp->st_name);
 			BITSET( solidbits->be_v, stp->st_bit );
-			rtip->nshots++;
+			l_nshots++;
 			if( rt_functab[stp->st_id].ft_shot( 
 			    stp, &ap->a_ray, ap, &waiting_segs,
-			    &ap->a_rt_i->rti_tol ) <= 0 )  {
-				rtip->nmiss++;
+			    &rtip->rti_tol ) <= 0 )  {
+				l_nmiss++;
 				continue;	/* MISS */
 			}
-			rtip->nhits++;
+			l_nhits++;
 		}
 	}
 
@@ -725,10 +723,7 @@ register struct application *ap;
 	 *  It is vitally important to always stay within the model RPP, or
 	 *  the space partitoning tree will pick wrong boxes & miss them.
 	 */
-	for(;;)  {
-		if( (cutp = rt_advance_to_next_cell( &ss )) == CUTTER_NULL )
-			break;
-
+	while( (cutp = rt_advance_to_next_cell( &ss )) != CUTTER_NULL )  {
 		if(debug_shoot) {
 			rt_pr_cut( cutp, 0 );
 		}
@@ -771,12 +766,12 @@ register struct application *ap;
 			}
 
 			if(debug_shoot)rt_log("shooting %s\n", stp->st_name);
-			rtip->nshots++;
+			l_nshots++;
 			RT_LIST_INIT( &(new_segs.l) );
 			if( rt_functab[stp->st_id].ft_shot( 
 			    stp, &ss.newray, ap, &new_segs,
-			    &ap->a_rt_i->rti_tol ) <= 0 )  {
-				rtip->nmiss++;
+			    &rtip->rti_tol ) <= 0 )  {
+				l_nmiss++;
 				continue;	/* MISS */
 			}
 
@@ -791,7 +786,7 @@ register struct application *ap;
 					RT_LIST_INSERT( &(waiting_segs.l), &(s2->l) );
 				}
 			}
-			rtip->nhits++;
+			l_nhits++;
 		}
 
 		/*
@@ -888,12 +883,26 @@ hitit:
 	RT_FREE_PT_LIST( &FinalPart, ap->a_resource );
 
 	/*
-	 * Processing of this ray is complete.  Free dynamic resources.
+	 * Processing of this ray is complete.
 	 */
 out:
+	/*  Free dynamic resources.  */
 	if( solidbits != BITV_NULL)  {
 		FREE_BITV( solidbits, ap->a_resource );
 	}
+
+	/*
+	 *  Record essential statistics in a critical section.
+	 *  rti_nrays provides the RTFM, so it must be accurate.
+	 */
+	RES_ACQUIRE( &rt_g.res_stats );
+	rtip->rti_nrays++;
+	rtip->nshots += l_nshots;
+	rtip->nmiss += l_nmiss;
+	rtip->nhits += l_nhits;
+	RES_RELEASE( &rt_g.res_stats );
+
+	/* Terminate any logging */
 	if(rt_g.debug&(DEBUG_ALLRAYS|DEBUG_SHOOT|DEBUG_PARTITION))  {
 		if( rt_g.rtg_logindent > 0 )
 			rt_g.rtg_logindent -= 2;
@@ -936,34 +945,34 @@ out:
  *	rp->r_max = dist from start of ray to point at which ray LEAVES solid
  */
 rt_in_rpp( rp, invdir, min, max )
-register struct xray *rp;
+struct xray		*rp;
 register CONST fastf_t *invdir;	/* inverses of rp->r_dir[] */
 register CONST fastf_t *min;
 register CONST fastf_t *max;
 {
-	register fastf_t *pt = &rp->r_pt[0];
-	FAST fastf_t sv;
+	register fastf_t	*pt = &rp->r_pt[0];
+	register fastf_t	sv;
 #define st sv			/* reuse the register */
+	register fastf_t	rmin = -INFINITY;
+	register fastf_t	rmax =  INFINITY;
 
 	/* Start with infinite ray, and trim it down */
-	rp->r_min = -INFINITY;
-	rp->r_max = INFINITY;
 
 	/* X axis */
 	if( rp->r_dir[X] < 0.0 )  {
 		/* Heading towards smaller numbers */
 		/* if( *min > *pt )  miss */
-		if(rp->r_max > (sv = (*min - *pt) * *invdir) )
-			rp->r_max = sv;
-		if( rp->r_min < (st = (*max - *pt) * *invdir) )
-			rp->r_min = st;
+		if(rmax > (sv = (*min - *pt) * *invdir) )
+			rmax = sv;
+		if( rmin < (st = (*max - *pt) * *invdir) )
+			rmin = st;
 	}  else if( rp->r_dir[X] > 0.0 )  {
 		/* Heading towards larger numbers */
 		/* if( *max < *pt )  miss */
-		if(rp->r_max > (st = (*max - *pt) * *invdir) )
-			rp->r_max = st;
-		if( rp->r_min < ((sv = (*min - *pt) * *invdir)) )
-			rp->r_min = sv;
+		if(rmax > (st = (*max - *pt) * *invdir) )
+			rmax = st;
+		if( rmin < ((sv = (*min - *pt) * *invdir)) )
+			rmin = sv;
 	}  else  {
 		/*
 		 *  Direction cosines along this axis is NEAR 0,
@@ -977,15 +986,15 @@ register CONST fastf_t *max;
 	/* Y axis */
 	pt++; invdir++; max++; min++;
 	if( rp->r_dir[Y] < 0.0 )  {
-		if(rp->r_max > (sv = (*min - *pt) * *invdir) )
-			rp->r_max = sv;
-		if( rp->r_min < (st = (*max - *pt) * *invdir) )
-			rp->r_min = st;
+		if(rmax > (sv = (*min - *pt) * *invdir) )
+			rmax = sv;
+		if( rmin < (st = (*max - *pt) * *invdir) )
+			rmin = st;
 	}  else if( rp->r_dir[Y] > 0.0 )  {
-		if(rp->r_max > (st = (*max - *pt) * *invdir) )
-			rp->r_max = st;
-		if( rp->r_min < ((sv = (*min - *pt) * *invdir)) )
-			rp->r_min = sv;
+		if(rmax > (st = (*max - *pt) * *invdir) )
+			rmax = st;
+		if( rmin < ((sv = (*min - *pt) * *invdir)) )
+			rmin = sv;
 	}  else  {
 		if( (*min > *pt) || (*max < *pt) )
 			return(0);	/* MISS */
@@ -994,23 +1003,27 @@ register CONST fastf_t *max;
 	/* Z axis */
 	pt++; invdir++; max++; min++;
 	if( rp->r_dir[Z] < 0.0 )  {
-		if(rp->r_max > (sv = (*min - *pt) * *invdir) )
-			rp->r_max = sv;
-		if( rp->r_min < (st = (*max - *pt) * *invdir) )
-			rp->r_min = st;
+		if(rmax > (sv = (*min - *pt) * *invdir) )
+			rmax = sv;
+		if( rmin < (st = (*max - *pt) * *invdir) )
+			rmin = st;
 	}  else if( rp->r_dir[Z] > 0.0 )  {
-		if(rp->r_max > (st = (*max - *pt) * *invdir) )
-			rp->r_max = st;
-		if( rp->r_min < ((sv = (*min - *pt) * *invdir)) )
-			rp->r_min = sv;
+		if(rmax > (st = (*max - *pt) * *invdir) )
+			rmax = st;
+		if( rmin < ((sv = (*min - *pt) * *invdir)) )
+			rmin = sv;
 	}  else  {
 		if( (*min > *pt) || (*max < *pt) )
 			return(0);	/* MISS */
 	}
 
 	/* If equal, RPP is actually a plane */
-	if( rp->r_min > rp->r_max )
+	if( rmin > rmax )
 		return(0);	/* MISS */
+
+	/* HIT.  Only now do rp->r_min and rp->r_max have to be written */
+	rp->r_min = rmin;
+	rp->r_max = rmax;
 	return(1);		/* HIT */
 }
 
