@@ -635,14 +635,15 @@ init_sedit()
 		/* rearrange vectors to correspond to the
 		 *  	"standard" ARB6
 		 */
-		VMOVE(&temprec.s_values[3], &es_rec.s.s_values[9]);
-		VMOVE(&temprec.s_values[6], &es_rec.s.s_values[21]);
-		VMOVE(&temprec.s_values[9], &es_rec.s.s_values[12]);
-		VMOVE(&temprec.s_values[12], &es_rec.s.s_values[3]);
-		VMOVE(&temprec.s_values[15], &es_rec.s.s_values[6]);
-		VMOVE(&temprec.s_values[18], &es_rec.s.s_values[18]);
-		VMOVE(&temprec.s_values[21], &es_rec.s.s_values[15]);
-		es_rec.s = temprec;	/* struct copy */
+		register struct solidrec *trp = &temprec;
+		VMOVE(&trp->s_values[3], &es_rec.s.s_values[9]);
+		VMOVE(&trp->s_values[6], &es_rec.s.s_values[21]);
+		VMOVE(&trp->s_values[9], &es_rec.s.s_values[12]);
+		VMOVE(&trp->s_values[12], &es_rec.s.s_values[3]);
+		VMOVE(&trp->s_values[15], &es_rec.s.s_values[6]);
+		VMOVE(&trp->s_values[18], &es_rec.s.s_values[18]);
+		VMOVE(&trp->s_values[21], &es_rec.s.s_values[15]);
+		es_rec.s = *trp;	/* struct copy */
 		type = ARB6;
 	}
 	es_rec.s.s_cgtype = type;
