@@ -49,10 +49,6 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
  * XXX don't spoil the conversion.
  */
 
-/*
- * XXX On output, these should be bracketed in {} !!!!
- */
-
 int
 bn_decode_mat(m, str)
 mat_t m;
@@ -132,6 +128,11 @@ const char *str;
 	return sscanf(str, "%lf %lf %lf %lf", &v[0], &v[1], &v[2], &v[3]);
 }
 
+/*
+ *  Encoding routines.
+ *  All these tuples should be wrapped in {}s.
+ */
+
 void
 bn_encode_mat(vp, m)
 struct bu_vls *vp;
@@ -142,7 +143,7 @@ const mat_t m;
 		return;
 	}
 
-	bu_vls_printf(vp, "%g %g %g %g  %g %g %g %g  %g %g %g %g  %g %g %g %g",
+	bu_vls_printf(vp, "{%g %g %g %g  %g %g %g %g  %g %g %g %g  %g %g %g %g} ",
 	    m[0], m[1], m[2], m[3], m[4], m[5], m[6], m[7],
 	    m[8], m[9], m[10], m[11], m[12], m[13], m[14], m[15]);
 }
@@ -152,7 +153,7 @@ bn_encode_quat(vp, q)
 struct bu_vls *vp;
 const quat_t q;
 {
-	bu_vls_printf(vp, "%g %g %g %g", V4ARGS(q));
+	bu_vls_printf(vp, "{%g %g %g %g} ", V4ARGS(q));
 }
 
 void
@@ -160,7 +161,7 @@ bn_encode_vect(vp, v)
 struct bu_vls *vp;
 const vect_t v;
 {
-	bu_vls_printf(vp, "%g %g %g", V3ARGS(v));
+	bu_vls_printf(vp, "{%g %g %g} ", V3ARGS(v));
 }
 
 void
@@ -168,8 +169,12 @@ bn_encode_hvect(vp, v)
 struct bu_vls *vp;
 const hvect_t v;
 {
-	bu_vls_printf(vp, "%g %g %g %g", V4ARGS(v));
+	bu_vls_printf(vp, "{%g %g %g %g} ", V4ARGS(v));
 }
+
+/*
+ *  Wrappers for macros and multiple-return-value functions
+ */
 
 void
 bn_quat_distance_wrapper(dp, q1, q2)
@@ -666,11 +671,8 @@ char **argv;
 			bu_vls_printf(&result, "bn_isect_2planes() failed, ret=%d\n", ret);
 			goto error;
 		}
-		bu_vls_printf(&result, "{");
 		bn_encode_vect( &result, out_pt );
-		bu_vls_printf(&result, "} {");
 		bn_encode_vect( &result, out_dir );
-		bu_vls_printf(&result, "}");
 	} else {
 		bu_vls_printf(&result, "libbn/bn_tcl.c: math function %s not supported yet", argv[0]);
 		goto error;
