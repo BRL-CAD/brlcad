@@ -17,7 +17,7 @@
 /* light.h material.h mathtab.h rad.h rdebug.h */
 #define FILES	\
 	rtshot \
-	rt opt do worker \
+	main opt do worker \
 	view viewpp viewray viewrad viewcheck viewg3 \
 	regionfix \
 	shade sh_text sh_cloud mathtab \
@@ -27,7 +27,7 @@
 
 /* Explicit composition of each product */
 
-#define	RT_OBJ	rt.o opt.o do.o worker.o sh_text.o sh_cloud.o view.o wray.o \
+#define	RT_OBJ	main.o opt.o do.o worker.o sh_text.o sh_cloud.o view.o wray.o \
 		mathtab.o material.o refract.o \
 		shade.o sh_stack.o sh_plastic.o \
 		sh_cook.o sh_spm.o sh_light.o sh_marble.o \
@@ -39,7 +39,7 @@ rt:	RT_OBJ LIBRT
 	CC LDFLAGS RT_OBJ vers.o LIB_PRE''LIBRT LIB_PRE''LIBFB LIBFB_LIBES LIBRT_LIBES LIBMALLOC LIBES -o rt
 
 
-#define RTRAY_OBJ	rt.o opt.o do.o worker.o viewray.o regionfix.o \
+#define RTRAY_OBJ	main.o opt.o do.o worker.o viewray.o regionfix.o \
 			wray.o mathtab.o
 
 rtray:	RTRAY_OBJ LIBRT
@@ -47,21 +47,21 @@ rtray:	RTRAY_OBJ LIBRT
 	CC CFLAGS -c vers.c
 	CC LDFLAGS RTRAY_OBJ vers.o LIB_PRE''LIBRT LIB_PRE''LIBFB LIBFB_LIBES LIBRT_LIBES LIBMALLOC LIBES -o rtray
 
-#define RTPP_OBJ	rt.o opt.o do.o worker.o viewpp.o mathtab.o
+#define RTPP_OBJ	main.o opt.o do.o worker.o viewpp.o mathtab.o
 
 rtpp:	RTPP_OBJ LIBRT
 	sh ../newvers.sh version "RT pretty-picture"
 	CC CFLAGS -c vers.c
 	CC LDFLAGS RTPP_OBJ vers.o LIB_PRE''LIBRT LIB_PRE''LIBFB LIBFB_LIBES LIBRT_LIBES LIBMALLOC LIBES -o rtpp
 
-#define RTXRAY_OBJ	rt.o opt.o do.o worker.o mathtab.o viewxray.o
+#define RTXRAY_OBJ	main.o opt.o do.o worker.o mathtab.o viewxray.o
 
 rtxray:	RTXRAY_OBJ LIBRT
 	sh ../newvers.sh version "RT X-Ray"
 	CC CFLAGS -c vers.c
 	CC LDFLAGS RTXRAY_OBJ vers.o LIB_PRE''LIBRT LIB_PRE''LIBFB LIBFB_LIBES LIBRT_LIBES LIBMALLOC LIBES -o rtxray
 
-#define RTRAD_OBJ	rt.o opt.o do.o worker.o mathtab.o \
+#define RTRAD_OBJ	main.o opt.o do.o worker.o mathtab.o \
 			viewrad.o
 
 rtrad:	RTRAD_OBJ LIBRT
@@ -69,7 +69,7 @@ rtrad:	RTRAD_OBJ LIBRT
 	CC CFLAGS -c vers.c
 	CC LDFLAGS RTRAD_OBJ vers.o LIB_PRE''LIBRT LIB_PRE''LIBFB LIBFB_LIBES LIBRT_LIBES LIBMALLOC LIBES -o rtrad
 
-#define RTSCAT_OBJ	rt.o opt.o do.o worker.o mathtab.o \
+#define RTSCAT_OBJ	main.o opt.o do.o worker.o mathtab.o \
 			viewscat.o
 
 rtbscat: RTSCAT_OBJ LIBRT LIBRAD
@@ -77,7 +77,7 @@ rtbscat: RTSCAT_OBJ LIBRT LIBRAD
 	CC CFLAGS -c vers.c
 	CC LDFLAGS RTSCAT_OBJ vers.o LIB_PRE''LIBRAD LIB_PRE''LIBRT LIB_PRE''LIBFB LIBFB_LIBES LIBRT_LIBES LIBMALLOC LIBES -o rtbscat
 
-#define RTCHECK_OBJ	rt.o opt.o do.o worker.o viewcheck.o \
+#define RTCHECK_OBJ	main.o opt.o do.o worker.o viewcheck.o \
 			mathtab.o
 
 rtcheck: RTCHECK_OBJ LIBRT
@@ -91,7 +91,7 @@ rtshot:	rtshot.o LIBRT
 rtwalk:	rtwalk.o LIBRT
 	CC LDFLAGS rtwalk.o LIB_PRE''LIBRT LIBRT_LIBES LIBMALLOC LIBES -o rtwalk
 
-#define RTG3_OBJ	rt.o opt.o do.o worker.o viewg3.o regionfix.o \
+#define RTG3_OBJ	main.o opt.o do.o worker.o viewg3.o regionfix.o \
 			mathtab.o
 
 rtg3:	RTG3_OBJ LIBRT
@@ -99,7 +99,7 @@ rtg3:	RTG3_OBJ LIBRT
 	CC CFLAGS -c vers.c
 	CC LDFLAGS RTG3_OBJ vers.o LIB_PRE''LIBRT LIB_PRE''LIBFB LIBFB_LIBES LIBRT_LIBES LIBMALLOC LIBES -o rtg3
 
-#define RTHIDE_OBJ	rt.o opt.o do.o worker.o viewhide.o regionfix.o \
+#define RTHIDE_OBJ	main.o opt.o do.o worker.o viewhide.o regionfix.o \
 			mathtab.o
 
 rthide:	RTHIDE_OBJ LIBRT
@@ -107,7 +107,7 @@ rthide:	RTHIDE_OBJ LIBRT
 	CC CFLAGS -c vers.c
 	CC LDFLAGS RTHIDE_OBJ vers.o LIB_PRE''LIBRT LIB_PRE''LIBFB LIBFB_LIBES LIBRT_LIBES LIBMALLOC LIBES -o rthide
 
-#define RTDUMMY_OBJ	rt.o opt.o do.o worker.o viewdummy.o regionfix.o \
+#define RTDUMMY_OBJ	main.o opt.o do.o worker.o viewdummy.o regionfix.o \
 			mathtab.o
 
 rtdummy:	RTDUMMY_OBJ LIBRT

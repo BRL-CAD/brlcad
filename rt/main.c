@@ -1,7 +1,8 @@
 /*
- *			R T . C 
+ *			M A I N . C
  *
- *  Ray Tracing main program, using RT library.
+ *  Ray Tracing User Interface (RTUIF) main program, using LIBRT library.
+ *
  *  Invoked by MGED for quick pictures.
  *  Is linked with each of several "back ends":
  *	view.c, viewpp.c, viewray.c, viewcheck.c, etc
