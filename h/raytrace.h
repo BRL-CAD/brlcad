@@ -2034,6 +2034,8 @@ BU_EXTERN(void rt_pr_seg, (CONST struct seg *segp));
 BU_EXTERN(void rt_pr_hit, (CONST char *str, CONST struct hit	*hitp));
 BU_EXTERN(void rt_pr_hit_vls, (struct bu_vls *v, CONST char *str,
 	CONST struct hit *hitp));
+BU_EXTERN(void rt_pr_hitarray_vls, (struct bu_vls *v, CONST char *str,
+	CONST struct hit *hitp, int count));
 BU_EXTERN(void rt_pr_tree, (CONST union tree *tp, int lvl));
 BU_EXTERN(void rt_pr_tree_vls, (struct bu_vls *vls, CONST union tree *tp));
 BU_EXTERN(char *rt_pr_tree_str, (CONST union tree *tree));

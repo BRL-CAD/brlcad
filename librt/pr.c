@@ -286,6 +286,30 @@ register CONST struct hit	*hitp;
 }
 
 /*
+ *			R T _ P R _ H I T A R R A Y _ V L S
+ */
+void
+rt_pr_hitarray_vls( v, str, hitp, count )
+struct bu_vls			*v;
+CONST char			*str;
+register CONST struct hit	*hitp;
+int				count;
+{
+	int	i;
+
+	BU_CK_VLS( v );
+	RT_CK_HIT(hitp);
+
+	bu_log_indent_vls( v );
+	bu_vls_strcat( v, str );
+
+	for( i=0; i<count; i++ )  {
+		bu_vls_printf(v, "HIT%d dist=%g (surf %d)\n", i,
+			hitp->hit_dist, hitp->hit_surfno );
+	}
+}
+
+/*
  *			R T _ P R _ T R E E
  *
  *  Warning:  This function uses recursion rather than iteration and
