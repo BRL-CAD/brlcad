@@ -1242,7 +1242,7 @@ char	**argv;
 		return CMD_BAD;
 	}
 
-	if( argc < 2 )
+	if( argc < 1 )
 	{
 		rt_log( "Nothing to evaluate!!!\n" );
 		return CMD_BAD;
