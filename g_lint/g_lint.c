@@ -47,7 +47,7 @@ struct g_lint_ctrl
     unsigned long	glc_what_to_report;	/* Bits to tailor the output */
     unsigned long	glc_how_to_report;	/* Nature of the output */
     FILE		*glc_fp;	/* The output stream */
-    unsigned char	**glc_color;	/* RGB for plot3(5) output */
+    unsigned char	*glc_color;	/* RGB for plot3(5) output */
 };
 #define G_LINT_CTRL_NULL	((struct g_lint_ctrl *) 0)
 #define G_LINT_CTRL_MAGIC	0x676c6374
@@ -71,16 +71,14 @@ struct g_lint_ctrl
 #define	G_LINT_ASCII_WITH_ORIGIN	1
 #define	G_LINT_PLOT3			2
 
-static unsigned char	dflt_plot_rgb[][3] =
+static unsigned char	dflt_plot_rgb[] =
 			{
-			    {  1,   1,   1},	/* dummy */
-			    {255,   0,   0},	/* overlap */
-			    {255, 255,   0},	/* air_contiguous */
-			    {  0, 255,   0},	/* air_unconfined */
-			    {255,   0, 255},	/* air_first */
-			    {  0, 255, 255},	/* air_last */
-			    {128, 128, 128},	/* vacuum */
-			    0
+			    255,   0,   0,	/* overlap */
+			    255, 255,   0,	/* air_contiguous */
+			      0, 255,   0,	/* air_unconfined */
+			    255,   0, 255,	/* air_first */
+			      0, 255, 255,	/* air_last */
+			    128, 128, 128	/* vacuum */
 			};
 
 int log_2 (unsigned long x)
@@ -128,6 +126,16 @@ void printusage ()
 	rt_log("%s", *u);
 }
 
+unsigned char *get_color (unsigned char *ucp, unsigned long x)
+{
+    int	index;
+
+    for (index = 0; x > 1; ++index)
+	x >>= 1;
+    
+    return (ucp + (index * 3));
+}
+
 /*			R P T _ H I T
  *
  *	Ray-hit handler for use by rt_shootray().
@@ -164,6 +172,7 @@ struct partition	*ph;
     int			do_plot3;
     fastf_t		tolerance;
     unsigned long	what_to_report;
+    unsigned char	*color;
 
     RT_AP_CHECK(ap);
     RT_CKMAG(ph, PT_HD_MAGIC, "partition-list head");
@@ -196,8 +205,8 @@ struct partition	*ph;
 		    {
 			if (do_plot3)
 			{
-			    pl_color(cp -> glc_fp,
-				V3ARGS(&(cp -> glc_color[log_2(G_LINT_A_CONT)])));
+			    color = get_color(cp -> glc_color, G_LINT_A_CONT);
+			    pl_color(cp -> glc_fp, V3ARGS(color));
 			    pdv_3point(cp -> glc_fp,
 				    pp -> pt_inhit -> hit_point);
 			}
@@ -223,8 +232,8 @@ struct partition	*ph;
 		    {
 			if (do_plot3)
 			{
-			    pl_color(cp -> glc_fp,
-				V3ARGS(&(cp -> glc_color[log_2(G_LINT_A_1ST)])));
+			    color = get_color(cp -> glc_color, G_LINT_A_1ST);
+			    pl_color(cp -> glc_fp, V3ARGS(color));
 			    pdv_3point(cp -> glc_fp,
 				    pp -> pt_inhit -> hit_point);
 			}
@@ -251,8 +260,8 @@ struct partition	*ph;
 		    {
 			if (do_plot3)
 			{
-			    pl_color(cp -> glc_fp,
-				V3ARGS(&(cp -> glc_color[log_2(G_LINT_A_UNCONF)])));
+			    color = get_color(cp -> glc_color, G_LINT_A_UNCONF);
+			    pl_color(cp -> glc_fp, V3ARGS(color));
 			    pdv_3line(cp -> glc_fp,
 				pp -> pt_back -> pt_outhit -> hit_point,
 				pp -> pt_inhit -> hit_point);
@@ -286,8 +295,8 @@ struct partition	*ph;
 		    {
 			if (do_plot3)
 			{
-			    pl_color(cp -> glc_fp,
-				V3ARGS(&(cp -> glc_color[log_2(G_LINT_A_LAST)])));
+			    color = get_color(cp -> glc_color, G_LINT_A_LAST);
+			    pl_color(cp -> glc_fp, V3ARGS(color));
 			    pdv_3point(cp -> glc_fp,
 				    pp -> pt_outhit -> hit_point);
 			}
@@ -314,8 +323,8 @@ struct partition	*ph;
 		    {
 			if (do_plot3)
 			{
-			    pl_color(cp -> glc_fp,
-				V3ARGS(&(cp -> glc_color[log_2(G_LINT_A_UNCONF)])));
+			    color = get_color(cp -> glc_color, G_LINT_A_UNCONF);
+			    pl_color(cp -> glc_fp, V3ARGS(color));
 			    pdv_3line(cp -> glc_fp,
 				pp -> pt_outhit -> hit_point,
 				pp -> pt_forw -> pt_inhit -> hit_point);
@@ -486,16 +495,6 @@ void init_plot3 (struct application *ap)
     pdv_3space(cp -> glc_fp, rtip->rti_pmin, rtip->rti_pmax);
 }
 
-unsigned char *get_color (unsigned char *ucp, unsigned long x)
-{
-    int	index;
-
-    for (index = 0; x > 1; ++index)
-	x >>= 1;
-    
-    return (ucp + (index * 3));
-}
-
 main (argc, argv)
 
 int	argc;
@@ -526,6 +525,7 @@ char	**argv;
     point_t		mdl_vpo;		/* View-plane origin */
     point_t		v_bb_vertex;	/* bounding-box vertex, view coords */
     struct rt_i		*rtip;
+    unsigned char	*color;
     vect_t		unit_D;			/* View basis vectors */
     vect_t		unit_H;
     vect_t		unit_V;
@@ -544,7 +544,7 @@ char	**argv;
     control.glc_what_to_report = G_LINT_OVLP;
     control.glc_how_to_report = G_LINT_ASCII;
     control.glc_fp = stdout;
-    control.glc_color = (unsigned char **) dflt_plot_rgb;
+    control.glc_color = (unsigned char *) dflt_plot_rgb;
 
     /* Handle command-line options */
     while ((ch = getopt(argc, argv, OPT_STRING)) != EOF)
@@ -727,13 +727,6 @@ char	**argv;
 
     if (control.glc_how_to_report == G_LINT_PLOT3)
 	init_plot3(&ap);
-
-    for (i = 1; i < 64; i <<= 1)
-	rt_log("Color %d (%d) is    %d %d %d\n",
-		i, log_2(i),
-		V3ARGS(get_color(*(control.glc_color), G_LINT_A_CONT)));
-		/* V3ARGS(&(control.glc_color[log_2(G_LINT_A_CONT)]))); */
-    exit (0);
 
     /* Do the actual gridding */
     VSCALE(ap.a_ray.r_dir, unit_D, -1.0);
