@@ -1461,7 +1461,11 @@ start_helper()
 #endif
 						"rsh", host,
 						"-n", cmd, 0 );
-					perror("execl");
+					execlp(
+						"rsh",
+						"rsh", host,
+						"-n", cmd, 0 );
+					perror("rsh execl");
 					_exit(0);
 				}
 				_exit(0);
