@@ -62,6 +62,20 @@ option, see SEQUENCE RECORDING below.
 .TP
 status
 Queries the VAS and the VTR, and prints their current status.
+.TP
+time0
+Seek to timer value 00:00:00.
+.TP
+reset_time
+Reset tape time to 00:00:00.  This is only safe when the tape is playing
+or not moving.
+.TP
+search n
+Search for frame #n.
+.TP 
+old sn start
+Record over an old scene, given scene number (sn) and starting frame (start).
+
 .SH EXAMPLES
 .nf
 vas4	init
