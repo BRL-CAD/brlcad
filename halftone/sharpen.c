@@ -45,6 +45,9 @@ extern double Beta;
  *	Christopher T. Johnson
  *
  * $Log$
+ * Revision 10.2  94/08/23  17:59:09  gdurf
+ * Added includes of conf.h, machine.h, externs.h for malloc
+ * 
  * Revision 10.1  1991/10/12  06:53:19  mike
  * Release_4.0
  *

@@ -49,6 +49,9 @@ int eq_cubic();
  *	tone scale.  If eqptr is null then Set EqCubic to evaluate to a line.
  *
  * $Log$
+ * Revision 10.2  94/08/23  17:58:17  gdurf
+ * Added include of conf.h, machine.h and externs.h, the last for malloc()
+ * 
  * Revision 10.1  1991/10/12  06:53:23  mike
  * Release_4.0
  *
