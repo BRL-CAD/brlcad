@@ -1148,6 +1148,6 @@ f_savekey()
 	 */
 	VSET( temp, 0, 0, 1 );
 	MAT4X3PNT( eye_model, view2model, temp );
-	rt_write(fp, eye_model);
+	rt_oldwrite(fp, eye_model);
 	(void)fclose( fp );
 }
