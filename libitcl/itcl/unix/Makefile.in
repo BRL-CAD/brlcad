@@ -40,7 +40,7 @@ INSTALL_ROOT =
 # Directory from which applications will reference the library of
 # [incr Tcl] scripts (note: you can set the ITCL_LIBRARY environment
 # variable at run-time to override this value):
-ITCL_LIBRARY = $(prefix)/lib/itcl$(VERSION)
+ITCL_LIBRARY = $(prefix)/itcl$(VERSION)
 
 # Path name to use when installing library scripts:
 SCRIPT_INSTALL_DIR =	$(INSTALL_ROOT)$(ITCL_LIBRARY)
