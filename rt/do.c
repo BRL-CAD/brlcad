@@ -942,9 +942,11 @@ res_pr()
 	fprintf(stderr,"\nResource use summary, by processor:\n");
 	res = &resource[0];
 	for( i=0; i<npsw; i++, res++ )  {
-		fprintf("---CPU %d:\n", i);
-		if( res->re_magic != RESOURCE_MAGIC )
+		fprintf(stderr, "---CPU %d:\n", i);
+		if( res->re_magic != RESOURCE_MAGIC )  {
 			fprintf(stderr,"Bad magic number!!\n");
+			continue;
+		}
 		fprintf(stderr,"seg       len=%10d get=%10d free=%10d\n",
 			res->re_seglen, res->re_segget, res->re_segfree );
 		fprintf(stderr,"partition len=%10d get=%10d free=%10d\n",
