@@ -87,7 +87,11 @@ int			count;
 	 *  IEEE format internally, using big-endian order.
 	 *  These are the lucky ones.
 	 */
-	bcopy( in, out, count*8 );
+#	if BSD
+		bcopy( in, out, count*8 );
+#	else
+		memcpy( out, in, count*8 );
+#	endif
 	return;
 #	define	HTOND	yes
 #elif	defined(REVERSED_IEEE)
@@ -400,7 +404,11 @@ int			count;
 	 */
 	if( sizeof(double) != 8 )
 		fprintf(stderr, "ntohd:  sizeof(double) != 8\n");
-	bcopy( in, out, count*8 );
+#	if BSD
+		bcopy( in, out, count*8 );
+#	else
+		memcpy( out, in, count*8 );
+#	endif
 	return;
 #	define	NTOHD	yes
 #elif	defined(REVERSED_IEEE)
