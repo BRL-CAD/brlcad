@@ -72,7 +72,6 @@ char *filename;
 			if( strcmp( record.i.i_version, ID_VERSION) != 0 )  {
 				(void)fprintf(stderr,"File is Version %s, Program is version %s\n",
 					record.i.i_version, ID_VERSION );
-				rtbomb("Version mismatch");
 			}
 			(void)fprintf(stderr,"%s (units=%s)\n",
 				record.i.i_title,
