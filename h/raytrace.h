@@ -1776,6 +1776,10 @@ RT_EXTERN(int db_dirdelete, ( struct db_i *, struct directory *dp ) );
 RT_EXTERN(int db_rename, ( struct db_i *, struct directory *, CONST char *newname) );
 RT_EXTERN(void db_pr_dir, ( CONST struct db_i *dbip ) );
 
+/* db_match.c */
+RT_EXTERN(int db_regexp_match, (CONST char *pattern, CONST char *string));
+RT_EXTERN(int db_regexp_match_all, (struct bu_vls *dest, struct db_i *dbip, CONST char *pattern));
+
 /* db_alloc.c */
 					/* allocate "count" granules */
 RT_EXTERN(int db_alloc, ( struct db_i *, struct directory *dp, int count ) );
@@ -1826,7 +1830,9 @@ RT_EXTERN(void db_apply_anims, (struct db_full_path *pathp,
 	struct mater_info *materp));
 
 /* db_comb.c */
-
+#ifdef _TCL
+RT_EXTERN(int db_tcl_comb_describe, (Tcl_Interp *interp, struct rt_comb_internal *comb, CONST char *item));
+#endif
 
 /* memalloc.c -- non PARALLEL routines */
 RT_EXTERN(unsigned long rt_memalloc, (struct mem_map **pp, unsigned size) );
