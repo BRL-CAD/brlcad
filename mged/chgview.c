@@ -483,9 +483,6 @@ sol_com:
 			pr_solid(&es_rec.s);
 
 		goto out;
-	case ID_TGC:
-		dbpr_tgc( &rp[0].s, dp );
-		goto sol_com;
 	case ID_ELL:
 		dbpr_ell( &rp[0].s, dp );
 		goto sol_com;
@@ -525,30 +522,9 @@ sol_com:
 		(void)printf("%s: %s\n", dp->d_namep, rp->ss.ss_str );
 		break;
 	case ID_PARTICLE:
-		{
-			struct rt_external	ext;
-			struct rt_db_internal	intern;
-			mat_t			ident;
-			struct rt_vls		str;
-
-			printf("%s:  ", dp->d_namep);
-			RT_INIT_EXTERNAL(&ext);
-			ext.ext_buf = (genptr_t)rp;
-			ext.ext_nbytes = dp->d_len*sizeof(union record);
-			mat_idn( ident );
-			if( rt_part_import( &intern, &ext, ident ) < 0 )
-				printf("import error\n");
-			db_free_external( &ext );
-			rp = (union record *)0;
-			rt_vls_init( &str );
-			if( rt_part_describe( &str, &intern, 1 ) < 0 )
-				printf("describe error\n");
-			rt_part_ifree( &intern );
-			fputs( rt_vls_addr( &str ), stdout );
-			rt_vls_free( &str );
-		}
-		break;
 	case ID_PIPE:
+	case ID_ARBN:
+	case ID_TGC:
 		{
 			struct rt_external	ext;
 			struct rt_db_internal	intern;
@@ -560,14 +536,14 @@ sol_com:
 			ext.ext_buf = (genptr_t)rp;
 			ext.ext_nbytes = dp->d_len*sizeof(union record);
 			mat_idn( ident );
-			if( rt_pipe_import( &intern, &ext, ident ) < 0 )
+			if( rt_functab[id].ft_import( &intern, &ext, ident ) < 0 )
 				printf("import error\n");
 			db_free_external( &ext );
 			rp = (union record *)0;
 			rt_vls_init( &str );
-			if( rt_pipe_describe( &str, &intern, 1 ) < 0 )
+			if( rt_functab[id].ft_describe( &str, &intern, 1 ) < 0 )
 				printf("describe error\n");
-			rt_pipe_ifree( &intern );
+			rt_functab[id].ft_ifree( &intern );
 			fputs( rt_vls_addr( &str ), stdout );
 			rt_vls_free( &str );
 		}
