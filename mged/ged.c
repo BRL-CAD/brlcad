@@ -1117,8 +1117,39 @@ void
 setview( a1, a2, a3 )
 double a1, a2, a3;		/* DOUBLE angles, in degrees */
 {
-	buildHrot( Viewrot, a1 * degtorad, a2 * degtorad, a3 * degtorad );
-	new_mats();
+#define TRY_NEW_STUFF 1
+#if TRY_NEW_STUFF
+  vect_t view_pos;
+  point_t new_pos;
+  point_t old_pos;
+  point_t diff;
+  mat_t newrot;
+
+  MAT_DELTAS_GET(old_pos, toViewcenter);
+#endif
+
+  buildHrot( Viewrot, a1 * degtorad, a2 * degtorad, a3 * degtorad );
+
+#if TRY_NEW_STUFF
+  mat_idn( newrot );
+  mat_mul2( newrot, Viewrot );
+  {
+    mat_t   newinv;
+    mat_inv( newinv, newrot );
+    wrt_view( ModelDelta, newinv, ModelDelta );
+  }
+#endif
+
+  new_mats();
+
+#if TRY_NEW_STUFF
+  MAT_DELTAS_GET_NEG(new_pos, toViewcenter);
+  VSUB2(diff, new_pos, orig_pos);
+  VADD2(new_pos, old_pos, diff);
+  VSET(view_pos, new_pos[X], new_pos[Y], new_pos[Z]);
+  MAT4X3PNT( new_pos, model2view, view_pos);
+  VMOVE( absolute_slew, new_pos );
+#endif
 }
 
 /*
