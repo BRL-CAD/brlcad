@@ -1401,6 +1401,12 @@ done:
 	  bu_vls_trunc(&t_vls, -2);
 	}
 
+	/* include nirt script string */
+	if (bu_vls_strlen(&qray_script)) {
+	  *vp++ = "-e";
+	  *vp++ = bu_vls_addr(&qray_script);
+	}
+
 	for( i=1; i < argc; i++ )
 		*vp++ = argv[i];
 	*vp++ = dbip->dbi_filename;
