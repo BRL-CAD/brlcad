@@ -465,6 +465,9 @@ struct soltab {
 	struct bu_ptbl	st_regions;	/* ptrs to regions using this solid (const) */
 	matp_t		st_matp;	/* solid coords to model space, NULL=identity */
 	struct db_full_path st_path;	/* path from region to leaf */
+	/* Experimental stuff for accelerating "pieces" of solids */
+	long		st_npieces;	/* # pieces used by this solid */
+	long		st_piecestate_num; /* re_pieces[] subscript */
 };
 #define st_name		st_dp->d_namep
 #define RT_SOLTAB_NULL	((struct soltab *)0)
@@ -1131,7 +1134,8 @@ struct animate {
 #define ANIMATE_MAGIC	0x414e4963		/* 1095649635 */
 #define RT_CK_ANIMATE(_p)	BU_CKMAG((_p), ANIMATE_MAGIC, "animate")
 
-/*			Q E L E M
+/*
+ *			R T _ Q E L E M
  *
  *	Structure for use by pmalloc()
  */
@@ -1146,6 +1150,46 @@ struct rt_pm_res {
 	struct rt_qelem buckets[RT_PM_NBUCKETS];
 	struct rt_qelem adjhead;
 };
+
+/*
+ *			R T _ P I E C E S T A T E
+ *
+ *  Holds onto memory re-used by rt_shootray() from shot to shot.
+ *  One of these for each solid which uses pieces.
+ *  There is a separate array of these for each cpu.
+ *  Storage for the bit vectors is pre-allocated at prep time.
+ *  The array is subscripted by st_piecestate_num.
+ */
+struct rt_piecestate  {
+	long		magic;
+	struct soltab	*stp;
+	struct bu_bitv	shot;
+	struct hit	oddhit;
+};
+#define RT_PIECESTATE_MAGIC	0x70637374	/* pcst */
+#define RT_CK_PIECESTATE(_p)	BU_CKMAG(_p, RT_PIECESTATE_MAGIC, "struct rt_piecestate")
+
+/*
+ *			R T _ P I E C E L I S T
+ *
+ *  For each space partitioning cell,
+ *  there is one of these for each solid in that cell which uses pieces.
+ *  Storage for the array is allocated at cut time, and never changes.
+ *
+ *  It is expected that the indices allocated by any solid range from
+ *  0..(npieces-1).
+ *
+ *  The piece indices are used as a subscript into a solid-specific table,
+ *  and also into the 'shot' bitv of the corresponding rt_piecestate.
+ */
+struct rt_piecelist  {
+	struct bu_list	l;
+	long		npieces;
+	long		*pieces;	/* pieces[npieces], piece indices */
+	struct soltab	*stp;
+};
+#define RT_PIECELIST_MAGIC	0x70636c73	/* pcls */
+#define RT_CK_PIECELIST(_p)	BU_CKMAG(_p, RT_PIECELIST_MAGIC, "struct rt_piecelist")
 
 /*
  *			R E S O U R C E
@@ -1199,6 +1243,8 @@ struct resource {
 	long		re_prune_solrpp;/* shot missed solid RPP, ft_shot skipped */
 	long		re_ndup;	/* ft_shot() calls skipped for already-ft_shot() solids */
 	long		re_nempty_cells; /* number of empty NUgrid cells passed through */
+	/* Experimental stuff for accelerating "pieces" of solids */
+	struct rt_piecestate *re_pieces; /* array [rti_nsolids_with_pieces] */
 };
 extern struct resource	rt_uniresource;	/* default.  Defined in librt/shoot.c */
 #define RESOURCE_NULL	((struct resource *)0)
@@ -1443,6 +1489,8 @@ struct rt_i {
 /*	struct soltab	*rti_up;	/_* 'up' ptr for rt_submodel rti's only */
 	char		*rti_treetop;	/* bu_strduped, for rt_submodel rti's only */
 	int		rti_uses;	/* for rt_submodel */
+	/* Experimental stuff for accelerating "pieces" of solids */
+	int		rti_nsolids_with_pieces; /* #solids using pieces */
 };
 
 #define RT_NU_GFACTOR_DEFAULT	1.5	 /* see rt_cut_it() for a description
