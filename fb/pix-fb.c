@@ -183,21 +183,24 @@ char **argv;
 	scr_width = fb_getwidth(fbp);
 	scr_height = fb_getheight(fbp);
 
-	/* compute pixels output to screen */
+	/* compute number of pixels to be output to screen */
 	xout = scr_width - scr_xoff;
-	if( xout < 0 ) xout = 0;
-	if( xout > (file_width-file_xoff) ) xout = (file_width-file_xoff);
+	if( xout < 0 )
+		exit(0);			/* off screen */
+	if( xout > (file_width-file_xoff) )
+		xout = (file_width-file_xoff);
+	scanpix = xout;				/* # pixels on scanline */
+
 	yout = scr_height - scr_yoff;
-	if( yout < 0 ) yout = 0;
-	if( yout > (file_height-file_yoff) ) yout = (file_height-file_yoff);
-	scanpix = xout;			/* # pixels on scanline */
+	if( yout < 0 )
+		exit(0);			/* off screen */
+	if( yout > (file_height-file_yoff) )
+		yout = (file_height-file_yoff);
 
 	/* Only in the simplest case use multi-line writes */
 	if( !inverse && !zoom &&
-	    xout == scr_width &&
-	    file_xoff == 0 &&
-	    file_width == scr_width &&
-	    (file_height%16) == 0  )  {
+	    xout == file_width &&
+	    file_width <= scr_width )  {
 		streamline = 16;
 	    	scanpix *= streamline;
 	}
@@ -235,12 +238,15 @@ char **argv;
 				height = (n/sizeof(RGBpixel)+xout-1)/xout;
 				if( height <= 0 )  break;
 			}
-			m = fb_writerect( fbp, 0, y, scr_width, height,
+			m = fb_writerect( fbp, scr_xoff, y,
+				file_width, height,
 				scanline );
-			if( m != scr_width*height )
+			if( m != file_width*height )  {
 				fprintf(stderr,
-					"pix-fb: fb_writerect(x=0, y=%d, w=%d, h=%d) failure, ret=%d, s/b=%d\n",
-					y, scr_width, height, m, scanbytes );
+					"pix-fb: fb_writerect(x=%d, y=%d, w=%d, h=%d) failure, ret=%d, s/b=%d\n",
+					scr_xoff, y,
+					file_width, height, m, scanbytes );
+			}
 		}
 	} else if( !inverse )  {
 		/* Normal way -- bottom to top */
@@ -249,7 +255,13 @@ char **argv;
 				skipbytes( infd, file_xoff*sizeof(RGBpixel) );
 			n = mread( infd, (char *)scanline, scanbytes );
 			if( n <= 0 ) break;
-			fb_write( fbp, scr_xoff, y, scanline, xout );
+			m = fb_write( fbp, scr_xoff, y, scanline, xout );
+			if( m != xout )  {
+				fprintf(stderr,
+					"pix-fb: fb_write(x=%d, y=%d, npix=%d) ret=%d, s/b=%d\n",
+					scr_xoff, y, xout,
+					m, xout );
+			}
 			/* slop at the end of the line? */
 			if( xout < file_width-file_xoff )
 				skipbytes( infd, (file_width-file_xoff-xout)*sizeof(RGBpixel) );
@@ -261,7 +273,13 @@ char **argv;
 				skipbytes( infd, file_xoff*sizeof(RGBpixel) );
 			n = mread( infd, (char *)scanline, scanbytes );
 			if( n <= 0 ) break;
-			fb_write( fbp, scr_xoff, y, scanline, xout );
+			m = fb_write( fbp, scr_xoff, y, scanline, xout );
+			if( m != xout )  {
+				fprintf(stderr,
+					"pix-fb: fb_write(x=%d, y=%d, npix=%d) ret=%d, s/b=%d\n",
+					scr_xoff, y, xout,
+					m, xout );
+			}
 			/* slop at the end of the line? */
 			if( xout < file_width-file_xoff )
 				skipbytes( infd, (file_width-file_xoff-xout)*sizeof(RGBpixel) );
