@@ -741,6 +741,11 @@ int			ncpu;
 
 		/* Infinite and finite solids all get lumpped together */
 		rt_cut_extend( finp, stp, rtip );
+
+		if( stp->st_aradius >= INFINITY )  {
+			/* Also add infinite solids to a special BOXNODE */
+			rt_cut_extend( &rtip->rti_inf_box, stp, rtip );
+		}
 	} RT_VISIT_ALL_SOLTABS_END
 
 	/*  Dynamic decisions on tree limits.  Note that there * will be
