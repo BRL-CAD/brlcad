@@ -1873,6 +1873,10 @@ RT_EXTERN(void			nmg_jv, (struct vertex *v1, struct vertex *v2) );
 /*	SHELL Routines */
 RT_EXTERN(int			nmg_simplify_shell, (struct shell *s) );
 RT_EXTERN(void			nmg_rm_redundancies, (struct shell *s ) );
+RT_EXTERN(void			nmg_sanitize_s_lv, (struct shell *s,
+				int orient) );
+RT_EXTERN(void			nmg_s_split_touchingloops, (struct shell *s,
+				CONST struct rt_tol *tol) );
 /*	FACE Routines */
 RT_EXTERN(struct faceuse	*nmg_cmface, (struct shell *s, struct vertex **vt[], int n) );
 RT_EXTERN(struct faceuse	*nmg_cface, (struct shell *s, struct vertex **vt,	int n) );
@@ -1903,7 +1907,7 @@ RT_EXTERN(struct loopuse	*nmg_dup_loop, (struct loopuse *lu,
 				long *parent, long **trans_tbl) );
 RT_EXTERN(void			nmg_set_lu_orientation, (struct loopuse *lu, int is_opposite) );
 RT_EXTERN(void			nmg_lu_reorient, (struct loopuse *lu,
-				CONST plane_t norm, CONST struct rt_tol *tol) );
+				CONST struct rt_tol *tol) );
 /*	EDGE Routines */
 RT_EXTERN(struct edgeuse	*nmg_eusplit, (struct vertex *v, struct edgeuse *oldeu) );
 RT_EXTERN(struct edgeuse	*nmg_esplit, (struct vertex *v, struct edgeuse *eu) );
@@ -1965,6 +1969,8 @@ RT_EXTERN(int			nmg_is_loop_in_facelist, (CONST struct loop *l,
 				CONST struct rt_list *fu_hd) );
 RT_EXTERN(struct vertex		*nmg_find_pt_in_shell, (CONST struct shell *s,
 				CONST point_t pt, CONST struct rt_tol *tol) );
+RT_EXTERN(struct faceuse	*nmg_find_fu_with_fg_in_s, (CONST struct shell *s1,
+				CONST struct faceuse *fu2));
 
 RT_EXTERN(void			nmg_region_vertex_list, (struct nmg_ptbl *tab,
 				struct nmgregion *r));
@@ -2130,8 +2136,6 @@ RT_EXTERN(void			nmg_face_cutjoin, (
 				struct faceuse *fu1, struct faceuse *fu2,
 				point_t pt, vect_t dir,
 				CONST struct rt_tol *tol) );
-RT_EXTERN(void			nmg_lu_reorient, (struct loopuse *lu,
-				CONST plane_t norm, CONST struct rt_tol *tol) );
 
 #define nmg_mev(_v, _u)	nmg_me((_v), (struct vertex *)NULL, (_u))
 
