@@ -1,13 +1,13 @@
 .\" $Header$
-.\" troff -t -ms README | catimp -P imt1
+.\"	groff -ms README | print-postscript
 .TL
 README
 .sp
-The Ballistic Research Laboratory CAD Package
+The BRL-CAD Package
 .br
-Release 4.0
+Release 4.4
 .br
-(October-1991)
+(October-1994)
 .RT
 .IP "VERSION"
 .sp
@@ -30,10 +30,10 @@ that they are now each a standalone document.
 Please note that
 this distribution package does \fInot\fR include
 the various military-specific model
-analysis tools such as GIFT, SAR, SLAVE, VAST, etc., nor does it
+analysis tools such as MUVES, GIFT, SAR, SLAVE, VAST, etc., nor does it
 include any military databases.
 If you desire to have access to this material,
-please contact Keith Applin at (301)-278-6647.
+please contact Keith Applin at (410)-278-6647.
 .sp
 .IP "INSTALLATION"
 .sp
@@ -62,21 +62,21 @@ Models", included in the file papers/solid-models.
 .IP "DISTRIBUTION DETAILS"
 .sp
 This software is governed by a limited distribution agreement.
-To obtain a copy of the BRL CAD Package distribution materials, there
+To obtain a copy of the BRL-CAD Package distribution materials, there
 are two options:
 .sp
 1.  Free distribution with no support privileges:  Those users with
-online access to the DARPA InterNet may obtain the BRL-CAD Package via
+online access to the InterNet may obtain the BRL-CAD Package via
 FTP file transfer, at no cost, after completing and returning a signed
 copy of the printed distribution agreement. A blank agreement form is
-available only via anonymous FTP from host ftp.brl.mil (address
+available only via anonymous FTP from host ftp.arl.mil (address
 128.63.16.158) from file "brl-cad/agreement". One printed set of BRL-CAD
 documentation will be mailed to you at no cost. No installation
 assistance or telephone support will be available.
 .sp
 2.  Full service distribution:  The Survivability/Vulnerability
 Information Analysis Center (SURVIAC) administers the supported BRL-CAD
-distributions and information exchange programs for BRL.  Full service
+distributions and information exchange programs for ARL.  Full service
 distributions a copy of the full distribution materials on your choice
 of magnetic tape media, or you may elect to obtain your copy via FTP.
 One printed set of BRL-CAD documentation will be mailed to you.
@@ -87,24 +87,27 @@ full service distribution with a simple MIPR or OGA funds transfer.
 .sp
 .nf
 For further details, contact:
-
+.sp .5
 	BRL-CAD Distribution
 	SURVIAC Aberdeen Satellite Office
 	1003 Old Philadelphia Road
 	Suite 103
 	Aberdeen MD  21001  USA
-
-or call Mr. Glenn Gillis at (301)-273-7794.
+.fi
+.sp .5
+or call Ms. Carla Moyer at USA (410)-273-7794, send
+E-mail to <cad-dist@arl.mil>, FAX your letter to USA (410)-272-6763,
+or write to the above address.
 .fi
 .sp
 .ne 1i
 .IP "COMMUNICATION"
 .sp
-You are invited to participate in the DARPA InterNet (aka "ARPANET")
+You are invited to participate in the InterNet (aka "ARPANET")
 electronic mailing list on the BRL-CAD software, which is called
 .sp .5
 .ti +1i
-<CAD @ BRL.MIL>.
+<CAD @ ARL.MIL>.
 .sp .5
 Bug reports and discussions of new features
 are the main topics;  volume of messages has been light (so far).
@@ -112,9 +115,20 @@ Direct your bug reports to this address.  Request a subscription by
 sending to
 .sp .5
 .ti +1i
-<CAD-REQUEST @ BRL.MIL>.
+<CAD-REQUEST @ ARL.MIL>.
 .sp .5
 If you find bugs, please report your experiences via E-mail.
+.sp
+A variety of information on BRL-CAD is available via the World-Wide-Web.
+Papers and documentation can be found at
+.sp .5
+.ti +1i
+http://web.arl.mil/software/brl-cad/
+.sp .5
+The software repository can be found at
+.sp .5
+.ti +1i
+http://ftp.arl.mil/ftp/brl-cad/
 .sp
 .IP "FUTURE EVENTS"
 .sp
@@ -131,11 +145,10 @@ know, so we can update our records.
 Best Wishes,
  -Mike Muuss
 .sp
-  Leader, Advanced Computer Systems Team
-  U.S. Army Ballistic Research Laboratory
-  APG, MD. 21005-5066
-  USA
+Leader, Advanced Computer Systems Team
+The US Army Research Laboratory
+APG, MD  21005-5068  USA
 .sp
-ArpaNet:  <Mike @ BRL.MIL>
+E-mail:  <Mike @ ARL.MIL>
 .KE
 .fi
