@@ -307,7 +307,7 @@ unsigned long addr;
 	}
 
 	if( type & (M_TOVFL|M_BOVFL) )  {
-		bu_log("rt_mfree(addr=x%x,size=%d)  ERROR type=0%o\n",
+		bu_log("rt_memfree(addr=x%x,size=%d)  ERROR type=0%o\n",
 			addr, size, type );
 		if( prevp )
 			bu_log("prevp: m_addr=x%x, m_size=%d\n",
