@@ -39,8 +39,10 @@ README
   status: bad
   extremely dated readme about the entire package last updated 1995; would recommend using gnu convention of having a README|INSTALL|LICENSE|... set of files
 
-Directories
------------
+Directories/Packages
+--------------------
+Listed are the packages and directories as a whole including their present status and brief descriptions:
+
 anim
 awf
 bat
@@ -118,6 +120,10 @@ util
 vas4
 vdeck
 vfont
+
+Tools\Binaries
+--------------
+Listed 
 a-d
 alias-pix
 all_sf
