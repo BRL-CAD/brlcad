@@ -50,6 +50,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <gl.h>
 #include <get.h>
 #include <device.h>
+#define _BSD_TYPES		/* Needed for IRIX 5.0.1 */
 #include <sys/types.h>
 #include <sys/invent.h>
 #include <sys/ipc.h>

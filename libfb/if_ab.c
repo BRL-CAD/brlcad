@@ -27,6 +27,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <time.h>
 
 #include <netdb.h>
+#define _BSD_TYPES		/* Needed for IRIX 5.0.1 */
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
