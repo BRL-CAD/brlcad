@@ -7628,7 +7628,19 @@ sedit_apply(accept_flag)
 		es_edclass = EDIT_CLASS_NULL;
 
 		rt_db_free_internal(&es_int, &rt_uniresource);
+	} else {
+		/* XXX hack to restore es_int after rt_db_put_internal blows it away */
+		/* Read solid description into es_int again!!! Gaak! */
+		if (rt_db_get_internal(&es_int, LAST_SOLID(illump),
+				       dbip, NULL, &rt_uniresource) < 0) {
+			Tcl_AppendResult(interp, "sedit_apply(",
+					 LAST_SOLID(illump)->d_namep,
+					 "):  solid reimport failure\n", (char *)NULL);
+			rt_db_free_internal(&es_int, &rt_uniresource);
+			return TCL_ERROR;
+		}
 	}
+
 
 	return TCL_OK;
 }
