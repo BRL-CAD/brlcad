@@ -134,12 +134,12 @@ CONST char	*str;		/* non-zero means pause after the display */
 			/* Display only OT_SAME, and OT_UNSPEC et.al.  */
 			if( lu->orientation == OT_OPPOSITE )  continue;
 
-			sprintf(buf, "%s=x%x", str, lu);
+			sprintf(buf, "%s=x%lx", str, (unsigned long)lu);
 			nmg_show_broken_classifier_stuff(&lu->l.magic, classlist, new, fancy, buf);
 		}
 	}
 	for( BU_LIST_FOR( lu, loopuse, &s->lu_hd ) )  {
-		sprintf(buf, "%s=x%x (wire)", str, lu);
+		sprintf(buf, "%s=x%lx (wire)", str, (unsigned long)lu);
 		nmg_show_broken_classifier_stuff(&lu->l.magic, classlist, new, fancy, buf);
 	}
 	rt_g.NMG_debug = save;		/* restore it */

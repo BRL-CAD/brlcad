@@ -416,7 +416,7 @@ FILE	*fp;
 			fprintf( stderr, "plrot: unrecognized command '%c' (0x%x)\n",
 				(isascii(c) && isprint(c)) ? c : '?',
 				c );
-			fprintf( stderr, "plrot: ftell = %d\n", ftell(fp) );
+			fprintf( stderr, "plrot: ftell = %ld\n", ftell(fp) );
 			putchar( c );
 			break;
 		}

@@ -279,7 +279,7 @@ struct seg		*finished_segs;
     {
 	BU_CKMAG(pp, PT_MAGIC, "partition");
 	BU_CKMAG(pp -> pt_regionp, RT_REGION_MAGIC, "region");
-	printf("    Partition <%x> is '%s' ",
+	printf("    Partition <%lx> is '%s' ",
 	    pp, pp -> pt_regionp -> reg_name);
 	
 	printf("\n--- Solids hit on this partition ---\n");

@@ -55,7 +55,8 @@ char	*title;
 		*cp++ = c;
 		count--;
 		if( count <= 0 )  {
-			printf("getline(x%x, %d) input record overflows buffer for %s\n", cp, buflen, title);
+			printf("getline(x%lx, %d) input record overflows buffer for %s\n",
+			       (unsigned long)cp, buflen, title);
 			break;
 		}
 		c = fgetc(infp);

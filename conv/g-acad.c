@@ -263,8 +263,8 @@ char	*argv[];
 		regions_written, percent );
 	}
 
-	rt_log( "%d triangles written\n", tot_polygons );
-	fprintf( fpe, "%d triangles written\n", tot_polygons );
+	rt_log( "%ld triangles written\n", tot_polygons );
+	fprintf( fpe, "%ld triangles written\n", tot_polygons );
 /* XXX Write out number of facet entities to .facet file */
 
 	rewind(fp);

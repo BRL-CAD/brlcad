@@ -191,7 +191,7 @@ struct rt_lex_key *symbols;
 			for (cp=unit; *cp && *cp>='0' && *cp <='7'; cp++);
 			if (!*cp) {	/* We have an octal value */
 				token->type = RT_LEX_INT;
-				sscanf(unit,"%lo",&token->t_int.value);
+				sscanf(unit,"%o",&token->t_int.value);
 				rt_free(unit,"unit token");
 				return used;
 			}
@@ -205,7 +205,7 @@ struct rt_lex_key *symbols;
 				for(;*cp && isxdigit(*cp);cp++);
 				if (!*cp) {
 					token->type = RT_LEX_INT;
-					sscanf(unit,"%lx",&token->t_int.value);
+					sscanf(unit,"%x",&token->t_int.value);
 					rt_free(unit, "unit token");
 					return used;
 				}
@@ -218,7 +218,7 @@ struct rt_lex_key *symbols;
 		for (cp=unit; *cp && isdigit(*cp); cp++);
 		if (!*cp) {
 			token->type = RT_LEX_INT;
-			sscanf(unit,"%ld", &token->t_int.value);
+			sscanf(unit,"%d", &token->t_int.value);
 			rt_free(unit, "unit token");
 			return used;
 		}

@@ -490,10 +490,10 @@ int material_id;
 						int j;
 
 						j = nmg_tbl( &norms, TBL_LOC, (long *)eu->vu_p->a.magic_p );
-						fprintf( fp, " %d//%d", i+1+vert_offset, j+1+norm_offset );
+						fprintf( fp, " %ld//%ld", i+1+vert_offset, j+1+norm_offset );
 					}
 					else
-						fprintf( fp, " %d", i+1+vert_offset );
+						fprintf( fp, " %ld", i+1+vert_offset );
 				}
 
 				fprintf( fp, "\n" );

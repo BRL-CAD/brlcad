@@ -74,7 +74,7 @@ char	*argv[];
 	if ( backcolor_flag && nback < in_hdr.ncolors )
 	{
 	    fprintf( stderr, "%s: Need %d colors, only %d supplied.\n",
-		     in_hdr.ncolors, nback );
+		     cmd_name( argv ), in_hdr.ncolors, nback );
 	    exit(-1);
 	}
 	out_hdr = in_hdr;

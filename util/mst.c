@@ -709,7 +709,7 @@ char	*argv[];
 	{
 	    BU_CKMAG(vcp, VERTEX_MAGIC, "vertex");
 	    if (numeric)
-		(void) printf("%d %d %g\n",
+		(void) printf("%ld %ld %g\n",
 		    vcp -> v_index, vup -> v_index, bp -> b_weight);
 	    else
 		(void) printf("%s %s %g\n",

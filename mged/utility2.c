@@ -2349,7 +2349,7 @@ char **argv;
 
 	rt_db_free_internal( &intern );
 
-	sprintf( count_str, "%d", count );
+	sprintf( count_str, "%ld", count );
 	Tcl_AppendResult(interp, count_str, " edges collapsed\n", (char *)NULL );
 
 	/* use "e" command to get new solid displayed */

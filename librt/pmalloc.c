@@ -503,7 +503,7 @@ register struct rt_pm_res *pmem;
 	char oendfree;
 
 	if (mem == NULL)
-		return(rt_pmalloc(nbytes, pmem));
+		return(rt_pmalloc((long)nbytes, pmem));
 
 	/* if beyond current arena it has to be bad */
 	if(mem > (char*)FROMADJ(pmem->adjhead.q_back) + sizeof(struct overhead))
@@ -564,7 +564,7 @@ register struct rt_pm_res *pmem;
 	else
 		bu_semaphore_release( BU_SEM_SYSCALL );
 
-	newmem = rt_pmalloc(nbytes, pmem);
+	newmem = rt_pmalloc((long)nbytes, pmem);
 
 	if (newmem != mem && newmem != NULL) {
 		register Size n;
@@ -688,7 +688,7 @@ register struct rt_pm_res *pmem;
 	register char *p;
 
 	size *= num;
-	if (p = rt_pmalloc(size, pmem))  {
+	if (p = rt_pmalloc((long)size, pmem))  {
 #ifdef BSD
 		bzero(p, size);
 #else

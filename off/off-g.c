@@ -168,7 +168,8 @@ FILE *fpin, *fpout;
 		rt_bomb("Error: no geometry filename.");
 
 	if ((fgeom = fopen(geom_fname, "r")) == NULL) {
-		fprintf(stderr, "%s: cannot open %s (geometry description) for reading\n", geom_fname);
+		fprintf(stderr, "off2nmg: cannot open %s (geometry description) for reading\n",
+			geom_fname);
 		exit(1);
 	}
 

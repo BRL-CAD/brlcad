@@ -184,6 +184,7 @@ struct rt_i		*rtip;
 	MAT4X3VEC( tmp_pt, Rot, eip->v_vec );
 	VPRINT( "rotated v_vec:", tmp_pt );
 
+	return(0);              /* OK */
 }
 
 /*
@@ -599,9 +600,9 @@ CONST struct db_i		*dbip;
 	ptr = (unsigned char *)rec;
 	ptr += sizeof( struct extr_rec );
 
-	strncpy( ptr, extrude_ip->sketch_name, 16 );
+	strncpy( (char *)ptr, extrude_ip->sketch_name, 16 );
 	ptr += 16;
-	strncpy( ptr, extrude_ip->curve_name, 16 );
+	strncpy( (char *)ptr, extrude_ip->curve_name, 16 );
 
 	return(0);
 }

@@ -285,7 +285,7 @@ char **comment_names;
 		{
 		    if ( (cp = strchr( the_comment, '\n' )) )
 			printf( ", %s=%.*s", *comment_names,
-				cp - the_comment - 1, the_comment );
+				(int)(cp - the_comment - 1), the_comment );
 		    else
 			printf( ", %s=%s", *comment_names, the_comment );
 		    break;

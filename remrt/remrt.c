@@ -518,7 +518,7 @@ char	**argv;
 
 	/* Random inits */
 	our_hostname = get_our_hostname();
-	fprintf(stderr,"%s %s %s\n", stamp(), our_hostname, version+5 );
+	fprintf(stderr,"%s %s %s\n", stamp(), our_hostname, (char *)(version+5) );
 	fflush(stderr);
 
 	width = height = 512;			/* same size as RT */
@@ -1463,10 +1463,10 @@ register struct frame	*fr;
 
 	/* Always create a file name to write into */
 	if( outputfile )  {
-		sprintf( name, "%s.%d", outputfile, fr->fr_number );
+		sprintf( name, "%s.%ld", outputfile, fr->fr_number );
 		fr->fr_tempfile = 0;
 	} else {
-		sprintf( name, "remrt.pix.%d", fr->fr_number );
+		sprintf( name, "remrt.pix.%ld", fr->fr_number );
 		fr->fr_tempfile = 1;
 	}
 	fr->fr_filename = bu_strdup( name );
@@ -1519,7 +1519,7 @@ register struct frame *fr;
 	(void)gettimeofday( &fr->fr_end, (struct timezone *)0 );
 	delta = tvdiff( &fr->fr_end, &fr->fr_start);
 	if( delta < 0.0001 )  delta=0.0001;
-	bu_log("%s Frame %d DONE: %g elapsed sec, %d rays/%g cpu sec\n",
+	bu_log("%s Frame %ld DONE: %g elapsed sec, %d rays/%g cpu sec\n",
 		stamp(),
 		fr->fr_number,
 		delta,
@@ -1543,7 +1543,7 @@ register struct frame *fr;
 		char *cmd;
 		cmd = malloc(strlen(frame_script) + strlen(fr->fr_filename) +
 		    20); /* spaces and frame number */
-		(void) sprintf(cmd,"%s %s %d",frame_script,fr->fr_filename,
+		(void) sprintf(cmd,"%s %s %ld",frame_script,fr->fr_filename,
 		    fr->fr_number);
 		if(rem_debug) bu_log("%s %s\n", stamp(), cmd);
 		(void) system(cmd);

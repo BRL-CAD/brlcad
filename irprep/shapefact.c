@@ -633,7 +633,7 @@ char **argv;
 	(void)fprintf(fp2,"\nError file for shapefact.\n");
 	(void)fprintf(fp2,"Shape factor file created:  %s\n\n",outfile);
 	(void)fprintf(fp2,"Regions with reciprocity errors greater ");
-	(void)fprintf(fp2,"than 10%.\n\n");
+	(void)fprintf(fp2,"than 10%%.\n\n");
 	(void)fflush(fp2);
 
 	for(i=0; i<numreg; i++)

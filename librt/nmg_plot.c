@@ -2086,7 +2086,7 @@ CONST char	*a_string;
 	case NMG_VERTEXUSE_MAGIC:
 		show_broken_vu( vbp, (struct vertexuse *)p, fancy);
 		break;
-	default: fprintf(stderr, "Unknown magic number %ld %0x %ld %0x\n", *p, *p, p, p);
+	default: fprintf(stderr, "Unknown magic number %ld %0lx %lu %0lx\n", *p, *p, p, p);
 				break;
 	}
 

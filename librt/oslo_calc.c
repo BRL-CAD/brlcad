@@ -200,7 +200,7 @@ struct oslo_mat * om;
 
 	for( omp = om; omp!= ( struct oslo_mat *) 0; omp = omp->next)
 	{
-		fprintf( stderr, "%x offset %d osize %d next %x\n",  omp,
+		fprintf( stderr, "%lx offset %d osize %d next %lx\n",  omp,
 		    omp->offset,  omp->osize,  omp->next);
 
 		fprintf(stderr,"\t%f",  omp->o_vec[0]);

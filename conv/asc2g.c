@@ -250,7 +250,7 @@ nmgbld()
 	}
 
 	cp = buf;
-	sscanf( buf , "%c %d %s %d" , &nmg_id, &version, name, &granules );
+	sscanf( buf , "%c %d %s %ld" , &nmg_id, &version, name, &granules );
 
 	if( fgets( buf, BUFSIZE, ifp ) == (char *)0 )
 	{

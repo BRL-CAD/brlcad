@@ -104,7 +104,7 @@ void	*sPtr;
      *	Prime the pump when reading from a string
      */
     if (input_source == READING_STRING)
-	sgetc(0);
+	sgetc((char *)0);
 
     for (;;)
     {

@@ -43,7 +43,7 @@ char *s;
 	if (s) (void)fputs(s, stderr);
 
 	(void) fprintf(stderr, "Usage: %s [-t] file.g nmg_solid [ nmg_solid ... ]\n",
-			progname, options);
+			progname);
 	exit(1);
 }
 

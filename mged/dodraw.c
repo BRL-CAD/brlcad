@@ -1119,7 +1119,7 @@ int			copy;
 		if( vbp->rgb[i] == 0 )  continue;
 		if( BU_LIST_IS_EMPTY( &(vbp->head[i]) ) )  continue;
 
-		sprintf( namebuf, "%s%x",
+		sprintf( namebuf, "%s%lx",
 			shortname, vbp->rgb[i] );
 		invent_solid( namebuf, &vbp->head[i], vbp->rgb[i], copy );
 	}

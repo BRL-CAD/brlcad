@@ -1519,8 +1519,8 @@ Display *dpy;
 	printf("%d DisplayPlanes (other Visuals, if any, may vary)\n",
 		DisplayPlanes(dpy,screen) );
 	printf("%d DisplayCells\n", DisplayCells(dpy,screen) );
-	printf("BlackPixel = %d\n", BlackPixel(dpy,screen) );
-	printf("WhitePixel = %d\n", WhitePixel(dpy,screen) );
+	printf("BlackPixel = %lu\n", BlackPixel(dpy,screen) );
+	printf("WhitePixel = %lu\n", WhitePixel(dpy,screen) );
 	printf("Save Unders: %s\n",
 		DoesSaveUnders(ScreenOfDisplay(dpy,screen)) ? "True" : "False");
 	i = DoesBackingStore(ScreenOfDisplay(dpy,screen));
@@ -1529,20 +1529,20 @@ Display *dpy;
 	printf("Installed Colormaps: min %d, max %d\n",
 		MinCmapsOfScreen(ScreenOfDisplay(dpy,screen)),
 		MaxCmapsOfScreen(ScreenOfDisplay(dpy,screen)) );
-	printf("DefaultColormap: 0x%x\n", DefaultColormap(dpy,screen));
+	printf("DefaultColormap: 0lx%lx\n", DefaultColormap(dpy,screen));
 
 	visual = DefaultVisual(dpy,screen);
-	printf("---- Visual 0x%x ----\n", visual );
+	printf("---- Visual 0x%lx ----\n", visual );
 
 	switch(visual->class) {
 	case DirectColor:
 		printf("DirectColor: Alterable RGB maps, pixel RGB subfield indicies\n");
-		printf("RGB Masks: 0x%x 0x%x 0x%x\n", visual->red_mask,
+		printf("RGB Masks: 0x%lx 0x%lx 0x%lx\n", visual->red_mask,
 			visual->green_mask, visual->blue_mask);
 		break;
 	case TrueColor:
 		printf("TrueColor: Fixed RGB maps, pixel RGB subfield indicies\n");
-		printf("RGB Masks: 0x%x 0x%x 0x%x\n", visual->red_mask,
+		printf("RGB Masks: 0x%lx 0x%lx 0x%lx\n", visual->red_mask,
 			visual->green_mask, visual->blue_mask);
 		break;
 	case PseudoColor:
@@ -1567,22 +1567,22 @@ Display *dpy;
 
 	printf("==== Standard Colormaps ====\n");
 	if( XGetStandardColormap( dpy, win, &cmap, XA_RGB_BEST_MAP ) ) {
-		printf( "XA_RGB_BEST_MAP    - Yes (0x%x)\n", cmap.colormap);
-		printf( "R[0..%d] * %d + G[0..%d] * %d  + B[0..%d] * %d + %d\n",
+		printf( "XA_RGB_BEST_MAP    - Yes (0x%lx)\n", cmap.colormap);
+		printf( "R[0..%lu] * %lu + G[0..%lu] * %lu  + B[0..%lu] * %lu + %lu\n",
 			cmap.red_max, cmap.red_mult, cmap.green_max, cmap.green_mult,
 			cmap.blue_max, cmap.blue_mult, cmap.base_pixel);
 	} else
 		printf( "XA_RGB_BEST_MAP    - No\n" );
 	if( XGetStandardColormap( dpy, win, &cmap, XA_RGB_DEFAULT_MAP ) ) {
-		printf( "XA_RGB_DEFAULT_MAP - Yes (0x%x)\n", cmap.colormap );
-		printf( "R[0..%d] * %d + G[0..%d] * %d  + B[0..%d] * %d + %d\n",
+		printf( "XA_RGB_DEFAULT_MAP - Yes (0x%lx)\n", cmap.colormap );
+		printf( "R[0..%lu] * %lu + G[0..%lu] * %lu  + B[0..%lu] * %lu + %lu\n",
 			cmap.red_max, cmap.red_mult, cmap.green_max, cmap.green_mult,
 			cmap.blue_max, cmap.blue_mult, cmap.base_pixel);
 	} else
 		printf( "XA_RGB_DEFAULT_MAP - No\n" );
 	if( XGetStandardColormap( dpy, win, &cmap, XA_RGB_GRAY_MAP ) ) {
-		printf( "XA_RGB_GRAY_MAP    - Yes (0x%x)\n", cmap.colormap );
-		printf( "R[0..%d] * %d + %d\n",
+		printf( "XA_RGB_GRAY_MAP    - Yes (0x%lx)\n", cmap.colormap );
+		printf( "R[0..%lu] * %lu + %lu\n",
 			cmap.red_max, cmap.red_mult, cmap.base_pixel);
 	} else
 		printf( "XA_RGB_GRAY_MAP    - No\n" );

@@ -35,7 +35,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #define PRNT_A1_DEBUG(_op,_n) \
 	if(rle_debug) (void)fprintf(stderr,"%s(%d)\n",_op,_n)
 #define PRNT_A2_DEBUG(_op,_n,_c) \
-	if(rle_debug) (void)fprintf(stderr,"%s(%d,%d)\n",_op,_n,_c)
+	if(rle_debug) (void)fprintf(stderr,"%s(%ld,%d)\n",_op,_n,_c)
 #define CUR	RED		/* Must be rightmost part of Pixel.		*/
 
 /*	States for run detection					*/
@@ -588,7 +588,7 @@ RGBpixel	*scan_buf;
 			*p++ = getc( fp );
 			SWAB( word );
 			}
-			PRNT_A2_DEBUG( "Run-Data", n,	word );
+			PRNT_A2_DEBUG( "Run-Data", (long)n,	word );
 			if( ! _bw_flag )
 				{
 				register unsigned char inten = (unsigned char)word;

@@ -1250,7 +1250,7 @@ char	**argv;
 	curr_dm_list = save_dmlp;
 	curr_cmd_list = save_cmd_list;
 
-	sprintf(perf_message, "E: %ld vectors in %ld sec\n", nvectors, etime - start_time );
+	sprintf(perf_message, "E: %ld vectors in %ld sec\n", nvectors, (long)(etime - start_time) );
 	Tcl_AppendResult(interp, perf_message, (char *)NULL);
 
 	update_views = 1;

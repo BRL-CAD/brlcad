@@ -1057,7 +1057,7 @@ int			num;
 	mh = MAGNITUDE( gp->h );
 
 	if( ma <= 0.0 || mb <= 0.0 )  {
-		fprintf(stderr, "addtgc(%s): ma=%e, mb=%e, skipping\n", ma, mb );
+		fprintf(stderr, "addtgc(%s): ma=%e, mb=%e, skipping\n", name, ma, mb );
 		return;
 	}
 

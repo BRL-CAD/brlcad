@@ -67,7 +67,7 @@ char *font;
 
 	/* Open the file and read in the header information. */
 	if( (fp = fopen( font, "r" )) == NULL )  {
-		sprintf( fname, "%s/%s", bu_brlcad_path("vfont"), font );
+		sprintf( fname, "%s/%s", (char *)bu_brlcad_path("vfont"), font );
 		if( (fp = fopen( fname, "r" )) == NULL )  {
 			sprintf( fname, "%s/%s", FONTDIR2, font );
 			if( (fp = fopen( fname, "r" )) == NULL )  {

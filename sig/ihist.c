@@ -41,7 +41,7 @@ int argc; char **argv;
 			zerop[ ibuf[i] ] ++;
 		}
 	}
-	printf( "%d values\n", num );
+	printf( "%ld values\n", num );
 	max = 32767;
 	while( zerop[max] == 0 )
 		max--;
@@ -62,15 +62,15 @@ int argc; char **argv;
 		}
 	}
 	for( bit = 0; bit < 16; bit++ ) {
-		printf( "%8d: %10d (%f)\n",
+		printf( "%8ld: %10ld (%f)\n",
 			bit, bits[bit], (double)bits[bit]/(double)num );
 	}
 
-	printf( "%d levels used (%04.2f %%)\n", levels, levels/65535.0 * 100.0 );
+	printf( "%ld levels used (%04.2f %%)\n", levels, levels/65535.0 * 100.0 );
 	if( verbose ) {
 		for( i = -32768; i < 32768; i++ ) {
 			if( zerop[i] ) {
-				printf( "%d %d\n", i, zerop[i] );
+				printf( "%ld %ld\n", i, zerop[i] );
 			}
 		}
 	}
