@@ -1,0 +1,21 @@
+/*
+ *			jack/Cakefile
+ */
+
+#define SRCDIR	jack
+#define PRODUCTS	g-jack jack-g
+#define	SRCSUFF	.c
+#define MANSECTION	1
+
+#include "../Cakefile.defs"
+#include "../Cakefile.prog"
+
+/* Explicit composition of each product */
+
+g-jack:	g-jack.o LIBRT
+	CC LDFLAGS -o g-jack g-jack.o LIB_PRE''LIBRT LIBRT_LIBES LIBES
+
+jack-g:	jack-g.o LIBWDB LIBRT
+	CC LDFLAGS -o jack-g jack-g.o LIBWDB LIB_PRE''LIBRT LIBRT_LIBES LIBES
+
+#include "../Cakefile.rules"
