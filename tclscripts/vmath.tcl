@@ -38,6 +38,10 @@ set M_2_SQRTPI	1.12837916709551257390
 set M_SQRT2	1.41421356237309504880
 set M_SQRT1_2	0.70710678118654752440
 
+proc init_vmath {} {
+	# this routine does nothing except ensure that the abpve global variables get set
+}
+
 proc near_zero { val epsilon } {
     return [expr abs([lindex $val 0])<$epsilon && \
 	         abs([lindex $val 1])<$epsilon && \
