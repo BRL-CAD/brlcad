@@ -2282,8 +2282,6 @@ proc set_cmd_win { id } {
 	if { $mged_gui($id,show_dm) } {
 	    .$id.t configure -height $mged_gui($id,num_lines)
 	    grid .$id.tf -sticky nsew -row 1 -column 0
-	    #		update
-	    #		setmv $id
 	} else {
 	    grid .$id.tf -sticky nsew -row 0 -column 0
 	}
