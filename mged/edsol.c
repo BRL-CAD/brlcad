@@ -184,6 +184,8 @@ int	es_menu;		/* item selected from menu */
 #define MENU_PIPE_INS_PT	69
 #define MENU_PIPE_DEL_PT	70
 #define	MENU_PIPE_MOV_PT	71
+#define	MENU_PIPE_PT_RADIUS	72
+#define	MENU_PIPE_SCALE_RADIUS	73
 
 extern int arb_faces[5][24];	/* from edarb.c */
 
@@ -496,8 +498,10 @@ struct menu_item pipe_menu[] = {
 	{ "prepend point", pipe_ed, MENU_PIPE_INS_PT },
 	{ "scale point OD", pipe_ed, MENU_PIPE_PT_OD },
 	{ "scale point ID", pipe_ed, MENU_PIPE_PT_ID },
+	{ "scale point bend", pipe_ed, MENU_PIPE_PT_RADIUS },
 	{ "scale pipe OD", pipe_ed, MENU_PIPE_SCALE_OD },
 	{ "scale pipe ID", pipe_ed, MENU_PIPE_SCALE_ID },
+	{ "scale pipe bend", pipe_ed, MENU_PIPE_SCALE_RADIUS },
 	{ "", (void (*)())NULL, 0 }
 };
 
@@ -691,6 +695,7 @@ int arg;
 		break;
 		case MENU_PIPE_PT_OD:
 		case MENU_PIPE_PT_ID:
+		case MENU_PIPE_PT_RADIUS:
 			if( !es_pipept )
 			{
 				rt_log( "No Pipe Segment selected\n" );
@@ -702,6 +707,7 @@ int arg;
 		break;
 		case MENU_PIPE_SCALE_OD:
 		case MENU_PIPE_SCALE_ID:
+		case MENU_PIPE_SCALE_RADIUS:
 			es_menu = arg;
 			es_edflag = PSCALE;
 		break;
@@ -3916,6 +3922,24 @@ pscale()
 			pipe_seg_scale_id( es_pipept, es_scale );
 		}
 		break;
+	case MENU_PIPE_PT_RADIUS:	/* scale bend radius at selected point */
+		{
+			if( !es_pipept )
+			{
+				rt_log( "pscale: no pipe segment selected for scaling\n" );
+				return;
+			}
+			
+			if( inpara ) {
+				/* take es_mat[15] (path scaling) into account */
+				if( es_pipept->pp_id > 0.0 )
+					es_scale = es_para[0] * es_mat[15]/es_pipept->pp_bendradius;
+				else
+					es_scale = (-es_para[0] * es_mat[15]);
+			}
+			pipe_seg_scale_radius( es_pipept, es_scale );
+		}
+		break;
 	case MENU_PIPE_SCALE_OD:	/* scale entire pipe OD */
 		if( inpara )
 		{
@@ -3973,6 +3997,34 @@ pscale()
 			}
 		}
 		pipe_scale_id( &es_int, es_scale );
+		break;
+	case MENU_PIPE_SCALE_RADIUS:	/* scale entire pipr bend radius */
+		if( inpara )
+		{
+			struct rt_pipe_internal *pipe =
+				(struct rt_pipe_internal *)es_int.idb_ptr;
+			struct wdb_pipept *ps;
+
+			RT_PIPE_CK_MAGIC( pipe );
+
+			ps = RT_LIST_FIRST( wdb_pipept, &pipe->pipe_segs_head );
+			RT_CKMAG( ps, WDB_PIPESEG_MAGIC, "wdb_pipept" );
+
+			if( ps->pp_bendradius > 0.0 )
+				es_scale = es_para[0] * es_mat[15]/ps->pp_bendradius;
+			else
+			{
+				while( ps->l.magic != RT_LIST_HEAD_MAGIC && ps->pp_bendradius <= 0.0 )
+					ps = RT_LIST_NEXT( wdb_pipept, &ps->l );
+
+				/* Check if entire pipe has zero ID */
+				if( ps->l.magic == RT_LIST_HEAD_MAGIC )
+					es_scale = (-es_para[0] * es_mat[15]);
+				else
+					es_scale = es_para[0] * es_mat[15]/ps->pp_bendradius;
+			}
+		}
+		pipe_scale_radius( &es_int, es_scale );
 		break;
 	}
 }

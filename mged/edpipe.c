@@ -209,6 +209,127 @@ fastf_t scale;
 		ps->pp_id = (-scale);
 }
 
+void
+pipe_seg_scale_radius( ps, scale )
+struct wdb_pipept *ps;
+fastf_t scale;
+{
+	fastf_t old_radius;
+	struct wdb_pipept *head;
+
+	RT_CKMAG( ps, WDB_PIPESEG_MAGIC, "pipe point" );
+
+	head = ps;
+	while( head->l.magic != RT_LIST_HEAD_MAGIC )
+		head = RT_LIST_NEXT( wdb_pipept, &head->l );
+
+	/* make sure we can make this change */
+	old_radius = ps->pp_bendradius;
+	if( scale > 0.0 )
+		ps->pp_bendradius *= scale;
+	else
+		ps->pp_bendradius = (-scale);
+
+	if( ps->pp_bendradius < ps->pp_od * 0.5 )
+	{
+		rt_log( "Cannot make bend radius less than pipe outer radius\n" );
+		ps->pp_bendradius = old_radius;
+		return;
+	}
+
+	if( rt_pipe_ck( head ) )
+	{
+		/* won't work, go back to original radius */
+		ps->pp_bendradius = old_radius;
+		return;
+	}
+
+}
+
+void
+pipe_scale_radius( db_int, scale )
+struct rt_db_internal *db_int;
+fastf_t scale;
+{
+	struct rt_list head;
+	struct wdb_pipept *old_ps,*new_ps;
+	struct rt_pipe_internal *pipe=(struct rt_pipe_internal *)db_int->idb_ptr;
+
+	RT_CK_DB_INTERNAL( db_int );
+	RT_PIPE_CK_MAGIC( pipe );
+
+	/* make a quick check for minimum bend radius */
+	for( RT_LIST_FOR( old_ps, wdb_pipept, &pipe->pipe_segs_head ) )
+	{
+		if( scale < 0.0 )
+		{
+			if( (-scale) < old_ps->pp_od * 0.5 )
+			{
+				rt_log( "Cannot make bend radius less than pipe outer radius\n" );
+				return;
+			}
+		}
+		else
+		{
+			if( old_ps->pp_bendradius * scale < old_ps->pp_od * 0.5 )
+			{
+				rt_log( "Cannot make bend radius less than pipe outer radius\n" );
+				return;
+			}
+		}
+	}
+
+	/* make temporary copy of this pipe solid */
+	RT_LIST_INIT( &head );
+	for( RT_LIST_FOR( old_ps, wdb_pipept, &pipe->pipe_segs_head ) )
+	{
+		GETSTRUCT( new_ps, wdb_pipept );
+		*new_ps = (*old_ps);
+		RT_LIST_APPEND( &head, &new_ps->l );
+	}
+
+	/* make the desired editing changes to the copy */
+	for( RT_LIST_FOR( new_ps, wdb_pipept, &head ) )
+	{
+		if( scale < 0.0 )
+			new_ps->pp_bendradius = (-scale);
+		else
+			new_ps->pp_bendradius *= scale;
+	}
+
+	/* check if the copy is O.K. */
+	if( rt_pipe_ck( &head ) )
+	{
+		/* won't work, go back to original */
+		while( RT_LIST_NON_EMPTY( &head ) )
+		{
+			new_ps = RT_LIST_FIRST( wdb_pipept, &head );
+			RT_LIST_DEQUEUE( &new_ps->l );
+			rt_free( (char *)new_ps, "pipe_scale_radius: new_ps" );
+		}
+		return;
+	}
+
+	/* free temporary pipe solid */
+	while( RT_LIST_NON_EMPTY( &head ) )
+	{
+		new_ps = RT_LIST_FIRST( wdb_pipept, &head );
+		RT_LIST_DEQUEUE( &new_ps->l );
+		rt_free( (char *)new_ps, "pipe_scale_radius: new_ps" );
+	}
+
+	/* make changes to the original */
+	for( RT_LIST_FOR( old_ps, wdb_pipept, &pipe->pipe_segs_head ) )
+	{
+		if( scale < 0.0 )
+			old_ps->pp_bendradius = (-scale);
+		else
+			old_ps->pp_bendradius *= scale;
+	}
+
+}
+
+
 struct wdb_pipept *
 find_pipept_nearest_pt( pipe_hd, pt )
 CONST struct rt_list *pipe_hd;
