@@ -28,6 +28,7 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #endif
 
 #include "conf.h"
+#include <math.h>
 #include <stdio.h>
 #ifdef USE_STRING_H
 #include <string.h>
@@ -39,6 +40,7 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #include "externs.h"
 #include "nmg.h"
 #include "raytrace.h"
+#include "nurb.h"
 
 #include "db.h"		/* for debugging stuff at bottom */
 
@@ -8599,4 +8601,373 @@ top:
 	}
 
 	nmg_tbl( &edgeuses, TBL_FREE, (long *)0 );
+}
+/*	R T _ J O I N _ C N U R B S
+ *
+ * Join a list of cnurb structs into a single cnurb.
+ * The list is destroyed upon succesful completion.
+ *
+ * Returns:
+ *	A single cnurb structure that joins all the
+ *	cnurbs on the list. Linear segments may be added
+ *	where consective cnurbs do not have matching endpoints.
+ */
+struct cnurb *
+rt_join_cnurbs( crv_head )
+struct rt_list	*crv_head;
+{
+	struct cnurb *crv,*next_crv;
+	struct cnurb *new_crv=(struct cnurb *)NULL;
+	struct cnurb *linear_crv;
+	fastf_t knot_delta=0.0;
+	fastf_t last_knot;
+	int ncoords;
+	int knot_index=(-1);
+	int max_order=0;
+	int ctl_points=1;
+	int ctl_index=(-1);
+	int knot_length=0;
+	int pt_type=0;
+	int curve_count=0;
+	int i,j;
+
+	RT_CK_LIST_HEAD( crv_head );
+
+	/* Check that all curves are the same pt_type and
+	 * have mutliplicity equal to order at endpoints.
+	 */
+	for( RT_LIST_FOR( crv, cnurb, crv_head ) )
+	{
+		curve_count++;
+		rt_nurb_c_print( crv);
+		if( crv->order > max_order )
+			max_order = crv->order;
+
+		i = 0;
+		while( crv->knot.knots[++i] == crv->knot.knots[0] );
+		if( i != crv->order )
+		{
+			rt_log( "Curve does not have multiplicity equal to order at start:\n" );
+			rt_nurb_c_print( crv);
+			return( new_crv );
+		}
+
+		i = crv->knot.k_size - 1;
+		while( crv->knot.knots[--i] == crv->knot.knots[crv->knot.k_size - 1] );
+		if( crv->knot.k_size - i - 1 != crv->order )
+		{
+			rt_log( "Curve does not have multiplicity equal to order at end:\n" );
+			rt_nurb_c_print( crv);
+			return( new_crv );
+		}
+
+		if( pt_type == 0 )
+			pt_type = crv->pt_type;
+		else
+		{
+			if( crv->pt_type != pt_type )
+			{
+				rt_log( "rt_join_cnurbs: curves are not the same pt_type (%d vs %d)\n",
+					pt_type, crv->pt_type );
+				return( new_crv );
+			}
+		}
+	}
+
+	/* If there is only one entry on list, just return it */
+	if( curve_count < 2 )
+	{
+		crv = RT_LIST_FIRST( cnurb, crv_head );
+		RT_LIST_DEQUEUE( &crv->l );
+		return( crv );
+	}
+
+	/* Raise each curve to order max_order */
+	for( RT_LIST_FOR( crv, cnurb, crv_head ) )
+	{
+		if( crv->order == max_order )
+			continue;
+
+		/* This curve must have its order raised to max_order */
+		/* XXXX Need a routine to raise order of a curve */
+		rt_bomb( "rt_join_cnurbs: Need to raise order of curve\n" );
+	}
+
+	/* Add linear segments where segment endpoints don't match */
+	crv = RT_LIST_FIRST( cnurb, crv_head );
+	ncoords = RT_NURB_EXTRACT_COORDS( crv->pt_type );
+	next_crv = RT_LIST_NEXT( cnurb, &crv->l );
+	while( RT_LIST_NOT_HEAD( &next_crv->l, crv_head ) )
+	{
+		if( VEQUAL( &crv->ctl_points[(crv->c_size-1)*ncoords], next_crv->ctl_points ) )
+		{
+			/* Nothing needed here, go to next curve */
+			crv = next_crv;
+			next_crv = RT_LIST_NEXT( cnurb, &crv->l );
+			continue;
+		}
+
+		/* Need to add a linear segment here */
+		linear_crv = rt_nurb_new_cnurb( max_order, 2*max_order, 3, pt_type );
+
+		/* Set knots for the correct order */
+		for( i=0 ; i<max_order ; i++ )
+			linear_crv->knot.knots[i] = 0.0;
+		for( i=max_order ; i<2*max_order ; i++ )
+			linear_crv->knot.knots[i] = 1.0;
+
+		/* start point */
+		VMOVE( linear_crv->ctl_points, &crv->ctl_points[(crv->c_size-1)*ncoords] );
+		if( ncoords == 4 )
+			linear_crv->ctl_points[3] = 1.0;
+
+		/* end point */
+		VMOVE( &linear_crv->ctl_points[2*ncoords], next_crv->ctl_points );
+		if( ncoords == 4 )
+			linear_crv->ctl_points[11] = 1.0;
+
+		/* mid point */
+		VBLEND2( &linear_crv->ctl_points[ncoords], 0.5, linear_crv->ctl_points, 0.5, &linear_crv->ctl_points[2*ncoords] );
+		if( ncoords == 4 )
+			linear_crv->ctl_points[7] = 1.0;
+
+		RT_LIST_APPEND( &crv->l, &linear_crv->l );
+		crv = next_crv;
+		next_crv = RT_LIST_NEXT( cnurb, &crv->l );
+	}
+
+	/* Get new knot size and polygon size */
+	crv = RT_LIST_FIRST( cnurb, crv_head );
+	knot_length = crv->order;
+	for( RT_LIST_FOR( crv, cnurb, crv_head ) )
+	{
+		ctl_points += (crv->c_size - 1);
+		knot_length += (crv->knot.k_size - crv->order - 1);
+
+	}
+	knot_length++;
+
+	new_crv = rt_nurb_new_cnurb( max_order, knot_length, ctl_points, pt_type );
+
+	crv = RT_LIST_FIRST( cnurb, crv_head );
+
+	/* copy first knot values from first curve */
+	for( i=0 ; i<crv->order ; i++ )
+		new_crv->knot.knots[++knot_index] = crv->knot.knots[i];
+
+	/* copy first control point from first curve */
+	for( j=0 ; j<ncoords ; j++ )
+		new_crv->ctl_points[j] = crv->ctl_points[j];
+
+	ctl_index = 0;
+	knot_delta = new_crv->knot.knots[knot_index];
+
+	/* copy each curve to the new combined curve */
+	for( RT_LIST_FOR( crv, cnurb, crv_head ) )
+	{
+		/* copy interior knots */
+		for( i=crv->order ; i<crv->knot.k_size-crv->order ; i++ )
+		{
+			new_crv->knot.knots[++knot_index] = crv->knot.knots[i] + knot_delta;
+		}
+
+		/* copy endpoint knots (reduce multiplicity by one) */
+		for( i=0 ; i<crv->order-1 ; i++ )
+			new_crv->knot.knots[++knot_index] = crv->knot.knots[crv->knot.k_size-1] + knot_delta;
+
+		knot_delta += crv->knot.knots[crv->knot.k_size-1];
+		last_knot = new_crv->knot.knots[knot_index];
+
+		/* copy control points (skip duplicate initial point) */
+		for( i=1 ; i<crv->c_size ; i++ )
+		{
+			ctl_index++;
+			for( j=0 ; j<ncoords ; j++ )
+				new_crv->ctl_points[ctl_index*ncoords+j] = crv->ctl_points[i*ncoords+j];
+		}
+	}
+	new_crv->knot.knots[++knot_index] = last_knot;
+
+	/* Free cnurbs in list */
+	while( RT_LIST_WHILE( crv, cnurb, crv_head ) )
+	{
+		RT_LIST_DEQUEUE( &crv->l );
+		rt_nurb_free_cnurb( crv );
+	}
+
+	return( new_crv );
+}
+
+/*	R T _ A R C X Y _ T O _ C N U R B
+ *
+ * Convert a 2D arc in the XY-plane to a NURB curve
+ *	The arc start, end, and center must be at the same Z
+ *	coordinate value. The arc is constructed counter-clockwise
+ *	(as viewed from the +Z direction).
+ */
+struct cnurb *
+rt_arcxy_to_cnurb( center, start, end, tol )
+point_t center;
+point_t start;
+point_t end;
+struct rt_tol *tol;
+{
+	struct cnurb *crv;
+	struct rt_list crv_head;
+	double angle;
+	double angles[3];
+	double radius;
+	double tmp_radius;
+	vect_t v1, v2;
+	vect_t ref1, ref2;
+	vect_t norm;
+	point_t start1;
+	point_t end1;
+	int pt_type;
+	int nsegs;
+	int i;
+
+	RT_CK_TOL( tol );
+
+	/* check for points at same Z-coordinate value */
+	if( center[Z] - start[Z] > tol->dist )
+	{
+		rt_log( "rt_arcxy_to_cnurb: center and start points not at same Z value (%g vs %g)\n",
+				center[Z], start[Z] );
+		return( (struct cnurb *)NULL );
+	}
+
+	if( end[Z] - start[Z] > tol->dist )
+	{
+		rt_log( "rt_arcxy_to_cnurb: end and start points not at same Z value (%g vs %g)\n",
+				end[Z], start[Z] );
+		return( (struct cnurb *)NULL );
+	}
+
+	if( end[Z] - center[Z] > tol->dist )
+	{
+		rt_log( "rt_arcxy_to_cnurb: end and center points not at same Z value (%g vs %g)\n",
+				end[Z], center[Z] );
+		return( (struct cnurb *)NULL );
+	}
+
+	/* point type is x, y, z with weighting factor (rational) */
+	pt_type = RT_NURB_MAKE_PT_TYPE( 4, RT_NURB_PT_XYZ, RT_NURB_PT_RATIONAL );
+
+	/* calculate radius twice */
+	VSUB2( v1, start, center );
+	radius = MAGNITUDE( v1 );
+	VSUB2( v2, end, center );
+	tmp_radius = MAGNITUDE( v2 );
+
+	/* make sure radii are consistent */
+	if( radius - tmp_radius > tol->dist )
+	{
+		rt_log( "rt_arcxy_to_cnurb: distances from center to start and center to end are different\n" );
+		rt_log( "                        (%g and %g)\n", radius, tmp_radius );
+		return( (struct cnurb *)NULL );
+	}
+
+	/* construct coord system ref1,ref2,norm */
+	VSET( norm, 0.0, 0.0, 1.0 );
+	VMOVE( ref1, v1 );
+	VSCALE( ref1, ref1, 1.0/radius );
+	VCROSS( ref2, norm, ref1 );
+
+	/* calculate angle of arc */
+	angle = atan2( VDOT( v2, ref2 ), VDOT( v2, ref1 ) );
+	if( angle <= 0.0 )
+		angle += 2.0*rt_pi;
+
+	if( angle < 150.0*rt_pi/180.0 ) /* angle is reasonable to do in one segment */
+	{
+		fastf_t dist1, dist2;
+		vect_t t1, t2, t3;
+		int ret_val;
+
+		/* second control point is intersection of tangent lines */
+		VMOVE( t1, ref2 );
+		if( VDOT( t1, v2 ) > 0.0 )
+			VREVERSE( t1, t1 );
+		VCROSS( t2, v2, norm );
+		VUNITIZE( t2 );
+		if( VDOT( t2, v1 ) > 0.0 )
+			VREVERSE( t2, t2 );
+		if( (ret_val=rt_isect_line3_line3( &dist1, &dist2, start, t1, end, t2, tol )) < 1 )
+		{
+			rt_log( "rt_arcxy_to_cnurb: Cannot calculate second control point\n" );
+			rt_log( "                   rt_isect_line3_line3 returns %d\n" , ret_val );
+			return( (struct cnurb *)NULL );
+		}
+
+		/* Get memory for this curve (order=3, 6 knot values, 3 control points) */
+		crv = rt_nurb_new_cnurb( 3, 6, 3, pt_type );
+
+		/* Set knot values */
+		for( i=0 ; i<3 ; i++ )
+			crv->knot.knots[i] = 0.0;
+		for( i=3 ; i<6 ; i++ )
+			crv->knot.knots[i] = 1.0;
+
+		/* First and third control points are start and end */
+		VMOVE( crv->ctl_points, start );
+		VMOVE( &crv->ctl_points[8], end );
+
+		/* weights are 1.0 for the endpoints */
+		crv->ctl_points[3] = 1.0;
+		crv->ctl_points[11] = 1.0;
+
+		/* second control point is as calculated above */
+		VJOIN1( &crv->ctl_points[4], start, dist1, t1 );
+
+		/* weight for second control point is cosine of half the arc angle */
+		crv->ctl_points[7] = cos( angle/2.0 );
+
+		/* scale middle point by its weight */
+		VSCALE( &crv->ctl_points[4], &crv->ctl_points[4], crv->ctl_points[7] );
+
+		return( crv );
+	}
+
+	/* Angle is too great for one segment.
+	 * Make up to three segments and join them.
+	 */
+
+	if( angle < 1.5*rt_pi )
+	{
+		/* do it in two segments */
+		nsegs = 2;
+		angles[0] = angle/2.0;
+		angles[1] = angle;
+	}
+	else
+	{
+		/* use three segments */
+		nsegs = 3;
+		angles[0] = angle/3.0;
+		angles[1] = 2.0*angles[0];
+		angles[2] = angle;
+	}
+
+	/* initialize rt_list structure to hold list of curves */
+	RT_LIST_INIT( &crv_head );
+
+	/* Make each arc segment */
+	VMOVE( end1, start );
+	for( i=0 ; i<nsegs ; i++ )
+	{
+		VMOVE( start1, end1 );
+		if( i == nsegs-1 )
+			VMOVE( end1, end )
+		else
+			VJOIN2( end1, center, radius*cos( angles[i] ), ref1, radius*sin( angles[i] ), ref2 )
+
+		crv = rt_arcxy_to_cnurb( center, start1, end1, tol );
+		RT_LIST_INSERT( &crv_head, &crv->l );
+	}
+
+	/* join the arc segments into one cnurb */
+	crv = rt_join_cnurbs( &crv_head );
+
+	return( crv );
 }
