@@ -45,7 +45,9 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <ctype.h>		/* used by inet_addr() routine, below */
 #include <sys/param.h>
 #include <sys/time.h>
+#if !defined(vax)
 #include <time.h>
+#endif
 #include <sys/socket.h>
 #include <sys/ioctl.h>		/* for FIONBIO */
 #include <netinet/in.h>		/* for htons(), etc */
