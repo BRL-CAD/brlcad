@@ -768,7 +768,7 @@ int flag;
 	RT_CK_DIR( dp );
 	BU_CK_PTBL( cur_path );
 
-	if( dp->d_flags & DIR_SOLID )
+	if( !(dp->d_flags & DIR_COMB) )
 		return;
 
 	if( rt_db_get_internal( &intern, dp, dbip, (fastf_t *)NULL, &rt_uniresource ) < 0 )
@@ -858,6 +858,12 @@ int flag;
 						op, sol_dp->d_namep);
 					continue;
 				}
+				else if( !(sol_dp->d_flags & DIR_SOLID) )
+				{
+					(void)fprintf( tabptr, "   ?? %c %s\n",
+						op, sol_dp->d_namep);
+					continue;
+				}
 				else
 				{
 					if( tree_list[i].tl_tree->tr_l.tl_mat )  {
@@ -890,7 +896,7 @@ int flag;
 			else
 				(void) fprintf( tabptr, "%s:  ", tree_list[i].tl_tree->tr_l.tl_name );
 
-			if( !old )
+			if( !old && (sol_dp->d_flags & DIR_SOLID) )
 			{
 				/* if we get here, we must be looking for a solid table */
 				bu_vls_init_if_uninit( &tmp_vls );
@@ -902,7 +908,7 @@ int flag;
 				(void)fprintf( tabptr, bu_vls_addr(&tmp_vls));
 				bu_vls_free( &tmp_vls );
 			}
-			if( nsoltemp )
+			if( nsoltemp && (sol_dp->d_flags & DIR_SOLID) )
 				rt_db_free_internal( &sol_intern, &rt_uniresource );
 		}
 	}
