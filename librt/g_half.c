@@ -608,7 +608,7 @@ struct rt_tol		*tol;
 
 	RT_CK_DB_INTERNAL(ip);
 	vip = (struct rt_half_internal *)ip->idb_ptr;
-	RT_VOL_CK_MAGIC(vip);
+	RT_HALF_CK_MAGIC(vip);
 
 	/* XXX tess routine needed */
 	return(-1);
