@@ -117,23 +117,6 @@ register char *cp;
 #undef	COLUMNS
 }
 
-void
-col_putchar(c)
-char c;
-{
-	bu_putchar(c);
-	col_len++;
-}
-
-void
-col_eol()
-{
-	if ( col_count != 0 )		/* partial line */
-		bu_putchar( '\n' );
-	col_count = 0;
-	col_len = 0;
-}
-
 /*
  *			C M P D I R N A M E
  *
@@ -159,126 +142,61 @@ CONST genptr_t b;
  *  in that list, sort and print that list in column order over four columns.
  */
 void
-col_pr4v( list_of_names, num_in_list)
+vls_col_pr4v(vls, list_of_names, num_in_list)
+struct bu_vls *vls;
 struct directory **list_of_names;
 int num_in_list;
 {
-	int lines, i, j, namelen, this_one;
+  int lines, i, j, namelen, this_one;
 
-	qsort( (genptr_t)list_of_names,
-		(unsigned)num_in_list, (unsigned)sizeof(struct directory *),
-		(int (*)())cmpdirname);
+  qsort( (genptr_t)list_of_names,
+	 (unsigned)num_in_list, (unsigned)sizeof(struct directory *),
+	 (int (*)())cmpdirname);
+
+  /*
+   * For the number of (full and partial) lines that will be needed,
+   * print in vertical format.
+   */
+  lines = (num_in_list + 3) / 4;
+  for( i=0; i < lines; i++) {
+    for( j=0; j < 4; j++) {
+      this_one = j * lines + i;
+      /* Restrict the print to 16 chars per spec. */
+      bu_vls_printf(vls,  "%.16s", list_of_names[this_one]->d_namep);
+      namelen = strlen( list_of_names[this_one]->d_namep);
+      if( namelen > 16)
+	namelen = 16;
+      /*
+       * Region and ident checks here....  Since the code
+       * has been modified to push and sort on pointers,
+       * the printing of the region and ident flags must
+       * be delayed until now.  There is no way to make the
+       * decision on where to place them before now.
+       */
+      if(list_of_names[this_one]->d_flags & DIR_COMB) {
+	bu_vls_putc(vls, '/');
+	namelen++;
+      }
+      if(list_of_names[this_one]->d_flags & DIR_REGION) {
+	bu_vls_putc(vls, 'R');
+	namelen++;
+      }
+      /*
+       * Size check (partial lines), and line termination.
+       * Note that this will catch the end of the lines
+       * that are full too.
+       */
+      if( this_one + lines >= num_in_list) {
+	bu_vls_putc(vls, '\n');
+	break;
+      } else {
 	/*
-	 * For the number of (full and partial) lines that will be needed,
-	 * print in vertical format.
+	 * Pad to next boundary as there will be
+	 * another entry to the right of this one. 
 	 */
-	lines = (num_in_list + 3) / 4;
-	for( i=0; i < lines; i++) {
-		for( j=0; j < 4; j++) {
-			this_one = j * lines + i;
-			/* Restrict the print to 16 chars per spec. */
-			bu_log( "%.16s", list_of_names[this_one]->d_namep); 
-			namelen = strlen( list_of_names[this_one]->d_namep);
-			if( namelen > 16)
-				namelen = 16;
-			/*
-			 * Region and ident checks here....  Since the code
-			 * has been modified to push and sort on pointers,
-			 * the printing of the region and ident flags must
-			 * be delayed until now.  There is no way to make the
-			 * decision on where to place them before now.
-			 */
-			if(list_of_names[this_one]->d_flags & DIR_COMB) {
-				bu_putchar('/');
-				namelen++;
-			}
-			if(list_of_names[this_one]->d_flags & DIR_REGION) {
-				bu_putchar('R');
-				namelen++;
-			}
-			/*
-			 * Size check (partial lines), and line termination.
-			 * Note that this will catch the end of the lines
-			 * that are full too.
-			 */
-			if( this_one + lines >= num_in_list) {
-				bu_log("\n");
-				break;
-			} else {
-				/*
-				 * Pad to next boundary as there will be
-				 * another entry to the right of this one. 
-				 */
-				while( namelen++ < 20)
-					bu_putchar(' ');
-			}
-		}
-	}
-}
-
-/*
- *				V L S _ C O L _ P R 4 V
- *
- *  Given a pointer to a list of pointers to names and the number of names
- *  in that list, sort and print that list in column order over four columns.
- */
-void
-vls_col_pr4v( str, list_of_names, num_in_list)
-struct bu_vls	*str;
-struct directory **list_of_names;
-int num_in_list;
-{
-	int lines, i, j, namelen, this_one;
-
-	BU_CK_VLS( str );
-
-	qsort( (genptr_t)list_of_names,
-		(unsigned)num_in_list, (unsigned)sizeof(struct directory *),
-		(int (*)())cmpdirname);
-	/*
-	 * For the number of (full and partial) lines that will be needed,
-	 * print in vertical format.
-	 */
-	lines = (num_in_list + 3) / 4;
-	for( i=0; i < lines; i++) {
-		for( j=0; j < 4; j++) {
-			this_one = j * lines + i;
-			/* Restrict the print to 16 chars per spec. */
-			bu_vls_printf( str, "%.16s", list_of_names[this_one]->d_namep);
-			namelen = strlen( list_of_names[this_one]->d_namep);
-			if( namelen > 16)
-				namelen = 16;
-			/*
-			 * Region and ident checks here....  Since the code
-			 * has been modified to push and sort on pointers,
-			 * the printing of the region and ident flags must
-			 * be delayed until now.  There is no way to make the
-			 * decision on where to place them before now.
-			 */
-			if(list_of_names[this_one]->d_flags & DIR_COMB) {
-				bu_vls_putc(str, '/');
-				namelen++;
-			}
-			if(list_of_names[this_one]->d_flags & DIR_REGION) {
-				bu_vls_putc(str, 'R');
-				namelen++;
-			}
-			/*
-			 * Size check (partial lines), and line termination.
-			 * Note that this will catch the end of the lines
-			 * that are full too.
-			 */
-			if( this_one + lines >= num_in_list) {
-				bu_vls_putc(str, '\n');
-				break;
-			} else {
-				/*
-				 * Pad to next boundary as there will be
-				 * another entry to the right of this one. 
-				 */
-				while( namelen++ < 20)
-					bu_vls_putc(str, ' ');
-			}
-		}
-	}
+	while( namelen++ < 20)
+	  bu_vls_putc(vls, ' ');
+      }
+    }
+  }
 }
