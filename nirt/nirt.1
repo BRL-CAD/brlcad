@@ -1,4 +1,3 @@
-'\"	last edit:	91/02/15	P J Tanenbaum
 .\" Set the interparagraph spacing to 1 (default is 0.4)
 .PD 1v
 .\"
@@ -15,40 +14,59 @@ operates on the specified
 .I objects
 in the database
 .I model.g,
-tracing rays according to commands read from the standard input
+using
+.IR librt (3)
+to trace rays according to commands read from the standard input
 and producing an ASCII report of the results.
 The user can interact with
 .I nirt,
-repeatedly specifying origination points and directions from which to fire rays
+repeatedly specifying origination points and directions for rays
 and the format and destination for the reports.
 Locations may be input and output in either
 model coordinates (\fIx\fR, \fIy\fR, \fIz\fR)
 or view (a.k.a. grid-plane) coordinates (\fIh\fR, \fIv\fR, \fId\fR).
-Similarly, directions may be input and output either as
+Similarly, direction may be input and output either as
 vectors expressed in model coordinates or as
 angles of azimuth and elevation.
+
+The
+.BI -u " n"
+option sets the \fIuseair\fR member
+of the \fIrt_i\fR structure to \fIn\fR.
+See the discussion of the
+.I useair
+command below.
+
+If there is a file called .nirtrc in the current directory,
+otherwise in the user's home directory,
+.I nirt
+begins by reading from it.  This start-up file may contain any
+.I nirt
+commands
+and is useful for loading predefined states
+or initializing actions for output statements.
 .SS Commands
 The commands and their meanings are given below.
 .TP 12
 .BI "xyz [" "x y z" "]"
-Causes future rays to be fired from the point
+Sets the ray origination point to
 (\fIx\fR, \fIy\fR, \fIz\fR).
-Without arguments, this command causes
+If this command is invoked with no arguments,
 .I nirt
-to print the current ray origination point in model coordinates.
+prints the current ray origination point in model coordinates.
 Default is (0, 0, 0).
 Changing (\fIx\fR, \fIy\fR, \fIz\fR) will change
 (\fIh\fR, \fIv\fR, \fId\fR),
 according to the current direction vector.
 .TP 12
 .BI "hv [" "h v" "[" d "]]"
-Causes future rays to be fired from the point
+Sets the ray origination point to
 (\fIh\fR, \fIv\fR, \fId\fR).
-If this command is given with only two arguments,
+If this command is invoked with only two arguments,
 .I nirt
 interprets them as \fIh\fR and \fIv\fR,
 and \fId\fR retains its previous value.
-Without arguments, the command causes
+If invoked with no argument, the command causes
 .I nirt
 to print the current ray origination point in view coordinates.
 Default is (0, 0, 0).
@@ -57,41 +75,40 @@ Changing (\fIh\fR, \fIv\fR, \fId\fR) will change
 according to the current direction vector.
 .TP 12
 .BI "dir [" "dx dy dz" "]"
-Causes future rays to be fired in the direction aligned with
+Sets the direction vector to the unit vector in direction
 (\fIdx\fR, \fIdy\fR, \fIdz\fR).
-Without arguments, this command causes
+If this command is invoked with no arguments,
 .I nirt
-to print the current (unit-length) direction vector.
+prints the current direction vector.
 Default is (-1, 0, 0).
 Changing (\fIdx\fR, \fIdy\fR, \fIdz\fR) will change
 the azimuth and elevation angles.
 .TP 12
-.BI "ae [" " az el" "]"
-Causes future rays to be fired from
+.BI "ae [" "az el" "]"
+Sets the direction vector to point
+.I from
 azimuth = \fIaz\fR and elevation = \fIel\fR.
-Without arguments, this command causes
+If this command is invoked with no arguments,
 .I nirt
-to print the current values of the azimuth and elevation angles.
+prints the current values of the azimuth and elevation angles.
 Default is (0, 0).
 Changing azimuth and elevation will change the direction vector.
 .TP 12
 .B s
-Causes
-.I nirt
-to fire a ray from the current origination point in the current direction.
+Fires a ray from the current origination point in the current direction.
 .TP 12
 .BI "useair [" n "]"
 Sets the
 .I useair
 member of the
 .I rt_i
-structure to \fIn\fR.
+structure to the integer \fIn\fR.
 If \fIn\fR is 0, then
 .I nirt
 ignores any air in the geometry.
-Without arguments, this command causes
+If this command is invoked with no arguments,
 .I nirt
-to print the current value of
+prints the current value of
 .I useair.
 Default is 0.
 .TP 12
@@ -100,15 +117,15 @@ Causes
 .I nirt
 to read and write all distances and locations in units of \fIu\fR.
 Valid choices for \fIu\fR are ``mm,'' ``cm,'' ``m,'' ``in,'' and ``ft.''
-Without arguments, this command causes
+If this command is invoked with no arguments,
 .I nirt
-to print the current choice of I/O units.
+prints the current choice of I/O units.
 Default is the units of
 .I model.g.
 .TP 12
 .BI "fmt [" "t format item item ..." "]"
 Sets the action for output statements of type \fIt\fR.
-If this command is given with only one argument,
+If this command is invoked with only one argument,
 a valid statement type,
 .I nirt
 prints the current format and items for the specified type.
@@ -128,9 +145,9 @@ In any event, \fId\fR is not closed until the user quits
 or resets the destination by another invocation of the
 .I dest
 command.
-Without arguments, this command causes
+If this command is invoked with no arguments,
 .I nirt
-to print the current value of \fId\fR.
+prints the current value of \fId\fR.
 Default is ``default,'' that is, the standard output.
 .TP 12
 .BI "statefile [" f "]"
@@ -139,9 +156,9 @@ and from which to load state information.
 See the
 .IR dump " and " load
 commands below.
-Without arguments, this command causes
+If this command is invoked with no arguments,
 .I nirt
-to print the current name of the state file.
+prints the current name of the state file.
 Default is ``nirt_state.''
 .TP 12
 .B dump
@@ -154,6 +171,25 @@ Reads state information from the state file.
 The state file loaded may contain any
 .I nirt
 commands.
+.TP 12
+.BI print " item"
+Prints the current value of the output item \fIitem\fR.
+See the discussion of output statements below.
+.TP 12
+.BI "! [" command "]"
+Executes the shell pipeline
+.I command.
+If this command is invoked with no arguments,
+.I nirt
+spins off a subshell, executing the program named in the environment variable
+SHELL.
+.TP 12
+.B ?
+Prints a help menu to the standard output.
+.TP 12
+.B quit
+Quits
+.I nirt.
 .SS Output Statements
 .I Nirt
 allows the user a high degree of control,
@@ -170,57 +206,227 @@ Ray.
 The first output statement executed
 whenever the
 .I s
-command is given.
+command is invoked.
 .TP
 .B h
 Head.
 Executed immediately after the ray statement
-if the ray hits any of the
-.I objects.
+if the ray hits anything.
 .TP
 .B p
 Partition.
 Executed once for each partition along the ray
-if the ray hits any of the
-.I objects.
+if the ray hits anything.
 .TP
 .B f
 Foot.
 The last output statement executed
-if the ray hits any of the
-.I objects.
+if the ray hits anything.
 .TP
 .B m
 Miss.
 Executed immediately after the ray statement
-if the ray does not hit any of the
-.I objects.
+if the ray hits nothing.
 .TP
 .B o
 Overlap.
 Executed once for each overlap along the ray
-if the ray hits any of the
-.I objects.
-
-Each of the output statement types is essentially a
-.I printf(3)
+if the ray hits anything.
+.P
+The action associated with each output statement type is essentially a
+.IR printf (3)
 statement,
 with a format string and a list of output items.
 The items may be chosen from a set of values that
 .I nirt
-updates according to user commands and location along a ray.
-.SH DIAGNOSTICS
-If
-\fIname\fR.s
-is longer than the fifteen-character limit imposed by
+updates according to user commands and location along the ray.
+These values may be categorized as pertaining to the entire ray,
+partitions along the ray,
+or overlaps.
+The values are explained in the following table.
+
+.ce
+Ray Information
+.PD .6v
+.TP 18
+.B x_orig
+\fIx\fR coordinate of ray origination point.
+.TP 18
+.B y_orig
+\fIy\fR coordinate of ray origination point.
+.TP 18
+.B z_orig
+\fIz\fR coordinate of ray origination point.
+.TP 18
+.B d_orig
+\fId\fR coordinate of ray origination point.
+.TP 18
+.B h
+\fIh\fR coordinate for the entire ray.
+.TP 18
+.B v
+\fIv\fR coordinate for the entire ray.
+.TP 18
+.B x_dir
+\fIx\fR component of direction vector.
+.TP 18
+.B y_dir
+\fIy\fR component of direction vector.
+.TP 18
+.B z_dir
+\fIz\fR component of direction vector.
+.TP 18
+.B a
+azimuth of view (i.e., of ray direction).
+.TP 18
+.B e
+elevation of view (i.e., of ray direction).
+
+.ce
+Partition Information
+.TP 18
+.B x_in
+\fIx\fR coordinate of entry into current region.
+.TP 18
+.B y_in
+\fIy\fR coordinate of entry into current region.
+.TP 18
+.B z_in
+\fIz\fR coordinate of entry into current region.
+.TP 18
+.B d_in
+\fId\fR coordinate of entry into current region.
+.TP 18
+.B x_out
+\fIx\fR coordinate of exit from current region.
+.TP 18
+.B y_out
+\fIy\fR coordinate of exit from current region.
+.TP 18
+.B z_out
+\fIz\fR coordinate of exit from current region.
+.TP 18
+.B d_out
+\fId\fR coordinate of exit from current region.
+.TP 18
+.B los
+line-of-sight distance through current region.
+.TP 18
+.B reg_name
+name of current region.
+.TP 18
+.B reg_id
+region ID of current region.
+.TP 18
+.B obliq_in
+entry obliquity for current region.
+.TP 18
+.B obliq_out
+exit obliquity for current region.
+
+.ce
+Overlap Information
+.TP 18
+.B ov_reg1_name
+name of one of the overlapping regions.
+.TP 18
+.B ov_reg2_name
+name of the other overlapping region.
+.TP 18
+.B ov_reg1_id
+region ID of one of the overlapping regions.
+.TP 18
+.B ov_reg2_id
+region ID of the other overlapping region.
+.TP 18
+.B ov_sol_in
+name of one of the overlapping solids.
+.TP 18
+.B ov_sol_out
+name of the other overlapping solid.
+.TP 18
+.B ov_los
+line-of-sight distance through the overlap.
+.TP 18
+.B ov_x_in
+\fIx\fR coordinate of entry into overlap.
+.TP 18
+.B ov_y_in
+\fIy\fR coordinate of entry into overlap.
+.TP 18
+.B ov_z_in
+\fIz\fR coordinate of entry into overlap.
+.TP 18
+.B ov_d_in
+\fId\fR coordinate of entry into overlap.
+.TP 18
+.B ov_x_out
+\fIx\fR coordinate of exit from overlap.
+.TP 18
+.B ov_y_out
+\fIy\fR coordinate of exit from overlap.
+.TP 18
+.B ov_z_out
+\fIz\fR coordinate of exit from overlap.
+.TP 18
+.B ov_d_out
+\fId\fR coordinate of exit from overlap.
+.PD 1v
+.SH HINTS
+Ray origination coordinates specified with the
+.I hv
+command are immediately converted for internal use
+to model coordinates,
+according to the current direction vector.
+If you want to change the ray direction and origination point,
+and you're using view coordinates,
+you probably want to change the ray direction
+.I before
+you use the
+.I hv
+command.
+
+The name ``nirt'' stands for ``Natalie's interactive ray tracer.''
+.SH DEFINITIONS
+The usage in
+.I nirt
+of the following terms corresponds to that found in
 .IR mged (1)
-or the input stream does not conform to the expected format,
+and elsewhere throughout BRL CAD.
+We provide the definitions here for reference.
+.SS View Coordinates
+We define the view coordinate system
+(more precisely its basis vectors \fBm\fR, \fBn\fR, and \fBo\fR)
+in terms of the basis vectors
+\fBi\fR, \fBj\fR, and \fBk\fR
+of the model coordinate system as follows:
+.in +5m
+
+\fBm\fR is the opposite of the direction vector and corresponds to \fId\fR,
+.br
+\fBn\fR = \fBk\fR \(mu \fBm\fR corresponds to \fIh\fR, and
+.br
+\fBo\fR = \fBm\fR \(mu \fBn\fR corresponds to \fIv\fR.
+
+.in -5m
+Thus if the direction vector is (-1, 0, 0),
 then
-.IR showshot
-complains and exits with status 1.
+(\fId\fR, \fIh\fR, \fIv\fR) =
+(\fIx\fR, \fIy\fR, \fIz\fR).
+.SS Azimuth and Elevation
+Azimuth is the angle measured around \fBk\fR (right-hand rule)
+from the \fIxz\fR plane to \fBm\fR.
+Elevation is the angle measured toward \fBk\fR
+from the \fIxy\fR plane to \fBm\fR.
+.SH FILES
+ .nirtrc \h12m run-time configuration file
 .SH SEE ALSO
-mged(1), nirt(1)
-.SH AUTHOR
+mged(1), librt(3), printf(3)
+.SH BUGS
+The program sometimes complains about ``previously unreported overlaps.''
+To the best of our knowledge, this complaint may be safely ignored.
+We hope to fix this soon.
+.SH AUTHORS
 Natalie Eberius
 .br
 Paul Tanenbaum
