@@ -651,6 +651,8 @@ struct bu_ptbl {
  *  so that subsequent frames may take advantage of the large data files
  *  having already been read and converted.
  *  Examples include EBMs, texture maps, and height fields.
+ *
+ *  For appl == "db_i", file is a ".g" database & apbuf is (struct db_i *).
  */
 struct bu_mapped_file {
 	struct bu_list	l;

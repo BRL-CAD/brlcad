@@ -721,9 +721,9 @@ struct db_i  {
 	char			*dbi_filename;	/* file name */
 	int			dbi_read_only;	/* !0 => read only file */
 	struct mem_map		*dbi_freep;	/* map of free granules */
-	char			*dbi_inmem;	/* ptr to in-memory copy */
-	char			*dbi_shmaddr;	/* ptr to memory-mapped file */
+	genptr_t		dbi_inmem;	/* ptr to in-memory copy */
 	struct animate		*dbi_anroot;	/* heads list of anim at root lvl */
+	struct bu_mapped_file	*dbi_mf;	/* Only in read-only mode */
 };
 #define DBI_NULL	((struct db_i *)0)
 #define DBI_MAGIC	0x57204381
