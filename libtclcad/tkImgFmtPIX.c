@@ -34,24 +34,26 @@
 static char RCSid[] = "@(#)$Header$ (ARL)";
 #endif
 
+#include "conf.h"
+#include <stdio.h>
+#include "machine.h"
+#include "bu.h"
+#include "vmath.h"
+#include "bn.h"
+
 #include "./tkPort.h"
-
-/*
- * The maximum amount of memory to allocate for data read from the
- * file.  If we need more than this, we do it in pieces.
- */
-
-#define MAX_MEMORY	10000		/* don't allocate > 10KB */
 
 /*
  * The format record for the PIX file format:
  */
 
-static int		FileMatchPIX _ANSI_ARGS_((FILE *f, char *fileName,
+static int		FileMatchPIX _ANSI_ARGS_((Tcl_Channel chan,
+			    char *fileName,
 			    char *formatString, int *widthPtr,
 			    int *heightPtr));
 static int		FileReadPIX  _ANSI_ARGS_((Tcl_Interp *interp,
-			    FILE *f, char *fileName, char *formatString,
+			    Tcl_Channel chan,
+			    char *fileName, char *formatString,
 			    Tk_PhotoHandle imageHandle, int destX, int destY,
 			    int width, int height, int srcX, int srcY));
 static int		FileWritePIX _ANSI_ARGS_((Tcl_Interp *interp,
@@ -92,8 +94,8 @@ Tk_PhotoImageFormat tkImgFmtPIX = {
  */
 
 static int
-FileMatchPIX(f, fileName, formatString, widthPtr, heightPtr)
-    FILE *f;			/* The image file, open for reading. */
+FileMatchPIX(chan, fileName, formatString, widthPtr, heightPtr)
+    Tcl_Channel chan;
     char *fileName;		/* The name of the image file. */
     char *formatString;		/* User-specified format string, or NULL. */
     int *widthPtr, *heightPtr;	/* The dimensions of the image are
@@ -139,10 +141,10 @@ FileMatchPIX(f, fileName, formatString, widthPtr, heightPtr)
  */
 
 static int
-FileReadPIX(interp, f, fileName, formatString, imageHandle, destX, destY,
+FileReadPIX(interp, chan, fileName, formatString, imageHandle, destX, destY,
 	width, height, srcX, srcY)
     Tcl_Interp *interp;		/* Interpreter to use for reporting errors. */
-    FILE *f;			/* The image file, open for reading. */
+    Tcl_Channel chan;
     char *fileName;		/* The name of the image file. */
     char *formatString;		/* User-specified format string, or NULL. */
     Tk_PhotoHandle imageHandle;	/* The photo image to write into. */
@@ -195,8 +197,9 @@ FileReadPIX(interp, f, fileName, formatString, imageHandle, destX, destY,
     Tk_PhotoExpand(imageHandle, destX + width, destY + height);
 
     if ((srcY + height) < fileHeight) {
-	fseek(f, (long) ((fileHeight - srcY - height) * block.pitch),
-	      SEEK_CUR);
+    	Tcl_Seek( chan, (long) ((fileHeight - srcY - height) * block.pitch),
+    		SEEK_CUR );
+    		
     }
 
     nBytes = block.pitch;
@@ -205,11 +208,11 @@ FileReadPIX(interp, f, fileName, formatString, imageHandle, destX, destY,
     block.pixelPtr = pixelPtr + srcX * block.pixelSize;
 
     for (h = height; h > 0; h--) {
-	count = fread(pixelPtr, 1, (unsigned) nBytes, f);
+	count = Tcl_Read( chan, (char *)pixelPtr, nBytes );
 	if (count != nBytes) {
 	    Tcl_AppendResult(interp, "error reading PIX image file \"",
 		    fileName, "\": ",
-		    feof(f) ? "not enough data" : Tcl_PosixError(interp),
+		    Tcl_Eof(chan) ? "not enough data" : Tcl_PosixError(interp),
 		    (char *) NULL);
 	    bu_free((char *) pixelPtr, "PIX image");
 	    return TCL_ERROR;
