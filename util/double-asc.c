@@ -28,6 +28,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "fb.h"
 
 static char	*file_name;
+static char	*format = 0;
 static int	infd;
 
 static int	fileinput = 0;		/* Input from file (vs. pipe)? */
@@ -41,10 +42,11 @@ static int	d_per_l = 1;		/* doubles per line of output */
 
 void print_usage (void)
 {
-#define OPT_STRING	"achs:n:w#:?"
+#define OPT_STRING	"acf:hs:n:w#:?"
 
-    bu_log("Usage: 'double-asc %s [file.d]'\n",
-	"[-{ah}c] [-s squaresize] [-w width] [-n height] [-# depth]");
+    bu_log("Usage: 'double-asc %s\n%s [file.d]'\n",
+	"[-{ah}] [-s squaresize] [-w width] [-n height]",
+	   "                   [-c] [-f format] [-# depth]");
 }
 
 get_args(argc, argv)
@@ -59,11 +61,11 @@ register char	*argv[];
     {
 	switch (ch)
 	{
+	    /*
+	     *	BRL-CAD image-size options
+	     */
 	    case 'a':
 		autosize = 1;
-		break;
-	    case 'c':
-		make_cells = 1;
 		break;
 	    case 'h':
 		/* high-res */
@@ -83,6 +85,19 @@ register char	*argv[];
 		file_width = atoi(optarg);
 		autosize = 0;
 		break;
+	    /*
+	     *	application-specific options
+	     */
+	    case 'c':
+		make_cells = 1;
+		break;
+	    case 'f':
+		if (format != 0)
+		    bu_free(format, "format_string");
+		format = (char *)
+			    bu_malloc(strlen(optarg) + 1, "format string");
+		strcpy(format, optarg);
+		break;
 	    case '#':
 		d_per_l = atoi(optarg);
 		break;
@@ -93,6 +108,8 @@ register char	*argv[];
 		return(0);
 	}
     }
+    if (format == 0)
+	format = " %g";
 
     /*
      *	Establish the input stream
@@ -152,7 +169,7 @@ char	*argv[];
     {
 	int	w, h;
 
-	if (fb_common_file_size(&w, &h, file_name, d_per_l * 8))
+	if (bn_common_file_size(&w, &h, file_name, d_per_l * 8))
 	{
 	    file_width = w;
 	    file_height = h;
@@ -179,11 +196,11 @@ char	*argv[];
 	for (line_nm = 0; line_nm < l_per_b; ++line_nm)
 	{
 	    if (make_cells)
-		printf("%d %d ", col, row);
+		printf("%d %d", col, row);
 	    ntohd(value, bp, d_per_l);
 	    bp += d_per_l * 8;
 	    for (i = 0; i < d_per_l; ++i)
-		printf((i == 0) ? "%g" : " %g", value[i]);
+		printf(format, value[i]);
 	    printf("\n");
 	    if (++col % file_width == 0)
 	    {
