@@ -159,12 +159,14 @@ register struct shootray_status	*ssp;
 	int					push_flag = 0;
 	double					fraction;
 	int					exponent;
-	
+
+#if EXTRA_SAFETY	
 	if( curcut == CUTTER_NULL ) {
 		bu_log(
 		   "rt_advance_to_next_cell: warning: ssp->curcut not set\n" );
 		ssp->curcut = curcut = &ap->a_rt_i->rti_CutHead;
 	}
+#endif	
 
 	for( ;; ) {
 		/* Set cutp to CUTTER_NULL.  If it fails to become set in the
@@ -194,24 +196,23 @@ register struct shootray_status	*ssp;
 		 *	rather than an absolute distance in mm.
 		 *	This will prevent doing microscopic models.
 		 */
-		t0 = ssp->box_start + OFFSET_DIST;
+		t0 = ssp->box_start;
 		/* NB: can't compute px,py,pz here since t0 may advance
 		   in the following statement! */
 		
-		switch( curcut->cut_type ) {
+top:		switch( curcut->cut_type ) {
 		case CUT_NUGRIDNODE: {
 /*
  *  This version uses Gigante's non-uniform 3-D space grid/mesh discretization.
  */
-			CONST struct rt_i	*a_rt_i = ap->a_rt_i;
 			register int out_axis;
-			CONST struct nu_axis  **nu_axis =
+			register CONST struct nu_axis  **nu_axis =
 			     (CONST struct nu_axis **)&curcut->nugn.nu_axis[0];
-			CONST int		*nu_stepsize =
+			register CONST int		*nu_stepsize =
 			     &curcut->nugn.nu_stepsize[0];
-			CONST int	        *nu_cells_per_axis =
+			register CONST int	        *nu_cells_per_axis =
 			     &curcut->nugn.nu_cells_per_axis[0];
-			CONST union cutter	*nu_grid =
+			register CONST union cutter	*nu_grid =
 			     curcut->nugn.nu_grid;
 
 			if( ssp->lastcell == CUTTER_NULL ) {
@@ -225,16 +226,17 @@ register struct shootray_status	*ssp;
 				pz = ap->a_ray.r_pt[Z] + t0*ap->a_ray.r_dir[Z];
 
 				/* Must find cell that contains newray.r_pt.
-				   We do this by binary subdivision. */
-				x = rt_find_nugrid( &curcut->nugn, X, px );
-				y = rt_find_nugrid( &curcut->nugn, Y, py );
-				z = rt_find_nugrid( &curcut->nugn, Z, pz );
-
-				/* If any are out of bounds, we have left the
+				   We do this by binary subdivision.
+				   If any are out of bounds, we have left the
 				   NUgrid and will pop a level off the stack
 				   in the outer loop (if applicable).  */
-				if( x<0 || y<0 || z<0 ) break;
-				
+				x = rt_find_nugrid( &curcut->nugn, X, px );
+				if( x<0 ) break;
+				y = rt_find_nugrid( &curcut->nugn, Y, py );
+				if( y<0 ) break;
+				z = rt_find_nugrid( &curcut->nugn, Z, pz );
+				if( z<0 ) break;
+
 				cutp = &nu_grid[z*nu_stepsize[Z] +
 					        y*nu_stepsize[Y] +
 					        x*nu_stepsize[X]];
@@ -256,16 +258,24 @@ register struct shootray_status	*ssp;
 				   in the *same* NUgrid cell (if, for instance,
 				   the NUgrid cell is a cutnode with
 				   boxnode leaves).  So if t0 hasn't advanced
-				   past the end of the box, stay here. */
+				   past the end of the box, advance
+				   a tiny bit (less than rt_ct_optim makes
+				   boxnodes) and be handled by tree-traversing
+				   code below. */
 
-				if( t0 < ssp->tv[out_axis] ) break;
+				if( cutp->cut_type == CUT_CUTNODE &&
+				    t0 + OFFSET_DIST < ssp->tv[out_axis] ) {
+					t0 += OFFSET_DIST;
+					break;
+				}
 
 				/* Advance to the next cell as appropriate,
 				   bailing out with cutp=CUTTER_NULL
 				   if we run past the end of the NUgrid
 				   array. */
 					
-again:				if( ssp->rstep[out_axis] > 0 ) {
+again:				t0 = ssp->tv[out_axis];
+				if( ssp->rstep[out_axis] > 0 ) {
 					if( ++(ssp->igrid[out_axis]) >=
 					    nu_cells_per_axis[out_axis] ) {
 						cutp = CUTTER_NULL;
@@ -303,7 +313,6 @@ again:				if( ssp->rstep[out_axis] > 0 ) {
 			if( cutp->cut_type == CUT_BOXNODE &&
 			    cutp->bn.bn_len <= 0 ) {
 				++ssp->resp->re_nempty_cells;
-				t0 = ssp->tv[out_axis] + OFFSET_DIST;
 				goto again;
 			}
 
@@ -311,12 +320,21 @@ again:				if( ssp->rstep[out_axis] > 0 ) {
 			ssp->lastcell = cutp;
 			
 			if( rt_g.debug&DEBUG_ADVANCE )
-				bu_log( "Exit axis is %c, t1=%g\n",
+				bu_log( "t0=%g found in cell (%d,%d,%d), out_axis=%c at %g; cell is %s\n",
+					t0,
+					ssp->igrid[X], ssp->igrid[Y],
+					ssp->igrid[Z],
 					"XYZ*"[ssp->out_axis],
-					ssp->tv[out_axis] );
+					ssp->tv[out_axis],
+					cutp->cut_type==CUT_CUTNODE?"cut":
+					cutp->cut_type==CUT_BOXNODE?"box":
+					cutp->cut_type==CUT_NUGRIDNODE?"nu":
+					"?" );
 			break; }
-		case CUT_BOXNODE:
 		case CUT_CUTNODE:
+			t0 += OFFSET_DIST;
+			/* fall through */
+		case CUT_BOXNODE:
 /*
  *  This version uses Muuss' non-uniform binary space partitioning tree.
  */
@@ -327,7 +345,7 @@ again:				if( ssp->rstep[out_axis] > 0 ) {
 		       "rt_advance_to_next_cell: unknown high-level cutnode" );
 		}
 
-top:		if( cutp==CUTTER_NULL ) {
+test:		if( cutp==CUTTER_NULL ) {
 			/* Move up out of the current node, or return if there
 			   is nothing left to do. */
 			register struct shootray_status *old = ssp->old_status;
@@ -361,7 +379,7 @@ top:		if( cutp==CUTTER_NULL ) {
 		    py < ssp->curmin[Y] || py > ssp->curmax[Y] ||
 		    pz < ssp->curmin[Z] || pz > ssp->curmax[Z] ) {
 			cutp = CUTTER_NULL;
-			goto top;
+			goto test;
 		}
 		
 		if( rt_g.debug&DEBUG_ADVANCE ) {
@@ -401,6 +419,7 @@ top:		if( cutp==CUTTER_NULL ) {
 
 		switch( cutp->cut_type ) {
 		case CUT_BOXNODE:
+#if UNNECESSARY			
 		    /* Ensure point is located in the indicated cell */
 			if( px < cutp->bn.bn_min[X] ||
 			    px > cutp->bn.bn_max[X] ||
@@ -428,7 +447,7 @@ top:		if( cutp==CUTTER_NULL ) {
 				t0 += OFFSET_DIST;
 				goto top;
 			}
-
+#endif			
 			/* Don't get stuck within the same box for
 			   long */
 			if( cutp==ssp->lastcut ) {
@@ -534,13 +553,12 @@ push:				;
 			}
 
 done:			ssp->lastcut = cutp;
-#if 1
+#if EXTRA_SAFETY
 			/* Diagnostic purposes only */
 			ssp->odist_corr = ssp->dist_corr;
 			ssp->obox_start = ssp->box_start;
 			ssp->obox_end = ssp->box_end;
 #endif			
-
 			ssp->dist_corr = t0;
 			ssp->box_start = t0 + ssp->newray.r_min;
 			ssp->box_end = t0 + ssp->newray.r_max;
@@ -845,10 +863,11 @@ register struct application *ap;
 	if( ss.box_start < BACKING_DIST )
 		ss.box_start = BACKING_DIST; /* Only look a little bit behind */
 
-	ss.lastcut = ss.lastcell = CUTTER_NULL;
+	ss.lastcut = CUTTER_NULL;
 	ss.old_status = (struct shootray_status *)NULL;
 	ss.curcut = &ap->a_rt_i->rti_CutHead;
 	if( ss.curcut->cut_type == CUT_NUGRIDNODE ) {
+		ss.lastcell = CUTTER_NULL;
 		VSET( ss.curmin, ss.curcut->nugn.nu_axis[X][0].nu_spos,
 				 ss.curcut->nugn.nu_axis[Y][0].nu_spos,
 				 ss.curcut->nugn.nu_axis[Z][0].nu_spos );
@@ -857,6 +876,7 @@ register struct application *ap;
 				 ss.curcut->nugn.nu_axis[Z][ss.curcut->nugn.nu_cells_per_axis[Z]-1].nu_epos );
 	} else if( ss.curcut->cut_type == CUT_CUTNODE ||
 		   ss.curcut->cut_type == CUT_BOXNODE ) {
+		ss.lastcell = ss.curcut;
 		VMOVE( ss.curmin, rtip->mdl_min );
 		VMOVE( ss.curmax, rtip->mdl_max );
 	}
