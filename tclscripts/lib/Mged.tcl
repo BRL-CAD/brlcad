@@ -17,20 +17,19 @@
 #       in all countries except the USA.  All rights reserved.
 #
 # Description -
-#	The Mged class inherits from Panedwindow and contains a QuadDisplay
-#       object and a Command object.
+#	The Mged class inherits from QuadDisplay and contains
+#       a Database object.
 #
 class Mged {
-    inherit iwidgets::Panedwindow
+    inherit QuadDisplay
 
-    constructor {file args} {}
+    constructor {file args} {
+	eval QuadDisplay::constructor $args
+    } {}
     destructor {}
 
-    itk_option define -prompt prompt Prompt "mged> "
-    itk_option define -dmtype dmtype Dmtype X
-
+    ######################### Commands related to the Database #########################
     public method opendb {args}
-    public method openFile {}
     public method match {args}
     public method get {args}
     public method put {args}
@@ -84,106 +83,25 @@ class Mged {
     public method illum {obj}
     public method label {obj}
 
-    public method pane {args}
-    public method multi_pane {args}
-    public method toggle_multi_pane {}
-    public method aet {args}
-    public method center {args}
-    public method rot {args}
-    public method slew {x y}
-    public method tra {args}
-    public method size {args}
-    public method scale {args}
-    public method zoom {sf}
-    public method autoview {}
-    public method listen {args}
-    public method fb_active {args}
-    public method fb_update {args}
-    public method rt {args}
-    public method rtcheck {args}
-
-    public method reset_panes {}
-    public method default_views {}
-    public method edit_style {style}
-
-    protected method attach_view {}
-    protected method attach_drawable {}
-    protected method detach_view {}
-    protected method detach_drawable {}
-    protected method refresh {}
-
-    private variable qd ""
     private variable db ""
     private variable dg ""
-    private variable cmd ""
-    private variable top ""
-    private variable screen ""
-    private variable fsd ""
-
-    private variable ftypes {{{MGED Database} {.g}} {{All Files} {*}}}
-    private variable dir ""
 }
 
 body Mged::constructor {file args} {
-    # process options
-    eval itk_initialize $args
-
-    add qd
-    set qd [QuadDisplay [childsite qd].qd $itk_option(-dmtype)]
-    pack $qd -fill both -expand yes
-
-    add cmd
-    set cmd [Command [childsite cmd].cmd -prompt $itk_option(-prompt) -wrap word \
-	    -hscrollmode dynamic -vscrollmode dynamic -cmd_prefix $this]
-    pack $cmd -fill both -expand yes
-
     set db [Database #auto $file]
     set dg [$db Drawable::get_name]
-    $qd addall $dg
-
-    # initialize pane
-    paneconfigure 0 -margin 0
-    paneconfigure 1 -margin 4
-
-    # default real estate allocation:  geometry ---> 75%, command window ---> 25%
-    fraction 75 25
-
-    set dir [pwd]
-    set top [winfo toplevel [string map {:: ""} $this]]
-    set screen [winfo screen $top]
-    wm title $top $file
-
-    # create and initialize file selection dialog
-    set fsd [fileselectiondialog $top#auto -modality application]
+    addall $dg
 }
 
 body Mged::destructor {} {
-    ::delete object $qd
-    ::delete object $cmd
     ::delete object $db
 }
-
-######################### User Interface #########################
 
 ######################### Commands related to the Database #########################
 body Mged::opendb {args} {
     set file [eval $db open $args]
     wm title $top $file
     return $file
-}
-
-body Mged::openFile {} {
-    #XXX the fileselectiondialog is slow to activate
-    if {[$fsd activate]} {
-	set filename [$fsd get]
-	if {$filename != ""} {
-	    set ret [catch {opendb $filename} msg]
-	    if {$ret} {
-		cad_dialog .uncool $screen "Error" \
-			$msg info 0 OK
-	    }
-	}
-    }
 }
 
 body Mged::match {args} {
@@ -353,21 +271,21 @@ body Mged::draw {args} {
 
     if {$blank} {
 	# stop observing the Drawable
-	detach_drawable
+	detach_drawableall $dg
 	set result [eval $db draw $args]
 	# resume observing the Drawable
-	attach_drawable
+	attach_drawableall $dg
 
 	# stop observing the View
-	detach_view
-	autoview
+	detach_viewall
+	autoviewall
 	# resume observing the View
-	attach_view
+	attach_viewall
 
 	# We need to refresh here because nobody was observing
 	# during the changes to the Drawable and the View. This
 	# was done in order to prevent multiple refreshes.
-	refresh
+	refreshall
     } else {
 	set result [eval $db draw $args]
     }
@@ -418,109 +336,3 @@ body Mged::illum {args} {
 body Mged::label {args} {
     eval $db label $args
 }
-
-######################### Commands related to QuadDisplay #########################
-body Mged::pane {args} {
-    eval $qd pane $args
-}
-
-body Mged::multi_pane {args} {
-    eval $qd multi_pane $args
-}
-
-body Mged::toggle_multi_pane {} {
-    eval $qd toggle_multi_pane
-}
-
-body Mged::aet {args} {
-    eval $qd aet $args
-}
-
-body Mged::center {args} {
-    eval $qd center $args
-}
-
-body Mged::rot {args} {
-    eval $qd rot $args
-}
-
-body Mged::slew {x y} {
-    eval $qd slew $x $y
-}
-
-body Mged::tra {args} {
-    eval $qd tra $args
-}
-
-body Mged::size {args} {
-    eval $qd size $args
-}
-
-body Mged::scale {args} {
-    eval $qd scale $args
-}
-
-body Mged::zoom {sf} {
-    eval $qd zoom $sf
-}
-
-body Mged::autoview {} {
-    $qd autoviewall
-}
-
-body Mged::listen {args} {
-    eval $qd listen $args
-}
-
-body Mged::fb_active {args} {
-    eval $qd fb_active $args
-}
-
-body Mged::fb_update {args} {
-    eval $qd fb_update $args
-}
-
-body Mged::rt {args} {
-    eval $qd rt $args
-}
-
-body Mged::rtcheck {args} {
-    eval $qd rtcheck $args
-}
-
-body Mged::default_views {} {
-    $qd default_views
-}
-
-body Mged::edit_style {args} {
-    eval $cmd edit_style $args
-}
-
-body Mged::attach_view {} {
-    $qd attach_viewall
-}
-
-body Mged::attach_drawable {} {
-    $qd attach_drawableall $dg
-}
-
-body Mged::detach_view {} {
-    $qd detach_viewall
-}
-
-body Mged::detach_drawable {} {
-    $qd detach_drawableall $dg
-}
-
-body Mged::refresh {} {
-    $qd refreshall
-}
-
-######################### Other Public Methods #########################
-body Mged::reset_panes {} {
-    # default real estate allocation:  geometry ---> 75%, command window ---> 25%
-    fraction 75 25
-    $qd resetall
-}
-
-######################### Private Methods #########################
