@@ -52,34 +52,41 @@ typedef struct  {
  */
 typedef struct  {
 	/* Static information: per device TYPE.	*/
-	int	(*if_open)();
-	int	(*if_close)();
-	int	(*if_reset)();
-	int	(*if_clear)();
-	int	(*if_read)();
-	int	(*if_write)();
-	int	(*if_rmap)();
-	int	(*if_wmap)();
-	int	(*if_viewport)();
-	int	(*if_window)();
-	int	(*if_zoom)();
-	int	(*if_setcursor)();
-	int	(*if_cursor)();
-	int	(*if_scursor)();
-	int	(*if_readrect)();
-	int	(*if_writerect)();
-	int	(*if_flush)();
-	int	(*if_free)();
-	int	(*if_help)();	/* prints useful information */
-	char	*if_type;	/* what "open" claims it is. */
-	int	if_max_width;
-	int	if_max_height;
+	int	(*if_open)();		/* open device		*/
+	int	(*if_close)();		/* close device		*/
+	int	(*if_clear)();		/* clear device 	*/
+	int	(*if_read)();		/* read pixels		*/
+	int	(*if_write)();		/* write pixels		*/
+	int	(*if_rmap)();		/* read colormap 	*/
+	int	(*if_wmap)();		/* write colormap 	*/
+	int	(*if_view)();		/* set view		*/
+	int	(*if_getview)();	/* get view		*/
+	int	(*if_setcursor)();	/* define cursor 	*/
+	int	(*if_cursor)();		/* set cursor		*/
+	int	(*if_getcursor)();	/* get cursor		*/
+	int	(*if_readrect)();	/* read rectangle 	*/
+	int	(*if_writerect)();	/* write rectangle 	*/
+	int	(*if_poll)();		/* handle events 	*/
+	int	(*if_flush)();		/* flush output 	*/
+	int	(*if_free)();		/* free resources 	*/
+	int	(*if_help)();		/* print useful info	*/
+	char	*if_type;		/* what "open" calls it	*/
+	int	if_max_width;		/* max device width	*/
+	int	if_max_height;		/* max device height	*/
 	/* Dynamic information: per device INSTANCE. */
 	char	*if_name;	/* what the user called it */
 	int	if_width;	/* current values */
 	int	if_height;
+	int	if_selfd;	/* select(fd) for input events if >= 0 */
 	/* Internal information: needed by the library.	*/
-	int	if_fd;
+	int	if_fd;		/* internal file descriptor */
+	int	if_xzoom;	/* zoom factors */
+	int	if_yzoom;
+	int	if_xcenter;	/* pan position */
+	int	if_ycenter;
+	int	if_cursmode;	/* cursor on/off */
+	int	if_xcurs;	/* cursor position */
+	int	if_ycurs;
 	RGBpixel *if_pbase;	/* Address of malloc()ed page buffer.	*/
 	RGBpixel *if_pcurp;	/* Current pointer into page buffer.	*/
 	RGBpixel *if_pendp;	/* End of page buffer.			*/
@@ -111,20 +118,22 @@ typedef struct  {
 #define fb_gettype(_ifp)		(_ifp->if_type)
 #define fb_getwidth(_ifp)		(_ifp->if_width)
 #define fb_getheight(_ifp)		(_ifp->if_height)
+#define fb_poll(_ifp)			(*_ifp->if_poll)(_ifp)
 #define fb_help(_ifp)			(*_ifp->if_help)(_ifp)
-#define fb_reset(_ifp)			(*_ifp->if_reset)(_ifp)
 #define fb_free(_ifp)			(*_ifp->if_free)(_ifp)
 #define fb_clear(_ifp,_pp)		(*_ifp->if_clear)(_ifp,_pp)
 #define fb_read(_ifp,_x,_y,_pp,_ct)	(*_ifp->if_read)(_ifp,_x,_y,_pp,_ct)
 #define fb_write(_ifp,_x,_y,_pp,_ct)	(*_ifp->if_write)(_ifp,_x,_y,_pp,_ct)
 #define fb_rmap(_ifp,_cmap)		(*_ifp->if_rmap)(_ifp,_cmap)
 #define fb_wmap(_ifp,_cmap)		(*_ifp->if_wmap)(_ifp,_cmap)
-#define	fb_viewport(_ifp,_l,_t,_r,_b)	(*_ifp->if_viewport)(_ifp,_l,_t,_r,_b)
-#define fb_window(_ifp,_x,_y)		(*_ifp->if_window)(_ifp,_x,_y)
-#define fb_zoom(_ifp,_x,_y)		(*_ifp->if_zoom)(_ifp,_x,_y)
-#define fb_setcursor(_ifp,_bits,_xb,_yb,_xo,_yo) (*_ifp->if_setcursor)(_ifp,_bits,_xb,_yb,_xo,_yo)
+#define fb_view(_ifp,_xc,_yc,_xz,_yz)	(*_ifp->if_view)(_ifp,_xc,_yc,_xz,_yz)
+#define fb_getview(_ifp,_xcp,_ycp,_xzp,_yzp) \
+		(*_ifp->if_getview)(_ifp,_xcp,_ycp,_xzp,_yzp)
+#define fb_setcursor(_ifp,_bits,_xb,_yb,_xo,_yo) \
+		(*_ifp->if_setcursor)(_ifp,_bits,_xb,_yb,_xo,_yo)
 #define fb_cursor(_ifp,_mode,_x,_y)	(*_ifp->if_cursor)(_ifp,_mode,_x,_y)
-#define fb_scursor(_ifp,_mode,_x,_y)	(*_ifp->if_scursor)(_ifp,_mode,_x,_y)
+#define fb_getcursor(_ifp,_modep,_xp,_yp) \
+		(*_ifp->if_getcursor)(_ifp,_modep,_xp,_yp)
 #define fb_readrect(_ifp,_xmin,_ymin,_width,_height,_pp) \
 		(*_ifp->if_readrect)(_ifp,_xmin,_ymin,_width,_height,_pp)
 #define fb_writerect(_ifp,_xmin,_ymin,_width,_height,_pp) \
@@ -148,6 +157,12 @@ extern int	fb_common_file_size(int *w, int *h, char *file, int psize);
 extern int	fb_common_image_size(int *w, int *h, int npixels);
 extern int	fb_is_linear_cmap(ColorMap *cmap);
 extern void	fb_make_linear_cmap(ColorMap *cmap);
+/* backward compatibility hacks */
+extern int	fb_reset(FBIO *ifp);
+extern int	fb_viewport(FBIO *ifp, int left, int top, int right, int bottom);
+extern int	fb_window(FBIO *ifp, int xcenter, int ycenter);
+extern int	fb_zoom(FBIO *ifp, int xzoom, int yzoom);
+extern int	fb_scursor(FBIO *ifp, int mode, int x, int y);
 #else
 extern FBIO	*fb_open();
 extern int	fb_close();
@@ -165,6 +180,12 @@ extern int	fb_common_file_size();
 extern int	fb_common_image_size();
 extern int	fb_is_linear_cmap();
 extern void	fb_make_linear_cmap();
+/* backward compatibility hacks */
+extern int	fb_reset();
+extern int	fb_viewport();
+extern int	fb_window();
+extern int	fb_zoom();
+extern int	fb_scursor();
 #endif
 
 /*
@@ -177,6 +198,10 @@ extern int	_fb_pgflush();
 extern int	_fb_disk_enable;
 extern int	fb_sim_readrect();
 extern int	fb_sim_writerect();
+extern int	fb_sim_view();
+extern int	fb_sim_getview();
+extern int	fb_sim_cursor();
+extern int	fb_sim_getcursor();
 
 /*
  * Copy one RGB pixel to another.
