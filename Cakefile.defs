@@ -262,7 +262,7 @@ set -S2 "/bin/sh"
 #		define	LD_OPTS		GFLAG
 #		define	LIBFB_LIBES	LIBPKG -L''XLIBDIR -lX11''SHARED -lgl''SHARED
 #		define	MGED_LIBES	-L''XLIBDIR -lX11''SHARED -lgl''SHARED
-#		define	TCL_MGED_LIBES	LIBTKGLX -L''XLIBDIR -lX11''SHARED -lgl''SHARED -lGL
+#		define	TCL_MGED_LIBES	-L''XLIBDIR -lX11''SHARED -lgl''SHARED -lGL
 #	else
 /*		Static linked executables */
 #		define	GFLAG		
@@ -270,8 +270,17 @@ set -S2 "/bin/sh"
 #		define	STANDARD_LIBES	-L/usr/lib -lm -lmalloc -lc_s
 #		define	LD_OPTS		GFLAG
 #		define	LIBFB_LIBES	LIBPKG -L''XLIBDIR -lGL -lgl -lXt -lXm -lX11
-#		define	TCL_MGED_LIBES	LIBTKGLX -L''XLIBDIR -lX11_s -lgl_s -lGL_s
-#		define	MGED_LIBES	LIBTKGLX -L''XLIBDIR -lPEX5 -lX11_s -lgl_s -lGL
+#		define	TCL_MGED_LIBES	-L''XLIBDIR -lX11_s -lgl_s -lGL_s
+#if 0
+#		define	MGED_LIBES	-L''XLIBDIR -lPEX5 -lX11_s -lgl_s -lGL
+#else
+#	if 1
+#		define	MGED_LIBES	LIBDM -L''XLIBDIR -lPEX5 -lX11_s -lgl_s -lGL
+#	else
+/* Experiment with Mesa library */
+#		define	MGED_LIBES	LIBDM -L''XLIBDIR -lPEX5 -lXi -lXext -lX11_s -lgl_s -L../.libMesa.6d -lMesaGL
+#	endif
+#endif
 #	endif
 /* -ansiposix	ANSI+POSIX mode is used over ANSI, to get fdopen(), etc, defined. */
 #	define  CC_OPTS		GFLAG -ansiposix -DIRIX=5
@@ -292,9 +301,12 @@ set -S2 "/bin/sh"
 #	define	MGED_CONFIG	GFLAG -DIR_KNOBS=8 -DIR_BUTTONS=32 -DDM_4D -DDM_X -I''XINCDIR
 # else
 /* 	Carl's test version */
-#if 0
-#	define	MGED_OBJS	dm-X libdm-X
-#	define	MGED_CONFIG	GFLAG -DDM_X -I''XINCDIR -DUSE_LIBDM -DMGED_LIBRARY=\\\\"/m/cad/tclscripts\\\\" -DDOUBLE_BUFFERING_WITH_PIXMAPS
+#if 1
+#	define	LIBMESA_CONFIG	-DFBIND=2
+#	define  LIBDM_OBJS	dm-X dm-ogl dm-glx dm-pex	
+#	define	LIBDM_CONFIG	-DIR_KNOBS=8 -DIR_BUTTONS=32 -DDM_OGL 
+#	define	MGED_OBJS	dm-X dm-ogl dm-glx dm-pex
+#	define	MGED_CONFIG	GFLAG -DIR_KNOBS=8 -DIR_BUTTONS=32 -DDM_PEX -DDM_X -DDM_OGL -DDM_GLX -I''XINCDIR -DMGED_LIBRARY=\\\\"/m/cad/tclscripts\\\\"
 #else
 #	define	MGED_OBJS	dm-4d dm-X dm-ogl dm-glx dm-pex
 #	define	MGED_CONFIG	GFLAG -DIR_KNOBS=8 -DIR_BUTTONS=32 -DDM_4D -DDM_X -I''XINCDIR -DDM_OGL -DDM_GLX -DDM_PEX -DMGED_LIBRARY=\\\\"/m/cad/tclscripts\\\\" -DDOUBLE_BUFFERING_WITH_PIXMAPS
@@ -1401,6 +1413,14 @@ set -S2 "/bin/sh"
 
 /* Various configuration flags that default to nothing */
 
+#ifndef LIBMESA_CONFIG
+#	define LIBMESA_CONFIG	/**/
+#endif
+
+#ifndef LIBDM_CONFIG
+#	define LIBDM_CONFIG	/**/
+#endif
+
 /* RT_CONFIG is no longer used, and should not be set to anything. */
 #define	RT_CONFIG	/*compat*/
 
@@ -1526,6 +1546,12 @@ set -S2 "/bin/sh"
 #	define	LIBBN_DIR	../libbn
 #	define	LIBBN		-L''LIBBN_DIR -lbn
 #	define	LIBBN_DEP	[[LIBVERS ../libbn/libbn.ARCH_SUF]]
+#	define	LIBDM_DIR	../libdm
+#	define	LIBDM		-L''LIBDM_DIR -ldm
+#	define	LIBDM_DEP	[[LIBVERS ../libdm/libdm.ARCH_SUF]]
+#	define	LIBMESA_DIR	../libMesa
+#	define	LIBMESA		-L''LIBMESA_DIR -lMesa
+#	define	LIBMESA_DEP	[[LIBVERS ../libMesa/libMesa.ARCH_SUF]]
 #	define	LIBPLOT_DIR	../libplot3
 #	define	LIBPLOT		-L''LIBPLOT_DIR -lplot3
 #	define	LIBPLOT_DEP	[[LIBVERS ../libplot3/libplot3.ARCH_SUF]]
@@ -1596,6 +1622,12 @@ set -S2 "/bin/sh"
 #	define	LIBBN_DIR	../.libbn.MTYPE
 #	define	LIBBN		-L''LIBBN_DIR -lbn
 #	define	LIBBN_DEP	[[LIBVERS ../.libbn.MTYPE/libbn.ARCH_SUF]]
+#	define	LIBDM_DIR	../.libdm.MTYPE
+#	define	LIBDM		-L''LIBDM_DIR -ldm
+#	define	LIBDM_DEP	[[LIBVERS ../.libdm.MTYPE/libdm.ARCH_SUF]]
+#	define	LIBMESA_DIR	../.libMesa.MTYPE
+#	define	LIBMESA		-L''LIBMESA_DIR -lMesa
+#	define	LIBMESA_DEP	[[LIBVERS ../.libMesa.MTYPE/libMesa.ARCH_SUF]]
 #	define	LIBPLOT_DIR	../.libplot3.MTYPE
 #	define	LIBPLOT		-L''LIBPLOT_DIR -lplot3
 #	define	LIBPLOT_DEP	[[LIBVERS ../.libplot3.MTYPE/libplot3.ARCH_SUF]]
@@ -1644,9 +1676,11 @@ set -S2 "/bin/sh"
 #	define	LIBREDBLACK_DIR	../.libredblack.MTYPE
 #	define	LIBREDBLACK	-L''LIBREDBLACK_DIR -lredblack
 #	define	LIBREDBLACK_DEP	[[LIBVERS ../.libredblack.MTYPE/libredblack.ARCH_SUF]]
+#if 0
 #	define	LIBTKGLX_DIR	../.libtkGLX.MTYPE
 #	define	LIBTKGLX	-L''LIBTKGLX_DIR -ltkGLX
 #	define	LIBTKGLX_DEP	[[LIBVERS ../.libtkGLX.MTYPE/libtkGLX.ARCH_SUF]]
+#endif
 #	if HAS_TCP
 #		define	LIBPKG_DIR	../.libpkg.MTYPE
 #		define	LIBPKG	-L''LIBPKG_DIR -lpkg
