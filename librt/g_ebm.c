@@ -1,5 +1,5 @@
 /*
- *			E B M . C
+ *			G _ E B M . C
  *
  *  Purpose -
  *	Intersect a ray with an Extruded Bitmap,
@@ -49,7 +49,7 @@ struct ebm_specific {
 #define EBM_NULL	((struct ebm_specific *)0)
 #define EBM_O(m)	offsetof(struct ebm_specific, m)
 
-struct structparse ebm_parse[] = {
+struct structparse rt_ebm_parse[] = {
 #if CRAY && !__STDC__
 	"%s",	EBM_NAME_LEN, "file",	0,		FUNC_NULL,
 #else
@@ -62,8 +62,8 @@ struct structparse ebm_parse[] = {
 	(char *)0, 0, (char *)0, 0,			FUNC_NULL
 };
 
-struct ebm_specific	*ebm_import();
-RT_EXTERN(int ebm_dda,(struct xray *rp, struct soltab *stp,
+struct ebm_specific	*rt_ebm_import();
+RT_EXTERN(int rt_ebm_dda,(struct xray *rp, struct soltab *stp,
 	struct application *ap, struct seg *seghead));
 RT_EXTERN(int rt_seg_planeclip,(struct seg *out_hd, struct seg *in_hd,
 	vect_t out_norm, fastf_t in, fastf_t out,
@@ -189,18 +189,18 @@ struct application *ap;
 	return( count );
 }
 
-static int ebm_normtab[3] = { NORM_XPOS, NORM_YPOS, NORM_ZPOS };
+static int rt_ebm_normtab[3] = { NORM_XPOS, NORM_YPOS, NORM_ZPOS };
 
 
 /*
- *			E B M _ D D A
+ *			R T _ E B M _ D D A
  *
  *  Step through the 2-D array, in local coordinates ("ideal space").
  *
  *
  */
 int
-ebm_dda( rp, stp, ap, seghead )
+rt_ebm_dda( rp, stp, ap, seghead )
 register struct xray	*rp;
 struct soltab		*stp;
 struct application	*ap;
@@ -394,11 +394,11 @@ if(rt_g.debug&DEBUG_EBM)rt_log("Exit index is %s, t[X]=%g, t[Y]=%g\n",
 				if( rp->r_dir[in_index] < 0 )  {
 					/* Go left, entry norm goes right */
 					segp->seg_in.hit_surfno =
-						ebm_normtab[in_index];
+						rt_ebm_normtab[in_index];
 				}  else  {
 					/* go right, entry norm goes left */
 					segp->seg_in.hit_surfno =
-						(-ebm_normtab[in_index]);
+						(-rt_ebm_normtab[in_index]);
 				}
 				RT_LIST_INSERT( &(seghead->l), &(segp->l) );
 
@@ -423,11 +423,11 @@ if(rt_g.debug&DEBUG_EBM)rt_log("Exit index is %s, t[X]=%g, t[Y]=%g\n",
 				if( rp->r_dir[in_index] < 0 )  {
 					/* Go left, exit normal goes left */
 					tail->seg_out.hit_surfno =
-						(-ebm_normtab[in_index]);
+						(-rt_ebm_normtab[in_index]);
 				}  else  {
 					/* go right, exit norm goes right */
 					tail->seg_out.hit_surfno =
-						ebm_normtab[in_index];
+						rt_ebm_normtab[in_index];
 				}
 				if(rt_g.debug&DEBUG_EBM) rt_log("END t=%g, surfno=%d\n",
 					t0, tail->seg_out.hit_surfno );
@@ -455,10 +455,10 @@ if(rt_g.debug&DEBUG_EBM)rt_log("Exit index is %s, t[X]=%g, t[Y]=%g\n",
 		/* Compute exit normal.  Previous out_index is now in_index */
 		if( rp->r_dir[in_index] < 0 )  {
 			/* Go left, exit normal goes left */
-			tail->seg_out.hit_surfno = (-ebm_normtab[in_index]);
+			tail->seg_out.hit_surfno = (-rt_ebm_normtab[in_index]);
 		}  else  {
 			/* go right, exit norm goes right */
-			tail->seg_out.hit_surfno = ebm_normtab[in_index];
+			tail->seg_out.hit_surfno = rt_ebm_normtab[in_index];
 		}
 		if(rt_g.debug&DEBUG_EBM) rt_log("closed END t=%g, surfno=%d\n",
 			tmax, tail->seg_out.hit_surfno );
@@ -470,10 +470,10 @@ if(rt_g.debug&DEBUG_EBM)rt_log("Exit index is %s, t[X]=%g, t[Y]=%g\n",
 }
 
 /*
- *			E B M _ I M P O R T
+ *			R T _ E B M _ I M P O R T
  */
 HIDDEN struct ebm_specific *
-ebm_import( rp )
+rt_ebm_import( rp )
 union record	*rp;
 {
 	register struct ebm_specific *ebmp;
@@ -493,7 +493,7 @@ union record	*rp;
 	while( *cp && isspace(*cp) )  cp++;
 
 	rt_vls_strcpy( &str, cp );
-	rt_structparse( &str, ebm_parse, (char *)ebmp );
+	rt_structparse( &str, rt_ebm_parse, (char *)ebmp );
 	rt_vls_free( &str );
 
 	/* Check for reasonable values */
@@ -559,7 +559,7 @@ vect_t	imin, imax;
 }
 
 /*
- *			E B M _ P R E P
+ *			R T _ E B M _ P R E P
  *
  *  Returns -
  *	0	OK
@@ -567,10 +567,10 @@ vect_t	imin, imax;
  *
  *  Implicit return -
  *	A struct ebm_specific is created, and it's address is stored
- *	in stp->st_specific for use by ebm_shot().
+ *	in stp->st_specific for use by rt_ebm_shot().
  */
 int
-ebm_prep( stp, rp, rtip )
+rt_ebm_prep( stp, rp, rtip )
 struct soltab	*stp;
 union record	*rp;
 struct rt_i	*rtip;
@@ -581,7 +581,7 @@ struct rt_i	*rtip;
 	vect_t	diam;
 	vect_t	small;
 
-	if( (ebmp = ebm_import( rp )) == EBM_NULL )
+	if( (ebmp = rt_ebm_import( rp )) == EBM_NULL )
 		return(-1);	/* ERROR */
 
 	/* build Xform matrix from model(world) to ideal(local) space */
@@ -619,10 +619,10 @@ struct rt_i	*rtip;
 }
 
 /*
- *			E B M _ P R I N T
+ *			R T _ E B M _ P R I N T
  */
 void
-ebm_print( stp )
+rt_ebm_print( stp )
 register struct soltab	*stp;
 {
 	register struct ebm_specific *ebmp =
@@ -637,7 +637,7 @@ register struct soltab	*stp;
 }
 
 /*
- *			E B M _ S H O T
+ *			R T _ E B M _ S H O T
  *
  *  Intersect a ray with an extruded bitmap.
  *  If intersection occurs, a pointer to a sorted linked list of
@@ -648,7 +648,7 @@ register struct soltab	*stp;
  *	>0	HIT
  */
 int
-ebm_shot( stp, rp, ap, seghead )
+rt_ebm_shot( stp, rp, ap, seghead )
 struct soltab		*stp;
 register struct xray	*rp;
 struct application	*ap;
@@ -672,7 +672,7 @@ rt_log("%g %g %g %g %g %g\n",
 ideal_ray.r_pt[X], ideal_ray.r_pt[Y], ideal_ray.r_pt[Z],
 ideal_ray.r_dir[X], ideal_ray.r_dir[Y], ideal_ray.r_dir[Z] );
 #endif
-	if( ebm_dda( &ideal_ray, stp, ap, &myhead ) <= 0 )
+	if( rt_ebm_dda( &ideal_ray, stp, ap, &myhead ) <= 0 )
 		return(0);
 
 	VSET( norm, 0, 0, -1 );		/* letters grow in +z, which is "inside" the halfspace */
@@ -692,7 +692,7 @@ ideal_ray.r_dir[X], ideal_ray.r_dir[Y], ideal_ray.r_dir[Z] );
 }
 
 /*
- *			E B M _ N O R M
+ *			R T _ E B M _ N O R M
  *
  *  Given one ray distance, return the normal and
  *  entry/exit point.
@@ -700,7 +700,7 @@ ideal_ray.r_dir[X], ideal_ray.r_dir[Y], ideal_ray.r_dir[Z] );
  *  code into the proper normal.
  */
 void
-ebm_norm( hitp, stp, rp )
+rt_ebm_norm( hitp, stp, rp )
 register struct hit	*hitp;
 struct soltab		*stp;
 register struct xray	*rp;
@@ -741,12 +741,12 @@ register struct xray	*rp;
 }
 
 /*
- *			E B M _ C U R V E
+ *			R T _ E B M _ C U R V E
  *
  *  Everything has sharp edges.  This makes things easy.
  */
 void
-ebm_curve( cvp, hitp, stp )
+rt_ebm_curve( cvp, hitp, stp )
 register struct curvature	*cvp;
 register struct hit		*hitp;
 struct soltab			*stp;
@@ -759,13 +759,13 @@ struct soltab			*stp;
 }
 
 /*
- *			E B M _ U V
+ *			R T _ E B M _ U V
  *
  *  Map the hit point in 2-D into the range 0..1
  *  untransformed X becomes U, and Y becomes V.
  */
 void
-ebm_uv( ap, stp, hitp, uvp )
+rt_ebm_uv( ap, stp, hitp, uvp )
 struct application	*ap;
 struct soltab		*stp;
 register struct hit	*hitp;
@@ -778,10 +778,10 @@ register struct uvcoord	*uvp;
 }
 
 /*
- * 			E B M _ F R E E
+ * 			R T _ E B M _ F R E E
  */
 void
-ebm_free( stp )
+rt_ebm_free( stp )
 struct soltab	*stp;
 {
 	register struct ebm_specific *ebmp =
@@ -792,16 +792,16 @@ struct soltab	*stp;
 }
 
 int
-ebm_class()
+rt_ebm_class()
 {
 	return(0);
 }
 
 /*
- *			E B M _ P L O T
+ *			R T _ E B M _ P L O T
  */
 int
-ebm_plot( rp, matp, vhead, dp )
+rt_ebm_plot( rp, matp, vhead, dp )
 union record	*rp;
 matp_t		matp;
 struct vlhead	*vhead;
@@ -812,7 +812,7 @@ struct directory *dp;
 	register int	following;
 	register int	base;
 
-	if( (ebmp = ebm_import( rp )) == EBM_NULL )
+	if( (ebmp = rt_ebm_import( rp )) == EBM_NULL )
 		return(-1);
 
 	/* Find vertical lines */
@@ -823,7 +823,7 @@ struct directory *dp;
 			if( following )  {
 				if( (BIT( x-1, y )==0) != (BIT( x, y )==0) )
 					continue;
-				ebm_plate( x, base, x, y, ebmp->ebm_tallness,
+				rt_ebm_plate( x, base, x, y, ebmp->ebm_tallness,
 					matp, vhead );
 				following = 0;
 			} else {
@@ -842,7 +842,7 @@ struct directory *dp;
 			if( following )  {
 				if( (BIT( x, y-1 )==0) != (BIT( x, y )==0) )
 					continue;
-				ebm_plate( base, y, x, y, ebmp->ebm_tallness,
+				rt_ebm_plate( base, y, x, y, ebmp->ebm_tallness,
 					matp, vhead );
 				following = 0;
 			} else {
@@ -859,7 +859,7 @@ struct directory *dp;
 }
 
 /* either x1==x2, or y1==y2 */
-ebm_plate( x1, y1, x2, y2, t, mat, vhead )
+rt_ebm_plate( x1, y1, x2, y2, t, mat, vhead )
 int			x1, y1;
 int			x2, y2;
 double			t;
@@ -928,11 +928,11 @@ char	**argv;
 
 	strcpy( rec.ss.ss_str, "ebm file=bm.bw w=6 n=6 d=6.0" );
 
-	if( ebm_prep( &Tsolid, &rec, 0 ) != 0 )  {
+	if( rt_ebm_prep( &Tsolid, &rec, 0 ) != 0 )  {
 		printf("prep failed\n");
 		exit(1);
 	}
-	ebm_print( &Tsolid );
+	rt_ebm_print( &Tsolid );
 	ebmp = bmsp = (struct ebm_specific *)Tsolid.st_specific;
 
 	outline( Tsolid.st_pathmat, &rec );
@@ -1098,7 +1098,7 @@ vect_t	p1, p2;
 		ray.r_dir[X], ray.r_dir[Y], ray.r_dir[Z] );
 
 
-	segp = ebm_shot( &Tsolid, &ray, &Tappl );
+	segp = rt_ebm_shot( &Tsolid, &ray, &Tappl );
 
 	lastk = 0;
 	while( segp != SEG_NULL )  {
@@ -1131,7 +1131,7 @@ union record	*rp;
 		 ebmp->ebm_xdim+BIT_XWIDEN, ebmp->ebm_ydim+BIT_YWIDEN, (int)(ebmp->ebm_tallness+1.99) );
 
 	/* Get vlist, then just draw the vlist */
-	ebm_plot( rp, mat, &vhead, 0 );
+	rt_ebm_plot( rp, mat, &vhead, 0 );
 
 	for( vp = vhead.vh_first; vp != VL_NULL; vp = vp->vl_forw )  {
 		if( vp->vl_draw == 0 )

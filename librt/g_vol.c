@@ -53,7 +53,7 @@ struct vol_specific {
 #define VOL_NULL	((struct vol_specific *)0)
 #define VOL_O(m)	offsetof(struct vol_specific, m)
 
-struct structparse vol_parse[] = {
+struct structparse rt_vol_parse[] = {
 #if CRAY && !__STDC__
 	"%s",	VOL_NAME_LEN, "file",	0,		FUNC_NULL,
 #else
@@ -69,7 +69,9 @@ struct structparse vol_parse[] = {
 	(char *)0, 0, (char *)0,	0,		FUNC_NULL
 };
 
-struct vol_specific	*vol_import();
+RT_EXTERN(void rt_vol_plate,(point_t a, point_t b, point_t c, point_t d,
+	mat_t mat, struct vlhead *vhead, struct vol_specific *volp));
+RT_EXTERN(struct vol_specific *rt_vol_import, (union record *rp));
 
 /*
  *  Codes to represent surface normals.
@@ -100,11 +102,11 @@ struct vol_specific	*vol_import();
 
 #define OK(v)	( (v) >= volp->vol_lo && (v) <= volp->vol_hi )
 
-static int vol_normtab[3] = { NORM_XPOS, NORM_YPOS, NORM_ZPOS };
+static int rt_vol_normtab[3] = { NORM_XPOS, NORM_YPOS, NORM_ZPOS };
 
 
 /*
- *			V O L _ S H O T
+ *			R T _ V O L _ S H O T
  *
  *  Transform the ray into local coordinates of the volume ("ideal space").
  *  Step through the 3-D array, in local coordinates.
@@ -112,7 +114,7 @@ static int vol_normtab[3] = { NORM_XPOS, NORM_YPOS, NORM_ZPOS };
  *
  */
 int
-vol_shot( stp, rp, ap, seghead )
+rt_vol_shot( stp, rp, ap, seghead )
 struct soltab		*stp;
 register struct xray	*rp;
 struct application	*ap;
@@ -315,11 +317,11 @@ if(rt_g.debug&DEBUG_VOL)rt_log("Exit index is %s, t[]=(%g, %g, %g)\n",
 				if( rp->r_dir[in_index] < 0 )  {
 					/* Go left, entry norm goes right */
 					segp->seg_in.hit_surfno =
-						vol_normtab[in_index];
+						rt_vol_normtab[in_index];
 				}  else  {
 					/* go right, entry norm goes left */
 					segp->seg_in.hit_surfno =
-						(-vol_normtab[in_index]);
+						(-rt_vol_normtab[in_index]);
 				}
 				RT_LIST_INSERT( &(seghead->l), &(segp->l) );
 				if(rt_g.debug&DEBUG_VOL) rt_log("START t=%g, surfno=%d\n",
@@ -343,11 +345,11 @@ if(rt_g.debug&DEBUG_VOL)rt_log("Exit index is %s, t[]=(%g, %g, %g)\n",
 				if( rp->r_dir[in_index] < 0 )  {
 					/* Go left, exit normal goes left */
 					tail->seg_out.hit_surfno =
-						(-vol_normtab[in_index]);
+						(-rt_vol_normtab[in_index]);
 				}  else  {
 					/* go right, exit norm goes right */
 					tail->seg_out.hit_surfno =
-						vol_normtab[in_index];
+						rt_vol_normtab[in_index];
 				}
 				if(rt_g.debug&DEBUG_VOL) rt_log("END t=%g, surfno=%d\n",
 					t0, tail->seg_out.hit_surfno );
@@ -375,10 +377,10 @@ if(rt_g.debug&DEBUG_VOL)rt_log("Exit index is %s, t[]=(%g, %g, %g)\n",
 		/* Compute exit normal.  Previous out_index is now in_index */
 		if( rp->r_dir[in_index] < 0 )  {
 			/* Go left, exit normal goes left */
-			tail->seg_out.hit_surfno = (-vol_normtab[in_index]);
+			tail->seg_out.hit_surfno = (-rt_vol_normtab[in_index]);
 		}  else  {
 			/* go right, exit norm goes right */
-			tail->seg_out.hit_surfno = vol_normtab[in_index];
+			tail->seg_out.hit_surfno = rt_vol_normtab[in_index];
 		}
 		if(rt_g.debug&DEBUG_VOL) rt_log("closed END t=%g, surfno=%d\n",
 			tmax, tail->seg_out.hit_surfno );
@@ -390,10 +392,10 @@ if(rt_g.debug&DEBUG_VOL)rt_log("Exit index is %s, t[]=(%g, %g, %g)\n",
 }
 
 /*
- *			V O L _ I M P O R T
+ *			R T _ V O L _ I M P O R T
  */
 HIDDEN struct vol_specific *
-vol_import( rp )
+rt_vol_import( rp )
 union record	*rp;
 {
 	register struct vol_specific *volp;
@@ -422,7 +424,7 @@ union record	*rp;
 	VSETALL( volp->vol_cellsize, 1 );
 
 	rt_vls_strcpy( &vls, cp);
-	rt_structparse( &vls, vol_parse, (char *)volp );
+	rt_structparse( &vls, rt_vol_parse, (char *)volp );
 	rt_vls_free( &vls );
 
 	/* Check for reasonable values */
@@ -430,7 +432,7 @@ union record	*rp;
 	    volp->vol_ydim < 1 || volp->vol_zdim < 1 ||
 	    volp->vol_lo < 0 || volp->vol_hi > 255 )  {
 	    	rt_log("Unreasonable VOL parameters\n");
-	    	rt_structprint("unreasonable", vol_parse, (char *)volp );
+	    	rt_structprint("unreasonable", rt_vol_parse, (char *)volp );
 		rt_free( (char *)volp, "vol_specific" );
 		return( VOL_NULL );
 	}
@@ -468,7 +470,7 @@ err:
 }
 
 /*
- *			V O L _ P R E P
+ *			R T _ V O L _ P R E P
  *
  *  Returns -
  *	0	OK
@@ -476,10 +478,10 @@ err:
  *
  *  Implicit return -
  *	A struct vol_specific is created, and it's address is stored
- *	in stp->st_specific for use by vol_shot().
+ *	in stp->st_specific for use by rt_vol_shot().
  */
 int
-vol_prep( stp, rp, rtip )
+rt_vol_prep( stp, rp, rtip )
 struct soltab	*stp;
 union record	*rp;
 struct rt_i	*rtip;
@@ -490,7 +492,7 @@ struct rt_i	*rtip;
 	vect_t	diam;
 	vect_t	small;
 
-	if( (volp = vol_import( rp )) == VOL_NULL )
+	if( (volp = rt_vol_import( rp )) == VOL_NULL )
 		return(-1);	/* ERROR */
 
 	/* build Xform matrix from model(world) to ideal(local) space */
@@ -526,10 +528,10 @@ struct rt_i	*rtip;
 }
 
 /*
- *			V O L _ P R I N T
+ *			R T _ V O L _ P R I N T
  */
 void
-vol_print( stp )
+rt_vol_print( stp )
 register struct soltab	*stp;
 {
 	register struct vol_specific *volp =
@@ -544,7 +546,7 @@ register struct soltab	*stp;
 }
 
 /*
- *			V O L _ N O R M
+ *			R T _ V O L _ N O R M
  *
  *  Given one ray distance, return the normal and
  *  entry/exit point.
@@ -552,7 +554,7 @@ register struct soltab	*stp;
  *  code into the proper normal.
  */
 void
-vol_norm( hitp, stp, rp )
+rt_vol_norm( hitp, stp, rp )
 register struct hit	*hitp;
 struct soltab		*stp;
 register struct xray	*rp;
@@ -585,7 +587,7 @@ register struct xray	*rp;
 		break;
 
 	default:
-		rt_log("vol_norm(%s): surfno=%d bad\n",
+		rt_log("rt_vol_norm(%s): surfno=%d bad\n",
 			stp->st_name, hitp->hit_surfno );
 		VSETALL( hitp->hit_normal, 0 );
 		break;
@@ -593,12 +595,12 @@ register struct xray	*rp;
 }
 
 /*
- *			V O L _ C U R V E
+ *			R T _ V O L _ C U R V E
  *
  *  Everything has sharp edges.  This makes things easy.
  */
 void
-vol_curve( cvp, hitp, stp )
+rt_vol_curve( cvp, hitp, stp )
 register struct curvature	*cvp;
 register struct hit		*hitp;
 struct soltab			*stp;
@@ -611,13 +613,13 @@ struct soltab			*stp;
 }
 
 /*
- *			V O L _ U V
+ *			R T _ V O L _ U V
  *
  *  Map the hit point in 2-D into the range 0..1
  *  untransformed X becomes U, and Y becomes V.
  */
 void
-vol_uv( ap, stp, hitp, uvp )
+rt_vol_uv( ap, stp, hitp, uvp )
 struct application	*ap;
 struct soltab		*stp;
 register struct hit	*hitp;
@@ -630,10 +632,10 @@ register struct uvcoord	*uvp;
 }
 
 /*
- * 			V O L _ F R E E
+ * 			R T _ V O L _ F R E E
  */
 void
-vol_free( stp )
+rt_vol_free( stp )
 struct soltab	*stp;
 {
 	register struct vol_specific *volp =
@@ -644,16 +646,16 @@ struct soltab	*stp;
 }
 
 int
-vol_class()
+rt_vol_class()
 {
 	return(0);
 }
 
 /*
- *			V O L _ P L O T
+ *			R T _ V O L _ P L O T
  */
 int
-vol_plot( rp, matp, vhead, dp )
+rt_vol_plot( rp, matp, vhead, dp )
 union record	*rp;
 mat_t		matp;
 struct vlhead	*vhead;
@@ -664,7 +666,7 @@ struct directory *dp;
 	register short	v1,v2;
 	point_t		a,b,c,d;
 
-	if( (volp = vol_import( rp )) == VOL_NULL )
+	if( (volp = rt_vol_import( rp )) == VOL_NULL )
 		return(-1);
 
 	/*
@@ -689,7 +691,7 @@ struct directory *dp;
 				/* End of run of edge.  One cell beyond. */
 				VSET( c, x+0.5, y-0.5, z+0.5 );
 				VSET( d, x+0.5, y-0.5, z-0.5 );
-				vol_plate( a,b,c,d, matp, vhead, volp );
+				rt_vol_plate( a,b,c,d, matp, vhead, volp );
 			}
 		}
 	}
@@ -715,7 +717,7 @@ struct directory *dp;
 				/* End of run of edge.  One cell beyond */
 				VSET( c, (x-0.5), (y+0.5), (z+0.5) );
 				VSET( d, (x-0.5), (y+0.5), (z-0.5) );
-				vol_plate( a,b,c,d, matp, vhead, volp );
+				rt_vol_plate( a,b,c,d, matp, vhead, volp );
 			}
 		}
 	}
@@ -741,14 +743,18 @@ struct directory *dp;
 				/* End of run of edge.  One cell beyond */
 				VSET( c, (x+0.5), (y+0.5), (z-0.5) );
 				VSET( d, (x+0.5), (y-0.5), (z-0.5) );
-				vol_plate( a,b,c,d, matp, vhead, volp );
+				rt_vol_plate( a,b,c,d, matp, vhead, volp );
 			}
 		}
 	}
 	return(0);
 }
 
-vol_plate( a,b,c,d, mat, vhead, volp )
+/*
+ *			R T _ V O L _ P L A T E
+ */
+void
+rt_vol_plate( a,b,c,d, mat, vhead, volp )
 point_t			a,b,c,d;
 register mat_t		mat;
 register struct vlhead	*vhead;
