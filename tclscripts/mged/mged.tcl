@@ -18,6 +18,8 @@
 #
 # Description -
 #       Sample user interface for MGED
+#
+#  $Revision$
 
 #==============================================================================
 # Ensure that tk.tcl has been loaded already via mged command 'loadtk'.
@@ -145,7 +147,21 @@ proc mged_input_dialog { w title text entryvar defaultentry default args } {
 if [info exists env(MGED_LIBRARY)] then {
     set mged_library $env(MGED_LIBRARY)
 } else {
-    set mged_library ../mged
+	if [file exists ../mged/mged.tcl] then {
+		set mged_library ../mged
+	} else {
+		set mged_library /usr/brlcad/tcl
+	}
+}
+
+if [info exists env(MGED_HTML_DIR)] then {
+    set mged_html_dir $env(MGED_HTML_DIR)
+} else {
+	if [file exists ../html/mged/index.html] then {
+		set mged_html_dir ../html/mged
+	} else {
+		set mged_html_dir /usr/brlcad/html
+	}
 }
 
 while { [file exists $mged_library/vmath.tcl]==0 } {
@@ -508,12 +524,6 @@ set ia_font -*-Courier-Medium-R-Normal-*-120-*-*-*-*-*-*
 #==============================================================================
 # PHASE 5: HTML support
 #==============================================================================
-
-if [info exists env(MGED_HTML_DIR)] then {
-    set mged_html_dir $env(MGED_HTML_DIR)
-} else {
-    set mged_html_dir ../html/mged
-}
 
 proc ia_man { } {
     global mged_library mged_html_dir ia_url message
