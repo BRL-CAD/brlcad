@@ -70,7 +70,7 @@ typedef struct  {
  *  the library routines.
  */
 typedef struct FBIO_ {
-	int	if_magic;
+	long	if_magic;
 	/* Static information: per device TYPE.	*/
 	int	(*if_open)FB_ARGS((struct FBIO_ *ifp, char *file, int width, int height));		/* open device		*/
 	int	(*if_close)FB_ARGS((struct FBIO_ *ifp));				/* close device		*/
