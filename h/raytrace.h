@@ -1804,13 +1804,14 @@ RT_EXTERN(int rt_avail_cpus, (void) );
 					/* run func in parallel */
 RT_EXTERN(void rt_parallel, ( void (*func)(), int ncpu ) );
 
-/* memalloc.c */
-RT_EXTERN(unsigned long memalloc, (struct mem_map **pp, unsigned size) );
-RT_EXTERN(unsigned long memget, (struct mem_map **pp, unsigned int size,
+/* memalloc.c -- non PARALLEL routines */
+RT_EXTERN(unsigned long rt_memalloc, (struct mem_map **pp, unsigned size) );
+RT_EXTERN(unsigned long rt_memget, (struct mem_map **pp, unsigned int size,
 	unsigned int place) );
-RT_EXTERN(void memfree, (struct mem_map **pp, unsigned size, unsigned long addr) );
-RT_EXTERN(void mempurge, (struct mem_map **pp) );
-RT_EXTERN(void memprint, (struct mem_map **pp) );
+RT_EXTERN(void rt_memfree, (struct mem_map **pp, unsigned size, unsigned long addr) );
+RT_EXTERN(void rt_mempurge, (struct mem_map **pp) );
+RT_EXTERN(void rt_memprint, (struct mem_map **pp) );
+RT_EXTERN(void rt_memclose,() );
 
 RT_EXTERN(struct rt_vlblock *rt_vlblock_init, () );
 RT_EXTERN(void rt_vlblock_free, (struct rt_vlblock *vbp) );
