@@ -202,10 +202,6 @@ int ac;
 char *av[];
 {
 	int  c;
-
-#if defined(BSD) && BSD < 43
-#define strrchr rindex
-#endif
 	char *strrchr();
 	struct opening *op;
 	double dx, dy, width, height;
