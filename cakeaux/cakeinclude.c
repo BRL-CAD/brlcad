@@ -1,7 +1,7 @@
 /*
  *			C A K E I N C L U D E . C
- *
- *  This program is intended to be a faster replacement for the
+ *  This program lists the names of all header files that a given C source
+ *  module includes.  It is intended to be a faster replacement for the
  *  cakeinclude.sh script used for BRL-CAD distributions.
  *  It therefore embodies the same conventions and restrictions.
  *
@@ -46,26 +46,28 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <stdio.h>
 
 /* declarations to support use of getopt() system call */
-char *options = "hb:i:s:";
+char *options = "hb:i:s:d";
 char optflags[sizeof(options)];
 extern char *optarg;
 extern int optind, opterr, getopt();
 
 char *progname = "(noname)";
-char *buffer, *malloc(), *realloc();
-unsigned bufsiz=16384;
+char *malloc(), *realloc();
 char *srcdir = ".";
 char *incdir = ".";
 int status;
-FILE *fd, *fopen();
+unsigned bsize=16384;
+FILE *fopen();
+int debug = 0;
 
 /*
  *	U S A G E --- tell user how to invoke this program, then exit
  */
 void usage()
 {
-	(void) fprintf(stderr, "Usage: %s [ -%s ] file [ file ... ]\n",
-			progname, options);
+	(void) fprintf(stderr,
+		"Usage: %s [ -s srcdir ] [ -i incdir ] [ -b bufsize ] file\n",
+			progname);
 	exit(1);
 }
 
@@ -89,7 +91,7 @@ char *av[];
 	/* get all the option flags from the command line */
 	while ((c=getopt(ac,av,options)) != EOF)
 		switch (c) {
-		case 'b'	: if ((bufsiz = atoi(optarg)) < 11)
+		case 'b'	: if ((bsize = atoi(optarg)) < 11)
 					usage();
 				break;
 		case 'i':
@@ -97,6 +99,9 @@ char *av[];
 			break;
 		case 's':
 			srcdir = optarg;
+			break;
+		case 'd':
+			debug = !debug;
 			break;
 		default		: usage(); break; 
 		}
@@ -108,46 +113,54 @@ char *av[];
  *
  *	check an include statement for suitability
  */
-int chkincl(j, i)
-register int j, *i;
+int chkincl(fd, bufpos, eob_cnt_p, buffer, bufsiz)
+FILE *fd;
+char *buffer;
+unsigned *bufsiz;
+register int bufpos, *eob_cnt_p;
 {
 	int k;
+	char name[1024];
 
 	/* skip over any white space */
-	while (j < *i && buffer[j] == ' ' || buffer[j] == '\t')  j++;
+	while (bufpos < *eob_cnt_p &&
+	    buffer[bufpos] == ' ' || buffer[bufpos] == '\t')
+		bufpos++;
 
-	if (j >= *i) return(j);
+	if (bufpos >= *eob_cnt_p) return(bufpos);
 
 	/* ignore the #include <> format and # include " " format.
 	 * we are only interested in lines of the form:
 	 * #include "filespec"
 	 */
-	if (buffer[j++] != '"') return(j);
+	if (buffer[bufpos++] != '"') return(bufpos);
 
 	/* find end of filename */
-label:	for (k = j ; k < *i && buffer[k] != '"' && buffer[k] != '\n' ; k++)
+label:	for (k = bufpos ;
+	     k < *eob_cnt_p && buffer[k] != '"' && buffer[k] != '\n' ;
+	     k++)
 		;
 
 	if (buffer[k] == '\n')
 		return(k);
-	else if (k >= *i) {
+	else if (k >= *eob_cnt_p) {
 		/* we hit the end of the buffer in the middle of an include
 		 * statement.  If the buffer wasn't full, we hit EOF and can
 		 * just give up.  On the other hand, if the buffer was full,
 		 * we should try to extend the buffer and read in the rest
 		 * of the include statment
 		 */
-		if (*i < bufsiz-1) return(k);
-		if ((buffer=realloc(buffer, bufsiz+1024)) == (char *)NULL) {
+		if (*eob_cnt_p < (*bufsiz) -1) return(k);
+		if ((buffer=realloc(buffer, (*bufsiz)+1024)) == (char *)NULL){
 			fprintf(stderr, "%s: Error extending buffer\n",
 				progname);
 			exit(-1);
 		}
-		/* read a little more data */			
-		bufsiz += 1024;
-		while ( *i < bufsiz-1 && 
-		    (status=fread(&buffer[*i], 1, bufsiz-1-(*i), fd)) )
-			*i += status;
+		/* read a little more data */
+		*bufsiz += 1024;
+		while ( *eob_cnt_p < (*bufsiz)-1 && 
+		    (status=fread(&buffer[*eob_cnt_p], 1, (*bufsiz)-1-(*eob_cnt_p), fd)) )
+			*eob_cnt_p += status;
 
 		goto label;
 
@@ -156,17 +169,85 @@ label:	for (k = j ; k < *i && buffer[k] != '"' && buffer[k] != '\n' ; k++)
 		buffer[k] = '\0';
 
 	/* ignore the "...debug.h" files */
-	if (k-7 >= j && !strncmp("debug.h", &buffer[k-7], 7))
+	if (k-7 >= bufpos && !strncmp("debug.h", &buffer[k-7], 7))
 		return(k);
 
-	if (buffer[j] == '.' && buffer[j+1] == '/')
-		(void)printf("%s%s\n", srcdir, &buffer[j+1]);
-	else if (buffer[j] == '/')
-		(void)printf("%s\n", &buffer[j]);
-	else
-		(void)printf("%s/%s\n", incdir, &buffer[j]);
+	if (buffer[bufpos] == '.' && buffer[bufpos+1] == '/') {
+		(void)printf("%s%s\n", srcdir, &buffer[bufpos+1]);
+
+		if (strlen(srcdir)+strlen(&buffer[bufpos+1]) < sizeof(name)){
+			sprintf(name, "%s%s", srcdir, &buffer[bufpos+1]);
+			get_includes(name);
+		}
+
+	} else if (buffer[bufpos] == '/') {
+		(void)printf("%s\n", &buffer[bufpos]);
+
+		if (strlen(&buffer[bufpos]) < sizeof(name)) {
+			strcpy(name, &buffer[bufpos]);
+			get_includes(name);
+		}
+	} else {
+		(void)printf("%s/%s\n", incdir, &buffer[bufpos]);
+
+		if (strlen(incdir) + strlen(&buffer[bufpos]) < sizeof(name)) {
+			sprintf(name, "%s/%s", incdir, &buffer[bufpos]);
+			get_includes(name);
+		}
+
+	}
+
 
 	return(k);
+}
+
+get_includes(s)
+char *s;
+{
+	int bufpos, eob, newline;
+	char *buffer;
+	unsigned bufsiz= bsize;
+	FILE *fd, *fopen();
+
+	if ((buffer=malloc(bufsiz)) == (char *)0) {
+		fprintf(stderr, "%s: Unable to allocate %u bytes for buffer\n",
+			progname, bufsiz);
+		exit(-1);
+	}
+
+	if (debug)
+		(void)fprintf(stderr, "Visiting \"%s\"\n", s);
+
+	/* This part might be done in a loop, to match usage message? */
+
+	if ((fd = fopen(s, "r")) == (FILE *)NULL) {
+		(void)fprintf(stderr, "%s: routine get_includes: ", progname);
+		perror(s);
+		exit(-1);
+	}
+
+	/* fill buffer */
+	for (eob=0 ; eob < bufsiz-1 && 
+	    (status=fread(&buffer[eob], 1, bufsiz-1-eob, fd)) ; eob += status)
+		;
+
+	if (eob == 0) {
+		fprintf(stderr, "%s: Error reading file \"%s\"\n",
+				progname, s);
+		exit(-1);
+	}
+	
+	newline = 1;
+	for (bufpos = 0 ; bufpos < eob ; bufpos++) {
+		if (newline && !strncmp("#include", &buffer[bufpos], 8))
+			bufpos= chkincl(fd, bufpos+8, &eob, buffer, &bufsiz);
+
+		newline = (buffer[bufpos] == '\n');
+	}
+
+	(void)fclose(fd);
+	if (debug)
+		(void)fprintf(stderr, "leaving \"%s\"\n", s);
 }
 
 
@@ -181,44 +262,12 @@ int ac;
 char *av[];
 {
 	int arg_index;
-	int j, eob, newline;
 
 	/* parse command flags, and make sure there are arguments
 	 * left over for processing.
 	 */
 	if ((arg_index = parse_args(ac, av)) >= ac) usage();
 
-	if ((buffer=malloc(bufsiz)) == (char *)0) {
-		fprintf(stderr, "%s: Unable to allocate %d bytes for buffer\n",
-			progname, bufsiz);
-		exit(-1);
-	}
-
-	/* This part might be done in a loop, to match usage message? */
-
-	if ((fd = fopen(av[arg_index], "r")) == (FILE *)NULL) {
-		perror(av[arg_index]);
-		exit(-1);
-	}
-
-	/* fill buffer */
-	for (eob=0 ; eob < bufsiz-1 && 
-	    (status=fread(&buffer[eob], 1, bufsiz-1-eob, fd)) ; eob += status)
-		;
-
-	if (eob == 0) {
-		fprintf(stderr, "%s: Error reading file \"%s\"\n",
-				progname, av[arg_index]);
-		exit(-1);
-	}
-	
-	newline = 1;
-	for (j = 0 ; j < eob ; j++) {
-		if (newline && !strncmp("#include", &buffer[j], 8))
-			j = chkincl(j+8, &eob);
-
-		newline = (buffer[j] == '\n');
-	}
-
-	(void)fclose(fd);
+	get_includes(av[arg_index]);
+	return(0);
 }
