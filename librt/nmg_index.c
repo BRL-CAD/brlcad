@@ -333,8 +333,9 @@ struct model	*m;
  *  the second pass can do less.
  */
 void
-nmg_m_reindex( m )
+nmg_m_reindex( m, newindex )
 struct model	*m;
+register long	newindex;
 {
 	struct nmgregion	*r;
 	struct shell		*s;
@@ -346,10 +347,11 @@ struct model	*m;
 	struct edge			*e;
 	register struct vertexuse	*vu;
 	struct vertex			*v;
-	register int		newindex;
+
 
 	NMG_CK_MODEL(m);
 	if( m->index != 0 )  rt_log("nmg_m_reindex() m->index=%d\n", m->index);
+	if ( newindex < 0 )  rt_log("nmg_m_reindex() newindex(%ld) < 0\n", newindex);
 
 	/* First pass:  set high bits */
 	nmg_m_set_high_bit( m );
@@ -357,7 +359,6 @@ struct model	*m;
 	/*
 	 *  Second pass:  assign new index number
 	 */
-	newindex = 0;	/* model remains index 0 */
 
 	NMG_ASSIGN_NEW_INDEX(m);
 	if( m->ma_p )  NMG_ASSIGN_NEW_INDEX(m->ma_p);
@@ -824,4 +825,45 @@ struct model				*m;
 	}
 	/* Caller must free them */
 	return ptrs;
+}
+
+
+/*			N M G _ M E R G _ M O D E L S
+ *
+ *	Combine two NMG model trees into one single NMG model.  The 
+ *	first model inherits the nmgregions of the second.  The second
+ *	model pointer is freed before return.
+ */
+void
+nmg_merge_models(m1, m2)
+struct model *m1;
+struct model *m2;
+{
+	struct nmgregion *r;
+
+	NMG_CK_MODEL(m1);
+	NMG_CK_MODEL(m2);
+
+	/* first reorder the first model to "compress" the
+	 * number space if possible.
+	 */
+	nmg_m_reindex(m1, 0);
+	nmg_m_reindex(m2, 0);
+
+	/* no re-order the second model starting with an index number
+	 * of m1->maxindex.
+	 *
+	 * We might get away with using m1->maxindex-1, since the first
+	 * value is assigned to the second model structure, and we will
+	 * shortly be freeing the second model struct.
+	 */
+
+	nmg_m_reindex(m2, m1->maxindex);
+
+	for ( RT_LIST_FOR(r, nmgregion, &(m1->r_hd)) )
+		r->m_p = m1;
+
+	RT_LIST_APPEND_LIST(&(m1->r_hd), &(m2->r_hd));
+
+	FREE_MODEL(m2);
 }
