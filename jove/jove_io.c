@@ -4,6 +4,10 @@
  * $Revision$
  *
  * $Log$
+ * Revision 2.1  86/09/23  22:28:40  mike
+ * Externs now declared properly.
+ * I/O fixes for SysV
+ * 
  * Revision 2.1  86/09/23  22:26:37  mike
  * Externs now declared properly.
  * I/O fixes for SysV
@@ -690,7 +694,7 @@ int	(*iofcn)();
 		error("IO error");
 }
 
-#ifdef SYS5
+#ifdef notdef
 /* block copy from from to to, count bytes */
 bcopy(from, to, count)
 	register char *from, *to;
@@ -699,7 +703,7 @@ bcopy(from, to, count)
 	while ((--count) >= 0)
 		*to++ = *from++;
 }
-#endif
+#endif notdef
 
 /*
  * Save the current contents of linebuf, if it has changed.
