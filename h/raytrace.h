@@ -12,8 +12,8 @@
 struct ray {
 	point_t		r_pt;		/* Point at which ray starts */
 	vect_t		r_dir;		/* Direction of ray (UNIT Length) */
-	float		r_min;		/* entry dist to bounding sphere */
-	float		r_max;		/* exit dist from bounding sphere */
+	fastf_t		r_min;		/* entry dist to bounding sphere */
+	fastf_t		r_max;		/* exit dist from bounding sphere */
 	struct ray	*r_forw;	/* !0 -> ray after deflection */
 };
 #define RAY_NULL	((struct ray *)0)
@@ -29,7 +29,7 @@ struct ray {
 struct hit {
 	point_t		hit_point;	/* Intersection point */
 	vect_t		hit_normal;	/* Surface Normal at hit_point */
-	float		hit_dist;	/* dist from r_pt to hit_point */
+	fastf_t		hit_dist;	/* dist from r_pt to hit_point */
 };
 #define HIT_NULL	((struct hit *)0)
 
@@ -55,7 +55,13 @@ struct seg {
 	struct seg	*seg_next;	/* non-zero if more segments */
 };
 #define SEG_NULL	((struct seg *)0)
-
+extern struct seg *FreeSeg;		/* Head of freelist */
+#define GET_SEG(p)    {	if( ((p)=FreeSeg) == SEG_NULL )  { \
+				GETSTRUCT((p), seg); \
+			} else { \
+				FreeSeg = (p)->seg_next; \
+			} }
+#define FREE_SEG(p) {(p)->seg_next = FreeSeg; FreeSeg = (p);}
 
 
 /*
@@ -66,7 +72,7 @@ struct seg {
 struct soltab {
 	int		st_id;		/* Solid ident */
 	vect_t		st_center;	/* Center of bounding Sphere */
-	float		st_radsq;	/* Bounding sphere Radius, squared */
+	fastf_t		st_radsq;	/* Bounding sphere Radius, squared */
 	int		*st_specific;	/* -> ID-specific (private) struct */
 	struct soltab	*st_forw;	/* Linked list of solids */
 	char		*st_name;	/* Name of solid */
@@ -95,7 +101,7 @@ struct functab {
 
 #define EPSILON		0.0001
 #define NEAR_ZERO(f)	( ((f) < 0) ? ((f) > -EPSILON) : ((f) < EPSILON) )
-
+#define INFINITY	100000000.0
 
 
 /*
