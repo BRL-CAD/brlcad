@@ -167,24 +167,6 @@ proc get_player_id_t { w } {
     return ":"
 }
 
-proc do_Open { id } {
-    global mged_gui
-
-    set file_types {{{MGED Database} {.g}}}
-    set ia_filename [tk_getOpenFile -parent .$id -filetypes $file_types\
-	    -title "Open MGED Database" -defaultextension ".g"]
-    if {$ia_filename != ""} {
-	set ret [catch {opendb $ia_filename} msg]
-	if {$ret} {
-	    cad_dialog .$id.cool $mged_gui($id,screen) "Error" \
-		    $msg info 0 OK
-	} else {
-	    cad_dialog .$id.cool $mged_gui($id,screen) "File loaded" \
-		    $msg info 0 OK
-	}
-    }
-}
-
 proc do_New { id } {
     global mged_gui
 
@@ -202,7 +184,7 @@ must not exist by this name."}}\
 	} else {
 	    set ret [catch {opendb $ia_filename y} msg]
 	    if {$ret} {
-		cad_dialog .$id.cool $mged_gui($id,screen) "Error" \
+		cad_dialog .$id.uncool $mged_gui($id,screen) "Error" \
 			$msg info 0 OK
 	    } else {
 		cad_dialog .$id.cool $mged_gui($id,screen) "File loaded" \
@@ -212,12 +194,30 @@ must not exist by this name."}}\
     }
 }
 
+proc do_Open { id } {
+    global mged_gui
+
+    set file_types {{{MGED Database} {.g}}}
+    set ia_filename [tk_getOpenFile -parent .$id -filetypes $file_types\
+	    -title "Open MGED Database" -defaultextension ".g"]
+    if {$ia_filename != ""} {
+	set ret [catch {opendb $ia_filename} msg]
+	if {$ret} {
+	    cad_dialog .$id.uncool $mged_gui($id,screen) "Error" \
+		    $msg info 0 OK
+	} else {
+	    cad_dialog .$id.cool $mged_gui($id,screen) "File loaded" \
+		    $msg info 0 OK
+	}
+    }
+}
+
 proc do_Concat { id } {
     global mged_gui
 
     set file_types {{{MGED Database} {.g}}}
     set ia_filename [tk_getOpenFile -parent .$id -filetypes $file_types\
-	    -initialdir . -title "Insert MGED Database" -defaultextension ".g"]
+	    -title "Insert MGED Database" -defaultextension ".g"]
     if {$ia_filename != ""} {
 	set ret [cad_input_dialog .$id.prefix $mged_gui($id,screen) "Prefix" \
 		"Enter prefix:" prefix ""\
@@ -232,6 +232,24 @@ the database being inserted."} { see_also dbconcat } } OK CANCEL]
 
 	if {$ret == 0} {
 	    dbconcat $ia_filename $prefix
+	}
+    }
+}
+
+proc do_LoadScript { id } {
+    global mged_gui
+
+    set file_types {{{Tcl Scripts} {.tcl}}}
+    set ia_filename [tk_getOpenFile -parent .$id -filetypes $file_types\
+	    -title "Load Script" -defaultextension ".tcl"]
+    if {$ia_filename != ""} {
+	set ret [catch {source $ia_filename} msg]
+	if {$ret} {
+	    cad_dialog .$id.uncool $mged_gui($id,screen) "Error" \
+		    $msg info 0 OK
+	} else {
+	    cad_dialog .$id.cool $mged_gui($id,screen) "Script loaded" \
+		    "Script successfully loaded!" info 0 OK
 	}
     }
 }
