@@ -110,7 +110,7 @@ char **argv;
 		}
 	}
 	fprintf(stderr,
-		"pixcmp bytes: %7d matching, %7d off by 1, %7d off by many\n",
+		"pixcmp bytes: %8ld matching, %8ld off by 1, %8ld off by many\n",
 		matching, off1, offmany );
 
 	/* If files were of different lengths, that is an error */
