@@ -20,16 +20,17 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "common.h"
 
 #ifdef HAVE_UNISTD_H
-# include <unistd.h>
+#  include <unistd.h>
 #endif
-                                                                                                                                                                            
+
 #include <stdio.h>
 #include <math.h>
 #ifdef HAVE_STRING_H
-#include <string.h>
+#  include <string.h>
 #else
-#include <strings.h>
+#  include <strings.h>
 #endif
+
 #include "machine.h"
 #include "bu.h"
 #include "vmath.h"
@@ -38,7 +39,9 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "raytrace.h"
 #include "rtgeom.h"
 #include "wdb.h"
+
 #include "../librt/debug.h"
+
 
 #define		MAX_NUM_PTS	15360
 
@@ -55,7 +58,8 @@ RT_EXTERN( fastf_t nmg_loop_plane_area, (const struct loopuse *lu, plane_t pl ) 
 
 int	psurf_to_nmg(struct model *m, FILE *fp, char *jfile);
 int	create_brlcad_db(struct rt_wdb *fpout, struct model *m, char *reg_name, char *grp_name);
-void	jack_to_brlcad(FILE *fpin, FILE *fpout, char *reg_name, char *grp_name, char *jfile, char *bfile);
+void	jack_to_brlcad(FILE *fpin, struct rt_wdb *fpout, char *reg_name, char *grp_name, char *jfile, char *bfile);
+
 
 int
 main(int argc, char **argv)
@@ -147,7 +151,7 @@ main(int argc, char **argv)
  *	Convert a UPenn Jack data base into a BRL-CAD data base.
  */
 void
-jack_to_brlcad(FILE *fpin, FILE *fpout, char *reg_name, char *grp_name, char *jfile, char *bfile)
+jack_to_brlcad(FILE *fpin, struct rt_wdb *fpout, char *reg_name, char *grp_name, char *jfile, char *bfile)
 {
 	struct model	*m;
 
