@@ -544,11 +544,11 @@ do_reflection:
 #if RT_MULTISPECTRAL
 		{ struct bu_vls str;
 			bu_vls_init(&str);
-			bu_vls_puts(&str, "ms_shader_color: ");
+			bu_vls_strcat(&str, "ms_shader_color: ");
 			rt_tabdata_to_tcl( &str, ms_shader_color);
-			bu_vls_puts(&str, "\nms_reflect_color: ");
+			bu_vls_strcat(&str, "\nms_reflect_color: ");
 			rt_tabdata_to_tcl( &str, ms_reflect_color);
-			bu_vls_puts(&str, "\nms_transmit_color: ");
+			bu_vls_strcat(&str, "\nms_transmit_color: ");
 			rt_tabdata_to_tcl( &str, ms_transmit_color);
 			bu_log("rr_render: %s\n", bu_vls_addr(&str) );
 			bu_vls_free(&str);
@@ -564,7 +564,7 @@ out:
 #if RT_MULTISPECTRAL
 		{ struct bu_vls str;
 			bu_vls_init(&str);
-			bu_vls_puts(&str, "final swp->msw_color: ");
+			bu_vls_strcat(&str, "final swp->msw_color: ");
 			rt_tabdata_to_tcl( &str, swp->msw_color);
 			bu_log("rr_render: %s\n", bu_vls_addr(&str) );
 			bu_vls_free(&str);
