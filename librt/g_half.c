@@ -182,7 +182,7 @@ register struct xray *rp;
 				return( SEG_NULL );	/* MISS */
 		}
 	}
-	if( rt_g.debug & DEBUG_TESTING )
+	if( rt_g.debug & DEBUG_ARB8 )
 		rt_log("half: in=%f, out=%f\n", in, out);
 
 	{
@@ -190,14 +190,8 @@ register struct xray *rp;
 
 		GET_SEG( segp );
 		segp->seg_stp = stp;
-		/* At most one normal is really defined, but whichever one
-		 * it is, it has value half_N.  Set them both and forget it.
-		 */
 		segp->seg_in.hit_dist = in;
-		VMOVE( segp->seg_in.hit_normal, halfp->half_N );
-
 		segp->seg_out.hit_dist = out;
-		VMOVE( segp->seg_out.hit_normal, halfp->half_N );
 		return(segp);			/* HIT */
 	}
 	/* NOTREACHED */
@@ -214,22 +208,24 @@ register struct hit *hitp;
 struct soltab *stp;
 register struct xray *rp;
 {
-	/* We are expected to compute hit_point here */
-	VJOIN1( hitp->hit_point, rp->r_pt, hitp->hit_dist, rp->r_dir );
-}
+	register struct half_specific *halfp =
+		(struct half_specific *)stp->st_specific;
+	FAST fastf_t f;
 
-/*
- *  This is a pretty shabby replacement for the
- *  not always available fmod() routine.
- */
-double
-ffmod(x,y)
-double x,y;
-{
-	register long i;
+	/*
+	 * At most one normal is really defined, but whichever one
+	 * it is, it has value half_N.
+	 */
+	VMOVE( hitp->hit_normal, halfp->half_N );
 
-	i = (long)x/y;
-	return( x - i * y );
+	/* We are expected to compute hit_point here.  May be infinite. */
+	f = hitp->hit_dist;
+	if( f <= -INFINITY || f >= INFINITY )  {
+		VJOIN1( hitp->hit_point, rp->r_pt, f, rp->r_dir );
+	} else {
+		rt_log("hlf_norm:  dist=INFINITY, pt=?\n");
+		VSETALL( hitp->hit_point, INFINITY );
+	}
 }
 
 /*
@@ -249,23 +245,46 @@ register struct hit *hitp;
 register struct uvcoord *uvp;
 {
 	register struct half_specific *halfp =
-		(struct half_specific *)hitp->hit_private;
+		(struct half_specific *)stp->st_specific;
 	LOCAL vect_t P_A;
 	FAST fastf_t f;
+	auto double ival;
 
+	f = hitp->hit_dist;
+	if( f <= -INFINITY || f >= INFINITY )  {
+		rt_log("hlf_uv:  infinite dist\n");
+		rt_pr_hit( "hlf_uv", hitp );
+		uvp->uv_u = uvp->uv_v = 0;
+		uvp->uv_du = uvp->uv_dv = 0;
+		return;
+	}
 	VSUB2( P_A, hitp->hit_point, stp->st_center );
 
 	f = VDOT( P_A, halfp->half_Xbase )/10000;
+	if( f <= -INFINITY || f >= INFINITY )  {
+		rt_log("hlf_uv:  bad X vdot\n");
+		VPRINT("Xbase", halfp->half_Xbase);
+		rt_pr_hit( "hlf_uv", hitp );
+		VPRINT("st_center", stp->st_center );
+		f = 0;
+	}
 	if( f < 0 )  f = -f;
-	f = ffmod( f, 1.0 );
+	f = modf( f, &ival );
 	if( f < 0.5 )
 		uvp->uv_u = 2 * f;		/* 0..1 */
 	else
 		uvp->uv_u = 2 * (1 - f);	/* 1..0 */
 
 	f = VDOT( P_A, halfp->half_Ybase )/10000;
+	if( f <= -INFINITY || f >= INFINITY )  {
+		rt_log("hlf_uv:  bad Y vdot\n");
+		VPRINT("Xbase", halfp->half_Ybase);
+		rt_pr_hit( "hlf_uv", hitp );
+		VPRINT("st_center", stp->st_center );
+		f = 0;
+	}
 	if( f < 0 )  f = -f;
-	f = ffmod( f, 1.0 );
+	f = modf( f, &ival );
 	if( f < 0.5 )
 		uvp->uv_v = 2 * f;		/* 0..1 */
 	else
