@@ -4,8 +4,13 @@
 			Aberdeen Proving Ground
 			Maryland 21005-5066
 */
+
 #ifndef lint
 static const char RCSid[] = "@(#)$Header$ (BRL)";
+#endif
+
+#ifdef HAVE_CONFIG_H
+# include "config.h"
 #endif
 
 #ifndef DEBUG
