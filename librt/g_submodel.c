@@ -484,7 +484,7 @@ struct seg		*seghead;
 	/* Do this in a repeatable way */
 	/* Distances differ only by a scale factor of m[15] */
 	MAT4X3PNT( sub_ap.a_ray.r_pt, submodel->m2subm, ap->a_ray.r_pt );
-	MAT4X3VEC( sub_ap.a_ray.r_dir, submodel->m2subm, ap->a_ray.r_dir );
+	MAT3X3VEC( sub_ap.a_ray.r_dir, submodel->m2subm, ap->a_ray.r_dir );
 
 	/* NOTE: ap->a_ray.r_pt is not the same as rp->r_pt! */
 	/* This changes the distances */
