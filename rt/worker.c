@@ -163,6 +163,8 @@ grid_setup()
 void
 do_run( a, b )
 {
+	int		cpu;
+
 	cur_pixel = a;
 	last_pixel = b;
 
@@ -171,24 +173,28 @@ do_run( a, b )
 		 * SERIAL case -- one CPU does all the work.
 		 */
 		worker();
-		return;
+	} else {
+		/*
+		 *  Parallel case.
+		 */
+		nworkers = 0;
+		rt_parallel( worker, npsw );
+
+		/*
+		 *  Ensure that all the workers are REALLY finished.
+		 *  On some systems, if threads core dump, the rest of
+		 *  the gang keeps going, so this can actually happen (sigh).
+		 */
+		if( nworkers > 0 )  {
+			rt_log("\n***ERROR: %d workers did not finish!\n\n",
+				nworkers);
+		}
 	}
 
-	/*
-	 *  Parallel case.
-	 */
-	nworkers = 0;
-	rt_parallel( worker, npsw );
-
-	/*
-	 *  Ensure that all the workers are REALLY finished.
-	 *  On some systems, if threads core dump, the rest of
-	 *  the gang keeps going, so this can actually happen (sigh).
-	 */
-	if( nworkers > 0 )  {
-		rt_log("\n***ERROR: %d workers did not finish!\n\n",
-			nworkers);
-	}
+	/* Tally up the statistics */
+	for( cpu=0; cpu < npsw; cpu++ )
+		rt_add_res_stats( ap.a_rt_i, &resource[cpu] );
+	return;
 }
 
 #define CRT_BLEND(v)	(0.26*(v)[X] + 0.66*(v)[Y] + 0.08*(v)[Z])
@@ -224,7 +230,7 @@ worker()
 		if( com > last_pixel )
 			break;
 
-		/* Note: ap.... may not be valid until first time here */
+		/* Obtain fresh copy of application struct */
 		a = ap;				/* struct copy */
 		a.a_resource = &resource[cpu];
 
