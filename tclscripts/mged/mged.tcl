@@ -103,7 +103,11 @@ proc ia_apropos { parent screen } {
 
     catch { destroy $w }
     if { [cad_input_dialog $w $screen Apropos \
-	   "Enter keyword to search for:" keyword "" 0 OK Cancel] == 1 } {
+	   "Enter keyword to search for:" keyword ""\
+	   0 {{ summary "This is where the keyword, on which to search,
+is entered. The keyword is used to search
+for commands whose descriptions contains the
+given keyword."} { see_also apropos }} OK Cancel] == 1 } {
 	return
     }
 
@@ -179,8 +183,12 @@ proc do_Open { id } {
 proc do_New { id } {
     global mged_gui
 
-    set ret [cad_input_dialog .$id.new $mged_gui($id,screen) "New MGED Database" \
-	    "Enter new database filename:" ia_filename "" 0 OK CANCEL]
+    set ret [cad_input_dialog .$id.new $mged_gui($id,screen)\
+	    "New MGED Database" \
+	    "Enter new database filename:" ia_filename ""\
+	    0 {{ summary "Enter a new database name. Note - a database
+must not exist by this name."}}\
+	    OK CANCEL]
 
     if {$ia_filename != "" && $ret == 0} {
 	if [file exists $ia_filename] {
@@ -201,13 +209,19 @@ proc do_Concat { id } {
     set ia_filename [tk_getOpenFile -parent .$id -filetypes $file_types\
 	    -initialdir . -title "Insert MGED Database" -defaultextension ".g"]
     if {$ia_filename != ""} {
-	cad_input_dialog .$id.prefix $mged_gui($id,screen) "Prefix" \
-		"Enter prefix:" prefix "" 0 OK
+	set ret [cad_input_dialog .$id.prefix $mged_gui($id,screen) "Prefix" \
+		"Enter prefix:" prefix ""\
+		0 {{ summary "
+This is where to enter a prefix. The prefix,
+if entered, is prepended to each object of
+the database being inserted."} { see_also dbconcat } } OK CANCEL]
 
-	if {$prefix != ""} {
-	    dbconcat $ia_filename $prefix
-	} else {
-	    dbconcat $ia_filename /
+	if {$ret == 0} {
+	    if {$prefix != ""} {
+		dbconcat $ia_filename $prefix
+	    } else {
+		dbconcat $ia_filename
+	    }
 	}
     }
 }
@@ -342,7 +356,9 @@ proc man_goto { w screen } {
     global ia_url
 
     cad_input_dialog $w.goto $screen "Go To" "Enter filename to read:" \
-	    filename $ia_url(current) 0 OK
+	    filename $ia_url(current) \
+	    0 {{ summary "Enter a filename or URL."}} OK
+
     if { [file exists $filename]!=0 } {
 	if { [string match /* $filename] } {
 	    set new_url $filename

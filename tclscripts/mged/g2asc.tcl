@@ -15,7 +15,10 @@ proc init_g2asc { id } {
     set db_name [_mged_opendb]
     set default_name [file rootname $db_name].asc
     set ret [cad_input_dialog $top $mged_gui($id,screen) "Save as Ascii"\
-	    "Enter ascii filename:" ascii_filename $default_name 0 OK CANCEL]
+	    "Enter ascii filename:" ascii_filename\
+	    $default_name 0 {{ summary "Enter a filename to indicate where
+to put the acsii converted database."}} OK CANCEL]
+
 
     if { $ascii_filename != "" } {
 	if { $ret == 0 } {
