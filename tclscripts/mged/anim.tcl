@@ -263,12 +263,12 @@ proc sketch_popup_draw { p } {
 		-side left -expand yes
 	
 	#initialize name
-	if { [vdraw o] } {
-		sketch_open_curve [vdraw r n]
+	if { [vdraw open] } {
+		sketch_open_curve [vdraw read n]
 	} else {
 		sketch_open_curve $mged_sketch_defname
 	} 
-	set mged_sketch_splname "$mged_sketch_splprefix[vdraw r n]"
+	set mged_sketch_splname "$mged_sketch_splprefix[vdraw read n]"
 	sketch_update
 }
 
@@ -278,7 +278,7 @@ proc sketch_post_curve_list { menu function } {
 		delete {set command sketch_delete_curve}
 	}
 	$menu delete 0 end
-	foreach curve [vdraw v l] {
+	foreach curve [vdraw vlist l] {
 		if { $curve != "_sketch_hl_" } {
 		  $menu add command -label $curve -command "$command $curve"
 		}
@@ -287,21 +287,21 @@ proc sketch_post_curve_list { menu function } {
 
 proc sketch_open_curve {name} {
 	global mged_sketch_tinc
-	set res [vdraw o $name]
+	set res [vdraw open $name]
 	if {$res < 0} {
 		tk_dialog ._sketch_msg {Couldn't open curve} \
 			"Curve $name cannot be opened - it conflicts\
 			 with existing geometry." {} 0 {OK}
 	} else {
 	       #create associated time variable if non-existent
-		if { [vdraw r n] != "$name" } {
+		if { [vdraw read n] != "$name" } {
 			#debugging - should never happen
-			puts "Warning: wanted $name got [vdraw r n]"
+			puts "Warning: wanted $name got [vdraw read n]"
 		}
 		set tname "mged_sketch_time_$name"
 		uplevel #0 "append $tname {}"
 		upvar #0 $tname time
-		set len [vdraw r l]
+		set len [vdraw read l]
 		set lenn [expr $len - 1]
 		set tlen [llength $time]
 		if { $tlen > $len } {
@@ -323,7 +323,7 @@ proc sketch_open_curve {name} {
 #set the time stamp for current node
 proc sketch_time_set { value } {
 	upvar #0 mged_sketch_node node
-	upvar #0 [format "mged_sketch_time_%s" [vdraw r n]] tlist
+	upvar #0 [format "mged_sketch_time_%s" [vdraw read n]] tlist
 	if {$node != ""} {
 	set tlist [lreplace $tlist $node $node $value]
 	}
@@ -335,11 +335,11 @@ proc sketch_update {} {
 	global mged_sketch_count mged_sketch_time mged_sketch_node
 	global mged_sketch_name mged_sketch_splname mged_sketch_color
 
-	set mged_sketch_count [vdraw r l]
+	set mged_sketch_count [vdraw read l]
 
 	sketch_clip
 
-	upvar #0 [format "mged_sketch_time_%s" [vdraw r n]] tlist 
+	upvar #0 [format "mged_sketch_time_%s" [vdraw read n]] tlist 
 
 	if {$mged_sketch_node == ""} {
 		set mged_sketch_time ""
@@ -347,10 +347,10 @@ proc sketch_update {} {
 		set mged_sketch_time [lindex $tlist $mged_sketch_node]
 	}
 
-	set mged_sketch_color [sketch_hex_to_rgb [vdraw r c]]
-	set mged_sketch_name  [vdraw r n]
+	set mged_sketch_color [sketch_hex_to_rgb [vdraw read c]]
+	set mged_sketch_name  [vdraw read n]
 	
-	if { [vdraw s] < 0 } {
+	if { [vdraw send] < 0 } {
 		tk_dialog ._sketch_msg {Can't display curve} \
 		  "Can't create pseudo-solid _VDRW$mged_sketch_name because true solid \
 		   with that name exists. Kill the true solid or choose a \
@@ -397,13 +397,13 @@ proc sketch_highlight { } {
 	if {$mged_sketch_node == ""} return
 
 	set offset [expr [view size] * 0.01]
-	set oldname [vdraw r n]
-	set vertex [eval [concat vdraw r $mged_sketch_node]]
+	set oldname [vdraw read n]
+	set vertex [eval [concat vdraw read $mged_sketch_node]]
 
 	set v_x [lindex $vertex 1]
 	set v_y [lindex $vertex 2]
 	set v_z [lindex $vertex 3]
-	vdraw s
+	vdraw send
 	sketch_open_curve _sketch_hl_
 	sketch_draw_highlight $v_x $v_y $v_z $offset
 	sketch_open_curve $oldname
@@ -411,15 +411,15 @@ proc sketch_highlight { } {
 }
 
 proc sketch_draw_highlight {v_x v_y v_z offset} {
-	vdraw d a
-	vdraw w n 0 [expr $v_x - $offset] $v_y $v_z
-	vdraw w n 1 [expr $v_x + $offset] $v_y $v_z
-	vdraw w n 0 $v_x [expr $v_y - $offset] $v_z
-	vdraw w n 1 $v_x [expr $v_y + $offset] $v_z
-	vdraw w n 0 $v_x $v_y [expr $v_z - $offset]
-	vdraw w n 1 $v_x $v_y [expr $v_z + $offset]
-	vdraw p c 0x00ffff
-	vdraw s 
+	vdraw delete a
+	vdraw write n 0 [expr $v_x - $offset] $v_y $v_z
+	vdraw write n 1 [expr $v_x + $offset] $v_y $v_z
+	vdraw write n 0 $v_x [expr $v_y - $offset] $v_z
+	vdraw write n 1 $v_x [expr $v_y + $offset] $v_z
+	vdraw write n 0 $v_x $v_y [expr $v_z - $offset]
+	vdraw write n 1 $v_x $v_y [expr $v_z + $offset]
+	vdraw params c 0x00ffff
+	vdraw send
 }
 
 #increment current node by specified amount
@@ -436,11 +436,11 @@ proc sketch_incr { i } {
 proc sketch_add { point n } {
 	global mged_sketch_tinc mged_sketch_tinit mged_sketch_node
 
-	set length [vdraw r l]
+	set length [vdraw read l]
 	set last [expr $length - 1]
-	upvar #0 "mged_sketch_time_[vdraw r n]" tlist
+	upvar #0 "mged_sketch_time_[vdraw read n]" tlist
 	if { $length == 0 } {
-		eval vdraw w 0 0 $point
+		eval vdraw write 0 0 $point
 		set tlist [list $mged_sketch_tinit]
 		sketch_update
 		return
@@ -451,15 +451,15 @@ proc sketch_add { point n } {
 	}
 	set newn [expr $n + 1]
 	if { $n == -1 } {
-		eval vdraw i $newn 0 $point
-		set vertex [vdraw r 1]
-		eval vdraw w 1 1 [lrange $vertex 1 3]
+		eval vdraw insert $newn 0 $point
+		set vertex [vdraw read 1]
+		eval vdraw write 1 1 [lrange $vertex 1 3]
 		set tn [expr [lindex $tlist 0] - $mged_sketch_tinc]
 	} elseif { $n == $last} {
-		eval vdraw i $newn 1 $point
+		eval vdraw insert $newn 1 $point
 		set tn [expr [lindex $tlist $last] + $mged_sketch_tinc]
 	} else {
-		eval vdraw i $newn 1 $point
+		eval vdraw insert $newn 1 $point
 		set tn [expr ([lindex $tlist $n]+[lindex $tlist $newn])*0.5]
 	}
 	set tlist [linsert $tlist $newn $tn]
@@ -482,9 +482,9 @@ proc sketch_move { point n } {
 		return
 	}
 	if { $n == 0 } {
-		eval vdraw w $n 0 $point
+		eval vdraw write $n 0 $point
 	} else {
-		eval vdraw w $n 1 $point
+		eval vdraw write $n 1 $point
 	}
 	sketch_update
 }
@@ -496,12 +496,12 @@ proc sketch_delete { n } {
 		sketch_update
 		return
 	}
-	vdraw d $n
-	if { ($n == 0) && ([vdraw r l] > 0) } {
-		set vertex [vdraw r 0]
-		eval [concat vdraw w 0 0 [lrange $vertex 1 3]]
+	vdraw delete $n
+	if { ($n == 0) && ([vdraw read l] > 0) } {
+		set vertex [vdraw read 0]
+		eval [concat vdraw write 0 0 [lrange $vertex 1 3]]
 	}
-	upvar #0 [format "mged_sketch_time_%s" [vdraw r n]] tlist
+	upvar #0 [format "mged_sketch_time_%s" [vdraw read n]] tlist
 	set tlist [lreplace $tlist $n $n]
 
 	sketch_update
@@ -538,7 +538,7 @@ proc sketch_popup_color {type color} {
 	}
 	if { $type == "current" } {
 		set mged_sketch_color $color
-		set name [vdraw r n]
+		set name [vdraw read n]
 	} elseif { $type == "spline" } {
 		set name $mged_sketch_splname
 	} else {
@@ -548,10 +548,10 @@ proc sketch_popup_color {type color} {
 	}
 
 	if { $flag == 0 } {
-		set oldname [vdraw r n]
-		vdraw o $name
+		set oldname [vdraw read n]
+		vdraw open $name
 		sketch_color $color
-		vdraw o $oldname
+		vdraw open $oldname
 		sketch_update
 		return
 	}
@@ -561,10 +561,10 @@ proc sketch_popup_color {type color} {
 		[list "New color:" $color] \
 		]
 	set buttons [list \
-		[list "OK" "set oldname \[vdraw r n\]; \
-			vdraw o \[._sketch_input.f0.e get\]; \
+		[list "OK" "set oldname \[vdraw read n\]; \
+			vdraw open \[._sketch_input.f0.e get\]; \
 			sketch_color \[._sketch_input.f1.e get \]; \
-			vdraw o \$oldname; \
+			vdraw open \$oldname; \
 			sketch_update; \
 			destroy ._sketch_input"] \
 		{"Cancel" "destroy ._sketch_input"} \
@@ -577,9 +577,9 @@ proc sketch_popup_color {type color} {
 #set current curve color
 proc sketch_color { color } {
 	global mged_sketch_color
-	vdraw p c [sketch_rgb_to_hex $color]
-	vdraw s
-	set mged_sketch_color [sketch_hex_to_rgb [vdraw r c]]
+	vdraw params c [sketch_rgb_to_hex $color]
+	vdraw send
+	set mged_sketch_color [sketch_hex_to_rgb [vdraw read c]]
 	catch {focus .}
 }
 
@@ -591,7 +591,7 @@ proc sketch_do_spline { mode } {
 
 	#write vertices to temp2, result to temp1
 	set fo [open $mged_sketch_temp2 w]
-	set length [vdraw r l]
+	set length [vdraw read l]
 	if { $length < 2 } {
 		puts {Need at least two vertices}
 		close $fo
@@ -605,7 +605,7 @@ proc sketch_do_spline { mode } {
 	sketch_write_to_fd $fo $length
 	close $fo
 
-	upvar #0 [format "mged_sketch_time_%s" [vdraw r n]] tlist
+	upvar #0 [format "mged_sketch_time_%s" [vdraw read n]] tlist
 	set start [lindex $tlist 0]
 	set end [lindex $tlist [expr $length - 1]]
 	set fo [open "| ${mged_sketch_tab_path}tabinterp -q > $mged_sketch_temp1" w]
@@ -618,15 +618,15 @@ proc sketch_do_spline { mode } {
 
 	#read results into curve
 	set fi [open $mged_sketch_temp1 r]
-	set oldname [vdraw r n]
-	set oldcolor [sketch_hex_to_rgb [vdraw r c]]
-	vdraw s
+	set oldname [vdraw read n]
+	set oldcolor [sketch_hex_to_rgb [vdraw read c]]
+	vdraw send
 	sketch_open_curve $mged_sketch_splname
-	vdraw d a
+	vdraw delete a
 	set num_read [sketch_read_from_fd $fi]
 	close $fi
-	#vdraw p c $oldcolor
-	vdraw s
+	#vdraw params c $oldcolor
+	vdraw send
 	sketch_open_curve $oldname
 	exec rm $mged_sketch_temp1
 	return $num_read
@@ -637,7 +637,7 @@ proc sketch_do_spline { mode } {
 proc sketch_popup_load {} {
 	set entries [list \
 		{"File to Load"} \
-		[list "Name of Curve" [vdraw r n]] \
+		[list "Name of Curve" [vdraw read n]] \
 		]
 	set buttons [list \
 		{"OK" {sketch_load [._sketch_input.f0.e get] \
@@ -655,12 +655,12 @@ proc sketch_load { filename  curve } {
 		return	
 	}
 	set fd [open $filename r]
-	vdraw d a
+	vdraw delete a
 	sketch_read_from_fd $fd
 	close $fd
 	catch {destroy ._sketch_input}
 	sketch_update				
-	set mged_sketch_splname "$mged_sketch_splprefix[vdraw r n]"
+	set mged_sketch_splname "$mged_sketch_splprefix[vdraw read n]"
 }
 
 
@@ -668,7 +668,7 @@ proc sketch_popup_save { type  } {
 	global mged_sketch_splprefix
 
 	set entries [list \
-		[list "Name of Curve" [vdraw r n]] \
+		[list "Name of Curve" [vdraw read n]] \
 		{"Save to File:"} \
 		]
 	set buttons [list \
@@ -692,10 +692,10 @@ proc sketch_save { curve filename } {
 		}
 	}
 
-	set oldcurve [vdraw r n]
+	set oldcurve [vdraw read n]
 	set fd [open $filename w]
 	sketch_open_curve $curve
-	sketch_write_to_fd $fd [vdraw r l]
+	sketch_write_to_fd $fd [vdraw read l]
 	close $fd
 	sketch_open_curve $oldcurve
 	catch {destroy ._sketch_input}
@@ -735,13 +735,13 @@ proc sketch_name { name } {
 	}
 	catch {destroy ._sketch_input}
 	sketch_update
-	set mged_sketch_splname "$mged_sketch_splprefix[vdraw r n]"
+	set mged_sketch_splname "$mged_sketch_splprefix[vdraw read n]"
 }
 
 proc sketch_rename { name } {
 	global mged_sketch_splname mged_sketch_splprefix
-	set oldname [vdraw r n]
-	if { [catch {vdraw p n $name }] == 1 } {
+	set oldname [vdraw read n]
+	if { [catch {vdraw params n $name }] == 1 } {
 		#error occurred - name already exists
 		set ans [tk_dialog ._sketch_msg {Curve exists} \
 		  "A curve with name $name already exists." {} \
@@ -749,8 +749,8 @@ proc sketch_rename { name } {
 		if { $ans == 1 } { 
 			return -1
 		} else {
-			vdraw v d $name
-			vdraw p n $name
+			vdraw vlist d $name
+			vdraw params n $name
 		}
 	}
 	#for some reason, this update is needed to prevent dialog from
@@ -765,7 +765,7 @@ proc sketch_rename { name } {
 		catch {destroy ._sketch_input}
 		kill -f "_VDRW$oldname"
 		unset oldtime
-		set mged_sketch_name [vdraw r n]
+		set mged_sketch_name [vdraw read n]
 		if { "$mged_sketch_name" != "$name" } {
 			puts "sketch_rename error. This should never happen."
 		}
@@ -773,25 +773,25 @@ proc sketch_rename { name } {
 	} else {
 		#put things back
 		unset newtime
-		vdraw p n $oldname
+		vdraw params name $oldname
 		sketch_update
 	}
 }
 
 proc sketch_copy { name } {
-	set basename [vdraw r n]
-	if { [vdraw o $name ] == 0 } {
+	set basename [vdraw read n]
+	if { [vdraw open $name ] == 0 } {
 		set ans [tk_dialog ._sketch_msg {Curve exists} \
 		  "A curve with name $name already exists." {} \
 		  1 {Copy anyway} {Cancel} ]
 		if { $ans == 1 } {
-			vdraw 0 $basename
+			vdraw open $basename
 			return -1
 		} else {
-			vdraw d a
+			vdraw delete a
 		}
 	}
-	vdraw o $basename
+	vdraw open $basename
 	set buffer ._sketch_scratch_
 	text $buffer
 	sketch_text_echoc $buffer
@@ -802,14 +802,14 @@ proc sketch_copy { name } {
 		catch {destroy ._sketch_input}
 	} else {
 		sketch_open_curve $basename
-		vdraw v d $name
+		vdraw vlist d $name
 		sketch_update
 	}
 }
 
 proc sketch_popup_delete_curve {} {
 	set entries [list \
-		[list "Delete Curve:" [vdraw r n]] \
+		[list "Delete Curve:" [vdraw read n]] \
 		]
 	set buttons [list \
 		{ "OK" {sketch_delete_curve [._sketch_input.f0.e get]; \
@@ -822,10 +822,10 @@ proc sketch_popup_delete_curve {} {
 proc sketch_delete_curve { name } {
 	global mged_sketch_defname
 
-	vdraw v d $name
-	catch {vdraw v d _sketch_hl_}
-	if { [vdraw o] } {
-		sketch_open_curve [vdraw r n]
+	vdraw vlist d $name
+	catch {vdraw vlist d _sketch_hl_}
+	if { [vdraw open] } {
+		sketch_open_curve [vdraw read n]
 	} else {
 		sketch_open_curve $mged_sketch_defname
 	}
@@ -1695,7 +1695,7 @@ proc sketch_popup_table { p name args } {
 	switch [lindex $args 0] {
 		empty {$root.t delete 1.0 end}
 		curve {
-		  set oldname [vdraw r n]
+		  set oldname [vdraw read n]
 		  sketch_open_curve [lindex $args 1]
 		  $root.t delete 1.0 end
 		  sketch_text_echoc $root.t
@@ -1935,7 +1935,7 @@ proc sketch_post_read_menu { menu text } {
 		}
 	}
 	if { [info globals mged_sketch_init_draw] != "" } {
-		foreach curve [vdraw v l] {
+		foreach curve [vdraw vlist l] {
 			if { [info globals "mged_sketch_time_$curve"] != ""} {
 			  $menu add command -label "From Curve $curve" \
 			    -command "sketch_popup_read $text curve $curve"
@@ -2377,7 +2377,7 @@ proc sketch_popup_read {w type src} {
 }
 
 proc sketch_text_readc {w curve col mode} {
-	set oldcurve [vdraw r n]
+	set oldcurve [vdraw read n]
 	sketch_open_curve $curve
 	set buffer $w._readc_scratch_
 	text $buffer
@@ -2400,7 +2400,7 @@ proc sketch_popup_write {w dst} {
 				\[._sketch_input.f1.e get\]"
 		}
 		curve {
-			set entries [list [list "Write to curve:" [vdraw r n]]]
+			set entries [list [list "Write to curve:" [vdraw read n]]]
 			set okcmd "sketch_text_writec $w \
 				\[._sketch_input.f0.e get\] \
 				\[._sketch_input.f1.e get\]"
@@ -2436,7 +2436,7 @@ proc sketch_text_writec {w curve col} {
 		sketch_text_col_arith $buffer all {@i @0 @1 @2}
 		puts "Filling in missing time column"
 	}
-	set oldcurve [vdraw r n]
+	set oldcurve [vdraw read n]
 	sketch_open_curve $curve
 	sketch_text_apply $buffer replace
 	sketch_open_curve $oldcurve
@@ -2710,8 +2710,8 @@ proc sketch_objanim { objorview } {
 	switch $ltype {
 		"curve:" { 
 			set type curve 
-			set oldcurve [vdraw r n]
-			vdraw s
+			set oldcurve [vdraw read n]
+			vdraw send
 			set ret [sketch_open_curve $src]
 			if {$ret != 0} {
 				tk_dialog ._sketch_msg {Couldn't find curve} \
@@ -2921,7 +2921,7 @@ proc sketch_objanim { objorview } {
 		if { $type == "curve" } {
 			set sfile $mged_sketch_temp1
 			set fd [open $sfile w]
-			sketch_write_to_fd $fd [vdraw r l]
+			sketch_write_to_fd $fd [vdraw read l]
 			close $fd
 		} elseif { $type == "text" } {
 			set sfile $mged_sketch_temp1
@@ -2980,7 +2980,7 @@ proc sketch_objanim { objorview } {
 		set fd [open \
 		     [concat | ${mged_sketch_anim_path}anim_script $opts $ovname > \
 		     $mged_sketch_objscript] w ]
-		sketch_write_to_fd $fd [vdraw r l]
+		sketch_write_to_fd $fd [vdraw read l]
 		close $fd
 		sketch_open_curve $oldcurve
 	} elseif { $type == "text" } {
@@ -3607,14 +3607,14 @@ proc sketch_preview { filename } {
 	
 	eval [concat preview $arg0 $arg1 $arg2 $arg3 $filename]
 	# restore current curves to display
-	if [vdraw o] {
-		set oldname [vdraw r n]
+	if [vdraw open] {
+		set oldname [vdraw read n]
 	} else {
 		set oldname ""
 	}
 	foreach curve $clist {
-		vdraw o $curve
-		vdraw s
+		vdraw open $curve
+		vdraw send
 	}
 	if {$oldname != "" } {
 		sketch_open_curve $oldname
@@ -3656,23 +3656,23 @@ proc sketch_quit { p } {
 #-----------------------------------------------------------------
 # write "length" curve nodes to given file descriptor
 proc sketch_write_to_fd { fd length} {
-	upvar #0 [format "mged_sketch_time_%s" [vdraw r n]] tlist
+	upvar #0 [format "mged_sketch_time_%s" [vdraw read n]] tlist
 	if { ![info exists tlist] } { return } 
 	for { set i 0} { $i < $length} {incr i} {
 		puts $fd [concat \
 			[lindex $tlist $i] \
-			[lrange [vdraw r $i] 1 3] ]
+			[lrange [vdraw read $i] 1 3] ]
 	}
 }	
 
 # read curve nodes from file, return number appended
 proc sketch_read_from_fd { fd } {
-	upvar #0 [format "mged_sketch_time_%s" [vdraw r n]] tlist
+	upvar #0 [format "mged_sketch_time_%s" [vdraw read n]] tlist
 	set line {}
 	set tlist {}
 	if { [gets $fd line] >= 0 } {
 		lappend tlist [lindex $line 0]
-		vdraw w n 0 [lindex $line 1] [lindex $line 2] \
+		vdraw write n 0 [lindex $line 1] [lindex $line 2] \
 				[lindex $line 3]
 		set num_added 1
 	} else {
@@ -3683,7 +3683,7 @@ proc sketch_read_from_fd { fd } {
 	}
 	while { [gets $fd line] >= 0 } {
 		lappend tlist [lindex $line 0]
-		vdraw w n 1 [lindex $line 1] [lindex $line 2] \
+		vdraw write n 1 [lindex $line 1] [lindex $line 2] \
 				[lindex $line 3]
 		incr num_added
 	}
@@ -3692,12 +3692,12 @@ proc sketch_read_from_fd { fd } {
 
 #read current curve into end of table editor
 proc sketch_text_echoc { w } {
-	if { ! [vdraw o] } { return }
-	set length [vdraw r l]
-	upvar #0 "mged_sketch_time_[vdraw r n]" tlist
+	if { ! [vdraw open] } { return }
+	set length [vdraw read l]
+	upvar #0 "mged_sketch_time_[vdraw read n]" tlist
 	if { ![info exists tlist] } { return } 
 	for {set i 0} {$i < $length} {incr i} {
-		set temp [vdraw r $i]
+		set temp [vdraw read $i]
 		$w insert end [format "\t%s\t%s\t%s\t%s\n" \
 			[lindex $tlist $i] [lindex $temp 1] \
 			[lindex $temp 2] [lindex $temp 3] ]
@@ -3716,15 +3716,15 @@ proc sketch_text_copy { win wout args } {
 
 #apply first four columns from table editor to current curve
 proc sketch_text_apply { w mode} {
-	upvar #0 [format "mged_sketch_time_%s" [vdraw r n]] tlist
+	upvar #0 [format "mged_sketch_time_%s" [vdraw read n]] tlist
 	if {$mode == "replace"} {
-		vdraw d a
+		vdraw delete a
 		set tlist {}
 	}
 	#otherwise append to existing
 	if { [set line [$w get 1.0 "1.0 lineend"]] != ""} {
 		lappend tlist [lindex $line 0]
-		vdraw w n 0 [lindex $line 1] [lindex $line 2] \
+		vdraw write n 0 [lindex $line 1] [lindex $line 2] \
 				[lindex $line 3]
 		set num_added 2
 	} else {
@@ -3735,7 +3735,7 @@ proc sketch_text_apply { w mode} {
 	}
 	while { [set line [$w get $num_added.0 "$num_added.0 lineend"]] != ""} {
 		lappend tlist [lindex $line 0]
-		vdraw w n 1 [lindex $line 1] [lindex $line 2] \
+		vdraw write n 1 [lindex $line 1] [lindex $line 2] \
 				[lindex $line 3]
 		incr num_added
 	}
@@ -3844,10 +3844,10 @@ proc sketch_parse_col {str num output} {
 
 
 proc sketch_print {} {
-	set length [vdraw r l]
-	puts "Solid name is [vdraw r n]"
+	set length [vdraw read l]
+	puts "Solid name is [vdraw read n]"
 	for {set i 0} { $i < $length} { incr i} {
-		puts [vdraw r $i]
+		puts [vdraw read $i]
 	}
 	
 }
