@@ -138,10 +138,10 @@ register struct application *ap;
 
 	HeadSeg = SEG_NULL;
 	
-	/* XXX WARNING this needs attention for multiple rt_i sizes */
 	GET_BITV( rtip, solidbits, ap->a_resource );	/* see rt_get_bitv() for details */
 	bzero( (char *)solidbits, rtip->rti_bv_bytes );
-	regionbits = &solidbits->be_v[2+(BITS2BYTES(rtip->nsolids)/sizeof(bitv_t))];
+	regionbits = &solidbits->be_v[
+		1+RT_BITV_BITS2WORDS(ap->a_rt_i->nsolids)];
 
 	/* Compute the inverse of the direction cosines */
 	if( !NEAR_ZERO( ap->a_ray.r_dir[X], SQRT_SMALL_FASTF ) )  {
@@ -235,11 +235,10 @@ register struct application *ap;
 			register bitv_t *in = ary_stp[i]->st_regions;
 			register bitv_t *out = regionbits;	/* XXX sb [ray] */
 
-			/* BITS2BYTES() / sizeof(bitv_t) */
-			words = (ary_stp[i]->st_maxreg+BITV_MASK)>>BITV_SHIFT;
+			words = RT_BITV_BITS2WORDS(ary_stp[i]->st_maxreg);
 #			include "noalias.h"
-			for( ; words > 0; words-- )
-				regionbits[words-1] |= in[words-1];
+			for( --words; words >= 0; words-- )
+				regionbits[words] |= in[words];
 		}
 	}
  
@@ -498,11 +497,11 @@ int nbits;
 {
 	register int words;
 
-	words = (nbits+BITV_MASK)>>BITV_SHIFT;/*BITS2BYTES()/sizeof(bitv_t)*/
+	words = RT_BITV_BITS2WORDS(nbits);
 #ifdef VECTORIZE
 #	include "noalias.h"
-	for( ; words > 0; words-- )
-		out[words-1] |= in[words-1];
+	for( --words; words >= 0; words-- )
+		out[words] |= in[words];
 #else
 	while( words-- > 0 )
 		*out++ |= *in++;

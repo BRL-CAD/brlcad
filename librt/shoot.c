@@ -131,10 +131,10 @@ register struct application *ap;
 	HeadSeg = SEG_NULL;
 	waitsegs = SEG_NULL;
 
-	/* XXX WARNING this needs attention for multiple rt_i sizes */
 	GET_BITV( ap->a_rt_i, solidbits, ap->a_resource );	/* see rt_get_bitv() for details */
 	bzero( (char *)solidbits, ap->a_rt_i->rti_bv_bytes );
-	regionbits = &solidbits->be_v[2+(BITS2BYTES(ap->a_rt_i->nsolids)/sizeof(bitv_t))];
+	regionbits = &solidbits->be_v[
+		1+RT_BITV_BITS2WORDS(ap->a_rt_i->nsolids)];
 
 	/* Verify that direction vector has unit length */
 	if(rt_g.debug) {
@@ -761,11 +761,11 @@ int nbits;
 {
 	register int words;
 
-	words = (nbits+BITV_MASK)>>BITV_SHIFT;/*BITS2BYTES()/sizeof(bitv_t)*/
+	words = RT_BITV_BITS2WORDS(nbits);
 #ifdef VECTORIZE
 #	include "noalias.h"
-	for( ; words > 0; words-- )
-		out[words-1] |= in[words-1];
+	for( --words; words >= 0; words-- )
+		out[words] |= in[words];
 #else
 	while( words-- > 0 )
 		*out++ |= *in++;
