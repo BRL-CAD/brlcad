@@ -31,14 +31,14 @@ struct rt_g rt_g;				/* All global state */
 
 extern int	rt_nul_prep(), rt_nul_class();
 extern int	rt_tor_prep(), rt_tor_class();
-extern int	tgc_prep(), tgc_class();
+extern int	rt_tgc_prep(), rt_tgc_class();
 extern int	rt_ell_prep(), rt_ell_class();
 extern int	rt_arb_prep(), rt_arb_class();
-extern int	hlf_prep(), hlf_class();
-extern int	ars_prep(), ars_class();
-extern int	rec_prep(), rec_class();
+extern int	rt_hlf_prep(), rt_hlf_class();
+extern int	rt_ars_prep(), rt_ars_class();
+extern int	rt_rec_prep(), rt_rec_class();
 extern int	rt_pg_prep(), rt_pg_class();
-extern int	spl_prep(), spl_class();
+extern int	rt_spl_prep(), rt_spl_class();
 extern int	rt_sph_prep(), rt_sph_class();
 extern int	ebm_prep(), ebm_class();
 extern int	vol_prep(), vol_class();
@@ -46,14 +46,14 @@ extern int	rt_arbn_prep(), rt_arbn_class();
 
 extern void	rt_nul_print(), rt_nul_norm(), rt_nul_uv();
 extern void	rt_tor_print(), rt_tor_norm(), rt_tor_uv();
-extern void	tgc_print(), tgc_norm(), tgc_uv();
+extern void	rt_tgc_print(), rt_tgc_norm(), rt_tgc_uv();
 extern void	rt_ell_print(), rt_ell_norm(), rt_ell_uv();
 extern void	rt_arb_print(), rt_arb_norm(), rt_arb_uv();
-extern void	hlf_print(), hlf_norm(), hlf_uv();
-extern void	ars_print(), ars_norm(), ars_uv();
-extern void	rec_print(), rec_norm(), rec_uv();
+extern void	rt_hlf_print(), rt_hlf_norm(), rt_hlf_uv();
+extern void	rt_ars_print(), rt_ars_norm(), rt_ars_uv();
+extern void	rt_rec_print(), rt_rec_norm(), rt_rec_uv();
 extern void	rt_pg_print(),  rt_pg_norm(),  rt_pg_uv();
-extern void	spl_print(), spl_norm(), spl_uv();
+extern void	rt_spl_print(), rt_spl_norm(), rt_spl_uv();
 extern void	rt_sph_print(), rt_sph_norm(), rt_sph_uv();
 extern void	ebm_print(), ebm_norm(), ebm_uv();
 extern void	vol_print(), vol_norm(), vol_uv();
@@ -61,14 +61,14 @@ extern void	rt_arbn_print(), rt_arbn_norm(), rt_arbn_uv();
 
 extern void	rt_nul_curve(), rt_nul_free();
 extern void	rt_tor_curve(), rt_tor_free();
-extern void	tgc_curve(), tgc_free();
+extern void	rt_tgc_curve(), rt_tgc_free();
 extern void	rt_ell_curve(), rt_ell_free();
 extern void	rt_arb_curve(), rt_arb_free();
-extern void	hlf_curve(), hlf_free();
-extern void	ars_curve(), ars_free();
-extern void	rec_curve(), rec_free();
+extern void	rt_hlf_curve(), rt_hlf_free();
+extern void	rt_ars_curve(), rt_ars_free();
+extern void	rt_rec_curve(), rt_rec_free();
 extern void	rt_pg_curve(),  rt_pg_free();
-extern void	spl_curve(), spl_free();
+extern void	rt_spl_curve(), rt_spl_free();
 extern void	rt_sph_curve(), rt_sph_free();
 extern void	ebm_curve(), ebm_free();
 extern void	vol_curve(), vol_free();
@@ -76,28 +76,27 @@ extern void	rt_arbn_curve(), rt_arbn_free();
 
 extern int	rt_nul_plot();
 extern int	rt_tor_plot();
-extern int	tgc_plot();
+extern int	rt_tgc_plot();
 extern int	rt_ell_plot();
 extern int	rt_arb_plot();
-extern int	hlf_plot();
-extern int	ars_plot();
-extern int	rec_plot();
+extern int	rt_hlf_plot();
+extern int	rt_ars_plot();
 extern int	rt_pg_plot();
-extern int	spl_plot();
+extern int	rt_spl_plot();
 extern int	ebm_plot();
 extern int	vol_plot();
 extern int	rt_arbn_plot();
 
 extern struct seg *rt_nul_shot();
 extern struct seg *rt_tor_shot();
-extern struct seg *tgc_shot();
+extern struct seg *rt_tgc_shot();
 extern struct seg *rt_ell_shot();
 extern struct seg *rt_arb_shot();
-extern struct seg *ars_shot();
-extern struct seg *hlf_shot();
-extern struct seg *rec_shot();
+extern struct seg *rt_ars_shot();
+extern struct seg *rt_hlf_shot();
+extern struct seg *rt_rec_shot();
 extern struct seg *rt_pg_shot();
-extern struct seg *spl_shot();
+extern struct seg *rt_spl_shot();
 extern struct seg *rt_sph_shot();
 extern struct seg *ebm_shot();
 extern struct seg *vol_shot();
@@ -106,10 +105,10 @@ extern struct seg *rt_arbn_shot();
 extern void	rt_nul_vshot();
 extern void	rt_ell_vshot();
 extern void	rt_sph_vshot();
-extern void	hlf_vshot();
-extern void	rec_vshot();
+extern void	rt_hlf_vshot();
+extern void	rt_rec_vshot();
 extern void	rt_arb_vshot();
-extern void	tgc_vshot();
+extern void	rt_tgc_vshot();
 extern void	rt_tor_vshot();
 extern void	rt_arbn_vshot();
 extern void	rt_vstub();	/* XXX vshoot.c */
@@ -117,12 +116,13 @@ extern void	rt_vstub();	/* XXX vshoot.c */
 extern int	rt_nul_tess();
 extern int	rt_ell_tess();
 extern int	rt_arb_tess();
-extern int	tgc_tess();
+extern int	rt_tgc_tess();
 extern int	rt_tor_tess();
 extern int	rt_pg_tess();
+extern int	rt_hlf_tess();
+extern int	rt_ars_tess();
+extern int	rt_spl_tess();
 #if 0
-extern int	hlf_tess();
-extern int	rec_tess();
 extern int	ebm_tess();
 extern int	vol_tess();
 #endif
@@ -140,9 +140,9 @@ struct rt_functab rt_functab[ID_MAXIMUM+2] = {
 		rt_tor_plot,	rt_tor_vshot,	rt_tor_tess,
 
 	"ID_TGC",	1,
-		tgc_prep,	tgc_shot,	tgc_print,	tgc_norm,
-		tgc_uv,		tgc_curve,	tgc_class,	tgc_free,
-		tgc_plot,	tgc_vshot,	tgc_tess,
+		rt_tgc_prep,	rt_tgc_shot,	rt_tgc_print,	rt_tgc_norm,
+		rt_tgc_uv,	rt_tgc_curve,	rt_tgc_class,	rt_tgc_free,
+		rt_tgc_plot,	rt_tgc_vshot,	rt_tgc_tess,
 
 	"ID_ELL",	1,
 		rt_ell_prep,	rt_ell_shot,	rt_ell_print,	rt_ell_norm,
@@ -155,19 +155,19 @@ struct rt_functab rt_functab[ID_MAXIMUM+2] = {
 		rt_arb_plot,	rt_arb_vshot,	rt_arb_tess,
 
 	"ID_ARS",	1,
-		ars_prep,	ars_shot,	ars_print,	ars_norm,
-		ars_uv,		ars_curve,	ars_class,	ars_free,
-		ars_plot,	rt_vstub,	rt_nul_tess,
+		rt_ars_prep,	rt_ars_shot,	rt_ars_print,	rt_ars_norm,
+		rt_ars_uv,	rt_ars_curve,	rt_ars_class,	rt_ars_free,
+		rt_ars_plot,	rt_vstub,	rt_ars_tess,
 
 	"ID_HALF",	0,
-		hlf_prep,	hlf_shot,	hlf_print,	hlf_norm,
-		hlf_uv,		hlf_curve,	hlf_class,	hlf_free,
-		hlf_plot,	hlf_vshot,	rt_nul_tess,
+		rt_hlf_prep,	rt_hlf_shot,	rt_hlf_print,	rt_hlf_norm,
+		rt_hlf_uv,	rt_hlf_curve,	rt_hlf_class,	rt_hlf_free,
+		rt_hlf_plot,	rt_hlf_vshot,	rt_hlf_tess,
 
 	"ID_REC",	1,
-		rec_prep,	rec_shot,	rec_print,	rec_norm,
-		rec_uv,		rec_curve,	rec_class,	rec_free,
-		tgc_plot,	rec_vshot,	rt_nul_tess,
+		rt_rec_prep,	rt_rec_shot,	rt_rec_print,	rt_rec_norm,
+		rt_rec_uv,	rt_rec_curve,	rt_rec_class,	rt_rec_free,
+		rt_tgc_plot,	rt_rec_vshot,	rt_tgc_tess,
 
 	"ID_POLY",	1,
 		rt_pg_prep,	rt_pg_shot,	rt_pg_print,	rt_pg_norm,
@@ -175,9 +175,9 @@ struct rt_functab rt_functab[ID_MAXIMUM+2] = {
 		rt_pg_plot,	rt_vstub,	rt_pg_tess,
 
 	"ID_BSPLINE",	1,
-		spl_prep,	spl_shot,	spl_print,	spl_norm,
-		spl_uv,		spl_curve,	spl_class,	spl_free,
-		spl_plot,	rt_vstub,	rt_nul_tess,
+		rt_spl_prep,	rt_spl_shot,	rt_spl_print,	rt_spl_norm,
+		rt_spl_uv,	rt_spl_curve,	rt_spl_class,	rt_spl_free,
+		rt_spl_plot,	rt_vstub,	rt_spl_tess,
 
 	"ID_SPH",	1,
 		rt_sph_prep,	rt_sph_shot,	rt_sph_print,	rt_sph_norm,
