@@ -434,7 +434,7 @@ char **argv;
 		Tcl_AppendResult( interp,
 				"wrong # args: should be \"",
 				argv[0], " ", argv[1],
-				" [use_air [hasty_prep]]\"",
+				" [hasty_prep]\"",
 				(char *)NULL );
 		return TCL_ERROR;
 	}
@@ -452,18 +452,17 @@ char **argv;
 		return TCL_ERROR;
 	}
 
-	if( argc >= 3 )  rtip->useair = atoi(argv[2]);
-	if( argc >= 4 )  rtip->rti_hasty_prep = atoi(argv[3]);
+	if( argc >= 3 )  rtip->rti_hasty_prep = atoi(argv[3]);
 
 	/* If args were given, prep now. */
 	if( argc >= 3 )  rt_prep_parallel( rtip, 1 );
 
 	/* Now, describe the current state */
 	bu_vls_init( &str );
-	bu_vls_printf( &str, "useair %d hasty_prep %d dont_instance %d needprep %d",
-		rtip->useair,
+	bu_vls_printf( &str, "hasty_prep %d dont_instance %d useair %d needprep %d",
 		rtip->rti_hasty_prep,
 		rtip->rti_dont_instance,
+		rtip->useair,
 		rtip->needprep
 	);
 
@@ -1599,7 +1598,7 @@ char	      **argv;
 		Tcl_AppendResult( interp,
 			"rt_gettrees: wrong # args: should be \"",
 			argv[0], " ", argv[1],
-			" newprocname [-i] treetops...\"\n", (char *)NULL );
+			" newprocname [-i] [-u] treetops...\"\n", (char *)NULL );
 		return TCL_ERROR;
 	}
 
@@ -1609,10 +1608,20 @@ char	      **argv;
 	/* Delete previous proc (if any) to release all that memory, first */
 	(void)Tcl_DeleteCommand( interp, newprocname );
 
-	if( strcmp( argv[3], "-i" ) == 0 )  {
-		rtip->rti_dont_instance = 1;
-		argc--;
-		argv++;
+	while( argv[3][0] == '-' )  {
+		if( strcmp( argv[3], "-i" ) == 0 )  {
+			rtip->rti_dont_instance = 1;
+			argc--;
+			argv++;
+			continue;
+		}
+		if( strcmp( argv[3], "-i" ) == 0 )  {
+			rtip->useair = 1;
+			argc--;
+			argv++;
+			continue;
+		}
+		break;
 	}
 
 	if( rt_gettrees( rtip, argc-3, (CONST char **)&argv[3], 1 ) < 0 )  {
