@@ -3,18 +3,26 @@
  *
  *  Function -
  *	Utilities for NURB curves and surfaces.
+ *
  *  Author -
  *	Paul Randal Stay
- * 
+ *  
  *  Source -
- * 	SECAD/VLD Computing Consortium, Bldg 394
- *	The U.S. Army Ballistic Research Laboratory
- * 	Aberdeen Proving Ground, Maryland 21005
+ *	The U. S. Army Research Laboratory
+ *	Aberdeen Proving Ground, Maryland  21005-5068  USA
+ *  
+ *  Distribution Notice -
+ *	Re-distribution of this software is restricted, as described in
+ *	your "Statement of Terms and Conditions for the Release of
+ *	The BRL-CAD Package" agreement.
  *
  *  Copyright Notice -
- *	This software is Copyright (C) 1986 by the United States Army.
- *	All rights reserved.
+ *	This software is Copyright (C) 1994 by the United States Army
+ *	in all countries except the USA.  All rights reserved.
  */
+#ifndef lint
+static char RCSid[] = "@(#)$Header$ (ARL)";
+#endif
 
 #include "conf.h"
 
@@ -84,25 +92,77 @@ int order, n_knots, n_pts, pt_type;
 	return crv;
 }
 
-/* free routine for a nurb surface */
+/*
+ *			R T _ N U R B _ C L E A N _ S N U R B
+ *
+ *  Clean up the storage use of an snurb, but don't release the pointer.
+ *  Often used by routines that allocate an array of nurb pointers,
+ *  or use automatic variables to hold one.
+ */
+void
+rt_nurb_clean_snurb( srf )
+struct snurb * srf;
+{
+	NMG_CK_SNURB(srf);
 
+	rt_free( (char *)srf->u_knots.knots, "rt_nurb_clean_snurb() u_knots.knots" );
+	rt_free( (char *)srf->v_knots.knots, "rt_nurb_free_snurb() v_knots.knots" );
+	rt_free( (char *)srf->ctl_points, "rt_nurb_free_snurb() ctl_points");
+	/* Invalidate the structure */
+	srf->u_knots.knots = (fastf_t *)NULL;
+	srf->v_knots.knots = (fastf_t *)NULL;
+	srf->ctl_points = (fastf_t *)NULL;
+	srf->order[0] = srf->order[1] = -1;
+	srf->l.magic = 0;
+}
+
+/*
+ *			R T _ N U R B _ F R E E _ S N U R B
+ */
 void
 rt_nurb_free_snurb( srf )
 struct snurb * srf;
 {
 	NMG_CK_SNURB(srf);
-    /* assume that links to other surface and curves are already deleted */
 
-    rt_free( (char *)srf->u_knots.knots, "rt_nurb_free_snurb: u kv knots" );
-    rt_free( (char *)srf->v_knots.knots, "rt_nurb_free_snurb: v kv knots" );
-    rt_free( (char *)srf->ctl_points, "rt_nurb_free_snurb: mesh points");
+	/* assume that links to other surface and curves are already deleted */
 
-    rt_free( (char *)srf, "rt_nurb_free_snurb: snurb struct" );
+	rt_free( (char *)srf->u_knots.knots, "rt_nurb_free_snurb: u kv knots" );
+	rt_free( (char *)srf->v_knots.knots, "rt_nurb_free_snurb: v kv knots" );
+	rt_free( (char *)srf->ctl_points, "rt_nurb_free_snurb: mesh points");
+
+	srf->l.magic = 0;
+	rt_free( (char *)srf, "rt_nurb_free_snurb: snurb struct" );
 }
 
 
-/* free routine for a nurb curve */
+/*
+ *			R T _ N U R B _ C L E A N _ C N U R B
+ *
+ *  Clean up the storage use of a cnurb, but don't release the pointer.
+ *  Often used by routines that allocate an array of nurb pointers,
+ *  or use automatic variables to hold one.
+ */
+void
+rt_nurb_clean_cnurb( crv )
+struct cnurb * crv;
+{
+	NMG_CK_CNURB(crv);
+	rt_free( (char*)crv->knot.knots, "rt_nurb_free_cnurb: knots");
+	rt_free( (char*)crv->ctl_points, "rt_nurb_free_cnurb: control points");
+	/* Invalidate the structure */
+	crv->knot.knots = (fastf_t *)NULL;
+	crv->ctl_points = (fastf_t *)NULL;
+	crv->c_size = 0;
+	crv->order = -1;
+	crv->l.magic = 0;
+}
 
+/*
+ *			R T _ N U R B _ F R E E _ C N U R B
+ *
+ *  Release a cnurb and all the storage that it references.
+ */
 void
 rt_nurb_free_cnurb( crv)
 struct cnurb * crv;
@@ -110,8 +170,8 @@ struct cnurb * crv;
 	NMG_CK_CNURB(crv);
 	rt_free( (char*)crv->knot.knots, "rt_nurb_free_cnurb: knots");
 	rt_free( (char*)crv->ctl_points, "rt_nurb_free_cnurb: control points");
+	crv->l.magic = 0;		/* sanity */
 	rt_free( (char*)crv, "rt_nurb_free_cnurb: cnurb struct");
-
 }
 
 void
