@@ -117,11 +117,6 @@ register struct application *ap;
 char *file, *obj;
 {
 
-	if( npsw != 1 )  {
-		rt_log("Note: changing from %d to one cpu\n", npsw );
-		npsw = 1;		/* Disable parallel processing */
-	}
-
 	ap->a_hit = rayhit;
 	ap->a_miss = raymiss;
 	ap->a_onehit = 1;
@@ -151,6 +146,16 @@ struct application	*ap;
 
 	if( outfp == NULL )
 		rt_bomb("outfp is NULL\n");
+
+	/*
+	 *  For now, RTHIDE does not operate in parallel, while ray-tracing.
+	 *  However, not dropping out of parallel mode until here permits
+	 *  tree walking and database prepping to still be done in parallel.
+	 */
+	if( npsw >= 1 )  {
+		rt_log("Note: changing from %d cpus to 1 cpu\n", npsw );
+		npsw = 1;		/* Disable parallel processing */
+	}
 
 /***	regionfix( ap, "rtray.regexp" );		/* XXX */
 
