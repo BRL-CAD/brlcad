@@ -1534,8 +1534,12 @@ RT_EXTERN(int rt_structparse, (CONST struct rt_vls *vls,
 	CONST struct structparse *tab, char *base ) );
 		/* Print arbitrary data structure for human consumption*/
 RT_EXTERN(void rt_vls_item_print, (struct rt_vls *vp,
-	CONST struct structparse *tab, CONST char *base ) );
-          /* Print single element from data structure for Tcl consumption */
+	CONST struct structparse *sp, CONST char *base ) );
+          /* Print single element from data structure */
+RT_EXTERN(void rt_vls_name_print, (struct rt_vls *vp,
+	CONST struct structparse *parsetab, CONST char *name,
+				    CONST char *base ) );
+          /* Print single element from data structure, chosen by name */
 RT_EXTERN(void rt_structprint, (CONST char *title,
 	CONST struct structparse *tab, CONST char *base ) );
 		/* Print arbitrary data structure to vls for rt_structparse */
