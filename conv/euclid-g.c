@@ -38,8 +38,9 @@ static char RCSid[] = "$Header$";
 #include "wdb.h"
 #include "../librt/debug.h"
 
-#define MAX_FACES_PER_REGION 8192
-#define MAX_PTS_PER_FACE 8192
+#define BRLCAD_TITLE_LENGTH	72
+#define MAX_FACES_PER_REGION	8192
+#define MAX_PTS_PER_FACE	8192
 
 #define MAX(A, B) ((A) > (B) ? (A) : (B))
 
@@ -73,7 +74,7 @@ struct nmg_ptbl groups[11];
 
 static int polysolids;
 static int debug;
-static char	usage[] = "Usage: %s [-i euclid_db] [-o brlcad_db] [-p]\n\t\t(-p indicates write as polysolids)\n ";
+static char	usage[] = "Usage: %s [-i euclid_db] [-o brlcad_db] [-p] [-xX lvl]\n\t\t(-p indicates write as polysolids)\n ";
 static struct rt_tol  tol;
 
 main(argc, argv)
@@ -82,6 +83,7 @@ char	*argv[];
 {
 	char		*bfile, *efile;
 	FILE		*fpin, *fpout;
+	char		title[BRLCAD_TITLE_LENGTH];	/* BRL-CAD database title */
 	register int	c;
 	int i;
 
@@ -100,7 +102,7 @@ char	*argv[];
 
 
 	/* Get command line arguments. */
-	while ((c = getopt(argc, argv, "d:vi:o:p")) != EOF) {
+	while ((c = getopt(argc, argv, "d:vi:o:px:X:")) != EOF) {
 		switch (c) {
 		case 'd':
 			tol.dist = atof( optarg );
@@ -131,6 +133,12 @@ char	*argv[];
 		case 'p':
 			polysolids = 1;
 			break;
+		case 'x':
+			sscanf( optarg, "%x", &rt_g.debug );
+			break;
+		case 'X':
+			sscanf( optarg, "%x", &rt_g.NMG_debug );
+			break;
 		default:
 			fprintf(stderr, usage, argv[0]);
 			exit(1);
@@ -140,9 +148,23 @@ char	*argv[];
 
 	/* Output BRL-CAD database header.  No problem if more than one. */
 	if( efile == NULL )
-		mk_id( fpout , "Conversion from EUCLID" );
+		sprintf( title, "Conversion from EUCLID (tolerance distance = %gmm)", tol.dist );
 	else
-		mk_id(fpout, efile);
+	{
+		char tol_str[BRLCAD_TITLE_LENGTH];
+		int title_len,tol_len;
+
+		sprintf( tol_str, " (tolerance distance = %gmm)", tol.dist );
+		sprintf( title, "%s", efile );
+		title_len = strlen( title );
+		tol_len =  strlen( tol_str );
+		if( title_len + tol_len > BRLCAD_TITLE_LENGTH )
+			strcat( &title[BRLCAD_TITLE_LENGTH-tol_len-1], tol_str );
+		else
+			strcat( title, tol_str );
+	}
+
+	mk_id( fpout, title );
 
 	for( i=0 ; i<11 ; i++ )
 		nmg_tbl( &groups[i] , TBL_INIT , (long *)NULL );
@@ -184,7 +206,28 @@ int		reg_id;
 	if( polysolids )
 		write_shell_as_polysolid( fpout , sname , s );
 	else
-		mk_nmg(fpout, sname,  m);		/* Make nmg object. */
+	{
+		int something_left=1;
+
+		while( RT_LIST_NOT_HEAD( s, &r->s_hd ) )
+		{
+			struct shell *next_s;
+
+			next_s = RT_LIST_PNEXT( shell, &s->l );
+			if( nmg_simplify_shell( s ) )
+			{
+				if( nmg_ks( s ) )
+				{
+					/* we killed it all!!! */
+					something_left = 0;
+					break;
+				}
+			}
+			s = next_s;
+		}
+		if( something_left )
+			mk_nmg(fpout, sname,  m);		/* Make nmg object. */
+	}
 
 	gift_ident = reg_id % 100000;
 	group_id = gift_ident/1000;
@@ -415,12 +458,13 @@ cvt_euclid_region(fp, fpdb, reg_id)
 FILE	*fp, *fpdb;
 int	reg_id;
 {
-	int	cur_id, face, facet_type, hole_face, i,
+	int	cur_id, face, facet_type, hole_face, i, j,
 		lst[MAX_PTS_PER_FACE], np, nv, shell_count;
 	struct faceuse	*outfaceuses[MAX_PTS_PER_FACE];
 	struct model	*m;	/* Input/output, nmg model. */
 	struct nmgregion *r;
 	struct shell	*s;
+	struct faceuse	*fu;
 	struct vertex	*vertlist[MAX_PTS_PER_FACE];
 	struct vlist	vert;
 
@@ -492,44 +536,112 @@ int	reg_id;
 		rt_log( "Associating face geometry:\n" );
 	for (i = 0; i < face; i++)
 	{
-		plane_t pl;
-		fastf_t area;
-		struct loopuse *lu;
-
-		for( RT_LIST_FOR( lu , loopuse , &outfaceuses[i]->lu_hd ) )
+		/* calculate plane for this faceuse */
+		if( nmg_calc_face_g( outfaceuses[i] ) )
 		{
-			area = nmg_loop_plane_area( lu , pl );
-			if( area > 0.0 )
-			{
-				if( debug )
-					rt_log( "\t( %g %g %g %g )\n" , V4ARGS( pl ) );
-				if( lu->orientation == OT_OPPOSITE )
-				{
-					if( debug )
-						rt_log( "\t\treversing plane normal for OT_OPPOSITE loop\n" );
-					HREVERSE( pl , pl );
-				}
-				nmg_face_g( outfaceuses[i] , pl );
-				break;
-			}
-			else
-			{
-				rt_log( "Cannot calculate geometry for loop:\n" );
-				nmg_pr_lu_briefly( lu, "" );
-			}
+			rt_log( "nmg_calc_face_g failed\n" );
+			nmg_pr_fu_briefly( outfaceuses[i], "" );
 		}
 	}
 
 	/* Glue edges of outward pointing face uses together. */
 	nmg_gluefaces(outfaceuses, face);
 
-	/* Compute "geometry" for region and shell */
-	nmg_region_a( r , &tol );
+	/* Compute "geometry" for model, region, and shell */
+	nmg_rebound( m , &tol );
 
 	/* fix the normals */
 	s = RT_LIST_FIRST( shell , &r->s_hd );
 	nmg_fix_normals( s, &tol );
 
+	/* verify face plane calculations */
+	for (i = 0; i < face; i++)
+	{
+		plane_t pl;
+		struct loopuse *lu;
+		struct edgeuse *eu;
+		struct vertexuse *vu;
+		fastf_t dist_to_plane;
+		int triangulate=0;
+
+		NMG_GET_FU_PLANE( pl, outfaceuses[i] );
+
+		/* check if all the vertices for this face lie on the plane */
+		for( RT_LIST_FOR( lu, loopuse, &outfaceuses[i]->lu_hd ) )
+		{
+			NMG_CK_LOOPUSE( lu );
+
+			if( RT_LIST_FIRST_MAGIC( &lu->down_hd ) == NMG_VERTEXUSE_MAGIC )
+			{
+				vu = RT_LIST_FIRST( vertexuse, &lu->down_hd );
+				dist_to_plane = DIST_PT_PLANE( vu->v_p->vg_p->coord, pl );
+				if( dist_to_plane > tol.dist || dist_to_plane < -tol.dist )
+				{
+					triangulate = 1;
+					break;
+				}
+			}
+			else
+			{
+				for( RT_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
+				{
+					NMG_CK_EDGEUSE( eu );
+					vu = eu->vu_p;
+					dist_to_plane = DIST_PT_PLANE( vu->v_p->vg_p->coord, pl );
+					if( dist_to_plane > tol.dist || dist_to_plane < -tol.dist )
+					{
+						triangulate = 1;
+						break;
+					}
+				}
+				if( triangulate )
+					break;
+			}
+		}
+
+		if( triangulate )
+		{
+			/* Need to triangulate this face */
+			nmg_triangulate_fu( outfaceuses[i], &tol );
+
+			/* split each triangular loop into its own face */
+			fu = outfaceuses[i];
+			if( fu->orientation != OT_SAME )
+				fu = fu->fumate_p;
+			if( fu->orientation != OT_SAME )
+			{
+				rt_log( "cvt_euclid_region: face (fu = x%x) with no OT_SAME use!!\n", fu );
+				nmg_pr_fu_briefly( fu , "" );
+				rt_bomb( "cvt_euclid_region: face with no OT_SAME use\n" );
+			}
+			(void)nmg_split_loops_into_faces( &fu->l.magic, &tol );
+			if( nmg_calc_face_g( fu ) )
+			{
+				rt_log( "cvt_euclid_region: nmg_calc_face_g failed!!\n" );
+				rt_bomb( "euclid-g: Could not calculate new face geometry\n" );
+			}
+		}
+	}
+
+	for( RT_LIST_FOR( fu, faceuse, &s->fu_hd ) )
+	{
+		int found=0;
+
+		if( fu->orientation != OT_SAME )
+			continue;
+
+		for( j=0; j<face; j++ )
+		{
+			if( fu == outfaceuses[j] || fu->fumate_p == outfaceuses[j] )
+			{
+				found = 1;
+				break;
+			}
+		}
+		if( !found )
+			nmg_calc_face_g( fu );
+	}
+#if 0
 	/* if the shell we just built has a void shell inside, nmg_fix_normals will
 	 * point the normals of the void shell in the wrong direction. This section
 	 * of code looks for such a situation and reverses the normals of the void shell
@@ -738,6 +850,7 @@ int	reg_id;
 		rt_free( (char *)in_out, "in_out" );
 	}
 	else
+#endif
 		add_nmg_to_db( fpdb, m, reg_id );
 
 	nmg_km(m);				/* Safe to kill model now. */
