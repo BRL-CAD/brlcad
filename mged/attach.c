@@ -33,7 +33,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "raytrace.h"
 #include "dm-Null.h"
 #include "./ged.h"
-#include "./solid.h"
+#include "./mged_solid.h"
 #include "./mged_dm.h"
 
 static int do_2nd_attach_prompt();
@@ -162,7 +162,7 @@ char *name;
 	}
 
 	/* Delete all references to display processor memory */
-	FOR_ALL_SOLIDS( sp )  {
+	FOR_ALL_SOLIDS(sp, &HeadSolid.l)  {
 		rt_memfree( &(dmp->dmr_map), sp->s_bytes, (unsigned long)sp->s_addr );
 		sp->s_bytes = 0;
 		sp->s_addr = 0;
@@ -273,15 +273,17 @@ char    **argv;
   if(argc == 2 && NEED_GUI(wp->dp)){
     return do_2nd_attach_prompt();
   }else{
-    dmlp = (struct dm_list *)bu_malloc(sizeof(struct dm_list), "struct dm_list");
-    bzero((void *)dmlp, sizeof(struct dm_list));
+    BU_GETSTRUCT(dmlp, dm_list);
     BU_LIST_APPEND(&head_dm_list.l, &dmlp->l);
     o_dm_list = curr_dm_list;
     curr_dm_list = dmlp;
-    dmp = (struct dm *)bu_malloc(sizeof(struct dm), "struct dm");
+    BU_GETSTRUCT(dmp, dm);
     *dmp = *wp->dp;
+    dmp->dmr_hp = &HeadSolid;  /*XXX Temporary */
+    dmp->dmr_cfunc = color_soltab;
     dm_init = wp->init;
     dm_var_init(o_dm_list, argv[2]);
+    dmp->dmr_vp = &Viewscale;
   }
 
   no_memory = 0;
@@ -296,7 +298,7 @@ char    **argv;
   Tcl_AppendResult(interp, "ATTACHING ", dmp->dmr_name, " (", dmp->dmr_lname,
 		   ")\n", (char *)NULL);
 
-  FOR_ALL_SOLIDS( sp )  {
+  FOR_ALL_SOLIDS(sp, &HeadSolid.l)  {
     /* Write vector subs into new display processor */
     if( (sp->s_bytes = dmp->dmr_cvtvecs( dmp, sp )) != 0 )  {
       sp->s_addr = rt_memalloc( &(dmp->dmr_map), sp->s_bytes );
@@ -309,7 +311,9 @@ char    **argv;
   }
 
   dmp->dmr_colorchange(dmp);
+#if 0  /* dmr_colorchange already does this */
   color_soltab();
+#endif
   dmp->dmr_viewchange( dmp, DM_CHGV_REDO, SOLID_NULL );
   ++dmaflag;
   return TCL_OK;
@@ -389,10 +393,11 @@ char    **argv;
       --p->s_info->_rc;
       sip = p->s_info;
       find_new_owner(p);
-      p->s_info = (struct shared_info *)bu_malloc(sizeof(struct shared_info),
-						  "shared_info");
+      BU_GETSTRUCT(p->s_info, shared_info);
       bcopy((void *)sip, (void *)p->s_info, sizeof(struct shared_info));
       p->s_info->_rc = 1;
+      p->_owner = 1;
+      p->_dmp->dmr_vp = &p->s_info->_Viewscale;
       
       return TCL_OK;
     }else
@@ -400,11 +405,11 @@ char    **argv;
   }else{
     --p->s_info->_rc;
     sip = p->s_info;
-    p->s_info = (struct shared_info *)bu_malloc(sizeof(struct shared_info),
-						"shared_info");
+    BU_GETSTRUCT(p->s_info, shared_info);
     bcopy((void *)sip, (void *)p->s_info, sizeof(struct shared_info));
     p->s_info->_rc = 1;
     p->_owner = 1;
+    p->_dmp->dmr_vp = &p->s_info->_Viewscale;
 
     return TCL_OK;
   }
@@ -439,7 +444,6 @@ char    **argv;
     return TCL_ERROR;
   }
 
-  /*XXX this screws things up for dm-ogl's viewscale pointer --- needs fixing */
   /* free p1's s_info struct if not being used */
   if(!--p1->s_info->_rc)
     bu_free( (genptr_t)p1->s_info, "tie: s_info" );
@@ -451,6 +455,8 @@ char    **argv;
 
   /* p1 now shares p2's s_info */
   p1->s_info = p2->s_info;
+
+  p1->_dmp->dmr_vp = &p1->s_info->_Viewscale;
 
   /* increment the reference count */
   ++p2->s_info->_rc;
@@ -484,9 +490,7 @@ char *name;
 {
   int i;
 
-  curr_dm_list->s_info = (struct shared_info *)bu_malloc(sizeof(struct shared_info),
-							 "shared_info");
-  bzero((void *)curr_dm_list->s_info, sizeof(struct shared_info));
+  BU_GETSTRUCT(curr_dm_list->s_info, shared_info);
   bcopy((void *)&default_mged_variables, (void *)&mged_variables,
 	sizeof(struct _mged_variables));
 
