@@ -363,12 +363,15 @@ rt_comb_export5(
 		bu_vls_trunc( &value, 0 );
 		switch (comb->is_fastgen) {
 		case REGION_FASTGEN_PLATE:
-		    bu_vls_printf(&value, "P");		break;
+		    bu_vls_printf(&value, "P");
+		    break;
 		case REGION_FASTGEN_VOLUME:
-		    bu_vls_printf(&value, "V");		break;
+		    bu_vls_printf(&value, "V");
+		    break;
 		case REGION_NON_FASTGEN: /* fallthrough */
 		default:
-		    bu_vls_printf(&value, "R");		break;
+		    bu_vls_printf(&value, "R");
+		    break;
 		}
 		bu_avs_add_vls( avsp, "region", &value );
 	} else
@@ -692,14 +695,22 @@ finish:
 	    comb->region_flag = 1;
 
 	    /* Determine if this is a FASTGEN region */
-	    if (! strcmp("V", ap)) {
+	    switch (*ap) {
+	    case 'V' : /* fallthrough */
+	    case '2' :
 		comb->is_fastgen = REGION_FASTGEN_VOLUME;
-	    } else if (! strcmp("P", ap)) {
+		break;
+	    case 'P' : /* fallthrough */
+	    case '1' :
 		comb->is_fastgen = REGION_FASTGEN_PLATE;
-	    } else if (! strcmp("R", ap)) {
+		break;
+	    case 'R' : /* fallthrough */
+	    case '0' :
 		comb->is_fastgen = REGION_NON_FASTGEN;
-	    } else {
+		break;
+	    default:
 		bu_log("unable to parse 'region' attribute '%s'\n", ap);
+		break;
 	    }
 
 	    /* get the other GIFT "region" attributes */
