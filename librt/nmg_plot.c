@@ -270,6 +270,15 @@ int		poly_markers;
 
 #define LEE_DIVIDE_TOL	(1.0e-5)	/* sloppy tolerance */
 
+/*
+ *			N M G _ E U _ C O O R D
+ *
+ *  Given an edgeuse structure, return the coordinates of the "base point"
+ *  of this edge.  This base point will be offset inwards along the edge
+ *  slightly, to avoid obscuring the vertex, and will be offset off the
+ *  face (in the direction of the face normal) slightly, to avoid
+ *  obscuring the edge itself.
+ */
 static void nmg_eu_coord(eu, base)
 struct edgeuse *eu;
 point_t base;
@@ -295,29 +304,13 @@ point_t base;
 	pt_eu = eu->vu_p->v_p->vg_p->coord;
 	pt_other = eu->eumate_p->vu_p->v_p->vg_p->coord;
 
-	/* v_eu is the vector of the edgeuse
-	 * mag is the magnitude of the edge vector
-	 */
-	VSUB2(v_eu, pt_other, pt_eu); 
-
 	if (*eu->up.magic_p == NMG_SHELL_MAGIC || 
 	    (*eu->up.magic_p == NMG_LOOPUSE_MAGIC &&
 	     *eu->up.lu_p->up.magic_p != NMG_FACEUSE_MAGIC) ) {
-
+	     	/* Wire edge, or edge in wire loop */
 		VMOVE(base, pt_eu);
-	     	dist1 = MAGNITUDE(v_eu);
-	     	/* whichever component of the edge is the least significant,
-	     	 * we perturb 
-	     	if (base[0] <= base[1] && base[0] <= base[2])
-	     		base[0] += dist1 * 0.1;
-	     	else if (base[1] <= base[0] && base[1] <= base[2])
-	     		base[1] += dist1 * 0.1;
-	     	else if (base[2] <= base[1] && base[2] <= base[0])
-	     		base[2] += dist1 * 0.1;
-	     	*/
 		return;
 	}
-
 	if (*eu->up.magic_p != NMG_LOOPUSE_MAGIC ||
 	    *eu->up.lu_p->up.magic_p != NMG_FACEUSE_MAGIC) {
 		rt_log("in %s at %d edgeuse has bad parent\n", __FILE__, __LINE__);
@@ -325,22 +318,18 @@ point_t base;
 	}
 
 	lu = eu->up.lu_p;
-
 	NMG_CK_FACE(lu->up.fu_p->f_p);
 	NMG_CK_FACE_G(lu->up.fu_p->f_p->fg_p);
 
-#ifdef DEBUG_PLEU
-	HPRINT("Normal", lu->up.fu_p->f_p->fg_p->N);
-	nmg_pr_orient(lu->up.fu_p->orientation, "");
-#endif
 	VMOVE(N, lu->up.fu_p->f_p->fg_p->N);
 	if (lu->up.fu_p->orientation == OT_OPPOSITE) {
 		VREVERSE(N,N);
 	}
-#ifdef DEBUG_PLEU
-	VPRINT("Adjusted Normal", N);
-#endif
 
+	/* v_eu is the vector of the edgeuse
+	 * mag is the magnitude of the edge vector
+	 */
+	VSUB2(v_eu, pt_other, pt_eu); 
 	VUNITIZE(v_eu);
 
 	/* find a point not on the edge */
@@ -361,6 +350,8 @@ point_t base;
 	 * should start
 	 */
 	VADD2(v_other, v_other, v_eu); VUNITIZE(v_other);
+
+	/* XXX vector lengths should be scaled by 5% of face size */
 	
 	/* compute the start of the edgeuse */
 	VJOIN2(base, pt_eu, 0.125,v_other, 0.05,N);
@@ -369,13 +360,16 @@ point_t base;
 
 /*			N M G _ E U _ C O O R D S
  *
- *	compute a pair of coordinates for representing an edgeuse
+ *  Get the two (offset and shrunken) endpoints that represent
+ *  an edgeuse.
+ *  Return the base point, and a point 60% along the way towards the
+ *  other end.
  */
-static nmg_eu_coords(eu, base, tip)
+static nmg_eu_coords(eu, base, tip60)
 struct edgeuse *eu;
-point_t base, tip;
+point_t base, tip60;
 {
-	vect_t eu_vec;
+	point_t	tip;
 
 	NMG_CK_EDGEUSE(eu);
 
@@ -383,37 +377,33 @@ point_t base, tip;
 	if (*eu->up.magic_p == NMG_SHELL_MAGIC ||
 	    (*eu->up.magic_p == NMG_LOOPUSE_MAGIC &&
 	    *eu->up.lu_p->up.magic_p == NMG_SHELL_MAGIC) ) {
-
+	    	/* Wire edge, or edge in wire loop */
 		NMG_CK_EDGEUSE(eu->eumate_p);
 		nmg_eu_coord( eu->eumate_p, tip );
 	}
 	else if (*eu->up.magic_p == NMG_LOOPUSE_MAGIC &&
 	    *eu->up.lu_p->up.magic_p == NMG_FACEUSE_MAGIC) {
+	    	/* Loop in face */
 	    	register struct edgeuse *eutmp;
 		eutmp = NMG_LIST_PNEXT_CIRC(edgeuse, eu);
 		NMG_CK_EDGEUSE(eutmp);
 		nmg_eu_coord( eutmp, tip );
 	} else
-		rt_bomb("nmg_eu_coords: What's going on?\n");
+		rt_bomb("nmg_eu_coords: bad edgeuse up. What's going on?\n");
 
-	/* compute edgeuse vector */
-	VSUB2SCALE(eu_vec, tip, base, 0.6);
-
-	/* compute tip location from edgeuse vector */
-	VADD2(tip, base, eu_vec);
+	VBLEND2( tip60, 0.4, base, 0.6, tip );
 }
 
 /*
  *			N M G _ E U _ R A D I A L
+ *
+ *  Find location for 80% tip on edgeuse's radial edgeuse.
  */
-static void nmg_eu_radial(fp, eu, tip, R, G, B)
-FILE *fp;
+static void nmg_eu_radial(eu, tip)
 struct edgeuse *eu;
 point_t tip;
-unsigned char R, G, B;
 {
-	point_t b2, t2, p;
-	vect_t v;
+	point_t	b2, t2;
 
 	NMG_CK_EDGEUSE(eu->radial_p);
 	NMG_CK_VERTEXUSE(eu->radial_p->vu_p);
@@ -422,28 +412,25 @@ unsigned char R, G, B;
 
 	nmg_eu_coords(eu->radial_p, b2, t2);
 
-	/* form vector of other edgeuse and scale down */
-	VSUB2SCALE(v, t2, b2, 0.8);
-
-	/* find point along other edgeuse where radial pointer should touch */
-	VADD2(p, b2, v);
-
-	pl_color(fp, R, G-20, B);
-	pd_3line(fp, tip[0], tip[1], tip[2], p[0], p[1], p[2]);
-	pl_color(fp, R, G, B);
+	/* find point 80% along other eu where radial pointer should touch */
+	VCOMB2( tip, 0.8, t2, 0.2, b2 );
 }
 
 /*
  *			N M G _ E U _ L A S T
+ *
+ *  Find the tip of the last (previous) edgeuse from 'eu'.
  */
-static void nmg_eu_last(fp, eu, base)
-FILE *fp;
-struct edgeuse *eu;
-point_t base;
+static void nmg_eu_last( eu, tip_out )
+struct edgeuse	*eu;
+point_t		tip_out;
 {
-	point_t b2, t2, p;
+	point_t		radial_base;
+	point_t		radial_tip;
+	point_t		last_base;
+	point_t		last_tip;
+	point_t		p;
 	struct edgeuse	*eulast;
-	vect_t v;
 
 	NMG_CK_EDGEUSE(eu);
 	eulast = NMG_LIST_PLAST_CIRC( edgeuse, eu );
@@ -452,40 +439,28 @@ point_t base;
 	NMG_CK_VERTEX(eulast->vu_p->v_p);
 	NMG_CK_VERTEX_G(eulast->vu_p->v_p->vg_p);
 
-	nmg_eu_coords(eulast->radial_p, b2, t2);
+	nmg_eu_coords(eulast->radial_p, radial_base, radial_tip);
 
-	/* form vector of last edgeuse's radial edgeuse and scale down */
-	VSUB2SCALE(v, t2, b2, 0.8);
-
-	/* find point along last edgeuse's radial edgeuse
-	 * where radial pointer should touch 
-	 */
-	VADD2(p, b2, v);
+	/* find pt 80% along LAST eu's radial eu where radial ptr touches */
+	VCOMB2( p, 0.8, radial_tip, 0.2, radial_base );
 
 	/* get coordinates of last edgeuse */
-	nmg_eu_coords(eulast, b2, t2);
+	nmg_eu_coords(eulast, last_base, last_tip);
 
-	/* form vector of last edgeuse's radial pointer and scale down */
-	VSUB2SCALE(v, p, t2, 0.2);
-
-	/* find point along other edgeuse's radial pointer where 
-	 * last pointer should touch
-	 */
-	VADD2(p, t2, v);
-
-	pl_color(fp, 0, 200, 0);
-	pd_3line(fp, base[0], base[1], base[2], p[0], p[1], p[2]);
+	/* Find pt 80% along other eu where last pointer should touch */
+	VCOMB2( tip_out, 0.8, last_tip, 0.2, p );
 }
 
 /*
  *			N M G _ E U _ N E X T
+ *
+ *  Return the base of the next edgeuse
  */
-static void nmg_eu_next(fp, eu, tip)
-FILE *fp;
-struct edgeuse *eu;
-point_t tip;
+static void nmg_eu_next_base( eu, next_base)
+struct edgeuse	*eu;
+point_t		next_base;
 {
-	point_t b2, t2;
+	point_t	t2;
 	register struct edgeuse	*nexteu;
 
 	NMG_CK_EDGEUSE(eu);
@@ -495,10 +470,7 @@ point_t tip;
 	NMG_CK_VERTEX(nexteu->vu_p->v_p);
 	NMG_CK_VERTEX_G(nexteu->vu_p->v_p->vg_p);
 
-	nmg_eu_coords(nexteu, b2, t2);
-
-	pl_color(fp, 0, 100, 0);
-	pd_3line(fp, tip[0], tip[1], tip[2], b2[0], b2[1], b2[2]);
+	nmg_eu_coords(nexteu, next_base, t2);
 }
 
 /*
@@ -587,8 +559,9 @@ struct nmg_ptbl *b;
 unsigned char R, G, B;
 {
 	point_t base, tip;
-
-	
+	point_t	radial_tip;
+	point_t	next_base;
+	point_t	last_tip;
 
 	NMG_CK_EDGEUSE(eu);
 	NMG_CK_EDGE(eu->e_p);
@@ -617,14 +590,21 @@ unsigned char R, G, B;
 	    		R = G = B = (unsigned char)255;
 
 		pl_color(fp, R, G, B);
+	    	pdv_3line( fp, base, tip );
 
-		pd_3line(fp, base[0], base[1], base[2],
-			tip[0], tip[1], tip[2]);
+	    	nmg_eu_radial( eu, radial_tip );
+		pl_color(fp, R, G-20, B);
+	    	pdv_3line( fp, tip, radial_tip );
 
+		pl_color(fp, 0, 100, 0);
+	    	nmg_eu_next_base( eu, next_base );
+	    	pdv_3line( fp, tip, next_base );
 
-	    	nmg_eu_radial(fp, eu, tip, R, G, B);
-	    	nmg_eu_next(fp, eu, tip);
-/*	    	nmg_eu_last(fp, eu, base); */
+/*** presently unused ***
+	    	nmg_eu_last( eu, last_tip );
+		pl_color(fp, 0, 200, 0);
+	    	pdv_3line( fp, base, last_tip );
+****/
 	    }
 }
 
