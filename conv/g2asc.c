@@ -101,6 +101,9 @@ top:
 	    	case DBID_STRSOL:
 	    		strsol_dump();
 	    		continue;
+	    	case DBID_NMG:
+	    		nmg_dump();
+	    		continue;
 	    	case DBID_PARTICLE:
 	    		particle_dump();
 	    		continue;
@@ -157,7 +160,73 @@ int			ngran;
 }
 
 void
-strsol_dump()	/* print out ebm or vol solid info */
+nmg_dump()
+{
+	union record		*rec;
+	long			i,granules;
+	long			struct_count[26];
+	int			j,k;
+
+	/* just in case someone changes the record size */
+	if( sizeof( union record )%32 )
+	{
+		fprintf( stderr , "g2asc: nmg_dump cannot work with records not multiple of 32\n" );
+		exit( -1 );
+	}
+
+	/* get number of granules needed for this NMG */
+	granules = rt_glong(record.nmg.N_count);
+
+	/* allocate memory to store the granules */
+	rec = (union record *)rt_calloc( granules , sizeof( union record ) , "g2asc: nmg: rec" );
+
+	/* Read the records */
+	for( i=0 ; i<granules ; i++ )
+	{
+		if( !fread( (char *)&rec[i], sizeof record, 1, stdin ) )
+		{
+			(void)fprintf( stderr , "Error reading nmg granules\n" );
+			exit( -1 );
+		}
+	}
+
+	/* get the array of structure counts */
+	for( j=0 ; j<26 ; j++ )
+		struct_count[j] = rt_glong( &record.nmg.N_structs[j*4] );
+
+	/* output some header info */
+	(void)printf( "%c %d %.16s %d\n",
+		record.nmg.N_id,	/* N */
+		record.nmg.N_version,	/* NMG version */
+		record.nmg.N_name,	/* solid name */
+		granules );		/* number of additional granules */
+
+	/* output the structure counts */
+	for( j=0 ; j<26 ; j++ )
+		(void)printf( " %d" , struct_count[j] );
+	(void)putchar( '\n' );
+
+	/* dump the reminder in hex format */
+	for( i=0 ; i<granules ; i++ )
+	{
+		char *cp;
+
+		cp = (char *)&rec[i];
+
+		/* 32 bytes per line */
+		for( k=0 ; k<sizeof( union record)/32 ; k++ )
+		{
+			for( j=0 ; j<32 ; j++ )
+				printf( "%02x" , *cp++ );	 /* two hex digits per byte */
+			putchar( '\n' );
+		}
+	}
+
+	rt_free( (char *)rec , "g2asc: nmg: rec" );
+}
+
+void
+strsol_dump()	/* print out strsol solid info */
 {
 	union record rec[DB_SS_NGRAN];
 	char *cp;
@@ -183,7 +252,7 @@ strsol_dump()	/* print out ebm or vol solid info */
 
 	(void)printf( "%c %.16s %.16s %s\n",
 		rec[0].ss.ss_id,	/* s */
-		rec[0].ss.ss_keyword,	/* "ebm" or "vol" */
+		rec[0].ss.ss_keyword,	/* "ebm", "vol", or ??? */
 		rec[0].ss.ss_name,	/* solid name */
 		rec[0].ss.ss_args );	/* everything else */
 
