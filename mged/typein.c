@@ -1288,6 +1288,11 @@ char			*prompt[];
 	pipe = (struct rt_pipe_internal *)intern->idb_ptr;
 	pipe->pipe_magic = RT_PIPE_INTERNAL_MAGIC;
 	BU_LIST_INIT( &pipe->pipe_segs_head );
+
+	if( argc != 4 + num_points*6 ) {
+		return CMD_BAD;
+	}
+
 	for( i=4 ; i<argc ; i+= 6 )
 	{
 		struct wdb_pipept *pipept;
