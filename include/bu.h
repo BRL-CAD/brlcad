@@ -1805,6 +1805,8 @@ BU_EXPORT BU_EXTERN(genptr_t bu_calloc,
 		     const char *str));
 BU_EXPORT BU_EXTERN(void bu_prmem,
 		    (const char *str));
+BU_EXPORT BU_EXTERN(char *bu_strdupm,
+		    (const char *cp, const char *label));
 BU_EXPORT BU_EXTERN(char *bu_strdup,
 		    (const char *cp));
 BU_EXPORT BU_EXTERN(char *bu_dirname,
