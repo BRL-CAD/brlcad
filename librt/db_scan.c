@@ -156,6 +156,12 @@ int			do_old_matter;
 				DIR_SOLID );
 			break;
 		case DBID_STRSOL:
+			for( ; nrec < DB_SS_NGRAN; nrec++ )  {
+				if( fread( (char *)&rec2, sizeof(rec2),
+				    1, dbip->dbi_fp ) != 1 )
+					break;
+			}
+			next = ftell(dbip->dbi_fp);
 			handler( dbip, record.ss.ss_name, addr, nrec,
 				DIR_SOLID );
 			break;

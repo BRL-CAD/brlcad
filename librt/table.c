@@ -379,15 +379,15 @@ struct rt_external	*ep;
 		break;
 	case DBID_STRSOL:
 		/* XXX This really needs to be some kind of table */
-		if( strncmp( rec->ss.ss_str, "ebm", 3 ) == 0 )  {
+		if( strncmp( rec->ss.ss_keyword, "ebm", 3 ) == 0 )  {
 			id = ID_EBM;
 			break;
-		} else if( strncmp( rec->ss.ss_str, "vol", 3 ) == 0 )  {
+		} else if( strncmp( rec->ss.ss_keyword, "vol", 3 ) == 0 )  {
 			id = ID_VOL;
 			break;
 		}
 		rt_log("rt_id_solid(%s):  String solid type '%s' unknown\n",
-			rec->ss.ss_name, rec->ss.ss_str );
+			rec->ss.ss_name, rec->ss.ss_keyword );
 		id = ID_NULL;		/* BAD */
 		break;
 	case DBID_ARBN:
