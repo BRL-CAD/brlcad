@@ -66,10 +66,22 @@
 #define ERROR1		1
 #define ERROR2		2
 
+/* Orientation conventions:
+ * The default object orientation is facing the positive x-axis, with 
+ * the positive y-axis to the object's left and the positive z-axis above
+ * the object.
+ * The default view orientation for rt and mged is facing the negative z-axis,
+ * with the negative x-axis leading to the left and the positive y-axis 
+ * going upwards.
+ */
+
 /* ANIM_V_PERMUTE - Pre-multiply a rotation matrix by a matrix 
  * which maps the z-axis to the negative x-axis, the y-axis to the 
- * z-axis and the x-axis to the negative y-axis. This is used in some 
- * situations where the virtual camera is involved.
+ * z-axis and the x-axis to the negative y-axis. 
+ * This has the effect of twisting an object in the default view orientation
+ * into the default object orientation before applying the matrix.
+ * Given a matrix designed to operate on an object, yield a matrix which 
+ * operates on the view.
  */
 void anim_v_permute(m)
 mat_t m;
@@ -86,6 +98,11 @@ mat_t m;
 }
 
 /* ANIM_V_UNPERMUTE - Undo the mapping done by anim_v_permute().
+ * This has the effect of twisting an object in the default object 
+ * orientation into the default view orientation before applying the
+ * matrix.
+ * Given a matrix designed to operate on the view, yield a matrix which 
+ * operates on an object.
  */
 void anim_v_unpermute(m)
 mat_t m;
