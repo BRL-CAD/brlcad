@@ -242,12 +242,13 @@ fb-cmap
 fb-fb
 fb-orle
 fb-pix sean
-fb-png
+fb-png 
 fb-rle
 fbanim
 fbcbars
 fbclear
   status: ok
+  desc: clear the framebuffer
 fbcmap
 fbcmrot
 fbcolor
