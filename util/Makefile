@@ -1,8 +1,8 @@
 #	Makefile -- for Frame buffer utilities
 
-#	last edit:	85/03/28	Gary S. Moss
+#	last edit:	85/04/03	Gary S. Moss
 
-#	SCCS ID:	@(#)Makefile	1.12
+#	SCCS ID:	@(#)Makefile	1.13
 
 PRODUCTS= pp-fb fbclear fbgrid rle-fb fb-rle fbcmap
 HEADERS =
@@ -27,7 +27,7 @@ INS	= cp
 	$(GET) $(GFLAGS) -p s.$@ > $@
 	touch $@
 
-all:	fbzoom ${PRODUCTS}# ${MANUALS}
+all:	fbzoom ${PRODUCTS} ${MANUALS}
 
 ${PRODUCTS}:	$$@.o
 	$(CC) -o $@ ${LDFLAGS} $@.o ${LIBES} 
