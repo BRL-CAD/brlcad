@@ -82,13 +82,15 @@ eval `sh machinetype.sh -b`
 
 ############################################################################
 #
-# Install the necessary shell scripts in BINDIR
+# Install the entire set of shell scripts from "sh/" into BINDIR
+#
+# Includes machinetype.sh and many others,
+# but does NOT include gen.sh, setup.sh, or newbindir.sh -- those
+# pertain to the installation process only, and don't get installed.
 #
 ############################################################################
-SCRIPTS="machinetype.sh cakeinclude.sh cray.sh ranlib5.sh \
-	pixinfo.sh sgisnap.sh cadbug.sh show.sh"
-
-for i in ${SCRIPTS}
+cd sh
+for i in *.sh
 do
 	if test -f ${BINDIR}/${i}
 	then
@@ -96,6 +98,7 @@ do
 	fi
 	cp ${i} ${BINDIR}/.
 done
+cd ..
 
 
 ############################################################################
@@ -109,6 +112,10 @@ then
 	make clobber
 	make install
 	make clobber
+	if test ! -f ${BINDIR}/cake
+	then
+		echo "***ERROR:  cake not installed"
+	fi
 
 	cd ../cakeaux
 	make clobber
