@@ -266,10 +266,10 @@ register struct xray *rp;
 	/* We are expected to compute hit_point here.  May be infinite. */
 	f = hitp->hit_dist;
 	if( f <= -INFINITY || f >= INFINITY )  {
-		VJOIN1( hitp->hit_point, rp->r_pt, f, rp->r_dir );
-	} else {
 		rt_log("hlf_norm:  dist=INFINITY, pt=?\n");
 		VSETALL( hitp->hit_point, INFINITY );
+	} else {
+		VJOIN1( hitp->hit_point, rp->r_pt, f, rp->r_dir );
 	}
 }
 
