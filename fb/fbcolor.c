@@ -165,8 +165,6 @@ i v	select intensity value\r\n\
 q	quit\r\n\
 \\n	Exit\r\n";
 
-#define ctl(x)	('x'&037)
-
 doKeyPad()
 { 
 	register ch;	
