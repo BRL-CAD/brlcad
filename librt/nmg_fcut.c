@@ -2212,6 +2212,7 @@ CONST char		*reason;
 		rs->eg_p = eg;
 		goto out;
 	}
+
 	/*
 	 * Edge has an edge geometry struct, different from that of isect line.
 	 * Force all uses of this edge geom to take on isect line's geometry.
@@ -2228,6 +2229,437 @@ out:
 	}
 }
 
+static int
+find_loop_to_cut( index1, index2, prior_start, prior_end, next_start, next_end, rs )
+int *index1,*index2;
+int prior_start, prior_end;
+int next_start, next_end;
+struct nmg_ray_state *rs;
+{
+	struct loopuse *lu1,*lu2;
+	struct vertexuse *vu1,*vu2;
+	struct loopuse *match_lu=(struct loopuse *)NULL;
+	struct loopuse *prior_lu,*next_lu;
+	struct vertexuse *prior_vu, *next_vu;
+	int class;
+	int count;
+	int i,j;
+	int done=0;
+
+	if(rt_g.NMG_debug&DEBUG_FCUT)
+		rt_log( "find_loop_to_cut: prior_start=%d, prior_end=%d, next_start=%d, next_end=%d, rs=x%x\n",
+			prior_start, prior_end, next_start, next_end, rs );
+
+	NMG_CK_RAYSTATE(rs);
+	/* check if any coincident VU's can give us a loop to cut */
+	while( !done )
+	{
+		done = 1;
+		for( i=prior_start ; i < prior_end ; i++ )
+		{
+
+			prior_lu = nmg_find_lu_of_vu( rs->vu[i] );
+			for( j=next_start ; j < next_end ; j++ )
+			{
+				next_lu = nmg_find_lu_of_vu( rs->vu[j] );
+				if( prior_lu == next_lu )
+				{
+					if( !match_lu )
+					{
+						match_lu = next_lu;
+						continue;
+					}
+					class = nmg_classify_lu_lu( next_lu, match_lu, rs->tol );
+					if( class == NMG_CLASS_AinB )
+					{
+						match_lu = next_lu;
+						done = 0;
+					}
+				}
+			}
+		}
+	}
+
+	if( match_lu )
+	{
+		if(rt_g.NMG_debug&DEBUG_FCUT)
+			rt_log( "\tfind_loop_to_cut: matching lu's = x%x\n", match_lu );
+		lu1 = match_lu;
+		for( i=prior_start ; i < prior_end ; i++ )
+		{
+			if( nmg_find_lu_of_vu( rs->vu[i] ) == lu1 )
+			{
+				*index1 = i;
+				vu1 = rs->vu[i];
+				break;
+			}
+		}
+		lu2 = match_lu;
+		for( i=next_start ; i < next_end ; i++ )
+		{
+			if( nmg_find_lu_of_vu( rs->vu[i] ) == lu2 )
+			{
+				*index2 = i;
+				vu2 = rs->vu[i];
+				break;
+
+			}
+		}
+	}
+	else
+	{
+		if(rt_g.NMG_debug&DEBUG_FCUT)
+			rt_log( "\tfind_loop_to_cut returning 0\n" );
+		return( 0 );
+	}
+
+	/* Check if there is more than one VU from lu2 */
+	count = 0;
+	for( i=next_start ; i<next_end ; i++ )
+	{
+		if( nmg_find_lu_of_vu( rs->vu[i] ) == lu2 )
+			count++;
+	}
+
+	if( count > 1 )
+	{
+		struct vertexuse *vu_best;
+		fastf_t vu_angle;
+		vect_t x_dir,y_dir;
+		vect_t norm;
+
+		if(rt_g.NMG_debug&DEBUG_FCUT)
+			rt_log( "\tfind_loop_to_cut: %d VU's from lu x%x\n", count, lu2 );
+
+		/* need to select correct VU */
+		vu_angle = (-rt_pi);
+		vu_best = (struct vertexuse *)NULL;
+
+		VSUB2( x_dir, vu2->v_p->vg_p->coord, vu1->v_p->vg_p->coord );
+		VUNITIZE( x_dir );
+		NMG_GET_FU_NORMAL( norm, rs->fu1 );
+
+		VCROSS( y_dir, norm, x_dir );
+		VUNITIZE( y_dir );
+
+		if(rt_g.NMG_debug&DEBUG_FCUT)
+			rt_log( "\tx_dir=(%g %g %g), y_dir=(%g %g %g)\n",
+				V3ARGS( x_dir ), V3ARGS( y_dir ) );
+
+		for( i=next_start ; i<next_end ; i++ )
+		{
+			struct edgeuse *eu;
+			fastf_t angle;
+			vect_t eu_dir;
+
+
+			if( nmg_find_lu_of_vu( rs->vu[i] ) != lu2 )
+				continue;
+
+			if( *(rs->vu[i]->up.magic_p) != NMG_EDGEUSE_MAGIC )
+			{
+				rt_log( "nmg_fcut_face: VU (x%x) is not from an EU\n", rs->vu[i] );
+				rt_bomb( "nmg_fcut_face: VU is not from an EU" );
+			}
+
+			/* calculate angle this EU will make with edgeuse
+			 * that will be created by the cut/join
+			 */
+			eu = rs->vu[i]->up.eu_p;
+			VSUB2( eu_dir, eu->eumate_p->vu_p->v_p->vg_p->coord, eu->vu_p->v_p->vg_p->coord );
+			angle = atan2( VDOT( y_dir,eu_dir ), VDOT( x_dir, eu_dir ) );
+
+			if(rt_g.NMG_debug&DEBUG_FCUT)
+				rt_log( "\tangle for eu x%x (vu=x%x, #%d) is %g\n",
+					eu, rs->vu[i], i, angle );
+
+			/* select max angle */
+			if( angle > vu_angle )
+			{
+				if(rt_g.NMG_debug&DEBUG_FCUT)
+					rt_log( "\t\tabove is the new best VU\n" );
+				vu_angle = angle;
+				vu_best = rs->vu[i];
+				*index2 = i;
+			}
+		}
+
+		if( vu_best )
+			vu2 = vu_best;
+
+		if(rt_g.NMG_debug&DEBUG_FCUT)
+			rt_log( "\tfind_loop_to_cut: selecting VU2 x%x\n", vu2 );
+	}
+
+	/* Check if there is more than one VU from lu1 */
+	count = 0;
+	for( i=prior_start ; i<prior_end ; i++ )
+	{
+		if( nmg_find_lu_of_vu( rs->vu[i] ) == lu1 )
+			count++;
+	}
+
+	if( count > 1 )
+	{
+		struct vertexuse *vu_best;
+
+		fastf_t vu_angle;
+		vect_t x_dir,y_dir;
+		vect_t norm;
+
+		if(rt_g.NMG_debug&DEBUG_FCUT)
+			rt_log( "\tfind_loop_to_cut: %d VU's from lu x%x\n", count, lu1 );
+
+		/* need to select correct VU */
+		vu_angle = (-rt_pi);
+		vu_best = (struct vertexuse *)NULL;
+
+		VSUB2( x_dir, vu1->v_p->vg_p->coord, vu2->v_p->vg_p->coord );
+		VUNITIZE( x_dir );
+		NMG_GET_FU_NORMAL( norm, rs->fu1 );
+
+		VCROSS( y_dir, norm, x_dir );
+		VUNITIZE( y_dir );
+
+		if(rt_g.NMG_debug&DEBUG_FCUT)
+			rt_log( "\tx_dir=(%g %g %g), y_dir=(%g %g %g)\n",
+				V3ARGS( x_dir ), V3ARGS( y_dir ) );
+
+		for( i=prior_start ; i<prior_end ; i++ )
+		{
+			struct edgeuse *eu;
+			fastf_t angle;
+			vect_t eu_dir;
+
+			if( nmg_find_lu_of_vu( rs->vu[i] ) != lu1 )
+				continue;
+
+			if( *(rs->vu[i]->up.magic_p) != NMG_EDGEUSE_MAGIC )
+			{
+				rt_log( "nmg_fcut_face: VU (x%x) is not from an EU\n", rs->vu[i] );
+				rt_bomb( "nmg_fcut_face: VU is not from an EU" );
+			}
+
+			/* calculate angle this EU will make with edgeuse
+			 * that will be created by the cut/join
+			 */
+			eu = rs->vu[i]->up.eu_p;
+			VSUB2( eu_dir, eu->eumate_p->vu_p->v_p->vg_p->coord, eu->vu_p->v_p->vg_p->coord );
+			angle = atan2( VDOT( y_dir,eu_dir ), VDOT( x_dir, eu_dir ) );
+
+			if(rt_g.NMG_debug&DEBUG_FCUT)
+				rt_log( "\tangle for eu x%x (vu=x%x, #%d) is %g\n",
+					eu, rs->vu[i], i, angle );
+
+			/* select max angle */
+			if( angle > vu_angle )
+			{
+				if(rt_g.NMG_debug&DEBUG_FCUT)
+					rt_log( "\t\tabove is the new best VU\n" );
+				vu_angle = angle;
+
+				vu_best = rs->vu[i];
+				*index1 = i;
+			}
+		}
+
+		if( vu_best )
+			vu1 = vu_best;
+
+		if(rt_g.NMG_debug&DEBUG_FCUT)
+			rt_log( "\tfind_loop_to_cut: selecting VU1 x%x\n", vu1 );
+	}
+
+	if(rt_g.NMG_debug&DEBUG_FCUT)
+		rt_log( "\tfind_loop_to_cut: returning 1 (index1=%d, index2=%d)\n",
+				*index1, *index2 );
+
+	return( 1 );
+}
+
+static fastf_t
+nmg_eu_angle( eu, vp )
+struct edgeuse *eu;
+struct vertex *vp;
+{
+	struct faceuse *fu;
+	struct vertex_g *vg1,*vg2;
+	vect_t norm;
+	vect_t x_dir;
+	vect_t y_dir;
+	vect_t eu_dir;
+	fastf_t angle;
+
+	NMG_CK_EDGEUSE( eu );
+	NMG_CK_VERTEX( vp );
+
+	fu = nmg_find_fu_of_eu( eu );
+	NMG_CK_FACEUSE( fu );
+	NMG_GET_FU_NORMAL( norm, fu );
+
+	vg1 = eu->vu_p->v_p->vg_p;
+	vg2 = eu->eumate_p->vu_p->v_p->vg_p;
+
+	VSUB2( x_dir, vg1->coord, vp->vg_p->coord );
+	VUNITIZE( x_dir );
+	VCROSS( y_dir, norm, x_dir );
+	VUNITIZE( y_dir );
+
+	VSUB2( eu_dir, vg2->coord, vg1->coord );
+	angle = atan2( VDOT( eu_dir, y_dir ), VDOT( eu_dir, x_dir ) );
+
+	return( angle );
+}
+
+static int
+find_best_vu( start, end, other_vp, rs )
+int start;
+int end;
+struct vertex *other_vp;
+struct nmg_ray_state *rs;
+{
+	struct edgeuse *eu;
+	struct vertexuse *best_vu;
+	struct loopuse *best_lu;
+	fastf_t best_angle;
+	int best_index;
+	int other_is_in_best;
+	int class;
+	int i;
+
+	if(rt_g.NMG_debug&DEBUG_FCUT)
+		rt_log( "find_best_vu: start=%d, end=%d, other_vp=x%x, rs=x%x\n",
+				start,end,other_vp, rs );
+
+	NMG_CK_VERTEX( other_vp );
+	NMG_CK_RAYSTATE(rs);
+
+	if( start == end-1 )
+	{
+		if(rt_g.NMG_debug&DEBUG_FCUT)
+			rt_log( "\tfind_best_vu returning %d\n", start );
+
+		return( start );
+	}
+
+	best_vu = rs->vu[start];
+	best_lu = nmg_find_lu_of_vu( best_vu );
+	best_index = start;
+	eu = best_vu->up.eu_p;
+	best_angle = nmg_eu_angle( eu, other_vp );
+
+	if( RT_LIST_FIRST_MAGIC( &best_lu->down_hd ) == NMG_VERTEXUSE_MAGIC )
+	{
+		other_is_in_best = 0;
+	}
+	else if( nmg_loop_is_a_crack( best_lu ) )
+	{
+		other_is_in_best = 0;
+	}
+	else
+	{
+		class = nmg_class_pt_lu_except( other_vp->vg_p->coord, best_lu, (struct edge *)NULL, rs->tol );
+
+		if( class == NMG_CLASS_AinB )
+			other_is_in_best = 1;
+		else if( class == NMG_CLASS_AonBshared )
+		{
+			rt_log( "find_best_vu: There is a loop to cut, lu=x%x\n", best_lu );
+			rt_bomb( "find_best_vu: There is a loop to cut" );
+		}
+		else
+			other_is_in_best = 0;
+	}
+
+	if(rt_g.NMG_debug&DEBUG_FCUT)
+		rt_log( "\tfind_best_vu: first choice is index=%d, vu=x%x, lu=x%x, other_is_in_best=%d\n",
+				best_index, best_vu, best_lu, other_is_in_best );
+
+	for( i=start+1 ; i<end ; i++ )
+	{
+		struct loopuse *lu;
+
+		lu = nmg_find_lu_of_vu( rs->vu[i] );
+		if( lu != best_lu )
+		{
+			class = nmg_classify_lu_lu( lu, best_lu, rs->tol );
+
+			if( other_is_in_best )
+			{
+				if( class == NMG_CLASS_AinB || (class == NMG_CLASS_AonBshared && lu->orientation == OT_OPPOSITE) )
+				{
+
+					best_vu = rs->vu[i];
+					best_lu = lu;
+					best_index = i;
+
+					if(rt_g.NMG_debug&DEBUG_FCUT)
+						rt_log( "\tfind_best_vu: better choice (inside) - index=%d, vu=x%x, lu=x%x, other_is_in_best=%d\n",
+							best_index, best_vu, best_lu, other_is_in_best );
+					/* other_is_in_best can't change */
+				}
+			}
+			else
+			{
+				if( class == NMG_CLASS_AoutB ||  (class == NMG_CLASS_AonBshared && lu->orientation == OT_OPPOSITE) )
+				{
+					best_vu = rs->vu[i];
+					best_lu = lu;
+					best_index = i;
+
+					/* other_is_in_best may change */
+					if( RT_LIST_FIRST_MAGIC( &best_lu->down_hd ) == NMG_VERTEXUSE_MAGIC )
+					{
+						other_is_in_best = 0;
+					}
+					else if( nmg_loop_is_a_crack( best_lu ) )
+					{
+						other_is_in_best = 0;
+					}
+					else
+					{
+						class = nmg_class_pt_lu_except( other_vp->vg_p->coord,
+							best_lu, (struct edge *)NULL, rs->tol );
+
+						if( class == NMG_CLASS_AinB )
+							other_is_in_best = 1;
+						else if( class == NMG_CLASS_AonBshared )
+						{
+							rt_log( "find_best_vu: There is a loop to cut, lu=x%x\n",
+								best_lu );
+							rt_bomb( "find_best_vu: There is a loop to cut" );
+						}
+						else
+							other_is_in_best = 0;
+					}
+					if(rt_g.NMG_debug&DEBUG_FCUT)
+
+						rt_log( "\tfind_best_vu: better choice (outside) - index=%d, vu=x%x, lu=x%x, other_is_in_best=%d\n",
+							best_index, best_vu, best_lu, other_is_in_best );
+				}
+			}
+		}
+		else
+		{
+			struct edgeuse *eu;
+			fastf_t angle;
+			/* need to choose based on eu directions */
+
+			eu = rs->vu[i]->up.eu_p;
+			NMG_CK_EDGEUSE( eu );
+			angle = nmg_eu_angle( eu, other_vp );
+			if( angle > best_angle )
+			{
+				best_angle = angle;
+				best_vu = rs->vu[i];
+				best_lu = nmg_find_lu_of_vu( best_vu );
+				best_index = i;
+			}
+		}
+	}
+
+	return( best_index );
+}
 
 HIDDEN void
 nmg_fcut_face( rs )
@@ -2239,6 +2671,8 @@ struct nmg_ray_state *rs;
 	struct loopuse *new_lu;
 	struct edgeuse *new_eu1,*new_eu2;
 	struct edgeuse *old_eu;
+	struct vertex *prev_v;
+	int prior_start;
 
 	NMG_CK_RAYSTATE(rs);
 	RT_CK_TOL(rs->tol);
@@ -2265,22 +2699,43 @@ struct nmg_ray_state *rs;
 		rt_log( "\tvu=x%x, v=x%x, lu=x%x\n", rs->vu[cur], rs->vu[cur]->v_p, nmg_find_lu_of_vu( rs->vu[cur] ) );
 	}
 
+
 	if( rs->nvu < 2 )
 		return;
 
-	vu2 = rs->vu[0];
-	for( cur=1 ; cur<rs->nvu ; cur++ )
+	prev_v = (struct vertex *)NULL;
+	prior_start = 0;
+	while( 1 )
 	{
+		struct edgeuse *eu_tmp;
 		struct loopuse *lu1,*lu2;
 		point_t mid_pt;
 		int class;
 		int orient1,orient2;
+		int prior_end;
+		int next_start,next_end;
+		int count;
+		int i;
+		int index1,index2;
 
-		vu1 = vu2;
-		vu2 = rs->vu[cur];
+		while( rs->vu[prior_start]->v_p == prev_v )
+			prior_start++;
 
-		if( vu1->v_p == vu2->v_p )
-			continue;
+		vu1 = rs->vu[prior_start];
+		prior_end = prior_start;
+
+		prev_v = vu1->v_p;
+
+		while( ++prior_end < rs->nvu && rs->vu[prior_end]->v_p == vu1->v_p );
+
+		next_start = prior_end;
+
+		if( next_start >= rs->nvu )
+			break;		/* all done */
+
+		vu2 = rs->vu[next_start];
+		next_end = next_start;
+		while( ++next_end < rs->nvu && rs->vu[next_end]->v_p == vu2->v_p );
 
 		/* See if there is an edge joining the 2 vertices already */
 		old_eu = nmg_findeu( vu1->v_p, vu2->v_p, (struct shell *)NULL,
@@ -2303,6 +2758,7 @@ struct nmg_ray_state *rs;
 			continue;
 
 		if( nmg_find_eu_in_face( vu1->v_p, vu2->v_p, rs->fu1,
+
 			(struct edgeuse *)NULL, 0 ) )
 		{
 			if(rt_g.NMG_debug&DEBUG_FCUT)
@@ -2318,87 +2774,26 @@ struct nmg_ray_state *rs;
 			continue;
 		}
 
-		lu1 = nmg_find_lu_of_vu( vu1 );
-		lu2 = nmg_find_lu_of_vu( vu2 );
-		orient1 = lu1->orientation;
-		orient2 = lu2->orientation;
-
-		if(rt_g.NMG_debug&DEBUG_FCUT)
-			rt_log( "lu1=x%x (mate=x%x), lu2=x%x (mate=x%x)\n", lu1, lu1->lumate_p, lu2, lu2->lumate_p );
-
-		if( lu1 != lu2 )
+		if( find_loop_to_cut( &index1, &index2, prior_start, prior_end, next_start, next_end, rs ) )
 		{
-			struct loopuse *match_lu=(struct loopuse *)NULL;
-			struct loopuse *prior_lu,*next_lu;
-			struct vertexuse *prior_vu, *next_vu;
-			int prior_start,prior_end;
-			int next_start,next_end;
-			int i,j;
-			int done=0;
+			vu1 = rs->vu[index1];
+			vu2 = rs->vu[index2];
+			lu1 = nmg_find_lu_of_vu( vu1 );
+			lu2 = nmg_find_lu_of_vu( vu2 );
+			orient1 = lu1->orientation;
+			orient2 = lu2->orientation;
 
-			/* check if any conicident VU's can give us a loop to cut */
-			prior_start = cur;
-			prior_end = cur;
-			next_start = cur;
-			next_end = cur;
-
-			while( prior_start > 0 && rs->vu[--prior_start]->v_p == vu1->v_p );
-			if( rs->vu[prior_start]->v_p != vu1->v_p )
-				prior_start++;
-
-			while( next_end < rs->nvu-1 && rs->vu[++next_end]->v_p == vu2->v_p );
-			if( rs->vu[next_end]->v_p == vu2->v_p )
-				next_end++;
-
-			match_lu = (struct loopuse *)NULL;
-			while( !done )
-			{
-				done = 1;
-				for( i=prior_start ; i < prior_end ; i++ )
-				{
-					prior_lu = nmg_find_lu_of_vu( rs->vu[i] );
-					for( j=next_start ; j < next_end ; j++ )
-					{
-						next_lu = nmg_find_lu_of_vu( rs->vu[j] );
-						if( prior_lu == next_lu )
-						{
-							if( !match_lu )
-							{
-								match_lu = next_lu;
-								continue;
-							}
-							class = nmg_classify_lu_lu( next_lu, match_lu, rs->tol );
-							if( class == NMG_CLASS_AinB )
-							{
-								match_lu = next_lu;
-								done = 0;
-							}
-						}
-					}
-				}
-			}
-
-			if( match_lu )
-			{
-				lu1 = match_lu;
-				for( i=prior_start ; i < prior_end ; i++ )
-				{
-					if( nmg_find_lu_of_vu( rs->vu[i] ) == lu1 )
-					{
-						vu1 = rs->vu[i];
-						break;
-					}
-				}
-				lu2 = match_lu;
-				for( i=next_start ; i < next_end ; i++ )
-				{
-					if( nmg_find_lu_of_vu( rs->vu[i] ) == lu2 )
-					{
-						vu2 = rs->vu[i];
-						break;
-					}
-				}
-			}
+		}
+		else
+		{
+			index1 = find_best_vu( prior_start, prior_end, vu2->v_p, rs );
+			index2 = find_best_vu( next_start, next_end, vu1->v_p, rs );
+			vu1 = rs->vu[index1];
+			vu2 = rs->vu[index2];
+			lu1 = nmg_find_lu_of_vu( vu1 );
+			lu2 = nmg_find_lu_of_vu( vu2 );
+			orient1 = lu1->orientation;
+			orient2 = lu2->orientation;
 		}
 
 		if( lu1 == lu2 )
@@ -2417,34 +2812,68 @@ struct nmg_ray_state *rs;
 			nmg_lu_reorient( new_lu, rs->tol );
 
 			if(rt_g.NMG_debug&DEBUG_FCUT)
+			{
 				rt_log( "\t\t new_eu = x%x\n", new_eu1 );
+				nmg_pr_fu_briefly( rs->fu1, "" );
+			}
 #if 0
 			/* Fuse new edge to intersect line, old edge */
 			nmg_edge_geom_isect_line( new_eu1, rs, "CUTJOIN, new edge after loop cut" );
 #endif
 			if( old_eu ) nmg_radial_join_eu( old_eu, new_eu1, rs->tol );
 
+			/* A new VU has been added to vu2->v_p, add it to the rs->vu[]
+			 * array by overwriting the last use of vu1->v_p
+			 */
+
+			eu_tmp = vu1->up.eu_p;
+			eu_tmp = RT_LIST_PPREV_CIRC( edgeuse, &eu_tmp->l );
+			if( eu_tmp->vu_p->v_p != vu2->v_p )
+			{
+				rt_log( "nmg_fcut_face: eu (x%x) has wrong vertex (x%x) should be (x%x)\n", eu_tmp, eu_tmp->vu_p->v_p, vu2->v_p );
+				rt_bomb( "nmg_fcut_face: eu has wrong vertex" );
+			}
+
+			rs->vu[prior_end-1] = eu_tmp->vu_p;
+
 			continue;
 		}
 
 		if( RT_LIST_FIRST_MAGIC( &lu1->down_hd ) == NMG_VERTEXUSE_MAGIC &&
 		    RT_LIST_FIRST_MAGIC( &lu2->down_hd ) == NMG_VERTEXUSE_MAGIC )
-		{
-			if(rt_g.NMG_debug&DEBUG_FCUT)
-				rt_log( "\tjoin 2 singvu loops\n" );
 
-			vu2 = nmg_join_2singvu_loops( vu1, vu2 );
-			new_eu1 = vu2->up.eu_p;
+		{
+			struct vertexuse *new_vu2;
+
+			new_vu2 = nmg_join_2singvu_loops( vu1, vu2 );
+			new_eu1 = new_vu2->up.eu_p;
 			NMG_CK_EDGEUSE( new_eu1 );
 
 			nmg_loop_g( lu1->l_p, rs->tol );
 			lu1->orientation = OT_SAME;
 			lu1->lumate_p->orientation = OT_SAME;
+
+			if(rt_g.NMG_debug&DEBUG_FCUT)
+			{
+				rt_log( "\tjoin 2 singvu loops\n" );
+				nmg_pr_fu_briefly( rs->fu1, "" );
+			}
 #if 0			
 			/* Fuse new edge to intersect line, old edge */
 			nmg_edge_geom_isect_line( new_eu1, rs, "CUTJOIN, new edge after loop cut" );
 #endif
 			if( old_eu )  nmg_radial_join_eu( old_eu, new_eu1, rs->tol );
+
+			/* vu2 has been killed, replace it in rs->vu[] */
+
+			for( i=next_start ; i<next_end ; i++ )
+			{
+				if( rs->vu[i] == vu2 )
+				{
+					rs->vu[i] = new_vu2;
+					break;
+				}
+			}
 
 			continue;
 		}
@@ -2452,38 +2881,62 @@ struct nmg_ray_state *rs;
 		if( RT_LIST_FIRST_MAGIC( &lu1->down_hd ) == NMG_VERTEXUSE_MAGIC &&
 		    RT_LIST_FIRST_MAGIC( &lu2->down_hd ) == NMG_EDGEUSE_MAGIC )
 		{
-			if(rt_g.NMG_debug&DEBUG_FCUT)
-				rt_log( "\tjoin loops vu1 (x%x) is sing vu loop\n", vu1 );
+			struct vertexuse *new_vu1;
 
-			vu1 = nmg_join_singvu_loop( vu2, vu1 );
-			new_eu1 = vu1->up.eu_p;
+			new_vu1 = nmg_join_singvu_loop( vu2, vu1 );
+			new_eu1 = new_vu1->up.eu_p;
 			NMG_CK_EDGEUSE( new_eu1 );
 
 			nmg_loop_g( lu2->l_p, rs->tol );
 			lu2->orientation = orient2;
 			lu2->lumate_p->orientation = orient2;
+
+			if(rt_g.NMG_debug&DEBUG_FCUT)
+			{
+				rt_log( "\tjoin loops vu1 (x%x) is sing vu loop\n", vu1 );
+				nmg_pr_fu_briefly( rs->fu1, "" );
+			}
 #if 0			
 			/* Fuse new edge to intersect line, old edge */
 			nmg_edge_geom_isect_line( new_eu1, rs, "CUTJOIN, new edge after loop cut" );
+
 #endif
 			if( old_eu )  nmg_radial_join_eu( old_eu, new_eu1, rs->tol );
 
+			/* A new VU has been added to vu2->v_p, add it to the rs->vu[]
+			 * array by overwriting the last use of vu1->v_p
+			 */
+
+			eu_tmp = new_vu1->up.eu_p;
+			eu_tmp = RT_LIST_PPREV_CIRC( edgeuse, &eu_tmp->l );
+			if( eu_tmp->vu_p->v_p != vu2->v_p )
+			{
+				rt_log( "nmg_fcut_face: eu (x%x) has wrong vertex (x%x) should be (x%x)\n", eu_tmp, eu_tmp->vu_p->v_p, vu2->v_p );
+				rt_bomb( "nmg_fcut_face: eu has wrong vertex" );
+			}
+
+			rs->vu[prior_end-1] = eu_tmp->vu_p;
 			continue;
 		}
 
 		if( RT_LIST_FIRST_MAGIC( &lu1->down_hd ) == NMG_EDGEUSE_MAGIC &&
 		    RT_LIST_FIRST_MAGIC( &lu2->down_hd ) == NMG_VERTEXUSE_MAGIC )
 		{
-			if(rt_g.NMG_debug&DEBUG_FCUT)
-				rt_log( "\tjoin loops vu2 (x%x) is sing vu loop\n", vu2 );
+			struct vertexuse *new_vu2;
 
-			vu2 = nmg_join_singvu_loop( vu1, vu2 );
-			new_eu1 = vu2->up.eu_p;
+			new_vu2 = nmg_join_singvu_loop( vu1, vu2 );
+			new_eu1 = new_vu2->up.eu_p;
 			NMG_CK_EDGEUSE( new_eu1 );
 
 			nmg_loop_g( lu1->l_p, rs->tol );
 			lu1->orientation = orient1;
 			lu1->lumate_p->orientation = orient1;
+
+			if(rt_g.NMG_debug&DEBUG_FCUT)
+			{
+				rt_log( "\tjoin loops vu2 (x%x) is sing vu loop\n", vu2 );
+				nmg_pr_fu_briefly( rs->fu1, "" );
+			}
 #if 0			
 			/* Fuse new edge to intersect line, old edge */
 			nmg_edge_geom_isect_line( new_eu1, rs, "CUTJOIN, new edge after loop cut" );
@@ -2491,25 +2944,53 @@ struct nmg_ray_state *rs;
 
 			if( old_eu )  nmg_radial_join_eu( old_eu, new_eu1, rs->tol );
 
+			/* vu2 has been killed, replace it in rs->vu[] */
+
+			for( i=next_start ; i<next_end ; i++ )
+			{
+				if( rs->vu[i] == vu2 )
+				{
+					rs->vu[i] = new_vu2;
+					break;
+				}
+			}
+
 			continue;
 		}
 
 		if( lu1 != lu2 )
 		{
-			if(rt_g.NMG_debug&DEBUG_FCUT)
-				rt_log( "\t join 2 loops\n" );
+			struct vertexuse *new_vu2;
 
-			vu2 = nmg_join_2loops( vu1, vu2 );
-			new_eu1 = vu2->up.eu_p;
+			new_vu2 = nmg_join_2loops( vu1, vu2 );
+			new_eu1 = new_vu2->up.eu_p;
 			NMG_CK_EDGEUSE( new_eu1 );
 
 			nmg_loop_g( lu1->l_p, rs->tol );
+
+			if(rt_g.NMG_debug&DEBUG_FCUT)
+			{
+				rt_log( "\t join 2 loops\n" );
+				nmg_pr_fu_briefly( rs->fu1, "" );
+			}
+
 #if 0
 			/* Fuse new edge to intersect line, old edge */
 			nmg_edge_geom_isect_line( new_eu1, rs, "CUTJOIN, new edge after loop cut" );
 #endif
 
 			if( old_eu )  nmg_radial_join_eu( old_eu, new_eu1, rs->tol );
+
+			/* vu2 has been killed, replace it in rs->vu[] */
+
+			for( i=next_start ; i<next_end ; i++ )
+			{
+				if( rs->vu[i] == vu2 )
+				{
+					rs->vu[i] = new_vu2;
+					break;
+				}
+			}
 
 			continue;
 		}
