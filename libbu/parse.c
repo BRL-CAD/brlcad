@@ -40,7 +40,7 @@ static char RCSparse[] = "@(#)$Header$ (BRL)";
 #include "externs.h"
 #include "vmath.h"
 #include "bu.h"
-#include "raytrace.h"
+
 
 /*
  *			B U _ P A R S E _ D O U B L E
