@@ -46,6 +46,7 @@ static char RCSid[] = "$Header$";
 #include "../librt/debug.h"
 
 static int keep_1001=0;		/* flag to indicate that components with id 1001 should not be ignored */
+static int verbose=0;		/* verbosity flag */
 
 #define START_ARRAY_SIZE	64
 #define ARRAY_BLOCK_SIZE	64
@@ -121,10 +122,15 @@ int comp_code_num;
  *	Converts "tankill" format geometry to BRLCAD model
  */
 
-static char *usage="Usage: tankill-g [-p] [-k] [-t tolerance] [-i input_tankill_file] [-o output_brlcad_model]\n\
-	where tolerance is the minimum distance (mm) between distinct vertices\n\
+static char *usage="Usage: tankill-g [-v] [-p] [-k] [-t tolerance] [-x lvl] [-X lvl] [-i input_tankill_file] [-o output_brlcad_model]\n\
+    where tolerance is the minimum distance (mm) between distinct vertices,\n\
+    input_tankill_file is the file name for input TANKILL model\n\
+    output_brlcad_model is the file name for output BRL-CAD model\n\
+	-v -> verbose\n\
 	-p -> write output as polysolids rather than NMG's\n\
-	-k -> keep components with id = 1001 (normally skipped)\n";
+	-k -> keep components with id = 1001 (normally skipped)\n\
+	-x lvl -> sets the librt debug flag to lvl\n\
+	-X lvl -> sets the NMG debug flag to lvl\n";
 
 main( argc , argv )
 int argc;
@@ -136,6 +142,7 @@ char *argv[];
 	int vert_no;
 	int no_of_verts;
 	int comp_code;
+	int shell_count;
 	int array_size=START_ARRAY_SIZE;		/* size of "tankill_verts" array */
 	int surr_code;	/* not useful */
 	float x,y,z;
@@ -144,6 +151,7 @@ char *argv[];
 	struct model *m;
 	struct nmgregion *r;
 	struct shell *s;
+	struct shell *s2;
 	struct faceuse *fu;
 	struct nmg_ptbl faces;
 	struct rt_tol tol;
@@ -174,10 +182,23 @@ char *argv[];
 	nmg_tbl( &faces , TBL_INIT , NULL );
 
 	/* get command line arguments */
-	while ((c = getopt(argc, argv, "kpt:i:o:")) != EOF)
+	while ((c = getopt(argc, argv, "vkpt:i:o:x:X:")) != EOF)
 	{
 		switch( c )
 		{
+			case 'v':
+				verbose = 1;
+				break;
+			case 'x':
+				sscanf( optarg, "%x", &rt_g.debug );
+				rt_printb( "librt rt_g.debug", rt_g.debug, DEBUG_FORMAT );
+				rt_log("\n");
+				break;
+			case 'X':
+				sscanf( optarg, "%x", &rt_g.NMG_debug );
+				rt_printb( "librt rt_g.NMG_debug", rt_g.NMG_debug, NMG_DEBUG_FORMAT );
+				rt_log("\n");
+				break;
 			case 'k': /* keep component codes of 1001 */
 				keep_1001 = 1;
 				break;
@@ -245,6 +266,9 @@ char *argv[];
 			break;
 		}
 
+		if( verbose )
+			rt_log( "Component code %d (%d vertices)\n", comp_code, no_of_verts );
+
 		/* read the surroundings code (I think this is like the space code in GIFT/FASTGEN) */
 		if( fscanf( in_fp , "%d " , &surr_code ) == EOF )
 		{
@@ -266,7 +290,11 @@ char *argv[];
 
 		/* skip component codes of 1001 (these are not real components) */
 		if( comp_code == 1001 && !keep_1001 )
+		{
+			if( verbose )
+				rt_log( "Skipping component code %d (%d vertices)\n", comp_code, no_of_verts );
 			continue;
+		}
 
 		/* now start making faces, patch-style */
 		vert_no = 0;
@@ -286,9 +314,6 @@ char *argv[];
 
 				/* make a face */
 				fu = nmg_cmface( s , face_verts , 3 );
-
-				/* save the face in a table */
-				nmg_tbl( &faces , TBL_INS , (long *)fu );
 
 				/* make sure any duplicate vertices get the same vertex pointer */
 				for( ; vert1 < vert_no+3 ; vert1++ )
@@ -324,6 +349,9 @@ char *argv[];
 		        {
 		                if( nmg_calc_face_g( fu ) )
 		                        rt_log( "Failed to calculate plane eqn\n" );
+
+				/* save the face in a table */
+				nmg_tbl( &faces , TBL_INS , (long *)fu );
 		        }
 		    }
 		}
@@ -342,7 +370,7 @@ char *argv[];
 		nmg_break_long_edges( s , &tol );
 
 		/* glue all the faces together */
-		nmg_gluefaces( (struct faceuse **)NMG_TBL_BASEADDR( &faces) , NMG_TBL_END( &faces ) );
+		nmg_gluefaces( (struct faceuse **)NMG_TBL_BASEADDR( &faces) , NMG_TBL_END( &faces ), &tol );
 
 		/* re-initialize the face list */
 		nmg_tbl( &faces , TBL_RST , NULL );
@@ -352,104 +380,35 @@ char *argv[];
 
 		/* fix the normals */
 		s = RT_LIST_FIRST( shell , &r->s_hd );
+
 		nmg_fix_normals( s, &tol );
-
-		/* if the shell we just built has a void shell inside, nmg_fix_normals will
-		 * point the normals of the void shell in the wrong direction. This section
-		 * of code looks for such a situation and reverses the normals of the void shell
-		 *
-		 * first decompose the shell into maximally connected shells
-		 */
-		if( nmg_decompose_shell( s , &tol ) > 1 )
-		{
-			/* This shell has more than one part */
-			struct shell *outer_shell=NULL;
-			long *flags;
-
-			flags = (long *)rt_calloc( m->maxindex , sizeof( long ) , "tankill-g: flags" );
-
-			for( RT_LIST_FOR( s , shell , &r->s_hd ) )
-			{
-				struct shell *s2;
-
-				int is_outer=1;
-
-				/* insure that bounding boxes are available */
-				if( !s->sa_p )
-					nmg_shell_a( s , &tol );
-
-				/* Check if this shells contains all the others
-				 * In TANKILL, there should only be one outer shell
-				 */
-				for( RT_LIST_FOR( s2 , shell , &r->s_hd ) )
-				{
-					if( !s2->sa_p )
-
-						nmg_shell_a( s2 , &tol );
-
-					if( !V3RPP1_IN_RPP2( s2->sa_p->min_pt , s2->sa_p->max_pt ,
-							    s->sa_p->min_pt , s->sa_p->max_pt ) )
-					{
-						/* doesn't contain shell s2, so it's not an outer shell */
-						is_outer = 0;
-						break;
-					}
-				}
-				if( is_outer )
-				{
-					outer_shell = s;
-					break;
-				}
-			}
-			if( !outer_shell )
-			{
-				rt_log( "tankill-g: Could not find outer shell for component code %d\n" , comp_code );
-				outer_shell = RT_LIST_FIRST( shell , &r->s_hd );
-			}
-
-			/* reverse the normals for each void shell
-			 * and merge back into one shell */
-			s = RT_LIST_FIRST( shell , &r->s_hd );
-			while( RT_LIST_NOT_HEAD( s , &r->s_hd ) )
-			{
-				struct faceuse *fu;
-				struct shell *next_s;
-
-				if( s == outer_shell )
-				{
-					s = RT_LIST_PNEXT( shell , s );
-					continue;
-				}
-
-				next_s = RT_LIST_PNEXT( shell , s );
-				fu = RT_LIST_FIRST( faceuse , &s->fu_hd );
-				nmg_reverse_face( fu );
-				nmg_propagate_normals( fu , flags, &tol );
-				nmg_js( outer_shell , s , &tol );
-				s = next_s;
-			}
-		}
-		s = RT_LIST_FIRST( shell , &r->s_hd );
 
 		/* make a name for this solid */
 		sprintf( name , "s.%d.%d" , comp_code , Add_solid( comp_code ) );
 
 		/* write the solid to the brlcad database */
+		s = RT_LIST_FIRST( shell, &r->s_hd );
 		if( polysolids )
+		{
+			if( verbose )
+				rt_log( "\twriting polysolid %s\n", name );
 			write_shell_as_polysolid( out_fp , name , s );
+		}
 		else
 		{
 			/* simplify the structure as much as possible before writing */
-			nmg_shell_coplanar_face_merge( s , &tol , 1 );
+/*			nmg_shell_coplanar_face_merge( s , &tol , 1 );
 			if( nmg_simplify_shell( s ) )
 			{
 				rt_log( "tankill-g: nmg_simplify_shell emptied %s\n" , name );
 				nmg_km( m );
 				continue;
 			}
-			else
+			else */
 			{
 				/* write it out */
+				if( verbose )
+					rt_log( "\twriting polysolid %s\n", name );
 				mk_nmg( out_fp , name , m );
 			}
 		}
@@ -480,6 +439,8 @@ char *argv[];
 		sprintf( name , "r.%d" , ptr->ident );
 
 		/* make the region */
+		if( verbose )
+			rt_log( "Creating region %s\n", name );
 		if (mk_lrcomb( out_fp , name , &reg_head , 1 , (char *)NULL ,
 			(char *)NULL , (unsigned char *)NULL , ptr->ident , 0 ,
 			1 , 100 , 0 ) )
@@ -515,6 +476,8 @@ char *argv[];
 			sprintf( name , "%02dXX_codes" , i );
 
 			/* make the group */
+			if( verbose )
+				rt_log( "Creating group %s\n", name );
 			if( mk_lcomb( out_fp , name , &reg_head , 0,
 				(char *)NULL, (char *)NULL,
 				(unsigned char *)NULL, 0 ) )
@@ -548,6 +511,8 @@ char *argv[];
 		{
 			/* make the group */
 			sprintf( name , "%dXXX_codes" , i );
+			if( verbose )
+				rt_log( "Creating group %s\n", name );
 			if( mk_lcomb( out_fp , name , &reg_head , 0,
 			(char *)NULL, (char *)NULL, (unsigned char *)0, 0 ) )
 			{
@@ -586,6 +551,8 @@ char *argv[];
 	}
 	if( all_len )
 	{
+		if( verbose )
+			rt_log( "Creating top level group 'all'\n" );
 		if( mk_lcomb( out_fp , "all" , &reg_head , 0,
 		    (char *)NULL, (char *)NULL, (unsigned char *)NULL, 0 ) )
 			rt_bomb( "tankill: Error in freeing region memory" );
