@@ -30,6 +30,8 @@
 #ifndef _TCL
 #define _TCL
 
+#include "conf.h"
+
 #ifndef BUFSIZ
 #include <stdio.h>
 #endif
@@ -45,7 +47,7 @@
 
 #undef _ANSI_ARGS_
 #undef CONST
-#if ((defined(__STDC__) || defined(SABER)) && !defined(NO_PROTOTYPE)) || defined(__cplusplus)
+#ifdef USE_PROTOTYPES
 #   define _USING_PROTOTYPES_ 1
 #   define _ANSI_ARGS_(x)	x
 #   define CONST const
