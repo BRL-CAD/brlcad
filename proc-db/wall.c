@@ -4,6 +4,11 @@
  *	
  */
 #include <stdio.h>
+#ifdef BSD
+#include <strings.h>
+#else
+#include <string.h>
+#endif
 #include <math.h>
 #include "machine.h"
 #include "vmath.h"
@@ -202,7 +207,6 @@ int ac;
 char *av[];
 {
 	int  c;
-	char *strrchr();
 	struct opening *op;
 	double dx, dy, width, height;
 	int R, G, B;
