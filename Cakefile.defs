@@ -261,7 +261,7 @@ set -S2 "/bin/sh"
 /*		Static linked executables */
 #		define	GFLAG		
 #		define	RANLIB	ranlib5.sh
-#		define	STANDARD_LIBES	-L/usr/lib -lm -lmalloc -lc_s
+#		define	STANDARD_LIBES	-L/usr/lib -lm -lmalloc_cv -lc_s
 #		define	LD_OPTS		GFLAG
 #		define	LIBFB_LIBES	LIBPKG -L''XLIBDIR -lGL -lgl -lXt -lXm -lX11
 #		define	TCL_MGED_LIBES	LIBTKGLX -L''XLIBDIR -lX11_s -lgl_s -lGL_s
@@ -298,9 +298,9 @@ set -S2 "/bin/sh"
 				-lxmalloc -ll
 # else
 /* 	Carl's test version */
-#	define	MGED_OBJS	dm-4d dm-X dm-ogl dm-glx dm-pex dm-ogl2
+#	define	MGED_OBJS	dm-4d dm-X dm-ogl dm-glx dm-pex
 #  if 1
-#	define	MGED_CONFIG	GFLAG -DIR_KNOBS=8 -DIR_BUTTONS=32 -DDM_4D -DDM_X -I''XINCDIR -DDM_OGL -DDM_GLX -DDM_PEX -DDM_OGL2
+#	define	MGED_CONFIG	GFLAG -DIR_KNOBS=8 -DIR_BUTTONS=32 -DDM_4D -DDM_X -I''XINCDIR -DDM_OGL -DDM_GLX -DDM_PEX
 #  else
 #	define	MGED_CONFIG	GFLAG -DIR_KNOBS=8 -DIR_BUTTONS=32 -DDM_4D -DDM_X -I''XINCDIR -DDM_OGL -DDM_GLX -DMULTI_ATTACH
 #  endif
