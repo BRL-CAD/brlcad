@@ -22,6 +22,8 @@ static char RCSshoot[] = "@(#)$Header$ (BRL)";
 
 char CopyRight_Notice[] = "@(#) Copyright (C) 1985 by the United States Army";
 
+#include "conf.h"
+
 #include <stdio.h>
 #include <math.h>
 #include "machine.h"
