@@ -4,6 +4,9 @@
  * $Revision$
  *
  * $Log$
+ * Revision 2.0  84/12/26  16:47:08  dpk
+ * System as distributed to Berkeley 26 Dec 84
+ * 
  * Revision 1.2  83/12/16  00:09:03  dpk
  * Added distinctive RCS header
  * 
@@ -662,6 +665,7 @@ delchar:
 		cp = jumpup(cp);
 		break;
 
+	case CTL(Y):
 	case CTL(R):
 		if (!def || !*def) {
 			rbell();
