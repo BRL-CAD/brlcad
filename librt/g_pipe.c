@@ -510,34 +510,10 @@ int			seg_no;
 	LOCAL bn_poly_t	X2_Y2;		/* X**2 + Y**2 */
 	LOCAL vect_t	cor_pprime;	/* new ray origin */
 	LOCAL fastf_t	cor_proj;
-	LOCAL vect_t	inv_dir;
 
 	*hit_count = 0;
 
-	/* Compute the inverse of the direction cosines */
-	if( ap->a_ray.r_dir[X] < -SQRT_SMALL_FASTF )  {
-		inv_dir[X]=1.0/ap->a_ray.r_dir[X];
-	} else if( ap->a_ray.r_dir[X] > SQRT_SMALL_FASTF )  {
-		inv_dir[X]=1.0/ap->a_ray.r_dir[X];
-	} else {
-		inv_dir[X] = INFINITY;
-	}
-	if( ap->a_ray.r_dir[Y] < -SQRT_SMALL_FASTF )  {
-		inv_dir[Y]=1.0/ap->a_ray.r_dir[Y];
-	} else if( ap->a_ray.r_dir[Y] > SQRT_SMALL_FASTF )  {
-		inv_dir[Y]=1.0/ap->a_ray.r_dir[Y];
-	} else {
-		inv_dir[Y] = INFINITY;
-	}
-	if( ap->a_ray.r_dir[Z] < -SQRT_SMALL_FASTF )  {
-		inv_dir[Z]=1.0/ap->a_ray.r_dir[Z];
-	} else if( ap->a_ray.r_dir[Z] > SQRT_SMALL_FASTF )  {
-		inv_dir[Z]=1.0/ap->a_ray.r_dir[Z];
-	} else {
-		inv_dir[Z] = INFINITY;
-	}
-
-	if( !rt_in_rpp( rp, inv_dir, pipe->bend_min, pipe->bend_max ) ) {
+	if( !rt_in_rpp( rp, ap->a_inv_dir, pipe->bend_min, pipe->bend_max ) ) {
 		return;		 /* miss */
 	}
 

@@ -874,6 +874,7 @@ register struct application *ap;
 		ss.abs_inv_dir[Z] = ss.inv_dir[Z] = INFINITY;
 		ss.rstep[Z] = 0;
 	}
+	VMOVE( ap->a_inv_dir, ss.inv_dir );
 
 	/*
 	 *  If ray does not enter the model RPP, skip on.
