@@ -1830,47 +1830,36 @@ long		*magic_p;
 	NMG_CK_EDGE_G_LSEG(eg);
 	if( eu == eu->eumate_p )  rt_bomb("nmg_use_edge_g() eu == eumate_p!\n");
 
-	nmg_ck_list( &eg->eu_hd2, "nmg_use_edge_g() eg->eu_hd2 A" );
-
 	old = eu->g.lseg_p;	/* This may be NULL.  For printing only. */
 
+	/* Handle edgeuse */
 	if( eu->g.lseg_p != eg && eu->g.lseg_p )  {
+
 		NMG_CK_EDGE_G_LSEG(eu->g.lseg_p);
-nmg_ck_list( &eu->g.lseg_p->eu_hd2, "nmg_use_edge_g() old->eu_hd2 A" );
 
 		RT_LIST_DEQUEUE( &eu->l2 );
-nmg_ck_list( &eg->eu_hd2, "nmg_use_edge_g() eg->eu_hd2 B" );
-nmg_ck_list( &eu->g.lseg_p->eu_hd2, "nmg_use_edge_g() old->eu_hd2 C" );
 		ndead += nmg_keg( eu );
 		eu->g.magic_p = (long *)NULL;
-nmg_ck_list( &eg->eu_hd2, "nmg_use_edge_g() eg->eu_hd2 D" );
 	}
 	if( eu->g.lseg_p != eg )  {
-nmg_ck_list( &eg->eu_hd2, "nmg_use_edge_g() eg->eu_hd2 E" );
 		RT_LIST_INSERT( &eg->eu_hd2, &(eu->l2) );
-nmg_ck_list( &eg->eu_hd2, "nmg_use_edge_g() eg->eu_hd2 F" );
 		eu->g.magic_p = magic_p;
 	}
 
+	/* Handle edgeuse mate separately */
 	if( eu->eumate_p->g.lseg_p != eg && eu->eumate_p->g.lseg_p )  {
 		struct edgeuse	*mate = eu->eumate_p;
-		NMG_CK_EDGEUSE(mate);
 
+		NMG_CK_EDGEUSE(mate);
 		NMG_CK_EDGE_G_LSEG(mate->g.lseg_p);
-nmg_ck_list( &mate->g.lseg_p->eu_hd2, "nmg_use_edge_g() old->eu_hd2 P" );
 
 		RT_LIST_DEQUEUE( &mate->l2 );
-nmg_ck_list( &eg->eu_hd2, "nmg_use_edge_g() eg->eu_hd2 Q" );
-nmg_ck_list( &mate->g.lseg_p->eu_hd2, "nmg_use_edge_g() old->eu_hd2 R" );
 		ndead += nmg_keg( mate );
 		mate->g.magic_p = (long *)NULL;
-nmg_ck_list( &eg->eu_hd2, "nmg_use_edge_g() eg->eu_hd2 S" );
 	}
 
 	if( eu->eumate_p->g.lseg_p != eg )  {
-nmg_ck_list( &eg->eu_hd2, "nmg_use_edge_g() eg->eu_hd2 T" );
 		RT_LIST_INSERT( &eg->eu_hd2, &(eu->eumate_p->l2) );
-nmg_ck_list( &eg->eu_hd2, "nmg_use_edge_g() eg->eu_hd2 U" );
 		eu->eumate_p->g.magic_p = magic_p;
 	}
 	if( eu->g.magic_p != eu->eumate_p->g.magic_p )  rt_bomb("nmg_use_edge_g() eu and mate not using same geometry?\n");
