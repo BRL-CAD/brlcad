@@ -25,9 +25,11 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include <stdio.h>
 #if defined(HAVE_STDARG_H)
-#include <stdarg.h>
-#elif defined(HAVE_VARARGS_H)
-#include <varargs.h>
+#  include <stdarg.h>
+#else
+#  if defined(HAVE_VARARGS_H)
+#    include <varargs.h>
+#  endif
 #endif
 #include <assert.h>
 
@@ -54,7 +56,9 @@ char *str;
 	if( pix_buffered == B_PAGE )
 		(void) fb_flush( fbiop ); /* Write out buffered image.	*/
 	(void) abort();			  /* Should dump.		*/
+#if !__STDC__
 	exit(12);
+#endif
 	}
 
 #if defined(HAVE_STDARG_H)
