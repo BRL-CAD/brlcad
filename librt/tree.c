@@ -48,7 +48,7 @@ HIDDEN void	rt_tree_region_assign();
 static struct db_tree_state	rt_initial_tree_state = {
 	0,			/* ts_dbip */
 	0,			/* ts_sofar */
-	0, 0, 0,		/* region, air, gmater */
+	0, 0, 0, 0,		/* region, air, gmater, LOS */
 	1.0, 1.0, 1.0,		/* color, RGB */
 	0,			/* override */
 	DB_INH_LOWER,		/* color inherit */
@@ -103,6 +103,7 @@ union tree		*curtree;
 	rp->reg_regionid = tsp->ts_regionid;
 	rp->reg_aircode = tsp->ts_aircode;
 	rp->reg_gmater = tsp->ts_gmater;
+	rp->reg_los = tsp->ts_los;
 	rp->reg_mater = tsp->ts_mater;		/* struct copy */
 	rp->reg_name = db_path_to_string( pathp );
 
