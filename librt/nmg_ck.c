@@ -1401,6 +1401,10 @@ CONST struct rt_tol	*tol;
 	s = nmg_find_s_of_eu(eu);
 	NMG_CK_SHELL(s);
 
+#if 1
+	/* Just use the new checker */
+	return nmg_eu_radial_check( eu, s, tol );
+#endif
 	if (rt_g.NMG_debug & DEBUG_BASIC)  {
 		rt_log("nmg_check_radial(eu=x%x, tol)\n", eu);
 	}
