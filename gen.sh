@@ -258,7 +258,7 @@ EOF
 		;;
 	7d|m4i64|m4i65)
 		BDIRS=`echo ${BDIRS} | \
-		    sed -e  -e 's/libz//' -e 's/libpng//' `
+		    sed -e 's/libz//' -e 's/libpng//' `
 		;;
 esac
 
