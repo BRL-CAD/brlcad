@@ -1,4 +1,27 @@
 /*
+   Just a note:
+
+   DM-4D.C currently uses the commands below. These particular commands
+   should not be used in mixed mode programming.
+
+   qdevice
+   blkqread
+   qtest
+   getbutton
+   getvaluator
+   setvaluator
+   unqdevice
+   mapcolor
+   gconfig
+   doublebuffer
+   RGBmode
+   winopen
+   foreground
+   noborder
+   keepaspect
+   prefposition
+*/
+/*
  *			D M - 4 D . C
  *
  *  This version for the SGI 4-D Iris, both regular and GT versions.
@@ -23,6 +46,8 @@
 static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
+#define MIXED_MODE 1
+
 #include "conf.h"
 
 /* Forwards compat with IRIX 5.0.1 */
@@ -36,8 +61,23 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #undef VMIN		/* is used in vmath.h, too */
 #include <ctype.h>
 
+#if MIXED_MODE
+#include <X11/X.h>
+#include <gl/glws.h>
+#include "tk.h"
+#include <X11/extensions/XI.h>
+#include <X11/extensions/XInput.h>
+#include <X11/Xutil.h>
+#include "tkGLX.h"
+extern Tcl_Interp *interp;
+extern Tk_Window tkwin;
+static Tk_Window xtkwin;
+static Display  *dpy;
+static Window   win;
+#else
 #include <gl/gl.h>		/* SGI IRIS library */
 #include <gl/device.h>		/* SGI IRIS library */
+#endif
 #include <gl/get.h>		/* SGI IRIS library */
 #include <gl/cg2vme.h>		/* SGI IRIS, for DE_R1 defn on IRIX 3 */
 #include <gl/addrs.h>		/* SGI IRIS, for DER1_STEREO defn on IRIX 3 */
@@ -74,7 +114,12 @@ unsigned Ir_cvtvecs(), Ir_load();
 void	Ir_statechange(), Ir_viewchange(), Ir_colorchange();
 void	Ir_window(), Ir_debug();
 int	Ir_dm();
+#if MIXED_MODE
+int    Ircheckevents();
+void   Ir_loadGLX();
+#else
 void    Ircheckevents();
+#endif
 
 /*
  * These variables are visible and modifiable via a "dm set" command.
@@ -236,11 +281,17 @@ static int
 irisX2ged(x)
 register int x;
 {
+#if MIXED_MODE
+	x = (x/(double)winx_size - 0.5) * 4095;
+#else
 	if( x <= win_l )  return(-2048);
 	if( x >= win_r )  return(2047);
+
 	x -= win_l;
 	x = ( x / (double)winx_size)*4096.0;
 	x -= 2048;
+#endif
+
 	return(x);
 }
 
@@ -248,12 +299,18 @@ static int
 irisY2ged(y)
 register int y;
 {
+#if MIXED_MODE
+	y = (0.5 - y/(double)winy_size) * 4095;
+#else
 	if( y <= win_b )  return(-2048);
 	if( y >= win_t )  return(2047);
+
 	y -= win_b;
 	if( stereo_is_on )  y = (y%512)<<1;
 	y = ( y / (double)winy_size)*4096.0;
 	y -= 2048;
+#endif
+
 	return(y);
 }
 
@@ -275,6 +332,7 @@ Ir_configure_window_shape()
 
 	getsize( &winx_size, &winy_size);
 	getorigin( &win_l, & win_b );
+
 	win_r = win_l + winx_size;
 	win_t = win_b + winy_size;
 
@@ -294,6 +352,8 @@ Ir_configure_window_shape()
 	} else
 		ir_clear_to_black();
 
+#if MIXED_MODE
+#else
 	switch( getmonitor() )  {
 	default:
 		break;
@@ -350,6 +410,7 @@ Ir_configure_window_shape()
 		blanktime(0);	/* don't screensave while recording video! */
 		break;
 	}
+#endif
 
 	ortho( -xlim_view, xlim_view, -ylim_view, ylim_view, -1.0, 1.0 );
 	/* The ortho() call really just makes this matrix: */
@@ -374,6 +435,406 @@ Ir_configure_window_shape()
  *  message. It doesn't hurt anything.  Silly MEX.
  */
 
+#if MIXED_MODE
+int
+Ir_open()
+{
+	register int	i;
+	Matrix		m;
+	inventory_t	*inv;
+	int		win_size=1000;
+	int		win_o_x=272;
+	int		win_o_y=12;
+
+#if 0
+#ifdef DM_OGL
+	/* This is a hack to handle the fact that the sgi attach crashes
+	 * if a direct OpenGL context has been previously opened in the 
+	 * current mged session. This stops the attach before it crashes.
+	 */
+	ogl_sgi_used = 1;
+	if (ogl_ogl_used){
+		rt_log("Can't attach sgi, because a direct OpenGL context has\n");
+		rt_log("previously been opened in this session. To use sgi,\n");
+		rt_log("quit this session and reopen it.\n");
+		return(-1);
+	}
+#endif /* DM_OGL */
+	/*
+	 *  Take inventory of the hardware.
+	 *  See "types for class graphics" in /usr/include/sys/invent.h
+	 */
+	while( (inv = getinvent()) != (inventory_t *)0 )  {
+		if( inv->class != INV_GRAPHICS )  continue;
+		switch( inv->type )  {
+		default:
+#if 0
+			rt_log("mged/dm-4d.c: getinvent() INV_GRAPHICS type=%d not recognized, you need to modify the source code\n",
+			    inv->type);
+#endif
+			/* Since we recognize all the old devices, be
+			 * optimistic and assume that new devices are plush.
+			 * Or at least that GL can simulate everything adequately.
+			 */
+			ir_is_gt = 1;
+			ir_has_zbuf = 1;
+			ir_has_rgb = 1;
+			ir_has_doublebuffer = 1;
+			break;
+		case INV_GRODEV:			 /* 4D/60 machines */
+			ir_has_doublebuffer = 1;
+			if( inv->state & INV_GR1ZBUF24 )
+				ir_has_zbuf = 1;
+			break;
+		case INV_VGX:
+		case INV_VGXT:			/* VGX Turbo and SkyWriter */
+		case INV_GMDEV:			/* GT graphics */
+		case INV_CG2:
+			ir_is_gt = 1;
+			ir_has_zbuf = 1;
+			ir_has_rgb = 1;
+			ir_has_doublebuffer = 1;
+			break;
+		case INV_GR1BP:
+			ir_has_rgb = 1;
+			break;
+		case INV_GR1ZBUFFER:
+			ir_has_zbuf = 1;
+			break;
+		case INV_GR1BOARD:	/* Persoanl Iris */
+			if ( inv->state & INV_GR1RE2 )
+				ir_is_gt = 1;
+			if(inv->state & INV_GR1ZBUF24 )
+				ir_has_zbuf = 1;
+			if(inv->state & INV_GR1BIT24 )
+				ir_has_rgb = 1;
+			ir_has_doublebuffer = 1;
+			break;
+#if defined(INV_LIGHT)
+		case INV_LIGHT:		/* Entry Level Indigo */
+			ir_is_gt = 0;
+			ir_has_zbuf = 1;
+			ir_has_doublebuffer = 0;
+			ir_has_rgb = 1;
+			break;
+#endif
+
+#if defined(INV_GR2)
+		case INV_GR2:		/* Elan EXPRESS Graphics */
+			/* if(inv->state & INV_GR2_ELAN) */
+			/* Just let GL simulate it */
+			ir_has_rgb = 1;
+			ir_has_doublebuffer = 1;
+			ir_has_zbuf = 1;
+			ir_is_gt = 1;
+			/* if(inv->state & INV_GR2_EXTREME) */
+			break;
+#endif
+#if defined(INV_NEWPORT)
+		case INV_NEWPORT:
+			/* if(inv->state & INV_NEWPORT_XL) */
+			/* Just let GL simulate it */
+			ir_has_rgb = 1;
+			ir_has_doublebuffer = 1;
+			ir_has_zbuf = 1;
+			ir_is_gt = 1;
+#			if 0
+				if(inv->state & INV_NEWPORT_24)
+					ir_has_rgb = 1;
+#			endif
+			break;
+#endif
+		}
+	}
+	endinvent();		/* frees internal inventory memory */
+#if 0
+	rt_log("4D: gt=%d, zbuf=%d, rgb=%d\n", ir_is_gt, ir_has_zbuf, ir_has_rgb);
+#endif
+
+	/* Start out with the usual window */
+	foreground();
+#if 1
+	if (mged_variables.sgi_win_size > 0)
+		win_size = mged_variables.sgi_win_size;
+
+	if (mged_variables.sgi_win_origin[0] != 0)
+		win_o_x = mged_variables.sgi_win_origin[0];
+
+	if (mged_variables.sgi_win_origin[1] != 0)
+		win_o_y = mged_variables.sgi_win_origin[1];
+
+	prefposition( win_o_x, win_o_x+win_size, win_o_y, win_o_y+win_size);
+#else
+	prefposition( 376, 1276, 12, 912 );		/* Old, larger size */
+	prefposition( 376, 376+900, 112, 112+900 );	/* new, smaller size */
+#endif
+	if( (gr_id = winopen( "BRL MGED" )) == -1 )  {
+		rt_log( "No more graphics ports available.\n" );
+		return	-1;
+	}
+	keepaspect(1,1);	/* enforce 1:1 aspect ratio */
+	winconstraints();	/* remove constraints on the window size */
+
+	ir_oldmonitor = getmonitor();
+	if( mged_variables.eye_sep_dist )  {
+		if( sgi_has_stereo() )  {
+			setmonitor(STR_RECT);
+			stereo_is_on = 1;
+		} else {
+			rt_log("NOTICE: This SGI does not have stereo display capability\n");
+			stereo_is_on = 0;
+		}
+	}
+
+	/*
+	 *  If monitor is in special mode, close window and re-open.
+	 *  winconstraints() does not work, and getmonitor() can't
+	 *  be called before a window is open.
+	 */
+	switch( getmonitor() )  {
+	case HZ30:
+	case HZ30_SG:
+		/* Dunn camera, etc. */
+		/* Use already established prefposition */
+		break;
+	case STR_RECT:
+		/* Hi-res monitor in stereo mode, take over whole screen */
+		winclose(gr_id);
+		noborder();
+		foreground();
+#if defined(__sgi) && defined(__mips)
+		/* Deal with Irix 4.0 bug:  (+2,+0) offset due to border */
+		prefposition( 0-2, XMAXSCREEN-2, 0, YMAXSCREEN );
+#else
+		prefposition( 0, XMAXSCREEN, 0, YMAXSCREEN );
+#endif
+		if( (gr_id = winopen( "BRL MGED" )) == -1 )  {
+			rt_log( "No more graphics ports available.\n" );
+			return	-1;
+		}
+		break;
+	default:
+	case HZ60:
+		/* Regular hi-res monitor */
+		/* Use already established prefposition */
+		break;
+	case NTSC:
+		/* Television */
+		winclose(gr_id);
+		prefposition( 0, XMAX170, 0, YMAX170 );
+		foreground();
+		if( (gr_id = winopen( "BRL MGED" )) == -1 )  {
+			rt_log( "No more graphics ports available.\n" );
+			return	-1;
+		}
+		break;
+	case PAL:
+		/* Television */
+		winclose(gr_id);
+		prefposition( 0, XMAXPAL, 0, YMAXPAL );
+		foreground();
+		if( (gr_id = winopen( "BRL MGED" )) == -1 )  {
+			rt_log( "No more graphics ports available.\n" );
+			return	-1;
+		}
+		break;
+	}
+
+	/*
+	 *  Configure the operating mode of the pixels in this window.
+	 *  Do not output graphics, clear screen, etc, until *after*
+	 *  the call to gconfig().
+	 */
+	if( ir_has_rgb )  {
+		RGBmode();
+	} else {
+		/* one indexed color map of 4096 entries */
+		onemap();
+	}
+	if ( ir_has_doublebuffer)
+		doublebuffer();
+
+	gconfig();
+
+	/*
+	 * Establish GL library operating modes
+	 */
+	/* Don't draw polygon edges */
+	glcompat( GLC_OLDPOLYGON, 0 );
+
+	/* Z-range mapping */
+	/* Z range from getgdesc(GD_ZMIN)
+	 * to getgdesc(GD_ZMAX).
+	 * Hardware specific.
+	 */
+	glcompat( GLC_ZRANGEMAP, 0 );
+	/* Take off a smidgeon for wraparound, as suggested by SGI manual */
+	min_scr_z = getgdesc(GD_ZMIN)+15;
+	max_scr_z = getgdesc(GD_ZMAX)-15;
+
+	Ir_configure_window_shape();
+
+	/* Enable qdev() input from various devices */
+	qdevice(LEFTMOUSE);
+	qdevice(MIDDLEMOUSE);
+	qdevice(RIGHTMOUSE);
+	tie(LEFTMOUSE, MOUSEX, MOUSEY);
+	tie(MIDDLEMOUSE, MOUSEX, MOUSEY);
+	tie(RIGHTMOUSE, MOUSEX, MOUSEY);
+
+#if IR_KNOBS
+	/*
+	 *  Turn on the dials and initialize them for -2048 to 2047
+	 *  range with a dead spot at zero (Iris knobs are 1024 units
+	 *  per rotation).
+	 */
+	for(i = DIAL0; i < DIAL8; i++)
+		setvaluator(i, 0, -2048-NOISE, 2047+NOISE);
+	for(i = DIAL0; i < DIAL8; i++)
+		qdevice(i);
+#endif
+#if IR_BUTTONS
+	/*
+	 *  Enable all the buttons in the button table.
+	 */
+	for(i = 0; i < IR_BUTTONS; i++)
+		qdevice(i+SWBASE);
+	/*
+	 *  For all possible button presses, build a table
+	 *  of MGED function to SGI button/light mappings.
+	 */
+	for( i=0; i < IR_BUTTONS; i++ )  {
+		register int j;
+		if( (j = bmap[i]) != 0 )
+			invbmap[j] = i;
+	}
+# if 0
+	ir_dbtext(ir_title);
+# else
+	dbtext("");
+# endif
+#endif
+
+	qdevice(F1KEY);	/* pf1 key for depthcue switching */
+	qdevice(F2KEY);	/* pf2 for Z clipping */
+	qdevice(F3KEY);	/* pf3 for perspective */
+	qdevice(F4KEY);	/* pf4 for Z buffering */
+	qdevice(F5KEY);	/* pf5 for lighting */
+	qdevice(F6KEY);	/* pf6 for changing perspective */
+	qdevice(F7KEY);	/* pf7 for no faceplate */
+	qdevice(F12KEY);/* pf12 to zero knobs */
+	while( getbutton(LEFTMOUSE)||getbutton(MIDDLEMOUSE)||getbutton(RIGHTMOUSE) )  {
+		rt_log("IRIS_open:  mouse button stuck\n");
+		sleep(1);
+	}
+
+	/* Line style 0 is solid.  Program line style 1 as dot-dashed */
+	deflinestyle( 1, 0xCF33 );
+	setlinestyle( 0 );
+
+	ir_fd = qgetfd();
+
+	Tk_CreateFileHandler(ir_fd, 1, Ircheckevents, (void *)NULL);
+	return(0);
+#else
+	char ref[] = "mged_glx";
+	int count;
+	struct rt_vls str;
+
+	rt_vls_init(&str);
+	rt_vls_strcpy(&str, "loadtk\n");
+	(void)cmdline(&str, FALSE);
+	rt_vls_free(&str);
+
+	TkGLX_Init(interp, tkwin);
+
+	/* Invoke script to create a mixed-mode X window */
+	Ir_loadGLX();
+
+	if(TkGLXwin_RefExists(ref))
+	  xtkwin = TkGLXwin_RefGetTkwin(ref);
+	else{
+	  rt_log("Ir_open: ref - %s doesn't exist!!!\n", ref);
+	  mged_finish(1);
+	}
+
+	dpy = Tk_Display(xtkwin);
+	Tk_MapWindow(xtkwin);
+#if 0
+	Tk_MakeWindowExist(xtkwin);
+#endif
+	
+	ir_is_gt = 1;
+	ir_has_zbuf = 1;
+	ir_has_rgb = 1;
+	ir_has_doublebuffer = 1;
+
+	/* Start out with the usual window */
+	foreground();
+	
+	if (mged_variables.sgi_win_size > 0)
+		win_size = mged_variables.sgi_win_size;
+
+	if (mged_variables.sgi_win_origin[0] != 0)
+		win_o_x = mged_variables.sgi_win_origin[0];
+
+	if (mged_variables.sgi_win_origin[1] != 0)
+		win_o_y = mged_variables.sgi_win_origin[1];
+#if 0
+	prefposition( win_o_x, win_o_x+win_size, win_o_y, win_o_y+win_size);
+#else
+#endif
+#if 0
+	keepaspect(1,1);	/* enforce 1:1 aspect ratio */
+#endif
+	winconstraints();	/* remove constraints on the window size */
+
+	/*
+	 * Establish GL library operating modes
+	 */
+	/* Don't draw polygon edges */
+	glcompat( GLC_OLDPOLYGON, 0 );
+
+	/* Z-range mapping */
+	/* Z range from getgdesc(GD_ZMIN)
+	 * to getgdesc(GD_ZMAX).
+	 * Hardware specific.
+	 */
+	glcompat( GLC_ZRANGEMAP, 0 );
+	/* Take off a smidgeon for wraparound, as suggested by SGI manual */
+#if 0
+	min_scr_z = getgdesc(GD_ZMIN)+15;
+	max_scr_z = getgdesc(GD_ZMAX)-15;
+#else
+	min_scr_z = 0;
+	max_scr_z = 0;
+#endif
+
+	Ir_configure_window_shape();
+
+	Tk_CreateEventHandler(xtkwin, ExposureMask|PointerMotionMask|
+			      StructureNotifyMask,
+			      (void (*)())Ircheckevents, (ClientData)NULL);
+
+	/* Line style 0 is solid.  Program line style 1 as dot-dashed */
+	deflinestyle( 1, 0xCF33 );
+	setlinestyle( 0 );
+
+	return (0);
+#endif
+}
+
+/*XXX Just experimenting */
+void
+Ir_loadGLX()
+{
+  if(Tcl_EvalFile(interp, "../mged/glxinit.tk") == TCL_ERROR){
+    rt_log("Ir_open: %s\n", interp->result);
+    mged_finish(1);
+  }
+}
+
+#else
 int
 Ir_open()
 {
@@ -674,6 +1135,7 @@ Ir_open()
 	Tk_CreateFileHandler(ir_fd, 1, Ircheckevents, (void *)NULL);
 	return(0);
 }
+#endif
 
 /*
  *  			I R _ C L O S E
@@ -703,7 +1165,11 @@ Ir_close()
 	if( getmonitor() != ir_oldmonitor )
 		setmonitor(ir_oldmonitor);
 
+#if MIXED_MODE
+	Tk_DestroyWindow(xtkwin);
+#else
 	winclose(gr_id);
+#endif
 	return;
 }
 
@@ -1176,6 +1642,9 @@ int		noblock;
 	fd_set		files;
 	int		width;
 
+#if MIXED_MODE
+/* Don't need to do this because Ir_input never gets called anyway */
+#else
 	if (ir_debug)
 		rt_log( "Ir_input()\n");
 	if( (width = sysconf(_SC_OPEN_MAX)) <= 0 )
@@ -1232,9 +1701,37 @@ input_waiting:
 
 	if( FD_ISSET( ir_fd, input ) )
 		Ircheckevents();
-
+#endif
 	return;
 }
+
+#if MIXED_MODE
+int
+Ircheckevents(clientData, eventPtr)
+ClientData clientData;
+XEvent *eventPtr;
+{
+  /* Now getting X events */
+  if((eventPtr->type == Expose && eventPtr->xexpose.count == 0) ||
+      eventPtr->type == ConfigureNotify){
+    /* Window may have moved */
+    Ir_configure_window_shape();
+    dmaflag = 1;
+    if( ir_has_doublebuffer) /* to fix back buffer */
+       refresh();
+    dmaflag = 1;
+  }else if( eventPtr->type == MotionNotify ) {
+    int x, y;
+
+    x = (eventPtr->xmotion.x/(double)winx_size - 0.5) * 4095;
+    y = (0.5 - eventPtr->xmotion.y/(double)winy_size) * 4095;
+    /* Constant tracking (e.g. illuminate mode) bound to M mouse */
+    rt_vls_printf( &dm_values.dv_string, "M 0 %d %d\n", x, y );
+  }
+
+  return TCL_OK;
+}
+#else
 /*
  *  C H E C K E V E N T S
  *
@@ -1591,6 +2088,7 @@ continue;
 		}
 	}
 }
+#endif
 
 /* 
  *			I R _ L I G H T
@@ -1660,6 +2158,8 @@ Ir_statechange( a, b )
 	 *  including enabling continuous tablet tracking,
 	 *  object highlighting
 	 */
+#if MIXED_MODE
+#else
 	switch( b )  {
 	case ST_VIEW:
 		unqdevice( MOUSEY );	/* constant tracking OFF */
@@ -1681,6 +2181,7 @@ Ir_statechange( a, b )
 		rt_log("Ir_statechange: unknown state %s\n", state_str[b]);
 		break;
 	}
+#endif
 	Ir_viewchange( DM_CHGV_REDO, SOLID_NULL );
 }
 
@@ -1903,6 +2404,8 @@ int i;
 gen_color(c)
 int c;
 {
+#if MIXED_MODE
+#else
 	if(cueing_on) {
 
 		/*  Not much sense in making a ramp for DM_BLACK.  Besides
@@ -1933,6 +2436,7 @@ int c;
 		mapcolor(c+CMAP_BASE,
 		    ir_rgbtab[c].r, ir_rgbtab[c].g, ir_rgbtab[c].b);
 	}
+#endif
 }
 
 #ifdef never
@@ -2462,6 +2966,7 @@ char	**argv;
 {
 	struct rt_vls	vls;
 
+#if 0
 	if( argc < 1 )  return -1;
 
 	/* For now, only "set" command is implemented */
@@ -2486,6 +2991,49 @@ char	**argv;
 	}
 	rt_vls_free(&vls);
 	return CMD_OK;
+#else
+	if( !strcmp( argv[0], "set" )){
+	  rt_vls_init(&vls);
+	  if( argc < 2 )  {
+	    /* Bare set command, print out current settings */
+	    rt_structprint("dm_4d internal variables", Ir_vparse, (char *)0 );
+	    rt_log("%s", rt_vls_addr(&vls) );
+	  } else if( argc == 2 ) {
+	    rt_vls_name_print( &vls, Ir_vparse, argv[1], (char *)0 );
+	    rt_log( "%s\n", rt_vls_addr(&vls) );
+	  } else {
+	    rt_vls_printf( &vls, "%s=\"", argv[1] );
+	    rt_vls_from_argv( &vls, argc-2, argv+2 );
+	    rt_vls_putc( &vls, '\"' );
+	    rt_structparse( &vls, Ir_vparse, (char *)0 );
+	  }
+	  rt_vls_free(&vls);
+	  return CMD_OK;
+	}
+
+	if( !strcmp( argv[0], "mouse")){
+	  int up;
+	  int xpos;
+	  int ypos;
+
+	  if( argc < 4){
+	    rt_log("dm: need more parameters\n");
+	    rt_log("mouse 1|0 xpos ypos\n");
+	    return CMD_BAD;
+	  }
+
+	  up = atoi(argv[1]);
+	  xpos = atoi(argv[2]);
+	  ypos = atoi(argv[3]);
+	  rt_vls_printf(&dm_values.dv_string, "M %d %d %d\n",
+			up, irisX2ged(xpos), irisY2ged(ypos));
+	  return CMD_OK;
+	}
+
+	rt_log("dm: bad command - %s\n", argv[0]);
+	return CMD_BAD;
+
+#endif
 }
 
 
