@@ -159,19 +159,19 @@ BDIRS="bench \
 	libfb \
 	rfbd \
 	fbserv \
+	libnurb librt \
+	conv \
+	db \
+	rt \
+	mged \
+	remrt \
 	libtermio \
 	libcursor \
 	libfont \
 	liborle \
 	librle \
 	libfft \
-	libnurb librt \
 	libredblack \
-	conv \
-	db \
-	rt \
-	remrt \
-	mged \
 	proc-db \
 	jack \
 	mk \
@@ -387,6 +387,8 @@ tcl)
 	done;;
 
 install-tcl)
+	cp libtcl/library/* /usr/brlcad/tcl
+	cp -r libtk/library/* /usr/brlcad/tk
 	for dir in ${TDIRS}; do
 		echo -------------------------------- ${DIRPRE}${dir}${DIRSUF};
 		( cd ${DIRPRE}${dir}${DIRSUF}; cake -k install )
