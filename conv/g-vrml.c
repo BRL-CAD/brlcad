@@ -140,6 +140,39 @@ clean_pmp( struct plate_mode *pmp )
 	}
 }
 
+struct rt_bot_internal *
+dup_bot( struct rt_bot_internal *bot_in )
+{
+	struct rt_bot_internal *bot;
+	int i;
+
+	RT_BOT_CK_MAGIC( bot_in );
+
+	bot = (struct rt_bot_internal *)bu_malloc( sizeof( struct rt_bot_internal ), "dup bot" );
+
+	*bot = *bot_in;	/* struct copy */
+
+	bot->faces = (int *)bu_calloc( bot_in->num_faces*3, sizeof( int ), "bot faces" );
+	for( i=0 ; i<bot_in->num_faces*3 ; i++ )
+		bot->faces[i] = bot_in->faces[i];
+
+	bot->vertices = (fastf_t *)bu_calloc( bot_in->num_vertices*3, sizeof( fastf_t ), "bot verts" );
+	for( i=0 ; i<bot_in->num_vertices*3 ; i++ )
+		bot->vertices[i] = bot_in->vertices[i];
+
+	if( bot_in->thickness ) {
+		bot->thickness = (fastf_t *)bu_calloc( bot_in->num_faces, sizeof( fastf_t ), "bot thickness" );
+		for( i=0 ; i<bot_in->num_faces ; i++ )
+			bot->thickness[i] = bot_in->thickness[i];
+	}
+
+	if( bot_in->face_mode ) {
+		bot->face_mode = bu_bitv_dup( bot_in->face_mode );
+	}
+
+	return( bot );
+}
+
 static int
 select_lights( tsp, pathp, combp, client_data )
 register struct db_tree_state	*tsp;
@@ -240,7 +273,8 @@ genptr_t                client_data;
 				    (char *)pmp->bots, pmp->array_size,
 				    "pmp->bots" );
 		}
-		pmp->bots[pmp->num_bots] = bot;
+		/* db_walk_tree() will free the BOT, so we need a copy */
+		pmp->bots[pmp->num_bots] = dup_bot( bot );
 		pmp->num_bots++;
 		return( (union tree *)NULL );
 	}
@@ -458,9 +492,8 @@ char	*argv[];
 	bu_prmem("After complete G-NMG conversion");
 #endif
 
-	if( verbose )
-		bu_log( "Total of %d regions converted of %d regions attempted\n",
-			regions_converted, regions_tried );
+	bu_log( "Total of %d regions converted of %d regions attempted\n",
+		regions_converted, regions_tried );
 
 	return 0;
 }
