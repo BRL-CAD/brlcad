@@ -20,7 +20,7 @@
  *	in all countries except the USA.  All rights reserved.
  */
 #ifndef lint
-static char RCSsh_light[] = "@(#)$Header$ (ARL)";
+static const char RCSsh_light[] = "@(#)$Header$ (ARL)";
 #endif
 
 #include "conf.h"
@@ -400,13 +400,13 @@ light_gen_sample_pts(struct rt_i            *rtip,
 		       V3ARGS(tree_min), V3ARGS(tree_max) );
 
 
+	/* get extent in X, Y, Z */
+	VSUB2(span, tree_max, tree_min);
+
 	/* if there is no space occupied by the light source, then
 	 * just give up
 	 */
 	if (span[X] <= 0.0 && span[Y] <= 0.0 && span[Z] <= 0.0) return;
-
-	/* get extent in X, Y, Z */
-	VSUB2(span, tree_max, tree_min);
 
 	while ( lsp->lt_pt_count < 5 ) {
 		VSCALE(step, span, mul);
