@@ -181,6 +181,30 @@ end:
   return status;
 }
 
+HIDDEN void
+Do_update( dbip, comb, comb_leaf, user_ptr1, user_ptr2, user_ptr3 )
+struct db_i		*dbip;
+struct rt_comb_internal *comb;
+union tree		*comb_leaf;
+genptr_t		user_ptr1, user_ptr2, user_ptr3;
+{
+	char	mref[NAMESIZE+2];
+	char	*prestr;
+	int	*ncharadd;
+
+	RT_CK_DBI( dbip );
+	RT_CK_TREE( comb_leaf );
+
+	ncharadd = (int *)user_ptr1;
+	prestr = (char *)user_ptr2;
+
+	(void)strncpy( mref, prestr, *ncharadd );
+	(void)strncpy( mref+(*ncharadd),
+		comb_leaf->tr_l.tl_name,
+		NAMESIZE-1-(*ncharadd) );
+	bu_free( comb_leaf->tr_l.tl_name, "comb_leaf->tr_l.tl_name" );
+	comb_leaf->tr_l.tl_name = bu_strdup( mref );
+}
 
 /*
  *			M G E D _ D I R _ A D D
@@ -198,6 +222,8 @@ int			flags;
 {
 	register struct directory *input_dp;
 	register struct directory *dp;
+	struct rt_db_internal intern;
+	struct rt_comb_internal *comb;
 	union record		*rec;
 	char			local[NAMESIZE+2+2];
 
@@ -250,8 +276,8 @@ int			flags;
 	if( db_alloc( dbip, dp, len ) < 0 )
 		return(-1);
 
-	/* Read in all the records for this object */
-	if( (rec = db_getmrec( input_dbip, input_dp )) == (union record *)0 )  {
+	if( rt_db_get_internal( &intern, input_dp, input_dbip, (mat_t *)NULL ) < 0 )
+	{
 		READ_ERR;
 		if( db_delete( dbip, dp ) < 0 ||
 		    db_dirdelete( dbip, dp ) < 0 )  {
@@ -262,38 +288,38 @@ int			flags;
 	}
 
 	/* Update the name, and any references */
-	if( flags & DIR_SOLID )  {
+	if( flags & DIR_SOLID )
+	{
 		bu_log("adding solid '%s'\n", local );
 		if ((ncharadd + strlen(name)) >= (unsigned)NAMESIZE)
 			bu_log("WARNING: solid name \"%s%s\" truncated to \"%s\"\n",
 				prestr,name, local);
 
-		/* Depends on all kinds of solids having name in same place */
-		NAMEMOVE( local, rec->s.s_name );
-	} else {
+		NAMEMOVE( local, dp->d_namep );
+	}
+	else
+	{
 		register int i;
 		char	mref[NAMESIZE+2];
 
 		bu_log("adding  comb '%s'\n", local );
-		NAMEMOVE( local, rec->c.c_name );
+		NAMEMOVE( local, dp->d_namep );
 
 		/* Update all the member records */
-		for( i=1; i < dp->d_len; i++ )  {
-			if( ncharadd ) {
-				(void)strncpy( mref, prestr, ncharadd );
-				(void)strncpy( mref+ncharadd,
-					rec[i].M.m_instname,
-					NAMESIZE-1-ncharadd );
-				NAMEMOVE( mref, rec[i].M.m_instname );
-			}
+		comb = (struct rt_comb_internal *)intern.idb_ptr;
+		if( ncharadd && comb->tree )
+		{
+			db_tree_funcleaf( dbip, comb, comb->tree, Do_update,
+				(genptr_t)&ncharadd, (genptr_t)prestr, (genptr_t)NULL );
 		}
 	}
 
-	/* Write the new record into the main database */
-	if( db_put( dbip, dp, rec, 0, len ) < 0 )
-		return(-1);
+	if( rt_db_put_internal( dp, dbip, &intern ) < 0 )
+	{
+		bu_log( "Failed writing %s to database\n", dp->d_namep );
+		return( -1 );
+	}
 
-	bu_free( (genptr_t)rec, "db_getmrec rec" );
 	return 0;
 }
 
