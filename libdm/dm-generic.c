@@ -67,8 +67,51 @@ char *argv[];
   return( (struct dm *)NULL );
 }
 
+#ifdef USE_RT_ASPECT
 fastf_t
-dm_X2Normal(dmp, x, use_aspect)
+dm_Xx2Normal(dmp, x)
+struct dm *dmp;
+register int x;
+{
+  return ((x / (fastf_t)dmp->dm_width - 0.5) * 2.0);
+}
+
+int
+dm_Normal2Xx(dmp, f)
+struct dm *dmp;
+register fastf_t f;
+{
+  return (f * 0.5 + 0.5) * dmp->dm_width;
+}
+
+fastf_t
+dm_Xy2Normal(dmp, y, use_aspect)
+struct dm *dmp;
+register int y;
+int use_aspect;
+{
+  if(use_aspect)
+    return ((0.5 - y / (fastf_t)dmp->dm_height) / dmp->dm_aspect * 2.0);
+  else
+    return ((0.5 - y / (fastf_t)dmp->dm_height) * 2.0);
+}
+
+int
+dm_Normal2Xy(dmp, f, use_aspect)
+struct dm *dmp;
+register fastf_t f;
+int use_aspect;
+{
+  if(use_aspect)
+    return (0.5 - f * 0.5 * dmp->dm_aspect) * dmp->dm_height;
+  else
+    return (0.5 - f * 0.5) * dmp->dm_height;
+}
+
+#else
+
+fastf_t
+dm_Xx2Normal(dmp, x, use_aspect)
 struct dm *dmp;
 register int x;
 int use_aspect;
@@ -79,13 +122,34 @@ int use_aspect;
     return ((x / (fastf_t)dmp->dm_width - 0.5) * 2.0);
 }
 
+int
+dm_Normal2Xx(dmp, f, use_aspect)
+struct dm *dmp;
+register fastf_t f;
+int use_aspect;
+{
+  if(use_aspect)
+    return (f * 0.5 * dmp->dm_aspect + 0.5) * dmp->dm_width;
+  else
+    return (f * 0.5 + 0.5) * dmp->dm_width;
+}
+
 fastf_t
-dm_Y2Normal(dmp, y)
+dm_Xy2Normal(dmp, y)
 struct dm *dmp;
 register int y;
 {
   return ((0.5 - y / (fastf_t)dmp->dm_height) * 2.0);
 }
+
+int
+dm_Normal2Xy(dmp, f)
+struct dm *dmp;
+register fastf_t f;
+{
+  return (0.5 - f * 0.5) * dmp->dm_height;
+}
+#endif
 
 void
 dm_configureWindowShape(dmp)
