@@ -116,6 +116,9 @@ struct dm dm_X = {
 fastf_t min_short = (fastf_t)SHRT_MIN;
 fastf_t max_short = (fastf_t)SHRT_MAX;
 
+vect_t clipmin;
+vect_t clipmax;
+
 /* Currently, the application must define these. */
 extern Tk_Window tkwin;
 
@@ -200,6 +203,7 @@ char *argv[];
   dmp->dm_aspect = 1.0;
 
   /* initialize modifiable variables */
+  ((struct x_vars *)dmp->dm_vars)->mvars.zclip = 1;
   ((struct x_vars *)dmp->dm_vars)->mvars.dummy_perspective = 1;
 
   BU_LIST_APPEND(&head_x_vars.l, &((struct x_vars *)dmp->dm_vars)->l);
@@ -579,23 +583,31 @@ register struct rt_vlist *vp;
 
 		pnt[0] *= 2047 * dmp->dm_aspect;
 		pnt[1] *= 2047;
+		pnt[2] *= 2047;
 
 		/* save pnt --- it might get changed by clip() */
 		VMOVE(spnt, pnt);
 
-		/* Check to see if lpnt or pnt contain values that exceed
-		   the capacity of a short (segbuf is an array of XSegments which
-		   contain shorts). If so, do clipping now. Otherwise, let the
-		   X server do the clipping */
-		if(lpnt[0] < min_short || max_short < lpnt[0] ||
-		   lpnt[1] < min_short || max_short < lpnt[1] ||
-		   pnt[0] < min_short || max_short < pnt[0] ||
-		     pnt[1] < min_short || max_short < pnt[1]){
-
-		  /* if the entire line segment will not be visible then ignore it */
-		  if(clip(&lpnt[0], &lpnt[1], &pnt[0], &pnt[1]) == -1){
+		if(((struct x_vars *)dmp->dm_vars)->mvars.zclip){
+		  if(vclip(lpnt, pnt, clipmin, clipmax) == 0){
 		    VMOVE(lpnt, spnt);
 		    continue;
+		  }
+		}else{
+		  /* Check to see if lpnt or pnt contain values that exceed
+		     the capacity of a short (segbuf is an array of XSegments which
+		     contain shorts). If so, do clipping now. Otherwise, let the
+		     X server do the clipping */
+		  if(lpnt[0] < min_short || max_short < lpnt[0] ||
+		     lpnt[1] < min_short || max_short < lpnt[1] ||
+		     pnt[0] < min_short || max_short < pnt[0] ||
+		     pnt[1] < min_short || max_short < pnt[1]){
+
+		    /* if the entire line segment will not be visible then ignore it */
+		    if(clip(&lpnt[0], &lpnt[1], &pnt[0], &pnt[1]) == -1){
+		      VMOVE(lpnt, spnt);
+		      continue;
+		    }
 		  }
 		}
 
@@ -785,15 +797,12 @@ X_setWinBounds(dmp, w)
 struct dm *dmp;
 register int w[];
 {
-#if 0
-  /* Compute the clipping bounds */
-  clipmin[0] = w[1] / 2048.;
-  clipmin[1] = w[3] / 2048.;
-  clipmin[2] = w[5] / 2048.;
-  clipmax[0] = w[0] / 2047.;
-  clipmax[1] = w[2] / 2047.;
-  clipmax[2] = w[4] / 2047.;
-#endif
+  clipmin[0] = w[1];
+  clipmin[1] = w[3];
+  clipmin[2] = w[5];
+  clipmax[0] = w[0];
+  clipmax[1] = w[2];
+  clipmax[2] = w[4];
 
   return TCL_OK;
 }

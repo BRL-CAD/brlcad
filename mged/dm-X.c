@@ -69,6 +69,7 @@ static void	X_statechange();
 static int     X_dm();
 static void     establish_perspective();
 static void     set_perspective();
+static void     dirty_hook();
 static void     set_knob_offset();
 
 #ifdef USE_PROTOTYPES
@@ -82,6 +83,7 @@ extern Tcl_Interp *interp;
 extern Tk_Window tkwin;
 
 struct bu_structparse X_vparse[] = {
+  {"%d",  1, "zclip",             X_MV_O(zclip),            dirty_hook },
   {"%d",  1, "perspective",       X_MV_O(perspective_mode), establish_perspective },
   {"%d",  1, "set_perspective",   X_MV_O(dummy_perspective),set_perspective },
   {"%d",  1, "debug",             X_MV_O(debug),            BU_STRUCTPARSE_FUNC_NULL },
@@ -1889,6 +1891,12 @@ X_dbtext(str)
 		   str, "'\n", (char *)NULL);
 }
 #endif
+
+static void
+dirty_hook()
+{
+  dirty = 1;
+}
 
 static void
 set_knob_offset()
