@@ -1,13 +1,13 @@
 /*
-	SCCS id:	@(#) pp-fb.c	1.5
-	Last edit: 	3/14/85 at 17:57:51	G S M
-	Retrieved: 	8/13/86 at 03:15:58
+	SCCS id:	@(#) pp-fb.c	1.6
+	Last edit: 	3/28/85 at 16:38:52	G S M
+	Retrieved: 	8/13/86 at 03:16:08
 	SCCS archive:	/m/cad/fb_utils/RCS/s.pp-fb.c
 
 */
 #if ! defined( lint )
 static
-char	sccsTag[] = "@(#) pp-fb.c	1.5	last edit 3/14/85 at 17:57:51";
+char	sccsTag[] = "@(#) pp-fb.c	1.6	last edit 3/28/85 at 16:38:52";
 #endif
 /*
 			P P - F B . C
@@ -126,23 +126,16 @@ char **argv;
 	/* check invocation */
 	if( ! pars_Argv( argc, argv ) )
 		{
-		(void) fprintf( stderr, "Usage: pp-fb [-h] filename\n" );
+		(void) fprintf( stderr, "Usage: pp-fb filename\n" );
 		return	1;
 		}
-
-	if(	fbopen( NULL, APPEND ) == -1
-	    ||	fb_wmap( (ColorMap *) NULL ) == -1
-		)
-		{
-		return	1;
-		}
-	scans_per_buffer = FBBUFSIZE/getfbsize();
 
 	/* print data on first two lines of plot file */
 	(void) fgets(linebuf, sizeof(linebuf), input);
 line1:
 	if( (linebuf[0] == ' ' || (linebuf[0]>='A' && linebuf[0]<='Z')) )
-		(void) fprintf( stderr, "\007WARNING:  This appears to be a .PC file.  If this does not work, use pc-fb\n\n");
+		(void) fprintf( stderr,
+				"\007WARNING:  This appears to be a .PC file.  If this does not work, use pc-fb\n\n");
 	for( i=0; linebuf[i]!='\n'; )
 		(void) putchar(linebuf[i++]);
 	(void) putchar('\n');
@@ -155,6 +148,16 @@ line1:
 
 	(void) fscanf( input, "%d", &maxh );
 	(void) fscanf( input, "%d", &maxv );
+	if( maxh > 512 || maxv > 512 ) /* Automatic high res. mode.	*/
+		setfbsize( 1024 );
+	if(	fbopen( NULL, APPEND ) == -1
+	    ||	fb_wmap( (ColorMap *) NULL ) == -1
+		)
+		{
+		return	1;
+		}
+	scans_per_buffer = FBBUFSIZE/getfbsize();
+
 	(void) printf( "Number of Horz cells %4d, ",maxh);
 	(void) printf( "Number of Vert cells %4d\n",maxv);
 
@@ -316,6 +319,11 @@ noread:
 			break;
 	}
 	(void) printf( "\n\n----------------------------------\n");
+	if( fbclose( _fbfd ) == -1 )
+		{
+		(void) fprintf( stderr, "Can't close framebuffer!\n" );
+		return	1;
+		}
 	goto line1;
 }
 
@@ -376,13 +384,10 @@ register char	**argv;
 	register int	c;
 	extern int	optind;
 
-	while( (c = getopt( argc, argv, "h" )) != EOF )
+	while( (c = getopt( argc, argv, "" )) != EOF )
 		{
 		switch( c )
 			{
-			case 'h' : /* High resolution frame buffer.	*/
-				setfbsize( 1024 );
-				break;
 			case '?' :
 				return	0;
 			}
