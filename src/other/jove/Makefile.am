@@ -32,15 +32,15 @@ noinst_HEADERS = jove.h jove_temp.h termcap.h
 
 dist_man_MANS = jove.1 describe.com.1 teach-jove.1
 
-tune.c:	$(top_srcdir)/jove/jove_tune.c
+tune.c:	$(top_srcdir)/src/other/jove/jove_tune.c
 	rm -f tune.c
-	sed -e 's;BinDir;BINDIR;' -e 's;LibDir;LIBDIR;' < $(top_srcdir)/jove/jove_tune.c > tune.c
+	sed -e 's;BinDir;BINDIR;' -e 's;LibDir;LIBDIR;' < $(top_srcdir)/src/other/jove/jove_tune.c > tune.c
 
 version.c:
-	sh $(top_srcdir)/jove/mkversion.sh
+	sh $(top_srcdir)/src/other/jove/mkversion.sh
 
-teach-jove:	$(top_srcdir)/jove/teach-jove.sh
-	sed -e 's;BinDir;BINDIR;' -e 's;LibDir;LIBDIR;' < $(top_srcdir)/jove/teach-jove.sh > teach-jove
+teach-jove:	$(top_srcdir)/src/other/jove/teach-jove.sh
+	sed -e 's;BinDir;BINDIR;' -e 's;LibDir;LIBDIR;' < $(top_srcdir)/src/other/jove/teach-jove.sh > teach-jove
 
 install-data-local:
 	$(INSTALL_DATA) $(srcdir)/describe.com.1 $(libdir)/describe.com
