@@ -200,7 +200,7 @@ button .status.decr -text "NCPU--" -command \
 	{cur_node_send {global npsw; incr npsw -1; set npsw}}
 button .status.drop -text "DROP" -command \
 	{set node_num [lindex [selection get] 0]; \
-	drop_rtnode $node_num}
+	drop_rtnode $node_num; update_cpu_status}
 listbox .status.list -height 1 -width 60
 pack .status.incr .status.decr .status.drop -side left -in .status.incr_fr
 pack .status.button .status.incr_fr .status.list -side top -in .status
