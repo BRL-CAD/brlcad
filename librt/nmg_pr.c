@@ -752,7 +752,26 @@ int			verbose;
 	for( lp = (long **)NMG_TBL_BASEADDR(tbl);
 	     lp <= (long **)NMG_TBL_LASTADDR(tbl); lp++
 	)  {
-		rt_log("  %.8x %s\n", *lp, rt_identify_magic(**lp) );
+		if( *lp == 0 )  {
+			rt_log("  %.8x NULL entry\n", *lp);
+			continue;
+		}
+		switch(**lp)  {
+		default:
+			rt_log("  %.8x %s\n", *lp, rt_identify_magic(**lp) );
+			break;
+		case NMG_EDGEUSE_MAGIC:
+			rt_log("  %.8x edgeuse vu=%x, far vu=%x\n",
+				*lp,
+				((struct edgeuse *)*lp)->vu_p,
+				RT_LIST_PNEXT_CIRC(edgeuse, *lp)->vu_p );
+			break;
+		case NMG_VERTEXUSE_MAGIC:
+			rt_log("  %.8x vertexuse v=%x\n",
+				*lp,
+				((struct vertexuse *)*lp)->v_p );
+			break;
+		}
 	}
 }
 
