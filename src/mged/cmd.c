@@ -3325,7 +3325,8 @@ cmd_shaded_mode(ClientData	clientData,
 		char    	**argv)
 {
 	/* check to see if we have -a or -auto */
-	if (argc == 3 && 
+	if (argc == 3 &&
+	    strlen(argv[1]) >= 2 &&
 	    argv[1][0] == '-' &&
 	    argv[1][1] == 'a') {
 	  struct bu_vls vls;
