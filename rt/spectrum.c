@@ -358,7 +358,8 @@ CONST struct rt_spect_sample	*ss;
 
 
 #define C1	3.7415E4    /* watts um^4 cm^-2 */
-#define C2    	1.4388E4    /* um K */ 	
+#define C2	14387.86    /* um K */ 	
+/* Russ gives these values at 37,415 and 14,388 */
 /* Handbook of Physics and Chem gives these values as 37,403 and 14,384 */
 /* Aircraft Combat Surv gives these values as 37,483.2 and 14,387.86 */
 
