@@ -316,18 +316,19 @@ vect_t	a, b, c;
  *  r2: radius of solid part.
  */
 int
-mk_tor( fp, name, center, norm, r1, r2 )
+mk_tor( fp, name, center, inorm, r1, r2 )
 FILE	*fp;
 char	*name;
 point_t	center;
-vect_t	norm;
+vect_t	inorm;
 double	r1, r2;
 {
 	register int i;
 	union record rec;
-	vect_t	work;
+	vect_t	norm;
+	vect_t	cross1, cross2;
 	double	r3, r4;
-	double	m1, m2, m3, m4, m5, m6;
+	double	m2;
 
 	bzero( (char *)&rec, sizeof(rec) );
 	rec.s.s_id = ID_SOLID;
@@ -340,69 +341,41 @@ double	r1, r2;
 			name, r1, r2);
 		return(-1);
 	}
+
 	r1 *= mk_conv2mm;
 	r2 *= mk_conv2mm;
 	r3=r1-r2;	/* Radius to inner circular edge */
 	r4=r1+r2;	/* Radius to outer circular edge */
 
 	VSCALE( F1, center, mk_conv2mm );
-	VSCALE( F2, norm, mk_conv2mm );
 
-	/*
-	 * To allow for V being (0,0,0), for VCROSS purposes only,
-	 * we add (PI,PI,PI).  THIS DOES NOT GO OUT INTO THE FILE!!
-	 * work[] must NOT be colinear with N[].  We check for this
-	 * later.
-	 */
-	VMOVE(work, center);
-	work[0] += PI;
-	work[1] += PI;
-	work[2] += PI;
-
-	m2 = MAGNITUDE( F2 );		/* F2 is NORMAL to torus */
-	if( m2 <= 0.0 )  {
+	VMOVE( norm, inorm );
+	m2 = MAGNITUDE( norm );		/* F2 is NORMAL to torus */
+	if( m2 <= SQRT_SMALL_FASTF )  {
 		(void)fprintf(stderr, "mk_tor(%s): normal magnitude is zero!\n", name);
 		return(-1);		/* failure */
 	}
-	VSCALE( F2, F2, r2/m2 );	/* Give it radius length */
+	m2 = 1.0/m2;
+	VSCALE( norm, norm, m2 );	/* Give normal unit length */
+	VSCALE( F2, norm, r2 );		/* Give F2 normal radius length */
 
-	/* F3, F4 are perpendicular, goto center of Torus (solid part), for top/bottom */
-	VCROSS(F3,work,F2);
-	m1=MAGNITUDE(F3);
-	if( m1 <= 0.0 )  {
-		work[1] = 0.0;		/* Vector is colinear, so */
-		work[2] = 0.0;		/* make it different */
-		VCROSS(F3,work,F2);
-		m1=MAGNITUDE(F3);
-		if( m1 <= 0.0 )  {
-			(void)fprintf(stderr, "mk_tor(%s): cross product vector is zero!\n", name);
-			return(-1);	/* failure */
-		}
-	}
-	VSCALE(F3,F3,r1/m1);
+	/* Create two mutually perpendicular vectors, perpendicular to Norm */
+	vec_ortho( cross1, norm );
+	VCROSS( cross2, cross1, norm );
+	VUNITIZE( cross2 );
 
-	VCROSS(F4,F3,F2);
-	m3=MAGNITUDE(F4);
-	if( m3 <= 0.0 )  {
-		(void)fprintf(stderr, "mk_tor(%s): magnitude m3 is zero!\n", name);
-		return(-1);	 /* failure */
-	}
+	/* F3, F4 are perpendicular, goto center of solid part */
+	VSCALE( F3, cross1, r1 );
+	VSCALE( F4, cross2, r1 );
 
-	VSCALE(F4,F4,r1/m3);
-	m5 = MAGNITUDE(F3);
-	m6 = MAGNITUDE( F4 );
-	if( m5 <= 0.0 || m6 <= 0.0 )  {
-		(void)fprintf(stderr, "mk_tor(%s): magnitude m5/m6 is zero!\n", name);
-		return(-1);	/* failure */
-	}
-
+	/* The rest of these provide no real extra information */
 	/* F5, F6 are perpendicular, goto inner edge of ellipse */
-	VSCALE( F5, F3, r3/m5 );
-	VSCALE( F6, F4, r3/m6 );
+	VSCALE( F5, cross1, r3 );
+	VSCALE( F6, cross2, r3 );
 
 	/* F7, F8 are perpendicular, goto outer edge of ellipse */
-	VSCALE( F7, F3, r4/m5 );
-	VSCALE( F8, F4, r4/m6 );
+	VSCALE( F7, cross1, r4 );
+	VSCALE( F8, cross2, r4 );
 	
 	if( fwrite( (char *) &rec, sizeof(rec), 1, fp) != 1 )
 		return(-1);	/* failure */
@@ -423,8 +396,7 @@ vect_t	height;
 fastf_t	radius;
 {
 	union record rec;
-	fastf_t m1, m2;
-	vect_t	tvec;
+	vect_t	cross1, cross2;
 
 	bzero( (char *)&rec, sizeof(rec) );
 	rec.s.s_id = ID_SOLID;
@@ -432,36 +404,18 @@ fastf_t	radius;
 	rec.s.s_cgtype = RCC;
 	NAMEMOVE(name, rec.s.s_name);
 
+	/* Units conversion */
 	radius *= mk_conv2mm;
 	VSCALE( F1, base, mk_conv2mm );
 	VSCALE( F2, height, mk_conv2mm  );
 
-	VSCALE( tvec, base, mk_conv2mm );
-	tvec[0] += PI;
-	tvec[1] += PI;
-	tvec[2] += PI;
-	VCROSS( F3, tvec, F2 );
-	m1 = MAGNITUDE( F3 );
-	if( m1 == 0.0 )  {
-		tvec[1] = 0.0;		/* Vector is colinear, so */
-		tvec[2] = 0.0;		/* make it different */
-		VCROSS( F3, tvec, F2 );
-		m1 = MAGNITUDE( F3 );
-		if( m1 == 0.0 )  {
-			(void)printf("ERROR, magnitude is zero!\n");
-			return(-1);	/* failure */
-		}
-	}
-	VSCALE( F3, F3, radius/m1 );
-	VCROSS( F4, F2, F3 );
-	m2 = MAGNITUDE( F4 );
-	if( m2 == 0.0 )  {
-		(void)printf("ERROR, magnitude is zero!\n");
-		return(-1);	/* failure */
-	}
+	/* Create two mutually perpendicular vectors, perpendicular to H */
+	vec_ortho( cross1, height );
+	VCROSS( cross2, cross1, height );
+	VUNITIZE( cross2 );
 
-	VSCALE( F4, F4, radius/m2 );
-
+	VSCALE( F3, cross1, radius );
+	VSCALE( F4, cross2, radius );
 	VMOVE( F5, F3);
 	VMOVE( F6, F4);
 
@@ -540,6 +494,7 @@ fastf_t	radtop;
 	VMOVE( F1, base );
 	VMOVE( F2, height );
 
+	/* Create two mutually perpendicular vectors, perpendicular to H */
 	vec_ortho( cross1, height );
 	VCROSS( cross2, cross1, height );
 	VUNITIZE( cross2 );
