@@ -321,23 +321,26 @@ struct faceuse *fu;
 			if (rt_g.NMG_debug & DEBUG_POLYSECT)
 				rt_log("re-using vertex from other face\n");
 
-			(void)nmg_esplit(vu_other->v_p, eu->e_p);
+/*			(void)nmg_esplit(vu_other->v_p, eu->e_p); */
+			(void)nmg_ebreak(vu_other->v_p, eu->e_p);
 			(void)nmg_tbl(bs->l2, TBL_INS_UNIQUE, &vu_other->l.magic);
 		} else {
 			if (rt_g.NMG_debug & DEBUG_POLYSECT)
 				rt_log("Making new vertex\n");
 
-			(void)nmg_esplit((struct vertex *)NULL, eu->e_p);
+/*			(void)nmg_esplit((struct vertex *)NULL, eu->e_p); */
+			(void)nmg_ebreak((struct vertex *)NULL, eu->e_p);
 
-			/* given the trouble that nmg_esplit was to create,
-			 * we're going to check this to the limit
+			/* given the trouble that nmg_ebreak (nmg_esplit)
+			 * went to create, we're going to check this to the
+			 * limit.
 			 */
 			NMG_CK_EDGEUSE(eu);
 			NMG_CK_EDGEUSE(eu->eumate_p);
 
 			/* since we just split eu, the "next" edgeuse
 			 * from eu CAN'T (in a working [as opposed to broken]
-			 * system) be the list head.  
+			 * system) be the list head.
 			 */
 			euforw = RT_LIST_PNEXT(edgeuse, eu);
 
