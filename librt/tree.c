@@ -989,7 +989,7 @@ register CONST char	*str;
 HIDDEN struct region *
 rt_getregion( rtip, reg_name )
 struct rt_i	*rtip;
-register char	*reg_name;
+CONST register char	*reg_name;
 {	
 	register struct region	*regp = rtip->HeadRegion;
 	register CONST char *reg_base = rt_basename(reg_name);
@@ -1020,7 +1020,7 @@ register char	*reg_name;
 int
 rt_rpp_region( rtip, reg_name, min_rpp, max_rpp )
 struct rt_i	*rtip;
-char		*reg_name;
+CONST char	*reg_name;
 fastf_t		*min_rpp, *max_rpp;
 {	
 	register struct region	*regp;
