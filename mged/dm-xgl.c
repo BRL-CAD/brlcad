@@ -885,8 +885,8 @@ XGL_viewchange(cmd, sp)
 register int cmd;
 register struct solid *sp;
 {
-	register struct vlist		*vp;
-	register Xgl_pt_flag_f3d	*pt;
+	register struct rt_vlist	*vp;
+	register Xgl_pt_flag_f3d	*ptr;
 	register int			i;
 	struct obj			*objptr;
 
@@ -908,18 +908,35 @@ register struct solid *sp;
 		objptr->sp           = sp;
 		objptr->pt_list.bbox = NULL;
 
-		for(vp = sp->s_vlist, pt = objptr->pt_list.pts.flag_f3d, i = 1;
-		    vp != VL_NULL;
-		    vp = vp->vl_forw, ++pt, ++i) {
-
-			if(i > sp->s_vlen) break;
-			pt->x = vp->vl_pnt[0];
-			pt->y = vp->vl_pnt[1];
-			pt->z = vp->vl_pnt[2];
-			pt->flag = vp->vl_draw ? 0x01 : 0x00;
+		ptr = objptr->pt_list.pts.flag_f3d;
+		for( RT_LIST_FOR( vp, rt_vlist, &(sp->s_vlist) ) )  {
+			register int	nused = vp->nused;
+			register int	*cmd = vp->cmd;
+			register point_t *pt = vp->pt;
+			for( i = 0; i < nused; i++,cmd++,pt++,ptr++ )  {
+				switch( *cmd )  {
+				case RT_VLIST_POLY_START:
+					continue;
+				case RT_VLIST_POLY_MOVE:
+				case RT_VLIST_LINE_MOVE:
+					/* Move, not draw */
+					ptr->x = pt[0];
+					ptr->y = pt[1];
+					ptr->z = pt[2];
+					ptr->flag = 0x00;
+					continue;
+				case RT_VLIST_POLY_DRAW:
+				case RT_VLIST_POLY_END:
+				case RT_VLIST_LINE_DRAW:
+					/* draw */
+					ptr->x = pt[0];
+					ptr->y = pt[1];
+					ptr->z = pt[2];
+					ptr->flag = 0x01;
+					continue;
+				}
+			}
 		}
-		if(i != sp->s_vlen + 1)
-			fprintf(stderr,"mged XGL_viewchange: corrupt solid\n");
 		break;
 
 	case DM_CHGV_REDO:
