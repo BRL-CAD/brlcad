@@ -19,7 +19,7 @@ Point of Contact for Original Software:
 	Christopher Sean Morrison
 	U.S. Army Research Laboratory
 	AMSRD-ARL-SL-BE, Bldg 238
-	APG, MD 21005-5058
+	APG, MD 21005-5068
 	Phone:  410.278.6678
 	E-mail: morrison@brlcad.org
 
@@ -129,9 +129,10 @@ under this Agreement except for additions covered under paragraph 3H.
 B. Each Recipient must ensure that the following copyright notice
 appears prominently in the Subject Software:
 
-Copyright 2004, United States Government as represented by Director of
-the U.S. Army Research Laboratory.  No copyright is claimed in the
-United States under Title 17, U.S.Code. All Other Rights Reserved.
+Copyright 2004, United States Government as represented by the
+Director of the U.S. Army Research Laboratory.  No copyright is
+claimed in the United States under Title 17, U.S.Code.  All Other
+Rights Reserved.
 
 C. Each Contributor must characterize its alteration of the Subject
 Software as a Modification and must identify itself as the originator
@@ -264,4 +265,4 @@ to be directed to the designated representative as follows:
 	Lee Butler
 	U.S. Army Research Laboratory
 	AMSRD-ARL-SL-BE, Bldg 238
-	APG, MD 21005-5058
+	APG, MD 21005-5068
