@@ -438,7 +438,7 @@ static void be_o_rotate()  {
 static void be_accept()  {
 	register struct solid *sp;
 
-	menu_array[MENU_L2] = MENU_NULL;
+	mmenu_set( MENU_L2, MENU_NULL );
 	if( state == ST_S_EDIT )  {
 		/* Accept a solid edit */
 		dmp->dmr_light( LIGHT_OFF, BE_ACCEPT );
@@ -448,8 +448,8 @@ static void be_accept()  {
 
 		sedit_accept();		/* zeros "edsol" var */
 
-		menu_array[MENU_L1] = MENU_NULL;
-		menu_array[MENU_L2] = MENU_NULL;
+		mmenu_set( MENU_L1, MENU_NULL );
+		mmenu_set( MENU_L2, MENU_NULL );
 		dmp->dmr_light( LIGHT_OFF, BE_S_EDIT );
 
 		FOR_ALL_SOLIDS( sp )
@@ -495,8 +495,8 @@ static void be_reject()  {
 		/* Reject a solid edit */
 		if( edsol )
 			dmp->dmr_light( LIGHT_OFF, edsol );
-		menu_array[MENU_L1] = MENU_NULL;
-		menu_array[MENU_L2] = MENU_NULL;
+		mmenu_set( MENU_L1, MENU_NULL );
+		mmenu_set( MENU_L2, MENU_NULL );
 
 		sedit_reject();
 		break;
@@ -504,8 +504,8 @@ static void be_reject()  {
 	case ST_O_EDIT:
 		if( edobj )
 			dmp->dmr_light( LIGHT_OFF, edobj );
-		menu_array[MENU_L1] = MENU_NULL;
-		menu_array[MENU_L2] = MENU_NULL;
+		mmenu_set( MENU_L1, MENU_NULL );
+		mmenu_set( MENU_L2, MENU_NULL );
 
 		oedit_reject();
 		break;
@@ -556,7 +556,7 @@ static void be_s_rotate()  {
 
 	dmp->dmr_light( LIGHT_OFF, edsol );
 	dmp->dmr_light( LIGHT_ON, edsol = BE_S_ROTATE );
-	menu_array[MENU_L1] = MENU_NULL;
+	mmenu_set( MENU_L1, MENU_NULL );
 	es_edflag = SROT;
 	mat_idn(acc_rot_sol);
 	dmaflag++;
@@ -571,7 +571,7 @@ static void be_s_trans()  {
 	dmp->dmr_light( LIGHT_ON, edsol = BE_S_TRANS );
 	es_edflag = STRANS;
 	movedir = UARROW | RARROW;
-	menu_array[MENU_L1] = MENU_NULL;
+	mmenu_set( MENU_L1, MENU_NULL );
 	dmaflag++;
 }
 
@@ -583,7 +583,7 @@ static void be_s_scale()  {
 	dmp->dmr_light( LIGHT_OFF, edsol );
 	dmp->dmr_light( LIGHT_ON, edsol = BE_S_SCALE );
 	es_edflag = SSCALE;
-	menu_array[MENU_L1] = MENU_NULL;
+	mmenu_set( MENU_L1, MENU_NULL );
 	acc_sc_sol = 1.0;
 	dmaflag++;
 }
@@ -660,10 +660,10 @@ void
 btn_head_menu(i, menu, item)  {
 	switch(i)  {
 	case 0:
-		menu_array[MENU_GEN] = first_menu;
+		mmenu_set( MENU_GEN, first_menu );
 		break;
 	case 1:
-		menu_array[MENU_GEN] = second_menu;
+		mmenu_set( MENU_GEN, second_menu );
 		break;
 	case 2:
 		/* nothing happens */
@@ -679,10 +679,10 @@ void
 chg_l2menu(i)  {
 	switch( i )  {
 	case ST_S_EDIT:
-		menu_array[MENU_L2] = sed_menu;
+		mmenu_set( MENU_L2, sed_menu );
 		break;
 	case ST_O_EDIT:
-		menu_array[MENU_L2] = oed_menu;
+		mmenu_set( MENU_L2, oed_menu );
 		break;
 	default:
 		(void)rt_log("chg_l2menu(%d): bad arg\n");
