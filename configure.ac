@@ -721,9 +721,11 @@ WDB='${top_builddir}/src/libwdb/libwdb.la'
 AC_SUBST(WDB)
 
 
-AC_CONFIG_SUBDIRS([misc/enigma])
-#	src/other/libtcl8.4/unix
-#	src/other/libtk8.4/unix
+AC_CONFIG_SUBDIRS([ \
+	misc/enigma \
+	src/other/libtcl/unix \
+	src/other/libtk/unix \
+])
 
 AC_CONFIG_FILES([
 	Makefile
