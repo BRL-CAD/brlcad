@@ -771,8 +771,7 @@ char **argv;
 	int	i;
 	int	id;
 	struct push_id *pip;
-	struct bu_external	es_ext;
-	struct rt_db_internal	es_int;
+	struct rt_db_internal	intern;
 
 	CHECK_DBI_NULL;
 	CHECK_READ_ONLY;
@@ -860,36 +859,24 @@ char **argv;
 		Tcl_AppendResult(interp, "push:\tdb_walk_tree failed or there was a solid moving\n\tin two or more directions\n", (char *)NULL);
 		return TCL_ERROR;
 	}
-/*
- * We've built the push solid list, now all we need to do is apply
- * the matrix we've stored for each solid.
- */
+	/*
+	 * We've built the push solid list, now all we need to do is apply
+	 * the matrix we've stored for each solid.
+	 */
 	FOR_ALL_PUSH_SOLIDS(pip) {
-		BU_INIT_EXTERNAL(&es_ext);
-		RT_INIT_DB_INTERNAL(&es_int);
-		if (db_get_external( &es_ext, pip->pi_dir, dbip) < 0) {
+		if (rt_db_get_internal( &intern, pip->pi_dir, dbip, pip->pi_mat ) < 0 )  {
 		  Tcl_AppendResult(interp, "f_push: Read error fetching '",
 				   pip->pi_dir->d_namep, "'\n", (char *)NULL);
 		  push_error = -1;
 		  continue;
 		}
-		id = rt_id_solid( &es_ext);
-		if (rt_functab[id].ft_import(&es_int, &es_ext, pip->pi_mat, dbip) < 0 ) {
-		  Tcl_AppendResult(interp, "push(", pip->pi_dir->d_namep,
-				   "): solid import failure\n", (char *)NULL);
-		  if (es_int.idb_ptr) rt_functab[id].ft_ifree( &es_int);
-		  db_free_external( &es_ext);
-		  continue;
-		}
-		RT_CK_DB_INTERNAL( &es_int);
-		if ( rt_functab[id].ft_export( &es_ext, &es_int, 1.0, dbip) < 0 ) {
+		RT_CK_DB_INTERNAL( &intern );
+
+		if (rt_db_put_internal( pip->pi_dir, dbip, &intern ) < 0)  {
 		  Tcl_AppendResult(interp, "push(", pip->pi_dir->d_namep,
 				   "): solid export failure\n", (char *)NULL);
-		} else {
-			db_put_external(&es_ext, pip->pi_dir, dbip);
 		}
-		if (es_int.idb_ptr) rt_functab[id].ft_ifree(&es_int);
-		db_free_external(&es_ext);
+		rt_db_free_internal( &intern );
 	}
 
 	/*
@@ -935,10 +922,11 @@ genptr_t		user_ptr1, user_ptr2, user_ptr3;
 	RT_CK_DBI( dbip );
 	RT_CK_TREE( comb_leaf );
 
-	if( !comb_leaf->tr_l.tl_mat )  {
-		comb_leaf->tr_l.tl_mat = (matp_t)bu_malloc( sizeof(mat_t), "tl_mat" );
+	/* NULL pointer signifies an identity matrix */
+	if( comb_leaf->tr_l.tl_mat )  {
+		bu_free( comb_leaf->tr_l.tl_mat, "tl_mat" );
+		comb_leaf->tr_l.tl_mat = NULL;
 	}
-	bn_mat_idn( comb_leaf->tr_l.tl_mat );
 	if( (dp = db_lookup( dbip, comb_leaf->tr_l.tl_name, LOOKUP_NOISY )) == DIR_NULL )
 		return;
 
@@ -978,6 +966,7 @@ struct directory *dp;
 			return;
 		}
 	}
+	rt_db_free_internal( &intern );
 }
 
 static void
