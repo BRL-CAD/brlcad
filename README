@@ -7,8 +7,8 @@ and
 RAY-TRACING BENCHMARK
 .sp
 DISTRIBUTION PACKAGE
-Release 1.20
-(13-Feb-87)
+Release 1.21
+(30-May-87)
 .fi
 .sp
 .IP "DISTRIBUTION DETAILS"
@@ -52,7 +52,18 @@ authors at the address below.
 .sp
 For non-US sites, an extra step is required.  You must send your letter
 and tape to your Ambassador to the United States in Washington DC, and
-have them forwarded to BRL through official channels.
+have them forwarded to BRL through official channels.  Our current
+understanding is that any requests from Foreign governments should be
+sent on a Government to Government basis. The non-US Embassy should
+forward requests to the Deputy Chief of Staff for Intelligence,
+Department of the Army.  They handle all requests from foreign
+governments, and they decide where it goes from there.  The address
+to use is claimed to be:
+.sp
+	Deputy Chief of Staff for Intelligence
+	Army Headquarters
+	ATTN: DAM-CIT
+	Washington, DC  20310
 .sp
 .IP CONTENTS
 .sp
@@ -170,7 +181,7 @@ lines should be null lists, ie:
 	LIBFB_CONFIG	=
 .fi
 .sp
-In the case of extreme difficulty, a noop-stub version of libfb
+In the case of extreme difficulty, a no-op stub version of libfb
 is provided in rt/libfb-dummy.c.
 .sp
 The timer configuration LIBRT_TIMER must be specified, based on the
@@ -255,9 +266,7 @@ to within plus-or-minus one in each color (see pixdiff(1)).
 .sp
 5)  Compare the execution times in the "bench/xxx.log" files with the
 VAX-11/780 (with hardware FPA) times which are given in the
-"pix/xxx.log" files.  The significant figure is the "rays/sec" figure
-(the "RT Figure of Merit", RTFM) and should only be compared between
-different runs on the same model.
+"pix/xxx.log" files.
 .sp
 .IP "BENCHMARK RESULTS"
 .sp
@@ -467,7 +476,8 @@ _
 .fi
 .sp 2
 It would be greatly appreciated if you would return to BRL any
-statistics that you gather, including the manufacturer of the machine,
+statistics that you gather, including:  which BRL CAD release
+was used, the manufacturer of the machine,
 hardware and software version numbers, presence or absence of floating
 point hardware, and the name (preferably InterNet or UUCP) of the
 specific machine used.
@@ -503,15 +513,6 @@ precision, and generate lots of diagnostics, filling your disk.
 SGI software release version 3.3.1, 3.4, and 3.5 have a defective
 library version of hypot();  be aware of the (slower) substitute in rt.c
 .sp
-In SGI release 3.5, printf() is unable to print the numbers 500.0,
-1500.0, 2500.0, etc., when using the hardware floating-point chip
-(eg, -Zf compiler flag) due to a bug in the hardware divide causing
-troubles in modf().  This will cause 500.0 to print as ``4:0.0''.  This
-problem goes away if you remove the -Zf flag when compiling, but then
-your speed vanishes as well. A special hack exists in conv/Makefile.loc
-if you have problems converting databases, but the trouble runs deeper
-than that.
-.sp
 Operations of the form "*fp += incr;" are known to compile incorrectly
 on release 3.5 when "fp" is declared as "\fBregister double\fR *fp"
 (or \fBregister float\fR).  The one known instance of this in
@@ -523,19 +524,43 @@ core on the SGI on many databases.  This has not been isolated yet.
 Currently there are no good solutions to these problems.  Voice your
 opinions to the vendor.
 .sp
+It is very useful to add a "gclear" account to each SGI, so that after
+using the screen in 24-bit mode you can regain control of the screen by
+typing "gclear", whether or not you are logged in.  Add this line
+to /etc/passwd:
+.sp
+gclear::4:5::/tmp:/usr/bin/gclear
+.sp
 .IP "FULL CONFIGURATION"
 .sp
 The following assumes that you have already loaded the distribution per
 step 1 of "The Benchmark" section, and performed the configuration
 outlined in the "Benchmark Configuration" section, above.
 .sp
-You may wish to install the package in places other than BRL does.
-In general, all CAD executable programs are installed in BINDIR
-(/usr/brl/bin), with libraries going in LIBDIR (/usr/brl/lib).
-Users are told to find the CAD-related include files in INCLUDE_DIR
+Note that if you are configuring the software for more than one type of
+computer, you will have to go through this configuration procedure
+separately for each system.  Configuration questions apply only to
+the hardware available on the particular system presently being
+configured. If you have several types of machine sharing a single
+filesystem using NFS, be certain to have a separate CAD tree for each
+machine, to keep the binaries separate.
+.sp
+You may wish to install the package in directories other than where BRL
+does. In general, all CAD executable programs are installed in BINDIR
+(/usr/brl/bin), with libraries going in LIBDIR (/usr/brl/lib). Users are
+told to find the CAD-related include files in INCLUDE_DIR
 (/usr/include/brlcad). Be certain to examine these defines in
 Makefile.defs. The remote-frame-buffer daemon is installed in
-/usr/brl/etc, see rfbd/Makefile.loc.
+/usr/brl/etc, see rfbd/Makefile.loc.  If you wish to use the BRL
+directories, you may need to run (as root):
+.br
+ 	mkdir /usr/include/brlcad
+ 	mkdir /usr/brl 
+	mkdir /usr/brl/bin
+ 	mkdir /usr/brl/lib
+ 	mkdir /usr/brl/etc
+.br
+and then use chown(1) and chmod(1) to suit.
 .sp
 The configuration for libfb must be edited to reflect the display
 hardware that you have.  Even if your system has no display hardware,
@@ -553,10 +578,7 @@ ie:
 	LIBFB_CONFIG	=
 .fi
 .sp
-If this is an SGI system of release 3.5 with TCP, then certain kernel
-limits need to be adjusted for libfb/if_sgi.c to work well.  See the
-detailed comment on the front of that module. The display is configured
-by:
+If this is an SGI system of release 3.5, the display is configured by:
 .sp
 .nf
 	LIBFB_CFILES	= if_sgi.c
@@ -572,6 +594,12 @@ support, the display can be supported by:
 	LIBFB_OBJS	= if_sgi.o sgiselect.o
 	LIBFB_CONFIG	= -DIF_SGI
 .fi
+.sp
+When using the framebuffer library on the SGI, it is necessary to modify
+certain kernel limits in the binary image of your kernel to be able to
+use a large block of shared memory.  Follow the directions in
+libfb/if_sgi.c, and then reboot your workstation to allow the changes to
+take effect.
 .sp
 If this is a TCP-capable system, you will want to include the remote
 frame-buffer capability;  the defaults already provide for this. If you
@@ -697,6 +725,10 @@ on a UNIX system are these:
 .sp
 4)  After everything compiles, install everything.
 	make install
+.sp
+Note that in this step (#4) of the installation procedure, certain error
+messages are expected, and do not represent an error.  They are:
+????
 .fi
 .sp
 .IP "IMAGE DISPLAY"
@@ -766,18 +798,18 @@ Note that BRL considers the RLE format a long-term image storage format,
 with pix(5) format used for image manipulation, while Utah uses RLE
 format for all manipulation stages as well.
 .sp
-Note that the viewpoint specification information generated by the MGED
-command "saveview" and read by RT with the -M flag is in the process of
-being completely reimplemented, with the added capability of allowing
-the specification of full articulation of the models for animation
-purposes.  Also note that the specification and implementation of light
-sources is being changed to allow multiple light sources of arbitrary
-color and intensity.  If these changes will seriously impact your
-work, contact the authors for updated modules.
-.sp
 Note that the current versions of "fbed" and "lgt" will not compile
 on systems that do not support FLEXNAMES, such as System V Release 1
 and earlier versions of UNIX.  This should be fixed by the next release.
+.sp
+.IP "UPGRADING FROM RELEASE 1.20"
+.sp
+This release contains only minor external changes from Release 1.20,
+but for complete safety, you should save the old binary to "conv/g2asc",
+so that if you find the binary format of the database incompatable
+you can convert your old databases from binary to ASCII form. Having to
+do this is very unlikely, but it difficult to recover from without having
+saved the old converter.
 .sp
 .IP "COMMUNICATION"
 .sp
