@@ -34,9 +34,7 @@
 #include <sys/time.h>
 #include <time.h>
 
-#define XLIB_ILLEGAL_ACCESS	/* necessary on facist SGI 5.0.1 */
 #include "tcl.h"
-#include "tk.h"
 
 #include "machine.h"
 #include "vmath.h"
@@ -46,6 +44,7 @@
 #include "rtlist.h"
 #include "externs.h"
 #include "./ged.h"
+#include "./mgedtcl.h"
 
 struct mged_hist {
     struct rt_list l;
@@ -97,16 +96,23 @@ int status;   /* Either CMD_OK or CMD_BAD */
     firstjournal = 0;
 }
 
-HIDDEN void
+HIDDEN int
 timediff(tvdiff, start, finish)
 struct timeval *tvdiff, *start, *finish;
 {
+    if (finish->tv_sec == 0 && finish->tv_usec == 0)
+	return -1;
+    if (start->tv_sec == 0 && start->tv_usec == 0)
+	return -1;
+    
     tvdiff->tv_sec = finish->tv_sec - start->tv_sec;
     tvdiff->tv_usec = finish->tv_usec - start->tv_usec;
     if (tvdiff->tv_usec < 0) {
 	--tvdiff->tv_sec;
 	tvdiff->tv_usec += 1000000L;
     }
+
+    return 0;
 }
 
 void
@@ -117,9 +123,9 @@ struct mged_hist *hptr;
     struct mged_hist *lasthptr;
 
     lasthptr = RT_LIST_PREV(mged_hist, &(hptr->l));
-    timediff(&tvdiff, &(lasthptr->finish), &(hptr->start));
-
-    fprintf(journalfp, "delay %d %d\n", tvdiff.tv_sec, tvdiff.tv_usec);
+    if (timediff(&tvdiff, &(lasthptr->finish), &(hptr->start)) >= 0)
+	fprintf(journalfp, "delay %d %d\n", tvdiff.tv_sec, tvdiff.tv_usec);
+    
     if (hptr->status == CMD_BAD)
 	fprintf(journalfp, "# ");
     fprintf(journalfp, "%s", hptr->command);
@@ -229,9 +235,9 @@ char **argv;
 	rt_vls_trunc(&str, 0);
 	hp_prev = RT_LIST_PREV(mged_hist, &(hp->l));
 	if (with_delays && RT_LIST_NOT_HEAD(hp_prev, &(mged_hist_head.l))) {
-	    timediff(&tvdiff, &(hp_prev->finish), &(hp->start));
-	    rt_vls_printf(&str, "delay %d %d\n", tvdiff.tv_sec,
-			  tvdiff.tv_usec);
+	    if (timediff(&tvdiff, &(hp_prev->finish), &(hp->start)) >= 0)
+		rt_vls_printf(&str, "delay %d %d\n", tvdiff.tv_sec,
+			      tvdiff.tv_usec);
 	}
 
 	if (hp->status == CMD_BAD)
@@ -284,6 +290,10 @@ history_next()
 {
     struct mged_hist *hp;
 
+    if (RT_LIST_IS_HEAD(cur_hist, &(mged_hist_head.l))) {
+	return 0;
+    }
+    
     hp = RT_LIST_NEXT(mged_hist, &(cur_hist->l));
     if (RT_LIST_IS_HEAD(hp, &(mged_hist_head.l))) {
 	cur_hist = hp;
@@ -339,11 +349,43 @@ char **argv;
 }
 
 
+int
+cmd_hist_add(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
+int argc;
+char **argv;
+{
+    struct timeval zero;
+    struct rt_vls vls;
+
+    if (argc < 2)
+	return TCL_OK;
+
+    if (argv[1][0] == '\n')
+	return TCL_OK;
+
+    rt_vls_init(&vls);
+    rt_vls_strcat(&vls, argv[1]);
+    if (argv[1][strlen(argv[1])-1] != '\n')
+	rt_vls_putc(&vls, '\n');
+
+    zero.tv_sec = zero.tv_usec = 0L;
+    history_record(&vls, &zero, &zero, CMD_OK);
+
+    rt_vls_free(&vls);
+    return TCL_OK;
+}
+
 void
 history_setup()
 {
     RT_LIST_INIT(&(mged_hist_head.l));
     cur_hist = &mged_hist_head;
+    rt_vls_init(&(mged_hist_head.command));
+    mged_hist_head.start.tv_sec = mged_hist_head.start.tv_usec =
+	mged_hist_head.finish.tv_sec = mged_hist_head.finish.tv_usec = 0L;
+    mged_hist_head.status = CMD_OK;
     journalfp = NULL;
 }
     
