@@ -52,7 +52,7 @@ struct rt_vol_specific {
 
 #define VOL_O(m)	offsetof(struct rt_vol_internal, m)
 
-struct structparse rt_vol_parse[] = {
+struct bu_structparse rt_vol_parse[] = {
 #if CRAY && !__STDC__
 	{"%s",	RT_VOL_NAME_LEN, "file",	1,		FUNC_NULL },
 #else
@@ -435,7 +435,7 @@ CONST mat_t			mat;
 
 	rt_vls_init( &str );
 	rt_vls_strcpy( &str, rp->ss.ss_args );
-	if( rt_structparse( &str, rt_vol_parse, (char *)vip ) < 0 )  {
+	if( bu_structparse( &str, rt_vol_parse, (char *)vip ) < 0 )  {
 		rt_vls_free( &str );
 		return -2;
 	}
@@ -445,7 +445,7 @@ CONST mat_t			mat;
 	if( vip->file[0] == '\0' || vip->xdim < 1 ||
 	    vip->ydim < 1 || vip->zdim < 1 || vip->mat[15] <= 0.0 ||
 	    vip->lo < 0 || vip->hi > 255 )  {
-	    	rt_structprint("Unreasonable VOL parameters", rt_vol_parse,
+	    	bu_structprint("Unreasonable VOL parameters", rt_vol_parse,
 			(char *)vip );
 	    	return(-1);
 	}
@@ -521,7 +521,7 @@ double				local2mm;
 	rec = (union record *)ep->ext_buf;
 
 	RT_VLS_INIT( &str );
-	rt_vls_structprint( &str, rt_vol_parse, (char *)&vol );
+	bu_vls_structprint( &str, rt_vol_parse, (char *)&vol );
 
 	rec->ss.ss_id = DBID_STRSOL;
 	strncpy( rec->ss.ss_keyword, "vol", NAMESIZE-1 );
@@ -551,7 +551,7 @@ double			mm2local;
 	RT_VOL_CK_MAGIC(vip);
 	rt_vls_strcat( str, "thresholded volumetric solid (VOL)\n\t");
 
-	rt_vls_structprint( str, rt_vol_parse, (char *)vip );
+	bu_vls_structprint( str, rt_vol_parse, (char *)vip );
 	rt_vls_strcat( str, "\n" );
 
 	return(0);

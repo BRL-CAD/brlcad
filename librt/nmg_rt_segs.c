@@ -39,7 +39,7 @@ struct ef_data {
 };
 
 static CONST 
-struct structparse rt_ef_parsetab[] = {
+struct bu_structparse rt_ef_parsetab[] = {
 	{"%f", 1, "fdotr", offsetof(struct ef_data, fdotr), FUNC_NULL},
 	{"%f", 1, "fdotl", offsetof(struct ef_data, fdotl), FUNC_NULL},
 	{"%f", 1, "ndotr", offsetof(struct ef_data, ndotr), FUNC_NULL},
@@ -48,7 +48,7 @@ struct structparse rt_ef_parsetab[] = {
 };
 
 static CONST
-struct structparse rt_hit_parsetab[] = {
+struct bu_structparse rt_hit_parsetab[] = {
 {"%f", 1, "hit_dist", offsetof(struct hit, hit_dist), FUNC_NULL},
 {"%f", 3, "hit_point", offsetofarray(struct hit, hit_point), FUNC_NULL},
 {"%f", 4, "hit_normal", offsetofarray(struct hit, hit_normal), FUNC_NULL},

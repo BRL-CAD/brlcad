@@ -50,7 +50,7 @@ struct rt_ebm_specific {
 
 #define RT_EBM_O(m)	offsetof(struct rt_ebm_internal, m)
 
-struct structparse rt_ebm_parse[] = {
+struct bu_structparse rt_ebm_parse[] = {
 #if CRAY && !__STDC__
 	{"%s",	RT_EBM_NAME_LEN, "file",	1,	FUNC_NULL },
 #else
@@ -546,7 +546,7 @@ CONST mat_t			mat;
 
 	rt_vls_init( &str );
 	rt_vls_strcpy( &str, rp->ss.ss_args );
-	if( rt_structparse( &str, rt_ebm_parse, (char *)eip ) < 0 )  {
+	if( bu_structparse( &str, rt_ebm_parse, (char *)eip ) < 0 )  {
 		rt_vls_free( &str );
 		rt_free( (char *)eip , "rt_ebm_import: eip" );
 		ip->idb_type = ID_NULL;
@@ -559,7 +559,7 @@ CONST mat_t			mat;
 	if( eip->file[0] == '\0' || eip->xdim < 1 ||
 	    eip->ydim < 1 || eip->mat[15] <= 0.0 ||
 	    eip->tallness <= 0.0 )  {
-	    	rt_structprint( "Unreasonable EBM parameters", rt_ebm_parse,
+	    	bu_structprint( "Unreasonable EBM parameters", rt_ebm_parse,
 	    		(char *)eip );
 	    	rt_free( (char *)eip , "rt_ebm_import: eip" );
 	    	ip->idb_type = ID_NULL;
@@ -636,7 +636,7 @@ double				local2mm;
 	rec = (union record *)ep->ext_buf;
 
 	RT_VLS_INIT( &str );
-	rt_vls_structprint( &str, rt_ebm_parse, (char *)&ebm );
+	bu_vls_structprint( &str, rt_ebm_parse, (char *)&ebm );
 
 	rec->ss.ss_id = DBID_STRSOL;
 	strncpy( rec->ss.ss_keyword, "ebm", NAMESIZE-1 );
@@ -666,7 +666,7 @@ double			mm2local;
 	RT_EBM_CK_MAGIC(eip);
 	rt_vls_strcat( str, "extruded bitmap (EBM)\n\t");
 
-	rt_vls_structprint( str, rt_ebm_parse, (char *)eip );
+	bu_vls_structprint( str, rt_ebm_parse, (char *)eip );
 	rt_vls_strcat( str, "\n" );
 
 	return(0);

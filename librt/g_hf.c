@@ -69,7 +69,7 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #define HF_O(m)			offsetof(struct rt_hf_internal, m)
 
 /* All fields valid in string solid */
-CONST struct structparse rt_hf_parse[] = {
+CONST struct bu_structparse rt_hf_parse[] = {
 	{"%s",	128,	"cfile",	offsetofarray(struct rt_hf_internal, cfile), FUNC_NULL},
 	{"%s",	128,	"dfile",	offsetofarray(struct rt_hf_internal, dfile), FUNC_NULL},
 	{"%s",	8,	"fmt",		offsetofarray(struct rt_hf_internal, fmt), FUNC_NULL},
@@ -86,7 +86,7 @@ CONST struct structparse rt_hf_parse[] = {
 	{"",	0,	(char *)0,	0,			FUNC_NULL }
 };
 /* Subset of fields found in cfile */
-CONST struct structparse rt_hf_cparse[] = {
+CONST struct bu_structparse rt_hf_cparse[] = {
 	{"%s",	128,	"dfile",	offsetofarray(struct rt_hf_internal, dfile), FUNC_NULL},
 	{"%s",	8,	"fmt",		offsetofarray(struct rt_hf_internal, fmt), FUNC_NULL},
 	{"%d",	1,	"w",		HF_O(w),		FUNC_NULL },
@@ -1754,7 +1754,7 @@ register CONST mat_t		mat;
 	/* Process parameters found in .g file */
 	rt_vls_init( &str );
 	rt_vls_strcpy( &str, rp->ss.ss_args );
-	if( rt_structparse( &str, rt_hf_parse, (char *)xip ) < 0 )  {
+	if( bu_structparse( &str, rt_hf_parse, (char *)xip ) < 0 )  {
 		rt_vls_free( &str );
 err1:
 		rt_free( (char *)xip , "rt_hf_import: xip" );
@@ -1782,7 +1782,7 @@ err1:
 		RES_ACQUIRE( &rt_g.res_syscall );
 		fclose(fp);
 		RES_RELEASE( &rt_g.res_syscall );
-		if( rt_structparse( &str, rt_hf_cparse, (char *)xip ) < 0 )  {
+		if( bu_structparse( &str, rt_hf_cparse, (char *)xip ) < 0 )  {
 			rt_log("rt_hf_import() parse error in cfile input '%s'\n",
 				rt_vls_addr(&str) );
 			rt_vls_free( &str );
@@ -1905,7 +1905,7 @@ double				local2mm;
 	rec = (union record *)ep->ext_buf;
 
 	RT_VLS_INIT( &str );
-	rt_vls_structprint( &str, rt_hf_parse, (char *)&xip );
+	bu_vls_structprint( &str, rt_hf_parse, (char *)&xip );
 
 	/* Any changes made by solid editing affect .g file only,
 	 * and not the cfile, if specified.
@@ -1939,7 +1939,7 @@ double			mm2local;
 	RT_VLS_CHECK(str);
 	RT_HF_CK_MAGIC(xip);
 	rt_vls_printf( str, "Height Field (HF)  mm2local=%g\n", mm2local);
-	rt_vls_structprint( str, rt_hf_parse, ip->idb_ptr );
+	bu_vls_structprint( str, rt_hf_parse, ip->idb_ptr );
 	rt_vls_strcat( str, "\n" );
 
 	return(0);
