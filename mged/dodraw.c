@@ -227,9 +227,10 @@ int regionid;
 		if( sp->s_addr == 0 )  {
 			no_memory = 1;
 			(void)printf("draw: out of Displaylist\n");
-			return(-1);		/* ERROR */
+			sp->s_bytes = 0;	/* not drawn */
+		} else {
+			sp->s_bytes = dmp->dmr_load(sp->s_addr, sp->s_bytes );
 		}
-		sp->s_bytes = dmp->dmr_load( sp->s_addr, sp->s_bytes );
 	}
 
 	/* Solid is successfully drawn.  Compute maximum. */
