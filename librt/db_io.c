@@ -20,7 +20,7 @@
  *	All rights reserved.
  */
 #ifndef lint
-static char RCSid[] = "@(#)$Header$ (BRL)";
+static const char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include "conf.h"
@@ -261,7 +261,7 @@ long		offset;		/* byte offset from start of file */
 /* should be HIDDEN */
 int
 db_write( dbip, addr, count, offset )
-CONST struct db_i	*dbip;
+struct db_i	*dbip;
 CONST genptr_t	addr;
 long		count;
 long		offset;
@@ -296,8 +296,9 @@ long		offset;
 	bu_semaphore_release( BU_SEM_SYSCALL );
 	if( got != count )  {
 		perror("db_write");
-		bu_log("db_write(%s):  write error.  Wanted %d, got %d bytes\n",
+		bu_log("db_write(%s):  write error.  Wanted %d, got %d bytes.  File forced read-only.\n",
 			dbip->dbi_filename, count, got );
+		dbip->dbi_read_only = 1;
 		return(-1);
 	}
 	return(0);			/* OK */
