@@ -785,6 +785,7 @@ struct db_tree_state {
 #else
 	genptr_t		*ts_m;		/* ptr to genptr */
 #endif
+	struct rt_i		*ts_rtip;	/* Helper for rt_gettrees() */
 };
 #define TS_SOFAR_MINUS	1		/* Subtraction encountered above */
 #define TS_SOFAR_INTER	2		/* Intersection encountered above */
