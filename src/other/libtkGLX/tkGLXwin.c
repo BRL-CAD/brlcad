@@ -95,7 +95,7 @@ typedef struct {
     int height;			/* Height to request for window.  <= 0 means
 				 * don't request any size. */
 
-    Cursor cursor;		/* Current cursor for window, or None. */
+    Tk_Cursor cursor;		/* Current cursor for window, or None. */
     int flags;			/* Various flags;  see below for
 				 * definitions. */
 
