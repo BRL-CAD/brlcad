@@ -17,6 +17,7 @@ static char RCSid[] = "$Header$";
 
 extern outval		ValTab[];
 extern int		nirt_debug;
+extern int		overlap_claims;
 extern double		base2local;
 extern double		local2base;
 overlap			ovlp_list;
@@ -39,12 +40,21 @@ struct seg		*finished_segs;
     overlap		*ovp;	/* the overlap record for this partition */
     point_t		inormal;
     point_t		onormal;
+    struct bu_vls	claimant_list;	/* Names of the claiming regions */
+    int			need_to_free = 0;	/* Clean up the bu_vls? */
 
     fastf_t		get_obliq();
 
 
     report(FMT_RAY);
     report(FMT_HEAD);
+    if (overlap_claims == OVLP_REBUILD_FASTGEN)
+	rt_rebuild_overlaps(part_head, ap, 1);
+    else if (overlap_claims == OVLP_REBUILD_ALL)
+	rt_rebuild_overlaps(part_head, ap, 0);
+#if 0
+    rt_pr_partitions( ap->a_rt_i, part_head, " ...At top of for loop:" );
+#endif
     for (part = part_head -> pt_forw; part != part_head; part = part -> pt_forw)
     {
 	++part_nm;
@@ -111,9 +121,51 @@ struct seg		*finished_segs;
 	    get_obliq(ap -> a_ray.r_dir, inormal);
 	ValTab[VTI_OBLIQ_OUT].value.fval =
 	    get_obliq(ap -> a_ray.r_dir, onormal);
+#if 0
+	if (*(part -> pt_overlap_reg) == REGION_NULL)
+#else
+	if (part -> pt_overlap_reg == 0)
+#endif
+	{
+	    ValTab[VTI_CLAIMANT_COUNT].value.ival = 1;
+	    ValTab[VTI_CLAIMANT_LIST].value.sval =
+	    ValTab[VTI_CLAIMANT_LISTN].value.sval =
+		basename(part -> pt_regionp -> reg_name);
+	}
+	else
+	{
+	    struct region	**rpp;
+	    char		*cp;
+
+	    bu_vls_init(&claimant_list);
+	    ValTab[VTI_CLAIMANT_COUNT].value.ival = 0;
+	    for (rpp = part -> pt_overlap_reg; *rpp != REGION_NULL; ++rpp)
+	    {
+		if (ValTab[VTI_CLAIMANT_COUNT].value.ival++)
+		    bu_vls_strcat(&claimant_list, " ");
+		bu_vls_strcat(&claimant_list, basename((*rpp) -> reg_name));
+	    }
+	    ValTab[VTI_CLAIMANT_LIST].value.sval =
+		bu_vls_addr(&claimant_list);
+	    ValTab[VTI_CLAIMANT_LISTN].value.sval =
+		bu_vls_strdup(&claimant_list);
+	    for (cp = ValTab[VTI_CLAIMANT_LISTN].value.sval;
+		*cp != '\0'; ++cp)
+		if (*cp == ' ')
+		    *cp = '\n';
+	    need_to_free = 1;
+	}
 
 	/* Do the printing for this partition */
 	report(FMT_PART);
+
+	if (need_to_free)
+	{
+	    bu_vls_free(&claimant_list);
+	    bu_free(ValTab[VTI_CLAIMANT_LISTN].value.sval,
+		"returned by bu_vls_strdup");
+	    need_to_free = 0;
+	}
 
 	if ((ovp = find_ovlp(part)) != OVERLAP_NULL)
 	{
@@ -193,8 +245,8 @@ struct region			*reg2;
     new_ovlp -> forw -> backw = new_ovlp;
     ovlp_list.forw = new_ovlp;
 
-    /* Match BRL-CAD 4.4's accidental behavior: take higher bit */
-    if( reg1->reg_bit > reg2->reg_bit )  return 1;
+    /* Match BRL-CAD 4.4's accidental behavior: take lower bit */
+    if( reg1->reg_bit < reg2->reg_bit )  return 1;
     else return 2;
 }
 
