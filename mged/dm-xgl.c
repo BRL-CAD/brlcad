@@ -2054,7 +2054,7 @@ fk_perspective()
 {
 	/* 'Borrowed' from dm-4d.c */
 	perspective_mode = 1 - perspective_mode;
-        rt_vls_printf( &dm_values.dv_string, "set perspective=%d\n",
+        rt_vls_printf( &dm_values.dv_string, "set perspective %d\n",
         	perspective_mode ? perspective_table[perspective_angle] : -1 );
 	/*
 	 * If depth-cueing is on, re-set the depth-cue scale factors to allow
@@ -2147,7 +2147,7 @@ fk_p_angle()
 		perspective_angle = NUM_PERSPECTIVE_ANGLES-1;
        	if(perspective_mode) 
 		rt_vls_printf( &dm_values.dv_string,
-       		"set perspective=%d\n", perspective_table[perspective_angle] );
+       		"set perspective %d\n", perspective_table[perspective_angle] );
 	dmaflag = 1;
 
 }
