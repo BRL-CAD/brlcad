@@ -1895,12 +1895,14 @@ struct rt_functab {
 			CONST struct bu_external * /*ep*/,
 			CONST mat_t /*mat*/,
 			CONST struct db_i * /*dbip*/,
-			struct resource * /*resp*/));
+			struct resource * /*resp*/,
+			CONST int minor_type));
 	int	(*ft_export5) BU_ARGS((struct bu_external * /*ep*/,
 			CONST struct rt_db_internal * /*ip*/,
 			double /*local2mm*/,
 			CONST struct db_i * /*dbip*/,
-			struct resource * /*resp*/));
+			struct resource * /*resp*/,
+			CONST int minor_type));
 	int	(*ft_import) BU_ARGS((struct rt_db_internal * /*ip*/,
 			CONST struct bu_external * /*ep*/,
 			CONST mat_t /*mat*/,
@@ -2719,7 +2721,8 @@ extern int rt_comb_import5( struct rt_db_internal   *ip,
         const struct bu_external *ep,
         const mat_t             mat,
         const struct db_i       *dbip,
-        struct resource         *resp );
+        struct resource         *resp,
+	const int		minor_type);
 
 
 /* db_lookup.c */

@@ -1098,8 +1098,11 @@ rt_db_cvt_to_external5(
 	RT_CK_RESOURCE(resp);
 	BU_INIT_EXTERNAL( &body );
 
+	major = DB5_MAJORTYPE_BRLCAD;
+	minor = ip->idb_type;	/* XXX not necessarily v5 numbers. */
+
 	/* Scale change on export is 1.0 -- no change */
-	if( ip->idb_meth->ft_export5( &body, ip, conv2mm, dbip, resp ) < 0 )  {
+	if( ip->idb_meth->ft_export5( &body, ip, conv2mm, dbip, resp, minor ) < 0 )  {
 		bu_log("rt_db_cvt_to_external5(%s):  ft_export5 failure\n",
 			name);
 		bu_free_external( &body );
@@ -1115,9 +1118,6 @@ rt_db_cvt_to_external5(
 	} else {
 		BU_INIT_EXTERNAL(&attributes);
 	}
-
-	major = DB5_MAJORTYPE_BRLCAD;
-	minor = ip->idb_type;	/* XXX not necessarily v5 numbers. */
 
 	db5_export_object3( ext, DB5HDR_HFLAGS_DLI_APPLICATION_DATA_OBJECT,
 		name, &attributes, &body,
@@ -1373,7 +1373,7 @@ rt_db_external5_to_internal5(
 	}
 
 	/* ip has already been initialized, and should not be re-initted */
-	if( rt_functab[id].ft_import5( ip, &raw.body, mat, dbip, resp ) < 0 )  {
+	if( rt_functab[id].ft_import5( ip, &raw.body, mat, dbip, resp, id ) < 0 )  {
 		bu_log("rt_db_get_internal5(%s):  import failure\n",
 			name );
 		rt_db_free_internal( ip, resp );

@@ -86,11 +86,12 @@ CONST struct bu_structparse rt_nul_parse[] = {
 			CONST struct bn_tol *tol)); \
 	BU_EXTERN(int rt_##name##_import5, (struct rt_db_internal *ip, \
 			CONST struct bu_external *ep, CONST mat_t mat, \
-			CONST struct db_i *dbip, struct resource *resp )); \
+			CONST struct db_i *dbip, struct resource *resp, CONST int minor_type )); \
 	BU_EXTERN(int rt_##name##_export5, (struct bu_external *ep, \
 			CONST struct rt_db_internal *ip, \
 			double local2mm, CONST struct db_i *dbip, \
-			struct resource *resp )); \
+			struct resource *resp, \
+			CONST int minor_type)); \
 	BU_EXTERN(int rt_##name##_import, (struct rt_db_internal *ip, \
 			CONST struct bu_external *ep, CONST mat_t mat, \
 			CONST struct db_i *dbip, struct resource *resp )); \
@@ -149,10 +150,10 @@ CONST struct bu_structparse rt_nul_parse[] = {
 			struct model *m, struct rt_db_internal *ip, \
 			CONST struct bn_tol *tol)); \
 	BU_EXTERN(int rt_/**/name/**/_import5, (struct rt_db_internal *ip, \
-			CONST struct bu_external *ep, CONST mat_t mat, CONST struct db_i *dbip )); \
+			CONST struct bu_external *ep, CONST mat_t mat, CONST struct db_i *dbip, CONST int minor_type )); \
 	BU_EXTERN(int rt_/**/name/**/_export5, (struct bu_external *ep, \
 			CONST struct rt_db_internal *ip, \
-			double local2mm, CONST struct db_i *dbip )); \
+			double local2mm, CONST struct db_i *dbip, CONST int minor_type )); \
 	BU_EXTERN(int rt_/**/name/**/_import, (struct rt_db_internal *ip, \
 			CONST struct bu_external *ep, CONST mat_t mat, CONST struct db_i *dbip )); \
 	BU_EXTERN(int rt_/**/name/**/_export, (struct bu_external *ep, \
@@ -263,55 +264,50 @@ int rt_comb_export5(
 	const struct rt_db_internal	*ip,
 	double				local2mm,
 	const struct db_i		*dbip,
-	struct resource			*resp);
+	struct resource			*resp,
+	const int			minor_type);
 int rt_comb_import5(
 	struct rt_db_internal	*ip,
 	const struct bu_external *ep,
 	const mat_t		mat,
 	const struct db_i	*dbip,
-	struct resource		*resp);
+	struct resource		*resp,
+	const int		minor_type);
 
 /* from db5_bin.c */
-BU_EXTERN(int rt_bin_expm_import5, (struct rt_db_internal * ip,
+BU_EXTERN(int rt_binexpm_import5, (struct rt_db_internal * ip,
  			CONST struct bu_external *ep,
  			CONST mat_t mat,
 			CONST struct db_i *dbip,
-			      struct resource *resp));
-BU_EXTERN(int rt_bin_unif_import5, (struct rt_db_internal * ip,
+			      struct resource *resp,
+			CONST int minor_type));
+BU_EXTERN(int rt_binunif_import5, (struct rt_db_internal * ip,
  			CONST struct bu_external *ep,
  			CONST mat_t mat,
 			CONST struct db_i *dbip,
-			      struct resource *resp));
-BU_EXTERN(int rt_bin_mime_import5, (struct rt_db_internal * ip,
+			      struct resource *resp,
+			CONST int minor_type));
+BU_EXTERN(int rt_binmime_import5, (struct rt_db_internal * ip,
  			CONST struct bu_external *ep,
  			CONST mat_t mat,
 			CONST struct db_i *dbip,
-			      struct resource *resp));
+			      struct resource *resp,
+			CONST int minor_type));
 
-BU_EXTERN(int rt_bin_expm_export5, (struct bu_external *ep,
+BU_EXTERN(int rt_binexpm_export5, (struct bu_external *ep,
 			CONST struct rt_db_internal *ip,
 			double local2mm,
 			CONST struct db_i *dbip,
-			struct resource *resp));
+			struct resource *resp,
+			CONST int minor_type));
 
-BU_EXTERN(int rt_bin_unif_export5, (struct bu_external *ep,
-			CONST struct rt_db_internal *ip,
-			double local2mm,
-			CONST struct db_i *dbip,
-			struct resource *resp));
-
-
-
-BU_EXTERN(int rt_binexpm_import5, (struct rt_db_internal *ip,
-		CONST unsigned char minor_type,
-		CONST struct bu_external *ep,
-		   CONST struct db_i *dbip ));
-BU_EXTERN(int rt_binmime_import5, (struct rt_db_internal *ip,
-		CONST unsigned char minor_type,
-		CONST struct bu_external *ep, CONST struct db_i *dbip ));
 BU_EXTERN(int rt_binunif_export5, (struct bu_external *ep,
-		CONST struct rt_db_internal *ip,
-		CONST struct db_i *dbip ));
+			CONST struct rt_db_internal *ip,
+			double local2mm,
+			CONST struct db_i *dbip,
+			struct resource *resp,
+			CONST int minor_type));
+
 BU_EXTERN(void rt_binunif_ifree, (struct rt_db_internal *ip,
 		struct resource *resp));
 BU_EXTERN(int rt_binunif_describe, (struct bu_vls *str,
@@ -894,7 +890,7 @@ CONST struct rt_functab rt_functab[] = {
 		rt_nul_piece_shot, rt_nul_piece_hitsegs,
 		rt_nul_uv,	rt_nul_curve,	rt_nul_class,	rt_nul_free,
 		rt_nul_plot,	rt_nul_vshot,	rt_nul_tess,	rt_nul_tnurb,
-		rt_bin_expm_import5,
+		rt_binexpm_import5,
 	 rt_nul_export5,
 		rt_nul_import,	rt_nul_export,	rt_nul_ifree,
 		rt_nul_describe,rt_generic_xform, NULL,
@@ -909,8 +905,8 @@ CONST struct rt_functab rt_functab[] = {
 		rt_nul_piece_shot, rt_nul_piece_hitsegs,
 		rt_nul_uv,	rt_nul_curve,	rt_nul_class,	rt_nul_free,
 		rt_nul_plot,	rt_nul_vshot,	rt_nul_tess,	rt_nul_tnurb,
-		rt_bin_unif_import5,
-	 rt_bin_unif_export5,
+		rt_binunif_import5,
+	 rt_binunif_export5,
 		rt_nul_import,	rt_nul_export,	rt_binunif_ifree,
 		rt_binunif_describe,rt_generic_xform, NULL,
 		0,				0,
@@ -924,7 +920,7 @@ CONST struct rt_functab rt_functab[] = {
 		rt_nul_piece_shot, rt_nul_piece_hitsegs,
 		rt_nul_uv,	rt_nul_curve,	rt_nul_class,	rt_nul_free,
 		rt_nul_plot,	rt_nul_vshot,	rt_nul_tess,	rt_nul_tnurb,
-		rt_bin_mime_import5, rt_nul_export5,
+		rt_binmime_import5, rt_nul_export5,
 		rt_nul_import,	rt_nul_export,	rt_nul_ifree,
 		rt_nul_describe,rt_generic_xform, NULL,
 		0,				0,
@@ -1016,11 +1012,13 @@ int NDEF(rt_nul_tnurb,(struct nmgregion **r,
 int NDEF(rt_nul_import5,(struct rt_db_internal *ip,
 			CONST struct bu_external *ep,
 			CONST mat_t mat, CONST struct db_i *dbip,
-			struct resource *resp ))
+			struct resource *resp,
+			 CONST int minot_type))
 int NDEF(rt_nul_export5,(struct bu_external *ep,
 			CONST struct rt_db_internal *ip,
 			double local2mm, CONST struct db_i *dbip,
-			struct resource *resp ))
+			struct resource *resp,
+			CONST int minor_type ))
 int NDEF(rt_nul_import,(struct rt_db_internal *ip,
 			CONST struct bu_external *ep,
 			CONST mat_t mat, CONST struct db_i *dbip,

@@ -426,7 +426,8 @@ rt_comb_import5(
 	const struct bu_external *ep,
 	const mat_t		mat,
 	const struct db_i	*dbip,
-	struct resource		*resp)
+	struct resource		*resp,
+	const int		minor_type)
 {
 	struct rt_comb_internal	*comb;
 	unsigned char	*cp;

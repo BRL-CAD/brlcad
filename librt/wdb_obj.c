@@ -2215,7 +2215,7 @@ wdb_dir_add5(
 			in.idb_avs.count = 0;
 		}
 
-		if( rt_comb_import5( &in, &rip->body, NULL, dasp->main_dbip, dasp->wdbp->wdb_resp ) ) {
+		if( rt_comb_import5( &in, &rip->body, NULL, dasp->main_dbip, dasp->wdbp->wdb_resp, 0 ) ) {
 			Tcl_AppendResult(dasp->interp,
 					 "rt_comb_import5() Failed for ",
 					 local,
