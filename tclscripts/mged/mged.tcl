@@ -275,6 +275,11 @@ proc ia_print_prompt { w str } {
     $w mark gravity promptEnd left
 }
 
+
+if ![info exists mged_players] {
+    set mged_players ""
+}
+
 proc get_player_id_t { w } {
     global mged_players
     
