@@ -31,7 +31,7 @@
  *	Duplicate a given NMG face, move it by specified vector,
  *	and create a solid bounded by these faces.
  */
-extrude_nmg_face(fu, Vec, tol)
+nmg_extrude_face(fu, Vec, tol)
 struct faceuse	*fu;	/* Face to extrude. */
 vect_t		Vec;	/* Magnitude and direction of extrusion. */
 struct rt_tol	*tol;	/* NMG tolerances. */
