@@ -25,11 +25,11 @@ struct glx_vars {
   Window win;
   Tk_Window top;
   Tk_Window xtkwin;
+  int depth;
   int omx, omy;
   unsigned int mb_mask;
   Colormap cmap;
-  Visual *vis;
-  int depth;
+  XVisualInfo *vip;
   int devmotionnotify;
   int devbuttonpress;
   int devbuttonrelease;

@@ -43,6 +43,16 @@ extern vect_t curr_e_axes_pos;  /* from edsol.c */
 void draw_grid();
 void snap_to_grid();
 
+#if 0
+f_grid(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
+int	argc;
+char	**argv;
+{
+}
+#endif
+
 void
 draw_grid()
 {
