@@ -1,7 +1,7 @@
 /*
- *	SCCS id:	@(#) vdeck.c	2.4
- *	Last edit: 	9/17/84 at 07:56:50
- *	Retrieved: 	8/13/86 at 08:10:37
+ *	SCCS id:	@(#) vdeck.c	2.5
+ *	Last edit: 	10/16/84 at 14:25:42
+ *	Retrieved: 	8/13/86 at 08:11:03
  *	SCCS archive:	/m/cad/vdeck/RCS/s.vdeck.c
  *
  *	Author:		Gary S. Moss
@@ -11,7 +11,7 @@
  *			(301)278-6647 or AV-283-6647
  */
 static
-char	sccsTag[] = "@(#) vdeck.c	2.4	last edit 9/17/84 at 07:56:50";
+char	sccsTag[] = "@(#) vdeck.c	2.5	last edit 10/16/84 at 14:25:42";
 
 /*
  *	Derived from KARDS, written by Keith Applin.
@@ -398,7 +398,7 @@ matp_t	old_xlate;
 				else	nextdp = diradd(mp->m_brname,
 							nextdp->d_addr );
 			}
-			mat_mul( new_xlate, mp->m_mat, old_xlate );
+			mat_mul( new_xlate, old_xlate, mp->m_mat );
 
 			/* Recursive call
 			 */
