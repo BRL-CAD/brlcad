@@ -729,6 +729,7 @@ CONST struct rt_tol	*tol;
 	struct loopuse		*lu;
 	plane_t			plane;
 	struct vertex		*a, *b, *c;
+	register int	stupid_compiler;
 
 	RT_CK_TOL(tol);
 
@@ -767,9 +768,10 @@ CONST struct rt_tol	*tol;
 		c = eu_final->vu_p->v_p;
 		NMG_CK_VERTEX(c);
 		NMG_CK_VERTEX_G(c->vg_p);
-	} while( (c == b
-		|| VAPPROXEQUAL(a->vg_p->coord, c->vg_p->coord, tol->dist)
-		|| VAPPROXEQUAL(b->vg_p->coord, c->vg_p->coord, tol->dist)
+		stupid_compiler = c == b ||
+		    VAPPROXEQUAL(a->vg_p->coord, c->vg_p->coord, tol->dist) ||
+		    VAPPROXEQUAL(b->vg_p->coord, c->vg_p->coord, tol->dist);
+	} while( (stupid_compiler
 		|| rt_3pts_collinear(a->vg_p->coord, b->vg_p->coord,
 			c->vg_p->coord, tol))
 		&& eu_next->vu_p != eu->vu_p );
