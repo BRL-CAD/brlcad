@@ -34,13 +34,6 @@
 /* Size limits.								*/
 #define MAXLN	80	/* max length of input line */
 
-#ifndef NDIR
-#ifdef sel
-#define NDIR	9000	/* max objects in input */
-#else
-#define NDIR	20000	/* max objects in input */
-#endif
-#endif
 #define MAXARG	20	/* max arguments on command line */
 
 /* Standard flag settings.						*/
@@ -55,12 +48,9 @@ extern void		abort_sig(), quit();
 extern void		toc(), list_toc();
 extern void		prompt();
 
-extern char	*toc_list[];
-extern char	*curr_list[];
 extern int	curr_ct;
 extern char	*arg_list[];
 extern int	arg_ct;
-extern char	*tmp_list[];
 extern int	tmp_ct;
 
 extern char	*objfile;
