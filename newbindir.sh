@@ -1,4 +1,5 @@
 #!/bin/sh
+#  $Header$
 
 eval `grep "^BINDIR=" setup.sh`		# sets BINDIR
 LIBDIR=`echo $BINDIR | sed -e 's/bin$/lib/'`
