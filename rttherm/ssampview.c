@@ -92,8 +92,8 @@ CONST struct rt_tabdata *tabp;
 	bu_vls_init(&str);
 
 	rt_tabdata_to_tcl(&str, tabp);
-	Tcl_SetVar( interp, name, bu_vls_addr(&str), 0 );
-	Tcl_AppendResult( interp, (char *)name, " ", (char *)NULL );
+	Tcl_SetVar( interp, (char *)name, bu_vls_addr(&str), 0 );
+	Tcl_AppendResult( interp, name, " ", (char *)NULL );
 
 	bu_vls_free(&str);
 }
@@ -118,10 +118,54 @@ char		*argv[];
 	assign_tabdata_to_tcl_var( interp, "ntsc_g_samp", ntsc_g );
 	assign_tabdata_to_tcl_var( interp, "ntsc_b_samp", ntsc_b );
 
+#if 0
 	/* These are the curves from the data tables in the library */
 	assign_tabdata_to_tcl_var( interp, "ntsc_r_orig", rt_NTSC_r_tabdata );
 	assign_tabdata_to_tcl_var( interp, "ntsc_g_orig", rt_NTSC_g_tabdata );
 	assign_tabdata_to_tcl_var( interp, "ntsc_b_orig", rt_NTSC_b_tabdata );
+#endif
+
+	/* Sum togther the sampled curves */
+	{
+		struct rt_tabdata	*sum;
+		RT_GET_TABDATA( sum, ntsc_r->table );
+		rt_tabdata_add( sum, ntsc_r, ntsc_g );
+		rt_tabdata_add( sum, sum, ntsc_b );
+		assign_tabdata_to_tcl_var( interp, "ntsc_sum", sum );
+		bu_free( sum, "rt_tabdata sum" );
+	}
+
+	/* Check out the RGB to spectrum curves */
+	{
+		struct rt_tabdata	*r, *g, *b, *sum;
+		point_t		rgb;
+
+		RT_GET_TABDATA( r, ntsc_r->table );
+		RT_GET_TABDATA( g, ntsc_r->table );
+		RT_GET_TABDATA( b, ntsc_r->table );
+		RT_GET_TABDATA( sum, ntsc_r->table );
+
+		VSET( rgb, 1, 0, 0 );
+		rt_spect_reflectance_rgb( r, rgb );
+		assign_tabdata_to_tcl_var( interp, "reflectance_r", r );
+
+		VSET( rgb, 0, 1, 0 );
+		rt_spect_reflectance_rgb( g, rgb );
+		assign_tabdata_to_tcl_var( interp, "reflectance_g", g );
+
+		VSET( rgb, 0, 0, 1 );
+		rt_spect_reflectance_rgb( b, rgb );
+		assign_tabdata_to_tcl_var( interp, "reflectance_b", b );
+
+		rt_tabdata_add( sum, r, g );
+		rt_tabdata_add( sum, sum, b );
+		assign_tabdata_to_tcl_var( interp, "reflectance_sum", sum );
+
+		bu_free( r, "r" );
+		bu_free( g, "g" );
+		bu_free( b, "b" );
+		bu_free( sum, "sum" );
+	}
 
 	return TCL_OK;
 }
