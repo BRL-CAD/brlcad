@@ -192,6 +192,8 @@ register long	magic;
 		return "rt application";
 	case RTI_MAGIC:
 		return("rt_i");
+	case RT_FUNCTAB_MAGIC:
+		return "rt_functab";
 
 	/*
 	 *  rtgeom.h
