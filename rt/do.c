@@ -39,7 +39,7 @@ static char RCSrt[] = "@(#)$Header$ (BRL)";
 #include "./rdebug.h"
 #include "../librt/debug.h"
 
-#ifdef HAVE_UNIX_IO
+#ifdef HAVE_SBRK
 extern char	*sbrk();
 #endif
 
@@ -503,7 +503,7 @@ register struct rt_i	*rtip;
 		rt_pr_lock_stats();
 	}
 
-#ifdef HAVE_UNIX_IO
+#ifdef HAVE_SBRK
 	rt_log("Additional dynamic memory used=%d. bytes\n",
 		sbrk(0)-beginptr );
 	beginptr = sbrk(0);
@@ -533,7 +533,7 @@ struct rt_i	*rtip;
 		(void)rt_read_timer( outbuf, sizeof(outbuf) );
 		rt_log( "PREP: %s\n", outbuf );
 	}
-#ifdef HAVE_UNIX_IO
+#ifdef HAVE_SBRK
 	rt_log("Additional dynamic memory used=%d. bytes\n",
 		sbrk(0)-beginptr );
 	beginptr = sbrk(0);
@@ -816,7 +816,7 @@ int framenumber;
 	 *  All done.  Display run statistics.
 	 */
 	rt_log("SHOT: %s\n", outbuf );
-#ifdef HAVE_UNIX_IO
+#ifdef HAVE_SBRK
 	rt_log("Additional dynamic memory used=%d. bytes\n",
 		sbrk(0)-beginptr );
 		beginptr = sbrk(0);
