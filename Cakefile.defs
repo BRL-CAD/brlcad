@@ -315,7 +315,7 @@ set -S2 "/bin/sh"
 #	define	MGED_LIBES	-lX11 -lresolv -lsocket -lnsl -L/usr/ucblib -lucb
 #endif
 
-#ifdef gould
+#if defined(gould) && !defined(NP1)
 /*	Gould SEL, PowerNode.  Obtain more stack space with -m */
 /*	Tested with UTX/32 2.0 */
 #	undef	sel
@@ -343,6 +343,38 @@ set -S2 "/bin/sh"
 #		define	LIBFB_LIBES	LIBPKG /usr/local/lib/libX11.a
 #		define	MGED_OBJS	dm-X
 #		define	MGED_CONFIG	-DDM_X -I/m/X11/core
+#		define	MGED_LIBES	/usr/local/lib/libX11.a
+#	endif
+#	define	LIBRT_TIMER	timer42
+#endif
+
+/* XXX The existance of the CPP symbol NP1 is unknown.  */
+#if defined(gould) && defined(NP1)
+/*	Gould NP1 */
+#	undef	np1
+#	define	MTYPE	np1
+#	define	BSD	43
+#	define	HAS_TCP	1
+#	if 1
+/*		Normal configuration, with optimization */
+#	else
+/*		DBX configuration, -g, no optimization */
+#		define  OPTIMIZER /**/
+#		define	CC_OPTS	-g
+#		define	LD_OPTS	-g
+#	endif
+#	if 1
+/*		Normal Configuration */
+#		define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB
+#		define	LIBFB_OBJS	if_remote if_ab
+#		define	LIBFB_LIBES	LIBPKG
+#	else
+/*		X-Windows Configuration */
+#		define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB -DIF_X
+#		define	LIBFB_OBJS	if_remote if_ab if_X
+#		define	LIBFB_LIBES	LIBPKG /usr/local/lib/libX11.a
+#		define	MGED_OBJS	dm-X
+#		define	MGED_CONFIG	-DDM_X
 #		define	MGED_LIBES	/usr/local/lib/libX11.a
 #	endif
 #	define	LIBRT_TIMER	timer42
@@ -599,6 +631,7 @@ set -S2 "/bin/sh"
 #	define	BSD	43
 #	define	HAS_TCP	1
 #	define	OPTIMIZER	-O2
+/*#	define	CC_DEFS	-DAUTOSPEC	/* What does this do? */
 #	define	LIBMALLOC	/* use vendor library */
 #	define	LIBRT_TIMER	timer42
 #	if 1
@@ -786,7 +819,7 @@ set -S2 "/bin/sh"
 #endif
 
 #ifdef ardent
-/* This configuration information is based on a preliminary test */
+/* Ardent/Stardent. This configuration information is based on a preliminary test */
 #	undef	ard
 #	define	MTYPE	ard
 /*	The network code is not tested with BRL-CAD yet */
@@ -795,13 +828,12 @@ set -S2 "/bin/sh"
 /*	Note that -O2 causes multiple compiler failures */
 #	define	OPTIMIZER	-O1
 /*	Note that a cc -43 option gives a workable BSD environment */
-/*XXX	Note that this X11 configuration may need tweaking */
 #	define	LIBFB_CONFIG	-DIF_X
 #	define	LIBFB_OBJS	if_X
-#	define	LIBFB_LIBES	-lX11
+#	define	LIBFB_LIBES	-L/usr/X11/lib -lX11
 #	define	MGED_OBJS	dm-X
 #	define	MGED_CONFIG	-DDM_X
-#	define	MGED_LIBES	/usr/lib/libX11.a
+#	define	MGED_LIBES	-L/usr/X11/lib -lX11
 #endif
 
 #ifdef stellar
@@ -858,28 +890,6 @@ set -S2 "/bin/sh"
 #	define	LIBFB_OBJS	if_remote
 #	define	LIBFB_CONFIG	-DIF_REMOTE
 #	define	LIBFB_LIBES	LIBPKG
-#endif
-
-/*
- *  Prototype System V machine
- */
-#ifdef RANDOM_SYSV
-#	define	MTYPE	unknown_sysv
-#	define	HAS_TCP	0
-#	define	LIBRT_TIMER	timerunix
-#endif
-
-#ifdef VLD
-/*	Not yet shaken out for use with Cake */
-#	define	HAS_TCP	0
-#	define	CC_DEFS	-DVLDSYSV
-#	define	LIBRT_TIMER	timer52brl
-#	define	CC	/usr/5bin/cc
-#	define	RANLIB	ranlib
-#	define	BINDIR	/vld/bin
-#	define	LIBDIR	/vld/lib
-#	define	ETCDIR	/vld/etc
-#	define	MANDIR	/usr/5lib/man/local/min
 #endif
 
 /****************************************************************
