@@ -20,27 +20,25 @@
 #	The View class wraps LIBRT's view object.
 #
 class View {
-    private variable view ""
+    protected variable view ""
 
-    public variable size ""
-    public variable scale ""
-    public variable center ""
-    public variable aet ""
+    public variable size 1000
+    public variable scale 500
+    public variable center {0 0 0}
+    public variable aet "0 90 0"
     public variable perspective_angle 90
 
     constructor {args} {
 	# first create view object
 	set view [v_open $this\_view]
 
-	# now safe to process options
+	# process options
 	eval configure $args
 
-	# initialize public variables
-	set size [$view size]
-	set scale [$view scale]
-	set center [$view center]
-	set aet [$view aet]
-	$view perspective $perspective_angle
+        View::size $size
+	eval View::center $center
+	eval View::aet $aet
+	View::perspective $perspective_angle
     }
 
     destructor {
@@ -72,11 +70,11 @@ configbody View::scale {
 }
 
 configbody View::center {
-    View::center $center
+    eval View::center $center
 }
 
 configbody View::aet {
-    View::aet $aet
+    eval View::aet $aet
 }
 
 configbody View::perspective_angle {
