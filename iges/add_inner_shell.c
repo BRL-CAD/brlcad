@@ -15,13 +15,14 @@
 
 #include <stdio.h>
 
-#include "machine.h"
-#include "vmath.h"
 #ifdef USE_STRING_H
 #include <string.h>
 #else
 #include <strings.h>
 #endif
+
+#include "machine.h"
+#include "vmath.h"
 #include "rtlist.h"
 #include "rtstring.h"
 #include "nmg.h"
@@ -32,6 +33,7 @@
 
 RT_EXTERN( struct faceuse *Add_face_to_shell , ( struct shell *s , int entityno , int face_orient) );
 
+struct shell *
 Add_inner_shell( r , entityno , shell_orient )
 struct nmgregion *r;
 int entityno;
@@ -40,9 +42,9 @@ int shell_orient;
 
 	int		sol_num;		/* IGES solid type number */
 	int		no_of_faces;		/* Number of faces in shell */
+	int		face_count=0;		/* Actual number of faces made */
 	int		*face_de;		/* Directory seqence numbers for faces */
 	int		*face_orient;		/* Orientation of faces */
-	int		face_use_orient;	/* Face orientation for shell */
 	int		face;
 	struct shell	*s;			/* NMG shell */
 	struct faceuse	**fu;			/* list of faceuses */
@@ -57,8 +59,8 @@ int shell_orient;
 	}
 
 	Readrec( dir[entityno]->param );
-	Readint( &sol_num , "SHELL:" );
-	Readint( &no_of_faces , "\tno. of faces:" );
+	Readint( &sol_num , "" );
+	Readint( &no_of_faces , "" );
 
 	face_de = (int *)rt_calloc( no_of_faces , sizeof( int ) , "Add_inner_shell face DE's" );
 	face_orient = (int *)rt_calloc( no_of_faces , sizeof( int ) , "Add_inner_shell orients" );
@@ -73,17 +75,15 @@ int shell_orient;
 	s = nmg_msv( r );
 	for( face=0 ; face<no_of_faces ; face++ )
 	{
-		if( face_orient[face] == shell_orient )
-			face_use_orient = 1;
-		else
-			face_use_orient = 0;
-		 fu[face] = Add_face_to_shell( s , (face_de[face]-1)/2 , face_use_orient );
+		fu[face_count] = Add_face_to_shell( s , (face_de[face]-1)/2 , 1 );
+		if( fu[face_count] != (struct faceuse *)NULL )
+			face_count++;
 	}
 
-	nmg_gluefaces( fu , no_of_faces );
+	nmg_gluefaces( fu , face_count );
 
 	rt_free( (char *)fu , "Add_inner_shell: faceuse list" );
 	rt_free( (char *)face_de , "Add_inner_shell: face DE's" );
 	rt_free( (char *)face_orient , "Add_inner_shell: face orients" );
-	return( 1 );
+	return( s );
 }
