@@ -1954,7 +1954,16 @@ struct shell *new_s;
 		NMG_CK_FACE_G_PLANE( fg );
 
 		if( NMG_INDEX_TEST_AND_SET( flags , fg ) )
+		{
+			if( debug )
+				rt_log( "Recalculating geometry for face x%x fg=x%x\n", f, fg );
 			(void)nmg_calc_face_g( fu );
+			if( debug )
+			{
+				NMG_CK_FACE_G_PLANE( fu->f_p->g.plane_p );
+				rt_log( "New geometry is ( %g %g %g %g )\n", V4ARGS( fu->f_p->g.plane_p->N ) );
+			}
+		}
 	}
 
 	rt_free( (char *)flags , "Recalc_face_g: flags" );
@@ -2696,6 +2705,24 @@ Make_arb6_obj()
 		rt_log( "ERROR: rt_mem_barriercheck failed in make_arb6_obj\n" );
 }
 
+void
+Check_face_g( s )
+struct shell *s;
+{
+	struct faceuse *fu;
+	struct face *f;
+	struct face_g_plane *fg;
+
+	for( RT_LIST_FOR( fu , faceuse , &s->fu_hd ) )
+	{
+		NMG_CK_FACEUSE( fu );
+		f = fu->f_p;
+		NMG_CK_FACE( f );
+		fg = f->g.plane_p;
+		NMG_CK_FACE_G_PLANE( fg );
+	}
+}
+
 int
 Check_radials( s_p )
 struct shell *s_p;
@@ -2703,6 +2730,7 @@ struct shell *s_p;
 	struct nmg_ptbl edgeuses;
 	struct nmg_ptbl uses;
 	struct edgeuse *eu1;
+	double *angles=NULL;
 	int i;
 	int radials_ok=1;
 	int *flags;
@@ -2785,13 +2813,13 @@ struct shell *s_p;
 			struct edgeuse *eu,*prev_eu;
 			vect_t xvec,yvec,zvec;
 			vect_t eu_dir,prev_eu_dir;
-			double *angles;
 			double ang;
 			int done=0;
 			int use_no=0;
 
 			radials_ok = 0;
 			angles = (double *)rt_calloc( use_count , sizeof( double ) , "Check_radials: angles" );
+
 			/* Check if radial orientation is O.K. */
 			eu = (struct edgeuse *)NMG_TBL_GET( &uses , 0 );
 			NMG_CK_EDGEUSE( eu );
@@ -2830,8 +2858,28 @@ struct shell *s_p;
 
 				if( tmp_use == (-1) )
 				{
+					int first_use;
+					double first_ang=MAX_FASTF;
+
+					/* Find eu with smallest angle */
+					for( use_no=0 ; use_no<use_count ; use_no++ )
+					{
+						if( angles[use_no] < first_ang )
+						{
+							first_use = use_no;
+							first_ang = angles[use_no];
+						}
+					}
+
+					/* one last check between last eu and first */
+					eu = (struct edgeuse *)NMG_TBL_GET( &uses , first_use );
+					VSUB2( eu_dir , eu->vu_p->v_p->vg_p->coord , eu->eumate_p->vu_p->v_p->vg_p->coord );
+					if( VDOT( eu_dir, prev_eu_dir ) > 0.0 )
+						radials_ok = 0;
+					else
+						radials_ok = 1;
+
 					done = 1;
-					radials_ok = 1;
 				}
 
 				if( !done )
@@ -2849,7 +2897,10 @@ struct shell *s_p;
 						eu = (struct edgeuse *)NMG_TBL_GET( &uses , use_no );
 						VSUB2( eu_dir , eu->vu_p->v_p->vg_p->coord , eu->eumate_p->vu_p->v_p->vg_p->coord );
 						if( VDOT( eu_dir, prev_eu_dir ) > 0.0 )
-							break;
+						{
+							radials_ok = 0;
+							goto out;
+						}
 
 						ang = angles[use_no];
 						prev_eu = eu;
@@ -2858,9 +2909,14 @@ struct shell *s_p;
 				}
 			}
 			rt_free( (char *)angles , "Check_radials: angles" );
+			angles = (double *)NULL;
 		}
 	}
 
+out:
+	if( angles )
+		rt_free( (char *)angles , "Check_radials: angles" );
+	
 	nmg_tbl( &edgeuses , TBL_FREE , (long *)NULL );
 	nmg_tbl( &uses , TBL_FREE , (long *)NULL );
 	rt_free( (char *)flags , "Check_radials: flags" );
@@ -3038,22 +3094,6 @@ make_nmg_objects()
 	Recalc_face_g( s );
 
 	if( rt_g.debug&DEBUG_MEM_FULL &&  rt_mem_barriercheck() )
-		rt_log( "ERROR: rt_mem_barriercheck failed in make_nmg_objects (after Recalc_face_g)\n" );
-
-	/* Check if a valid closed shell has been produced */
-	if( nmg_ck_closed_surf( s , &tol ) )
-		return( 1 );
-
-	/* Check radial orientation around all edges */
-	if( Check_radials( s ) )
-		return( 1 );
-
-	if( debug )
-		rt_log( "model fuse\n" );
-
-	nmg_model_fuse( m , &tol );
-
-	if( rt_g.debug&DEBUG_MEM_FULL &&  rt_mem_barriercheck() )
 		rt_log( "ERROR: rt_mem_barriercheck failed in make_nmg_objects (after model_fuse)\n" );
 
 	make_nmg_name( name , region_id );
@@ -3070,6 +3110,19 @@ make_nmg_objects()
 	}
 	else
 	{
+		/* Check radial orientation around all edges */
+		if( Check_radials( s ) )
+			return( 1 );
+
+		/* Check if a valid closed shell has been produced */
+		if( nmg_ck_closed_surf( s , &tol ) )
+			return( 1 );
+
+		if( debug )
+			rt_log( "model fuse\n" );
+
+		nmg_model_fuse( m , &tol );
+
 		nmg_simplify_shell( s );
 
 		if( rt_g.debug&DEBUG_MEM_FULL &&  rt_mem_barriercheck() )
@@ -4532,6 +4585,7 @@ char *argv[];
 			case 'D':
 				tol.dist = atof( optarg );
 				rt_log( "tolerance distance set to %f\n" , tol.dist );
+				tol.dist_sq = tol.dist * tol.dist;
 				break;
 			case 'P':
 				tol.perp = atof( optarg );
