@@ -22,7 +22,7 @@
  *
  ***********************************************************************/
 
-#include "fence.h"
+#include "./fence.h"
 
 
 /* command-line options are described in the parseArguments function
