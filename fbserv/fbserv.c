@@ -193,7 +193,7 @@ int argc; char **argv;
 	if( is_socket(netfd) ) {
 		init_syslog();
 		rem_pcp = pkg_transerver( pkg_switch, comm_error );
-		do1( netfd );
+		do1();
 		exit(0);
 	}
 #endif /* BSD */
@@ -230,9 +230,7 @@ int argc; char **argv;
 			rem_pcp = pkg_getclient( netfd, pkg_switch, comm_error, 0 );
 			if( rem_pcp == PKC_ERROR )
 				break;
-			/*printf("Accepted connection 0x%x\n", rem_pcp);*/
-			do1(netfd);
-			/*printf("Closed connection 0x%x\n", rem_pcp);*/
+			do1();
 		}
 		exit(0);
 	}
@@ -249,7 +247,6 @@ int argc; char **argv;
 	}
 
 	init_syslog();
-printf("permserver start\n");fflush(stdout);
 	while( (netfd = pkg_permserver(portname, 0, 0, comm_error)) < 0 ) {
 		sleep(5);
 		continue;
@@ -258,23 +255,18 @@ printf("permserver start\n");fflush(stdout);
 
 	while(1) {
 		int stat;
-printf("awaiting client, netfd=%d\n",netfd);fflush(stdout);
 		rem_pcp = pkg_getclient( netfd, pkg_switch, comm_error, 0 );
-printf("got client on fd=%d\n", rem_pcp->pkc_fd);fflush(stdout);
 		if( rem_pcp == PKC_ERROR )  {
 			exit(2);	/* continue?! */
 		}
-printf("forking\n");fflush(stdout);
 		if( fork() == 0 )  {
 			/* 1st level child process */
 			(void)close(netfd);	/* Child is not listener */
-printf("child closing netfd %d\n", netfd);fflush(stdout);
 
 			/* Create 2nd level child process, "double detatch" */
 			if( fork() == 0 )  {
 				/* 2nd level child -- start work! */
 				do1();
-printf("2nd child back from do1, exiting\n");fflush(stdout);
 				exit(0);
 			} else {
 				/* 1st level child -- vanish */
@@ -282,7 +274,6 @@ printf("2nd child back from do1, exiting\n");fflush(stdout);
 			}
 		} else {
 			/* Parent: lingering server daemon */
-printf("Parent closing client on fd=%d\n", rem_pcp->pkc_fd);fflush(stdout);
 			pkg_close(rem_pcp);	/* Daemon is not the server */
 			/* Collect status from 1st level child */
 			(void)wait( &stat );
@@ -310,7 +301,6 @@ do1()
 
 #ifdef BSD
 	if( setsockopt( rem_pcp->pkc_fd, SOL_SOCKET, SO_KEEPALIVE, &on, sizeof(on)) < 0 ) {
-printf("setsockopt KEEPALIVE error\n");fflush(stdout);
 #		ifndef CRAY2
 		syslog( LOG_WARNING, "setsockopt (SO_KEEPALIVE): %m" );
 #		endif
@@ -327,7 +317,6 @@ printf("setsockopt KEEPALIVE error\n");fflush(stdout);
 	}
 #endif
 
-/*printf("child: into pkg loop\n");fflush(stdout);*/
 	while( pkg_block(rem_pcp) > 0 )
 		;
 
