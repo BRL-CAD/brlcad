@@ -159,6 +159,19 @@ void			prompt();
 
 void			addarb();
 void			addtgc();
+void			addtor();
+void			addhalf();
+void			addarbn();
+void			addell();
+void			addars();
+void			deck();
+void			itoa();
+void			vls_blanks();
+void			vls_itoa();
+void			vls_ftoa_vec_cvt();
+void			vls_ftoa_vec();
+void			vls_ftoa_cvt();
+void			vls_ftoa();
 
 RT_EXTERN(void ewrite, (FILE *fp, CONST char *buf, unsigned bytes) );
 RT_EXTERN(void blank_fill, (FILE *fp, int count) );
@@ -740,6 +753,7 @@ register double	*d1, *d2;
  *
  *  Process torus.
  */
+void
 addtor( v, gp, name, num )
 struct rt_vls		*v;
 struct rt_tor_internal	*gp;
@@ -769,6 +783,7 @@ int			num;
 /*
  *			A D D H A L F
  */
+void
 addhalf( v, gp, name, num )
 struct rt_vls		*v;
 struct rt_half_internal	*gp;
@@ -791,6 +806,7 @@ int			num;
 /*
  *			A D D A R B N
  */
+void
 addarbn( v, gp, name, num )
 struct rt_vls		*v;
 struct rt_arbn_internal	*gp;
@@ -920,6 +936,7 @@ int			num;
  *
  *	Process the general ellipsoid.
  */
+void
 addell( v, gp, name, num )
 struct rt_vls		*v;
 struct rt_ell_internal	*gp;
@@ -1214,6 +1231,7 @@ int			num;
  *
  *	Process triangular surfaced polyhedron - ars.
  */
+void
 addars( v, gp, name, num )
 struct rt_vls		*v;
 struct rt_ars_internal	*gp;
@@ -1267,6 +1285,7 @@ unsigned	bytes;
 	make a COMGEOM deck for current list of objects
 
  */
+void
 deck( prefix )
 register char *prefix;
 {	
@@ -1616,6 +1635,7 @@ char	*args[];
 /*	i t o a ( )
 	Convert integer to ascii  wd format.
  */
+void
 itoa( n, s, w )
 register
 char	*s;
@@ -1646,6 +1666,7 @@ int   n,    w;
 	}
 }
 
+void
 vls_blanks( v, n )
 struct rt_vls	*v;
 int		n;
@@ -1660,6 +1681,7 @@ int		n;
  *
  *	Convert integer to ascii  wd format.
  */
+void
 vls_itoa( v, n, w )
 struct rt_vls	*v;
 register int	n;
@@ -1694,6 +1716,7 @@ register int	w;
 	}
 }
 
+void
 vls_ftoa_vec_cvt( v, vec, w, d )
 struct rt_vls	*v;
 vect_t		vec;
@@ -1705,6 +1728,7 @@ int		d;
 	vls_ftoa( v, vec[Z]*dbip->dbi_base2local, w, d );
 }
 
+void
 vls_ftoa_vec( v, vec, w, d )
 struct rt_vls	*v;
 vect_t		vec;
@@ -1716,6 +1740,7 @@ int		d;
 	vls_ftoa( v, vec[Z], w, d );
 }
 
+void
 vls_ftoa_cvt( v, f, w, d )
 struct rt_vls	*v;
 register double	f;
@@ -1729,6 +1754,7 @@ register int	w, d;
  *
  *	Convert float to ascii  w.df format.
  */
+void
 vls_ftoa( v, f, w, d )
 struct rt_vls	*v;
 register double	f;
