@@ -21,6 +21,8 @@ struct modifiable_ogl_vars {
   int doublebuffer;
   int depth;
   int debug;
+  double bound;
+  int boundFlag;
 };
 
 struct ogl_vars {
