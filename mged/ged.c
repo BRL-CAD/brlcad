@@ -49,6 +49,7 @@ char MGEDCopyRight_Notice[] = "@(#) Copyright (C) 1985,1987 by the United States
 #	undef VMIN	/* also used in vmath.h */
 #endif
 
+#include "externs.h"
 #include "machine.h"
 #include "vmath.h"
 #include "db.h"
@@ -61,12 +62,6 @@ char MGEDCopyRight_Notice[] = "@(#) Copyright (C) 1985,1987 by the United States
 #ifndef	LOGFILE
 #define LOGFILE	"/vld/lib/gedlog"	/* usage log */
 #endif
-
-extern void	exit(), perror(), sync();
-extern char	*malloc(), *tempnam();
-extern int	close(), dup(), execl(), fork(), getuid(), open(), pipe(),
-		unlink(), write();
-extern long	time();
 
 struct db_i	*dbip;			/* database instance pointer */
 

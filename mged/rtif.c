@@ -36,13 +36,10 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "mater.h"
 #include "./sedit.h"
 #include "raytrace.h"
+#include "externs.h"
 #include "./ged.h"
 #include "./solid.h"
 #include "./dm.h"
-
-extern void	perror();
-extern int	atoi(), execl(), fork(), nice(), wait();
-extern long	time();
 
 extern int	numargs;	/* number of args */
 extern char	*cmd_args[];	/* array of pointers to args */

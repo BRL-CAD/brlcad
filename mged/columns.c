@@ -33,13 +33,12 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "vmath.h"
 #include "db.h"			/* for NAMESIZE */
 #include "raytrace.h"
+#include "externs.h"
 #include "./ged.h"
 
 static int	col_count;		/* names listed on current line */
 static int	col_len;		/* length of previous name */
 #define	COLUMNS	((80 + NAMESIZE - 1) / NAMESIZE)
-
-extern int qsort(), strcmp();
 
 void
 col_item(cp)
