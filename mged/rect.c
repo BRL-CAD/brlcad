@@ -151,9 +151,10 @@ paint_rect_area()
   if(!fbp)
     return;
 
-  get_rect(&x, &y, &width, &height);
-
 #ifdef USE_FRAMEBUFFER
+  get_rect(&x, &y, &width, &height);
+  height *= dmp->dm_aspect;
+
   (void)fb_refresh(fbp, x, y, width, height);
 #endif
 }
