@@ -150,7 +150,7 @@ struct partition *PartHeadp;
 		break;
 	case 2:
 		/* Store surface normals pointing inwards */
-		/* (For Spencer's moving light program */
+		/* (For Spencer's moving light program) */
 		ap->a_color[0] = (hitp->hit_normal[0] * (-.5)) + .5;
 		ap->a_color[1] = (hitp->hit_normal[1] * (-.5)) + .5;
 		ap->a_color[2] = (hitp->hit_normal[2] * (-.5)) + .5;
@@ -161,20 +161,20 @@ struct partition *PartHeadp;
 			FAST fastf_t f;
 			auto int ival;
 
-			RT_CURVE( &cv, hitp, pp->pt_inseg->seg_stp, &(ap->a_ray) );
+			RT_CURVE( &cv, hitp, pp->pt_inseg->seg_stp );
 	
 			f = cv.crv_c1;
-			f /= 64;
-			if( f<0 )  f = -f;
-			if( f > 1 )  f = 1;
-			ap->a_color[0] = 1.0 - f;
+			f *= 10;
+			if( f < -0.5 )  f = -0.5;
+			if( f > 0.5 )  f = 0.5;
+			ap->a_color[0] = 0.5 + f;
 			ap->a_color[1] = 0;
 
 			f = cv.crv_c2;
-			f /= 64;
-			if( f<0 )  f = -f;
-			if( f > 1 )  f = 1;
-			ap->a_color[2] = 1.0 - f;
+			f *= 10;
+			if( f < -0.5 )  f = -0.5;
+			if( f > 0.5 )  f = 0.5;
+			ap->a_color[2] = 0.5 + f;
 		}
 		break;
 	case 5:
@@ -183,7 +183,7 @@ struct partition *PartHeadp;
 			FAST fastf_t f;
 			auto int ival;
 
-			RT_CURVE( &cv, hitp, pp->pt_inseg->seg_stp, &(ap->a_ray) );
+			RT_CURVE( &cv, hitp, pp->pt_inseg->seg_stp );
 
 			ap->a_color[0] = (cv.crv_pdir[0] * (-.5)) + .5;
 			ap->a_color[1] = (cv.crv_pdir[1] * (-.5)) + .5;
