@@ -181,11 +181,11 @@ union record *recp;
 
 	if( drawHsolid(
 		sp,
-		illump->s_soldash,
-		illump->s_last,
+		sp->s_soldash,
+		sp->s_last,
 		es_mat,
 		recp,
-		0
+		sp->s_regionid
 	) != 1 )  {
 		(void)printf("redraw():  error in drawHsolid()\n");
 		return(sp);
