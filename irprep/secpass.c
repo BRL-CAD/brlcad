@@ -2,7 +2,7 @@
  *			S E C P A S S . C
  *
  *  Author -
- *	S.Coates - 10 March 1992
+ *	S.Coates - 11 February 1993
  *  
  *  Source -
  *	The U. S. Army Ballistic Research Laboratory
@@ -37,6 +37,8 @@
 /*			   file.  The largest number must come first.  */
 /*	13 February 1992 - Change format for writing PRISM 3.0 files.  */
 /*	10 March 1992    - Print out PRISM release being used.  */
+/*	11 February 1993 - Add option to fire from three orthogonal  */
+/*			   directions.  */
 
 #ifndef lint
 static char RCSid[] = "@(#)$Header$ (BRL)";
@@ -162,6 +164,9 @@ char *argv[];
    double zmin,zmax;	/*  Maximum & minimum z of grid.  */
    int nadjreg;		/*  Number of adjacent regions.  */
    int prmrel;		/*  PRISM release number, 2=>2.0, 3=>3.0.  */
+   int ifire;		/*  Number of sets of rays to be fired, 0=>  */
+			/*  fire from 3 orthogonal postions, 1=>fire  */
+			/*  from 1 position.  */
 
    /*  Check to see if arguments implimented correctly.  */
    if(argv[1] == NULL || argv[2] == NULL)
@@ -258,6 +263,23 @@ char *argv[];
 	(void)fprintf(stdout,"(15 char max).  ");
 	(void)fflush(stdout);
 	(void)scanf("%s",fileerr);
+
+	/*  Choose whether 3 orthogonal sets of rays are to be fired  */
+	/*  or 1 set of rays is to be fired.  */
+	(void)printf("Should there be 3 sets of orhogonal rays fired ");
+	(void)printf("(0) or 1 set (1)?\n\t");
+	(void)fflush(stdout);
+	(void)scanf("%d",&ifire);
+	if(ifire != 0) ifire = 1;
+	if(ifire == 0)
+	{
+	   (void)printf("3 sets of orthogonal rays will be fired.\n");
+	}
+	if(ifire == 1)
+	{
+	   (void)printf("1 set of rays will be fired.\n");
+	}
+	(void)fflush(stdout);
 
 	/*  Write out file information.  */
 	if(iwrite ==1)
@@ -527,9 +549,10 @@ char *argv[];
 	angle[Y] = radians((double)BETA);
 	angle[Z] = radians((double)ALPHA);
 
-	/*  Set up and shoot down x-axis (positive to negative).  */
+	/*  Set up and shoot down the 1st axis, positive to negative  */
+	/*  (x-axis).  */
 
-	(void)fprintf(stdout,"\nShooting down x-axis.\n");
+	(void)fprintf(stdout,"\nShooting down 1st axis.\n");
 	(void)fflush(stdout);
 
 	strtpt[X] = xmax;
@@ -583,6 +606,110 @@ char *argv[];
 
 	}	/*  END # 3  */
 
+	/*  Shoot down 2nd & 3rd axes if necessary.  */
+	if(ifire == 0)
+	{						/*  START # 1000  */
+	   /*  Set up & shoot down the 2nd axis (y-axis).  */
+	   (void)printf("\nShooting down the 2nd axis.\n");
+	   (void)fflush(stdout);
+
+	   strtpt[X] = xmin + gridspace / 2.;
+	   strtpt[Y] = ymax;
+	   strtpt[Z] = zmin + gridspace / 2.;
+	   strtdir[X] = 0.;
+	   strtdir[Y] = (-1.);
+	   strtdir[X] = 0.;
+
+	   /*  Rotate starting point (new pt = C + R[P - C]).  */
+	   t[X] = strtpt[X] - center [X];
+	   t[Y] = strtpt[Y] - center [Y];
+	   t[Z] = strtpt[Z] - center [Z];
+
+	   (void)rotate(t,angle,r);
+
+	   ap.a_ray.r_pt[X] = center[X] + r[X];
+	   ap.a_ray.r_pt[Y] = center[Y] + r[Y];
+	   ap.a_ray.r_pt[Z] = center[Z] + r[Z];
+
+	   /*  Rotate firing direction (new dir = R[D])  */
+	   (void)rotate(strtdir,angle,r);
+
+	   ap.a_ray.r_dir[X] = r[X];
+	   ap.a_ray.r_dir[Y] = r[Y];
+	   ap.a_ray.r_dir[Z] = r[Z];
+
+	   while(strtpt[Z] <= zmax)
+	   {						/*  START # 1010  */
+		iprev = (-1);		/*  No previous shots.  */
+
+		/*  Call rt_shootray.  */
+		(void)rt_shootray(&ap);
+
+		strtpt[X] += gridspace;
+		if(strtpt[X] > xmax)
+		{
+		   strtpt[X] = xmin + gridspace / 2.;
+		   strtpt[Z] += gridspace;
+		}
+
+		t[X] = strtpt[X] - center[X];
+		t[Y] = strtpt[Y] - center[Y];
+		t[Z] = strtpt[Z] - center[Z];
+
+		(void)rotate(t,angle,r);
+
+		ap.a_ray.r_pt[X] = center[X] + r[X];
+		ap.a_ray.r_pt[Y] = center[Y] + r[Y];
+		ap.a_ray.r_pt[Z] = center[Z] + r[Z];
+	   }						/*  END # 1010  */
+
+	   /*  Set up & shoot down the 3rd axis (z-axis).  */
+	   (void)printf("\nShooting down the 3rd axis.\n");
+	   (void)fflush(stdout);
+
+	   strtpt[X] = xmin + gridspace / 2.;
+	   strtpt[Y] = ymin + gridspace / 2.;
+	   strtpt[Z] = zmax;
+	   strtdir[X] = 0.;
+	   strtdir[Y] = 0.;
+	   strtdir[Z] = (-1.);
+
+	   /*  Rotate starting points (new pt = C + R[P - C]).  */
+	   t[X] = strtpt[X] - center[X];
+	   t[Y] = strtpt[Y] - center[Y];
+	   t[Z] = strtpt[Z] - center[Z];
+
+	   (void)rotate(t,angle,r);
+
+	   ap.a_ray.r_pt[X] = r[X];
+	   ap.a_ray.r_pt[Y] = r[Y];
+	   ap.a_ray.r_pt[Z] = r[Z];
+
+	   while(strtpt[Y] <= ymax)
+	   {						/*  START # 1020  */
+		iprev = (-1);		/*  No previous shots.  */
+
+		/*  Call rt_shootray.  */
+		(void)rt_shootray(&ap);
+
+		strtpt[X] += gridspace;
+		if(strtpt[X] > xmax)
+		{
+		   strtpt[X] = xmin + gridspace / 2.;
+		   strtpt[Y] += gridspace;
+		}
+
+		t[X] = strtpt[X] - center[X];
+		t[Y] = strtpt[Y] - center[Y];
+		t[Z] = strtpt[Z] - center[Z];
+
+		(void)rotate(t,angle,r);
+
+		ap.a_ray.r_pt[X] = center[X] + r[X];
+		ap.a_ray.r_pt[Y] = center[Y] + r[Y];
+		ap.a_ray.r_pt[Z] = center[Z] + r[Z];
+	   }						/*  END # 1020  */
+	}						/*  END # 1000  */
 
 	/*  Calculate final length between centroid & shared surface area.  */
 	if(iwrite == 0)
