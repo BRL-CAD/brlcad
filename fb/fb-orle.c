@@ -1,7 +1,7 @@
 /*
-	SCCS id:	@(#) fb-rle.c	1.4
-	Last edit: 	3/27/85 at 20:45:10
-	Retrieved: 	8/13/86 at 03:10:46
+	SCCS id:	@(#) fb-rle.c	1.5
+	Last edit: 	5/29/85 at 13:10:26
+	Retrieved: 	8/13/86 at 03:10:53
 	SCCS archive:	/m/cad/fb_utils/RCS/s.fb-rle.c
 
 	Author:		Gary S. Moss
@@ -12,7 +12,7 @@
  */
 #if ! defined( lint )
 static
-char	sccsTag[] = "@(#) fb-rle.c	1.4	last edit 3/27/85 at 20:45:10";
+char	sccsTag[] = "@(#) fb-rle.c	1.5	last edit 5/29/85 at 13:10:26";
 #endif
 #include <stdio.h>
 #include <fb.h>
@@ -23,13 +23,13 @@ char	sccsTag[] = "@(#) fb-rle.c	1.4	last edit 3/27/85 at 20:45:10";
 #define MAX_DMA	1024*16
 #endif
 #define DMA_PIXELS	(MAX_DMA/sizeof(Pixel))
-#define DMA_SCANS	(DMA_PIXELS/fbsz)
-#define PIXEL_OFFSET	((scan_ln%dma_scans)*fbsz)
+#define DMA_SCANS	(DMA_PIXELS/_fbsize)
+#define PIXEL_OFFSET	((scan_ln%dma_scans)*_fbsize)
 static char	*usage[] = {
 "",
-"fb-rle (1.4)",
+"fb-rle (1.5)",
 "",
-"Usage: fb-rle [-CScdhvw] [file.rle]",
+"Usage: fb-rle [-CScdhvw][-l X Y][-p X Y][file.rle]",
 "",
 "If no rle file is specifed, fb-rle will write to its standard output.",
 "If the environment variable FB_FILE is set, its value will be used",
@@ -42,7 +42,7 @@ static int	bgflag = 1;
 static int	ncolors = 3;
 static int	cmflag = 1;
 static int	crunch = 0;
-static int	fbsz;
+static int	xpos = 0, ypos = 0, xlen = 0, ylen = 0;
 static int	parsArgv();
 static void	prntUsage();
 
@@ -52,7 +52,6 @@ int	argc;
 char	*argv[];
 	{
 	register int	scan_ln;
-	register int	fbsz = 512;
 	register int	dma_scans;
 	static Pixel	scan_buf[DMA_PIXELS];
 	static ColorMap	cmap;
@@ -65,23 +64,20 @@ char	*argv[];
 		return	1;
 		}
 	setbuf( fp, malloc( BUFSIZ ) );
-	fbsz = getfbsize();
 	dma_pixels = DMA_PIXELS;
 	dma_scans = DMA_SCANS;
-	scan_bytes = fbsz * sizeof(Pixel);
+	scan_bytes = _fbsize * sizeof(Pixel);
 	if( rle_verbose )
 		(void) fprintf( stderr,
 				"Background is %d %d %d\n",
 				bgpixel.red, bgpixel.green, bgpixel.blue
 				);
-	if(	rle_whdr( fp, ncolors, bgflag, cmflag, &bgpixel )
-	    ==	-1
-		)
+	rle_wlen( xlen, ylen, 1 );
+	rle_wpos( xpos, ypos, 1 );
+	if( rle_whdr( fp, ncolors, bgflag, cmflag, &bgpixel ) == -1 )
 		return	1;
-
 	if( fbopen( NULL, APPEND ) == -1 )
 		return	1;
-
 	if( cmflag )
 		{
 		if( fb_rmap( &cmap ) == -1 )
@@ -100,13 +96,13 @@ char	*argv[];
 					);
 		}
 	if( ncolors == 0 )
-		{ /* Only save colormap, so we are finished.		*/
+		/* Only save colormap, so we are finished.		*/
 		return	0;
-		}
+
 	/* Save image.							*/
 	{	register int	page_fault = 1;
-		register int	y_buffer = fbsz - dma_scans;
-	for( scan_ln = fbsz-1; scan_ln >= 0; --scan_ln )
+		register int	y_buffer = (ypos + ylen) - dma_scans;
+	for( scan_ln = ypos + (ylen-1); scan_ln >= ypos; --scan_ln )
 		{
 		if( page_fault )
 			if( fbread( 0, y_buffer, scan_buf, dma_pixels ) == -1)
@@ -131,34 +127,56 @@ register char	**argv;
 	extern char	*optarg;
 
 	/* Parse options.						*/
-	while( (c = getopt( argc, argv, "CScdhvw" )) != EOF )
+	while( (c = getopt( argc, argv, "CScdhl:p:vw" )) != EOF )
 		{
 		switch( c )
 			{
-			case 'C' : /* Crunch color map.			*/
-				crunch = 1;
-				cmflag = 0;
-				break;
-			case 'S' : /* 'Box' save, store entire image.	*/
-				bgflag = 0;
-				break;
-			case 'c' : /* Only save color map.		*/
-				ncolors = 0;
-				break;
-			case 'd' : /* For debugging.			*/
-				rle_debug = 1;
-				break;
-			case 'h' : /* High resolution.			*/
-				setfbsize( 1024 );
-				break;
-			case 'v' : /* Verbose on.			*/
-				rle_verbose = 1;
-				break;
-			case 'w' : /* Monochrome (black & white) mode.	*/
-				ncolors = 1;
-				break;
-			case '?' :
+		case 'C' : /* Crunch color map.				*/
+			crunch = 1;
+			cmflag = 0;
+			break;
+		case 'S' : /* 'Box' save, store entire image.		*/
+			bgflag = 0;
+			break;
+		case 'c' : /* Only save color map.			*/
+			ncolors = 0;
+			break;
+		case 'd' : /* For debugging.				*/
+			rle_debug = 1;
+			break;
+		case 'h' : /* High resolution.				*/
+			setfbsize( 1024 );
+			break;
+		case 'l' : /* Length in x and y.			*/
+			if( argc - optind < 2 )
+				{
+				(void) fprintf( stderr,
+				"-l option requires an X and Y argument!\n"
+						);
 				return	0;
+				}
+			xlen = atoi( optarg );
+			ylen = atoi( argv[optind++] );
+			break;
+		case 'p' : /* Position of bottom-left corner.		*/
+			if( argc - optind < 2 )
+				{
+				(void) fprintf( stderr,
+				"-p option requires an X and Y argument!\n"
+						);
+				return	0;
+				}
+			xpos = atoi( optarg );
+			ypos = atoi( argv[optind++] );
+			break;
+		case 'v' : /* Verbose on.				*/
+			rle_verbose = 1;
+			break;
+		case 'w' : /* Monochrome (black & white) mode.		*/
+			ncolors = 1;
+			break;
+		case '?' :
+			return	0;
 			}
 		}
 	if( argv[optind] != NULL )
@@ -196,6 +214,10 @@ register char	**argv;
 		(void) fprintf( stderr, "Too many arguments!\n" );
 		return	0;
 		}
+	if( xlen == 0 )
+		xlen = _fbsize;
+	if( ylen == 0 )
+		ylen = _fbsize;
 	return	1;
 	}
 
