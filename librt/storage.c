@@ -258,11 +258,11 @@ char *str;
 {
 	char	*original_ptr = ptr;
 
-	if( rt_memdebug_check( ptr, str ) == MEMDEBUG_NULL )  {
-		rt_log("%7x realloc%6d %s ** barrier check failure\n",
-			ptr, cnt, str );
-	}
 	if( rt_g.debug&DEBUG_MEM_FULL )  {
+		if( rt_memdebug_check( ptr, str ) == MEMDEBUG_NULL )  {
+			rt_log("%7x realloc%6d %s ** barrier check failure\n",
+				ptr, cnt, str );
+		}
 		/* Pad, plus full int for magic number */
 		cnt = (cnt+2*sizeof(long)-1)&(~(sizeof(long)-1));
 	}
