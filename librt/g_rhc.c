@@ -1290,6 +1290,110 @@ CONST struct db_i		*dbip;
 }
 
 /*
+ *			R T _ R H C _ I M P O R T 5
+ *
+ *  Import an RHC from the database format to the internal format.
+ *  Apply modeling transformations as well.
+ */
+int
+rt_rhc_import5( ip, ep, mat, dbip )
+struct rt_db_internal		*ip;
+CONST struct bu_external	*ep;
+register CONST mat_t		mat;
+CONST struct db_i		*dbip;
+{
+	LOCAL struct rt_rhc_internal	*xip;
+	fastf_t			vec[11];
+
+	BU_CK_EXTERNAL( ep );
+
+	RT_INIT_DB_INTERNAL( ip );
+	ip->idb_type = ID_RHC;
+	ip->idb_meth = &rt_functab[ID_RHC];
+	ip->idb_ptr = bu_malloc( sizeof(struct rt_rhc_internal), "rt_rhc_internal");
+
+	xip = (struct rt_rhc_internal *)ip->idb_ptr;
+	xip->rhc_magic = RT_RHC_INTERNAL_MAGIC;
+
+	/* Convert from database (network) to internal (host) format */
+	ntohd( (unsigned char *)vec, ep->ext_buf, 11 );
+
+	/* Apply modeling transformations */
+	MAT4X3PNT( xip->rhc_V, mat, &vec[0*3] );
+	MAT4X3VEC( xip->rhc_H, mat, &vec[1*3] );
+	MAT4X3VEC( xip->rhc_B, mat, &vec[2*3] );
+	xip->rhc_r = vec[3*3] / mat[15];
+	xip->rhc_c = vec[3*3+1] / mat[15];
+
+	if( xip->rhc_r < SMALL_FASTF || xip->rhc_c < SMALL_FASTF )
+	{
+		bu_log( "rt_rhc_import: r or c are zero\n" );
+		bu_free( (char *)ip->idb_ptr , "rt_rhc_import: ip->idb_ptr" );
+		return( -1 );
+	}
+
+	return(0);			/* OK */
+}
+
+/*
+ *			R T _ R H C _ E X P O R T 5
+ *
+ *  The name is added by the caller, in the usual place.
+ */
+int
+rt_rhc_export5( ep, ip, local2mm, dbip )
+struct bu_external		*ep;
+CONST struct rt_db_internal	*ip;
+double				local2mm;
+CONST struct db_i		*dbip;
+{
+	struct rt_rhc_internal	*xip;
+	fastf_t			vec[11];
+
+	RT_CK_DB_INTERNAL(ip);
+	if( ip->idb_type != ID_RHC )  return(-1);
+	xip = (struct rt_rhc_internal *)ip->idb_ptr;
+	RT_RHC_CK_MAGIC(xip);
+
+	BU_INIT_EXTERNAL(ep);
+	ep->ext_nbytes = SIZEOF_NETWORK_DOUBLE * 11;
+	ep->ext_buf = (genptr_t)bu_malloc( ep->ext_nbytes, "rhc external");
+
+	if (MAGNITUDE(xip->rhc_B) < RT_LEN_TOL
+		|| MAGNITUDE(xip->rhc_H) < RT_LEN_TOL
+		|| xip->rhc_r < RT_LEN_TOL
+		|| xip->rhc_c < RT_LEN_TOL) {
+		bu_log("rt_rhc_export: not all dimensions positive!\n");
+		return(-1);
+	}
+
+	{
+		vect_t ub, uh;
+
+		VMOVE(ub, xip->rhc_B);
+		VUNITIZE(ub);
+		VMOVE(uh, xip->rhc_H);
+		VUNITIZE(uh);
+		if ( !NEAR_ZERO( VDOT(ub, uh), RT_DOT_TOL) ) {
+			bu_log("rt_rhc_export: B and H are not perpendicular!\n");
+			return(-1);
+		}
+	}
+
+	/* scale 'em into local buffer */
+	VSCALE( &vec[0*3], xip->rhc_V, local2mm );
+	VSCALE( &vec[1*3], xip->rhc_H, local2mm );
+	VSCALE( &vec[2*3], xip->rhc_B, local2mm );
+	vec[3*3] = xip->rhc_r * local2mm;
+	vec[3*3+1] = xip->rhc_c * local2mm;
+
+	/* Convert from internal (host) to database (network) format */
+	htond( ep->ext_buf, (unsigned char *)vec, 11 );
+
+	return(0);
+}
+
+/*
  *			R T _ R H C _ D E S C R I B E
  *
  *  Make human-readable formatted presentation of this solid.
