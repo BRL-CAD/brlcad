@@ -109,8 +109,14 @@ char *file, *obj;
 	save_file = file;
 	save_obj = obj;
 
-	/* Cause grid_setup() to align the grid on inch boundaries */
-	gift_grid_rounding = 25.4;
+	/*
+	 *  Cause grid_setup() to align the grid on one inch boundaries,
+	 *  or cell_width boundaries, if it is given.
+	 */
+	if( cell_width > 0 )
+		gift_grid_rounding = cell_width;
+	else
+		gift_grid_rounding = 25.4;		/* one inch */
 
 	ap->a_hit = rayhit;
 	ap->a_miss = raymiss;
