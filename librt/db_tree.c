@@ -1099,13 +1099,6 @@ int		cur;
 
 /* ============================== */
 
-static struct db_i	*db_dbip;
-static union tree	**db_reg_trees;
-static int		db_reg_count;
-static int		db_reg_current;		/* semaphored when parallel */
-static union tree *	(*db_reg_end_func)();
-static union tree *	(*db_reg_leaf_func)();
-
 HIDDEN union tree *db_gettree_region_end( tsp, pathp, curtree )
 register struct db_tree_state	*tsp;
 struct db_full_path	*pathp;
@@ -1148,10 +1141,18 @@ int			id;
 	return(curtree);
 }
 
-void
-db_walk_subtree( tp, region_start_statepp )
+static struct db_i	*db_dbip;
+static union tree	**db_reg_trees;
+static int		db_reg_count;
+static int		db_reg_current;		/* semaphored when parallel */
+static union tree *	(*db_reg_end_func)();
+static union tree *	(*db_reg_leaf_func)();
+
+HIDDEN void
+db_walk_subtree( tp, region_start_statepp, leaf_func )
 register union tree	*tp;
 struct combined_tree_state	**region_start_statepp;
+union tree		 *(*leaf_func)();
 {
 	struct combined_tree_state	*ctsp;
 	union tree	*curtree;
@@ -1170,8 +1171,8 @@ struct combined_tree_state	**region_start_statepp;
 		ctsp->cts_s.ts_region_start_func = 0;
 		/* ts_region_end_func() will be called in db_walk_dispatcher() */
 		ctsp->cts_s.ts_region_end_func = 0;
-		/* Use user's leaf function. Import via static global */
-		ctsp->cts_s.ts_leaf_func = db_reg_leaf_func;
+		/* Use user's leaf function */
+		ctsp->cts_s.ts_leaf_func = leaf_func;
 
 		/* If region already seen, force flag */
 		if( *region_start_statepp )
@@ -1197,7 +1198,7 @@ struct combined_tree_state	**region_start_statepp;
 	case OP_NOT:
 	case OP_GUARD:
 	case OP_XNOP:
-		db_walk_subtree( tp->tr_b.tb_left, region_start_statepp );
+		db_walk_subtree( tp->tr_b.tb_left, region_start_statepp, leaf_func );
 		return;
 
 	case OP_UNION:
@@ -1205,8 +1206,8 @@ struct combined_tree_state	**region_start_statepp;
 	case OP_SUBTRACT:
 	case OP_XOR:
 		/* This node is known to be a binary op */
-		db_walk_subtree( tp->tr_b.tb_left, region_start_statepp );
-		db_walk_subtree( tp->tr_b.tb_right, region_start_statepp );
+		db_walk_subtree( tp->tr_b.tb_left, region_start_statepp, leaf_func );
+		db_walk_subtree( tp->tr_b.tb_right, region_start_statepp, leaf_func );
 		return;
 
 	default:
@@ -1245,7 +1246,7 @@ db_walk_dispatcher()
 		region_start_statep = (struct combined_tree_state *)0;
 		if( (curtree = db_reg_trees[mine]) == TREE_NULL )
 			continue;
-		db_walk_subtree( curtree, &region_start_statep );
+		db_walk_subtree( curtree, &region_start_statep, db_reg_leaf_func );
 
 		/*  curtree->tr_op may be OP_NOP here.
 		 *  It is up to db_reg_end_func() to deal with this,
@@ -1378,14 +1379,6 @@ union tree *	(*leaf_func)();
 		"*reg_trees[]" );
 	(void)db_tally_subtree_regions( whole_tree, reg_trees, 0 );
 
-	if( rt_g.debug&DEBUG_TREEWALK )  {
-		rt_log("new region count=%d\n", new_reg_count);
-		for( i=0; i<new_reg_count; i++ )  {
-			rt_log("tree %d =\n", i);
-			rt_pr_tree( reg_trees[i], 0 );
-		}
-	}
-
 	/*  Release storage for tree from whole_tree to leaves.
 	 *  db_tally_subtree_regions() duplicated and OP_NOP'ed the original
 	 *  top of any sub-trees that it wanted to keep, so whole_tree
@@ -1393,13 +1386,36 @@ union tree *	(*leaf_func)();
 	 */
 	db_free_tree( whole_tree );
 
+	/* As a debugging aid, print out the waiting region names */
+	if( rt_g.debug&DEBUG_TREEWALK )  {
+		rt_log("%d waiting regions:\n", new_reg_count);
+		for( i=0; i < new_reg_count; i++ )  {
+			union tree	*treep;
+			struct combined_tree_state	*ctsp;
+			char	*str;
+
+			if( (treep = reg_trees[i]) == TREE_NULL )  {
+				rt_log("%d: NULL\n", i);
+				continue;
+			}
+			if( treep->tr_op != OP_REGION )  {
+				rt_log("%d: op=%\n", i, treep->tr_op);
+				continue;
+			}
+			ctsp = (struct combined_tree_state *)treep->tr_a.tu_stp;
+			str = db_path_to_string( &(ctsp->cts_p) );
+			rt_log("%d: path='%s'\n", i, str);
+			rt_free( str, "path string" );
+		}
+	}
+
 	/*
 	 *  Fourth, in parallel, for each region, walk the tree to the leaves.
 	 */
 	/* Export some state to read-only static variables */
 	db_reg_trees = reg_trees;
 	db_reg_count = new_reg_count;
-	db_reg_current = 0;
+	db_reg_current = 0;			/* Semaphored */
 	db_reg_end_func = reg_end_func;
 	db_reg_leaf_func = leaf_func;
 
