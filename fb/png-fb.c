@@ -57,11 +57,12 @@ static int	zoom = 0;
 static int	inverse = 0;		/* Draw upside-down */
 static int	one_line_only = 0;	/* insist on 1-line writes */
 static int	verbose = 0;
+static int	header_only = 0;
 
 static double	def_screen_gamma=2.2;
 
 static char usage[] = "\
-Usage: png-fb [-h -i -c -v -z -1] [-m #lines] [-F framebuffer]\n\
+Usage: png-fb [-H -h -i -c -v -z -1] [-m #lines] [-F framebuffer]\n\
 	[-s squarefilesize] [-w file_width] [-n file_height]\n\
 	[-x file_xoff] [-y file_yoff] [-X scr_xoff] [-Y scr_yoff]\n\
 	[-S squarescrsize] [-W scr_width] [-N scr_height] [file.png]\n";
@@ -71,13 +72,16 @@ register char **argv;
 {
 	register int c;
 
-	while ( (c = getopt( argc, argv, "1m:hicvzF:s:x:y:X:Y:S:W:N:" )) != EOF )  {
+	while ( (c = getopt( argc, argv, "1m:HhicvzF:s:x:y:X:Y:S:W:N:" )) != EOF )  {
 		switch( c )  {
 		case '1':
 			one_line_only = 1;
 			break;
 		case 'm':
 			multiple_lines = atoi(optarg);
+			break;
+		case 'H':
+			header_only = 1;
 			break;
 		case 'h':
 			/* high-res */
@@ -225,6 +229,11 @@ char **argv;
 				break;
 		}
 		bu_log( "Image size: %d X %d\n", file_width, file_height );
+	}
+
+	if( header_only )  {
+		fprintf(stdout, "WIDTH=%d HEIGHT=%d\n", file_width, file_height);
+		exit(0);
 	}
 
 	if( png_get_bKGD( png_p, info_p, &input_backgrd ) )
