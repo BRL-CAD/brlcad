@@ -537,8 +537,10 @@ char	**argv;
 			continue;
 		}
 		/*  Change object name in the directory. */
-		if( db_rename( dbip, dp, tempstring ) < 0 )
-			printf("error in rename to %s\n", tempstring );
+		if( db_rename( dbip, dp, tempstring ) < 0 )  {
+			printf("error in rename to %s, aborting\n", tempstring );
+			return;
+		}
 	}
 
 	/* Examine all COMB nodes */
@@ -560,7 +562,10 @@ char	**argv;
 					(void)strcat( tempstring, argv[k]);
 					(void)strncpy(rp[j].M.m_instname,
 						tempstring, NAMESIZE);
-					(void)db_put( dbip, dp, rp, 0, dp->d_len );
+					if( db_put( dbip, dp, rp, 0, dp->d_len ) < 0 )  {
+						printf("db_put error, aborting\n");
+						return;
+					}
 				}
 			}
 			rt_free( (char *)rp, "dir_nref recs" );
@@ -808,13 +813,17 @@ char	**argv;
 		return;
 	}
 	/*  Change object name in the directory. */
-	if( db_rename( dbip, dp, argv[2] ) < 0 )
-		printf("error in rename to %s\n", argv[2] );
+	if( db_rename( dbip, dp, argv[2] ) < 0 )  {
+		printf("error in rename to %s, aborting\n", argv[2] );
+	}
 
 	/* Change name in the file */
 	(void)db_get( dbip,  dp, &record, 0 , 1);
 	NAMEMOVE( argv[2], record.c.c_name );
-	(void)db_put( dbip, dp, &record, 0, 1 );
+	if( db_put( dbip, dp, &record, 0, 1 ) < 0 )  {
+		printf("unable to update name, aborting\n");
+		return;
+	}
 
 	/* Examine all COMB nodes */
 	for( i = 0; i < RT_DBNHASH; i++ )  {
@@ -833,7 +842,10 @@ char	**argv;
 						continue;
 					(void)strncpy(rp[j].M.m_instname,
 						argv[2], NAMESIZE);
-					(void)db_put( dbip, dp, rp, 0, dp->d_len );
+					if( db_put( dbip, dp, rp, 0, dp->d_len ) < 0 )  {
+						printf("db_put failure, aborting\n");
+						return;
+					}
 				}
 			}
 			rt_free( (char *)rp, "dir_nref recs" );
@@ -879,7 +891,10 @@ again:
 						continue;
 
 					/* Remove this reference */
-					(void)db_delrec( dbip, dp, j );
+					if( db_delrec( dbip, dp, j ) < 0 )  {
+						printf("aborting\n");
+						return;
+					}
 					rt_free( (char *)rp, "dir_nref recs" );
 					goto again;
 				}
