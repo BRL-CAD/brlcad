@@ -19,6 +19,8 @@ gif-fb \- display GIF file on frame buffer
 .CW -F
 .I "frame buffer name"
 ] [
+.CW -c
+] [
 .CW -i
 .I "image number"
 ] [
@@ -45,6 +47,12 @@ is not set).
 The frame buffer size requested will be the same as
 the input GIF screen size.
 The actual size obtained depends on details of the specific frame buffer.
+.TP
+.CW -c
+Uses all 8 bits per channel for color maps supplied in the GIF file,
+overriding the color resolution specified in the GIF file.
+(While technically a violation of the GIF ``standard'',
+apparently some GIF implementations assume this interpretation.)
 .TP
 \f\*(pf-i\fP \fIimage number\fP
 Displays just the specified image
