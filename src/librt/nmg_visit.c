@@ -280,8 +280,6 @@ nmg_visit_model(struct model *model, const struct nmg_visit_handlers *htab, genp
  */
 void
 nmg_visit(const long int *magicp, const struct nmg_visit_handlers *htab, genptr_t *state)
-          			        
-                               	      
         			       		/* Handler's private state */
 {
 	switch( *magicp )  {
