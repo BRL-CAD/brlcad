@@ -59,9 +59,8 @@ FBIO DEVNAME_interface =  {
 	PIXEL_NULL,			/* page_curp		*/
 	PIXEL_NULL,			/* page_endp		*/
 	-1,				/* page_no		*/
-	0,				/* page_ref		*/
+	0,				/* page_dirty		*/
 	0L,				/* page_curpos		*/
-	0L,				/* page_bytes		*/
 	0L,				/* page_pixels		*/
 	0				/* debug		*/
 };

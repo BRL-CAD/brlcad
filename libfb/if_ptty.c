@@ -73,7 +73,6 @@ FBIO ptty_interface =
 		0,
 		0L,
 		0L,
-		0L,
 		0
 		};
 
