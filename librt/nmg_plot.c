@@ -536,6 +536,7 @@ point_t tip;
 	VCOMB2( tip, 0.8, t2, 0.2, b2 );
 }
 
+#if 0
 /*
  *			N M G _ E U _ L A S T
  *
@@ -570,6 +571,7 @@ point_t		tip_out;
 	/* Find pt 80% along other eu where last pointer should touch */
 	VCOMB2( tip_out, 0.8, last_tip, 0.2, p );
 }
+#endif
 
 /*
  *			N M G _ E U _ N E X T
@@ -682,7 +684,6 @@ int			red, green, blue;
 	point_t base, tip;
 	point_t	radial_tip;
 	point_t	next_base;
-	point_t	last_tip;
 
 	NMG_CK_EDGEUSE(eu);
 	NMG_CK_EDGE(eu->e_p);
@@ -918,7 +919,6 @@ CONST struct vertex		*v;
 long				*tab;
 {
 	pointp_t p;
-	static char label[128];
 	struct rt_list	*vh;
 
 	RT_CK_VLBLOCK(vbp);
@@ -931,6 +931,7 @@ long				*tab;
 	vh = rt_vlblock_find( vbp, 255, 255, 255 );
 #if 0
 	if (rt_g.NMG_debug & DEBUG_LABEL_PTS) {
+		static char label[128];
 		mat_t	mat;
 		mat_idn(mat);
 		(void)sprintf(label, "%g %g %g", p[0], p[1], p[2]);
@@ -1004,7 +1005,6 @@ int				loopnum;
 	point_t base, tip;
 	point_t	radial_tip;
 	point_t	next_base;
-	point_t	last_tip;
 	struct rt_list	*vh;
 
 	RT_CK_VLBLOCK(vbp);
@@ -1635,7 +1635,6 @@ int			show_mates;
 
 int		nmg_class_nothing_broken=1;
 static long	**global_classlist;
-static struct rt_vlblock *vbp_old;
 static long	*broken_tab;
 static int 	broken_color;
 static unsigned char broken_colors[][3] = {
@@ -1670,7 +1669,6 @@ int fancy;
 CONST struct vertexuse *vu;
 {
 	pointp_t p;
-	static char label[128];
 	struct rt_list	*vh;
 	struct vertex *v;
 	point_t pt;
@@ -1779,13 +1777,11 @@ struct rt_vlblock *vbp;
 int fancy;
 CONST struct edgeuse *eu;
 {
-	vect_t v;
 	struct rt_list	*vh;
     	int red, green, blue;
 	point_t base, tip;
 	point_t	radial_tip;
 	point_t	next_base;
-	point_t	last_tip;
 
 	NMG_CK_EDGEUSE(eu);
 	NMG_CK_EDGE(eu->e_p);
@@ -1933,7 +1929,6 @@ int fancy;
 	struct faceuse *fu;
 	struct loopuse *lu;
 	struct edgeuse *eu;
-	struct vertexuse *vu;
 
 	NMG_CK_SHELL(s);
 	for ( RT_LIST_FOR(fu, faceuse, &s->fu_hd ))
@@ -2076,10 +2071,6 @@ CONST char	*a_string;
 	/* The "copy" flag on nmg_vlblock_anim_upcall() means that
 	 * the vlist will remain, undisturbed, for further use. */
 	if( nmg_vlblock_anim_upcall )  {
-		struct rt_vlblock *vbp2 = vbp;
-		register struct loopuse *lu;
-		struct faceuse *fu = (struct faceuse *)p;
-		int i;
 		void            (*cur_sigint)();
 
 		if (!a_string) {
@@ -2119,7 +2110,6 @@ CONST struct faceuse	*fu;
 	extern void (*nmg_vlblock_anim_upcall)();
 	struct model		*m;
 	struct rt_vlblock	*vbp;
-	struct face_g_plane	*fg;
 	long		*tab;
 	int		fancy;
 	static int	num = 1;
@@ -2179,7 +2169,6 @@ CONST struct faceuse	*fu1, *fu2;
 	extern void (*nmg_vlblock_anim_upcall)();
 	struct model		*m;
 	struct rt_vlblock	*vbp;
-	struct face_g_plane	*fg;
 	long		*tab;
 	int		fancy;
 
@@ -2492,7 +2481,6 @@ int				n_interior;	/* typ. 10 */
 	register int		i;
 	register int		j;
 	register fastf_t	* vp;
-	int			s;
 	struct knot_vector 	tkv1,
 				tkv2,
 				tau1,

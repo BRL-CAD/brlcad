@@ -2707,11 +2707,9 @@ struct rt_tol *tol;	/* tolerance for collinearity check */
 			dist_to_loop_sq = MAGSQ( vect_to_loop );
 			if( dist_to_loop_sq < eu_len_sq )
 			{
-				struct edgeuse *new_eu;
-
 				if(rt_g.NMG_debug&DEBUG_FCUT)
 					rt_log( "\tvu1 is on vu2's eu, creating new edge (MAGSQ=%g, tol->dist_sq=%g)\n" , dist_to_loop_sq , tol->dist_sq );
-				new_eu = nmg_ebreaker( vu1->v_p , vu2->up.eu_p, tol );
+				(void) nmg_ebreaker( vu1->v_p , vu2->up.eu_p, tol );
 				nmg_klu( vu1->up.lu_p );
 				return( 1 );
 			}
@@ -2731,11 +2729,10 @@ struct rt_tol *tol;	/* tolerance for collinearity check */
 			dist_to_loop_sq = MAGSQ( vect_to_loop );
 			if( dist_to_loop_sq < eu_len_sq )
 			{
-				struct edgeuse *new_eu;
 
 				if(rt_g.NMG_debug&DEBUG_FCUT)
 					rt_log( "\tvu1 is on eu that ends at vu2, creating new edge (MAGSQ=%g, tol->dist_sq=%g)\n" , dist_to_loop_sq , tol->dist_sq );
-				new_eu = nmg_ebreaker( vu1->v_p , eu_to, tol );
+				(void) nmg_ebreaker( vu1->v_p , eu_to, tol );
 				nmg_klu( vu1->up.lu_p );
 				return( 1 );
 			}
@@ -3214,7 +3211,7 @@ rt_log("force next eu to ray\n");
 nmg_fu_touchingloops(rs->fu1);
 nmg_fu_touchingloops(rs->fu2);
 	}
-out:
+
 	if(rt_g.NMG_debug&DEBUG_FCUT)  {
 		rt_log("nmg_face_state_transition(vu x%x, pos=%d) END\n",
 			rs->vu[pos], pos);
