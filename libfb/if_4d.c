@@ -966,7 +966,9 @@ int	width, height;
 	ifp->if_width = width;
 	ifp->if_height = height;
 
+#if 0
 	blanktime(0);
+#endif
 	foreground();		/* Direct focus here, don't detach */
 
 	if( (ifp->if_mode & MODE_5MASK) == MODE_5NTSC )  {
@@ -1220,6 +1222,7 @@ _LOCAL_ int
 sgi_final_close( ifp )
 FBIO	*ifp;
 {
+#if 0
 	/*
 	 *  User is finally done with the frame buffer,
 	 *  return control to our caller (who may have more to do).
@@ -1236,6 +1239,7 @@ FBIO	*ifp;
 	 *  The 4D has a hardware botch limiting the time to 2**15 frames.
 	 */
 	blanktime( (long) 32767L );
+#endif
 #endif
 
 	/* Restore initial operation mode, if this was 30Hz */
