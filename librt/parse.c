@@ -43,14 +43,14 @@ static char RCSparse[] = "@(#)$Header$ (BRL)";
 #include "raytrace.h"
 
 /*
- *			R T _ P A R S E _ D O U B L E
+ *			B U _ P A R S E _ D O U B L E
  *
  *  Parse an array of one or more doubles.
  *  Return value: 0 when successful
  *               <0 upon failure
  */
 HIDDEN int
-rt_parse_double(str, count, loc)
+bu_parse_double(str, count, loc)
 CONST char	*str;
 long		count;
 double		*loc;
@@ -111,7 +111,7 @@ double		*loc;
 }
 
 /*
- *			R T _ S T R U C T _ L O O K U P
+ *			B U _ S T R U C T _ L O O K U P
  *
  *  Returns -
  *      -2      parse error
@@ -119,8 +119,8 @@ double		*loc;
  *	 0	entry found and processed
  */
 HIDDEN int
-rt_struct_lookup( sdp, name, base, value )
-register CONST struct structparse	*sdp;	/* structure description */
+bu_struct_lookup( sdp, name, base, value )
+register CONST struct bu_structparse	*sdp;	/* structure description */
 register CONST char			*name;	/* struct member name */
 char					*base;	/* begining of structure */
 CONST char				*value;	/* string containing value */
@@ -147,8 +147,8 @@ CONST char				*value;	/* string containing value */
 
 		if (sdp->sp_fmt[0] == 'i') {
 			/* Indirect to another structure */
-			if( rt_struct_lookup(
-				(struct structparse *)sdp->sp_count,
+			if( bu_struct_lookup(
+				(struct bu_structparse *)sdp->sp_count,
 				name, base, value )
 			    == 0 )
 				return(0);	/* found */
@@ -156,7 +156,7 @@ CONST char				*value;	/* string containing value */
 				continue;
 		}
 		if (sdp->sp_fmt[0] != '%') {
-			bu_log("rt_struct_lookup(%s): unknown format '%s'\n",
+			bu_log("bu_struct_lookup(%s): unknown format '%s'\n",
 				name, sdp->sp_fmt );
 			return(-1);
 		}
@@ -256,11 +256,11 @@ CONST char				*value;	/* string containing value */
 			}
 			break;
 		case 'f':
-			retval = rt_parse_double(value, sdp->sp_count,
+			retval = bu_parse_double(value, sdp->sp_count,
 						 (double *)loc);
 			break;
 		default:
-			bu_log("rt_struct_lookup(%s): unknown format '%s'\n",
+			bu_log("bu_struct_lookup(%s): unknown format '%s'\n",
 				name, sdp->sp_fmt );
 			return(-1);
 		}
@@ -273,7 +273,7 @@ CONST char				*value;	/* string containing value */
 }
 
 /*
- *			R T _ S T R U C T P A R S E
+ *			B U _ S T R U C T P A R S E
  *
  *	Parse the structure element description in the vls string "vls"
  *	according to the structure description in "parsetab"
@@ -283,9 +283,9 @@ CONST char				*value;	/* string containing value */
  *	 0	OK
  */
 int
-rt_structparse( in_vls, desc, base )
+bu_structparse( in_vls, desc, base )
 CONST struct bu_vls		*in_vls;	/* string to parse through */
-CONST struct structparse	*desc;		/* structure description */
+CONST struct bu_structparse	*desc;		/* structure description */
 char				*base;		/* base addr of users struct */
 {
 	struct bu_vls	vls;
@@ -295,8 +295,8 @@ char				*base;		/* base addr of users struct */
 	int retval;
 
 	BU_CK_VLS(in_vls);
-	if (desc == (struct structparse *)NULL) {
-		bu_log( "Null \"struct structparse\" pointer\n");
+	if (desc == (struct bu_structparse *)NULL) {
+		bu_log( "Null \"struct bu_structparse\" pointer\n");
 		return(-1);
 	}
 
@@ -321,7 +321,7 @@ char				*base;		/* base addr of users struct */
 			if( name == cp ) break;
 
 			/* end of string in middle of arg */
-			bu_log("rt_structparse: name '%s' without '='\n",
+			bu_log("bu_structparse: name '%s' without '='\n",
 				name );
 			bu_vls_free( &vls );
 			return(-2);
@@ -341,7 +341,7 @@ char				*base;		/* base addr of users struct */
 					break;
 
 			if (*cp != '"') {
-				bu_log("rt_structparse: name '%s'=\" without closing \"\n",
+				bu_log("bu_structparse: name '%s'=\" without closing \"\n",
 					name);
 				bu_vls_free( &vls );
 				return(-3);
@@ -357,11 +357,11 @@ char				*base;		/* base addr of users struct */
 			*cp++ = '\0';
 
 		/* Lookup name in desc table and modify */
-		retval = rt_struct_lookup( desc, name, base, value );
+		retval = bu_struct_lookup( desc, name, base, value );
 		if( retval == -1 ) {
-		    bu_log("rt_structparse:  '%s=%s', element name not found in:\n",
+		    bu_log("bu_structparse:  '%s=%s', element name not found in:\n",
 			   name, value);
-		    rt_structprint( "troublesome one", desc, base );
+		    bu_structprint( "troublesome one", desc, base );
 		} else if( retval == -2 ) {
 		    bu_vls_free( &vls );
 		    return -2;
@@ -372,13 +372,15 @@ char				*base;		/* base addr of users struct */
 	return(0);
 }
 
+
 /*
- *			R T _ M A T P R I N T
+ *			B U _ M A T P R I N T
  *
+ *	XXX Should this be here, or could it be with the matrix support?
  *	pretty-print a matrix
  */
 HIDDEN void
-rt_matprint(name, mat)
+bu_matprint(name, mat)
 CONST char		*name;
 register CONST matp_t	mat;
 {
@@ -402,17 +404,18 @@ register CONST matp_t	mat;
 		mat[12], mat[13], mat[14], mat[15]);
 }
 
+
 HIDDEN void
-rt_vls_item_print_core( vp, sdp, base, sep_char )
+bu_vls_item_print_core( vp, sdp, base, sep_char )
 struct bu_vls *vp;
-CONST struct structparse *sdp;    /* item description */
+CONST struct bu_structparse *sdp;    /* item description */
 CONST char *base;                 /* base address of users structure */
 char sep_char;                    /* value separator */
 {
     register char *loc;
 
-    if (sdp == (struct structparse *)NULL) {
-	bu_log( "Null \"struct structparse\" pointer\n");
+    if (sdp == (struct bu_structparse *)NULL) {
+	bu_log( "Null \"struct bu_structparse\" pointer\n");
 	return;
     }
 
@@ -428,7 +431,7 @@ char sep_char;                    /* value separator */
     }
 
     if ( sdp->sp_fmt[0] != '%')  {
-	bu_log("rt_vls_item_print:  %s: unknown format '%s'\n",
+	bu_log("bu_vls_item_print:  %s: unknown format '%s'\n",
 	       sdp->sp_name, sdp->sp_fmt );
 	return;
     }
@@ -484,76 +487,76 @@ char sep_char;                    /* value separator */
 
 
 /*
- *                     R T _ V L S _ I T E M _ P R I N T
+ *                     B U _ V L S _ I T E M _ P R I N T
  *
  * Takes the single item pointed to by "sp", and prints its value into a
  * vls.
  */
 
 void
-rt_vls_item_print( vp, sdp, base )
+bu_vls_item_print( vp, sdp, base )
 struct bu_vls *vp;
-CONST struct structparse *sdp;     /* item description */
+CONST struct bu_structparse *sdp;     /* item description */
 CONST char *base;                 /* base address of users structure */
 {
-    rt_vls_item_print_core( vp, sdp, base, ',' );
+    bu_vls_item_print_core( vp, sdp, base, ',' );
 }
 
 /*
- *    R T _ V L S _ I T E M _ P R I N T _ N C
+ *    B U _ V L S _ I T E M _ P R I N T _ N C
  *
- *    A "no-commas" version of the rt_vls_item_print() routine.
+ *    A "no-commas" version of the bu_vls_item_print() routine.
  */
 
 void
-rt_vls_item_print_nc( vp, sdp, base )
+bu_vls_item_print_nc( vp, sdp, base )
 struct bu_vls *vp;
-CONST struct structparse *sdp;     /* item description */
+CONST struct bu_structparse *sdp;     /* item description */
 CONST char *base;                 /* base address of users structure */
 {
-    rt_vls_item_print_core( vp, sdp, base, ' ' );
+    bu_vls_item_print_core( vp, sdp, base, ' ' );
 }
 
-/*                  R T _ V L S _ N A M E _ P R I N T
+/*                  B U _ V L S _ N A M E _ P R I N T
  *
- * A version of rt_vls_item_print that allows you to select by name.
+ * A version of bu_vls_item_print that allows you to select by name.
  */
 
 int
-rt_vls_name_print( vp, parsetab, name, base )
+bu_vls_name_print( vp, parsetab, name, base )
 struct bu_vls *vp;
-CONST struct structparse *parsetab;
+CONST struct bu_structparse *parsetab;
 CONST char *name;
 CONST char *base;
 {
-    register CONST struct structparse *sdp;
+    register CONST struct bu_structparse *sdp;
 
     for( sdp = parsetab; sdp->sp_name != NULL; sdp++ )
 	if( strcmp(sdp->sp_name, name) == 0 ) {
-	    rt_vls_item_print( vp, sdp, base );
+	    bu_vls_item_print( vp, sdp, base );
 	    return 0;
 	}
 
     return -1;
 }
 
-/*                  R T _ V L S _ N A M E _ P R I N T _ N C
+/*                  B U _ V L S _ N A M E _ P R I N T _ N C
  *
- * A "no-commas" version of rt_vls_name_print
+ * A "no-commas" version of bu_vls_name_print
  */
 
 int
-rt_vls_name_print_nc( vp, parsetab, name, base )
+bu_vls_name_print_nc( vp, parsetab, name, base )
 struct bu_vls *vp;
-CONST struct structparse *parsetab;
+CONST struct bu_structparse *parsetab;
 CONST char *name;
 CONST char *base;
 {
-    register CONST struct structparse *sdp;
+    register CONST struct bu_structparse *sdp;
 
     for( sdp = parsetab; sdp->sp_name != NULL; sdp++ )
 	if( strcmp(sdp->sp_name, name) == 0 ) {
-	    rt_vls_item_print_nc( vp, sdp, base );
+	    bu_vls_item_print_nc( vp, sdp, base );
 	    return 0;
 	}
 
@@ -564,23 +567,23 @@ CONST char *base;
 
 
 /*
- *			R T _ S T R U C T P R I N T
+ *			B U _ S T R U C T P R I N T
  */
 void
-rt_structprint( title, parsetab, base )
+bu_structprint( title, parsetab, base )
 CONST char			*title;
-CONST struct structparse	*parsetab;/* structure description */
+CONST struct bu_structparse	*parsetab;/* structure description */
 CONST char			*base;	  /* base address of users structure */
 {
-	register CONST struct structparse	*sdp;
+	register CONST struct bu_structparse	*sdp;
 	register char			*loc;
 	register int			lastoff = -1;
 	struct bu_vls vls;
 
 	bu_vls_init( &vls );
 	bu_log( "%s\n", title );
-	if (parsetab == (struct structparse *)NULL) {
-		bu_log( "Null \"struct structparse\" pointer\n");
+	if (parsetab == (struct bu_structparse *)NULL) {
+		bu_log( "Null \"struct bu_structparse\" pointer\n");
 		return;
 	}
 	for( sdp = parsetab; sdp->sp_name != (char *)0; sdp++ )  {
@@ -597,20 +600,20 @@ CONST char			*base;	  /* base address of users structure */
 #endif
 
 		if (sdp->sp_fmt[0] == 'i' )  {
-			rt_structprint( sdp->sp_name,
-				(struct structparse *)sdp->sp_count,
+			bu_structprint( sdp->sp_name,
+				(struct bu_structparse *)sdp->sp_count,
 				base );
 			continue;
 		}
 
 		if ( sdp->sp_fmt[0] != '%')  {
-			bu_log("rt_structprint:  %s: unknown format '%s'\n",
+			bu_log("bu_structprint:  %s: unknown format '%s'\n",
 				sdp->sp_name, sdp->sp_fmt );
 			continue;
 		}
 #if 0
 		bu_vls_trunc( &vls, 0 );
-		rt_vls_item_print( &vls, sdp, base );
+		bu_vls_item_print( &vls, sdp, base );
 		bu_log( " %s=%s\n", sdp->sp_name, bu_vls_addr(&vls) );
 #else
 		switch( sdp->sp_fmt[1] )  {
@@ -666,7 +669,7 @@ CONST char			*base;	  /* base address of users structure */
 				register double *dp = (double *)loc;
 
 				if (sdp->sp_count == ELEMENTS_PER_MAT) {
-					rt_matprint(sdp->sp_name, (matp_t)dp);
+					bu_matprint(sdp->sp_name, (matp_t)dp);
 				} else if (sdp->sp_count <= ELEMENTS_PER_VECT){
 					bu_log( " %s=%.25G", sdp->sp_name, *dp++ );
 
@@ -701,7 +704,7 @@ CONST char			*base;	  /* base address of users structure */
 			}
 			break;
 		default:
-			bu_log( " rt_structprint: Unknown format: %s=%s??\n",
+			bu_log( " bu_structprint: Unknown format: %s=%s??\n",
 				sdp->sp_name, sdp->sp_fmt );
 			break;
 		}
@@ -711,10 +714,10 @@ CONST char			*base;	  /* base address of users structure */
 }
 
 /*
- *			R T _ V L S _ P R I N T _ D O U B L E
+ *			B U _ V L S _ P R I N T _ D O U B L E
  */
 HIDDEN void
-rt_vls_print_double(vls, name, count, dp)
+bu_vls_print_double(vls, name, count, dp)
 struct bu_vls		*vls;
 CONST char		*name;
 register long		count;
@@ -739,15 +742,15 @@ register CONST double	*dp;
 }
 
 /*
- *			R T _ V L S _ S T R U C T P R I N T
+ *			B U _ V L S _ S T R U C T P R I N T
  *
- *	This differs from rt_structprint in that this output is less readable
+ *	This differs from bu_structprint in that this output is less readable
  *	by humans, but easier to parse with the computer.
  */
 void
-rt_vls_structprint( vls, sdp, base)
+bu_vls_structprint( vls, sdp, base)
 struct	bu_vls				*vls;	/* vls to print into */
-register CONST struct structparse	*sdp;	/* structure description */
+register CONST struct bu_structparse	*sdp;	/* structure description */
 CONST char				*base;	/* structure ponter */
 {
 	register char			*loc;
@@ -756,8 +759,8 @@ CONST char				*base;	/* structure ponter */
 
 	BU_CK_VLS(vls);
 
-	if (sdp == (struct structparse *)NULL) {
-		bu_log( "Null \"struct structparse\" pointer\n");
+	if (sdp == (struct bu_structparse *)NULL) {
+		bu_log( "Null \"struct bu_structparse\" pointer\n");
 		return;
 	}
 
@@ -778,8 +781,8 @@ CONST char				*base;	/* structure ponter */
 			struct bu_vls sub_str;
 
 			bu_vls_init(&sub_str);
-			rt_vls_structprint( &sub_str,
-				(struct structparse *)sdp->sp_count,
+			bu_vls_structprint( &sub_str,
+				(struct bu_structparse *)sdp->sp_count,
 				base );
 
 			bu_vls_vlscat(vls, &sub_str);
@@ -788,7 +791,7 @@ CONST char				*base;	/* structure ponter */
 		}
 
 		if ( sdp->sp_fmt[0] != '%' )  {
-			bu_log("rt_structprint:  %s: unknown format '%s'\n",
+			bu_log("bu_structprint:  %s: unknown format '%s'\n",
 				sdp->sp_name, sdp->sp_fmt );
 			break;
 		}
@@ -905,7 +908,7 @@ CONST char				*base;	/* structure ponter */
 			}
 			break;
 		case 'f':
-			rt_vls_print_double(vls, sdp->sp_name, sdp->sp_count,
+			bu_vls_print_double(vls, sdp->sp_name, sdp->sp_count,
 				(double *)loc);
 			break;
 		default:
