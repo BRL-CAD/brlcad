@@ -403,6 +403,57 @@ getsolid()
 	}
 }
 
+/*
+ *			G E T S O L D A T A
+ *
+ *  Obtain 'num' data items from input card(s).
+ *  The first input card is already in global 'scard'.
+ *
+ *  Returns -
+ *	 0	OK
+ *	-1	failure
+ */
+int
+getsoldata( dp, num, solid_num )
+double	*dp;
+int	num;
+int	solid_num;
+{
+	int	cd;
+	double	*fp;
+	int	i;
+
+	for( cd=1; num > 0; cd++ )  {
+		if( cd != 1 )  {
+			if( getline( &scard, sizeof(scard), "solid continuation card" ) == EOF )  {
+				printf("too few cards for solid %d\n",
+					solid_num);
+				return(-1);
+			}
+			/* continuation card
+			 * solid type should be blank 
+			 */
+			if( (version==5 && ((char *)&scard)[5] != ' ' ) ||
+			    (version==4 && ((char *)&scard)[3] != ' ' ) )  {
+				printf("solid %d (continuation) card %d non-blank\n",
+					solid_num, cd);
+				return(-1);
+			}
+		}
+
+		fp = &dp[cd*6-1];
+		if( num <= 6 )
+			i = num-1;
+		else
+			i = 5;
+		for(; i>=0; i--,num--)   {
+			scard.sc_fields[i][10] = '\0';	/* null OFF END */
+			*fp-- = atof( scard.sc_fields[i] );
+		}
+	}
+	return(0);
+}
+
 
 /*
  * Input Vector Fields
@@ -457,9 +508,8 @@ char	*solid_type;
 	static float m5, m6;	/* TOR temporaries */
 	static float r3,r4; /* magnitude temporaries */
 	static int i;
-	int	cd;
-	float	*fp;
 	char	name[16+2];
+	double	dd[4*6];	/* 4 cards of 6 nums each */
 
 	in.s_id = SOLID;
 	in.s_type = cur_type;
@@ -469,32 +519,11 @@ char	*solid_type;
 	NAMEMOVE( name, in.s_name );
 
 	for(i=0; i<24; i++)
-		in.s_values[i] = 0.0;
-
-	for( cd=1; cd <= ncards[in.s_type]; cd++ )  {
-		if( cd != 1 )  {
-			if( getline( &scard, sizeof(scard), "solid continuation card" ) == EOF )  {
-				printf("too few cards for solid %d\n",
-					in.s_num);
-				return	0;
-			}
-			/* continuation card
-			 * solid type should be blank 
-			 */
-			if( (version==5 && ((char *)&scard)[5] != ' ' ) ||
-			    (version==4 && ((char *)&scard)[3] != ' ' ) )  {
-				printf("solid %d continuation card solid type non-blank, ='%s'\n",
-					in.s_num, solid_type);
-				return 0;
-			}
-		}
-
-		fp = &in.s_values[cd*6-1];
-		for(i=5; i>=0; i--)   {
-			scard.sc_fields[i][10] = '\0';	/* null OFF END */
-			*fp-- = atof( scard.sc_fields[i] );
-		}
-	}
+		dd[i] = 0.0;
+	if( getsoldata( dd, ncards[in.s_type]*6, in.s_num ) < 0 )
+		return(-1);
+	for(i=0; i<24; i++)
+		in.s_values[i] = dd[i];
 
 	col_pr( name );
 
