@@ -13,7 +13,7 @@
 #	The BRL-CAD Package" agreement.
 #
 # Copyright Notice -
-#	This software is Copyright (C) 1995 by the United States Army
+#	This software is Copyright (C) 1995-2004 by the United States Army
 #	in all countries except the USA.  All rights reserved.
 #
 # Description -
@@ -95,10 +95,10 @@ proc handle_select { w y } {
 }
 
 proc mged_help { w1 screen } {
-    global tkPriv
+    global ::tk::Priv
 
     catch { help [$w1 get [$w1 curselection]]} msg
-    cad_dialog $tkPriv(cad_dialog) $screen Usage $msg info 0 OK
+    cad_dialog $::tk::Priv(cad_dialog) $screen Usage $msg info 0 OK
 }
 
 proc ia_apropos { parent screen } {
@@ -142,7 +142,7 @@ proc ia_changestate { args } {
     }
 }
 
-proc tkTextInsert {w s} {
+proc ::tk::TextInsert {w s} {
     if {$s == ""} {
 	return
     }
@@ -172,7 +172,7 @@ proc get_player_id_t { w } {
 
 proc do_New { id } {
     global mged_gui
-    global tkPriv
+    global ::tk::Priv
 
     set ret [cad_input_dialog .$id.new $mged_gui($id,screen)\
 	    "New MGED Database" \
@@ -186,7 +186,7 @@ must not exist by this name."}}\
 	if [file isdirectory $ia_filename] {
 	    # the split followed by the join removes extra /'s
 	    set mged_gui(databaseDir) [eval file join [file split $ia_filename]]
-	    cad_dialog $tkPriv(cad_dialog) $mged_gui($id,screen) "Not a database." \
+	    cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen) "Not a database." \
 		    "$ia_filename is a directory!" info 0 OK
 	    return
 	} else {
@@ -194,15 +194,15 @@ must not exist by this name."}}\
 	}
 
 	if [file exists $ia_filename] {
-	    cad_dialog $tkPriv(cad_dialog) $mged_gui($id,screen) "Existing Database" \
+	    cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen) "Existing Database" \
 		    "$ia_filename already exists" info 0 OK
 	} else {
 	    set ret [catch {opendb $ia_filename y} msg]
 	    if {$ret} {
-		cad_dialog $tkPriv(cad_dialog) $mged_gui($id,screen) "Error" \
+		cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen) "Error" \
 			$msg info 0 OK
 	    } else {
-		cad_dialog $tkPriv(cad_dialog) $mged_gui($id,screen) "File created" \
+		cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen) "File created" \
 			$msg info 0 OK
 	    }
 	}
@@ -211,7 +211,7 @@ must not exist by this name."}}\
 
 proc do_Open { id } {
     global mged_gui
-    global tkPriv
+    global ::tk::Priv
 
     set ftypes {{{MGED Database} {.g}} {{All Files} {*}}}
     set filename [tk_getOpenFile -parent .$id -filetypes $ftypes \
@@ -223,10 +223,10 @@ proc do_Open { id } {
 
 	set ret [catch {opendb $filename} msg]
 	if {$ret} {
-	    cad_dialog $tkPriv(cad_dialog) $mged_gui($id,screen) "Error" \
+	    cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen) "Error" \
 		    $msg info 0 OK
 	} else {
-	    cad_dialog $tkPriv(cad_dialog) $mged_gui($id,screen) "File loaded" \
+	    cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen) "File loaded" \
 		    $msg info 0 OK
 	}
     }
@@ -242,7 +242,7 @@ proc do_Open { id } {
 #
 proc getFile { parent dir ftypes title } {
     global mged_gui
-    global tkPriv
+    global ::tk::Priv
 
     upvar #0 $dir path
 
@@ -258,7 +258,7 @@ proc getFile { parent dir ftypes title } {
 	if {$parent == "."} {
 	    set parent ""
 	}
-	cad_dialog $tkPriv(cad_dialog) $parent "Error" \
+	cad_dialog $::tk::Priv(cad_dialog) $parent "Error" \
 		"Length of path is greater than 127 bytes." info 0 OK
 	return ""
     }
@@ -273,10 +273,10 @@ proc getFile { parent dir ftypes title } {
 
 proc do_Concat { id } {
     global mged_gui
-    global tkPriv
+    global ::tk::Priv
 
     if {[opendb] == ""} {
-	cad_dialog $tkPriv(cad_dialog) $mged_gui($id,screen) "No database." \
+	cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen) "No database." \
 		"No database has been opened!" info 0 OK
 	return
     }
@@ -309,7 +309,7 @@ the database being inserted."} { see_also dbconcat } } OK Cancel]
 
 proc do_LoadScript { id } {
 	global mged_gui
-	global tkPriv
+	global ::tk::Priv
 	
 	set ftypes {{{All Readable Scripts} {.tcl .sh .rt}} {{Raytrace Scripts} {.rt .sh}} {{Tcl Scripts} {.tcl}} {{All Files} {*}}}
 	set ia_filename [tk_getOpenFile -parent .$id -filetypes $ftypes -initialdir $mged_gui(loadScriptDir) -title "Load Script"]
@@ -322,15 +322,15 @@ proc do_LoadScript { id } {
 		# XXX this is not the best thing to do if we have a big script file..
 		set ret [ catch { open $ia_filename } scriptfd ]
 		if {$ret} {
-			cad_dialog $tkPriv(cad_dialog) $mged_gui($id,screen) "Error" $scriptfd info 0 OK
+			cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen) "Error" $scriptfd info 0 OK
 		}
 		set ret [ catch { read $scriptfd } scriptsource ]
 		if {$ret} {
-			cad_dialog $tkPriv(cad_dialog) $mged_gui($id,screen) "Error" $scriptsource info 0 OK
+			cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen) "Error" $scriptsource info 0 OK
 		}
 		set ret [ catch { close $scriptfd } msg ]
 		if {$ret} {
-			cad_dialog $tkPriv(cad_dialog) $mged_gui($id,screen) "Error" $msg info 0 OK
+			cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen) "Error" $msg info 0 OK
 		}			
 
 		# the script should now be stored in scriptsource. attempt to determine some basic types
@@ -355,24 +355,22 @@ proc do_LoadScript { id } {
 
 		# output a result dialog
 		if {$ret} {
-			cad_dialog $tkPriv(cad_dialog) $mged_gui($id,screen) "Error" $output info 0 OK
+			cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen) "Error" $output info 0 OK
 		} else {
-			cad_dialog $tkPriv(cad_dialog) $mged_gui($id,screen) "Script loaded" "Script successfully loaded!" info 0 OK
+			cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen) "Script loaded" "Script successfully loaded!" info 0 OK
 		}
-
 	}
 	# end check if filename was given
-
 }
 
 proc do_Units { id } {
     global mged_gui
     global mged_display
-    global tkPriv
+    global ::tk::Priv
 
     if {[opendb] == ""} {
 	set mged_display(units) ""
-	cad_dialog $tkPriv(cad_dialog) $mged_gui($id,screen) "No database." \
+	cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen) "No database." \
 		"No database has been opened!" info 0 OK
 	return
     }
@@ -382,13 +380,13 @@ proc do_Units { id } {
 
 proc do_rt_script { id } {
     global mged_gui
-    global tkPriv
+    global ::tk::Priv
 
     set ia_filename [fs_dialog .$id.rtscript .$id "./*"]
     if {[string length $ia_filename] > 0} {
 	saveview $ia_filename
     } else {
-	cad_dialog $tkPriv(cad_dialog) $mged_gui($id,screen) "Error" \
+	cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen) "Error" \
 		"No such file exists." warning 0 OK
     }
 }
@@ -397,9 +395,9 @@ proc do_About_MGED { id } {
     global mged_gui
     global mged_default
     global version
-    global tkPriv
+    global ::tk::Priv
 
-    cad_dialog $tkPriv(cad_dialog) $mged_gui($id,screen) "About MGED..." \
+    cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen) "About MGED..." \
 	    "$version
 MGED (Multi-device Geometry EDitor) is part
 of the BRL-CAD(TM) package.
@@ -508,9 +506,9 @@ proc echo args {
 #==============================================================================
 proc man_goto { w screen } {
     global ia_url
-    global tkPriv
+    global ::tk::Priv
 
-    cad_input_dialog $tkPriv(cad_dialog) $screen "Go To" "Enter filename to read:" \
+    cad_input_dialog $::tk::Priv(cad_dialog) $screen "Go To" "Enter filename to read:" \
 	    filename $ia_url(current) \
 	    0 {{ summary "Enter a filename or URL."}} OK
 
@@ -523,7 +521,7 @@ proc man_goto { w screen } {
 
 	HMlink_callback $w.text $new_url
     } else {
-	cad_dialog $tkPriv(cad_dialog) $screen "Error reading file" \
+	cad_dialog $::tk::Priv(cad_dialog) $screen "Error reading file" \
 		"Cannot read file $filename." error 0 OK
     }
 }

@@ -34,7 +34,7 @@
  *	Aberdeen Proving Ground, Maryland  21005-5066
  *  
  *  Copyright Notice -
- *	This software is Copyright (C) 1990 by the United States Army.
+ *	This software is Copyright (C) 1990-2004 by the United States Army.
  *	All rights reserved.
  */
 #ifndef lint
@@ -1752,7 +1752,6 @@ classify_sketch_loops( struct bu_ptbl *loopa, struct bu_ptbl *loopb, struct rt_s
 	struct bn_tol tol;
 	point2d_t pta, ptb;
 	point2d_t dir;
-	struct curve *crv;
 	genptr_t seg;
 	fastf_t inv_len;
 	int loopa_count=0, loopb_count=0;
@@ -1761,8 +1760,6 @@ classify_sketch_loops( struct bu_ptbl *loopa, struct bu_ptbl *loopb, struct rt_s
 	BU_CK_PTBL( loopa );
 	BU_CK_PTBL( loopb );
 	RT_SKETCH_CK_MAGIC( ip );
-
-	crv = &ip->skt_curve;
 
 	tol.magic = BN_TOL_MAGIC;
 	tol.dist = 0.005;
@@ -2300,7 +2297,8 @@ rt_extrude_import5(
 	const struct bu_external	*ep,
 	register const mat_t		mat,
 	const struct db_i		*dbip,
-	struct resource			*resp)
+	struct resource			*resp,
+	const int			minor_type )
 {
 	LOCAL struct rt_extrude_internal	*extrude_ip;
 	struct rt_db_internal			tmp_ip;
@@ -2449,10 +2447,15 @@ rt_extrude_xform(
 		RT_INIT_DB_INTERNAL( op );
 		eop = (struct rt_extrude_internal *)bu_malloc( sizeof( struct rt_extrude_internal ), "eop" );
 		eop->magic = RT_EXTRUDE_INTERNAL_MAGIC;
+		eop->sketch_name = bu_strdup( eip->sketch_name );
 		op->idb_ptr = (genptr_t)eop;
 		op->idb_meth = &rt_functab[ID_EXTRUDE];
 		op->idb_major_type = DB5_MAJORTYPE_BRLCAD;
 		op->idb_type = ID_EXTRUDE;
+		if( ip->idb_avs.magic == BU_AVS_MAGIC ) {
+			bu_avs_init( &op->idb_avs, ip->idb_avs.count, "avs" );
+			bu_avs_merge( &op->idb_avs, &ip->idb_avs );
+		}
 	}
 	else
 		eop = (struct rt_extrude_internal *)ip->idb_ptr;
@@ -2466,7 +2469,6 @@ rt_extrude_xform(
 	MAT4X3VEC( tmp_vec, mat, eip->v_vec );
 	VMOVE( eop->v_vec, tmp_vec );
 	eop->keypoint = eip->keypoint;
-	eop->sketch_name = bu_strdup( eip->sketch_name );
 
 	if( free && ip != op )
 	{

@@ -10,7 +10,7 @@
  *	Aberdeen Proving Ground, Maryland  21005
  *  
  *  Copyright Notice -
- *	This software is Copyright (C) 1985 by the United States Army.
+ *	This software is Copyright (C) 1985-2004 by the United States Army.
  *	All rights reserved.
  */
 #ifndef lint
@@ -42,6 +42,7 @@ static void tvadd();
 static void tvsub(struct timeval *tdiff, struct timeval *t1, struct timeval *t0);
 static void psecs(long int l, struct bu_vls *vp);
 
+
 /*
  *			R T _ P R E P _ T I M E R
  */
@@ -72,6 +73,7 @@ rt_get_timer(struct bu_vls *vp, double *elapsed)
 	double	user_cpu_secs;
 	double	elapsed_secs;
 
+
 	getrusage(RUSAGE_SELF, &ru1);
 	getrusage(RUSAGE_CHILDREN, &ru1c);
 	gettimeofday(&timedol, (struct timezone *)0);
@@ -80,10 +82,10 @@ rt_get_timer(struct bu_vls *vp, double *elapsed)
 		(timedol.tv_usec - time0.tv_usec)/1000000.0;
 
 	tvsub( &td, &ru1.ru_utime, &ru0.ru_utime );
-	user_cpu_secs = td.tv_sec + ((double)td.tv_usec) / 1000000;
+	user_cpu_secs = td.tv_sec + ((double)td.tv_usec) / 1000000.0;
 
 	tvsub( &td, &ru1c.ru_utime, &ru0c.ru_utime );
-	user_cpu_secs += td.tv_sec + ((double)td.tv_usec) / 1000000;
+	user_cpu_secs += td.tv_sec + ((double)td.tv_usec) / 1000000.0;
 
 	if( user_cpu_secs < 0.00001 )  user_cpu_secs = 0.00001;
 	if( elapsed_secs < 0.00001 )  elapsed_secs = user_cpu_secs;	/* It can't be any less! */
@@ -91,13 +93,6 @@ rt_get_timer(struct bu_vls *vp, double *elapsed)
 	if( elapsed )  *elapsed = elapsed_secs;
 
 	if( vp )  {
-#ifdef linux
-		if( rt_g.rtg_parallel != 0 ) {
-			bu_log( "\t\t\tLinux machines do not know how to correctly account for CPU time used\n\
-			by threads.You are trying to use more than one CPU, so the\n\
-			times you see here are likely to be meaningless.\n" );
-		}
-#endif /* linux */
 		bu_vls_printf( vp, "cpu = %g sec, elapsed = %g sec\n",
 			user_cpu_secs, elapsed_secs );
 		bu_vls_strcat( vp, "    parent: " );

@@ -20,7 +20,7 @@
  *	Aberdeen Proving Ground, Maryland  21005
  *  
  *  Copyright Notice -
- *	This software is Copyright (C) 1985 by the United States Army.
+ *	This software is Copyright (C) 1985-2004 by the United States Army.
  *	All rights reserved.
  */
 #ifndef lint
@@ -57,7 +57,11 @@ void color_soltab(void);
 void color_putrec(register struct mater *mp), color_zaprec(register struct mater *mp);
 
 static char	tmpfil[17];
+#ifndef WIN32
 static char	*tmpfil_init = "/tmp/GED.aXXXXXX";
+#else
+static char	*tmpfil_init = "c:\\GED.aXXXXXX";
+#endif
 
 /*
  *  			F _ E D C O L O R
@@ -92,7 +96,7 @@ f_edcolor(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	}
 
 	strcpy(tmpfil, tmpfil_init);
-#if 0
+#ifdef WIN32
 	(void)mktemp(tmpfil);
 	if ((fp = fopen(tmpfil, "w")) == NULL) {
 		perror(tmpfil);

@@ -4140,10 +4140,10 @@ proc sketch_text_from_table {tid {needcol -1}} {
 
 proc animmate { id {p .} } {
     global mged_gui
-    global tkPriv
+    global ::tk::Priv
 
     if {[opendb] == ""} {
-	cad_dialog $tkPriv(cad_dialog) $mged_gui($id,screen) "No database." \
+	cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen) "No database." \
 		"No database has been opened!" info 0 OK
 	return
     }

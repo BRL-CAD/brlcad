@@ -16,7 +16,7 @@
  *
  *
  * Copyright Notice -
- * 	This software if Copyright (C) 1990 by the United States Arym.
+ * 	This software if Copyright (C) 1990-2004 by the United States Army.
  *	All Rights Reserved.
  */
 

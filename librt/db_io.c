@@ -16,7 +16,7 @@
  *	Aberdeen Proving Ground, Maryland  21005-5066
  *  
  *  Copyright Notice -
- *	This software is Copyright (C) 1988 by the United States Army.
+ *	This software is Copyright (C) 1988-2004 by the United States Army.
  *	All rights reserved.
  */
 #ifndef lint
@@ -26,7 +26,9 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "conf.h"
 
 #include <stdio.h>
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif
 #ifdef USE_STRING_H
 #include <string.h>
 #else

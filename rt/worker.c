@@ -13,7 +13,7 @@
  *	Aberdeen Proving Ground, Maryland  21005
  *  
  *  Copyright Notice -
- *	This software is Copyright (C) 1985 by the United States Army.
+ *	This software is Copyright (C) 1985-2004 by the United States Army.
  *	All rights reserved.
  */
 #ifndef lint
@@ -34,6 +34,16 @@ static const char RCSworker[] = "@(#)$Header$ (BRL)";
 #include "raytrace.h"
 #include "./ext.h"
 #include "rtprivate.h"
+#include "fb.h"					/* Added because RGBpixel is now needed in do_pixel() */
+
+/* for fork/pipe linux timing hack */
+#if defined(linux)
+#  include <sys/select.h>
+#  include <sys/types.h>
+#  include <sys/wait.h>
+#  include <unistd.h>
+#endif
+
 
 int		per_processor_chunk = 0;	/* how many pixels to do at once */
 
@@ -47,7 +57,6 @@ struct floatpixel	*curr_float_frame;	/* buffer of full frame */
 struct floatpixel	*prev_float_frame;
 int		reproj_cur;	/* number of pixels reprojected this frame */
 int		reproj_max;	/* out of total number of pixels */
-/* XXX should record width&height, in case size changes on-the-fly */
 
 /* Local communication with worker() */
 int cur_pixel;			/* current pixel number, 0..last_pixel */
@@ -58,6 +67,8 @@ extern int		query_y;
 extern int		Query_one_pixel;
 extern int		query_rdebug;
 extern int		query_debug;
+
+extern unsigned	char	*pixmap;		/* pixmap for rerendering of black pixels */
 
 /*
  *			G R I D _ S E T U P
@@ -201,6 +212,7 @@ grid_setup(void)
 	}
 }
 
+
 /*
  *			D O _ R U N
  *
@@ -215,6 +227,26 @@ void do_run( int a, int b )
 	cur_pixel = a;
 	last_pixel = b;
 
+#  if defined(linux)
+	int pid, wpid;
+	int waitret;
+	int p[2];
+	void *buffer;
+	struct resource *tmp_res;
+
+	if( rt_g.rtg_parallel ) {
+		buffer = calloc(npsw, sizeof(resource[0]));
+		if (buffer == NULL) {
+			perror("calloc failed");
+			bu_bomb("Unable to allocate memory");
+		}
+		if (pipe(p) == -1) {
+			perror("pipe failed");
+		}
+	}
+#  endif
+
+
 	if( !rt_g.rtg_parallel )  {
 		/*
 		 * SERIAL case -- one CPU does all the work.
@@ -225,17 +257,82 @@ void do_run( int a, int b )
 		/*
 		 *  Parallel case.
 		 */
-		bu_parallel( worker, npsw, NULL );
-	}
 
+		/* hack to bypass a bug in the Linux 2.4 kernel pthreads
+		 * implementation. cpu statistics are only traceable on a
+		 * process level and the timers will report effectively no
+		 * elapsed cpu time.  this allows the stats of all threads
+		 * to be gathered up by an encompassing process that may
+		 * be timed.
+		 *
+		 * XXX this should somehow only apply to a build on a 2.4
+		 * linux kernel.
+		 */
+#  if defined(linux)
+		pid = fork();
+		if (pid < 0) {
+			perror("fork failed");
+			exit(1);
+		} else if (pid == 0) {
+#  endif
+
+			bu_parallel( worker, npsw, NULL );
+
+#  if defined(linux)
+			/* send raytrace instance data back to the parent */
+			if (write(p[1], resource, sizeof(resource[0]) * npsw) == -1) {
+				perror("Unable to write to the communication pipe");
+				exit(1);
+			}
+			/* flush the pipe */
+			if (close(p[1]) == -1) {
+			  	perror("Unable to close the communication pipe");
+			  	sleep(1); /* give the parent time to read */
+			}
+			exit(0); 
+		} else {
+			if (read(p[0], buffer, sizeof(resource[0]) * npsw) == -1) {
+				perror("Unable to read from the communication pipe");
+			}
+
+			/* do not use the just read info to overwrite the resource structures.
+			 * doing so will hose the resources completely
+			 */
+
+			/* parent ends up waiting on his child (and his child's threads) to
+			 * terminate.  we can get valid usage statistics on a child process.
+			 */
+			while ((wpid = wait(&waitret)) != pid && wpid != -1)
+				; /* do nothing */
+		} /* end fork() */
+#  endif
+
+	} /* end parallel case */
+
+#  if defined(linux )
+	if( rt_g.rtg_parallel ) {
+		tmp_res = (struct resource *)buffer;
+	} else {
+		tmp_res = resource;
+	}
+	for( cpu=0; cpu < npsw; cpu++ ) {
+		if ( tmp_res[cpu].re_magic != RESOURCE_MAGIC )  {
+			bu_log("ERROR: CPU %d resources corrupted, statistics bad\n", cpu);
+			continue;
+		}
+		rt_add_res_stats( ap.a_rt_i, &tmp_res[cpu] );
+		rt_zero_res_stats( &resource[cpu] );
+	}
+#  else
 	/* Tally up the statistics */
-	for( cpu=0; cpu < npsw; cpu++ )  {
-		if( resource[cpu].re_magic != RESOURCE_MAGIC )  {
+	for ( cpu=0; cpu < npsw; cpu++ ) {
+		if ( resource[cpu].re_magic != RESOURCE_MAGIC )  {
 			bu_log("ERROR: CPU %d resources corrupted, statistics bad\n", cpu);
 			continue;
 		}
 		rt_add_res_stats( ap.a_rt_i, &resource[cpu] );
 	}
+#endif
 	return;
 }
 
@@ -316,11 +413,12 @@ void do_pixel(int cpu,
 	      int pat_num,
 	      int pixelnum)
 {
-	LOCAL struct application a;
-	LOCAL struct pixel_ext pe;
-	LOCAL vect_t point;		/* Ref point on eye or view plane */
-	LOCAL vect_t colorsum;
-	int	samplenum;
+	LOCAL	struct	application	a;
+	LOCAL	struct	pixel_ext	pe;
+	LOCAL	vect_t			point;		/* Ref point on eye or view plane */
+	LOCAL	vect_t			colorsum;
+	int				samplenum,i;
+        unsigned	char		*pixel;
 
 
 	/* Obtain fresh copy of global application struct */
@@ -367,117 +465,141 @@ void do_pixel(int cpu,
 		}
 	}
 
-	VSETALL( colorsum, 0 );
 
-	for( samplenum=0; samplenum<=hypersample; samplenum++ )  {
-		if( jitter & JITTER_CELL ) {
-			jitter_start_pt(point, &a, samplenum, pat_num);
-		}  else  {
-			VJOIN2( point, viewbase_model,
-				a.a_x, dx_model,
-				a.a_y, dy_model );
-		}
-		if (a.a_rt_i->rti_prismtrace) {
-			/* compute the four corners */
-			pe.magic = PIXEL_EXT_MAGIC;
 
-			VJOIN2(pe.corner[0].r_pt,
-			       viewbase_model,
-			       a.a_x, dx_model,
-			       a.a_y, dy_model );
+        /* Check the pixel map to determine if this image should be rendered or not */
+	pixel= (unsigned char*)malloc(sizeof(RGBpixel));
+	for (i= 0; i < sizeof(RGBpixel); i++)
+		pixel[i]= 0;
+	if (pixmap) {
+/*		bu_log("val[%d]\n",3*(pixelnum%width+pixelnum/width));*/
+		memcpy(pixel,&pixmap[pixelnum*sizeof(RGBpixel)],sizeof(RGBpixel));
+		a.a_user= 1;	/* Force Shot Hit */
+/*		bu_log("a.a_user: %d\n",a.a_user);*/
+	}
 
-			VJOIN2(pe.corner[1].r_pt,
-			       viewbase_model,
-			       (a.a_x+1), dx_model,
-			       a.a_y, dy_model );
+	if (pixel[0]+pixel[1]+pixel[2]) {
+		a.a_color[0]= (double)(pixel[0])/255.0;
+		a.a_color[1]= (double)(pixel[1])/255.0;
+		a.a_color[2]= (double)(pixel[2])/255.0;
+/*		bu_log("1: [%d,%d] : [%.2f,%.2f,%.2f]\n",pixelnum%width,pixelnum/width,a.a_color[0],a.a_color[1],a.a_color[2]);*/
+	} else {
+		VSETALL( colorsum, 0 );
 
-			VJOIN2(pe.corner[2].r_pt,
-			       viewbase_model,
-			       (a.a_x+1), dx_model,
-			       (a.a_y+1), dy_model );
-
-			VJOIN2(pe.corner[3].r_pt,
-			       viewbase_model,
-			       a.a_x, dx_model,
-			       (a.a_y+1), dy_model );
-
-			a.a_pixelext = &pe;
-		} else {
-			a.a_pixelext=(struct pixel_ext *)NULL;
-		}
-
-		if( rt_perspective > 0.0 )  {
-			VSUB2( a.a_ray.r_dir,
-			       point, eye_model );
-			VUNITIZE( a.a_ray.r_dir );
-			VMOVE( a.a_ray.r_pt, eye_model );
-			if (a.a_rt_i->rti_prismtrace) {
-				VSUB2(pe.corner[0].r_dir,
-				      pe.corner[0].r_pt,
-				      eye_model);
-				VSUB2(pe.corner[1].r_dir,
-				      pe.corner[1].r_pt,
-				      eye_model);
-				VSUB2(pe.corner[2].r_dir,
-				      pe.corner[2].r_pt,
-				      eye_model);
-				VSUB2(pe.corner[3].r_dir,
-				      pe.corner[3].r_pt,
-				      eye_model);
+		for( samplenum=0; samplenum<=hypersample; samplenum++ )  {
+			if( jitter & JITTER_CELL ) {
+				jitter_start_pt(point, &a, samplenum, pat_num);
+			}  else  {
+				VJOIN2( point, viewbase_model,
+					a.a_x, dx_model,
+					a.a_y, dy_model );
 			}
-		} else {
-			VMOVE( a.a_ray.r_pt, point );
-			VMOVE( a.a_ray.r_dir, ap.a_ray.r_dir );
-
 			if (a.a_rt_i->rti_prismtrace) {
-				VMOVE(pe.corner[0].r_dir,
-				      a.a_ray.r_dir);
-				VMOVE(pe.corner[1].r_dir,
-				      a.a_ray.r_dir);
-				VMOVE(pe.corner[2].r_dir,
-				      a.a_ray.r_dir);
-				VMOVE(pe.corner[3].r_dir,
-				      a.a_ray.r_dir);
+				/* compute the four corners */
+				pe.magic = PIXEL_EXT_MAGIC;
+
+				VJOIN2(pe.corner[0].r_pt,
+				       viewbase_model,
+				       a.a_x, dx_model,
+				       a.a_y, dy_model );
+
+				VJOIN2(pe.corner[1].r_pt,
+				       viewbase_model,
+				       (a.a_x+1), dx_model,
+				       a.a_y, dy_model );
+
+				VJOIN2(pe.corner[2].r_pt,
+				       viewbase_model,
+				       (a.a_x+1), dx_model,
+				       (a.a_y+1), dy_model );
+
+				VJOIN2(pe.corner[3].r_pt,
+				       viewbase_model,
+				       a.a_x, dx_model,
+				       (a.a_y+1), dy_model );
+
+				a.a_pixelext = &pe;
+			} else {
+				a.a_pixelext=(struct pixel_ext *)NULL;
 			}
-		}
-		if( report_progress )  {
-			report_progress = 0;
-			bu_log("\tframe %d, xy=%d,%d on cpu %d, samp=%d\n", curframe, a.a_x, a.a_y, cpu, samplenum );
-		}
 
-		a.a_level = 0;		/* recursion level */
-		a.a_purpose = "main ray";
-		(void)rt_shootray( &a );
-
-		if( stereo )  {
-			FAST fastf_t right,left;
-
-			right = CRT_BLEND(a.a_color);
-
-			VSUB2(  point, point,
-				left_eye_delta );
 			if( rt_perspective > 0.0 )  {
 				VSUB2( a.a_ray.r_dir,
-				       point, eye_model );
+				point, eye_model );
 				VUNITIZE( a.a_ray.r_dir );
-				VADD2( a.a_ray.r_pt, eye_model, left_eye_delta );
+				VMOVE( a.a_ray.r_pt, eye_model );
+				if (a.a_rt_i->rti_prismtrace) {
+					VSUB2(pe.corner[0].r_dir,
+					      pe.corner[0].r_pt,
+					      eye_model);
+					VSUB2(pe.corner[1].r_dir,
+					      pe.corner[1].r_pt,
+					      eye_model);
+					VSUB2(pe.corner[2].r_dir,
+					      pe.corner[2].r_pt,
+					      eye_model);
+					VSUB2(pe.corner[3].r_dir,
+					      pe.corner[3].r_pt,
+					      eye_model);
+				}
 			} else {
 				VMOVE( a.a_ray.r_pt, point );
+				VMOVE( a.a_ray.r_dir, ap.a_ray.r_dir );
+
+				if (a.a_rt_i->rti_prismtrace) {
+					VMOVE(pe.corner[0].r_dir,
+					      a.a_ray.r_dir);
+					VMOVE(pe.corner[1].r_dir,
+					      a.a_ray.r_dir);
+					VMOVE(pe.corner[2].r_dir,
+					      a.a_ray.r_dir);
+					VMOVE(pe.corner[3].r_dir,
+					      a.a_ray.r_dir);
+				}
 			}
+			if( report_progress )  {
+				report_progress = 0;
+				bu_log("\tframe %d, xy=%d,%d on cpu %d, samp=%d\n", curframe, a.a_x, a.a_y, cpu, samplenum );
+			}
+
 			a.a_level = 0;		/* recursion level */
-			a.a_purpose = "left eye ray";
+			a.a_purpose = "main ray";
 			(void)rt_shootray( &a );
 
-			left = CRT_BLEND(a.a_color);
-			VSET( a.a_color, left, 0, right );
+			if( stereo )  {
+				FAST fastf_t right,left;
+
+				right = CRT_BLEND(a.a_color);
+
+				VSUB2(  point, point,
+					left_eye_delta );
+				if( rt_perspective > 0.0 )  {
+					VSUB2( a.a_ray.r_dir,
+					       point, eye_model );
+					VUNITIZE( a.a_ray.r_dir );
+					VADD2( a.a_ray.r_pt, eye_model, left_eye_delta );
+				} else {
+					VMOVE( a.a_ray.r_pt, point );
+				}
+				a.a_level = 0;		/* recursion level */
+				a.a_purpose = "left eye ray";
+				(void)rt_shootray( &a );
+
+				left = CRT_BLEND(a.a_color);
+				VSET( a.a_color, left, 0, right );
+			}
+			VADD2( colorsum, colorsum, a.a_color );
+		} /* for samplenum <= hypersample */
+		if( hypersample )  {
+			FAST fastf_t f;
+			f = 1.0 / (hypersample+1);
+			VSCALE( a.a_color, colorsum, f );
 		}
-		VADD2( colorsum, colorsum, a.a_color );
-	} /* for samplenum <= hypersample */
-	if( hypersample )  {
-		FAST fastf_t f;
-		f = 1.0 / (hypersample+1);
-		VSCALE( a.a_color, colorsum, f );
+
+/*		bu_log("2: [%d,%d] : [%.2f,%.2f,%.2f]\n",pixelnum%width,pixelnum/width,a.a_color[0],a.a_color[1],a.a_color[2]);*/
 	}
+
+	free(pixel);
 	view_pixel( &a );
 	if( a.a_x == width-1 )
 		view_eol( &a );		/* End of scan line */

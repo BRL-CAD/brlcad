@@ -55,6 +55,7 @@ rt_raybundle_maker(struct xray *rp, double radius, const fastf_t *avec, const fa
 	int	count = 0;
 
 	rp[0].index = count++;
+	rp[0].magic =RT_RAY_MAGIC; 
 
 	for( ring=0; ring < nring; ring++ )  {
 		register int i;
@@ -72,6 +73,7 @@ rt_raybundle_maker(struct xray *rp, double radius, const fastf_t *avec, const fa
 			VJOIN2( rayp->r_pt, rp[0].r_pt, ct, avec, st, bvec );
 			VMOVE( rayp->r_dir, rp[0].r_dir );
 			rayp->index = count++;
+			rayp->magic = RT_RAY_MAGIC;
 			theta += delta;
 			rayp++;
 		}
@@ -86,22 +88,33 @@ rt_raybundle_maker(struct xray *rp, double radius, const fastf_t *avec, const fa
 main()
 {
 	FILE	*fp = fopen("bundle.pl", "w");
-	struct xray	ray[1000];
-	int	rays_per_ring;
-	int	nring;
+	int	rays_per_ring=5;
+	int	nring=3;
+	fastf_t bundle_radius=1000.0;
 	int	i;
+	vect_t avec, bvec;
+	struct xray *rp;
+	vect_t dir;
 
-	VSET( ray[0].r_pt, 0, 0, 0 );
-	VSET( ray[0].r_dir, 0, 0, -1 );
 
-	rays_per_ring = 8;
-	nring = 4;
-	rt_raybundle_maker( ray, 1.0, rays_per_ring, nring );
+	VSET( dir, 0, 0, -1 );
+	/* create orthogonal rays for basis of bundle */
+	bn_vec_ortho( avec, dir );
+	VCROSS( bvec, dir, avec );
+	VUNITIZE( bvec );
+
+	rp = (struct xray *)bu_calloc( sizeof( struct xray ),
+				       (rays_per_ring * nring) + 1,
+				       "ray bundle" );
+	VSET( rp[0].r_pt, 0, 0, 2000);
+	VMOVE( rp[0].r_dir, dir );
+	rt_raybundle_maker( rp, bundle_radius, avec, bvec, rays_per_ring, nring );
+
 
 	for( i=0; i <= rays_per_ring * nring; i++ )  {
 		point_t	tip;
-		VADD2( tip, ray[i].r_pt, ray[i].r_dir );
-		pdv_3line( fp, ray[i].r_pt, tip );
+		VJOIN1( tip, rp[i].r_pt, 3500, rp[i].r_dir );
+		pdv_3line( fp, rp[i].r_pt, tip );
 	}
 	fclose(fp);
 }

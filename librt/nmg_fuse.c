@@ -19,7 +19,7 @@
  *	The BRL-CAD Pacakge" agreement.
  *
  *  Copyright Notice -
- *	This software is Copyright (C) 1993 by the United States Army
+ *	This software is Copyright (C) 1993-2004 by the United States Army
  *	in all countries except the USA.  All rights reserved.
  */
 #ifndef lint
@@ -1279,7 +1279,7 @@ nmg_model_edge_fuse(struct model *m, const struct bn_tol *tol)
 			{
 				count++;
 				nmg_radial_join_eu(eu1, eu2, tol);
-				if( !e2->magic )
+				if(!e2->magic)
 					bu_ptbl_zero( &edges, (long *)e2 );
 			}
 		}

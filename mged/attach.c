@@ -17,7 +17,7 @@
  *	Aberdeen Proving Ground, Maryland  21005
  *  
  *  Copyright Notice -
- *	This software is Copyright (C) 1985 by the United States Army.
+ *	This software is Copyright (C) 1985-2004 by the United States Army.
  *	All rights reserved.
  */
 #ifndef lint
@@ -31,7 +31,9 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #  include <strings.h>
 #endif
 #include <stdio.h>
+#ifndef WIN32
 #include <sys/time.h>		/* for struct timeval */
+#endif
 #include "machine.h"
 #include "externs.h"
 #include "bu.h"
@@ -61,8 +63,10 @@ extern int Plot_dm_init(struct dm_list *o_dm_list, int argc, char **argv);
 extern int PS_dm_init(struct dm_list *o_dm_list, int argc, char **argv);
 
 #ifdef DM_X
+#ifndef WIN32
 extern int X_dm_init();
 extern void X_fb_open();
+#endif
 
 #ifdef DM_OGL
 extern int Ogl_dm_init();
@@ -82,7 +86,9 @@ extern void set_port(void);		/* defined in fbserv.c */
 extern void predictor_init(void);	/* defined in predictor.c */
 extern void view_ring_init(struct _view_state *vsp1, struct _view_state *vsp2); /* defined in chgview.c */
 
+#ifndef WIN32
 extern void Tk_CreateCanvasBezierType();
+#endif
 
 #ifdef DM_X
 extern Tk_Window tkwin;
@@ -114,7 +120,9 @@ struct w_dm which_dm[] = {
   { DM_TYPE_PLOT, "plot", Plot_dm_init },  /* DM_PLOT_INDEX defined in mged_dm.h */
   { DM_TYPE_PS, "ps", PS_dm_init },      /* DM_PS_INDEX defined in mged_dm.h */
 #ifdef DM_X
+#ifndef WIN32
   { DM_TYPE_X, "X", X_dm_init },
+#endif
 #ifdef DM_OGL
   { DM_TYPE_OGL, "ogl", Ogl_dm_init },
 #endif
@@ -297,7 +305,9 @@ print_valid_dm(void)
 {
     Tcl_AppendResult(interp, "\tThe following display manager types are valid: ", (char *)NULL);
 #ifdef DM_X
+#ifndef WIN32
     Tcl_AppendResult(interp, "X  ", (char *)NULL);
+#endif
 #ifdef DM_OGL
     Tcl_AppendResult(interp, "ogl  ", (char *)NULL);
 #endif
@@ -465,7 +475,9 @@ gui_setup(char *dstr)
   }
 
   /* Add Bezier Curves to the canvas widget */
+#ifndef WIN32
   Tk_CreateCanvasBezierType();
+#endif
 
   /* Initialize [incr Tk] */
   if (Itk_Init(interp) == TCL_ERROR) {
@@ -494,7 +506,9 @@ gui_setup(char *dstr)
   }
 
   /* Add Bezier Curves to the canvas widget */
+#ifndef WIN32
   Tk_CreateCanvasBezierType();
+#endif
 
 
   /* Initialize libdm */
@@ -693,10 +707,15 @@ void
 mged_fb_open(void)
 {
 #ifdef DM_X
+#ifndef WIN32
   if(dmp->dm_type == DM_TYPE_X)
     X_fb_open();
+#endif
 #ifdef DM_OGL
-  else if(dmp->dm_type == DM_TYPE_OGL)
+#ifndef WIN32
+  else 
+#endif
+if(dmp->dm_type == DM_TYPE_OGL)
     Ogl_fb_open();
 #endif
 #endif

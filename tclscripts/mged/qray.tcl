@@ -22,10 +22,10 @@ proc init_qray_control { id } {
     global qray_control
     global mouse_behavior
     global use_air
-    global tkPriv
+    global ::tk::Priv
 
     if {[opendb] == ""} {
-	cad_dialog $tkPriv(cad_dialog) $mged_gui($id,screen) "No database." \
+	cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen) "No database." \
 		"No database has been opened!" info 0 OK
 	return
     }

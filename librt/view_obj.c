@@ -23,7 +23,7 @@
  *	The BRL-CAD Package" agreement.
  *
  *  Copyright Notice -
- *	This software is Copyright (C) 1997 by the United States Army
+ *	This software is Copyright (C) 1997-2004 by the United States Army
  *	in all countries except the USA.  All rights reserved.
  */
 #include "conf.h"
@@ -40,6 +40,7 @@
 #include "vmath.h"
 #include "bn.h"
 #include "raytrace.h"
+
 
 int Vo_Init(Tcl_Interp *interp);
 
@@ -80,7 +81,7 @@ static int vo_mrot_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char
 static int vo_cmd(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 void vo_update(struct view_obj *vop, Tcl_Interp *interp, int oflag);
 void vo_mat_aet(struct view_obj *vop);
-static void vo_persp_mat(fastf_t *m, fastf_t fovy, fastf_t aspect, fastf_t near, fastf_t far, fastf_t backoff);
+static void vo_persp_mat(fastf_t *m, fastf_t fovy, fastf_t aspect, fastf_t near1, fastf_t far1, fastf_t backoff);
 static void vo_mike_persp_mat(fastf_t *pmat, const fastf_t *eye);
 
 struct view_obj HeadViewObj;		/* head of view object list */
@@ -222,7 +223,7 @@ vo_open_tcl(ClientData	clientData,
 	vop = vo_open_cmd(argv[1]);
 	(void)Tcl_CreateCommand(interp,
 				bu_vls_addr(&vop->vo_name),
-				vo_cmd,
+				(Tcl_CmdProc *)vo_cmd,
 				(ClientData)vop,
 				vo_deleteProc);
 
@@ -2415,8 +2416,8 @@ static void
 vo_persp_mat(mat_t	m,
 	     fastf_t	fovy,
 	     fastf_t	aspect,
-	     fastf_t	near,
-	     fastf_t	far,
+	     fastf_t	near1,
+	     fastf_t	far1,
 	     fastf_t	backoff)
 {
 	mat_t	m2, tran;
@@ -2426,8 +2427,8 @@ vo_persp_mat(mat_t	m,
 	MAT_IDN(m2);
 	m2[5] = cos(fovy/2.0) / sin(fovy/2.0);
 	m2[0] = m2[5]/aspect;
-	m2[10] = (far+near) / (far-near);
-	m2[11] = 2*far*near / (far-near);	/* This should be negative */
+	m2[10] = (far1+near1) / (far1-near1);
+	m2[11] = 2*far1*near1 / (far1-near1);	/* This should be negative */
 
 	m2[14] = -1;		/* XXX This should be positive */
 	m2[15] = 0;

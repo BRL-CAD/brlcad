@@ -3,6 +3,7 @@ class Sketch_editor {
 
 	private variable sketch_name
         private variable sketch_path
+        private variable edit_frame
 	private variable V
 	private variable A
 	private variable B
@@ -26,6 +27,7 @@ class Sketch_editor {
 	private variable save_entry
 	private variable angle
 	private variable bezier_indices ""
+        private variable selection_mode ""
 	common pi2 [expr {4.0 * asin( 1.0 )}]
 	common rad2deg  [expr {360.0 / $pi2}]
 
@@ -50,6 +52,10 @@ class Sketch_editor {
 			set sketch_path $args
 			set path [split [string trim $args] "/"]
 			set sketch_name [lindex $path [expr [llength $path] - 1]]
+
+			# check if we already have an editor working on this sketch
+			verify_unique_editor
+
 			if { [catch {db get $sketch_name} sketch_info] } {
 				tk_messageBox -icon error -title "Cannot Get Sketch" -type ok \
 					-message $sketch_info
@@ -57,12 +63,17 @@ class Sketch_editor {
 				return
 			}
 			if { [lindex $sketch_info 0] != "sketch" } {
-				tk_messageBox -icon error -type ok -title "$name is not a sketch" -message "$name is not a sketch"
+				tk_messageBox -icon error -type ok -title "$name is not a sketch" \
+				    -message "$name is not a sketch"
 				destroy $itk_component(hull)
 				return
 			}
 		    } elseif { $num_args == 2 } {
 			set sketch_name [lindex $args 0]
+
+			# check if we already have an editor working on this sketch
+			verify_unique_editor
+			
 			set sketch_path [lindex $args 1]
 			if { [catch {db get $sketch_name} sketch_info] } {
 				tk_messageBox -icon error -title "Cannot Get Sketch" -type ok \
@@ -71,7 +82,8 @@ class Sketch_editor {
 				return
 			}
 			if { [lindex $sketch_info 0] != "sketch" } {
-				tk_messageBox -icon error -type ok -title "$name is not a sketch" -message "$name is not a sketch"
+				tk_messageBox -icon error -type ok -title "$name is not a sketch" \
+				    -message "$name is not a sketch"
 				destroy $itk_component(hull)
 				return
 			}
@@ -84,6 +96,9 @@ class Sketch_editor {
 		}
 		if { [catch units units] } {
 			set units ""
+		}
+	        if { [string index $units end] == "\n" } {
+		    set units [string range $units 0 "end-1"]
 		}
 		if { [catch {status base2local} tolocal] } {
 			set tolocal 1.0
@@ -100,14 +115,18 @@ class Sketch_editor {
 		set segments {}
 		itk_initialize
 		itk_component add canvas {
-			canvas $itk_interior.canv -width 600 -height 600 -scrollregion {0 0 300 300} \
-				-xscrollcommand [code $itk_interior.xscr set] -yscrollcommand [code $itk_interior.yscr set]
+			canvas $itk_interior.canv -width 600 -height 600 \
+			    -scrollregion {0 0 300 300} \
+			    -xscrollcommand [code $itk_interior.xscr set] \
+			    -yscrollcommand [code $itk_interior.yscr set]
 		}
 		itk_component add controls {
 			frame $itk_interior.controls -relief groove -bd 3
 		}
 		itk_component add notebook {
-			tabnotebook $itk_component(controls).notebook -tabpos w -gap 3 -raiseselect true -bevelamount 3 -borderwidth 3
+			tabnotebook $itk_component(controls).notebook -tabpos w -gap 3 \
+			    -raiseselect true -bevelamount 3 -borderwidth 3 \
+			    -foreground \#ff0000
 		}
 		itk_component add frame {
 			frame $itk_component(controls).frame -relief groove -bd 3
@@ -152,8 +171,8 @@ class Sketch_editor {
 
 		set edit_frame [$itk_component(controls).notebook add -label "Edit"]
 
-		button $edit_frame.pick_seg -text "Select Segments" -command [code $this start_seg_pick]
-		button $edit_frame.pick_vert -text "Select Vertices" -command [code $this start_vert_pick]
+		radiobutton $edit_frame.pick_seg -text "Select Segments" -command [code $this start_seg_pick] -variable selection_mode -value "segs" -indicatoron false -state normal
+		radiobutton $edit_frame.pick_vert -text "Select Vertices" -command [code $this start_vert_pick] -variable selection_mode -value "verts" -indicatoron false -state normal
 		button $edit_frame.delete -text "Delete Selected" -command [code $this delete_selection]
 		button $edit_frame.move -text "Move Selected" -command [code $this setup_move]
 		button $edit_frame.cancel -text "Cancel" -command [code $this do_cancel 1]
@@ -251,6 +270,31 @@ class Sketch_editor {
 
 	method get_tobase {} {
 		return $tobase
+	}
+
+        method verify_unique_editor {} {
+	    set editors [find objects -class Sketch_editor]
+	    foreach editor $editors {
+		if { [string compare $this $editor] == 0 } {
+		    continue
+		}
+
+		if { [string compare [$editor get_sketch_name] $sketch_name] == 0 } {
+		    # another editor for this sketch already exists, destroy me
+		    $editor raise_me
+		    destroy $itk_component(hull)
+		    return
+		}
+	    }
+	}
+
+        method get_sketch_name {} {
+	    return $sketch_name
+	}
+
+        method raise_me {} {
+	    wm deiconify $itk_component(hull)
+	    raise $itk_component(hull)
 	}
 
 	method do_set_tangency { sx sy } {
@@ -491,6 +535,9 @@ class Sketch_editor {
 		set curr_seg ""
 		set index1 -1
 		set index2 -1
+	        set selection_mode ""
+	        $edit_frame.pick_seg deselect
+	        $edit_frame.pick_vert deselect
 		bind $itk_component(canvas) <ButtonPress-1> {}
 		bind $itk_component(canvas) <ButtonRelease-1> {}
 		bind $itk_component(canvas) <ButtonRelease-3> {}

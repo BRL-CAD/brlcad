@@ -169,14 +169,8 @@ rt_shootray_bundle(register struct application *ap, struct xray *rays, int nrays
 		/* Ensure that this CPU's resource structure is registered */
 		BU_ASSERT_PTR( BU_PTBL_GET(&rtip->rti_resources, resp->re_cpu), !=, NULL );
 	}
-	if( BU_LIST_IS_EMPTY( &resp->re_solid_bitv ) )  {
-		solidbits = bu_bitv_new( rtip->nsolids );
-	} else {
-		solidbits = BU_LIST_FIRST( bu_bitv, &resp->re_solid_bitv );
-		BU_LIST_DEQUEUE( &solidbits->l );
-		BU_CK_BITV(solidbits);
-		BU_BITV_NBITS_CHECK( solidbits, rtip->nsolids );
-	}
+
+	solidbits = get_solidbitv( rtip->nsolids, resp );
 	bu_bitv_clear(solidbits);
 
 	if( BU_LIST_IS_EMPTY( &resp->re_region_ptbl ) )  {

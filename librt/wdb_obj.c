@@ -19,7 +19,7 @@
  *	The BRL-CAD Package" license agreement.
  *
  *  Copyright Notice -
- *	This software is Copyright (C) 2000 by the United States Army
+ *	This software is Copyright (C) 2000-2004 by the United States Army
  *	in all countries except the USA.  All rights reserved.
  */
 #ifndef lint
@@ -261,6 +261,7 @@ static void wdb_dir_summary(struct db_i *dbip, Tcl_Interp *interp, int flag);
 static struct directory ** wdb_dir_getspace(struct db_i *dbip, register int num_entries);
 static union tree *wdb_pathlist_leaf_func(struct db_tree_state *tsp, struct db_full_path *pathp, struct rt_db_internal *ip, genptr_t client_data);
 
+
 static struct bu_cmdtab wdb_cmds[] = {
 	{"adjust",	wdb_adjust_tcl},
 	{"attr",	wdb_attr_tcl},
@@ -281,6 +282,7 @@ static struct bu_cmdtab wdb_cmds[] = {
 	{"dump",	wdb_dump_tcl},
 	{"dup",		wdb_dup_tcl},
 	{"expand",	wdb_expand_tcl},
+	{"facetize",	wdb_facetize_tcl},
 	{"find",	wdb_find_tcl},
 	{"form",	wdb_form_tcl},
 	{"g",		wdb_group_tcl},
@@ -314,6 +316,7 @@ static struct bu_cmdtab wdb_cmds[] = {
 	{"rt_gettrees",	wdb_rt_gettrees_tcl},
 	{"shells",	wdb_shells_tcl},
 	{"showmats",	wdb_showmats_tcl},
+	{"smooth_bot",	wdb_smooth_bot_tcl},
 	{"summary",	wdb_summary_tcl},
 	{"title",	wdb_title_tcl},
 	{"tol",		wdb_tol_tcl},
@@ -442,7 +445,7 @@ wdb_init_obj(Tcl_Interp		*interp,
 
 	/* Instantiate the newprocname, with clientData of wdbp */
 	/* Beware, returns a "token", not TCL_OK. */
-	(void)Tcl_CreateCommand(interp, oname, wdb_cmd,
+	(void)Tcl_CreateCommand(interp, oname, (Tcl_CmdProc *)wdb_cmd,
 				(ClientData)wdbp, wdb_deleteProc);
 
 	/* Return new function name as result */
@@ -685,9 +688,6 @@ wdb_reopen_cmd(struct rt_wdb	*wdbp,
 		db_close(wdbp->dbip);
 
 		wdbp->dbip = dbip;
-
-		/* --- Scan geometry database and build in-memory directory --- */
-		db_dirbuild(wdbp->dbip);
 
 		Tcl_AppendResult(interp, wdbp->dbip->dbi_filename, (char *)NULL);
 		return TCL_OK;
@@ -2766,407 +2766,16 @@ wdb_move_all_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **arg
 	return wdb_move_all_cmd(wdbp, interp, argc-1, argv+1);
 }
 
-static void
-wdb_do_update(struct db_i		*dbip,
-	      struct rt_comb_internal	*comb,
-	      union tree		*comb_leaf,
-	      genptr_t			user_ptr1,
-	      genptr_t			user_ptr2,
-	      genptr_t			user_ptr3)
-{
-	char	*mref;
-	char	mref4[RT_NAMESIZE+2];
-	struct bu_vls mref5;
-	struct bu_vls *prestr;
-	int	*ncharadd;
-
-	if(dbip == DBI_NULL)
-		return;
-
-	RT_CK_DBI(dbip);
-	RT_CK_TREE(comb_leaf);
-
-	ncharadd = (int *)user_ptr1;
-	prestr = (struct bu_vls *)user_ptr2;
-
-	if( dbip->dbi_version < 5 ) {
-		mref = mref4;
-		(void)strncpy(mref, bu_vls_addr( prestr ), *ncharadd);
-		(void)strncpy(mref+(*ncharadd),
-			      comb_leaf->tr_l.tl_name,
-			      RT_NAMESIZE-(*ncharadd) );
-	} else {
-		bu_vls_init( &mref5 );
-		bu_vls_vlscat( &mref5, prestr );
-		bu_vls_strcat( &mref5, comb_leaf->tr_l.tl_name );
-		mref = bu_vls_addr( &mref5 );
-	}
-	bu_free(comb_leaf->tr_l.tl_name, "comb_leaf->tr_l.tl_name");
-	comb_leaf->tr_l.tl_name = bu_strdup(mref);
-
-	if( dbip->dbi_version >= 5 )
-		bu_vls_free( &mref5 );
-}
-
-static int wdb_dir_add BU_ARGS((struct db_i *input_dbip, const char
-	*name, long laddr, int len, int flags, genptr_t ptr));
-
-struct dir_add_stuff {
-	Tcl_Interp	*interp;
-	struct db_i	*main_dbip;		/* the main database */
-	struct rt_wdb	*wdbp;
+struct concat_data {
+	int unique_mode;
+	struct db_i *old_dbip;
+	struct db_i *new_dbip;
+	struct bu_vls prestr;
 };
-
-/*
- *			W D B _ D I R _ A D D 5
- * V5 version of wdb_dir_add
- */
-static void
-wdb_dir_add5(struct db_i			*dbip,		/* db_i to add this object to */
-	     const struct db5_raw_internal	*rip,
-	     long				laddr,
-	     genptr_t				client_data)
-{
-	struct bu_vls 		local5;
-	char			*local;
-	struct bu_external	ext;
-	struct dir_add_stuff	*dasp = (struct dir_add_stuff *)client_data;
-	struct db5_raw_internal	raw;
-	struct directory	*dp;
-
-	RT_CK_DBI( dbip );
-
-	if( rip->h_dli == DB5HDR_HFLAGS_DLI_HEADER_OBJECT )  return;
-	if( rip->h_dli == DB5HDR_HFLAGS_DLI_FREE_STORAGE ) {
-		/* Record available free storage */
-		rt_memfree( &(dbip->dbi_freep), rip->object_length, laddr );
-		return;
-	}
-	
-	/* If somehow it doesn't have a name, ignore it */
-	if( rip->name.ext_buf == NULL )  return;
-
-	if(RT_G_DEBUG&DEBUG_DB) {
-		bu_log("wdb_dir_add5(dbip=x%x, name='%s', addr=x%x, len=%d)\n",
-			dbip, (char *)rip->name.ext_buf, rip->object_length );
-	}
-
-	/* add to its own directory first */
-	(void)db5_diradd( dbip, rip, laddr, NULL );
-
-	/* do not concat GLOBAL object */
-	if( rip->major_type == DB5_MAJORTYPE_ATTRIBUTE_ONLY &&
-	    rip->minor_type == 0 )
-		return;
-
-	/* now add this object to the current database */
-	bu_vls_init( &local5 );
-
-	/* Add the prefix, if any */
-	if( dasp->wdbp->wdb_ncharadd > 0 ) {
-		bu_vls_vlscat( &local5, &dasp->wdbp->wdb_prestr );
-		bu_vls_strcat( &local5, rip->name.ext_buf );
-	} else {
-		bu_vls_strcat( &local5, rip->name.ext_buf );
-	}
-	local = bu_vls_addr( &local5 );
-
-	if( rip->minor_type != DB5_MINORTYPE_BRLCAD_COMBINATION ) {
-
-		/* export object */
-		db5_export_object3( &ext, rip->h_dli, local, 0, &rip->attributes,
-			    &rip->body, rip->major_type, rip->minor_type,
-			    rip->a_zzz, rip->b_zzz );
-
-		if( db5_get_raw_internal_ptr( &raw, ext.ext_buf ) == NULL ) {
-			Tcl_AppendResult(dasp->interp,
-					 "db5_get_raw_internal_ptr() failed for ",
-					 local,
-					 ". This object ignored.\n",
-					 (char *)NULL );
-			bu_vls_free( &local5 );
-			bu_free( ext.ext_buf, "ext.ext_buf" );
-			return;
-		}
-
-		/* add to the main directory */
-		dp = (struct directory *)db5_diradd( dasp->main_dbip, &raw, -1L, NULL );
-		dp->d_len = 0;
-
-		/* write to main database */
-		if( db_put_external5( &ext, dp, dasp->main_dbip ) ) {
-			Tcl_AppendResult(dasp->interp,
-					 "db_put_external5() failed for ",
-					 rip->name.ext_buf,
-					 ". This object ignored.\n",
-					 (char *)NULL );
-			bu_vls_free( &local5 );
-			bu_free( ext.ext_buf, "ext.ext_buf" );
-			return;
-		}
-
-		Tcl_AppendResult(dasp->interp,
-				 "Added ",
-				 local,
-				 "\n",
-				 (char *)NULL );
-
-		bu_vls_free( &local5 );
-		bu_free( ext.ext_buf, "ext.ext_buf" );
-	} else if( rip->major_type == DB5_MAJORTYPE_BRLCAD &&
-		   rip->minor_type == DB5_MINORTYPE_BRLCAD_COMBINATION ) { 
-		struct rt_db_internal in;
-		struct rt_comb_internal *comb;
-
-		/* export object */
-		db5_export_object3( &ext, rip->h_dli, local, 0, &rip->attributes,
-			    &rip->body, rip->major_type, rip->minor_type,
-			    rip->a_zzz, rip->b_zzz );
-
-		if( db5_get_raw_internal_ptr( &raw, ext.ext_buf ) == NULL ) {
-			Tcl_AppendResult(dasp->interp,
-					 "db5_get_raw_internal_ptr() failed for ",
-					 local,
-					 ". This object ignored.\n",
-					 (char *)NULL );
-			bu_vls_free( &local5 );
-			bu_free( ext.ext_buf, "ext.ext_buf" );
-			return;
-		}
-
-		RT_INIT_DB_INTERNAL( &in );
-		if( rip->attributes.ext_nbytes > 0 ) {
-			if( db5_import_attributes( &in.idb_avs, &rip->attributes ) < 0 )  {
-				Tcl_AppendResult(dasp->interp,
-						 "db5_import_attributes() failed for ",
-						 local,
-						 " (combination), this object will be missing attributes.\n",
-						 (char *)NULL );
-			}
-		} else {
-			in.idb_avs.magic = BU_AVS_MAGIC;
-			in.idb_avs.count = 0;
-			in.idb_avs.max = 0;
-		}
-
-		if( rt_comb_import5( &in, &rip->body, NULL, dasp->main_dbip, dasp->wdbp->wdb_resp, 0 ) ) {
-			Tcl_AppendResult(dasp->interp,
-					 "rt_comb_import5() Failed for ",
-					 local,
-					 ". Skipping this combination.\n",
-					 (char *)NULL );
-			bu_vls_free( &local5 );
-			bu_free( ext.ext_buf, "ext.ext_buf" );
-			return;
-		}
-		comb = (struct rt_comb_internal *)in.idb_ptr;
-		RT_CHECK_COMB( comb );
-		if (dasp->wdbp->wdb_ncharadd && comb->tree) {
-			db_tree_funcleaf(dasp->main_dbip, comb, comb->tree, wdb_do_update,
-			 (genptr_t)&(dasp->wdbp->wdb_ncharadd),
-			 (genptr_t)&(dasp->wdbp->wdb_prestr), (genptr_t)NULL);
-		}
-
-		/* add to the main directory */
-		dp = (struct directory *)db5_diradd( dasp->main_dbip, &raw, -1L, NULL );
-		dp->d_len = 0;
-
-		if (rt_db_put_internal(dp, dasp->main_dbip, &in, dasp->wdbp->wdb_resp ) < 0) {
-			Tcl_AppendResult(dasp->interp,
-				 "Failed writing ",
-				 dp->d_namep, " to database\n", (char *)NULL);
-			bu_vls_free( &local5 );
-			bu_free( ext.ext_buf, "ext.ext_buf" );
-			rt_db_free_internal( &in, dasp->wdbp->wdb_resp );
-			return;
-		}
-		Tcl_AppendResult(dasp->interp,
-				 "Added combination ",
-				 local,
-				 "\n",
-				 (char *)NULL );
-		bu_vls_free( &local5 );
-		rt_db_free_internal( &in, dasp->wdbp->wdb_resp );
-		bu_free( ext.ext_buf, "ext.ext_buf" );
-	} else {
-		Tcl_AppendResult(dasp->interp,
-				 "Skipping non-BRLCAD object ",
-				 local,
-				 ", not yet supported\n",
-				 (char *)NULL );
-			bu_vls_free( &local5 );
-			bu_free( ext.ext_buf, "ext.ext_buf" );
-			return;
-	}
-}
-
-/*
- *			W D B _ D I R _ A D D
- *
- *  Add a solid or conbination from an auxillary database
- *  into the primary database.
- */
-static int
-wdb_dir_add(register struct db_i	*input_dbip,
-	    register const char		*name,
-	    long			laddr,
-	    int				len,
-	    int				flags,
-	    genptr_t			ptr)
-{
-	register struct directory *input_dp;
-	register struct directory *dp;
-	struct rt_db_internal intern;
-	struct rt_comb_internal *comb;
-	struct bu_vls		local5;
-	char			*local;
-	char			local4[RT_NAMESIZE+2+2];
-	unsigned char		type='0';
-	struct dir_add_stuff	*dasp = (struct dir_add_stuff *)ptr;
-
-	RT_CK_DBI(input_dbip);
-
-	/* Add the prefix, if any */
-	if( dasp->main_dbip->dbi_version < 5 ) {
-		local = local4;
-		if (dasp->wdbp->wdb_ncharadd > 0) {
-			(void)strncpy(local, bu_vls_addr( &dasp->wdbp->wdb_prestr ), dasp->wdbp->wdb_ncharadd);
-			(void)strncpy(local+dasp->wdbp->wdb_ncharadd, name, RT_NAMESIZE-dasp->wdbp->wdb_ncharadd);
-		} else {
-			(void)strncpy(local, name, RT_NAMESIZE);
-		}
-		local[RT_NAMESIZE] = '\0';
-	} else {
-		bu_vls_init( &local5 );
-		bu_vls_vlscat( &local5, &dasp->wdbp->wdb_prestr );
-		bu_vls_strcat( &local5, name );
-		local = bu_vls_addr( &local5 );
-	}
-		
-	/* Look up this new name in the existing (main) database */
-	if ((dp = db_lookup(dasp->main_dbip, local, LOOKUP_QUIET)) != DIR_NULL) {
-		register int	c;
-		char		*loc2;
-		char		loc2_4[RT_NAMESIZE+2+2];
-
-		/* This object already exists under the (prefixed) name */
-		/* Protect the database against duplicate names! */
-		/* Change object names, but NOT any references made by combinations. */
-		if( dasp->main_dbip->dbi_version < 5 ) {
-			loc2 = loc2_4;
-			(void)strncpy( loc2, local, RT_NAMESIZE );
-			/* Shift name right two characters, and further prefix */
-			strncpy(local+2, loc2, RT_NAMESIZE-2);
-			local[1] = '_';			/* distinctive separater */
-			local[RT_NAMESIZE] = '\0';	/* ensure null termination */
-
-			for (c = 'A'; c <= 'Z'; c++) {
-				local[0] = c;
-				if ((dp = db_lookup(dasp->main_dbip, local, LOOKUP_QUIET)) == DIR_NULL)
-					break;
-			}
-		} else {
-			for( c = 'A' ; c <= 'Z' ; c++ ) {
-				bu_vls_trunc( &local5, 0 );
-				bu_vls_putc( &local5, c );
-				bu_vls_putc( &local5, '_' );
-				bu_vls_strncat( &local5, bu_vls_addr( &dasp->wdbp->wdb_prestr ), dasp->wdbp->wdb_ncharadd);
-				bu_vls_strcat( &local5, name );
-				local = bu_vls_addr( &local5 );
-				if ((dp = db_lookup(dasp->main_dbip, local, LOOKUP_QUIET)) == DIR_NULL)
-					break;
-			}
-			loc2 = bu_vls_addr( &local5 ) + 2;
-		}
-		if (c > 'Z') {
-			Tcl_AppendResult(dasp->interp,
-					 "wdb_dir_add: Duplicate of name '",
-					 local, "', ignored\n", (char *)NULL);
-			if( dasp->main_dbip->dbi_version >= 5 )
-				bu_vls_free( &local5 );
-			return 0;
-		}
-		Tcl_AppendResult(dasp->interp,
-				 "mged_dir_add: Duplicate of '",
-				 loc2, "' given new name '",
-				 local, "'\nYou should have used the 'dup' command to detect this,\nand then specified a prefix for the 'dbconcat' command.\n");
-	}
-
-	/* First, register this object in input database */
-	/* use bogus type here (since we don't know it) */
-	if ((input_dp = db_diradd(input_dbip, name, laddr, len, flags, (genptr_t)&type)) == DIR_NULL) {
-		if( dasp->main_dbip->dbi_version >= 5 )
-			bu_vls_free( &local5 );
-		return(-1);
-	}
-
-	if (rt_db_get_internal(&intern, input_dp, input_dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
-		Tcl_AppendResult(dasp->interp, "Database read error, aborting\n", (char *)NULL);
-		if (db_delete(dasp->main_dbip, dp) < 0 ||
-		    db_dirdelete(dasp->main_dbip, dp) < 0) {
-			Tcl_AppendResult(dasp->interp, "Database write error, aborting\n", (char *)NULL);
-		}
-		if( dasp->main_dbip->dbi_version >= 5 )
-			bu_vls_free( &local5 );
-	    	/* Abort processing on first error */
-		return -1;
-	}
-
-	/* Then, register a new object in the main database */
-	if ((dp = db_diradd(dasp->main_dbip, local, -1L, 0, flags, (genptr_t)&intern.idb_type)) == DIR_NULL) {
-		if( dasp->main_dbip->dbi_version >= 5 )
-			bu_vls_free( &local5 );
-		return(-1);
-	}
-
-	/* Update any references.  Name is already correct. */
-	if (flags & DIR_SOLID) {
-		Tcl_AppendResult(dasp->interp,
-				 "adding solid '",
-				 local, "'\n", (char *)NULL);
-		if (dasp->main_dbip->dbi_version < 5 && (dasp->wdbp->wdb_ncharadd + strlen(name)) > (unsigned)RT_NAMESIZE)
-			Tcl_AppendResult(dasp->interp,
-					 "WARNING: solid name \"",
-					 bu_vls_addr( &dasp->wdbp->wdb_prestr ), name,
-					 "\" truncated to \"",
-					 local, "\"\n", (char *)NULL);
-	} else if(flags & DIR_COMB) {
-		Tcl_AppendResult(dasp->interp,
-				 "adding  comb '",
-				 local, "'\n", (char *)NULL);
-
-		/* Update all the member records */
-		comb = (struct rt_comb_internal *)intern.idb_ptr;
-		if (dasp->wdbp->wdb_ncharadd && comb->tree) {
-			db_tree_funcleaf(dasp->main_dbip, comb, comb->tree, wdb_do_update,
-			 (genptr_t)&(dasp->wdbp->wdb_ncharadd),
-			 (genptr_t)&(dasp->wdbp->wdb_prestr), (genptr_t)NULL);
-		}
-	} else {
-		Tcl_AppendResult(dasp->interp,
-				 "WARNING: object name \"",
-				 bu_vls_addr( &dasp->wdbp->wdb_prestr ), name,
-				 "\" is of an unsupported type, not copied.\n",
-				 (char *)NULL);
-		return -1;
-	}
-
-	if (rt_db_put_internal(dp, dasp->main_dbip, &intern, &rt_uniresource) < 0) {
-		Tcl_AppendResult(dasp->interp,
-				 "Failed writing ",
-				 dp->d_namep, " to database\n", (char *)NULL);
-		if( dasp->main_dbip->dbi_version >= 5 )
-			bu_vls_free( &local5 );
-		return( -1 );
-	}
-
-	if( dasp->main_dbip->dbi_version >= 5 )
-		bu_vls_free( &local5 );
-	return 0;
-}
 
 #define ADD_PREFIX 1
 #define ADD_SUFFIX 2
+#define OLD_PREFIX 3
 
 static char *
 get_new_name(
@@ -3174,7 +2783,7 @@ get_new_name(
 	     struct db_i *dbip,
 	     Tcl_HashTable *name_tbl,
 	     Tcl_HashTable *used_names_tbl,
-	     int unique_mode )
+	     struct concat_data *cc_data )
 {
 	int new=0;
 	Tcl_HashEntry *ptr;
@@ -3191,20 +2800,28 @@ get_new_name(
 
 	/* need to create a unique name for this item */
 	bu_vls_init( &new_name );
-	bu_vls_strcpy( &new_name, name );
-	aname = bu_vls_addr( &new_name );
-	while(  db_lookup( dbip, aname, LOOKUP_QUIET ) != DIR_NULL ||
-		Tcl_FindHashEntry( used_names_tbl, aname ) != NULL ) {
-		bu_vls_trunc( &new_name, 0 );
-		num++;
-		if( unique_mode == ADD_PREFIX ) {
-			bu_vls_printf( &new_name, "%d_", num);
-		}
-		bu_vls_strcat( &new_name, name );
-		if( unique_mode == ADD_SUFFIX ) {
-			bu_vls_printf( &new_name, "_%d", num );
-		}
+	if( cc_data->unique_mode != OLD_PREFIX ) {
+		bu_vls_strcpy( &new_name, name );
 		aname = bu_vls_addr( &new_name );
+		while(  db_lookup( dbip, aname, LOOKUP_QUIET ) != DIR_NULL ||
+			Tcl_FindHashEntry( used_names_tbl, aname ) != NULL ) {
+			bu_vls_trunc( &new_name, 0 );
+			num++;
+			if( cc_data->unique_mode == ADD_PREFIX ) {
+				bu_vls_printf( &new_name, "%d_", num);
+			}
+			bu_vls_strcat( &new_name, name );
+			if( cc_data->unique_mode == ADD_SUFFIX ) {
+				bu_vls_printf( &new_name, "_%d", num );
+			}
+			aname = bu_vls_addr( &new_name );
+		}
+	} else {
+		bu_vls_vlscat( &new_name, &cc_data->prestr );
+		bu_vls_strcat( &new_name, name );
+		if( cc_data->old_dbip->dbi_version < 5 ) {
+			bu_vls_trunc( &new_name, RT_NAMESIZE );
+		}
 	}
 
 	/* now have a unique name, make entries for it in both hash tables */
@@ -3223,14 +2840,14 @@ adjust_names(
 	     struct db_i *dbip,
 	     Tcl_HashTable *name_tbl,
 	     Tcl_HashTable *used_names_tbl,
-	     int unique_mode )
+	     struct concat_data *cc_data )
 {
 	char *new_name;
 
 	switch( trp->tr_op ) {
 		case OP_DB_LEAF:
 			new_name = get_new_name( trp->tr_l.tl_name, dbip,
-						 name_tbl, used_names_tbl, unique_mode );
+						 name_tbl, used_names_tbl, cc_data );
 			if( new_name ) {
 				bu_free( trp->tr_l.tl_name, "leaf name" );
 				trp->tr_l.tl_name = bu_strdup( new_name );
@@ -3241,15 +2858,15 @@ adjust_names(
 		case OP_SUBTRACT:
 		case OP_XOR:
 			adjust_names( interp, trp->tr_b.tb_left, dbip,
-				      name_tbl, used_names_tbl, unique_mode );
+				      name_tbl, used_names_tbl, cc_data );
 			adjust_names( interp, trp->tr_b.tb_right, dbip,
-				      name_tbl, used_names_tbl, unique_mode );
+				      name_tbl, used_names_tbl, cc_data );
 			break;
 		case OP_NOT:
 		case OP_GUARD:
 		case OP_XNOP:
 			adjust_names( interp, trp->tr_b.tb_left, dbip,	
-				      name_tbl, used_names_tbl, unique_mode );
+				      name_tbl, used_names_tbl, cc_data );
 			break;
 	}
 }
@@ -3262,7 +2879,7 @@ copy_object(
 	struct db_i *curr_dbip,
 	Tcl_HashTable *name_tbl,
 	Tcl_HashTable *used_names_tbl,
-	int unique_mode )
+	struct concat_data *cc_data )
 {
 	struct rt_db_internal ip;
 	struct rt_extrude_internal *extr;
@@ -3283,13 +2900,13 @@ copy_object(
 			case DB5_MINORTYPE_BRLCAD_COMBINATION:
 				comb = (struct rt_comb_internal *)ip.idb_ptr;
 				RT_CK_COMB_TCL( interp, comb );
-				adjust_names( interp, comb->tree, curr_dbip, name_tbl, used_names_tbl, unique_mode );
+				adjust_names( interp, comb->tree, curr_dbip, name_tbl, used_names_tbl, cc_data );
 				break;
 			case DB5_MINORTYPE_BRLCAD_EXTRUDE:
 				extr = (struct rt_extrude_internal *)ip.idb_ptr;
 				RT_EXTRUDE_CK_MAGIC( extr );
 
-				new_name = get_new_name( extr->sketch_name, curr_dbip, name_tbl, used_names_tbl, unique_mode );
+				new_name = get_new_name( extr->sketch_name, curr_dbip, name_tbl, used_names_tbl, cc_data );
 				if( new_name ) {
 					bu_free( extr->sketch_name, "sketch name" );
 					extr->sketch_name = bu_strdup( new_name );
@@ -3302,7 +2919,7 @@ copy_object(
 				if( dsp->dsp_datasrc == RT_DSP_SRC_OBJ ) {
 					/* This dsp references a database object, may need to change its name */
 					new_name = get_new_name( bu_vls_addr( &dsp->dsp_name ), curr_dbip,
-								 name_tbl, used_names_tbl, unique_mode );
+								 name_tbl, used_names_tbl, cc_data );
 					if( new_name ) {
 						bu_vls_free( &dsp->dsp_name );
 						bu_vls_strcpy( &dsp->dsp_name, new_name );
@@ -3312,7 +2929,7 @@ copy_object(
 		}
 	}
 
-	new_name = get_new_name(input_dp->d_namep, curr_dbip, name_tbl, used_names_tbl , unique_mode );
+	new_name = get_new_name(input_dp->d_namep, curr_dbip, name_tbl, used_names_tbl , cc_data );
 	if( !new_name ) {
 		new_name = input_dp->d_namep;
 	}
@@ -3340,9 +2957,13 @@ wdb_concat_cmd(struct rt_wdb	*wdbp,
 {
 	struct db_i		*newdbp;
 	int			bad = 0;
-	struct dir_add_stuff	das;
-	int			version;
-	int			unique_mode=0;
+	int			file_index;
+	struct directory	*dp;
+	Tcl_HashTable		name_tbl;
+	Tcl_HashTable		used_names_tbl;
+	Tcl_HashEntry		*ptr;
+	Tcl_HashSearch		search;
+	struct concat_data	cc_data;
 
 	WDB_TCL_CHECK_READ_ONLY;
 
@@ -3356,17 +2977,16 @@ wdb_concat_cmd(struct rt_wdb	*wdbp,
 		return TCL_ERROR;
 	}
 
+	bu_vls_init( &cc_data.prestr );
+
 	if( argv[1][0] == '-' ) {
-		struct directory *dp;
-		Tcl_HashTable name_tbl;
-		Tcl_HashTable used_names_tbl;
-		Tcl_HashEntry *ptr;
-		Tcl_HashSearch search;
+
+		file_index = 2;
 
 		if( argv[1][1] == 'p' ) {
-			unique_mode = ADD_PREFIX;
+			cc_data.unique_mode = ADD_PREFIX;
 		} else if( argv[1][1] == 's' ) {
-			unique_mode = ADD_SUFFIX;
+			cc_data.unique_mode = ADD_SUFFIX;
 		} else {
 			struct bu_vls vls;
 
@@ -3376,94 +2996,70 @@ wdb_concat_cmd(struct rt_wdb	*wdbp,
 			bu_vls_free(&vls);
 			return TCL_ERROR;
 		}
-
-		/* open the input file */
-		if ((newdbp = db_open(argv[2], "r")) == DBI_NULL) {
-			perror(argv[2]);
-			Tcl_AppendResult(interp, "concat: Can't open ",
-					 argv[2], (char *)NULL);
-			return TCL_ERROR;
-		}
-
-		db_dirbuild( newdbp );
-
-		/* visit each directory pointer in the input database */
-		Tcl_InitHashTable( &name_tbl, TCL_STRING_KEYS );
-		Tcl_InitHashTable( &used_names_tbl, TCL_STRING_KEYS );
-		FOR_ALL_DIRECTORY_START( dp, newdbp )
-			if( dp->d_major_type == DB5_MAJORTYPE_ATTRIBUTE_ONLY ) {
-				/* skip GLOBAL object */
-				continue;
-			}
-
-			copy_object( interp, dp, newdbp, wdbp->dbip, &name_tbl,
-				     &used_names_tbl, unique_mode );
-		FOR_ALL_DIRECTORY_END;
-
-		/* Free the Hash tables */
-		ptr = Tcl_FirstHashEntry( &name_tbl, &search );
-		while( ptr ) {
-			bu_free( (char *)Tcl_GetHashValue( ptr ), "new name" );
-			ptr = Tcl_NextHashEntry( &search );
-		}
-		Tcl_DeleteHashTable( &name_tbl );
-		Tcl_DeleteHashTable( &used_names_tbl );
 	} else {
+		file_index = 1;
+		cc_data.unique_mode = OLD_PREFIX;
 
-		bu_vls_trunc( &wdbp->wdb_prestr, 0 );
 		if (strcmp(argv[2], "/") != 0) {
-			(void)bu_vls_strcpy(&wdbp->wdb_prestr, argv[2]);
+			(void)bu_vls_strcpy(&cc_data.prestr, argv[2]);
 		}
 
 		if( wdbp->dbip->dbi_version < 5 ) {
-			if ((wdbp->wdb_ncharadd = bu_vls_strlen(&wdbp->wdb_prestr)) > 12) {
-				wdbp->wdb_ncharadd = 12;
-				bu_vls_trunc( &wdbp->wdb_prestr, 12 );
-			}
-		} else {
-			wdbp->wdb_ncharadd = bu_vls_strlen(&wdbp->wdb_prestr);
-		}
-
-		/* open the input file */
-		if ((newdbp = db_open(argv[1], "r")) == DBI_NULL) {
-			perror(argv[1]);
-			Tcl_AppendResult(interp, "concat: Can't open ",
-					 argv[1], (char *)NULL);
-			return TCL_ERROR;
-		}
-
-		/* Scan new database, adding everything encountered. */
-		version = db_get_version( newdbp );
-		if( version > 4 && wdbp->dbip->dbi_version < 5 ) {
-			Tcl_AppendResult(interp, "concat: databases are incompatible, convert ",
-					 wdbp->dbip->dbi_filename, " to version 5 first",
-					 (char *)NULL );
-			return TCL_ERROR;
-		}
-
-		das.interp = interp;
-		das.main_dbip = wdbp->dbip;
-		das.wdbp = wdbp;
-		if (version < 5) {
-			if (db_scan(newdbp, wdb_dir_add, 1, (genptr_t)&das) < 0) {
-				Tcl_AppendResult(interp, "concat: db_scan failure", (char *)NULL);
-				bad = 1;	
-				/* Fall through, to close off database */
-			}
-		} else {
-			if (db5_scan(newdbp, wdb_dir_add5, (genptr_t)&das) < 0) {
-				Tcl_AppendResult(interp, "concat: db_scan failure", (char *)NULL);
-				bad = 1;	
-				/* Fall through, to close off database */
+			if ( bu_vls_strlen(&cc_data.prestr) > 12) {
+				bu_vls_trunc( &cc_data.prestr, 12 );
 			}
 		}
-		rt_mempurge(&(newdbp->dbi_freep));        /* didn't really build a directory */
-
-		/* Free all the directory entries, and close the input database */
-		db_close(newdbp);
-
-		db_sync(wdbp->dbip);	/* force changes to disk */
 	}
+
+	/* open the input file */
+	if ((newdbp = db_open(argv[file_index], "r")) == DBI_NULL) {
+		perror(argv[file_index]);
+		Tcl_AppendResult(interp, "concat: Can't open ",
+				 argv[file_index], (char *)NULL);
+		return TCL_ERROR;
+	}
+
+	if( newdbp->dbi_version > 4 && wdbp->dbip->dbi_version < 5 ) {
+		Tcl_AppendResult(interp, "concat: databases are incompatible, convert ",
+				 wdbp->dbip->dbi_filename, " to version 5 first",
+				 (char *)NULL );
+		return TCL_ERROR;
+	}
+
+	db_dirbuild( newdbp );
+
+	cc_data.new_dbip = newdbp;
+	cc_data.old_dbip = wdbp->dbip;
+
+	/* visit each directory pointer in the input database */
+	Tcl_InitHashTable( &name_tbl, TCL_STRING_KEYS );
+	Tcl_InitHashTable( &used_names_tbl, TCL_STRING_KEYS );
+	FOR_ALL_DIRECTORY_START( dp, newdbp )
+		if( dp->d_major_type == DB5_MAJORTYPE_ATTRIBUTE_ONLY ) {
+			/* skip GLOBAL object */
+			continue;
+		}
+
+	        copy_object( interp, dp, newdbp, wdbp->dbip, &name_tbl,
+				     &used_names_tbl, &cc_data );
+	FOR_ALL_DIRECTORY_END;
+
+	bu_vls_free( &cc_data.prestr );
+	rt_mempurge(&(newdbp->dbi_freep));
+
+	/* Free all the directory entries, and close the input database */
+	db_close(newdbp);
+
+	db_sync(wdbp->dbip);	/* force changes to disk */
+
+	/* Free the Hash tables */
+	ptr = Tcl_FirstHashEntry( &name_tbl, &search );
+	while( ptr ) {
+		bu_free( (char *)Tcl_GetHashValue( ptr ), "new name" );
+		ptr = Tcl_NextHashEntry( &search );
+	}
+	Tcl_DeleteHashTable( &name_tbl );
+	Tcl_DeleteHashTable( &used_names_tbl );
 
 	return bad ? TCL_ERROR : TCL_OK;
 }
@@ -4188,6 +3784,276 @@ wdb_find_ref(struct db_i		*dbip,
 	Tcl_AppendElement(interp, comb_name);
 }
 
+HIDDEN union tree *
+facetize_region_end( tsp, pathp, curtree, client_data )
+register struct db_tree_state	*tsp;
+struct db_full_path	*pathp;
+union tree		*curtree;
+genptr_t		client_data;
+{
+	struct bu_list		vhead;
+	union tree		**facetize_tree;
+
+	facetize_tree = (union tree **)client_data;
+	BU_LIST_INIT( &vhead );
+
+	if( curtree->tr_op == OP_NOP )  return  curtree;
+
+	if( *facetize_tree )  {
+		union tree	*tr;
+		tr = (union tree *)bu_calloc(1, sizeof(union tree), "union tree");
+		tr->magic = RT_TREE_MAGIC;
+		tr->tr_op = OP_UNION;
+		tr->tr_b.tb_regionp = REGION_NULL;
+		tr->tr_b.tb_left = *facetize_tree;
+		tr->tr_b.tb_right = curtree;
+		*facetize_tree = tr;
+	} else {
+		*facetize_tree = curtree;
+	}
+
+	/* Tree has been saved, and will be freed later */
+	return( TREE_NULL );
+}
+
+int
+wdb_facetize_cmd(struct rt_wdb	*wdbp,
+	     Tcl_Interp		*interp,
+	     int		argc,
+	     char 		**argv)
+{
+	int			i;
+	register int		c;
+	int			triangulate;
+	char			*newname;
+	struct rt_db_internal	intern;
+	struct directory	*dp;
+	int			failed;
+	int			nmg_use_tnurbs = 0;
+	int			make_bot;
+	struct db_tree_state	init_state;
+	struct db_i		*dbip;
+	union tree		*facetize_tree;
+	struct model		*nmg_model;
+
+	if(argc < 3){
+		Tcl_AppendResult(interp,
+				 "Usage: ",
+				 argv[0],
+				 " new_object old_object [old_object2 old_object3 ...]\n",
+				 (char *)NULL );
+	  return TCL_ERROR;
+	}
+
+	dbip = wdbp->dbip;
+	RT_CHECK_DBI(dbip);
+
+	db_init_db_tree_state( &init_state, dbip, wdbp->wdb_resp );
+
+	/* Establish tolerances */
+	init_state.ts_ttol = &wdbp->wdb_ttol;
+	init_state.ts_tol = &wdbp->wdb_tol;
+
+	/* Initial vaues for options, must be reset each time */
+	triangulate = 0;
+	make_bot = 1;
+
+	/* Parse options. */
+	bu_optind = 1;		/* re-init bu_getopt() */
+	while( (c=bu_getopt(argc,argv,"ntT")) != EOF )  {
+		switch(c)  {
+		case 'n':
+			make_bot = 0;
+			break;
+		case 'T':
+			triangulate = 1;
+			break;
+		case 't':
+			nmg_use_tnurbs = 1;
+			break;
+		default:
+		  {
+		    struct bu_vls tmp_vls;
+
+		    bu_vls_init(&tmp_vls);
+		    bu_vls_printf(&tmp_vls, "option '%c' unknown\n", c);
+		    Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls),
+				     "Usage: facetize [-ntT] object(s)\n",
+				     "\t-n make NMG primitives rather than BOT's\n",
+				     "\t-t Perform CSG-to-tNURBS conversion\n",
+				     "\t-T enable triangulator\n", (char *)NULL);
+		    bu_vls_free(&tmp_vls);
+		  }
+		  break;
+		}
+	}
+	argc -= bu_optind;
+	argv += bu_optind;
+	if( argc < 0 ){
+	  Tcl_AppendResult(interp, "facetize: missing argument\n", (char *)NULL);
+	  return TCL_ERROR;
+	}
+
+	newname = argv[0];
+	argv++;
+	argc--;
+	if( argc < 0 ){
+	  Tcl_AppendResult(interp, "facetize: missing argument\n", (char *)NULL);
+	  return TCL_ERROR;
+	}
+
+	if( db_lookup( dbip, newname, LOOKUP_QUIET ) != DIR_NULL )  {
+	  Tcl_AppendResult(interp, "error: solid '", newname,
+			   "' already exists, aborting\n", (char *)NULL);
+	  return TCL_ERROR;
+	}
+
+	{
+	  struct bu_vls tmp_vls;
+
+	  bu_vls_init(&tmp_vls);
+	  bu_vls_printf(&tmp_vls,
+			"facetize:  tessellating primitives with tolerances a=%g, r=%g, n=%g\n",
+			wdbp->wdb_ttol.abs, wdbp->wdb_ttol.rel, wdbp->wdb_ttol.norm );
+	  Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+	  bu_vls_free(&tmp_vls);
+	}
+	facetize_tree = (union tree *)0;
+  	nmg_model = nmg_mm();
+	init_state.ts_m = &nmg_model;
+
+	i = db_walk_tree( dbip, argc, (const char **)argv,
+		1,
+		&init_state,
+		0,			/* take all regions */
+		facetize_region_end,
+  		nmg_use_tnurbs ?
+  			nmg_booltree_leaf_tnurb :
+			nmg_booltree_leaf_tess,
+		(genptr_t)&facetize_tree
+		);
+
+
+	if( i < 0 )  {
+	  Tcl_AppendResult(interp, "facetize: error in db_walk_tree()\n", (char *)NULL);
+	  /* Destroy NMG */
+	  nmg_km( nmg_model );
+	  return TCL_ERROR;
+	}
+
+	if( facetize_tree )
+	{
+		/* Now, evaluate the boolean tree into ONE region */
+		Tcl_AppendResult(interp, "facetize:  evaluating boolean expressions\n", (char *)NULL);
+
+		if( BU_SETJUMP )
+		{
+			BU_UNSETJUMP;
+			Tcl_AppendResult(interp, "WARNING: facetization failed!!!\n", (char *)NULL );
+			if( facetize_tree )
+				db_free_tree( facetize_tree, &rt_uniresource );
+			facetize_tree = (union tree *)NULL;
+			nmg_km( nmg_model );
+			nmg_model = (struct model *)NULL;
+			return TCL_ERROR;
+		}
+
+		failed = nmg_boolean( facetize_tree, nmg_model, &wdbp->wdb_tol, &rt_uniresource );
+		BU_UNSETJUMP;
+	}
+	else
+		failed = 1;
+
+	if( failed )  {
+	  Tcl_AppendResult(interp, "facetize:  no resulting region, aborting\n", (char *)NULL);
+	  if( facetize_tree )
+		db_free_tree( facetize_tree, &rt_uniresource );
+	  facetize_tree = (union tree *)NULL;
+	  nmg_km( nmg_model );
+	  nmg_model = (struct model *)NULL;
+	  return TCL_ERROR;
+	}
+	/* New region remains part of this nmg "model" */
+	NMG_CK_REGION( facetize_tree->tr_d.td_r );
+	Tcl_AppendResult(interp, "facetize:  ", facetize_tree->tr_d.td_name,
+			 "\n", (char *)NULL);
+
+	/* Triangulate model, if requested */
+	if( triangulate && !make_bot )
+	{
+		Tcl_AppendResult(interp, "facetize:  triangulating resulting object\n", (char *)NULL);
+		if( BU_SETJUMP )
+		{
+			BU_UNSETJUMP;
+			Tcl_AppendResult(interp, "WARNING: triangulation failed!!!\n", (char *)NULL );
+			if( facetize_tree )
+				db_free_tree( facetize_tree, &rt_uniresource );
+			facetize_tree = (union tree *)NULL;
+			nmg_km( nmg_model );
+			nmg_model = (struct model *)NULL;
+			return TCL_ERROR;
+		}
+		nmg_triangulate_model( nmg_model , &wdbp->wdb_tol );
+		BU_UNSETJUMP;
+	}
+
+	if( make_bot )
+	{
+		struct rt_bot_internal *bot;
+		struct nmgregion *r;
+		struct shell *s;
+
+		Tcl_AppendResult(interp, "facetize:  converting to BOT format\n", (char *)NULL);
+
+		r = BU_LIST_FIRST( nmgregion, &nmg_model->r_hd );
+		s = BU_LIST_FIRST( shell, &r->s_hd );
+		bot = (struct rt_bot_internal *)nmg_bot( s, &wdbp->wdb_tol );
+		nmg_km( nmg_model );
+		nmg_model = (struct model *)NULL;
+
+		/* Export BOT as a new solid */
+		RT_INIT_DB_INTERNAL(&intern);
+		intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
+		intern.idb_type = ID_BOT;
+		intern.idb_meth = &rt_functab[ID_BOT];
+		intern.idb_ptr = (genptr_t) bot;
+	}
+	else
+	{
+
+		Tcl_AppendResult(interp, "facetize:  converting NMG to database format\n", (char *)NULL);
+
+		/* Export NMG as a new solid */
+		RT_INIT_DB_INTERNAL(&intern);
+		intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
+		intern.idb_type = ID_NMG;
+		intern.idb_meth = &rt_functab[ID_NMG];
+		intern.idb_ptr = (genptr_t)nmg_model;
+		nmg_model = (struct model *)NULL;
+	}
+
+	if( (dp=db_diradd( dbip, newname, -1L, 0, DIR_SOLID, (genptr_t)&intern.idb_type)) == DIR_NULL )
+	{
+		Tcl_AppendResult(interp, "Cannot add ", newname, " to directory\n", (char *)NULL );
+		return TCL_ERROR;
+	}
+
+	if( rt_db_put_internal( dp, dbip, &intern, &rt_uniresource ) < 0 )
+	{
+		Tcl_AppendResult(interp, "Failed to write ", newname, " to database\n", (char *)NULL );
+		rt_db_free_internal( &intern, &rt_uniresource );
+		return TCL_ERROR;
+	}
+	
+	facetize_tree->tr_d.td_r = (struct nmgregion *)NULL;
+
+	/* Free boolean tree, and the regions in it */
+	db_free_tree( facetize_tree, &rt_uniresource );
+    	facetize_tree = (union tree *)NULL;
+
+	return TCL_OK;
+}
+
 int
 wdb_find_cmd(struct rt_wdb	*wdbp,
 	     Tcl_Interp		*interp,
@@ -4230,6 +4096,19 @@ wdb_find_cmd(struct rt_wdb	*wdbp,
 
 	return TCL_OK;
 }
+
+static int
+wdb_facetize_tcl(clientData, interp, argc, argv)
+     ClientData clientData;
+     Tcl_Interp *interp;
+     int     argc;
+     char    **argv;
+{
+	struct rt_wdb *wdbp = (struct rt_wdb *)clientData;
+
+	return wdb_facetize_cmd(wdbp, interp, argc-1, argv+1);
+}
+
 
 /*
  * Usage:
@@ -5582,26 +5461,34 @@ struct object_use
 };
 
 static void
-Free_uses(struct db_i		*dbip,
-	  struct directory	*dp,
-	  genptr_t		ptr)
+Free_uses( struct db_i *dbip )
 {
-	struct object_use *use;
+	int i;
 
-	RT_CK_DIR(dp);
+	for (i=0 ; i<RT_DBNHASH ; i++) {
+		struct directory *dp;
+		struct object_use *use;
 
-	while (BU_LIST_NON_EMPTY(&dp->d_use_hd)) {
-		use = BU_LIST_FIRST(object_use, &dp->d_use_hd);
-		if (!use->used) {
-			/* never used, so delete directory entry.
-			 * This could actually delete the original, buts that's O.K.
-			 */
-			db_dirdelete(dbip, use->dp);
+		for (dp=dbip->dbi_Head[i]; dp!=DIR_NULL; dp=dp->d_forw) {
+			if (!(dp->d_flags & (DIR_SOLID | DIR_COMB)))
+				continue;
+
+			while (BU_LIST_NON_EMPTY(&dp->d_use_hd)) {
+				use = BU_LIST_FIRST(object_use, &dp->d_use_hd);
+				if( !use->used ) {
+					if( use->dp->d_un.file_offset >= 0 ) {
+						/* was written to disk */
+						db_delete( dbip, use->dp );
+					}
+					db_dirdelete(dbip, use->dp);
+				}
+				BU_LIST_DEQUEUE(&use->l);
+				bu_free((genptr_t)use, "Free_uses: use");
+			}
+			
 		}
-
-		BU_LIST_DEQUEUE(&use->l);
-		bu_free((genptr_t)use, "Free_uses: use");
 	}
+
 }
 
 static void
@@ -6045,13 +5932,13 @@ wdb_xpush_cmd(struct rt_wdb	*wdbp,
 	if (rt_db_get_internal(&intern, old_dp, wdbp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
 		bu_log("ERROR: cannot load %s feom the database!!!\n", old_dp->d_namep);
 		bu_log("\tNothing has been changed!!\n");
-		db_functree(wdbp->dbip, old_dp, Free_uses, Free_uses, &rt_uniresource, NULL);
+		Free_uses( wdbp->dbip );
 		return TCL_ERROR;
 	}
 
 	comb = (struct rt_comb_internal *)intern.idb_ptr;
 	if (!comb->tree) {
-		db_functree(wdbp->dbip, old_dp, Free_uses, Free_uses, &rt_uniresource, NULL);
+		Free_uses( wdbp->dbip );
 		return TCL_OK;
 	}
 
@@ -6062,13 +5949,12 @@ wdb_xpush_cmd(struct rt_wdb	*wdbp,
 		Tcl_AppendResult(interp, "rt_db_put_internal failed for ", old_dp->d_namep,
 				 "\n", (char *)NULL);
 		rt_comb_ifree(&intern, &rt_uniresource);
-		db_functree(wdbp->dbip, old_dp, Free_uses, Free_uses, &rt_uniresource, NULL);
+		Free_uses( wdbp->dbip );
 		return TCL_ERROR;
 	}
 
 	/* Free use lists and delete unused directory entries */
-	db_functree(wdbp->dbip, old_dp, Free_uses, Free_uses, &rt_uniresource, NULL);
-
+	Free_uses( wdbp->dbip );
 	return TCL_OK;
 }
 
@@ -6164,6 +6050,33 @@ wdb_node_write(struct db_i		*dbip,
 
 	if (rt_db_get_internal(&intern, dp, dbip, NULL, &rt_uniresource) < 0)
 		WDB_READ_ERR_return;
+
+	/* if this is an extrusion, keep the referenced sketch */
+	if( dp->d_major_type == DB5_MAJORTYPE_BRLCAD && dp->d_minor_type == DB5_MINORTYPE_BRLCAD_EXTRUDE ) {
+		struct rt_extrude_internal *extr;
+		struct directory *dp2;
+
+		extr = (struct rt_extrude_internal *)intern.idb_ptr;
+		RT_EXTRUDE_CK_MAGIC( extr );
+
+		if( (dp2 = db_lookup( dbip, extr->sketch_name, LOOKUP_QUIET )) != DIR_NULL ) {
+			wdb_node_write( dbip, dp2, ptr );
+		}
+	} else if ( dp->d_major_type == DB5_MAJORTYPE_BRLCAD && dp->d_minor_type == DB5_MINORTYPE_BRLCAD_DSP ) {
+		struct rt_dsp_internal *dsp;
+		struct directory *dp2;
+
+		/* this is a DSP, if it uses a binary object, keep it also */
+		dsp = (struct rt_dsp_internal *)intern.idb_ptr;
+		RT_DSP_CK_MAGIC( dsp );
+
+		if( dsp->dsp_datasrc == RT_DSP_SRC_OBJ ) {
+			/* need to keep this object */
+			if( (dp2 = db_lookup( dbip, bu_vls_addr(&dsp->dsp_name),  LOOKUP_QUIET )) != DIR_NULL ) {
+				wdb_node_write( dbip, dp2, ptr );	
+			}
+		}
+	}
 
 	if (wdb_put_internal(keepfp, dp->d_namep, &intern, 1.0) < 0)
 		WDB_WRITE_ERR_return;
@@ -6884,7 +6797,7 @@ wdb_hide_cmd(struct rt_wdb	*wdbp,
 						 (char *)NULL ) != TCL_OK ) {
 					bu_log( "Unable to post question!!!\n" );
 				} else {
-					char *result;
+					const char *result;
 
 					result = Tcl_GetStringResult( interp );
 					if( !strcmp( result, "no" ) ) {
@@ -7841,6 +7754,135 @@ wdb_pathlist_tcl(ClientData	clientData,
 	struct rt_wdb *wdbp = (struct rt_wdb *)clientData;
 
 	return wdb_pathlist_cmd(wdbp, interp, argc-1, argv+1);
+}
+
+int
+wdb_smooth_bot_cmd(struct rt_wdb	*wdbp,
+	       Tcl_Interp	*interp,
+	       int		argc,
+	       char 		**argv)
+{
+	char *new_bot_name, *old_bot_name;
+	struct directory *dp_old, *dp_new;
+	struct rt_bot_internal *old_bot;
+	struct rt_db_internal intern;
+	fastf_t tolerance_angle=180.0;
+	int arg_index=1;
+	int id;
+
+	/* check that we are using a version 5 database */
+	if( wdbp->dbip->dbi_version < 5 ) {
+		Tcl_AppendResult(interp, "This is an older database version.\n",
+			"It does not support BOT surface normals.\n",
+			"Use \"dbupgrade\" to upgrade this database to the current version.\n",
+			(char *)NULL );
+		return TCL_ERROR;
+	}
+
+	if( argc < 3 ) {
+		struct bu_vls vls;
+
+		bu_vls_init(&vls);
+		bu_vls_printf(&vls, "helplib_alias wdb_smooth_bot %s", argv[0]);
+		Tcl_Eval(interp, bu_vls_addr(&vls));
+		bu_vls_free(&vls);
+		return TCL_ERROR;
+	}
+
+	while( *argv[arg_index] == '-' ) {
+		/* this is an option */
+		if( !strcmp( argv[arg_index], "-t" ) ) {
+			arg_index++;
+			tolerance_angle = atof( argv[arg_index] );
+		} else {
+			struct bu_vls vls;
+
+			bu_vls_init(&vls);
+			bu_vls_printf(&vls, "helplib_alias wdb_smooth_bot %s", argv[0]);
+			Tcl_Eval(interp, bu_vls_addr(&vls));
+			bu_vls_free(&vls);
+			return TCL_ERROR;
+		}
+		arg_index++;
+	}
+
+	if( arg_index >= argc ) {
+		struct bu_vls vls;
+
+		bu_vls_init(&vls);
+		bu_vls_printf(&vls, "helplib_alias wdb_smooth_bot %s", argv[0]);
+		Tcl_Eval(interp, bu_vls_addr(&vls));
+		bu_vls_free(&vls);
+		return TCL_ERROR;
+	}
+
+	new_bot_name = argv[arg_index++];
+	old_bot_name = argv[arg_index];
+
+	if( (dp_old=db_lookup( wdbp->dbip, old_bot_name, LOOKUP_QUIET ) ) == DIR_NULL ) {
+		Tcl_AppendResult(interp, old_bot_name, " does not exist!!\n", (char *)NULL );
+		return TCL_ERROR;
+	}
+
+	if( strcmp( old_bot_name, new_bot_name ) ) {
+
+		if( (dp_new=db_lookup( wdbp->dbip, new_bot_name, LOOKUP_QUIET ) ) != DIR_NULL ) {
+			Tcl_AppendResult(interp, new_bot_name, " already exists!!\n", (char *)NULL );
+			return TCL_ERROR;
+		}
+	} else {
+		dp_new = dp_old;
+	}
+
+	if( (id=rt_db_get_internal( &intern, dp_old, wdbp->dbip, NULL, wdbp->wdb_resp ) ) < 0 ) {
+		Tcl_AppendResult(interp, "Failed to get internal form of ", old_bot_name, "\n", (char *)NULL );
+		return TCL_ERROR;
+	}
+
+	if( id != ID_BOT ) {
+		Tcl_AppendResult(interp, old_bot_name, " is not a BOT primitive\n", (char *)NULL );
+		rt_db_free_internal( &intern, wdbp->wdb_resp );
+		return TCL_ERROR;
+	}
+
+	old_bot = (struct rt_bot_internal *)intern.idb_ptr;
+	RT_BOT_CK_MAGIC( old_bot );
+
+	if( rt_smooth_bot( old_bot, old_bot_name, wdbp->dbip, tolerance_angle*M_PI/180.0 ) ) {
+		Tcl_AppendResult(interp, "Failed to smooth ", old_bot_name, "\n", (char *)NULL );
+		rt_db_free_internal( &intern, wdbp->wdb_resp );
+		return TCL_ERROR;
+	}
+
+	if( dp_new == DIR_NULL ) {
+		if( (dp_new=db_diradd( wdbp->dbip, new_bot_name, -1L, 0, DIR_SOLID,
+				   (genptr_t)&intern.idb_type)) == DIR_NULL ) {
+			rt_db_free_internal(&intern, wdbp->wdb_resp);
+			Tcl_AppendResult(interp, "Cannot add ", new_bot_name, " to directory\n", (char *)NULL);
+			return TCL_ERROR;
+		}
+	}
+
+	if( rt_db_put_internal( dp_new, wdbp->dbip, &intern, wdbp->wdb_resp ) < 0 ) {
+		rt_db_free_internal(&intern, wdbp->wdb_resp);
+		Tcl_AppendResult(interp, "Database write error, aborting.\n", (char *)NULL);
+		return TCL_ERROR;
+	}
+
+	rt_db_free_internal( &intern, wdbp->wdb_resp );
+
+	return TCL_OK;
+}
+
+static int
+wdb_smooth_bot_tcl(ClientData	clientData,
+		 Tcl_Interp	*interp,
+		 int		argc,
+		 char		**argv)
+{
+	struct rt_wdb *wdbp = (struct rt_wdb *)clientData;
+
+	return wdb_smooth_bot_cmd(wdbp, interp, argc-1, argv+1);
 }
 
 int
@@ -9085,12 +9127,30 @@ wdb_bot_decimate_cmd(struct rt_wdb	*wdbp,
 		switch(c) {
 			case 'c':
 				max_chord_error = atof( bu_optarg );
+				if( max_chord_error < 0.0 ) {
+					Tcl_AppendResult(interp,
+							 "Maximum chord error cannot be less than zero",
+							 (char *)NULL );
+					return TCL_ERROR;
+				}
 				break;
 			case 'n':
 				max_normal_error = atof( bu_optarg );
+				if( max_normal_error < 0.0 ) {
+					Tcl_AppendResult(interp,
+							 "Maximum normal error cannot be less than zero",
+							 (char *)NULL );
+					return TCL_ERROR;
+				}
 				break;
 			case 'e':
 				min_edge_length = atof( bu_optarg );
+				if( min_edge_length < 0.0 ) {
+					Tcl_AppendResult(interp,
+							 "minumum edge length cannot be less than zero",
+							 (char *)NULL );
+					return TCL_ERROR;
+				}
 				break;
 			default:
 				{
@@ -9104,18 +9164,6 @@ wdb_bot_decimate_cmd(struct rt_wdb	*wdbp,
 					return TCL_ERROR;
 				}
 		}
-	}
-
-	if( max_chord_error <= SMALL_FASTF &&
-	    max_normal_error <= SMALL_FASTF &&
-	    min_edge_length <= SMALL_FASTF ) {
-		struct bu_vls vls;
-
-		bu_vls_init(&vls);
-		bu_vls_printf(&vls, "helplib_alias wdb_bot_decimate %s", argv[0]);
-		Tcl_Eval(interp, bu_vls_addr(&vls));
-		bu_vls_free(&vls);
-		return TCL_ERROR;
 	}
 
 	argc -= bu_optind;

@@ -33,6 +33,7 @@
 
 #include "./fence.h"
 
+
 /* command-line options are described in the parseArguments function
  */
 char *options="IiDdVvO:o:N:n:U:u:H:h:L:l:R:r:J:j:A:a:T:t:B:b:C:c:F:f:P:p:M:m:W:w:S:s:E:e:G:g:XxZz";

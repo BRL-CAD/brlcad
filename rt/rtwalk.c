@@ -15,7 +15,7 @@
  *	Aberdeen Proving Ground, Maryland  21005
  *  
  *  Copyright Notice -
- *	This software is Copyright (C) 1987 by the United States Army.
+ *	This software is Copyright (C) 1987-2004 by the United States Army.
  *	All rights reserved.
  */
 #ifndef lint
@@ -56,7 +56,6 @@ double		viewsize = 42;
  *	2 - plots with attempted rays in red
  *	3 - lots of printfs too
  */
-int		rdebug;			/* program debugging (not library) */
 
 int		npsw = 1;		/* Run serially */
 int		interactive = 0;	/* human is watching results */
@@ -196,7 +195,7 @@ main(int argc, char **argv)
 	plotfp = stdout;
 
 	/* Plot all of the solids */
-	if( rdebug > 0 )  {
+	if( R_DEBUG > 0 )  {
 		pl_color( plotfp, 150, 150, 150 );
 		rt_plot_all_solids( plotfp, rtip, &rt_uniresource );
 	}
@@ -212,11 +211,11 @@ main(int argc, char **argv)
 		 *  the results of the last iteration.
 		 *  The first and last iterations result in no output
 		 */
-		if(rdebug>=3) {
+		if(R_DEBUG>=3) {
 			VPRINT("pos", ap.a_ray.r_pt);
 		}
 		if( curstep > 0 )  {
-			if( rdebug > 0 )  {
+			if( R_DEBUG > 0 )  {
 				if( curstep&1 )
 					pl_color( plotfp, 0, 255, 0 );
 				else
@@ -256,7 +255,7 @@ main(int argc, char **argv)
 			int	i;
 
 			/* Shoot Ray */
-			if(rdebug>=3)fprintf(stderr,"try=%d, maxtogo=%g  ",
+			if(R_DEBUG>=3)fprintf(stderr,"try=%d, maxtogo=%g  ",
 				failed_try, max_dist_togo);
 			ap.a_hit = hit;
 			ap.a_miss = miss;
@@ -281,7 +280,7 @@ main(int argc, char **argv)
 			 * Failed, try another direction
 			 */
 
-			if(rdebug > 2 )   {
+			if(R_DEBUG > 2 )   {
 				/* Log attempted ray in Red */
 				VJOIN1( out, ap.a_ray.r_pt,
 					incr_dist*4, ap.a_ray.r_dir );
@@ -298,23 +297,23 @@ main(int argc, char **argv)
 				 *  Otherwise, head on tangent plane.
 				 */
 				if( VEQUAL( norm_cur_try, norm_prev_step ) )  {
-					if(rdebug>=3)fprintf(stderr,
+					if(R_DEBUG>=3)fprintf(stderr,
 						"Try prev dir\n");
 					VMOVE( ap.a_ray.r_dir, dir_prev_step );
 					continue;
 				}
-				if(rdebug>=3)fprintf(stderr,"Try tangent\n");
+				if(R_DEBUG>=3)fprintf(stderr,"Try tangent\n");
 				proj_goal();
 				continue;
 			} else if( failed_try <= 7 )  {
 				/* Try 7 azimuthal escapes, 1..7 */
 				i = failed_try-1+1;	/*  1..7 */
-				if(rdebug>=3)fprintf(stderr,"Try az %d\n", i);
+				if(R_DEBUG>=3)fprintf(stderr,"Try az %d\n", i);
 				bn_mat_ae( mat, i*45.0, 0.0 );
 			} else if( failed_try <= 14 ) {
 				/* Try 7 Elevations to escape, 8..14 */
 				i = failed_try-8+1;	/*     1..7 */
-				if(rdebug>=3)fprintf(stderr,"Try el %d\n", i);
+				if(R_DEBUG>=3)fprintf(stderr,"Try el %d\n", i);
 				bn_mat_ae( mat, 0.0, i*45.0 );
 			} else {
 				fprintf(stderr,"trapped, giving up on escape\n");

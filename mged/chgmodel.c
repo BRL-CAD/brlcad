@@ -28,7 +28,7 @@
  *	Aberdeen Proving Ground, Maryland  21005
  *  
  *  Copyright Notice -
- *	This software is Copyright (C) 1985 by the United States Army.
+ *	This software is Copyright (C) 1985-2004 by the United States Army.
  *	All rights reserved.
  */
 #ifndef lint
@@ -69,7 +69,11 @@ void set_tran();
 void	aexists(char *name);
 
 static char	tmpfil[17];
+#ifndef WIN32
 static char	*tmpfil_init = "/tmp/GED.aXXXXXX";
+#else
+static char	*tmpfil_init = "C:\\GED.aXXXXXX";
+#endif
 
 int		newedge;		/* new edge for arb editing */
 
@@ -344,7 +348,7 @@ f_edmater(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
   }
 
   strcpy(tmpfil, tmpfil_init);
-#if 0
+#ifdef WIN32
   (void)mktemp(tmpfil);
   i=creat(tmpfil, 0600);
 #else
@@ -1850,12 +1854,12 @@ f_make(ClientData	clientData,
 		internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 		internal.idb_type = ID_BOT;
 		internal.idb_meth = &rt_functab[ID_BOT];
-		internal.idb_ptr = (genptr_t)bu_malloc( sizeof( struct rt_bot_internal ), "rt_bot_internal" );
+		BU_GETSTRUCT( bot_ip, rt_bot_internal );
+		internal.idb_ptr = (genptr_t)bot_ip;
 		bot_ip = (struct rt_bot_internal *)internal.idb_ptr;
 		bot_ip->magic = RT_BOT_INTERNAL_MAGIC;
 		bot_ip->mode = RT_BOT_SOLID;
 		bot_ip->orientation = RT_BOT_UNORIENTED;
-		bot_ip->error_mode = 0;
 		bot_ip->num_vertices = 4;
 		bot_ip->num_faces = 4;
 		bot_ip->faces = (int *)bu_calloc( bot_ip->num_faces * 3, sizeof( int ), "BOT faces" );
@@ -2679,4 +2683,14 @@ f_binary(ClientData	clientData,
 	CHECK_DBI_NULL;
 
 	return wdb_binary_cmd(wdbp, interp, argc, argv);
+}
+
+int cmd_smooth_bot( ClientData	clientData,
+	 Tcl_Interp	*interp,
+	 int		argc,
+	 char 		**argv)
+{
+	CHECK_DBI_NULL;
+
+	return wdb_smooth_bot_cmd( wdbp, interp, argc, argv );
 }

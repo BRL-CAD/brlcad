@@ -14,7 +14,7 @@
  *	Aberdeen Proving Ground, Maryland  21005
  *  
  *  Copyright Notice -
- *	This software is Copyright (C) 1985 by the United States Army.
+ *	This software is Copyright (C) 1985-2004 by the United States Army.
  *	All rights reserved.
  */
 #ifndef lint
@@ -275,6 +275,9 @@ f_area(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	char tol_str[32];
 	char *tol_ptr;
 
+#ifndef WIN32
+	/* XXX needs fixing */
+
 	CHECK_DBI_NULL;
 
 	if(argc < 1 || 2 < argc){
@@ -427,6 +430,7 @@ f_area(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	fclose(fp_r);
 	close(fd1[1]);
 	close(fd3[0]);
+#endif
 
 	return TCL_OK;
 }

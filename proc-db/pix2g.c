@@ -34,7 +34,6 @@ int width=512;
 int height=512;
 double cellSize=1.0;
 double objectSize=1.0;
-char fileName[256]="";
 const char *prototype="pixel";
 
 int nextAvailableRow=0;
@@ -148,6 +147,8 @@ void computeScanline( int pid, genptr_t arg ) {
 int
 main(int ac, char *av[])
 {
+	char imageFileName[256]="";
+	char databaseFileName[256]="";
 	char scratch[256]="";
 	point_t origin;
 
@@ -155,25 +156,29 @@ main(int ac, char *av[])
 
 	if (ac < 3) usage();
 
-	if (ac > 2) width=(int)atoi(av[2]);
-	if (ac > 3) sprintf(fileName, "%s", av[3]);
+	sprintf(imageFileName, "%s", av[1]);
+	sprintf(databaseFileName, "%s", av[2]);
+
+	if (ac > 3) width=(int)atoi(av[3]);
 	if (ac > 4) height=(int)atoi(av[4]);
 	if (ac > 5) cellSize=(double)atof(av[5]);
 	if (ac > 6) objectSize=(double)atof(av[6]);
 
 	/*	bu_log("{%s} {%s} {%s} {%s} {%s} {%s} {%s}\n", av[0], av[1], av[2], av[3], av[4], av[5], av[6]); */
 
-	if ((db_fp = wdb_fopen(av[1])) == NULL) {
-		perror(av[1]);
+	if ((db_fp = wdb_fopen(databaseFileName)) == NULL) {
+	  bu_log("unable to open database [%s]\n", databaseFileName);
+		perror("Unable to open database file");
 		exit(-1);
 	}
 
-	if ((image = bu_open_mapped_file(fileName, NULL)) == NULL) {
+	if ((image = bu_open_mapped_file(imageFileName, NULL)) == NULL) {
+	  bu_log("unable to open image [%s]\n", imageFileName);
 		perror("Unable to open file");
 		exit(-2);
 	}
 
-	bu_log("Loading image %s from file...", fileName);
+	bu_log("Loading image %s from file...", imageFileName);
 	if (image->buflen < width * height * 3) {
 		bu_log("\nWARNING: %s needs %d bytes, file only contains %d bytes\n", width*height*3, image->buflen);
 	} else if (image->buflen > width* height * 3) {
@@ -185,7 +190,7 @@ main(int ac, char *av[])
 	bu_log("Objects are %f with %f spacing\n", objectSize, cellSize);
 	
 
-	sprintf(scratch, "%s Geometry Image", fileName);
+	sprintf(scratch, "%s Geometry Image", imageFileName);
 	mk_id(db_fp, scratch); /* create the database header record */
 
 	/* make a region that is the union of these two objects
@@ -234,7 +239,7 @@ main(int ac, char *av[])
 		
 	mk_lcomb(db_fp, "image.c", &allScanlineList, 0, NULL, NULL, NULL, 0);
 		
-	bu_log("\n...done! (see %s)\n", av[1]);
+	bu_log("\n...done! (see %s)\n", databaseFileName);
 	
 	bu_close_mapped_file(image);
 	

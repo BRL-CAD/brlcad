@@ -12,7 +12,7 @@
 #       The BRL-CAD Package" agreement.
 #
 # Copyright Notice -
-#       This software is Copyright (C) 1998 by the United States Army
+#       This software is Copyright (C) 1998-2004 by the United States Army
 #       in all countries except the USA.  All rights reserved.
 #
 # Description -
@@ -105,7 +105,7 @@ Support for the previous file format may be removed in a future release.
 #
 proc dbupgrade {args} {
     global mged_gui
-    global tkPriv
+    global ::tk::Priv
     global dbupgrade_priv
 
     set id [get_player_id_dm [winset]]
@@ -113,8 +113,8 @@ proc dbupgrade {args} {
     # first time through only
     if {![info exists dbupgrade_priv(dbname)]} {
 	if {[opendb] == ""} {
-	    if {[info exists tkPriv(cad_dialog)]} {
-		cad_dialog $tkPriv(cad_dialog) $mged_gui($id,screen) "No database." \
+	    if {[info exists ::tk::Priv(cad_dialog)]} {
+		cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen) "No database." \
 			"No database has been opened!" info 0 OK
 		return
 	    } else {
@@ -144,8 +144,8 @@ proc dbupgrade {args} {
     if {[llength $args] == 0} {
 	# inform and prompt the user to upgrade
 
-	if {[info exists tkPriv(cad_dialog)]} {
-	    set result [cad_dialog $tkPriv(cad_dialog) $mged_gui($id,screen)\
+	if {[info exists ::tk::Priv(cad_dialog)]} {
+	    set result [cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen)\
 		    "Would you like to upgrade $dbname?" \
 		    $dbupgrade_priv(message) \
 		    "" 0 Upgrade Cancel]
@@ -219,8 +219,8 @@ proc dbupgrade {args} {
 	# when overwrite is 0, the user hasn't been prompted to overwrite yet
 	if {!$overwrite} {
 	    # not a directory, so prompt the user about overwriting
-	    if {[info exists tkPriv(cad_dialog)]} {
-		set result [cad_dialog $tkPriv(cad_dialog) $mged_gui($id,screen)\
+	    if {[info exists ::tk::Priv(cad_dialog)]} {
+		set result [cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen)\
 			"About to overwrite $dbname\R4"\
 			"Would you like to overwrite $dbname\R4"\
 			"" 0 Overwrite Cancel]

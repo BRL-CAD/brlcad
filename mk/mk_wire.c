@@ -28,7 +28,7 @@
 #include "raytrace.h"
 #include "wdb.h"
 
-#define MAXSEG 10		/*  Maximum number of segments.  The  */
+#define MAXWIRESEG 10		/*  Maximum number of segments.  The  */
 				/*  maximum may be no greater then 100  */
 				/*  because of the way the name of the  */
 				/*  segments is found.  */
@@ -39,10 +39,10 @@ main(int argc, char **argv)
    struct rt_wdb *fpw;		/*  File to be created.  */
    char filemged[26];		/*  Mged file name.  */
    double numseg;		/*  Number of segments.  */
-   double strtpt[MAXSEG][3];	/*  Start point of segment.  */
-   double endpt[MAXSEG][3];	/*  End point of segment.  */
-   double strtrad[MAXSEG];	/*  Radius at starting point of segment.  */
-   double endrad[MAXSEG];	/*  Radius at ending point of segment.  */
+   double strtpt[MAXWIRESEG][3];	/*  Start point of segment.  */
+   double endpt[MAXWIRESEG][3];	/*  End point of segment.  */
+   double strtrad[MAXWIRESEG];	/*  Radius at starting point of segment.  */
+   double endrad[MAXWIRESEG];	/*  Radius at ending point of segment.  */
 
    char solcyl[8],regcyl[8];	/*  Solid & region name for cylinder (cone).  */
    char solsph[8],regsph[8];	/*  Solid & region name for sphere.  */
@@ -133,16 +133,16 @@ main(int argc, char **argv)
 
    /*  Find the number of segments.  */
    (void)printf("Enter the number of segments (maximum of %d).\n\t",
-	MAXSEG);
+	MAXWIRESEG);
    (void)fflush(stdout);
    (void)scanf("%lf",&numseg);
 
    /*  Check that the number of segments is less than or equal to the  */
    /*  maximum.  */
-   while(numseg > MAXSEG)
+   while(numseg > MAXWIRESEG)
    {
 	(void)printf("The maximum number of segments is %d.  Enter the\n",
-		MAXSEG);
+		MAXWIRESEG);
 	(void)printf("number of segments.\n\t");
 	(void)fflush(stdout);
 	(void)scanf("%lf",&numseg);

@@ -11,7 +11,7 @@
 #       The BRL-CAD Package" agreement.
 #
 # Copyright Notice -
-#       This software is Copyright (C) 1998 by the United States Army
+#       This software is Copyright (C) 1998-2004 by the United States Army
 #       in all countries except the USA.  All rights reserved.
 #
 # Description -
@@ -23,15 +23,15 @@ if ![info exists mged_default(solid_name_fmt)] {
 
 proc make_dsp { id top } {
     global mged_gui
-    global tkPriv
+    global ::tk::Priv
 
 	if { ![info exists mged_gui($id,solid_name)] } {
-		cad_dialog $tkPriv(cad_dialog) $mged_gui($id,screen) "ERROR creating DSP" "No solid name provided!!!!" "" 0 OK
+		cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen) "ERROR creating DSP" "No solid name provided!!!!" "" 0 OK
 		return
 	}
 
 	if { [string length $mged_gui($id,solid_name)] < 1 } {
-		cad_dialog $tkPriv(cad_dialog) $mged_gui($id,screen) "ERROR creating DSP" "No solid name provided!!!!" "" 0 OK
+		cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen) "ERROR creating DSP" "No solid name provided!!!!" "" 0 OK
 		return
 	}
 
@@ -42,7 +42,7 @@ proc make_dsp { id top } {
 
 	set ret [catch $command result]
 	if { $ret != 0 } {
-		cad_dialog $tkPriv(cad_dialog) $mged_gui($id,screen) "ERROR creaing DSP" $result "" 0 OK
+		cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen) "ERROR creaing DSP" $result "" 0 OK
 	}
 
 	catch {_mged_sed $mged_gui($id,solid_name)}
@@ -51,10 +51,10 @@ proc make_dsp { id top } {
 
 proc dsp_create { id } {
     global mged_gui
-    global tkPriv
+    global ::tk::Priv
 
     if {[opendb] == ""} {
-	cad_dialog $tkPriv(cad_dialog) $mged_gui($id,screen) "No database." \
+	cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen) "No database." \
 		"No database has been opened!" info 0 OK
 	return
     }
@@ -149,10 +149,10 @@ proc dsp_create { id } {
 
 proc init_solid_create { id type } {
     global mged_gui
-    global tkPriv
+    global ::tk::Priv
 
     if {[opendb] == ""} {
-	cad_dialog $tkPriv(cad_dialog) $mged_gui($id,screen) "No database." \
+	cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen) "No database." \
 		"No database has been opened!" info 0 OK
 	return
     }
@@ -194,14 +194,14 @@ proc init_solid_create { id type } {
 proc solid_auto_name { id } {
     global mged_gui
     global mged_default
-    global tkPriv
+    global ::tk::Priv
 
     set result [catch {_mged_make_name $mged_default(solid_name_fmt)} name]
 
     if {$result == 0} {
 	set mged_gui($id,solid_name) $name
     } else {
-	cad_dialog $tkPriv(cad_dialog) $mged_gui($id,screen)\
+	cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen)\
 		"Failed to automatically create a solid name!"\
 		$name\
 		"" 0 OK
@@ -211,7 +211,7 @@ proc solid_auto_name { id } {
 
 proc make_solid { id w type } {
     global mged_gui
-    global tkPriv
+    global ::tk::Priv
 
     set result [catch {_mged_make $mged_gui($id,solid_name) $type} msg]
 
@@ -219,7 +219,7 @@ proc make_solid { id w type } {
 	catch {_mged_sed $mged_gui($id,solid_name)}
 	catch {destroy $w}
     } else {
-	cad_dialog $tkPriv(cad_dialog) $mged_gui($id,screen)\
+	cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen)\
 		"Bad solid name!"\
 		$msg\
 		"" 0 OK

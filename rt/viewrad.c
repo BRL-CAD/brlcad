@@ -18,7 +18,7 @@
  *	Aberdeen Proving Ground, Maryland  21005
  *  
  *  Copyright Notice -
- *	This software is Copyright (C) 1985 by the United States Army.
+ *	This software is Copyright (C) 1985-2004 by the United States Army.
  *	All rights reserved.
  */
 #ifndef lint
@@ -267,7 +267,7 @@ radhit(register struct application *ap, struct partition *PartHeadp, struct seg 
 		return(0);
 	}
 
-	if(rdebug&RDEBUG_HITS)  {
+	if(R_DEBUG&RDEBUG_HITS)  {
 		rt_pr_pt( ap->a_rt_i, pp );
 	}
 
@@ -289,7 +289,7 @@ radhit(register struct application *ap, struct partition *PartHeadp, struct seg 
 
 	RT_HIT_NORMAL( rayp->norm, hitp, pp->pt_inseg->seg_stp, &(ap->a_ray), pp->pt_inflip );
 
-	if(rdebug&RDEBUG_HITS)  {
+	if(R_DEBUG&RDEBUG_HITS)  {
 		rt_pr_hit( " In", hitp );
 	}
 

@@ -16,7 +16,7 @@
  *	The BRL-CAD Package" agreement.
  *
  *  Copyright Notice -
- *	This software is Copyright (C) 1994 by the United States Army
+ *	This software is Copyright (C) 1994-2004 by the United States Army
  *	in all countries except the USA.  All rights reserved.
  */
 #include "conf.h"
@@ -28,6 +28,11 @@
 #include "nmg.h"
 #include "raytrace.h"
 #include "plot3.h"
+
+/*
+NOTES:
+	Changed near to near1 for win32 compatibility 
+*/
 
 /* vertex/edge distance 
  * Each loop geometry element (edge/vertex) has one of these computed.
@@ -816,7 +821,7 @@ make_near_list(struct edge_info *edge_list, struct bu_list *near)
 	double dist;
 
 	BU_CK_LIST_HEAD(&edge_list->l);
-	BU_CK_LIST_HEAD(near);
+	BU_CK_LIST_HEAD(near1);
 
 	/* toss opposing pairs of uses of the same edge from the list */
 	ei = BU_LIST_FIRST( edge_info, &edge_list->l);
@@ -873,14 +878,14 @@ make_near_list(struct edge_info *edge_list, struct bu_list *near)
 		if (ei->ved_p->dist == dist) {
 			ei_p = BU_LIST_PLAST(edge_info, &ei->l);
 			BU_LIST_DEQUEUE(&ei->l);
-			BU_LIST_APPEND(near, &ei->l);
+			BU_LIST_APPEND(near1, &ei->l);
 			ei = ei_p;
 		}
 	}
 
 	if (rt_g.NMG_debug & DEBUG_PT_FU ) {
 		bu_log("dist %g near list\n", dist);
-		for (BU_LIST_FOR(ei, edge_info, near)) {
+		for (BU_LIST_FOR(ei, edge_info, near1)) {
 			bu_log("\t(%g %g %g) -> (%g %g %g)\n",
 				V3ARGS(ei->eu_p->vu_p->v_p->vg_p->coord),
 				V3ARGS(ei->eu_p->eumate_p->vu_p->v_p->vg_p->coord));
@@ -983,7 +988,7 @@ compute_loop_class(struct fpi *fpi,
 {
 	struct edge_info *ei;
 	struct edge_info *ei_vdot_max;
-	struct bu_list	near;
+	struct bu_list	near1;
 	int 		lu_class = NMG_CLASS_Unknown;
 
 	if (rt_g.NMG_debug & DEBUG_PT_FU ) {
@@ -998,16 +1003,16 @@ bu_log("dist:%g class:%s status:%d\n\tv1(%g %g %g) v2(%g %g %g)\n",
 	}
 
 	BU_CK_LIST_HEAD(&edge_list->l);
-	BU_LIST_INIT(&near);
+	BU_LIST_INIT(&near1);
 
 	/* get a list of "closest/useful" edges to use in classifying
 	 * the pt WRT the loop
 	 */
-	while (BU_LIST_IS_EMPTY(&near) && BU_LIST_NON_EMPTY(&edge_list->l)) {
-		make_near_list(edge_list, &near);
+	while (BU_LIST_IS_EMPTY(&near1) && BU_LIST_NON_EMPTY(&edge_list->l)) {
+		make_near_list(edge_list, &near1);
 	}
 	
-	if (BU_LIST_IS_EMPTY(&near)) {
+	if (BU_LIST_IS_EMPTY(&near1)) {
 		/* This was a "crack" or "snake" loop */
 		
 		if (lu->orientation == OT_SAME) {
@@ -1027,7 +1032,7 @@ bu_log("dist:%g class:%s status:%d\n\tv1(%g %g %g) v2(%g %g %g)\n",
 
 	ei_vdot_max = (struct edge_info *)NULL;
 
-	for (BU_LIST_FOR(ei, edge_info, &near)) {
+	for (BU_LIST_FOR(ei, edge_info, &near1)) {
 		NMG_CK_EI(ei);
 		NMG_CK_VED(ei->ved_p);
 		switch (ei->ved_p->status) {
@@ -1069,7 +1074,7 @@ departure:
 	/* the caller will get whatever is left of the edge_list, but
 	 * we need to free up the "near" list
 	 */
-	while (BU_LIST_WHILE(ei, edge_info, &near)) {
+	while (BU_LIST_WHILE(ei, edge_info, &near1)) {
 		BU_LIST_DEQUEUE( &ei->l );
 		bu_free( (char *)ei, "edge_info struct");
 	}

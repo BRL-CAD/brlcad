@@ -16,7 +16,7 @@
  *	Aberdeen Proving Ground, Maryland  21005
  *  
  *  Copyright Notice -
- *	This software is Copyright (C) 1985 by the United States Army.
+ *	This software is Copyright (C) 1985-2004 by the United States Army.
  *	All rights reserved.
  */
 
@@ -34,7 +34,9 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #else
 #include <strings.h>
 #endif
+#ifndef WIN32
 #include <sys/time.h>
+#endif
 #include <time.h>
 
 #ifdef DM_X
@@ -110,6 +112,7 @@ extern int gui_setup(char *dstr);				/* in attach.c */
 extern int mged_default_dlist;			/* in attach.c */
 extern int classic_mged;			/* in ged.c */
 extern int bot_vertex_fuse(), bot_condense();
+extern int cmd_smooth_bot();
 struct cmd_list head_cmd_list;
 struct cmd_list *curr_cmd_list;
 
@@ -129,6 +132,10 @@ int mged_cmd(int argc, char **argv, struct funtab *in_functions);
 struct bu_vls tcl_output_hook;
 
 Tcl_Interp *interp = NULL;
+
+#ifdef WIN32
+void gettimeofday(struct timeval *tp, struct timezone *tzp);
+#endif
 
 #ifdef DM_X
 Tk_Window tkwin;
@@ -175,9 +182,10 @@ static struct cmdtab cmdtab[] = {
 	{"dbbinary", f_binary},
 	{"bot_face_fuse", f_bot_face_fuse},
 	{"bot_face_sort", cmd_bot_face_sort},
-	{"bot_vertex_fuse", f_bot_fuse},
 	{"bot_condense", f_bot_condense},
 	{"bot_decimate", cmd_bot_decimate},
+	{"bot_smooth", cmd_smooth_bot },
+	{"bot_vertex_fuse", f_bot_fuse},
 	{"bottom",	bv_bottom},
 	{"c", cmd_comb_std},
 	{"cat", cmd_cat},
@@ -338,7 +346,9 @@ static struct cmdtab cmdtab[] = {
 	{"plot", f_plot},
 	{"pl", f_pl},
 	{"polybinout", f_polybinout},
+#ifdef TCP_FILES
 	{"pov", cmd_pov},
+#endif
 	{"prcolor", cmd_prcolor},
 	{"prefix", f_prefix},
 	{"press", f_press},
@@ -682,13 +692,23 @@ mged_setup(void)
 {
 	struct bu_vls str;
 	char *filename;
-
+	
 	/* The following is for GUI output hooks: contains name of function to
 	   run with output */
 	bu_vls_init(&tcl_output_hook);
 
 	/* Locate the BRL-CAD-specific Tcl scripts */
 	filename = bu_brlcad_path( "" );
+#ifdef WIN32
+	{
+	  /* XXX - nasty little hack to convert paths */
+	  int i;
+	  strcat(filename,"/");
+	  for (i=0;i<strlen(filename);i++) {
+	    if(filename[i]=='\\') 
+	      filename[i]='/'; }
+	}
+#endif
 
 	/* Create the interpreter */
 	interp = Tcl_CreateInterp();
@@ -738,10 +758,7 @@ mged_setup(void)
 #endif
 
 	bu_vls_init(&str);
-	bu_vls_printf(&str, "set auto_path [linsert $auto_path 0 \
-                             %stclscripts/mged %stclscripts \
-                             %stclscripts/lib %stclscripts/util]",
-		      filename, filename, filename, filename);
+	bu_vls_printf(&str, "set auto_path [linsert $auto_path 0 %stclscripts/mged %stclscripts %stclscripts/lib %stclscripts/util %stclscripts/geometree]", filename, filename, filename, filename, filename);
 	(void)Tcl_Eval(interp, bu_vls_addr(&str));
 
 	/* Tcl needs to write nulls onto subscripted variable names */
@@ -794,6 +811,17 @@ cmd_setup(void)
 
 		/* Locate the BRL-CAD-specific Tcl scripts */
 		pathname = bu_brlcad_path("");
+
+#ifdef WIN32
+	{
+		/* XXXXXXXXXXXXXXX UGLY XXXXXXXXXXXXXXXXXX*/
+	int i;
+	strcat(pathname,"/");
+	for (i=0;i<strlen(pathname);i++) {
+		if(pathname[i]=='\\') 
+			pathname[i]='/'; }
+	}
+#endif
 
 		bu_vls_init(&vls);
 		bu_vls_printf(&vls, "source %stclscripts/mged/tree.tcl", pathname);
@@ -1469,6 +1497,8 @@ int
 f_comm(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
 
+#ifndef WIN32
+
 	register int pid, rpid;
 	int retcode;
 
@@ -1494,6 +1524,7 @@ f_comm(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 		;
 
 	Tcl_AppendResult(interp, "!\n", (char *)NULL);
+#endif
 
 	return TCL_OK;
 }
@@ -1541,8 +1572,10 @@ f_sync(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 		bu_vls_free(&vls);
 		return TCL_ERROR;
 	}
-
+// XXXXXXXXXXXXXXX FIX LATER XXXXXXXXXXXXXXXXXx
+#ifndef WIN32
 	sync();
+#endif
     
 	return TCL_OK;
 }
@@ -3254,6 +3287,22 @@ cmd_bot_decimate( ClientData	clientData,
 	CHECK_DBI_NULL;
 	return wdb_bot_decimate_cmd( wdbp, interp, argc, argv );
 }
+
+#ifdef WIN32
+/* limited to seconds only */
+void gettimeofday(struct timeval *tp, struct timezone *tzp)
+{
+
+	time_t ltime;
+
+	time( &ltime );
+
+	tp->tv_sec = ltime;
+	tp->tv_usec = 0;
+
+}
+#endif
+
 
 #if USE_SURVICE_MODS
 int

@@ -5,8 +5,6 @@
  *
  */
 
-/* Header files which are used for this example */
-
 #include "conf.h"
 
 #include <stdio.h>		/* Direct the output to stdout */

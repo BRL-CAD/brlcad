@@ -49,7 +49,7 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 #include "vmath.h"
 #include "raytrace.h"
 #include "./ged.h"
-#include "./solid.h"
+#include "solid.h"
 #include "./mged_dm.h"
 
 #define MAXOBJECTS	3000

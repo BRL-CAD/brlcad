@@ -95,7 +95,7 @@ main(int argc, char **argv)
  *  (see raytrace.h), and a circular linked list of partitions,
  *  each one describing one in and out segment of one region.
  */
-hit(register struct application *ap, struct partition *PartHeadp)
+hit(register struct application *ap, struct partition *PartHeadp, struct seg *segs)
 {
 	/* see raytrace.h for all of these guys */
 	register struct partition *pp;

@@ -70,12 +70,33 @@ or
 .I 3
 argument does not resolve any overlaps (each unique combination of
 intersection extent and list of claiming regions produces a single partition).
+.TP
+.B \-n #
+This option specifies the number of rings to use in a ray bundle (does not include
+the central ray).
+.TP
+.B \-c #
+This option specifies the number of rays in each ring. The rays in each ring are
+not aligned with the rays in the previous ring, they make an outward spiral pattern.
+A central ray is included.
+.TP
+.B \-R #
+This option specifies the radius of the ray bundle. Each ring is evenly spaced with the
+outermost ring at this radius.
 .LP
 The
 .B rtshot
 program is a simple front-end to
 .IR librt (3)
-which can be invoked directly by the user.
+which can be invoked directly by the user. If a ray bundle is desired, all of the
+.I \-n
+,
+.I \-c
+, and
+.I \-R
+options must be specified. The output from a ray bundle is handled as a single ray.
+Any overlaps between rays in the bundle are resolved by favoring rays closer to the
+central ray. The default is to fire a single ray.
 .SH "SEE ALSO"
 mged(1), rt(1), pix-fb(1), rtray(1), rtpp(1),
 librt(3), ray(5V), pix(5).
@@ -91,7 +112,7 @@ The U. S. Army Ballistic Research Laboratory
 .br
 Aberdeen Proving Ground, Maryland  21005
 .SH COPYRIGHT
-This software is Copyright (C) 1987 by the United States Army.
+This software is Copyright (C) 1987-2004 by the United States Army.
 All rights reserved.
 .SH BUGS
 Most deficiencies observed while using the
@@ -101,4 +122,4 @@ program are usually with the
 package instead.
 .SH "BUG REPORTS"
 Reports of bugs or problems should be submitted via electronic
-mail to <CAD@ARL.MIL>.
+mail to <CAD@ARL.ARMY.MIL>.

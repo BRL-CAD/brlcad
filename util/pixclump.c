@@ -12,7 +12,7 @@
  *	Aberdeen Proving Ground, Maryland  21005-5068
  *  
  *  Copyright Notice -
- *	This software is Copyright (C) 1997 by the United States Army.
+ *	This software is Copyright (C) 1997-2004 by the United States Army.
  *	All rights reserved.
  */
 #ifndef lint

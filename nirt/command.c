@@ -124,24 +124,28 @@ com_table		*ctp;
 void sh_esc (buffer)
 char	*buffer;
 {
-	static char	*shell = "";
-	static char	*last_cmd = "";
+  static char	*shell = "";
+  static char	*last_cmd = "";
 
-	while (isspace(*buffer))
-	    ++buffer;
-	if (*buffer == '!')
-	    (void) system(last_cmd);
-	else if (*buffer)
-	{
-	    (void) system(buffer);
-	    last_cmd = buffer;
-	}
-	else
-	{
-	    if ((*shell == '\0') && (shell = getenv("SHELL")) == 0)
-		shell = DFLT_SHELL;
-	    (void) system(shell);
-	}
+  while (isspace(*buffer)) {
+    ++buffer;
+  }
+
+  if (*buffer == '!') {
+    (void) system(last_cmd);
+  } else if (*buffer) {
+    (void) system(buffer);
+    last_cmd = buffer;
+  } else {
+    if ((*shell == '\0') && (shell = getenv("SHELL")) == 0) {
+#ifndef WIN32
+      shell = DFLT_SHELL;
+#else
+      shell = "cmd.exe";
+#endif
+    }
+    (void) system(shell);
+  }
 }
 
 void grid_coor(buffer, ctp)

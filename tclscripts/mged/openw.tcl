@@ -11,7 +11,7 @@
 #				The BRL-CAD Package" agreement.
 #
 # Copyright Notice -
-#				This software is Copyright (C) 1998 by the United States Army
+#				This software is Copyright (C) 1998-2004 by the United States Army
 #				in all countries except the USA.	All rights reserved.
 #
 # Description -
@@ -158,6 +158,14 @@ if {![info exists mged_default(zclip)]} {
 	set mged_default(zclip) 1
 }
 
+if {![info exists mged_default(zbuffer)]} {
+	set mged_default(zbuffer) 1
+}
+
+if {![info exists mged_default(lighting)]} {
+	set mged_default(lighting) 0
+}
+
 if {![info exists mged_default(perspective_mode)]} {
 	set mged_default(perspective_mode) 0
 }
@@ -192,13 +200,12 @@ if {![info exists mged_browser]} {
 				if {[file exists $path/netscape]} {
 					set mged_browser $path/netscape
 					break;
-				} elseif { [file exists $path/open] } {
-					# open is the Darwin command equivalent to double-clicking a file icon (an open the file with the system default browser)
-					set mged_browser $path/open
-					break;
 				} elseif { [file exists $path/mozilla] } {
 					set mged_browser $path/mozilla
 					break;
+				} elseif { ($::tcl_platform(os) == "Darwin") && [file exists $path/open] } {
+				        set mged_browser $path/open
+				        break
 				}
 			}
 		}
@@ -230,11 +237,11 @@ bind Listbox <ButtonPress-3><ButtonRelease-3> "hoc_callback %W %X %Y"
 bind Scale <ButtonPress-3><ButtonRelease-3> "hoc_callback %W %X %Y"
 
 # This causes cad_dialog to use mged_wait instead of tkwait
-set tkPriv(wait_cmd) mged_wait
+set ::tk::Priv(wait_cmd) mged_wait
 
 # Used throughout the GUI as the dialog window name.
 # This helps prevent window clutter.
-set tkPriv(cad_dialog) .mged_dialog
+set ::tk::Priv(cad_dialog) .mged_dialog
 
 proc gui { args } {
 	global tmp_hoc
@@ -250,6 +257,18 @@ proc gui { args } {
 	global vi_state
 	global mged_color_scheme
 	global mged_Priv
+
+        # configure the stdout chanel for this platform
+        # this is supposedly done automatically by Tcl, but not
+        switch $::tcl_platform(platform) {
+	    "macintosh" -
+	    "unix" {
+		fconfigure stdout -translation lf
+	    }
+	    "windows" {
+		fconfigure stdout -translation crlf
+	    }
+	}
 
 	# set defaults
 	set save_id [cmd_win get]
@@ -495,16 +514,15 @@ proc gui { args } {
 	.$id.menubar.file add separator
 	.$id.menubar.file add cascade -label "Preferences" -underline 0 -menu .$id.menubar.file.pref
 	.$id.menubar.file add separator
-	.$id.menubar.file add command -label "Create/Initialize .mgedrc" -underline 0 \
+	.$id.menubar.file add command -label "Create/Update .mgedrc" -underline 0 \
 			-command "update_mgedrc"
-	hoc_register_menu_data "File" "Create/Initialize .mgedrc" "Create/Initialize .mgedrc"\
-			{ { summary "Create or initialize the .mgedrc startup file with default variable settings." }
+	hoc_register_menu_data "File" "Create/Update .mgedrc" "Create/Update .mgedrc"\
+			{ { summary "Create the .mgedrc startup file with default variable settings, or update to current settings." }
 	{ see_also } }
-	.$id.menubar.file add command -label "Close" -underline 0 \
-			-command "closedb"
-	hoc_register_menu_data "File" "Close" "Close Database"\
-			{ { summary "Close any presently open database." }
-	{ see_also opendb } }
+        .$id.menubar.file add command -label "Clear Command Window" -underline 14 \
+	    -command ".$id.t delete 1.0 end; mged_print_prompt .$id.t {mged> }"
+        hoc_register_menu_data "File" "Clear Command Window" "Delete all text from command window"\
+	    { { summary "Delete all text from command window" } see_also }
 	.$id.menubar.file add command -label "Exit" -underline 1 -command _mged_quit
 	hoc_register_menu_data "File" "Exit" "Exit MGED"\
 			{ { summary "Exit MGED." }
@@ -733,7 +751,7 @@ hoc_register_menu_data "Edit" "Combination Editor" "Combination Editor"\
 		{ { summary "A tool for editing/creating combinations." } }
 .$id.menubar.edit add command -label "Attribute Editor" -underline 0 \
 		-command "Attr_editor::start_editor $id"
-
+.$id.menubar.edit add command -label "Browse Geometry" -underline 0 -command "geometree"
 
 menu .$id.menubar.create -title "Create" -tearoff $mged_default(tearoff_menus)
 
@@ -2101,7 +2119,13 @@ hoc_register_menu_data "ViewRing" "Add View" "Add View"\
 	}
 	scrollbar .$id.s -relief flat -command ".$id.t yview"
 
-	bind .$id.t <Enter> "focus .$id.t; break"
+        if { $::tcl_platform(platform) != "windows" && $::tcl_platform(os) != "Darwin" } {
+            bind .$id.t <Enter> "focus .$id.t; break"
+        } else {
+             # some platforms should not be forced window activiation
+            focus .$id.t
+        }
+
 	hoc_register_data .$id.t "Command Window"\
 			{ { summary "This is MGED's default command window. Its main
 	function is to allow the user to enter commands.
@@ -2275,17 +2299,6 @@ hoc_register_menu_data "ViewRing" "Add View" "Add View"\
 		set geometry [wm geometry .$id]
 		wm geometry .$id $geometry
 	}
-
-	set num_players [llength $mged_players]
-	switch $num_players {
-		1 {
-			.$id.menubar.file entryconfigure 14 -state disabled
-		}
-		2 {
-			set id [lindex $mged_players 0]
-			.$id.menubar.file entryconfigure 14 -state normal
-		}
-	}
 }
 
 proc gui_destroy args {
@@ -2318,16 +2331,6 @@ proc gui_destroy args {
 	catch { destroy .sliders$id }
 	catch { destroy $mged_gui($id,top) }
 	catch { destroy .$id }
-
-# this will disable the File->Close option
-# XXX this should be disabled initially, and then enabled during an opendb or
-# a file->open action.
-#
-	if { [llength $mged_players] == 1 } {
-		set id [lindex $mged_players 0]
-		.$id.menubar.file entryconfigure 14 -state disabled
-	}
-
 }
 
 proc reconfig_gui_default { id } {

@@ -17,7 +17,7 @@
  *	The BRL-CAD Package" agreement.
  *
  *  Copyright Notice -
- *	This software is Copyright (C) 1996 by the United States Army
+ *	This software is Copyright (C) 1996-2004 by the United States Army
  *	in all countries except the USA.  All rights reserved.
  */
 #ifndef lint
@@ -55,7 +55,7 @@ Print_tree(union tree *tree)
 		printf( "NULL Tree\n" );
 }
 
-int main(int argc, char **argv)
+int main(int argc, char *argv[])
 {
 	struct db_i		*dbip;
 	struct directory	*dp;
@@ -90,7 +90,6 @@ int main(int argc, char **argv)
 
 	for( i=2 ; i<argc ; i++ )
 	{
-
 		printf( "%s\n" , argv[i] );
 
 		dp = db_lookup( dbip , argv[i] , 1 );

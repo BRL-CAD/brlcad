@@ -15,7 +15,7 @@
  *	Aberdeen Proving Ground, Maryland  21005-5066
  *  
  *  Copyright Notice -
- *	This software is Copyright (C) 1990 by the United States Army.
+ *	This software is Copyright (C) 1990-2004 by the United States Army.
  *	All rights reserved.
  */
 #ifndef lint
@@ -25,7 +25,9 @@ static const char RCSconcat[] = "@(#)$Header$ (BRL)";
 #include "conf.h"
 
 #include <stdio.h>
+#ifndef WIN32
 #include <pwd.h>
+#endif
 #include <signal.h>
 #include <math.h>
 #include <time.h>

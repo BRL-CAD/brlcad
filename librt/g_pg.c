@@ -15,7 +15,7 @@
  *	Aberdeen Proving Ground, Maryland  21005
  *  
  *  Copyright Notice -
- *	This software is Copyright (C) 1985 by the United States Army.
+ *	This software is Copyright (C) 1985-2004 by the United States Army.
  *	All rights reserved.
  */
 #ifndef lint
@@ -889,7 +889,7 @@ rt_pg_to_bot( struct rt_db_internal *ip, const struct bn_tol *tol, struct resour
 	ip_bot->magic = RT_BOT_INTERNAL_MAGIC;
 	ip_bot->mode = RT_BOT_SOLID;
 	ip_bot->orientation = RT_BOT_CCW;
-	ip_bot->error_mode = '\0';
+	ip_bot->bot_flags = 0;
 
 	/* maximum possible vertices */
 	max_pts = ip_pg->npoly * ip_pg->max_npts;

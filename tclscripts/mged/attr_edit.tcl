@@ -6,7 +6,7 @@
 #       Author - John Anderson
 #
 
-package require Iwidgets 3.0
+package require Iwidgets
 
 class Attr_editor {
     inherit itk::Toplevel
@@ -82,7 +82,7 @@ class Attr_editor {
 
 	# build the widgets
 	itk_initialize
-	$this configure -title "Attribute Editor ($this)"
+	$this configure -title "Attribute Editor"
 
 
 	# frame containing the database object name
@@ -96,7 +96,7 @@ class Attr_editor {
 		    -expand no -side left -anchor w
 	pack $itk_interior.fr_obj.obj_e \
 		    -expand yes -fill x -side left -anchor w
-	grid $itk_interior.fr_obj -row 0 -column 0 -sticky new -pad 3
+	grid $itk_interior.fr_obj -row 0 -column 0 -sticky new -padx 3 -pady 3
 
 
 	# frame for all attribute related stuff
@@ -119,7 +119,7 @@ class Attr_editor {
 		-pady 3 -sticky e
 	grid $fnew.attr_e -row 0 -column 2 -padx 3\
 		-pady 3 -sticky ew
-	grid $fnew -row 0 -column 0 -sticky ew -pad 3
+	grid $fnew -row 0 -column 0 -sticky ew -padx 3 -pady 3
 	grid columnconfigure $fnew 2 -weight 1 -pad 3
 
 	set fr_pane [frame $itk_interior.fr_attr.fr_pane -relief groove -bd 3]
@@ -211,6 +211,14 @@ class Attr_editor {
 	# this keeps the cur_value entry for the selected attribute current with the
 	# text in the text widget
 	bind $textb <KeyRelease> [code $this update_cur_attr]
+	bind $textb <ButtonRelease-2> +[code $this update_cur_attr]
+	# re-order the bindings so that the above binding is performed after
+	# any text is pasted
+	set bindings [bindtags $textb]
+	set my_window [lindex $bindings 0]
+	set bindings [lreplace $bindings 0 0]
+	lappend bindings $my_window
+	bindtags $textb $bindings
 
 	# this allows the attributes of a new object to be edited by typing name
 	# into the object entry widget and hitting enter

@@ -13,7 +13,7 @@
 #	The BRL-CAD Package" agreement.
 #
 # Copyright Notice -
-#	This software is Copyright (C) 1995 by the United States Army
+#	This software is Copyright (C) 1995-2004 by the United States Army
 #	in all countries except the USA.  All rights reserved.
 #
 # Description -
@@ -25,14 +25,14 @@
 #		*- mods to pop up the dialog box near the pointer.
 #		*- mods to cad_dialog (i.e. use text widget with
 #		   scrollbar if string length becomes too large).
-#		*- add tkPriv(wait_cmd) and use in all dialogs
+#		*- add ::tk::Priv(wait_cmd) and use in all dialogs
 #	 (John Anderson):
 #		*- added cad_radio proc
 #
 #==============================================================================
 
-if {![info exists tkPriv(wait_cmd)]} {
-    set tkPriv(wait_cmd) tkwait
+if {![info exists ::tk::Priv(wait_cmd)]} {
+    set ::tk::Priv(wait_cmd) tkwait
 }
 
 # cad_dialog --
@@ -42,7 +42,7 @@ if {![info exists tkPriv(wait_cmd)]} {
 #
 proc cad_dialog { w screen title text bitmap default args } {
     global button$w
-    global tkPriv
+    global ::tk::Priv
 
     if [winfo exists $w] {
 	catch {destroy $w}
@@ -110,7 +110,7 @@ proc cad_dialog { w screen title text bitmap default args } {
 
     place_near_mouse $w
 
-    $tkPriv(wait_cmd) variable button$w
+    $::tk::Priv(wait_cmd) variable button$w
     catch { destroy $w }
     return [set button$w]
 }
@@ -124,7 +124,7 @@ proc cad_dialog { w screen title text bitmap default args } {
 proc cad_input_dialog { w screen title text entryvar defaultentry default entry_hoc_data args } {
     global hoc_data
     global button$w entry$w
-    global tkPriv
+    global ::tk::Priv
     upvar $entryvar entrylocal
 
     set entry$w $defaultentry
@@ -179,7 +179,7 @@ actions as indicated by the button label."}}
 
     place_near_mouse $w
 
-    $tkPriv(wait_cmd) variable button$w
+    $::tk::Priv(wait_cmd) variable button$w
     set entrylocal [set entry$w]
     catch { destroy $w }
     return [set button$w]
@@ -198,7 +198,7 @@ actions as indicated by the button label."}}
 #	help_strings is a list of help strings for the corresponding labels in choice_labels
 proc cad_radio { my_widget_name screen radio_result title text_message default choice_labels help_strings } {
 	global $radio_result
-        global tkPriv
+        global ::tk::Priv
 	# The screen parameter can be the pathname of some
 	# widget where the screen value can be obtained.
 	# Otherwise, it is assumed to be a genuine X DISPLAY
@@ -238,14 +238,90 @@ proc cad_radio { my_widget_name screen radio_result title text_message default c
 	}
 
 	button $w.dismiss -text Dismiss -command "set $radio_result $default; set done 2"
-	hoc_register_data $w.dismiss "DIsmiss" {
-		{ summary "Click on this button to indicate you do not want to change\nthis selection from its value when the window appeard" }
+	hoc_register_data $w.dismiss "Dismiss" {
+		{ summary "Click on this button to indicate you do not want to change\nthis selection from its value when the window first appeared" }
 	}
 
 	grid $w.apply -row [expr $counter + 1] -column 0
 	grid $w.dismiss -row [ expr $counter + 1] -column 1
 	update
 
-	$tkPriv(wait_cmd) variable done
+	$::tk::Priv(wait_cmd) variable done
 	catch " destroy $w "
 }
+
+proc cad_list_buts { my_widget_name screen list_of_results cur_settings title text_message choice_labels help_strings } {
+    global $list_of_results
+    global list_but_result
+    global list_buts_done
+    global ::tk::Priv
+
+    # The screen parameter can be the pathname of some
+    # widget where the screen value can be obtained.
+    # Otherwise, it is assumed to be a genuine X DISPLAY
+    # string.
+    if [winfo exists $screen] {
+	set screen [winfo screen $screen]
+    }
+
+    set list_buts_done 0
+    set w $my_widget_name
+
+    if [winfo exists $w] { catch "destroy $w" }
+    toplevel $w -screen $screen
+    wm title $w $title
+    wm iconname $w Dialog
+    message $w.mess -text $text_message -justify center -width 500
+    hoc_register_data $w.mess "List selection Dialog" {
+	{ summary "Use this window select any number (or none) of the possibilities listed" }
+    }
+
+    grid $w.mess -row 0 -column 0 -columnspan 2 -sticky ew
+    if { [llength $cur_settings] != [llength $choice_labels]} {
+	puts "settings do not match choices"
+	set $list_of_results $cur_settings
+	catch " destroy $w "
+	return
+    }
+    set counter 0
+    foreach setting $cur_settings choice $choice_labels {
+	set list_but_result($counter) $setting
+	checkbutton $w.but_$counter -text [lindex $choice_labels $counter] -variable list_but_result($counter)
+	grid $w.but_$counter -row [expr $counter + 1] -column 0 -sticky ew -columnspan 2
+	set hoc_data [subst {{ summary \"[lindex $help_strings $counter]\" }}]
+	hoc_register_data $w.but_$counter [lindex $choice_labels $counter] $hoc_data
+	incr counter
+    }
+
+    button $w.apply -text Apply -command "set list_buts_done 1"
+    hoc_register_data $w.apply "Apply" {
+	{ summary "Click on this button to indicate you have finished making your selections" }
+    }
+
+    button $w.dismiss -text Dismiss -command "set list_buts_done 2"
+    hoc_register_data $w.dismiss "Dismiss" {
+	{ summary "Click on this button to indicate you do not want to change\nthe selections from their values when the window first appeared" }
+    }
+
+    grid $w.apply -row [expr $counter + 1] -column 0
+    grid $w.dismiss -row [ expr $counter + 1] -column 1
+    update
+
+    $::tk::Priv(wait_cmd) variable list_buts_done
+
+    set num_choices [llength $choice_labels]
+    if { $list_buts_done == 2 } {
+	set $list_of_results $cur_settings
+    } else {
+	set $list_of_results {}
+	for { set counter 0 } { $counter < $num_choices } { incr counter } {
+	    if { $list_but_result($counter) == 1 } {
+		lappend $list_of_results "1"
+	    } else {
+		lappend $list_of_results "0"
+	    }
+	}
+    }
+    catch " destroy $w "
+}
+

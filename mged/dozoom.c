@@ -13,7 +13,7 @@
  *	Aberdeen Proving Ground, Maryland  21005
  *  
  *  Copyright Notice -
- *	This software is Copyright (C) 1985 by the United States Army.
+ *	This software is Copyright (C) 1985-2004 by the United States Army.
  *	All rights reserved.
  */
 #ifndef lint
@@ -53,6 +53,8 @@ point_t	eye_pos_scr = { 0, 0, 1 };
 struct solid	FreeSolid;	/* Head of freelist */
 struct solid	HeadSolid;	/* Head of solid table */
 
+/* changed near - near1, far - far1*/
+
 /*
  *			P E R S P _ M A T
  *
@@ -61,7 +63,7 @@ struct solid	HeadSolid;	/* Head of solid table */
  *  (Note:  SGI is left-handed, but the fix is done in the Display Manger).
  */
 static void
-persp_mat(fastf_t *m, fastf_t fovy, fastf_t aspect, fastf_t near, fastf_t far, fastf_t backoff)
+persp_mat(mat_t *m, fastf_t fovy, fastf_t aspect, fastf_t near, fastf_t far, fastf_t backoff)
 {
 	mat_t	m2, tran;
 
@@ -70,8 +72,8 @@ persp_mat(fastf_t *m, fastf_t fovy, fastf_t aspect, fastf_t near, fastf_t far, f
 	MAT_IDN( m2 );
 	m2[5] = cos(fovy/2.0) / sin(fovy/2.0);
 	m2[0] = m2[5]/aspect;
-	m2[10] = (far+near) / (far-near);
-	m2[11] = 2*far*near / (far-near);	/* This should be negative */
+	m2[10] = (far1+near1) / (far1-near1);
+	m2[11] = 2*far1*near1 / (far1-near1);	/* This should be negative */
 
 	m2[14] = -1;		/* XXX This should be positive */
 	m2[15] = 0;
@@ -103,7 +105,7 @@ mike_persp_mat(fastf_t *pmat, const fastf_t *eye)
 	mat_t	t1, t2;
 	point_t	sheared_eye;
 #if 0
-	fastf_t	near, far;
+	fastf_t	near1, far1;
 	point_t	a,b;
 #endif
 

@@ -22,7 +22,10 @@
  *  and "inst-dist" rule should take care of copying to distribution dir.
  *  Nothing else to do.
  */
-all&:
+all&: protk.dat
 	@echo SRCDIR:  all done
+
+protk.dat:
+	sed -e s\\\\&/usr/brlcad\\\\&BASEDIR\\\\& < protk.in > protk.dat
 
 #include "../Cakefile.rules"

@@ -5,7 +5,7 @@
  */
 #include "../Cakefile.defs"
 
-#define PRODUCTS	*.c *.h makefile
+#define PRODUCTS	*.c *.h makefile g-xxx.c g-xxx_facets.c
 #define SRCDIR	sample_applications
 #undef BINDIR
 #define BINDIR	BASEDIR/sample_applications
@@ -26,5 +26,12 @@ clobber&:
 
 makefile:
 	BUILD_MAKEFILE
+
+g-xxx.c: ../conv/g-xxx.c
+	cp ../conv/g-xxx.c .
+
+g-xxx_facets.c: ../conv/g-xxx_facets.c
+	cp ../conv/g-xxx_facets.c .
+
 
 #include "../Cakefile.rules"

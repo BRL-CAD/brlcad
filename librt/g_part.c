@@ -17,7 +17,7 @@
  *	Aberdeen Proving Ground, Maryland  21005-5066
  *  
  *  Copyright Notice -
- *	This software is Copyright (C) 1990 by the United States Army.
+ *	This software is Copyright (C) 1990-2004 by the United States Army.
  *	All rights reserved.
  *
  *  Algorithm for the hemisphere-tipped cylinder and cone cases -
@@ -887,6 +887,7 @@ rt_part_free(register struct soltab *stp)
 		(struct part_specific *)stp->st_specific;
 
 	bu_free( (char *)part, "part_specific" );
+	stp->st_specific = GENPTR_NULL;
 }
 
 /*
@@ -1490,12 +1491,16 @@ rt_part_import(struct rt_db_internal *ip, const struct bu_external *ep, register
 	MAT4X3PNT( part->part_V, mat, v );
 	MAT4X3VEC( part->part_H, mat, h );
 	if( (part->part_vrad = vrad / mat[15]) < 0 )  {
-		bu_free( ip->idb_ptr, "rt_part_internal" );
-		return(-2);
+	  bu_log("unable to import particle, negative v radius\n");
+	  bu_free( ip->idb_ptr, "rt_part_internal" );
+	  ip->idb_ptr=NULL;
+	  return(-2);
 	}
 	if( (part->part_hrad = hrad / mat[15]) < 0 )  {
-		bu_free( ip->idb_ptr, "rt_part_internal" );
-		return(-3);
+	  bu_log("unable to import particle, negative h radius\n");
+	  bu_free( ip->idb_ptr, "rt_part_internal" );
+	  ip->idb_ptr=NULL;
+	  return(-3);
 	}
 
 	if( part->part_vrad > part->part_hrad )  {
@@ -1506,8 +1511,10 @@ rt_part_import(struct rt_db_internal *ip, const struct bu_external *ep, register
 		minrad = part->part_vrad;
 	}
 	if( maxrad <= 0 )  {
-		bu_free( ip->idb_ptr, "rt_part_internal" );
-		return(-4);
+	  bu_log("unable to import particle, negative radius\n");
+	  bu_free( ip->idb_ptr, "rt_part_internal" );
+	  ip->idb_ptr=NULL;
+	  return(-4);
 	}
 
 	if( MAGSQ( part->part_H ) * 1000000 < maxrad * maxrad )  {
@@ -1568,6 +1575,7 @@ rt_part_export(struct bu_external *ep, const struct rt_db_internal *ip, double l
 	return(0);
 }
 
+
 /*
  *			R T _ P A R T _ I M P O R T 5
  */
@@ -1590,20 +1598,24 @@ rt_part_import5(struct rt_db_internal *ip, const struct bu_external *ep, registe
 
 	part = (struct rt_part_internal *)ip->idb_ptr;
 	part->part_magic = RT_PART_INTERNAL_MAGIC;
-
+	
 	/* Convert from database (network) to internal (host) format */
 	ntohd( (unsigned char *)vec, ep->ext_buf, 8 );
-
+	
 	/* Apply modeling transformations */
 	MAT4X3PNT( part->part_V, mat, &vec[0*3] );
 	MAT4X3VEC( part->part_H, mat, &vec[1*3] );
 	if( (part->part_vrad = vec[2*3] / mat[15]) < 0 )  {
-		bu_free( ip->idb_ptr, "rt_part_internal" );
-		return(-2);
+	  bu_free( ip->idb_ptr, "rt_part_internal" );
+	  ip->idb_ptr=NULL;
+	  bu_log("unable to import particle, negative v radius\n");
+	  return(-2);
 	}
 	if( (part->part_hrad = vec[2*3+1] / mat[15]) < 0 )  {
-		bu_free( ip->idb_ptr, "rt_part_internal" );
-		return(-3);
+	  bu_free( ip->idb_ptr, "rt_part_internal" );
+	  ip->idb_ptr=NULL;
+	  bu_log("unable to import particle, negative h radius\n");
+	  return(-3);
 	}
 
 	if( part->part_vrad > part->part_hrad )  {
@@ -1614,8 +1626,10 @@ rt_part_import5(struct rt_db_internal *ip, const struct bu_external *ep, registe
 		minrad = part->part_vrad;
 	}
 	if( maxrad <= 0 )  {
-		bu_free( ip->idb_ptr, "rt_part_internal" );
-		return(-4);
+	  bu_free( ip->idb_ptr, "rt_part_internal" ); 
+	  ip->idb_ptr=NULL;
+	  bu_log("unable to import particle, negative radius\n");
+	  return(-4);
 	}
 
 	if( MAGSQ( part->part_H ) * 1000000 < maxrad * maxrad )  {
@@ -1660,6 +1674,8 @@ rt_part_export5(struct bu_external *ep, const struct rt_db_internal *ip, double 
 	VSCALE( &vec[1*3], pip->part_H, local2mm );
 	vec[2*3] = pip->part_vrad * local2mm;
 	vec[2*3+1] = pip->part_hrad * local2mm;
+
+	/* !!! should make sure the values are proper (no negative radius) */
 
 	/* Convert from internal (host) to database (network) format */
 	htond( ep->ext_buf, (unsigned char *)vec, 8 );

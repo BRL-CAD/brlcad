@@ -6,6 +6,7 @@
 #include "raytrace.h"
 #include "wdb.h"
 
+
 int main(int argc, char *argv[])
 {
   FILE *f;

@@ -17,7 +17,7 @@
  *	The BRL-CAD Package" agreement.
  *
  *  Copyright Notice -
- *	This software is Copyright (C) 2000 by the United States Army
+ *	This software is Copyright (C) 2000-2004 by the United States Army
  *	in all countries except the USA.  All rights reserved.
  */
 #ifndef lint
@@ -142,11 +142,7 @@ wdb_dbopen( struct db_i *dbip, int mode )
  *  NON-PARALLEL because of rt_uniresource
  */
 int
-wdb_import(
-	struct rt_wdb *wdbp,
-	struct rt_db_internal *internp,
-	const char *name,
-	const mat_t mat )
+wdb_import(struct rt_wdb *wdbp,	struct rt_db_internal *internp,	const char *name, const mat_t mat )
 {
 	struct directory	*dp;
 

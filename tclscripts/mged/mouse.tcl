@@ -13,7 +13,7 @@
 #	The BRL-CAD Package" agreement.
 #
 # Copyright Notice -
-#	This software is Copyright (C) 1995 by the United States Army
+#	This software is Copyright (C) 1995-2004 by the United States Army
 #	in all countries except the USA.  All rights reserved.
 #
 # Description -
@@ -21,7 +21,7 @@
 
 proc mouse_get_spath { x y } {
     global mged_gui
-    global tkPriv
+    global ::tk::Priv
 
     set win [winset]
     set id [get_player_id_dm $win]
@@ -39,7 +39,7 @@ proc mouse_get_spath { x y } {
     set paths [ray_get_info $ray in path]
 
     if {![llength $paths]} {
-	cad_dialog $tkPriv(cad_dialog) $mged_gui($id,screen)\
+	cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen)\
 		"Nothing was hit!"\
 		"Nothing was hit!"\
 		"" 0 OK
@@ -166,7 +166,7 @@ proc mouse_spath_and_pos_destroy { id top } {
 
 proc mouse_get_comb { x y } {
     global mged_gui
-    global tkPriv
+    global ::tk::Priv
 
     set win [winset]
     set id [get_player_id_dm $win]
@@ -183,7 +183,7 @@ proc mouse_get_comb { x y } {
     set ray [mouse_shoot_ray $x $y]
     set paths [ray_get_info $ray in path]
     if {![llength $paths]} {
-	cad_dialog $tkPriv(cad_dialog) $mged_gui($id,screen)\
+	cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen)\
 		"Nothing was hit!"\
 		"Nothing was hit!"\
 		"" 0 OK

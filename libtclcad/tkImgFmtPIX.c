@@ -233,7 +233,7 @@ FileReadPIX(Tcl_Interp *interp, Tcl_Channel chan, const char *fileName, Tcl_Obj 
 	    return TCL_ERROR;
 	}
 	block.height = 1;
-	Tk_PhotoPutBlock(imageHandle, &block, destX, destY+h-1, width, 1);
+	Tk_PhotoPutBlock(imageHandle, &block, destX, destY+h-1, width, height, 1);
     }
 
     bu_free((char *) pixelPtr, "PIX image buffer");

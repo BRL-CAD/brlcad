@@ -39,13 +39,15 @@
  *	Aberdeen Proving Ground, Maryland  21005
  *  
  *  Copyright Notice -
- *	This software is Copyright (C) 1985 by the United States Army.
+ *	This software is Copyright (C) 1985-2004 by the United States Army.
  *	All rights reserved.
  *
  *  $Header$
  */
 
+#ifndef WIN32
 #include <sys/time.h>
+#endif
 #include <time.h>
 #include "tcl.h"
 #include "wdb.h"
@@ -322,7 +324,7 @@ extern char *state_str[];		/* identifying strings */
 #endif
 #endif
 
-#define	MAXLINE		10240	/* Maximum number of chars per line */
+#define	MAXLINE		RT_MAXLINE	/* Maximum number of chars per line */
 
 /* Cloned mged macros for use in Tcl/Tk */
 #define TCL_READ_ERR {\

@@ -13,7 +13,7 @@
  *	Aberdeen Proving Ground, Maryland  21005-5066
  *  
  *  Copyright Notice -
- *	This software is Copyright (C) 1992 by the United States Army.
+ *	This software is Copyright (C) 1992-2004 by the United States Army.
  *	All rights reserved.
  */
 #ifndef lint
@@ -43,7 +43,11 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 extern int cmd_name(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 
 static char	red_tmpfil[17];
+#ifndef WIN32
 static char	*red_tmpfil_init = "/tmp/GED.aXXXXXX";
+#else
+static char	*red_tmpfil_init = "C:\\GED.aXXXXXX";
+#endif
 static char	red_tmpcomb[16];
 static char	*red_tmpcomb_init = "red_tmp.aXXXXXX";
 static char	delims[] = " \t/";	/* allowable delimiters */
@@ -98,7 +102,7 @@ f_red(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 		comb = (struct rt_comb_internal *)intern.idb_ptr;
 
 		/* Make a file for the text editor */
-#if 0
+#ifdef WIN32
 		(void)mktemp( red_tmpfil );
 #else
 		if ((fd = mkstemp(red_tmpfil)) < 0) {
@@ -120,7 +124,7 @@ f_red(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	{
 		comb = (struct rt_comb_internal *)NULL;
 		/* Make a file for the text editor */
-#if 0
+#ifdef WIN32
 		(void)mktemp( red_tmpfil );
 #else
 		if ((fd = mkstemp(red_tmpfil)) < 0) {

@@ -40,28 +40,21 @@
 #      could get nasty after working on a set of databases for a while.
 #   6) color selection support (right now, it's a hard-wired list)
 #
-#
-
-
-global glob_compat_mode
-set prevGlobCompatMode [ set glob_compat_mode ]
-set glob_compat_mode 0
 
 package require Itcl
 package require Itk
 package require Iwidgets
 
 # go ahead and blow away the class if we are reloading
-if [ catch {delete class GeometryBrowser} error ] { 
+#if [ catch {delete class GeometryBrowser} error ] { 
 #	puts $error
-}
+#}
 
+package provide GeometryBrowser 1.0
 
 class GeometryBrowser {
-	inherit itk::Toplevel
+	inherit itk::Toplevel	
 
-	package provide GeometryBrowser 1.0
-	
 	constructor {} {}
 	destructor {} 
 	
@@ -256,8 +249,11 @@ body GeometryBrowser::constructor {} {
 			-label "Dark Red" -background [ $this rgbToHex "79 47 47" ] \
 			-command [ code $this setNodeColor [ $itk_interior.cadtree current ] "79 47 47" ]
 	$_itemMenu.colorMenu add command \
-			-label "Green" -background [ $this rgbToHex "50 145 20" ] \
+			-label "Forest Green" -background [ $this rgbToHex "50 145 20" ] \
 			-command [ code $this setNodeColor [ $itk_interior.cadtree current ] "50 145 20" ]
+	$_itemMenu.colorMenu add command \
+			-label "Green" -background [ $this rgbToHex "0 255 0" ] \
+			-command [ code $this setNodeColor [ $itk_interior.cadtree current ] "0 255 0" ]
 	$_itemMenu.colorMenu add command \
 			-label "Grey" -background [ $this rgbToHex "80 80 80" ] \
 			-command [ code $this setNodeColor [ $itk_interior.cadtree current ] "80 80 80" ]
@@ -1508,6 +1504,6 @@ body GeometryBrowser::extractNodeName { { node "" } } {
 
 # !!! remove glob hack once included into menu properly
 # restore previous globbing mode
-if { [ catch { set glob_compat_mode [ set prevGlobCompatMode ] } error ] } {
-	puts "unable to restore glob_compat_mode?"
-}
+#if { [ catch { set glob_compat_mode [ set prevGlobCompatMode ] } error ] } {
+#	puts "unable to restore glob_compat_mode?"
+#}

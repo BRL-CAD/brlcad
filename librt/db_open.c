@@ -17,7 +17,7 @@
  *	Aberdeen Proving Ground, Maryland  21005-5066
  *  
  *  Copyright Notice -
- *	This software is Copyright (C) 1988 by the United States Army.
+ *	This software is Copyright (C) 1988-2004 by the United States Army.
  *	All rights reserved.
  */
 #ifndef lint
@@ -27,7 +27,9 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "conf.h"
 
 #include <stdio.h>
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif
 #include <fcntl.h>
 #ifdef USE_STRING_H
 #include <string.h>
@@ -388,6 +390,12 @@ db_sync(struct db_i *dbip)
 {
 	RT_CK_DBI(dbip);
 
+#ifdef WIN32
+	bu_semaphore_acquire(BU_SEM_SYSCALL);
+	fflush(dbip->dbi_fp);
+	bu_semaphore_release(BU_SEM_SYSCALL);
+#else
+
 #ifdef HAVE_UNIX_IO
 	bu_semaphore_acquire(BU_SEM_SYSCALL);
 	fsync(dbip->dbi_fd);
@@ -396,5 +404,6 @@ db_sync(struct db_i *dbip)
 	bu_semaphore_acquire(BU_SEM_SYSCALL);
 	sync();
 	bu_semaphore_release(BU_SEM_SYSCALL);
+#endif
 #endif
 }

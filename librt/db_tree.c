@@ -15,7 +15,7 @@
  *	Aberdeen Proving Ground, Maryland  21005-5066
  *  
  *  Copyright Notice -
- *	This software is Copyright (C) 1988 by the United States Army.
+ *	This software is Copyright (C) 1988-2004 by the United States Army.
  *	All rights reserved.
  */
 #ifndef lint
@@ -1063,7 +1063,6 @@ db_recurse(struct db_tree_state *tsp, struct db_full_path *pathp, struct combine
 	struct directory	*dp;
 	struct rt_db_internal	intern;
 	union tree		*curtree = TREE_NULL;
-	int			i;
 
 	RT_CK_DBTS(tsp);
 	RT_CHECK_DBI( tsp->ts_dbip );
@@ -1117,20 +1116,9 @@ db_recurse(struct db_tree_state *tsp, struct db_full_path *pathp, struct combine
 
 		if( is_region > 0 )  {
 			struct combined_tree_state	*ctsp;
-			const char *value;
 
 			/* get attribute/value structure */
-			for( i=0 ; i<nts.ts_attrs.count ; i++ ) {
-				if( nts.ts_attrs.avp[i].value ) {
-					if( AVS_IS_FREEABLE( &nts.ts_attrs, nts.ts_attrs.avp[i].value ) )
-						bu_free( (char *)nts.ts_attrs.avp[i].value, "tree state AVS value" );
-				}
-				value = bu_avs_get( &intern.idb_avs, nts.ts_attrs.avp[i].name );
-				if( value )
-					nts.ts_attrs.avp[i].value = bu_strdup( value );
-				else
-					nts.ts_attrs.avp[i].value = (char *)NULL;
-			}
+			bu_avs_merge( &nts.ts_attrs, &intern.idb_avs );
 
 			/*
 			 *  This is the start of a new region.

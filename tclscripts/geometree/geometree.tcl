@@ -39,7 +39,7 @@ package require GeometryBrowser
 # All GeometryBrowser stuff is in the GeometryBrowser namespace
 proc geometree { } {
 	global mged_gui
-	global tkPriv
+	global ::tk::Priv
 	global mged_players
 
 	# determine the framebuffer window id

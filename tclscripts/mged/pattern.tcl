@@ -327,6 +327,8 @@ proc obj_exists { obj_name } {
 
 
 proc pattern_rect { args } {
+        global local2base
+
     	set usage "Usage:\n\tpattern_rect \[-top|-regions|-primitives\] \[-g group_name\] \
 		 \[-xdir { x y z }\] \[-ydir { x y z }\] \[-zdir { x y z }\] \
 		\[-nx num_x -dx delta_x | -lx list_of_x_values\]\n\t\t \
@@ -521,15 +523,15 @@ proc pattern_rect { args } {
 	}
 
 	if { $num_x == 0 } {
-		set list_x { { 0 0 0 } }
+		set list_x { 0 }
 	}
 
 	if { $num_y == 0 } {
-		set list_y { { 0 0 0 } }
+		set list_y { 0 }
 	}
 
 	if { $num_z == 0 } {
-		set list_z { { 0 0 0 } }
+		set list_z { 0 }
 	}
 
 	set xlen [llength $list_x]
@@ -541,6 +543,17 @@ proc pattern_rect { args } {
 	set xdir [vunitize $xdir]
 	set ydir [vunitize $ydir]
 	set zdir [vunitize $zdir]
+
+        # convert to local units
+        for { set i 0 } { $i < $num_x } { incr i } {
+	    set list_x [lreplace $list_x $i $i [expr [lindex $list_x $i] * $local2base]]
+	}
+        for { set i 0 } { $i < $num_y } { incr i } {
+	    set list_y [lreplace $list_y $i $i [expr [lindex $list_y $i] * $local2base]]
+	}
+        for { set i 0 } { $i < $num_z } { incr i } {
+	    set list_z [lreplace $list_z $i $i [expr [lindex $list_z $i] * $local2base]]
+	}
 
 	set x_index 0
 	foreach x $list_x {
@@ -600,7 +613,7 @@ proc pattern_rect { args } {
 
 
 proc pattern_sph { args } {
-	global M_PI M_PI_2
+	global M_PI M_PI_2 local2base
 
 	init_vmath
 	set usage "pattern_sph \[-top | -regions | -primitives\] \[-g group_name\] \[-s source_string replacement_string\] \
@@ -845,6 +858,15 @@ proc pattern_sph { args } {
 		incr pole_count
 	    }
 	}
+
+        # convert to base units
+        for { set i 0 } { $i < $num_r } { incr i } {
+	    set list_r [lreplace $list_r $i $i [expr [lindex $list_r $i] * $local2base]]
+	}
+
+        set center_pat [vscale $center_pat $local2base]
+        set center_obj [vscale $center_obj $local2base]
+
 	$feed_name configure -steps [expr {$rlen * ($ellen - $pole_count) * $azlen + $pole_count * $rlen}]
 	set r_index 0
 	foreach radius $list_r {
@@ -920,7 +942,7 @@ proc pattern_sph { args } {
 
 
 proc pattern_cyl { args } {
-	global M_PI M_PI_2
+	global M_PI M_PI_2 local2base
 
 	init_vmath
 
@@ -1181,6 +1203,16 @@ proc pattern_cyl { args } {
 	set hlen [llength $list_h]
 	set azlen [llength $list_az]
 	$feed_name configure -steps [expr $rlen * $hlen * $azlen]
+
+        # convert to base units
+        for { set i 0 } { $i < $num_h } { incr i } {
+	    set list_h [lreplace $list_h $i $i [expr [lindex $list_h $i] * $local2base]]
+	}
+        for { set i 0 } { $i < $num_r } { incr i } {
+	    set list_r [lreplace $list_r $i $i [expr [lindex $list_r $i] * $local2base]]
+	}
+        set center_obj [vscale $center_obj $local2base]
+        set center_base [vscale $center_base $local2base]
 
 	set r_index 0
 	foreach radius $list_r {

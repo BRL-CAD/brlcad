@@ -12,7 +12,7 @@
  *	Aberdeen Proving Ground, Maryland  21005
  *  
  *  Copyright Notice -
- *	This software is Copyright (C) 1989 by the United States Army.
+ *	This software is Copyright (C) 1989-2004 by the United States Army.
  *	All rights reserved.
  */
 #ifndef lint
@@ -40,15 +40,18 @@ static const char RCSrt[] = "@(#)$Header$ (BRL)";
 #include "rtprivate.h"
 #include "../librt/debug.h"
 
-extern int	rdebug;			/* RT program debugging (not library) */
+extern int	rdebug;			/* RT program debugging */
+
+int		rpt_dist = 0;		/* report distance to each pixel */
+int		width;			/* # of pixels in X */
+int		height;			/* # of lines in Y */
+
 
 /***** Variables shared with viewing model *** */
 int		doubles_out = 0;	/* u_char or double .pix output file */
-double		AmbientIntensity = 0.4;	/* Ambient light intensity */
 double		azimuth, elevation;
 int		lightmodel = 0;		/* Select lighting model */
 int		rpt_overlap = 1;	/* report overlapping region names */
-int		rpt_dist = 0;		/* report distance to each pixel */
 /***** end of sharing with viewing model *****/
 
 /***** variables shared with worker() ******/
@@ -71,8 +74,8 @@ fastf_t		cell_height;		/* model space grid cell height */
 int		cell_newsize=0;		/* new grid cell size */
 point_t		eye_model;		/* model-space location of eye */
 fastf_t         eye_backoff = 1.414;	/* dist from eye to center */
-int		width;			/* # of pixels in X */
-int		height;			/* # of lines in Y */
+extern int		width;			/* # of pixels in X */
+extern int		height;			/* # of lines in Y */
 mat_t		Viewrotscale;
 fastf_t		viewsize=0;
 int		incr_mode = 0;		/* !0 for incremental resolution */
@@ -82,6 +85,11 @@ int		npsw = 1;		/* number of worker PSWs to run */
 struct resource	resource[MAX_PSW];	/* memory resources */
 int		transpose_grid = 0;     /* reverse the order of grid traversal */
 /***** end variables shared with worker() *****/
+
+/***** Photon Mapping Variables *****/
+double		pmargs[9];
+char		pmfile[255];
+/***** ************************ *****/
 
 /***** variables shared with do.c *****/
 char		*string_pix_start;	/* string spec of starting pixel */
@@ -109,6 +117,9 @@ int		sub_ymax = 0;
 
 /***** variables shared with view.c *****/
 fastf_t		frame_delta_t = 1./30.; /* 1.0 / frames_per_second_playback */
+double		airdensity;    /* is the scene hazy (we shade the void space */
+double		haze[3] = { 0.8, 0.9, 0.99 };	      /* color of the haze */
+
 /***** end variables shared with view.c *****/
 
 /* temporary kludge to get rt to use a tighter tolerance for raytracing */
@@ -140,7 +151,7 @@ int get_args( int argc, register char **argv )
 
 
 #define GETOPT_STR	\
-	".:,:@:a:b:c:d:e:f:g:ij:l:n:o:p:q:rs:tv:w:x:A:BC:D:E:F:G:H:IJ:K:MN:O:P:Q:RST:U:V:X:!:"
+	".:,:@:a:b:c:d:e:f:g:h:ij:l:n:o:p:q:rs:tv:w:x:A:BC:D:E:F:G:H:IJ:K:MN:O:P:Q:RST:U:V:X:!:"
 
 	while( (c=bu_getopt( argc, argv, GETOPT_STR )) != EOF )  {
 		switch( c )  {
@@ -157,6 +168,10 @@ int get_args( int argc, register char **argv )
 			}
 			bn_randhalftabsize = i;
 			break;
+		case 'h':
+		    i = sscanf(bu_optarg, "%lg,%lg,%lg,%lg", 
+			       &airdensity, &haze[X], &haze[Y], &haze[Z]);
+		    break;
 		case 't':
 			transpose_grid = 1;
 			break;
@@ -334,8 +349,38 @@ int get_args( int argc, register char **argv )
 			matflag = 0;
 			break;
 		case 'l':
-			/* Select lighting model # */
-			lightmodel = atoi( bu_optarg );
+			{
+				char	*item;
+
+				/* Select lighting model # */
+				lightmodel= 1;	/* Initialize with Full Lighting Model */
+				item= strtok(bu_optarg,",");
+				lightmodel= atoi(item);
+
+				if (lightmodel == 7) {					/* Process the photon mapping arguments */
+					item= strtok(NULL,",");
+ 					pmargs[0]= item ? atoi(item) : 16384;		/* Number of Global Photons */
+					item= strtok(NULL,",");
+					pmargs[1]= item ? atof(item) : 50;		/* Percent of Global Photons that should be used for Caustic Photons */
+					item= strtok(NULL,",");
+					pmargs[2]= item ? atoi(item) : 10;		/* Number of Irradiance Sample Rays, Total Rays is this number squared */
+					item= strtok(NULL,",");
+					pmargs[3]= item ? atof(item) : 60.0;		/* Angular Tolerance */
+					item= strtok(NULL,",");
+					pmargs[4]= item ? atoi(item) : 0;		/* Random Seed */
+					item= strtok(NULL,",");
+					pmargs[5]= item ? atoi(item) : 0;		/* Importance Mapping */
+					item= strtok(NULL,",");
+					pmargs[6]= item ? atoi(item) : 0;		/* Irradiance Hypersampling */
+					item= strtok(NULL,",");
+					pmargs[7]= item ? atoi(item) : 0;		/* Visualize Irradiance */
+					item= strtok(NULL,",");
+					pmargs[8]= item ? atof(item) : 1.0;		/* Scale Lumens */
+					item= strtok(NULL,",");
+					if (item) { strcpy(pmfile,item); } else { pmfile[0]= 0; }
+/*					item ? strcpy(pmfile,item) : pmfile[0]= 0;*/	/* Scale Lumens */
+				}
+			}
 			break;
 		case 'O':
 			/* Output pixel file name, double precision format */
@@ -461,7 +506,7 @@ int get_args( int argc, register char **argv )
 	}
 
 	/* Compat */
-	if( RT_G_DEBUG || rdebug || rt_g.NMG_debug )
+	if( RT_G_DEBUG || R_DEBUG || rt_g.NMG_debug )
 		bu_debug |= BU_DEBUG_COREDUMP;
 
 	if( RT_G_DEBUG & DEBUG_MEM_FULL )  bu_debug |= BU_DEBUG_MEM_CHECK;
@@ -469,7 +514,7 @@ int get_args( int argc, register char **argv )
 	if( RT_G_DEBUG & DEBUG_PARALLEL )  bu_debug |= BU_DEBUG_PARALLEL;
 	if( RT_G_DEBUG & DEBUG_MATH )  bu_debug |= BU_DEBUG_MATH;
 
-	if( rdebug & RDEBUG_RTMEM_END )  bu_debug |= BU_DEBUG_MEM_CHECK;
+	if( R_DEBUG & RDEBUG_RTMEM_END )  bu_debug |= BU_DEBUG_MEM_CHECK;
 
 	return(1);			/* OK */
 }

@@ -20,7 +20,7 @@
  *	The BRL-CAD Pacakge" agreement.
  *
  *  Copyright Notice -
- *	This software is Copyright (C) 1993 by the United States Army
+ *	This software is Copyright (C) 1993-2004 by the United States Army
  *	in all countries except the USA.  All rights reserved.
  */
 #ifndef lint
@@ -895,17 +895,26 @@ nmg_find_outer_and_void_shells(struct nmgregion *r, struct bu_ptbl ***shells, co
 		struct faceuse *fu;
 		vect_t normal;
 
-		f = nmg_find_top_face( s, &dir , flags );
-		fu = f->fu_p;
-		if( fu->orientation != OT_SAME )
-			fu = fu->fumate_p;
-		if( fu->orientation != OT_SAME )
-			rt_bomb( "nmg_find_outer_and_void_shells: Neither faceuse nor mate have OT_SAME orient\n" );
+		f = (struct face *)NULL;
+		for( dir = X ; dir <= Z ; dir++ ) {
+			if( (f = nmg_find_top_face_in_dir( s, dir , flags )) == (struct face *)NULL )
+				continue;
 
-		NMG_GET_FU_NORMAL( normal , fu );
-		if( normal[dir] > 0.0)
-		{
-			bu_ptbl_ins( outer_shells , (long *)s );	/* outer shell */
+			fu = f->fu_p;
+			if( fu->orientation != OT_SAME )
+				fu = fu->fumate_p;
+			if( fu->orientation != OT_SAME )
+				rt_bomb( "nmg_find_outer_and_void_shells: Neither faceuse nor mate have OT_SAME orient\n" );
+
+			NMG_GET_FU_NORMAL( normal , fu );
+			if( normal[dir] >= 0.0)	{
+				bu_ptbl_ins( outer_shells , (long *)s );	/* outer shell */
+				break;
+			}
+		}
+
+		if( f == (struct face *)NULL ) {
+			bu_bomb( "nmg_find_outer_and_void_shells: cannot find top face in a shell\n" );
 		}
 	}
 
@@ -11979,7 +11988,7 @@ nmg_bot(struct shell *s, const struct bn_tol *tol)
 	bot->magic = RT_BOT_INTERNAL_MAGIC;
 	bot->mode = RT_BOT_SOLID;
 	bot->orientation = RT_BOT_CCW;
-	bot->error_mode = 0;
+	bot->bot_flags = 0;
 
 	bot->num_vertices = BU_PTBL_LEN( &nmg_vertices );
 	bot->num_faces = 0;

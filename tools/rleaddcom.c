@@ -38,6 +38,9 @@
 #include "externs.h"
 #include "rle.h"
 
+/* AIX uses the same define to mean something else, disable it for this file */
+#undef BIG_ENDIAN
+
 #include <sys/types.h>
 #undef BSD	/* /usr/include/sys/param.h redefines this */
 #include <sys/param.h>			/* for MAXPATHLEN */
