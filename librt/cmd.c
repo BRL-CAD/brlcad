@@ -80,7 +80,7 @@ register FILE	*fp;
 		} else if( !isascii(c) )  {
 			c = '?';
 		}
-		if( curpos == 0 && isspace(c) )  {
+		if( c != '\0' && curpos == 0 && isspace(c) )  {
 			/*  Dispose of leading white space.
 			 *  Necessary to slurp up what newlines turn into.
 			 */
