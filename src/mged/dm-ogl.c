@@ -38,28 +38,23 @@ static const char RCSid[] = "@(#)$Header";
 
 #include "common.h"
 
-
-
 #ifdef HAVE_STRING_H
-#include <string.h>
+#  include <string.h>
 #else
-#include <strings.h>
+#  include <strings.h>
 #endif
 
 #include <math.h>
 #include "tk.h"
 
-#ifndef WIN32
-#ifdef USE_MESA_GL
-#include <GL/glx.h>
-#include <GL/gl.h>
-#else
-#include <GL/glx.h>
-#include <GL/gl.h>
-#include <gl/device.h>
+#ifdef HAVE_GL_GLX_H
+#  include <GL/glx.h>
 #endif
-#else
-#include <GL/gl.h>
+#ifdef HAVE_GL_GL_H
+#  include <GL/gl.h>
+#endif
+#ifdef HAVE_GL_DEVICE_H
+#  include <gl/device.h>
 #endif
 
 #include "machine.h"
@@ -72,6 +67,7 @@ static const char RCSid[] = "@(#)$Header";
 #include "./ged.h"
 #include "./sedit.h"
 #include "./mged_dm.h"
+
 
 extern int _ogl_open_existing();	/* defined in libfb/if_ogl.c */
 extern int common_dm();			/* defined in dm-generic.c */
@@ -109,10 +105,6 @@ struct bu_structparse Ogl_vparse[] = {
 	{"",	0,  (char *)0,		0,			BU_STRUCTPARSE_FUNC_NULL }
 };
 
-#ifdef WIN32  
-/* ??? not sure why this is needed? */
-extern FBIO ogl_interface;
-#endif
 
 int
 Ogl_dm_init(struct dm_list	*o_dm_list,

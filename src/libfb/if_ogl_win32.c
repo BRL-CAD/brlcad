@@ -55,7 +55,10 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #include <ctype.h>
 #include <signal.h>
 #include <errno.h>
-#include <GL/gl.h>
+#ifdef HAVE_GL_GL_H
+#  include <GL/gl.h>
+#endif
+
 #undef RED
 #include "tk.h"
 #include "tkPlatDecls.h"

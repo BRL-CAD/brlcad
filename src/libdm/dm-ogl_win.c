@@ -297,7 +297,6 @@ ogl_open(interp, argc, argv)
     return DM_NULL;
   }
 
-#ifndef USE_MESA_GL
   {
     int return_val;
 
@@ -307,7 +306,6 @@ ogl_open(interp, argc, argv)
       return DM_NULL;
     }
   }
-#endif
 
   if(dmp->dm_width == 0){
     dmp->dm_width =

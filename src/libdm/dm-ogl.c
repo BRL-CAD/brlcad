@@ -297,7 +297,7 @@ ogl_open(Tcl_Interp *interp, int argc, char **argv)
     (void)ogl_close(dmp);
     return DM_NULL;
   }
-#ifndef USE_MESA_GL
+
   {
     int return_val;
 
@@ -307,7 +307,7 @@ ogl_open(Tcl_Interp *interp, int argc, char **argv)
       return DM_NULL;
     }
   }
-#endif
+
   if(dmp->dm_width == 0){
     dmp->dm_width =
       DisplayWidth(tmp_dpy, DefaultScreen(tmp_dpy)) - 30;

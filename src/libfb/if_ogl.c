@@ -46,13 +46,11 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 
 #include "common.h"
 
-
-
 #include <stdio.h> 
 #ifdef HAVE_STRING_H
-#include <string.h>
+#  include <string.h>
 #else
-#include <strings.h>
+#  include <strings.h>
 #endif
 #include <stdlib.h>  
 #include <unistd.h>
@@ -63,8 +61,12 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #include <errno.h>
 #include <X11/keysym.h> 
 #include <X11/StringDefs.h> 
-#include <GL/glx.h>
-#include <GL/gl.h>
+#ifdef HAVE_GL_GLX_H
+#  include <GL/glx.h>
+#endif
+#ifdef HAVE_GL_GL_H
+#  include <GL/gl.h>
+#endif
 #undef RED
 
 #include "machine.h"

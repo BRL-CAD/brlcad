@@ -52,26 +52,8 @@ dm_validXType(char	*dpy_string,
 {
 	int val = 0;
 
-#ifdef WIN32
-  if(!strcmp(name, "ogl"))
-     return 1;
-#else
-#if !defined(USE_MESA_GL) && defined(DM_OGL)
-	int return_val;
-#endif
-
-#ifdef USE_MESA_GL
-
-#ifdef DM_OGL
-	if (!strcmp(name, "ogl"))
-		return 1;
-#endif
-#ifdef DM_X
-	if (!strcmp(name, "X"))
-		return 1;
-#endif
-
-#else /* Here we assume the X server supports OpenGL */
+#ifdef HAVE_XOPENDISPLAY
+	/* Here we assume the X server supports OpenGL */
 	Display *dpy;
 
 	if ((dpy = XOpenDisplay(dpy_string)) == NULL) {
@@ -79,22 +61,32 @@ dm_validXType(char	*dpy_string,
 		return val;
 	}
 
-#ifdef DM_OGL
+#  ifdef DM_OGL
 	if (!strcmp(name, "ogl") &&
 	    XQueryExtension(dpy, "GLX", &return_val, &return_val, &return_val))
 		val = 1;
 	else
-#endif  
-#ifdef DM_X
+#  endif  
+#  ifdef DM_X
 		if (!strcmp(name, "X"))
 			val = 1;
-#endif
+#  endif
 
 	XCloseDisplay(dpy);
 
-#endif
+#else /* HAVE_XOPENDISPLAY */
 
-#endif /* WIN32*/
+#  ifdef DM_OGL
+	int return_val;
+	if (!strcmp(name, "ogl"))
+		return 1;
+#  endif
+#  ifdef DM_X
+	if (!strcmp(name, "X"))
+		return 1;
+#  endif
+
+#endif /* HAVE_XOPENDISPLAY */
 
   return val;
 }
