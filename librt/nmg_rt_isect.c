@@ -2159,7 +2159,7 @@ struct rt_tol *tol;
 	RT_LIST_INIT(&rd.rd_hit);
 	RT_LIST_INIT(&rd.rd_miss);
 
-	nmg_isect_ray_shell(rd, s);
+	nmg_isect_ray_shell( &rd, s);
 
 	while (RT_LIST_WHILE(a_hit, hitmiss, &rd.rd_miss)) {
 		RT_LIST_DEQUEUE( &a_hit->l );
