@@ -69,6 +69,10 @@ namespace eval ::itcl {\n\
             lappend dirs [file join $bindir .. .. library]\n\
             lappend dirs [file join $bindir .. .. itcl library]\n\
             lappend dirs [file join $bindir .. .. .. itcl library]\n\
+            lappend dirs [file join $bindir src other incrTcl itcl library]\n\
+            lappend dirs [file join $bindir .. src other incrTcl itcl library]\n\
+            lappend dirs [file join $bindir .. .. src other incrTcl itcl library]\n\
+            lappend dirs [file join $bindir .. .. .. src other incrTcl itcl library]\n\
         }\n\
         foreach i $dirs {\n\
             set library $i\n\
