@@ -42,77 +42,6 @@ struct scard {
 	char	sc_remark[16];
 } scard;
 
-/*
- * Table to map names of solids into internal numbers.
- *
- * NOTE that the name field is expected to be four characters
- * wide, right blank filled, null terminated.
- */
-struct table  {
-	int	t_value;
-	char	t_name[6];
-}  
-table[] =  {
-	RPP,	"rpp",
-	BOX,	"box",
-	RAW,	"raw",
-	ARB8,	"arb8",
-	ARB7,	"arb7",
-	ARB6,	"arb6",
-	ARB5,	"arb5",
-	ARB4,	"arb4",
-	GENELL,	"ellg",
-	ELL1,	"ell1",
-	ELL,	"ell",		/* After longer ell entries */
-	SPH,	"sph",
-	RCC,	"rcc",
-	REC,	"rec",
-	TRC,	"trc",
-	TEC,	"tec",
-	TOR,	"tor",
-	TGC,	"tgc",
-	GENTGC,	"cone",
-	ARS,	"ars",
-	0,	""
-};
-
-/*
- *			L O O K U P
- */
-int
-lookup( cp )
-register char	*cp;
-{
-	register struct table *tp;
-	register char	*lp;
-	register char	c;
-	char	low[32];
-	
-
-	/* Reduce input to lower case */
-	lp = low;
-	while( (c = *cp++) != '\0' )  {
-		if( !isascii(c) )  {
-			*lp++ = '?';
-		} else if( isupper(c) )  {
-			*lp++ = tolower(c);
-		} else {
-			*lp++ = c;
-		}
-	}
-	*lp = '\0';
-
-	tp = &table[0];
-	while( tp->t_value != 0 )  {
-		if( strcmp( low, tp->t_name ) == 0 )
-			return( tp->t_value );
-		tp++;
-	}
-
-	printf("ERROR:  bad solid type '%s'\n", low );
-	return(0);
-}
-
 trim_trail_spaces( cp )
 register char	*cp;
 {
@@ -135,9 +64,8 @@ register char	*cp;
  */
 getsolid()
 {
-	char	cur_solid_num[16];
+	char	given_solid_num[16];
 	char	solid_type[16];
-	int	cur_type;
 	int	i;
 
 	if( sol_work == sol_total )	/* processed all solids */
@@ -149,18 +77,18 @@ getsolid()
 	}
 
 	if( version == 5 )  {
-		strncpy( cur_solid_num, ((char *)&scard)+0, 5 );
-		cur_solid_num[5] = '\0';
+		strncpy( given_solid_num, ((char *)&scard)+0, 5 );
+		given_solid_num[5] = '\0';
 		strncpy( solid_type, ((char *)&scard)+5, 5 );
 		solid_type[5] = '\0';
 	} else {
-		strncpy( cur_solid_num, ((char *)&scard)+0, 3 );
-		cur_solid_num[3] = '\0';
+		strncpy( given_solid_num, ((char *)&scard)+0, 3 );
+		given_solid_num[3] = '\0';
 		strncpy( solid_type, ((char *)&scard)+3, 7 );
 		solid_type[7] = '\0';
 	}
 	/* Trim trailing spaces */
-	trim_trail_spaces( cur_solid_num );
+	trim_trail_spaces( given_solid_num );
 	trim_trail_spaces( solid_type );
 
 	/* another solid - increment solid counter
@@ -186,11 +114,6 @@ getsolid()
 		}
 	}
 
-	if( (cur_type = lookup(solid_type)) <= 0 )  {
-		printf("getsolid: bad type\n");
-		return -1;
-	}
-
 	if( strcmp( solid_type, "ars" ) == 0 )  {
 		static int j,n,jj,m,mx;
 		static float *fp;
@@ -213,8 +136,8 @@ getsolid()
 		col_pr( arsap->a_name );
 
 		/* M is # of curves, N is # of points per curve */
-		M = getint( scard, 10, 10 );
-		N = getint( scard, 20, 10 );
+		M = getint( &scard, 10, 10 );
+		N = getint( &scard, 20, 10 );
 		arsap->a_m = M;
 		arsap->a_n = N;
 
@@ -255,12 +178,12 @@ getsolid()
 			exit( 1 );
 		}
 
-		/* calculate number of ARS data cards that have to be read in */
-		/*   as given in GIFT users manual  */
-		cd = M*((N+1)/2);
-
 		/*    number of data cards per cross section calculated here */
 		cdcx = (N+1)/2;
+
+		/* calculate number of ARS data cards that have to be read in */
+		/*   as given in GIFT users manual  */
+		cd = M*(cdcx);
 
 		/*  2 sets of xyz coordinates for every data card
 		 *  set up counters to read in coordinate points and load into 
@@ -356,7 +279,7 @@ getsolid()
 
 	}  else   {
 		/* solid type other than ARS */
-		convert( cur_type, sol_work, solid_type );
+		convert( sol_work, solid_type );
 
 		return(1);		/* input is valid */
 	}
@@ -421,8 +344,7 @@ int	solid_num;
  *  This routine is expected to write the records out itself.
  *  The first card has already been read into 'scard'.
  */
-convert( cur_type, sol_num, solid_type )
-int	cur_type;
+convert( sol_num, solid_type )
 int	sol_num;
 char	*solid_type;
 {
@@ -637,4 +559,76 @@ ellcom:
 	 */
 	printf("convert:  no support for solid type '%s'\n", solid_type );
 	return(-1);
+}
+
+/*
+ *			M K _ A R S
+ *
+ *  The input is an array of pointers to an array of fastf_t values.
+ *  There is one pointer for each curve.
+ *  It is anticipated that there will be pts_per_curve+1 elements per
+ *  curve, the first point being repeated as the final point, although
+ *  this is not checked here.
+ *
+ *  Returns -
+ *	 0	OK
+ *	-1	Fail
+ */
+int
+mk_ars( fp, name, ncurves, pts_per_curve, curves )
+FILE	*fp;
+char	*name;
+int	ncurves;
+int	pts_per_curve;
+fastf_t	**curves;
+{
+	union record	rec;
+	vect_t		base_pt;
+	int		per_curve_grans;
+	int		i;
+
+	bzero( (char *)&rec, sizeof(rec) );
+
+	rec.a.a_id = ID_ARS_A;
+	rec.a.a_type = ARS;			/* obsolete? */
+	NAMEMOVE( name, rec.a.a_name );
+	rec.a.a_m = ncurves;
+	rec.a.a_n = pts_per_curve;
+
+	per_curve_grans = (pts_per_curve+7)/8;
+	rec.a.a_curlen = per_curve_grans;
+	rec.a.a_totlen = per_curve_grans * ncurves;
+	if( fwrite( (char *)&rec, sizeof(rec), 1, fp ) != 1 )
+		return(-1);
+
+	VMOVE( base_pt, &curves[0][0] );
+	/* The later subtraction will "undo" this, leaving just base_pt */
+	VADD2( &curves[0][0], &curves[0][0], base_pt);
+
+	for( i=0; i<ncurves; i++ )  {
+		register fastf_t	*fp;
+		int			npts;
+
+		fp = curves[i];
+		for( npts = pts_per_curve; npts > 0; npts -= 8 )  {
+			register int	i;
+			register int	lim;
+
+			bzero( (char *)&rec, sizeof(rec) );
+			rec.b.b_id = ID_ARS_B;
+			rec.b.b_type = ARSCONT;	/* obsolete? */
+			rec.b.b_n = i;		/* obsolete? */
+			rec.b.b_ngranule = pts_per_curve - npts; /* obsolete? */
+
+			lim = (npts > 8 ) ? 8 : npts;
+			for( i=0; i < lim; i++ )  {
+				/* XXX also converts to dbfloat_t */
+				VSUB2( &(rec.b.b_values[i*3]), fp, base_pt );
+				fp += ELEMENTS_PER_VECT;
+			}
+			if( fwrite( (char *)&rec, sizeof(rec), 1, fp ) != 1 )
+				return(-1);
+		}
+	}
+	return(0);
 }
