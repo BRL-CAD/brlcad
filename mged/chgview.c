@@ -997,16 +997,17 @@ char	**argv;
 
 #ifdef DO_DISPLAY_LISTS
 	FOR_ALL_DISPLAYS(dmlp, &head_dm_list.l){
-	  if(dmlp->_dmp->dm_displaylist && dmlp->_mged_variables->dlist)
+	  if(dmlp->_dmp->dm_displaylist &&
+	     dmlp->_mged_variables->dlist &&
+	     BU_LIST_NON_EMPTY(&HeadSolid.l))
 #ifdef DO_SINGLE_DISPLAY_LIST
-	    dmlp->_dmp->dm_freeDLists(dmlp->_dmp,
-				      HeadSolid.s_dlist + dmlp->_dmp->dm_displaylist,
-				      1);
+	    dmlp->_dmp->dm_freeDLists(dmlp->_dmp, dmlp->_dmp->dm_displaylist + 1, 1);
 #else
 	    dmlp->_dmp->dm_freeDLists(dmlp->_dmp,
-				      HeadSolid.s_dlist + dmlp->_dmp->dm_displaylist,
+				      BU_LIST_FIRST(solid, &HeadSolid.l)->s_dlist +
+				      dmlp->_dmp->dm_displaylist,
 				      BU_LIST_LAST(solid, &HeadSolid.l)->s_dlist -
-				      HeadSolid.s_dlist + 1);
+				      BU_LIST_FIRST(solid, &HeadSolid.l)->s_dlist + 1);
 #endif
 	}
 #endif
