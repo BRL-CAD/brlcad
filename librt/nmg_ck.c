@@ -154,6 +154,11 @@ long *eg;
 	/* Ensure that all edgeuses on the edge_g_* list point to me */
 	for( RT_LIST_FOR( eu2, rt_list, &((struct edge_g_lseg *)eg)->eu_hd2 ) )  {
 		struct edgeuse	*eu;
+
+		if( eu2 == NULL)
+		{
+			 rt_bomb("nmg_veg null eu2\n");
+		}
 		eu = RT_LIST_MAIN_PTR( edgeuse, eu2, l2 );
 		NMG_CK_EDGEUSE(eu);
 		if( eu->g.magic_p == eg )  continue;
