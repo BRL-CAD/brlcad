@@ -919,6 +919,7 @@ EOF
 	;;
 
 # For SGI IRIX, use the "swpkg" GUI tool.
+	# it appears that you must be root for this to work
 	# cd /tmp
 	# swpkg -nofork
 	# Critical note: Product Name may *not* have a "-" in it!
@@ -954,7 +955,7 @@ EOF
 	# Click OK on "Save Idb"
 	# Watch files scroll by in uppermost scrolling window
 	# When done, select menu "File > Exit"
-	# Four files should have been created.  Bundle them up with:
+	# Four files should have been created in "/var/tmp".  Bundle them up with:
 	# tar cvf brlcad51.tardist brlcad brlcad.idb brlcad.man brlcad.sw
 	# gzip -9 < brlcad51.tardist > brlcad51.tardist.gz
 	# crypt xyzzy < brlcad51.tardist.gz > brlcad51.tardist.gz.crypt
