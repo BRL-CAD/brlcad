@@ -4,6 +4,9 @@
  * $Revision$
  *
  * $Log$
+ * Revision 2.2  85/05/14  01:43:59  dpk
+ * Added changes to support System V (conditional on SYS5)
+ * 
  * Revision 2.1  85/01/17  23:58:32  dpk
  * 
  * 
@@ -571,7 +574,7 @@ InitCM()
 	WarpDirect[LOWER].c_func = BottomUp;
 
 	HomeLen = HO ? strlen(HO) : 1000;
-	LowerLen = LL ? strlen(LL) : 1000;
+	LowerLen = (LL && (LI == LI_termcap)) ? strlen(LL) : 1000;
 	UpLen = UP ? strlen(UP) : 1000;
 }
 

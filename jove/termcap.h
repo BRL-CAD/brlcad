@@ -4,6 +4,9 @@
  * $Revision$
  *
  * $Log$
+ * Revision 2.0  84/12/26  16:50:05  dpk
+ * System as distributed to Berkeley 26 Dec 84
+ * 
  * Revision 1.2  83/12/16  00:10:36  dpk
  * Added distinctive RCS header
  * 
@@ -40,6 +43,7 @@ extern char	*UP,	/* Scroll reverse, or up */
 		*SR,	/* Scroll reverse */
 		*VB;	/* Visible bell */
 
+extern int LI_termcap;	/* LI as given in termcap - to see if ll makes sense */
 extern int LI;		/* Number of lines */
 extern int CO;		/* Number of columns */
 extern int SG;		/* Number of magic cookies left by SO and SG */

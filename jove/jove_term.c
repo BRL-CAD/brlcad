@@ -4,6 +4,9 @@
  * $Revision$
  *
  * $Log$
+ * Revision 2.2  87/04/14  21:58:07  dpk
+ * Added TERMINFO fix for sys5.  Strips %p# strings.
+ * 
  * Revision 2.1  85/05/14  01:44:34  dpk
  * Added changes to support System V (conditional on SYS5)
  * 
@@ -76,6 +79,7 @@ char	*UP,	/* Move cursor up */
 	*SR,	/* Scroll reverse (down, for scrolling regions) */
 	*VB;	/* Visual bell (e.g. a flash) */
 
+int	LI_termcap;	/* LI as given in termcap - to see if ll makes sense */
 int	LI,		/* Number of lines */
 	CO,		/* Number of columns */
 	TABS,		/* Whether we are in tabs mode */
@@ -163,6 +167,7 @@ getTERM()
 
 	if ((LI = tgetnum("li")) == -1)
 		TermError("lines?");
+	LI_termcap = LI;			/* save this for comparison to winsize */
 
 	if ((SG = tgetnum("sg")) == -1)
 		SG = 0;			/* Used for mode line only */
