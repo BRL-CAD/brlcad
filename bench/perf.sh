@@ -41,8 +41,8 @@ RATIO_LIST=""
 set $CURVALS
 
 while test $# != 5
-do	echo "${NAME}: Warning, only $# times found, using zeros"
-	CURVALS="$CURVALS 0"
+do	echo "${NAME}: Warning, only $# times found, adding a zero."
+	CURVALS="${CURVALS}0	"
 	set $CURVALS
 done
 
