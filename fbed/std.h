@@ -71,9 +71,4 @@ typedef char *pointer;		/* generic pointer (void *) */
 #define tonumber( c )	((c) - '0')	/* convt digit char to number */
 #define todigit( n )	((n) + '0')	/* convt digit number to char */
 
-/* other kludges for deficient C implementations etc.: */
-/*#define	strchr	index		/* 7th Edition UNIX, 4.2BSD */
-/*#define	strrchr	rindex		/* 7th Edition UNIX, 4.2BSD */
-/*#define	void int /* K&R Appendix A followers */
-
 #endif	/* _VLD_STD_H_ */
