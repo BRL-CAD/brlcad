@@ -167,7 +167,7 @@ BDIRS="bench \
 	libredblack \
 	libtermio \
 	libtcl \
-	libtclad \
+	libtclcad \
 	libdm \
 	conv \
 	db \
