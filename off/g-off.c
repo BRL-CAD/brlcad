@@ -213,6 +213,7 @@ struct db_full_path	*pathp;
 union tree		*curtree;
 {
 	extern FILE		*fp_fig;
+	union tree		*ret_tree;
 	struct nmgregion	*r;
 	struct rt_list		vhead;
 
@@ -259,8 +260,12 @@ union tree		*curtree;
 		}
 	}
 	(void)nmg_model_fuse(*tsp->ts_m, tsp->ts_tol);
-	r = nmg_booltree_evaluate(curtree, tsp->ts_tol);	/* librt/nmg_bool.c */
+	ret_tree = nmg_booltree_evaluate(curtree, tsp->ts_tol);	/* librt/nmg_bool.c */
 	RT_UNSETJUMP;		/* Relinquish the protection */
+	if( ret_tree )
+		r = ret_tree->tr_d.td_r;
+	else
+		r = (struct nmgregion *)NULL;
 	regions_done++;
 	if (r != 0) {
 		FILE	*fp_psurf;
@@ -385,7 +390,7 @@ FILE		*fp_psurf;	/* Jack format file to write vertex list to. */
 	map = (int *)rt_calloc(r->m_p->maxindex, sizeof(int *), "Jack vert map");
 
 	/* Built list of vertex structs */
-	nmg_region_vertex_list( &vtab, r );
+	nmg_vertex_tabulate( &vtab, &r->l.magic );
 
 	/* XXX What to do if 0 vertices?  */
 
