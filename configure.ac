@@ -860,18 +860,25 @@ if test "x$regex_link_works" = "xno" ; then
 	AC_CHECK_LIB(compat, regcomp, regex_link_works=yes)
 fi
 
-dnl check whether there is a useable zlib library
+dnl check if zlib library links
 zlib_link_works=no
 AC_CHECK_LIB(z, deflate, zlib_link_works=yes)
 
-dnl detect a useable system png library
+dnl check if a png library links
 png_link_works=no
-dnl AC_CHECK_LIB(png, png_check_sig, png_link_works=yes)
 AC_CHECK_LIB(png, png_access_version_number, png_link_works=yes)
 
- dnl check whether there is a useable math library
+dnl check if a math library links
 m_link_works=no
 AC_CHECK_LIB(m, cos, m_link_works=yes)
+
+dnl check if a socket library links
+socket_link_works=no
+AC_CHECK_LIB(socket, socket, socket_link_works=yes)
+
+dnl check if a network socket library links
+nsl_link_works=no
+AC_CHECK_LIB(gethostbyaddr, nsl, nsl_link_works=yes)
 
 
 dnl *************************
@@ -902,6 +909,7 @@ AC_CHECK_HEADERS( \
 	pthread.h \
 	pwd.h \
 	sgtty.h \
+	socket.h \
 	stdarg.h \
 	stddef.h \
 	stdlib.h \
@@ -1459,15 +1467,6 @@ AC_CHECK_FUNC(popen, AC_DEFINE(HAVE_POPEN_DECL,1,popen))
 AC_CHECK_FUNC(getopt, AC_DEFINE(HAVE_GETOPT_DECL,1,getopt))
 AC_CHECK_FUNC(strdup, AC_DEFINE(HAVE_STRDUP_DECL,1,strdup))
 
-AC_CHECK_FUNCS(socket, LIBSOCKET="" ,
-	       [AC_CHECK_LIB(socket, socket, LIBSOCKET="-lsocket", 
-	       		BC_EXTRA_SEARCH_DIRS
-			BC_RETRY_CONFIGURE([$0], [CPPFLAGS="$CPPFLAGS" LDFLAGS="$LDFLAGS" PATH="$PATH"])
-			AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
-			AC_MSG_ERROR([*** No internet socket found ***]))
-	       ])
-AC_SUBST(LIBSOCKET)
-
 
 dnl *********************************
 dnl *** Check for system services ***
@@ -1659,6 +1658,32 @@ else
 	AC_MSG_RESULT(no)
 fi
 AC_SUBST(LIBZ)
+
+
+dnl *** libsocket ***
+
+LIBSOCKET=""
+AC_MSG_CHECKING(for socket library availability)
+if test "x$socket_link_works" = "xyes" ; then
+	LIBSOCKET="-lsocket"
+	AC_MSG_RESULT(yes)
+else
+	AC_MSG_RESULT(no)
+fi
+AC_SUBST(LIBSOCKET)
+
+
+dnl *** libnsl ***
+
+LIBNSL=""
+AC_MSG_CHECKING(for network socket library availablity)
+if test "x$nsl_link_works" = "xyes" ; then
+	LIBNSL="-lnsl"
+	AC_MSG_RESULT(yes)
+else
+	AC_MSG_RESULT(no)
+fi
+AC_SUBST(LIBNSL)
 
 
 dnl *** 64-bit compilation ***
