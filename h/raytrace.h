@@ -104,7 +104,7 @@ extern "C" {
  *			R T _ T E S S _ T O L
  *
  *  Tessellation (geometric) tolerances,
- *  different beasts than the calcuation tolerance in rt_tol.
+ *  different beasts than the calcuation tolerance in bn_tol.
  */
 struct rt_tess_tol  {
 	long		magic;
@@ -1294,24 +1294,6 @@ extern struct rt_functab rt_functab[];
 extern int rt_nfunctab;
 
 
-/*  A supply of pseudo-random numbers (from table in snoise.c).  
- *  The values are in the range 0..1
- *
- * Usage:
- *	int idx;
- *	float f;
- *
- *	RT_RANDSEED( idx, integer_seed );
- *
- *	while (NEED_MORE_RAND_NUMBERS) {
- *		f = RT_RANDOM( idx );
- *	}
- */
-#define RT_RAND_TABSIZE 4096
-#define RT_RANDSEED( _i, _seed )        _i = _seed % RT_RAND_TABSIZE
-#define RT_RANDOM( _i )         rt_rand_table[ _i = (_i+1) % RT_RAND_TABSIZE ]
-extern CONST float rt_rand_table[RT_RAND_TABSIZE];
-
 /*****************************************************************
  *                                                               *
  *          Applications interface to the RT library             *
@@ -1358,14 +1340,6 @@ RT_EXTERN(void rt_add_res_stats, (struct rt_i *rtip, struct resource *resp) );
 					/* Tally stats into struct rt_i */
 
 /* The matrix math routines */
-#define vtoh_move(_d,_s)	mat_vtoh_move(_d,_s)	/* compat */
-#define htov_move(_d,_s)	mat_htov_move(_d,_s)
-#define ae_vec(_az,_el,_vec)	mat_ae_vec(_az,_el,_vec)	/* compat */
-#define eigen2x2(_val1,_val2,_vec1,_vec2,_a,_b,_c)	\
-	mat_eigen2x2(_val1,_val2,_vec1,_vec2,_a,_b,_c)	/* compat */
-#define vec_ortho(_d,_s)	mat_vec_ortho(_d,_s)	/* compat */
-#define vec_perp(_d,_s)		mat_vec_perp(_d,_s)	/* compat */
-
 
 /* Routines from qmath.h */
 
@@ -1566,56 +1540,7 @@ RT_EXTERN(struct rt_list *rt_vlblock_find, (struct rt_vlblock *vbp,
 	int r, int g, int b) );
 
 /* plane.c */
-RT_EXTERN(double rt_dist_pt3_pt3, (CONST point_t a, CONST point_t b));
-RT_EXTERN(int rt_3pts_distinct, (CONST point_t a, CONST point_t b,
-	CONST point_t c, CONST struct rt_tol *tol) );
-RT_EXTERN(int rt_mk_plane_3pts, (plane_t plane, CONST point_t a,
-	CONST point_t b, CONST point_t c, CONST struct rt_tol *tol) );
-RT_EXTERN(int rt_mkpoint_3planes, (point_t pt, CONST plane_t a,
-	CONST plane_t b, CONST plane_t c) );
-RT_EXTERN(int rt_isect_line3_plane, (fastf_t *dist, CONST point_t pt,
-	CONST vect_t dir, CONST plane_t plane, CONST struct rt_tol *tol) );
-RT_EXTERN(int rt_isect_2planes, (point_t pt, vect_t dir, CONST plane_t a,
-	CONST plane_t b, CONST vect_t rpp_min, CONST struct rt_tol *tol) );
-RT_EXTERN(int rt_isect_2lines, (fastf_t *t, fastf_t *u, CONST point_t p,
-	CONST vect_t d, CONST point_t a, CONST vect_t c,
-	CONST struct rt_tol *tol) );
-RT_EXTERN(int rt_isect_line_lseg, (fastf_t *t, CONST point_t p,
-	CONST vect_t d, CONST point_t a, CONST point_t b,
-	CONST struct rt_tol *tol) );
-#define rt_dist_line_point(pt,dir,a)	rt_dist_line3_pt3(pt,dir,a)
-RT_EXTERN(double		rt_dist_line3_pt3, (CONST point_t pt,
-				CONST vect_t dir, CONST point_t a) );
-RT_EXTERN(double		rt_distsq_line3_pt3, (CONST point_t pt,
-				CONST vect_t dir, CONST point_t a));
-RT_EXTERN(double		rt_dist_line_origin, (CONST point_t pt,
-				CONST vect_t dir) );
-RT_EXTERN(double		rt_dist_line2_point2, (CONST point_t pt,
-				CONST vect_t dir, CONST point_t a));
-RT_EXTERN(double		rt_distsq_line2_point2, (CONST point_t pt,
-				CONST vect_t dir, CONST point_t a));
-RT_EXTERN(double rt_area_of_triangle, (CONST point_t a, CONST point_t b,
-	CONST point_t c) );
-RT_EXTERN(int rt_isect_pt_lseg, (fastf_t *dist, CONST point_t a,
-	CONST point_t b, CONST point_t p, CONST struct rt_tol *tol) );
-RT_EXTERN(double rt_dist_pt_lseg, (point_t pca, CONST point_t a,
-	CONST point_t b, CONST point_t p, CONST struct rt_tol *tol) );
-RT_EXTERN(void rt_rotate_bbox, (point_t omin, point_t omax, CONST mat_t mat,
-	CONST point_t imin, CONST point_t imax));
-RT_EXTERN(void rt_rotate_plane, (plane_t oplane, CONST mat_t mat,
-	CONST plane_t iplane));
-RT_EXTERN(int rt_coplanar, (CONST plane_t a, CONST plane_t b,
-	CONST struct rt_tol *tol));
-RT_EXTERN(double		rt_angle_measure, (vect_t vec, CONST vect_t x_dir,
-				CONST vect_t y_dir));
-RT_EXTERN(double		rt_dist_pt3_along_line3, (CONST point_t	p,
-				CONST vect_t d, CONST point_t x));
-RT_EXTERN(double		rt_dist_pt2_along_line2, (CONST point_t p,
-				CONST vect_t d, CONST point_t x));
-RT_EXTERN(int			rt_between, (double left, double mid,
-				double right, CONST struct rt_tol *tol));
-
-
+ 
 /* CxDiv, CxSqrt */
 extern void rt_pr_roots();		/* print complex roots */
 
@@ -1666,19 +1591,6 @@ RT_EXTERN(int			rt_uplot_to_vlist, (struct rt_vlblock *vbp,
 RT_EXTERN(void			rt_label_vlist_verts, (struct rt_vlblock *vbp,
 				struct rt_list *src, mat_t mat,
 				double sz, double mm2local) );
-
-/* snoise.c */
-RT_EXTERN(double	noise_v, (point_t pt) );
-RT_EXTERN(double	noise_vc, (point_t pt) );
-RT_EXTERN(double	noise_g, (point_t pt) );
-RT_EXTERN(double	noise_gv, (point_t pt) );
-RT_EXTERN(double	noise_sc, (point_t pt) );
-RT_EXTERN(void		noise_init, () );
-RT_EXTERN(double	noise_perlin, (point_t pt) );
-RT_EXTERN(void		noise_vec, (point_t point, point_t result) );
-RT_EXTERN(double	noise_fbm, (point_t point, double h_val, double lacunarity, double octaves) );
-RT_EXTERN(double	noise_turb, (point_t point, double h_val, double lacunarity, double octaves ) );
-
 
 
 /************************************************************************

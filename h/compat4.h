@@ -45,6 +45,19 @@ extern "C" {
 #define RT_SETJUMP	BU_SETJUMP
 #define RT_UNSETJUMP	BU_UNSETJUMP
 
+/* const.c */
+#define rt_pi	bn_pi
+#define rt_twopi	bn_twopi
+#define rt_halfpi	bn_halfpi
+#define rt_quarterpi	bn_quarterpi
+#define rt_invpi	bn_invpi
+#define rt_inv2pi	bn_inv2pi
+#define rt_inv4pi	bn_inv4pi
+#define rt_inv255	bn_inv255
+
+#define rt_degtorad	bn_degtorad
+#define rt_radtodeg	bn_radtodeg
+
 /* hist.c */
 #define histogram		bu_hist		/* struct */
 #define RT_HISTOGRAM_MAGIC	BU_HIST_MAGIC
@@ -130,8 +143,22 @@ extern "C" {
 #define RT_CK_MAPPED_FILE	BU_CK_MAPPED_FILE
 
 /* mat.c */
+#define rt_identity		mat_identity
 #define rt_mat_is_equal	mat_is_equal
+#define vtoh_move(_d,_s)	mat_vtoh_move(_d,_s)	/* compat */
+#define htov_move(_d,_s)	mat_htov_move(_d,_s)
+#define ae_vec(_az,_el,_vec)	mat_ae_vec(_az,_el,_vec)	/* compat */
+#define eigen2x2(_val1,_val2,_vec1,_vec2,_a,_b,_c)	\
+	mat_eigen2x2(_val1,_val2,_vec1,_vec2,_a,_b,_c)	/* compat */
+#define vec_ortho(_d,_s)	mat_vec_ortho(_d,_s)	/* compat */
+#define vec_perp(_d,_s)		mat_vec_perp(_d,_s)	/* compat */
 
+/* noise.c */
+#define noise_init	bn_noise_init
+#define noise_perlin	bn_noise_perlin
+#define noise_vec	bn_noise_vec
+#define noise_fbm	bn_noise_fbm
+#define noise_turb	bn_noise_turb
 
 /* parallel.c */
 #define rt_pri_set	bu_nice_set
@@ -172,6 +199,44 @@ extern "C" {
 #define RT_INIT_EXTERNAL	BU_INIT_EXTERNAL
 #define RT_CK_EXTERNAL		BU_CK_EXTERNAL
 
+/* plane.c */
+#define rt_dist_pt3_lseg3	bn_dist_pt3_lseg3
+#define rt_3pts_collinear	bn_3pts_collinear
+#define rt_pt3_pt3_equal	bn_pt3_pt3_equal
+#define rt_dist_pt2_lseg2	bn_dist_pt2_lseg2
+#define rt_isect_lseg3_lseg3	bn_isect_lseg3_lseg3
+#define rt_isect_line3_line3	bn_isect_line3_line3
+#define rt_2line3_colinear	bn_2line3_colinear
+#define rt_isect_pt2_lseg2	bn_isect_pt2_lseg2
+#define rt_isect_line2_lseg2	bn_isect_line2_lseg2
+#define rt_isect_lseg2_lseg2	bn_isect_lseg2_lseg2
+#define rt_isect_line2_line2	bn_isect_line2_line2
+#define rt_dist_line_point	bn_dist_line3_pt3
+#define	rt_dist_pt3_pt3		bn_dist_pt3_pt3
+#define	rt_3pts_distinct	bn_3pts_distinct
+#define	rt_mk_plane_3pts	bn_mk_plane_3pts
+#define	rt_mkpoint_3planes	bn_mkpoint_3planes
+#define	rt_isect_line3_plane	bn_isect_line3_plane
+#define	rt_isect_2planes	bn_isect_2planes
+#define	rt_isect_2lines		bn_isect_2lines
+#define	rt_isect_line_lseg	bn_isect_line_lseg
+#define	rt_dist_line3_pt3	bn_dist_line3_pt3
+#define	rt_distsq_line3_pt3	bn_distsq_line3_pt3
+#define	rt_dist_line_origin	bn_dist_line_origin
+#define	rt_dist_line2_point2	bn_dist_line2_point2
+#define	rt_distsq_line2_point2	bn_distsq_line2_point2
+#define	rt_area_of_triangle	bn_area_of_triangle
+#define	rt_isect_pt_lseg	bn_isect_pt_lseg
+#define	rt_dist_pt_lseg		bn_dist_pt_lseg
+#define	rt_rotate_bbox		bn_rotate_bbox
+#define	rt_rotate_plane		bn_rotate_plane
+#define	rt_coplanar		bn_coplanar
+#define	rt_angle_measure	bn_angle_measure
+#define	rt_dist_pt3_along_line3	bn_dist_pt3_along_line3
+#define	rt_dist_pt2_along_line2	bn_dist_pt2_along_line2
+#define	rt_between		bn_between
+
+
 /* printb.c */
 #define rt_printb		bu_printb
 
@@ -193,6 +258,13 @@ extern "C" {
 #define NMG_TBL_LASTADDR	BU_PTBL_LASTADDR
 #define NMG_TBL_END		BU_PTBL_END
 #define NMG_TBL_GET		BU_PTBL_GET
+
+/* rand.c */
+#define RT_RAND_TABSIZE BN_RAND_TABSIZE
+#define RT_RANDSEED	BN_RANDSEED
+#define RT_RANDOM	BN_RANDOM
+#define rt_rand_table	bn_rand_table
+
 
 /* raytrace.h */
 #define rt_tol bn_tol
