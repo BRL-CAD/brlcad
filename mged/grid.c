@@ -107,9 +107,9 @@ draw_grid()
   nv_lines = 2.0 * sf * inv_grid_res_h + (2 * mged_variables->grid_res_major_h);
 
   DM_SET_FGCOLOR(dmp,
-	       mged_variables->grid_color[0], 
-	       mged_variables->grid_color[1],
-	       mged_variables->grid_color[2], 1);
+	       color_scheme->grid[0], 
+	       color_scheme->grid[1],
+	       color_scheme->grid[2], 1);
   DM_SET_LINE_ATTR(dmp, 1, 0);		/* solid lines */
 
   /* draw horizontal dots */

@@ -85,9 +85,9 @@ draw_rect()
 
   /* draw rectangle */
   DM_SET_FGCOLOR(dmp,
-	       mged_variables->rubber_band_color[0],
-	       mged_variables->rubber_band_color[1],
-	       mged_variables->rubber_band_color[2], 1);
+	       color_scheme->rubber_band[0],
+	       color_scheme->rubber_band[1],
+	       color_scheme->rubber_band[2], 1);
   DM_SET_LINE_ATTR(dmp, mged_variables->rubber_band_linewidth, line_style);
 
   DM_DRAW_LINE_2D(dmp, rect_x, rect_y * dmp->dm_aspect,

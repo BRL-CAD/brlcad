@@ -40,7 +40,8 @@ mat_t	incr_change;
 mat_t	modelchanges;
 mat_t	identity;
 
-int wireframe_highlight_color[] = { 255, 255, 255 };
+/* This is a holding place for the current display managers default wireframe color */
+extern unsigned char geometry_default_color[];		/* defined in dodraw.c */
 
 /* Screen coords of actual eye position.  Usually it is at (0,0,+1),
  * but in head-tracking and VR applications, it can move.
@@ -360,7 +361,7 @@ bn_mat_print("perspective_mat", perspective_mat);
 
 	FOR_ALL_SOLIDS(sp, &HeadSolid.l)  {
 	  sp->s_flag = DOWN;		/* Not drawn yet */
-	  /* If part of object rotation, will be drawn below */
+	  /* If part of object edit, will be drawn below */
 	  if( sp->s_iflag == UP )
 	    continue;
 
@@ -378,19 +379,36 @@ bn_mat_print("perspective_mat", perspective_mat);
 	    DM_SET_LINE_ATTR(dmp, mged_variables->linewidth, linestyle);
 	  }
 
-	  if(!DM_SAME_COLOR(r,g,b,
-			    (short)sp->s_color[0],
-			    (short)sp->s_color[1],
-			    (short)sp->s_color[2])){
-	    DM_SET_FGCOLOR(dmp,
+	  if(sp->s_cflag){
+	    if(!DM_SAME_COLOR(r,g,b,
+			      (short)geometry_default_color[0],
+			      (short)geometry_default_color[1],
+			      (short)geometry_default_color[2])){
+	      DM_SET_FGCOLOR(dmp,
+			     (short)geometry_default_color[0],
+			     (short)geometry_default_color[1],
+			     (short)geometry_default_color[2], 0);
+	      DM_COPY_COLOR(r,g,b,
+			    (short)geometry_default_color[0],
+			    (short)geometry_default_color[1],
+			    (short)geometry_default_color[2]);
+	    }
+	  } else {
+	    if(!DM_SAME_COLOR(r,g,b,
+			      (short)sp->s_color[0],
+			      (short)sp->s_color[1],
+			      (short)sp->s_color[2])){
+	      DM_SET_FGCOLOR(dmp,
 			     (short)sp->s_color[0],
 			     (short)sp->s_color[1],
 			     (short)sp->s_color[2], 0);
-	    DM_COPY_COLOR(r,g,b,
-			  (short)sp->s_color[0],
-			  (short)sp->s_color[1],
-			  (short)sp->s_color[2]);
+	      DM_COPY_COLOR(r,g,b,
+			    (short)sp->s_color[0],
+			    (short)sp->s_color[1],
+			    (short)sp->s_color[2]);
+	    }
 	  }
+
 #ifdef DO_DISPLAY_LISTS
 	  if(displaylist && mged_variables->dlist){
 #ifdef DO_SINGLE_DISPLAY_LIST
@@ -423,7 +441,10 @@ bn_mat_print("perspective_mat", perspective_mat);
 
 	/* draw predictor vlist */
 	if(mged_variables->predictor){
-	  DM_SET_FGCOLOR(dmp, DM_WHITE_R, DM_WHITE_G, DM_WHITE_B, 1);
+	  DM_SET_FGCOLOR(dmp,
+			 color_scheme->predictor[0],
+			 color_scheme->predictor[1],
+			 color_scheme->predictor[2], 1);
 	  DM_DRAW_VLIST(dmp, (struct rt_vlist *)&curr_dm_list->p_vlist, mged_variables->perspective);
 	}
 
@@ -443,13 +464,12 @@ bn_mat_print("perspective_mat", perspective_mat);
 	DM_LOADMATRIX( dmp, mat, which_eye );
 	inv_viewsize /= modelchanges[15];
 	DM_SET_FGCOLOR(dmp,
-		       wireframe_highlight_color[0],
-		       wireframe_highlight_color[1],
-		       wireframe_highlight_color[2],
-		       1);
+		       color_scheme->geo_hl[0],
+		       color_scheme->geo_hl[1],
+		       color_scheme->geo_hl[2], 1);
 
 	FOR_ALL_SOLIDS(sp, &HeadSolid.l)  {
-	  /* Ignore all objects not being rotated */
+	  /* Ignore all objects not being edited */
 	  if( sp->s_iflag != UP )
 	    continue;
 
