@@ -1,6 +1,4 @@
 /*
- * XXXXX Big-E is badly broken right now
- *
  *			D O D R A W . C
  *
  * Functions -
@@ -50,10 +48,6 @@ struct vlist	*rtg_vlFree;	/* should be rt_g.rtg_vlFree !! XXX dm.h */
 
 int	no_memory;	/* flag indicating memory for drawing is used up */
 long	nvectors;	/* number of vectors drawn so far */
-
-int	regmemb;	/* # of members left to process in a region */
-char	memb_oper;	/* operation for present member of processed region */
-int	reg_pathpos;	/* pathpos of a processed region */
 
 static struct mater_info mged_no_mater = {
 	/* RT default is white.  This is red, to stay clear of illuminate mode */
@@ -196,84 +190,6 @@ int			id;
 	GETUNION( curtree, tree );
 	curtree->tr_op = OP_NOP;
 
-	return( curtree );
-}
-
-/*
- *			M G E D _ B I G e _ L E A F
- *
- *  This routine must be prepared to run in parallel.
- */
-HIDDEN union tree *mged_bigE_leaf( tsp, pathp, rp, id )
-struct db_tree_state	*tsp;
-struct db_full_path	*pathp;
-union record		*rp;
-int			id;
-{
-	union tree	*curtree;
-	int		dashflag;		/* draw with dashed lines */
-	struct vlhead	vhead;
-	int		flag = '-';
-	int		i;
-
-	vhead.vh_first = vhead.vh_last = VL_NULL;
-
-	if(rt_g.debug&DEBUG_TREEWALK)  {
-		char	*sofar = db_path_to_string(pathp);
-		rt_log("mged_bigE_leaf(%s) path='%s'\n",
-			rt_functab[id].ft_name, sofar );
-		rt_free(sofar, "path string");
-	}
-
-	/* processing a member of a processed region */
-	/* regmemb  =>  number of members left */
-	/* regmemb == 0  =>  last member */
-	if(memb_oper == UNION)
-		flag = 999;
-
-	/* The hard part */
-	/* XXX flag is the boolean operation */
-	i = proc_region( rp, tsp->ts_mat, flag );
-	if( i < 0 )  {
-		/* error somwhere */
-		(void)printf("Error in converting solid %s to ARBN\n",
-			DB_FULL_PATH_CUR_DIR(pathp)->d_namep );
-		if(regmemb == 0) {
-			regmemb = -1;
-		}
-	    	return(TREE_NULL);		/* ERROR */
-	}
-
-	/* if more member solids to be processed, no drawing was done
-	 */
-	if( regmemb > 0 )  {
-		/* NOP -- more to come */
-	    	return(TREE_NULL);
-	}
-
-	i = finish_region( &vhead );
-	if( i < 0 )  {
-		(void)printf("error in finish_region()\n");
-	    	return(TREE_NULL);		/* ERROR */
-	}
-	drawH_part2( 0, vhead.vh_first, pathp, tsp, SOLID_NULL );
-
-	/* Indicate success by returning something other than TREE_NULL */
-	GETUNION( curtree, tree );
-	curtree->tr_op = OP_NOP;
-	return( curtree );
-}
-
-/*
- *			M G E D _ B I G e _ R E G I O N _ E N D
- *
- *  This routine must be prepared to run in parallel.
- */
-HIDDEN union tree *mged_bigE_region_end( tsp, pathp, curtree )
-register struct db_tree_state	*tsp;
-struct db_full_path	*pathp;
-union tree		*curtree;
-{
 	return( curtree );
 }
 
@@ -537,6 +453,7 @@ int	kind;
 		if( i < 0 )  return(-1);
 		break;
 	case 2:		/* Big-E */
+#	    if 0
 		i = db_walk_tree( dbip, argc, argv,
 			ncpu,
 			&mged_initial_tree_state,
@@ -545,6 +462,10 @@ int	kind;
 			mged_bigE_leaf );
 		if( i < 0 )  return(-1);
 		break;
+#	    else
+		rt_log("drawtrees:  can't do big-E here\n");
+		return(-1);
+#	    endif
 	case 3:
 	  {
 		/* NMG */
@@ -640,16 +561,9 @@ struct solid		*existing_sp;
 		}
 		sp->s_iflag = DOWN;
 		sp->s_soldash = dashflag;
+		sp->s_Eflag = 0;	/* This is a solid */
+		sp->s_last = pathp->fp_len-1;
 
-		if(regmemb == 0) {
-			/* done processing a region */
-			regmemb = -1;
-			sp->s_last = reg_pathpos;
-			sp->s_Eflag = 1;	/* This is processed region */
-		}  else  {
-			sp->s_Eflag = 0;	/* This is a solid */
-			sp->s_last = pathp->fp_len-1;
-		}
 		/* Copy path information */
 		for( i=0; i<=sp->s_last; i++ )
 			sp->s_path[i] = pathp->fp_names[i];
