@@ -246,11 +246,11 @@ end:
 	}
 #endif
       }else if(mged_variables->mouse_behavior == 's' && !stolen){
-	bu_vls_printf(&vls, "ray_build_edit_menu s %d %d", x, y);
+	bu_vls_printf(&vls, "mouse_solid_edit_select %d %d", x, y);
       }else if(mged_variables->mouse_behavior == 'o' && !stolen){
-	bu_vls_printf(&vls, "ray_build_edit_menu o %d %d", x, y);
+	bu_vls_printf(&vls, "mouse_object_edit_select %d %d", x, y);
       }else if(mged_variables->mouse_behavior == 'c' && !stolen){
-	bu_vls_printf(&vls, "ray_build_comb_menu %d %d", x, y);
+	bu_vls_printf(&vls, "mouse_comb_edit_select %d %d", x, y);
       }else
 	bu_vls_printf(&vls, "M 1 %d %d\n", x, y);
 
