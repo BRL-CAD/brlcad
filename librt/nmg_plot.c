@@ -944,7 +944,7 @@ long				*tab;
 		mat_idn(mat);
 		(void)sprintf(label, "%g %g %g", p[0], p[1], p[2]);
 		/* XXX What size characters to use? */
-		rt_vlist_3string( vh, label, p, mat, scale );
+		bn_vlist_3string( vh, vbp->free_vlist_hd, label, p, mat, scale );
 	}
 #endif
 	RT_ADD_VLIST( vh, p, RT_VLIST_LINE_MOVE );
@@ -1163,7 +1163,7 @@ CONST struct bn_tol		*tol;
 
 	/* char_scale is based on length of eu */
 	char_scale = len * 0.05;
-	rt_vlist_3string( vh, str, tip, mat, char_scale );
+	bn_vlist_3string( vh, &rt_g.rtg_vlfree, str, tip, mat, char_scale );
 }
 
 /*
@@ -1829,40 +1829,8 @@ CONST struct edgeuse *eu;
 
 	    	nmg_eu_next_base( eu, next_base );
 		vh = rt_vlblock_find( vbp, 0, 100, 0 );
-#if 0
 		RT_ADD_VLIST( vh, tip, RT_VLIST_LINE_MOVE );
 		RT_ADD_VLIST( vh, next_base, RT_VLIST_LINE_DRAW );
-#else
-	    	{
-	    		register struct rt_vlist *_vp = BU_LIST_LAST( rt_vlist, (vh) );
-	    		if( BU_LIST_IS_HEAD( _vp, (vh) ) || _vp->nused >= RT_VLIST_CHUNK ) {
-#if 0
-	    			RT_GET_VLIST(_vp);
-#else
-	    			_vp = BU_LIST_FIRST( rt_vlist, &rt_g.rtg_vlfree );
-	    			if( BU_LIST_IS_HEAD( _vp, &rt_g.rtg_vlfree ) ) {
-					_vp = (struct rt_vlist *)rt_malloc(sizeof(struct rt_vlist), "rt_vlist");
-					_vp->l.magic = RT_VLIST_MAGIC;
-				} else {
-					BU_LIST_DEQUEUE( &(_vp->l) );
-				}
-				_vp->nused = 0;
-#endif
-	    			BU_LIST_INSERT( (vh), &(_vp->l) );
-	    		}
-	    		VMOVE( _vp->pt[_vp->nused], (tip) );
-	    		_vp->cmd[_vp->nused++] = (RT_VLIST_LINE_MOVE);
-	    	}
-	    	{
-	    		register struct rt_vlist *_vp = BU_LIST_LAST( rt_vlist, (vh) );
-	    		if( BU_LIST_IS_HEAD( _vp, (vh) ) || _vp->nused >= RT_VLIST_CHUNK ) {
-	    			RT_GET_VLIST(_vp);
-	    			BU_LIST_INSERT( (vh), &(_vp->l) );
-	    		}
-	    		VMOVE( _vp->pt[_vp->nused], (next_base) );
-	    		_vp->cmd[_vp->nused++] = (RT_VLIST_LINE_DRAW);
-	    	}
-#endif
 	}
 
 }
