@@ -10,11 +10,10 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include <stdio.h>
+#include "./extern.h"
 #include "./vecmath.h"
 #include "./mat_db.h"
 #include "./screen.h"
-#include "./extern.h"
-#include "./lgt.h"
 static Mat_Db_Entry	mat_db_table[MAX_MAT_DB];
 static int		mat_db_size = 0;
 Mat_Db_Entry		mat_dfl_entry =
@@ -43,7 +42,7 @@ Mat_Db_Entry		mat_nul_entry =
 				MF_NULL,	/* Mode flag.		*/
 				"(null)"	/* Material name.	*/
 				};
-_LOCAL_ int	get_Mat_Entry(), put_Mat_Entry();
+STATIC int	get_Mat_Entry(), put_Mat_Entry();
 
 /*	m a t _ R d _ D b ( )
 	Open material database and read entries into table,
@@ -285,7 +284,7 @@ int	id;
 		return	MAT_DB_NULL;
 	}
 
-_LOCAL_
+STATIC
 get_Mat_Entry( entry, fp )
 register Mat_Db_Entry	*entry;
 FILE	*fp;
@@ -344,7 +343,7 @@ FILE	*fp;
 	return	1;
 	}
 
-_LOCAL_
+STATIC
 put_Mat_Entry( entry, fp )
 register Mat_Db_Entry	*entry;
 register FILE		*fp;

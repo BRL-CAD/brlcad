@@ -10,13 +10,6 @@
 #ifndef lint
 static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
-/*
-	Originally extracted from SCCS archive:
-		SCCS id:	@(#) getfont.c	2.1
-		Modified: 	12/10/86 at 16:04:36	G S M
-		Retrieved: 	2/4/87 at 08:54:04
-		SCCS archive:	/vld/moss/src/lgt/s.getfont.c
-*/
 /* 
 	getfont.c - Load a new font by reading in the header and directory.
  */ 

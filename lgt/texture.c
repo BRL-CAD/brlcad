@@ -10,12 +10,8 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 #include <stdio.h>
 #include <fcntl.h>
-#include "machine.h"
-#include "fb.h"
-#include "vmath.h"
-#include "raytrace.h"
-#include "./mat_db.h"
 #include "./extern.h"
+#include "./mat_db.h"
 
 #define DEBUG_TEXTURE	0
 
@@ -48,7 +44,7 @@ struct fb_texture
 	}
 *fbs = NULL;
 
-_LOCAL_ char	*
+STATIC char	*
 suffix( str )
 register char	*str;
 	{	register char	*p = str + strlen( str ) - 1;
@@ -60,7 +56,7 @@ register char	*str;
 		return	p;
 	}
 
-_LOCAL_ RGBpixel	*
+STATIC RGBpixel	*
 icon_Lookup( iconp, u, v )
 struct icon_texture	*iconp;
 int	u, v;
@@ -76,7 +72,7 @@ int	u, v;
 		return	(RGBpixel *) white_pixel;
 	}
 
-_LOCAL_ struct icon_texture	*
+STATIC struct icon_texture	*
 init_Icon_Texture( file, entry )
 char		*file;
 Mat_Db_Entry	*entry;
@@ -143,7 +139,7 @@ Mat_Db_Entry	*entry;
 	return	iconp;
 	}
 
-_LOCAL_ struct fb_texture	*
+STATIC struct fb_texture	*
 init_Fb_Texture( file, entry )
 char	*file;
 Mat_Db_Entry	*entry;

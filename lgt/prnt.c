@@ -9,22 +9,18 @@
 static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 #include <stdio.h>
-#include "machine.h"
-#include "vmath.h"
-#include "raytrace.h"
+#include "./extern.h"
 #include "./vecmath.h"
-#include "./lgt.h"
 #include "./tree.h"
 #include "./screen.h"
 #include "./ascii.h"
-#include "./extern.h"
 
 static char	*usage[] =
 	{
 "",
 "Usage:",
 "",
-"lgt [-IOTovw file][-AGKXacefgiknps n][-b \"R G B\"][-dtD \"x y\"][-xy \"a b\"] file.g object...",
+"lgt [-IOjovw file][-AGKTXacefiknps n][-G \"s c g v\"][-b \"R G B\"][-dtD \"x y\"][-xy \"a b\"] file.g object...",
 "",
 "The options may appear in any order; however, their parameters must",
 "be present, are positional, and if there is more than one parameter",
@@ -37,7 +33,7 @@ static char	*lgt_menu[] =
 	{
 "                BRL Lighting Model (LGT) : global command set",
 "",
-"A factor             anti-aliasing thru over-sampling by factor",
+"A factor             anti-aliasing thru over-sampling by factor (i.e. 2)",
 "a roll               specify roll (angle around viewing axis) rotation to grid",
 "B                    submit batch run using current context",
 "b R G B              specify background-color",
@@ -48,14 +44,22 @@ static char	*lgt_menu[] =
 "e bitmask            set debug flag (hexidecimal bitmask)",
 "F                    animate",
 "f distance           specify distance from origin of grid to model centroid",
-"G size               grid resolution (# of rays along edge of square grid)",
-"g fov                field of view (1.0 = entire model)",
+"G size cflag gflag view_size    grid configuration",
+"        if cflag == 0, size refers to no. of rays across image (default)",
+"        otherwise it refers to cell size (ray separation) in millimeters.",
+"        if gflag == 0, grid origin will be aligned WRT model RPP (default)",
+"        otherwise it will be aligned WRT model origin",
+"        if viewsize > 0.0 the field of view will be set accordingly",
+"        otherwise it will be set relative to the model RPP (default)",
 "H file               save frame buffer image",
 "h file               read frame buffer image",
 "J                    make a movie (prompts for parameters)",
 "j file               input key-frame from file (as output by mged(1))",
 "K bounces            maximum level of recursion in raytracing",
 "k flag               enable or disable hidden line drawing",
+"        if flag == 0, a lighting model image is produced (default)",
+"        otherwise a hidden line drawing is produced",
+"        if flag == 2, a reverse video (white-on-black) drawing is generated",
 "L id                 modify light source entry id (0 to 10)",
 "l id                 print light source entry id (0 to 10) or all",
 "M id                 modify material data base entry id (0 to 99)",
@@ -67,9 +71,12 @@ static char	*lgt_menu[] =
 "q or ^D              quit",
 "R                    raytrace (generate image) within current rectangle",
 "r                    redraw screen",
-"S file               script (save current option settings in file) ",
+"S file               script (save current option settings in file)",
 "s                    enter infrared module",
-"T file               read texture map file",
+"T size               size of frame buffer display (pixels across)",
+"        By default the display window fits the grid size.  If zooming",
+"        is desired, size should be a multiple of the grid size. To turn",
+"        off manual sizing, set size to zero.",
 "t x y                translate grid when raytracing (WRT model)",
 "V file               write light source data base",
 "v file               read light source data base",
@@ -108,7 +115,7 @@ char	screen[TOP_SCROLL_WIN+1][TEMPLATE_COLS+1];
 /*	pad_Strcpy -- WARNING: this routine does NOT nul-terminate the
 	destination buffer, but pads it with blanks.
  */
-_LOCAL_ void
+STATIC void
 pad_Strcpy( des, src, len )
 register char	*des, *src;
 register int	len;
@@ -140,8 +147,8 @@ prnt_Status()
 	pad_Strcpy( TITLE_PTR, title, TITLE_LEN - 1 );
 	pad_Strcpy( TIMER_PTR, timer, TIMER_LEN - 1 );
 	pad_Strcpy( F_SCRIPT_PTR, script_file, 32 );
-	(void) sprintf( scratchbuf, "%6.4f", grid_scale );
-	(void) strncpy( FIELD_OF_VU_PTR, scratchbuf, strlen( scratchbuf ) );
+	(void) sprintf( scratchbuf, "%11.4f", view_size );
+	(void) strncpy( VU_SIZE_PTR, scratchbuf, strlen( scratchbuf ) );
 	pad_Strcpy( F_ERRORS_PTR, err_file, 32 );
 	(void) sprintf( scratchbuf, "%11.4f", grid_dist );
 	(void) strncpy( GRID_DIS_PTR, scratchbuf, strlen( scratchbuf ) );
@@ -154,7 +161,8 @@ prnt_Status()
 	pad_Strcpy( F_RASTER_PTR, fb_file, 32 );
 	(void) sprintf( scratchbuf, "%11.4f", modl_radius );
 	(void) strncpy( MODEL_RA_PTR, scratchbuf, strlen( scratchbuf ) );
-	(void) sprintf( scratchbuf, "%3d %3d %3d", background[0], background[1], background[2] );
+	(void) sprintf( scratchbuf, "%3d %3d %3d",
+			background[0], background[1], background[2] );
 	(void) strncpy( BACKGROU_PTR, scratchbuf, strlen( scratchbuf ) );
 	(void) sprintf( scratchbuf,
 			"%4s",	pix_buffered == B_PAGE ? "PAGE" :
@@ -168,8 +176,10 @@ prnt_Status()
 	(void) strncpy( MAX_BOUN_PTR, scratchbuf, strlen( scratchbuf ) );
 	(void) sprintf( scratchbuf, " LGT %s", version );
 	(void) strncpy( PROGRAM_NM_PTR, scratchbuf, strlen( scratchbuf ) );
-	(void) sprintf( scratchbuf, " %s ", ged_file == NULL ? "(null)" : ged_file );
-	(void) strncpy( F_GED_DB_PTR, scratchbuf, Min( strlen( scratchbuf ), 26 ) );
+	(void) sprintf( scratchbuf, " %s ",
+			ged_file == NULL ? "(null)" : ged_file );
+	(void) strncpy( F_GED_DB_PTR, scratchbuf,
+			Min( strlen( scratchbuf ), 26 ) );
 	(void) sprintf( scratchbuf, " [%04d-", grid_x_org );
 	(void) strncpy( GRID_PIX_PTR, scratchbuf, strlen( scratchbuf ) );
 	(void) sprintf( scratchbuf, "%04d,", grid_x_fin );

@@ -13,14 +13,9 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <fcntl.h>
 #include <math.h>
 #include <signal.h>
-#include "machine.h"
-#include "vmath.h"
-#include "raytrace.h"
-#include "fb.h"
-#include "./vecmath.h"
-#include "./lgt.h"
-#include "./screen.h"
 #include "./extern.h"
+#include "./vecmath.h"
+#include "./screen.h"
 #if defined( CRAY )
 #include <sys/category.h>
 #include <sys/resource.h>
@@ -35,18 +30,14 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 int	ready_Output_Device();
 void	close_Output_Device();
 #if STD_SIGNAL_DECLS
-_LOCAL_ void	intr_sig();
-void		(*norml_sig)(), (*abort_sig)();
-extern void	stop_sig();
+STATIC void	intr_sig();
 #else
-_LOCAL_ int	intr_sig();
-int		(*norml_sig)(), (*abort_sig)();
-extern int	stop_sig();
+STATIC int	intr_sig();
 #endif
-_LOCAL_ void	init_Lgts();
+STATIC void	init_Lgts();
 void		exit_Neatly();
 
-_LOCAL_ int
+STATIC int
 substr( str, pattern )
 char	*str, *pattern;
 	{
@@ -175,7 +166,7 @@ int	frame;
 	if( ! movie.m_fullscreen )
 		{	register int	frames_across;
 			register int	size;
-		size = (int) sqrt( (double) movie.m_noframes + 0.5 ) * movie.m_frame_sz;
+		size = MovieSize( movie.m_frame_sz, movie.m_noframes );
 		frames_across = size / movie.m_frame_sz;
 		x_fb_origin = (frame % frames_across) * movie.m_frame_sz;
 		y_fb_origin = (frame / frames_across) * movie.m_frame_sz;
@@ -230,18 +221,33 @@ int	status;
 int
 ready_Output_Device( frame )
 int	frame;
-	{	int	size =
-		(int) sqrt( (double) movie.m_noframes + 0.5 ) * grid_sz;
+	{	int size;
+	if( force_cellsz )
+		{
+		grid_sz = (int)(view_size / cell_sz);
+		setGridSize( grid_sz );
+		prnt_Status();
+		}
+	/* Calculate size of frame buffer image (pixels across square image). */
+	if( movie.m_noframes > 1 && ! movie.m_fullscreen )
+		/* Fit frames of movie. */
+		size = MovieSize( grid_sz, movie.m_noframes );
+	else
+	if( force_fbsz && ! DiskFile(fb_file) )
+		size = fb_size; /* user-specified size */
+	else
+		size = grid_sz; /* just 1 pixel/ray */
 	if( movie.m_noframes > 1 && movie.m_fullscreen )
-		{	char	frame_file[MAX_LN];
+		{	char	framefile[MAX_LN];
 		/* We must be doing full-screen frames. */
-		(void) sprintf( frame_file, "%s.%04d", fb_file, frame );
-		if( ! fb_Setup( frame_file, grid_sz ) )
+		size = grid_sz;
+		(void) sprintf( framefile, "%s.%04d", prefix, frame );
+		if( ! fb_Setup( framefile, size ) )
 			return	0;
 		}
 	else
 		{
-		if( ! fb_Setup( fb_file, size ) )
+		if( frame == movie.m_curframe && ! fb_Setup( fb_file, size ) )
 			return	0;
 		fb_Zoom_Window();
 		}
@@ -250,17 +256,26 @@ int	frame;
 
 /*	c l o s e _ O u t p u t _ D e v i c e ( )			*/
 void
-close_Output_Device()
+close_Output_Device( frame )
+int frame;
 	{
+	assert( fbiop != FBIO_NULL );
+#if SGI_WINCLOSE_BUG
 	if( strncmp( fbiop->if_name, "/dev/sgi", 8 ) != 0 )
+#endif
+	if(	(movie.m_noframes > 1 && movie.m_fullscreen)
+	    ||	frame == movie.m_endframe )
+		{
 		(void) fb_close( fbiop );
+		fbiop = FBIO_NULL;
+		}
 	return;
 	}
 
 #if STD_SIGNAL_DECLS
-_LOCAL_ void
+STATIC void
 #else
-_LOCAL_ int
+STATIC int
 #endif
 /*ARGSUSED*/
 intr_sig( sig )
@@ -277,7 +292,7 @@ int	sig;
 /*	i n i t _ L g t s ( )
 	Set certain default lighting info.
  */
-_LOCAL_ void
+STATIC void
 init_Lgts()
 	{
 	/* Ambient lighting.						*/

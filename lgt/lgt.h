@@ -9,6 +9,16 @@
 */
 #ifndef INCL_LGT
 #define INCL_LGT
+#include "machine.h"	/* has once-only latch */
+#include "vmath.h"	/* has once-only latch */
+#include "raytrace.h"	/* has once-only latch */
+#include "fb.h"		/* has once-only latch */
+#include "./hmenu.h"	/* has once-only latch */
+
+#ifdef BSD
+#define strchr	index
+#define strrchr	rindex
+#endif
 
 #define OVERLAPTOL	0.25	/* Thinner overlaps won't be reported.	*/
 #define MAX_COLOR	15
@@ -27,6 +37,19 @@
 #define Malloc_Bomb( _bytes_ ) \
 		fb_log( "\"%s\"(%d) : allocation of %d bytes failed.\n", \
 				__FILE__, __LINE__, _bytes_ )
+
+/* Guess whether or not a frame buffer name is a disk file. (XXX) */
+#define DiskFile(fil)	(*fil != '\0'\
+			&& strncmp(fil, "/dev", 4 ) && strchr( fil, ':' )==NULL)
+
+/* Values for grid type. */
+#define GT_RPP_CENTERED	0 /* Grid origin aligned with centroid of model RPP. */
+#define GT_ORG_CENTERED	1 /* Grid aligned with model origin. */
+
+/* Flag (hiddenln_draw) values for hidden line drawing. */
+#define HL_DISABLED		0
+#define HL_ENABLED		1
+#define HL_REVERSE_VIDEO	2
 
 /* Flag (pix_buffered) values for writing pixels to the frame buffer.	*/
 #define B_PIO		0	/* Programmed I/O.			*/
@@ -122,6 +145,7 @@ typedef struct
 	fastf_t m_pers_end;
 	}
 Movie;
+#define MovieSize( sz, nf )	(int)sqrt((double)(nf)+0.5)*(sz)
 #define IK_INTENSITY	255.0
 #define RGB_INVERSE	(1.0 / IK_INTENSITY)
 #define EYE_SIZE	12.7

@@ -17,14 +17,9 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 */
 
 #include <stdio.h>
-#include "machine.h"
-#include "vmath.h"
-#include "raytrace.h"
-#include "fb.h"
-#include "./vecmath.h"
-#include "./lgt.h"
-#include "./tree.h"
 #include "./extern.h"
+#include "./vecmath.h"
+#include "./tree.h"
 
 /* Error incurred while converting from double to float and back.	*/
 #define F2D_EPSILON	1.0e-1
@@ -37,7 +32,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 		(((p) = (PtList *) malloc(sizeof(PtList))) != PTLIST_NULL)
 #define NewOctree( p ) \
 		(((p) = (Octree *) malloc(sizeof(Octree))) != OCTREE_NULL)
-_LOCAL_ int	subdivide_Octree();
+STATIC int	subdivide_Octree();
 
 Octree	*
 new_Octant( parentp, childpp, bitv, level )
@@ -240,7 +235,7 @@ PtList	**ptlistp;
 
 #define L_MAX_POWER_TWO		31
 
-_LOCAL_ int
+STATIC int
 subdivide_Octree( parentp, level )
 register Octree	*parentp;
 int		level;
@@ -393,7 +388,7 @@ FILE	*fp;
 	return	1;
 	}
 
-_LOCAL_ void
+STATIC void
 hit_octant( ap, op, lpp, inv_dir, level )
 struct application	*ap;
 register Octree		*op, **lpp;

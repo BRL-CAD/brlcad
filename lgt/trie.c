@@ -10,14 +10,10 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include <stdio.h>
-#include "machine.h"
-#include "vmath.h"
-#include "fb.h"
-#include "./lgt.h"
+#include "./extern.h"
 #include "./vecmath.h"
 #include "./ascii.h"
 #include "./tree.h"
-#include "./extern.h"
 #define NewTrie( p ) \
 		if( ((p) = (Trie *) malloc( sizeof(Trie) )) == TRIE_NULL ) \
 			{ \
@@ -32,8 +28,8 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 			fatal_error = TRUE; \
 			return; \
 			}
-_LOCAL_ OcList	*copy_OcList();
-_LOCAL_ OcList	*match_Trie();
+STATIC OcList	*copy_OcList();
+STATIC OcList	*match_Trie();
 
 void
 append_Octp( triep, octp )
@@ -174,7 +170,7 @@ register Trie	*triep;
 	return	copy_OcList( curp->l.t_octp );
 	}
 
-_LOCAL_ OcList	*
+STATIC OcList	*
 match_Trie( triep )
 register Trie	*triep;
 	{	OcList	*oclist = OCLIST_NULL;
@@ -200,7 +196,7 @@ register Trie	*triep;
 	}
 
 
-_LOCAL_ OcList	*
+STATIC OcList	*
 copy_OcList( orp )
 register OcList	*orp;			/* Input list read pointer.	*/
 	{	OcList *oclistp = OCLIST_NULL;	/* Output list pointer.	*/

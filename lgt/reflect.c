@@ -21,16 +21,11 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #else
 #include <string.h>
 #endif
-#include "machine.h"
-#include "vmath.h"
-#include "raytrace.h"
-#include "fb.h"
+#include "./extern.h"
 #include "./vecmath.h"
-#include "./lgt.h"
 #include "./mat_db.h"
 #include "./tree.h"
 #include "./screen.h"
-#include "./extern.h"
 #define TWO_PI		6.28318530717958647692528676655900576839433879875022
 #define RI_AIR		1.0  /* refractive index of air */
 
@@ -124,10 +119,11 @@ static int		hits_shadowed;
 static int		hits_lit;
 
 /* Local communication with render_Scan(). */
-static int curr_scan;		/* current scan line number */
-static int last_scan;		/* last scan */
-static int nworkers;		/* number of workers now running */
-static int a_gridsz;
+static int curr_scan;	  /* current scan line number */
+static int last_scan;	  /* last scan */
+static int nworkers;	  /* number of workers now running */
+static int a_gridsz;	  /* grid size taking anti-aliasing into account */
+static fastf_t	a_cellsz; /* cell size taking anti-aliasing into account */
 static fastf_t	grid_dh[3], grid_dv[3];
 static struct application ag;	/* global application structure */
 
@@ -186,22 +182,22 @@ static unsigned short	*hl_dstmap = NULL;
 		}\
 	}
 
-_LOCAL_ fastf_t		ipow();
-_LOCAL_ fastf_t		correct_Lgt();
-_LOCAL_ fastf_t		*mirror_Reflect();
+STATIC fastf_t		ipow();
+STATIC fastf_t		correct_Lgt();
+STATIC fastf_t		*mirror_Reflect();
 
 /* "Hit" application routines to pass to "rt_shootray()".		*/
-_LOCAL_ int		f_Model(), f_Probe(), f_Shadow(), f_HL_Hit(), f_Region();
+STATIC int		f_Model(), f_Probe(), f_Shadow(), f_HL_Hit(), f_Region();
 /* "Miss" application routines to pass to "rt_shootray()".		*/
-_LOCAL_ int		f_Backgr(), f_Error(), f_Lit(), f_HL_Miss(), f_R_Miss();
+STATIC int		f_Backgr(), f_Error(), f_Lit(), f_HL_Miss(), f_R_Miss();
 /* "Overlap" application routines to pass to "rt_shootray()".		*/
-_LOCAL_ int		f_Overlap(), f_NulOverlap();
+STATIC int		f_Overlap(), f_NulOverlap();
 
-_LOCAL_ int		refract();
+STATIC int		refract();
 
-_LOCAL_ void		model_Reflectance();
-_LOCAL_ void		glass_Refract();
-_LOCAL_ void		view_pix(), view_bol(), view_eol(), view_end();
+STATIC void		model_Reflectance();
+STATIC void		glass_Refract();
+STATIC void		view_pix(), view_bol(), view_eol(), view_end();
 
 void			cons_Vector();
 void			render_Model();
@@ -219,6 +215,50 @@ RGBpixel	**pp;
 	}
 #endif
 
+/*
+	void getCellSize( int gsize )
+ */
+STATIC void
+getCellSize( gsize )
+int gsize;
+	{
+	if( save_view_flag )
+		{ /* Saved view from GED, match view size. */
+		if( rel_perspective != 0.0 )
+			/* Animation sequence, perspective gridding. */
+			cell_sz = EYE_SIZE / (fastf_t) gsize;
+		else
+			cell_sz = view_size / (fastf_t) gsize;
+		}
+	else
+		cell_sz = view_size/ (fastf_t) gsize;
+	return;
+	}
+
+/*
+	void getCenter( void )
+
+ */
+STATIC int
+getCenter()
+	{
+	switch( type_grid )
+		{
+	case GT_RPP_CENTERED :
+		modl_cntr[X] = (rt_ip->mdl_max[X] + rt_ip->mdl_min[X]) / 2.0;
+		modl_cntr[Y] = (rt_ip->mdl_max[Y] + rt_ip->mdl_min[Y]) / 2.0;
+		modl_cntr[Z] = (rt_ip->mdl_max[Z] + rt_ip->mdl_min[Z]) / 2.0;
+		break;
+	case GT_ORG_CENTERED :
+		VSETALL( modl_cntr, 0.0 );
+		break;
+	default :
+		rt_log( "Illegal grid type %d\n", type_grid );
+		return	FALSE;
+		}
+	return	TRUE;
+	}
+
 /*	r e n d e r _ M o d e l ( )					*/
 void
 render_Model( frame )
@@ -234,7 +274,6 @@ int	frame;
 		{
 		ag.a_hit = f_IR_Model;
 		ag.a_miss = f_IR_Backgr;
-		ag.a_overlap = report_overlaps ? f_Overlap : f_NulOverlap;
 		}
 	else
 	if( query_region )
@@ -242,6 +281,7 @@ int	frame;
 		ag.a_hit = f_Region;
 		ag.a_miss = f_R_Miss;
 		ag.a_overlap = report_overlaps ? f_Overlap : f_NulOverlap;
+		ag.a_onehit = TRUE;
 		}
 	else
 	if( hiddenln_draw )
@@ -260,18 +300,22 @@ int	frame;
 		ag.a_hit = f_HL_Hit;
 		ag.a_miss = f_HL_Miss;
 		ag.a_overlap = report_overlaps ? f_Overlap : f_NulOverlap;
-		max_bounce = 0;
+		ag.a_onehit = TRUE;
 		}
 	else
 		{
 		ag.a_hit = f_Model;
 		ag.a_miss = f_Backgr;
 		ag.a_overlap = report_overlaps ? f_Overlap : f_NulOverlap;
+		ag.a_onehit = ! (max_bounce > 0);
 		}
 	ag.a_rt_i = rt_ip;
-	ag.a_onehit = max_bounce > 0 ? 0 : 1;
 	ag.a_rbeam = modl_radius / grid_sz;
 	ag.a_diverge = 0.0;
+
+	/* Compute center of view. */
+	if( ! getCenter() )
+		return;
 
 	/* Compute light source positions.				*/
 	if( ! setup_Lgts( frame ) )
@@ -283,21 +327,18 @@ int	frame;
 		These will be the delta vectors between adjacent cells.
 	 */
 	a_gridsz = anti_aliasing ? grid_sz * aperture_sz : grid_sz;
-	if( save_view_flag )
-		{ /* Saved view from GED, match view size.		*/
-		if( rel_perspective != 0.0 )
-			/* Animation sequence, perspective gridding.	*/
-			cell_sz = EYE_SIZE / (fastf_t) a_gridsz;
-		else
-			cell_sz = view_size / (fastf_t) a_gridsz;
-		}
+	if( force_cellsz )
+		a_cellsz = anti_aliasing ? cell_sz / aperture_sz : cell_sz;
 	else
-		cell_sz = modl_radius * 2.0/ (fastf_t) a_gridsz * grid_scale;
+		{
+		getCellSize( a_gridsz );
+		a_cellsz = cell_sz;
+		}
+
 	if( rt_g.debug & DEBUG_CELLSIZE )
 		rt_log( "Cell size is %g mm.\n", cell_sz );
-
-	Scale2Vec( grid_hor, cell_sz, grid_dh );
-	Scale2Vec( grid_ver, cell_sz, grid_dv );
+	Scale2Vec( grid_hor, a_cellsz, grid_dh );
+	Scale2Vec( grid_ver, a_cellsz, grid_dv );
 
 	/* Statistics for refraction tuning.				*/ 
 	refrac_missed = 0;
@@ -370,6 +411,9 @@ render_Scan()
 	RES_RELEASE( &rt_g.res_worker );
 
 	resource[cpu].re_cpu = cpu;
+#ifdef RESOURCE_MAGIC
+	resource[cpu].re_magic = RESOURCE_MAGIC;
+#endif
 
 	for( ; ! user_interrupt; )
 		{
@@ -379,15 +423,16 @@ render_Scan()
 
 		if( com > last_scan )
 			break;
+		a = ag; /* Eeek, look out for those struct copy bugs. */
+		assert( a.a_hit == ag.a_hit );
+		assert( a.a_miss == ag.a_miss );
+		assert( a.a_overlap == ag.a_overlap );
+		assert( a.a_rt_i == ag.a_rt_i );
+		assert( a.a_rbeam == ag.a_rbeam );
+		assert( a.a_diverge == ag.a_diverge );
 		a.a_x = grid_x_org;
 		a.a_y = com;
-		a.a_hit = ag.a_hit;
-		a.a_miss = ag.a_miss;
-		a.a_overlap = ag.a_overlap;
 		a.a_onehit = FALSE;
-		a.a_rt_i = ag.a_rt_i;
-		a.a_rbeam = ag.a_rbeam;
-		a.a_diverge = ag.a_diverge;
 		a.a_resource = &resource[cpu];
 		a.a_purpose = "render_Scan";
 		if( anti_aliasing )
@@ -460,7 +505,7 @@ render_Scan()
 	}
 
 /*ARGSUSED*/
-_LOCAL_ int
+STATIC int
 f_R_Miss( ap )
 register struct application *ap;
 	{
@@ -468,7 +513,7 @@ register struct application *ap;
 	return	0;
 	}
 
-_LOCAL_ int
+STATIC int
 f_Region( ap, pt_headp )
 register struct application *ap;
 struct partition *pt_headp;
@@ -529,7 +574,7 @@ struct partition *pt_headp;
 	return	1;
 	}
 
-_LOCAL_ int
+STATIC int
 f_HL_Miss( ap )
 register struct application *ap;
 	{
@@ -541,7 +586,7 @@ register struct application *ap;
 	return	0;
 	}
 
-_LOCAL_ int
+STATIC int
 f_HL_Hit( ap, pt_headp )
 register struct application *ap;
 struct partition *pt_headp;
@@ -586,7 +631,7 @@ struct partition *pt_headp;
 	ma_matparm array, we will assign those digits to the material id
 	of this region.
  */
-_LOCAL_ bool
+STATIC bool
 getMaMID( map, id )
 struct mater_info *map;
 int *id;
@@ -635,7 +680,7 @@ int *id;
 	observer or a bounced ray.
 
  */
-_LOCAL_ int
+STATIC int
 f_Model( ap, pt_headp )
 register struct application *ap;
 struct partition *pt_headp;
@@ -870,7 +915,7 @@ struct partition *pt_headp;
 	Shoot a ray to the light source to determine if surface
 	is shadowed, return corrected light source intensity.
  */
-_LOCAL_ fastf_t
+STATIC fastf_t
 correct_Lgt( ap, pp, lgt_entry )
 register struct application	*ap;
 register struct partition	*pp;
@@ -889,11 +934,12 @@ register Lgt_Source		*lgt_entry;
 	if( shadowing )
 		{	struct application	ap_hit;
 		/* Set up appl. struct for 'rt_shootray()' to light src. */
-		ap_hit = *ap;
+		ap_hit = *ap; /* Watch out for struct copy bugs. */
+		assert( ap_hit.a_overlap == ap->a_overlap );
+		assert( ap_hit.a_level == ap->a_level );
 		ap_hit.a_onehit = FALSE; /* Go all the way to the light. */
 		ap_hit.a_hit = f_Shadow; /* Handle shadowed pixels. */
 		ap_hit.a_miss = f_Lit;   /* Handle illuminated pixels. */
-		ap_hit.a_overlap = ap->a_overlap;
 		ap_hit.a_level++;	 /* Increment recursion level. */
 	
 		if( rt_g.debug & DEBUG_SHADOW )
@@ -960,7 +1006,7 @@ register Lgt_Source		*lgt_entry;
 	}
 
 /*	m i r r o r _ R e f l e c t ( )					*/
-_LOCAL_ fastf_t *
+STATIC fastf_t *
 mirror_Reflect( ap, pp )
 register struct application	*ap;
 register struct partition	*pp;
@@ -993,7 +1039,7 @@ register struct partition	*pp;
 	}
 
 /*	g l a s s _ R e f r a c t ( )					*/
-_LOCAL_ void
+STATIC void
 glass_Refract( ap, pp, entry )
 register struct application	*ap;
 register struct partition	*pp;
@@ -1004,7 +1050,7 @@ register Mat_Db_Entry		*entry;
 	ap_ref = *ap;
 	ap_ref.a_hit =  f_Probe;	/* Find exit from glass.	*/
 	ap_ref.a_miss = f_Error;	/* Bad news.			*/
-	ap_ref.a_overlap = ap->a_overlap;
+	assert( ap_ref.a_overlap == ap->a_overlap );
 	ap_ref.a_onehit = TRUE;
 	ap_ref.a_level++;		/* Increment recursion level.	*/
 
@@ -1175,7 +1221,7 @@ exiting_ray :
 	'Miss' application specific routine for 'rt_shootray()' from
 	observer or a bounced ray.
  */
-_LOCAL_ int
+STATIC int
 f_Backgr( ap )
 register struct application *ap;
 	{	register int	i;
@@ -1229,7 +1275,7 @@ register struct application *ap;
 
 /*	f _ E r r o r ( )						*/
 /*ARGSUSED*/
-_LOCAL_ int
+STATIC int
 f_Error( ap )
 register struct application *ap;
 	{
@@ -1242,7 +1288,7 @@ register struct application *ap;
 	'Miss' application specific routine for 'rt_shootray()' to
 	light source for shadowing.  Return full intensity in "ap->a_diverge".
  */
-_LOCAL_ int
+STATIC int
 f_Lit( ap )
 register struct application *ap;
 	{	
@@ -1254,7 +1300,7 @@ register struct application *ap;
 	}
 
 /*	f _ P r o b e ( )						*/
-_LOCAL_ int
+STATIC int
 f_Probe( ap, pt_headp )
 register struct application *ap;
 struct partition *pt_headp;
@@ -1294,7 +1340,7 @@ struct partition *pt_headp;
 	reflection, the 'critical angle' is the angle theta_1 for which
 	ri_1/ri_2 * sin( theta_1 ) equals 1.
  */
-_LOCAL_ int
+STATIC int
 refract( v_1, norml, ri_1, ri_2, v_2 )
 register fastf_t	*v_1, *norml;
 fastf_t			ri_1, ri_2;
@@ -1356,7 +1402,7 @@ register fastf_t	*v_2;
 	light source for shadowing. Returns attenuated light intensity in
 	"ap->a_diverge".
  */
-_LOCAL_ int
+STATIC int
 f_Shadow( ap, pt_headp )
 register struct application *ap;
 struct partition *pt_headp;
@@ -1451,7 +1497,7 @@ struct partition *pt_headp;
 
 	The RGB result is returned implicitly in "ap->a_color".
  */
-_LOCAL_ void
+STATIC void
 model_Reflectance( ap, pp, mdb_entry, lgt_entry, view_dir )
 register struct application	*ap;
 struct partition		*pp;
@@ -1600,7 +1646,7 @@ int	sig;
 	Integer exponent pow() function.
 	Returns 'd' to the 'n'th power.
  */
-_LOCAL_ fastf_t
+STATIC fastf_t
 ipow( d, n )
 register fastf_t	d;
 register int	n;
@@ -1699,6 +1745,10 @@ int	x, y;
 hl_Postprocess()
 	{	static RGBpixel	black_pixel = { 0, 0, 0 };
 		static RGBpixel	white_pixel = { 255, 255, 255 };
+		register RGBpixel *fgp = (RGBpixel *)
+				(reverse_video ? black_pixel : white_pixel);
+		register RGBpixel *bgp = (RGBpixel *)
+				(reverse_video ? white_pixel : black_pixel);
 		static RGBpixel bufa[1024], bufb[1024];
 		register int	x, y;
 		unsigned short	maxdist = (cell_sz*ARCTAN_87)+2;
@@ -1706,6 +1756,7 @@ hl_Postprocess()
 	for( y = 0; y < grid_sz && ! user_interrupt; y++ )
 		{	static RGBpixel	*rpixp;
 			static RGBpixel	*lpixp;
+			
 		rpixp = is_Odd(y) ? bufb : bufa;
 		lpixp = is_Odd(y) ? bufa : bufb;
 		(void) fb_seek( fbiop, 0, y );
@@ -1716,7 +1767,9 @@ hl_Postprocess()
 			{
 			if( fb_rpixel( fbiop, rpixp[x] ) == -1 )
 				{
-				fb_log( "hl_Postprocess: Failed to read pixel <%d,%d>\n", x, y );
+				fb_log(
+			"hl_Postprocess: Failed to read pixel <%d,%d>\n",
+					x, y );
 				return;
 				}
 			/*prnt_Pixel( rpixp[x], x, y );*/
@@ -1750,11 +1803,11 @@ hl_Postprocess()
 			{
 			if( HL_TSTBIT( x, y ) )
 				{
-				FB_WPIXEL( fbiop, white_pixel );
+				FB_WPIXEL( fbiop, *fgp );
 				}
 			else
 				{
-				FB_WPIXEL( fbiop, black_pixel );
+				FB_WPIXEL( fbiop, *bgp );
 				}
 			}
 		}
@@ -1763,7 +1816,7 @@ hl_Postprocess()
 	}
 
 /*	v i e w _ p i x ( )						*/
-_LOCAL_ void
+STATIC void
 view_pix( ap, scanbuf )
 register struct application	*ap;
 RGBpixel		scanbuf[];
@@ -1864,7 +1917,7 @@ RGBpixel		scanbuf[];
 	}
 
 /*	v i e w _ b o l ( )						*/
-_LOCAL_ void
+STATIC void
 view_bol( ap )
 register struct application	*ap;
 	{	int	x = grid_x_org + x_fb_origin;
@@ -1887,7 +1940,7 @@ register struct application	*ap;
 	}
 
 /*	v i e w _ e o l ( )						*/
-_LOCAL_ void
+STATIC void
 view_eol( ap, scanbuf )
 register struct application	*ap;
 RGBpixel			scanbuf[];
@@ -1940,7 +1993,7 @@ RGBpixel			scanbuf[];
 	}
 
 /*	v i e w _ e n d ( )						*/
-_LOCAL_ void
+STATIC void
 view_end()
 	{
 	if( pix_buffered == B_PAGE )
@@ -1996,7 +2049,7 @@ fastf_t	R;
 	return	exp( - Sqr( R ) / LOG10E ) / (LOG10E * PI);
 	}
 
-_LOCAL_ int
+STATIC int
 f_Overlap( ap, pp, reg1, reg2 )
 register struct application	*ap;
 register struct partition	*pp;
@@ -2022,7 +2075,7 @@ struct region			*reg1, *reg2;
 	return	1;
 	}
 
-_LOCAL_ int
+STATIC int
 /*ARGSUSED*/
 f_NulOverlap( ap, pp, reg1, reg2 )
 struct application	*ap;

@@ -29,8 +29,8 @@ static char sccsTag[] = "%Z% %M% %I%, modified %G% at %U%, archive %P%";
 #include "./extern.h"
 #include "./hmenu.h"
 extern int	LI, CO;
-#ifndef _LOCAL_
-#define _LOCAL_ static
+#ifndef STATIC
+#define STATIC static
 #endif
 #define MAX_PROMPT	10
 #define Alloc(p_,t_,s_)\
@@ -83,7 +83,7 @@ struct nmllist
 	HMllist	*next;
 	};
 
-_LOCAL_ void
+STATIC void
 prnt_HMitem( itemp )
 HMitem	*itemp;
 	{
@@ -101,7 +101,7 @@ HMitem	*itemp;
 	return;
 	}
 
-_LOCAL_ void
+STATIC void
 prnt_HMllist( listp )
 HMllist	*listp;
 	{
@@ -112,7 +112,7 @@ HMllist	*listp;
 	return;
 	}
 
-_LOCAL_ void
+STATIC void
 free_HMitems( itemp )
 HMitem	*itemp;
 	{	register HMitem	*citemp;
@@ -126,7 +126,7 @@ HMitem	*itemp;
 	return;
 	}
 
-_LOCAL_ void
+STATIC void
 free_HMllist( listp )
 HMllist	*listp;
 	{
@@ -138,7 +138,7 @@ HMllist	*listp;
 	return;
 	}
 
-_LOCAL_ void
+STATIC void
 hm_Put_Item( win, itemp, flag )
 register HWindow	*win;
 register HMitem		*itemp;
@@ -225,7 +225,7 @@ int			flag;
 		return;
 		}
 
-_LOCAL_ void
+STATIC void
 hm_Put_Border( win, row, mark )
 register HWindow	*win;
 register int		row;
@@ -252,7 +252,7 @@ char			mark;
 	return;
 	}
 
-_LOCAL_ void
+STATIC void
 hm_Setbit( win, col, row )
 register HWindow	*win;
 int			col, row;
@@ -261,7 +261,7 @@ int			col, row;
 	return;
 	}
 
-_LOCAL_ void
+STATIC void
 hm_Clrmap( win )
 HWindow	*win;
 	{	register int	row;
@@ -270,7 +270,7 @@ HWindow	*win;
 	return;
 	}
 
-_LOCAL_ void
+STATIC void
 hm_Setmap( win )
 HWindow	*win;
 	{	register int	row;
@@ -279,7 +279,7 @@ HWindow	*win;
 	return;
 	}
 
-_LOCAL_ HWindow	*
+STATIC HWindow	*
 hm_In_Win( x, y, win )
 register int		x, y;
 register HWindow	*win;
@@ -294,7 +294,7 @@ register HWindow	*win;
 	return	(HWindow *) 0;
 	}
 
-_LOCAL_ void
+STATIC void
 hm_Draw_Win( win )
 register HWindow	*win;
 	{	register HMitem	*itemp;
@@ -314,7 +314,7 @@ register HWindow	*win;
 	return;
 	}
 
-_LOCAL_ void
+STATIC void
 hm_Redraw_Win( win )
 HWindow	*win;
 	{
@@ -328,7 +328,7 @@ HWindow	*win;
 	return;
 	}
 
-_LOCAL_ void
+STATIC void
 hm_Help( win, entry )
 register HWindow	*win;
 int	entry;
@@ -355,7 +355,7 @@ int	entry;
 	return;
 	}
 
-_LOCAL_ void
+STATIC void
 hm_Lift_Win( win )
 register HWindow	*win;
 	{	register int	row, col;

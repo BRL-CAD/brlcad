@@ -7,16 +7,22 @@
 			Maryland 21005-5066
 			(301)278-6651 or AV-298-6651
 */
-#if ! defined(FAST)
-#include "machine.h"
+#include "./lgt.h"
+
+#ifndef DEBUG
+#define NDEBUG
+#endif
+#include <assert.h>
+
+#ifndef STATIC
+#define STATIC static
 #endif
 
-#if ! defined(INCL_FB)
-#include "fb.h"
-#endif
-
-#if ! defined(INCL_HM)
-#include "./hmenu.h"
+/* Set pre-processor switch to make up for SGI 4d Release 2 winclose() bug. */
+#ifdef SGI4D_Rel2
+#define SGI_WINCLOSE_BUG 1
+#else
+#define SGI_WINCLOSE_BUG 0
 #endif
 
 /* Set pre-processor switch for getting signal() handler declarations right.
@@ -25,6 +31,13 @@
 #define STD_SIGNAL_DECLS 1
 #else
 #define STD_SIGNAL_DECLS 0
+#endif
+
+/* Set pre_processor switch to make up for SGI 3000 series math library. */
+#if defined(sgi) && ! defined(mips)
+#define SINGLE_PRECISION 1
+#else
+#define SINGLE_PRECISION 0
 #endif
 
 #if STD_SIGNAL_DECLS
@@ -42,15 +55,16 @@ extern int abort_RT();
 #	ifdef BSD
 	extern int exit();
 	extern int free();
+	extern int stop_sig();
 #	else
 	extern void exit();
 	extern void free();
+	extern void stop_sig();
 #	endif
 extern char *getenv();
 extern char *malloc();
 #endif
 extern char *sbrk();
-extern char *strcpy(), *strncpy();
 #ifdef BSD
 extern char *tmpnam(), *gets(), *strtok();
 extern int perror();
@@ -99,7 +113,7 @@ extern void prnt3vec();
 extern void render_Model();
 extern void ring_Bell();
 extern void set_IRmapping();
-extern void set_Size_Grid();
+extern void setGridSize();
 extern void update_Screen();
 extern void user_Interaction();
 
@@ -121,6 +135,7 @@ extern char ir_file[];
 extern char ir_db_file[];
 extern char lgt_db_file[];
 extern char mat_db_file[];
+extern char prefix[];
 extern char prompt[];
 extern char script_file[];
 extern char title[];
@@ -134,7 +149,6 @@ extern fastf_t grid_dist;
 extern fastf_t grid_hor[];
 extern fastf_t grid_ver[];
 extern fastf_t grid_loc[];
-extern fastf_t grid_scale;
 extern fastf_t grid_roll;
 extern fastf_t modl_cntr[];
 extern fastf_t modl_radius;
@@ -152,6 +166,10 @@ extern int co;
 extern int debug;
 extern int errno;
 extern int fatal_error;
+extern int fb_size;
+extern int force_cellsz;
+extern int force_fbsz;
+extern int force_viewsz;
 extern int frame_no;
 extern int grid_sz;
 extern int grid_position;
@@ -174,12 +192,14 @@ extern int npsw;
 extern int pix_buffered;
 extern int query_region;
 extern int report_overlaps;
+extern int reverse_video;
 extern int save_view_flag;
 extern int sgi_console;
 extern int sgi_usemouse;
 extern int shadowing;
 extern int tracking_cursor;
 extern int tty;
+extern int type_grid;
 extern int user_interrupt;
 extern int x_fb_origin, y_fb_origin;
 extern int zoom;

@@ -29,7 +29,6 @@ register CONST char *delim;
 	register char *scan;
 	char *tok;
 	register CONST char *dscan;
-
 	if (s == NULL && scanpoint == NULL)
 		return(NULL);
 	if (s != NULL)

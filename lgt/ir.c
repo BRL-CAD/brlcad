@@ -10,14 +10,9 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include <stdio.h>
-#include "machine.h"
-#include "vmath.h"
-#include "raytrace.h"
-#include "fb.h"
-#include "./vecmath.h"
-#include "./lgt.h"
-#include "./tree.h"
 #include "./extern.h"
+#include "./vecmath.h"
+#include "./tree.h"
 #define IR_DATA_WID	512
 #define Avg_Fah(sum)	((sum)/(sample_sz))
 #define Kelvin2Fah( f )	(9.0/5.0)*((f)-273.15) + 32.0
@@ -28,7 +23,7 @@ static RGBpixel	black = { 0, 0, 0 };
 static int	ir_max_index = -1;
 RGBpixel	*ir_table = RGBPIXEL_NULL;
 
-_LOCAL_ void	temp_To_RGB();
+STATIC void	temp_To_RGB();
 
 int
 ir_Chk_Table()
@@ -53,7 +48,7 @@ ir_Chk_Table()
 	return	1;
 	}
 
-_LOCAL_ int
+STATIC int
 adjust_Page( y )
 int	y;
 	{	int	scans_per_page = fbiop->if_ppixels/fbiop->if_width;
@@ -131,7 +126,7 @@ int	xmin, ymin;
 	return;
 	}
 
-_LOCAL_ int
+STATIC int
 get_IR( x, y, fahp, fp )
 int	x, y;
 int	*fahp;
@@ -232,7 +227,7 @@ FILE	*fp;
 	Douglas A. Gwyn here at BRL, and has been modified slightly
 	to suit the input data.
  */
-_LOCAL_ void
+STATIC void
 temp_To_RGB( rgb, temp )
 RGBpixel	rgb;
 int		temp;

@@ -10,16 +10,9 @@
 #ifndef lint
 static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
-/*
-	Originally extracted from SCCS archive:
-		SCCS id:	@(#) grid_rotate.c	2.1
-		Modified: 	12/10/86 at 16:03:10	G S M
-		Retrieved: 	2/4/87 at 08:53:18
-		SCCS archive:	/vld/moss/src/lgt/s.grid_rotate.c
-*/
-
+#include <stdio.h>
 #include <math.h>
-#include "machine.h"
+#include "./extern.h"
 #include "./vecmath.h"
 void	grid_Rotate();
 

@@ -3,7 +3,7 @@
 			U. S. Army Ballistic Research Laboratory
 			Aberdeen Proving Ground
 			Maryland 21005-5066
-			(301)278-6647 or AV-298-6647
+			(301)278-6651 or AV-298-6651
 
 	$Header$ (BRL)
 */
@@ -11,13 +11,13 @@
 #define TITLE_PTR		&template[ 0][ 7]
 #define TIMER_PTR		&template[ 1][ 7]
 #define F_SCRIPT_PTR		&template[ 2][16]
-#define FIELD_OF_VU_PTR		&template[ 2][72]
+#define GRID_XOF_PTR		&template[ 2][67]
 #define F_ERRORS_PTR		&template[ 3][16]
-#define GRID_DIS_PTR		&template[ 3][67]
+#define GRID_YOF_PTR		&template[ 3][67]
 #define F_MAT_DB_PTR		&template[ 4][16]
-#define GRID_XOF_PTR		&template[ 4][67]
+#define GRID_DIS_PTR		&template[ 4][67]
 #define F_LGT_DB_PTR		&template[ 5][16]
-#define GRID_YOF_PTR		&template[ 5][67]
+#define VU_SIZE_PTR		&template[ 5][67]
 #define F_RASTER_PTR		&template[ 6][16]
 #define MODEL_RA_PTR		&template[ 6][67]
 #define BACKGROU_PTR		&template[ 7][67]

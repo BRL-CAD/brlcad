@@ -14,14 +14,10 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <gl.h>
 #include <device.h>
 #include <string.h>
-#include "machine.h"
-#include "vmath.h"
-#include "raytrace.h"
-#include "./lgt.h"
-#include "./ascii.h"
-#include "./vecmath.h"
 #undef RED
 #include "./extern.h"
+#include "./ascii.h"
+#include "./vecmath.h"
 
 #define WINBORDER	4  /* Thickness of window border. */
 #define WINBANNER	16 /* Thickness of window title bar. */
@@ -59,7 +55,7 @@ static char	*winpupstr[] =
 			(char *) NULL
 			};
 
-_LOCAL_ void
+STATIC void
 sgi_Rect( x0, y0, x1, y1 )
 int	x0, y0, x1, y1;
 	{
@@ -73,7 +69,7 @@ int	x0, y0, x1, y1;
 	return;
 	}
 
-_LOCAL_ void
+STATIC void
 sgi_OL_Transparent()
 	{
 #ifdef mips
@@ -84,7 +80,7 @@ sgi_OL_Transparent()
 	return;
 	}
 
-_LOCAL_ void
+STATIC void
 sgi_OL_Opaque()
 	{
 #ifdef mips
@@ -95,7 +91,7 @@ sgi_OL_Opaque()
 	return;
 	}
 
-_LOCAL_ void
+STATIC void
 sgi_OL_Start()
 	{
 #ifdef mips
@@ -106,7 +102,7 @@ sgi_OL_Start()
 	return;
 	}
 
-_LOCAL_ void
+STATIC void
 sgi_OL_End()
 	{
 #ifdef mips
@@ -117,7 +113,7 @@ sgi_OL_End()
 	return;
 	}
 
-_LOCAL_ void
+STATIC void
 sgi_OL_Erase()
 	{
 #ifndef mips
@@ -151,9 +147,9 @@ long		two_digit_menu;
 static long	popup_gid = -1;
 
 void		sgi_Animate();
-_LOCAL_ void	sgi_Read_Keyboard();
+STATIC void	sgi_Read_Keyboard();
 
-_LOCAL_ int
+STATIC int
 mips_Animate( fps )
 int	fps;
 	{
@@ -161,7 +157,7 @@ int	fps;
 	return	'#'; /* For backward compatibility with SGI menu interface. */
 	}
 
-_LOCAL_ int
+STATIC int
 mips_IR_Flags( flag )
 int	flag;
 	{
@@ -170,7 +166,7 @@ int	flag;
 	return	'#'; /* For backward compatibility with SGI menu interface. */
 	}
 
-_LOCAL_ int
+STATIC int
 mips_IR_Paint( flag )
 int	flag;
 	{
@@ -184,7 +180,7 @@ int	flag;
 	return	'#'; /* For backward compatibility with SGI menu interface. */
 	}
 
-_LOCAL_ int
+STATIC int
 mips_Mat_Print( flag )
 int	flag;
 	{
@@ -193,7 +189,7 @@ int	flag;
 	return	'#'; /* For backward compatibility with SGI menu interface. */
 	}
 
-_LOCAL_ int
+STATIC int
 mips_Max_Ray( flag )
 int	flag;
 	{
@@ -204,7 +200,7 @@ int	flag;
 	return	'#'; /* For backward compatibility with SGI menu interface. */
 	}
 
-_LOCAL_ int
+STATIC int
 mips_Mat_Edit( flag )
 int	flag;
 	{
@@ -212,7 +208,7 @@ int	flag;
 	return	'#'; /* For backward compatibility with SGI menu interface. */
 	}
 
-_LOCAL_ int
+STATIC int
 mips_Lgt_Print( flag )
 int	flag;
 	{
@@ -220,7 +216,7 @@ int	flag;
 	return	'#'; /* For backward compatibility with SGI menu interface. */
 	}
 
-_LOCAL_ int
+STATIC int
 mips_Lgt_Edit( flag )
 int	flag;
 	{
@@ -228,7 +224,7 @@ int	flag;
 	return	'#'; /* For backward compatibility with SGI menu interface. */
 	}
 
-_LOCAL_ int
+STATIC int
 mips_Buffering( flag )
 int	flag;
 	{
@@ -236,7 +232,7 @@ int	flag;
 	return	'#'; /* For backward compatibility with SGI menu interface. */
 	}
 
-_LOCAL_ int
+STATIC int
 mips_Debugging( flag )
 int	flag;
 	{
@@ -248,16 +244,16 @@ int	flag;
 	return	'#'; /* For backward compatibility with SGI menu interface. */
 	}
 
-_LOCAL_ int
+STATIC int
 mips_Size_Grid( size )
 int	size;
 	{
 	grid_sz = size;
-	set_Size_Grid( grid_sz );	
+	setGridSize( grid_sz );	
 	return	'#'; /* For backward compatibility with SGI menu interface. */
 	}
 
-_LOCAL_ void
+STATIC void
 sgi_Pup_Strs()
 	{	register int	i, ypos = PUPHGT-WINBANNER-WINBORDER;
 		long	gid = winget();
@@ -273,7 +269,7 @@ sgi_Pup_Strs()
 	winset( gid );
 	}
 
-_LOCAL_ void
+STATIC void
 sgi_Pup_Redraw()
 	{	long	gid = winget();
 	winset( popup_gid );
@@ -283,7 +279,7 @@ sgi_Pup_Redraw()
 	return;
 	}
 
-_LOCAL_ int
+STATIC int
 sgi_Tag_Pixel( origin, x, y, x0, y0 )
 int	origin, x, y, x0, y0;
 	{	short	val;
@@ -346,7 +342,7 @@ int	origin, x, y, x0, y0;
 		}
 	}
 
-_LOCAL_ int
+STATIC int
 sgi_Sweep_Rect( origin, x, y, x0, y0 )
 int	origin, x, y, x0, y0;
 	{	short	val;
@@ -431,7 +427,7 @@ int	origin, x, y, x0, y0;
 		}
 	}
 
-_LOCAL_ int
+STATIC int
 sgi_Window_In( origin, x, y, x0, y0, out_flag )
 int	origin, x, y, x0, y0, out_flag;
 	{	short		val;
@@ -465,15 +461,15 @@ int	origin, x, y, x0, y0, out_flag;
 			    ||	qread( &val ) != MENUBUTTON;
 				)
 				;
-#define Pixel2Grid(x_) ((x_)/((double)fbiop->if_width/grid_sz))
+#define Pixel2Grid(x_) ((x_)/((double)fb_getwidth(fbiop)/grid_sz))
 #define Grid2Model(x_) ((x_)*cell_sz)
 			relscale = Pixel2Grid( dw*2.0 )/ (double)(grid_sz);
 			if( out_flag )
 				relscale = 1.0 / relscale;
-			x_translate = (x0-xwin) - (fbiop->if_width/2);
+			x_translate = (x0-xwin) - (fb_getwidth(fbiop)/2);
 			x_translate = Pixel2Grid( x_translate );
 			x_translate = Grid2Model( x_translate );
-			y_translate = (y0-ywin) - (fbiop->if_height/2);
+			y_translate = (y0-ywin) - (fb_getheight(fbiop)/2);
 			y_translate = Pixel2Grid( y_translate );
 			y_translate = Grid2Model( y_translate );
 			if( out_flag )
@@ -486,7 +482,7 @@ int	origin, x, y, x0, y0, out_flag;
 				x_grid_offset += x_translate;
 				y_grid_offset += y_translate;
 				}
-			grid_scale *= relscale;	/* Scale down grid.	*/
+			view_size *= relscale;	/* Scale down view size. */
 			sgi_OL_Erase();
 			sgi_OL_End();
 			unqdevice( MOUSEX );
@@ -497,11 +493,11 @@ int	origin, x, y, x0, y0, out_flag;
 		case MIDDLEMOUSE :
 			Toggle( origin );
 			if( origin )
-				{ /* Done framing window.	*/
+				{ /* Done framing window. */
 				(void) fb_setcursor( fbiop, target1, 16, 16, 8, 8 );
 				}
 			else
-				{ /* Framing a window.		*/
+				{ /* Framing a window. */
 				x0 = x;
 				y0 = y;
 				sgi_OL_Erase();
@@ -1182,7 +1178,7 @@ char	*msg;
 	return	inbuf;
 	}
 
-_LOCAL_ void
+STATIC void
 sgi_Read_Keyboard( args )
 char	**args;
 	{	register int	i;

@@ -11,25 +11,17 @@
 #ifndef lint
 static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
-/*
-	Originally extracted from SCCS archive:
-
-		SCCS id:	@(#) char.c	2.1
-		Modified: 	12/10/86 at 16:04:27	G S M
-		Retrieved: 	2/4/87 at 08:53:52
-		SCCS archive:	/vld/moss/src/lgt/s.char.c
-*/
 /* 
 	char.c - routines for displaying a string on a frame buffer.
  */
 
 #include <stdio.h>
 #include <fb.h>
-#include "./font.h"
 #include "./extern.h"
+#include "./font.h"
 #define BUFFSIZ 200
-_LOCAL_ int	bitx();
-_LOCAL_ void	do_char();
+STATIC int	bitx();
+STATIC void	do_char();
 
 void
 do_line( xpos, ypos, line )
@@ -87,7 +79,7 @@ register char	*line;
 	bitmap from the character font file.  The file pointer is assumed
 	to be in the correct position.
  */
-_LOCAL_ void
+STATIC void
 do_char( c, xpos, ypos )
 int		c;
 register int	xpos, ypos;
@@ -155,7 +147,7 @@ register int	xpos, ypos;
 	Extract a bit field from a bit string.
  */
 /*ARGSUSED*/
-_LOCAL_ int
+STATIC int
 bitx( bitstring, posn )
 register char *bitstring;
 register int posn;

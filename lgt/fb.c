@@ -11,12 +11,8 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include <stdio.h>
 #include <fcntl.h>
-#include "machine.h"
-#include "vmath.h"
-#include "fb.h"
-#include "./lgt.h"
-#include "./screen.h"
 #include "./extern.h"
+#include "./screen.h"
 int		zoom;	/* Current zoom factor of frame buffer.		*/
 int		fb_Setup();
 void		fb_Zoom_Window();
@@ -27,28 +23,28 @@ fb_Setup( file, size )
 char	*file;
 int	size;
 	{
-#ifdef sgi
+#if SGI_WINCLOSE_BUG
+		/* XXX -- SGI BUG prohibits closing windows. */
 		static int	sgi_open = FALSE;
 		static int	sgi_size;
 		static FBIO	*sgi_iop;
+#else
+	assert( fbiop == FBIO_NULL );
 #endif
 	if( strcmp( file, "/dev/remote" ) == 0 )
 		file = "/dev/debug";
 	prnt_Event( "Opening device..." );
-	size = size > 512 ? 1024 : 512;
-#ifdef sgi
+#if SGI_WINCLOSE_BUG
 	if( sgi_open )
 		{
 		if( file[0] == '\0' || strncmp( file, "/dev/sgi", 8 ) == 0 )
 			{
-#ifndef mips	/* XXX -- SGI BUG prohibits closing windows. */
 			if( size != sgi_size )
 				(void) fb_close( fbiop );
 			else
-#endif
 				{
 				fbiop = sgi_iop;
-				return	1; /* Only open SGI once.	*/
+				return	1; /* Only open SGI once. */
 				}
 			}
 		}
@@ -63,7 +59,7 @@ int	size;
 		return	0;
 	(void) fb_setcursor( fbiop, arrowcursor, 16, 16, 0, 0 );
 	(void) fb_cursor( fbiop, 1, size/2, size/2 );
-#ifdef sgi
+#if SGI_WINCLOSE_BUG
 	if( strncmp( fbiop->if_name, "/dev/sgi", 8 ) == 0 )
 		{
 		sgi_open = TRUE;

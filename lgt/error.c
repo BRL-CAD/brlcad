@@ -22,13 +22,13 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
  */
 
 #include <stdio.h>
+#if __STDC__
+#include <stdarg.h>
+#else
 #include <varargs.h>
-#include "machine.h"
-#include "vmath.h"
-#include "raytrace.h"
-#include "./lgt.h"
-#include "./screen.h"
+#endif
 #include "./extern.h"
+#include "./screen.h"
 extern int	_doprnt();
 /*
  *  		R T _ B O M B
@@ -47,6 +47,60 @@ char *str;
 	(void) abort();			  /* Should dump.		*/
 	exit(12);
 	}
+
+#if __STDC__
+void
+rt_log( char *fmt, ... )
+	{
+	va_list ap;
+	/* We use the same lock as malloc.  Sys-call or mem lock, really */
+	RES_ACQUIRE( &rt_g.res_syscall );		/* lock */
+	va_start( ap, fmt );
+	if( tty && (err_file[0] == '\0' || ! strcmp( err_file, "/dev/tty" )) )
+		{ /* Only move cursor and scroll if newline is output.	*/
+			static int	newline = 1;
+		if( CS != NULL )
+			{
+			(void) SetScrlReg( TOP_SCROLL_WIN, PROMPT_LINE - 1 );
+			if( newline )
+				{
+				SCROLL_PR_MOVE();
+				(void) ClrEOL();
+				}
+			(void) vfprintf( stdout, fmt, ap );
+			(void) ResetScrlReg();
+			}
+		else
+		if( DL != NULL )
+			{
+			if( newline )
+				{
+				SCROLL_DL_MOVE();
+				(void) DeleteLn();
+				SCROLL_PR_MOVE();
+				(void) ClrEOL();
+				}
+			(void) vfprintf( stdout, fmt, ap );
+			}
+		else
+			(void) vfprintf( stdout, fmt, ap );
+		(void) fflush( stdout );
+		/* End of line detected by existance of a newline.	*/
+		newline = fmt[strlen( fmt )-1] == '\n';
+		hmredraw();
+		}
+	else
+		{
+		(void) vfprintf( stderr, fmt, ap );
+#ifdef sun
+		(void) fflush( stderr );
+#endif
+		}
+	va_end( ap );
+	RES_RELEASE( &rt_g.res_syscall );		/* unlock */
+	return;
+	}
+#else /* __STDC__ */
 
 #if defined( CRAY1 )
 /* VARARGS */
@@ -92,7 +146,8 @@ char *fmt;
 		(void) fprintf( stderr, fmt, a,b,c,d,e,f,g,h,i );
 	RES_RELEASE( &rt_g.res_syscall );		/* unlock */
 	}
-#else
+#else /* CRAY1 */
+
 /*
  *  		R T _  L O G
  *  
@@ -151,7 +206,62 @@ va_dcl
 	RES_RELEASE( &rt_g.res_syscall );		/* unlock */
 	return;
 	}
+#endif /* CRAY1 */
+#endif /* __STDC__ */
+
+#if __STDC__
+void
+fb_log( char *fmt, ... )
+	{
+	va_list ap;
+	/* We use the same lock as malloc.  Sys-call or mem lock, really */
+	RES_ACQUIRE( &rt_g.res_syscall );		/* lock */
+	va_start( ap, fmt );
+	if( tty && (err_file[0] == '\0' || ! strcmp( err_file, "/dev/tty" )) )
+		{ /* Only move cursor and scroll if newline is output.	*/
+			static int	newline = 1;
+		if( CS != NULL )
+			{
+			(void) SetScrlReg( TOP_SCROLL_WIN, PROMPT_LINE - 1 );
+			if( newline )
+				{
+				SCROLL_PR_MOVE();
+				(void) ClrEOL();
+				}
+			(void) vfprintf( stdout, fmt, ap );
+			(void) ResetScrlReg();
+			}
+		else
+		if( DL != NULL )
+			{
+			if( newline )
+				{
+				SCROLL_DL_MOVE();
+				(void) DeleteLn();
+				SCROLL_PR_MOVE();
+				(void) ClrEOL();
+				}
+			(void) vfprintf( stdout, fmt, ap );
+			}
+		else
+			(void) vfprintf( stdout, fmt, ap );
+		(void) fflush( stdout );
+		/* End of line detected by existance of a newline.	*/
+		newline = fmt[strlen( fmt )-1] == '\n';
+		hmredraw();
+		}
+	else
+		{
+		(void) vfprintf( stderr, fmt, ap );
+#ifdef sun
+		(void) fflush( stderr );
 #endif
+		}
+	va_end( ap );
+	RES_RELEASE( &rt_g.res_syscall );		/* unlock */
+	return;
+	}
+#else /* __STDC__ */
 
 #if defined( CRAY1 )
 /* VARARGS */
@@ -160,15 +270,49 @@ fb_log(fmt, a,b,c,d,e,f,g,h,i)
 char *fmt;
 	{
 	RES_ACQUIRE( &rt_g.res_syscall );		/* lock */
-	fprintf(stderr, fmt, a,b,c,d,e,f,g,h,i );
+	if( tty && (err_file[0] == '\0' || ! strcmp( err_file, "/dev/tty" )) )
+		{ /* Only move cursor and scroll if newline is output.	*/
+			static int	newline = 1;
+		if( CS != NULL )
+			{
+			(void) SetScrlReg( TOP_SCROLL_WIN, PROMPT_LINE - 1 );
+			if( newline )
+				{
+				SCROLL_PR_MOVE();
+				(void) ClrEOL();
+				}
+			(void) fprintf( stdout, fmt, a,b,c,d,e,f,g,h,i );
+			(void) ResetScrlReg();
+			}
+		else
+		if( DL != NULL )
+			{
+			if( newline )
+				{
+				SCROLL_DL_MOVE();
+				(void) DeleteLn();
+				SCROLL_PR_MOVE();
+				(void) ClrEOL();
+				}
+			(void) fprintf( stdout, fmt, a,b,c,d,e,f,g,h,i );
+			}
+		else
+			(void) fprintf( stdout, fmt, a,b,c,d,e,f,g,h,i );
+		(void) fflush( stdout );
+		/* End of line detected by existance of a newline.	*/
+		newline = fmt[strlen( fmt )-1] == '\n';
+		hmredraw();
+		}
+	else
+		(void) fprintf( stderr, fmt, a,b,c,d,e,f,g,h,i );
 	RES_RELEASE( &rt_g.res_syscall );		/* unlock */
-	hmredraw();
 	}
-#else
+#else /* CRAY1 */
+
 /*
- *		F B _ L O G
+ *  		R T _  L O G
  *  
- *  Log an FB library event
+ *  Log an RT library event
  */
 /* VARARGS */
 void
@@ -223,5 +367,5 @@ va_dcl
 	RES_RELEASE( &rt_g.res_syscall );		/* unlock */
 	return;
 	}
-#endif
-
+#endif /* CRAY1 */
+#endif /* __STDC__ */

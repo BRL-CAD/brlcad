@@ -10,14 +10,10 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include <stdio.h>
-#include "machine.h"
-#include "vmath.h"
-#include "raytrace.h"
-#include "./vecmath.h"
-#include "./lgt.h"
-#include "./screen.h"
 #include "./extern.h"
-_LOCAL_ int	get_Lgt_Entry(), put_Lgt_Entry();
+#include "./vecmath.h"
+#include "./screen.h"
+STATIC int	get_Lgt_Entry(), put_Lgt_Entry();
 
 /*	l g t _ P r i n t _ D b ( )
 	Print light source database entry.
@@ -225,7 +221,7 @@ int	id;
 	return	1;
 	}
 
-_LOCAL_ int
+STATIC int
 get_Lgt_Entry( entry, fp )
 register Lgt_Source	*entry;
 FILE			*fp;
@@ -266,7 +262,7 @@ FILE			*fp;
 	return	1;
 	}
 
-_LOCAL_ int
+STATIC int
 put_Lgt_Entry( entry, fp )
 register Lgt_Source	*entry;
 FILE			*fp;
