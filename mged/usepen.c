@@ -113,7 +113,7 @@ char	**argv;
 	mousevec[Y] =  ypos / 2047.0;
 	mousevec[Z] = 0;
 
-	if (mged_variables.faceplate && mged_variables.show_menu && up) {
+	if (mged_variables.faceplate && mged_variables.orig_gui && up) {
 	  /*
 	   * If mouse press is in scroll area, see if scrolling, and if so,
 	   * divert this mouse press.
@@ -219,7 +219,7 @@ char	**argv;
 	  return TCL_OK;
 
 	case ST_S_EDIT:
-	  if((SEDIT_TRAN || SEDIT_SCALE || SEDIT_PICK) && mged_variables.edit)
+	  if((SEDIT_TRAN || SEDIT_SCALE || SEDIT_PICK) && mged_variables.transform == 'e')
 	    sedit_mouse( mousevec );
 	  else
 	    slewview( mousevec );
@@ -252,7 +252,7 @@ char	**argv;
 		return TCL_OK;
 
 	case ST_O_EDIT:
-	  if((OEDIT_TRAN || OEDIT_SCALE) && mged_variables.edit)
+	  if((OEDIT_TRAN || OEDIT_SCALE) && mged_variables.transform == 'e')
 	    objedit_mouse( mousevec );
 	  else
 	    slewview( mousevec );

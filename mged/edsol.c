@@ -2058,7 +2058,7 @@ int both;    /* if(!both) then set only curr_e_axes_pos, otherwise
       es_edclass = EDIT_CLASS_NULL;
 
 #if 0
-    if(mged_variables.edit)
+    if(mged_variables.transform == 'e')
       scroll_edit = es_edclass;
     else
       scroll_edit = EDIT_CLASS_NULL;
@@ -2066,7 +2066,7 @@ int both;    /* if(!both) then set only curr_e_axes_pos, otherwise
 
     bn_mat_idn(acc_rot_sol);
 
-    mged_variables.edit = 1;
+    mged_variables.transform = 'e';
     set_scroll();
   }
 }

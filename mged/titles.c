@@ -346,7 +346,7 @@ if(mged_variables.faceplate){
 	dmp->dm_drawLine2D( dmp, XMIN, TITLE_YBASE-TEXT1_DY, XMAX,
 			      TITLE_YBASE-TEXT1_DY );
 
-	if(mged_variables.show_menu){
+	if(mged_variables.orig_gui){
 	  /* Enclose window in decorative box.  Mostly for alignment. */
 	  dmp->dm_drawLine2D( dmp, XMIN, YMIN, XMAX, YMIN );
 	  dmp->dm_drawLine2D( dmp, XMAX, YMIN, XMAX, YMAX );
@@ -387,7 +387,7 @@ if(mged_variables.faceplate){
 	  }
 	}
 
-	if(mged_variables.show_menu){
+	if(mged_variables.orig_gui){
 	  /*
 	   * The top of the menu (if any) begins at the Y value specified.
 	   */
@@ -419,7 +419,7 @@ if(mged_variables.faceplate){
 	 * Prepare the numerical display of the currently edited solid/object.
 	 */
 	/*	create_text_overlay( &vls ); */
-	if(mged_variables.show_menu){
+	if(mged_variables.orig_gui){
 	  screen_vls( SOLID_XBASE, scroll_ybot+TEXT0_DY, overlay_vls );
 	}else{
 	  screen_vls( x, y, overlay_vls );
@@ -429,7 +429,7 @@ if(mged_variables.faceplate){
 	 * General status information on the next to last line
 	 */
 	bu_vls_printf(&vls,
-		      " cent=(%s, %s, %s), sz=%s %s, ", cent_x, cent_y, cent_z,
+		      " cent=(%s, %s, %s), %s %s, ", cent_x, cent_y, cent_z,
 		      size, rt_units_string(dbip->dbi_local2base));
 	bu_vls_printf(&vls,
 		       "az=%3.2f el=%3.2f tw=%3.2f ang=(%s, %s, %s)",

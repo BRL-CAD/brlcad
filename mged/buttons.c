@@ -40,6 +40,7 @@ extern int mged_svbase();
 extern void set_e_axes_pos();
 extern int mged_zoom();
 extern void set_scroll();  /* defined in set.c */
+extern void set_absolute_tran(); /* defined in set.c */
 
 /* This flag indicates that SOLID editing is in effect.
  * edobj may not be set at the same time.
@@ -64,8 +65,6 @@ fastf_t	acc_sc_sol;
 fastf_t	acc_sc_obj;     /* global object scale factor --- accumulations */
 fastf_t	acc_sc[3];	/* local object scale factors --- accumulations */
 
-static void bv_edit_toggle(), bv_eyerot_toggle();
-static void be_s_context();
 static void bv_zoomin(), bv_zoomout(), bv_rate_toggle();
 static void bv_top(), bv_bottom(), bv_right();
 static void bv_left(), bv_front(), bv_rear();
@@ -110,15 +109,10 @@ struct buttons  {
 	BE_S_ROTATE,	"srot",		be_s_rotate,
 	BE_S_SCALE,	"sscale",	be_s_scale,
 	BE_S_TRANS,	"sxy",		be_s_trans,
-#if 0
-	BE_S_CONTEXT,   "context",      be_s_context,
-#endif
 	BV_TOP,		"top",		bv_top,
 	BV_ZOOM_IN,	"zoomin",	bv_zoomin,
 	BV_ZOOM_OUT,	"zoomout",	bv_zoomout,
 	BV_RATE_TOGGLE, "rate",		bv_rate_toggle,
-	BV_EDIT_TOGGLE, "edit",		bv_edit_toggle,
-	BV_EYEROT_TOGGLE, "eyerot",     bv_eyerot_toggle,
 	-1,		"-end-",	be_reject
 };
 
@@ -153,8 +147,6 @@ struct menu_item second_menu[] = {
 	{ "Zero Sliders", sl_halt_scroll, 0 },
 	{ "Sliders", sl_toggle_scroll, 0 },
 	{ "Rate/Abs", btn_item_hit, BV_RATE_TOGGLE },
-	{ "Edit/View", btn_item_hit, BV_EDIT_TOGGLE },
-	{ "Rotate About Eye", btn_item_hit, BV_EYEROT_TOGGLE },
 	{ "Zoom In 2X", btn_item_hit, BV_ZOOM_IN },
 	{ "Zoom Out 2X", btn_item_hit, BV_ZOOM_OUT },
 	{ "Solid Illum", btn_item_hit, BE_S_ILLUMINATE },
@@ -167,9 +159,6 @@ struct menu_item sed_menu[] = {
 	{ "Rotate", btn_item_hit, BE_S_ROTATE },
 	{ "Translate", btn_item_hit, BE_S_TRANS },
 	{ "Scale", btn_item_hit, BE_S_SCALE },
-#if 0
-	{ "Context", btn_item_hit, BE_S_CONTEXT },
-#endif
 	{ "", (void (*)())NULL, 0 }
 };
 
@@ -334,31 +323,9 @@ bv_zoomout()
 }
 
 static void
-bv_edit_toggle()
-{
-  mged_variables.edit = !mged_variables.edit;
-  set_scroll();
-}
-
-static void
 bv_rate_toggle()
 {
   mged_variables.rateknobs = !mged_variables.rateknobs;
-  set_scroll();
-}
-
-static void
-bv_eyerot_toggle()
-{
-  mged_variables.eyerot = !mged_variables.eyerot;
-
-  ++dmaflag;
-}
-
-static void
-be_s_context()
-{
-  mged_variables.context = !mged_variables.context;
   set_scroll();
 }
 
@@ -947,7 +914,7 @@ char *str;
 
 	      /* get new orig_pos */
 	      size_reset();
-	      MAT_DELTAS_GET(orig_pos, toViewcenter);
+	      MAT_DELTAS_GET_NEG(orig_pos, toViewcenter);
 
 	      /* restore old toViewcenter and Viewscale */
 	      bn_mat_copy(toViewcenter, o_toViewcenter);
@@ -957,9 +924,8 @@ char *str;
 
 	    new_mats();
 
-	    /* recompute absolute_slew */
-	    VSET(new_pos, -orig_pos[X], -orig_pos[Y], -orig_pos[Z]);
-	    MAT4X3PNT(absolute_slew, model2view, new_pos);
+	    /* recompute absolute_tran */
+	    set_absolute_tran();
 	  }
 
 	  curr_dm_list = save_dm_list;
@@ -1020,11 +986,6 @@ btn_head_menu(i, menu, item)  {
 
 	  break;
 	}
-
-#if 0
-	if(mged_variables.show_menu)
-	  dmaflag = 1;
-#endif
 }
 
 void
