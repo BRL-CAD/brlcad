@@ -607,27 +607,49 @@ GC gc;
   }
   XI_SET(ifp, xi);
 
-  if (vip->class == TrueColor) {
-      if (vip->depth >= 24)
-	  xi->xi_mode = FLG_VT24 << 1;
-      else if (vip->depth >= 16)
-	  xi->xi_mode = FLG_VT16 << 1;
-      else
-	  xi->xi_mode = FLG_VS1 << 1;
-  } else if (vip->class == DirectColor) {
-      if (vip->depth >= 24)
-	  xi->xi_mode = FLG_VD24 << 1;
-      else if (vip->depth >= 16)
-	  xi->xi_mode = FLG_VD16 << 1;
-      else
-	  xi->xi_mode = FLG_VS1 << 1;
-  } else if (vip->class == PseudoColor) {
-      if (vip->depth >= 8)
-	  xi->xi_mode = FLG_VP8 << 1;
-      else
-	  xi->xi_mode = FLG_VS1 << 1;
-  } else
+  switch (vip->class) {
+  case TrueColor:
+    if (vip->depth >= 24) {
+      xi->xi_mode = FLG_VT24 << 1;
+      xi->xi_flags = FLG_VT24 | FLG_XCMAP;
+    } else if (vip->depth >= 16) {
+      xi->xi_mode = FLG_VT16 << 1;
+      xi->xi_flags = FLG_VT16 | FLG_XCMAP;
+    } else {
       xi->xi_mode = FLG_VS1 << 1;
+      xi->xi_flags = FLG_VS1 | FLG_XCMAP;
+    }
+
+    break;
+  case DirectColor:
+    if (vip->depth >= 24) {
+      xi->xi_mode = FLG_VD24 << 1;
+      xi->xi_flags = FLG_VD24 | FLG_XCMAP;
+    } else if (vip->depth >= 16) {
+      xi->xi_mode = FLG_VD16 << 1;
+      xi->xi_flags = FLG_VD16 | FLG_XCMAP;
+    } else {
+      xi->xi_mode = FLG_VS1 << 1;
+      xi->xi_flags = FLG_VS1 | FLG_XCMAP;
+    }
+
+    break;
+  case PseudoColor:
+    if (vip->depth >= 8) {
+      xi->xi_mode = FLG_VP8 << 1;
+      xi->xi_flags = FLG_VP8 | FLG_XCMAP;
+    } else {
+      xi->xi_mode = FLG_VS1 << 1;
+      xi->xi_flags = FLG_VS1 | FLG_XCMAP;
+    }
+
+    break;
+  default:
+    xi->xi_mode = FLG_VS1 << 1;
+    xi->xi_flags = FLG_VS1 | FLG_XCMAP;
+
+    break;
+  }
 
   xi->xi_iwidth = width;
   xi->xi_iheight = height;
@@ -644,12 +666,6 @@ GC gc;
   xi->xi_dpy = dpy;
   xi->xi_screen = DefaultScreen(xi->xi_dpy);
 
-#if 0
-  /*XXX For now assume 24-bit TrueColor */
-  xi->xi_flags = FLG_VT24 | FLG_XCMAP;
-#else
-  xi->xi_flags = FLG_VT16 | FLG_XCMAP;
-#endif
   xi->xi_visinfo = *vip;		/* struct copy */
   xi->xi_visual = vip->visual;
   xi->xi_depth = vip->depth;
