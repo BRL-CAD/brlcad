@@ -29,6 +29,8 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "rtlist.h"
 #include "raytrace.h"
 
+extern int nmg_class_nothing_broken;
+
 #define INSIDE	32
 #define ON_SURF	64
 #define OUTSIDE	128
@@ -640,7 +642,7 @@ CONST struct rt_tol	*tol;
 	if( NMG_INDEX_TEST(classlist[NMG_CLASS_AonBshared], eu->e_p) )
 		return(ON_SURF);
 
-	if( NMG_INDEX_TEST(classlist[NMG_CLASS_AinB], eu->e_p) )
+	if( NMG_INDEX_TEST(classlist[NMG_CLASS_AoutB], eu->e_p) )
 		return(OUTSIDE);
 
 	euv_cl = class_vu_vs_s(eu->vu_p, s, classlist, tol);
@@ -670,6 +672,8 @@ CONST struct rt_tol	*tol;
 			if (nmg_eups(eup) == s) {
 				NMG_INDEX_SET(classlist[NMG_CLASS_AonBshared],
 					eu->e_p );
+				if (rt_g.NMG_debug & DEBUG_GRAPHCL)
+					show_broken_stuff((long *)eu, classlist, nmg_class_nothing_broken, 0, (char *)NULL);
 				return(ON_SURF);
 			}
 
@@ -702,14 +706,20 @@ CONST struct rt_tol	*tol;
 			rt_bomb("class_eu_vs_s");
 		}
 
+		if (rt_g.NMG_debug & DEBUG_GRAPHCL)
+			show_broken_stuff((long *)eu, classlist, nmg_class_nothing_broken, 0, (char *)NULL);
 		return(status);
 	}
 
 	if (euv_cl == OUTSIDE || matev_cl == OUTSIDE) {
 		NMG_INDEX_SET(classlist[NMG_CLASS_AoutB], eu->e_p);
+		if (rt_g.NMG_debug & DEBUG_GRAPHCL)
+			show_broken_stuff((long *)eu, classlist, nmg_class_nothing_broken, 0, (char *)NULL);
 		return(OUTSIDE);
 	}
 	NMG_INDEX_SET(classlist[NMG_CLASS_AinB], eu->e_p);
+	if (rt_g.NMG_debug & DEBUG_GRAPHCL)
+		show_broken_stuff((long *)eu, classlist, nmg_class_nothing_broken, 0, (char *)NULL);
 	return(INSIDE);
 }
 
@@ -739,7 +749,7 @@ CONST struct rt_tol	*tol;
 	if( NMG_INDEX_TEST(classlist[NMG_CLASS_AonBshared], lu->l_p) )
 		return(ON_SURF);
 
-	if( NMG_INDEX_TEST(classlist[NMG_CLASS_AinB], lu->l_p) )
+	if( NMG_INDEX_TEST(classlist[NMG_CLASS_AoutB], lu->l_p) )
 		return(OUTSIDE);
 
 	magic1 = RT_LIST_FIRST_MAGIC( &lu->down_hd );
@@ -791,12 +801,33 @@ CONST struct rt_tol	*tol;
 		rt_log("Loopuse edges in:%d on:%d out:%d\n", in, on, out);
 
 	if (in > 0 && out > 0) {
+		FILE *fd;
 		rt_log("Loopuse edges in:%d on:%d out:%d\n", in, on, out);
 		for(RT_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
+			if (NMG_INDEX_TEST(classlist[NMG_CLASS_AinB], eu->e_p))
+				fprintf(stderr, "In:  ");
+			else if (NMG_INDEX_TEST(classlist[NMG_CLASS_AoutB], eu->e_p))
+				fprintf(stderr, "Out: ");
+			else if (NMG_INDEX_TEST(classlist[NMG_CLASS_AonBshared], eu->e_p))
+				fprintf(stderr, "On:  ");
+			else
+				fprintf(stderr, "Unknown edge class? ");
 			EUPRINT("edgeuse", eu);
 		}
 
-		rt_bomb("class_lu_vs_s: loop crosses face?\n");
+		if ((fd=fopen("badloop.pl", "w")) != NULL) {
+			long *b;
+			struct model *m;
+
+			m = nmg_find_model(lu->up.magic_p);
+			
+			b = (long *)rt_calloc(m->maxindex, sizeof(long), "nmg_pl_lu flag[]");
+
+			nmg_pl_lu(fd, lu, b, 255, 255, 255);
+			fclose(fd);
+		}
+
+		rt_bomb("class_lu_vs_s: loop transits plane of shell/face?\n");
 	}
 	if (out > 0) {
 		NMG_INDEX_SET(classlist[NMG_CLASS_AoutB], lu->l_p);
