@@ -1,11 +1,25 @@
 /*
  *			N M G _ C L A S S . C
  *
- *	NMG classifier code
+ *  Subroutines to classify one object with respect to another.
+ *  Possible classifications are AinB, AoutB, AinBshared, AinBanti.
  *
+ *  The first set of routines (nmg_class_pt_xxx) are used to classify
+ *  an arbitrary point specified by it's Cartesian coordinates,
+ *  against various kinds of NMG elements.
+ *  nmg_class_pt_f() and nmg_class_pt_s() are available to
+ *  applications programmers for direct use, and have no side effects.
  *
- *  Author -
+ *  The second set of routines (class_xxx_vs_s) are used only to support
+ *  the routine nmg_class_shells() mid-way through the NMG Boolean
+ *  algorithm.  These routines operate with special knowledge about
+ *  the state of the data structures after the intersector has been called,
+ *  and depends on all geometric equivalences to have been converted into
+ *  shared topology.
+ *
+ *  Authors -
  *	Lee A. Butler
+ *	Michael John Muuss
  *  
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
@@ -13,7 +27,7 @@
  *	Aberdeen Proving Ground, Maryland  21005-5066
  *  
  *  Copyright Notice -
- *	This software is Copyright (C) 1989 by the United States Army.
+ *	This software is Copyright (C) 1993 by the United States Army.
  *	All rights reserved.
  */
 #ifndef lint
@@ -30,14 +44,9 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "raytrace.h"
 #include "./debug.h"
 
-/* XXX Move to vmath.h */
-#define V3PT_IN_RPP(_pt, _lo, _hi)	( \
-	(_pt)[X] >= (_lo)[X] && (_pt)[X] <= (_hi)[X] && \
-	(_pt)[Y] >= (_lo)[Y] && (_pt)[Y] <= (_hi)[Y] && \
-	(_pt)[Z] >= (_lo)[Z] && (_pt)[Z] <= (_hi)[Z]  )
-
 extern int nmg_class_nothing_broken;
 
+/* XXX These should go the way of the dodo bird. */
 #define INSIDE	32
 #define ON_SURF	64
 #define OUTSIDE	128
@@ -47,24 +56,22 @@ extern int nmg_class_nothing_broken;
  */
 struct neighbor {
 	union {
-		struct vertexuse *vu;
-		struct edgeuse *eu;
+		CONST struct vertexuse *vu;
+		CONST struct edgeuse *eu;
 	} p;
-	fastf_t dist;	/* distance from point to neighbor */
-	int inout;	/* what the neighbor thought about the point */
+	/* XXX For efficiency, this should have been dist_sq */
+	fastf_t	dist;	/* distance from point to neighbor */
+	int	class;	/* Classification of this neighbor */
 };
 
-static void	joint_hitmiss2 RT_ARGS( (struct edgeuse	*eu, point_t pt,
-			struct neighbor *closest, long *novote) );
-static void	pt_hitmis_e RT_ARGS( (point_t pt, struct edgeuse *eu,
-			struct neighbor	*closest, CONST struct rt_tol *tol,
-			long *novote) );
-static void	pt_hitmis_l RT_ARGS( (point_t pt, struct loopuse *lu,
-			struct neighbor	*closest, CONST struct rt_tol *tol,
-			long *novote) );
-RT_EXTERN(int		nmg_pt_hitmis_f, (point_t pt, struct faceuse *fu,
-			CONST struct rt_tol *tol, long *novote) );
-static int	pt_inout_s RT_ARGS( (point_t pt, struct shell *s,
+static void	joint_hitmiss2 RT_ARGS( (struct neighbor *closest,
+			CONST struct edgeuse *eu, CONST point_t pt,
+			int code) );
+static void	nmg_class_pt_e RT_ARGS( (struct neighbor *closest,
+			CONST point_t pt, CONST struct edgeuse *eu,
+			CONST struct rt_tol *tol) );
+static void	nmg_class_pt_l RT_ARGS( (struct neighbor *closest, 
+			CONST point_t pt, CONST struct loopuse *lu,
 			CONST struct rt_tol *tol) );
 static int	class_vu_vs_s RT_ARGS( (struct vertexuse *vu, struct shell *sB,
 			long *classlist[4], CONST struct rt_tol	*tol) );
@@ -75,10 +82,7 @@ static int	class_lu_vs_s RT_ARGS( (struct loopuse *lu, struct shell *s,
 static void	class_fu_vs_s RT_ARGS( (struct faceuse *fu, struct shell *s,
 			long *classlist[4], CONST struct rt_tol	*tol) );
 
-static vect_t projection_dir = { 1.0, 0.0, 0.0 };
-
-#define FACE_HIT 256
-#define FACE_MISS 512
+static CONST vect_t projection_dir = { 1.0, 0.0, 0.0 };
 
 /*
  *			N M G _ C L A S S _ S T A T U S
@@ -118,22 +122,18 @@ int	status;
  *	The ray hit an edge.  We have to decide whether it hit the
  *	edge, or missed it.
  */
-static void joint_hitmiss2(eu, pt, closest, novote)
-struct edgeuse	*eu;
-point_t		pt;
-struct neighbor *closest;
-long		*novote;
+static void joint_hitmiss2(closest, eu, pt, code)
+struct neighbor		*closest;
+CONST struct edgeuse	*eu;
+CONST point_t		pt;
+int			code;
 {
-	struct edgeuse *eu_rinf, *eu_r, *mate_r;
-	struct edgeuse	*p;
-	fastf_t	*N1, *N2;
-	fastf_t PdotN1, PdotN2;
+	CONST struct edgeuse *eu_rinf;
 
 	eu_rinf = nmg_faceradial(eu);
 
 	if (rt_g.NMG_debug & DEBUG_CLASSIFY) {
-		EUPRINT("Easy question time", eu);
-		VPRINT("Point", pt);
+		rt_log("joint_hitmiss2\n");
 	}
 	if( eu_rinf == eu )  {
 		rt_bomb("joint_hitmiss2: radial eu is me?\n");
@@ -144,52 +144,68 @@ long		*novote;
 	 */
 	if( eu->up.lu_p->orientation == eu_rinf->up.lu_p->orientation ) {
 		if (eu->up.lu_p->orientation == OT_SAME) {
-			closest->dist = 0.0;
-			closest->p.eu = eu;
-			closest->inout = FACE_HIT;
-			if (rt_g.NMG_debug & DEBUG_CLASSIFY) rt_log("FACE_HIT\n");
+			closest->class = NMG_CLASS_AonBshared;
 		} else if (eu->up.lu_p->orientation == OT_OPPOSITE) {
-			closest->dist = 0.0;
-			closest->p.eu = eu;
-			closest->inout = FACE_MISS;
-			if (rt_g.NMG_debug & DEBUG_CLASSIFY) rt_log("FACE_MISS\n");
+			closest->class = NMG_CLASS_AoutB;
 		} else rt_bomb("joint_hitmiss2: bad loop orientation\n");
+		closest->dist = 0.0;
+		switch(code)  {
+		case 0:
+			/* Hit the edge */
+			closest->p.eu = eu;
+			break;
+		case 1:
+			/* Hit first vertex */
+			closest->p.vu = eu->vu_p;
+			break;
+		case 2:
+			/* Hit second vertex */
+			closest->p.vu = RT_LIST_PNEXT_CIRC(edgeuse,eu)->vu_p;
+			break;
+		}
+		if (rt_g.NMG_debug & DEBUG_CLASSIFY) rt_log("\t\t%s\n", nmg_class_name(closest->class) );
 	    	return;
 	}
 
-	if (rt_g.NMG_debug & (DEBUG_CLASSIFY|DEBUG_NMGRT) )
-		EUPRINT("Hard question time", eu);
-
+	/* XXX What goes here? */
 	rt_log("joint_hitmiss2: NO CODE HERE, assuming miss\n");
-	rt_log(" eu_rinf=x%x, eu->eumate_p=x%x, eu=x%x\n", eu_rinf, eu->eumate_p, eu);
-	rt_log(" eu lu orient=%s, eu_rinf lu orient=%s\n",
-		nmg_orientation(eu->up.lu_p->orientation),
-		nmg_orientation(eu_rinf->up.lu_p->orientation) );
+
+	if (rt_g.NMG_debug & (DEBUG_CLASSIFY|DEBUG_NMGRT) )  {
+		EUPRINT("Hard question time", eu);
+		rt_log(" eu_rinf=x%x, eu->eumate_p=x%x, eu=x%x\n", eu_rinf, eu->eumate_p, eu);
+		rt_log(" eu lu orient=%s, eu_rinf lu orient=%s\n",
+			nmg_orientation(eu->up.lu_p->orientation),
+			nmg_orientation(eu_rinf->up.lu_p->orientation) );
+	}
 }
 
 /*
- *			P T _ H I T M I S _ E
+ *			N M G _ C L A S S _ P T _ E
  *
- *	Given a point and an edgeuse, determine if the point is
- *	closer to this edgeuse than anything it's been compared with
- *	before.  If it is, record how close the point is to the edgeuse
- *	and whether it is on the inside of the face area bounded by the
- *	edgeuse or on the outside of the face area.
+ *  Given the Cartesian coordinates of a point, determine if the point
+ *  is closer to this edgeuse than the previous neighbor(s) as given
+ *  in the "closest" structure.
+ *  If it is, record how close the point is, and whether it is IN, ON, or OUT.
+ *  The neighor's "p" element will indicate the edgeuse or vertexuse closest.
  *
  *  This routine should print everything indented two tab stops.
+ *
+ *  Implicit Return -
+ *	Updated "closest" structure if appropriate.
  */
-static void pt_hitmis_e(pt, eu, closest, tol, novote)
-point_t		pt;
-struct edgeuse	*eu;
-struct neighbor	*closest;
+static void
+nmg_class_pt_e(closest, pt, eu, tol)
+struct neighbor		*closest;
+CONST point_t		pt;
+CONST struct edgeuse	*eu;
 CONST struct rt_tol	*tol;
-long		*novote;
 {
 	vect_t	N,	/* plane normal */
 		euvect,	/* vector of edgeuse */
 		ptvec;	/* vector from lseg to pt */
 	vect_t	left;	/* vector left of edge -- into inside of loop */
-	pointp_t eupt, matept;
+	CONST fastf_t	*eupt;
+	CONST fastf_t	*matept;
 	point_t pca;	/* point of closest approach from pt to edge lseg */
 	fastf_t dist;	/* distance from pca to pt */
 	fastf_t dot, mag;
@@ -206,8 +222,8 @@ long		*novote;
 	matept = eu->eumate_p->vu_p->v_p->vg_p->coord;
 
 	if (rt_g.NMG_debug & DEBUG_CLASSIFY) {
-		VPRINT("pt_hitmis_e\tProjected pt", pt);
-		EUPRINT("          \tVS. eu", eu);
+		VPRINT("nmg_class_pt_e\tPt", pt);
+		EUPRINT("          \tvs. eu", eu);
 	}
 	/*
 	 * XXX Note here that "pca" will be one of the endpoints,
@@ -221,43 +237,39 @@ long		*novote;
 		VPRINT("          \tpca:", pca);
 	}
 
-	/* XXX Double check on dist to pca */
-	VSUB2( ptvec, pt, pca );
-	mag = MAGNITUDE(ptvec);
-	if( fabs(dist - mag) > tol->dist )
-		rt_log("ERROR! dist=%e |pt-pca|=%e, tol=%g, tol_sq=%g\n", dist, mag, tol->dist, tol->dist_sq);
-
 	if (dist >= closest->dist + tol->dist ) {
  		if(rt_g.NMG_debug & DEBUG_CLASSIFY) {
-			EUPRINT("\t\tskipping, earlier eu is closer", eu);
+ 			rt_log("\t\tskipping, earlier eu is closer (%g)\n", closest->dist);
  		}
 		return;
  	}
  	if( dist >= closest->dist - tol->dist )  {
  		/*
  		 *  Distances are very nearly the same.
- 		 *  If "closest" result so far was a FACE_HIT, then keep it,
+ 		 *  If "closest" result so far was a NMG_CLASS_AinB or
+		 *  or NMG_CLASS_AonB, then keep it,
  		 *  otherwise, replace that result with whatever we find
  		 *  here.  Logic:  Two touching loops, one concave ("A")
 		 *  which wraps around part of the other ("B"), with the
  		 *  point inside A near the contact with B.  If loop B is
-		 *  processed first, the closest result will be FACE_MISS,
+		 *  processed first, the closest result will be NMG_CLASS_AoutB,
  		 *  and when loop A is visited the distances will be exactly
  		 *  equal, not giving A a chance to claim it's hit.
  		 */
- 		if( closest->inout == FACE_HIT )  {
+ 		if( closest->class == NMG_CLASS_AinB ||
+		    closest->class == NMG_CLASS_AonBshared )  {
 	 		if(rt_g.NMG_debug & DEBUG_CLASSIFY)
-				rt_log("\t\tSkipping, earlier eu at same dist, has HIT\n");
+				rt_log("\t\tSkipping, earlier eu at same dist, is IN or ON\n");
  			return;
  		}
  		if(rt_g.NMG_debug & DEBUG_CLASSIFY)
-			rt_log("\t\tEarlier eu at same dist, had MISS, continue processing.\n");
+			rt_log("\t\tEarlier eu at same dist, is OUT, continue processing.\n");
  	}
 
 	/* Plane hit point is closer to this edgeuse than previous one(s) */
 	if (rt_g.NMG_debug & DEBUG_CLASSIFY) {
-		EUPRINT("\t\tcloser to edgeuse", eu);
-		rt_log("\t\tdistance: %g (closest=%g)\n", dist, closest->dist);
+		rt_log("\t\tCloser. dist=%g (closest=%g), tol=%g\n",
+			dist, closest->dist, tol->dist);
 	}
 
 	if (*eu->up.magic_p != NMG_LOOPUSE_MAGIC ||
@@ -271,21 +283,20 @@ long		*novote;
 	}
 
 	if( code <= 2 )  {
-		/* code==0:  The ray has hit the edge! */
-		/* code==1 or 2:  The ray has hit a vertex! */
+		/* code==0:  The point is ON the edge! */
+		/* code==1 or 2:  The point is ON a vertex! */
     		if (rt_g.NMG_debug & DEBUG_CLASSIFY) {
-	    		rt_log("\t\tdistance: %e   tol: %g\n", dist, tol->dist);
-    			rt_log("\t\tThe ray has hit the edge, calling joint_hitmiss2()\n");
+    			rt_log("\t\tThe point is ON the edge, calling joint_hitmiss2()\n");
     		}
-    		joint_hitmiss2(eu, pt, closest, novote);
+   		joint_hitmiss2(closest, eu, pt, code);
     		goto out;
     	} else {
     		if (rt_g.NMG_debug & DEBUG_CLASSIFY) {
-	    		rt_log("\t\tdistance: %g   tol: %g\n", dist, tol->dist);
-    			rt_log("\t\tThe ray has missed the edge\n");
+			rt_log("\t\tThe point is not on the edge\n");
     		}
     	}
 
+	/* The point did not lie exactly ON the edge */
 	/* calculate in/out */
 	VMOVE(N, eu->up.lu_p->up.fu_p->f_p->fg_p->N);
     	if (eu->up.lu_p->up.fu_p->orientation != OT_SAME) {
@@ -320,13 +331,13 @@ long		*novote;
 	if (dot >= 0.0) {
 		closest->dist = dist;
 		closest->p.eu = eu;
-		closest->inout = FACE_HIT;
+		closest->class = NMG_CLASS_AinB;
 	    	if (rt_g.NMG_debug & DEBUG_CLASSIFY)
 	    		rt_log("\t\tpt is left of edge, INSIDE loop, dot=%g\n", dot);
-	} else if (dot < 0.0) {
+	} else {
 		closest->dist = dist;
 		closest->p.eu = eu;
-		closest->inout = FACE_MISS;
+		closest->class = NMG_CLASS_AoutB;
 	    	if (rt_g.NMG_debug & DEBUG_CLASSIFY)
 	    		rt_log("\t\tpt is right of edge, OUTSIDE loop\n");
 	}
@@ -361,24 +372,27 @@ out:
 
 
 /*
- *			P T _ H I T M I S _ L
+ *			N M G _ C L A S S _ P T _ L
  *
- *	Given a point on the plane of the loopuse, determine if the point
- *	is in, or out of the area of the loop
+ *  Given the coordinates of a point which lies on the plane of the face
+ *  containing a loopuse, determine if the point is IN, ON, or OUT of the
+ *  area enclosed by the loop.
+ *
+ *  Implicit Return -
+ *	Updated "closest" structure if appropriate.
  */
-static void pt_hitmis_l(pt, lu, closest, tol, novote)
-point_t		pt;
-struct loopuse	*lu;
-struct neighbor	*closest;
+static void
+nmg_class_pt_l(closest, pt, lu, tol)
+struct neighbor		*closest;
+CONST point_t		pt;
+CONST struct loopuse	*lu;
 CONST struct rt_tol	*tol;
-long		*novote;
 {
-	vect_t	delta;
-	pointp_t lu_pt;
-	fastf_t dist;
-	struct edgeuse *eu;
+	vect_t		delta;
+	pointp_t	lu_pt;
+	fastf_t		dist;
+	struct edgeuse	*eu;
 	struct loop_g	*lg;
-	char *name;
 
 	NMG_CK_LOOPUSE(lu);
 	NMG_CK_LOOP(lu->l_p);
@@ -386,179 +400,205 @@ long		*novote;
 	NMG_CK_LOOP_G(lg);
 
 	if (rt_g.NMG_debug & DEBUG_CLASSIFY)
-		VPRINT("pt_hitmis_l\tProjected Pt:", pt);
+		VPRINT("nmg_class_pt_l\tPt:", pt);
 
 	if (*lu->up.magic_p != NMG_FACEUSE_MAGIC)
 		return;
 
-	if( !V3PT_IN_RPP( pt, lg->min_pt, lg->max_pt ) )  {
+	if( !V3PT_IN_RPP_TOL( pt, lg->min_pt, lg->max_pt, tol ) )  {
 		if (rt_g.NMG_debug & DEBUG_CLASSIFY)
 			rt_log("\tPoint is outside loop RPP\n");
 		return;
 	}
 	if (RT_LIST_FIRST_MAGIC(&lu->down_hd) == NMG_EDGEUSE_MAGIC) {
 		for (RT_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
-			pt_hitmis_e(pt, eu, closest, tol, novote);
+			nmg_class_pt_e(closest, pt, eu, tol);
 		}
-
 	} else if (RT_LIST_FIRST_MAGIC(&lu->down_hd) == NMG_VERTEXUSE_MAGIC) {
 		register struct vertexuse *vu;
 		vu = RT_LIST_FIRST(vertexuse, &lu->down_hd);
-
 		lu_pt = vu->v_p->vg_p->coord;
 		VSUB2(delta, pt, lu_pt);
-		dist = MAGNITUDE(delta);
-
-		if (dist < closest->dist) {
-
+		if ( (dist = MAGNITUDE(delta)) < closest->dist) {
 			if (lu->orientation == OT_OPPOSITE) {
-				closest->inout = FACE_HIT; name = "HIT";
+				closest->class = NMG_CLASS_AoutB;
 			} else if (lu->orientation == OT_SAME) {
-				closest->inout = FACE_MISS; name = "MISS";
+				closest->class = NMG_CLASS_AonBshared;
 			} else {
-				rt_log("bad orientation for face loopuse\n");
 				nmg_pr_orient(lu->orientation, "\t");
-				rt_bomb("pt_hitmis_l: BAD NMG\n");
+				rt_bomb("nmg_class_pt_l: bad orientation for face loopuse\n");
 			}
-
 			if (rt_g.NMG_debug & DEBUG_CLASSIFY)
-				rt_log("point (%g, %g, %g) closer to lupt (%g, %g, %g)\n\tdist %g %s\n",
-					pt[0], pt[1], pt[2],
-					lu_pt[0], lu_pt[1], lu_pt[2],
-					dist, name);
+				rt_log("\t\t closer to loop pt (%g, %g, %g)\n",
+					V3ARGS(lu_pt) );
 
 			closest->dist = dist;
 			closest->p.vu = vu;
 		}
 	} else {
-		rt_log("%s at %d bad child of loopuse\n", __FILE__,
-			__LINE__);
-		rt_bomb("pt_hitmis_l\n");
+		rt_bomb("nmg_class_pt_l() bad child of loopuse\n");
 	}
 	if (rt_g.NMG_debug & DEBUG_CLASSIFY)
-		rt_log("pt_hitmis_l	returning, closest=%g\n", closest->dist);
+		rt_log("nmg_class_pt_l\treturning, closest=%g %s\n",
+			closest->dist, nmg_class_name(closest->class) );
 }
 
 /*
- *			P T _ H I T M I S _ F
+ *			N M G _ C L A S S _ P T _ F
  *
- *	Given a face and a point on the plane of the face, determine if
- *	the point is in or out of the area bounded by the face.
+ *  This is intended as a general user interface routine.
+ *  Given the Cartesian coordinates for a point which is known to
+ *  lie on a face, return the classification for that point
+ *  with respect to all the loops on that face.
  *
- *	Explicit Return
- *		1	point is ON or IN the area of the face
- *		0	point is outside the area of the face
+ *  The algorithm used is to find the edge which the point is closest
+ *  to, and classifiy with respect to that.
+ *
+ *  The point is "A", and the face is "B".
+ *
+ *  Returns -
+ *	NMG_CLASS_AinB		pt is INSIDE the area of the face.
+ *	NMG_CLASS_AonBshared	pt is ON a loop boundary.
+ *	NMG_CLASS_AoutB		pt is OUTSIDE the area of the face.
  */
 int
-nmg_pt_hitmis_f(pt, fu, tol, novote)
-point_t		pt;
-struct faceuse	*fu;
+nmg_class_pt_f(pt, fu, tol)
+CONST point_t		pt;
+CONST struct faceuse	*fu;
 CONST struct rt_tol	*tol;
-long		*novote;
 {
 	struct loopuse *lu;
 	struct neighbor closest;
+	fastf_t		dist;
 
 	if (rt_g.NMG_debug & DEBUG_CLASSIFY) {
-		VPRINT("nmg_pt_hitmis_f\tProjected Pt:", pt);
+		VPRINT("nmg_class_pt_f\tPt:", pt);
 	}
-	/* XXX Should validate distance from point to plane */
+	NMG_CK_FACEUSE(fu);
+	NMG_CK_FACE(fu->f_p);
+	NMG_CK_FACE_G(fu->f_p->fg_p);
+	RT_CK_TOL(tol);
+
+	/* Validate distance from point to plane */
+	if( (dist=fabs(DIST_PT_PLANE( pt, fu->f_p->fg_p->N ))) > tol->dist )  {
+		rt_log("nmg_class_pt_f() ERROR, point (%g,%g,%g) not on face, dist=%g\n",
+			V3ARGS(pt), dist );
+	}
 
 	/* find the closest approach in this face to the projected point */
 	closest.dist = MAX_FASTF;
 	closest.p.eu = (struct edgeuse *)NULL;
-	closest.inout = 0;
+	closest.class = NMG_CLASS_AoutB;	/* default return */
 
 	for (RT_LIST_FOR(lu, loopuse, &fu->lu_hd)) {
-		pt_hitmis_l(pt, lu, &closest, tol, novote);
+		nmg_class_pt_l( &closest, pt, lu, tol );
 	}
 
 	if (rt_g.NMG_debug & DEBUG_CLASSIFY) {
-		rt_log("nmg_pt_hitmis_f\tReturn=%s\n",
-			closest.inout == FACE_HIT ? "HIT" : "MISS" );
+		rt_log("nmg_class_pt_f\tdist=%g, return=%s\n",
+			closest.dist,
+			nmg_class_name(closest.class) );
 	}
-	if (closest.inout == FACE_HIT) return(1);
-	if( closest.inout == FACE_MISS ) return(0);
-	/* No explicit results implies a miss */
-	if (rt_g.NMG_debug & DEBUG_CLASSIFY)
-		rt_log("nmg_pt_hitmis_f: no results.  Implies MISS\n");
-	return 0;
+	return closest.class;
 }
 
 
 /*
- *			P T _ H I T M I S _ S
+ *			N M G _ C L A S S _ P T _ S
  *
- *	returns status (inside/outside/on_surface) of pt WRT shell.
+ *  This is intended as a general user interface routine.
+ *  Given the Cartesian coordinates for a point in space,
+ *  return the classification for that point with respect to a shell.
+ *
+ *  The algorithm used is to fire a ray from the point, and count
+ *  the number of times it crosses a face.
+ *
+ *  The point is "A", and the face is "B".
+ *
+ *  Returns -
+ *	NMG_CLASS_AinB		pt is INSIDE the volume of the shell.
+ *	NMG_CLASS_AonBshared	pt is ON the shell boundary.
+ *	NMG_CLASS_AoutB		pt is OUTSIDE the volume of the shell.
  */
-static pt_inout_s(pt, s, tol)
-point_t pt;
-struct shell *s;
+int
+nmg_class_pt_s(pt, s, tol)
+CONST point_t		pt;
+CONST struct shell	*s;
 CONST struct rt_tol	*tol;
 {
 	int		hitcount = 0;
 	int		stat;
 	fastf_t 	dist;
 	point_t 	plane_pt;
-	struct faceuse	*fu;
+	CONST struct faceuse	*fu;
 	struct model	*m;
-	long		*novote; /* faces that can't vote in a hit list */
+	long		*faces_seen;
 	vect_t		region_diagonal;
 	fastf_t		region_diameter;
+	int		class;
 
+	NMG_CK_SHELL(s);
 	RT_CK_TOL(tol);
 
 	if (rt_g.NMG_debug & DEBUG_CLASSIFY)
-		VPRINT("pt_inout_s: ", pt);
+		rt_log("nmg_class_pt_s:\tpt=(%g, %g, %g), s=x%x\n",
+			V3ARGS(pt), s );
 
-	if (! V3RPP_OVERLAP(s->sa_p->min_pt,s->sa_p->max_pt,pt,pt) )  {
+	if( !V3PT_IN_RPP_TOL(pt, s->sa_p->min_pt, s->sa_p->max_pt, tol) )  {
 		if (rt_g.NMG_debug & DEBUG_CLASSIFY)
-			rt_log("	OUTSIDE, extents don't overlap\n");
-
-		return(OUTSIDE);
+			rt_log("	OUT, point not in RPP\n");
+		return NMG_CLASS_AoutB;
 	}
 
 	m = s->r_p->m_p;
 	NMG_CK_MODEL(m);
-	novote = (long *)rt_calloc( m->maxindex, sizeof(long), "pt_inout_s novote[]" );
+	faces_seen = (long *)rt_calloc( m->maxindex, sizeof(long), "nmg_class_pt_s faces_seen[]" );
 	NMG_CK_REGION_A(s->r_p->ra_p);
 	VSUB2( region_diagonal, s->r_p->ra_p->max_pt, s->r_p->ra_p->min_pt );
 	region_diameter = MAGNITUDE(region_diagonal);
 
 	if (rt_g.NMG_debug & DEBUG_CLASSIFY)
-		rt_log("\tPt=(%g, %g, %g) dir=(%g, %g, %g), reg_diam=%g\n", V3ARGS(pt), V3ARGS(projection_dir), region_diameter);
+		rt_log("\tPt=(%g, %g, %g) dir=(%g, %g, %g), reg_diam=%g\n",
+			V3ARGS(pt), V3ARGS(projection_dir), region_diameter);
 
-	fu = RT_LIST_FIRST(faceuse, &s->fu_hd);
-	while (RT_LIST_NOT_HEAD(fu, &s->fu_hd)) {
+	for( RT_LIST_FOR(fu, faceuse, &s->fu_hd) )  {
+		/* If this face processed before, skip on */
+		if( NMG_INDEX_TEST( faces_seen, fu->f_p ) )  continue;
 
-		/* catch some (but not all) non-voters before they reach
-		 * the polling booth
-		 */
-		if (nmg_dangling_face(fu)) {
-			NMG_INDEX_SET(novote, fu->f_p);
-/***			(void)nmg_tbl(&novote, TBL_INS, &fu->f_p->magic);**/
+		/* Mark this face as having been processed */
+		NMG_INDEX_SET(faces_seen, fu->f_p);
 
-			if (RT_LIST_PNEXT(faceuse, fu) == fu->fumate_p)
-				fu = RT_LIST_PNEXT_PNEXT(faceuse, fu);
-			else
-				fu = RT_LIST_PNEXT(faceuse, fu);
+		/* Only consider the outward pointing faces */
+		if( fu->orientation != OT_SAME )  continue;
 
+		/* See if this point lies on this face */
+		if( (dist = fabs(DIST_PT_PLANE(pt, fu->f_p->fg_p->N))) < tol->dist)  {
+			/* Point lies on this plane, it may be possible to
+			 * short circuit everything.
+			 */
+			class = nmg_class_pt_f( pt, fu, tol );
+			if( class == NMG_CLASS_AonBshared )  {
+				/* Point is ON face, therefore it must be
+				 * ON the shell also.
+				 */
+				class = NMG_CLASS_AonBshared;
+				goto out;
+			}
+			if( class == NMG_CLASS_AinB )  {
+				/* Point is IN face, therefor it must be
+				 * ON the shell also.
+				 */
+				class = NMG_CLASS_AonBshared;
+				goto out;
+			}
+			/* Point is OUTside face, skip on. */
 			continue;
 		}
 
-		/* since the above block of code isn't the only place that
-		 * faces get put in the list, we need this here too
-		 */
-/***		if (nmg_tbl(&novote, TBL_LOC, &fu->f_p->magic) >= 0)  ***/
-		if( NMG_INDEX_TEST( novote, fu->f_p ) )  {
-			if (RT_LIST_PNEXT(faceuse, fu) == fu->fumate_p)
-				fu = RT_LIST_PNEXT_PNEXT(faceuse, fu);
-			else
-				fu = RT_LIST_PNEXT(faceuse, fu);
+		/* Dangling faces don't participate in Jordan Curve calc */
+		if (nmg_dangling_face(fu))  continue;
 
-			continue;
-		}
-
+		/* Find point where ray hits the plane */
 		stat = rt_isect_ray_plane(&dist, pt, projection_dir,
 			fu->f_p->fg_p->N);
 
@@ -567,57 +607,41 @@ CONST struct rt_tol	*tol;
 			PLPRINT("\tplane", fu->f_p->fg_p->N);
 		}
 
-		if (stat >= 0 && dist >= 0) {
-			/* compare extent of face to projection of pt on plane */
-			if( dist > region_diameter )  {
-				if (rt_g.NMG_debug & DEBUG_CLASSIFY)
-					rt_log("\tpt_inout_s: hit plane outside region, skipping\n");
-			} else if(
-			    pt[Y] >= fu->f_p->fg_p->min_pt[Y] &&
-			    pt[Y] <= fu->f_p->fg_p->max_pt[Y] &&
-			    pt[Z] >= fu->f_p->fg_p->min_pt[Z] &&
-			    pt[Z] <= fu->f_p->fg_p->max_pt[Z]) {
-			    	/*
-			    	 * XXX Above test assumes dir=1,0,0; omit X.
-				 * translate point into plane of face and
-			    	 * determine hit.
-			    	 */
-			    	VJOIN1(plane_pt, pt, dist,projection_dir);
+		if( stat < 0 )  continue;	/* Ray missed */
+		if( dist < 0 )  continue;	/* Hit was behind start pt. */
 
-				if (!nmg_dangling_face(fu)) {
-					hitcount += nmg_pt_hitmis_f(plane_pt,
-						fu, tol, novote);
-				} else {
-					if (rt_g.NMG_debug & DEBUG_CLASSIFY)
-						rt_log("\tnon-manifold face\n");
-					return(0);
-				}
-			}
+		/*
+		 *  The ray hit the face.  Determine if this is a reasonable
+		 *  hit distance by comparing with the region diameter.
+		 */
+		if( dist > region_diameter )  {
+			if (rt_g.NMG_debug & DEBUG_CLASSIFY)
+				rt_log("\tnmg_class_pt_s: hit plane outside region, skipping\n");
+			continue;
 		}
 
-		if (RT_LIST_PNEXT(faceuse, fu) == fu->fumate_p)
-			fu = RT_LIST_PNEXT_PNEXT(faceuse, fu);
-		else
-			fu = RT_LIST_PNEXT(faceuse, fu);
+		/* Construct coordinates of hit point, and classify. */
+	    	VJOIN1(plane_pt, pt, dist, projection_dir);
+		class = nmg_class_pt_f( plane_pt, fu, tol );
+		if( class != NMG_CLASS_AoutB )  hitcount++;
 	}
+	rt_free( (char *)faces_seen, "nmg_class_pt_s faces_seen[]" );
 
-	rt_free( (char *)novote, "pt_inout_s novote[]" );
-
-	/* if the hitcount is even, we're outside.  if it's odd, we're inside
+	/*  Using Jordan Curve Theorem, if hitcount is even, point is OUT.
+	 *  If hiscount is odd, point is IN.
 	 */
-	if (hitcount & 1) {
-		if (rt_g.NMG_debug & DEBUG_CLASSIFY)
-			rt_log("pt_inout_s: INSIDE. pt=(%g, %g, %g) hitcount: %d\n",
-			pt[0], pt[1], pt[2], hitcount);
-
-		return(INSIDE);
-	}
-
 	if (rt_g.NMG_debug & DEBUG_CLASSIFY)
-		rt_log("pt_inout_s: OUTSIDE. pt=(%g, %g, %g) hitcount: %d\n",
-			pt[0], pt[1], pt[2], hitcount);
-
-	return(OUTSIDE);
+		rt_log("nmg_class_pt_s:\t hitcount=%d\n", hitcount);
+	if (hitcount & 1) {
+		class = NMG_CLASS_AinB;
+	} else {
+		class = NMG_CLASS_AoutB;
+	}
+out:
+	if (rt_g.NMG_debug & DEBUG_CLASSIFY)
+		rt_log("nmg_class_pt_s: returning %s\n",
+			nmg_class_name(class) );
+	return class;
 }
 
 
@@ -636,6 +660,7 @@ CONST struct rt_tol	*tol;
 	pointp_t pt;
 	char	*reason;
 	int	status;
+	int	class;
 
 	NMG_CK_VERTEXUSE(vu);
 	NMG_CK_SHELL(sB);
@@ -693,21 +718,26 @@ CONST struct rt_tol	*tol;
 	 * so now it's time to look at the geometry to determine the vertex
 	 * relationship to the shell.
 	 *
-	 *  We know that the vertex doesn't lie ON any of the faces or
+	 * The vertex should *not* lie ON any of the faces or
 	 * edges, since the intersection algorithm would have combined the
 	 * topology if that had been the case.
 	 */
-	reason = "of pt_inout_s()";
-	status = pt_inout_s(pt, sB, tol);
+	reason = "of nmg_class_pt_s()";
+	class = nmg_class_pt_s(pt, sB, tol);
 	
-	if (status == OUTSIDE)  {
+	if( class == NMG_CLASS_AoutB )  {
 		NMG_INDEX_SET(classlist[NMG_CLASS_AoutB], vu->v_p);
-	}  else if (status == INSIDE)  {
+		status = OUTSIDE;
+	}  else if( class == NMG_CLASS_AinB )  {
 		NMG_INDEX_SET(classlist[NMG_CLASS_AinB], vu->v_p);
+		status = INSIDE;
+	}  else if( class == NMG_CLASS_AonBshared )  {
+		/* XXX what about corner of a cube touching inside the face of another cube? */
+		rt_bomb("class_vu_vs_s:  classifier found point ON, vertex topology should have been shared\n");
 	}  else  {
-		rt_log("status=%d\n", status);
+		rt_log("class=%s\n", nmg_class_name(class) );
 		VPRINT("pt", pt);
-		rt_bomb("class_vu_vs_s: pt_inout_s() failure. Point neither IN or OUT?\n");
+		rt_bomb("class_vu_vs_s: nmg_class_pt_s() failure\n");
 	}
 
 out:
@@ -733,6 +763,7 @@ CONST struct rt_tol	*tol;
 	point_t pt;
 	pointp_t eupt, matept;
 	char	*reason;
+	int	class;
 
 	if (rt_g.NMG_debug & DEBUG_CLASSIFY)
 		EUPRINT("class_eu_vs_s\t", eu);
@@ -820,15 +851,20 @@ CONST struct rt_tol	*tol;
 		if (rt_g.NMG_debug & DEBUG_CLASSIFY)
 			VPRINT("class_eu_vs_s: midpoint of edge", pt);
 
-		status = pt_inout_s(pt, s, tol);
+		class = nmg_class_pt_s(pt, s, tol);
 		reason = "midpoint classification (both verts ON)";
-		if (status == OUTSIDE)  {
+		if( class == NMG_CLASS_AoutB )  {
 			NMG_INDEX_SET(classlist[NMG_CLASS_AoutB], eu->e_p);
-		}  else if (status == INSIDE)  {
+			status = OUTSIDE;
+		}  else if( class == NMG_CLASS_AinB )  {
 			NMG_INDEX_SET(classlist[NMG_CLASS_AinB], eu->e_p);
+			status = INSIDE;
+		} else if( class == NMG_CLASS_AonBshared )  {
+			rt_bomb("class_eu_vs_s:  classifier found edge midpoint ON, edge topology should have been shared\n");
 		}  else  {
+			rt_log("class=%s\n", nmg_class_name(class) );
 			EUPRINT("Why wasn't this edge in or out?", eu);
-			rt_bomb("class_eu_vs_s\n");
+			rt_bomb("class_eu_vs_s: nmg_class_pt_s() midpoint failure\n");
 		}
 		goto out;
 	}
@@ -1144,6 +1180,10 @@ CONST struct rt_tol	*tol;
  *			N M G _ C L A S S _ S H E L L S
  *
  *	Classify one shell WRT the other shell
+ *
+ *  Implicit return -
+ *	Each element's classification will be represented by a
+ *	SET entry in the appropriate classlist[] array.
  */
 void
 nmg_class_shells(sA, sB, classlist, tol)
@@ -1156,11 +1196,13 @@ CONST struct rt_tol	*tol;
 	struct loopuse *lu;
 	struct edgeuse *eu;
 
+	NMG_CK_SHELL(sA);
+	NMG_CK_SHELL(sB);
 	RT_CK_TOL(tol);
 
 	if (rt_g.NMG_debug & DEBUG_CLASSIFY &&
 	    RT_LIST_NON_EMPTY(&sA->fu_hd))
-		rt_log("class_shells - doing faces\n");
+		rt_log("nmg_class_shells - doing faces\n");
 
 	fu = RT_LIST_FIRST(faceuse, &sA->fu_hd);
 	while (RT_LIST_NOT_HEAD(fu, &sA->fu_hd)) {
@@ -1175,7 +1217,7 @@ CONST struct rt_tol	*tol;
 	
 	if (rt_g.NMG_debug & DEBUG_CLASSIFY &&
 	    RT_LIST_NON_EMPTY(&sA->lu_hd))
-		rt_log("class_shells - doing loops\n");
+		rt_log("nmg_class_shells - doing loops\n");
 
 	lu = RT_LIST_FIRST(loopuse, &sA->lu_hd);
 	while (RT_LIST_NOT_HEAD(lu, &sA->lu_hd)) {
@@ -1190,7 +1232,7 @@ CONST struct rt_tol	*tol;
 
 	if (rt_g.NMG_debug & DEBUG_CLASSIFY &&
 	    RT_LIST_NON_EMPTY(&sA->eu_hd))
-		rt_log("class_shells - doing edges\n");
+		rt_log("nmg_class_shells - doing edges\n");
 
 	eu = RT_LIST_FIRST(edgeuse, &sA->eu_hd);
 	while (RT_LIST_NOT_HEAD(eu, &sA->eu_hd)) {
@@ -1205,7 +1247,7 @@ CONST struct rt_tol	*tol;
 
 	if (sA->vu_p) {
 		if (rt_g.NMG_debug)
-			rt_log("class_shells - doing vertex\n");
+			rt_log("nmg_class_shells - doing vertex\n");
 		(void)class_vu_vs_s(sA->vu_p, sB, classlist, tol);
 	}
 }
