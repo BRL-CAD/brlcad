@@ -44,6 +44,7 @@ extern char	*optarg;
 extern int	optind;
 
 extern void	(*nmg_plot_anim_upcall)();
+extern void	(*nmg_vlblock_anim_upcall)();
 
 struct vlist	*rtg_vlFree;	/* should be rt_g.rtg_vlFree !! XXX dm.h */
 
@@ -107,6 +108,32 @@ long	us;		/* microseconds of extra delay */
 	/* Overlay plot file */
 	sprintf( buf, "overlay %s\n", file );
 	cmdline( buf );
+
+	event_check( 1 );	/* Take any device events */
+
+	refresh();		/* Force screen update */
+
+	/* Extra delay between screen updates, for more viewing time */
+	if(us)
+		(void)bsdselect( 0, 0, us );
+}
+
+/*
+ *		M G E D _ V L B L O C K _ A N I M _ U P C A L L _ H A N D L E R
+ *
+ *  Used via upcall by routines deep inside LIBRT, to have a UNIX-plot
+ *  file dyanmicly overlaid on the screen.
+ *  This can be used to provide a very easy to program diagnostic
+ *  animation capability.
+ *  Alas, no wextern keyword to make this a little less indirect.
+ */
+void
+mged_vlblock_anim_upcall_handler( vbp, us )
+struct vlblock	*vbp;
+long		us;		/* microseconds of extra delay */
+{
+
+	cvt_vlblock_to_solids( vbp, "_PLOT_OVERLAY_" );
 
 	event_check( 1 );	/* Take any device events */
 
@@ -494,6 +521,7 @@ int	kind;
 
 	/* Establish upcall interfaces for use by bottom of NMG library */
 	nmg_plot_anim_upcall = mged_plot_anim_upcall_handler;
+	nmg_vlblock_anim_upcall = mged_vlblock_anim_upcall_handler;
 
 	switch( kind )  {
 	default:
@@ -796,4 +824,127 @@ mat_t		mat;
 		memfree( &(dmp->dmr_map), bytes, (unsigned long)addr );
 	dmaflag = 1;
 	return(0);
+}
+
+/*
+ *			C V T _ V L B L O C K _ T O _ S O L I D S
+ */
+cvt_vlblock_to_solids( vbp, name )
+struct vlblock	*vbp;
+char		*name;
+{
+	int		i;
+	char		shortname[32];
+	char		namebuf[64];
+	char		cmd_buf[64];
+
+	strncpy( shortname, name, 16-6 );
+	shortname[16-6] = '\0';
+	/* Remove any residue colors from a previous overlay w/same name */
+	sprintf( cmd_buf, "kill %s*\n", shortname );
+	cmdline(cmd_buf);
+
+	for( i=0; i < vbp->count; i++ )  {
+		if( i== 0 )  {
+			invent_solid( name, &vbp->cvp[0] );
+			continue;
+		}
+		if( vbp->cvp[i].rgb == 0 )  continue;
+		sprintf( namebuf, "%s%x",
+			shortname, vbp->cvp[i].rgb );
+		invent_solid( namebuf, &vbp->cvp[i] );
+	}
+}
+
+/*
+ *			I N V E N T _ S O L I D
+ *
+ *  Invent a solid by adding a fake entry in the database table,
+ *  adding an entry to the solid table, and populating it with
+ *  the given vector list.
+ *
+ *  This parallels much of the code in dodraw.c
+ */
+int
+invent_solid( name, cvl )
+char	*name;
+struct color_vlhead	*cvl;
+{
+	register struct directory *dp;
+	register struct solid *sp;
+	register struct vlist *vp;
+	struct vlhead	*vhead;
+	vect_t		max, min;
+
+	vhead = &cvl->head;
+
+#define PHONY_ADDR	(-1L)
+	if( (dp = db_lookup( dbip,  name, LOOKUP_QUIET )) != DIR_NULL )  {
+		if( dp->d_addr != PHONY_ADDR )  {
+			printf("invent_solid(%s) would clobber existing database entry, ignored\n");
+			return(-1);
+		}
+		/* Name exists from some other overlay,
+		 * zap any associated solids
+		 */
+		eraseobj(dp);
+	} else {
+		/* Need to enter phony name in directory structure */
+		dp = db_diradd( dbip,  name, PHONY_ADDR, 0, DIR_SOLID );
+	}
+
+	/* Obtain a fresh solid structure, and fill it in */
+	GET_SOLID(sp);
+
+	VSETALL( max, -INFINITY );
+	VSETALL( min,  INFINITY );
+	sp->s_vlist = vhead->vh_first;
+	vhead->vh_first = vhead->vh_last = VL_NULL;
+	sp->s_vlen = 0;
+	for( vp = sp->s_vlist; vp != VL_NULL; vp = vp->vl_forw )  {
+		/* XXX need to look at types here */
+		VMINMAX( min, max, vp->vl_pnt );
+		sp->s_vlen++;
+	}
+	VSET( sp->s_center,
+		(max[X] + min[X])*0.5,
+		(max[Y] + min[Y])*0.5,
+		(max[Z] + min[Z])*0.5 );
+
+	sp->s_size = max[X] - min[X];
+	MAX( sp->s_size, max[Y] - min[Y] );
+	MAX( sp->s_size, max[Z] - min[Z] );
+
+	/* set path information -- this is a top level node */
+	sp->s_last = 0;
+	sp->s_path[0] = dp;
+
+	sp->s_iflag = DOWN;
+	sp->s_soldash = 0;
+	sp->s_Eflag = 1;		/* Can't be solid edited! */
+	sp->s_color[0] = sp->s_basecolor[0] = (cvl->rgb>>16) & 0xFF;
+	sp->s_color[1] = sp->s_basecolor[1] = (cvl->rgb>> 8) & 0xFF;
+	sp->s_color[2] = sp->s_basecolor[2] = (cvl->rgb    ) & 0xFF;
+	sp->s_regionid = 0;
+	sp->s_addr = 0;
+	sp->s_bytes = 0;
+
+	/* Cvt to displaylist, determine displaylist memory requirement. */
+	if( !no_memory && (sp->s_bytes = dmp->dmr_cvtvecs( sp )) != 0 )  {
+		/* Allocate displaylist storage for object */
+		sp->s_addr = memalloc( &(dmp->dmr_map), sp->s_bytes );
+		if( sp->s_addr == 0 )  {
+			no_memory = 1;
+			(void)printf("invent_solid: out of Displaylist\n");
+			sp->s_bytes = 0;	/* not drawn */
+		} else {
+			sp->s_bytes = dmp->dmr_load(sp->s_addr, sp->s_bytes );
+		}
+	}
+
+	/* Solid successfully drawn, add to linked list of solid structs */
+	APPEND_SOLID( sp, HeadSolid.s_back );
+	dmp->dmr_viewchange( DM_CHGV_ADD, sp );
+	dmp->dmr_colorchange();
+	return(0);		/* OK */
 }
