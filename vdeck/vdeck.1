@@ -1,6 +1,6 @@
 .TH VDECK 1V VMB
-'\"	last edit:	85/03/05	D A Gwyn
-'\"	SCCS ID:	@(#)vdeck.1	2.3
+'\"	last edit:	86/03/26	D A Gwyn
+'\"	SCCS ID:	@(#)vdeck.1	2.4
 .SH NAME
 vdeck \- generate COM-GEOM decks from a GED file
 .SH SYNOPSIS
@@ -33,13 +33,11 @@ the program.
 .SH WARNING
 .I Vdeck\^
 is intended for new-style
-.RI (post- vged\^ )
-GED databases only.
-Such files usually have names ending with
-.BR .vg ,
-whereas old-style GED database names
-usually end in
-.BR .g .
+.I mged\^
+databases only.
+Files produced by older versions of GED
+may be incompatible with
+.IR vdeck\^ .
 .SH FILES
 .PD 0
 .TP "\w'/tmp/reg???   'u"
@@ -71,7 +69,7 @@ temporary
 /tmp/reg???
 temporary
 .SH "SEE ALSO"
-cat(1), ged2vged(1V), gedplot(1V), gedu(1V), vged(1V).
+cat(1), gedplot(1V), mged(1B).
 .SH AUTHORS
 Gary S. Moss, BRL/VLD-VMB
 .br
