@@ -86,7 +86,7 @@ typedef struct FBIO_ {
 	int	(*if_wmap)FB_ARGS((struct FBIO_ *ifp, CONST ColorMap *cmap));		/* write colormap 	*/
 	int	(*if_view)FB_ARGS((struct FBIO_ *ifp, int xcent, int ycent, int xzoom, int yzoom));		/* set view		*/
 	int	(*if_getview)FB_ARGS((struct FBIO_ *ifp, int *xcent, int *ycent, int *xzoom, int *yzoom));	/* get view		*/
-	int	(*if_setcursor)FB_ARGS((struct FBIO_ *ifp, unsigned char *bits, int xb, int yb, int xo, int yo));	/* define cursor 	*/
+	int	(*if_setcursor)FB_ARGS((struct FBIO_ *ifp, CONST unsigned char *bits, int xb, int yb, int xo, int yo));	/* define cursor 	*/
 	int	(*if_cursor)FB_ARGS((struct FBIO_ *ifp, int mode, int x, int y));		/* set cursor		*/
 	int	(*if_getcursor)FB_ARGS((struct FBIO_ *ifp, int *mode, int *x, int *y));	/* get cursor		*/
 	int	(*if_readrect)FB_ARGS((struct FBIO_ *ifp, int xmin, int ymin, int width, int height, unsigned char *pp));	/* read rectangle 	*/
@@ -179,12 +179,12 @@ extern int	fb_wpixel(FBIO *ifp, unsigned char *pp);
 extern int	fb_flush(FBIO *ifp);
 extern void	fb_log(char *fmt, ...);
 extern int	fb_null(FBIO *ifp);
-extern int	fb_null_setcursor(FBIO *ifp, unsigned char *bits, int xbits, int ybits, int xorig, int yorig);
+extern int	fb_null_setcursor(FBIO *ifp, CONST unsigned char *bits, int xbits, int ybits, int xorig, int yorig);
 
 /* utility functions */
 extern int	fb_common_file_size(int *w, int *h, char *file, int psize);
 extern int	fb_common_image_size(int *w, int *h, int npixels);
-extern int	fb_is_linear_cmap(ColorMap *cmap);
+extern int	fb_is_linear_cmap(CONST ColorMap *cmap);
 extern void	fb_make_linear_cmap(ColorMap *cmap);
 /* backward compatibility hacks */
 extern int	fb_reset(FBIO *ifp);
