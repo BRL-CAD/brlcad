@@ -923,22 +923,27 @@ struct rt_db_internal	*ip;
 CONST struct rt_tess_tol *ttol;
 struct rt_tol		*tol;
 {
-	fastf_t		c, dtol, f, mag_a, mag_h, ntol, r1, r2;
+	fastf_t		c, dtol, f, mag_a, mag_h, ntol, r1, r2, cprime;
 	fastf_t		**ellipses, theta_prev, theta_new, ell_ang();
 	int		*pts_dbl, face, i, j, nseg;
 	int		jj, na, nb, nell, recalc_b;
 	LOCAL mat_t	R;
 	LOCAL mat_t	invR;
+	LOCAL mat_t	invRoS;
+	LOCAL mat_t	S;
+	LOCAL mat_t	SoR;
 	LOCAL struct rt_ehy_internal	*xip;
 	point_t		p1;
 	struct pt_node	*pos_a, *pos_b, *pts_a, *pts_b, *rt_ptalloc();
 	struct shell	*s;
 	struct faceuse	**outfaceuses;
+	struct faceuse	*fu_top;
 	struct loopuse	*lu;
 	struct edgeuse	*eu;
 	struct vertex	*vertp[3];
 	struct vertex	***vells = (struct vertex ***)NULL;
 	vect_t		A, Au, B, Bu, Hu, V;
+	struct nmg_ptbl	vert_tab;
 
 	RT_CK_DB_INTERNAL(ip);
 	xip = (struct rt_ehy_internal *)ip->idb_ptr;
@@ -952,6 +957,7 @@ struct rt_tol		*tol;
 	mag_a = MAGSQ( xip->ehy_Au );	/* should already be unit vector */
 	mag_h = MAGNITUDE( xip->ehy_H );
 	c = xip->ehy_c;
+	cprime = c / mag_h;
 	r1 = xip->ehy_r1;
 	r2 = xip->ehy_r2;
 	/* Check for |H| > 0, |A| == 1, r1 > 0, r2 > 0, c > 0 */
@@ -979,6 +985,16 @@ struct rt_tol		*tol;
 	VMOVE(    &R[4], Au );
 	VREVERSE( &R[8], Hu );
 	mat_trn( invR, R );			/* inv of rot mat is trn */
+
+	/* Compute S */
+	mat_idn( S );
+	S[ 0] = 1.0/r2;
+	S[ 5] = 1.0/r1;
+	S[10] = 1.0/mag_h;
+
+	/* Compute SoR and invRoS */
+	mat_mul( SoR, S, R );
+	mat_mul( invRoS, invR, S );
 
 	/*
 	 *  Establish tolerances
@@ -1163,6 +1179,7 @@ struct rt_tol		*tol;
 		rt_log("rt_ehy_tess() failure, top face\n");
 		goto fail;
 	}
+	fu_top = outfaceuses[0];
 
 	/* Mark edges of this face as real, this is the only real edge */
 	for( RT_LIST_FOR( lu , loopuse , &outfaceuses[0]->lu_hd ) )
@@ -1265,7 +1282,8 @@ struct rt_tol		*tol;
 		}
 
 		/* associate geometry with each vertex */
-		for (j = 0; j < nseg; j++) {
+		for (j = 0; j < nseg; j++)
+		{
 			NMG_CK_VERTEX( vells[bottom][j] );
 			nmg_vertex_gv( vells[bottom][j],
 				&ellipses[bottom][3*j] );
@@ -1321,6 +1339,48 @@ struct rt_tol		*tol;
 	rt_free( (char *)ellipses, "fastf_t ell[]");
 	rt_free( (char *)vells, "vertex [][]");
 
+	/* Assign vertexuse normals */
+	nmg_vertex_tabulate( &vert_tab , &s->l.magic );
+	for( i=0 ; i<NMG_TBL_END( &vert_tab ) ; i++ )
+	{
+		point_t pt_prime,tmp_pt;
+		vect_t norm,rev_norm,tmp_vect;
+		struct vertex_g *vg;
+		struct vertex *v;
+		struct vertexuse *vu;
+
+		v = (struct vertex *)NMG_TBL_GET( &vert_tab , i );
+		NMG_CK_VERTEX( v );
+		vg = v->vg_p;
+		NMG_CK_VERTEX_G( vg );
+
+		VSUB2( tmp_pt , vg->coord , xip->ehy_V );
+		MAT4X3VEC( pt_prime , SoR , tmp_pt );
+		VSET( tmp_vect , pt_prime[X]*(2*cprime+1), pt_prime[Y]*(2*cprime+1), -(pt_prime[Z]+cprime+1) );
+		MAT4X3VEC( norm , invRoS , tmp_vect );
+		VUNITIZE( norm );
+		VREVERSE( rev_norm , norm );
+
+		for( RT_LIST_FOR( vu , vertexuse , &v->vu_hd ) )
+		{
+			struct faceuse *fu;
+
+			NMG_CK_VERTEXUSE( vu );
+			fu = nmg_find_fu_of_vu( vu );
+
+			/* don't assign vertexuse normals to top face (flat) */
+			if( fu == fu_top || fu->fumate_p == fu_top )
+				continue;
+
+			NMG_CK_FACEUSE( fu );
+			if( fu->orientation == OT_SAME )
+				nmg_vertexuse_nv( vu , norm );
+			else if( fu->orientation == OT_OPPOSITE )
+				nmg_vertexuse_nv( vu , rev_norm );
+		}
+	}
+
+	nmg_tbl( &vert_tab , TBL_FREE , (long *)NULL );
 	return(0);
 
 fail:
