@@ -350,7 +350,7 @@ f_copy_inv()
 
 	db_getrec( proto, &record, 0 );
 
-	if(record.u_id != ID_SOLID || recrod.s.s_type != GENTGC )  {
+	if(record.u_id != ID_SOLID || record.s.s_type != GENTGC )  {
 		(void)printf("%s: Not a cylinder\n",record.s.s_name);
 		return;
 	}
