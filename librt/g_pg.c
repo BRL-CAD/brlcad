@@ -120,10 +120,9 @@ struct rt_i		*rtip;
  *	#pts	(3) if a valid plane resulted.
  */
 HIDDEN int
-rt_pgface( stp, ap, bp, cp, np, tol )
+rt_pgface( stp, ap, bp, cp, tol )
 struct soltab	*stp;
 fastf_t		*ap, *bp, *cp;
-fastf_t		*np;
 CONST struct rt_tol	*tol;
 {
 	register struct tri_specific *trip;
