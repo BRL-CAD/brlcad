@@ -49,72 +49,58 @@ is being invoked from a shell script created by an
 .IR mged (1)
 \fIsaveview\fR command.
 .LP
-The following options are recognized.
+The following options are recognized:
 .TP
-.B \-s#
-specifies the
-number of rays to fire in the X and Y directions on a square grid.
-For non-square grids, the
-.B \-n#
-option defines the number of scanlines, and the
-.B \-w#
-option defines the width of each scanline in pixels.
-In all cases,
-the default size is 512 pixels.
-There is no maximum size limit.
-Alternatively, the grid cell sizes can be specified with
+.B \-a#
+selects auto-sizing, and gives the view azimuth in degrees.  Used with
+.B \-e
+and conflicts with
+.B \-M
+.TP
+.B \-b ``# #''
+is sometimes useful for debugging.  A single ray is fired at the pixel
+coordinates specified.
+This is best when accompanied by debugging options.  Note that the standard
+.IR getopt (3)
+routine only allows options to have one parameter, so the X and Y
+pixel coordinates need to be combined into one string parameter by enclosing
+them in double quotes.  This option must follow any viewing parameters.
+.TP
+.B \-c ``script_command''
+is used to supply on the command line any command that can appear
+in a
+.B \-M
+command script.
+For example,
+.B \-c ``set''
+will print the values of all settable variables.
+.TP
+.B \-e#
+selects auto-sizing, and gives the view elevation in degrees.  Used with
+.B \-a
+and conflicts with
+.B \-M
+.TP
 .B \-g#
-used to set the grid cell width, and
-.B \-G#
-optionally used to set the grid cell height.
+is used to set the grid cell width, in milimeters.
+Ordinarily, the cell width is computed by dividing the view size by
+the number of pixels of width, so this option need not be used.
+To obtain exactly 1 inch ray spacing, specify
+.B \-g25.4.
 If the grid cell width is specified and
 the grid cell height is \fInot\fR specified,
 the grid cell height defaults to be the same as the width.
 .TP
-.B \-b "# #"
-is sometimes useful for debugging.  A single ray is fired at the pixel
-coordinates specified, using the view parameters as specified.  This
-is best when accompanied by debugging options.  Note that the standard
-.IR getopt (3)
-routine only allows options to have one parameter, so the X and Y
-coordinates need to be combined into one string parameter by enclosing
-them in double quotes.  This option must follow any viewing parameters.
-.TP
-.B \-a#
-Select azimuth in degrees.  Used with
-.B \-e
-and conflicts with
-.B \-M
-.TP
-.B \-e#
-Select elevation in degrees.  Used with
-.B \-a
-and conflicts with
-.B \-M
-.TP
-.B \-M
-Read model2view matrix from standard input.
-Conflicts with
-.B \-a
-and
-.B \-e
-.TP
-.B \-o
-.B output.pix
-Specify the name of a file to store the
-.IR pix (5)
-format output.
-The
-.IR pix-fb (1)
-utility can be used to later display ``.pix'' files.
-.TP
-.B \-O
-.B output.a_pix
-Specify the name of a file to store the ASCII version of the image.
-.IR asc2pix (1)
-can be used to later convert the file to
-.IR pix (5)
-format output.
+.B \-i
+enables \fIincremental mode\fR processing.
+First a single ray is fired.
+Then, the screen is subdivided into four parts by evenly subdividing
+in the vertical and horizontal directions.
+The previously fired ray was the lower left corner;
+three more rays are fired.
+This process recurses until full resolution has been reached.
+Assumes square image.
+Also assumes fast path between CPU and display hardware.
 .TP
 .B \-l#
 Select lighting model.  Default is 0.
@@ -139,24 +125,85 @@ radius of curvature.
 Model 5 is a curvature debugging display, showing the principal
 direction vector.
 .TP
-.B \-P#
-Specify the maximum number of processors (in a multi-processor system) to be
-used for this execution.  The default is system dependent.
-On ``dedicated'' multi-processors, such as workstations and super-minis,
-the default is usually set for the maximum number of processors,
-while on shared multi-processors, such as SuperComputers,
-usually just one processor is used by default.
+.B \-n#
+defines the height of the image as a number of scanlines.
+.TP
+.B \-o
+.B output.pix
+Specify the name of a file to store the
+.IR pix (5)
+format output.
+The
+.IR pix-fb (1)
+utility can be used to later display ``.pix'' files.
+.TP
+.B \-p#
+Sets the perspective, in degrees, ranging  0 <= # < 180.
+.TP
+.B \-r#
+requests that overlapping regions be reported.
+.TP
+.B \-s#
+specifies the
+number of rays to fire in the X and Y directions on a square grid.
+The default size is 512 pixels.
+There is no maximum size limit.
+.TP
+.B \-w#
+defines the width of each scanline in pixels.
+.TP
+.B \-x#
+sets the
+.IR librt (3)
+debug flags to the given hexadecimal bit vector.
+See librt/debug.h for the bit definitions.
+.TP
+.B \-A#
+sets the ambient light intensity,
+as a fraction of the total light in the scene
+in the range of 0.0 to 1.0.
 .TP
 .B \-B
 The ``benchmark'' flag.  When specified, all intentional random effects
 such as ray dither, color dither, etc, are turned off, to allow
 benchmark timing comparison and benchmark result comparison.
 .TP
-.B \-E#
-Set distance of eye from center.
+.B \-C#/#/#
+sets the background color to the RGB value #/#/#, where each #
+is in the range of 0 to 255.
+All non-background colors will be dithered away from this value.
 .TP
-.B \-S
-Turns on stereo viewing.
+.B \-D#
+The "desired frame" flag, specifies frame number to start with.
+.TP
+.B \-E#
+sets the distance from the eye point to the center of the model RPP.
+Only useful with auto-sizing, conflicts with
+.B \-M
+.TP
+.B \-F\ framebuffer
+indicates that the output should be sent to the indicated framebuffer.
+See
+.IR libfb (3)
+for more details on the specification of a framebuffer.
+.TP
+.B \-G#
+sets the grid cell height, in milimeters.
+.TP
+.B \-H#
+The "hypersample" flag, specifies number of extra rays to fire
+for each pixel, to obtain more accurate results
+without needing to store the extra pixels.
+Causes
+.B \-J1
+to be set.
+The final colors of all rays are averaged together.
+Better results can be obtained by simply increasing the resolution,
+and decimating the results with a filter such as
+.IR pixhalve (1).
+.B \-I
+Turns on interactive mode.  If this flag is off, and your image is
+"large" (>= 256x256) it will lower the priority of the rt process.
 .TP
 .B \-J#
 The "jitter" flag, if nonzero randomizes the point from which the ray
@@ -165,46 +212,58 @@ post filtering for antialiasing, or to eliminate systematic
 errors.  This has been useful in obtaining more accurate results
 in a volume-calculating raytrace as well.
 .TP
-.B \-H#
-The "hypersample" flag, specifies number of extra rays to fire for 
-more accurate results.  The final colors of all rays are averaged
-together.
-.TP
-.B \-F\ framebuffer
-.TP
+.B \-K#
+sets the final (kill-after) frame number.
+Used with animation scripts in conjunction with
 .B \-D#
-The "desired frame" flag, specifies frame number to start with.
 .TP
-.B \-x#
-Set the
-.IR librt (3)
-debug flags to the given hexadecimal bit vector.
-See librt/debug.h for the bit definitions.
+.B \-M
+Read animation matrix or animation script from standard input.
+Conflicts with
+.B \-a
+and
+.B \-e
+.TP
+.B \-O
+.B output.dpix
+Specify the name of a file to store the double-precision floating-point
+version of the image.
+.IR dpix-pix (1)
+can be used to later convert the file to
+.IR pix (5)
+format output.
+(Deferred implementation).
+.TP
+.B \-P#
+Specify the maximum number of processors (in a multi-processor system) to be
+used for this execution.  The default is system dependent.
+On ``dedicated'' multi-processors, such as workstations and super-minis,
+the default is usually set for the maximum number of processors,
+while on shared multi-processors, such as SuperComputers,
+usually just one processor is used by default.
+.TP
+.B \-S
+Turns on stereo viewing.
+The left-eye image is drawn in red,
+and the right-eye image is drawn in blue.
+.TP
+.B \-U#
+Sets the "use_air" value.
+Default is 0, which ignores regions that have non-zero aircode values.
+.TP
+.B \-V#
+Sets the view aspect.  This is the ratio of width over height and can
+be specified as either a fraction or a colon-separated ratio.
+For example, the NTSC aspect ratio can be specified by either
+.B \-V1.33
+or
+.B \V4:3
 .TP
 .B \-X#
 Turns on the
 .I rt (1)
 program debugging flags.  See rt/rdebug.h for the meaning of these bits.
 .TP
-.B \-A#
-Sets the ambient light intensity.
-.TP
-.B \-p#
-Sets the perspective, in degrees ranging  0 <= p < 180.
-.TP
-.B \-i
-Sets the "increment mode" flag, calling for incremental resolution.
-.TP
-.B \-I
-Turns on interactive mode.  If this flag is off, and your image is
-"large" (>= 256x256) it will lower the priority of the rt process.
-.TP
-.B \-U#
-Sets the "use_air" value.
-.TP
-.B \-V#
-Sets the view aspect.  This is the ratio of width over height and can
-be specified as either 1.33 or 4:3 for example.
 .LP
 The
 .B rt
