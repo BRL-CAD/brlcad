@@ -1,6 +1,6 @@
 /*
- *	@(#) vdeck.c		retrieved 8/13/86 at 08:04:41,
- *	@(#) version 1.4		  created 2/25/83 at 13:33:18.
+ *	@(#) vdeck.c		retrieved 8/13/86 at 08:05:00,
+ *	@(#) version 1.5		  created 2/25/83 at 13:39:41.
  *
  *	Written by Gary S. Moss.
  *	All rights reserved, Ballistic Research Laboratory.
@@ -687,7 +687,8 @@ Record *rec;
 	register int	i;
 	float	work[3], worc[3];
 	vect_t	v_work, v_workk;
-
+	float	xmin, xmax, ymin, ymax, zmin, zmax;
+	
 	if( rec->s.s_type == GENARB8 )	/*** KLUDGE ****/
 		if( rec->s.s_num > 0 )	rec->s.s_num = ARB8;
 		else			rec->s.s_num *= -1;
