@@ -18,8 +18,30 @@ cake \
  chgtree.o \
  chgview.o \
  cmd.o \
- columns.o \
- db.o &
+ columns.o &
+
+cake \
+ grid.o \
+ axes.o \
+ qray.o \
+ color_scheme.o \
+ share.o \
+ polyif.o \
+ predictor.o \
+ edpipe.o \
+ edars.o &
+
+cake \
+ red.o \
+ set.o \
+ animedit.o \
+ solids_on_ray.o \
+ comb_std.o \
+ vrlink.o \
+ dm-generic.o \
+ vdraw.o \
+ fbserv.o \
+ rect.o &
 
 cake \
  dir.o \
@@ -57,4 +79,5 @@ cake \
  utility2.o &
 
 wait
+echo --- Collecting any stragglers.
 cake
