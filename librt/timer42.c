@@ -87,9 +87,11 @@ double		*elapsed;
 	if( elapsed )  *elapsed = elapsed_secs;
 
 	if( vp )  {
-		rt_vls_strcat( vp, "parent: " );
+		rt_vls_printf( vp, "cpu = %g sec, elapsed = %g sec\n",
+			user_cpu_secs, elapsed_secs );
+		rt_vls_strcat( vp, "    parent: " );
 		prusage(&ru0, &ru1, &timedol, &time0, vp);
-		rt_vls_strcat( vp, "\n\tchildren: ");
+		rt_vls_strcat( vp, "\n  children: ");
 		prusage(&ru0c, &ru1c, &timedol, &time0, vp);
 	}
 
