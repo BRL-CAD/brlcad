@@ -3594,7 +3594,7 @@ genptr_t		client_data;
 	    "artic_grip");
 	newGrip->l.magic = MAGIC_A_GRIP;
 	VMOVE(newGrip->vert, gip->center);
-	newGrip->dir = pathp->fp_names[pathp->fp_len-1];
+	newGrip->dir = dp;
 	for (BU_LIST_FOR(newJoint, artic_joints, &artic_head)) {
 		if (newJoint->joint == jp) {
 			BU_LIST_APPEND(&newJoint->head, &(newGrip->l));
