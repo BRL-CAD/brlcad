@@ -905,6 +905,34 @@ register const double	*mat;
 		mat[12], mat[13], mat[14], mat[15]);
 }
 
+HIDDEN void
+bu_vls_matprint(struct bu_vls		*vls,
+		const char		*name,
+		register const double	*mat)
+{
+	int	delta = strlen(name)+2;
+
+	/* indent the body of the matrix */
+	bu_log_indent_delta(delta);
+
+	bu_vls_printf(vls, " %s=%12E %12E %12E %12E\n",
+		      name, mat[0], mat[1], mat[2], mat[3]);
+	bu_log_indent_vls(vls);
+
+	bu_vls_printf(vls, "%12E %12E %12E %12E\n",
+		      mat[4], mat[5], mat[6], mat[7]);
+	bu_log_indent_vls(vls);
+
+	bu_vls_printf(vls, "%12E %12E %12E %12E\n",
+		      mat[8], mat[9], mat[10], mat[11]);
+	bu_log_indent_vls(vls);
+
+	bu_log_indent_delta(-delta);
+
+	bu_vls_printf(vls, "%12E %12E %12E %12E\n",
+		      mat[12], mat[13], mat[14], mat[15]);
+}
+
 /*
  *	
  *	Convert a structure element (indicated by sdp) to its ASCII
@@ -1029,9 +1057,7 @@ const char			*base;	  /* base address of users structure */
 	register const struct bu_structparse	*sdp;
 	register char			*loc;
 	register int			lastoff = -1;
-	struct bu_vls vls;
 
-	bu_vls_init( &vls );
 	bu_log( "%s\n", title );
 	if (parsetab == (struct bu_structparse *)NULL) {
 		bu_log( "Null \"struct bu_structparse\" pointer\n");
@@ -1161,7 +1187,6 @@ const char			*base;	  /* base address of users structure */
 		}
 #endif
 	}
-	bu_vls_free(&vls);
 }
 
 /*
@@ -1385,12 +1410,10 @@ bu_vls_struct_print2(struct bu_vls			*vls_out,
 	register const struct bu_structparse	*sdp;
 	register char			*loc;
 	register int			lastoff = -1;
-	struct bu_vls vls;
 
-	bu_vls_init(&vls);
 	bu_vls_printf(vls_out, "%s\n", title);
 	if (parsetab == (struct bu_structparse *)NULL) {
-		bu_log("Null \"struct bu_structparse\" pointer\n");
+		bu_vls_printf(vls_out, "Null \"struct bu_structparse\" pointer\n");
 		return;
 	}
 
@@ -1415,15 +1438,11 @@ bu_vls_struct_print2(struct bu_vls			*vls_out,
 		}
 
 		if (sdp->sp_fmt[0] != '%') {
-			bu_log("bu_struct_print:  %s: unknown format '%s'\n",
+			bu_vls_printf(vls_out, "bu_vls_struct_print:  %s: unknown format '%s'\n",
 			       sdp->sp_name, sdp->sp_fmt );
 			continue;
 		}
-#if 0
-		bu_vls_trunc( &vls, 0 );
-		bu_vls_struct_item( &vls, sdp, base, ',' );
-		bu_log( " %s=%s\n", sdp->sp_name, bu_vls_addr(&vls) );
-#else
+
 		switch( sdp->sp_fmt[1] )  {
 		case 'c':
 		case 's':
@@ -1442,34 +1461,37 @@ bu_vls_struct_print2(struct bu_vls			*vls_out,
 					(struct bu_vls *)loc;
 
 				bu_log_indent_delta(delta);
-				bu_log(" %s=(vls_magic)%d (vls_offset)%d (vls_len)%d (vls_max)%d\n",
+				bu_vls_printf(vls_out, " %s=(vls_magic)%d (vls_offset)%d (vls_len)%d (vls_max)%d\n",
 					sdp->sp_name, vls->vls_magic,
 					vls->vls_offset,
 					vls->vls_len, vls->vls_max);
+				bu_log_indent_vls(vls_out);
 				bu_log_indent_delta(-delta);
-				bu_log("\"%s\"\n", vls->vls_str+vls->vls_offset);
+				bu_vls_printf(vls_out, "\"%s\"\n", vls->vls_str+vls->vls_offset);
 			}
 			break;
 		case 'i':
 			{	register int i = sdp->sp_count;
 				register short *sp = (short *)loc;
 
-				bu_log( " %s=%hd", sdp->sp_name, *sp++ );
+				bu_vls_printf(vls_out, " %s=%hd", sdp->sp_name, *sp++ );
 
-				while (--i > 0) bu_log( ",%d", *sp++ );
+				while (--i > 0)
+					bu_vls_printf(vls_out, ",%d", *sp++ );
 
-				bu_log("\n");
+				bu_vls_printf(vls_out, "\n");
 			}
 			break;
 		case 'd':
 			{	register int i = sdp->sp_count;
 				register int *dp = (int *)loc;
 
-				bu_log( " %s=%d", sdp->sp_name, *dp++ );
+				bu_vls_printf(vls_out, " %s=%d", sdp->sp_name, *dp++ );
 
-				while (--i > 0) bu_log( ",%d", *dp++ );
+				while (--i > 0)
+					bu_vls_printf(vls_out, ",%d", *dp++ );
 
-				bu_log("\n");
+				bu_vls_printf(vls_out, "\n");
 			}
 			break;
 		case 'f':
@@ -1477,26 +1499,28 @@ bu_vls_struct_print2(struct bu_vls			*vls_out,
 				register double *dp = (double *)loc;
 
 				if (sdp->sp_count == 16) {
-					bu_matprint(sdp->sp_name, dp);
+					bu_vls_matprint(vls_out, sdp->sp_name, dp);
 				} else if (sdp->sp_count <= 3){
-					bu_log( " %s=%.25G", sdp->sp_name, *dp++ );
+					bu_vls_printf(vls_out, " %s=%.25G", sdp->sp_name, *dp++ );
 
 					while (--i > 0)
-						bu_log( ",%.25G", *dp++ );
+						bu_vls_printf(vls_out, ",%.25G", *dp++ );
 
-					bu_log("\n");
+					bu_vls_printf(vls_out, "\n");
 				}else  {
 					int delta = strlen(sdp->sp_name)+2;
 
 					bu_log_indent_delta(delta);
+					bu_vls_printf(vls_out, " %s=%.25G\n", sdp->sp_name, *dp++ );
+					bu_log_indent_vls(vls_out);
 
-					bu_log( " %s=%.25G\n", sdp->sp_name, *dp++ );
-
-					while (--i > 1)
-						bu_log( "%.25G\n", *dp++ );
+					while (--i > 1) {
+						bu_vls_printf(vls_out, "%.25G\n", *dp++ );
+						bu_log_indent_vls(vls_out);
+					}
 
 					bu_log_indent_delta(-delta);
-					bu_log( "%.25G\n", *dp );
+					bu_vls_printf(vls_out, "%.25G\n", *dp );
 				}
 			}
 			break;
@@ -1504,21 +1528,20 @@ bu_vls_struct_print2(struct bu_vls			*vls_out,
 			{	register int i = sdp->sp_count;
 				register int *dp = (int *)loc;
 
-				bu_log( " %s=%08x", sdp->sp_name, *dp++ );
+				bu_vls_printf(vls_out, " %s=%08x", sdp->sp_name, *dp++ );
 
-				while (--i > 0) bu_log( ",%08x", *dp++ );
+				while (--i > 0)
+					bu_vls_printf(vls_out, ",%08x", *dp++ );
 
-				bu_log("\n");
+				bu_vls_printf(vls_out, "\n");
 			}
 			break;
 		default:
-			bu_log( " bu_struct_print: Unknown format: %s=%s??\n",
+			bu_vls_printf(vls_out, " bu_vls_struct_print2: Unknown format: %s=%s??\n",
 				sdp->sp_name, sdp->sp_fmt );
 			break;
 		}
-#endif
 	}
-	bu_vls_free(&vls);
 }
 
 
