@@ -4,6 +4,9 @@
  * $Revision$
  *
  * $Log$
+ * Revision 10.2  93/10/26  03:45:31  mike
+ * ANSI C
+ * 
  * Revision 10.1  91/10/12  06:53:57  mike
  * Release_4.0
  * 
@@ -52,7 +55,7 @@ int	InJoverc = 0;
 
 extern char	*Findcom;
 extern int	getch(),
-		getchar();
+		jgetchar();
 
 void		BindSomething();
 void		DoKeyDesc();
@@ -121,7 +124,7 @@ KeyDesc()
 
 	s_mess(FuncName());
 	UpdateMesg();
-	key = getchar();
+	key = jgetchar();
 	if (mainmap[key]->f.Func == EscPrefix)
 		DoKeyDesc(pref1map, key);
 	else if (mainmap[key]->f.Func == CtlxPrefix)
@@ -140,7 +143,7 @@ struct function	**map;
 
 	s_mess("%s%c-", FuncName(), key);
 	UpdateMesg();
-	c = getchar();
+	c = jgetchar();
 	s_mess("%s%c-%c", FuncName(), key, c);
 	if (map[c] == 0)
 		s_mess("%c-%c is unbound", key, c);
@@ -459,8 +462,8 @@ char	*file;
 	}
 
 	InJoverc = 1;
-	Getchar = getchar;
-	while (Ungetc(getchar()) != EOF)
+	Getchar = jgetchar;
+	while (Ungetc(jgetchar()) != EOF)
 		Extend();
 	InJoverc = 0;
 	Getchar = getch;
