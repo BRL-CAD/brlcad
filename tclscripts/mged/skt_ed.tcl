@@ -984,16 +984,23 @@ class Sketch_editor {
 		draw_verts
 	    }
 
+	    lappend bezier_indices $bezier_indices
+	    set new_seg [Sketch_bezier #auto $this $itk_component(canvas) \
+		    "D [expr [llength $bezier_indices] - 1] P [list $bezier_indices]"]
+	    lappend segments ::Sketch_editor::$new_seg
+	    set needs_saving 1
+	    draw_segs
+
 	    # setup to pick next bezier point
 	    $itk_component(status_line) configure -text "Click mouse button 1 to set next Bezier point\n\
 		    or click mouse button 3 to select an existing vertex as the next point\n\
 		    or enter next point coordinates in entry windows\n\
 		    or click mouse button 2 to finish"
-	    bind $itk_component(canvas) <ButtonRelease-1> [code $this next_bezier 1 %x %y]
-	    bind $itk_component(canvas) <ButtonRelease-3> [code $this next_bezier_pick %x %y]
-	    bind $itk_component(canvas) <ButtonRelease-2> [code $this end_bezier]
-	    bind $itk_component(coords).x <Return> [code $this next_bezier 0 0 0]
-	    bind $itk_component(coords).y <Return> [code $this next_bezier 0 0 0]
+	    bind $itk_component(canvas) <ButtonRelease-1> [code $this next_bezier $new_seg 1 %x %y]
+	    bind $itk_component(canvas) <ButtonRelease-3> [code $this next_bezier_pick $new_seg %x %y]
+	    bind $itk_component(canvas) <ButtonRelease-2> [code $this end_bezier $new_seg]
+	    bind $itk_component(coords).x <Return> [code $this next_bezier $new_seg 0 0 0]
+	    bind $itk_component(coords).y <Return> [code $this next_bezier $new_seg 0 0 0]
 	}
 
 	method start_bezier_pick { x y } {
@@ -1003,7 +1010,7 @@ class Sketch_editor {
 	    start_bezier 2 0 0
 	}
 
-	method next_bezier { coord_type x y} {
+	method next_bezier { segment coord_type x y} {
 	    if { $coord_type == 1 } {
 		# screen coordinates
 		show_coords $x $y
@@ -1016,20 +1023,29 @@ class Sketch_editor {
 	    }
 	    if { $coord_type != 2 } {
 		# use index numbers
+		if { [llength $bezier_indices] == 2 && [lindex $bezier_indices 0] == [lindex $bezier_indices 1] } {
+		    set bezier_indices [lrange $bezier_indices 0 0]
+		}
 		lappend bezier_indices [llength $VL]
 		lappend VL "$sx $sy"
 		draw_verts
 	    }
+	    $itk_component(canvas) delete ::Sketch_editor::$segment
+	    ::Sketch_editor::$segment set_vars D [expr [llength $bezier_indices] - 1] P $bezier_indices
+	    draw_segs
 	}
 
-	method next_bezier_pick { x y } {
+	method next_bezier_pick { segment x y } {
 	    set index [pick_vertex $x $y]
 	    if { $index == -1 } return
-	    lapend bezier_indices $index
-	    next_bezier 2 0 0
+	    if { [llength $bezier_indices] == 2 && [lindex $bezier_indices 0] == [lindex $bezier_indices 1] } {
+		set bezier_indices [lrange $bezier_indices 0 0]
+	    }
+	    lappend bezier_indices $index
+	    next_bezier $segment 2 0 0
 	}
 
-	method end_bezier {} {
+	method end_bezier { segment } {
 	    bind $itk_component(canvas) <ButtonRelease-1> {}
 	    bind $itk_component(canvas) <ButtonRelease-3> {}
 	    bind $itk_component(canvas) <ButtonRelease-2> {}
@@ -1043,9 +1059,8 @@ class Sketch_editor {
 		return
 	    }
 
-	    set new_seg [Sketch_bezier #auto $this $itk_component(canvas) \
-		    "D [expr [llength $bezier_indices] - 1] P [list $bezier_indices]"]
-	    lappend segments ::Sketch_editor::$new_seg
+	    $itk_component(canvas) delete ::Sketch_editor::$segment
+	    ::Sketch_editor::$segment set_vars D [expr [llength $bezier_indices] - 1] P $bezier_indices
 	    set needs_saving 1
 	    draw_segs
 	}
@@ -1421,7 +1436,7 @@ class Sketch_editor {
 			or click mouse button 3 to select an existing vertex to set the endpoint\n\
 			or enter end point cordinates in the entry windows"
 		bind $itk_component(canvas) <B1-Motion> [code $this continue_line $new_seg 0 1 %x %y]
-		bind $itk_component(canvas) <ButtonPress-1> [code $this continue_line $new_seg 0 1 %x %y]
+		bind $itk_component(canvas) <ButtonPress-1> [code $this continue_line $new_seg 2 1 %x %y]
 		bind $itk_component(canvas) <ButtonRelease-1> [code $this continue_line $new_seg 1 1 %x %y]
 		bind $itk_component(canvas) <ButtonRelease-3> [code $this continue_line_pick $new_seg %x %y]
 		bind $itk_component(coords).x <Return> [code $this continue_line $new_seg 1 0 0 0]
@@ -1450,13 +1465,19 @@ class Sketch_editor {
 			set ey $y_coord
 		}
 
+		if { $state == 2 } {
+		    set index2 [llength $VL]
+		    lappend VL "$ex $ey"
+		    ::Sketch_editor::$segment set_vars E $index2
+		}
+
 		if { $coord_type != 2 } {
 			set VL [lreplace $VL $index2 $index2 "$ex $ey"]
 		}
 		$itk_component(canvas) delete ::Sketch_editor::$segment
 		$segment draw ""
 		$itk_component(canvas) configure -scrollregion [$itk_component(canvas) bbox all]
-		if { $state } {
+		if { $state == 1 } {
 			bind $itk_component(canvas) <ButtonPress-1> {}
 			bind $itk_component(canvas) <B1-Motion> {}
 			bind $itk_component(canvas) <ButtonRelease-1> {}
