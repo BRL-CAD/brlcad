@@ -189,7 +189,11 @@ f_debug()
 
 f_regdebug()
 {
-		regdebug ^= 1;	/* toggle */
+	if( numargs <= 1 )
+		regdebug = !regdebug;	/* toggle */
+	else
+		regdebug = atoi( cmd_args[1] );
+	(void)printf("regdebug=%d\n", regdebug);
 }
 
 /* List object information */
