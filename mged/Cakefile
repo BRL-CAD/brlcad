@@ -19,32 +19,17 @@
 			spline mater plot overlay inside \
 			utility1 utility2 track arbs \
 			facedef arb ell half tgc torus \
-			attach dm-tek dm-plot \
+			attach dm-tek dm-plot dm-ps \
 			dm-tek4109 MGED_OBJS
 
 #include "../Cakefile.defs"
-
-#ifndef MGED_OBJS
-#	define	MGED_OBJS	/**/
-#endif
-
-#ifndef MGED_CONFIG
-#	define	MGED_CONFIG	/**/
-#endif
-
-#ifndef MGED_LIBES
-#	define	MGED_LIBES	/**/
-#endif
-
-#ifndef RT_CONFIG
-#	define	RT_CONFIG	/**/
-#endif
-
 #include "../Cakefile.prog"
 
 mged:	OBJ
-	sh ../SRCDIR/MGED_VERS
-	CC -c vers.c
-	CC -o mged CFLAGS OBJ MGED_LIBES LIBRT RT_CONFIG LIBMALLOC LIBES vers.o
+	-rm -f vers.c
+	sh ../SRCDIR/newvers.sh
+	CC CFLAGS -c vers.c
+	CC -o mged LDFLAGS OBJ MGED_LIBES \
+		LIBRT RT_LIBES LIBMALLOC LIBES vers.o
 
 #include "../Cakefile.rules"
