@@ -1,4 +1,9 @@
 #!/bin/sh
+#			N E W B I N D I R . S H
+#
+#  Script to permanantly modify your copy of the BRL-CAD distribution to
+#  place the installed programs in some place other than BRL's usual place.
+#
 #  $Header$
 
 eval `grep "^BINDIR=" setup.sh`		# sets BINDIR
@@ -29,7 +34,15 @@ echo "ETCDIR was $ETCDIR, will be $NEW"
 echo "MANDIR and INCLUDE_DIR will be $NEW"
 echo
 
-for i in Cakefile.defs setup.sh cray.sh cake/Makefile cakeaux/Makefile
+#  The first set of substitutions replace one path with another.
+#  This works well on Makefiles and shell scripts.
+#  The second set of substitutions modify #define entries
+#  (typically in Cakefile.defs) that might be system-specific.
+
+for i in \
+	Cakefile.defs setup.sh cray.sh \
+	cake/Makefile cakeaux/Makefile \
+	brlman/awf brlman/brlman
 do
 	chmod 775 $i
 	ed - $i << EOF
@@ -37,6 +50,7 @@ f
 g,$BINDIR,s,,$NEW,p
 g,$LIBDIR,s,,$NEW,p
 g,$ETCDIR,s,,$NEW,p
+g,$MANDIR,s,,$NEW,p
 g,$INCLUDE_DIR,s,,$NEW,p
 g,INCLUDE_DIR	.*,s,,INCLUDE_DIR	$NEW,p
 g,MANDIR	.*,s,,MANDIR	$NEW,p
