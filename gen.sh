@@ -198,8 +198,6 @@ BDIRS="bench \
 	jove \
 	canon \
 	burst \
-	tcl \
-	tk \
 	dhrystone"
 
 TDIRS="libtk libtkGLX"
