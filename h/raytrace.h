@@ -716,7 +716,7 @@ struct mem_map {
  *  application programmers.
  */
 struct db_i  {
-	int			dbi_magic;	/* magic number */
+	long			dbi_magic;	/* magic number */
 	struct directory	*dbi_Head[RT_DBNHASH];
 	int			dbi_fd;		/* UNIX file descriptor */
 	FILE			*dbi_fp;	/* STDIO file descriptor */
@@ -938,7 +938,7 @@ struct rt_anim_color {
 };
 
 struct animate {
-	int	magic;				/* magic number */
+	long		magic;			/* magic number */
 	struct animate	*an_forw;		/* forward link */
 	struct db_full_path an_path;		/* (sub)-path pattern */
 	int		an_type;		/* AN_MATRIX, AN_COLOR... */
