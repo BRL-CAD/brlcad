@@ -343,10 +343,14 @@ static char idmap[] = {
  *  Returns ID_xxx if successful, or ID_NULL upon failure.
  */
 int
-rt_id_solid( rec )
-register union record *rec;
+rt_id_solid( ep )
+struct rt_external	*ep;
 {
+	register union record *rec;
 	register int id;
+
+	RT_CK_EXTERNAL( ep );
+	rec = (union record *)ep->ext_buf;
 
 	switch( rec->u_id )  {
 	case ID_SOLID:
