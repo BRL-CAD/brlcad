@@ -23,7 +23,11 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "raytrace.h"
 #include "./ged.h"
 
-struct mged_variables mged_variables;
+struct mged_variables mged_variables = {
+/* autosize */		1,
+/* sgi_win_size */	0,
+/* sgi_win_origin */	{ 0, 0 }
+};
 
 #define MV_O(_m)	offsetof(struct mged_variables, _m)
 struct structparse mged_vparse[] = {
