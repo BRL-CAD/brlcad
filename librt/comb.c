@@ -174,7 +174,7 @@ char *argv[];
 		bu_vls_free( &file );
 
 		/* Test the lumberjacks */
-		rt_comb_ifree( &ip );
+		ip.idb_meth->ft_ifree( &ip );
 
 	}
 }

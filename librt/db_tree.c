@@ -870,7 +870,7 @@ int				depth;		/* # arcs in new_path to use */
 		/* Found it, state has been applied, sofar applied,
 		 * member's directory entry pushed onto total_path
 		 */
-		rt_comb_ifree( &intern );
+		intern.idb_meth->ft_ifree( &intern );
 
 		/* If member is a leaf, handle leaf processing too. */
 		if( (dp->d_flags & DIR_COMB) == 0 )  {
@@ -1233,7 +1233,7 @@ region_end:
 		curtree = TREE_NULL;
 	}
 out:
-	if( intern.idb_ptr )  rt_comb_ifree( &intern );
+	if( intern.idb_ptr )  intern.idb_meth->ft_ifree( &intern );
 	db_free_external( &ext );
 	if(rt_g.debug&DEBUG_TREEWALK)  {
 		char	*sofar = db_path_to_string(pathp);
@@ -2250,7 +2250,7 @@ int depth;			/* number of arcs */
 			db_apply_anims(pathp, kidp, mat, tmat, 0);
 		}
 		pathp->fp_len = holdlength;
-		rt_comb_ifree( &intern );
+		intern.idb_meth->ft_ifree( &intern );
 	}
 	return 1;
 #endif
