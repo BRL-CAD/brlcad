@@ -1,9 +1,6 @@
 #ifndef CONF_H
 #define CONF_H seen
 
-/* !!! Fuckers clobbered everything else -- need to merge manually with the full conf.h ... */
-#error "useless conf.h on non-windows"
-
 /*
  *			C O N F . H
  *
@@ -85,6 +82,7 @@
  *
  *  $Header$
  */
+
 #if __STDC__ || (defined(__sgi) && defined(__mips)) || defined(__convex__) \
     || defined(__cplusplus)
 #	define USE_PROTOTYPES	1
@@ -94,24 +92,42 @@
 #	define _POSIX_SOURCE	1
 #endif
 
-#if defined(WIN32)
-/* compiler hack*/
+#if defined(__alpha)
+#	define HAVE_GETOPT_H	1
+#	define HAVE_GETOPT	1
+#	define HAVE_STDLIB_H	1
+#	define HAVE_UNISTD_H	1
+#	define HAVE_TERMIOS_H	1
+#	define HAVE_STRING_H	1
+#	define HAVE_SYS_SELECT_H	1 	/* For fd_set */
+#	define HAVE_SBRK_DECL		1
+#	define HAVE_SYS_MMAN_H	1
+#	define HAVE_GETHOSTNAME	1
+#	define HAVE_TERMIOS_H	1
+#endif
 
-#define __STDC__ 1
 
-#pragma warning( disable : 4244 4305 4018)
-/*  4244 conversion from type 1 to type 2 
-    4305 truncation
-	4018 signed/unsigned mismatch
-*/
-/* Microsoft VisualC++ 6.0 on WinNT 4.0 */
-/*
+/* Windows */
+#if defined(_WIN32)
+/* Microsoft VisualC++ 6.0 on WinNT 4.0
+ *
  * Ensure that Project Settings / Project Options includes
  *	/Za		for ANSI C
- *	/D "WIN32"	to fire this rule
  */
+
+/* XXX - compiler hack; need to remove later */
+# define __STDC__ 1
+
+/* Quell the MSVC++ compiler
+ *  4244 conversion from type 1 to type 2 
+ *  4305 truncation
+ *  4018 signed/unsigned mismatch
+ * XXX should remove these eventually (and fix the warnings)
+ */
+# pragma warning( disable : 4244 4305 4018)
+
 # if !__STDC__
-#	error "STDC is not properly set on WIN32 build, add /Za to Project Settings / Project Options"
+#	 error "STDC is not properly set on WIN32 build, add /Za to Project Settings / Project Options"
 # endif
 #	define HAVE_STDLIB_H	1
 #	define HAVE_STDARG_H	1
@@ -169,71 +185,504 @@
 #	define bzero(str,n)		memset( str, 0, n )
 #	define bcopy(from,to,count)	memcpy( to, from, count )
 #	define REVERSED_IEEE	yes
+
+# include <windows.h>
+# include <io.h>
+
+/* use compatibility library calls for standard unixyness */
+# define stat _stat
+# define hypot _hypot
+# define fdopen _fdopen
+# define off_t _off_t
+# undef rad1
+# undef rad2
+# define isascii __isascii
+# define chmod _chmod
+# define popen _popen
+# define open _open
+# define read _read
+# define close _close
+# define fstat _fstat
+# define O_RDONLY _O_RDONLY
+# define O_RDWR _O_RDWR
+# define O_CREAT _O_CREAT
+# define O_EXCL _O_EXCL
+# define MAXPATHLEN _MAX_PATH
+# define fileno _fileno
+# define write _write
+# define getpid _getpid
+# define access _access
+# define pclose _pclose
+# define strdup _strdup
+# define	isnan _isnan
+# define isatty _isatty
+# define creat _creat
+# define mktemp _mktemp
+# undef OUT
+# undef IN
+# undef DELETE
+# undef complex
+
+#endif
+
+/*
+#if defined(_WIN32) && defined(_MSC_VER) && defined(_M_IX86)
+#	define USE_PROTOTYPES 1
+#	define HAVE_STRING_H 1
+#	define HAVE_STDLIB_H 1
+#	define HAVE_STDARG_H 1
+#	define HAVE_VARARGS_H 1
+#	define HAVE_DRAND48 1
+#	define HAVE_GETHOSTNAME 1
+#	define HAVE_GETOPT 1
+#	define HAVE_STRCHR 1
+#	define HAVE_UNIX_IO 1
+#endif
+*/
+
+#if defined(sgi) || defined(__sgi) || defined(IRIX)
+#	if IRIX < 6
+#		define HAS_SGIGL	1	/* Old GL */
+#	else
+#		define HAS_OPENGL	1	/* OpenGL */
+#	endif
+#	define HAVE_GETOPT_H	1
+#	define HAVE_STDLIB_H	1
+#	define HAVE_UNISTD_H	1
+#	define HAVE_GETHOSTNAME	1
+#	define HAVE_SYS_MMAN_H	1
+#       ifndef __STDC__
+#               define __STDC__         1
+#               define USE_PROTOTYPES   1
+#       endif
+#       define HAVE_FLOAT_H     1
+#       define HAVE_LIMITS_H    1
+#	define HAVE_BZERO	1
+#endif
+
+#if IRIX == 5
+#	define HAVE_SYS_SELECT_H	1 	/* For fd_set */
+#	define _BSD_TYPES		1
+#	define _BSD_TIME		1	/* for good timeval */
+#	define HAVE_SBRK_DECL		1
+#endif
+
+#if IRIX == 6
+#	define HAVE_BSDGETTIMEOFDAY	1	/* For BSDgettimeofday */
+#	define HAVE_SYS_SELECT_H	1 	/* For fd_set */
+#	define _BSD_TYPES		1
+#	define _BSD_TIME		1	/* for good timeval */
+#	define HAVE_SBRK_DECL		1
+#	define HAVE_REGEX_DECL		1
+#	define HAVE_POSIX_REGEXEC	1
+#	define USE_REGCOMP		1
+#	define HAVE_DLOPEN		1
+#endif
+
+#if defined(_AIX) || defined(__AIX)
+#	define HAVE_SYS_SELECT_H	1 	/* For fd_set */
+#endif
+
+#if defined(__convex__)
+#	define HAVE_STRING_H	1
+#	define HAVE_STDLIB_H	1
+#	define HAVE_UNISTD_H	1
+#endif
+
+#if defined(_GNU_SOURCE)
+#	define _POSIX_SOURCE	1
+#	define HAVE_TERMIOS_H	1
+#	define HAVE_MEMORY_H	1				/* XXX */
+#endif
+
+#if defined(sun) || defined(SUNOS)
+	/* SunOS 4.X on Sun-3 or Sun-4 */
+#	define HAVE_STDLIB_H	1
+#	define HAVE_UNISTD_H	1
+#	define HAVE_SYS_MMAN_H	1
+#	define HAVE_LIMITS_H	1
+#endif
+
+#if SUNOS > 55
+#	define USE_PROTOTYPES   1	
+#	define HAVE_SBRK_DECL	1
+/* #	define HAVE_GETOPT_DECL	1 -- is not available if __STDC__ */
+#	define HAVE_MEMORY_H	1
+#	define HAVE_LIMITS_H	1
+#	define USE_STRING_H	1
+#	undef _KERNEL  /* make sure the kernel calls are not used */
+#endif
+
+
+#if defined(__FreeBSD__)
+#	define	HAVE_STDLIB_H	1
+#	define	HAVE_STDARG_H	1
+#	define	HAVE_XOSDEFS_H	1
+#	define	HAVE_GETHOSTNAME	1
+#	define	HAVE_GETOPT_DECL	1
+#	define	HAVE_GETOPT	1
+#	define	HAVE_REGEX	1
+#	define	HAVE_STRCHR	1
+#	define	HAVE_VFORK	1
+#	define	HAVE_VPRINTF	1
+#	define	HAVE_WRITEV	1
+#	define HAVE_UNIX_DOMAIN_SOCKETS	1
+#	define HAVE_SHELL_ESCAPE	1
+#	define HAVE_UNIX_IO		1
+#	define	HAVE_SBRK_DECL	1
+#	define HAVE_SYS_SOCKET_H	1
+#	define	HAVE_SYS_ERRLIST_DECL	1
+#	define HAVE_DRAND48	1
+#	define	USE_REGCOMP	1
+#	define HAVE_REGEX_DECL	1
+#	define HAVE_POSIX_REGEXEC	1
+#	define HAVE_STDLIB_H	1
+#	define HAVE_UNISTD_H	1
+#	define HAVE_TERMIOS_H	1
+#	define HAVE_TERMCAP_H	1
+#	define HAVE_IOCTL_COMPAT_H 1
+#	define HAVE_SYS_MMAN_H	1
+#       define HAVE_FLOAT_H     1
+#       define HAVE_LIMITS_H    1
+#	define HAVE_BZERO	1
+#	define HAVE_DLOPEN	1
+#	if 0 && (__FreeBSD_cc_version >= 400000 )
+/*	Only FreeBSD 4.0 and above have multi-CPU support */
+#		define HAS_POSIX_THREADS 1
+#	endif
+#endif
+
+#if defined(__bsdi__)
+#	define HAVE_GETOPT	1
+#	define HAVE_GETOPT_DECL	1
+#	define HAVE_XOPEN	1
+#	define HAVE_TERMIOS_H	1
+#	define HAVE_IOCTL_COMPAT_H 1
+#	define HAVE_SYS_MMAN_H	1
+#	define HAVE_MEMORY_H	1				/* XXX */
+#	if !defined(_XOPEN_SOURCE)				/* XXX */
+#		define _XOPEN_SOURCE	1
+#	endif
+#	define HAVE_SYS_ERRLIST_DECL	1
+#	define USE_PROTOTYPES	1
+#	define HAVE_STDLIB_H	1
+#	define HAVE_UNISTD_H	1
+#	define HAVE_FLOAT_H	1
+#	define HAVE_SBRK_DECL	1
+#	define TK_READ_DATA_PENDING(f)	((f)->_flags & __SRD)
+#endif
+
+#if defined(linux)
+#	define _BSD_SOURCE	1	/* for sys/types.h to define caddr_t */
+#       define STDIN_FILENO    0
+#	define HAVE_GETOPT	1
+#	define HAVE_GETOPT_H	1
+#	define HAVE_GETOPT_DECL 1
+#	define HAVE_STRDUP_DECL	1
+#	define HAVE_XOSDEFS_H	1
+#	define HAVE_SYS_ERRLIST_DECL	1
+#	define HAVE_POSIX_REGEXEC	1
+#	define USE_REGCOMP	1
+#	define HAVE_UNISTD_H	1
+#	define HAVE_STDLIB_H	1
+#	define HAVE_GETOPT_H	1
+#	define HAVE_XOSDEFS_H	1
+#	define HAVE_STRING_H	1
+#	define HAVE_POSIX_REGEXEC	1
+#	define HAVE_STRCHR	1
+#	define HAVE_VFORK	1
+#	define HAVE_VPRINTF	1
+#	define HAVE_WRITEV	1
+#	define HAVE_SBRK_DECL	1
+#	define HAVE_DLOPEN	1
+#	define HAVE_UNIX_DOMAIN_SOCKETS 1
+#	define HAVE_SHELL_ESCAPE	1
+#	define HAVE_UNIX_IO	1
+#	define HAVE_DRAND48	1
+#	define HAVE_TERMIOS_H	1
+#	define HAVE_TERMCAP_H	1
+#	define HAVE_SYS_MMAN_H	1
+#	define HAVE_LIMITS_H	1
+/*#	define HAVE_BZERO	1 -- faster to use memcpy */
+#	define TK_READ_DATA_PENDING(f)	((f)->_IO_read_ptr != (f)->_IO_read_end)
+
+#endif
+
+#if defined(__NetBSD__)
+#	define USE_PROTOTYPES	1
+#	define HAVE_STRING_H	1
+#	define HAVE_STDLIB_H	1
+#	define HAVE_STDARG_H	1
+#	define HAVE_UNISTD_H	1
+#	define HAVE_SYS_MMAN_H	1
+#	define HAVE_SBRK_DECL	1
+#	define HAVE_GETOPT	1
+#	define HAVE_GETOPT_DECL 1
+#	define HAVE_REGEX_DECL	1
+#	define HAVE_SYS_ERRLIST_DECL	1
+#	define HAVE_SBRK_DECL		1
+#	define HAVE_IOCTL_COMPAT_H	1
+#	define HAVE_BZERO	1
+#endif
+
+/* Apple Mac OS X (Darwin -- not YellowDog Linux or others where __PPC__ is
+ * defined instead of __ppc__ 
+ */
+#if defined(__ppc__)
+#       define USE_PROTOTYPES   1
+#       define USE_REGCOMP      1
+#       define USE_STRING_H     1
+#				define HAVE_STRING_H	1
+#       define HAS_POSIX_THREADS        1
+#       define HAVE_BZERO       1
+#				define HAVE_FLOAT	1
+#				define HAVE_GETHOSTNAME	1
+#       define HAVE_GETOPT      1
+#       define HAVE_GETOPT_DECL 1
+#       define HAVE_IOCTL_COMPAT_H      1
+#				define HAVE_LIMITS_H	1
+#				define HAVE_MEMORY_H	1
+#       define HAVE_POSIX_REGEXEC       1
+#       define HAVE_REGEX	1
+#       define HAVE_REGEX_DECL  1
+#       define HAVE_SBRK	1
+#       define HAVE_SBRK_DECL   1
+#       define HAVE_SHELL_ESCAPE	1
+#				define HAVE_STRCHR	1
+#       define HAVE_STDLIB_H    1
+#       define HAVE_STDARG_H    1
+#       define HAVE_SYS_ERRLIST_DECL    1
+#       define HAVE_SYS_MMAN_H  1
+#       define HAVE_SYS_SOCKET_H	1
+#				define HAVE_TERMIOS_H	1
+#       define HAVE_UNISTD_H    1
+#       define HAVE_UNIX_DOMAIN_SOCKETS 1
+#       define HAVE_UNIX_IO             1
+#       define HAVE_VFORK                       1
+#       define HAVE_VPRINTF             1
+#       define HAVE_WRITEV              1
+#endif
+
+#if defined(__sp3__)
+#	define USE_PROTOTYPES	1
+#       define USE_STRING_H     1
+#	define HAS_POSIX_THREADS	1
+#	define HAVE_FLOAT_H	1
+#	define HAVE_GETHOSTNAME	1
+#	define HAVE_GETOPT	1
+#	define HAVE_GETOPT_DECL	1
+#	define HAVE_LIMITS_H	1
+#	define HAVE_MEMORY_H	1
+#	define HAVE_SBRK	1
+#	define HAVE_SBRK_DECL	1
+#	define HAVE_STRCHR	1
+#	define HAVE_STDLIB_H	1
+#	define HAVE_STDARG_H	1
+#	define HAVE_STRING_H	1
+#	define HAVE_SYS_MMAN_H	1
+#	define HAVE_SYS_SOCKET_H	1
+#	define HAVE_TERMIOS_H	1
+#	define HAVE_UNISTD_H	1
+#	define HAVE_UNIX_DOMAIN_SOCKETS	1
+#	define HAVE_UNIX_IO	1
+#	define HAVE_VFORK	1
+#	define HAVE_VPRINTF	1
+#	define HAVE_WRITEV	1
+#endif
+
+#if defined(__STDC__)
+#	define HAVE_STDLIB_H	1
+#	define HAVE_STDARG_H	1
+#endif
+
+#if 1 	/* defined(SYSV) */
+	/* Most people have this. Gives us strtok and strdup and strchr */
+#	define HAVE_STRING_H	1
+#endif
+
+#if defined(_POSIX_SOURCE)
+#	define HAVE_UNISTD_H	1
+#endif
+
+#ifdef CRAY1
+#	define HAVE_SYS_MACHD_H	1	/* XMP only, for HZ */
+#endif
+
+#if BSD >= 43
+#	define HAVE_SYS_SOCKET_H	1
+#endif
+
+#if (defined(BSD) && !defined(SYSV)) || defined(CRAY)
+#	define USE_SYS_TIME_H	1
+#endif
+
+#if defined(HAVE_STRING_H)		/*  && defined(SYSV) */
+#	define USE_STRING_H	1
+#endif
+
+#if !defined(__convex__) && !defined(__bsdi__) && !defined(__ppc__)
+#	define HAVE_DRAND48	1
+#endif
+
+#if defined(BSD) || defined(linux) || defined(sgi) || defined(_BSD_SOURCE)
+#	define HAVE_GETHOSTNAME	1
+#endif
+
+#if defined(SYSV) || defined(__NetBSD__) || defined(__stardent)
+#	define HAVE_GETOPT	1
+#endif
+
+#if defined(__NetBSD__) || defined(CRAY1) || defined(_HPUX_SOURCE)
+#	define HAVE_GETOPT_DECL	1
+#endif
+
+
+#if (defined(SYSV) || BSD >= 43) && !__STDC__
+#	define HAVE_MATHERR	1
+#endif
+
+#if defined(__convex__)
+#	define HAVE_POPEN_DECL	1
+#	define HAVE_STRDUP_DECL 1
+#endif
+
+#ifdef CRAY2
+#	define HAVE_POPEN_DECL 1
+#endif
+
+#if !defined(__bsdi__) && (defined(BSD) || defined(__GNUC__) )
+#	define HAVE_REGEX	1
+#endif
+
+/* For those systems without regex, pick the alternative */
+#if defined(__bsdi__)
+#	define USE_REGCOMP 1	/* This is the POSIX way */
+#else
+/*
+ * XXX This hack was put in to prevent both USE_REGCOMP and USE_SYSV_RE
+ * being defined at the same time.
+ */
+#if !defined(USE_REGCOMP)
+#	define USE_SYSV_RE 1
+#endif
+#endif
+
+#if !defined(SYSV)
+#	define HAVE_VFORK	1
+#endif
+
+#if defined(__STDC__) || (defined(alliant) && defined(i860)) || defined(sun)
+#	define HAVE_VPRINTF	1
+#endif
+
+#if defined(BSD) && !defined(CRAY) && !defined(mips) && !defined(n16)
+#	define HAVE_WRITEV	1
+#endif
+
+#if defined(HAVE_STRING_H)
+#	define HAVE_STRCHR	1
+#endif
+
+#if defined(unix) || defined(__unix) || defined(__unix__) || defined(BSD) || \
+		defined(SUNOS) || defined(linux)
+#	define HAVE_SHELL_ESCAPE	1
+#	define HAVE_UNIX_IO		1
+#	define HAVE_SBRK_DECL		1
+#endif
+
+#if defined(BSD) && !defined(sgi)
+#	define HAVE_UNIX_DOMAIN_SOCKETS	1
+#endif
+
+/*
+ *	Posix and XOpen terminal-handling features.
+ *
+ *	HAVE_XOPEN
+ *	HAVE_TERMIOS_H		Has <termios.h>, tcgetattr(), tcsetattr()
+ *	HAVE_MEMORY_H		Has <memory.h> for memset(), memcpy(), etc.
+ *	_XOPEN_SOURCE
+ */
+
+#if ( defined(_POSIX_SOURCE) || defined(linux) ) && !defined(__convex__)
+#	define HAVE_XOPEN	1
+#	define HAVE_TERMIOS_H	1
+#	define HAVE_MEMORY_H	1				/* XXX */
+#	if !defined(_XOPEN_SOURCE)				/* XXX */
+#		define _XOPEN_SOURCE	1
+#	endif
+#endif
+
+#if !defined(SYSV)			/* XXXXXXXXX */
+#	define HAVE_CALTECH_MALLOC 1   /* XXX Bleh. See librt/storage.c */
+#endif
+
+#ifdef SYSV
+#	define SPRINTF_NOT_PARALLEL	1
+#endif
+
+#if defined(sun) || \
+	(defined(alliant) && !defined(i860)) || \
+        defined(ardent) || defined(stellar) || \
+	defined(sparc) || defined(__sparc) || defined(__sparc__) || \
+	defined(mips) || \
+        (defined(sgi) && defined(mips)) || \
+        (defined(__sgi) && defined(__mips)) || \
+        defined(pyr) || defined(apollo) || defined(aux) || \
+        defined(_AIX) || defined(NeXT) || defined(convex) || \
+	defined(hpux) || defined(__hppa) || defined(__convex__) || \
+	(defined(__ppc__) || defined(__PPC__))
+
+        /*  These systems already operate in
+         *  IEEE format internally, using big-endian order.
+         */
+#       define  NATURAL_IEEE    yes
+#endif
+
+#if defined(i386) || defined(__i386) || defined(__alpha) \
+    || defined(n16) || defined(i860) ||defined(__stardent) 
+
+        /* These systems operate in IEEE format, using little-endian order */
+#       define  REVERSED_IEEE   yes
 #endif
 
 #if defined(NATURAL_IEEE) && defined(REVERSED_IEEE)
 # include "conf.h:  ERROR, two IEEE conversions defined for this machine type"
 #endif
 
+#if 1
+#	define HAVE_OFF_T	1
+#endif
+
+#if 1
+#	define HAVE_STRDUP	1
+#endif
+
+/* We need sys/types.h for definitions and prototypes that will appear 
+   everywhere. */
+
+#if SUNOS >= 52
+	/* For the duration of <sys/types.h>, set this, to get u_short
+	 * etc, defined properly.
+	 */
+        /* This is no longer needed/recommended with the newer sun libs 
+	 */
+#	if SUNOS <= 55
+#		define	_KERNEL	1
+#	endif
+#endif
+
 #ifndef CPP_ONLY
 # include <sys/types.h>
 #endif
 
-#if !defined(TK_FILE_COUNT) && !defined(TK_FILE_GPTR) && !defined(TK_FILE_READ_PTR) && !defined(TK_READ_DATA_PENDING)
-# define TK_FILE_COUNT _cnt
+#if SUNOS >= 52
+#	if SUNOS <= 55
+#		undef	_KERNEL
+#	endif
 #endif
 
-
-
-#if defined(WIN32)
-/* Microsoft VisualC++ 6.0 on WinNT 4.0 */
-/*
- * Ensure that Project Settings / Project Options includes
- *	/Za		for ANSI C
- *	/D "WIN32"	to fire this rule
- */
-
-#include <windows.h>
-#include <io.h>
-
-# if !__STDC__
-#	error "STDC is not properly set on WIN32 build, add /Za to Project Settings / Project Options"
-# endif
-#	define HAVE_STDLIB_H	1
-#	define HAVE_STDARG_H	1
-#	define HAVE_STRING_H	1
-#define stat _stat
-#define hypot _hypot
-#define fdopen _fdopen
-#define off_t _off_t
-#undef rad1
-#undef rad2
-#define isascii __isascii
-#define chmod _chmod
-#define popen _popen
-#define open _open
-#define read _read
-#define close _close
-#define fstat _fstat
-#define O_RDONLY _O_RDONLY
-#define O_RDWR _O_RDWR
-#define O_CREAT _O_CREAT
-#define O_EXCL _O_EXCL
-#define MAXPATHLEN _MAX_PATH
-#define fileno _fileno
-#define write _write
-#define getpid _getpid
-#define access _access
-#define pclose _pclose
-#define strdup _strdup
-#define	isnan _isnan
-#define isatty _isatty
-#define creat _creat
-#define mktemp _mktemp
-#undef OUT
-#undef IN
-#undef DELETE
-#undef complex
+#if !defined(TK_FILE_COUNT) && !defined(TK_FILE_GPTR) && !defined(TK_FILE_READ_PTR) && !defined(TK_READ_DATA_PENDING)
+# define TK_FILE_COUNT _cnt
 #endif
 
 /*
@@ -272,4 +721,3 @@
 
 
 #endif /* CONF_H */
-

@@ -1,5 +1,5 @@
 # Microsoft Developer Studio Project File - Name="zlibvc" - Package Owner=<4>
-# Microsoft Developer Studio Generated Build File, Format Version 5.00
+# Microsoft Developer Studio Generated Build File, Format Version 6.00
 # ** DO NOT EDIT **
 
 # TARGTYPE "Win32 (x86) Dynamic-Link Library" 0x0102
@@ -20,15 +20,13 @@ CFG=zlibvc - Win32 Release
 !MESSAGE 
 !MESSAGE "zlibvc - Win32 Release" (based on "Win32 (x86) Dynamic-Link Library")
 !MESSAGE "zlibvc - Win32 Debug" (based on "Win32 (x86) Dynamic-Link Library")
-!MESSAGE "zlibvc - Win32 ReleaseAxp" (based on\
- "Win32 (ALPHA) Dynamic-Link Library")
-!MESSAGE "zlibvc - Win32 ReleaseWithoutAsm" (based on\
- "Win32 (x86) Dynamic-Link Library")
-!MESSAGE "zlibvc - Win32 ReleaseWithoutCrtdll" (based on\
- "Win32 (x86) Dynamic-Link Library")
+!MESSAGE "zlibvc - Win32 ReleaseAxp" (based on "Win32 (ALPHA) Dynamic-Link Library")
+!MESSAGE "zlibvc - Win32 ReleaseWithoutAsm" (based on "Win32 (x86) Dynamic-Link Library")
+!MESSAGE "zlibvc - Win32 ReleaseWithoutCrtdll" (based on "Win32 (x86) Dynamic-Link Library")
 !MESSAGE 
 
 # Begin Project
+# PROP AllowPerConfigDependencies 0
 # PROP Scc_ProjName ""
 # PROP Scc_LocalPath ""
 
@@ -45,6 +43,7 @@ CFG=zlibvc - Win32 Release
 # PROP Intermediate_Dir ".\Release"
 # PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
+F90=df.exe
 CPP=cl.exe
 # ADD BASE CPP /nologo /MT /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /YX /c
 # ADD CPP /nologo /MT /W3 /GX /O2 /D "NDEBUG" /D "WIN32" /D "_WINDOWS" /D "_WINDLL" /D "_WIN32" /D "BUILD_ZLIBDLL" /D "ZLIB_DLL" /D "DYNAMIC_CRC_TABLE" /D "ASMV" /FAcs /FR /FD /c
@@ -75,9 +74,10 @@ LINK32=link.exe
 # PROP Output_Dir ".\Debug"
 # PROP Intermediate_Dir ".\Debug"
 # PROP Target_Dir ""
+F90=df.exe
 CPP=cl.exe
 # ADD BASE CPP /nologo /MTd /W3 /Gm /GX /Zi /Od /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /YX /c
-# ADD CPP /nologo /MTd /W3 /Gm /GX /Zi /Od /D "_DEBUG" /D "WIN32" /D "_WINDOWS" /D "_WINDLL" /D "_WIN32" /D "BUILD_ZLIBDLL" /D "ZLIB_DLL" /FD /c
+# ADD CPP /nologo /MTd /W3 /Gm /GX /ZI /Od /D "_DEBUG" /D "WIN32" /D "_WINDOWS" /D "_WINDLL" /D "_WIN32" /D "BUILD_ZLIBDLL" /D "ZLIB_DLL" /FD /c
 # SUBTRACT CPP /YX
 MTL=midl.exe
 # ADD BASE MTL /nologo /D "_DEBUG" /win32
@@ -106,13 +106,14 @@ LINK32=link.exe
 # PROP Intermediate_Dir "zlibvc__"
 # PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
-MTL=midl.exe
-# ADD BASE MTL /nologo /D "NDEBUG" /mktyplib203 /win32
-# ADD MTL /nologo /D "NDEBUG" /mktyplib203 /win32
 CPP=cl.exe
 # ADD BASE CPP /nologo /MT /Gt0 /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_WIN32" /D "BUILD_ZLIBDLL" /D "ZLIB_DLL" /D "DYNAMIC_CRC_TABLE" /FAcs /FR /YX /FD /c
 # ADD CPP /nologo /MT /Gt0 /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_WIN32" /D "BUILD_ZLIBDLL" /D "ZLIB_DLL" /D "DYNAMIC_CRC_TABLE" /FAcs /FR /FD /c
 # SUBTRACT CPP /YX
+F90=df.exe
+MTL=midl.exe
+# ADD BASE MTL /nologo /D "NDEBUG" /mktyplib203 /win32
+# ADD MTL /nologo /D "NDEBUG" /mktyplib203 /win32
 RSC=rc.exe
 # ADD BASE RSC /l 0x40c /d "NDEBUG"
 # ADD RSC /l 0x40c /d "NDEBUG"
@@ -139,6 +140,7 @@ LINK32=link.exe
 # PROP Intermediate_Dir "zlibvc_0"
 # PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
+F90=df.exe
 CPP=cl.exe
 # ADD BASE CPP /nologo /MT /W3 /GX /O2 /D "NDEBUG" /D "WIN32" /D "_WINDOWS" /D "_WINDLL" /D "_WIN32" /D "BUILD_ZLIBDLL" /D "ZLIB_DLL" /D "DYNAMIC_CRC_TABLE" /FAcs /FR /YX /FD /c
 # ADD CPP /nologo /MT /W3 /GX /O2 /D "NDEBUG" /D "WIN32" /D "_WINDOWS" /D "_WINDLL" /D "_WIN32" /D "BUILD_ZLIBDLL" /D "ZLIB_DLL" /D "DYNAMIC_CRC_TABLE" /FAcs /FR /FD /c
@@ -172,6 +174,7 @@ LINK32=link.exe
 # PROP Intermediate_Dir "zlibvc_1"
 # PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
+F90=df.exe
 CPP=cl.exe
 # ADD BASE CPP /nologo /MT /W3 /GX /O2 /D "NDEBUG" /D "WIN32" /D "_WINDOWS" /D "_WINDLL" /D "_WIN32" /D "BUILD_ZLIBDLL" /D "ZLIB_DLL" /D "DYNAMIC_CRC_TABLE" /D "ASMV" /FAcs /FR /YX /FD /c
 # ADD CPP /nologo /MT /W3 /GX /O2 /D "NDEBUG" /D "WIN32" /D "_WINDOWS" /D "_WINDLL" /D "_WIN32" /D "BUILD_ZLIBDLL" /D "ZLIB_DLL" /D "DYNAMIC_CRC_TABLE" /D "ASMV" /FAcs /FR /FD /c
@@ -213,7 +216,7 @@ SOURCE=.\adler32.c
 
 !ELSEIF  "$(CFG)" == "zlibvc - Win32 ReleaseAxp"
 
-DEP_CPP_ADLER=\
+NODEP_CPP_ADLER=\
 	".\zconf.h"\
 	".\zlib.h"\
 	
@@ -235,7 +238,7 @@ SOURCE=.\compress.c
 
 !ELSEIF  "$(CFG)" == "zlibvc - Win32 ReleaseAxp"
 
-DEP_CPP_COMPR=\
+NODEP_CPP_COMPR=\
 	".\zconf.h"\
 	".\zlib.h"\
 	
@@ -257,7 +260,7 @@ SOURCE=.\crc32.c
 
 !ELSEIF  "$(CFG)" == "zlibvc - Win32 ReleaseAxp"
 
-DEP_CPP_CRC32=\
+NODEP_CPP_CRC32=\
 	".\zconf.h"\
 	".\zlib.h"\
 	
@@ -279,7 +282,7 @@ SOURCE=.\deflate.c
 
 !ELSEIF  "$(CFG)" == "zlibvc - Win32 ReleaseAxp"
 
-DEP_CPP_DEFLA=\
+NODEP_CPP_DEFLA=\
 	".\deflate.h"\
 	".\zconf.h"\
 	".\zlib.h"\
@@ -320,7 +323,7 @@ SOURCE=.\gzio.c
 
 !ELSEIF  "$(CFG)" == "zlibvc - Win32 ReleaseAxp"
 
-DEP_CPP_GZIO_=\
+NODEP_CPP_GZIO_=\
 	".\zconf.h"\
 	".\zlib.h"\
 	".\zutil.h"\
@@ -343,7 +346,7 @@ SOURCE=.\infblock.c
 
 !ELSEIF  "$(CFG)" == "zlibvc - Win32 ReleaseAxp"
 
-DEP_CPP_INFBL=\
+NODEP_CPP_INFBL=\
 	".\infblock.h"\
 	".\infcodes.h"\
 	".\inftrees.h"\
@@ -370,7 +373,7 @@ SOURCE=.\infcodes.c
 
 !ELSEIF  "$(CFG)" == "zlibvc - Win32 ReleaseAxp"
 
-DEP_CPP_INFCO=\
+NODEP_CPP_INFCO=\
 	".\infblock.h"\
 	".\infcodes.h"\
 	".\inffast.h"\
@@ -398,7 +401,7 @@ SOURCE=.\inffast.c
 
 !ELSEIF  "$(CFG)" == "zlibvc - Win32 ReleaseAxp"
 
-DEP_CPP_INFFA=\
+NODEP_CPP_INFFA=\
 	".\infblock.h"\
 	".\infcodes.h"\
 	".\inffast.h"\
@@ -426,7 +429,7 @@ SOURCE=.\inflate.c
 
 !ELSEIF  "$(CFG)" == "zlibvc - Win32 ReleaseAxp"
 
-DEP_CPP_INFLA=\
+NODEP_CPP_INFLA=\
 	".\infblock.h"\
 	".\zconf.h"\
 	".\zlib.h"\
@@ -450,7 +453,7 @@ SOURCE=.\inftrees.c
 
 !ELSEIF  "$(CFG)" == "zlibvc - Win32 ReleaseAxp"
 
-DEP_CPP_INFTR=\
+NODEP_CPP_INFTR=\
 	".\inftrees.h"\
 	".\zconf.h"\
 	".\zlib.h"\
@@ -474,7 +477,7 @@ SOURCE=.\infutil.c
 
 !ELSEIF  "$(CFG)" == "zlibvc - Win32 ReleaseAxp"
 
-DEP_CPP_INFUT=\
+NODEP_CPP_INFUT=\
 	".\infblock.h"\
 	".\infcodes.h"\
 	".\inftrees.h"\
@@ -501,7 +504,7 @@ SOURCE=.\trees.c
 
 !ELSEIF  "$(CFG)" == "zlibvc - Win32 ReleaseAxp"
 
-DEP_CPP_TREES=\
+NODEP_CPP_TREES=\
 	".\deflate.h"\
 	".\zconf.h"\
 	".\zlib.h"\
@@ -525,7 +528,7 @@ SOURCE=.\uncompr.c
 
 !ELSEIF  "$(CFG)" == "zlibvc - Win32 ReleaseAxp"
 
-DEP_CPP_UNCOM=\
+NODEP_CPP_UNCOM=\
 	".\zconf.h"\
 	".\zlib.h"\
 	
@@ -589,7 +592,7 @@ SOURCE=.\zutil.c
 
 !ELSEIF  "$(CFG)" == "zlibvc - Win32 ReleaseAxp"
 
-DEP_CPP_ZUTIL=\
+NODEP_CPP_ZUTIL=\
 	".\zconf.h"\
 	".\zlib.h"\
 	".\zutil.h"\

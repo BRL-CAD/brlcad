@@ -3799,15 +3799,22 @@ dgo_rt_output_handler(ClientData	clientData,
 	char line[5120+1];
 
 	/* Get data from rt */
-	if ((!ReadFile(run_rtp->fd, line, 5120,&count,0))) {
+#if _WIN32
+  if (Tcl_Eof(run_rtp->chan) || (!ReadFile(run_rtp->fd, line, 5120,&count,0))) {
 #endif
 		int aborted;
 
 		Tcl_DeleteChannelHandler(run_rtp->chan,dgo_rt_output_handler,(ClientData)run_rtp);
 		CloseHandle(run_rtp->fd);
 
-		/* wait for the forked process */
-		WaitForSingleObject( run_rtp->hProcess, INFINITE );
+		/* wait for the forked process 
+		 * either EOF has been sent or there was a read error.
+		 * there is no need to block indefinately
+		 */
+		WaitForSingleObject( run_rtp->hProcess, 120 );
+		/* !!! need to observer implications of being non-infinate
+		 *	WaitForSingleObject( run_rtp->hProcess, INFINITE ); 
+		 */
 		
 		if(GetLastError() == ERROR_PROCESS_ABORTED)
 		{

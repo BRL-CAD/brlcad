@@ -41,7 +41,9 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "wdb.h"
 #include "rtgeom.h"
 #include "tcl.h"
-
+#ifndef WIN32
+#include <fcntl.h>
+#endif
 
 const mat_t	id_mat = {
 	1.0, 0.0, 0.0, 0.0,
@@ -81,8 +83,16 @@ char **argv;
 {
 	int i;
 
+#ifdef WIN32
+	_fmode = _O_BINARY;
+#endif
+
 	iname = "-";
+#ifdef WIN32
+	ifp = fopen(iname, "r");
+#else
 	ifp = stdin;
+#endif
 	ofp = stdout;
 
 	bu_debug = BU_DEBUG_COREDUMP;
@@ -141,7 +151,7 @@ char **argv;
 		if( Tcl_Init(interp) == TCL_ERROR )
 			bu_log("Tcl_Init error %s\n", interp->result);
 
-		if( (dbip = db_open( iname, "r" )) == NULL )  {
+		if( (dbip = db_open( iname, "rb" )) == NULL )  {
 			bu_log("Unable to db_open() file '%s', aborting\n", iname );
 			exit(4);
 		}

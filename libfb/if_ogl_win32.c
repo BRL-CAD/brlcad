@@ -1982,40 +1982,24 @@ _LOCAL_ void
 do_event(ifp)
 FBIO *ifp;	
 {
- // XEvent event;
-//  OGL(ifp)->firstTime = 0;
-
-/*  while (XCheckWindowEvent(OGL(ifp)->dispp, OGL(ifp)->wind,
-			   OGL(ifp)->event_mask, &event)) {
-    switch (event.type) {
-    case Expose:
-      if(!OGL(ifp)->use_ext_ctrl)
-	expose_callback(ifp, &event);
-      break;
-    case ButtonPress:
-      break;
-    case ButtonRelease:
-      OGL(ifp)->alive = 0;
-      break;
-    case KeyPress:
-      break;
-    case KeyRelease:
-      OGL(ifp)->alive = 0;
-      break;
-    case ConfigureNotify:
-      {
-	XConfigureEvent *conf = (XConfigureEvent *)&event;
-
-	if(conf->width == OGL(ifp)->win_width &&
-	   conf->height == OGL(ifp)->win_height)
-	  return;
-
-	ogl_configureWindow(ifp, conf->width, conf->height);
-      }
-    default:
-      break;
-    }
-  }*/
+	MSG msg;
+	BOOL bRet;
+    // Check and Dispatch any messages. 
+ 
+    if( (bRet = GetMessage( &msg, NULL, 0, 0 )) != 0)
+    { 
+        if (bRet == -1)
+        {
+            // handle the error and possibly exit
+        }
+        else
+        {
+            TranslateMessage(&msg); 
+            DispatchMessage(&msg); 
+        }
+    } 
+	// let's not starve the processor
+	Sleep( 250 );
 }
 
 _LOCAL_ void

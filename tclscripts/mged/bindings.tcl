@@ -5,11 +5,19 @@ if ![info exists mged_players] {
 proc mged_bind_dm { w } {
     global hot_key
     global forwarding_key
+    global tcl_platform
 
     set hot_key 65478
 
 #make this the current display manager
+	if { $tcl_platform(os) != "Windows NT" } {
     bind $w <Enter> "winset $w; focus $w;"
+  } else {
+    # focus binding under windows platform causes
+    # window activation (bring-to-front), which
+    # is not desireable or expected on that platform
+    focus $w;
+  }
 
 #default mouse bindings
     default_mouse_bindings $w
@@ -248,9 +256,9 @@ proc default_mouse_bindings { w } {
     global transform
 
 # default button bindings
-    bind $w <1> "winset $w; zoom 0.5; break"
-    bind $w <2> "winset $w; set tmpstr \[dm m %x %y\]; print_return_val \$tmpstr; break"
-    bind $w <3> "winset $w; zoom 2.0; break"
+	bind $w <1> "winset $w; focus $w; zoom 0.5; break"
+	bind $w <2> "winset $w; focus $w; set tmpstr \[dm m %x %y\]; print_return_val \$tmpstr; break"
+	bind $w <3> "winset $w; focus $w; zoom 2.0; break"
 
     bind $w <ButtonRelease> "winset $w; dm idle; break"
     bind $w <KeyRelease-Control_L> "winset $w; dm idle; break"

@@ -25,7 +25,7 @@ CFG=libbu - Win32 Debug
 # PROP AllowPerConfigDependencies 0
 # PROP Scc_ProjName ""
 # PROP Scc_LocalPath ""
-CPP=cl.exe
+CPP=df.exe
 RSC=rc.exe
 
 !IF  "$(CFG)" == "libbu - Win32 Release"
@@ -40,8 +40,8 @@ RSC=rc.exe
 # PROP Output_Dir "Release"
 # PROP Intermediate_Dir "Release"
 # PROP Target_Dir ""
-# ADD BASE CPP /nologo /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_MBCS" /D "_LIB" /YX /FD /c
-# ADD CPP /nologo /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_MBCS" /D "_LIB" /YX /FD /c
+# ADD BASE CPP /nologo /W3 /GX /O2 /D "NDEBUG" /D "_MBCS" /D "_LIB" /YX /FD /c
+# ADD CPP /nologo /MT /W3 /GX /O2 /I "../h" /D "NDEBUG" /D "_MBCS" /D "_LIB" /YX /FD /c
 # ADD BASE RSC /l 0x409 /d "NDEBUG"
 # ADD RSC /l 0x409 /d "NDEBUG"
 BSC32=bscmake.exe
@@ -50,6 +50,12 @@ BSC32=bscmake.exe
 LIB32=link.exe -lib
 # ADD BASE LIB32 /nologo
 # ADD LIB32 /nologo
+
+# Begin Special Build Tool
+TargetPath=.\Release\libbu.lib
+SOURCE="$(InputPath)"
+PostBuild_Cmds=copy $(TargetPath) "..\lib"
+# End Special Build Tool
 
 !ELSEIF  "$(CFG)" == "libbu - Win32 Debug"
 
@@ -73,16 +79,12 @@ BSC32=bscmake.exe
 LIB32=link.exe -lib
 # ADD BASE LIB32 /nologo
 # ADD LIB32 /nologo /out:"Debug\libbu_d.lib"
-# Begin Custom Build
+# Begin Special Build Tool
 TargetPath=.\Debug\libbu_d.lib
-TargetName=libbu_d
-InputPath=.\Debug\libbu_d.lib
 SOURCE="$(InputPath)"
 
-"$(TargetName).lib" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
-	copy $(TargetPath) "..\lib"
-
-# End Custom Build
+PostBuild_Cmds=copy $(TargetPath) ..\lib
+# End Special Build Tool
 
 !ENDIF 
 

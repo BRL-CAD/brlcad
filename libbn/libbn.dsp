@@ -25,6 +25,7 @@ CFG=libbn - Win32 Debug
 # PROP AllowPerConfigDependencies 0
 # PROP Scc_ProjName ""
 # PROP Scc_LocalPath ""
+F90=df.exe
 CPP=cl.exe
 RSC=rc.exe
 
@@ -40,8 +41,8 @@ RSC=rc.exe
 # PROP Output_Dir "Release"
 # PROP Intermediate_Dir "Release"
 # PROP Target_Dir ""
-# ADD BASE CPP /nologo /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_MBCS" /D "_LIB" /YX /FD /c
-# ADD CPP /nologo /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_MBCS" /D "_LIB" /YX /FD /c
+# ADD BASE CPP /nologo /W3 /GX /O2 /D "NDEBUG" /D "_MBCS" /D "_LIB" /YX /FD /c
+# ADD CPP /nologo /MT /W3 /GX /O2 -I "../h" /D "NDEBUG" /D "_MBCS" /D "_LIB" /YX /FD /c
 # ADD BASE RSC /l 0x409 /d "NDEBUG"
 # ADD RSC /l 0x409 /d "NDEBUG"
 BSC32=bscmake.exe
@@ -50,6 +51,12 @@ BSC32=bscmake.exe
 LIB32=link.exe -lib
 # ADD BASE LIB32 /nologo
 # ADD LIB32 /nologo
+
+# Begin Special Build Tool
+TargetPath=.\Release\libbn.lib
+SOURCE="$(InputPath)"
+PostBuild_Cmds=copy $(TargetPath) "..\lib"
+# End special Build Tool
 
 !ELSEIF  "$(CFG)" == "libbn - Win32 Debug"
 
@@ -73,16 +80,10 @@ BSC32=bscmake.exe
 LIB32=link.exe -lib
 # ADD BASE LIB32 /nologo
 # ADD LIB32 /nologo /out:"Debug\libbn_d.lib"
-# Begin Custom Build
 TargetPath=.\Debug\libbn_d.lib
-TargetName=libbn_d
-InputPath=.\Debug\libbn_d.lib
 SOURCE="$(InputPath)"
-
-"$(TargetName).lib" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
-	copy $(TargetPath) "..\lib"
-
-# End Custom Build
+PostBuild_Cmds=copy $(TargetPath) ..\lib
+# End Special Build Tool
 
 !ENDIF 
 

@@ -26,6 +26,7 @@ CFG=libdm - Win32 Debug
 # PROP Scc_ProjName ""
 # PROP Scc_LocalPath ""
 CPP=cl.exe
+F90=df.exe
 RSC=rc.exe
 
 !IF  "$(CFG)" == "libdm - Win32 Release"
@@ -41,7 +42,7 @@ RSC=rc.exe
 # PROP Intermediate_Dir "Release"
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_MBCS" /D "_LIB" /YX /FD /c
-# ADD CPP /nologo /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_MBCS" /D "_LIB" /YX /FD /c
+# ADD CPP /nologo /MT /W3 /GX /O2 /I "../h" /I "../libtk8.4/xlib" /I "../libtk8.4/generic" /I "../libtk8.4/win" /D "WIN32" /D "NDEBUG" /D "_MBCS" /D "_LIB" /D "DM_OGL" /D "DM_X" /YX /FD /c
 # ADD BASE RSC /l 0x409 /d "NDEBUG"
 # ADD RSC /l 0x409 /d "NDEBUG"
 BSC32=bscmake.exe
@@ -50,6 +51,11 @@ BSC32=bscmake.exe
 LIB32=link.exe -lib
 # ADD BASE LIB32 /nologo
 # ADD LIB32 /nologo
+# Begin Special Build Tool
+TargetPath=.\Release\libdm.lib
+SOURCE="$(InputPath)"
+PostBuild_Cmds=copy $(TargetPath) "..\lib"
+# End Special Build Tool
 
 !ELSEIF  "$(CFG)" == "libdm - Win32 Debug"
 
@@ -73,16 +79,11 @@ BSC32=bscmake.exe
 LIB32=link.exe -lib
 # ADD BASE LIB32 /nologo
 # ADD LIB32 /nologo /out:"Debug\libdm_d.lib"
-# Begin Custom Build
+# Begin Special Build Tool
 TargetPath=.\Debug\libdm_d.lib
-TargetName=libdm_d
-InputPath=.\Debug\libdm_d.lib
 SOURCE="$(InputPath)"
-
-"$(TargetName).lib" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
-	copy $(TargetPath) "..\lib"
-
-# End Custom Build
+PostBuild_Cmds=copy $(TargetPath) ..\lib
+# End Special Build Tool
 
 !ENDIF 
 

@@ -26,6 +26,7 @@ CFG=mged - Win32 Debug
 # PROP Scc_ProjName ""
 # PROP Scc_LocalPath ""
 CPP=cl.exe
+F90=df.exe
 RSC=rc.exe
 
 !IF  "$(CFG)" == "mged - Win32 Release"
@@ -39,9 +40,10 @@ RSC=rc.exe
 # PROP Use_Debug_Libraries 0
 # PROP Output_Dir "Release"
 # PROP Intermediate_Dir "Release"
+# PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_CONSOLE" /D "_MBCS" /YX /FD /c
-# ADD CPP /nologo /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_CONSOLE" /D "_MBCS" /YX /FD /c
+# ADD CPP /nologo /MT /W3 /GX /O2 /I "../h" /I "../libtk8.4/xlib" /I "../libtk8.4/generic" /I "../libtk8.4/win" /D "WIN32" /D "NDEBUG" /D "_CONSOLE" /D "_MBCS" /D "DM_X" /D "DM_OGL" /YX /FD /c
 # ADD BASE RSC /l 0x409 /d "NDEBUG"
 # ADD RSC /l 0x409 /d "NDEBUG"
 BSC32=bscmake.exe
@@ -49,7 +51,13 @@ BSC32=bscmake.exe
 # ADD BSC32 /nologo
 LINK32=link.exe
 # ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:console /machine:I386
-# ADD LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:console /machine:I386
+# ADD LINK32 opengl32.lib gdi32.lib user32.lib ws2_32.lib advapi32.lib libtcl84.lib libtk84.lib libsysv.lib libdm.lib libwdb.lib libbu.lib libbn.lib libfb.lib librt.lib libtermio.lib libitcl321.lib libitk321.lib /nologo /subsystem:console /machine:I386 /libpath:"../lib"
+# SUBTRACT LINK32 /pdb:none
+# Begin Special Build Tool
+TargetPath=.\Release\mged.exe
+SOURCE="$(InputPath)"
+PostBuild_Cmds=copy $(TargetPath) ..\bin
+# End Special Build Tool
 
 !ELSEIF  "$(CFG)" == "mged - Win32 Debug"
 
@@ -73,17 +81,12 @@ BSC32=bscmake.exe
 # ADD BSC32 /nologo
 LINK32=link.exe
 # ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:console /debug /machine:I386 /pdbtype:sept
-# ADD LINK32 opengl32.lib gdi32.lib user32.lib ws2_32.lib advapi32.lib tcl84d.lib tk84d.lib libsysv_d.lib libdm_d.lib libwdb_d.lib libbu_d.lib libbn_d.lib libfb_d.lib librt_d.lib libtermio_d.lib itcl32d.lib itk32d.lib /nologo /subsystem:console /debug /machine:I386 /pdbtype:sept /libpath:"../lib"
-# Begin Custom Build
-TargetPath=.\Debug\mged.exe
-TargetName=mged
-InputPath=.\Debug\mged.exe
+# ADD LINK32 opengl32.lib gdi32.lib user32.lib ws2_32.lib advapi32.lib libtcl84d.lib libtk84d.lib libsysv_d.lib libdm_d.lib libwdb_d.lib libbu_d.lib libbn_d.lib libfb_d.lib librt_d.lib libtermio_d.lib libitcl321d.lib libitk321d.lib /nologo /subsystem:console /debug /machine:I386 /out:"Debug/mged_d.exe" /pdbtype:sept /libpath:"../lib"
+# Begin Special Build Tool
+TargetPath=.\Debug\mged_d.exe
 SOURCE="$(InputPath)"
-
-"$(TargetName).exe" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
-	copy $(TargetPath) "c:\code\brlcad6.0\bin"
-
-# End Custom Build
+PostBuild_Cmds=copy $(TargetPath) ..\bin
+# End Special Build Tool
 
 !ENDIF 
 
@@ -342,6 +345,18 @@ SOURCE=.\vparse.c
 # Begin Group "Resource Files"
 
 # PROP Default_Filter "ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe"
+# Begin Source File
+
+SOURCE=.\icon1.ico
+# End Source File
+# Begin Source File
+
+SOURCE=.\icon2.ico
+# End Source File
+# Begin Source File
+
+SOURCE=.\script.rc
+# End Source File
 # End Group
 # End Target
 # End Project

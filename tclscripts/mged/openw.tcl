@@ -2101,7 +2101,15 @@ hoc_register_menu_data "ViewRing" "Add View" "Add View"\
 	}
 	scrollbar .$id.s -relief flat -command ".$id.t yview"
 
-	bind .$id.t <Enter> "focus .$id.t; break"
+	if { $tcl_platform(os) != "Windows NT" } {
+    bind .$id.t <Enter> "focus .$id.t; break"
+	} else {
+		# focus binding under windows platform causes
+		# window "bring-to-front" behavior which is 
+    # unexpected and undesireable for that platform
+		focus .$id.t
+	}
+
 	hoc_register_data .$id.t "Command Window"\
 			{ { summary "This is MGED's default command window. Its main
 	function is to allow the user to enter commands.

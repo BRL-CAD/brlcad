@@ -87,7 +87,8 @@ const char *rhs;
 #ifndef WIN32
 	lhs = "/usr/brlcad";		/* Changed by newbindir.sh */
 #else
-	lhs = "C:\\code\\brlcad6.0";  /* change as needed*/
+	/* XXX nastiness that will need to be made dynamic
+	lhs = "C:\\brlcad";  /* change as needed*/
 #endif
 #endif
 	if( bu_file_exists(lhs) )

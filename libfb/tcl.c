@@ -140,7 +140,7 @@ fb_tcl_open_existing(clientData, interp, argc, argv)
 	}
 
 #ifndef WIN32
-	if(strcmp(argv[1], X_name) == 0){
+	if(stricmp(argv[1], X_name) == 0){
 		*ifp = X24_interface; /* struct copy */
 
 		ifp->if_name = malloc((unsigned)strlen(X_name) + 1);
@@ -165,7 +165,7 @@ fb_tcl_open_existing(clientData, interp, argc, argv)
 #ifndef WIN32
 	else 
 #endif
-		if(strcmp(argv[1], ogl_name) == 0){
+		if(stricmp(argv[1], ogl_name) == 0){
 		*ifp = ogl_interface; /* struct copy */
 
 		ifp->if_name = malloc((unsigned)strlen(ogl_name) + 1);
@@ -243,7 +243,7 @@ fb_tcl_close_existing(clientData, interp, argc, argv)
 	FB_TCL_CK_FBIO(ifp);
 	_fb_pgflush(ifp);
 #ifndef WIN32
-	if(strcmp(ifp->if_name, X_name) == 0){
+	if(stricmp(ifp->if_name, X_name) == 0){
 		if((status = X24_close_existing(ifp)) <= -1){
 			bu_vls_init(&vls);
 			bu_vls_printf(&vls, "fb_close_existing: can not close device \"%s\", ret=%d.\n",
@@ -261,7 +261,7 @@ fb_tcl_close_existing(clientData, interp, argc, argv)
 #ifndef WIN32
 	else
 #endif
-		if(strcmp(ifp->if_name, ogl_name) == 0){
+		if(stricmp(ifp->if_name, ogl_name) == 0){
 		if((status = ogl_close_existing(ifp)) <= -1){
 			bu_vls_init(&vls);
 			bu_vls_printf(&vls, "fb_close_existing: can not close device \"%s\", ret=%d.\n",
@@ -297,22 +297,22 @@ fb_configureWindow(ifp, width, height)
      int width, height;
 {
 #ifdef IF_X
-#ifndef WIN32
+#ifndef _WIN32
 	const char *X_name = "/dev/X";
 #endif
 #ifdef IF_OGL
 	const char *ogl_name = "/dev/ogl";
 #endif
 
-#ifndef WIN32
+#ifndef _WIN32
 	if (!strncmp(ifp->if_name, X_name, strlen(X_name)))
 		X24_configureWindow(ifp, width, height);
 #endif
 #ifdef IF_OGL
-#ifndef WIN32	
+#ifndef _WIN32	
 	else 
 #endif
-		if (!strncmp(ifp->if_name, ogl_name, strlen(ogl_name)))
+		if (!strnicmp(ifp->if_name, ogl_name, strlen(ogl_name)))
 		ogl_configureWindow(ifp, width, height);
 #endif
 #endif /* IF_X */
