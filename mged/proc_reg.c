@@ -4,6 +4,7 @@
  * This module deals with building an edge description of a region.
  *
  * Functions -
+ *	proc_reg	processes each member (solid) of a region
  *
  * Authors -
  *	Keith Applin
@@ -13,6 +14,10 @@
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005
+ *  
+ *  Copyright Notice -
+ *	This software is Copyright (C) 1985 by the United States Army.
+ *	All rights reserved.
  */
 #ifndef lint
 static char RCSid[] = "@(#)$Header$ (BRL)";
@@ -20,17 +25,15 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include	<math.h>
 #include "ged_types.h"
-#include "db.h"
+#include "../h/db.h"
 #include "ged.h"
-#include "vmath.h"
+#include "../h/vmath.h"
 #include "dm.h"
-
-extern int	printf();
 
 static void	center(), cpoint(), dwreg(), ellin(), move(), neg(), points(),
 		regin(), solin(), solpl(), tgcin(), tplane(),
 		vectors();
-static int	arb(), cgarbs(), compar(), gap(), plane(), redoarb(),
+static int	arb(), cgarbs(), comparvec(), gap(), planeeq(), redoarb(),
 		region();
 
 static union record input;		/* Holds an object file record */
@@ -224,7 +227,7 @@ register int *svec;	/* array of like points */
 		if(done == NO)
 			svec[si] = i;
 		for(j=i+1; j<8; j++) {
-			if(compar(&input.s.s_values[i*3], &input.s.s_values[j*3]) == YES) {
+			if(comparvec(&input.s.s_values[i*3], &input.s.s_values[j*3]) == YES) {
 				if( done == NO )
 					svec[++si] = j;
 				unique = NO;
@@ -512,7 +515,7 @@ int p0, p1, p2, p3, p4, p5, p6, p7;
 
 
 static int
-compar( x, y )
+comparvec( x, y )
 register float *x,*y;
 {
 	register int i;
@@ -574,7 +577,7 @@ points()
  *	 10. regin()	process region to planes
  *	 11. solin()	finds enclosing rpp for solids
  *	 12. solpl()	process solids to arbn's
- *	 13. plane()	finds normalized plane from 3 points
+ *	 13. planeeq()	finds normalized plane from 3 points
  *
  *		R E V I S I O N   H I S T O R Y
  *
@@ -613,8 +616,6 @@ dwreg()
 	static int itemp;
 	static float pi[3],po[3];
 	static float lenwb;
-	static unsigned	count;
-	static unsigned	addr;
 	static float c1[3*4]={1.,0.,0.,0.,0.,1.,0.,0.,0.,0.,1.,0.};
 
 	/* calculate center and scale for COMPLETE REGION since may have ORs */
@@ -997,7 +998,7 @@ register float *p, *q, *r, *s;
 	}
 
 	/* Does plane already exist? */
-	if(plane(p,q,r)==0) return;
+	if(planeeq(p,q,r)==0) return;
 
 	if((*(pp+3)-VDOT(pp,pc)) > 0.) neg(pp,pp,4);
 	for(pf = &peq[0];pf<pp;pf+=4) {
@@ -1328,7 +1329,7 @@ solpl()
 
 /* computes normalized plane eq from three points */
 static int
-plane(p1,p2,p3)
+planeeq(p1,p2,p3)
 float *p1, *p2, *p3;
 {
 	static float vecl;

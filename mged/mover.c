@@ -6,16 +6,29 @@
  *	moveinstance	Given a COMB and an object, modify all the regerences
  *	combadd		Add an instance of an object to a combination
  *
- * The U. S. Army Ballistic Research Laboratory
+ *  Author -
+ *	Michael John Muuss
+ *
+ *  Source -
+ *	SECAD/VLD Computing Consortium, Bldg 394
+ *	The U. S. Army Ballistic Research Laboratory
+ *	Aberdeen Proving Ground, Maryland  21005
+ *  
+ *  Copyright Notice -
+ *	This software is Copyright (C) 1985 by the United States Army.
+ *	All rights reserved.
  */
+#ifndef lint
+static char RCSid[] = "@(#)$Header$ (BRL)";
+#endif
 
 #include	<string.h>
 #include "ged_types.h"
-#include "db.h"
+#include "../h/db.h"
 #include "ged.h"
-#include "dir.h"
+#include "objdir.h"
 #include "solid.h"
-#include "vmath.h"
+#include "../h/vmath.h"
 
 extern int	printf();
 

@@ -2,24 +2,36 @@
  *			E D A R B . C
  *
  * Functions -
- *	redraw		redraw a single solid, given matrix and record.
- *	init_sedit	set up for a Solid Edit
- *	sedit		Apply Solid Edit transformation(s)
- *	findang		Given a normal vector, find rotation & fallback angles
- *	pr_solid	Print a description of a solid
- *	plane
+ *	editarb		edit ARB edge
+ *	do_new_edge	internal routine for editarb()
+ *	plane		attempts to find equation of plane
+ *	planeqn		?
  *
+ *  Author -
+ *	Keith A. Applin
+ *  
+ *  Source -
+ *	SECAD/VLD Computing Consortium, Bldg 394
+ *	The U. S. Army Ballistic Research Laboratory
+ *	Aberdeen Proving Ground, Maryland  21005
+ *  
+ *  Copyright Notice -
+ *	This software is Copyright (C) 1985 by the United States Army.
+ *	All rights reserved.
  */
+#ifndef lint
+static char RCSid[] = "@(#)$Header$ (BRL)";
+#endif
 
 #include	<math.h>
 #include	<string.h>
 #include "ged_types.h"
-#include "db.h"
+#include "../h/db.h"
 #include "sedit.h"
-#include "vmath.h"
+#include "../h/vmath.h"
 #include "ged.h"
 #include "solid.h"
-#include "dir.h"
+#include "objdir.h"
 #include "dm.h"
 #include "menu.h"
 
@@ -27,7 +39,6 @@ extern int	printf();
 
 static void	findsam();
 static int	compar(), special();
-
 
 /*
  *  			E D I T A R B
@@ -39,6 +50,7 @@ static int	compar(), special();
  *
  *  If es_menu = (a*10)+b then moving edge ab.
  */
+int
 editarb( pos_model )
 vect_t pos_model;
 {
@@ -118,6 +130,7 @@ err:
  *  
  *  Find the line equation, and the equations of the bounding planes.
  */
+int
 do_new_edge()
 {
 	register float *op;

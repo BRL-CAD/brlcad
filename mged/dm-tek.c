@@ -2,15 +2,20 @@
  *			D M - T E K . C
  *
  * An unsatisfying (but useful) hack to allow GED to display
- * it's images on Tektronix 4014 compatible displays.
+ * its images on Tektronix 4014 compatible displays.
  * Mostly, a precursor for BLIT and RasterTek code.
  *
- * Mike Muuss, BRL, 16-Jan-85.
+ *  Author -
+ *	Michael John Muuss
  *  
- * Source -
+ *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005
+ *  
+ *  Copyright Notice -
+ *	This software is Copyright (C) 1985 by the United States Army.
+ *	All rights reserved.
  */
 #ifndef lint
 static char RCSid[] = "@(#)$Header$ (BRL)";
@@ -20,8 +25,10 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "ged_types.h"
 #include "ged.h"
 #include "dm.h"
-#include "vmath.h"
+#include "../h/vmath.h"
 #include "solid.h"
+
+extern void	perror();
 
 typedef unsigned char u_char;
 
@@ -56,7 +63,7 @@ struct dm dm_Tek = {
 	"tek", "Tektronix 4014"
 };
 
-struct timeval	{			/* needed for _select() */
+struct timeval	{			/* needed for select() */
 	long	tv_sec;			/* seconds */
 	long	tv_usec;		/* microseconds */
 };
@@ -69,7 +76,6 @@ extern int	inten_offset;		/* Intensity offset */
 extern int	inten_scale;		/* Intensity scale */
 extern int	xcross;
 extern int	ycross;			/* tracking cross position */
-extern mat_t	rot;			/* viewing rotation */
 extern int	windowbounds[6];	/* X hi,lo;  Y hi,lo;  Z hi,lo */
 /**** End global display information ******/
 
@@ -109,12 +115,12 @@ Tek_open()
 {
 	char line[64], line2[64];
 
-	printf("Output tty [stdout]? ");
+	(void)printf("Output tty [stdout]? ");
 	(void)gets( line );		/* Null terminated */
 	if( feof(stdin) )  quit();
 	if( line[0] != '\0' )  {
 		if( (outfp = fopen(line,"r+w")) == NULL )  {
-			sprintf( line2, "/dev/tty%s%c", line, '\0' );
+			(void)sprintf( line2, "/dev/tty%s%c", line, '\0' );
 			if( (outfp = fopen(line2,"r+w")) == NULL )  {
 				perror(line);
 				return(1);		/* BAD */
@@ -138,8 +144,8 @@ Tek_open()
 void
 Tek_close()
 {
-	putc(US,outfp);
-	fflush(outfp);
+	(void)putc(US,outfp);
+	(void)fflush(outfp);
 	fclose(outfp);
 }
 
@@ -151,7 +157,7 @@ Tek_close()
 void
 Tek_restart()
 {
-	printf("Tek_restart\n");
+	(void)printf("Tek_restart\n");
 }
 
 /*
@@ -162,34 +168,18 @@ Tek_restart()
 void
 Tek_prolog()
 {
-	register int i;
-
 	if( !dmaflag )
 		return;
 
 	/* If something significant has happened, clear screen and redraw */
 	erase();
 	/* Miniature typeface */
-	putc(ESC,outfp);
-	putc(';',outfp);
+	(void)putc(ESC,outfp);
+	(void)putc(';',outfp);
 
 	/* Put the center point up */
 	point( 0, 0 );
 
-#ifdef never
-	/* Draw the tracking cross */
-#define CLIP(v)	if(v < -2048) v = -2048; else if(v > 2047) v = 2047;
-	i = xcross-75;  CLIP(i);
-	move( i, ycross );
-	i = xcross+75;  CLIP(i);
-	cont(i, ycross );
-
-	i = ycross-75;  CLIP(i);
-	move( xcross, i );
-	i = ycross+75;  CLIP(i);
-	cont( xcross, i );
-#undef CLIP
-#endif
 	/* Compute the clipping bounds */
 	clipmin[0] = windowbounds[1] / 2048.;
 	clipmin[1] = windowbounds[3] / 2048.;
@@ -208,13 +198,14 @@ Tek_epilog()
 	if( !dmaflag )
 		return;
 	move( TITLE_XBASE, SOLID_YBASE );
-	putc(US,outfp);
+	(void)putc(US,outfp);
 }
 
 /*
  *  			T E K _ N E W R O T
  *  Stub.
  */
+/* ARGSUSED */
 void
 Tek_newrot(mat)
 mat_t mat;
@@ -231,6 +222,7 @@ mat_t mat;
  *
  *  Returns 0 if object could be drawn, !0 if object was omitted.
  */
+/* ARGSUSED */
 int
 Tek_object( sp, mat, ratio, white )
 register struct solid *sp;
@@ -243,9 +235,9 @@ double ratio;
 	int useful = 0;
 
 	if(  sp->s_soldash )
-		putc('b',outfp);	/* Dot dash */
+		(void)putc('b',outfp);	/* Dot dash */
 	else
-		putc('`',outfp);	/* Solid */
+		(void)putc('`',outfp);	/* Solid */
 
 	nvec = sp->s_vlen;
 	for( vp = sp->s_vlist; nvec-- > 0; vp++ )  {
@@ -254,24 +246,24 @@ double ratio;
 			/* Move, not draw */
 			MAT4X3PNT( last, mat, vp->vl_pnt );
 		}  else  {
-			static vect_t finish;
+			static vect_t fin;
 			static vect_t start;
 			/* draw */
-			MAT4X3PNT( finish, mat, vp->vl_pnt );
+			MAT4X3PNT( fin, mat, vp->vl_pnt );
 			VMOVE( start, last );
-			VMOVE( last, finish );
+			VMOVE( last, fin );
 			if(
 #ifdef later
 				/* sqrt(1+1) */
 				(ratio >= 0.7071)  &&
 #endif
-				vclip( start, finish, clipmin, clipmax ) == 0
+				vclip( start, fin, clipmin, clipmax ) == 0
 			)  continue;
 
 			move(	(int)( start[0] * 2047 ),
 				(int)( start[1] * 2047 ) );
-			cont(	(int)( finish[0] * 2047 ),
-				(int)( finish[1] * 2047 ) );
+			cont(	(int)( fin[0] * 2047 ),
+				(int)( fin[1] * 2047 ) );
 			useful = 1;
 		}
 	}
@@ -301,11 +293,11 @@ Tek_update()
 {
 	if( second_fd )  {
 		/* put up graphics cursor */
-		putc(ESC,outfp);
-		putc(SUB,outfp);
+		(void)putc(ESC,outfp);
+		(void)putc(SUB,outfp);
 	} else
-		putc(US,outfp);		/* Alpha mode */
-	fflush(outfp);
+		(void)putc(US,outfp);		/* Alpha mode */
+	(void)fflush(outfp);
 }
 
 /*
@@ -314,6 +306,7 @@ Tek_update()
  * Output a string into the displaylist.
  * The starting position of the beam is as specified.
  */
+/* ARGSUSED */
 void
 Tek_puts( str, x, y, size, color )
 register u_char *str;
@@ -361,13 +354,13 @@ static get_cursor()
 	i = read( second_fd, ibuf, sizeof(ibuf) );
 	/* The LAST 6 chars are the string from the tektronix */
 	if( i < 6 )  {
-		printf("short read of %d\n", i);
+		(void)printf("short read of %d\n", i);
 		return;		/* Fails if he hits RETURN */
 	}
 	cp = &ibuf[i-6];
 	if( cp[5] != '\n' )  {
-		printf("cursor synch?\n");
-		printf("saw:%c%c%c%c%c%c\n",
+		(void)printf("cursor synch?\n");
+		(void)printf("saw:%c%c%c%c%c%c\n",
 			cp[0], cp[1], cp[2], cp[3], cp[4], cp[5] );
 		return;
 	}
@@ -390,7 +383,7 @@ static get_cursor()
 
 	switch(cp[0])  {
 	case 'Z':
-		printf("x=%d,y=%d\n", dm_values.dv_xpen, dm_values.dv_ypen);
+		(void)printf("x=%d,y=%d\n", dm_values.dv_xpen, dm_values.dv_ypen);
 		break;		/* NOP */
 	case 'b':
 		dm_values.dv_penpress = DV_INZOOM;
@@ -402,7 +395,7 @@ static get_cursor()
 		dm_values.dv_penpress = DV_SLEW;
 		break;
 	default:
-		printf("s=smaller, b=bigger, .=slew, space=pick/slew\n");
+		(void)printf("s=smaller, b=bigger, .=slew, space=pick/slew\n");
 		return;
 	case ' ':
 		dm_values.dv_penpress = DV_PICK;
@@ -427,7 +420,6 @@ Tek_input( cmd_fd, noblock )
 {
 	static long readfds;
 	static struct timeval timeout;
-	register int i, j;
 
 	/*
 	 * Check for input on the keyboard or on the polled registers.
@@ -451,7 +443,7 @@ Tek_input( cmd_fd, noblock )
 	readfds = (1<<cmd_fd);
 	if( second_fd )
 		readfds |= (1<<second_fd);
-	(void)_select( 32, &readfds, 0L, 0L, &timeout );
+	(void)select( 32, &readfds, 0L, 0L, &timeout );
 
 	dm_values.dv_penpress = 0;
 	if( second_fd && readfds & (1<<second_fd) )
@@ -466,6 +458,7 @@ Tek_input( cmd_fd, noblock )
 /* 
  *			T E K _ L I G H T
  */
+/* ARGSUSED */
 void
 Tek_light( cmd, func )
 int cmd;
@@ -474,9 +467,10 @@ int func;			/* BE_ or BV_ function */
 	return;
 }
 
+/* ARGSUSED */
 unsigned
 Tek_cvtvecs( sp )
-register struct solid *sp;
+struct solid *sp;
 {
 	return( 0 );
 }
@@ -488,7 +482,7 @@ unsigned
 Tek_load( addr, count )
 unsigned addr, count;
 {
-	printf("Tek_load(x%x, %d.)\n", addr, count );
+	(void)printf("Tek_load(x%x, %d.)\n", addr, count );
 	return( 0 );
 }
 
@@ -503,33 +497,21 @@ Tek_viewchange()
 }
 
 /*
- *	This program performs the interpretation function
+ * Perform the interface functions
  * for the Tektronix 4014-1 with Extended Graphics Option.
- * The device independant requests which the TIG-PACK routines
- * output are mapped by this program into 4014 commands.
- *
  * The Extended Graphics Option makes available a field of
  * 10 inches vertical, and 14 inches horizontal, with a resolution
  * of 287 points per inch.
  *
  * The Tektronix is Quadrant I, 4096x4096 (not all visible).
  */
-/*** pilfered, for now *** */
-/*	@(#)subr.c	1.1	*/
-float obotx = 0.;
-float oboty = 0.;
-float botx = 0.;
-float boty = 0.;
-float scalex = 1.;
-float scaley = 1.;
-int scaleflag;
-
 int oloy = -1;
 int ohiy = -1;
 int ohix = -1;
 int oextra = -1;
 
 /* The input we see is -2048..+2047 */
+/* Continue motion from last position */
 cont(x,y)
 register int x,y;
 {
@@ -539,10 +521,6 @@ register int x,y;
 	x = GED_TO_TEK(x);
 	y = GED_TO_TEK(y);
 
-#ifdef never
-	x = (x-obotx)*scalex + botx;
-	y = (y-oboty)*scaley + boty;
-#endif
 	hix=(x>>7) & 037;
 	hiy=(y>>7) & 037;
 	lox = (x>>2)&037;
@@ -550,70 +528,71 @@ register int x,y;
 	extra=x&03+(y<<2)&014;
 	n = (abs(hix-ohix) + abs(hiy-ohiy) + 6) / 12;
 	if(hiy != ohiy){
-		putc(hiy|040,outfp);
+		(void)putc(hiy|040,outfp);
 		ohiy=hiy;
 	}
-	if(hix != ohix){
-		if(extra != oextra){
-			putc(extra|0140,outfp);
+	if(hix != ohix) {
+		if(extra != oextra) {
+			(void)putc(extra|0140,outfp);
 			oextra=extra;
 		}
-		putc(loy|0140,outfp);
-		putc(hix|040,outfp);
+		(void)putc(loy|0140,outfp);
+		(void)putc(hix|040,outfp);
 		ohix=hix;
 		oloy=loy;
-	}
-	else{
-		if(extra != oextra){
-			putc(extra|0140,outfp);
-			putc(loy|0140,outfp);
+	} else {
+		if(extra != oextra) {
+			(void)putc(extra|0140,outfp);
+			(void)putc(loy|0140,outfp);
 			oextra=extra;
 			oloy=loy;
-		}
-		else if(loy != oloy){
-			putc(loy|0140,outfp);
+		} else if(loy != oloy) {
+			(void)putc(loy|0140,outfp);
 			oloy=loy;
 		}
 	}
-	putc(lox|0100,outfp);
+	(void)putc(lox|0100,outfp);
 	while(n--)
-		putc(0,outfp);
+		(void)putc(0,outfp);
 }
 
-move(xi,yi){
-
-	putc(GS,outfp);			/* Next vector blank */
+move(xi,yi)
+{
+	(void)putc(GS,outfp);			/* Next vector blank */
 	cont(xi,yi);
 }
 
-erase(){
+erase()
+{
 	extern unsigned sleep();	/* DAG -- was missing */
-	putc(ESC,outfp);
-	putc(FF,outfp);
+
+	(void)putc(ESC,outfp);
+	(void)putc(FF,outfp);
 	ohix = ohiy = oloy = oextra = -1;
-	fflush(outfp);
+	(void)fflush(outfp);
 
 	/* If 2 FD's, it's probably a BLIT, otherwise assume real Tek */
 #ifdef BLIT
 	if( !second_fd )
 #endif
-		sleep(3);
+		(void)sleep(3);
 }
 
 label(s)
 register char *s;
 {
-	putc(US,outfp);
+	(void)putc(US,outfp);
 	for( ; *s; s++ )
-		putc(*s,outfp);
+		(void)putc(*s,outfp);
 	ohix = ohiy = oloy = oextra = -1;
 }
 
 linemod(s)
-char *s;
+register char *s;
 {
-	int c;				/* DAG -- was char */
-	putc(ESC,outfp);
+	register int c;				/* DAG -- was char */
+
+	(void)putc(ESC,outfp);
 	switch(s[0]){
 	case 'l':	
 		c = 'd';
@@ -630,7 +609,7 @@ char *s;
 		c = '`';
 		break;
 	}
-	putc(c,outfp);
+	(void)putc(c,outfp);
 }
 
 point(xi,yi){

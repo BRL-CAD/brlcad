@@ -3,7 +3,8 @@
  *
  * Mainline portion of the graphics editor
  *
- * Functions -
+ *  Functions -
+ *	prprompt	print prompt
  *	main		Mainline portion of the graphics editor
  *	refresh		Internal routine to perform displaylist output writing
  *	usejoy		Apply joystick to viewing perspective
@@ -12,9 +13,10 @@
  *	log_event	Log an event in the log file
  *	finish		Terminate with logging.  To be used instead of exit().
  *	quit		General Exit routine
+ *	sig2		user interrupt catcher
+ *	new_mats	derive inverse and editing matrices, as required
  *
- *
- * Authors -
+ *  Authors -
  *	Michael John Muuss
  *	Charles M Kennedy
  *	Douglas A Gwyn
@@ -22,14 +24,20 @@
  *	Gary Steven Moss
  *	Earl P Weaver
  *
- * Source -
+ *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005
+ *  
+ *  Copyright Notice -
+ *	This software is Copyright (C) 1985 by the United States Army.
+ *	All rights reserved.
  */
 #ifndef lint
 static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
+
+char CopyRight_Notice[] = "@(#) Copyright (C) 1985 by the United States Army";
 
 #include <stdio.h>
 #include <fcntl.h>
@@ -40,10 +48,10 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "ged_types.h"
 #include "ged.h"
 #include "solid.h"
-#include "db.h"
+#include "../h/db.h"
 #include "sedit.h"
 #include "dm.h"
-#include "vmath.h"
+#include "../h/vmath.h"
 
 #ifndef	LOGFILE
 #define LOGFILE	"/vld/lib/gedlog"	/* usage log */
@@ -52,8 +60,13 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 extern void	exit(), perror(), sync();
 extern char	*malloc(), *tempnam();
 extern int	close(), dup(), execl(), fork(), getuid(), open(), pipe(),
-		printf(),  unlink(), write();
+		printf(), unlink(), write();
 extern long	time();
+#ifdef BSD42
+extern char	*sprintf();
+#else
+extern int	sprintf();
+#endif
 
 extern struct dm dm_Mg;
 struct device_values dm_values;		/* Dev Values, filled by dm-XX.c */
@@ -71,18 +84,21 @@ int		windowbounds[6];	/* X hi,lo;  Y hi,lo;  Z hi,lo */
 static jmp_buf	jmp_env;		/* For non-local gotos */
 void		(*cur_sigint)();	/* Current SIGINT status */
 void		sig2();
+void		new_mats();
+void		usejoy();
 static void	log_event();
 extern char	version[];		/* from vers.c */
 
 void
 pr_prompt()  {
 	(void)printf("mged> ");
-	fflush(stdout);
+	(void)fflush(stdout);
 }
 
 /* 
  *			M A I N
  */
+int
 main(argc,argv)
 int argc;
 char **argv;
@@ -92,11 +108,11 @@ char **argv;
 	/* Check for proper invocation */
 	if( argc != 2 )  {
 		(void)printf("Usage:  %s database\n", argv[0]);
-		exit(1);		/* NOT finish() */
+		return(1);		/* NOT finish() */
 	}
 
 	/* Identify ourselves */
-	printf("%s\n", version);
+	(void)printf("%s\n", version);
 
 	/* Get input file */
 	db_open( argv[1] );
@@ -162,7 +178,7 @@ char **argv;
 		else
 			cur_sigint = sig2;	/* back to here w/!0 return */
 	} else {
-		printf("\nAborted.\n");
+		(void)printf("\nAborted.\n");
 	}
 	(void)signal( SIGINT, SIG_IGN );
 	pr_prompt();
@@ -187,7 +203,7 @@ char **argv;
 
 		/* Process any function button presses */
 		if( dm_values.dv_buttonpress )
-			button( dm_values.dv_buttonpress );
+			button( (long)dm_values.dv_buttonpress );
 
 		/* Process any joystick activity */
 		if(	dmaflag
@@ -195,7 +211,6 @@ char **argv;
 		   ||	dm_values.dv_yjoy != 0.0
 		   ||	dm_values.dv_zjoy != 0.0
 		)  {
-
 			rateflag++;
 
 			/* Compute delta x,y,z parameters */
@@ -213,10 +228,7 @@ char **argv;
 		xcross = dm_values.dv_xpen;
 		ycross = dm_values.dv_ypen;
 
-		/* inputs:  -2048 <= x,y <= +2047 */
-		usepen( dm_values.dv_xpen,
-			dm_values.dv_ypen,
-			dm_values.dv_penpress );
+		usepen();
 
 		/*
 		 * Set up window so that drawing does not run over into the
@@ -225,7 +237,6 @@ char **argv;
 		windowbounds[0] = 2047;		/* XHR */
 		if( illump != SOLID_NULL )
 			windowbounds[0] = XLIM;
-
 
 		windowbounds[3] = TITLE_YBASE-TEXT1_DY;	/* YLR */
 
@@ -241,7 +252,7 @@ char **argv;
 
 		/* Apply zoom rate input to current view window size */
 		if( dm_values.dv_zoom != 0 )  {
-#define MINVIEW		0.01	/* smallest view.  Prevents runaway zoom */
+#define MINVIEW		0.001	/* smallest view.  Prevents runaway zoom */
 
 			Viewscale *= 1.0 - (dm_values.dv_zoom / 10);
 			if( Viewscale < MINVIEW )
@@ -306,13 +317,7 @@ refresh()
 
 		/* Compute and display angle/distance cursor */
 		if (adcflag)
-			adcursor(
-				dm_values.dv_xadc,
-				dm_values.dv_yadc,
-				dm_values.dv_1adc,	/* Solid line angle */
-				dm_values.dv_2adc,	/* Dashed line angle */
-				dm_values.dv_distadc	/* Tick distance */
-			);
+			adcursor();
 
 		/* Display titles, etc */
 		dotitles();
@@ -333,6 +338,7 @@ refresh()
  * Yangle = angle of rotation about the Y axis, and is done 2nd.
  * Zangle = angle of rotation about the Z axis, and is done 1st.
  */
+void
 usejoy( xangle, yangle, zangle )
 float xangle, yangle, zangle;
 {
@@ -350,7 +356,6 @@ float xangle, yangle, zangle;
 
 		mat_idn( incr_change );
 		buildHrot( incr_change, xangle, yangle, zangle );
-
 
 		if( es_edflag == SROT || es_edflag == PROT )  {
 			/* accumulate the translations */
@@ -489,16 +494,17 @@ quit()
 void
 sig2()
 {
-	longjmp( jmp_env );
+	longjmp( jmp_env, 1 );
 	/* NOTREACHED */
 }
 
 /*
  *  			N E W _ M A T S
  *  
- *  Derrive the inverse and editing matrices, as required.
+ *  Derive the inverse and editing matrices, as required.
  *  Centralized here to simplify things.
  */
+void
 new_mats()
 {
 	mat_mul( model2view, Viewrot, toViewcenter );

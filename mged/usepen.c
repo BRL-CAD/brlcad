@@ -5,7 +5,22 @@
  *	usepen		Use x,y data from data tablet
  *	buildHrot	Generate rotation matrix
  *	wrt_view	Modify xform matrix with respect to current view
+ *
+ *  Author -
+ *	Michael John Muuss
+ *  
+ *  Source -
+ *	SECAD/VLD Computing Consortium, Bldg 394
+ *	The U. S. Army Ballistic Research Laboratory
+ *	Aberdeen Proving Ground, Maryland  21005
+ *  
+ *  Copyright Notice -
+ *	This software is Copyright (C) 1985 by the United States Army.
+ *	All rights reserved.
  */
+#ifndef lint
+static char RCSid[] = "@(#)$Header$ (BRL)";
+#endif
 
 #include	<math.h>
 #include "ged_types.h"
@@ -13,8 +28,8 @@
 #include "solid.h"
 #include "menu.h"
 #include "dm.h"
-#include "vmath.h"
-#include "db.h"
+#include "../h/vmath.h"
+#include "../h/db.h"
 #include "sedit.h"
 
 /*	Degree <-> Radian conversion factors	*/
@@ -31,7 +46,7 @@ static void	illuminate();
  *			U S E P E N
  *
  * X and Y are expected to be in -2048 <= x,y <= +2047 range.
- * Press is !0 when pen is pressed.
+ * Pressval is !0 when pen is pressed, DV_{PICK,INZOOM,OUTZOOM,SLEW}.
  *
  * Note -
  *  The data tablet is the focus of much of the editing activity in GED.
@@ -58,8 +73,7 @@ static void	illuminate();
  *  is by completing the sequence, or pressing BE_REJECT.
  */
 void
-usepen( x, y, press )
-register int x, y;
+usepen()
 {
 	static float scale;
 	register struct solid *sp;
@@ -70,8 +84,8 @@ register int x, y;
 	static vect_t tabvec;		/* tablet vector */
 	static vect_t temp;
 
-	/* TODO:  switch(press) { switch(state) {stuff} } */
-	switch( press )  {
+	/* TODO:  switch(dm_values.dv_penpress) { switch(state) {stuff} } */
+	switch( dm_values.dv_penpress )  {
 	case DV_INZOOM:
 		Viewscale *= 0.5;
 		new_mats();
@@ -84,8 +98,8 @@ register int x, y;
 
 	case DV_SLEW:
 		/* Move view center to here */
-		tabvec[X] =  x / 2047.0;
-		tabvec[Y] =  y / 2047.0;
+		tabvec[X] =  dm_values.dv_xpen / 2047.0;
+		tabvec[Y] =  dm_values.dv_ypen / 2047.0;
 		tabvec[Z] = 0;
 
 		slewview( tabvec );
@@ -95,7 +109,10 @@ register int x, y;
 	case 0:
 		break;
 	default:
-		printf("usepen(%d,%d,x%x) -- bad dm press code\n", x,y,press);
+		(void)printf("usepen(%d,%d,x%x) -- bad dm press code\n",
+			dm_values.dv_xpen,
+			dm_values.dv_ypen,
+			dm_values.dv_penpress);
 		return;
 	}
 
@@ -108,18 +125,18 @@ register int x, y;
 	 */
 	if(  menu_on == TRUE  &&
 		menu_list != (struct menu_item *) NULL  &&
-		menu_select( x, y, press )
+		menu_select( dm_values.dv_xpen, dm_values.dv_ypen, dm_values.dv_penpress )
 	) return;
 	if( state == ST_VIEW )  {
-		if( press == 0 )
+		if( dm_values.dv_penpress == 0 )
 			return;
 
 		/*
 		 * Use the DT for moving view center.
 		 * Make indicated point be new view center (NEW).
 		 */
-		tabvec[X] =  x / 2047.0;
-		tabvec[Y] =  y / 2047.0;
+		tabvec[X] =  dm_values.dv_xpen / 2047.0;
+		tabvec[Y] =  dm_values.dv_ypen / 2047.0;
 		tabvec[Z] = 0;
 
 		slewview( tabvec );
@@ -130,7 +147,7 @@ register int x, y;
 		/*
 		 * We are in "illuminate" mode, with no object selected.
 		 */
-		if( press )  {
+		if( dm_values.dv_penpress )  {
 			/* Currently illuminated object is selected */
 			if( state == ST_O_PICK )  {
 				ipathpos = 0;
@@ -146,7 +163,7 @@ register int x, y;
 		/*
 		 * Use the tablet for illuminating a solid
 		 */
-		illuminate( y );
+		illuminate( dm_values.dv_ypen );
 
 		/*
 		 * People seem to find the cross-hair distracting in
@@ -159,7 +176,7 @@ register int x, y;
 	if( state == ST_O_PATH )  {
 		/* Select path element for Object Edit */
 		/* If pressed, use selected path element */
-		if( press )  {
+		if( dm_values.dv_penpress )  {
 			/*
 			 * Set combination "illuminate" mode.  This code
 			 * assumes that the user has already illuminated
@@ -199,13 +216,13 @@ register int x, y;
 		 * The following formula depends heavily on
 		 * the fact that s_count will never exceed 7.
 		 */
-		ipathpos = (y + 2048) * (illump->s_last+1) / 4096;
+		ipathpos = (dm_values.dv_ypen + 2048) * (illump->s_last+1) / 4096;
 		ipathpos = illump->s_last - ipathpos;
 		dmaflag++;
 		return;
 	}
 
-	if( !press )
+	if( !dm_values.dv_penpress )
 		return;
 	/*
 	 * When pressed, use the DT for object transformations
@@ -218,8 +235,8 @@ register int x, y;
 	case PSCALE:
 		/* use pen to get a scale factor */
 		es_scale = 1.0 + 0.25 *
-				((float)(y > 0 ? y : -y) / 2047);
-		if ( y <= 0 )
+				((float)(dm_values.dv_ypen > 0 ? dm_values.dv_ypen : -dm_values.dv_ypen) / 2047);
+		if ( dm_values.dv_ypen <= 0 )
 			es_scale = 1.0 / es_scale;
 
 		/* accumulate scale factor */
@@ -236,8 +253,8 @@ register int x, y;
 		 */
 		MAT4X3PNT( temp, es_mat, es_rec.s.s_values );
 		MAT4X3PNT( pos_view, model2view, temp );
-		pos_view[X] = x / 2047.0;
-		pos_view[Y] = y / 2047.0;
+		pos_view[X] = dm_values.dv_xpen / 2047.0;
+		pos_view[Y] = dm_values.dv_ypen / 2047.0;
 		MAT4X3PNT( temp, view2model, pos_view );
 		MAT4X3PNT( es_rec.s.s_values, es_invmat, temp );
 		sedraw = 1;
@@ -247,8 +264,8 @@ register int x, y;
 		VADD2( temp, &es_rec.s.s_tgc_V, &es_rec.s.s_tgc_H );
 		MAT4X3PNT(pos_model, es_mat, temp);
 		MAT4X3PNT( pos_view, model2view, pos_model );
-		pos_view[X] = x / 2047.0;
-		pos_view[Y] = y / 2047.0;
+		pos_view[X] = dm_values.dv_xpen / 2047.0;
+		pos_view[Y] = dm_values.dv_ypen / 2047.0;
 		/* Do NOT change pos_view[Z] ! */
 		MAT4X3PNT( temp, view2model, pos_view );
 		MAT4X3PNT( tr_temp, es_invmat, temp );
@@ -257,8 +274,8 @@ register int x, y;
 		return;
 	case EARB:
 		/* move arb edge, through indicated point */
-		tabvec[X] = x / 2047.0;
-		tabvec[Y] = y / 2047.0;
+		tabvec[X] = dm_values.dv_xpen / 2047.0;
+		tabvec[Y] = dm_values.dv_ypen / 2047.0;
 		tabvec[Z] = 0;
 		MAT4X3PNT( temp, view2model, tabvec );
 		/* apply inverse of es_mat */
@@ -280,8 +297,8 @@ register int x, y;
 	mat_idn( incr_change );
 	scale = 1;
 	if( movedir & SARROW )  {
-		scale = 1.0 + (float)(y > 0 ? y : -y) / (2047);
-		if ( y <= 0 )
+		scale = 1.0 + (float)(dm_values.dv_ypen > 0 ? dm_values.dv_ypen : -dm_values.dv_ypen) / (2047);
+		if ( dm_values.dv_ypen <= 0 )
 			scale = 1.0 / scale;
 
 		/*  For this to take effect relative to the view center,
@@ -305,9 +322,9 @@ register int x, y;
 		MAT4X3PNT( temp, es_mat, es_rec.s.s_values );
 		MAT4X3PNT( pos_view, model2objview, temp );
 		if( movedir & RARROW )
-			pos_view[X] = x / 2047.0;
+			pos_view[X] = dm_values.dv_xpen / 2047.0;
 		if( movedir & UARROW )
-			pos_view[Y] = y / 2047.0;
+			pos_view[Y] = dm_values.dv_ypen / 2047.0;
 
 		MAT4X3PNT( pos_model, view2model, pos_view );/* NOT objview */
 		MAT4X3PNT( tr_temp, modelchanges, temp );
@@ -317,7 +334,7 @@ register int x, y;
 		mat_copy( oldchanges, modelchanges );
 		mat_mul( modelchanges, incr_change, oldchanges );
 	}  else  {
-		printf("No object edit mode selected;  pen press ignored\n");
+		(void)printf("No object edit mode selected;  pen press ignored\n");
 		return;
 	}
 	mat_idn( incr_change );

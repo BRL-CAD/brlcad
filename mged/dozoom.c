@@ -4,10 +4,17 @@
  * Functions -
  *	dozoom		Compute new zoom/rotation perspectives
  *  
- * Source -
+ *  Author -
+ *	Michael John Muuss
+ *  
+ *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005
+ *  
+ *  Copyright Notice -
+ *	This software is Copyright (C) 1985 by the United States Army.
+ *	All rights reserved.
  */
 #ifndef lint
 static char RCSid[] = "@(#)$Header$ (BRL)";
@@ -16,11 +23,11 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "ged_types.h"
 #include "ged.h"
 #include "solid.h"
-#include "db.h"
+#include "../h/db.h"
 #include "sedit.h"
 #include <math.h>
 #include "dm.h"
-#include "vmath.h"
+#include "../h/vmath.h"
 
 /* Variables for dozoom() */
 float	Viewscale;

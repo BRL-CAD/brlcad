@@ -4,22 +4,30 @@
  * Functions -
  *	drawHsolid	Manage the drawing of a COMGEOM solid
  *  
- * Source -
+ *  Author -
+ *	Michael John Muuss
+ *  
+ *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005
+ *  
+ *  Copyright Notice -
+ *	This software is Copyright (C) 1985 by the United States Army.
+ *	All rights reserved.
  */
 #ifndef lint
 static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include "ged_types.h"
-#include "db.h"
+#include "../h/db.h"
 #include "ged.h"
 #include "solid.h"
-#include "dir.h"
-#include "vmath.h"
+#include "objdir.h"
+#include "../h/vmath.h"
 #include "dm.h"
+
 #ifdef BSD42
 extern void bcopy();
 #define	memcpy(to,from,cnt)	bcopy(from,to,cnt)
@@ -28,9 +36,10 @@ extern char *memcpy();
 #endif
 
 extern void	perror();
+extern char	*malloc();
 extern int	printf(), write();
 
-#define NVL	1000
+#define NVL	2000
 static struct veclist veclist[NVL];
 
 struct veclist *vlp;		/* pointer to first free veclist element */
@@ -171,9 +180,9 @@ union record *recordp;
 	/* Make a private copy of the vector list */
 	sp->s_vlen = vlp - &veclist[0];		/* # of structs */
 	count = sp->s_vlen * sizeof(struct veclist);
-	if( (sp->s_vlist = (struct veclist *)malloc(count)) == VLIST_NULL )  {
+	if( (sp->s_vlist = (struct veclist *)malloc((unsigned)count)) == VLIST_NULL )  {
 		no_memory = 1;
-		printf("draw: malloc error\n");
+		(void)printf("draw: malloc error\n");
 		return(-1);		/* ERROR */
 	}
 	(void)memcpy( (char *)sp->s_vlist, (char *)veclist, count );
@@ -198,13 +207,15 @@ union record *recordp;
 
 		/* Add to linked list of solid structs */
 		APPEND_SOLID( sp, HeadSolid.s_back );
+		dmp->dmr_viewchange( 1, sp );		/* ADD solid */
 	} else {
 		/* replacing illuminated solid -- struct already linked in */
 		sp->s_iflag = UP;
+		dmp->dmr_viewchange( 3, sp );		/* REPLACE solid */
 	}
 
 	/* Cvt to displaylist, determine displaylist memory requirement. */
-	if( (sp->s_bytes = dmp->dmr_cvtvecs( sp )) > 0 )  {
+	if( (sp->s_bytes = dmp->dmr_cvtvecs( sp )) != 0 )  {
 
 		/* Allocate displaylist storage for object */
 		sp->s_addr = memalloc( &(dmp->dmr_map), sp->s_bytes );
@@ -226,35 +237,3 @@ union record *recordp;
 
 	return(1);		/* OK */
 }
-
-#ifdef never
-/*
- *			M R E A D
- *
- * This function performs the function of a read(II) but will
- * call read(II) multiple times in order to get the requested
- * number of characters.  This KLUDGE is necessary because pipes
- * may not return any more than 512 characters on a single read.
- */
-static int
-mread(fd, bufp, n)
-int fd;
-register char	*bufp;
-unsigned	n;
-{
-	register unsigned	count = 0;
-	register int		nread;
-
-	do {
-		nread = read(fd, bufp, n-count);
-		if(nread == -1)
-			return(nread);
-		if(nread == 0)
-			return((int)count);
-		count += (unsigned)nread;
-		bufp += nread;
-	 } while(count < n);
-
-	return((int)count);
-}
-#endif

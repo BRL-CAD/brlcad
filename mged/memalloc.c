@@ -5,29 +5,15 @@
  *	memalloc	allocate 'size' of memory from a given map
  *	memget		allocate 'size' of memory from map at 'place'
  *	memfree		return 'size' of memory to map at 'place'
+ *	mempurge	free everything on current memory chain
  *	memprint	print a map
  *
- * Structure of the displaylist memory map chains.
- * Consists of non-zero count and base address of that many contiguous units.
+ * The structure of the displaylist memory map chains
+ * consists of non-zero count and base address of that many contiguous units.
  * The addresses are increasing and the list is terminated with the
  * first zero link.
  *
  * memalloc() and memfree() use these tables to allocate displaylist memory.
- */
-#ifndef lint
-static char RCSid[] = "@(#)$Header$ (BRL)";
-#endif
-
-#include <stdio.h>
-#include "dm.h"		/* for struct mem_map */
-
-/* Allocation/Free spaces */
-static struct mem_map *freemap = MAP_NULL;	/* Freelist of buffers */
-
-/*
- *	A little better memory allocator		=GET=
- *
- *	July 4, 1980
  *
  *	For each Memory Map there exists a queue (coremap).
  *	There also exists a queue of free buffers which are enqueued
@@ -37,11 +23,32 @@ static struct mem_map *freemap = MAP_NULL;	/* Freelist of buffers */
  *	the mapping buffer is taken off from the respective queue and
  *	returned to the `freemap' queue.
  *
+ *  Authors -
+ *	George E. Toth
+ *	Michael John Muuss
+ *
+ *  Source -
+ *	SECAD/VLD Computing Consortium, Bldg 394
+ *	The U. S. Army Ballistic Research Laboratory
+ *	Aberdeen Proving Ground, Maryland  21005
+ *  
+ *  Copyright Notice -
+ *	This software is Copyright (C) 1985 by the United States Army.
+ *	All rights reserved.
  */
+#ifndef lint
+static char RCSid[] = "@(#)$Header$ (BRL)";
+#endif
 
+#include <stdio.h>
+#include "dm.h"		/* for struct mem_map */
 
-	/* Flags used by `type' in memfree() */
+extern char	*malloc();
 
+/* Allocation/Free spaces */
+static struct mem_map *freemap = MAP_NULL;	/* Freelist of buffers */
+
+/* Flags used by `type' in memfree() */
 #define	M_TMTCH	00001	/* Top match */
 #define	M_BMTCH	00002	/* Bottom match */
 #define	M_TOVFL	00004	/* Top overflow */
@@ -207,15 +214,15 @@ unsigned long addr;
 	}
 
 	if( type & (M_TOVFL|M_BOVFL|M_TWRAR|M_BWRAR) )  {
-		printf("mfree(addr=%d,size=%d)  error type=0%o\n",
+		(void)printf("mfree(addr=%d,size=%d)  error type=0%o\n",
 			addr, size, type );
 		if( prevp )
-			printf("prevp: m_addr=%d, m_size=%d\n",
+			(void)printf("prevp: m_addr=%d, m_size=%d\n",
 				prevp->m_addr, prevp->m_size );
 		if( curp )
-			printf("curp: m_addr=%d, m_size=%d\n",
+			(void)printf("curp: m_addr=%d, m_size=%d\n",
 				curp->m_addr, curp->m_size );
-		printf("display memory dropped, continuing\n");
+		(void)printf("display memory dropped, continuing\n");
 		return;
 	}
 
@@ -300,5 +307,5 @@ struct mem_map **pp;
 
 	curp = *pp;
 	for( curp = *pp; curp; curp = curp->m_nxtp )
-		printf(" %ld, len=%d\n", curp->m_addr, curp->m_size );
+		(void)printf(" %ld, len=%d\n", curp->m_addr, curp->m_size );
 }

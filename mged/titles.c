@@ -4,10 +4,18 @@
  * Functions -
  *	dotitles	Output GED "faceplate" & titles.
  *
- * Source -
+ *  Author -
+ *	Michael John Muuss
+ *	Kieth A. Applin
+ *  
+ *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005
+ *  
+ *  Copyright Notice -
+ *	This software is Copyright (C) 1985 by the United States Army.
+ *	All rights reserved.
  */
 #ifndef lint
 static char RCSid[] = "@(#)$Header$ (BRL)";
@@ -16,12 +24,12 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "ged_types.h"
 #include "ged.h"
 #include "solid.h"
-#include "dir.h"
-#include "db.h"
+#include "objdir.h"
+#include "../h/db.h"
 #include "sedit.h"
 #include <math.h>
 #include "dm.h"
-#include "vmath.h"
+#include "../h/vmath.h"
 
 extern int	printf(), sprintf();
 
@@ -247,7 +255,7 @@ dotitles()
 					1,
 					DM_RED);
 			/* print the evaluated (path) solid parameters */
-			temp_rec = es_rec;
+			temp_rec.s = es_rec.s;		/* struct copy */
 			MAT4X3PNT( &temp_rec.s.s_values[0], es_mat,
 					&es_rec.s.s_values[0] );
 			for(i=1; i<8; i++) {
@@ -292,7 +300,7 @@ dotitles()
 		if( state == ST_O_EDIT && illump->s_Eflag == 0 ) {
 			/* NOT an evaluated region */
 			/* object edit option selected */
-			temp_rec = es_rec;
+			temp_rec.s = es_rec.s;		/* struct copy */
 			mat_mul(new_mat, modelchanges, es_mat);
 			MAT4X3PNT( temp_rec.s.s_values, new_mat, es_rec.s.s_values );
 			for(i=1; i<8; i++) {

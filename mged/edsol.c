@@ -7,25 +7,43 @@
  *	sedit		Apply Solid Edit transformation(s)
  *	findang		Given a normal vector, find rotation & fallback angles
  *	pr_solid	Print a description of a solid
- *	plane
+ *	pscale		Partial scaling of a solid
+ *	init_objedit	set up for object edit?
  *
+ *  Authors -
+ *	Keith A. Applin
+ *	Bob Suckling
+ *  
+ *  Source -
+ *	SECAD/VLD Computing Consortium, Bldg 394
+ *	The U. S. Army Ballistic Research Laboratory
+ *	Aberdeen Proving Ground, Maryland  21005
+ *  
+ *  Copyright Notice -
+ *	This software is Copyright (C) 1985 by the United States Army.
+ *	All rights reserved.
  */
+#ifndef lint
+static char RCSid[] = "@(#)$Header$ (BRL)";
+#endif
 
 #include	<math.h>
 #include	<string.h>
 #include "ged_types.h"
-#include "db.h"
+#include "../h/db.h"
 #include "sedit.h"
-#include "vmath.h"
+#include "../h/vmath.h"
 #include "ged.h"
 #include "solid.h"
-#include "dir.h"
+#include "objdir.h"
 #include "dm.h"
 #include "menu.h"
 
 extern int	printf();
 
 static void	arb_ed(), ars_ed(), ell_ed(), tgc_ed(), tor_ed();
+
+void pscale();
 
 struct menu_item  arb_menu[] = {
 	{ "GENERAL ARB MENU", (void (*)())NULL, 0 },
@@ -159,7 +177,7 @@ union record *recp;
 	}
 
 	/* Release previous chunk of displaylist, and rewrite control list */
-	memfree( &(dmp->dmr_map), bytes, addr );
+	memfree( &(dmp->dmr_map), (unsigned)bytes, (unsigned long)addr );
 	dmaflag = 1;
 	return( sp );
 }
@@ -170,6 +188,7 @@ union record *recp;
  *  First time in for this solid, set things up.
  *  If all goes well, change state to ST_S_EDIT.
  */
+void
 init_sedit()
 {
 	/*
@@ -412,7 +431,7 @@ sedit()
 		break;
 
 	default:
-		printf("sedit():  unknown edflag = %d.\n", es_edflag );
+		(void)printf("sedit():  unknown edflag = %d.\n", es_edflag );
 	}
 
 	illump = redraw( illump, &es_rec );
@@ -451,15 +470,15 @@ register float *angles, *unitv;
 	angles[4] *= radtodeg;
 }
 
-#define PR_PT(ln,title,base)	sprintf( &es_display[ln*ES_LINELEN],\
+#define PR_PT(ln,title,base)	(void)sprintf( &es_display[ln*ES_LINELEN],\
 		" %c (%.4f, %.4f, %.4f)%c", \
 		title, (base)[X], (base)[Y], (base)[Z], '\0' )
 
-#define PR_VECM(ln,title,base,mag)	sprintf( &es_display[ln*ES_LINELEN],\
+#define PR_VECM(ln,title,base,mag)	(void)sprintf( &es_display[ln*ES_LINELEN],\
 		" %c (%.4f, %.4f, %.4f) Mag=%f%c", \
 		title, (base)[X], (base)[Y], (base)[Z], mag, '\0' )
 
-#define PR_ANG(ln,str,base)	sprintf( &es_display[ln*ES_LINELEN],\
+#define PR_ANG(ln,str,base)	(void)sprintf( &es_display[ln*ES_LINELEN],\
 		" %s dir cos=(%.1f, %.1f, %.1f), rot=%.1f, fb=%.1f%c", \
 		str, (base)[0], (base)[1], (base)[2], \
 		(base)[3], (base)[4], '\0' )
@@ -494,7 +513,7 @@ register struct solidrec *sp;
 		r2 = MAGNITUDE(&sp->s_tor_H);
 		PR_PT( 0, 'V', &sp->s_tor_V );
 
-		sprintf( &es_display[1*ES_LINELEN],
+		(void)sprintf( &es_display[1*ES_LINELEN],
 			" r1=%f, r2=%f%c", r1, r2, '\0' );
 
 		VSCALE( unitv, &sp->s_tor_H, 1.0/r2 );	/* N == H^ */
@@ -588,6 +607,7 @@ register struct solidrec *sp;
  *  
  *  Partial scaling of a solid.
  */
+void
 pscale()
 {
 	register float *op;
@@ -756,6 +776,7 @@ torcom:
  *			I N I T _ O B J E D I T
  *
  */
+void
 init_objedit()
 {
 	int i;
@@ -802,7 +823,6 @@ init_objedit()
 	mat_inv( es_invmat, es_mat );
 
 	/* fill the display array */
-	pr_solid( &es_rec );
+	pr_solid( &es_rec.s );
 
 }
-

@@ -6,9 +6,21 @@
  *	menu_display		Add a list of items to the display list
  *	menu_select		Called by usepen() for menu pointing
  *
- * Authors -
+ * Author -
  *	Bob Suckling
+ *  
+ *  Source -
+ *	SECAD/VLD Computing Consortium, Bldg 394
+ *	The U. S. Army Ballistic Research Laboratory
+ *	Aberdeen Proving Ground, Maryland  21005
+ *  
+ *  Copyright Notice -
+ *	This software is Copyright (C) 1985 by the United States Army.
+ *	All rights reserved.
  */
+#ifndef lint
+static char RCSid[] = "@(#)$Header$ (BRL)";
+#endif
 
 #include	"ged_types.h"
 #include	"ged.h"
@@ -81,10 +93,10 @@ int			y;	/*=== points @ the tube. */
  * Returns: 1 if menu claims these pen co-ordinates, 0 otherwise.
  */
 int
-menu_select( x, y, press )
+menu_select( x, y, pressval )
 int	x;
 register int y;
-int	press;
+int	pressval;
 { 
 	struct menu_item	*mptr;
 	int			yy;
@@ -119,7 +131,7 @@ int	press;
 		}
 	}
 
-	if(	press
+	if(	pressval
 	    &&	( i_menu_pen != -1 )		/* pen on menu item */
 	    &&	( x != x_old_menu)		/* debounce x and y */
 	    &&	( y != y_old_menu)		)
