@@ -29,8 +29,8 @@
  */
 #define	brt(x,y)	(11*x+y)
 #define drk(x,y)	-(11*x+y)
-#define	LAST		0200		/* Marks end of stroke list */
-#define	NEGY		0201		/* Denotes negative y stroke */
+#define	LAST		-128		/* 0200 Marks end of stroke list */
+#define	NEGY		-127		/* 0201 Denotes negative y stroke */
 #define bneg(x,y)	NEGY, brt(x,y)
 #define dneg(x,y)	NEGY, drk(x,y)
 
