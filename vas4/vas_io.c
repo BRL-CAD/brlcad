@@ -180,7 +180,7 @@ void
 vas_puts(s)
 char *s;
 {
-	while (*s != NULL ) {
+	while (*s != '\0' ) {
 		vas_putc(*s++);
 	}
 }

@@ -68,17 +68,17 @@ int argc; char **argv;
 		} else switch( argv[1][1] ) {
 			case 'R':
 				red++;
-				if( argv[1][2] != NULL )
+				if( argv[1][2] != '\0' )
 					rweight = atof( &argv[1][2] );
 				break;
 			case 'G':
 				green++;
-				if( argv[1][2] != NULL )
+				if( argv[1][2] != '\0' )
 					gweight = atof( &argv[1][2] );
 				break;
 			case 'B':
 				blue++;
-				if( argv[1][2] != NULL )
+				if( argv[1][2] != '\0' )
 					bweight = atof( &argv[1][2] );
 				break;
 			default:
