@@ -38,7 +38,7 @@ BINDIR=$BASEDIR/bin
 #
 ############################################################################
 if [ X${SILENT} = X ] ; then
-	echo verify.sh: Verifying that ${BINDIR} is in your search path.
+	echo brlcad-check.sh: Verifying that ${BINDIR} is in your search path.
 fi
 PATH_ELEMENTS=`echo $PATH | sed 's/^://
 				s/:://g
@@ -94,7 +94,7 @@ fi
 #
 ############################################################################
 if [ X${SILENT} = X ] ; then
-	echo verify.sh: Comparing machinetype.sh and Cakefile.defs
+	echo brlcad-check.sh: Comparing machinetype.sh and Cakefile.defs
 fi
 if test ! -f Cakefile.defs
 then
