@@ -47,7 +47,7 @@ char **argv;
 	while( fread( (char *)&record, sizeof record, 1, stdin ) == 1  &&
 	    !feof(stdin) )  {
 	    	if( argc > 1 )
-			fprintf(stderr,"0%o (%c)\n", record.u_id, record.u_id);
+			(void)fprintf(stderr,"0%o (%c)\n", record.u_id, record.u_id);
 		/* Check record type and skip deleted records */
 	    	switch( record.u_id )  {
 	    	case ID_FREE:
@@ -103,7 +103,8 @@ idendump()	/* Print out Ident record information */
 
 	/* Print a warning message on stderr if versions differ */
 	if( strcmp( record.i.i_version, ID_VERSION ) != 0 )  {
-		(void)fprintf(stderr,"File is Version %s, Program is version %s\n",
+		(void)fprintf(stderr,
+			"g2asc: File is version (%s), Program is version (%s)\n",
 			record.i.i_version, ID_VERSION );
 	}
 }
@@ -315,14 +316,14 @@ bsurfdump()	/* Print d-spline surface description record information */
 	/* Malloc and clear memory for the KNOT DATA and read it */
 	nbytes = record.d.d_nknots * sizeof(union record);
 	if( (vp = (float *)malloc(nbytes))  == (float *)0 )  {
-		(void)fprintf(stderr, "G2ASC: spline knot malloc error\n");
+		(void)fprintf(stderr, "g2asc: spline knot malloc error\n");
 		exit(1);
 	}
 	fp = vp;
 	(void)bzero( (char *)fp, nbytes );
 	count = fread( (char *)fp, 1, nbytes, stdin );
 	if( count != 1 )  {
-		(void)fprintf(stderr, "G2ASC: spline knot read failure\n");
+		(void)fprintf(stderr, "g2asc: spline knot read failure\n");
 		exit(1);
 	}
 	/* Print the knot vector information */
@@ -336,14 +337,14 @@ bsurfdump()	/* Print d-spline surface description record information */
 	/* Malloc and clear memory for the CONTROL MESH data and read it */
 	nbytes = record.d.d_nctls * sizeof(union record);
 	if( (vp = (float *)malloc(nbytes))  == (float *)0 )  {
-		(void)fprintf(stderr, "G2ASC: control mesh malloc error\n");
+		(void)fprintf(stderr, "g2asc: control mesh malloc error\n");
 		exit(1);
 	}
 	fp = vp;
 	(void)bzero( (char *)fp, nbytes );
 	count = fread( (char *)fp, 1, nbytes, stdin );
 	if( count != nbytes )  {
-		(void)fprintf(stderr, "G2ASC: control mesh read failure\n");
+		(void)fprintf(stderr, "g2asc: control mesh read failure\n");
 		exit(1);
 	}
 	/* Print the control mesh information */
@@ -395,8 +396,8 @@ char *str;
 	*op = '\0';
 	if(warn)  {
 		(void)fprintf(stderr,
-		"g2asc: Illegal char in object name, converted to '%s'\n",
-		buf );
+			"g2asc: Illegal char in object name, converted to '%s'\n",
+			buf );
 	}
 	if( op == buf )  {
 		/* Null input name */
@@ -437,8 +438,8 @@ char *str;
 	*op = '\0';
 	if(warn)  {
 		(void)fprintf(stderr,
-		"g2asc: Illegal char in string, converted to '%s'\n",
-		buf );
+			"g2asc: Illegal char in string, converted to '%s'\n",
+			buf );
 	}
 	if( op == buf )  {
 		/* Null input name */
