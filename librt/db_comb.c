@@ -263,10 +263,13 @@ CONST matp_t			matrix;		/* NULL if identity */
 		comb->rgb[1] = rp[0].c.c_rgb[1];
 		comb->rgb[2] = rp[0].c.c_rgb[2];
 	}
-	bu_vls_strncpy( &comb->shader , rp[0].c.c_matname, 32 );
-	if( rp[0].c.c_matparm[0] != '\0' )  {
-		bu_vls_putc( &comb->shader, ' ' );
-		bu_vls_strncat( &comb->shader , rp[0].c.c_matparm, 60 );
+	if( rp[0].c.c_matname[0] != '\0' )
+	{
+		bu_vls_strncpy( &comb->shader , rp[0].c.c_matname, 32 );
+		if( rp[0].c.c_matparm[0] != '\0' )  {
+			bu_vls_putc( &comb->shader, ' ' );
+			bu_vls_strncat( &comb->shader , rp[0].c.c_matparm, 60 );
+		}
 	}
 	/* XXX Separate flags for color inherit, shader inherit, (new) material inherit? */
 	/* XXX cf: ma_cinherit, ma_minherit */
