@@ -20,8 +20,10 @@
 static char RCSroots[] = "@(#)$Header$ (BRL)";
 #endif
 
-#include <math.h>
+#include "conf.h"
+
 #include <stdio.h>
+#include <math.h>
 #include "machine.h"
 #include "vmath.h"
 #include "./polyno.h"
