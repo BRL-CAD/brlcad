@@ -69,7 +69,7 @@ struct txt_specific {
 	char	tx_file[128];	/* Filename */
 	int	tx_w;		/* Width of texture in pixels */
 	int	tx_fw;		/* File width of texture in pixels */
-	int	tx_l;		/* Length of pixels in lines */
+	int	tx_n;		/* Number of scanlines */
 	char	*tx_pixels;	/* Pixel holding area */
 };
 #define TX_NULL	((struct txt_specific *)0)
@@ -83,7 +83,8 @@ struct matparse txt_parse[] = {
 	"file",		(mp_off_ty)1,			"%s",
 #endif
 	"w",		(mp_off_ty)&(TX_NULL->tx_w),	"%d",
-	"l",		(mp_off_ty)&(TX_NULL->tx_l),	"%d",
+	"n",		(mp_off_ty)&(TX_NULL->tx_n),	"%d",
+	"l",		(mp_off_ty)&(TX_NULL->tx_n),	"%d",	/*compat*/
 	"fw",		(mp_off_ty)&(TX_NULL->tx_fw),	"%d",
 	(char *)0,	(mp_off_ty)0,			(char *)0
 };
@@ -109,9 +110,9 @@ register struct txt_specific *tp;
 	}
 	linebuf = rt_malloc(tp->tx_fw*3,"texture file line");
 	tp->tx_pixels = rt_malloc(
-		tp->tx_w * tp->tx_l * 3,
+		tp->tx_w * tp->tx_n * 3,
 		tp->tx_file );
-	for( i=0; i<tp->tx_l; i++ )  {
+	for( i=0; i<tp->tx_n; i++ )  {
 		if( fread(linebuf,1,tp->tx_fw*3,fp) != tp->tx_fw*3 ) {
 			rt_log("txt_read: read error on %s\n", tp->tx_file);
 			tp->tx_file[0] = '\0';
@@ -180,9 +181,9 @@ char	*dp;
 	if( xmax > 1 )  xmax = 1;
 	if( ymax > 1 )  ymax = 1;
 	x = xmin * (tp->tx_w-1);
-	y = ymin * (tp->tx_l-1);
+	y = ymin * (tp->tx_n-1);
 	dx = (xmax - xmin) * (tp->tx_w-1);
-	dy = (ymax - ymin) * (tp->tx_l-1);
+	dy = (ymax - ymin) * (tp->tx_n-1);
 	if( dx < 1 )  dx = 1;
 	if( dy < 1 )  dy = 1;
 /** rt_log("x=%d y=%d, dx=%d, dy=%d\n", x, y, dx, dy); **/
@@ -240,10 +241,10 @@ char	**dpp;
 	*dpp = (char *)tp;
 
 	tp->tx_file[0] = '\0';
-	tp->tx_w = tp->tx_fw = tp->tx_l = -1;
+	tp->tx_w = tp->tx_fw = tp->tx_n = -1;
 	mlib_parse( matparm, txt_parse, (mp_off_ty)tp );
 	if( tp->tx_w < 0 )  tp->tx_w = 512;
-	if( tp->tx_l < 0 )  tp->tx_l = tp->tx_w;
+	if( tp->tx_n < 0 )  tp->tx_n = tp->tx_w;
 	if( tp->tx_fw < 0 )  tp->tx_fw = tp->tx_w;
 	tp->tx_pixels = (char *)0;
 	if( tp->tx_transp[3] != 0 )
@@ -485,7 +486,7 @@ char	*dp;
 
 	/* Find our RGB value */
 	i = swp->sw_uv.uv_u * (tp->tx_w-1);
-	j = swp->sw_uv.uv_v * (tp->tx_l-1);
+	j = swp->sw_uv.uv_v * (tp->tx_n-1);
 	cp = (unsigned char *)(tp->tx_pixels +
 	     (j) * tp->tx_w * 3  +  i * 3);
 	pertU = (*cp - 128) / 128.0;

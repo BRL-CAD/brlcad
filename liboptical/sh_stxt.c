@@ -33,8 +33,8 @@ struct	stxt_specific  {
 	char	stx_file[128];	/* Filename */
 	int	stx_w;		/* Width of texture in pixels */
 	int	stx_fw;		/* File width of texture in pixels */
-	int	stx_l;		/* Length of pixels in lines */
-	int	stx_h;		/* Depth of texture in pixels (Numfiles)*/
+	int	stx_n;		/* Number of scanlines */
+	int	stx_d;		/* Depth of texture (Num pix files)*/
 	int	stx_norm;
 	vect_t	stx_min;
 	vect_t	stx_max;
@@ -51,8 +51,8 @@ struct	matparse stxt_parse[] = {
 	"file",		(mp_off_ty)1,			"%s",
 #endif
 	"w",		(mp_off_ty)&(SOL_NULL->stx_w),	"%d",
-	"l",		(mp_off_ty)&(SOL_NULL->stx_l),	"%d",
-	"h",		(mp_off_ty)&(SOL_NULL->stx_h),	"%d",
+	"n",		(mp_off_ty)&(SOL_NULL->stx_n),	"%d",
+	"d",		(mp_off_ty)&(SOL_NULL->stx_d),	"%d",
 	"fw",		(mp_off_ty)&(SOL_NULL->stx_fw),	"%d",
 	(char *)0,	(mp_off_ty)0,		(char *)0
 };
@@ -92,7 +92,7 @@ register struct stxt_specific *stp;
 
 	/*** MEMORY HOG ***/
 	stp->stx_pixels = rt_malloc(
-		stp->stx_w * stp->stx_l * stp->stx_h * 3,
+		stp->stx_w * stp->stx_n * stp->stx_d * 3,
 		stp->stx_file );
 
 	ln = 0;
@@ -100,7 +100,7 @@ register struct stxt_specific *stp;
 	rd = 0;
 
 	/**  LOOP: through list of basename.n files **/
-	for( frame=0; frame <= stp->stx_h-1; frame++ )  {
+	for( frame=0; frame <= stp->stx_d-1; frame++ )  {
 
 		sprintf(name, "%s.%d", stp->stx_file, frame);
 
@@ -111,7 +111,7 @@ register struct stxt_specific *stp;
 		}
 		linebuf = rt_malloc(stp->stx_fw*3,"texture file line");
 
-		for( i = 0; i < stp->stx_l; i++ )  {
+		for( i = 0; i < stp->stx_n; i++ )  {
 			if( (rd = fread(linebuf,1,stp->stx_fw*3,fp)) != stp->stx_fw*3 ) {
 				rt_log("stxt_read: read error on %s\n", name);
 				stp->stx_file[0] = '\0';
@@ -146,7 +146,7 @@ char	**dpp;
 
 	/**  Set up defaults  **/
 	stp->stx_file[0] = '\0';
-	stp->stx_w = stp->stx_fw = stp->stx_l = stp->stx_h = -1;
+	stp->stx_w = stp->stx_fw = stp->stx_n = stp->stx_d = -1;
 	stp->stx_norm = 0;
 	VSETALL(stp->stx_min,  INFINITY);
 	VSETALL(stp->stx_max, -INFINITY);
@@ -156,10 +156,10 @@ char	**dpp;
 	mlib_parse( matparm, stxt_parse, (mp_off_ty)stp );
 	/*** DEFAULT SIZE OF STXT FILES ***/
 	if( stp->stx_w < 0 )  stp->stx_w = 512;
-	if( stp->stx_l < 0 )  stp->stx_l = stp->stx_w;
+	if( stp->stx_n < 0 )  stp->stx_n = stp->stx_w;
 
 	/**  Defaults to an orthogonal projection??  **/
-	if( stp->stx_h < 0 )  stp->stx_h = 1;
+	if( stp->stx_d < 0 )  stp->stx_d = 1;
 
 	if( stp->stx_fw < 0 )  stp->stx_fw = stp->stx_w;
 	stp->stx_pixels = (char *)0;
@@ -223,7 +223,7 @@ char	*dp;
 *		sx = 2 * ( 1 - f );
 *********************************/
 
-	f = VDOT( swp->sw_hit.hit_point, ly ) / (float)stp->stx_l;
+	f = VDOT( swp->sw_hit.hit_point, ly ) / (float)stp->stx_n;
 	if( f < 0 ) f = -f;
 	f = modf( f, &iptr );
 	sy=f;
@@ -234,7 +234,7 @@ char	*dp;
 *		sy = 2 * ( 1 - f );
 **********************************/
 
-	f = VDOT( swp->sw_hit.hit_point, lz ) / (float)stp->stx_h;
+	f = VDOT( swp->sw_hit.hit_point, lz ) / (float)stp->stx_d;
 	if( f < 0 ) f = -f;
 	f = modf( f, &iptr );
 	sz=f;
@@ -249,10 +249,10 @@ char	*dp;
 
 	/* Index into TEXTURE SPACE */
 	tx = sx * stp->stx_w;
-	ty = sy * stp->stx_l;
-	tz = sz * stp->stx_h;
+	ty = sy * stp->stx_n;
+	tz = sz * stp->stx_d;
 
-	u1 = (int)tz * stp->stx_l * stp->stx_w *  3.0;
+	u1 = (int)tz * stp->stx_n * stp->stx_w *  3.0;
 	u2 = (int)ty * stp->stx_w * 3.0;
 	u3 = (int)tx * 3.0;
 
@@ -309,10 +309,10 @@ char	*dp;
 
 	/* Index into TEXTURE SPACE */
 	tx = sx * stp->stx_w;
-	ty = sy * stp->stx_l;
-	tz = sz * stp->stx_h;
+	ty = sy * stp->stx_n;
+	tz = sz * stp->stx_d;
 
-	u1 = (int)tz * stp->stx_l * stp->stx_w *  3.0;
+	u1 = (int)tz * stp->stx_n * stp->stx_w *  3.0;
 	u2 = (int)ty * stp->stx_w * 3.0;
 	u3 = (int)tx * 3.0;
 
@@ -376,10 +376,10 @@ char	*dp;
 
 	/* Index into TEXTURE SPACE */
 	tx = sx * stp->stx_w;
-	ty = sy * stp->stx_l;
-	tz = sz * stp->stx_h;
+	ty = sy * stp->stx_n;
+	tz = sz * stp->stx_d;
 
-	u1 = (int)tz * stp->stx_l * stp->stx_w *  3.0;
+	u1 = (int)tz * stp->stx_n * stp->stx_w *  3.0;
 	u2 = (int)ty * stp->stx_w * 3.0;
 	u3 = (int)tx * 3.0;
 
