@@ -160,6 +160,8 @@ int			noisy;
  * Add an entry to the directory.
  * Try to make the regular path through the code as fast as possible,
  * to speed up building the table of contents.
+ * Note: This is used only for v4 databases.
+ * v5 databases use db5_diradd_handler()
  */
 struct directory *
 db_diradd( dbip, name, laddr, len, flags, ptr )
