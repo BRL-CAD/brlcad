@@ -22,6 +22,10 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include <stdio.h>
 
+void	putshort(), putieee(), getstring();
+void	putargs(), getargs();
+void	doscale();
+
 #define	TBAD	0	/* no such command */
 #define TNONE	1	/* no arguments */
 #define TSHORT	2	/* Vax 16-bit short */
@@ -104,6 +108,7 @@ double	sp[6];			/* space command */
 char	strarg[512];		/* string buffer */
 double	cx, cy, cz;		/* center */
 double	scale = 0;
+int	seenscale = 0;
 
 int	nofloat = 1;
 int	noflush = 1;
@@ -119,7 +124,6 @@ char	**argv;
 {
 	register int	c;
 	struct	uplot *up;
-	int	i;
 
 	while( argc > 1 ) {
 		if( strcmp(argv[1], "-v") == 0 ) {
@@ -304,10 +308,17 @@ char	**argv;
 		if( verbose )
 			printf( "%s\n", up->desc );
 	}
+
+	if( !seenscale ) {
+		fprintf( stderr, "pl-pl: warning no space command\n" );
+	}
+
+	return(0);
 }
 
 /*** Input args ***/
 
+void
 getargs( up )
 struct uplot *up;
 {
@@ -335,6 +346,7 @@ struct uplot *up;
 	}
 }
 
+void
 getstring()
 {
 	int	c;
@@ -373,6 +385,7 @@ getieee()
 
 /*** Output args ***/
 
+void
 putargs( up )
 struct uplot *up;
 {
@@ -424,6 +437,7 @@ struct uplot *up;
 	}
 }
 
+void
 putshort( s )
 short s;
 {
@@ -434,6 +448,7 @@ short s;
 	putchar( s>>8 );
 }
 
+void
 putieee( d )
 double	d;
 {
@@ -443,6 +458,7 @@ double	d;
 	fwrite( out, 1, 8, stdout );
 }
 
+void
 doscale()
 {
 	double	dx, dy, dz;
@@ -461,4 +477,6 @@ doscale()
 	if( dz > max ) max = dz;
 
 	scale = 32767.0 / max;
+
+	seenscale++;
 }
