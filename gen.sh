@@ -29,7 +29,8 @@ NFS=1
 # Label number for this CAD Release,
 # RCS main Revision number, and date.
 #RELEASE=M.N;	RCS_REVISION=X;		REL=DATE=dd-mmm-yy
-RELEASE=3.10;	RCS_REVISION=9;		REL_DATE=Today
+#RELEASE=3.11;	RCS_REVISION=9;		REL_DATE=Today
+RELEASE=3.10;	RCS_REVISION=9;		REL_DATE=1-Jul-91	# alpha
 #RELEASE=3.9;	RCS_REVISION=9;		REL_DATE=28-Jan-91	# internal
 #RELEASE=3.8;	RCS_REVISION=9;		REL_DATE=3-Jan-91	# internal
 #RELEASE=3.7;	RCS_REVISION=9;		REL_DATE=19-June-89
@@ -102,7 +103,7 @@ TOP_FILES="Copyright* README Cakefile* Makefile \
 		cakeinclude.sh newbindir.sh"
 
 # Has Cakefile, but no compilation or tools needed, not machine specific
-ADIRS="h doc pix"
+ADIRS="h doc pix vfont awf brlman"
 
 # Has no Cakefile, just copy it verbatim
 CDIRS="cake cakeaux papers contributed patch"
@@ -121,12 +122,11 @@ BDIRS="bench \
 	fbserv \
 	libtermio \
 	libcursor \
-	libtig \
 	libfont \
 	liborle \
 	librle \
 	libfft \
-	libspl librt \
+	libnurb librt \
 	conv \
 	db \
 	rt \
@@ -134,14 +134,18 @@ BDIRS="bench \
 	mged \
 	proc-db \
 	comgeom-g \
+	iges-g \
 	util \
 	fbed \
 	lgt \
 	vas4 \
 	vdeck \
 	sig \
+	tab \
 	tools \
 	halftone \
+	edpix \
+	nirt irprep \
 	whetstone dhrystone"
 
 # If there is no TCP networking, eliminate network-only directories.
@@ -151,6 +155,12 @@ then
 					s/remrt//
 					s/fbserv//
 					s/rfbd//'`
+fi
+
+# If this is not an SGI 4D, eliminate SGI-specific directories
+if test "${MACHINE}" != "4d"
+then
+	BDIRS=`echo ${BDIRS} | sed -e  's/edpix//'`
 fi
 
 if test "$1" = ""
@@ -262,7 +272,7 @@ install|install-nobak|uninstall)
 #
 #  inst-dist	BRL-only:  inst sources in dist tree without inst products
 #
-inst-man|inst-dist|print|typeset|nroff)
+install-man|inst-dist|print|typeset|nroff)
 	for dir in ${ADIRS} ${BDIRS}; do
 		echo -------------------------------- ${dir};
 		( cd ${dir}; cake -k ${TARGET} )
