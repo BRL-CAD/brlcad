@@ -130,7 +130,7 @@ FILE *fp;
 		rewind( fp );
 		return(0);		/* Not old way */
 	}
-	rt_log("Interpreting command stream in old format\n");
+	bu_log("Interpreting command stream in old format\n");
 
 	def_tree( ap.a_rt_i );		/* Load the default trees */
 
@@ -205,7 +205,7 @@ char	**argv;
 		while( *cp && !isspace(*cp) )  cp++;	/* skip keyword */
 		while( *cp && isspace(*cp) )  cp++;	/* skip spaces */
 		frame = atoi(cp);
-		rt_free( buf, "rt_read_cmd command buffer (skipping frames)" );
+		bu_free( buf, "rt_read_cmd command buffer (skipping frames)" );
 		if( finalframe >= 0 && frame > finalframe )
 			return(-1);			/* "EOF" */
 		if( frame >= desiredframe )  {
@@ -256,7 +256,7 @@ char	**argv;
 	 */
 	VSUB2( dir, pt, eye_model );
 	VUNITIZE( dir );
-	mat_lookat( Viewrotscale, dir, yflip );
+	bn_mat_lookat( Viewrotscale, dir, yflip );
 	return(0);
 }
 
@@ -307,21 +307,21 @@ int		argc;
 CONST char	**argv;
 {
 	register struct rt_i *rtip = ap.a_rt_i;
-	struct rt_vls	times;
+	struct bu_vls	times;
 
 	if( argc <= 1 )  {
 		def_tree( rtip );		/* Load the default trees */
 		return(0);
 	}
-	rt_vls_init( &times );
+	bu_vls_init( &times );
 
 	rt_prep_timer();
 	if( rt_gettrees(rtip, argc-1, &argv[1], npsw) < 0 )
-		rt_log("rt_gettrees(%s) FAILED\n", argv[0]);
+		bu_log("rt_gettrees(%s) FAILED\n", argv[0]);
 	(void)rt_get_timer( &times, NULL );
 
-	rt_log("GETTREE: %s\n", rt_vls_addr(&times) );
-	rt_vls_free( &times );
+	bu_log("GETTREE: %s\n", bu_vls_addr(&times) );
+	bu_vls_free( &times );
 	return(0);
 }
 
@@ -365,7 +365,7 @@ char	**argv;
 {
 
 	if( db_parse_anim( ap.a_rt_i->rti_dbip, argc, argv ) < 0 )  {
-		rt_log("cm_anim:  %s %s failed\n", argv[1], argv[2]);
+		bu_log("cm_anim:  %s %s failed\n", argv[1], argv[2]);
 		return(-1);		/* BAD */
 	}
 	return(0);
@@ -386,7 +386,7 @@ char	**argv;
 	rt_clean( ap.a_rt_i );
 
 	if(rdebug&RDEBUG_RTMEM_END)
-		rt_prmem( "After cm_clean" );
+		bu_prmem( "After cm_clean" );
 	return(0);
 }
 
@@ -408,7 +408,7 @@ char	**argv;
 	bu_free( (genptr_t)ap.a_rt_i, "struct rt_i" );
 	ap.a_rt_i = RTI_NULL;
 
-	rt_prmem( "After _closedb" );
+	bu_prmem( "After _closedb" );
 	exit(0);
 
 	return( 1 );	/* for compiler */
@@ -448,7 +448,7 @@ struct bu_structparse set_parse[] = {
 	{"%d",	1, "height",	byteoffset(height),		FUNC_NULL },
 	{"%f",	1, "perspective", byteoffset(rt_perspective),	FUNC_NULL },
 	{"%f",	1, "angle",	byteoffset(rt_perspective),	FUNC_NULL },
-	{"i", byteoffset(view_parse[0]),"View_Module-Specific Parameters", 0, FUNC_NULL },
+	{"i", byteoffset(view_parse[0]),"View_Module-Specific Parameters", 0, BU_STRUCTPARSE_FUNC_NULL },
 #endif
 	{"",	0, (char *)0,	0,				FUNC_NULL }
 };
@@ -462,20 +462,20 @@ cm_set( argc, argv )
 int	argc;
 char	**argv;
 {
-	struct rt_vls	str;
+	struct bu_vls	str;
 
 	if( argc <= 1 ) {
 		bu_struct_print( "Generic and Application-Specific Parameter Values",
 			set_parse, (char *)0 );
 		return(0);
 	}
-	rt_vls_init( &str );
-	rt_vls_from_argv( &str, argc-1, argv+1 );
+	bu_vls_init( &str );
+	bu_vls_from_argv( &str, argc-1, argv+1 );
 	if( bu_struct_parse( &str, set_parse, (char *)0 ) < 0 )  {
-		rt_vls_free( &str );
+		bu_vls_free( &str );
 		return(-1);
 	}
-	rt_vls_free( &str );
+	bu_vls_free( &str );
 	return(0);
 }
 
@@ -516,24 +516,24 @@ void
 def_tree( rtip )
 register struct rt_i	*rtip;
 {
-	struct rt_vls	times;
+	struct bu_vls	times;
 
 	if( rtip->rti_magic != RTI_MAGIC )  {
-		rt_log("rtip=x%x, rti_magic=x%x s/b x%x\n", rtip,
+		bu_log("rtip=x%x, rti_magic=x%x s/b x%x\n", rtip,
 			rtip->rti_magic, RTI_MAGIC );
 		rt_bomb("def_tree:  bad rtip\n");
 	}
 
-	rt_vls_init( &times );
+	bu_vls_init( &times );
 	rt_prep_timer();
 	if( rt_gettrees(rtip, nobjs, (CONST char **)objtab, npsw) < 0 )
-		rt_log("rt_gettrees(%s) FAILED\n", objtab[0]);
+		bu_log("rt_gettrees(%s) FAILED\n", objtab[0]);
 	(void)rt_get_timer( &times, NULL );
-	rt_log("GETTREE: %s\n", rt_vls_addr(&times));
-	rt_vls_free( &times );
+	bu_log("GETTREE: %s\n", bu_vls_addr(&times));
+	bu_vls_free( &times );
 
 #ifdef HAVE_SBRK
-	rt_log("Additional dynamic memory used=%d. bytes\n",
+	bu_log("Additional dynamic memory used=%d. bytes\n",
 		(char *)sbrk(0)-beginptr );
 	beginptr = (char *) sbrk(0);
 #endif
@@ -548,7 +548,7 @@ void
 do_prep( rtip )
 struct rt_i	*rtip;
 {
-	struct rt_vls	times;
+	struct bu_vls	times;
 
 	RT_CHECK_RTI(rtip);
 	if( rtip->needprep )  {
@@ -556,16 +556,16 @@ struct rt_i	*rtip;
 		view_setup(rtip);
 
 		/* Allow RT library to prepare itself */
-		rt_vls_init( &times );
+		bu_vls_init( &times );
 		rt_prep_timer();
 		rt_prep_parallel(rtip, npsw);
 
 		(void)rt_get_timer( &times, NULL );
-		rt_log( "PREP: %s\n", rt_vls_addr(&times) );
-		rt_vls_free( &times );
+		bu_log( "PREP: %s\n", bu_vls_addr(&times) );
+		bu_vls_free( &times );
 	}
 #ifdef HAVE_SBRK
-	rt_log("Additional dynamic memory used=%d. bytes\n",
+	bu_log("Additional dynamic memory used=%d. bytes\n",
 		(char *)sbrk(0)-beginptr );
 	beginptr = (char *) sbrk(0);
 #endif
@@ -581,7 +581,7 @@ struct rt_i	*rtip;
 do_frame( framenumber )
 int framenumber;
 {
-	struct rt_vls	times;
+	struct bu_vls	times;
 	char framename[128];		/* File name to hold current frame */
 	struct rt_i *rtip = ap.a_rt_i;
 	double	utime;			/* CPU time used */
@@ -592,19 +592,19 @@ int framenumber;
 	vect_t	work, temp;
 	quat_t	quat;
 
-	rt_log( "\n...................Frame %5d...................\n",
+	bu_log( "\n...................Frame %5d...................\n",
 		framenumber);
 
 	/* Compute model RPP, etc */
 	do_prep( rtip );
 
-	rt_log("Tree: %d solids in %d regions\n",
+	bu_log("Tree: %d solids in %d regions\n",
 		rtip->nsolids, rtip->nregions );
 	if( rtip->nsolids <= 0 )  {
-		rt_log("rt ERROR: No solids\n");
+		bu_log("rt ERROR: No solids\n");
 		exit(3);
 	}
-	rt_log("Model: X(%g,%g), Y(%g,%g), Z(%g,%g)\n",
+	bu_log("Model: X(%g,%g), Y(%g,%g), Z(%g,%g)\n",
 		rtip->mdl_min[X], rtip->mdl_max[X],
 		rtip->mdl_min[Y], rtip->mdl_max[Y],
 		rtip->mdl_min[Z], rtip->mdl_max[Z] );
@@ -618,13 +618,13 @@ int framenumber;
 	VSET( work, 0, 0, 1 );
 	MAT3X3VEC( temp, view2model, work );
 	ae_vec( &azimuth, &elevation, temp );
-	rt_log(
+	bu_log(
 		"View: %g azimuth, %g elevation off of front view\n",
 		azimuth, elevation);
 	quat_mat2quat( quat, model2view );
-	rt_log("Orientation: %g, %g, %g, %g\n", V4ARGS(quat) );
-	rt_log("Eye_pos: %g, %g, %g\n", V3ARGS(eye_model) );
-	rt_log("Size: %gmm\n", viewsize);
+	bu_log("Orientation: %g, %g, %g, %g\n", V4ARGS(quat) );
+	bu_log("Eye_pos: %g, %g, %g\n", V3ARGS(eye_model) );
+	bu_log("Size: %gmm\n", viewsize);
 #if 0
 	/*
 	 *  This code shows how the model2view matrix can be reconstructed
@@ -636,21 +636,21 @@ int framenumber;
 		mat_t	new;
 		quat_t	newquat;
 
-		mat_print("model2view", model2view);
+		bn_mat_print("model2view", model2view);
 		quat_quat2mat( rotscale, quat );
 		rotscale[15] = 0.5 * viewsize;
-		mat_idn( xlate );
+		bn_mat_idn( xlate );
 		MAT_DELTAS( xlate, -eye_model[X], -eye_model[Y], -eye_model[Z] );
-		mat_mul( new, rotscale, xlate );
-		mat_print("reconstructed m2v", new);
+		bn_mat_mul( new, rotscale, xlate );
+		bn_mat_print("reconstructed m2v", new);
 		quat_mat2quat( newquat, new );
 		HPRINT( "reconstructed orientation:", newquat );
 	}
 #endif
-	rt_log("Grid: (%g, %g) mm, (%d, %d) pixels\n",
+	bu_log("Grid: (%g, %g) mm, (%d, %d) pixels\n",
 		cell_width, cell_height,
 		width, height );
-	rt_log("Beam: radius=%g mm, divergence=%g mm/1mm\n",
+	bu_log("Beam: radius=%g mm, divergence=%g mm/1mm\n",
 		ap.a_rbeam, ap.a_diverge );
 
 	/* Process -b and ??? options now, for this frame */
@@ -666,7 +666,7 @@ int framenumber;
 		while( *cp >= '0' && *cp <= '9' )  cp++;
 		while( *cp && (*cp < '0' || *cp > '9') ) cp++;
 		yy = atoi(cp);
-		rt_log("only pixel %d %d\n", xx, yy);
+		bu_log("only pixel %d %d\n", xx, yy);
 		if( xx * yy >= 0 )  {
 			pix_start = yy * width + xx;
 			pix_end = pix_start;
@@ -680,7 +680,7 @@ int framenumber;
 		while( *cp >= '0' && *cp <= '9' )  cp++;
 		while( *cp && (*cp < '0' || *cp > '9') ) cp++;
 		yy = atoi(cp);
-		rt_log("ending pixel %d %d\n", xx, yy);
+		bu_log("ending pixel %d %d\n", xx, yy);
 		if( xx * yy >= 0 )  {
 			pix_end = yy * width + xx;
 		}
@@ -699,8 +699,8 @@ int framenumber;
 #define MINRATE	65
 #endif
 	npix = width*height*(hypersample+1);
-	if( (lim = rt_cpuget()) > 0 )  {
-		rt_cpuset( lim + npix / MINRATE + 100 );
+	if( (lim = bu_cpulimit_get()) > 0 )  {
+		bu_cpulimit_set( lim + npix / MINRATE + 100 );
 	}
 
 	/*
@@ -709,9 +709,9 @@ int framenumber;
 	 */
 	if( !interactive )  {
 		if( npix > 256*256 )
-			rt_pri_set(10);
+			bu_nice_set(10);
 		else if( npix > 512*512 )
-			rt_pri_set(14);
+			bu_nice_set(14);
 	}
 
 	/*
@@ -777,7 +777,7 @@ int framenumber;
 			return(-1);			/* Bad */
 		}
 #endif /* CRAY_COS */
-		rt_log("Output file is '%s'\n", framename);
+		bu_log("Output file is '%s'\n", framename);
 	}
 
 	/* initialize lighting, may update pix_start */
@@ -795,7 +795,7 @@ int framenumber;
 	rtip->nhits = 0;
 	rtip->rti_nrays = 0;
 
-	rt_log("\n");
+	bu_log("\n");
 	fflush(stdout);
 	fflush(stderr);
 
@@ -817,7 +817,7 @@ int framenumber;
 		pix_start = 0;
 		pix_end = height*width - 1;
 	}
-	rt_vls_init( &times );
+	bu_vls_init( &times );
 	utime = rt_get_timer( &times, &wallclock );
 
 	/*
@@ -849,34 +849,34 @@ int framenumber;
 	/*
 	 *  All done.  Display run statistics.
 	 */
-	rt_log("SHOT: %s\n", rt_vls_addr( &times ) );
-	rt_vls_free( &times );
+	bu_log("SHOT: %s\n", bu_vls_addr( &times ) );
+	bu_vls_free( &times );
 #ifdef HAVE_SBRK
-	rt_log("Additional dynamic memory used=%d. bytes\n",
+	bu_log("Additional dynamic memory used=%d. bytes\n",
 		(char *)sbrk(0)-beginptr );
 		beginptr = (char *) sbrk(0);
 #endif
-	rt_log("%ld solid/ray intersections: %ld hits + %ld miss\n",
+	bu_log("%ld solid/ray intersections: %ld hits + %ld miss\n",
 		rtip->nshots, rtip->nhits, rtip->nmiss );
-	rt_log("pruned %.1f%%:  %ld model RPP, %ld dups skipped, %ld solid RPP\n",
+	bu_log("pruned %.1f%%:  %ld model RPP, %ld dups skipped, %ld solid RPP\n",
 		rtip->nshots>0?((double)rtip->nhits*100.0)/rtip->nshots:100.0,
 		rtip->nmiss_model, rtip->ndup, rtip->nmiss_solid );
-	rt_log("%8d empty boxnodes (%s)\n", rtip->nempty_cells,
+	bu_log("%8d empty boxnodes (%s)\n", rtip->nempty_cells,
 	       rtip->rti_space_partition == RT_PART_NUGRID ? "NUGrid" :
 	       "NUBSPT" );
-	rt_log(
+	bu_log(
 		"Frame %5d: %8d pixels in %10.2f sec = %10.2f pixels/sec\n",
 		framenumber,
 		width*height, nutime, ((double)(width*height))/nutime );
-	rt_log(
+	bu_log(
 		"Frame %5d: %8d rays   in %10.2f sec = %10.2f rays/sec (RTFM)\n",
 		framenumber,
 		rtip->rti_nrays, nutime, ((double)(rtip->rti_nrays))/nutime );
-	rt_log(
+	bu_log(
 		"Frame %5d: %8d rays   in %10.2f sec = %10.2f rays/CPU_sec\n",
 		framenumber,
 		rtip->rti_nrays, utime, ((double)(rtip->rti_nrays))/utime );
-	rt_log(
+	bu_log(
 		"Frame %5d: %8d rays   in %10.2f sec = %10.2f rays/sec (wallclock)\n",
 		framenumber,
 		rtip->rti_nrays,
@@ -903,7 +903,7 @@ int framenumber;
 			"%s Dispose,dn='%s',text='%s'.  stat=0%o",
 			(status==0) ? "Good" : "---BAD---",
 			dn, framename, status );
-		rt_log( "%s\n", message);
+		bu_log( "%s\n", message);
 		remark(message);	/* Send to log files */
 #else
 		/* Protect finished product */
@@ -917,7 +917,7 @@ int framenumber;
 		res_pr();
 	}
 
-	rt_log("\n");
+	bu_log("\n");
 	return(0);		/* OK */
 }
 
@@ -961,11 +961,11 @@ double azim, elev;
 	rtip->mdl_max[Y] = ceil( rtip->mdl_max[Y] );
 	rtip->mdl_max[Z] = ceil( rtip->mdl_max[Z] );
 
-	mat_idn( Viewrotscale );
-	mat_angles( Viewrotscale, 270.0+elev, 0.0, 270.0-azim );
+	bn_mat_idn( Viewrotscale );
+	bn_mat_angles( Viewrotscale, 270.0+elev, 0.0, 270.0-azim );
 
 	/* Look at the center of the model */
-	mat_idn( toEye );
+	bn_mat_idn( toEye );
 	toEye[MDX] = -(rtip->mdl_max[X]+rtip->mdl_min[X])/2;
 	toEye[MDY] = -(rtip->mdl_max[Y]+rtip->mdl_min[Y])/2;
 	toEye[MDZ] = -(rtip->mdl_max[Z]+rtip->mdl_min[Z])/2;
@@ -982,8 +982,8 @@ double azim, elev;
 		}
 	}
 	Viewrotscale[15] = 0.5*viewsize;	/* Viewscale */
-	mat_mul( model2view, Viewrotscale, toEye );
-	mat_inv( view2model, model2view );
+	bn_mat_mul( model2view, Viewrotscale, toEye );
+	bn_mat_inv( view2model, model2view );
 	VSET( temp, 0, 0, eye_backoff );
 	MAT4X3PNT( eye_model, view2model, temp );
 }
