@@ -364,7 +364,7 @@ char *argv[];
     return DM_NULL;
   }
 
-  ((struct dm_xvars *)dmp->dm_vars.pub_vars)->depth = ((struct dm_xvars *)dmp->dm_vars.pub_vars)->vip->depth;
+  ((struct dm_xvars *)dmp->dm_vars.pub_vars)->depth = ((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.depth;
 
   Tk_MakeWindowExist(((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin);
 
@@ -1244,9 +1244,11 @@ Tk_Window tkwin;
   int good[NGOOD];
   int tries, baddepth;
   int num, i, j;
+  int fail;
   int use = 0;
   int rgba = 0;
   int dbfr = 0;
+  int depth = 0;
 #if OGL_DO_STEREO
   int m_stereo, stereo;
 
@@ -1272,28 +1274,35 @@ Tk_Window tkwin;
   while (1) {
     for (i=0, j=0, vip=vibase; i<num; i++, vip++){
       /* requirements */
-      glXGetConfig(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
+      fail = glXGetConfig(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
 		   vip, GLX_USE_GL, &use);
-      if (!use)
+      if (fail || !use)
 	continue;
 
-      glXGetConfig(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
+      fail = glXGetConfig(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
 		     vip, GLX_RGBA, &rgba);
-      if (!rgba)
+      if (fail || !rgba)
 	continue;
 
-      glXGetConfig(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
+      fail = glXGetConfig(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
 		     vip, GLX_DOUBLEBUFFER,&dbfr);
-      if (!dbfr)
+      if (fail || !dbfr)
+	continue;
+
+      fail = glXGetConfig(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
+		     vip, GLX_DEPTH_SIZE,&depth);
+      if (fail || !depth)
 	continue;
 
 #if OGL_DO_STEREO
       /* desires */
       if ( m_stereo ) {
-	glXGetConfig(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
+	fail = glXGetConfig(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
 		     vip, GLX_STEREO, &stereo);
-	if (!stereo)
+	if (fail || !stereo){
+	  bu_log("ogl_choose_visual: failed visual - GLX_STEREO\n");
 	  continue;
+	}
       }
 #endif
 
@@ -1341,10 +1350,14 @@ Tk_Window tkwin;
 	if (Tk_SetWindowVisual(tkwin,
 			       maxvip->visual, maxvip->depth,
 			       ((struct dm_xvars *)dmp->dm_vars.pub_vars)->cmap)){
-	  glXGetConfig(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy, maxvip, GLX_DEPTH_SIZE,
+	  int result;
+
+	  result = glXGetConfig(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
+		       maxvip, GLX_DEPTH_SIZE,
 		       &((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.depth);
 	  if (((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.depth > 0)
 	    ((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.zbuf = 1;
+
 #if 0
 	  XFree((void *)vibase);
 #endif
