@@ -30,7 +30,7 @@ CELLSPACING=4
 # Note that spaces are not allowed. Here we use comma's instead of spaces.
 DEF_FILES_AND_TITLES="{{mged_cmds.html}{MGED,User,Commands}}
     {{mged_devel_cmds.html}{MGED,Developer,Commands}}"
-TARGET_FILE=mged_cmds_index.html
+TARGET_FILE=mged_cmd_index.html
 
 if test -f $TARGET_FILE
 then
@@ -60,7 +60,7 @@ do
 	then
 		if test $count -gt 0
 		then
-			DEF_INDEX_INDEX="$DEF_INDEX_INDEX</TR>\n"
+			DEF_INDEX_INDEX="$DEF_INDEX_INDEX</TR>"
 		fi
 
 		DEF_INDEX_INDEX="$DEF_INDEX_INDEX<TR>"
@@ -72,7 +72,7 @@ do
 	ANCHOR_NAME=`echo $DEF_FILE_AND_TITLE |
 	    sed 's/{{[^{}][^{}]*}{\([^{}][^{}]*\)}}/\1/g
 		s/,/_/g'`
-	DEF_INDEX_INDEX="$DEF_INDEX_INDEX\n<TD><a href=\"$TARGET_FILE#$ANCHOR_NAME\">$TITLE</a></TD>"
+	DEF_INDEX_INDEX="$DEF_INDEX_INDEX<TD><a href=\"$TARGET_FILE#$ANCHOR_NAME\">$TITLE</a></TD>"
 done
 DEF_INDEX_INDEX="$DEF_INDEX_INDEX</TR></TABLE>"
 
