@@ -17,7 +17,7 @@
  *	All rights reserved.
  */
 #ifndef lint
-static char RCSid[] = "@(#)$Header$ (BRL)";
+static const char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include "conf.h"
@@ -31,11 +31,15 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "tk.h"
 #include <X11/Xutil.h>
 
+#define USE_DIALS_AND_BUTTONS 0
+
 #ifdef HAVE_XOSDEFS_H
 #include <X11/Xfuncproto.h>
 #include <X11/Xosdefs.h>
 #endif
+#if USE_DIALS_AND_BUTTONS
 #include <X11/extensions/XInput.h>
+#endif
 #if defined(linux)
 #	undef   X_NOT_STDC_ENV
 #	undef   X_NOT_POSIX
@@ -116,25 +120,25 @@ struct dm dm_X = {
   1.0, /* aspect ratio */
   0,
   {0, 0},
-  0,
-  0,
-  0,
-  0,
-  0,
-  0,				/* clipmin */
-  0,				/* clipmax */
+  {0, 0, 0, 0, 0},		/* bu_vls path name*/
+  {0, 0, 0, 0, 0},		/* bu_vls full name drawing window */
+  {0, 0, 0, 0, 0},		/* bu_vls short name drawing window */
+  {0, 0, 0},			/* bg color */
+  {0, 0, 0},			/* fg color */
+  {0.0, 0.0, 0.0},		/* clipmin */
+  {0.0, 0.0, 0.0},		/* clipmax */
   0,				/* no debugging */
   0,				/* no perspective */
   0,				/* no lighting */
   0,				/* no zbuffer */
-  0				/* no zclipping */
+  0,				/* no zclipping */
+  0				/* Tcl interpreter */
 };
 
 fastf_t min_short = (fastf_t)SHRT_MIN;
 fastf_t max_short = (fastf_t)SHRT_MAX;
 
-/* Currently, the application must define these. */
-extern Tk_Window tkwin;
+extern int vectorThreshold;	/* defined in libdm/tcl.c */ 
 
 /*
  *			X _ O P E N
@@ -143,29 +147,38 @@ extern Tk_Window tkwin;
  *
  */
 struct dm *
-X_open(argc, argv)
-int argc;
-char *argv[];
+X_open(interp, argc, argv)
+     Tcl_Interp *interp;
+     int argc;
+     char *argv[];
 {
   static int count = 0;
-  int j, k;
   int make_square = -1;
   XGCValues gcv;
+#if USE_DIALS_AND_BUTTONS
+  int j, k;
   int ndevices;
   int nclass = 0;
   XDeviceInfoPtr olist, list;
   XDevice *dev;
   XEventClass e_class[15];
   XInputClassInfo *cip;
+#endif
   struct bu_vls str;
   struct bu_vls init_proc_vls;
   struct dm *dmp;
+  Tk_Window tkwin;
+
+  if ((tkwin = Tk_MainWindow(interp)) == NULL) {
+	  return DM_NULL;
+  }
 
   BU_GETSTRUCT(dmp, dm);
   if(dmp == DM_NULL)
     return DM_NULL;
 
   *dmp = dm_X; /* struct copy */
+  dmp->dm_interp = interp;
 
   dmp->dm_vars.pub_vars = (genptr_t)bu_calloc(1, sizeof(struct dm_xvars), "X_open: dm_xvars");
   if(dmp->dm_vars.pub_vars == (genptr_t)NULL){
@@ -365,6 +378,7 @@ char *argv[];
       goto Skip_dials;
   }
 
+#if USE_DIALS_AND_BUTTONS
   /*
    * Take a look at the available input devices. We're looking
    * for "dial+buttons".
@@ -418,6 +432,7 @@ char *argv[];
   }
 Done:
   XFreeDeviceList(olist);
+#endif
 
 Skip_dials:
 #ifndef CRAY2
@@ -571,233 +586,233 @@ int which_eye;
 
 HIDDEN int
 X_drawVList(dmp, vp)
-struct dm *dmp;
-register struct rt_vlist *vp;
+     struct dm			*dmp;
+     register struct rt_vlist	*vp;
 {
-    static vect_t spnt, lpnt, pnt;
-    register struct rt_vlist *tvp;
-    XSegment segbuf[1024];		/* XDrawSegments list */
-    XSegment *segp;			/* current segment */
-    int	nseg;			        /* number of segments */
-    fastf_t delta;
-    register point_t *pt_prev = NULL;
-    fastf_t 	 dist_prev=1.0;
+	static vect_t			spnt, lpnt, pnt;
+	register struct rt_vlist	*tvp;
+	XSegment			segbuf[1024];		/* XDrawSegments list */
+	XSegment			*segp;			/* current segment */
+	int				nseg;		        /* number of segments */
+	fastf_t				delta;
+	register point_t		*pt_prev = NULL;
+	fastf_t				dist_prev=1.0;
+	static int			nvectors = 0;
 
-    if (dmp->dm_debugLevel) {
-      bu_log("X_drawVList()\n");
-      bu_log("vp - %lu, perspective - %d\n", vp, dmp->dm_perspective);
-    }
-
-    /* delta is used in clipping to insure clipped endpoint is slightly
-     * in front of eye plane (perspective mode only).
-     * This value is a SWAG that seems to work OK.
-     */
-    delta = ((struct x_vars *)dmp->dm_vars.priv_vars)->xmat[15]*0.0001;
-    if( delta < 0.0 )
-	delta = -delta;
-    if( delta < SQRT_SMALL_FASTF )
-	delta = SQRT_SMALL_FASTF;
-
-    nseg = 0;
-    segp = segbuf;
-    for( BU_LIST_FOR( tvp, rt_vlist, &vp->l ) )  {
-	register int	i;
-	register int	nused = tvp->nused;
-	register int	*cmd = tvp->cmd;
-	register point_t *pt = tvp->pt;
-    	fastf_t 	 dist;
-
-	/* Viewing region is from -1.0 to +1.0 */
-	/* 2^31 ~= 2e9 -- dynamic range of a long int */
-	/* 2^(31-11) = 2^20 ~= 1e6 */
-	/* Integerize and let the X server do the clipping */
-	for( i = 0; i < nused; i++,cmd++,pt++ )  {
-	    switch( *cmd )  {
-	    case RT_VLIST_POLY_START:
-	    case RT_VLIST_POLY_VERTNORM:
-		continue;
-	    case RT_VLIST_POLY_MOVE:
-	    case RT_VLIST_LINE_MOVE:
-		/* Move, not draw */
-		if(dmp->dm_debugLevel > 2){
-		  bu_log("before transformation:\n");
-		  bu_log("pt - %lf %lf %lf\n", V3ARGS(*pt));
-		}
-
-		if (dmp->dm_perspective > 0)
-	    	{
-	    		/* cannot apply perspective transformation to
-			 * points behind eye plane!!!!
-	    		 */
-	    		dist = VDOT(*pt, &((struct x_vars *)dmp->dm_vars.priv_vars)->xmat[12]) + ((struct x_vars *)dmp->dm_vars.priv_vars)->xmat[15];
-	    		if( dist <= 0.0 )
-	    		{
-	    			pt_prev = pt;
-	    			dist_prev = dist;
-	    			continue;
-	    		}
-	    		else
-	    		{
-	    			MAT4X3PNT(lpnt, ((struct x_vars *)dmp->dm_vars.priv_vars)->xmat, *pt);
-	    			dist_prev = dist;
-	    			pt_prev = pt;
-	    		}
-	    	}
-		else
-			MAT4X3PNT(lpnt, ((struct x_vars *)dmp->dm_vars.priv_vars)->xmat, *pt);
-
-		lpnt[0] *= 2047;
-		lpnt[1] *= 2047 * dmp->dm_aspect;
-		lpnt[2] *= 2047;
-		continue;
-	    case RT_VLIST_POLY_DRAW:
-	    case RT_VLIST_POLY_END:
-	    case RT_VLIST_LINE_DRAW:
-		/* draw */
-		if(dmp->dm_debugLevel > 2){
-		  bu_log("before transformation:\n");
-		  bu_log("pt - %lf %lf %lf\n", V3ARGS(*pt));
-		}
-
-		if (dmp->dm_perspective > 0)
-	    	{
-	    		/* cannot apply perspective transformation to
-			 * points behind eye plane!!!!
-	    		 */
-	    		dist = VDOT( *pt, &((struct x_vars *)dmp->dm_vars.priv_vars)->xmat[12] ) + ((struct x_vars *)dmp->dm_vars.priv_vars)->xmat[15];
-			if(dmp->dm_debugLevel > 2)
-	    			bu_log( "dist=%g, dist_prev=%g\n", dist, dist_prev );
-	    		if( dist <= 0.0 )
-	    		{
-	    			if( dist_prev <= 0.0 )
-	    			{
-	    				/* nothing to plot */
-		    			dist_prev = dist;
-		    			pt_prev = pt;
-		    			continue;
-	    			}
-	    			else
-	    			{
-	    				fastf_t alpha;
-	    				vect_t diff;
-	    				point_t tmp_pt;
-
-	    				/* clip this end */
-	    				VSUB2( diff, *pt, *pt_prev );
-	    				alpha = (dist_prev - delta) / ( dist_prev - dist );
-	    				VJOIN1( tmp_pt, *pt_prev, alpha, diff );
-	    				MAT4X3PNT( pnt, ((struct x_vars *)dmp->dm_vars.priv_vars)->xmat, tmp_pt );
-	    			}
-	    		}
-	    		else
-	    		{
-	    			if( dist_prev <= 0.0 )
-	    			{
-	    				fastf_t alpha;
-	    				vect_t diff;
-	    				point_t tmp_pt;
-
-	    				/* clip other end */
-	    				VSUB2( diff, *pt, *pt_prev );
-	    				alpha = (-dist_prev + delta) / ( dist - dist_prev );
-	    				VJOIN1( tmp_pt, *pt_prev, alpha, diff );
-	    				MAT4X3PNT( lpnt, ((struct x_vars *)dmp->dm_vars.priv_vars)->xmat, tmp_pt );
-	    				lpnt[0] *= 2047;
-	    				lpnt[1] *= 2047 * dmp->dm_aspect;
-	    				lpnt[2] *= 2047;
-	    				MAT4X3PNT( pnt, ((struct x_vars *)dmp->dm_vars.priv_vars)->xmat, *pt );
-	    			}
-	    			else
-	    			{
-	    				MAT4X3PNT( pnt, ((struct x_vars *)dmp->dm_vars.priv_vars)->xmat, *pt );
-	    			}
-	    		}
-	    	}
-		else
-			MAT4X3PNT( pnt, ((struct x_vars *)dmp->dm_vars.priv_vars)->xmat, *pt );
-
-		pnt[0] *= 2047;
-		pnt[1] *= 2047 * dmp->dm_aspect;
-		pnt[2] *= 2047;
-
-		/* save pnt --- it might get changed by clip() */
-		VMOVE(spnt, pnt);
-	    	pt_prev = pt;
-	    	dist_prev = dist;
-
-		if(dmp->dm_debugLevel > 2) {
-		  bu_log("before clipping:\n");
-		  bu_log("clipmin - %lf %lf %lf\n",
-			 dmp->dm_clipmin[X],
-			 dmp->dm_clipmin[Y],
-			 dmp->dm_clipmin[Z]);
-		  bu_log("clipmax - %lf %lf %lf\n",
-			 dmp->dm_clipmax[X],
-			 dmp->dm_clipmax[Y],
-			 dmp->dm_clipmax[Z]);
-		  bu_log("pt1 - %lf %lf %lf\n", lpnt[X], lpnt[Y], lpnt[Z]);
-		  bu_log("pt2 - %lf %lf %lf\n", pnt[X], pnt[Y], pnt[Z]);
-		}
-
-		if (dmp->dm_zclip) {
-		  if(vclip(lpnt, pnt,
-			   dmp->dm_clipmin,
-			   dmp->dm_clipmax) == 0){
-		    VMOVE(lpnt, spnt);
-		    continue;
-		  }
-		}else{
-		  /* Check to see if lpnt or pnt contain values that exceed
-		     the capacity of a short (segbuf is an array of XSegments which
-		     contain shorts). If so, do clipping now. Otherwise, let the
-		     X server do the clipping */
-		  if(lpnt[0] < min_short || max_short < lpnt[0] ||
-		     lpnt[1] < min_short || max_short < lpnt[1] ||
-		     pnt[0] < min_short || max_short < pnt[0] ||
-		     pnt[1] < min_short || max_short < pnt[1]){
-		    /* if the entire line segment will not be visible then ignore it */
-		    if(clip(&lpnt[0], &lpnt[1], &pnt[0], &pnt[1]) == -1){
-		      VMOVE(lpnt, spnt);
-		      continue;
-		    }
-		  }
-		}
-
-		if(dmp->dm_debugLevel > 2) {
-		  bu_log("after clipping:\n");
-		  bu_log("pt1 - %lf %lf %lf\n", lpnt[X], lpnt[Y], lpnt[Z]);
-		  bu_log("pt2 - %lf %lf %lf\n", pnt[X], pnt[Y], pnt[Z]);
-		}
-
-		/* convert to X window coordinates */
-		segp->x1 = (short)GED_TO_Xx(dmp, lpnt[0]);
-		segp->y1 = (short)GED_TO_Xy(dmp, lpnt[1]);
-		segp->x2 = (short)GED_TO_Xx(dmp, pnt[0]);
-		segp->y2 = (short)GED_TO_Xy(dmp, pnt[1]);
-
-		nseg++;
-		segp++;
-		VMOVE(lpnt, spnt);
-
-		if( nseg == 1024 ) {
-		  XDrawSegments( ((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
-				 ((struct x_vars *)dmp->dm_vars.priv_vars)->pix,
-				 ((struct x_vars *)dmp->dm_vars.priv_vars)->gc, segbuf, nseg );
-
-		  nseg = 0;
-		  segp = segbuf;
-		}
-		break;
-	    }
+	if (dmp->dm_debugLevel) {
+		bu_log("X_drawVList()\n");
+		bu_log("vp - %lu, perspective - %d\n", vp, dmp->dm_perspective);
 	}
-    }
-    if( nseg ) {
-      XDrawSegments( ((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
-		     ((struct x_vars *)dmp->dm_vars.priv_vars)->pix,
-		     ((struct x_vars *)dmp->dm_vars.priv_vars)->gc, segbuf, nseg );
-    }
 
-    return TCL_OK;
+	/* delta is used in clipping to insure clipped endpoint is slightly
+	 * in front of eye plane (perspective mode only).
+	 * This value is a SWAG that seems to work OK.
+	 */
+	delta = ((struct x_vars *)dmp->dm_vars.priv_vars)->xmat[15]*0.0001;
+	if (delta < 0.0)
+		delta = -delta;
+	if (delta < SQRT_SMALL_FASTF)
+		delta = SQRT_SMALL_FASTF;
+
+	nseg = 0;
+	segp = segbuf;
+	for (BU_LIST_FOR(tvp, rt_vlist, &vp->l)) {
+		register int	i;
+		register int	nused = tvp->nused;
+		register int	*cmd = tvp->cmd;
+		register point_t *pt = tvp->pt;
+		fastf_t 	 dist;
+
+		/* Viewing region is from -1.0 to +1.0 */
+		/* 2^31 ~= 2e9 -- dynamic range of a long int */
+		/* 2^(31-11) = 2^20 ~= 1e6 */
+		/* Integerize and let the X server do the clipping */
+		for (i = 0; i < nused; i++,cmd++,pt++) {
+			switch (*cmd) {
+			case RT_VLIST_POLY_START:
+
+			case RT_VLIST_POLY_VERTNORM:
+				continue;
+			case RT_VLIST_POLY_MOVE:
+			case RT_VLIST_LINE_MOVE:
+				/* Move, not draw */
+				if (dmp->dm_debugLevel > 2) {
+					bu_log("before transformation:\n");
+					bu_log("pt - %lf %lf %lf\n", V3ARGS(*pt));
+				}
+
+				if (dmp->dm_perspective > 0) {
+					/* cannot apply perspective transformation to
+					 * points behind eye plane!!!!
+					 */
+					dist = VDOT(*pt, &((struct x_vars *)dmp->dm_vars.priv_vars)->xmat[12]) + ((struct x_vars *)dmp->dm_vars.priv_vars)->xmat[15];
+					if (dist <= 0.0) {
+						pt_prev = pt;
+						dist_prev = dist;
+						continue;
+					} else {
+						MAT4X3PNT(lpnt, ((struct x_vars *)dmp->dm_vars.priv_vars)->xmat, *pt);
+						dist_prev = dist;
+						pt_prev = pt;
+					}
+				} else {
+					MAT4X3PNT(lpnt, ((struct x_vars *)dmp->dm_vars.priv_vars)->xmat, *pt);
+				}
+
+				lpnt[0] *= 2047;
+				lpnt[1] *= 2047 * dmp->dm_aspect;
+				lpnt[2] *= 2047;
+				continue;
+			case RT_VLIST_POLY_DRAW:
+			case RT_VLIST_POLY_END:
+			case RT_VLIST_LINE_DRAW:
+				/* draw */
+				if (dmp->dm_debugLevel > 2) {
+					bu_log("before transformation:\n");
+					bu_log("pt - %lf %lf %lf\n", V3ARGS(*pt));
+				}
+
+				if (dmp->dm_perspective > 0) {
+					/* cannot apply perspective transformation to
+					 * points behind eye plane!!!!
+					 */
+					dist = VDOT( *pt, &((struct x_vars *)dmp->dm_vars.priv_vars)->xmat[12] ) + ((struct x_vars *)dmp->dm_vars.priv_vars)->xmat[15];
+					if (dmp->dm_debugLevel > 2)
+						bu_log( "dist=%g, dist_prev=%g\n", dist, dist_prev );
+					if (dist <= 0.0) {
+						if (dist_prev <= 0.0) {
+							/* nothing to plot */
+							dist_prev = dist;
+							pt_prev = pt;
+							continue;
+						} else {
+							fastf_t alpha;
+							vect_t diff;
+							point_t tmp_pt;
+
+							/* clip this end */
+							VSUB2(diff, *pt, *pt_prev);
+							alpha = (dist_prev - delta) / (dist_prev - dist);
+							VJOIN1(tmp_pt, *pt_prev, alpha, diff);
+							MAT4X3PNT(pnt, ((struct x_vars *)dmp->dm_vars.priv_vars)->xmat, tmp_pt);
+						}
+					} else {
+						if (dist_prev <= 0.0) {
+							fastf_t alpha;
+							vect_t diff;
+							point_t tmp_pt;
+
+							/* clip other end */
+							VSUB2(diff, *pt, *pt_prev);
+							alpha = (-dist_prev + delta) / (dist - dist_prev);
+							VJOIN1(tmp_pt, *pt_prev, alpha, diff);
+							MAT4X3PNT(lpnt, ((struct x_vars *)dmp->dm_vars.priv_vars)->xmat, tmp_pt);
+							lpnt[0] *= 2047;
+							lpnt[1] *= 2047 * dmp->dm_aspect;
+							lpnt[2] *= 2047;
+							MAT4X3PNT(pnt, ((struct x_vars *)dmp->dm_vars.priv_vars)->xmat, *pt);
+						} else {
+							MAT4X3PNT(pnt, ((struct x_vars *)dmp->dm_vars.priv_vars)->xmat, *pt);
+						}
+					}
+					dist_prev = dist;
+				} else {
+					MAT4X3PNT(pnt, ((struct x_vars *)dmp->dm_vars.priv_vars)->xmat, *pt);
+				}
+
+				pnt[0] *= 2047;
+				pnt[1] *= 2047 * dmp->dm_aspect;
+				pnt[2] *= 2047;
+
+				/* save pnt --- it might get changed by clip() */
+				VMOVE(spnt, pnt);
+				pt_prev = pt;
+
+				if (dmp->dm_debugLevel > 2) {
+					bu_log("before clipping:\n");
+					bu_log("clipmin - %lf %lf %lf\n",
+					       dmp->dm_clipmin[X],
+					       dmp->dm_clipmin[Y],
+					       dmp->dm_clipmin[Z]);
+					bu_log("clipmax - %lf %lf %lf\n",
+					       dmp->dm_clipmax[X],
+					       dmp->dm_clipmax[Y],
+					       dmp->dm_clipmax[Z]);
+					bu_log("pt1 - %lf %lf %lf\n", lpnt[X], lpnt[Y], lpnt[Z]);
+					bu_log("pt2 - %lf %lf %lf\n", pnt[X], pnt[Y], pnt[Z]);
+				}
+
+				if (dmp->dm_zclip) {
+					if (vclip(lpnt, pnt,
+						  dmp->dm_clipmin,
+						  dmp->dm_clipmax) == 0) {
+						VMOVE(lpnt, spnt);
+						continue;
+					}
+				} else {
+					/* Check to see if lpnt or pnt contain values that exceed
+					   the capacity of a short (segbuf is an array of XSegments which
+					   contain shorts). If so, do clipping now. Otherwise, let the
+					   X server do the clipping */
+					if (lpnt[0] < min_short || max_short < lpnt[0] ||
+					    lpnt[1] < min_short || max_short < lpnt[1] ||
+					    pnt[0] < min_short || max_short < pnt[0] ||
+					    pnt[1] < min_short || max_short < pnt[1]) {
+						/* if the entire line segment will not be visible then ignore it */
+						if (clip(&lpnt[0], &lpnt[1], &pnt[0], &pnt[1]) == -1) {
+							VMOVE(lpnt, spnt);
+							continue;
+						}
+					}
+				}
+
+				if (dmp->dm_debugLevel > 2) {
+					bu_log("after clipping:\n");
+					bu_log("pt1 - %lf %lf %lf\n", lpnt[X], lpnt[Y], lpnt[Z]);
+					bu_log("pt2 - %lf %lf %lf\n", pnt[X], pnt[Y], pnt[Z]);
+				}
+
+				/* convert to X window coordinates */
+				segp->x1 = (short)GED_TO_Xx(dmp, lpnt[0]);
+				segp->y1 = (short)GED_TO_Xy(dmp, lpnt[1]);
+				segp->x2 = (short)GED_TO_Xx(dmp, pnt[0]);
+				segp->y2 = (short)GED_TO_Xy(dmp, pnt[1]);
+
+				nseg++;
+				segp++;
+				VMOVE(lpnt, spnt);
+
+				if (nseg == 1024) {
+					XDrawSegments(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
+						      ((struct x_vars *)dmp->dm_vars.priv_vars)->pix,
+						      ((struct x_vars *)dmp->dm_vars.priv_vars)->gc, segbuf, nseg);
+
+					nseg = 0;
+					segp = segbuf;
+				}
+				break;
+			}
+		}
+
+		nvectors += nused;
+		if (nvectors >= vectorThreshold) {
+			if (dmp->dm_debugLevel)
+				bu_log("X_drawVList(): handle Tcl events\n");
+
+			nvectors = 0;
+
+			/* Handle events in the queue */
+			while (Tcl_DoOneEvent(TCL_ALL_EVENTS|TCL_DONT_WAIT));
+		}
+	}
+
+	if (nseg) {
+		XDrawSegments( ((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
+			       ((struct x_vars *)dmp->dm_vars.priv_vars)->pix,
+			       ((struct x_vars *)dmp->dm_vars.priv_vars)->gc, segbuf, nseg );
+	}
+
+	return TCL_OK;
 }
 
 /*

@@ -53,25 +53,26 @@ extern void ogl_fogHint();
 #endif
 
 struct dm *
-dm_open(type, argc, argv)
-int type;
-int argc;
-char *argv[];
+dm_open(interp, type, argc, argv)
+     Tcl_Interp *interp;
+     int type;
+     int argc;
+     char *argv[];
 {
-  switch(type){
-  case DM_TYPE_NULL:
-    return Nu_open(argc, argv);
-  case DM_TYPE_PLOT:
-    return plot_open(argc, argv);
-  case DM_TYPE_PS:
-    return ps_open(argc, argv);
+	switch (type) {
+	case DM_TYPE_NULL:
+		return Nu_open(argc, argv);
+	case DM_TYPE_PLOT:
+		return plot_open(argc, argv);
+	case DM_TYPE_PS:
+		return ps_open(argc, argv);
 #ifdef DM_X
-  case DM_TYPE_X:
-    return X_open(argc, argv);
+	case DM_TYPE_X:
+		return X_open(interp, argc, argv);
 #endif
 #ifdef DM_OGL
-  case DM_TYPE_OGL:
-    return ogl_open(argc, argv);
+	case DM_TYPE_OGL:
+		return ogl_open(interp, argc, argv);
 #endif
   default:
     break;

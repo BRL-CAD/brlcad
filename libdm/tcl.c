@@ -31,55 +31,69 @@ extern int Dmo_Init();
 HIDDEN int dm_validXType_tcl();
 HIDDEN int dm_bestXType_tcl();
 
+int vectorThreshold = 100000;
+
 HIDDEN struct bu_cmdtab cmdtab[] = {
-	"dm_validXType",	dm_validXType_tcl,
-	"dm_bestXType",		dm_bestXType_tcl,
-	(char *)0,		(int (*)())0
+	{"dm_validXType",	dm_validXType_tcl},
+	{"dm_bestXType",	dm_bestXType_tcl},
+	{(char *)0,		(int (*)())0}
 };
 
 int
 Dm_Init(interp)
-Tcl_Interp *interp;
+     Tcl_Interp *interp;
 {
-  char *version_number;
+	char		*version_number;
+	struct bu_vls	vls;
 
-  /* register commands */
-  bu_register_cmds(interp, cmdtab);
+	/* register commands */
+	bu_register_cmds(interp, cmdtab);
 
-  /* initialize display manager object code */
-  Dmo_Init(interp);
+	bu_vls_init(&vls);
+	bu_vls_strcpy(&vls, "vectorThreshold");
+	Tcl_LinkVar(interp, bu_vls_addr(&vls), (char *)&vectorThreshold,
+		    TCL_LINK_INT);
+	bu_vls_free(&vls);
 
-  Tcl_SetVar(interp, "dm_version", (char *)dm_version+5, TCL_GLOBAL_ONLY);
-  Tcl_Eval(interp, "lindex $dm_version 2");
-  version_number = Tcl_GetStringResult(interp);
-  Tcl_PkgProvide(interp,  "Dm", version_number);
+	/* initialize display manager object code */
+	Dmo_Init(interp);
 
-  return TCL_OK;
+	Tcl_SetVar(interp, "dm_version", (char *)dm_version+5, TCL_GLOBAL_ONLY);
+	Tcl_Eval(interp, "lindex $dm_version 2");
+	version_number = Tcl_GetStringResult(interp);
+	Tcl_PkgProvide(interp,  "Dm", version_number);
+
+	return TCL_OK;
 }
 
 HIDDEN int
 dm_validXType_tcl(clientData, interp, argc, argv)
-ClientData clientData;
-Tcl_Interp *interp;
-int     argc;
-char    **argv;
+     ClientData clientData;
+     Tcl_Interp *interp;
+     int     argc;
+     char    **argv;
 {
-  struct bu_vls vls;
+	struct bu_vls	vls;
+	Tcl_Obj		*obj;
 
-  bu_vls_init(&vls);
+	bu_vls_init(&vls);
 
-  if(argc != 3){
-    bu_vls_printf(&vls, "helplib dm_validXType");
-    Tcl_Eval(interp, bu_vls_addr(&vls));
-    bu_vls_free(&vls);
-    return TCL_ERROR;
-  }
+	if(argc != 3){
+		bu_vls_printf(&vls, "helplib dm_validXType");
+		Tcl_Eval(interp, bu_vls_addr(&vls));
+		bu_vls_free(&vls);
+		return TCL_ERROR;
+	}
 
-  bu_vls_printf(&vls, "%d", dm_validXType(argv[1], argv[2]));
-  Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
-  bu_vls_free(&vls);
+	bu_vls_printf(&vls, "%d", dm_validXType(argv[1], argv[2]));
+	obj = Tcl_GetObjResult(interp);
+	if (Tcl_IsShared(obj))
+		obj = Tcl_DuplicateObj(obj);
+	Tcl_AppendStringsToObj(obj, bu_vls_addr(&vls), (char *)NULL);
+	bu_vls_free(&vls);
 
-  return TCL_OK;
+	Tcl_SetObjResult(interp, obj);
+	return TCL_OK;
 }
 
 HIDDEN int
@@ -89,16 +103,23 @@ Tcl_Interp *interp;
 int     argc;
 char    **argv;
 {
-  if (argc != 2) {
-    struct bu_vls vls;
+	Tcl_Obj		*obj;
 
-    bu_vls_init(&vls);
-    bu_vls_printf(&vls, "helplib dm_bestXType");
-    Tcl_Eval(interp, bu_vls_addr(&vls));
-    bu_vls_free(&vls);
-    return TCL_ERROR;
-  }
+	if (argc != 2) {
+		struct bu_vls vls;
 
-  Tcl_AppendResult(interp, dm_bestXType(argv[1]), (char *)NULL);
-  return TCL_OK;
+		bu_vls_init(&vls);
+		bu_vls_printf(&vls, "helplib dm_bestXType");
+		Tcl_Eval(interp, bu_vls_addr(&vls));
+		bu_vls_free(&vls);
+		return TCL_ERROR;
+	}
+
+	obj = Tcl_GetObjResult(interp);
+	if (Tcl_IsShared(obj))
+		obj = Tcl_DuplicateObj(obj);
+	Tcl_AppendStringsToObj(obj, dm_bestXType(argv[1]), (char *)NULL);
+
+	Tcl_SetObjResult(interp, obj);
+	return TCL_OK;
 }
