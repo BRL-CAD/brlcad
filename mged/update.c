@@ -153,7 +153,7 @@ f_wait(clientData, interp, argc, argv)
 		}
 		done = 0;
 		while (!done) {
-			mged_update(1);
+			mged_update(0);
 		}
 		Tcl_UntraceVar(interp, argv[2],
 			       TCL_GLOBAL_ONLY|TCL_TRACE_WRITES|TCL_TRACE_UNSETS,
@@ -170,7 +170,7 @@ f_wait(clientData, interp, argc, argv)
 				      WaitVisibilityProc, (ClientData) &done);
 		done = 0;
 		while (!done) {
-			mged_update(1);
+			mged_update(0);
 		}
 		if (done != 1) {
 			/*
@@ -197,7 +197,7 @@ f_wait(clientData, interp, argc, argv)
 				      WaitWindowProc, (ClientData) &done);
 		done = 0;
 		while (!done) {
-			mged_update(1);
+			mged_update(0);
 		}
 		/*
 		 * Note:  there's no need to delete the event handler.  It was
