@@ -1494,6 +1494,7 @@ retry:
 			bu_log("all light sample pts used.  trying to recycle\n");
 		}
 
+		tryagain = 0;
 		for (k=0 ; k < los->lsp->lt_pt_count ; k++) {
 			if (flags[k] & VF_SEEN ) {
 				/* this one was used, we can re-use it */
