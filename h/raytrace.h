@@ -96,6 +96,41 @@ extern char	*realloc();
 #define RT_PCOEF_TOL	(1.0e-10)
 
 /*
+ *			R T _ T O L
+ *
+ *  A handy way of passing around the tolerance information needed to
+ *  perform approximate floating-point calculations on geometry.
+ *
+ *  dist & dist_sq establish the distance tolerance.
+ *
+ *	If two points are closer together than dist, then they are to
+ *	be considered the same point.
+ *	For example:
+ *		point_t	a,b;
+ *		vect_t	diff;
+ *		VSUB2( diff, a, b );
+ *		if( MAGNITUDE(diff) < tol->dist )	a & b are the same.
+ *	or, more efficiently:
+ *		if( MAQSQ(diff) < tol->dist_sq )
+ *
+ *  perp & para establish the angular tolerance.
+ *
+ *	If two rays emanate from the same point, and their dot product
+ *	is nearly one, then the two rays are the same, while if their
+ *	dot product is nearly zero, then they are perpendicular.
+ *	For example:
+ *		vect_t	a,b;
+ *		if( VDOT(a,b) >= tol->para )	a & b are parallel
+ *		if( VDOT(a,b) <= tol->perp )	a & b are perpendicular
+ */
+struct rt_tol {
+	double		dist;			/* >= 0 */
+	double		dist_sq;		/* dist * dist */
+	double		perp;			/* nearly 0 */
+	double		para;			/* nearly 1 */
+};
+
+/*
  *  Macros for providing function prototypes, regardless of whether
  *  the compiler understands them or not.
  *  It is vital that the argument list given for "args" be enclosed
