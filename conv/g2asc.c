@@ -367,7 +367,7 @@ cline_dump()
 	get_ext( &ext, ngranules );
 
 	/* Hand off to librt's import() routine */
-	if( (rt_cline_import( &intern, &ext, id_mat, DBI_NULL )) != 0 )  {
+	if( (rt_functab[ID_CLINE].ft_import( &intern, &ext, id_mat, DBI_NULL )) != 0 )  {
 		fprintf(stderr, "g2asc: cline import failure\n");
 		exit(-1);
 	}
@@ -382,7 +382,7 @@ cline_dump()
 	(void)fprintf(ofp, "%.12e %.12e", cli->radius, cli->thickness );
 	(void)fprintf(ofp, "\n");			/* Terminate w/ a newline */
 
-	rt_cline_ifree( &intern );
+	rt_db_free_internal( &intern );
 	db_free_external( &ext );
 }
 
@@ -401,7 +401,7 @@ bot_dump()
 	get_ext( &ext, ngranules );
 
 	/* Hand off to librt's import() routine */
-	if( (rt_bot_import( &intern, &ext, id_mat, DBI_NULL )) != 0 )  {
+	if( (rt_functab[ID_BOT].ft_import( &intern, &ext, id_mat, DBI_NULL )) != 0 )  {
 		fprintf(stderr, "g2asc: bot import failure\n");
 		exit(-1);
 	}
@@ -438,7 +438,7 @@ bot_dump()
 			fprintf(ofp,  "	%d: %d %d %d\n", i, V3ARGS( &bot->faces[i*3] ) );
 	}
 
-	rt_bot_ifree( &intern );
+	rt_db_free_internal( &intern );
 	db_free_external( &ext );
 }
 
@@ -458,7 +458,7 @@ pipe_dump()	/* Print out Pipe record information */
 	get_ext( &ext, ngranules );
 
 	/* Hand off to librt's import() routine */
-	if( (rt_pipe_import( &intern, &ext, id_mat )) != 0 )  {
+	if( (rt_functab[ID_PIPE].ft_import( &intern, &ext, id_mat, NULL )) != 0 )  {
 		fprintf(stderr, "g2asc: pipe import failure\n");
 		exit(-1);
 	}
@@ -472,7 +472,7 @@ pipe_dump()	/* Print out Pipe record information */
 
 	dump_pipe_segs(name, &pipe->pipe_segs_head);
 
-	rt_pipe_ifree( &intern );
+	rt_db_free_internal( &intern );
 	db_free_external( &ext );
 }
 
@@ -509,7 +509,7 @@ particle_dump()
 	get_ext( &ext, 1 );
 
 	/* Hand off to librt's import() routine */
-	if( (rt_part_import( &intern, &ext, id_mat )) != 0 )  {
+	if( (rt_functab[ID_PARTICLE].ft_import( &intern, &ext, id_mat, NULL )) != 0 )  {
 		fprintf(stderr, "g2asc: particle import failure\n");
 		exit(-1);
 	}
@@ -566,7 +566,7 @@ arbn_dump()
 	get_ext( &ext, ngranules );
 
 	/* Hand off to librt's import() routine */
-	if( (rt_arbn_import( &intern, &ext, id_mat )) != 0 )  {
+	if( (rt_functab[ID_ARBN].ft_import( &intern, &ext, id_mat, NULL )) != 0 )  {
 		fprintf(stderr, "g2asc: arbn import failure\n");
 		exit(-1);
 	}
@@ -581,7 +581,7 @@ arbn_dump()
 			arbn->eqn[i][Z], arbn->eqn[i][3]);
 	}
 
-	rt_arbn_ifree( &intern );
+	rt_db_free_internal( &intern );
 	db_free_external( &ext );
 }
 
@@ -968,7 +968,7 @@ extrdump()
 
 	/* Hand off to librt's import() routine */
 	RT_INIT_DB_INTERNAL(&intern);
-	if( (rt_extrude_import( &intern, &ext, id_mat, DBI_NULL )) != 0 )  {
+	if( (rt_functab[ID_EXTRUDE].ft_import( &intern, &ext, id_mat, DBI_NULL )) != 0 )  {
 		fprintf(stderr, "g2asc: extrusion import failure\n");
 		exit(-1);
 	}
@@ -1003,7 +1003,7 @@ sketchdump()
 
 	/* Hand off to librt's import() routine */
 	RT_INIT_DB_INTERNAL(&intern);
-	if( (rt_sketch_import( &intern, &ext, id_mat, DBI_NULL )) != 0 )  {
+	if( (rt_functab[ID_SKETCH].ft_import( &intern, &ext, id_mat, DBI_NULL )) != 0 )  {
 		fprintf(stderr, "g2asc: sketch import failure\n");
 		exit( -1 );
 	}
