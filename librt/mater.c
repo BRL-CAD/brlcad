@@ -42,7 +42,7 @@ static char RCSmater[] = "@(#)$Header$ (BRL)";
  *  in strictly ascending order, with no overlaps (ie, monotonicly
  * increasing).
  */
-struct mater *MaterHead = MATER_NULL;
+struct mater *rt_material_head = MATER_NULL;
 
 void	rt_insert_color();
 
@@ -90,19 +90,19 @@ register struct mater *newp;
 	register struct mater *mp;
 	register struct mater *zot;
 
-	if( MaterHead == MATER_NULL || newp->mt_high < MaterHead->mt_low )  {
+	if( rt_material_head == MATER_NULL || newp->mt_high < rt_material_head->mt_low )  {
 		/* Insert at head of list */
-		newp->mt_forw = MaterHead;
-		MaterHead = newp;
+		newp->mt_forw = rt_material_head;
+		rt_material_head = newp;
 		return;
 	}
-	if( newp->mt_low < MaterHead->mt_low )  {
+	if( newp->mt_low < rt_material_head->mt_low )  {
 		/* Insert at head of list, check for redefinition */
-		newp->mt_forw = MaterHead;
-		MaterHead = newp;
+		newp->mt_forw = rt_material_head;
+		rt_material_head = newp;
 		goto check_overlap;
 	}
-	for( mp = MaterHead; mp != MATER_NULL; mp = mp->mt_forw )  {
+	for( mp = rt_material_head; mp != MATER_NULL; mp = mp->mt_forw )  {
 		if( mp->mt_low == newp->mt_low  &&
 		    mp->mt_high <= newp->mt_high )  {
 			(void)fprintf(stderr,"dropping overwritten region-id based material property entry:\n");
@@ -199,7 +199,7 @@ register struct region *regp;
 		fprintf(stderr,"color_map(NULL)\n");
 		return;
 	}
-	for( mp = MaterHead; mp != MATER_NULL; mp = mp->mt_forw )  {
+	for( mp = rt_material_head; mp != MATER_NULL; mp = mp->mt_forw )  {
 		if( regp->reg_regionid <= mp->mt_high &&
 		    regp->reg_regionid >= mp->mt_low ) {
 		    	regp->reg_mater.ma_override = 1;
@@ -225,8 +225,8 @@ rt_color_free()
 {
 	register struct mater *mp;
 
-	while( (mp = MaterHead) != MATER_NULL )  {
-		MaterHead = mp->mt_forw;	/* Dequeue 'mp' */
+	while( (mp = rt_material_head) != MATER_NULL )  {
+		rt_material_head = mp->mt_forw;	/* Dequeue 'mp' */
 		/* mt_handle? */
 		rt_free( (char *)mp, "getstruct mater" );
 	}
