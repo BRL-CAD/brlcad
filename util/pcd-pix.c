@@ -31,7 +31,10 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
    just remove the x from xMeldung */
 #define xMELDUNG
 
+#include "conf.h"
 #include <stdio.h>
+#include "machine.h"
+#include "externs.h"
 
 #define own_BUsize (3*24*1024)
 
@@ -124,7 +127,7 @@ static long bufpos;
 #define melde(x)
 #endif
 
-#define EREADBUF {if(READBUF < 1) error(E_READ);}
+#define EREADBUF {if(READBUF < (unsigned)1) error(E_READ);}
 
 #define SKIP(n)  { if (fseek(fin,(n),1)) error(E_READ);}
 #define SKIPr(n) { if (fseek(fin,(n),1)) return(E_READ);}
@@ -696,24 +699,24 @@ implane *l,*c1,*c2;
 	{
 		if(pl)
 		{
-			if(fread(pl,w,1,fin)<1) return(E_READ);
+			if(fread(pl,w,1,fin)<(unsigned)1) return(E_READ);
 			pl+= l->mwidth;
 
-			if(fread(pl,w,1,fin)<1) return(E_READ);
+			if(fread(pl,w,1,fin)<(unsigned)1) return(E_READ);
 			pl+= l->mwidth;
 		}
 		else SKIPr(2*w);
 
 		if(pc1)
 		{ 
-			if(fread(pc1,w/2,1,fin)<1) return(E_READ);
+			if(fread(pc1,w/2,1,fin)<(unsigned)1) return(E_READ);
 			pc1+= c1->mwidth;
 		}
 		else SKIPr(w/2);
 
 		if(pc2)
 		{ 
-			if(fread(pc2,w/2,1,fin)<1) return(E_READ);
+			if(fread(pc2,w/2,1,fin)<(unsigned)1) return(E_READ);
 			pc2+= c2->mwidth;
 		}
 		else SKIPr(w/2);
