@@ -1,43 +1,46 @@
 /*
- *			J O V E _ E X T E N D . C 
+ *			J O V E _ E X T E N D . C
  *
  * $Revision$
  *
  * $Log$
+ * Revision 11.1  95/01/04  10:35:13  mike
+ * Release_4.4
+ *
  * Revision 10.3  93/10/26  06:06:44  mike
  * Changed getchar() to jgetchar() to avoid stdio.h conflict.
- * 
+ *
  * Revision 10.2  93/10/26  03:45:31  mike
  * ANSI C
- * 
+ *
  * Revision 10.1  91/10/12  06:53:57  mike
  * Release_4.0
- * 
+ *
  * Revision 2.6  91/09/23  03:08:17  mike
  * Eliminated return / return(expr) warning
- * 
+ *
  * Revision 2.5  91/08/30  18:59:47  mike
  * Modifications for clean compilation on the XMP
- * 
+ *
  * Revision 2.4  91/08/30  17:54:32  mike
  * Changed #include directives to distinguish between local and system header
  * files.
- * 
+ *
  * Revision 2.3  91/08/30  17:49:05  mike
  * Paul Stay mods for ANSI C
- * 
+ *
  * Revision 2.2  87/04/14  20:18:43  dpk
  * Fixed casting on RunEdit call
- * 
+ *
  * Revision 2.1  86/04/13  22:02:57  gwyn
  * fixed getchar type bug
- * 
+ *
  * Revision 2.0  84/12/26  16:46:04  dpk
  * System as distributed to Berkeley 26 Dec 84
- * 
+ *
  * Revision 1.2  83/12/16  00:07:57  dpk
  * Added distinctive RCS header
- * 
+ *
  */
 #ifndef lint
 static char RCSid[] = "@(#)$Header$";
@@ -45,7 +48,7 @@ static char RCSid[] = "@(#)$Header$";
 
 /*
    Jonathan Payne at Lincoln-Sudbury Regional High School 4-19-83
-  
+
    jove_extend.c
 
    This contains the TENEX style command completion routine and
@@ -56,7 +59,7 @@ static char RCSid[] = "@(#)$Header$";
 
 int	InJoverc = 0;
 
-extern char	*Findcom;
+extern char	Findcom[];
 extern int	getch(),
 		jgetchar();
 
@@ -154,7 +157,7 @@ struct function	**map;
 		s_mess("%c-%c is bound to %s", key, c, map[c]->f_name);
 	return;
 }
-		
+
 DescCom()
 {
 	int	com;
@@ -168,7 +171,7 @@ DescCom()
 	ignore(UnixToBuf("Command Description", 0, exp_p == 0,
 					Findcom,
 					"describe",
-					fp->f_name, 0));
+					fp->f_name, (char *)0));
 	message("Done");
 	SetWind(savewp);
 }
@@ -248,7 +251,7 @@ char	*prompt;
 	else
 		value = atoi(val);
 	return value;
-}	
+}
 
 void
 PrVar()
@@ -278,7 +281,7 @@ SetVar()
 	*(variables[command].f.Var) = value;
 	setfuncs(globflags);
 }
-			
+
 int
 findcom(possible, prompt)
 struct function possible[];
@@ -287,7 +290,7 @@ char	*prompt;
 	char	response[132],
 		*cp,
 		*begin;
-	int	c;	/* DAG -- was char */
+	int	c;
 	int	minmatch,
 		command,
 		i,
@@ -393,7 +396,7 @@ char	*prompt;
 			break;
 
 		default:
-			if ((cp = RunEdit(c, begin, cp, (char *) 0, Getchar)) == (char *)-1)
+			if ((cp = RunEdit(c, begin, cp, (char *) 0, Getchar)) == (char *)0)
 abort:
 				if (InJoverc)
 					return EOF;
@@ -444,7 +447,7 @@ char	*what;
 		else
 			save = -1;
 	}
-			
+
 	return save;
 }
 
