@@ -1,10 +1,10 @@
 /*
  *			libfb/Cakefile
  *
- *  Note that it is the philosophy of this framebuffer library that
- *  a program desiring to use a framebuffer need link ONLY with
- *  this library.  Therefore, any vendor libraries need to be included
- *  within libfb.
+ *  Note that it may be necessary to link with other (vendor specific)
+ *  libraries when using libfb.  For a list of the libraries required
+ *  find the symbol LIBFB_LIBES in ../Cakefile.defs in the section on
+ *  the machine architecture you are using.
  *
  *  $Header$
  */
