@@ -1492,6 +1492,7 @@ char	**argv;
 	struct rt_part_internal *part_ip;
 	struct rt_pipe_internal *pipe_ip;
 	struct rt_sketch_internal *sketch_ip;
+	struct rt_extrude_internal *extrude_ip;
 
 	if(dbip == DBI_NULL)
 	  return TCL_OK;
@@ -1516,7 +1517,7 @@ char	**argv;
 	RT_INIT_DB_INTERNAL( &internal );
 
 	/* make name <arb8 | arb7 | arb6 | arb5 | arb4 | ellg | ell |
-	 * sph | tor | tgc | rec | trc | rcc | grp | half | nmg | sketch> */
+	 * sph | tor | tgc | rec | trc | rcc | grp | half | nmg | sketch | extrude> */
 	if( strcmp( argv[2], "arb8" ) == 0 )  {
 		internal.idb_type = ID_ARB8;
 		internal.idb_ptr = (genptr_t)bu_malloc( sizeof(struct rt_arb_internal) , "rt_arb_internal" );
@@ -1828,6 +1829,25 @@ char	**argv;
 		ps->pp_id = 0.5*ps->pp_od;
 		ps->pp_bendradius = ps->pp_od;
 		BU_LIST_INSERT( &pipe_ip->pipe_segs_head, &ps->l );
+	} else if( strcmp( argv[2], "extrude" ) == 0 ) {
+		char *av[3];
+
+		internal.idb_type = ID_EXTRUDE;
+		internal.idb_ptr = (genptr_t)bu_malloc( sizeof( struct rt_extrude_internal), "rt_extrude_internal" );
+		extrude_ip = (struct rt_extrude_internal *)internal.idb_ptr;
+		extrude_ip->magic = RT_EXTRUDE_INTERNAL_MAGIC;
+		VSET( extrude_ip->V, -toViewcenter[MDX] , -toViewcenter[MDY] , -toViewcenter[MDZ]-Viewscale*0.5 );
+		VSET( extrude_ip->u_vec, 1, 0, 0 );
+		VSET( extrude_ip->v_vec, 0, 1, 0 );
+		VSET( extrude_ip->h, 0, 0, Viewscale );
+		extrude_ip->keypoint = 0;
+		strcpy( extrude_ip->sketch_name, "sketch_test" );
+		strcpy( extrude_ip->curve_name, "curve0" );
+		extrude_ip->skt = (struct rt_sketch_internal *)NULL;
+		av[0] = "make";
+		av[1] = "sketch_test";
+		av[2] = "sketch";
+		f_make( clientData, interp, 3, av );
 	} else if( strcmp( argv[2], "sketch" ) == 0 ) {
 		struct line_seg *lsg;
 
@@ -1899,7 +1919,7 @@ char	**argv;
 	} else {
 	  Tcl_AppendResult(interp, "make:  ", argv[2], " is not a known primitive\n",
 			   "\tchoices are: arb8, arb7, arb6, arb5, arb4, sph, ell, ellg, grip, tor,\n",
-			   "\t\ttgc, tec, rec, trc, rcc, half, rpc, rhc, epa, ehy, eto, part, sketch\n",
+			   "\t\ttgc, tec, rec, trc, rcc, half, rpc, rhc, epa, ehy, eto, part, sketch extrude\n",
 			   (char *)NULL);
 	  return TCL_ERROR;
 	}
