@@ -1982,9 +1982,11 @@ BU_EXTERN(void db_apply_anims, (struct db_full_path *pathp,
 	struct mater_info *materp));
 
 /* dir.c */
-BU_EXTERN(int rt_db_get_internal, (struct rt_db_internal *ip, struct directory *dp,
-	struct db_i *dbip, CONST mat_t mat));
-
+BU_EXTERN(int rt_db_get_internal, (struct rt_db_internal *ip,
+	CONST struct directory *dp,
+	CONST struct db_i *dbip, CONST mat_t mat));
+BU_EXTERN(int rt_db_put_internal, (struct directory *dp, struct db_i *dbip,
+	struct rt_db_internal *ip));
 
 /* db_comb.c */
 
