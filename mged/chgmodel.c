@@ -35,13 +35,15 @@
 static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
+#include "conf.h"
+
 #include <math.h>
 #include <signal.h>
 #include <stdio.h>
-#ifdef BSD
-#include <strings.h>
-#else
+#ifdef USE_STRING_H
 #include <string.h>
+#else
+#include <strings.h>
 #endif
 
 #include "machine.h"
@@ -1021,9 +1023,6 @@ char	**argv;
 	struct edgeuse *eu;
 	struct vertex *v_new, *v;
 	unsigned long tw, tf, tp;
-#ifndef log10
-	double log10();
-#endif
 
 	rt_log("fracture:");
 	for (i=0 ; i < argc ; i++)

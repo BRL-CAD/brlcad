@@ -32,23 +32,24 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 static char	sccsid[] = "@(#)cad_boundp.c	1.13";
 #endif
 
-#include	<math.h>
-#include	<stdio.h>
-#include	<string.h>
+#include "conf.h"
+
+#include <math.h>
+#include <stdio.h>
+#include <string.h>
 
 #include	"./vld_std.h"
 
-#if STD_C
+#ifdef HAVE_STDARG_H
 #include	<stdarg.h>
-#else
+#elif HAVE_VARARGS_H
 #include	<varargs.h>
+#else
+#error "Need to have stdarg.h or varargs.h."
 #endif
 
-extern void	exit(), free();
-extern pointer	malloc();
-extern int	getopt();
-
-extern char	*optarg;
+#include "machine.h"
+#include "externs.h"
 
 typedef struct
 	{
@@ -79,7 +80,7 @@ typedef struct queue
 	point		*endpoint;	/* -> endpt of ray from point */
 }	queue;			/* entry in list of endpoints */
 
-#if STD_C
+#ifdef HAVE_STDARG_H
 static bool	Mess(char *fmt, ...);
 #else
 static bool	Mess();
@@ -742,7 +743,7 @@ register pointer	ptr;	/* -> allocated storage */
 
 /*VARARGS*/
 static bool
-#if STD_C
+#ifdef HAVE_STDARG_H
 Mess( char *fmt, ... )			/* print error message */
 #else
 Mess( va_alist )			/* print error message */
@@ -750,7 +751,7 @@ va_dcl					/* format, optional arguments */
 #endif
 {
 	va_list		ap;		/* for accessing arguments */
-#if !STD_C
+#ifndef HAVE_STDARG_H
 	register char	*fmt;		/* format */
 
 	va_start( ap );
@@ -760,10 +761,10 @@ va_dcl					/* format, optional arguments */
 #endif
 	(void)fflush( stdout );
 	(void)fputs( "cad_boundp: ", stderr );
-#if defined(BSD)
-	(void) _doprnt( fmt, ap, stderr );
-#else
+#ifdef HAVE_VPRINTF
 	(void)vfprintf( stderr, fmt, ap );
+#else
+	(void) _doprnt( fmt, ap, stderr );
 #endif
 	(void)fputc( '\n', stderr );
 

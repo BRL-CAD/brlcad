@@ -27,10 +27,10 @@ static char RCSconcat[] = "@(#)$Header$ (BRL)";
 #include <signal.h>
 #include <math.h>
 #include <time.h>
-#ifdef BSD
-#include <strings.h>
-#else
+#ifdef USE_STRING_H
 #include <string.h>
+#else
+#include <strings.h>
 #endif
 
 #include "machine.h"
