@@ -290,7 +290,7 @@ static struct funtab {
 "ted", "", "text edit a solid's parameters",
 	f_tedit,1,1,
 "title", "string", "change the title",
-	f_title,2,MAXARGS,
+	f_title,1,MAXARGS,
 "tol", "[abs #]|[rel #]", "show/set absolute or relative tolerance for tessellation",
 	f_tol, 1, 3,
 "tops", "", "find all top level objects",
