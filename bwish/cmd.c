@@ -1,7 +1,7 @@
 /*
  *				C M D . C
  *
- * This is the place where CWISH's commands live.
+ * This is the place where BWISH's commands live.
  * The history routines were borrowed from mged/history.c
  * and modified for use in this application.
  *
@@ -45,7 +45,7 @@ void quit();
 HIDDEN struct bu_cmdhist histHead;
 HIDDEN struct bu_cmdhist *currHist;
 
-HIDDEN struct bu_cmdtab cwish_cmds[] =
+HIDDEN struct bu_cmdtab bwish_cmds[] =
 {
 	"exit",		cmd_quit,
 	"history",	cmd_history,
@@ -58,15 +58,15 @@ int
 cmdInit(interp)
      Tcl_Interp *interp;
 {
-	/* Register cwish commands */
-	bu_register_cmds(interp, cwish_cmds);
+	/* Register bwish commands */
+	bu_register_cmds(interp, bwish_cmds);
 
 	/* initialize command history */
 	historyInit();
 	return TCL_OK;
 }
 
-/***************************** CWISH COMMANDS *****************************/
+/***************************** BWISH COMMANDS *****************************/
 
 HIDDEN int
 cmd_quit(clientData, interp, argc, argv)
@@ -91,7 +91,7 @@ quit(status)
 	Tcl_Exit(status);
 }
 
-/***************************** CWISH COMMAND HISTORY *****************************/
+/***************************** BWISH COMMAND HISTORY *****************************/
 
 HIDDEN void
 historyInit()

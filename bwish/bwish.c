@@ -1,8 +1,8 @@
 /*
- *				C W I S H . C
+ *				B W I S H . C
  *
  *  This is yet another version of the WISH program for BRL-CAD (maybe it
- *  should be called YAW :-)). CWISH initializes the Tcl interfaces of the
+ *  should be called YAW :-)). BWISH initializes the Tcl interfaces of the
  *  BRL-CAD libraries as well as [incr Tcl] and [incr Tk]. This version also
  *  provides command history and command line editing.
  *
@@ -175,7 +175,7 @@ Cad_AppInit(interp)
 	(void)Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 
-	/* register cwish commands */
+	/* register bwish commands */
 	cmdInit(interp);
 
 	/*
@@ -185,6 +185,6 @@ Cad_AppInit(interp)
 	 * then no user-specific startup file will be run under any conditions.
 	 */
 
-	Tcl_SetVar(interp, "tcl_rcFileName", "~/.cwishrc", TCL_GLOBAL_ONLY);
+	Tcl_SetVar(interp, "tcl_rcFileName", "~/.bwishrc", TCL_GLOBAL_ONLY);
 	return TCL_OK;
 }

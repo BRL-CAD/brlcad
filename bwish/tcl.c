@@ -1,7 +1,7 @@
 /*
  *				T C L . C
  *
- *  The supporting Tcl routines for CWISH.
+ *  The supporting Tcl routines for BWISH.
  *
  *  Author -
  *	  Robert G. Parker
@@ -33,7 +33,7 @@
 #include "externs.h"
 #include "bu.h"
 
-#define CWISH_RCFILENAME ".cwishrc"
+#define BWISH_RCFILENAME ".bwishrc"
 
 /*
  * Main program for wish-like applications that desire command
@@ -114,7 +114,7 @@ Cad_Main(argc, argv, appInitProc, interp)
 		initInput();
 
 		/* Set the name of the startup file. */
-		Tcl_SetVar(interp, "tcl_rcFileName", CWISH_RCFILENAME, TCL_GLOBAL_ONLY);
+		Tcl_SetVar(interp, "tcl_rcFileName", BWISH_RCFILENAME, TCL_GLOBAL_ONLY);
 
 		/* Source the startup file if it exists. */
 		Tcl_SourceRCFile(interp);

@@ -56,7 +56,7 @@
 #define ESC         27
 #define BACKSPACE   '\b'
 #define DELETE      127
-#define PROMPT "\rcwish> "
+#define PROMPT "\rbwish> "
 
 #define SPACES "                                                                                                                                                                                                                                                                                                           "
 
