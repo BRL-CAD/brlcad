@@ -125,6 +125,9 @@ struct menu_item  tgc_menu[] = {
 	{ "scale B",	tgc_ed, MENUB },
 	{ "scale c",	tgc_ed, MENUP1 },
 	{ "scale d",	tgc_ed, MENUP2 },
+	{ "scale A,B",	tgc_ed, MENUAB },
+	{ "scale C,D",	tgc_ed, MENUCD },
+	{ "scale A,B,C,D", tgc_ed, MENUABCD },
 	{ "rotate H",	tgc_ed, MENURH },
 	{ "rotate AxB",	tgc_ed, MENURAB },
 	{ "move end H(rt)", tgc_ed, MENUMH },
@@ -144,6 +147,7 @@ struct menu_item  ell_menu[] = {
 	{ "scale A", ell_ed, MENUA },
 	{ "scale B", ell_ed, MENUB },
 	{ "scale C", ell_ed, MENUC },
+	{ "scale A,B,C", ell_ed, MENUABC },
 	{ "", (void (*)())NULL, 0 }
 };
 
@@ -668,6 +672,10 @@ sedit()
 		(void)printf("sedit():  unknown edflag = %d.\n", es_edflag );
 	}
 
+	/* must re-calculate the face plane equations for arbs */
+	if( es_rec.s.s_type == GENARB8 )
+		redo_planes();
+
 	illump = redraw( illump, &es_rec );
 
 	inpara = 0;
@@ -750,6 +758,12 @@ register struct solidrec *sp;
 		cgtype *= -1;
 
 	switch( sp->s_type ) {
+
+	case ARS:
+	case ARSCONT:
+		PR_PT( 0, 'V', &sp->s_values[0]);
+		es_nlines = 1;
+		break;
 
 	case TOR:
 		r1 = MAGNITUDE(&local.s_tor_A);
@@ -1061,6 +1075,72 @@ torcom:
 		}
 		VSCALE(op, op, es_scale);
 		break;
+
+	case MENUAB:
+		op = &es_rec.s.s_tgc_A;
+		if( inpara ) {
+			/* take es_mat[15] (path scaling) into account */
+			es_para[0] *= es_mat[15];
+			es_scale = es_para[0] / MAGNITUDE(op);
+		}
+		VSCALE(op, op, es_scale);
+		ma = MAGNITUDE( op );
+		op = &es_rec.s.s_tgc_B;
+		mb = MAGNITUDE( op );
+		VSCALE(op, op, ma/mb);
+		break;
+
+	case MENUCD:	/* scale C and D of tgc */
+		op = &es_rec.s.s_tgc_C;
+		if( inpara ) {
+			/* take es_mat[15] (path scaling) into account */
+			es_para[0] *= es_mat[15];
+			es_scale = es_para[0] / MAGNITUDE(op);
+		}
+		VSCALE(op, op, es_scale);
+		ma = MAGNITUDE( op );
+		op = &es_rec.s.s_tgc_D;
+		mb = MAGNITUDE( op );
+		VSCALE(op, op, ma/mb);
+		break;
+
+	case MENUABCD: 		/* scale A,B,C, and D of tgc */
+		op = &es_rec.s.s_tgc_A;
+		if( inpara ) {
+			/* take es_mat[15] (path scaling) into account */
+			es_para[0] *= es_mat[15];
+			es_scale = es_para[0] / MAGNITUDE(op);
+		}
+		VSCALE(op, op, es_scale);
+		ma = MAGNITUDE( op );
+		op = &es_rec.s.s_tgc_B;
+		mb = MAGNITUDE( op );
+		VSCALE(op, op, ma/mb);
+		op = &es_rec.s.s_tgc_C;
+		mb = MAGNITUDE( op );
+		VSCALE(op, op, ma/mb);
+		op = &es_rec.s.s_tgc_D;
+		mb = MAGNITUDE( op );
+		VSCALE(op, op, ma/mb);
+		break;
+
+	case MENUABC:	/* scale A,B, and C of ellg */
+		op = &es_rec.s.s_ell_A;
+		if( inpara ) {
+			/* take es_mat[15] (path scaling) into account */
+			es_para[0] *= es_mat[15];
+			es_scale = es_para[0] / MAGNITUDE(op);
+		}
+		VSCALE(op, op, es_scale);
+		ma = MAGNITUDE( op );
+		op = &es_rec.s.s_ell_B;
+		mb = MAGNITUDE( op );
+		VSCALE(op, op, ma/mb);
+		op = &es_rec.s.s_ell_C;
+		mb = MAGNITUDE( op );
+		VSCALE(op, op, ma/mb);
+		break;
+
 	}
 }
 
@@ -1071,7 +1151,8 @@ torcom:
 void
 init_objedit()
 {
-	register int i;
+	register int i, type;
+	union record trec;
 
 	/*
 	 * Check for a processed region 
@@ -1100,15 +1181,23 @@ init_objedit()
 	/* Not an evaluated region - just a regular path ending in a solid */
 	db_getrec( illump->s_path[illump->s_last], &es_rec, 0 );
 
-	if( es_rec.u_id == ID_ARS_A || es_rec.u_id == ID_B_SPL_HEAD )  {
-		(void)printf("ARS or SPLINE may not work well\n");
+	if( es_rec.u_id == ID_B_SPL_HEAD ) {
+		(void)printf("SPLINE may not work well\n");
 		mat_idn(es_mat);
 		es_menu = 0;
 		es_edflag = -1;
 		return;
 	}
 
-	if( es_rec.u_id != ID_SOLID )  {
+	if( es_rec.u_id == ID_ARS_A ) { 
+		/* read the first B-record into trec */
+		db_getrec( illump->s_path[illump->s_last], &trec, 1 );
+		/* only interested in vertex */
+		VMOVE(es_rec.s.s_values, trec.b.b_values);
+		es_rec.s.s_type = es_rec.s.s_cgtype = ARS;
+	}
+
+	if( es_rec.u_id != ID_SOLID && es_rec.u_id != ID_ARS_A ) {
 		(void)printf(
 "ERROR - Should have a SOLID at bottom of path\n");
 		return;
@@ -1116,6 +1205,20 @@ init_objedit()
 
 	es_menu = 0;
 	es_edflag = -1;
+
+	if( es_rec.s.s_cgtype < 0 )
+		es_rec.s.s_cgtype *= -1;
+
+	if( es_rec.s.s_type == GENARB8 ) {
+		/* find the comgeom arb type */
+		if( (type = type_arb( &es_rec )) == 0 ) {
+			(void)printf("%s: BAD ARB\n",es_rec.s.s_name);
+			return;
+		}
+
+		es_rec.s.s_cgtype = type;
+	}
+
 
 	/* Save aggregate path matrix */
 	pathHmat( illump, es_mat );
@@ -1127,3 +1230,38 @@ init_objedit()
 	pr_solid( &es_rec.s );
 
 }
+
+
+/* 	REDO_PLANES()
+ *		redo the plane (face) equations for an arb
+ */
+redo_planes( )
+{
+	union record temprec;
+	register int i, type, p1, p2, p3;
+	float *op;
+
+	type = es_rec.s.s_cgtype;
+	temprec = es_rec;
+
+	/* find the plane equations */
+	/* point notation - use temprec record */
+	for(i=3; i<=21; i+=3) {
+		op = &temprec.s.s_values[i];
+		VADD2(op, op, &es_rec.s.s_values[0]);
+	}
+	type -= 4;	/* ARB4 at location 0, ARB5 at 1, etc */
+	for(i=0; i<6; i++) {
+		if(faces[type][i*4] == -1)
+			break;	/* faces are done */
+		p1 = faces[type][i*4];
+		p2 = faces[type][i*4+1];
+		p3 = faces[type][i*4+2];
+		if(planeqn(i, p1, p2, p3, &temprec.s)) {
+			(void)printf("No eqn for face %d%d%d%d\n",
+				p1+1,p2+1,p3+1,faces[type][i*4+3]+1);
+			return;
+		}
+	}
+}
+

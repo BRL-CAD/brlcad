@@ -56,6 +56,10 @@ int	es_menu;		/* item selected from menu */
 #define MENUMHH		10
 #define MENUP1		11
 #define MENUP2		12
+#define MENUAB		13
+#define MENUCD		14
+#define MENUABCD	15
+#define MENUABC		16
 mat_t	es_mat;			/* accumulated matrix of path */ 
 mat_t 	es_invmat;		/* inverse of es_mat   KAA */
 int	es_nlines;		/* # lines in printed display */

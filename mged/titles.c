@@ -202,6 +202,12 @@ dotitles()
 		MAT4X3PNT( pos_view, model2objview, temp );
 		dmp->dmr_puts( "H", ((int)(pos_view[X]*2048))+15, ((int)(pos_view[Y]*2048))+15, 0, DM_WHITE );
 		break;
+	case ARS:
+	case ARSCONT:
+		MAT4X3PNT(temp, es_mat, es_rec.s.s_values);
+		MAT4X3PNT( pos_view, model2objview, temp );
+		dmp->dmr_puts( "V", ((int)(pos_view[X]*2048))+15, ((int)(pos_view[Y]*2048))+15, 0, DM_WHITE );
+		break;
 	}
 
 	/*

@@ -113,6 +113,16 @@ f_analyze()
 		}
 		if(temp_rec.s.s_cgtype < 0)
 			temp_rec.s.s_cgtype *= -1;
+
+		if( temp_rec.s.s_type == GENARB8 ) {
+			/* find the specific arb type */
+			if( (type = type_arb( &temp_rec )) == 0 ) {
+				(void)printf("%s: BAD ARB\n",temp_rec.s.s_name);
+				return;
+			}
+			temp_rec.s.s_cgtype = type;
+		}
+
 		do_list(ndp);
 		do_anal();
 	}
