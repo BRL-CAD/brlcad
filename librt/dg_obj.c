@@ -79,24 +79,25 @@ static union tree *dgo_wireframe_region_end();
 static union tree *dgo_wireframe_leaf();
 static int dgo_drawtrees();
 static void dgo_cvt_vlblock_to_solids();
-static int dgo_invent_solid();
+int dgo_invent_solid();
 static void dgo_bound_solid();
 static void dgo_drawH_part2();
 static void dgo_eraseobjall();
 void dgo_eraseobjall_callback();
 static void dgo_eraseobj();
 static void dgo_color_soltab();
-static dgo_run_rt();
+static int dgo_run_rt();
+static int dgo_build_tops();
 
-static int		dgo_draw_nmg_only;
-static int		dgo_nmg_triangulate;
-static int		dgo_draw_wireframes;
-static int		dgo_draw_normals;
-static int		dgo_draw_solid_lines_only=0;
-static int		dgo_draw_no_surfaces = 0;
-static int		dgo_shade_per_vertex_normals=0;
-static int		dgo_wireframe_color_override;
-static int		dgo_wireframe_color[3];
+static int dgo_draw_nmg_only;
+static int dgo_nmg_triangulate;
+static int dgo_draw_wireframes;
+static int dgo_draw_normals;
+static int dgo_draw_solid_lines_only=0;
+static int dgo_draw_no_surfaces = 0;
+static int dgo_shade_per_vertex_normals=0;
+static int dgo_wireframe_color_override;
+static int dgo_wireframe_color[3];
 static struct model	*dgo_nmg_model;
 static struct db_tree_state	dgo_initial_tree_state;
 static struct rt_tess_tol	dgo_ttol;
@@ -1378,7 +1379,7 @@ int			copy;
  *
  *  This parallels much of the code in dodraw.c
  */
-static int
+int
 dgo_invent_solid(name, vhead, rgb, copy)
      char		*name;
      struct bu_list	*vhead;
@@ -1758,7 +1759,7 @@ done: ;
  *
  *  Build a command line vector of the tops of all objects in view.
  */
-int
+static int
 dgo_build_tops(interp, hsp, start, end)
      Tcl_Interp *interp;
      struct solid *hsp;
