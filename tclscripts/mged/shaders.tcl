@@ -116,6 +116,9 @@ proc do_checker { shade_var id } {
 	label $shader_params($id,window).fr.color2 -text "Second Color"
 	entry $shader_params($id,window).fr.color2_e -width 15 -textvariable shader_params($id,ckr_b)
 	bind $shader_params($id,window).fr.color2_e <KeyRelease> "do_shader_apply $shade_var $id"
+	label $shader_params($id,window).fr.scale -text "Scale"
+	entry $shader_params($id,window).fr.scale_e -width 15 -textvariable shader_params($id,ckr_scale)
+	bind $shader_params($id,window).fr.scale_e <KeyRelease> "do_shader_apply $shade_var $id"
 
 	hoc_register_data $shader_params($id,window).fr.color1_e "First Color" {
 		{summary "Enter one of the colors to use in the checkerboard pattern\n\
@@ -135,6 +138,16 @@ proc do_checker { shade_var id } {
 		{summary "Enter another color to use in the checkerboard pattern"}
 		{range "An RGB triple, each value from 0 to 255"}
 	}
+	hoc_register_data $shader_params($id,window).fr.scale "Scale" {
+		{summary "Enter a scale factor to use for the checkerboard pattern\n\
+			(Allows different numbers of checks)"}
+		{range "Non-zero positive numbers"}
+	}
+	hoc_register_data $shader_params($id,window).fr.scale_e "Scale" {
+		{summary "Enter a scale factor to use for the checkerboard pattern\n\
+			(Allows different numbers of checks)"}
+		{range "Non-zero positive numbers"}
+	}
 
 	set_checker_values $shader_str $id
 
@@ -142,6 +155,8 @@ proc do_checker { shade_var id } {
 	grid $shader_params($id,window).fr.color1_e -row 0 -column 1 -sticky w
 	grid $shader_params($id,window).fr.color2 -row 1 -column 0 -sticky e
 	grid $shader_params($id,window).fr.color2_e -row 1 -column 1 -sticky w
+	grid $shader_params($id,window).fr.scale -row 2 -column 0 -sticky e
+	grid $shader_params($id,window).fr.scale_e -row 2 -column 1 -sticky w
 
 	grid columnconfigure $shader_params($id,window).fr.color1_e 0 -weight 1
 	grid columnconfigure $shader_params($id,window).fr.color2_e 0 -weight 1
@@ -183,6 +198,11 @@ proc set_checker_values { shader_str id } {
 						set shader_params($id,ckr_b) $value }
 				    }
 				}
+				s { catch {
+					if { $value != $shader_params($id,def_ckr_scale) } then {
+						set shader_params($id,ckr_scale) $value }
+				    }
+				}
 			}
 		}
 	}
@@ -210,6 +230,13 @@ proc do_checker_apply { shade_var id } {
 			}
 		}
 	}
+	catch {
+		if { [string length $shader_params($id,ckr_scale) ] > 0 } then {
+			if { $shader_params($id,ckr_scale) != $shader_params($id,def_ckr_scale) } then {
+				lappend params s $shader_params($id,ckr_scale)
+			}
+		}
+	}
 
 	set shader [list checker $params ]
 }
@@ -219,6 +246,7 @@ proc set_checker_defaults { id } {
 
 	set shader_params($id,def_ckr_a) [list 255 255 255]
 	set shader_params($id,def_ckr_b) [list 0 0 0]
+	set shader_params($id,def_ckr_scale) 2.0
 }
 
 # PHONG routines
