@@ -91,6 +91,8 @@ union record  {
 #define ID_MATERIAL	'm'	/* Material description record */
 #define ID_STRSOL	's'	/* String solid description */
 #define DBID_ARBN	'n'	/* Convex polyhedron with N faces */
+#define DBID_PIPE	'w'	/* pipe (wire) solid */
+#define DBID_PARTICLE	'p'	/* a particle (lozenge) */
 
 	char	u_size[DB_MINREC];	/* Minimum record size */
 
@@ -293,6 +295,28 @@ union record  {
 		int	n_grans;		/* # eqn granules to follow */
 		/* Note that eqn granules are in "network" byte order */
 	}  n;
+	struct pipe_wire_rec  {
+		char	pw_id;			/* DBID_PIPE */
+		char	pw_pad;
+		char	pw_name[NAMESIZE];
+		int	pw_count;		/* # granules used */
+		struct exported_pipeseg  {
+			char		eps_type[4];
+			char		eps_start[8*3];
+			char		eps_bendcenter[8*3];
+			char		eps_id[8];
+			char		eps_od[8];
+		} pw_data[1];			/* mach indep segments */
+	}  pw;
+	struct particle_rec  {
+		char	p_id;			/* DBID_PARTICLE */
+		char	p_pad;
+		char	p_name[NAMESIZE];
+		char	p_v[8*3];		/* vertex (mach indep fmt) */
+		char	p_h[8*3];		/* height vector */
+		char	p_vrad[8];		/* radius at vertex */
+		char	p_hrad[8];		/* radius at end of height */
+	}  part;
 };
 
 #endif	/* DB_H */

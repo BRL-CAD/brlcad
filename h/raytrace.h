@@ -389,9 +389,10 @@ struct soltab {
 #define ID_EBM		12	/* Extruded bitmap solid */
 #define ID_VOL		13	/* 3-D Volume */
 #define ID_ARBN		14	/* ARB with N faces */
-#define ID_WIRE		15	/* Wire solid */
+#define ID_PIPE		15	/* Pipe (wire) solid */
+#define ID_PARTICLE	16	/* Particle system solid */
 
-#define ID_MAXIMUM	15	/* Maximum defined ID_xxx value */
+#define ID_MAXIMUM	16	/* Maximum defined ID_xxx value */
 
 /*
  *			F U N C T A B
