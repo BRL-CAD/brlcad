@@ -120,34 +120,36 @@ register char	*devicename;
 int	width, height;
 {
 	register int	i;
+	struct pkg_conn *pc;
 	char	buf[128];
 	char	*file;
 	char	hostname[MAX_HOSTNAME];
 
 	if( devicename == NULL || (file = strchr( devicename, ':' )) == NULL ) {
-		fb_log( "remote_dopen : bad device name \"%s\"\n",
+		fb_log( "remote_dopen: bad device name \"%s\"\n",
 			devicename == NULL ? "(null)" : devicename );
 		return	-1;
 	}
 	for( i = 0; devicename[i] != ':' && i < MAX_HOSTNAME; i++ )
 		hostname[i] = devicename[i];
 	hostname[i] = '\0';
-	if( (PCPL(ifp) = (char *)pkg_open( hostname, "mfb", pkgswitch, fb_log )) < 0 ) {
-		fb_log(	"remote_dopen : can't connect to host \"%s\".\n",
+	if( (pc = pkg_open( hostname, "mfb", pkgswitch, fb_log )) == PKC_ERROR ) {
+		fb_log(	"remote_dopen: can't connect to host \"%s\".\n",
 			hostname );
 		return	-1;
 	}
-	ifp->if_fd = PCP(ifp)->pkc_fd;
+	PCPL(ifp) = (char *)pc;			/* stash in u1 */
+	ifp->if_fd = pc->pkc_fd;
 	ifp->if_width = width;
 	ifp->if_height = height;
 
 	(void)putlong( ifp->if_width, &buf[0] );
 	(void)putlong( ifp->if_height, &buf[4] );
 	(void) strcpy( &buf[8], file + 1 );
-	pkg_send( MSG_FBOPEN, buf, strlen(devicename)+8, PCP(ifp) );
+	pkg_send( MSG_FBOPEN, buf, strlen(devicename)+8, pc );
 
 	/* XXX - need to get the size back! */
-	pkg_waitfor( MSG_RETURN, buf, 4, PCP(ifp) );
+	pkg_waitfor( MSG_RETURN, buf, 4, pc );
 	return( getlong( buf ) );
 }
 
@@ -205,7 +207,7 @@ int	num;
 	if( ret == 0 )
 		pkg_waitfor( MSG_DATA, (char *) pixelp,	num*4, PCP(ifp) );
 	else
-		fb_log( "remote_bread : read at <%d,%d> failed.\n", x, y );
+		fb_log( "remote_bread: read at <%d,%d> failed.\n", x, y );
 	return	ret;
 }
 
@@ -457,7 +459,7 @@ register struct pkg_conn *pc;
 	start = 0;
 	while( len > 0 ) {
 		if( (i = writev( pc->pkc_fd, &buf[start], (len>8?8:len) )) < 0 )  {
-			fb_log( "pkg_send : write failed.\n" );
+			fb_log( "pkg_send: writev failed.\n" );
 			return(-1);
 		}
 		len -= 8;
