@@ -39,8 +39,8 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "machine.h"
 #include "vmath.h"
 #include "db.h"
+#include "raytrace.h"
 #include "./ged.h"
-#include "./objdir.h"
 #include "./sedit.h"
 #include "./solid.h"
 
@@ -193,10 +193,10 @@ f_inside()
 		/* Not doing any editing....ask for outside solid */
 		(void)printf("Enter name of outside solid: ");
 		argcnt = getcmd(args);
-		if( (dp = lookup( cmd_args[args], LOOKUP_NOISY )) == DIR_NULL )  
+		if( (dp = db_lookup( dbip,  cmd_args[args], LOOKUP_NOISY )) == DIR_NULL )  
 			return;
 		args += argcnt;
-		db_getrec( dp, &newrec, 0 );
+		db_get( dbip,  dp, &newrec, 0 , 1);
 
 		if(newrec.u_id != ID_SOLID) {
 			(void)printf("%s: NOT a solid\n",dp->d_namep);
@@ -240,7 +240,7 @@ f_inside()
 		(void)printf("Enter name of the inside solid: ");
 		argcnt = getcmd(args);
 	}
-	if( lookup( cmd_args[args], LOOKUP_QUIET ) != DIR_NULL ) {
+	if( db_lookup( dbip,  cmd_args[args], LOOKUP_QUIET ) != DIR_NULL ) {
 		aexists( cmd_args[args] );
 		return;
 	}
@@ -362,11 +362,11 @@ f_inside()
 	(void)signal( SIGINT, SIG_IGN);
  
 	/* Add to in-core directory */
-	if( (dp = dir_add( newrec.s.s_name, -1, DIR_SOLID, 0 )) == DIR_NULL )
+	if( (dp = db_diradd( dbip,  newrec.s.s_name, -1, DIR_SOLID, 0 )) == DIR_NULL )
 		return;
-	db_alloc( dp, 1 );
+	db_alloc( dbip, dp, 1 );
 
-	db_putrec( dp, &newrec, 0 );
+	db_put( dbip, dp, &newrec, 0, 1 );
 	/* draw the "inside" solid */
 	drawHobj(dp, ROOT, 0, identity);
 	dmaflag = 1;
