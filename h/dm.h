@@ -127,6 +127,7 @@ struct dm {
   int (*dm_drawVList)();	/* formerly dmr_object */
   int (*dm_setFGColor)();
   int (*dm_setBGColor)();
+  int (*dm_getBGColor)();
   int (*dm_setLineAttr)();	/* currently - linewidth, (not-)dashed */
   int (*dm_setWinBounds)();
   int (*dm_debug)();		/* Set DM debug level */
@@ -167,6 +168,7 @@ struct dm {
 #define DM_DRAW_VLIST(_dmp,_vlist,_persp) _dmp->dm_drawVList(_dmp,_vlist,_persp)
 #define DM_SET_FGCOLOR(_dmp,_r,_g,_b,_strict) _dmp->dm_setFGColor(_dmp,_r,_g,_b,_strict)
 #define DM_SET_BGCOLOR(_dmp,_r,_g,_b) _dmp->dm_setBGColor(_dmp,_r,_g,_b)
+#define DM_GET_BGCOLOR(_dmp,_interp) _dmp->dm_getBGColor(_dmp,_interp)
 #define DM_SET_LINE_ATTR(_dmp,_width,_dashed) _dmp->dm_setLineAttr(_dmp,_width,_dashed)
 #define DM_SET_WIN_BOUNDS(_dmp,_w) _dmp->dm_setWinBounds(_dmp,_w)
 #define DM_DEBUG(_dmp,_lvl) _dmp->dm_debug(_dmp,_lvl)

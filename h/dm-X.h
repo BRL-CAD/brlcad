@@ -22,6 +22,7 @@ struct x_vars {
   unsigned long pixels[NUM_PIXELS];
   vect_t clipmin;
   vect_t clipmax;
+  fastf_t r, g, b;
   struct modifiable_x_vars mvars;
 };
 #endif /* SEEN_DM_X */
