@@ -263,9 +263,9 @@ worker()
 	int	samplenum;
 	int	cpu;			/* our CPU (PSW) number */
 
-	RES_ACQUIRE( &rt_g.res_worker );
+	bu_semaphore_acquire( RT_SEM_WORKER );
 	cpu = nworkers_started++;
-	RES_RELEASE( &rt_g.res_worker );
+	bu_semaphore_release( RT_SEM_WORKER );
 
 	/* The more CPUs at work, the bigger the bites we take */
 	if( per_processor_chunk <= 0 )  per_processor_chunk = npsw;
@@ -274,10 +274,10 @@ worker()
 	RT_CK_RESOURCE( &resource[cpu] );
 
 	while(1)  {
-		RES_ACQUIRE( &rt_g.res_worker );
+		bu_semaphore_acquire( RT_SEM_WORKER );
 		pixel_start = cur_pixel;
 		cur_pixel += per_processor_chunk;
-		RES_RELEASE( &rt_g.res_worker );
+		bu_semaphore_release( RT_SEM_WORKER );
 
 		for( pixelnum = pixel_start; pixelnum < pixel_start+per_processor_chunk; pixelnum++ )  {
 
@@ -365,7 +365,7 @@ worker()
 		}
 	}
 out:
-	RES_ACQUIRE( &rt_g.res_worker );
+	bu_semaphore_acquire( RT_SEM_WORKER );
 	nworkers_finished++;
-	RES_RELEASE( &rt_g.res_worker );
+	bu_semaphore_release( RT_SEM_WORKER );
 }
