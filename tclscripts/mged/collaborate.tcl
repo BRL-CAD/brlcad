@@ -73,6 +73,7 @@ proc collab_join { id } {
 
 	catch { share view $ow $nw }
 	reconfig_gui_default $id
+	view_ring_copy $cid $id
     }
 
     set mged_gui($id,collaborate) 1

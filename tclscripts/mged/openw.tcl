@@ -37,6 +37,10 @@ if {![info exists tk_version]} {
     loadtk
 }
 
+if {![info exists mged_default(max_views)]} {
+    set mged_default(max_views) 10
+}
+
 if {![info exists mged_default(rot_factor)]} {
     set mged_default(rot_factor) 1
 }
@@ -894,33 +898,38 @@ hoc_register_menu_data "ViewRing" "Add View" "Add View"\
           { description "A view ring is a mechanism for managing multiple
 views within a single pane or display manager. Each pane
 has its own view ring where any number of views can be stored.
-The stored views can be removed or traversed." }
-          { see_also "view_ring" } }
+The stored views can be removed or traversed." } }
 .$id.menubar.viewring add cascade -label "Select View" -underline 0 -menu .$id.menubar.viewring.select
 .$id.menubar.viewring add cascade -label "Delete View" -underline 0 -menu .$id.menubar.viewring.delete
 .$id.menubar.viewring add command -label "Next View" -underline 0 -command "view_ring_next $id"
 hoc_register_menu_data "ViewRing" "Next View" "Next View"\
 	{ { synopsis "Go to the next view on the view ring." }
-          { accelerator "Control-n" }
-          { see_also "view_ring" } }
+          { accelerator "Control-n" } }
 .$id.menubar.viewring add command -label "Prev View" -underline 0 -command "view_ring_prev $id"
 hoc_register_menu_data "ViewRing" "Prev View" "Previous View"\
 	{ { synopsis "Go to the previous view on the view ring." }
-          { accelerator "Control-p" }
-          { see_also "view_ring" } }
+          { accelerator "Control-p" } }
 .$id.menubar.viewring add command -label "Last View" -underline 0 -command "view_ring_toggle $id"
 hoc_register_menu_data "ViewRing" "Last View" "Last View"\
 	{ { synopsis "Go to the last view. This can be used to toggle
 between two views." }
-          { accelerator "Control-t" }
-          { see_also "view_ring" } }
+          { accelerator "Control-t" } }
 
-menu .$id.menubar.viewring.select -title "Select View" -tearoff $mged_default(tearoff_menus)\
+#menu .$id.menubar.viewring.select -title "Select View" -tearoff $mged_default(tearoff_menus)\
 	-postcommand "update_view_ring_labels $id"
+menu .$id.menubar.viewring.select -title "Select View" -tearoff $mged_default(tearoff_menus) \
+	-postcommand "view_ring_save_curr $id"
+
 update_view_ring_entries $id s
-set view_ring($id) 1
-menu .$id.menubar.viewring.delete -title "Delete View" -tearoff $mged_default(tearoff_menus)\
+
+set mged_gui($id,views) ""
+set view_ring($id) 0
+set view_ring($id,curr) 0
+set view_ring($id,prev) 0
+#menu .$id.menubar.viewring.delete -title "Delete View" -tearoff $mged_default(tearoff_menus)\
 	-postcommand "update_view_ring_labels $id"
+menu .$id.menubar.viewring.delete -title "Delete View" -tearoff $mged_default(tearoff_menus)
+
 update_view_ring_entries $id d
 
 menu .$id.menubar.settings -title "Settings" -tearoff $mged_default(tearoff_menus)
@@ -2290,8 +2299,8 @@ proc reconfig_gui_default { id } {
     .$id.status.aet configure -textvar mged_display($dm_id,aet)
     .$id.status.ang configure -textvar mged_display($dm_id,ang)
 
-    update_view_ring_entries $id s
-    update_view_ring_entries $id d
+#    update_view_ring_entries $id s
+#    update_view_ring_entries $id d
 #    reconfig_mmenu $id
 }
 
@@ -2473,7 +2482,7 @@ proc set_active_dm { id } {
     trace variable mged_display($mged_gui($id,active_dm),fps) w "ia_changestate $id"
 
     update_mged_vars $id
-    set view_ring($id) [view_ring get]
+#    set view_ring($id) [view_ring get]
 
     _mged_tie $id $mged_gui($id,active_dm)
     reconfig_gui_default $id
@@ -2482,9 +2491,10 @@ proc set_active_dm { id } {
 	setmv $id
     }
 
+    # XXXX this is already done in the call to reconfig_gui_default above
     # update view_ring entries
-    update_view_ring_entries $id s
-    update_view_ring_entries $id d
+#    update_view_ring_entries $id s
+#    update_view_ring_entries $id d
 
     # update adc control panel
     adc_load $id
@@ -2590,186 +2600,295 @@ proc set_dm_win { id } {
     }
 }
 
-proc view_ring_add { id } {
+proc view_ring_add {id} {
     global mged_gui
+    global mged_default
     global view_ring
     global mged_collaborators
 
     winset $mged_gui($id,active_dm)
 
-    # already more than 9 views in the view ring, ignore add
-    if {9 < [llength [_mged_view_ring get -a]]} {
+    # already have 10 views in the view ring, ignore add
+    if {$mged_default(max_views) <= [llength $mged_gui($id,views)]} {
 	return
     }
-    _mged_view_ring add
 
-    set i [lsearch -exact $mged_collaborators $id]
-    if {$i != -1 && "$mged_gui($id,top).ur" == "$mged_gui($id,active_dm)"} {
-	foreach cid $mged_collaborators {
-	    if {"$mged_gui($cid,top).ur" == "$mged_gui($cid,active_dm)"} {
-		update_view_ring_entries $cid s
-		update_view_ring_entries $cid d
-		winset $mged_gui($cid,active_dm)
-		set view_ring($cid) [view_ring get]
-	    }
-	}
+    # calculate a view id for the new view
+    set vid [.$id.menubar.viewring.select entrycget end -value]
+    if {$vid == ""} {
+	set vid 0
     } else {
-	update_view_ring_entries $id s
-	update_view_ring_entries $id d
-	set view_ring($id) [view_ring get]
+	incr vid
     }
-}
 
-proc view_ring_delete { id vid } {
-    global mged_gui
-    global view_ring
-    global mged_collaborators
+    # get view parameters
+    set aet [_mged_ae]
+    set center [_mged_center]
+    set size [_mged_size]
 
-#    if {$mged_gui($id,dm_loc) != "lv"} {
-#	winset $mged_gui($id,active_dm)
-#    }
-    winset $mged_gui($id,active_dm)
+    # save view commands
+    set vcmds "_mged_ae $aet; _mged_center $center; _mged_size $size"
 
-    _mged_view_ring delete $vid
+    # format view parameters for display in menu
+    set aet [format "az=%.2f el=%.2f tw=%.2f" \
+	    [lindex $aet 0] [lindex $aet 1] [lindex $aet 2]]
+    set center [format "cent=(%.3f %.3f %.3f)" \
+	    [lindex $center 0] [lindex $center 1] [lindex $center 2]]
+    set size [format "size=%.3f" $size]
 
-    set i [lsearch -exact $mged_collaborators $id]
-    if { $i != -1 && "$mged_gui($id,top).ur" == "$mged_gui($id,active_dm)"} {
+    if {[lsearch -exact $mged_collaborators $id] != -1} {
 	foreach cid $mged_collaborators {
-	    if {"$mged_gui($cid,top).ur" == "$mged_gui($cid,active_dm)"} {
-		update_view_ring_entries $cid s
-		update_view_ring_entries $cid d
-		winset $mged_gui($cid,active_dm)
-		set view_ring($cid) [view_ring get]
-	    }
+	    # append view commands to view list
+	    lappend mged_gui($cid,views) $vcmds
+
+	    .$cid.menubar.viewring.select add radiobutton -value $vid -variable view_ring($cid) \
+		    -label "$center $size $aet" -command "view_ring_goto $cid $vid"
+	    .$cid.menubar.viewring.delete add command -label "$center $size $aet" \
+		    -command "view_ring_delete $cid $vid"
+
+	    # remember the last selected radiobutton
+	    set view_ring($cid,prev) $view_ring($cid)
+
+	    # update radio buttons
+	    set view_ring($cid) $vid
 	}
     } else {
-	update_view_ring_entries $id s
-	update_view_ring_entries $id d
-	set view_ring($id) [view_ring get]
-    }
-}
+	# append view commands to view list
+	lappend mged_gui($id,views) $vcmds
 
-proc view_ring_goto { id vid } {
-    global mged_gui
-    global view_ring
-    global mged_collaborators
+	.$id.menubar.viewring.select add radiobutton -value $vid -variable view_ring($id) \
+		-label "$center $size $aet" -command "view_ring_goto $id $vid"
+	.$id.menubar.viewring.delete add command -label "$center $size $aet" \
+		-command "view_ring_delete $id $vid"
 
-#    if {$mged_gui($id,dm_loc) != "lv"} {
-#	winset $mged_gui($id,active_dm)
-#    }
-    winset $mged_gui($id,active_dm)
+	# remember the last selected radiobutton
+	set view_ring($id,prev) $view_ring($id)
 
-    _mged_view_ring goto $vid
-
-    set i [lsearch -exact $mged_collaborators $id]
-    if { $i != -1 && "$mged_gui($id,top).ur" == "$mged_gui($id,active_dm)"} {
-	foreach cid $mged_collaborators {
-	    if {"$mged_gui($cid,top).ur" == "$mged_gui($cid,active_dm)"} {
-		set view_ring($cid) $vid
-	    }
-	}
-    } else {
+	# update radio buttons
 	set view_ring($id) $vid
     }
 }
 
-proc view_ring_next { id } {
+proc find_view_index {vid vi_in m} {
+    global mged_default
+    upvar $vi_in vi
+
+    # find view index of menu entry whose value is $vid
+    for {set vi 0} {$vi < $mged_default(max_views)} {incr vi} {
+	if {[$m entrycget $vi -value] == $vid} {
+	    return 1
+	}
+    }
+
+    return 0
+}
+
+#
+# Note - the view index (vi) corresponds to both the menu entry
+#        and the view command list (mged_gui($id,views)) entry.
+#        The view id (vid) is a value that corresponds to one of
+#        the radiobutton entries.
+#
+proc view_ring_set_view {id vid vi} {
     global mged_gui
-    global view_ring
     global mged_collaborators
+    global view_ring
 
-#    if {$mged_gui($id,dm_loc) != "lv"} {
-#	winset $mged_gui($id,active_dm)
-#    }
-    winset $mged_gui($id,active_dm)
-
-    _mged_view_ring next
-
-    set i [lsearch -exact $mged_collaborators $id]
-    if { $i != -1 && "$mged_gui($id,top).ur" == "$mged_gui($id,active_dm)"} {
+    # we're collaborating, so update collaborators
+    if {[lsearch -exact $mged_collaborators $id] != -1 && \
+	    "$mged_gui($id,top).ur" == "$mged_gui($id,active_dm)"} {
 	foreach cid $mged_collaborators {
 	    if {"$mged_gui($cid,top).ur" == "$mged_gui($cid,active_dm)"} {
+		set view_ring($cid,prev) $view_ring($cid)
+		set view_ring($cid) $vid
 		winset $mged_gui($cid,active_dm)
-		set view_ring($cid) [view_ring get]
+		eval [lindex $mged_gui($cid,views) $vi]
 	    }
 	}
     } else {
-	set view_ring($id) [view_ring get]
+	set view_ring($id,prev) $view_ring($id)
+	set view_ring($id) $vid
+	winset $mged_gui($id,active_dm)
+	eval [lindex $mged_gui($id,views) $vi]
     }
 }
 
-proc view_ring_prev { id } {
+proc view_ring_delete {id vid} {
     global mged_gui
+    global mged_default
     global view_ring
     global mged_collaborators
 
-#    if {$mged_gui($id,dm_loc) != "lv"} {
-#	winset $mged_gui($id,active_dm)
-#    }
-    winset $mged_gui($id,active_dm)
+#    winset $mged_gui($id,active_dm)
 
-    _mged_view_ring prev
+    if {![find_view_index $vid vi .$id.menubar.viewring.select]} {
+	return
+    }
 
-    set i [lsearch -exact $mged_collaborators $id]
-    if { $i != -1 && "$mged_gui($id,top).ur" == "$mged_gui($id,active_dm)"} {
+    # we're collaborating, so update collaborators
+    if {[lsearch -exact $mged_collaborators $id] != -1} {
 	foreach cid $mged_collaborators {
-	    if {"$mged_gui($cid,top).ur" == "$mged_gui($cid,active_dm)"} {
-		winset $mged_gui($cid,active_dm)
-		set view_ring($cid) [view_ring get]
-	    }
+	    .$cid.menubar.viewring.select delete $vi
+	    .$cid.menubar.viewring.delete delete $vi
+	    set mged_gui($cid,views) [lreplace $mged_gui($cid,views) $vi $vi]
+	    set view_ring($cid) 0
+	    set view_ring($cid,prev) 0
 	}
     } else {
-	set view_ring($id) [view_ring get]
+	.$id.menubar.viewring.select delete $vi
+	.$id.menubar.viewring.delete delete $vi
+	set mged_gui($id,views) [lreplace $mged_gui($id,views) $vi $vi]
+	set view_ring($id) 0
+	set view_ring($id,prev) 0
     }
 }
 
-proc view_ring_toggle { id } {
+#
+# This gets called when the .$id.menubar.viewring.select menu is posted
+# to capture the current value of view_ring($id) before it gets
+# modified by selecting one of the entries (i.e. view_ring($id) is tied
+# to the radiobuttons).
+#
+proc view_ring_save_curr {id} {
+    global view_ring
+
+    set view_ring($id,curr) $view_ring($id)
+}
+
+proc view_ring_goto {id vid} {
     global mged_gui
+    global mged_default
     global view_ring
     global mged_collaborators
 
-#    if {$mged_gui($id,dm_loc) != "lv"} {
-#	winset $mged_gui($id,active_dm)
-#    }
-    winset $mged_gui($id,active_dm)
+#    winset $mged_gui($id,active_dm)
 
-    _mged_view_ring toggle
+    if {![find_view_index $vid vi .$id.menubar.viewring.select]} {
+	return
+    }
 
-    set i [lsearch -exact $mged_collaborators $id]
-    if { $i != -1 && "$mged_gui($id,top).ur" == "$mged_gui($id,active_dm)"} {
-	foreach cid $mged_collaborators {
-	    if {"$mged_gui($cid,top).ur" == "$mged_gui($cid,active_dm)"} {
-		winset $mged_gui($cid,active_dm)
-		set view_ring($cid) [view_ring get]
-	    }
-	}
-    } else {
-	set view_ring($id) [view_ring get]
+    # Since view_ring(id) has been modified by the radiobutton, we'll put
+    # it back the way it was for now. view_ring_set_view will restore it again.
+    # This is done so that view_ring(id,prev) gets updated properly.
+    set view_ring($id) $view_ring($id,curr)
+    view_ring_set_view $id $vid $vi
+}
+
+proc view_ring_next {id} {
+    global mged_gui
+    global view_ring
+
+#    winset $mged_gui($id,active_dm)
+
+    # find view index of menu entry whose value is $view_ring($id)
+    if {![find_view_index $view_ring($id) vi .$id.menubar.viewring.select]} {
+	return
+    }
+
+    # advance view index to next
+    incr vi
+
+    # see if we have to wrap
+    if {[.$id.menubar.viewring.select index end] < $vi} {
+	set vi 0
+    }
+
+    set vid [.$id.menubar.viewring.select entrycget $vi -value]
+    view_ring_set_view $id $vid $vi
+}
+
+proc view_ring_prev {id} {
+    global mged_gui
+    global view_ring
+
+#    winset $mged_gui($id,active_dm)
+
+    # find view index of menu entry whose value is $view_ring($id)
+    if {![find_view_index $view_ring($id) vi .$id.menubar.viewring.select]} {
+	return
+    }
+
+    # advance view index to next
+    incr vi -1
+
+    # see if we have to wrap
+    if {$vi < 0} {
+	set vi [.$id.menubar.viewring.select index end]
+    }
+
+    set vid [.$id.menubar.viewring.select entrycget $vi -value]
+    view_ring_set_view $id $vid $vi
+}
+
+proc view_ring_toggle {id} {
+    global mged_gui
+    global view_ring
+
+    # validate view_ring(id)
+    if {![find_view_index $view_ring($id) vi .$id.menubar.viewring.select]} {
+	return
+    }
+
+    # validate view_ring(id,prev) and find its corresponding menu view index 
+    if {![find_view_index $view_ring($id,prev) vi_prev .$id.menubar.viewring.select]} {
+	return
+    }
+
+    view_ring_set_view $id $view_ring($id,prev) $vi_prev
+}
+
+proc view_ring_copy {from to} {
+    global mged_gui
+    global view_ring
+
+    # first, delete all menu entries in select and delete menus
+    .$to.menubar.viewring.select delete 0 end
+    .$to.menubar.viewring.delete delete 0 end
+
+    # update list of views
+    set mged_gui($to,views) $mged_gui($from,views)
+
+    # redo the select and delete menus
+    set len [llength $mged_gui($to,views)]
+    for {set i 0} {$i < $len} {incr i} {
+	# get the label from the from_menu
+	set label [.$from.menubar.viewring.select entrycget $i -label]
+
+	# get the value/view_id from the from_menu
+	set vid [.$from.menubar.viewring.select entrycget $i -value]
+
+	# recreate the entries for the select and delete menus
+	.$to.menubar.viewring.select add radiobutton -value $vid -variable view_ring($to) \
+		-label $label -command "view_ring_goto $to $vid"
+	.$to.menubar.viewring.delete add command -label $label \
+		-command "view_ring_delete $to $vid"
     }
 }
 
 proc update_view_ring_entries { id m } {
     global view_ring
 
-    set views [view_ring get -a]
-    set llen [llength $views]
+    if {0} {
+	set views [view_ring get -a]
+	set llen [llength $views]
 
-    if {$m == "s"} {
-	set w .$id.menubar.viewring.select
-	$w delete 0 end
-	for {set i 0} {$i < $llen} {incr i} {
-	    $w add radiobutton -value [lindex $views $i] -variable view_ring($id)\
-		    -label [lindex $views $i] -command "view_ring_goto $id [lindex $views $i]"
+	if {$m == "s"} {
+	    set w .$id.menubar.viewring.select
+	    $w delete 0 end
+	    for {set i 0} {$i < $llen} {incr i} {
+		$w add radiobutton -value [lindex $views $i] -variable view_ring($id)\
+			-label [lindex $views $i] -command "view_ring_goto $id [lindex $views $i]"
+	    }
+	} elseif {$m == "d"} {
+	    set w .$id.menubar.viewring.delete
+	    $w delete 0 end
+	    for {set i 0} {$i < $llen} {incr i} {
+		$w add command -label [lindex $views $i]\
+			-command "view_ring_delete $id [lindex $views $i]"
+	    }
+	} else {
+	    puts "Usage: update_view_ring_entries w s|d"
 	}
-    } elseif {$m == "d"} {
-	set w .$id.menubar.viewring.delete
-	$w delete 0 end
-	for {set i 0} {$i < $llen} {incr i} {
-	    $w add command -label [lindex $views $i]\
-		    -command "view_ring_delete $id [lindex $views $i]"
-	}
-    } else {
-	puts "Usage: update_view_ring_entries w s|d"
     }
 }
 
@@ -2777,38 +2896,40 @@ proc update_view_ring_labels { id } {
     global mged_gui
     global view_ring
 
-    if {[_mged_opendb] == ""} {
-	error "No database has been opened!"
+    if {0} {
+	if {[_mged_opendb] == ""} {
+	    error "No database has been opened!"
+	}
+
+	winset $mged_gui($id,active_dm)
+	set view_ring($id) [view_ring get]
+	set views [view_ring get -a]
+	set llen [llength $views]
+
+	# we need to also save the previous view so that
+	# toggle will continue to work
+	view_ring toggle
+	set prev [view_ring get]
+
+	set ws .$id.menubar.viewring.select
+	set wd .$id.menubar.viewring.delete
+	for {set i 0} {$i < $llen} {incr i} {
+	    view_ring goto [lindex $views $i]
+	    set aet [view aet]
+	    set aet [format "az=%.2f el=%.2f tw=%.2f"\
+		    [lindex $aet 0] [lindex $aet 1] [lindex $aet 2]]
+	    set center [view center]
+	    set center [format "cent=(%.3f %.3f %.3f)"\
+		    [lindex $center 0] [lindex $center 1] [lindex $center 2]]
+	    set size [format "size=%.3f" [view size]]
+	    $ws entryconfigure $i -label "$center $size $aet"
+	    $wd entryconfigure $i -label "$center $size $aet"
+	}
+
+	# restore both previous and current views
+	view_ring goto $prev
+	view_ring goto $view_ring($id)
     }
-
-    winset $mged_gui($id,active_dm)
-    set view_ring($id) [view_ring get]
-    set views [view_ring get -a]
-    set llen [llength $views]
-
-    # we need to also save the previous view so that
-    # toggle will continue to work
-    view_ring toggle
-    set prev [view_ring get]
-
-    set ws .$id.menubar.viewring.select
-    set wd .$id.menubar.viewring.delete
-    for {set i 0} {$i < $llen} {incr i} {
-	view_ring goto [lindex $views $i]
-	set aet [view aet]
-	set aet [format "az=%.2f el=%.2f tw=%.2f"\
-		[lindex $aet 0] [lindex $aet 1] [lindex $aet 2]]
-	set center [view center]
-	set center [format "cent=(%.3f %.3f %.3f)"\
-		[lindex $center 0] [lindex $center 1] [lindex $center 2]]
-	set size [format "size=%.3f" [view size]]
-	$ws entryconfigure $i -label "$center $size $aet"
-	$wd entryconfigure $i -label "$center $size $aet"
-    }
-
-    # restore both previous and current views
-    view_ring goto $prev
-    view_ring goto $view_ring($id)
 }
 
 proc toggle_status_bar { id } {
