@@ -165,6 +165,7 @@ do_run( a, b )
 void
 worker()
 {
+	/* breaks when a is static (default for LOCAL) or global, okay if auto */
 	LOCAL struct application a;
 	LOCAL vect_t point;		/* Ref point on eye or view plane */
 	LOCAL vect_t colorsum;
@@ -174,6 +175,7 @@ worker()
 	RES_ACQUIRE( &rt_g.res_worker );
 	cpu = nworkers++;
 	RES_RELEASE( &rt_g.res_worker );
+/*printf("cpu = %d, &resource[0] = 0x%x\n", cpu, &resource[0]);*/
 
 	resource[cpu].re_cpu = cpu;
 
@@ -186,7 +188,9 @@ worker()
 			break;
 		/* Note: ap.... may not be valid until first time here */
 		a = ap;				/* struct copy */
+/*		bcopy( &ap, &a, sizeof(a) );*/
 		a.a_resource = &resource[cpu];
+/*printf("cpu = %d, &resource[0] = 0x%x\n", cpu, &resource[0]);*/
 		if( incr_mode )  {
 			register int i = 1<<incr_level;
 			a.a_x = com%i;
