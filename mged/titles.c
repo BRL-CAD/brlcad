@@ -385,8 +385,8 @@ dotitles()
 		point_t	center_model;
 
 		VSET(pt1, 
-		    (curs_x / 2047.0) *Viewscale*base2local,
-		    (curs_y / 2047.0) *Viewscale*base2local, 0.0);
+		    (curs_x / 2047.0) *Viewscale,
+		    (curs_y / 2047.0) *Viewscale, 0.0);
 		VSET(center_model, 
 		    -toViewcenter[MDX], -toViewcenter[MDY],
 		    -toViewcenter[MDZ]);
@@ -396,7 +396,7 @@ dotitles()
 " curs:  a1=%.1f,  a2=%.1f,  dst=%.3f,  cent=(%.3f, %.3f)",
 			angle1 * radtodeg, angle2 * radtodeg,
 			(c_tdist / 2047.0) *Viewscale*base2local,
-			pt3[X], pt3[Y]);
+			pt3[X]*base2local, pt3[Y]*base2local);
 		dmp->dmr_puts( &linebuf[0], TITLE_XBASE, TITLE_YBASE + TEXT1_DY, 1, DM_YELLOW );
 	}
 	else if( illump != SOLID_NULL )  {
