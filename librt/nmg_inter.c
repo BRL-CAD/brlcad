@@ -293,14 +293,17 @@ struct vertexuse	*vu;
 	fastf_t		dist;
 	int		status;
 	point_t		endpt;
+	int		ret;
 
 	NMG_CK_INTER_STRUCT(is);
 	NMG_CK_EDGEUSE(eu);
 	NMG_CK_VERTEXUSE(vu);
 
 	/* Topology check */
-	if( vu->v_p == eu->vu_p->v_p )  return 1;
-	if( vu->v_p == eu->eumate_p->vu_p->v_p )  return 1;
+	if( vu->v_p == eu->vu_p->v_p || vu->v_p == eu->eumate_p->vu_p->v_p )  {
+		ret = 1;
+		goto out;
+	}
 
 	/* XXX a 2d formulation would be better! */
 #if 0
@@ -317,21 +320,28 @@ struct vertexuse	*vu;
 		vu->v_p->vg_p->coord, &is->tol );
 	switch( status )  {
 	default:
+		ret = 0;
 		break;
 	case 1:
 		/* pt is at start of edge */
 		nmg_jv( vu->v_p, eu->vu_p->v_p );
-		return 1;
+		ret = 1;
+		break;
 	case 2:
 		/* pt is at end of edge */
 		nmg_jv( vu->v_p, eu->eumate_p->vu_p->v_p );
-		return 1;
+		ret = 1;
+		break;
 	case 3:
 		/* pt is in interior of edge, break edge */
 		(void)nmg_ebreak( vu->v_p, eu );
-		return 2;
+		ret = 2;
+		break;
 	}
-	return 0;
+out:
+	if (rt_g.NMG_debug & DEBUG_POLYSECT)
+		rt_log("nmg_isect_edge2p_vert2p(, eu=x%x, vu=x%x) ret=%d\n", eu, vu, ret);
+	return ret;
 }
 
 /*
@@ -420,13 +430,15 @@ struct faceuse *fu;
 
 	NMG_CK_INTER_STRUCT(bs);
 	NMG_CK_VERTEXUSE(vu);
+	NMG_CK_VERTEX(vu->v_p);
 	NMG_CK_FACEUSE(fu);
 
 	if (rt_g.NMG_debug & DEBUG_POLYSECT)
-		rt_log("nmg_isect_3vertex_3face(, vu=x%x, fu=x%x)\n", vu, fu);
+		rt_log("nmg_isect_3vertex_3face(, vu=x%x, fu=x%x) v=x%x\n", vu, fu, vu->v_p);
 
 	/* check the topology first */	
 	if (vup=nmg_find_v_in_face(vu->v_p, fu)) {
+		if (rt_g.NMG_debug & DEBUG_POLYSECT) rt_log("\tvu lies in face (topology 1)\n");
 		(void)nmg_tbl(bs->l1, TBL_INS_UNIQUE, &vu->l.magic);
 		(void)nmg_tbl(bs->l2, TBL_INS_UNIQUE, &vup->l.magic);
 		return;
@@ -439,11 +451,15 @@ struct faceuse *fu;
 	pt = vu->v_p->vg_p->coord;
 	dist = DIST_PT_PLANE(pt, fu->f_p->fg_p->N);
 
-	if ( !NEAR_ZERO(dist, bs->tol.dist) )  return;
-
-	/* The point lies on the plane of the face, by geometry. */
+	if ( !NEAR_ZERO(dist, bs->tol.dist) )  {
+		if (rt_g.NMG_debug & DEBUG_POLYSECT) rt_log("\tvu not on face (geometry)\n");
+		return;
+	}
 
 	/*
+	 *  The point lies on the plane of the face, by geometry.
+	 *  This is now a 2-D problem.
+	 *
 	 *  Intersect this point with all the edges of the face.
 	 *  Note that no nmg_tbl() calls will be done during vert2p_face2p,
 	 *  which is exactly what is needed here.
@@ -452,6 +468,7 @@ struct faceuse *fu;
 
 	/* Re-check the topology */
 	if (vup=nmg_find_v_in_face(vu->v_p, fu)) {
+		if (rt_g.NMG_debug & DEBUG_POLYSECT) rt_log("\tvu lies in face (topology 2)\n");
 		(void)nmg_tbl(bs->l1, TBL_INS_UNIQUE, &vu->l.magic);
 		(void)nmg_tbl(bs->l2, TBL_INS_UNIQUE, &vup->l.magic);
 		return;
