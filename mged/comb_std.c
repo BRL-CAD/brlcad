@@ -55,7 +55,9 @@ struct bool_tree_node	*comb_bool_tree;
  *		Create a leaf node for a Boolean tree
  *
  */
-struct bool_tree_node *bt_create_leaf (char *object_name)
+struct bool_tree_node *
+bt_create_leaf(object_name)
+char *object_name;
 {
     struct bool_tree_node	*b;
     char			*sp;
@@ -82,9 +84,10 @@ struct bool_tree_node *bt_create_leaf (char *object_name)
  *		Create a leaf node for a Boolean tree
  *
  */
-struct bool_tree_node *bt_create_internal (int opn,
-		    struct bool_tree_node *opd1,
-		    struct bool_tree_node *opd2)
+struct bool_tree_node *
+bt_create_internal(opn, opd1, opd2)
+int opn;
+struct bool_tree_node *opd1, *opd2;
 {
     struct bool_tree_node	*b;
 
@@ -121,8 +124,8 @@ struct bool_tree_node *bt_create_internal (int opn,
  *
  *	Syntax: c [-gr] comb_name [boolean_expr]
  */
-int f_comb_std (argc, argv)
-
+int
+f_comb_std (argc, argv)
 int	argc;
 char	**argv;
 
@@ -224,7 +227,8 @@ char	**argv;
  *	Input function for LEX(1) scanner to read Boolean expressions
  *	from a variable-length string.
  */
-int bool_input_from_vls ()
+int
+bool_input_from_vls()
 {
     if (*bool_bufp == '\0')
 	return (0);
@@ -238,10 +242,9 @@ int bool_input_from_vls ()
  *	Unput function for LEX(1) scanner to read Boolean expressions
  *	from a variable-length string.
  */
-void bool_unput_from_vls (ch)
-
-int	ch;
-
+void
+bool_unput_from_vls(ch)
+int ch;
 {
     *--bool_bufp = ch;
 }
