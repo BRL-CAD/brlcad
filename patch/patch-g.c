@@ -72,6 +72,7 @@ void	mk_cyladdmember();
 void	proc_donut();
 
 static struct bn_tol	tol;
+static int scratch_num;
 
 static char usage[] = "\
 Usage: patch-g [options] > model.g\n\
@@ -133,6 +134,8 @@ char	*argv[];
         tol.para = 1 - tol.perp;
 
 	conv_mm2in = 1.0/25.4; /* convert mm to inches */
+
+	scratch_num = 0;
 
 	if ( isatty(fileno(stdout)) ){
 		(void)fputs("attempting to send binary output to tty, aborting!\n",stderr);
@@ -2786,7 +2789,6 @@ int cnt;
 	char shflg,mrflg,ctflg;
 	int count=0;
 	int make_basic_solids;
-	int scratch_num;
 	char scratch_name1[17];
 	char scratch_name2[17];
 	char scratch_name3[17];
