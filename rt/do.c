@@ -611,6 +611,7 @@ int framenumber;
 		bu_log("rt ERROR: No solids\n");
 		exit(3);
 	}
+
 	if (rt_verbosity & VERBOSE_VIEWDETAIL)
 		bu_log("Model: X(%g,%g), Y(%g,%g), Z(%g,%g)\n",
 			rtip->mdl_min[X], rtip->mdl_max[X],

@@ -14,6 +14,13 @@
  *
  *  @(#)$Header$ (BRL)
  */
+struct light_pt {
+	point_t	lp_pt;
+	vect_t	lp_norm;
+};
+#define LPT_MAGIC 0x327649
+#define MAX_LIGHT_SAMPLES 128
+
 struct light_specific {
 	struct bu_list	l;	/* doubly linked list */
 	/* User-specified fields */
@@ -40,6 +47,8 @@ struct light_specific {
 	vect_t	lt_aim;		/* Unit vector - light beam direction */
 	char	*lt_name;	/* identifying string */
 	struct	region *lt_rp;	/* our region of origin */
+	int	lt_pt_count;
+	struct light_pt lt_sample_pts[MAX_LIGHT_SAMPLES];
 };
 #define LIGHT_NULL	((struct light_specific *)0)
 #define LIGHT_MAGIC	0xdbddbdb7
@@ -49,7 +58,7 @@ extern struct light_specific	LightHead;
 
 extern void light_cleanup(void);
 extern void light_maker(int num, mat_t v2m);
-extern int light_init(void);
+extern int light_init(struct application *ap);
 
 RT_EXTERN(void light_obs, (struct application *ap,
 				  struct shadework *swp, int have) );

@@ -1382,7 +1382,7 @@ bu_log("mallocing curr_float_frame\n");
 	default:
 		rt_bomb("bad lighting model #");
 	}
-	ap->a_rt_i->rti_nlights = light_init();
+	ap->a_rt_i->rti_nlights = light_init(ap);
 
 	/* Create integer version of background color */
 	inonbackground[0] = ibackground[0] = background[0] * 255;
