@@ -1511,10 +1511,17 @@ const struct db_i		*dbip;
 		double	rh;	/* r2 */
 	} rec;
 
+
 	BU_CK_EXTERNAL( ep );
 	BU_ASSERT_LONG( ep->ext_nbytes, ==, SIZEOF_NETWORK_DOUBLE * (2*3+2) );
 
 	RT_CK_DB_INTERNAL( ip );
+
+	if (bn_mat_is_non_unif(mat)) {
+	    bu_log("------------------ WARNING ----------------\n\
+     Non-uniform matrix transform on torus.  Ignored\n");
+	}
+
 
 	ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	ip->idb_type = ID_TOR;
