@@ -75,8 +75,8 @@ struct txt_specific {
 	int	tx_w;		/* Width of texture in pixels */
 	int	tx_fw;		/* File width of texture in pixels */
 	int	tx_n;		/* Number of scanlines */
-	char	*tx_pixels;	/* Pixel holding area */
 	int	tx_trans_valid;	/* boolean: is tx_transp valid ? */
+	struct rt_mapped_file	*mp;
 };
 #define TX_NULL	((struct txt_specific *)0)
 #define TX_O(m)	offsetof(struct txt_specific, m)
@@ -121,50 +121,6 @@ char	*value;
 	}
 }
 
-
-/*
- *			T X T _ R E A D
- *
- *  Load the texture into memory.
- *  Returns 0 on failure, 1 on success.
- */
-HIDDEN int
-txt_read( tp )
-register struct txt_specific *tp;
-{
-	char *linebuf;
-	register FILE *fp;
-	register int	i;
-	register int	got;
-
-	if( (fp = fopen(tp->tx_file, "r")) == NULL )  {
-		rt_log("txt_read(%s):  can't open\n", tp->tx_file);
-		tp->tx_file[0] = '\0';
-		return(0);
-	}
-	linebuf = rt_malloc(tp->tx_fw*3,"texture file line");
-	tp->tx_pixels = rt_malloc(
-		tp->tx_w * tp->tx_n * 3,
-		tp->tx_file );
-	for( i=0; i<tp->tx_n; i++ )  {
-		got = fread(linebuf, 1, tp->tx_fw*3, fp);
-		if( got != tp->tx_fw*3 ) {
-			rt_log("txt_read: read error on %s\n", tp->tx_file);
-			rt_log("txt_read: wanted %d, got %d on line %d\n", tp->tx_fw*3, got, i);
-			(void)fclose(fp);
-			rt_free( tp->tx_pixels, tp->tx_file );
-			rt_free(linebuf,"file line, error");
-			tp->tx_file[0] = '\0';
-			tp->tx_n = -1;
-			return(0);
-		}
-		bcopy( linebuf, tp->tx_pixels + i*tp->tx_w*3, tp->tx_w*3 );
-	}
-	(void)fclose(fp);
-	rt_free(linebuf,"texture file line");
-	return(1);	/* OK */
-}
-
 /*
  *  			T X T _ R E N D E R
  *  
@@ -193,8 +149,7 @@ char	*dp;
 	 * If no texture file present, or if
 	 * texture isn't and can't be read, give debug colors
 	 */
-	if( tp->tx_file[0] == '\0'  ||
-	    ( tp->tx_pixels == (char *)0 && txt_read(tp) == 0 ) )  {
+	if( tp->tx_file[0] == '\0' || !tp->mp )  {
 		VSET( swp->sw_color, swp->sw_uv.uv_u, 0, swp->sw_uv.uv_v );
 		return(1);
 	}
@@ -229,8 +184,8 @@ char	*dp;
 	for( line=0; line<dy; line++ )  {
 		register unsigned char *cp;
 		register unsigned char *ep;
-		cp = (unsigned char *)(tp->tx_pixels +
-		     (y+line) * tp->tx_w * 3  +  x * 3);
+		cp = ((unsigned char *)(tp->mp->buf)) +
+		     (y+line) * tp->tx_w * 3  +  x * 3;
 		ep = cp + 3*dx;
 		while( cp < ep )  {
 			r += *cp++;
@@ -291,15 +246,14 @@ char			**dpp;
 	if( tp->tx_w < 0 )  tp->tx_w = 512;
 	if( tp->tx_n < 0 )  tp->tx_n = tp->tx_w;
 	if( tp->tx_fw < 0 )  tp->tx_fw = tp->tx_w;
-	tp->tx_pixels = (char *)0;
 
 	if( tp->tx_trans_valid )
 		rp->reg_transmit = 1;
 
-	if( txt_read(tp) == 0 )
-		return(-1);
-	else
-		return(1);
+	if( tp->tx_file[0] == '\0' )  return -1;	/* FAIL, no file */
+	if( tp->mp = rt_open_mapped_file( tp->tx_file, NULL ) )
+		return 1;				/* OK */
+	return -1;					/* FAIL */
 }
 
 /*
@@ -319,9 +273,10 @@ HIDDEN void
 txt_free( cp )
 char *cp;
 {
-	if( ((struct txt_specific *)cp)->tx_pixels )
-		rt_free( ((struct txt_specific *)cp)->tx_pixels,
-			((struct txt_specific *)cp)->tx_file );
+	struct txt_specific *tp =
+		(struct txt_specific *)cp;
+
+	if( tp->mp )  rt_close_mapped_file( tp->mp );
 	rt_free( cp, "txt_specific" );
 }
 
@@ -509,8 +464,7 @@ char	*dp;
 	 * If no texture file present, or if
 	 * texture isn't and can't be read, give debug color.
 	 */
-	if( tp->tx_file[0] == '\0'  ||
-	    ( tp->tx_pixels == (char *)0 && txt_read(tp) == 0 ) )  {
+	if( tp->tx_file[0] == '\0' || !tp->mp )  {
 		VSET( swp->sw_color, swp->sw_uv.uv_u, 0, swp->sw_uv.uv_v );
 		return(1);
 	}
@@ -534,8 +488,8 @@ char	*dp;
 	/* Find our RGB value */
 	i = swp->sw_uv.uv_u * (tp->tx_w-1);
 	j = swp->sw_uv.uv_v * (tp->tx_n-1);
-	cp = (unsigned char *)(tp->tx_pixels +
-	     (j) * tp->tx_w * 3  +  i * 3);
+	cp = ((unsigned char *)(tp->mp->buf)) +
+	     (j) * tp->tx_w * 3  +  i * 3;
 	pertU = ((fastf_t)(*cp) - 128.0) / 128.0;
 	pertV = ((fastf_t)(*(cp+2)) - 128.0) / 128.0;
 
