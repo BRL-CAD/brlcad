@@ -58,6 +58,18 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #include "nmg.h"
 #include "raytrace.h"
 
+/* XXX move to plane.c */
+double
+rt_dist_pt3_pt3( a, b )
+CONST point_t	a;
+CONST point_t	b;
+{
+	vect_t	diff;
+
+	VSUB2( diff, a, b );
+	return MAGNITUDE( diff );
+}
+
 #define ISECT_NONE	0
 #define ISECT_SHARED_V	1
 #define ISECT_SPLIT1	2
@@ -3227,14 +3239,15 @@ CONST struct rt_tol	*tol;
  * XXX This is a lame name.
  */
 struct vertexuse *
-nmg_search_v_eg( eu, second, eg1, eg2, hit_vu )
+nmg_search_v_eg( eu, second, eg1, eg2, hit_vu, tol )
 CONST struct edgeuse		*eu;
 int				second;		/* 2nd vu on eu, not 1st */
 CONST struct edge_g		*eg1;
 CONST struct edge_g		*eg2;
 struct vertexuse		*hit_vu;	/* often will be NULL */
+CONST struct rt_tol		*tol;
 {
-	CONST struct vertex	*v;
+	struct vertex		*v;
 	CONST struct vertexuse	*vu;
 	struct vertexuse	*vu1;
 	int			seen1 = 0;
@@ -3243,6 +3256,7 @@ struct vertexuse		*hit_vu;	/* often will be NULL */
 	NMG_CK_EDGEUSE(eu);
 	NMG_CK_EDGE_G(eg1);
 	NMG_CK_EDGE_G(eg2);
+	RT_CK_TOL(tol);
 
 	if( second )  {
 		vu = RT_LIST_PNEXT_CIRC(edgeuse, eu)->vu_p;
@@ -3275,14 +3289,39 @@ struct vertexuse		*hit_vu;	/* often will be NULL */
 			vu, v, hit_vu, hit_vu->v_p );
 		VPRINT("vu ", vu->v_p->vg_p->coord);
 		VPRINT("hit", hit_vu->v_p->vg_p->coord);
-		rt_log("eg1: vu dist=%g, hit dist=%g\n",
+		rt_log("dist vu-hit=%g, equal=%d\n",
+			rt_dist_pt3_pt3(vu->v_p->vg_p->coord,
+				hit_vu->v_p->vg_p->coord),
+			rt_pt3_pt3_equal(vu->v_p->vg_p->coord,
+				hit_vu->v_p->vg_p->coord, tol)
+		    );
+		rt_log("eg1: line/ vu dist=%g, hit dist=%g\n",
 			rt_dist_line3_pt3( eg1->e_pt, eg1->e_dir, vu->v_p->vg_p->coord ),
 			rt_dist_line3_pt3( eg1->e_pt, eg1->e_dir, hit_vu->v_p->vg_p->coord ) );
-		rt_log("eg2: vu dist=%g, hit dist=%g\n",
+		rt_log("eg2: line/ vu dist=%g, hit dist=%g\n",
 			rt_dist_line3_pt3( eg2->e_pt, eg2->e_dir, vu->v_p->vg_p->coord ),
 			rt_dist_line3_pt3( eg2->e_pt, eg2->e_dir, hit_vu->v_p->vg_p->coord ) );
 		nmg_pr_eg(eg1, 0);
 		nmg_pr_eg(eg2, 0);
+
+		if( rt_dist_pt3_pt3(vu->v_p->vg_p->coord,
+		      hit_vu->v_p->vg_p->coord) < 10 * tol->dist )  {
+			struct edgeuse	*eu0;
+			rt_log("NOTICE: The intersection of two lines has resulted in 2 different intersect points\n");
+			rt_log("  Since the two points are 'close', they are being fused.\n");
+
+			/* See if there is an edge between them */
+			eu0 = nmg_findeu(hit_vu->v_p, v, (struct shell *)NULL,
+				(struct edgeuse *)NULL, 0);
+			if( eu0 )  {
+				rt_log("DANGER: a 0-length edge is being created eu0=x%x\n", eu0);
+			}
+
+			nmg_jv(hit_vu->v_p, v);
+			/* XXX Kill all uses of the 0-length edge? */
+			return hit_vu;
+		}
+
 		rt_bomb("nmg_search_v_eg() two different vertices for intersect point?\n");
 	}
 	return hit_vu;
@@ -3420,8 +3459,8 @@ colinear:
 				NMG_CK_EDGEUSE(*eu1);
 				if( (*eu1)->e_p->eg_p != *eg1 )  continue;
 				/* Both verts of *eu1 lie on line *eg1 */
-				hit_vu = nmg_search_v_eg( *eu1, 0, *eg1, is->on_eg, hit_vu );
-				hit_vu = nmg_search_v_eg( *eu1, 1, *eg1, is->on_eg, hit_vu );
+				hit_vu = nmg_search_v_eg( *eu1, 0, *eg1, is->on_eg, hit_vu, &(is->tol) );
+				hit_vu = nmg_search_v_eg( *eu1, 1, *eg1, is->on_eg, hit_vu, &(is->tol) );
 			}
 			/* hit_vu will be non-NULL if there is 1 topological intersection */
 		}
