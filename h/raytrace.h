@@ -1855,11 +1855,11 @@ RT_EXTERN(void			nmg_vertex_gv, (struct vertex *v, CONST point_t pt) );
 RT_EXTERN(void			nmg_vertex_g, (struct vertex *v, fastf_t x, fastf_t y, fastf_t z) );
 RT_EXTERN(void			nmg_edge_g, (struct edge *e) );
 RT_EXTERN(void			nmg_use_edge_g, (struct edge *e, struct edge_g *eg) );
-RT_EXTERN(void			nmg_loop_g, (struct loop *l) );
-RT_EXTERN(void			nmg_face_g, (struct faceuse *fu, plane_t p) );
-RT_EXTERN(void			nmg_face_bb, (struct face *f) );
-RT_EXTERN(void			nmg_shell_a, (struct shell *s) );
-RT_EXTERN(void			nmg_region_a, (struct nmgregion *r) );
+RT_EXTERN(void			nmg_loop_g, (struct loop *l, CONST struct rt_tol *tol) );
+RT_EXTERN(void			nmg_face_g, (struct faceuse *fu, CONST plane_t p) );
+RT_EXTERN(void			nmg_face_bb, (struct face *f, CONST struct rt_tol *tol) );
+RT_EXTERN(void			nmg_shell_a, (struct shell *s, CONST struct rt_tol *tol) );
+RT_EXTERN(void			nmg_region_a, (struct nmgregion *r, CONST struct rt_tol *tol) );
 /*	DEMOTE routines */
 RT_EXTERN(int			nmg_demote_lu, (struct loopuse *lu) );
 RT_EXTERN(int			nmg_demote_eu, (struct edgeuse *eu) );
@@ -2000,7 +2000,7 @@ RT_EXTERN(void			nmg_euprint, (CONST char *str, CONST struct edgeuse *eu) );
 RT_EXTERN(int			nmg_tbl, (struct nmg_ptbl *b, int func, long *p) );
 RT_EXTERN(void			nmg_purge_unwanted_intersection_points, (struct nmg_ptbl *vert_list, CONST struct faceuse *fu, CONST struct rt_tol *tol));
 RT_EXTERN(int			nmg_in_or_ref, (struct vertexuse *vu, struct nmg_ptbl *b) );
-RT_EXTERN(void			nmg_rebound, (struct model *m) );
+RT_EXTERN(void			nmg_rebound, (struct model *m, CONST struct rt_tol *tol) );
 RT_EXTERN(void			nmg_count_shell_kids, (CONST struct model *m, unsigned long *total_wires, unsigned long *total_faces, unsigned long *total_points));
 RT_EXTERN(void			nmg_stash_model_to_file, (CONST char *filename,
 				CONST struct model *m, CONST char *title) );
