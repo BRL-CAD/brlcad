@@ -31,14 +31,16 @@ struct txt_specific {
 	int	tx_fw;		/* File width of texture in pixels */
 	int	tx_l;		/* Length of pixels in lines */
 	char	*tx_pixels;	/* Pixel holding area */
+	unsigned char tx_transp[4];	/* RGB for transparency */
 };
 #define TX_NULL	((struct txt_specific *)0)
 
 struct matparse txt_parse[] = {
-	"file",		(int)(TX_NULL->tx_file),	"%s",
+	"file",		(int)&(TX_NULL->tx_file[0]),	"%s",
 	"w",		(int)&(TX_NULL->tx_w),		"%d",
 	"l",		(int)&(TX_NULL->tx_l),		"%d",
 	"fw",		(int)&(TX_NULL->tx_fw),		"%d",
+	"transp",	(int)&(TX_NULL->tx_transp[0]),	"%C",
 	(char *)0,	0,				(char *)0
 };
 
@@ -153,17 +155,49 @@ struct partition *pp;
 	r = g = b = 0;
 	for( line=0; line<dy; line++ )  {
 		register unsigned char *cp;
-		register int i;
+		register unsigned char *ep;
 		cp = (unsigned char *)(tp->tx_pixels +
 		     (y+line) * tp->tx_w * 3  +  x * 3);
-		for( i=0; i<dx; i++ )  {
+		ep = cp + 3*dx;
+		while( cp < ep )  {
 			r += *cp++;
 			g += *cp++;
 			b += *cp++;
 		}
 	}
-	f = 1.0 / ( 255 * dx * dy );
-	VSET( ap->a_color, r * f, g * f, b * f );
+	r /= (dx*dy);
+	g /= (dx*dy);
+	b /= (dx*dy);
+	/*
+	 * Transparency mapping is enabled, and we hit a transparent spot.
+	 * Fire another ray to determine the actual color
+	 */
+	if( tp->tx_transp[3] == 0 ||
+	    r != tp->tx_transp[0] ||
+	    g != tp->tx_transp[1] ||
+	    b != tp->tx_transp[2] )  {
+		f = 1.0 / 255.0;
+		VSET( ap->a_color, r * f, g * f, b * f );
+		return(1);
+	}
+	if( pp->pt_outhit->hit_dist >= INFINITY )  {
+		rt_log("txt_render:  transparency on infinite object?\n");
+		VSET( ap->a_color, 0, 1, 0 );
+		return(1);
+	}
+	if( (ap->a_level%100) > 5 )  {
+		VSET( ap->a_color, .1, .1, .1);
+		return(1);
+	}
+	{
+		auto struct application sub_ap;
+		sub_ap = *ap;		/* struct copy */
+		sub_ap.a_level = ap->a_level+1;
+		VJOIN1( sub_ap.a_ray.r_pt, ap->a_ray.r_pt,
+			pp->pt_outhit->hit_dist, ap->a_ray.r_dir );
+		(void)rt_shootray( &sub_ap );
+		VMOVE( ap->a_color, sub_ap.a_color );
+	}
 	return(1);
 }
 
@@ -187,6 +221,7 @@ register struct region *rp;
 	if( tp->tx_l < 0 )  tp->tx_l = tp->tx_w;
 	if( tp->tx_fw < 0 )  tp->tx_fw = tp->tx_w;
 	tp->tx_pixels = (char *)0;
+mlib_print("txt_setup", txt_parse, (char *)tp);
 	return(1);
 }
 

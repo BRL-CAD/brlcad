@@ -20,6 +20,7 @@ static char RCSmaterial[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include <stdio.h>
+#include <ctype.h>
 #include "../h/machine.h"
 #include "../h/vmath.h"
 #include "../h/raytrace.h"
@@ -79,6 +80,33 @@ def:
 }
 
 /*
+ *			M L I B _ R G B
+ *
+ *  Parse a slash (or other non-numeric, non-whitespace) separated string
+ *  as 3 decimal (or octal) bytes.  Useful for entering rgb values in
+ *  mlib_parse as 4/5/6.  Element [3] is made non-zero to indicate
+ *  that a value has been loaded.
+ */
+void
+mlib_rgb( rgb, str )
+register unsigned char *rgb;
+register char *str;
+{
+	if( !isdigit(*str) )  return;
+	rgb[0] = atoi(str);
+	rgb[1] = rgb[2] = 0;
+	rgb[3] = 1;
+	while( *str )
+		if( !isdigit(*str++) )  break;
+	if( !*str )  return;
+	rgb[1] = atoi(str);
+	while( *str )
+		if( !isdigit(*str++) )  break;
+	if( !*str )  return;
+	rgb[2] = atoi(str);
+}
+
+/*
  *			M L I B _ P A R S E
  */
 mlib_parse( cp, parsetab, base )
@@ -117,12 +145,14 @@ char *base;		/* base address of users structure */
 
 		/* Lookup name in parsetab table */
 		for( mp = parsetab; mp->mp_name != (char *)0; mp++ )  {
-			if( strcmp( mp->mp_name, name ) == 0 )  {
+			if( strcmp( mp->mp_name, name ) != 0 )
+				continue;
+			if( mp->mp_fmt[1] == 'C' )
+				mlib_rgb( base + mp->mp_offset, value );
+			else
 				(void)sscanf( value,
-					mp->mp_fmt, 
-					base + mp->mp_offset );
-				goto out;
-			}
+					mp->mp_fmt, base + mp->mp_offset );
+			goto out;
 		}
 		rt_log("mlib_parse:  %s=%s not a valid arg\n", name, value);
 out:		;
@@ -154,6 +184,14 @@ char *base;		/* base address of users structure */
 			rt_log( " %s=%f\n", mp->mp_name,
 				*((double *)(base + mp->mp_offset)) );
 			break;
+		case 'C':
+			{
+				register unsigned char *cp =
+					(unsigned char *)(base+mp->mp_offset);
+				rt_log(" %s=%d/%d/%d(%d)\n", mp->mp_name,
+					cp[0], cp[1], cp[2], cp[3] );
+				break;
+			}
 		default:
 			rt_log( " %s=%s??\n", mp->mp_name,
 				mp->mp_fmt );
