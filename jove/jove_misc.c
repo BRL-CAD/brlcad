@@ -4,6 +4,9 @@
  * $Revision$
  *
  * $Log$
+ * Revision 11.4  1998/08/23  01:33:56  mike
+ * Added support for page up and page down keys on PC-style keyboards.
+ *
  * Revision 11.3  1997/01/03  17:42:17  jra
  * Mods for Irix 6.2
  *
@@ -56,7 +59,7 @@
  *
  */
 #ifndef lint
-static char RCSid[] = "@(#)$Header$";
+static const char RCSid[] = "@(#)$Header$";
 #endif
 
 /*

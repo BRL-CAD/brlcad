@@ -4,6 +4,9 @@
  * $Revision$
  *
  * $Log$
+ * Revision 11.3  1997/01/03  17:42:17  jra
+ * Mods for Irix 6.2
+ *
  * Revision 11.2  1995/06/21  03:39:34  gwyn
  * Eliminated trailing blanks.
  *
@@ -28,7 +31,7 @@
  *
  */
 #ifndef lint
-static char RCSid[] = "@(#)$Header$";
+static const char RCSid[] = "@(#)$Header$";
 #endif
 
 /*
@@ -50,6 +53,7 @@ void	fixorder();
    Also sets `diffnum' to the number of lines between the two for
    redisplay purposes. */
 
+int
 inorder(line1, char1, line2, char2)
 LINE	*line1,
 	*line2;

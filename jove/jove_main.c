@@ -4,6 +4,9 @@
  * $Revision$
  *
  * $Log$
+ * Revision 11.6  1997/07/16  02:31:25  mike
+ * Changed from HAS_TERMIOS to HAVE_TERMIOS_H
+ *
  * Revision 11.5  1997/01/03  17:42:17  jra
  * Mods for Irix 6.2
  *
@@ -133,7 +136,7 @@
  *
  */
 #ifndef lint
-static char RCSid[] = "@(#)$Header$";
+static const char RCSid[] = "@(#)$Header$";
 #endif
 
 /*

@@ -4,6 +4,10 @@
  * $Revision$
  *
  * $Log$
+ * Revision 11.5  1997/07/16  02:37:42  mike
+ * Modern tgetstr() requires null-terminated 2-char string;
+ * the third and subsequent characters are significant.
+ *
  * Revision 11.4  1997/07/16  02:31:25  mike
  * Changed from HAS_TERMIOS to HAVE_TERMIOS_H
  *
@@ -66,7 +70,7 @@
  *
  */
 #ifndef lint
-static char RCSid[] = "@(#)$Header$";
+static const char RCSid[] = "@(#)$Header$";
 #endif
 
 /*

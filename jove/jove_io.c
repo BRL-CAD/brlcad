@@ -4,6 +4,9 @@
  * $Revision$
  *
  * $Log$
+ * Revision 11.4  1999/05/13  19:54:41  jra
+ * Linux "stat" corrupts its args on failure!!!!!
+ *
  * Revision 11.3  1999/01/12  03:05:25  mike
  * Recognize file suffixes for C++ code as well as C code.
  *
@@ -89,7 +92,7 @@
  *
  */
 #ifndef lint
-static char RCSid[] = "@(#)$Header$";
+static const char RCSid[] = "@(#)$Header$";
 #endif
 
 /*

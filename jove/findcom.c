@@ -4,6 +4,11 @@
  * $Revision$
  *
  * $Log$
+ * Revision 11.2  1995/06/21  03:37:40  gwyn
+ * Eliminated trailing blanks.
+ * Describe is now an array rather than pointer to (unmodifiable) string literal.
+ * findcom now returns well-defined exit status (0).
+ *
  * Revision 11.1  95/01/04  10:35:04  mike
  * Release_4.4
  *
@@ -21,13 +26,14 @@
  *
  */
 #ifndef lint
-static char RCSid[] = "@(#)$Header$";
+static const char RCSid[] = "@(#)$Header$";
 #endif
 
 #include <stdio.h>
 
 extern char	Describe[];
 
+int
 main(argc, argv)
 int	argc;
 char	*argv[];
