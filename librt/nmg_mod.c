@@ -44,6 +44,9 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
  *  for this in any case.
  *  If the "simplify" flag is set, pairs of loops in the face that touch
  *  will be combined into a single loop where possible.
+ *
+ *  XXX Perhaps should be recast as "nmg_shell_shared_face_merge()", leaving
+ *  XXX all the geometric calculations to the code in nmg_fuse.c ?
  */
 void
 nmg_shell_coplanar_face_merge( s, tol, simplify )
@@ -374,17 +377,25 @@ int		orient;
  *  separately.
  */
 void
-nmg_s_split_touchingloops(s)
-struct shell	*s;
+nmg_s_split_touchingloops(s, tol)
+struct shell		*s;
+CONST struct rt_tol	*tol;
 {
 	struct faceuse	*fu;
 	struct loopuse	*lu;
 
 	NMG_CK_SHELL(s);
+	RT_CK_TOL(tol);
 
 	for( RT_LIST_FOR( fu, faceuse, &s->fu_hd ) )  {
+		/* First, handle any splitting */
 		for( RT_LIST_FOR( lu, loopuse, &fu->lu_hd ) )  {
 			nmg_split_touchingloops( lu );
+		}
+		/* Second, reorient any split loop fragments */
+		for( RT_LIST_FOR( lu, loopuse, &fu->lu_hd ) )  {
+			if( lu->orientation != OT_UNSPEC )  continue;
+			nmg_lu_reorient( lu, tol );
 		}
 	}
 	for( RT_LIST_FOR( lu, loopuse, &s->lu_hd ) )  {
@@ -1515,6 +1526,36 @@ struct vertexuse	*vu1, *vu2;
  *  new loopuse's list of edgeuses.
  *
  *  It is the caller's responsibility to re-bound the loops.
+ *
+ *  Both old and new loopuse will have orientation OT_UNSPEC.  It is the
+ *  callers responsibility to determine what the orientations should be.
+ *  This can be conveniently done with nmg_lu_reorient().
+ *
+ *  Here is a simple example of how the new loopuse might have a different
+ *  orientation than the original one:
+ *
+ *
+ *		F<----------------E
+ *		|                 ^
+ *		|                 |
+ *		|      C--------->D
+ *		|      ^          .
+ *		|      |          .
+ *		|      |          .
+ *		|      B<---------A
+ *		|                 ^
+ *		v                 |
+ *		G---------------->H
+ *
+ *  When nmg_cut_loop(A,D) is called, the new loop ABCD is clockwise,
+ *  even though the original loop was counter-clockwise.
+ *  There is no way to determine this without referring to the
+ *  face normal and vertex geometry, which being a topology routine
+ *  this routine shouldn't do.
+ *
+ *  Returns -
+ *	NULL	Error
+ *	lu	Loopuse of new loop, on success.
  */
 struct loopuse *
 nmg_cut_loop(vu1, vu2)
@@ -1573,8 +1614,8 @@ struct vertexuse *vu1, *vu2;
 	/* make a new loop structure for the new loop & throw away
 	 * the vertexuse we don't need
 	 */
-	lu = nmg_mlv(oldlu->up.magic_p, (struct vertex *)NULL,
-		oldlu->orientation);
+	lu = nmg_mlv(oldlu->up.magic_p, (struct vertex *)NULL, OT_UNSPEC );
+	oldlu->orientation = oldlu->lumate_p->orientation = OT_UNSPEC;
 
 	nmg_kvu(RT_LIST_FIRST(vertexuse, &lu->down_hd));
 	nmg_kvu(RT_LIST_FIRST(vertexuse, &lu->lumate_p->down_hd));
@@ -1649,13 +1690,33 @@ struct vertexuse *vu1, *vu2;
  *  In a loop which has at least two distinct uses of a vertex,
  *  split off the edges from "split_vu" to the second occurance of
  *  the vertex into a new loop.
- *  It is the caller's responsibility to re-bound the loops, if desired.
+ *  It is the caller's responsibility to re-bound the loops.
+ *
+ *  The old and new loopuses will have orientation OT_UNSPEC.  It is the
+ *  callers responsibility to determine what their orientations should be.
+ *  This can be conveniently done with nmg_lu_reorient().
+ *
+ *  Here is an example:
+ *
+ *	              E<__________B <___________A
+ *	              |           ^\            ^
+ *	              |          /  \           |
+ *	              |         /    \          |
+ *	              |        /      v         |
+ *	              |       D<_______C        |
+ *	              v                         |
+ *	              F________________________>G
+ *	
+ *  When nmg_split_lu_at_vu(lu, B) is called, the old loopuse continues to
+ *  be counter clockwise and OT_SAME, but the new loopuse BCD is now
+ *  clockwise.  It needs to be marked OT_OPPOSITE.  Without referring
+ *  to the geometry, this can't be determined.
  *
  *  Intended primarily for use by nmg_split_touchingloops().
  *
  *  Returns -
  *	NULL	Error
- *	*lu	Loopuse of new loop, on success.
+ *	lu	Loopuse of new loop, on success.
  */
 struct loopuse *
 nmg_split_lu_at_vu( lu, split_vu )
@@ -1680,9 +1741,9 @@ struct vertexuse	*split_vu;
 		return (struct loopuse *)0;		/* FAIL */
 	}
 
-begin:
 	/* Make a new loop in the same face */
-	newlu = nmg_mlv( lu->up.magic_p, (struct vertex *)NULL, lu->orientation);
+	lu->orientation = lu->lumate_p->orientation = OT_UNSPEC;
+	newlu = nmg_mlv( lu->up.magic_p, (struct vertex *)NULL, OT_UNSPEC );
 	NMG_CK_LOOPUSE(newlu);
 	newlumate = newlu->lumate_p;
 	NMG_CK_LOOPUSE(newlumate);
@@ -1709,7 +1770,7 @@ begin:
 		/* Advance to next edgeuse */
 		eu = eunext;
 
-		/* When split_vertex is encountered, stop */
+		/* When split_v is encountered, stop */
 		vu = eu->vu_p;
 		NMG_CK_VERTEXUSE(vu);
 		if( vu->v_p == split_v )  break;
@@ -1725,6 +1786,9 @@ begin:
  *  Search through all the vertices in a loop.
  *  Whenever there are two distinct uses of one vertex in the loop,
  *  split off all the edges between them into a new loop.
+ *
+ *  Note that the call to nmg_split_lu_at_vu() will cause the split
+ *  loopuses to be marked OT_UNSPEC.
  */
 void
 nmg_split_touchingloops( lu )
@@ -2185,31 +2249,38 @@ int		is_opposite;
  *  if the stored orientation differs from the geometric one.
  */
 void
-nmg_lu_reorient( lu, norm, tol )
-struct loopuse	*lu;
-CONST plane_t		norm;
+nmg_lu_reorient( lu, tol )
+struct loopuse		*lu;
 CONST struct rt_tol	*tol;
 {
+	struct faceuse	*fu;
 	int	ccw;
 	int	geom_orient;
+	plane_t	norm;
 
 	NMG_CK_LOOPUSE(lu);
 	RT_CK_TOL(tol);
+	fu = lu->up.fu_p;
+	NMG_CK_FACEUSE(fu);
+	if( fu->orientation != OT_SAME )  fu = fu->fumate_p;
+
+	/* Get OT_SAME faceuse's normal */
+	NMG_GET_FU_PLANE( norm, fu );
 
 	ccw = nmg_loop_is_ccw( lu, norm, tol );
 	if( ccw == 0 )  {
+		/* Loop does not have 3 linearly independent vertices, can't tell. */
 		rt_log("nmg_lu_reorient:  unable to determine orientation from geometry\n");
-		/* rt_bomb("nmg_lu_reorient"); */
 		return;
 	}
 	if( ccw > 0 )  {
-		geom_orient = OT_SAME;	/* same as face */
+		geom_orient = OT_SAME;	/* same as face (OT_SAME faceuse) */
 	} else {
 		geom_orient = OT_OPPOSITE;
 	}
 
 	if( lu->orientation == geom_orient )  return;
-	rt_log("nmg_lu_reorient(x%x):  changing loop orientation from %s to %s\n",
+	rt_log("nmg_lu_reorient(x%x):  changing orientation: %s to %s\n",
 		lu, nmg_orientation(lu->orientation), nmg_orientation(geom_orient) );
 
 	lu->orientation = geom_orient;
