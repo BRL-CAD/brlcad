@@ -855,32 +855,40 @@ ft_Crunch_Image( buf ) /* Average image to half its size.		*/
 char	*buf;
 	{	char	answer[2];
 		register int	x, y;
-		RGBpixel	*p_buff;
+		register RGBpixel	*p1, *p2;
 	if( ! get_Input( answer, 2, "Crunch image [n=no] ? " ) )
 		return	0;
 	if( answer[0] == 'n' )
 		return	1;
-	if( (p_buff = (RGBpixel *) malloc( sizeof(RGBpixel) * fb_getwidth(fbp) * 2 ))
-		== (RGBpixel *) NULL
+	if( (p1 = (RGBpixel *) malloc( sizeof(RGBpixel) * fb_getwidth(fbp) ))
+		== RGBPIXEL_NULL
+		)
+		{
+		Malloc_Bomb();
+		}
+	if( (p2 = (RGBpixel *) malloc( sizeof(RGBpixel) * fb_getwidth(fbp) ))
+		== RGBPIXEL_NULL
 		)
 		{
 		Malloc_Bomb();
 		}
 	for( y = 0; y < fb_getheight(fbp); y += 2 )
 		{	register RGBpixel	*p_avg;
-		fb_read( fbp, 0, y, p_buff, fb_getwidth(fbp) * 2 );
+		fb_read( fbp, 0, y, p1, fb_getwidth(fbp));
+		fb_read( fbp, 0, y+1, p2, fb_getwidth(fbp) );
 		for( x = 0; x < fb_getwidth(fbp); x +=2 )
 			{
-			p_avg = pixel_Avg(	p_buff+x,
-						p_buff+x+1,
-						p_buff+x+fb_getwidth(fbp),
-						p_buff+x+fb_getwidth(fbp)+1
+			p_avg = pixel_Avg(	p1+x,
+						p1+x+1,
+						p2+x,
+						p2+x+1
 						);
-			(void) fb_seek( fbp, x/2, y/2 );
-			FB_WPIXEL( fbp, *p_avg );
+			COPYRGB( p1[x/2], *p_avg );
 			}
+		fb_write( fbp, 0, y/2, p1, fb_getwidth(fbp)/2 );
 		}
-	free( (char *) p_buff );
+	free( (char *) p1 );
+	free( (char *) p2 );
 	return	1;
 	}
 
@@ -1123,7 +1131,7 @@ char	*buf;
 		fb_Off_Menu( &pallet );
 	if( pick_one.on_flag )
 	fb_Off_Menu( &pick_one );
-	get_Point( "Pick top-left corner of panel", &current.r_origin );
+	get_Point( "Pick lower-left corner of panel", &current.r_origin );
 	current.r_corner.p_x = current.r_origin.p_x + panel.n_wid;
 	current.r_corner.p_y = current.r_origin.p_y + panel.n_hgt;
 	put_Fb_Panel( &current, panel.n_buf );
@@ -1886,9 +1894,9 @@ _LOCAL_ RGBpixel	*
 pixel_Avg( p1, p2, p3, p4 )
 register RGBpixel	*p1, *p2, *p3, *p4;
 	{	static RGBpixel	p_avg;
-	p_avg[RED] = ((int) p1[RED] + (int) p2[RED] + (int) p3[RED] + (int) p4[RED]) / 4;
-	p_avg[GRN] = ((int) p1[GRN] + (int) p2[GRN] + (int) p3[GRN] + (int) p4[GRN]) / 4;
-	p_avg[BLU] = ((int) p1[BLU] + (int) p2[BLU] + (int) p3[BLU] + (int) p4[BLU]) / 4;
+	p_avg[RED] = ((int) (*p1)[RED] + (int) (*p2)[RED] + (int) (*p3)[RED] + (int) (*p4)[RED]) / 4;
+	p_avg[GRN] = ((int) (*p1)[GRN] + (int) (*p2)[GRN] + (int) (*p3)[GRN] + (int) (*p4)[GRN]) / 4;
+	p_avg[BLU] = ((int) (*p1)[BLU] + (int) (*p2)[BLU] + (int) (*p3)[BLU] + (int) (*p4)[BLU]) / 4;
 	return	(RGBpixel *)p_avg;
 	}
 
