@@ -4,6 +4,10 @@ fbcmap \- change the color map of a frame buffer
 .SH SYNOPSIS
 .B fbcmap
 .RB [ \-h ]
+.RB [ \-F\  framebuffer]
+.RB [ \-{sS}\  squarescrsize]
+.RB [ \-{wW}\  scr_width]
+.RB [ \-{nN}\  scr_height]
 [map_number]
 .SH DESCRIPTION
 .I Fbcmap
@@ -16,15 +20,30 @@ is used to select the display device (see
 .IR brlcad (1)).
 If this variable is not set, the default device for your system will
 be used.
-If the
+.PP
+The requested framebuffer size will be the default size for the
+selected device (often 512x512 pixels).
+Specifying the
 .B \-h
-option is used, a
-.SM
-.B HIRES
-(1024x1024x24) framebuffer is written; otherwise a
-.SM
-.B LORES
-(512x512x24) device is assumed.
+flag changes the size to 1024x1024.
+.PP
+The
+.BI \-w\  scr_width
+and
+.BI \-W\  scr_width
+flags specifies the width of each scanline for the display device,
+in pixels.
+.PP
+The
+.BI \-n\  scr_height
+and
+.BI \-N\  scr_height
+flags specifies the height of each scanline for the display device.
+.PP
+.BI \-s\  squarescrsize
+and
+.BI \-S\  squarescrsize
+set both the height and width to the size given.
 This size distinction is important only for devices like the Adage
 framebuffers which have different operating modes based on the
 display size.
@@ -51,6 +70,9 @@ The values at 191 and above are all full on.  Zero remains at zero.
 .TP
 5
 a gamma correcting color map used by the University of Utah Alpha_1 project.
+A better source of gamma correction is the
+.IR fbgamma (1)
+utility.
 .TP
 6
 a map with a series of color deltas.
@@ -71,7 +93,7 @@ black,
 white,
 and 18% neutral grey, respectively.
 .SH "SEE ALSO"
-brlcad(1), fbcmrot(1), cmap-fb(1), fb-cmap(1), cmap(5)
+brlcad(1), fbcmrot(1), fbgamma(1), cmap-fb(1), fb-cmap(1), cmap(5)
 .SH AUTHORS
 Gary S. Moss
 .br
@@ -84,4 +106,4 @@ The U. S. Army Ballistic Research Laboratory
 Aberdeen Proving Ground, Maryland  21005
 .SH "BUG REPORTS"
 Reports of bugs or problems should be submitted via electronic
-mail to <CAD@BRL.ARPA>.
+mail to <CAD@BRL.MIL>.
