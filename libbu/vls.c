@@ -108,7 +108,7 @@ register CONST struct bu_vls	*vp;
 
 	BU_CK_VLS(vp);
 
-	if( vp->vls_max == 0 || vp->vls_len == 0 || vp->vls_str == (char *)NULL )  {
+	if( vp->vls_max == 0 || vp->vls_str == (char *)NULL )  {
 		/* A zero-length VLS is a null string */
 		nullbuf[0] = '\0';
 		return(nullbuf);
