@@ -65,7 +65,7 @@ register char *prefix;
 		}
 	else
 		(void) strncpy( st_file, "solids", 7 );
-	if( (solfd = creat( st_file, 0666 )) < 0 )
+	if( (solfd = creat( st_file, 0644 )) < 0 )
 		{
 		perror( st_file );
 		exit( 10 );
@@ -95,7 +95,7 @@ register char *prefix;
 		}
 	else
 		(void) strncpy( rt_file, "regions", 8 );
-	if( (regfd = creat( rt_file, 0666 )) < 0 )
+	if( (regfd = creat( rt_file, 0644 )) < 0 )
 		{
 		perror( rt_file );
 		exit( 10 );
@@ -110,7 +110,7 @@ register char *prefix;
 		}
 	else
 		(void) strncpy( id_file, "region_ids", 11 );
-	if( (ridfd = creat( id_file, 0666 )) < 0 )
+	if( (ridfd = creat( id_file, 0644 )) < 0 )
 		{
 		perror( id_file );
 		exit( 10 );
@@ -121,7 +121,7 @@ register char *prefix;
 
 	/* Create /tmp file for discrimination of files.		*/
 	(void) strncpy( disc_file, mktemp( "/tmp/disXXXXXX" ), 15 );
-	if( (idfd = creat( disc_file, 0666 )) < 0 )
+	if( (idfd = creat( disc_file, 0644 )) < 0 )
 		{
 		perror( disc_file );
 		exit( 10 );
@@ -130,7 +130,7 @@ register char *prefix;
 
 	/* Create /tmp file for storage of region names in the comgeom desc.	*/
 	(void) strncpy( reg_file, mktemp( "/tmp/regXXXXXX" ), 15 );
-	if( (rrfd = creat( reg_file, 0666 )) < 0 )
+	if( (rrfd = creat( reg_file, 0644 )) < 0 )
 		{
 		perror( reg_file );
 		exit( 10 );
