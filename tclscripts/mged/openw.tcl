@@ -360,7 +360,6 @@ set mged_gui($id,apply_list) $mged_gui($id,active_dm)
 #==============================================================================
 # PHASE 2: Construction of menu bar
 #==============================================================================
-
 menu .$id.menubar -tearoff $mged_default(tearoff_menus)
 .$id.menubar add cascade -label "File" -underline 0 -menu .$id.menubar.file
 .$id.menubar add cascade -label "Edit" -underline 0 -menu .$id.menubar.edit
@@ -1427,7 +1426,7 @@ hoc_register_menu_data "Modes" "Persistent sweep rectangle" "Persistent Rubber B
           { see_also "rset" } }
 .$id.menubar.modes add checkbutton -offvalue 0 -onvalue 1 -variable mged_gui($id,adc_draw)\
 	-label "Angle/Dist Cursor" -underline 0 \
-	-command "mged_apply $id \"adc draw \$mged_gui($id,adc_draw)\""
+	-command "adc_CBHandler $id"
 hoc_register_menu_data "Modes" "Angle/Dist Cursor" "Angle/Dist Cursor"\
 	{ { summary "Toggle drawing the angle distance cursor." }
           { see_also "adc" } }
@@ -1633,7 +1632,7 @@ hoc_register_menu_data "Tools" "Raytrace Control Panel" "Raytrace Control Panel"
 	{ { summary "Tool for raytracing." }
           { see_also rt } }
 .$id.menubar.tools add command -label "AnimMate Control Panel" -underline 1\
-	-command "animmate .$id"
+	-command "animmate $id .$id"
 hoc_register_menu_data "Tools" "AnimMate Control Panel" "AnimMate Control Panel"\
 	{ { summary "Tool for building animation scripts." }
           { see_also animmate } }
@@ -1877,7 +1876,6 @@ been located, the built-in Tcl browser is used." } }
 #==============================================================================
 # PHASE 3: Bottom-row display
 #==============================================================================
-
 frame .$id.status
 frame .$id.status.dpy
 frame .$id.status.illum
@@ -1911,7 +1909,6 @@ or the ADC attributes." } }
 #==============================================================================
 # PHASE 4: Text widget for interaction
 #==============================================================================
-
 frame .$id.tf
 if {$comb} {
     text .$id.t -height $mged_gui($id,num_lines) \
@@ -1987,7 +1984,6 @@ set vi_state(.$id.t,search_dir) ""
 #==============================================================================
 # Pack windows
 #==============================================================================
-
 setupmv $id
 setmv $id
 
@@ -2035,7 +2031,6 @@ mview_build_menubar $id
 #==============================================================================
 # PHASE 6: Further setup
 #==============================================================================
-
 if {[info procs cad_MenuFirstEntry] == ""} {
     # trigger the Tcl source file to be loaded
     cad_MenuFirstEntry ""
@@ -2195,7 +2190,9 @@ proc update_mged_vars { id } {
 
     winset $mged_gui($id,active_dm)
     set mged_gui($id,rateknobs) $rateknobs
-    set mged_gui($id,adc_draw) [adc draw]
+    if ![catch {adc draw} result] {
+	set mged_gui($id,adc_draw) $result
+    }
     set mged_gui($id,model_draw) [rset ax model_draw]
     set mged_gui($id,view_draw) [rset ax view_draw]
     set mged_gui($id,edit_draw) [rset ax edit_draw]
