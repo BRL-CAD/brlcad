@@ -58,7 +58,9 @@ void mged_print_result();
 void mged_global_variable_setup();
 int f_bot_fuse(), f_bot_condense(), f_bot_face_fuse();
 
+#if !defined( HAVE_UNISTD_H )
 extern void sync();
+#endif
 extern void init_qray();			/* in qray.c */
 extern int gui_setup();				/* in attach.c */
 extern int mged_default_dlist;			/* in attach.c */
