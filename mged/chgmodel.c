@@ -79,7 +79,8 @@ int	argc;
 char	**argv;
 {
 	register struct directory *dp;
-	int ident, air;
+	int			ident, air, GIFTmater, los;
+	int			GIFTmater_set, los_set;
 	struct rt_db_internal	intern;
 	struct rt_comb_internal	*comb;
 
@@ -100,11 +101,24 @@ char	**argv;
 	}
 
 	air = ident = 0;
+	GIFTmater_set = los_set = 0;
 	ident = atoi( argv[2] );
 
-	/* If <air> is not included, it is assumed to be zero */
-	if( argc == 4 )  {
+	/*
+	 * If <air> is not included, it is assumed to be zero.
+	 * If, on the other hand, either of <GIFTmater> and <los>
+	 * is not included, it is left unchanged.
+	 */
+	if( argc > 3 )  {
 		air = atoi( argv[3] );
+	}
+	if( argc > 4 )  {
+		GIFTmater = atoi( argv[4] );
+		GIFTmater_set = 1;
+	}
+	if( argc > 5 )  {
+		los = atoi( argv[5] );
+		los_set = 1;
 	}
 
 	if( rt_db_get_internal( &intern, dp, dbip, (mat_t *)NULL ) < 0 )  {
@@ -114,6 +128,12 @@ char	**argv;
 	RT_CK_COMB(comb);
 	comb->region_id = ident;
 	comb->aircode = air;
+	if ( GIFTmater_set )  {
+		comb->GIFTmater = GIFTmater;
+	}
+	if ( los_set )  {
+		comb->los = los;
+	}
 	if( rt_db_put_internal( dp, dbip, &intern ) < 0 )  {
 		TCL_WRITE_ERR_return;
 	}
