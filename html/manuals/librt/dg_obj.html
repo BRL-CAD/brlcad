@@ -117,7 +117,7 @@ according to the specified options:
 <P>
 <DT><I>dgName</I> <A NAME="get_autoview"><B>get_autoview</B></A></DT>
 <DD>Return the view parameters (i.e. center and size) for optimal viewing
-(i.e. centered on geometry with the smallest view size so that all
+(i.e. centered on the geometry with the smallest view size such that all
 geometry is still visible).
 </DD>
 <P>
@@ -169,7 +169,7 @@ Each color corresponds to 2 hex digits, so that white becomes "ffffff",
 red becomes "ff0000",  green is "00ff00", etc.
 </DD>
 <P>
-<DT><I>dgName</I> <A NAME="rt"><B>rt</B></A> [<I>options</I>] [-- <I>objects</I>]</I></DT>
+<DT><I>dgName</I> <A NAME="rt"><B>rt</B></A> <I>view_obj</I> [<I>options</I>] [-- <I>objects</I>]</I></DT>
 <DD>Execute the <I>BRL&#173CAD</I> <I>rt</I> program with the default
 options of ``-s50 -M''.
 The current database name is added to the end of the <I>rt</I> command line
@@ -181,13 +181,17 @@ program is written such that options may be repeated, and the last occurrence of
 will override any earlier occurences. This allows the user to specify other <I>size</I> (<I>-s</I>)
 options.
 The <I>-M</I> option tells <I>rt</I> to read the viewing
-parameters from standard input. See the <I>man</I> page on <I>rt</I> for details.
+parameters from standard input so that rays are only fired from
+the view specified by <A HREF="view_obj.html">view_obj</A>.
+See the <I>man</I> page on <I>rt</I> for details.
 </DD>
 <P>
-<DT><I>dgName</I> <A NAME="rtcheck"><B>rtcheck</B></A> [<I>options</I>]</I></DT>
+<DT><I>dgName</I> <A NAME="rtcheck"><B>rtcheck</B></A> <I>view_obj</I> [<I>options</I>]</I></DT>
 <DD>Execute the <I>BRL&#173CAD</I> <I>rtcheck</I> program with the default
-options of ``-s50 -M''. The <I>-M</I> option tells <I>rtcheck</I> to read the viewing
-parameters from standard input so that rays are only fired from the current view.
+options of ``-s50 -M''.
+The <I>-M</I> option tells <I>rtcheck</I> to read the viewing
+parameters from standard input so that rays are only fired from
+the view specified by <A HREF="view_obj.html">view_obj</A>.
 The current database name and the list
 of currently displayed objects are added to the end of the <I>rtcheck</I> command line. The <I>rtcheck</I>
 program is written such that options may be repeated, and the last occurrence of an option
