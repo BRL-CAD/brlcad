@@ -129,14 +129,14 @@ char **argv;
 
 	/*
 	 *  Operation is bottom-to-top.
-	 *  Build bottom line, and send it for 1/6th of the screen,
+	 *  Build bottom line, and send it for 1/4th of the screen,
 	 *  then build the top line, and fill the rest of the screen.
 	 */
 	for( x=0; x<scr_width; x++) {
 		/* build bottom part */
 		COPYRGB( scanline[x], botpart[x*5/scr_width] );
 	}
-	for( y=0; y<(scr_height/6); y++)
+	for( y=0; y<(scr_height/4); y++)
 		fb_write( fbp, 0, y, scanline, scr_width );
 
 	for( x=0; x<scr_width; x++)  {
