@@ -32,6 +32,7 @@ static char RCSrt[] = "@(#)$Header$ (BRL)";
 #include "raytrace.h"
 #include "fb.h"
 #include "./mathtab.h"
+#include "./ext.h"
 #include "./rdebug.h"
 #include "../librt/debug.h"
 
@@ -47,14 +48,9 @@ int		rdebug;			/* RT program debugging (not library) */
 /***** Variables shared with viewing model *** */
 FBIO		*fbp = FBIO_NULL;	/* Framebuffer handle */
 FILE		*outfp = NULL;		/* optional pixel output file */
-extern int	hex_out;		/* Binary or Hex .pix output file */
-extern double	AmbientIntensity;	/* Ambient light intensity */
-extern double	azimuth, elevation;
-extern int	lightmodel;		/* Select lighting model */
 int		output_is_binary = 1;	/* !0 means output file is binary */
 mat_t		view2model;
 mat_t		model2view;
-extern int	use_air;		/* Handling of air in librt */
 /***** end of sharing with viewing model *****/
 
 /***** variables shared with worker() ******/
