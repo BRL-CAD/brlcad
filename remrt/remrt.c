@@ -40,6 +40,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include <sys/types.h>
+#include <sys/stat.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #ifndef CRAY
@@ -148,10 +149,10 @@ struct frame {
 	struct frame	*fr_forw;
 	struct frame	*fr_back;
 	int		fr_number;	/* frame number */
+	char		*fr_filename;	/* name of output file */
 	/* options */
 	int		fr_width;	/* frame width (pixels) */
 	int		fr_height;	/* frame height (pixels) */
-	char		*fr_picture;	/* ptr to picture buffer */
 	struct list	fr_todo;	/* work still to be done */
 	/* Timings */
 	struct timeval	fr_start;	/* start time */
@@ -293,6 +294,7 @@ char	**argv;
 {
 	register int i;
 	register struct servers *sp;
+	struct timeval	now;
 
 	/* Random inits */
 	gethostname( ourname, sizeof(ourname) );
@@ -324,7 +326,9 @@ char	**argv;
 
 		while(clients)  {
 			check_input( 30 );	/* delay up to 30 secs */
-			schedule();
+
+			(void)gettimeofday( &now, (struct timezone *)0 );
+			schedule( &now );
 		}
 		/* Might want to see if any work remains, and if so,
 		 * record it somewhere */
@@ -376,9 +380,12 @@ char	**argv;
 		/* Compute until no work remains */
 		running = 1;
 		while( FrameHead.fr_forw != &FrameHead )  {
-			start_servers();
+			(void)gettimeofday( &now, (struct timezone *)0 );
+			start_servers( &now );
 			check_input( 30 );	/* delay up to 30 secs */
-			schedule();
+
+			(void)gettimeofday( &now, (struct timezone *)0 );
+			schedule( &now );
 		}
 		printf("REMRT:  task accomplished\n");
 	}
@@ -476,6 +483,7 @@ addclient(pc)
 struct pkg_conn *pc;
 {
 	register struct servers *sp;
+	register struct frame	*fr;
 	struct ihost	*ihp;
 	int		on = 1;
 	int		options = 0;
@@ -514,7 +522,10 @@ struct pkg_conn *pc;
 	sp->sr_index = fd;
 	sp->sr_host = ihp;
 
-	printf("%s: ACCEPT\n", sp->sr_host->ht_name );
+	/* Clear any frame state that may remain from an earlier server */
+	for( fr = FrameHead.fr_forw; fr != &FrameHead; fr = fr->fr_forw)  {
+		fr->fr_servinit[sp->sr_index] = 0;
+	}
 }
 
 /*
@@ -527,11 +538,13 @@ register struct servers	*sp;
 	register struct pkg_conn *pc;
 	register struct frame	*fr;
 	int fd;
+	int	oldstate;
 
 	if( sp == SERVERS_NULL || sp->sr_host == IHOST_NULL )  {
 		printf("drop_server(x%x), sr_host=0\n", sp);
 		return;
 	}
+	oldstate = sp->sr_state;
 	printf("dropping %s\n", sp->sr_host->ht_name);
 
 	pc = sp->sr_pc;
@@ -554,19 +567,17 @@ register struct servers	*sp;
 	/* After most server state has been zapped, close PKG connection */
 	pkg_close(pc);
 
+	if( oldstate != SRST_READY )  return;
+
 	/* Need to requeue any work that was in progress */
 	lhp = &(sp->sr_work);
 	while( (lp = lhp->li_forw) != lhp )  {
 		fr = lp->li_frame;
-		fr->fr_servinit[sp->sr_index] = 0;
-
 		DEQUEUE_LIST( lp );
 		printf("requeueing fr%d %d..%d\n",
 			fr->fr_number,
 			lp->li_start, lp->li_stop);
 		APPEND_LIST( lp, &(fr->fr_todo) );
-		printf("ToDo:\n");
-		pr_list(&(fr->fr_todo));
 	}
 }
 
@@ -579,22 +590,21 @@ register struct servers	*sp;
 #define SERVER_CHECK_INTERVAL	(10*60)		/* seconds */
 struct timeval	last_server_check_time;
 
-start_servers()
+start_servers( nowp )
+struct timeval	*nowp;
 {
 	register struct ihost	*ihp;
 	register struct servers	*sp;
-	struct timeval	now;
 	int	night;
 	int	add;
 
 	if( file_fullname[0] == '\0' )  return;
 
-	(void)gettimeofday( &now, (struct timezone *)0 );
-	if( tvdiff( &now, &last_server_check_time ) < SERVER_CHECK_INTERVAL )
+	if( tvdiff( nowp, &last_server_check_time ) < SERVER_CHECK_INTERVAL )
 		return;
 
 	printf("seeking servers to start\n");
-	night = is_night( &now );
+	night = is_night( nowp );
 	for( ihp = HostHead; ihp != IHOST_NULL; ihp = ihp->ht_next )  {
 
 		/* Skip hosts which are not eligible for add/drop */
@@ -638,7 +648,7 @@ start_servers()
 
 next_host:	continue;
 	}
-	last_server_check_time = now;		/* struct copy */
+	last_server_check_time = *nowp;		/* struct copy */
 }
 
 /*
@@ -859,8 +869,6 @@ register struct frame *fr;
 		hypersample, rt_perspective );
 	vls_cat( &fr->fr_cmd, buf );
 
-	if( fr->fr_picture )  free(fr->fr_picture);
-	fr->fr_picture = (char *)0;
 	bzero( fr->fr_servinit, sizeof(fr->fr_servinit) );
 
 	fr->fr_start.tv_sec = fr->fr_end.tv_sec = 0;
@@ -899,6 +907,72 @@ do_a_frame()
 }
 
 /*
+ *			F R A M E _ S T A R T
+ *
+ *  This code is called just before the first time work is to be
+ *  assigned from this frame, to a server.
+ *  In some cases, the caller will be told to skip this frame.
+ *
+ *  Returns -
+ *	 0	OK
+ *	-1	drop this frame
+ */
+frame_start(fr)
+register struct frame	*fr;
+{
+	char		name[512];
+	struct stat	sb;
+	int		fd;
+
+	/* Always create a file name to write into */
+	if( outputfile )  {
+		sprintf( name, "%s.%d", outputfile, fr->fr_number );
+	} else {
+		sprintf( name, "/usr/tmp/remrt%d", getpid() );
+		(void)unlink(name);	/* remove any previous one */
+	}
+	fr->fr_filename = rt_strdup( name );
+
+	/*
+	 *  There are several cases:
+	 *	file does not exist, create it
+	 *	file exists, is not writable -- skip this frame
+	 *	file exists, is writable -- eliminate all non-black pixels
+	 *		from work-to-do queue
+	 */
+	if( access( fr->fr_filename, 0 ) < 0 )  {
+		/* File does not yet exist */
+		if( (fd = creat( fr->fr_filename, 0644 )) < 0 )  {
+			/* Unable to create new file */
+			perror( fr->fr_filename );
+			return( -1 );		/* skip this frame */
+		}
+		(void)close(fd);
+		goto begin;
+	}
+	/* The file exists */
+	if( access( fr->fr_filename, 2 ) < 0 )  {
+		/* File exists, and is not writable, skip this frame */
+		perror( fr->fr_filename );
+		return( -1 );			/* skip this frame */
+	}
+	/* The file exists and is writable */
+	if( stat( fr->fr_filename, &sb ) >= 0 && sb.st_size > 0 )  {
+		/* The file has existing contents, dequeue all non-black
+		 * pixels.
+xxx
+		 */
+		printf("...need to scan %s for non-black pixels (deferred)\n",
+			fr->fr_filename );
+	}
+
+begin:
+	/* Note when actual work on this frame was started */
+	(void)gettimeofday( &fr->fr_start, (struct timezone *)0 );
+	return(0);			/* this frame is OK */
+}
+
+/*
  *			F R A M E _ I S _ D O N E
  */
 frame_is_done(fr)
@@ -921,25 +995,93 @@ register struct frame *fr;
 		fr->fr_nrays/delta,
 		fr->fr_nrays/fr->fr_cpu );
 
-	if( outputfile )  {
-		sprintf(name, "%s.%d", outputfile, fr->fr_number);
-		cnt = fr->fr_width*fr->fr_height*3;
-		if( (fd = creat(name, 0444)) > 0 )  {
-			printf("Writing..."); fflush(stdout);
-			if( write( fd, fr->fr_picture, cnt ) != cnt ) {
-				perror(name);
-				exit(3);
-			} else
-				printf(" %s\n", name);
-			close(fd);
-		} else {
-			perror(name);
+	/* Write-protect file, to prevent re-computation */
+	if( chmod( fr->fr_filename, 0444 ) < 0 )
+		perror( fr->fr_filename );
+
+	destroy_frame( fr );
+}
+
+/*
+ *			D E S T R O Y _ F R A M E
+ */
+destroy_frame( fr )
+register struct frame	*fr;
+{
+	register struct list	*lp;
+
+	/*
+	 *  Need to remove any pending work.
+	 *  What about work already assigned that will dribble in?
+	 */
+	while( (lp = fr->fr_todo.li_forw) != &(fr->fr_todo) )  {
+		DEQUEUE_LIST( lp );
+		FREE_LIST(lp);
+	}
+
+	DEQUEUE_FRAME(fr);
+	FREE_FRAME(fr);
+}
+
+/*
+ *			T H I S _ F R A M E _ D O N E
+ *
+ *  All work on this frame is done when there is no more work to be sent out,
+ *  and none of the servers have outstanding assignments for this frame.
+ *
+ *  Returns -
+ *	 0	not done
+ *	!0	all done
+ */
+int
+this_frame_done( fr )
+register struct frame	*fr;
+{
+	register struct servers	*sp;
+	register struct list	*lhp, *lp;
+
+	if( fr->fr_todo.li_forw != &(fr->fr_todo) )
+		return(1);		/* more work still to be sent */
+
+	for( sp = &servers[0]; sp < &servers[MAXSERVERS]; sp++ )  {
+		if( sp->sr_pc == PKC_NULL )  continue;
+		lhp = &(sp->sr_work);
+		for( lp = lhp->li_forw; lp != lhp; lp=lp->li_forw )  {
+			if( fr != lp->li_frame )  continue;
+			return(0);		/* nope, still more work */
 		}
 	}
-	if( fr->fr_picture )  {
-		free(fr->fr_picture);
-		fr->fr_picture = (char *)0;
+	return(1);			/* All done */
+}
+
+/*
+ *			A L L _ D O N E
+ *
+ *  All work is done when there is no more work to be sent out,
+ *  and there is no more work pending in any of the servers.
+ *
+ *  Returns -
+ *	 0	not done
+ *	!0	all done
+ */
+int
+all_done()
+{
+	register struct servers	*sp;
+	register struct frame	*fr;
+
+	for( fr = FrameHead.fr_forw; fr != &FrameHead; fr = fr->fr_forw)  {
+		if( fr->fr_todo.li_forw == &(fr->fr_todo) )
+			continue;
+		return(0);		/* nope, still more work */
 	}
+
+	for( sp = &servers[0]; sp < &servers[MAXSERVERS]; sp++ )  {
+		if( sp->sr_pc == PKC_NULL )  continue;
+		if( sp->sr_work.li_forw == &(sp->sr_work) )  continue;
+		return(0);		/* nope, still more work */
+	}
+	return(1);			/* All done */
 }
 
 /*
@@ -961,7 +1103,8 @@ register struct frame *fr;
  *
  *  When done, we leave the last finished frame around for attach/release.
  */
-schedule()
+schedule( nowp )
+struct timeval	*nowp;
 {
 	register struct servers *sp;
 	register struct frame *fr;
@@ -992,37 +1135,24 @@ schedule()
 	}
 
 	/* Look for finished frames */
-	servers_going = 0;
 	fr = FrameHead.fr_forw;
 	while( fr != &FrameHead )  {
 		if( fr->fr_todo.li_forw != &(fr->fr_todo) )
 			goto next_frame;	/* unassigned work remains */
 
-		for( sp = &servers[0]; sp < &servers[MAXSERVERS]; sp++ )  {
-			if( sp->sr_pc == PKC_NULL )  continue;
-			if( sp->sr_curframe != fr )  continue;
-			if( sp->sr_work.li_forw != &(sp->sr_work) )  {
-				servers_going++;
-				goto next_frame;
-			}
+		if( this_frame_done( fr ) )  {
+			/* No servers are still working on this frame */
+			fr2 = fr->fr_forw;
+			frame_is_done( fr );	/* will dequeue */
+			fr = fr2;
+			continue;
 		}
-
-		/* No servers are still working on this frame */
-		fr2 = fr->fr_forw;
-		DEQUEUE_FRAME(fr);
-		frame_is_done( fr );
-		FREE_FRAME(fr);
-		fr = fr2;
-		continue;
-
 next_frame: ;
 		fr = fr->fr_forw;
 	}
-	if( running == 0 || FrameHead.fr_forw == &FrameHead )  {
-		/* No more work to send out */
-		if( servers_going > 0 )
-			goto out;
-		/* Nothing to do, and nobody still working */
+
+	if( !running )  goto out;
+	if( all_done() )  {
 		running = 0;
 		printf("REMRT:  All work done!\n");
 		if( detached )  exit(0);
@@ -1039,15 +1169,20 @@ next_frame: ;
 			for( sp = &servers[0]; sp < &servers[MAXSERVERS]; sp++ )  {
 				if( sp->sr_pc == PKC_NULL )  continue;
 
-				another_pass += task_server( fr, sp );
+				another_pass += task_server( fr, sp, nowp );
 			}
 		} while( another_pass > 0 );
 	}
-	/* No work remains to be assigned */
+	/* No work remains to be assigned, or servers are stuffed full */
 out:
 	scheduler_going = 0;
 	return;
 }
+
+#define ASSIGNMENT_TIME		5		/* desired seconds/result */
+#define TARDY_SERVER_INTERVAL	(9*60)		/* max seconds of silence */
+#define N_SERVER_ASSIGNMENTS	3		/* desired # of assignments */
+#define MAX_LUMP		(8*1024)	/* max pixels/assignment */
 
 /*
  *			T A S K _ S E R V E R
@@ -1060,9 +1195,10 @@ out:
  *	0	when this server winds up with a full workload
  *	1	when this server needs additional work
  */
-task_server( fr, sp )
+task_server( fr, sp, nowp )
 register struct servers	*sp;
 register struct frame	*fr;
+struct timeval		*nowp;
 {
 	register struct list	*lp;
 	int			a, b;
@@ -1072,7 +1208,24 @@ register struct frame	*fr;
 	if( sp->sr_state != SRST_READY )
 		return(0);	/* not running yet */
 
-#define N_SERVER_ASSIGNMENTS	3
+	/*
+	 *  Check for tardy server.
+	 *  The assignments are estimated to take only ASSIGNMENT_TIME
+	 *  seconds, so waiting many minutes is unreasonable.
+	 *  However, if the picture "suddenly" became very complex,
+	 *  or a system got very busy,
+	 *  the estimate could be quite low.
+	 *  This mechanism exists mostly to protect against servers that
+	 *  go into "black hole" mode while REMRT is running unattended.
+	 */
+	if( server_q_len(sp) > 0 &&
+	    sp->sr_sendtime.tv_sec > 0 && 
+	    tvdiff( nowp, &sp->sr_sendtime ) > TARDY_SERVER_INTERVAL )  {
+		printf("%s: *TARDY*\n", sp->sr_host->ht_name);
+		drop_server( sp );
+		return(0);	/* not worth giving another assignment */
+	}
+
 	if( server_q_len(sp) >= N_SERVER_ASSIGNMENTS )
 		return(0);	/* plenty busy */
 
@@ -1080,18 +1233,37 @@ register struct frame	*fr;
 		/*  No more work to assign in this frame,
 		 *  on next pass, caller should advance to next frame.
 		 */
-		return(1);
+		return(1);	/* need more work */
 	}
 
-	/* Provide info about this frame, if this is first assignment in it */
+	/*
+	 *  Provide info about this frame, if this is the first assignment
+	 *  of work from this frame to this server.
+	 */
 	if( fr->fr_servinit[sp->sr_index] == 0 )  {
 		send_matrix( sp, fr );
 		fr->fr_servinit[sp->sr_index] = 1;
 		sp->sr_curframe = fr;
 	}
 
-#define MAX_LUMP		(8*1024)
-#define ASSIGNMENT_TIME		5	/* desired seconds between results */
+	/* Special handling for the first assignment of each frame */
+	if( fr->fr_start.tv_sec == 0 )  {
+		if( frame_start( fr ) < 0 )  {
+			/* Skip this frame after all */
+			frame_is_done( fr );	/* will dequeue */
+			return(1);		/* need more work */
+		}
+	}
+
+	/*
+	 *  Make this assignment size based on weighted average of
+	 *  past behavior.  Using rays/elapsed_sec metric takes into
+	 *  account:
+	 *	remote processor speed
+	 *	remote processor load
+	 *	available network bandwidth & load
+	 *	local processing delays
+	 */
 	sp->sr_lump = ASSIGNMENT_TIME * sp->sr_w_elapsed;
 	if( sp->sr_lump < 32 )  sp->sr_lump = 32;
 	if( sp->sr_lump > MAX_LUMP )  sp->sr_lump = MAX_LUMP;
@@ -1112,9 +1284,6 @@ register struct frame	*fr;
 	lp->li_start = a;
 	lp->li_stop = b;
 	APPEND_LIST( lp, &(sp->sr_work) );
-	if( fr->fr_start.tv_sec == 0 )  {
-		(void)gettimeofday( &fr->fr_start, (struct timezone *)0 );
-	}
 	send_do_lines( sp, a, b, fr->fr_number );
 
 	/* See if server will need more assignments */
@@ -1231,9 +1400,10 @@ char *buf;
 	}
 	if( sp->sr_state != SRST_LOADING )  {
 		printf("MSG_START in state %d?\n", sp->sr_state);
+		drop_server( sp );
+		return;
 	}
 	sp->sr_state = SRST_READY;
-	printf("%s READY FOR WORK\n", sp->sr_host->ht_name);
 }
 
 /*
@@ -1303,75 +1473,85 @@ ph_pixels(pc, buf)
 register struct pkg_conn *pc;
 char *buf;
 {
-	int line;
-	register int i;
-	register struct servers *sp;
-	register struct frame *fr;
+	register int		i;
+	register struct servers	*sp;
+	register struct frame	*fr;
 	struct line_info	info;
 	struct timeval		tvnow;
 	int			npix;
+	int			fd;
+	int			cnt;
 
 	(void)gettimeofday( &tvnow, (struct timezone *)0 );
 
 	sp = &servers[pc->pkc_fd];
-	fr = sp->sr_curframe;
 	if( (sp->sr_l_elapsed = tvdiff( &tvnow, &sp->sr_sendtime )) < 0.1 )
 		sp->sr_l_elapsed = 0.1;
 
 	i = struct_import( (stroff_t)&info, desc_line_info, buf );
 	if( i < 0 || i != info.li_len )  {
-		fprintf(stderr,"struct_inport error, %d, %d\n", i, info.li_len);
-		return;
+		fprintf(stderr,"struct_import error, %d, %d\n", i, info.li_len);
+		goto out;
 	}
-fprintf(stderr,"%s:fr=%d, %d..%d, ry=%d, cpu=%g, el=%g\n",
+printf("%s:fr=%d, %d..%d, ry=%d, cpu=%g, el=%g\n",
 sp->sr_host->ht_name,
 info.li_frame, info.li_startpix, info.li_endpix,
 info.li_nrays, info.li_cpusec, sp->sr_l_elapsed );
+
+	/* XXX this is bogus -- assignments may have moved on to subsequent
+	 * frames.  Need to search frame list */
+	if( (fr = sp->sr_curframe) == FRAME_NULL )  {
+		printf("%s: no current frame, discarding\n");
+		goto out;
+	}
 
 	/* Don't be so trusting... */
 	if( info.li_frame != fr->fr_number )  {
 		printf("frame number mismatch, claimed=%d, actual=%d\n",
 			info.li_frame, fr->fr_number );
-bad:
 		drop_server( sp );
-		if(buf) (void)free(buf);
-		return;
+		goto out;
 	}
 	if( info.li_startpix < 0 ||
 	    info.li_endpix >= fr->fr_width*fr->fr_height )  {
 		printf("pixel numbers out of range\n");
-		goto bad;
+		drop_server( sp );
+		goto out;
 	}
 
-	/* Stash pixels in memory in bottom-to-top .pix order */
-	if( fr->fr_picture == (char *)0 )  {
-		i = fr->fr_width*fr->fr_height*3+3;
-		printf("allocating %d bytes for image\n", i);
-		fr->fr_picture = malloc( i );
-		if( fr->fr_picture == (char *)0 )  {
-			fprintf(stdout, "ph_pixels: malloc(%d) error\n",i);
-			fprintf(stderr, "ph_pixels: malloc(%d) error\n",i);
-			abort();
-			exit(19);
-		}
-		bzero( fr->fr_picture, i );
-	}
+	/* Stash pixels in bottom-to-top .pix order */
 	npix = info.li_endpix - info.li_startpix + 1;
 	i = npix*3;
 	if( pc->pkc_len - info.li_len < i )  {
 		fprintf(stderr,"short scanline, s/b=%d, was=%d\n",
 			i, pc->pkc_len - info.li_len );
 		i = pc->pkc_len - info.li_len;
-		/* Should re-queue missing pixels, if this is a problem */
+		drop_server( sp );
+		goto out;
 	}
-	bcopy( buf+info.li_len, fr->fr_picture + info.li_startpix*3, i );
+	/* Write pixels into file */
+	/* Later, can implement FD cache here */
+	if( (fd = open( fr->fr_filename, 2 )) < 0 )  {
+		perror( fr->fr_filename );
+		/* Now what? Drop frame? */
+	}
+	if( lseek( fd, info.li_startpix*3L, 0 ) < 0 )  {
+		perror( fr->fr_filename );
+		/* Again, now what? */
+		(void)close(fd);	/* prevent write */
+	}
+	if( (cnt = write( fd, buf+info.li_len, i )) != i )  {
+		perror("write");
+		printf("write s/b %d, got %d\n", i, cnt );
+		/* Again, now what? */
+	}
+	(void)close(fd);
 
 	/* If display attached, also draw it */
 	if( fbp != FBIO_NULL )  {
 		write_fb( buf + info.li_len, fr,
 			info.li_startpix, info.li_endpix+1 );
 	}
-	if(buf) (void)free(buf);
 
 	/* Stash the statistics that came back */
 	fr->fr_nrays += info.li_nrays;
@@ -1390,6 +1570,9 @@ bad:
 
 	/* Remove from work list */
 	list_remove( &(sp->sr_work), info.li_startpix, info.li_endpix );
+
+out:
+	if(buf) (void)free(buf);
 }
 
 /*
@@ -1482,6 +1665,45 @@ int		b;
 }
 
 /*
+ *		R E P A I N T _ F B
+ *
+ *  Repaint the frame buffer from the stored file.
+ *  Sort of a cheap "pix-fb", built in.
+ */
+repaint_fb( fr )
+register struct frame *fr;
+{
+	register int	y;
+	char		*line;
+	int		nby;
+	FILE		*fp;
+	int		w;
+	int		cnt;
+
+	if( fbp == FBIO_NULL ) return;
+	size_display(fr);
+
+	if( fr->fr_filename == (char *)0 )  return;
+
+	/* Draw the accumulated image */
+	nby = 3*fr->fr_width;
+	line = rt_malloc( nby, "scanline" );
+	if( (fp = fopen( fr->fr_filename, "r" )) == NULL )  {
+		perror( fr->fr_filename );
+		return;
+	}
+	w = fr->fr_width;
+	if( w > fb_getwidth(fbp) )  w = fb_getwidth(fbp);
+
+	for( y=0; y < fr->fr_height; y++ )  {
+		cnt = fread( line, nby, 1, fp );
+		/* Write out even partial results, then quit */
+		fb_write( fbp, 0, y, line, w );
+		if( cnt != 1 )  break;
+	}
+}
+
+/*
  *			I N I T _ F B
  */
 int
@@ -1538,7 +1760,7 @@ register struct servers *sp;
 	case HT_CD:
 		if( pkg_send( MSG_CD, ihp->ht_path, strlen(ihp->ht_path)+1, sp->sr_pc ) < 0 )
 			drop_server(sp);
-		sprintf( cmd, "%s %s", file_fullname, object_list );
+		sprintf( cmd, "%s %s", file_basename, object_list );
 		break;
 	case HT_CONVERT:
 		/* Conversion was done when server was started */
@@ -2223,24 +2445,15 @@ int	argc;
 char	**argv;
 {
 	register struct frame *fr;
-	register struct list *lp;
 
 	if( running )  {
 		printf("must STOP before RESET!\n");
 		return;
 	}
-	for( fr = FrameHead.fr_forw; fr != &FrameHead; fr=fr->fr_forw )  {
-		if( fr->fr_picture )  free(fr->fr_picture);
-		fr->fr_picture = (char *)0;
-		/* Need to remove any pending work,
-		 * work already assigned will dribble in.
-		 */
-		while( (lp = fr->fr_todo.li_forw) != &(fr->fr_todo) )  {
-			DEQUEUE_LIST( lp );
-			FREE_LIST(lp);
-		}
-		/* We will leave cleanups to schedule() */
-	}
+	do {
+		fr = FrameHead.fr_forw;
+		destroy_frame( fr );
+	} while( FrameHead.fr_forw != &FrameHead );
 }
 
 cd_attach( argc, argv )
@@ -2248,7 +2461,6 @@ int	argc;
 char	**argv;
 {
 	register struct frame *fr;
-	register int	i;
 	char		*name;
 
 	if( argc <= 1 )  {
@@ -2257,16 +2469,10 @@ char	**argv;
 		name = argv[1];
 	}
 	if( init_fb(name) < 0 )  return;
-
+	if( fbp == FBIO_NULL ) return;
 	if( (fr = FrameHead.fr_forw) == &FrameHead )  return;
 
-	/* Draw the accumulated image */
-	if( fr->fr_picture == (char *)0 )  return;
-	size_display(fr);
-	if( fbp == FBIO_NULL ) return;
-
-	/* Trim to what can be drawn */
-	write_fb( fr->fr_picture, fr, 0, fr->fr_height*fr->fr_width );
+	repaint_fb( fr );
 }
 
 cd_release( argc, argv )
@@ -2290,8 +2496,8 @@ char	**argv;
 		printf("%5d\t", fr->fr_number);
 		printf("width=%d, height=%d\n",
 			fr->fr_width, fr->fr_height );
-		if( fr->fr_picture )  printf(" (Pic)");
-		printf("\n");
+		if( fr->fr_filename )  printf(" %s\n", fr->fr_filename );
+
 		printf("\tnrays = %d, cpu sec=%g\n", fr->fr_nrays, fr->fr_cpu);
 		printf("       servinit: ");
 		for( i=0; i<MAXSERVERS; i++ )
