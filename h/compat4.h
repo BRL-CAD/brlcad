@@ -18,6 +18,8 @@
  *  $Header$
  */
 
+#ifndef DONT_USE_COMPAT4_H	/* Define this to scrub out Release 4-isms */
+
 #ifndef SEEN_COMPAT4_H
 #define SEEN_COMPAT4_H seen
 #ifdef __cplusplus
@@ -387,3 +389,5 @@ extern "C" {
 }
 #endif
 #endif /* SEEN_COMPAT4_H */
+
+#endif /* DONT_USE_COMPAT4_H */
