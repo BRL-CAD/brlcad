@@ -301,18 +301,23 @@ char	**argv;
 {
 	register struct directory *dp;
 	register int i;
+	int	is_phony;
 
 	for( i = 1; i < argc; i++ )  {
 		if( (dp = db_lookup( dbip,  argv[i], LOOKUP_NOISY )) != DIR_NULL )  {
+			is_phony = (dp->d_addr == RT_DIR_PHONY_ADDR);
 			eraseobj( dp );
+			/* eraseobj() does db_dirdelete() on phony entries, don't re-do. */
+			if( is_phony )  continue;
+
 			if( db_delete( dbip, dp ) < 0 ||
 			    db_dirdelete( dbip, dp ) < 0 )  {
 			    	DELETE_ERR(argv[i]);
+			    	/* Abort kill processing on first error */
 				return CMD_BAD;
 			}
 		}
 	}
-
 	return CMD_OK;
 }
 
