@@ -696,17 +696,19 @@ struct loopuse *lu1;
 		rt_bomb("loopuses do not have same type of child!\n");
 
 	/* deal with the children */
-	if (lu1->down.magic_p && *lu1->down.magic_p == NMG_VERTEXUSE_MAGIC) {
-		nmg_kvu(lu1->down.vu_p);
-		nmg_kvu(lu2->down.vu_p);
+	if (lu1->down.magic_p) {
+		if (*lu1->down.magic_p == NMG_VERTEXUSE_MAGIC) {
+			nmg_kvu(lu1->down.vu_p);
+			nmg_kvu(lu2->down.vu_p);
+		}
+		else if (*lu1->down.magic_p == NMG_EDGEUSE_MAGIC) {
+			/* delete all edgeuse in the loopuse (&mate) */
+			while (lu1->down.eu_p)
+				nmg_keu(lu1->down.eu_p);
+		}
+		else
+			rt_bomb("nmg_klu: unknown type for loopuse child\n");
 	}
-	else if (lu1->down.magic_p && *lu1->down.magic_p == NMG_EDGEUSE_MAGIC) {
-		/* delete all edgeuse in the loopuse (&mate) */
-		while (lu1->down.eu_p)
-			nmg_keu(lu1->down.eu_p);
-	}
-	else
-		rt_bomb("unknown type for loopuse child\n");
 
 
 	/* disconnect from parent's list */
