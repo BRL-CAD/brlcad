@@ -87,6 +87,7 @@ struct rt_tabdata {
 #define RT_CK_TABDATA(_p)	RT_CKMAG(_p, RT_TABDATA_MAGIC, "rt_tabdata")
 #define RT_TABDATA_NULL		((struct rt_tabdata *)NULL)
 
+#define RT_SIZEOF_TABDATA_Y(_tabdata)	sizeof(fastf_t)*((_tabdata)->ny)
 #define RT_SIZEOF_TABDATA(_table)	( sizeof(struct rt_tabdata) + \
 			sizeof(fastf_t)*((_table)->nx-1) )
 
