@@ -22,16 +22,14 @@
 static void _rb_walk (struct rb_node *root, int order, void (*visit)())
 {
 
-    /* Check data type of the parameter "root" */
-    if (root != 0)
-    {
-	RB_CKMAG(root, RB_NODE_MAGIC, "red-black node");
-	if (root == rb_null(root -> rbn_tree))
-	    return;
-	_rb_walk (rb_left_child(root, order), order, visit);
-	visit(rb_data(root, order));
-	_rb_walk (rb_right_child(root, order), order, visit);
-    }
+    RB_CKMAG(root, RB_NODE_MAGIC, "red-black node");
+    RB_CKORDER(root -> rbn_tree, order);
+
+    if (root == rb_null(root -> rbn_tree))
+	return;
+    _rb_walk (rb_left_child(root, order), order, visit);
+    visit(rb_data(root, order));
+    _rb_walk (rb_right_child(root, order), order, visit);
 }
 
 /*		        R B _ W A L K ( )
@@ -46,5 +44,7 @@ void rb_walk (rb_tree *tree, int order, void (*visit)())
 {
 
     RB_CKMAG(tree, RB_TREE_MAGIC, "red-black tree");
+    RB_CKORDER(tree, order);
+
     _rb_walk(rb_root(tree, order), order, visit);
 }
