@@ -138,7 +138,7 @@ BDIRS="bench \
 	whetstone dhrystone"
 
 # If there is no TCP networking, eliminate network-only directories.
-if test HAS_TCP = 0
+if test "${HAS_TCP}" = "0"
 then
 	BDIRS=`echo ${BDIRS} | sed -e  's/libpkg//
 					s/remrt//
@@ -146,13 +146,13 @@ then
 					s/rfbd//'`
 fi
 
-if test x$1 = x
+if test "$1" = ""
 then	TARGET=all
 else	TARGET=$1
 fi
 
 # For handline multiple machines in an NFS environment
-if test x$NFS = x1
+if test "${NFS}" = "1"
 then
 	DIRPRE=.
 	DIRSUF=.${MACHINE}
@@ -173,7 +173,7 @@ echo
 
 # Now, actually work on making the target
 
-case ${TARGET} in
+case "${TARGET}" in
 
 help)
 	echo '	all		Makes all software'
