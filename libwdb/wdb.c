@@ -36,47 +36,11 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <stdio.h>
 #include <math.h>
 #include "machine.h"
-#include "db.h"
 #include "vmath.h"
 #include "rtlist.h"
 #include "rtgeom.h"
 #include "raytrace.h"
 #include "wdb.h"
-
-/*
- * Input Vector Fields
- */
-#define F(i)	(rec.s.s_values+(i-1)*3)
-#define F1	(rec.s.s_values+(1-1)*3)
-#define F2	(rec.s.s_values+(2-1)*3)
-#define F3	(rec.s.s_values+(3-1)*3)
-#define F4	(rec.s.s_values+(4-1)*3)
-#define F5	(rec.s.s_values+(5-1)*3)
-#define F6	(rec.s.s_values+(6-1)*3)
-#define F7	(rec.s.s_values+(7-1)*3)
-#define F8	(rec.s.s_values+(8-1)*3)
-
-/*
- *			M K _ I D
- *
- *  Make a database header (ID) record.
- */
-int
-mk_id( fp, title )
-FILE	*fp;
-char	*title;
-{
-	union record rec;
-
-	bzero( (char *)&rec, sizeof(rec) );
-	rec.i.i_id = ID_IDENT;
-	rec.i.i_units = ID_MM_UNIT;
-	strncpy( rec.i.i_version, ID_VERSION, sizeof(rec.i.i_version) );
-	strncpy( rec.i.i_title, title, sizeof(rec.i.i_title) );
-	if( fwrite( (char *)&rec, sizeof(rec), 1, fp ) != 1 )
-		return(-1);
-	return(0);
-}
 
 /*
  *			M K _ H A L F
@@ -86,10 +50,10 @@ char	*title;
  */
 int
 mk_half( fp, name, norm, d )
-FILE	*fp;
-char	*name;
-vect_t	norm;
-double	d;
+FILE		*fp;
+char		*name;
+CONST vect_t	norm;
+double		d;
 {
 	struct rt_half_internal		half;
 
@@ -107,9 +71,10 @@ double	d;
  */
 int
 mk_rpp( fp, name, min, max )
-FILE	*fp;
-char	*name;
-point_t	min, max;
+FILE		*fp;
+char		*name;
+CONST point_t	min;
+CONST point_t	max;
 {
 	point_t	pt8[8];
 
@@ -134,20 +99,18 @@ point_t	min, max;
  *  left corner, an x and a z direction vector, x, y, and z lengths, and an
  *  x length for the top.  The y direcion vector is x cross z.
  */
-
 int
 mk_wedge(fp, name, vert, xdirv, zdirv, xlen, ylen, zlen, x_top_len)
 FILE		*fp;
 char		*name;
-point_t		vert;
-vect_t		xdirv;
-vect_t		zdirv;
+CONST point_t	vert;
+CONST vect_t	xdirv;
+CONST vect_t	zdirv;
 fastf_t		xlen;
 fastf_t		ylen;
 fastf_t		zlen;
 fastf_t		x_top_len;
 {
-
 	point_t		pts[8];		/* vertices for the wedge */
 	vect_t		xvec;		/* x_axis vector */
 	vect_t		txvec;		/* top x_axis vector */
@@ -194,9 +157,9 @@ fastf_t		x_top_len;
  */
 int
 mk_arb4( fp, name, pts )
-FILE	*fp;
-char	*name;
-point_t	pts[];
+FILE		*fp;
+char		*name;
+CONST point_t	pts[4];
 {
 	point_t	pt8[8];
 
@@ -225,9 +188,9 @@ point_t	pts[];
  */
 int
 mk_arb8( fp, name, pts )
-FILE	*fp;
-char	*name;
-point_t	pts[];
+FILE		*fp;
+char		*name;
+CONST point_t	pts[8];
 {
 	register int i;
 	struct rt_arb_internal	arb;
@@ -248,27 +211,20 @@ point_t	pts[];
  */
 int
 mk_sph( fp, name, center, radius )
-FILE	*fp;
-char	*name;
-point_t	center;
-fastf_t	radius;
+FILE		*fp;
+char		*name;
+CONST point_t	center;
+fastf_t		radius;
 {
-	union record rec;
-	fastf_t		nrad = radius * mk_conv2mm;
+	struct rt_ell_internal	ell;
 
-	bzero( (char *)&rec, sizeof(rec) );
-	rec.s.s_id = ID_SOLID;
-	rec.s.s_type = GENELL;
-	NAMEMOVE(name,rec.s.s_name);
+	ell.magic = RT_ELL_INTERNAL_MAGIC;
+	VMOVE( ell.v, center );
+	VSET( ell.a, radius, 0, 0 );
+	VSET( ell.b, 0, radius, 0 );
+	VSET( ell.c, 0, 0, radius );
 
-	VSCALE( &rec.s.s_values[0], center, mk_conv2mm );
-	VSET( &rec.s.s_values[3], nrad, 0, 0 );
-	VSET( &rec.s.s_values[6], 0, nrad, 0 );
-	VSET( &rec.s.s_values[9], 0, 0, nrad );
-
-	if( fwrite( (char *) &rec, sizeof(rec), 1, fp) != 1 )
-		return(-1);
-	return(0);
+	return mk_export_fwrite( fp, name, (genptr_t)&ell, ID_ELL );
 }
 
 /*
@@ -280,26 +236,20 @@ fastf_t	radius;
  */
 int
 mk_ell( fp, name, center, a, b, c )
-FILE	*fp;
-char	*name;
-point_t	center;
-vect_t	a, b, c;
+FILE		*fp;
+char		*name;
+CONST point_t	center;
+CONST vect_t	a, b, c;
 {
-	union record rec;
+	struct rt_ell_internal	ell;
 
-	bzero( (char *)&rec, sizeof(rec) );
-	rec.s.s_id = ID_SOLID;
-	rec.s.s_type = GENELL;
-	NAMEMOVE(name,rec.s.s_name);
+	ell.magic = RT_ELL_INTERNAL_MAGIC;
+	VMOVE( ell.v, center );
+	VMOVE( ell.a, a );
+	VMOVE( ell.b, b );
+	VMOVE( ell.c, c );
 
-	VSCALE( &rec.s.s_values[0], center, mk_conv2mm );
-	VSCALE( &rec.s.s_values[3], a, mk_conv2mm );
-	VSCALE( &rec.s.s_values[6], b, mk_conv2mm );
-	VSCALE( &rec.s.s_values[9], c, mk_conv2mm );
-
-	if( fwrite( (char *) &rec, sizeof(rec), 1, fp) != 1 )
-		return(-1);
-	return(0);
+	return mk_export_fwrite( fp, name, (genptr_t)&ell, ID_ELL );
 }
 
 /*
@@ -311,11 +261,11 @@ vect_t	a, b, c;
  */
 int
 mk_tor( fp, name, center, inorm, r1, r2 )
-FILE	*fp;
-char	*name;
-point_t	center;
-vect_t	inorm;
-double	r1, r2;
+FILE		*fp;
+char		*name;
+CONST point_t	center;
+CONST vect_t	inorm;
+double		r1, r2;
 {
 	struct rt_tor_internal	tor;
 
@@ -335,38 +285,24 @@ double	r1, r2;
  */
 int
 mk_rcc( fp, name, base, height, radius )
-FILE	*fp;
-char	*name;
-point_t	base;
-vect_t	height;
-fastf_t	radius;
+FILE		*fp;
+char		*name;
+CONST point_t	base;
+CONST vect_t	height;
+fastf_t		radius;
 {
-	union record rec;
 	vect_t	cross1, cross2;
-
-	bzero( (char *)&rec, sizeof(rec) );
-	rec.s.s_id = ID_SOLID;
-	rec.s.s_type = GENTGC;
-	NAMEMOVE(name, rec.s.s_name);
-
-	/* Units conversion */
-	radius *= mk_conv2mm;
-	VSCALE( F1, base, mk_conv2mm );
-	VSCALE( F2, height, mk_conv2mm  );
+	vect_t	a, b;
 
 	/* Create two mutually perpendicular vectors, perpendicular to H */
-	vec_ortho( cross1, height );
+	mat_vec_ortho( cross1, height );
 	VCROSS( cross2, cross1, height );
 	VUNITIZE( cross2 );
 
-	VSCALE( F3, cross1, radius );
-	VSCALE( F4, cross2, radius );
-	VMOVE( F5, F3);
-	VMOVE( F6, F4);
+	VSCALE( a, cross1, radius );
+	VSCALE( b, cross2, radius );
 
-	if( fwrite( (char *)&rec, sizeof( rec), 1, fp) != 1 )
-		return(-1);
-	return(0);		/* OK */
+	return mk_tgc( fp, name, base, height, a, b, a, b );
 }
 
 /*
@@ -376,31 +312,26 @@ fastf_t	radius;
  */
 int
 mk_tgc( fp, name, base, height, a, b, c, d )
-FILE	*fp;
-char	*name;
-point_t	base;
-vect_t	height;
-vect_t	a, b;
-vect_t	c, d;
+FILE		*fp;
+char		*name;
+CONST point_t	base;
+CONST vect_t	height;
+CONST vect_t	a;
+CONST vect_t	b;
+CONST vect_t	c;
+CONST vect_t	d;
 {
-	union record rec;
+	struct rt_tgc_internal	tgc;
 
-	bzero( (char *)&rec, sizeof(rec) );
-	rec.s.s_id = ID_SOLID;
-	rec.s.s_type = GENTGC;
-	NAMEMOVE(name, rec.s.s_name);
+	tgc.magic = RT_TGC_INTERNAL_MAGIC;
+	VMOVE( tgc.v, base );
+	VMOVE( tgc.h, height );
+	VMOVE( tgc.a, a );
+	VMOVE( tgc.b, b );
+	VMOVE( tgc.c, c );
+	VMOVE( tgc.d, d );
 
-	/* Really, converting from fastf_t to dbfloat_t here */
-	VSCALE( F1, base, mk_conv2mm );
-	VSCALE( F2, height, mk_conv2mm );
-	VSCALE( F3, a, mk_conv2mm );
-	VSCALE( F4, b, mk_conv2mm );
-	VSCALE( F5, c, mk_conv2mm );
-	VSCALE( F6, d, mk_conv2mm );
-
-	if( fwrite( (char *)&rec, sizeof( rec), 1, fp) != 1 )
-		return(-1);
-	return(0);		/* OK */
+	return mk_export_fwrite( fp, name, (genptr_t)&tgc, ID_TGC );
 }
 
 
@@ -410,18 +341,16 @@ vect_t	c, d;
  *  a direction vector, a scalar height, and the radii at each end of the
  *  cone.
  */
-
 int
 mk_cone( fp, name, base, dirv, height, rad1, rad2)
 FILE		*fp;
 char		*name;
-point_t		base;
-vect_t		dirv;
+CONST point_t	base;
+CONST vect_t	dirv;
 fastf_t		height;
 fastf_t		rad1;
 fastf_t		rad2;
 {
-
 	vect_t		a, avec;	/* one base radius vector */
 	vect_t		b, bvec;	/* another base radius vector */
 	vect_t		cvec;		/* nose radius vector */
@@ -435,7 +364,7 @@ fastf_t		rad2;
 
 	/* Now make a, b, c, and d vectors. */
 
-	vec_ortho(a, h_unitv);
+	mat_vec_ortho(a, h_unitv);
 	VUNITIZE(a);
 	VCROSS(b, h_unitv, a);
 	VSCALE(avec, a, rad1);
@@ -453,47 +382,29 @@ fastf_t		rad2;
  *  Make a truncated right cylinder. 
  */
 int
-mk_trc( fp, name, ibase, iheight, radbase, radtop )
-FILE	*fp;
-char	*name;
-point_t	ibase;
-vect_t	iheight;
-fastf_t	radbase;
-fastf_t	radtop;
+mk_trc( fp, name, base, height, radbase, radtop )
+FILE		*fp;
+char		*name;
+CONST point_t	base;
+CONST vect_t	height;
+fastf_t		radbase;
+fastf_t		radtop;
 {
-	point_t	base;
-	vect_t	height;
-	union record rec;
 	vect_t	cross1, cross2;
-
-	bzero( (char *)&rec, sizeof(rec) );
-	rec.s.s_id = ID_SOLID;
-	rec.s.s_type = GENTGC;
-	NAMEMOVE(name, rec.s.s_name);
-
-	/* Units conversion */
-	radbase *= mk_conv2mm;
-	radtop *= mk_conv2mm;
-	VSCALE( base, ibase, mk_conv2mm );
-	VSCALE( height, iheight, mk_conv2mm );
-
-	VMOVE( F1, base );
-	VMOVE( F2, height );
+	vect_t	a, b, c, d;
 
 	/* Create two mutually perpendicular vectors, perpendicular to H */
 	vec_ortho( cross1, height );
 	VCROSS( cross2, cross1, height );
 	VUNITIZE( cross2 );
 
-	VSCALE( F3, cross1, radbase );
-	VSCALE( F4, cross2, radbase );
+	VSCALE( a, cross1, radbase );
+	VSCALE( b, cross2, radbase );
 
-	VSCALE( F5, cross1, radtop );
-	VSCALE( F6, cross2, radtop );
+	VSCALE( c, cross1, radtop );
+	VSCALE( d, cross2, radtop );
 
-	if( fwrite( (char *)&rec, sizeof( rec), 1, fp) != 1 )
-		return(-1);
-	return(0);	/* OK */
+	return mk_tgc( fp, name, base, height, a, b, c, d );
 }
 
 /*
@@ -503,100 +414,15 @@ fastf_t	radtop;
  */
 int
 mk_trc_top( fp, name, ibase, itop, radbase, radtop )
-FILE	*fp;
-char	*name;
-point_t	ibase;
-point_t	itop;
-fastf_t	radbase;
-fastf_t	radtop;
+FILE		*fp;
+char		*name;
+CONST point_t	ibase;
+CONST point_t	itop;
+fastf_t		radbase;
+fastf_t		radtop;
 {
 	vect_t	height;
 
 	VSUB2( height, itop, ibase );
 	return( mk_trc( fp, name, ibase, height, radbase, radtop ) );
-}
-
-/*
- *			M K _ P O L Y S O L I D
- *
- *  Make the header record for a polygon solid.
- *  Must be followed by 1 or more mk_poly() or mk_fpoly() calls
- *  before any other mk_* routines.
- */
-int
-mk_polysolid( fp, name )
-FILE	*fp;
-char	*name;
-{
-	union record rec;
-
-	bzero( (char *)&rec, sizeof(rec) );
-	rec.p.p_id = ID_P_HEAD;
-	NAMEMOVE( name, rec.p.p_name );
-	if( fwrite( (char *)&rec, sizeof(rec), 1, fp ) != 1 )
-		return(-1);
-	return(0);
-}
-
-/*
- *			M K _ P O L Y
- *
- *  Must follow a call to mk_polysolid(), mk_poly(), or mk_fpoly().
- */
-int
-mk_poly( fp, npts, verts, norms )
-FILE	*fp;
-int	npts;
-fastf_t	verts[][3];
-fastf_t	norms[][3];
-{
-	union record rec;
-	register int i,j;
-
-	if( npts < 3 || npts > 5 )  {
-		fprintf(stderr,"mk_poly:  npts=%d is bad\n", npts);
-		return(-1);
-	}
-
-	bzero( (char *)&rec, sizeof(rec) );
-	rec.q.q_id = ID_P_DATA;
-	rec.q.q_count = npts;
-	for( i=0; i<npts; i++ )  {
-		for( j=0; j<3; j++ )  {
-			rec.q.q_verts[i][j] = verts[i][j] * mk_conv2mm;
-			rec.q.q_norms[i][j] = norms[i][j] * mk_conv2mm;
-		}
-	}
-	if( fwrite( (char *)&rec, sizeof(rec), 1, fp ) != 1)
-		return(-1);
-	return(0);
-}
-
-/*
- *			M K _ F P O L Y
- *
- *  Must follow a call to mk_polysolid(), mk_poly(), or mk_fpoly().
- */
-int
-mk_fpoly( fp, npts, verts )
-FILE	*fp;
-int	npts;
-fastf_t	verts[][3];
-{
-	int	i;
-	vect_t	v1, v2, norms[5];
-
-	if( npts < 3 || npts > 5 )  {
-		fprintf(stderr,"mk_poly:  npts=%d is bad\n", npts);
-		return(-1);
-	}
-
-	VSUB2( v1, verts[1], verts[0] );
-	VSUB2( v2, verts[npts-1], verts[0] );
-	VCROSS( norms[0], v1, v2 );
-	VUNITIZE( norms[0] );
-	for( i = 1; i < npts; i++ ) {
-		VMOVE( norms[i], norms[0] );
-	}
-	return( mk_poly(fp, npts, verts, norms) );
 }
