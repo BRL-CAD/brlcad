@@ -461,18 +461,28 @@ sgi_zapmem()
  *
  *  Note that lrectwrite() addresses are relative to the pixel coordinates of
  *  the window, not the current viewport, as you might expect!
+ *
+ *  Normally, xbase=0 and npix = if_width.  For transmissions of
+ *  less than one scanline, these may be different.
  */
 _LOCAL_ int
-sgi_xmit_scanlines( ifp, ybase, nlines )
+sgi_xmit_scanlines( ifp, ybase, nlines, xbase, npix )
 register FBIO	*ifp;
 int		ybase;
 int		nlines;
+int		xbase;
+int		npix;
 {
 	register int	y;
 	register int	n;
 	struct sgi_clip	clip;
 	int		sw_cmap;	/* !0 => needs software color map */
 	int		sw_zoom;	/* !0 => needs software zoom/pan */
+
+	if( nlines > 1 )  {
+		xbase = 0;
+		npix = ifp->if_width;
+	}
 
 	winset(ifp->if_fd);
 
@@ -516,28 +526,44 @@ int		nlines;
 	y = ybase;
 	if( !sw_zoom && !sw_cmap )  {
 		if( ifp->if_width == SGI(ifp)->mi_memwidth )  {
-			lrectwrite(
-				SGI(ifp)->mi_xoff+0,
-				SGI(ifp)->mi_yoff+y,
-				SGI(ifp)->mi_xoff+0+ifp->if_width-1,
-				SGI(ifp)->mi_yoff+y+nlines-1,
-				&ifp->if_mem[(y*SGI(ifp)->mi_memwidth)*
-				    sizeof(struct sgi_pixel)] );
-			return;
+			if( nlines == 1 )  {
+				/* This is the partial-line case */
+				lrectwrite(
+					SGI(ifp)->mi_xoff+xbase,
+					SGI(ifp)->mi_yoff+y,
+					SGI(ifp)->mi_xoff+xbase+npix-1,
+					SGI(ifp)->mi_yoff+y,
+					&ifp->if_mem[(y*SGI(ifp)->mi_memwidth+xbase)*
+					    sizeof(struct sgi_pixel)] );
+				return;
+			} else {
+				/* Multiple line case */
+				lrectwrite(
+					SGI(ifp)->mi_xoff+0,
+					SGI(ifp)->mi_yoff+y,
+					SGI(ifp)->mi_xoff+0+ifp->if_width-1,
+					SGI(ifp)->mi_yoff+y+nlines-1,
+					&ifp->if_mem[(y*SGI(ifp)->mi_memwidth)*
+					    sizeof(struct sgi_pixel)] );
+				return;
+			}
 		}
 		for( n=nlines; n>0; n--, y++ )  {
+			/*
+			 *  GTX is limited to about 1000 lrectwrites/sec,
+			 *  due to the fact that 1-scanline lrectwrites
+			 *  are done with DMA.  The sys-call & interrupt
+			 *  processing burns 60% of the CPU in sys-time!
+			 */
 			lrectwrite(
-				SGI(ifp)->mi_xoff+0,
+				SGI(ifp)->mi_xoff+xbase,
 				SGI(ifp)->mi_yoff+y,
-				SGI(ifp)->mi_xoff+0+ifp->if_width-1,
+				SGI(ifp)->mi_xoff+xbase+npix-1,
 				SGI(ifp)->mi_yoff+y,
 				&ifp->if_mem[(y*SGI(ifp)->mi_memwidth)*
 				    sizeof(struct sgi_pixel)] );
-			/*  XXX big performance hit here.
-			 *  GTX is limited to about 1000 lrectwrites/sec,
-			 *  due to some library synchronization mechanism
-			 *  that burns 60% of the CPU in sys-time. ?!?!
-			 */
+			xbase = 0;
+			npix = ifp->if_width;
 		}
 		return;
 	}
@@ -633,7 +659,7 @@ int		nlines;
 					*op++ = *sgip;	/* struct copy */
 				}
 				sgip++;
-			}
+				}
 			if( sw_cmap )  {
 				x=(clip.xmax-clip.xmin)*SGI(ifp)->mi_xzoom;
 				op = SGI(ifp)->mi_scanline;
@@ -1075,7 +1101,7 @@ int	width, height;
 	 *  Display the existing contents of the memory segment.
 	 *  Make no assumptions about the state of the window.
 	 */
-	sgi_xmit_scanlines( ifp, 0, ifp->if_height );
+	sgi_xmit_scanlines( ifp, 0, ifp->if_height, 0, ifp->if_width );
 	if( SGI(ifp)->mi_is_gt )  {
 		gt_zbuf_to_screen( ifp );
 	}
@@ -1156,7 +1182,8 @@ FBIO	*ifp;
 
 		case REDRAW:
 			reshapeviewport();
-			sgi_xmit_scanlines(ifp, 0, ifp->if_height);
+			sgi_xmit_scanlines(ifp, 0, ifp->if_height,
+				0, ifp->if_width);
 			if( SGI(ifp)->mi_is_gt )  {
 				gt_zbuf_to_screen(ifp);
 			}
@@ -1278,7 +1305,8 @@ register RGBpixel	*pp;
 	}
 
 	if( SGI(ifp)->mi_is_gt )  {
-		sgi_xmit_scanlines( ifp, 0, ifp->if_height );
+		sgi_xmit_scanlines( ifp, 0, ifp->if_height,
+			0, ifp->if_width );
 		gt_zbuf_to_screen(ifp);
 	} else {
 		clear();
@@ -1313,7 +1341,7 @@ int	x, y;
 		/* Transmitting the Zbuffer is all that is needed */
 		gt_zbuf_to_screen( ifp );
 	} else {
-		sgi_xmit_scanlines( ifp, 0, ifp->if_height );
+		sgi_xmit_scanlines( ifp, 0, ifp->if_height, 0, ifp->if_width );
 	}
 	return(0);
 }
@@ -1351,7 +1379,7 @@ int	x, y;
 		/* Transmitting the Zbuffer is all that is needed */
 		gt_zbuf_to_screen( ifp );
 	} else {
-		sgi_xmit_scanlines( ifp, 0, ifp->if_height );
+		sgi_xmit_scanlines( ifp, 0, ifp->if_height, 0, ifp->if_width );
 	}
 	return(0);
 }
@@ -1424,18 +1452,24 @@ int	count;
  *  the screen separately.
  */
 _LOCAL_ int
-sgi_bwrite( ifp, x, y, pixelp, count )
+sgi_bwrite( ifp, xstart, ystart, pixelp, count )
 register FBIO	*ifp;
-register int	x, y;
+int		xstart;
+int		ystart;
 RGBpixel	*pixelp;
-register int	count;
+int		count;
 {
 	register short		scan_count;	/* # pix on this scanline */
 	register unsigned char	*cp;
 	int			ret;
 	int			ybase;
+	register int		pix_count;	/* # pixels to send */
+	register int		x;
+	register int		y;
 
-	ybase = y;
+	x = xstart;
+	ybase = y = ystart;
+	pix_count = count;
 
 	if( x < 0 || x > ifp->if_width ||
 	    y < 0 || y > ifp->if_height)
@@ -1444,17 +1478,17 @@ register int	count;
 	ret = 0;
 	cp = (unsigned char *)(pixelp);
 
-	while( count )  {
+	while( pix_count )  {
 		register unsigned int n;
 		register struct sgi_pixel	*sgip;
 
 		if( y >= ifp->if_height )
 			break;
 
-		if ( count >= ifp->if_width-x )
+		if ( pix_count >= ifp->if_width-x )
 			scan_count = ifp->if_width-x;
 		else
-			scan_count = count;
+			scan_count = pix_count;
 
 		sgip = (struct sgi_pixel *)&ifp->if_mem[
 		    (y*SGI(ifp)->mi_memwidth+x)*sizeof(struct sgi_pixel) ];
@@ -1492,7 +1526,7 @@ register int	count;
 			}
 		}
 		ret += scan_count;
-		count -= scan_count;
+		pix_count -= scan_count;
 		x = 0;
 		if( ++y >= ifp->if_height )
 			break;
@@ -1508,7 +1542,19 @@ register int	count;
 	if( qtest() )
 		sgi_inqueue(ifp);
 
-	sgi_xmit_scanlines( ifp, ybase, y-ybase );
+	if( xstart + count <= ifp->if_width  )  {
+		/* "Fast path" case for writes of less than one scanline */
+		if( SGI(ifp)->mi_doublebuffer )  {
+			fb_log("switching to single buffer\n");
+			singlebuffer();
+			SGI(ifp)->mi_doublebuffer = 0;
+			gconfig();
+		}
+		sgi_xmit_scanlines( ifp, ybase, 1, xstart, count );
+	} else {
+		/* Normal case -- multi-pixel write */
+		sgi_xmit_scanlines( ifp, ybase, y-ybase, 0, ifp->if_width );
+	}
 	if( SGI(ifp)->mi_is_gt )  {
 		/* repaint screen from Z buffer */
 		gt_zbuf_to_screen( ifp );
@@ -1565,7 +1611,7 @@ RGBpixel	*pp;
 	if( qtest() )
 		sgi_inqueue(ifp);
 
-	sgi_xmit_scanlines( ifp, ymin, height );
+	sgi_xmit_scanlines( ifp, ymin, height, 0, ifp->if_width );
 	if( SGI(ifp)->mi_is_gt )  {
 		/* repaint screen from Z buffer */
 		gt_zbuf_to_screen( ifp );
@@ -1674,7 +1720,7 @@ register ColorMap	*cmp;
 
 	if( (ifp->if_mode & MODE_7MASK) == MODE_7SWCMAP )  {
 		/* Software color mapping, trigger a repaint */
-		sgi_xmit_scanlines( ifp, 0, ifp->if_height );
+		sgi_xmit_scanlines( ifp, 0, ifp->if_height, 0, ifp->if_width );
 		if( SGI(ifp)->mi_is_gt )  {
 			gt_zbuf_to_screen( ifp );
 		}
@@ -1819,7 +1865,7 @@ register FBIO *ifp;
 	 */
 	if( redraw )  {
 		reshapeviewport();
-		sgi_xmit_scanlines( ifp, 0, ifp->if_height );
+		sgi_xmit_scanlines( ifp, 0, ifp->if_height, 0, ifp->if_width );
 		if( SGI(ifp)->mi_is_gt )  {
 			gt_zbuf_to_screen( ifp );
 		}
