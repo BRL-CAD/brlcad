@@ -78,6 +78,8 @@ extern struct resource resource[];
 /***** end variables shared with worker() */
 
 /***** variables shared with rt.c *****/
+extern char	*string_pix_start;	/* string spec of starting pixel */
+extern char	*string_pix_end;	/* string spec of ending pixel */
 extern int	pix_start;		/* pixel to start at */
 extern int	pix_end;		/* pixel to end at */
 extern int	nobjs;			/* Number of cmd-line treetops */
@@ -569,9 +571,37 @@ int framenumber;
 	rt_log("Beam: radius=%g mm, divergence=%g mm/1mm\n",
 		ap.a_rbeam, ap.a_diverge );
 
+	/* Process -b and ??? options now, for this frame */
 	if( pix_start == -1 )  {
 		pix_start = 0;
 		pix_end = height * width - 1;
+	}
+	if( string_pix_start )  {
+		int xx, yy;
+		register char *cp = string_pix_start;
+
+		xx = atoi(cp);
+		while( *cp >= '0' && *cp <= '9' )  cp++;
+		while( *cp && (*cp < '0' || *cp > '9') ) cp++;
+		yy = atoi(cp);
+		rt_log("only pixel %d %d\n", xx, yy);
+		if( xx * yy >= 0 )  {
+			pix_start = yy * width + xx;
+			pix_end = pix_start;
+		}
+	}
+	if( string_pix_end )  {
+		int xx, yy;
+		register char *cp = string_pix_end;
+
+		xx = atoi(cp);
+		while( *cp >= '0' && *cp <= '9' )  cp++;
+		while( *cp && (*cp < '0' || *cp > '9') ) cp++;
+		yy = atoi(cp);
+		rt_log("ending pixel %d %d\n", xx, yy);
+		if( xx * yy >= 0 )  {
+			pix_end = yy * width + xx;
+		}
 	}
 
 	/*

@@ -69,6 +69,8 @@ struct resource	resource[MAX_PSW];	/* memory resources */
 /***** end variables shared with worker() *****/
 
 /***** variables shared with do.c *****/
+char		*string_pix_start;	/* string spec of starting pixel */
+char		*string_pix_end;	/* string spec of ending pixel */
 int		pix_start = -1;		/* pixel to start at */
 int		pix_end;		/* pixel to end at */
 int		nobjs;			/* Number of cmd-line treetops */
@@ -86,6 +88,7 @@ char		*framebuffer;		/* desired framebuffer */
 
 #define MAX_WIDTH	(32*1024)
 
+extern struct command_tab	rt_cmdtab[];
 
 /*
  *			G E T _ A R G S
@@ -99,10 +102,37 @@ register char **argv;
 	optind = 1;		/* restart */
 
 #define GETOPT_STR	\
-	"E:SJ:H:F:D:K:MA:x:X:s:f:a:e:l:O:o:p:P:Bb:n:w:iIU:V:g:G:r"
+	"a:b:c:e:f:g:il:n:o:p:rs:w:x:A:BC:D:E:F:G:H:IJ:K:MO:P:SU:V:X:"
 
 	while( (c=getopt( argc, argv, GETOPT_STR )) != EOF )  {
 		switch( c )  {
+		case 'c':
+			(void)rt_do_cmd( (struct rt_i *)0, optarg, rt_cmdtab );
+			break;
+		case 'C':
+			{
+				char		buf[128];
+				int		r,g,b;
+				register char	*cp = optarg;
+
+				r = atoi(cp);
+				while( (*cp >= '0' && *cp <= '9') )  cp++;
+				while( *cp && (*cp < '0' || *cp > '9') ) cp++;
+				g = atoi(cp);
+				while( (*cp >= '0' && *cp <= '9') )  cp++;
+				while( *cp && (*cp < '0' || *cp > '9') ) cp++;
+				b = atoi(cp);
+
+				if( r < 0 || r > 255 )  r = 255;
+				if( g < 0 || g > 255 )  g = 255;
+				if( b < 0 || b > 255 )  b = 255;
+
+				sprintf(buf,"set background=%f/%f/%f",
+					r/255., g/255., b/255. );
+				(void)rt_do_cmd( (struct rt_i *)0, buf,
+					rt_cmdtab );
+			}
+			break;
 		case 'U':
 			use_air = atoi( optarg );
 			break;
@@ -222,28 +252,24 @@ register char **argv;
 			break;
 		case 'B':
 			/*  Remove all intentional random effects
-			 *  (dither, etc) for benchmarking.
+			 *  (dither, etc) for benchmarking purposes.
 			 */
 			benchmark = 1;
 			mathtab_constant();
 			break;
 		case 'b':
 			/* Specify a single pixel to be done */
-			{
-				int xx, yy;
-				register char *cp = optarg;
-
-				xx = atoi(cp);
-				while( *cp >= '0' && *cp <= '9' )  cp++;
-				while( *cp && (*cp < '0' || *cp > '9') ) cp++;
-				yy = atoi(cp);
-				fprintf(stderr,"only pixel %d %d\n", xx, yy);
-				if( xx * yy >= 0 )  {
-					pix_start = yy * width + xx;
-					pix_end = pix_start;
-				}
-			}
+			/* Actually processed in do_frame() */
+			string_pix_start = optarg;
 			break;
+#if 0
+		case ?:
+			/* XXX what letter to use? */
+			/* Specify the pixel to end at */
+			/* Actually processed in do_frame() */
+			string_pix_end = optarg;
+			break;
+#endif
 		case 'V':
 			/* View aspect */
 			{
