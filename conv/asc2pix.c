@@ -36,9 +36,13 @@ main()
 	}
 }
 
-#ifdef SYS5
+#ifndef BSD42
+
 bzero( str, n )
+register char *str;
+register int n;
 {
-	memset( str, '\0', n );
+	while( n-- > 0 )
+		*str++ = '\0';
 }
 #endif
