@@ -1,5 +1,5 @@
 #
-#		M A K E F I L E 
+#		M A K E F I L E
 #
 #  $Revision$
 #  @(#)$Header$;
@@ -12,10 +12,15 @@
 
 # For SGI 4D
 CC = cc
-CFLAGS= -O2 -DSYS5
-#CFLAGS= -ansi -O2 -DSYS5
+CFLAGS= -O2 -DSYS5 -DHAS_TERMIOS
+#CFLAGS= -ansi -O2 -DSYS5 -DHAS_TERMIOS
 LDFLAGS = -O2
 LB=	-lcurses
+
+# For Solaris 2.x
+#CC = cc
+#CFLAGS = -O -i -Xc -xstrconst -DSYS5 -DHAS_TERMIOS
+#LB = -lcurses
 
 DESTDIR=
 BINDIR=${DESTDIR}/usr/brl/bin
@@ -37,18 +42,35 @@ OBJECTS =	jove_buf.o \
 		jove_re.o \
 		jove_screen.o \
 		jove_term.o \
-		jove_tune.o \
-		jove_wind.o 
+		jove_wind.o \
+		tune.o \
+		version.o
 
-all:	xjove xfindcom
+all:	xjove xfindcom xteach-jove
 
 xjove:	$(OBJECTS)
-	sh mkversion.sh
-	$(CC) $(LDFLAGS) -o xjove version.o $(OBJECTS) $(LB)
+	$(CC) $(LDFLAGS) -o xjove $(OBJECTS) $(LB)
 	size xjove
 
-xfindcom:	findcom.o jove_tune.o
-	$(CC) findcom.o jove_tune.o -o xfindcom
+xfindcom:	findcom.o tune.o
+	$(CC) findcom.o tune.o -o xfindcom
+
+xteach-jove:	teach-jove.sh FRC
+	sed -e 's;BinDir;$(BINDIR);' -e 's;LibDir;$(LIBDIR);' < teach-jove.sh > $@
+
+tune.c:		jove_tune.c FRC
+	sed -e 's;LibDir;$(LIBDIR);' < jove_tune.c > $@
+
+version.c:	FRC
+	if test ! -f version.number ; then echo 0 > version.number; fi
+	c=`cat version.number`; \
+	rm -f version.number $@; \
+	echo $$c | \
+		awk '{version = $$1 + 1; };END{printf "%d\n", version > "version.number"; }'; \
+	c=`cat version.number`; \
+	echo "char	version[] = \"2.$$c\";" > $@
+
+FRC:
 
 $(OBJECTS)				: jove.h
 
@@ -56,14 +78,14 @@ jove_disp.c jove_draw.c jove_wind.c	: termcap.h
 
 jove_io.c	jove_screen.c		: termcap.h jove_temp.h
 
-install: xjove xfindcom
+install:	xjove xfindcom xteach-jove
 	-mkdir $(LIBDIR); chmod 755 $(LIBDIR)
 	install -c -m 755 xjove $(BINDIR)/jove
 	install -c -m 755 xfindcom $(LIBDIR)/findcom
-	install -c -m 755 teach-jove.sh $(BINDIR)/teach-jove
+	install -c -m 755 xteach-jove $(BINDIR)/teach-jove
 
 clean:
-	rm -f *.o core xjove xfindcom
+	rm -f *.o core xjove xfindcom xteach-jove tune.c version.c
 
-tags:	$(OBJECTS)
+tags:	tune.c version.c
 	ctags *.c
