@@ -106,7 +106,7 @@ matp_t mat;			/* Homogenous 4x4, with translation, [15]=1 */
 		}
 		if( rec.d.d_geom_type != 3 && rec.d.d_geom_type != 4 )  {
 			printf("BSURF geom_type=%d?\n", rec.d.d_geom_type);
-			return;
+			return(-1);
 		}
 		GETSTRUCT( spl, surf );
 		spl->spl_forw = list;
@@ -122,7 +122,7 @@ matp_t mat;			/* Homogenous 4x4, with translation, [15]=1 */
 		nby = rec.d.d_nknots * sizeof(union record);
 		if( (vp = (float *)malloc(nby)) == (float *)0 )  {
 			printf("draw_spline:  malloc error\n");
-			return;
+			return(-1);
 		}
 		fp = vp;
 /***		db_getmany( dp, (char *)vp, cur_gran, rec.d.d_nknots ); ***/
@@ -142,7 +142,7 @@ matp_t mat;			/* Homogenous 4x4, with translation, [15]=1 */
 		nby = rec.d.d_nctls * sizeof(union record);
 		if( (spl->spl_mesh = (float *)malloc(nby)) == (float *)0 )  {
 			printf("draw_spline:  malloc error\n");
-			return;
+			return(-1);
 		}
 /***		db_getmany( dp, (char *)spl->spl_mesh, cur_gran, rec.d.d_nctls ); ***/
 		i = fread( (char *)spl->spl_mesh, nby, 1, rt_i.fp );
