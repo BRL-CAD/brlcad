@@ -18,19 +18,19 @@
 /* Explicit composition of each product */
 
 firpass:	firpass.o subroutines.o
-	CC LDFLAGS firpass.o subroutines.o LIBRT LIBBU LIBBU_LIBES LIBES -o firpass
+	CC LDFLAGS firpass.o subroutines.o LIBRT LIBBN LIBBU LIBBU_LIBES LIBES -o firpass
 
 secpass:        secpass.o subroutines.o
-        CC LDFLAGS secpass.o subroutines.o LIBRT LIBBU LIBBU_LIBES LIBES -o secpass
+        CC LDFLAGS secpass.o subroutines.o LIBRT LIBBN LIBBU LIBBU_LIBES LIBES -o secpass
 
 shapefact:  shapefact.o
-        CC LDFLAGS shapefact.o LIBRT LIBBU LIBBU_LIBES LIBES -o shapefact
+        CC LDFLAGS shapefact.o LIBRT LIBBN LIBBU LIBBU_LIBES LIBES -o shapefact
 
 all_sf:  all_sf.o
-        CC LDFLAGS all_sf.o LIBRT LIBBU LIBBU_LIBES LIBES -o all_sf
+        CC LDFLAGS all_sf.o LIBRT LIBBN LIBBU LIBBU_LIBES LIBES -o all_sf
 
 display:  display.o
-        CC LDFLAGS display.o LIBRT LIBBU LIBBU_LIBES LIBES -o display
+        CC LDFLAGS display.o LIBRT LIBBN LIBBU LIBBU_LIBES LIBES -o display
 
 ir-X:	ir-X.o
 	CC LDFLAGS ir-X.o -L''XLIBDIR -lX11 -o ir-X

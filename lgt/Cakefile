@@ -44,7 +44,7 @@
 /* Explicit composition of each product */
 
 lgt:	OBJ
-	CC LDFLAGS -o lgt OBJ LIBRT LIBBU LIBBU_LIBES LIBFB LIBFB_LIBES LIBTERMIO LIBCURSOR LIBTERMLIB LIBES
+	CC LDFLAGS -o lgt OBJ LIBRT LIBBN LIBBU LIBBU_LIBES LIBFB LIBFB_LIBES LIBTERMIO LIBCURSOR LIBTERMLIB LIBES
 
 tfiles/model.g:	tfiles/model.asc
 	asc2g < tfiles/model.asc > tfiles/model.g

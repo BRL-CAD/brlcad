@@ -15,6 +15,6 @@
 /* Explicit composition of each product */
 
 comgeom-g:	OBJ
-	CC LDFLAGS -o comgeom-g OBJ LIBWDB LIBRT LIBBU LIBBU_LIBES LIBES
+	CC LDFLAGS -o comgeom-g OBJ LIBWDB LIBRT LIBBN LIBBU LIBBU_LIBES LIBES
 
 #include "../Cakefile.rules"

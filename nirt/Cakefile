@@ -17,9 +17,9 @@
 	nirt.o command.o conversion.o if.o interact.o bsphere.o \
 	read_mat.o str_manip.o parse_fmt.o
 
-nirt:	NIRT_OBJ LIBRT_DEP LIBFB_DEP LIBBU_DEP
+nirt:	NIRT_OBJ LIBRT_DEP LIBBN_DEP LIBFB_DEP LIBBU_DEP
 	sh ../newvers.sh version "Natalie's Interactive Ray Tracer"
 	CC CFLAGS -c vers.c
-	CC LDFLAGS NIRT_OBJ vers.o LIBRT LIBFB LIBFB_LIBES LIBBU LIBBU_LIBES LIBES -o nirt
+	CC LDFLAGS NIRT_OBJ vers.o LIBRT LIBBN LIBFB LIBFB_LIBES LIBBU LIBBU_LIBES LIBES -o nirt
 
 #include "../Cakefile.rules"
