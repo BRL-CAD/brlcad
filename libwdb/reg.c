@@ -344,7 +344,7 @@ register struct wmember *headp;
 }
 
 /*
- *			M K _ R L C O M B
+ *			M K _ L R C O M B
  *
  *  Make a combination, much like mk_comb(), but where the
  *  members are described by a linked list of wmember structs.
