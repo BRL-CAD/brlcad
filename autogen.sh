@@ -172,7 +172,7 @@ fi
 ############################################
 reconfigure_manually=no
 if [ "x$HAVE_AUTORECONF" = "xyes" ] && [ "x$HAVE_LIBTOOLIZE" = "xyes" ] ; then
-  echo $ECHO_N "Automatically preparing build ...$ECHO_C"
+  echo $ECHO_N "Automatically preparing build ... $ECHO_C"
   autoreconf -i
   if [ ! $? = 0 ] ; then
     echo "Warning: autoreconf failed"
@@ -184,7 +184,7 @@ else
 fi
 
 if [ "x$reconfigure_manually" = "xyes" ] ; then
-  echo $ECHO_N "Preparing build ...$ECHO_C"
+  echo $ECHO_N "Preparing build ... $ECHO_C"
   if [ "x$HAVE_LIBTOOLIZE" = "xyes" ] ; then 
     libtoolize --automake -c -f
     [ ! $? = 0 ] && echo "ERROR: libtoolize failed" && exit 2
@@ -203,7 +203,7 @@ if [ "x$reconfigure_manually" = "xyes" ] ; then
       echo "file to the appropriate location (misc/).  This has been done for you."
       echo
       cp ltmain.sh misc/ltmain.sh
-      echo "Continuing build preparation ..."
+      echo $ECHO_N "Continuing build preparation ... $ECHO_C"
     fi
   fi
 
