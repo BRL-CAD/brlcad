@@ -609,7 +609,11 @@ int			end;		/* last index + 1 */
 		 *  in which case, let just one through.  (return 'start+1');
 		 */
 		if( *(rs->vu[i]->up.magic_p) == NMG_LOOPUSE_MAGIC )  {
-			if( i <= start && nvu == 0 )  return start+1;
+			if( i <= start && nvu == 0 )  {
+				rt_free( (char *)vs, "nmg_vu_stuff");
+				rt_free( (char *)ls, "nmg_loop_stuff");
+				return start+1;
+			}
 			/* Drop this loop of a single vertex in sanitize() */
 			lu->orientation =
 			  lu->lumate_p->orientation = OT_BOOLPLACE;
@@ -665,6 +669,9 @@ got_loop:
 			rt_log(" vu[%d]=x%x, v=x%x\n",
 				start+i, rs->vu[start+i], rs->vu[start+i]->v_p );
 	}
+
+	rt_free( (char *)vs, "nmg_vu_stuff");
+	rt_free( (char *)ls, "nmg_loop_stuff");
 	return start+nvu;
 }
 
