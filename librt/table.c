@@ -569,9 +569,9 @@ const struct rt_functab rt_functab[] = {
 
 	{RT_FUNCTAB_MAGIC, "ID_ARS", "ars",
 		1,		/* 5 */
-		rt_ars_prep,	rt_ars_shot,	rt_ars_print,	rt_ars_norm,
-		rt_nul_piece_shot, rt_nul_piece_hitsegs,
-		rt_ars_uv,	rt_ars_curve,	rt_ars_class,	rt_ars_free,
+		rt_ars_prep,	rt_bot_shot,	rt_ars_print,	rt_bot_norm,
+		rt_bot_piece_shot, rt_bot_piece_hitsegs,
+		rt_ars_uv,	rt_bot_curve,	rt_bot_class,	rt_bot_free,
 		rt_ars_plot,	rt_vstub,	rt_ars_tess,	rt_nul_tnurb,
 		rt_ars_import5, rt_ars_export5,
 		rt_ars_import,	rt_ars_export,	rt_ars_ifree,

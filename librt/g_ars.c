@@ -28,6 +28,7 @@ static const char RCSars[] = "@(#)$Header$ (BRL)";
 #endif
 #include <math.h>
 #include <ctype.h>
+#include "tcl.h"
 #include "machine.h"
 #include "vmath.h"
 #include "db.h"
@@ -41,9 +42,66 @@ static const char RCSars[] = "@(#)$Header$ (BRL)";
 
 /* Describe algorithm here */
 
-HIDDEN fastf_t	*rt_ars_rd_curve();
+extern int rt_bot_minpieces;
 
-extern int	rt_ars_face();
+void
+rt_ars_free( register struct soltab *stp )
+{
+    bu_bomb("rt_ars_free s/b rt_bot_free\n");
+}
+int
+rt_ars_class(const struct soltab	*stp,
+	     const vect_t		min,
+	     const vect_t		max,
+	     const struct bn_tol	*tol)
+{
+    bu_bomb("rt_ars_class s/b rt_bot_class\n");
+    return 0; /* not reached */
+}
+
+
+/*
+ *			R T _ A R S _ R D _ C U R V E
+ *
+ *  rt_ars_rd_curve() reads a set of ARS B records and returns a pointer
+ *  to a malloc()'ed memory area of fastf_t's to hold the curve.
+ */
+fastf_t *
+rt_ars_rd_curve(rp, npts)
+union record	*rp;
+int		npts;
+{
+	LOCAL int lim;
+	LOCAL fastf_t *base;
+	register fastf_t *fp;		/* pointer to temp vector */
+	register int i;
+	LOCAL union record *rr;
+	int	rec;
+
+	/* Leave room for first point to be repeated */
+	base = fp = (fastf_t *)bu_malloc(
+	    (npts+1) * sizeof(fastf_t) * ELEMENTS_PER_VECT,
+	    "ars curve" );
+
+	rec = 0;
+	for( ; npts > 0; npts -= 8 )  {
+		rr = &rp[rec++];
+		if( rr->b.b_id != ID_ARS_B )  {
+			bu_log("rt_ars_rd_curve():  non-ARS_B record!\n");
+			break;
+		}
+		lim = (npts>8) ? 8 : npts;
+		for( i=0; i<lim; i++ )  {
+			/* cvt from dbfloat_t */
+			VMOVE( fp, (&(rr->b.b_values[i*3])) );
+			fp += ELEMENTS_PER_VECT;
+		}
+	}
+	return( base );
+}
+
+
+
 
 /*
  *			R T _ A R S _ I M P O R T
@@ -413,165 +471,119 @@ struct soltab		*stp;
 struct rt_db_internal	*ip;
 struct rt_i		*rtip;
 {
-	LOCAL fastf_t	dx, dy, dz;	/* For finding the bounding spheres */
-	register int	i, j;
-	LOCAL fastf_t	f;
-	struct rt_ars_internal	*arip;
+    LOCAL fastf_t	dx, dy, dz;	/* For finding the bounding spheres */
+    int	i, j, ntri;
+    LOCAL fastf_t	f;
+    struct rt_ars_internal	*arip;
+    struct bot_specific	*bot;
+    const struct bn_tol		*tol = &rtip->rti_tol;
+    int ncv;
 
-	arip = (struct rt_ars_internal *)ip->idb_ptr;
-	RT_ARS_CK_MAGIC(arip);
 
-	/*
-	 * Compute bounding sphere.
-	 * Find min and max of the point co-ordinates.
-	 */
-	VSETALL( stp->st_max, -INFINITY );
-	VSETALL( stp->st_min,  INFINITY );
+    arip = (struct rt_ars_internal *)ip->idb_ptr;
+    RT_ARS_CK_MAGIC(arip);
 
-	for( i = 0; i < arip->ncurves; i++ )  {
-		register fastf_t *v;
+    /* initialize the Bag-'o-triangles structure we need */
+    BU_GETSTRUCT( bot, bot_specific );
+    stp->st_specific = (genptr_t)bot;
+    bot->bot_mode = RT_BOT_SOLID;
+    bot->bot_orientation = RT_BOT_UNORIENTED;
+    bot->bot_errmode = (unsigned char)NULL;
+    bot->bot_thickness = (fastf_t *)NULL;
+    bot->bot_facemode = (struct bu_bitv *)NULL;
+    bot->bot_facelist = (struct tri_specific *)NULL;
 
-		v = arip->curves[i];
-		for( j = 0; j < arip->pts_per_curve; j++ )  {
-			VMINMAX( stp->st_min, stp->st_max, v );
-			v += ELEMENTS_PER_VECT;
-		}
+    /*
+     * Compute bounding sphere.
+     * Find min and max of the point co-ordinates.
+     */
+    VSETALL( stp->st_max, -INFINITY );
+    VSETALL( stp->st_min,  INFINITY );
+
+    for( i = 0; i < arip->ncurves; i++ )  {
+	register fastf_t *v;
+
+	v = arip->curves[i];
+	for( j = 0; j < arip->pts_per_curve; j++ )  {
+	    VMINMAX( stp->st_min, stp->st_max, v );
+	    v += ELEMENTS_PER_VECT;
 	}
-	VSET( stp->st_center,
-		(stp->st_max[X] + stp->st_min[X])/2,
-		(stp->st_max[Y] + stp->st_min[Y])/2,
-		(stp->st_max[Z] + stp->st_min[Z])/2 );
+    }
+    VSET( stp->st_center,
+	  (stp->st_max[X] + stp->st_min[X])/2,
+	  (stp->st_max[Y] + stp->st_min[Y])/2,
+	  (stp->st_max[Z] + stp->st_min[Z])/2 );
 
-	dx = (stp->st_max[X] - stp->st_min[X])/2;
-	f = dx;
-	dy = (stp->st_max[Y] - stp->st_min[Y])/2;
-	if( dy > f )  f = dy;
-	dz = (stp->st_max[Z] - stp->st_min[Z])/2;
-	if( dz > f )  f = dz;
-	stp->st_aradius = f;
-	stp->st_bradius = sqrt(dx*dx + dy*dy + dz*dz);
-	stp->st_specific = (genptr_t) 0;
+    dx = (stp->st_max[X] - stp->st_min[X])/2;
+    f = dx;
+    dy = (stp->st_max[Y] - stp->st_min[Y])/2;
+    if( dy > f )  f = dy;
+    dz = (stp->st_max[Z] - stp->st_min[Z])/2;
+    if( dz > f )  f = dz;
+    stp->st_aradius = f;
+    stp->st_bradius = sqrt(dx*dx + dy*dy + dz*dz);
 
-	/*
-	 *  Compute planar faces
-	 *  Will examine curves[i][pts_per_curve], provided by rt_ars_rd_curve.
-	 */
-	for( i = 0; i < arip->ncurves-1; i++ )  {
-		register fastf_t *v1, *v2;
 
-		v1 = arip->curves[i];
-		v2 = arip->curves[i+1];
-		for( j = 0; j < arip->pts_per_curve;
-		    j++, v1 += ELEMENTS_PER_VECT, v2 += ELEMENTS_PER_VECT )  {
-		    	/* carefully make faces, w/inward pointing normals */
-			rt_ars_face( stp,
-				&v1[0],				/* [0][0] */
-				&v2[ELEMENTS_PER_VECT],		/* [1][1] */
-				&v1[ELEMENTS_PER_VECT] );	/* [0][1] */
-			rt_ars_face( stp,
-				&v2[0],				/* [1][0] */
-				&v2[ELEMENTS_PER_VECT],		/* [1][1] */
-				&v1[0] );			/* [0][0] */
-		}
+    /*
+     *  Compute planar faces
+     *  Will examine curves[i][pts_per_curve], provided by rt_ars_rd_curve.
+     */
+    ncv = arip->ncurves-2;
+    ntri = 0;
+    for(i=0; i <= ncv; i++ )  {
+	register fastf_t *v1, *v2;
+
+	v1 = arip->curves[i];
+	v2 = arip->curves[i+1];
+	for( j = 0; j < arip->pts_per_curve;
+	     j++, v1 += ELEMENTS_PER_VECT, v2 += ELEMENTS_PER_VECT )  {
+
+	    /* XXX make sure the faces are actual triangles */
+
+
+	    /* carefully make faces, w/inward pointing normals */
+	    /* [0][0] [1][1], [0][1] */
+	    if (i != 0 && 
+		rt_botface(stp, bot, &v1[0], &v2[ELEMENTS_PER_VECT],
+			   &v1[ELEMENTS_PER_VECT], ntri, tol) > 0)   ntri++;
+
+	    /* [1][0] [1][1] [0][0] */
+	    if (i < ncv &&
+		rt_botface(stp, bot, &v2[0], &v2[ELEMENTS_PER_VECT],
+			   &v1[0], ntri, tol) > 0)   ntri++;
 	}
+    }
 
-	rt_ars_ifree( ip );
 
-	return(0);		/* OK */
+    if( bot->bot_facelist == (struct tri_specific *)0 )  {
+	bu_log("ars(%s):  no faces\n", stp->st_name);
+	return(-1);             /* BAD */
+    }
+
+
+    /*
+     *  Support for solid 'pieces'
+     *  For now, each triangle is considered a separate piece.
+     *  These array allocations can't be made until the number of
+     *  triangles are known.
+     *
+     *  If the number of triangles is too small,
+     *  don't bother making pieces, the overhead isn't worth it.
+     *
+     *  To disable BoT pieces, on the RT command line specify:
+     *	-c "set rt_bot_minpieces=0"
+     */
+    if( rt_bot_minpieces <= 0 )  return 0;
+    if( ntri < rt_bot_minpieces )  return 0;
+
+
+    rt_bot_prep_pieces(bot, stp, ntri, tol);
+
+    rt_ars_ifree( ip );
+
+    return(0);		/* OK */
 }
 
-/*
- *			R T _ A R S _ R D _ C U R V E
- *
- *  rt_ars_rd_curve() reads a set of ARS B records and returns a pointer
- *  to a malloc()'ed memory area of fastf_t's to hold the curve.
- */
-fastf_t *
-rt_ars_rd_curve(rp, npts)
-union record	*rp;
-int		npts;
-{
-	LOCAL int lim;
-	LOCAL fastf_t *base;
-	register fastf_t *fp;		/* pointer to temp vector */
-	register int i;
-	LOCAL union record *rr;
-	int	rec;
-
-	/* Leave room for first point to be repeated */
-	base = fp = (fastf_t *)bu_malloc(
-	    (npts+1) * sizeof(fastf_t) * ELEMENTS_PER_VECT,
-	    "ars curve" );
-
-	rec = 0;
-	for( ; npts > 0; npts -= 8 )  {
-		rr = &rp[rec++];
-		if( rr->b.b_id != ID_ARS_B )  {
-			bu_log("rt_ars_rd_curve():  non-ARS_B record!\n");
-			break;
-		}
-		lim = (npts>8) ? 8 : npts;
-		for( i=0; i<lim; i++ )  {
-			/* cvt from dbfloat_t */
-			VMOVE( fp, (&(rr->b.b_values[i*3])) );
-			fp += ELEMENTS_PER_VECT;
-		}
-	}
-	return( base );
-}
-
-/*
- *			R T _ A R S _ F A C E
- *
- *  This function is called with pointers to 3 points,
- *  and is used to prepare ARS faces.
- *  ap, bp, cp point to vect_t points.
- *
- * Return -
- *	0	if the 3 points didn't form a plane (eg, colinear, etc).
- *	#pts	(3) if a valid plane resulted.
- */
-int
-rt_ars_face( stp, ap, bp, cp )
-struct soltab *stp;
-pointp_t ap, bp, cp;
-{
-	register struct tri_specific *trip;
-	vect_t work;
-	LOCAL fastf_t m1, m2, m3, m4;
-
-	BU_GETSTRUCT( trip, tri_specific );
-	VMOVE( trip->tri_A, ap );
-	VSUB2( trip->tri_BA, bp, ap );
-	VSUB2( trip->tri_CA, cp, ap );
-	VCROSS( trip->tri_wn, trip->tri_BA, trip->tri_CA );
-
-	/* Check to see if this plane is a line or pnt */
-	m1 = MAGNITUDE( trip->tri_BA );
-	m2 = MAGNITUDE( trip->tri_CA );
-	VSUB2( work, bp, cp );
-	m3 = MAGNITUDE( work );
-	m4 = MAGNITUDE( trip->tri_wn );
-	if( NEAR_ZERO(m1,0.0001) || NEAR_ZERO(m2,0.0001) ||
-	    NEAR_ZERO(m3,0.0001) || NEAR_ZERO(m4,0.0001) )  {
-		bu_free( (char *)trip, "tri_specific struct");
-		if( RT_G_DEBUG & DEBUG_ARB8 )
-			bu_log("ars(%s): degenerate facet\n", stp->st_name);
-		return(0);			/* BAD */
-	}		
-
-	/*
-	 *  wn is an inward pointing normal, of non-unit length.
-	 *  tri_N is a unit length outward pointing normal.
-	 */
-	VREVERSE( trip->tri_N, trip->tri_wn );
-	VUNITIZE( trip->tri_N );
-
-	/* Add this face onto the linked list for this solid */
-	trip->tri_forw = (struct tri_specific *)stp->st_specific;
-	stp->st_specific = (genptr_t)trip;
-	return(3);				/* OK */
-}
 
 /*
  *  			R T _ A R S _ P R I N T
@@ -904,29 +916,6 @@ register struct uvcoord *uvp;
 	uvp->uv_dv = r * yylen;
 }
 
-/*
- *			R T _ A R S _ F R E E
- */
-void
-rt_ars_free( stp )
-register struct soltab *stp;
-{
-	register struct tri_specific *trip =
-		(struct tri_specific *)stp->st_specific;
-
-	while( trip != TRI_NULL )  {
-		register struct tri_specific *nexttri = trip->tri_forw;
-
-		bu_free( (char *)trip, "ars tri_specific");
-		trip = nexttri;
-	}
-}
-
-int
-rt_ars_class()
-{
-	return(0);
-}
 
 /*
  *			R T _ A R S _ P L O T

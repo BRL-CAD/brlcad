@@ -505,6 +505,7 @@ struct rt_bot_internal
 #define	RT_BOT_INTERNAL_MAGIC		0x626F7472	/* botr */
 #define RT_BOT_CK_MAGIC(_p)	BU_CKMAG(_p,RT_BOT_INTERNAL_MAGIC,"rt_bot_internal")
 
+
 #ifdef __cplusplus
 }
 #endif

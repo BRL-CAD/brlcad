@@ -38,16 +38,6 @@ static const char RCSbot[] = "@(#)$Header$ (BRL)";
 #include "./debug.h"
 #include "./plane.h"
 
-struct bot_specific
-{
-	unsigned char bot_mode;
-	unsigned char bot_orientation;
-	unsigned char bot_errmode;
-	fastf_t *bot_thickness;
-	struct bu_bitv *bot_facemode;
-	struct tri_specific *bot_facelist;	/* head of linked list */
-	struct tri_specific **bot_facearray;	/* head of face array */
-};
 
 /* XXX Set this to 32 to enable pieces by default */
 int rt_bot_minpieces = 32;
@@ -64,13 +54,14 @@ int rt_bot_minpieces = 32;
  *	0	if the 3 points didn't form a plane (eg, colinear, etc).
  *	#pts	(3) if a valid plane resulted.
  */
-HIDDEN int
-rt_botface( stp, bot, ap, bp, cp, face_no, tol )
-struct soltab *stp;
-struct bot_specific *bot;
-fastf_t		*ap, *bp, *cp;
-int		face_no;
-const struct bn_tol	*tol;
+int
+rt_botface(struct soltab	*stp,
+	   struct bot_specific	*bot,
+	   fastf_t		*ap,
+	   fastf_t		*bp,
+	   fastf_t		*cp,
+	   int			face_no,
+	   const struct bn_tol	*tol)
 {
 	register struct tri_specific *trip;
 	vect_t work;
@@ -93,7 +84,7 @@ const struct bn_tol	*tol;
 	    m3 < 0.00001 || m4 < 0.00001 )  {
 		bu_free( (char *)trip, "getstruct tri_specific");
 	    	{
-			bu_log("bot(%s): degenerate facet #%d\n",
+			bu_log("%s: degenerate facet #%d\n",
 				stp->st_name, face_no);
 	    		bu_log( "\t(%g %g %g) (%g %g %g) (%g %g %g)\n",
 	    			V3ARGS( ap ), V3ARGS( bp ), V3ARGS( cp ) );
@@ -114,6 +105,103 @@ const struct bn_tol	*tol;
 	trip->tri_forw = bot->bot_facelist;
 	bot->bot_facelist = trip;
 	return(3);				/* OK */
+}
+
+/*
+ *	Do the prep to support pieces for a BOT/ARS
+ *
+ */
+void
+rt_bot_prep_pieces(struct bot_specific	*bot,
+		   struct soltab	*stp,
+		   int			ntri,
+		   const struct bn_tol		*tol)
+{
+    struct bound_rpp	*minmax;
+    struct tri_specific **fap;
+    register struct tri_specific *trip;
+    point_t b,c;
+    point_t d,e,f;
+    vect_t offset;
+    fastf_t los;
+    int surfno;
+
+    stp->st_npieces = ntri;
+
+    fap = bot->bot_facearray = (struct tri_specific **)
+	bu_malloc( sizeof(struct tri_specific *) * ntri,
+		   "bot_facearray" );
+
+    stp->st_piece_rpps = (struct bound_rpp *)
+	bu_malloc( sizeof(struct bound_rpp) * ntri,
+		   "st_piece_rpps" );
+
+
+    trip = bot->bot_facelist;
+    for (surfno=ntri-1 ; trip; trip = trip->tri_forw, surfno-- )  {
+
+	fap[surfno] = trip;
+	minmax = &stp->st_piece_rpps[surfno];
+
+	/* It is critical that the surfno's used in
+	 * rt error messages (from hit_surfno) match
+	 * the tri_surfno values, so that mged users who
+	 * run "db get name f#" to see that triangle
+	 * get the triangle they're expecting!
+	 */
+	BU_ASSERT_LONG( trip->tri_surfno, ==, surfno );
+
+	if( bot->bot_mode == RT_BOT_PLATE || bot->bot_mode == RT_BOT_PLATE_NOCOS )  {
+	    if( BU_BITTEST( bot->bot_facemode, surfno ) )  {
+		/* Append full thickness on both sides */
+		los = bot->bot_thickness[surfno];
+	    } else {
+		/* Center thickness.  Append 1/2 thickness on both sides */
+		los = bot->bot_thickness[surfno] * 0.51;
+	    }
+	} else {
+				/* Prevent the RPP from being 0 thickness */
+	    los = tol->dist;	/* typ 0.005mm */
+	}
+
+	minmax->min[X] = minmax->max[X] = trip->tri_A[X];
+	minmax->min[Y] = minmax->max[Y] = trip->tri_A[Y];
+	minmax->min[Z] = minmax->max[Z] = trip->tri_A[Z];
+	VADD2( b, trip->tri_BA, trip->tri_A );
+	VADD2( c, trip->tri_CA, trip->tri_A );
+	VMINMAX( minmax->min, minmax->max, b );
+	VMINMAX( minmax->min, minmax->max, c );
+
+	/* Offset face in +los */
+	VSCALE( offset, trip->tri_N, los );
+	VADD2( d, trip->tri_A, offset );
+	VADD2( e, b, offset );
+	VADD2( f, c, offset );
+	VMINMAX( minmax->min, minmax->max, d );
+	VMINMAX( minmax->min, minmax->max, e );
+	VMINMAX( minmax->min, minmax->max, f );
+
+	/* Offset face in -los */
+	VSCALE( offset, trip->tri_N, -los );
+	VADD2( d, trip->tri_A, offset );
+	VADD2( e, b, offset );
+	VADD2( f, c, offset );
+	VMINMAX( minmax->min, minmax->max, d );
+	VMINMAX( minmax->min, minmax->max, e );
+	VMINMAX( minmax->min, minmax->max, f );
+    }
+
+
+    for (surfno=ntri-1 ; surfno >= 0; surfno-- )  {
+	trip = bot->bot_facearray[surfno];
+	if (trip->tri_surfno != surfno) {
+	    bu_log("trip->tri_surfno:%d != piecenum%d", 
+		   trip->tri_surfno, surfno);
+	    bu_bomb("");
+	}
+    }
+
+
 }
 
 /*
@@ -144,6 +232,8 @@ struct rt_i		*rtip;
 	LOCAL fastf_t			dx, dy, dz;
 	LOCAL fastf_t			f;
 	int				ntri = 0;
+
+	bu_log("bot_shot()\n");
 
 	RT_CK_DB_INTERNAL(ip);
 	bot_ip = (struct rt_bot_internal *)ip->idb_ptr;
@@ -178,7 +268,7 @@ struct rt_i		*rtip;
 			ntri++;
 	}
 
-	if( stp->st_specific == (genptr_t)0 )  {
+	if( bot->bot_facelist == (struct tri_specific *)0 )  {
 		bu_log("bot(%s):  no faces\n", stp->st_name);
 		return(-1);             /* BAD */
 	}
@@ -219,80 +309,7 @@ struct rt_i		*rtip;
 	if( rt_bot_minpieces <= 0 )  return 0;
 	if( ntri < rt_bot_minpieces )  return 0;
 
-	stp->st_npieces = ntri;
-
-	bot->bot_facearray = (struct tri_specific **)
-		bu_malloc( sizeof(struct tri_specific *) * ntri,
-			"bot_facearray" );
-
-	stp->st_piece_rpps = (struct bound_rpp *)
-		bu_malloc( sizeof(struct bound_rpp) * ntri,
-			"st_piece_rpps" );
-
-	{
-		struct bound_rpp	*minmax;
-		const struct tri_specific **fap =
-			(const struct tri_specific **)bot->bot_facearray;
-		register const struct tri_specific *trip = bot->bot_facelist;
-		int surfno = ntri-1;
-
-		for( ; trip; trip = trip->tri_forw, surfno-- )  {
-			point_t b,c;
-			point_t d,e,f;
-			vect_t offset;
-			fastf_t los;
-
-			fap[surfno] = trip;
-			minmax = &stp->st_piece_rpps[surfno];
-
-			/* It is critical that the surfno's used in
-			 * rt error messages (from hit_surfno) match
-			 * the tri_surfno values, so that mged users who
-			 * run "db get name f#" to see that triangle
-			 * get the triangle they're expecting!
-			 */
-			BU_ASSERT_LONG( trip->tri_surfno, ==, surfno );
-			if( bot->bot_mode == RT_BOT_PLATE || bot->bot_mode == RT_BOT_PLATE_NOCOS )  {
-				if( BU_BITTEST( bot->bot_facemode, surfno ) )  {
-					/* Append full thickness on both sides */
-					los = bot->bot_thickness[surfno];
-				} else {
-					/* Center thickness.  Append 1/2 thickness on both sides */
-					los = bot->bot_thickness[surfno] * 0.51;
-				}
-			} else {
-				/* Prevent the RPP from being 0 thickness */
-				los = tol->dist;	/* typ 0.005mm */
-			}
-
-			minmax->min[X] = minmax->max[X] = trip->tri_A[X];
-			minmax->min[Y] = minmax->max[Y] = trip->tri_A[Y];
-			minmax->min[Z] = minmax->max[Z] = trip->tri_A[Z];
-			VADD2( b, trip->tri_BA, trip->tri_A );
-			VADD2( c, trip->tri_CA, trip->tri_A );
-			VMINMAX( minmax->min, minmax->max, b );
-			VMINMAX( minmax->min, minmax->max, c );
-
-			/* Offset face in +los */
-			VSCALE( offset, trip->tri_N, los );
-			VADD2( d, trip->tri_A, offset );
-			VADD2( e, b, offset );
-			VADD2( f, c, offset );
-			VMINMAX( minmax->min, minmax->max, d );
-			VMINMAX( minmax->min, minmax->max, e );
-			VMINMAX( minmax->min, minmax->max, f );
-
-			/* Offset face in -los */
-			VSCALE( offset, trip->tri_N, -los );
-			VADD2( d, trip->tri_A, offset );
-			VADD2( e, b, offset );
-			VADD2( f, c, offset );
-			VMINMAX( minmax->min, minmax->max, d );
-			VMINMAX( minmax->min, minmax->max, e );
-			VMINMAX( minmax->min, minmax->max, f );
-		}
-	}
-
+	rt_bot_prep_pieces(bot, stp, ntri, tol);
 	return 0;
 }
 
@@ -812,10 +829,15 @@ struct seg		*seghead;
 
 		/* Shoot a ray */
 		BU_BITSET( psp->shot, piecenum );
-			if(debug_shoot) bu_log("%s piece %d ...\n", stp->st_name, piecenum);
+		if(debug_shoot)
+		    bu_log("%s piece %d ...\n", stp->st_name, piecenum);
 
 		/* Now intersect with each piece */
 		trip = bot->bot_facearray[piecenum];
+		if (trip->tri_surfno != piecenum) {
+		    bu_log("trip->tri_surfno:%d != piecenum%d", 
+			   trip->tri_surfno, piecenum);
+		}
 		BU_ASSERT_LONG(trip->tri_surfno, ==, piecenum);
 
 		/*
@@ -964,6 +986,7 @@ struct soltab		*stp;
 
 	/* any tangent direction */
  	bn_vec_ortho( cvp->crv_pdir, hitp->hit_normal );
+	cvp->crv_c1 = cvp->crv_c2 = 0;
 }
 
 /*
