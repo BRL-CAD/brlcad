@@ -413,7 +413,13 @@ view_end(ap)
 struct application *ap;
 {
 	if( buf_mode == BUFMODE_FULLFLOAT )  {
-		/* For now, disposal of the frame is handled elsewhere */
+		if( prev_float_frame )  {
+			bu_free( (genptr_t)prev_float_frame, "floatpixel frame");
+			prev_float_frame = curr_float_frame;
+		}
+		curr_float_frame = (struct floatpixel *)bu_malloc(
+			width * height * sizeof(struct floatpixel),
+			"floatpixel frame");
 	}
 
 	if( scanline )  free_scanlines();
@@ -819,6 +825,7 @@ struct partition *PartHeadp;
 	ap->a_user = 1;		/* Signal view_pixel:  HIT */
 	return(0);
 }
+
 void
 free_scanlines()
 {
@@ -972,13 +979,11 @@ char	*framename;
 		bu_log("Single pixel I/O, unbuffered\n");
 		break;	
 	case BUFMODE_FULLFLOAT:
-		if( prev_float_frame )  {
-			bu_free( (genptr_t)prev_float_frame, "floatpixel frame");
-			prev_float_frame = curr_float_frame;
+		if( !curr_float_frame )  {
+			curr_float_frame = (struct floatpixel *)bu_malloc(
+				width * height * sizeof(struct floatpixel),
+				"floatpixel frame");
 		}
-		curr_float_frame = (struct floatpixel *)bu_malloc(
-			width * height * sizeof(struct floatpixel),
-			"floatpixel frame");
 		break;
 #ifdef RTSRV
 	case BUFMODE_RTSRV:
