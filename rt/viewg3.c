@@ -445,6 +445,8 @@ register struct partition *PartHeadp;
 			air_id = 0;
 			air_thickness = nextpp->pt_inhit->hit_dist -
 				pp->pt_outhit->hit_dist;
+			if( air_thickness < 0.0 )
+				air_thickness = 0.0;
 			if( !NEAR_ZERO( air_thickness, 0.1 ) )  {
 				air_id = 1;	/* air gap */
 				if( rdebug & RDEBUG_HITS )
