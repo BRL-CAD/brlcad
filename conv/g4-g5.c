@@ -27,6 +27,9 @@ char	**argv;
 	struct directory	*dp;
 	long	errors = 0;
 	struct bn_tol tol;
+	char name[17];
+
+	name[16] = '\0';
 
         /* XXX These need to be improved */
         tol.magic = BN_TOL_MAGIC;
@@ -62,10 +65,7 @@ char	**argv;
 	RT_CK_DBI(dbip);
 	db_dirbuild( dbip );
 
-#if 0
-	/* XXX Need wdb_ routine to update title, units, etc. */
-	db5_fwrite_ident( fp, dbip->dbi_title, dbip->dbi_local2base );
-#endif
+	db_update_ident( fp->dbip, dbip->dbi_title, dbip->dbi_local2base );
 
 	/* Retrieve every item in the input database */
 	FOR_ALL_DIRECTORY_START(dp, dbip)  {
@@ -73,7 +73,7 @@ char	**argv;
 		int id;
 		int ret;
 
-		fprintf(stderr, "%s\n", dp->d_namep );
+		fprintf(stderr, "%.16s\n", dp->d_namep );
 
 		id = rt_db_get_internal( &intern, dp, dbip, NULL, &rt_uniresource );
 		if( id < 0 )  {
@@ -114,7 +114,10 @@ char	**argv;
 				continue;
 			}
 		}
-		ret = wdb_put_internal( fp, dp->d_namep, &intern, 1.0 );
+
+		/* to insure null termination */
+		strncpy( name, dp->d_namep, 16 );
+		ret = wdb_put_internal( fp, name, &intern, 1.0 );
 		if( ret < 0 )  {
 			fprintf(stderr,
 				"%s: wdb_put_internal(%s) failure, skipping\n",
