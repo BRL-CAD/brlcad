@@ -157,16 +157,10 @@ fastf_t od, id, bendradius;
  *	initialize a linked list of pipe segments with the first segment
  */
 void
-mk_pipe_init( head, coord, od, id, bendradius )
+mk_pipe_init( head )
 struct wdb_pipept *head;
-point_t coord;
-fastf_t od, id, bendradius;
 {
 	BU_LIST_INIT( &head->l );
 	head->l.magic = WDB_PIPESEG_MAGIC;
-	head->pp_od = od;
-	head->pp_id = id;
-	head->pp_bendradius = bendradius;
-	VMOVE( head->pp_coord, coord );
 }
 
