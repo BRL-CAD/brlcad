@@ -3,7 +3,6 @@ main.o: In function `main':
 main.o(.text+0x1710): warning: tempnam() possibly used unsafely; consider using mkstemp()
 file.o: In function `dir_start':
 file.o(.text+0x10): warning: mktemp() possibly used unsafely; consider using mkstemp()
-BRLCAD_BINDIR=/c/regress/brlcad.fbsd/bin
 cake installed
 Done making cake and cakeaux
 ./gen.sh -s all
@@ -13,6 +12,8 @@ Done making cake and cakeaux
 -------------------------------- .libbn.fbsd
 -------------------------------- .libwdb.fbsd
 -------------------------------- .libpkg.fbsd
+../libpkg/pkg.c: In function `pkg_getclient':
+../libpkg/pkg.c:496: warning: pointer targets in passing arg 3 of `accept' differ in signedness
 -------------------------------- .libfb.fbsd
 -------------------------------- .libtcl8.3.fbsd
 creating cache cache.fbsd
@@ -95,12 +96,78 @@ iwidgets3.0.0: make all
  rm -f libitcl.so libitk.so ; cp itcl/libitcl3.2.so . ; cp itk/libitk3.2.so . ; ln -s libitk3.2.so libitk.so ; ln -s libitcl3.2.so libitcl.so
 -------------------------------- .libdm.fbsd
 -------------------------------- .fbserv.fbsd
+../fbserv/fbserv.c: In function `is_socket':
+../fbserv/fbserv.c:208: warning: pointer targets in passing arg 3 of `getsockname' differ in signedness
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
 -------------------------------- .librt.fbsd
+../librt/g_rpc.c: In function `rt_rpc_prep':
+../librt/g_rpc.c:210: warning: unused variable `tol'
 -------------------------------- .liboptical.fbsd
 -------------------------------- .libmultispectral.fbsd
 -------------------------------- .libtermio.fbsd
+In file included from ../libtermio/termio.c:49:
+/usr/include/termios.h:115: warning: `OCRNL' redefined
+../libtermio/termio.c:27: warning: this is the location of the previous definition
 -------------------------------- .libtclcad.fbsd
 -------------------------------- .conv.fbsd
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../conv/g-euclid.c: In function `do_region_end':
+../conv/g-euclid.c:693: warning: argument `curtree' might be clobbered by `longjmp' or `vfork'
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../conv/g-tankill.c: In function `do_region_end':
+../conv/g-tankill.c:858: warning: variable `r' might be clobbered by `longjmp' or `vfork'
+../conv/g-tankill.c:930: warning: variable `empty_model' might be clobbered by `longjmp' or `vfork'
+../conv/g-tankill.c:855: warning: argument `curtree' might be clobbered by `longjmp' or `vfork'
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../conv/g-nmg.c: In function `do_region_end':
+../conv/g-nmg.c:88: warning: variable `color' might be clobbered by `longjmp' or `vfork'
+../conv/g-nmg.c:78: warning: argument `curtree' might be clobbered by `longjmp' or `vfork'
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../conv/g-euclid1.c: In function `do_region_end':
+../conv/g-euclid1.c:572: warning: argument `curtree' might be clobbered by `longjmp' or `vfork'
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../conv/g-vrml.c: In function `nmg_2_vrml':
+../conv/g-vrml.c:525: warning: variable `reg' might be clobbered by `longjmp' or `vfork'
+../conv/g-vrml.c:531: warning: variable `first' might be clobbered by `longjmp' or `vfork'
+../conv/g-vrml.c:532: warning: variable `is_light' might be clobbered by `longjmp' or `vfork'
+../conv/g-vrml.c:533: warning: variable `r' might be clobbered by `longjmp' or `vfork'
+../conv/g-vrml.c:533: warning: variable `g' might be clobbered by `longjmp' or `vfork'
+../conv/g-vrml.c:533: warning: variable `b' might be clobbered by `longjmp' or `vfork'
+../conv/g-vrml.c:731: warning: variable `s' might be clobbered by `longjmp' or `vfork'
+../conv/g-vrml.c:738: warning: variable `fu' might be clobbered by `longjmp' or `vfork'
+../conv/g-vrml.c:745: warning: variable `next_fu' might be clobbered by `longjmp' or `vfork'
+../conv/g-vrml.c:747: warning: variable `shell_is_dead' might be clobbered by `longjmp' or `vfork'
+../conv/g-vrml.c:748: warning: variable `face_is_dead' might be clobbered by `longjmp' or `vfork'
+../conv/g-vrml.c: In function `nmg_region_end':
+../conv/g-vrml.c:1032: warning: argument `curtree' might be clobbered by `longjmp' or `vfork'
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../conv/g-acad.c: In function `do_region_end':
+../conv/g-acad.c:509: warning: variable `r' might be clobbered by `longjmp' or `vfork'
+../conv/g-acad.c:592: warning: variable `empty_model' might be clobbered by `longjmp' or `vfork'
+../conv/g-acad.c:504: warning: argument `curtree' might be clobbered by `longjmp' or `vfork'
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../conv/g-wave.c: In function `do_region_end':
+../conv/g-wave.c:552: warning: variable `r' might be clobbered by `longjmp' or `vfork'
+../conv/g-wave.c:626: warning: variable `empty_model' might be clobbered by `longjmp' or `vfork'
+../conv/g-wave.c:547: warning: argument `curtree' might be clobbered by `longjmp' or `vfork'
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
 -------------------------------- .db.fbsd
 NOTICE:  boolean-ops.g is BRL-CAD v5 format.
 NOTICE:  bldg391.g is BRL-CAD v5 format.
@@ -129,8 +196,53 @@ NOTICE:  cray.g is BRL-CAD v5 format.
 NOTICE:  kman.g is BRL-CAD v5 format.
 NOTICE:  terra.g is BRL-CAD v5 format.
 -------------------------------- .rt.fbsd
+../rt/material.c: In function `try_load':
+../rt/material.c:100: warning: assignment discards qualifiers from pointer target type
+../rt/material.c:107: warning: assignment discards qualifiers from pointer target type
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
 -------------------------------- .mged.fbsd
+../mged/dodraw.c: In function `f_facetize':
+../mged/dodraw.c:1322: warning: variable `triangulate' might be clobbered by `longjmp' or `vfork'
+../mged/dodraw.c:1328: warning: variable `make_bot' might be clobbered by `longjmp' or `vfork'
+../mged/dodraw.c: In function `f_bev':
+../mged/dodraw.c:1569: warning: variable `triangulate' might be clobbered by `longjmp' or `vfork'
+../mged/dodraw.c:1573: warning: variable `tmp_tree' might be clobbered by `longjmp' or `vfork'
+../mged/cmd.c: In function `cmd_dbversion':
+../mged/cmd.c:2367: warning: implicit declaration of function `wdb_version_cmd'
+../mged/rtif.c: In function `f_rmats':
+../mged/rtif.c:750: warning: variable `sp' might be clobbered by `longjmp' or `vfork'
+../mged/rtif.c:755: warning: variable `mode' might be clobbered by `longjmp' or `vfork'
+../mged/inside.c: In function `f_inside':
+../mged/inside.c:165: warning: variable `arg' might be clobbered by `longjmp' or `vfork'
+../mged/facedef.c: In function `f_facedef':
+../mged/facedef.c:87: warning: variable `status' might be clobbered by `longjmp' or `vfork'
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
 -------------------------------- .remrt.fbsd
+../remrt/remrt.c: In function `addclient':
+../remrt/remrt.c:835: warning: pointer targets in passing arg 3 of `getpeername' differ in signedness
+../remrt/ihost.c: In function `host_lookup_of_fd':
+../remrt/ihost.c:239: warning: pointer targets in passing arg 3 of `getpeername' differ in signedness
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
 -------------------------------- .libcursor.fbsd
 -------------------------------- .liborle.fbsd
 -------------------------------- .libutahrle.fbsd
@@ -146,30 +258,785 @@ adds = 394, mults = 207
 adds = 956, mults = 498
 adds = 2250, mults = 1167
 -------------------------------- .proc-db.fbsd
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../proc-db/tea.c: In function `main':
+../proc-db/tea.c:47: warning: implicit declaration of function `getopt'
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
 -------------------------------- .jack.fbsd
+../jack/g-jack.c: In function `do_region_end':
+../jack/g-jack.c:267: warning: argument `curtree' might be clobbered by `longjmp' or `vfork'
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
 -------------------------------- .mk.fbsd
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
 -------------------------------- .comgeom-g.fbsd
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
 -------------------------------- .iges.fbsd
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../iges/g-iges.c: In function `do_nmg_region_end':
+../iges/g-iges.c:464: warning: argument `curtree' might be clobbered by `longjmp' or `vfork'
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
 -------------------------------- .fb.fbsd
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../fb/fb-pix.c: In function `get_args':
+../fb/fb-pix.c:99: warning: implicit declaration of function `chmod'
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../fb/fbanim.c: In function `newframe':
+../fb/fbanim.c:192: warning: implicit declaration of function `bzero'
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../fb/fbcmrot.c: In function `main':
+../fb/fbcmrot.c:132: warning: implicit declaration of function `bzero'
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../fb/fb-png.c: In function `get_args':
+../fb/fb-png.c:118: warning: implicit declaration of function `chmod'
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
 -------------------------------- .util.fbsd
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+buffer.o: In function `main':
+buffer.o(.text+0x9f): warning: mktemp() possibly used unsafely; consider using mkstemp()
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../util/ttcp.c: In function `Nread':
+../util/ttcp.c:397: warning: pointer targets in passing arg 6 of `recvfrom' differ in signedness
+../util/ttcp.c: In function `main':
+../util/ttcp.c:562: warning: pointer targets in passing arg 3 of `accept' differ in signedness
+../util/ttcp.c: At top level:
+../util/ttcp.c:17: warning: `RCSid' defined but not used
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
 -------------------------------- .fbed.fbsd
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
 -------------------------------- .lgt.fbsd
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
 -------------------------------- .patch.fbsd
+../patch/patch-g.c: In function `proc_triangle':
+../patch/patch-g.c:1769: warning: variable `l' might be clobbered by `longjmp' or `vfork'
+../patch/patch-g.c: In function `proc_plate':
+../patch/patch-g.c:2045: warning: variable `thick_no' might be clobbered by `longjmp' or `vfork'
+../patch/patch-g.c:2046: warning: variable `l' might be clobbered by `longjmp' or `vfork'
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
 -------------------------------- .vas4.fbsd
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
 -------------------------------- .vdeck.fbsd
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
 -------------------------------- .sig.fbsd
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../sig/fhor.c:166: warning: return-type defaults to `int'
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
 -------------------------------- .tab.fbsd
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../tab/script.l: In function `yylex':
+../tab/script.l:67: warning: label `find_rule' defined but not used
+../tab/script.l: At top level:
+../tab/script.l:384: warning: `yyunput' defined but not used
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
 -------------------------------- .tools.fbsd
+rleaddcom.o: In function `main':
+rleaddcom.o(.text+0x200): warning: mktemp() possibly used unsafely; consider using mkstemp()
+rlecat.o: In function `main':
+rlecat.o(.text+0x153): warning: mktemp() possibly used unsafely; consider using mkstemp()
 -------------------------------- .anim.fbsd
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
 -------------------------------- .off.fbsd
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../off/g-off.c: In function `do_region_end':
+../off/g-off.c:219: warning: argument `curtree' might be clobbered by `longjmp' or `vfork'
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
 -------------------------------- .halftone.fbsd
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
 -------------------------------- .nirt.fbsd
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
 -------------------------------- .irprep.fbsd
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
 -------------------------------- .jove.fbsd
+../jove/jove_buf.c: In function `buf_exists':
+../jove/jove_buf.c:116: warning: implicit declaration of function `atoi'
+../jove/jove_buf.c: In function `setfuncs':
+../jove/jove_buf.c:203: warning: implicit declaration of function `BindInserts'
+../jove/jove_buf.c:209: warning: implicit declaration of function `BindFunc'
+../jove/jove_buf.c: In function `setflags':
+../jove/jove_buf.c:240: warning: implicit declaration of function `SetUnmodified'
+../jove/jove_buf.c: In function `mak_buf':
+../jove/jove_buf.c:267: warning: implicit declaration of function `initlist'
+../jove/jove_buf.c: In function `do_find':
+../jove/jove_buf.c:343: warning: implicit declaration of function `bufname'
+../jove/jove_buf.c:345: warning: implicit declaration of function `read_file'
+../jove/jove_buf.c: In function `SetBuf':
+../jove/jove_buf.c:384: warning: implicit declaration of function `lsave'
+../jove/jove_buf.c:386: warning: implicit declaration of function `getDOT'
+../jove/jove_buf.c: In function `defb_wind':
+../jove/jove_buf.c:426: warning: implicit declaration of function `del_wind'
+../jove/jove_buf.c: In function `BufErase':
+../jove/jove_buf.c:463: warning: suggest parentheses around assignment used as truth value
+../jove/jove_buf.c: In function `BufKill':
+../jove/jove_buf.c:478: warning: implicit declaration of function `lfreelist'
+../jove/jove_buf.c: In function `BufList':
+../jove/jove_buf.c:499: warning: implicit declaration of function `TellWBuffers'
+../jove/jove_buf.c:502: warning: implicit declaration of function `TellWScreen'
+../jove/jove_buf.c:504: warning: implicit declaration of function `DoTell'
+../jove/jove_buf.c:518: warning: implicit declaration of function `Bof'
+../jove/jove_buf.c:519: warning: implicit declaration of function `NotModified'
+../jove/jove_buf.c:521: warning: implicit declaration of function `StopTelling'
+../jove/jove_c.c: In function `m_paren':
+../jove/jove_c.c:80: warning: suggest parentheses around assignment used as truth value
+../jove/jove_c.c:83: warning: implicit declaration of function `NotInQuotes'
+../jove/jove_delete.c: In function `patchup':
+../jove/jove_delete.c:133: warning: implicit declaration of function `KludgeWindows'
+../jove/jove_delete.c:134: warning: implicit declaration of function `SetModified'
+../jove/jove_delete.c:147: warning: implicit declaration of function `linecopy'
+../jove/jove_delete.c:149: warning: implicit declaration of function `DFixMarks'
+../jove/jove_delete.c: In function `del_char':
+../jove/jove_delete.c:243: warning: implicit declaration of function `DOTsave'
+../jove/jove_delete.c: In function `reg_kill':
+../jove/jove_delete.c:276: warning: implicit declaration of function `lfreelist'
+../jove/jove_disp.c:103: warning: return-type defaults to `int'
+../jove/jove_disp.c: In function `redisplay':
+../jove/jove_disp.c:165: warning: implicit declaration of function `charp'
+../jove/jove_disp.c:165: warning: suggest parentheses around assignment used as truth value
+../jove/jove_disp.c:169: warning: implicit declaration of function `putstr'
+../jove/jove_disp.c:178: warning: implicit declaration of function `message'
+../jove/jove_disp.c:215: warning: implicit declaration of function `calc_pos'
+../jove/jove_disp.c:215: warning: implicit declaration of function `DoPlacur'
+../jove/jove_disp.c: In function `DoIDline':
+../jove/jove_disp.c:254: warning: implicit declaration of function `AddLines'
+../jove/jove_disp.c:263: warning: implicit declaration of function `DelLines'
+../jove/jove_disp.c: In function `UpdateWindow':
+../jove/jove_disp.c:304: warning: implicit declaration of function `find_pos'
+../jove/jove_disp.c:331: warning: implicit declaration of function `finish'
+../jove/jove_disp.c:346: warning: suggest parentheses around assignment used as truth value
+../jove/jove_disp.c: In function `UpdateMesg':
+../jove/jove_disp.c:396: warning: implicit declaration of function `i_set'
+../jove/jove_disp.c:397: warning: implicit declaration of function `swrite'
+../jove/jove_disp.c:398: warning: implicit declaration of function `cl_eol'
+../jove/jove_disp.c: In function `CalcScroll':
+../jove/jove_disp.c:441: warning: implicit declaration of function `inorder'
+../jove/jove_disp.c:443: warning: implicit declaration of function `min'
+../jove/jove_disp.c:435: warning: unused variable `diffnum'
+../jove/jove_disp.c: At top level:
+../jove/jove_disp.c:452: warning: return-type defaults to `int'
+../jove/jove_disp.c:470: warning: return-type defaults to `int'
+../jove/jove_disp.c: In function `AddLines':
+../jove/jove_disp.c:478: warning: implicit declaration of function `v_ins_line'
+../jove/jove_disp.c: At top level:
+../jove/jove_disp.c:490: warning: return-type defaults to `int'
+../jove/jove_disp.c: In function `DelLines':
+../jove/jove_disp.c:498: warning: implicit declaration of function `v_del_line'
+../jove/jove_disp.c: In function `DeTab':
+../jove/jove_disp.c:521: warning: suggest parentheses around assignment used as truth value
+../jove/jove_disp.c: In function `UpdateLine':
+../jove/jove_disp.c:556: warning: implicit declaration of function `ModeLine'
+../jove/jove_disp.c:562: warning: implicit declaration of function `FLine'
+../jove/jove_disp.c:579: warning: implicit declaration of function `IDchar'
+../jove/jove_disp.c:585: warning: implicit declaration of function `BufSwrite'
+../jove/jove_disp.c: At top level:
+../jove/jove_disp.c:631: warning: return-type defaults to `int'
+../jove/jove_disp.c: In function `IDchar':
+../jove/jove_disp.c:649: warning: implicit declaration of function `IDcomp'
+../jove/jove_disp.c:650: warning: implicit declaration of function `NumSimilar'
+../jove/jove_disp.c:652: warning: implicit declaration of function `OkayInsert'
+../jove/jove_disp.c:663: warning: implicit declaration of function `OkayDelete'
+../jove/jove_disp.c: At top level:
+../jove/jove_disp.c:673: warning: return-type defaults to `int'
+../jove/jove_disp.c:685: warning: return-type defaults to `int'
+../jove/jove_disp.c:706: warning: return-type defaults to `int'
+../jove/jove_disp.c:715: warning: return-type defaults to `int'
+../jove/jove_disp.c: In function `DelChar':
+../jove/jove_disp.c:751: warning: implicit declaration of function `putpad'
+../jove/jove_disp.c:763: warning: implicit declaration of function `clrline'
+../jove/jove_draw.c:95: warning: return-type defaults to `int'
+../jove/jove_draw.c: In function `find_pos':
+../jove/jove_draw.c:104: warning: implicit declaration of function `calc_pos'
+../jove/jove_draw.c: At top level:
+../jove/jove_draw.c:108: warning: return-type defaults to `int'
+../jove/jove_draw.c: In function `jprintf':
+../jove/jove_draw.c:173: warning: implicit declaration of function `putstr'
+../jove/jove_draw.c: In function `ModeLine':
+../jove/jove_draw.c:204: warning: implicit declaration of function `FLine'
+../jove/jove_draw.c:234: warning: implicit declaration of function `bufnumber'
+../jove/jove_draw.c:247: warning: implicit declaration of function `i_set'
+../jove/jove_draw.c:248: warning: implicit declaration of function `DoPlacur'
+../jove/jove_draw.c:249: warning: implicit declaration of function `putpad'
+../jove/jove_draw.c:250: warning: implicit declaration of function `swrite'
+../jove/jove_draw.c: At top level:
+../jove/jove_draw.c:257: warning: return-type defaults to `int'
+../jove/jove_draw.c: In function `v_clear':
+../jove/jove_draw.c:291: warning: implicit declaration of function `cl_eol'
+../jove/jove_draw.c: In function `ClAndRedraw':
+../jove/jove_draw.c:300: warning: implicit declaration of function `cl_scr'
+../jove/jove_draw.c: In function `NextPage':
+../jove/jove_draw.c:309: warning: implicit declaration of function `UpScroll'
+../jove/jove_draw.c:311: warning: implicit declaration of function `max'
+../jove/jove_draw.c:313: warning: implicit declaration of function `in_window'
+../jove/jove_draw.c: In function `PrevPage':
+../jove/jove_draw.c:325: warning: implicit declaration of function `DownScroll'
+../jove/jove_draw.c: At top level:
+../jove/jove_draw.c:396: warning: return-type defaults to `int'
+../jove/jove_draw.c: In function `DoTell':
+../jove/jove_draw.c:400: warning: implicit declaration of function `ins_str'
+../jove/jove_draw.c:401: warning: implicit declaration of function `LineInsert'
+../jove/jove_draw.c:419: warning: implicit declaration of function `Ungetc'
+../jove/jove_draw.c: In function `StopTelling':
+../jove/jove_draw.c:443: warning: implicit declaration of function `NotModified'
+../jove/jove_draw.c:444: warning: implicit declaration of function `SetWind'
+../jove/jove_extend.c:83: warning: return-type defaults to `int'
+../jove/jove_extend.c: In function `BindSomething':
+../jove/jove_extend.c:108: warning: implicit declaration of function `findcom'
+../jove/jove_extend.c: In function `DescCom':
+../jove/jove_extend.c:193: warning: implicit declaration of function `message'
+../jove/jove_extend.c:194: warning: implicit declaration of function `SetWind'
+../jove/jove_extend.c: In function `Apropos':
+../jove/jove_extend.c:215: warning: implicit declaration of function `TellWBuffers'
+../jove/jove_extend.c:218: warning: implicit declaration of function `TellWScreen'
+../jove/jove_extend.c:220: warning: implicit declaration of function `sindex'
+../jove/jove_extend.c:221: warning: implicit declaration of function `DoTell'
+../jove/jove_extend.c:232: warning: implicit declaration of function `Bof'
+../jove/jove_extend.c:233: warning: implicit declaration of function `NotModified'
+../jove/jove_extend.c:235: warning: implicit declaration of function `StopTelling'
+../jove/jove_extend.c: At top level:
+../jove/jove_extend.c:239: warning: return-type defaults to `int'
+../jove/jove_extend.c: In function `Extend':
+../jove/jove_extend.c:259: warning: implicit declaration of function `ExecFunc'
+../jove/jove_extend.c: At top level:
+../jove/jove_extend.c:263: warning: return-type defaults to `int'
+../jove/jove_extend.c: In function `AskInt':
+../jove/jove_extend.c:273: warning: implicit declaration of function `atoi'
+../jove/jove_extend.c: In function `SetVar':
+../jove/jove_extend.c:303: warning: implicit declaration of function `setfuncs'
+../jove/jove_extend.c: In function `findcom':
+../jove/jove_extend.c:330: warning: suggest parentheses around assignment used as truth value
+../jove/jove_extend.c:342: warning: implicit declaration of function `match'
+../jove/jove_extend.c:363: warning: implicit declaration of function `numcomp'
+../jove/jove_extend.c:420: warning: suggest explicit braces to avoid ambiguous `else'
+../jove/jove_extend.c: At top level:
+../jove/jove_extend.c:434: warning: return-type defaults to `int'
+../jove/jove_extend.c:445: warning: return-type defaults to `int'
+../jove/jove_extend.c: In function `Source':
+../jove/jove_extend.c:480: warning: implicit declaration of function `joverc'
+../jove/jove_extend.c: At top level:
+../jove/jove_extend.c:485: warning: return-type defaults to `int'
+../jove/jove_extend.c: In function `joverc':
+../jove/jove_extend.c:487: warning: implicit declaration of function `open'
+../jove/jove_extend.c:494: warning: implicit declaration of function `Ungetc'
+../jove/jove_extend.c:498: warning: implicit declaration of function `close'
+../jove/jove_extend.c: In function `BufPos':
+../jove/jove_extend.c:510: warning: `dotline' might be used uninitialized in this function
+../jove/jove_funcs.c: In function `Remember':
+../jove/jove_funcs.c:674: warning: implicit declaration of function `message'
+../jove/jove_funcs.c: At top level:
+../jove/jove_funcs.c:680: warning: return-type defaults to `int'
+../jove/jove_funcs.c: In function `Forget':
+../jove/jove_funcs.c:697: warning: array subscript has type `char'
+../jove/jove_funcs.c: In function `NameMac':
+../jove/jove_funcs.c:761: warning: implicit declaration of function `free'
+../jove/jove_funcs.c: At top level:
+../jove/jove_funcs.c:815: warning: return-type defaults to `int'
+../jove/jove_funcs.c: In function `RunMacro':
+../jove/jove_funcs.c:832: warning: implicit declaration of function `findcom'
+../jove/jove_funcs.c: In function `WriteMacs':
+../jove/jove_funcs.c:849: warning: implicit declaration of function `creat'
+../jove/jove_funcs.c:856: warning: implicit declaration of function `write'
+../jove/jove_funcs.c:862: warning: implicit declaration of function `close'
+../jove/jove_funcs.c: In function `ReadMacs':
+../jove/jove_funcs.c:875: warning: implicit declaration of function `open'
+../jove/jove_funcs.c:879: warning: implicit declaration of function `read'
+../jove/jove_insert.c: In function `LineInsert':
+../jove/jove_insert.c:104: warning: implicit declaration of function `SavLine'
+../jove/jove_insert.c:112: warning: implicit declaration of function `SetModified'
+../jove/jove_insert.c:113: warning: implicit declaration of function `IFixMarks'
+../jove/jove_insert.c: In function `OverWrite':
+../jove/jove_insert.c:185: warning: implicit declaration of function `DelNChar'
+../jove/jove_insert.c: In function `QuotChar':
+../jove/jove_insert.c:223: warning: suggest parentheses around assignment used as truth value
+../jove/jove_insert.c: At top level:
+../jove/jove_insert.c:228: warning: return-type defaults to `int'
+../jove/jove_insert.c: In function `blankp':
+../jove/jove_insert.c:232: warning: suggest parentheses around assignment used as truth value
+../jove/jove_insert.c: In function `DoParen':
+../jove/jove_insert.c:254: warning: implicit declaration of function `Bol'
+../jove/jove_insert.c:255: warning: implicit declaration of function `DelWtSpace'
+../jove/jove_insert.c:264: warning: implicit declaration of function `redisplay'
+../jove/jove_insert.c:265: warning: implicit declaration of function `GotoDot'
+../jove/jove_insert.c:267: warning: implicit declaration of function `NotInQuotes'
+../jove/jove_insert.c:268: warning: suggest parentheses around assignment used as truth value
+../jove/jove_insert.c:269: warning: implicit declaration of function `in_window'
+../jove/jove_insert.c:273: warning: implicit declaration of function `DOTsave'
+../jove/jove_insert.c:276: warning: implicit declaration of function `sleep'
+../jove/jove_insert.c: At top level:
+../jove/jove_insert.c:314: warning: return-type defaults to `int'
+../jove/jove_insert.c: In function `ins_str':
+../jove/jove_insert.c:350: warning: suggest parentheses around assignment used as truth value
+../jove/jove_insert.c: In function `linecopy':
+../jove/jove_insert.c:368: warning: suggest parentheses around assignment used as truth value
+../jove/jove_insert.c: In function `DoYank':
+../jove/jove_insert.c:395: warning: implicit declaration of function `lsave'
+../jove/jove_insert.c:426: warning: implicit declaration of function `getDOT'
+../jove/jove_insert.c: At top level:
+../jove/jove_insert.c:488: warning: return-type defaults to `int'
+../jove/jove_insert.c: In function `GCchunks':
+../jove/jove_insert.c:564: warning: implicit declaration of function `message'
+../jove/jove_insert.c:580: warning: implicit declaration of function `free'
+../jove/jove_io.c: In function `IOclose':
+../jove/jove_io.c:166: warning: implicit declaration of function `close'
+../jove/jove_io.c: In function `getfline':
+../jove/jove_io.c:198: warning: implicit declaration of function `message'
+../jove/jove_io.c:199: warning: implicit declaration of function `redisplay'
+../jove/jove_io.c: In function `read_file':
+../jove/jove_io.c:284: warning: implicit declaration of function `open'
+../jove/jove_io.c:290: warning: implicit declaration of function `DOTsave'
+../jove/jove_io.c:296: warning: implicit declaration of function `access'
+../jove/jove_io.c: In function `dofread':
+../jove/jove_io.c:324: warning: implicit declaration of function `linecopy'
+../jove/jove_io.c: In function `SaveFile':
+../jove/jove_io.c:371: warning: implicit declaration of function `SetUnmodified'
+../jove/jove_io.c: In function `DoWriteReg':
+../jove/jove_io.c:416: warning: implicit declaration of function `creat'
+../jove/jove_io.c:426: warning: implicit declaration of function `inorder'
+../jove/jove_io.c: In function `file_write':
+../jove/jove_io.c:469: warning: implicit declaration of function `getuid'
+../jove/jove_io.c:470: warning: implicit declaration of function `getgid'
+../jove/jove_io.c:488: warning: implicit declaration of function `unlink'
+../jove/jove_io.c:522: warning: implicit declaration of function `link'
+../jove/jove_io.c:527: warning: implicit declaration of function `free'
+../jove/jove_io.c:544: warning: implicit declaration of function `Eof'
+../jove/jove_io.c:545: warning: implicit declaration of function `length'
+../jove/jove_io.c:546: warning: implicit declaration of function `LineInsert'
+../jove/jove_io.c:558: warning: implicit declaration of function `chown'
+../jove/jove_io.c: In function `SaveName':
+../jove/jove_io.c:570: warning: suggest parentheses around assignment used as truth value
+../jove/jove_io.c: In function `initlist':
+../jove/jove_io.c:589: warning: implicit declaration of function `lfreelist'
+../jove/jove_io.c:594: warning: implicit declaration of function `AllMarkSet'
+../jove/jove_io.c:598: warning: implicit declaration of function `initwinds'
+../jove/jove_io.c: In function `InsFile':
+../jove/jove_io.c:666: warning: implicit declaration of function `SetModified'
+../jove/jove_io.c: In function `tmpinit':
+../jove/jove_io.c:710: warning: implicit declaration of function `putstr'
+../jove/jove_io.c:711: warning: implicit declaration of function `finish'
+../jove/jove_io.c: In function `getline':
+../jove/jove_io.c:731: warning: suggest parentheses around assignment used as truth value
+../jove/jove_io.c: In function `putline':
+../jove/jove_io.c:759: warning: suggest parentheses around assignment used as truth value
+../jove/jove_main.c: In function `finish':
+../jove/jove_main.c:241: warning: implicit declaration of function `message'
+../jove/jove_main.c:243: warning: implicit declaration of function `read'
+../jove/jove_main.c:246: warning: implicit declaration of function `redisplay'
+../jove/jove_main.c:254: warning: implicit declaration of function `putstr'
+../jove/jove_main.c:257: warning: implicit declaration of function `WtModBuf'
+../jove/jove_main.c:262: warning: implicit declaration of function `DoPlacur'
+../jove/jove_main.c:263: warning: implicit declaration of function `putpad'
+../jove/jove_main.c: At top level:
+../jove/jove_main.c:281: warning: return-type defaults to `int'
+../jove/jove_main.c:291: warning: return-type defaults to `int'
+../jove/jove_main.c:319: warning: return-type defaults to `int'
+../jove/jove_main.c: In function `PauseJove':
+../jove/jove_main.c:406: warning: implicit declaration of function `ClAndRedraw'
+../jove/jove_main.c: In function `RunShell':
+../jove/jove_main.c:440: warning: implicit declaration of function `fork'
+../jove/jove_main.c:449: warning: implicit declaration of function `execl'
+../jove/jove_main.c:456: warning: implicit declaration of function `wait'
+../jove/jove_main.c: In function `emalloc':
+../jove/jove_main.c:689: warning: suggest parentheses around assignment used as truth value
+../jove/jove_main.c:692: warning: implicit declaration of function `GCchunks'
+../jove/jove_main.c:693: warning: suggest parentheses around assignment used as truth value
+../jove/jove_main.c: In function `dispatch':
+../jove/jove_main.c:715: warning: implicit declaration of function `ExecFunc'
+../jove/jove_main.c: In function `getch':
+../jove/jove_main.c:724: warning: implicit declaration of function `MacGetc'
+../jove/jove_main.c:732: warning: implicit declaration of function `MacPutc'
+../jove/jove_main.c: In function `parse':
+../jove/jove_main.c:757: warning: implicit declaration of function `find_tag'
+../jove/jove_main.c:763: warning: implicit declaration of function `SetBuf'
+../jove/jove_main.c:764: warning: implicit declaration of function `atoi'
+../jove/jove_main.c:781: warning: implicit declaration of function `PrevWindow'
+../jove/jove_main.c: At top level:
+../jove/jove_main.c:878: warning: return-type defaults to `int'
+../jove/jove_main.c: In function `DoKeys':
+../jove/jove_main.c:907: warning: implicit declaration of function `getDOT'
+../jove/jove_main.c:910: warning: implicit declaration of function `IOclose'
+../jove/jove_main.c:913: warning: implicit declaration of function `close'
+../jove/jove_main.c:917: warning: implicit declaration of function `FixMacros'
+../jove/jove_main.c: At top level:
+../jove/jove_main.c:944: warning: return-type defaults to `int'
+../jove/jove_main.c: In function `main':
+../jove/jove_main.c:969: warning: implicit declaration of function `getTERM'
+../jove/jove_main.c:972: warning: implicit declaration of function `InitCM'
+../jove/jove_main.c:974: warning: implicit declaration of function `settout'
+../jove/jove_main.c:975: warning: implicit declaration of function `make_scr'
+../jove/jove_main.c:976: warning: implicit declaration of function `tmpinit'
+../jove/jove_main.c:977: warning: implicit declaration of function `MacInit'
+../jove/jove_main.c:978: warning: implicit declaration of function `InitFuncs'
+../jove/jove_main.c:980: warning: implicit declaration of function `winit'
+../jove/jove_main.c:982: warning: implicit declaration of function `noflags'
+../jove/jove_main.c:987: warning: implicit declaration of function `joverc'
+../jove/jove_main.c:988: warning: suggest parentheses around assignment used as truth value
+../jove/jove_main.c:1003: warning: implicit declaration of function `RedrawDisplay'
+../jove/jove_main.c:1006: warning: control reaches end of non-void function
+../jove/jove_marks.c: In function `DoDelMark':
+../jove/jove_marks.c:98: warning: implicit declaration of function `free'
+../jove/jove_misc.c:115: warning: return-type defaults to `int'
+../jove/jove_misc.c:141: warning: return-type defaults to `int'
+../jove/jove_misc.c: In function `waitfor':
+../jove/jove_misc.c:148: warning: implicit declaration of function `alarm'
+../jove/jove_misc.c: In function `EscPrefix':
+../jove/jove_misc.c:203: warning: implicit declaration of function `ExecFunc'
+../jove/jove_misc.c: In function `CopyRegion':
+../jove/jove_misc.c:224: warning: implicit declaration of function `lfreelist'
+../jove/jove_misc.c:229: warning: implicit declaration of function `inorder'
+../jove/jove_misc.c: In function `dword':
+../jove/jove_misc.c:265: warning: implicit declaration of function `reg_kill'
+../jove/jove_misc.c: In function `ToIndent':
+../jove/jove_misc.c:285: warning: suggest parentheses around assignment used as truth value
+../jove/jove_misc.c: In function `VtKeys':
+../jove/jove_misc.c:304: warning: implicit declaration of function `getch'
+../jove/jove_misc.c:324: warning: implicit declaration of function `PrevPage'
+../jove/jove_misc.c:329: warning: implicit declaration of function `NextPage'
+../jove/jove_misc.c: In function `DoJustify':
+../jove/jove_misc.c:376: warning: implicit declaration of function `fixorder'
+../jove/jove_misc.c:380: warning: implicit declaration of function `blnkp'
+../jove/jove_misc.c:386: warning: implicit declaration of function `calc_pos'
+../jove/jove_misc.c:394: warning: implicit declaration of function `DelWtSpace'
+../jove/jove_misc.c:395: warning: implicit declaration of function `DelNChar'
+../jove/jove_misc.c:412: warning: implicit declaration of function `LineInsert'
+../jove/jove_misc.c:413: warning: implicit declaration of function `TwoBlank'
+../jove/jove_misc.c:430: warning: implicit declaration of function `ToMark'
+../jove/jove_misc.c:431: warning: implicit declaration of function `DelMark'
+../jove/jove_misc.c: In function `ChrToOct':
+../jove/jove_misc.c:440: warning: implicit declaration of function `ins_str'
+../jove/jove_misc.c: In function `StrIndex':
+../jove/jove_misc.c:452: warning: suggest parentheses around assignment used as truth value
+../jove/jove_misc.c: In function `TransChar':
+../jove/jove_misc.c:520: warning: implicit declaration of function `DelPChar'
+../jove/jove_misc.c: In function `UpScroll':
+../jove/jove_misc.c:543: warning: implicit declaration of function `in_window'
+../jove/jove_misc.c: In function `KillEOL':
+../jove/jove_misc.c:578: warning: implicit declaration of function `length'
+../jove/jove_misc.c: In function `Yank':
+../jove/jove_misc.c:629: warning: implicit declaration of function `lsave'
+../jove/jove_misc.c:634: warning: implicit declaration of function `SetMark'
+../jove/jove_misc.c: At top level:
+../jove/jove_misc.c:641: warning: return-type defaults to `int'
+../jove/jove_misc.c:652: warning: return-type defaults to `int'
+../jove/jove_misc.c: In function `jumpup':
+../jove/jove_misc.c:671: warning: implicit declaration of function `isword'
+../jove/jove_misc.c: In function `RunEdit':
+../jove/jove_misc.c:784: warning: suggest parentheses around assignment used as truth value
+../jove/jove_misc.c: At top level:
+../jove/jove_misc.c:807: warning: return-type defaults to `int'
+../jove/jove_misc.c: In function `NoMacGetc':
+../jove/jove_misc.c:810: warning: implicit declaration of function `redisplay'
+../jove/jove_misc.c:812: warning: implicit declaration of function `finish'
+../jove/jove_misc.c: In function `ask':
+../jove/jove_misc.c:839: warning: implicit declaration of function `message'
+../jove/jove_misc.c:862: warning: suggest explicit braces to avoid ambiguous `else'
+../jove/jove_misc.c: In function `WtModBuf':
+../jove/jove_misc.c:915: warning: implicit declaration of function `SetBuf'
+../jove/jove_misc.c:929: warning: implicit declaration of function `file_write'
+../jove/jove_misc.c:930: warning: implicit declaration of function `SetUnmodified'
+../jove/jove_misc.c: At top level:
+../jove/jove_misc.c:954: warning: return-type defaults to `int'
+../jove/jove_misc.c: In function `down_line':
+../jove/jove_misc.c:1081: warning: implicit declaration of function `how_far'
+../jove/jove_misc.c: At top level:
+../jove/jove_misc.c:1087: warning: return-type defaults to `int'
+../jove/jove_misc.c: In function `how_far':
+../jove/jove_misc.c:1100: warning: suggest parentheses around assignment used as truth value
+../jove/jove_misc.c: In function `SetDot':
+../jove/jove_misc.c:1155: warning: implicit declaration of function `getDOT'
+../jove/jove_misc.c: In function `Eos':
+../jove/jove_misc.c:1204: warning: `bp' might be used uninitialized in this function
+../jove/jove_misc.c: In function `Eow':
+../jove/jove_misc.c:1304: warning: implicit declaration of function `min'
+../jove/jove_misc.c: In function `CapChar':
+../jove/jove_misc.c:1340: warning: implicit declaration of function `SetModified'
+../jove/jove_proc.c: In function `ErrParse':
+../jove/jove_proc.c:184: warning: implicit declaration of function `Bof'
+../jove/jove_proc.c:189: warning: suggest parentheses around assignment used as truth value
+../jove/jove_proc.c:191: warning: implicit declaration of function `putmatch'
+../jove/jove_proc.c:194: warning: implicit declaration of function `atoi'
+../jove/jove_proc.c: In function `SpellCom':
+../jove/jove_proc.c:213: warning: implicit declaration of function `SaveFile'
+../jove/jove_proc.c:217: warning: implicit declaration of function `NotModified'
+../jove/jove_proc.c:224: warning: implicit declaration of function `message'
+../jove/jove_proc.c:227: warning: implicit declaration of function `SetWind'
+../jove/jove_proc.c: In function `SpParse':
+../jove/jove_proc.c:254: warning: implicit declaration of function `Upper'
+../jove/jove_proc.c:254: warning: implicit declaration of function `getch'
+../jove/jove_proc.c:271: warning: suggest parentheses around assignment used as truth value
+../jove/jove_proc.c:285: warning: implicit declaration of function `Bol'
+../jove/jove_proc.c:286: warning: implicit declaration of function `KillEOL'
+../jove/jove_proc.c: In function `ErrFree':
+../jove/jove_proc.c:304: warning: implicit declaration of function `free'
+../jove/jove_proc.c: In function `DoNextErr':
+../jove/jove_proc.c:328: warning: implicit declaration of function `inlist'
+../jove/jove_proc.c: In function `MakeErrors':
+../jove/jove_proc.c:359: warning: implicit declaration of function `WtModBuf'
+../jove/jove_proc.c: In function `dopipe':
+../jove/jove_proc.c:485: warning: implicit declaration of function `pipe'
+../jove/jove_proc.c: In function `PipeClose':
+../jove/jove_proc.c:493: warning: implicit declaration of function `close'
+../jove/jove_proc.c: In function `UnixToBuf':
+../jove/jove_proc.c:534: warning: implicit declaration of function `redisplay'
+../jove/jove_proc.c:541: warning: implicit declaration of function `fork'
+../jove/jove_proc.c:550: warning: implicit declaration of function `dup'
+../jove/jove_proc.c:553: warning: implicit declaration of function `execvp'
+../jove/jove_proc.c:554: warning: implicit declaration of function `write'
+../jove/jove_proc.c:562: warning: implicit declaration of function `getfline'
+../jove/jove_proc.c:563: warning: implicit declaration of function `ins_str'
+../jove/jove_proc.c:564: warning: implicit declaration of function `LineInsert'
+../jove/jove_proc.c:572: warning: implicit declaration of function `IOclose'
+../jove/jove_proc.c:573: warning: implicit declaration of function `wait'
+../jove/jove_proc.c: In function `RegToShell':
+../jove/jove_proc.c:594: warning: implicit declaration of function `inorder'
+../jove/jove_proc.c: In function `RegToUnix':
+../jove/jove_proc.c:621: warning: implicit declaration of function `creat'
+../jove/jove_proc.c:623: warning: implicit declaration of function `putreg'
+../jove/jove_proc.c:626: warning: implicit declaration of function `DelReg'
+../jove/jove_proc.c:629: warning: implicit declaration of function `unlink'
+../jove/jove_re.c:136: warning: return-type defaults to `int'
+../jove/jove_re.c: In function `nextc':
+../jove/jove_re.c:139: warning: suggest parentheses around assignment used as truth value
+../jove/jove_re.c: In function `replace':
+../jove/jove_re.c:181: warning: implicit declaration of function `ToMark'
+../jove/jove_re.c:182: warning: implicit declaration of function `DelMark'
+../jove/jove_re.c: In function `dosearch':
+../jove/jove_re.c:212: warning: implicit declaration of function `length'
+../jove/jove_re.c:216: warning: implicit declaration of function `execute'
+../jove/jove_re.c: In function `search':
+../jove/jove_re.c:263: warning: implicit declaration of function `message'
+../jove/jove_re.c:268: warning: implicit declaration of function `SetMark'
+../jove/jove_re.c: In function `substitute':
+../jove/jove_re.c:291: warning: implicit declaration of function `Upper'
+../jove/jove_re.c:314: warning: implicit declaration of function `Recurse'
+../jove/jove_re.c:316: warning: implicit declaration of function `SetBuf'
+../jove/jove_re.c:342: warning: implicit declaration of function `SetModified'
+../jove/jove_re.c:348: warning: implicit declaration of function `redisplay'
+../jove/jove_re.c: In function `dosub':
+../jove/jove_re.c:396: warning: suggest parentheses around assignment used as truth value
+../jove/jove_re.c:409: warning: implicit declaration of function `max'
+../jove/jove_re.c:414: warning: suggest parentheses around assignment used as truth value
+../jove/jove_re.c:416: warning: implicit declaration of function `len_error'
+../jove/jove_re.c: At top level:
+../jove/jove_re.c:600: warning: return-type defaults to `int'
+../jove/jove_re.c: In function `execute':
+../jove/jove_re.c:606: warning: array subscript has type `char'
+../jove/jove_re.c:607: warning: array subscript has type `char'
+../jove/jove_re.c:622: warning: implicit declaration of function `advance'
+../jove/jove_re.c: At top level:
+../jove/jove_re.c:648: warning: return-type defaults to `int'
+../jove/jove_re.c: In function `advance':
+../jove/jove_re.c:685: warning: implicit declaration of function `isword'
+../jove/jove_re.c:715: warning: implicit declaration of function `cclass'
+../jove/jove_re.c:729: warning: array subscript has type `char'
+../jove/jove_re.c:733: warning: array subscript has type `char'
+../jove/jove_re.c:739: warning: implicit declaration of function `backref'
+../jove/jove_re.c:652: warning: `i' might be used uninitialized in this function
+../jove/jove_re.c: At top level:
+../jove/jove_re.c:807: warning: return-type defaults to `int'
+../jove/jove_re.c:820: warning: return-type defaults to `int'
+../jove/jove_re.c: In function `IncSearch':
+../jove/jove_re.c:867: warning: implicit declaration of function `DOTsave'
+../jove/jove_re.c: At top level:
+../jove/jove_re.c:993: warning: return-type defaults to `int'
+../jove/jove_re.c: In function `look_up':
+../jove/jove_re.c:1001: warning: implicit declaration of function `open'
+../jove/jove_re.c:1005: warning: implicit declaration of function `getfline'
+../jove/jove_re.c:1014: warning: suggest parentheses around assignment used as truth value
+../jove/jove_re.c:1018: warning: suggest parentheses around assignment used as truth value
+../jove/jove_re.c:1030: warning: implicit declaration of function `IOclose'
+../jove/jove_re.c: In function `find_tag':
+../jove/jove_re.c:1063: warning: implicit declaration of function `numwindows'
+../jove/jove_re.c:1068: warning: implicit declaration of function `Bof'
+../jove/jove_re.c: In function `isfuncname':
+../jove/jove_re.c:1095: warning: implicit declaration of function `isalpha'
+../jove/jove_re.c:1095: warning: implicit declaration of function `isdigit'
+../jove/jove_screen.c: In function `make_scr':
+../jove/jove_screen.c:114: warning: implicit declaration of function `free'
+../jove/jove_screen.c: In function `cl_eol':
+../jove/jove_screen.c:160: warning: implicit declaration of function `putpad'
+../jove/jove_screen.c: In function `swrite':
+../jove/jove_screen.c:219: warning: suggest parentheses around assignment used as truth value
+../jove/jove_screen.c:223: warning: implicit declaration of function `charp'
+../jove/jove_screen.c:223: warning: suggest parentheses around assignment used as truth value
+../jove/jove_screen.c: In function `BufSwrite':
+../jove/jove_screen.c:279: warning: suggest parentheses around assignment used as truth value
+../jove/jove_screen.c:283: warning: suggest parentheses around assignment used as truth value
+../jove/jove_screen.c: In function `putstr':
+../jove/jove_screen.c:319: warning: suggest parentheses around assignment used as truth value
+../jove/jove_screen.c: In function `DoPlacur':
+../jove/jove_screen.c:677: warning: implicit declaration of function `ForNum'
+../jove/jove_screen.c: At top level:
+../jove/jove_screen.c:723: warning: return-type defaults to `int'
+../jove/jove_term.c: In function `TermError':
+../jove/jove_term.c:167: warning: implicit declaration of function `write'
+../jove/jove_term.c: In function `getTERM':
+../jove/jove_term.c:227: warning: implicit declaration of function `read'
+../jove/jove_term.c:238: warning: implicit declaration of function `tgetent'
+../jove/jove_term.c:241: warning: implicit declaration of function `tgetnum'
+../jove/jove_term.c:251: warning: implicit declaration of function `tgetflag'
+../jove/jove_term.c:260: warning: implicit declaration of function `tgetstr'
+../jove/jove_term.c:278: warning: implicit declaration of function `disp_opt_init'
+../jove/jove_term.c: In function `putpad':
+../jove/jove_term.c:317: warning: implicit declaration of function `tputs'
+../jove/jove_term.c: In function `settout':
+../jove/jove_term.c:417: warning: implicit declaration of function `max'
+../jove/jove_term.c:355: warning: unused variable `speeds'
+../jove/jove_wind.c: In function `del_wind':
+../jove/jove_wind.c:158: warning: implicit declaration of function `free'
+../jove/jove_wind.c: In function `SetWind':
+../jove/jove_wind.c:252: warning: implicit declaration of function `SetBuf'
+../jove/jove_wind.c:253: warning: implicit declaration of function `inlist'
+../jove/jove_wind.c: At top level:
+../jove/jove_wind.c:274: warning: return-type defaults to `int'
+../jove/jove_wind.c: In function `WindFind':
+../jove/jove_wind.c:291: warning: suggest parentheses around assignment used as truth value
+../jove/jove_wind.c: In function `PageNWind':
+../jove/jove_wind.c:352: warning: implicit declaration of function `NextPage'
+../jove/jove_wind.c: In function `pop_wind':
+../jove/jove_wind.c:369: warning: implicit declaration of function `SplitWind'
+../jove/jove_wind.c:377: warning: implicit declaration of function `initlist'
+../jove/jove_wind.c: At top level:
+../jove/jove_wind.c:464: warning: return-type defaults to `int'
+jove_io.o: In function `tmpinit':
+jove_io.o(.text+0x10fa): warning: tempnam() possibly used unsafely; consider using mkstemp()
+../jove/findcom.c: In function `main':
+../jove/findcom.c:67: warning: implicit declaration of function `strncmp'
 -------------------------------- .burst.fbsd
+burst.o: In function `main':
+burst.o(.text+0x1ef): warning: tmpnam() possibly used unsafely; consider using mkstemp()
 -------------------------------- .gtools.fbsd
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
 -------------------------------- .bwish.fbsd
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
 -------------------------------- .btclsh.fbsd
+../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+Compilation complete
 ./gen.sh -s install
 -------------------------------- h
 ......checking XtndRunsv.h
@@ -558,8 +1425,6 @@ Installing html from /c/regress/brlcad/.libitcl3.2.fbsd/../libitcl3.2/iwidgets3.
 for i in /c/regress/brlcad/.libitcl3.2.fbsd/../libitcl3.2/iwidgets3.0.0/demos/html/*;  do  if [ -f $i ] ; then  /c/regress/brlcad/.libtcl8.3.fbsd/tclsh `echo /c/regress/brlcad/.libitcl3.2.fbsd/../libitcl3.2/iwidgets3.0.0/../config/installFile.tcl` -c -m 644 $i /c/regress/brlcad.fbsd/lib/iwidgets3.0.1/demos/html;  fi;  done;
 Installing docs from /c/regress/brlcad/.libitcl3.2.fbsd/../libitcl3.2/iwidgets3.0.0/doc into /c/regress/brlcad.fbsd/man/mann
 /c/regress/brlcad/.libtcl8.3.fbsd/tclsh `echo /c/regress/brlcad/.libitcl3.2.fbsd/../libitcl3.2/iwidgets3.0.0/../config/installFile.tcl` -c -m 644 /c/regress/brlcad/.libitcl3.2.fbsd/../libitcl3.2/iwidgets3.0.0/license.terms /c/regress/brlcad.fbsd/lib/iwidgets3.0.1
-cp: itcl/libitcl3.2.so: No such file or directory
-cp: itk/libitk3.2.so: No such file or directory
 -------------------------------- .libdm.fbsd
 ......checking libdm.so.15
 ++++++INSTALLED /c/regress/brlcad.fbsd/lib/libdm.so.15
@@ -2128,8 +2993,6 @@ cake: install is up to date
 ++++++INSTALLED /c/regress/brlcad.fbsd/html/manuals/mged/mged3.html
 ......checking mged_callbacks.html
 ++++++INSTALLED /c/regress/brlcad.fbsd/html/manuals/mged/mged_callbacks.html
-......checking mged_cmd_index.html
-++++++INSTALLED /c/regress/brlcad.fbsd/html/manuals/mged/mged_cmd_index.html
 ......checking mged_cmds.html
 ++++++INSTALLED /c/regress/brlcad.fbsd/html/manuals/mged/mged_cmds.html
 ......checking mged_devel_cmds.html
@@ -2210,6 +3073,8 @@ cake: install is up to date
 ++++++INSTALLED /c/regress/brlcad.fbsd/html/manuals/mged/peewee.jpg
 ......checking rim.jpg
 ++++++INSTALLED /c/regress/brlcad.fbsd/html/manuals/mged/rim.jpg
+......checking mged_cmd_index.html
+++++++INSTALLED /c/regress/brlcad.fbsd/html/manuals/mged/mged_cmd_index.html
 -------------------------------- html/manuals/mged/animmate
 ......checking anim_cascade.html
 ++++++INSTALLED /c/regress/brlcad.fbsd/html/manuals/mged/animmate/anim_cascade.html
@@ -2582,16 +3447,7 @@ RUNNING TEST:
 /c/regress/brlcad/regress/tests.d/solids.sh
 NOTICE:  moss.g is BRL-CAD v5 format.
 rendering solids...
-solids.pix       0 off by many
-       0 off by many
-       0 off by many
-       0 off by many
-       0 off by many
-       0 off by many
-       0 off by many
-       0 off by many
-       0 off by many
-       0 off by many
+solids.pix  766396 off by many
 rendering moss...
 moss.pix       0 off by many
 RUNNING TEST:
@@ -2605,4 +3461,4 @@ Creating region id=1000, air=0, GIFTmaterial=1, los=100
 Defaulting item number to 1027
 Creating region id=1026, air=0, GIFTmaterial=1, los=100
 rendering...
-Regression Testing Complete
+Regression Tests Complete
