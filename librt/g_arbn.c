@@ -1072,11 +1072,24 @@ struct rt_db_internal	*ip;
 	aip = (struct rt_arbn_internal *)ip->idb_ptr;
 	RT_ARBN_CK_MAGIC(aip);
 
-	bu_free( (char *)aip->eqn, "rt_arbn_internal eqn[]");
+	if( aip->neqn > 0 )
+		bu_free( (char *)aip->eqn, "rt_arbn_internal eqn[]");
 	bu_free( (char *)aip, "rt_arbn_internal" );
 
 	ip->idb_ptr = (genptr_t)0;	/* sanity */
 }
+
+/*
+ * 		R T _ A R B N _ T C L G E T
+ *
+ *	Routine to format the parameters of an ARBN primitive for "db get"
+ *
+ *	Legal requested parameters include:
+ *		"N" - number of equations
+ *		"P" - list of all the planes
+ *		"P#" - the specified plane number (0 based)
+ *		no arguments returns everything
+ */
 
 int
 rt_arbn_tclget( interp, intern, attr )
@@ -1142,6 +1155,18 @@ const char			*attr;
 	return( TCL_OK );
 }
 
+/*
+ *		R T _ A R B N _ T C L A D J U S T
+ *
+ *	Routine to modify an arbn via the "db adjust" command
+ *
+ *	Legal parameters are:
+ *		"N" - adjust the number of planes (new ones will be zeroed)
+ *		"P" - adjust the entire list of planes
+ *		"P#" - adjust a specific plane (0 based)
+ *		"P+" - add a new plane to the list of planes
+ */
+
 int
 rt_arbn_tcladjust( interp, intern, argc, argv )
 Tcl_Interp		*interp;
@@ -1164,10 +1189,21 @@ char			**argv;
 
 	while( argc >= 2 ) {
 		if( !strcmp( argv[0], "N" ) ) {
+			i = arbn->neqn;
 			arbn->neqn = atoi( argv[1] );
-			arbn->eqn = (plane_t *)bu_realloc( arbn->eqn,
-					     arbn->neqn * sizeof( plane_t ),
-							   "arbn->eqn");
+			if( arbn->neqn > 0 ) {
+				arbn->eqn = (plane_t *)bu_realloc( arbn->eqn,
+						   arbn->neqn * sizeof( plane_t ),
+								   "arbn->eqn");
+				for( ; i<arbn->neqn ; i++ ) {
+					VSETALLN( arbn->eqn[i], 0.0, 4 );
+				}
+			} else {
+				arbn->neqn = i;
+				Tcl_SetResult( interp,
+				       "ERROR: number of planes must be greater than 0\n",
+					TCL_STATIC );
+			}
 		}
 		else if( !strcmp( argv[0], "P" ) ) {
 			/* eliminate all the '{' and '}' chars */
@@ -1195,37 +1231,38 @@ char			**argv;
 				bu_free( (char *)arbn->eqn, "arbn->eqn" );
 			arbn->eqn = (plane_t *)new_planes;
 			arbn->neqn = len / 4;
+			for( i=0 ; i<arbn->neqn ; i++ )
+				VUNITIZE( arbn->eqn[i] );
 		}
 		else if( argv[0][0] == 'P' ) {
-			if( !isdigit( argv[0][1] ) ) {
+			if( argv[0][1] == '+' ) {
+				i = arbn->neqn;
+				arbn->neqn++;
+				arbn->eqn = (plane_t *)bu_realloc( arbn->eqn,
+							 (arbn->neqn) * sizeof( plane_t ),
+							 "arbn->eqn" );
+			}
+			else if( isdigit( argv[0][1] ) ) {
+				i = atoi( &argv[0][1] );
+			} else {
 				Tcl_SetResult( interp,
-					       "ERROR: Illegal plane number\n",
+					       "ERROR: illegal argument, choices are P, P#, P+, or N\n",
 					       TCL_STATIC );
 				return( TCL_ERROR );
 			}
-			i = atoi( &argv[0][1] );
-			if( i < 0 || i > arbn->neqn ) {
+			if( i < 0 || i >= arbn->neqn ) {
 				Tcl_SetResult( interp,
 					       "ERROR: plane number out of range\n",
 					       TCL_STATIC );
 				return( TCL_ERROR );
 			}
-			if( i == arbn->neqn ) {
-				arbn->eqn = (plane_t *)bu_realloc( arbn->eqn,
-							 (i+1) * sizeof( plane_t ),
-							 "arbn->eqn" );
-			}
 			len = 4;
 			array = (fastf_t *)&arbn->eqn[i];
 			if( (ret=tcl_list_to_fastf_array( interp, argv[1],
 							  &array, &len ) ) != TCL_OK ) {
-				arbn->eqn = (plane_t *)bu_realloc( arbn->eqn,
-							 arbn->neqn * sizeof( plane_t ),
-							 "arbn->eqn" );
 				return( ret );
 			}
-			if( i == arbn->neqn )
-				arbn->neqn++;
+			VUNITIZE( arbn->eqn[i] );
 		}
 		argc -= 2;
 		argv += 2;
