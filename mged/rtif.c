@@ -1132,10 +1132,17 @@ char	**argv;
 	double	t;
 	double	t_in;
 	FILE *fp;
+	FILE *fp2;
 	int pid, rpid;
 	int retcode;
 	int o_pipe[2];
+	int o_pipe2[2];
+	int c;
+	int use_input_orig = 0;
+	char line[MAXLINE];
+	fastf_t xorig, yorig;
 	vect_t	center_model;
+	vect_t  view_ray_orig;
 	vect_t	direction;
 	vect_t	extremum[2];
 	vect_t	minus, plus;	/* vers of this solid's bounding box */
@@ -1157,9 +1164,63 @@ char	**argv;
 	if( not_state( ST_VIEW, "Single ray-trace from current view" ) )
 	  return TCL_ERROR;
 
+	VSET(center_model, -toViewcenter[MDX],
+	     -toViewcenter[MDY], -toViewcenter[MDZ]);
+
 	vp = &rt_cmd_vec[0];
 	*vp++ = "nirt";
 	*vp++ = "-M";
+#if 1
+	/*
+	 * Look through options for -p ----> process that one here.
+	 * Pass everything else to nirt.
+	 */
+	bu_optind = 1;
+	while((c = bu_getopt(argc, argv, "Msvu:x:p:")) != EOF)
+	  switch(c){
+	  case 'M':
+	    /* ignore */
+	    break;
+	  case 's':
+	    *vp++ = "-s";
+	    break;
+	  case 'v':
+	    *vp++ = "-v";
+	    break;
+	  case 'u':
+	    *vp++ = "-u";
+	    *vp++ = bu_optarg;
+	    break;
+	  case 'x':
+	    *vp++ = "-x";
+	    *vp++ = bu_optarg;
+	    break;
+	  case 'p':
+	    {
+	      if(sscanf(bu_optarg, "%lf", &xorig) != 1)
+		xorig = 0.0;
+
+	      if(bu_optind >= argc){
+		struct bu_vls vls;
+
+		bu_vls_init(&vls);
+		bu_vls_printf(&vls, "help nirt");
+		Tcl_Eval(interp, bu_vls_addr(&vls));
+		bu_vls_free(&vls);
+		return TCL_ERROR;
+	      }
+
+	      if(sscanf(argv[bu_optind], "%lf", &yorig) != 1)
+		yorig = 0.0;
+	      ++bu_optind;
+
+	      use_input_orig = 1;
+	    }
+	  }
+
+	argc -= (bu_optind - 1);
+	argv += (bu_optind - 1);
+#endif
 	for( i=1; i < argc; i++ )
 		*vp++ = argv[i];
 	*vp++ = dbip->dbi_filename;
@@ -1167,10 +1228,17 @@ char	**argv;
 	setup_rt( vp );
 
 	(void)pipe( o_pipe );
+	(void)pipe( o_pipe2 );
 	(void)signal( SIGINT, SIG_IGN );
 	if ( ( pid = fork()) == 0 )  {
 		(void)close(0);
 		(void)dup( o_pipe[0] );
+		(void)close(1);
+		(void)dup( o_pipe2[1] );
+		(void)close(o_pipe[0]);
+		(void)close(o_pipe[1]);
+		(void)close(o_pipe2[0]);
+		(void)close(o_pipe2[1]);
 		for( i=3; i < 20; i++ )
 			(void)close(i);
 		(void)signal( SIGINT, SIG_DFL );
@@ -1182,13 +1250,34 @@ char	**argv;
 	/* As parent, send view information down pipe */
 	(void)close( o_pipe[0] );
 	fp = fdopen( o_pipe[1], "w" );
-	{
-		VSET(center_model, -toViewcenter[MDX],
-		    -toViewcenter[MDY], -toViewcenter[MDZ]);
-		if (mged_variables->adcflag)
-		{
-		   Tcl_AppendResult(interp, "Firing through angle/distance cursor...\n",
-				    (char *)NULL);
+	/* We also need to read back the result */
+	(void)close( o_pipe2[1] );
+	fp2 = fdopen( o_pipe2[0], "r" );
+
+	if (mged_variables->adcflag || use_input_orig){
+	  if(use_input_orig){
+	    struct bu_vls vls;
+
+	    bu_vls_init(&vls);
+	    bu_vls_printf(&vls, "Firing from (%lf, %lf, 0.0)...\n",
+			  xorig, yorig);
+	    Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+	    bu_vls_free(&vls);
+	  }else{
+	    Tcl_AppendResult(interp, "Firing through angle/distance cursor...\n",
+			     (char *)NULL);
+	    xorig = curs_x;
+	    yorig = curs_y;
+	  }
+#if 1
+	  {
+	    fastf_t sf = 1.0/2047.0;
+	      
+	    VSET(view_ray_orig, xorig, yorig, 2047.0);
+	    VSCALE(view_ray_orig, view_ray_orig, sf);
+	    MAT4X3PNT(center_model, view2model, view_ray_orig);
+	  }
+#else
 		    /*
 		     * Compute bounding box of all objects displayed.
 		     * Borrowed from size_reset() in chgview.c
@@ -1245,17 +1334,27 @@ char	**argv;
 
 		    VMOVEN(unit_H, model2view, 3);
 		    VMOVEN(unit_V, model2view + 4, 3);
+#if 1
+		    VJOIN1(center_model,
+			center_model, xorig * Viewscale / 2047.0, unit_H);
+		    VJOIN1(center_model,
+			center_model, yorig * Viewscale / 2047.0, unit_V);
+#else
 		    VJOIN1(center_model,
 			center_model, curs_x * Viewscale / 2047.0, unit_H);
 		    VJOIN1(center_model,
 			center_model, curs_y * Viewscale / 2047.0, unit_V);
-		}
-		else
-		  Tcl_AppendResult(interp, "Firing from view center...\n", (char *)NULL);
+#endif
+#endif
+	}else
+	  Tcl_AppendResult(interp, "Firing from view center...\n", (char *)NULL);
 
-		rt_write(fp, center_model );
-	}
+	rt_write(fp, center_model );
+
 	(void)fclose( fp );
+	while(fgets(line, MAXLINE, fp2) != (char *)NULL)
+	  Tcl_AppendResult(interp, line, (char *)NULL);
+	(void)fclose( fp2 );
 
 	/* Wait for program to finish */
 	while ((rpid = wait(&retcode)) != pid && rpid != -1)
