@@ -24,13 +24,14 @@ SHELL=/bin/sh
 export SHELL
 
 # Set to 0 for non-NFS environment (default), 1 for NFS configuration.
-NFS=1
+NFS=0
 
 # Label number for this CAD Release,
 # RCS main Revision number, and date.
 #RELEASE=M.N;	RCS_REVISION=X;		REL=DATE=dd-mmm-yy
-#RELEASE=3.23;	RCS_REVISION=9;		REL_DATE=Today
-RELEASE=3.22;	RCS_REVISION=9;		REL_DATE=26-July-91	# Beta+9
+#RELEASE=3.24;	RCS_REVISION=9;		REL_DATE=Today
+RELEASE=3.23;	RCS_REVISION=9;		REL_DATE=12-Aug-91	# Beta+10
+#RELEASE=3.22;	RCS_REVISION=9;		REL_DATE=26-July-91	# Beta+9
 #RELEASE=3.21;	RCS_REVISION=9;		REL_DATE=25-July-91	# Beta+8
 #RELEASE=3.20;	RCS_REVISION=9;		REL_DATE=25-July-91	# Beta+7
 #RELEASE=3.19;	RCS_REVISION=9;		REL_DATE=24-July-91	# Beta+6
