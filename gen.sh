@@ -32,7 +32,7 @@ SHELL=/bin/sh
 export SHELL
 
 # Set to 0 for non-NFS environment (default), 1 for NFS configuration.
-NFS=0
+NFS=1
 
 # Label number for this CAD Release,
 # RCS main Revision number, and date.
