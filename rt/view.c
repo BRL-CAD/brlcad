@@ -761,6 +761,7 @@ char *file, *obj;
 		extern struct mfuncs marble_mfuncs[];
 		extern struct mfuncs stxt_mfuncs[];
 		extern struct mfuncs points_mfuncs[];
+		extern struct mfuncs toyota_mfuncs[];
 
 		mlib_add( phg_mfuncs );
 		mlib_add( light_mfuncs );
@@ -772,6 +773,7 @@ char *file, *obj;
 		mlib_add( marble_mfuncs );
 		mlib_add( stxt_mfuncs );
 		mlib_add( points_mfuncs );
+		mlib_add( toyota_mfuncs );
 	}
 
 	if( minus_o )  {
