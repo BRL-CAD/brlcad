@@ -203,7 +203,7 @@ int		width = 64;
 int		height = 64;
 extern int	hypersample;
 extern int	matflag;
-double		perspective = 0;
+extern double	rt_perspective;
 int		benchmark = 0;
 int		rdebug;
 int		use_air = 0;
@@ -804,7 +804,7 @@ register struct frame *fr;
 	if( benchmark )  vls_cat( &fr->fr_cmd, "opt -B;" );
 	sprintf(buf, "opt -w%d -n%d -H%d -p%g;",
 		fr->fr_width, fr->fr_height,
-		hypersample, perspective );
+		hypersample, rt_perspective );
 	vls_cat( &fr->fr_cmd, buf );
 
 	if( fr->fr_picture )  free(fr->fr_picture);
@@ -1780,9 +1780,9 @@ cd_persp( argc, argv )
 int	argc;
 char	**argv;
 {
-	perspective = atof( argv[1] );
-	if( perspective < 0.0 )  perspective = 0.0;
-	printf("perspective angle=%g, takes effect after next MAT\n", perspective);
+	rt_perspective = atof( argv[1] );
+	if( rt_perspective < 0.0 )  rt_perspective = 0.0;
+	printf("perspective angle=%g, takes effect after next MAT\n", rt_perspective);
 }
 
 cd_read( argc, argv )
