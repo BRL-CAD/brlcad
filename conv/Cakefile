@@ -10,7 +10,7 @@
 			viewpoint-g dxf-g g-nmg g-euclid1 fast4-g proe-g g-nff \
 			asc-nmg nmg-rib g-vrml g-x3d g-acad cy-g nastran-g g-wave g-stl \
 			nmg-bot g-shell.rect stl-g poly-bot dbupgrade enf-g bot_shell-vtk \
-			g-dxf
+			g-dxf ply-g
 #define	SRCSUFF	.c
 #define MANSECTION	1
 
@@ -38,6 +38,9 @@ bot_shell-vtk: bot_shell-vtk.o LIBRT_DEP LIBBN_DEP LIBBU_DEP LIBTCL_DEP LIBSYSV_
 
 enf-g: enf-g.o LIBRT_DEP LIBBN_DEP LIBBU_DEP LIBTCL_DEP LIBWDB_DEP LIBSYSV_DEP
 	CC LDFLAGS enf-g.o LIBWDB LIBRT LIBBN LIBBU LIBBU_LIBES LIBTCL LIBTCL_LIBES LIBES LIBSYSV -o enf-g
+
+ply-g: ply-g.o LIBRT_DEP LIBBN_DEP LIBBU_DEP LIBTCL_DEP LIBWDB_DEP LIBSYSV_DEP
+	CC LDFLAGS ply-g.o LIBWDB LIBRT LIBBN LIBBU LIBBU_LIBES LIBTCL LIBTCL_LIBES LIBES LIBSYSV -o ply-g
 
 poly-bot: poly-bot.o LIBRT_DEP LIBBN_DEP LIBBU_DEP LIBWDB_DEP LIBTCL_DEP
 	CC LDFLAGS poly-bot.o LIBWDB LIBRT LIBBN LIBBU LIBBU_LIBES LIBTCL LIBTCL_LIBES LIBES -o poly-bot
