@@ -112,7 +112,9 @@ struct seg *segp;
 /* These aren't defined in BSD errno.h.					*/
 extern int	errno;
 extern int	sys_nerr;
+#if 0
 extern char	*sys_errlist[];
+#endif
 
 void
 locPerror( msg )
