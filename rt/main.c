@@ -216,6 +216,7 @@ char **argv;
 
 	/* Copy values from command line options into rtip */
 	rtip->rti_space_partition = space_partition;
+	rtip->rti_nugrid_dimlimit = nugrid_dimlimit;
 	rtip->rti_nu_gfactor = nu_gfactor;
 	rtip->useair = use_air;
 	if( rt_dist_tol > 0 )  {
