@@ -8,11 +8,6 @@
  *	otherwise,  stop  drawing  that  vector  or  draw  dotted  line.
  *	Produces Unix-plot type output.
  *
- *	cmd.c must be changed to allow this routine to be called. Since
- *	MGED currently uses floats and libfb uses doubles, a special version
- *	of libfb.a must be created using floats. This means that a special
- *	version of raytrace.h is needed too.
- *
  *	The command is "H file.pl [stepsize] [%epsilon]". Stepsize is the
  *	number of segments into which the window size should be broken.
  *	%Epsilon specifies how close two points must be before they are
@@ -33,14 +28,19 @@
 
 #include <stdio.h>
 #include <string.h>
-#include "./machine.h"		/* special copy */
+#include "machine.h"
 #include "vmath.h"
-#include "solid.h"
-#include "./raytrace.h"		/* special copy w/out GETSTRUCT def */
-#include "dm.h"
+#include "raytrace.h"
+#include "./solid.h"
+#include "./dm.h"
 
+#ifdef gould
+#define MAXOBJECTS	1000
+#define NAMELEN		40
+#else
 #define MAXOBJECTS	3000
 #define NAMELEN		80
+#endif /* gould */
 #define VIEWSIZE	(2*Viewscale)
 #define TRUE	1
 #define FALSE	0
@@ -53,7 +53,7 @@
 		  MAT4X3PNT(t,model2view,(v));\
 		  pl_cont(plotfp,(int)(2048*t[X]),(int)(2048*t[Y])); }
 
-extern char *filename;		/* file name of database */
+extern struct db_i *dbip;	/* current database instance */
 extern int numargs;
 extern char *cmd_args[];	/* array of pointers to args */
 extern float Viewscale;
@@ -70,7 +70,7 @@ f_hideline()
     FILE 	*plotfp;
     char 	visible;
     extern int 	hit_headon(),hit_tangent(),hit_overlap();
-    int 	i,j,n,numobjs;
+    int 	i,j,numobjs;
     char 	objname[MAXOBJECTS][NAMELEN],title[1];
     fastf_t 	len,u,step;
     FAST float 	ratio;
@@ -80,7 +80,7 @@ f_hideline()
     register struct application a;
     register vect_t temp;
     register vect_t last,dir;
-    register struct veclist *vp;
+    register struct vlist *vp;
 
 /*
  * Open Unix-plot file and initialize
@@ -88,13 +88,14 @@ f_hideline()
     if ((plotfp = fopen(cmd_args[1],"w")) == NULL) {
 	(void)printf("f_hideline: unable to open \"%s\" for writing.\n",
 								cmd_args[1]);
-	return(0);
+	return(1);
     }
     pl_space(plotfp,-2048,-2048,2048,2048);
 
 /*
  * Build list of objects being viewed
  */
+    numobjs = 0;
     FOR_ALL_SOLIDS(sp) {
 	for (i = 0; i < numobjs; i++)
 	    if (!strcmp(objname[i],sp->s_path[0]->d_namep))
@@ -114,8 +115,9 @@ f_hideline()
     RES_INIT( &rt_g.res_stats );
     RES_INIT( &rt_g.res_results );
 
-    if ((rtip = rt_dirbuild(filename,title,0)) == RTI_NULL) {
-	printf("f_hideline: unable to open model file \"%s\"\n",filename);
+    if ((rtip = rt_dirbuild(dbip->dbi_filename,title,0)) == RTI_NULL) {
+	printf("f_hideline: unable to open model file \"%s\"\n",
+		dbip->dbi_filename);
 	return(1);
     }
     a.a_hit = hit_headon;
@@ -154,9 +156,10 @@ f_hideline()
 	if (ratio >= dmp->dmr_bound || ratio < 0.001)
 	    continue;
 	
-	n = sp->s_vlen;
-	for (vp = sp->s_vlist; n--; vp++)
-	    if (vp->vl_pen == PEN_UP) {
+printf("Solid\n");
+	for (vp = sp->s_vlist; vp != VL_NULL; vp = vp->vl_forw ) {
+printf("\tVector\n");
+	    if (vp->vl_draw == 0) {		/* move */
 		VMOVE(last,vp->vl_pnt);
 		MOVE(last);
 	    } else {
@@ -164,6 +167,7 @@ f_hideline()
 		len = MAGNITUDE(dir);
 		VUNITIZE(dir);
 		visible = FALSE;
+printf("\t\tDraw 0 -> %g, step %g\n", len, step);
 		for (u = 0; u <= len; u += step) {
 		    VJOIN1(aim_point,last,u,dir);
 		    MAT4X3PNT(temp,model2view,aim_point);
@@ -174,19 +178,22 @@ f_hideline()
 			    visible = TRUE;
 			    MOVE(aim_point);
 			}
-		    } else
+		    } else {
 			if (visible) {
 			    visible = FALSE;
 			    DRAW(aim_point);
 			}
+		    }
 		}
 		if (visible)
 		    DRAW(aim_point);
 		VMOVE(last,vp->vl_pnt);		/* new last vertex */
 	    }
+	}
     }
     fprintf(plotfp,"PG;");
     fclose(plotfp);
+    return(0);
 }
 
 /*
