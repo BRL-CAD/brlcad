@@ -100,7 +100,7 @@ found:
 	rp->reg_mfuncs = (char *)mfp;
 	rp->reg_udata = (char *)0;
 
-	if( (ret = mfp->mf_setup( rp, &param, &rp->reg_udata )) < 0 )  {
+	if( (ret = mfp->mf_setup( rp, &param, &rp->reg_udata, mfp )) < 0 )  {
 		rt_log("ERROR mlib_setup(%s) failed. Material='%s', param='%s'.\n",
 			rp->reg_name, material, RT_VLS_ADDR(&param) );
 		if( material != mdefault )  {

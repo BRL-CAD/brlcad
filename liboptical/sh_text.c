@@ -312,10 +312,11 @@ opaque:
  *			T X T _ S E T U P
  */
 HIDDEN int
-txt_setup( rp, matparm, dpp )
+txt_setup( rp, matparm, dpp, mfp )
 register struct region	*rp;
 struct rt_vls		*matparm;
 char			**dpp;
+CONST struct mfuncs	*mfp;
 {
 	register struct txt_specific *tp;
 	int		pixelbytes = 3;
@@ -342,12 +343,12 @@ char			**dpp;
 		return -1;				/* FAIL */
 
 	/* Ensure file is large enough */
-	if( strcmp( rp->reg_mater.ma_matname, "bwtexture" ) == 0 )
+	if( strcmp( mfp->mf_name, "bwtexture" ) == 0 )
 		pixelbytes = 1;
 	if( tp->mp->buflen < tp->tx_w * tp->tx_n * pixelbytes )  {
-		rt_log("\nERROR %s %s needs %d bytes, '%s' only has %d\n",
+		rt_log("\ntxt_setup() ERROR %s %s needs %d bytes, '%s' only has %d\n",
 			rp->reg_name,
-			rp->reg_mater.ma_matname,
+			mfp->mf_name,
 			tp->tx_w * tp->tx_n * pixelbytes,
 			tp->mp->name,
 			tp->mp->buflen );

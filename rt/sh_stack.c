@@ -228,7 +228,7 @@ found:
 	*dpp = (char *)0;
 	RT_VLS_INIT( &arg );
 	rt_vls_strcat( &arg, cp );
-	if( mfp->mf_setup( rp, &arg, dpp ) < 0 )  {
+	if( mfp->mf_setup( rp, &arg, dpp, mfp ) < 0 )  {
 		/* What to do if setup fails? */
 		return(-1);		/* BAD */
 	}
