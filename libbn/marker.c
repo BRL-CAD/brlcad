@@ -26,7 +26,6 @@ register int c;
 int	x, y;
 double	scale;
 {
-	int x,y;
 	static char *mark_str = "x";
 
 	mark_str[0] = (char)c;
