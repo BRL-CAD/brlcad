@@ -1064,9 +1064,13 @@ struct nmg_radial {
  *  Build sorted list, with 'ang' running from zero to 2*pi.
  *  New edgeuses with same angle as an edgeuse already on the list
  *  are added AFTER the existing one.
+ *
+ *  ??? Should this perhaps build the list in descending order, so
+ *  ??? as to match the way that nmg_pr_fu_around_eu_vecs() works?
  */
 void
 nmg_radial_sorted_list_insert( hd, rad )
+
 struct rt_list		*hd;
 struct nmg_radial	*rad;
 {
@@ -1087,16 +1091,16 @@ struct nmg_radial	*rad;
 	 */
 	cur = RT_LIST_PREV(nmg_radial, hd);
 	if( rad_ang >= cur->ang )  {
-		RT_LIST_APPEND( hd, &rad->l );
+		RT_LIST_INSERT( hd, &rad->l );
 		return;
 	}
 
 	/* Brute force search through hd's list, going backwards */
 	for( RT_LIST_FOR_BACKWARDS( cur, nmg_radial, hd ) )  {
-		if( rad_ang < cur->ang )  continue;
-		/* rad_ang >= cur */
-		RT_LIST_APPEND( &cur->l, &rad->l );
-		return;
+		if( rad_ang >= cur->ang )  {
+			RT_LIST_APPEND( &cur->l, &rad->l );
+			return;
+		}
 	}
 
 	/* Add before first element */
@@ -1313,6 +1317,22 @@ CONST struct rt_tol	*tol;
 		if( !orig->existing_flag )  {
 			/* There were no originals.  Do something sensible to check the newbies */
 			if( !orig->fu )  continue;	/* Nothing but wires */
+#if 0
+			/*  Given that there were no existing edgeuses
+			 *  from this shell, make our first addition
+			 *  oppose the previous radial faceuse, just to be nice.
+			 */
+			rad = RT_LIST_PPREV_CIRC( nmg_radial, orig );
+			/* Hopefully it isn't a wire */
+			if( rad->eu->vu_p->v_p == orig->eu->vu_p->v_p )  {
+				/* Flip everything, for general compatibility */
+				for( RT_LIST_FOR( rad, nmg_radial, hd ) )  {
+					if( rad->s != *sp )  continue;
+					if( !rad->fu )  continue;	/* skip wires */
+					rad->needs_flip = !rad->needs_flip;
+				}
+			}
+#endif
 		}
 		expected_ot = !(orig->fu->orientation == OT_SAME);
 
@@ -1326,8 +1346,7 @@ CONST struct rt_tol	*tol;
 			}
 			/* Mis-match detected */
 			rt_log("nmg_radial_mark_flips() Mis-match detected, setting flip flag eu=x%x\n", rad->eu);
-			/* XXX Should it be flipped, rather than set? */
-			rad->needs_flip = 1;
+			rad->needs_flip = !rad->needs_flip;
 			/* With this one flipped, set expectation for next */
 			expected_ot = !expected_ot;
 		}
@@ -1432,6 +1451,8 @@ again:
 		 */
 		if( rad->needs_flip )  {
 			nmg_je( prev->eu->eumate_p, rad->eu->eumate_p );
+			rad->eu = rad->eu->eumate_p;
+			rad->fu = nmg_find_fu_of_eu( rad->eu );
 			rad->needs_flip = 0;
 		} else {
 			nmg_je( prev->eu->eumate_p, rad->eu );
@@ -1574,6 +1595,8 @@ CONST struct rt_tol	*tol;
 	nmg_radial_mark_flips( &list1, &shell_tbl, tol );
 #if 0
 rt_log("marked list:\n");
+rt_log("  edge: %g %g %g -> %g %g %g\n",
+	V3ARGS(eu1->vu_p->v_p->vg_p->coord), V3ARGS(eu1->eumate_p->vu_p->v_p->vg_p->coord) );
 nmg_pr_radial_list( &list1, tol );
 #endif
 
