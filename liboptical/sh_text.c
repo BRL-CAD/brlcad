@@ -192,40 +192,24 @@ char	*dp;
 	r /= (dx*dy);
 	g /= (dx*dy);
 	b /= (dx*dy);
-	/*
-	 * Transparency mapping is enabled, and we hit a transparent spot.
-	 * Fire another ray to determine the actual color
-	 */
-#ifndef crayXX
-/* UNICOS 2.0 BUG */
+
 	if( tp->tx_transp[3] == 0 ||
 	    r != (tp->tx_transp[0]) ||
 	    g != (tp->tx_transp[1]) ||
 	    b != (tp->tx_transp[2]) )  {
-		FAST fastf_t f;
-		f = 1.0 / 255.0;
-		VSET( swp->sw_color, r * f, g * f, b * f );
+		VSET( swp->sw_color,
+			(r+0.5) * rt_inv255,
+			(g+0.5) * rt_inv255,
+			(b+0.5) * rt_inv255 );
 		return(1);
 	}
-#endif
-	if( pp->pt_outhit->hit_dist >= INFINITY )  {
-		rt_log("txt_render:  transparency on infinite object?\n");
-		VSET( swp->sw_color, 0, 1, 0 );
-		return(1);
-	}
-	if( (ap->a_level%100) > 5 )  {
-		VSET( swp->sw_color, .1, .1, .1);
-		return(1);
-	}
-	{
-		auto struct application sub_ap;
-		sub_ap = *ap;		/* struct copy */
-		sub_ap.a_level = ap->a_level+1;
-		VJOIN1( sub_ap.a_ray.r_pt, ap->a_ray.r_pt,
-			pp->pt_outhit->hit_dist, ap->a_ray.r_dir );
-		(void)rt_shootray( &sub_ap );
-		VMOVE( swp->sw_color, sub_ap.a_color );
-	}
+
+	/*
+	 *  Transparency mapping is enabled, and we hit a transparent spot.
+	 *  Let higher level handle it in reflect/refract code.
+	 */
+	swp->sw_transmit = 1.0;
+	swp->sw_reflect = 0.0;
 	return(1);
 }
 
@@ -307,9 +291,7 @@ char	*dp;
 {
 	register struct ckr_specific *ckp =
 		(struct ckr_specific *)dp;
-	auto struct uvcoord uv;
 	register unsigned char *cp;
-	FAST fastf_t f;
 
 	if( (swp->sw_uv.uv_u < 0.5 && swp->sw_uv.uv_v < 0.5) ||
 	    (swp->sw_uv.uv_u >=0.5 && swp->sw_uv.uv_v >=0.5) )  {
@@ -317,8 +299,10 @@ char	*dp;
 	} else {
 		cp = ckp->ckr_b;
 	}
-	f = 1.0/255.;
-	VSET( swp->sw_color, cp[0]*f, cp[1]*f, cp[2]*f );
+	VSET( swp->sw_color,
+		(cp[0]+0.5) * rt_inv255,
+		(cp[1]+0.5) * rt_inv255,
+		(cp[2]+0.5) * rt_inv255 );
 }
 
 /*
