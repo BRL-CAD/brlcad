@@ -326,9 +326,9 @@ struct seg		*seghead;
 	LOCAL complex	val[MAXP];	/* The complex roots */
 	LOCAL double	k[4];		/* The real roots */
 	register int	i;
-	LOCAL int	j, n;
+	LOCAL int	j;
 	LOCAL vect_t	cor_pprime;	/* new ray origin */
-	LOCAL fastf_t	cor_proj, f1;
+	LOCAL fastf_t	cor_proj;
 	LOCAL fastf_t	A1,A2,A3,A4,A5,A6,A7,A8,B1,B2,B3,C1,C2,C3,D1,term;
 
 	/* Convert vector into the space of the unit eto */
@@ -602,7 +602,7 @@ register struct curvature *cvp;
 register struct hit *hitp;
 struct soltab *stp;
 {
-	fastf_t	a, b, ch, cv, dh, dv, k_circ, k_ell, phi, rad, xp, yp,
+	fastf_t	a, b, ch, cv, dh, dv, k_circ, k_ell, phi, rad, xp,
 		yp1, yp2, work;
 	register struct eto_specific *eto =
 		(struct eto_specific *)stp->st_specific;
@@ -635,7 +635,7 @@ struct soltab *stp;
 	/* put hit point in cross sectional coordinates */
 	VSUB2( Hit_Ell, hitp->hit_vpriv, Radius );
 	xp = VDOT( Hit_Ell, Dp );
-	yp = VDOT( Hit_Ell, Cp );
+	/* yp = VDOT( Hit_Ell, Cp ); */
 
 	/* calculate curvature along ellipse */
 	/* k = y'' / (1 + y'^2) ^ 3/2 */
@@ -752,7 +752,7 @@ struct rt_tol		*tol;
 	point_t		Ell_V;	/* vertex of an ellipse */
 	point_t		*rt_mk_ell();
 	struct rt_eto_internal	*tip;
-	vect_t		Au, Bu, Nu, D, Cp, Dp, Xu;
+	vect_t		Au, Bu, Nu, Cp, Dp, Xu;
 
 	RT_CK_DB_INTERNAL(ip);
 	tip = (struct rt_eto_internal *)ip->idb_ptr;
@@ -894,8 +894,7 @@ struct pt_node	*pts;
 	point_t	mpt, p0, p1;
 	vect_t	norm_line, norm_ell;
 	struct pt_node *new, *rt_ptalloc();
-	struct pt_node *pos;
-	
+
 	/* endpoints of segment approximating ellipse */
 	VMOVE( p0, pts->p );
 	VMOVE( p1, pts->next->p );
@@ -1013,7 +1012,7 @@ struct rt_tol		*tol;
 	struct vertex	**verts;
 	struct faceuse	**faces;
 	struct vertex	**vertp[4];
-	vect_t		Au, Bu, Nu, D, Cp, Dp, Xu;
+	vect_t		Au, Bu, Nu, Cp, Dp, Xu;
 	vect_t		*norms;	/* normal vectors for each vertex */
 	int		fail=0;
 
@@ -1215,9 +1214,6 @@ register CONST mat_t		mat;
 {
 	struct rt_eto_internal	*tip;
 	union record		*rp;
-	LOCAL fastf_t		vec[3*4];
-	vect_t			axb;
-	register fastf_t	f;
 
 	RT_CK_EXTERNAL( ep );
 	rp = (union record *)ep->ext_buf;
@@ -1261,11 +1257,6 @@ double				local2mm;
 {
 	struct rt_eto_internal	*tip;
 	union record		*eto;
-	vect_t			norm;
-	vect_t			cross1, cross2;
-	fastf_t			r1, r2;
-	fastf_t			r3, r4;
-	double			m2;
 
 	RT_CK_DB_INTERNAL(ip);
 	if( ip->idb_type != ID_ETO )  return(-1);
@@ -1317,12 +1308,9 @@ struct rt_db_internal	*ip;
 int			verbose;
 double			mm2local;
 {
-	register int			j;
 	register struct rt_eto_internal	*tip =
 		(struct rt_eto_internal *)ip->idb_ptr;
 	char				buf[256];
-	int				i;
-	double				r3, r4;
 
 	RT_ETO_CK_MAGIC(tip);
 	rt_vls_strcat( str, "Elliptical Torus (ETO)\n");
