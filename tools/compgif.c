@@ -32,20 +32,12 @@
 *
 */
 
-#include "rle_config.h"
+#include "conf.h"
+
 #include <stdio.h>
 
-#ifdef USE_STDLIB_H
-#include <stdlib.h>
-#else
-
-#ifndef VOID_STAR
-extern char *malloc();
-#else
-extern void *malloc();
-#endif
-
-#endif /* USE_STDLIB_H */
+#include "machine.h"
+#include "externs.h"
 
 #include "./rletogif.h"
 

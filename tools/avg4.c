@@ -30,19 +30,21 @@
 static char rcs_ident[] = "$Header$";
 #endif
 
+#include "conf.h"
 
 #include <stdio.h>
-#include <rle.h>
-#ifdef USE_STDLIB_H
-#include <stdlib.h>
-#endif /* USE_STDLIB_H */
+
+#include "machine.h"
+#include "externs.h"
+
+#include "rle.h"
 
 #define MALLOC_ERR {fprintf(stderr, "avg4: ran out of heap space\n");exit(-2);}
 
 static bit_count[16] = {0, 63, 63, 127, 63, 127, 127,
     192, 63, 127, 127, 192, 127, 192, 192, 255};
 
-void
+int
 main(argc, argv)
 int	argc;
 char	*argv[];

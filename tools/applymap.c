@@ -25,21 +25,15 @@
  * Copyright (c) 1986, Spencer W. Thomas
  */
 
+#include "conf.h"
+
 #include <stdio.h>
-#include <rle.h>
-#include <rle_raw.h>
-#ifdef USE_STDLIB_H
-#include <stdlib.h>
-#else
 
-#ifdef VOID_STAR
-extern void *malloc();
-#else
-extern char *malloc();
-#endif
-extern void free();
+#include "machine.h"
+#include "externs.h"
 
-#endif /* USE_STDLIB_H */
+#include "rle.h"
+#include "rle_raw.h"
 
 #define	map_pixel( pix, cmaplen, cmap )	((pix) > cmaplen ? (pix) : \
 					 (cmap[pix]) >> 8)
