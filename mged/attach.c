@@ -95,10 +95,6 @@ extern struct dm dm_Ir;
 extern struct dm dm_4d;
 #endif
 
-#ifdef DM_GT
-extern struct dm dm_gt;
-#endif
-
 #ifdef DM_SUNPW
 extern struct dm dm_SunPw;
 #endif
