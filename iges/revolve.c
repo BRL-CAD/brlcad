@@ -17,7 +17,11 @@
 
 
 #include <stdio.h>
+#ifdef BSD
 #include <strings.h>
+#else
+#include <string.h>
+#endif
 #include <math.h>
 #include "machine.h"
 #include "vmath.h"
