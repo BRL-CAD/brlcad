@@ -1,6 +1,5 @@
 #define	DEBUGX	0
 #define	CURSOR	1
-#define	NEWLIBFB 1
 /*
  *			I F _ X . C
  *
@@ -32,10 +31,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "fb.h"
 #include "./fblocal.h"
 
-#if !NEWLIBFB
-extern int	fb_sim_readrect(), fb_sim_writerect();
-#endif
-
 static	int	linger();
 static	int	xsetup();
 static	void	print_display_info();	/* debug */
@@ -49,18 +44,17 @@ _LOCAL_ int	X_scanwrite();
 
 _LOCAL_ int	X_open(),
 		X_close(),
-		X_reset(),
 		X_clear(),
 		X_read(),
 		X_write(),
 		X_rmap(),
 		X_wmap(),
-		X_viewport(),
-		X_window(),
-		X_zoom(),
+		X_view(),
+		X_getview(),
 		X_setcursor(),
 		X_cursor(),
-		X_scursor(),
+		X_getcursor(),
+		X_poll(),
 		X_flush(),
 		X_help();
 
@@ -68,24 +62,21 @@ _LOCAL_ int	X_open(),
 FBIO X_interface = {
 	X_open,			/* device_open		*/
 	X_close,		/* device_close		*/
-	X_reset,		/* device_reset		*/
 	X_clear,		/* device_clear		*/
 	X_read,			/* buffer_read		*/
 	X_write,		/* buffer_write		*/
 	X_rmap,			/* colormap_read	*/
 	X_wmap,			/* colormap_write	*/
-	X_viewport,		/* viewport_set		*/
-	X_window,		/* window_set		*/
-	X_zoom,			/* zoom_set		*/
+	X_view,			/* set view		*/
+	X_getview,		/* get view		*/
 	X_setcursor,		/* define cursor	*/
-	X_cursor,		/* cursor - memory addr */
-	X_scursor,		/* cursor - screen addr */
-	fb_sim_readrect,
-	fb_sim_writerect,
-#if NEWLIBFB
+	X_cursor,		/* set cursor		*/
+	X_getcursor,		/* get cursor		*/
+	fb_sim_readrect,	/* read rectangle	*/
+	fb_sim_writerect,	/* write rectangle	*/
+	X_poll,			/* handle events	*/
 	X_flush,		/* flush		*/
 	X_close,		/* free			*/
-#endif
 	X_help,			/* help message		*/
 	"X Window System (X11)",/* device description	*/
 	2048,			/* max width		*/
@@ -93,7 +84,11 @@ FBIO X_interface = {
 	"/dev/X",		/* short device name	*/
 	512,			/* default/current width  */
 	512,			/* default/current height */
+	-1,			/* select file desc	*/
 	-1,			/* file descriptor	*/
+	1, 1,			/* zoom			*/
+	256, 256,		/* window center	*/
+	0, 0, 0,		/* cursor		*/
 	PIXEL_NULL,		/* page_base		*/
 	PIXEL_NULL,		/* page_curp		*/
 	PIXEL_NULL,		/* page_endp		*/
@@ -125,8 +120,6 @@ struct	xinfo {
 
 	int	depth;			/* 1, 8, or 24bit */
 	int	mode;			/* 0,1,2 */
-	int	xzoom, yzoom;		/* fb_zoom() parameters */
-	int	xcenter, ycenter;	/* fb_window() parameters */
 	ColorMap rgb_cmap;		/* User's libfb colormap */
 };
 #define	XI(ptr) ((struct xinfo *)((ptr)->u1.p))
@@ -295,10 +288,10 @@ int	width, height;
 		fb_log("X_open: xinfo malloc failed\n");
 		return(-1);
 	}
-	XI(ifp)->xzoom = 1;
-	XI(ifp)->yzoom = 1;
-	XI(ifp)->xcenter = width/2;
-	XI(ifp)->ycenter = height/2;
+	ifp->if_xzoom = 1;
+	ifp->if_yzoom = 1;
+	ifp->if_xcenter = width/2;
+	ifp->if_ycenter = height/2;
 	XI(ifp)->mode = mode;
 
 	/* set up an X window, graphics context, etc. */
@@ -375,6 +368,9 @@ int	width, height;
 		XI(ifp)->depth = 1;
 	}
 
+	/* Make the Display connection available for selecting on */
+	ifp->if_selfd = XI(ifp)->dpy->fd;
+
 	return(0);
 }
 
@@ -391,13 +387,6 @@ FBIO	*ifp;
 		XCloseDisplay( XI(ifp)->dpy );
 		(void)free( (char *)XIL(ifp) );
 	}
-	return(0);
-}
-
-_LOCAL_ int
-X_reset( ifp )
-FBIO	*ifp;
-{
 	return(0);
 }
 
@@ -742,7 +731,7 @@ done:
 	 * the window (if any) including pan & zoom, and display that
 	 * portion.
 	 */
-	if( save && (XI(ifp)->xzoom != 1) ) {
+	if( save && (ifp->if_xzoom != 1) ) {
 		/* note: slowrect never asks us to save */
 		slowrect( ifp, x, x+count-1, y, y );
 	} else if( save ) {
@@ -842,49 +831,44 @@ ColorMap	*cmp;
 }
 
 _LOCAL_ int
-X_viewport( ifp, left, top, right, bottom )
+X_view( ifp, xcenter, ycenter, xzoom, yzoom )
 FBIO	*ifp;
-int	left, top, right, bottom;
-{
-}
-
-_LOCAL_ int
-X_window( ifp, x, y )
-FBIO	*ifp;
-int	x, y;
+int	xcenter, ycenter;
+int	xzoom, yzoom;
 {
 	/* bypass if no change */
-	if( XI(ifp)->xcenter == x && XI(ifp)->ycenter == y )
+	if( ifp->if_xcenter == xcenter && ifp->if_ycenter == ycenter
+	 && ifp->if_xzoom == xcenter && ifp->if_yzoom == ycenter )
 		return	0;
 
 	/* check bounds */
-	if( x < 0 || x >= ifp->if_width || y < 0 || y >= ifp->if_height )
+	if( xcenter < 0 || xcenter >= ifp->if_width
+	 || ycenter < 0 || ycenter >= ifp->if_height )
+		return	-1;
+	if( xzoom <= 0 || xzoom >= ifp->if_width/2
+	 || yzoom <= 0 || yzoom >= ifp->if_height/2 )
 		return	-1;
 
-	XI(ifp)->xcenter = x;
-	XI(ifp)->ycenter = y;
+	ifp->if_xcenter = xcenter;
+	ifp->if_ycenter = ycenter;
+	ifp->if_xzoom = xzoom;
+	ifp->if_yzoom = yzoom;
 	/* XXX - repaint */
 	repaint(ifp);
 	return	0;
 }
 
 _LOCAL_ int
-X_zoom( ifp, x, y )
+X_getview( ifp, xcenter, ycenter, xzoom, yzoom )
 FBIO	*ifp;
-int	x, y;
+int	*xcenter, *ycenter;
+int	*xzoom, *yzoom;
 {
-	/* bypass if no change */
-	if( XI(ifp)->xzoom == x && XI(ifp)->yzoom == y )
-		return	0;
+	*xcenter = ifp->if_xcenter;
+	*ycenter = ifp->if_ycenter;
+	*xzoom = ifp->if_xzoom;
+	*yzoom = ifp->if_yzoom;
 
-	/* check bounds */
-	if( x <= 0 || x >= ifp->if_width/2 || y <= 0 || y >= ifp->if_height/2 )
-		return	-1;
-
-	XI(ifp)->xzoom = x;
-	XI(ifp)->yzoom = y;
-	/* XXX - repaint */
-	repaint(ifp);
 	return	0;
 }
 
@@ -904,19 +888,12 @@ FBIO	*ifp;
 int	mode;
 int	x, y;
 {
+	fb_sim_cursor(ifp, mode, x, y);
+
 	/* remap image x,y to screen position */
-	x = (x-XI(ifp)->xcenter)*XI(ifp)->xzoom+ifp->if_width/2;
-	y = (y-XI(ifp)->ycenter)*XI(ifp)->yzoom+ifp->if_height/2;
+	x = (x-ifp->if_xcenter)*ifp->if_xzoom+ifp->if_width/2;
+	y = (y-ifp->if_ycenter)*ifp->if_yzoom+ifp->if_height/2;
 
-	return	X_scursor( ifp, mode, x, y );
-}
-
-_LOCAL_ int
-X_scursor( ifp, mode, x, y )
-FBIO	*ifp;
-int	mode;
-int	x, y;
-{
 	if( XI(ifp)->curswin == 0 )
 		x_make_cursor(ifp);
 
@@ -932,6 +909,15 @@ int	x, y;
 	XFlush( XI(ifp)->dpy );
 
 	return	0;
+}
+
+_LOCAL_ int
+X_getcursor( ifp, mode, x, y )
+FBIO	*ifp;
+int	*mode;
+int	*x, *y;
+{
+	return fb_sim_getcursor(ifp, mode, x, y);
 }
 
 static
@@ -1076,18 +1062,35 @@ printf("Making graphics context\n");
 			break;
 		}
 	}
+	XSelectInput( dpy, win, ExposureMask|ButtonPressMask );
 
 	return	0;
 }
+
+static int alive = 1;
 
 static int
 linger( ifp )
 FBIO	*ifp;
 {
+	if( fork() != 0 )
+		return 1;	/* release the parent */
+
+	XSelectInput( XI(ifp)->dpy, XI(ifp)->win,
+		ExposureMask|ButtonPressMask );
+
+	while( alive ) {
+		do_event(ifp);
+	}
+}
+
+static int
+do_event( ifp )
+FBIO	*ifp;
+{
 	XEvent	event;
 	XExposeEvent	*expose;
 	XCrossingEvent	*xcrossing;
-	int	alive = 1;
 	int	button;
 	unsigned char *bitbuf = XI(ifp)->bitbuf;
 	unsigned char *bytebuf = XI(ifp)->bytebuf;
@@ -1095,13 +1098,9 @@ FBIO	*ifp;
 	Cursor	watch = XCreateFontCursor(XI(ifp)->dpy, XC_watch);
 #endif
 
-	if( fork() != 0 )
-		return 1;	/* release the parent */
-
-	XSelectInput( XI(ifp)->dpy, XI(ifp)->win,
-		ExposureMask|ButtonPressMask );
 	expose = (XExposeEvent *)&event;
-	while( alive ) {
+
+
 		XNextEvent( XI(ifp)->dpy, &event );
 		switch( (int)event.type ) {
 		case Expose:
@@ -1181,7 +1180,6 @@ FBIO	*ifp;
 			fb_log("Bad X event.\n");
 			break;
 		}
-	}
 
 	return 0;
 }
@@ -1243,10 +1241,24 @@ int method;
 }
 
 _LOCAL_ int
+X_poll( ifp )
+FBIO	*ifp;
+{
+	XFlush( XI(ifp)->dpy );
+	while( XPending(XI(ifp)->dpy) > 0 )
+		do_event(ifp);
+
+	return(0);
+}
+
+_LOCAL_ int
 X_flush( ifp )
 FBIO	*ifp;
 {
 	XFlush( XI(ifp)->dpy );
+	while( XPending(XI(ifp)->dpy) > 0 )
+		do_event(ifp);
+
 	return(0);
 }
 
@@ -1438,7 +1450,7 @@ FBIO *ifp;
 
 	xswa.save_under = True;
 	XI(ifp)->curswin = XCreateWindow( XI(ifp)->dpy, XI(ifp)->win,
-		XI(ifp)->xcenter, XI(ifp)->ycenter, 1, 1, 3,
+		ifp->if_xcenter, ifp->if_ycenter, 1, 1, 3,
 		CopyFromParent, InputOutput, CopyFromParent,
 		CWSaveUnder, &xswa );
 }
@@ -1601,10 +1613,10 @@ FBIO	*ifp;
 	 * Compute which image pixels WOULD fall at the left, right,
 	 * bottom, and top of the window if the image were unbounded.
 	 */
-	xmin = XI(ifp)->xcenter - w.width/(2*XI(ifp)->xzoom);
-	xmax = XI(ifp)->xcenter + w.width/(2*XI(ifp)->xzoom) - 1;
-	ymin = XI(ifp)->ycenter - w.height/(2*XI(ifp)->yzoom);
-	ymax = XI(ifp)->ycenter + w.height/(2*XI(ifp)->yzoom) - 1;
+	xmin = ifp->if_xcenter - w.width/(2*ifp->if_xzoom);
+	xmax = ifp->if_xcenter + w.width/(2*ifp->if_xzoom) - 1;
+	ymin = ifp->if_ycenter - w.height/(2*ifp->if_yzoom);
+	ymax = ifp->if_ycenter + w.height/(2*ifp->if_yzoom) - 1;
 
 	/*
 	 * Clip these against the actual image dimensions.
@@ -1622,10 +1634,10 @@ FBIO	*ifp;
 	 * Compute the window pixel location corresponding to
 	 * the included image data.
 	 */
-	sleft = (xmin - XI(ifp)->xcenter) * XI(ifp)->xzoom + w.width/2;
-	sright = ((xmax+1) - XI(ifp)->xcenter) * XI(ifp)->xzoom + w.width/2 - 1;
-	sbottom = (ymin - XI(ifp)->ycenter) * XI(ifp)->yzoom + w.height/2;
-	stop = ((ymax+1) - XI(ifp)->ycenter) * XI(ifp)->yzoom + w.height/2 - 1;
+	sleft = (xmin - ifp->if_xcenter) * ifp->if_xzoom + w.width/2;
+	sright = ((xmax+1) - ifp->if_xcenter) * ifp->if_xzoom + w.width/2 - 1;
+	sbottom = (ymin - ifp->if_ycenter) * ifp->if_yzoom + w.height/2;
+	stop = ((ymax+1) - ifp->if_ycenter) * ifp->if_yzoom + w.height/2 - 1;
 
 	/*
 	 * if(sleft || sbottom || sright != w.width-1 || stop != w.height-1)
@@ -1639,14 +1651,14 @@ FBIO	*ifp;
 	 */
 	/*
 	printf("window(%3d,%3d) zoom(%3d,%3d)\n\r",
-		XI(ifp)->xcenter, XI(ifp)->ycenter,
-		XI(ifp)->xzoom, XI(ifp)->yzoom);
+		ifp->if_xcenter, ifp->if_ycenter,
+		ifp->if_xzoom, ifp->if_yzoom);
 	printf("Image ([%3d %3d],[%3d %3d]) Screen ([%3d %3d],[%3d %3d])\n\r",
 		xmin, xmax, ymin, ymax, sleft, sright, sbottom, stop);
 	*/
 
 	/* Display our image rectangle */
-	if( (XI(ifp)->xzoom == 1) && (XI(ifp)->yzoom == 1 ) ) {
+	if( (ifp->if_xzoom == 1) && (ifp->if_yzoom == 1 ) ) {
 		/* Note quadrant reversal */
 		XPutImage(XI(ifp)->dpy, XI(ifp)->win, XI(ifp)->gc,
 			XI(ifp)->image,
@@ -1686,8 +1698,8 @@ FBIO	*ifp;
 /*
  * Note: these return the "lower left corner" of a zoomed pixel
  */
-#define	xIMG2SCR(x)	(((x)-XI(ifp)->xcenter)*XI(ifp)->xzoom+w.width/2)
-#define	yIMG2SCR(y)	(((y)-XI(ifp)->ycenter)*XI(ifp)->yzoom+w.height/2)
+#define	xIMG2SCR(x)	(((x)-ifp->if_xcenter)*ifp->if_xzoom+w.width/2)
+#define	yIMG2SCR(y)	(((y)-ifp->if_ycenter)*ifp->if_yzoom+w.height/2)
 
 /*
  * Repaint a (pre clipped) rectangle from the image onto the screen.
@@ -1727,18 +1739,18 @@ int ymin, ymax;
 
 	xlen = xmax - xmin + 1;
 	ylen = ymax - ymin + 1;
-	sxlen = xlen * XI(ifp)->xzoom;
-	sylen = ylen * XI(ifp)->yzoom;
+	sxlen = xlen * ifp->if_xzoom;
+	sylen = ylen * ifp->if_yzoom;
 
 	sxmin = xIMG2SCR(xmin);
 	symin = yIMG2SCR(ymin);
 
 	for( y = 0; y < sylen; y++ ) {
 		sy = symin + y;
-		iy = ymin + y/XI(ifp)->yzoom; 
+		iy = ymin + y/ifp->if_yzoom; 
 		for( x = 0; x < sxlen; x++ ) {
 			sx = sxmin + x;
-			ix = xmin + x/XI(ifp)->xzoom;
+			ix = xmin + x/ifp->if_xzoom;
 			/*printf("S(%3d,%3d) <- I(%3d,%3d)\n", sx, sy, ix, iy);*/
 			pp = (RGBpixel *)&(XI(ifp)->mem[(iy*ifp->if_width+ix)*3]);
 			scanbuf[x][RED] = (*pp)[RED];
