@@ -77,7 +77,6 @@ int	argc;
 char	**argv;
 {
 	int			i, solve;
-	int			ngran;
 	vect_t			vec1;
 	vect_t			vec2;
 	fastf_t			pt4[2], length, thick;
@@ -86,7 +85,6 @@ char	**argv;
 	char			name[NAMESIZE+2];
 	struct directory	*dp;
 	struct rt_db_internal	internal;
-	struct bu_external	external;
 	struct rt_arb_internal	*aip;
 
 	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
@@ -286,31 +284,17 @@ char	**argv;
 		VJOIN1( aip->pt[i+4] , aip->pt[i] , thick , norm );
 	}
 
-	/* Don't use local2base here, coordinates are already converted to mm above */
-	if( rt_functab[internal.idb_type].ft_export( &external, &internal, (double)1.0 ) < 0 )
+	if( (dp = db_diradd( dbip, name, -1L, 0, DIR_SOLID)) == DIR_NULL )
 	{
-	  Tcl_AppendResult(interp, "f_3ptarb: export failure\n", (char *)NULL);
-	  rt_functab[internal.idb_type].ft_ifree( &internal );
-	  return TCL_ERROR;
-	}
-	rt_functab[internal.idb_type].ft_ifree( &internal );   /* free internal rep */
-
-	/* no interuprts */
-	(void)signal( SIGINT, SIG_IGN );
-
-	ngran = (external.ext_nbytes+sizeof(union record)-1) / sizeof(union record);
-	if( (dp = db_diradd( dbip, name, -1L, ngran, DIR_SOLID)) == DIR_NULL ||
-	    db_alloc( dbip, dp, 1 ) < 0 ) {
-	    	db_free_external( &external );
-	    	TCL_ALLOC_ERR_return;
+		Tcl_AppendResult(interp, "Cannot add ", name, " to the directory\n", (char *)NULL );
+		return TCL_ERROR;
 	}
 
-	if (db_put_external( &external, dp, dbip ) < 0 ) 
+	if( rt_db_put_internal( dp, dbip, &internal ) < 0 )
 	{
-		db_free_external( &external );
+		rt_db_free_internal( &internal );
 		TCL_WRITE_ERR_return;
 	}
-	db_free_external( &external );
 
 	{
 	  char *av[3];
@@ -349,14 +333,12 @@ char	**argv;
 	struct directory	*dp;
 	int			i;
 	int			solve[3];
-	int			ngran;
 	char			name[NAMESIZE+2];
 	fastf_t			pt[3][2];
 	fastf_t			thick, rota, fba;
 	vect_t			norm;
 	fastf_t			ndotv;
 	struct rt_db_internal	internal;
-	struct bu_external	external;
 	struct rt_arb_internal	*aip;
 
 	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
@@ -556,31 +538,20 @@ char	**argv;
 		VJOIN1( aip->pt[i+4] , aip->pt[i] , thick , norm );
 	}
 
-	if( rt_functab[internal.idb_type].ft_export( &external, &internal, local2base ) < 0 )
-	{
-	  Tcl_AppendResult(interp, "f_3ptarb: export failure\n", (char *)NULL);
-	  rt_functab[internal.idb_type].ft_ifree( &internal );
-	  return TCL_ERROR;
-	}
-	rt_functab[internal.idb_type].ft_ifree( &internal );   /* free internal rep */
-
 	/* no interuprts */
 	(void)signal( SIGINT, SIG_IGN );
 
-	ngran = (external.ext_nbytes+sizeof(union record)-1) / sizeof(union record);
-	if( (dp = db_diradd( dbip, name, -1L, ngran, DIR_SOLID)) == DIR_NULL ||
-	    db_alloc( dbip, dp, 1 ) < 0 )
-	    {
-	    	db_free_external( &external );
-	    	TCL_ALLOC_ERR_return;
-	    }
-
-	if (db_put_external( &external, dp, dbip ) < 0 )
+	if( (dp = db_diradd( dbip, name, -1L, 0, DIR_SOLID)) == DIR_NULL )
 	{
-		db_free_external( &external );
+		Tcl_AppendResult(interp, "Cannot add ", name, " to the directory\n", (char *)NULL );
+		return TCL_ERROR;
+	}
+
+	if( rt_db_put_internal( dp, dbip, &internal ) < 0 )
+	{
+		rt_db_free_internal( &internal );
 		TCL_WRITE_ERR_return;
 	}
-	db_free_external( &external );
 
 	{
 	  char *av[3];
@@ -591,167 +562,6 @@ char	**argv;
 
 	  /* draw the "made" solid */
 	  return f_edit( clientData, interp, 2, av );
-	}
-}
-
-/* ------------------------------ old way ------------------------------ */
-
-static void	points();
-
-static union record input;		/* Holds an object file record */
-
-/* TYPE_ARB()	returns specific ARB type of record rec.  The record rec
- *		is also rearranged to "standard" form.
- */
-type_arb( rec )
-union record *rec;
-{
-	int i;
-	static int uvec[8], svec[11];
-
-	if( rec->s.s_type != GENARB8 )
-		return( 0 );
-
-	input = *rec;		/* copy */
-
-	/* convert input record to points */
-	points();
-
-	if( cgarbs(uvec, svec) == 0 )
-		return(0);
-
-	/* convert to vectors in the rec record */
-	VMOVE(&rec->s.s_values[0], &input.s.s_values[0]);
-	for(i=3; i<=21; i+=3) {
-		VSUB2(&rec->s.s_values[i], &input.s.s_values[i], &input.s.s_values[0]);
-	}
-
-	return( input.s.s_cgtype );
-
-}
-
-#define NO	0
-#define YES	1
-	
-/*
- * C G A R B S :   determines COMGEOM arb types from GED general arbs
- */
-static int
-cgarbs( uvec, svec )
-register int *uvec;	/* array of unique points */
-register int *svec;	/* array of like points */
-{
-	register int i,j;
-	static int numuvec, unique, done;
-	static int si;
-
-	done = NO;		/* done checking for like vectors */
-
-	svec[0] = svec[1] = 0;
-	si = 2;
-
-	for(i=0; i<7; i++) {
-		unique = YES;
-		if(done == NO)
-			svec[si] = i;
-		for(j=i+1; j<8; j++) {
-			int tmp;
-			vect_t vtmp;
-
-			VSUB2( vtmp, &input.s.s_values[i*3], &input.s.s_values[j*3] );
-
-			if( fabs(vtmp[0]) > 0.0001) tmp = 0;
-			else 	if( fabs(vtmp[1]) > 0.0001) tmp = 0;
-			else 	if( fabs(vtmp[2]) > 0.0001) tmp = 0;
-			else tmp = 1;
-
-			if( tmp ) {
-				if( done == NO )
-					svec[++si] = j;
-				unique = NO;
-			}
-		}
-		if( unique == NO ) {  	/* point i not unique */
-			if( si > 2 && si < 6 ) {
-				svec[0] = si - 1;
-				if(si == 5 && svec[5] >= 6)
-					done = YES;
-				si = 6;
-			}
-			if( si > 6 ) {
-				svec[1] = si - 5;
-				done = YES;
-			}
-		}
-	}
-
-	if( si > 2 && si < 6 ) 
-		svec[0] = si - 1;
-	if( si > 6 )
-		svec[1] = si - 5;
-	for(i=1; i<=svec[1]; i++)
-		svec[svec[0]+1+i] = svec[5+i];
-	for(i=svec[0]+svec[1]+2; i<11; i++)
-		svec[i] = -1;
-	/* find the unique points */
-	numuvec = 0;
-	for(j=0; j<8; j++) {
-		unique = YES;
-		for(i=2; i<svec[0]+svec[1]+2; i++) {
-			if( j == svec[i] ) {
-				unique = NO;
-				break;
-			}
-		}
-		if( unique == YES )
-			uvec[numuvec++] = j;
-	}
-
-	/* put comgeom solid typpe into s_cgtype */
-	switch( numuvec ) {
-
-	case 8:
-		input.s.s_cgtype = ARB8;  /* ARB8 */
-		break;
-
-	case 6:
-		input.s.s_cgtype = ARB7;	/* ARB7 */
-		break;
-
-	case 4:
-		if(svec[0] == 2)
-			input.s.s_cgtype = ARB6;	/* ARB6 */
-		else
-			input.s.s_cgtype = ARB5;	/* ARB5 */
-		break;
-
-	case 2:
-		input.s.s_cgtype = ARB4;	/* ARB4 */
-		break;
-
-	default:
-	  {
-	    struct bu_vls tmp_vls;
-
-	    bu_vls_init(&tmp_vls);
-	    bu_vls_printf(&tmp_vls, "solid: %s  bad number of unique vectors (%d)\n",
-			  input.s.s_name, numuvec);
-	    Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
-	    bu_vls_free(&tmp_vls);
-	  }
-
-	  return(0);
-	}
-	return( numuvec );
-}
-
-static void
-points()
-{
-	register int i;
-
-	for(i=3; i<=21; i+=3) {
-		VADD2(&input.s.s_values[i],&input.s.s_values[i],&input.s.s_values[0]);
 	}
 }
 
