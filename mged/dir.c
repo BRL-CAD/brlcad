@@ -362,11 +362,13 @@ long laddr;
 {
 	register struct directory **headp;
 	register struct directory *dp;
+	char local[NAMESIZE];
 
 	GETSTRUCT( dp, directory );
 	if( dp == DIR_NULL )
 		return( DIR_NULL );
-	dp->d_namep = strdup( name );
+	(void)strncpy( local, name, NAMESIZE );		/* Trim the name */
+	dp->d_namep = strdup( local );
 	dp->d_addr = laddr;
 	dp->d_flags = flags;
 	dp->d_len = len;
