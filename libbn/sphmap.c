@@ -84,7 +84,7 @@ int	elsize;
 		mapp->xbin[i] = &((mapp->_data)[index]);
 		index += elsize * mapp->nx[i];
 	}
-
+	mapp->magic = SPM_MAGIC;
 	return( mapp );
 }
 
@@ -97,17 +97,24 @@ void
 spm_free( mp )
 spm_map_t *mp;
 {
+	RT_CK_SPM(mp);
 	if( mp == SPM_NULL )
 		return;
 
-	if( mp->_data != NULL )
+	if( mp->_data != NULL )  {
 		(void) rt_free( (char *)mp->_data, "sph _data" );
+		mp->_data = NULL;
+	}
 
-	if( mp->nx != NULL )
+	if( mp->nx != NULL )  {
 		(void) rt_free( (char *)mp->nx, "sph nx" );
+		mp->nx = NULL;
+	}
 
-	if( mp->xbin != NULL )
+	if( mp->xbin != NULL )  {
 		(void) rt_free( (char *)mp->xbin, "sph xbin" );
+		mp->xbin = NULL;
+	}
 
 	(void) rt_free( (char *)mp, "spm_map_t" );
 }
@@ -130,6 +137,8 @@ double	u, v;
 	int	x, y;
 	register unsigned char *cp;
 	register int	i;
+
+	RT_CK_SPM(mapp);
 
 	y = v * mapp->ny;
 	x = u * mapp->nx[y];
@@ -160,6 +169,8 @@ double	u, v;
 	register unsigned char *cp;
 	register int	i;
 
+	RT_CK_SPM(mapp);
+
 	y = v * mapp->ny;
 	x = u * mapp->nx[y];
 	cp = &(mapp->xbin[y][x*mapp->elsize]);
@@ -187,6 +198,8 @@ double	u, v;
 	int	x, y;
 	register unsigned char *cp;
 
+	RT_CK_SPM(mapp);
+
 	y = v * mapp->ny;
 	x = u * mapp->nx[y];
 	cp = &(mapp->xbin[y][x*mapp->elsize]);
@@ -209,6 +222,8 @@ char	*filename;
 {
 	int	y, total;
 	FILE	*fp;
+
+	RT_CK_SPM(mapp);
 
 	if( strcmp( filename, "-" ) == 0 )
 		fp = stdin;
@@ -249,6 +264,8 @@ char	*filename;
 	int	i;
 	int	got;
 	FILE	*fp;
+
+	RT_CK_SPM(mapp);
 
 	if( strcmp( filename, "-" ) == 0 )
 		fp = stdout;
@@ -303,6 +320,8 @@ int	nx, ny;
 	unsigned long	red, green, blue;
 	long	count;
 	FILE	*fp;
+
+	RT_CK_SPM(mapp);
 
 	if( strcmp( filename, "-" ) == 0 )
 		fp = stdin;
@@ -373,6 +392,8 @@ int	nx, ny;
 	unsigned char pixel[3];
 	int	got;
 
+	RT_CK_SPM(mapp);
+
 	if( strcmp( filename, "-" ) == 0 )
 		fp = stdout;
 	else  {
@@ -413,14 +434,18 @@ int	nx, ny;
  *  Used for debugging.
  */
 void
-spm_dump( mp )
+spm_dump( mp, verbose )
 spm_map_t *mp;
+int	verbose;
 {
 	int	i;
+
+	RT_CK_SPM(mp);
 
 	rt_log("elsize = %d\n", mp->elsize );
 	rt_log("ny = %d\n", mp->ny );
 	rt_log("_data = 0x%x\n", mp->_data );
+	if( !verbose )  return;
 	for( i = 0; i < mp->ny; i++ ) {
 		rt_log("  nx[%d] = %3d, xbin[%d] = 0x%x\n",
 			i, mp->nx[i], i, mp->xbin[i] );
