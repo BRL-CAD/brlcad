@@ -34,8 +34,9 @@ static char RCSebm[] = "@(#)$Header$ (BRL)";
 struct ebm_specific {
 	char		ebm_file[128];
 	unsigned char	*ebm_map;
-	int		ebm_dim[2];
-	double		ebm_tallness;
+	int		ebm_xdim;	/* X dimension */
+	int		ebm_ydim;	/* Y dimension */
+	double		ebm_tallness;	/* Z dimension */
 	vect_t		ebm_xnorm;	/* local +X norm in model coords */
 	vect_t		ebm_ynorm;
 	vect_t		ebm_znorm;
@@ -53,8 +54,8 @@ struct structparse ebm_parse[] = {
 #else
 	"%s",	"file",	offsetofarray(struct ebm_specific, ebm_file),	FUNC_NULL,
 #endif
-	"%d",	"w",		EBM_O(ebm_dim[0]),	FUNC_NULL,
-	"%d",	"n",		EBM_O(ebm_dim[1]),	FUNC_NULL,
+	"%d",	"w",		EBM_O(ebm_xdim),	FUNC_NULL,
+	"%d",	"n",		EBM_O(ebm_ydim),	FUNC_NULL,
 	"%f",	"d",		EBM_O(ebm_tallness),	FUNC_NULL,
 	/* XXX might have option for ebm_origin */
 	(char *)0,(char *)0,	0,			FUNC_NULL
@@ -86,7 +87,7 @@ struct seg		*rt_seg_planeclip();
  */
 #define	BIT_XWIDEN	2
 #define	BIT_YWIDEN	2
-#define BIT(xx,yy)	ebmp->ebm_map[((yy)+BIT_YWIDEN)*(ebmp->ebm_dim[X] + \
+#define BIT(xx,yy)	ebmp->ebm_map[((yy)+BIT_YWIDEN)*(ebmp->ebm_xdim + \
 				BIT_XWIDEN*2)+(xx)+BIT_XWIDEN]
 
 /*
@@ -263,13 +264,13 @@ if(rt_g.debug&DEBUG_EBM)rt_log("[shoot: r_min=%g, r_max=%g]\n", rp->r_min, rp->r
 	igrid[Y] = (P[Y] - ebmp->ebm_origin[Y]) / ebmp->ebm_cellsize[Y];
 	if( igrid[X] < 0 )  {
 		igrid[X] = 0;
-	} else if( igrid[X] >= ebmp->ebm_dim[X] ) {
-		igrid[X] = ebmp->ebm_dim[X]-1;
+	} else if( igrid[X] >= ebmp->ebm_xdim ) {
+		igrid[X] = ebmp->ebm_xdim-1;
 	}
 	if( igrid[Y] < 0 )  {
 		igrid[Y] = 0;
-	} else if( igrid[Y] >= ebmp->ebm_dim[Y] ) {
-		igrid[Y] = ebmp->ebm_dim[Y]-1;
+	} else if( igrid[Y] >= ebmp->ebm_ydim ) {
+		igrid[Y] = ebmp->ebm_ydim-1;
 	}
 if(rt_g.debug&DEBUG_EBM)rt_log("g[X] = %d, g[Y] = %d\n", igrid[X], igrid[Y]);
 
@@ -504,8 +505,8 @@ union record	*rp;
 	rt_free( str, "ss_str" );
 
 	/* Check for reasonable values */
-	if( ebmp->ebm_file[0] == '\0' || ebmp->ebm_dim[0] < 1 ||
-	    ebmp->ebm_dim[1] < 1 ||
+	if( ebmp->ebm_file[0] == '\0' || ebmp->ebm_xdim < 1 ||
+	    ebmp->ebm_ydim < 1 ||
 	    ebmp->ebm_tallness <= 0.0 )  {
 	    	rt_log("Unreasonable EBM parameters\n");
 		rt_free( (char *)ebmp, "ebm_specific" );
@@ -513,7 +514,7 @@ union record	*rp;
 	}
 
 	/* Get bit map from .bw(5) file */
-	nbytes = (ebmp->ebm_dim[X]+BIT_XWIDEN*2)*(ebmp->ebm_dim[Y]+BIT_YWIDEN*2);
+	nbytes = (ebmp->ebm_xdim+BIT_XWIDEN*2)*(ebmp->ebm_ydim+BIT_YWIDEN*2);
 	ebmp->ebm_map = (unsigned char *)rt_malloc( nbytes, "ebm_import bitmap" );
 #ifdef SYSV
 	memset( ebmp->ebm_map, 0, nbytes );
@@ -527,8 +528,8 @@ union record	*rp;
 	}
 
 	/* Because of in-memory padding, read each scanline separately */
-	for( y=0; y < ebmp->ebm_dim[Y]; y++ )
-		(void)fread( &BIT(0, y), ebmp->ebm_dim[X], 1, fp );
+	for( y=0; y < ebmp->ebm_ydim; y++ )
+		(void)fread( &BIT(0, y), ebmp->ebm_xdim, 1, fp );
 	fclose(fp);
 	return( ebmp );
 }
@@ -606,7 +607,7 @@ struct rt_i	*rtip;
 
 	/* Find bounding RPP of rotated local RPP */
 	VSETALL( small, 0 );
-	VSET( ebmp->ebm_large, ebmp->ebm_dim[X], ebmp->ebm_dim[Y], ebmp->ebm_tallness );
+	VSET( ebmp->ebm_large, ebmp->ebm_xdim, ebmp->ebm_ydim, ebmp->ebm_tallness );
 	rt_rot_bound_rpp( stp->st_min, stp->st_max, stp->st_pathmat,
 		small, ebmp->ebm_large );
 
@@ -637,7 +638,7 @@ register struct soltab	*stp;
 
 	rt_log("ebm file = %s\n", ebmp->ebm_file );
 	rt_log("dimensions = (%d, %d, %g)\n",
-		ebmp->ebm_dim[X], ebmp->ebm_dim[Y],
+		ebmp->ebm_xdim, ebmp->ebm_ydim,
 		ebmp->ebm_tallness );
 	VPRINT("model cellsize", ebmp->ebm_cellsize);
 	VPRINT("model grid origin", ebmp->ebm_origin);
@@ -819,9 +820,9 @@ struct directory *dp;
 
 	/* Find vertical lines */
 	base = 0;	/* lint */
-	for( x=0; x <= ebmp->ebm_dim[X]; x++ )  {
+	for( x=0; x <= ebmp->ebm_xdim; x++ )  {
 		following = 0;
-		for( y=0; y <= ebmp->ebm_dim[Y]; y++ )  {
+		for( y=0; y <= ebmp->ebm_ydim; y++ )  {
 			if( following )  {
 				if( (BIT( x-1, y )==0) != (BIT( x, y )==0) )
 					continue;
@@ -838,9 +839,9 @@ struct directory *dp;
 	}
 
 	/* Find horizontal lines */
-	for( y=0; y <= ebmp->ebm_dim[Y]; y++ )  {
+	for( y=0; y <= ebmp->ebm_ydim; y++ )  {
 		following = 0;
-		for( x=0; x <= ebmp->ebm_dim[X]; x++ )  {
+		for( x=0; x <= ebmp->ebm_xdim; x++ )  {
 			if( following )  {
 				if( (BIT( x, y-1 )==0) != (BIT( x, y )==0) )
 					continue;
@@ -952,7 +953,7 @@ char	**argv;
 #endif
 #if 0
 	y = arg;
-	for( x=0; x<=ebmp->ebm_dim[X]; x++ )  {
+	for( x=0; x<=ebmp->ebm_xdim; x++ )  {
 		VSET( pt1, 0, y, 1 );
 		VSET( pt2, x, 0, 1 );
 		trial( pt1, pt2 );
@@ -960,15 +961,15 @@ char	**argv;
 #endif
 #if 0
 	y = arg;
-	for( x=0; x<=ebmp->ebm_dim[X]; x++ )  {
+	for( x=0; x<=ebmp->ebm_xdim; x++ )  {
 		VSET( pt1, 0, y, 2 );
 		VSET( pt2, x, 0, 4 );
 		trial( pt1, pt2 );
 	}
 #endif
 #if 0
-	for( y=0; y<=ebmp->ebm_dim[Y]; y++ )  {
-		for( x=0; x<=ebmp->ebm_dim[X]; x++ )  {
+	for( y=0; y<=ebmp->ebm_ydim; y++ )  {
+		for( x=0; x<=ebmp->ebm_xdim; x++ )  {
 			VSET( pt1, 0, y, 2 );
 			VSET( pt2, x, 0, 4 );
 			trial( pt1, pt2 );
@@ -976,8 +977,8 @@ char	**argv;
 	}
 #endif
 #if 0
-	for( y= -1; y<=ebmp->ebm_dim[Y]; y++ )  {
-		for( x= -1; x<=ebmp->ebm_dim[X]; x++ )  {
+	for( y= -1; y<=ebmp->ebm_ydim; y++ )  {
+		for( x= -1; x<=ebmp->ebm_xdim; x++ )  {
 			VSET( pt1, x, y, 10 );
 			VSET( pt2, x+2, y+3, -4 );
 			trial( pt1, pt2 );
@@ -985,10 +986,10 @@ char	**argv;
 	}
 #endif
 #if 0
-	for( y=0; y<=ebmp->ebm_dim[Y]; y++ )  {
-		for( x=0; x<=ebmp->ebm_dim[X]; x++ )  {
-			VSET( pt1, ebmp->ebm_dim[X], y, 2 );
-			VSET( pt2, x, ebmp->ebm_dim[Y], 4 );
+	for( y=0; y<=ebmp->ebm_ydim; y++ )  {
+		for( x=0; x<=ebmp->ebm_xdim; x++ )  {
+			VSET( pt1, ebmp->ebm_xdim, y, 2 );
+			VSET( pt2, x, ebmp->ebm_ydim, 4 );
 			trial( pt1, pt2 );
 		}
 	}
@@ -1002,8 +1003,8 @@ char	**argv;
 	}
 #endif
 #if 0
-	for( yy=0; yy<=ebmp->ebm_dim[Y]; yy += 0.3 )  {
-		for( xx=0; xx<=ebmp->ebm_dim[X]; xx += 0.3 )  {
+	for( yy=0; yy<=ebmp->ebm_ydim; yy += 0.3 )  {
+		for( xx=0; xx<=ebmp->ebm_xdim; xx += 0.3 )  {
 			VSET( pt1, 0, yy, 2 );
 			VSET( pt2, xx, 0, 4 );
 			trial( pt1, pt2 );
@@ -1011,10 +1012,10 @@ char	**argv;
 	}
 #endif
 #if 0
-	for( yy=0; yy<=ebmp->ebm_dim[Y]; yy += 0.3 )  {
-		for( xx=0; xx<=ebmp->ebm_dim[X]; xx += 0.3 )  {
-			VSET( pt1, ebmp->ebm_dim[X], yy, 2 );
-			VSET( pt2, xx, ebmp->ebm_dim[Y], 4 );
+	for( yy=0; yy<=ebmp->ebm_ydim; yy += 0.3 )  {
+		for( xx=0; xx<=ebmp->ebm_xdim; xx += 0.3 )  {
+			VSET( pt1, ebmp->ebm_xdim, yy, 2 );
+			VSET( pt2, xx, ebmp->ebm_ydim, 4 );
 			trial( pt1, pt2 );
 		}
 	}
@@ -1035,8 +1036,8 @@ char	**argv;
 	 * were especially troublesome */
 	xx=0;
 	yy=0.3;
-	VSET( pt1, ebmp->ebm_dim[X], yy, 2 );
-	VSET( pt2, xx, ebmp->ebm_dim[Y], 4 );
+	VSET( pt1, ebmp->ebm_xdim, yy, 2 );
+	VSET( pt2, xx, ebmp->ebm_ydim, 4 );
 	trial( pt1, pt2 );
 #endif
 
@@ -1058,8 +1059,8 @@ char	**argv;
 	 */
 	VSET( pt1, 0.75, 1.1, 0 );
 	{
-		for( yy=0; yy<=ebmp->ebm_dim[Y]; yy += 0.3 )  {
-			for( xx=0; xx<=ebmp->ebm_dim[X]; xx += 0.3 )  {
+		for( yy=0; yy<=ebmp->ebm_ydim; yy += 0.3 )  {
+			for( xx=0; xx<=ebmp->ebm_xdim; xx += 0.3 )  {
 				VSET( pt2, xx, yy, 4 );
 				trial( pt1, pt2 );
 			}
@@ -1067,7 +1068,7 @@ char	**argv;
 	}
 #endif
 #if 0
-	for( x=0; x<ebmp->ebm_dim[X]; x++ )  {
+	for( x=0; x<ebmp->ebm_xdim; x++ )  {
 		VSET( pt1, x+0.75, 1.1, -10 );
 		VSET( pt2, x+0.75, 1.1, 4 );
 		trial( pt1, pt2 );
@@ -1125,9 +1126,9 @@ union record	*rp;
 	vhead.vh_first = vhead.vh_last = VL_NULL;
 
 	pl_3space( plotfp, -BIT_XWIDEN,-BIT_YWIDEN,-BIT_XWIDEN,
-		 ebmp->ebm_dim[X]+BIT_XWIDEN, ebmp->ebm_dim[Y]+BIT_YWIDEN, (int)(ebmp->ebm_tallness+1.99) );
+		 ebmp->ebm_xdim+BIT_XWIDEN, ebmp->ebm_ydim+BIT_YWIDEN, (int)(ebmp->ebm_tallness+1.99) );
 	pl_3box( plotfp, -BIT_XWIDEN,-BIT_YWIDEN,-BIT_XWIDEN,
-		 ebmp->ebm_dim[X]+BIT_XWIDEN, ebmp->ebm_dim[Y]+BIT_YWIDEN, (int)(ebmp->ebm_tallness+1.99) );
+		 ebmp->ebm_xdim+BIT_XWIDEN, ebmp->ebm_ydim+BIT_YWIDEN, (int)(ebmp->ebm_tallness+1.99) );
 
 	/* Get vlist, then just draw the vlist */
 	ebm_plot( rp, mat, &vhead, 0 );
