@@ -51,7 +51,7 @@ ARCHIVE="$5"
 RESOURCES="$6"
 if [ "x$NAME" = "x" ] ; then
     echo "Usage: $0 title major_version minor_version patch_version archive_dir [resource_dir]"
-    echo "ERROR: must specify a package name"
+    echo "ERROR: must specify a title for the package name"
     exit 1
 fi
 if [ "x$MINOR_VERSION" = "x" ] ; then
