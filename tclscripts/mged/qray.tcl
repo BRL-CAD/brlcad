@@ -367,38 +367,71 @@ proc qray_choose_color { id ray } {
 
     set top .$id.qray_control
 
-    set colors [chooseColor $top]
-
-    if {[llength $colors] == 0} {
-	return
-    }
-
-    if {[llength $colors] != 2} {
-	mged_dialog .$id.gridDialog $player_screen($id)\
-		"Error choosing a color!"\
-		"Error choosing a color!"\
-		"" 0 OK
-	return
-    }
-
     switch $ray {
 	odd {
-	    $top.oddColorMB configure -bg [lindex $colors 0]
-	    set qray_oddColor($id) [lindex $colors 1]
+	    cadColorWidget dialog $top.oddColorMB -title "Query Ray Color - Odd"\
+		    -initialcolor [$top.oddColorMB cget -background]\
+		    -ok "qray_color_ok $id $ray $top.oddColorMB.colorWidget"\
+		    -cancel "qray_color_cancel $id $top.oddColorMB.colorWidget"
 	}
 	even {
-	    $top.evenColorMB configure -bg [lindex $colors 0]
-	    set qray_evenColor($id) [lindex $colors 1]
+	    cadColorWidget dialog $top.evenColorMB -title "Query Ray Color - Even"\
+		    -initialcolor [$top.evenColorMB cget -background]\
+		    -ok "qray_color_ok $id $ray $top.evenColorMB.colorWidget"\
+		    -cancel "qray_color_cancel $id $top.evenColorMB.colorWidget"
 	}
 	void {
-	    $top.voidColorMB configure -bg [lindex $colors 0]
-	    set qray_voidColor($id) [lindex $colors 1]
+	    cadColorWidget dialog $top.voidColorMB -title "Query Ray Color - Void"\
+		    -initialcolor [$top.voidColorMB cget -background]\
+		    -ok "qray_color_ok $id $ray $top.voidColorMB.colorWidget"\
+		    -cancel "qray_color_cancel $id $top.voidColorMB.colorWidget"
 	}
 	overlap {
-	    $top.overlapColorMB configure -bg [lindex $colors 0]
-	    set qray_overlapColor($id) [lindex $colors 1]
+	    cadColorWidget dialog $top.overlapColorMB -title "Query Ray Color - Overlap"\
+		    -initialcolor [$top.overlapColorMB cget -background]\
+		    -ok "qray_color_ok $id $ray $top.overlapColorMB.colorWidget"\
+		    -cancel "qray_color_cancel $id $top.overlapColorMB.colorWidget"
 	}
     }
+}
+
+proc qray_color_ok { id ray w } {
+    global qray_oddColor
+    global qray_evenColor
+    global qray_voidColor
+    global qray_overlapColor
+
+    upvar #0 $w data
+
+    set top .$id.qray_control
+    switch $ray {
+	 odd {
+	     $top.oddColorMB configure -bg $data(finalColor)
+	     set qray_oddColor($id) "$data(red) $data(green) $data(blue)"
+	 }
+	 even {
+	     $top.evenColorMB configure -bg $data(finalColor)
+	     set qray_evenColor($id) "$data(red) $data(green) $data(blue)"
+	 }
+	 void {
+	     $top.voidColorMB configure -bg $data(finalColor)
+	     set qray_voidColor($id) "$data(red) $data(green) $data(blue)"
+	 }
+	 overlap {
+	     $top.overlapColorMB configure -bg $data(finalColor)
+	     set qray_overlapColor($id) "$data(red) $data(green) $data(blue)"
+	 }
+    }
+
+    destroy $w
+    unset data
+}
+
+proc qray_color_cancel { id w } {
+    upvar #0 $w data
+
+    destroy $w
+    unset data
 }
 
 proc qray_effects { id } {

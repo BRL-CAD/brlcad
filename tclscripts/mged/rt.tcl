@@ -256,7 +256,7 @@ proc do_Raytrace { id } {
     if {$rt_fb_or_file($id) == "filename"} {
 	if {$rt_file($id) != ""} {
 	    if {[file exists $rt_file($id)]} {
-		set result [mged_dialog .$id.rtDialog $player_screen($id)\
+		set result [cad_dialog .$id.rtDialog $player_screen($id)\
 			"Overwrite $rt_file($id)?"\
 			"Overwrite $rt_file($id)?"\
 			"" 0 OK CANCEL]
@@ -268,7 +268,7 @@ proc do_Raytrace { id } {
 
 	    append rt_cmd " -o $rt_file($id)"
 	} else {
-	    mged_dialog .$id.rtDialog $player_screen($id)\
+	    cad_dialog .$id.rtDialog $player_screen($id)\
 		    "No file name specified!"\
 		    "No file name specified!"\
 		    "" 0 OK
@@ -296,7 +296,7 @@ proc do_Raytrace { id } {
 		append rt_cmd " -s $width"
 	    }
 	} else {
-	    mged_dialog .$id.rtDialog $player_screen($id)\
+	    cad_dialog .$id.rtDialog $player_screen($id)\
 		    "Improper size specification!"\
 		    "Improper size specification: $rt_size($id)"\
 		    "" 0 OK
@@ -312,7 +312,7 @@ proc do_Raytrace { id } {
 	if {$result} {
 	    append rt_cmd " -C$red/$green/$blue"
 	} else {
-	    mged_dialog .$id.rtDialog $player_screen($id)\
+	    cad_dialog .$id.rtDialog $player_screen($id)\
 		    "Improper color specification!"\
 		    "Improper color specification: $rt_color($id)"\
 		    "" 0 OK
@@ -382,7 +382,7 @@ proc do_fbclear { id } {
 	set result [regexp "^(\[0-9\]+)\[ \]+(\[0-9\]+)\[ \]+(\[0-9\]+)$" \
 		$rt_color($id) cmatch red green blue]
 	if {!$result} {
-	    mged_dialog .$id.rtDialog $player_screen($id)\
+	    cad_dialog .$id.rtDialog $player_screen($id)\
 		    "Improper color specification!"\
 		    "Improper color specification: $rt_color($id)"\
 		    "" 0 OK
@@ -401,7 +401,7 @@ proc do_fbclear { id } {
     }
 
     if {$result != 0} {
-	mged_dialog .$id.rtDialog $player_screen($id)\
+	cad_dialog .$id.rtDialog $player_screen($id)\
 		"RT Error!" "Rt Error: $rt_error" "" 0 OK
     }
 }
@@ -438,18 +438,31 @@ proc rt_choose_color { id } {
     global rt_color
 
     set top .$id.do_rt
-    set colors [chooseColor $top]
 
-    if {[llength $colors] != 2} {
-	mged_dialog .$id.rtDialog $player_screen($id)\
-		"Error choosing a color!"\
-		"Error choosing a color!"\
-		"" 0 OK
-	return
-    }
+    cadColorWidget dialog $top -title "Raytrace Background Color"\
+	    -initialcolor [$top.colorMB cget -background]\
+	    -ok "rt_color_ok $id $top.colorWidget"\
+	    -cancel "rt_color_cancel $id $top.colorWidget"
+}
 
-    $top.colorMB configure -bg [lindex $colors 0]
-    set rt_color($id) [lindex $colors 1]
+proc rt_color_ok { id w } {
+    global rt_color
+
+    upvar #0 $w data
+
+    set top .$id.do_rt
+    $top.colorMB configure -bg $data(finalColor)
+    set rt_color($id) "$data(red) $data(green) $data(blue)"
+
+    destroy $w
+    unset data
+}
+
+proc rt_color_cancel { id w } {
+    upvar #0 $w data
+
+    destroy $w
+    unset data
 }
 
 proc rt_set_colorMB { id } {
@@ -462,7 +475,7 @@ proc rt_set_colorMB { id } {
 	set result [regexp "^(\[0-9\]+)\[ \]+(\[0-9\]+)\[ \]+(\[0-9\]+)$" \
 		$rt_color($id) cmatch red green blue]
 	if {!$result} {
-	    mged_dialog .$id.rtDialog $player_screen($id)\
+	    cad_dialog .$id.rtDialog $player_screen($id)\
 		    "Improper color specification!"\
 		    "Improper color specification: $rt_color($id)"\
 		    "" 0 OK
