@@ -67,9 +67,17 @@ string before reading the standard input.
 Multiple commands in
 .I script
 may be separated with a semicolon ';'.
-This option overrides any
+Scripts specified with either the
 .BR -e " or " -f
-options earlier on the command line.
+options are executed in the order in which they are specified
+on the command line.
+.TP
+.B -E
+causes
+.I nirt
+to ignore any
+.BR -e " or " -f
+options specified previously on the command line.
 .TP
 .BI -f " sfile"
 causes
@@ -77,9 +85,10 @@ causes
 to run the script file
 .I sfile
 before reading the standard input.
-This option overrides any
+Scripts specified with either the
 .BR -e " or " -f
-options earlier on the command line.
+options are executed in the order in which they are specified
+on the command line.
 .TP
 .B -s
 causes
