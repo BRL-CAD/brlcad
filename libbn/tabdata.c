@@ -36,9 +36,7 @@ static char RCStabdata[] = "@(#)$Header$ (ARL)";
 #include "machine.h"
 #include "vmath.h"
 #include "bu.h"
-/* #include "raytrace.h" */
-#include "tabdata.h"
-#include "../librt/debug.h"
+#include "bn.h"
 
 /*
  *			B N _ T A B L E _ F R E E
@@ -665,7 +663,7 @@ register double			wl;
 	BN_CK_TABLE(tabp);
 
 	if( (i = bn_table_find_x( tabp, wl )) < 0 )  {
-		if(bu_debug&DEBUG_MATH)bu_log("bn_table_lin_interp(%g) out of range %g to %g\n", wl, tabp->x[0], tabp->x[tabp->nx] );
+		if(bu_debug&BU_DEBUG_TABDATA)bu_log("bn_table_lin_interp(%g) out of range %g to %g\n", wl, tabp->x[0], tabp->x[tabp->nx] );
 		return 0;
 	}
 
@@ -676,7 +674,7 @@ register double			wl;
 
 	if( i >= tabp->nx-2 )  {
 		/* Assume value is constant in final interval. */
-		if(bu_debug&DEBUG_MATH)bu_log("bn_table_lin_interp(%g)=%g off end of range %g to %g\n", wl, samp->y[tabp->nx-1], tabp->x[0], tabp->x[tabp->nx] );
+		if(bu_debug&BU_DEBUG_TABDATA)bu_log("bn_table_lin_interp(%g)=%g off end of range %g to %g\n", wl, samp->y[tabp->nx-1], tabp->x[0], tabp->x[tabp->nx] );
 		return samp->y[tabp->nx-1];
 	}
 
@@ -684,7 +682,7 @@ register double			wl;
 	fract = (wl - tabp->x[i]) / (tabp->x[i+1] - tabp->x[i]);
 	if( fract < 0 || fract > 1 )  bu_bomb("bn_table_lin_interp() assertion2 failed\n");
 	ret = (1-fract) * samp->y[i] + fract * samp->y[i+1];
-	if(bu_debug&DEBUG_MATH)bu_log("bn_table_lin_interp(%g)=%g in range %g to %g\n",
+	if(bu_debug&BU_DEBUG_TABDATA)bu_log("bn_table_lin_interp(%g)=%g in range %g to %g\n",
 		wl, ret, tabp->x[i], tabp->x[i+1] );
 	return ret;
 }
