@@ -77,7 +77,10 @@ main(argc, argv)
     int argc;			/* Number of command-line arguments. */
     char **argv;		/* Values of command-line arguments. */
 {
-    Tk_Main(argc, argv, Tcl_AppInit);
+	Tcl_Interp *interp;
+
+    interp = Tcl_CreateInterp();
+    Tk_MainEx(argc, argv, Tcl_AppInit, interp);
     return 0;			/* Needed only to prevent compiler warning. */
 }
 
