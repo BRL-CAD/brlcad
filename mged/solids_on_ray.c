@@ -194,6 +194,7 @@ struct solid	*sp;
     db_path_to_vls(vp, &sp->s_fullpath);
 }
 
+#if 0
 /*
  *			R P T _ S O L I D S
  *
@@ -267,8 +268,8 @@ struct seg		*finished_segs;
     {
 	BU_CKMAG(pp, PT_MAGIC, "partition");
 	BU_CKMAG(pp -> pt_regionp, RT_REGION_MAGIC, "region");
-	printf("    Partition <%lx> is '%s' ",
-	    pp, pp -> pt_regionp -> reg_name);
+	printf("    Partition <x%lx> is '%s' ",
+	    (long)pp, pp -> pt_regionp -> reg_name);
 	
 	printf("\n--- Solids hit on this partition ---\n");
 	for (i = 0; i < (pp -> pt_seglist).end; ++i)
@@ -452,6 +453,7 @@ struct seg		*finished_segs;
     return (1);
 #endif
 }
+#endif
 
 /*
  *			R P T _ H I T S _ M I K E

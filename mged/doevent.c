@@ -44,10 +44,12 @@ extern void rect_image2view();
 extern void rb_set_dirty_flag();
 
 static void motion_event_handler();
+#if IR_KNOBS
 static void dials_event_handler();
-static void buttons_event_handler();
+#endif
 
-#ifdef IR_BUTTONS
+#if IR_BUTTONS
+static void buttons_event_handler();
 /*
  * Map SGI Button numbers to MGED button functions.
  * The layout of this table is suggestive of the actual button box layout.
@@ -84,7 +86,9 @@ static char	*kn2_knobs[] = {
 };
 #endif
 
+#if IR_BUTTONS || IR_KNOBS
 static int button0 = 0;
+#endif
 
 int
 doEvent(clientData, eventPtr)
@@ -171,6 +175,7 @@ XEvent *eventPtr;
   return status;
 }
 
+#if IR_BUTTONS || IR_KNOBS
 static void
 set_knob_offset()
 {
@@ -179,13 +184,16 @@ set_knob_offset()
   for(i = 0; i < 8; ++i)
     dml_knobs[i] = 0;
 }
+#endif
 
+#if IR_BUTTONS || IR_KNOBS
 static void
 common_dbtext(str)
 char *str;
 {
   bu_log("common_dbtext: You pressed Help key and '%s'\n", str);
 }
+#endif
 
 static void
 motion_event_handler(xmotion)

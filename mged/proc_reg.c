@@ -1980,7 +1980,6 @@ Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
-	int i;
 	int	initial_blank_screen;
 	char perf_message[128];
 	register int    c;

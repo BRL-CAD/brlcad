@@ -33,6 +33,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include "machine.h"
+#include "bu.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "rtgeom.h"
@@ -497,8 +498,6 @@ char	**argv;
 	register struct directory	*dp;
     	struct rt_db_internal		intern;
 	struct rt_comb_internal		*comb;
-	extern int			bu_optind;
-	extern char			*bu_optarg;
 	struct tokens			tok_hd;
 	struct tokens			*tok;
 	short				last_tok;
