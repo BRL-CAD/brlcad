@@ -1350,6 +1350,8 @@ CONST struct edgeuse	*eu;
 	vect_t			edgevect;
 	vect_t			edge_unit;
 	fastf_t			dot;
+	struct vertex_g		*vg1;
+	struct vertex_g		*vg2;
 
 	NMG_CK_EDGEUSE(eu);
 	if( *eu->up.magic_p != NMG_LOOPUSE_MAGIC )  return -1;
@@ -1361,11 +1363,13 @@ CONST struct edgeuse	*eu;
 	NMG_CK_FACE(fu->f_p);
 	NMG_CK_FACE_G_PLANE(fu->f_p->g.plane_p);
 
+	vg1 = eu->vu_p->v_p->vg_p;
+	vg2 = eu->eumate_p->vu_p->v_p->vg_p;
+
 	/* Get unit length Normal vector for edgeuse's faceuse */
 	NMG_GET_FU_NORMAL( Norm, fu );
 
-	VSUB2( edgevect, eu->eumate_p->vu_p->v_p->vg_p->coord,
-		eu->vu_p->v_p->vg_p->coord );
+	VSUB2( edgevect, vg2->coord, vg1->coord );
 
 	VMOVE( edge_unit, edgevect );
 	VUNITIZE( edge_unit );

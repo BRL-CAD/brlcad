@@ -20,6 +20,10 @@
  *  $Header$
  */
 
+/* defining the following flag will improve NMG raytrace speed by eliminating some checking
+ * Use with CAUTION!!! */
+#define FAST_NMG	1
+
 #define NMG_HIT_LIST	0
 #define NMG_MISS_LIST	1
 #define NMG_RT_HIT_MAGIC 0x48697400	/* "Hit" */
@@ -173,6 +177,22 @@ struct ray_data {
 };
 
 
+#if FAST_NMG
+#define GET_HITMISS(_p) { \
+	(_p) = (struct hitmiss *)rt_calloc(1, sizeof(struct hitmiss), "hitmiss"); \
+	}
+
+#define FREE_HITMISS(_p) { \
+	(void)rt_free( (char *)_p,  "hitmiss"); \
+	}
+
+#define NMG_FREE_HITLIST(_p) { \
+	struct hitmiss *_hit; \
+	while ( RT_LIST_WHILE(_hit, hitmiss, _p)) { \
+		RT_LIST_DEQUEUE( &_hit->l ); \
+		FREE_HITMISS( _hit ); \
+	} }
+#else
 #define GET_HITMISS(_p) { \
 	char str[64]; \
 	(void)sprintf(str, "GET_HITMISS %s %d", __FILE__, __LINE__); \
@@ -185,7 +205,6 @@ struct ray_data {
 	(void)rt_free( (char *)_p,  str); \
 	}
 
-
 #define NMG_FREE_HITLIST(_p) { \
 	struct hitmiss *_hit; \
 	while ( RT_LIST_WHILE(_hit, hitmiss, _p)) { \
@@ -193,6 +212,8 @@ struct ray_data {
 		RT_LIST_DEQUEUE( &_hit->l ); \
 		FREE_HITMISS( _hit ); \
 	} }
+
+#endif
 
 #define HIT 1	/* a hit on a face */
 #define MISS 0	/* a miss on the face */
