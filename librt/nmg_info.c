@@ -1173,10 +1173,10 @@ CONST struct faceuse	*fu2;
 				    			rt_bomb("nmg_find_edge_between_2fu() 2 faces intersect with differing edge geometries?\n");
 				    		}
 				    	}
-				} else {
-					eur = eur->eumate_p->radial_p;
-					NMG_CK_EDGEUSE(eur);
 				}
+				/* Advance to next */
+				eur = eur->eumate_p->radial_p;
+				NMG_CK_EDGEUSE(eur);
 			}
 		}
 	}
