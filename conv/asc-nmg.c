@@ -263,7 +263,7 @@ vect_t		Ext;	/* Extrusion vector. */
 			break;
 
 		case 'v':		/* Vertex in current loop. */
-			if (token[1] == NULL)
+			if (token[1] == '\0')
 				rt_bomb("descr_to_nmg: vertices must be numbered.\n");
 			vert_num = atoi(token+1);
 			stat = fscanf(fp, "%s", token);
