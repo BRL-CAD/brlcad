@@ -318,8 +318,10 @@ char	**dpp;
 {
 	register struct ckr_specific *ckp;
 
+	/* Default will be white and black checkers */
 	GETSTRUCT( ckp, ckr_specific );
 	*dpp = (char *)ckp;
+	ckp->ckr_a[0] = ckp->ckr_a[1] = ckp->ckr_a[2] = 255;
 	mlib_parse( matparm, ckr_parse, (mp_off_ty)ckp );
 	return(1);
 }
