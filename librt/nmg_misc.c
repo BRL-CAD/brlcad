@@ -4057,6 +4057,10 @@ CONST struct rt_tol *tol;
 		{
 			if( !rt_dist_line3_line3( dist , edge_fus->start , edge_fus->dir , other_fus->start , other_fus->dir , tol ) )
 			{
+				if( rt_g.NMG_debug & DEBUG_BASIC )
+					rt_log( "Edge #%d intersects edge #%d at dist = %f\n" , edge_no , next_edge_no , dist[0] );
+				if( NEAR_ZERO( dist[0] , tol->dist ) )
+					dist[0] = 0.0;
 				if( dist[0] > max_dist )
 					max_dist = dist[0];
 			}
@@ -4082,6 +4086,10 @@ CONST struct rt_tol *tol;
 		{
 			if( rt_dist_line3_line3( dist , edge_fus->start , edge_fus->dir , other_fus->start , other_fus->dir , tol ) >= 0 )
 			{
+				if( rt_g.NMG_debug & DEBUG_BASIC )
+					rt_log( "Edge #%d intersects edge #%d at dist = %f\n" , edge_no , prev_edge_no , dist[0] );
+				if( NEAR_ZERO( dist[0] , tol->dist ) )
+					dist[0] = 0.0;
 				if( dist[0] > max_dist )
 					max_dist = dist[0];
 			}
@@ -4111,8 +4119,18 @@ CONST struct rt_tol *tol;
 				if( edge_fus->fu[1] && f == edge_fus->fu[1]->f_p )
 					continue;
 
+				/* Do not intersect with a plane that this edge is parallel to */
+				if( NEAR_ZERO( VDOT( f->fg_p->N , edge_fus->dir ) , tol->perp ) )
+					continue;
+
 				if( rt_isect_line3_plane( &dist[0] , edge_fus->start , edge_fus->dir , f->fg_p->N , tol ) > 1 )
 					continue;
+
+				if( rt_g.NMG_debug & DEBUG_BASIC )
+					rt_log( "Edge #%d intersects fu[0] from edge #%d at dist = %f\n" , edge_no , other_index , dist[0] );
+
+				if( NEAR_ZERO( dist[0] , tol->dist ) )
+					dist[0] = 0.0;
 
 				if( dist[0] > max_dist )
 					max_dist = dist[0];
@@ -5385,80 +5403,12 @@ CONST struct rt_tol *tol;
  *
  * Calculates a new geometry for new_v
  */
-static void
+static int
 nmg_calc_new_v( new_v , int_faces , tol )
 struct vertex *new_v;
 CONST struct nmg_ptbl *int_faces;
 CONST struct rt_tol *tol;
 {
-#if 0
-	int edge_no;
-	fastf_t edge_count=0.0;
-	point_t ave_pt,prev_pt;
-	struct intersect_fus *free_fus[2];
-	struct intersect_fus *edge_fus;
-	int free_edge_count=0;
-
-	NMG_CK_VERTEX( new_v );
-	NMG_CK_PTBL( int_faces );
-	RT_CK_TOL( tol );
-
-	if( rt_g.NMG_debug & DEBUG_BASIC )
-		rt_log( "nmg_calc_new_v\n" );
-
-	edge_fus = (struct intersect_fus *)NMG_TBL_GET( int_faces , NMG_TBL_END( int_faces)-1 );
-	if( edge_fus->vp )
-		VMOVE( prev_pt , edge_fus->vp->vg_p->coord )
-	else
-		VMOVE( prev_pt , new_v->vg_p->coord );
-
-	VSET( ave_pt , 0.0 , 0.0 , 0.0 )
-
-	/* generally, just average the intersect_fus->vp's */
-	for( edge_no=0 ; edge_no<NMG_TBL_END( int_faces ) ; edge_no++ )
-	{
-
-		edge_fus = (struct intersect_fus *)NMG_TBL_GET( int_faces , edge_no );
-
-		if( edge_fus->free_edge )
-		{
-			free_fus[free_edge_count++] = edge_fus;
-			if( free_edge_count > 2 )
-				rt_bomb( "nmg_calc_new_v: Too many free edges\n" );
-		}
-
-		if( !edge_fus->vp )
-			continue;
-
-		if( !rt_pt3_pt3_equal( prev_pt , edge_fus->vp->vg_p->coord , tol ) )
-		{
-			VADD2( ave_pt , ave_pt , edge_fus->vp->vg_p->coord )
-			edge_count += 1.0;
-			VMOVE( prev_pt , edge_fus->vp->vg_p->coord )
-		}
-	}
-
-	if( edge_count > 0.0 )
-	{
-		fastf_t scale;
-
-		scale = 1.0/edge_count;
-		VSCALE( ave_pt , ave_pt , scale )
-	}
-	else if( NMG_TBL_END( int_faces ) > 0 )
-	{
-		/* all the intersect vertices are within tolerance of prev_pt */
-		VMOVE( ave_pt , prev_pt )
-	}
-	else
-		rt_bomb( "nmg_calc_new_v: edge_count is zero\n" );
-
-	/* if there are two free edges, new_v should be on the same plane as the free edges */
-	if( free_edge_count == 2 )
-		VBLEND2( new_v->vg_p->coord , 0.5 , free_fus[0]->vp->vg_p->coord , 0.5 , free_fus[1]->vp->vg_p->coord )
-	else
-		VMOVE( new_v->vg_p->coord , ave_pt )
-#else
 	plane_t *planes;
 	int pl_count;
 	int i;
@@ -5470,7 +5420,11 @@ CONST struct rt_tol *tol;
 	if( rt_g.NMG_debug & DEBUG_BASIC )
 		rt_log( "nmg_calc_new_v: (%f %f %f) , %d faces\n" , V3ARGS( new_v->vg_p->coord ) , NMG_TBL_END( int_faces ) );
 
-	planes = (plane_t *)rt_calloc( NMG_TBL_END( int_faces ) , sizeof( plane_t ) , "nmg_calc_new_v: planes" );
+	/* make space for at least three planes */
+	i = NMG_TBL_END( int_faces );
+	if( i < 3 )
+		i = 3;
+	planes = (plane_t *)rt_calloc( i , sizeof( plane_t ) , "nmg_calc_new_v: planes" );
 
 	pl_count = 0;
 
@@ -5506,13 +5460,35 @@ CONST struct rt_tol *tol;
 		pl_count++;
 	}
 
-	if( rt_g.NMG_debug & DEBUG_BASIC )
+	if( pl_count > 2 )
+		rt_isect_planes( new_v->vg_p->coord , planes , pl_count );
+	else if( pl_count == 1 )
 	{
-		for( i=0 ; i<pl_count ; i++ )
-			rt_log( "Plane #%d: %f %f %f %f\n" , i , V4ARGS( planes[i] ) );
-	}
+		fastf_t vert_move_len;
 
-	rt_isect_planes( new_v->vg_p->coord , planes , pl_count );
+		/* move the vertex to the plane */
+		vert_move_len = DIST_PT_PLANE( new_v->vg_p->coord , planes[0] );
+		VJOIN1( new_v->vg_p->coord , new_v->vg_p->coord , -vert_move_len , planes[0] );
+	}
+	else if( pl_count == 2 )
+	{
+		VCROSS( planes[2] , planes[0] , planes[1] );
+		planes[2][H] = VDOT( new_v->vg_p->coord , planes[2] );
+		pl_count = 3;
+		if( rt_mkpoint_3planes( new_v->vg_p->coord , planes[0] , planes[1] , planes[2] ) )
+		{
+			rt_log( "nmg_cacl_new_v: 3 planes do not intersect at a point\n" );
+			rt_free( (char *)planes , "nmg_calc_new_v: planes" );
+			return( 1 );
+		}
+	}
+	else
+	{
+		rt_log( "nmg_calc_new_v: No face planes at vertex x%x (%f %f %f)\n",
+			new_v , V3ARGS( new_v->vg_p->coord ) );
+		rt_free( (char *)planes , "nmg_calc_new_v: planes" );
+		return( 1 );
+	}
 
 	if( rt_g.NMG_debug & DEBUG_BASIC )
 		rt_log( "\tnew_v = ( %f %f %f )\n" , V3ARGS( new_v->vg_p->coord ) );
@@ -5528,13 +5504,14 @@ CONST struct rt_tol *tol;
 
 		(void) rt_dist_pt3_line3( &dist , fus->start , fus->start , fus->dir , new_v->vg_p->coord , tol );
 	}
-#endif
 
 	if( rt_g.NMG_debug & DEBUG_BASIC )
 	{
 		rt_log( "After nmg_calc_new_v:\n" );
 		nmg_pr_inter( new_v , int_faces );
 	}
+
+	return( 0 );
 }
 
 /*	N M G _ C O M P L E X _ V E R T E X _ S O L V E
@@ -5600,7 +5577,11 @@ CONST struct rt_tol *tol;
 	}
 
 	/* calculate geometry for new_v */
-	nmg_calc_new_v( new_v , &int_faces , tol );
+	if( nmg_calc_new_v( new_v , &int_faces , tol ) )
+	{
+		nmg_tbl( &int_faces , TBL_FREE , (long *)NULL );
+		return( 1 );
+	}
 
 	/* fill in "pt" portion of intersect_fus structures with points
 	 * that are the intersections of the edge line with the other
