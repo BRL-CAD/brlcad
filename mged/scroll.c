@@ -63,7 +63,6 @@ struct scroll_item sl_menu[] = {
 	{ "xrot",	sl_rrtol,	4,	"x" },
 	{ "yrot",	sl_rrtol,	5,	"y" },
 	{ "zrot",	sl_rrtol,	6,	"z" },
-	{ "azim",	sl_rrtol,	7,	"azim" },
 	{ "",		(void (*)())NULL, 0,	"" }
 };
 
@@ -75,7 +74,6 @@ struct scroll_item sl_abs_menu[] = {
 	{ "Xrot",	sl_artol,	4,	"ax" },
 	{ "Yrot",	sl_artol,	5,	"ay" },
 	{ "Zrot",	sl_artol,	6,	"az" },
-	{ "Azim",	sl_artol,	7,	"aazim" },
 	{ "",		(void (*)())NULL, 0,	"" }
 };
 
@@ -167,7 +165,7 @@ char **argv;
     scroll_array[1] = SCROLL_NULL;	
   }
 
-  if(mged_variables.show_menu)
+  if(mged_variables.faceplate && mged_variables.orig_gui)
     dirty = 1;
 
   return TCL_OK;
@@ -338,7 +336,7 @@ int y_top;
 	if(second_menu)
 	  f = (double)dv_xadc / 2047.0;
 	else {
-	  if(EDIT_TRAN && mged_variables.edit){
+	  if(EDIT_TRAN && mged_variables.transform == 'e'){
 	    if(mged_variables.rateknobs)
 	      f = edit_rate_tran[X];
 	    else
@@ -346,10 +344,17 @@ int y_top;
 
 	    dmp->dm_setColor(dmp, DM_WHITE, 1);
 	  }else{
-	    if(mged_variables.rateknobs)
-	      f = rate_slew[X];
-	    else
-	      f = absolute_slew[X];
+	    if(mged_variables.rateknobs){
+	      if(mged_variables.coords == 'm')
+		f = rate_model_tran[X];
+	      else
+		f = rate_tran[X];
+	    }else{
+	      if(mged_variables.coords == 'm')
+		f = absolute_model_tran[X];
+	      else
+		f = absolute_tran[X];
+	    }
 
 	    dmp->dm_setColor(dmp, DM_RED, 1);
 	  }
@@ -359,7 +364,7 @@ int y_top;
 	if(second_menu)
 	  f = (double)dv_yadc / 2047.0;
 	else {
-	  if(EDIT_TRAN && mged_variables.edit){
+	  if(EDIT_TRAN && mged_variables.transform == 'e'){
 	    if(mged_variables.rateknobs)
 	      f = edit_rate_tran[Y];
 	    else
@@ -367,10 +372,17 @@ int y_top;
 
 	    dmp->dm_setColor(dmp, DM_WHITE, 1);
 	  }else{
-	    if(mged_variables.rateknobs)
-	      f = rate_slew[Y];
-	    else
-	      f = absolute_slew[Y];
+	    if(mged_variables.rateknobs){
+	      if(mged_variables.coords == 'm')
+		f = rate_model_tran[Y];
+	      else
+		f = rate_tran[Y];
+	    }else{
+	      if(mged_variables.coords == 'm')
+		f = absolute_model_tran[Y];
+	      else
+		f = absolute_tran[Y];
+	    }
 
 	    dmp->dm_setColor(dmp, DM_RED, 1);
 	  }
@@ -380,7 +392,7 @@ int y_top;
 	if(second_menu)
 	  f = (double)dv_1adc / 2047.0;
 	else {
-	  if(EDIT_TRAN && mged_variables.edit){
+	  if(EDIT_TRAN && mged_variables.transform == 'e'){
 	    if(mged_variables.rateknobs)
 	      f = edit_rate_tran[Z];
 	    else
@@ -388,10 +400,17 @@ int y_top;
 
 	    dmp->dm_setColor(dmp, DM_WHITE, 1);
 	  }else{
-	    if(mged_variables.rateknobs)
-	      f = rate_slew[Z];
-	    else
-	      f = absolute_slew[Z];
+	    if(mged_variables.rateknobs){
+	      if(mged_variables.coords == 'm')
+		f = rate_model_tran[Z];
+	      else
+		f = rate_tran[Z];
+	    }else{
+	      if(mged_variables.coords == 'm')
+		f = absolute_model_tran[Z];
+	      else
+		f = absolute_tran[Z];
+	    }
 
 	    dmp->dm_setColor(dmp, DM_RED, 1);
 	  }
@@ -401,7 +420,7 @@ int y_top;
 	if(second_menu)
 	  f = (double)dv_2adc / 2047.0;
 	else {
-	  if(EDIT_SCALE && mged_variables.edit){
+	  if(EDIT_SCALE && mged_variables.transform == 'e'){
 	    if(mged_variables.rateknobs)
 	      f = edit_rate_scale;
 	    else
@@ -422,7 +441,7 @@ int y_top;
 	if(second_menu)
 	  f = (double)dv_distadc / 2047.0;
 	else {
-	  if(EDIT_ROTATE && mged_variables.edit){
+	  if(EDIT_ROTATE && mged_variables.transform == 'e'){
 	    if(mged_variables.rateknobs)
 	      f = edit_rate_rotate[X] / RATE_ROT_FACTOR;
 	    else
@@ -430,10 +449,14 @@ int y_top;
 
 	    dmp->dm_setColor(dmp, DM_WHITE, 1);
 	  }else{
-	    if(mged_variables.rateknobs)
-	      f = rate_rotate[X] / RATE_ROT_FACTOR;
-	    else
+	    if(mged_variables.rateknobs){
+	      if(mged_variables.coords == 'm')
+		f = rate_model_rotate[X] / RATE_ROT_FACTOR;
+	      else
+		f = rate_rotate[X] / RATE_ROT_FACTOR;
+	    }else{
 	      f = absolute_rotate[X] / ABS_ROT_FACTOR;
+	    }
 
 	    dmp->dm_setColor(dmp, DM_RED, 1);
 	  }
@@ -444,7 +467,7 @@ int y_top;
 	  Tcl_AppendResult(interp, "scroll_display: 2nd scroll menu is hosed\n",
 			   (char *)NULL);
 	else {
-	  if(EDIT_ROTATE && mged_variables.edit){
+	  if(EDIT_ROTATE && mged_variables.transform == 'e'){
 	    if(mged_variables.rateknobs)
 	      f = edit_rate_rotate[Y] / RATE_ROT_FACTOR;
 	    else
@@ -452,10 +475,14 @@ int y_top;
 
 	    dmp->dm_setColor(dmp, DM_WHITE, 1);
 	  }else{
-	    if(mged_variables.rateknobs)
-	      f = rate_rotate[Y] / RATE_ROT_FACTOR;
-	    else
+	    if(mged_variables.rateknobs){
+	      if(mged_variables.coords == 'm')
+		f = rate_model_rotate[Y] / RATE_ROT_FACTOR;
+	      else
+		f = rate_rotate[Y] / RATE_ROT_FACTOR;
+	    }else{
 	      f = absolute_rotate[Y] / ABS_ROT_FACTOR;
+	    }
 
 	    dmp->dm_setColor(dmp, DM_RED, 1);
 	  }
@@ -466,7 +493,7 @@ int y_top;
 	  Tcl_AppendResult(interp, "scroll_display: 2nd scroll menu is hosed\n",
 			   (char *)NULL);
 	else {
-	  if(EDIT_ROTATE && mged_variables.edit){
+	  if(EDIT_ROTATE && mged_variables.transform == 'e'){
 	    if(mged_variables.rateknobs)
 	      f = edit_rate_rotate[Z] / RATE_ROT_FACTOR;
 	    else
@@ -474,47 +501,19 @@ int y_top;
 
 	    dmp->dm_setColor(dmp, DM_WHITE, 1);
 	  }else{
-	    if(mged_variables.rateknobs)
-	      f = rate_rotate[Z] / RATE_ROT_FACTOR;
-	    else
+	    if(mged_variables.rateknobs){
+	      if(mged_variables.coords == 'm')
+		f = rate_model_rotate[Z] / RATE_ROT_FACTOR;
+	      else
+		f = rate_rotate[Z] / RATE_ROT_FACTOR;
+	    }else{
 	      f = absolute_rotate[Z] / ABS_ROT_FACTOR;
+	    }
 
 	    dmp->dm_setColor(dmp, DM_RED, 1);
 	  }
 	}
 	break;
-      case 7:
-	if(second_menu)
-	  Tcl_AppendResult(interp, "scroll_display: 2nd scroll menu is hosed\n",
-			   (char *)NULL);
-	else {
-	  if(mged_variables.rateknobs)
-	    f = rate_azimuth / RATE_ROT_FACTOR;
-	  else{
-#if 0
-	    if(NEAR_ZERO(curr_dm_list->s_info->elevation - 90.0,(fastf_t)0.005) ||
-	       NEAR_ZERO(curr_dm_list->s_info->elevation + 90.0,(fastf_t)0.005))
-	      f = curr_dm_list->s_info->azimuth / ABS_ROT_FACTOR;
-	    else if(0.0 <= curr_dm_list->s_info->azimuth &&
-		    curr_dm_list->s_info->azimuth <= 180.0)
-	      f = curr_dm_list->s_info->azimuth / ABS_ROT_FACTOR;
-	    else
-	      f = (curr_dm_list->s_info->azimuth - 360.0) / ABS_ROT_FACTOR;
-#else
-#if 1
-	    if(0.0 <= curr_dm_list->s_info->azimuth &&
-	       curr_dm_list->s_info->azimuth <= 180.0)
-	      f = curr_dm_list->s_info->azimuth / ABS_ROT_FACTOR;
-	    else
-	      f = (curr_dm_list->s_info->azimuth - 360.0) / ABS_ROT_FACTOR;
-#else
-	    f = curr_dm_list->s_info->azimuth / ABS_ROT_FACTOR;
-#endif
-#endif
-	  }
-
-	  dmp->dm_setColor(dmp, DM_RED, 1);
-	}
       default:
 	if(second_menu)
 	  Tcl_AppendResult(interp, "scroll_display: 2nd scroll menu is hosed\n",
