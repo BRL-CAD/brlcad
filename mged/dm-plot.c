@@ -191,10 +191,14 @@ double ratio;
 	register struct vlist *vp;
 	int useful = 0;
 
-	if( sp->s_soldash )
-		pl_linmod( up_fp, "dotdashed");
-	else
-		pl_linmod( up_fp, "solid");
+	if( white )  {
+		pl_linmod( up_fp, "longdashed" );
+	} else {
+		if( sp->s_soldash )
+			pl_linmod( up_fp, "dotdashed");
+		else
+			pl_linmod( up_fp, "solid");
+	}
 
 	for( vp = sp->s_vlist; vp != VL_NULL; vp = vp->vl_forw )  {
 		/* Viewing region is from -1.0 to +1.0 */
