@@ -72,6 +72,7 @@ set -S2 "/bin/sh"
  *								*
  ****************************************************************/
 #undef NFS
+#define NFS	1
 
 /****************************************************************
  *								*
@@ -195,7 +196,7 @@ set -S2 "/bin/sh"
 #		define	CC_OPTS	-g
 #		define	LD_OPTS	-m 8 -g
 #	endif
-#	if 1
+#	if 0
 /*		Normal Configuration */
 #		define	LIBFB_CONFIG	-DIF_REMOTE -DIF_PTTY
 #		define	LIBFB_OBJS	if_remote pkg if_ptty
@@ -358,7 +359,7 @@ set -S2 "/bin/sh"
 #	define	LD_OPTS	CC_OPTS
 #	define	LIBMALLOC	/* must use libc.a, for _malloc_at_addr() */
 #	define	LIBRT_TIMER	timer42
-#	if 1
+#	if 0
 /*		Normal Sun configuration */
 #		define	LIBFB_OBJS	if_remote pkg if_sun
 #		define	LIBFB_CONFIG	-DIF_REMOTE -DIF_SUN
