@@ -131,8 +131,8 @@ struct seg		*seghead;
 	int	igrid[3];/* Grid cell coordinates of cell (integerized) */
 	vect_t	P;	/* hit point */
 	int	inside;	/* inside/outside a solid flag */
-	int	in_index;
-	int	out_index;
+	int	in_axis;
+	int	out_axis;
 	int	j;
 	struct xray	ideal_ray;
 
@@ -236,17 +236,17 @@ if(rt_g.debug&DEBUG_VOL)rt_log("t[Z] = %g, delta[Z] = %g\n", t[Z], delta[Z] );
 
 	/* Find face of entry into first cell -- max initial t value */
 	if( t[X] >= t[Y] )  {
-		in_index = X;
+		in_axis = X;
 		t0 = t[X];
 	} else {
-		in_index = Y;
+		in_axis = Y;
 		t0 = t[Y];
 	}
 	if( t[Z] > t0 )  {
-		in_index = Z;
+		in_axis = Z;
 		t0 = t[Z];
 	}
-if(rt_g.debug&DEBUG_VOL)rt_log("Entry index is %s, t0=%g\n", in_index==X ? "X" : (in_index==Y?"Y":"Z"), t0);
+if(rt_g.debug&DEBUG_VOL)rt_log("Entry axis is %s, t0=%g\n", in_axis==X ? "X" : (in_axis==Y?"Y":"Z"), t0);
 
 	/* Advance to next exits */
 	t[X] += delta[X];
@@ -277,18 +277,18 @@ if(rt_g.debug&DEBUG_VOL) VPRINT("Exit t[]", t);
 		/* find minimum exit t value */
 		if( t[X] < t[Y] )  {
 			if( t[Z] < t[X] )  {
-				out_index = Z;
+				out_axis = Z;
 				t1 = t[Z];
 			} else {
-				out_index = X;
+				out_axis = X;
 				t1 = t[X];
 			}
 		} else {
 			if( t[Z] < t[Y] )  {
-				out_index = Z;
+				out_axis = Z;
 				t1 = t[Z];
 			} else {
-				out_index = Y;
+				out_axis = Y;
 				t1 = t[Y];
 			}
 		}
@@ -298,8 +298,8 @@ if(rt_g.debug&DEBUG_VOL) VPRINT("Exit t[]", t);
 if(rt_g.debug&DEBUG_VOL)rt_log("igrid [%d %d %d] from %g to %g, val=%d\n",
 			igrid[X], igrid[Y], igrid[Z],
 			t0, t1, val );
-if(rt_g.debug&DEBUG_VOL)rt_log("Exit index is %s, t[]=(%g, %g, %g)\n",
-			out_index==X ? "X" : (out_index==Y?"Y":"Z"),
+if(rt_g.debug&DEBUG_VOL)rt_log("Exit axis is %s, t[]=(%g, %g, %g)\n",
+			out_axis==X ? "X" : (out_axis==Y?"Y":"Z"),
 			t[X], t[Y], t[Z] );
 
 		if( t1 <= t0 )  rt_log("ERROR vol t1=%g < t0=%g\n", t1, t0 );
@@ -314,14 +314,14 @@ if(rt_g.debug&DEBUG_VOL)rt_log("Exit index is %s, t[]=(%g, %g, %g)\n",
 				segp->seg_in.hit_dist = t0;
 
 				/* Compute entry normal */
-				if( rp->r_dir[in_index] < 0 )  {
+				if( rp->r_dir[in_axis] < 0 )  {
 					/* Go left, entry norm goes right */
 					segp->seg_in.hit_surfno =
-						rt_vol_normtab[in_index];
+						rt_vol_normtab[in_axis];
 				}  else  {
 					/* go right, entry norm goes left */
 					segp->seg_in.hit_surfno =
-						(-rt_vol_normtab[in_index]);
+						(-rt_vol_normtab[in_axis]);
 				}
 				RT_LIST_INSERT( &(seghead->l), &(segp->l) );
 				if(rt_g.debug&DEBUG_VOL) rt_log("START t=%g, surfno=%d\n",
@@ -342,14 +342,14 @@ if(rt_g.debug&DEBUG_VOL)rt_log("Exit index is %s, t[]=(%g, %g, %g)\n",
 				tail->seg_out.hit_dist = t0;
 
 				/* Compute exit normal */
-				if( rp->r_dir[in_index] < 0 )  {
+				if( rp->r_dir[in_axis] < 0 )  {
 					/* Go left, exit normal goes left */
 					tail->seg_out.hit_surfno =
-						(-rt_vol_normtab[in_index]);
+						(-rt_vol_normtab[in_axis]);
 				}  else  {
 					/* go right, exit norm goes right */
 					tail->seg_out.hit_surfno =
-						rt_vol_normtab[in_index];
+						rt_vol_normtab[in_axis];
 				}
 				if(rt_g.debug&DEBUG_VOL) rt_log("END t=%g, surfno=%d\n",
 					t0, tail->seg_out.hit_surfno );
@@ -358,12 +358,12 @@ if(rt_g.debug&DEBUG_VOL)rt_log("Exit index is %s, t[]=(%g, %g, %g)\n",
 
 		/* Take next step */
 		t0 = t1;
-		in_index = out_index;
-		t[out_index] += delta[out_index];
-		if( rp->r_dir[out_index] > 0 ) {
-			igrid[out_index]++;
+		in_axis = out_axis;
+		t[out_axis] += delta[out_axis];
+		if( rp->r_dir[out_axis] > 0 ) {
+			igrid[out_axis]++;
 		} else {
-			igrid[out_index]--;
+			igrid[out_axis]--;
 		}
 	}
 
@@ -374,13 +374,13 @@ if(rt_g.debug&DEBUG_VOL)rt_log("Exit index is %s, t[]=(%g, %g, %g)\n",
 		tail = RT_LIST_LAST( seg, &(seghead->l) );
 		tail->seg_out.hit_dist = tmax;
 
-		/* Compute exit normal.  Previous out_index is now in_index */
-		if( rp->r_dir[in_index] < 0 )  {
+		/* Compute exit normal.  Previous out_axis is now in_axis */
+		if( rp->r_dir[in_axis] < 0 )  {
 			/* Go left, exit normal goes left */
-			tail->seg_out.hit_surfno = (-rt_vol_normtab[in_index]);
+			tail->seg_out.hit_surfno = (-rt_vol_normtab[in_axis]);
 		}  else  {
 			/* go right, exit norm goes right */
-			tail->seg_out.hit_surfno = rt_vol_normtab[in_index];
+			tail->seg_out.hit_surfno = rt_vol_normtab[in_axis];
 		}
 		if(rt_g.debug&DEBUG_VOL) rt_log("closed END t=%g, surfno=%d\n",
 			tmax, tail->seg_out.hit_surfno );
