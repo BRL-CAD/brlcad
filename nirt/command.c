@@ -10,6 +10,7 @@ static char RCSid[] = "$Header$";
 #include <machine.h>
 #include <vmath.h>
 #include <raytrace.h>
+#include "../librt/debug.h"
 #include "./nirt.h"
 #include "./usrfmt.h"
 
@@ -83,8 +84,6 @@ char	*buffer;
 {
 	char		*shell;
 	static char	*last_cmd = "";
-
-	char		*getenv();
 
 	while (isspace(*buffer))
 	    ++buffer;
@@ -371,6 +370,7 @@ com_table		*ctp;
 	for (op = &object_list; op -> obj_next != NULL; op = op -> obj_next)
 	    do_rt_gettree( rtip, op -> obj_name, 0);
     }
+	/* XXX ap.a_resource needs to be set here */
     ap.a_rt_i = rti_tab[new_use];
 }
 
@@ -508,4 +508,26 @@ char	*str;
 		return( tp->val );
 	}
 	return(0.0);		/* Unable to find it */
+}
+
+void
+cm_libdebug(buffer, ctp)
+char		*buffer;
+com_table	*ctp;
+{
+	register char	*cp = buffer;
+
+	/* This is really icky -- should have argc, argv interface */
+	while( *cp && isascii(*cp) && isspace(*cp) )  cp++;
+	if( *cp == '\0' )  {
+		/* display current value */
+		rt_printb( "librt rt_g.debug", rt_g.debug, DEBUG_FORMAT );
+		rt_log("\n");
+		return;
+	}
+
+	/* Set a new value */
+	sscanf( cp, "%x", &rt_g.debug );
+	rt_printb( "librt rt_g.debug", rt_g.debug, DEBUG_FORMAT );
+	rt_log("\n");
 }
