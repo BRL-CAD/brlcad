@@ -47,18 +47,16 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "vmath.h"
 #include "db.h"
 #include "mater.h"
-#include "./sedit.h"
+#include "rtstring.h"
 #include "raytrace.h"
-#include "./ged.h"
+#include "nmg.h"
 #include "externs.h"
+#include "./sedit.h"
+#include "./ged.h"
 #include "./solid.h"
 #include "./dm.h"
-#include "nmg.h"
 
 #include "../librt/debug.h"	/* XXX */
-
-extern int	atoi();
-extern long	time();
 
 extern long	nvectors;	/* from dodraw.c */
 
@@ -66,11 +64,8 @@ double		mged_abs_tol;
 double		mged_rel_tol = 0.01;		/* 1%, by default */
 double		mged_nrm_tol;			/* normal ang tol, radians */
 
-extern CONST double rt_degtorad;	/* XXX move to raytrace.h */
-extern CONST double rt_radtodeg;	/* XXX move to raytrace.h */
-
 static void	eedit();
-void	f_zap();
+void		f_zap();
 
 /* Delete an object or several objects from the display */
 /* Format: d object1 object2 .... objectn */
@@ -529,10 +524,34 @@ sol_com:
 	case ID_VOL:
 		(void)printf("%s: %s\n", dp->d_namep, rp->ss.ss_str );
 		break;
+	case ID_PARTICLE:
+		{
+			struct rt_external	ext;
+			struct rt_db_internal	intern;
+			mat_t			ident;
+			struct rt_vls		str;
+
+			printf("%s:  ", dp->d_namep);
+			RT_INIT_EXTERNAL(&ext);
+			ext.ext_buf = (genptr_t)rp;
+			ext.ext_nbytes = dp->d_len*sizeof(union record);
+			mat_idn( ident );
+			if( rt_part_import( &intern, &ext, ident ) < 0 )
+				printf("import error\n");
+			db_free_external( &ext );
+			rp = (union record *)0;
+			rt_vls_init( &str );
+			if( rt_part_describe( &str, &intern, 1 ) < 0 )
+				printf("describe error\n");
+			rt_part_ifree( &intern );
+			printf("%s", rt_vls_addr( &str ) );
+			rt_vls_free( &str );
+		}
+		break;
 	}
 
 out:
-	rt_free( (char *)rp, "do_list records");
+	if(rp) rt_free( (char *)rp, "do_list records");
 }
 
 /* List object information, verbose */
