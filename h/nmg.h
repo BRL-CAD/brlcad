@@ -291,7 +291,6 @@ struct model {
 	struct model_a		*ma_p;
 	struct rt_list		r_hd;	/* list of regions */
 	long			index;	/* struct # in this model */
-	char			*manifolds; /*  structure 1-3manifold table */
 	long			maxindex; /* # of structs so far */
 };
 
