@@ -1278,6 +1278,7 @@ struct rt_i {
 	int		useair;		/* 1="air" regions are retained while prepping */
 	int		rti_dont_instance; /* 1=Don't compress instances of solids into 1 while prepping */
 	int		rti_hasty_prep;	/* 1=hasty prep, slower ray-trace */
+	int		rti_nobool;	/* 1=find seg list only, no partitions */
 	int		rti_nlights;	/* number of light sources */
 	int		rti_prismtrace; /* add support for pixel prism trace */
 	char		*rti_region_fix_file; /* rt_regionfix() file or NULL */
