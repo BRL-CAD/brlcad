@@ -925,6 +925,21 @@ struct seg	*segHeadp;
 			ap->a_color[2] = (cv.crv_pdir[2] * (-.5)) + .5;
 	 	}
 		break;
+	case 6:
+		{
+			LOCAL struct uvcoord uv;
+
+			/* Exactly like 'testmap' shader: UV debug */
+			RT_HIT_UVCOORD( ap, pp->pt_inseg->seg_stp, hitp, &uv );
+
+			BU_ASSERT( uv.uv_u >= 0 );
+			BU_ASSERT( uv.uv_u <= 1 );
+			BU_ASSERT( uv.uv_v >= 0 );
+			BU_ASSERT( uv.uv_v <= 1 );
+
+			VSET( ap->a_color, uv.uv_u, 0, uv.uv_v );
+		}
+		break;
 	}
 
 	if(rdebug&RDEBUG_HITS)  {
@@ -1356,6 +1371,7 @@ bu_log("mallocing curr_float_frame\n");
 	case 1:
 	case 4:
 	case 5:
+	case 6:
 		ap->a_hit = viewit;
 		light_maker(3, view2model);
 		break;
