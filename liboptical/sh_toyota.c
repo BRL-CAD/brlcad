@@ -1435,7 +1435,7 @@ fastf_t	lambda;
 
 	if (lambda < 250. || lambda > 25000.)
 		rt_bomb("atmos_irradiance: bad wavelength.");
-	else {
+	{
 		/* Find index of lower lambda in table. */
 		lo = 0;
 		hi = NSIRRAD - 1;
