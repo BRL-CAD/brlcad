@@ -766,7 +766,7 @@ char	**argv;
 	}
 	fclose(fp);
 
-	cvt_vlblock_to_solids( "EYE_PATH", rtif_vbp );
+	cvt_vlblock_to_solids( rtif_vbp, "EYE_PATH" );
 	rt_vlblock_free(rtif_vbp);
 }
 
