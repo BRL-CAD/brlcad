@@ -3278,7 +3278,7 @@ rt_dsp_plot( vhead, ip, ttol, tol )
 	for (x=xfudge ; x < xlim ; x+=step ) {
 	    s_pt[X] = x;
 	    
-	    if (s_pt[Z] = DSP(dsp_ip, x, y)) {
+	    if ( (s_pt[Z] = DSP(dsp_ip, x, y)) ) {
 		if (drawing) {
 		    DRAW(s_pt);
 		} else {
@@ -3297,7 +3297,7 @@ rt_dsp_plot( vhead, ip, ttol, tol )
 	}
 		
 	s_pt[X] = xlim;
-	if (s_pt[Z] = DSP(dsp_ip, xlim, y)) {
+	if ( (s_pt[Z] = DSP(dsp_ip, xlim, y)) ) {
 	    if (drawing) {
 		DRAW(s_pt);
 	    } else {
@@ -3328,7 +3328,7 @@ rt_dsp_plot( vhead, ip, ttol, tol )
 	for (y=yfudge ; y < ylim ; y+=step) {
 	    s_pt[Y] = y;
 
-	    if (s_pt[Z] = DSP(dsp_ip, x, y)) {
+	    if ( (s_pt[Z] = DSP(dsp_ip, x, y)) ) {
 		if (drawing) {
 		    DRAW(s_pt);
 		} else {
@@ -3347,7 +3347,7 @@ rt_dsp_plot( vhead, ip, ttol, tol )
 	}
 		
 	s_pt[Y] = ylim;
-	if (s_pt[Z] = DSP(dsp_ip, x, ylim)) {
+	if ( (s_pt[Z] = DSP(dsp_ip, x, ylim)) ) {
 	    if (drawing) {
 		DRAW(s_pt);
 	    } else {
