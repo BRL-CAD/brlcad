@@ -51,7 +51,6 @@ cake \
  g_torus.o \
  g_part.o \
  g_pipe.o \
- msr.o \
  vert.o \
  nmg_class.o \
  &
