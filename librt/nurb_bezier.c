@@ -63,9 +63,9 @@ int
 rt_bez_check( srf )
 struct snurb * srf;
 {
-	if( srf->u_knots->k_size > (2.0 * srf->order[0]))
+	if( srf->u_knots.k_size > (2.0 * srf->order[0]))
 		return 0;
-	if( srf->v_knots->k_size > (2.0 * srf->order[1]))
+	if( srf->v_knots.k_size > (2.0 * srf->order[1]))
 		return 1;
 
 	return -1;

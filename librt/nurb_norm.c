@@ -45,39 +45,39 @@ fastf_t u, v;
 		se = (fastf_t *) rt_nurb_s_eval( srf, u, v);
 		
 		p = 0.0;
-		for( i = 0; i < srf->u_knots->k_size -1; i++)
+		for( i = 0; i < srf->u_knots.k_size -1; i++)
 		{
-			if ( srf->u_knots->knots[i] <= u 
-				&& u < srf->u_knots->knots[i+1] )
+			if ( srf->u_knots.knots[i] <= u 
+				&& u < srf->u_knots.knots[i+1] )
 			{
-				p = srf->u_knots->knots[i];
+				p = srf->u_knots.knots[i];
 
 				if (u == p)
-					p = srf->u_knots->knots[i+1];
+					p = srf->u_knots.knots[i+1];
 				if ( u == p && i > 1)
-					p = srf->u_knots->knots[i-1];
+					p = srf->u_knots.knots[i-1];
 			}
 		}
 
 		ue = (fastf_t *)rt_nurb_s_eval( srf, p, v);
 
 		p = 0.0;
-		for( i = 0; i < srf->v_knots->k_size -1; i++)
+		for( i = 0; i < srf->v_knots.k_size -1; i++)
 		{
-			if ( srf->v_knots->knots[i] < u 
-				&& srf->v_knots->knots[i+1] )
+			if ( srf->v_knots.knots[i] < u 
+				&& srf->v_knots.knots[i+1] )
 			{
-				p = srf->v_knots->knots[i];
+				p = srf->v_knots.knots[i];
 				if (v == p)
-					p = srf->v_knots->knots[i+1];
+					p = srf->v_knots.knots[i+1];
 				if ( v == p && i > 1)
-					p = srf->v_knots->knots[i-1];
+					p = srf->v_knots.knots[i-1];
 			}
 		}
 
 		ve = (fastf_t *) rt_nurb_s_eval( srf, u, p);		
 	
-		if( RT_NURB_IS_PT_RATIONAL(srf->mesh->pt_type))
+		if( RT_NURB_IS_PT_RATIONAL(srf->mesh.pt_type))
 		{
 			ue[0] = ue[0] / ue[3];
 			ue[1] = ue[1] / ue[3];
@@ -115,17 +115,17 @@ fastf_t u, v;
 		
 		norm = (fastf_t *) rt_malloc( 3 * sizeof(fastf_t),"normal");
 		p = 0.0;
-		for( i = 0; i < srf->u_knots->k_size -1; i++)
+		for( i = 0; i < srf->u_knots.k_size -1; i++)
 		{
-			if ( srf->u_knots->knots[i] <= u 
-				&& u < srf->u_knots->knots[i+1] )
+			if ( srf->u_knots.knots[i] <= u 
+				&& u < srf->u_knots.knots[i+1] )
 			{
-				p = srf->u_knots->knots[i];
+				p = srf->u_knots.knots[i];
 
 				if (u == p)
-					p = srf->u_knots->knots[i+1];
+					p = srf->u_knots.knots[i+1];
 				if ( u == p && i > 1)
-					p = srf->u_knots->knots[i-1];
+					p = srf->u_knots.knots[i-1];
 			}
 		}
 
@@ -135,7 +135,7 @@ fastf_t u, v;
 
 		ve = (fastf_t *) rt_nurb_s_eval(vsrf, u, v);
 
-		if( RT_NURB_IS_PT_RATIONAL(srf->mesh->pt_type) )
+		if( RT_NURB_IS_PT_RATIONAL(srf->mesh.pt_type) )
 		{
 			fastf_t w, inv_w;
 			
@@ -177,17 +177,17 @@ fastf_t u, v;
 		
 		norm = (fastf_t *) rt_malloc( 3 * sizeof(fastf_t),"normal");
 		p = 0.0;
-		for( i = 0; i < srf->v_knots->k_size -1; i++)
+		for( i = 0; i < srf->v_knots.k_size -1; i++)
 		{
-			if ( srf->v_knots->knots[i] <= v 
-				&& v < srf->v_knots->knots[i+1] )
+			if ( srf->v_knots.knots[i] <= v 
+				&& v < srf->v_knots.knots[i+1] )
 			{
-				p = srf->v_knots->knots[i];
+				p = srf->v_knots.knots[i];
 
 				if (v == p)
-					p = srf->u_knots->knots[i+1];
+					p = srf->u_knots.knots[i+1];
 				if ( v == p && i > 1)
-					p = srf->v_knots->knots[i-1];
+					p = srf->v_knots.knots[i-1];
 			}
 		}
 
@@ -196,7 +196,7 @@ fastf_t u, v;
 		usrf = (struct snurb *) rt_nurb_s_diff(srf, RT_NURB_SPLIT_ROW);
 		ue = (fastf_t *) rt_nurb_s_eval(usrf, u, v);
 
-		if( RT_NURB_IS_PT_RATIONAL(srf->mesh->pt_type) )
+		if( RT_NURB_IS_PT_RATIONAL(srf->mesh.pt_type) )
 		{
 			fastf_t w, inv_w;
 			
@@ -234,7 +234,7 @@ fastf_t u, v;
 	}
 	
 	/* Case Non Rational (order > 2, order > 2) */
-	if( !RT_NURB_IS_PT_RATIONAL(srf->mesh->pt_type))
+	if( !RT_NURB_IS_PT_RATIONAL(srf->mesh.pt_type))
 	{
 
 		norm = (fastf_t *) rt_malloc( sizeof( fastf_t) * 3, 
@@ -258,7 +258,7 @@ fastf_t u, v;
 	}
 
 	/* Case Rational (order > 2, order > 2) */
-	if( RT_NURB_IS_PT_RATIONAL(srf->mesh->pt_type))
+	if( RT_NURB_IS_PT_RATIONAL(srf->mesh.pt_type))
 	{
 		fastf_t w, inv_w;
 		vect_t unorm, vnorm;
