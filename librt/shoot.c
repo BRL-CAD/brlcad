@@ -695,7 +695,7 @@ register struct application *ap;
 	}
 
 	if( rtip->needprep )
-		rt_prep(rtip);
+		rt_prep_parallel(rtip, 1);	/* Stay on our CPU */
 
 	InitialPart.pt_forw = InitialPart.pt_back = &InitialPart;
 	InitialPart.pt_magic = PT_HD_MAGIC;
