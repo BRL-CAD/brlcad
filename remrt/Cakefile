@@ -38,7 +38,7 @@
 		RTDIR/sh_wood.o RTDIR/sh_scloud.o RTDIR/sh_fire.o RTDIR/turb.o \
 		RTDIR/sh_marble.o RTDIR/sh_stxt.o RTDIR/sh_gauss.o \
 		RTDIR/sh_points.o RTDIR/sh_toyota.o \
-		RTDIR/sh_Nfbm.o RTDIR/sh_camo.o \
+		RTDIR/sh_Nfbm.o RTDIR/sh_camo.o RTDIR/sh_paint.o \
 		RTDIR/sh_air.o \
 		RTDIR/sh_spm.o RTDIR/sh_light.o RTDIR/do.o \
 		LIBPKG LIBPKG_LIBES \
