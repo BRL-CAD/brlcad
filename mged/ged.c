@@ -331,7 +331,6 @@ int
 event_check( non_blocking )
 int	non_blocking;
 {
-	char		input_line[MAXLINE];
 	vect_t		knobvec;	/* knob slew */
 	int		i;
 	int		len;
@@ -346,13 +345,16 @@ int	non_blocking;
 	 */
 	i = dmp->dmr_input( 0, non_blocking );	/* fd 0 for cmds */
 	if( i )  {
-
-		input_line[0] = '\0';
+		struct rt_vls	str;
+		rt_vls_init(&str);
 
 		/* Read input line */
-		if( fgets( input_line, MAXLINE, stdin ) != NULL ) {
-			if( cmdline( input_line ) )
-				pr_prompt();
+		if( (len = rt_vls_gets( &str, stdin )) >= 0 )  {
+			rt_vls_strcat( &str, "\n" );
+			if( len > 0 )  {
+				if( cmdline( &str ) )
+					pr_prompt();
+			}
 		} else {
 			/* Check for Control-D (EOF) */
 			if( feof( stdin ) )  {
@@ -361,6 +363,7 @@ int	non_blocking;
 				/* NOTREACHED */
 			}
 		}
+		rt_vls_free(&str);
 	}
 	non_blocking = 0;
 
@@ -370,25 +373,23 @@ int	non_blocking;
 
 	/* Process any function button presses */
 	if( dm_values.dv_buttonpress )  {
-		rt_vls_strcat( &dm_values.dv_string, "press " );
-		rt_vls_strcat( &dm_values.dv_string,
+		rt_vls_printf( &dm_values.dv_string, "press %s\n",
 			label_button(dm_values.dv_buttonpress) );
-		rt_vls_strcat( &dm_values.dv_string, "\n" );
 		dm_values.dv_buttonpress = 0;
 	}
 
 	/* Detect any joystick activity */
 	if( dm_values.dv_xjoy != old_values.dv_xjoy )  {
-		sprintf(input_line, "knob x %f\n", dm_values.dv_xjoy );
-		rt_vls_strcat( &dm_values.dv_string, input_line);
+		rt_vls_printf( &dm_values.dv_string, "knob x %f\n",
+			dm_values.dv_xjoy );
 	}
 	if( dm_values.dv_yjoy != old_values.dv_yjoy )  {
-		sprintf(input_line, "knob y %f\n", dm_values.dv_yjoy );
-		rt_vls_strcat( &dm_values.dv_string, input_line);
+		rt_vls_printf( &dm_values.dv_string, "knob y %f\n",
+			dm_values.dv_yjoy );
 	}
 	if( dm_values.dv_zjoy != old_values.dv_zjoy )  {
-		sprintf(input_line, "knob z %f\n", dm_values.dv_zjoy );
-		rt_vls_strcat( &dm_values.dv_string, input_line);
+		rt_vls_printf( &dm_values.dv_string, "knob z %f\n",
+			dm_values.dv_zjoy );
 	}
 
 	/*
@@ -415,18 +416,16 @@ int	non_blocking;
 		break;
 
 	case DV_PICK:		/* transition 0 --> 1 */
-		sprintf(input_line, "M 1 %d %d\n",
+		rt_vls_printf( &dm_values.dv_string, "M 1 %d %d\n",
 			dm_values.dv_xpen, dm_values.dv_ypen);
-		rt_vls_strcat( &dm_values.dv_string, input_line);
 		non_blocking++;	/* to catch transition back to 0 */
 		need_penup = 1;
 		break;
 	case 0:			/* transition 1 --> 0 */
 		if( need_penup && formerly_non_blocking )  {
 			need_penup = 0;
-			sprintf(input_line, "M 0 %d %d\n",
+			rt_vls_printf( &dm_values.dv_string, "M 0 %d %d\n",
 				dm_values.dv_xpen, dm_values.dv_ypen);
-			rt_vls_strcat( &dm_values.dv_string, input_line);
 		}
 		break;
 	default:
@@ -441,22 +440,22 @@ int	non_blocking;
 	 * Apply the knob slew factor to the view center
 	 */
 	if( dm_values.dv_xslew != old_values.dv_xslew )  {
-		sprintf(input_line, "knob X %f\n", dm_values.dv_xslew );
-		rt_vls_strcat( &dm_values.dv_string, input_line);
+		rt_vls_printf( &dm_values.dv_string, "knob X %f\n",
+			dm_values.dv_xslew );
 	}
 	if( dm_values.dv_yslew != old_values.dv_yslew )  {
-		sprintf(input_line, "knob Y %f\n", dm_values.dv_yslew );
-		rt_vls_strcat( &dm_values.dv_string, input_line);
+		rt_vls_printf( &dm_values.dv_string, "knob Y %f\n",
+			dm_values.dv_yslew );
 	}
 	if( dm_values.dv_zslew != old_values.dv_zslew )  {
-		sprintf(input_line, "knob Z %f\n", dm_values.dv_zslew );
-		rt_vls_strcat( &dm_values.dv_string, input_line);
+		rt_vls_printf( &dm_values.dv_string, "knob Z %f\n",
+			dm_values.dv_zslew );
 	}
 
 	/* Apply zoom rate input to current view window size */
 	if( dm_values.dv_zoom != old_values.dv_zoom )  {
-		sprintf(input_line, "knob S %f\n", dm_values.dv_zoom );
-		rt_vls_strcat( &dm_values.dv_string, input_line);
+		rt_vls_printf( &dm_values.dv_string, "knob S %f\n",
+			dm_values.dv_zoom );
 	}
 
 	/* See if the angle/distance cursor is doing anything */
@@ -492,10 +491,7 @@ int	non_blocking;
 			/* Copy one cmd, incl newline.  Null terminate */
 			rt_vls_strncpy( &cmd, cp, ep-cp+1 );
 			/* cmdline insists on ending with newline&null */
-#if 0
-printf("cmd: %s", rt_vls_addr(&cmd) );
-#endif
-			(void)cmdline( rt_vls_addr(&cmd) );
+			(void)cmdline( &cmd );
 			cp = ep+1;
 		}
 		rt_vls_trunc( &dm_values.dv_string, 0 );
@@ -812,30 +808,6 @@ new_mats()
 }
 
 /*
- *			S O U R C E _ F I L E
- *
- *  XXX This should probably move to mged/cmd.c
- */
-static void
-source_file(fp)
-register FILE	*fp;
-{
-	struct rt_vls	str;
-	int		len;
-
-	rt_vls_init(&str);
-
-	while( (len = rt_vls_gets( &str, fp )) >= 0 )  {
-		rt_vls_strcat( &str, "\n" );
-		if( len > 0 )  cmdline( rt_vls_addr( &str ) );
-		rt_vls_trunc( &str, 0 );
-	}
-
-	rt_vls_free(&str);
-}
-
-
-/*
  *			D O _ R C
  *
  *  If an mgedrc file exists, open it and process the commands within.
@@ -854,7 +826,7 @@ do_rc()
 
 	if( (path = getenv("MGED_RCFILE")) != (char *)NULL )  {
 		if( (fp = fopen(path, "r")) != NULL )  {
-			source_file( fp );
+			mged_source_file( fp );
 			fclose(fp);
 			return(0);
 		}
@@ -865,7 +837,7 @@ do_rc()
 		rt_vls_strcpy( &str, path );
 		rt_vls_strcat( &str, "/.mgedrc" );
 		if( (fp = fopen(rt_vls_addr(&str), "r")) != NULL )  {
-			source_file( fp );
+			mged_source_file( fp );
 			fclose(fp);
 			rt_vls_free(&str);
 			return(0);
@@ -873,7 +845,7 @@ do_rc()
 		rt_vls_free(&str);
 	}
 	if( (fp = fopen( ".mgedrc", "r" )) != NULL )  {
-		source_file( fp );
+		mged_source_file( fp );
 		fclose(fp);
 		return(0);
 	}

@@ -336,12 +336,14 @@ static struct funtab {
  * when non-blocking I/O is used instead of select.
  */
 int
-cmdline(line)
-char	*line;
+cmdline(vp)
+struct rt_vls	*vp;
 {
 	int	i;
 
-	i = parse_line(line);
+	RT_VLS_CHECK(vp);
+
+	i = parse_line(rt_vls_addr(vp));
 	if( i == 0 ) {
 		mged_cmd( numargs, cmd_args );
 		return 1;
@@ -608,4 +610,26 @@ char	**argv;
 			break;
 	}
 	dir_summary(flags);
+}
+
+/*
+ *			S O U R C E _ F I L E
+ *
+ */
+void
+mged_source_file(fp)
+register FILE	*fp;
+{
+	struct rt_vls	str;
+	int		len;
+
+	rt_vls_init(&str);
+
+	while( (len = rt_vls_gets( &str, fp )) >= 0 )  {
+		rt_vls_strcat( &str, "\n" );
+		if( len > 0 )  cmdline( &str );
+		rt_vls_trunc( &str, 0 );
+	}
+
+	rt_vls_free(&str);
 }
