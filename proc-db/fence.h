@@ -21,6 +21,7 @@
  *      This software is Copyright (C) 1998 & 1999 by the United States
  *      Army in all countries except the USA.  All rights reserved.
  */
+
 #ifndef __FENCE_H__
 #define __FENCE_H__
 
