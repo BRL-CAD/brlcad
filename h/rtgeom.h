@@ -210,4 +210,75 @@ struct rt_part_internal {
 #define RT_PARTICLE_TYPE_CYLINDER	2
 #define RT_PARTICLE_TYPE_CONE		3
 
+/*
+ *	ID_RPC
+ */
+struct rt_rpc_internal {
+	long	rpc_magic;
+	point_t	rpc_V;	/* rpc vertex */
+	vect_t	rpc_H;	/* height vector */
+	vect_t	rpc_B;	/* breadth vector */
+	fastf_t	rpc_r;	/* scalar half-width of rectangular face */
+};
+#define RT_RPC_INTERNAL_MAGIC	0xaaccee88
+#define RT_RPC_CK_MAGIC(_p)	RT_CKMAG(_p,RT_RPC_INTERNAL_MAGIC,"rt_rpc_internal")
+
+/*
+ *	ID_RHC
+ */
+struct rt_rhc_internal {
+	long	rhc_magic;
+	point_t	rhc_V;	/* rhc vertex */
+	vect_t	rhc_H;	/* height vector */
+	vect_t	rhc_B;	/* breadth vector */
+	fastf_t	rhc_r;	/* scalar half-width of rectangular face */
+	fastf_t	rhc_c;	/* dist from hyperbola to vertex of asymptotes */
+};
+#define RT_RHC_INTERNAL_MAGIC	0xaaccee89
+#define RT_RHC_CK_MAGIC(_p)	RT_CKMAG(_p,RT_RHC_INTERNAL_MAGIC,"rt_rhc_internal")
+
+/*
+ *	ID_EPA
+ */
+struct rt_epa_internal {
+	long	epa_magic;
+	point_t	epa_V;	/* epa vertex */
+	vect_t	epa_H;	/* height vector */
+	vect_t	epa_Au;	/* unit vector along semi-major axis */
+	fastf_t	epa_r1;	/* scalar semi-major axis length */
+	fastf_t	epa_r2;	/* scalar semi-minor axis length */
+};
+#define RT_EPA_INTERNAL_MAGIC	0xaaccee90
+#define RT_EPA_CK_MAGIC(_p)	RT_CKMAG(_p,RT_EPA_INTERNAL_MAGIC,"rt_epa_internal")
+
+/*
+ *	ID_EHY
+ */
+struct rt_ehy_internal {
+	long	ehy_magic;
+	point_t	ehy_V;	/* ehy vertex */
+	vect_t	ehy_H;	/* height vector */
+	vect_t	ehy_Au;	/* unit vector along semi-major axis */
+	fastf_t	ehy_r1;	/* scalar semi-major axis length */
+	fastf_t	ehy_r2;	/* scalar semi-minor axis length */
+	fastf_t	ehy_c;	/* dist from hyperbola to vertex of asymptotes */
+};
+#define RT_EHY_INTERNAL_MAGIC	0xaaccee91
+#define RT_EHY_CK_MAGIC(_p)	RT_CKMAG(_p,RT_EHY_INTERNAL_MAGIC,"rt_ehy_internal")
+
+/*
+ *	ID_ETO
+ */
+struct rt_eto_internal {
+	long	eto_magic;
+	point_t	eto_V;	/* eto vertex */
+	vect_t	eto_N;	/* vector normal to plane of torus */
+	vect_t	eto_C;	/* vector along semi-major axis of ellipse */
+	fastf_t	eto_r;	/* scalar radius of rotation */
+	fastf_t	eto_rd;	/* scalar length of semi-minor of ellipse */
+};
+#define RT_ETO_INTERNAL_MAGIC	0xaaccee92
+#define RT_ETO_CK_MAGIC(_p)	RT_CKMAG(_p,RT_ETO_INTERNAL_MAGIC,"rt_eto_internal")
+
+
 #endif /* SEEN_RTGEOM_H */
