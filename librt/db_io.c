@@ -59,7 +59,7 @@ CONST struct directory	*dp;
 	union record	*where;
 
 	if( dbip->dbi_magic != DBI_MAGIC )  rt_bomb("db_getmrec:  bad dbip\n");
-	if(rt_g.debug&DEBUG_DB) rt_log("db_getmrec(%s) x%x, x%x\n",
+	if(rt_g.debug&DEBUG_DB) bu_log("db_getmrec(%s) x%x, x%x\n",
 		dp->d_namep, dbip, dp );
 
 	if( dp->d_addr < 0 )
@@ -97,7 +97,7 @@ int		len;
 {
 
 	if( dbip->dbi_magic != DBI_MAGIC )  rt_bomb("db_get:  bad dbip\n");
-	if(rt_g.debug&DEBUG_DB) rt_log("db_get(%s) x%x, x%x x%x off=%d len=%d\n",
+	if(rt_g.debug&DEBUG_DB) bu_log("db_get(%s) x%x, x%x x%x off=%d len=%d\n",
 		dp->d_namep, dbip, dp, where, offset, len );
 
 	if( dp->d_addr < 0 )  {
@@ -105,7 +105,7 @@ int		len;
 		return(-1);
 	}
 	if( offset < 0 || offset+len > dp->d_len )  {
-		rt_log("db_get(%s):  xfer %d..%x exceeds 0..%d\n",
+		bu_log("db_get(%s):  xfer %d..%x exceeds 0..%d\n",
 			dp->d_namep, offset, offset+len, dp->d_len );
 		where->u_id = '\0';	/* undefined id */
 		return(-1);
@@ -139,16 +139,16 @@ int		len;
 {
 
 	if( dbip->dbi_magic != DBI_MAGIC )  rt_bomb("db_put:  bad dbip\n");
-	if(rt_g.debug&DEBUG_DB) rt_log("db_put(%s) x%x, x%x x%x off=%d len=%d\n",
+	if(rt_g.debug&DEBUG_DB) bu_log("db_put(%s) x%x, x%x x%x off=%d len=%d\n",
 		dp->d_namep, dbip, dp, where, offset, len );
 
 	if( dbip->dbi_read_only )  {
-		rt_log("db_put(%s):  READ-ONLY file\n",
+		bu_log("db_put(%s):  READ-ONLY file\n",
 			dbip->dbi_filename);
 		return(-1);
 	}
 	if( offset < 0 || offset+len > dp->d_len )  {
-		rt_log("db_put(%s):  xfer %d..%x exceeds 0..%d\n",
+		bu_log("db_put(%s):  xfer %d..%x exceeds 0..%d\n",
 			dp->d_namep, offset, offset+len, dp->d_len );
 		return(-1);
 	}
@@ -183,7 +183,7 @@ long		offset;		/* byte offset from start of file */
 
 	if( dbip->dbi_magic != DBI_MAGIC )  rt_bomb("db_read:  bad dbip\n");
 	if(rt_g.debug&DEBUG_DB)  {
-		rt_log("db_read(dbip=x%x, addr=x%x, count=%d., offset=%d.)\n",
+		bu_log("db_read(dbip=x%x, addr=x%x, count=%d., offset=%d.)\n",
 			dbip, addr, count, offset );
 	}
 	if( count <= 0 || offset < 0 )  {
@@ -192,7 +192,7 @@ long		offset;		/* byte offset from start of file */
 	if( dbip->dbi_inmem )  {
 		if( offset+count > dbip->dbi_eof )  {
 			/* Attempt to read off the end of the (mapped) file */
-			rt_log("db_read(%s) ERROR offset=%d, count=%d, dbi_eof=%d\n",
+			bu_log("db_read(%s) ERROR offset=%d, count=%d, dbi_eof=%d\n",
 				dbip->dbi_filename,
 				offset, count, dbip->dbi_eof );
 			return -1;
@@ -203,7 +203,7 @@ long		offset;		/* byte offset from start of file */
 	RES_ACQUIRE( &rt_g.res_syscall );
 #ifdef HAVE_UNIX_IO
 	if ((s=(long)lseek( dbip->dbi_fd, (off_t)offset, 0 )) != offset) {
-		rt_log("db_read: lseek returns %d not %d\n", s, offset);
+		bu_log("db_read: lseek returns %d not %d\n", s, offset);
 		rt_bomb("Goodbye");
 	}
 	got = read( dbip->dbi_fd, addr, count );
@@ -216,7 +216,7 @@ long		offset;		/* byte offset from start of file */
 
 	if( got != count )  {
 		perror("db_read");
-		rt_log("db_read(%s):  read error.  Wanted %d, got %d bytes\n",
+		bu_log("db_read(%s):  read error.  Wanted %d, got %d bytes\n",
 			dbip->dbi_filename, count, got );
 		return(-1);
 	}
@@ -245,11 +245,11 @@ long		offset;
 
 	if( dbip->dbi_magic != DBI_MAGIC )  rt_bomb("db_write:  bad dbip\n");
 	if(rt_g.debug&DEBUG_DB)  {
-		rt_log("db_write(dbip=x%x, addr=x%x, count=%d., offset=%d.)\n",
+		bu_log("db_write(dbip=x%x, addr=x%x, count=%d., offset=%d.)\n",
 			dbip, addr, count, offset );
 	}
 	if( dbip->dbi_read_only )  {
-		rt_log("db_write(%s):  READ-ONLY file\n",
+		bu_log("db_write(%s):  READ-ONLY file\n",
 			dbip->dbi_filename);
 		return(-1);
 	}
@@ -257,7 +257,7 @@ long		offset;
 		return(-1);
 	}
 	if( dbip->dbi_inmem )  {
-		rt_log("db_write() in memory?\n");
+		bu_log("db_write() in memory?\n");
 		return(-1);
 	}
 	RES_ACQUIRE( &rt_g.res_syscall );
@@ -271,7 +271,7 @@ long		offset;
 	RES_RELEASE( &rt_g.res_syscall );
 	if( got != count )  {
 		perror("db_write");
-		rt_log("db_write(%s):  write error.  Wanted %d, got %d bytes\n",
+		bu_log("db_write(%s):  write error.  Wanted %d, got %d bytes\n",
 			dbip->dbi_filename, count, got );
 		return(-1);
 	}
@@ -287,18 +287,18 @@ long		offset;
  */
 int
 db_get_external( ep, dp, dbip )
-register struct rt_external	*ep;
+register struct bu_external	*ep;
 CONST struct directory		*dp;
 struct db_i			*dbip;
 {
 	if( dbip->dbi_magic != DBI_MAGIC )  rt_bomb("db_get_external:  bad dbip\n");
-	if(rt_g.debug&DEBUG_DB) rt_log("db_get_external(%s) ep=x%x, dbip=x%x, dp=x%x\n",
+	if(rt_g.debug&DEBUG_DB) bu_log("db_get_external(%s) ep=x%x, dbip=x%x, dp=x%x\n",
 		dp->d_namep, ep, dbip, dp );
 
 	if( dp->d_addr < 0 )
 		return( -1 );		/* was dummy DB entry */
 
-	RT_INIT_EXTERNAL(ep);
+	BU_INIT_EXTERNAL(ep);
 	ep->ext_nbytes = dp->d_len * sizeof(union record);
 	ep->ext_buf = (genptr_t)rt_malloc(
 		ep->ext_nbytes, "db_get_ext ext_buf");
@@ -326,7 +326,7 @@ struct db_i			*dbip;
  */
 int
 db_put_external( ep, dp, dbip )
-struct rt_external	*ep;
+struct bu_external	*ep;
 struct directory	*dp;
 struct db_i		*dbip;
 {
@@ -334,10 +334,10 @@ struct db_i		*dbip;
 	int	ngran;
 
 	if( dbip->dbi_magic != DBI_MAGIC )  rt_bomb("db_put_external:  bad dbip\n");
-	if(rt_g.debug&DEBUG_DB) rt_log("db_put_external(%s) ep=x%x, dbip=x%x, dp=x%x\n",
+	if(rt_g.debug&DEBUG_DB) bu_log("db_put_external(%s) ep=x%x, dbip=x%x, dp=x%x\n",
 		dp->d_namep, ep, dbip, dp );
 
-	RT_CK_EXTERNAL(ep);
+	BU_CK_EXTERNAL(ep);
 
 	ngran = (ep->ext_nbytes+sizeof(union record)-1)/sizeof(union record);
 	if( ngran != dp->d_len )  {
@@ -353,7 +353,7 @@ struct db_i		*dbip;
 	}
 	/* Sanity check */
 	if( ngran != dp->d_len )  {
-		rt_log("db_put_external(%s) ngran=%d != dp->d_len %d\n",
+		bu_log("db_put_external(%s) ngran=%d != dp->d_len %d\n",
 			dp->d_namep, ngran, dp->d_len );
 		rt_bomb("db_io.c: db_put_external()");
 	}
@@ -372,9 +372,9 @@ struct db_i		*dbip;
  */
 void
 db_free_external( ep )
-register struct rt_external	*ep;
+register struct bu_external	*ep;
 {
-	RT_CK_EXTERNAL(ep);
+	BU_CK_EXTERNAL(ep);
 	if( ep->ext_buf )  {
 		rt_free( ep->ext_buf, "db_get_ext ext_buf" );
 		ep->ext_buf = GENPTR_NULL;

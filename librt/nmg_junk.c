@@ -15,26 +15,26 @@
  */
 
 struct groupie {
-	struct rt_list	l;
+	struct bu_list	l;
 	struct loopuse *lu;
 }
 
 struct loopgroup {
-	struct rt_list	l;
-	struct rt_list	groupies;
+	struct bu_list	l;
+	struct bu_list	groupies;
 } groups;
 
 
 struct loopgroup *
 group(lu, groups)
 struct loopuse *lu;
-struct rt_list *groups;
+struct bu_list *groups;
 {
 	struct loopgroup *group;
 	struct groupie *groupie;
 
-	for (RT_LIST_FOR(group, loopgroup, groups)) {
-		for (RT_LIST_FOR(groupie, groupie, &groupies)) {
+	for (BU_LIST_FOR(group, loopgroup, groups)) {
+		for (BU_LIST_FOR(groupie, groupie, &groupies)) {
 			if (groupie->lu == lu)
 				return(group);
 		}
@@ -45,7 +45,7 @@ struct rt_list *groups;
 void
 new_loop_group(lu, groups)
 struct loopuse *lu;
-struct rt_list *groups;
+struct bu_list *groups;
 {
 	struct loopgroup *lg;
 	struct groupie *groupie;
@@ -54,9 +54,9 @@ struct rt_list *groups;
 	groupie = (struct groupie *)rt_calloc(sizeof(struct groupie), "groupie");
 	groupie->lu = lu;
 
-	RT_LIST_INIT(&lg->groupies);
-	RT_LIST_APPEND(&lg->groupies, &groupie->l);
-	RT_LIST_APPEND(groups, &lg.l);
+	BU_LIST_INIT(&lg->groupies);
+	BU_LIST_APPEND(&lg->groupies, &groupie->l);
+	BU_LIST_APPEND(groups, &lg.l);
 }
 
 void
@@ -65,23 +65,23 @@ struct loopgroup *lg1, *lg2;
 {
 	struct groupie *groupie;
 
-	while (RT_LIST_WHILE(groupie, groupie, &lg2->groupies)) {
-		RT_LIST_DEQUEUE(&(groupie->l));
-		RT_LIST_APPEND(&(lg1->groupies), &(groupie->l))
+	while (BU_LIST_WHILE(groupie, groupie, &lg2->groupies)) {
+		BU_LIST_DEQUEUE(&(groupie->l));
+		BU_LIST_APPEND(&(lg1->groupies), &(groupie->l))
 	}
 	RT_DEQUEUE(&(lg2->l));
 	rt_free((char *)lg2, "free loopgroup 2 of merge");
 }
 void
 free_groups(head)
-struct rt_list *head;
+struct bu_list *head;
 {
 	while
 }
 
-	RT_LIST_INIT(&groups);
+	BU_LIST_INIT(&groups);
 
-	for (RT_LIST_FOR(lu, loopuse, &fu->lu_hd)) {
+	for (BU_LIST_FOR(lu, loopuse, &fu->lu_hd)) {
 
 		/* build loops out of exterior loops only */
 		if (lu->orientation == OT_OPPOSITE)
@@ -90,7 +90,7 @@ struct rt_list *head;
 		if (group(lu) == NULL)
 			new_loop_group(lu, &groups);
 
-		for (RT_LIST_FOR(lu2, loopuse, &fu->lu_hd)) {
+		for (BU_LIST_FOR(lu2, loopuse, &fu->lu_hd)) {
 			if (lu == lu2 ||
 			    group(lu, &groups) == group(lu2, &groups))
 				continue;
@@ -126,11 +126,11 @@ struct edgeuse *eu;
 
 
 
-	matenext = RT_LIST_PNEXT_CIRC(eu->eumate_p);
+	matenext = BU_LIST_PNEXT_CIRC(eu->eumate_p);
 	NMG_CK_EDGEUSE(matenext);
 
-	RT_LIST_DEQUEUE(eu);
-	RT_LIST_DEQUEUE(matenext);
+	BU_LIST_DEQUEUE(eu);
+	BU_LIST_DEQUEUE(matenext);
 
 }
 #endif
@@ -163,7 +163,7 @@ struct shell *
 nmg_polytonmg(fp, r, tol)
 FILE *fp;
 struct nmgregion	*r;
-CONST struct rt_tol	*tol;
+CONST struct bn_tol	*tol;
 {
 	int i, j, num_pts, num_facets, pts_this_face, facet;
 	int vl_len;
@@ -186,7 +186,7 @@ CONST struct rt_tol	*tol;
 		rt_bomb("polytonmg() Error in first line of poly file\n");
 	else
 		if (rt_g.NMG_debug & DEBUG_POLYTO)
-			rt_log("points: %d  facets: %d\n",
+			bu_log("points: %d  facets: %d\n",
 				num_pts, num_facets);
 
 
@@ -205,7 +205,7 @@ CONST struct rt_tol	*tol;
 			rt_bomb("polytonmg() Error reading point");
 		else
 			if (rt_g.NMG_debug & DEBUG_POLYTO)
-				rt_log("read vertex #%d (%g %g %g)\n",
+				bu_log("read vertex #%d (%g %g %g)\n",
 					i, p[0], p[1], p[2]);
 
 		nmg_vertex_gv(v[i], p);
@@ -219,7 +219,7 @@ CONST struct rt_tol	*tol;
 			rt_bomb("polytonmg() error getting pt count for this face");
 
 		if (rt_g.NMG_debug & DEBUG_POLYTO)
-			rt_log("facet %d pts in face %d\n",
+			bu_log("facet %d pts in face %d\n",
 				facet, pts_this_face);
 
 		if (pts_this_face > vl_len) {
@@ -236,22 +236,22 @@ CONST struct rt_tol	*tol;
 		}
 
 		fu = nmg_cface(s, vl, pts_this_face);
-		lu = RT_LIST_FIRST( loopuse, &fu->lu_hd );
+		lu = BU_LIST_FIRST( loopuse, &fu->lu_hd );
 		/* XXX should check for vertex-loop */
-		eu = RT_LIST_FIRST( edgeuse, &lu->down_hd );
+		eu = BU_LIST_FIRST( edgeuse, &lu->down_hd );
 		NMG_CK_EDGEUSE(eu);
-		if (rt_mk_plane_3pts(plane, eu->vu_p->v_p->vg_p->coord,
-		    RT_LIST_PNEXT(edgeuse,eu)->vu_p->v_p->vg_p->coord,
-		    RT_LIST_PLAST(edgeuse,eu)->vu_p->v_p->vg_p->coord,
+		if (bn_mk_plane_3pts(plane, eu->vu_p->v_p->vg_p->coord,
+		    BU_LIST_PNEXT(edgeuse,eu)->vu_p->v_p->vg_p->coord,
+		    BU_LIST_PLAST(edgeuse,eu)->vu_p->v_p->vg_p->coord,
 		    tol ) )  {
-			rt_log("At %d in %s\n", __LINE__, __FILE__);
+			bu_log("At %d in %s\n", __LINE__, __FILE__);
 			rt_bomb("polytonmg() cannot make plane equation\n");
 		}
 		else nmg_face_g(fu, plane);
 	}
 
 	for (i=0 ; i < num_pts ; ++i) {
-		if( RT_LIST_IS_EMPTY( &v[i]->vu_hd ) )  continue;
+		if( BU_LIST_IS_EMPTY( &v[i]->vu_hd ) )  continue;
 		FREE_VERTEX(v[i]);
 	}
 	rt_free( (char *)v, "vertex array");
@@ -288,7 +288,7 @@ int	n;
 	heap = (struct vertex **)
 		rt_malloc(1 + n*sizeof(struct vertex *), "heap");
 	if (heap == (struct vertex **)NULL) {
-		rt_log("init_heap: no mem\n");
+		bu_log("init_heap: no mem\n");
 		rt_bomb("");
 	}
 	return(heap);
@@ -419,18 +419,18 @@ struct shell	*s2;
 	NMG_CK_SHELL(s1);
 
 	if (rt_g.NMG_debug & DEBUG_POLYSECT)
-		rt_log("nmg_isect_face3p_shell_int(, fu1=x%x, s2=x%x) START\n", fu1, s2 );
+		bu_log("nmg_isect_face3p_shell_int(, fu1=x%x, s2=x%x) START\n", fu1, s2 );
 
-	for( RT_LIST_FOR( lu1, loopuse, &fu1->lu_hd ) )  {
+	for( BU_LIST_FOR( lu1, loopuse, &fu1->lu_hd ) )  {
 		NMG_CK_LOOPUSE(lu1);
-		if( RT_LIST_FIRST_MAGIC( &lu1->down_hd ) == NMG_VERTEXUSE_MAGIC)
+		if( BU_LIST_FIRST_MAGIC( &lu1->down_hd ) == NMG_VERTEXUSE_MAGIC)
 			continue;
-		for( RT_LIST_FOR( eu1, edgeuse, &lu1->down_hd ) )  {
+		for( BU_LIST_FOR( eu1, edgeuse, &lu1->down_hd ) )  {
 			struct edgeuse		*eu2;
 
 			eu2 = nmg_find_matching_eu_in_s( eu1, s2 );
 			if( eu2	)  {
-rt_log("nmg_isect_face3p_shell_int() eu1=x%x, e1=x%x, eu2=x%x, e2=x%x (nothing to do)\n", eu1, eu1->e_p, eu2, eu2->e_p);
+bu_log("nmg_isect_face3p_shell_int() eu1=x%x, e1=x%x, eu2=x%x, e2=x%x (nothing to do)\n", eu1, eu1->e_p, eu2, eu2->e_p);
 				/*  Whether the edgeuse is in a face, or a
 				 *  wire edgeuse, the other guys will isect it.
 				 */
@@ -440,11 +440,11 @@ rt_log("nmg_isect_face3p_shell_int() eu1=x%x, e1=x%x, eu2=x%x, e2=x%x (nothing t
 			 *  edge running between them in shell s2.
 			 *  Create a line of intersection, and go to it!.
 			 */
-rt_log("nmg_isect_face3p_shell_int(, s2=x%x) eu1=x%x, no eu2\n", s2, eu1);
+bu_log("nmg_isect_face3p_shell_int(, s2=x%x) eu1=x%x, no eu2\n", s2, eu1);
 			nmg_isect_edge3p_shell( is, eu1, s2 );
 		}
 	}
 
 	if (rt_g.NMG_debug & DEBUG_POLYSECT)
-		rt_log("nmg_isect_face3p_shell_int(, fu1=x%x, s2=x%x) END\n", fu1, s2 );
+		bu_log("nmg_isect_face3p_shell_int(, fu1=x%x, s2=x%x) END\n", fu1, s2 );
 }

@@ -620,18 +620,18 @@ register struct application *ap;
 	FinalPart.pt_forw = FinalPart.pt_back = &FinalPart;
 	FinalPart.pt_magic = PT_HD_MAGIC;
 
-	RT_LIST_INIT( &new_segs.l );
-	RT_LIST_INIT( &waiting_segs.l );
-	RT_LIST_INIT( &finished_segs.l );
+	BU_LIST_INIT( &new_segs.l );
+	BU_LIST_INIT( &waiting_segs.l );
+	BU_LIST_INIT( &finished_segs.l );
 
-	if( RT_LIST_UNINITIALIZED( &resp->re_parthead ) )  {
-		RT_LIST_INIT( &resp->re_parthead );
+	if( BU_LIST_UNINITIALIZED( &resp->re_parthead ) )  {
+		BU_LIST_INIT( &resp->re_parthead );
 
 		/* If one is, they all probably are.  Runs once per processor. */
-		if( RT_LIST_UNINITIALIZED( &resp->re_solid_bitv ) )
-			RT_LIST_INIT(  &resp->re_solid_bitv );
-		if( RT_LIST_UNINITIALIZED( &resp->re_region_ptbl ) )
-			RT_LIST_INIT(  &resp->re_region_ptbl );
+		if( BU_LIST_UNINITIALIZED( &resp->re_solid_bitv ) )
+			BU_LIST_INIT(  &resp->re_solid_bitv );
+		if( BU_LIST_UNINITIALIZED( &resp->re_region_ptbl ) )
+			BU_LIST_INIT(  &resp->re_region_ptbl );
 
 		/*
 		 *  Add this resource structure to the table.
@@ -641,22 +641,22 @@ register struct application *ap;
 		bu_ptbl_ins_unique( &rtip->rti_resources, (long *)resp );
 		RES_RELEASE(&rt_g.res_model);
 	}
-	if( RT_LIST_IS_EMPTY( &resp->re_solid_bitv ) )  {
+	if( BU_LIST_IS_EMPTY( &resp->re_solid_bitv ) )  {
 		solidbits = bu_bitv_new( rtip->nsolids );
 	} else {
-		solidbits = RT_LIST_FIRST( bu_bitv, &resp->re_solid_bitv );
-		RT_LIST_DEQUEUE( &solidbits->l );
+		solidbits = BU_LIST_FIRST( bu_bitv, &resp->re_solid_bitv );
+		BU_LIST_DEQUEUE( &solidbits->l );
 		BU_CK_BITV(solidbits);
 		BU_BITV_NBITS_CHECK( solidbits, rtip->nsolids );
 	}
 	bu_bitv_clear(solidbits);
 
-	if( RT_LIST_IS_EMPTY( &resp->re_region_ptbl ) )  {
-		BU_GETSTRUCT( regionbits, bu_ptbl );
+	if( BU_LIST_IS_EMPTY( &resp->re_region_ptbl ) )  {
+		BU_BU_GETSTRUCT( regionbits, bu_ptbl );
 		bu_ptbl_init( regionbits, 7, "rt_shootray() regionbits ptbl" );
 	} else {
-		regionbits = RT_LIST_FIRST( bu_ptbl, &resp->re_region_ptbl );
-		RT_LIST_DEQUEUE( &regionbits->l );
+		regionbits = BU_LIST_FIRST( bu_ptbl, &resp->re_region_ptbl );
+		BU_LIST_DEQUEUE( &regionbits->l );
 		BU_CK_PTBL(regionbits);
 	}
 
@@ -740,7 +740,7 @@ register struct application *ap;
 	    	 * XXX and let rt_advance_to_next_cell mention them otherwise,
 	    	 * XXX such as when rays escape from the model RPP.
 	    	 */
-	    	if( RT_LIST_NON_EMPTY( &waiting_segs.l ) )  {
+	    	if( BU_LIST_NON_EMPTY( &waiting_segs.l ) )  {
 	    		/* Go handle the infinite objects we hit */
 	    		ss.model_end = INFINITY;
 	    		goto weave;
@@ -833,7 +833,7 @@ register struct application *ap;
 
 			if(debug_shoot)bu_log("shooting %s\n", stp->st_name);
 			resp->re_shots++;
-			RT_LIST_INIT( &(new_segs.l) );
+			BU_LIST_INIT( &(new_segs.l) );
 			if( rt_functab[stp->st_id].ft_shot( 
 			    stp, &ss.newray, ap, &new_segs ) <= 0 )  {
 				resp->re_shot_miss++;
@@ -843,12 +843,12 @@ register struct application *ap;
 			/* Add seg chain to list awaiting rt_boolweave() */
 			{
 				register struct seg *s2;
-				while(RT_LIST_WHILE(s2,seg,&(new_segs.l)))  {
-					RT_LIST_DEQUEUE( &(s2->l) );
+				while(BU_LIST_WHILE(s2,seg,&(new_segs.l)))  {
+					BU_LIST_DEQUEUE( &(s2->l) );
 					/* Restore to original distance */
 					s2->seg_in.hit_dist += ss.dist_corr;
 					s2->seg_out.hit_dist += ss.dist_corr;
-					RT_LIST_INSERT( &(waiting_segs.l), &(s2->l) );
+					BU_LIST_INSERT( &(waiting_segs.l), &(s2->l) );
 				}
 			}
 			resp->re_shot_hit++;
@@ -870,7 +870,7 @@ register struct application *ap;
 		 *  All partitions will have valid in and out distances.
 		 *  a_ray_length is treated similarly to a_onehit.
 		 */
-		if( ap->a_onehit > 0 && RT_LIST_NON_EMPTY( &(waiting_segs.l) ) )  {
+		if( ap->a_onehit > 0 && BU_LIST_NON_EMPTY( &(waiting_segs.l) ) )  {
 			int	done;
 
 			/* Weave these segments into partition list */
@@ -897,12 +897,12 @@ register struct application *ap;
 	 *  Weave any remaining segments into the partition list.
 	 */
 weave:
-	if( RT_LIST_NON_EMPTY( &(waiting_segs.l) ) )  {
+	if( BU_LIST_NON_EMPTY( &(waiting_segs.l) ) )  {
 		rt_boolweave( &finished_segs, &waiting_segs, &InitialPart, ap );
 	}
 
 	/* finished_segs chain now has all segments hit by this ray */
-	if( RT_LIST_IS_EMPTY( &(finished_segs.l) ) )  {
+	if( BU_LIST_IS_EMPTY( &(finished_segs.l) ) )  {
 		ap->a_return = ap->a_miss( ap );
 		status = "MISS solids";
 		goto out;
@@ -962,9 +962,9 @@ hitit:
 out:
 	/*  Return dynamic resources to their freelists.  */
 	BU_CK_BITV(solidbits);
-	RT_LIST_APPEND( &resp->re_solid_bitv, &solidbits->l );
+	BU_LIST_APPEND( &resp->re_solid_bitv, &solidbits->l );
 	BU_CK_PTBL(regionbits);
-	RT_LIST_APPEND( &resp->re_region_ptbl, &regionbits->l );
+	BU_LIST_APPEND( &resp->re_region_ptbl, &regionbits->l );
 
 	/*
 	 *  Record essential statistics in per-processor data structure.
@@ -1233,7 +1233,7 @@ struct application	*ap; /* pointer to an application */
 	register struct seg *tmp_seg;
 	struct seg	seghead;
 
-	RT_LIST_INIT( &(seghead.l) );
+	BU_LIST_INIT( &(seghead.l) );
 
 	/* go through each ray/solid pair and call a scalar function */
 	for (i = 0; i < n; i++) {
@@ -1242,8 +1242,8 @@ struct application	*ap; /* pointer to an application */
 			if( rt_functab[stp[i]->st_id].ft_shot(stp[i], rp[i], ap, &seghead) <= 0 )  {
 				SEG_MISS(segp[i]);
 			} else {
-				tmp_seg = RT_LIST_FIRST(seg, &(seghead.l) );
-				RT_LIST_DEQUEUE( &(tmp_seg->l) );
+				tmp_seg = BU_LIST_FIRST(seg, &(seghead.l) );
+				BU_LIST_DEQUEUE( &(tmp_seg->l) );
 				segp[i] = *tmp_seg; /* structure copy */
 				RT_FREE_SEG(tmp_seg, ap->a_resource);
 			}

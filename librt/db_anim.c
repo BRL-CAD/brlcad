@@ -57,12 +57,12 @@ int	root;
 	anp->an_forw = ANIM_NULL;
 	if( root )  {
 		if( rt_g.debug&DEBUG_ANIM )
-			rt_log("db_add_anim(x%x) root\n", anp);
+			bu_log("db_add_anim(x%x) root\n", anp);
 		headp = &(dbip->dbi_anroot);
 	} else {
 		dp = DB_FULL_PATH_CUR_DIR(&anp->an_path);
 		if( rt_g.debug&DEBUG_ANIM )
-			rt_log("db_add_anim(x%x) arc %s\n", anp,
+			bu_log("db_add_anim(x%x) arc %s\n", anp,
 				dp->d_namep);
 		headp = &(dp->d_animate);
 	}
@@ -102,14 +102,14 @@ struct mater_info	*materp;
 	mat_t	temp;
 
 	if( rt_g.debug&DEBUG_ANIM )
-		rt_log("db_do_anim(x%x) ", anp);
+		bu_log("db_do_anim(x%x) ", anp);
 	RT_CK_ANIMATE(anp);
 	switch( anp->an_type )  {
 	case RT_AN_MATRIX:
 		if( rt_g.debug&DEBUG_ANIM )  {
 			int	op = anp->an_u.anu_m.anm_op;
 			if( op < 0 )  op = 0;
-			rt_log("matrix, op=%s (%d)\n",
+			bu_log("matrix, op=%s (%d)\n",
 				db_anim_matrix_strings[op], op);
 			if( rt_g.debug&DEBUG_ANIM_FULL )  {
 				mat_print("on original arc", arc);
@@ -147,7 +147,7 @@ struct mater_info	*materp;
 		break;
 	case RT_AN_MATERIAL:
 		if( rt_g.debug&DEBUG_ANIM )
-			rt_log("property\n");
+			bu_log("property\n");
 		/*
 		 * if the caller does not care about property, a null
 		 * mater pointer is given.
@@ -156,25 +156,25 @@ struct mater_info	*materp;
 		if ((anp->an_u.anu_p.anp_op == RT_ANP_RBOTH) ||
 		    (anp->an_u.anu_p.anp_op == RT_ANP_RMATERIAL)) {
 			strncpy(materp->ma_matname,
-			    rt_vls_addr(&anp->an_u.anu_p.anp_matname), 32);
+			    bu_vls_addr(&anp->an_u.anu_p.anp_matname), 32);
 			materp->ma_matname[31] = '\0';
 		}
 		if ((anp->an_u.anu_p.anp_op == RT_ANP_RBOTH) ||
 		    (anp->an_u.anu_p.anp_op == RT_ANP_RPARAM)) {
 			strncpy(materp->ma_matparm,
-			    rt_vls_addr(&anp->an_u.anu_p.anp_matparam), 60);
+			    bu_vls_addr(&anp->an_u.anu_p.anp_matparam), 60);
 			materp->ma_matparm[59] = '\0';
 		}
 		if (anp->an_u.anu_p.anp_op == RT_ANP_APPEND) {
 			strncat(materp->ma_matparm,
-			    rt_vls_addr(&anp->an_u.anu_p.anp_matparam),
+			    bu_vls_addr(&anp->an_u.anu_p.anp_matparam),
 			    60-strlen(materp->ma_matparm));
 			materp->ma_matparm[59] = '\0';
 		}
 		break;
 	case RT_AN_COLOR:
 		if( rt_g.debug&DEBUG_ANIM )
-			rt_log("color\n");
+			bu_log("color\n");
 		/*
 		 * if the caller does not care about property, a null
 		 * mater pointer is given.
@@ -182,15 +182,15 @@ struct mater_info	*materp;
 		if (!materp) break;
 		materp->ma_override = 1;	/* XXX - really override? */
 		materp->ma_color[0] =
-		    (((double)anp->an_u.anu_c.anc_rgb[0])+0.5)*rt_inv255;
+		    (((double)anp->an_u.anu_c.anc_rgb[0])+0.5)*bn_inv255;
 		materp->ma_color[1] =
-		    (((double)anp->an_u.anu_c.anc_rgb[1])+0.5)*rt_inv255;
+		    (((double)anp->an_u.anu_c.anc_rgb[1])+0.5)*bn_inv255;
 		materp->ma_color[2] =
-		    (((double)anp->an_u.anu_c.anc_rgb[2])+0.5)*rt_inv255;
+		    (((double)anp->an_u.anu_c.anc_rgb[2])+0.5)*bn_inv255;
 		break;
 	default:
 		if( rt_g.debug&DEBUG_ANIM )
-			rt_log("unknown op\n");
+			bu_log("unknown op\n");
 		/* Print something here? */
 		return(-1);			/* BAD */
 	}
@@ -210,8 +210,8 @@ struct animate		*anp;
 
 	switch( anp->an_type )  {
 	case RT_AN_MATERIAL:
-		rt_vls_free( &anp->an_u.anu_p.anp_matname );
-		rt_vls_free( &anp->an_u.anu_p.anp_matparam );
+		bu_vls_free( &anp->an_u.anu_p.anp_matname );
+		bu_vls_free( &anp->an_u.anu_p.anp_matparam );
 		break;
 	}
 
@@ -280,7 +280,7 @@ CONST char	**argv;
 	int	i;
 	int	at_root = 0;
 
-	GETSTRUCT( anp, animate );
+	BU_GETSTRUCT( anp, animate );
 	anp->magic = ANIMATE_MAGIC;
 
 	bzero( (char *)&ts, sizeof(ts) );
@@ -303,7 +303,7 @@ CONST char	**argv;
 		else if( strcmp( argv[3], "rboth" ) == 0 )
 			anp->an_u.anu_m.anm_op = ANM_RBOTH;
 		else  {
-			rt_log("db_parse_1anim:  Matrix op '%s' unknown\n",
+			bu_log("db_parse_1anim:  Matrix op '%s' unknown\n",
 				argv[3]);
 			goto bad;
 		}
@@ -311,7 +311,7 @@ CONST char	**argv;
 		if( strcmp( argv[4], "translate" ) == 0 ||
 		    strcmp( argv[4], "xlate" ) == 0 )  {
 		    	if( argc < 5+2 )  {
-		    		rt_log("db_parse_1anim:  matrix %s translate does not have enough arguments, only %d\n",
+		    		bu_log("db_parse_1anim:  matrix %s translate does not have enough arguments, only %d\n",
 		    			argv[3], argc );
 		    		goto bad;
 		    	}
@@ -322,7 +322,7 @@ CONST char	**argv;
 		    		atof( argv[5+2] ) );
 		} else if( strcmp( argv[4], "rot" ) == 0 )  {
 			if( argc < 5+2 )  {
-		    		rt_log("db_parse_1anim:  matrix %s rot does not have enough arguments, only %d\n",
+		    		bu_log("db_parse_1anim:  matrix %s rot does not have enough arguments, only %d\n",
 		    			argv[3], argc );
 		    		goto bad;
 		    	}
@@ -338,26 +338,26 @@ CONST char	**argv;
 		}
 	} else if( strcmp( argv[2], "material" ) == 0 )  {
 		anp->an_type = RT_AN_MATERIAL;
-		rt_vls_init( &anp->an_u.anu_p.anp_matname );
-		rt_vls_init( &anp->an_u.anu_p.anp_matparam );
+		bu_vls_init( &anp->an_u.anu_p.anp_matname );
+		bu_vls_init( &anp->an_u.anu_p.anp_matparam );
 		if( strcmp( argv[3], "rboth" ) == 0 )  {
-			rt_vls_strcpy( &anp->an_u.anu_p.anp_matname, argv[4] );
-			rt_vls_from_argv( &anp->an_u.anu_p.anp_matparam,
+			bu_vls_strcpy( &anp->an_u.anu_p.anp_matname, argv[4] );
+			bu_vls_from_argv( &anp->an_u.anu_p.anp_matparam,
 				argc-5, (char **)&argv[5] );
 			anp->an_u.anu_p.anp_op = RT_ANP_RBOTH;
 		} else if( strcmp( argv[3], "rmaterial" ) == 0 )  {
-			rt_vls_strcpy( &anp->an_u.anu_p.anp_matname, argv[4] );
+			bu_vls_strcpy( &anp->an_u.anu_p.anp_matname, argv[4] );
 			anp->an_u.anu_p.anp_op = RT_ANP_RMATERIAL;
 		} else if( strcmp( argv[3], "rparam" ) == 0 )  {
-			rt_vls_from_argv( &anp->an_u.anu_p.anp_matparam,
+			bu_vls_from_argv( &anp->an_u.anu_p.anp_matparam,
 				argc-4, (char **)&argv[4] );
 			anp->an_u.anu_p.anp_op = RT_ANP_RPARAM;
 		} else if( strcmp( argv[3], "append" ) == 0 )  {
-			rt_vls_from_argv( &anp->an_u.anu_p.anp_matparam,
+			bu_vls_from_argv( &anp->an_u.anu_p.anp_matparam,
 				argc-4, (char **)&argv[4] );
 			anp->an_u.anu_p.anp_op = RT_ANP_APPEND;
 		} else {
-			rt_log("db_parse_1anim:  material animation '%s' unknown\n",
+			bu_log("db_parse_1anim:  material animation '%s' unknown\n",
 				argv[3]);
 			goto bad;
 		}
@@ -367,7 +367,7 @@ CONST char	**argv;
 		anp->an_u.anu_c.anc_rgb[1] = atoi( argv[3+1] );
 		anp->an_u.anu_c.anc_rgb[2] = atoi( argv[3+2] );
 	} else {
-		rt_log("db_parse_1anim:  animation type '%s' unknown\n", argv[2]);
+		bu_log("db_parse_1anim:  animation type '%s' unknown\n", argv[2]);
 		goto bad;
 	}
 	return anp;
@@ -420,7 +420,7 @@ struct animate *anp;
 
 	thepath  = db_path_to_string(&(anp->an_path));
 	if ( rt_g.debug&DEBUG_ANIM) {
-		rt_log("db_write_anim: Writing %s\n", thepath);
+		bu_log("db_write_anim: Writing %s\n", thepath);
 	}
 
 	fprintf(fop,"anim %s ", thepath);
@@ -447,7 +447,7 @@ struct animate *anp;
 			break;
 		default:
 			fputs("unknown\n",fop);
-			rt_log("db_write_anim: unknown matrix operation\n");
+			bu_log("db_write_anim: unknown matrix operation\n");
 		}
 		for (i=0; i<16; i++) {
 			fprintf(fop, " %.15e", anp->an_u.anu_m.anm_mat[i]);
@@ -472,7 +472,7 @@ struct animate *anp;
 			fputs("append ", fop);
 			break;
 		default:
-			rt_log("db_write_anim: unknown property operation.\n");
+			bu_log("db_write_anim: unknown property operation.\n");
 			break;
 		}
 		break;
@@ -483,7 +483,7 @@ struct animate *anp;
 	case RT_AN_SOLID:
 		break;
 	default:
-		rt_log("db_write_anim: Unknown animate type.\n");
+		bu_log("db_write_anim: Unknown animate type.\n");
 	}
 	fputs(";\n", fop);
 	return;

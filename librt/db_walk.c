@@ -59,7 +59,7 @@ void		(*leaf_func)();
 	register struct directory *mdp;
 
 	if( dbip->dbi_magic != DBI_MAGIC )  rt_bomb("db_gettree:  bad dbip\n");
-	if(rt_g.debug&DEBUG_DB) rt_log("db_functree(%s) x%x, x%x, comb=x%x, leaf=x%x\n",
+	if(rt_g.debug&DEBUG_DB) bu_log("db_functree(%s) x%x, x%x, comb=x%x, leaf=x%x\n",
 		dp->d_namep, dbip, dp, comb_func, leaf_func );
 
 	/*
@@ -84,7 +84,7 @@ void		(*leaf_func)();
 		if( leaf_func )
 			leaf_func( dbip, dp );
 	} else {
-		rt_log("db_functree:  %s is neither COMB nor SOLID?\n",
+		bu_log("db_functree:  %s is neither COMB nor SOLID?\n",
 			dp->d_namep );
 	}
 	rt_free( (char *)rp, "db_functree record[]" );

@@ -36,7 +36,7 @@ struct nmg_bool_state  {
 	int		bs_isA;		/* true if A, else doing B */
 	long		**bs_classtab;
 	CONST int	*bs_actions;
-	CONST struct rt_tol	*bs_tol;
+	CONST struct bn_tol	*bs_tol;
 };
 
 static void nmg_eval_shell RT_ARGS( (struct shell *s,
@@ -79,7 +79,7 @@ static CONST char	*nmg_class_names[] = {
 void
 nmg_ck_lu_orientation( lu, tolp )
 struct loopuse		*lu;
-CONST struct rt_tol	*tolp;
+CONST struct bn_tol	*tolp;
 {
 	struct faceuse	*fu;
 	plane_t		fu_peqn;
@@ -101,7 +101,7 @@ CONST struct rt_tol	*tolp;
 
 	if( dot < 0.0 )
 	{
-		rt_log("nmg_ck_lu_orientation() lu=x%x, dot=%g, fu_orient=%s, lu_orient=%s\n", lu,
+		bu_log("nmg_ck_lu_orientation() lu=x%x, dot=%g, fu_orient=%s, lu_orient=%s\n", lu,
 			dot,
 			nmg_orientation(fu->orientation),
 			nmg_orientation(lu->orientation)
@@ -190,17 +190,17 @@ struct shell	*sA;
 struct shell	*sB;
 int		op;
 long		*classlist[8];
-CONST struct rt_tol	*tol;
+CONST struct bn_tol	*tol;
 {
 	int CONST	*actions;
 	struct nmg_bool_state	bool_state;
 
 	NMG_CK_SHELL(sA);
 	NMG_CK_SHELL(sB);
-	RT_CK_TOL(tol);
+	BN_CK_TOL(tol);
 
 	if (rt_g.NMG_debug & DEBUG_BOOLEVAL) {
-		rt_log("nmg_evaluate_boolean(sA=x%x, sB=x%x, op=%d) START\n",
+		bu_log("nmg_evaluate_boolean(sA=x%x, sB=x%x, op=%d) START\n",
 			sA, sB, op );
 	}
 
@@ -217,7 +217,7 @@ CONST struct rt_tol	*tol;
 		break;
 	default:
 		actions = union_actions;	/* shut up lint */
-		rt_log("ERROR nmg_evaluate_boolean() op=%d.\n", op);
+		bu_log("ERROR nmg_evaluate_boolean() op=%d.\n", op);
 		rt_bomb("bad boolean\n");
 	}
 
@@ -234,7 +234,7 @@ CONST struct rt_tol	*tol;
 	nmg_eval_shell( sB, &bool_state );
 
 	if (rt_g.NMG_debug & DEBUG_BOOLEVAL) {
-		rt_log("nmg_evaluate_boolean(sA=x%x, sB=x%x, op=%d), evaluations done\n",
+		bu_log("nmg_evaluate_boolean(sA=x%x, sB=x%x, op=%d), evaluations done\n",
 			sA, sB, op );
 	}
 	/* Write sA and sB into separate files, if wanted? */
@@ -250,7 +250,7 @@ CONST struct rt_tol	*tol;
 			(void)perror("bool_ans.pl");
 			exit(-1);
 		}
-    		rt_log("plotting bool_ans.pl\n");
+    		bu_log("plotting bool_ans.pl\n");
 		nmg_pl_s( fp, sA );
 		(void)fclose(fp);
 	}
@@ -259,7 +259,7 @@ CONST struct rt_tol	*tol;
 	nmg_rm_redundancies( sA, tol );
 
 	if (rt_g.NMG_debug & DEBUG_BOOLEVAL) {
-		rt_log("nmg_evaluate_boolean(sA=x%x, sB=x%x, op=%d) END\n",
+		bu_log("nmg_evaluate_boolean(sA=x%x, sB=x%x, op=%d) END\n",
 			sA, sB, op );
 	}
 }
@@ -290,7 +290,7 @@ struct nmg_bool_state *bs;
 	int		loops_retained;
 
 	NMG_CK_SHELL(s);
-	RT_CK_TOL(bs->bs_tol);
+	BN_CK_TOL(bs->bs_tol);
 
 	if( rt_g.NMG_debug & DEBUG_VERIFY )
 		nmg_vshell( &s->r_p->s_hd, s->r_p );
@@ -300,10 +300,10 @@ struct nmg_bool_state *bs;
 	 *  and then handle the face and all loops as a unit.
 	 */
 	nmg_eval_plot( bs, nmg_eval_count++, 1 );	/* debug */
-	fu = RT_LIST_FIRST( faceuse, &s->fu_hd );
-	while( RT_LIST_NOT_HEAD( fu, &s->fu_hd ) )  {
+	fu = BU_LIST_FIRST( faceuse, &s->fu_hd );
+	while( BU_LIST_NOT_HEAD( fu, &s->fu_hd ) )  {
 		NMG_CK_FACEUSE(fu);
-		nextfu = RT_LIST_PNEXT( faceuse, fu );
+		nextfu = BU_LIST_PNEXT( faceuse, fu );
 
 		/* Faceuse mates will be handled at same time as OT_SAME fu */
 		if( fu->orientation != OT_SAME )  {
@@ -311,18 +311,18 @@ struct nmg_bool_state *bs;
 			continue;
 		}
 		if( fu->fumate_p == nextfu )
-			nextfu = RT_LIST_PNEXT( faceuse, nextfu );
+			nextfu = BU_LIST_PNEXT( faceuse, nextfu );
 
 		/* Consider this face */
 		NMG_CK_FACE(fu->f_p);
 
 		loops_retained = 0;
-		lu = RT_LIST_FIRST( loopuse, &fu->lu_hd );
-		while( RT_LIST_NOT_HEAD( lu, &fu->lu_hd ) )  {
+		lu = BU_LIST_FIRST( loopuse, &fu->lu_hd );
+		while( BU_LIST_NOT_HEAD( lu, &fu->lu_hd ) )  {
 			NMG_CK_LOOPUSE(lu);
-			nextlu = RT_LIST_PNEXT( loopuse, lu );
+			nextlu = BU_LIST_PNEXT( loopuse, lu );
 			if( lu->lumate_p == nextlu )
-				nextlu = RT_LIST_PNEXT( loopuse, nextlu );
+				nextlu = BU_LIST_PNEXT( loopuse, nextlu );
 
 			NMG_CK_LOOP( lu->l_p );
 #if 0
@@ -334,7 +334,7 @@ struct nmg_bool_state *bs;
 			switch( nmg_eval_action( (genptr_t)lu->l_p, bs ) )  {
 			case BACTION_KILL:
 				/* Kill by demoting loop to edges */
-				if( RT_LIST_FIRST_MAGIC( &lu->down_hd ) == NMG_VERTEXUSE_MAGIC )  {
+				if( BU_LIST_FIRST_MAGIC( &lu->down_hd ) == NMG_VERTEXUSE_MAGIC )  {
 					/* loop of single vertex */
 					(void)nmg_klu( lu );
 				} else if( nmg_demote_lu( lu ) == 0 )  {
@@ -352,7 +352,7 @@ struct nmg_bool_state *bs;
 		}
 
 		if (rt_g.NMG_debug & DEBUG_BOOLEVAL)
-			rt_log("faceuse x%x loops retained=%d\n",
+			bu_log("faceuse x%x loops retained=%d\n",
 				fu, loops_retained);
 		if( rt_g.NMG_debug & DEBUG_VERIFY )
 			nmg_vshell( &s->r_p->s_hd, s->r_p );
@@ -362,11 +362,11 @@ struct nmg_bool_state *bs;
 		 *  Decide the fate of the face;  if the face dies,
 		 *  then any remaining loops, edges, etc, will die too.
 		 */
-		if( RT_LIST_IS_EMPTY( &fu->lu_hd ) )  {
+		if( BU_LIST_IS_EMPTY( &fu->lu_hd ) )  {
 			if( loops_retained )  rt_bomb("nmg_eval_shell() empty faceuse with retained loops?\n");
 			/* faceuse is empty, face & mate die */
 			if (rt_g.NMG_debug & DEBUG_BOOLEVAL)
-		    		rt_log("faceuse x%x empty, kill\n", fu);
+		    		bu_log("faceuse x%x empty, kill\n", fu);
 			nmg_kfu( fu );	/* kill face & mate, dequeue from shell */
 			if( rt_g.NMG_debug & DEBUG_VERIFY )
 				nmg_vshell( &s->r_p->s_hd, s->r_p );
@@ -390,14 +390,14 @@ struct nmg_bool_state *bs;
 	 *  Only consider wire loops here.
 	 */
 	nmg_eval_plot( bs, nmg_eval_count++, 1 );	/* debug */
-	lu = RT_LIST_FIRST( loopuse, &s->lu_hd );
-	while( RT_LIST_NOT_HEAD( lu, &s->lu_hd ) )  {
+	lu = BU_LIST_FIRST( loopuse, &s->lu_hd );
+	while( BU_LIST_NOT_HEAD( lu, &s->lu_hd ) )  {
 		NMG_CK_LOOPUSE(lu);
-		nextlu = RT_LIST_PNEXT( loopuse, lu );
+		nextlu = BU_LIST_PNEXT( loopuse, lu );
 		if( lu->lumate_p == nextlu )
-			nextlu = RT_LIST_PNEXT( loopuse, nextlu );
+			nextlu = BU_LIST_PNEXT( loopuse, nextlu );
 
-		if( RT_LIST_FIRST_MAGIC( &lu->down_hd ) == NMG_VERTEXUSE_MAGIC )  {
+		if( BU_LIST_FIRST_MAGIC( &lu->down_hd ) == NMG_VERTEXUSE_MAGIC )  {
 			/* ignore vertex-with-self-loop */
 			lu = nextlu;
 			continue;
@@ -425,12 +425,12 @@ struct nmg_bool_state *bs;
 	 *  For each wire-edge in the shell, ...
 	 */
 	nmg_eval_plot( bs, nmg_eval_count++, 1 );	/* debug */
-	eu = RT_LIST_FIRST( edgeuse, &s->eu_hd );
-	while( RT_LIST_NOT_HEAD( eu, &s->eu_hd ) )  {
+	eu = BU_LIST_FIRST( edgeuse, &s->eu_hd );
+	while( BU_LIST_NOT_HEAD( eu, &s->eu_hd ) )  {
 		NMG_CK_EDGEUSE(eu);
-		nexteu = RT_LIST_PNEXT( edgeuse, eu );	/* may be head */
+		nexteu = BU_LIST_PNEXT( edgeuse, eu );	/* may be head */
 		if( eu->eumate_p == nexteu )
-			nexteu = RT_LIST_PNEXT( edgeuse, nexteu );
+			nexteu = BU_LIST_PNEXT( edgeuse, nexteu );
 
 		/* Consider this edge */
 		NMG_CK_EDGE( eu->e_p );
@@ -462,19 +462,19 @@ struct nmg_bool_state *bs;
 	 *  which will be processed here.
 	 */
 	nmg_eval_plot( bs, nmg_eval_count++, 1 );	/* debug */
-	lu = RT_LIST_FIRST( loopuse, &s->lu_hd );
-	while( RT_LIST_NOT_HEAD( lu, &s->lu_hd ) )  {
+	lu = BU_LIST_FIRST( loopuse, &s->lu_hd );
+	while( BU_LIST_NOT_HEAD( lu, &s->lu_hd ) )  {
 		NMG_CK_LOOPUSE(lu);
-		nextlu = RT_LIST_PNEXT( loopuse, lu );
+		nextlu = BU_LIST_PNEXT( loopuse, lu );
 
-		if( RT_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_VERTEXUSE_MAGIC )  {
+		if( BU_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_VERTEXUSE_MAGIC )  {
 			/* ignore any remaining wire-loops */
 			lu = nextlu;
 			continue;
 		}
 		if( nextlu == lu->lumate_p )
-			nextlu = RT_LIST_PNEXT(loopuse, nextlu);
-		vu = RT_LIST_PNEXT( vertexuse, &lu->down_hd );
+			nextlu = BU_LIST_PNEXT(loopuse, nextlu);
+		vu = BU_LIST_PNEXT( vertexuse, &lu->down_hd );
 		NMG_CK_VERTEXUSE( vu );
 		NMG_CK_VERTEX( vu->v_p );
 		switch( nmg_eval_action( (genptr_t)vu->v_p, bs ) )  {
@@ -533,7 +533,7 @@ register struct nmg_bool_state	*bs;
 	register int	class;
 	int		index;
 
-	RT_CK_TOL(bs->bs_tol);
+	BN_CK_TOL(bs->bs_tol);
 
 	index = nmg_index_of_struct(ptr);
 	if( bs->bs_isA )  {
@@ -557,8 +557,8 @@ register struct nmg_bool_state	*bs;
 			ret = bs->bs_actions[NMG_CLASS_AoutB];
 			goto out;
 		}
-		rt_log("nmg_eval_action(ptr=x%x) %s has no A classification, retaining\n",
-			ptr, rt_identify_magic( *((long *)ptr) ) );
+		bu_log("nmg_eval_action(ptr=x%x) %s has no A classification, retaining\n",
+			ptr, bu_identify_magic( *((long *)ptr) ) );
 		class = NMG_CLASS_BAD;
 		ret = BACTION_RETAIN;
 		goto out;
@@ -585,16 +585,16 @@ register struct nmg_bool_state	*bs;
 		ret = bs->bs_actions[NMG_CLASS_BoutA];
 		goto out;
 	}
-	rt_log("nmg_eval_action(ptr=x%x) %s has no B classification, retaining\n",
-		ptr, rt_identify_magic( *((long *)ptr) ) );
+	bu_log("nmg_eval_action(ptr=x%x) %s has no B classification, retaining\n",
+		ptr, bu_identify_magic( *((long *)ptr) ) );
 	class = NMG_CLASS_BAD;
 	ret = BACTION_RETAIN;
 out:
 	if (rt_g.NMG_debug & DEBUG_BOOLEVAL) {
-		rt_log("nmg_eval_action(ptr=x%x) index=%d %s %s %s %s\n",
+		bu_log("nmg_eval_action(ptr=x%x) index=%d %s %s %s %s\n",
 			ptr, index,
 			bs->bs_isA ? "A" : "B",
-			rt_identify_magic( *((long *)ptr) ),
+			bu_identify_magic( *((long *)ptr) ),
 			nmg_class_name(class),
 			nmg_baction_names[ret] );
 	}
@@ -625,7 +625,7 @@ int		delay;
 
 	if( !do_plot && !do_anim )  return;
 
-	RT_CK_TOL(bs->bs_tol);
+	BN_CK_TOL(bs->bs_tol);
 
 	if( do_plot )  {
 		sprintf(fname, "nmg_eval%d.pl", num);
@@ -633,7 +633,7 @@ int		delay;
 			perror(fname);
 			return;
 		}
-		rt_log("Plotting %s\n", fname);
+		bu_log("Plotting %s\n", fname);
 
 		nmg_pl_s( fp, bs->bs_dest );
 		nmg_pl_s( fp, bs->bs_src );
@@ -657,7 +657,7 @@ int		delay;
 				(rt_g.NMG_debug&DEBUG_PL_SLOW) ? 250000 : 0,
 				0 );
 		} else {
-			rt_log("null nmg_vlblock_anim_upcall, no animation\n");
+			bu_log("null nmg_vlblock_anim_upcall, no animation\n");
 		}
 		rt_vlblock_free(vbp);
 	}

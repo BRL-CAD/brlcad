@@ -106,12 +106,12 @@ int			noisy;
 			name[1] == this[1]  &&	/* speed */
 			strcmp( name, this ) == 0
 		)  {
-			if(rt_g.debug&DEBUG_DB) rt_log("db_lookup(%s) x%x\n", name, dp);
+			if(rt_g.debug&DEBUG_DB) bu_log("db_lookup(%s) x%x\n", name, dp);
 			return(dp);
 		}
 	}
 
-	if(noisy || rt_g.debug&DEBUG_DB) rt_log("db_lookup(%s) failed\n", name);
+	if(noisy || rt_g.debug&DEBUG_DB) bu_log("db_lookup(%s) failed\n", name);
 	return( DIR_NULL );
 }
 
@@ -135,7 +135,7 @@ int			flags;
 	RT_CK_DBI(dbip);
 
 	if(rt_g.debug&DEBUG_DB)  {
-		rt_log("db_diradd(dbip=x%x, name='%s', addr=x%x, len=%d, flags=x%x)\n",
+		bu_log("db_diradd(dbip=x%x, name='%s', addr=x%x, len=%d, flags=x%x)\n",
 			dbip, name, laddr, len, flags );
 	}
 
@@ -157,25 +157,25 @@ int			flags;
 				break;
 		}
 		if( c > 'Z' )  {
-			rt_log("db_diradd: Duplicate of name '%s', ignored\n",
+			bu_log("db_diradd: Duplicate of name '%s', ignored\n",
 				local );
 			return( DIR_NULL );
 		}
-		rt_log("db_diradd: Duplicate of '%s', given temporary name '%s'\n",
+		bu_log("db_diradd: Duplicate of '%s', given temporary name '%s'\n",
 			name, local );
 	}
 
-	GETSTRUCT( dp, directory );
+	BU_GETSTRUCT( dp, directory );
 	if( dp == DIR_NULL )
 		return( DIR_NULL );
 	dp->d_magic = RT_DIR_MAGIC;
-	dp->d_namep = rt_strdup( local );
+	dp->d_namep = bu_strdup( local );
 	dp->d_addr = laddr;
 	dp->d_flags = flags;
 	dp->d_len = len;
 	headp = &(dbip->dbi_Head[db_dirhash(local)]);
 	dp->d_forw = *headp;
-	RT_LIST_INIT( &dp->d_use_hd );
+	BU_LIST_INIT( &dp->d_use_hd );
 	*headp = dp;
 	return( dp );
 }
@@ -264,7 +264,7 @@ CONST char			*newname;
 out:
 	/* Effect new name */
 	rt_free( dp->d_namep, "d_namep" );
-	dp->d_namep = rt_strdup( newname );
+	dp->d_namep = bu_strdup( newname );
 
 	/* Add to new linked list */
 	headp = &(dbip->dbi_Head[db_dirhash(newname)]);
@@ -288,11 +288,11 @@ register CONST struct db_i	*dbip;
 
 	RT_CK_DBI(dbip);
 
-	rt_log("db_pr_dir(x%x):  Dump of directory for file %s [%s]\n",
+	bu_log("db_pr_dir(x%x):  Dump of directory for file %s [%s]\n",
 		dbip, dbip->dbi_filename,
 		dbip->dbi_read_only ? "READ-ONLY" : "Read/Write" );
 
-	rt_log("Title = %s\n", dbip->dbi_title);
+	bu_log("Title = %s\n", dbip->dbi_title);
 	/* units ? */
 
 	for( i = 0; i < RT_DBNHASH; i++ )  {
@@ -307,7 +307,7 @@ register CONST struct db_i	*dbip;
 				flags = "COM";
 			else
 				flags = "Bad";
-			rt_log("%.8x %.16s %s addr=%.6x use=%.2d len=%.3d nref=%.2d",
+			bu_log("%.8x %.16s %s addr=%.6x use=%.2d len=%.3d nref=%.2d",
 				dp, dp->d_namep,
 				flags,
 				dp->d_addr,
@@ -315,9 +315,9 @@ register CONST struct db_i	*dbip;
 				dp->d_len,
 				dp->d_nref );
 			if( dp->d_animate )
-				rt_log(" anim=x%x\n", dp->d_animate );
+				bu_log(" anim=x%x\n", dp->d_animate );
 			else
-				rt_log("\n");
+				bu_log("\n");
 		}
 	}
 }

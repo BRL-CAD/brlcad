@@ -34,7 +34,8 @@ int		rt_poly_roots();
 void	rt_poly_eval_w_2derivatives(), rt_poly_deflate();
 int	rt_poly_findroot(), rt_poly_checkroots();
 
-/*	>>>  p o l y R o o t s ( )  <<<
+/*
+ *			R T _ P O L Y _ R O O T S
  *	
  *	WARNING:  The polynomial given as input is destroyed by this
  *		routine.  The caller must save it if it is important!
@@ -46,7 +47,7 @@ int	rt_poly_findroot(), rt_poly_checkroots();
  */
 int
 rt_poly_roots( eqn, roots )
-register poly		*eqn;		/* equation to be solved	*/
+register bn_poly_t	*eqn;		/* equation to be solved	*/
 register bn_complex_t	roots[];	/* space to put roots found	*/
 {
 	register int	n;		/* number of roots found	*/
@@ -155,7 +156,7 @@ register bn_complex_t	roots[];	/* space to put roots found	*/
  */
 int
 rt_poly_findroot( eqn, nxZ )
-register poly		*eqn;	/* polynomial			*/
+register bn_poly_t	*eqn;	/* polynomial			*/
 register bn_complex_t	*nxZ;	/* initial guess for root	*/
 {
 	LOCAL complex  p0, p1, p2;	/* evaluated polynomial+derivatives */
@@ -189,7 +190,7 @@ register bn_complex_t	*nxZ;	/* initial guess for root	*/
 		bn_cx_sub( &p1_H, &cH );
 		bn_cx_add( &p1, &cH );		/* p1 <== p1+H */
 		bn_cx_scal( &p0, (double)(eqn->dgr) );
-		if ( bn_cx_amplSq( &p1_H ) > bn_cx_amplSq( &p1 ) ){
+		if ( bn_cx_amplsq( &p1_H ) > bn_cx_amplsq( &p1 ) ){
 			bn_cx_div( &p0, &p1_H);
 			bn_cx_sub( nxZ, &p0 );
 		} else {
@@ -200,7 +201,7 @@ register bn_complex_t	*nxZ;	/* initial guess for root	*/
 		/* Use proportional convergence test to allow very small
 		 * roots and avoid wasting time on large roots.
 		 * The original version used bn_cx_ampl(), which requires
-		 * a square root.  Using bn_cx_amplSq() saves lots of cycles,
+		 * a square root.  Using bn_cx_amplsq() saves lots of cycles,
 		 * but changes loop termination conditions somewhat.
 		 *
 		 * diff is |p0|**2.  nxZ = Z - p0.
@@ -208,8 +209,8 @@ register bn_complex_t	*nxZ;	/* initial guess for root	*/
 		 * SGI XNS IRIS 3.5 compiler fails if following 2 assignments
 		 * are imbedded in the IF statement, as before.
 		 */
-		b = bn_cx_amplSq( nxZ );
-		diff = bn_cx_amplSq( &p0 );
+		b = bn_cx_amplsq( nxZ );
+		diff = bn_cx_amplsq( &p0 );
 		if( b < diff )
 			continue;
 		if( (b-diff) == b )
@@ -250,7 +251,7 @@ register bn_complex_t	*nxZ;	/* initial guess for root	*/
 void
 rt_poly_eval_w_2derivatives( cZ, eqn, b, c, d )
 register bn_complex_t	*cZ;		/* input */
-register poly		*eqn;		/* input */
+register bn_poly_t	*eqn;		/* input */
 register bn_complex_t	*b, *c, *d;	/* outputs */
 {
 	register int	n;
@@ -299,7 +300,7 @@ register bn_complex_t	*b, *c, *d;	/* outputs */
  */
 int
 rt_poly_checkroots( eqn, roots, nroots )
-register poly		*eqn;
+register bn_poly_t		*eqn;
 bn_complex_t			roots[];
 register int		nroots;
 {
@@ -345,10 +346,10 @@ register int		nroots;
  */
 void
 rt_poly_deflate( oldP, root )
-register poly		*oldP;
+register bn_poly_t	*oldP;
 register bn_complex_t	*root;
 {
-	LOCAL poly	div, rem;
+	LOCAL bn_poly_t	div, rem;
 
 	/* Make a polynomial out of the given root:  Linear for a real
 	 * root, Quadratic for a complex root (since they come in con-
@@ -364,7 +365,7 @@ register bn_complex_t	*root;
 		div.dgr = 2;
 		div.cf[0] = 1;
 		div.cf[1] = -2 * root->re;
-		div.cf[2] = bn_cx_amplSq( root );
+		div.cf[2] = bn_cx_amplsq( root );
 	}
 
 	/* Use synthetic division to find the quotient (new polynomial)

@@ -229,7 +229,7 @@ CONST struct db_full_path	*pathp;
 {
 	char	*sofar = db_path_to_string(pathp);
 
-	rt_log("%s %s\n", msg, sofar );
+	bu_log("%s %s\n", msg, sofar );
 	rt_free(sofar, "path string");
 }
 
@@ -268,7 +268,7 @@ CONST char			*str;
 		return 0;
 	}
 
-	copy = rt_strdup( str );
+	copy = bu_strdup( str );
 	cp = copy;
 	while( *cp )  {
 		if( (slashp = strchr( cp, '/' )) == NULL )  break;
@@ -295,7 +295,7 @@ CONST char			*str;
 			*slashp = '\0';
 		}
 		if( (dp = db_lookup( dbip, cp, 1 )) == DIR_NULL )  {
-			rt_log("db_string_to_path() of '%s' failed on '%s'\n",
+			bu_log("db_string_to_path() of '%s' failed on '%s'\n",
 				str, cp );
 			ret = -1;	/* FAILED */
 			/* Fall through, storing null dp in this location */

@@ -77,12 +77,12 @@ int		orientation;
 CONST char	*h;
 {
 	switch (orientation) {
-	case OT_SAME : rt_log("%s%8s orientation\n", h, "SAME"); break;
-	case OT_OPPOSITE : rt_log("%s%8s orientation\n", h, "OPPOSITE"); break;
-	case OT_NONE : rt_log("%s%8s orientation\n", h, "NONE"); break;
-	case OT_UNSPEC : rt_log("%s%8s orientation\n", h, "UNSPEC"); break;
-	case OT_BOOLPLACE : rt_log("%s%8s orientation\n", h, "BOOLPLACE"); break;
-	default : rt_log("%s%8s orientation\n", h, "BOGUS!!!"); break;
+	case OT_SAME : bu_log("%s%8s orientation\n", h, "SAME"); break;
+	case OT_OPPOSITE : bu_log("%s%8s orientation\n", h, "OPPOSITE"); break;
+	case OT_NONE : bu_log("%s%8s orientation\n", h, "NONE"); break;
+	case OT_UNSPEC : bu_log("%s%8s orientation\n", h, "UNSPEC"); break;
+	case OT_BOOLPLACE : bu_log("%s%8s orientation\n", h, "BOOLPLACE"); break;
+	default : bu_log("%s%8s orientation\n", h, "BOGUS!!!"); break;
 	}
 }
 
@@ -95,14 +95,14 @@ CONST struct model *m;
 {
 	CONST struct nmgregion *r;
 
-	rt_log("MODEL %8x\n", m);
+	bu_log("MODEL %8x\n", m);
 	if (!m || m->magic != NMG_MODEL_MAGIC) {
-		rt_log("bad model magic\n");
+		bu_log("bad model magic\n");
 		return;
 	}
-	rt_log("%ld maxindex\n", m->maxindex);
+	bu_log("%ld maxindex\n", m->maxindex);
 
-	for( RT_LIST_FOR( r, nmgregion, &m->r_hd ) )  {
+	for( BU_LIST_FOR( r, nmgregion, &m->r_hd ) )  {
 		nmg_pr_r(r, (char *)NULL);
 	}
 }
@@ -135,21 +135,21 @@ char *h;
 {
 	struct shell *s;
 
-	rt_log("REGION %8x\n", r);
+	bu_log("REGION %8x\n", r);
 
 	MKPAD(h);
 
 	if (!r || r->l.magic != NMG_REGION_MAGIC) {
-		rt_log("bad region magic\n");
+		bu_log("bad region magic\n");
 		Return;
 	}
 
-	rt_log("%8x m_p\n", r->m_p);
-	rt_log("%8x l.forw\n", r->l.forw);
-	rt_log("%8x l.back\n", r->l.back);
-	rt_log("%8x ra_p\n", r->ra_p);
+	bu_log("%8x m_p\n", r->m_p);
+	bu_log("%8x l.forw\n", r->l.forw);
+	bu_log("%8x l.back\n", r->l.back);
+	bu_log("%8x ra_p\n", r->ra_p);
 
-	for( RT_LIST_FOR( s, shell, &r->s_hd ) )  {
+	for( BU_LIST_FOR( s, shell, &r->s_hd ) )  {
 		nmg_pr_s(s, h);
 	}
 	Return;
@@ -165,15 +165,15 @@ char *h;
 {
 	MKPAD(h);
 
-	rt_log("%sSHELL_A %8x\n", h, sa);
+	bu_log("%sSHELL_A %8x\n", h, sa);
 	if (!sa || sa->magic != NMG_SHELL_A_MAGIC) {
-		rt_log("bad shell_a magic\n");
+		bu_log("bad shell_a magic\n");
 		Return;
 	}
 	
-	rt_log("%s%f %f %f Min\n", h, sa->min_pt[X], sa->min_pt[Y],
+	bu_log("%s%f %f %f Min\n", h, sa->min_pt[X], sa->min_pt[Y],
 		sa->min_pt[Z]);
-	rt_log("%s%f %f %f Max\n", h, sa->max_pt[X], sa->max_pt[Y],
+	bu_log("%s%f %f %f Max\n", h, sa->max_pt[X], sa->max_pt[Y],
 		sa->max_pt[Z]);
 
 	Return;
@@ -190,10 +190,10 @@ char *h;
 	MKPAD(h);
 	NMG_CK_LOOP_G(lg);
 	
-	rt_log("%sLOOP_G %8x\n", h, lg);
-	rt_log("%s%f %f %f Min\n", h, lg->min_pt[X], lg->min_pt[Y],
+	bu_log("%sLOOP_G %8x\n", h, lg);
+	bu_log("%s%f %f %f Min\n", h, lg->min_pt[X], lg->min_pt[Y],
 		lg->min_pt[Z]);
-	rt_log("%s%f %f %f Max\n", h, lg->max_pt[X], lg->max_pt[Y],
+	bu_log("%s%f %f %f Max\n", h, lg->max_pt[X], lg->max_pt[Y],
 		lg->max_pt[Z]);
 
 	Return;
@@ -215,36 +215,36 @@ char *h;
 
 	switch( *magic )  {
 	case NMG_FACE_G_PLANE_MAGIC:
-		rt_log("%sFACE_G_PLANE %8x\n", h, magic);
+		bu_log("%sFACE_G_PLANE %8x\n", h, magic);
 
-		rt_log("%s%fX + %fY + %fZ = %f\n", h,
+		bu_log("%s%fX + %fY + %fZ = %f\n", h,
 			V4ARGS( ((struct face_g_plane *)magic)->N ) );
 		break;
 	case NMG_FACE_G_SNURB_MAGIC:
 		fgs = (struct face_g_snurb *)magic;
-		rt_log("%sFACE_G_SNURB %8x\n", h, magic);
-		rt_log( "%s  order (%d, %d)\n", h, fgs->order[0], fgs->order[1] );
-		rt_log( "%s  U knots: size=%d", h, fgs->u.k_size );
+		bu_log("%sFACE_G_SNURB %8x\n", h, magic);
+		bu_log( "%s  order (%d, %d)\n", h, fgs->order[0], fgs->order[1] );
+		bu_log( "%s  U knots: size=%d", h, fgs->u.k_size );
 		for( i=0 ; i<fgs->u.k_size ; i++ )
-			rt_log( " %f", fgs->u.knots[i] );
-		rt_log( "\n%s  V knots: size=%d", h, fgs->v.k_size );
+			bu_log( " %f", fgs->u.knots[i] );
+		bu_log( "\n%s  V knots: size=%d", h, fgs->v.k_size );
 		for( i=0 ; i<fgs->v.k_size ; i++ )
-			rt_log( " %f", fgs->v.knots[i] );
-		rt_log( "\n%s  Mesh size = (%d X %d), pt_type = %d\n", h, fgs->s_size[0], fgs->s_size[1], fgs->pt_type );
+			bu_log( " %f", fgs->v.knots[i] );
+		bu_log( "\n%s  Mesh size = (%d X %d), pt_type = %d\n", h, fgs->s_size[0], fgs->s_size[1], fgs->pt_type );
 		ncoords = RT_NURB_EXTRACT_COORDS( fgs->pt_type );
 		l = 0;
 		for( i=0 ; i<fgs->s_size[0] ; i++ )
 		{
-			rt_log( "%s  ", h );
+			bu_log( "%s  ", h );
 			for( j=0 ; j<fgs->s_size[1] ; j++ )
 			{
-				rt_log( " (", h );
+				bu_log( " (", h );
 				for( k=0 ; k<ncoords ; k++ )
-					rt_log( "%f ", fgs->ctl_points[l+k] );
-				rt_log( ")" );
+					bu_log( "%f ", fgs->ctl_points[l+k] );
+				bu_log( ")" );
 				l += ncoords;
 			}
-			rt_log( "\n" );
+			bu_log( "\n" );
 		}
 		break;
 	default:
@@ -268,28 +268,28 @@ char *h;
 
 	MKPAD(h);
 	
-	rt_log("%sSHELL %8x\n", h, s);
+	bu_log("%sSHELL %8x\n", h, s);
 	if (!s || s->l.magic != NMG_SHELL_MAGIC) {
-		rt_log("bad shell magic\n");
+		bu_log("bad shell magic\n");
 		Return;
 	}
 
-	rt_log("%s%8x r_p\n", h, s->r_p);
-	rt_log("%s%8x l.forw\n", h, s->l.forw );
-	rt_log("%s%8x l.back\n", h, s->l.back );
-	rt_log("%s%8x sa_p\n", h, s->sa_p );
+	bu_log("%s%8x r_p\n", h, s->r_p);
+	bu_log("%s%8x l.forw\n", h, s->l.forw );
+	bu_log("%s%8x l.back\n", h, s->l.back );
+	bu_log("%s%8x sa_p\n", h, s->sa_p );
 	if (s->sa_p)
 		nmg_pr_sa(s->sa_p, h);
 	
-	for( RT_LIST_FOR( fu, faceuse, &s->fu_hd ) )  {
+	for( BU_LIST_FOR( fu, faceuse, &s->fu_hd ) )  {
 		nmg_pr_fu(fu, h);
 	}
 
-	for( RT_LIST_FOR( lu, loopuse, &s->lu_hd ) )  {
+	for( BU_LIST_FOR( lu, loopuse, &s->lu_hd ) )  {
 		nmg_pr_lu(lu, h);
 	}
 
-	for( RT_LIST_FOR( eu, edgeuse, &s->eu_hd ) )  {
+	for( BU_LIST_FOR( eu, edgeuse, &s->eu_hd ) )  {
 		nmg_pr_eu(eu, h);
 	}
 	if (s->vu_p)
@@ -312,21 +312,21 @@ char *h;
 
 	MKPAD(h);
 	
-	rt_log("%sSHELL %8x\n", h, s);
+	bu_log("%sSHELL %8x\n", h, s);
 	if (!s || s->l.magic != NMG_SHELL_MAGIC) {
-		rt_log("bad shell magic\n");
+		bu_log("bad shell magic\n");
 		Return;
 	}
 
-	for( RT_LIST_FOR( fu, faceuse, &s->fu_hd ) )  {
+	for( BU_LIST_FOR( fu, faceuse, &s->fu_hd ) )  {
 		nmg_pr_fu_briefly(fu, h);
 	}
 
-	for( RT_LIST_FOR( lu, loopuse, &s->lu_hd ) )  {
+	for( BU_LIST_FOR( lu, loopuse, &s->lu_hd ) )  {
 		nmg_pr_lu_briefly(lu, h);
 	}
 
-	for( RT_LIST_FOR( eu, edgeuse, &s->eu_hd ) )  {
+	for( BU_LIST_FOR( eu, edgeuse, &s->eu_hd ) )  {
 		nmg_pr_eu_briefly(eu, h);
 	}
 	if (s->vu_p)
@@ -346,13 +346,13 @@ char *h;
 	MKPAD(h);
 	NMG_CK_FACE(f);
 
-	rt_log("%sFACE %8x\n", h, f);
-	rt_log("%s%8x fu_p\n", h, f->fu_p);
-	rt_log("%s%8x g.magic_p\n", h, f->g.magic_p);
+	bu_log("%sFACE %8x\n", h, f);
+	bu_log("%s%8x fu_p\n", h, f->fu_p);
+	bu_log("%s%8x g.magic_p\n", h, f->g.magic_p);
 	
-	rt_log("%s%f %f %f Min\n", h, f->min_pt[X], f->min_pt[Y],
+	bu_log("%s%f %f %f Min\n", h, f->min_pt[X], f->min_pt[Y],
 		f->min_pt[Z]);
-	rt_log("%s%f %f %f Max\n", h, f->max_pt[X], f->max_pt[Y],
+	bu_log("%s%f %f %f Max\n", h, f->max_pt[X], f->max_pt[Y],
 		f->max_pt[Z]);
 
 	if (f->g.plane_p)
@@ -374,24 +374,24 @@ char *h;
 	MKPAD(h);
 	NMG_CK_FACEUSE(fu);
 
-	rt_log("%sFACEUSE %8x\n", h, fu);
+	bu_log("%sFACEUSE %8x\n", h, fu);
 
 	if (!fu || fu->l.magic != NMG_FACEUSE_MAGIC) {
-		rt_log("bad faceuse magic\n");
+		bu_log("bad faceuse magic\n");
 		Return;
 	}
 	
-	rt_log("%s%8x s_p\n", h, fu->s_p);
-	rt_log("%s%8x l.forw\n", h, fu->l.forw);
-	rt_log("%s%8x l.back\n", h, fu->l.back);
-	rt_log("%s%8x fumate_p\n", h, fu->fumate_p);
+	bu_log("%s%8x s_p\n", h, fu->s_p);
+	bu_log("%s%8x l.forw\n", h, fu->l.forw);
+	bu_log("%s%8x l.back\n", h, fu->l.back);
+	bu_log("%s%8x fumate_p\n", h, fu->fumate_p);
 	nmg_pr_orient(fu->orientation, h);
 
-	rt_log("%s%8x f_p\n", h, fu->f_p);
+	bu_log("%s%8x f_p\n", h, fu->f_p);
 	if (fu->f_p)
 		nmg_pr_f(fu->f_p, h);
 
-	for( RT_LIST_FOR( lu, loopuse, &fu->lu_hd ) )  {
+	for( BU_LIST_FOR( lu, loopuse, &fu->lu_hd ) )  {
 		nmg_pr_lu(lu, h);
 	}
 	Return;
@@ -415,14 +415,14 @@ char *h;
 
 	if( *f->g.magic_p == NMG_FACE_G_PLANE_MAGIC )
 	{
-		rt_log("%sFACEUSE %8x (%s) f_p=x%x flip=%d pl= %f %f %f %f\n",
+		bu_log("%sFACEUSE %8x (%s) f_p=x%x flip=%d pl= %f %f %f %f\n",
 			h, fu, nmg_orientation(fu->orientation), fu->f_p, fu->f_p->flip, V4ARGS( f->g.plane_p->N ));
 	}
 	else
-		rt_log("%sFACEUSE %8x (%s) f_p=x%x\n",
+		bu_log("%sFACEUSE %8x (%s) f_p=x%x\n",
 			h, fu, nmg_orientation(fu->orientation), fu->f_p);
 
-	for( RT_LIST_FOR( lu, loopuse, &fu->lu_hd ) )  {
+	for( BU_LIST_FOR( lu, loopuse, &fu->lu_hd ) )  {
 		nmg_pr_lu_briefly(lu, h);
 	}
 	Return;
@@ -439,13 +439,13 @@ char *h;
 	MKPAD(h);
 	NMG_CK_LOOP(l);
 
-	rt_log("%sLOOP %8x\n", h, l);
+	bu_log("%sLOOP %8x\n", h, l);
 	if (!l || l->magic != NMG_LOOP_MAGIC) {
-		rt_log("bad loop magic\n");
+		bu_log("bad loop magic\n");
 		Return;
 	}
-	rt_log("%s%8x lu_p\n", h, l->lu_p);
-	rt_log("%s%8x lg_p\n", h, l->lg_p);
+	bu_log("%s%8x lu_p\n", h, l->lu_p);
+	bu_log("%s%8x lg_p\n", h, l->lg_p);
 	if (l->lg_p)
 		nmg_pr_lg(l->lg_p, h);
 
@@ -467,43 +467,43 @@ char *h;
 	MKPAD(h);
 	NMG_CK_LOOPUSE(lu);
 
-	rt_log("%sLOOPUSE %8x\n", h, lu);
+	bu_log("%sLOOPUSE %8x\n", h, lu);
 
 	switch (*lu->up.magic_p) {
-	case NMG_SHELL_MAGIC	: rt_log("%s%8x up.s_p\n", h, lu->up.s_p);
+	case NMG_SHELL_MAGIC	: bu_log("%s%8x up.s_p\n", h, lu->up.s_p);
 					break;
-	case NMG_FACEUSE_MAGIC	: rt_log("%s%8x up.fu_p\n", h, lu->up.fu_p);
+	case NMG_FACEUSE_MAGIC	: bu_log("%s%8x up.fu_p\n", h, lu->up.fu_p);
 					break;
-	default			: rt_log("Bad loopuse parent magic\n");
+	default			: bu_log("Bad loopuse parent magic\n");
 					Return;
 	}
 
-	rt_log("%s%8x l.forw\n", h, lu->l.forw);
-	rt_log("%s%8x l.back\n", h, lu->l.back);
-	rt_log("%s%8x lumate_p\n", h, lu->lumate_p);
+	bu_log("%s%8x l.forw\n", h, lu->l.forw);
+	bu_log("%s%8x l.back\n", h, lu->l.back);
+	bu_log("%s%8x lumate_p\n", h, lu->lumate_p);
 	nmg_pr_orient(lu->orientation, h);
-	rt_log("%s%8x l_p\n", h, lu->l_p);
+	bu_log("%s%8x l_p\n", h, lu->l_p);
 	if (lu->l_p)
 		nmg_pr_l(lu->l_p, h);
 
 
-	rt_log("%s%8x down_hd.magic\n", h, lu->down_hd.magic);
-	rt_log("%s%8x down_hd.forw\n", h, lu->down_hd.forw);
-	rt_log("%s%8x down_hd.back\n", h, lu->down_hd.back);
+	bu_log("%s%8x down_hd.magic\n", h, lu->down_hd.magic);
+	bu_log("%s%8x down_hd.forw\n", h, lu->down_hd.forw);
+	bu_log("%s%8x down_hd.back\n", h, lu->down_hd.back);
 
-	magic1 = RT_LIST_FIRST_MAGIC( &lu->down_hd );
+	magic1 = BU_LIST_FIRST_MAGIC( &lu->down_hd );
 	if (magic1 == NMG_VERTEXUSE_MAGIC) {
-		vu = RT_LIST_PNEXT( vertexuse, &lu->down_hd );
-		rt_log("%s%8x down_hd->forw (vu)\n", h, vu);
+		vu = BU_LIST_PNEXT( vertexuse, &lu->down_hd );
+		bu_log("%s%8x down_hd->forw (vu)\n", h, vu);
 		nmg_pr_vu(vu, h);
 	}
 	else if (magic1 == NMG_EDGEUSE_MAGIC) {
-		for( RT_LIST_FOR( eu, edgeuse, &lu->down_hd ) )  {
+		for( BU_LIST_FOR( eu, edgeuse, &lu->down_hd ) )  {
 			nmg_pr_eu(eu, h);
 		}
 	}
 	else
-		rt_log("bad loopuse child magic\n");
+		bu_log("bad loopuse child magic\n");
 
 	Return;
 }
@@ -523,22 +523,22 @@ char *h;
 	MKPAD(h);
 	NMG_CK_LOOPUSE(lu);
 
-	rt_log("%sLOOPUSE %8x, lumate_p=x%x (%s) \n",
+	bu_log("%sLOOPUSE %8x, lumate_p=x%x (%s) \n",
 		h, lu, lu->lumate_p, nmg_orientation(lu->orientation) );
 
-	magic1 = RT_LIST_FIRST_MAGIC( &lu->down_hd );
+	magic1 = BU_LIST_FIRST_MAGIC( &lu->down_hd );
 	if (magic1 == NMG_VERTEXUSE_MAGIC) {
-		vu = RT_LIST_PNEXT( vertexuse, &lu->down_hd );
-		rt_log("%s%8x down_hd->forw (vu)\n", h, vu);
+		vu = BU_LIST_PNEXT( vertexuse, &lu->down_hd );
+		bu_log("%s%8x down_hd->forw (vu)\n", h, vu);
 		nmg_pr_vu_briefly(vu, h);
 	}
 	else if (magic1 == NMG_EDGEUSE_MAGIC) {
-		for( RT_LIST_FOR( eu, edgeuse, &lu->down_hd ) )  {
+		for( BU_LIST_FOR( eu, edgeuse, &lu->down_hd ) )  {
 			nmg_pr_eu_briefly(eu, h);
 		}
 	}
 	else
-		rt_log("bad loopuse child magic\n");
+		bu_log("bad loopuse child magic\n");
 
 	Return;
 }
@@ -563,9 +563,9 @@ char *h;
 		{
 			struct edge_g_lseg *eg_l=(struct edge_g_lseg *)eg_magic_p;
 
-			rt_log("%sEDGE_G_LSEG %8x pt:(%f %f %f)\n",
+			bu_log("%sEDGE_G_LSEG %8x pt:(%f %f %f)\n",
 				h, eg_l, V3ARGS(eg_l->e_pt));
-			rt_log("%s       eu uses=%d  dir:(%f %f %f)\n",
+			bu_log("%s       eu uses=%d  dir:(%f %f %f)\n",
 				h, rt_list_len( &eg_l->eu_hd2 ), V3ARGS(eg_l->e_dir));
 			break;
 		}
@@ -575,25 +575,25 @@ char *h;
 			int i,j,l;
 			int ncoords;
 
-			rt_log( "%sEDGE_G_CNURB %8x\n" , h , eg_c );
-			rt_log( "%s  order=%d, %d ctl pts, pt_type=%d\n",
+			bu_log( "%sEDGE_G_CNURB %8x\n" , h , eg_c );
+			bu_log( "%s  order=%d, %d ctl pts, pt_type=%d\n",
 				h, eg_c->order, eg_c->c_size, eg_c->pt_type );
-			rt_log( "%s  knot vector (len=%d):", h, eg_c->k.k_size );
+			bu_log( "%s  knot vector (len=%d):", h, eg_c->k.k_size );
 			for( i=0 ; i<eg_c->k.k_size ; i++ )
-				rt_log( " %f", eg_c->k.knots[i] );
-			rt_log( "\n" );
+				bu_log( " %f", eg_c->k.knots[i] );
+			bu_log( "\n" );
 			ncoords = RT_NURB_EXTRACT_COORDS( eg_c->pt_type );
 			l = 0;
-			rt_log( "%s  control points: ", h );
+			bu_log( "%s  control points: ", h );
 			for( i=0 ; i<eg_c->c_size ; i++ )
 			{
-				rt_log( "(" );
+				bu_log( "(" );
 				for( j=0 ; j<ncoords ; j++ )
-					rt_log( "%f ", eg_c->ctl_points[l+j] );
-				rt_log( ")" );
+					bu_log( "%f ", eg_c->ctl_points[l+j] );
+				bu_log( ")" );
 				l += ncoords;
 			}
-			rt_log( "\n" );
+			bu_log( "\n" );
 			break;
 		}
 	}
@@ -612,12 +612,12 @@ char *h;
 	MKPAD(h);
 	NMG_CK_EDGE(e);
 
-	rt_log("%sEDGE %8x\n", h, e);
+	bu_log("%sEDGE %8x\n", h, e);
 	if (!e || e->magic != NMG_EDGE_MAGIC) {
-		rt_log("bad edge magic\n");
+		bu_log("bad edge magic\n");
 		Return;
 	}
-	rt_log("%s%8x eu_p\n", h, e->eu_p);
+	bu_log("%s%8x eu_p\n", h, e->eu_p);
 
 	Return;
 }
@@ -633,24 +633,24 @@ char *h;
 	MKPAD(h);
 	NMG_CK_EDGEUSE(eu);
 
-	rt_log("%sEDGEUSE %8x\n", h, eu);
+	bu_log("%sEDGEUSE %8x\n", h, eu);
 
 	switch (*eu->up.magic_p) {
-	case NMG_SHELL_MAGIC	: rt_log("%s%8x up.s_p\n", h, eu->up.s_p);
+	case NMG_SHELL_MAGIC	: bu_log("%s%8x up.s_p\n", h, eu->up.s_p);
 				break;
-	case NMG_LOOPUSE_MAGIC	: rt_log("%s%8x up.lu_p\n", h, eu->up.lu_p);
+	case NMG_LOOPUSE_MAGIC	: bu_log("%s%8x up.lu_p\n", h, eu->up.lu_p);
 				break;
-	default			: rt_log("bad edgeuse parent magic\n");
+	default			: bu_log("bad edgeuse parent magic\n");
 				Return;
 	}
-	rt_log("%s%8x l.forw\n", h, eu->l.forw);
-	rt_log("%s%8x l.back\n", h, eu->l.back);
-	rt_log("%s%8x eumate_p\n", h, eu->eumate_p);
-	rt_log("%s%8x radial_p\n", h, eu->radial_p);
+	bu_log("%s%8x l.forw\n", h, eu->l.forw);
+	bu_log("%s%8x l.back\n", h, eu->l.back);
+	bu_log("%s%8x eumate_p\n", h, eu->eumate_p);
+	bu_log("%s%8x radial_p\n", h, eu->radial_p);
 	nmg_pr_orient(eu->orientation, h);
-	rt_log("%s%8x e_p\n", h, eu->e_p);
-	rt_log("%s%8x vu_p\n", h, eu->vu_p);
-	rt_log("%s%8x g.magic_p\n", h, eu->g.magic_p);
+	bu_log("%s%8x e_p\n", h, eu->e_p);
+	bu_log("%s%8x vu_p\n", h, eu->vu_p);
+	bu_log("%s%8x g.magic_p\n", h, eu->g.magic_p);
 	nmg_pr_e(eu->e_p, h);
 	nmg_pr_vu(eu->vu_p, h);
 
@@ -671,7 +671,7 @@ char *h;
 	MKPAD(h);
 	NMG_CK_EDGEUSE(eu);
 
-	rt_log("%sEDGEUSE %8x, g=%8x, e_p=%8x\n", h, eu, eu->g.magic_p, eu->e_p);
+	bu_log("%sEDGEUSE %8x, g=%8x, e_p=%8x\n", h, eu, eu->g.magic_p, eu->e_p);
 	nmg_pr_vu_briefly(eu->vu_p, h);
 
 	Return;
@@ -695,7 +695,7 @@ char *h;
 	NMG_CK_VERTEX_G(vg1);
 	NMG_CK_VERTEX_G(vg2);
 
-	rt_log("%sEDGEUSE %8x\n%s  (%g, %g, %g) -- (%g, %g, %g)\n", h, eu, h,
+	bu_log("%sEDGEUSE %8x\n%s  (%g, %g, %g) -- (%g, %g, %g)\n", h, eu, h,
 		V3ARGS(vg1->coord),
 		V3ARGS(vg2->coord) );
 
@@ -714,11 +714,11 @@ char *h;
 	NMG_CK_VERTEX_G(vg);
 
 	if (!vg || vg->magic != NMG_VERTEX_G_MAGIC) {
-		rt_log("%sVERTEX_G %8x\n", h, vg);
-		rt_log("bad vertex_g magic\n");
+		bu_log("%sVERTEX_G %8x\n", h, vg);
+		bu_log("bad vertex_g magic\n");
 		Return;
 	}
-	rt_log("%sVERTEX_G %8x %f %f %f = XYZ coord\n",
+	bu_log("%sVERTEX_G %8x %f %f %f = XYZ coord\n",
 		h, vg, V3ARGS(vg->coord) );
 	Return;
 }
@@ -734,18 +734,18 @@ char *h;
 	MKPAD(h);
 	NMG_CK_VERTEX(v);
 
-	rt_log("%sVERTEX %8x\n", h, v);
+	bu_log("%sVERTEX %8x\n", h, v);
 	if (!v || v->magic != NMG_VERTEX_MAGIC) {
-		rt_log("bad vertex magic\n");
+		bu_log("bad vertex magic\n");
 		Return;
 	}
 	/* vu_hd ? */
-	rt_log("%s   vu_hd %8x\n", h, &v->vu_hd);
-	rt_log("%s%8x vu_hd.forw\n", h, v->vu_hd.forw);
-	rt_log("%s%8x vu_hd.back\n", h, v->vu_hd.back);
+	bu_log("%s   vu_hd %8x\n", h, &v->vu_hd);
+	bu_log("%s%8x vu_hd.forw\n", h, v->vu_hd.forw);
+	bu_log("%s%8x vu_hd.back\n", h, v->vu_hd.back);
 
 
-	rt_log("%s%8x vg_p\n", h, v->vg_p);
+	bu_log("%s%8x vg_p\n", h, v->vg_p);
 	if (v->vg_p)
 		nmg_pr_vg(v->vg_p, h);
 
@@ -763,31 +763,31 @@ char *h;
 	MKPAD(h);
 	NMG_CK_VERTEXUSE(vu);
 
-	rt_log("%sVERTEXUSE %8x\n", h, vu);
+	bu_log("%sVERTEXUSE %8x\n", h, vu);
 	if (!vu || vu->l.magic != NMG_VERTEXUSE_MAGIC) {
-		rt_log("bad vertexuse magic\n");
+		bu_log("bad vertexuse magic\n");
 		Return;
 	}
 
 	switch (*vu->up.magic_p) {
-	case NMG_SHELL_MAGIC	: rt_log("%s%8x up.s_p\n", h, vu->up.s_p); break;
-	case NMG_LOOPUSE_MAGIC	: rt_log("%s%8x up.lu_p\n", h, vu->up.lu_p); break;
-	case NMG_EDGEUSE_MAGIC	: rt_log("%s%8x up.eu_p\n", h, vu->up.eu_p); break;
-	default			: rt_log("bad vertexuse parent magic\n"); 
+	case NMG_SHELL_MAGIC	: bu_log("%s%8x up.s_p\n", h, vu->up.s_p); break;
+	case NMG_LOOPUSE_MAGIC	: bu_log("%s%8x up.lu_p\n", h, vu->up.lu_p); break;
+	case NMG_EDGEUSE_MAGIC	: bu_log("%s%8x up.eu_p\n", h, vu->up.eu_p); break;
+	default			: bu_log("bad vertexuse parent magic\n"); 
 				Return;
 	}
-	rt_log("%s%8x l.forw\n", h, vu->l.forw);
-	rt_log("%s%8x l.back\n", h, vu->l.back);
+	bu_log("%s%8x l.forw\n", h, vu->l.forw);
+	bu_log("%s%8x l.back\n", h, vu->l.back);
 	if( vu->a.magic_p )  switch( *vu->a.magic_p )  {
 	case NMG_VERTEXUSE_A_PLANE_MAGIC:
-		rt_log("%s%8x a.plane_p\n", h, vu->a.plane_p);
-		rt_log("%s normal: %f %f %f\n", h, V3ARGS( vu->a.plane_p->N ) );
+		bu_log("%s%8x a.plane_p\n", h, vu->a.plane_p);
+		bu_log("%s normal: %f %f %f\n", h, V3ARGS( vu->a.plane_p->N ) );
 		break;
 	case NMG_VERTEXUSE_A_CNURB_MAGIC:
-		rt_log("%s%8x a.cnurb_p\n", h, vu->a.cnurb_p);
+		bu_log("%s%8x a.cnurb_p\n", h, vu->a.cnurb_p);
 		break;
 	}
-	rt_log("%s%8x v_p\n", h, vu->v_p);
+	bu_log("%s%8x v_p\n", h, vu->v_p);
 	nmg_pr_v(vu->v_p, h);
 	if( vu->a.magic_p )  nmg_pr_vua( vu->a.magic_p, h );
 
@@ -810,10 +810,10 @@ char *h;
 
 	if( vg = vu->v_p->vg_p )  {
 		NMG_CK_VERTEX_G(vg);
-		rt_log("%sVERTEXUSE %8x, v=x%x, %f %f %f\n", h, vu, vu->v_p,
+		bu_log("%sVERTEXUSE %8x, v=x%x, %f %f %f\n", h, vu, vu->v_p,
 			V3ARGS(vg->coord) );
 	} else {
-		rt_log("%sVERTEXUSE %8x, v=x%x\n", h, vu, vu->v_p);
+		bu_log("%sVERTEXUSE %8x, v=x%x\n", h, vu, vu->v_p);
 	}
 
 	Return;
@@ -829,19 +829,19 @@ char *h;
 {
 	MKPAD(h);
 
-	rt_log("%sVERTEXUSE_A %8x\n", h, magic_p);
+	bu_log("%sVERTEXUSE_A %8x\n", h, magic_p);
 	if (!magic_p)  {
-		rt_log("bad vertexuse_a magic\n");
+		bu_log("bad vertexuse_a magic\n");
 		Return;
 	}
 
 	switch( *magic_p )  {
 	case NMG_VERTEXUSE_A_PLANE_MAGIC:
-		rt_log("%s N=(%g, %g, %g, %g)\n", h,
+		bu_log("%s N=(%g, %g, %g, %g)\n", h,
 			V3ARGS( ((struct vertexuse_a_plane *)magic_p)->N ) );
 		break;
 	case NMG_VERTEXUSE_A_CNURB_MAGIC:
-		rt_log("%s param=(%g, %g, %g)\n", h,
+		bu_log("%s param=(%g, %g, %g)\n", h,
 			V3ARGS( ((struct vertexuse_a_cnurb *)magic_p)->param ) );
 		break;
 	}
@@ -874,47 +874,47 @@ CONST struct edgeuse	*eu;
 	eup = eu->vu_p->v_p->vg_p->coord;
 	matep = eu->eumate_p->vu_p->v_p->vg_p->coord;
 
-	rt_log("%s (%g, %g, %g -> %g, %g, %g)\n", str, eup[0], eup[1], eup[2],
+	bu_log("%s (%g, %g, %g -> %g, %g, %g)\n", str, eup[0], eup[1], eup[2],
 		matep[0], matep[1], matep[2]);
 }
 /*
  *			N M G _ P R _ P T B L
  *
- *  Print an nmg_ptbl array for inspection.
+ *  Print an bu_ptbl array for inspection.
  */
 void
 nmg_pr_ptbl( title, tbl, verbose )
 CONST char		*title;
-CONST struct nmg_ptbl	*tbl;
+CONST struct bu_ptbl	*tbl;
 int			verbose;
 {
 	register long	**lp;
 
-	NMG_CK_PTBL(tbl);
-	rt_log("%s: nmg_ptbl array with %d entries\n",
+	BU_CK_PTBL(tbl);
+	bu_log("%s: bu_ptbl array with %d entries\n",
 		title, tbl->end );
 
 	if( !verbose )  return;
 
-	for( lp = (long **)NMG_TBL_BASEADDR(tbl);
-	     lp <= (long **)NMG_TBL_LASTADDR(tbl); lp++
+	for( lp = (long **)BU_PTBL_BASEADDR(tbl);
+	     lp <= (long **)BU_PTBL_LASTADDR(tbl); lp++
 	)  {
 		if( *lp == 0 )  {
-			rt_log("  %.8x NULL entry\n", *lp);
+			bu_log("  %.8x NULL entry\n", *lp);
 			continue;
 		}
 		switch(**lp)  {
 		default:
-			rt_log("  %.8x %s\n", *lp, rt_identify_magic(**lp) );
+			bu_log("  %.8x %s\n", *lp, bu_identify_magic(**lp) );
 			break;
 		case NMG_EDGEUSE_MAGIC:
-			rt_log("  %.8x edgeuse vu=%x, far vu=%x\n",
+			bu_log("  %.8x edgeuse vu=%x, far vu=%x\n",
 				*lp,
 				((struct edgeuse *)*lp)->vu_p,
-				RT_LIST_PNEXT_CIRC(edgeuse, *lp)->vu_p );
+				BU_LIST_PNEXT_CIRC(edgeuse, *lp)->vu_p );
 			break;
 		case NMG_VERTEXUSE_MAGIC:
-			rt_log("  %.8x vertexuse v=%x\n",
+			bu_log("  %.8x vertexuse v=%x\n",
 				*lp,
 				((struct vertexuse *)*lp)->v_p );
 			break;
@@ -930,7 +930,7 @@ int			verbose;
 void
 nmg_pr_ptbl_vert_list( str, tbl, mag )
 CONST char		*str;
-CONST struct nmg_ptbl	*tbl;
+CONST struct bu_ptbl	*tbl;
 CONST fastf_t		*mag;
 {
 	int			i;
@@ -939,14 +939,14 @@ CONST fastf_t		*mag;
 	CONST struct vertex	*v;
 	CONST struct vertex_g	*vg;
 
-    	rt_log("nmg_pr_ptbl_vert_list(%s):\n", str);
+    	bu_log("nmg_pr_ptbl_vert_list(%s):\n", str);
 
 	vup = (CONST struct vertexuse **)tbl->buffer;
 	for (i=0 ; i < tbl->end ; ++i) {
 		vu = vup[i];
 		if( vu->l.magic != NMG_VERTEXUSE_MAGIC )
 		{
-			rt_log( "\tWARNING: vertexuse #%d has bad MAGIC (%x)\n" , i, vu->l.magic );
+			bu_log( "\tWARNING: vertexuse #%d has bad MAGIC (%x)\n" , i, vu->l.magic );
 			continue;
 		}
 		NMG_CK_VERTEXUSE(vu);
@@ -954,21 +954,21 @@ CONST fastf_t		*mag;
 		NMG_CK_VERTEX(v);
 		vg = v->vg_p;
 		NMG_CK_VERTEX_G(vg);
-		rt_log("%d\t%g, %g, %g\t", i, V3ARGS(vg->coord) );
+		bu_log("%d\t%g, %g, %g\t", i, V3ARGS(vg->coord) );
 		if (*vu->up.magic_p == NMG_EDGEUSE_MAGIC) {
-			rt_log("EDGEUSE");
+			bu_log("EDGEUSE");
 		} else if (*vu->up.magic_p == NMG_LOOPUSE_MAGIC) {
-			rt_log("LOOPUSE");
+			bu_log("LOOPUSE");
 			if ((struct vertexuse *)vu->up.lu_p->down_hd.forw != vu) {
-				rt_log("ERROR vertexuse's parent disowns us!\n");
+				bu_log("ERROR vertexuse's parent disowns us!\n");
 				if (((struct vertexuse *)(vu->up.lu_p->lumate_p->down_hd.forw))->l.magic == NMG_VERTEXUSE_MAGIC)
 					rt_bomb("lumate has vertexuse\n");
 				rt_bomb("lumate has garbage\n");
 			}
 		} else {
-			rt_log("vu up UNKNOWN");
+			bu_log("vu up UNKNOWN");
 		}
-		rt_log("\tv=x%x, vu=x%x, dist=%g\n", v , vu, mag[i] );
+		bu_log("\tv=x%x, vu=x%x, dist=%g\n", v , vu, mag[i] );
 	}
 }
 
@@ -984,7 +984,7 @@ CONST struct edgeuse	*eu;
 CONST vect_t		xvec;
 CONST vect_t		yvec;
 CONST vect_t		zvec;
-CONST struct rt_tol	*tol;
+CONST struct bn_tol	*tol;
 {
 	CONST struct loopuse	*lu;
 	CONST struct faceuse	*fu;
@@ -1019,7 +1019,7 @@ CONST struct rt_tol	*tol;
 	NMG_CK_SHELL(s);
 	if( f && *f->g.magic_p == NMG_FACE_G_SNURB_MAGIC )
 	{
-		rt_log(" %8.8x, lu=%8.8x=%1.1s, f=%8.8x, fu=%8.8x=%1.1s, s=%8.8x SNURB\n",
+		bu_log(" %8.8x, lu=%8.8x=%1.1s, f=%8.8x, fu=%8.8x=%1.1s, s=%8.8x SNURB\n",
 			eu,
 			lu, lu_orient,
 			f,
@@ -1028,13 +1028,13 @@ CONST struct rt_tol	*tol;
 	}
 	else
 	{
-		rt_log(" %8.8x, lu=%8.8x=%1.1s, f=%8.8x, fu=%8.8x=%1.1s, s=%8.8x %g deg\n",
+		bu_log(" %8.8x, lu=%8.8x=%1.1s, f=%8.8x, fu=%8.8x=%1.1s, s=%8.8x %g deg\n",
 			eu,
 			lu, lu_orient,
 			f,
 			fu, fu_orient,
 			s,
-			nmg_measure_fu_angle(eu, xvec, yvec, zvec) * rt_radtodeg );
+			nmg_measure_fu_angle(eu, xvec, yvec, zvec) * bn_radtodeg );
 	}
 }
 
@@ -1047,13 +1047,13 @@ CONST struct edgeuse	*eu;
 CONST vect_t		xvec;
 CONST vect_t		yvec;
 CONST vect_t		zvec;
-CONST struct rt_tol	*tol;
+CONST struct bn_tol	*tol;
 {
 	CONST struct edgeuse	*eu1;
 
 	NMG_CK_EDGEUSE(eu);
-	RT_CK_TOL(tol);
-	rt_log("nmg_pr_fu_around_eu_vecs(eu=x%x) e=x%x\n", eu, eu->e_p);
+	BN_CK_TOL(tol);
+	bu_log("nmg_pr_fu_around_eu_vecs(eu=x%x) e=x%x\n", eu, eu->e_p);
 
 	/* To go correct way around, start with arg's mate,
 	 * so that arg, then radial, will follow.
@@ -1085,13 +1085,13 @@ CONST struct rt_tol	*tol;
 void
 nmg_pr_fu_around_eu( eu, tol )
 CONST struct edgeuse *eu;
-CONST struct rt_tol	*tol;
+CONST struct bn_tol	*tol;
 {
 	vect_t			xvec, yvec, zvec;
 
 	NMG_CK_EDGEUSE(eu);
-	RT_CK_TOL(tol);
-	rt_log("nmg_pr_fu_around_eu(x%x)\n", eu);
+	BN_CK_TOL(tol);
+	bu_log("nmg_pr_fu_around_eu(x%x)\n", eu);
 
 	if( eu->vu_p->v_p == eu->eumate_p->vu_p->v_p || *eu->g.magic_p == NMG_EDGE_G_CNURB_MAGIC )
 	{
@@ -1158,7 +1158,7 @@ CONST struct edgeuse	*eu;
 
 	rt_free( (char *)b, "nmg_pl_lu_around_eu flag[]" );
 	fclose(fp);
-	rt_log("Wrote %s\n", buf);
+	bu_log("Wrote %s\n", buf);
 }
 
 /*
@@ -1174,11 +1174,11 @@ CONST long	*fg_magic;
 	struct face	*f;
 
 	NMG_CK_FACE_G_EITHER(fg_magic);
-	rt_log("nmg_pr_fus_in_fg(x%x):\n", fg_magic);
-	for( RT_LIST_FOR( f, face, &(((struct face_g_plane *)fg_magic)->f_hd) ) )  {
+	bu_log("nmg_pr_fus_in_fg(x%x):\n", fg_magic);
+	for( BU_LIST_FOR( f, face, &(((struct face_g_plane *)fg_magic)->f_hd) ) )  {
 		NMG_CK_FACE(f);
 		NMG_CK_FACEUSE(f->fu_p);
-		rt_log(" f=x%x, fu=x%x, fumate=x%x\n",
+		bu_log(" f=x%x, fu=x%x, fumate=x%x\n",
 			f, f->fu_p, f->fu_p->fumate_p );
 	}
 }

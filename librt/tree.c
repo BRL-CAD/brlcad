@@ -127,7 +127,7 @@ union tree			*curtree;
 		return  curtree;
 	}
 
-	GETSTRUCT( rp, region );
+	BU_GETSTRUCT( rp, region );
 	rp->reg_magic = RT_REGION_MAGIC;
 	rp->reg_forw = REGION_NULL;
 	rp->reg_regionid = tsp->ts_regionid;
@@ -140,7 +140,7 @@ union tree			*curtree;
 	dp = (struct directory *)DB_FULL_PATH_CUR_DIR(pathp);
 
 	if(rt_g.debug&DEBUG_TREEWALK)  {
-		rt_log("rt_gettree_region_end() %s\n", rp->reg_name );
+		bu_log("rt_gettree_region_end() %s\n", rp->reg_name );
 		rt_pr_tree( curtree, 0 );
 	}
 	
@@ -167,7 +167,7 @@ union tree			*curtree;
 	RES_RELEASE( &rt_g.res_results );	/* leave critical section */
 
 	if( rt_g.debug & DEBUG_REGIONS )  {
-		rt_log("Add Region %s instnum %d\n",
+		bu_log("Add Region %s instnum %d\n",
 			rp->reg_name, rp->reg_instnum);
 	}
 
@@ -263,12 +263,12 @@ struct rt_i			*rtip;
 
 	/* If solid has not been referenced yet, the search can be skipped */
 	if( dp->d_uses > 0 )  {
-		struct rt_list	*mid;
+		struct bu_list	*mid;
 
 		/* Search dp->d_use_hd list for other instances */
-		for( RT_LIST_FOR( mid, rt_list, &dp->d_use_hd ) )  {
+		for( BU_LIST_FOR( mid, rt_list, &dp->d_use_hd ) )  {
 
-			stp = RT_LIST_MAIN_PTR( soltab, mid, l2 );
+			stp = BU_LIST_MAIN_PTR( soltab, mid, l2 );
 			RT_CK_SOLTAB(stp);
 
 			/* Don't instance this solid in some other model instance */
@@ -298,7 +298,7 @@ struct rt_i			*rtip;
 		stp->st_uses++;
 		/* dp->d_uses is NOT incremented, because number of soltab's using it has not gone up. */
 		if( rt_g.debug & DEBUG_SOLIDS )  {
-			rt_log( mat ?
+			bu_log( mat ?
 			    "rt_find_identical_solid:  %s re-referenced %d\n" :
 			    "rt_find_identical_solid:  %s re-referenced %d (identity mat)\n",
 				dp->d_namep, stp->st_uses );
@@ -308,7 +308,7 @@ struct rt_i			*rtip;
 		 *  Create and link a new solid into the list.
 		 *  Ensure the search keys "dp" and "mat" are stored now.
 		 */
-		GETSTRUCT(stp, soltab);
+		BU_GETSTRUCT(stp, soltab);
 		stp->l.magic = RT_SOLTAB_MAGIC;
 		stp->l2.magic = RT_SOLTAB2_MAGIC;
 		stp->st_rtip = rtip;
@@ -326,11 +326,11 @@ struct rt_i			*rtip;
 		}
 		/* Add to the appropriate soltab list head */
 		/* PARALLEL NOTE:  Needs critical section on rt_solidheads element */
-		RT_LIST_INSERT( &(rtip->rti_solidheads[hash]), &(stp->l) );
+		BU_LIST_INSERT( &(rtip->rti_solidheads[hash]), &(stp->l) );
 
 		/* Also add to the directory structure list head */
 		/* PARALLEL NOTE:  Needs critical section on this 'dp' */
-		RT_LIST_INSERT( &dp->d_use_hd, &(stp->l2) );
+		BU_LIST_INSERT( &dp->d_use_hd, &(stp->l2) );
 
 		/* Tables of regions using this solid.  Usually small. */
 		bu_ptbl_init( &stp->st_regions, 7, "st_regions ptbl" );
@@ -360,7 +360,7 @@ struct rt_i			*rtip;
 HIDDEN union tree *rt_gettree_leaf( tsp, pathp, ep, id )
 CONST struct db_tree_state	*tsp;
 struct db_full_path		*pathp;
-CONST struct rt_external	*ep;
+CONST struct bu_external	*ep;
 int				id;
 {
 	register struct soltab	*stp;
@@ -372,7 +372,7 @@ int				id;
 
 	RT_CK_DBI(tsp->ts_dbip);
 	RT_CK_FULL_PATH(pathp);
-	RT_CK_EXTERNAL(ep);
+	BU_CK_EXTERNAL(ep);
 	RT_CK_RTI(rt_tree_rtip);
 	dp = DB_FULL_PATH_CUR_DIR(pathp);
 
@@ -417,7 +417,7 @@ int				id;
 	 */
     	RT_INIT_DB_INTERNAL(&intern);
 	if( rt_functab[id].ft_import( &intern, ep, mat ) < 0 )  {
-		rt_log("rt_gettree_leaf(%s):  solid import failure\n", dp->d_namep );
+		bu_log("rt_gettree_leaf(%s):  solid import failure\n", dp->d_namep );
 	    	if( intern.idb_ptr )  rt_functab[id].ft_ifree( &intern );
 		/* Too late to delete soltab entry; mark it as "dead" */
 		stp->st_aradius = -1;
@@ -437,7 +437,7 @@ int				id;
     	 */
 	if( rt_functab[id].ft_prep( stp, &intern, rt_tree_rtip ) )  {
 		/* Error, solid no good */
-		rt_log("rt_gettree_leaf(%s):  prep failure\n", dp->d_namep );
+		bu_log("rt_gettree_leaf(%s):  prep failure\n", dp->d_namep );
 	    	if( intern.idb_ptr )  rt_functab[stp->st_id].ft_ifree( &intern );
 		/* Too late to delete soltab entry; mark it as "dead" */
 		stp->st_aradius = -1;
@@ -461,23 +461,23 @@ int				id;
 		db_dup_path_tail( &stp->st_path, pathp, i );
 		if(rt_g.debug&DEBUG_TREEWALK)  {
 			char	*sofar = db_path_to_string(&stp->st_path);
-			rt_log("rt_gettree_leaf() st_path=%s\n", sofar );
+			bu_log("rt_gettree_leaf() st_path=%s\n", sofar );
 			rt_free(sofar, "path string");
 		}
 	}
 
 #if 0
 	if(rt_g.debug&DEBUG_SOLIDS)  {
-		struct rt_vls	str;
-		rt_log("\n---Solid %d: %s\n", stp->st_bit, dp->d_namep);
-		rt_vls_init( &str );
+		struct bu_vls	str;
+		bu_log("\n---Solid %d: %s\n", stp->st_bit, dp->d_namep);
+		bu_vls_init( &str );
 		/* verbose=1, mm2local=1.0 */
 		if( rt_functab[stp->st_id].ft_describe( &str, &intern, 1, 1.0 ) < 0 )  {
-			rt_log("rt_gettree_leaf(%s):  solid describe failure\n",
+			bu_log("rt_gettree_leaf(%s):  solid describe failure\n",
 				dp->d_namep );
 		}
-		rt_log( "%s:  %s", dp->d_namep, rt_vls_addr( &str ) );
-		rt_vls_free( &str );
+		bu_log( "%s:  %s", dp->d_namep, bu_vls_addr( &str ) );
+		bu_vls_free( &str );
 	}
 #endif
 
@@ -485,7 +485,7 @@ int				id;
     	if( intern.idb_ptr )  rt_functab[stp->st_id].ft_ifree( &intern );
 
 found_it:
-	GETUNION( curtree, tree );
+	BU_GETUNION( curtree, tree );
 	curtree->magic = RT_TREE_MAGIC;
 	curtree->tr_op = OP_SOLID;
 	curtree->tr_a.tu_stp = stp;
@@ -494,7 +494,7 @@ found_it:
 
 	if(rt_g.debug&DEBUG_TREEWALK)  {
 		char	*sofar = db_path_to_string(pathp);
-		rt_log("rt_gettree_leaf() %s\n", sofar );
+		bu_log("rt_gettree_leaf() %s\n", sofar );
 		rt_free(sofar, "path string");
 	}
 
@@ -531,9 +531,9 @@ struct soltab	*stp;
 	}
 
 	/* NON-PARALLEL, on d_use_hd (may be locked on other semaphore) */
-	RT_LIST_DEQUEUE( &(stp->l2) );	/* remove from st_dp->d_use_hd list */
+	BU_LIST_DEQUEUE( &(stp->l2) );	/* remove from st_dp->d_use_hd list */
 
-	RT_LIST_DEQUEUE( &(stp->l) );	/* NON-PARALLEL on rti_solidheads[] */
+	BU_LIST_DEQUEUE( &(stp->l) );	/* NON-PARALLEL on rti_solidheads[] */
 
 	RES_RELEASE( &rt_g.res_model );
 
@@ -607,7 +607,7 @@ int		ncpus;
 	RT_CHECK_RTI(rtip);
 
 	if(!rtip->needprep)  {
-		rt_log("ERROR: rt_gettree() called again after rt_prep!\n");
+		bu_log("ERROR: rt_gettree() called again after rt_prep!\n");
 		return(-1);		/* FAIL */
 	}
 
@@ -644,7 +644,7 @@ again:
 	RT_VISIT_ALL_SOLTABS_START( stp, rtip )  {
 		RT_CK_SOLTAB(stp);
 		if( stp->st_aradius <= 0 )  {
-			rt_log("rt_gettrees() cleaning up dead solid '%s'\n",
+			bu_log("rt_gettrees() cleaning up dead solid '%s'\n",
 				stp->st_dp->d_namep );
 			rt_free_soltab(stp);
 			/* Can't do rtip->nsolids--, that doubles as max bit number! */
@@ -671,7 +671,7 @@ again:
 		 *  to the list of infinite solids, for special handling.
 		 */
 		if( rt_bound_tree( regp->reg_treetop, region_min, region_max ) < 0 )  {
-			rt_log("rt_gettrees() %s\n", regp->reg_name );
+			bu_log("rt_gettrees() %s\n", regp->reg_name );
 			rt_bomb("rt_gettrees(): rt_bound_tree() fail\n");
 		}
 		if( region_max[X] < INFINITY )  {
@@ -690,7 +690,7 @@ again:
 	if( i < 0 )  return(-1);
 
 	if( rtip->nsolids <= prev_sol_count )
-		rt_log("rt_gettrees(%s) warning:  no solids found\n", argv[0]);
+		bu_log("rt_gettrees(%s) warning:  no solids found\n", argv[0]);
 	return(0);	/* OK */
 }
 
@@ -760,7 +760,7 @@ vect_t				tree_max;
 			stp = tp->tr_a.tu_stp;
 			RT_CK_SOLTAB(stp);
 			if( stp->st_aradius <= 0 )  {
-				rt_log("rt_bound_tree: encountered dead solid '%s'\n",
+				bu_log("rt_bound_tree: encountered dead solid '%s'\n",
 					stp->st_dp->d_namep);
 				return -1;	/* ERROR */
 			}
@@ -776,7 +776,7 @@ vect_t				tree_max;
 		}
 
 	default:
-		rt_log( "rt_bound_tree(x%x): unknown op=x%x\n",
+		bu_log( "rt_bound_tree(x%x): unknown op=x%x\n",
 			tp, tp->tr_op );
 		return(-1);
 
@@ -833,7 +833,7 @@ register union tree	*tp;
 			stp = tp->tr_a.tu_stp;
 			RT_CK_SOLTAB(stp);
 			if( stp->st_aradius <= 0 )  {
-				if(rt_g.debug&DEBUG_TREEWALK)rt_log("rt_tree_kill_dead_solid_refs: encountered dead solid '%s' stp=x%x, tp=x%x\n",
+				if(rt_g.debug&DEBUG_TREEWALK)bu_log("rt_tree_kill_dead_solid_refs: encountered dead solid '%s' stp=x%x, tp=x%x\n",
 					stp->st_dp->d_namep, stp, tp);
 				rt_free_soltab(stp);
 				tp->tr_a.tu_stp = SOLTAB_NULL;
@@ -843,7 +843,7 @@ register union tree	*tp;
 		}
 
 	default:
-		rt_log( "rt_tree_kill_dead_solid_refs(x%x): unknown op=x%x\n",
+		bu_log( "rt_tree_kill_dead_solid_refs(x%x): unknown op=x%x\n",
 			tp, tp->tr_op );
 		return;
 
@@ -896,7 +896,7 @@ top:
 		return(0);		/* Retain */
 
 	default:
-		rt_log( "rt_tree_elim_nops(x%x): unknown op=x%x\n",
+		bu_log( "rt_tree_elim_nops(x%x): unknown op=x%x\n",
 			tp, tp->tr_op );
 		return(-1);
 
@@ -1215,7 +1215,7 @@ struct resource		*resp;
 			}
 			break;
 		default:
-			rt_log("rt_optim_tree: bad op x%x\n", tp->tr_op);
+			bu_log("rt_optim_tree: bad op x%x\n", tp->tr_op);
 			break;
 		}
 	}

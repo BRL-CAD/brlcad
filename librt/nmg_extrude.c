@@ -36,7 +36,7 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #include "./debug.h"
 
 RT_EXTERN( struct shell *nmg_dup_shell , ( struct shell *s , long ***copy_tbl ) );
-RT_EXTERN( void nmg_isect_shell_self , ( struct shell *s , CONST struct rt_tol *tol ) );
+RT_EXTERN( void nmg_isect_shell_self , ( struct shell *s , CONST struct bn_tol *tol ) );
 RT_EXTERN( fastf_t nmg_loop_plane_area , ( struct loopuse *lu , plane_t pl ) );
 
 /*
@@ -55,16 +55,16 @@ struct loopuse	*lu;
 	/* Count number of vertices in loop. */
 	cnt = 0;
 	NMG_CK_LOOPUSE(lu);
-	if (RT_LIST_FIRST_MAGIC(&lu->down_hd) == NMG_EDGEUSE_MAGIC) {
-		for (RT_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
+	if (BU_LIST_FIRST_MAGIC(&lu->down_hd) == NMG_EDGEUSE_MAGIC) {
+		for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
 			NMG_CK_EDGEUSE(eu);
 			NMG_CK_EDGE(eu->e_p);
 			NMG_CK_VERTEXUSE(eu->vu_p);
 			NMG_CK_VERTEX(eu->vu_p->v_p);
 			cnt++;
 		}
-	} else if (RT_LIST_FIRST_MAGIC(&lu->down_hd) == NMG_VERTEXUSE_MAGIC) {
-		v = RT_LIST_PNEXT(vertexuse, &lu->down_hd)->v_p;
+	} else if (BU_LIST_FIRST_MAGIC(&lu->down_hd) == NMG_VERTEXUSE_MAGIC) {
+		v = BU_LIST_PNEXT(vertexuse, &lu->down_hd)->v_p;
 		NMG_CK_VERTEX(v);
 		cnt++;
 	} else
@@ -85,7 +85,7 @@ struct faceuse	*fu;
 	struct loopuse	*lu;
 
 	cnt = 0;
-	for (RT_LIST_FOR(lu, loopuse, &fu->lu_hd))
+	for (BU_LIST_FOR(lu, loopuse, &fu->lu_hd))
 		cnt += verts_in_nmg_loop(lu);
 	return(cnt);
 }
@@ -99,7 +99,7 @@ void
 nmg_translate_face(fu, Vec, tol)
 struct faceuse	*fu;
 vect_t		Vec;
-struct rt_tol	*tol;
+struct bn_tol	*tol;
 {
 	int		cnt,		/* Number of vertices in face. */
 			cur,
@@ -111,9 +111,9 @@ struct rt_tol	*tol;
 	struct vertex	*v;
 	struct faceuse	*fu_tmp;
 	plane_t pl;
-	struct nmg_ptbl	edge_g_tbl;
+	struct bu_ptbl	edge_g_tbl;
 
-	nmg_tbl( &edge_g_tbl , TBL_INIT , (long *)NULL );
+	bu_ptbl_init( &edge_g_tbl , 64, " &edge_g_tbl ");
 
 	cur = 0;
 	cnt = verts_in_nmg_face(fu);
@@ -123,10 +123,10 @@ struct rt_tol	*tol;
 		verts[i] = NULL;
 
 	/* Go through each loop and translate it. */
-	for (RT_LIST_FOR(lu, loopuse, &fu->lu_hd)) {
+	for (BU_LIST_FOR(lu, loopuse, &fu->lu_hd)) {
 		NMG_CK_LOOPUSE(lu);
-		if (RT_LIST_FIRST_MAGIC(&lu->down_hd) == NMG_EDGEUSE_MAGIC) {
-			for (RT_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
+		if (BU_LIST_FIRST_MAGIC(&lu->down_hd) == NMG_EDGEUSE_MAGIC) {
+			for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
 				in_there = 0;
 				for (i = 0; i < cur && !in_there; i++)
 					if (verts[i] == eu->vu_p->v_p)
@@ -138,9 +138,9 @@ struct rt_tol	*tol;
 						Vec);
 				}
 			}
-		} else if (RT_LIST_FIRST_MAGIC(&lu->down_hd)
+		} else if (BU_LIST_FIRST_MAGIC(&lu->down_hd)
 			== NMG_VERTEXUSE_MAGIC) {
-			v = RT_LIST_FIRST(vertexuse, &lu->down_hd)->v_p;
+			v = BU_LIST_FIRST(vertexuse, &lu->down_hd)->v_p;
 			NMG_CK_VERTEX(v);
 			VADD2(v->vg_p->coord, v->vg_p->coord, Vec);
 		} else
@@ -153,12 +153,12 @@ struct rt_tol	*tol;
 
 	/* Move edge geometry */
 	nmg_edge_g_tabulate( &edge_g_tbl , &fu->l.magic );
-	for( i=0 ; i<NMG_TBL_END( &edge_g_tbl ) ; i++ )
+	for( i=0 ; i<BU_PTBL_END( &edge_g_tbl ) ; i++ )
 	{
 		long *ep;
 		struct edge_g_lseg *eg;
 
-		ep = NMG_TBL_GET( &edge_g_tbl , i );
+		ep = BU_PTBL_GET( &edge_g_tbl , i );
 		switch( *ep )
 		{
 			case NMG_EDGE_G_LSEG_MAGIC:
@@ -172,9 +172,9 @@ struct rt_tol	*tol;
 		}
 	}
 
-	nmg_tbl( &edge_g_tbl , TBL_FREE , (long *)NULL );
+	bu_ptbl_free( &edge_g_tbl );
 
-	if(nmg_loop_plane_area( RT_LIST_FIRST( loopuse , &fu_tmp->lu_hd ) , pl ) < 0.0 )
+	if(nmg_loop_plane_area( BU_LIST_FIRST( loopuse , &fu_tmp->lu_hd ) , pl ) < 0.0 )
 	{
 		rt_bomb( "nmg_translate_face: Cannot calculate plane equation for face\n" );
 	}
@@ -192,7 +192,7 @@ int
 nmg_extrude_face(fu, Vec, tol)
 struct faceuse	*fu;	/* Face to extrude. */
 vect_t		Vec;	/* Magnitude and direction of extrusion. */
-struct rt_tol	*tol;	/* NMG tolerances. */
+struct bn_tol	*tol;	/* NMG tolerances. */
 {
 	fastf_t		cosang;
 	int		nfaces;
@@ -204,7 +204,7 @@ struct rt_tol	*tol;	/* NMG tolerances. */
 #define MIKE_TOL 0.0001
 
 	NMG_CK_FACEUSE( fu );
-	RT_CK_TOL( tol );
+	BN_CK_TOL( tol );
 
 	/* Duplicate and reverse face. */
 	fu2 = nmg_dup_face(fu, fu->s_p);
@@ -229,21 +229,21 @@ struct rt_tol	*tol;	/* NMG tolerances. */
 	outfaces[0] = fu;
 	outfaces[1] = fu2->fumate_p;
 
-	for( RT_LIST_FOR2(lu , lu2 , loopuse , &fu->lu_hd , &fu2->lu_hd ) )
+	for( BU_LIST_FOR2(lu , lu2 , loopuse , &fu->lu_hd , &fu2->lu_hd ) )
 	{
 		struct edgeuse *eu,*eu2;
 
 		NMG_CK_LOOPUSE( lu );
 		NMG_CK_LOOPUSE( lu2 );
 
-		if( RT_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
+		if( BU_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
 			continue;
-		if( RT_LIST_FIRST_MAGIC( &lu2->down_hd ) != NMG_EDGEUSE_MAGIC )
+		if( BU_LIST_FIRST_MAGIC( &lu2->down_hd ) != NMG_EDGEUSE_MAGIC )
 		{
-			rt_log( "nmg_extrude_face: Original face and dup face don't match up!!\n" );
+			bu_log( "nmg_extrude_face: Original face and dup face don't match up!!\n" );
 			return( -1 );
 		}
-		for( RT_LIST_FOR2( eu , eu2 , edgeuse , &lu->down_hd , &lu2->down_hd ) )
+		for( BU_LIST_FOR2( eu , eu2 , edgeuse , &lu->down_hd , &lu2->down_hd ) )
 		{
 			struct vertex	*vertlist[4];
 
@@ -257,7 +257,7 @@ struct rt_tol	*tol;	/* NMG tolerances. */
 			outfaces[face_count] = nmg_cface( fu->s_p , vertlist , 4 );
 			if( nmg_calc_face_g( outfaces[face_count] ) )
 			{
-				rt_log( "nmg_extrude_face: failed to calculate plane eqn\n" );
+				bu_log( "nmg_extrude_face: failed to calculate plane eqn\n" );
 				return( -1 );
 			}
 			face_count++;
@@ -288,11 +288,11 @@ CONST struct loopuse *lu;
 	NMG_CK_VERTEX( v );
 	NMG_CK_LOOPUSE( lu );
 
-	if( RT_LIST_FIRST_MAGIC( &lu->down_hd ) == NMG_VERTEXUSE_MAGIC )
+	if( BU_LIST_FIRST_MAGIC( &lu->down_hd ) == NMG_VERTEXUSE_MAGIC )
 	{
 		struct vertexuse *vu;
 
-		vu = RT_LIST_FIRST( vertexuse , &lu->down_hd );
+		vu = BU_LIST_FIRST( vertexuse , &lu->down_hd );
 		NMG_CK_VERTEXUSE( vu );
 
 		if( vu->v_p == v )
@@ -302,7 +302,7 @@ CONST struct loopuse *lu;
 	}
 
 	ret_vu = (struct vertexuse *)NULL;
-	for( RT_LIST_FOR( eu , edgeuse , &lu->down_hd ) )
+	for( BU_LIST_FOR( eu , edgeuse , &lu->down_hd ) )
 	{
 		NMG_CK_EDGEUSE( eu );
 
@@ -327,9 +327,9 @@ nmg_start_new_loop( start_eu , lu1 , lu2 , loops )
 struct edgeuse *start_eu;
 struct loopuse *lu1;
 struct loopuse *lu2;
-struct nmg_ptbl *loops;
+struct bu_ptbl *loops;
 {
-	struct nmg_ptbl *new_lu_tab;
+	struct bu_ptbl *new_lu_tab;
 	struct loopuse *this_lu;
 	struct loopuse *other_lu;
 	struct edgeuse *eu;
@@ -341,11 +341,11 @@ struct nmg_ptbl *loops;
 	NMG_CK_LOOPUSE( lu2 );
 
 	/* create a table to hold eu pointers for a new loop */
-	new_lu_tab = (struct nmg_ptbl *)rt_malloc( sizeof( struct nmg_ptbl ) , "nmg_start_new_loop: new_lu_tab" );
-	nmg_tbl( new_lu_tab , TBL_INIT , (long *)NULL );
+	new_lu_tab = (struct bu_ptbl *)rt_malloc( sizeof( struct bu_ptbl ) , "nmg_start_new_loop: new_lu_tab" );
+	bu_ptbl_init( new_lu_tab , 64, " new_lu_tab ");
 
 	/* add this table to the list of loops */
-	nmg_tbl( loops , TBL_INS , (long *)new_lu_tab );
+	bu_ptbl_ins( loops , (long *)new_lu_tab );
 
 	/* put edgeuses from lu1 into new_lu_tab until a vertex shared by lu1 and lu2 is encountered
 	 * or until start_eu is encountered
@@ -359,7 +359,7 @@ struct nmg_ptbl *loops;
 		struct edgeuse *next_eu;
 		struct vertexuse *vu2;
 
-		next_eu = RT_LIST_PNEXT_CIRC( edgeuse , &eu->l );
+		next_eu = BU_LIST_PNEXT_CIRC( edgeuse , &eu->l );
 
 		/* skip this checking until we get by the first edgeuse */
 		if( edges )
@@ -385,13 +385,13 @@ struct nmg_ptbl *loops;
 				eu2 = vu2->up.eu_p;
 
 				/* check if a loop has already been started here */
-				for( i=0 ; i<NMG_TBL_END( loops ) ; i++ )
+				for( i=0 ; i<BU_PTBL_END( loops ) ; i++ )
 				{
-					struct nmg_ptbl *loop_tab;
+					struct bu_ptbl *loop_tab;
 					struct edgeuse *loop_start_eu;
 
-					loop_tab = (struct nmg_ptbl *)NMG_TBL_GET( loops , i );
-					loop_start_eu = (struct edgeuse *)NMG_TBL_GET( loop_tab , 0 );
+					loop_tab = (struct bu_ptbl *)BU_PTBL_GET( loops , i );
+					loop_start_eu = (struct edgeuse *)BU_PTBL_GET( loop_tab , 0 );
 					if( loop_start_eu == eu )
 					{
 						loop_started = 1;
@@ -407,7 +407,7 @@ struct nmg_ptbl *loops;
 
 				/* continue this loop by switching to the other loopuse */
 				eu = eu2;
-				next_eu = RT_LIST_PNEXT_CIRC( edgeuse , &eu->l );
+				next_eu = BU_LIST_PNEXT_CIRC( edgeuse , &eu->l );
 				lu_tmp = this_lu;
 				this_lu = other_lu;
 				other_lu = lu_tmp;
@@ -415,7 +415,7 @@ struct nmg_ptbl *loops;
 		}
 
 		/* add this edgeuse to the current list */
-		nmg_tbl( new_lu_tab , TBL_INS , (long *)eu );
+		bu_ptbl_ins( new_lu_tab , (long *)eu );
 
 		edges++;
 
@@ -447,29 +447,29 @@ struct nmg_ptbl *loops;
 void
 nmg_fix_overlapping_loops( s , tol )
 struct shell *s;
-CONST struct rt_tol *tol;
+CONST struct bn_tol *tol;
 {
 	struct faceuse *fu;
 	struct edgeuse *start_eu;
-	struct nmg_ptbl loops;
+	struct bu_ptbl loops;
 	int i;
 
 	NMG_CK_SHELL( s );
 
 	if( rt_g.NMG_debug & DEBUG_BASIC )
-		rt_log( "nmg_fix_overlapping_loops: s = x%x\n" , s );
+		bu_log( "nmg_fix_overlapping_loops: s = x%x\n" , s );
 
 	/* this routine needs simple faceuses */
 	nmg_split_loops_into_faces( &s->l.magic , tol );
 
-	/* This table will contain a list of nmg_ptbl's when we are
-	 * finished. Each of those nmg_ptbl's will be a list of
+	/* This table will contain a list of bu_ptbl's when we are
+	 * finished. Each of those bu_ptbl's will be a list of
 	 * edgeuses that comprise a new loop
 	 */
-	nmg_tbl( &loops , TBL_INIT , (long *)NULL );
+	bu_ptbl_init( &loops , 64, " &loops ");
 
 	/* process all faceuses in the shell */
-	for( RT_LIST_FOR( fu , faceuse , &s->fu_hd ) )
+	for( BU_LIST_FOR( fu , faceuse , &s->fu_hd ) )
 	{
 		struct loopuse *lu1,*lu2;
 		struct edgeuse *eu1;
@@ -486,29 +486,29 @@ CONST struct rt_tol *tol;
 		/* This is pretty simple-minded right now, assuming that
 		 * there are only two loopuses
 		 */
-		lu1 = RT_LIST_FIRST( loopuse , &fu->lu_hd );
+		lu1 = BU_LIST_FIRST( loopuse , &fu->lu_hd );
 		NMG_CK_LOOPUSE( lu1 );
 
-		lu2 = RT_LIST_PNEXT( loopuse , &lu1->l );
+		lu2 = BU_LIST_PNEXT( loopuse , &lu1->l );
 
 		/* if there is only one loopuse, nothing to do */
-		if( RT_LIST_IS_HEAD( lu2 , &fu->lu_hd ) )
+		if( BU_LIST_IS_HEAD( lu2 , &fu->lu_hd ) )
 			continue;
 
 		NMG_CK_LOOPUSE( lu2 );
 
 
 		/* if the loopuses aren't both loops af edges, nothing to do */
-		if( RT_LIST_FIRST_MAGIC( &lu1->down_hd ) != NMG_EDGEUSE_MAGIC )
+		if( BU_LIST_FIRST_MAGIC( &lu1->down_hd ) != NMG_EDGEUSE_MAGIC )
 			continue;
 
-		if( RT_LIST_FIRST_MAGIC( &lu2->down_hd ) != NMG_EDGEUSE_MAGIC )
+		if( BU_LIST_FIRST_MAGIC( &lu2->down_hd ) != NMG_EDGEUSE_MAGIC )
 			continue;
 
 		/* if both loopuses are the same orientation, something is wrong */
 		if( lu1->orientation == lu2->orientation )
 		{
-			rt_log( "nmg_fix_overlapping_loops: Cannot handle loops of same orientation\n" );
+			bu_log( "nmg_fix_overlapping_loops: Cannot handle loops of same orientation\n" );
 			nmg_pr_fu_briefly( fu , (char *)NULL );
 			continue;
 		}
@@ -525,7 +525,7 @@ CONST struct rt_tol *tol;
 		}
 		else if( lu2->orientation != OT_OPPOSITE || lu1->orientation != OT_SAME )
 		{
-			rt_log( "nmg_fix_overlapping_loops: bad loop orientations %s and %s\n",
+			bu_log( "nmg_fix_overlapping_loops: bad loop orientations %s and %s\n",
 				nmg_orientation( lu1->orientation ),
 				nmg_orientation( lu2->orientation ) );
 			continue;
@@ -534,7 +534,7 @@ CONST struct rt_tol *tol;
 		/* lu1 is OT_SAME and lu2 is OT_OPPOSITE, check for overlap */
 
 		/* count how many vertices in lu2 are inside lu1 and outside lu1 */
-		for( RT_LIST_FOR( eu , edgeuse , &lu2->down_hd ) )
+		for( BU_LIST_FOR( eu , edgeuse , &lu2->down_hd ) )
 		{
 			struct vertexuse *vu;
 
@@ -564,13 +564,13 @@ CONST struct rt_tol *tol;
 		/* the loops overlap, now fix it */
 
 		/* first, split the edges where the two loops cross each other */
-		for( RT_LIST_FOR( eu1 , edgeuse , &lu1->down_hd ) )
+		for( BU_LIST_FOR( eu1 , edgeuse , &lu1->down_hd ) )
 		{
 			vect_t v1;
 			struct edgeuse *eu2;
 
 			VSUB2( v1 , eu1->eumate_p->vu_p->v_p->vg_p->coord , eu1->vu_p->v_p->vg_p->coord );
-			for( RT_LIST_FOR( eu2 , edgeuse , &lu2->down_hd ) )
+			for( BU_LIST_FOR( eu2 , edgeuse , &lu2->down_hd ) )
 			{
 				vect_t v2;
 				fastf_t dist[2];
@@ -579,7 +579,7 @@ CONST struct rt_tol *tol;
 				VSUB2( v2 , eu2->eumate_p->vu_p->v_p->vg_p->coord ,
 						eu2->vu_p->v_p->vg_p->coord );
 
-				if( rt_isect_lseg3_lseg3( dist , eu1->vu_p->v_p->vg_p->coord , v1 ,
+				if( bn_isect_lseg3_lseg3( dist , eu1->vu_p->v_p->vg_p->coord , v1 ,
 					eu2->vu_p->v_p->vg_p->coord , v2 , tol ) >= 0 )
 				{
 					struct edgeuse *new_eu;
@@ -633,7 +633,7 @@ CONST struct rt_tol *tol;
 		 * this will be a starting edgeuse for a new loopuse
 		 */
 		start_eu = (struct edgeuse *)NULL;
-		for( RT_LIST_FOR( eu1 , edgeuse , &lu1->down_hd ) )
+		for( BU_LIST_FOR( eu1 , edgeuse , &lu1->down_hd ) )
 		{
 			struct vertex *v1,*v2;
 			point_t mid_pt;
@@ -659,13 +659,13 @@ CONST struct rt_tol *tol;
 
 		if( !start_eu )
 		{
-			rt_log( "nmg_fix_overlapping_loops: cannot find start point for new loops\n" );
-			rt_log( "lu1=x%x, lu2=x%x\n" , lu1 , lu2 );
+			bu_log( "nmg_fix_overlapping_loops: cannot find start point for new loops\n" );
+			bu_log( "lu1=x%x, lu2=x%x\n" , lu1 , lu2 );
 			nmg_pr_fu_briefly( fu , (char *)NULL );
 			continue;;
 		}
 
-		nmg_tbl( &loops , TBL_RST , (long *)NULL );
+		bu_ptbl_reset( &loops );
 
 		/* start new loop
 		 * this routine will recurse, building as many tables as needed
@@ -673,61 +673,61 @@ CONST struct rt_tol *tol;
 		nmg_start_new_loop( start_eu , lu1 , lu2 , &loops );
 
 		/* use loops table to create the new loops */
-		for( i=0 ; i<NMG_TBL_END( &loops ) ; i++ )
+		for( i=0 ; i<BU_PTBL_END( &loops ) ; i++ )
 		{
 			struct loopuse *new_lu;
 			struct loopuse *new_lu_mate;
-			struct nmg_ptbl *loop_tab;
+			struct bu_ptbl *loop_tab;
 			int eu_no;
 
 			/* each table represents a new loopuse to be constructed */
-			loop_tab = (struct nmg_ptbl *)NMG_TBL_GET( &loops , i );
+			loop_tab = (struct bu_ptbl *)BU_PTBL_GET( &loops , i );
 
 			/* if there are some entries in this table, make a new loopuse */
-			if( NMG_TBL_END( loop_tab ) )
+			if( BU_PTBL_END( loop_tab ) )
 			{
 				/* create new loop */
 				new_lu = nmg_mlv( &fu->l.magic , (struct vertex *)NULL , OT_SAME );
 				new_lu_mate = new_lu->lumate_p;
 
 				/* get rid of vertex just created */
-				nmg_kvu( RT_LIST_FIRST( vertexuse , &new_lu->down_hd ) );
-				nmg_kvu( RT_LIST_FIRST( vertexuse , &new_lu_mate->down_hd ) );
+				nmg_kvu( BU_LIST_FIRST( vertexuse , &new_lu->down_hd ) );
+				nmg_kvu( BU_LIST_FIRST( vertexuse , &new_lu_mate->down_hd ) );
 
 				/* move edgeuses to new loops */
-				for( eu_no=0 ; eu_no<NMG_TBL_END( loop_tab ) ; eu_no++ )
+				for( eu_no=0 ; eu_no<BU_PTBL_END( loop_tab ) ; eu_no++ )
 				{
 					struct edgeuse *mv_eu;
 
 					/* get edgeuse to be moved */
-					mv_eu = (struct edgeuse *)NMG_TBL_GET( loop_tab , eu_no );
+					mv_eu = (struct edgeuse *)BU_PTBL_GET( loop_tab , eu_no );
 					NMG_CK_EDGEUSE( mv_eu );
 
 					/* move it to new loopuse */
-					RT_LIST_DEQUEUE( &mv_eu->l );
-					RT_LIST_INSERT( &new_lu->down_hd , &mv_eu->l );
+					BU_LIST_DEQUEUE( &mv_eu->l );
+					BU_LIST_INSERT( &new_lu->down_hd , &mv_eu->l );
 					mv_eu->up.lu_p = new_lu;
 
 					/* move edgeuse mate to loopuse mate */
-					RT_LIST_DEQUEUE( &mv_eu->eumate_p->l );
-					RT_LIST_APPEND( &new_lu_mate->down_hd , &mv_eu->eumate_p->l );
+					BU_LIST_DEQUEUE( &mv_eu->eumate_p->l );
+					BU_LIST_APPEND( &new_lu_mate->down_hd , &mv_eu->eumate_p->l );
 					mv_eu->eumate_p->up.lu_p = new_lu_mate;
 				}
 
-				nmg_tbl( loop_tab , TBL_FREE , (long *)NULL );
+				bu_ptbl_free( loop_tab );
 				rt_free( (char *)loop_tab , "nmg_fix_overlapping_loops: loop_tab" );
 			}
 		}
 
 		/* kill empty loopuses left in faceuse */
-		lu1 = RT_LIST_FIRST( loopuse , &fu->lu_hd );
-		while( RT_LIST_NOT_HEAD( lu1 , &fu->lu_hd ) )
+		lu1 = BU_LIST_FIRST( loopuse , &fu->lu_hd );
+		while( BU_LIST_NOT_HEAD( lu1 , &fu->lu_hd ) )
 		{
 			struct loopuse *next_lu;
 
-			next_lu = RT_LIST_PNEXT( loopuse , &lu1->l );
+			next_lu = BU_LIST_PNEXT( loopuse , &lu1->l );
 
-			if( RT_LIST_IS_EMPTY( &lu1->down_hd ) )
+			if( BU_LIST_IS_EMPTY( &lu1->down_hd ) )
 			{
 				if( nmg_klu( lu1 ) )
 					rt_bomb( "nmg_fix_overlapping_loops: Emptied faceuse!!\n" );
@@ -735,10 +735,10 @@ CONST struct rt_tol *tol;
 			lu1 = next_lu;
 		}
 	}
-	nmg_tbl( &loops , TBL_FREE , (long *)NULL );
+	bu_ptbl_free( &loops );
 
 	if( rt_g.NMG_debug & DEBUG_BASIC )
-		rt_log( "nmg_fix_overlapping_loops: done\n" );
+		bu_log( "nmg_fix_overlapping_loops: done\n" );
 }
 
 /*	N M G _ B R E A K _ C R O S S E D _ L O O P S
@@ -750,14 +750,14 @@ CONST struct rt_tol *tol;
 void
 nmg_break_crossed_loops( is , tol )
 struct shell *is;
-CONST struct rt_tol *tol;
+CONST struct bn_tol *tol;
 {
 	struct faceuse *fu;
 
 	NMG_CK_SHELL( is );
-	RT_CK_TOL( tol );
+	BN_CK_TOL( tol );
 
-	for( RT_LIST_FOR( fu , faceuse , &is->fu_hd ) )
+	for( BU_LIST_FOR( fu , faceuse , &is->fu_hd ) )
 	{
 		struct loopuse *lu;
 
@@ -766,30 +766,30 @@ CONST struct rt_tol *tol;
 		if( fu->orientation != OT_SAME )
 			continue;
 
-		for( RT_LIST_FOR( lu , loopuse , &fu->lu_hd ) )
+		for( BU_LIST_FOR( lu , loopuse , &fu->lu_hd ) )
 		{
 			struct edgeuse *eu1,*eu2;
 			vect_t v1,v2;
 
 			NMG_CK_LOOPUSE( lu );
 
-			if( RT_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
+			if( BU_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
 				continue;
 
-			for( RT_LIST_FOR( eu1 , edgeuse , &lu->down_hd ) )
+			for( BU_LIST_FOR( eu1 , edgeuse , &lu->down_hd ) )
 			{
 				VSUB2( v1 , eu1->eumate_p->vu_p->v_p->vg_p->coord ,
 						eu1->vu_p->v_p->vg_p->coord );
 
-				eu2 = RT_LIST_PNEXT( edgeuse , eu1 );
-				while( RT_LIST_NOT_HEAD( eu2 , &lu->down_hd ) )
+				eu2 = BU_LIST_PNEXT( edgeuse , eu1 );
+				while( BU_LIST_NOT_HEAD( eu2 , &lu->down_hd ) )
 				{
 					fastf_t dist[2];
 
 					VSUB2( v2 , eu2->eumate_p->vu_p->v_p->vg_p->coord ,
 							eu2->vu_p->v_p->vg_p->coord );
 
-					if( rt_isect_lseg3_lseg3( dist , eu1->vu_p->v_p->vg_p->coord , v1 ,
+					if( bn_isect_lseg3_lseg3( dist , eu1->vu_p->v_p->vg_p->coord , v1 ,
 						eu2->vu_p->v_p->vg_p->coord , v2 , tol ) >= 0 )
 					{
 						point_t pt;
@@ -837,7 +837,7 @@ CONST struct rt_tol *tol;
 								nmg_vertex_gv( v , pt );
 						}
 					}
-					eu2 = RT_LIST_PNEXT( edgeuse , eu2 );
+					eu2 = BU_LIST_PNEXT( edgeuse , eu2 );
 				}
 			}
 		}
@@ -858,7 +858,7 @@ struct shell *
 nmg_extrude_cleanup( is , is_void , tol )
 struct shell *is;
 CONST int is_void;
-CONST struct rt_tol *tol;
+CONST struct bn_tol *tol;
 {
 	struct model *m;
 	struct nmgregion *new_r;
@@ -869,10 +869,10 @@ CONST struct rt_tol *tol;
 	struct shell *s_tmp;
 
 	NMG_CK_SHELL( is );
-	RT_CK_TOL( tol );
+	BN_CK_TOL( tol );
 
 	if( rt_g.NMG_debug & DEBUG_BASIC )
-		rt_log( "nmg_extrude_cleanup( is=x%x )\n" , is );
+		bu_log( "nmg_extrude_cleanup( is=x%x )\n" , is );
 
 	m = nmg_find_model( &is->l.magic );
 
@@ -883,13 +883,13 @@ CONST struct rt_tol *tol;
 	nmg_fix_overlapping_loops( is , tol );
 
 	/* look for self-touching loops */
-	for( RT_LIST_FOR( fu , faceuse , &is->fu_hd ) )
+	for( BU_LIST_FOR( fu , faceuse , &is->fu_hd ) )
 	{
 		if( fu->orientation != OT_SAME )
 			continue;
 
-		lu = RT_LIST_LAST( loopuse , &fu->lu_hd );
-		while( RT_LIST_NOT_HEAD( lu , &fu->lu_hd ) )
+		lu = BU_LIST_LAST( loopuse , &fu->lu_hd );
+		while( BU_LIST_NOT_HEAD( lu , &fu->lu_hd ) )
 		{
 			struct loopuse *new_lu;
 			int orientation;
@@ -914,7 +914,7 @@ CONST struct rt_tol *tol;
 				lu->lumate_p->orientation = orientation;
 			}
 
-			lu = RT_LIST_PLAST( loopuse , &lu->l );
+			lu = BU_LIST_PLAST( loopuse , &lu->l );
 		}
 	}
 
@@ -927,7 +927,7 @@ CONST struct rt_tol *tol;
 	new_r = nmg_mrsv( m );
 
 	/* s_tmp is the shell just created */
-	s_tmp = RT_LIST_FIRST( shell , &new_r->s_hd );
+	s_tmp = BU_LIST_FIRST( shell , &new_r->s_hd );
 
 	/* move our shell (is) to the new nmgregion
 	 * in preparaion for nmg_decompose_shell.
@@ -963,13 +963,13 @@ CONST struct rt_tol *tol;
 	else
 	{
 		/* look at each shell in "new_r" */
-		s_tmp = RT_LIST_FIRST( shell , &new_r->s_hd );
-		while( RT_LIST_NOT_HEAD( s_tmp , &new_r->s_hd ) )
+		s_tmp = BU_LIST_FIRST( shell , &new_r->s_hd );
+		while( BU_LIST_NOT_HEAD( s_tmp , &new_r->s_hd ) )
 		{
 			struct shell *next_s;
 			int kill_it=0;
 
-			next_s = RT_LIST_PNEXT( shell , &s_tmp->l );
+			next_s = BU_LIST_PNEXT( shell , &s_tmp->l );
 
 			if( nmg_bad_face_normals( s_tmp , tol ) )
 				kill_it = 1;
@@ -998,14 +998,14 @@ CONST struct rt_tol *tol;
 	if( new_r )
 	{
 		/* merge remaining shells in "new_r" */
-		is = RT_LIST_FIRST( shell , &new_r->s_hd );
+		is = BU_LIST_FIRST( shell , &new_r->s_hd );
 
-		s_tmp = RT_LIST_PNEXT( shell , &is->l );
-		while( RT_LIST_NOT_HEAD( s_tmp , &new_r->s_hd ) )
+		s_tmp = BU_LIST_PNEXT( shell , &is->l );
+		while( BU_LIST_NOT_HEAD( s_tmp , &new_r->s_hd ) )
 		{
 			struct shell *next_s;
 
-			next_s = RT_LIST_PNEXT( shell , &s_tmp->l );
+			next_s = BU_LIST_PNEXT( shell , &s_tmp->l );
 
 			if( s_tmp == is )
 			{
@@ -1022,8 +1022,8 @@ CONST struct rt_tol *tol;
 			(void)nmg_mv_shell_to_region( is , old_r );
 
 		/* kill the temporary nmgregion */
-		if( RT_LIST_NON_EMPTY( &new_r->s_hd ) )
-			rt_log( "nmg_extrude_cleanup: temporary nmgregion not empty!!\n" );
+		if( BU_LIST_NON_EMPTY( &new_r->s_hd ) )
+			bu_log( "nmg_extrude_cleanup: temporary nmgregion not empty!!\n" );
 
 		(void)nmg_kr( new_r );
 	}
@@ -1050,7 +1050,7 @@ nmg_hollow_shell( s , thick , approximate , tol )
 struct shell *s;
 CONST fastf_t thick;
 CONST int approximate;
-CONST struct rt_tol *tol;
+CONST struct bn_tol *tol;
 {
 	struct nmgregion *new_r,*old_r;
 	struct vertexuse *vu;
@@ -1061,27 +1061,27 @@ CONST struct rt_tol *tol;
 	struct model *m;
 	struct shell *is;	/* inside shell */
 	struct shell *s_tmp;
-	struct nmg_ptbl shells;
+	struct bu_ptbl shells;
 	long *flags;
 	long **copy_tbl;
 	int shell_no;
 	int is_void;
 
 	if( rt_g.NMG_debug & DEBUG_BASIC )
-		rt_log( "nmg_extrude_shell( s=x%x , thick=%f)\n" , s , thick );
+		bu_log( "nmg_extrude_shell( s=x%x , thick=%f)\n" , s , thick );
 
 	NMG_CK_SHELL( s );
-	RT_CK_TOL( tol );
+	BN_CK_TOL( tol );
 
 	if( thick < 0.0 )
 	{
-		rt_log( "nmg_extrude_shell: thickness less than zero not allowed" );
+		bu_log( "nmg_extrude_shell: thickness less than zero not allowed" );
 		return;
 	}
 
 	if( thick < tol->dist )
 	{
-		rt_log( "nmg_extrude_shell: thickness less than tolerance not allowed" );
+		bu_log( "nmg_extrude_shell: thickness less than tolerance not allowed" );
 		return;
 	}
 
@@ -1093,7 +1093,7 @@ CONST struct rt_tol *tol;
 
 	/* move this shell to another region */
 	new_r = nmg_mrsv( m );
-	s_tmp = RT_LIST_FIRST( shell , &new_r->s_hd );
+	s_tmp = BU_LIST_FIRST( shell , &new_r->s_hd );
 	(void)nmg_mv_shell_to_region( s , new_r );
 
 	/* decompose this shell */
@@ -1106,14 +1106,14 @@ CONST struct rt_tol *tol;
 	nmg_region_a( new_r , tol );
 
 	/* make a list of all the shells in the new region */
-	nmg_tbl( &shells , TBL_INIT , (long *)NULL );
-	for( RT_LIST_FOR( s_tmp , shell , &new_r->s_hd ) )
-		nmg_tbl( &shells , TBL_INS , (long *)s_tmp );
+	bu_ptbl_init( &shells , 64, " &shells ");
+	for( BU_LIST_FOR( s_tmp , shell , &new_r->s_hd ) )
+		bu_ptbl_ins( &shells , (long *)s_tmp );
 
 	/* extrude a copy of each shell, one at a time */
-	for( shell_no=0 ; shell_no<NMG_TBL_END( &shells ) ; shell_no ++ )
+	for( shell_no=0 ; shell_no<BU_PTBL_END( &shells ) ; shell_no ++ )
 	{
-		s_tmp = (struct shell *)NMG_TBL_GET( &shells , shell_no );
+		s_tmp = (struct shell *)BU_PTBL_GET( &shells , shell_no );
 
 		/* first make a copy of this shell */
 		is = nmg_dup_shell( s_tmp , &copy_tbl );
@@ -1122,7 +1122,7 @@ CONST struct rt_tol *tol;
 		flags = (long *)rt_calloc( m->maxindex , sizeof( long ) , "nmg_extrude_shell flags" );
 
 		/* now adjust all the planes, first move them inward by distance "thick" */
-		for( RT_LIST_FOR( fu , faceuse , &is->fu_hd ) )
+		for( BU_LIST_FOR( fu , faceuse , &is->fu_hd ) )
 		{
 			NMG_CK_FACEUSE( fu );
 			NMG_CK_FACE( fu->f_p );
@@ -1147,15 +1147,15 @@ CONST struct rt_tol *tol;
 		/* now start adjusting the vertices
 		 * Use the original shell so that we can pass the original vertex to nmg_inside_vert
 		 */
-		for( RT_LIST_FOR( fu , faceuse , &s_tmp->fu_hd ) )
+		for( BU_LIST_FOR( fu , faceuse , &s_tmp->fu_hd ) )
 		{
 			if( fu->orientation != OT_SAME )
 				continue;
 
-			for( RT_LIST_FOR( lu , loopuse , &fu->lu_hd ) )
+			for( BU_LIST_FOR( lu , loopuse , &fu->lu_hd ) )
 			{
 				NMG_CK_LOOPUSE( lu );
-				if( RT_LIST_FIRST_MAGIC( &lu->down_hd ) == NMG_VERTEXUSE_MAGIC )
+				if( BU_LIST_FIRST_MAGIC( &lu->down_hd ) == NMG_VERTEXUSE_MAGIC )
 				{
 					/* the vertex in a loop of one vertex
 					 * must show up in an edgeuse somewhere,
@@ -1164,7 +1164,7 @@ CONST struct rt_tol *tol;
 				}
 				else
 				{
-					for( RT_LIST_FOR( eu , edgeuse , &lu->down_hd ) )
+					for( BU_LIST_FOR( eu , edgeuse , &lu->down_hd ) )
 					{
 						struct vertex *new_v;
 
@@ -1198,7 +1198,7 @@ CONST struct rt_tol *tol;
 			{
 				if( !nmg_ck_closed_surf( is , tol ) )
 				{
-					rt_log( "nmg_extrude_shell: inside shell is not closed, calling nmg_close_shell\n" );
+					bu_log( "nmg_extrude_shell: inside shell is not closed, calling nmg_close_shell\n" );
 					nmg_close_shell( is );
 				}
 
@@ -1212,7 +1212,7 @@ CONST struct rt_tol *tol;
 			{
 				if( nmg_ck_closed_surf( is , tol ) )
 				{
-					rt_log( "nmg_extrude_shell: inside shell is closed, outer isn't!!\n" );
+					bu_log( "nmg_extrude_shell: inside shell is closed, outer isn't!!\n" );
 					nmg_shell_coplanar_face_merge( is , tol , 0 );
 					nmg_simplify_shell( is );
 					nmg_js( s_tmp , is , tol );
@@ -1234,16 +1234,16 @@ CONST struct rt_tol *tol;
 	}
 
 	/* put it all back together */
-	for( shell_no=0 ; shell_no<NMG_TBL_END( &shells ) ; shell_no++ )
+	for( shell_no=0 ; shell_no<BU_PTBL_END( &shells ) ; shell_no++ )
 	{
 		struct shell *s2;
 
-		s2 = (struct shell *)NMG_TBL_GET( &shells , shell_no );
+		s2 = (struct shell *)BU_PTBL_GET( &shells , shell_no );
 		if( s2 != s )
 			nmg_js( s , s2 , tol );
 	}
 
-	nmg_tbl( &shells , TBL_FREE , (long *)NULL );
+	bu_ptbl_free( &shells );
 
 	(void)nmg_mv_shell_to_region( s , old_r );
 	nmg_kr( new_r );
@@ -1270,24 +1270,24 @@ struct shell *s;
 CONST fastf_t dist;
 CONST int normal_ward;
 CONST int approximate;
-CONST struct rt_tol *tol;
+CONST struct bn_tol *tol;
 {
 	fastf_t thick;
 	int along_normal;
 	struct model *m;
 	struct nmgregion *new_r,*old_r;
 	struct shell *s_tmp,*s2;
-	struct nmg_ptbl shells;
-	struct nmg_ptbl verts;
+	struct bu_ptbl shells;
+	struct bu_ptbl verts;
 	int shell_no;
 	int failed=0;
 
 	NMG_CK_SHELL( s );
-	RT_CK_TOL( tol );
+	BN_CK_TOL( tol );
 
 	if( NEAR_ZERO( dist , tol->dist ) )
 	{
-		rt_log( "nmg_extrude_shell: Cannot extrude a distance less than tolerance distance\n" );
+		bu_log( "nmg_extrude_shell: Cannot extrude a distance less than tolerance distance\n" );
 		return( s );
 	}
 
@@ -1308,7 +1308,7 @@ CONST struct rt_tol *tol;
 
 	/* decompose this shell and extrude each piece seperately */
 	new_r = nmg_mrsv( m );
-	s_tmp = RT_LIST_FIRST( shell , &new_r->s_hd );
+	s_tmp = BU_LIST_FIRST( shell , &new_r->s_hd );
 	(void)nmg_mv_shell_to_region( s , new_r );
 	(void)nmg_decompose_shell( s , tol );
 
@@ -1319,21 +1319,21 @@ CONST struct rt_tol *tol;
 	nmg_region_a( new_r , tol );
 
 	/* make a list of all the shells to be extruded */
-	nmg_tbl( &shells , TBL_INIT , (long *)NULL );
-	for( RT_LIST_FOR( s_tmp , shell , &new_r->s_hd ) )
-		nmg_tbl( &shells , TBL_INS , (long *)s_tmp );
+	bu_ptbl_init( &shells , 64, " &shells ");
+	for( BU_LIST_FOR( s_tmp , shell , &new_r->s_hd ) )
+		bu_ptbl_ins( &shells , (long *)s_tmp );
 
-	nmg_tbl( &verts , TBL_INIT , (long *)NULL );
+	bu_ptbl_init( &verts , 64, " &verts ");
 
 	/* extrude each shell */
-	for( shell_no=0 ; shell_no < NMG_TBL_END( &shells ) ; shell_no++ )
+	for( shell_no=0 ; shell_no < BU_PTBL_END( &shells ) ; shell_no++ )
 	{
 		int vert_no;
 		int is_void;
 		long *flags;
 		struct faceuse *fu;
 
-		s_tmp = (struct shell *)NMG_TBL_GET( &shells , shell_no );
+		s_tmp = (struct shell *)BU_PTBL_GET( &shells , shell_no );
 		NMG_CK_SHELL( s_tmp );
 
 		is_void = nmg_shell_is_void( s_tmp );
@@ -1342,7 +1342,7 @@ CONST struct rt_tol *tol;
 		flags = (long *)rt_calloc( m->maxindex , sizeof( long ) , "nmg_extrude_shell flags" );
 
 		/* now adjust all the planes, first move them by distance "thick" */
-		for( RT_LIST_FOR( fu , faceuse , &s_tmp->fu_hd ) )
+		for( BU_LIST_FOR( fu , faceuse , &s_tmp->fu_hd ) )
 		{
 			struct face_g_plane *fg_p;
 
@@ -1367,27 +1367,27 @@ CONST struct rt_tol *tol;
 		nmg_vertex_tabulate( &verts , &s_tmp->l.magic );
 
 		/* now move all the vertices */
-		for( vert_no = 0 ; vert_no < NMG_TBL_END( &verts ) ; vert_no++ )
+		for( vert_no = 0 ; vert_no < BU_PTBL_END( &verts ) ; vert_no++ )
 		{
 			struct vertex *new_v;
 
-			new_v = (struct vertex *)NMG_TBL_GET( &verts , vert_no );
+			new_v = (struct vertex *)BU_PTBL_GET( &verts , vert_no );
 			NMG_CK_VERTEX( new_v );
 
 			if( nmg_in_vert( new_v , approximate , tol ) )
 			{
-				rt_log( "nmg_extrude_shell: Failed to calculate new vertex at v=x%x was ( %f %f %f )\n",
+				bu_log( "nmg_extrude_shell: Failed to calculate new vertex at v=x%x was ( %f %f %f )\n",
 					new_v , V3ARGS( new_v->vg_p->coord ) );
 				failed = 1;
 				goto out;
 			}
 		}
 
-		nmg_tbl( &verts , TBL_FREE , (long *)NULL );
+		bu_ptbl_free( &verts );
 
 		if( approximate )	/* need to recalculate plane eqns */
 		{
-			for( RT_LIST_FOR( fu , faceuse , &s_tmp->fu_hd ) )
+			for( BU_LIST_FOR( fu , faceuse , &s_tmp->fu_hd ) )
 			{
 				struct loopuse *lu;
 				int got_plane=0;
@@ -1395,12 +1395,12 @@ CONST struct rt_tol *tol;
 				if( fu->orientation != OT_SAME )
 					continue;
 
-				for( RT_LIST_FOR( lu , loopuse , &fu->lu_hd ) )
+				for( BU_LIST_FOR( lu , loopuse , &fu->lu_hd ) )
 				{
 					fastf_t area;
 					plane_t pl;
 
-					if( RT_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
+					if( BU_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
 						continue;
 
 					if( lu->orientation != OT_SAME )
@@ -1417,7 +1417,7 @@ CONST struct rt_tol *tol;
 				}
 				if( !got_plane )
 				{
-					rt_log( "nmg_extrude_shell: Cannot recalculate plane for face:\n" );
+					bu_log( "nmg_extrude_shell: Cannot recalculate plane for face:\n" );
 					nmg_pr_fu_briefly( fu , (char *)NULL );
 					failed = 1;
 					goto out;
@@ -1432,18 +1432,18 @@ CONST struct rt_tol *tol;
 	}
 
 out:
-	nmg_tbl( &shells , TBL_FREE , (long *)NULL );
+	bu_ptbl_free( &shells );
 
 	/* put it all back together */
-	if( RT_LIST_NON_EMPTY( &new_r->s_hd ) )
+	if( BU_LIST_NON_EMPTY( &new_r->s_hd ) )
 	{
-		s_tmp = RT_LIST_FIRST( shell , &new_r->s_hd );
-		s2 = RT_LIST_PNEXT( shell , &s_tmp->l );
-		while( RT_LIST_NOT_HEAD( s2 , &new_r->s_hd ) )
+		s_tmp = BU_LIST_FIRST( shell , &new_r->s_hd );
+		s2 = BU_LIST_PNEXT( shell , &s_tmp->l );
+		while( BU_LIST_NOT_HEAD( s2 , &new_r->s_hd ) )
 		{
 			struct shell *next_s;
 
-			next_s = RT_LIST_PNEXT( shell , &s2->l );
+			next_s = BU_LIST_PNEXT( shell , &s2->l );
 			nmg_js( s_tmp , s2 );
 
 			s2 = next_s;

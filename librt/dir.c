@@ -46,10 +46,10 @@ struct db_i	*dbip;
 
 	RT_CK_DBI( dbip );
 
-	GETSTRUCT( rtip, rt_i );
+	BU_GETSTRUCT( rtip, rt_i );
 	rtip->rti_magic = RTI_MAGIC;
 	for( i=0; i < RT_DBNHASH; i++ )  {
-		RT_LIST_INIT( &(rtip->rti_solidheads[i]) );
+		BU_LIST_INIT( &(rtip->rti_solidheads[i]) );
 	}
 	rtip->rti_dbip = dbip;
 	rtip->needprep = 1;
@@ -61,7 +61,7 @@ struct db_i	*dbip;
 	rtip->rti_inf_box.bn.bn_type = CUT_BOXNODE;
 
 	/* XXX These need to be improved */
-	rtip->rti_tol.magic = RT_TOL_MAGIC;
+	rtip->rti_tol.magic = BN_TOL_MAGIC;
 	rtip->rti_tol.dist = 0.005;
 	rtip->rti_tol.dist_sq = rtip->rti_tol.dist * rtip->rti_tol.dist;
 	rtip->rti_tol.perp = 1e-6;
@@ -91,8 +91,8 @@ int	len;
 	register struct rt_i	*rtip;
 	register struct db_i	*dbip;		/* Database instance ptr */
 
-	if( RT_LIST_FIRST( rt_list, &rt_g.rtg_vlfree ) == 0 )  {
-		RT_LIST_INIT( &rt_g.rtg_vlfree );
+	if( BU_LIST_FIRST( rt_list, &rt_g.rtg_vlfree ) == 0 )  {
+		BU_LIST_INIT( &rt_g.rtg_vlfree );
 	}
 
 	if( (dbip = db_open( filename, "r" )) == DBI_NULL )
@@ -144,17 +144,17 @@ struct directory	*dp;
 struct db_i		*dbip;
 CONST mat_t		mat;
 {
-	struct rt_external	ext;
+	struct bu_external	ext;
 	register int		id;
 
-	RT_INIT_EXTERNAL(&ext);
+	BU_INIT_EXTERNAL(&ext);
 	RT_INIT_DB_INTERNAL(ip);
 	if( db_get_external( &ext, dp, dbip ) < 0 )
 		return -2;		/* FAIL */
 
 	id = rt_id_solid( &ext );
 	if( rt_functab[id].ft_import( ip, &ext, mat ) < 0 )  {
-		rt_log("rt_db_get_internal(%s):  solid import failure\n",
+		bu_log("rt_db_get_internal(%s):  solid import failure\n",
 			dp->d_namep );
 	    	if( ip->idb_ptr )  rt_functab[id].ft_ifree( ip );
 		db_free_external( &ext );
@@ -182,14 +182,14 @@ struct rt_db_internal	*ip;
 struct directory	*dp;
 struct db_i		*dbip;
 {
-	struct rt_external	ext;
+	struct bu_external	ext;
 
-	RT_INIT_EXTERNAL(&ext);
+	BU_INIT_EXTERNAL(&ext);
 	RT_CK_DB_INTERNAL( ip );
 
 	/* Scale change on export is 1.0 -- no change */
 	if( rt_functab[ip->idb_type].ft_export( &ext, ip, 1.0 ) < 0 )  {
-		rt_log("rt_db_put_internal(%s):  solid export failure\n",
+		bu_log("rt_db_put_internal(%s):  solid export failure\n",
 			dp->d_namep);
 		db_free_external( &ext );
 		return -2;		/* FAIL */

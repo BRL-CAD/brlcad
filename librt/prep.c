@@ -64,7 +64,7 @@ int			ncpu;
 
 	RES_ACQUIRE(&rt_g.res_results);	/* start critical section */
 	if(!rtip->needprep)  {
-		rt_log("WARNING: rt_prep() invoked a second time, ignored");
+		bu_log("WARNING: rt_prep() invoked a second time, ignored");
 		RES_RELEASE(&rt_g.res_results);
 		return;
 	}
@@ -76,17 +76,17 @@ int			ncpu;
 
 	if( rtip->nsolids <= 0 )  {
 		if( rtip->rti_air_discards > 0 )
-			rt_log("rt_prep: %d solids discarded due to air regions\n", rtip->rti_air_discards );
+			bu_log("rt_prep: %d solids discarded due to air regions\n", rtip->rti_air_discards );
 		rt_bomb("rt_prep:  no solids left to prep");
 	}
 
 	/* In case everything is a halfspace, set a minimum space */
 	if( rtip->mdl_min[X] >= INFINITY )  {
-		rt_log("All solids are halspaces, setting minimum\n");
+		bu_log("All solids are halspaces, setting minimum\n");
 		VSETALL( rtip->mdl_min, -1 );
 	}
 	if( rtip->mdl_max[X] <= -INFINITY )  {
-		rt_log("All solids are halspaces, setting maximum\n");
+		bu_log("All solids are halspaces, setting maximum\n");
 		VSETALL( rtip->mdl_max, 1 );
 	}
 
@@ -124,7 +124,7 @@ int			ncpu;
 	}
 	if(rt_g.debug&DEBUG_REGIONS)  {
 		RT_VISIT_ALL_SOLTABS_START( stp, rtip )  {
-			rt_log("solid %s ", stp->st_name);
+			bu_log("solid %s ", stp->st_name);
 			bu_pr_ptbl( "st_regions", &stp->st_regions, 1 );
 		} RT_VISIT_ALL_SOLTABS_END
 	}
@@ -169,7 +169,7 @@ int			ncpu;
 	} RT_VISIT_ALL_SOLTABS_END
 	if( rt_g.debug & DEBUG_DB )  {
 		for( i=1; i <= ID_MAXIMUM; i++ )  {
-			rt_log("%5d %s (%d)\n",
+			bu_log("%5d %s (%d)\n",
 				rtip->rti_nsol_by_type[i],
 				rt_functab[i].ft_name,
 				i );
@@ -289,20 +289,20 @@ register FILE		*fp;
 struct rt_i		*rtip;
 struct soltab		*stp;
 {
-	struct rt_list			vhead;
+	struct bu_list			vhead;
 	struct region			*regp;
-	struct rt_external		ext;
+	struct bu_external		ext;
 	struct rt_db_internal		intern;
 	int				id = stp->st_id;
 	int				rnum;
 	struct rt_tess_tol		ttol;
-	struct rt_tol			tol;
+	struct bn_tol			tol;
 	matp_t				mat;
 
-	RT_LIST_INIT( &vhead );
+	BU_LIST_INIT( &vhead );
 
 	if( db_get_external( &ext, stp->st_dp, rtip->rti_dbip ) < 0 )  {
-		rt_log("rt_plot_solid(%s): db_get_external() failure\n",
+		bu_log("rt_plot_solid(%s): db_get_external() failure\n",
 			stp->st_name);
 		return(-1);			/* FAIL */
 	}
@@ -311,7 +311,7 @@ struct soltab		*stp;
 		mat = (matp_t)rt_identity;
     	RT_INIT_DB_INTERNAL(&intern);
 	if( rt_functab[id].ft_import( &intern, &ext, mat ) < 0 )  {
-		rt_log("rt_plot_solid(%s):  solid import failure\n",
+		bu_log("rt_plot_solid(%s):  solid import failure\n",
 			stp->st_name );
 	    	if( intern.idb_ptr )  rt_functab[id].ft_ifree( &intern );
 		db_free_external( &ext );
@@ -325,7 +325,7 @@ struct soltab		*stp;
 	ttol.norm = 0;
 
 	/* XXX These need to be improved */
-	tol.magic = RT_TOL_MAGIC;
+	tol.magic = BN_TOL_MAGIC;
 	tol.dist = 0.005;
 	tol.dist_sq = tol.dist * tol.dist;
 	tol.perp = 1e-6;
@@ -337,7 +337,7 @@ struct soltab		*stp;
 		&ttol,
 		&tol
 	    ) < 0 )  {
-		rt_log("rt_plot_solid(%s): ft_plot() failure\n",
+		bu_log("rt_plot_solid(%s): ft_plot() failure\n",
 			stp->st_name);
 	    	if( intern.idb_ptr )  rt_functab[id].ft_ifree( &intern );
 		db_free_external( &ext );
@@ -354,8 +354,8 @@ struct soltab		*stp;
 			(int)(255*regp->reg_mater.ma_color[2]) );
 	}
 
-	if( RT_LIST_IS_EMPTY( &vhead ) )  {
-		rt_log("rt_plot_solid(%s): no vectors to plot?\n",
+	if( BU_LIST_IS_EMPTY( &vhead ) )  {
+		bu_log("rt_plot_solid(%s): no vectors to plot?\n",
 			stp->st_name);
 		return(-3);		/* FAIL */
 	}
@@ -387,8 +387,8 @@ struct resource	*resp;
 	RT_CK_RESOURCE(resp);
 
 	/* The 'struct seg' guys are malloc()ed in blocks, not individually */
-	RT_LIST_INIT( &resp->re_seg );	/* abandon the list of individuals */
-	if( !RT_LIST_UNINITIALIZED( &resp->re_solid_bitv ) )  {
+	BU_LIST_INIT( &resp->re_seg );	/* abandon the list of individuals */
+	if( !BU_LIST_UNINITIALIZED( &resp->re_solid_bitv ) )  {
 		struct seg **spp;
 		BU_CK_PTBL( &resp->re_seg_blocks );
 		for( BU_PTBL_FOR( spp, (struct seg **), &resp->re_seg_blocks ) )  {
@@ -399,32 +399,32 @@ struct resource	*resp;
 	}
 
 	/* The 'struct partition' guys are individually malloc()ed */
-	if( !RT_LIST_UNINITIALIZED( &resp->re_parthead ) )  {
+	if( !BU_LIST_UNINITIALIZED( &resp->re_parthead ) )  {
 		struct partition *pp;
-		while( RT_LIST_WHILE( pp, partition, &resp->re_parthead ) )  {
+		while( BU_LIST_WHILE( pp, partition, &resp->re_parthead ) )  {
 			RT_CK_PT(pp);
-			RT_LIST_DEQUEUE( (struct rt_list *)pp );
+			BU_LIST_DEQUEUE( (struct bu_list *)pp );
 			bu_ptbl_free( &pp->pt_solids_hit );
 			bu_free( (genptr_t)pp, "struct partition" );
 		}
 	}
 
 	/* The 'struct bu_bitv' guys on re_solid_bitv are individually malloc()ed */
-	if( !RT_LIST_UNINITIALIZED( &resp->re_solid_bitv ) )  {
+	if( !BU_LIST_UNINITIALIZED( &resp->re_solid_bitv ) )  {
 		struct bu_bitv	*bvp;
-		while( RT_LIST_WHILE( bvp, bu_bitv, &resp->re_solid_bitv ) )  {
+		while( BU_LIST_WHILE( bvp, bu_bitv, &resp->re_solid_bitv ) )  {
 			BU_CK_BITV( bvp );
-			RT_LIST_DEQUEUE( &bvp->l );
+			BU_LIST_DEQUEUE( &bvp->l );
 			bu_free( (genptr_t)bvp, "struct bu_bitv" );
 		}
 	}
 
 	/* The 'struct bu_ptbl' guys on re_region_ptbl are individually malloc()ed */
-	if( !RT_LIST_UNINITIALIZED( &resp->re_region_ptbl ) )  {
+	if( !BU_LIST_UNINITIALIZED( &resp->re_region_ptbl ) )  {
 		struct bu_ptbl	*tabp;
-		while( RT_LIST_WHILE( tabp, bu_ptbl, &resp->re_region_ptbl ) )  {
+		while( BU_LIST_WHILE( tabp, bu_ptbl, &resp->re_region_ptbl ) )  {
 			BU_CK_PTBL(tabp);
-			RT_LIST_DEQUEUE( &tabp->l );
+			BU_LIST_DEQUEUE( &tabp->l );
 			bu_ptbl_free( tabp );
 			bu_free( (genptr_t)tabp, "struct bu_ptbl" );
 		}
@@ -452,7 +452,7 @@ rt_clean( rtip )
 register struct rt_i *rtip;
 {
 	register struct region *regp;
-	register struct rt_list	*head;
+	register struct bu_list	*head;
 	register struct soltab *stp;
 	int	i;
 
@@ -485,7 +485,7 @@ register struct rt_i *rtip;
 	 */
 	head = &(rtip->rti_solidheads[0]);
 	for( ; head < &(rtip->rti_solidheads[RT_DBNHASH]); head++ )  {
-		while( RT_LIST_WHILE( stp, soltab, head ) )  {
+		while( BU_LIST_WHILE( stp, soltab, head ) )  {
 			RT_CHECK_SOLTAB(stp);
 			rt_free_soltab(stp);
 		}
@@ -558,8 +558,8 @@ register struct rt_i *rtip;
 	VSETALL( rtip->mdl_min,  INFINITY );
 	VSETALL( rtip->mdl_max, -INFINITY );
 
-	rt_hist_free( &rtip->rti_hist_cellsize );
-	rt_hist_free( &rtip->rti_hist_cutdepth );
+	bu_hist_free( &rtip->rti_hist_cellsize );
+	bu_hist_free( &rtip->rti_hist_cutdepth );
 
 	rtip->rti_magic = RTI_MAGIC;
 	rtip->needprep = 1;
@@ -587,7 +587,7 @@ register struct region *delregp;
 
 	regp = rtip->HeadRegion;
 	if( rt_g.debug & DEBUG_REGIONS )
-		rt_log("Del Region %s\n", delregp->reg_name);
+		bu_log("Del Region %s\n", delregp->reg_name);
 
 	if( regp == delregp )  {
 		rtip->HeadRegion = regp->reg_forw;
@@ -601,7 +601,7 @@ register struct region *delregp;
 			goto zot;
 		}
 	}
-	rt_log("rt_del_region:  unable to find %s\n", delregp->reg_name);
+	bu_log("rt_del_region:  unable to find %s\n", delregp->reg_name);
 	return(-1);
 zot:
 	db_free_tree( delregp->reg_treetop );
@@ -658,7 +658,7 @@ struct resource		*resp;
 			}
 			break;
 		default:
-			rt_log("rt_solid_bitfinder:  op=x%x\n", treep->tr_op);
+			bu_log("rt_solid_bitfinder:  op=x%x\n", treep->tr_op);
 			break;
 		}
 	}

@@ -100,9 +100,9 @@ char	*mode;
 	struct stat		sb;
 #endif
 
-	if(rt_g.debug&DEBUG_DB) rt_log("db_open(%s, %s)\n", name, mode );
+	if(rt_g.debug&DEBUG_DB) bu_log("db_open(%s, %s)\n", name, mode );
 
-	GETSTRUCT( dbip, db_i );
+	BU_GETSTRUCT( dbip, db_i );
 
 	for( i=0; i<RT_DBNHASH; i++ )
 		dbip->dbi_Head[i] = DIR_NULL;
@@ -137,7 +137,7 @@ char	*mode;
 				dbip->dbi_inmem = (char *)0;
 			} else {
 				if(rt_g.debug&DEBUG_DB)
-					rt_log("db_open: memory mapped file, addr=x%x\n", dbip->dbi_inmem);
+					bu_log("db_open: memory mapped file, addr=x%x\n", dbip->dbi_inmem);
 			}
 #		endif
 
@@ -154,7 +154,7 @@ char	*mode;
 				goto fail;
 			dbip->dbi_eof = sb.st_size;	/* needed by db_read() */
 			if(rt_g.debug&DEBUG_DB)
-				rt_log("db_open: in-memory file\n");
+				bu_log("db_open: in-memory file\n");
 		}
 #else /* HAVE_UNIX_IO */
 		if( (dbip->dbi_fp = fopen( name, "r")) == NULL )
@@ -177,15 +177,15 @@ char	*mode;
 		dbip->dbi_read_only = 0;
 	}
 
-	dbip->dbi_filename = rt_strdup(name);
+	dbip->dbi_filename = bu_strdup(name);
 	dbip->dbi_magic = DBI_MAGIC;		/* Now it's valid */
 
 	if(rt_g.debug&DEBUG_DB)
-		rt_log("db_open(%s) dbip=x%x\n", dbip->dbi_filename, dbip);
+		bu_log("db_open(%s) dbip=x%x\n", dbip->dbi_filename, dbip);
 	return dbip;
 fail:
 	if(rt_g.debug&DEBUG_DB)
-		rt_log("db_open(%s) FAILED\n", name);
+		bu_log("db_open(%s) FAILED\n", name);
 	rt_free( (char *)dbip, "struct db_i" );
 	return DBI_NULL;
 }
@@ -208,7 +208,7 @@ char *name;
 {
 	union record new;
 
-	if(rt_g.debug&DEBUG_DB) rt_log("db_create(%s, %s)\n", name );
+	if(rt_g.debug&DEBUG_DB) bu_log("db_create(%s, %s)\n", name );
 
 	/* Prepare the IDENT record */
 	bzero( (char *)&new, sizeof(new) );
@@ -251,7 +251,7 @@ register struct db_i	*dbip;
 	register struct directory *dp, *nextdp;
 
 	if( dbip->dbi_magic != DBI_MAGIC )  rt_bomb("db_close:  bad dbip\n");
-	if(rt_g.debug&DEBUG_DB) rt_log("db_close(%s) x%x\n",
+	if(rt_g.debug&DEBUG_DB) bu_log("db_close(%s) x%x\n",
 		dbip->dbi_filename, dbip );
 
 #ifdef HAVE_UNIX_IO

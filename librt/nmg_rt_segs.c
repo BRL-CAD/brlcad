@@ -40,32 +40,32 @@ struct ef_data {
 
 static CONST 
 struct bu_structparse rt_ef_parsetab[] = {
-	{"%f", 1, "fdotr", offsetof(struct ef_data, fdotr), FUNC_NULL},
-	{"%f", 1, "fdotl", offsetof(struct ef_data, fdotl), FUNC_NULL},
-	{"%f", 1, "ndotr", offsetof(struct ef_data, ndotr), FUNC_NULL},
-	{"%x", 1, "eu",   offsetof(struct ef_data, eu),   FUNC_NULL},
-	{"", 0, (char *)NULL,	  0,			  FUNC_NULL}
+	{"%f", 1, "fdotr", offsetof(struct ef_data, fdotr), BU_STRUCTPARSE_FUNC_NULL},
+	{"%f", 1, "fdotl", offsetof(struct ef_data, fdotl), BU_STRUCTPARSE_FUNC_NULL},
+	{"%f", 1, "ndotr", offsetof(struct ef_data, ndotr), BU_STRUCTPARSE_FUNC_NULL},
+	{"%x", 1, "eu",   offsetof(struct ef_data, eu),   BU_STRUCTPARSE_FUNC_NULL},
+	{"", 0, (char *)NULL,	  0,			  BU_STRUCTPARSE_FUNC_NULL}
 };
 
 static CONST
 struct bu_structparse rt_hit_parsetab[] = {
-{"%f", 1, "hit_dist", offsetof(struct hit, hit_dist), FUNC_NULL},
-{"%f", 3, "hit_point", offsetofarray(struct hit, hit_point), FUNC_NULL},
-{"%f", 4, "hit_normal", offsetofarray(struct hit, hit_normal), FUNC_NULL},
-{"%f", 3, "hit_vpriv", offsetofarray(struct hit, hit_vpriv), FUNC_NULL},
-{"%x", 1, "hit_private", offsetof(struct hit, hit_private), FUNC_NULL},
-{"%d", 1, "hit_surfno", offsetof(struct hit, hit_surfno), FUNC_NULL},
-{"", 0, (char *)NULL,	  0,			  FUNC_NULL}
+{"%f", 1, "hit_dist", offsetof(struct hit, hit_dist), BU_STRUCTPARSE_FUNC_NULL},
+{"%f", 3, "hit_point", bu_offsetofarray(struct hit, hit_point), BU_STRUCTPARSE_FUNC_NULL},
+{"%f", 4, "hit_normal", bu_offsetofarray(struct hit, hit_normal), BU_STRUCTPARSE_FUNC_NULL},
+{"%f", 3, "hit_vpriv", bu_offsetofarray(struct hit, hit_vpriv), BU_STRUCTPARSE_FUNC_NULL},
+{"%x", 1, "hit_private", offsetof(struct hit, hit_private), BU_STRUCTPARSE_FUNC_NULL},
+{"%d", 1, "hit_surfno", offsetof(struct hit, hit_surfno), BU_STRUCTPARSE_FUNC_NULL},
+{"", 0, (char *)NULL,	  0,			  BU_STRUCTPARSE_FUNC_NULL}
 };
 
 
 #define CK_SEGP(_p) if ( !(_p) || !(*(_p)) ) {\
-	rt_log("%s[line:%d]: Bad seg_p pointer\n", __FILE__, __LINE__); \
+	bu_log("%s[line:%d]: Bad seg_p pointer\n", __FILE__, __LINE__); \
 	nmg_rt_segs_exit("Goodbye"); }
 #define DO_LONGJMP
 #ifdef DO_LONGJMP
 jmp_buf nmg_longjump_env;
-#define nmg_rt_segs_exit(_s) {rt_log("%s\n",_s);longjmp(nmg_longjump_env, -1);}
+#define nmg_rt_segs_exit(_s) {bu_log("%s\n",_s);longjmp(nmg_longjump_env, -1);}
 #else
 #define nmg_rt_segs_exit(_s) rt_bomb(_s)
 #endif
@@ -80,21 +80,21 @@ char *s;
 {
 	struct seg *seg_p;
 
-	rt_log("Segment List (%d segnemts) (%s):\n", seg_count, s);
+	bu_log("Segment List (%d segnemts) (%s):\n", seg_count, s);
 	/* print debugging data before returning */
-	rt_log("Seghead:\n0x%08x magic: 0x%0x(%d) forw:0x%08x back:0x%08x\n\n",
+	bu_log("Seghead:\n0x%08x magic: 0x%0x(%d) forw:0x%08x back:0x%08x\n\n",
 			seghead,
 			seghead->l.magic,
 			seghead->l.forw,
 			seghead->l.back);
 
-	for (RT_LIST_FOR(seg_p, seg, &seghead->l) ) {
-		rt_log("0x%08x magic: 0x%0x(%d) forw:0x%08x back:0x%08x\n",
+	for (BU_LIST_FOR(seg_p, seg, &seghead->l) ) {
+		bu_log("0x%08x magic: 0x%0x(%d) forw:0x%08x back:0x%08x\n",
 			seg_p,
 			seg_p->l.magic,
 			seg_p->l.forw,
 			seg_p->l.back);
-		rt_log("dist %g  pt(%g,%g,%g)  N(%g,%g,%g)  =>\n",
+		bu_log("dist %g  pt(%g,%g,%g)  N(%g,%g,%g)  =>\n",
 		seg_p->seg_in.hit_dist,
 		seg_p->seg_in.hit_point[0],
 		seg_p->seg_in.hit_point[1],
@@ -102,7 +102,7 @@ char *s;
 		seg_p->seg_in.hit_normal[0],
 		seg_p->seg_in.hit_normal[1],
 		seg_p->seg_in.hit_normal[2]);
-		rt_log("dist %g  pt(%g,%g,%g)  N(%g,%g,%g)\n",
+		bu_log("dist %g  pt(%g,%g,%g)  N(%g,%g,%g)\n",
 		seg_p->seg_out.hit_dist,
 		seg_p->seg_out.hit_point[0],
 		seg_p->seg_out.hit_point[1],
@@ -133,11 +133,11 @@ struct ray_data	*rd;
 		perror(name);
 		abort();
 	} else
-		rt_log("overlay %s\n", name);
+		bu_log("overlay %s\n", name);
 
 	VMOVE(old_point, rd->rp->r_pt);
 
-	for (RT_LIST_FOR(a_hit, hitmiss, &rd->rd_hit)) {
+	for (BU_LIST_FOR(a_hit, hitmiss, &rd->rd_hit)) {
 		NMG_CK_HITMISS(a_hit);
 
 		in_state = HMG_INBOUND_STATE(a_hit);
@@ -230,7 +230,7 @@ struct soltab	*stp;
 struct application	*ap;
 {
 	if ( !seg_p ) {
-		rt_log("%s[line:%d]: Null pointer to segment pointer\n",
+		bu_log("%s[line:%d]: Null pointer to segment pointer\n",
 			__FILE__, __LINE__);
 		nmg_rt_segs_exit("Goodbye");
 	}
@@ -248,7 +248,7 @@ struct application	*ap;
 	VMOVE((*seg_p)->seg_in.hit_normal, a_hit->inbound_norm);
 
 	if (rt_g.NMG_debug & DEBUG_RT_SEGS) {
-		rt_log("Set seg_in:\n\tdist %g  pt(%g,%g,%g)  N(%g,%g,%g)\n",
+		bu_log("Set seg_in:\n\tdist %g  pt(%g,%g,%g)  N(%g,%g,%g)\n",
 		(*seg_p)->seg_in.hit_dist,
 		(*seg_p)->seg_in.hit_point[0],
 		(*seg_p)->seg_in.hit_point[1],
@@ -265,7 +265,7 @@ struct seg	**seg_p;	/* The segment we're building */
 struct hitmiss	*a_hit;		/* The input hit point */
 {
 	if ( !seg_p ) {
-		rt_log("%s[line:%d]: Null pointer to segment pointer\n",
+		bu_log("%s[line:%d]: Null pointer to segment pointer\n",
 			__FILE__, __LINE__);
 		nmg_rt_segs_exit("Goodbye");
 	}
@@ -281,7 +281,7 @@ struct hitmiss	*a_hit;		/* The input hit point */
 	VMOVE((*seg_p)->seg_out.hit_normal, a_hit->outbound_norm);
 
 	if (rt_g.NMG_debug & DEBUG_RT_SEGS) {
-		rt_log("Set seg_out:\n\tdist %g  pt(%g,%g,%g)  N(%g,%g,%g)  =>\n",
+		bu_log("Set seg_out:\n\tdist %g  pt(%g,%g,%g)  N(%g,%g,%g)  =>\n",
 		(*seg_p)->seg_in.hit_dist,
 		(*seg_p)->seg_in.hit_point[0],
 		(*seg_p)->seg_in.hit_point[1],
@@ -289,7 +289,7 @@ struct hitmiss	*a_hit;		/* The input hit point */
 		(*seg_p)->seg_in.hit_normal[0],
 		(*seg_p)->seg_in.hit_normal[1],
 		(*seg_p)->seg_in.hit_normal[2]);
-		rt_log("\tdist %g  pt(%g,%g,%g)  N(%g,%g,%g)\n",
+		bu_log("\tdist %g  pt(%g,%g,%g)  N(%g,%g,%g)\n",
 		(*seg_p)->seg_out.hit_dist,
 		(*seg_p)->seg_out.hit_point[0],
 		(*seg_p)->seg_out.hit_point[1],
@@ -310,7 +310,7 @@ int		*seg_count;	/* The number of valid segments built */
 struct hitmiss	*a_hit;		/* The input hit point */
 struct soltab	*stp;
 struct application *ap;
-struct rt_tol	*tol;
+struct bn_tol	*tol;
 {
 	int ret_val = -1;
 
@@ -328,7 +328,7 @@ struct rt_tol	*tol;
 	case HMG_HIT_IN_OUT:
 	case HMG_HIT_ON_OUT:
 		/* error */
-		rt_log("%s[line:%d]: State transition error: exit without entry.\n",
+		bu_log("%s[line:%d]: State transition error: exit without entry.\n",
 			__FILE__, __LINE__);
 		ret_val = -2;
 		break;
@@ -345,7 +345,7 @@ struct rt_tol	*tol;
 		ret_val = 4;
 		break;
 	default:
-		rt_log("%s[line:%d]: bogus hit in/out status\n",
+		bu_log("%s[line:%d]: bogus hit in/out status\n",
 			__FILE__, __LINE__);
 		nmg_rt_segs_exit("Goodbye\n");
 		break;
@@ -362,7 +362,7 @@ int		*seg_count;	/* The number of valid segments built */
 struct hitmiss	*a_hit;		/* The input hit point */
 struct soltab	*stp;
 struct application *ap;
-struct rt_tol	*tol;
+struct bn_tol	*tol;
 {
 	int ret_val = -1;
 
@@ -389,7 +389,7 @@ struct rt_tol	*tol;
 		ret_val = 1;
 		break;
 	default:
-		rt_log("%s[line:%d]: bogus hit in/out status\n",
+		bu_log("%s[line:%d]: bogus hit in/out status\n",
 			__FILE__, __LINE__);
 		nmg_rt_segs_exit("Goodbye\n");
 		break;
@@ -406,7 +406,7 @@ int		*seg_count;	/* The number of valid segments built */
 struct hitmiss	*a_hit;		/* The input hit point */
 struct soltab	*stp;
 struct application *ap;
-struct rt_tol	*tol;
+struct bn_tol	*tol;
 {
 	int ret_val = -1;
 	double delta;
@@ -415,8 +415,8 @@ struct rt_tol	*tol;
 	case HMG_HIT_OUT_ON:
 	case HMG_HIT_OUT_IN:
 		/* Segment completed.  Insert into segment list */
-		RT_LIST_MAGIC_SET( &( (*seg_p)->l ), RT_SEG_MAGIC);
-		RT_LIST_INSERT(&(seghead->l), &((*seg_p)->l) );
+		BU_LIST_MAGIC_SET( &( (*seg_p)->l ), RT_SEG_MAGIC);
+		BU_LIST_INSERT(&(seghead->l), &((*seg_p)->l) );
 		(*seg_count)++;
 
 		/* start new segment */
@@ -430,7 +430,7 @@ struct rt_tol	*tol;
 	case HMG_HIT_ON_IN:
 	case HMG_HIT_IN_ON:
 		/* Error */
-		rt_log("%s[line:%d]: State transition error.\n",
+		bu_log("%s[line:%d]: State transition error.\n",
 			__FILE__, __LINE__);
 		ret_val = -2;
 		break;
@@ -442,7 +442,7 @@ struct rt_tol	*tol;
 		break;
 	case HMG_HIT_OUT_OUT:
 		CK_SEGP(seg_p);
-		RT_CK_TOL(tol);
+		BN_CK_TOL(tol);
 		delta = fabs((*seg_p)->seg_in.hit_dist - a_hit->hit.hit_dist);
 		if ( delta < tol->dist) {
 			set_outpoint(seg_p, a_hit);
@@ -450,8 +450,8 @@ struct rt_tol	*tol;
 			break;
 		}
 		/* complete the segment */
-		RT_LIST_MAGIC_SET( &( (*seg_p)->l ), RT_SEG_MAGIC);
-		RT_LIST_INSERT(&(seghead->l), &((*seg_p)->l) );
+		BU_LIST_MAGIC_SET( &( (*seg_p)->l ), RT_SEG_MAGIC);
+		BU_LIST_INSERT(&(seghead->l), &((*seg_p)->l) );
 		(*seg_count)++;
 
 		/* start new segment */
@@ -463,7 +463,7 @@ struct rt_tol	*tol;
 		break;
 	case HMG_HIT_ANY_ANY:
 		CK_SEGP(seg_p);
-		RT_CK_TOL(tol);
+		BN_CK_TOL(tol);
 		delta = fabs((*seg_p)->seg_in.hit_dist - a_hit->hit.hit_dist);
 		if ( delta < tol->dist) {
 			set_outpoint(seg_p, a_hit);
@@ -471,8 +471,8 @@ struct rt_tol	*tol;
 			break;
 		}
 		/* complete the segment */
-		RT_LIST_MAGIC_SET( &( (*seg_p)->l ), RT_SEG_MAGIC);
-		RT_LIST_INSERT(&(seghead->l), &((*seg_p)->l) );
+		BU_LIST_MAGIC_SET( &( (*seg_p)->l ), RT_SEG_MAGIC);
+		BU_LIST_INSERT(&(seghead->l), &((*seg_p)->l) );
 		(*seg_count)++;
 
 		/* start new segment */
@@ -483,7 +483,7 @@ struct rt_tol	*tol;
 		ret_val = 4;
 		break;
 	default:
-		rt_log("%s[line:%d]: bogus hit in/out status\n",
+		bu_log("%s[line:%d]: bogus hit in/out status\n",
 			__FILE__, __LINE__);
 		nmg_rt_segs_exit("Goodbye\n");
 		break;
@@ -500,13 +500,13 @@ int		*seg_count;	/* The number of valid segments built */
 struct hitmiss	*a_hit;		/* The input hit point */
 struct soltab	*stp;
 struct application *ap;
-struct rt_tol	*tol;
+struct bn_tol	*tol;
 {
 	int ret_val = -1;
 	double delta;
 
 	CK_SEGP(seg_p);
-	RT_CK_TOL(tol);
+	BN_CK_TOL(tol);
 	delta = fabs((*seg_p)->seg_in.hit_dist - a_hit->hit.hit_dist);
 
 	switch (a_hit->in_out) {
@@ -516,8 +516,8 @@ struct rt_tol	*tol;
 			ret_val = 5;
 		} else {
 			/* complete the segment */
-			RT_LIST_MAGIC_SET( &( (*seg_p)->l ), RT_SEG_MAGIC);
-			RT_LIST_INSERT(&(seghead->l), &((*seg_p)->l) );
+			BU_LIST_MAGIC_SET( &( (*seg_p)->l ), RT_SEG_MAGIC);
+			BU_LIST_INSERT(&(seghead->l), &((*seg_p)->l) );
 			(*seg_count)++;
 
 			/* start new segment */
@@ -535,7 +535,7 @@ struct rt_tol	*tol;
 			ret_val = 3;
 		} else {
 			/* Error */
-			rt_log("%s[line:%d]: State transition error.\n",
+			bu_log("%s[line:%d]: State transition error.\n",
 				__FILE__, __LINE__);
 			ret_val = -2;
 		}
@@ -558,8 +558,8 @@ struct rt_tol	*tol;
 	case HMG_HIT_OUT_OUT:
 		if (delta > tol->dist) {
 			/* complete the segment */
-			RT_LIST_MAGIC_SET( &( (*seg_p)->l ), RT_SEG_MAGIC);
-			RT_LIST_INSERT(&(seghead->l), &((*seg_p)->l) );
+			BU_LIST_MAGIC_SET( &( (*seg_p)->l ), RT_SEG_MAGIC);
+			BU_LIST_INSERT(&(seghead->l), &((*seg_p)->l) );
 			(*seg_count)++;
 
 			/* start new segment */
@@ -574,8 +574,8 @@ struct rt_tol	*tol;
 			ret_val = 3;
 		} else {
 			/* complete the segment */
-			RT_LIST_MAGIC_SET( &( (*seg_p)->l ), RT_SEG_MAGIC);
-			RT_LIST_INSERT(&(seghead->l), &((*seg_p)->l) );
+			BU_LIST_MAGIC_SET( &( (*seg_p)->l ), RT_SEG_MAGIC);
+			BU_LIST_INSERT(&(seghead->l), &((*seg_p)->l) );
 			(*seg_count)++;
 
 			/* start new segment */
@@ -585,7 +585,7 @@ struct rt_tol	*tol;
 		}
 		break;
 	default:
-		rt_log("%s[line:%d]: bogus hit in/out status\n",
+		bu_log("%s[line:%d]: bogus hit in/out status\n",
 			__FILE__, __LINE__);
 		nmg_rt_segs_exit("Goodbye\n");
 		break;
@@ -602,7 +602,7 @@ int		*seg_count;	/* The number of valid segments built */
 struct hitmiss	*a_hit;		/* The input hit point */
 struct soltab	*stp;
 struct application *ap;
-struct rt_tol	*tol;
+struct bn_tol	*tol;
 {
 	int ret_val = -1;
 	double delta;
@@ -611,12 +611,12 @@ struct rt_tol	*tol;
 	case HMG_HIT_OUT_ON:
 	case HMG_HIT_OUT_IN:
 		CK_SEGP(seg_p);
-		RT_CK_TOL(tol);
+		BN_CK_TOL(tol);
 		delta = fabs((*seg_p)->seg_in.hit_dist - a_hit->hit.hit_dist);
 		if (delta > tol->dist) {
 			/* complete the segment */
-			RT_LIST_MAGIC_SET( &( (*seg_p)->l ), RT_SEG_MAGIC);
-			RT_LIST_INSERT(&(seghead->l), &((*seg_p)->l) );
+			BU_LIST_MAGIC_SET( &( (*seg_p)->l ), RT_SEG_MAGIC);
+			BU_LIST_INSERT(&(seghead->l), &((*seg_p)->l) );
 			(*seg_count)++;
 
 			/* start new segment */
@@ -632,18 +632,18 @@ struct rt_tol	*tol;
 	case HMG_HIT_ON_OUT:
 	case HMG_HIT_IN_OUT:
 		/* Error */
-		rt_log("%s[line:%d]: State transition error.\n",
+		bu_log("%s[line:%d]: State transition error.\n",
 			__FILE__, __LINE__);
 		ret_val = -2;
 		break;
 	case HMG_HIT_OUT_OUT:
 		CK_SEGP(seg_p);
-		RT_CK_TOL(tol);
+		BN_CK_TOL(tol);
 		delta = fabs((*seg_p)->seg_in.hit_dist - a_hit->hit.hit_dist);
 		if (delta > tol->dist) {
 			/* complete the segment */
-			RT_LIST_MAGIC_SET( &( (*seg_p)->l ), RT_SEG_MAGIC);
-			RT_LIST_INSERT(&(seghead->l), &((*seg_p)->l) );
+			BU_LIST_MAGIC_SET( &( (*seg_p)->l ), RT_SEG_MAGIC);
+			BU_LIST_INSERT(&(seghead->l), &((*seg_p)->l) );
 			(*seg_count)++;
 
 			/* start new segment */
@@ -655,12 +655,12 @@ struct rt_tol	*tol;
 		break;
 	case HMG_HIT_ANY_ANY:
 		CK_SEGP(seg_p);
-		RT_CK_TOL(tol);
+		BN_CK_TOL(tol);
 		delta = fabs((*seg_p)->seg_in.hit_dist - a_hit->hit.hit_dist);
 		if (delta > tol->dist) {
 			/* complete the segment */
-			RT_LIST_MAGIC_SET( &( (*seg_p)->l ), RT_SEG_MAGIC);
-			RT_LIST_INSERT(&(seghead->l), &((*seg_p)->l) );
+			BU_LIST_MAGIC_SET( &( (*seg_p)->l ), RT_SEG_MAGIC);
+			BU_LIST_INSERT(&(seghead->l), &((*seg_p)->l) );
 			(*seg_count)++;
 
 			/* start new segment */
@@ -671,7 +671,7 @@ struct rt_tol	*tol;
 		ret_val = 4;
 		break;
 	default:
-		rt_log("%s[line:%d]: bogus hit in/out status\n",
+		bu_log("%s[line:%d]: bogus hit in/out status\n",
 			__FILE__, __LINE__);
 		nmg_rt_segs_exit("Goodbye\n");
 		break;
@@ -688,7 +688,7 @@ int		*seg_count;	/* The number of valid segments built */
 struct hitmiss	*a_hit;		/* The input hit point */
 struct soltab	*stp;
 struct application *ap;
-struct rt_tol	*tol;
+struct bn_tol	*tol;
 {
 	int ret_val = -1;
 	double delta;
@@ -697,14 +697,14 @@ struct rt_tol	*tol;
 	case HMG_HIT_OUT_ON:
 	case HMG_HIT_OUT_IN:
 		CK_SEGP(seg_p);
-		RT_CK_TOL(tol);
+		BN_CK_TOL(tol);
 		delta = fabs((*seg_p)->seg_in.hit_dist - a_hit->hit.hit_dist);
 		if (delta < tol->dist) {
 			ret_val = 5;
 		} else {
 			/* complete the segment */
-			RT_LIST_MAGIC_SET( &( (*seg_p)->l ), RT_SEG_MAGIC);
-			RT_LIST_INSERT(&(seghead->l), &((*seg_p)->l) );
+			BU_LIST_MAGIC_SET( &( (*seg_p)->l ), RT_SEG_MAGIC);
+			BU_LIST_INSERT(&(seghead->l), &((*seg_p)->l) );
 			(*seg_count)++;
 
 			/* start new segment */
@@ -726,14 +726,14 @@ struct rt_tol	*tol;
 		break;
 	case HMG_HIT_OUT_OUT:
 		CK_SEGP(seg_p);
-		RT_CK_TOL(tol);
+		BN_CK_TOL(tol);
 		delta = fabs((*seg_p)->seg_in.hit_dist - a_hit->hit.hit_dist);
 		if (delta < tol->dist) {
 			ret_val = 6;
 		} else {
 			/* complete the segment */
-			RT_LIST_MAGIC_SET( &( (*seg_p)->l ), RT_SEG_MAGIC);
-			RT_LIST_INSERT(&(seghead->l), &((*seg_p)->l) );
+			BU_LIST_MAGIC_SET( &( (*seg_p)->l ), RT_SEG_MAGIC);
+			BU_LIST_INSERT(&(seghead->l), &((*seg_p)->l) );
 			(*seg_count)++;
 
 			/* start new segment */
@@ -745,14 +745,14 @@ struct rt_tol	*tol;
 		break;
 	case HMG_HIT_ANY_ANY:
 		CK_SEGP(seg_p);
-		RT_CK_TOL(tol);
+		BN_CK_TOL(tol);
 		delta = fabs((*seg_p)->seg_in.hit_dist - a_hit->hit.hit_dist);
 		if (delta < tol->dist) {
 			ret_val = 5;
 		} else {
 			/* complete the segment */
-			RT_LIST_MAGIC_SET( &( (*seg_p)->l ), RT_SEG_MAGIC);
-			RT_LIST_INSERT(&(seghead->l), &((*seg_p)->l) );
+			BU_LIST_MAGIC_SET( &( (*seg_p)->l ), RT_SEG_MAGIC);
+			BU_LIST_INSERT(&(seghead->l), &((*seg_p)->l) );
 			(*seg_count)++;
 
 			/* start new segment */
@@ -763,7 +763,7 @@ struct rt_tol	*tol;
 		}
 		break;
 	default:
-		rt_log("%s[line:%d]: bogus hit in/out status\n",
+		bu_log("%s[line:%d]: bogus hit in/out status\n",
 			__FILE__, __LINE__);
 		nmg_rt_segs_exit("Goodbye\n");
 		break;
@@ -780,7 +780,7 @@ int		*seg_count;	/* The number of valid segments built */
 struct hitmiss	*a_hit;		/* The input hit point */
 struct soltab	*stp;
 struct application *ap;
-struct rt_tol	*tol;
+struct bn_tol	*tol;
 {
 	int ret_val = -1;
 	double delta;
@@ -789,14 +789,14 @@ struct rt_tol	*tol;
 	case HMG_HIT_OUT_ON:
 	case HMG_HIT_OUT_IN:
 		CK_SEGP(seg_p);
-		RT_CK_TOL(tol);
+		BN_CK_TOL(tol);
 		delta = fabs((*seg_p)->seg_in.hit_dist - a_hit->hit.hit_dist);
 		if (delta < tol->dist) {
 			ret_val = 5;
 		} else {
 			/* complete the segment */
-			RT_LIST_MAGIC_SET( &( (*seg_p)->l ), RT_SEG_MAGIC);
-			RT_LIST_INSERT(&(seghead->l), &((*seg_p)->l) );
+			BU_LIST_MAGIC_SET( &( (*seg_p)->l ), RT_SEG_MAGIC);
+			BU_LIST_INSERT(&(seghead->l), &((*seg_p)->l) );
 			(*seg_count)++;
 
 			/* start new segment */
@@ -818,14 +818,14 @@ struct rt_tol	*tol;
 		break;
 	case HMG_HIT_OUT_OUT:
 		CK_SEGP(seg_p);
-		RT_CK_TOL(tol);
+		BN_CK_TOL(tol);
 		delta = fabs((*seg_p)->seg_in.hit_dist - a_hit->hit.hit_dist);
 		if (delta < tol->dist) {
 			ret_val = 6;
 		} else {
 			/* complete the segment */
-			RT_LIST_MAGIC_SET( &( (*seg_p)->l ), RT_SEG_MAGIC);
-			RT_LIST_INSERT(&(seghead->l), &((*seg_p)->l) );
+			BU_LIST_MAGIC_SET( &( (*seg_p)->l ), RT_SEG_MAGIC);
+			BU_LIST_INSERT(&(seghead->l), &((*seg_p)->l) );
 			(*seg_count)++;
 
 			/* start new segment */
@@ -837,14 +837,14 @@ struct rt_tol	*tol;
 		break;
 	case HMG_HIT_ANY_ANY:
 		CK_SEGP(seg_p);
-		RT_CK_TOL(tol);
+		BN_CK_TOL(tol);
 		delta = fabs((*seg_p)->seg_in.hit_dist - a_hit->hit.hit_dist);
 		if (delta < tol->dist) {
 			ret_val = 6;
 		} else {
 			/* complete the segment */
-			RT_LIST_MAGIC_SET( &( (*seg_p)->l ), RT_SEG_MAGIC);
-			RT_LIST_INSERT(&(seghead->l), &((*seg_p)->l) );
+			BU_LIST_MAGIC_SET( &( (*seg_p)->l ), RT_SEG_MAGIC);
+			BU_LIST_INSERT(&(seghead->l), &((*seg_p)->l) );
 			(*seg_count)++;
 
 			/* start new segment */
@@ -855,7 +855,7 @@ struct rt_tol	*tol;
 		}
 		break;
 	default:
-		rt_log("%s[line:%d]: bogus hit in/out status\n",
+		bu_log("%s[line:%d]: bogus hit in/out status\n",
 			__FILE__, __LINE__);
 		nmg_rt_segs_exit("Goodbye\n");
 		break;
@@ -887,7 +887,7 @@ struct soltab		*stp;
 
 	NMG_CK_HITMISS_LISTS(a_hit, rd);
 
-	for (RT_LIST_FOR(a_hit, hitmiss, &rd->rd_hit)) {
+	for (BU_LIST_FOR(a_hit, hitmiss, &rd->rd_hit)) {
 		NMG_CK_HITMISS(a_hit);
 
 		new_state = state_table[ray_state](seghead, &seg_p,
@@ -897,22 +897,22 @@ struct soltab		*stp;
 			/* state transition error.  Print out the hit list
 			 * and indicate where we were in processing it.
 			 */
-			for (RT_LIST_FOR(hm, hitmiss, &rd->rd_hit)) {
+			for (BU_LIST_FOR(hm, hitmiss, &rd->rd_hit)) {
 				if (hm == a_hit) {
-					rt_log("======= State %d ======\n",
+					bu_log("======= State %d ======\n",
 						ray_state);
 					nmg_rt_print_hitmiss(hm);
-					rt_log("================\n");
+					bu_log("================\n");
 				} else 
 					nmg_rt_print_hitmiss(hm);
 			}
 
 			/* Now bomb off */
-			rt_log("Solid: %s, pixel=%d %d, lvl=%d %s\n",
+			bu_log("Solid: %s, pixel=%d %d, lvl=%d %s\n",
 				rd->stp->st_dp->d_namep,
 				rd->ap->a_x, rd->ap->a_y, rd->ap->a_level,
 				rd->ap->a_purpose );
-		    	rt_log("Ray: pt:(%g %g %g) dir:(%g %g %g)\n",
+		    	bu_log("Ray: pt:(%g %g %g) dir:(%g %g %g)\n",
 		    		V3ARGS(rd->rp->r_pt), V3ARGS(rd->rp->r_dir) );
 			nmg_rt_segs_exit("Goodbye\n");
 		}
@@ -924,13 +924,13 @@ struct soltab		*stp;
 	 * in the state table.
 	 */
 	if (ray_state == 1) {
-		rt_log("%s[line:%d]: Input ended at non-terminal FSM state\n",
+		bu_log("%s[line:%d]: Input ended at non-terminal FSM state\n",
 			__FILE__, __LINE__);
 
-	    	rt_log("Ray: pt:(%g %g %g) dir:(%g %g %g)\n",
+	    	bu_log("Ray: pt:(%g %g %g) dir:(%g %g %g)\n",
 	    		V3ARGS(rd->rp->r_pt), V3ARGS(rd->rp->r_dir) );
 		
-		rt_log("Solid: %s, pixel=%d %d, lvl=%d %s\n",
+		bu_log("Solid: %s, pixel=%d %d, lvl=%d %s\n",
 			stp->st_dp->d_namep,
 			ap->a_x, ap->a_y, ap->a_level,
 			ap->a_purpose );
@@ -940,8 +940,8 @@ struct soltab		*stp;
 	/* Insert the last segment if appropriate */
 	if (ray_state > 1) {
 		/* complete the segment */
-		RT_LIST_MAGIC_SET( &( seg_p->l ), RT_SEG_MAGIC);
-		RT_LIST_INSERT(&(seghead->l), &(seg_p->l) );
+		BU_LIST_MAGIC_SET( &( seg_p->l ), RT_SEG_MAGIC);
+		BU_LIST_INSERT(&(seghead->l), &(seg_p->l) );
 		seg_count++;
 	}
 
@@ -954,13 +954,13 @@ struct soltab		*stp;
  */
 static long *
 common_topo(a_tbl, next_tbl)
-struct nmg_ptbl *a_tbl;
-struct nmg_ptbl *next_tbl;
+struct bu_ptbl *a_tbl;
+struct bu_ptbl *next_tbl;
 {
 	long **p;
 
 	for (p = &a_tbl->buffer[a_tbl->end] ; p >= a_tbl->buffer ; p--) {
-		if (nmg_tbl(next_tbl, TBL_LOC, *p) >= 0)
+		if (bu_ptbl_locate(next_tbl, *p) >= 0)
 			return *p;
 	}
 
@@ -974,16 +974,16 @@ long *l_p;
 genptr_t tbl;
 int after;
 {
-	(void)nmg_tbl( (struct nmg_ptbl *)tbl, TBL_INS_UNIQUE, l_p);
+	(void)bu_ptbl_ins_unique( (struct bu_ptbl *)tbl, l_p);
 }
 
 /*
- *	Add an element provided by nmg_visit to a nmg_ptbl struct.
+ *	Add an element provided by nmg_visit to a bu_ptbl struct.
  */
 static void
 build_topo_list(l_p, tbl)
 long *l_p;
-struct nmg_ptbl *tbl;
+struct bu_ptbl *tbl;
 {
 	struct nmg_visit_handlers htab;
 	struct loopuse *lu;
@@ -994,7 +994,7 @@ struct nmg_ptbl *tbl;
 	int radial_not_mate=0;
 
 	if (!l_p) {
-		rt_log("%s:%d NULL l_p\n", __FILE__, __LINE__);
+		bu_log("%s:%d NULL l_p\n", __FILE__, __LINE__);
 		nmg_rt_segs_exit("");
 	}
 
@@ -1012,7 +1012,7 @@ struct nmg_ptbl *tbl;
 			 */
 			if (*eu->up.magic_p == NMG_LOOPUSE_MAGIC &&
 			    *eu->up.lu_p->up.magic_p == NMG_FACEUSE_MAGIC)
-				nmg_tbl(tbl, TBL_INS_UNIQUE,
+				bu_ptbl_ins_unique(tbl,
 					(long *)eu->up.lu_p->up.fu_p->f_p);
 
 			if (radial_not_mate)	eu = eu->radial_p;
@@ -1020,21 +1020,21 @@ struct nmg_ptbl *tbl;
 			radial_not_mate = ! radial_not_mate;
 		} while (eu != eu_p);
 
-		nmg_tbl(tbl, TBL_INS_UNIQUE, (long *)eu->e_p);
-		nmg_tbl(tbl, TBL_INS_UNIQUE, (long *)eu->vu_p->v_p);
-		nmg_tbl(tbl, TBL_INS_UNIQUE, (long *)eu->eumate_p->vu_p->v_p);
+		bu_ptbl_ins_unique(tbl, (long *)eu->e_p);
+		bu_ptbl_ins_unique(tbl, (long *)eu->vu_p->v_p);
+		bu_ptbl_ins_unique(tbl, (long *)eu->eumate_p->vu_p->v_p);
 
 		break;
 	case NMG_VERTEXUSE_MAGIC:
 		vu_p = (struct vertexuse *)l_p;
-		nmg_tbl(tbl, TBL_INS_UNIQUE, (long *)vu_p->v_p);
+		bu_ptbl_ins_unique(tbl, (long *)vu_p->v_p);
 
-		for (RT_LIST_FOR(vu, vertexuse, &vu_p->v_p->vu_hd)) {
+		for (BU_LIST_FOR(vu, vertexuse, &vu_p->v_p->vu_hd)) {
 			lu = (struct loopuse *)NULL;
 			switch (*vu->up.magic_p) {
 			case NMG_EDGEUSE_MAGIC:
 				eu = vu->up.eu_p;
-				nmg_tbl(tbl, TBL_INS_UNIQUE, (long *)eu->e_p);
+				bu_ptbl_ins_unique(tbl, (long *)eu->e_p);
 				if (*eu->up.magic_p !=  NMG_LOOPUSE_MAGIC)
 					break;
 
@@ -1045,21 +1045,21 @@ struct nmg_ptbl *tbl;
 				if ( ! lu ) lu = vu->up.lu_p;
 
 				if (*lu->up.magic_p == NMG_FACEUSE_MAGIC)
-					nmg_tbl(tbl, TBL_INS_UNIQUE,
+					bu_ptbl_ins_unique(tbl,
 						(long *)lu->up.fu_p->f_p);
 				break;
 			case NMG_SHELL_MAGIC:
 				break;
 			default:
-				rt_log("%s[%d]: Bogus vertexuse parent magic:%s.",
-					rt_identify_magic( *vu->up.magic_p ));
+				bu_log("%s[%d]: Bogus vertexuse parent magic:%s.",
+					bu_identify_magic( *vu->up.magic_p ));
 				nmg_rt_segs_exit("goodbye");
 			}
 		}
 		break;
 	default:
-		rt_log("%s[%d]: Bogus magic number pointer:%s",
-			rt_identify_magic( *l_p ) );
+		bu_log("%s[%d]: Bogus magic number pointer:%s",
+			bu_identify_magic( *l_p ) );
 		nmg_rt_segs_exit("goodbye");
 	}
 }
@@ -1068,8 +1068,8 @@ static void
 unresolved(a_hit, next_hit, a_tbl, next_tbl, hd, rd)
 struct hitmiss *a_hit;
 struct hitmiss *next_hit;
-struct nmg_ptbl  *a_tbl;
-struct nmg_ptbl  *next_tbl;
+struct bu_ptbl  *a_tbl;
+struct bu_ptbl  *next_tbl;
 struct hitmiss *hd;
 struct ray_data *rd;
 {
@@ -1078,31 +1078,31 @@ struct ray_data *rd;
 	register long **l_p;
 	register long **b;
 
-	rt_log("Unable to fix state transition--->\n");
-	for (RT_LIST_FOR(hm, hitmiss, &hd->l)) {
+	bu_log("Unable to fix state transition--->\n");
+	for (BU_LIST_FOR(hm, hitmiss, &hd->l)) {
 		if (hm == next_hit) {
-			rt_log("======= ======\n");
+			bu_log("======= ======\n");
 			nmg_rt_print_hitmiss(hm);
-			rt_log("================\n");
+			bu_log("================\n");
 		} else
 			nmg_rt_print_hitmiss(hm);
 	}
 
-	rt_log("topo table A\n");
+	bu_log("topo table A\n");
 	b = &a_tbl->buffer[a_tbl->end];
 	l_p = &a_tbl->buffer[0];
 	for ( ; l_p < b ; l_p ++)
-		rt_log("\t0x%08x %s\n",**l_p, rt_identify_magic( **l_p));
+		bu_log("\t0x%08x %s\n",**l_p, bu_identify_magic( **l_p));
 
-	rt_log("topo table NEXT\n");
+	bu_log("topo table NEXT\n");
 	b = &next_tbl->buffer[next_tbl->end];
 	l_p = &next_tbl->buffer[0];
 	for ( ; l_p < b ; l_p ++)
-		rt_log("\t0x%08x %s\n",**l_p, rt_identify_magic( **l_p));
+		bu_log("\t0x%08x %s\n",**l_p, bu_identify_magic( **l_p));
 
-	rt_log("<---Unable to fix state transition\n");
+	bu_log("<---Unable to fix state transition\n");
 	pl_ray(rd);
-	rt_log("Solid: %s, pixel=%d %d,  lvl=%d %s\n",
+	bu_log("Solid: %s, pixel=%d %d,  lvl=%d %s\n",
 		rd->stp->st_dp->d_namep,
 		rd->ap->a_x, rd->ap->a_y, rd->ap->a_level,
 		rd->ap->a_purpose );
@@ -1118,24 +1118,24 @@ struct ray_data	*rd;
 	struct hitmiss *next_hit;
 	int ibs;
 	int obs;
-	struct nmg_ptbl *a_tbl = (struct nmg_ptbl *)NULL;
-	struct nmg_ptbl *next_tbl = (struct nmg_ptbl *)NULL;
-	struct nmg_ptbl *tbl_p = (struct nmg_ptbl *)NULL;
+	struct bu_ptbl *a_tbl = (struct bu_ptbl *)NULL;
+	struct bu_ptbl *next_tbl = (struct bu_ptbl *)NULL;
+	struct bu_ptbl *tbl_p = (struct bu_ptbl *)NULL;
 	long *long_ptr;
 
-	RT_CK_LIST_HEAD(&hd->l);
+	BU_CK_LIST_HEAD(&hd->l);
 
 	NMG_CK_HITMISS_LISTS(a_hit, rd);
 
 	/* find that first "OUTSIDE" point */
-	a_hit = RT_LIST_FIRST(hitmiss, &hd->l);
+	a_hit = BU_LIST_FIRST(hitmiss, &hd->l);
 	NMG_CK_HITMISS(a_hit);
 	if (((a_hit->in_out & 0x0f0) >> 4) != NMG_RAY_STATE_OUTSIDE ||
 	    rt_g.NMG_debug & DEBUG_RT_SEGS) {
-		rt_log("check_hitstate()\n");
+		bu_log("check_hitstate()\n");
 	     	nmg_rt_print_hitlist(hd);
 
-	    	rt_log("Ray: pt:(%g %g %g) dir:(%g %g %g)\n",
+	    	bu_log("Ray: pt:(%g %g %g) dir:(%g %g %g)\n",
 	    		V3ARGS(rd->rp->r_pt), V3ARGS(rd->rp->r_dir) );
 	}
 
@@ -1145,30 +1145,30 @@ struct ray_data	*rd;
 
 		NMG_CK_HITMISS(a_hit);
 		/* this better be a 2-manifold face */
-		rt_log("%s[%d]: This better be a 2-manifold face\n",
+		bu_log("%s[%d]: This better be a 2-manifold face\n",
 			__FILE__, __LINE__);
-		rt_log("Solid: %s, pixel=%d %d,  lvl=%d %s\n",
+		bu_log("Solid: %s, pixel=%d %d,  lvl=%d %s\n",
 				rd->stp->st_dp->d_namep,
 				rd->ap->a_x, rd->ap->a_y, rd->ap->a_level,
 				rd->ap->a_purpose );
-		a_hit = RT_LIST_PNEXT(hitmiss, a_hit);
+		a_hit = BU_LIST_PNEXT(hitmiss, a_hit);
 		if (a_hit != hd) {
 			NMG_CK_HITMISS(a_hit);
 		}
 	}
 	if (a_hit == hd) return 1;
 
-	a_tbl = (struct nmg_ptbl *)
-		rt_calloc(1, sizeof(struct nmg_ptbl), "a_tbl");
-	nmg_tbl(a_tbl, TBL_INIT, (long *)NULL);
+	a_tbl = (struct bu_ptbl *)
+		rt_calloc(1, sizeof(struct bu_ptbl), "a_tbl");
+	bu_ptbl_init(a_tbl, 64, "a_tbl");
 
 
-	next_tbl = (struct nmg_ptbl *)
-		rt_calloc(1, sizeof(struct nmg_ptbl), "next_tbl");
-	nmg_tbl(next_tbl, TBL_INIT, (long *)NULL);
+	next_tbl = (struct bu_ptbl *)
+		rt_calloc(1, sizeof(struct bu_ptbl), "next_tbl");
+	bu_ptbl_init(next_tbl, 64, "next_tbl");
 
 	/* check the state transition on the rest of the hit points */
-	while ((next_hit = RT_LIST_PNEXT(hitmiss, &a_hit->l)) != hd) {
+	while ((next_hit = BU_LIST_PNEXT(hitmiss, &a_hit->l)) != hd) {
 		NMG_CK_HITMISS(next_hit);
 		ibs = HMG_INBOUND_STATE(next_hit);
 		obs = HMG_OUTBOUND_STATE(a_hit);
@@ -1180,12 +1180,12 @@ struct ray_data	*rd;
 			 * with each hit.
 			 */
 
-			nmg_tbl(a_tbl, TBL_RST, (long *)NULL);
+			bu_ptbl_reset(a_tbl);
 
 			NMG_CK_HITMISS(a_hit);
 			build_topo_list(a_hit->outbound_use, a_tbl);
 
-			nmg_tbl(next_tbl, TBL_RST, (long *)NULL);
+			bu_ptbl_reset(next_tbl);
 			NMG_CK_HITMISS(next_hit);
 			build_topo_list(next_hit->outbound_use, next_tbl);
 
@@ -1220,8 +1220,8 @@ struct ray_data	*rd;
 		a_hit = next_hit;
 	}
 
-	nmg_tbl(next_tbl, TBL_FREE, (long *)NULL);
-	nmg_tbl(a_tbl, TBL_FREE, (long *)NULL);
+	bu_ptbl_free(next_tbl);
+	bu_ptbl_free(a_tbl);
 	(void)rt_free( (char *)a_tbl, "a_tbl");
 	(void)rt_free( (char *)next_tbl, "next_tbl");
 
@@ -1252,13 +1252,13 @@ struct ray_data	*rd;
 
 	NMG_CK_HITMISS_LISTS(a_hit, rd);
 
-	if (RT_LIST_IS_EMPTY(&rd->rd_hit)) {
+	if (BU_LIST_IS_EMPTY(&rd->rd_hit)) {
 
 		NMG_FREE_HITLIST( &rd->rd_miss );
 
 		if (rt_g.NMG_debug & DEBUG_RT_SEGS) {
-			if (last_miss)	rt_log(".");
-			else		rt_log("ray missed NMG\n");
+			if (last_miss)	bu_log(".");
+			else		bu_log("ray missed NMG\n");
 		}
 		last_miss = 1;
 		return(0);			/* MISS */
@@ -1266,9 +1266,9 @@ struct ray_data	*rd;
 
 		print_seg_list(rd->seghead, seg_count, "before");
 
-		rt_log("\n\nnmg_ray_segs(rd)\nsorted nmg/ray hit list\n");
+		bu_log("\n\nnmg_ray_segs(rd)\nsorted nmg/ray hit list\n");
 
-		for (RT_LIST_FOR(a_hit, hitmiss, &rd->rd_hit))
+		for (BU_LIST_FOR(a_hit, hitmiss, &rd->rd_hit))
 			nmg_rt_print_hitmiss(a_hit);
 	}
 
@@ -1281,8 +1281,8 @@ struct ray_data	*rd;
 	}
 
 	if (rt_g.NMG_debug & DEBUG_RT_SEGS) {
-		rt_log("----------morphed nmg/ray hit list---------\n");
-		for (RT_LIST_FOR(a_hit, hitmiss, &rd->rd_hit))
+		bu_log("----------morphed nmg/ray hit list---------\n");
+		for (BU_LIST_FOR(a_hit, hitmiss, &rd->rd_hit))
 			nmg_rt_print_hitmiss(a_hit);
 
 		pl_ray(rd);

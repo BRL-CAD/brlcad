@@ -63,22 +63,22 @@ int		count;
 
 	RT_CK_DBI(dbip);
 	RT_CK_DIR(dp);
-	if(rt_g.debug&DEBUG_DB) rt_log("db_alloc(%s) x%x, x%x, count=%d\n",
+	if(rt_g.debug&DEBUG_DB) bu_log("db_alloc(%s) x%x, x%x, count=%d\n",
 		dp->d_namep, dbip, dp, count );
 
 	if( dbip->dbi_read_only )  {
-		rt_log("db_alloc on READ-ONLY file\n");
+		bu_log("db_alloc on READ-ONLY file\n");
 		return(-1);
 	}
 	if( count <= 0 )  {
-		rt_log("db_alloc(0)\n");
+		bu_log("db_alloc(0)\n");
 		return(-1);
 	}
 	while(1)  {
 		if( (addr = rt_memalloc( &(dbip->dbi_freep), (unsigned)count )) == 0L )  {
 			/* No contiguous free block, append to file */
 			if( (dp->d_addr = dbip->dbi_eof) < 0 )  {
-				rt_log("db_alloc: bad EOF\n");
+				bu_log("db_alloc: bad EOF\n");
 				return(-1);
 			}
 			dp->d_len = count;
@@ -91,7 +91,7 @@ int		count;
 		if( db_get( dbip, dp, &rec, 0, 1 ) < 0 )
 			return(-1);
 		if( rec.u_id != ID_FREE )  {
-			rt_log("db_alloc():  addr %ld non-FREE (id %d), skipping\n",
+			bu_log("db_alloc():  addr %ld non-FREE (id %d), skipping\n",
 				addr, rec.u_id );
 			continue;
 		}
@@ -126,16 +126,16 @@ int		count;
 
 	RT_CK_DBI(dbip);
 	RT_CK_DIR(dp);
-	if(rt_g.debug&DEBUG_DB) rt_log("db_grow(%s) x%x, x%x, count=%d\n",
+	if(rt_g.debug&DEBUG_DB) bu_log("db_grow(%s) x%x, x%x, count=%d\n",
 		dp->d_namep, dbip, dp, count );
 
 	if( dbip->dbi_read_only )  {
-		rt_log("db_grow on READ-ONLY file\n");
+		bu_log("db_grow on READ-ONLY file\n");
 		return(-1);
 	}
 
 	if( count <= 0 )  {
-		rt_log("db_grow(%d)\n", count );
+		bu_log("db_grow(%d)\n", count );
 		return(-1);
 	}
 
@@ -159,7 +159,7 @@ int		count;
 	for( i=old_len; i < dp->d_len; i++ )  {
 		if( db_get( dbip, dp, &rec, i, 1 ) < 0 ||
 		     rec.u_id != ID_FREE )  {
-			rt_log("db_grow:  FREE record wasn't?! (id%d)\n",
+			bu_log("db_grow:  FREE record wasn't?! (id%d)\n",
 				rec.u_id);
 		     	dp->d_len -= count;
 			goto hard;
@@ -201,11 +201,11 @@ int			 count;
 
 	RT_CK_DBI(dbip);
 	RT_CK_DIR(dp);
-	if(rt_g.debug&DEBUG_DB) rt_log("db_trunc(%s) x%x, x%x, count=%d\n",
+	if(rt_g.debug&DEBUG_DB) bu_log("db_trunc(%s) x%x, x%x, count=%d\n",
 		dp->d_namep, dbip, dp, count );
 
 	if( dbip->dbi_read_only )  {
-		rt_log("db_trunc on READ-ONLY file\n");
+		bu_log("db_trunc on READ-ONLY file\n");
 		return(-1);
 	}
 	i = db_zapper( dbip, dp, dp->d_len - count );
@@ -232,11 +232,11 @@ int			recnum;
 
 	RT_CK_DBI(dbip);
 	RT_CK_DIR(dp);
-	if(rt_g.debug&DEBUG_DB) rt_log("db_delrec(%s) x%x, x%x, recnum=%d\n",
+	if(rt_g.debug&DEBUG_DB) bu_log("db_delrec(%s) x%x, x%x, recnum=%d\n",
 		dp->d_namep, dbip, dp, recnum );
 
 	if( dbip->dbi_read_only )  {
-		rt_log("db_delrec on READ-ONLY file\n");
+		bu_log("db_delrec on READ-ONLY file\n");
 		return(-1);
 	}
 	/* If deleting last member, just truncate */
@@ -277,7 +277,7 @@ struct directory *dp;
 
 	RT_CK_DBI(dbip);
 	RT_CK_DIR(dp);
-	if(rt_g.debug&DEBUG_DB) rt_log("db_delete(%s) x%x, x%x\n",
+	if(rt_g.debug&DEBUG_DB) bu_log("db_delete(%s) x%x, x%x\n",
 		dp->d_namep, dbip, dp );
 
 	i = db_zapper( dbip, dp, 0 );
@@ -313,7 +313,7 @@ int		start;
 
 	RT_CK_DBI(dbip);
 	RT_CK_DIR(dp);
-	if(rt_g.debug&DEBUG_DB) rt_log("db_zapper(%s) x%x, x%x, start=%d\n",
+	if(rt_g.debug&DEBUG_DB) bu_log("db_zapper(%s) x%x, x%x, start=%d\n",
 		dp->d_namep, dbip, dp, start );
 
 	if( dbip->dbi_read_only )

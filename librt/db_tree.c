@@ -65,9 +65,9 @@ struct rt_comb_internal  {
 	/* End GIFT compatability */
 	char		rgb_valid;	/* !0 ==> rgb[] has valid color */
 	unsigned char	rgb[3];
-	struct rt_vls	shader_name;
-	struct rt_vls	shader_param;
-	struct rt_vls	material;
+	struct bu_vls	shader_name;
+	struct bu_vls	shader_param;
+	struct bu_vls	material;
 	char		inherit;
 };
 #define RT_COMB_MAGIC	0x436f6d49	/* "ComI" */
@@ -85,7 +85,7 @@ RT_EXTERN( union tree *db_mkgift_tree , (struct tree_list *tree_list , int howfa
 int
 rt_comb_v4_import( ip, ep, matrix )
 struct rt_db_internal		*ip;
-CONST struct rt_external	*ep;
+CONST struct bu_external	*ep;
 CONST matp_t			matrix;		/* NULL if identity */
 {
 	union record		*rp;
@@ -95,12 +95,12 @@ CONST matp_t			matrix;		/* NULL if identity */
 	int			i,j;
 	int			node_count;
 
-	RT_CK_EXTERNAL( ep );
+	BU_CK_EXTERNAL( ep );
 	rp = (union record *)ep->ext_buf;
 
 	if( rp[0].u_id != ID_COMB )
 	{
-		rt_log( "rt_comb_v4_import: Attempt to import a non-combination\n" );
+		bu_log( "rt_comb_v4_import: Attempt to import a non-combination\n" );
 		return( -1 );
 	}
 
@@ -117,7 +117,7 @@ CONST matp_t			matrix;		/* NULL if identity */
 		if( rp[j+1].u_id != ID_MEMB )
 		{
 			rt_free( (char *)tree_list , "rt_comb_v4_import: tree_list" );
-			rt_log( "rt_comb_v4_import(): granule in external buffer is not ID_MEMB, id=%d\n", rp[j+1].u_id );
+			bu_log( "rt_comb_v4_import(): granule in external buffer is not ID_MEMB, id=%d\n", rp[j+1].u_id );
 			return( -1 );
 		}
 
@@ -130,7 +130,7 @@ CONST matp_t			matrix;		/* NULL if identity */
 				tree_list[j].tl_op = OP_SUBTRACT;
 				break;
 			default:
-				rt_log("rt_comb_v4_import() unknown op=x%x, assuming UNION\n", rp[j+1].M.m_relation );
+				bu_log("rt_comb_v4_import() unknown op=x%x, assuming UNION\n", rp[j+1].M.m_relation );
 				/* Fall through */
 			case 'u':
 				tree_list[j].tl_op = OP_UNION;
@@ -143,13 +143,13 @@ CONST matp_t			matrix;		/* NULL if identity */
 			mat_t			diskmat;
 			char			namebuf[NAMESIZE+2];
 
-			GETUNION( tp, tree );
+			BU_GETUNION( tp, tree );
 			tree_list[j].tl_tree = tp;
 			tp->tr_l.magic = RT_TREE_MAGIC;
 			tp->tr_l.tl_op = OP_DB_LEAF;
 			strncpy( namebuf, rp[j+1].M.m_instname, NAMESIZE );
 			namebuf[NAMESIZE] = '\0';	/* ensure null term */
-			tp->tr_l.tl_name = rt_strdup( namebuf );
+			tp->tr_l.tl_name = bu_strdup( namebuf );
 
 			/* See if disk record is identity matrix */
 			rt_mat_dbmat( diskmat, rp[j+1].M.m_mat );
@@ -168,7 +168,7 @@ CONST matp_t			matrix;		/* NULL if identity */
 					tp->tr_l.tl_mat = mat_dup( prod );
 				}
 			}
-rt_log("M_name=%s, matp=x%x\n", tp->tr_l.tl_name, tp->tr_l.tl_mat );
+bu_log("M_name=%s, matp=x%x\n", tp->tr_l.tl_name, tp->tr_l.tl_mat );
 		}
 	}
 	if( node_count )
@@ -181,9 +181,9 @@ rt_log("M_name=%s, matp=x%x\n", tp->tr_l.tl_name, tp->tr_l.tl_mat );
 	comb = (struct rt_comb_internal *)rt_malloc( sizeof( struct rt_comb_internal ) , "rt_comb_v4_import: rt_comb_internal" );
 	ip->idb_ptr = (genptr_t)comb;
 	comb->magic = RT_COMB_MAGIC;
-	rt_vls_init( &comb->shader_name );
-	rt_vls_init( &comb->shader_param );
-	rt_vls_init( &comb->material );
+	bu_vls_init( &comb->shader_name );
+	bu_vls_init( &comb->shader_param );
+	bu_vls_init( &comb->material );
 	comb->tree = tree;
 	comb->region_flag = (rp[0].c.c_flags == 'R');
 
@@ -196,11 +196,11 @@ rt_log("M_name=%s, matp=x%x\n", tp->tr_l.tl_name, tp->tr_l.tl_mat );
 	comb->rgb[0] = rp[0].c.c_rgb[0];
 	comb->rgb[1] = rp[0].c.c_rgb[1];
 	comb->rgb[2] = rp[0].c.c_rgb[2];
-	rt_vls_strncpy( &comb->shader_name , rp[0].c.c_matname, 32 );
-	rt_vls_strncpy( &comb->shader_param , rp[0].c.c_matparm, 60 );
+	bu_vls_strncpy( &comb->shader_name , rp[0].c.c_matname, 32 );
+	bu_vls_strncpy( &comb->shader_param , rp[0].c.c_matparm, 60 );
 	comb->inherit = rp[0].c.c_inherit;
 	/* Automatic material table lookup here? */
-	rt_vls_printf( &comb->material, "gift%d", comb->GIFTmater );
+	bu_vls_printf( &comb->material, "gift%d", comb->GIFTmater );
 
 	return( 0 );
 }
@@ -223,9 +223,9 @@ struct rt_db_internal	*ip;
 	db_free_tree( comb->tree );
 	comb->tree = NULL;
 
-	rt_vls_free( &comb->shader_name );
-	rt_vls_free( &comb->shader_param );
-	rt_vls_free( &comb->material );
+	bu_vls_free( &comb->shader_name );
+	bu_vls_free( &comb->shader_param );
+	bu_vls_free( &comb->material );
 
 	comb->magic = 0;			/* sanity */
 	rt_free( (char *)comb, "comb ifree" );
@@ -268,7 +268,7 @@ int			no_unions;
 		return db_ck_left_heavy_tree( tp->tr_b.tb_left, no_unions );
 
 	default:
-		rt_log("db_ck_left_heavy_tree: bad op %d\n", tp->tr_op);
+		bu_log("db_ck_left_heavy_tree: bad op %d\n", tp->tr_op);
 		rt_bomb("db_ck_left_heavy_tree\n");
 	}
 	return 0;
@@ -311,7 +311,7 @@ CONST union tree	*tp;
 		return db_ck_left_heavy_tree( tp, 1 );
 
 	default:
-		rt_log("db_ck_v4gift_tree: bad op %d\n", tp->tr_op);
+		bu_log("db_ck_v4gift_tree: bad op %d\n", tp->tr_op);
 		rt_bomb("db_ck_v4gift_tree\n");
 	}
 	return 0;
@@ -334,7 +334,7 @@ register CONST struct db_full_path	*pathp;
 	RT_CK_FULL_PATH(pathp);
 	RT_CK_DBI(tsp->ts_dbip);
 
-	GETSTRUCT( new, combined_tree_state );
+	BU_GETSTRUCT( new, combined_tree_state );
 	new->magic = RT_CTS_MAGIC;
 	new->cts_s = *tsp;		/* struct copy */
 	db_full_path_init( &(new->cts_p) );
@@ -352,7 +352,7 @@ CONST struct combined_tree_state	*old;
 	struct combined_tree_state	*new;
 
  	RT_CK_CTS(old);
-	GETSTRUCT( new, combined_tree_state );
+	BU_GETSTRUCT( new, combined_tree_state );
 	new->magic = RT_CTS_MAGIC;
 	new->cts_s = old->cts_s;	/* struct copy */
 	db_full_path_init( &(new->cts_p) );
@@ -380,20 +380,20 @@ void
 db_pr_tree_state( tsp )
 register CONST struct db_tree_state	*tsp;
 {
-	rt_log("db_pr_tree_state(x%x):\n", tsp);
-	rt_log(" ts_dbip=x%x\n", tsp->ts_dbip);
-	rt_printb(" ts_sofar", tsp->ts_sofar, "\020\3REGION\2INTER\1MINUS" );
-	rt_log("\n");
-	rt_log(" ts_regionid=%d\n", tsp->ts_regionid);
-	rt_log(" ts_aircode=%d\n", tsp->ts_aircode);
-	rt_log(" ts_gmater=%d\n", tsp->ts_gmater);
-	rt_log(" ts_los=%d\n", tsp->ts_los);
-	rt_log(" ts_mater.ma_color=%g,%g,%g\n",
+	bu_log("db_pr_tree_state(x%x):\n", tsp);
+	bu_log(" ts_dbip=x%x\n", tsp->ts_dbip);
+	bu_printb(" ts_sofar", tsp->ts_sofar, "\020\3REGION\2INTER\1MINUS" );
+	bu_log("\n");
+	bu_log(" ts_regionid=%d\n", tsp->ts_regionid);
+	bu_log(" ts_aircode=%d\n", tsp->ts_aircode);
+	bu_log(" ts_gmater=%d\n", tsp->ts_gmater);
+	bu_log(" ts_los=%d\n", tsp->ts_los);
+	bu_log(" ts_mater.ma_color=%g,%g,%g\n",
 		tsp->ts_mater.ma_color[0],
 		tsp->ts_mater.ma_color[1],
 		tsp->ts_mater.ma_color[2] );
-	rt_log(" ts_mater.ma_matname=%s\n", tsp->ts_mater.ma_matname );
-	rt_log(" ts_mater.ma_matparam=%s\n", tsp->ts_mater.ma_matparm );
+	bu_log(" ts_mater.ma_matname=%s\n", tsp->ts_mater.ma_matname );
+	bu_log(" ts_mater.ma_matparam=%s\n", tsp->ts_mater.ma_matparm );
 	mat_print("ts_mat", tsp->ts_mat );
 }
 
@@ -407,10 +407,10 @@ register CONST struct combined_tree_state	*ctsp;
 	char	*str;
 
  	RT_CK_CTS(ctsp);
-	rt_log("db_pr_combined_tree_state(x%x):\n", ctsp);
+	bu_log("db_pr_combined_tree_state(x%x):\n", ctsp);
 	db_pr_tree_state( &(ctsp->cts_s) );
 	str = db_path_to_string( &(ctsp->cts_p) );
-	rt_log(" path='%s'\n", str);
+	bu_log(" path='%s'\n", str);
 	rt_free( str, "path string" );
 }
 
@@ -429,15 +429,15 @@ int
 db_apply_state_from_comb( tsp, pathp, ep )
 struct db_tree_state		*tsp;
 CONST struct db_full_path	*pathp;
-CONST struct rt_external	*ep;
+CONST struct bu_external	*ep;
 {
 	register CONST union record	*rp;
 
-	RT_CK_EXTERNAL( ep );
+	BU_CK_EXTERNAL( ep );
 	rp = (union record *)ep->ext_buf;
 	if( rp->u_id != ID_COMB )  {
 		char	*sofar = db_path_to_string(pathp);
-		rt_log("db_apply_state_from_comb() defective record at '%s'\n",
+		bu_log("db_apply_state_from_comb() defective record at '%s'\n",
 			sofar );
 		rt_free(sofar, "path string");
 		return(-1);
@@ -449,7 +449,7 @@ CONST struct rt_external	*ep;
 				/* This combination is within a region */
 				char	*sofar = db_path_to_string(pathp);
 
-				rt_log("db_apply_state_from_comb(): WARNING: color override in combination within region '%s', ignored\n",
+				bu_log("db_apply_state_from_comb(): WARNING: color override in combination within region '%s', ignored\n",
 					sofar );
 				rt_free(sofar, "path string");
 			}
@@ -457,11 +457,11 @@ CONST struct rt_external	*ep;
 		} else if( tsp->ts_mater.ma_cinherit == DB_INH_LOWER )  {
 			tsp->ts_mater.ma_override = 1;
 			tsp->ts_mater.ma_color[0] =
-				(((double)(rp->c.c_rgb[0]))*rt_inv255);
+				(((double)(rp->c.c_rgb[0]))*bn_inv255);
 			tsp->ts_mater.ma_color[1] =
-				(((double)(rp->c.c_rgb[1]))*rt_inv255);
+				(((double)(rp->c.c_rgb[1]))*bn_inv255);
 			tsp->ts_mater.ma_color[2] =
-				(((double)(rp->c.c_rgb[2]))*rt_inv255);
+				(((double)(rp->c.c_rgb[2]))*bn_inv255);
 			tsp->ts_mater.ma_cinherit = rp->c.c_inherit;
 		}
 	}
@@ -471,7 +471,7 @@ CONST struct rt_external	*ep;
 				/* This combination is within a region */
 				char	*sofar = db_path_to_string(pathp);
 
-				rt_log("db_apply_state_from_comb(): WARNING: material property spec in combination within region '%s', ignored\n",
+				bu_log("db_apply_state_from_comb(): WARNING: material property spec in combination within region '%s', ignored\n",
 					sofar );
 				rt_free(sofar, "path string");
 			}
@@ -488,7 +488,7 @@ CONST struct rt_external	*ep;
 		if( tsp->ts_sofar & TS_SOFAR_REGION )  {
 			if( (tsp->ts_sofar&(TS_SOFAR_MINUS|TS_SOFAR_INTER)) == 0 )  {
 				char	*sofar = db_path_to_string(pathp);
-				rt_log("Warning:  region unioned into region at '%s', lower region info ignored\n",
+				bu_log("Warning:  region unioned into region at '%s', lower region info ignored\n",
 					sofar);
 				rt_free(sofar, "path string");
 			}
@@ -530,7 +530,7 @@ CONST struct member	*mp;
 
 	if( mp->m_id != ID_MEMB )  {
 		char	*sofar = db_path_to_string(pathp);
-		rt_log("db_apply_state_from_memb:  defective member rec in '%s'\n", sofar);
+		bu_log("db_apply_state_from_memb:  defective member rec in '%s'\n", sofar);
 		rt_free(sofar, "path string");
 		return(-1);
 	}
@@ -551,7 +551,7 @@ CONST struct member	*mp;
 	/* Check here for animation to apply */
 	if ((mdp->d_animate != ANIM_NULL) && (rt_g.debug & DEBUG_ANIM)) {
 		char	*sofar = db_path_to_string(pathp);
-		rt_log("Animate %s with...\n", sofar);
+		bu_log("Animate %s with...\n", sofar);
 		rt_free(sofar, "path string");
 	}
 	/*
@@ -573,16 +573,16 @@ CONST struct member	*mp;
 			char	*str;
 
 			str = db_path_to_string( &(anp->an_path) );
-			rt_log( "\t%s\t", str );
+			bu_log( "\t%s\t", str );
 			rt_free( str, "path string" );
-			rt_log("an_path.fp_len-1:%d  pathp->fp_len-1:%d\n",
+			bu_log("an_path.fp_len-1:%d  pathp->fp_len-1:%d\n",
 				i, j);
 
 		}
 		for( ; i>=0 && j>=0; i--, j-- )  {
 			if( anp->an_path.fp_names[i] != pathp->fp_names[j] ) {
 				if (rt_g.debug & DEBUG_ANIM) {
-					rt_log("%s != %s\n",
+					bu_log("%s != %s\n",
 					     anp->an_path.fp_names[i]->d_namep,
 					     pathp->fp_names[j]->d_namep);
 				}
@@ -636,7 +636,7 @@ CONST union tree	*tp;
 	/* Check here for animation to apply */
 	if ((mdp->d_animate != ANIM_NULL) && (rt_g.debug & DEBUG_ANIM)) {
 		char	*sofar = db_path_to_string(pathp);
-		rt_log("Animate %s with...\n", sofar);
+		bu_log("Animate %s with...\n", sofar);
 		rt_free(sofar, "path string");
 	}
 	/*
@@ -658,16 +658,16 @@ CONST union tree	*tp;
 			char	*str;
 
 			str = db_path_to_string( &(anp->an_path) );
-			rt_log( "\t%s\t", str );
+			bu_log( "\t%s\t", str );
 			rt_free( str, "path string" );
-			rt_log("an_path.fp_len-1:%d  pathp->fp_len-1:%d\n",
+			bu_log("an_path.fp_len-1:%d  pathp->fp_len-1:%d\n",
 				i, j);
 
 		}
 		for( ; i>=0 && j>=0; i--, j-- )  {
 			if( anp->an_path.fp_names[i] != pathp->fp_names[j] ) {
 				if (rt_g.debug & DEBUG_ANIM) {
-					rt_log("%s != %s\n",
+					bu_log("%s != %s\n",
 					     anp->an_path.fp_names[i]->d_namep,
 					     pathp->fp_names[j]->d_namep);
 				}
@@ -704,7 +704,7 @@ struct db_full_path	*pathp;
 CONST char		*orig_str;
 int			noisy;
 {
-	struct rt_external	ext;
+	struct bu_external	ext;
 	register int		i;
 	register char		*cp;
 	register char		*ep;
@@ -719,15 +719,15 @@ int			noisy;
 
 	if(rt_g.debug&DEBUG_TREEWALK)  {
 		char	*sofar = db_path_to_string(pathp);
-		rt_log("db_follow_path_for_state() pathp='%s', tsp=x%x, orig_str='%s', noisy=%d\n",
+		bu_log("db_follow_path_for_state() pathp='%s', tsp=x%x, orig_str='%s', noisy=%d\n",
 			sofar, tsp, orig_str, noisy );
 		rt_free(sofar, "path string");
 	}
 
 	if( *orig_str == '\0' )  return(0);		/* Null string */
 
-	RT_INIT_EXTERNAL( &ext );
-	cp = str = rt_strdup( orig_str );
+	BU_INIT_EXTERNAL( &ext );
+	cp = str = bu_strdup( orig_str );
 
 	/* Prime the pumps, and get the starting combination */
 	if( pathp->fp_len > 0 )  {
@@ -793,7 +793,7 @@ int			noisy;
 
 		/* At this point, comb_db is the comb, dp is the member */
 		if(rt_g.debug&DEBUG_TREEWALK)  {
-			rt_log("db_follow_path_for_state() at %s/%s\n", comb_dp->d_namep, dp->d_namep );
+			bu_log("db_follow_path_for_state() at %s/%s\n", comb_dp->d_namep, dp->d_namep );
 		}
 
 		/* Load the entire combination into contiguous memory */
@@ -813,11 +813,11 @@ int			noisy;
 			if( strncmp( mp->m_instname, cp, sizeof(mp->m_instname)) == 0 )
 				goto found_it;
 		}
-		if(noisy) rt_log("db_follow_path_for_state() ERROR: unable to find '%s/%s'\n", comb_dp->d_namep, cp );
+		if(noisy) bu_log("db_follow_path_for_state() ERROR: unable to find '%s/%s'\n", comb_dp->d_namep, cp );
 		goto fail;
 found_it:
 		if( db_apply_state_from_memb( tsp, pathp, mp ) < 0 )  {
-			rt_log("db_follow_path_for_state() ERROR: unable to apply member %s state\n", dp->d_namep);
+			bu_log("db_follow_path_for_state() ERROR: unable to apply member %s state\n", dp->d_namep);
 			goto fail;
 		}
 		/* directory entry was pushed */
@@ -853,7 +853,7 @@ is_leaf:
 			/* Additional path was given, this is wrong */
 			if( noisy )  {
 				char	*sofar = db_path_to_string(pathp);
-				rt_log("db_follow_path_for_state(%s) ERROR: found leaf early at '%s'\n",
+				bu_log("db_follow_path_for_state(%s) ERROR: found leaf early at '%s'\n",
 					cp, sofar );
 				rt_free(sofar, "path string");
 			}
@@ -864,7 +864,7 @@ is_leaf:
 		if( dp->d_len <= 1 )  {
 			/* Combination has no members */
 			if( noisy )  {
-				rt_log("db_follow_path_for_state(%s) ERROR: combination '%s' has no members\n",
+				bu_log("db_follow_path_for_state(%s) ERROR: combination '%s' has no members\n",
 					cp, dp->d_namep );
 			}
 			goto fail;
@@ -877,17 +877,17 @@ is_leaf:
 
 out:
 	db_free_external( &ext );
-	rt_free( str, "rt_strdup (dup'ed path)" );
+	rt_free( str, "bu_strdup (dup'ed path)" );
 	if(rt_g.debug&DEBUG_TREEWALK)  {
 		char	*sofar = db_path_to_string(pathp);
-		rt_log("db_follow_path_for_state() returns pathp='%s'\n",
+		bu_log("db_follow_path_for_state() returns pathp='%s'\n",
 			sofar);
 		rt_free(sofar, "path string");
 	}
 	return(0);		/* SUCCESS */
 fail:
 	db_free_external( &ext );
-	rt_free( str, "rt_strdup (dup'ed path)" );
+	rt_free( str, "bu_strdup (dup'ed path)" );
 	return(-1);		/* FAIL */
 }
 
@@ -936,7 +936,7 @@ int		howfar;
 	if( first_tlp->tl_op != OP_UNION )  {
 		first_tlp->tl_op = OP_UNION;	/* Fix it */
 		if( rt_g.debug & DEBUG_TREEWALK )  {
-			rt_log("db_mkbool_tree() WARNING: non-union (%c) first operation ignored\n",
+			bu_log("db_mkbool_tree() WARNING: non-union (%c) first operation ignored\n",
 				first_tlp->tl_op );
 		}
 	}
@@ -948,7 +948,7 @@ int		howfar;
 		if( tlp->tl_tree == TREE_NULL )
 			continue;
 
-		GETUNION( xtp, tree );
+		BU_GETUNION( xtp, tree );
 		xtp->magic = RT_TREE_MAGIC;
 		xtp->tr_b.tb_left = curtree;
 		xtp->tr_b.tb_right = tlp->tl_tree;
@@ -1000,7 +1000,7 @@ struct db_tree_state	*tsp;
 		tstart->tl_tree = curtree;
 
 		if(rt_g.debug&DEBUG_TREEWALK)  {
-			rt_log("db_mkgift_tree() intermediate term:\n");
+			bu_log("db_mkgift_tree() intermediate term:\n");
 			rt_pr_tree(tstart->tl_tree, 0);
 		}
 
@@ -1011,7 +1011,7 @@ struct db_tree_state	*tsp;
 final:
 	curtree = db_mkbool_tree( trees, subtreecount );
 	if(rt_g.debug&DEBUG_TREEWALK)  {
-		rt_log("db_mkgift_tree() returns:\n");
+		bu_log("db_mkgift_tree() returns:\n");
 		rt_pr_tree(curtree, 0);
 	}
 	return( curtree );
@@ -1065,7 +1065,7 @@ struct combined_tree_state	**region_start_statepp;
 		break;
 
 	default:
-		rt_log("recurseit: bad op %d\n", tp->tr_op);
+		bu_log("recurseit: bad op %d\n", tp->tr_op);
 		rt_bomb("recurseit\n");
 	}
 	return;
@@ -1091,7 +1091,7 @@ struct db_full_path	*pathp;
 struct combined_tree_state	**region_start_statepp;
 {
 	struct directory	*dp;
-	struct rt_external	ext;
+	struct bu_external	ext;
 	struct rt_db_internal	intern;
 	int			i;
 	struct tree_list	*tlp;		/* cur elem of trees[] */
@@ -1103,13 +1103,13 @@ struct combined_tree_state	**region_start_statepp;
 	RT_INIT_DB_INTERNAL(&intern);
 
 	if( pathp->fp_len <= 0 )  {
-		rt_log("db_recurse() null path?\n");
+		bu_log("db_recurse() null path?\n");
 		return(TREE_NULL);
 	}
 	dp = DB_FULL_PATH_CUR_DIR(pathp);
 	if(rt_g.debug&DEBUG_TREEWALK)  {
 		char	*sofar = db_path_to_string(pathp);
-		rt_log("db_recurse() pathp='%s', tsp=x%x, *statepp=x%x\n",
+		bu_log("db_recurse() pathp='%s', tsp=x%x, *statepp=x%x\n",
 			sofar, tsp,
 			*region_start_statepp );
 		rt_free(sofar, "path string");
@@ -1120,7 +1120,7 @@ struct combined_tree_state	**region_start_statepp;
 	 */
 	if( dp->d_addr == RT_DIR_PHONY_ADDR )  return TREE_NULL;
 	if( db_get_external( &ext, dp, tsp->ts_dbip ) < 0 )  {
-		rt_log("db_recurse() db_get_external() FAIL\n");
+		bu_log("db_recurse() db_get_external() FAIL\n");
 		return(TREE_NULL);		/* FAIL */
 	}
 
@@ -1135,7 +1135,7 @@ struct combined_tree_state	**region_start_statepp;
 
 #if !1
 		if( rt_comb_v4_import( &intern , &ext , NULL ) < 0 )  {
-			rt_log("db_recurse() import of %s failed\n", dp->d_namep);
+			bu_log("db_recurse() import of %s failed\n", dp->d_namep);
 			curtree = TREE_NULL;		/* FAIL */
 			goto out;
 		}
@@ -1168,7 +1168,7 @@ struct combined_tree_state	**region_start_statepp;
 
 			/* Take note of full state here at region start */
 			if( *region_start_statepp != (struct combined_tree_state *)0 ) {
-				rt_log("db_recurse() ERROR at start of a region, *region_start_statepp = x%x\n",
+				bu_log("db_recurse() ERROR at start of a region, *region_start_statepp = x%x\n",
 					*region_start_statepp );
 				curtree = TREE_NULL;		/* FAIL */
 				goto out;
@@ -1176,7 +1176,7 @@ struct combined_tree_state	**region_start_statepp;
 			ctsp =  db_new_combined_tree_state( &nts, pathp );
 			*region_start_statepp = ctsp;
 			if(rt_g.debug&DEBUG_TREEWALK)  {
-				rt_log("setting *region_start_statepp to x%x\n", ctsp );
+				bu_log("setting *region_start_statepp to x%x\n", ctsp );
 				db_pr_combined_tree_state(ctsp);
 			}
 		}
@@ -1202,7 +1202,7 @@ struct combined_tree_state	**region_start_statepp;
 			if( i > 1 )  {
 				switch( mp->m_relation )  {
 				default:
-				rt_log("%s: bad m_relation '%c'\n",
+				bu_log("%s: bad m_relation '%c'\n",
 						dp->d_namep, mp->m_relation );
 					tlp->tl_op = OP_UNION;
 					break;
@@ -1232,7 +1232,7 @@ struct combined_tree_state	**region_start_statepp;
 		}
 		if( tlp <= trees )  {
 			/* No subtrees in this region, invent a NOP */
-			GETUNION( curtree, tree );
+			BU_GETUNION( curtree, tree );
 			curtree->magic = RT_TREE_MAGIC;
 			curtree->tr_op = OP_NOP;
 		} else {
@@ -1244,7 +1244,7 @@ struct combined_tree_state	**region_start_statepp;
 			recurseit( curtree, &nts, pathp, region_start_statepp );
 		} else {
 			/* No subtrees in this combination, invent a NOP */
-			GETUNION( curtree, tree );
+			BU_GETUNION( curtree, tree );
 			curtree->magic = RT_TREE_MAGIC;
 			curtree->tr_op = OP_NOP;
 		}
@@ -1268,7 +1268,7 @@ region_end:
 
 		/* Get solid ID */
 		if( (id = rt_id_solid( &ext )) == ID_NULL )  {
-			rt_log("db_recurse(%s): defective database record, addr=x%x\n",
+			bu_log("db_recurse(%s): defective database record, addr=x%x\n",
 				dp->d_namep,
 				dp->d_addr );
 			curtree = TREE_NULL;		/* FAIL */
@@ -1289,7 +1289,7 @@ region_end:
 		if( ! NEAR_ZERO(fx, 0.0001) ||
 		    ! NEAR_ZERO(fy, 0.0001) ||
 		    ! NEAR_ZERO(fz, 0.0001) )  {
-			rt_log("db_recurse(%s):  matrix does not preserve axis perpendicularity.\n  X.Y=%g, Y.Z=%g, X.Z=%g\n",
+			bu_log("db_recurse(%s):  matrix does not preserve axis perpendicularity.\n  X.Y=%g, Y.Z=%g, X.Z=%g\n",
 				dp->d_namep, fx, fy, fz );
 			mat_print("bad matrix", tsp->ts_mat);
 			curtree = TREE_NULL;		/* FAIL */
@@ -1306,13 +1306,13 @@ region_end:
 		    	 *  Take note of full state here at "region start".
 			 */
 			if( *region_start_statepp != (struct combined_tree_state *)0 ) {
-				rt_log("db_recurse(%s) ERROR at start of a region (bare solid), *region_start_statepp = x%x\n",
+				bu_log("db_recurse(%s) ERROR at start of a region (bare solid), *region_start_statepp = x%x\n",
 					sofar, *region_start_statepp );
 				curtree = TREE_NULL;		/* FAIL */
 				goto out;
 			}
 			if( rt_g.debug & DEBUG_REGIONS )  {
-			    	rt_log("WARNING: db_recurse(): solid '%s' not contained in a region\n",
+			    	bu_log("WARNING: db_recurse(): solid '%s' not contained in a region\n",
 			    		sofar );
 			}
 
@@ -1320,7 +1320,7 @@ region_end:
 		    	ctsp->cts_s.ts_sofar |= TS_SOFAR_REGION;
 			*region_start_statepp = ctsp;
 			if(rt_g.debug&DEBUG_TREEWALK)  {
-				rt_log("db_recurse(%s): setting *region_start_statepp to x%x (bare solid)\n",
+				bu_log("db_recurse(%s): setting *region_start_statepp to x%x (bare solid)\n",
 					sofar, ctsp );
 				db_pr_combined_tree_state(ctsp);
 			}
@@ -1335,7 +1335,7 @@ region_end:
 		curtree = tsp->ts_leaf_func( tsp, pathp, &ext, id );
 		if(curtree) RT_CK_TREE(curtree);
 	} else {
-		rt_log("db_recurse:  %s is neither COMB nor SOLID?\n",
+		bu_log("db_recurse:  %s is neither COMB nor SOLID?\n",
 			dp->d_namep );
 		curtree = TREE_NULL;
 	}
@@ -1345,7 +1345,7 @@ out:
 	if( trees )  rt_free( (char *)trees, "tree_list array" );
 	if(rt_g.debug&DEBUG_TREEWALK)  {
 		char	*sofar = db_path_to_string(pathp);
-		rt_log("db_recurse() return curtree=x%x, pathp='%s', *statepp=x%x\n",
+		bu_log("db_recurse() return curtree=x%x, pathp='%s', *statepp=x%x\n",
 			curtree, sofar,
 			*region_start_statepp );
 		rt_free(sofar, "path string");
@@ -1364,7 +1364,7 @@ CONST union tree	*tp;
 	union tree	*new;
 
 	RT_CK_TREE(tp);
-	GETUNION( new, tree );
+	BU_GETUNION( new, tree );
 	*new = *tp;		/* struct copy */
 
 	switch( tp->tr_op )  {
@@ -1394,7 +1394,7 @@ CONST union tree	*tp;
 		return(new);
 
 	default:
-		rt_log("db_dup_subtree: bad op %d\n", tp->tr_op);
+		bu_log("db_dup_subtree: bad op %d\n", tp->tr_op);
 		rt_bomb("db_dup_subtree\n");
 	}
 	return( TREE_NULL );
@@ -1437,7 +1437,7 @@ CONST union tree	*tp;
 		break;
 
 	default:
-		rt_log("db_ck_tree: bad op %d\n", tp->tr_op);
+		bu_log("db_ck_tree: bad op %d\n", tp->tr_op);
 		rt_bomb("db_ck_tree\n");
 	}
 }
@@ -1487,10 +1487,10 @@ union tree	*tp;
 			 */
 #if 0
 			if( r->l.magic == (-1L) )  {
-				rt_log("db_free_tree: OP_NMG_TESS, r = -1, skipping\n");
+				bu_log("db_free_tree: OP_NMG_TESS, r = -1, skipping\n");
 			} else if( r->l.magic != NMG_REGION_MAGIC )  {
 				/* It may have been freed, and the memory re-used */
-				rt_log("db_free_tree: OP_NMG_TESS, bad magic x%x (s/b x%x), skipping\n",
+				bu_log("db_free_tree: OP_NMG_TESS, bad magic x%x (s/b x%x), skipping\n",
 					r->l.magic, NMG_REGION_MAGIC );
 			} else {
 #endif
@@ -1534,7 +1534,7 @@ union tree	*tp;
 		break;
 
 	default:
-		rt_log("db_free_tree: bad op %d\n", tp->tr_op);
+		bu_log("db_free_tree: bad op %d\n", tp->tr_op);
 		rt_bomb("db_free_tree\n");
 	}
 	tp->tr_op = 0;		/* sanity */
@@ -1594,7 +1594,7 @@ top:
 		 *	 / \
 		 *	A   B
 		 */
-		GETUNION( rhs, tree );
+		BU_GETUNION( rhs, tree );
 
 		/* duplicate top node into rhs */
 		*rhs = *tp;		/* struct copy */
@@ -1641,7 +1641,7 @@ top:
 		/* Now reconsider whole tree again */
 		goto top;
 	}
-    	rt_log("db_non_union_push() ERROR tree op=%d.?\n", tp->tr_op );
+    	bu_log("db_non_union_push() ERROR tree op=%d.?\n", tp->tr_op );
 }
 
 /*
@@ -1680,7 +1680,7 @@ register int			count;
 		return(count);
 
 	default:
-		rt_log("db_count_subtree_regions: bad op %d\n", tp->tr_op);
+		bu_log("db_count_subtree_regions: bad op %d\n", tp->tr_op);
 		rt_bomb("db_count_subtree_regions\n");
 	}
 	return( 0 );
@@ -1718,7 +1718,7 @@ CONST union tree	*tp;
 		return(1);
 
 	default:
-		rt_log("db_count_subtree_regions: bad op %d\n", tp->tr_op);
+		bu_log("db_count_subtree_regions: bad op %d\n", tp->tr_op);
 		rt_bomb("db_count_subtree_regions\n");
 	}
 	return( 0 );
@@ -1745,7 +1745,7 @@ int		lim;
 
 	case OP_SOLID:
 	case OP_REGION:
-		GETUNION( new, tree );
+		BU_GETUNION( new, tree );
 		*new = *tp;		/* struct copy */
 		tp->tr_op = OP_NOP;	/* Zap original */
 		reg_trees[cur++] = new;
@@ -1764,14 +1764,14 @@ int		lim;
 	case OP_GUARD:
 	case OP_XNOP:
 		/* This is as far down as we go -- this is a region top */
-		GETUNION( new, tree );
+		BU_GETUNION( new, tree );
 		*new = *tp;		/* struct copy */
 		tp->tr_op = OP_NOP;	/* Zap original */
 		reg_trees[cur++] = new;
 		return(cur);
 
 	default:
-		rt_log("db_tally_subtree_regions: bad op %d\n", tp->tr_op);
+		bu_log("db_tally_subtree_regions: bad op %d\n", tp->tr_op);
 		rt_bomb("db_tally_subtree_regions\n");
 	}
 	return( cur );
@@ -1788,7 +1788,7 @@ union tree		*curtree;
 	RT_CK_DBI(tsp->ts_dbip);
 	RT_CK_FULL_PATH(pathp);
 
-	GETUNION( curtree, tree );
+	BU_GETUNION( curtree, tree );
 	curtree->magic = RT_TREE_MAGIC;
 	curtree->tr_op = OP_REGION;
 	curtree->tr_c.tc_ctsp = db_new_combined_tree_state( tsp, pathp );
@@ -1799,7 +1799,7 @@ union tree		*curtree;
 HIDDEN union tree *db_gettree_leaf( tsp, pathp, ext, id )
 struct db_tree_state	*tsp;
 struct db_full_path	*pathp;
-struct rt_external	*ext;
+struct bu_external	*ext;
 int			id;
 {
 	register union tree	*curtree;
@@ -1807,7 +1807,7 @@ int			id;
 	RT_CK_DBI(tsp->ts_dbip);
 	RT_CK_FULL_PATH(pathp);
 
-	GETUNION( curtree, tree );
+	BU_GETUNION( curtree, tree );
 	curtree->magic = RT_TREE_MAGIC;
 	curtree->tr_op = OP_REGION;
 	curtree->tr_c.tc_ctsp = db_new_combined_tree_state( tsp, pathp );
@@ -1845,7 +1845,7 @@ union tree		 *(*leaf_func)();
 		ctsp = tp->tr_c.tc_ctsp;
 	 	RT_CK_CTS(ctsp);
 		if( ctsp->cts_p.fp_len <= 0 )  {
-			rt_log("db_walk_subtree() REGION with null path?\n");
+			bu_log("db_walk_subtree() REGION with null path?\n");
 			db_free_combined_tree_state( ctsp );
 			/* Result is an empty tree */
 			tp->tr_op = OP_NOP;
@@ -1871,7 +1871,7 @@ union tree		 *(*leaf_func)();
 		if( curtree == TREE_NULL )  {
 			char	*str;
 			str = db_path_to_string( &(ctsp->cts_p) );
-			rt_log("db_walk_subtree() FAIL on '%s'\n", str);
+			bu_log("db_walk_subtree() FAIL on '%s'\n", str);
 			rt_free( str, "path string" );
 
 			db_free_combined_tree_state( ctsp );
@@ -1902,7 +1902,7 @@ union tree		 *(*leaf_func)();
 		return;
 
 	default:
-		rt_log("db_walk_subtree: bad op\n", tp->tr_op);
+		bu_log("db_walk_subtree: bad op\n", tp->tr_op);
 		rt_bomb("db_walk_subtree\n");
 	}
 }
@@ -1932,7 +1932,7 @@ db_walk_dispatcher()
 			break;
 
 		if( rt_g.debug&DEBUG_TREEWALK )
-			rt_log("\n\n***** db_walk_dispatcher() on item %d\n\n", mine );
+			bu_log("\n\n***** db_walk_dispatcher() on item %d\n\n", mine );
 
 		if( (curtree = db_reg_trees[mine]) == TREE_NULL )
 			continue;
@@ -1948,7 +1948,7 @@ db_walk_dispatcher()
 		 */
 		RT_CK_TREE(curtree);
 		if( !region_start_statep )  {
-			rt_log("ERROR: db_walk_dispatcher() region %d started with no state\n", mine);
+			bu_log("ERROR: db_walk_dispatcher() region %d started with no state\n", mine);
 			if( rt_g.debug&DEBUG_TREEWALK )			
 				rt_pr_tree( curtree, 0 );
 			continue;
@@ -1981,7 +1981,7 @@ db_walk_dispatcher()
  *
  *  If ncpu > 1, the caller is responsible for making sure that
  *	rt_g.rtg_parallel is non-zero, and that the various
- *	RES_INIT() functions have been performed, first.
+ *	bu_semaphore_init(5)functions have been performed, first.
  *
  *  Returns -
  *	-1	Failure to prepare even a single sub-tree
@@ -2047,7 +2047,7 @@ union tree *	(*leaf_func)();
 
 		RT_CK_TREE(curtree);
 		if( rt_g.debug&DEBUG_TREEWALK )  {
-			rt_log("tree after db_recurse():\n");
+			bu_log("tree after db_recurse():\n");
 			rt_pr_tree( curtree, 0 );
 		}
 
@@ -2056,7 +2056,7 @@ union tree *	(*leaf_func)();
 		} else {
 			union tree	*new;
 
-			GETUNION( new, tree );
+			BU_GETUNION( new, tree );
 			new->magic = RT_TREE_MAGIC;
 			new->tr_op = OP_UNION;
 			new->tr_b.tb_left = whole_tree;
@@ -2073,7 +2073,7 @@ union tree *	(*leaf_func)();
 	 */
 	db_non_union_push( whole_tree );
 	if( rt_g.debug&DEBUG_TREEWALK )  {
-		rt_log("tree after db_non_union_push():\n");
+		bu_log("tree after db_non_union_push():\n");
 		rt_pr_tree( whole_tree, 0 );
 	}
 
@@ -2096,28 +2096,28 @@ union tree *	(*leaf_func)();
 
 	/* As a debugging aid, print out the waiting region names */
 	if( rt_g.debug&DEBUG_TREEWALK )  {
-		rt_log("%d waiting regions:\n", new_reg_count);
+		bu_log("%d waiting regions:\n", new_reg_count);
 		for( i=0; i < new_reg_count; i++ )  {
 			union tree	*treep;
 			struct combined_tree_state	*ctsp;
 			char	*str;
 
 			if( (treep = reg_trees[i]) == TREE_NULL )  {
-				rt_log("%d: NULL\n", i);
+				bu_log("%d: NULL\n", i);
 				continue;
 			}
 			RT_CK_TREE(treep);
 			if( treep->tr_op != OP_REGION )  {
-				rt_log("%d: op=%\n", i, treep->tr_op);
+				bu_log("%d: op=%\n", i, treep->tr_op);
 				continue;
 			}
 			ctsp = treep->tr_c.tc_ctsp;
 		 	RT_CK_CTS(ctsp);
 			str = db_path_to_string( &(ctsp->cts_p) );
-			rt_log("%d '%s'\n", i, str);
+			bu_log("%d '%s'\n", i, str);
 			rt_free( str, "path string" );
 		}
-		rt_log("end of waiting regions\n");
+		bu_log("end of waiting regions\n");
 	}
 
 	/*
@@ -2134,12 +2134,12 @@ union tree *	(*leaf_func)();
 		db_walk_dispatcher();
 	} else {
 		/* Ensure that rt_g.rtg_parallel is set */
-		/* XXX Should actually be done by rt_parallel(). */
+		/* XXX Should actually be done by bu_parallel(). */
 		if( rt_g.rtg_parallel == 0 )  {
-			rt_log("db_walk_tree() ncpu=%d, rtg_parallel not set!\n", ncpu);
+			bu_log("db_walk_tree() ncpu=%d, rtg_parallel not set!\n", ncpu);
 			rt_g.rtg_parallel = 1;
 		}
-		rt_parallel( db_walk_dispatcher, ncpu );
+		bu_parallel( db_walk_dispatcher, ncpu );
 	}
 
 	/* Clean up any remaining sub-trees still in reg_trees[] */
@@ -2195,7 +2195,7 @@ int depth;			/* number of arcs */
 		kidp = pathp->fp_names[i+1];
 		if (!(parentp->d_flags & DIR_COMB)) {
 			char *sofar = db_path_to_string(pathp);
-			rt_log("db_path_to_mat: '%s' of '%s' not a combination.\n",
+			bu_log("db_path_to_mat: '%s' of '%s' not a combination.\n",
 			    parentp->d_namep, sofar);
 			rt_free(sofar, "path string");
 			return 0;
@@ -2226,7 +2226,7 @@ int depth;			/* number of arcs */
 			break;
 		}
 		if (j >= parentp->d_len) {
-			rt_log("db_path_to_mat: unable to follow %s/%s path\n",
+			bu_log("db_path_to_mat: unable to follow %s/%s path\n",
 			    parentp->d_namep, kidp->d_namep);
 			return 0;
 		}
@@ -2253,7 +2253,7 @@ struct mater_info *materp;
 
 	if ((dp->d_animate != ANIM_NULL) && (rt_g.debug & DEBUG_ANIM)) {
 		char	*sofar = db_path_to_string(pathp);
-		rt_log("Animate %s with...\n", sofar);
+		bu_log("Animate %s with...\n", sofar);
 		rt_free(sofar, "path string");
 	}
 
@@ -2277,14 +2277,14 @@ struct mater_info *materp;
 			char	*str;
 
 			str = db_path_to_string( &(anp->an_path) );
-			rt_log( "\t%s\t", str );
+			bu_log( "\t%s\t", str );
 			rt_free( str, "path string" );
 		}
 
 		for( ; i>=0 && j>=0; i--, j-- )  {
 			if( anp->an_path.fp_names[i] != pathp->fp_names[j] ) {
 				if (rt_g.debug & DEBUG_ANIM) {
-					rt_log("%s != %s\n",
+					bu_log("%s != %s\n",
 					     anp->an_path.fp_names[i]->d_namep,
 					     pathp->fp_names[j]->d_namep);
 				}
@@ -2318,12 +2318,12 @@ CONST char *name;
 	/* get transformation between world and "region" coordinates */
 	if (db_string_to_path( &full_path, dbip, name) ) {
 		/* bad thing */
-		rt_log("db_string_to_path(%s) error\n", name);
+		bu_log("db_string_to_path(%s) error\n", name);
 		rt_bomb("error getting path\n");
 	}
 	if(! db_path_to_mat((struct db_i *)dbip, &full_path, region_to_model, 0)) {
 		/* bad thing */
-		rt_log("db_path_to_mat(%s) error", name);
+		bu_log("db_path_to_mat(%s) error", name);
 		rt_bomb("error getting region coordinate matrix\n");
 	}
 

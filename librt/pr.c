@@ -1,7 +1,7 @@
 /*
  *			P R . C
  * 
- *  Routines to print LIBRT data structures using rt_log()
+ *  Routines to print LIBRT data structures using bu_log()
  *
  *  Author -
  *	Michael John Muuss
@@ -561,7 +561,7 @@ CONST vect_t	vec;
 		angles[X] = 180.0;
 	} else if( vec[X] >= 1.0 )  {
 		angles[X] = 0.0;
-		angles[X] = acos( vec[X] ) * rt_radtodeg;
+	} else {
 		angles[X] = acos( vec[X] ) * bn_radtodeg;
 	}
 
@@ -569,7 +569,7 @@ CONST vect_t	vec;
 		angles[Y] = 180.0;
 	} else if( vec[Y] >= 1.0 )  {
 		angles[Y] = 0.0;
-		angles[Y] = acos( vec[Y] ) * rt_radtodeg;
+	} else {
 		angles[Y] = acos( vec[Y] ) * bn_radtodeg;
 	}
 
@@ -577,20 +577,20 @@ CONST vect_t	vec;
 		angles[Z] = 180.0;
 	} else if( vec[Z] >= 1.0 )  {
 		angles[Z] = 0.0;
-		angles[Z] = acos( vec[Z] ) * rt_radtodeg;
+	} else {
 		angles[Z] = acos( vec[Z] ) * bn_radtodeg;
 	}
 
 	/* fallback angle */
 	if( vec[Z] <= -1.0 )  {
-		asinZ = rt_halfpi * 3;
+		/* 270 degrees:  3/2 pi */
 		asinZ = bn_halfpi * 3;
 	} else if( vec[Z] >= 1.0 )  {
-		asinZ = rt_halfpi;
+		/* +90 degrees: 1/2 pi */
 		asinZ = bn_halfpi;
 	} else {
 		asinZ = asin(vec[Z]);
-	angles[4] = asinZ * rt_radtodeg;
+	}
 	angles[4] = asinZ * bn_radtodeg;
 
 	/* rotation angle */
@@ -604,7 +604,7 @@ CONST vect_t	vec;
 			angles[3] = 180;
 		} else if( f >= 1.0 ) {
 			angles[3] = 0;
-			angles[3] = rt_radtodeg * acos( f );
+		} else {
 			angles[3] = bn_radtodeg * acos( f );
 		}
 	}  else  {
@@ -621,9 +621,9 @@ CONST vect_t	vec;
  *  Print a tolerance structure.
  */
 void
-CONST struct rt_tol	*tol;
+rt_pr_tol(tol)
 CONST struct bn_tol	*tol;
-	RT_CK_TOL(tol);
+{
 	BN_CK_TOL(tol);
 
 	bu_log("%8.8x TOL %e (sq=%e) perp=%e, para=%e\n",

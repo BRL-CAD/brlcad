@@ -44,7 +44,7 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #include "./debug.h"
 
 #define DEBUG_PR(aaa, rrr) 	{\
-	if(rt_g.debug&DEBUG_DB) rt_log("db_scan x%x %c (0%o)\n", \
+	if(rt_g.debug&DEBUG_DB) bu_log("db_scan x%x %c (0%o)\n", \
 		aaa,rrr.u_id,rrr.u_id ); }
 
 /*
@@ -90,14 +90,14 @@ int			do_old_matter;
 	register int	j;
 
 	RT_CK_DBI(dbip);
-	if(rt_g.debug&DEBUG_DB) rt_log("db_scan( x%x, x%x )\n", dbip, handler);
+	if(rt_g.debug&DEBUG_DB) bu_log("db_scan( x%x, x%x )\n", dbip, handler);
 
 	/* XXXX Note that this ignores dbip->dbi_inmem */
 	/* In a portable way, read the header (even if not rewound) */
 	rewind( dbip->dbi_fp );
 	if( fread( (char *)&record, sizeof record, 1, dbip->dbi_fp ) != 1  ||
 	    record.u_id != ID_IDENT )  {
-		rt_log("db_scan ERROR:  File is lacking a proper MGED database header\n");
+		bu_log("db_scan ERROR:  File is lacking a proper MGED database header\n");
 	    	return(-1);
 	}
 	rewind( dbip->dbi_fp );
@@ -108,7 +108,7 @@ int			do_old_matter;
 	while(1)  {
 		nrec = 0;
 		if( fseek(dbip->dbi_fp, next, 0) != 0 )  {
-			rt_log("db_scan:  fseek(offset=%d) failure\n", next);
+			bu_log("db_scan:  fseek(offset=%d) failure\n", next);
 			return(-1);
 		}
 		addr = next;
@@ -123,12 +123,12 @@ int			do_old_matter;
 		switch( record.u_id )  {
 		case ID_IDENT:
 			if( strcmp( record.i.i_version, ID_VERSION) != 0 )  {
-				rt_log("db_scan WARNING: File is Version %s, Program is version %s\n",
+				bu_log("db_scan WARNING: File is Version %s, Program is version %s\n",
 					record.i.i_version, ID_VERSION );
 			}
 			/* Record first IDENT records title string */
 			if( dbip->dbi_title == (char *)0 )  {
-				dbip->dbi_title = rt_strdup( record.i.i_title );
+				dbip->dbi_title = bu_strdup( record.i.i_title );
 				dbip->dbi_localunit = record.i.i_units;
 				db_conversions( dbip, dbip->dbi_localunit );
 			}
@@ -156,7 +156,7 @@ int			do_old_matter;
 				DIR_SOLID );
 			break;
 		case ID_ARS_B:
-			rt_log("db_scan ERROR: Unattached ARS 'B' record\n");
+			bu_log("db_scan ERROR: Unattached ARS 'B' record\n");
 			break;
 		case ID_SOLID:
 			handler( dbip, record.s.s_name, addr, nrec,
@@ -196,7 +196,7 @@ int			do_old_matter;
 				DIR_SOLID );
 			break;
 		case ID_P_DATA:
-			rt_log("db_scan ERROR: Unattached P_DATA record\n");
+			bu_log("db_scan ERROR: Unattached P_DATA record\n");
 			break;
 		case ID_BSOLID:
 			while(1) {
@@ -222,7 +222,7 @@ int			do_old_matter;
 				DIR_SOLID );
 			break;
 		case ID_BSURF:
-			rt_log("db_scan ERROR: Unattached B-spline surface record\n");
+			bu_log("db_scan ERROR: Unattached B-spline surface record\n");
 
 			/* Just skip over knots and control mesh */
 			j = (record.d.d_nknots + record.d.d_nctls);
@@ -231,7 +231,7 @@ int			do_old_matter;
 				fread( (char *)&rec2, sizeof(rec2), 1, dbip->dbi_fp );
 			break;
 		case DBID_ARBN:
-			j = rt_glong(record.n.n_grans);
+			j = bu_glong(record.n.n_grans);
 			nrec += j;
 			while( j-- > 0 )
 				fread( (char *)&rec2, sizeof(rec2), 1, dbip->dbi_fp );
@@ -244,7 +244,7 @@ int			do_old_matter;
 				DIR_SOLID );
 			break;
 		case DBID_PIPE:
-			j = rt_glong(record.pwr.pwr_count);
+			j = bu_glong(record.pwr.pwr_count);
 			nrec += j;
 			while( j-- > 0 )
 				fread( (char *)&rec2, sizeof(rec2), 1, dbip->dbi_fp );
@@ -253,7 +253,7 @@ int			do_old_matter;
 				DIR_SOLID );
 			break;
 		case DBID_NMG:
-			j = rt_glong(record.nmg.N_count);
+			j = bu_glong(record.nmg.N_count);
 			nrec += j;
 			while( j-- > 0 )
 				(void)fread( (char *)&rec2, sizeof(rec2), 1, dbip->dbi_fp );
@@ -262,7 +262,7 @@ int			do_old_matter;
 				DIR_SOLID );
 			break;
 		case ID_MEMB:
-			rt_log("db_scan ERROR: Unattached combination MEMBER record\n");
+			bu_log("db_scan ERROR: Unattached combination MEMBER record\n");
 			break;
 		case ID_COMB:
 			while(1) {
@@ -283,7 +283,7 @@ int			do_old_matter;
 					DIR_COMB|DIR_REGION : DIR_COMB );
 			break;
 		default:
-			rt_log("db_scan ERROR:  bad record %c (0%o), addr=x%x\n",
+			bu_log("db_scan ERROR:  bad record %c (0%o), addr=x%x\n",
 				record.u_id, record.u_id, addr );
 			/* skip this record */
 			break;
@@ -321,7 +321,7 @@ int		units;
 	char			*old_title;
 
 	RT_CK_DBI(dbip);
-	if(rt_g.debug&DEBUG_DB) rt_log("db_ident( x%x, '%s', %d )\n",
+	if(rt_g.debug&DEBUG_DB) bu_log("db_ident( x%x, '%s', %d )\n",
 		dbip, new_title, units );
 
 	if( dbip->dbi_read_only )
@@ -338,7 +338,7 @@ int		units;
 	(void)strncpy(rec.i.i_title, new_title, sizeof(rec.i.i_title)-1 );
 
 	old_title = dbip->dbi_title;
-	dbip->dbi_title = rt_strdup( new_title );
+	dbip->dbi_title = bu_strdup( new_title );
 	dbip->dbi_localunit = rec.i.i_units = units;
 
 	if( old_title )

@@ -143,13 +143,13 @@ genptr_t			*state;		/* Handler's private state */
 
 	if(htab->bef_loopuse) htab->bef_loopuse( (long *)lu, state, 0 );
 
-	if( RT_LIST_FIRST_MAGIC(&lu->down_hd) == NMG_VERTEXUSE_MAGIC )  {
+	if( BU_LIST_FIRST_MAGIC(&lu->down_hd) == NMG_VERTEXUSE_MAGIC )  {
 		struct vertexuse	*vu;
-		vu = RT_LIST_FIRST(vertexuse, &lu->down_hd);
+		vu = BU_LIST_FIRST(vertexuse, &lu->down_hd);
 		nmg_visit_vertexuse( vu, htab, state );
 	} else {
 		struct edgeuse		*eu;
-		for( RT_LIST_FOR( eu, edgeuse, &lu->down_hd ) )  {
+		for( BU_LIST_FOR( eu, edgeuse, &lu->down_hd ) )  {
 			nmg_visit_edgeuse( eu, htab, state );
 		}
 	}
@@ -189,7 +189,7 @@ genptr_t			*state;		/* Handler's private state */
 
 	if(htab->bef_faceuse) htab->bef_faceuse( (long *)fu, state, 0 );
 
-	for( RT_LIST_FOR( lu, loopuse, &fu->lu_hd ) )  {
+	for( BU_LIST_FOR( lu, loopuse, &fu->lu_hd ) )  {
 		nmg_visit_loopuse( lu, htab, state );
 	}
 
@@ -215,13 +215,13 @@ genptr_t			*state;		/* Handler's private state */
 
 	if(htab->bef_shell) htab->bef_shell( (long *)s, state, 0 );
 
-	for( RT_LIST_FOR( fu, faceuse, &s->fu_hd ) )  {
+	for( BU_LIST_FOR( fu, faceuse, &s->fu_hd ) )  {
 		nmg_visit_faceuse( fu, htab, state );
 	}
-	for( RT_LIST_FOR( lu, loopuse, &s->lu_hd ) )  {
+	for( BU_LIST_FOR( lu, loopuse, &s->lu_hd ) )  {
 		nmg_visit_loopuse( lu, htab, state );
 	}
-	for( RT_LIST_FOR( eu, edgeuse, &s->eu_hd ) )  {
+	for( BU_LIST_FOR( eu, edgeuse, &s->eu_hd ) )  {
 		nmg_visit_edgeuse( eu, htab, state );
 	}
 	if( s->vu_p )  nmg_visit_vertexuse( s->vu_p, htab, state );
@@ -246,7 +246,7 @@ genptr_t			*state;		/* Handler's private state */
 
 	if(htab->bef_region) htab->bef_region( (long *)r, state, 0 );
 
-	for( RT_LIST_FOR( s, shell, &r->s_hd ) )  {
+	for( BU_LIST_FOR( s, shell, &r->s_hd ) )  {
 		nmg_visit_shell( s, htab, state );
 	}
 	if(htab->vis_region_a && r->ra_p)
@@ -269,7 +269,7 @@ genptr_t			*state;		/* Handler's private state */
 
 	if(htab->bef_model) htab->bef_model( (long *)model, state, 0 );
 
-	for( RT_LIST_FOR( r, nmgregion, &model->r_hd ) )  {
+	for( BU_LIST_FOR( r, nmgregion, &model->r_hd ) )  {
 		nmg_visit_region( r, htab, state );
 	}
 
@@ -287,7 +287,7 @@ genptr_t			*state;		/* Handler's private state */
 {
 	switch( *magicp )  {
 	default:
-		rt_log("nmg_visit() Can't visit %s directly\n", rt_identify_magic( *magicp ));
+		bu_log("nmg_visit() Can't visit %s directly\n", bu_identify_magic( *magicp ));
 		rt_bomb("nmg_visit()\n");
 		/* NOTREACHED */
 	case NMG_MODEL_MAGIC:
