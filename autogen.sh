@@ -60,6 +60,8 @@ LIBTOOL_MAJOR_VERSION=1
 LIBTOOL_MINOR_VERSION=4
 LIBTOOL_PATCH_VERSION=2
 
+LIBTOOL_M4="${PATH_TO_AUTOGEN}/misc/libtool.m4"
+
 
 ##################
 # argument check #
@@ -535,8 +537,34 @@ if [ "x$reconfigure_manually" = "xyes" ] ; then
   fi
 
   $VERBOSE_ECHO "$AUTOCONF -f"
-  $AUTOCONF -f
-  [ ! $? = 0 ] && $ECHO "ERROR: $AUTOCONF failed" && exit 2
+  autoconf_output=`$AUTOCONF -f 2>&1`
+  if [ ! $? = 0 ] ; then
+    if test -f "$LIBTOOL_M4" ; then
+      found_libtool="$ECHO $autoconf_output | grep AC_PROG_LIBTOOL"
+      if ! test "x$found_libtool" = "x" ; then
+	if test -f acinclude.m4 ; then
+	  if ! test -f acinclude.m4.backup ; then
+	    $VERBOSE_ECHO cp acinclude.m4 acinclude.m4.backup
+	    cp acinclude.m4 acinclude.m4.backup
+	  fi
+	fi
+	$VERBOSE_ECHO cat "$LIBTOOL_M4" >> acinclude.m4
+	cat "$LIBTOOL_M4" >> acinclude.m4
+
+	$ECHO
+	$ECHO "Restarting the configuration steps with a local libtool.m4"
+
+	$VERBOSE_ECHO $0 "$1" "$2" "$3" "$4" "$5" "$6" "$7" "$8" "$9"
+	$0 "$1" "$2" "$3" "$4" "$5" "$6" "$7" "$8" "$9"
+	exit $?
+      fi
+    fi
+    cat <<EOF
+$autoconf_output
+EOF
+    $ECHO "ERROR: $AUTOCONF failed"
+    exit 2
+  fi
 
   $VERBOSE_ECHO "$AUTOHEADER"
   $AUTOHEADER
