@@ -10504,9 +10504,7 @@ not_arb:
  *	The newly constructed arb is in "arb_int"
  */
 int
-nmg_to_arb( m, arb_int )
-CONST struct model *m;
-struct rt_arb_internal *arb_int;
+nmg_to_arb( const struct model *m, struct rt_arb_internal *arb_int )
 {
 	struct nmgregion *r;
 	struct shell *s;
@@ -10757,10 +10755,10 @@ struct rt_arb_internal *arb_int;
  *	Currently only supports RCC, and creates circumscribed RCC
  */
 int
-nmg_to_tgc( m, tgc_int,  tol )
-CONST struct model *m;
-struct rt_tgc_internal *tgc_int;
-CONST struct bn_tol *tol;
+nmg_to_tgc(
+	const struct model *m,
+	struct rt_tgc_internal *tgc_int,
+	const struct bn_tol *tol )
 {
 	struct nmgregion *r;
 	struct shell *s;
@@ -11066,6 +11064,11 @@ CONST struct bn_tol *tol;
 	return( 1 );
 }
 
+/*
+ *			N M G _ T O _ P O L Y
+ *
+ * XXX This routine is deprecated in favor of BoTs
+ */
 int
 nmg_to_poly( m, poly_int, tol )
 CONST struct model *m;
