@@ -346,7 +346,6 @@ double	ratio;
 	u_char          mvlist[MAXVEC];		/* Sun move/draw buffer */
 	int             numvec;			/* number of points */
 	static vect_t   pt;			/* working point */
-	struct mater	*mp;
 	Pr_texture	*texP;			/* line style/color */
 	Pr_brush	*brush;
 	int		color;
@@ -386,12 +385,11 @@ double	ratio;
 	else
 		brush = (Pr_brush *)0;
 	texP = sun_get_texP(sp->s_soldash);
-	mp = (struct mater *) sp->s_materp;
 	if( sun_depth < 8 ) {
 		sun_color( DM_WHITE );
 		color = PIX_COLOR(sun_cmap_color);
 	} else {
-		color = PIX_COLOR(mp->mt_dm_int);
+		color = PIX_COLOR(sp->s_dmindex);
 	}
 
 	pw_polyline( sun_pw, 0, 0, numvec, ptlist, mvlist,
@@ -813,10 +811,12 @@ SunPw_colorchange()
 	sun_cmap[6].b = 0;	/* Green */
 
 	slotsused = 7;
-	for (mp = MaterHead; mp != MATER_NULL; mp = mp->mt_forw)
-		sun_colorit(mp);
 
-	color_soltab();		/* apply colors to the solid table */
+	/* apply region-id based colors to the solid table */
+	color_soltab();
+
+	/* Map the colors in the solid table to colormap indices */
+	sun_colorit();
 
 	for( i = 0; i < slotsused; i++ ) {
 		red[i] = sun_cmap[i].r;
@@ -852,45 +852,44 @@ SunPw_colorchange()
 }
 
 int
-sun_colorit(mp)
-struct mater   *mp;
+sun_colorit()
 {
-    register struct cmap *rgb;
-    register int    i;
-    register int    r, g, b;
+	register struct solid	*sp;
+	register struct cmap *rgb;
+	register int    i;
+	register int    r, g, b;
 
-    r = mp->mt_r;
-    g = mp->mt_g;
-    b = mp->mt_b;
-    if ((r == 255 && g == 255 && b == 255) ||
-	(r == 0 && g == 0 && b == 0))
-    {
-	mp->mt_dm_int = DM_WHITE;
-	return;
-    }
+	FOR_ALL_SOLIDS( sp )  {
+		r = sp->s_color[0];
+		g = sp->s_color[1];
+		b = sp->s_color[2];
+		if( (r == 255 && g == 255 && b == 255) ||
+		    (r == 0 && g == 0 && b == 0) )  {
+		    	sp->s_dmindex = DM_WHITE;
+			continue;
+		}
 
-    /* First, see if this matches an existing color map entry */
-    rgb = sun_cmap;
-    for (i = 0; i < slotsused; i++, rgb++)
-    {
-	if (rgb->r == r && rgb->g == g && rgb->b == b)
-	{
-	    mp->mt_dm_int = i;
-	    return;
+		/* First, see if this matches an existing color map entry */
+		rgb = sun_cmap;
+		for( i = 0; i < slotsused; i++, rgb++ )  {
+			if( rgb->r == r && rgb->g == g && rgb->b == b )  {
+				sp->s_dmindex = i;
+				goto next;
+			}
+		}
+
+		/* If slots left, create a new color map entry, first-come basis */
+		if( slotsused < sun_nslots )  {
+			rgb = &sun_cmap[i=(slotsused++)];
+			rgb->r = r;
+			rgb->g = g;
+			rgb->b = b;
+			sp->s_dmindex = i;
+			continue;
+		}
+		sp->s_dmindex = DM_YELLOW;	/* Default color */
+next:		;
 	}
-    }
-
-    /* If slots left, create a new color map entry, first-come basis */
-    if (slotsused < sun_nslots)
-    {
-	rgb = &sun_cmap[i = (slotsused++)];
-	rgb->r = r;
-	rgb->g = g;
-	rgb->b = b;
-	mp->mt_dm_int = i;
-	return;
-    }
-    mp->mt_dm_int = DM_YELLOW;	/* Default color */
 }
 
 /* ARGSUSED */
