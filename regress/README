@@ -33,6 +33,8 @@ For each requested machine (default is all), a semaphore lock is independantly a
 
 Results are logged to files and summarys are individually mailed out as specified for each systems.d architecture.
 
+[ from http://www.whatis.techtarget.com/definitionsCategor/0,289915,sid9_tax1663,00.html ]
+Regression testing is a process of testing chances to computer programs to make sure that the older programming still works with the new changes.  Regression testing is a normal part of the program development process and, in some companies, is done by code testing specialists.  Test department coders develop code test scenarios and exercises that will test new units of code after they have been written.  These test cases form what becomes the `test bucket'.  Before a new version of a software product is released, the old test cases are run against the new version to make sure that all the old capabilities still work.  The reason they might notwork is because changing or adding new code to a program can easily introduce errors into code that is not intended to be changed.
 
 
 ---------------- Old content here --------------------------------------
