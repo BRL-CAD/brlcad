@@ -763,7 +763,7 @@ LDFLAGS="$LDFLAGS $pipe_flag"
 AC_TRY_COMPILE( [], [], [], [pipe_flag_works=no])
 AC_MSG_RESULT($pipe_flag_works)
 
-if test "$pipe_flag_works" = "xno" ; then
+if test "x$pipe_flag_works" = "xno" ; then
 	CFLAGS="$PRECFLAGS"
 	LDFLAGS="$PRELDFLAGS"
 fi
