@@ -422,7 +422,7 @@ char *argv[];
 #endif
 
   bu_vls_init(&fps_name);
-  bu_vls_printf(&fps_name, "mged_display(%S,fps)",
+  bu_vls_printf(&fps_name, "%s(%S,fps)", MGED_DISPLAY_VAR,
 		&curr_dm_list->_dmp->dm_pathName);
   mged_slider_link_vars(curr_dm_list);
   mmenu_init();
@@ -1066,15 +1066,15 @@ struct dm_list *p;
 {
   mged_slider_init_vls(p);
 
-  bu_vls_printf(&p->s_info->_aet_name, "mged_display(%S,aet)",
+  bu_vls_printf(&p->s_info->_aet_name, "%s(%S,aet)", MGED_DISPLAY_VAR,
 		&p->_dmp->dm_pathName);
-  bu_vls_printf(&p->s_info->_ang_name, "mged_display(%S,ang)",
+  bu_vls_printf(&p->s_info->_ang_name, "%s(%S,ang)", MGED_DISPLAY_VAR,
 		&p->_dmp->dm_pathName);
-  bu_vls_printf(&p->s_info->_center_name, "mged_display(%S,center)",
+  bu_vls_printf(&p->s_info->_center_name, "%s(%S,center)", MGED_DISPLAY_VAR,
 		&p->_dmp->dm_pathName);
-  bu_vls_printf(&p->s_info->_size_name, "mged_display(%S,size)",
+  bu_vls_printf(&p->s_info->_size_name, "%s(%S,size)", MGED_DISPLAY_VAR,
 		&p->_dmp->dm_pathName);
-  bu_vls_printf(&p->s_info->_adc_name, "mged_display(%S,adc)",
+  bu_vls_printf(&p->s_info->_adc_name, "%s(%S,adc)", MGED_DISPLAY_VAR,
 		&p->_dmp->dm_pathName);
 
 #ifdef UPDATE_TCL_SLIDERS

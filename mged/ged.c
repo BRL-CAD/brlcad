@@ -311,7 +311,7 @@ char **argv;
 	BU_GETSTRUCT(curr_dm_list->menu_vars, menu_vars);
 
 	bu_vls_init(&fps_name);
-	bu_vls_printf(&fps_name, "mged_display(%S,fps)",
+	bu_vls_printf(&fps_name, "%s(%S,fps)", MGED_DISPLAY_VAR,
 		      &curr_dm_list->_dmp->dm_pathName);
 
 	bn_mat_idn( identity );		/* Handy to have around */
