@@ -621,6 +621,10 @@ int framenumber;
 		}
 	} else {
 		do_run( pix_start, pix_end );
+
+		/* Reset values to full size, for next frame (if any) */
+		pix_start = 0;
+		pix_end = height*width - 1;
 	}
 	utime = rt_read_timer( outbuf, sizeof(outbuf) );
 
