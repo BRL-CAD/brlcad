@@ -317,12 +317,12 @@ char	**argv;
 	  tol_ptr = argv[1];
 	}else{
 	  struct bu_vls tmp_vls;
-	  double tol = VIEWSIZE * 0.001;
+	  double tol = 0.005;
 
 	  bu_vls_init(&tmp_vls);
 	  sprintf(tol_str, "%e", tol);
 	  tol_ptr = tol_str;
-	  bu_vls_printf(&tmp_vls, "Auto-tolerance of 0.1%% is %s\n", tol_str);
+	  bu_vls_printf(&tmp_vls, "Auto-tolerance is %s\n", tol_str);
 	  Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
 	  bu_vls_free(&tmp_vls);
 	}
