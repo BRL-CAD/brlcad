@@ -284,9 +284,10 @@ static XFontStruct *fontstruct;		/* X Font */
 #define	GED_TO_Xy(x)	((0.5-(x)/4096.0)*height)
 
 /* get rid of when no longer needed */
+#define USE_RAMP	(cueing_on || lighting_on)
 #define CMAP_BASE	32
 #define CMAP_RAMP_WIDTH	16
-#define MAP_ENTRY(x)	((cueing_on) ? \
+#define MAP_ENTRY(x)	( USE_RAMP ? \
 			((x) * CMAP_RAMP_WIDTH + CMAP_BASE) : \
 			((x) + CMAP_BASE) )
 
@@ -713,6 +714,13 @@ int white_flag;
 		} else if( (nvec = MAP_ENTRY( sp->s_dmindex )) != ovec) {
 			glIndexi(nvec);
 			ovec = nvec;
+		}
+
+		if (lighting_on){
+			material[0] = ovec - CMAP_RAMP_WIDTH + 2;
+			material[1] = ovec - CMAP_RAMP_WIDTH/2;
+			material[2] = ovec - 1;
+			glMaterialfv(GL_FRONT, GL_COLOR_INDEXES, material);
 		}
 	}
 
@@ -1358,20 +1366,19 @@ Ogl_colorchange()
 		return;
 	}
 
-	if(cueing_on && (ogl_index_size < 7)) {
-		rt_log("Too few bitplanes: depthcueing disabled\n");
+	if(USE_RAMP && (ogl_index_size < 7)) {
+		rt_log("Too few bitplanes: depthcueing and lighting disabled\n");
 		cueing_on = 0;
+		lighting_on = 0;
 	}
 	/* number of slots is 2^indexsize */
 	ogl_nslots = 1<<ogl_index_size;
 	if( ogl_nslots > NSLOTS )  ogl_nslots = NSLOTS;
-	if(cueing_on) {
+	if(USE_RAMP) {
 		/* peel off reserved ones */
 		ogl_nslots = (ogl_nslots - CMAP_BASE) / CMAP_RAMP_WIDTH;
-		glEnable(GL_FOG);
 	} else {
 		ogl_nslots -= CMAP_BASE;	/* peel off the reserved entries */
-		glDisable(GL_FOG);
 	}
 
 	ovec = -1;	/* Invalidate the old colormap entry */
@@ -1379,11 +1386,24 @@ Ogl_colorchange()
 	/* apply region-id based colors to the solid table */
 	color_soltab();
 
+	/* best to do this before the colorit */
+	if (cueing_on && lighting_on){
+		lighting_on = 0;
+		glDisable(GL_LIGHTING);
+	}
+
 	/* Map the colors in the solid table to colormap indices */
 	ogl_colorit();
 
 	for( i=0; i < slotsused; i++ )  {
 		Ogl_gen_color( i, ogl_rgbtab[i].r, ogl_rgbtab[i].g, ogl_rgbtab[i].b);
+	}
+
+	/* best to do this after the colorit */
+	if (cueing_on){
+		glEnable(GL_FOG);
+	} else {
+		glDisable(GL_FOG);
 	}
 
 	ovec = MAP_ENTRY(DM_WHITE);
@@ -1839,15 +1859,23 @@ char	**argv;
 void	
 establish_lighting()
 {
-	/* no lighting in index mode yet */
-	if (!ogl_has_rgb)
-		lighting_on = 0;
+
 
 	if (!lighting_on) {
 		/* Turn it off */
 		glDisable(GL_LIGHTING);
+		if (!ogl_has_rgb)
+			Ogl_colorchange();
 	} else {
 		/* Turn it on */
+
+		if (!ogl_has_rgb){
+			if (cueing_on){
+				cueing_on = 0;
+				glDisable(GL_FOG);
+			} 
+			Ogl_colorchange();
+		}
 
 		glLightModelfv(GL_LIGHT_MODEL_AMBIENT, amb_three);
 		glLightModeli(GL_LIGHT_MODEL_LOCAL_VIEWER, GL_FALSE);
@@ -1951,7 +1979,7 @@ void
 Ogl_gen_color(c)
 int c;
 {
-	if(cueing_on) {
+	if(USE_RAMP) {
 
 		/*  Not much sense in making a ramp for DM_BLACK.  Besides
 		 *  which, doing so, would overwrite the bottom color
@@ -1972,15 +2000,28 @@ int c;
 			green = ogl_rgbtab[c].g * 256;
 			blue = ogl_rgbtab[c].b * 256;
 #endif
+			
 
-			for(i = 0, j = MAP_ENTRY(c) + CMAP_RAMP_WIDTH - 1; 
-				i < CMAP_RAMP_WIDTH;
-			    i++, j--, red += r_inc, green += g_inc, blue += b_inc){
-			    	cells[i].pixel = j;
-			    	cells[i].red = (short)red;
-			    	cells[i].green = (short)green;
-			    	cells[i].blue = (short)blue;
-			    	cells[i].flags = DoRed|DoGreen|DoBlue;
+			if (cueing_on){
+				for(i = 0, j = MAP_ENTRY(c) + CMAP_RAMP_WIDTH - 1; 
+					i < CMAP_RAMP_WIDTH;
+				    i++, j--, red += r_inc, green += g_inc, blue += b_inc){
+				    	cells[i].pixel = j;
+				    	cells[i].red = (short)red;
+				    	cells[i].green = (short)green;
+				    	cells[i].blue = (short)blue;
+				    	cells[i].flags = DoRed|DoGreen|DoBlue;
+				}
+			} else { /* lighting_on */ 
+				for(i = 0, j = MAP_ENTRY(c) - CMAP_RAMP_WIDTH + 1; 
+					i < CMAP_RAMP_WIDTH;
+				    i++, j++, red += r_inc, green += g_inc, blue += b_inc){
+				    	cells[i].pixel = j;
+				    	cells[i].red = (short)red;
+				    	cells[i].green = (short)green;
+				    	cells[i].blue = (short)blue;
+				    	cells[i].flags = DoRed|DoGreen|DoBlue;
+				    }
 			}
 			XStoreColors(dpy, cmap, cells, CMAP_RAMP_WIDTH);
 		}
