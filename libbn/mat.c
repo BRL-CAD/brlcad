@@ -8,6 +8,7 @@
  *	mat_idn( &m )			Fill matrix m with identity matrix
  *	mat_copy( &o, &i )		Copy matrix i to matrix o
  *	mat_mul( &o, &i1, &i2 )		Multiply i1 by i2 and store in o
+ *	mat_mul2( &i, &o )
  *	matXvec( &ov, &m, &iv )		Multiply m by vector iv, store in ov
  *	mat_inv( &om, &im )		Invert matrix im, store result in om
  *	mat_print( &title, &m )		Print matrix (with title) on stdout.
@@ -166,6 +167,23 @@ register CONST mat_t	b;
 	o[15] = a[12]*b[ 3] + a[13]*b[ 7] + a[14]*b[11] + a[15]*b[15];
 }
 
+/*
+ *			M A T _ M U L 2
+ *
+ *  o = i * o
+ *
+ *  A convenience wrapper for mat_mul().
+ */
+void
+mat_mul2( i, o )
+register CONST mat_t	i;
+register mat_t		o;
+{
+	mat_t	temp;
+
+	mat_mul( temp, i, o );
+	mat_copy( o, temp );
+}
 
 /*
  *			M A T X V E C
