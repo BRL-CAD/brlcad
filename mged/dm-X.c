@@ -51,6 +51,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./mged_solid.h"
 #include "./sedit.h"
 
+extern void mged_print_result();
 int     X_dm_init();
 
 static void	X_statechange();
@@ -326,6 +327,7 @@ char *argv[];
     sprintf(xstr, "%d", Xx_TO_GED(dmp, atoi(argv[3])));
     sprintf(ystr, "%d", Xy_TO_GED(dmp, atoi(argv[4])));
     status = f_mouse((ClientData)NULL, interp, 4, av);
+    mged_print_result(status);
 
     return status;
   }

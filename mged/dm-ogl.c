@@ -42,9 +42,14 @@
 #include <X11/extensions/XI.h>
 #include <X11/extensions/XInput.h>
 
+#ifdef USE_MESA_GL
+#include <MESA_GL/glx.h>
+#include <MESA_GL/gl.h>
+#else
 #include <GL/glx.h>
 #include <GL/gl.h>
 #include <gl/device.h>
+#endif
 
 #include "machine.h"
 #include "externs.h"
@@ -58,6 +63,7 @@
 #include "./mged_solid.h"
 #include "./sedit.h"
 
+extern void mged_print_result();
 int      Ogl_dm_init();
 static void     set_knob_offset();
 static void     Ogl_statechange();
@@ -617,7 +623,7 @@ end:
   return TCL_ERROR;
 }
 
-void
+static void
 Ogl_statechange( a, b )
 int	a, b;
 {
@@ -658,7 +664,7 @@ int	a, b;
  * 
  *  Implement display-manager specific commands, from MGED "dm" command.
  */
-int
+static int
 Ogl_dm(argc, argv)
 int	argc;
 char	**argv;
@@ -731,6 +737,7 @@ char	**argv;
     sprintf(xstr, "%d", Ogl_irisX2ged(dmp, atoi(argv[3])));
     sprintf(ystr, "%d", Ogl_irisY2ged(dmp, atoi(argv[4])));
     status = f_mouse((ClientData)NULL, interp, 4, av);
+    mged_print_result(status);
 
     return status;
   }
@@ -800,6 +807,7 @@ char	**argv;
 static void
 Ogl_colorchange()
 {
+  color_soltab();
   dmp->dmr_colorchange(dmp);
   ++dmaflag;
 }

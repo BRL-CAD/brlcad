@@ -78,6 +78,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./mged_solid.h"
 #include "./sedit.h"
 
+extern void mged_print_result();
 int Glx_dm_init();
 
 static int      Glx_doevent();
@@ -748,6 +749,7 @@ char	**argv;
     sprintf(xstr, "%d", Glx_irisX2ged(dmp, atoi(argv[3])));
     sprintf(ystr, "%d", Glx_irisY2ged(dmp, atoi(argv[4])));
     status = f_mouse((ClientData)NULL, interp, 4, av);
+    mged_print_result(status);
 
     return status;
   }
@@ -841,6 +843,7 @@ register char *str;
 static void
 Glx_colorchange()
 {
+  color_soltab();
   dmp->dmr_colorchange(dmp);
   ++dmaflag;
 }
