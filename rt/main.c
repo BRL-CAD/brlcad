@@ -207,13 +207,18 @@ char **argv;
 			xx <<= 1;
 		while( yy < width )
 			yy <<= 1;
-		if( (fbp = fb_open( framebuffer, xx, yy )) == FBIO_NULL )  {
+		RES_ACQUIRE( &rt_g.res_syscall );
+		fbp = fb_open( framebuffer, xx, yy );
+		RES_RELEASE( &rt_g.res_syscall );
+		if( fbp == FBIO_NULL )  {
 			fprintf(stderr,"rt:  can't open frame buffer\n");
 			exit(12);
 		}
 		/* New way:  center, zoom */
+		RES_ACQUIRE( &rt_g.res_syscall );
 		fb_view( fbp, width/2, height/2,
 			fb_getwidth(fbp)/width, fb_getheight(fbp)/height );
+		RES_RELEASE( &rt_g.res_syscall );
 	} else if( outputfile == (char *)0 )  {
 		/* If not going to framebuffer, or to a file, then use stdout */
 		if( outfp == NULL )  outfp = stdout;
