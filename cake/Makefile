@@ -40,13 +40,13 @@ $(GOBJ):	$(HDR)
 
 cake_g.c:	cake_g.y
 		yacc -dv cake_g.y
-		mv y.tab.h cake_g.h
-		mv y.tab.c cake_g.c
-		mv y.output cake_g.t
+		mv -f y.tab.h cake_g.h
+		mv -f y.tab.c cake_g.c
+		mv -f y.output cake_g.t
 
 cake_s.c:	cake_s.l
 		lex cake_s.l
-		mv lex.yy.c cake_s.c
+		mv -f lex.yy.c cake_s.c
 
 var:		$(SRC) $(GSRC)
 		var -DATT $(COPTS) $(SRC) $(GSRC) > Var
