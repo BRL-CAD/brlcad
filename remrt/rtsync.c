@@ -697,10 +697,10 @@ char **argv;
 		/* All values reported in ms */
 		bu_vls_printf(&str,
 			"rt_min %.1f rt_max %.1f tot_min %.1f tot_max %.1f",
+			ms_rt_min,
+			ms_rt_max,
 			ms_total_min,
 			ms_total_max,
-			ms_rt_min,
-			ms_rt_max
 		    );
 		Tcl_AppendResult(interp, bu_vls_addr(&str), NULL);
 		bu_vls_free(&str);
