@@ -364,6 +364,7 @@ stop_catching_output(vp)
 	bu_log_delete_hook(output_catch, (genptr_t)vp);
 }
 
+#if 0
 /*
  *	T C L _ A P P I N I T
  *
@@ -379,7 +380,6 @@ Tcl_AppInit(interp)
 	return TCL_OK;
 }
 
-#if 0
 /*			C M D _ W R A P P E R
  *
  * Translates between MGED's "CMD_OK/BAD/MORE" result codes to ones that
@@ -647,6 +647,25 @@ mged_setup()
 	/* This runs the init.tcl script */
 	if( Tcl_Init(interp) == TCL_ERROR )
 		bu_log("Tcl_Init error %s\n", interp->result);
+
+#if 0
+	/* Initialize [incr Tcl] */
+	if (Itcl_Init(interp) == TCL_ERROR)
+	  bu_log("Itcl_Init error %s\n", interp->result);
+
+#if 0
+	Tcl_StaticPackage(interp, "Itcl", Itcl_Init, Itcl_SafeInit);
+#endif
+
+	/* Import [incr Tcl] commands into the global namespace. */
+	/* Then cause the autoloader to do the same. */
+	if (Tcl_Import(interp, Tcl_GetGlobalNamespace(interp),
+		       "::itcl::*", /* allowOverwrite */ 1) != TCL_OK)
+	  bu_log("Tcl_Import error %s\n", interp->result);
+
+	if (Tcl_Eval(interp, "auto_mkindex_parser::slavehook { _%@namespace import -force ::itcl::* }") != TCL_OK)
+	  bu_log("auto_mkindex_parser error %s\n", interp->result);
+#endif
 
 	/* register commands */
 	cmd_setup();
