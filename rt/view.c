@@ -156,6 +156,11 @@ register struct application *ap;
 	register char	*pixelp;
 	register struct scanline	*slp;
 	register int	do_eol = 0;
+	register int	pwidth;		/* Width of each pixel (in bytes) */
+	unsigned char	dist[8];	/* pixel distance (in IEEE format) */
+
+	pwidth = rpt_dist ? 3+8 : 3;
+	htond(dist, (double) ap->a_dist, 1);
 
 	if( ap->a_user == 0 )  {
 		/* Shot missed the model, don't dither */
@@ -204,6 +209,8 @@ register struct application *ap;
 
 			if( outfp != NULL )  {
 				if( fwrite( p, 3, 1, outfp ) != 1 )
+					rt_bomb("pixel fwrite error");
+				if( fwrite( dist, 8, 1, outfp ) != 1 )
 					rt_bomb("pixel fwrite error");
 			}
 			if( fbp != FBIO_NULL )  {
@@ -540,6 +547,7 @@ struct seg *finished_segs;
 			pp->pt_regionp->reg_name);
 		rt_pr_pt( ap->a_rt_i, pp );
 	}
+	ap->a_dist = hitp->hit_dist;
 	if( hitp->hit_dist >= INFINITY )  {
 		rt_log("colorview:  entry beyond infinity\n");
 		VSET( ap->a_color, .5, 0, 0 );
