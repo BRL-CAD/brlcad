@@ -1129,7 +1129,21 @@ register struct pkg_conn *pc;
  *				break;
  *			}
  *		}
+ *		if( pkg_process( pc ) < 0 )  {
+ *			printf("pkg_process error encountered\n");
+ *			continue;
+ *		}
+ *		do_other_stuff();
  *	}
+ *
+ *  Note that the first call to pkg_process() handles all buffered packages
+ *  before a potentially long delay in select().
+ *  The second call to pkg_process() handles any new packages obtained
+ *  either directly by pkg_suckin() or as a byproduct of a handler.
+ *  This double checking is absolutely necessary, because
+ *  the use of pkg_send() or other pkg routines either in the actual
+ *  handlers or in do_other_stuff() can cause pkg_suckin() to be
+ *  called to bring in more packages.
  *
  *  Returns -
  *	<0	some internal error encountered; DO NOT call select() next.
@@ -1216,8 +1230,10 @@ register struct pkg_conn *pc;
 			pc->pkc_curpos += len;
 			pc->pkc_left -= len;
 			if( pc->pkc_left > 0 )  {
-				/* Input buffer must now be exhausted */
-				DMSG("more data needed to finish this PKG\n");
+				/*
+				 *  Input buffer is exhausted, but more
+				 *  data is needed to finish this package.
+				 */
 				break;
 			}
 		}
@@ -1235,7 +1251,7 @@ register struct pkg_conn *pc;
 			DMSG("pkg_dispatch failed\n");
 			errcnt++;
 		} else {
-			DMSG("pkg_dispatch worked\n");
+			/* it worked */
 			goodcnt++;
 		}
 	}
@@ -1249,7 +1265,7 @@ register struct pkg_conn *pc;
 	if( pkg_debug )  {
 		pkg_timestamp();
 		fprintf( pkg_debug,
-			"pkg_process() returns %d, pkc_left=%d, errcnt=%d, goodcnt=%d\n",
+			"pkg_process() ret=%d, pkc_left=%d, errcnt=%d, goodcnt=%d\n",
 			ret, pc->pkc_left, errcnt, goodcnt);
 		fflush(pkg_debug);
 	}
@@ -1537,8 +1553,18 @@ register struct pkg_conn	*pc;
 	int	waste;
 	int	avail;
 	int	got;
+	int	ret;
 
+	got = 0;
 	PKG_CK(pc);
+
+	if( pkg_debug )  {
+		pkg_timestamp();
+		fprintf( pkg_debug,
+			"pkg_suckin() incur=%d, inend=%d, inlen=%d\n",
+			pc->pkc_incur, pc->pkc_inend, pc->pkc_inlen );
+		fflush(pkg_debug);
+	}
 
 	/* If no buffer allocated yet, get one */
 	if( pc->pkc_inbuf == (char *)0 || pc->pkc_inlen <= 0 )  {
@@ -1546,7 +1572,8 @@ register struct pkg_conn	*pc;
 		if( (pc->pkc_inbuf = (char *)malloc(pc->pkc_inlen)) == (char *)0 )  {
 			pc->pkc_errlog("pkg_suckin malloc failure\n");
 			pc->pkc_inlen = 0;
-			return(-1);
+			ret = -1;
+			goto out;
 		}
 		pc->pkc_incur = pc->pkc_inend = 0;
 	}
@@ -1582,7 +1609,8 @@ register struct pkg_conn	*pc;
 		if( (pc->pkc_inbuf = (char *)realloc(pc->pkc_inbuf, pc->pkc_inlen)) == (char *)0 )  {
 			pc->pkc_errlog("pkg_suckin realloc failure\n");
 			pc->pkc_inlen = 0;
-			return(-1);
+			ret = -1;
+			goto out;
 		}
 	}
 
@@ -1596,24 +1624,28 @@ register struct pkg_conn	*pc;
 					avail, pc->pkc_fd );
 				fflush(pkg_debug);
 			}
-			return(0);	/* EOF */
+			ret = 0;	/* EOF */
+			goto out;
 		}
 		pkg_perror(pc->pkc_errlog, "pkg_suckin: read");
-		return(-1);
+		ret = -1;
+		goto out;
 	}
 	if( got > avail )  {
 		pc->pkc_errlog("pkg_suckin:  read more bytes than desired\n");
 		got = avail;
 	}
 	pc->pkc_inend += got;
+	ret = 1;
+out:
 	if( pkg_debug )  {
 		pkg_timestamp();
 		fprintf( pkg_debug,
-			"pkg_suckin(pc=x%x) incur=%d, inend=%d, inlen=%d\n",
-			pc, pc->pkc_incur, pc->pkc_inend, pc->pkc_inlen );
+			"pkg_suckin() ret=%d, got %d, total=%d\n",
+			ret, got, pc->pkc_inend - pc->pkc_incur );
 		fflush(pkg_debug);
 	}
-	return(1);
+	return(ret);
 }
 
 /*
