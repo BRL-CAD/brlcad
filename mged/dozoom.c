@@ -40,6 +40,8 @@ mat_t	incr_change;
 mat_t	modelchanges;
 mat_t	identity;
 
+int wireframe_highlight_color[] = { 255, 255, 255 };
+
 /* Screen coords of actual eye position.  Usually it is at (0,0,+1),
  * but in head-tracking and VR applications, it can move.
  */
@@ -440,7 +442,11 @@ bn_mat_print("perspective_mat", perspective_mat);
 	}
 	DM_LOADMATRIX( dmp, mat, which_eye );
 	inv_viewsize /= modelchanges[15];
-	DM_SET_FGCOLOR(dmp, DM_WHITE_R, DM_WHITE_G, DM_WHITE_B, 1);
+	DM_SET_FGCOLOR(dmp,
+		       wireframe_highlight_color[0],
+		       wireframe_highlight_color[1],
+		       wireframe_highlight_color[2],
+		       1);
 
 	FOR_ALL_SOLIDS(sp, &HeadSolid.l)  {
 	  /* Ignore all objects not being rotated */
