@@ -292,6 +292,7 @@ typedef long	bitv_t;		/* largest integer type */
 #  else
 	typedef char	*genptr_t;
 #  endif
+#  define GENPTR_NULL	((genptr_t)0)
 #endif
 
 /* A portable way of handling the ANSI C const keyword */
