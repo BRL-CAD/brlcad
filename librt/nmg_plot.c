@@ -29,6 +29,8 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "raytrace.h"
 #include "plot3.h"
 
+#define US_DELAY	10	/* Additional delay between frames */
+
 /* Move to vmath.h */
 #define VJOIN3(a,b,c,d,e,f,g,h)	\
 	(a)[X] = (b)[X] + (c)*(d)[X] + (e)*(f)[X] + (g)*(h)[X];\
@@ -1259,7 +1261,7 @@ struct faceuse	*fu1;
 		rt_free( (char *)tab, "nmg_pl_comb_fu tab[]" );
 
 		if( nmg_vlblock_anim_upcall )  {
-			(*nmg_vlblock_anim_upcall)( vbp, 0 );
+			(*nmg_vlblock_anim_upcall)( vbp, US_DELAY );
 		} else {
 			rt_log("null nmg_vlblock_anim_upcall, no animation\n");
 		}
@@ -1332,7 +1334,7 @@ int		show_mates;
 
 		/* Cause animation of boolean operation as it proceeds! */
 		if( nmg_vlblock_anim_upcall )  {
-			(*nmg_vlblock_anim_upcall)( vbp, 0 );
+			(*nmg_vlblock_anim_upcall)( vbp, US_DELAY );
 		}
 		rt_vlblock_free(vbp);
 	}
