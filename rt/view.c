@@ -357,10 +357,19 @@ register struct application *ap;
 			bu_semaphore_acquire( BU_SEM_SYSCALL );
 			for( dy=spread; dy >= 0; dy-- )  {
 				yy = ap->a_y + dy;
-				npix = fb_write( fbp, 0, yy,
-					(unsigned char *)scanline[yy].sl_buf,
-					width );
-				if( npix != width )  break;
+				if( sub_grid_mode )  {
+					if( dy < sub_ymin || dy > sub_ymax )
+						continue;
+					npix = fb_write( fbp, sub_xmin, yy,
+						(unsigned char *)scanline[yy].sl_buf+3*sub_xmin,
+						sub_xmax-sub_xmin+1 );
+					if( npix != sub_xmax-sub_xmin+1 )  break;
+				} else {
+					npix = fb_write( fbp, 0, yy,
+						(unsigned char *)scanline[yy].sl_buf,
+						width );
+					if( npix != width )  break;
+				}
 			}
 			bu_semaphore_release( BU_SEM_SYSCALL);
 			if( npix != width )  rt_bomb("fb_write error (incremental res)");
@@ -371,10 +380,20 @@ register struct application *ap;
 		if( fbp != FBIO_NULL )  {
 			int		npix;
 			bu_semaphore_acquire( BU_SEM_SYSCALL );
-			npix = fb_write( fbp, 0, ap->a_y,
-			    (unsigned char *)scanline[ap->a_y].sl_buf, width );
+			if( sub_grid_mode )  {
+				npix = fb_write( fbp, sub_xmin, ap->a_y,
+				    (unsigned char *)scanline[ap->a_y].sl_buf+3*sub_xmin,
+				    sub_xmax-sub_xmin+1 );
+			} else {
+				npix = fb_write( fbp, 0, ap->a_y,
+				    (unsigned char *)scanline[ap->a_y].sl_buf, width );
+			}
 			bu_semaphore_release( BU_SEM_SYSCALL);
-			if( npix < width )  rt_bomb("scanline fb_write error");
+			if( sub_grid_mode )  {
+				if( npix < sub_xmax-sub_xmin-1 )  rt_bomb("scanline fb_write error");
+			} else {
+				if( npix < width )  rt_bomb("scanline fb_write error");
+			}
 		}
 		if( outfp != NULL )  {
 			int	count;
@@ -1000,10 +1019,18 @@ char	*framename;
 
 			/* Diminish buffer expectations on work-saved lines */
 			for( i=0; i<j; i++ )  {
-				if( (i & 1) == 0 )
-					scanline[i*w].sl_left = j/2;
-				else
-					scanline[i*w].sl_left = j;
+				if( sub_grid_mode )  {
+					/* ???? */
+					if( (i & 1) == 0 )
+						scanline[i*w].sl_left = j/2;
+					else
+						scanline[i*w].sl_left = j;
+				} else {
+					if( (i & 1) == 0 )
+						scanline[i*w].sl_left = j/2;
+					else
+						scanline[i*w].sl_left = j;
+				}
 			}
 		}
 		if( incr_level > 1 )
@@ -1012,8 +1039,13 @@ char	*framename;
 
 	case BUFMODE_DYNAMIC:
 		bu_log("Dynamic scanline buffering\n");
-		for( i=0; i<height; i++ )
-			scanline[i].sl_left = width;
+		if( sub_grid_mode )  {
+			for( i=sub_ymin; i<=sub_ymax; i++ )
+				scanline[i].sl_left = sub_xmax-sub_xmin+1;
+		} else {
+			for( i=0; i<height; i++ )
+				scanline[i].sl_left = width;
+		}
 
 #ifdef HAVE_UNIX_IO
 		/*
