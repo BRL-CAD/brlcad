@@ -136,6 +136,14 @@ struct pt_node {
 	struct pt_node	*next;	/* ptr to next pt */
 };
 
+struct bu_structparse rt_eto_parse[] = {
+    { "%f", 3, "V",   offsetof(struct rt_eto_internal, eto_V[X]), BU_STRUCTPARSE_FUNC_NULL },
+    { "%f", 3, "N",   offsetof(struct rt_eto_internal, eto_N[X]), BU_STRUCTPARSE_FUNC_NULL },
+    { "%f", 3, "C",   offsetof(struct rt_eto_internal, eto_C[X]), BU_STRUCTPARSE_FUNC_NULL },
+    { "%f", 1, "r",   offsetof(struct rt_eto_internal, eto_r),    BU_STRUCTPARSE_FUNC_NULL },
+    { "%f", 1, "r_d", offsetof(struct rt_eto_internal, eto_rd),   BU_STRUCTPARSE_FUNC_NULL },
+    {0} };
+
 /*
  *  			R T _ E T O _ P R E P
  *  

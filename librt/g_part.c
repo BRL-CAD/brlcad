@@ -193,6 +193,13 @@ struct part_specific {
 #define RT_PARTICLE_SURF_BODY		2
 #define RT_PARTICLE_SURF_HSPHERE	3
 
+struct bu_structparse rt_part_parse[] = {
+    { "%f", 3, "V",  offsetof(struct rt_part_internal, part_V[X]), BU_STRUCTPARSE_FUNC_NULL },
+    { "%f", 3, "H",  offsetof(struct rt_part_internal, part_H[X]), BU_STRUCTPARSE_FUNC_NULL },
+    { "%f", 1, "r_v",offsetof(struct rt_part_internal, part_vrad), BU_STRUCTPARSE_FUNC_NULL },
+    { "%f", 1, "r_h",offsetof(struct rt_part_internal, part_hrad), BU_STRUCTPARSE_FUNC_NULL },
+    {0} };
+	    
 RT_EXTERN( void rt_part_ifree, (struct rt_db_internal *ip) );
 
 /*
