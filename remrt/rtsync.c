@@ -179,6 +179,8 @@ struct rtnode {
 	fastf_t		time_delta;
 	fastf_t		i_lps;		/* instantaneous # lines per sec */
 	fastf_t		w_lps;		/* weighted # lines per sec */
+	int		pr_percent;	/* reprojection pixel percentage */
+	fastf_t		pr_time;	/* elapsed time for reprojection (ms) */
 	fastf_t		rt_time;	/* elapsed time for ray-tracing (ms) */
 	fastf_t		fb_time;	/* elapsed time for fb_write() (ms) */
 	fastf_t		ck_time;	/* elapsed time for fb sync check (ms) */
@@ -232,6 +234,7 @@ CONST char	*database;
 struct bu_vls	treetops;
 double		blend1 = 0.8;		/* weight to give older timing data */
 int		update_status_every_frame = 0;
+int		debugimage = 0;
 
 char		*node_search_path;
 
@@ -352,7 +355,7 @@ char **argv;
 	if( i < 0 || i >= MAX_NODES )  {
 		/* Use this as a signal to generate a title. */
 		Tcl_AppendResult(interp,
-			"##: CP ord i_lps w_lps lump tot/rt/fb/ck state", NULL);
+			"##: CP ord i_lps w_lps lump tot=pr/rt/fb/ck state", NULL);
 		return TCL_OK;
 	}
 	if( rtnodes[i].fd <= 0 )  {
@@ -368,7 +371,7 @@ char **argv;
 
 	bu_vls_init(&str);
 	bu_vls_printf(&str,
-		"%2.2d: %2.2d %2.2d %5.5d %5.5d %4.4d %d=%d/%d/%d %s %s",
+		"%2.2d: %2.2d %2.2d %5.5d %5.5d %4.4d %d=%d/%d/%d/%d %s %s",
 		i,
 		rtnodes[i].ncpus,
 		rtnodes[i].finish_order,
@@ -376,6 +379,7 @@ char **argv;
 		(int)rtnodes[i].w_lps,
 		rtnodes[i].lump,
 		(int)(rtnodes[i].time_delta * 1000),
+		(int)rtnodes[i].pr_time,
 		(int)rtnodes[i].rt_time,
 		(int)rtnodes[i].fb_time,
 		(int)rtnodes[i].ck_time,
@@ -1026,6 +1030,7 @@ char	*argv[];
 	Tcl_LinkVar( interp, "framebuffer", (char *)&framebuffer, TCL_LINK_STRING | TCL_LINK_READ_ONLY );
 	Tcl_LinkVar( interp, "database", (char *)&database, TCL_LINK_STRING | TCL_LINK_READ_ONLY );
 	Tcl_LinkVar( interp, "debug", (char *)&debug, TCL_LINK_INT );
+	Tcl_LinkVar( interp, "debugimage", (char *)&debugimage, TCL_LINK_INT );
 	Tcl_LinkVar( interp, "update_status_every_frame", (char *)&update_status_every_frame, TCL_LINK_INT );
 	Tcl_LinkVar( interp, "blend1", (char *)&blend1, TCL_LINK_DOUBLE );
 
@@ -1724,10 +1729,11 @@ char			*buf;
 	double		interval;
 	double		blend2;
 	int		new_npsw;
-	double		t1, t2, t3;
+	double		t1, t2, t3, t4;
 	int		nfields;
 	int		sched_update = 0;
 	int		last_i;
+	int		reproj_percent;
 	long		total_bits;
 
 	blend2 = 1 - blend1;	/* blend1 may change via Tcl interface */
@@ -1751,8 +1757,8 @@ char			*buf;
 
 		new_npsw = -1;
 		t1 = t2 = t3 = -1;
-		nfields = sscanf(buf, "%d %lf %lf %lf",
-			&new_npsw, &t1, &t2, &t3 );
+		nfields = sscanf(buf, "%d %lf %lf %lf %lf %d",
+			&new_npsw, &t1, &t2, &t3, &t4, &reproj_percent );
 
 		if( nfields < 1 )  {
 			bu_log(" %s %s reply message had insufficient (%d) fields\n",
@@ -1768,9 +1774,11 @@ char			*buf;
 			sched_update = 1;
 		}
 
-		rtnodes[i].rt_time = t1;
-		rtnodes[i].fb_time = t2;
-		rtnodes[i].ck_time = t3;
+		rtnodes[i].pr_time = t1;
+		rtnodes[i].rt_time = t2;
+		rtnodes[i].fb_time = t3;
+		rtnodes[i].ck_time = t4;
+		rtnodes[i].pr_percent = reproj_percent;
 
 		if( debug )  {
 			bu_log("%s DONE %s (%g ms) rt=%g fb=%g ck=%g buf=%s\n",
@@ -1840,6 +1848,7 @@ check_others:
 
 	/* Calculate network bandwidth consumed in non-raytracing time */
 	total_bits = width * height * 3 * 8;
+	if( debugimage )  total_bits *= 2;
 	average_mbps = total_bits / interval / 1000000.0;
 	/* burst_mbps is still too low; it's a lower bound. */
 	burst_mbps = total_bits / (interval - ms_rt_min/1000) / 1000000.0;

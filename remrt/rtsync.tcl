@@ -156,6 +156,8 @@ proc do_reproject_mode {val} {
 }
 
 proc do_debugimage {val} {
+	global debugimage
+	set debugimage $val
 	node_send \
 		set debugimage $val
 }

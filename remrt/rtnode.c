@@ -776,6 +776,7 @@ char			*buf;
 	point_t	eye_screen;
 	int	saved_print_on = print_on;
 	char	obuf[128];
+	double	pr_elapsed_time;	/* reprojection */
 	double	rt_elapsed_time;
 	double	fb_elapsed_time;
 	double	ck_elapsed_time;
@@ -852,10 +853,12 @@ char			*buf;
 	grid_setup();
 
 	/* initialize lighting, set buf_mode=BUFMODE_DYNAMIC */
+	rt_prep_timer();
 	fullfloat_mode = 1;	/* sets buf_mode=BUFMODE_FULLFLOAT */
 	print_on = 0;		/* Disable bu_log ! */
 	view_2init( &ap );
 	print_on = saved_print_on;	/* re-enable bu_log */
+	(void)rt_get_timer( (struct bu_vls *)NULL, &pr_elapsed_time  );
 
 	if( reproj_cur > 0 && reproj_max > 0 )
 		reproj_percent = (int)(((double)reproj_cur)/reproj_max*100);
@@ -983,8 +986,9 @@ fp->ff_dist, V3ARGS(fp->ff_hitpt) );
 	if(debug) bu_log("done!\n");
 
 	/* Build up reply message */
-	sprintf(obuf, "%d %g %g %g %d",
+	sprintf(obuf, "%d %g %g %g %g %d",
 		npsw,
+		pr_elapsed_time * 1000,
 		rt_elapsed_time * 1000,
 		fb_elapsed_time * 1000,
 		ck_elapsed_time * 1000,
