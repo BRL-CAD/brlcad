@@ -560,6 +560,8 @@ register struct solid *sp;
  *
  *  Once the vlist has been created, perform the common tasks
  *  in handling the drawn solid.
+ *
+ *  This routine must be prepared to run in parallel.
  */
 drawH_part2( dashflag, vhead, pathp, tsp, existing_sp )
 int			dashflag;
@@ -630,7 +632,9 @@ struct solid		*existing_sp;
 	/* Solid is successfully drawn */
 	if( !existing_sp )  {
 		/* Add to linked list of solid structs */
+		RES_ACQUIRE( &rt_g.res_model );
 		APPEND_SOLID( sp, HeadSolid.s_back );
+		RES_RELEASE( &rt_g.res_model );
 		dmp->dmr_viewchange( DM_CHGV_ADD, sp );
 	} else {
 		/* replacing existing solid -- struct already linked in */
@@ -918,6 +922,8 @@ long		rgb;
 	return(0);		/* OK */
 }
 
+static union tree	*mged_facetize_tree;
+
 /*
  *			M G E D _ F A C E T I Z E _ R E G I O N _ E N D
  *
@@ -940,11 +946,22 @@ union tree		*curtree;
 		rt_free(sofar, "path string");
 	}
 
-	(void)mged_nmg_doit( curtree );
-	/* New region remains part of this nmg "model" */
+	RES_ACQUIRE( &rt_g.res_model );
+	if( mged_facetize_tree )  {
+		union tree	*tr;
+		tr = (union tree *)rt_calloc(1, sizeof(union tree), "union tree");
+		tr->tr_op = OP_UNION;
+		tr->tr_b.tb_regionp = REGION_NULL;
+		tr->tr_b.tb_left = mged_facetize_tree;
+		tr->tr_b.tb_right = curtree;
+		mged_facetize_tree = tr;
+	} else {
+		mged_facetize_tree = curtree;
+	}
+	RES_RELEASE( &rt_g.res_model );
 
-	/* Return original tree -- it needs to be freed (by caller) */
-	return( curtree );
+	/* Tree has been saved, and will be freed later */
+	return( TREE_NULL );
 }
 
 /* facetize [opts] new_obj old_obj(s) */
@@ -961,6 +978,7 @@ char	**argv;
 	struct rt_db_internal	intern;
 	union record		*rec;
 	struct directory	*dp;
+	struct nmgregion	*r;
 	int			ngran;
 
 	RT_CHECK_DBI(dbip);
@@ -992,6 +1010,7 @@ char	**argv;
 		return;
 	}
 
+	mged_facetize_tree = (union tree *)0;
   	mged_nmg_model = nmg_mm();
 	i = db_walk_tree( dbip, argc, argv,
 		ncpu,
@@ -1006,6 +1025,20 @@ char	**argv;
 		nmg_km( mged_nmg_model );
 		return;
 	}
+
+	/* Now, evaluate the boolean tree into ONE region */
+	r = mged_nmg_doit( mged_facetize_tree );
+	if( r == 0 )  {
+		rt_log("facetize:  no resulting region, aborting\n");
+		nmg_km( mged_nmg_model );
+		return;
+	}
+	/* New region remains part of this nmg "model" */
+	NMG_CK_REGION( r );
+
+	/* Free boolean tree */
+	db_free_tree( mged_facetize_tree );
+
 	/* Export NMG as a new solid */
 	RT_INIT_DB_INTERNAL(&intern);
 	intern.idb_type = ID_NMG;
@@ -1022,6 +1055,7 @@ char	**argv;
 	}
 	rt_functab[ID_NMG].ft_ifree( &intern );
 
+	/* Depends on solid names always being in the same place */
 	rec = (union record *)ext.ext_buf;
 	NAMEMOVE( newname, rec->s.s_name );
 
