@@ -70,9 +70,33 @@ CONST struct rt_tol	*tol;
 }
 
 /*
+ *			R T _ P T 2 _ P T 2 _ E Q U A L
+ *
+ *  Returns -
+ *	1	if the two points are equal, within the tolerance
+ *	0	if the two points are not "the same"
+ */
+int
+rt_pt2_pt2_equal( a, b, tol )
+CONST point_t		a;
+CONST point_t		b;
+CONST struct rt_tol	*tol;
+{
+	vect_t	diff;
+
+	RT_CK_TOL(tol);
+	VSUB2_2D( diff, b, a );
+	if( MAGSQ_2D( diff ) < tol->dist_sq )  return 1;
+	return 0;
+}
+
+/*
  *			R T _ 3 P T S _ C O L L I N E A R
  *
  *  Check to see if three points are collinear.
+ *
+ *  The algorithm is designed to work properly regardless of the
+ *  order in which the points are provided.
  *
  *  Returns (boolean) -
  *	1	If 3 points are collinear
@@ -567,6 +591,7 @@ CONST struct rt_tol	*tol;
 	/* XXX This zero tolerance here should actually be
 	 * XXX determined by something like
 	 * XXX max(c[X], c[Y], d[X], d[Y]) / MAX_FASTF_DYNAMIC_RANGE
+	 * XXX In any case, nothing smaller than 1e-16
 	 */
 	if( NEAR_ZERO( det, SQRT_SMALL_FASTF ) )  {
 		/* Lines are parallel */
@@ -606,6 +631,21 @@ rt_log("\thx=%g, hy=%g, det=%g, det1=%g, det2=%g\n", hx, hy, det, det1, (d[X] * 
 	dist[1] = det * (d[X] * hy - hx * d[Y]);
 	if( rt_g.debug & DEBUG_MATH )  {
 		rt_log("\tintersection, t = %g, u = %g\n", dist[0], dist[1] );
+	}
+
+	/*  To prevent errors, check the answer.
+	 *  Not returning bogus results to our caller is worth the extra time.
+	 */
+	{
+		point_t		hit1, hit2;
+
+		VJOIN1_2D( hit1, p, dist[0], d );
+		VJOIN1_2D( hit2, a, dist[1], c );
+		if( !rt_pt2_pt2_equal( hit1, hit2, tol ) )  {
+			rt_log("rt_isect_line2_line2(): BOGUS RESULT, hit1=(%g,%g), hit2=(%g,%g)\n",
+				hit1[X], hit1[Y], hit2[X], hit2[Y]);
+			return -2;	/* s/b -1? */
+		}
 	}
 
 	return 1;		/* Intersection found */
@@ -703,13 +743,20 @@ CONST struct rt_tol	*tol;
 	 *  to returning wrong answers.  Know a faster algorithm?
 	 */
 	{
-		fastf_t		ab_dist;
+		fastf_t		ab_dist = 0;
 		point_t		b;
 		point_t		hit_pt;
+		point_t		hit2;
 
 		VADD2_2D( b, a, c );
 		VJOIN1_2D( hit_pt, p, dist[0], d );
+		VJOIN1_2D( hit2, a, dist[1], c );
 		ret = rt_isect_pt2_lseg2( &ab_dist, a, b, hit_pt, tol );
+		if( rt_g.debug & DEBUG_MATH )  {
+			/* XXX This is temporary */
+rt_log("rt_isect_pt2_lseg2() hit2d=(%g,%g) ab_dist=%g, ret=%d\n", hit_pt[X], hit_pt[Y], ab_dist, ret);
+rt_log("\tother hit2d=(%g,%g)\n", hit2[X], hit2[Y] );
+		}
 		if( ret <= 0 )  {
 			if( ab_dist < 0 )  {
 				ret = -2;	/* Intersection < A */
@@ -1140,6 +1187,7 @@ CONST struct rt_tol	*tol;
 	VSUB2( h, a, p );
 	det = c[q] * d[r] - d[q] * c[r];
 	det1 = (c[q] * h[r] - h[q] * c[r]);		/* see below */
+	/* XXX This should be no smaller than 1e-16.  See rt_isect_line2_line2 for details */
 	if( NEAR_ZERO( det, SQRT_SMALL_FASTF ) )  {
 		/* Lines are parallel */
 		if( !NEAR_ZERO( det1, SQRT_SMALL_FASTF ) )  {
@@ -1198,6 +1246,21 @@ CONST struct rt_tol	*tol;
 		 */
 		/* Inconsistent solution, lines miss each other */
 		return(-1);
+	}
+
+	/*  To prevent errors, check the answer.
+	 *  Not returning bogus results to our caller is worth the extra time.
+	 */
+	{
+		point_t		hit1, hit2;
+
+		VJOIN1( hit1, p, *t, d );
+		VJOIN1( hit2, a, *u, c );
+		if( !rt_pt3_pt3_equal( hit1, hit2, tol ) )  {
+			rt_log("rt_isect_line3_line3(): BOGUS RESULT, hit1=(%g,%g,%g), hit2=(%g,%g,%g)\n",
+				hit1[X], hit1[Y], hit1[Z], hit2[X], hit2[Y], hit2[Z]);
+			return -1;
+		}
 	}
 
 	return(1);		/* Intersection found */
@@ -1480,7 +1543,7 @@ CONST struct rt_tol	*tol;
 	distsq = MAGSQ(ABunit);
 	if( distsq < tol->dist_sq )
 		return -1;	/* A equals B, and P isn't there */
-	distsq = 1/distsq;
+	distsq = 1/sqrt(distsq);
 	VSCALE( ABunit, ABunit, distsq );
 
 	/* Similar to rt_dist_line_pt, except we
@@ -1559,9 +1622,11 @@ CONST struct rt_tol	*tol;
 	VSUB2_2D(AtoB, b, a);
 	VMOVE_2D(ABunit, AtoB);
 	distsq = MAGSQ_2D(ABunit);
-	if( distsq < tol->dist_sq )
+	if( distsq < tol->dist_sq )  {
+rt_log("distsq A=%g\n", distsq);
 		return -1;	/* A equals B, and P isn't there */
-	distsq = 1/distsq;
+	}
+	distsq = 1/sqrt(distsq);
 	VSCALE_2D( ABunit, ABunit, distsq );
 
 	/* Similar to rt_dist_line_pt, except we
@@ -1575,8 +1640,11 @@ CONST struct rt_tol	*tol;
 
 	/* because of pythgorean theorem ... */
 	distsq = MAGSQ_2D(AtoP) - APprABunit * APprABunit;
-	if (distsq > tol->dist_sq)
+	if (distsq > tol->dist_sq) {
+VPRINT("ABunit", ABunit);
+rt_log("distsq B=%g\n", distsq);
 		return(-1);	/* dist pt to line too large */
+	}
 
 	/* Distance from the point to the line is within tolerance. */
 	*dist = VDOT_2D(AtoP, AtoB) / MAGSQ_2D(AtoB);
