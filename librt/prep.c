@@ -57,10 +57,13 @@ register struct rt_i *rtip;
 	if( rtip->rti_magic != RTI_MAGIC )  rt_bomb("rt_prep:  bad rtip\n");
 
 	if(!rtip->needprep)
-		rt_bomb("rt_prep: re-invocation");
+		rt_bomb("rt_prep: invoked a second time");
 	rtip->needprep = 0;
-	if( rtip->nsolids <= 0 )
-		rt_bomb("rt_prep:  no solids to prep");
+	if( rtip->nsolids <= 0 )  {
+		if( rtip->rti_air_discards > 0 )
+			rt_log("rt_prep: %d solids discarded due to air regions\n", rtip->rti_air_discards );
+		rt_bomb("rt_prep:  no solids left to prep");
+	}
 
 	/* Compute size of model-specific variable-length data structures */
 	/* -sizeof(bitv_t) == sizeof(struct partition.pt_solhit) */
