@@ -4,6 +4,9 @@
  * $Header$
  *
  */
+
+#include <config.h>
+
 /* jove.h header file to be included by EVERYONE */
 #include <stdio.h>
 
@@ -30,7 +33,7 @@
 #if (defined(BSD) && BSD >= 44) || defined(_POSIX_SOURCE)
 #	define HAVE_TERMIOS_H	1
 #else
-#	define HAVE_TERMIOS_H	0
+/* undef HAVE_TERMIOS_H */
 #endif
 #endif
 
