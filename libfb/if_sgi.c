@@ -67,8 +67,6 @@ extern int errno;
 extern char *shmat();
 extern int brk();
 
-extern int	fb_sim_readrect(), fb_sim_writerect();
-
 /*
  *  Defines for dealing with SGI Graphics Engine Pipeline
  */
@@ -102,42 +100,39 @@ static Cursor	cursor =
 #include "./sgicursor.h"
 	};
 
-_LOCAL_ int	sgi_dopen(),
-		sgi_dclose(),
-		sgi_dclear(),
-		sgi_bread(),
-		sgi_bwrite(),
-		sgi_cmread(),
-		sgi_cmwrite(),
-		sgi_viewport_set(),
-		sgi_window_set(),
-		sgi_zoom_set(),
-		sgi_curs_set(),
-		sgi_cmemory_addr(),
-		sgi_cscreen_addr(),
+_LOCAL_ int	sgi_open(),
+		sgi_close(),
+		sgi_clear(),
+		sgi_read(),
+		sgi_write(),
+		sgi_rmap(),
+		sgi_wmap(),
+		sgi_view(),
+		sgi_setcursor(),
+		sgi_cursor(),
+		sgi_poll(),
 		sgi_help();
 
 /* This is the ONLY thing that we "export" */
 FBIO sgi_interface =
 		{
-		sgi_dopen,
-		sgi_dclose,
-		fb_null,		/* reset? */
-		sgi_dclear,
-		sgi_bread,
-		sgi_bwrite,
-		sgi_cmread,
-		sgi_cmwrite,
-		sgi_viewport_set,
-		sgi_window_set,
-		sgi_zoom_set,
-		sgi_curs_set,
-		sgi_cmemory_addr,
-		fb_null,		/* cscreen_addr */
+		sgi_open,
+		sgi_close,
+		sgi_clear,
+		sgi_read,
+		sgi_write,
+		sgi_rmap,
+		sgi_wmap,
+		sgi_view,
+		fb_sim_getview,
+		sgi_setcursor,		/* define cursor */
+		sgi_cursor,		/* set cursor */
+		fb_sim_getcursor,	/* get cursor */
 		fb_sim_readrect,
 		fb_sim_writerect,
+		sgi_poll,		/* poll */
 		fb_null,		/* flush */
-		sgi_dclose,		/* free */
+		sgi_close,		/* free */
 		sgi_help,
 		"Silicon Graphics IRIS",
 		1024,			/* max width */
@@ -145,7 +140,11 @@ FBIO sgi_interface =
 		"/dev/sgi",
 		1024,			/* current/default width  */
 		768,			/* current/default height */
+		-1,			/* select fd */
 		-1,			/* file descriptor */
+		1, 1,			/* zoom */
+		512, 384,		/* window center */
+		0, 0, 0,		/* cursor */
 		PIXEL_NULL,		/* page_base */
 		PIXEL_NULL,		/* page_curp */
 		PIXEL_NULL,		/* page_endp */
@@ -177,10 +176,6 @@ struct sgi_cmap {
  */
 struct sgiinfo {
 	short	si_curs_on;
-	short	si_xzoom;
-	short	si_yzoom;
-	short	si_xcenter;
-	short	si_ycenter;
 	int	si_rgb_ct;
 	short	si_cmap_flag;
 	int	si_shmid;
@@ -310,7 +305,7 @@ success:
 
 	/* Provide non-black colormap on creation of new shared mem */
 	if(new)
-		sgi_cmwrite( ifp, COLORMAP_NULL );
+		sgi_wmap( ifp, COLORMAP_NULL );
 	return(0);
 fail:
 	fb_log("sgi_getmem:  Unable to attach to shared memory.\nConsult comment in cad/libfb/if_sgi.c for details\n");
@@ -370,27 +365,27 @@ register FBIO	*ifp;
 
 	xscroff = yscroff = 0;
 	xscrpad = yscrpad = 0;
-	xwidth = ifp->if_width/SGI(ifp)->si_xzoom;
+	xwidth = ifp->if_width/ifp->if_xzoom;
 	i = xwidth/2;
-	xmin = SGI(ifp)->si_xcenter - i;
-	xmax = SGI(ifp)->si_xcenter + i - 1;
-	i = (ifp->if_height/2)/SGI(ifp)->si_yzoom;
-	ymin = SGI(ifp)->si_ycenter - i;
-	ymax = SGI(ifp)->si_ycenter + i - 1;
+	xmin = ifp->if_xcenter - i;
+	xmax = ifp->if_xcenter + i - 1;
+	i = (ifp->if_height/2)/ifp->if_yzoom;
+	ymin = ifp->if_ycenter - i;
+	ymax = ifp->if_ycenter + i - 1;
 	if( xmin < 0 )  {
-		xscroff = -xmin * SGI(ifp)->si_xzoom;
+		xscroff = -xmin * ifp->if_xzoom;
 		xmin = 0;
 	}
 	if( ymin < 0 )  {
-		yscroff = -ymin * SGI(ifp)->si_yzoom;
+		yscroff = -ymin * ifp->if_yzoom;
 		ymin = 0;
 	}
 	if( xmax > ifp->if_width-1 )  {
-		xscrpad = (xmax-(ifp->if_width-1))*SGI(ifp)->si_xzoom;
+		xscrpad = (xmax-(ifp->if_width-1))*ifp->if_xzoom;
 		xmax = ifp->if_width-1;
 	}
 	if( ymax > ifp->if_height-1 )  {
-		yscrpad = (ymax-(ifp->if_height-1))*SGI(ifp)->si_yzoom;
+		yscrpad = (ymax-(ifp->if_height-1))*ifp->if_yzoom;
 		ymax = ifp->if_height-1;
 	}
 
@@ -435,8 +430,8 @@ register FBIO	*ifp;
 			register Scoord l, b, r, t;
 
 			l = xscroff;
-			b = yscroff + (y-ymin)*SGI(ifp)->si_yzoom;
-			t = b + SGI(ifp)->si_yzoom - 1;
+			b = yscroff + (y-ymin)*ifp->if_yzoom;
+			t = b + ifp->if_yzoom - 1;
 			if ( SGI(ifp)->si_cmap_flag == FALSE )  {
 				for( i=xwidth; i > 0; i--)  {
 					switch( ifp->if_mode ) {
@@ -455,7 +450,7 @@ register FBIO	*ifp;
 						hole->s = COLOR_APPROX(ip);
 						break;
 					}
-					r = l + SGI(ifp)->si_xzoom - 1;
+					r = l + ifp->if_xzoom - 1;
 					/* left bottom right top: rectfs( l, b, r, t ); */
 					hole->s = GEmovepoly | GEPA_2S;
 					hole->s = l;
@@ -500,7 +495,7 @@ register FBIO	*ifp;
 						hole->s = COLOR_APPROX(new);
 						break;
 					}
-					r = l + SGI(ifp)->si_xzoom - 1;
+					r = l + ifp->if_xzoom - 1;
 					/* left bottom right top: rectfs( l, b, r, t ); */
 					hole->s = GEmovepoly | GEPA_2S;
 					hole->s = l;
@@ -642,7 +637,7 @@ register FBIO	*ifp;
  *			S G I _ D O P E N
  */
 _LOCAL_ int
-sgi_dopen( ifp, file, width, height )
+sgi_open( ifp, file, width, height )
 FBIO	*ifp;
 char	*file;
 int	width, height;
@@ -698,7 +693,7 @@ int	width, height;
 	ifp->if_height = height;
 
 	if( (SGIL(ifp) = (char *)calloc( 1, sizeof(struct sgiinfo) )) == NULL )  {
-		fb_log("sgi_dopen:  sgiinfo malloc failed\n");
+		fb_log("sgi_open:  sgiinfo malloc failed\n");
 		return(-1);
 	}
 	SGI(ifp)->si_shmid = -1;	/* indicate no shared memory */
@@ -708,10 +703,10 @@ int	width, height;
 		a call to "sgi_repaint" (when initializing shared memory
 		after a reboot).					*/
 	ifp->if_zoomflag = 0;
-	SGI(ifp)->si_xzoom = 1;
-	SGI(ifp)->si_yzoom = 1;
-	SGI(ifp)->si_xcenter = width/2;
-	SGI(ifp)->si_ycenter = height/2;
+	ifp->if_xzoom = 1;
+	ifp->if_yzoom = 1;
+	ifp->if_xcenter = width/2;
+	ifp->if_ycenter = height/2;
 	ifp->if_mode = MODE_RGB;
 
 	if( sgi_getmem(ifp) < 0 )
@@ -729,7 +724,7 @@ int	width, height;
 }
 
 /*
- *			S G I _ D C L O S E
+ *			S G I _ C L O S E
  *
  *  Finishing with a gexit() is mandatory.
  *  If we do a tpon() greset(), the text port pops up right
@@ -744,7 +739,7 @@ int	width, height;
  *  separate programs, just like we do on the real framebuffers.
  */
 _LOCAL_ int
-sgi_dclose( ifp )
+sgi_close( ifp )
 FBIO	*ifp;
 {
 	blanktime( 67 * 60 * 20L );	/* 20 minute blanking when fb closed */
@@ -771,7 +766,7 @@ FBIO	*ifp;
 		if( SGI(ifp)->si_shmid != -1 ) {
 			/* detach from shared memory */
 			if( shmdt( ifp->if_mem ) == -1 ) {
-				fb_log("sgi_dclose shmdt failed, errno=%d\n", errno);
+				fb_log("sgi_close shmdt failed, errno=%d\n", errno);
 				return -1;
 			}
 		} else {
@@ -787,10 +782,10 @@ FBIO	*ifp;
 }
 
 /*
- *			S G I _ D C L E A R
+ *			S G I _ C L E A R
  */
 _LOCAL_ int
-sgi_dclear( ifp, pp )
+sgi_clear( ifp, pp )
 FBIO	*ifp;
 register RGBpixel	*pp;
 {
@@ -838,51 +833,42 @@ register RGBpixel	*pp;
 	return(0);
 }
 
-/*
- *			S G I _ W I N D O W _ S E T
- */
 _LOCAL_ int
-sgi_window_set( ifp, x, y )
+sgi_poll(ifp)
 FBIO	*ifp;
-int	x, y;
 {
 	if( qtest() )
 		sgw_inqueue(ifp);
-
-	if( SGI(ifp)->si_xcenter == x && SGI(ifp)->si_ycenter == y )
-		return(0);
-	if( x < 0 || x >= ifp->if_width )
-		return(-1);
-	if( y < 0 || y >= ifp->if_height )
-		return(-1);
-	SGI(ifp)->si_xcenter = x;
-	SGI(ifp)->si_ycenter = y;
-	sgi_repaint( ifp );
-	return(0);
 }
 
-/*
- *			S G I _ Z O O M _ S E T
- */
 _LOCAL_ int
-sgi_zoom_set( ifp, x, y )
+sgi_view( ifp, xcenter, ycenter, xzoom, yzoom )
 FBIO	*ifp;
-int	x, y;
+int	xcenter, ycenter;
+int	xzoom, yzoom;
 {
 	if( qtest() )
 		sgw_inqueue(ifp);
 
-	if( x < 1 ) x = 1;
-	if( y < 1 ) y = 1;
-	if( SGI(ifp)->si_xzoom == x && SGI(ifp)->si_yzoom == y )
+	if( xzoom < 1 ) xzoom = 1;
+	if( yzoom < 1 ) yzoom = 1;
+	if( ifp->if_xcenter == xcenter && ifp->if_ycenter == ycenter
+	 && ifp->if_xzoom == xzoom && ifp->if_yzoom == yzoom )
 		return(0);
-	if( x >= ifp->if_width || y >= ifp->if_height )
+
+	if( xcenter < 0 || xcenter >= ifp->if_width )
+		return(-1);
+	if( ycenter < 0 || ycenter >= ifp->if_height )
+		return(-1);
+	if( xzoom >= ifp->if_width || yzoom >= ifp->if_height )
 		return(-1);
 
-	SGI(ifp)->si_xzoom = x;
-	SGI(ifp)->si_yzoom = y;
+	ifp->if_xcenter = xcenter;
+	ifp->if_ycenter = ycenter;
+	ifp->if_xzoom = xzoom;
+	ifp->if_yzoom = yzoom;
 
-	if( SGI(ifp)->si_xzoom > 1 || SGI(ifp)->si_yzoom > 1 )
+	if( ifp->if_xzoom > 1 || ifp->if_yzoom > 1 )
 		ifp->if_zoomflag = 1;
 	else	ifp->if_zoomflag = 0;
 
@@ -891,10 +877,10 @@ int	x, y;
 }
 
 /*
- *			S G I _ B R E A D
+ *			S G I _ R E A D
  */
 _LOCAL_ int
-sgi_bread( ifp, x, y, pixelp, count )
+sgi_read( ifp, x, y, pixelp, count )
 FBIO	*ifp;
 int	x, y;
 register RGBpixel	*pixelp;
@@ -940,7 +926,7 @@ int	count;
  *			S G I _ B W R I T E
  */
 _LOCAL_ int
-sgi_bwrite( ifp, xmem, ymem, pixelp, count )
+sgi_write( ifp, xmem, ymem, pixelp, count )
 FBIO	*ifp;
 int	xmem, ymem;
 RGBpixel *pixelp;
@@ -953,8 +939,8 @@ int	count;
 	register unsigned char *cp;
 	register unsigned char *op;
 	int ret;
-	int hfwidth = (ifp->if_width/SGI(ifp)->si_xzoom)/2;
-	int hfheight = (ifp->if_height/SGI(ifp)->si_yzoom)/2;
+	int hfwidth = (ifp->if_width/ifp->if_xzoom)/2;
+	int hfheight = (ifp->if_height/ifp->if_yzoom)/2;
 
 	if( qtest() )
 		sgw_inqueue(ifp);
@@ -965,8 +951,8 @@ int	count;
 		cursoff();		/* Cursor interferes with writing */
 
 	ret = 0;
-	xscr = (xmem - (SGI(ifp)->si_xcenter-hfwidth)) * SGI(ifp)->si_xzoom;
-	yscr = (ymem - (SGI(ifp)->si_ycenter-hfheight)) * SGI(ifp)->si_yzoom;
+	xscr = (xmem - (ifp->if_xcenter-hfwidth)) * ifp->if_xzoom;
+	yscr = (ymem - (ifp->if_ycenter-hfheight)) * ifp->if_yzoom;
 	cp = (unsigned char *)(*pixelp);
 	while( count > 0 )  {
 		if( yscr >= ifp->if_height )
@@ -980,7 +966,7 @@ int	count;
 
 		if( ifp->if_zoomflag )  {
 			register Scoord l, b, r, t;
-			int todraw = (ifp->if_width-xscr)/SGI(ifp)->si_xzoom;
+			int todraw = (ifp->if_width-xscr)/ifp->if_xzoom;
 			int tocopy;
 
 			if( todraw > scan_count )  todraw = scan_count;
@@ -988,7 +974,7 @@ int	count;
 
 			l = xscr;
 			b = yscr;
-			t = b + SGI(ifp)->si_yzoom - 1;
+			t = b + ifp->if_yzoom - 1;
 			for( i = todraw; i > 0; i-- )  {
 
 				switch( ifp->if_mode )  {
@@ -1029,7 +1015,7 @@ int	count;
 					}
 					break;
 				}
-				r = l + SGI(ifp)->si_xzoom - 1;
+				r = l + ifp->if_xzoom - 1;
 
 				/* left bottom right top: rectfs( l, b, r, t ); */
 				hole->s = GEmovepoly | GEPA_2S;
@@ -1060,9 +1046,9 @@ int	count;
 			ret += scan_count;
 			xmem = 0;
 			ymem++;
-			xscr = (hfwidth-SGI(ifp)->si_xcenter) *
-				SGI(ifp)->si_xzoom;
-			yscr += SGI(ifp)->si_yzoom;
+			xscr = (hfwidth-ifp->if_xcenter) *
+				ifp->if_xzoom;
+			yscr += ifp->if_yzoom;
 			continue;
 		}
 		/* Non-zoomed case */
@@ -1189,7 +1175,7 @@ int	count;
 		ret += scan_count;
 		xmem = 0;
 		ymem++;
-		xscr = SGI(ifp)->si_xcenter - hfwidth;
+		xscr = ifp->if_xcenter - hfwidth;
 		yscr++;
 	}
 	GEP_END(hole)->s = (0xFF<<8)|8;	/* im_last_passthru(0) */
@@ -1199,30 +1185,10 @@ int	count;
 }
 
 /*
- *			S G I _ V I E W P O R T _ S E T
- */
-_LOCAL_ int
-sgi_viewport_set( ifp, left, top, right, bottom )
-FBIO	*ifp;
-int	left, top, right, bottom;
-{
-	if( qtest() )
-		sgw_inqueue(ifp);
-#if 0
-	viewport(	(Screencoord) left,
-			(Screencoord) right,
-			(Screencoord) top,
-			(Screencoord) (bottom * fb2iris_scale)
-			);
-#endif
-	return(0);
-}
-
-/*
  *			S G I _ C M R E A D
  */
 _LOCAL_ int
-sgi_cmread( ifp, cmp )
+sgi_rmap( ifp, cmp )
 register FBIO	*ifp;
 register ColorMap	*cmp;
 {
@@ -1266,7 +1232,7 @@ register FBIO	*ifp;
  *			 S G I _ C M W R I T E
  */
 _LOCAL_ int
-sgi_cmwrite( ifp, cmp )
+sgi_wmap( ifp, cmp )
 register FBIO	*ifp;
 register ColorMap	*cmp;
 {
@@ -1304,7 +1270,7 @@ register ColorMap	*cmp;
  *			S G I _ C U R S _ S E T
  */
 _LOCAL_ int
-sgi_curs_set( ifp, bits, xbits, ybits, xorig, yorig )
+sgi_setcursor( ifp, bits, xbits, ybits, xorig, yorig )
 FBIO	*ifp;
 unsigned char	*bits;
 int		xbits, ybits;
@@ -1342,7 +1308,7 @@ int		xorig, yorig;
  *			S G I _ C M E M O R Y _ A D D R
  */
 _LOCAL_ int
-sgi_cmemory_addr( ifp, mode, x, y )
+sgi_cursor( ifp, mode, x, y )
 FBIO	*ifp;
 int	mode;
 int	x, y;
@@ -1354,20 +1320,21 @@ int	x, y;
 	if( qtest() )
 		sgw_inqueue(ifp);
 
+	fb_sim_cursor(ifp,mode,x,y);
 	SGI(ifp)->si_curs_on = mode;
 	if( ! mode )  {
 		cursoff();
 		return	0;
 	}
-	xwidth = ifp->if_width/SGI(ifp)->si_xzoom;
+	xwidth = ifp->if_width/ifp->if_xzoom;
 	i = xwidth/2;
-	xmin = SGI(ifp)->si_xcenter - i;
-	i = (ifp->if_height/2)/SGI(ifp)->si_yzoom;
-	ymin = SGI(ifp)->si_ycenter - i;
+	xmin = ifp->if_xcenter - i;
+	i = (ifp->if_height/2)/ifp->if_yzoom;
+	ymin = ifp->if_ycenter - i;
 	x -= xmin;
 	y -= ymin;
-	x *= SGI(ifp)->si_xzoom;
-	y *= SGI(ifp)->si_yzoom;
+	x *= ifp->if_xzoom;
+	y *= ifp->if_yzoom;
 	curson();
 	switch( ifp->if_mode )  {
 	case MODE_RGB:
@@ -1537,10 +1504,10 @@ int	width, height;
 		a call to "sgi_repaint" (when initializing shared memory
 		after a reboot).					*/
 	ifp->if_zoomflag = 0;
-	SGI(ifp)->si_xzoom = 1;	/* for zoom fakeout */
-	SGI(ifp)->si_yzoom = 1;	/* for zoom fakeout */
-	SGI(ifp)->si_xcenter = width/2;
-	SGI(ifp)->si_ycenter = height/2;
+	ifp->if_xzoom = 1;	/* for zoom fakeout */
+	ifp->if_yzoom = 1;	/* for zoom fakeout */
+	ifp->if_xcenter = width/2;
+	ifp->if_ycenter = height/2;
 
 	if( sgi_getmem(ifp) < 0 )
 		return(-1);
