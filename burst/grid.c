@@ -423,13 +423,15 @@ struct partition *pt_headp;
 					cp = cp->pt_forw )
 					{
 					if( OutsideAir( cp->pt_regionp ) )
+						/* Include outside air. */
 						np->pt_outhit->hit_dist =
 						cp->pt_outhit->hit_dist;
 					else
 					if( cp->pt_inhit->hit_dist -
 					    np->pt_outhit->hit_dist
-						> LOS_TOL
-						)
+						> LOS_TOL )
+						/* Include void following
+							outside air. */
 						np->pt_outhit->hit_dist =
 						cp->pt_inhit->hit_dist;
 					else
@@ -443,16 +445,15 @@ struct partition *pt_headp;
 #if DEBUG_GRID
 			rt_log( "\tmerging inside airs\n" );
 #endif
-			for( cp = np->pt_forw; cp != pt_headp;
+			for(	cp = np->pt_forw;
+				cp != pt_headp;
 				cp = cp->pt_forw )
 				{
 				if(	InsideAir( cp->pt_regionp )
-				    &&	SameAir( np->pt_regionp,
-						 cp->pt_regionp )
+				    &&	SameAir(np->pt_regionp, cp->pt_regionp)
 				    &&	cp->pt_inhit->hit_dist -
 						np->pt_outhit->hit_dist
-					<= LOS_TOL
-					)
+					<= LOS_TOL )
 					np->pt_outhit->hit_dist =
 						cp->pt_outhit->hit_dist;
 				else
@@ -464,16 +465,31 @@ struct partition *pt_headp;
 			that is if it is the first thing hit. */
 		if( pp->pt_back == pt_headp && InsideAir( regp ) )
 			{	fastf_t	slos;
+			/* If adjacent partitions are the same air, extend
+				the first on to include them. */
 #if DEBUG_GRID
 			rt_log( "\tphantom armor before internal air\n" );
 #endif
+			for( cp = np; cp != pt_headp; cp = cp->pt_forw )
+				{
+				if(	InsideAir( cp->pt_regionp )
+				    &&	SameAir( regp, cp->pt_regionp )
+				    &&	cp->pt_inhit->hit_dist -
+						pp->pt_outhit->hit_dist
+					<= LOS_TOL )
+					pp->pt_outhit->hit_dist =
+						cp->pt_outhit->hit_dist;
+				else
+					break;
+				
+				}
 
 			slos = pp->pt_outhit->hit_dist - pp->pt_inhit->hit_dist;
-			prntPhantom( pp->pt_inhit, regp->reg_aircode, slos );
+			prntPhantom( pp->pt_inhit, (int) regp->reg_aircode,
+					slos );
 			}				
 		else
-		/* If we have a component, output it. */
-		if( ! Air( regp ) )
+		if( ! Air( regp ) ) /* If we have a component, output it. */
 			{
 #if DEBUG_GRID
 			rt_log( "\twe have a component\n" );
@@ -487,8 +503,14 @@ struct partition *pt_headp;
 			if( voidflag )
 				{
 #if DEBUG_GRID
-				rt_log( "\t\tthere is a void, so outputting 01 air\n" );
+				rt_log( "\t\tthere is a void, %s\n",
+					"so outputting 01 air" );
 #endif
+				if(	bp == PT_NULL && ! reqburstair
+				    &&	findIdents( regp->reg_regionid,
+							&armorids ) )
+					/* Bursting on armor/void (ouchh). */
+					bp = pp;
 				prntSeg( ap, pp, OUTSIDE_AIR );
 				}
 			else
@@ -503,8 +525,9 @@ struct partition *pt_headp;
 				if(	bp == PT_NULL && bdist <= 0.0
 				    &&	findIdents( regp->reg_regionid,
 							&armorids )
-				    &&	findIdents( nregp->reg_aircode,
-							&airids )
+				    && ( ! reqburstair
+				     ||	findIdents( nregp->reg_aircode,
+							&airids ))
 					)
 					bp = pp; /* register interior burst */
 				prntSeg( ap, pp, nregp->reg_aircode );
@@ -575,12 +598,13 @@ struct partition *pt_headp;
 			    &&	Air( nregp )
 			    &&	DiffAir( nregp, regp )
 				)
-				{ fastf_t slos = np->pt_outhit->hit_dist -
+				{	fastf_t slos = np->pt_outhit->hit_dist -
 						 np->pt_inhit->hit_dist;
 #if DEBUG_GRID
 				rt_log( "\t\tdiffering airs are adjacent\n" );
 #endif
-				prntPhantom( np->pt_inhit, nregp->reg_aircode,
+				prntPhantom( np->pt_inhit,
+						(int) nregp->reg_aircode,
 						slos );
 				}
 			}

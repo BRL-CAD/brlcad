@@ -565,12 +565,22 @@ HmItem *itemp;
 	{	static Input input[] =
 			{
 			{ "Burst along shotline", "n", "%d", "y or n" },
+			{ "Require burst air", "y", "%d", "y or n" }
 			};
 		register Input *ip = input;
 	GetBool( shotburst, ip );
-	(void) sprintf( scrbuf, "%s\t\t%s",
-			itemp != NULL ? itemp->text : cmdname,
-			shotburst == 1 ? "yes" : "no" );
+	if( shotburst )
+		{
+		GetBool( reqburstair, ip );
+		(void) sprintf( scrbuf, "%s\t\t%s %s",
+				itemp != NULL ? itemp->text : cmdname,
+				shotburst ? "yes" : "no",
+				reqburstair ? "yes" : "no" );
+		}
+	else
+		(void) sprintf( scrbuf, "%s\t\t%s",
+				itemp != NULL ? itemp->text : cmdname,
+				shotburst ? "yes" : "no" );
 	logCmd( scrbuf );
 	
 	if( shotburst )

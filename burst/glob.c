@@ -49,6 +49,7 @@ bool fatalerror;		/* must abort ray tracing */
 bool groundburst = false;	/* if true, burst on imaginary ground */
 bool reportoverlaps = DFL_OVERLAPS;
 				/* if true, overlaps are reported */
+bool reqburstair = true;	/* if true, burst air required for shotburst */
 bool shotburst = false;		/* if true, burst along shotline */
 bool tty = true;		/* if true, full screen display is used */
 bool userinterrupt;		/* has the ray trace been interrupted */

@@ -190,7 +190,7 @@ prntAspectInit()
 	projarea *= projarea;
 	if(	outfile[0] != NUL
 	    &&	fprintf(outfp,
-			"%c % 8.4f % 8.4f % 4.1f % 10.2f %-6s\n",
+			"%c % 8.4f % 8.4f % 5.2f % 10.2f %-6s% 9.6f\n",
 			PB_ASPECT_INIT,
 			viewazim*DEGRAD, /* attack azimuth in degrees */
 			viewelev*DEGRAD, /* attack elevation in degrees */
@@ -200,7 +200,8 @@ prntAspectInit()
 			units == U_FEET ?        "feet" :
 			units == U_MILLIMETERS ? "mm" :
 			units == U_CENTIMETERS ? "cm" :
-			units == U_METERS ?      "meters" : "units?"
+			units == U_METERS ?      "meters" : "units?",
+			raysolidangle
 			) < 0
 		)
 		{
@@ -239,6 +240,9 @@ prntAspectInit()
 
 	Burst Point Library and Shotline file: information about shotline.
 	Ref. Figure 20., Line Number 2 and Figure 19., Line Number 2 of ICD.
+
+	NOTE: field width of first 2 floats compatible with PB_RAY_HEADER
+	record.
  */
 void
 prntCellIdent( ap )
@@ -246,7 +250,7 @@ register struct application *ap;
 	{
 	if(	outfile[0] != NUL
 	    &&	fprintf(outfp,
-			"%c % 8.2f % 8.2f\n",
+			"%c % 8.3f % 8.3f\n",
 			PB_CELL_IDENT,
 			ap->a_uvec[X]*unitconv,
 			 	/* horizontal coordinate of shotline (Y') */
@@ -261,7 +265,7 @@ register struct application *ap;
 		}
 	if(	shotlnfile[0] != NUL
 	    &&	fprintf(shotlnfp,
-			"%c % 8.2f % 8.2f\n",
+			"%c % 8.3f % 8.3f\n",
 			PS_CELL_IDENT,
 			ap->a_uvec[X]*unitconv,
 			 	/* horizontal coordinate of shotline (Y') */
@@ -289,7 +293,8 @@ prntSeg( ap, cpp, space )
 register struct application *ap;
 register struct partition *cpp;		/* component partition */
 int space;
-	{	fastf_t cosobliquity;	/* cosine of obliquity at entry */
+	{	fastf_t icosobliquity;	/* cosine of obliquity at entry */
+		fastf_t ocosobliquity;	/* cosine of obliquity at exit */
 		fastf_t	cosrotation;	/* cosine of rotation angle */
 		fastf_t	entryangle;	/* obliquity angle at entry */
 		fastf_t exitangle;	/* obliquity angle at exit */
@@ -299,12 +304,13 @@ int space;
 		fastf_t sinfbangle;	/* sine of fall back angle */
 		register struct hit *ihitp;
 		register struct hit *ohitp;
-		register struct soltab *stp;
+		register struct soltab *istp;
+		register struct soltab *ostp;
 
 	/* fill in entry hit point and normal */
-	stp = cpp->pt_inseg->seg_stp;
+	istp = cpp->pt_inseg->seg_stp;
 	ihitp = cpp->pt_inhit;
-	RT_HIT_NORM( ihitp, stp, &(ap->a_ray) );
+	RT_HIT_NORM( ihitp, istp, &(ap->a_ray) );
 	
 	/* check for flipped normal and fix */
 	if( cpp->pt_inflip )
@@ -314,24 +320,53 @@ int space;
 		}
 fixed_entry_normal:
 	/* This *should* give negative of desired result, but make sure. */
-	cosobliquity = Dot( ap->a_ray.r_dir, ihitp->hit_normal );
-	if( cosobliquity < 0.0 )
-		cosobliquity = -cosobliquity;
+	icosobliquity = Dot( ap->a_ray.r_dir, ihitp->hit_normal );
+	if( icosobliquity < 0.0 )
+		icosobliquity = -icosobliquity;
 	else 
 		{ 
 #ifdef DEBUG 
 		rt_log( "prntSeg: fixed flipped entry normal.\n" );
 		rt_log( "cosine of angle of obliquity is %12.9f\n",
-			cosobliquity );
+			icosobliquity );
 		rt_log( "\tregion name '%s' solid name '%s'\n",
 			cpp->pt_regionp->reg_name,
-			stp->st_name );
+			istp->st_name );
 #endif
 		ScaleVec( ihitp->hit_normal, -1.0 );
 		goto fixed_entry_normal;
 		}
-	cosrotation = Dot( ihitp->hit_normal, xaxis );
-	sinfbangle = Dot( ihitp->hit_normal, zaxis );
+	/* fill in exit hit point and normal */
+	ostp = cpp->pt_outseg->seg_stp;
+	ohitp = cpp->pt_outhit;
+	RT_HIT_NORM( ohitp, ostp, &(ap->a_ray) );
+	
+	/* check for flipped normal and fix */
+	if( cpp->pt_outflip )
+		{
+		ScaleVec( ohitp->hit_normal, -1.0 );
+		cpp->pt_outflip = 0;
+		}
+fixed_exit_normal:
+	/* This *should* give negative of desired result, but make sure. */
+	ocosobliquity = Dot( ap->a_ray.r_dir, ohitp->hit_normal );
+	if( ocosobliquity < 0.0 )
+		ocosobliquity = -ocosobliquity;
+	else 
+		{ 
+#ifdef DEBUG 
+		rt_log( "prntSeg: fixed flipped exit normal.\n" );
+		rt_log( "cosine of angle of obliquity is %12.9f\n",
+			ocosobliquity );
+		rt_log( "\tregion name '%s' solid name '%s'\n",
+			cpp->pt_regionp->reg_name,
+			ostp->st_name );
+#endif
+		ScaleVec( ohitp->hit_normal, -1.0 );
+		goto fixed_exit_normal;
+		}
+	cosrotation = Dot( ohitp->hit_normal, xaxis );
+	sinfbangle = Dot( ohitp->hit_normal, zaxis );
 	rotangle = AproxEq( cosrotation, 1.0, COS_TOL ) ?
 			0.0 : acos( cosrotation ) * DEGRAD;
 	los = (cpp->pt_outhit->hit_dist-ihitp->hit_dist)*unitconv;
@@ -350,9 +385,9 @@ fixed_entry_normal:
 			cpp->pt_regionp->reg_regionid,
 					/* component code number */
 			space,		/* space code */
-			sinfbangle,	/* sine of fallback angle */
-			rotangle,	/* rotation angle in degrees */
-			cosobliquity	/* cosine of obliquity angle at entry */
+			sinfbangle,	/* sine of fallback angle at exit */
+			rotangle,	/* rotation angle in degrees at exit */
+			icosobliquity	/* cosine of obliquity angle at entry */
 			) < 0
 		)
 		{
@@ -362,10 +397,10 @@ fixed_entry_normal:
 		}
 	if( shotlnfile[0] == NUL )
 		return;
-	entryangle = AproxEq( cosobliquity, 1.0, COS_TOL ) ?
-			0.0 : acos( cosobliquity ) * DEGRAD;
+	entryangle = AproxEq( icosobliquity, 1.0, COS_TOL ) ?
+			0.0 : acos( icosobliquity ) * DEGRAD;
 	if(	(normthickness =
-		 getNormThickness( ap, cpp, cosobliquity )) <= 0.0
+		 getNormThickness( ap, cpp, icosobliquity )) <= 0.0
 	    &&	fatalerror )
 		{
 		rt_log( "Couldn't compute normal thickness.\n" );
@@ -375,47 +410,18 @@ fixed_entry_normal:
 			);
 		rt_log( "\tregion name '%s' solid name '%s'\n",
 			cpp->pt_regionp->reg_name,
-			stp->st_name );
+			istp->st_name );
 		return;
 		}
-	/* fill in exit hit point and normal */
-	stp = cpp->pt_outseg->seg_stp;
-	ohitp = cpp->pt_outhit;
-	RT_HIT_NORM( ohitp, stp, &(ap->a_ray) );
-	
-	/* check for flipped normal and fix */
-	if( cpp->pt_outflip )
-		{
-		ScaleVec( ohitp->hit_normal, -1.0 );
-		cpp->pt_outflip = 0;
-		}
-fixed_exit_normal:
-	/* This *should* give negative of desired result, but make sure. */
-	cosobliquity = Dot( ap->a_ray.r_dir, ohitp->hit_normal );
-	if( cosobliquity < 0.0 )
-		cosobliquity = -cosobliquity;
-	else 
-		{ 
-#ifdef DEBUG 
-		rt_log( "prntSeg: fixed flipped exit normal.\n" );
-		rt_log( "cosine of angle of obliquity is %12.9f\n",
-			cosobliquity );
-		rt_log( "\tregion name '%s' solid name '%s'\n",
-			cpp->pt_regionp->reg_name,
-			stp->st_name );
-#endif
-		ScaleVec( ohitp->hit_normal, -1.0 );
-		goto fixed_exit_normal;
-		}
-	exitangle = AproxEq( cosobliquity, 1.0, COS_TOL ) ?
-			0.0 : acos( cosobliquity ) * DEGRAD;
+	exitangle = AproxEq( ocosobliquity, 1.0, COS_TOL ) ?
+			0.0 : acos( ocosobliquity ) * DEGRAD;
 	if( fprintf( shotlnfp,
 	       "%c % 8.2f % 7.3f % 7.3f %4d % 8.2f % 8.2f %2d % 7.2f % 7.2f\n",
 			PS_SHOT_INTERSECT,
 			(standoff-ihitp->hit_dist)*unitconv,
 					/* X'-coordinate of intersection */
-			sinfbangle,	/* sine of fallback angle */
-			rotangle,	/* rotation angle in degrees */
+			sinfbangle,	/* sine of fallback angle at exit */
+			rotangle,	/* rotation angle in degrees at exit */
 			cpp->pt_regionp->reg_regionid,
 					/* component code number */
 			normthickness*unitconv,
@@ -440,6 +446,9 @@ fixed_exit_normal:
 	Burst Point Library: information about burst ray.  All angles are
 	WRT the shotline coordinate system, represented by X', Y' and Z'.
 	Ref. Figure 20., Line Number 19 of ICD.
+	
+	NOTE: field width of first 2 floats compatible with PB_CELL_IDENT
+	record.
  */
 void
 prntRayHeader( raydir, shotdir, rayno )
@@ -457,7 +466,7 @@ unsigned rayno;		/* ray number for this burst point */
 	azim = atan2( cosyr, cosxr );
 	sinelev = Dot( gridver, raydir );
 	if(	fprintf( outfp,
-			"%c % 6.3f % 6.3f % 6u\n",
+			"%c % 8.3f % 8.3f % 6u\n",
 			PB_RAY_HEADER,
 			azim,   /* ray azimuth angle WRT shotline (radians). */
 			sinelev, /* sine of ray elevation angle WRT shotline. */

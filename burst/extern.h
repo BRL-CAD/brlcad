@@ -127,6 +127,7 @@ extern bool dithercells;
 extern bool fatalerror;
 extern bool groundburst;
 extern bool reportoverlaps;
+extern bool reqburstair;
 extern bool shotburst;
 extern bool tty;
 extern bool userinterrupt;
