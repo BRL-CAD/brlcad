@@ -1490,7 +1490,7 @@ register int	ct;
 
 	for( i = 0, column = 0; i < ct; i++ )
 	{
-		if( column + strlen( list[i] ) > MAX_COL )
+		if( column + (int)strlen( list[i] ) > MAX_COL )
 		{
 			SEND_LN();
 			i--;
