@@ -2141,6 +2141,11 @@ struct rt_tol		*tol;
 				fu = nmg_find_fu_of_vu( vu );
 				NMG_CK_FACEUSE( fu );
 
+				/* don't need vertexuse normals for faces that are really flat */
+				if( fu == fu_base || fu == fu_base->fumate_p ||
+				    fu == fu_top  || fu == fu_top->fumate_p )
+						continue;
+
 				if( fu->orientation == OT_SAME )
 					nmg_vertexuse_nv( vu , normal );
 				else if( fu->orientation == OT_OPPOSITE )
@@ -2156,41 +2161,36 @@ struct rt_tol		*tol;
 		rt_free( (char *)pts[i] , "rt_tgc_tess: pts[i]" );
 	rt_free( (char *)pts , "rt_tgc_tess: pts" );
 
-	/* Normals for vertexuses in base and top faces are wrong, fix them here */
+	/* mark real edges for top and bottom faces */
 	for( i=0 ; i<2 ; i++ )
 	{
-		struct loopuse		*lu;
-		struct edgeuse		*eu;
+		struct loopuse *lu;
 
 		if( i == 0 )
-			fu = fu_top;
-		else
 			fu = fu_base;
+		else
+			fu = fu_top;
 
 		NMG_CK_FACEUSE( fu );
 
-		NMG_GET_FU_NORMAL( normal , fu );
-		VREVERSE( rev_norm , normal );
-		lu = RT_LIST_FIRST( loopuse , &fu->lu_hd );
-		NMG_CK_LOOPUSE( lu );
-
-		for( RT_LIST_FOR( eu , edgeuse , &lu->down_hd ) )
+		for( RT_LIST_FOR( lu , loopuse , &fu->lu_hd ) )
 		{
-			struct vertexuse *vu;
+			struct edgeuse *eu;
 
-			NMG_CK_EDGEUSE( eu );
+			NMG_CK_LOOPUSE( lu );
 
-			vu = eu->vu_p;
-			NMG_CK_VERTEXUSE( vu );
+			if( RT_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
+				continue;
 
-			/* OT_SAME vertexuse gets same normal as OT_SAME faceuse */
-			nmg_vertexuse_nv( vu , normal );
+			for( RT_LIST_FOR( eu , edgeuse , &lu->down_hd ) )
+			{
+				struct edge *e;
 
-			vu = eu->eumate_p->vu_p;
-			NMG_CK_VERTEXUSE( vu );
-
-			/* OT_OPPOSITE use gets reversed normal */
-			nmg_vertexuse_nv( vu , rev_norm );
+				NMG_CK_EDGEUSE( eu );
+				e = eu->e_p;
+				NMG_CK_EDGE( e );
+				e->is_real = 1;
+			}
 		}
 	}
 
