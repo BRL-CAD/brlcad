@@ -315,7 +315,9 @@ mk_comb(
 			case 'V':
 				comb->is_fastgen = REGION_FASTGEN_VOLUME;
 				break;
+			case 'R':
 			case 1:
+				/* Regular non-FASTGEN Region */
 				break;
 			default:
 				bu_log("mk_comb(%s) unknown region_kind=%d (%c), assuming normal non-FASTGEN\n",
