@@ -2285,8 +2285,9 @@ struct rt_tol *tol;
 		}
 	}
 
-	/* Mark first faceuse with shell number */
+	/* Mark first faceuse and mate with shell number */
 	NMG_INDEX_ASSIGN( flags , fu , shell_no );
+	NMG_INDEX_ASSIGN( flags , fu->fumate_p , shell_no );
 
 	/* now pop edgeuse of the stack and visit faces radial to edgeuse */
 	while( (eu1 = nmg_pop_eu( &stack )) != (struct edgeuse *)NULL )
