@@ -1532,7 +1532,7 @@ CONST unsigned char	*basep;	/* base of whole import record */
 			fg->pt_type = rt_glong( d->pt_type );
 			/* Transform ctl_points by 'mat' */
 			fg->ctl_points = rt_nmg_import_fastf( basep, ecnt,
-				rt_glong( d->ctl_points ), mat,
+				rt_glong( d->ctl_points ), (matp_t)mat,
 				fg->s_size[0] * fg->s_size[1],
 				fg->pt_type );
 		}
@@ -1695,7 +1695,7 @@ CONST unsigned char	*basep;	/* base of whole import record */
 				/* XYZ coords on planar face DO get xformed */
 				eg->ctl_points = rt_nmg_import_fastf( basep,
 					ecnt,
-					rt_glong( d->ctl_points ), mat,
+					rt_glong( d->ctl_points ), (matp_t)mat,
 					eg->c_size, eg->pt_type );
 			}
 		}
