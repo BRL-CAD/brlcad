@@ -39,7 +39,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #define	NUM_YOFF	(3*char_width)	/* numbers offset from line */
 #define	TITLE_YOFF	(5*char_width)	/* title offset from line */
 
-
+void
 tp_3axis( fp, string, origin, rot, length, ccw,
 	ndigits, label_start, label_incr, tick_separation, char_width )
 FILE	*fp;
@@ -157,6 +157,7 @@ double	char_width;		/* character scale (size) */
 	}
 }
 
+void
 F3AXIS(fp, string, x, y, z, length, theta, ccw,
 	ndigits, label_start, label_incr, tick_separation, char_width )
 FILE		**fp;

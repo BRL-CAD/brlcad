@@ -35,6 +35,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
  *  For markers, use tp_mlist(), below.
  *  This "C" interface expects arrays of DOUBLES.
  */
+void
 tp_2list( fp, x, y, npoints )
 register FILE	*fp;
 register double	*x, *y;			/* arrays of points */
@@ -48,6 +49,7 @@ register int	npoints;
 		pd_cont( fp, *x++, *y++ );
 }
 
+void
 F2LIST( fpp, x, y, n )
 FILE		**fpp;
 register float	*x, *y;
@@ -67,6 +69,7 @@ int		*n;
 /*
  *			T P _ 3 L I S T
  */
+void
 tp_3list( fp, x, y, z, npoints )
 FILE		*fp;
 register double	*x, *y, *z;
@@ -80,6 +83,7 @@ register int	npoints;
 		pd_3cont( fp, *x++, *y++, *z++ );
 }
 
+void
 F3LIST( fpp, x, y, z, n )
 FILE		**fpp;
 register float	*x, *y, *z;
@@ -118,6 +122,7 @@ int		*n;
  *	2	Draw connecting lines only.
  *	3	Draw line and marks
  */
+void
 tp_2mlist( fp, x, y, npoints, flag, mark, interval, size )
 FILE		*fp;
 register double	*x, *y;			/* arrays of points */
@@ -152,6 +157,7 @@ double		size;			/* marker size */
 /*
  *  This FORTRAN interface expects arrays of REALs (single precision).
  */
+void
 F2MLST( fp, x, y, np, flag, mark, interval, size )
 FILE	*fp;
 float	*x, *y;
