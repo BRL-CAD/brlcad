@@ -579,7 +579,7 @@ typedef long	bitv_t;		/* largest integer type */
 /*
  *  Some very common BSD --> SYSV conversion aids
  */
-#if defined(SYSV) && !defined(bzero)
+#if defined(SYSV) && !defined(bzero) && !defined(HAVE_BZERO)
 #	define bzero(str,n)		memset( str, '\0', n )
 #	define bcopy(from,to,count)	memcpy( to, from, count )
 #endif
