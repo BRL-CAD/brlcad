@@ -253,7 +253,9 @@ and thus is ignored for the purposes of positioning the name count.
 
 <DD>This command is used to handle outstanding events and to
 refresh the <I>mged</I> display(s). This may be useful in certain Tcl scripts
-to maintain interactivity while waiting for user input.
+to maintain interactivity while waiting for user input. Note that if
+<I>non_blocking</I> is negative, outstanding events will not be processed.
+That is, only the <I>mged</I> display(s) will be refreshed.
 
 	<DL>
 	<DT><big>Examples:</big></DT>
