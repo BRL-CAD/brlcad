@@ -1,27 +1,20 @@
 #!/bin/sh
 #
-# This is the initial build app
+# b u i l d
+# 
+# This is the BRL-CAD build test script.  It take a given source of brlcad
+# and builds it.
 #
-
+###
 # Source function library
 . `dirname $0`/library
 
-initializeVariable PACKAGE_NAME brlcad
-# if regress_dir was not set, default to the package that this script is included with
-if [ "x$REGRESS_DIR" = "x" ] ; then
-    if [ -d "$LPWD/../../$PACKAGE_NAME" ] ; then
-        initializeVariable REGRESS_DIR "$LPWD/../.."
-    elif [ -d "$LPWD/../$PACKAGE_NAME" ] ; then
-        initializeVariable REGRESS_DIR "$LPWD/.."
-    elif [ -d "$LPWD/$PACKAGE_NAME" ] ; then
-        initializeVariable REGRESS_DIR "$LPWD"
-    else
-        bomb "Unable to locate $PACKAGE_NAME"
-    fi
+# use machinetype.sh's naming convention instead of the default name we get
+# from uname
+if [ -f "${REGRESS_DIR}/${PACKAGE_NAME}/sh/machinetype.sh" ] ; then
+    mt="`${REGRESS_DIR}/${PACKAGE_NAME}/sh/machinetype.sh > /dev/null 2>&1`"
+    [ $? = 0 ] && ARCH="$mt"
 fi
-__ARCH="$ARCH"
-initializeVariable ARCH `${REGRESS_DIR}/brlcad/sh/machinetype.sh`
-initializeVariable ARCH "$__ARCH"
 initializeVariable BRLCAD_ROOT "${REGRESS_DIR}/${PACKAGE_NAME}.${ARCH}"
 
 
@@ -57,12 +50,6 @@ EOF
     releaseLock $REGRESS_DIR/$PACKAGE_NAME/build-$ARCH
 }
 
-stop ( ) {
-    bomb "stop unimplemented"
-    killall build
-    killall sh
-    killall cake
-}
 
 status ( ) {
     if [ ! -f $REGRESS_DIR/build.log ] ; then
@@ -113,23 +100,6 @@ status ( ) {
 }
 
 
-case "$1" in
-    start )
-        start
-        ;;
-    stop )
-        stop
-        ;;
-    restart )
-        stop
-        start
-        ;;
-    status )
-        status
-        ;;
-    * )
-        log "Usage: $0 {start|stop|restart|status}"
-        exit 1
-esac
+regress $1
 
 exit $?

@@ -1,28 +1,16 @@
 #!/bin/sh
 #
-# This is the initial spdi test
+# s p d i
 #
-
+# This test generates a 5x5 specular and diffuse grid of sphere primitives.
+# The resultings image that is raytraced gets compared against a reference
+# image.
+#
+###
 # Source function library
 . `dirname $0`/library
 
-initializeVariable PACKAGE_NAME brlcad
-# if regress_dir was not set, default to the package that this script is included with
-if [ "x$REGRESS_DIR" = "x" ] ; then
-    if [ -d "$LPWD/../../$PACKAGE_NAME" ] ; then
-        initializeVariable REGRESS_DIR "$LPWD/../.."
-    elif [ -d "$LPWD/../$PACKAGE_NAME" ] ; then
-        initializeVariable REGRESS_DIR "$LPWD/.."
-    elif [ -d "$LPWD/$PACKAGE_NAME" ] ; then
-        initializeVariable REGRESS_DIR "$LPWD"
-    else
-        bomb "Unable to locate $PACKAGE_NAME"
-    fi
-fi
-__ARCH="$ARCH"
-initializeVariable ARCH `${REGRESS_DIR}/brlcad/sh/machinetype.sh`
-initializeVariable ARCH "$__ARCH"
-initializeVariable BRLCAD_ROOT "${REGRESS_DIR}/${PACKAGE_NAME}.${ARCH}"
+NAME=SpecularDiffuse
 
 
 start ( ) {
@@ -30,7 +18,7 @@ start ( ) {
 BIN=$BRLCAD_ROOT/bin
 export BIN
 
-rm -f spdi.g spdi.log spdi spdi.pix
+rm -f spdi.g spdi.rt spdi.log spdi.pix
 
 $BIN/mged -c spdi.g << EOF
 
@@ -72,28 +60,22 @@ Z
 e all.g
 press top
 size 3200
-saveview spdi.view
+saveview spdi.rt
 q
 EOF
 
-mv spdi.view spdi.orig
-sed "s,^rt,$BIN/rt," < spdi.orig > spdi.view
+mv spdi.rt spdi.orig
+sed "s,^rt,$BIN/rt," < spdi.orig > spdi.rt
 rm spdi.orig
-chmod 775 spdi.view
+chmod 775 spdi.rt
 echo "rendering..."
-./spdi.view
+./spdi.rt
 
 }
 
-stop ( ) {
-    bomb "stop unimplemented"
-    killall build
-    killall sh
-    killall cake
-}
 
 status ( ) {
-    if [ ! -f $REGRESS_DIR/spdi.view ] || [ ! -f $REGRESS_DIR/spdi.g ] ; then
+    if [ ! -f $REGRESS_DIR/spdi.rt ] || [ ! -f $REGRESS_DIR/spdi.g ] ; then
         warn "mged failed"
         return 1
     fi
@@ -101,24 +83,10 @@ status ( ) {
     return 0
 }
 
+stop ( ) {
+    log "stopping this damn bitch"
+}
 
-case "$1" in
-    start )
-        start
-        ;;
-    stop )
-        stop
-        ;;
-    restart )
-        stop
-        start
-        ;;
-    status )
-        status
-        ;;
-    * )
-        log "Usage: $0 {start|stop|restart|status}"
-        exit 1
-esac
+regress $1
 
 exit $?

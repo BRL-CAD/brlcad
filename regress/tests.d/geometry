@@ -16,28 +16,6 @@
 # this is not necessary, but including anyways for now
 initializeVariable TEST "geometry"
 
-# initialize some variables, if not already set, to expected brlcadish values
-initializeVariable PACKAGE_NAME brlcad
-if [ "x$REGRESS_DIR" = "x" ] ; then
-    if [ -d "$LPWD/../../$PACKAGE_NAME" ] ; then
-        initializeVariable REGRESS_DIR "$LPWD/../.."
-    elif [ -d "$LPWD/../$PACKAGE_NAME" ] ; then
-        initializeVariable REGRESS_DIR "$LPWD/.."
-    elif [ -d "$LPWD/$PACKAGE_NAME" ] ; then
-        initializeVariable REGRESS_DIR "$LPWD"
-    else
-        warn "Unable to locate $PACKAGE_NAME (set REGRESS_DIR), using $LPWD anyways"
-        initializeVariable REGRESS_DIR "$LPWD"
-    fi
-fi
-__ARCH="$ARCH"
-[ -x "${REGRESS_DIR}/brlcad/sh/machinetype.sh" ] && initializeVariable ARCH `${REGRESS_DIR}/brlcad/sh/machinetype.sh`
-initializeVariable ARCH "$__ARCH"
-__CADROOT="$BRLCAD_ROOT"
-[ -d "${REGRESS_DIR}/${PACKAGE_NAME}.${ARCH}" ] && initializeVariable BRLCAD_ROOT "${REGRESS_DIR}/${PACKAGE_NAME}.${ARCH}"
-initializeVariable BRLCAD_ROOT "$__CADROOT"
-
-
 start ( ) {
     
 #
@@ -400,11 +378,18 @@ for PRIM in $PRIMITIVES ; do
                 dd of=${TEST}.tmp.bw bs=1024 count=1 >/dev/null 2>&1
 	    cat ${TEST}.tmp.bw >> ${TEST}.vol.bw
 
-            if expr "`ls -s ${TEST}.vol.bw | awk '{print $1}'" = "0" ; then
+            if expr "`ls -s ${TEST}.vol.bw | awk '{print $1}'`" = "0" ; then
                 warn "failed to create vol primitive volume map datafile properly"
             fi
             rm ${TEST}.tmp.bw
 	fi
+
+
+        # make sure mged will run
+        mged -c > /dev/null 2>&1 <<EOF
+q
+EOF
+[ $? != 0 ] && bomb "MGED fails to run"
 
 
         #
@@ -631,43 +616,16 @@ done
     return 0
 }
 
-stopTest ( ) {
-    bomb "stop unimplemented"
-}
-
-status ( ) {
-    bomb "status unimplemented"
-}
 
 clean ( ) {
     if [ ! "x$TEST" = "x" ] ; then
-        rm -f ${TEST}.*
+        rm -f ${TEST}.* > /dev/null 2>&1
     fi
 
     return 0
 }
 
-case "$1" in
-    start )
-        start
-        ;;
-    stop )
-        stopTest
-        ;;
-    restart )
-        stopTest
-        start
-        ;;
-    status )
-        status
-        ;;
-    clean )
-        clean
-        ;;
-    * )
-        log "Usage: $0 {start|stop|restart|status|clean}"
-        exit 1
-esac
+
+regress $1
 
 exit $?
-
