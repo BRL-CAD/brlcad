@@ -157,21 +157,17 @@ int		width, height;
 		char	ourfile[16];
 
 	/* Only 512 and 1024 opens are available */
-	if( width > 512 )
-		width = 1024;
-	else if( width < 512 )
-		width = 512;
-	if( height > 512 )
-		height = 1024;
-	else if( height < 512 )
-		height = 512;
+	if( width > 512 || height > 512 )
+		width = height = 1024;
+	else
+		width = height = 512;
 
 	/* /dev/ik0l */
 	/* 012345678 */
 	if( strlen( file ) > 12 )
 		return -1;
 	sprintf( ourfile, "%s0l", file );
-	if( width > 512 )
+	if( width > 512 || height > 512 )
 		ourfile[8] = 'h';
 	else
 		ourfile[8] = 'l';
@@ -336,13 +332,20 @@ int	count;
 {
 	register char *out, *in;
 	register int i;
-	long bytes = count * (long) sizeof(IKONASpixel);
+	long ikbytes = count * (long) sizeof(IKONASpixel);
 	long todo;
+	int toread;
+	int width;
+	int scanlines;
+	int maxikdma;
 
 	if( count == 1 )
 		return adage_read_pio_pixel( ifp, x, y, pixelp );
 
-	y = ifp->if_width-1-y;		/* 1st quadrant */
+	scanlines = (count+ifp->if_width-1) / ifp->if_width;	/* ceil */
+	width = count - (scanlines-1) * ifp->if_width;	/* residue on last line */
+
+	y = ifp->if_width-y-scanlines;		/* 1st quadrant */
 	if( lseek(	ifp->if_fd,
 			(((long) y * (long) ifp->if_width) + (long) x)
 			* (long) sizeof(IKONASpixel),
@@ -354,21 +357,32 @@ int	count;
 			* (long) sizeof(IKONASpixel) );
 		return	-1;
 	}
-	while( bytes > 0 ) {
-		todo = (bytes > ADAGE_DMA_BYTES ? ADAGE_DMA_BYTES : bytes);
-		if( read( ifp->if_fd, _pixbuf, todo ) != todo )
+	out = (char *)&(pixelp[(scanlines-1) * ifp->if_width][RED]);
+	maxikdma =  ADAGE_DMA_BYTES /
+		(ifp->if_width*sizeof(IKONASpixel)) *
+		(ifp->if_width*sizeof(IKONASpixel)); /* even # of scanlines */
+	while( ikbytes > 0 ) {
+		if( ikbytes > maxikdma )
+			todo = maxikdma;
+		else
+			todo = ikbytes;
+		toread = todo;
+		if( read( ifp->if_fd, _pixbuf, toread ) != toread )
 			return	-1;
 
 		in = _pixbuf;
-		out = (char *)pixelp;
-		for( i = todo/sizeof(IKONASpixel); i > 0; i-- ) {
-			*out++ = *in;
-			*out++ = in[1];
-			*out++ = in[2];
-			in += sizeof(IKONASpixel);
-		}
-		bytes -= todo;
-		pixelp += todo / sizeof(IKONASpixel);
+		do {
+			for( i = width; i > 0; i-- ) {
+				*out++ = *in;
+				*out++ = in[1];
+				*out++ = in[2];
+				in += sizeof(IKONASpixel);
+			}
+			todo -= width * sizeof(IKONASpixel);
+			out -= (width + ifp->if_width) * sizeof(RGBpixel);
+			width = ifp->if_width;
+		} while( todo > 0 );
+		ikbytes -= toread;
 	}
 	return	count;
 }
@@ -382,13 +396,20 @@ long	count;
 {
 	register char *out, *in;
 	register int i;
-	register long	bytes = count * (long) sizeof(IKONASpixel);
+	register long	ikbytes = count * (long) sizeof(IKONASpixel);
 	register int	todo;
+	int towrite;
+	int width;
+	int scanlines;
+	int maxikdma;
 
 	if( count == 1 )
 		return adage_write_pio_pixel( ifp, x, y, pixelp );
 
-	y = ifp->if_width-1-y;		/* 1st quadrant */
+	scanlines = (count+ifp->if_width-1) / ifp->if_width;	/* ceil */
+	width = count - (scanlines-1) * ifp->if_width;	/* residue on last line */
+
+	y = ifp->if_height-y-scanlines;	/* 1st quadrant */
 	if( lseek(	ifp->if_fd,
 			((long) y * (long) ifp->if_width + (long) x)
 			* (long) sizeof(IKONASpixel),
@@ -400,21 +421,32 @@ long	count;
 			* (long) sizeof(IKONASpixel) );
 		return	-1;
 	}
-	while( bytes > 0 ) {
-		todo = (bytes > ADAGE_DMA_BYTES ? ADAGE_DMA_BYTES : bytes);
-		in = (char *)pixelp;
+	in = (char *)&(pixelp[(scanlines-1) * ifp->if_width][RED]);
+	maxikdma =  ADAGE_DMA_BYTES /
+		(ifp->if_width*sizeof(IKONASpixel)) *
+		(ifp->if_width*sizeof(IKONASpixel)); /* even # of scanlines */
+	while( ikbytes > 0 ) {
+		if( ikbytes > maxikdma )
+			todo = maxikdma;
+		else
+			todo = ikbytes;
+		towrite = todo;
 		out = _pixbuf;
-		for( i = todo/sizeof(IKONASpixel); i > 0; i-- ) {
-			/* VAX subscripting faster than ++ */
-			*out = *in++;
-			out[1] = *in++;
-			out[2] = *in++;
-			out += sizeof(IKONASpixel);
-		}
-		if( write( ifp->if_fd, _pixbuf, todo ) != todo )
+		do {
+			for( i = width; i > 0; i-- ) {
+				/* VAX subscripting faster than ++ */
+				*out = *in++;
+				out[1] = *in++;
+				out[2] = *in++;
+				out += sizeof(IKONASpixel);
+			}
+			todo -= width * sizeof(IKONASpixel);
+			in -= (width + ifp->if_width) * sizeof(RGBpixel);
+			width = ifp->if_width;
+		} while( todo > 0 );
+		if( write( ifp->if_fd, _pixbuf, towrite ) != towrite )
 			return	-1;
-		bytes -= todo;
-		pixelp += todo / sizeof(IKONASpixel);
+		ikbytes -= towrite;
 	}
 	return	count;
 }
