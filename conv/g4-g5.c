@@ -88,7 +88,7 @@ char	**argv;
 					continue;
 				}
 			}
-			ret = rt_fwrite_internal5( fp, dp->d_namep, &intern, 1.0, NULL );
+			ret = rt_fwrite_internal5( fp, dp->d_namep, &intern, 1.0 );
 			if( ret < 0 )  {
 				fprintf(stderr,
 					"%s: rt_fwrite_internal5(%s) failure, skipping\n",
