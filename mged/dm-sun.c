@@ -350,13 +350,13 @@ struct solid	*sp;
 mat_t	mat;
 double	ratio;
 {
-	register struct vlist	*vp;
+	register struct rt_vlist *vp;
 	register struct pr_pos	*ptP;		/* Sun point list */
 	register u_char		*mvP;		/* Sun move/draw list */
 	struct pr_pos   ptlist[MAXVEC];		/* Sun point buffer */
 	u_char          mvlist[MAXVEC];		/* Sun move/draw buffer */
 	int             numvec;			/* number of points */
-	static vect_t   pt;			/* working point */
+	static vect_t   pnt;			/* working point */
 	Pr_texture	*texP;			/* line style/color */
 	Pr_brush	*brush;
 	int		color;
@@ -364,29 +364,55 @@ double	ratio;
 	ptP = ptlist;
 	mvP = mvlist;
 	numvec = 0;
-	for( vp = sp->s_vlist; vp != VL_NULL; vp = vp->vl_forw )  {
-		MAT4X3PNT(pt, mat, vp->vl_pnt);
-		/* Visible range is +/- 1.0 */
+	for( RT_LIST_FOR( vp, rt_vlist, &(sp->s_vlist) ) )  {
+		register int	i;
+		register int	nused = vp->nused;
+		register int	*cmd = vp->cmd;
+		register point_t *pt = vp->pt;
+
+		/* Viewing region is from -1.0 to +1.0 */
 		/* 2^31 ~= 2e9 -- dynamic range of a long int */
 		/* 2^(31-11) = 2^20 ~= 1e6 */
-		if( pt[0] < -1e6 || pt[0] > 1e6 ||
-		    pt[1] < -1e6 || pt[1] > 1e6 )
-			continue;		/* omit this point (ugh) */
-
-		/* Integerize and let the Sun library do the clipping */
-		ptP->x = GED_TO_SUNPWx(2048*pt[0]);
-		ptP->y = GED_TO_SUNPWy(2048*pt[1]);
-		ptP++;
-		if( vp->vl_draw )
-			*mvP++ = 0;
-		else
-			*mvP++ = 1;
-
-		if( ++numvec >= MAXVEC ) {
-			(void)fprintf( stderr,
-				"SunPw_object: nvec %d clipped to %d\n",
-				sp->s_vlen, numvec );
-			break;
+		/* Integerize and let Sun do the clipping */
+		for( i = 0; i < nused; i++,cmd++,pt++ )  {
+			static vect_t	start, fin;
+			switch( *cmd )  {
+			case RT_VLIST_POLY_START:
+				continue;
+			case RT_VLIST_POLY_MOVE:
+			case RT_VLIST_LINE_MOVE:
+				/* Move, not draw */
+				MAT4X3PNT( pnt, mat, *pt );
+				if( pnt[0] < -1e6 || pnt[0] > 1e6 ||
+				    pnt[1] < -1e6 || pnt[1] > 1e6 )
+					continue; /* omit this point (ugh) */
+				/* Integerize and let the Sun library do the clipping */
+				ptP->x = GED_TO_SUNPWx(2048*pnt[0]);
+				ptP->y = GED_TO_SUNPWy(2048*pnt[1]);
+				ptP++;
+				*mvP++ = 1;
+				break;
+			case RT_VLIST_POLY_DRAW:
+			case RT_VLIST_POLY_END:
+			case RT_VLIST_LINE_DRAW:
+				/* draw */
+				MAT4X3PNT( pnt, mat, *pt );
+				if( pnt[0] < -1e6 || pnt[0] > 1e6 ||
+				    pnt[1] < -1e6 || pnt[1] > 1e6 )
+					continue; /* omit this point (ugh) */
+				/* Integerize and let the Sun library do the clipping */
+				ptP->x = GED_TO_SUNPWx(2048*pnt[0]);
+				ptP->y = GED_TO_SUNPWy(2048*pnt[1]);
+				ptP++;
+				*mvP++ = 0;
+				break;
+			}
+			if( ++numvec >= MAXVEC ) {
+				(void)fprintf( stderr,
+					"SunPw_object: nvec %d clipped to %d\n",
+					sp->s_vlen, numvec );
+				break;
+			}
 		}
 	}
 
