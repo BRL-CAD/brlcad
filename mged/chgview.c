@@ -958,9 +958,9 @@ char	**argv;
     return TCL_ERROR;
 
   if(argc == 2)
-    return release(argv[1]);
+    return release(argv[1], 1);
 
-  return release(NULL);
+  return release(NULL, 1);
 }
 
 /*
