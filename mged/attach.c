@@ -193,8 +193,10 @@ get_attached()
 
 	while(1)  {
 		(void)printf("attach (");
-		for( dp = &which_dm[0]; *dp != (struct dm *)0; dp++ )
-			(void)printf("%s|", (*dp)->dmr_name);
+		dp = &which_dm[0];
+		(void)printf("%s", (*dp++)->dmr_name);
+		for( ; *dp != (struct dm *)0; dp++ )
+			(void)printf("|%s", (*dp)->dmr_name);
 		(void)printf(")[%s]? ", which_dm[0]->dmr_name);
 		(void)gets( line );		/* Null terminated */
 		if( feof(stdin) )  quit();
