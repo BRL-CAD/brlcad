@@ -7741,7 +7741,7 @@ wdb_binary_cmd(struct rt_wdb	*wdbp,
 	argc -= bu_optind;
 	argv += bu_optind;
 
-	if (argc != 4) {
+	if ( (input_mode && argc != 4) || (output_mode && argc != 2) ) {
 		bu_vls_init(&vls);
 		bu_vls_printf(&vls, "helplib_alias wdb_binary %s", cname);
 		Tcl_Eval(interp, bu_vls_addr(&vls));
@@ -7750,68 +7750,68 @@ wdb_binary_cmd(struct rt_wdb	*wdbp,
 	}
 
 
-	if (argv[0][0] == 'u') {
-
-		if (argv[1][1] != '\0') {
-			bu_vls_init(&vls);
-			bu_vls_printf(&vls, "Unrecognized minor type: %s", argv[1]);
-			Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
-			bu_vls_free(&vls);
-			return TCL_ERROR;
-		}
-
-		major_type=DB5_MAJORTYPE_BINARY_UNIF;
-		switch ((int)argv[1][0]) {
-		case 'f':
-			minor_type = DB5_MINORTYPE_BINU_FLOAT;
-			break;
-		case 'd':
-			minor_type = DB5_MINORTYPE_BINU_DOUBLE;
-			break;
-		case 'c':
-			minor_type = DB5_MINORTYPE_BINU_8BITINT;
-			break;
-		case 's':
-			minor_type = DB5_MINORTYPE_BINU_16BITINT;
-			break;
-		case 'i':
-			minor_type = DB5_MINORTYPE_BINU_32BITINT;
-			break;
-		case 'l':
-			minor_type = DB5_MINORTYPE_BINU_64BITINT;
-			break;
-		case 'C':
-			minor_type = DB5_MINORTYPE_BINU_8BITINT_U;
-			break;
-		case 'S':
-			minor_type = DB5_MINORTYPE_BINU_16BITINT_U;
-			break;
-		case 'I':
-			minor_type = DB5_MINORTYPE_BINU_32BITINT_U;
-			break;
-		case 'L':
-			minor_type = DB5_MINORTYPE_BINU_64BITINT_U;
-			break;
-		default:
-			bu_vls_init(&vls);
-			bu_vls_printf(&vls, "Unrecognized minor type: %s", argv[1]);
-			Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
-			bu_vls_free(&vls);
-			return TCL_ERROR;
-		}
-	} else {
-		bu_vls_init(&vls);
-		bu_vls_printf(&vls, "Unrecognized major type: %s", argv[0]);
-		Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
-		bu_vls_free(&vls);
-		return TCL_ERROR;
-	}
-
-	/* skip past major_type and minor_type */
-	argc -= 2;
-	argv += 2;
-
 	if( input_mode ) {
+		if (argv[0][0] == 'u') {
+
+			if (argv[1][1] != '\0') {
+				bu_vls_init(&vls);
+				bu_vls_printf(&vls, "Unrecognized minor type: %s", argv[1]);
+				Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+				bu_vls_free(&vls);
+				return TCL_ERROR;
+			}
+
+			major_type=DB5_MAJORTYPE_BINARY_UNIF;
+			switch ((int)argv[1][0]) {
+			case 'f':
+				minor_type = DB5_MINORTYPE_BINU_FLOAT;
+				break;
+			case 'd':
+				minor_type = DB5_MINORTYPE_BINU_DOUBLE;
+				break;
+			case 'c':
+				minor_type = DB5_MINORTYPE_BINU_8BITINT;
+				break;
+			case 's':
+				minor_type = DB5_MINORTYPE_BINU_16BITINT;
+				break;
+			case 'i':
+				minor_type = DB5_MINORTYPE_BINU_32BITINT;
+				break;
+			case 'l':
+				minor_type = DB5_MINORTYPE_BINU_64BITINT;
+				break;
+			case 'C':
+				minor_type = DB5_MINORTYPE_BINU_8BITINT_U;
+				break;
+			case 'S':
+				minor_type = DB5_MINORTYPE_BINU_16BITINT_U;
+				break;
+			case 'I':
+				minor_type = DB5_MINORTYPE_BINU_32BITINT_U;
+				break;
+			case 'L':
+				minor_type = DB5_MINORTYPE_BINU_64BITINT_U;
+				break;
+			default:
+				bu_vls_init(&vls);
+				bu_vls_printf(&vls, "Unrecognized minor type: %s", argv[1]);
+				Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+				bu_vls_free(&vls);
+				return TCL_ERROR;
+			}
+		} else {
+			bu_vls_init(&vls);
+			bu_vls_printf(&vls, "Unrecognized major type: %s", argv[0]);
+			Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+			bu_vls_free(&vls);
+			return TCL_ERROR;
+		}
+
+		/* skip past major_type and minor_type */
+		argc -= 2;
+		argv += 2;
+
 		if( minor_type == 0 ) {
 			bu_vls_init(&vls);
 			bu_vls_printf(&vls, "helplib_alias wdb_binary %s", cname);
@@ -7854,6 +7854,16 @@ wdb_binary_cmd(struct rt_wdb	*wdbp,
 		obj_name = *argv;
 
 		if( (dp=db_lookup(wdbp->dbip, obj_name, LOOKUP_NOISY )) == DIR_NULL ) { 
+			return TCL_ERROR;
+		}
+		if( !( dp->d_major_type & DB5_MAJORTYPE_BINARY_MASK) ) {
+			Tcl_AppendResult(interp, obj_name, " is not a binary object", (char *)NULL );
+			return TCL_ERROR;
+		}
+
+		if( dp->d_major_type != DB5_MAJORTYPE_BINARY_UNIF ) {
+			Tcl_AppendResult(interp, "source must be a uniform binary object",
+					 (char *)NULL );
 			return TCL_ERROR;
 		}
 		
