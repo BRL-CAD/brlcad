@@ -504,6 +504,8 @@ struct seg *finished_segs;
 		if (pp->pt_inhit->hit_dist <= ap->a_rt_i->rti_tol.dist) {
 			int retval;
 
+			/* XXX This is bogus if air is being used */
+
 			/* What has probably happened is that the shadow ray
 			 * has produced an Out-hit from the current solid
 			 * which looks valid, but is in fact an intersection
@@ -564,7 +566,7 @@ struct seg *finished_segs;
 
 	/* If we hit an entirely opaque object, this light is invisible */
 	if( pp->pt_outhit->hit_dist >= INFINITY ||
-	    regp->reg_transmit == 0 )  {
+	    (regp->reg_transmit == 0 /* XXX && Not procedural shader */) )  {
 		VSETALL( ap->a_color, 0 );
 		light_visible = 0;
 		goto out;
