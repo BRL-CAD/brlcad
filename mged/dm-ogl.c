@@ -65,6 +65,7 @@ static char RCSid[] = "";
 #include "./sedit.h"
 #include "dm-ogl.h"
 
+extern void vrot2mrot();
 extern void dm_var_init();
 extern void mged_print_result();
 
@@ -255,12 +256,16 @@ XEvent *eventPtr;
     goto end;
   } else if( eventPtr->type == MotionNotify ) {
     int mx, my;
+    int dx, dy;
+    fastf_t f;
 
     mx = eventPtr->xmotion.x;
     my = eventPtr->xmotion.y;
+    dx = mx - ((struct ogl_vars *)dmp->dm_vars)->omx;
+    dy = my - ((struct ogl_vars *)dmp->dm_vars)->omy;
 
     switch(am_mode){
-    case ALT_MOUSE_MODE_IDLE:
+    case ALT_IDLE:
       if(scroll_active && eventPtr->xmotion.state & ((struct ogl_vars *)dmp->dm_vars)->mb_mask)
 	bu_vls_printf( &cmd, "M 1 %d %d\n",
 		       ogl_irisX2ged(dmp, mx, 0), ogl_irisY2ged(dmp, my));
@@ -273,24 +278,54 @@ XEvent *eventPtr;
 	goto end;
 
       break;
-    case ALT_MOUSE_MODE_ROTATE:
-      bu_vls_printf( &cmd, "knob -i ax %f ay %f\n",
-		     (my - ((struct ogl_vars *)dmp->dm_vars)->omy) * 0.25,
-		     (mx - ((struct ogl_vars *)dmp->dm_vars)->omx) * 0.25 );
-      break;
-    case ALT_MOUSE_MODE_TRANSLATE:
-      if(EDIT_TRAN && mged_variables.edit){
-	vect_t view_pos;
+    case ALT_ROT:
 #if 0
-	view_pos[X] = (mx/(fastf_t)dmp->dm_width
-		       - 0.5) * 2.0;
-#else
-	view_pos[X] = (mx /
-		      (fastf_t)dmp->dm_width - 0.5) /
-	              dmp->dm_aspect * 2.0; 
+/*XXX Experimenting */
+      if(EDIT_ROTATE && mged_variables.transform == 'e'){
+	mat_t mat;
+	mat_t vrot;
+	mat_t new_acc_rot_sol;
+	mat_t invViewrot;
+	vect_t view_direc, model_direc;
+	point_t rot_point;
+
+	bn_mat_idn(vrot);
+	bn_mat_idn(new_acc_rot_sol);
+	bn_mat_idn(incr_change);
+	buildHrot(vrot, dy * 0.025, dx * 0.025, 0.0);
+	bn_mat_inv(invViewrot, Viewrot);
+
+	VSET(view_direc, 0, 0, 1);
+	VSET(rot_point, 0, 0, 0);
+	MAT4X3VEC(model_direc, invViewrot, view_direc);
+	wrt_point_direc(incr_change, vrot, bn_mat_identity, rot_point, model_direc);
+
+	incr_change[3] = incr_change[7] = incr_change[11] = 0.0;
+	incr_change[15] = 1.0;
+
+	bn_mat_mul(new_acc_rot_sol, incr_change, acc_rot_sol);
+	bn_mat_copy(acc_rot_sol, new_acc_rot_sol);
+	inpara = 0;
+	sedit();
+      }else{
 #endif
-	view_pos[Y] = (0.5 - my/
-		       (fastf_t)dmp->dm_height) * 2.0;
+	if(mged_variables.rateknobs)
+	  bu_vls_printf( &cmd, "knob -i -v x %f y %f\n",
+			 dy / (fastf_t)dmp->dm_height * RATE_ROT_FACTOR * 2.0,
+			 dx / (fastf_t)dmp->dm_width * RATE_ROT_FACTOR * 2.0);
+	else
+	  bu_vls_printf( &cmd, "knob -i -v ax %f ay %f\n",
+			 dy * 0.25, dx * 0.25 );
+#if 0
+      }
+#endif
+      break;
+    case ALT_TRAN:
+      if(EDIT_TRAN && mged_variables.transform == 'e'){
+	vect_t view_pos;
+
+	view_pos[X] = (mx / (fastf_t)dmp->dm_width - 0.5) / dmp->dm_aspect * 2.0; 
+	view_pos[Y] = (0.5 - my / (fastf_t)dmp->dm_height) * 2.0;
 	view_pos[Z] = 0.0;
 
 	if(state == ST_S_EDIT)
@@ -302,29 +337,161 @@ XEvent *eventPtr;
       }else{
 	fastf_t fx, fy;
 
-#if 0
-	fx = (mx - ((struct ogl_vars *)dmp->dm_vars)->omx)/
-	  (fastf_t)dmp->dm_width * 2.0;
-#else
-	fx = (mx - ((struct ogl_vars *)dmp->dm_vars)->omx) /
-	     (fastf_t)dmp->dm_width /
-	     dmp->dm_aspect * 2.0;
-#endif
-	fy = (((struct ogl_vars *)dmp->dm_vars)->omy - my)/
-	  (fastf_t)dmp->dm_height * 2.0;
-	bu_vls_printf( &cmd, "knob -i aX %f aY %f\n", fx, fy);
+	fx = dx / (fastf_t)dmp->dm_width / dmp->dm_aspect * 2.0;
+	fy = -dy / (fastf_t)dmp->dm_height * 2.0;
+
+	if(mged_variables.rateknobs)
+	  bu_vls_printf( &cmd, "knob -i -v X %f Y %f\n", fx, fy );
+	else
+	  bu_vls_printf( &cmd, "knob -i -v aX %f aY %f\n", fx, fy );
       }
 
       break;
-    case ALT_MOUSE_MODE_ZOOM:
-      bu_vls_printf( &cmd, "knob -i aS %f\n",
-		     (((struct ogl_vars *)dmp->dm_vars)->omy - my)/
-		      (fastf_t)dmp->dm_height);
+    case ALT_ZOOM:
+      if(abs(dx) >= abs(dy))
+	f = dx;
+      else
+	f = -dy;
+
+      if(mged_variables.rateknobs)
+	bu_vls_printf( &cmd, "knob -i S %f\n", f / (fastf_t)dmp->dm_height );
+      else
+	bu_vls_printf( &cmd, "knob -i aS %f\n", f / (fastf_t)dmp->dm_height );
       break;
+    case ALT_ADC:
+      bu_vls_printf( &cmd, "knob -i xadc %f yadc %f\n",
+		     dx / (fastf_t)dmp->dm_width / dmp->dm_aspect * 4095.0,
+		     -dy / (fastf_t)dmp->dm_height * 4095.0 );
+
+      break;
+    case ALT_CON_ROT_X:
+      if(abs(dx) >= abs(dy))
+	f = dx;
+      else if(mged_variables.coords == 'm')
+	f = -dy;
+      else
+	f = dy;
+
+      if(mged_variables.rateknobs)
+	bu_vls_printf( &cmd, "knob -i x %f\n",
+		       f / (fastf_t)dmp->dm_width * RATE_ROT_FACTOR * 2.0 );
+      else
+	bu_vls_printf( &cmd, "knob -i ax %f\n", f * 0.25 );
+
+      break;
+    case ALT_CON_ROT_Y:
+      if(abs(dx) >= abs(dy))
+	f = dx;
+      else
+	f = -dy;
+
+      if(mged_variables.rateknobs)
+	bu_vls_printf( &cmd, "knob -i y %f\n",
+		       f / (fastf_t)dmp->dm_width * RATE_ROT_FACTOR * 2.0 );
+      else
+	bu_vls_printf( &cmd, "knob -i ay %f\n", f * 0.25 );
+      break;
+    case ALT_CON_ROT_Z:
+      if(abs(dx) >= abs(dy))
+	f = dx;
+      else
+	f = -dy;
+
+      if(mged_variables.rateknobs)
+	bu_vls_printf( &cmd, "knob -i z %f\n",
+		       f / (fastf_t)dmp->dm_width * RATE_ROT_FACTOR * 2.0 );
+      else
+	bu_vls_printf( &cmd, "knob -i az %f\n", f * 0.25 );
+      break;
+    case ALT_CON_TRAN_X:
+      if(abs(dx) >= abs(dy))
+	f = dx;
+      else
+	f = -dy;
+
+      if(mged_variables.rateknobs)
+	bu_vls_printf( &cmd, "knob -i X %f\n",
+		       f / (fastf_t)dmp->dm_width / dmp->dm_aspect * 2.0 );
+      else
+	bu_vls_printf( &cmd, "knob -i aX %f\n",
+		       f / (fastf_t)dmp->dm_width / dmp->dm_aspect * 2.0 );
+      break;
+    case ALT_CON_TRAN_Y:
+      if(abs(dx) >= abs(dy))
+	f = dx;
+      else
+	f = -dy;
+
+      if(mged_variables.rateknobs)
+	bu_vls_printf( &cmd, "knob -i Y %f\n",
+		       f / (fastf_t)dmp->dm_width * 2.0);
+      else
+	bu_vls_printf( &cmd, "knob -i aY %f\n",
+		       f / (fastf_t)dmp->dm_width * 2.0 );
+
+      break;
+    case ALT_CON_TRAN_Z:
+      if(abs(dx) >= abs(dy))
+	f = dx;
+      else
+	f = -dy;
+
+      if(mged_variables.rateknobs)
+	bu_vls_printf( &cmd, "knob -i Z %f\n",
+		       f / (fastf_t)dmp->dm_width * 2.0);
+      else
+	bu_vls_printf( &cmd, "knob -i aZ %f\n",
+		       f / (fastf_t)dmp->dm_width * 2.0 );
+      break;
+    case ALT_CON_XADC:
+      if(abs(dx) >= abs(dy))
+	f = dx;
+      else
+	f = -dy;
+
+      bu_vls_printf( &cmd, "knob -i xadc %f\n",
+		     f / (fastf_t)dmp->dm_width / dmp->dm_aspect * 4095.0 );
+      break;
+    case ALT_CON_YADC:
+      if(abs(dx) >= abs(dy))
+	f = dx;
+      else
+	f = -dy;
+
+      bu_vls_printf( &cmd, "knob -i yadc %f\n",
+		     f / (fastf_t)dmp->dm_height * 4095.0 );
+	break;
+    case ALT_CON_ANG1:
+      if(abs(dx) >= abs(dy))
+	f = dx;
+      else
+	f = -dy;
+
+      bu_vls_printf( &cmd, "knob -i ang1 %f\n",
+		     f / (fastf_t)dmp->dm_width * 90.0 );
+	break;
+    case ALT_CON_ANG2:
+      if(abs(dx) >= abs(dy))
+	f = dx;
+      else
+	f = -dy;
+
+      bu_vls_printf( &cmd, "knob -i ang2 %f\n",
+		     f / (fastf_t)dmp->dm_width * 90.0 );
+	break;
+    case ALT_CON_TICK:
+      if(abs(dx) >= abs(dy))
+	f = dx;
+      else
+	f = -dy;
+
+      bu_vls_printf( &cmd, "knob -i distadc %f\n",
+		     f / (fastf_t)dmp->dm_width / dmp->dm_aspect * 4095.0 );
+	break;
     }
 
-      ((struct ogl_vars *)dmp->dm_vars)->omx = mx;
-      ((struct ogl_vars *)dmp->dm_vars)->omy = my;
+    ((struct ogl_vars *)dmp->dm_vars)->omx = mx;
+    ((struct ogl_vars *)dmp->dm_vars)->omy = my;
   }
 #if IR_KNOBS
   else if( eventPtr->type == ((struct ogl_vars *)dmp->dm_vars)->devmotionnotify ){
@@ -391,7 +558,7 @@ XEvent *eventPtr;
       break;
     case DIAL1:
       if(mged_variables.rateknobs){
-	if(EDIT_SCALE && mged_variables.edit)
+	if(EDIT_SCALE && mged_variables.transform == 'e')
 	  f = edit_rate_scale;
 	else
 	  f = rate_zoom;
@@ -409,7 +576,7 @@ XEvent *eventPtr;
 	setting = dm_limit(((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis]);
 	bu_vls_printf( &cmd, "knob S %f\n", setting / 512.0 );
       }else{
-	if(EDIT_SCALE && mged_variables.edit)
+	if(EDIT_SCALE && mged_variables.transform == 'e')
 	  f = edit_absolute_scale;
 	else
 	  f = absolute_zoom;
@@ -444,7 +611,7 @@ XEvent *eventPtr;
 		       45.0 - 45.0*((double)setting)/2047.0);
       }else {
 	if(mged_variables.rateknobs){
-	  if(EDIT_ROTATE && mged_variables.edit)
+	  if(EDIT_ROTATE && mged_variables.transform == 'e')
 	    f = edit_rate_rotate[Z];
 	  else
 	    f = rate_rotate[Z];
@@ -462,7 +629,7 @@ XEvent *eventPtr;
 	  setting = dm_limit(((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis]);
 	  bu_vls_printf( &cmd, "knob z %f\n", setting / 512.0 );
 	}else{
-	  if(EDIT_ROTATE && mged_variables.edit)
+	  if(EDIT_ROTATE && mged_variables.transform == 'e')
 	    f = edit_absolute_rotate[Z];
 	  else
 	    f = absolute_rotate[Z];
@@ -497,10 +664,10 @@ XEvent *eventPtr;
 	bu_vls_printf( &cmd, "knob distadc %d\n", setting );
       }else {
 	if(mged_variables.rateknobs){
-	  if(EDIT_TRAN && mged_variables.edit)
+	  if(EDIT_TRAN && mged_variables.transform == 'e')
 	    f = edit_rate_tran[Z];
 	  else
-	    f = rate_slew[Z];
+	    f = rate_tran[Z];
 
 	  if(-NOISE <= ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] &&
 	     ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] <= NOISE &&
@@ -515,10 +682,10 @@ XEvent *eventPtr;
 	  setting = dm_limit(((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis]);
 	  bu_vls_printf( &cmd, "knob Z %f\n", setting / 512.0 );
 	}else{
-	  if(EDIT_TRAN && mged_variables.edit)
+	  if(EDIT_TRAN && mged_variables.transform == 'e')
 	    f = edit_absolute_tran[Z];
 	  else
-	    f = absolute_slew[Z];
+	    f = absolute_tran[Z];
 
 	  if(-NOISE <= ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] &&
 	     ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] <= NOISE &&
@@ -550,7 +717,7 @@ XEvent *eventPtr;
 	bu_vls_printf( &cmd, "knob yadc %d\n", setting );
       }else{
 	if(mged_variables.rateknobs){
-	  if(EDIT_ROTATE && mged_variables.edit)
+	  if(EDIT_ROTATE && mged_variables.transform == 'e')
 	    f = edit_rate_rotate[Y];
 	  else
 	    f = rate_rotate[Y];
@@ -568,7 +735,7 @@ XEvent *eventPtr;
 	  setting = dm_limit(((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis]);
 	  bu_vls_printf( &cmd, "knob y %f\n", setting / 512.0 );
 	}else{
-	  if(EDIT_ROTATE && mged_variables.edit)
+	  if(EDIT_ROTATE && mged_variables.transform == 'e')
 	    f = edit_absolute_rotate[Y];
 	  else
 	    f = absolute_rotate[Y];
@@ -590,10 +757,10 @@ XEvent *eventPtr;
       break;
     case DIAL5:
       if(mged_variables.rateknobs){
-	  if(EDIT_TRAN && mged_variables.edit)
+	  if(EDIT_TRAN && mged_variables.transform == 'e')
 	    f = edit_rate_tran[Y];
 	  else
-	    f = rate_slew[Y];
+	    f = rate_tran[Y];
 
 	  if(-NOISE <= ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] &&
 	     ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] <= NOISE &&
@@ -608,10 +775,10 @@ XEvent *eventPtr;
 	  setting = dm_limit(((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis]);
 	bu_vls_printf( &cmd, "knob Y %f\n", setting / 512.0 );
       }else{
-	  if(EDIT_TRAN && mged_variables.edit)
+	  if(EDIT_TRAN && mged_variables.transform == 'e')
 	    f = edit_absolute_tran[Y];
 	  else
-	    f = absolute_slew[Y];
+	    f = absolute_tran[Y];
 
 	  if(-NOISE <= ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] &&
 	     ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] <= NOISE &&
@@ -643,7 +810,7 @@ XEvent *eventPtr;
 	bu_vls_printf( &cmd, "knob xadc %d\n", setting );
       }else{
 	if(mged_variables.rateknobs){
-	  if(EDIT_ROTATE && mged_variables.edit)
+	  if(EDIT_ROTATE && mged_variables.transform == 'e')
 	    f = edit_rate_rotate[X];
 	  else
 	    f = rate_rotate[X];
@@ -661,7 +828,7 @@ XEvent *eventPtr;
 	  setting = dm_limit(((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis]);
 	  bu_vls_printf( &cmd, "knob x %f\n", setting / 512.0);
 	}else{
-	  if(EDIT_ROTATE && mged_variables.edit)
+	  if(EDIT_ROTATE && mged_variables.transform == 'e')
 	    f = edit_absolute_rotate[X];
 	  else
 	    f = absolute_rotate[X];
@@ -683,10 +850,10 @@ XEvent *eventPtr;
       break;
     case DIAL7:
       if(mged_variables.rateknobs){
-	if(EDIT_TRAN && mged_variables.edit)
+	if(EDIT_TRAN && mged_variables.transform == 'e')
 	  f = edit_rate_tran[X];
 	else
-	  f = rate_slew[X];
+	  f = rate_tran[X];
 
 	if(-NOISE <= ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] &&
 	   ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] <= NOISE &&
@@ -701,10 +868,10 @@ XEvent *eventPtr;
 	setting = dm_limit(((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis]);
 	bu_vls_printf( &cmd, "knob X %f\n", setting / 512.0 );
       }else{
-	if(EDIT_TRAN && mged_variables.edit)
+	if(EDIT_TRAN && mged_variables.transform == 'e')
 	  f = edit_absolute_tran[X];
 	else
-	  f = absolute_slew[X];
+	  f = absolute_tran[X];
 
 	if(-NOISE <= ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] &&
 	   ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] <= NOISE &&
@@ -759,7 +926,7 @@ XEvent *eventPtr;
   }
 #endif
   else {
-    /*XXX Hack to prevent Tk from choking on Ctrl-c */
+    /*XXX Hack to prevent Tk from choking on certain control sequences */
     if(eventPtr->type == KeyPress && eventPtr->xkey.state & ControlMask){
       char buffer[1];
       KeySym keysym;
@@ -767,7 +934,8 @@ XEvent *eventPtr;
       XLookupString(&(eventPtr->xkey), buffer, 1,
 		    &keysym, (XComposeStatus *)NULL);
 
-      if(keysym == XK_c){
+      if(keysym == XK_c || keysym == XK_t || keysym == XK_v ||
+	 keysym == XK_w || keysym == XK_x || keysym == XK_y){
 	bu_vls_free(&cmd);
 	curr_dm_list = save_dm_list;
 
@@ -894,15 +1062,15 @@ char	**argv;
     {
       int x;
       int y;
-      int old_show_menu;
+      int old_orig_gui;
 
-      old_show_menu = mged_variables.show_menu;
+      old_orig_gui = mged_variables.orig_gui;
 
       x = ogl_irisX2ged(dmp, atoi(argv[3]), 0);
       y = ogl_irisY2ged(dmp, atoi(argv[4]));
 
       if(mged_variables.faceplate &&
-	 mged_variables.show_menu &&
+	 mged_variables.orig_gui &&
 	 *argv[2] == '1'){
 #define        MENUXLIM        (-1250)
 	if(scroll_active)
@@ -915,29 +1083,38 @@ char	**argv;
 	  goto end;
       }
 
+      mged_variables.orig_gui = 0;
+
+      if(mged_variables.adcflag && mged_variables.transform == 'a'){
+	bu_vls_init(&vls);
+	bu_vls_printf(&vls, "knob xadc %d yadc %d\n", x, y);
+	status = Tcl_Eval(interp, bu_vls_addr(&vls));
+	mged_variables.orig_gui = old_orig_gui;
+	bu_vls_free(&vls);
+
+	return status;
+      }
+
       x = ogl_irisX2ged(dmp, atoi(argv[3]), 1);
-      mged_variables.show_menu = 0;
 end:
       bu_vls_init(&vls);
-      bu_vls_printf(&vls, "M %s %d %d", argv[2], x, y);
+      bu_vls_printf(&vls, "M %s %d %d\n", argv[2], x, y);
       status = Tcl_Eval(interp, bu_vls_addr(&vls));
-      mged_variables.show_menu = old_show_menu;
+      mged_variables.orig_gui = old_orig_gui;
       bu_vls_free(&vls);
 
       return status;
     }
   }
 
-  status = TCL_OK;
-
-  if( !strcmp( argv[0], "am" )){
+  if(!strcmp(argv[0], "am")){
     int buttonpress;
 
     scroll_active = 0;
 
     if( argc < 5){
       Tcl_AppendResult(interp, "dm am: need more parameters\n",
-		       "dm am <r|t|z> 1|0 xpos ypos\n", (char *)NULL);
+		       "dm am <a|r|t|z> 1|0 xpos ypos\n", (char *)NULL);
       return TCL_ERROR;
     }
 
@@ -947,23 +1124,20 @@ end:
 
     if(buttonpress){
       switch(*argv[1]){
+      case 'a':
+	am_mode = ALT_ADC;
+	break;
       case 'r':
-	am_mode = ALT_MOUSE_MODE_ROTATE;
+	am_mode = ALT_ROT;
 	break;
       case 't':
-	am_mode = ALT_MOUSE_MODE_TRANSLATE;
-	if(EDIT_TRAN && mged_variables.edit){
+	am_mode = ALT_TRAN;
+	if(EDIT_TRAN && mged_variables.transform == 'e'){
 	  vect_t view_pos;
 
-#if 0
-	  view_pos[X] = (((struct ogl_vars *)dmp->dm_vars)->omx /
-			 (fastf_t)dmp->dm_width -
-			 0.5) * 2.0;
-#else
 	  view_pos[X] = (((struct ogl_vars *)dmp->dm_vars)->omx /
 			(fastf_t)dmp->dm_width - 0.5) /
 	                dmp->dm_aspect * 2.0;
-#endif
 	  view_pos[Y] = (0.5 - ((struct ogl_vars *)dmp->dm_vars)->omy /
 			 (fastf_t)dmp->dm_height) * 2.0;
 	  view_pos[Z] = 0.0;
@@ -976,18 +1150,106 @@ end:
 
 	break;
       case 'z':
-	am_mode = ALT_MOUSE_MODE_ZOOM;
+	am_mode = ALT_ZOOM;
 	break;
       default:
 	Tcl_AppendResult(interp, "dm am: need more parameters\n",
-			 "dm am <r|t|z> 1|0 xpos ypos\n", (char *)NULL);
+			 "dm am <a|r|t|z> 1|0 xpos ypos\n", (char *)NULL);
 	return TCL_ERROR;
       }
-    }else{
-      am_mode = ALT_MOUSE_MODE_IDLE;
+
+      return TCL_OK;
     }
 
-    return status;
+    am_mode = ALT_IDLE;
+    return TCL_OK;
+  }
+
+  if(!strcmp(argv[0], "con")){
+    int buttonpress;
+
+    scroll_active = 0;
+
+    if( argc < 6){
+      Tcl_AppendResult(interp, "dm con: need more parameters\n",
+		       "dm con r|t x|y|z 1|0 xpos ypos\n",
+		       "dm con a x|y|1|2|t\n", (char *)NULL);
+      return TCL_ERROR;
+    }
+
+    buttonpress = atoi(argv[3]);
+    ((struct ogl_vars *)dmp->dm_vars)->omx = atoi(argv[4]);
+    ((struct ogl_vars *)dmp->dm_vars)->omy = atoi(argv[5]);
+
+    if(buttonpress){
+      switch(*argv[1]){
+      case 'a':
+	switch(*argv[2]){
+	case 'x':
+	  am_mode = ALT_CON_XADC;
+	  break;
+	case 'y':
+	  am_mode = ALT_CON_YADC;
+	  break;
+	case '1':
+	  am_mode = ALT_CON_ANG1;
+	  break;
+	case '2':
+	  am_mode = ALT_CON_ANG2;
+	  break;
+	case 't':
+	  am_mode = ALT_CON_TICK;
+	  break;
+	default:
+	  Tcl_AppendResult(interp, "dm con: unrecognized parameter - ", argv[2],
+			   "\ndm con a x|y|1|2|t\n", (char *)NULL);
+	}
+	break;
+      case 'r':
+	switch(*argv[2]){
+	case 'x':
+	  am_mode = ALT_CON_ROT_X;
+	  break;
+	case 'y':
+	  am_mode = ALT_CON_ROT_Y;
+	  break;
+	case 'z':
+	  am_mode = ALT_CON_ROT_Z;
+	  break;
+	default:
+	  Tcl_AppendResult(interp, "dm con: unrecognized parameter - ", argv[2],
+			 "\ndm con r|t x|y|z 1|0 xpos ypos\n", (char *)NULL);
+	  return TCL_ERROR;
+	}
+	break;
+      case 't':
+	switch(*argv[2]){
+	case 'x':
+	  am_mode = ALT_CON_TRAN_X;
+	  break;
+	case 'y':
+	  am_mode = ALT_CON_TRAN_Y;
+	  break;
+	case 'z':
+	  am_mode = ALT_CON_TRAN_Z;
+	  break;
+	default:
+	  Tcl_AppendResult(interp, "dm con: unrecognized parameter - ", argv[2],
+			 "\ndm con type x|y|z 1|0 xpos ypos\n", (char *)NULL);
+	  return TCL_ERROR;
+	}
+	break;
+      default:
+	Tcl_AppendResult(interp, "dm con: unrecognized parameter - ", argv[1],
+			 "\ndm con type x|y|z 1|0 xpos ypos\n", (char *)NULL);
+	return TCL_ERROR;
+      }
+
+      return TCL_OK;
+    }
+
+    am_mode = ALT_IDLE;
+    return TCL_OK;
   }
 
   if( !strcmp( argv[0], "size" )){
