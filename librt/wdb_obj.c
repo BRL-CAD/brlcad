@@ -1714,7 +1714,7 @@ wdb_list_cmd(struct rt_wdb	*wdbp,
 
 			bu_vls_printf( &str, "%s:  ", argv[arg] );
 
-			if (rt_functab[id].ft_describe(&str, &intern, 99, wdbp->dbip->dbi_base2local, &rt_uniresource) < 0)
+			if (rt_functab[id].ft_describe(&str, &intern, 99, wdbp->dbip->dbi_base2local, &rt_uniresource, wdbp->dbip) < 0)
 				Tcl_AppendResult(interp, dp->d_namep, ": describe error", (char *)NULL);
 
 			rt_db_free_internal(&intern, &rt_uniresource);
@@ -1879,7 +1879,7 @@ wdb_trace(register struct directory	*dp,
 		return;
 	}
 	bu_vls_printf(&str, "%s:\n", dp->d_namep);
-	if (rt_functab[id].ft_describe(&str, &intern, 1, wtdp->wtd_dbip->dbi_base2local, &rt_uniresource) < 0)
+	if (rt_functab[id].ft_describe(&str, &intern, 1, wtdp->wtd_dbip->dbi_base2local, &rt_uniresource, wtdp->wtd_dbip) < 0)
 		Tcl_AppendResult(wtdp->wtd_interp, dp->d_namep, ": describe error\n", (char *)NULL);
 	rt_db_free_internal(&intern, &rt_uniresource);
 	Tcl_AppendResult(wtdp->wtd_interp, bu_vls_addr(&str), (char *)NULL);
@@ -7796,7 +7796,7 @@ wdb_do_list(struct db_i		*dbip,
 		bu_vls_printf(outstrp, "%s:  ", dp->d_namep);
 		
 		if (rt_functab[id].ft_describe(outstrp, &intern,
-					       verbose, dbip->dbi_base2local, &rt_uniresource) < 0)
+					       verbose, dbip->dbi_base2local, &rt_uniresource, dbip) < 0)
 			Tcl_AppendResult(interp, dp->d_namep, ": describe error\n", (char *)NULL);
 		rt_db_free_internal(&intern, &rt_uniresource);
 	}

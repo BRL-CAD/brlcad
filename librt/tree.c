@@ -594,7 +594,7 @@ genptr_t			client_data;
 		bu_log("\n---Solid %d: %s\n", stp->st_bit, dp->d_namep);
 		bu_vls_init( &str );
 		/* verbose=1, mm2local=1.0 */
-		if( stp->st_meth->ft_describe( &str, ip, 1, 1.0, tsp->ts_resp ) < 0 )  {
+		if( stp->st_meth->ft_describe( &str, ip, 1, 1.0, tsp->ts_resp, tsp->ts_dbip ) < 0 )  {
 			bu_log("rt_gettree_leaf(%s):  solid describe failure\n",
 				dp->d_namep );
 		}
