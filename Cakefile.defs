@@ -862,6 +862,8 @@ set -S2 "/bin/sh"
 #	define	XINCDIR		/usr/openwin/include
 #	define	XLIBDIR		/usr/openwin/lib
 
+#	define	JNI_INC		-I /usr/java/include -I /usr/java/include/solaris
+
 #	if defined( __GNUC__ )
 #		define	CC		gcc
 #		if BUILD_OPTIMIZED	
@@ -1047,6 +1049,7 @@ set -S2 "/bin/sh"
 #	define	CC	gcc
 #	define	CC_DEFS -pipe -fPIC GCC_WARNINGS
 /*			-std=iso9899:199409 */
+#	define	JNI_INC	-I/usr/java/j2sdk1.4.2_02/include "-I/usr/java/j2sdk1.4.2_02/include/linux"
 #	if BUILD_OPTIMIZED	
 #		define	OPTIMIZER	-O3 -fomit-frame-pointer -fno-strict-aliasing
 #	else
