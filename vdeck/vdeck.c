@@ -44,6 +44,13 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
  */
 #include <stdio.h>
 #include <signal.h>
+#ifdef BSD
+#include <strings.h>
+#else
+#include <string.h>
+#endif
+#include "machine.h"
+#include "vmath.h"
 #include "externs.h"
 #include "./vextern.h"
 #include "rtstring.h"
@@ -74,6 +81,16 @@ void			eread(), ewrite();
 struct soltab	sol_hd;
 
 struct db_i	*dbip;		/* Database instance ptr */
+
+/*	s o r t F u n c ( )
+	Comparison function for qsort().
+ */
+static int
+sortFunc( a, b )
+char	**a, **b;
+	{
+	return( strcmp( *a, *b ) );
+	}
 
 /*
  *			M A I N
@@ -177,7 +194,8 @@ char	*argv[];
 			(void) shell( arg_list );
 			break;
 		case SORT_TOC :
-			sort( toc_list, ndir );
+			qsort( (genptr_t)toc_list, (unsigned)ndir,
+				sizeof(char *), sortFunc );
 			break;
 		case TOC :
 			list_toc( arg_list );
