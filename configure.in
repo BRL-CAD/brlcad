@@ -65,8 +65,8 @@ TK_LIBS='${top_builddir}/libtk${TKVER}/libtk${TKVER}.la ${TCL_LIBS} ${X_LIBS}'
 TK_LIBRARY="$prefix/tk${TKVER}"
 
 ITCL_VERSION="3.2"
-ITCL_LIBS='${top_builddir}/libitcl${ITCL_VERSION}/itcl/libitcl.la'
-ITK_LIBS='${top_builddir}/libitcl${ITCL_VERSION}/itk/libitk.la'
+ITCL_LIBS='${top_builddir}/libitcl/itcl/libitcl.la'
+ITK_LIBS='${top_builddir}/libitcl/itk/libitk.la'
 
 PNG_LIBS='${top_builddir}/libpng/libpng.la ${top_builddir}/libz/libz.la'
 
@@ -108,7 +108,7 @@ fi
 dnl ============================================================
 
 
-AC_DEFINE(DM_X,,[Display for X])
+AC_DEFINE(DM_X,1,[Display for X])
 GL_CFLAGS="-DUSE_MESA_GL"
 LEX_CFLAGS="-Dyylex=cmd_nop"
 X_CFLAGS="-I/usr/X11R6/include"
@@ -274,12 +274,10 @@ AC_CONFIG_FILES([
 	libitcl/itcl/doc/Makefile
 	libitcl/itcl/generic/Makefile
 	libitcl/itcl/library/Makefile
-	libitcl/itcl/unix/Makefile
 	libitcl/itk/Makefile
 	libitcl/itk/doc/Makefile
 	libitcl/itk/generic/Makefile
 	libitcl/itk/library/Makefile
-	libitcl/itk/unix/Makefile
 	liboptical/Makefile
 	liborle/Makefile
 	libpkg/Makefile
