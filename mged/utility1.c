@@ -315,7 +315,7 @@ f_dup( )
 
 	if( (dirp = dir_getspace(0)) == (struct directory **) 0) {
 		(void) printf( "f_dup: unable to get memory\n");
-		return(1);
+		return;
 	}
 	dirp0 = dirp;
 
