@@ -52,6 +52,7 @@ void mged_slider_unlink_vars();
 static int do_2nd_attach_prompt();
 static void find_new_owner();
 
+extern void predictor_init(); /* defined in predictor.c */
 extern void set_scroll();  /* defined in set.c */
 extern void color_soltab();
 extern int mged_view_init(); /* defined in chgview.c */
@@ -125,7 +126,7 @@ int need_close;
     if(!strcmp("nu", name))
       return TCL_OK;  /* Ignore */
 
-    for( BU_LIST_FOR(p, dm_list, &head_dm_list.l) ){
+    FOR_ALL_DISPLAYS(p, &head_dm_list.l){
       if(strcmp(name, bu_vls_addr(&p->_dmp->dm_pathName)))
 	continue;
 
@@ -196,7 +197,7 @@ int need_close;
 
   if(need_close){
 #ifdef DO_DISPLAY_LISTS
-    if(displaylist && mged_variables.dlist)
+    if(displaylist && mged_variables->dlist)
 #ifdef DO_SINGLE_DISPLAY_LIST
     dmp->dm_freeDLists(dmp, HeadSolid.s_dlist + dmp->dm_displaylist, 1);
 #else
@@ -207,7 +208,8 @@ int need_close;
 #endif
     dmp->dm_close(dmp);
   }
-	
+
+  RT_FREE_VLIST(&p->p_vlist);
   BU_LIST_DEQUEUE( &p->l );
   if(p->_scroll_edit_vls.vls_magic == BU_VLS_MAGIC){
     Tcl_UnlinkVar(interp, bu_vls_addr(&p->_scroll_edit_vls));
@@ -366,6 +368,11 @@ char *argv[];
 
   o_dm_list = curr_dm_list;
   BU_GETSTRUCT(curr_dm_list, dm_list);
+
+  /* initialize predictor stuff */
+  BU_LIST_INIT(&curr_dm_list->p_vlist);
+  predictor_init();
+
   BU_LIST_APPEND(&head_dm_list.l, &curr_dm_list->l);
   /* Only need to do this once */
   if(tkwin == NULL && NEED_GUI(wp->type)){
@@ -435,7 +442,7 @@ char *argv[];
 		   ")\n", (char *)NULL);
 
 #ifdef DO_DISPLAY_LISTS
-  if(displaylist && mged_variables.dlist)
+  if(displaylist && mged_variables->dlist)
 #ifdef DO_SINGLE_DISPLAY_LIST
     createDList(&HeadSolid);
 #else
@@ -598,7 +605,7 @@ is_dm_null()
 
 
 int
-f_untie(clientData, interp, argc, argv )
+f_unshare_view(clientData, interp, argc, argv )
 ClientData clientData;
 Tcl_Interp *interp;
 int     argc;
@@ -614,7 +621,7 @@ char    **argv;
     struct bu_vls vls;
 
     bu_vls_init(&vls);
-    bu_vls_printf(&vls, "help untie");
+    bu_vls_printf(&vls, "help unshare_view");
     Tcl_Eval(interp, bu_vls_addr(&vls));
     bu_vls_free(&vls);
 
@@ -628,12 +635,12 @@ char    **argv;
   else
     bu_vls_strcpy(&vls1, argv[1]);
 
-  for( BU_LIST_FOR(p, dm_list, &head_dm_list.l) )
+  FOR_ALL_DISPLAYS(p, &head_dm_list.l)
     if(!strcmp(bu_vls_addr(&vls1), bu_vls_addr(&p->_dmp->dm_pathName)))
       break;
 
   if(p == &head_dm_list){
-    Tcl_AppendResult(interp, "untie: bad pathname - %s\n",
+    Tcl_AppendResult(interp, "unshare_view: bad pathname - %s\n",
 		     bu_vls_addr(&vls1), (char *)NULL);
     bu_vls_free(&vls1);
     return TCL_ERROR;
@@ -679,7 +686,7 @@ char    **argv;
 }
 
 int
-f_tie(clientData, interp, argc, argv )
+f_share_view(clientData, interp, argc, argv )
 ClientData clientData;
 Tcl_Interp *interp;
 int     argc;
@@ -695,7 +702,7 @@ char    **argv;
     struct bu_vls vls;
 
     bu_vls_init(&vls);
-    bu_vls_printf(&vls, "help tie");
+    bu_vls_printf(&vls, "help share_view");
     Tcl_Eval(interp, bu_vls_addr(&vls));
     bu_vls_free(&vls);
     return TCL_ERROR;
@@ -714,7 +721,7 @@ char    **argv;
   else
     bu_vls_strcpy(&vls2, argv[2]);
 
-  for( BU_LIST_FOR(p, dm_list, &head_dm_list.l) ){
+  FOR_ALL_DISPLAYS(p, &head_dm_list.l){
     if(p1 == (struct dm_list *)NULL && !strcmp(bu_vls_addr(&vls1),
 					       bu_vls_addr(&p->_dmp->dm_pathName)))
       p1 = p;
@@ -726,7 +733,7 @@ char    **argv;
   }
 
   if(p1 == (struct dm_list *)NULL || p2 == (struct dm_list *)NULL){
-    Tcl_AppendResult(interp, "f_tie: bad pathname(s)\n\tpathName1 - ",
+    Tcl_AppendResult(interp, "f_share_view: bad pathname(s)\n\tpathName1 - ",
 		     bu_vls_addr(&vls1), "\t\tpathName2 - ",
 		     bu_vls_addr(&vls2), "\n", (char *)NULL);
     bu_vls_free(&vls1);
@@ -756,7 +763,7 @@ char    **argv;
       }
     }
 
-    bu_free( (genptr_t)p1->s_info, "tie: s_info" );
+    bu_free( (genptr_t)p1->s_info, "share_view: s_info" );
   /* otherwise if p1's s_info struct is being used and p1 is the owner */
   }else if(p1->_owner)
     find_new_owner(p1);
@@ -795,7 +802,7 @@ struct dm_list *op;
   struct dm_list *save_cdlp;
   struct cmd_list *save_cclp;
 
-  for( BU_LIST_FOR(p, dm_list, &head_dm_list.l) ){
+  FOR_ALL_DISPLAYS(p, &head_dm_list.l){
     /* first one found is the new owner */
     if(op != p && p->s_info == op->s_info){
       p->_owner = 1;
@@ -822,6 +829,102 @@ struct dm_list *op;
   Tcl_AppendResult(interp, "find_new_owner: Failed to find a new owner\n", (char *)NULL);
 }
 
+int
+f_share_vars(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
+int     argc;
+char    **argv;
+{
+  struct dm_list *dlp1, *dlp2, *dlp3;
+  struct _mged_variables *save_mvp;
+
+  if(argc != 3){
+    return TCL_ERROR;
+  }
+
+  FOR_ALL_DISPLAYS(dlp1, &head_dm_list.l)
+    if(!strcmp(argv[1], bu_vls_addr(&dlp1->_dmp->dm_pathName)))
+      break;
+
+  if(dlp1 == &head_dm_list){
+     Tcl_AppendResult(interp, "f_share_vars: unrecognized pathName - ",
+		      argv[1], "\n", (char *)NULL);
+    return TCL_ERROR;
+  }
+
+  FOR_ALL_DISPLAYS(dlp2, &head_dm_list.l)
+    if(!strcmp(argv[2], bu_vls_addr(&dlp2->_dmp->dm_pathName)))
+      break;
+
+  if(dlp2 == &head_dm_list){
+     Tcl_AppendResult(interp, "f_share_vars: unrecognized pathName - ",
+		      argv[1], "\n", (char *)NULL);
+    return TCL_ERROR;
+  }
+
+  if(dlp1 == dlp2)
+    return TCL_OK;
+
+  /* already sharing mged variables */
+  if(dlp1->_mged_variables == dlp2->_mged_variables)
+    return TCL_OK;
+
+
+  save_mvp = dlp2->_mged_variables;
+  dlp2->_mged_variables = dlp1->_mged_variables;
+
+  /* check if save_mvp is being used elsewhere */
+  FOR_ALL_DISPLAYS(dlp3, &head_dm_list.l)
+    if(save_mvp == dlp3->_mged_variables)
+      break;
+
+  /* save_mvp is not being used */
+  if(dlp3 == &head_dm_list)
+    bu_free((genptr_t)save_mvp, "f_share_menu: save_mvp");
+
+  /* need to redraw this guy */
+  dlp2->_dirty = 1;
+
+  return TCL_OK;
+}
+
+int
+f_unshare_vars(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
+int     argc;
+char    **argv;
+{
+  struct dm_list *dlp1, *dlp2;
+
+  if(argc != 2){
+    return TCL_ERROR;
+  }
+
+  FOR_ALL_DISPLAYS(dlp1, &head_dm_list.l)
+    if(!strcmp(argv[1], bu_vls_addr(&dlp1->_dmp->dm_pathName)))
+      break;
+
+  if(dlp1 == &head_dm_list){
+     Tcl_AppendResult(interp, "f_unshare_menu: unrecognized pathName - ",
+		      argv[1], "\n", (char *)NULL);
+    return TCL_ERROR;
+  }
+
+  FOR_ALL_DISPLAYS(dlp2, &head_dm_list.l)
+    if(dlp1 != dlp2 && dlp1->_mged_variables == dlp2->_mged_variables)
+      break;
+
+  /* not sharing mged_variables ---- nothing to do */
+  if(dlp2 == &head_dm_list)
+    return TCL_OK;
+
+  BU_GETSTRUCT(dlp1->_mged_variables, _mged_variables);
+  *dlp1->_mged_variables = *dlp2->_mged_variables;  /* struct copy */
+
+  return TCL_OK;
+}
 
 void
 dm_var_init(initial_dm_list)
@@ -830,15 +933,13 @@ struct dm_list *initial_dm_list;
   int i;
 
   BU_GETSTRUCT(curr_dm_list->s_info, shared_info);
-#if 0
-  mged_variables = default_mged_variables; /* struct copy */
-#else
-  mged_variables = initial_dm_list->_mged_variables; /* struct copy */
-#endif
+  BU_GETSTRUCT(mged_variables, _mged_variables);
+  *mged_variables = *initial_dm_list->_mged_variables; /* struct copy */
 
 #if 1
   bn_mat_copy(Viewrot, initial_dm_list->s_info->_Viewrot);
   bn_mat_copy(toViewcenter, initial_dm_list->s_info->_toViewcenter);
+  bn_mat_copy(ModelDelta, bn_mat_identity);
   Viewscale = initial_dm_list->s_info->_Viewscale;
 #else
   bn_mat_copy(Viewrot, bn_mat_identity);
@@ -854,12 +955,10 @@ struct dm_list *initial_dm_list;
   frametime = 1;
   mapped = 1;
   adc_a1_deg = adc_a2_deg = 45.0;
-  last_v_axes = initial_dm_list->_last_v_axes;
+  mged_variables->v_axes_pos = initial_dm_list->_mged_variables->v_axes_pos;
   mged_view_init(curr_dm_list);
 
-#if 1
   BU_GETSTRUCT(curr_dm_list->menu_vars, menu_vars);
-#endif
 }
 
 void
