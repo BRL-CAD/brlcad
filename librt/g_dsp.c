@@ -25,8 +25,9 @@
  *		6	ZMID (dsp_min)		-7	(upward normal)
  *
  *  if the "struct hit" surfno surface is positive, then 
- *  	hit_vpriv holds the cell that was hit.
- *	surfno is either  TRI1 or TRI2
+ *  	hit_vpriv[X,Y] holds the cell that was hit.
+ *	hit_vpriv[Z] is 0 if this was an in-hit.  1 if an out-hit
+ *	surfno is either  TRI1 or TRI2  (XXX TRI3/TRI4?)
  *	
  *	The top surfaces of the dsp are numbered 0 .. wid*len*2
  *	(2 triangles per ``cell'')
@@ -227,6 +228,7 @@ register CONST struct soltab *stp;
 		(struct dsp_specific *)stp->st_specific;
 	struct bu_vls vls;
  
+
 	RT_DSP_CK_MAGIC(dsp);
 
 	dsp_print(&vls, &(dsp->dsp_i) );
@@ -392,6 +394,7 @@ int line;
 	isp->sp->seg_in.hit_surfno = surf;
 	isp->sp->seg_in.hit_vpriv[X] = cell[X];
 	isp->sp->seg_in.hit_vpriv[Y] = cell[Y];
+	isp->sp->seg_in.hit_vpriv[Z] = 0.0;
 	VMOVE(isp->sp->seg_in.hit_normal, norm);
 	isp->sp_is_valid = 1;
 
@@ -436,6 +439,7 @@ int line;
 	isp->sp->seg_out.hit_surfno = surf;
 	isp->sp->seg_out.hit_vpriv[X] = cell[X];
 	isp->sp->seg_out.hit_vpriv[Y] = cell[Y];
+	isp->sp->seg_out.hit_vpriv[Z] = 1.0;
 	VMOVE(isp->sp->seg_out.hit_normal, norm);
 	isp->sp_is_done = 1;
 
@@ -687,11 +691,9 @@ double dist2;		  /* distance to second cell hit */
 	VSET(C, cell[X],   cell[Y]+1, DSP(isect->dsp, cell[X],   cell[Y]+1));
 	VSET(D, cell[X]+1, cell[Y]+1, DSP(isect->dsp, cell[X]+1, cell[Y]+1));
 
-	bu_semaphore_acquire( RT_SEM_MODEL);
 	bu_semaphore_acquire( BU_SEM_SYSCALL);
 	sprintf(buf, "dsp%02d.pl", plot_file_num++);
 	bu_semaphore_release( BU_SEM_SYSCALL);
-	bu_semaphore_release( RT_SEM_MODEL);
 	bu_log("%s\n", buf);
 
 	bu_semaphore_acquire( BU_SEM_SYSCALL);
@@ -2051,14 +2053,21 @@ struct application	*ap;
 	(void)rt_vstub( stp, rp, segp, n, ap );
 }
 
+/***********************************************************************
+ *
+ * Compute the model-space normal at a gridpoint
+ *
+ */
 static void
-compute_normal_at_gridpoint(N, dsp, x, y)
+compute_normal_at_gridpoint(N, dsp, x, y, fd, bool)
 vect_t N;
 struct dsp_specific *dsp;
 int x, y;
+FILE *fd;
+int bool;
 {
-	/*  Gridpoint specified is "B" we compute normal based upon
-	 *  A/C, D/E
+	/*  Gridpoint specified is "B" we compute normal by taking the
+	 *  cross product of the vectors  A->C, D->E
 	 *
 	 * 		E
 	 *
@@ -2074,82 +2083,37 @@ int x, y;
 	point_t A, B, C, D, E, tmp;
 	vect_t Vac, Vde;
 
-	if (x < 1) {
-		VSET(tmp, x, y, DSP(dsp, x, y) );
-	} else {
-		VSET(tmp, x-1, y, DSP(dsp, x-1, y) );
-	}
+	if (x == 0) {	VSET(tmp, x, y, DSP(dsp, x, y) );	}
+	else {		VSET(tmp, x-1, y, DSP(dsp, x-1, y) );	}
 	MAT4X3PNT(A, dsp->dsp_i.dsp_stom, tmp);
 
-	if (x >= XSIZ(dsp)) {
-		VSET(tmp, x, y,  DSP(dsp, x, y) );
-	} else {
-		VSET(tmp, x+1, y,  DSP(dsp, x+1, y) );
-	}
+	if (x >= XSIZ(dsp)) {	VSET(tmp, x, y,  DSP(dsp, x, y) ); } 
+	else {			VSET(tmp, x+1, y,  DSP(dsp, x+1, y) );	}
 	MAT4X3PNT(C, dsp->dsp_i.dsp_stom, tmp);
 
 
-	if (y < 1) {
-		VSET(tmp, x, y, DSP(dsp, x, y) );
-	} else {
-		VSET(tmp, x, y-1, DSP(dsp, x, y-1) );
-	}
+	if (y == 0) {	VSET(tmp, x, y, DSP(dsp, x, y) ); }
+	else {		VSET(tmp, x, y-1, DSP(dsp, x, y-1) );	}
 	MAT4X3PNT(D, dsp->dsp_i.dsp_stom, tmp);
 
-	if (y >= YSIZ(dsp)) {
-		VSET(tmp, x, y, DSP(dsp, x, y) );
-	} else {
-		VSET(tmp, x, y+1, DSP(dsp, x, y+1) );
-	}
-
+	if (y >= YSIZ(dsp)) {	VSET(tmp, x, y, DSP(dsp, x, y) ); }
+	else {			VSET(tmp, x, y+1, DSP(dsp, x, y+1) );	}
 	MAT4X3PNT(E, dsp->dsp_i.dsp_stom, tmp);
 
-	VSUB2(Vac, A, C);
-	VSUB2(Vde, D, E);
+	if (fd && bool) {
+		pl_color(fd, 220, 220, 90);
+		pdv_3line(fd, A, C);
+		pdv_3line(fd, D, E);
+	}
+
+	VSUB2(Vac, C, A);
+	VSUB2(Vde, E, D);
 
 	VCROSS(N, Vac, Vde);
 
 	VUNITIZE(N);
-
-	if (rt_g.debug & DEBUG_HF) {
-		char buf[32];
-		FILE *fd;
-
-		VSET(tmp, x, y, DSP(dsp, x, y));
-		MAT4X3PNT(B, dsp->dsp_i.dsp_stom, tmp);
-
-		bu_semaphore_acquire( RT_SEM_MODEL);
-		sprintf(buf, "dsp%02d.pl", plot_file_num++);
-		bu_semaphore_release( RT_SEM_MODEL);
-		bu_log("%s\n", buf);
-
-		bu_semaphore_acquire( BU_SEM_SYSCALL);
-		if ((fd=fopen(buf, "w")) != (FILE *)NULL) {
-			pl_color(fd, 255, 255, 0);
-			VJOIN1(tmp, B, 1.0, N);
- 			pdv_3line(fd, B, tmp);
-
-			pl_color(fd, 255, 140, 0);
-			VUNITIZE(Vac);
-			VUNITIZE(Vde);
-
-			VJOIN1(tmp, B, 1.0, Vac);
-			pdv_3line(fd, B, tmp);
-
-			VJOIN1(tmp, B, 1.0, Vde);
-			pdv_3line(fd, B, tmp);
-
-			fclose(fd);
-		}
-		bu_semaphore_release( BU_SEM_SYSCALL);
-	}
-
-
-
-
-
-
 }
+
 /*
  *  			R T _ D S P _ N O R M
  *  
@@ -2161,271 +2125,192 @@ register struct hit	*hitp;
 struct soltab		*stp;
 register struct xray	*rp;
 {
-#if 1
- 	if (rt_g.debug & DEBUG_HF)
-		bu_log("rt_dsp_norm(%g %g %g,   %g %g %g)",
-		V3ARGS(hitp->hit_point),
-		V3ARGS(hitp->hit_normal));
-
-/*	MAT4X3VEC(N, dsp->dsp_i.dsp_stom, hitp->hit_normal);
-	VUNITIZE(N);
-	VMOVE(hitp->hit_normal, N);
-*/
-
- 	if (rt_g.debug & DEBUG_HF) {
-		char buf[132];
- 		point_t n;
- 		FILE *fd;
-
-		bu_log("\n\t %g %g %g\n", V3ARGS(hitp->hit_normal));
-
-		bu_semaphore_acquire( BU_SEM_SYSCALL);
-		sprintf(buf, "dsp%02d.pl", plot_file_num++);
-
-		if ((fd=fopen(buf, "w")) != (FILE *)NULL) {
-			pl_color(fd, 255, 40, 40);
-
-			pdv_3move(fd, hitp->hit_point);
-			VADD2(n, hitp->hit_point, hitp->hit_normal);
-			pdv_3cont(fd, n);
-			fclose(fd);
-		}
-		bu_semaphore_release( BU_SEM_SYSCALL);
-
-
- 	}
-#else
-	vect_t N, tmp, A, B, C, D, AB, AC, AD;
+	vect_t N, t, tmp, A, B, C, D, AB, AC, AD, N_orig;
 	int cell[2];
 	char buf[32];
+	struct dsp_specific *dsp = (struct dsp_specific *)stp->st_specific;
+	vect_t Anorm, Bnorm, Dnorm, Cnorm, ABnorm, CDnorm;
+	double Xfrac, Yfrac;
+	int x, y;
+	point_t pt;
+	double dot;
+	double len;
+	FILE *fd = (FILE *)NULL;
 
  	if (rt_g.debug & DEBUG_HF)
-		bu_log("rt_dsp_norm()\n");
+		bu_log("rt_dsp_norm(%g %g %g)\n", V3ARGS(hitp->hit_normal));
 
+	VMOVE(N_orig, hitp->hit_normal);
 
 	VJOIN1( hitp->hit_point, rp->r_pt, hitp->hit_dist, rp->r_dir );
-	if (hitp->hit_surfno < 0) {
-		MAT4X3VEC( N, dsp->dsp_i.dsp_stom, 
-			dsp_pl[ BBSURF(hitp->hit_surfno) ] );
-	} else if (dsp->dsp_i.dsp_smooth) {
-		if ( hitp->hit_surfno == TRI2 ||  hitp->hit_surfno == TRI1 ||
-		     hitp->hit_surfno == TRI3 ||  hitp->hit_surfno == TRI4 ) {
-			vect_t Anorm, Bnorm, Dnorm, Cnorm, ABnorm, CDnorm;
-			double Xfrac, Yfrac;
-			int x, y;
-			point_t pt;
-	
-			x = hitp->hit_vpriv[X];
-			y = hitp->hit_vpriv[Y];
-	
-			compute_normal_at_gridpoint(Anorm, dsp, x, y);
-			compute_normal_at_gridpoint(Bnorm, dsp, x+1, y);
-			compute_normal_at_gridpoint(Dnorm, dsp, x+1, y+1);
-			compute_normal_at_gridpoint(Cnorm, dsp, x, y+1);
-	
-			VSET(A, x,   y, DSP(dsp, x, y)  );
-	
-			VSET(D, x+1, y+1, DSP(dsp, x+1, y+1));
-	
-			MAT4X3PNT(pt, dsp->dsp_i.dsp_mtos, hitp->hit_point);
-	
+ 	if (rt_g.debug & DEBUG_HF)
+		VPRINT("hit point", hitp->hit_point);
 
-			Xfrac = (pt[X] - A[X]) / (D[X] - A[X]);
-			Yfrac = (pt[Y] - A[Y]) / (D[Y] - A[Y]);
-
-			if (Xfrac < 0.0) Xfrac = 0.0;
-			if (Xfrac > 1.0) Xfrac = 1.0;
-
-			if (Yfrac < 0.0) Yfrac = 0.0;
-			if (Yfrac > 1.0) Yfrac = 1.0;
-
-		     	if (dsp->dsp_i.dsp_smooth == 2) {
-#define SMOOTHSTEP(x)  ((x)*(x)*(3 - 2*(x)))
-				Xfrac = SMOOTHSTEP( Xfrac );
-
-				Yfrac = SMOOTHSTEP( Yfrac );
-#undef SMOOTHSTEP
-		     	}
-
-			VSCALE(Anorm, Anorm, (1.0-Xfrac) );
-			VSCALE(Bnorm, Bnorm,      Xfrac  );
-			VADD2(ABnorm, Anorm, Bnorm);
-			VUNITIZE(ABnorm);
-
-			VSCALE(Cnorm, Cnorm, (1.0-Xfrac) );
-			VSCALE(Dnorm, Dnorm,      Xfrac  );
-			VADD2(CDnorm, Dnorm, Cnorm);
-			VUNITIZE(CDnorm);
-
-			VSCALE(ABnorm, ABnorm, (1.0-Yfrac) );
-			VSCALE(CDnorm, CDnorm, Yfrac );
-	
-			VADD2(N, ABnorm, CDnorm);
-			if (rt_g.debug & DEBUG_HF) {
-				FILE *fd;
-
-				VPRINT("A", A);
-				VPRINT("D", D);
-				VPRINT("pt", pt);
-				bu_log("Xfrac:%g Yfrac:%g\n", Xfrac, Yfrac);
-
-				bu_semaphore_acquire( RT_SEM_MODEL);
-				sprintf(buf, "dsp%02d.pl", plot_file_num++);
-				bu_semaphore_release( RT_SEM_MODEL);
-				bu_log("plotting normal in %s\n", buf);
-
-				bu_semaphore_acquire( BU_SEM_SYSCALL);
-				if ((fd=fopen(buf, "w")) != (FILE *)NULL) {
-					pl_color(fd, 220, 220, 90);
-
-					VJOIN1(tmp, hitp->hit_point, 1.0, Anorm);
-					pdv_3line(fd, hitp->hit_point, tmp);
-
-					VJOIN1(tmp, hitp->hit_point, 1.0, Bnorm);
-					pdv_3line(fd, hitp->hit_point, tmp);
-
-					VJOIN1(tmp, hitp->hit_point, 1.0, Dnorm);
-					pdv_3line(fd, hitp->hit_point, tmp);
-
-					VJOIN1(tmp, hitp->hit_point, 1.0, Cnorm);
-					pdv_3line(fd, hitp->hit_point, tmp);
-
-					fclose(fd);
-				}
-				bu_semaphore_release( BU_SEM_SYSCALL);
-			}
-		} else {
-			bu_log("%s:%d ", __FILE__, __LINE__);
-			bu_log("bogus surface of DSP %d\n", hitp->hit_surfno);
-			bu_bomb("");
-		}
-	} else {
-		/* XXX this section should be replaced with code in
-		 * isect_ray_triangles() to save the normal
-		 * the only thing we should do here is transform the normal
-		 * from solid to model space
+	if (hitp->hit_surfno < 0 || !dsp->dsp_i.dsp_smooth ) {
+		/* we've hit one of the sides or bottom, or the user didn't
+		 * ask for smoothing of the elevation data,
+		 * so there's no interpolation to do
 		 */
 
-		cell[X] = hitp->hit_vpriv[X];
-		cell[Y] = hitp->hit_vpriv[Y];
-		if ( hitp->hit_surfno == TRI1 ) {
-		
-			VSET(tmp, cell[X],   cell[Y],   DSP(dsp, cell[X],   cell[Y])  );
-			MAT4X3PNT(A, dsp->dsp_i.dsp_stom, tmp);
+		if (rt_g.debug & DEBUG_HF)
+			bu_log("no Interpolation needed\n",
+			       V3ARGS(hitp->hit_normal));
+		return;
+	}
 
-			VSET(tmp, cell[X]+1, cell[Y],   DSP(dsp, cell[X]+1, cell[Y])  );
-			MAT4X3PNT(B, dsp->dsp_i.dsp_stom, tmp);
+	if ( hitp->hit_surfno != TRI2 &&  hitp->hit_surfno != TRI1 &&
+	     hitp->hit_surfno != TRI3 && hitp->hit_surfno != TRI4 ) {
+		bu_log("%s:%d bogus surface of DSP %d\n",
+		       __FILE__, __LINE__, hitp->hit_surfno);
+		bu_bomb("");
+	}
 
-			VSET(tmp, cell[X]+1, cell[Y]+1, DSP(dsp, cell[X]+1, cell[Y]+1));
-			MAT4X3PNT(D, dsp->dsp_i.dsp_stom, tmp);
+	if (rt_g.debug & DEBUG_HF)
+		bu_log("Interpolation: %d\n", dsp->dsp_i.dsp_smooth);
 
+	/* compute the distance between grid points in model space */
+	VSET(tmp, 1.0, 0.0, 0.0);
+	MAT4X3VEC(t, dsp->dsp_i.dsp_stom, tmp);
+	len = MAGNITUDE(t);
 
-			VSUB2(AB, B, A);
-			VSUB2(AD, D, A);
+	if (rt_g.debug & DEBUG_HF) {
+		bu_semaphore_acquire( BU_SEM_SYSCALL);
+		sprintf(buf, "dsp%02d.pl", plot_file_num++);
+		bu_semaphore_release( BU_SEM_SYSCALL);
 
-			VCROSS(N, AB, AD); 
-		} else if ( hitp->hit_surfno == TRI2 ) {
-
-			VSET(tmp, cell[X],   cell[Y],   DSP(dsp, cell[X],   cell[Y])  );
-			MAT4X3PNT(A, dsp->dsp_i.dsp_stom, tmp);
-
-			VSET(tmp, cell[X],   cell[Y]+1, DSP(dsp, cell[X],   cell[Y]+1));
-			MAT4X3PNT(C, dsp->dsp_i.dsp_stom, tmp);
-
-			VSET(tmp, cell[X]+1, cell[Y]+1, DSP(dsp, cell[X]+1, cell[Y]+1));
-			MAT4X3PNT(D, dsp->dsp_i.dsp_stom, tmp);
-
-			VSUB2(AD, D, A);
-			VSUB2(AC, C, A);
-
-
-			VCROSS(N, AD, AC); 
-		} else if ( hitp->hit_surfno == TRI3 ) {
-			/* alternate cut cell */
-			
-			VSET(tmp, cell[X]+1,   cell[Y],
-			 DSP(dsp, cell[X]+1,   cell[Y])  );
-			MAT4X3PNT(A, dsp->dsp_i.dsp_stom, tmp);
-
-			VSET(tmp, cell[X]+1, cell[Y]+1,  
-			 DSP(dsp, cell[X]+1, cell[Y]+1)  );
-			MAT4X3PNT(B, dsp->dsp_i.dsp_stom, tmp);
-
-			VSET(tmp, cell[X], cell[Y]+1,
-			 DSP(dsp, cell[X], cell[Y]+1) );
-			MAT4X3PNT(D, dsp->dsp_i.dsp_stom, tmp);
-
-			VSUB2(AB, B, A);
-			VSUB2(AD, D, A);
-
-			VCROSS(N, AB, AD); 
-
-		} else if ( hitp->hit_surfno == TRI4 ) {
-			/* alternate cut cell */
-
-			VSET(tmp, cell[X]+1,   cell[Y],  
-			 DSP(dsp, cell[X]+1,   cell[Y])  );
-			MAT4X3PNT(A, dsp->dsp_i.dsp_stom, tmp);
-
-			VSET(tmp, cell[X],   cell[Y],
-			 DSP(dsp, cell[X],   cell[Y]));
-			MAT4X3PNT(C, dsp->dsp_i.dsp_stom, tmp);
-
-			VSET(tmp, cell[X], cell[Y]+1,
-			 DSP(dsp, cell[X], cell[Y]+1));
-			MAT4X3PNT(D, dsp->dsp_i.dsp_stom, tmp);
-
-			VSUB2(AD, D, A);
-			VSUB2(AC, C, A);
-
-			VCROSS(N, AD, AC); 
-		} else {
-			bu_log("%s:%d ", __FILE__, __LINE__);
-			bu_log("bogus surface of DSP %d\n", hitp->hit_surfno);
-			bu_bomb("");
+		bu_log("plotting normals in %s\n", buf);
+		bu_semaphore_acquire( BU_SEM_SYSCALL);
+		if ((fd=fopen(buf, "w")) == (FILE *)NULL) {
+			bu_semaphore_release( BU_SEM_SYSCALL);
+			bu_bomb("Couldn't open plot file\n");
 		}
 	}
 
-	VUNITIZE(N);
-	VMOVE(hitp->hit_normal, N);
+	/* get the cell we hit */
+	x = hitp->hit_vpriv[X];
+	y = hitp->hit_vpriv[Y];
 
-	
+	compute_normal_at_gridpoint(Anorm, dsp, x, y, fd, 1);
+	compute_normal_at_gridpoint(Bnorm, dsp, x+1, y, fd, 0);
+	compute_normal_at_gridpoint(Dnorm, dsp, x+1, y+1, fd, 0);
+	compute_normal_at_gridpoint(Cnorm, dsp, x, y+1, fd, 0);
+
 	if (rt_g.debug & DEBUG_HF) {
-		vect_t tmp;
-		char buf[32];
-		FILE *fd;
 
-		if ( hitp->hit_surfno == TRI1 || hitp->hit_surfno == TRI2 ) {
-			bu_log("surf[%d] cell(%d,%d) pt(%g %g %g) Norm[%g %g %g](%g %g %g)\n",
-				hitp->hit_surfno,
-				cell[X], cell[Y],
-				V3ARGS(hitp->hit_point),
-				V3ARGS(dsp_pl[ hitp->hit_surfno ]),
-				V3ARGS(N));
-		} else {
-			bu_log("surf[%d] cell(?,?) pt(%g %g %g) Norm[%g %g %g](%g %g %g)\n",
-				hitp->hit_surfno,
-				V3ARGS(hitp->hit_point),
-				V3ARGS(dsp_pl[ hitp->hit_surfno ]),
-				V3ARGS(N));
-		}
-		bu_semaphore_acquire( RT_SEM_MODEL);
-		sprintf(buf, "dsp%02d.pl", plot_file_num++);
-		bu_semaphore_release( RT_SEM_MODEL);
-		bu_log("plotting normal in %s\n", buf);
+		/* plot the ray */
+		pl_color(fd, 255, 0, 0);
+		pdv_3line(fd, rp->r_pt, hitp->hit_point);
 
-		bu_semaphore_acquire( BU_SEM_SYSCALL);
-		if ((fd=fopen(buf, "w")) != (FILE *)NULL) {
-			pl_color(fd, 90, 220, 90);
+		/* plot the normal we started with */
+		pl_color(fd, 0, 255, 0);
+		VJOIN1(tmp, hitp->hit_point, len, N_orig);
+		pdv_3line(fd, hitp->hit_point, tmp);
 
-			pdv_3move(fd, hitp->hit_point);
-			VJOIN1(tmp, hitp->hit_point, 1.0, N);
-			pdv_3cont(fd, tmp);
-			fclose(fd);
-		}
+
+		/* Plot the normals we just got */
+		pl_color(fd, 220, 220, 90);
+
+		VSET(tmp, x,   y,   DSP(dsp, x,   y));
+		MAT4X3PNT(A, dsp->dsp_i.dsp_stom, tmp);
+		VJOIN1(tmp, A, len, Anorm);
+		pdv_3line(fd, A, tmp);
+
+		VSET(tmp, x+1, y,   DSP(dsp, x+1, y));
+		MAT4X3PNT(B, dsp->dsp_i.dsp_stom, tmp);
+		VJOIN1(tmp, B, len, Anorm);
+		pdv_3line(fd, B, tmp);
+
+		VSET(tmp, x+1, y+1, DSP(dsp, x+1, y+1));
+		MAT4X3PNT(D, dsp->dsp_i.dsp_stom, tmp);
+		VJOIN1(tmp, D, len, Anorm);
+		pdv_3line(fd, D, tmp);
+
+		VSET(tmp, x,   y+1, DSP(dsp, x,   y+1));
+		MAT4X3PNT(C, dsp->dsp_i.dsp_stom, tmp);
+		VJOIN1(tmp, C, len, Anorm);
+		pdv_3line(fd, C, tmp);
+
 		bu_semaphore_release( BU_SEM_SYSCALL);
 	}
-#endif
+
+	MAT4X3PNT(pt, dsp->dsp_i.dsp_mtos, hitp->hit_point);
+
+	Xfrac = (pt[X] - x);
+	Yfrac = (pt[Y] - y);
+	if (rt_g.debug & DEBUG_HF)
+		bu_log("Xfract:%g Yfract:%g\n", Xfrac, Yfrac);
+
+	if (Xfrac < 0.0) Xfrac = 0.0;
+	else if (Xfrac > 1.0) Xfrac = 1.0;
+
+	if (Yfrac < 0.0) Yfrac = 0.0;
+	else if (Yfrac > 1.0) Yfrac = 1.0;
+
+
+     	if (dsp->dsp_i.dsp_smooth == 2) {
+		/* This is an experiment to "flatten" the curvature 
+		 * of the dsp near the grid points
+		 */
+#define SMOOTHSTEP(x)  ((x)*(x)*(3 - 2*(x)))
+		Xfrac = SMOOTHSTEP( Xfrac );
+		Yfrac = SMOOTHSTEP( Yfrac );
+#undef SMOOTHSTEP
+     	}
+
+	/* we compute the normal along the "X edges" of the cell */
+	VSCALE(Anorm, Anorm, (1.0-Xfrac) );
+	VSCALE(Bnorm, Bnorm,      Xfrac  );
+	VADD2(ABnorm, Anorm, Bnorm);
+	VUNITIZE(ABnorm);
+
+	VSCALE(Cnorm, Cnorm, (1.0-Xfrac) );
+	VSCALE(Dnorm, Dnorm,      Xfrac  );
+	VADD2(CDnorm, Dnorm, Cnorm);
+	VUNITIZE(CDnorm);
+
+	/* now we interpolate the two X edge normals to get the final one */
+	VSCALE(ABnorm, ABnorm, (1.0-Yfrac) );
+	VSCALE(CDnorm, CDnorm, Yfrac );
+	VADD2(N, ABnorm, CDnorm);
+
+	VUNITIZE(N);
+
+	dot = VDOT(N, rp->r_dir);
+	if (rt_g.debug & DEBUG_HF)
+		bu_log("interpolated %g %g %g  dot:%g\n", 
+		       V3ARGS(N), dot);
+
+	if ( (hitp->hit_vpriv[Z] == 0.0 && dot > 0.0)/* in-hit needs fix */ ||
+	     (hitp->hit_vpriv[Z] == 1.0 && dot < 0.0)/* out-hit needs fix */){
+		/* bring the normal back to being perpindicular 
+		 * to the ray to avoid "flipped normal" warnings
+		 */
+		VCROSS(A, rp->r_dir, N);
+		VCROSS(N, A, rp->r_dir);
+		VUNITIZE(N);
+
+		dot = VDOT(N, rp->r_dir);
+
+
+		if (rt_g.debug & DEBUG_HF)
+			bu_log("corrected: %g %g %g dot:%g\n", V3ARGS(N), dot);
+	}
+	VMOVE(hitp->hit_normal, N);
+
+	if (rt_g.debug & DEBUG_HF) {
+
+
+		if (fd) {
+
+			bu_semaphore_acquire( BU_SEM_SYSCALL);
+			pl_color(fd, 255, 255, 255);
+			VJOIN1(tmp, hitp->hit_point, len, hitp->hit_normal);
+			pdv_3line(fd, hitp->hit_point, tmp);
+
+			fclose(fd);
+			bu_semaphore_release( BU_SEM_SYSCALL);
+		}
+	}
 }
 
 /*
