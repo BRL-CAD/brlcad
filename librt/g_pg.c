@@ -66,11 +66,6 @@ struct rt_i		*rtip;
 
 	for( p = 0; p < pgp->npoly; p++ )  {
 		LOCAL vect_t	work[3];
-		LOCAL vect_t	norm;
-
-		/* Just use first normal as a face normal.  Ignore rest */
-		VMOVE( norm, pgp->poly[p].norms );
-		VUNITIZE( norm );
 
 		VMOVE( work[0], &pgp->poly[p].verts[0*3] );
 		VMINMAX( stp->st_min, stp->st_max, work[0] );
@@ -83,7 +78,7 @@ struct rt_i		*rtip;
 
 			/* output a face */
 			(void)rt_pgface( stp,
-				work[0], work[1], work[2], norm, &rtip->rti_tol );
+				work[0], work[1], work[2], &rtip->rti_tol );
 
 			/* Chop off a triangle, and continue */
 			VMOVE( work[1], work[2] );
@@ -155,19 +150,12 @@ CONST struct rt_tol	*tol;
 		return(0);			/* BAD */
 	}		
 
-	/*  wn is a GIFT-style normal, not necessarily of unit length.
+	/*  wn is a normal of not necessarily unit length.
 	 *  N is an outward pointing unit normal.
-	 *  Eventually, N should be computed as a blend of the given normals.
+	 *  We depend on the points being given in CCW order here.
 	 */
-	m3 = MAGNITUDE( np );
-	if( !NEAR_ZERO( m3, 0.0001 ) )  {
-		VMOVE( trip->tri_N, np );
-		m3 = 1 / m3;
-		VSCALE( trip->tri_N, trip->tri_N, m3 );
-	} else {
-		VMOVE( trip->tri_N, trip->tri_wn );
-		VUNITIZE( trip->tri_N );
-	}
+	VMOVE( trip->tri_N, trip->tri_wn );
+	VUNITIZE( trip->tri_N );
 
 	/* Add this face onto the linked list for this solid */
 	trip->tri_forw = (struct tri_specific *)stp->st_specific;
@@ -316,7 +304,7 @@ struct seg		*seghead;
 		 */
 		hits[nhits] = hits[nhits-1];	/* struct copy */
 		VREVERSE( hits[nhits].hit_normal, hits[nhits-1].hit_normal );
-		hits[nhits++].hit_dist += 0.1;	/* mm thick */
+		nhits++;
 		if( nerrors++ < 6 )  {
 			rt_log("rt_pg_shot(%s): %d hits: ", stp->st_name, nhits-1);
 			for(i=0; i < nhits; i++ )
@@ -329,7 +317,7 @@ struct seg		*seghead;
 	{
 		register struct seg *segp;
 		register int	i;
-		for( i=0; i < nhits; i -= 2 )  {
+		for( i=0; i < nhits; i += 2 )  {
 			RT_GET_SEG(segp, ap->a_resource);
 			segp->seg_stp = stp;
 			segp->seg_in = hits[i];		/* struct copy */
@@ -438,54 +426,7 @@ struct soltab *stp;
 	vec_ortho( cvp->crv_pdir, hitp->hit_normal );
 	cvp->crv_c1 = cvp->crv_c2 = 0;
 }
-#if 0
-/*	Superseeded by nmg_find_vu_in_face
- */
-/*
- *			R T _ N M G _ F I N D _ P T _ I N _ F A C E
- *
- *  Given a point in 3-space and a face pointer, try to find a vertex
- *  in the face which is within sqrt(tol_sq) distance of the given point.
- *
- *  Returns -
- *	pointer to vertex with matching geometry
- *	NULL
- */
-struct vertex *
-rt_nmg_find_pt_in_face( fu, pt, tol_sq )
-struct faceuse	*fu;
-point_t		pt;
-double		tol_sq;
-{
-	struct loopuse *lu;
-	struct edgeuse *eu;
-	vect_t		delta;
 
-	NMG_CK_FACEUSE(fu);
-	lu = fu->lu_p;
-	do {
-		NMG_CK_LOOPUSE(lu);
-		if (*lu->down.magic_p == NMG_VERTEXUSE_MAGIC) {
-			VSUB2( delta, lu->down.vu_p->v_p->vg_p->coord, pt );
-			if( MAGSQ(delta) < tol_sq )
-				return(lu->down.vu_p->v_p);
-		}
-		else if (*lu->down.magic_p == NMG_EDGEUSE_MAGIC) {
-			eu = lu->down.eu_p;
-			do {
-				VSUB2( delta, eu->vu_p->v_p->vg_p->coord, pt );
-				if( MAGSQ(delta) < tol_sq )
-					return(eu->vu_p->v_p);
-				eu = eu->next;
-			} while (eu != lu->down.eu_p);
-		} else
-			rt_bomb("rt_nmg_find_pt_in_face: Bogus child of loop\n");
-
-		lu = lu->next;
-	} while (lu != fu->lu_p);
-	return ((struct vertex *)NULL);
-}
-#endif
 /*
  *			R T _ N M G _ F I N D _ P T _ I N _ S H E L L
  *
@@ -512,6 +453,7 @@ CONST struct rt_tol	*tol;
 	vect_t		delta;
 
 	NMG_CK_SHELL(s);
+	RT_CK_TOL(tol);
 
 	fu = RT_LIST_FIRST(faceuse, &s->fu_hd);
 	while (RT_LIST_NOT_HEAD(fu, &s->fu_hd) ) {
@@ -557,8 +499,6 @@ CONST struct rt_tol	*tol;
 			}
 		}
 	}
-
-
 
 	lu = RT_LIST_FIRST(loopuse, &s->lu_hd);
 	while (RT_LIST_NOT_HEAD(lu, &s->lu_hd) ) {
@@ -642,7 +582,7 @@ struct rt_tol		*tol;
 		/* Locate these points, if previously mentioned */
 		for( i=0; i < pp->npts; i++ )  {
 			verts[i] = rt_nmg_find_pt_in_shell( s,
-				&pp->verts[3*i], tol->dist_sq );
+				&pp->verts[3*i], tol );
 		}
 
 		/* Construct the face.  Verts should be in CCW order */
