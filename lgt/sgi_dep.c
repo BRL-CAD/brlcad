@@ -882,7 +882,7 @@ sgi_Init_Popup_Menu()
 				infrared_menu
 				);
 #ifdef mips
-	main_menu = defpup( "main menu %t|raytrace %m %x35|animate %x70|gridding parameters %m %x35|buffering %m %x46|debugging %m %x101|shell escape %x33|background color %x98|maximum ray bounces %m %x75|tracking cursor (on/off) %x99|cursor input %x67|clear frame buffer %x69|redraw text %x114|light sources %m %x35|material attributes %m %x35|files %m %x35|special applications %m %x35|quit %x113",
+	main_menu = defpup( "main menu %t|raytrace %m %x35|animate %x70|gridding parameters %m %x35|buffering %m %x46|debugging %m %x101|shell escape %x33|background color %x98|maximum ray bounces %m %x75|tracking cursor (on/off) %x99|overlap reporting (on/off) %x88|cursor input %x67|clear frame buffer %x69|redraw text %x114|light sources %m %x35|material attributes %m %x35|files %m %x35|special applications %m %x35|quit %x113",
 				raytracer_menu,
 				grid_cntl_menu,
 				buffering_menu,
@@ -894,7 +894,7 @@ sgi_Init_Popup_Menu()
 				special_menu
 				);
 #else
-	main_menu = defpup( "main menu %t|raytrace %m %x35|animate %x70|gridding parameters %m %x35|buffering %x46|debugging %x101|shell escape %x33|background color %x98|maximum ray bounces %x75|tracking cursor (on/off) %x99|cursor input %x67|clear frame buffer %x69|redraw text %x114|light sources %m %x35|material attributes %m %x35|files %m %x35|special applications %m %x35|quit %x113",
+	main_menu = defpup( "main menu %t|raytrace %m %x35|animate %x70|gridding parameters %m %x35|buffering %x46|debugging %x101|shell escape %x33|background color %x98|maximum ray bounces %x75|tracking cursor (on/off) %x99|overlap reporting (on/off) %x88|cursor input %x67|clear frame buffer %x69|redraw text %x114|light sources %m %x35|material attributes %m %x35|files %m %x35|special applications %m %x35|quit %x113",
 				raytracer_menu,
 				grid_cntl_menu,
 				light_src_menu,
