@@ -3487,7 +3487,7 @@ CONST struct db_i		*dbip;
 	for( BU_LIST_FOR( ppt, wdb_pipept, headp ) )
 		count++;
 
-	if( count <= 1 )
+	if( count < 1 )
 		return(-4);			/* Not enough for 1 pipe! */
 
 	/* Determine how many whole granules will be required */
@@ -3742,10 +3742,10 @@ CONST char			*attr;
 
 		seg_no = 0;
 		for( BU_LIST_FOR( ptp, wdb_pipept, &pipe->pipe_segs_head ) ) {
-			bu_vls_printf( &vls, " V%d { %.25G %.25G %.25G } I%d %.25G O%d %.25G R%d %.25G",
+			bu_vls_printf( &vls, " V%d { %.25G %.25G %.25G } O%d %.25G I%d %.25G R%d %.25G",
 				      seg_no, V3ARGS( ptp->pp_coord ),
-				      seg_no, ptp->pp_id,
 				      seg_no, ptp->pp_od,
+				      seg_no, ptp->pp_id,
 				      seg_no, ptp->pp_bendradius );
 			seg_no++;
 		}
@@ -3834,8 +3834,12 @@ char			**argv;
 
 		/* count vertices */
 		num_segs = 0;
-		for( BU_LIST_FOR( ptp, wdb_pipept, &pipe->pipe_segs_head ) )
-			num_segs++;
+		if( pipe->pipe_segs_head.forw ) {
+			for( BU_LIST_FOR( ptp, wdb_pipept, &pipe->pipe_segs_head ) )
+				num_segs++;
+		} else {
+			BU_LIST_INIT( &pipe->pipe_segs_head );
+		}
 		
 		if( !isdigit( argv[0][1] ) ) {
 			Tcl_SetResult( interp, "no vertex number specified", TCL_STATIC );
@@ -3843,6 +3847,25 @@ char			**argv;
 		}
 
 		seg_no = atoi( &argv[0][1] );
+		if( seg_no == num_segs ) {
+			struct wdb_pipept *new_pt;
+
+			new_pt = (struct wdb_pipept *)bu_calloc( 1, sizeof( struct wdb_pipept ), "New pipe segment" );
+			if( num_segs > 0 ) {
+				ptp = BU_LIST_LAST( wdb_pipept, &pipe->pipe_segs_head );
+				*new_pt = *ptp;		/* struct copy */
+				BU_LIST_INSERT( &pipe->pipe_segs_head, &new_pt->l );
+				ptp = new_pt;
+			} else {
+				VSETALL( new_pt->pp_coord, 0.0 );
+				new_pt->pp_id = 0.0;
+				new_pt->pp_od = 10.0;
+				new_pt->pp_bendradius = 20.0;
+				BU_LIST_INSERT( &pipe->pipe_segs_head, &new_pt->l );
+				ptp = new_pt;
+			}
+			num_segs++;
+		}
 		if( seg_no < 0 || seg_no >= num_segs ) {
 			Tcl_SetResult( interp, "vertex number out of range", TCL_STATIC );
 			return( TCL_ERROR );
