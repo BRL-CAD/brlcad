@@ -25,18 +25,18 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include <stdio.h>
 #include <ctype.h>
-#include <string.h>
+#ifdef SYSV
+# include <string.h>
+#else
+# include <strings.h>
+#endif
 #include <math.h>
 
-#include "externs.h"
 #include "machine.h"
+#include "externs.h"
 #include "vmath.h"
 #include "rtlist.h"
 #include "wdb.h"
-
-extern int	getopt();
-extern char	*optarg;
-extern int	optind;
 
 struct wmember	*wmp;	/* array indexed by region number */
 
