@@ -548,7 +548,9 @@ short *cell_max;
 
 
 
-
+/* 
+ * produce a plot file of the ray and the cell being intersected 
+ */
 static void
 plot_cell_ray(isect, cell,
 	curr_pt, next_pt, hit1, dist1, hit2, dist2, inside)
@@ -760,6 +762,13 @@ int inside;
 	}
 }
 
+/* 
+ *  This is a support routine for isect_ray_triangles()
+ *  The basic idea is to get the coordinates of the four corners of the cell.
+ *  The cell top will be cut from point A to point D by isect_ray_triangles()
+ *  So we re-order the points so that the cut is optimally placed.  Basically
+ *  we decide if the cut will be A-D or B-C.
+ */
 static void
 set_and_permute(isect, cell, A, B, C, D, tri1, tri2)
 struct isect_stuff *isect;
@@ -799,20 +808,32 @@ int *tri2;
 	VSET(tmp,	 sub[X], sub[Y],
 	 DSP(isect->dsp, sub[X], sub[Y]));
 	VSUB2(Aline, A, tmp);
+	VUNITIZE(Aline);
 
 	VSET(tmp,	 sup[X], sup[Y],
 	 DSP(isect->dsp, sup[X], sup[Y]));
 	VSUB2(Dline, tmp, D);
+	VUNITIZE(Dline);
+
+	VSUB2(tmp, D, A);
+	VUNITIZE(tmp);
+
+	dot1 = VDOT(Aline, tmp) + VDOT(Dline, tmp);
+
 
 	VSET(tmp,	 sub[X], sup[Y],
 	 DSP(isect->dsp, sub[X], sup[Y]));
 	VSUB2(Cline, tmp, C);
+	VUNITIZE(Cline);
 
 	VSET(tmp, sup[X], sub[Y], DSP(isect->dsp, sup[X], sub[Y]));
 	VSUB2(Bline, B, tmp);
+	VUNITIZE(Bline);
 
-	dot1 = VDOT(Aline, Dline);
-	dot2 = VDOT(Bline, Cline);
+	VSUB2(tmp, C, B);
+	VUNITIZE(tmp);
+	
+	dot2 = VDOT(Cline, tmp) + VDOT(Bline, tmp);
 
 	if ( dot1 > dot2 ) {
 		*tri1 = TRI1;
@@ -839,8 +860,6 @@ int *tri2;
  *  Once we've determined that the ray hits the bounding box for
  *  the triangles, this routine takes care of the actual triangle intersection
  *  and follow-up.
- *
- *
  */
 static void
 isect_ray_triangles(isect, cell, 
