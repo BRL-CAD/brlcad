@@ -1119,8 +1119,11 @@ register struct xray	*rp;
 	first = BU_LIST_FIRST( hit_list, &h->l );
 	if( VDOT( first->hitp->hit_normal, rp->r_dir ) > 0.0 )
 	{
-		bu_log( "ERROR: first hit on %s is an exit at (%g %g %g)\n",
-			stp->st_dp->d_namep, V3ARGS( first->hitp->hit_point ) );
+
+		bu_log( "ERROR: first hit on %s (surfno = %d) is an exit at (%g %g %g)\n",
+			stp->st_dp->d_namep, first->hitp->hit_surfno, V3ARGS( first->hitp->hit_point ) );
+		bu_log( "\tray start = (%.12e %.12e %.12e), ray dir = (%.12e %.12e %.12e)\n",
+			V3ARGS( rp->r_pt ), V3ARGS( rp->r_dir ) );
 
 		while( BU_LIST_WHILE( hitp, hit_list, &h->l ) )
 		{
@@ -1280,14 +1283,15 @@ struct seg		*seghead;
 	LOCAL struct hit_list		hit_head;
 	LOCAL struct hit_list		*hitp;
 	LOCAL int			hit_count;
-	LOCAL int			total_hits=0;
-	LOCAL int			seg_no=0;
+	LOCAL int			total_hits;
+	LOCAL int			seg_no;
 	LOCAL int			i;
 
 	BU_LIST_INIT( &hit_head.l );
 
 	pipe_start_shot( stp, rp, ap, seghead, BU_LIST_FIRST( id_pipe, head ),
 		&hit_head, &total_hits, 1 );
+	seg_no = 0;
 	for( BU_LIST_FOR( pipe_id, id_pipe, head ) )
 		seg_no++;
 	pipe_end_shot( stp, rp, ap, seghead, BU_LIST_LAST( id_pipe, head ),
