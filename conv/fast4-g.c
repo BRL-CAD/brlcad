@@ -4656,25 +4656,28 @@ make_nmg_objects()
 		}
 	}
 
-	if( debug )
-		rt_log( "Coplanar face merge\n" );
-
-	for( RT_LIST_FOR( r, nmgregion, &m->r_hd ) )
+	if( !polysolids )
 	{
-		for( RT_LIST_FOR( s, shell, &r->s_hd ) )
+		if( debug )
+			rt_log( "Coplanar face merge\n" );
+
+		for( RT_LIST_FOR( r, nmgregion, &m->r_hd ) )
 		{
-			tmp_shell_coplanar_face_merge( s , &tol , 0 );
+			for( RT_LIST_FOR( s, shell, &r->s_hd ) )
+			{
+				tmp_shell_coplanar_face_merge( s , &tol , 0 );
+			}
 		}
-	}
 
-	if( rt_g.debug&DEBUG_MEM_FULL &&  rt_mem_barriercheck() )
-		rt_log( "ERROR: rt_mem_barriercheck failed in make_nmg_objects (after tmp_shell_coplanar_face_merge)\n" );
+		if( rt_g.debug&DEBUG_MEM_FULL &&  rt_mem_barriercheck() )
+			rt_log( "ERROR: rt_mem_barriercheck failed in make_nmg_objects (after tmp_shell_coplanar_face_merge)\n" );
 
-	for( RT_LIST_FOR( r, nmgregion, &m->r_hd ) )
-	{
-		for( RT_LIST_FOR( s, shell, &r->s_hd ) )
+		for( RT_LIST_FOR( r, nmgregion, &m->r_hd ) )
 		{
-			Recalc_face_g( s );
+			for( RT_LIST_FOR( s, shell, &r->s_hd ) )
+			{
+				Recalc_face_g( s );
+			}
 		}
 	}
 
@@ -4737,59 +4740,31 @@ make_nmg_objects()
 				if( debug )
 					bu_log( "%d edge_g's fused\n", count );
 
-		/* count number of shells in this component */
-		count = 0;
 		for( RT_LIST_FOR( r, nmgregion, &m->r_hd ) )
 		{
 			NMG_CK_REGION( r );
 			for( RT_LIST_FOR( s, shell, &r->s_hd ) )
 			{
-				count++;
+				int tmp_id;
+
+				NMG_CK_SHELL( s );
+
+				count = Unbreak_shell_edges( s );
+				if( debug )
+					bu_log( "%d edges mended by Unbreak_shell_edges()\n", count );
+
+				if( debug )
+					nmg_pr_s_briefly( s, "" );
+
+				sol_count++;
+				tmp_id = group_id * 1000 + comp_id;
+				sprintf( tmp_name, "s.%d.%d", tmp_id, sol_count );
+				make_unique_name( tmp_name );
+				write_shell_as_polysolid( fdout , tmp_name , s );
+				mk_addmember( tmp_name, &tmp_head, WMOP_UNION );
 			}
 		}
-
-		if( count > 1 )
-		{
-			for( RT_LIST_FOR( r, nmgregion, &m->r_hd ) )
-			{
-				NMG_CK_REGION( r );
-				for( RT_LIST_FOR( s, shell, &r->s_hd ) )
-				{
-					int tmp_id;
-
-					NMG_CK_SHELL( s );
-
-					count = Unbreak_shell_edges( s );
-					if( debug )
-						bu_log( "%d edges mended by Unbreak_shell_edges()\n", count );
-
-					if( debug )
-						nmg_pr_s_briefly( s, "" );
-
-					sol_count++;
-					tmp_id = group_id * 1000 + comp_id;
-					sprintf( tmp_name, "s.%d.%d", tmp_id, sol_count );
-					make_unique_name( tmp_name );
-					write_shell_as_polysolid( fdout , tmp_name , s );
-					mk_addmember( tmp_name, &tmp_head, WMOP_UNION );
-				}
-			}
-			mk_lcomb( fdout, name, &tmp_head, 0, (char *)NULL, (char *)NULL, (unsigned char *)NULL, 0 );
-		}
-		else
-		{
-			r = RT_LIST_FIRST( nmgregion,  &m->r_hd );
-			s = RT_LIST_FIRST( shell,  &r->s_hd );
-			count = 0;
-			for( RT_LIST_FOR( fu, faceuse, &s->fu_hd ) )
-			{
-				NMG_CK_FACEUSE( fu );
-				if( fu->orientation != OT_SAME )
-					continue;
-				count++;
-			}
-			write_shell_as_polysolid( fdout , name , s );
-		}
+		mk_lcomb( fdout, name, &tmp_head, 0, (char *)NULL, (char *)NULL, (unsigned char *)NULL, 0 );
 	}
 	else
 	{
