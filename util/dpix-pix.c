@@ -115,7 +115,8 @@ char	*argv[];
 			break;
 		count = got / sizeof(doub[0]);
 		ep = &doub[count];
-		for(dp = &doub[0], cp = &cha[0]; dp < ep;)  {
+		cp = &cha[0];
+		for(dp = &doub[0]; dp < ep;)  {
 			*cp++ = mm * (*dp++) + bb;
 		}
 
