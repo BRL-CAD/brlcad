@@ -56,7 +56,6 @@ extern int 	localunit;		/* the current local unit (index) */
 extern char	cur_title[];		/* current model title */
 
 extern int	dmaflag;		/* Set !0 to force a new screen DMA */
-extern int	regdebug;		/* Device register debugging flag */
 
 /* default region codes       defined in mover.c */
 extern int	item_default;

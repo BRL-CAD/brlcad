@@ -50,7 +50,6 @@ struct mem_map {
 struct dm {
 	int	(*dmr_open)();
 	void	(*dmr_close)();
-	void	(*dmr_restart)();
 	int	(*dmr_input)();
 	void	(*dmr_prolog)();
 	void	(*dmr_epilog)();
@@ -66,6 +65,8 @@ struct dm {
 	void	(*dmr_statechange)();	/* called on editor state change */
 	void	(*dmr_viewchange)();	/* add/drop solids from view */
 	void	(*dmr_colorchange)();	/* called when color table changes */
+	void	(*dmr_window)();	/* Change window boundry */
+	void	(*dmr_debug)();		/* Set DM debug level */
 	int	dmr_displaylist;	/* !0 means device has displaylist */
 	float	dmr_bound;		/* zoom-in limit */
 	char	*dmr_name;		/* short name of device */
