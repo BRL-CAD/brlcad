@@ -250,6 +250,8 @@ char	**dpp;
 	if( tp->tx_l < 0 )  tp->tx_l = tp->tx_w;
 	if( tp->tx_fw < 0 )  tp->tx_fw = tp->tx_w;
 	tp->tx_pixels = (char *)0;
+	if( tp->tx_transp[3] != 0 )
+		rp->reg_transmit = 1;
 	return( txt_read(tp) );
 }
 
