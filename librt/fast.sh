@@ -14,7 +14,6 @@ cake  \
  const.o \
  cut.o \
  dir.o \
- file.o \
  rtlex.o \
  g_hf.o \
  &
@@ -96,7 +95,6 @@ cake \
  &
 
 cake \
- inout.o \
  plane.o \
  plot3.o \
  polylib.o \
