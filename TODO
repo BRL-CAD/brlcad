@@ -9,6 +9,8 @@ THESE SHOULD HAPPEN BEFORE SOURCEFORGE UPLOAD
 
 * ensure successful build on solaris with gcc and sunwpro compiler
 
+* apply latest patches from survice
+
 * ensure successful build on windows 
 
 * write up initial README
