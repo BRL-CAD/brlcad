@@ -63,6 +63,8 @@ Coord	viewsize;
 Matrix	g_rot;		/* Global Rotations and Translations */
 double	g_scal[3];	/* Global Scales */
 
+char	*shellcmd = NULL;
+int	shellexit = 0;	/* one shot shell command! */
 int	ntsc = 0;	/* use NTSC display, for video recording */
 int	axis = 0;	/* display coord axis */
 int	info = 0;	/* output orientation info */
@@ -101,7 +103,7 @@ register char **argv;
 {
 	register int c;
 
-	while ( (c = getopt( argc, argv, "aft:n" )) != EOF )  {
+	while ( (c = getopt( argc, argv, "aft:ns:S:" )) != EOF )  {
 		switch( c )  {
 		case 'a':
 			axis++;
@@ -114,6 +116,13 @@ register char **argv;
 			break;
 		case 'n':
 			ntsc = 1;
+			break;
+		case 's':
+			shellcmd = optarg;
+			break;
+		case 'S':
+			shellcmd = optarg;
+			shellexit++;
 			break;
 		default:		/* '?' */
 			return(0);
@@ -129,7 +138,7 @@ register char **argv;
 }
 
 static char usage[] = "\
-Usage: pl-sgi [-a -f -n] [-t thickness] [file.plot]\n";
+Usage: pl-sgi [-a -f -n] [-t thickness] [-{s|S} shellcmd] [file.plot]\n";
 #endif /* sgi */
 
 main( argc, argv )
@@ -271,8 +280,9 @@ char	**argv;
 #define	MENU_AXIS	2
 #define	MENU_INFO	3
 #define	MENU_SNAP	4
-#define	MENU_EXIT	5
-char *menustring = "Center|Axis|Info|DunnSnap|Exit";
+#define	MENU_SHELL	5
+#define	MENU_EXIT	6
+char *menustring = "Center|Axis|Info|DunnSnap|ShellCmd|Exit";
 
 /*XXX - global because it is shared with the menu/mouse input function */
 float	d_tran[3];	/* Delta Translations */
@@ -328,9 +338,9 @@ process_input()
 		break;
 	case SBPERIOD:
 		sbperiod = fval;
-		d_tran[0] = sbperiod * sbtransrate * sbtx;
-		d_tran[1] = sbperiod * sbtransrate * sbty;
-		d_tran[2] = sbperiod * sbtransrate * sbtz;
+		d_tran[0] = sbperiod * sbtransrate * sbtx / g_scal[0];
+		d_tran[1] = sbperiod * sbtransrate * sbty / g_scal[1];
+		d_tran[2] = sbperiod * sbtransrate * sbtz / g_scal[2];
 		rotarbaxis( sbperiod*sbrotrate, sbrx, sbry, sbrz, d_rot );
 		loadmatrix( d_rot );
 		break;
@@ -342,41 +352,34 @@ process_input()
 		break;
 #endif
 	case ROTX:
-		fval *= 5.0;
+		fval *= 10.0;
 		rotate( (Angle) fval, 'x' );
 		setvaluator(ROTX, 0, -360, 360);
 		break;
 	case ROTY:
-		fval *= 5.0;
+		fval *= 10.0;
 		rotate( (Angle) fval, 'y' );
 		setvaluator(ROTY, 0, -360, 360);
 		break;
 	case ROTZ:
-		fval *= 5.0;
+		fval *= 10.0;
 		rotate( (Angle) fval, 'z' );
 		setvaluator(ROTZ, 0, -360, 360);
 		break;
 	case TRANX:
-		/* XXX PROBLEM - TRAN[XYZ] vary with zoom, i.e. it takes more
-		 * knob twist to move a tiny object across the screen than
-		 * a large one.  Also quantization courseness.
-		 */
-		/*fval *= viewsize/200.0;*/
-		fval *= 0.50;
-		d_tran[0] += fval;
-		setvaluator(TRANX, 0, -10, 10);
+		fval *= 0.30;
+		d_tran[0] += fval / g_scal[0];
+		setvaluator(TRANX, 0, -50, 50);
 		break;
 	case TRANY:
-		/*fval *= viewsize/200.0;*/
-		fval *= 0.50;
-		d_tran[1] += fval;
-		setvaluator(TRANY, 0, -10, 10);
+		fval *= 0.30;
+		d_tran[1] += fval / g_scal[1];
+		setvaluator(TRANY, 0, -50, 50);
 		break;
 	case TRANZ:
-		/*fval *= viewsize/200.0;*/
-		fval *= 0.50;
-		d_tran[2] += fval;
-		setvaluator(TRANZ, 0, -10, 10);
+		fval *= 0.30;
+		d_tran[2] += fval / g_scal[2];
+		setvaluator(TRANZ, 0, -50, 50);
 		break;
 	case ZOOM:
 		fval = 1.0 + fval / 1100.0;
@@ -519,8 +522,12 @@ view_loop()
 					color( (255&0xf0)<<4 | (255&0xf0) | (255>>4) );
 				callobj( o );
 			}
-			curson();
 			swapbuffers();
+			if( shellcmd != NULL && shellexit ) {
+				system(shellcmd);
+				exit(0);
+			}
+			curson();
 		}
 
 		do {
@@ -679,16 +686,16 @@ init_display()
 	setvaluator(ROTX, 0, -360, 360);
 	setvaluator(ROTY, 0, -360, 360);
 	setvaluator(ROTZ, 0, -360, 360);
-	setvaluator(TRANX, 0, -10, 10);
-	setvaluator(TRANY, 0, -10, 10);
-	setvaluator(TRANZ, 0, -10, 10);
+	setvaluator(TRANX, 0, -50, 50);
+	setvaluator(TRANY, 0, -50, 50);
+	setvaluator(TRANZ, 0, -50, 50);
 	setvaluator(ZOOM, 1, -1000, 1000);
-	noise( ROTX, 5 );
-	noise( ROTY, 5 );
-	noise( ROTZ, 5 );
-	noise( TRANX, 5 );
-	noise( TRANY, 5 );
-	noise( TRANZ, 5 );
+	noise( ROTX, 2 );
+	noise( ROTY, 2 );
+	noise( ROTZ, 2 );
+	noise( TRANX, 2 );
+	noise( TRANY, 2 );
+	noise( TRANZ, 2 );
 	noise( ZOOM, 5 );
 
 	blanktime( 60 * 60 * 5L );	/* 5 minute blanking */
@@ -1047,8 +1054,8 @@ int	n;
 		getorigin( &left, &bottom );
 		fx = 0.5 - (x - left) / (double)winx_size;
 		fy = 0.5 - (y - bottom) / (double)winy_size;
-		d_tran[0] += fx * 2.0 * viewsize;
-		d_tran[1] += fy * 2.0 * viewsize;
+		d_tran[0] += fx * 2.0 * viewsize / g_scal[0];
+		d_tran[1] += fy * 2.0 * viewsize / g_scal[1];
 		break;
 	case MENU_AXIS:
 		if( axis == 0 )
@@ -1081,6 +1088,11 @@ int	n;
 			fprintf( stderr, "pl-sgi: Snap failed. Out of film?\n" );
 			ringbell();
 		}
+		break;
+	case MENU_SHELL:
+		cursoff();
+		system(shellcmd);
+		curson();
 		break;
 	case MENU_EXIT:
 		break;
