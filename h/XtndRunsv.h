@@ -14,6 +14,10 @@
  * If you modify this software, you should include a notice giving the
  * name of the person performing the modification, the date of modification,
  * and the reason for such modification.
+ *
+ *  Modified at BRL 10-Sept-88 by Mike Muuss to be portable to machines
+ *  such as the Cray where sizeof(short) != 2.
+ *  All use of the symbol LITTLE_ENDIAN has been removed.
  */
 /* 
  * Runsv.h - Definitions for Run Length Encoding.
@@ -49,10 +53,10 @@
 
 struct XtndRsetup
 {
-    short   h_xpos,
-            h_ypos,
-            h_xlen,
-            h_ylen;
+    char    hc_xpos[2];
+    char    hc_ypos[2];
+    char    hc_xlen[2];
+    char    hc_ylen[2];
     char    h_flags,
             h_ncolors,
 	    h_pixelbits,
