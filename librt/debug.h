@@ -3,6 +3,9 @@
  *  
  *  Various definitions permitting segmented debugging to
  *  be independently controled.
+ *
+ *  For programs based on the "RT" program, these flags follow
+ *  the "-x" (lower case x) option.
  *  
  *  Author -
  *	Michael John Muuss
