@@ -904,10 +904,15 @@ int	argc;
 	return(-1);
 }
 cm_anim(argc, argv)
-char	**argv;
 int	argc;
+char	**argv;
 {
-	return(-1);
+
+	if( db_parse_anim( dbip, argc, argv ) < 0 )  {
+		rt_log("cm_anim:  %s %s failed\n", argv[1], argv[2]);
+		return(-1);		/* BAD */
+	}
+	return(0);
 }
 cm_tree(argc, argv)
 char	**argv;
