@@ -108,7 +108,10 @@ if {![info exists mged_default(num_lines)]} {
     set mged_default(num_lines) 10
 }
 
+# XXX For the moment, disable tearoff menus
 if {![info exists mged_default(tearoff_menus)]} {
+    set mged_default(tearoff_menus) 0
+} else {
     set mged_default(tearoff_menus) 0
 }
 
