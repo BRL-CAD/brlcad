@@ -994,39 +994,6 @@ char	**argv;
     return result;
 }
 
-int
-get_comb_internal (dbip, comb_name, dpp, ip, noisy)
-
-struct db_i		*dbip;
-char			*comb_name;
-struct directory	**dpp;
-struct rt_db_internal	*ip;
-int			noisy;
-
-{
-    struct directory		*dp;
-    struct rt_comb_internal	*comb;
-
-    if (comb_name == (char *) 0)
-    {
-	if (noisy == LOOKUP_NOISY)
-	    bu_log("No combination specified\n");
-	return ID_NULL;
-    }
-    if ((dp = db_lookup(dbip, comb_name, noisy)) == DIR_NULL)
-	return ID_NULL;
-    if (rt_db_get_internal(ip, dp, dbip, (mat_t *) NULL ) < 0 )
-    {
-	if (noisy == LOOKUP_NOISY)
-	    bu_log("Failed to get internal form of object '%s'\n",
-		dp -> d_namep);
-	return ID_NULL;
-    }
-
-    *dpp = dp;
-    return (ip -> idb_type);
-}
-
 /*
  *			F _ C O P Y M A T
  *
@@ -1067,7 +1034,7 @@ char **argv;
 	 || (strchr(++child, '/') != NULL))
 	{
 	    Tcl_AppendResult(interp,
-		"Bad arc: '", argv[i], "'\n", (char *) NULL);
+		"copymat: bad arc: '", argv[i], "'\n", (char *) NULL);
 	    return TCL_ERROR;
 	}
 
@@ -1082,7 +1049,8 @@ char **argv;
 	< 0 )
     {
 	Tcl_AppendResult(interp,
-	    "Cannot follow path for arc: '", argv[1], "'\n", (char *) NULL);
+	    "copymat: cannot follow path for arc: '", argv[1], "'\n",
+	    (char *) NULL);
 	return TCL_ERROR;
     }
 
@@ -1091,25 +1059,36 @@ char **argv;
     parent = bu_vls_addr(&pvls);
     sep = strchr(parent, '/') - parent;
     bu_vls_trunc(&pvls, sep);
-    if ((comb = get_comb_internal(dbip, parent, &dp, &intern, LOOKUP_NOISY))
-	    == ID_NULL)
-	    /* XXX check for ID_COMBINATION */
+    switch (rt_db_lookup_internal(dbip, parent, &dp, &intern, LOOKUP_NOISY))
     {
-	bu_vls_free(&pvls);
-	return TCL_ERROR;
+	case ID_COMBINATION:
+	    if (dp -> d_flags & DIR_COMB)
+		break;
+	    else
+	    {
+		struct bu_vls tmp_vls;
+
+		bu_vls_init(&tmp_vls);
+		bu_vls_printf(&tmp_vls, "Non-combination directory <x%x> '%s' for combination rt_db_internal <x%x>\nThis should not happen\n",
+		    dp, dp -> d_namep, intern);
+		Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *) NULL);
+	    }
+	    /* Fall through this case */
+	default:
+	    Tcl_AppendResult(interp,
+		"copymat: Object '", parent, "' is not a combination\n",
+		(char *) NULL);
+	    /* Fall through this case */
+	case ID_NULL:
+	    bu_vls_free(&pvls);
+	    return TCL_ERROR;
     }
-    if ((dp -> d_flags & DIR_COMB) == 0)
-    {
-	bu_log("Object '%s' not a combination\n", parent);
-	status = TCL_ERROR;
-	goto wrapup;
-    }
-    comb = (struct rt_comb_internal *) intern.db_ptr;
+    comb = (struct rt_comb_internal *) intern.idb_ptr;
     RT_CK_COMB(comb);
 
     if ((tp = db_find_named_leaf(comb -> tree, child)) == TREE_NULL)
     {
-	Tcl_AppendResult(interp, "Unable to find instance of '",
+	Tcl_AppendResult(interp, "copymat: unable to find instance of '",
 		child, "' in combination '", dp -> d_namep,
 		"'\n", (char *)NULL);
 	status = TCL_ERROR;
