@@ -1,0 +1,21 @@
+# $Id$
+
+lib_LTLIBRARIES = libtkGLX.la
+
+libtkGLX_la_SOURCES = \
+	tkGLXCmds.c\
+	tkGLXInit.c\
+	tkGLXwin.c
+
+noinst_HEADERS = \
+	descnames.h\
+	patchlevel.h\
+	tkGLX.h
+
+libtkGLX_la_LDFLAGS = -version-info 19:1 
+AM_CFLAGS = -I$(top_srcdir)/h @GL_CFLAGS@
+
+descnames.h: 
+	sh makedescnames.sh
+
+EXTRA_DIST = makedescnames.sh
