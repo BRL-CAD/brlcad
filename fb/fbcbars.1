@@ -1,0 +1,57 @@
+.TH CBARS-FB 1 BRL/CAD
+.SH NAME
+cbars-fb \- display standard color bars on a framebuffer
+.SH SYNOPSIS
+.B cbars-fb
+.RB [ \-h ]
+.RB [ \-F\  framebuffer]
+.RB [ \-S\  squarescrsize]
+.RB [ \-W\  scr_width]
+.RB [ \-N\  scr_height]
+.SH DESCRIPTION
+.I cbars-fb
+displays a color bar scale on the currently selected framebuffer.
+The environment variable FB_FILE specifies
+the current framebuffer, see
+.IR brlcad (1).
+Alternatively, the framebuffer may be explicitly specified
+by using the
+.B \-F
+flag.
+.PP
+By default, the requested framebuffer size is assumed to be 512x512 pixels.
+Specifying the
+.B \-h
+flag changes the size to 1024x1024.
+.PP
+The
+.BI \-W\  scr_width
+flag specifies the width of each output scanline, in pixels.
+.PP
+The
+.BI \-N\  scr_height
+flag specifies the desired height in scanlines of the display device.
+.PP
+.BI \-S\  squarescrsize
+set both the height and width to the size given.
+.PP
+The color scale is arranged
+arranged horizontally on screen.
+The bottom 1/6th of the screen will be
+black, white, dark gray (31%), black.
+The upper portion of the screen will be
+75% gray, yellow, cyan, green, magenta, red, blue,
+with pixel channel intensities of 255 (100%).
+.SH AUTHORS
+Michael John Muuss
+.br
+Mike Pique, University of North Carolina.
+.SH SOURCE
+SECAD/VLD Computing Consortium, Bldg 394
+.br
+The U. S. Army Ballistic Research Laboratory
+.br
+Aberdeen Proving Ground, Maryland  21005
+.SH "BUG REPORTS"
+Reports of bugs or problems should be submitted via electronic
+mail to <CAD@BRL.ARPA>.
