@@ -13,6 +13,7 @@
 #include "raytrace.h"
 #include "./material.h"
 #include "./mathtab.h"
+#include "./light.h"
 #include "./rdebug.h"
 
 #define SHADE_CONT	0
@@ -66,14 +67,14 @@ struct plant {
 #define GRASSRAY_MAGIC 2048
 struct grass_ray {
 	long		magic;
-	struct xray	r;
-	double		d_min;
-	double		d_max;
-	vect_t		rev;
-	double		diverge;
-	double		radius;
-	struct bn_tol	tol;
-	struct hit	hit;
+	struct xray	r;	/* pt, direction */
+	double		d_min;	
+	double		d_max;	/* out point of solid (hit pt cull) */
+	vect_t		rev;	/* VINVDIR(r.r_dir) for rt_in_rpp */
+	double		diverge;/* ray divergence in region space */
+	double		radius;	/* radius of beam at in point */
+	struct bn_tol	tol;	/* XXX region space tolerance (bogus) */
+	struct hit	hit;	/* */
 };
 
 /*
@@ -185,7 +186,12 @@ CONST struct mfuncs grass_mfuncs[] = {
 	0,		0,		0,		0 }
 };
 
-/* fraction of total allowed returned */
+/* 
+ *  Based upon a cell location we come up with a cell-specific random 
+ *  number in the range 0.0 .. 1.0 inclusive.  This is used to determine
+ *  the deviation from the mean number of plants per cell for the given
+ *  cell.
+ */
 static double
 plants_this_cell(cell, grass_sp)
 long cell[3];	/* integer cell number */
@@ -194,12 +200,12 @@ struct grass_specific *grass_sp;
 	point_t c;
 	double val;
 
-	VSCALE(c, cell, grass_sp->size);  /* int/float conv */
+	VSCALE(c, cell, grass_sp->size);  /* int/float conv + noise scale */
+	VADD2(c, c, grass_sp->delta);	/* noise space shift */
 
-	VADD2(c, c, grass_sp->delta);
 	val = fabs(bn_noise_fbm(c, grass_sp->h_val, grass_sp->lacunarity,
 			grass_sp->octaves));
-	
+
 	val = CLAMP(val, 0.0, 1.0);
 
 	return val;
@@ -807,36 +813,9 @@ CONST struct grass_specific *grass_sp;
 	}
 	r->r.r_min = r->r.r_max = 0.0;
 	if (! rt_in_rpp(&r->r, r->rev, pl->pmin, pl->pmax) ) {
-		if( rdebug&RDEBUG_SHADE) {
-			point_t in_pt, out_pt;
-			bu_log("min:%g max:%g\n", r->r.r_min, r->r.r_max);
-
-			bu_log("ray %g %g %g->%g %g %g misses:\n\trpp %g %g %g, %g %g %g\n",
-				V3ARGS(r->r.r_pt), V3ARGS(r->r.r_dir),
-				V3ARGS(pl->pmin),  V3ARGS(pl->pmax));
-			VJOIN1(in_pt, r->r.r_pt, r->r.r_min, r->r.r_dir);
-			VPRINT("\tin_pt", in_pt);
-	
-			VJOIN1(out_pt, r->r.r_pt, r->r.r_max, r->r.r_dir);
-			VPRINT("\tout_pt", out_pt);
-			bu_log("MISSED BBox\n");
-		}
+		if( rdebug&RDEBUG_SHADE)
+			bu_log("MISSED plant BBox\n");
 		return 0;
-	} else { 
-		if( rdebug&RDEBUG_SHADE) {
-			point_t in_pt, out_pt;
-			bu_log("min:%g max:%g\n", r->r.r_min, r->r.r_max);
-			bu_log("ray %g %g %g->%g %g %g hit:\n\trpp %g %g %g, %g %g %g\n",
-				V3ARGS(r->r.r_pt),
-				V3ARGS(r->r.r_dir),
-				V3ARGS(pl->pmin),
-				V3ARGS(pl->pmax));
-			VJOIN1(in_pt, r->r.r_pt, r->r.r_min, r->r.r_dir);
-			VPRINT("\tin_pt", in_pt);
-	
-			VJOIN1(out_pt, r->r.r_pt, r->r.r_max, r->r.r_dir);
-			VPRINT("\tout_pt", out_pt);
-		}
 	}
 
 	for (i=0 ; i < pl->blades ; i++) {
@@ -937,30 +916,49 @@ struct grass_specific	*grass_sp;
 	if (rdebug&RDEBUG_SHADE)
 		bu_log("isect_cell(%ld,%ld)\n", V2ARGS(cell));
 
-
 	/* get coords of cell */
 	CELL_POS(cell_pos, grass_sp, cell);
 
 	VSUB2(v, cell_pos, r->r.r_pt);
 	dist_to_cell = MAGNITUDE(v);
-
 	
 	/* radius of ray at cell origin */
 	val = r->radius + r->diverge * dist_to_cell;
-
 
 	if (rdebug&RDEBUG_SHADE)
 		bu_log("\t  ray radius @cell %g = %g, %g, %g   (%g)\n\t   cell:%g,%g\n",
 			val, r->radius, r->diverge, dist_to_cell,  val*32.0,
 			V2ARGS(grass_sp->cell));
 
-	if (val > grass_sp->blade_width * 3.5) {
+	/* If the radius of the ray at the cell origin is larger
+	 * than some threshold, then we skip all the grass intersection code
+	 * and just to a statistical surface noise approximation of the
+	 * effect.  This saves a lot of computation marching through cells
+	 * that ar out near the horizon.
+	 */
+	if (val > grass_sp->blade_width * 3.5)
 		return stat_cell(cell_pos, r, grass_sp, swp, dist_to_cell, val);
-	}
 
-	/* Figure out how many plants are in this cell */
+
+	/* We're going to have to intersect individual grass blades for 
+	 * this cell.  We first need to figure out how many grass plants
+	 * are in the cell.  At the moment we do this by taking a mean
+	 * number of plants in a cell (ppc) and modify it with a 
+	 * cell-specific random number and the user-specified deviation 
+	 * in plants-per-cell (ppcd)
+	 */
+
 	val = plants_this_cell(cell, grass_sp);
 	ppc = grass_sp->ppc + grass_sp->ppcd * val;
+
+	if (rdebug&RDEBUG_SHADE) {
+		bu_log("cell pos(%g,%g .. %g,%g)\n", V2ARGS(cell_pos),
+			cell_pos[X]+grass_sp->cell[X],
+			cell_pos[Y]+grass_sp->cell[Y]);
+
+		bu_log("%d plants  ppc:%g v:%g\n", ppc, grass_sp->ppcd, val);
+	}
+
 
 #if WIND
 {
@@ -973,20 +971,13 @@ struct grass_specific	*grass_sp;
 	bn_noise_vec(c, wind);
 
 	/* how much do we move when we move */
-	VSCALE(wind, wind, .125); 
+	VSCALE(wind, wind, .05); 
 }
 #else
 	VSET(wind, 0.0, 0.0, 0.0);
-#endif
 	VSCALE(c, cell, grass_sp->size);
+#endif
 
-	if (rdebug&RDEBUG_SHADE)
-		bu_log("cell pos(%g,%g .. %g,%g)\n", V2ARGS(cell_pos),
-			cell_pos[X]+grass_sp->cell[X],
-			cell_pos[Y]+grass_sp->cell[Y]);
-
-	if (rdebug&RDEBUG_SHADE)
-		bu_log("%d plants  ppc:%g v:%g\n", ppc, grass_sp->ppcd, val);
 
 	/* intersect the ray with each plant */
 	for (p=0 ;  p < ppc ; p++) {
@@ -1269,7 +1260,6 @@ char			*dp;	/* ptr to the shader-specific struct */
 	/* Time to go marching across the grid */
 	while (curr_dist < out_dist) {
 
-
 		if( rdebug&RDEBUG_SHADE) {
 			point_t	cell_pos; /* cell origin position */
 
@@ -1403,3 +1393,25 @@ done:
 
 
 }
+
+
+#if 0
+shade_pt(pt, norm, color)
+{
+	register struct light_specific *lp;
+	vect_t tolight;
+
+
+	for( RT_LIST_FOR( lp, light_specific, &(LightHead.l) ) )  {
+		RT_CK_LIGHT(lp);
+		/* compute the light direction */
+		if( lp->lt_infinite ) {
+			/* Infinite lights are point sources, no fuzzy penumbra */
+			VMOVE( tolight, lp->lt_vec );
+		} else {
+			VSUB2(tolight, lp->lt_pos,
+				swp->sw_hit.hit_point);
+		}
+	}
+}
+#endif

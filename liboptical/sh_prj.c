@@ -107,7 +107,7 @@ CONST char				*value;	/* string containing value */
 	 */
 
 	if (prj_sp->prj_count)
-		prj_dup(prj_sp);
+		image_dup(prj_sp);
 
 	/* initialize new image */
 	prj_sp->prj_images.i_mp = bu_open_mapped_file( prj_sp->prj_name, NULL );
@@ -220,7 +220,7 @@ struct rt_i		*rtip;	/* New since 4.4 release */
 	/* initialize the default values for the shader */
 
 	prj_sp->magic = prj_MAGIC;
-	bu_mat_idn(prj_sp->prj_m_to_sh);
+	bn_mat_idn(prj_sp->prj_m_to_sh);
 	BU_LIST_INIT(&prj_sp->prj_images.l);
 	*prj_sp->prj_name = '\0';
 	prj_sp->prj_count = 0;
@@ -342,7 +342,7 @@ char			*dp;	/* ptr to the shader-specific struct */
 		if (i->i_persp) {
 			VSUB2(dir, pt, i->i_eye);
 		} else {
-			VERVERSE(dir, pl);
+			VREVERSE(dir, pl);
 		}
 
 		switch (bn_isect_line3_plane(&dist, pt, dir, i->i_plane, &ap->a_rt_i->rti_tol)) {
