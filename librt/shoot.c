@@ -444,12 +444,14 @@ top:
 		/* Don't get stuck within the same box for long */
 		if( cutp==ssp->lastcut )  {
 push:			;
+#if 0
 			rt_log("%d,%d box push odist_corr=%.20e n=%.20e model_end=%.20e\n",
 				ap->a_x, ap->a_y,
 				ssp->odist_corr, ssp->dist_corr, ssp->model_end );
 			rt_log("box_start o=%.20e n=%.20e, box_end o=%.20e n=%.20e\n",
 				ssp->obox_start, ssp->box_start,
 				ssp->obox_end, ssp->box_end );
+#endif
 #if 0
 			VPRINT("a_ray.r_pt", ap->a_ray.r_pt);
 			rt_log("Point=(%g,%g,%g)\n", px, py, pz );
@@ -461,7 +463,9 @@ push:			;
 			 * floating point resolution will allow.
 			 */
 			fraction = frexp( ssp->box_end, &exponent );
+#if 0
 rt_log("frexp: box_end=%g, fract=%g, exp=%d\n", ssp->box_end, fraction, exponent);
+#endif
 			if( exponent <= 0 )  {
 				/* Never advance less than 1mm */
 				ssp->box_start = ssp->box_end + 1.0;
@@ -474,7 +478,9 @@ rt_log("frexp: box_end=%g, fract=%g, exp=%d\n", ssp->box_end, fraction, exponent
 				else
 					fraction += 1.0e-14;
 				ssp->box_start = ldexp( fraction, exponent );
+#if 0
 rt_log("ldexp: box_end=%g, fract=%g, exp=%d\n", ssp->box_end, fraction, exponent);
+#endif
 			}
 			if( rt_g.debug & DEBUG_ADVANCE )  {
 				rt_log("push: was=%.20e, now=%.20e\n",
@@ -485,9 +491,11 @@ rt_log("ldexp: box_end=%g, fract=%g, exp=%d\n", ssp->box_end, fraction, exponent
 		}
 		if( push_flag )  {
 			push_flag = 0;
+#if 0
 			rt_log("%d,%d Escaped %d. dist_corr=%g, box_start=%g, box_end=%g\n",
 				ap->a_x, ap->a_y, push_flag,
 				ssp->dist_corr, ssp->box_start, ssp->box_end );
+#endif
 		}
 		ssp->lastcut = cutp;
 
