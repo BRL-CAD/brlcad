@@ -114,6 +114,12 @@ char *p_ebm[] = {
 	"Enter extrusion distance: "
 };
 
+char *p_submodel[] = {
+	"Enter name of treetop: ",
+	"Enter space partitioning method: ",
+	"Enter name of .g file (or \"\" for none): "
+};
+
 char *p_vol[] = {
 	"Enter name of file containing voxel data: ",
 	"Enter X, Y, Z dimensions of file (number of cells): ",
@@ -404,7 +410,7 @@ char **argv;
 				rcc_in(), rhc_in(), rpc_in(), rpp_in(),
 				sph_in(), tec_in(), tgc_in(), tor_in(),
 				trc_in(), ebm_in(), vol_in(), hf_in(),
-				dsp_in();
+				dsp_in(), submodel_in();
 
 	if(dbip == DBI_NULL)
 	  return TCL_OK;
@@ -485,6 +491,10 @@ char **argv;
 		nvals = 4;
 		menu = p_ebm;
 		fn_in = ebm_in;
+	} else if( strcmp( argv[2], "submodel" ) == 0 )  {
+		nvals = 3;
+		menu = p_submodel;
+		fn_in = submodel_in;
 	} else if( strcmp( argv[2], "vol" ) == 0 )  {
 		nvals = 9;
 		menu = p_vol;
@@ -660,6 +670,48 @@ struct rt_db_internal	*intern;
 	ebm->ydim = atoi( cmd_argvs[5] );
 	ebm->tallness = atof( cmd_argvs[6] ) * local2base;
 	bn_mat_idn( ebm->mat );
+
+	return( 0 );
+}
+
+/* parameters for solid, internal representation
+ * XXX This goes in rtgeom.h
+ */
+/* parameters for solid, internal representation */
+struct rt_submodel_internal {
+	long	magic;
+	char	file[128];	/* .g filename, 0-len --> this database. */
+	char	treetop[128];	/* one treetop only */
+	int	meth;		/* space partitioning method */
+	/* other option flags (lazy prep, etc.)?? */
+	/* REMAINING ELEMENTS PROVIDED BY IMPORT, UNUSED BY EXPORT */
+	mat_t	root2leaf;
+};
+#define RT_SUBMODEL_INTERNAL_MAGIC	0x7375626d	/* subm */
+
+/*			S U B M O D E L _ I N
+ *
+ *	Read submodel from keyboard
+ *
+ */
+int
+submodel_in( cmd_argvs, intern )
+char			*cmd_argvs[];
+struct rt_db_internal	*intern;
+{
+	struct rt_submodel_internal	*sip;
+
+	if(dbip == DBI_NULL)
+	  return TCL_OK;
+
+	BU_GETSTRUCT( sip, rt_submodel_internal );
+	intern->idb_type = ID_SUBMODEL;
+	intern->idb_ptr = (genptr_t)sip;
+	sip->magic = RT_SUBMODEL_INTERNAL_MAGIC;
+
+	strcpy( sip->treetop, cmd_argvs[3] );
+	sip->meth = atoi( cmd_argvs[4] );
+	strcpy( sip->file, cmd_argvs[5] );
 
 	return( 0 );
 }
