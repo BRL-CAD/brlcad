@@ -1369,6 +1369,10 @@ struct rt_piecelist  {
 #define RT_PIECELIST_MAGIC	0x70636c73	/* pcls */
 #define RT_CK_PIECELIST(_p)	BU_CKMAG(_p, RT_PIECELIST_MAGIC, "struct rt_piecelist")
 
+/* Used to set globals declared in g_bot.c */
+#define RT_DEFAULT_MINPIECES		32
+#define RT_DEFAULT_TRIS_PER_PIECE	4
+
 /*
  *			R E S O U R C E
  *
