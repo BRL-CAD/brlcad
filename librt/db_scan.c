@@ -261,6 +261,24 @@ int			do_old_matter;
 			handler( dbip, record.nmg.N_name, addr, nrec,
 				DIR_SOLID );
 			break;
+		case DBID_SKETCH:
+			j = bu_glong(record.skt.skt_count);
+			nrec += j;
+			while( j-- > 0 )
+				(void)fread( (char *)&rec2, sizeof(rec2), 1, dbip->dbi_fp );
+			next = ftell(dbip->dbi_fp);
+			handler( dbip, record.skt.skt_name, addr, nrec,
+				DIR_SOLID );
+			break;
+		case DBID_EXTR:
+			j = bu_glong(record.extr.ex_count);
+			nrec += j;
+			while( j-- > 0 )
+				(void)fread( (char *)&rec2, sizeof(rec2), 1, dbip->dbi_fp );
+			next = ftell(dbip->dbi_fp);
+			handler( dbip, record.extr.ex_name, addr, nrec,
+				DIR_SOLID );
+			break;
 		case ID_MEMB:
 			bu_log("db_scan ERROR: Unattached combination MEMBER record\n");
 			break;

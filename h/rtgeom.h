@@ -369,5 +369,53 @@ struct rt_dsp_internal{
 #define RT_DSP_INTERNAL_MAGIC	0xde6
 #define RT_DSP_CK_MAGIC(_p)	RT_CKMAG(_p,RT_DSP_INTERNAL_MAGIC,"rt_dsp_internal")
 
+/*
+ *	ID_SKETCH
+ */
+
+#define SKETCH_NAME_LEN	16
+struct rt_sketch_internal
+{
+	long		magic;
+	point_t		V;		/* default embedding of sketch */
+	vect_t		u_vec;
+	vect_t		v_vec;
+	int		vert_count;	/* number of vertices in this sketch */
+	point2d_t	*verts;		/* array of 2D vertices that may be used as
+					 * endpoints, centers, or NURB control points */
+
+	int		curve_count;	/* number of curves in this sketch */
+	struct curve {
+		char		crv_name[SKETCH_NAME_LEN];
+		int		seg_count;	/* number of segments in this curve */
+		int		*reverse;	/* array of ints indicating if segment should be reversed */
+		genptr_t	*segments;	/* array of pointers to segments in this curve */
+	} *curves;			/* array of curves in this sketch */
+};
+#define RT_SKETCH_INTERNAL_MAGIC	0x736b6574	/* sket */
+#define RT_SKETCH_CK_MAGIC(_p)	RT_CKMAG(_p,RT_SKETCH_INTERNAL_MAGIC,"rt_sketch_internal")
+
+
+/*
+ *	ID_EXTRUDE
+ */
+
+struct rt_extrude_internal
+{
+	long		magic;
+	point_t		V;	/* vertex, start and end point of loop to be extruded */
+	vect_t		h;	/* extrusion vector, may not be in (u_vec X v_vec) plane */
+	vect_t		u_vec;	/* vector in U parameter direction */
+	vect_t		v_vec;	/* vector in V parameter direction */
+	int		keypoint;	/* index of keypoint vertex */
+	char		sketch_name[SKETCH_NAME_LEN];	/* name of sketch object that defines
+						 * the curve to be extruded */
+
+	char		curve_name[SKETCH_NAME_LEN];	/* name of curve (in sketch) to be extruded */
+	struct rt_sketch_internal	*skt;	/* pointer to referenced sketch */
+};
+#define RT_EXTRUDE_INTERNAL_MAGIC	0x65787472	/* extr */
+#define RT_EXTRUDE_CK_MAGIC(_p)	RT_CKMAG(_p,RT_EXTRUDE_INTERNAL_MAGIC,"rt_extrude_internal")
+
 
 #endif /* SEEN_RTGEOM_H */
