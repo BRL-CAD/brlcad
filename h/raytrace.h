@@ -1493,8 +1493,8 @@ struct rt_pt_node {
 
 
 /*
- *			L I N E _ S E G
- *	used by the solid of extrusion
+ *			L I N E _ S E G,  C A R C _ S E G,  N U R B _ S E G
+ *	used by the sketch and solid of extrusion
  */
 
 struct line_seg		/* line segment */
@@ -1512,7 +1512,9 @@ struct carc_seg		/* circular arc segment */
 	int			start, end;	/* indices */
 	fastf_t			radius;		/* radius < 0.0 -> full circle with start point on
 						 * circle and "end" at center */
-
+	int			center_is_left;	/* flag indicating where center of curvature is.
+						 * If non-zero, then center is to left of vector
+						 * from start to end */
 	int			orientation;	/* 0 -> ccw, !0 -> cw */
 	int			curve_count;	/* number of curves using this segment */
 	struct curve		**curves;	/* array of pointers to curves using this segment */
@@ -1522,8 +1524,12 @@ struct carc_seg		/* circular arc segment */
 struct nurb_seg		/* NURB curve segment */
 {
 	long			magic;
-	int			start, end;	/* indices */
-	struct edge_g_cnurb	cnurb;		/* NURB curve (some fields ignored) */
+	int			order;		/* order of NURB curve (degree - 1) */
+	int			pt_type;	/* type of NURB curve */
+	struct knot_vector	k;		/* knot vector for NURB curve */
+	int			c_size;		/* number of control points */
+	int			*ctl_points;	/* array of indicies for control points */
+	fastf_t			*weights;	/* array of weights for control points (NULL if non_rational) */
 	int			curve_count;	/* number of curves using this segment */
 	struct curve		**curves;	/* array of pointers to curves using this segment */
 };
