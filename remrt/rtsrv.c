@@ -950,7 +950,7 @@ const char *str;
 
 	if(debug)  fprintf(stderr,"\n%s\n", str);
 	fflush(stderr);
-	if( rt_g.debug || rt_g.NMG_debug || bu_debug || debug )
+	if( RT_G_DEBUG || rt_g.NMG_debug || bu_debug || debug )
 		abort();	/* should dump */
 	exit(12);
 }

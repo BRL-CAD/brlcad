@@ -117,7 +117,7 @@ dump_patch( struct face_g_snurb **surfp, pt patch )
 	bu_free((char *)b_patch->v.knots, "dumping v_kv knots I'm about to realloc");
 	rt_nurb_kvknot( &b_patch->v, 4, 0.0, 1.0, 0, &rt_uniresource);
 
-	if (rt_g.debug) {
+	if (RT_G_DEBUG) {
 		rt_ck_malloc_ptr(b_patch, "b_patch");
 		rt_ck_malloc_ptr(b_patch->u.knots,
 			"b_patch->u.knots");

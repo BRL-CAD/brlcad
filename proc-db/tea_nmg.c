@@ -30,7 +30,7 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 #include "nurb.h"		/* BRLCAD Spline data structures */
 #include "raytrace.h"
 #include "wdb.h"
-#include "../librt/debug.h"	/* rt_g.debug flag settings */
+#include "../librt/debug.h"	/* RT_G_DEBUG flag settings */
 
 #include "./tea.h"		/* IEEE Data Structures */
 #include "./ducks.h"		/* Teapot Vertex data */

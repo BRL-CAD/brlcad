@@ -380,7 +380,7 @@ int			xCell, yCell;
 	int fnd1, fnd2;
 	register double hf2mm = hfp->hf_file2mm;
 
-	if (rt_g.debug & DEBUG_HF) {
+	if (RT_G_DEBUG & DEBUG_HF) {
 		bu_log("rt_hf_cell_shot(%s): %d, %d\n", stp->st_name,
 		    xCell, yCell);
 	}
@@ -569,7 +569,7 @@ int			xCell, yCell;
 leave:
 	if (!fnd1 && !fnd2) return 0;
 
-	if (rt_g.debug & DEBUG_HF) {
+	if (RT_G_DEBUG & DEBUG_HF) {
 		bu_log("rt_hf_cell_shot: hit(%d).\n",fnd1+fnd2);
 	}
 
@@ -860,7 +860,7 @@ bzero(hits,sizeof(hits));
 		dxbdn = VDOT( peqn, rp->r_pt) - pdist;
 		dn = -VDOT( peqn, rp->r_dir);
 /*		allDist[allIndex] = s = dxbdn/dn; */
-		if (rt_g.debug & DEBUG_HF) {
+		if (RT_G_DEBUG & DEBUG_HF) {
 			VPRINT("hf: Plane Equation", peqn);
 			bu_log("hf: dn=%g, dxbdn=%g, ", dn, dxbdn);
 		}
@@ -871,7 +871,7 @@ bzero(hits,sizeof(hits));
 				out = s;
 				oplane = j;
 			}
-			if (rt_g.debug & DEBUG_HF) {
+			if (RT_G_DEBUG & DEBUG_HF) {
 				bu_log("s=%g out=%g\n", s, out);
 			}
 		} else if (dn > SQRT_SMALL_FASTF) {	/* entering */
@@ -880,7 +880,7 @@ bzero(hits,sizeof(hits));
 				in = s;
 				iplane = j;
 			}
-			if (rt_g.debug & DEBUG_HF) {
+			if (RT_G_DEBUG & DEBUG_HF) {
 				bu_log("s=%g in=%g\n", s, in);
 			}
 		} else {
@@ -888,7 +888,7 @@ bzero(hits,sizeof(hits));
 			 * if the ray is outside the solid, then this
 			 * is a miss.
 			 */
-			if (rt_g.debug & DEBUG_HF) {
+			if (RT_G_DEBUG & DEBUG_HF) {
 				bu_log("s=DIVIDE_BY_ZERO\n");
 			}
 			if ( dxbdn > SQRT_SMALL_FASTF) {
@@ -897,7 +897,7 @@ bzero(hits,sizeof(hits));
 			allDist[allIndex] = INFINITY;
 		}
 		if ( in > out) {
-			if (rt_g.debug & DEBUG_HF) {
+			if (RT_G_DEBUG & DEBUG_HF) {
 				bu_log("rt_hf_shoot(%s): in(%g) > out(%g)\n",
 				    stp->st_name, in, out);
 			}
@@ -912,7 +912,7 @@ bzero(hits,sizeof(hits));
 	}
 
 	if ( fabs(in-out) < SMALL_FASTF  || out >= INFINITY ) {
-		if (rt_g.debug & DEBUG_HF) {
+		if (RT_G_DEBUG & DEBUG_HF) {
 			bu_log("rt_hf_shoot(%s): in(%g) >= out(%g) || out >= INFINITY\n",
 			    stp->st_name, in, out);
 		}
@@ -929,7 +929,7 @@ bzero(hits,sizeof(hits));
 	xWidth = hf->hf_Xlen/((double)(hf->hf_w-1));
 	yWidth = hf->hf_Ylen/((double)(hf->hf_n-1));
 
-	if (rt_g.debug & DEBUG_HF) {
+	if (RT_G_DEBUG & DEBUG_HF) {
 		bu_log("hf: xWidth=%g, yWidth=%g, in=%g, out=%g\n", xWidth,
 		       yWidth, in, out);
 	}
@@ -965,7 +965,7 @@ bzero(hits,sizeof(hits));
 	if (fabs(cosine) < SMALL_FASTF) {	/* near enough to Z */
 		vect_t tmp;
 		int xCell, yCell, r;
-		if (rt_g.debug & DEBUG_HF) {
+		if (RT_G_DEBUG & DEBUG_HF) {
 			bu_log("hf: Vertical shoot\n");
 		}
 		VSUB2(tmp, rp->r_pt, hf->hf_V);
@@ -1029,7 +1029,7 @@ bu_log("hf: before VSCALE... aray=(%g,%g,%g)\n",
 		signX = (aray[X] < 0.0) ? -1 : 1;
 		signY = (aray[Y] < 0.0) ? -1 : 1;
 
-		if (rt_g.debug & DEBUG_HF ) {
+		if (RT_G_DEBUG & DEBUG_HF ) {
 			bu_log("hf: curloc=(%g, %g, %g) aray=(%g,%g,%g)\n", curloc[X], curloc[Y],
 			    curloc[Z], aray[X], aray[Y], aray[Z]);
 			bu_log("hf: from=(%g, %g) to=(%g, %g)\n",
@@ -1063,7 +1063,7 @@ bu_log("aray[Y]/aray[X]=%g\n", delta);
 			xCell+=signX;
 			error += delta;
 		}
-		if (rt_g.debug & DEBUG_HF) {
+		if (RT_G_DEBUG & DEBUG_HF) {
 			bu_log("hf: delta=%g, error=%g, %d, %d\n", 
 			   delta, error, xCell, yCell);
 		}
@@ -1074,7 +1074,7 @@ bu_log("aray[Y]/aray[X]=%g\n", delta);
 			farZ = curloc[Z] + aray[Z];
 			maxZ = (curloc[Z] > farZ) ? curloc[Z] : farZ;
 			minZ = (curloc[Z] < farZ) ? curloc[Z] : farZ;
-			if (rt_g.debug & DEBUG_HF) {
+			if (RT_G_DEBUG & DEBUG_HF) {
 				bu_log("hf: cell %d,%d [%g -- %g]",
 				xCell, yCell, minZ, maxZ);
 			}
@@ -1143,7 +1143,7 @@ bu_log("aray[Y]/aray[X]=%g\n", delta);
 				highest *= hf->hf_file2mm;
 			}
 
-			if (rt_g.debug & DEBUG_HF) {
+			if (RT_G_DEBUG & DEBUG_HF) {
 				bu_log("lowest=%g, highest=%g\n", 
 				    lowest, highest);
 			}
@@ -1171,7 +1171,7 @@ bu_log("aray[Y]/aray[X]=%g\n", delta);
 skip_first:
 			if (error > SQRT_SMALL_FASTF) {
 				yCell += signY;
-				if (rt_g.debug & DEBUG_HF) {
+				if (RT_G_DEBUG & DEBUG_HF) {
 					bu_log("hf: cell %d,%d ", xCell, yCell);
 				}
 				if ((yCell < 0) || yCell > hf->hf_n-2) {
@@ -1242,7 +1242,7 @@ skip_first:
 			error += delta;
 			VADD2(curloc, curloc, aray);
 		} while (xCell >= 0 && xCell < hf->hf_w-1 );
-		if (rt_g.debug & DEBUG_HF) {
+		if (RT_G_DEBUG & DEBUG_HF) {
 			bu_log("htf: leaving loop, %d, %d, %g vs. 0--%d, 0--%d, 0.0--%g\n",
 			   xCell, yCell, curloc[Z], hf->hf_w-1, hf->hf_n-1, hf->hf_max);
 		}
@@ -1301,7 +1301,7 @@ bu_log("hf: before VSCALE... aray=(%g,%g,%g)\n",
 		signX = (aray[X] < 0.0) ? -1 : 1;
 		signY = (aray[Y] < 0.0) ? -1 : 1;
 
-		if (rt_g.debug & DEBUG_HF ) {
+		if (RT_G_DEBUG & DEBUG_HF ) {
 			bu_log("hf: curloc=(%g, %g, %g) aray=(%g,%g,%g)\n", curloc[X], curloc[Y],
 			    curloc[Z], aray[X], aray[Y], aray[Z]);
 			bu_log("hf: from=(%g, %g) to=(%g, %g)\n",
@@ -1335,7 +1335,7 @@ bu_log("aray[X]/aray[Y]=%g\n", delta);
 			yCell+=signY;
 			error += delta;
 		}
-		if (rt_g.debug & DEBUG_HF) {
+		if (RT_G_DEBUG & DEBUG_HF) {
 			bu_log("hf: delta=%g, error=%g, %d, %d\n", 
 			   delta, error, xCell, yCell);
 		}
@@ -1345,7 +1345,7 @@ bu_log("aray[X]/aray[Y]=%g\n", delta);
 			farZ = curloc[Z] + aray[Z];
 			maxZ = (curloc[Z] > farZ) ? curloc[Z] : farZ;
 			minZ = (curloc[Z] < farZ) ? curloc[Z] : farZ;
-			if (rt_g.debug & DEBUG_HF) {
+			if (RT_G_DEBUG & DEBUG_HF) {
 				bu_log("hf: cell %d,%d [%g -- %g] ",
 				xCell, yCell, minZ, maxZ);
 			}
@@ -1403,7 +1403,7 @@ bu_log("aray[X]/aray[Y]=%g\n", delta);
 			}
 
 
-			if (rt_g.debug & DEBUG_HF) {
+			if (RT_G_DEBUG & DEBUG_HF) {
 				bu_log("lowest=%g, highest=%g\n", 
 				    lowest, highest);
 			}
@@ -1431,7 +1431,7 @@ bu_log("aray[X]/aray[Y]=%g\n", delta);
 skip_2nd:
 			if (error > SQRT_SMALL_FASTF) {
 				xCell += signX;
-				if (rt_g.debug & DEBUG_HF) {
+				if (RT_G_DEBUG & DEBUG_HF) {
 					bu_log("hf: cell %d,%d\n", xCell, yCell);
 				}
 				if ((xCell < 0) || xCell > hf->hf_w-2) {
@@ -1502,7 +1502,7 @@ skip_2nd:
 			error += delta;
 			VADD2(curloc, curloc, aray);
 		} while (yCell >= 0 && yCell < hf->hf_n-1 );
-		if (rt_g.debug & DEBUG_HF) {
+		if (RT_G_DEBUG & DEBUG_HF) {
 			bu_log("htf: leaving loop, %d, %d, %g vs. 0--%d, 0--%d, 0.0--%g\n",
 			   xCell, yCell, curloc[Z], hf->hf_w-1, hf->hf_n-1, hf->hf_max);
 		}

@@ -587,7 +587,7 @@ int	reg_id;
 			cur_id = -1;
 	} while (reg_id == cur_id);
 
-	if( rt_g.debug&DEBUG_MEM_FULL )
+	if( RT_G_DEBUG&DEBUG_MEM_FULL )
 		bu_prmem( "After building faces:\n" );
 
 	/* Associate the vertex geometry, ccw. */
@@ -635,7 +635,7 @@ int	reg_id;
 	if( !m )
 		return( cur_id );
 
-	if( rt_g.debug&DEBUG_MEM_FULL )
+	if( RT_G_DEBUG&DEBUG_MEM_FULL )
 		bu_prmem( "Before assoc face geom:\n" );
 
 	/* Associate the face geometry. */
@@ -690,7 +690,7 @@ int	reg_id;
 	}
 #endif
 
-	if( rt_g.debug&DEBUG_MEM_FULL )
+	if( RT_G_DEBUG&DEBUG_MEM_FULL )
 		bu_prmem( "Before glueing faces:\n" );
 
 	/* Glue faceuses together. */
@@ -708,7 +708,7 @@ int	reg_id;
 		bu_log( "Fix normals\n" );
 	nmg_fix_normals( s, &tol );
 
-	if( rt_g.debug&DEBUG_MEM_FULL )
+	if( RT_G_DEBUG&DEBUG_MEM_FULL )
 		bu_prmem( "After fixing normals:\n" );
 
 	if( debug )
@@ -756,12 +756,12 @@ int	reg_id;
 		bu_log( "Verify plane equations:\n" );
 	}
 
-	if( rt_g.debug&DEBUG_MEM_FULL )
+	if( RT_G_DEBUG&DEBUG_MEM_FULL )
 		bu_prmem( "Before nmg_make_faces_within_tol():\n" );
 
 	nmg_make_faces_within_tol( s, &tol );
 
-	if( rt_g.debug&DEBUG_MEM_FULL )
+	if( RT_G_DEBUG&DEBUG_MEM_FULL )
 		bu_prmem( "After nmg_make_faces_within_tol():\n" );
 
 	if( debug )

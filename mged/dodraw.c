@@ -267,7 +267,7 @@ genptr_t		client_data;
 
 	BU_LIST_INIT( &vhead );
 
-	if(rt_g.debug&DEBUG_TREEWALK)  {
+	if(RT_G_DEBUG&DEBUG_TREEWALK)  {
 	  char	*sofar = db_path_to_string(pathp);
 
 	  Tcl_AppendResult(interp, "mged_wireframe_leaf(",
@@ -352,7 +352,7 @@ genptr_t client_data;
 	matp_t			matp;
 	struct bu_list		vhead;
 
-	if(rt_g.debug&DEBUG_TREEWALK)  {
+	if(RT_G_DEBUG&DEBUG_TREEWALK)  {
 		char	*sofar = db_path_to_string(pathp);
 		bu_log("mged_nmg_region_start(%s)\n", sofar);
 		bu_free((genptr_t)sofar, "path string");
@@ -396,7 +396,7 @@ genptr_t client_data;
 	switch( intern.idb_type )  {
 	case ID_POLY:
 		{
-			if(rt_g.debug&DEBUG_TREEWALK)  {
+			if(RT_G_DEBUG&DEBUG_TREEWALK)  {
 				bu_log("fastpath draw ID_POLY %s\n", dp->d_namep);
 			}
 			if( mged_draw_wireframes )  {
@@ -408,7 +408,7 @@ genptr_t client_data;
 		goto out;
 	case ID_BOT:
 		{
-			if (rt_g.debug&DEBUG_TREEWALK) {
+			if (RT_G_DEBUG&DEBUG_TREEWALK) {
 				bu_log("fastpath draw ID_BOT %s\n", dp->d_namep);
 			}
 			if( mged_draw_wireframes )  {
@@ -456,7 +456,7 @@ genptr_t client_data;
 
 	BU_LIST_INIT( &vhead );
 
-	if(rt_g.debug&DEBUG_TREEWALK)  {
+	if(RT_G_DEBUG&DEBUG_TREEWALK)  {
 	  char	*sofar = db_path_to_string(pathp);
 
 	  Tcl_AppendResult(interp, "mged_nmg_region_end() path='", sofar,
@@ -1278,7 +1278,7 @@ genptr_t		client_data;
 
 	BU_LIST_INIT( &vhead );
 
-	if(rt_g.debug&DEBUG_TREEWALK)  {
+	if(RT_G_DEBUG&DEBUG_TREEWALK)  {
 	  char	*sofar = db_path_to_string(pathp);
 
 	  Tcl_AppendResult(interp, "mged_facetize_region_end() path='", sofar,

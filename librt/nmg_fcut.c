@@ -3360,7 +3360,7 @@ fastf_t			*mag2;
 		bu_log("cur1 = %d of %d, cur2 = %d of %d\n",
 			cur1, rs1->nvu, cur2, rs2->nvu );
 
-		if( rt_g.debug || rt_g.NMG_debug )  {
+		if( RT_G_DEBUG || rt_g.NMG_debug )  {
 			/* Drop a plot file */
 			rt_g.NMG_debug |= DEBUG_VU_SORT|DEBUG_FCUT|DEBUG_PLOTEM;
 			nmg_pl_comb_fu( 0, 1, rs1->fu1 );
@@ -4153,7 +4153,7 @@ int			other_rs_state;
 			vu, pos,
 			nmg_state_names[old_state], nmg_v_assessment_names[assessment],
 			nmg_state_names[new_state], action_names[action] );
-	     if( rt_g.debug || rt_g.NMG_debug )  {
+	     if( RT_G_DEBUG || rt_g.NMG_debug )  {
 		/* First, print this faceuse */
 		lu = nmg_find_lu_of_vu( vu );
 	     	NMG_CK_LOOPUSE(lu);

@@ -275,9 +275,9 @@ char	*argv[];
 	if( debug )
 		rt_log( "debug level = %d\n" , debug );
 
-	if( rt_g.debug )
+	if( RT_G_DEBUG )
 	{
-		rt_printb( "librt rt_g.debug", rt_g.debug, DEBUG_FORMAT );
+		rt_printb( "librt RT_G_DEBUG", RT_G_DEBUG, DEBUG_FORMAT );
 		rt_log( "\n" );
 	}
 
@@ -443,7 +443,7 @@ char	*argv[];
 					rt_log("IN: %f %f %f\n",in[j].x,in[j].y,in[j].z);
 			}
 
-                    	if( rt_g.debug&DEBUG_MEM_FULL )
+                    	if( RT_G_DEBUG&DEBUG_MEM_FULL )
                     		rt_prmem( "At start of component" );
 
 			switch(in[i-1].surf_type){    /* Key on surface types. */
@@ -522,7 +522,7 @@ char	*argv[];
 			in[0] = in[i];
 			i = 0;
 
-                    	if( rt_g.debug&DEBUG_MEM_FULL )
+                    	if( RT_G_DEBUG&DEBUG_MEM_FULL )
                     		rt_prmem( "At end of component" );
 
 		}       /* end "processing" if */

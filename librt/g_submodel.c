@@ -140,7 +140,7 @@ struct rt_i		*rtip;
 
 			bu_semaphore_release(RT_SEM_MODEL);
 
-			if( rt_g.debug & (DEBUG_DB|DEBUG_SOLIDS) )  {
+			if( RT_G_DEBUG & (DEBUG_DB|DEBUG_SOLIDS) )  {
 				bu_log("rt_submodel_prep(%s): Re-used already prepped database %s, rtip=x%lx\n",
 					stp->st_dp->d_namep,
 					sub_dbip->dbi_filename,
@@ -158,7 +158,7 @@ struct rt_i		*rtip;
 
 	bu_semaphore_release(RT_SEM_MODEL);
 
-	if( rt_g.debug & (DEBUG_DB|DEBUG_SOLIDS) )  {
+	if( RT_G_DEBUG & (DEBUG_DB|DEBUG_SOLIDS) )  {
 		bu_log("rt_submodel_prep(%s): Opened database %s\n",
 			stp->st_dp->d_namep, sub_dbip->dbi_filename );
 	}
@@ -215,7 +215,7 @@ struct rt_i		*rtip;
 		BU_PTBL_LEN(&sub_rtip->rti_resources) = sub_rtip->rti_resources.blen;
 	}
 
-if(rt_g.debug) rt_pr_cut_info( sub_rtip, stp->st_name );
+if(RT_G_DEBUG) rt_pr_cut_info( sub_rtip, stp->st_name );
 
 done:	
 	BU_GETSTRUCT( submodel, submodel_specific );
@@ -236,7 +236,7 @@ done:
 	VSCALE( radvec, diam, 0.5 );
 	stp->st_aradius = stp->st_bradius = MAGNITUDE( radvec );
 
-	if( rt_g.debug & (DEBUG_DB|DEBUG_SOLIDS) )  {
+	if( RT_G_DEBUG & (DEBUG_DB|DEBUG_SOLIDS) )  {
 		bu_log("rt_submodel_prep(%s): finished loading database %s\n",
 			stp->st_dp->d_namep, sub_dbip->dbi_filename );
 	}
@@ -693,7 +693,7 @@ genptr_t		client_data;
 	/* NON-PARALLEL access to vlist pointed to by vheadp is not semaphored */
 	if(bu_is_parallel()) bu_bomb("rt_submodel_wireframe_leaf() non-parallel code\n");
 
-	if(rt_g.debug&DEBUG_TREEWALK)  {
+	if(RT_G_DEBUG&DEBUG_TREEWALK)  {
 		char	*sofar = db_path_to_string(pathp);
 
 		bu_log("rt_submodel_wireframe_leaf(%s) path=%s\n",

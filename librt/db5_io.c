@@ -265,7 +265,7 @@ const unsigned char		*cp;
 	rip->major_type = cp[4];
 	rip->minor_type = cp[5];
 
-	if(rt_g.debug&DEBUG_DB) bu_log("db5_crack_disk_header()\n\
+	if(RT_G_DEBUG&DEBUG_DB) bu_log("db5_crack_disk_header()\n\
 	h_dli=%d, h_object_width=%d, h_name_present=%d, h_name_width=%d,\n\
 	a_width=%d, a_present=%d, a_zzz=%d,\n\
 	b_width=%d, b_present=%d, b_zzz=%d, major=%d, minor=%d\n",
@@ -855,7 +855,7 @@ db5_replace_attributes( struct directory *dp, struct bu_attribute_value_set *avs
 	BU_CK_AVS(avsp);
 	RT_CK_DBI(dbip);
 
-	if(rt_g.debug&DEBUG_DB)  {
+	if(RT_G_DEBUG&DEBUG_DB)  {
 		bu_log("db5_replace_attributes(%s) dbip=x%x\n",
 			dp->d_namep, dbip );
 		bu_avs_print( avsp, "new attributes" );
@@ -929,7 +929,7 @@ db5_update_attributes( struct directory *dp, struct bu_attribute_value_set *avsp
 	BU_CK_AVS(avsp);
 	RT_CK_DBI(dbip);
 
-	if(rt_g.debug&DEBUG_DB)  {
+	if(RT_G_DEBUG&DEBUG_DB)  {
 		bu_log("db5_update_attributes(%s) dbip=x%x\n",
 			dp->d_namep, dbip );
 		bu_avs_print( avsp, "new attributes" );
@@ -1293,7 +1293,7 @@ db_put_external5(struct bu_external *ep, struct directory *dp, struct db_i *dbip
 	RT_CK_DIR(dp);
 	BU_CK_EXTERNAL(ep);
 
-	if(rt_g.debug&DEBUG_DB) bu_log("db_put_external5(%s) ep=x%x, dbip=x%x, dp=x%x\n",
+	if(RT_G_DEBUG&DEBUG_DB) bu_log("db_put_external5(%s) ep=x%x, dbip=x%x, dp=x%x\n",
 		dp->d_namep, ep, dbip, dp );
 
 	if( dbip->dbi_read_only )  {

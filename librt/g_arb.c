@@ -537,7 +537,7 @@ const char			*name;
 		equiv_pts[i] = i;
 	next_point: ;
 	}
-	if( rt_g.debug & DEBUG_ARB8 )  {
+	if( RT_G_DEBUG & DEBUG_ARB8 )  {
 		bu_log("arb(%s) equiv_pts[] = %d %d %d %d %d %d %d %d\n",
 			name,
 			equiv_pts[0], equiv_pts[1], equiv_pts[2], equiv_pts[3],
@@ -553,7 +553,7 @@ const char			*name;
 			int	pt_index;
 
 			pt_index = rt_arb_info[i].ai_sub[j];
-			if( rt_g.debug & DEBUG_ARB8 )  {
+			if( RT_G_DEBUG & DEBUG_ARB8 )  {
 				bu_log("face %d, j=%d, npts=%d, orig_vert=%d, vert=%d\n",
 					i, j, npts,
 					pt_index, equiv_pts[pt_index] );
@@ -789,7 +789,7 @@ struct seg		*seghead;
 	out = INFINITY;
 	iplane = oplane = -1;
 
-	if (rt_g.debug & DEBUG_ARB8) {
+	if (RT_G_DEBUG & DEBUG_ARB8) {
 		bu_log("\n\n------------\n arb: ray point %g %g %g -> %g %g %g\n",
 			V3ARGS(rp->r_pt),
 			V3ARGS(rp->r_dir));
@@ -806,7 +806,7 @@ struct seg		*seghead;
 		dxbdn = VDOT( afp->peqn, rp->r_pt ) - afp->peqn[3];
 		dn = -VDOT( afp->peqn, rp->r_dir );
 
-	        if (rt_g.debug & DEBUG_ARB8) {
+	        if (RT_G_DEBUG & DEBUG_ARB8) {
 	        	HPRINT("arb: Plane Equation", afp->peqn);
 			bu_log("arb: dn=%g dxbdn=%g s=%g\n", dn, dxbdn, dxbdn/dn);
 	        }
@@ -1048,7 +1048,7 @@ register struct uvcoord *uvp;
 		    		stp->st_specific, arbp->arb_opt );
 			return;
 		}
-		if(rt_g.debug&DEBUG_SOLIDS)  rt_pr_soltab( stp );
+		if(RT_G_DEBUG&DEBUG_SOLIDS)  rt_pr_soltab( stp );
 	}
 
 	ofp = &arbp->arb_opt[hitp->hit_surfno];
@@ -1515,7 +1515,7 @@ const struct bn_tol		*tol;
 			*vertpp++ = &verts[pa.pa_pindex[1][i]];
 			*vertpp++ = &verts[pa.pa_pindex[0][i]];
 		}
-		if( rt_g.debug & DEBUG_ARB8 )  {
+		if( RT_G_DEBUG & DEBUG_ARB8 )  {
 			bu_log("face %d, npts=%d, verts %d %d %d %d\n",
 				i, pa.pa_npts[i],
 				pa.pa_pindex[0][i], pa.pa_pindex[1][i],
@@ -1630,7 +1630,7 @@ const struct bn_tol	*tol;
 			*vertpp++ = &verts[pa.pa_pindex[1][i]];
 			*vertpp++ = &verts[pa.pa_pindex[0][i]];
 		}
-		if( rt_g.debug & DEBUG_ARB8 )  {
+		if( RT_G_DEBUG & DEBUG_ARB8 )  {
 			bu_log("face %d, npts=%d, verts %d %d %d %d\n",
 				i, pa.pa_npts[i],
 				pa.pa_pindex[0][i], pa.pa_pindex[1][i],

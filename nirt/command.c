@@ -517,7 +517,7 @@ com_table	*ctp;
 	if (*cp == '\0')
 	{
 	    /* display current value */
-	    bu_printb( "libdebug ", rt_g.debug, RT_DEBUG_FMT );
+	    bu_printb( "libdebug ", RT_G_DEBUG, RT_DEBUG_FMT );
 	    bu_log("\n");
 	    return;
 	}
@@ -525,7 +525,7 @@ com_table	*ctp;
 	/* Set a new value */
 	if (sscanf( cp, "%x", &rt_g.debug ) == 1)
 	{
-	    bu_printb( "libdebug ", rt_g.debug, RT_DEBUG_FMT );
+	    bu_printb( "libdebug ", RT_G_DEBUG, RT_DEBUG_FMT );
 	    bu_log("\n");
 	}
 	else

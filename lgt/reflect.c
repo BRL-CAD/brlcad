@@ -54,7 +54,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 	{ fastf_t	f = Dot( _rdir, _normal );\
 	if( f >= 0.0 )\
 		{\
-		if( ! _pp->pt_inflip && (rt_g.debug&DEBUG_NORML) )\
+		if( ! _pp->pt_inflip && (RT_G_DEBUG&DEBUG_NORML) )\
 			{\
 			V_Print( "Fixed flipped entry normal, was",\
 				_normal, bu_log );\
@@ -72,7 +72,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 	{	fastf_t	f = Dot( _rdir, _normal );\
 	if( f <= 0.0 )\
 		{\
-		if( ! _pp->pt_outflip && (rt_g.debug&DEBUG_NORML) )\
+		if( ! _pp->pt_outflip && (RT_G_DEBUG&DEBUG_NORML) )\
 			{\
 			V_Print( "Fixed flipped exit normal, was",\
 				_normal, bu_log );\
@@ -344,7 +344,7 @@ int frame;
 		a_cellsz = cell_sz;
 		}
 
-	if( rt_g.debug & DEBUG_CELLSIZE )
+	if( RT_G_DEBUG & DEBUG_CELLSIZE )
 		bu_log( "Cell size is %g mm.\n", cell_sz );
 	Scale2Vec( grid_hor, a_cellsz, grid_dh );
 	Scale2Vec( grid_ver, a_cellsz, grid_dv );
@@ -611,7 +611,7 @@ struct partition *pt_headp;
 	ap->a_color[RED] = (normal[X] + 1.0) / 2.0;
 	ap->a_color[GRN] = (normal[Y] + 1.0) / 2.0;
 	ap->a_color[BLU] = (normal[Z] + 1.0) / 2.0;
-	if( rt_g.debug )
+	if( RT_G_DEBUG )
 		{
 		V_Print( "normal", normal, bu_log );
 		V_Print( "acolor", ap->a_color, bu_log );
@@ -896,7 +896,7 @@ struct partition *pt_headp;
 							normal
 							);
 				VJOIN1(	rgb_coefs, rgb_coefs, f, ap->a_color );
-				if( rt_g.debug & DEBUG_SHADOW )
+				if( RT_G_DEBUG & DEBUG_SHADOW )
 					{
 					bu_log( "\t\tcontribution from light %d:\n", i );
 					V_Print( "\t\treflectance coeffs", ap->a_color, bu_log );
@@ -924,7 +924,7 @@ struct partition *pt_headp;
 				entry->reflectivity,
 				mirror_coefs
 				);
-			if( rt_g.debug & DEBUG_RGB )
+			if( RT_G_DEBUG & DEBUG_RGB )
 				{
 				V_Print( "mirror", mirror_coefs, bu_log );
 				V_Print( "rgb_coefs", rgb_coefs, bu_log );
@@ -939,7 +939,7 @@ struct partition *pt_headp;
 				entry->transparency,
 				ap->a_color
 				);
-			if( rt_g.debug & DEBUG_RGB )
+			if( RT_G_DEBUG & DEBUG_RGB )
 				{
 				V_Print( "glass", ap->a_color, bu_log );
 				V_Print( "rgb_coefs", rgb_coefs, bu_log );
@@ -948,7 +948,7 @@ struct partition *pt_headp;
 		}
 	/* Pass result in application struct. */
 	VMOVE( ap->a_color, rgb_coefs );
-	if( rt_g.debug & DEBUG_RGB )
+	if( RT_G_DEBUG & DEBUG_RGB )
 		{
 		V_Print( "ap->a_color", ap->a_color, bu_log );
 		}
@@ -987,7 +987,7 @@ register Lgt_Source *lgt_entry;
 		ap_hit.a_miss = f_Lit;   /* Handle illuminated pixels. */
 		ap_hit.a_level++;	 /* Increment recursion level. */
 	
-		if( rt_g.debug & DEBUG_SHADOW )
+		if( RT_G_DEBUG & DEBUG_SHADOW )
 			{
 			bu_log( "\tcorrect_Lgt()\n" );
 			V_Print( "\t\tlgt source location",
@@ -1003,7 +1003,7 @@ register Lgt_Source *lgt_entry;
 		ap_hit.a_cumlen =
 			Dist3d( pp->pt_inhit->hit_point, lgt_entry->loc );
 
-		if( rt_g.debug & DEBUG_SHADOW )
+		if( RT_G_DEBUG & DEBUG_SHADOW )
 			{
 			V_Print( "\t\tdir. of ray to light",
 				ap_hit.a_ray.r_dir, bu_log );
@@ -1039,7 +1039,7 @@ register Lgt_Source *lgt_entry;
 			return	0.0;
 		ang_dist = sqrt( 1.0 - Sqr( cos_angl ) );
 		rel_radius = lgt_entry->radius / pp->pt_inhit->hit_dist;
-		if( rt_g.debug & DEBUG_RGB )
+		if( RT_G_DEBUG & DEBUG_RGB )
 			{
 			bu_log( "\t\tcos. of angle to lgt center = %g\n", cos_angl );
 			bu_log( "\t\t	   angular distance = %g\n", ang_dist );
@@ -1071,7 +1071,7 @@ vect_t normal;
 	ap_hit.a_onehit = false;
 	ap_hit.a_level++;	/* Increment recursion level. */
 
-	if( rt_g.debug & DEBUG_RGB )
+	if( RT_G_DEBUG & DEBUG_RGB )
 		{
 		bu_log( "\tmirror_Reflect: level %d grid <%d,%d>\n",
 			ap_hit.a_level, ap_hit.a_x, ap_hit.a_y
@@ -1121,7 +1121,7 @@ vect_t normal;
 	ap_hit.a_onehit = false;
 	ap_hit.a_level++;
 
-	if( rt_g.debug & DEBUG_REFRACT )
+	if( RT_G_DEBUG & DEBUG_REFRACT )
 		{
 		bu_log( "\tEntering glass_Refract(), level %d grid <%d,%d>\n",
 			ap->a_level, ap->a_x, ap->a_y
@@ -1138,7 +1138,7 @@ vect_t normal;
 	if( entry->refrac_index == RI_AIR )
 		{ /* No refraction necessary. */
 			struct partition *pt_headp = pp->pt_back;
-		if( rt_g.debug & DEBUG_REFRACT )
+		if( RT_G_DEBUG & DEBUG_REFRACT )
 			bu_log( "\t\tNo refraction on entry.\n" );
 		/* Ray direction stays the same, and so does ray origin,
 			because we are using existing partitions with
@@ -1158,7 +1158,7 @@ vect_t normal;
 			FREE_PT( pp, ap->a_resource );
 			f_Model( &ap_hit, pt_headp );
 			VMOVE( ap->a_color, ap_hit.a_color );
-			if( rt_g.debug & DEBUG_REFRACT )
+			if( RT_G_DEBUG & DEBUG_REFRACT )
 				{
 				V_Print( "\t\tf_Model returned coeffs",
 					ap->a_color, bu_log );
@@ -1169,7 +1169,7 @@ vect_t normal;
 			{
 			f_Backgr( &ap_hit );
 			VMOVE( ap->a_color, ap_hit.a_color );
-			if( rt_g.debug & DEBUG_REFRACT )
+			if( RT_G_DEBUG & DEBUG_REFRACT )
 				{
 				bu_log( "\t\tOne hit flag is %s\n",
 					ap->a_onehit ? "ON" : "OFF" );
@@ -1184,7 +1184,7 @@ vect_t normal;
 		{ /* Calculate refraction at entrance. */
 		if( pp->pt_inhit->hit_dist < 0.0 )
 			{
-			if( rt_g.debug & DEBUG_REFRACT )
+			if( RT_G_DEBUG & DEBUG_REFRACT )
 				bu_log( "\t\tRefracting inside solid.\n" );
 			VMOVE( ap_ref.a_ray.r_pt, ap->a_ray.r_pt );
 			VMOVE( ap_ref.a_ray.r_dir, ap->a_ray.r_dir );
@@ -1200,7 +1200,7 @@ vect_t normal;
 			{ /* Past critical angle, reflected back out. */
 			VMOVE( ap_hit.a_ray.r_pt, pp->pt_inhit->hit_point );
 			VMOVE( ap_hit.a_ray.r_dir, ap_ref.a_ray.r_dir );
-			if( rt_g.debug & DEBUG_REFRACT )
+			if( RT_G_DEBUG & DEBUG_REFRACT )
 				bu_log( "\t\tPast critical angle on entry!\n" );
 			goto	exiting_ray;
 			}
@@ -1216,7 +1216,7 @@ inside_ray :
 		{ /* Refracted ray missed, solid!  This should not occur,
 			but if it does we will skip the refraction.
 		   */
-		if( rt_g.debug & DEBUG_REFRACT )
+		if( RT_G_DEBUG & DEBUG_REFRACT )
 			{
 			bu_log( "\t\tRefracted ray missed:\n" );
 			V_Print( "\t\trefracted ray pnt", ap_ref.a_ray.r_pt, bu_log );
@@ -1229,7 +1229,7 @@ inside_ray :
 		}
 	else
 		{
-		if( rt_g.debug & DEBUG_REFRACT )
+		if( RT_G_DEBUG & DEBUG_REFRACT )
 			bu_log( "\t\tRefracted ray hit.\n" );
 		}
 
@@ -1245,7 +1245,7 @@ inside_ray :
 				)
 			)
 			{ /* Past critical angle, internal reflection. */
-			if( rt_g.debug & DEBUG_REFRACT )
+			if( RT_G_DEBUG & DEBUG_REFRACT )
 				bu_log( "\t\tInternal reflection, recursion level (%d)\n", ap_ref.a_level );
 			ap_ref.a_level++;
 			VMOVE( ap_ref.a_ray.r_dir, ap_hit.a_ray.r_dir );
@@ -1257,7 +1257,7 @@ inside_ray :
 	else
 		{ /* Exceeded max bounces, total absorbtion of light. */
 		VSETALL( ap->a_color, 0.0 );
-		if( rt_g.debug & DEBUG_REFRACT )
+		if( RT_G_DEBUG & DEBUG_REFRACT )
 			bu_log( "\t\tExceeded max bounces with internal reflections, recursion level (%d)\n", ap_ref.a_level );
 		refrac_inside++;
 		return;
@@ -1267,7 +1267,7 @@ inside_ray :
 
 exiting_ray :
 	/* Shoot from exit point in direction of refracted ray. */
-	if( rt_g.debug & DEBUG_REFRACT )
+	if( RT_G_DEBUG & DEBUG_REFRACT )
 		{
 		bu_log( "\t\tExiting ray from glass.\n" );
 		V_Print( "\t\t   ray origin", ap_hit.a_ray.r_pt, bu_log );
@@ -1292,7 +1292,7 @@ register struct application *ap;
 	/* Base-line color is same as background. */
 	VMOVE( ap->a_color, bg_coefs );
 
-	if( rt_g.debug & DEBUG_RGB )
+	if( RT_G_DEBUG & DEBUG_RGB )
 		{
 		bu_log( "\tRay missed model.\n" );
 		V_Print( "\tbackground coeffs", ap->a_color, bu_log );
@@ -1330,7 +1330,7 @@ register struct application *ap;
 				}
 			}
 		}
-	if( rt_g.debug & DEBUG_RGB )
+	if( RT_G_DEBUG & DEBUG_RGB )
 		{
 		V_Print( "coeffs returned from background", ap->a_color, bu_log );
 		}
@@ -1345,7 +1345,7 @@ STATIC int
 f_Error( ap )
 register struct application *ap;
 	{
-	if( rt_g.debug & DEBUG_RGB )
+	if( RT_G_DEBUG & DEBUG_RGB )
 		bu_log( "f_Error()\n" );
 	return	0;
 	}
@@ -1360,7 +1360,7 @@ STATIC int
 f_Lit( ap )
 register struct application *ap;
 	{	
-	if( rt_g.debug & DEBUG_SHADOW )
+	if( RT_G_DEBUG & DEBUG_SHADOW )
 		bu_log( "\t\tSurface is illuminated.\n" );
 	ap->a_diverge = 1.0;
 	hits_lit++;
@@ -1378,7 +1378,7 @@ struct partition *pt_headp;
 	{	register struct partition *pp;
 		register struct hit *hitp;
 		register struct soltab *stp;
-	if( rt_g.debug & DEBUG_RGB )
+	if( RT_G_DEBUG & DEBUG_RGB )
 		bu_log( "f_Probe()\n" );
 	Get_Partition( ap, pp, pt_headp, "f_Probe" );
 	stp = pp->pt_outseg->seg_stp;
@@ -1416,7 +1416,7 @@ fastf_t ri_1, ri_2;
 register fastf_t *v_2;
 	{	fastf_t	w[3], u[3];	/* Intermediate vectors. */
 		fastf_t	beta;		/* Intermediate scalar. */
-	if( rt_g.debug & DEBUG_REFRACT )
+	if( RT_G_DEBUG & DEBUG_REFRACT )
 		{
 		V_Print( "\tEntering refract(), incident ray", v_1, bu_log );
 		V_Print( "\t\tentrance normal", norml, bu_log );
@@ -1443,7 +1443,7 @@ register fastf_t *v_2;
 		beta = 2.0 * Dot( u, norml );
 		Scale2Vec( norml, beta, w );
 		Diff2Vec( w, u, v_2 );
-		if( rt_g.debug & DEBUG_REFRACT )
+		if( RT_G_DEBUG & DEBUG_REFRACT )
 			{
 			V_Print( "\tdeflected refracted ray", v_2, bu_log );
 			}
@@ -1458,7 +1458,7 @@ register fastf_t *v_2;
 		beta = -sqrt( 1.0 - beta ) - Dot( w, norml );
 		Scale2Vec( norml, beta, u );
 		Add2Vec( w, u, v_2 );
-		if( rt_g.debug & DEBUG_REFRACT )
+		if( RT_G_DEBUG & DEBUG_REFRACT )
 			{
 			V_Print( "\trefracted ray", v_2, bu_log );
 			}
@@ -1482,7 +1482,7 @@ struct partition *pt_headp;
 	{	register struct partition *pp;
 		register Mat_Db_Entry *entry;
 	Get_Partition( ap, pp, pt_headp, "f_Shadow" );
-	if( rt_g.debug & DEBUG_SHADOW )
+	if( RT_G_DEBUG & DEBUG_SHADOW )
 		{	register struct hit *ihitp, *ohitp;
 			register struct soltab *istp;
 			point_t inormal;
@@ -1501,7 +1501,7 @@ struct partition *pt_headp;
 	ap->a_diverge = 1.0;
 	if( pp->pt_inseg->seg_stp == lgts[ap->a_user].stp )
 		{ /* Have hit the EXPLICIT light source, no shadow. */
-		if( rt_g.debug & DEBUG_SHADOW )
+		if( RT_G_DEBUG & DEBUG_SHADOW )
 			bu_log( "Unobstructed path to explicit light.\n" );
 		return	ap->a_miss( ap );
 		}
@@ -1530,14 +1530,14 @@ struct partition *pt_headp;
 	if( ap->a_diverge != 1.0 )
 		/* Light source is obstructed, object shadowed. */
 		{
-		if( rt_g.debug & DEBUG_SHADOW )
+		if( RT_G_DEBUG & DEBUG_SHADOW )
 			bu_log( "Lgt source obstructed, object shadowed\n" );
 		hits_shadowed++;
 		return	1;
 		}
 	else	/* Full intensity of light source. */
 		{
-		if( rt_g.debug & DEBUG_SHADOW )
+		if( RT_G_DEBUG & DEBUG_SHADOW )
 			bu_log( "Full intensity of light source, no shadow\n" );
 		return	ap->a_miss( ap );
 		}
@@ -1592,7 +1592,7 @@ register fastf_t *norml;
 		fastf_t cos_il; 	/* cosine incident angle */
 		auto fastf_t lgt_dir[3];
 
-	if( rt_g.debug & DEBUG_RGB )
+	if( RT_G_DEBUG & DEBUG_RGB )
 		bu_log( "\nmodel_Reflectance(): level %d grid <%d,%d>\n",
 			ap->a_level, ap->a_x, ap->a_y
 			);
@@ -1623,7 +1623,7 @@ register fastf_t *norml;
 	ff = cos_il * lgt_energy * mdb_entry->wgt_diffuse;
 	/* Facter in light source color. */
 	Scale2Vec( lgt_entry->coef, ff, ap->a_color );
-	if( rt_g.debug & DEBUG_RGB )
+	if( RT_G_DEBUG & DEBUG_RGB )
 		{
 		bu_log( "\tDiffuse reflectance:\n" );
 		V_Print( "\tsurface normal", norml, bu_log );
@@ -1651,7 +1651,7 @@ register fastf_t *norml;
 		ff = 2.0 * cos_il;
 		Scale2Vec( norml, ff, tmp_dir );
 		Diff2Vec( tmp_dir, lgt_dir, lgt_reflect );
-		if( rt_g.debug & DEBUG_RGB )
+		if( RT_G_DEBUG & DEBUG_RGB )
 			{
 			bu_log( "\tSpecular reflectance:\n" );
 			V_Print( "\t           dir of eye", view_dir, bu_log );
@@ -1665,7 +1665,7 @@ register fastf_t *norml;
 					myIpow( cos_s, mdb_entry->shine );
 			/* Add specular component. */
 			VJOIN1( ap->a_color, ap->a_color, specular, lgt_entry->coef );
-			if( rt_g.debug & DEBUG_RGB )
+			if( RT_G_DEBUG & DEBUG_RGB )
 				{
 				bu_log( "\tcosine of specular angle = %g\n",
 					cos_s );
@@ -1925,7 +1925,7 @@ vect_t aliasbuf[];
 	{	RGBpixel pixel;
 		int x;
 		int y;
-	if( rt_g.debug && tty )
+	if( RT_G_DEBUG && tty )
 		{
 		bu_semaphore_acquire( BU_SEM_SYSCALL );
 		(void) sprintf( GRID_PIX_PTR, " [%04d-", ap->a_x/aperture_sz );
@@ -2126,13 +2126,13 @@ view_end()
 	{
 	if( pix_buffered == B_PAGE )
 		fb_flush( fbiop );
-	if( rt_g.debug & DEBUG_REFRACT )
+	if( RT_G_DEBUG & DEBUG_REFRACT )
 		bu_log( "%s : hits=%d misses=%d inside=%d total=%d\n",
 			"Refraction stats",
 			refrac_total-(refrac_missed+refrac_inside),
 			refrac_missed, refrac_inside, refrac_total
 			);
-	if( rt_g.debug & DEBUG_SHADOW )
+	if( RT_G_DEBUG & DEBUG_SHADOW )
 		bu_log( "Shadowing stats : lit=%d shadowed=%d total=%d\n",
 			hits_lit, hits_shadowed, hits_lit+hits_shadowed
 			);

@@ -539,7 +539,7 @@ const struct bn_tol	*tol;
 
 	if( area <= 0.0 )
 	{
-		if( rt_g.debug & DEBUG_MATH )
+		if( RT_G_DEBUG & DEBUG_MATH )
 		{
 			bu_log( "nmg_loop_is_ccw: Loop has no area\n" );
 			nmg_pr_lu_briefly( lu, " " );
@@ -550,7 +550,7 @@ const struct bn_tol	*tol;
 
 	if( NEAR_ZERO( area, tol->dist_sq ) )
 	{
-		if( rt_g.debug & DEBUG_MATH )
+		if( RT_G_DEBUG & DEBUG_MATH )
 		{
 			bu_log( "nmg_loop_is_ccw: Loop area (%g) is less than tol->dist_sq (%g)\n", area, tol->dist_sq );
 			nmg_pr_lu_briefly( lu, " " );
@@ -563,7 +563,7 @@ const struct bn_tol	*tol;
 
 	if( NEAR_ZERO( dot, tol->perp ) )
 	{
-		if( rt_g.debug & DEBUG_MATH )
+		if( RT_G_DEBUG & DEBUG_MATH )
 		{
 			bu_log( "nmg_loop_is_ccw: normal ( %g %g %g ) is in plane of loop ( %g %g %g %g ), dot = %g\n",
 				V3ARGS( norm ), V4ARGS( pl ), dot );

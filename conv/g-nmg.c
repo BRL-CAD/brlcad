@@ -96,7 +96,7 @@ genptr_t		client_data;
 
 	BU_LIST_INIT(&vhead);
 
-	if (rt_g.debug&DEBUG_TREEWALK || verbose) {
+	if (RT_G_DEBUG&DEBUG_TREEWALK || verbose) {
 		sofar = db_path_to_string(pathp);
 		bu_log("\ndo_region_end(%d %d%%) %s\n",
 			regions_tried,
@@ -257,7 +257,7 @@ genptr_t		client_data;
 
 out:
 
-	if( rt_g.debug&DEBUG_MEM_FULL )
+	if( RT_G_DEBUG&DEBUG_MEM_FULL )
 		bu_prmem( "At end of do_region_end()" );
 
 	BU_GETUNION(curtree, tree);
@@ -484,7 +484,7 @@ char	*argv[];
 			break;
 		case 'x':
 			sscanf( optarg, "%x", &rt_g.debug );
-			bu_printb( "librt rt_g.debug", rt_g.debug, DEBUG_FORMAT );
+			bu_printb( "librt RT_G_DEBUG", RT_G_DEBUG, DEBUG_FORMAT );
 			bu_log("\n");
 			break;
 		case 'X':

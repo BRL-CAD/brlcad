@@ -235,12 +235,12 @@ int			noisy;
 			n1 == this[1]  &&	/* speed */
 			strcmp( name, this ) == 0
 		)  {
-			if(rt_g.debug&DEBUG_DB) bu_log("db_lookup(%s) x%x\n", name, dp);
+			if(RT_G_DEBUG&DEBUG_DB) bu_log("db_lookup(%s) x%x\n", name, dp);
 			return(dp);
 		}
 	}
 
-	if(noisy || rt_g.debug&DEBUG_DB) bu_log("db_lookup(%s) failed: %s does not exist\n", name, name);
+	if(noisy || RT_G_DEBUG&DEBUG_DB) bu_log("db_lookup(%s) failed: %s does not exist\n", name, name);
 	return( DIR_NULL );
 }
 
@@ -268,7 +268,7 @@ genptr_t		ptr;		/* for db version 5, this is a pointer to an unsigned char (mino
 
 	RT_CK_DBI(dbip);
 
-	if(rt_g.debug&DEBUG_DB)  {
+	if(RT_G_DEBUG&DEBUG_DB)  {
 		bu_log("db_diradd(dbip=x%x, name='%s', addr=x%x, len=%d, flags=x%x)\n",
 			dbip, name, laddr, len, flags );
 	}

@@ -57,7 +57,7 @@ db5_scan(
 	long			addr;
 
 	RT_CK_DBI(dbip);
-	if(rt_g.debug&DEBUG_DB) bu_log("db5_scan( x%x, x%x )\n", dbip, handler);
+	if(RT_G_DEBUG&DEBUG_DB) bu_log("db5_scan( x%x, x%x )\n", dbip, handler);
 
 	raw.magic = DB5_RAW_INTERNAL_MAGIC;
 	nrec = 0L;
@@ -217,7 +217,7 @@ db5_diradd_handler(
 	/* If somehow it doesn't have a name, ignore it */
 	if( rip->name.ext_buf == NULL )  return;
 
-	if(rt_g.debug&DEBUG_DB)  {
+	if(RT_G_DEBUG&DEBUG_DB)  {
 		bu_log("db5_diradd_handler(dbip=x%x, name='%s', addr=x%x, len=%d)\n",
 			dbip, rip->name, laddr, rip->object_length );
 	}

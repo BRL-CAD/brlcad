@@ -941,7 +941,7 @@ const struct bn_tol	*tol;
 
 	    	nmg_pr_class_status("eu vu", euv_cl);
 	    	nmg_pr_class_status("eumate vu", matev_cl);
-	    	if( rt_g.debug || rt_g.NMG_debug )  {
+	    	if( RT_G_DEBUG || rt_g.NMG_debug )  {
 		    	/* Do them over, so we can watch */
 	    		bu_log("Edge not cut, doing it over\n");
 	    		NMG_INDEX_CLEAR( classlist[NMG_CLASS_AinB], eu->vu_p);

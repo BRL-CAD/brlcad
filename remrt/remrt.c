@@ -1331,7 +1331,7 @@ register struct frame *fr;
 		use_air, jitter,
 		AmbientIntensity, lightmodel,
 		eye_backoff,
-		rt_g.debug, rdebug,
+		RT_G_DEBUG, rdebug,
 		rt_dist_tol, rt_perp_tol
 	);
 	bu_vls_strcat( &fr->fr_cmd, buf );

@@ -1652,7 +1652,7 @@ dgo_wireframe_leaf(tsp, pathp, ip, client_data)
 
 	BU_LIST_INIT(&vhead);
 
-	if (rt_g.debug&DEBUG_TREEWALK) {
+	if (RT_G_DEBUG&DEBUG_TREEWALK) {
 		char	*sofar = db_path_to_string(pathp);
 
 		Tcl_AppendResult(dgcdp->interp, "dgo_wireframe_leaf(",
@@ -1734,7 +1734,7 @@ dgo_nmg_region_start(tsp, pathp, combp, client_data)
 	struct bu_list		vhead;
 	struct dg_client_data *dgcdp = (struct dg_client_data *)client_data;
 
-	if (rt_g.debug&DEBUG_TREEWALK) {
+	if (RT_G_DEBUG&DEBUG_TREEWALK) {
 		char	*sofar = db_path_to_string(pathp);
 		bu_log("dgo_nmg_region_start(%s)\n", sofar);
 		bu_free((genptr_t)sofar, "path string");
@@ -1781,7 +1781,7 @@ dgo_nmg_region_start(tsp, pathp, combp, client_data)
 	switch (intern.idb_type) {
 	case ID_POLY:
 		{
-			if (rt_g.debug&DEBUG_TREEWALK) {
+			if (RT_G_DEBUG&DEBUG_TREEWALK) {
 				bu_log("fastpath draw ID_POLY %s\n", dp->d_namep);
 			}
 			if (dgcdp->draw_wireframes) {
@@ -1793,7 +1793,7 @@ dgo_nmg_region_start(tsp, pathp, combp, client_data)
 		goto out;
 	case ID_BOT:
 		{
-			if (rt_g.debug&DEBUG_TREEWALK) {
+			if (RT_G_DEBUG&DEBUG_TREEWALK) {
 				bu_log("fastpath draw ID_BOT %s\n", dp->d_namep);
 			}
 			if (dgcdp->draw_wireframes) {
@@ -1844,7 +1844,7 @@ dgo_nmg_region_end(tsp, pathp, curtree, client_data)
 
 	BU_LIST_INIT( &vhead );
 
-	if(rt_g.debug&DEBUG_TREEWALK)  {
+	if(RT_G_DEBUG&DEBUG_TREEWALK)  {
 	  char	*sofar = db_path_to_string(pathp);
 
 	  Tcl_AppendResult(dgcdp->interp, "dgo_nmg_region_end() path='", sofar,

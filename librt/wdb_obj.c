@@ -2705,7 +2705,7 @@ wdb_dir_add5(struct db_i			*dbip,		/* db_i to add this object to */
 	/* If somehow it doesn't have a name, ignore it */
 	if( rip->name.ext_buf == NULL )  return;
 
-	if(rt_g.debug&DEBUG_DB) {
+	if(RT_G_DEBUG&DEBUG_DB) {
 		bu_log("wdb_dir_add5(dbip=x%x, name='%s', addr=x%x, len=%d)\n",
 			dbip, (char *)rip->name.ext_buf, rip->object_length );
 	}
@@ -4808,7 +4808,7 @@ wdb_push_leaf(struct db_tree_state	*tsp,
 
 	dp = pathp->fp_names[pathp->fp_len-1];
 
-	if (rt_g.debug&DEBUG_TREEWALK) {
+	if (RT_G_DEBUG&DEBUG_TREEWALK) {
 		char *sofar = db_path_to_string(pathp);
 
 		Tcl_AppendResult(wpdp->interp, "wdb_push_leaf(",
@@ -4913,7 +4913,7 @@ wdb_push_cmd(struct rt_wdb	*wdbp,
 	wpdp->pi_head.forw = wpdp->pi_head.back = &wpdp->pi_head;
 	wpdp->pi_head.pi_dir = (struct directory *) 0;
 
-	old_debug = rt_g.debug;
+	old_debug = RT_G_DEBUG;
 
 	/* Initial values for options, must be reset each time */
 	ncpu = 1;

@@ -1486,7 +1486,7 @@ Convtrimsurfs()
 
 	bu_log( "\n\nConverting Trimmed Surface entities:\n" );
 
-	if( rt_g.debug & DEBUG_MEM_FULL )
+	if( RT_G_DEBUG & DEBUG_MEM_FULL )
 		bu_mem_barriercheck();
 
 	m = nmg_mm();
@@ -1497,7 +1497,7 @@ Convtrimsurfs()
 	{
 		if( dir[i]->type == 144 )
 		{
-			if( rt_g.debug & DEBUG_MEM_FULL )
+			if( RT_G_DEBUG & DEBUG_MEM_FULL )
 				bu_mem_barriercheck();
 
 			totsurfs++;
@@ -1507,7 +1507,7 @@ Convtrimsurfs()
 				nmg_face_bb( fu->f_p , &tol );
 				convsurf++;
 			}
-			if( rt_g.debug & DEBUG_MEM_FULL )
+			if( RT_G_DEBUG & DEBUG_MEM_FULL )
 				bu_mem_barriercheck();
 
 		}
@@ -1563,7 +1563,7 @@ Convtrimsurfs()
 
 	bu_log( "Converted %d Trimmed Sufaces successfully out of %d total Trimmed Sufaces\n" , convsurf , totsurfs );
 
-	if( rt_g.debug & DEBUG_MEM_FULL )
+	if( RT_G_DEBUG & DEBUG_MEM_FULL )
 		bu_mem_barriercheck();
 
 	if( convsurf )
@@ -1575,13 +1575,13 @@ Convtrimsurfs()
 		else
 			mk_nmg( fdout , "Trimmed_surf" , m );
 	}
-	if( rt_g.debug & DEBUG_MEM_FULL )
+	if( RT_G_DEBUG & DEBUG_MEM_FULL )
 		bu_mem_barriercheck();
 
 
 	nmg_km( m );
 
-	if( rt_g.debug & DEBUG_MEM_FULL )
+	if( RT_G_DEBUG & DEBUG_MEM_FULL )
 		bu_mem_barriercheck();
 
 }

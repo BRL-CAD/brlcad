@@ -146,7 +146,7 @@ const struct bn_tol	*tol;
 	if( m1 < tol->dist || m2 < tol->dist ||
 	    m3 < tol->dist || m4 < tol->dist )  {
 		bu_free( (char *)trip, "getstruct tri_specific");
-		if( rt_g.debug & DEBUG_ARB8 )
+		if( RT_G_DEBUG & DEBUG_ARB8 )
 			bu_log("pg(%s): degenerate facet\n", stp->st_name);
 		return(0);			/* BAD */
 	}		

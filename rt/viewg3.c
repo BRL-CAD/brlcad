@@ -420,7 +420,7 @@ register struct partition *PartHeadp;
 	 *  The easy way to activate this is with the harmless -!1 option
 	 *  when running RTG3.
 	 */
-	if( rdebug || bu_debug || rt_g.debug )  {
+	if( rdebug || bu_debug || RT_G_DEBUG )  {
 		bu_vls_printf( &str, "   -b%d,%d -p %26.20e %26.20e %26.20e -d %26.20e %26.20e %26.20e\n",
 			ap->a_x, ap->a_y,
 			V3ARGS(ap->a_ray.r_pt),
@@ -480,7 +480,7 @@ register struct partition *PartHeadp;
 				comp_thickness, region_id, hv[0], hv[1], ap->a_x, ap->a_y , pp );
 			rt_pr_partitions(ap->a_rt_i, PartHeadp, "Defective partion:");
 			bu_log("Send this output to Sue Muuss (sue@brl.mil)\n");
-			if ( ! (rt_g.debug & DEBUG_ARB8)) {
+			if ( ! (RT_G_DEBUG & DEBUG_ARB8)) {
 				rt_g.debug |= DEBUG_ARB8;
 				rt_shootray(ap);
 				rt_g.debug &= ~DEBUG_ARB8;

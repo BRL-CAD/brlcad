@@ -505,7 +505,7 @@ rt_retrieve_binunif(struct rt_db_internal *intern,
 	if (db5_type_descrip_from_codes(&tmp, raw.major_type, raw.minor_type))
 		tmp = 0;
 
-	if (rt_g.debug & DEBUG_VOL)
+	if (RT_G_DEBUG & DEBUG_VOL)
 		bu_log("get_body() sees type (%d, %d)='%s'\n",
 		       raw.major_type, raw.minor_type, tmp);
 
@@ -514,46 +514,46 @@ rt_retrieve_binunif(struct rt_db_internal *intern,
 
 	bip = intern->idb_ptr;
 	RT_CK_BINUNIF(bip);
-	if (rt_g.debug & DEBUG_HF)
+	if (RT_G_DEBUG & DEBUG_HF)
 		rt_binunif_dump(bip);
 
-	if (rt_g.debug & DEBUG_VOL)
+	if (RT_G_DEBUG & DEBUG_VOL)
 		bu_log("cmd_export_body() thinks bip->count=%d\n",
 		       bip->count);
 
 	switch (bip -> type) {
 	case DB5_MINORTYPE_BINU_FLOAT:
-		if (rt_g.debug & DEBUG_VOL)
+		if (RT_G_DEBUG & DEBUG_VOL)
 			bu_log("bip->type switch... float");
 		break;
 	case DB5_MINORTYPE_BINU_DOUBLE:
-		if (rt_g.debug & DEBUG_VOL)
+		if (RT_G_DEBUG & DEBUG_VOL)
 			bu_log("bip->type switch... double");
 		break;
 	case DB5_MINORTYPE_BINU_8BITINT:
-		if (rt_g.debug & DEBUG_VOL)
+		if (RT_G_DEBUG & DEBUG_VOL)
 			bu_log("bip->type switch... 8bitint");
 		break;
 	case DB5_MINORTYPE_BINU_8BITINT_U:
-		if (rt_g.debug & DEBUG_VOL)
+		if (RT_G_DEBUG & DEBUG_VOL)
 			bu_log("bip->type switch... 8bituint");
 		break;
 	case DB5_MINORTYPE_BINU_16BITINT:
-		if (rt_g.debug & DEBUG_VOL)
+		if (RT_G_DEBUG & DEBUG_VOL)
 			bu_log("bip->type switch... 16bituint");
 		break;
 	case DB5_MINORTYPE_BINU_16BITINT_U:
-		if (rt_g.debug & DEBUG_VOL)
+		if (RT_G_DEBUG & DEBUG_VOL)
 			bu_log("bip->type switch... 16bitint");
 		break;
 	case DB5_MINORTYPE_BINU_32BITINT:
 	case DB5_MINORTYPE_BINU_32BITINT_U:
-		if (rt_g.debug & DEBUG_VOL)
+		if (RT_G_DEBUG & DEBUG_VOL)
 			bu_log("bip->type switch... 32bitint");
 		break;
 	case DB5_MINORTYPE_BINU_64BITINT:
 	case DB5_MINORTYPE_BINU_64BITINT_U:
-		if (rt_g.debug & DEBUG_VOL)
+		if (RT_G_DEBUG & DEBUG_VOL)
 			bu_log("bip->type switch... 64bitint");
 		break;
 	default:

@@ -345,7 +345,7 @@ int				 just_collect_info, depth;
 	pseudo_depth = depth;
 #endif
 
-	if( rt_g.debug&DEBUG_CUT )
+	if( RT_G_DEBUG&DEBUG_CUT )
 		bu_log(
 	             "\nnu_ncells=%d, nu_sol_per_cell=%d, nu_max_ncells=%d\n",
 		     nu_ncells, nu_sol_per_cell, nu_max_ncells );
@@ -548,7 +548,7 @@ int				 just_collect_info, depth;
 					nugnp->nu_stepsize[Y];
 
 	/* For debugging */
-	if( rt_g.debug&DEBUG_CUT ) for( i=0; i<3; i++ ) {
+	if( RT_G_DEBUG&DEBUG_CUT ) for( i=0; i<3; i++ ) {
 		register int j;
 		bu_log( "NUgrid %c axis:  %d cells\n", "XYZ*"[i],
 			nugnp->nu_cells_per_axis[i] );
@@ -759,7 +759,7 @@ int			ncpu;
 	if( rtip->rti_cutlen < 3 )  rtip->rti_cutlen = 3;
 	if( rtip->rti_cutdepth < 9 )  rtip->rti_cutdepth = 9;
 	if( rtip->rti_cutdepth > 24 )  rtip->rti_cutdepth = 24;     /* !! */
-	if( rt_g.debug&DEBUG_CUT )
+	if( RT_G_DEBUG&DEBUG_CUT )
 		bu_log( "Cut: Tree Depth=%d, Leaf Len=%d\n",
 			rtip->rti_cutdepth, rtip->rti_cutlen );
 
@@ -812,7 +812,7 @@ int			ncpu;
 			rtip->rti_CutHead = *head;	/* struct copy */
 			bu_free( (char *)head, "union cutter" );
 			
-			if(rt_g.debug&DEBUG_CUTDETAIL)  {
+			if(RT_G_DEBUG&DEBUG_CUTDETAIL)  {
 				for( i=0; i<3; i++ )  {
 					bu_log("\nNUgrid %c axis:  %d cells\n",
 				     "XYZ*"[i], nuginfo.nu_cells_per_axis[i] );
@@ -842,16 +842,16 @@ int			ncpu;
 		      (fastf_t)rtip->rti_cutdepth+1, rtip->rti_cutdepth+1 );
 	bzero( rtip->rti_ncut_by_type, sizeof(rtip->rti_ncut_by_type) );
 	rt_ct_measure( rtip, &rtip->rti_CutHead, 0 );
-	if( rt_g.debug&DEBUG_CUT )  {
+	if( RT_G_DEBUG&DEBUG_CUT )  {
 		rt_pr_cut_info( rtip, "Cut" );
 	}
 
-	if( rt_g.debug&DEBUG_CUTDETAIL ) {
+	if( RT_G_DEBUG&DEBUG_CUTDETAIL ) {
 		/* Produce a voluminous listing of the cut tree */
 		rt_pr_cut( &rtip->rti_CutHead, 0 );
 	}
 
-	if( rt_g.debug&DEBUG_PLOTBOX ) {
+	if( RT_G_DEBUG&DEBUG_PLOTBOX ) {
 		/* Debugging code to plot cuts */
 		if( (plotfp=fopen("rtcut.plot", "w"))!=NULL ) {
 			pdv_3space( plotfp, rtip->rti_pmin, rtip->rti_pmax );
@@ -882,7 +882,7 @@ const struct rt_i	*rtip;
 
 	BU_ASSERT( cutp->cut_type == CUT_BOXNODE );
 
-	if(rt_g.debug&DEBUG_CUTDETAIL)  {
+	if(RT_G_DEBUG&DEBUG_CUTDETAIL)  {
 		bu_log("rt_cut_extend(cutp=x%x) %s npieces=%d\n",
 			cutp, stp->st_name, stp->st_npieces);
 	}
@@ -1204,7 +1204,7 @@ double			where;
 	int success = 0;
 
 	RT_CK_RTI(rtip);
-	if(rt_g.debug&DEBUG_CUTDETAIL)  {
+	if(RT_G_DEBUG&DEBUG_CUTDETAIL)  {
 		bu_log("rt_ct_box(x%x, %c) %g .. %g .. %g\n",
 			cutp, "XYZ345"[axis],
 			cutp->bn.bn_min[axis],
@@ -1236,7 +1236,7 @@ double			where;
 		 *  This cut operation did no good, release storage,
 		 *  and let caller attempt something else.
 		 */
-		if(rt_g.debug&DEBUG_CUTDETAIL)  {
+		if(RT_G_DEBUG&DEBUG_CUTDETAIL)  {
 			static char axis_str[] = "XYZw";
 			bu_log("rt_ct_box:  no luck, len=%d, axis=%c\n",
 				cutp->bn.bn_len, axis_str[axis] );
@@ -1278,7 +1278,7 @@ register const struct soltab *stp;
 register const struct rt_i *rtip;
 {
 	RT_CHECK_SOLTAB(stp);
-	if( rt_g.debug&DEBUG_BOXING )  {
+	if( RT_G_DEBUG&DEBUG_BOXING )  {
 		bu_log("rt_ck_overlap(%s)\n",stp->st_name);
 		VPRINT(" box min", min);
 		VPRINT(" sol min", stp->st_min);
@@ -1298,10 +1298,10 @@ register const struct rt_i *rtip;
 	if( rt_functab[stp->st_id].ft_classify( stp, min, max,
 			  &rtip->rti_tol ) == RT_CLASSIFY_OUTSIDE )  goto fail;
 
-	if( rt_g.debug&DEBUG_BOXING )  bu_log("rt_ck_overlap:  TRUE\n");
+	if( RT_G_DEBUG&DEBUG_BOXING )  bu_log("rt_ck_overlap:  TRUE\n");
 	return(1);
 fail:
-	if( rt_g.debug&DEBUG_BOXING )  bu_log("rt_ck_overlap:  FALSE\n");
+	if( RT_G_DEBUG&DEBUG_BOXING )  bu_log("rt_ck_overlap:  FALSE\n");
 	return(0);
 }
 
@@ -1357,7 +1357,7 @@ int	depth;
 	}
 
 	oldlen = rt_ct_piececount(cutp);	/* save before rt_ct_box() */
-	if( rt_g.debug&DEBUG_CUTDETAIL )  bu_log("rt_ct_optim( cutp=x%x, depth=%d ) piececount=%d\n", cutp, depth, oldlen);
+	if( RT_G_DEBUG&DEBUG_CUTDETAIL )  bu_log("rt_ct_optim( cutp=x%x, depth=%d ) piececount=%d\n", cutp, depth, oldlen);
 
 	/*
 	 * BOXNODE (leaf)
@@ -1404,7 +1404,7 @@ int	depth;
 	}
 	if( rt_ct_piececount(cutp->cn.cn_l) >= oldlen &&
 	    rt_ct_piececount(cutp->cn.cn_r) >= oldlen )  {
-/* 		if( rt_g.debug&DEBUG_CUTDETAIL ) */
+/* 		if( RT_G_DEBUG&DEBUG_CUTDETAIL ) */
 	    	bu_log("rt_ct_optim(cutp=x%x, depth=%d) oldlen=%d, lhs=%d, rhs=%d, hopeless\n",
 	    		cutp, depth, oldlen,
 			rt_ct_piececount(cutp->cn.cn_l),
@@ -1442,7 +1442,7 @@ double	*offcenter_p;
 	register int	i;
 	register double	left, right;
 
-	if(rt_g.debug&DEBUG_CUTDETAIL)bu_log("rt_ct_old_assess(x%x, %c)\n",cutp,"XYZ345"[axis]);
+	if(RT_G_DEBUG&DEBUG_CUTDETAIL)bu_log("rt_ct_old_assess(x%x, %c)\n",cutp,"XYZ345"[axis]);
 
 	/*  In absolute terms, each box must be at least 1mm wide after cut. */
 	if( (right=cutp->bn.bn_max[axis])-(left=cutp->bn.bn_min[axis]) < 2.0 )
@@ -1503,7 +1503,7 @@ double	*offcenter_p;
 		}
 	}
 
-	if(rt_g.debug&DEBUG_CUTDETAIL)bu_log("rt_ct_old_assess() left=%g, where=%g, right=%g, offcenter=%g\n",
+	if(RT_G_DEBUG&DEBUG_CUTDETAIL)bu_log("rt_ct_old_assess() left=%g, where=%g, right=%g, offcenter=%g\n",
 		left, where, right, offcenter);
 
 	if( where <= left || where >= right )

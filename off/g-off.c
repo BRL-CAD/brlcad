@@ -230,7 +230,7 @@ genptr_t		client_data;
 
 	RT_LIST_INIT(&vhead);
 
-	if (rt_g.debug&DEBUG_TREEWALK || verbose) {
+	if (RT_G_DEBUG&DEBUG_TREEWALK || verbose) {
 		char	*sofar = db_path_to_string(pathp);
 		rt_log("\ndo_region_end(%d %d%%) %s\n",
 			regions_tried,

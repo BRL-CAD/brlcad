@@ -315,7 +315,7 @@ int	level;
 		);
 	for( ptp = parentp->o_points->c_next; ptp != PTLIST_NULL; ptp = ptp->c_next )
 		{
-		if( rt_g.debug )
+		if( RT_G_DEBUG )
 			bu_log( "\t%8.3f,%8.3f,%8.3f\n",
 				ptp->c_point[X],
 				ptp->c_point[Y],

@@ -1191,7 +1191,7 @@ genptr_t		client_data;
 	curtree->tr_d.td_name = bu_strdup(dp->d_namep);
 	curtree->tr_d.td_r = r1;
 
-	if (rt_g.debug&DEBUG_TREEWALK)
+	if (RT_G_DEBUG&DEBUG_TREEWALK)
 		bu_log("nmg_booltree_leaf_tess(%s) OK\n", dp->d_namep);
 
 	return(curtree);
@@ -1253,7 +1253,7 @@ genptr_t		client_data;
 	curtree->tr_d.td_name = bu_strdup(dp->d_namep);
 	curtree->tr_d.td_r = r1;
 
-	if (rt_g.debug&DEBUG_TREEWALK)
+	if (RT_G_DEBUG&DEBUG_TREEWALK)
 		bu_log("nmg_booltree_leaf_tnurb(%s) OK\n", dp->d_namep);
 
 	return(curtree);

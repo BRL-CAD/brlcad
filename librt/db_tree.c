@@ -816,7 +816,7 @@ db_follow_path(
 	RT_CK_FULL_PATH( new_path );
 	RT_CK_RESOURCE( tsp->ts_resp );
 
-	if(rt_g.debug&DEBUG_TREEWALK)  {
+	if(RT_G_DEBUG&DEBUG_TREEWALK)  {
 		char	*sofar = db_path_to_string(total_path);
 		char	*toofar = db_path_to_string(new_path);
 		bu_log("db_follow_path() total_path='%s', tsp=x%x, new_path='%s', noisy=%d, depth=%d\n",
@@ -887,7 +887,7 @@ db_follow_path(
 		}
 
 		/* At this point, comb_db is the comb, dp is the member */
-		if(rt_g.debug&DEBUG_TREEWALK)  {
+		if(RT_G_DEBUG&DEBUG_TREEWALK)  {
 			bu_log("db_follow_path() at %s/%s\n", comb_dp->d_namep, dp->d_namep );
 		}
 
@@ -935,7 +935,7 @@ is_leaf:
 	} while( j <= depth );
 
 out:
-	if(rt_g.debug&DEBUG_TREEWALK)  {
+	if(RT_G_DEBUG&DEBUG_TREEWALK)  {
 		char	*sofar = db_path_to_string(total_path);
 		bu_log("db_follow_path() returns total_path='%s'\n",
 			sofar);
@@ -1102,7 +1102,7 @@ genptr_t	client_data;
 	}
 	dp = DB_FULL_PATH_CUR_DIR(pathp);
 
-	if(rt_g.debug&DEBUG_TREEWALK)  {
+	if(RT_G_DEBUG&DEBUG_TREEWALK)  {
 		char	*sofar = db_path_to_string(pathp);
 		bu_log("db_recurse() pathp='%s', tsp=x%x, *statepp=x%x, tsp->ts_sofar=%d\n",
 			sofar, tsp,
@@ -1164,7 +1164,7 @@ genptr_t	client_data;
 			 */
 			if( tsp->ts_region_start_func && 
 			    tsp->ts_region_start_func( &nts, pathp, comb, client_data ) < 0 )  {
-				if(rt_g.debug&DEBUG_TREEWALK)  {
+				if(RT_G_DEBUG&DEBUG_TREEWALK)  {
 					char	*sofar = db_path_to_string(pathp);
 					bu_log("db_recurse() ts_region_start_func deletes %s\n",
 						sofar);
@@ -1189,7 +1189,7 @@ genptr_t	client_data;
 			}
 			ctsp =  db_new_combined_tree_state( &nts, pathp );
 			*region_start_statepp = ctsp;
-			if(rt_g.debug&DEBUG_TREEWALK)  {
+			if(RT_G_DEBUG&DEBUG_TREEWALK)  {
 				bu_log("setting *region_start_statepp to x%x\n", ctsp );
 				db_pr_combined_tree_state(ctsp);
 			}
@@ -1238,7 +1238,7 @@ region_end:
 			goto out;
 		}
 
-		if(rt_g.debug&DEBUG_TREEWALK)
+		if(RT_G_DEBUG&DEBUG_TREEWALK)
 			bu_log("db_recurse() rt_db_get_internal(%s) solid\n", dp->d_namep);
 
 	    	RT_INIT_DB_INTERNAL(&intern);
@@ -1263,7 +1263,7 @@ region_end:
 				curtree = TREE_NULL;		/* FAIL */
 				goto out;
 			}
-			if( rt_g.debug & DEBUG_REGIONS )  {
+			if( RT_G_DEBUG & DEBUG_REGIONS )  {
 			    	bu_log("NOTICE: db_recurse(): solid '%s' not contained in a region, creating a region for it of the same name.\n",
 			    		sofar );
 			}
@@ -1271,7 +1271,7 @@ region_end:
 		    	ctsp = db_new_combined_tree_state( tsp, pathp );
 		    	ctsp->cts_s.ts_sofar |= TS_SOFAR_REGION;
 			*region_start_statepp = ctsp;
-			if(rt_g.debug&DEBUG_TREEWALK)  {
+			if(RT_G_DEBUG&DEBUG_TREEWALK)  {
 				bu_log("db_recurse(%s): setting *region_start_statepp to x%x (bare solid)\n",
 					sofar, ctsp );
 				db_pr_combined_tree_state(ctsp);
@@ -1294,7 +1294,7 @@ region_end:
 	}
 out:
 	rt_db_free_internal( &intern, tsp->ts_resp );
-	if(rt_g.debug&DEBUG_TREEWALK)  {
+	if(RT_G_DEBUG&DEBUG_TREEWALK)  {
 		char	*sofar = db_path_to_string(pathp);
 		bu_log("db_recurse() return curtree=x%x, pathp='%s', *statepp=x%x\n",
 			curtree, sofar,
@@ -2064,7 +2064,7 @@ genptr_t	arg;
 		if( mine >= wps->reg_count )
 			break;
 
-		if( rt_g.debug&DEBUG_TREEWALK )
+		if( RT_G_DEBUG&DEBUG_TREEWALK )
 			bu_log("\n\n***** db_walk_dispatcher() on item %d\n\n", mine );
 
 		if( (curtree = wps->reg_trees[mine]) == TREE_NULL )
@@ -2083,14 +2083,14 @@ genptr_t	arg;
 		RT_CK_TREE(curtree);
 		if( !region_start_statep )  {
 			bu_log("ERROR: db_walk_dispatcher() region %d started with no state\n", mine);
-			if( rt_g.debug&DEBUG_TREEWALK )			
+			if( RT_G_DEBUG&DEBUG_TREEWALK )			
 				rt_pr_tree( curtree, 0 );
 			continue;
 		}
 		RT_CK_CTS( region_start_statep );
 
 		/* This is a new region */
-		if( rt_g.debug&DEBUG_TREEWALK )
+		if( RT_G_DEBUG&DEBUG_TREEWALK )
 			db_pr_combined_tree_state(region_start_statep);
 
 		/*
@@ -2249,7 +2249,7 @@ genptr_t	client_data;
 			continue;	/* ERROR */
 
 		RT_CK_TREE(curtree);
-		if( rt_g.debug&DEBUG_TREEWALK )  {
+		if( RT_G_DEBUG&DEBUG_TREEWALK )  {
 			bu_log("tree after db_recurse():\n");
 			rt_pr_tree( curtree, 0 );
 		}
@@ -2276,7 +2276,7 @@ genptr_t	client_data;
 	 *  Third, push all non-union booleans down.
 	 */
 	db_non_union_push( whole_tree, resp );
-	if( rt_g.debug&DEBUG_TREEWALK )  {
+	if( RT_G_DEBUG&DEBUG_TREEWALK )  {
 		char *str;
 
 		bu_log("tree after db_non_union_push():\n");
@@ -2305,7 +2305,7 @@ genptr_t	client_data;
 	db_free_tree( whole_tree, resp );
 
 	/* As a debugging aid, print out the waiting region names */
-	if( rt_g.debug&DEBUG_TREEWALK )  {
+	if( RT_G_DEBUG&DEBUG_TREEWALK )  {
 		bu_log("%d waiting regions:\n", new_reg_count);
 		for( i=0; i < new_reg_count; i++ )  {
 			union tree	*treep;
@@ -2426,7 +2426,7 @@ struct mater_info *materp;
 
 	/* Check here for animation to apply */
 
-	if ((dp->d_animate != ANIM_NULL) && (rt_g.debug & DEBUG_ANIM)) {
+	if ((dp->d_animate != ANIM_NULL) && (RT_G_DEBUG & DEBUG_ANIM)) {
 		char	*sofar = db_path_to_string(pathp);
 		bu_log("Animate %s with...\n", sofar);
 		bu_free(sofar, "path string");
@@ -2448,7 +2448,7 @@ struct mater_info *materp;
 		i = anp->an_path.fp_len-1;
 		anim_flag = 1;
 
-		if (rt_g.debug & DEBUG_ANIM) {
+		if (RT_G_DEBUG & DEBUG_ANIM) {
 			char	*str;
 
 			str = db_path_to_string( &(anp->an_path) );
@@ -2460,7 +2460,7 @@ struct mater_info *materp;
 
 		for( ; i>=0 && j>=0; i--, j-- )  {
 			if( anp->an_path.fp_names[i] != pathp->fp_names[j] ) {
-				if (rt_g.debug & DEBUG_ANIM) {
+				if (RT_G_DEBUG & DEBUG_ANIM) {
 					bu_log("%s != %s\n",
 					     anp->an_path.fp_names[i]->d_namep,
 					     pathp->fp_names[j]->d_namep);

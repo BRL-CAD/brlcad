@@ -188,7 +188,7 @@ prnt_Status()
 				pix_buffered == B_LINE ? "LINE" : "?"
 				);
 	(void) strncpy( BUFFERED_PTR, scratchbuf, strlen( scratchbuf ) );
-	(void) sprintf( scratchbuf, "0x%06x", rt_g.debug );
+	(void) sprintf( scratchbuf, "0x%06x", RT_G_DEBUG );
 	(void) strncpy( DEBUGGER_PTR, scratchbuf, strlen( scratchbuf ) );
 	(void) sprintf( scratchbuf, "%-2d", max_bounce );
 	(void) strncpy( MAX_BOUN_PTR, scratchbuf, strlen( scratchbuf ) );
@@ -372,7 +372,7 @@ void
 prnt_Title( titleptr )
 char	*titleptr;
 	{
-	if( ! tty || rt_g.debug )
+	if( ! tty || RT_G_DEBUG )
 		bu_log( "%s\n", titleptr == NULL ? "(null)" : titleptr );
 	return;
 	}

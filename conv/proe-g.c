@@ -391,7 +391,7 @@ char line[MAX_LINE_LEN];
 	int start;
 	int i;
 
-	if( rt_g.debug & DEBUG_MEM_FULL )
+	if( RT_G_DEBUG & DEBUG_MEM_FULL )
 	{
 		bu_log( "Barrier check at start of Convert_assy:\n" );
 		if( bu_mem_barriercheck() )
@@ -537,7 +537,7 @@ char line[MAX_LINE_LEN];
 		}
 	}
 
-	if( rt_g.debug & DEBUG_MEM_FULL )
+	if( RT_G_DEBUG & DEBUG_MEM_FULL )
 	{
 		bu_log( "Barrier check at end of Convet_assy:\n" );
 		if( bu_mem_barriercheck() )
@@ -768,10 +768,10 @@ char line[MAX_LINE_LEN];
 	int solid_in_region=0;
 	point_t part_max,part_min;	/* Part RPP */
 
-	if( rt_g.debug & DEBUG_MEM_FULL )
+	if( RT_G_DEBUG & DEBUG_MEM_FULL )
 		bu_prmem( "At start of Conv_prt():\n" );
 
-	if( rt_g.debug & DEBUG_MEM_FULL )
+	if( RT_G_DEBUG & DEBUG_MEM_FULL )
 	{
 		bu_log( "Barrier check at start of Convet_part:\n" );
 		if( bu_mem_barriercheck() )
@@ -864,7 +864,7 @@ char line[MAX_LINE_LEN];
 
 	bu_log( "\tUsing solid name: %s\n" , solid_name );
 
-	if( rt_g.debug & DEBUG_MEM || rt_g.debug & DEBUG_MEM_FULL )
+	if( RT_G_DEBUG & DEBUG_MEM || RT_G_DEBUG & DEBUG_MEM_FULL )
 		bu_prmem( "At start of Convert_part()" );
 
 	while( fgets( line1, MAX_LINE_LEN, fd_in ) != NULL )
@@ -1075,7 +1075,7 @@ char line[MAX_LINE_LEN];
 		}
 	}
 
-	if( rt_g.debug & DEBUG_MEM_FULL )
+	if( RT_G_DEBUG & DEBUG_MEM_FULL )
 	{
 		bu_log( "Barrier check at end of Convert_part:\n" );
 		if( bu_mem_barriercheck() )
@@ -1327,7 +1327,7 @@ char	*argv[];
 			break;
 		case 'x':
 			sscanf( optarg, "%x", &rt_g.debug );
-			bu_printb( "librt rt_g.debug", rt_g.debug, DEBUG_FORMAT );
+			bu_printb( "librt RT_G_DEBUG", RT_G_DEBUG, DEBUG_FORMAT );
 			bu_log("\n");
 			break;
 		case 'u':

@@ -1058,7 +1058,7 @@ db_mkbool_tree(
 
 	if( first_tlp->tl_op != OP_UNION )  {
 		first_tlp->tl_op = OP_UNION;	/* Fix it */
-		if( rt_g.debug & DEBUG_TREEWALK )  {
+		if( RT_G_DEBUG & DEBUG_TREEWALK )  {
 			bu_log("db_mkbool_tree() WARNING: non-union (%c) first operation ignored\n",
 				first_tlp->tl_op );
 		}
@@ -1124,7 +1124,7 @@ db_mkgift_tree(
 		tstart->tl_op = OP_UNION;
 		tstart->tl_tree = curtree;
 
-		if(rt_g.debug&DEBUG_TREEWALK)  {
+		if(RT_G_DEBUG&DEBUG_TREEWALK)  {
 			bu_log("db_mkgift_tree() intermediate term:\n");
 			rt_pr_tree(tstart->tl_tree, 0);
 		}
@@ -1134,7 +1134,7 @@ db_mkgift_tree(
 	}
 
 	curtree = db_mkbool_tree( trees, subtreecount, resp );
-	if(rt_g.debug&DEBUG_TREEWALK)  {
+	if(RT_G_DEBUG&DEBUG_TREEWALK)  {
 		bu_log("db_mkgift_tree() returns:\n");
 		rt_pr_tree(curtree, 0);
 	}

@@ -238,7 +238,7 @@ struct seg		*seghead;
 			{
 				struct rt_nurb_uv_hit * o;
 
-				if( rt_g.debug & DEBUG_SPLINE )
+				if( RT_G_DEBUG & DEBUG_SPLINE )
 					bu_log("hit at %d %d sub = %d u = %f v = %f\n",
 						ap->a_x, ap->a_y, hp->sub, hp->u, hp->v);
 

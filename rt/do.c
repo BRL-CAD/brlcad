@@ -601,7 +601,7 @@ int framenumber;
 
 	if (Query_one_pixel) {
 		query_rdebug = rdebug;
-		query_debug = rt_g.debug;
+		query_debug = RT_G_DEBUG;
 		rt_g.debug = rdebug = 0;
 	}
 

@@ -95,7 +95,7 @@ int			nrays;
 	register const union cutter *cutp;
 	struct resource		*resp;
 	struct rt_i		*rtip;
-	const int		debug_shoot = rt_g.debug & DEBUG_SHOOT;
+	const int		debug_shoot = RT_G_DEBUG & DEBUG_SHOOT;
 
 	RT_AP_CHECK(ap);
 	if( ap->a_magic )  {
@@ -111,7 +111,7 @@ int			nrays;
 	if( ap->a_resource == RESOURCE_NULL )  {
 		ap->a_resource = &rt_uniresource;
 		rt_uniresource.re_magic = RESOURCE_MAGIC;
-		if(rt_g.debug)bu_log("rt_shootray_bundle:  defaulting a_resource to &rt_uniresource\n");
+		if(RT_G_DEBUG)bu_log("rt_shootray_bundle:  defaulting a_resource to &rt_uniresource\n");
 	}
 	ss.ap = ap;
 	rtip = ap->a_rt_i;
@@ -120,7 +120,7 @@ int			nrays;
 	RT_RESOURCE_CHECK(resp);
 	ss.resp = resp;
 
-	if(rt_g.debug&(DEBUG_ALLRAYS|DEBUG_SHOOT|DEBUG_PARTITION|DEBUG_ALLHITS)) {
+	if(RT_G_DEBUG&(DEBUG_ALLRAYS|DEBUG_SHOOT|DEBUG_PARTITION|DEBUG_ALLHITS)) {
 		bu_log_indent_delta(2);
 		bu_log("\n**********shootray_bundle cpu=%d  %d,%d lvl=%d (%s)\n",
 			resp->re_cpu,
@@ -192,7 +192,7 @@ int			nrays;
 	}
 
 	/* Verify that direction vector has unit length */
-	if(rt_g.debug) {
+	if(RT_G_DEBUG) {
 		FAST fastf_t f, diff;
 		f = MAGSQ(ap->a_ray.r_dir);
 		if( NEAR_ZERO(f, 0.0001) )  {
@@ -387,7 +387,7 @@ int			nrays;
 				break;			/* HIT */
 			}
 		}
-		if( rt_g.debug & DEBUG_ADVANCE )
+		if( RT_G_DEBUG & DEBUG_ADVANCE )
 			rt_plot_cell( cutp, &ss, &(waiting_segs.l), rtip);
 
 		/*
@@ -434,7 +434,7 @@ int			nrays;
 	 *  Weave any remaining segments into the partition list.
 	 */
 weave:
-	if( rt_g.debug&DEBUG_ADVANCE )
+	if( RT_G_DEBUG&DEBUG_ADVANCE )
 		bu_log( "rt_shootray_bundle: ray has left known space\n" );
 	
 	if( BU_LIST_NON_EMPTY( &(waiting_segs.l) ) )  {
@@ -490,7 +490,7 @@ hitit:
 	 *  finished_segs is only used by special hit routines
 	 *  which don't follow the traditional solid modeling paradigm.
 	 */
-	if(rt_g.debug&DEBUG_ALLHITS) rt_pr_partitions(rtip,&FinalPart,"Parition list passed to a_hit() routine");
+	if(RT_G_DEBUG&DEBUG_ALLHITS) rt_pr_partitions(rtip,&FinalPart,"Parition list passed to a_hit() routine");
 	ap->a_return = ap->a_hit( ap, &FinalPart, &finished_segs );
 	status = "HIT";
 
@@ -513,7 +513,7 @@ out:
 	resp->re_nshootray++;
 
 	/* Terminate any logging */
-	if(rt_g.debug&(DEBUG_ALLRAYS|DEBUG_SHOOT|DEBUG_PARTITION|DEBUG_ALLHITS))  {
+	if(RT_G_DEBUG&(DEBUG_ALLRAYS|DEBUG_SHOOT|DEBUG_PARTITION|DEBUG_ALLHITS))  {
 		bu_log_indent_delta(-2);
 		bu_log("----------shootray_bundle cpu=%d  %d,%d lvl=%d (%s) %s ret=%d\n",
 			resp->re_cpu,

@@ -44,7 +44,7 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 #include "./debug.h"
 
 #define DEBUG_PR(aaa, rrr) 	{\
-	if(rt_g.debug&DEBUG_DB) bu_log("db_scan x%x %c (0%o)\n", \
+	if(RT_G_DEBUG&DEBUG_DB) bu_log("db_scan x%x %c (0%o)\n", \
 		aaa,rrr.u_id,rrr.u_id ); }
 
 /*
@@ -91,7 +91,7 @@ genptr_t		client_data;	/* argument for handler */
 	register int	j;
 
 	RT_CK_DBI(dbip);
-	if(rt_g.debug&DEBUG_DB) bu_log("db_scan( x%x, x%x )\n", dbip, handler);
+	if(RT_G_DEBUG&DEBUG_DB) bu_log("db_scan( x%x, x%x )\n", dbip, handler);
 
 	/* XXXX Note that this ignores dbip->dbi_inmem */
 	/* In a portable way, read the header (even if not rewound) */
@@ -362,7 +362,7 @@ db_update_ident( struct db_i *dbip, const char *new_title, double local2mm )
 	int			v4units;
 
 	RT_CK_DBI(dbip);
-	if(rt_g.debug&DEBUG_DB) bu_log("db_update_ident( x%x, '%s', %g )\n",
+	if(RT_G_DEBUG&DEBUG_DB) bu_log("db_update_ident( x%x, '%s', %g )\n",
 		dbip, new_title, local2mm );
 
 	BU_ASSERT_LONG( dbip->dbi_version, >, 0 );
@@ -430,7 +430,7 @@ db_fwrite_ident( FILE *fp, const char *title, double local2mm )
 
 	code = db_v4_get_units_code(bu_units_string(local2mm));
 
-	if(rt_g.debug&DEBUG_DB) bu_log("db_fwrite_ident( x%x, '%s', %g ) code=%d\n",
+	if(RT_G_DEBUG&DEBUG_DB) bu_log("db_fwrite_ident( x%x, '%s', %g ) code=%d\n",
 		fp, title, local2mm, code );
 
 	bzero( (char *)&rec, sizeof(rec) );

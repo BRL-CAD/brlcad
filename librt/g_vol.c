@@ -163,14 +163,14 @@ struct seg		*seghead;
 	if( ! rt_in_rpp(rp, invdir, P, volp->vol_large ) )
 		return	0;	/* MISS */
 	VJOIN1( P, rp->r_pt, rp->r_min, rp->r_dir );	/* P is hit point */
-if(rt_g.debug&DEBUG_VOL)VPRINT("vol_large", volp->vol_large);
-if(rt_g.debug&DEBUG_VOL)VPRINT("vol_origin", volp->vol_origin);
-if(rt_g.debug&DEBUG_VOL)VPRINT("r_pt", rp->r_pt);
-if(rt_g.debug&DEBUG_VOL)VPRINT("P", P);
-if(rt_g.debug&DEBUG_VOL)VPRINT("cellsize", volp->vol_i.cellsize);
+if(RT_G_DEBUG&DEBUG_VOL)VPRINT("vol_large", volp->vol_large);
+if(RT_G_DEBUG&DEBUG_VOL)VPRINT("vol_origin", volp->vol_origin);
+if(RT_G_DEBUG&DEBUG_VOL)VPRINT("r_pt", rp->r_pt);
+if(RT_G_DEBUG&DEBUG_VOL)VPRINT("P", P);
+if(RT_G_DEBUG&DEBUG_VOL)VPRINT("cellsize", volp->vol_i.cellsize);
 	t0 = rp->r_min;
 	tmax = rp->r_max;
-if(rt_g.debug&DEBUG_VOL)bu_log("[shoot: r_min=%g, r_max=%g]\n", rp->r_min, rp->r_max);
+if(RT_G_DEBUG&DEBUG_VOL)bu_log("[shoot: r_min=%g, r_max=%g]\n", rp->r_min, rp->r_max);
 
 	/* find grid cell where ray first hits ideal space bounding RPP */
 	igrid[X] = (P[X] - volp->vol_origin[X]) / volp->vol_i.cellsize[X];
@@ -191,7 +191,7 @@ if(rt_g.debug&DEBUG_VOL)bu_log("[shoot: r_min=%g, r_max=%g]\n", rp->r_min, rp->r
 	} else if( igrid[Z] >= volp->vol_i.zdim ) {
 		igrid[Z] = volp->vol_i.zdim-1;
 	}
-if(rt_g.debug&DEBUG_VOL)bu_log("igrid=(%d, %d, %d)\n", igrid[X], igrid[Y], igrid[Z]);
+if(RT_G_DEBUG&DEBUG_VOL)bu_log("igrid=(%d, %d, %d)\n", igrid[X], igrid[Y], igrid[Z]);
 
 	/* X setup */
 	if( rp->r_dir[X] == 0.0 )  {
@@ -228,9 +228,9 @@ if(rt_g.debug&DEBUG_VOL)bu_log("igrid=(%d, %d, %d)\n", igrid[X], igrid[Y], igrid
 	}
 
 	/* The delta[] elements *must* be positive, as t must increase */
-if(rt_g.debug&DEBUG_VOL)bu_log("t[X] = %g, delta[X] = %g\n", t[X], delta[X] );
-if(rt_g.debug&DEBUG_VOL)bu_log("t[Y] = %g, delta[Y] = %g\n", t[Y], delta[Y] );
-if(rt_g.debug&DEBUG_VOL)bu_log("t[Z] = %g, delta[Z] = %g\n", t[Z], delta[Z] );
+if(RT_G_DEBUG&DEBUG_VOL)bu_log("t[X] = %g, delta[X] = %g\n", t[X], delta[X] );
+if(RT_G_DEBUG&DEBUG_VOL)bu_log("t[Y] = %g, delta[Y] = %g\n", t[Y], delta[Y] );
+if(RT_G_DEBUG&DEBUG_VOL)bu_log("t[Z] = %g, delta[Z] = %g\n", t[Z], delta[Z] );
 
 	/* Find face of entry into first cell -- max initial t value */
 	if( t[X] >= t[Y] )  {
@@ -244,7 +244,7 @@ if(rt_g.debug&DEBUG_VOL)bu_log("t[Z] = %g, delta[Z] = %g\n", t[Z], delta[Z] );
 		in_axis = Z;
 		t0 = t[Z];
 	}
-if(rt_g.debug&DEBUG_VOL)bu_log("Entry axis is %s, t0=%g\n", in_axis==X ? "X" : (in_axis==Y?"Y":"Z"), t0);
+if(RT_G_DEBUG&DEBUG_VOL)bu_log("Entry axis is %s, t0=%g\n", in_axis==X ? "X" : (in_axis==Y?"Y":"Z"), t0);
 
 	/* Advance to next exits */
 	t[X] += delta[X];
@@ -264,7 +264,7 @@ if(rt_g.debug&DEBUG_VOL)bu_log("Entry axis is %s, t0=%g\n", in_axis==X ? "X" : (
 		bu_log("*** advancing t[Z]\n");
 		t[Z] += delta[Z];
 	}
-if(rt_g.debug&DEBUG_VOL) VPRINT("Exit t[]", t);
+if(RT_G_DEBUG&DEBUG_VOL) VPRINT("Exit t[]", t);
 
 	inside = 0;
 
@@ -293,10 +293,10 @@ if(rt_g.debug&DEBUG_VOL) VPRINT("Exit t[]", t);
 
 		/* Ray passes through cell igrid[XY] from t0 to t1 */
 		val = VOL( &volp->vol_i, igrid[X], igrid[Y], igrid[Z] );
-if(rt_g.debug&DEBUG_VOL)bu_log("igrid [%d %d %d] from %g to %g, val=%d\n",
+if(RT_G_DEBUG&DEBUG_VOL)bu_log("igrid [%d %d %d] from %g to %g, val=%d\n",
 			igrid[X], igrid[Y], igrid[Z],
 			t0, t1, val );
-if(rt_g.debug&DEBUG_VOL)bu_log("Exit axis is %s, t[]=(%g, %g, %g)\n",
+if(RT_G_DEBUG&DEBUG_VOL)bu_log("Exit axis is %s, t[]=(%g, %g, %g)\n",
 			out_axis==X ? "X" : (out_axis==Y?"Y":"Z"),
 			t[X], t[Y], t[Z] );
 
@@ -322,7 +322,7 @@ if(rt_g.debug&DEBUG_VOL)bu_log("Exit axis is %s, t[]=(%g, %g, %g)\n",
 						(-rt_vol_normtab[in_axis]);
 				}
 				BU_LIST_INSERT( &(seghead->l), &(segp->l) );
-				if(rt_g.debug&DEBUG_VOL) bu_log("START t=%g, surfno=%d\n",
+				if(RT_G_DEBUG&DEBUG_VOL) bu_log("START t=%g, surfno=%d\n",
 					t0, segp->seg_in.hit_surfno);
 			} else {
 				/* Do nothing, marching through void */
@@ -349,7 +349,7 @@ if(rt_g.debug&DEBUG_VOL)bu_log("Exit axis is %s, t[]=(%g, %g, %g)\n",
 					tail->seg_out.hit_surfno =
 						rt_vol_normtab[in_axis];
 				}
-				if(rt_g.debug&DEBUG_VOL) bu_log("END t=%g, surfno=%d\n",
+				if(RT_G_DEBUG&DEBUG_VOL) bu_log("END t=%g, surfno=%d\n",
 					t0, tail->seg_out.hit_surfno );
 			}
 		}
@@ -380,7 +380,7 @@ if(rt_g.debug&DEBUG_VOL)bu_log("Exit axis is %s, t[]=(%g, %g, %g)\n",
 			/* go right, exit norm goes right */
 			tail->seg_out.hit_surfno = rt_vol_normtab[in_axis];
 		}
-		if(rt_g.debug&DEBUG_VOL) bu_log("closed END t=%g, surfno=%d\n",
+		if(RT_G_DEBUG&DEBUG_VOL) bu_log("closed END t=%g, surfno=%d\n",
 			tmax, tail->seg_out.hit_surfno );
 	}
 

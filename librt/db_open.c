@@ -78,7 +78,7 @@ const char	*mode;
 	register struct db_i	*dbip = DBI_NULL;
 	register int		i;
 
-	if(rt_g.debug&DEBUG_DB) bu_log("db_open(%s, %s)\n", name, mode );
+	if(RT_G_DEBUG&DEBUG_DB) bu_log("db_open(%s, %s)\n", name, mode );
 
 	if( mode[0] == 'r' && mode[1] == '\0' )  {
 		struct bu_mapped_file	*mfp;
@@ -91,7 +91,7 @@ const char	*mode;
 			dbip = (struct db_i *)mfp->apbuf;
 			RT_CK_DBI(dbip);
 			dbip->dbi_uses++;
-			if(rt_g.debug&DEBUG_DB)
+			if(RT_G_DEBUG&DEBUG_DB)
 				bu_log("db_open(%s) dbip=x%x: reused previously mapped file\n", name, dbip);
 			return dbip;
 		}
@@ -160,11 +160,11 @@ const char	*mode;
 	bu_ptbl_init( &dbip->dbi_clients, 128, "dbi_clients[]" );
 	dbip->dbi_magic = DBI_MAGIC;		/* Now it's valid */
 
-	if(rt_g.debug&DEBUG_DB)
+	if(RT_G_DEBUG&DEBUG_DB)
 		bu_log("db_open(%s) dbip=x%x\n", dbip->dbi_filename, dbip);
 	return dbip;
 fail:
-	if(rt_g.debug&DEBUG_DB)
+	if(RT_G_DEBUG&DEBUG_DB)
 		bu_log("db_open(%s) FAILED\n", name);
 	if(dbip) bu_free( (char *)dbip, "struct db_i" );
 	return DBI_NULL;
@@ -191,7 +191,7 @@ db_create( const char *name, int version )
 	FILE	*fp;
 	struct db_i	*dbip;
 
-	if(rt_g.debug&DEBUG_DB) bu_log("db_create(%s, %d)\n", name, version );
+	if(RT_G_DEBUG&DEBUG_DB) bu_log("db_create(%s, %d)\n", name, version );
 
 	if( (fp = fopen( name, "w" )) == NULL )  {
 		perror(name);
@@ -257,7 +257,7 @@ register struct db_i	*dbip;
 	register struct directory *dp, *nextdp;
 
 	RT_CK_DBI(dbip);
-	if(rt_g.debug&DEBUG_DB) bu_log("db_close(%s) x%x uses=%d\n",
+	if(RT_G_DEBUG&DEBUG_DB) bu_log("db_close(%s) x%x uses=%d\n",
 		dbip->dbi_filename, dbip, dbip->dbi_uses );
 
 	if( (--dbip->dbi_uses) > 0 )  {

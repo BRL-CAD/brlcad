@@ -227,7 +227,7 @@ genptr_t			client_data;
 
 	dp = (struct directory *)DB_FULL_PATH_CUR_DIR(pathp);
 
-	if(rt_g.debug&DEBUG_TREEWALK)  {
+	if(RT_G_DEBUG&DEBUG_TREEWALK)  {
 		bu_log("rt_gettree_region_end() %s\n", rp->reg_name );
 		rt_pr_tree( curtree, 0 );
 	}
@@ -271,7 +271,7 @@ genptr_t			client_data;
 		bu_semaphore_release( RT_SEM_RESULTS );	/* leave critical section */
 	}
 
-	if( rt_g.debug & DEBUG_REGIONS )  {
+	if( RT_G_DEBUG & DEBUG_REGIONS )  {
 		bu_log("Add Region %s instnum %d\n",
 			rp->reg_name, rp->reg_instnum);
 	}
@@ -394,7 +394,7 @@ more_checks:
 			if( !(stp->st_aradius <= -1) )
 				stp->st_uses++;
 			/* dp->d_uses is NOT incremented, because number of soltab's using it has not gone up. */
-			if( rt_g.debug & DEBUG_SOLIDS )  {
+			if( RT_G_DEBUG & DEBUG_SOLIDS )  {
 				bu_log( mat ?
 				    "rt_find_identical_solid:  %s re-referenced %d\n" :
 				    "rt_find_identical_solid:  %s re-referenced %d (identity mat)\n",
@@ -583,13 +583,13 @@ genptr_t			client_data;
 			db_dup_path_tail( &stp->st_path, pathp, i );
 		}
 	}
-	if(rt_g.debug&DEBUG_TREEWALK && stp->st_path.magic == DB_FULL_PATH_MAGIC)  {
+	if(RT_G_DEBUG&DEBUG_TREEWALK && stp->st_path.magic == DB_FULL_PATH_MAGIC)  {
 		char	*sofar = db_path_to_string(&stp->st_path);
 		bu_log("rt_gettree_leaf() st_path=%s\n", sofar );
 		bu_free(sofar, "path string");
 	}
 
-	if(rt_g.debug&DEBUG_SOLIDS)  {
+	if(RT_G_DEBUG&DEBUG_SOLIDS)  {
 		struct bu_vls	str;
 		bu_log("\n---Solid %d: %s\n", stp->st_bit, dp->d_namep);
 		bu_vls_init( &str );
@@ -610,7 +610,7 @@ found_it:
 	/* regionp will be filled in later by rt_tree_region_assign() */
 	curtree->tr_a.tu_regionp = (struct region *)0;
 
-	if(rt_g.debug&DEBUG_TREEWALK)  {
+	if(RT_G_DEBUG&DEBUG_TREEWALK)  {
 		char	*sofar = db_path_to_string(pathp);
 		bu_log("rt_gettree_leaf() %s\n", sofar );
 		bu_free(sofar, "path string");
@@ -813,7 +813,7 @@ again:
 		if( stp->st_npieces > 1 )  {
 			stp->st_piecestate_num = rtip->rti_nsolids_with_pieces++;
 		}
-		if(rt_g.debug&DEBUG_SOLIDS)
+		if(RT_G_DEBUG&DEBUG_SOLIDS)
 			rt_pr_soltab( stp );
 	} RT_VISIT_ALL_SOLTABS_END
 
@@ -1017,7 +1017,7 @@ register union tree	*tp;
 			stp = tp->tr_a.tu_stp;
 			RT_CK_SOLTAB(stp);
 			if( stp->st_aradius <= 0 )  {
-				if(rt_g.debug&DEBUG_TREEWALK)bu_log("rt_tree_kill_dead_solid_refs: encountered dead solid '%s' stp=x%x, tp=x%x\n",
+				if(RT_G_DEBUG&DEBUG_TREEWALK)bu_log("rt_tree_kill_dead_solid_refs: encountered dead solid '%s' stp=x%x, tp=x%x\n",
 					stp->st_dp->d_namep, stp, tp);
 				rt_free_soltab(stp);
 				tp->tr_a.tu_stp = SOLTAB_NULL;

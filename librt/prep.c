@@ -196,7 +196,7 @@ int			ncpu;
 
 	RT_CK_RTI(rtip);
 
-	if(rt_g.debug&DEBUG_REGIONS)  bu_log("rt_prep_parallel(%s,%d,ncpu=%d) START\n",
+	if(RT_G_DEBUG&DEBUG_REGIONS)  bu_log("rt_prep_parallel(%s,%d,ncpu=%d) START\n",
 			rtip->rti_dbip->dbi_filename,
 			rtip->rti_dbip->dbi_uses, ncpu);
 
@@ -256,7 +256,7 @@ int			ncpu;
 	rtip->Regions = (struct region **)bu_calloc(
 		rtip->nregions, sizeof(struct region *),
 		"rtip->Regions[]" );
-	if(rt_g.debug&DEBUG_REGIONS)  bu_log("rt_prep_parallel(%s,%d) about to optimize regions\n",
+	if(RT_G_DEBUG&DEBUG_REGIONS)  bu_log("rt_prep_parallel(%s,%d) about to optimize regions\n",
 			rtip->rti_dbip->dbi_filename,
 			rtip->rti_dbip->dbi_uses);
 	for( BU_LIST_FOR( regp, region, &(rtip->HeadRegion) ) )  {
@@ -265,12 +265,12 @@ int			ncpu;
 		rtip->Regions[regp->reg_bit] = regp;
 		rt_optim_tree( regp->reg_treetop, resp );
 		rt_solid_bitfinder( regp->reg_treetop, regp, resp );
-		if(rt_g.debug&DEBUG_REGIONS)  {
+		if(RT_G_DEBUG&DEBUG_REGIONS)  {
 			db_ck_tree( regp->reg_treetop);
 			rt_pr_region( regp );
 		}
 	}
-	if(rt_g.debug&DEBUG_REGIONS)  {
+	if(RT_G_DEBUG&DEBUG_REGIONS)  {
 		bu_log("rt_prep_parallel() printing solids' region pointers\n");
 		RT_VISIT_ALL_SOLTABS_START( stp, rtip )  {
 			bu_log("solid %s ", stp->st_name);
@@ -326,7 +326,7 @@ int			ncpu;
 		id = stp->st_id;
 		rtip->rti_sol_by_type[id][rtip->rti_nsol_by_type[id]++] = stp;
 	} RT_VISIT_ALL_SOLTABS_END
-	if( rt_g.debug & (DEBUG_DB|DEBUG_SOLIDS) )  {
+	if( RT_G_DEBUG & (DEBUG_DB|DEBUG_SOLIDS) )  {
 		bu_log("rt_prep_parallel(%s,%d) printing number of solids by type\n",
 			rtip->rti_dbip->dbi_filename,
 			rtip->rti_dbip->dbi_uses);
@@ -379,7 +379,7 @@ int			ncpu;
 	} RT_VISIT_ALL_SOLTABS_END
 
 	/* Plot bounding RPPs */
-	if( (rt_g.debug&DEBUG_PLOTBOX) )  {
+	if( (RT_G_DEBUG&DEBUG_PLOTBOX) )  {
 		FILE	*plotfp;
 
 		if( (plotfp=fopen("rtrpp.plot", "w"))!=NULL) {
@@ -391,7 +391,7 @@ int			ncpu;
 	}
 
 	/* Plot solid outlines */
-	if( (rt_g.debug&DEBUG_PLOTSOLIDS) )  {
+	if( (RT_G_DEBUG&DEBUG_PLOTSOLIDS) )  {
 		FILE		*plotfp;
 
 		if( (plotfp=fopen("rtsolids.pl", "w")) != NULL)  {
@@ -402,7 +402,7 @@ int			ncpu;
 	rtip->needprep = 0;		/* prep is done */
 	bu_semaphore_release(RT_SEM_RESULTS);	/* end critical section */
 
-	if(rt_g.debug&DEBUG_REGIONS)  bu_log("rt_prep_parallel(%s,%d,ncpu=%d) FINISH\n",
+	if(RT_G_DEBUG&DEBUG_REGIONS)  bu_log("rt_prep_parallel(%s,%d,ncpu=%d) FINISH\n",
 			rtip->rti_dbip->dbi_filename,
 			rtip->rti_dbip->dbi_uses, ncpu);
 }
@@ -929,7 +929,7 @@ rt_del_regtree( struct rt_i *rtip, register struct region *delregp, struct resou
 {
 	RT_CK_RESOURCE(resp);
 
-	if( rt_g.debug & DEBUG_REGIONS )
+	if( RT_G_DEBUG & DEBUG_REGIONS )
 		bu_log("rt_del_regtree(%s): region deleted\n", delregp->reg_name);
 
 	BU_LIST_DEQUEUE(&(delregp->l));

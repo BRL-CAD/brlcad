@@ -135,7 +135,7 @@ const struct bn_tol *tol;
 
 	BN_CK_TOL(tol);
 #if 0
-	if( rt_g.debug & DEBUG_MATH )   {
+	if( RT_G_DEBUG & DEBUG_MATH )   {
 		bu_log("bn_distsq_pt3_lseg3() a=(%g,%g,%g) b=(%g,%g,%g)\n\tp=(%g,%g,%g), tol->dist=%g sq=%g\n",
 			V3ARGS(a),
 			V3ARGS(b),

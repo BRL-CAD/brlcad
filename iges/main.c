@@ -167,9 +167,9 @@ char *argv[];
 				break;
 			case 'x':
 				sscanf( optarg, "%x", &rt_g.debug );
-				if( rt_g.debug & DEBUG_MEM )
+				if( RT_G_DEBUG & DEBUG_MEM )
 					bu_debug |= BU_DEBUG_MEM_LOG;
-				if( rt_g.debug & DEBUG_MEM_FULL )
+				if( RT_G_DEBUG & DEBUG_MEM_FULL )
 					bu_debug |= BU_DEBUG_MEM_CHECK;
 				break;
 			case 'X':
@@ -244,7 +244,7 @@ char *argv[];
 
 	while( BU_LIST_NON_EMPTY( &iges_list.l ) )
 	{
-		if( rt_g.debug & DEBUG_MEM_FULL )
+		if( RT_G_DEBUG & DEBUG_MEM_FULL )
 			bu_mem_barriercheck();
 
 		curr_file = BU_LIST_FIRST( file_list, &iges_list.l );
@@ -311,12 +311,12 @@ char *argv[];
 			Convassem();	/* Convert solid assemblies */
 		}
 
-		if( rt_g.debug & DEBUG_MEM_FULL )
+		if( RT_G_DEBUG & DEBUG_MEM_FULL )
 			bu_mem_barriercheck();
 
 		Free_dir();
 
-		if( rt_g.debug & DEBUG_MEM_FULL )
+		if( RT_G_DEBUG & DEBUG_MEM_FULL )
 			bu_mem_barriercheck();
 
 		BU_LIST_DEQUEUE( &curr_file->l );
@@ -324,7 +324,7 @@ char *argv[];
 		bu_free( (char *)curr_file, "iges-g: curr_file" );
 		file_count++;
 
-		if( rt_g.debug & DEBUG_MEM_FULL )
+		if( RT_G_DEBUG & DEBUG_MEM_FULL )
 			bu_mem_barriercheck();
 
 	}

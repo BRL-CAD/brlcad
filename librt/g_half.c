@@ -174,7 +174,7 @@ struct seg		*seghead;
 				return(0);	/* MISS */
 		}
 	}
-	if( rt_g.debug & DEBUG_ARB8 )
+	if( RT_G_DEBUG & DEBUG_ARB8 )
 		bu_log("half: in=%f, out=%f\n", in, out);
 
 	{
@@ -367,7 +367,7 @@ register struct uvcoord *uvp;
 		uvp->uv_v = 2 * (1 - f);	/* 1..0 */
 
 	if( uvp->uv_u < 0 || uvp->uv_v < 0 )  {
-		if( rt_g.debug )
+		if( RT_G_DEBUG )
 			bu_log("half_uv: bad uv=%f,%f\n", uvp->uv_u, uvp->uv_v);
 		/* Fix it up */
 		if( uvp->uv_u < 0 )  uvp->uv_u = (-uvp->uv_u);

@@ -127,7 +127,7 @@ char	*argv[];
 	mged_print_result( TCL_ERROR );
 	return TCL_ERROR;
     }
-    if (rt_g.debug & DEBUG_VOL)
+    if (RT_G_DEBUG & DEBUG_VOL)
         bu_log( "Type is %d %d '%s'\n", major_code, minor_code, descrip);
 
     /*
@@ -174,7 +174,7 @@ char	*argv[];
 	mged_print_result( TCL_ERROR );
 	return TCL_ERROR;
     }
-    if (rt_g.debug & DEBUG_VOL)
+    if (RT_G_DEBUG & DEBUG_VOL)
 	    bu_log ("File '%s' is %d bytes long\n", argv[2], stat_buf.st_size);
     if( (fd = open( argv[2], O_RDONLY  )) == -1 ) {
 	bu_vls_init( &vls );
@@ -201,7 +201,7 @@ char	*argv[];
 	    bip->magic = RT_BINUNIF_INTERNAL_MAGIC;
 	    bip->type = minor_code;
 	    bip->u.uint8 = (unsigned char *) bu_malloc(stat_buf.st_size, "binunif");
-    if (rt_g.debug & DEBUG_VOL)
+    if (RT_G_DEBUG & DEBUG_VOL)
 	    bu_log("Created an rt_binunif_internal for type '%s' (minor=%d)\n", descrip, minor_code);
 
 	    gotten = read( fd, (void *) (bip->u.uint8), stat_buf.st_size);
@@ -218,11 +218,11 @@ char	*argv[];
 		mged_print_result( TCL_ERROR );
 		return TCL_ERROR;
 	    }
-	    if (rt_g.debug & DEBUG_VOL)
+	    if (RT_G_DEBUG & DEBUG_VOL)
 		    bu_log("gotten=%d,  minor_code is %d\n",
 			   gotten, minor_code);
 	    bip->count = gotten / db5_type_sizeof_n_binu( minor_code );
-	    if (rt_g.debug & DEBUG_VOL) {
+	    if (RT_G_DEBUG & DEBUG_VOL) {
 		    bu_log("Got 'em!\nThink I own %d of 'em\n", bip->count);
 		    fflush(stderr);
 	    }
@@ -326,7 +326,7 @@ char	*argv[];
     if (db5_type_descrip_from_codes(&tmp, raw.major_type, raw.minor_type))
 	tmp = 0;
 
-    if (rt_g.debug & DEBUG_VOL)
+    if (RT_G_DEBUG & DEBUG_VOL)
 	    bu_log("cmd_export_body() sees type (%d, %d)='%s'\n",
 		   raw.major_type, raw.minor_type, tmp);
     switch (raw.major_type) {
@@ -345,42 +345,42 @@ char	*argv[];
 	    bu_log("cmd_export_body() thinks bip->count=%d\n", bip->count);
 	    switch (bip -> type) {
 		case DB5_MINORTYPE_BINU_FLOAT:
-			if (rt_g.debug & DEBUG_VOL)
+			if (RT_G_DEBUG & DEBUG_VOL)
 				bu_log("bip->type switch... float");
 		    nbytes = (size_t) (bip->count * sizeof(float));
 		    break;
 		case DB5_MINORTYPE_BINU_DOUBLE:
-			if (rt_g.debug & DEBUG_VOL)
+			if (RT_G_DEBUG & DEBUG_VOL)
 				bu_log("bip->type switch... double");
 		    nbytes = (size_t) (bip->count * sizeof(double));
 		    break;
 		case DB5_MINORTYPE_BINU_8BITINT:
 		case DB5_MINORTYPE_BINU_8BITINT_U:
-			if (rt_g.debug & DEBUG_VOL)
+			if (RT_G_DEBUG & DEBUG_VOL)
 				bu_log("bip->type switch... 8bitint");
 		    nbytes = (size_t) (bip->count);
 		    break;
 		case DB5_MINORTYPE_BINU_16BITINT:
-			if (rt_g.debug & DEBUG_VOL)
+			if (RT_G_DEBUG & DEBUG_VOL)
 				bu_log("bip->type switch... 16bitint");
 		    nbytes = (size_t) (bip->count * 2);
 		    bu_log("data[0] = %u\n", bip->u.uint16[0]);
 		    break;
 		case DB5_MINORTYPE_BINU_16BITINT_U:
-			if (rt_g.debug & DEBUG_VOL)
+			if (RT_G_DEBUG & DEBUG_VOL)
 				bu_log("bip->type switch... 16bituint");
 		    nbytes = (size_t) (bip->count * 2);
 		    bu_log("data[0] = %u\n", bip->u.uint16[0]);
 		    break;
 		case DB5_MINORTYPE_BINU_32BITINT:
 		case DB5_MINORTYPE_BINU_32BITINT_U:
-			if (rt_g.debug & DEBUG_VOL)
+			if (RT_G_DEBUG & DEBUG_VOL)
 				bu_log("bip->type switch... 32bitint");
 		    nbytes = (size_t) (bip->count * 4);
 		    break;
 		case DB5_MINORTYPE_BINU_64BITINT:
 		case DB5_MINORTYPE_BINU_64BITINT_U:
-			if (rt_g.debug & DEBUG_VOL)
+			if (RT_G_DEBUG & DEBUG_VOL)
 				bu_log("bip->type switch... 64bitint");
 		    nbytes = (size_t) (bip->count * 8);
 		    break;
@@ -391,13 +391,13 @@ char	*argv[];
 	    }
 	    break;
 	default:
-		if (rt_g.debug & DEBUG_VOL)
+		if (RT_G_DEBUG & DEBUG_VOL)
 			bu_log("I'm in the default\n");
 		bufp = (void *) ext.ext_buf;
 		nbytes = (size_t) ext.ext_nbytes;
 		break;
     }
-    if (rt_g.debug & DEBUG_VOL)
+    if (RT_G_DEBUG & DEBUG_VOL)
 	    bu_log("going to write %ld bytes\n", nbytes);
 
     if ( (written = write(fd, bufp, nbytes) ) != nbytes ) {

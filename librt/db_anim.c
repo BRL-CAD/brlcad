@@ -59,12 +59,12 @@ int	root;
 	RT_CK_ANIMATE(anp);
 	anp->an_forw = ANIM_NULL;
 	if( root )  {
-		if( rt_g.debug&DEBUG_ANIM )
+		if( RT_G_DEBUG&DEBUG_ANIM )
 			bu_log("db_add_anim(x%x) root\n", anp);
 		headp = &(dbip->dbi_anroot);
 	} else {
 		dp = DB_FULL_PATH_CUR_DIR(&anp->an_path);
-		if( rt_g.debug&DEBUG_ANIM )
+		if( RT_G_DEBUG&DEBUG_ANIM )
 			bu_log("db_add_anim(x%x) arc %s\n", anp,
 				dp->d_namep);
 		headp = &(dp->d_animate);
@@ -107,18 +107,18 @@ struct mater_info	*materp;
 {
 	mat_t	temp;
 
-	if( rt_g.debug&DEBUG_ANIM )
+	if( RT_G_DEBUG&DEBUG_ANIM )
 		bu_log("db_do_anim(x%x) ", anp);
-	if( rt_g.debug&DEBUG_ANIM && !materp )  bu_log("(null materp) ");
+	if( RT_G_DEBUG&DEBUG_ANIM && !materp )  bu_log("(null materp) ");
 	RT_CK_ANIMATE(anp);
 	switch( anp->an_type )  {
 	case RT_AN_MATRIX:
-		if( rt_g.debug&DEBUG_ANIM )  {
+		if( RT_G_DEBUG&DEBUG_ANIM )  {
 			int	op = anp->an_u.anu_m.anm_op;
 			if( op < 0 )  op = 0;
 			bu_log("matrix, op=%s (%d)\n",
 				db_anim_matrix_strings[op], op);
-			if( rt_g.debug&DEBUG_ANIM_FULL )  {
+			if( RT_G_DEBUG&DEBUG_ANIM_FULL )  {
 				bn_mat_print("on original arc", arc);
 				bn_mat_print("on original stack", stack);
 			}
@@ -147,13 +147,13 @@ struct mater_info	*materp;
 		default:
 			return(-1);		/* BAD */
 		}
-		if( rt_g.debug&DEBUG_ANIM_FULL )  {
+		if( RT_G_DEBUG&DEBUG_ANIM_FULL )  {
 			bn_mat_print("arc result", arc);
 			bn_mat_print("stack result", stack);
 		}
 		break;
 	case RT_AN_MATERIAL:
-		if( rt_g.debug&DEBUG_ANIM )
+		if( RT_G_DEBUG&DEBUG_ANIM )
 			bu_log("property\n");
 		/*
 		 * if the caller does not care about property, a null
@@ -182,7 +182,7 @@ struct mater_info	*materp;
 			bu_log("Unknown anp_op=%d\n", anp->an_u.anu_p.anp_op);
 		break;
 	case RT_AN_COLOR:
-		if( rt_g.debug&DEBUG_ANIM )
+		if( RT_G_DEBUG&DEBUG_ANIM )
 			bu_log("color\n");
 		/*
 		 * if the caller does not care about property, a null
@@ -203,7 +203,7 @@ struct mater_info	*materp;
 		    (((float)anp->an_u.anu_c.anc_rgb[2])+0.5)*bn_inv255;
 		break;
 	case RT_AN_TEMPERATURE:
-		if( rt_g.debug&DEBUG_ANIM )
+		if( RT_G_DEBUG&DEBUG_ANIM )
 			bu_log("temperature = %g\n", anp->an_u.anu_t);
 		if (!materp)  {
 			char *sofar = db_path_to_string(&anp->an_path);
@@ -214,7 +214,7 @@ struct mater_info	*materp;
 		materp->ma_temperature = anp->an_u.anu_t;
 		break;
 	default:
-		if( rt_g.debug&DEBUG_ANIM )
+		if( RT_G_DEBUG&DEBUG_ANIM )
 			bu_log("unknown op\n");
 		/* Print something here? */
 		return(-1);			/* BAD */
@@ -467,7 +467,7 @@ struct animate *anp;
 	RT_CK_ANIMATE(anp);
 
 	thepath  = db_path_to_string(&(anp->an_path));
-	if ( rt_g.debug&DEBUG_ANIM) {
+	if ( RT_G_DEBUG&DEBUG_ANIM) {
 		bu_log("db_write_anim: Writing %s\n", thepath);
 	}
 

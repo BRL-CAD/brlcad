@@ -126,7 +126,7 @@ struct rt_i	*rtip;
 #else				      
 			ret = re_exec((char *)rp->reg_name);
 #endif
-			if(rt_g.debug&DEBUG_INSTANCE)  {
+			if(RT_G_DEBUG&DEBUG_INSTANCE)  {
 				bu_log("'%s' %s '%s'\n", line,
 					ret==1 ? "==" : "!=",
 					rp->reg_name);
@@ -156,7 +156,7 @@ struct rt_i	*rtip;
 				newid = atoi( tabp );
 				if( newid == 0 )  bu_log("%s, line %d Warning:  new id = 0\n", file, linenum );
 			}
-			if(rt_g.debug&DEBUG_INSTANCE)  {
+			if(RT_G_DEBUG&DEBUG_INSTANCE)  {
 				bu_log("%s instance %d:  region id changed from %d to %d\n",
 					rp->reg_name, rp->reg_instnum,
 					oldid, newid );

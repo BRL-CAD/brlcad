@@ -100,7 +100,7 @@ genptr_t	client_data;
 	register int		i;
 
 	RT_CK_DBI(dbip);
-	if(rt_g.debug&DEBUG_DB) bu_log("db_functree(%s) x%x, x%x, comb=x%x, leaf=x%x, client_data=x%x\n",
+	if(RT_G_DEBUG&DEBUG_DB) bu_log("db_functree(%s) x%x, x%x, comb=x%x, leaf=x%x, client_data=x%x\n",
 		dp->d_namep, dbip, dp, comb_func, leaf_func, client_data );
 
 	if( dp->d_flags & DIR_COMB )  {

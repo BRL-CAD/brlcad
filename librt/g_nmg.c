@@ -2458,7 +2458,7 @@ const struct db_i		*dbip;
 	m = (struct model *)ip->idb_ptr;
 	NMG_CK_MODEL(m);
 
-	if( rt_g.debug || rt_g.NMG_debug )
+	if( RT_G_DEBUG || rt_g.NMG_debug )
 		nmg_vmodel(m);
 
 	return(0);			/* OK */
@@ -2551,7 +2551,7 @@ rt_nmg_import5( struct rt_db_internal	*ip,
 	bu_free( (char *)ecnt, "ecnt[]");
 	bu_free( (char *)real_ptrs, "ptrs[]");
 
-	if ( rt_g.debug || rt_g.NMG_debug ) {
+	if ( RT_G_DEBUG || rt_g.NMG_debug ) {
 		nmg_vmodel(m);
 	}
 	return 0;		/* OK */

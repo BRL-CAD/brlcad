@@ -64,7 +64,7 @@ long		offset;		/* byte offset from start of file */
 	register long	s;
 
 	RT_CK_DBI(dbip);
-	if(rt_g.debug&DEBUG_DB)  {
+	if(RT_G_DEBUG&DEBUG_DB)  {
 		bu_log("db_read(dbip=x%x, addr=x%x, count=%d., offset=x%x)\n",
 			dbip, addr, count, offset );
 	}
@@ -125,7 +125,7 @@ const struct directory	*dp;
 
 	RT_CK_DBI(dbip);
 	RT_CK_DIR(dp);
-	if(rt_g.debug&DEBUG_DB) bu_log("db_getmrec(%s) x%x, x%x\n",
+	if(RT_G_DEBUG&DEBUG_DB) bu_log("db_getmrec(%s) x%x, x%x\n",
 		dp->d_namep, dbip, dp );
 
 	if( dp->d_addr < 0 )
@@ -169,7 +169,7 @@ int		len;
 
 	RT_CK_DBI(dbip);
 	RT_CK_DIR(dp);
-	if(rt_g.debug&DEBUG_DB) bu_log("db_get(%s) x%x, x%x x%x off=%d len=%d\n",
+	if(RT_G_DEBUG&DEBUG_DB) bu_log("db_get(%s) x%x, x%x x%x off=%d len=%d\n",
 		dp->d_namep, dbip, dp, where, offset, len );
 
 	if( dp->d_addr < 0 )  {
@@ -220,7 +220,7 @@ long		offset;
 	register int	got;
 
 	RT_CK_DBI(dbip);
-	if(rt_g.debug&DEBUG_DB)  {
+	if(RT_G_DEBUG&DEBUG_DB)  {
 		bu_log("db_write(dbip=x%x, addr=x%x, count=%d., offset=x%x)\n",
 			dbip, addr, count, offset );
 	}
@@ -276,7 +276,7 @@ int		len;
 
 	RT_CK_DBI(dbip);
 	RT_CK_DIR(dp);
-	if(rt_g.debug&DEBUG_DB) bu_log("db_put(%s) x%x, x%x x%x off=%d len=%d\n",
+	if(RT_G_DEBUG&DEBUG_DB) bu_log("db_put(%s) x%x, x%x x%x off=%d len=%d\n",
 		dp->d_namep, dbip, dp, where, offset, len );
 
 	if( offset < 0 || offset+len > dp->d_len )  {
@@ -329,7 +329,7 @@ const struct db_i		*dbip;
 {
 	RT_CK_DBI(dbip);
 	RT_CK_DIR(dp);
-	if(rt_g.debug&DEBUG_DB) bu_log("db_get_external(%s) ep=x%x, dbip=x%x, dp=x%x\n",
+	if(RT_G_DEBUG&DEBUG_DB) bu_log("db_get_external(%s) ep=x%x, dbip=x%x, dp=x%x\n",
 		dp->d_namep, ep, dbip, dp );
 
 	if( (dp->d_flags & RT_DIR_INMEM) == 0 && dp->d_addr < 0 )
@@ -388,7 +388,7 @@ struct db_i		*dbip;
 	RT_CK_DBI(dbip);
 	RT_CK_DIR(dp);
 	BU_CK_EXTERNAL(ep);
-	if(rt_g.debug&DEBUG_DB) bu_log("db_put_external(%s) ep=x%x, dbip=x%x, dp=x%x\n",
+	if(RT_G_DEBUG&DEBUG_DB) bu_log("db_put_external(%s) ep=x%x, dbip=x%x, dp=x%x\n",
 		dp->d_namep, ep, dbip, dp );
 
 
@@ -463,7 +463,7 @@ const char		*name;
 struct bu_external	*ep;			/* can't be const */
 {
 
-	if(rt_g.debug&DEBUG_DB) bu_log("db_fwrite_external(%s) ep=x%x\n",
+	if(RT_G_DEBUG&DEBUG_DB) bu_log("db_fwrite_external(%s) ep=x%x\n",
 		name, ep);
 
 	BU_CK_EXTERNAL(ep);

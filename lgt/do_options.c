@@ -628,7 +628,7 @@ char	**args;
 				rt_g.debug = 0;
 			}
 		}
-	if( rt_g.debug & DEBUG_OCTREE )
+	if( RT_G_DEBUG & DEBUG_OCTREE )
 		prnt_Octree( &ir_octree, 0 );
 	return	1;
 	}
@@ -3736,8 +3736,8 @@ char	*file;
 				background[1],
 				background[2]
 				);
-	if( rt_g.debug )
-		(void) fprintf( run_fp,	" -e%d", rt_g.debug );
+	if( RT_G_DEBUG )
+		(void) fprintf( run_fp,	" -e%d", RT_G_DEBUG );
 	if( ir_noise != 2 )
 		(void) fprintf( run_fp,	" -i%d", ir_noise );
 	if( hiddenln_draw )

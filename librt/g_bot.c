@@ -747,7 +747,7 @@ struct seg		*seghead;
 	long		piecenum;
 	register struct hit *hp;
 	struct bot_specific *bot;
-	const int	debug_shoot = rt_g.debug & DEBUG_SHOOT;
+	const int	debug_shoot = RT_G_DEBUG & DEBUG_SHOOT;
 	int		starting_hits;
 
 	RT_CK_PIECELIST(plp);

@@ -61,7 +61,7 @@ int		count;
 
 	RT_CK_DBI(dbip);
 	RT_CK_DIR(dp);
-	if(rt_g.debug&DEBUG_DB) bu_log("db_alloc(%s) x%x, x%x, count=%d\n",
+	if(RT_G_DEBUG&DEBUG_DB) bu_log("db_alloc(%s) x%x, x%x, count=%d\n",
 		dp->d_namep, dbip, dp, count );
 	if( count <= 0 )  {
 		bu_log("db_alloc(0)\n");
@@ -125,7 +125,7 @@ int			recnum;
 
 	RT_CK_DBI(dbip);
 	RT_CK_DIR(dp);
-	if(rt_g.debug&DEBUG_DB) bu_log("db_delrec(%s) x%x, x%x, recnum=%d\n",
+	if(RT_G_DEBUG&DEBUG_DB) bu_log("db_delrec(%s) x%x, x%x, recnum=%d\n",
 		dp->d_namep, dbip, dp, recnum );
 
 	bu_log("ERROR db_delrec() is no longer supported.  Use combination import/export routines.\n");
@@ -148,7 +148,7 @@ struct directory *dp;
 
 	RT_CK_DBI(dbip);
 	RT_CK_DIR(dp);
-	if(rt_g.debug&DEBUG_DB) bu_log("db_delete(%s) x%x, x%x\n",
+	if(RT_G_DEBUG&DEBUG_DB) bu_log("db_delete(%s) x%x, x%x\n",
 		dp->d_namep, dbip, dp );
 
 	if( dp->d_flags & RT_DIR_INMEM )  {
@@ -198,7 +198,7 @@ int		start;
 
 	RT_CK_DBI(dbip);
 	RT_CK_DIR(dp);
-	if(rt_g.debug&DEBUG_DB) bu_log("db_zapper(%s) x%x, x%x, start=%d\n",
+	if(RT_G_DEBUG&DEBUG_DB) bu_log("db_zapper(%s) x%x, x%x, start=%d\n",
 		dp->d_namep, dbip, dp, start );
 
 	if( dp->d_flags & RT_DIR_INMEM )  bu_bomb("db_zapper() called on RT_DIR_INMEM object\n");

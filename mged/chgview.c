@@ -854,12 +854,12 @@ char	**argv;
 
   if( argc >= 2 )  {
     sscanf( argv[1], "%x", &rt_g.debug );
-    if( rt_g.debug )  bu_debug |= BU_DEBUG_COREDUMP;
+    if( RT_G_DEBUG )  bu_debug |= BU_DEBUG_COREDUMP;
   } else {
     bu_printb( "Possible flags", 0xffffffffL, DEBUG_FORMAT );
     bu_log("\n");
   }
-  bu_printb( "librt rt_g.debug", rt_g.debug, DEBUG_FORMAT );
+  bu_printb( "librt RT_G_DEBUG", RT_G_DEBUG, DEBUG_FORMAT );
   bu_log("\n");
 
   stop_catching_output(&vls);
@@ -1217,7 +1217,7 @@ f_zap(
 
 
 	/* Keeping freelists improves performance.  When debugging, give mem back */
-	if( rt_g.debug )  mged_freemem();
+	if( RT_G_DEBUG )  mged_freemem();
 
 	(void)chg_state( state, state, "zap" );
 

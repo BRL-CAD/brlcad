@@ -940,7 +940,7 @@ void
 prntTitle( title )
 char	*title;
 	{
-	if( ! tty || rt_g.debug )
+	if( ! tty || RT_G_DEBUG )
 		brst_log( "%s\n", title == NULL ? "(null)" : title );
 	}
 

@@ -547,7 +547,7 @@ pointp_t ap, bp, cp;
 	if( NEAR_ZERO(m1,0.0001) || NEAR_ZERO(m2,0.0001) ||
 	    NEAR_ZERO(m3,0.0001) || NEAR_ZERO(m4,0.0001) )  {
 		bu_free( (char *)trip, "tri_specific struct");
-		if( rt_g.debug & DEBUG_ARB8 )
+		if( RT_G_DEBUG & DEBUG_ARB8 )
 			bu_log("ars(%s): degenerate facet\n", stp->st_name);
 		return(0);			/* BAD */
 	}		
@@ -630,7 +630,7 @@ struct seg		*seghead;
 		 *  Ray Direction dot N.  (wn is inward pointing normal)
 		 */
 		dn = VDOT( trip->tri_wn, rp->r_dir );
-		if( rt_g.debug & DEBUG_ARB8 )
+		if( RT_G_DEBUG & DEBUG_ARB8 )
 			bu_log("N.Dir=%g ", dn );
 
 		/*
@@ -670,7 +670,7 @@ struct seg		*seghead;
 		hp->hit_vpriv[X] = dn;
 		hp->hit_rayp = rp;
 
-		if(rt_g.debug&DEBUG_ARB8) bu_log("ars: dist k=%g, ds=%g, dn=%g\n", k, ds, dn );
+		if(RT_G_DEBUG&DEBUG_ARB8) bu_log("ars: dist k=%g, ds=%g, dn=%g\n", k, ds, dn );
 
 		/* Bug fix: next line was "nhits++".  This caused rt_hitsort
 			to exceed bounds of "hits" array by one member and
@@ -885,7 +885,7 @@ register struct uvcoord *uvp;
 	uvp->uv_u = VDOT( P_A, trip->tri_BA ) * xxlen;
 	uvp->uv_v = 1.0 - ( VDOT( P_A, trip->tri_CA ) * yylen );
 	if( uvp->uv_u < 0 || uvp->uv_v < 0 )  {
-		if( rt_g.debug )
+		if( RT_G_DEBUG )
 			bu_log("rt_ars_uv: bad uv=%g,%g\n", uvp->uv_u, uvp->uv_v);
 		/* Fix it up */
 		if( uvp->uv_u < 0 )  uvp->uv_u = (-uvp->uv_u);
