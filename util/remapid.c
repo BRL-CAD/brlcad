@@ -1001,6 +1001,7 @@ void print_usage ()
 /*
  *                                M A I N ( )
  */
+int
 main (argc, argv)
 
 int	argc;
@@ -1081,4 +1082,5 @@ char	*argv[];
 	else
 	    bu_rb_walk1(assignment, write_assignment, INORDER);
     }
+    return 0;
 }
