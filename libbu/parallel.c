@@ -15,7 +15,7 @@
  *	Public Domain, Distribution Unlimited.
  */
 #ifndef lint
-static char RCSparallel[] = "@(#)$Header$ (ARL)";
+static const char RCSparallel[] = "@(#)$Header$ (ARL)";
 #endif
 
 #include "conf.h"
@@ -393,6 +393,7 @@ bu_set_realtime()
 #	define	CHECK_PIDS	1
 #endif
 
+#if defined(PARALLEL)
 /*
  *			B U _ W O R K E R _ T B L _ N O T _ E M P T Y
  */
@@ -427,7 +428,6 @@ int tbl[MAX_PSW];
 
 	bzero( (char *)tbl, sizeof(tbl) );
 }
-
 extern int	bu_pid_of_initiating_thread;	/* From ispar.c */
 
 static int	bu_nthreads_started = 0;	/* # threads started */
@@ -483,6 +483,7 @@ bu_parallel_interface()
 	if(cpu) _exit(0);
 #	endif /* SGI */
 }
+#endif /* PARALLEL */
 
 #ifdef SGI_4D
 /*

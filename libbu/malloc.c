@@ -27,7 +27,7 @@
  *	Public Domain, Distribution Unlimited.
  */
 #ifndef lint
-static char RCSmalloc[] = "@(#)$Header$ (ARL)";
+static const char RCSmalloc[] = "@(#)$Header$ (ARL)";
 #endif
 
 #include "conf.h"

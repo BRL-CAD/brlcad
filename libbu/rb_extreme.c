@@ -20,7 +20,7 @@
  *	in all countries except the USA.  All rights reserved.
  */
 #ifndef lint
-static char libbu_rb_extreme_RCSid[] = "@(#) $Header$";
+static const char libbu_rb_extreme_RCSid[] = "@(#) $Header$";
 #endif
 
 #include "conf.h"

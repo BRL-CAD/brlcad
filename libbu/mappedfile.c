@@ -27,7 +27,7 @@
  *	Public Domain, Distribution Unlimited.
  */
 #ifndef lint
-static char libbu_mappedfile_RCSid[] = "@(#)$Header$ (ARL)";
+static const char libbu_mappedfile_RCSid[] = "@(#)$Header$ (ARL)";
 #endif
 
 #include "conf.h"

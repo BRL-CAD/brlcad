@@ -29,7 +29,7 @@
  *	All rights reserved.
  */
 #ifndef lint
-static char RCSparse[] = "@(#)$Header$ (BRL)";
+static const char RCSparse[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include "conf.h"

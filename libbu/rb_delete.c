@@ -19,7 +19,7 @@
  *	in all countries except the USA.  All rights reserved.
  */
 #ifndef lint
-static char libbu_rb_delete_RCSid[] = "@(#) $Header$";
+static char const libbu_rb_delete_RCSid[] = "@(#) $Header$";
 #endif
 
 #include "conf.h"

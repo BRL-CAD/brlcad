@@ -11,7 +11,7 @@
  *	Public Domain, Distribution Unlimited.
  */
 #ifndef lint
-static char libbu_memset_RCSid[] = "@(#)$Header$ (ARL)";
+static const char libbu_memset_RCSid[] = "@(#)$Header$ (ARL)";
 #endif
 
 #if defined(BSD) && (BSD < 43)

@@ -24,7 +24,7 @@
  *	Public Domain, Distribution Unlimited.
  */
 #ifndef lint
-static char RCSsemaphore[] = "@(#)$Header$ (ARL)";
+static const char RCSsemaphore[] = "@(#)$Header$ (ARL)";
 #endif
 
 #include "conf.h"
@@ -211,8 +211,10 @@ register long *p;
 }
 #endif /* convex */
 
+#if defined(PARALLEL) || defined(DEFINED_BU_SEMAPHORES)
 static unsigned int		bu_nsemaphores = 0;
 static struct bu_semaphores	*bu_semaphores = (struct bu_semaphores *)NULL;
+#endif
 
 /*
  *			B U _ S E M A P H O R E _ I N I T
@@ -228,11 +230,11 @@ void
 bu_semaphore_init( nsemaphores )
 unsigned int	nsemaphores;
 {
-	int	i;
-
 #if !defined(PARALLEL) && !defined(DEFINED_BU_SEMAPHORES)
 	return;					/* No support on this hardware */
 #else
+	int	i;
+
 	if( bu_nsemaphores != 0 )  return;	/* Already called */
 	bu_semaphores = (struct bu_semaphores *)calloc(
 		nsemaphores,

@@ -38,7 +38,7 @@
  *	depth in the tree.
  */
 #ifndef lint
-static char libbu_rb_walk_RCSid[] = "@(#) $Header$";
+static const char libbu_rb_walk_RCSid[] = "@(#) $Header$";
 #endif
 
 #include "conf.h"

@@ -17,7 +17,7 @@
  *  Distribution Status -
  *      Public Domain, Distribution Unlimitied.
  */
-static char libbu_vls_RCSid[] = "@(#)$Header$ (BRL)";
+static const char libbu_vls_RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "conf.h"
 
@@ -759,7 +759,7 @@ va_list ap;
 #define FIELDLEN 0x002
 
     int flags;
-    int fieldlen;
+    int fieldlen=-1;
     char fbuf[64], buf[1024];			/* % format buffer */
 
     BU_CK_VLS(vls);
@@ -816,7 +816,7 @@ va_list ap;
 				int	stringlen = strlen(str);
 				int	left_justify;
 
-				if (left_justify = (fieldlen < 0))
+				if ((left_justify = (fieldlen < 0)))
 					fieldlen *= -1;
 
 				if (stringlen >= fieldlen)
@@ -859,7 +859,7 @@ va_list ap;
 				int	stringlen = bu_vls_strlen(vp);
 				int	left_justify;
 
-				if (left_justify = (fieldlen < 0))
+				if ((left_justify = (fieldlen < 0)))
 					fieldlen *= -1;
 
 				if (stringlen >= fieldlen)
