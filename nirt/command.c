@@ -1,4 +1,7 @@
 /*      COMMAND.C       */ 
+#ifndef lint
+static char RCSid[] = "$Header$";
+#endif
 
 /*	INCLUDES	*/
 #include <ctype.h>
