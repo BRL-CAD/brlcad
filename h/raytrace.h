@@ -503,6 +503,7 @@ struct region  {
 	rt_functab[_id].ft_norm(_hitp, _stp, _rayp); }
 
 struct partition {
+	/* This can be thought of as a struct rt_list */
 	long		pt_magic;		/* sanity check */
 	struct partition *pt_forw;		/* forwards link */
 	struct partition *pt_back;		/* backwards link */
@@ -533,16 +534,16 @@ struct partition {
 	(p)->pt_magic = PT_MAGIC; }
 
 #define GET_PT(ip,p,res)   { \
-	while( ((p) = res->re_parthead.pt_forw) == &(res->re_parthead) || \
+	while( ((p) = (struct partition *)res->re_parthead.forw) == (struct partition *)&(res->re_parthead) || \
 	    !(p) || (p)->pt_len != (ip)->rti_pt_bytes ) \
 		rt_get_pt(ip, res); \
 	(p)->pt_magic = PT_MAGIC; \
-	DEQUEUE_PT(p); \
+	RT_LIST_DEQUEUE((struct rt_list *)p); \
 	res->re_partget++; }
 
 #define FREE_PT(p,res)  { \
 			RT_CHECK_PT(p); \
-			APPEND_PT( (p), &(res->re_parthead) ); \
+			RT_LIST_APPEND( &(res->re_parthead), (struct rt_list *)(p) ); \
 			res->re_partfree++; }
 
 #define RT_FREE_PT_LIST( _headp, _res )		{ \
@@ -555,24 +556,14 @@ struct partition {
 		(_headp)->pt_forw = (_headp)->pt_back = (_headp); \
 	}
 
-/* Insert "new" partition in front of "old" partition */
-#define INSERT_PT(new,old)	{ \
-	(new)->pt_back = (old)->pt_back; \
-	(old)->pt_back = (new); \
-	(new)->pt_forw = (old); \
-	(new)->pt_back->pt_forw = (new);  }
+/* Insert "new" partition in front of "old" partition.  Note order change */
+#define INSERT_PT(_new,_old)	RT_LIST_INSERT((struct rt_list *)_old,(struct rt_list *)_new)
 
-/* Append "new" partition after "old" partition */
-#define APPEND_PT(new,old)	{ \
-	(new)->pt_forw = (old)->pt_forw; \
-	(new)->pt_back = (old); \
-	(old)->pt_forw = (new); \
-	(new)->pt_forw->pt_back = (new);  }
+/* Append "new" partition after "old" partition.  Note arg order change */
+#define APPEND_PT(_new,_old)	RT_LIST_APPEND((struct rt_list *)_old,(struct rt_list *)_new)
 
 /* Dequeue "cur" partition from doubly-linked list */
-#define DEQUEUE_PT(cur)	{ \
-	(cur)->pt_forw->pt_back = (cur)->pt_back; \
-	(cur)->pt_back->pt_forw = (cur)->pt_forw;  }
+#define DEQUEUE_PT(_cur)	RT_LIST_DEQUEUE((struct rt_list *)_cur)
 
 /*
  *  Bit vectors
@@ -935,7 +926,7 @@ struct resource {
 	long		re_seglen;
 	long		re_segget;
 	long		re_segfree;
-	struct partition re_parthead;	/* Head of freelist */
+	struct rt_list	re_parthead;	/* Head of freelist */
 	long		re_partlen;
 	long		re_partget;
 	long		re_partfree;
