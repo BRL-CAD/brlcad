@@ -44,7 +44,7 @@ extern FILE	*infp;
 
 extern char name_it[16];		/* argv[3] */
 
-void	namecvt(register int n, register char *cp, int c);
+void	namecvt(register int n, register char **cp, int c);
 
 /*
  *			G E T L I N E
@@ -106,7 +106,7 @@ getdouble(char *cp, int start, int len)
 
 /*		N A M E C V T	 */
 void
-namecvt(register int n, register char *cp, int c)
+namecvt(register int n, register char **cp, int c)
 {
 	char str[16];
 

@@ -1,3 +1,8 @@
+
+#ifdef HAVE_CONFIG_H
+# include "config.h"
+#endif
+
 #define PADCHR		~(1<<15)		/* non data value.*/
 
 char *
@@ -6,12 +11,15 @@ endstr(char *str)
 	return( str );
 }
 
+#ifndef HAVE_STRCPY
 strcpy(char *s, char *t)	/* === */
     	       
 {
 	while( (*s++ = *t++) != '\0' );
 	*s = '\0';
 }
+#endif
+
 strappend(char *s, char *t)	/* === */
     	       
 {	s = endstr( s );

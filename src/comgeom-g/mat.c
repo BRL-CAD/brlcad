@@ -25,6 +25,18 @@
  *
  */
 
+#ifdef HAVE_CONFIG_H
+# include "config.h"
+#endif
+
+#ifdef HAVE_FABS
+# ifdef HAVE_MATH_H
+#  include <math.h>
+# endif
+#else
+# define fabs(x) ((x)>0?(x):-(x))
+#endif
+
 #include "./ged_types.h"
 
 
@@ -189,7 +201,6 @@ mat_hscale(register matp_t m, float hscale)
  * The matrix pointed at by "im" is inverted and stored in the area
  * pointed at by "om".
  */
-double abs(double foo);
 #define EPSILON	0.000001
 
 /* 
@@ -222,13 +233,13 @@ mat_inv(register matp_t output, matp_t input)
 			static float w;			/* local temporary */
 
 			w = output[i*4+j];
-			if( abs(w) > abs(y) )  {
+			if( fabs(w) > fabs(y) )  {
 				k = j;
 				y = w;
 			}
 		}
 
-		if( abs(y) < EPSILON )  {
+		if( fabs(y) < EPSILON )  {
 			printf("mat_inv:  error!\n");
 			return;
 		}
@@ -278,13 +289,6 @@ mat_inv(register matp_t output, matp_t input)
 	return;
 }
 
-double abs(double foo)
-{
-	if( foo < 0 )
-		return( -foo );
-	else
-		return( foo );
-}
 
 /*
  *			V T O H _ M O V E

@@ -50,7 +50,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 /* defined in read.c */
 extern int getline(register char *cp, int buflen, char *title);
 extern int getint(char *cp, int start, int len);
-extern void namecvt(register int n, register char *cp, int c);
+extern void namecvt(register int n, register char **cp, int c);
 
 /* defined in cvt.c */
 extern void col_pr(char *str);
