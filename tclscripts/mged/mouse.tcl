@@ -217,7 +217,7 @@ proc mouse_solid_edit_select { x y } {
     _mged_press sill
     _mged_ill $spath
 
-    mged_apply_all "set mouse_behavior d"
+    mged_apply_all [winset] "set mouse_behavior d"
     foreach id $mged_players {
 	set mged_gui($id,mouse_behavior) d
     }
@@ -236,7 +236,7 @@ proc mouse_matrix_edit_select { x y } {
     _mged_ill [lindex $spath_and_pos 0]
     _mged_matpick [lindex $spath_and_pos 1]
 
-    mged_apply_all "set mouse_behavior d"
+    mged_apply_all [winset] "set mouse_behavior d"
     foreach id $mged_players {
 	set mged_gui($id,mouse_behavior) d
     }
@@ -301,7 +301,7 @@ proc mouse_comb_edit_select { x y } {
     set comb_control($id,name) $comb
     comb_reset $id
 
-    mged_apply_all "set mouse_behavior d"
+    mged_apply_all [winset] "set mouse_behavior d"
     foreach id $mged_players {
 	set mged_gui($id,mouse_behavior) d
     }

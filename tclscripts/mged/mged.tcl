@@ -273,7 +273,7 @@ proc ia_invoke { w } {
     } elseif {$mged_gui($id,apply_to) == 2} {
 	set cmd "mged_apply_using_list $id \"$hcmd\""
     } elseif {$mged_gui($id,apply_to) == 3} {
-	set cmd "mged_apply_all \"$hcmd\""
+	set cmd "mged_apply_all $mged_gui($id,active_dm) \"$hcmd\""
     } else {
 	set cmd $hcmd
     }

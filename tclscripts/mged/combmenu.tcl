@@ -51,7 +51,7 @@ proc build_comb_menu_all {} {
     set combs [build_comb_list $paths]
     build_comb_menu $id $combs
 
-    mged_apply_all "set mouse_behavior d"
+    mged_apply_all [winset] "set mouse_behavior d"
     foreach id $mged_players {
 	set mged_gui($id,mouse_behavior) d
     }
@@ -77,7 +77,7 @@ proc ray_build_comb_menu { x y } {
     set combs [build_comb_list $paths]
     build_comb_menu $id $combs
 
-    mged_apply_all "set mouse_behavior d"
+    mged_apply_all [winset] "set mouse_behavior d"
     foreach id $mged_players {
 	set mged_gui($id,mouse_behavior) d
     }

@@ -50,7 +50,7 @@ proc build_edit_menu_all { type } {
     _mged_press reject
     build_solid_menu $type $id $paths
 
-    mged_apply_all "set mouse_behavior d"
+    mged_apply_all [winset] "set mouse_behavior d"
     foreach id $mged_players {
 	set mged_gui($id,mouse_behavior) d
     }
@@ -105,7 +105,7 @@ proc ray_build_edit_menu { type x y } {
 	}
     }
 
-    mged_apply_all "set mouse_behavior d"
+    mged_apply_all [winset] "set mouse_behavior d"
     foreach id $mged_players {
 	set mged_gui($id,mouse_behavior) d
     }
