@@ -399,13 +399,13 @@ bn_mat_print("perspective_mat", perspective_mat);
 	    sp->s_flag = UP;
 	    ndrawn++;
 	  }else{
-	    if(DM_DRAW_VLIST(dmp, (struct rt_vlist *)&sp->s_vlist) == TCL_OK){
+	    if(DM_DRAW_VLIST(dmp, (struct rt_vlist *)&sp->s_vlist, mged_variables->perspective ) == TCL_OK){
 	      sp->s_flag = UP;
 	      ndrawn++;
 	    }
 	  }
 #else
-	  if(DM_DRAW_VLIST( dmp, (struct rt_vlist *)&sp->s_vlist ) == TCL_OK) {
+	  if(DM_DRAW_VLIST( dmp, (struct rt_vlist *)&sp->s_vlist, mged_variables->perspective ) == TCL_OK) {
 	    sp->s_flag = UP;
 	    ndrawn++;
 	  }
@@ -422,7 +422,7 @@ bn_mat_print("perspective_mat", perspective_mat);
 	/* draw predictor vlist */
 	if(mged_variables->predictor){
 	  DM_SET_COLOR(dmp, DM_WHITE_R, DM_WHITE_G, DM_WHITE_B, 1);
-	  DM_DRAW_VLIST(dmp, (struct rt_vlist *)&curr_dm_list->p_vlist);
+	  DM_DRAW_VLIST(dmp, (struct rt_vlist *)&curr_dm_list->p_vlist, mged_variables->perspective);
 	}
 
 	/*
@@ -464,7 +464,7 @@ bn_mat_print("perspective_mat", perspective_mat);
 #ifdef DO_DISPLAY_LISTS
 #ifdef DO_SINGLE_DISPLAY_LIST
 	  /* draw in immediate mode */
-	  if(DM_DRAW_VLIST(dmp, (struct rt_vlist *)&sp->s_vlist) == TCL_OK){
+	  if(DM_DRAW_VLIST(dmp, (struct rt_vlist *)&sp->s_vlist, mged_variables->perspective) == TCL_OK){
 	    sp->s_flag = UP;
 	    ndrawn++;
 	  }
@@ -475,14 +475,14 @@ bn_mat_print("perspective_mat", perspective_mat);
 	    ndrawn++;
 	  }else{
 	    /* draw in immediate mode */
-	    if(DM_DRAW_VLIST(dmp, (struct rt_vlist *)&sp->s_vlist) == TCL_OK){
+	    if(DM_DRAW_VLIST(dmp, (struct rt_vlist *)&sp->s_vlist, mged_variables->perspective) == TCL_OK){
 	      sp->s_flag = UP;
 	      ndrawn++;
 	    }
 	  }
 #endif
 #else
-	  if( DM_DRAW_VLIST( dmp, (struct rt_vlist *)&sp->s_vlist ) == TCL_OK){
+	  if( DM_DRAW_VLIST( dmp, (struct rt_vlist *)&sp->s_vlist, mged_variables->perspective ) == TCL_OK){
 	    sp->s_flag = UP;
 	    ndrawn++;
 	  }
@@ -527,7 +527,7 @@ struct solid *hsp;
 		    (short)sp->s_color[2]);
     }
 
-    DM_DRAW_VLIST(dmp, (struct rt_vlist *)&sp->s_vlist);
+    DM_DRAW_VLIST(dmp, (struct rt_vlist *)&sp->s_vlist, mged_variables->perspective);
   }
 
   DM_ENDDLIST(dmp);
@@ -541,7 +541,7 @@ createDList(sp)
 struct solid *sp;
 {
   DM_BEGINDLIST(dmp, sp->s_dlist);
-  DM_DRAW_VLIST(dmp, (struct rt_vlist *)&sp->s_vlist);
+  DM_DRAW_VLIST(dmp, (struct rt_vlist *)&sp->s_vlist, mged_variables->perspective);
   DM_ENDDLIST(dmp);
 }
 
