@@ -23,7 +23,7 @@
 	../SRCDIR/ktank.asc ../SRCDIR/moss.asc ../SRCDIR/prim.asc \
 	../SRCDIR/star.asc ../SRCDIR/truck.asc \
 	../SRCDIR/world.asc ../SRCDIR/cube.asc ../SRCDIR/axis.asc \
-	../SRCDIR/pwoodsman.asc ../SRCDIR/m35.asc \
+	../SRCDIR/woodsman.asc ../SRCDIR/m35.asc \
 	../SRCDIR/lgt-test.asc ../SRCDIR/lgt-test.ldb \
 	../SRCDIR/lgt-test.mdb ../SRCDIR/lgt-test.key
 
