@@ -1,3 +1,6 @@
+#ifndef SEEN_DM_PEX
+#define SEEN_DM_PEX
+
 /*
  * Display coordinate conversion:
  *  GED is using -2048..+2048,
@@ -45,7 +48,9 @@ struct pex_vars {
   genptr_t app_vars;   /* application specific variables */
 };
 
-extern struct pex_vars head_pex_vars;
 extern void Pex_configure_window_shape();
 extern void Pex_establish_perspective();
 extern void Pex_set_perspective();
+extern struct pex_vars head_pex_vars;
+
+#endif /* SEEN_DM_PEX */
