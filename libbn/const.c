@@ -40,3 +40,11 @@ CONST mat_t	rt_identity = {
 	0, 0, 1, 0,
 	0, 0, 0, 1
 };
+
+#ifdef ipsc860
+/* Hack to work around the broken iPSC/860 loader.  It doesn't
+ * see the definition in global.c, probably because there is no
+ * .text or .data there that it needs.
+ */
+struct rt_g rt_g;
+#endif
