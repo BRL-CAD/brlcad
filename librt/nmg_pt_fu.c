@@ -720,6 +720,19 @@ struct fpi	*fpi;
 	NMG_CK_LOOP_G(lu->l_p->lg_p);
 
 
+	if (!V3PT_IN_RPP( fpi->pt, lu->l_p->lg_p->min_pt, lu->l_p->lg_p->max_pt)) {
+		/* point is not in RPP of loop */
+
+		if (rt_g.NMG_debug & DEBUG_PT_FU )
+			rt_log("nmg_class_pt_lu( pt(%g %g %g) outside loop RPP\n",
+				V3ARGS(fpi->pt));
+
+		if (lu->orientation == OT_SAME)
+			return NMG_CLASS_AoutB;
+		else if (lu->orientation == OT_SAME)
+			return NMG_CLASS_AinB;
+			
+	}
 
 	if (RT_LIST_FIRST_MAGIC(&lu->down_hd) == NMG_EDGEUSE_MAGIC) {
 		register struct edgeuse	*eu;
@@ -834,6 +847,9 @@ CONST struct rt_tol     *tol;
 	double		dist;
 	struct ve_dist	*ved_p;
 
+	if (rt_g.NMG_debug & DEBUG_PT_FU )
+		rt_log("nmg_class_pt_fu_except( (%g %g %g) )\n", V3ARGS(pt));
+
 	NMG_CK_FACEUSE(fu);
 	NMG_CK_FACE(fu->f_p);
 	NMG_CK_FACE_G_PLANE(fu->f_p->g.plane_p);
@@ -846,6 +862,18 @@ CONST struct rt_tol     *tol;
 		rt_log("nmg_class_pt_fu_except() ERROR, point (%g,%g,%g)\nnot on face %g %g %g %g,\ndist=%g\n",
 			V3ARGS(pt), V4ARGS(fpi.norm), dist );
 	}
+
+	if( !V3PT_IN_RPP( pt, fu->f_p->min_pt, fu->f_p->max_pt ) )  {
+		/* point is not in RPP of face, so there's NO WAY this point
+		 * is anything but OUTSIDE
+		 */
+		if (rt_g.NMG_debug & DEBUG_PT_FU )
+			rt_log("nmg_class_pt_fu_except( (%g %g %g) ouside face RPP\n",
+				V3ARGS(pt));
+
+		return NMG_CLASS_AoutB;
+	}
+
 
 	fpi.fu_p = fu;
 	fpi.tol = tol;
@@ -862,6 +890,10 @@ CONST struct rt_tol     *tol;
 			continue;
 
 		lu_class = nmg_class_pt_lu(lu, &fpi);
+		if (rt_g.NMG_debug & DEBUG_PT_FU )
+			rt_log("loop %s says pt is %s\n",
+				nmg_orientation(lu->orientation),
+				nmg_class_name(lu_class) );
 
 		if (lu->orientation == OT_OPPOSITE &&
 		    lu_class == NMG_CLASS_AoutB )
@@ -898,4 +930,106 @@ CONST struct rt_tol     *tol;
 			nmg_class_name(fu_class));
 
 	return fu_class;
+}
+
+
+/*
+ *	N M G _ C L A S S _ P T _ L U _ E X C E P T 
+ *
+ *	Classify a point as being in/on/out of the area bounded by a loop,
+ *	ignoring any uses of a particular edge in the loop.
+ *
+ *	This routine must be called with a face-loop of edges!
+ */
+int
+nmg_class_pt_lu_except(pt, lu, e_p, tol)
+point_t		pt;
+struct loopuse	*lu;
+struct edge	*e_p;
+struct rt_tol	*tol;
+{
+	register struct edgeuse	*eu;
+	struct edge_info edge_list;
+	struct edge_info *ei;
+	struct fpi	fpi;
+	int		lu_class = NMG_CLASS_Unknown;
+	struct ve_dist	*ved_p;
+	double		dist;
+
+	NMG_CK_LOOPUSE(lu);
+
+	if (e_p) NMG_CK_EDGE(e_p);
+
+	NMG_CK_FACEUSE(lu->up.fu_p);
+
+	/* Validate distance from point to plane */
+	NMG_GET_FU_PLANE( fpi.norm, lu->up.fu_p );
+	if( (dist=fabs(DIST_PT_PLANE( pt, fpi.norm ))) > tol->dist )  {
+		rt_log("nmg_class_pt_lu_except() ERROR, point (%g,%g,%g)\nnot on face %g %g %g %g,\ndist=%g\n",
+			V3ARGS(pt), V4ARGS(fpi.norm), dist );
+	}
+
+
+	if (!V3PT_IN_RPP( pt, lu->l_p->lg_p->min_pt, lu->l_p->lg_p->max_pt)) {
+		/* point is not in RPP of loop */
+
+		if (rt_g.NMG_debug & DEBUG_PT_FU )
+			rt_log("nmg_class_pt_lu_except( pt(%g %g %g) outside loop RPP\n",
+				V3ARGS(pt));
+
+		if (lu->orientation == OT_SAME) return NMG_CLASS_AoutB;
+		else if (lu->orientation == OT_SAME) return NMG_CLASS_AinB;
+		else {
+			rt_log("What kind of loop is this anyway? %s?\n",
+				nmg_orientation(lu->orientation) );
+			rt_bomb("");
+		}
+	}
+
+	if (RT_LIST_FIRST_MAGIC(&lu->down_hd) == NMG_VERTEXUSE_MAGIC) {
+		rt_log("%s:%d Improper use of nmg_class_pt_lu_except(pt(%g %g %g), vu)\n",
+			__FILE__, __LINE__, V3ARGS(pt));
+		rt_bomb("giving up\n");
+	}
+
+	RT_LIST_INIT(&edge_list.l);
+	fpi.fu_p = lu->up.fu_p;
+
+	fpi.tol = tol;
+	RT_LIST_INIT(&fpi.ve_dh);
+	VMOVE(fpi.pt, pt);
+	fpi.eu_func = (void (*)())NULL;
+	fpi.vu_func = (void (*)())NULL;
+	fpi.priv = (char *)NULL;
+	fpi.hits = 0;
+	fpi.magic = NMG_FPI_MAGIC;
+
+	for (RT_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
+		if (eu->e_p == e_p) continue;
+
+		ei = nmg_class_pt_eu(&fpi, eu, &edge_list);
+		NMG_CK_EI(ei);
+		NMG_CK_VED(ei->ved_p);
+		if (ei->ved_p->dist < tol->dist) {
+			lu_class = NMG_CLASS_AinB;
+			break;
+		}
+	}
+	if (lu_class == NMG_CLASS_Unknown)
+		lu_class = compute_loop_class(&fpi, lu, &edge_list);
+	else if (rt_g.NMG_debug & DEBUG_PT_FU )
+		rt_log("loop class already known (pt must touch edge)\n");
+
+	/* free up the edge_list elements */
+	while ( RT_LIST_WHILE(ei, edge_info, &edge_list.l) ) {
+		RT_LIST_DEQUEUE( &ei->l );
+		rt_free( (char *)ei, "edge info struct");
+	}
+
+	while (RT_LIST_WHILE(ved_p, ve_dist, &fpi.ve_dh)) {
+		RT_LIST_DEQUEUE( &ved_p->l );
+		rt_free( (char *)ved_p, "ve_dist struct");
+	}
+
+	return lu_class;
 }
