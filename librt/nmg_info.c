@@ -1167,8 +1167,8 @@ CONST struct rt_tol	*tol;
 				    			rt_log("eur=x%x, eg_p=x%x;  ret=x%x, eg_p=x%x\n",
 				    				eur, eur->g.lseg_p,
 				    				ret, ret->g.lseg_p );
-				    			nmg_pr_eg( eur->g.lseg_p, 0 );
-				    			nmg_pr_eg( ret->g.lseg_p, 0 );
+				    			nmg_pr_eg( eur->g.magic_p, 0 );
+				    			nmg_pr_eg( ret->g.magic_p, 0 );
 				    			nmg_pr_eu_endpoints( eur, 0 );
 				    			nmg_pr_eu_endpoints( ret, 0 );
 

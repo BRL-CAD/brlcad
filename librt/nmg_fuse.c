@@ -465,8 +465,8 @@ trouble:
 		return 0;
 
 	/* XXX debug */
-	nmg_pr_eg( eg1, 0 );
-	nmg_pr_eg( eg2, 0 );
+	nmg_pr_eg( &eg1->magic, 0 );
+	nmg_pr_eg( &eg2->magic, 0 );
 	rt_log("nmg_2edgeuse_g_coincident() lines colinear, vertex check fails, calling colinear anyway.\n");
 	return 1;
 }
