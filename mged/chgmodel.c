@@ -461,6 +461,7 @@ char	**argv;
 	struct rt_tgc_internal	*tgc_ip;
 	struct rt_ell_internal	*ell_ip;
 	struct rt_tor_internal	*tor_ip;
+	struct rt_grip_internal	*grp_ip;
 
 	if( db_lookup( dbip,  argv[1], LOOKUP_QUIET ) != DIR_NULL )  {
 		aexists( argv[1] );
@@ -469,7 +470,8 @@ char	**argv;
 
 	RT_INIT_DB_INTERNAL( &internal );
 
-	/* make name <arb8|arb7|arb6|arb5|arb4|ellg|ell|sph|tor|tgc|rec|trc|rcc> */
+	/* make name <arb8 | arb7 | arb6 | arb5 | arb4 | ellg | ell |
+	 * sph | tor | tgc | rec | trc | rcc | grp> */
 	if( strcmp( argv[2], "arb8" ) == 0 )  {
 		internal.idb_type = ID_ARB8;
 		internal.idb_ptr = (genptr_t)rt_malloc( sizeof(struct rt_arb_internal) , "rt_arb_internal" );
@@ -584,6 +586,16 @@ char	**argv;
 		VSET( ell_ip->a, (0.5*Viewscale), 0, 0 );	/* A */
 		VSET( ell_ip->b, 0, (0.5*Viewscale), 0 );	/* B */
 		VSET( ell_ip->c, 0, 0, (0.5*Viewscale) );	/* C */
+	} else if(( strcmp( argv[2], "grp" ) == 0 ) ||
+		  ( strcmp( argv[2], "grip") == 0 )) {
+		internal.idb_type = ID_GRIP;
+		internal.idb_ptr = (genptr_t)rt_malloc( sizeof(struct rt_grip_internal), "rt_grp_internal" );
+		grp_ip = (struct rt_grip_internal *) internal.idb_ptr;
+		grp_ip->magic = RT_GRIP_INTERNAL_MAGIC;
+		VSET( grp_ip->center, -toViewcenter[MDX], -toViewcenter[MDY],
+		    -toViewcenter[MDZ]);
+		VSET( grp_ip->normal, 1.0, 0.0, 0.0);
+		grp_ip->mag = Viewscale*0.75;
 	} else if( strcmp( argv[2], "ell" ) == 0 )  {
 		internal.idb_type = ID_ELL;
 		internal.idb_ptr = (genptr_t)rt_malloc( sizeof(struct rt_ell_internal) , "rt_ell_internal" );
