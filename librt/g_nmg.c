@@ -1,3 +1,4 @@
+#define DEBUG	0
 /*
  *			G _ N M G . C
  *
@@ -268,17 +269,28 @@ double			norm_tol;
 	}
 
 	/* XXX A big hack, just for testing ***/
+
+	*r = RT_LIST_FIRST(nmgregion, &(lm->r_hd) );
+	NMG_CK_REGION(*r);
+	if( RT_LIST_NEXT_NOT_HEAD( *r, &(lm->r_hd) ) )  {
+		rt_log("rt_nmg_tess: WARNING, disk record contains more than 1 region, you probably won't get what you expect!\n");
+		/* Let it proceed, on the off chance it's useful */
+	}
+
+	/* What follows should probably be made a generic nmg operation */
+
 	/* Dest must be empty to avoid index confusion */
 	if( RT_LIST_NON_EMPTY( &(m->r_hd) ) )  {
 		rt_log("rt_nmg_tess: destination model non-empty\n");
+		/* XXX Here, should use some kind of nmg_copy() */
 		return(-1);
 	}
-	*r = RT_LIST_FIRST(nmgregion, &(lm->r_hd) );
-	NMG_CK_REGION(*r);
 
 	/* Swipe newly imported model's stuff */
 	RT_LIST_APPEND_LIST( &(m->r_hd), &(lm->r_hd) );
+	m->maxindex += lm->maxindex;	/* just barely OK for a hack */
 
+	/* Re-home regions to new model (which was empty until now) */
 	for( RT_LIST_FOR( lr, nmgregion, &(m->r_hd) ) )  {
 		lr->m_p = m;
 	}
@@ -1480,7 +1492,7 @@ register mat_t		mat;
 		rt_log("rt_struct_import failure\n");
 		return(-1);
 	}
-#if 0
+#if DEBUG
 	nmg_pr_struct_counts( &cntbuf, "After import" );
 #endif
 
@@ -1489,7 +1501,7 @@ register mat_t		mat;
 		kind_counts[kind] = ((long *)&cntbuf)[kind];
 		maxindex += kind_counts[kind];
 	}
-#if 0
+#if DEBUG
 	rt_log("import maxindex=%d\n", maxindex);
 #endif
 
@@ -1508,7 +1520,7 @@ register mat_t		mat;
 	subscript = 1;
 	cp = (char *)(rp+1);	/* start at first granule in */
 	for( kind = 0; kind < NMG_N_KINDS; kind++ )  {
-#if 0
+#if DEBUG
 rt_log("%d  %s\n",
 	kind_counts[kind], rt_nmg_kind_names[kind] );
 #endif
@@ -1543,6 +1555,7 @@ rt_log("%d  %s\n",
 					struct nmgregion	*r;
 					GET_REGION( r, m );
 					r->l.magic = NMG_REGION_MAGIC;
+					RT_LIST_INIT( &r->s_hd );
 					ptrs[subscript] = (long *)r;
 				}
 				break;
@@ -1559,6 +1572,9 @@ rt_log("%d  %s\n",
 					struct shell	*s;
 					GET_SHELL( s, m );
 					s->l.magic = NMG_SHELL_MAGIC;
+					RT_LIST_INIT( &s->fu_hd );
+					RT_LIST_INIT( &s->lu_hd );
+					RT_LIST_INIT( &s->eu_hd );
 					ptrs[subscript] = (long *)s;
 				}
 				break;
@@ -1575,6 +1591,7 @@ rt_log("%d  %s\n",
 					struct faceuse	*fu;
 					GET_FACEUSE( fu, m );
 					fu->l.magic = NMG_FACEUSE_MAGIC;
+					RT_LIST_INIT( &fu->lu_hd );
 					ptrs[subscript] = (long *)fu;
 				}
 				break;
@@ -1607,6 +1624,7 @@ rt_log("%d  %s\n",
 					struct loopuse	*lu;
 					GET_LOOPUSE( lu, m );
 					lu->l.magic = NMG_LOOPUSE_MAGIC;
+					RT_LIST_INIT( &lu->down_hd );
 					ptrs[subscript] = (long *)lu;
 				}
 				break;
@@ -1687,6 +1705,7 @@ rt_log("%d  %s\n",
 					struct vertex	*v;
 					GET_VERTEX( v, m );
 					v->magic = NMG_VERTEX_MAGIC;
+					RT_LIST_INIT( &v->vu_hd );
 					ptrs[subscript] = (long *)v;
 				}
 				break;
@@ -1703,7 +1722,7 @@ rt_log("%d  %s\n",
 				ptrs[subscript] = (long *)0;
 				break;
 			}
-#if 0
+#if DEBUG
 rt_log("   disk_index=%d, kind=%s, ptr=x%x, final_index=%d\n",
 subscript, rt_nmg_kind_names[kind],
 ptrs[subscript], rt_nmg_index_of_struct(ptrs[subscript]) );
@@ -1769,7 +1788,7 @@ double			local2mm;
 
 	bzero( (char *)&cntbuf, sizeof(cntbuf) );
 	ptrs = nmg_m_struct_count( &cntbuf, m );
-#if 0
+#if DEBUG
 	nmg_pr_struct_counts( &cntbuf, "Counts in rt_nmg_export" );
 #endif
 
@@ -1794,12 +1813,12 @@ double			local2mm;
 		}
 	}
 
-#if 0
+#if DEBUG
 rt_log("Mapping of old index to new index, and kind\n");
 #endif
 	for( i=0; i < m->maxindex; i++ )  {
 		if( ptrs[i] == (long *)0 )  continue;
-#if 0
+#if DEBUG
 		rt_log(" %4d %4d %s (%d)\n",
 			i, ecnt[i].new_subscript,
 			rt_nmg_kind_names[ecnt[i].kind], ecnt[i].kind);
@@ -1817,7 +1836,7 @@ rt_log("Mapping of old index to new index, and kind\n");
 
 	tot_size = 0;
 	for( i = 0; i < NMG_N_KINDS; i++ )  {
-#if 0
+#if DEBUG
 		rt_log("%d of kind %s (%d)\n",
 			kind_counts[i], rt_nmg_kind_names[i], i);
 #endif
