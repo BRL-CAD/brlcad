@@ -42,8 +42,11 @@ proc mike_dedication {id} {
 		}
 	}
 
-	button $top.dismiss -text "dismiss" -command "destroy $top"
+	button $top.dismiss -text "Ttfn" -command "destroy $top"
 	grid $top.dismiss -row $row -column 0 -columnspan 2 -pady 3
+	hoc_register_data $top.dismiss "Ttfn" {
+		{summary "Ta ta, for now\n              -Tigger" }
+	}
 
 	grid columnconfigure $top 0 -weight 1
 
