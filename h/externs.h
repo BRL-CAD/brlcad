@@ -23,7 +23,8 @@
 #ifndef EXTERNS_H_SEENYET
 #define EXTERNS_H_SEENYET
 
-#if __STDC__ && !apollo
+#if (__STDC__ && !apollo) || (sgi && mips)
+	/* SGI has this, even though it isn't ANSI */
 #	include <stdlib.h>
 #else
 
