@@ -92,6 +92,11 @@ double	t;
  *  can't be used here -- that only applies to faceuses from the same shell.
  *
  *  Some of the edgeuses around both edges may be wires.
+ *
+ *	Call to nmg_check_radial at end has been deleted.
+ *	Note that after two radial EU's have been joined
+ *	a third cannot be joined to them without creating
+ *	unclosed space that nmg_check_radial will find.
  */
 void
 nmg_radial_join_eu(eu1, eu2, tol)
@@ -334,12 +339,7 @@ insert:
 	}
 	if( iteration1 >= 10000 )  rt_bomb("nmg_radial_join_eu:  infinite loop (1)\n");
 
-	/* This should catch errors, anyway */
 	NMG_CK_EDGEUSE(original_eu1);
-	if( nmg_check_radial(original_eu1, tol) )  {
-		nmg_plot_lu_around_eu( "around", original_eu1, tol );
-		rt_bomb("nmg_radial_join_eu(): radial orientation ERROR\n");
-	}
 
 	if (rt_g.NMG_debug & DEBUG_MESH_EU)  rt_log("nmg_radial_join_eu: END\n");
 }
