@@ -935,6 +935,47 @@ int arg;
 				return;
 			}
 
+			/* Check if loop crosses itself */
+			for( RT_LIST_FOR( eu , edgeuse , &lu->down_hd ) )
+			{
+				struct edgeuse *eu2;
+				struct vertex *v1;
+				vect_t edge1;
+
+				NMG_CK_EDGEUSE( eu );
+
+				v1 = eu->vu_p->v_p;
+				NMG_CK_VERTEX( v1 );
+				VSUB2( edge1, eu->eumate_p->vu_p->v_p->vg_p->coord, v1->vg_p->coord );
+
+				for( eu2 = RT_LIST_PNEXT( edgeuse , &eu->l ) ; RT_LIST_NOT_HEAD( eu2 , &lu->down_hd ) ; eu2=RT_LIST_PNEXT( edgeuse, &eu2->l) )
+				{
+					struct vertex *v2;
+					vect_t edge2;
+					fastf_t dist[2];
+
+					NMG_CK_EDGEUSE( eu2 );
+
+					if( eu2 == eu )
+						continue;
+					if( eu2 == RT_LIST_PNEXT_CIRC( edgeuse,  &eu->l ) )
+						continue;
+					if( eu2 == RT_LIST_PPREV_CIRC( edgeuse, &eu->l ) )
+						continue;
+
+					v2 = eu2->vu_p->v_p;
+					NMG_CK_VERTEX( v2 );
+					VSUB2( edge2, eu2->eumate_p->vu_p->v_p->vg_p->coord, v2->vg_p->coord );
+
+					if( rt_isect_lseg3_lseg3( dist, v1->vg_p->coord, edge1,
+						v2->vg_p->coord, edge2, &mged_tol ) > (-1) )
+					{
+						(void)printf( "Loop crosses itself, cannot extrude\n" );
+						return;
+					}
+				}
+			}
+
 			/* Create a temporary model to store the basis loop */
 			m_tmp = nmg_mm();
 			r_tmp = nmg_mrsv( m_tmp );
