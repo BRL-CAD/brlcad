@@ -934,6 +934,7 @@ AC_CHECK_FUNCS(\
 	getpagesize \
 	getpass \
 	gettimeofday \
+	strerror \
 	inet_ntoa \
 	isascii \
 	localtime_r \
