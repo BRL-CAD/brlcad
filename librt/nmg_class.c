@@ -227,12 +227,32 @@ long		*novote;
 	if( fabs(dist - mag) > tol->dist )
 		rt_log("ERROR! dist=%e |pt-pca|=%e, tol=%g, tol_sq=%g\n", dist, mag, tol->dist, tol->dist_sq);
 
-	if (dist >= closest->dist) {
-		if (rt_g.NMG_debug & DEBUG_CLASSIFY) {
+	if (dist >= closest->dist + tol->dist ) {
+ 		if(rt_g.NMG_debug & DEBUG_CLASSIFY) {
 			EUPRINT("\t\tskipping, earlier eu is closer", eu);
-		}
+ 		}
 		return;
-	}
+ 	}
+ 	if( dist >= closest->dist - tol->dist )  {
+ 		/*
+ 		 *  Distances are very nearly the same.
+ 		 *  If "closest" result so far was a FACE_HIT, then keep it,
+ 		 *  otherwise, replace that result with whatever we find
+ 		 *  here.  Logic:  Two touching loops, one concave ("A")
+		 *  which wraps around part of the other ("B"), with the
+ 		 *  point inside A near the contact with B.  If loop B is
+		 *  processed first, the closest result will be FACE_MISS,
+ 		 *  and when loop A is visited the distances will be exactly
+ 		 *  equal, not giving A a chance to claim it's hit.
+ 		 */
+ 		if( closest->inout == FACE_HIT )  {
+	 		if(rt_g.NMG_debug & DEBUG_CLASSIFY)
+				rt_log("\t\tSkipping, earlier eu at same dist, has HIT\n");
+ 			return;
+ 		}
+ 		if(rt_g.NMG_debug & DEBUG_CLASSIFY)
+			rt_log("\t\tEarlier eu at same dist, had MISS, continue processing.\n");
+ 	}
 
 	/* Plane hit point is closer to this edgeuse than previous one(s) */
 	if (rt_g.NMG_debug & DEBUG_CLASSIFY) {
@@ -250,8 +270,9 @@ long		*novote;
 	    	return;
 	}
 
-    	if (NEAR_ZERO(dist, tol->dist)) {
-    		/* The ray has hit the edge! */
+	if( code <= 2 )  {
+		/* code==0:  The ray has hit the edge! */
+		/* code==1 or 2:  The ray has hit a vertex! */
     		if (rt_g.NMG_debug & DEBUG_CLASSIFY) {
 	    		rt_log("\t\tdistance: %e   tol: %g\n", dist, tol->dist);
     			rt_log("\t\tThe ray has hit the edge, calling joint_hitmiss2()\n");
@@ -325,8 +346,8 @@ out:
 		bits = (long *)rt_calloc( nmg_find_model(&fu->l.magic)->maxindex, sizeof(long), "bits[]");
 		sprintf(buf,"faceclass%d.pl", num++);
 		if( (fp = fopen(buf, "w")) == NULL) rt_bomb(buf);
-		nmg_pl_fu( fp, fu, bits, 0, 255, 0 );
-		pl_color( fp, 255, 255, 0 );	/* yellow */
+		nmg_pl_fu( fp, fu, bits, 0, 0, 255 );	/* blue */
+		pl_color( fp, 0, 255, 0 );	/* green */
 		pdv_3line( fp, pca, pt );
 		pl_color( fp, 255, 0, 0 );	/* red */
 		VADD2SCALE( mid_pt, eupt, matept, 0.5 );
@@ -365,7 +386,7 @@ long		*novote;
 	NMG_CK_LOOP_G(lg);
 
 	if (rt_g.NMG_debug & DEBUG_CLASSIFY)
-		VPRINT("pt_hitmis_loop\tProjected Pt:", pt);
+		VPRINT("pt_hitmis_l\tProjected Pt:", pt);
 
 	if (*lu->up.magic_p != NMG_FACEUSE_MAGIC)
 		return;
@@ -414,6 +435,8 @@ long		*novote;
 			__LINE__);
 		rt_bomb("pt_hitmis_l\n");
 	}
+	if (rt_g.NMG_debug & DEBUG_CLASSIFY)
+		rt_log("pt_hitmis_l	returning, closest=%g\n", closest->dist);
 }
 
 /*
@@ -749,7 +772,7 @@ CONST struct rt_tol	*tol;
 	    	nmg_pr_class_status("eumate vu", matev_cl);
 	    	if( rt_g.debug || rt_g.NMG_debug )  {
 		    	/* Do them over, so we can watch */
-	    		rt_g.debug |= DEBUG_MATH;
+/**	    		rt_g.debug |= DEBUG_MATH; **/
 			rt_g.NMG_debug |= DEBUG_CLASSIFY;
 			(void)class_vu_vs_s(eu->vu_p, s, classlist, tol);
 			(void)class_vu_vs_s(eu->eumate_p->vu_p, s, classlist, tol);
