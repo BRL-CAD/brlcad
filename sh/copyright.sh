@@ -54,7 +54,11 @@ files="`find $findgen -type f | \
         grep -v 'misc/' | \
         grep -v \"$findgen/\.\" | \
         grep -v '\.g$' | \
-        grep -v '\.pix$' \
+        grep -v '\.pix$' |\
+        grep -v '\.pdf$' |\
+        grep -v '\.dll$' |\
+        grep -v '\.gif$' |\
+        grep -v '\.png$' \
       `"
 
 for file in $files ; do
@@ -73,15 +77,16 @@ for file in $files ; do
   fi
   echo -n "."
   if [ -f "$file.copyright.new" ] ; then
-    echo "ERROR: $file.copyright.new is in the way (delete or move it)"
-    exit 2
+    echo "WARNING: $file.copyright.new is in the way (moving it to .bak)"
+    mv $file.copyright.new $file.copyright.new.bak
   elif [ -f "$file.copyright.old" ] ; then
-    echo "ERROR: $file.copyright.old is in the way (delete or move it)"
-    exit 3
+    echo "WARNING: $file.copyright.old is in the way (moving it to .bak)"
+    mv $file.copyright.old $file.copyright.old.bak
   fi
   echo -n "."
 
-  sed -E 's/Copyright \([cC]\) ([0-9][0-9][0-9][0-9]) ?-? ?[0-9]?[0-9]?[0-9]?[0-9]?([ .;])/Copyright (C) \1-`date +%Y`\2/' < $file > $file.copyright.new
+  year=`date +%Y`
+  sed -E "s/Copyright ?\([cC]\) ?([0-9][0-9][0-9][0-9]) ?-? ?[0-9]?[0-9]?[0-9]?[0-9]?([ .;])/Copyright (C) \1-$year\2/" < $file > $file.copyright.new
   if [ "x`diff $file $file.copyright.new`" = "x" ] ; then
     echo "."
     rm $file.copyright.new
