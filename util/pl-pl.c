@@ -116,7 +116,7 @@ int	nocolor = 1;
 int	no3d = 1;
 
 static char usage[] = "\
-Usage: pl-pl [-S] < unix_plot > unix_plot\n";
+Usage: pl-pl [-v] [-S] < unix_plot > unix_plot\n";
 
 main( argc, argv )
 int	argc;
