@@ -344,7 +344,7 @@ CONST struct rt_spectrum	*spect;
 	/* Traverse the CIE table.  Produce as many output values as possible
 	 * before advancing to next CIE table entry.
 	 */
-	for( i = 0; i < 81; i++ )  {
+	for( i = 0; i < 81-1; i++ )  {
 		FAST fastf_t	fract;		/* fraction from [i] to [i+1] */
 
 again:
@@ -820,7 +820,7 @@ int	num;
 
 	cp = (char *)ss;
 	for( i = 0; i < num; i++ ) {
-		struct rt_spect_sample	*sp;
+		register struct rt_spect_sample	*sp;
 
 		sp = (struct rt_spect_sample *)cp;
 		sp->magic = RT_SPECT_SAMPLE_MAGIC;
