@@ -57,6 +57,61 @@ static char RCSsketch[] = "@(#)$Header$ (BRL)";
 
 fastf_t rt_cnurb_par_edge();
 
+int
+rt_check_curve( crv, skt, noisey )
+struct curve *crv;
+struct rt_sketch_internal *skt;
+int noisey;
+{
+	int i, j;
+	int ret=0;
+
+	for( i=0 ; i<crv->seg_count ; i++ )
+	{
+		struct line_seg *lsg;
+		struct carc_seg *csg;
+		struct nurb_seg *nsg;
+		long *lng;
+
+		lng = (long *)&crv->segments[i];
+
+		switch( *lng )
+		{
+			case CURVE_LSEG_MAGIC:
+				lsg = (struct line_seg *)lng;
+				if( lsg->start >= skt->vert_count ||
+				    lsg->end >= skt->vert_count )
+					ret++;
+				break;
+			case CURVE_CARC_MAGIC:
+				csg = (struct carc_seg *)lng;
+				if( csg->start >= skt->vert_count ||
+				    csg->end >= skt->vert_count )
+					ret++;
+				break;
+			case CURVE_NURB_MAGIC:
+				nsg = (struct nurb_seg *)lng;
+				for( j=0 ; j<nsg->c_size ; j++ )
+				{
+					if( nsg->ctl_points[j] >= skt->vert_count )
+					{
+						ret++;
+						break;
+					}
+				}
+				break;
+			default:
+				ret++;
+				if( noisey )
+					bu_log( "Unrecognized segment type in curve (%s)\n", crv->crv_name );
+				break;
+		}
+	}
+	if( ret && noisey )
+		bu_log( "curve (%s) references non-existent vertices in sketch!!!\n", crv->crv_name );
+	return( ret );
+}
+
 /*
  *  			R T _ S K E T C H _ P R E P
  *  
@@ -186,10 +241,6 @@ void
 rt_sketch_free( stp )
 register struct soltab *stp;
 {
-	register struct sketch_specific *sketch =
-		(struct sketch_specific *)stp->st_specific;
-
-	bu_free( (char *)sketch, "sketch_specific" );
 }
 
 /*
@@ -204,7 +255,7 @@ rt_sketch_class()
 /*
  *			C U R V E _ T O _ V L I S T
  */
-void
+int
 curve_to_vlist( vhead, ttol, V, u_vec, v_vec, sketch_ip, crv )
 struct bu_list          *vhead;
 CONST struct rt_tess_tol *ttol;
@@ -224,6 +275,7 @@ struct curve                    *crv;
 	vect_t semi_a, semi_b;
 	fastf_t radius;
 	vect_t norm;
+	int ret=0;
 
 	if( bu_debug&BU_DEBUG_MEM_CHECK )
 	{
@@ -238,6 +290,12 @@ struct curve                    *crv;
 		{
 			case CURVE_LSEG_MAGIC:
 				lsg = (struct line_seg *)lng;
+				if( lsg->start >= sketch_ip->vert_count ||
+				    lsg->end >= sketch_ip->vert_count )
+				{
+					ret++;
+					break;
+				}
 				VJOIN2( pt, V, sketch_ip->verts[lsg->start][0], u_vec, sketch_ip->verts[lsg->start][1], v_vec);
 				RT_ADD_VLIST( vhead, pt, BN_VLIST_LINE_MOVE )
 				VJOIN2( pt, V, sketch_ip->verts[lsg->end][0], u_vec, sketch_ip->verts[lsg->end][1], v_vec);
@@ -251,8 +309,15 @@ struct curve                    *crv;
 				fastf_t oldu, oldv, newu, newv;
 				int nsegs;
 
-				delta = M_PI/4.0;
 				csg = (struct carc_seg *)lng;
+				if( csg->start >= sketch_ip->vert_count ||
+				    csg->end >= sketch_ip->vert_count )
+				{
+					ret++;
+					break;
+				}
+
+				delta = M_PI/4.0;
 				if( csg->radius <= 0.0 )
 				{
 					VJOIN2( center, V, sketch_ip->verts[csg->end][0], u_vec, sketch_ip->verts[csg->end][1], v_vec);
@@ -403,6 +468,14 @@ struct curve                    *crv;
 				fastf_t param_delta, epsilon;
 
 				nsg = (struct nurb_seg *)lng;
+				for( i=0 ; i<nsg->c_size ; i++ )
+				{
+					if( nsg->ctl_points[i] >= sketch_ip->vert_count )
+					{
+						ret++;
+						break;
+					}
+				}
 				if( nsg->order < 3 )
 				{
 					/* just straight lines */
@@ -520,6 +593,8 @@ struct curve                    *crv;
 		bu_log( "Barrier check at end of curve_to_vlist():\n" );
 		bu_mem_barriercheck();
 	}
+
+	return( ret );
 }
 
 /*
@@ -534,6 +609,8 @@ CONST struct bn_tol		*tol;
 {
 	LOCAL struct rt_sketch_internal	*sketch_ip;
 	int				curve_no;
+	int				ret;
+	int				myret=0;
 
 	RT_CK_DB_INTERNAL(ip);
 	sketch_ip = (struct rt_sketch_internal *)ip->idb_ptr;
@@ -541,10 +618,15 @@ CONST struct bn_tol		*tol;
 
 	for( curve_no=0 ; curve_no < sketch_ip->curve_count ; curve_no++ )
 	{
-		curve_to_vlist( vhead, ttol, sketch_ip->V, sketch_ip->u_vec, sketch_ip->v_vec, sketch_ip, &sketch_ip->curves[curve_no] );
+		if( (ret=curve_to_vlist( vhead, ttol, sketch_ip->V, sketch_ip->u_vec, sketch_ip->v_vec, sketch_ip, &sketch_ip->curves[curve_no] )) )
+		{
+			myret--;
+			bu_log( "WARNING: Errors in curve %s (%d segments reference non-existent vertices)\n",
+				sketch_ip->curves[curve_no].crv_name, ret );
+		}
 	}
 
-	return(0);
+	return( myret );
 }
 
 /*
@@ -604,7 +686,7 @@ CONST struct db_i		*dbip;
 	RT_INIT_DB_INTERNAL( ip );
 	ip->idb_type = ID_SKETCH;
 	ip->idb_meth = &rt_functab[ID_SKETCH];
-	ip->idb_ptr = bu_malloc( sizeof(struct rt_sketch_internal), "rt_sketch_internal");
+	ip->idb_ptr = bu_calloc( 1, sizeof(struct rt_sketch_internal), "rt_sketch_internal");
 	sketch_ip = (struct rt_sketch_internal *)ip->idb_ptr;
 	sketch_ip->magic = RT_SKETCH_INTERNAL_MAGIC;
 
@@ -620,11 +702,15 @@ CONST struct db_i		*dbip;
 
 	ptr = (unsigned char *)rp;
 	ptr += sizeof( struct sketch_rec );
-	sketch_ip->verts = (point2d_t *)bu_calloc( sketch_ip->vert_count, sizeof( point2d_t ), "sketch_ip->vert" );
+	if( sketch_ip->vert_count )
+		sketch_ip->verts = (point2d_t *)bu_calloc( sketch_ip->vert_count, sizeof( point2d_t ), "sketch_ip->vert" );
 	ntohd( (unsigned char *)sketch_ip->verts, ptr, sketch_ip->vert_count*2 );
 	ptr += 16 * sketch_ip->vert_count;
 
-	segs = (genptr_t *)bu_calloc( seg_count, sizeof( genptr_t ), "segs" );
+	if( seg_count )
+		segs = (genptr_t *)bu_calloc( seg_count, sizeof( genptr_t ), "segs" );
+	else
+		segs = (genptr_t *)NULL;
 	for( seg_no=0 ; seg_no < seg_count ; seg_no++ )
 	{
 		long magic;
@@ -697,7 +783,8 @@ CONST struct db_i		*dbip;
 		}
 	}
 
-	sketch_ip->curves = (struct curve *)bu_calloc( sketch_ip->curve_count, sizeof( struct curve ), "sketch_ip->curves" );
+	if( sketch_ip->curve_count )
+		sketch_ip->curves = (struct curve *)bu_calloc( sketch_ip->curve_count, sizeof( struct curve ), "sketch_ip->curves" );
 	for( curve_no=0 ; curve_no < sketch_ip->curve_count ; curve_no++ )
 	{
 		struct curve *crv;
@@ -723,7 +810,8 @@ CONST struct db_i		*dbip;
 		}
 	}
 
-	bu_free( (char *)segs, "segs" );
+	if( segs )
+		bu_free( (char *)segs, "segs" );
 
 	if( bu_debug&BU_DEBUG_MEM_CHECK )
 	{
@@ -962,15 +1050,17 @@ double			mm2local;
 {
 	register struct rt_sketch_internal	*sketch_ip =
 		(struct rt_sketch_internal *)ip->idb_ptr;
-	int curve_no;
+	int i, curve_no;
 	int seg_no;
 	char	buf[256];
 
 	RT_SKETCH_CK_MAGIC(sketch_ip);
 	bu_vls_strcat( str, "2D sketch (SKETCH)\n");
 
-	sprintf(buf, "\tV = (%g %g %g)\n\t%d vertices, %d curves\n",
+	sprintf(buf, "\tV = (%g %g %g),  A = (%g %g %g), B = (%g %g %g)\n\t%d vertices, %d curves\n",
 		V3ARGS( sketch_ip->V ),
+		V3ARGS( sketch_ip->u_vec ),
+		V3ARGS( sketch_ip->v_vec ),
 		sketch_ip->vert_count,
 		sketch_ip->curve_count );
 	bu_vls_strcat( str, buf );
@@ -978,9 +1068,22 @@ double			mm2local;
 	if( !verbose )
 		return( 0 );
 
+	if( sketch_ip->vert_count )
+	{
+		bu_vls_strcat( str, "\tVertices:\n\t" );
+		for( i=0 ; i<sketch_ip->vert_count ; i++ )
+		{
+			sprintf( buf, " %d-(%g %g)", i, V2ARGS( sketch_ip->verts[i] ) );
+			bu_vls_strcat( str, buf );
+			if( i && (i+1)%3 == 0 )
+				bu_vls_strcat( str, "\n\t" );
+		}
+	}
+	bu_vls_strcat( str, "\n" );
+
 	for( curve_no=0 ; curve_no < sketch_ip->curve_count ; curve_no++ )
 	{
-		sprintf(buf, "\tCurve: %-16.16s\n", sketch_ip->curves[curve_no].crv_name );
+		sprintf(buf, "\n\tCurve: %-16.16s\n", sketch_ip->curves[curve_no].crv_name );
 		bu_vls_strcat( str, buf );
 		for( seg_no=0 ; seg_no < sketch_ip->curves[curve_no].seg_count ; seg_no++ )
 		{
@@ -993,14 +1096,27 @@ double			mm2local;
 			{
 				case CURVE_LSEG_MAGIC:
 					lsg = (struct line_seg *)sketch_ip->curves[curve_no].segments[seg_no];
-					if( sketch_ip->curves[curve_no].reverse[seg_no] )
-						sprintf( buf, "\t\tLine segment (%g %g) <-> (%g %g)\n",
-							V2ARGS( sketch_ip->verts[lsg->end] ),
-							V2ARGS( sketch_ip->verts[lsg->start] ) );
-					else
-						sprintf( buf, "\t\tLine segment (%g %g) <-> (%g %g)\n",
-							V2ARGS( sketch_ip->verts[lsg->start] ),
-							V2ARGS( sketch_ip->verts[lsg->end] ) );
+					if( lsg->start >= sketch_ip->vert_count ||
+					    lsg->end >= sketch_ip->vert_count )
+					{
+						if( sketch_ip->curves[curve_no].reverse[seg_no] )
+							sprintf( buf, "\t\tLine segment from vertex #%d to #%d\n",
+								lsg->end, lsg->start );
+						else
+							sprintf( buf, "\t\tLine segment from vertex #%d to #%d\n",
+								lsg->start, lsg->end );
+					}
+					else	
+					{
+						if( sketch_ip->curves[curve_no].reverse[seg_no] )
+							sprintf( buf, "\t\tLine segment (%g %g) <-> (%g %g)\n",
+								V2ARGS( sketch_ip->verts[lsg->end] ),
+								V2ARGS( sketch_ip->verts[lsg->start] ) );
+						else
+							sprintf( buf, "\t\tLine segment (%g %g) <-> (%g %g)\n",
+								V2ARGS( sketch_ip->verts[lsg->start] ),
+								V2ARGS( sketch_ip->verts[lsg->end] ) );
+					}
 					bu_vls_strcat( str, buf );
 					break;
 				case CURVE_CARC_MAGIC:
@@ -1008,24 +1124,49 @@ double			mm2local;
 					if( csg->radius < 0.0 )
 					{
 						bu_vls_strcat( str, "\t\tFull Circle:\n" );
-						sprintf( buf, "\t\t\tcenter: (%g %g)\n",
-							V2ARGS( sketch_ip->verts[csg->end] ) );
-						bu_vls_strcat( str, buf );
-						sprintf( buf, "\t\t\tpoint on circle: (%g %g)\n",
-							V2ARGS( sketch_ip->verts[csg->start] ) );
+
+						if( csg->end >= sketch_ip->vert_count ||
+						    csg->start >= sketch_ip->vert_count )
+						{
+							sprintf( buf, "\t\tcenter at vertex #%d\n",
+								csg->end );
+							bu_vls_strcat( str, buf );
+							sprintf( buf, "\t\tpoint on circle at vertex #%d\n",
+								csg->start );
+						}
+						else
+						{
+							sprintf( buf, "\t\t\tcenter: (%g %g)\n",
+								V2ARGS( sketch_ip->verts[csg->end] ) );
+							bu_vls_strcat( str, buf );
+							sprintf( buf, "\t\t\tpoint on circle: (%g %g)\n",
+								V2ARGS( sketch_ip->verts[csg->start] ) );
+						}
 						bu_vls_strcat( str, buf );
 					}
 					else
 					{
 						bu_vls_strcat( str, "\t\tCircular Arc:\n" );
-						if( sketch_ip->curves[curve_no].reverse[seg_no] )
-							bu_vls_strcat( str, "\t\t\tarc is reversed\n" );
-						sprintf( buf, "\t\t\tstart: (%g, %g)\n",
-							V2ARGS( sketch_ip->verts[csg->start] ) );
-						bu_vls_strcat( str, buf );
-						sprintf( buf, "\t\t\tend: (%g, %g)\n",
-							V2ARGS( sketch_ip->verts[csg->end] ) );
-						bu_vls_strcat( str, buf );
+
+						if( csg->end >= sketch_ip->vert_count ||
+						    csg->start >= sketch_ip->vert_count )
+						{
+							sprintf( buf, "\t\t\tstart at vertex #%d\n",
+								csg->start );
+							bu_vls_strcat( str, buf );
+							sprintf( buf, "\t\t\tend at vertex #%d\n",
+								csg->end );
+							bu_vls_strcat( str, buf );
+						}
+						else
+						{
+							sprintf( buf, "\t\t\tstart: (%g, %g)\n",
+								V2ARGS( sketch_ip->verts[csg->start] ) );
+							bu_vls_strcat( str, buf );
+							sprintf( buf, "\t\t\tend: (%g, %g)\n",
+								V2ARGS( sketch_ip->verts[csg->end] ) );
+							bu_vls_strcat( str, buf );
+						}
 						sprintf( buf, "\t\t\tradius: %g\n", csg->radius );
 						bu_vls_strcat( str, buf );
 						if( csg->orientation )
@@ -1036,6 +1177,8 @@ double			mm2local;
 							bu_vls_strcat( str, "\t\t\tcenter of curvature is left of the line from start point to end point\n" );
 						else
 							bu_vls_strcat( str, "\t\t\tcenter of curvature is right of the line from start point to end point\n" );
+						if( sketch_ip->curves[curve_no].reverse[seg_no] )
+							bu_vls_strcat( str, "\t\t\tarc is reversed\n" );
 					}
 					break;
 				case CURVE_NURB_MAGIC:
@@ -1049,14 +1192,29 @@ double			mm2local;
 					sprintf( buf, "\t\t\torder = %d, number of control points = %d\n",
 						nsg->order, nsg->c_size );
 					bu_vls_strcat( str, buf );
-					if( sketch_ip->curves[curve_no].reverse[seg_no] )
-						sprintf( buf, "\t\t\tstarts at (%g %g)\n\t\t\tends at (%g %g)\n",
-							V2ARGS( sketch_ip->verts[nsg->ctl_points[nsg->c_size-1]] ),
-							V2ARGS( sketch_ip->verts[nsg->ctl_points[0]] ) );
+					if( nsg->ctl_points[0] >= sketch_ip->vert_count ||
+					    nsg->ctl_points[nsg->c_size-1] >= sketch_ip->vert_count )
+					{
+						if( sketch_ip->curves[curve_no].reverse[seg_no] )
+							sprintf( buf, "\t\t\tstarts at vertex #%d\n\t\t\tends at vertex #%d\n",
+								nsg->ctl_points[nsg->c_size-1],
+								nsg->ctl_points[0] );
+						else
+							sprintf( buf, "\t\t\tstarts at vertex #%d\n\t\t\tends at vertex #%d\n",
+								nsg->ctl_points[0],
+								nsg->ctl_points[nsg->c_size-1] );
+					}
 					else
-						sprintf( buf, "\t\t\tstarts at (%g %g)\n\t\t\tends at (%g %g)\n",
-							V2ARGS( sketch_ip->verts[nsg->ctl_points[0]] ),
-							V2ARGS( sketch_ip->verts[nsg->ctl_points[nsg->c_size-1]] ) );
+					{
+						if( sketch_ip->curves[curve_no].reverse[seg_no] )
+							sprintf( buf, "\t\t\tstarts at (%g %g)\n\t\t\tends at (%g %g)\n",
+								V2ARGS( sketch_ip->verts[nsg->ctl_points[nsg->c_size-1]] ),
+								V2ARGS( sketch_ip->verts[nsg->ctl_points[0]] ) );
+						else
+							sprintf( buf, "\t\t\tstarts at (%g %g)\n\t\t\tends at (%g %g)\n",
+								V2ARGS( sketch_ip->verts[nsg->ctl_points[0]] ),
+								V2ARGS( sketch_ip->verts[nsg->ctl_points[nsg->c_size-1]] ) );
+					}
 					bu_vls_strcat( str, buf );
 					sprintf( buf, "\t\t\tknot values are %g to %g\n",
 						nsg->k.knots[0], nsg->k.knots[nsg->k.k_size-1] );
@@ -1096,7 +1254,8 @@ struct rt_db_internal	*ip;
 		bu_mem_barriercheck();
 	}
 
-	bu_free( (char *)sketch_ip->verts, "sketch_ip->verts" );
+	if( sketch_ip->verts )
+		bu_free( (char *)sketch_ip->verts, "sketch_ip->verts" );
 	for( curve_no=0 ; curve_no < sketch_ip->curve_count ; curve_no++ )
 	{
 		long *lng;
@@ -1116,7 +1275,8 @@ struct rt_db_internal	*ip;
 		bu_free( (char *)crv->reverse, "crv->reverse" );
 		bu_free( (char *)crv->segments, "crv->segments" );
 	}
-	bu_free( (char *)sketch_ip->curves, "sketch_ip->curves" );
+	if( sketch_ip->curves )
+		bu_free( (char *)sketch_ip->curves, "sketch_ip->curves" );
 	bu_free( (char *)sketch_ip, "sketch ifree" );
 	ip->idb_ptr = GENPTR_NULL;	/* sanity */
 
@@ -1126,6 +1286,42 @@ struct rt_db_internal	*ip;
 		bu_mem_barriercheck();
 	}
 
+}
+
+void
+rt_curve_free( crv )
+struct curve *crv;
+{
+	int i;
+
+	if( crv->seg_count )
+		bu_free( (char *)crv->reverse, "crv->reverse" );
+	for( i=0 ; i<crv->seg_count ; i++ )
+	{
+		long *lng;
+		struct nurb_seg *nsg;
+
+		lng = (long *)crv->segments[i];
+		switch( *lng )
+		{
+			case CURVE_NURB_MAGIC:
+				nsg = (struct nurb_seg *)lng;
+				bu_free( (char *)nsg->ctl_points, "nsg->ctl_points" );
+				if( nsg->weights )
+					bu_free( ( char *)nsg->weights, "nsg->weights" );
+				bu_free( ( char *)nsg->k.knots, "nsg->k.knots" );
+			case CURVE_LSEG_MAGIC:
+			case CURVE_CARC_MAGIC:
+				bu_free( (char *)lng, "curve segment" );
+				break;
+			default:
+				bu_log( "ERROR: rt_curve_free: unrecognized curve segments type!!!!\n");
+				break;
+		}
+	}
+	crv->seg_count = 0;
+	crv->reverse = (int *)NULL;
+	crv->segments = (genptr_t)NULL;
 }
 
 void
@@ -1434,7 +1630,7 @@ CONST char			*attr;
 
 		bu_vls_printf( &vls, "%.25g %.25g", V2ARGS( skt->verts[i] ) );
 	}
-	else
+	else	 /* asking for a curve by name */
 	{
 		for( i=0 ; i<skt->curve_count ; i++ )
 		{
@@ -1459,3 +1655,629 @@ CONST char			*attr;
 	bu_vls_free( &vls );
 	return( TCL_OK );
 }
+
+int
+tcl_obj_to_int_array( interp, list, array, array_len )
+Tcl_Interp *interp;
+Tcl_Obj *list;
+int **array;
+int *array_len;
+{
+	Tcl_Obj **obj_array;
+	int len, i;
+	int ret;
+
+	if( (ret=Tcl_ListObjGetElements( interp, list, &len, &obj_array )) != TCL_OK )
+		return( ret );
+
+	if( len < 1 )
+		return( TCL_OK );
+
+	if( *array_len < 1 )
+	{
+		*array = (int *)bu_calloc( len, sizeof( int ), "array" );
+		*array_len = len;
+	}
+
+	for( i=0 ; i<len && i<*array_len ; i++ )
+		(*array)[i] = atoi( Tcl_GetStringFromObj( obj_array[i], NULL ) );
+
+	return( TCL_OK );
+}
+
+int
+tcl_list_to_int_array( interp, char_list, array, array_len )
+Tcl_Interp *interp;
+char *char_list;
+int **array;
+int *array_len;
+{
+	Tcl_Obj *obj, *list;
+	int ret;
+
+	obj = Tcl_NewStringObj( char_list, -1 );
+	list = Tcl_NewListObj( 0, NULL );
+	if( (ret=Tcl_ListObjAppendList( interp, list, obj )) != TCL_OK )
+	{
+		Tcl_DecrRefCount( list );
+		Tcl_DecrRefCount( obj );
+		return( ret );
+	}
+
+	ret = tcl_obj_to_int_array( interp, list, array, array_len );
+
+	Tcl_DecrRefCount( list );
+	Tcl_DecrRefCount( obj );
+
+	return( ret );
+}
+
+int
+tcl_obj_to_fastf_array( interp, list, array, array_len )
+Tcl_Interp *interp;
+Tcl_Obj *list;
+fastf_t **array;
+int *array_len;
+{
+	Tcl_Obj **obj_array;
+	int len, i;
+	int ret;
+
+	if( (ret=Tcl_ListObjGetElements( interp, list, &len, &obj_array )) != TCL_OK )
+		return( ret );
+
+	if( len < 1 )
+		return( TCL_OK );
+
+	if( *array_len < 1 )
+	{
+		*array = (fastf_t *)bu_calloc( len, sizeof( fastf_t ), "array" );
+		*array_len = len;
+	}
+
+	for( i=0 ; i<len && i<*array_len ; i++ )
+		(*array)[i] = atof( Tcl_GetStringFromObj( obj_array[i], NULL ) );
+
+	return( TCL_OK );
+}
+
+int
+tcl_list_to_fastf_array( interp, char_list, array, array_len )
+Tcl_Interp *interp;
+char *char_list;
+fastf_t **array;
+int *array_len;
+{
+	Tcl_Obj *obj, *list;
+	int ret;
+
+	obj = Tcl_NewStringObj( char_list, -1 );
+	list = Tcl_NewListObj( 0, NULL );
+	if( (ret=Tcl_ListObjAppendList( interp, list, obj )) != TCL_OK )
+	{
+		Tcl_DecrRefCount( list );
+		Tcl_DecrRefCount( obj );
+		return( ret );
+	}
+
+	ret = tcl_obj_to_fastf_array( interp, list, array, array_len );
+
+	Tcl_DecrRefCount( list );
+	Tcl_DecrRefCount( obj );
+
+	return( ret );
+}
+
+int
+get_tcl_curve( interp, crv, crv_obj )
+Tcl_Interp *interp;
+struct curve *crv;
+Tcl_Obj *crv_obj;
+{
+	Tcl_Obj *seg_list, *SL, *segments;
+	int len2, seg_count;
+	int ret, j;
+
+	/* get the segment list */
+	if( (ret=Tcl_ListObjIndex( interp, crv_obj, 1, &seg_list ) ))
+	{
+		return( ret );
+	}
+
+	/* get length of segment list */
+	if( (ret=Tcl_ListObjLength( interp, seg_list, &len2 ) ))
+	{
+		Tcl_DecrRefCount( seg_list );
+		return( ret );
+	}
+
+	if( len2 != 2 )
+	{
+		Tcl_ResetResult( interp );
+		Tcl_AppendResult( interp, "ERROR: Segment list must have two elements ('SL' and segment list)!!\n", "Erroneous segment list: ",
+			Tcl_GetString( seg_list ), (char *)NULL);
+		Tcl_DecrRefCount( seg_list );
+		return( TCL_ERROR );
+	}
+	if( (ret=Tcl_ListObjIndex( interp, seg_list, 0, &SL ) ))
+	{
+		Tcl_DecrRefCount( seg_list );
+		return( ret );
+	}
+	if( strcmp( "SL", Tcl_GetString( SL )) )
+	{
+		Tcl_DecrRefCount( seg_list );
+		Tcl_DecrRefCount( SL );
+		Tcl_ResetResult( interp );
+		Tcl_AppendResult( interp, "ERROR: Segment list does not start with 'SL'!!\n", "Erroneous segment list: ",
+			Tcl_GetString( seg_list ), (char *)NULL);
+		return( TCL_ERROR );
+	}
+	Tcl_DecrRefCount( SL );
+
+	/* now get actual list of segments */
+	if( (ret=Tcl_ListObjIndex( interp, seg_list, 1, &segments ) ))
+	{
+		Tcl_DecrRefCount( seg_list );
+		return( ret );
+	}
+	/* get number of segments */
+	seg_count = 0;
+	if( (ret=Tcl_ListObjLength( interp, segments, &seg_count ) ))
+	{
+		Tcl_DecrRefCount( seg_list );
+		Tcl_DecrRefCount( segments );
+		return( ret );
+	}
+
+	if( seg_count )
+	{
+		crv->seg_count = seg_count;
+		crv->reverse = (int *)bu_calloc( seg_count, sizeof( int ), "crv->reverse" );
+		crv->segments = (genptr_t *)bu_calloc( seg_count, sizeof( genptr_t ), "crv->segments" );
+	}
+
+	/* loop through all the segments */
+	for( j=0 ; j<seg_count ; j++ )
+	{
+		Tcl_Obj *seg, *seg_type, *seg_elem, *seg_val;
+		char *type, *elem;
+		int k, seg_len;
+
+		/* get the next segment */
+		if( (ret=Tcl_ListObjIndex( interp, segments, j, &seg ) ))
+		{
+			Tcl_DecrRefCount( seg_list );
+			Tcl_DecrRefCount( segments );
+			return( ret );
+		}
+
+		if( (ret=Tcl_ListObjLength( interp, seg, &seg_len )) )
+		{
+			Tcl_DecrRefCount( seg_list );
+			Tcl_DecrRefCount( segments );
+			return( ret );
+		}
+
+		/* get the segment type */
+		if( (ret=Tcl_ListObjIndex( interp, seg, 0, &seg_type ) ))
+		{
+			Tcl_DecrRefCount( seg_list );
+			Tcl_DecrRefCount( segments );
+			Tcl_DecrRefCount( seg );
+			return( ret );
+		}
+		type = Tcl_GetString( seg_type );
+
+		if( !strcmp( type, "line" ) )
+		{
+			struct line_seg *lsg;
+
+			lsg = (struct line_seg *)bu_calloc( 1, sizeof( struct line_seg ), "lsg" );
+			for( k=1 ; k<seg_len ; k += 2 )
+			{
+				if( (ret=Tcl_ListObjIndex( interp, seg, k, &seg_elem ) ))
+				{
+					Tcl_DecrRefCount( seg_list );
+					Tcl_DecrRefCount( segments );
+					Tcl_DecrRefCount( seg );
+					return( ret );
+				}
+				if( (ret=Tcl_ListObjIndex( interp, seg, k+1, &seg_val ) ))
+				{
+					Tcl_DecrRefCount( seg_list );
+					Tcl_DecrRefCount( segments );
+					Tcl_DecrRefCount( seg );
+					return( ret );
+				}
+				elem = Tcl_GetString( seg_elem );
+				switch( *elem )
+				{
+					case 'S':
+						Tcl_GetIntFromObj( interp, seg_val, &lsg->start );
+						break;
+					case 'E':
+						Tcl_GetIntFromObj( interp, seg_val, &lsg->end );
+						break;
+				}
+			}
+			lsg->curve_count = 1;
+			lsg->curves = &crv;
+			lsg->magic = CURVE_LSEG_MAGIC;
+			crv->segments[j] = (genptr_t)lsg;
+		}
+		else if( !strcmp( type, "carc" ) )
+		{
+			struct carc_seg *csg;
+			double tmp;
+
+			csg = (struct carc_seg *)bu_calloc( 1, sizeof( struct carc_seg ), "csg" );
+			for( k=1 ; k<seg_len ; k += 2 )
+			{
+				if( (ret=Tcl_ListObjIndex( interp, seg, k, &seg_elem ) ))
+				{
+					Tcl_DecrRefCount( seg_list );
+					Tcl_DecrRefCount( segments );
+					Tcl_DecrRefCount( seg );
+					return( ret );
+				}
+				if( (ret=Tcl_ListObjIndex( interp, seg, k+1, &seg_val ) ))
+				{
+					Tcl_DecrRefCount( seg_list );
+					Tcl_DecrRefCount( segments );
+					Tcl_DecrRefCount( seg );
+					return( ret );
+				}
+				elem = Tcl_GetString( seg_elem );
+				switch( *elem )
+				{
+					case 'S':
+						Tcl_GetIntFromObj( interp, seg_val, &csg->start );
+						break;
+					case 'E':
+						Tcl_GetIntFromObj( interp, seg_val, &csg->end );
+						break;
+					case 'R':
+						Tcl_GetDoubleFromObj( interp, seg_val, &tmp );
+						csg->radius = tmp;
+						break;
+					case 'L' :
+						Tcl_GetBooleanFromObj( interp, seg_val, &csg->center_is_left );
+						break;
+					case 'O':
+						Tcl_GetBooleanFromObj( interp, seg_val, &csg->orientation );
+						break;
+				}
+			}
+			csg->curve_count = 1;
+			csg->curves = &crv;
+			csg->magic = CURVE_CARC_MAGIC;
+			crv->segments[j] = (genptr_t)csg;
+		}
+		else if( !strcmp( type, "nurb" ) )
+		{
+			struct nurb_seg *nsg;
+
+			nsg = (struct nurb_seg *)bu_calloc( 1, sizeof( struct nurb_seg ), "nsg" );
+			for( k=1 ; k<seg_len ; k += 2 )
+			{
+				if( (ret=Tcl_ListObjIndex( interp, seg, k, &seg_elem ) ))
+				{
+					Tcl_DecrRefCount( seg_list );
+					Tcl_DecrRefCount( segments );
+					Tcl_DecrRefCount( seg );
+					return( ret );
+				}
+				if( (ret=Tcl_ListObjIndex( interp, seg, k+1, &seg_val ) ))
+				{
+					Tcl_DecrRefCount( seg_list );
+					Tcl_DecrRefCount( segments );
+					Tcl_DecrRefCount( seg );
+					return( ret );
+				}
+				elem = Tcl_GetString( seg_elem );
+				switch( *elem )
+				{
+					case 'O':
+						Tcl_GetIntFromObj( interp, seg_val, &nsg->order );
+						break;
+					case 'T':
+						Tcl_GetIntFromObj( interp, seg_val, &nsg->pt_type );
+						break;
+					case 'K':
+						tcl_obj_to_fastf_array( interp, seg_val, &nsg->k.knots, &nsg->k.k_size );
+						break;
+					case 'P' :
+						tcl_obj_to_int_array( interp, seg_val, &nsg->ctl_points, &nsg->c_size );
+						break;
+					case 'W':
+						tcl_obj_to_fastf_array( interp, seg_val, &nsg->weights, &nsg->c_size );
+						break;
+				}
+			}
+			nsg->curve_count = 1;
+			nsg->curves = &crv;
+			nsg->magic = CURVE_NURB_MAGIC;
+			crv->segments[j] = (genptr_t)nsg;
+		}
+		else
+		{
+			Tcl_DecrRefCount( seg_list );
+			Tcl_DecrRefCount( segments );
+			Tcl_DecrRefCount( seg );
+			Tcl_ResetResult( interp );
+			Tcl_AppendResult( interp, "ERROR: Unrecognized segment type: ",
+				Tcl_GetString( seg ), (char *)NULL);
+			return( TCL_ERROR );
+		}
+	}
+
+	return( TCL_OK );
+}
+
+int
+rt_sketch_tcladjust( interp, intern, argc, argv )
+Tcl_Interp		*interp;
+struct rt_db_internal	*intern;
+int			argc;
+char			**argv;
+{
+	struct rt_sketch_internal *skt;
+	int ret, array_len;
+	fastf_t *new;
+
+	RT_CK_DB_INTERNAL( intern );
+	skt = (struct rt_sketch_internal *)intern->idb_ptr;
+	RT_SKETCH_CK_MAGIC( skt );
+
+	while( argc >= 2 )
+	{
+		if( !strcmp( argv[0], "V" ) )
+		{
+			new = skt->V;
+			array_len = 3;
+			if( (ret=tcl_list_to_fastf_array( interp, argv[1], &new, &array_len )) != TCL_OK )
+				return( ret );
+		}
+		else if( !strcmp( argv[0], "A" ) )
+		{
+			new = skt->u_vec;
+			array_len = 3;
+			if( (ret=tcl_list_to_fastf_array( interp, argv[1], &new, &array_len )) != TCL_OK )
+				return( ret );
+		}
+		else if( !strcmp( argv[0], "B" ) )
+		{
+			new = skt->v_vec;
+			array_len = 3;
+			if( (ret=tcl_list_to_fastf_array( interp, argv[1], &new, &array_len )) != TCL_OK )
+				return( ret );
+		}
+		else if( !strcmp( argv[0], "VL" ) )
+		{
+			fastf_t *new_verts=(fastf_t *)NULL;
+			int len;
+			char *ptr;
+
+			/* the vertex list is a list of lists (each element is a list of two coordinates)
+			 * so eliminate all the '{' and '}' chars in the list
+			 */
+			ptr = argv[1];
+			while( *ptr != '\0' )
+			{
+				if( *ptr == '{' || *ptr == '}' )
+					*ptr = ' ';
+				ptr++;
+			}
+
+			len = 0;
+			if( (ret=tcl_list_to_fastf_array( interp, argv[1], &new_verts, &len )) != TCL_OK )
+				return( ret );
+
+			if( skt->verts )
+				bu_free( (char *)skt->verts, "verts" );
+			skt->verts = (point2d_t *)new_verts;
+			skt->vert_count = len / 2;
+		}
+		else if( !strcmp( argv[0], "CL" ) )	/* the entire curve list */
+		{
+			Tcl_Obj *list, *tmp, *tmp_list;
+			int len, len2, i;
+
+			/* create a Tcl object */
+			tmp = Tcl_NewStringObj( argv[1], -1 );
+			tmp_list = Tcl_NewListObj( 1, &tmp );
+
+			/* get the actual list of curves */
+			if( (ret=Tcl_ListObjIndex( interp, tmp_list, 0, &list )) != TCL_OK )
+			{
+				Tcl_DecrRefCount( tmp );
+				Tcl_DecrRefCount( tmp_list );
+				return( ret );
+			}
+
+			/* get the number of curves in the list */
+			if( (ret=Tcl_ListObjLength( interp, list, &len )) != TCL_OK )
+			{
+				Tcl_DecrRefCount( list );
+				return( ret );
+			}
+			if( len < 1 )
+				goto next_arg;
+
+			/* loop through each curve */
+			for( i=0 ; i<len ; i++ )
+			{
+				Tcl_Obj *crv_obj, *crv_name;
+				char *name;
+				int j;
+				struct curve *crv;
+
+				/* get the curve */
+				if( (ret=Tcl_ListObjIndex( interp, list, i, &crv_obj ) ))
+				{
+					Tcl_DecrRefCount( list );
+					return( ret );
+				}
+
+				/* get length of this curve */
+				if( (ret=Tcl_ListObjLength( interp, crv_obj, &len2 ) ))
+				{
+					Tcl_DecrRefCount( list );
+					Tcl_DecrRefCount( crv_obj );
+					return( ret );
+				}
+
+				/* each curve must have two elements (a name and a segment list) */
+				if( len2 != 2 )
+				{
+					Tcl_DecrRefCount( list );
+					Tcl_DecrRefCount( crv_obj );
+					Tcl_ResetResult( interp );
+					Tcl_AppendResult( interp, "ERROR: Curve must have two elements (name and segment list!!\n", "Erroneous curve: ",
+						Tcl_GetString( crv_obj ), (char *)NULL );
+					return( TCL_ERROR );
+				}
+
+				/* get the curve name */
+				if( (ret=Tcl_ListObjIndex( interp, crv_obj, 0, &crv_name ) ))
+				{
+					Tcl_DecrRefCount( list );
+					Tcl_DecrRefCount( crv_obj );
+					return( ret );
+				}
+				name = Tcl_GetString( crv_name );
+
+				/* check if this curve already exists */
+				crv = (struct curve *)NULL;
+				for( j=0 ; j<skt->curve_count ; j++ )
+				{
+					crv = &skt->curves[j];
+					if( !strcmp( crv->crv_name, name ) )
+						break;
+					else
+						crv = (struct curve *)NULL;
+				}
+				if( !crv )
+				{
+					skt->curves = (struct curve *)bu_realloc( skt->curves, (++skt->curve_count)*sizeof( struct curve ), "skt->curves" );
+					crv = &skt->curves[skt->curve_count-1];
+					crv->seg_count = 0;
+					crv->reverse = (int *)NULL;
+					crv->segments = (genptr_t)NULL;
+					NAMEMOVE( name, crv->crv_name );
+				}
+				else
+					rt_curve_free( crv );
+
+				if( (ret=get_tcl_curve( interp, crv, crv_obj )) != TCL_OK )
+				{
+					Tcl_DecrRefCount( list );
+					Tcl_DecrRefCount( crv_obj );
+					return( ret );
+				}
+
+			}
+		}
+		else if( *argv[0] == 'V' && isdigit( *(argv[0]+1) )  )	/* changing a specific vertex */
+		{
+			int vert_no;
+			fastf_t *new_vert;
+
+			vert_no = atoi( argv[0] + 1 );
+			new_vert = skt->verts[vert_no];
+			if( vert_no < 0 || vert_no > skt->vert_count )
+			{
+				Tcl_SetResult( interp, "ERROR: Illegal vertex number\n", TCL_STATIC );
+				return( TCL_ERROR );
+			}
+			array_len = 2;
+			if( (ret=tcl_list_to_fastf_array( interp, argv[1], &new_vert, &array_len )) != TCL_OK )
+				return( ret );
+		}
+		else	/* changing a specifically named curve, or adding a new curve */
+		{
+			Tcl_Obj *crv_obj, *objs[2];
+			struct curve *crv=(struct curve *)NULL;
+			struct curve save_curve;
+			int j, k;
+			char *crv_name;
+			int new_curve=1;
+
+			objs[0] = Tcl_NewStringObj( argv[0], -1 );
+			crv_name = Tcl_GetStringFromObj( objs[0], &j );
+
+			for( j=0 ; j<skt->curve_count ; j++ )
+			{
+				if( !strcmp( crv_name, skt->curves[j].crv_name ) )
+				{
+					new_curve = 0;
+					crv = &skt->curves[j];
+					break;
+				}
+			}
+
+			if( !strcmp( argv[1], "del" ) )
+			{
+				/* delete this curve */
+				if( crv )
+				{
+					rt_curve_free( crv );
+					skt->curve_count--;
+					for( k=j ; k<skt->curve_count ; k++ )
+						skt->curves[k] = skt->curves[k+1];
+					skt->curves = (struct curve *)bu_realloc( skt->curves, skt->curve_count*sizeof( struct curve ), "skt->curves" );
+				}
+
+				goto next_arg;
+			}
+
+			if( crv )
+			{
+				rt_copy_curve( &save_curve, crv );
+				rt_curve_free( crv );
+			}
+			else
+			{
+				skt->curves = (struct curve *)bu_realloc( skt->curves, (++skt->curve_count)*sizeof( struct curve ), "skt->curves" );
+				crv = &skt->curves[skt->curve_count-1];
+				crv->seg_count = 0;
+				crv->reverse = (int *)NULL;
+				crv->segments = (genptr_t)NULL;
+				NAMEMOVE( crv_name, crv->crv_name );
+			}
+			objs[1] = Tcl_NewStringObj( argv[1], -1 );
+			crv_obj = Tcl_NewListObj( 2, objs );
+
+			if( (ret=get_tcl_curve( interp, crv, crv_obj )) != TCL_OK )
+			{
+				if( new_curve )
+				{
+					/* eliminate the failed new curve */
+					rt_curve_free( crv );
+					skt->curves = (struct curve *)bu_realloc( skt->curves, (--skt->curve_count)*sizeof( struct curve ), "skt->curves" );
+				}
+				else
+				{
+					/* restore the original curve */
+					rt_curve_free( crv );
+					rt_copy_curve( crv, &save_curve );
+					rt_curve_free( &save_curve );
+				}
+				return( TCL_ERROR );
+			}
+#if 0
+			/* seems like we ought to free this stuff, but it core dumps!!!! */
+			Tcl_DecrRefCount( crv_obj );
+			Tcl_DecrRefCount( objs[0] );
+			Tcl_DecrRefCount( objs[1] );
+#endif
+		}
+next_arg:
+		argc -= 2;
+		argv += 2;
+	}
+
+	return( TCL_OK );
+}
+

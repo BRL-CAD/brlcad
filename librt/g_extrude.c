@@ -45,6 +45,7 @@ static char RCSextrude[] = "@(#)$Header$ (BRL)";
 
 #include <stdio.h>
 #include <math.h>
+#include "tcl.h"
 #include "machine.h"
 #include "vmath.h"
 #include "db.h"
@@ -140,6 +141,14 @@ struct rt_i		*rtip;
 		return( -1 );	/* failure */
 	}
 
+	/* make sure the curve is valid */
+	if( rt_check_curve( &skt->curves[curve_no], skt, 1 ) )
+	{
+		bu_log( "ERROR: referenced curve (%s) in sketch (%s) is bad!!!\n",
+			eip->curve_name, eip->sketch_name );
+		return( -1 );
+	}
+
 	BU_GETSTRUCT( extr, extrude_specific );
 	stp->st_specific = (genptr_t)extr;
 
@@ -200,7 +209,8 @@ struct rt_i		*rtip;
 	}
 
 	/* apply the rotation matrix  to all the vertices */
-	extr->verts = (point_t *)bu_calloc( vert_count, sizeof( point_t ), "extr->verts" );
+	if( vert_count )
+		extr->verts = (point_t *)bu_calloc( vert_count, sizeof( point_t ), "extr->verts" );
 	VSETALL( stp->st_min, MAX_FASTF );
 	VSETALL( stp->st_max, -MAX_FASTF );
 	for( i=0 ; i<skt->vert_count ; i++ )
@@ -1179,6 +1189,9 @@ register struct soltab *stp;
 	register struct extrude_specific *extrude =
 		(struct extrude_specific *)stp->st_specific;
 
+	if( extrude->verts )
+		bu_free( (char *)extrude->verts, "extrude->verts" );
+	rt_curve_free( extrude->crv );
 	bu_free( (char *)extrude, "extrude_specific" );
 }
 
@@ -1245,7 +1258,12 @@ CONST struct bn_tol	*tol;
 	/* plot bottom curve */
 	vp1 = BU_LIST_LAST( bn_vlist, vhead );
 	nused1 = vp1->nused;
-	curve_to_vlist( vhead, ttol, extrude_ip->V, extrude_ip->u_vec, extrude_ip->v_vec, sketch_ip, crv );
+	if( curve_to_vlist( vhead, ttol, extrude_ip->V, extrude_ip->u_vec, extrude_ip->v_vec, sketch_ip, crv ) )
+	{
+		bu_log( "Error: curve (%s) in sketch (%s) references non-existent vertices!!!\n",
+			crv->crv_name, extrude_ip->sketch_name );
+		return( -1 );
+	}
 
 	/* plot top curve */
 	VADD2( end_of_h, extrude_ip->V, extrude_ip->h );
@@ -1559,4 +1577,114 @@ int free;
 	}
 
 	return( 0 );		
+}
+
+int
+rt_extrude_tclget( interp, intern, attr )
+Tcl_Interp                      *interp;
+CONST struct rt_db_internal     *intern;
+CONST char                      *attr;
+{
+	register struct rt_extrude_internal *extr=(struct rt_extrude_internal *) intern->idb_ptr;
+        Tcl_DString     ds;
+        struct bu_vls   vls;
+	int ret=TCL_OK;
+
+	RT_EXTRUDE_CK_MAGIC( extr );
+
+	Tcl_DStringInit( &ds );
+	bu_vls_init( &vls );
+
+
+	if( attr == (char *)NULL )
+	{
+		bu_vls_strcpy( &vls, "extrude" );
+		bu_vls_printf( &vls, " V {%.25g %.25g %.25g}", V3ARGS( extr->V ) );
+		bu_vls_printf( &vls, " H {%.25g %.25g %.25g}", V3ARGS( extr->h ) );
+		bu_vls_printf( &vls, " A {%.25g %.25g %.25g}", V3ARGS( extr->u_vec ) );
+		bu_vls_printf( &vls, " B {%.25g %.25g %.25g}", V3ARGS( extr->v_vec ) );
+		bu_vls_printf( &vls, " S %s C %s", extr->sketch_name, extr->curve_name );
+		bu_vls_printf( &vls, " K %d", extr->keypoint );
+	}
+	else if( *attr == 'V' )
+		bu_vls_printf( &vls, "%.25g %.25g %.25g", V3ARGS( extr->V ) );
+	else if( *attr == 'H' )
+		bu_vls_printf( &vls, "%.25g %.25g %.25g", V3ARGS( extr->h ) );
+	else if( *attr == 'A' )
+		bu_vls_printf( &vls, "%.25g %.25g %.25g", V3ARGS( extr->u_vec ) );
+	else if( *attr == 'B' )
+		bu_vls_printf( &vls, "%.25g %.25g %.25g", V3ARGS( extr->v_vec ) );
+	else if( *attr == 'S' )
+		bu_vls_printf( &vls, "%s", extr->sketch_name );
+	else if( *attr == 'C' )
+		bu_vls_printf( &vls, "%s", extr->curve_name );
+	else if( *attr == 'K' )
+		bu_vls_printf( &vls, "%d", extr->keypoint );
+	else
+	{
+		bu_vls_strcat( &vls, "ERROR: unrecognized attribute, must be V, H, A, B, S, C, or K!!!" );
+		ret = TCL_ERROR;
+	}
+
+        Tcl_DStringAppendElement( &ds, bu_vls_addr( &vls ) );
+        Tcl_DStringResult( interp, &ds );
+        Tcl_DStringFree( &ds );
+        bu_vls_free( &vls );
+        return( ret );
+}
+
+int
+rt_extrude_tcladjust( interp, intern, argc, argv )
+Tcl_Interp              *interp;
+struct rt_db_internal   *intern;
+int                     argc;
+char                    **argv;
+{
+        struct rt_extrude_internal *extr;
+        int ret;
+        fastf_t *new;
+
+        RT_CK_DB_INTERNAL( intern );
+        extr = (struct rt_extrude_internal *)intern->idb_ptr;
+        RT_EXTRUDE_CK_MAGIC( extr );
+
+	while( argc >= 2 )
+	{
+
+		if( *argv[0] == 'V' )
+		{
+			new = extr->V;
+			if( (ret=tcl_list_to_fastf_array( interp, argv[1], &new, 3 ) ) )
+				return( ret );
+		}
+		else if( *argv[0] == 'H' )
+		{
+			new = extr->h;
+			if( (ret=tcl_list_to_fastf_array( interp, argv[1], &new, 3 ) ) )
+				return( ret );
+		}
+		else if( *argv[0] == 'A' )
+		{
+			new = extr->u_vec;
+			if( (ret=tcl_list_to_fastf_array( interp, argv[1], &new, 3 ) ) )
+				return( ret );
+		}
+		else if( *argv[0] == 'B' )
+		{
+			new = extr->v_vec;
+			if( (ret=tcl_list_to_fastf_array( interp, argv[1], &new, 3 ) ) )
+				return( ret );
+		}
+		else if( *argv[0] =='K' )
+			extr->keypoint = atoi( argv[1] );
+		else if( *argv[0] == 'S' )
+			NAMEMOVE( argv[1], extr->sketch_name );
+		else if( *argv[0] =='C' )
+			NAMEMOVE( argv[1], extr->curve_name );
+
+		argc -= 2;
+		argv += 2;
+	}
+
+	return( TCL_OK );
 }
