@@ -1767,6 +1767,7 @@ struct edgeuse *eu;
 	struct edge	*e;
 	struct edgeuse	*eu2;
 	pointp_t	pt;
+	int		found_eg=0;
 
 	NMG_CK_EDGEUSE(eu);
 	e = eu->e_p;
@@ -1793,6 +1794,7 @@ struct edgeuse *eu;
 	while( eu2 != eu )  {
 		if( eu2->g.magic_p && *eu2->g.magic_p == NMG_EDGE_G_LSEG_MAGIC )  {
 			eg_p = eu2->g.lseg_p;
+			found_eg = 1;
 			break;
 		}
 		eu2 = eu2->eumate_p->radial_p;
@@ -1838,6 +1840,21 @@ struct edgeuse *eu;
 	RT_LIST_INSERT( &eg_p->eu_hd2, &eu->eumate_p->l2 );
 	eu->g.lseg_p = eg_p;
 	eu->eumate_p->g.lseg_p = eg_p;
+
+	if( !found_eg )
+	{
+		/* No uses of this edge have geometry, get them all */
+		eu2 = eu->eumate_p->radial_p;
+		while( eu2 != eu )
+		{
+			eu2->g.lseg_p = eg_p;
+			RT_LIST_INSERT( &eg_p->eu_hd2, &eu2->l2 );
+			eu2->eumate_p->g.lseg_p = eg_p;
+			RT_LIST_INSERT( &eg_p->eu_hd2, &eu2->eumate_p->l2 );
+
+			eu2 = eu2->eumate_p->radial_p;
+		}
+	}
 
 	if (rt_g.NMG_debug & DEBUG_BASIC)  {
 		rt_log("nmg_edge_g(eu=x%x) eg=x%x\n", eu, eg_p );
