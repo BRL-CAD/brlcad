@@ -66,11 +66,10 @@ RT_EXTERN( void csg_leaf_func , ( struct db_i *dbip , struct directory *dp ) );
 RT_EXTERN( void set_iges_tolerances , ( struct rt_tol *set_tol , struct rt_tess_tol *set_ttol ) );
 RT_EXTERN( void count_refs , ( struct db_i *dbip , struct directory *dp ) );
 
-static char usage[] = "Usage: %s [-f|c|t] [-v] [-s] [-xX lvl] [-a abs_tol] [-r rel_tol] [-n norm_tol] [-o output_file] brlcad_db.g object(s)\n\
+static char usage[] = "Usage: %s [-f|t] [-v] [-s] [-xX lvl] [-a abs_tol] [-r rel_tol] [-n norm_tol] [-o output_file] brlcad_db.g object(s)\n\
 	options:\n\
 		f - convert each region to facetted BREP before output\n\
-		c - produce a CSG file to the maximum extent possible\n\
-		t - produce a file of trimmed surfaces\n\
+		t - produce a file of trimmed surfaces (experimental)\n\
 		s - produce NURBS for faces of any BREP objects\n\
 		v - verbose\n\
 		a - absolute tolerance for tessellation\n\
@@ -78,7 +77,9 @@ static char usage[] = "Usage: %s [-f|c|t] [-v] [-s] [-xX lvl] [-a abs_tol] [-r r
 		n - normal tolerance for tessellation\n\
 		x - librt debug flag\n\
 		X - nmg debug flag\n\
-		o - file to receive IGES output\n";
+		o - file to receive IGES output\n\
+	The f and t options are mutually exclusive. If neither is specified,\n\
+	the default output is a CSG file to the maximum extent possible\n";
 
 static int	NMG_debug;	/* saved arg of -X, for longjmp handling */
 static int	verbose=0;
@@ -194,13 +195,10 @@ char	*argv[];
 	prog_name = argv[0];
 
 	/* Get command line arguments. */
-	while ((c = getopt(argc, argv, "fctsa:n:o:p:r:vx:P:X:")) != EOF) {
+	while ((c = getopt(argc, argv, "ftsa:n:o:p:r:vx:P:X:")) != EOF) {
 		switch (c) {
 		case 'f':		/* Select facetized output */
 			mode = FACET_MODE;
-			break;
-		case 'c':		/* Select CSG output */
-			mode = CSG_MODE;
 			break;
 		case 't':
 			mode = TRIMMED_SURF_MODE;
