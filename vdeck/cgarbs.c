@@ -1,13 +1,12 @@
 /*
- *	@(#) cgarbs.c			retrieved 8/13/86 at 07:59:34,
- *	@(#) version 1.5		  created 7/19/83 at 10:58:32.
+ *	@(#) cgarbs.c			retrieved: 8/13/86 at 07:59:43,
+ *	@(#) version 1.6		last edit: 10/11/83 at 10:02:36., G S Moss.
  *
  *	Written by Keith Applin.
- *	All rights reserved, Ballistic Research Laboratory.
  */
-#include "ged_types.h"
-#include "3d.h"
-#include "./deck.h"
+#include "./ged_types.h"
+#include "./3d.h"
+#include "./vdeck.h"
 extern double	fabs();
 
 /* C G A R B S :   determines COMGEOM arb types from GED general arbs
@@ -75,20 +74,20 @@ int svec[];	/* array of like points */
 			uvec[numuvec++] = j;
 	}
 
-	/* put comgeom solid typpe into s_num */
+	/* put comgeom solid typpe into s_cgtype */
 	switch( numuvec ) {
 	case 8:
-		rec->s.s_num = -8;  /* ARB8 */
+		rec->s.s_cgtype = -8;  /* ARB8 */
 		break;
 	case 6:
-		rec->s.s_num = -7;	/* ARB7 */
+		rec->s.s_cgtype = -7;	/* ARB7 */
 		break;
 	case 4:
-		if(svec[0] == 2)	rec->s.s_num = -6;	/* ARB6 */
-		else			rec->s.s_num = -5;	/* ARB5 */
+		if(svec[0] == 2)	rec->s.s_cgtype = -6;	/* ARB6 */
+		else			rec->s.s_cgtype = -5;	/* ARB5 */
 		break;
 	case 2:
-		rec->s.s_num = -4;	/* ARB4 */
+		rec->s.s_cgtype = -4;	/* ARB4 */
 		break;
 	default:
 		printf("solid: %s  bad number of unique vectors (%d)\n",
@@ -112,7 +111,7 @@ int uvec[], svec[], numvec;
 	float		vec[3];
 	int		nleg1, nleg2, nleg3;
 
-	cgtype = rec->s.s_num * -1;
+	cgtype = rec->s.s_cgtype * -1;
 	switch( cgtype ) {
 	case ARB8: /* New stuff Mar 29, 1983.				*/
 #ifdef 0 /* THIS CODE DOES NOT WORK ====================================*/
@@ -179,7 +178,7 @@ int uvec[], svec[], numvec;
 		}
 
 		/* Have a BOX.						*/
-		rec->s.s_num = -2;
+		rec->s.s_cgtype = -2;
 
 		/* Check for RPP.					*/
 		nleg1 = nleg2 = nleg3 = 0;
@@ -192,7 +191,7 @@ int uvec[], svec[], numvec;
 				nleg3++;
 		}
 		if( nleg1 == 2 && nleg2 == 2 && nleg3 == 2 )
-			rec->s.s_num = -1;	/* RPP */
+			rec->s.s_cgtype = -1;	/* RPP */
 
 		/* Back to point notation.				*/
 		points( rec );
@@ -312,7 +311,7 @@ int uvec[], svec[], numvec;
 		break;
 	default:
 		printf("solid %s: unknown arb type (%d)\n",
-				rec->s.s_name,rec->s.s_num);
+				rec->s.s_name,rec->s.s_cgtype);
 		return( 0 );
 		break;
 	}
