@@ -187,7 +187,7 @@ CONST struct cnurb * crv;
 	rt_log("\tKnot Vector = {\n\t\t");
 
 	for( i = 0; i < crv->knot.k_size; i++)
-		rt_log("%3.2f  ", crv->knot.knots[i]);
+		rt_log("%10.8f ", crv->knot.knots[i]);
 
 	rt_log("\n\t}\n");
 	rt_log("\t");
