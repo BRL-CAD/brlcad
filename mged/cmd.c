@@ -2186,11 +2186,7 @@ f_pl(clientData, interp, argc, argv)
 void
 mged_update()
 {
-  event_check(1);  /* non-blocking */
-
-  if(sedraw > 0)
-    sedit();
-
+  event_check(0);  /* blocking */
   refresh();
 }
 
