@@ -1,8 +1,8 @@
 .TH RLE-FB 1V VMB
-'\"	last edit:	85/04/22	G. S. Moss
-'\"	SCCS ID:	@(#)rle-fb.1	1.3
+'\"	last edit:	85/05/21	G. S. Moss
+'\"	SCCS ID:	@(#)rle-fb.1	1.4
 .SH NAME
-rle-fb \- Restore Run-Length Encoded image onto a frame buffer
+rle-fb \- restore run-length encoded image onto a frame buffer
 .SH SYNOPSIS
 .B rle-fb
 [
@@ -16,10 +16,11 @@ rle-fb \- Restore Run-Length Encoded image onto a frame buffer
 x y ] [ file.rle ]
 .SH DESCRIPTION
 .I Rle-fb\^
-restoresto the name of another device or file name, an Alpha_1 standard format run-length encoded (RLE)
-file saved with
-.I fb-rle\^
-or a similar program.
+restores an Alpha_1 standard format Run-Length Encoded (RLE) file
+(saved with
+.IR fb-rle\^ (1V)
+or a similar program)
+to a frame buffer device or a file.
 If
 .I file.rle\^
 is not specified, the standard input is read.
@@ -30,10 +31,9 @@ This may be changed by setting the environment
 variable
 .B
 .SM FB_FILE
-to the name of another device or file name
+to the name of another device or file
 and exporting it before execution of
 .IR rle-fb\^ .
-Images may be written to disk or any supported frame buffer device.
 .I Rle-fb\^
 determines the type and size of the saved file (color or B&W)
 and acts accordingly.
@@ -72,7 +72,7 @@ can be any of
 .BI \-p "x y"
 Reposition the image.
 The original lower left corner is positioned at
-.RI [ x\^ ", " y\^ ]
+.RI ( x\^ ", " y\^ )
 before restoring the image.
 Warning:
 a saved image should not be
