@@ -77,7 +77,7 @@ set -S2 "/bin/sh"
  *								*
  ****************************************************************/
 #undef NFS
-
+#define NFS	1	/* BRL */
 
 /****************************************************************
  *								*
@@ -331,7 +331,7 @@ set -S2 "/bin/sh"
 #	define	LD_OPTS	CC_OPTS
 #	define	LIBMALLOC	/* must use libc.a, for _malloc_at_addr() */
 #	define	LIBRT_TIMER	timer42
-#if 1
+#if 0
 /*		Normal Sun configuration */
 #		define	LIBFB_OBJS	if_remote pkg if_sun
 #		define	LIBFB_CONFIG	-DIF_REMOTE -DIF_SUN
@@ -395,8 +395,13 @@ set -S2 "/bin/sh"
 #	undef	xmp
 #	define	UNIXTYPE	SYSV
 #	undef	cray
-#	define	CC_DEFS	-hvector,olevel_2
-/***#	define	CC_OPTS	-DVECTORIZE**/
+#	define	HAS_TCP	1
+/*	-g -hnobtreg for debugging */
+#	if 1
+#		define	CC_DEFS -hvector,olevel_3
+#		define	CC_DEFS -hvector,olevel_3,vmesg_2 -DVECTORIZE
+/*		Cray C 4.0 (experimental) */
+#		define	CC_DEFS -hvector,olevel_3,vmesg_2
 #		define	CC	/bin/ncc
 #	define	LIBPKG_CONFIG	-I/usr/win-include -DBSD -DSHORT_IDENT
 #	define	RFBD_CONFIG	-I/usr/win-include -DBSD -DSHORT_IDENT
@@ -418,11 +423,13 @@ set -S2 "/bin/sh"
 #	undef	cr2
 #	define	UNIXTYPE	SYSV
 #	undef	cray
-#	define	CC_DEFS -hvector,olevel_3,vmesg_2
-/**
-#	define	CC_DEFS -hvector,olevel_3,vmesg_2 -DVECTORIZE
-#	define	CC	/bin/ncc
-**/
+#	define	MTYPE	cr2
+#		define	CC_DEFS -hvector,olevel_3
+#		define	CC	/bin/scc
+/*		Cray C 4.0 (experimental) */
+#		define	CC_DEFS -hvector,olevel_3,vmesg_2 -DVECTORIZE
+#		define	CC	/bin/ncc
+#			define	CC	/bin/ncc
 #	define	FC	/bin/cft77
 		AR x /usr/lib/libnet.a select.o socket.o; \
 #	define	LIBPKG_CONFIG	-I/usr/win-include -DBSD -DSHORT_IDENT
