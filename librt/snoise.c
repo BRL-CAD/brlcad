@@ -76,7 +76,7 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 \
 	x = dst[0];	ix = FLOOR(x);	fx = x - ix; \
 	y = dst[1];	iy = FLOOR(y);	fy = y - iy; \
-	z = dst[0];	iz = FLOOR(z);	fz = z - iz; \
+	z = dst[2];	iz = FLOOR(z);	fz = z - iz; \
 }
 
 /* Permutation table */
@@ -817,7 +817,6 @@ static float rndtable[] = {
 #define RNDTABSIZ (sizeof(rndtable) / sizeof(float))
 #define RANDNBR	rndtable[rndtabi = (rndtabi+1) % RNDTABSIZ ]
 #define RANDSEED(_s) rndtabi = _s % RNDTABSIZ
-static int rndtabi = RNDTABSIZ - 1;
 
 
 static double
@@ -871,6 +870,7 @@ double d;
 	if (d >= 4.) return 0;
 
 	if (!initialized) {
+		initialized = 1;
 		for (i=0 ; i < NENTRIES ; i++) {
 			x = sqrt(  (double)i / (double)SAMPRATE  );
 			if (x < 1)
@@ -878,7 +878,6 @@ double d;
 			else
 				table[i] = 0.5 * (4+x*(-8+x*(5-x)));
 		}
-		initialized = 1;
 	}
 
 	d = d*SAMPRATE + 0.5;
@@ -893,7 +892,7 @@ double d;
  *
  */
 static double valueTab[TABSIZE];
-static int valueTabInitialized;
+static int valueTabInitialized = 0;
 #define vlattice(ix, iy, iz) (valueTab[INDEX(ix, iy, iz)])
 
 
@@ -903,14 +902,15 @@ long seed;
 {
 	register double *table = valueTab;
 	register int i;
+	int rndtabi = RNDTABSIZ - 1;
+
+	if (valueTabInitialized) return;
+	valueTabInitialized = 1;
 
 	RANDSEED(seed);
 
 	for (i=0 ; i < TABSIZE ; i++ )
 		*table++ = 1. - 2.* RANDNBR;
-
-
-	valueTabInitialized = 1;
 }
 
 double
@@ -995,6 +995,10 @@ long seed;
 	double *table = gradientTab;
 	double r, z, theta;
 	int i;
+	int rndtabi = RNDTABSIZ - 1;
+
+	if (gradientTabInitialized) return;
+	gradientTabInitialized = 1;
 
 	RANDSEED(seed);
 
@@ -1014,8 +1018,6 @@ long seed;
 		*table++ = r * sin(theta);
 		*table++ = z;
 	}
-
-	gradientTabInitialized = 1;
 }
 
 
@@ -1029,8 +1031,8 @@ double
 noise_g(point)
 point_t point;
 {
-	int ix, iy, iz;	/* lower integer lattice point */
-	double x, y, z;	/* corrected point */
+	int ix, iy, iz;		/* lower integer lattice point */
+	double x, y, z;		/* corrected point */
 	double fx, fy, fz;	/* distance above integer lattice point */
 	double fx1, fy1, fz1;
 	double wx, wy, wz;
@@ -1098,6 +1100,10 @@ long seed;
 {
 	int i;
 	double *f = impulseTab;
+	int rndtabi = RNDTABSIZ - 1;
+
+	if (impulseTabInitialized) return;
+	impulseTabInitialized = 1;
 
 	RANDSEED(seed);
 
@@ -1107,7 +1113,7 @@ long seed;
 		*f++ = RANDNBR;
 		*f++ = 1. - 2.*RANDNBR;
 	}
-	impulseTabInitialized = 1;
+
 }
 
 double
@@ -1170,7 +1176,6 @@ point_t point;
 #define MINY		MINX
 #define MINZ		MINX
 
-#define SCURVE(a) ((a)*(a)*(3.0-2.0*(a)))
 #define REALSCALE ( 2.0 / 65536.0 )
 #define NREALSCALE ( 2.0 / 4096.0 )
 #define Hash3d(a,b,c) \
@@ -1265,11 +1270,24 @@ point_t v;
 
 
 void
-NoiseInit()
+noise_init()
 {
 	point_t rp;
 	int i, j, k, temp;
+	int rndtabi = RNDTABSIZ - 1;
+	
+	if (hashTableValid) {
+		rt_log("noise_init(hashTable=0x%08x hashTableValid=%d) sleeping\n",
+			hashTable, hashTableValid);
+		sleep(1);
+		return;
+	}
+	hashTableValid = 1;
 
+	rt_log("noise_init(hashTable=0x%08x hashTableValid=%d)\n",
+		hashTable, hashTableValid);
+
+	RANDSEED( (RNDTABSIZ-1) );
 	hashTable = (short *) rt_malloc(4096*sizeof(short int), "noise hashTable");
 	for (i = 0; i < 4096; i++)
 		hashTable[i] = i;
@@ -1285,7 +1303,6 @@ NoiseInit()
 		rp[0] = rp[1] = rp[2] = (double)i;
 		RTable[i] = R(rp)*REALSCALE - 1.0;
 	}
-	hashTableValid = 1;
 }
 
 
@@ -1306,7 +1323,7 @@ point_t point;
 	short	m;
 	point_t	pt;
 
-	if (!hashTableValid) NoiseInit();
+	if (!hashTableValid) noise_init();
 
 	FILTER_ARGS( point); /* sets x,y,z, ix,iy,iz, fx,fy,fz */
 
@@ -1314,9 +1331,9 @@ point_t point;
 	jy = iy + 1; 
 	jz = iz + 1;
 
-	sx = SCURVE(fx); 
-	sy = SCURVE(fy); 
-	sz = SCURVE(fz);
+	sx = SMOOTHSTEP(fx); 
+	sy = SMOOTHSTEP(fy); 
+	sz = SMOOTHSTEP(fz);
 
 	/* the complement values of sx,sy,sz */
 	tx = 1.0 - sx; 
@@ -1371,19 +1388,17 @@ point_t result;
 	short		m;
 	point_t		pt;
 
-	if ( ! hashTableValid ) NoiseInit();
+
+	if ( ! hashTableValid ) noise_init();
+
 
 	FILTER_ARGS( point); /* sets x,y,z, ix,iy,iz, fx,fy,fz */
 
-	/* its equivalent integer lattice point. */
+	jx = ix+1;   jy = iy + 1;   jz = iz + 1;
 
-	jx = ix+1; 
-	jy = iy + 1; 
-	jz = iz + 1;
-
-	sx = SCURVE(x - ix); 
-	sy = SCURVE(y - iy); 
-	sz = SCURVE(z - iz);
+	sx = SMOOTHSTEP(x - ix); 
+	sy = SMOOTHSTEP(y - iy); 
+	sz = SMOOTHSTEP(z - iz);
 
 	/* the complement values of sx,sy,sz */
 	tx = 1.0 - sx; 
@@ -1467,7 +1482,7 @@ struct fbm_spec {
 };
 #define MAGIC_fbm_spec_wgt 0x837592
 
-static struct fbm_spec *etbl;
+static struct fbm_spec *etbl = (struct fbm_spec *)NULL;
 static int etbl_next = 0;
 static int etbl_size = 0;
 
@@ -1475,19 +1490,6 @@ static int etbl_size = 0;
 #define PSCALE(_p, _s) _p[0] *= _s; _p[1] *= _s; _p[2] *= _s
 #define PCOPY(_d, _s) _d[0] = _s[0]; _d[1] = _s[1]; _d[2] = _s[2]
 
-/* The first order of business is to see if we have pre-computed
- * the spectral weights table for these parameters in a previous
- * invocation.  If not, the we compute them and save them for
- * possible future use
- */
-#define FIND_SPEC_WGT(_ep, _h, _l, _o) \
-	for (_ep=etbl, i=0 ; i < etbl_next ; i++, _ep++) { \
-		if (_ep->magic != MAGIC_fbm_spec_wgt) abort(); \
-		else if (_ep->lacunarity == _l && _ep->h_val == _h && \
-			_ep->octaves >= _o ) \
-		    		break; \
-	} \
-	if (i >= etbl_next) _ep = build_spec_tbl(_h, _l, _o)
 
 
 static struct fbm_spec *
@@ -1535,6 +1537,47 @@ build_spec_tbl(double h_val, double lacunarity, double octaves)
 	return ep;
 }
 
+/* The first order of business is to see if we have pre-computed
+ * the spectral weights table for these parameters in a previous
+ * invocation.  If not, the we compute them and save them for
+ * possible future use
+ */
+/* #define FIND_SPEC_WGT(_ep, _h, _l, _o) \
+ *	for (_ep=etbl, i=0 ; i < etbl_next ; i++, _ep++) { \
+ *		if (_ep->magic != MAGIC_fbm_spec_wgt) abort(); \
+ *		else if (_ep->lacunarity == _l && _ep->h_val == _h && \
+ *			_ep->octaves >= _o ) \
+ *		    		break; \
+ *	} \
+ *	if (i >= etbl_next) _ep = build_spec_tbl(_h, _l, _o)
+ */
+#define FIND_SPEC_WGT(_ep, _h, _l, _o) _ep = find_spec_wgt(_h, _l, _o)
+struct fbm_spec		*
+find_spec_wgt(h, l, o)
+double			h;
+double			l;
+double			o;
+{
+	struct fbm_spec	*ep;
+	int i;
+#if 1
+	rt_log("locking\n");
+	RES_ACQUIRE(&rt_g.res_worker);
+#endif
+	for (ep = etbl, i=0 ; i < etbl_next ; i++, ep++) {
+		if (ep->magic != MAGIC_fbm_spec_wgt) rt_bomb("find_spec_wgt");
+		else if (ep->lacunarity == l && ep->h_val == h && 
+			ep->octaves >= o )
+		    		break;
+	}
+
+	if (i >= etbl_next) ep = build_spec_tbl(h, l, o);
+#if 1
+	RES_RELEASE(&rt_g.res_worker);
+	rt_log("released\n");
+#endif
+	return (ep);
+}
 /*
  * Procedural fBm evaluated at "point"; returns value stored in "value".
  * 
@@ -1661,5 +1704,3 @@ double octaves;
 	return( value );
 
 } /* fbm_turb() */
-
-
