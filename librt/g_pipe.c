@@ -412,7 +412,7 @@ double			local2mm;
 	rec = (union record *)ep->ext_buf;
 
 	rec->pw.pw_id = DBID_PIPE;
-	rec->pw.pw_count = ngran;
+	(void)rt_plong( rec->pw.pw_count, ngran-1 );	/* # EXTRA grans */
 
 	/* Convert the pipe segments to external form */
 	eps = &rec->pw.pw_data[0];
