@@ -50,8 +50,6 @@ set mged_helpdevel_data(view2model_vec)	{{vx vy vz}	{given a vector in view coor
         convert it to model coordinates.}}
 set mged_helpdevel_data(view2model_lu)	{{vx vy vz}	{given a point in view coordinates (local units),
         convert it to model coordinates (local units).}}
-set mged_helpdevel_data(viewget)	{{center|size|eye|ypr|quat|aet}	{Experimental - return high-precision view parameters.}}
-set mged_helpdevel_data(viewset)	{{center|eye|size|ypr|quat|aet}	{Experimental - set several view parameters at once.}}
 set mged_helpdevel_data(winset)		{{[pathname]}	{sets the current display manager to pathname}}
 
 proc helpdevel {args} {
