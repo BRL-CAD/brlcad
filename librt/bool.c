@@ -195,6 +195,12 @@ struct application	*ap;
 		RT_LIST_DEQUEUE( &(segp->l) );
 		RT_LIST_INSERT( &(out_hd->l), &(segp->l) );
 
+		/* Make nearly zero be exactly zero */
+		if( NEAR_ZERO( segp->seg_in.hit_dist, tol_dist ) )
+			segp->seg_in.hit_dist = 0;
+		if( NEAR_ZERO( segp->seg_out.hit_dist, tol_dist ) )
+			segp->seg_out.hit_dist = 0;
+
 		/* Totally ignore things behind the start position */
 		if( segp->seg_out.hit_dist < -10.0 )
 			continue;
