@@ -234,59 +234,47 @@ end:
       MAT4X3PNT(model_pt, view_state->vs_view2model, view_pt);
       VSCALE(model_pt, model_pt, base2local);
       bu_vls_printf(&vls, "adc xyz %lf %lf %lf\n", model_pt[X], model_pt[Y], model_pt[Z]);
-    }else if(grid_state->gr_snap && !stolen &&
-	     state != ST_S_PICK && state != ST_O_PICK &&
-	     state != ST_O_PATH && !SEDIT_PICK){
-      point_t view_pt;
-      point_t model_pt;
+    } else if (grid_state->gr_snap && !stolen &&
+	       SEDIT_TRAN && mged_variables->mv_transform == 'e') {
+	    point_t view_pt;
+	    point_t model_pt;
 
-      snap_to_grid(&fx, &fy);
+	    snap_to_grid(&fx, &fy);
+	    MAT4X3PNT(view_pt, view_state->vs_model2view, curr_e_axes_pos);
+	    view_pt[X] = fx;
+	    view_pt[Y] = fy;
+	    MAT4X3PNT(model_pt, view_state->vs_view2model, view_pt);
+	    VSCALE(model_pt, model_pt, base2local);
+	    bu_vls_printf(&vls, "p %lf %lf %lf", model_pt[X], model_pt[Y], model_pt[Z]);
+    } else if (grid_state->gr_snap && !stolen &&
+	       OEDIT_TRAN && mged_variables->mv_transform == 'e') {
+	    point_t view_pt;
+	    point_t model_pt;
 
-      if((state == ST_S_EDIT || state == ST_O_EDIT) &&
-	 mged_variables->mv_transform == 'e'){
+	    snap_to_grid(&fx, &fy);
+	    MAT4X3PNT(view_pt, view_state->vs_model2view, curr_e_axes_pos);
+	    view_pt[X] = fx;
+	    view_pt[Y] = fy;
+	    MAT4X3PNT(model_pt, view_state->vs_view2model, view_pt);
+	    VSCALE(model_pt, model_pt, base2local);
+	    bu_vls_printf(&vls, "translate %lf %lf %lf", model_pt[X], model_pt[Y], model_pt[Z]);
+    } else if (grid_state->gr_snap && !stolen &&
+	       state != ST_S_PICK && state != ST_O_PICK &&
+	       state != ST_O_PATH && !SEDIT_PICK && !EDIT_SCALE) {
+	    point_t view_pt;
+	    point_t model_pt;
+	    point_t vcenter;
 
-#if 0
-	if(state == ST_S_EDIT){
-	  save_edflag = es_edflag;
-	  if(!SEDIT_TRAN)
-	    es_edflag = STRANS;
-	}else{
-	  save_edflag = edobj;
-	  edobj = BE_O_XY;
-	}
-#endif
-
-	MAT4X3PNT(view_pt, view_state->vs_model2view, curr_e_axes_pos);
-	view_pt[X] = fx;
-	view_pt[Y] = fy;
-	MAT4X3PNT(model_pt, view_state->vs_view2model, view_pt);
-	VSCALE(model_pt, model_pt, base2local);
-	bu_vls_printf(&vls, "p %lf %lf %lf", model_pt[X], model_pt[Y], model_pt[Z]);
-	status = Tcl_Eval(interp, bu_vls_addr(&vls));
-
-#if 0
-	if(state == ST_S_EDIT)
-	  es_edflag = save_edflag;
-	else
-	  edobj = save_edflag;
-#endif
-
-	mged_variables->mv_orig_gui = old_orig_gui;
-	bu_vls_free(&vls);
-	return status;
-      }else{
-	point_t vcenter;
-
-	MAT_DELTAS_GET_NEG(vcenter, view_state->vs_toViewcenter);
-	MAT4X3PNT(view_pt, view_state->vs_model2view, vcenter);
-	view_pt[X] = fx;
-	view_pt[Y] = fy;
-	MAT4X3PNT(model_pt, view_state->vs_view2model, view_pt);
-	VSCALE(model_pt, model_pt, base2local);
-	bu_vls_printf(&vls, "center %lf %lf %lf", model_pt[X], model_pt[Y], model_pt[Z]);
-      }
-    }else
-      bu_vls_printf(&vls, "M 1 %d %d\n", x, y);
+	    snap_to_grid(&fx, &fy);
+	    MAT_DELTAS_GET_NEG(vcenter, view_state->vs_toViewcenter);
+	    MAT4X3PNT(view_pt, view_state->vs_model2view, vcenter);
+	    view_pt[X] = fx;
+	    view_pt[Y] = fy;
+	    MAT4X3PNT(model_pt, view_state->vs_view2model, view_pt);
+	    VSCALE(model_pt, model_pt, base2local);
+	    bu_vls_printf(&vls, "center %lf %lf %lf", model_pt[X], model_pt[Y], model_pt[Z]);
+    } else
+	    bu_vls_printf(&vls, "M 1 %d %d\n", x, y);
 
     status = Tcl_Eval(interp, bu_vls_addr(&vls));
     mged_variables->mv_orig_gui = old_orig_gui;

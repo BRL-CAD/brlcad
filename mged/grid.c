@@ -38,6 +38,7 @@ static char RCSid[] = "";
 #include "./mged_dm.h"
 
 extern void mged_vls_struct_parse(); /* defined in vparse.c */
+extern point_t e_axes_pos;  /* from edsol.c */
 extern vect_t curr_e_axes_pos;  /* from edsol.c */
 
 void draw_grid();
@@ -272,7 +273,12 @@ snap_keypoint_to_grid()
   point_t model_pt;
   struct bu_vls cmd;
 
-  MAT4X3PNT(view_pt, view_state->vs_model2view, curr_e_axes_pos);
+  if (state == ST_S_EDIT) {
+	  MAT4X3PNT(view_pt, view_state->vs_model2view, curr_e_axes_pos);
+  } else {
+	  MAT4X3PNT(model_pt, modelchanges, e_axes_pos);
+	  MAT4X3PNT(view_pt, view_state->vs_model2view, model_pt);
+  }
   snap_to_grid(&view_pt[X], &view_pt[Y]);
   MAT4X3PNT(model_pt, view_state->vs_view2model, view_pt);
   VSCALE(model_pt, model_pt, base2local);
