@@ -215,7 +215,7 @@ set mged_help_data(whichid)	{{[-s] ident(s)}	{lists all regions with given ident
 set mged_help_data(which_shader)	{{Shader(s)}	{lists all combinations using the given shaders}}
 set mged_help_data(who)		{{[r(eal)|p(hony)|b(oth)]}	{list the top-level objects currently being displayed}}
 set mged_help_data(wmater)	{{filename comb(s)}	{write combination materials to filename}}
-set mged_help_data(x)		{{lvl}	{print solid table & vector list}}
+set mged_help_data(x)		{{[lvl]}	{print solid table & vector list}}
 set mged_help_data(xpush)	{{object}	{Experimental Push Command}}
 set mged_help_data(Z)		{{}	{zap all objects off screen}}
 set mged_help_data(zoom)	{{scale_factor}	{zoom view in or out}}
