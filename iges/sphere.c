@@ -36,7 +36,6 @@ int entityno;
 	fastf_t		z;
 	int		sol_num;		/* IGES solid type number */
 
-
 	/* Set Defaults */
 
 	x = 0.0;

@@ -19,7 +19,10 @@
 	sphere wedge tor cyl cone ell convinst \
 	extrude extrudcirc extrudcon getcurve \
 	revolve splinef readdbl brlabs docolor spline convsurf \
-	b-spline
+	b-spline brep get_outer_shell add_inner_shell make_face \
+	add_face add_loop get_edge_list read_edge_list \
+	get_vertex_list read_vertex_list get_vertex get_att \
+	read_att check_names
 
 #include "../Cakefile.defs"
 #include "../Cakefile.prog"

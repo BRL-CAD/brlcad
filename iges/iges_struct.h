@@ -24,17 +24,26 @@ struct iges_directory
 	int param; /* record number for parameter entry */
 	int paramlines; /* number of lines for this entity in parameter section */
 	int direct; /* directory entry sequence number */
-/* Note that the directory entry sequence number and the directory structure
-   array index are not the same.  The index into the array can be calculated
-   as (sequence number - 1)/2.	*/
+/*
+ * Note that the directory entry sequence number and the directory structure
+ * array index are not the same.  The index into the array can be calculated
+ * as (sequence number - 1)/2.
+ */
 	int trans; /* index into directory array for transformation matrix */
 	int colorp; /* pointer to color definition entity (or color number) */
 	unsigned char rgb[3]; /* Actual color */
 	char *mater;	/* material parameter string */
-	int referenced; /* number of times this entity is referenced by boolean trees,
-		solids, or solid assemblies. For transformation entities,
-		it indicates whether the matrix list has been evaluated */
-	char name[NAMELEN+1]; /* entity name */
+	int referenced;
+/*
+ * uses of the "referenced" field:
+ *	for solid objects - number of times this entity is referenced by
+ *		boolean trees or solid assemblies.
+ *	For transformation entities - it indicates whether the matrix list
+ *		has been evaluated.
+ *	for attribute instances - It contains the DE for the attribute
+ *		definition entity.
+ */
+	char *name; /* entity name */
 	mat_t *rot; /*  transformation matrix. */
 };
 
@@ -46,6 +55,19 @@ struct node
 	struct node *left,*right,*parent;
 };
 
+/* structure for storing atributes */
+struct brlcad_att
+{
+	char			*material_name;
+	char			*material_params;
+	int			region_flag;
+	int			ident;
+	int			air_code;
+	int			material_code;
+	int			los_density;
+	int			inherit;
+	int			color_defined;
+};
 
 /* Structure for linked list of points */
 struct ptlist
@@ -74,4 +96,50 @@ struct reglist
 	char name[NAMELEN];
 	struct node *tree;
 	struct reglist *next;
+};
+
+struct types
+{
+	int	type;
+	char	*name;
+	int	count;
+};
+
+struct iges_edge_use
+{
+	int	edge_de;		/* directory sequence number for edge list or vertex list */
+	int	edge_is_vertex;		/* flag */
+	int	index;			/* index into list for this edge */
+	int	orient;			/* orientation flag (1 => agrees with geometry */
+};
+
+struct iges_vertex
+{
+	point_t pt;
+	struct vertex *v;
+};
+
+struct iges_vertex_list
+{
+	int vert_de;
+	int no_of_verts;
+	struct iges_vertex *i_verts;
+	struct iges_vertex_list *next;
+};
+
+struct iges_edge
+{
+	int curve_de;
+	int start_vert_de;
+	int start_vert_index;
+	int end_vert_de;
+	int end_vert_index;
+};
+
+struct iges_edge_list
+{
+	int edge_de;
+	int no_of_edges;
+	struct iges_edge *i_edge;
+	struct iges_edge_list *next;
 };

@@ -1,5 +1,5 @@
 
-#define NTYPES 74
+#define NTYPES 78
 
 struct types typecount[NTYPES+1]={
 	{ 0 , "Unknown entity type" , 0 },
@@ -15,6 +15,7 @@ struct types typecount[NTYPES+1]={
 	{ 118 , "Ruled Surface" , 0 },
 	{ 120 , "Surface of Revolution" , 0 },
 	{ 122 , "Tabulated Cylinder" , 0 },
+	{ 123 , "Direction" , 0 },
 	{ 124 , "Transformation Matrix (3X4)" , 0 },
 	{ 125 , "Flash" , 0 },
 	{ 126 , "Rational B-Spline Curve" , 0 },
@@ -39,6 +40,7 @@ struct types typecount[NTYPES+1]={
 	{ 180 , "Boolean Tree" , 0 },
 	{ 184 , "Solid Assembly" , 0 },
 	{ 186 , "Manifold Solid BREP Object" , 0 },
+	{ 190 , "Plane Surface" , 0 },
 	{ 202 , "Angular Dimension" , 0 },
 	{ 206 , "Diameter Dimension" , 0 },
 	{ 208 , "Flag Note" , 0 },
@@ -59,6 +61,7 @@ struct types typecount[NTYPES+1]={
 	{ 312 , "Text Display Template" , 0 },
 	{ 314 , "Color Definition" , 0 },
 	{ 320 , "Network Subfigure Definition" , 0 },
+	{ 322 , "Attribute Definition" , 0 },
 	{ 402 , "Associativity Instance" , 0 },
 	{ 404 , "Drawing" , 0 },
 	{ 406 , "Property" , 0 },
@@ -69,12 +72,13 @@ struct types typecount[NTYPES+1]={
 	{ 416 , "External Reference" , 0 },
 	{ 418 , "Nodal Load/Constraint" , 0 },
 	{ 420 , "Network Subfigure Instance" , 0 },
+	{ 422 , "Attribute Instance" , 0 },
 	{ 430 , "Solid Instance" , 0 },
-	{ 502 , "Vertex" , 0 },
-	{ 504 , "Edge" , 0 },
+	{ 502 , "Vertex List" , 0 },
+	{ 504 , "Edge List" , 0 },
 	{ 508 , "Loop" , 0 },
 	{ 510 , "Face" , 0 },
 	{ 514 , "Shell" , 0 },
 	{ 600 , "MACRO Instance" , 0 },
-	{ 700 , "Transformation Matrix (4X4)" , 0 },
+	{ 700 , "Transformation Matrix (4X4)" , 0 }
 };
