@@ -75,15 +75,13 @@ int len;
 	buf[0] = '\0';
 
 	/* In a portable way, read the header (even if not rewound) */
-	if(rewind( rt_i.fp )==EOF)
-		rt_log("rt_dirbuild: rewind() failure 1\n");
+	rewind( rt_i.fp );
 	if( fread( (char *)&record, sizeof record, 1, rt_i.fp ) != 1  ||
 	    record.u_id != ID_IDENT )  {
 		rt_log("WARNING:  File is lacking a proper MGED database header\n");
 		rt_log("This database should be converted before further use.\n");
 	}
-	if(rewind( rt_i.fp )==EOF)
-		rt_log("rt_dirbuild: rewind() failure 2\n");
+	rewind( rt_i.fp );
 
 	while(1)  {
 		if( (addr = ftell(rt_i.fp)) == EOF )
@@ -164,8 +162,8 @@ int len;
 			continue;
 		}
 	}
-	if(rewind( rt_i.fp )==EOF)
-		rt_log("rt_dirbuild: rewind() failure\n");
+	rewind( rt_i.fp );
+
 	/* Eventually, we will malloc() this on a per-db basis */
 	return( &rt_i );	/* OK */
 }
