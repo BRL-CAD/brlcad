@@ -774,11 +774,22 @@ combbld()
 	cp = nxt_spc( cp );
 	inherit = atoi( cp );
 
-	/* XXX Need support for P and V, for FASTGEN */
-	if( reg_flags == 'Y' )
-		is_reg = 1;
-	else
+	/* To support FASTGEN, different kinds of regions now exist. */
+	switch( reg_flags )  {
+	case 'Y':
+	case 'R':
+		is_reg = DBV4_REGION;
+		break;
+	case 'P':
+		is_reg = DBV4_REGION_FASTGEN_PLATE;
+		break;
+	case 'V':
+		is_reg = DBV4_REGION_FASTGEN_VOLUME;
+		break;
+	case 'N':
+	default:
 		is_reg = 0;
+	}
 
 	if( temp_nflag )  {
 		fgets( buf, BUFSIZE, ifp );
