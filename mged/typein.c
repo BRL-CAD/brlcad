@@ -64,6 +64,8 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "vmath.h"
 #include "raytrace.h"
 #include "rtgeom.h"
+#include "nurb.h"
+#include "wdb.h"
 #include "./ged.h"
 #include "./mged_dm.h"
 
@@ -131,6 +133,22 @@ char *p_vol[] = {
 	"Enter X, Y, Z dimensions of a cell: ",
 	"Enter Y dimension of a cell: ",
 	"Enter Z dimension of a cell: ",
+};
+
+char *p_pipe[] = {
+	"Enter number of points: ",
+	"Enter X, Y, Z, inner diameter, outer diameter, and bend radius for first point: ",
+	"Enter Y: ",
+	"Enter Z: ",
+	"Enter inner diameter: ",
+	"Enter outer diameter: ",
+	"Enter bend radius: ",
+	"Enter X, Y, Z, inner diameter, outer diameter, and bend radius",
+	"Enter Y",
+	"Enter Z",
+	"Enter inner diameter",
+	"Enter outer diameter",
+	"Enter bend radius"
 };
 
 char *p_ars[] = {
@@ -422,7 +440,7 @@ char **argv;
 				rcc_in(), rhc_in(), rpc_in(), rpp_in(),
 				sph_in(), tec_in(), tgc_in(), tor_in(),
 				trc_in(), ebm_in(), vol_in(), hf_in(),
-				dsp_in(), submodel_in(), part_in();
+				dsp_in(), submodel_in(), part_in(), pipe_in();
 
 	if(dbip == DBI_NULL)
 	  return TCL_OK;
@@ -519,6 +537,17 @@ char **argv;
 		nvals = 4;
 		menu = p_dsp;
 		fn_in = dsp_in;
+	} else if( strcmp( argv[2], "pipe" ) == 0 ) {
+		switch( pipe_in(argc, argv, &internal, &p_pipe[0]) ) {
+		case CMD_BAD:
+		  Tcl_AppendResult(interp, "ERROR, pipe not made!\n", (char *)NULL);
+		  if(internal.idb_type) rt_functab[internal.idb_type].
+					  ft_ifree( &internal );
+		  return TCL_ERROR;
+		case CMD_MORE:
+		  return TCL_ERROR;
+		}
+		goto do_new_update;
 	} else if( strcmp( argv[2], "ars" ) == 0 )  {
 		switch( ars_in(argc, argv, &internal, &p_ars[0]) ) {
 		case CMD_BAD:
@@ -868,6 +897,82 @@ struct rt_db_internal	*intern;
 	bn_mat_idn( vol->mat );
 
 	return( 0 );
+}
+
+/*
+ *			P I P E _ I N
+ */
+int
+pipe_in( argc, argv, intern, prompt )
+int			argc;
+char			**argv;
+struct rt_db_internal	*intern;
+char			*prompt[];
+{
+	register struct rt_pipe_internal *pipe;
+	int i,num_points;
+
+	if(dbip == DBI_NULL)
+	  return TCL_OK;
+
+	if( argc < 4 ) {
+	  Tcl_AppendResult(interp, MORE_ARGS_STR, prompt[argc-3], (char *)NULL);
+	  return CMD_MORE;
+	}
+
+	num_points = atoi( argv[3] );
+	if( num_points < 2 )
+	{
+		Tcl_AppendResult(interp, "Invalid number of points (must be at least 2)\n", (char *)NULL);
+		return CMD_BAD;
+	}
+
+	if( argc < 10 )
+	{
+		Tcl_AppendResult(interp, MORE_ARGS_STR, prompt[argc-3], (char *)NULL);
+		return CMD_MORE;
+	}
+
+	if( argc < 4 + num_points*6 )
+	{
+		struct bu_vls tmp_vls;
+
+		bu_vls_init( &tmp_vls );
+		bu_vls_printf( &tmp_vls, "%s for point %d : ", prompt[7+(argc-10)%6], 1+(argc-4)/6 );
+
+		Tcl_AppendResult(interp, MORE_ARGS_STR, bu_vls_addr(&tmp_vls), (char *)NULL);
+		bu_vls_free(&tmp_vls);
+
+		return CMD_MORE;
+	}
+
+	intern->idb_type = ID_PIPE;
+	intern->idb_ptr = (genptr_t)bu_malloc( sizeof( struct rt_pipe_internal ), "rt_pipe_internal" );
+	pipe = (struct rt_pipe_internal *)intern->idb_ptr;
+	pipe->pipe_magic = RT_PIPE_INTERNAL_MAGIC;
+	BU_LIST_INIT( &pipe->pipe_segs_head );
+	for( i=4 ; i<argc ; i+= 6 )
+	{
+		struct wdb_pipept *pipept;
+
+		pipept = (struct wdb_pipept *)bu_malloc( sizeof( struct wdb_pipept ), "wdb_pipept" );
+		pipept->pp_coord[0] = atof( argv[i] ) * local2base;
+		pipept->pp_coord[1] = atof( argv[i+1] ) * local2base;
+		pipept->pp_coord[2] = atof( argv[i+2] ) * local2base;
+		pipept->pp_id = atof( argv[i+3] ) * local2base;
+		pipept->pp_od = atof( argv[i+4] ) * local2base;
+		pipept->pp_bendradius = atof( argv[i+5] ) * local2base;
+
+		BU_LIST_INSERT( &pipe->pipe_segs_head, &pipept->l );
+	}
+
+	if( rt_pipe_ck(  &pipe->pipe_segs_head ) )
+	{
+		Tcl_AppendResult(interp, "Illegal pipe, solid not made!!\n", (char *)NULL );
+		return CMD_BAD;
+	}
+
+	return CMD_OK;
 }
 
 /*
