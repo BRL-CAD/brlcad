@@ -89,9 +89,13 @@ register int sz;
 #if CRAY
 #	define	F(lc,uc)	uc
 #endif
-#if apollo
+#if defined(apollo) || defined(mips) || defined(aux)
 	/* Lower case, with a trailing underscore */
+#ifdef __STDC__
+#	define	F(lc,uc)	lc ## _
+#else
 #	define	F(lc,uc)	lc/**/_
+#endif
 #endif
 #if !defined(F)
 #	define	F(lc,uc)	lc
