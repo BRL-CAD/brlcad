@@ -70,7 +70,6 @@ Options:\n\
 
 static int	noverlaps;		/* Number of overlaps seen */
 static int	overlap_count;		/* Number of overlap pairs seen */
-static int	rays;
 
 /*
  *  For each unique pair of regions that we find an overlap for
@@ -213,7 +212,6 @@ int minus_o;
 	ap->a_onehit = 0;
 	if( !minus_o)			/* Needs to be set to  stdout */
 		outfp = stdout;
-	rays = 1;
 	return	0;		/* No framebuffer needed */
 }
 

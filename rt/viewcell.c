@@ -75,10 +75,6 @@ int	rayhit(), raymiss();
  *  header. Furthermore, pointers to rayhit() and raymiss() are set up
  *  and are later called from do_run().
  */
-
-static char * save_file;
-static char * save_obj;
-
 int
 view_init( ap, file, obj, minus_o )
 register struct application *ap;
@@ -88,9 +84,6 @@ char *file, *obj;
 	if( !minus_o )
 		outfp = stdout;
 	
-	save_file = file;
-	save_obj = obj;
-
 	/*
 	 *  Cause grid_setup() to align the grid on one inch boundaries,
 	 *  or cell_width boundaries, if it is given.

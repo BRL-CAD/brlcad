@@ -93,7 +93,6 @@ get_args( argc, argv )
 register char **argv;
 {
 	register int c;
-	register int i;
 
 	while( (c=getopt( argc, argv, "x:X:n:v:" )) != EOF )  {
 		switch( c )  {
@@ -129,7 +128,6 @@ int argc;
 char **argv;
 {
 	static struct rt_i *rtip;
-	static vect_t temp;
 	char	*title_file;
 	char	idbuf[132];		/* First ID record info */
 	int	curstep;
@@ -258,7 +256,6 @@ char **argv;
 
 		for( failed_try=0; failed_try<100; failed_try++ )  {
 			vect_t	out;
-			fastf_t	dot;
 			int	i;
 
 			/* Shoot Ray */
@@ -333,7 +330,7 @@ char **argv;
 			 *  the tangent plane, it is doomed to failure;
 			 *  pick any tangent and use that instead.
 			 */
-			if( (dot=VDOT( ap.a_ray.r_dir, norm_cur_try )) < -0.9995 )  {
+			if( (VDOT( ap.a_ray.r_dir, norm_cur_try )) < -0.9995 )  {
 				vect_t	olddir;
 
 				VMOVE( olddir, ap.a_ray.r_dir );
@@ -445,11 +442,6 @@ proj_goal()
 void
 write_matrix(frame)
 {
-	mat_t	viewrot;
-	int	i;
-	vect_t	model;
-	vect_t	view;
-
 	fprintf(outfp, "start %d;\n", frame);
 	fprintf(outfp, "clean;\n");
 	fprintf(outfp, "viewsize %g;\n", viewsize);

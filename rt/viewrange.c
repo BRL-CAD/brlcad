@@ -221,7 +221,6 @@ register struct partition *PartHeadp;
 {
 	register struct partition *pp = PartHeadp->pt_forw;
 	struct	cell	*posp;		/* stores current cell position */
-	fastf_t		dist;   	/* ray distance */
 
 
 	if( pp == PartHeadp )

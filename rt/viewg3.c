@@ -72,7 +72,7 @@ static mat_t	model2hv;		/* model coords to GIFT h,v in inches */
 
 static FILE	*plotfp;		/* optional plotting file */
 
-char usage[] = "\
+CONST char usage[] = "\
 Usage:  rtg3 [options] model.g objects... >file.ray\n\
 Options:\n\
  -s #		Grid size in pixels, default 512\n\
@@ -150,12 +150,6 @@ void
 view_2init( ap )
 struct application	*ap;
 {
-
-	point_t		model_origin;		/* origin in model coordinates */
-	point_t		v_model_origin;		/* model origin shifted to view space coordinates */
-	vect_t		temp;
-	vect_t		m_temp, g_tmp;
-
 	if( outfp == NULL )
 		rt_bomb("outfp is NULL\n");
 
@@ -250,8 +244,6 @@ struct application *ap;
 register struct partition *PartHeadp;
 {
 	register struct partition *pp = PartHeadp->pt_forw;
-	struct partition	*np;	/* next partition */
-	struct partition	air;
 	int 			comp_count;	/* component count */
 	fastf_t			dfirst, dlast;	/* ray distances */
 	static fastf_t		dcorrection = 0; /* RT to GIFT dist corr */

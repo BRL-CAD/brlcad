@@ -90,7 +90,6 @@ register struct partition *PartHeadp;
 {
 	register struct partition *pp = PartHeadp->pt_forw;
 	struct partition	*np;	/* next partition */
-	struct partition	air;
 
 	if( pp == PartHeadp )
 		return(0);		/* nothing was actually hit?? */

@@ -296,8 +296,6 @@ register struct partition *PartHeadp;
 {
 	register struct partition *pp = PartHeadp->pt_forw;
 	struct	cell	*posp;			/* stores current cell position */
-	fastf_t			dist;   	/* ray distance */
-	int			region_id;	/* solid region's id */
 	register struct hit	*hitp;		/* which hit */
 
 	if( pp == PartHeadp )

@@ -78,7 +78,6 @@ mat_t 	model2view;
 	int		seen_size;
 
 	mat_t		rotate, xlate;
-	mat_t		tmp_mat;
 
 
 	/* Open the incoming file for reading */
