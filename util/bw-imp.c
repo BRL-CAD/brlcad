@@ -1,5 +1,5 @@
 /*
- *			B W - I M P R E S S . C
+ *			B W - I M P . C
  *
  *  Authors -
  *	Douglas A. Gwyn
@@ -87,7 +87,7 @@ bool	im_header();
 void	im_write();
 
 char usage[] = "\
-Usage: bw-impress [-h -D] [-s squaresize] [-w width] [-n height]\n\
+Usage: bw-imp [-h -D] [-s squaresize] [-w width] [-n height]\n\
 	[-t thresh] [file.bw] > impress\n";
 
 bool
@@ -134,14 +134,14 @@ register char	**argv;
 		file_name = argv[optind];
 		if( (infp = fopen(file_name, "r")) == NULL )  {
 			(void)fprintf( stderr,
-				"bw-impress: cannot open \"%s\" for reading\n",
+				"bw-imp: cannot open \"%s\" for reading\n",
 				file_name );
 			return false;
 		}
 	}
 
 	if ( argc > ++optind )
-		(void)fprintf( stderr, "bw-impress: excess argument(s) ignored\n" );
+		(void)fprintf( stderr, "bw-imp: excess argument(s) ignored\n" );
 
 	return true;
 }
@@ -173,7 +173,7 @@ char		*argv[];
 	im_wpatches = (im_width+31) / 32;
 	im_hpatches = ((height * im_mag)+31) / 32;
 	if( im_wpatches*32 > 2560 )  {
-		fprintf(stderr,"bw-impress:  output too wide\n");
+		fprintf(stderr,"bw-imp:  output too wide\n");
 		return(1);
 	}
 
