@@ -30,53 +30,44 @@
 /* HYPER_GET_X - get x value of a point which is a given distance along 
  * caternary curve. 
  * x(s) = arcsinh(a*s-sinh(a*c))/a + c
- * If a is too small, uses linear approximation. The x argument and the
- * cos_ang  argument are for the linear approximation only.
+ * Left to calling routine to avoid dividing by zero.
  */
 fastf_t hyper_get_x(a,c, s, d, x, cos_ang)
 fastf_t a, c; 	/* curve parameters */
-fastf_t s;		/* arclength value at beginning of curve */
-fastf_t d;		/* desired distance along curve */
-fastf_t x;		/* x value of beginning of curve */
-fastf_t cos_ang;	/* cosine of angle made by curve if linear */
+fastf_t s;		/* arclength value  */
 {
 	fastf_t arg, asinh_arg;
 
-	arg = a*(s+d) - sinh(a*c);
+	arg = a*s - sinh(a*c);
 	asinh_arg = log(arg + sqrt(arg*arg + 1.0));
-	if (a>VDIVIDE_TOL)
-		return(asinh_arg/a + c);
-	else { /* practically linear */
-		return(x + d*cos_ang);
-	}
+
+	return(asinh_arg/a + c);
 }
 
 /* HYPER_GET_S - calculate the arclength parameter of a caternary
  * curve corresponding to the given value of x.
- * s(x) = (sinh(a(x-c))+sinh(ac))/a */
-int hyper_get_s(ps, a, c, x)
+ * s(x) = (sinh(a(x-c))+sinh(ac))/a 
+ * Left to calling routime to avoid dividing by zero.
+ */
+fastf_t hyper_get_s(a, c, x)
 fastf_t a, c, x;
-double *ps;
 {
-	if (fabs(a)>VDIVIDE_TOL){
-		*ps = (sinh(a*(x-c))+sinh(a*c))/a;
-		return(0);
-	}
-	else {
-		return(-1);
-	}
+		return((sinh(a*(x-c))+sinh(a*c))/a);
 }
 
 /* HYPER_GET_Z - calculate point on the caternary curve:
  * z(x) = cosh(a*(x-c))/a + b
+ * Left to calling routine to avoid dividing by zero.
  */
 fastf_t hyper_get_z(a,b,c,x)
 fastf_t a,b,c,x;
 {
 	fastf_t z;
 
-	z = cosh(a*(x-c))/a + b;
-	return(z);
+	if (fabs(a)>VDIVIDE_TOL){
+		z = cosh(a*(x-c))/a + b;
+		return(z);
+	}
 }
 
 /* HYPER_GET_ANG - calculate angle corresponding to the slope of 
