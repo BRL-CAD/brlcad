@@ -289,7 +289,7 @@ echo
 echo Testing complete, check times against reference files in $path_to_run_sh/../pix/.
 
 # Local Variables: ***
-# mode:sh ***
+# mode: sh ***
 # tab-width: 8 ***
 # sh-indentation: 2 ***
 # sh-basic-offset: 2 ***

@@ -10,10 +10,9 @@ export PATH || (sh $0 $*; kill $$)
 path_to_perf_sh=`dirname $0`
 
 NAME=$0
-if test "x$1" = x
-then
-	echo "Usage:  $NAME hostname [note1] [note2]"
-	exit 1
+if test "x$1" = x ; then
+  echo "Usage:  $NAME hostname [note1] [note2]"
+  exit 1
 fi
 
 #  Save three args, because arg list will be reused below.
@@ -39,22 +38,20 @@ REF_FILES=" \
 	$path_to_perf_sh/../pix/sphflake.log \
 "
 
-for i in $NEW_FILES $REF_FILES
-do
-	if test ! -f $i
-	then
-		echo "${NAME}: file $i does not exist, aborting"
-		exit 1
-	fi
+for i in $NEW_FILES $REF_FILES ;  do
+ if test ! -f $i ; then
+   echo "${NAME}: file $i does not exist, aborting"
+   exit 1
+ fi
 done
 
 # Use TR to convert newlines to tabs.
 VGRREF=`grep RTFM $REF_FILES | \
-	sed -n -e 's/^.*= *//' -e 's/ rays.*//p' | \
-	tr '\012' '\011' `
+  sed -n -e 's/^.*= *//' -e 's/ rays.*//p' | \
+  tr '\012' '\011' `
 CURVALS=`grep RTFM $NEW_FILES | \
-	sed -n -e 's/^.*= *//' -e 's/ rays.*//p' | \
-	tr '\012' '\011' `
+  sed -n -e 's/^.*= *//' -e 's/ rays.*//p' | \
+  tr '\012' '\011' `
 
 RATIO_LIST=""
 
@@ -63,19 +60,18 @@ RATIO_LIST=""
 # and CURVALS are all positive (ie, no leading dashes), so this is safe.
 set $CURVALS
 
-while test $# -lt 6
-do	echo "${NAME}: Warning, only $# times found, adding a zero."
-	CURVALS="${CURVALS}0	"
-	set $CURVALS
+while test $# -lt 6 ; do
+ echo "${NAME}: Warning, only $# times found, adding a zero."
+ CURVALS="${CURVALS}0	"
+ set $CURVALS
 done
 
-for ref in $VGRREF
-do
-	cur=$1
-	shift
-	RATIO=`echo "2k $cur $ref / p" | dc`
+for ref in $VGRREF ; do
+ cur=$1
+ shift
+ RATIO=`echo "2k $cur $ref / p" | dc`
 	# Note: append new value and a trail TAB to existing list.
-	RATIO_LIST="${RATIO_LIST}$RATIO	"
+ RATIO_LIST="${RATIO_LIST}$RATIO	"
 done
 
 # The number of plus signs must be one less than the number of elements.
@@ -86,3 +82,12 @@ MEAN_REL=`echo 2k $RATIO_LIST +++++ 6/ p | dc`
 # The question mark is for the mean field
 echo "Abs	${HOST}	${CURVALS}${MEAN_ABS}	$NOTE1"
 echo "*vgr	${HOST}	${RATIO_LIST}${MEAN_REL}	$NOTE2"
+
+# Local Variables: ***
+# mode: sh ***
+# tab-width: 8 ***
+# sh-indentation: 2 ***
+# sh-basic-offset: 2 ***
+# indent-tabs-mode: t ***
+# End: ***
+# ex: shiftwidth=2 tabstop=8

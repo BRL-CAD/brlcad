@@ -151,7 +151,7 @@ echo "*** LGT does NOT work on this platform ***"
 exit 2
 
 # Local Variables: ***
-# mode:sh ***
+# mode: sh ***
 # tab-width: 8 ***
 # sh-indentation: 2 ***
 # sh-basic-offset: 2 ***
