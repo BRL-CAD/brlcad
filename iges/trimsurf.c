@@ -1019,7 +1019,8 @@ struct shell *s;
 
 	if( (srf=Get_nurb_surf( (surf_de-1)/2, m )) == (struct face_g_snurb *)NULL )
 	{
-		bu_free( (char *)inner_loop , "trim_surf: inner_loop" );
+		if( inner_loop_count )
+			bu_free( (char *)inner_loop , "trim_surf: inner_loop" );
 		return( (struct faceuse *)NULL );
 	}
 
