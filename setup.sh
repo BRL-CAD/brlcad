@@ -16,6 +16,12 @@ export SHELL
 # Ensure that other users can read and execute what we install!
 umask 002
 
+if [ $# -gt 0 -a X$1 = X-s ] ; then
+	SILENT=-s
+	shift
+else
+	SILENT=""
+fi
 
 ############################################################################
 #
@@ -33,8 +39,9 @@ export BRLCAD_ROOT
 BINDIR=$BASEDIR/bin
 MANDIR=$BASEDIR/man/man1
 
-echo "  BINDIR = ${BINDIR},  BASEDIR = ${BASEDIR}"
-
+if [ X${SILENT} = X ] ; then
+	echo "  BINDIR = ${BINDIR},  BASEDIR = ${BASEDIR}"
+fi
 
 ############################################################################
 #
@@ -43,8 +50,10 @@ echo "  BINDIR = ${BINDIR},  BASEDIR = ${BASEDIR}"
 # For this purpose, specifically exclude "dot" from the check.
 #
 ############################################################################
-echo
-echo Verifying that ${BINDIR} is in your search path.
+if [ X${SILENT} = X ] ; then
+	echo
+	echo Verifying that ${BINDIR} is in your search path.
+fi
 PATH_ELEMENTS=`echo $PATH | sed 's/^://
 				s/:://g
 				s/:$//
@@ -92,16 +101,20 @@ then
 	echo "$0 ERROR:  file: install.doc, section INSTALLATION DIRECTORIES."
 	exit 1		# Die
 fi
-echo "OK"
 
+if [ X${SILENT} = X ] ; then
+	echo "OK"
+fi
 ############################################################################
 #
 # Ensure that destination directory is clean.  No stale cakes, etc.
 # Then create desired directory structure.
 #
 ############################################################################
-echo
-echo "Cleaning out ${BASEDIR}."
+if [ X${SILENT} = X ] ; then
+	echo
+	echo "Cleaning out ${BASEDIR}."
+fi
 echo "OK to run  \"rm -fr ${BASEDIR}/*\"  ? (yes|no)[no]"
 read ANS
 if test "$ANS" != "yes"
@@ -110,12 +123,15 @@ then
 	exit 1
 fi
 
-echo "rm -fr ${BASEDIR}/*"
+if [ X${SILENT} = X ] ; then
+	echo "rm -fr ${BASEDIR}/*"
+fi
 rm -fr ${BASEDIR}/*
 
-echo
-echo Creating the necessary directories
-
+if [ X${SILENT} = X ] ; then
+	echo
+	echo Creating the necessary directories
+fi
 for LAST in \
 	bin include include/brlcad html lib vfont \
 	man man/man1 man/man3 man/man5 etc tcl tk \
@@ -139,7 +155,9 @@ done
 # Note that the installation directory is "burned in" as they are copied.
 #
 ############################################################################
-echo Installing shell scripts
+if [ X${SILENT} = X ] ; then
+	echo Installing shell scripts
+fi
 cd sh
 for i in *.sh
 do
@@ -157,31 +175,33 @@ cd ..
 # Make and install "cake" and "cakeaux"
 #
 ############################################################################
-echo Compiling cake and cakeaux
-echo "   " `machinetype.sh -d`
+if [ X${SILENT} = X ] ; then
+	echo Compiling cake and cakeaux
+	echo "   " `machinetype.sh -d`
+fi
 if test x$1 != x-f
 then
 	cd cake
-	make clobber
-	make install
-	make clobber
+	make ${SILENT} clobber
+	make ${SILENT} install
+	make ${SILENT} clobber
 	if test ! -f ${BINDIR}/cake
 	then
 		echo "***ERROR:  cake not installed"
 	fi
 
 	cd ../cakeaux
-	make clobber
+	make ${SILENT} clobber
 	for i in cakesub cakeinclude
 	do
-		make $i			# XXX, should do "install"
+		make ${SILENT} $i			# XXX, should do "install"
 		if test -f ${BINDIR}/$i
 		then
 			mv -f ${BINDIR}/$i ${BINDIR}/$i.bak
 		fi
 		cp $i ${BINDIR}/.
 	done
-	make clobber
+	make ${SILENT} clobber
 	cp *.1 ${MANDIR}/.
 	cd ..
 fi
@@ -193,10 +213,14 @@ fi
 #  This is mostly a double-check on people porting to new machines.
 #
 ############################################################################
-echo "Running brlcad-check.sh"
-if sh/brlcad-check.sh
+if [ X${SILENT} = X ] ; then
+	echo "Running brlcad-check.sh"
+fi
+if sh/brlcad-check.sh ${SILENT}
 then
-	echo OK
+	if [ X${SILENT} = X ] ; then
+		echo OK
+	fi
 else
 	echo "brlcad-check.sh failed, aborting setup.sh"
 	exit 1
@@ -207,12 +231,16 @@ fi
 #  Make final preparations to ready things for compilation.
 #
 ############################################################################
-echo "make mkdir"
-sh gen.sh mkdir		# Won't have any effect unless NFS is set.
+if [ X${SILENT} = X ] ; then
+	echo "make mkdir"
+fi
+sh gen.sh ${SILENT} mkdir		# Won't have any effect unless NFS is set.
 
 # Congratulations.  Everything is fine.
-echo "BRL-CAD initial setup is complete."
+if [ X${SILENT} = X ] ; then
+	echo "BRL-CAD initial setup is complete."
 # Just doing "make install" isn't good enough, it doesn't
 # compile things in bench, db, or proc-db.  You may want db.
 echo "Next, run:"
 echo "	make; make install"
+fi

@@ -13,6 +13,13 @@
 SHELL=/bin/sh
 export SHELL
 
+if [ $# -gt 0 -a X$1 = X-s ] ; then
+	SILENT=-s
+	shift
+else
+	SILENT=""
+fi
+
 # At this point, we expect machinetype.sh to have been installed.
 eval `machinetype.sh -v`
 BRLCAD_ROOT=$BASEDIR
@@ -30,7 +37,9 @@ BINDIR=$BASEDIR/bin
 # does not create/modify anything.
 #
 ############################################################################
-echo verify.sh: Verifying that ${BINDIR} is in your search path.
+if [ X${SILENT} = X ] ; then
+	echo verify.sh: Verifying that ${BINDIR} is in your search path.
+fi
 PATH_ELEMENTS=`echo $PATH | sed 's/^://
 				s/:://g
 				s/:$//
@@ -84,8 +93,9 @@ fi
 #  the results.
 #
 ############################################################################
-echo verify.sh: Comparing machinetype.sh and Cakefile.defs
-
+if [ X${SILENT} = X ] ; then
+	echo verify.sh: Comparing machinetype.sh and Cakefile.defs
+fi
 if test ! -f Cakefile.defs
 then
 	echo "$0: No Cakefile.defs, please run this script in your BRL-CAD source directory."
@@ -153,6 +163,8 @@ then
 	exit 6		# Die
 fi
 
-echo " OK. PATH, cake, machinetype.sh, and Cakefile.defs are set properly."
+if [ X${SILENT} = X ] ; then
+	echo " OK. PATH, cake, machinetype.sh, and Cakefile.defs are set properly."
+fi
 /bin/rm -f ${IN_FILE} ${OUT_FILE}
 exit 0

@@ -18,6 +18,14 @@
 #								#
 #################################################################
 
+if [ $# -gt 0 -a X$1 = X-s ] ; then
+	SILENT=-s
+	shift
+else
+	SILENT=""
+fi
+
+
 # Ensure that all subordinate scripts run with the Bourne shell,
 # rather than the user's shell
 SHELL=/bin/sh
@@ -254,15 +262,18 @@ else
 fi
 
 
-echo
-echo "This Release = ${RELEASE} of ${REL_DATE}      Making Target: ${TARGET}"
-echo " BRLCAD_ROOT = ${BRLCAD_ROOT}"
-echo "Has Symlinks = ${HAS_SYMLINKS}"
-echo "   UNIX Type = ${UNIXTYPE}"
-echo "     Has TCP = ${HAS_TCP}"
-echo "     Machine = ${MACHINE}"
-echo "         NFS = ${NFS}"
-echo
+if test "${SILENT}" = ""
+then
+	echo
+	echo "This Release = ${RELEASE} of ${REL_DATE}      Making Target: ${TARGET}"
+	echo " BRLCAD_ROOT = ${BRLCAD_ROOT}"
+	echo "Has Symlinks = ${HAS_SYMLINKS}"
+	echo "   UNIX Type = ${UNIXTYPE}"
+	echo "     Has TCP = ${HAS_TCP}"
+	echo "     Machine = ${MACHINE}"
+	echo "         NFS = ${NFS}"
+	echo
+fi
 
 # Now, actually work on making the target
 
@@ -292,20 +303,20 @@ benchmark)
 	if test x$NFS = x1
 	then	sh $0 relink
 	fi
-	(cd ${DIRPRE}libsysv${DIRSUF} && cake -k)
-	(cd ${DIRPRE}bench${DIRSUF} && cake -k)
-	(cd ${DIRPRE}libwdb${DIRSUF} && cake -k)
+	(cd ${DIRPRE}libsysv${DIRSUF} && cake -k ${SILENT} )
+	(cd ${DIRPRE}bench${DIRSUF} && cake -k ${SILENT} )
+	(cd ${DIRPRE}libwdb${DIRSUF} && cake -k ${SILENT})
 	if test ${HAS_TCP} = 1
 	then
-		(cd ${DIRPRE}libpkg${DIRSUF} && cake -k)  # needed for IF_REMOTE
+		(cd ${DIRPRE}libpkg${DIRSUF} && cake -k ${SILENT})  # needed for IF_REMOTE
 	fi
-	(cd ${DIRPRE}libfb${DIRSUF} && cake -k)
-	(cd ${DIRPRE}libbu${DIRSUF} && cake -k)
-	(cd ${DIRPRE}libbn${DIRSUF} && cake -k)
-	(cd ${DIRPRE}librt${DIRSUF} && cake -k)
-	(cd ${DIRPRE}conv${DIRSUF} && cake -k)
-	(cd ${DIRPRE}db${DIRSUF} && cake -k)
-	(cd ${DIRPRE}rt${DIRSUF} && cake -k)
+	(cd ${DIRPRE}libfb${DIRSUF} && cake -k ${SILENT})
+	(cd ${DIRPRE}libbu${DIRSUF} && cake -k ${SILENT})
+	(cd ${DIRPRE}libbn${DIRSUF} && cake -k ${SILENT})
+	(cd ${DIRPRE}librt${DIRSUF} && cake -k ${SILENT})
+	(cd ${DIRPRE}conv${DIRSUF} && cake -k ${SILENT})
+	(cd ${DIRPRE}db${DIRSUF} && cake -k ${SILENT})
+	(cd ${DIRPRE}rt${DIRSUF} && cake -k ${SILENT})
 	;;
 
 #  These directives operate in the machine-specific directories
@@ -319,13 +330,13 @@ benchmark)
 all)
 	for dir in ${BDIRS}; do
 		echo -------------------------------- ${DIRPRE}${dir}${DIRSUF};
-		( cd ${DIRPRE}${dir}${DIRSUF} && cake -k )
+		( cd ${DIRPRE}${dir}${DIRSUF} && cake -k ${SILENT} )
 	done;;
 
 clean|noprod|clobber|lint)
 	for dir in ${BDIRS}; do
 		echo -------------------------------- ${DIRPRE}${dir}${DIRSUF};
-		( cd ${DIRPRE}${dir}${DIRSUF} && cake -k ${TARGET} )
+		( cd ${DIRPRE}${dir}${DIRSUF} && cake -k ${SILENT} ${TARGET} )
 	done;;
 
 # Listing of source directories
@@ -346,15 +357,15 @@ ls-bin)
 install|install-nobak|uninstall)
 	for dir in ${ADIRS}; do
 		echo -------------------------------- ${dir};
-		( cd ${dir} && cake -k ${TARGET} )
+		( cd ${dir} && cake -k ${SILENT} ${TARGET} )
 	done
 	for dir in ${BDIRS}; do
 		echo -------------------------------- ${DIRPRE}${dir}${DIRSUF};
-		( cd ${DIRPRE}${dir}${DIRSUF} && cake -k ${TARGET} )
+		( cd ${DIRPRE}${dir}${DIRSUF} && cake -k ${SILENT} ${TARGET} )
 	done
 	for dir in ${TSDIRS}; do
 		echo -------------------------------- tclscripts/${dir};
-		( cd tclscripts/${dir} && cake -k ${TARGET} )
+		( cd tclscripts/${dir} && cake -k ${SILENT} ${TARGET} )
 	done;;
 #  These directives operate in the source directory
 #
@@ -363,7 +374,7 @@ install|install-nobak|uninstall)
 install-man|inst-dist|print|typeset|nroff)
 	for dir in ${ADIRS} ${BDIRS}; do
 		echo -------------------------------- ${dir};
-		( cd ${dir} && cake -k ${TARGET} )
+		( cd ${dir} && cake -k ${SILENT} ${TARGET} )
 	done;;
 
 #  These directives are for managing the multi-machine objects.
@@ -410,7 +421,7 @@ wc)
 tcl)
 	for dir in ${TDIRS}; do
 		echo -------------------------------- ${DIRPRE}${dir}${DIRSUF};
-		( cd ${DIRPRE}${dir}${DIRSUF} && cake -k )
+		( cd ${DIRPRE}${dir}${DIRSUF} && cake -k ${SILENT} )
 	done;;
 
 install-tcl)
@@ -418,26 +429,26 @@ install-tcl)
 	cp -r libtk/library/* /usr/brlcad/tk
 	for dir in ${TDIRS}; do
 		echo -------------------------------- ${DIRPRE}${dir}${DIRSUF};
-		( cd ${DIRPRE}${dir}${DIRSUF} && cake -k install )
+		( cd ${DIRPRE}${dir}${DIRSUF} && cake -k ${SILENT} install )
 	done;;
 
 tclIndex)
-	( cd tclscripts && cake -k ${TARGET} )
+	( cd tclscripts && cake -k ${SILENT} ${TARGET} )
 
 	for dir in ${TSDIRS}; do
-	    ( cd tclscripts/$dir && cake -k ${TARGET} )
+	    ( cd tclscripts/$dir && cake -k ${SILENT} ${TARGET} )
 	done;;
 
 tags)
 	for dir in ${BDIRS}; do
 		echo -------------------------------- ${dir};
-		( cd $dir && cake -k ${TARGET} )
+		( cd $dir && cake -k ${SILENT} ${TARGET} )
 	done;;
 
 TAGS)
 	for dir in ${BDIRS}; do
 		echo -------------------------------- ${dir};
-		( cd $dir && cake -k ${TARGET} )
+		( cd $dir && cake -k ${SILENT} ${TARGET} )
 	done;;
 
 shell)
