@@ -17,6 +17,20 @@
  *  $Header$
  */
 
+/*
+ * Types for matrixes and vectors.
+ */
+typedef	fastf_t	mat_t[4*4];
+typedef	fastf_t	*matp_t;
+
+#define ELEMENTS_PER_VECT	4	/* # of fastf_t's per [xyz] */
+
+typedef	fastf_t	vect_t[ELEMENTS_PER_VECT];
+typedef	fastf_t	*vectp_t;
+
+typedef fastf_t	point_t[ELEMENTS_PER_VECT];
+typedef fastf_t	*pointp_t;
+
 /* Element names in homogeneous vector (4-tuple) */
 #define	X	0
 #define	Y	1
@@ -51,6 +65,11 @@
 			(a)[1] = (b)[1] - (c)[1];\
 			(a)[2] = (b)[2] - (c)[2]
 
+/* Vectors:  A = B - C - D */
+#define VSUB3(a,b,c,d)	(a)[0] = (b)[0] - (c)[0] - (d)[0];\
+			(a)[1] = (b)[1] - (c)[1] - (d)[1];\
+			(a)[2] = (b)[2] - (c)[2] - (d)[2]
+
 /* Add 3 vectors at `b', `c', and `d', store result at `a' */
 #define VADD3(a,b,c,d)	(a)[0] = (b)[0] + (c)[0] + (d)[0];\
 			(a)[1] = (b)[1] + (c)[1] + (d)[1];\
@@ -67,7 +86,7 @@
 			(a)[2] = (b)[2] * (c)
 
 /* Normalize vector 'a' to be a unit vector */
-#define VUNITIZE(a)	{static double f; f = MAGNITUDE(a); \
+#define VUNITIZE(a)	{FAST double f; f = MAGNITUDE(a); \
 			if( f < 1.0e-10 ) f = 0.0; else f = 1.0/f; \
 			(a)[0] *= f; (a)[1] *= f; (a)[2] *= f; }
 
@@ -76,12 +95,12 @@
  *	scalar `c' times vector at `d' plus
  *	scalar `e' times vector at `f'
  */
-#define VCOMPOSE(a,b,c,d,e,f)	\
+#define VJOIN2(a,b,c,d,e,f)	\
 	(a)[0] = (b)[0] + (c) * (d)[0] + (e) * (f)[0];\
 	(a)[1] = (b)[1] + (c) * (d)[1] + (e) * (f)[1];\
 	(a)[2] = (b)[2] + (c) * (d)[2] + (e) * (f)[2]
 
-#define VCOMP1(a,b,c,d) \
+#define VJOIN1(a,b,c,d) \
 	(a)[0] = (b)[0] + (c) * (d)[0];\
 	(a)[1] = (b)[1] + (c) * (d)[1];\
 	(a)[2] = (b)[2] + (c) * (d)[2];
@@ -102,14 +121,8 @@ extern double sqrt();
 #define VDOT(a,b)	( (a)[0]*(b)[0] + (a)[1]*(b)[1] + (a)[2]*(b)[2] )
 
 /* Print vector name and components on stdout */
-#define VPRINT(a,b)	(void)printf("%s (%f, %f, %f)\n", a, (b)[0], (b)[1], (b)[2])
-#define HPRINT(a,b)	(void)printf("%s (%f, %f, %f, %f)\n", a, (b)[0], (b)[1], (b)[2], (b)[3])
-
-/* Acquire storage for a given struct, eg, GETSTRUCT(ptr,structname); */
-#define GETSTRUCT(p,str) \
-	p = (struct str *)malloc((unsigned)sizeof(struct str)); \
-	if( p == (struct str *)0 ) \
-		(void)printf("getstruct( p, str ): malloc failed\n");/* cpp magic */
+#define VPRINT(a,b)	(void)fprintf(stderr,"%s (%f, %f, %f)\n", a, (b)[0], (b)[1], (b)[2])
+#define HPRINT(a,b)	(void)fprintf(stderr,"%s (%f, %f, %f, %f)\n", a, (b)[0], (b)[1], (b)[2], (b)[3])
 
 /* Vector element multiplication.  Really: diagonal matrix X vect */
 #define VELMUL(a,b,c) \
@@ -143,7 +156,7 @@ extern double sqrt();
 
 /* Apply a 4x4 matrix to a 3-tuple which is a absolue Point in space */
 #define MAT4X3PNT(o,m,i) \
-	{ static double f; \
+	{ LOCAL fastf_t f; \
 	f = 1.0/((m)[12]*(i)[X] + (m)[13]*(i)[Y] + (m)[14]*(i)[Z] + (m)[15]);\
 	(o)[X]=((m)[0]*(i)[X] + (m)[1]*(i)[Y] + (m)[ 2]*(i)[Z] + (m)[3]) * f;\
 	(o)[Y]=((m)[4]*(i)[X] + (m)[5]*(i)[Y] + (m)[ 6]*(i)[Z] + (m)[7]) * f;\
@@ -151,7 +164,7 @@ extern double sqrt();
 
 /* Multiply an Absolute 3-Point by a full 4x4 matrix. */
 #define PNT3x4MAT(o,i,m) \
-	{ static double f; \
+	{ LOCAL fastf_t f; \
 	f = 1.0/((i)[X]*(m)[3] + (i)[Y]*(m)[7] + (i)[Z]*(m)[11] + (m)[15]);\
 	(o)[X]=((i)[X]*(m)[0] + (i)[Y]*(m)[4] + (i)[Z]*(m)[8] + (m)[12]) * f;\
 	(o)[Y]=((i)[X]*(m)[1] + (i)[Y]*(m)[5] + (i)[Z]*(m)[9] + (m)[13]) * f;\
@@ -159,21 +172,21 @@ extern double sqrt();
 
 /* Apply a 4x4 matrix to a 3-tuple which is a relative Vector in space */
 #define MAT4X3VEC(o,m,i) \
-	{ static double f;	f = 1.0/((m)[15]);\
+	{ LOCAL fastf_t f;	f = 1.0/((m)[15]);\
 	(o)[X] = ((m)[0]*(i)[X] + (m)[1]*(i)[Y] + (m)[ 2]*(i)[Z]) * f; \
 	(o)[Y] = ((m)[4]*(i)[X] + (m)[5]*(i)[Y] + (m)[ 6]*(i)[Z]) * f; \
 	(o)[Z] = ((m)[8]*(i)[X] + (m)[9]*(i)[Y] + (m)[10]*(i)[Z]) * f; }
 
 /* Multiply a Relative 3-Vector by most of a 4x4 matrix.  Pre-multiply */
 #define VEC3x4MAT(o,i,m) \
-	{ static double f; 	f = 1.0/((m)[15]); \
+	{ LOCAL fastf_t f; 	f = 1.0/((m)[15]); \
 	(o)[X] = ((i)[X]*(m)[0] + (i)[Y]*(m)[4] + (i)[Z]*(m)[8]) * f; \
 	(o)[Y] = ((i)[X]*(m)[1] + (i)[Y]*(m)[5] + (i)[Z]*(m)[9]) * f; \
 	(o)[Z] = ((i)[X]*(m)[2] + (i)[Y]*(m)[6] + (i)[Z]*(m)[10]) * f; }
 
 /* Multiply a Relative 2-Vector by most of a 4x4 matrix.  Pre-multiply */
 #define VEC2x4MAT(o,i,m) \
-	{ static double f; 	f = 1.0/((m)[15]); \
+	{ LOCAL fastf_t f; 	f = 1.0/((m)[15]); \
 	(o)[X] = ((i)[X]*(m)[0] + (i)[Y]*(m)[4]) * f; \
 	(o)[Y] = ((i)[X]*(m)[1] + (i)[Y]*(m)[5]) * f; \
 	(o)[Z] = ((i)[X]*(m)[2] + (i)[Y]*(m)[6]) * f; }
