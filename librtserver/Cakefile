@@ -2,14 +2,24 @@
  *			librtserver/Cakefile
  */
 #define SRCDIR	librtserver
+#ifdef __ppc__
+#define PRODUCTS	librtserver.jnilib
+#else
 #define PRODUCTS	librtserver.ARCH_SUF
+#endif
 #define	SRCSUFF	.c
 #define MANSECTION	3
 #define CONFIGDEFS	-I/usr/java/j2sdk1.4.2_02/include "-I/usr/java/j2sdk1.4.2_02/include/linux"
 
 #include "../Cakefile.defs"
 
+#ifdef __ppc__
+#undef CONFIGDEFS
+#define CONFIGDEFS -I"/System/Library/Frameworks/JavaVM.framework/Home/include"
+#else
 #define EXTRA_OBJ_NO_DEPENDENCY -L../.librt.''MTYPE -lrt -L../.libbn.''MTYPE -lbn -L../.libbu.''MTYPE -lbu -L../.libtcl8.4.''MTYPE -ltcl8.4
+#endif
+
 
 #define FILES	librtserver
 
@@ -22,6 +32,9 @@
 
 #define VERSION_VARIABLE	rtserver_version
 #define LIBRARY_TITLE		"The BRL-CAD Ray-Tracing Server library"
+
+librtserver.jnilib: librtserver.o	
+	gcc -dynamiclib -install_name BRLCAD_ROOT/lib/librtserver.jnilib -flat_namespace -o librtserver.jnilib  *.o -L../.librt.pmac/ -L../.libbu.pmac/ -L../.libbn.pmac/ -L../.libtcl8.4.pmac/ -lrt -lbn -lbu -ltcl
 
 #include "../Cakefile.lib"
 #include "../Cakefile.rules"
