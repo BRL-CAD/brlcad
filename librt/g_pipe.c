@@ -82,6 +82,8 @@ struct bend_pipe
 	vect_t	bend_rb;		/* unit vector in plane of bend (normal to bend_ra) */
 	vect_t	bend_N;			/* unit vector normal to plane of bend */
 	fastf_t	bend_R_SQ;		/* bounding sphere radius squared */
+	point_t bend_min;
+	point_t bend_max;
 };
 
 
@@ -125,8 +127,6 @@ fastf_t od, id;
 	LOCAL point_t	work;
 	LOCAL vect_t	tmp_vec;
 	LOCAL fastf_t	f;
-	LOCAL point_t	tmp_pt_min;
-	LOCAL point_t	tmp_pt_max;
 
 	pipe = (struct bend_pipe *)bu_malloc( sizeof( struct bend_pipe ), "rt_bend_pipe_prep:pipe" )	 ;
 	BU_LIST_INSERT( head, &pipe->l );
@@ -175,25 +175,25 @@ fastf_t od, id;
 	VSET( tmp_vec, 1.0, 0.0, 0.0 );
 	VCROSS( work, pipe->bend_N, tmp_vec );
 	f = pipe->bend_or + pipe->bend_radius * MAGNITUDE(work);
-	tmp_pt_min[X] = pipe->bend_V[X] - f;
-	tmp_pt_max[X] = pipe->bend_V[X] + f;
+	pipe->bend_min[X] = pipe->bend_V[X] - f;
+	pipe->bend_max[X] = pipe->bend_V[X] + f;
 
 	/* Y */
 	VSET( tmp_vec, 0.0, 1.0, 0.0 );
 	VCROSS( work, pipe->bend_N, tmp_vec );
 	f = pipe->bend_or + pipe->bend_radius * MAGNITUDE(work);
-	tmp_pt_min[Y] = pipe->bend_V[Y] - f;
-	tmp_pt_max[Y] = pipe->bend_V[Y] + f;
+	pipe->bend_min[Y] = pipe->bend_V[Y] - f;
+	pipe->bend_max[Y] = pipe->bend_V[Y] + f;
 
 	/* Z */
 	VSET( tmp_vec, 0.0, 0.0, 1.0 );
 	VCROSS( work, pipe->bend_N, tmp_vec );
 	f = pipe->bend_or + pipe->bend_radius * MAGNITUDE(work);
-	tmp_pt_min[Z] = pipe->bend_V[Z] - f;
-	tmp_pt_max[Z] = pipe->bend_V[Z] + f;
+	pipe->bend_min[Z] = pipe->bend_V[Z] - f;
+	pipe->bend_max[Z] = pipe->bend_V[Z] + f;
 
-	PIPE_MM( tmp_pt_min );
-	PIPE_MM( tmp_pt_max );
+	PIPE_MM( pipe->bend_min );
+	PIPE_MM( pipe->bend_max );
 
 	return( 0 );
 
@@ -510,16 +510,35 @@ int			seg_no;
 	LOCAL bn_poly_t	X2_Y2;		/* X**2 + Y**2 */
 	LOCAL vect_t	cor_pprime;	/* new ray origin */
 	LOCAL fastf_t	cor_proj;
-	LOCAL fastf_t	dist_to_pca;
-	LOCAL vect_t	to_start;
+	LOCAL vect_t	inv_dir;
 
 	*hit_count = 0;
 
-	VSUB2( to_start, rp->r_pt, pipe->bend_V );
-	dist_to_pca = VDOT( to_start, rp->r_dir );
-	if( (MAGSQ( to_start ) - dist_to_pca*dist_to_pca) > pipe->bend_R_SQ )
-	{
-		return;			/* Miss */
+	/* Compute the inverse of the direction cosines */
+	if( ap->a_ray.r_dir[X] < -SQRT_SMALL_FASTF )  {
+		inv_dir[X]=1.0/ap->a_ray.r_dir[X];
+	} else if( ap->a_ray.r_dir[X] > SQRT_SMALL_FASTF )  {
+		inv_dir[X]=1.0/ap->a_ray.r_dir[X];
+	} else {
+		inv_dir[X] = INFINITY;
+	}
+	if( ap->a_ray.r_dir[Y] < -SQRT_SMALL_FASTF )  {
+		inv_dir[Y]=1.0/ap->a_ray.r_dir[Y];
+	} else if( ap->a_ray.r_dir[Y] > SQRT_SMALL_FASTF )  {
+		inv_dir[Y]=1.0/ap->a_ray.r_dir[Y];
+	} else {
+		inv_dir[Y] = INFINITY;
+	}
+	if( ap->a_ray.r_dir[Z] < -SQRT_SMALL_FASTF )  {
+		inv_dir[Z]=1.0/ap->a_ray.r_dir[Z];
+	} else if( ap->a_ray.r_dir[Z] > SQRT_SMALL_FASTF )  {
+		inv_dir[Z]=1.0/ap->a_ray.r_dir[Z];
+	} else {
+		inv_dir[Z] = INFINITY;
+	}
+
+	if( !rt_in_rpp( rp, inv_dir, pipe->bend_min, pipe->bend_max ) ) {
+		return;		 /* miss */
 	}
 
 	/* Convert vector into the space of the unit torus */
