@@ -3,6 +3,6 @@
  */
 struct matparse {
 	char	*mp_name;
-	int	mp_offset;
+	int	*mp_offset;
 	char	*mp_fmt;
 };
