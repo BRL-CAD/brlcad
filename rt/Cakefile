@@ -41,7 +41,7 @@
 		sh_gauss.o sh_paint.o sh_noise.o sh_prj.o
 
 rt:	RT_OBJ LIBRT_DEP LIBBN_DEP LIBBU_DEP LIBFB_DEP
-	sh ../sh/newvers.sh version "Ray-Tracer"
+	newvers.sh version "Ray-Tracer"
 	CC CFLAGS -c vers.c
 	CC LDFLAGS RT_OBJ vers.o LIBRT LIBBN LIBFB LIBFB_LIBES LIBBU LIBBU_LIBES LIBES -o rt
 
@@ -49,42 +49,42 @@ rt:	RT_OBJ LIBRT_DEP LIBBN_DEP LIBBU_DEP LIBFB_DEP
 #define RTRAY_OBJ	RTUIF viewray.o wray.o
 
 rtray:	RTRAY_OBJ LIBRT_DEP LIBBN_DEP LIBBU_DEP LIBFB_DEP
-	sh ../sh/newvers.sh version "RT Ray"
+	newvers.sh version "RT Ray"
 	CC CFLAGS -c vers.c
 	CC LDFLAGS RTRAY_OBJ vers.o LIBRT LIBBN LIBFB LIBFB_LIBES LIBBU LIBBU_LIBES LIBES -o rtray
 
 #define RTPP_OBJ	RTUIF viewpp.o
 
 rtpp:	RTPP_OBJ LIBRT_DEP LIBBN_DEP LIBBU_DEP LIBFB_DEP
-	sh ../sh/newvers.sh version "RT pretty-picture"
+	newvers.sh version "RT pretty-picture"
 	CC CFLAGS -c vers.c
 	CC LDFLAGS RTPP_OBJ vers.o LIBRT LIBBN LIBFB LIBFB_LIBES LIBBU LIBBU_LIBES LIBES -o rtpp
 
 #define RTXRAY_OBJ	RTUIF viewxray.o
 
 rtxray:	RTXRAY_OBJ LIBRT_DEP LIBBN_DEP LIBBU_DEP LIBFB_DEP
-	sh ../sh/newvers.sh version "RT X-Ray"
+	newvers.sh version "RT X-Ray"
 	CC CFLAGS -c vers.c
 	CC LDFLAGS RTXRAY_OBJ vers.o LIBRT LIBBN LIBFB LIBFB_LIBES LIBBU LIBBU_LIBES LIBES -o rtxray
 
 #define RTRAD_OBJ	RTUIF viewrad.o
 
 rtrad:	RTRAD_OBJ LIBRT_DEP LIBBN_DEP LIBBU_DEP LIBFB_DEP
-	sh ../sh/newvers.sh version "RT Rad"
+	newvers.sh version "RT Rad"
 	CC CFLAGS -c vers.c
 	CC LDFLAGS RTRAD_OBJ vers.o LIBRT LIBBN LIBFB LIBFB_LIBES LIBBU LIBBU_LIBES LIBES -o rtrad
 
 #define RTSCAT_OBJ	RTUIF viewscat.o
 
 rtbscat: RTSCAT_OBJ LIBRT_DEP LIBBN_DEP LIBBU_DEP LIBFB_DEP
-	sh ../sh/newvers.sh version "RT BackScatter"
+	newvers.sh version "RT BackScatter"
 	CC CFLAGS -c vers.c
 	CC LDFLAGS RTSCAT_OBJ vers.o LIBRAD LIBRT LIBBN LIBFB LIBFB_LIBES LIBBU LIBBU_LIBES LIBES -o rtbscat
 
 #define RTCHECK_OBJ	RTUIF viewcheck.o
 
 rtcheck: RTCHECK_OBJ LIBRT_DEP LIBBN_DEP LIBBU_DEP LIBFB_DEP
-	sh ../sh/newvers.sh version "RT Check"
+	newvers.sh version "RT Check"
 	CC CFLAGS -c vers.c
 	CC LDFLAGS RTCHECK_OBJ vers.o LIBRT LIBBN LIBFB LIBFB_LIBES LIBBU LIBBU_LIBES LIBES -o rtcheck
 
@@ -97,49 +97,49 @@ rtwalk:	rtwalk.o LIBRT_DEP LIBBN_DEP LIBBU_DEP
 #define RTG3_OBJ	RTUIF viewg3.o
 
 rtg3:	RTG3_OBJ LIBRT_DEP LIBBN_DEP LIBBU_DEP LIBFB_DEP
-	sh ../sh/newvers.sh version "RTG3"
+	newvers.sh version "RTG3"
 	CC CFLAGS -c vers.c
 	CC LDFLAGS RTG3_OBJ vers.o LIBRT LIBBN LIBFB LIBFB_LIBES LIBBU LIBBU_LIBES LIBES -o rtg3
 
 #define RTCELL_OBJ	RTUIF viewcell.o
 
 rtcell:	RTCELL_OBJ LIBRT_DEP LIBBN_DEP LIBBU_DEP LIBFB_DEP
-	sh ../sh/newvers.sh version "RTCELL"
+	newvers.sh version "RTCELL"
 	CC CFLAGS -c vers.c
 	CC LDFLAGS RTCELL_OBJ vers.o LIBRT LIBBN LIBBU LIBBU_LIBES LIBFB LIBFB_LIBES LIBES -o rtcell
 
 #define RTHIDE_OBJ	RTUIF viewhide.o
 
 rthide:	RTHIDE_OBJ LIBRT_DEP LIBBN_DEP LIBBU_DEP LIBFB_DEP
-	sh ../sh/newvers.sh version "RT Hidden-Line Plot"
+	newvers.sh version "RT Hidden-Line Plot"
 	CC CFLAGS -c vers.c
 	CC LDFLAGS RTHIDE_OBJ vers.o LIBRT LIBBN LIBFB LIBFB_LIBES LIBBU LIBBU_LIBES LIBES -o rthide
 
 #define RTFRAC_OBJ	RTUIF viewfrac.o
 
 rtfrac:	RTFRAC_OBJ LIBRT_DEP LIBBN_DEP LIBBU_DEP LIBFB_DEP
-	sh ../sh/newvers.sh version "RT Volume Fractions"
+	newvers.sh version "RT Volume Fractions"
 	CC CFLAGS -c vers.c
 	CC LDFLAGS RTFRAC_OBJ vers.o LIBRT LIBBN LIBFB LIBFB_LIBES LIBBU LIBBU_LIBES LIBES -o rtfrac
 
 #define RTRANGE_OBJ	RTUIF viewrange.o
 
 rtrange:	RTRANGE_OBJ LIBRT_DEP LIBBN_DEP LIBBU_DEP LIBFB_DEP
-	sh ../sh/newvers.sh version "RT Range Plot"
+	newvers.sh version "RT Range Plot"
 	CC CFLAGS -c vers.c
 	CC LDFLAGS RTRANGE_OBJ vers.o LIBRT LIBBN LIBFB LIBFB_LIBES LIBBU LIBBU_LIBES LIBES -o rtrange
 
 #define RTDUMMY_OBJ	RTUIF viewdummy.o
 
 rtdummy:	RTDUMMY_OBJ LIBRT_DEP LIBBN_DEP LIBBU_DEP LIBFB_DEP
-	sh ../sh/newvers.sh version "RT Dummy"
+	newvers.sh version "RT Dummy"
 	CC CFLAGS -c vers.c
 	CC LDFLAGS RTDUMMY_OBJ vers.o LIBRT LIBBN LIBBU LIBBU_LIBES LIBFB LIBFB_LIBES LIBES -o rtdummy
 
 #define RT3D_OBJ  RTUIF view3d.o
 
 rt3d:	RT3D_OBJ  LIBRT_DEP LIBBN_DEP LIBBU_DEP LIBFB_DEP
-	sh ../sh/newvers.sh version "RT 3D"
+	newvers.sh version "RT 3D"
 	CC CFLAGS -c vers.c
 	CC LDFLAGS RT3D_OBJ vers.o LIBRT LIBBN LIBBU LIBBU_LIBES LIBFB LIBFB_LIBES LIBES -o rt3d
 
@@ -156,14 +156,14 @@ rtscale:	rtscale.o read-rtlog.o LIBRT_DEP LIBBN_DEP LIBBU_DEP
 #define RTTHERM_OBJ	RTUIF viewtherm.o wray.o spectrum.o
 
 rttherm:	RTTHERM_OBJ LIBRT_DEP LIBBN_DEP LIBBU_DEP LIBFB_DEP
-	sh ../sh/newvers.sh version "Thermal RT"
+	newvers.sh version "Thermal RT"
 	CC CFLAGS -c vers.c
 	CC LDFLAGS RTTHERM_OBJ vers.o LIBRT LIBBN LIBFB LIBFB_LIBES LIBBU LIBBU_LIBES LIBES -o rttherm
 
 #define RTSIL_OBJ	RTUIF viewsil.o
 
 rtsil:	RTSIL_OBJ LIBRT_DEP LIBBN_DEP LIBBU_DEP LIBFB_DEP
-	sh ../sh/newvers.sh version "RT Silhouette"
+	newvers.sh version "RT Silhouette"
 	CC CFLAGS -c vers.c
 	CC LDFLAGS RTSIL_OBJ vers.o LIBRT LIBBN LIBFB LIBFB_LIBES LIBBU LIBBU_LIBES LIBES -o rtsil
 
