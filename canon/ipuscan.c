@@ -5,14 +5,43 @@
  *
  *	Options
  *	h	help
+ *
+ *  Authors -
+ *	Lee A. Butler
+ *	Michael John Muuss
+ *  
+ *  Source -
+ *	The U. S. Army Research Laboratory
+ *	Aberdeen Proving Ground, Maryland  21005-5068  USA
+ *  
+ *  Distribution Notice -
+ *	Re-distribution of this software is restricted, as described in
+ *	your "Statement of Terms and Conditions for the Release of
+ *	The BRL-CAD Package" agreement.
+ *
+ *  Copyright Notice -
+ *	This software is Copyright (C) 1994 by the United States Army
+ *	in all countries except the USA.  All rights reserved.
  */
-#include <sys/types.h>
+#ifndef lint
+static char RCSid[] = "@(#)$Header$ (ARL)";
+#endif
+
+#include "conf.h"
+
+#include <stdio.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-#include <stdio.h>
-#include <stdlib.h>
+
+#ifdef USE_STRING_H
 #include <string.h>
-#include "canon.h"
+#else
+#include <strings.h>
+#endif
+
+#include "machine.h"
+#include "externs.h"
+#include "./canon.h"
 
 
 /*
@@ -36,9 +65,6 @@ char *av[];
 	int	pix_y;
 	int	buf_y;
 	int	x;
-
-	/* pick the LUN for the scanner this time */
-	scsi_device = "/dev/scsi/sc0d6l0";
 
 	/* parse command flags, and make sure there are arguments
 	 * left over for processing.
