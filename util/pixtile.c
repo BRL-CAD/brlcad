@@ -7,11 +7,11 @@
  */
 #include <stdio.h>
 
-extern int ikhires;
-extern int ikfd;
+#include "/vld/include/fb.h"
 
 char ibuf[512*3];		/* Input line */
-char obuf[1024*1024*4];		/* Output screen */
+
+struct pixel obuf[1024*1024];		/* Output screen */
 
 int pix_line;		/* number of pixels/line (512, 1024) */
 int scanbytes;		/* bytes per input line */
@@ -34,14 +34,13 @@ char **argv;
 
 	if( strcmp( argv[1], "-h" ) == 0 )  {
 		argc--; argv++;
-		ikhires = 1;
 		pix_line = 1024;
 	}  else
 		pix_line = 512;
 
 	basename = argv[1];
 	w = atoi( argv[2] );
-	if( w < 4 || w > 256 ) {
+	if( w < 4 || w > 512 ) {
 		printf("width of %d out of range\n", w);
 		exit(12);
 	}
@@ -49,14 +48,16 @@ char **argv;
 		framenumber = atoi(argv[3]);
 	else	framenumber = 0;
 
-	ikopen();
-	load_map(1);		/* Standard map: linear */
-	ikclear();
+	if( pix_line > 512 )
+		fbsetsize(pix_line);
+	if( fbopen( NULL, CREATE ) < 0 )
+		exit(12);
 
 	scanbytes = w * 3;
 	im_line = pix_line/w;	/* number of images across line */
 	for( image=0; ; image++, framenumber++ )  {
-		register char *in, *out;
+		register char *in;
+		register struct pixel *out;
 		register int j;
 		int fd;
 
@@ -73,7 +74,7 @@ char **argv;
 		/* Read in .pix file.  Bottom to top */
 		for( i=0; i<w; i++ )  {
 			in = ibuf;
-			out = &obuf[4*(
+			out = &obuf[(
 				/* virtual image start line*/
 				((image/im_line)*w*pix_line) +
 				/* virtual image l/r offset */
@@ -84,10 +85,10 @@ char **argv;
 			if( read( fd, ibuf, scanbytes ) != scanbytes )
 				break;
 			for( j=0; j<w; j++ )  {
-				*out++ = *in++;
-				*out++ = *in++;
-				*out++ = *in++;
-				*out++ = 0;
+				out->red = *in++;
+				out->green = *in++;
+				out->blue = *in++;
+				(out++)->spare = 0;
 			}
 		}
 		close(fd);
@@ -99,9 +100,6 @@ done:
 
 doit()
 {
-	register int i;
 
-	(void)lseek(ikfd, 0L, 0);
-	for( i=0; i < pix_line; i+=8 )
-		write(ikfd, &obuf[i*pix_line*4], 8*pix_line*4 );
+	fbwrite( 0, 0, obuf, pix_line*pix_line );
 }
