@@ -208,7 +208,12 @@ char	*program;	/* name of program to run */
 		if( access( bu_vls_addr(&path), X_OK ) )  continue;
 
 		/* Reap any prior dead children.  Sanity */
+#if defined(IRIX)
 		(void)wait3( &stat, WNOHANG, NULL );
+#else
+		/* Solaris, and perhaps others */
+		(void)waitpid( (pid_t)-1, &stat, WNOHANG );
+#endif
 
 		if( (pid = fork()) == 0 )  {
 			/* Child process */
@@ -225,7 +230,12 @@ char	*program;	/* name of program to run */
 			exit(42);
 		}
 		sleep(1);	/* Give exec enough time to fail */
-		if( wait3( &stat, WNOHANG, NULL ) == pid )  {
+#if defined(IRIX)
+		if( wait3( &stat, WNOHANG, NULL ) == pid )
+#else
+		if( waitpid( (pid_t)-1, &stat, WNOHANG ) == pid )
+#endif
+		{
 			/* It died. */
 			/* Be robust in the face of 'wrong architecture' errors. */
 			if( WIFEXITED(stat) )  {
@@ -279,12 +289,19 @@ char *find_paths[] = {
  *  A nasty huristic, and fairly ARL-specific, but necessary.
  */
 void
-find(fd, argv)
+find(fd, argc, argv)
 int	fd;
+int	argc;
 char	**argv;
 {
 	char	**pp;
 	char	*slash;
+
+	if( argc != 2 )  {
+		fprintf(ofp, "FAIL Usage: find filename\n");
+		fflush(ofp);
+		return;
+	}
 
 	find_paths[0] = start_dir;
 
@@ -372,7 +389,7 @@ int	fd;
 			continue;
 		}
 		if( strcmp( argv[0], "find" ) == 0 )  {
-			find(fd, argv);
+			find(fd, argc, argv);
 			continue;
 		}
 		if( strcmp( argv[0], "restart" ) == 0 )  {
@@ -567,7 +584,12 @@ await:
 		int	val;
 
 		/* Reap any dead children */
+#if defined(IRIX)
 		(void)wait3( &stat, WNOHANG, NULL );
+#else
+		/* Solaris, and perhaps others */
+		(void)waitpid( (pid_t)-1, &stat, WNOHANG );
+#endif
 
 		FD_ZERO(&fds);
 		FD_SET(listenfd, &fds);
