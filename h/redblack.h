@@ -57,6 +57,13 @@ struct rb_node
 #define rb_search1(t,n)	rb_search((t), 0, (n))
 
 /*
+ *	Applications interface to rb_walk()
+ */
+#define	PREORDER	0
+#define	INORDER		1
+#define	POSTORDER	2
+
+/*
  *	Applications interface to LIBREDBLACK
  */
 rb_tree *rb_create	(
@@ -103,7 +110,8 @@ void rb_summarize_tree	(   rb_tree	*tree	);
 void rb_walk		(
 			    rb_tree	*tree,
 			    int		order,
-			    void	(*visit)()
+			    void	(*visit)(),
+			    int		trav_type
 			);
 
 #endif /* REDBLACK_H */
