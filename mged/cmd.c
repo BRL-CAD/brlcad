@@ -110,6 +110,7 @@ extern int gui_setup();				/* in attach.c */
 extern int mged_default_dlist;			/* in attach.c */
 extern int classic_mged;			/* in ged.c */
 extern int bot_vertex_fuse(), bot_condense();
+extern int cmd_smooth_bot();
 struct cmd_list head_cmd_list;
 struct cmd_list *curr_cmd_list;
 
@@ -409,6 +410,7 @@ static struct cmdtab cmdtab[] = {
 	{"showmats", cmd_showmats},
 	{"sill",		be_s_illuminate},
 	{"size", cmd_size},
+	{"smooth_bot", cmd_smooth_bot },
 	{"solid_report", cmd_solid_report},
 	{"solids", f_tables},
 	{"solids_on_ray", cmd_solids_on_ray},
