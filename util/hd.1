@@ -1,0 +1,47 @@
+.TH HD 1 "18 February 1989"
+.SH NAME
+hd \- Hexadecimal and ASCII dump
+.SH SYNOPSIS
+.B hd
+.I 
+[
+.I \-o offset 
+]
+[
+.I file .\|.\|.
+]
+.SH DESCRIPTION
+.I Hd
+reads each 
+.I file
+in sequence and
+produces a dump on the standard output
+in hexadecimal and ASCII.  If no files are specified on the command
+line,
+.I hd
+checks to to be sure the standard input is not comming from a terminal
+before dumping from the standard input.
+.LP
+Input is 
+dumped 16 bytes at a time.  The program displays the offset 
+from the begining of the file/input 
+in hexadecimal, followed by 
+the hexadecimal representations for the
+next 16
+bytes of data, and their ASCII character representations.  Non-printing
+characters are displayed as a period (".") in the ASCII section.  Vertical
+bars delimit the ASCII section.
+.LP
+If multiple files are specified on the command line, each file's name is
+printed before its dump.
+.LP
+.SH OPTIONS
+.TP
+.B \-o offset
+start printing at byte position
+.I offset
+instead of at the begining of the data.  
+.I Offset
+is rounded down to a multiple of 16.
+.SH SEE ALSO
+od(1)
