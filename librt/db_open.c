@@ -181,34 +181,36 @@ struct db_i *
 db_create( name )
 CONST char *name;
 {
-	union record new;
+	FILE	*fp;
 
 	if(rt_g.debug&DEBUG_DB) bu_log("db_create(%s, %s)\n", name );
 
-	/* Prepare the IDENT record */
-	bzero( (char *)&new, sizeof(new) );
-	new.i.i_id = ID_IDENT;
-	new.i.i_units = ID_MM_UNIT;
-	strncpy( new.i.i_version, ID_VERSION, sizeof(new.i.i_version) );
-	strcpy( new.i.i_title, "Untitled MGED Database" );
-
-#ifdef HAVE_UNIX_IO
-	{
-		int	fd;
-		if( (fd = creat(name, 0644)) < 0 ||
-		    write( fd, (char *)&new, sizeof(new) ) != sizeof(new) )
-			return(DBI_NULL);
-		(void)close(fd);
+	if( (fp = fopen( name, "w" )) == NULL )  {
+		perror(name);
+		return(DBI_NULL);
 	}
-#else /* HAVE_UNIX_IO */
-	{
-		FILE	*fp;
-		if( (fp = fopen( name, "w" )) == NULL )
-			return(DBI_NULL);
-		(void)fwrite( (char *)&new, 1, sizeof(new), fp );
+
+#if 1
+	/* Create a v5 database */
+	if( db5_fwrite_ident( fp, "Untitled v5 BRL-CAD Database", 1.0 ) < 0 )  {
 		(void)fclose(fp);
+		return DBI_NULL;
+	}
+#else
+	{
+		union record new;
+
+		/* Prepare the v4 IDENT record */
+		bzero( (char *)&new, sizeof(new) );
+		new.i.i_id = ID_IDENT;
+		new.i.i_units = ID_MM_UNIT;
+		strncpy( new.i.i_version, ID_VERSION, sizeof(new.i.i_version) );
+		strcpy( new.i.i_title, "Untitled MGED Database" );
+		(void)fwrite( (char *)&new, 1, sizeof(new), fp );
 	}
 #endif
+
+	(void)fclose(fp);
 
 	return( db_open( name, "r+w" ) );
 }
