@@ -2058,7 +2058,7 @@ CONST char	*a_string;
 				1 );
 		} else {
 
-			fprintf(stderr, "NMG Intermediate display Ctrl-C to continue (%s)\n", a_string);
+			rt_log("NMG Intermediate display Ctrl-C to continue (%s)\n", a_string);
 			cur_sigint = signal(SIGINT, nmg_plot_sigstepalong);
 			(*nmg_vlblock_anim_upcall)( vbp,
 				(rt_g.NMG_debug&DEBUG_PL_SLOW) ? US_DELAY : 0,
@@ -2067,9 +2067,21 @@ CONST char	*a_string;
 				(*nmg_mged_debug_display_hack)();
 			}
 			signal(SIGINT, cur_sigint);
-			fprintf(stderr, "Continuing\n");
+			rt_log("Continuing\n");
 		}
 	} else {
+		/* Non interactive, drop a plot file */
+		char	buf[128];
+		static int	num=0;
+		FILE		*fp;
+
+		sprintf( buf, "cbroke%d.pl", num++ );
+		if( fp = fopen(buf, "w") )  {
+			rt_plot_vlblock(fp, vbp);
+			fclose(fp);
+			rt_log("Wrote %s for %s\n", buf, a_string);
+		}
+
 		rt_vlblock_free(vbp);
 		vbp = (struct rt_vlblock *)NULL;
 		rt_free((char *)broken_tab, "broken_tab");
