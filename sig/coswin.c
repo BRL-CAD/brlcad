@@ -4,6 +4,7 @@
  *  Do Cosine windowing effecting p percent of the samples in
  *  the buffer.  Precomputes the window function.
  */
+#include <stdlib.h>
 #include <stdio.h>	/* for stderr */
 #include <math.h>	/* for double sin(), cos() */
 #include "./complex.h"
@@ -11,6 +12,8 @@
 static int	_init_length = 0;	/* Internal: last initialized size */
 static int	maxinitlen = 0;
 static double	*coswintab = NULL;
+
+int init_coswintab( int size );
 
 void
 coswin( data, length, percent )
