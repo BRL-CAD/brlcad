@@ -33,7 +33,7 @@ number, \fIe.g.\fR to output the value in channel four, specify '@4',
 and to output the value in channel 42, specify '@42'.
 In some circumstances it my be desirable to highlight the difference
 between channel value substitution, and literal numeric values.
-To facilitate this, the channel number may be enclosed in parenthesies
+To facilitate this, the channel number may be enclosed in parenthesis
 to explicitly delimit the macro invocation.  For example, channel
 four could also be specified as '@(4)', and channel 42 as '@(42)'.
 This second notation is generally preferred.
@@ -57,7 +57,7 @@ of the current row.
 .PP
 The more complex macros can also take arguments.
 If the first character of an argument is an at-sign ('@')
-(or percent-sign ('%'), for backwards compatability), then
+(or percent-sign ('%'), for backwards compatibility), then
 the number that follows signifies an input channel substitution
 as before.  Otherwise the value is taken literally.
 .PP
@@ -79,9 +79,11 @@ which performs the rotation around the Z axis first, then Y, then X.
 For example, the macro
 .sp .5
    @(rot 0 0 45)
+.sp .5
 creates the following matrix, a 45 degree rotation about Z:
 .sp .5
 .nf
+.ne 4
 7.071067812e-01 -7.071067812e-01 0.000000000e+00 0.000000000e+00
 7.071067812e-01 7.071067812e-01 -0.000000000e+00 0.000000000e+00
 0.000000000e+00 0.000000000e+00 1.000000000e+00 0.000000000e+00
@@ -99,7 +101,7 @@ and the Z angle is fixed at 90 degrees.
 The
 .B xlate
 macro converts three distances (which must be
-specified in milimeters if the output script is destined for
+specified in millimeters if the output script is destined for
 processing by
 .IR rt (1)
 or
@@ -129,7 +131,7 @@ Similarly, the macro
   @(xlate 13 @7 0)
 .sp .5
 creates a matrix where the origin is translated 13 units (mm) in X,
-the numeber of units found in input channel 7 in Y.
+and the number of units found in input channel 7 in Y.
 No translation occurs in Z.
 .PP
 The
@@ -189,8 +191,7 @@ routine
 .B mat_fromto
 where the 'from' argument is derived from the
 .I axis
-given, and the 'to' argument is the unit-length difference
-'next'-'cur'.
+given, and the 'to' argument is the unit-length difference 'next'-'cur'.
 .SH EXAMPLE1
 .PP
 Based upon the example started in the manual page for
@@ -299,7 +300,7 @@ tabsub ./rocket.template < rocket.final >> script
 .fi
 .sp .5
 .PP
-The items worty of note are the use of the
+The items worthy of note are the use of the
 .IR tabinterp (1)
 .B next
 command to place the position look-ahead into channels 3,4,5
