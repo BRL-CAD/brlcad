@@ -115,6 +115,7 @@ set help_data(model2view)	{{mx my mz}	{convert point in model coords (mm) to vie
 set help_data(mv)		{{old new}	{rename object}}
 set help_data(mvall)		{{oldname newname}	{rename object everywhere}}
 set help_data(nirt)		{{}	{trace a single ray from current view}}
+set help_data(nmg_collapse)	{{new_solid nmg_solid}	{decimate NMG solid via edge collapse}}
 set help_data(nmg_simplify)	{{[arb|tgc|ell|poly] new_solid nmg_solid}	{simplify nmg_solid, if possible}}
 set help_data(oed)		{{path_lhs path_rhs}	{Go from view to object_edit of path_lhs/path_rhs}}
 set help_data(opendb)		{{database.g}	{Close current .g file, and open new .g file}}
