@@ -1035,8 +1035,10 @@ gui_setup()
 
   /* Load default GUI */
   Tcl_Eval( interp, vmath_ui_str );
+  Tcl_Eval( interp, vmath_ui_str2 );
   Tcl_Eval( interp, html_library_ui_str );
   Tcl_Eval( interp, mged_gui_str );
+  Tcl_Eval( interp, mged_gui_str2 );
   Tcl_Eval( interp, menu_gui_str );
   Tcl_Eval( interp, sliders_gui_str );
   Tcl_Eval( interp, editobj_gui_str );
@@ -2177,19 +2179,25 @@ int argc;
 char *argv[];
 {
   int status;
-  char *av_attach[] = {"attach", "ps", NULL, NULL};
-  char *av_release[] = {"release", NULL};
+  char *av_attach[4];
+  char *av_release[2];
 
   if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
     return TCL_ERROR;
 
+  av_attach[0] = "attach";
+  av_attach[1] = "ps";
   av_attach[2] = argv[1];
+  av_attach[3] = NULL;
   status = f_attach(clientData, interp, 3, av_attach);
   if(status == TCL_ERROR)
     return TCL_ERROR;
 
   dirty = 1;
   refresh();
+
+  av_release[0] = "release";
+  av_release[1] = NULL;
   return f_release(clientData, interp, 1, av_release);
 }
 
@@ -2481,7 +2489,7 @@ fastf_t x, y, z;
   point_t new_pos;
   point_t diff;
   int status;
-  char *av[] = {NULL, NULL, NULL, NULL, NULL};
+  char *av[5];
   struct rt_vls xval, yval, zval;
 
   rt_vls_init(&xval);
@@ -2493,15 +2501,14 @@ fastf_t x, y, z;
   av[1] = rt_vls_addr(&xval);
   av[2] = rt_vls_addr(&yval);
   av[3] = rt_vls_addr(&zval);
+  av[4] = NULL;
 
   /* if in view state or not doing a solid rotate then allow the view to be rotated */
   if(state == ST_VIEW || !EDIT_ROTATE){
-    char vrot_str[] = "vrot";
-
     if(EDIT_TRAN)
       MAT4X3PNT(model_pos, view2model, absolute_slew);
 
-    av[0] = vrot_str;
+    av[0] = "vrot";
     status = f_vrot((ClientData)NULL, interp, 4, av);
 
     if(EDIT_TRAN){
@@ -2511,14 +2518,10 @@ fastf_t x, y, z;
       MAT4X3PNT(absolute_slew, model2view, new_pos);
     }
   }else if(state == ST_S_EDIT){
-    char p_str[] = "p";
-
-    av[0] = p_str;
+    av[0] = "p";
     status = f_param((ClientData)NULL, interp, 4, av);
   }else if(state == ST_O_EDIT){
-    char rotobj_str[] = "rotobj";
-
-    av[0] = rotobj_str;
+    av[0] = "rotobj";
     status = f_rot_obj((ClientData)NULL, interp, 4, av);
   }
 
