@@ -2,30 +2,59 @@
  *			C A K E F I L E . R U L E S
  */
 
+/*
+ *  Patterns to handle the installation and uninstallation
+ *  of products, manuals, and manual stubs.
+ *  This is complicated by the fact that not all directories
+ *  will contain all three types of items.
+ */
+#define	MAN_EXISTS	{{ls ../SRCDIR|grep -s .MANSECTION'$'}}
+#define STUB_EXISTS	{{ls ../SRCDIR|grep -s .MANSECTION.stub'$'}}
+#define ARG_EXISTS	{{ARGS="%"; test '%' != "$ARGS" -o -f %}}
+
 /* Format sources for printing on stdout */
 print&:	Cakefile.print \
 	[[SUB X X.print ../SRCDIR/''*.[h''MANSECTION] ]] \
 	[[SUB X X.nroff ../SRCDIR/''*.MANSECTION ]] \
 	[[SUB X ../SRCDIR/X''SRCSUFF.print FILES]]
 
-%.print&:
+%.print&:  do-%.print			if ARG_EXISTS
+%.print&:				if not ARG_EXISTS
+
+do-%.print&:
 	@pr %
 
-%.nroff&:
-	@nroff -Tlp -man %
+/*
+ */
+nroff&:  do-nroff			if MAN_EXISTS
+nroff&:					if not MAN_EXISTS
+
+do-nroff&:  [[SUB X X.nroff ../SRCDIR/''*.MANSECTION ]]
+
+%.nroff&: ../SRCDIR/%
+	@nroff -Tlp -man ../SRCDIR/%
 
 /*
  *  Typeset all the non-stub manual pages.  Do them all at once,
  *  to prevent lots of extra header sheets on the printer
+ *
+ *	do-typeset-a	creates the file "troff.out" with the macros in it
+ *	%.troff		adds each manual page to "troff.out"
  */
-typeset&:  troff.out
-	echo "( TYPESET_MAN2 ) < troff.out"
+typeset&: do-typeset			if MAN_EXISTS
+typeset&:				if not MAN_EXISTS
+
+do-typeset&:  do-typeset-a troff.out
+	( TYPESET_MAN2 ) < troff.out
 	@rm -f troff.out
+
+do-typeset-a&:
+	TYPESET_MAN0 TYPESET_MAN1 > troff.out
 
 troff.out&:  [[SUB X X.troff ../SRCDIR/''*.MANSECTION ]]
 
-%.troff&:
-	echo "TYPESET_MAN1 % >> troff.out"
+%.troff&:				if ARG_EXISTS
+	TYPESET_MAN0 % >> troff.out
 
 #define SRC_LIST	`SUB X ../SRCDIR/X''SRCSUFF FILES`
 
@@ -45,16 +74,6 @@ compare&: [[SUB X X.compare PRODUCTS]]
 
 %.compare&:	%
 	cmp BINDIR/% %
-
-/*
- *  Patterns to handle the installation and uninstallation
- *  of products, manuals, and manual stubs.
- *  This is complicated by the fact that not all directories
- *  will contain all three types of items.
- */
-#define	MAN_EXISTS	{{ls ../SRCDIR|egrep -s .MANSECTION'$'}}
-#define STUB_EXISTS	{{ls ../SRCDIR|egrep -s .MANSECTION.stub'$'}}
-#define ARG_EXISTS	{{ARGS="%"; test '%' != "$ARGS" -o -f %}}
 
 uninstall&:  uninstall-prod uninstall-man uninstall-stub
 
@@ -142,7 +161,7 @@ do-install-stub&: [[SUB ../SRCDIR/X.stub X.install-stub ../SRCDIR/''*.stub]]
 #	define STATIC_PRODUCTS	/**/
 #endif
 #define	INSTALL_PATTERNS	STATIC_PRODUCTS \
-	./Cakefile \\\\*.[hcfs] \\\\*.sh \
+	./Cakefile \\\\*.[hcsfyl] \\\\*.sh \
 	\\\\*.MANSECTION \\\\*.MANSECTION.stub \\\\*.doc
 #define IS_MASTER	{{test x''MASTERHOST = x`GETHOST`}}
 
@@ -154,7 +173,8 @@ inst-dist&:			if not IS_MASTER
 inst-dist-main&: dist-clobber [[SUB X X.do-inst-dist INSTALL_PATTERNS]]
 
 dist-clobber&:
-	-rm -fr DISTRIBUTION/SRCDIR/''*
+	-rm -fr DISTRIBUTION/SRCDIR
+	mkdir DISTRIBUTION/SRCDIR; chmod 775 DISTRIBUTION/SRCDIR
 
 %.do-inst-dist&:  %.inst-dist	if ARG_EXISTS
 %.do-inst-dist&:		if not ARG_EXISTS
