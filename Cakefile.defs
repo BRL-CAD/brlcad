@@ -32,6 +32,11 @@
  *  WARNING:  For proper operation on the SGI 3-D machines,
  *  all comments must start in the first column, or CPP will
  *  leave the leading tabs in place, and confuse Cake.
+ *
+ *  UNIXTYPE:  By default, a machine is considered to be SYSV,
+ *  unless the symbol "BSD" is defined.
+ *  	BSD=42	For 4.2 BSD
+ *	BSD=43	For 4.3 BSD
  */
 #ifndef	DEFINES_ONLY
 set -S1 "/bin/sh -c"
@@ -40,18 +45,6 @@ set -S2 "/bin/sh"
 
 /* Program to run to obtain the "sub" substitution effect */
 #define SUB	cakesub
-
-/****************************************************************
- *								*
- *  Manifest constants.  Do not change these.			*
- *								*
- *  Note that because the C preprocessor does not implement	*
- *  string comparisons, manifest constants must be given	*
- *  numbers.  Shades of FORTRAN.				*
- *								*
- ****************************************************************/
-#define BSD	42
-#define SYSV	5
 
 /****************************************************************
  *								*
@@ -95,7 +88,6 @@ set -S2 "/bin/sh"
  *  Critical Definitions.  These symbols MUST be defined,	*
  *  and are not defaulted:					*
  *	MTYPE							*
- *	UNIXTYPE						*
  *	HAS_TCP							*
  *	LIBRT_TIMER						*
  *								*
@@ -129,9 +121,10 @@ set -S2 "/bin/sh"
 
 #ifdef vax
 /*	DEC VAX-11 systems */
+/*	4.3 BSD "Tahoe" */
 #	undef	vax
 #	define	MTYPE	vax
-#	define	UNIXTYPE	BSD
+#	define	BSD	43
 #	define	HAS_TCP	1
 /*	On Ultrix & 4.1 systems, #define	CC_DEFS	-Dvoid=int */
 #	define	LIBFB_OBJS	if_remote pkg if_ptty if_adage
@@ -144,14 +137,13 @@ set -S2 "/bin/sh"
 #endif
 
 #if defined(unix) && defined(m68k)
-/*	Apple MAC II running AUX */
+/*	Apple MAC II running A/UX 1.0 */
 #	undef	aux
 #	define	MTYPE	aux
-#	define	UNIXTYPE	SYSV
 #	define	HAS_TCP	0
 #	define	LIBRT_TIMER	timerunix
 #	define	CC_OPTS	-ZcI
-#	define	LIBPKG_CONFIG	-I/usr/include/netinet -DBSD=BSD
+#	define	LIBPKG_CONFIG	-I/usr/include/netinet -DBSD=42
 #	define	LIBFB_OBJS	if_remote pkg
 #	define	LIBFB_CONFIG	-DIF_REMOTE
 #	define	MGED_OBJS	dm-qd filters
@@ -161,10 +153,11 @@ set -S2 "/bin/sh"
 
 #ifdef alliant
 /*	Alliant FX/8.  Compile all programs for the CEs */
+/*	Tested only under Concentrix 3.0 */
 #	undef	fx
 #	undef	alliant
 #	define	MTYPE	fx
-#	define	UNIXTYPE	BSD
+#	define	BSD	42
 #	define	HAS_TCP	1
 #	if 1
 /*		Standard Alliant C Compiler */
@@ -184,9 +177,10 @@ set -S2 "/bin/sh"
 
 #ifdef gould
 /*	Gould SEL, PowerNode.  Obtain more stack space with -m */
+/*	Tested with UTX/32 2.0 */
 #	undef	sel
 #	define	MTYPE	sel
-#	define	UNIXTYPE	BSD
+#	define	BSD	43
 #	define	HAS_TCP	1
 #	define	LD_OPTS	-m 8
 #	if 1
@@ -207,7 +201,6 @@ set -S2 "/bin/sh"
 /*	Silicon Graphics 3D */
 #	undef	sgi
 #	define	MTYPE	3d
-#	define	UNIXTYPE	SYSV
 #	define	HAS_TCP	1
 /*	set CC_OPTS= -Zf only if Weitek FP chip installed */
 #	define	CC_OPTS	-Zf
@@ -235,7 +228,11 @@ set -S2 "/bin/sh"
 #		define	MGED_LIBES	../libfb/sgiselect.o -lgl2
 #	else
 /*		Versions 3.5 and 3.6 */
-#		define	LIBPKG_CONFIG	-I/usr/include/bsd -DBSD=BSD
+#		define	LIBSYSV_SETUP	( \
+			AR x /usr/lib/libbsd.a select.o getdtab.o; \
+			AR u libsysv.a select.o getdtab.o)
+#		define	LIBSYSV_OBJ	select.o
+#		define	LIBPKG_CONFIG	-I/usr/include/bsd -DBSD=42
 #		define	LIBPKG_SETUP	cp /usr/lib/libbsd.a PRODUCTS
 #		define	LIBFB_OBJS	if_remote pkg if_sgi
 #		define	LIBFB_SETUP	(rm -fr tmp;  mkdir tmp; \
@@ -247,7 +244,7 @@ set -S2 "/bin/sh"
 			rm -f __.SYMDEF; \
 			AR u ../libfb.a *; \
 			cd ..; rm -fr tmp)
-#		define	RFBD_CONFIG	-I/usr/include/bsd -DBSD=BSD
+#		define	RFBD_CONFIG	-I/usr/include/bsd -DBSD=42
 #		define	MGED_LIBES	-lbsd -lgl2
 #	endif
 #	define	LIBFB_CONFIG	-DIF_REMOTE -DIF_SGI
@@ -322,25 +319,25 @@ set -S2 "/bin/sh"
 			AR u ../libfb.a *; \
 			cd ..; rm -fr tmp)
 #	endif
-#	define	UNIXTYPE	SYSV
 #	define	HAS_TCP	1
 #	define	CC	/usr/bin/cc
 #	define	LD_OPTS		GFLAG
 #	define	OPTIMIZER	-O2
 #	define	RANLIB	ar ts
 #	define	GETHOST	hostname
-#	define	LIBPKG_CONFIG	-I/usr/include/bsd -DBSD=BSD
-#	define	RFBD_CONFIG	-I/usr/include/bsd -DBSD=BSD
+#	define	LIBPKG_CONFIG	-I/usr/include/bsd -DBSD=42
+#	define	RFBD_CONFIG	-I/usr/include/bsd -DBSD=42
 #	define	LIBRT_TIMER	timerunix
 #	define	MGED_OBJS	dm-4d
 #	define	MGED_CONFIG	GFLAG -DIR_KNOBS=8 -DIR_BUTTONS=32 -DDM_4D
 #endif
 
 #if defined(sun) && !defined(sparc)
+/*	SunOS 3.4, SunOS 4.0 */
 #	undef	sun
 #	undef	sun3
 #	define	MTYPE	sun3
-#	define	UNIXTYPE	BSD
+#	define	BSD	42
 #	define	HAS_TCP	1
 /*	If using GNU GCC, also add -traditional flag */
 /*	Select correct floating point flag, -fswitch if unsure */
@@ -396,7 +393,7 @@ set -S2 "/bin/sh"
 #	undef	sun
 #	undef	sun4
 #	define	MTYPE	sun4
-#	define	UNIXTYPE	BSD
+#	define	BSD	42
 #	define	HAS_TCP	1
 #	define	OPTIMIZER	-O2
 #	define	LIBMALLOC	/* use vendor library */
@@ -416,11 +413,10 @@ set -S2 "/bin/sh"
 #	define	MGED_CONFIG
 #	define	MGED_LIBES
 #endif
-/*	Cray X-M/P running UNICOS.  Define CRAY_COS for use on COS. */
+
 #if defined(CRAY1)
 /*	Cray X-M/P running UNICOS 3.  Define CRAY_COS for use on COS. */
 #	undef	xmp
-#	define	UNIXTYPE	SYSV
 #	undef	cray
 #	define	HAS_TCP	1
 /*	-g -hnobtreg for debugging */
@@ -430,8 +426,8 @@ set -S2 "/bin/sh"
 /*		Cray C 4.0 (experimental) */
 #		define	CC_DEFS -hvector,olevel_3,vmesg_2
 #		define	CC	/bin/ncc
-#	define	LIBPKG_CONFIG	-I/usr/win-include -DBSD=BSD -DSHORT_IDENT
-#	define	RFBD_CONFIG	-I/usr/win-include -DBSD=BSD -DSHORT_IDENT
+#	define	LIBPKG_CONFIG	-I/usr/win-include -DBSD=42 -DSHORT_IDENT
+#	define	RFBD_CONFIG	-I/usr/win-include -DBSD=42 -DSHORT_IDENT
 #	define	LIBRT_TIMER	timercray
 #	define	RFBD_LIBES	-lbsd
 #	define	LIBRT_TIMER	timerunix
@@ -451,10 +447,10 @@ set -S2 "/bin/sh"
 #	define	LIBPKG_SETUP	cp /usr/lib/libnet.ARCH_SUF PRODUCTS
 #	define	LIBFB_SETUP	cp /usr/lib/libnet.ARCH_SUF PRODUCTS
 #endif
+
 #if defined(CRAY2)
 /*	Cray-2 running UNICOS 4 */
 #	undef	cr2
-#	define	UNIXTYPE	SYSV
 #	undef	cray
 #	define	MTYPE	cr2
 #		define	CC_DEFS -hvector,olevel_3
@@ -465,8 +461,8 @@ set -S2 "/bin/sh"
 #			define	CC	/bin/ncc
 #	define	FC	/bin/cft77
 		AR x /usr/lib/libnet.a select.o socket.o; \
-#	define	LIBPKG_CONFIG	-I/usr/win-include -DBSD=BSD -DSHORT_IDENT
-#	define	RFBD_CONFIG	-I/usr/win-include -DBSD=BSD -DSHORT_IDENT
+#	define	LIBPKG_CONFIG	-I/usr/win-include -DBSD=42 -DSHORT_IDENT
+#	define	RFBD_CONFIG	-I/usr/win-include -DBSD=42 -DSHORT_IDENT
 #		define	RFBD_CONFIG	-DBSD=43
 #	endif
 #	define	LIBRT_TIMER	timerunix
@@ -489,7 +485,7 @@ set -S2 "/bin/sh"
 #ifdef convex
 /*	libplot3/htond.c depends on running the Convex in native mode (-fn) */
 #	undef	convex
-#	define	UNIXTYPE	BSD
+#	undef	c1
 #	define	MTYPE	c1
 #	define	BSD	42
 #	define	HAS_TCP	1
@@ -506,7 +502,6 @@ set -S2 "/bin/sh"
 #endif
 #ifdef ardent
 /* This configuration information is based on a preliminary test */
-#	define	UNIXTYPE	SYSV
 #	undef	ard
 #	define	MTYPE	ard
 /*	The network code is not tested with BRL-CAD yet */
@@ -525,7 +520,6 @@ set -S2 "/bin/sh"
 #endif
 #ifdef stellar
 /* This configuration information is based on a preliminary test */
-#	define	UNIXTYPE	SYSV
 #	undef	stl
 #	define	MTYPE	stl
 /*	The network code is not tested with BRL-CAD yet */
@@ -541,7 +535,6 @@ set -S2 "/bin/sh"
 #endif
 #ifdef eta10
 /* This configuration information is based on a preliminary test */
-#	define	UNIXTYPE	SYSV
 #	undef	eta
 #	define	MTYPE	eta
 #	define	HAS_TCP	0
@@ -549,7 +542,7 @@ set -S2 "/bin/sh"
 #endif
 
 #ifdef pyr
-#	define	UNIXTYPE	BSD
+#	undef	pyr
 #	define	MTYPE	pyr
 #	define	BSD	42
 #	define	HAS_TCP	1
@@ -560,14 +553,12 @@ set -S2 "/bin/sh"
 /*
  *  Prototype System V machine
  */
-#	define	UNIXTYPE	SYSV
 #ifdef RANDOM_SYSV
 #	define	MTYPE	unknown_sysv
 #	define	HAS_TCP	0
 #	define	LIBRT_TIMER	timerunix
 #endif
 
-#	define	UNIXTYPE	SYSV
 #ifdef VLD
 /*	Not yet shaken out for use with Cake */
 #	define	HAS_TCP	0
@@ -593,10 +584,6 @@ set -S2 "/bin/sh"
 
 #if !defined(MTYPE)
 #	include "It is necessary to define the machine type as MTYPE"
-#if !defined(UNIXTYPE) || ( UNIXTYPE != BSD && UNIXTYPE != SYSV )
-#	include "It is necessary to define UNIXTYPE as either _BSD or _SYSV"
-#endif
-
 #endif
 
 #if !defined(HAS_TCP)
@@ -629,6 +616,8 @@ set -S2 "/bin/sh"
 #		define	LIBFB_CONFIG	-DIF_REMOTE -DIF_PTTY
 #	endif
 /*	LIBFB_SETUP is only to be defined when needed */
+#endif
+
 /*	LIBSYSV_SETUP is only to be defined when needed */
 
 #ifndef RT_CONFIG
@@ -673,7 +662,7 @@ set -S2 "/bin/sh"
 #ifndef FC
 #	define	FC	/usr/bin/f77
 #endif
-#	if	UNIXTYPE == BSD
+
 #if	!defined(GETHOST)
 #	ifdef BSD
 #		define	GETHOST	hostname
@@ -681,7 +670,7 @@ set -S2 "/bin/sh"
 #		define	GETHOST	uname -n
 #	endif
 #endif
-#	if	UNIXTYPE == BSD
+
 #if	!defined(RANLIB)
 #	ifdef BSD
 #		define	RANLIB	echo
@@ -766,7 +755,7 @@ set -S2 "/bin/sh"
 #if !defined(LIBTERMLIB)
 #	define	LIBTERMLIB	-ltermlib
 #endif
-#	if UNIXTYPE == BSD
+
 #if !defined(MANDIR)
 #	ifdef BSD
 #		define	MANDIR	/usr/man/man
@@ -790,7 +779,7 @@ set -S2 "/bin/sh"
 #if !defined(CONFIGDEFS)
 #	define	CONFIGDEFS	/**/
 #endif
-#if UNIXTYPE == BSD
+
 /* C compiler flags */
 #ifdef BSD
 #	define CFLAGS	CC_OPTS OPTIMIZER PROFILER -I''INCDIR -DBSD=BSD CC_DEFS CONFIGDEFS
@@ -804,7 +793,7 @@ set -S2 "/bin/sh"
 /* FORTRAN flags */
 #define FFLAGS	OPTIMIZER FC_OPTS
 
-#if UNIXTYPE == BSD
+/* Lint flags */
 #define	LINT	lint
 #ifdef BSD
 #	define	LFLAGS	-abchx -DBSD=BSD CC_DEFS CONFIGDEFS
