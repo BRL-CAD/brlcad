@@ -92,3 +92,4 @@ if [ $FAILED -eq 1] ; then
 	/bin/echo "Mail delivery failed.  Send file $BUG_REPORT to cad-bugs@arl.mil"
 else
 	/bin/echo "Mail agent not found.  Send file $BUG_REPORT to cad-bugs@arl.mil"
+fi
