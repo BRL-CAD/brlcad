@@ -259,7 +259,7 @@ printf("reg_num=%d,id=%d,air=%d,mat=%d,los=%d\n", reg_num,id,air,mat,los);
 	}
 
 	mk_lrcomb( outfp, wp->wm_name, wp, reg_num,
-		"", "", (char *)0, id, air, mat, los, 0 );
+		"", "", (unsigned char *)0, id, air, mat, los, 0 );
 		/* Add region to the one group that it belongs to. */
 	group_add( id, wp->wm_name );
 
