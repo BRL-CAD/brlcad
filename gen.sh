@@ -125,10 +125,11 @@ DISTDIR=/m/dist/.
 ARCHDIR=/m/.
 ARCHIVE=${ARCHDIR}/cad${RELEASE}.tar
 
+# Every shell script to be distributed must be listed here.
 TOP_FILES="Copyright* README Cakefile* Makefile Acknowledgements \
 		cray.sh cray-ar.sh ranlib5.sh sgisnap.sh \
 		machinetype.sh gen.sh setup.sh newvers.sh \
-		sharedlibvers.sh cadbug.sh \
+		sharedlibvers.sh sharedliblink.sh cadbug.sh \
 		cakeinclude.sh newbindir.sh pixinfo.sh"
 
 # Has Cakefile, but no compilation or tools needed, not machine specific
