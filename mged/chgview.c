@@ -5817,9 +5817,9 @@ fastf_t sfactor;
 
     switch(edobj){
     case BE_O_XSCALE:                            /* local scaling ... X-axis */
-      smat[0] = inv_sfactor;
+      smat[0] = sfactor;
       old_scale = acc_sc[X];
-      acc_sc[X] *= inv_sfactor;
+      acc_sc[X] *= sfactor;
 
       if(acc_sc[X] < MGED_SMALL_SCALE){
 	acc_sc[X] = old_scale;
@@ -5827,9 +5827,9 @@ fastf_t sfactor;
       }
       break;
     case BE_O_YSCALE:                            /* local scaling ... Y-axis */
-      smat[5] = inv_sfactor;
+      smat[5] = sfactor;
       old_scale = acc_sc[Y];
-      acc_sc[Y] *= inv_sfactor;
+      acc_sc[Y] *= sfactor;
 
       if(acc_sc[Y] < MGED_SMALL_SCALE){
 	acc_sc[Y] = old_scale;
@@ -5837,9 +5837,9 @@ fastf_t sfactor;
       }
       break;
     case BE_O_ZSCALE:                            /* local scaling ... Z-axis */
-      smat[10] = inv_sfactor;
+      smat[10] = sfactor;
       old_scale = acc_sc[Z];
-      acc_sc[Z] *= inv_sfactor;
+      acc_sc[Z] *= sfactor;
 
       if(acc_sc[Z] < MGED_SMALL_SCALE){
 	acc_sc[Z] = old_scale;
