@@ -2113,8 +2113,7 @@ CONST char	*title;
 	struct rt_db_internal	intern;
 	union record		rec;
 
-	rt_log("nmg_stash_model_to_file(x%x '%s', x%x, %s)\n", filename, filename, m, title);
-filename = "error.g";	/* XXX First arg is getting trashed! */
+	rt_log("nmg_stash_model_to_file('%s', x%x, %s)\n", filename, m, title);
 
 	NMG_CK_MODEL(m);
 
