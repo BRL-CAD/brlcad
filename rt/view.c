@@ -95,6 +95,15 @@ hit_nothing( ap, PartHeadp )
 register struct application *ap;
 struct partition *PartHeadp;
 {
+	if( rdebug&RDEBUG_RAYPLOT )  {
+		vect_t	out;
+
+		VJOIN1( out, ap->a_ray.r_pt,
+			10000, ap->a_ray.r_dir );	/* to imply direction */
+		pl_color( stdout, 190, 0, 0 );
+		rt_drawvec( stdout, ap->a_rt_i,
+			ap->a_ray.r_pt, out );
+	}
 	ap->a_user = 0;		/* Signal view_pixel:  MISS */
 	return(0);
 }
@@ -399,19 +408,33 @@ struct partition *PartHeadp;
 		}
 	}
 	if( rdebug&RDEBUG_RAYPLOT )  {
+		/* There are two parts to plot here.
+		 *  Ray start to in hit, and inhit to outhit.
+		 */
 		if( hitp->hit_dist > 0.0001 )  {
 			register int i, lvl;
-			vect_t hit;
+			fastf_t out;
+			vect_t inhit, outhit;
+
 			lvl = ap->a_level % 100;
-			if( lvl > 3 )  lvl = 3;
-			i = 127 + lvl * (128/4);
-			/* Should check for INFINITY here.  XXX */
-			VJOIN1( hit,
-				ap->a_ray.r_pt, pp->pt_outhit->hit_dist,
+			if( lvl < 0 )  lvl = 0;
+			else if( lvl > 3 )  lvl = 3;
+			i = 255 - lvl * (128/4);
+
+			VJOIN1( inhit, ap->a_ray.r_pt,
+				hitp->hit_dist, ap->a_ray.r_dir );
+			pl_color( stdout, i, 0, i );
+			rt_drawvec( stdout, ap->a_rt_i,
+				ap->a_ray.r_pt, inhit );
+
+			if( (out = pp->pt_outhit->hit_dist) >= INFINITY )
+				out = 10000;	/* to imply the direction */
+			VJOIN1( outhit,
+				ap->a_ray.r_pt, out,
 				ap->a_ray.r_dir );
 			pl_color( stdout, i, i, i );
 			rt_drawvec( stdout, ap->a_rt_i,
-				ap->a_ray.r_pt, hit );
+				inhit, outhit );
 		}
 	}
 
@@ -444,9 +467,9 @@ struct partition *PartHeadp;
 		}
 		if( rp->reg_mater.ma_override )  {
 			VSET( sw.sw_color,
-				rp->reg_mater.ma_rgb[0]/255.,
-				rp->reg_mater.ma_rgb[1]/255.,
-				rp->reg_mater.ma_rgb[2]/255. );
+				rp->reg_mater.ma_color[0],
+				rp->reg_mater.ma_color[1],
+				rp->reg_mater.ma_color[2] );
 		} else {
 			/* Default color is white (uncolored) */
 		}
@@ -501,13 +524,23 @@ struct partition *PartHeadp;
 				ap, pp->pt_inseg->seg_stp,
 				&(sw.sw_hit), &(sw.sw_uv) );
 		}
+		if( sw.sw_uv.uv_u < 0 || sw.sw_uv.uv_u > 1 ||
+		    sw.sw_uv.uv_v < 0 || sw.sw_uv.uv_v > 1 )  {
+			rt_log("colorview:  bad u,v=%g,%g du,dv=%g,%g seg=%s\n",
+				sw.sw_uv.uv_u, sw.sw_uv.uv_v,
+				sw.sw_uv.uv_du, sw.sw_uv.uv_dv,
+				pp->pt_inseg->seg_stp->st_name );
+			VSET( sw.sw_color, 0, 1, 0 );	/* Green */
+			return(1);
+		}
 	}
 
 	/* Invoke the actual shader (may be a tree of them) */
 	(void)mfp->mf_render( ap, pp, &sw );
 
 	/* As a special case for now, handle reflection & refraction */
-	(void)rr_render( ap, pp, &sw );
+	if( sw.sw_reflect > 0 || sw.sw_transmit > 0 )
+		(void)rr_render( ap, pp, &sw );
 
 	VMOVE( ap->a_color, sw.sw_color );
 	ap->a_user = 1;		/* Signal view_pixel:  HIT */
