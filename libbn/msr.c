@@ -339,3 +339,10 @@ struct bn_gauss *p;
 	bu_free(p->msr_gausses,"msr guass table");
 	bu_free(p,"bn_msr_guass");
 }
+
+
+#undef A
+#undef M
+#undef DM
+#undef Q
+#undef R
