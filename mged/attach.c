@@ -41,9 +41,9 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./mged_dm.h"
 
 int gui_setup();
+void dm_var_init();
 static int do_2nd_attach_prompt();
 static void find_new_owner();
-static void dm_var_init();
 
 extern void set_scroll();  /* defined in set.c */
 extern void color_soltab();
@@ -51,16 +51,16 @@ extern void color_soltab();
 /* All systems can compile these! */
 extern struct dm dm_Null;
 
-extern struct dm *Plot_dm_init();
+extern int Plot_dm_init();
 extern struct dm dm_Plot;	/* Unix Plot */
 #define IS_DM_PLOT(dp) ((dp) == &dm_Plot)
 
-extern struct dm *PS_dm_init();
+extern int PS_dm_init();
 extern struct dm dm_PS;		/* PostScript */
 #define IS_DM_PS(dp) ((dp) == &dm_PS)
 
 #ifdef DM_X
-extern struct dm *X_dm_init();
+extern int X_dm_init();
 extern struct dm dm_X;
 #define IS_DM_X(dp) ((dp) == &dm_X)
 #else
@@ -68,7 +68,7 @@ extern struct dm dm_X;
 #endif
 
 #ifdef DM_OGL
-extern struct dm *Ogl_dm_init();
+extern int Ogl_dm_init();
 extern struct dm dm_ogl;
 #define IS_DM_OGL(dp) ((dp) == &dm_ogl)
 #else
@@ -76,7 +76,7 @@ extern struct dm dm_ogl;
 #endif
 
 #ifdef DM_GLX
-extern struct dm *Glx_dm_init();
+extern int Glx_dm_init();
 extern struct dm dm_glx;
 #define IS_DM_GLX(dp) ((dp) == &dm_glx)
 #else
@@ -84,7 +84,7 @@ extern struct dm dm_glx;
 #endif
 
 #ifdef DM_PEX
-extern struct dm *Pex_dm_init();
+extern int Pex_dm_init();
 extern struct dm dm_pex;
 #define IS_DM_PEX(dp) ((dp) == &dm_pex)
 #else
@@ -113,7 +113,7 @@ static char *default_view_strings[] = {
 
 struct w_dm {
   struct dm *dp;
-  struct dm *(*init)();
+  int (*init)();
 };
 
 static struct w_dm which_dm[] = {
@@ -131,7 +131,7 @@ static struct w_dm which_dm[] = {
 #ifdef DM_GLX
   { &dm_glx, Glx_dm_init },
 #endif
-  { (struct dm *)0, (struct dm *(*)())0}
+  { (struct dm *)0, (int (*)())0}
 };
 
 
@@ -329,9 +329,10 @@ char    **argv;
       goto Bad;
   }
 
-#if 0
-  if((dmp = wp->init(argc, argv)) == DM_NULL)
+#if DO_NEW_LIBDM_OPEN
+  if(wp->init(o_dm_list, argc, argv) == TCL_ERROR)
     goto Bad;
+  no_memory = 0;
 #else
   BU_GETSTRUCT(dmp, dm);
   *dmp = *wp->dp;
@@ -666,25 +667,15 @@ struct dm_list *op;
 }
 
 
-static void
-#if 0
-dm_var_init(initial_dm_list, name)
-struct dm_list *initial_dm_list;
-char *name;
-#else
+void
 dm_var_init(initial_dm_list)
 struct dm_list *initial_dm_list;
-#endif
 {
   int i;
 
   BU_GETSTRUCT(curr_dm_list->s_info, shared_info);
   mged_variables = default_mged_variables;
 
-#if 0
-  if(name)
-    bu_vls_strcpy(&dname, name);
-#endif
   bn_mat_copy(Viewrot, bn_mat_identity);
   size_reset();
   MAT_DELTAS_GET(orig_pos, toViewcenter);
@@ -696,8 +687,6 @@ struct dm_list *initial_dm_list;
   owner = 1;
   frametime = 1;
   adc_a1_deg = adc_a2_deg = 45.0;
-  dmp->dm_vp = &Viewscale;
-  curr_dm_list->s_info->opp = &pathName;
 }
 
 mged_slider_init_vls(sip)
