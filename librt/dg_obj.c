@@ -71,13 +71,11 @@ static int dgo_who_tcl();
 static int dgo_rt_tcl();
 static int dgo_vdraw_tcl();
 static int dgo_overlay_tcl();
-static int dgo_getview_tcl();
+static int dgo_get_autoview_tcl();
 static int dgo_zap_tcl();
 static int dgo_blast_tcl();
 static int dgo_tol_tcl();
-#if 0
 static int dgo_rtcheck_tcl();
-#endif
 
 static void dgo_plot_anim_upcall_handler();
 static void dgo_vlblock_anim_upcall_handler();
@@ -95,6 +93,8 @@ static void dgo_eraseobj();
 static void dgo_color_soltab();
 static int dgo_run_rt();
 static int dgo_build_tops();
+static void dgo_rt_write();
+static void dgo_rt_set_eye_model();
 
 static int dgo_draw_nmg_only;
 static int dgo_nmg_triangulate;
@@ -127,13 +127,11 @@ static struct bu_cmdtab dgo_cmds[] = {
 	"ev",			dgo_draw_tcl,
 	"erase",		dgo_erase_tcl,
 	"erase_all",		dgo_erase_all_tcl,
-	"getview",		dgo_getview_tcl,
+	"get_autoview",		dgo_get_autoview_tcl,
 	"headSolid",		dgo_headSolid_tcl,
 	"overlay",		dgo_overlay_tcl,
 	"rt",			dgo_rt_tcl,
-#if 0
 	"rtcheck",		dgo_rtcheck_tcl,
-#endif
 	"tol",			dgo_tol_tcl,
 	"vdraw",		dgo_vdraw_tcl,
 	"who",			dgo_who_tcl,
@@ -582,7 +580,9 @@ dgo_who_tcl(clientData, interp, argc, argv)
 }
 
 static void
-dgo_overlay(fp, name, char_size)
+dgo_overlay(dgop, interp, fp, name, char_size)
+     struct dg_obj *dgop;
+     Tcl_Interp *interp;
      FILE *fp;
      char *name;
      double char_size;
@@ -599,7 +599,7 @@ dgo_overlay(fp, name, char_size)
 		return;
 	}
 
-	dgo_cvt_vlblock_to_solids(vbp, name, 0);
+	dgo_cvt_vlblock_to_solids(dgop, interp, vbp, name, 0);
 	rt_vlblock_free(vbp);
 }
 
@@ -652,17 +652,17 @@ char	**argv;
 	curr_interp = interp;
 	curr_dbip = dgop->dgo_wdbop->wdb_wp->dbip;
 	curr_hsp = &dgop->dgo_headSolid;
-	dgo_overlay(fp, name, char_size);
+	dgo_overlay(dgop, interp, fp, name, char_size);
 
 	return TCL_OK;
 }
 
 /*
  * Usage:
- *        procname getview
+ *        procname get_autoview
  */
 static int
-dgo_getview_tcl(clientData, interp, argc, argv)
+dgo_get_autoview_tcl(clientData, interp, argc, argv)
 ClientData clientData;
 Tcl_Interp *interp;
 int	argc;
@@ -774,7 +774,7 @@ char	**argv;
 
 	/*
 	 * Now that we've grabbed all the options, if no args remain,
-	 * have setup_rt() append the names of all stuff currently displayed.
+	 * append the names of all stuff currently displayed.
 	 * Otherwise, simply append the remaining args.
 	 */
 	if (i == argc) {
@@ -1106,7 +1106,121 @@ dgo_tol_tcl(clientData, interp, argc, argv)
 	return TCL_OK;
 }
 
+struct rtcheck {
+	int			fd;
+	FILE			*fp;
+	int			pid;
+	struct bn_vlblock	*vbp;
+	struct bu_list		*vhead;
+	double			csize;  
+	struct dg_obj		*dgop;
+	Tcl_Interp		*interp;
+};
+
+/*
+ *			D G O _ W A I T _ S T A T U S
+ *
+ *  Interpret the status return of a wait() system call,
+ *  for the edification of the watching luser.
+ *  Warning:  This may be somewhat system specific, most especially
+ *  on non-UNIX machines.
+ */
+static void
+dgo_wait_status(interp, status)
+     Tcl_Interp *interp;
+     int	status;
+{
+	int	sig = status & 0x7f;
+	int	core = status & 0x80;
+	int	ret = status >> 8;
+	struct bu_vls tmp_vls;
+
+	if (status == 0) {
+		Tcl_AppendResult(interp, "Normal exit\n", (char *)NULL);
+		return;
+	}
+
+	bu_vls_init(&tmp_vls);
+	bu_vls_printf(&tmp_vls, "Abnormal exit x%x", status);
+
+	if (core)
+		bu_vls_printf(&tmp_vls, ", core dumped");
+
+	if (sig)
+		bu_vls_printf(&tmp_vls, ", terminating signal = %d", sig);
+	else
+		bu_vls_printf(&tmp_vls, ", return (exit) code = %d", ret);
+
+	Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), "\n", (char *)NULL);
+	bu_vls_free(&tmp_vls);
+}
+
+static void
+dgo_rtcheck_vector_handler(clientData, mask)
+     ClientData clientData;
+     int mask;
+{
+	int value;
+	struct solid *sp;
+	struct rtcheck *rtcp = (struct rtcheck *)clientData;
+
+	/* Get vector output from rtcheck */
+	if ((value = getc(rtcp->fp)) == EOF) {
+		int retcode;
+		int rpid;
+
+		Tcl_DeleteFileHandler(rtcp->fd);
+		fclose(rtcp->fp);
+
+		FOR_ALL_SOLIDS(sp, &rtcp->dgop->dgo_headSolid.l)
+			sp->s_iflag = DOWN;
+
+		/* Add overlay */
+		dgo_cvt_vlblock_to_solids(rtcp->dgop, rtcp->interp, rtcp->vbp, "OVERLAPS", 0);
+		rt_vlblock_free(rtcp->vbp);
+
+		/* wait for the forked process */
+		while ((rpid = wait(&retcode)) != rtcp->pid && rpid != -1)
+			dgo_wait_status(retcode);
+
+		/* free rtcp */
+		bu_free((genptr_t)rtcp, "dgo_rtcheck_vector_handler: rtcp");
+
+		return;
+	}
+
+	(void)rt_process_uplot_value(&rtcp->vhead,
+				     rtcp->vbp,
+				     rtcp->fp,
+				     value,
+				     rtcp->csize);
+}
+
+static void
+dgo_rtcheck_output_handler(clientData, mask)
+     ClientData clientData;
+     int mask;
+{
+	int count;
+	char line[RT_MAXLINE];
+	int fd = (int)clientData;
+
+	/* Get textual output from rtcheck */
 #if 0
+	if((count = read((int)fd, line, RT_MAXLINE)) == 0){
+#else
+	if((count = read((int)fd, line, 5120)) == 0){
+#endif
+		Tcl_DeleteFileHandler(fd);
+		close(fd);
+
+		return;
+	}
+
+	line[count] = '\0';
+	bu_log("%s", line);
+}
+
 /*
  * Usage:
  *        procname rtcheck view_obj [args]
@@ -1129,6 +1243,8 @@ dgo_rtcheck_tcl(clientData, interp, argc, argv)
 	int	e_pipe[2];	/* object reads textual results */
 	FILE	*fp;
 	struct rtcheck *rtcp;
+	vect_t temp;
+	vect_t eye_model;
 
 	if (argc < 3 || MAXARGS < argc) {
 		struct bu_vls vls;
@@ -1157,11 +1273,31 @@ dgo_rtcheck_tcl(clientData, interp, argc, argv)
 	*vp++ = "rtcheck";
 	*vp++ = "-s50";
 	*vp++ = "-M";
-	for( i=1; i < argc; i++ )
+	for (i=3; i < argc; i++)
 		*vp++ = argv[i];
 	*vp++ = dgop->dgo_wdbop->wdb_wp->dbip->dbi_filename;
 
-	setup_rt( vp, 1 );
+	/*
+	 * Now that we've grabbed all the options, if no args remain,
+	 * append the names of all stuff currently displayed.
+	 * Otherwise, simply append the remaining args.
+	 */
+	if (i == argc) {
+		dgop->dgo_rt_cmd_len = vp - dgop->dgo_rt_cmd;
+		dgop->dgo_rt_cmd_len += dgo_build_tops(interp,
+						       &dgop->dgo_headSolid,
+						       vp,
+						       &dgop->dgo_rt_cmd[MAXARGS]);
+	} else {
+		while (i < argc)
+			*vp++ = argv[i++];
+		*vp = 0;
+		vp = &dgop->dgo_rt_cmd[0];
+		while (*vp)
+			Tcl_AppendResult(interp, *vp++, " ", (char *)NULL);
+
+		Tcl_AppendResult(interp, "\n", (char *)NULL);
+	}
 
 	(void)pipe(i_pipe);
 	(void)pipe(o_pipe);
@@ -1170,11 +1306,11 @@ dgo_rtcheck_tcl(clientData, interp, argc, argv)
 	if ((pid = fork()) == 0) {
 		/* Redirect stdin, stdout and stderr */
 		(void)close(0);
-		(void)dup( o_pipe[0] );
+		(void)dup(o_pipe[0]);
 		(void)close(1);
-		(void)dup( i_pipe[1] );
+		(void)dup(i_pipe[1]);
 		(void)close(2);
-		(void)dup( e_pipe[1] );
+		(void)dup(e_pipe[1]);
 
 		/* close pipes */
 		(void)close(i_pipe[0]);
@@ -1187,22 +1323,22 @@ dgo_rtcheck_tcl(clientData, interp, argc, argv)
 		for (i=3; i < 20; i++)
 			(void)close(i);
 
-		(void)execvp( rt_cmd_vec[0], rt_cmd_vec );
+		(void)execvp(dgop->dgo_rt_cmd[0], dgop->dgo_rt_cmd);
 		perror(dgop->dgo_rt_cmd[0]);
 		exit(16);
 	}
 
 	/* As parent, send view information down pipe */
 	(void)close(o_pipe[0]);
-	fp = fdopen(o_pipe[1], "w");
-	{
-		vect_t temp;
-		vect_t eye_model;
+	fp = fdopen(o_pipe[1], "w"); 
+#if 1
+	VSET(temp, 0.0, 0.0, 1.0);
+	MAT4X3PNT(eye_model, vop->vo_view2model, temp);
+#else
+	dgo_rt_set_eye_model(dgop, vop, eye_model);
+#endif
+	dgo_rt_write(dgop, vop, fp, eye_model);
 
-		VSET( temp, 0.0, 0.0, 1.0 );
-		MAT4X3PNT( eye_model, view_state->vs_view2model, temp );
-		rt_write(fp, eye_model );
-	}
 	(void)fclose(fp);
 
 	/* close write end of pipes */
@@ -1216,18 +1352,19 @@ dgo_rtcheck_tcl(clientData, interp, argc, argv)
 	rtcp->fp = fdopen(i_pipe[0], "r");
 	rtcp->pid = pid;
 	rtcp->vbp = rt_vlblock_init();
-	rtcp->vhead = rt_vlblock_find( rtcp->vbp, 0xFF, 0xFF, 0x00 );
-	rtcp->csize = view_state->vs_Viewscale * 0.01;
+	rtcp->vhead = rt_vlblock_find(rtcp->vbp, 0xFF, 0xFF, 0x00);
+	rtcp->csize = vop->vo_scale * 0.01;
+	rtcp->dgop = dgop;
+	rtcp->interp = interp;
 
 	/* register file handlers */
 	Tcl_CreateFileHandler(i_pipe[0], TCL_READABLE,
-			      rtcheck_vector_handler, (ClientData)rtcp);
+			      dgo_rtcheck_vector_handler, (ClientData)rtcp);
 	Tcl_CreateFileHandler(e_pipe[0], TCL_READABLE,
-			      rtcheck_output_handler, (ClientData)e_pipe[0]);
+			      dgo_rtcheck_output_handler, (ClientData)e_pipe[0]);
 
 	return TCL_OK;
 }
-#endif
 
 /****************** utility routines ********************/
 
@@ -1257,7 +1394,7 @@ dgo_vlblock_anim_upcall_handler(vbp, us, copy)
      long us; /* microseconds of extra delay */
      int copy;
 {
-	dgo_cvt_vlblock_to_solids(vbp, "_PLOT_OVERLAY_", copy);
+	dgo_cvt_vlblock_to_solids(curr_dgop, curr_interp, vbp, "_PLOT_OVERLAY_", copy);
 }
 
 /*
@@ -1790,7 +1927,8 @@ dgo_drawtrees(argc, argv, kind)
 			);
 
 	  	if (dgo_draw_edge_uses) {
-	  		dgo_cvt_vlblock_to_solids(dgo_draw_edge_uses_vbp, "_EDGEUSES_", 0);
+	  		dgo_cvt_vlblock_to_solids(curr_dbip, curr_interp,
+						  dgo_draw_edge_uses_vbp, "_EDGEUSES_", 0);
 	  		rt_vlblock_free(dgo_draw_edge_uses_vbp);
 			dgo_draw_edge_uses_vbp = (struct bn_vlblock *)NULL;
  	  	}
@@ -1816,10 +1954,12 @@ dgo_drawtrees(argc, argv, kind)
  *			C V T _ V L B L O C K _ T O _ S O L I D S
  */
 static void
-dgo_cvt_vlblock_to_solids(vbp, name, copy)
-struct bn_vlblock	*vbp;
-char			*name;
-int			copy;
+dgo_cvt_vlblock_to_solids(dgop, interp, vbp, name, copy)
+     struct dg_obj *dgop;
+     Tcl_Interp *interp;
+     struct bn_vlblock *vbp;
+     char *name;
+     int copy;
 {
 	int		i;
 	char		shortname[32];
@@ -1828,10 +1968,13 @@ int			copy;
 
 	strncpy(shortname, name, 16-6);
 	shortname[16-6] = '\0';
+
+#if 0
 	/* Remove any residue colors from a previous overlay w/same name */
 	av[0] = shortname;
 	av[1] = NULL;
-	dgo_erase(curr_dgop, curr_interp, 1, av);
+	dgo_erase(dgop, interp, 1, av);
+#endif
 
 	for( i=0; i < vbp->nused; i++ )  {
 		if (BU_LIST_IS_EMPTY(&(vbp->head[i])))
@@ -1839,7 +1982,7 @@ int			copy;
 
 		sprintf(namebuf, "%s%lx",
 			shortname, vbp->rgb[i]);
-		dgo_invent_solid(namebuf, &vbp->head[i], vbp->rgb[i], copy);
+		dgo_invent_solid(dgop, interp, namebuf, &vbp->head[i], vbp->rgb[i], copy);
 	}
 }
 
@@ -1853,7 +1996,9 @@ int			copy;
  *  This parallels much of the code in dodraw.c
  */
 int
-dgo_invent_solid(name, vhead, rgb, copy)
+dgo_invent_solid(dgop, interp, name, vhead, rgb, copy)
+     struct dg_obj *dgop;
+     Tcl_Interp *interp;
      char		*name;
      struct bu_list	*vhead;
      long		rgb;
@@ -1864,12 +2009,12 @@ dgo_invent_solid(name, vhead, rgb, copy)
 	register struct dm_list *dmlp;
 	register struct dm_list *save_dmlp;
 
-	if (curr_dbip == DBI_NULL)
+	if (dgop->dgo_wdbop->wdb_wp->dbip == DBI_NULL)
 		return 0;
 
-	if ((dp = db_lookup(curr_dbip, name, LOOKUP_QUIET)) != DIR_NULL) {
+	if ((dp = db_lookup(dgop->dgo_wdbop->wdb_wp->dbip, name, LOOKUP_QUIET)) != DIR_NULL) {
 		if (dp->d_addr != RT_DIR_PHONY_ADDR) {
-			Tcl_AppendResult(curr_interp, "dgo_invent_solid(", name,
+			Tcl_AppendResult(interp, "dgo_invent_solid(", name,
 					 ") would clobber existing database entry, ignored\n", (char *)NULL);
 			return (-1);
 		}
@@ -1878,10 +2023,10 @@ dgo_invent_solid(name, vhead, rgb, copy)
 		 * Name exists from some other overlay,
 		 * zap any associated solids
 		 */
-		dgo_eraseobjall(curr_dgop, curr_interp, dp);
+		dgo_eraseobjall(dgop, interp, dp);
 	}
 	/* Need to enter phony name in directory structure */
-	dp = db_diradd(curr_dbip,  name, RT_DIR_PHONY_ADDR, 0, DIR_SOLID, NULL);
+	dp = db_diradd(dgop->dgo_wdbop->wdb_wp->dbip,  name, RT_DIR_PHONY_ADDR, 0, DIR_SOLID, NULL);
 
 	/* Obtain a fresh solid structure, and fill it in */
 	GET_SOLID(sp,&FreeSolid.l);
@@ -1907,10 +2052,10 @@ dgo_invent_solid(name, vhead, rgb, copy)
 	sp->s_color[1] = sp->s_basecolor[1] = (rgb>> 8) & 0xFF;
 	sp->s_color[2] = sp->s_basecolor[2] = (rgb    ) & 0xFF;
 	sp->s_regionid = 0;
-	sp->s_dlist = BU_LIST_LAST(solid, &curr_hsp->l)->s_dlist + 1;
+	sp->s_dlist = BU_LIST_LAST(solid, &dgop->dgo_headSolid.l)->s_dlist + 1;
 
 	/* Solid successfully drawn, add to linked list of solid structs */
-	BU_LIST_APPEND(curr_hsp->l.back, &sp->l);
+	BU_LIST_APPEND(dgop->dgo_headSolid.l.back, &sp->l);
 
 	return (0);		/* OK */
 }
@@ -2141,7 +2286,7 @@ dgo_eraseobjall(dgop, interp, dp)
 }
 
 static void
-dgo_eraseobj(interp, dgop, dp)
+dgo_eraseobj(dgop, interp, dp)
      struct dg_obj *dgop;
      Tcl_Interp *interp;
      register struct directory *dp;
@@ -2475,11 +2620,6 @@ dgo_run_rt(dgop, vop)
 	dgo_rt_set_eye_model(dgop, vop, eye_model);
 	dgo_rt_write(dgop, vop, fp_in, eye_model);
 	(void)fclose(fp_in);
-
-#if 0
-	FOR_ALL_SOLIDS(sp, &dgop->dgo_headSolid.l)
-		sp->s_iflag = DOWN;
-#endif
 
 	Tcl_CreateFileHandler(pipe_err[0], TCL_READABLE,
 			      dgo_rt_output_handler, (ClientData)pipe_err[0]);
