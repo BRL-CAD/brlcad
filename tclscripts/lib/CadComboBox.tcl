@@ -31,11 +31,14 @@ class CadComboBox {
     # menu stuff
     public method add {args}
     public method delete {args}
+    public method entryconfigure {args}
+    public method index {args}
     public method insert {args}
+    public method type {index}
 
     # entry stuff
-    public method entryget {}
-    public method entryset {val}
+    public method gettext {}
+    public method settext {val}
 
     private variable entrytext ""
 }
@@ -90,14 +93,26 @@ body CadComboBox::delete {args} {
     eval $itk_component(menu) delete $args
 }
 
+body CadComboBox::entryconfigure {args} {
+    eval $itk_component(menu) entryconfigure $args
+}
+
+body CadComboBox::index {args} {
+    eval $itk_component(menu) index $args
+}
+
 body CadComboBox::insert {args} {
     eval $itk_component(menu) insert $args
 }
 
-body CadComboBox::entryget {} {
+body CadComboBox::gettext {} {
     return $entrytext
 }
 
-body CadComboBox::entryset {val} {
+body CadComboBox::settext {val} {
     set entrytext $val
+}
+
+body CadComboBox::type {index} {
+    $itk_component(menu) type $index
 }
