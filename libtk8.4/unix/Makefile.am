@@ -10,3 +10,7 @@ noinst_HEADERS = tkUnixDefault.h tkUnixInt.h tkUnixPort.h
 
 tkdir = ${prefix}/tk8.4
 tk_DATA = tkAppInit.c
+tklibdir = ${libdir}
+tklib_DATA = tkConfig.sh
+EXTRA_DIST = tkConfig.sh.in
+

@@ -72,7 +72,9 @@ dnl 		;;
 dnl esac
 TCL_LIBS='${top_builddir}/libtcl8.4/libtcl8.4.la @DL@ -lm'
 TCL=libtcl8.4
+TCLVER=8.4
 AC_SUBST(TCL)
+AC_SUBST(TCLVER)
 AC_SUBST(TCL_LIBS)
 
 TCL_LIBRARY="$prefix/tcl8.4"
@@ -93,7 +95,8 @@ AC_SUBST(ITCL_VERSION)
 dnl tk
 TK_LIBS='${top_builddir}/libtk8.4/libtk8.4.la ${TCL_LIBS} ${X_LIBS}'
 TK_LIBRARY="$prefix/tk8.4"
-AC_SUBST(TK)
+TKVER="8.4"
+AC_SUBST(TKVER)
 AC_SUBST(TK_LIBS)
 AC_SUBST(TK_LIBRARY)
 
@@ -300,6 +303,7 @@ AC_OUTPUT([
 	libtk8.4/doc/Makefile
 	libtk8.4/generic/Makefile
 	libtk8.4/library/Makefile
+	libtk8.4/library/pkgIndex.tcl
 	libtk8.4/library/demos/Makefile
 	libtk8.4/library/demos/images/Makefile
 	libtk8.4/library/images/Makefile
