@@ -32,9 +32,6 @@ static char RCScut[] = "@(#)$Header$ (BRL)";
 #include "nmg.h"
 #include "./debug.h"
 
-int rt_cutLen;			/* normal limit on number objs per box node */
-int rt_cutDepth;		/* normal limit on depth of cut tree */
-
 HIDDEN int		rt_ck_overlap RT_ARGS((CONST vect_t min,
 					       CONST vect_t max,
 					       CONST struct soltab *stp,
@@ -737,31 +734,31 @@ int			ncpu;
 		if( stp->st_aradius <= 0 )  continue;
 		if( stp->st_aradius >= INFINITY )  {
 			/* Add to infinite solids list for special handling */
-			rt_cut_extend( &rtip->rti_inf_box, stp );
+			rt_cut_extend( &rtip->rti_inf_box, stp, rtip );
 		} else {
-			rt_cut_extend( finp, stp );
+			rt_cut_extend( finp, stp, rtip );
 		}
 	} RT_VISIT_ALL_SOLTABS_END
 
 	/*  Dynamic decisions on tree limits.  Note that there * will be
-	    (2**rt_cutDepth)*rt_cutLen leaf slots, but * solids will typically
+	    (2**rtip->rti_cutdepth)*rtip->rti_cutlen leaf slots, but * solids will typically
 	    span several leaves.  */
 		
-	rt_cutLen = (int)log((double)rtip->nsolids);  /* ln ~= log2 */
-	rt_cutDepth = 2 * rt_cutLen;
-	if( rt_cutLen < 3 )  rt_cutLen = 3;
-	if( rt_cutDepth < 9 )  rt_cutDepth = 9;
-	if( rt_cutDepth > 24 )  rt_cutDepth = 24;     /* !! */
+	rtip->rti_cutlen = (int)log((double)rtip->nsolids);  /* ln ~= log2 */
+	rtip->rti_cutdepth = 2 * rtip->rti_cutlen;
+	if( rtip->rti_cutlen < 3 )  rtip->rti_cutlen = 3;
+	if( rtip->rti_cutdepth < 9 )  rtip->rti_cutdepth = 9;
+	if( rtip->rti_cutdepth > 24 )  rtip->rti_cutdepth = 24;     /* !! */
 	if( rt_g.debug&DEBUG_CUT )
 		bu_log( "Cut: Tree Depth=%d, Leaf Len=%d\n",
-			rt_cutDepth, rt_cutLen );
+			rtip->rti_cutdepth, rtip->rti_cutlen );
 
 	bu_ptbl_init( &rtip->rti_cuts_waiting, rtip->nsolids,
 		      "rti_cuts_waiting ptbl" );
 
 	if( rtip->rti_hasty_prep )  {
 		rtip->rti_space_partition = RT_PART_NUBSPT;
-		rt_cutDepth = 6;
+		rtip->rti_cutdepth = 6;
 	}
 
 	switch( rtip->rti_space_partition ) {
@@ -831,7 +828,7 @@ int			ncpu;
 
 	bu_hist_init( &rtip->rti_hist_cellsize, 0.0, 400.0, 400 );
 	bu_hist_init( &rtip->rti_hist_cutdepth, 0.0,
-		      (fastf_t)rt_cutDepth+1, rt_cutDepth+1 );
+		      (fastf_t)rtip->rti_cutdepth+1, rtip->rti_cutdepth+1 );
 	bzero( rtip->rti_ncut_by_type, sizeof(rtip->rti_ncut_by_type) );
 	rt_ct_measure( rtip, &rtip->rti_CutHead, 0 );
 	rt_ct_measure( rtip, &rtip->rti_inf_box, 0 );
@@ -875,7 +872,7 @@ int			ncpu;
  *			R T _ C T _ A D D
  *  
  *  Add a solid to the cut tree, extending the tree as necessary,
- *  but without being paranoid about obeying the rt_cutLen limits,
+ *  but without being paranoid about obeying the rtip->rti_cutlen limits,
  *  so as to retain O(depth) performance.
  */
 HIDDEN void
@@ -913,23 +910,26 @@ CONST struct rt_i *rtip;
 	/* BOX NODE */
 
 	/* Just add to list at this box node */
-	rt_cut_extend( cutp, stp );
+	rt_cut_extend( cutp, stp, rtip );
 }
 
 /*
  *			R T _ C U T _ E X T E N D
  */
 void
-rt_cut_extend( cutp, stp )
-register union cutter *cutp;
-struct soltab *stp;
+rt_cut_extend( cutp, stp, rtip )
+register union cutter	*cutp;
+struct soltab		*stp;
+CONST struct rt_i	*rtip;
 {
+	RT_CK_RTI(rtip);
+
 	if( cutp->bn.bn_len >= cutp->bn.bn_maxlen )  {
 		/* Need to get more space in list.  */
 		if( cutp->bn.bn_maxlen <= 0 )  {
 			/* Initial allocation */
-			if( rt_cutLen > 6 )
-				cutp->bn.bn_maxlen = rt_cutLen;
+			if( rtip->rti_cutlen > 6 )
+				cutp->bn.bn_maxlen = rtip->rti_cutlen;
 			else
 				cutp->bn.bn_maxlen = 6;
 			cutp->bn.bn_list = (struct soltab **)bu_malloc(
@@ -1282,11 +1282,11 @@ int	depth;
 	 * BOXNODE (leaf)
 	 */
 	if( cutp->bn.bn_len <= 1 )  return;		/* optimal */
-	if( depth > rt_cutDepth )  return;		/* too deep */
+	if( depth > rtip->rti_cutdepth )  return;		/* too deep */
 
-	/* Attempt to subdivide finer than rt_cutLen near treetop */
+	/* Attempt to subdivide finer than rtip->rti_cutlen near treetop */
 	/**** XXX This test can be improved ****/
-	if( depth >= 6 && cutp->bn.bn_len <= rt_cutLen )
+	if( depth >= 6 && cutp->bn.bn_len <= rtip->rti_cutlen )
 		return;				/* Fine enough */
 #if NEW_WAY
  /* New way */

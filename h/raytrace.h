@@ -1428,6 +1428,8 @@ struct rt_i {
 	struct bu_list	rti_solidheads[RT_DBNHASH]; /* active solid lists */
 	struct bu_ptbl	rti_resources;	/* list of 'struct resource'es encountered */
 	double		rti_nu_gfactor;	/* constant in numcells computation */
+	int		rti_cutlen;	/* goal for # solids per boxnode */
+	int		rti_cutdepth;	/* goal for depth of NUBSPT cut tree */
 	/* Experimental stuff for rt_submodel */
 /*	struct soltab	*rti_up;	/_* 'up' ptr for rt_submodel rti's only */
 	char		*rti_treetop;	/* bu_strduped, for rt_submodel rti's only */
@@ -2029,7 +2031,8 @@ BU_EXTERN(void rt_region_color_map, (struct region *regp) );
 BU_EXTERN(void rt_color_addrec, () );
 BU_EXTERN(void rt_color_free, () );
 					/* extend a cut box */
-BU_EXTERN(void rt_cut_extend, (union cutter *cutp, struct soltab *stp) );
+BU_EXTERN(void rt_cut_extend, (union cutter *cutp, struct soltab *stp,
+	CONST struct rt_i *rtip) );
 					/* find RPP of one region */
 BU_EXTERN(int rt_rpp_region, (struct rt_i *rtip, CONST char *reg_name,
 	fastf_t *min_rpp, fastf_t *max_rpp) );
