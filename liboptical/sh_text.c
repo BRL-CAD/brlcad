@@ -317,6 +317,24 @@ register struct region *rp;
 	return(1);
 }
 
+
+static vect_t star_colors[] = {
+	{ 0.825769, 0.415579, 0.125303 },	/* 3000 */
+	{ 0.671567, 0.460987, 0.258868 },
+	{ 0.587580, 0.480149, 0.376395 },
+	{ 0.535104, 0.488881, 0.475879 },
+	{ 0.497639, 0.493881, 0.556825 },
+	{ 0.474349, 0.494836, 0.624460 },
+	{ 0.456978, 0.495116, 0.678378 },
+	{ 0.446728, 0.493157, 0.727269 },	/* 10000 */
+	{ 0.446728, 0.493157, 0.727269 },	/* fake 11000 */
+/***	{ 0.446728, 0.493157, 0.727269 },	/* fake 12000 */
+/***	{ 0.446728, 0.493157, 0.727269 },	/* fake 13000 */
+/***	{ 0.446728, 0.493157, 0.727269 },	/* fake 14000 */
+/***	{ 0.446728, 0.493157, 0.727269 }	/* fake 15000 */
+/***	{ 0.393433 0.488079 0.940423 },	/* 20000 */
+};
+
 /*
  *			S T A R _ R E N D E R
  */
@@ -326,12 +344,13 @@ register struct application *ap;
 register struct partition *pp;
 {
 	/* Probably want to diddle parameters based on what part of sky */
-	if( rand0to1() > 0.95 )  {
-		/* Stars have color.  may overflow 1.0 */
-		VSET( ap->a_color,
-			rand0to1()+0.5,
-			rand0to1()+0.5,
-			rand0to1()+0.5 );
+	if( rand0to1() >= 0.98 )  {
+		register int i;
+		FAST fastf_t f;
+		i = (sizeof(star_colors)-1) / sizeof(star_colors[0]);
+		i = ((double)i) * rand0to1();
+		f = rand0to1();
+		VSCALE( ap->a_color, star_colors[i], f );
 	} else {
 		VSETALL( ap->a_color, 0 );
 	}
