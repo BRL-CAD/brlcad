@@ -758,7 +758,11 @@ do_rc()
 		struct rt_vls	str;
 		rt_vls_init(&str);
 		rt_vls_strcpy( &str, path );
+#ifdef MGED_TCL
+		rt_vls_strcat( &str, "/.tmgedrc" );
+#else
 		rt_vls_strcat( &str, "/.mgedrc" );
+#endif
 		if( (fp = fopen(rt_vls_addr(&str), "r")) != NULL )  {
 			mged_source_file( fp );
 			fclose(fp);
