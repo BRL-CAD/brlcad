@@ -131,5 +131,8 @@ f_concat(clientData, interp, argc, argv)
 		return TCL_ERROR;
 	}
 
+	/* replace dbconcat with concat */
+	argv[0] = "concat";
+
 	return invoke_db_wrapper(interp, argc, argv);
 }
