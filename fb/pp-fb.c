@@ -46,7 +46,12 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include <stdio.h>
 #include "fb.h"
+#ifdef BSD
+#include <strings.h>
+#endif
+#ifdef SYSV
 #include <string.h>
+#endif
 
 FBIO *fbp;
 
