@@ -14,7 +14,7 @@
 
 #define FILES	\
 	init \
-	sh_light sh_plastic
+	sh_light sh_plastic sh_temp
 
 /* Specially compiled versions */
 sh_light.o: ../liboptical/sh_light.c

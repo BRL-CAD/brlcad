@@ -49,8 +49,13 @@ void
 multispectral_shader_init(headp)
 struct mfuncs	**headp;
 {
+	/* Compiled from sources in liboptical */
 	MFUNCS( phg_mfuncs );
 	MFUNCS( light_mfuncs );
+
+	/* multi-spectral-specific routines */
+	MFUNCS( temp_mfuncs );
+
 #if 0
 	{
 		extern struct mfuncs phg_mfuncs[];
