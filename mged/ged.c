@@ -167,7 +167,12 @@ static char *units_str[] = {
 
 struct rt_vls mged_prompt;
 void pr_prompt(), pr_beep();
+
+#ifdef USE_PROTOTYPES
 Tk_FileProc stdin_input;
+#else
+void stdin_input();
+#endif
 
 /* 
  *			M A I N
@@ -410,7 +415,7 @@ pr_prompt()
 void
 pr_beep()
 {
-    rt_log("\a");
+    rt_log("%c", 7);
 }
 
 /*
