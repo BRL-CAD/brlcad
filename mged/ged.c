@@ -177,8 +177,6 @@ char **argv;
 
 	setview( 0, 0, 0 );
 
-	drawreg = 0;		/* no region processing */
-	regmemb = -1;		/* no members to process */
 	no_memory = 0;		/* memory left */
 	es_edflag = -1;		/* no solid editing just now */
 
