@@ -1009,9 +1009,17 @@ register struct faceuse	*fu;
 	/* Remove fumate from src shell */
 	RT_LIST_DEQUEUE( &fumate->l );
 
-	/* Add fu and fumate to dest shell */
-	RT_LIST_APPEND( &dest->fu_hd, &fu->l );
-	RT_LIST_APPEND( &fu->l, &fumate->l );
+	/*
+	 * Add fu and fumate to dest shell,
+	 * preserving implicit OT_SAME, OT_OPPOSITE order
+	 */
+	if( fu->orientation == OT_SAME )  {
+		RT_LIST_APPEND( &dest->fu_hd, &fu->l );
+		RT_LIST_APPEND( &fu->l, &fumate->l );
+	} else {
+		RT_LIST_APPEND( &dest->fu_hd, &fumate->l );
+		RT_LIST_APPEND( &fumate->l, &fu->l );
+	}
 
 	fu->s_p = dest;
 	fumate->s_p = dest;
