@@ -110,7 +110,6 @@
 #	define HAVE_STDLIB_H 1
 #	define HAVE_STDARG_H 1
 #	define HAVE_VARARGS_H 1
-#	define USE_STRING_H 1
 #	define HAVE_DRAND48 1
 #	define HAVE_GETHOSTNAME 1
 #	define HAVE_GETOPT 1
@@ -172,7 +171,7 @@
 #	define HAVE_MEMORY_H	1				/* XXX */
 #endif
 
-#if defined(sun) && !defined(SUNOS)
+#if defined(sun) || defined(SUNOS)
 	/* SunOS 4.X on Sun-3 or Sun-4 */
 #	define HAVE_STDLIB_H	1
 #	define HAVE_UNISTD_H	1
@@ -180,17 +179,12 @@
 #	define HAVE_LIMITS_H	1
 #endif
 
-#if SUNOS >= 52
-#	define HAVE_STDLIB_H	1
-#	define HAVE_UNISTD_H	1
-#	define HAVE_XOSDEFS_H	1
-#	define HAVE_SYS_MMAN_H	1
+#if SUNOS > 55
 #	define HAVE_SBRK_DECL	1
-#endif
-
-#if SUNOS >= 55
 #	define HAVE_GETOPT_DECL	1
 #	define HAVE_MEMORY_H	1
+#	define HAVE_LIMITS_H	1
+#	undef _KERNEL  /* make sure the kernel calls are not used */
 #endif
 
 #if defined(WIN32)
@@ -282,7 +276,6 @@
 #	define HAVE_GETOPT_H	1
 #	define HAVE_XOSDEFS_H	1
 #	define HAVE_STRING_H	1
-#	define USE_STRING_H	1
 #	define HAVE_POSIX_REGEXEC	1
 #	define HAVE_STRCHR	1
 #	define HAVE_VFORK	1
@@ -305,7 +298,7 @@
 
 #if defined(__NetBSD__)
 #	define USE_PROTOTYPES	1
-#	define USE_STRING_H	1
+#	define HAVE_STRING_H	1
 #	define HAVE_STDLIB_H	1
 #	define HAVE_STDARG_H	1
 #	define HAVE_UNISTD_H	1
@@ -487,7 +480,11 @@
 	/* For the duration of <sys/types.h>, set this, to get u_short
 	 * etc, defined properly.
 	 */
-#	define	_KERNEL	1
+        /* This is no longer needed/recommended with the newer sun libs 
+	 */
+#	if SUNOS <= 55
+#		define	_KERNEL	1
+#	endif
 #endif
 
 #ifndef CPP_ONLY
@@ -495,7 +492,9 @@
 #endif
 
 #if SUNOS >= 52
-#	undef	_KERNEL
+#	if SUNOS <= 55
+#		undef	_KERNEL
+#	endif
 #endif
 
 #if !defined(TK_FILE_COUNT) && !defined(TK_FILE_GPTR) && !defined(TK_FILE_READ_PTR) && !defined(TK_READ_DATA_PENDING)
