@@ -450,6 +450,7 @@ do_compsplt()
 	int gr, co, gr1,  co1;
 	fastf_t z;
 	struct compsplt *splt;
+	char name[NAMESIZE+1];
 
 	strncpy( field, &line[8], 8 );
 	gr = atoi( field );
@@ -483,6 +484,7 @@ do_compsplt()
 	splt->ident_to_split = gr * 1000 + co;
 	splt->new_ident = gr1 * 1000 + co1;
 	splt->z = z;
+	make_region_name( name, gr1, co1 );
 }
 
 void
@@ -2208,6 +2210,12 @@ int type;
 	if( pass )
 		return;
 
+	if( type != HOLE && type != WALL )
+	{
+		bu_log( "do_hole_wall: unrecognized type (%d)\n", type );
+		bu_bomb( "do_hole_wall: unrecognized type\n" );
+	}
+
 	/* eliminate trailing blanks */
 	s_len = strlen( line );
 	while( isspace(line[--s_len] ) )
@@ -2226,72 +2234,46 @@ int type;
 	list_start = (struct hole_list *)NULL;
 	list_ptr = (struct hole_list *)NULL;
 	col = 24;
-	if( type == HOLE ) {
-		while( col < s_len )
+
+	while( col < s_len )
+	{
+		strncpy( field , &line[col] , 8 );
+		igrp = atoi( field );
+
+		col += 8;
+		if( col >= s_len )
+			break;
+
+		strncpy( field , &line[col] , 8 );
+		icmp = atoi( field );
+
+		if( igrp >= 0 && icmp > 0 )
 		{
-			strncpy( field , &line[col] , 8 );
-			igrp = atoi( field );
-
-			col += 8;
-			if( col >= s_len )
-				break;
-
-			strncpy( field , &line[col] , 8 );
-			icmp = atoi( field );
-
-			if( igrp >= 0 && icmp > 0 )
+			if( igrp == group && comp == icmp )
+				bu_log( "Hole or wall card references itself (ignoring): (%s)\n", line );
+			else
 			{
-				if( igrp == group && comp == icmp )
-					bu_log( "Hole or wall card references itself (ignoring): (%s)\n", line );
+				if( list_ptr )
+				{
+					list_ptr->next = (struct hole_list *)bu_malloc( sizeof( struct hole_list ) , "do_hole_wall: list_ptr" );
+					list_ptr = list_ptr->next;
+				}
 				else
 				{
-					if( list_ptr )
-					{
-						list_ptr->next = (struct hole_list *)bu_malloc( sizeof( struct hole_list ) , "do_hole_wall: list_ptr" );
-						list_ptr = list_ptr->next;
-					}
-					else
-					{
-						list_ptr = (struct hole_list *)bu_malloc( sizeof( struct hole_list ) , "do_hole_wall: list_ptr" );
-						list_start = list_ptr;
-					}
-				
-					list_ptr->group = igrp;
-					list_ptr->component = icmp;
-					list_ptr->next = (struct hole_list *)NULL;
+					list_ptr = (struct hole_list *)bu_malloc( sizeof( struct hole_list ) , "do_hole_wall: list_ptr" );
+					list_start = list_ptr;
 				}
-			}
-
-			col += 8;
-		}
-
-		Add_holes( type, group , comp , list_start );
-	} else if( type == WALL ) {
-		while( col < s_len ) {
-			strncpy( field , &line[col] , 8 );
-			igrp = atoi( field );
-
-			col += 8;
-			if( col >= s_len )
-				break;
-
-			strncpy( field , &line[col] , 8 );
-			icmp = atoi( field );
-
-			if( igrp >= 0 && icmp > 0 ) {
-				list_ptr = (struct hole_list *)bu_malloc( sizeof( struct hole_list ) , "do_hole_wall: list_ptr" );
-				list_ptr->group = group;
-				list_ptr->component = comp;
+			
+				list_ptr->group = igrp;
+				list_ptr->component = icmp;
 				list_ptr->next = (struct hole_list *)NULL;
-				Add_holes( type, igrp, icmp, list_ptr );
 			}
-
-			col += 8;
 		}
-	} else {
-		bu_log( "do_hole_wall: unrecognized type (%d)\n", type );
-		bu_bomb( "do_hole_wall: unrecognized type\n" );
+
+		col += 8;
 	}
+
+	Add_holes( type, group , comp , list_start );
 }
 
 int
@@ -2845,6 +2827,7 @@ do_hex2()
 
 	if( !pass )
 	{
+		make_region_name( name , group_id , comp_id );
 		if( !getline() )
 		{
 			bu_log( "Unexpected EOF while reading continuation card for CHEX2\n" );
@@ -2913,6 +2896,17 @@ Process_hole_wall()
 			do_hole_wall( WALL );
 		else if( !strncmp( line , "COMPSPLT", 8 ) )
 			do_compsplt();
+		else if( !strncmp( line, "SECTION", 7 ) )
+		{
+			strncpy( field , &line[24] , 8 );
+			mode = atoi( field );
+			if( mode != 1 && mode != 2 )
+			{
+				bu_log( "Illegal mode (%d) for group %d component %d, using volume mode\n",
+					mode, group_id, comp_id );
+				mode = 2;
+			}
+		}
 		else if( !strncmp( line , "ENDDATA" , 7 ) )
 			break;
 
@@ -3296,6 +3290,9 @@ void make_regions()
 			ptr2 = ptr2->nright;
 		}
 
+		if( BU_LIST_IS_EMPTY( &solids.l ) )
+			goto cont1;
+
 		sprintf( solids_name, "solids_%d", ptr1->region_id );
 		if( mk_lcomb( fdout, solids_name, &solids, 0, NULL, NULL, NULL, 0) )
 			bu_log("Failed to make combination of solids (%s)!!!!\n\tRegion %s is in ERROR!!!\n",
@@ -3329,6 +3326,8 @@ void make_regions()
 		if( splt )
 		{
 			vect_t norm;
+			struct name_tree *ptr2;
+			int found;
 
 			/* make a halfspace */
 			VSET( norm, 0.0, 0.0, 1.0 );
@@ -3367,8 +3366,13 @@ void make_regions()
 					bu_log( "make_regions: mk_addmember failed to add %s to %s\n", hole_name, ptr1->name );
 				lptr = lptr->next;
 			}
-			sprintf( reg_name, "comp_%d.r", splt->new_ident );
-			MK_REGION( fdout, &region, reg_name, splt->new_ident )
+			ptr2 = Search_ident( name_root, splt->new_ident, &found );
+			if( found ) {
+				MK_REGION( fdout, &region, ptr2->name, splt->new_ident )
+			} else {
+				sprintf( reg_name, "comp_%d.r", splt->new_ident );
+				MK_REGION( fdout, &region, reg_name, splt->new_ident )
+			}
 		}
 		else
 		{
