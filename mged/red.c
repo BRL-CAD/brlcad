@@ -306,6 +306,10 @@ char *line;
   int node_count=0;
   int j;
 
+  /* sanity */
+  if (line == NULL)
+    return 0;
+
   ptr = strtok(line , delims);
 
   while (!done) {
