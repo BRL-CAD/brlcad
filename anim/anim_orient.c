@@ -44,7 +44,6 @@
 #define AET		2
 #define QUAT		3
 #define MAT		4
-#define TRAN		5
 
 #define DEGREES		0
 #define RADIANS		1
@@ -60,7 +59,7 @@ extern int optind;
 extern char *optarg;
 
 int input_mode, output_mode, length, input_units, output_units;
-int input_perm, output_perm;
+int input_perm, output_perm, input_inv, output_inv;
 
 main(argc,argv)
 int argc;
@@ -97,13 +96,6 @@ char **argv;
 		case QUAT:
 			num_read = scanf("%lf %lf %lf %lf", quat,quat+1,quat+2,quat+3);
 			break;
-		case TRAN:
-			num_read = 0;
-			num_read += scanf("%lf %lf %lf %lf",matrix,matrix+4,matrix+8,matrix+12);
-			num_read += scanf("%lf %lf %lf %lf",matrix+1,matrix+5,matrix+9,matrix+13);
-			num_read += scanf("%lf %lf %lf %lf",matrix+2,matrix+6,matrix+10,matrix+14);
-			num_read += scanf("%lf %lf %lf %lf",matrix+3,matrix+7,matrix+11,matrix+15);
-			break;
 		case MAT:
 			num_read = 0;
 			num_read += scanf("%lf %lf %lf %lf",matrix,matrix+1,matrix+2,matrix+3);
@@ -132,11 +124,17 @@ char **argv;
 			break;
 		}
 
+		if (input_inv){
+			anim_tran(matrix);
+		}
 		if (input_perm){
 			anim_v_unpermute(matrix);
 		}
 		if (output_perm){
 			anim_v_permute(matrix);
+		}
+		if (output_inv){
+			anim_tran(matrix);
 		}
 
 		/* convert from matrix form and print result*/
@@ -170,11 +168,6 @@ char **argv;
 			anim_mat2quat(quat,matrix);
 			printf("%.12g\t%.12g\t%.12g\t%.12g\n",quat[0],quat[1],quat[2],quat[3]);
 			break;
-		case TRAN:
-			mat_trn(tmatrix,matrix);
-			anim_mat_print(tmatrix,0);
-			printf("\n");
-			break;
 		case MAT:
 			anim_mat_print(matrix,0);
 			printf("\n");
@@ -197,6 +190,8 @@ char **argv;
 	output_units = DEGREES;
 	input_perm = 0;
 	output_perm = 0;
+	input_inv = 0;
+	output_inv = 0;
 	length = 4;
 
 	if (argc > 2) { /*read output mode */
@@ -218,8 +213,8 @@ char **argv;
 			case 'm':
 				output_mode = MAT;
 				break;
-			case 't':
-				output_mode = TRAN;
+			case 'i':
+				output_inv = 1;
 				break;
 			case 'r':
 				output_units = RADIANS;
@@ -257,9 +252,8 @@ char **argv;
 				input_mode = MAT;
 				length = 16;
 				break;
-			case 't':
-				input_mode = TRAN;
-				length = 16;
+			case 'i':
+				input_inv = 1;
 				break;
 			case 'r':
 				input_units = RADIANS;
