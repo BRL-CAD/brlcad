@@ -58,17 +58,17 @@ if ![info exists mged_default_comb] {
 
 if ![info exists mged_default_vap] {
     winset nu
-    switch $v_axes {
-	3 {
+    switch $v_axes_pos {
+	1 {
 	    set mged_default_vap "Lower Left"
 	}
-	4 {
+	2 {
 	    set mged_default_vap "Upper Left"
 	}
-	5 {
+	3 {
 	    set mged_default_vap "Upper Right"
 	}
-	6 {
+	4 {
 	    set mged_default_vap "Lower Right"
 	}
 	default {
@@ -76,6 +76,8 @@ if ![info exists mged_default_vap] {
 	}
     }
 }
+
+set do_tearoffs 0
 
 proc openw args {
     global ia_cmd_prefix
@@ -133,6 +135,7 @@ proc openw args {
     global m_axes
     global edit_axes
     global e_axes
+    global do_tearoffs
 
 # set defaults
 set save_id [lindex [cmd_get] 2]
@@ -310,25 +313,25 @@ set save_small_dmc($id) $mged_small_dmc($id)
 frame .$id.m -relief raised -bd 1
 
 menubutton .$id.m.file -text "File" -underline 0 -menu .$id.m.file.m
-menu .$id.m.file.m
+menu .$id.m.file.m -tearoff $do_tearoffs
 .$id.m.file.m add command -label "New..." -underline 0 -command "do_New $id"
 .$id.m.file.m add command -label "Open..." -underline 0 -command "do_Open $id"
 .$id.m.file.m add command -label "Insert..." -underline 0 -command "do_Concat $id"
 .$id.m.file.m add command -label "Extract..." -underline 2 -command "do_Keep $id"
 .$id.m.file.m add separator
-.$id.m.file.m add command -label "Raytrace..." -underline 0 -command "do_Raytrace $id"
+.$id.m.file.m add command -label "Raytrace..." -underline 0 -command "init_Raytrace $id"
 .$id.m.file.m add cascade -label "Save View As" -menu .$id.m.file.m.cm_saveview
 .$id.m.file.m add separator
 .$id.m.file.m add command -label "Close" -underline 0 -command "closew $id"
 .$id.m.file.m add command -label "Exit" -command quit -underline 0
 
-menu .$id.m.file.m.cm_saveview
+menu .$id.m.file.m.cm_saveview -tearoff $do_tearoffs
 .$id.m.file.m.cm_saveview add command -label "RT script" -command "do_rt_script $id"
 .$id.m.file.m.cm_saveview add command -label "Plot" -command "do_plot $id"
-.$id.m.file.m.cm_saveview add command -label "Postscript" -command "do_postscript $id"
+.$id.m.file.m.cm_saveview add command -label "Postscript" -command "init_psTool $id"
 
 menubutton .$id.m.edit -text "Edit" -underline 0 -menu .$id.m.edit.m
-menu .$id.m.edit.m
+menu .$id.m.edit.m -tearoff $do_tearoffs
 .$id.m.edit.m add cascade -label "Add" -menu .$id.m.edit.m.cm_add
 .$id.m.edit.m add command -label "Edit Solid" -underline 5 -command "esolmenu"
 .$id.m.edit.m add command -label "Edit Matrix" -underline 5 -command "press oill"
@@ -336,34 +339,48 @@ menu .$id.m.edit.m
 #.$id.m.edit.m add command -label "Reject" -underline 0 -command "press reject" 
 #.$id.m.edit.m add command -label "Accept" -underline 0 -command "press accept"
 
-menu .$id.m.edit.m.cm_add
+menu .$id.m.edit.m.cm_add -tearoff $do_tearoffs
 .$id.m.edit.m.cm_add add command -label "Solid..." -command "solcreate $id"
-.$id.m.edit.m.cm_add add command -label "Combination..." -command "comb_create $id"
-.$id.m.edit.m.cm_add add command -label "Region..." -command "reg_create $id"
+#.$id.m.edit.m.cm_add add command -label "Combination..." -command "comb_create $id"
+#.$id.m.edit.m.cm_add add command -label "Region..." -command "reg_create $id"
 .$id.m.edit.m.cm_add add command -label "Instance..." -command "icreate $id"
 
 menubutton .$id.m.view -text "View" -underline 0 -menu .$id.m.view.m
-menu .$id.m.view.m
-.$id.m.view.m add command -label "Top" -underline 0 -command "press top"
-.$id.m.view.m add command -label "Bottom" -underline 5 -command "press bottom"
-.$id.m.view.m add command -label "Right" -underline 0 -command "press right"
-.$id.m.view.m add command -label "Left" -underline 0 -command "press left"
-.$id.m.view.m add command -label "Front" -underline 0 -command "press front"
-.$id.m.view.m add command -label "Back" -underline 0 -command "press rear"
-.$id.m.view.m add command -label "az35,el25" -underline 2 -command "press 35,25"
-.$id.m.view.m add command -label "az45,el45" -underline 2 -command "press 45,45"
+menu .$id.m.view.m -tearoff $do_tearoffs
+.$id.m.view.m add command -label "Top" -underline 0\
+	-command "cmd_set $id; press top"
+.$id.m.view.m add command -label "Bottom" -underline 5\
+	-command "cmd_set $id; press bottom"
+.$id.m.view.m add command -label "Right" -underline 0\
+	-command "cmd_set $id; press right"
+.$id.m.view.m add command -label "Left" -underline 0\
+	-command "cmd_set $id; press left"
+.$id.m.view.m add command -label "Front" -underline 0\
+	-command "cmd_set $id; press front"
+.$id.m.view.m add command -label "Back" -underline 0\
+	-command "cmd_set $id; press rear"
+.$id.m.view.m add command -label "az35,el25" -underline 2\
+	-command "cmd_set $id; press 35,25"
+.$id.m.view.m add command -label "az45,el45" -underline 2\
+	-command "cmd_set $id; press 45,45"
 .$id.m.view.m add separator
-.$id.m.view.m add command -label "Zoom In" -underline 5 -command "zoom 2"
-.$id.m.view.m add command -label "Zoom Out" -underline 5 -command "zoom 0.5"
+.$id.m.view.m add command -label "Zoom In" -underline 5\
+	-command "cmd_set $id; zoom 2"
+.$id.m.view.m add command -label "Zoom Out" -underline 5\
+	-command "cmd_set $id; zoom 0.5"
 .$id.m.view.m add separator
-.$id.m.view.m add command -label "Save" -underline 0 -command "press save"
-.$id.m.view.m add command -label "Restore" -underline 1 -command "press restore"
+.$id.m.view.m add command -label "Save" -underline 0\
+	-command "cmd_set $id; press save"
+.$id.m.view.m add command -label "Restore" -underline 1\
+	-command "cmd_set $id; press restore"
 .$id.m.view.m add separator
-.$id.m.view.m add command -label "Reset Viewsize" -underline 6 -command "press reset"
-.$id.m.view.m add command -label "Zero" -underline 0 -command "knob zero"
+.$id.m.view.m add command -label "Reset Viewsize"\
+	-underline 6 -command "cmd_set $id; press reset"
+.$id.m.view.m add command -label "Zero" -underline 0\
+	-command "cmd_set $id; knob zero"
 
 menubutton .$id.m.viewring -text "ViewRing" -underline 4 -menu .$id.m.viewring.m
-menu .$id.m.viewring.m 
+menu .$id.m.viewring.m -tearoff $do_tearoffs
 .$id.m.viewring.m add command -label "Add View" -underline 0 -command "do_add_view $id"
 .$id.m.viewring.m add cascade -label "Select View" -menu .$id.m.viewring.m.cm_select
 .$id.m.viewring.m add cascade -label "Delete View" -menu .$id.m.viewring.m.cm_delete
@@ -371,14 +388,14 @@ menu .$id.m.viewring.m
 .$id.m.viewring.m add command -label "Prev View" -underline 0 -command "do_prev_view $id"
 .$id.m.viewring.m add command -label "Last View" -underline 0 -command "do_toggle_view $id"
 
-menu .$id.m.viewring.m.cm_select
+menu .$id.m.viewring.m.cm_select -tearoff $do_tearoffs
 do_view_ring_entries $id s
 set view_ring($id) 1
-menu .$id.m.viewring.m.cm_delete
+menu .$id.m.viewring.m.cm_delete -tearoff $do_tearoffs
 do_view_ring_entries $id d
 
 menubutton .$id.m.options -text "Options" -underline 0 -menu .$id.m.options.m
-menu .$id.m.options.m
+menu .$id.m.options.m -tearoff $do_tearoffs
 .$id.m.options.m add checkbutton -offvalue 0 -onvalue 1 -variable status_bar($id)\
 	-label "Status Bar" -underline 0 -command "toggle_status_bar $id"
 if {$comb} {
@@ -397,7 +414,7 @@ if {$comb} {
 .$id.m.options.m add cascade -label "Rotate About..." -menu .$id.m.options.m.cm_origin
 .$id.m.options.m add cascade -label "Transform..." -menu .$id.m.options.m.cm_transform
 
-menu .$id.m.options.m.cm_mpane
+menu .$id.m.options.m.cm_mpane -tearoff $do_tearoffs
 .$id.m.options.m.cm_mpane add checkbutton -offvalue 0 -onvalue 1\
 	-variable multi_view($id) -label "Multi Pane" -underline 0\
 	-command "setmv $id"
@@ -413,7 +430,7 @@ menu .$id.m.options.m.cm_mpane
 .$id.m.options.m.cm_mpane add radiobutton -value lv -variable mged_dm_loc($id)\
 	-label "Last Visited" -command "do_last_visited $id"
 
-menu .$id.m.options.m.cm_units
+menu .$id.m.options.m.cm_units -tearoff $do_tearoffs
 .$id.m.options.m.cm_units add radiobutton -value um -variable mged_display(units)\
 	-label "micrometers" -command "do_Units $id"
 .$id.m.options.m.cm_units add radiobutton -value mm -variable mged_display(units)\
@@ -434,7 +451,7 @@ menu .$id.m.options.m.cm_units
 .$id.m.options.m.cm_units add radiobutton -value mi -variable mged_display(units)\
 	-label "miles" -command "do_Units $id"
 
-menu .$id.m.options.m.cm_coord
+menu .$id.m.options.m.cm_coord -tearoff $do_tearoffs
 .$id.m.options.m.cm_coord add radiobutton -value m -variable coord_type($id)\
 	-label "Model" -command "set_coords $id"
 .$id.m.options.m.cm_coord add radiobutton -value v -variable coord_type($id)\
@@ -442,7 +459,7 @@ menu .$id.m.options.m.cm_coord
 .$id.m.options.m.cm_coord add radiobutton -value o -variable coord_type($id)\
 	-label "Object" -command "set_coords $id" -state disabled
 
-#menu .$id.m.options.m.cm_rate_type
+#menu .$id.m.options.m.cm_rate_type -tearoff $do_tearoffs
 #.$id.m.options.m.cm_rate_type add checkbutton -offvalue 0 -onvalue 1\
 #	-variable rateknobs -label "rateknobs"
 #.$id.m.options.m.cm_rate_type add command -label "zero" -command "knob zero"
@@ -453,7 +470,7 @@ menu .$id.m.options.m.cm_coord
 #	-label "Vel Rate" -command "set_rate_type $id"
 #.$id.m.options.m.cm_rate_type add command -label "Set Friction..." -underline 0 -command "set_friction $id"
 
-menu .$id.m.options.m.cm_origin
+menu .$id.m.options.m.cm_origin -tearoff $do_tearoffs
 .$id.m.options.m.cm_origin add radiobutton -value v -variable rotate_about_what($id)\
 	-label "View Center" -command "set_rotate_about $id"
 .$id.m.options.m.cm_origin add radiobutton -value e -variable rotate_about_what($id)\
@@ -463,7 +480,7 @@ menu .$id.m.options.m.cm_origin
 .$id.m.options.m.cm_origin add radiobutton -value k -variable rotate_about_what($id)\
 	-label "Key Point" -command "set_rotate_about $id" -state disabled
 
-menu .$id.m.options.m.cm_transform
+menu .$id.m.options.m.cm_transform -tearoff $do_tearoffs
 .$id.m.options.m.cm_transform add radiobutton -value v -variable transform_what($id)\
 	-label "View" -command "set_transform $id"
 .$id.m.options.m.cm_transform add radiobutton -value a -variable transform_what($id)\
@@ -472,19 +489,20 @@ menu .$id.m.options.m.cm_transform
 	-label "Model Params" -command "set_transform $id" -state disabled
 
 menubutton .$id.m.tools -text "Tools" -menu .$id.m.tools.m
-menu .$id.m.tools.m
+menu .$id.m.tools.m -tearoff $do_tearoffs
 .$id.m.tools.m add cascade -label "Axes" -menu .$id.m.tools.m.cm_axes
 .$id.m.tools.m add cascade -label "View Axes Position" -menu .$id.m.tools.m.cm_vap
+.$id.m.tools.m add separator
 .$id.m.tools.m add checkbutton -offvalue 0 -onvalue 1 -variable buttons_on($id)\
 	-label "Button Menu" -underline 0 -command "toggle_button_menu $id"
 .$id.m.tools.m add checkbutton -offvalue 0 -onvalue 1 -variable adcflag_on($id)\
 	 -label "Angle/Dist Cursor" -underline 0 -command "toggle_adc $id"
-.$id.m.tools.m add checkbutton -offvalue 0 -onvalue 1 -variable sliders_on($id)\
-	-label "Sliders" -underline 0 -command "toggle_sliders $id"
+#.$id.m.tools.m add checkbutton -offvalue 0 -onvalue 1 -variable sliders_on($id)\
+#	-label "Sliders" -underline 0 -command "toggle_sliders $id"
 .$id.m.tools.m add checkbutton -offvalue 0 -onvalue 1 -variable edit_info_on($id)\
 	-label "Edit Info" -underline 0 -command "toggle_edit_info $id"
 
-menu .$id.m.tools.m.cm_axes
+menu .$id.m.tools.m.cm_axes -tearoff $do_tearoffs
 .$id.m.tools.m.cm_axes add checkbutton -offvalue 0 -onvalue 1\
 	-variable view_axes($id) -label "View" -command "set_view_axes $id"
 .$id.m.tools.m.cm_axes add checkbutton -offvalue 0 -onvalue 1\
@@ -492,20 +510,20 @@ menu .$id.m.tools.m.cm_axes
 .$id.m.tools.m.cm_axes add checkbutton -offvalue 0 -onvalue 1\
 	-variable edit_axes($id) -label "Edit" -command "set_edit_axes $id"
 
-menu .$id.m.tools.m.cm_vap
+menu .$id.m.tools.m.cm_vap -tearoff $do_tearoffs
 .$id.m.tools.m.cm_vap add radiobutton -variable view_axes_pos($id)\
-	-label "Center" -command "set_view_axes_pos $id"
+	-label "Center" -command "set_v_axes_pos $id"
 .$id.m.tools.m.cm_vap add radiobutton -variable view_axes_pos($id)\
-	-label "Lower Left" -command "set_view_axes_pos $id"
+	-label "Lower Left" -command "set_v_axes_pos $id"
 .$id.m.tools.m.cm_vap add radiobutton -variable view_axes_pos($id)\
-	-label "Upper Left" -command "set_view_axes_pos $id"
+	-label "Upper Left" -command "set_v_axes_pos $id"
 .$id.m.tools.m.cm_vap add radiobutton -variable view_axes_pos($id)\
-	-label "Upper Right" -command "set_view_axes_pos $id"
+	-label "Upper Right" -command "set_v_axes_pos $id"
 .$id.m.tools.m.cm_vap add radiobutton -variable view_axes_pos($id)\
-	-label "Lower Right" -command "set_view_axes_pos $id"
+	-label "Lower Right" -command "set_v_axes_pos $id"
 
 menubutton .$id.m.help -text "Help" -menu .$id.m.help.m
-menu .$id.m.help.m
+menu .$id.m.help.m -tearoff $do_tearoffs
 .$id.m.help.m add command -label "About" -command "do_About_MGED $id"
 .$id.m.help.m add command -label "On Context" -underline 0\
 	-command "on_context_help $id"
@@ -755,7 +773,7 @@ set_rotate_about $id
 set_coords $id
 set_transform $id
 set_view_axes $id
-set_view_axes_pos $id
+set_v_axes_pos $id
 set_model_axes $id
 set_edit_axes $id
 
@@ -918,10 +936,10 @@ proc jcs { id } {
 	if [winfo exists $mged_top($cid).ur] {
 	    set ow $mged_top($cid).ur
 	} else {
-	    return "jcs me thinks the session is corrupted"
+	    return "jcs: me thinks the session is corrupted"
 	}
 
-	catch { tie $nw $ow }
+	catch { share_view $ow $nw }
 	reconfig_openw $id
     }
 
@@ -944,7 +962,7 @@ proc qcs { id } {
 	return "qcs: unrecognized pathname - $mged_active_dm($id)"
     }
 
-    catch {untie $w}
+    catch {unshare_view $w}
     set mged_collaborators [lreplace $mged_collaborators $i $i]
 }
 
@@ -1464,56 +1482,28 @@ proc set_edit_axes { id } {
     set e_axes $edit_axes($id)
 }
 
-proc set_view_axes_pos { id } {
+proc set_v_axes_pos { id } {
     global mged_active_dm
     global view_axes_pos
+    global v_axes_pos
     global v_axes
 
     winset $mged_active_dm($id)
     switch $view_axes_pos($id) {
-	Center {
-	    if { $v_axes } {
-		set v_axes 2
-	    } else {
-		set v_axes 2
-		set v_axes 0
-	    }
-	}
 	"Lower Left" {
-	    if { $v_axes } {
-		set v_axes 3
-	    } else {
-		set v_axes 3
-		set v_axes 0
-	    }
+	    set v_axes_pos 1
 	}
 	"Upper Left" {
-	    if { $v_axes } {
-		set v_axes 4
-	    } else {
-		set v_axes 4
-		set v_axes 0
-	    }
+	    set v_axes_pos 2
 	}
 	"Upper Right" {
-	    if { $v_axes } {
-		set v_axes 5
-	    } else {
-		set v_axes 5
-		set v_axes 0
-	    }
+	    set v_axes_pos 3
 	}
 	"Lower Right" {
-	    if { $v_axes } {
-		set v_axes 6
-	    } else {
-		set v_axes 6
-		set v_axes 0
-	    }
+	    set v_axes_pos 4
 	}
 	default {
-	    puts "set_view_axes_pos: view_axes_pos($id) has invalid value -\
-		    $view_axes_pos($id)"
+	    set v_axes_pos 0
 	}
     }
 }
@@ -1521,42 +1511,25 @@ proc set_view_axes_pos { id } {
 proc get_view_axes_pos { id } {
     global mged_active_dm
     global view_axes_pos
+    global v_axes_pos
     global v_axes
 
     winset $mged_active_dm($id)
-    set ov_axes $v_axes
-    if {!$ov_axes} {
-	set v_axes 1
-    }
-    switch $v_axes {
-	3 {
-	    if {!$ov_axes} {
-		set v_axes 0
-	    }
+
+    switch $v_axes_pos {
+	1 {
 	    return "Lower Left"
 	}
-	4 {
-	    if {!$ov_axes} {
-		set v_axes 0
-	    }
+	2 {
 	    return "Upper Left"
 	}
-	5 {
-	    if {!$ov_axes} {
-		set v_axes 0
-	    }
+	3 {
 	    return "Upper Right"
 	}
-	6 {
-	    if {!$ov_axes} {
-		set v_axes 0
-	    }
+	4 {
 	    return "Lower Right"
 	}
 	default{
-	    if {!$ov_axes} {
-		set v_axes 0
-	    }
 	    return Center
 	}
     }
