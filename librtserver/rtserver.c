@@ -616,6 +616,7 @@ rts_load_geometry( char *filename, int use_articulation, int num_objs, char **ob
 	/* open the BRL-CAD model */
 	rtip = rt_dirbuild( filename, (char *)NULL, 0 );
 	if( rtip == RTI_NULL ) {
+		bu_log( "rt_dirbuild() failed for file %s\n", filename );
 		return -1;
 	}
 
@@ -1371,7 +1372,9 @@ rts_shutdown()
 	int i;
 	struct db_i *dbip;
 
-	dbip = rts_geometry[0]->rts_rtis[0]->rtrti_rtip->rti_dbip;
+	if( rts_geometry ) {
+		dbip = rts_geometry[0]->rts_rtis[0]->rtrti_rtip->rti_dbip;
+	}
 
 	/* send a shutdown job to each thread */
 	for( i=0 ; i<num_threads ; i++ ) {
@@ -1401,7 +1404,9 @@ rts_shutdown()
 		db_close( dbip );
 	}
 	num_geometries = 0;
-	bu_free( (char *)rts_geometry, "rts_geometry" );
+	if( rts_geometry ) {
+		bu_free( (char *)rts_geometry, "rts_geometry" );
+	}
 	rts_geometry = NULL;
 
 	if( hash_table_exists ) {
@@ -1468,6 +1473,10 @@ rts_shutdown()
 jobject
 build_Java_RayResult( JNIEnv *env, struct rtserver_result *aresult, jobject jstart_pt, jobject jdir, jclass point_class, jclass vect_class )
 {
+	/* XXX these jclass and jmethodID objects should be cached as global statics using
+	   (*env)->NewGlobalRef( env, ray_class )
+	   (*env)->DeleteGlobalRef( env, ray_class )
+	*/
 	jclass ray_class, rayResult_class, partition_class;
 	jmethodID ray_constructor_id, rayResult_constructor_id, point_constructor_id, partition_constructor_id, add_partition_id;
 	jobject jrayResult, jray, jpartition, jinhitPoint, jouthitPoint;
@@ -1871,11 +1880,13 @@ Java_mil_army_arl_muves_rtserver_RtServerImpl_rtsInit(JNIEnv *env, jobject obj, 
 	char **obj_list;
 	int num_objects=(len - 3);
 	jint ret=0;
+	int rts_load_return=0;
 	int i;
 
 	rts_init();
 
 	if( len < 4 ) {
+		bu_log( "wrong number of args\n" );
 		return( (jint) 1 );
 	}
 
@@ -1891,7 +1902,8 @@ Java_mil_army_arl_muves_rtserver_RtServerImpl_rtsInit(JNIEnv *env, jobject obj, 
 	}
 
 	/* load the geometry */
-	if( rts_load_geometry( file_name, 0, num_objects, obj_list ) < 0 ) {
+	if( (rts_load_return=rts_load_geometry( file_name, 0, num_objects, obj_list )) < 0 ) {
+		bu_log( "Failed to load geometry, rts_load_geometry() returned %d\n", rts_load_return );
 		ret = 2;
 	} else {
 		/* get number of queues specified by command line */
