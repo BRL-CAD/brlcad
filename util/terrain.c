@@ -284,7 +284,7 @@ fiord(point_t point, double h, double lacunarity, double octaves, double offset)
 	result = 0.0;
 
 	do {
-		signal = fabs(noise_perlin(pt)) * pow(freq, -h);
+		signal = fabs(bn_noise_perlin(pt)) * pow(freq, -h);
 		result += signal * weight;
 		weight = result;
 		freq *= lacunarity;
@@ -309,7 +309,7 @@ ice(point_t point, double h, double lacunarity, double octaves, double offset)
 	result = 0.0;
 
 	do {
-		signal = fabs(noise_perlin(pt)) * pow(freq, -h);
+		signal = fabs(bn_noise_perlin(pt)) * pow(freq, -h);
 
 		if (signal < lo) {
 			lo = signal;
@@ -344,7 +344,7 @@ lunar2(point_t point, double h, double lacunarity, double octaves, double offset
 	result = 0.0;
 
 	do {
-		signal = fabs(noise_perlin(pt));
+		signal = fabs(bn_noise_perlin(pt));
 		signal *= signal;
 
 		if (signal < lo) {
@@ -384,7 +384,7 @@ land(point_t point, double h, double lacunarity, double octaves, double offset)
 	result = 0.0;
 
 	do {
-		signal = fabs(noise_perlin(pt));
+		signal = fabs(bn_noise_perlin(pt));
 		signal *= weight;
 
 		result += signal * pow(freq, -h);
@@ -417,7 +417,7 @@ lee(point_t point, double h, double lacunarity, double octaves, double offset)
 	result = 0.0;
 
 	do {
-		signal = fabs(noise_perlin(pt));
+		signal = fabs(bn_noise_perlin(pt));
 		signal *=  1.5 * weight;
 
 

@@ -82,7 +82,7 @@ register char **argv;
 	int	i, num;
 	double	mtmp[16];
 
-	mat_idn( rmat );
+	bn_mat_idn( rmat );
 	scale = 1.0;
 
 	while ( (c = getopt( argc, argv, "S:m:vMga:e:x:y:z:X:Y:Z:s:" )) != EOF )  {
@@ -93,36 +93,36 @@ register char **argv;
 			Mflag = 1;		/* don't rebound */
 			break;
 		case 'g':
-			mat_angles( tmp, -90.0, 0.0, -90.0 );
-			mat_copy( m, rmat );
-			mat_mul( rmat, tmp, m );
+			bn_mat_angles( tmp, -90.0, 0.0, -90.0 );
+			bn_mat_copy( m, rmat );
+			bn_mat_mul( rmat, tmp, m );
 			break;
 		case 'a':
-			mat_angles( tmp, 0.0, 0.0, -atof(optarg) );
-			mat_copy( m, rmat );
-			mat_mul( rmat, tmp, m );
+			bn_mat_angles( tmp, 0.0, 0.0, -atof(optarg) );
+			bn_mat_copy( m, rmat );
+			bn_mat_mul( rmat, tmp, m );
 			rpp++;
 			break;
 		case 'e':
-			mat_angles( tmp, 0.0, -atof(optarg), 0.0 );
-			mat_copy( m, rmat );
-			mat_mul( rmat, tmp, m );
+			bn_mat_angles( tmp, 0.0, -atof(optarg), 0.0 );
+			bn_mat_copy( m, rmat );
+			bn_mat_mul( rmat, tmp, m );
 			rpp++;
 			break;
 		case 'x':
-			mat_angles( tmp, atof(optarg), 0.0, 0.0 );
-			mat_copy( m, rmat );
-			mat_mul( rmat, tmp, m );
+			bn_mat_angles( tmp, atof(optarg), 0.0, 0.0 );
+			bn_mat_copy( m, rmat );
+			bn_mat_mul( rmat, tmp, m );
 			break;
 		case 'y':
-			mat_angles( tmp, 0.0, atof(optarg), 0.0 );
-			mat_copy( m, rmat );
-			mat_mul( rmat, tmp, m );
+			bn_mat_angles( tmp, 0.0, atof(optarg), 0.0 );
+			bn_mat_copy( m, rmat );
+			bn_mat_mul( rmat, tmp, m );
 			break;
 		case 'z':
-			mat_angles( tmp, 0.0, 0.0, atof(optarg) );
-			mat_copy( m, rmat );
-			mat_mul( rmat, tmp, m );
+			bn_mat_angles( tmp, 0.0, 0.0, atof(optarg) );
+			bn_mat_copy( m, rmat );
+			bn_mat_mul( rmat, tmp, m );
 			break;
 		case 'm':
 			num = sscanf(&optarg[0], "%lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf", 
@@ -142,22 +142,22 @@ register char **argv;
 			}
 			break;
 		case 'X':
-			mat_idn( tmp );
+			bn_mat_idn( tmp );
 			tmp[MDX] = atof(optarg);
-			mat_copy( m, rmat );
-			mat_mul( rmat, tmp, m );
+			bn_mat_copy( m, rmat );
+			bn_mat_mul( rmat, tmp, m );
 			break;
 		case 'Y':
-			mat_idn( tmp );
+			bn_mat_idn( tmp );
 			tmp[MDY] = atof(optarg);
-			mat_copy( m, rmat );
-			mat_mul( rmat, tmp, m );
+			bn_mat_copy( m, rmat );
+			bn_mat_mul( rmat, tmp, m );
 			break;
 		case 'Z':
-			mat_idn( tmp );
+			bn_mat_idn( tmp );
 			tmp[MDZ] = atof(optarg);
-			mat_copy( m, rmat );
-			mat_mul( rmat, tmp, m );
+			bn_mat_copy( m, rmat );
+			bn_mat_mul( rmat, tmp, m );
 			break;
 		case 's':
 			scale *= atof(optarg);
@@ -169,10 +169,10 @@ register char **argv;
 			 *  seen in the arg list.
 			 */
 			if( !rpp )  {
-				mat_idn( tmp );
+				bn_mat_idn( tmp );
 				tmp[15] = 1/scale;
-				mat_copy( m, rmat );
-				mat_mul( rmat, tmp, m );
+				bn_mat_copy( m, rmat );
+				bn_mat_mul( rmat, tmp, m );
 				scale = 1.0;
 			}
 			break;
@@ -219,7 +219,7 @@ char	**argv;
 	}
 
 	if( verbose )  {
-		mat_print("rmat", rmat);
+		bn_mat_print("rmat", rmat);
 	}
 
 	if( optind < argc ) {
@@ -468,15 +468,15 @@ CONST point_t	min, max;
 		VADD2SCALE( rot_center, min, max, 0.5 );
 
 		/* Create the matrix which encodes this */
-		mat_idn( xlate );
+		bn_mat_idn( xlate );
 		MAT_DELTAS( xlate, -rot_center[X], -rot_center[Y], -rot_center[Z] );
-		mat_idn( resize );
+		bn_mat_idn( resize );
 		resize[15] = 1/scale;
-		mat_mul( t1, resize, xlate );
-		mat_mul( t2, rmat, t1 );
-		mat_copy( rmat, t2 );
+		bn_mat_mul( t1, resize, xlate );
+		bn_mat_mul( t2, rmat, t1 );
+		bn_mat_copy( rmat, t2 );
 		if( verbose )  {
-			mat_print("rmat", rmat);
+			bn_mat_print("rmat", rmat);
 		}
 
 		if( Mflag )  {
@@ -497,7 +497,7 @@ CONST point_t	min, max;
 			/* re-bound the space() rpp with a tighter one
 			 * after rotating & scaling it.
 			 */
-			rt_rotate_bbox( space_min, space_max, rmat, min, max );
+			bn_rotate_bbox( space_min, space_max, rmat, min, max );
 		}
 		space_set = 1;
 	} else {
