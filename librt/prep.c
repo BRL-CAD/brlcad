@@ -79,6 +79,7 @@ register struct rt_i *rtip;
 	 *  Allocate space for a per-solid bit of rtip->nregions length.
 	 */
 	RT_VISIT_ALL_SOLTABS_START( stp, rtip )  {
+		RT_CK_SOLTAB(stp);
 		stp->st_regions = (bitv_t *)rt_calloc(
 			RT_BITV_BITS2WORDS(rtip->nregions),
 			sizeof(bitv_t), "st_regions bitv" );
