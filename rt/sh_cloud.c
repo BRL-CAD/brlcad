@@ -1,5 +1,5 @@
 /*
- *		C L O U D T E X T . C
+ *			C L O U D . C
  *
  * An attempt at 2D Geoffrey Gardner style cloud texture map
  *
@@ -26,6 +26,21 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <math.h>
 #include "../h/machine.h"
 #include "../h/vmath.h"
+#include "../h/raytrace.h"
+#include "material.h"
+
+struct cloud_specific {
+	float	cl_thresh;
+	float	cl_range;
+};
+#define CL_NULL	((struct cloud_specific *)0)
+
+struct matparse cloud_parse[] = {
+	"thresh",	(int)&(CL_NULL->cl_thresh),	"%f",
+	"range",	(int)&(CL_NULL->cl_range),	"%f",
+	(char *)0,	0,				(char *)0
+};
+
 
 #define	PI	3.1415926535898
 #define	TWOPI	6.283185307179
@@ -59,12 +74,12 @@ double angle;
 }
 
 /*
- *	T E X T U R E
+ *			C L O U D _ T E X T U R E
  *
  * Returns the texture value for a plane point
  */
 double
-texture(x,y,Contrast,initFx,initFy)
+cloud_texture(x,y,Contrast,initFx,initFy)
 double x, y;
 float Contrast, initFx, initFy;
 {
@@ -109,21 +124,47 @@ float Contrast, initFx, initFy;
 	return( t1 * t2 / k );
 }
 
+extern cloud_render();
+
+int
+cloud_setup( rp )
+register struct region *rp;
+{
+	register struct cloud_specific *cp;
+
+	GETSTRUCT( cp, cloud_specific );
+	rp->reg_ufunc = cloud_render;
+	rp->reg_udata = (char *)cp;
+
+	cp->cl_thresh = 0.35;
+	cp->cl_range = 0.3;
+	matlib_parse( rp->reg_mater.ma_matparm, cloud_parse, (char *)cp );
+	return(1);
+}
+
+
 /*
- *	S K Y C O L O R
+ *			C L O U D _ R E N D E R
  *
  * Return a sky color with translucency control.
  *  Threshold is the intensity below which it is completely translucent.
  *  Range in the range on intensities over which translucence varies
  *   from 0 to 1.
+ *  thresh=0.35, range=0.3 for decent clouds.
  */
-long
-skycolor( intensity, color, thresh, range )
-double intensity;
-vect_t color;
-double thresh, range;
+cloud_render( ap, pp )
+register struct application *ap;
+register struct partition *pp;
 {
+	register struct cloud_specific *cp =
+		(struct cloud_specific *)pp->pt_regionp->reg_udata;
+	auto fastf_t uv[2];
+	double intensity;
 	FAST fastf_t	TR;
+
+	rt_functab[pp->pt_inseg->seg_stp->st_id].ft_uv(
+		pp->pt_inseg->seg_stp, pp->pt_inhit, uv );
+	intensity = cloud_texture( uv[0], uv[1], 1.0, 2.0, 1.0 );
 
 	/* Intensity is normalized - check bounds */
 	if( intensity > 1.0 )
@@ -132,13 +173,13 @@ double thresh, range;
 		intensity = 0.0;
 
 	/* Compute Translucency Function */
-	TR = 1.0 - ( intensity - thresh ) / range;
+	TR = 1.0 - ( intensity - cp->cl_thresh ) / cp->cl_range;
 	if (TR < 0.0)
 		TR = 0.0;
 	else if (TR > 1.0)
 		TR = 1.0;
 
-	color[0] = ((1-TR) * intensity + (TR * .31));		/* Red */
-	color[1] = ((1-TR) * intensity + (TR * .31));		/* Green */
-	color[2] = ((1-TR) * intensity + (TR * .78));		/* Blue */
+	ap->a_color[0] = ((1-TR) * intensity + (TR * .31));	/* Red */
+	ap->a_color[1] = ((1-TR) * intensity + (TR * .31));	/* Green */
+	ap->a_color[2] = ((1-TR) * intensity + (TR * .78));	/* Blue */
 }

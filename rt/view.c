@@ -42,8 +42,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "../h/raytrace.h"
 #include "../librt/debug.h"
 
-#include "mat_db.h"
-
 char usage[] = "\
 Usage:  rt [options] model.g objects...\n\
 Options:\n\
@@ -91,106 +89,6 @@ extern double AmbientIntensity;
 
 HIDDEN int	rfr_hit(), rfr_miss();
 HIDDEN int	refract();
-
-#define RI_AIR		1.0    /* Refractive index of air.		*/
-#define RI_GLASS	1.3    /* Refractive index of glass.		*/
-
-#ifdef BENCHMARK
-#define rand0to1()	(0.5)
-#define rand_half()	(0)
-#else BENCHMARK
-/*
- *  			R A N D 0 T O 1
- *
- *  Returns a random number in the range 0 to 1
- */
-double rand0to1()
-{
-	FAST fastf_t f;
-	/* On BSD, might want to use random() */
-	/* / (double)0x7FFFFFFFL */
-	f = ((double)rand()) *
-		0.00000000046566128752457969241057508271679984532147;
-	if( f > 1.0 || f < 0 )  {
-		rt_log("rand0to1 out of range\n");
-		return(0.42);
-	}
-	return(f);
-}
-
-/*
- *  			R A N D _ H A L F
- *
- *  Returns a random number in the range -0.5 to +0.5
- */
-#define rand_half()	(rand0to1()-0.5)
-
-#endif BENCHMARK
-
-/*
- *  			I P O W
- *  
- *  Raise a floating point number to an integer power
- */
-double
-ipow( d, cnt )
-double d;
-register int cnt;
-{
-	FAST fastf_t result;
-
-	if( d < 1e-8 )  return(0.0);
-	result = 1;
-	while( cnt-- > 0 )
-		result *= d;
-	return( result );
-}
-
-/* These shadow functions return a boolean "light_visible" */
-light_hit(ap, PartHeadp)
-struct application *ap;
-struct partition *PartHeadp;
-{
-	/* Check to see if we hit the light source */
-	if( PartHeadp->pt_forw->pt_inseg->seg_stp == l0stp )
-		return(1);		/* light_visible = 1 */
-	return(0);			/* light_visible = 0 */
-}
-
-/*
- *  			L I G H T _ M I S S
- *  
- *  If there is no explicit light solid in the model, we will always "miss"
- *  the light, so return light_visible = TRUE.
- */
-/* ARGSUSED */
-light_miss(ap, PartHeadp)
-register struct application *ap;
-struct partition *PartHeadp;
-{
-	return(1);			/* light_visible = 1 */
-}
-
-/* Null function */
-nullf() { ; }
-
-/*
- *			H I T _ N O T H I N G
- *
- *  a_miss() routine called when no part of the model is hit.
- *  Background texture mapping could be done here.
- *  For now, return a pleasant dark blue.
- */
-hit_nothing( ap )
-register struct application *ap;
-{
-	if( lightmodel == 2 )  {
-		VSET( ap->a_color, 0, 0, 0 );
-	}  else  {
-		VSET( ap->a_color, .25, 0, .5 );	/* Background */
-	}
-	return(0);
-}
 
 /*
  *			V I E W I T
@@ -378,18 +276,6 @@ struct partition *PartHeadp;
 {
 	register struct partition *pp = PartHeadp->pt_forw;
 	register struct hit *hitp= pp->pt_inhit;
-	auto struct application sub_ap;
-	auto int light_visible;
-	auto fastf_t	Rd1;
-	auto fastf_t	d_a;		/* ambient diffuse */
-	auto double	cosI1, cosI2;
-	auto fastf_t	f;
-	auto vect_t	work;
-	auto vect_t	reflected;
-	auto vect_t	to_eye;
-	auto vect_t	to_light;
-	auto point_t	mcolor;		/* Material color */
-	Mat_Db_Entry	*entry = &mat_dfl_entry;
 
 	if(rt_g.debug&DEBUG_HITS)  {
 		rt_pr_pt(pp);
@@ -403,17 +289,20 @@ struct partition *PartHeadp;
 		rt_log("colorview: N=(%f,%f,%f)?\n",
 			hitp->hit_normal[X],hitp->hit_normal[Y],hitp->hit_normal[Z]);
 		VSET( ap->a_color, 1, 1, 0 );
-		goto finish;
+		return(1);
 	}
 
 	/* Check to see if eye is "inside" the solid */
 	if( hitp->hit_dist < 0.0 )  {
+		struct application sub_ap;
+		FAST fastf_t f;
+
 		if( rt_g.debug || ap->a_level > MAX_BOUNCE )  {
 			VSET( ap->a_color, 1, 0, 0 );
 			rt_log("colorview:  eye inside %s (x=%d, y=%d, lvl=%d)\n",
 				pp->pt_inseg->seg_stp->st_name,
 				ap->a_x, ap->a_y, ap->a_level);
-			goto finish;
+			return(1);
 		}
 		/* Push on to exit point, and trace on from there */
 		sub_ap = *ap;	/* struct copy */
@@ -422,7 +311,7 @@ struct partition *PartHeadp;
 		VJOIN1(sub_ap.a_ray.r_pt, ap->a_ray.r_pt, f, ap->a_ray.r_dir);
 		(void)rt_shootray( &sub_ap );
 		VSCALE( ap->a_color, sub_ap.a_color, 0.8 );
-		goto finish;
+		return(1);
 	}
 
 	if( rt_g.debug&DEBUG_RAYWRITE )  {
@@ -436,245 +325,25 @@ struct partition *PartHeadp;
 	/* Check to see if we hit something special */
 	{
 		register struct soltab *stp;
-		register char *cp;
-		cp = (stp = pp->pt_inseg->seg_stp)->st_name;
+		stp = pp->pt_inseg->seg_stp;
 		if( stp == l0stp )  {
 			VMOVE( ap->a_color, l0color );
-			goto finish;
-		}
-		/* Clouds "Texture" map */
-		if( *cp == 'C' && strncmp( cp, "CLOUD", 5 )==0 )  {
-			auto fastf_t uv[2];
-			double inten;
-			extern double texture();
-			rt_functab[pp->pt_inseg->seg_stp->st_id].ft_uv(
-				pp->pt_inseg->seg_stp, hitp, uv );
-			inten = texture( uv[0], uv[1], 1.0, 2.0, 1.0 );
-			skycolor( inten, ap->a_color, 0.35, 0.3 );
-			goto finish;
-		}
-		/* "Texture" map from file */
-		if( *cp == 'T' && strncmp( cp, "TEXT", 4 )==0 )  {
-			auto fastf_t uv[2];
-			register unsigned char *cp;
-			extern unsigned char *text_uvget();
-			rt_functab[pp->pt_inseg->seg_stp->st_id].ft_uv(
-				pp->pt_inseg->seg_stp, hitp, uv );
-			cp = text_uvget( 0, uv );	/* tp hack */
-			VSET( mcolor, *cp++/255., *cp++/255., *cp++/255.);
-			goto colorit;
-		}
-		/* Debug map */
-		if( *cp == 'M' && strncmp( cp, "MAP", 3 )==0 )  {
-			auto fastf_t uv[2];
-			rt_functab[pp->pt_inseg->seg_stp->st_id].ft_uv(
-				pp->pt_inseg->seg_stp, hitp, uv );
-			if(rt_g.debug&DEBUG_HITS) rt_log("uv=%f,%f\n", uv[0], uv[1]);
-			VSET( ap->a_color, uv[0], 0, uv[1] );
-			goto finish;
+			return(1);
 		}
 	}
-
-	/* Try to look up material in Moss's database */
-	if( (entry = mat_Get_Db_Entry(pp->pt_regionp->reg_material))==MAT_DB_NULL
-	    || !(entry->mode_flag&MF_USED) )
-		entry = &mat_dfl_entry;
-	else  {
-		VSET( mcolor, entry->df_rgb[0]/255., entry->df_rgb[1]/255., entry->df_rgb[2]/255.);
-		goto colorit;
-	}
-
-	/* Get default color-by-ident for region.			*/
-	{
-		register struct mater *mp;
-		if( pp->pt_regionp == REGION_NULL )  {
-			rt_log("bad region pointer\n");
-			VSET( ap->a_color, 0.7, 0.7, 0.7 );
-			goto finish;
-		}
-		mp = (struct mater *)pp->pt_regionp->reg_materp;
-		VSET( mcolor, mp->mt_r/255., mp->mt_g/255., mp->mt_b/255.);
-	}
-colorit:
 
 	if( pp->pt_inflip )  {
 		VREVERSE( hitp->hit_normal, hitp->hit_normal );
-	}
-	VREVERSE( to_eye, ap->a_ray.r_dir );
-
-	/* Diminish intensity of reflected light the as a function of
-	 * the distance from your eye.
-	 */
-/**	dist_gradient = kCons / (hitp->hit_dist + cCons);  */
-
-	/* Diffuse reflectance from primary light source. */
-	VSUB2( to_light, l0pos, hitp->hit_point );
-	VUNITIZE( to_light );
-	Rd1 = 0;
-	if( (cosI1 = VDOT( hitp->hit_normal, to_light )) > 0.0 )  {
-		if( cosI1 > 1 )  {
-			rt_log("cosI1=%f (x%d,y%d,lvl%d)\n", cosI1,
-				ap->a_x, ap->a_y, ap->a_level);
-			cosI1 = 1;
-		}
-		Rd1 = cosI1 * (1 - AmbientIntensity);
+		pp->pt_inflip = 0;
 	}
 
-	/* Diffuse reflectance from secondary light source (at eye) */
-	d_a = 0;
-	if( (cosI2 = VDOT( hitp->hit_normal, to_eye )) > 0.0 )  {
-		if( cosI2 > 1 )  {
-			rt_log("cosI2=%f (x%d,y%d,lvl%d)\n", cosI2,
-				ap->a_x, ap->a_y, ap->a_level);
-			cosI2 = 1;
-		}
-		d_a = cosI2 * AmbientIntensity;
-	}
-
-	/* Apply secondary (ambient) (white) lighting. */
-	VSCALE( ap->a_color, mcolor, d_a );
-	if( l0stp )  {
-		/* An actual light solid exists */
-		FAST fastf_t f;
-
-		/* Fire ray at light source to check for shadowing */
-		/* This SHOULD actually return an energy value */
-		sub_ap.a_hit = light_hit;
-		sub_ap.a_miss = light_miss;
-		sub_ap.a_onehit = 1;
-		sub_ap.a_level = ap->a_level + 1;
-		sub_ap.a_x = ap->a_x;
-		sub_ap.a_y = ap->a_y;
-		VMOVE( sub_ap.a_ray.r_pt, hitp->hit_point );
-
-		/* Dither light pos for penumbra by +/- 0.5 light radius */
-		f = l0stp->st_aradius * 0.9;
-		sub_ap.a_ray.r_dir[X] =  l0pos[X] + rand_half()*f - hitp->hit_point[X];
-		sub_ap.a_ray.r_dir[Y] =  l0pos[Y] + rand_half()*f - hitp->hit_point[Y];
-		sub_ap.a_ray.r_dir[Z] =  l0pos[Z] + rand_half()*f - hitp->hit_point[Z];
-		VUNITIZE( sub_ap.a_ray.r_dir );
-		light_visible = rt_shootray( &sub_ap );
-	} else {
-		light_visible = 1;
-	}
-	
-	/* If not shadowed add primary lighting. */
-	if( light_visible )  {
-		auto fastf_t specular;
-		auto fastf_t cosS;
-
-		/* Diffuse */
-		VJOIN1( ap->a_color, ap->a_color, Rd1, mcolor );
-
-		/* Calculate specular reflectance.
-		 *	Reflected ray = (2 * cos(i) * Normal) - Incident ray.
-		 * 	Cos(s) = Reflected ray DOT Incident ray.
-		 */
-		cosI1 *= 2;
-		VSCALE( work, hitp->hit_normal, cosI1 );
-		VSUB2( reflected, work, to_light );
-		if( (cosS = VDOT( reflected, to_eye )) > 0 )  {
-			if( cosS > 1 )  {
-				rt_log("cosS=%f (x%d,y%d,lvl%d)\n", cosS,
-					ap->a_x, ap->a_y, ap->a_level);
-				cosS = 1;
-			}
-			specular = entry->wgt_specular *
-				ipow(cosS,(int)entry->shine);
-			VJOIN1( ap->a_color, ap->a_color, specular, l0color );
+	if( !(pp->pt_regionp->reg_ufunc) )  {
+		if( matlib_setup( pp->pt_regionp ) == 0 )  {
+			rt_log("matlib_setup failure");
+			return(0);
 		}
 	}
-
-	if( (entry->transmission <= 0 && entry->transparency <= 0) ||
-	    ap->a_level > MAX_BOUNCE )  {
-		if( rt_g.debug&DEBUG_RAYWRITE )  {
-			register struct soltab *stp;
-			/* Record passing through the solid */
-			stp = pp->pt_outseg->seg_stp;
-			rt_functab[stp->st_id].ft_norm(
-				pp->pt_outhit, stp, &(ap->a_ray) );
-			wray( pp, ap, stdout );
-		}
-		/* Nothing more to do for this ray */
-		goto finish;
-	}
-
-	/* Add in contributions from mirror reflection & transparency */
-	f = 1 - (entry->transmission + entry->transparency);
-	VSCALE( ap->a_color, ap->a_color, f );
-	if( entry->transmission > 0 )  {
-		/* Mirror reflection */
-		sub_ap.a_level = ap->a_level+1;
-		sub_ap.a_hit = colorview;
-		sub_ap.a_miss = hit_nothing;
-		sub_ap.a_onehit = 1;
-		VMOVE( sub_ap.a_ray.r_pt, hitp->hit_point );
-		f = 2 * VDOT( to_eye, hitp->hit_normal );
-		VSCALE( work, hitp->hit_normal, f );
-		/* I have been told this has unit length */
-		VSUB2( sub_ap.a_ray.r_dir, work, to_eye );
-		(void)rt_shootray( &sub_ap );
-		VJOIN1( ap->a_color, ap->a_color,
-			entry->transmission, sub_ap.a_color );
-	}
-	if( entry->transparency > 0 )  {
-		/* Calculate refraction at entrance. */
-		sub_ap.a_level = ap->a_level * 100;	/* flag */
-		sub_ap.a_x = ap->a_x;
-		sub_ap.a_y = ap->a_y;
-		if( !refract(ap->a_ray.r_dir, /* Incident ray (IN) */
-			hitp->hit_normal,
-			RI_AIR, entry->refrac_index,
-			sub_ap.a_ray.r_dir	/* Refracted ray (OUT) */
-		) )  {
-			/* Reflected back outside solid */
-			VMOVE( sub_ap.a_ray.r_pt, hitp->hit_point );
-			goto do_exit;
-		}
-		/* Find new exit point from the inside. */
-		VMOVE( sub_ap.a_ray.r_pt, hitp->hit_point );
-do_inside:
-		sub_ap.a_hit =  rfr_hit;
-		sub_ap.a_miss = rfr_miss;
-		(void) rt_shootray( &sub_ap );
-		/* NOTE: rfr_hit returns EXIT point in sub_ap.a_uvec,
-		 *  and returns EXIT normal in sub_ap.a_color.
-		 */
-		if( rt_g.debug&DEBUG_RAYWRITE )  {
-			wraypts( sub_ap.a_ray.r_pt, sub_ap.a_uvec,
-				ap, stdout );
-		}
-		VMOVE( sub_ap.a_ray.r_pt, sub_ap.a_uvec );
-
-		/* Calculate refraction at exit. */
-		if( !refract( sub_ap.a_ray.r_dir,	/* input direction */
-			sub_ap.a_color,			/* exit normal */
-			entry->refrac_index, RI_AIR,
-			sub_ap.a_ray.r_dir		/* output direction */
-		) )  {
-			/* Reflected internally -- keep going */
-			if( ++sub_ap.a_level > 100+MAX_IREFLECT )  {
-				rt_log("Excessive internal reflection (x%d,y%d, lvl%d)\n",
-					sub_ap.a_x, sub_ap.a_y, sub_ap.a_level );
-				if(rt_g.debug) {
-					VSET( ap->a_color, 0, 1, 0 );	/* green */
-				} else {
-					VSET( ap->a_color, .16, .16, .16 );	/* grey */
-				}
-				goto finish;
-			}
-			goto do_inside;
-		}
-do_exit:
-		sub_ap.a_hit =  colorview;
-		sub_ap.a_miss = hit_nothing;
-		sub_ap.a_level++;
-		(void) rt_shootray( &sub_ap );
-		VJOIN1( ap->a_color, ap->a_color,
-			entry->transparency, sub_ap.a_color );
-	}
-finish:
-	return(1);
+	return( pp->pt_regionp->reg_ufunc( ap, pp ) );
 }
 
 /*
@@ -840,12 +509,6 @@ char *file, *obj;
 			ikwindow( (0)*4, 4063+17 );
 		}
 	}
-
-	/* Moss's material database hooks */
-	if( mat_Open_Db( "mat.db" ) != NULL )  {
-		mat_Asc_Read_Db();
-		mat_Close_Db();
-	}
 }
 
 /*
@@ -856,6 +519,7 @@ char *file, *obj;
 view_2init( ap, outfd )
 register struct application *ap;
 {
+	extern int hit_nothing();
 	vect_t temp;
 
 	pixfd = outfd;
