@@ -172,7 +172,8 @@ struct rt_db_internal  {
 	genptr_t idb_ptr;
 };
 #define RT_DB_INTERNAL_MAGIC	0x0dbbd867
-#define RT_INIT_DB_INTERNAL(_p)	{(_p)->idb_magic = RT_DB_INTERNAL_MAGIC;}
+#define RT_INIT_DB_INTERNAL(_p)	{(_p)->idb_magic = RT_DB_INTERNAL_MAGIC; \
+	(_p)->idb_type = -1; (_p)->idb_ptr = GENPTR_NULL;}
 #define RT_CK_DB_INTERNAL(_p)	RT_CKMAG(_p, RT_DB_INTERNAL_MAGIC, "rt_db_internal")
 
 /*
@@ -1156,15 +1157,9 @@ struct command_tab {
 struct rt_functab {
 	char	*ft_name;
 	int	ft_use_rpp;
-#if defined(RECORD_DEFINED)
 	int	(*ft_prep) RT_ARGS((struct soltab * /*stp*/,
-			union record * /*rec*/,
+			struct rt_db_internal * /*ip*/,
 			struct rt_i * /*rtip*/));
-#else
-	int	(*ft_prep) RT_ARGS((struct soltab * /*stp*/,
-			genptr_t  /*rec*/,
-			struct rt_i * /*rtip*/));
-#endif
 	int 	(*ft_shot) RT_ARGS((struct soltab * /*stp*/,
 			struct xray * /*rp*/,
 			struct application * /*ap*/,
@@ -1182,36 +1177,28 @@ struct rt_functab {
 			struct soltab * /*stp*/));
 	int	(*ft_classify)();
 	void	(*ft_free) RT_ARGS((struct soltab * /*stp*/));
-#if defined(RECORD_DEFINED)
-	int	(*ft_plot) RT_ARGS((union record * /*rec*/,
-			mat_t /*mat*/,
+	int	(*ft_plot) RT_ARGS((
 			struct vlhead * /*vhead*/,
-			struct directory * /*dp*/,
-			double /*abs*/, double /*rel*/, double /*norm*/));
-#else
-	int	(*ft_plot) RT_ARGS((genptr_t /*rec*/,
 			mat_t /*mat*/,
-			struct vlhead * /*vhead*/,
-			struct directory * /*dp*/,
+			struct rt_db_internal * /*ip*/,
 			double /*abs*/, double /*rel*/, double /*norm*/));
-#endif
 	void	(*ft_vshot) RT_ARGS((struct soltab * /*stp*/[],
 			struct xray *[] /*rp*/,
 			struct seg [] /*segp*/, int /*n*/,
 			struct resource * /*resp*/));
-#if defined(RECORD_DEFINED) && defined(MODEL_DEFINED) && defined(NMGREGION_DEFINED)
-	int	(*ft_tessellate) RT_ARGS((struct nmgregion ** /*r*/,
+#if defined(MODEL_DEFINED) && defined(NMGREGION_DEFINED)
+	int	(*ft_tessellate) RT_ARGS((
+			struct nmgregion ** /*r*/,
 			struct model * /*m*/,
-			union record * /*rec*/,
+			struct rt_db_internal * /*ip*/,
 			mat_t /*mat*/,
-			struct directory * /*dp*/,
 			double /*abs*/, double /*rel*/, double /*norm*/));
 #else
-	int	(*ft_tessellate) RT_ARGS((genptr_t * /*r*/,
+	int	(*ft_tessellate) RT_ARGS((
+			genptr_t * /*r*/,
 			genptr_t /*m*/,
-			genptr_t /*rec*/,
+			struct rt_db_internal * /*ip*/,
 			mat_t /*mat*/,
-			struct directory * /*dp*/,
 			double /*abs*/, double /*rel*/, double /*norm*/));
 #endif
 	int	(*ft_import) RT_ARGS((struct rt_db_internal * /*ip*/,
