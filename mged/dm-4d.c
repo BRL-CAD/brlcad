@@ -282,7 +282,8 @@ Ir_configure_window_shape()
 	viewport(0, winx_size, 0, winy_size);
 
 	if( ir_has_zbuf ) establish_zbuffer();
-
+	establish_lighting();
+	
 	if( ir_has_doublebuffer)
 	{
 		/* Clear out image from windows underneath */
@@ -383,6 +384,17 @@ Ir_open()
 	int		win_o_x=272;
 	int		win_o_y=12;
 
+	/* This is a hack to handle the fact that the sgi attach crashes
+	 * if a direct OpenGL context has been previously opened in the 
+	 * current mged session. This stops the attach before it crashes.
+	 */
+	ogl_sgi_used = 1;
+	if (ogl_ogl_used){
+		rt_log("Can't attach sgi, because a direct OpenGL context has\n");
+		rt_log("previously been opened in this session. To use sgi,\n");
+		rt_log("quit this session and reopen it.\n");
+		return(-1);
+	}
 	/*
 	 *  Take inventory of the hardware.
 	 *  See "types for class graphics" in /usr/include/sys/invent.h
@@ -671,6 +683,14 @@ Ir_close()
 	if(cueing_on) depthcue(0);
 
 	lampoff( 0xf );
+
+	/* avoids error messages when reattaching */
+	mmode(MVIEWING);	
+	lmbind(LIGHT2,0);
+	lmbind(LIGHT3,0);
+	lmbind(LIGHT4,0);
+	lmbind(LIGHT5,0);
+
 
 	frontbuffer(1);
 	ir_clear_to_black();
