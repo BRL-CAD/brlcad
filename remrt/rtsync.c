@@ -80,8 +80,6 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 
 #include "./ihost.h"
 
-#define pkg_send_vls(type,vlsp,pkg)	pkg_send( (type), bu_vls_addr((vlsp)), bu_vls_strlen((vlsp))+1, (pkg) )
-
 extern int	pkg_permport;	/* libpkg/pkg_permserver() listen port */
 
 /*
@@ -173,7 +171,10 @@ struct rtnode {
 	struct ihost	*host;
 	int		state;
 	int		ncpus;		/* Ready when > 0, for now */
-	int		busy;
+	int		busy;		/* !0 -> # lines assigned */
+	struct timeval	time_start;
+	fastf_t		time_delta;
+	fastf_t		lps;		/* # scanlines per second */
 	Tcl_File	tcl_file;	/* Tcl's name for this fd */
 };
 #define MAX_NODES	32
@@ -196,7 +197,7 @@ Tk_Window	tkwin;
 CONST char	*database;
 struct bu_vls	treetops;
 
-struct timeval	time_start;
+struct timeval	frame_start;
 
 BU_EXTERN(void dispatcher, (ClientData clientData));
 void	new_rtnode();
@@ -808,7 +809,7 @@ ClientData clientData;
 	if( cpu_count <= 0 )  return;
 
 	/* Record starting time for this frame */
-	(void)gettimeofday( &time_start, (struct timezone *)NULL );
+	(void)gettimeofday( &frame_start, (struct timezone *)NULL );
 
 	/* Keep track of the POV used for this assignment.  For refresh. */
 	if( last_pov )  {
@@ -854,6 +855,7 @@ ClientData clientData;
 		bu_vls_free(&msg);
 		start_line = end_line + 1;
 		rtnodes[i].busy = 1;
+		gettimeofday( &rtnodes[i].time_start );
 	}
 }
 
@@ -1238,8 +1240,10 @@ char			*buf;
 
 		/* Found it */
 		(void)gettimeofday( &time_end, (struct timezone *)NULL );
-		interval = tvdiff( &time_end, &time_start );
+		interval = tvdiff( &time_end, &rtnodes[i].time_start );
 		if( interval <= 0 )  interval = 999;
+		rtnodes[i].lps = rtnodes[i].busy / interval;
+		rtnodes[i].time_delta = interval;
 
 		if( debug )  {
 			bu_log("%s DONE %s (%g ms)\n", stamp(),
@@ -1265,12 +1269,12 @@ check_others:
 
 	/* Compute total time for this frame */
 	(void)gettimeofday( &time_end, (struct timezone *)NULL );
-	interval = tvdiff( &time_end, &time_start );
+	interval = tvdiff( &time_end, &frame_start );
 	if( interval <= 0 )  interval = 999;
-	bu_log("%s Complete in %g sec, %g Kbps (%g fps)\n",
+	bu_log("%s Complete in %5g sec, %4g Mbps (%4g fps)\n",
 		stamp(),
 		interval,
-		width * height * 3 * 8 / interval / 1000.0,
+		width * height * 3 * 8 / interval / 1000000.0,
 		1.0/interval );
 }
 
