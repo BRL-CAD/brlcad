@@ -209,7 +209,7 @@ main( argc, argv )
 int	argc;
 char	**argv;
 {
-	FILE	*fp;
+	FILE	*fp=NULL;
 
 	if( !get_args( argc, argv ) )  {
 		(void)fputs(usage, stderr);
@@ -246,7 +246,6 @@ dofile( fp )
 FILE	*fp;
 {
 	register int	c;
-	int		num;
 
 	while( (c = getc(fp)) != EOF ) {
 		switch( c ) {
