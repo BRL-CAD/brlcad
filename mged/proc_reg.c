@@ -171,6 +171,8 @@ matp_t mat;
 
 	/* get the soltab stuff */
 	BU_GETSTRUCT( eptr->l.stp, soltab );
+	eptr->l.stp->l.magic = RT_SOLTAB_MAGIC;
+	eptr->l.stp->l2.magic = RT_SOLTAB2_MAGIC;
 	eptr->l.stp->st_dp = dp;
 	eptr->l.stp->st_matp = mat;
 
