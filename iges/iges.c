@@ -1569,7 +1569,7 @@ FILE *fp_param;
 
 	VSUB2( u_dir , vg_next->coord , vg->coord );
 	VUNITIZE( u_dir );
-	VCROSS( v_dir , fu->f_p->fg_p->N , u_dir );
+	VCROSS( v_dir , fu->f_p->g.plane_p->N , u_dir );
 	VUNITIZE( v_dir );
 
 	/* find the max and min distances from vg along u_dir and v_dir in the face */
@@ -1820,7 +1820,7 @@ FILE *fp_dir,*fp_param;
 					outer_loop_flag );
 			else
 				rt_vls_printf( &str , "510,%d,%d,%d" ,
-					write_plane_entity( fu->f_p->fg_p->N , fp_dir , fp_param ),
+					write_plane_entity( fu->f_p->g.plane_p->N , fp_dir , fp_param ),
 					loop_count,
 					outer_loop_flag );
 
