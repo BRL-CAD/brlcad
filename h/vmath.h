@@ -337,6 +337,13 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
 			(a)[X] *= _f; (a)[Y] *= _f; (a)[Z] *= _f; }
 #endif /* SHORT_VECTORS */
 
+/* If vector magnitude is too small, return an error code */
+#define VUNITIZE_RET(a,ret)	{ \
+			register double _f; _f = MAGNITUDE(a); \
+			if( _f < VDIVIDE_TOL ) return(ret); \
+			_f = 1.0/_f; \
+			(a)[X] *= _f; (a)[Y] *= _f; (a)[Z] *= _f; }
+
 /*
  *  Find the sum of two points, and scale the result.
  *  Often used to find the midpoint.
@@ -748,6 +755,27 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
 	(a)[Y] = (b)[Y] / (b)[H];\
 	(a)[Z] = (b)[Z] / (b)[H]; }
 #endif /* SHORT_VECTORS */
+
+/*
+ *  Some 2-D versions of the 3-D macros given above.
+ */
+#define VADD2_2D(a,b,c)	{ \
+			(a)[X] = (b)[X] + (c)[X];\
+			(a)[Y] = (b)[Y] + (c)[Y];}
+#define VSUB2_2D(a,b,c)	{ \
+			(a)[X] = (b)[X] - (c)[X];\
+			(a)[Y] = (b)[Y] - (c)[Y];}
+#define MAGSQ_2D(a)	( (a)[X]*(a)[X] + (a)[Y]*(a)[Y] )
+#define VDOT_2D(a,b)	( (a)[X]*(b)[X] + (a)[Y]*(b)[Y] )
+#define VMOVE_2D(a,b)	{ \
+			(a)[X] = (b)[X];\
+			(a)[Y] = (b)[Y];}
+#define VSCALE_2D(a,b,c)	{ \
+			(a)[X] = (b)[X] * (c);\
+			(a)[Y] = (b)[Y] * (c); }
+#define VJOIN1_2D(a,b,c,d) 	{ \
+			(a)[X] = (b)[X] + (c) * (d)[X];\
+			(a)[Y] = (b)[Y] + (c) * (d)[Y]; }
 
 /*
  *  Quaternion math definitions.
