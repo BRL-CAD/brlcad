@@ -3091,6 +3091,60 @@ rt_bot_sort_faces( struct rt_bot_internal *bot, int tris_per_piece )
 	return( 0 );
 }
 
+struct bot_edge {
+  int v;
+  int use_count;
+  struct bot_edge *next;
+};
+
+static void
+delete_edge( int v1, int v2, struct bot_edge **edges )
+{
+	struct bot_edge *edg, *prev=NULL;
+
+	if( v1 < v2 ) {
+		edg = edges[v1];
+		while( edg ) {
+			if( edg->v == v2 ) {
+				edg->use_count--;
+				if( edg->use_count < 1 ) {
+					if( prev ) {
+						prev->next = edg->next;
+					} else {
+						edges[v1] = edg->next;
+					}
+					edg->v = -1;
+					edg->next = NULL;
+					bu_free( (char *)edg, "bot_edge" );
+					return;
+				}
+			}
+			prev = edg;
+			edg = edg->next;
+		}
+	} else {
+		edg = edges[v2];
+		while( edg ) {
+			if( edg->v == v1 ) {
+				edg->use_count--;
+				if( edg->use_count < 1 ) {
+					if( prev ) {
+						prev->next = edg->next;
+					} else {
+						edges[v2] = edg->next;
+					}
+					edg->v = -1;
+					edg->next = NULL;
+					bu_free( (char *)edg, "bot_edge" );
+					return;
+				}
+			}
+			prev = edg;
+			edg = edg->next;
+		}
+	}
+}
+
 /*
  *			D E C I M A T E _ E D G E
  *
@@ -3101,79 +3155,162 @@ rt_bot_sort_faces( struct rt_bot_internal *bot, int tris_per_piece )
  */
 
 static int
-decimate_edge( int v1, int v2, int *faces, int num_faces )
+decimate_edge( int v1, int v2, struct bot_edge **edges, int num_edges, int *faces, int num_faces, int face_del1, int face_del2 )
 {
-	int i, j, k;
-	int count;		/* number of references to v1 or v2 in the current face */
-	int deleted_faces=0;
+	int i;
+	struct bot_edge *edg;
 
-	for( i=0 ; i<num_faces*3 ; i += 3 ) {
-		count = 0;
-		for( j=0 ; j<3 ; j++ ) {
-			k = i+j;
-			if( faces[k] == v2 ) {
-				/* a reference to v2, count it */
-				count++;
-			} else if( faces[k] == v1 ) {
-				/* a reference to v1, count it and change it to v2 */
-				faces[k] = v2;
-				count++;
-			}
-		}
-		if( count > 1 ) {
-			/* eliminate this face */
-			deleted_faces++;
-			for( j=0 ; j<3 ; j++ ) {
-				faces[i+j] = -1;
-			}
-		}
-	}
+	/* first eliminate all the edges of the two deleted faces from the edge list */
+	delete_edge( faces[face_del1*3 + 0], faces[face_del1*3 + 1], edges );
+	delete_edge( faces[face_del1*3 + 1], faces[face_del1*3 + 2], edges );
+	delete_edge( faces[face_del1*3 + 2], faces[face_del1*3 + 0], edges );
+	delete_edge( faces[face_del2*3 + 0], faces[face_del2*3 + 1], edges );
+	delete_edge( faces[face_del2*3 + 1], faces[face_del2*3 + 2], edges );
+	delete_edge( faces[face_del2*3 + 2], faces[face_del2*3 + 0], edges );
 
-	return deleted_faces;
-}
-
-static int
-bot_face_free_edge_count( int face, int *faces, int num_faces )
-{
-	int v[3];
-	int edge_count[3];
-	int i, j, k;
-	int free_edges=0;
-
-	VSETALL( edge_count, 0 );
-	VMOVE( v, &faces[face] );
-
-	for( i=0 ; i<num_faces*3 ; i += 3 ) {
-		int c[3];
-
-		VSETALL( c, 0 );
-
-		if( i == face )
-			continue;
-		for( k=0 ; k<3 ; k++ ) {
-			for( j=0 ; j<3 ; j++ ) {
-				if( faces[i+k] == v[j] ) {
-					c[j]++;
-				}
-			}
-		}
-		if( (c[0] + c[1] + c[2]) < 2 )
-			continue;
-
-		if( c[0] && c[1] )
-			edge_count[0]++;
-		if( c[1] && c[2] )
-			edge_count[1]++;
-		if( c[2] && c[0] )
-			edge_count[2]++;
-	}
-
+	/* do the decimation */
 	for( i=0 ; i<3 ; i++ ) {
-		if( !edge_count[i] )
-			free_edges++;
+		faces[face_del1*3 + i] = -1;
+		faces[face_del2*3 + i] = -1;
+	}
+	for( i=0 ; i<num_faces*3 ; i++ ) {
+		if( faces[i] == v1 ) {
+			faces[i] = v2;
+		}
 	}
 
-	return( free_edges );
+	/* update the edge list */
+	/* now move all the remaining edges at edges[v1] to somewhere else */
+	edg = edges[v1];
+	while( edg ) {
+		struct bot_edge *ptr;
+		struct bot_edge *next;
+
+		next = edg->next;
+
+		if( edg->v < v2 ) {
+			ptr = edges[edg->v];
+			while( ptr ) {
+				if( ptr->v == v2 ) {
+					ptr->use_count++;
+					edg->v = -1;
+					edg->next = NULL;
+					bu_free( (char *)edg, "bot edge" );
+					break;
+				}
+				ptr = ptr->next;
+			}
+			if( !ptr ) {
+				edg->next = edges[edg->v];
+				edges[edg->v] = edg;
+				edg->v = v2;
+			}
+		} else {
+			ptr = edges[v2];
+			while( ptr ) {
+				if( ptr->v == edg->v ) {
+					ptr->use_count++;
+					edg->v = -1;
+					edg->next = NULL;
+					bu_free( (char *)edg, "bot edge" );
+					break;
+				}
+				ptr = ptr->next;
+			}
+			if( !ptr ) {
+				edg->next = edges[v2];
+				edges[v2] = edg;
+			}
+		}
+
+		edg = next;
+	}
+	edges[v1] = NULL;
+
+	/* now change all remaining v1 references to v2 */
+	for( i=0 ; i<num_edges ; i++ ) {
+		struct bot_edge *next, *prev, *ptr;
+
+		prev = NULL;
+		edg = edges[i];
+		/* look at edges starting from vertex #i */
+		while( edg ) {
+			next = edg->next;
+
+			if( edg->v == v1 ) {
+				/* this one is affected */
+				edg->v = v2;	/* change v1 to v2 */
+				if( v2 < i ) {
+					/* disconnect this edge from list #i */
+					if( prev ) {
+						prev->next = next;
+					} else {
+						edges[i] = next;
+					}
+
+					/* this edge must move to the "v2" list */
+					ptr = edges[v2];
+					while( ptr ) {
+						if( ptr->v == i ) {
+							/* found another occurence of this edge
+							 * increment use count
+							 */
+							ptr->use_count++;
+
+							/* delete the original */
+							edg->v = -1;
+							edg->next = NULL;
+							bu_free( (char *)edg, "bot edge" );
+							break;
+						}
+						ptr = ptr->next;
+					}
+					if( !ptr ) {
+						/* did not find another occurence, add to list */
+						edg->next = edges[v2];
+						edges[v2] = edg;
+					}
+					edg = next;
+				} else {
+					/* look for other occurences of this edge in this list
+					 * if found, just increment use count
+					 */
+					ptr = edges[i];
+					while( ptr ) {
+						if( ptr->v == v2 && ptr != edg ) {
+							/* found another occurence */
+							/* increment use count */
+							ptr->use_count++;
+
+							/* disconnect original from list */
+							if( prev ) {
+								prev->next = next;
+							} else {
+								edges[i] = next;
+							}
+
+							/* free it */
+							edg->v = -1;
+							edg->next = NULL;
+							bu_free( (char *)edg, "bot edge" );
+
+							break;
+						}
+						ptr = ptr->next;
+					}
+					if( !ptr ) {
+						prev = edg;
+					}
+					edg = next;
+				}
+			} else {
+				/* unaffected edge, just continue */
+				edg = next;
+			}
+		}
+	}
+
+	return 2;
 }
 
 /*
@@ -3196,16 +3333,19 @@ bot_face_free_edge_count( int face, int *faces, int num_faces )
 static int
 edge_can_be_decimated( struct rt_bot_internal *bot,
 		       int *faces,
+		       struct bot_edge **edges,
 		       int v1,
 		       int v2,
+		       int *face_del1,
+		       int *face_del2,
 		       fastf_t max_chord_error,
 		       fastf_t max_normal_error,
 		       fastf_t min_edge_length_sq )
 {
 	int i, j, k;
 	int num_faces=bot->num_faces;
+	int num_edges=bot->num_vertices;
 	int count, v1_count;
-	int face_del1, face_del2;
 	int affected_count=0;
 	vect_t v01, v02, v12;
 	fastf_t *vertices=bot->vertices;
@@ -3216,8 +3356,8 @@ edge_can_be_decimated( struct rt_bot_internal *bot,
 	}
 
 	/* find faces to be deleted or affected */
-	face_del1 = -1;
-	face_del2 = -1;
+	*face_del1 = -1;
+	*face_del2 = -1;
 	for( i=0 ; i<num_faces*3 ; i += 3 ) {
 		count = 0;
 		v1_count = 0;
@@ -3234,10 +3374,10 @@ edge_can_be_decimated( struct rt_bot_internal *bot,
 		}
 		if( count > 1 ) {
 			/* this face will get deleted */
-			if( face_del1 > -1 ) {
-				face_del2 = i;
+			if( *face_del1 > -1 ) {
+				*face_del2 = i/3;
 			} else {
-				face_del1 = i;
+				*face_del1 = i/3;
 			}
 		} else if( v1_count ) {
 			/* this face will be affected */
@@ -3252,7 +3392,7 @@ edge_can_be_decimated( struct rt_bot_internal *bot,
 	/* if only one face will be deleted, do not decimate
 	 * this may be a free edge
 	 */
-	if( face_del2 < 0 ) {
+	if( *face_del2 < 0 ) {
 	  return 0;
 	}
 
@@ -3263,15 +3403,16 @@ edge_can_be_decimated( struct rt_bot_internal *bot,
 
 	/* for BOTs that are expected to have free edges, do a rigorous check for free edges */
 	if( bot->mode == RT_BOT_PLATE || bot->mode == RT_BOT_SURFACE ) {
-		if( bot_face_free_edge_count( face_del1, faces, bot->num_faces ) ) {
-			return 0;
-		}
-		if( bot_face_free_edge_count( face_del2, faces, bot->num_faces ) ) {
-			return 0;
-		}
-		for( i=0 ; i<affected_count ; i++ ) {
-			if( bot_face_free_edge_count( faces_affected[i], faces, bot->num_faces ) ) {
-				return 0;
+		struct bot_edge *edg;
+
+		/* check if vertex v1 is on a free edge */
+		for( i=0 ; i<num_edges ; i++ ) {
+			edg = edges[i];
+			while( edg ) {
+				if( (i == v1 || edg->v == v1) && edg->use_count < 2 ) {
+					return 0;
+				}
+				edg = edg->next;
 			}
 		}
 	}
@@ -3343,11 +3484,6 @@ edge_can_be_decimated( struct rt_bot_internal *bot,
 	return 1;
 }
 
-struct bot_edge {
-  int v;
-  struct bot_edge *next;
-};
-
 
 /*
  *				R T _ B O T _ D E C I M A T E
@@ -3355,6 +3491,13 @@ struct bot_edge {
  *	routine to reduce the number of triangles in a BOT by edges decimation
  *		max_chord_error is the maximum error distance allowed
  *		max_normal_error is the maximum change in surface normal allowed
+ *
+ *	This and associated routines maintain a list of edges and their "use counts"
+ *	A "free edge" is one with a use count of 1, most edges have a use count of 2
+ *	When a use count reaches zero, the edge is removed from the list.
+ *	The list is used to direct the edge decimation process and to avoid deforming the shape
+ *	of a non-volume enclosing BOT by keeping track of use counts (and thereby free edges)
+ *	If a free edge would be moved, that deciamtion is not performed.
  */
 int
 rt_bot_decimate( struct rt_bot_internal *bot,	/* BOT to be decimated */
@@ -3372,6 +3515,7 @@ rt_bot_decimate( struct rt_bot_internal *bot,	/* BOT to be decimated */
 	int deleted;
 	int v1, v2;
 	int i, j;
+	int done;
 
 	RT_BOT_CK_MAGIC( bot );
 
@@ -3432,45 +3576,69 @@ rt_bot_decimate( struct rt_bot_internal *bot,	/* BOT to be decimated */
 	    /* store this edge in the appropiate list */
 	    ptr = edges[v1];
 	    if( !ptr ) {
-	      ptr = bu_malloc( sizeof( struct bot_edge ), "edges[v1]" );
+	      ptr = bu_calloc( 1, sizeof( struct bot_edge ), "edges[v1]" );
 	      edges[v1] = ptr;
 	    } else {
 	      while( ptr->next && ptr->v != v2 ) ptr = ptr->next;
 	      if( ptr->v == v2 ) {
+		ptr->use_count++;
 		continue;
 	      }
-	      ptr->next = bu_malloc( sizeof( struct bot_edge ), "ptr->next" );
+	      ptr->next = bu_calloc( 1, sizeof( struct bot_edge ), "ptr->next" );
 	      ptr = ptr->next;
 	    }
 	    edge_count++;
 	    ptr->v = v2;
+	    ptr->use_count++;
 	    ptr->next = NULL;
 	  }
 	}
 
-	/* visit each edge */
-	for( i=0 ; i<bot->num_vertices ; i++ ) {
-	  struct bot_edge *ptr;
+	/* the decimation loop */
+	done = 0;
+	while( !done ) {
+		done = 1;
 
-	  ptr = edges[i];
-	  while( ptr ) {
+		/* visit each edge */
+		for( i=0 ; i<bot->num_vertices ; i++ ) {
+			struct bot_edge *ptr;
+			int face_del1, face_del2;
 
-	    /* try to avoid making 2D objects */
-	    if( face_count < 5 )
-	      break;
+			ptr = edges[i];
+			while( ptr ) {
 
-	    /* check if this edge can be eliminated (try both directions) */
-	    if( edge_can_be_decimated( bot, faces, i, ptr->v,
-				       max_chord_error, max_normal_error, min_edge_length_sq )) {
-	      face_count -= decimate_edge( i, ptr->v, faces, bot->num_faces );
-	      edges_deleted++;
-	    } else if( edge_can_be_decimated( bot, faces, ptr->v, i,
-				       max_chord_error, max_normal_error, min_edge_length_sq )) {
-	      face_count -= decimate_edge( ptr->v, i, faces, bot->num_faces );
-	      edges_deleted++;
-	    }
-	    ptr = ptr->next;
-	  }
+				/* try to avoid making 2D objects */
+				if( face_count < 5 )
+					break;
+
+				/* check if this edge can be eliminated (try both directions) */
+				if( edge_can_be_decimated( bot, faces, edges, i, ptr->v,
+							   &face_del1, &face_del2,
+							   max_chord_error,
+							   max_normal_error,
+							   min_edge_length_sq )) {
+					face_count -= decimate_edge( i, ptr->v, edges, bot->num_vertices,
+								     faces, bot->num_faces,
+								     face_del1, face_del2 );
+					edges_deleted++;
+					done = 0;
+					break;
+				} else if( edge_can_be_decimated( bot, faces, edges, ptr->v, i,
+								  &face_del1, &face_del2,
+								  max_chord_error,
+								  max_normal_error,
+								  min_edge_length_sq )) {
+					face_count -= decimate_edge( ptr->v, i, edges, bot->num_vertices,
+								     faces, bot->num_faces,
+								     face_del1, face_del2 );
+					edges_deleted++;
+					done = 0;
+					break;
+				} else {
+					ptr = ptr->next;
+				}
+			}
+		}
 	}
 
 	/* free some memory */
