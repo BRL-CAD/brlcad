@@ -898,9 +898,10 @@ rt_db_cvt_to_external5(
  *  and write it into the database.
  *
  *  Applications and middleware shouldn't call this directly, they
- *  should use the generic interface "rt_db_get_internal()".
+ *  should use the version-generic interface "rt_db_put_internal()".
  *
  *  The internal representation is always freed.
+ *  (Not the pointer, just the contents).
  *
  *  Returns -
  *	<0	error
@@ -923,21 +924,35 @@ struct rt_db_internal	*ip;
 	if( rt_db_cvt_to_external5( &ext, dp->d_namep, ip, 1.0, dbip ) < 0 )  {
 		bu_log("rt_db_put_internal5(%s):  export failure\n",
 			dp->d_namep);
-		bu_free_external( &ext );
-		rt_db_free_internal( ip );
-		return -1;		/* FAIL */
+		goto fail;
 	}
 	BU_CK_EXTERNAL( &ext );
 
-	if( db_put_external( &ext, dp, dbip ) < 0 )  {
-		bu_free_external( &ext );
-		rt_db_free_internal( ip );
-		return -2;		/* FAIL */
+	if( ext.ext_nbytes != dp->d_len || dp->d_addr == -1L )  {
+		if( db5_realloc( dbip, dp, &ext ) < 0 )  {
+			bu_log("rt_db_put_internal5(%s) db_realloc5() failed\n", dp->d_namep);
+			goto fail;
+		}
+	}
+	BU_ASSERT_LONG( ext.ext_nbytes, ==, dp->d_len );
+
+	if( dp->d_flags & RT_DIR_INMEM )  {
+		bcopy( (char *)ext.ext_buf, dp->d_un.ptr, ext.ext_nbytes );
+		goto ok;
 	}
 
+	if( db_write( dbip, (char *)ext.ext_buf, ext.ext_nbytes, dp->d_addr ) < 0 )  {
+		goto fail;
+	}
+ok:
 	bu_free_external( &ext );
 	rt_db_free_internal( ip );
 	return 0;			/* OK */
+
+fail:
+	bu_free_external( &ext );
+	rt_db_free_internal( ip );
+	return -2;		/* FAIL */
 }
 
 /*
