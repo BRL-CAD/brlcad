@@ -35,6 +35,8 @@ extern FILE	*infp;
 
 extern char name_it[16];		/* argv[3] */
 
+void	namecvt();
+
 /*
  *			G E T L I N E
  */
@@ -102,6 +104,7 @@ int	len;
 }
 
 /*		N A M E C V T	 */
+void
 namecvt( n, cp, c )
 register char *cp;
 register int n;

@@ -58,6 +58,7 @@ int	reg_total;
 
 extern void	getid();
 
+void		col_pr();
 
 static char usage[] = "\
 Usage: comgeom-g [options] input_file output_file\n\
@@ -334,6 +335,7 @@ char **argv;
 /*
  *			C O L _ P R
  */
+void
 col_pr( str )
 char	*str;
 {

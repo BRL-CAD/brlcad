@@ -49,6 +49,9 @@ extern int	sol_total, sol_work;
 
 char	scard[132];			/* Solid card buffer area */
 
+void	trim_trail_spaces();
+void	eat();
+
 /*
  *			G E T S O L D A T A
  *
@@ -158,6 +161,7 @@ int	solid_num;
 /*
  *			T R I M _ T R A I L _ S P A C E S
  */
+void
 trim_trail_spaces( cp )
 register char	*cp;
 {
@@ -971,6 +975,7 @@ next_k:				;
  *
  *  Eat the indicated number of input lines
  */
+void
 eat( count )
 int	count;
 {
