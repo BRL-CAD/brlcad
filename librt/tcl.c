@@ -109,6 +109,10 @@ struct rt_solid_type_lookup {
 	{ 0, 0, 0, 0 }
 };
 
+/*
+ *		R T _ G E T _ P A R S E T A B _ B Y _ I D
+ */
+
 struct rt_solid_type_lookup *
 rt_get_parsetab_by_id( s_id )
 int s_id;
@@ -123,20 +127,19 @@ int s_id;
 	return NULL;
 }
 
+/*
+ *		R T _ G E T _ P A R S E T A B _ B Y _ N A M E
+ */
+
 struct rt_solid_type_lookup *
 rt_get_parsetab_by_name( s_type )
 char *s_type;
 {
 	register int				i;
 	register struct rt_solid_type_lookup   *stlp;
-	char				       type[16];
-
-	for( i = 0; s_type[i] != 0 && i < 16; i++ )
-		type[i] = isupper(s_type[i]) ? tolower(s_type[i]) : s_type[i];
-	type[i] = 0;
 
 	for( stlp = rt_solid_type_lookup; stlp->id != 0; stlp++ )
-		if( strcmp(type, stlp->label) == 0 )
+		if( strcmp(s_type, stlp->label) == 0 )
 			return stlp;
 
 	return NULL;
@@ -145,6 +148,7 @@ char *s_type;
 /*
  *			B U _ B A D M A G I C _ T C L
  */
+
 void
 bu_badmagic_tcl( interp, ptr, magic, str, file, line )
 Tcl_Interp	*interp;
@@ -542,9 +546,7 @@ db_tcl_tree_describe( dsp, tp )
 Tcl_DString		*dsp;
 union tree		*tp;
 {
-	Tcl_DStringStartSublist( dsp );
-	
-	if( !tp ) goto done; /* empty list */
+	if( !tp ) return;
 
 	RT_CK_TREE(tp);
 	switch( tp->tr_op ) {
@@ -556,7 +558,7 @@ union tree		*tp;
 		bn_encode_mat( &vls, tp->tr_l.tl_mat );
 		Tcl_DStringAppendElement( dsp, bu_vls_addr(&vls) );
 		bu_vls_free( &vls );
-		goto done; }
+		break; }
 
 		/* This node is known to be a binary op */
 	case OP_UNION:
@@ -571,9 +573,15 @@ union tree		*tp;
 	case OP_XOR:
 		Tcl_DStringAppendElement( dsp, "^" );
 	bin:
+		Tcl_DStringStartSublist( dsp );
 		db_tcl_tree_describe( dsp, tp->tr_b.tb_left );
+		Tcl_DStringEndSublist( dsp );
+
+		Tcl_DStringStartSublist( dsp );
 		db_tcl_tree_describe( dsp, tp->tr_b.tb_right );
-		goto done;
+		Tcl_DStringEndSublist( dsp );
+
+		break;
 
 		/* This node is known to be a unary op */
 	case OP_NOT:
@@ -585,33 +593,25 @@ union tree		*tp;
 	case OP_XNOP:
 		Tcl_DStringAppendElement( dsp, "X" );
 	unary:
+		Tcl_DStringStartSublist( dsp );
 		db_tcl_tree_describe( dsp, tp->tr_b.tb_left );
-		goto done;
+		Tcl_DStringEndSublist( dsp );
+		break;
 			
 	case OP_NOP:
 		Tcl_DStringAppendElement( dsp, "N" );
-		goto done;
+		break;
 
 	default:
 		bu_log("db_tcl_tree_describe: bad op %d\n", tp->tr_op);
 		bu_bomb("db_tcl_tree_describe\n");
 	}
-
- done:
-	Tcl_DStringEndSublist( dsp );
-
 }
 
 /*
  *		D B _ T C L _ C O M B _ D E S C R I B E
  *
  * Sets the interp->result string to a description of the given combination.
- * If the combination is a region, the result is of the form
- *   region id %d air %d los %d GIFTmater %d rgb invalid|{%d %d %d} \
- *          shader %s material %s inherit yes|no tree %t
- * where %t is of the form produced by db_tcl_tree_describe.
- * If the combination is not a region, the result is of the form
- *   comb rgb invalid|{%d %d %d} shader %s material %s inherit yes|no tree %t
  */
 
 int
@@ -620,9 +620,9 @@ Tcl_Interp		*interp;
 struct rt_comb_internal *comb;
 CONST char		*item;
 {
+	char buf[128];
 	Tcl_DString	ds;
-	char		buf[128];
-
+	
 	if( !comb ) {
 		Tcl_AppendResult( interp, "error: null combination",
 				  (char *)NULL );
@@ -630,12 +630,13 @@ CONST char		*item;
 	}
 
 	if( item==0 ) {
+		/* Print out the whole combination. */
 		Tcl_DStringInit( &ds );
-		
-		if( !comb->region_flag )
-			Tcl_DStringAppendElement( &ds, "comb" );
-		else {
-			Tcl_DStringAppendElement( &ds, "region" );
+
+		Tcl_DStringAppendElement( &ds, "comb" );
+		Tcl_DStringAppendElement( &ds, "region" );
+		if( comb->region_flag ) {
+			Tcl_DStringAppendElement( &ds, "yes" );
 			Tcl_DStringAppendElement( &ds, "id" );
 			sprintf( buf, "%d", comb->region_id );
 			Tcl_DStringAppendElement( &ds, buf );
@@ -648,8 +649,10 @@ CONST char		*item;
 			Tcl_DStringAppendElement( &ds, "GIFTmater" );
 			sprintf( buf, "%d", comb->GIFTmater );
 			Tcl_DStringAppendElement( &ds, buf );
+		} else {
+			Tcl_DStringAppendElement( &ds, "no" );
 		}
-
+		
 		Tcl_DStringAppendElement( &ds, "rgb" );
 		if( comb->rgb_valid ) {
 			sprintf( buf, "%d %d %d", V3ARGS(comb->rgb) );
@@ -658,29 +661,36 @@ CONST char		*item;
 			Tcl_DStringAppendElement( &ds, "invalid" );
 
 		Tcl_DStringAppendElement( &ds, "shader" );
-		Tcl_DStringAppendElement( &ds, rt_vls_addr(&comb->shader) );
+		Tcl_DStringAppendElement( &ds, bu_vls_addr(&comb->shader) );
 		Tcl_DStringAppendElement( &ds, "material" );
-		Tcl_DStringAppendElement( &ds, rt_vls_addr(&comb->material) );
+		Tcl_DStringAppendElement( &ds, bu_vls_addr(&comb->material) );
 
-		Tcl_DStringAppendElement( &ds, "inherit" );
-		Tcl_DStringAppendElement( &ds, comb->inherit ? "yes" : "no" );
+		if( comb->inherit )
+			Tcl_DStringAppendElement( &ds, "inherit" );
 
 		Tcl_DStringAppendElement( &ds, "tree" );
+		Tcl_DStringStartSublist( &ds );
 		db_tcl_tree_describe( &ds, comb->tree );
+		Tcl_DStringEndSublist( &ds );
 
 		Tcl_DStringResult( interp, &ds );
 		Tcl_DStringFree( &ds );
-	} else {
-		register int i;
-		char itemlwr[16];
-		char buf[128];
 
-		for( i = 0; i < 16 && item[i]; i++ ) {
+		return TCL_OK;
+	} else {
+		/* Print out only the requested item. */
+		register int i;
+		char itemlwr[128];
+
+		for( i = 0; i < 128 && item[i]; i++ ) {
 			itemlwr[i] = (isupper(item[i]) ? tolower(item[i]) :
 				      item[i]);
 		}
+		itemlwr[i] = 0;
 
-		if( strcmp(itemlwr, "id")==0 ) {
+		if( strcmp(itemlwr, "region")==0 ) {
+			strcpy( buf, comb->region_flag ? "yes" : "no" );
+		} else if( strcmp(itemlwr, "id")==0 ) {
 			if( !comb->region_flag ) goto not_region;
 			sprintf( buf, "%d", comb->region_id );
 		} else if( strcmp(itemlwr, "air")==0 ) {
@@ -689,7 +699,7 @@ CONST char		*item;
 		} else if( strcmp(itemlwr, "los")==0 ) {
 			if( !comb->region_flag ) goto not_region;
 			sprintf( buf, "%d", comb->los );
-		} else if( strcmp(itemlwr, "GIFTmater")==0 ) {
+		} else if( strcmp(itemlwr, "giftmater")==0 ) {
 			if( !comb->region_flag ) goto not_region;
 			sprintf( buf, "%d", comb->GIFTmater );
 		} else if( strcmp(itemlwr, "rgb")==0 ) {
@@ -698,11 +708,11 @@ CONST char		*item;
 			else
 				strcpy( buf, "invalid" );
 		} else if( strcmp(itemlwr, "shader")==0 ) {
-			Tcl_AppendResult( interp, rt_vls_addr(&comb->shader),
+			Tcl_AppendResult( interp, bu_vls_addr(&comb->shader),
 					  (char *)NULL );
 			return TCL_OK;
 		} else if( strcmp(itemlwr, "material")==0 ) {
-			Tcl_AppendResult( interp, rt_vls_addr(&comb->material),
+			Tcl_AppendResult( interp, bu_vls_addr(&comb->material),
 					  (char *)NULL );
 			return TCL_OK;
 		} else if( strcmp(itemlwr, "inherit")==0 ) {
@@ -713,6 +723,10 @@ CONST char		*item;
 			Tcl_DStringResult( interp, &ds );
 			Tcl_DStringFree( &ds );
 			return TCL_OK;
+		} else {
+			Tcl_AppendResult( interp, "no such attribute",
+					  (char *)NULL );
+			return TCL_ERROR;
 		}
 
 		Tcl_AppendResult( interp, buf, (char *)NULL );
@@ -789,11 +803,11 @@ char	      **argv;
 	register struct rt_solid_type_lookup   *stlp;
 	int			id, status;
 	struct rt_db_internal	intern;
-	struct bu_vls		str;
-	mat_t			idn;
 	char			objecttype;
 	char		       *objname;
 	struct rt_wdb	       *wdb = (struct rt_wdb *)clientData;
+	Tcl_DString		ds;
+	struct bu_vls		str;
 
 	if( argc < 2 || argc > 3) {
 		Tcl_AppendResult( interp,
@@ -802,10 +816,14 @@ char	      **argv;
 		return TCL_ERROR;
 	}
 
-	bu_vls_init( &str );
-
-	/* XXX Verify that this wdb supports lookup operations
-	       (non-null dbip) */
+	/* Verify that this wdb supports lookup operations
+	   (non-null dbip) */
+	if( wdb->dbip==0 ) {
+		Tcl_AppendResult( interp,
+				  "db does not support lookup operations",
+				  (char *)NULL );
+		return TCL_ERROR;
+	}
 
 	dp = db_lookup( wdb->dbip, argv[1], LOOKUP_QUIET );
 	if( dp == NULL ) {
@@ -824,59 +842,57 @@ char	      **argv;
 
        /* Find out what type of object we are dealing with and report on it. */
 	id = intern.idb_type;
-	stlp = rt_get_parsetab_by_id( id );
-	if( stlp != NULL ) {
-		bu_vls_strcat( &str, stlp->label );
-		sp = stlp->parsetab;
-		if( argc == 2 ) while( sp->sp_name != NULL ) {
-			bu_vls_printf( &str, " %s ", sp->sp_name );
-			if( sp->sp_count > 1 ) {
-				bu_vls_putc( &str, '{' );
-				bu_vls_struct_item( &str, sp,
-						 (char *)intern.idb_ptr, ' ' );
-				bu_vls_putc( &str, '}' );
-			} else {
-				bu_vls_struct_item( &str, sp,
-						 (char *)intern.idb_ptr, ' ' );
-			}
-			++sp;
-		} else {
-			bu_vls_trunc( &str, 0 );
-			if( bu_vls_struct_item_named( &str, sp, argv[2],
-					 (char *)intern.idb_ptr, ' ') < 0 ) {
-				Tcl_AppendResult( interp, "no such attribute",
-						  (char *)NULL );
-				rt_functab[id].ft_ifree( &intern );
-				goto error;
-			}
-		}
-	} else {
-		if( id == ID_COMBINATION ) {
-			bu_vls_free( &str );
-			(void)db_tcl_comb_describe( interp,
-		          (struct rt_comb_internal *)intern.idb_ptr, argv[2] );
-			rt_functab[id].ft_ifree( &intern );
+	switch( id ) {
+	case ID_COMBINATION:
+		status = db_tcl_comb_describe( interp,
+			       (struct rt_comb_internal *)intern.idb_ptr,
+					       argv[2] );
+		break;
+	default:
+		if( (stlp=rt_get_parsetab_by_id(id)) == NULL ) {
+			Tcl_AppendResult( interp,
+ "invalid {an output routine for this data type has not yet been implemented}",
+				  (char *)NULL );
 			return TCL_OK;
 		}
+
+		bu_vls_init( &str );
+		Tcl_DStringInit( &ds );
+
+		sp = stlp->parsetab;
+		if( argc == 2 ) {
+			/* Print out solid type and all attributes */
+			Tcl_DStringAppendElement( &ds, stlp->label );
+			while( sp->sp_name != NULL ) {
+				Tcl_DStringAppendElement( &ds, sp->sp_name );
+				bu_vls_trunc( &str, 0 );
+				bu_vls_struct_item( &str, sp,
+						 (char *)intern.idb_ptr, ' ' );
+				Tcl_DStringAppendElement( &ds,
+							  bu_vls_addr(&str) );
+				++sp;
+			}
+			status = TCL_OK;
+		} else {
+			if( bu_vls_struct_item_named( &str, sp, argv[2],
+					   (char *)intern.idb_ptr, ' ') < 0 ) {
+				Tcl_DStringAppend( &ds, "no such attribute",
+						   17 );
+				status = TCL_ERROR;
+			} else {
+				Tcl_DStringAppendElement( &ds,
+							  bu_vls_addr(&str) );
+				status = TCL_OK;
+			}
+		}
+
+		Tcl_DStringResult( interp, &ds );
+		Tcl_DStringFree( &ds );
+		bu_vls_free( &str );
 	}
 
 	rt_functab[id].ft_ifree( &intern );
-
-	if( bu_vls_strlen(&str)==0 ) {
-		Tcl_AppendResult( interp,
-	 "an output routine for this data type has not yet been implemented",
-				  (char *)NULL );
-		goto error;
-	}
-
-
-	Tcl_AppendResult( interp, bu_vls_addr(&str), (char *)NULL );
-	bu_vls_free( &str );
-	return TCL_OK;
-
- error:
-	bu_vls_free( &str );
-	return TCL_ERROR;
+	return status;
 }
 
 /*
@@ -888,56 +904,122 @@ char	      **argv;
 
 int
 rt_db_put(clientData, interp, argc, argv)
-ClientData clientData;
-Tcl_Interp *interp;
-int argc;
-char **argv;
+ClientData	clientData;
+Tcl_Interp     *interp;
+int		argc;
+char	      **argv;
 {
-	struct rt_db_internal intern;
-	register struct rt_solid_type_lookup *stlp;
-	register struct directory *dp;
-	int status, ngran, id;
-	char *newargv[3];
-	struct rt_wdb	*wdb = (struct rt_wdb *)clientData;
+	struct rt_db_internal			intern;
+	register struct rt_solid_type_lookup   *stlp;
+	register struct directory	       *dp;
+	int					status, ngran, id, i;
+	char				       *newargv[4], *name;
+	struct rt_wdb			  *wdb = (struct rt_wdb *)clientData;
+	char				        type[16];
+
     
-	if (argc < 2) {
-		Tcl_AppendResult(interp,
-				 "wrong # args: should be db put objName objType attrs",
-				 (char *)NULL);
+	if( argc < 2 ) {
+		Tcl_AppendResult( interp,
+ 	               "wrong # args: should be db put objName objType attrs",
+				  (char *)NULL );
 		return TCL_ERROR;
 	}
+
+	name = argv[1];
     
-	/* XXX Verify that this wdb supports lookup operations (non-null dbip) */
+	/* XXX
+	   Verify that this wdb supports lookup operations (non-null dbip) */
 	/* If not, just skip the lookup test and write the object */
 
-	if (db_lookup(wdb->dbip, argv[1], LOOKUP_QUIET) != DIR_NULL) {
-		Tcl_AppendResult(interp, argv[1], " already exists", (char *)NULL);
+	if( db_lookup(wdb->dbip, argv[1], LOOKUP_QUIET) != DIR_NULL ) {
+		Tcl_AppendResult(interp, argv[1], " already exists",
+				 (char *)NULL);
 		return TCL_ERROR;
 	}
 
 	RT_INIT_DB_INTERNAL(&intern);
 
-	stlp = rt_get_parsetab_by_name(argv[2]);
-	if (stlp == NULL) {
-		Tcl_AppendResult(interp, "unknown object type", (char *)NULL);
-		return TCL_ERROR;
+	for( i = 0; argv[2][i] != 0 && i < 16; i++ ) {
+		type[i] = isupper(argv[2][i]) ? tolower(argv[2][i]) :
+			  argv[2][i];
+	}
+	type[i] = 0;
+
+	if( strcmp(type, "comb")==0 ) {
+		struct rt_comb_internal *comb;
+		id = intern.idb_type = ID_COMBINATION;
+		intern.idb_ptr = bu_malloc( sizeof(struct rt_comb_internal),
+					    "rt_db_put" );
+		/* Create combination with appropriate values */
+		comb = (struct rt_comb_internal *)intern.idb_ptr;
+		comb->magic = (long)RT_COMB_MAGIC;
+		comb->tree = (union tree *)0;
+		comb->region_flag = 1;
+		comb->region_id = 0;
+		comb->aircode = 0;
+		comb->GIFTmater = 0;
+		comb->los = 0;
+		comb->rgb_valid = 0;
+		comb->rgb[0] = comb->rgb[1] = comb->rgb[2] = 0;
+		bu_vls_init( &comb->shader );
+		bu_vls_init( &comb->material );
+		comb->inherit = 0;
+
+		if( wdb_export( wdb, name, intern.idb_ptr, intern.idb_type,
+				1.0 ) < 0 )  {
+			Tcl_AppendResult( interp, "wdb_export(", argv[1],
+					  ") failure\n", (char *)NULL );
+			rt_db_free_internal( &intern );
+			return TCL_ERROR;
+		}
+		rt_db_free_internal( &intern );
+
+		/* Update attributes */
+		newargv[0] = "adjust";
+		newargv[1] = name;
+		argv += 3;
+		argc -= 3;
+		while( argv[0] != 0 ) {
+			newargv[2] = argv[0];
+			newargv[3] = argv[1];
+			bu_log( "executing db %s %s %s %s\n",
+				newargv[0], newargv[1], newargv[2],
+				newargv[3] );
+			rt_db_adjust( clientData,
+				      interp,
+				      4, newargv );
+			argc -= 2;
+			argv += 2;
+		}
+	} else {
+		stlp = rt_get_parsetab_by_name( type );
+		if( stlp == NULL ) {
+			Tcl_AppendResult( interp,
+					  "unknown object type",
+					  (char *)NULL );
+			return TCL_ERROR;
+		}
+
+		id = intern.idb_type = stlp->id;
+		intern.idb_ptr = bu_malloc( stlp->db_internal_size,
+					    "rt_db_put" );
+		*((long *)intern.idb_ptr) = stlp->magic;
+		if( bu_structparse_argv(interp, argc-3, argv+3, stlp->parsetab,
+					(char *)intern.idb_ptr )==TCL_ERROR ) {
+			rt_db_free_internal(&intern);
+			return TCL_ERROR;
+		}
+		
+		if( wdb_export( wdb, name, intern.idb_ptr, intern.idb_type,
+				1.0 ) < 0 )  {
+			Tcl_AppendResult( interp, "wdb_export(", argv[1],
+					  ") failure\n", (char *)NULL );
+			rt_db_free_internal( &intern );
+			return TCL_ERROR;
+		}
 	}
 
-	id = intern.idb_type = stlp->id;
-	intern.idb_ptr = bu_malloc(stlp->db_internal_size, "rt_db_put");
-	*((long *)intern.idb_ptr) = stlp->magic;
-	if (bu_structparse_argv(interp, argc-3, argv+3, stlp->parsetab,
-				(char *)intern.idb_ptr) == TCL_ERROR) {
-		rt_db_free_internal(&intern);
-		return TCL_ERROR;
-	}
-
-	if( wdb_export( wdb, argv[1], intern.idb_ptr, intern.idb_type, 1.0 ) < 0 )  {
-		Tcl_AppendResult(interp, "wdb_export(", argv[1], ") failure\n", (char *)NULL);
-		rt_db_free_internal(&intern);
-		return TCL_ERROR;
-	}
-	rt_db_free_internal(&intern);
+	rt_db_free_internal( &intern );
 	return TCL_OK;
 }
 
@@ -945,48 +1027,50 @@ char **argv;
  *			R T _ D B _ A D J U S T
  *
  **
- ** For use with Tcl, this routine accepts as its first argument, an item in
+ ** For use with Tcl, this routine accepts as its first argument an item in
  ** the database; as its remaining arguments it takes the properties that
  ** need to be changed and their values.
  **/
 
 int
 rt_db_adjust( clientData, interp, argc, argv )
-ClientData clientData;
-Tcl_Interp *interp;
-int argc;
-char **argv;
+ClientData	clientData;
+Tcl_Interp     *interp;
+int		argc;
+char	      **argv;
 {
-	register struct directory *dp;
-	register struct bu_structparse *sp = NULL;
-	int id, status;
-	register int i;
-	struct rt_db_internal intern;
-	mat_t idn;
-	char objecttype;
-	struct rt_wdb	*wdb = (struct rt_wdb *)clientData;
+	register struct directory	*dp;
+	register struct bu_structparse	*sp = NULL;
+	int				 id, status, i;
+	struct rt_db_internal		 intern;
+	mat_t				 idn;
+	char				 objecttype;
+	struct rt_wdb		        *wdb = (struct rt_wdb *)clientData;
 
 	if( argc < 4 ) {
-		Tcl_AppendResult(interp,
-				 "wrong # args: should be \"db adjust objName attr value...\"",
-				 (char *)NULL);
+		Tcl_AppendResult( interp,
+		"wrong # args: should be \"db adjust objName attr value...\"",
+				  (char *)NULL );
 		return TCL_ERROR;
 	}
 
-	/* XXX Verify that this wdb supports lookup operations (non-null dbip) */
+	/* XXX
+	   Verify that this wdb supports lookup operations (non-null dbip) */
 
-	dp = db_lookup(wdb->dbip, argv[1], LOOKUP_QUIET);
-	if (dp == DIR_NULL) {
-		Tcl_AppendResult(interp, argv[1], ": not found\n", (char *)NULL);
+	dp = db_lookup( wdb->dbip, argv[1], LOOKUP_QUIET );
+	if( dp == DIR_NULL ) {
+		Tcl_AppendResult( interp, argv[1], ": not found\n",
+				  (char *)NULL );
 		return TCL_ERROR;
 	}
 
-	status = rt_db_get_internal(&intern, dp, wdb->dbip, (matp_t)NULL );
-	if (status < 0) {
-		Tcl_AppendResult(interp, "rt_db_get_internal(", argv[1], ") failure\n", (char *)NULL);
+	status = rt_db_get_internal( &intern, dp, wdb->dbip, (matp_t)NULL );
+	if( status < 0 ) {
+		Tcl_AppendResult( interp, "rt_db_get_internal(", argv[1],
+				  ") failure\n", (char *)NULL );
 		return TCL_ERROR;
 	}
-	RT_CK_DB_INTERNAL(&intern);
+	RT_CK_DB_INTERNAL( &intern );
 
 	/* Find out what type of object we are dealing with and tweak it. */
 	id = intern.idb_type;
@@ -996,58 +1080,101 @@ char **argv;
 			(struct rt_comb_internal *)intern.idb_ptr;
 		RT_CK_COMB(comb);
 
-		if( strcmp(argv[2], "rgb")==0 ) {
+		if( strcmp(argv[2], "region")==0 ) {
+			if( Tcl_GetBoolean( interp, argv[3], &i )!= TCL_OK )
+				goto error;
+			comb->region_flag = (char)i;
+		} else if( strcmp(argv[2], "id")==0 ) {
+			if( !comb->region_flag ) goto not_region;
+			if( Tcl_GetInt( interp, argv[3], &i ) != TCL_OK )
+				goto error;
+			comb->region_id = (short)i;
+		} else if( strcmp(argv[2], "air")==0 ) {
+			if( !comb->region_flag ) goto not_region;
+			if( Tcl_GetInt( interp, argv[3], &i ) != TCL_OK)
+				goto error;
+			comb->aircode = (short)i;
+		} else if( strcmp(argv[2], "los")==0 ) {
+			if( !comb->region_flag ) goto not_region;
+			if( Tcl_GetInt( interp, argv[3], &i ) != TCL_OK )
+				goto error;
+			comb->los = (short)i;
+		} else if( strcmp(argv[2], "GIFTmater")==0 ||
+			   strcmp(argv[2], "giftmater")==0 ) {
+			if( !comb->region_flag ) goto not_region;
+			if( Tcl_GetInt( interp, argv[3], &i ) != TCL_OK )
+				goto error;
+			comb->GIFTmater = (short)i;
+		} else if( strcmp(argv[2], "rgb")==0 ) {
 			if( argc == 6 ) {
-				comb->rgb[0] = atoi(argv[3+0]);
-				comb->rgb[1] = atoi(argv[3+1]);
-				comb->rgb[2] = atoi(argv[3+2]);
+				comb->rgb[0] = (unsigned char)atoi(argv[3+0]);
+				comb->rgb[1] = (unsigned char)atoi(argv[3+1]);
+				comb->rgb[2] = (unsigned char)atoi(argv[3+2]);
 				comb->rgb_valid = 1;
 			} else {
-				if( strcmp(argv[3], "invalid")==0 )
+				if( strcmp(argv[3], "invalid")==0 ) {
+					comb->rgb[0] = comb->rgb[1] =
+						comb->rgb[2] = 0;
 					comb->rgb_valid = 0;
-				else {
-					sscanf( argv[3], "%d %d %d",
-						&comb->rgb[0],
-						&comb->rgb[1],
-						&comb->rgb[2] );
+				} else {
+					unsigned int r, g, b;
+					sscanf( argv[3], "%u %u %u",
+						&r, &g, &b );
+					comb->rgb[0] = (unsigned char)r;
+					comb->rgb[1] = (unsigned char)g;
+					comb->rgb[2] = (unsigned char)b;
 					comb->rgb_valid = 1;
 				}
 			}
 		} else if( strcmp(argv[2], "shader" )==0 ) {
 			bu_vls_trunc( &comb->shader, 0 );
 			bu_vls_strcat( &comb->shader, argv[3] );
+		} else if( strcmp(argv[2], "material" )==0 ) {
+			bu_vls_trunc( &comb->material, 0 );
+			bu_vls_strcat( &comb->material, argv[3] );
+		} else if( strcmp(argv[2], "inherit" )==0 ) {
+			if( Tcl_GetBoolean( interp, argv[3], &i ) != TCL_OK )
+				goto error;
+			comb->inherit = (char)i;
+		} else if( strcmp(argv[2], "tree" )==0 ) {
+			;
 		} else {
-			Tcl_SetResult( interp, "not supported yet",
+			Tcl_SetResult( interp, "no such attribute",
 				       TCL_STATIC );
-			return TCL_ERROR;
+			goto error;
 		}
-	} else if (rt_get_parsetab_by_id(id) == NULL ||
-	    (sp = rt_get_parsetab_by_id(id)->parsetab) == NULL) {
-		Tcl_AppendResult(interp, "manipulation routines for this type \
-have not yet been implemented", (char *)NULL);
-		rt_db_free_internal(&intern);
-		return TCL_ERROR;
+	} else if( rt_get_parsetab_by_id(id) == NULL ||
+		   (sp=rt_get_parsetab_by_id(id)->parsetab) == NULL ) {
+		Tcl_AppendResult( interp,
+           "manipulation routines for this type have not yet been implemented",
+				  (char *)NULL );
+		goto error;
 	} else {
-		/* If we were able to find an entry in on the "cheat sheet", just
-		   use the handy parse functions to return the object. */
+		/* If we were able to find an entry in on the "cheat sheet",
+		   just use the handy parse functions to return the object. */
 
-		if (bu_structparse_argv(interp, argc-2, argv+2, sp,
-					(char *)intern.idb_ptr) == TCL_ERROR) {
-			rt_db_free_internal(&intern);
-			return TCL_ERROR;
-		}
+		if( bu_structparse_argv( interp, argc-2, argv+2, sp,
+					 (char *)intern.idb_ptr ) != TCL_OK )
+			goto error;
 	}
 
 	if( wdb_export( wdb, argv[1], intern.idb_ptr,
 			intern.idb_type, 1.0 ) < 0 )  {
-		Tcl_AppendResult(interp, "wdb_export(", argv[1],
-				 ") failure\n", (char *)NULL);
-		rt_db_free_internal(&intern);
+		Tcl_AppendResult( interp, "wdb_export(", argv[1],
+				  ") failure\n", (char *)NULL );
+		rt_db_free_internal( &intern );
 		return TCL_ERROR;
 	}
 
-	rt_db_free_internal(&intern);
+	rt_db_free_internal( &intern );
 	return TCL_OK;
+
+ not_region:
+	Tcl_AppendResult( interp, "attribute not valid for non-region",
+			  (char *)NULL );
+ error:
+	rt_db_free_internal( &intern );
+	return TCL_ERROR;
 }
 
 /*
@@ -1107,9 +1234,6 @@ error:
 	bu_vls_free(&str);
 	return TCL_ERROR;
 }
-
-
-
 
 /*
  *			R T _ D B
