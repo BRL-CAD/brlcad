@@ -730,6 +730,7 @@ static void
 checkevents()
 {
 	XEvent	event;
+	XKeyEvent	keyevent;
 	int	key;
 
 	while( XPending( dpy ) > 0 ) {
@@ -765,7 +766,7 @@ checkevents()
 			dm_values.dv_ypen = (0.5 - event.xbutton.y/(double)height) * 4095;
 		} else if( event.type == KeyPress ) {
 			/* Turn these into MGED "buttonpress" or knob functions */
-			key = XLookupKeysym( &event, 0 );
+			key = XLookupKeysym( &keyevent, 0 );
 			switch( key ) {
 			case '?':
 				fprintf( stderr, "\nKey Help Menu\n" );
