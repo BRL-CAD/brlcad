@@ -54,16 +54,18 @@ A typical application for an npf
 is to describe some attribute of an MGED model
 as a function of the direction from which the geometry is viewed.
 .PP
-For its default behavior, 
+In the absence of command-line options,
 .I polar-fb
-fills a 512\(mu512 region of the frame buffer with a background color
+fills the default area of the frame buffer
+(typically 512\(mu512 pixels)
+with a background color
 and displays the interior of the npf
 (i.e., {(\*(th,\ \*(rh)\ |\ \*(rh\ \(<=\ \*(ph(\*(th)}).
 The graph is positioned with its origin
 .I O,
-at the frame-buffer location (256,\ 256),
+at the center of the frame-buffer,
 oriented with \*(th\ \(eq\ 0 at the bottom,
-and scaled so that the unit radius is 256 pixels. 
+and scaled so that the unit circle just fits in the frame buffer.
 The graph consists of concentric regions colored
 blue, green, yellow, orange, or red,
 depending on distance from
@@ -79,6 +81,31 @@ that specifies a color in terms of
 intensities for red, green, and blue, respectively.
 The options and their meanings are:
 .sp
+.TP 8
+.BI -F \ fbfile
+Send the results to the frame buffer
+.I fbfile.\ 
+In the absence of the
+.B -F
+option, if the shell variable
+.B FB_FILE
+is defined, its value is used.
+Otherwise, the host's default frame buffer is used.
+.TP 8
+.BI -N \ scr_height
+Set screen (frame-buffer) height to 
+.I scr_height
+pixels.
+.TP 8
+.BI -S \ scr_size
+Set screen (frame-buffer) height and width to 
+.I scr_size
+pixels.
+.TP 8
+.BI -W \ scr_width
+Set screen (frame-buffer) width to 
+.I scr_width
+pixels.
 .TP 8
 .BI -a \ u\ v
 Plot only the portion of the npf between \fIu\fR and \fIv\fR degrees
@@ -99,22 +126,14 @@ This is useful with the
 .B -p
 option.
 .TP 8
-.BI -f \ fbfile
-Send the results to the frame buffer
-.I fbfile.\ 
-In the absence of the
-.B -f
-option, if the shell variable
-.B FB_FILE
-is defined, its value is used.
-Otherwise, the host's default frame buffer is used.
-.TP 8
 .B -g
 Do not plot the polar grid.
 .TP 8
 .B -h
 Use high-resolution mode.
-The frame buffer is 1024\(mu1024 pixels instead of 512\(mu512.
+The frame buffer is 1024\(mu1024 pixels.
+This has the same effect as 
+.B -S 1024 .
 .TP 8
 .BI -i \ r\ g\ b
 Display the interior of the npf with constant color
