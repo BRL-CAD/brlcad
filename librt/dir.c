@@ -49,6 +49,7 @@ int	len;
 {
 	register struct rt_i	*rtip;
 	register struct db_i	*dbip;		/* Database instance ptr */
+	register int		i;
 
 	if( RT_LIST_FIRST( rt_list, &rt_g.rtg_vlfree ) == 0 )  {
 		RT_LIST_INIT( &rt_g.rtg_vlfree );
@@ -62,7 +63,9 @@ int	len;
 
 	GETSTRUCT( rtip, rt_i );
 	rtip->rti_magic = RTI_MAGIC;
-	RT_LIST_INIT( &(rtip->rti_headsolid) );
+	for( i=0; i < RT_DBNHASH; i++ )  {
+		RT_LIST_INIT( &(rtip->rti_solidheads[i]) );
+	}
 	rtip->rti_dbip = dbip;
 	rtip->needprep = 1;
 
