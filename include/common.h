@@ -23,9 +23,11 @@
 #define __COMMON_H__
 
 #ifndef PACKAGE
-# ifdef HAVE_CONFIG_H
-#  include "config.h"
-# endif
+#  ifdef HAVE_CONFIG_H
+#    include "config.h"
+#  else
+#    include <brlcad/config.h>
+#  endif
 #endif
 
 #ifdef __win32
