@@ -32,9 +32,9 @@ HIDDEN int dm_validXType_tcl();
 HIDDEN int dm_bestXType_tcl();
 
 HIDDEN struct bu_cmdtab cmdtab[] = {
-	"dm_validXType",	dm_validXType_tcl,
-	"dm_bestXType",		dm_bestXType_tcl,
-	(char *)0,		(int (*)())0
+	{"dm_validXType",	dm_validXType_tcl},
+	{"dm_bestXType",	dm_bestXType_tcl},
+	{(char *)0,		(int (*)())0}
 };
 
 int

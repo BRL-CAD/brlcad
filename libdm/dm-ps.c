@@ -20,7 +20,7 @@
  *	All rights reserved.
  */
 #ifndef lint
-static char RCSid[] = "@(#)$Header$ (BRL)";
+static const char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include "conf.h"
@@ -93,13 +93,13 @@ struct dm dm_ps = {
   1.0, /* aspect ratio */
   0,
   {0, 0},
-  0,
-  0,
-  0,
-  0,
-  0,
-  0,				/* clipmin */
-  0,				/* clipmax */
+  {0, 0, 0, 0, 0},		/* bu_vls path name*/
+  {0, 0, 0, 0, 0},		/* bu_vls full name drawing window */
+  {0, 0, 0, 0, 0},		/* bu_vls short name drawing window */
+  {0, 0, 0},			/* bg color */
+  {0, 0, 0},			/* fg color */
+  {0.0, 0.0, 0.0},		/* clipmin */
+  {0.0, 0.0, 0.0},		/* clipmax */
   0,				/* no debugging */
   0,				/* no perspective */
   0,				/* no lighting */

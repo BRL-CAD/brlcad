@@ -15,7 +15,6 @@ char *dpy_string;
 char *name;
 {
   Display *dpy;
-  int return_val;
   int val = 0;
 
 #ifdef USE_MESA_GL
@@ -59,7 +58,6 @@ dm_bestXType(dpy_string)
 char *dpy_string;
 {
   Display *dpy;
-  int return_val;
   char *name = (char *)NULL;
 
 #ifdef USE_MESA_GL

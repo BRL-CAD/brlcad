@@ -22,7 +22,7 @@
  *	All rights reserved.
  */
 #ifndef lint
-static char RCSid[] = "@(#)$Header$ (BRL)";
+static const char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include "conf.h"
@@ -40,6 +40,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "dm.h"
 #include "dm-plot.h"
 #include "solid.h"
+#include "plot3.h"
 
 /* Display Manager package interface */
 
@@ -93,13 +94,13 @@ struct dm dm_plot = {
   1.0, /* aspect ratio */
   0,
   {0, 0},
-  0,
-  0,
-  0,
-  0,
-  0,
-  0,				/* clipmin */
-  0,				/* clipmax */
+  {0, 0, 0, 0, 0},		/* bu_vls path name*/
+  {0, 0, 0, 0, 0},		/* bu_vls full name drawing window */
+  {0, 0, 0, 0, 0},		/* bu_vls short name drawing window */
+  {0, 0, 0},			/* bg color */
+  {0, 0, 0},			/* fg color */
+  {0.0, 0.0, 0.0},		/* clipmin */
+  {0.0, 0.0, 0.0},		/* clipmax */
   0,				/* no debugging */
   0,				/* no perspective */
   0,				/* no lighting */

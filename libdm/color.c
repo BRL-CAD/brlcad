@@ -10,8 +10,6 @@ unsigned long dm_get_pixel();
 void dm_copy_cmap();
 void dm_allocate_color_cube();
 
-static void get_color_slot();
-
 /* Return the allocated pixel value that most closely represents
 the color requested. */
 unsigned long

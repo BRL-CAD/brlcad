@@ -22,7 +22,7 @@
  *	All rights reserved.
  */
 #ifndef lint
-static char RCSid[] = "@(#)$Header$ (BRL)";
+static const char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include "conf.h"
@@ -125,6 +125,7 @@ fastf_t x, y;
  *  Implicit Return -
  *	if !0 was returned, "a" and "b" have been clipped to the RPP.
  */
+int
 vclip( a, b, min, max )
 vect_t a, b;
 register fastf_t *min, *max;

@@ -17,7 +17,7 @@
  *	All rights reserved.
  */
 #ifndef lint
-static char RCSid[] = "@(#)$Header$ (BRL)";
+static const char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include "conf.h"
@@ -116,13 +116,13 @@ struct dm dm_X = {
   1.0, /* aspect ratio */
   0,
   {0, 0},
-  0,
-  0,
-  0,
-  0,
-  0,
-  0,				/* clipmin */
-  0,				/* clipmax */
+  {0, 0, 0, 0, 0},		/* bu_vls path name*/
+  {0, 0, 0, 0, 0},		/* bu_vls full name drawing window */
+  {0, 0, 0, 0, 0},		/* bu_vls short name drawing window */
+  {0, 0, 0},			/* bg color */
+  {0, 0, 0},			/* fg color */
+  {0.0, 0.0, 0.0},		/* clipmin */
+  {0.0, 0.0, 0.0},		/* clipmax */
   0,				/* no debugging */
   0,				/* no perspective */
   0,				/* no lighting */
@@ -624,27 +624,23 @@ register struct rt_vlist *vp;
 		  bu_log("pt - %lf %lf %lf\n", V3ARGS(*pt));
 		}
 
-		if (dmp->dm_perspective > 0)
-	    	{
+		if (dmp->dm_perspective > 0) {
 	    		/* cannot apply perspective transformation to
 			 * points behind eye plane!!!!
 	    		 */
 	    		dist = VDOT(*pt, &((struct x_vars *)dmp->dm_vars.priv_vars)->xmat[12]) + ((struct x_vars *)dmp->dm_vars.priv_vars)->xmat[15];
-	    		if( dist <= 0.0 )
-	    		{
+	    		if( dist <= 0.0 ) {
 	    			pt_prev = pt;
 	    			dist_prev = dist;
 	    			continue;
-	    		}
-	    		else
-	    		{
+	    		} else	{
 	    			MAT4X3PNT(lpnt, ((struct x_vars *)dmp->dm_vars.priv_vars)->xmat, *pt);
 	    			dist_prev = dist;
 	    			pt_prev = pt;
 	    		}
-	    	}
-		else
+	    	} else {
 			MAT4X3PNT(lpnt, ((struct x_vars *)dmp->dm_vars.priv_vars)->xmat, *pt);
+		}
 
 		lpnt[0] *= 2047;
 		lpnt[1] *= 2047 * dmp->dm_aspect;
@@ -659,25 +655,20 @@ register struct rt_vlist *vp;
 		  bu_log("pt - %lf %lf %lf\n", V3ARGS(*pt));
 		}
 
-		if (dmp->dm_perspective > 0)
-	    	{
+		if (dmp->dm_perspective > 0) {
 	    		/* cannot apply perspective transformation to
 			 * points behind eye plane!!!!
 	    		 */
 	    		dist = VDOT( *pt, &((struct x_vars *)dmp->dm_vars.priv_vars)->xmat[12] ) + ((struct x_vars *)dmp->dm_vars.priv_vars)->xmat[15];
 			if(dmp->dm_debugLevel > 2)
 	    			bu_log( "dist=%g, dist_prev=%g\n", dist, dist_prev );
-	    		if( dist <= 0.0 )
-	    		{
-	    			if( dist_prev <= 0.0 )
-	    			{
+	    		if( dist <= 0.0 ) {
+	    			if( dist_prev <= 0.0 ) {
 	    				/* nothing to plot */
 		    			dist_prev = dist;
 		    			pt_prev = pt;
 		    			continue;
-	    			}
-	    			else
-	    			{
+	    			} else {
 	    				fastf_t alpha;
 	    				vect_t diff;
 	    				point_t tmp_pt;
@@ -688,11 +679,8 @@ register struct rt_vlist *vp;
 	    				VJOIN1( tmp_pt, *pt_prev, alpha, diff );
 	    				MAT4X3PNT( pnt, ((struct x_vars *)dmp->dm_vars.priv_vars)->xmat, tmp_pt );
 	    			}
-	    		}
-	    		else
-	    		{
-	    			if( dist_prev <= 0.0 )
-	    			{
+	    		} else {
+	    			if( dist_prev <= 0.0 ) {
 	    				fastf_t alpha;
 	    				vect_t diff;
 	    				point_t tmp_pt;
@@ -706,15 +694,14 @@ register struct rt_vlist *vp;
 	    				lpnt[1] *= 2047 * dmp->dm_aspect;
 	    				lpnt[2] *= 2047;
 	    				MAT4X3PNT( pnt, ((struct x_vars *)dmp->dm_vars.priv_vars)->xmat, *pt );
-	    			}
-	    			else
-	    			{
+	    			} else {
 	    				MAT4X3PNT( pnt, ((struct x_vars *)dmp->dm_vars.priv_vars)->xmat, *pt );
 	    			}
 	    		}
-	    	}
-		else
+			dist_prev = dist;
+	    	} else {
 			MAT4X3PNT( pnt, ((struct x_vars *)dmp->dm_vars.priv_vars)->xmat, *pt );
+		}
 
 		pnt[0] *= 2047;
 		pnt[1] *= 2047 * dmp->dm_aspect;
@@ -723,7 +710,6 @@ register struct rt_vlist *vp;
 		/* save pnt --- it might get changed by clip() */
 		VMOVE(spnt, pnt);
 	    	pt_prev = pt;
-	    	dist_prev = dist;
 
 		if(dmp->dm_debugLevel > 2) {
 		  bu_log("before clipping:\n");
