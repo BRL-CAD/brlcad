@@ -23,6 +23,9 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #define	MAXLINELEN	256
 
+static char *usage="Usage:\n\trpatch [-D] < fastgen_input_file > file.rp\n\
+	where -D means that type 3 components are donuts (rather than triangles)\n";
+
 double
 get_ftn_float( str , start_col , format )
 char *str,*format;
@@ -171,16 +174,46 @@ unsigned int start_col;
 	return( atoi( tmp_str ) );
 }
 
-main()
+main( argc, argv )
+int argc;
+char *argv[];
 {
 	char line[MAXLINELEN];
 	float x,y,z,hold,work;
 	char minus;
 	int ity,ity1,ico,isq[8],m,n,k,cc,tmp;
 	int i;
+	int type3_is_donut=0;
+	int c;
+
+	if( argc > 2 )
+	{
+		fprintf( stderr, usage );
+		exit( 1 );
+	}
+
+	/* Get command line arguments. */
+	while ((c = getopt(argc, argv, "D")) != EOF)
+	{
+		switch (c)
+		{
+			case 'D':  /* donuts */
+				type3_is_donut = 1;
+				break;
+
+			default:
+				fprintf( stderr, "Illegal option (%c)\n", c );
+			case '?':
+				fprintf( stderr, usage );
+				exit( 1 );
+		}
+	}
 
 	while( gets(line) )
 	{
+		if( strlen( line ) == 0 )
+			continue;
+
 		x = get_ftn_float( line , 0 , "f8.3" );
 		y = get_ftn_float( line , 8 , "f8.3" );
 		z = get_ftn_float( line , 16 , "f9.3" );
@@ -209,6 +242,8 @@ main()
 		hold = work - ity;
 		if( ity == 4 )
 			ity = 8;
+		else if( ity == 3 && type3_is_donut )
+			ity = 4;
 
 		/* get thickness */
 		work = hold * 100.0;
