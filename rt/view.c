@@ -236,9 +236,10 @@ register struct application *ap;
 
 			RES_ACQUIRE( &rt_g.res_results );
 			for( dy=0; dy<spread; dy++ )  {
+				if( ap->a_y+dy >= height )  break;
 				slp = &scanline[ap->a_y+dy];
 				if( slp->sl_buf == (char *)0 )
-					slp->sl_buf = rt_calloc( width,
+					slp->sl_buf = rt_calloc( width+32,
 						3, "sl_buf" );
 
 				pixelp = slp->sl_buf+(ap->a_x*3);
