@@ -178,7 +178,7 @@ long val;
 
 	ev[0] = (short)val;
 	ev[1] = get_button(obj);
-	(void)fprintf(stdout, "button %d\n", ev[1]);
+/*	(void)fprintf(stdout, "button %d\n", ev[1]); */
 	ev[2] = getvaluator(MOUSEX);
 	ev[3] = getvaluator(MOUSEY);
 
@@ -201,11 +201,23 @@ long val;
 	lbr_qenter(ev);
 }
 
-void dial_call(obj, val)
+void dial_call(obj, dial_dev)
 OBJECT *obj;
-long val;
+long dial_dev;
 {
+	float	dial_val, min, max;
+	short	valuator;
 
+	dial_val = get_dial_value(obj);
+	get_dial_bounds(obj, &min, &max);
+	valuator = getvaluator(dial_dev);
+
+	/* setvaluator will cause an event to be queued if the device
+	 * has been queued.  Thus there is no reason for us to queue
+	 * a "fake" dial event, setvaluator will do it for us ;-).
+	 */
+	setvaluator((short)dial_dev, (short)dial_val,
+		(short)min, (short)max);
 }
 
 void help_call(obj, val)
@@ -468,6 +480,7 @@ Ir_open()
 
 	/* Enable qdev() input from various devices */
 #if IR_WIDGETS
+
 	fl_usrqdevice(LEFTMOUSE);
 	fl_usrqdevice(MIDDLEMOUSE);
 	fl_usrqdevice(RIGHTMOUSE);
