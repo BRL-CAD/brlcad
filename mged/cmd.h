@@ -201,8 +201,8 @@ MGED_EXTERN(int f_xpush, (ClientData clientData, Tcl_Interp *interp, int argc, c
 MGED_EXTERN(int f_zap, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 MGED_EXTERN(int f_zoom, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 
-MGED_EXTERN(int cmd_bodyread, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
-MGED_EXTERN(int cmd_bodywrite, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
+MGED_EXTERN(int cmd_import_body, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
+MGED_EXTERN(int cmd_export_body, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 MGED_EXTERN(int cmd_cmd_win, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 MGED_EXTERN(int cmd_echo, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 MGED_EXTERN(int cmd_expand, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
