@@ -1098,27 +1098,35 @@ CONST struct rt_tol	*tol;
 	do {
 		eu_next = RT_LIST_PNEXT_CIRC(edgeuse, eu_next);
 		NMG_CK_EDGEUSE(eu_next);
-		if( eu_next == eu )  return -1;
+		if( eu_next == eu )
+		{
+			rt_log( "nmg_fu_planeeqn(): First loopuse contains only one edgeuse\n" );
+			return -1;
+		}
 		NMG_CK_VERTEXUSE(eu_next->vu_p);
 		b = eu_next->vu_p->v_p;
 		NMG_CK_VERTEX(b);
 		NMG_CK_VERTEX_G(b->vg_p);
 	} while( (b == a
-		|| VAPPROXEQUAL(a->vg_p->coord, b->vg_p->coord, tol->dist))
+		|| rt_pt3_pt3_equal(a->vg_p->coord, b->vg_p->coord, tol))
 		&& eu_next->vu_p != eu->vu_p );
 
 	eu_final = eu_next;
 	do {
 		eu_final = RT_LIST_PNEXT_CIRC(edgeuse, eu_final);
 		NMG_CK_EDGEUSE(eu_final);
-		if( eu_final == eu )  return -1;
+		if( eu_final == eu )
+		{
+			rt_log( "nmg_fu_planeeqn(): Cannot find three distinct vertices\n" );
+			return -1;
+		}
 		NMG_CK_VERTEXUSE(eu_final->vu_p);
 		c = eu_final->vu_p->v_p;
 		NMG_CK_VERTEX(c);
 		NMG_CK_VERTEX_G(c->vg_p);
 		both_equal = (c == b) ||
-		    VAPPROXEQUAL(a->vg_p->coord, c->vg_p->coord, tol->dist) ||
-		    VAPPROXEQUAL(b->vg_p->coord, c->vg_p->coord, tol->dist);
+		    rt_pt3_pt3_equal(a->vg_p->coord, c->vg_p->coord, tol) ||
+		    rt_pt3_pt3_equal(b->vg_p->coord, c->vg_p->coord, tol);
 	} while( (both_equal
 		|| rt_3pts_collinear(a->vg_p->coord, b->vg_p->coord,
 			c->vg_p->coord, tol))
@@ -1142,7 +1150,7 @@ CONST struct rt_tol	*tol;
 
 	/* Check and make sure all verts are within tol->dist of face */
 	if( nmg_ck_fu_verts( fu, fu->f_p, tol ) != 0 )  {
-		rt_log("nmg_fu_planeeqn(fu=x%x) ERROR, verts are not within tol of face\n");
+		rt_log("nmg_fu_planeeqn(fu=x%x) ERROR, verts are not within tol of face\n" , fu );
 		return -1;
 	}
 
