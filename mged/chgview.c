@@ -194,7 +194,8 @@ char    **argv;
       eraseobj(dp);
   }
 
-  no_memory = 0;
+  /* XXX do dm_freeDList() for each solid deleted */
+
   return TCL_OK;
 }
 
@@ -225,7 +226,6 @@ char    **argv;
       eraseobjall(dp);
   }
 
-  no_memory = 0;
   return TCL_OK;
 }
 
@@ -497,7 +497,6 @@ int	catch_sigint;
   for( i = 1; i < argc; i++ )  {
     if( (dp = db_lookup( dbip,  argv[i], LOOKUP_QUIET )) != DIR_NULL )  {
       eraseobj( dp );
-      no_memory = 0;
     }
   }
 
@@ -550,9 +549,6 @@ int	catch_sigint;
       }
 
       color_soltab();
-#if 0
-      dmp->dm_colorchange(dmp);
-#endif
     }
 
     curr_dm_list = save_dm_list;
@@ -989,7 +985,6 @@ char	**argv;
 	}
 
 	update_views = 1;
-	no_memory = 0;
 
 	/* FIRST, reject any editing in progress */
 	if( state != ST_VIEW )
@@ -997,7 +992,6 @@ char	**argv;
 
 	sp = BU_LIST_NEXT(solid, &HeadSolid.l);
 	while(BU_LIST_NOT_HEAD(sp, &HeadSolid.l)){
-		rt_memfree( &(dmp->dm_map), sp->s_bytes, (unsigned long)sp->s_addr );
 		dp = sp->s_path[0];
 		RT_CK_DIR(dp);
 		if( dp->d_addr == RT_DIR_PHONY_ADDR )  {
@@ -1005,12 +999,13 @@ char	**argv;
 			  Tcl_AppendResult(interp, "f_zap: db_dirdelete failed\n", (char *)NULL);
 			}
 		}
-		sp->s_addr = sp->s_bytes = 0;
 		nsp = BU_LIST_PNEXT(solid, sp);
 		BU_LIST_DEQUEUE(&sp->l);
 		FREE_SOLID(sp,&FreeSolid.l);
 		sp = nsp;
 	}
+
+	/*XXX dm_freeDList() */
 
 	/* Keeping freelists improves performance.  When debugging, give mem back */
 	if( rt_g.debug )  mged_freemem();
@@ -1204,6 +1199,8 @@ register struct directory *dp;
 
   update_views = 1;
 
+  /* XXX do dm_freeDList() for each solid deleted */
+
   RT_CK_DIR(dp);
   sp = BU_LIST_NEXT(solid, &HeadSolid.l);
   while(BU_LIST_NOT_HEAD(sp, &HeadSolid.l)){
@@ -1213,7 +1210,6 @@ register struct directory *dp;
 
       if( state != ST_VIEW && illump == sp )
 	button( BE_REJECT );
-      rt_memfree( &(dmp->dm_map), sp->s_bytes, (unsigned long)sp->s_addr );
       BU_LIST_DEQUEUE(&sp->l);
       FREE_SOLID(sp, &FreeSolid.l);
 
@@ -1248,6 +1244,8 @@ register struct directory *dp;
   update_views = 1;
   RT_CK_DIR(dp);
 
+  /* XXX do dm_freeDList() for each solid deleted */
+
   sp = BU_LIST_FIRST(solid, &HeadSolid.l);
   while(BU_LIST_NOT_HEAD(sp, &HeadSolid.l)){
     nsp = BU_LIST_PNEXT(solid, sp);
@@ -1259,7 +1257,6 @@ register struct directory *dp;
     if(state != ST_VIEW && illump == sp)
       button( BE_REJECT );
 
-    rt_memfree(&(dmp->dm_map), sp->s_bytes, (unsigned long)sp->s_addr);
     BU_LIST_DEQUEUE(&sp->l);
     FREE_SOLID(sp, &FreeSolid.l);
     sp = nsp;
