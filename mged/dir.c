@@ -43,7 +43,6 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include <strings.h>
 #endif
 
-#include "tcl.h"
 #include "tk.h"
 
 #include "machine.h"
@@ -332,6 +331,8 @@ Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
+#if 0
+#else
 	register struct directory *dp;
 	register int i;
 	struct directory **dirp;
@@ -386,6 +387,7 @@ char	**argv;
 	bu_vls_free(&vls);
 	bu_free( (genptr_t)dirp0, "dir_getspace" );
 	return TCL_OK;
+#endif
 }
 
 /*
@@ -954,27 +956,29 @@ f_tree(clientData, interp, argc, argv)
      char	**argv;
 {
 	int		ret;
-	struct bu_vls	vls;
 
 	CHECK_DBI_NULL;
-	bu_vls_init(&vls);
+
+	if (setjmp(jmp_env) == 0)
+		(void)signal( SIGINT, sig3);  /* allow interupts */
+	else
+		return TCL_OK;
 
 	/*
 	 * The tree command is wrapped by tclscripts/tree.tcl and calls this
 	 * routine with the name _mged_tree. So, we put back the original name.
 	 */ 
 	argv[0] = "tree";
-	bu_build_cmd_vls(&vls, MGED_DB_NAME, argc, argv);
 
-	if (setjmp(jmp_env) == 0)
-		(void)signal( SIGINT, sig3);  /* allow interupts */
-	else {
-		bu_vls_free(&vls);
-		return TCL_OK;
-	}
+#if 1
+	ret = invoke_db_wrapper(interp, argc, argv);
+#else
+	bu_vls_init(&vls);
+	bu_build_cmd_vls(&vls, MGED_DB_NAME, argc, argv);
 
 	ret = Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
+#endif
 
 	(void)signal(SIGINT, SIG_IGN);
 	return ret;

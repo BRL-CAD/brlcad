@@ -1313,15 +1313,18 @@ int	argc;
 char	**argv;
 {
 	int		ret;
-	struct bu_vls	vls;
 	fastf_t		sf;
 
 	CHECK_DBI_NULL;
 
+#if 1
+	ret = invoke_db_wrapper(interp, argc, argv);
+#else
 	bu_vls_init(&vls);
 	bu_build_cmd_vls(&vls, MGED_DB_NAME, argc, argv);
 	ret = Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
+#endif
 
 	set_localunit_TclVar();
 	sf = dbip->dbi_base2local / sf;

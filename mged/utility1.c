@@ -432,6 +432,21 @@ f_which(clientData, interp, argc, argv)
      int	argc;
      char	**argv;
 {
+#if 1
+	int		ret;
+
+	CHECK_DBI_NULL;
+
+	if (setjmp(jmp_env) == 0)
+		(void)signal(SIGINT, sig3);  /* allow interupts */
+        else
+		return TCL_OK;
+
+	ret = invoke_db_wrapper(interp, argc, argv);
+
+	(void)signal(SIGINT, SIG_IGN);
+	return ret;
+#else
 	int		ret;
 	struct bu_vls	vls;
 
@@ -452,6 +467,7 @@ f_which(clientData, interp, argc, argv)
 
 	(void)signal(SIGINT, SIG_IGN);
 	return ret;
+#endif
 }
 
 /*		F _ W H I C H _ S H A D E R

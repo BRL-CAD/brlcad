@@ -226,6 +226,7 @@ MGED_EXTERN(int chg_state, (int from, int to, char *str) );
 MGED_EXTERN(void state_err, (char *str) );
 
 MGED_EXTERN(void do_list, (struct bu_vls *outstrp, struct directory *dp, int verbose));
+MGED_EXTERN(int invoke_db_wrapper, (Tcl_Interp *interp, int argc, char **argv));
 
 /* history.c */
 void history_record(
@@ -888,3 +889,4 @@ int build_tops(char **start, char **end);
 
 /* mater.c */
 void color_soltab(void);
+
