@@ -29,7 +29,7 @@ static char RCSxxx[] = "@(#)$Header$ (BRL)";
 
 struct rt_xxx_internal {
 	long	magic;
-	vect_t	xxx_V;
+	vect_t	v;
 };
 #define RT_XXX_INTERNAL_MAGIC	0xxx
 #define RT_XXX_CK_MAGIC(_p)	RT_CKMAG(_p,RT_XXX_INTERNAL_MAGIC,"rt_xxx_internal")
@@ -54,12 +54,17 @@ struct xxx_specific {
  *  	stp->st_specific for use by xxx_shot().
  */
 int
-rt_xxx_prep( stp, rec, rtip )
+rt_xxx_prep( stp, ip, rtip )
 struct soltab		*stp;
-union record		*rec;
+struct rt_db_internal	*ip;
 struct rt_i		*rtip;
 {
-	register struct xxx_specific *xxx;
+	struct rt_xxx_internal		*xip;
+	register struct xxx_specific	*xxx;
+
+	RT_CK_DB_INTERNAL(ip);
+	xip = (struct rt_xxx_internal *)ip->idb_ptr;
+	RT_XXX_CK_MAGIC(xip);
 }
 
 /*
@@ -98,7 +103,7 @@ struct seg		*seghead;
 	return(2);			/* HIT */
 }
 
-#define SEG_MISS(SEG)		(SEG).seg_stp=(struct soltab *) 0;	
+#define RT_XXX_SEG_MISS(SEG)	(SEG).seg_stp=RT_SOLTAB_NULL
 
 /*
  *			R T _ X X X _ V S H O T
@@ -198,43 +203,155 @@ rt_xxx_class()
  *			R T _ X X X _ P L O T
  */
 int
-rt_xxx_plot( rp, mat, vhead, dp, abs_tol, rel_tol, norm_tol )
-union record	*rp;
-mat_t		mat;
-struct vlhead	*vhead;
-struct directory *dp;
-double		abs_tol;
-double		rel_tol;
-double		norm_tol;
+rt_xxx_plot( vhead, ip, abs_tol, rel_tol, norm_tol )
+struct vlhead		*vhead;
+struct rt_db_internal	*ip;
+double			abs_tol;
+double			rel_tol;
+double			norm_tol;
 {
+	LOCAL struct rt_xxx_internal	*xip;
+
+	RT_CK_DB_INTERNAL(ip);
+	xip = (struct rt_xxx_internal *)ip->idb_ptr;
+	RT_XXX_CK_MAGIC(xip);
+
 	return(-1);
 }
 
 /*
  *			R T _ X X X _ T E S S
+ *
+ *  Returns -
+ *	-1	failure
+ *	 0	OK.  *r points to nmgregion that holds this tessellation.
  */
 int
-rt_xxx_tess( r, m, rp, mat, dp, abs_tol, rel_tol, norm_tol )
+rt_xxx_tess( r, m, ip, abs_tol, rel_tol, norm_tol )
 struct nmgregion	**r;
 struct model		*m;
-union record		*rp;
-mat_t			mat;
-struct directory	*dp;
+struct rt_db_internal	*ip;
 double			abs_tol;
 double			rel_tol;
 double			norm_tol;
 {
+	LOCAL struct rt_xxx_internal	*xip;
+
+	RT_CK_DB_INTERNAL(ip);
+	xip = (struct rt_xxx_internal *)ip->idb_ptr;
+	RT_XXX_CK_MAGIC(xip);
+
 	return(-1);
 }
 
 /*
  *			R T _ X X X _ I M P O R T
+ *
+ *  Import an XXX from the database format to the internal format.
+ *  Apply modeling transformations as well.
  */
 int
-rt_xxx_import( xxx, rp, mat )
-struct xxx_internal	*xxx;
-union record		*rp;
+rt_xxx_import( ip, ep, mat )
+struct rt_db_internal	*ip;
+struct rt_external	*ep;
 register mat_t		mat;
 {
+	LOCAL struct rt_xxx_internal	*xip;
+	union record			*rp;
+
+	RT_CK_EXTERNAL( ep );
+	rp = (union record *)ep->ext_buf;
+	/* Check record type */
+	if( rp->u_id != ID_SOLID )  {
+		rt_log("rt_xxx_import: defective record\n");
+		return(-1);
+	}
+
+	RT_INIT_DB_INTERNAL( ip );
+	ip->idb_type = ID_XXX;
+	ip->idb_ptr = rt_malloc( sizeof(struct rt_xxx_internal), "rt_xxx_internal");
+	xip = (struct rt_xxx_internal *)ip->idb_ptr;
+	xip->magic = RT_XXX_INTERNAL_MAGIC;
+
 	return(0);			/* OK */
+}
+
+/*
+ *			R T _ T G C _ E X P O R T
+ *
+ *  The name is added by the caller, in the usual place.
+ */
+int
+rt_xxx_export( ep, ip, local2mm )
+struct rt_external	*ep;
+struct rt_db_internal	*ip;
+double			local2mm;
+{
+	struct rt_xxx_internal	*xip;
+	union record		*rec;
+
+	RT_CK_DB_INTERNAL(ip);
+	if( ip->idb_type != ID_XXX )  return(-1);
+	xip = (struct rt_xxx_internal *)ip->idb_ptr;
+	RT_XXX_CK_MAGIC(xip);
+
+	RT_INIT_EXTERNAL(ep);
+	ep->ext_nbytes = sizeof(union record);
+	ep->ext_buf = (genptr_t)rt_calloc( 1, ep->ext_nbytes, "xxx external");
+	rec = (union record *)ep->ext_buf;
+
+	rec->s.s_id = ID_SOLID;
+	rec->s.s_type = XXX;
+
+	return(0);
+}
+
+/*
+ *			R T _ T G C _ D E S C R I B E
+ *
+ *  Make human-readable formatted presentation of this solid.
+ *  First line describes type of solid.
+ *  Additional lines are indented one tab, and give parameter values.
+ */
+int
+rt_xxx_describe( str, ip, verbose, mm2local )
+struct rt_vls		*str;
+struct rt_db_internal	*ip;
+int			verbose;
+double			mm2local;
+{
+	register struct rt_xxx_internal	*xip =
+		(struct rt_xxx_internal *)ip->idb_ptr;
+	char	buf[256];
+
+	RT_XXX_CK_MAGIC(xip);
+	rt_vls_strcat( str, "truncated general xxx (XXX)\n");
+
+	sprintf(buf, "\tV (%g, %g, %g)\n",
+		xip->v[X] * mm2local,
+		xip->v[Y] * mm2local,
+		xip->v[Z] * mm2local );
+	rt_vls_strcat( str, buf );
+
+	return(0);
+}
+
+/*
+ *			R T _ T G C _ I F R E E
+ *
+ *  Free the storage associated with the rt_db_internal version of this solid.
+ */
+void
+rt_xxx_ifree( ip )
+struct rt_db_internal	*ip;
+{
+	register struct rt_xxx_internal	*xip;
+
+	RT_CK_DB_INTERNAL(ip);
+	xip = (struct rt_xxx_internal *)ip->idb_ptr;
+	xip->magic = 0;			/* sanity */
+	RT_XXX_CK_MAGIC(xip);
+
+	rt_free( (char *)xip, "xxx ifree" );
+	ip->idb_ptr = GENPTR_NULL;	/* sanity */
 }
