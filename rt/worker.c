@@ -56,14 +56,16 @@ grid_setup()
 	mat_inv( view2model, model2view );
 
 	/* Determine grid spacing and orientation */
-	if( cell_width > 0.0 )  {
+	if( cell_width > 0.0 && width <= 0)  {
 		if( cell_height <= 0.0 )  cell_height = cell_width;
-		width = viewsize / cell_width;
-		height = viewsize / (cell_height*aspect);
-	} else {
+		width = (viewsize / cell_width) + 0.99;
+		height = (viewsize / (cell_height*aspect)) + 0.99;
+	} else if( cell_width <= 0.0 && width > 0 )  {
 		/* Chop -1.0..+1.0 range into parts */
 		cell_width = viewsize / width;
 		cell_height = viewsize / (height*aspect);
+	} else {
+		/* Do nothing, both are already set */
 	}
 	VSET( temp, 1, 0, 0 );
 	MAT3X3VEC( dx_model, view2model, temp );	/* rotate only */
