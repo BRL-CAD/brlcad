@@ -253,12 +253,12 @@ char **argv;
 					anim_y_p_r2mat(wmat,0.0,y_rot+r[count].ang,0.0);
 			        	anim_add_trans(wmat,position,r[count].pos);
 			        	if ((axes || cent) && links_placed){ /* link moved from vehicle coords */
-				        	mat_mul(mat_x,wmat,m_rev_axes);
-			        		mat_mul(wmat,m_axes,mat_x);
+				        	bn_mat_mul(mat_x,wmat,m_rev_axes);
+			        		bn_mat_mul(wmat,m_axes,mat_x);
 			        	}
 			        	else if (axes || cent){ /* link moved to vehicle coords */
 			        		MAT_MOVE(mat_x,wmat);
-			        		mat_mul(wmat,m_axes,mat_x);
+			        		bn_mat_mul(wmat,m_axes,mat_x);
 			        	}
 			        	if (print_mode==TRACK_ANIM) {
 						printf("anim %s.%d matrix %s\n", *(argv+link_nindex),count,link_cmd);
@@ -275,8 +275,8 @@ char **argv;
 					VREVERSE(temp,x[count].w.pos);
 					anim_add_trans(wmat,x[count].w.pos,temp);
 			        	if (axes || cent){
-				        	mat_mul(mat_x,wmat,m_rev_axes);
-			        		mat_mul(wmat,m_axes,mat_x);
+				        	bn_mat_mul(mat_x,wmat,m_rev_axes);
+			        		bn_mat_mul(wmat,m_axes,mat_x);
 			        	}
 			        	if (print_mode==TRACK_ANIM) {
 						printf("anim %s.%d matrix %s\n",*(argv+wheel_nindex),count,wheel_cmd);

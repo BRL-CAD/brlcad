@@ -109,15 +109,15 @@ char **argv;
 		maxlines = MAXLEN;
 	}
 
-	l = (fastf_t *) rt_malloc(maxlines*sizeof(fastf_t),"l[]");
+	l = (fastf_t *) bu_malloc(maxlines*sizeof(fastf_t),"l[]");
 	if (verbose) {
-		x = (fastf_t *) rt_malloc(maxlines*sizeof(fastf_t),"x[]");
-		y = (fastf_t *) rt_malloc(maxlines*sizeof(fastf_t),"y[]");
-		z = (fastf_t *) rt_malloc(maxlines*sizeof(fastf_t),"z[]");
+		x = (fastf_t *) bu_malloc(maxlines*sizeof(fastf_t),"x[]");
+		y = (fastf_t *) bu_malloc(maxlines*sizeof(fastf_t),"y[]");
+		z = (fastf_t *) bu_malloc(maxlines*sizeof(fastf_t),"z[]");
 	} else {
-		x = (fastf_t *) rt_malloc(2*sizeof(fastf_t),"x[]");
-		y = (fastf_t *) rt_malloc(2*sizeof(fastf_t),"y[]");
-		z = (fastf_t *) rt_malloc(2*sizeof(fastf_t),"z[]");
+		x = (fastf_t *) bu_malloc(2*sizeof(fastf_t),"x[]");
+		y = (fastf_t *) bu_malloc(2*sizeof(fastf_t),"y[]");
+		z = (fastf_t *) bu_malloc(2*sizeof(fastf_t),"z[]");
 	}
 	l[0] = 0.0;
 
@@ -221,10 +221,10 @@ char **argv;
 		printf("%.12e\n",end);
 	}
 
-	rt_free((char *) l, "l[]");
-	rt_free((char *) x, "x[]");
-	rt_free((char *) y, "y[]");
-	rt_free((char *) z, "z[]");
+	bu_free((char *) l, "l[]");
+	bu_free((char *) x, "x[]");
+	bu_free((char *) y, "y[]");
+	bu_free((char *) z, "z[]");
 
 }
 

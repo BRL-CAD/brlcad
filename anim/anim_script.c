@@ -120,12 +120,12 @@ char **argv;
 
 		/* make final matrix, including translation etc */
 		if (axes){ /* add pre-rotation from original axes */
-			mat_mul(m_x,a,m_rev_axes); 
+			bn_mat_mul(m_x,a,m_rev_axes); 
 			MAT_MOVE(a,m_x);
 		}
 		anim_add_trans(a,point,rcentroid); /* add translation */
 		if (axes && relative_a){ /* add post-rotation back to original axes */
-			mat_mul(m_x,m_axes,a);
+			bn_mat_mul(m_x,m_axes,a);
 			MAT_MOVE(a,m_x);
 		}
 		if (relative_c)

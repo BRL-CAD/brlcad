@@ -53,7 +53,7 @@ char **argv;
 	fastf_t val, time, roll_ang, yaw,sign;
 	vect_t v, point, front, back, zero, temp1, temp2;
 	mat_t m_from_world, m_to_world;
-	double mat_atan2();
+	double bn_atan2();
 
 	/* initialize variables */
 	VSETALL(zero, 0.0);
@@ -75,7 +75,7 @@ char **argv;
 		VSCAN(temp1);
 		scanf("%*f%*[^-0123456789]");
 		VSCAN(temp2);
-		angle = mat_atan2( (temp2[1]-temp1[1]),(temp2[0]-temp1[0]) );
+		angle = bn_atan2( (temp2[1]-temp1[1]),(temp2[0]-temp1[0]) );
 		rewind(stdin);
 	}
 	count = 0;
@@ -112,7 +112,7 @@ char **argv;
 
 			/*calculate new angle of vehicle*/
 			VSUB2(temp1,front,back);
-			angle = mat_atan2(temp1[1],temp1[0]);
+			angle = bn_atan2(temp1[1],temp1[0]);
 		}
 		else { /*first time through */
 			/*angle is already determined*/
@@ -126,7 +126,7 @@ char **argv;
 				sign = 1.0;
 			else
 				sign = -1.0;
-			yaw = mat_atan2(sign*v[1],sign*v[0]);
+			yaw = bn_atan2(sign*v[1],sign*v[0]);
 			if (radius > VDIVIDE_TOL)
 				roll_ang -= sign * MAGNITUDE(v) / radius;
 

@@ -170,16 +170,16 @@ char **argv;
 			anim_tran(m_rot1);
 			VSUB2(rotated,cen2,cen1);
 			MAT4X3PNT(cen_ans, m_rot1, rotated);
-			mat_mul(m_ans, m_rot1, m_rot2);
+			bn_mat_mul(m_ans, m_rot1, m_rot2);
 		} else if (output_mode==CASCADE_F) {
 			anim_tran(m_rot2);
-			mat_mul(m_ans, m_rot1, m_rot2);
+			bn_mat_mul(m_ans, m_rot1, m_rot2);
 			MAT4X3PNT(rotated, m_ans, cen2);
 			VSUB2(cen_ans, cen1, rotated);
 		} else {
 			MAT4X3PNT(rotated, m_rot1, cen2);
 			VADD2(cen_ans, rotated, cen1);
-			mat_mul(m_ans, m_rot1, m_rot2);
+			bn_mat_mul(m_ans, m_rot1, m_rot2);
 		}
 		anim_mat2ypr(rad_ang_ans, m_ans);
 		VSCALE(ang_ans, rad_ang_ans, RTOD);

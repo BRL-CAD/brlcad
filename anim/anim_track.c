@@ -222,7 +222,7 @@ char **argv;
 	}
 
 	if (anti_strobe) {
-		RT_RANDSEED(rndtabi, 0);
+		BN_RANDSEED(rndtabi, 0);
 	}
 
 	/* main loop */
@@ -299,7 +299,7 @@ char **argv;
 			delta = distance - prev_dist;
 			prev_dist = distance;
 			if ((delta >= halfpadlen)||(delta <= -halfpadlen)) {
-				distance += RT_RANDOM(rndtabi) * 2.0* halfpadlen;
+				distance += BN_RANDOM(rndtabi) * 2.0* halfpadlen;
 			}
 		}
 
@@ -317,7 +317,7 @@ char **argv;
 			        	anim_add_trans(wmat,position,zero);
 			        	if (axes || cent){ /* link moved to vehicle coords */
 			        		MAT_MOVE(mat_x,wmat);
-			        		mat_mul(wmat,m_axes,mat_x);
+			        		bn_mat_mul(wmat,m_axes,mat_x);
 			        	}
 			        	if (print_mode==PRINT_ANIM) {
 						printf("anim %s%d matrix %s\n", *(argv+link_nindex),count,link_cmd);
@@ -334,8 +334,8 @@ char **argv;
 					VREVERSE(temp,wh[count].pos);
 					anim_add_trans(wmat,x[count].w.pos,temp);
 			        	if (axes || cent){
-				        	mat_mul(mat_x,wmat,m_rev_axes);
-			        		mat_mul(wmat,m_axes,mat_x);
+				        	bn_mat_mul(mat_x,wmat,m_rev_axes);
+			        		bn_mat_mul(wmat,m_axes,mat_x);
 			        	}
 			        	if (print_mode==PRINT_ANIM) {
 						printf("anim %s%d matrix %s\n",*(argv+wheel_nindex),count,wheel_cmd);
