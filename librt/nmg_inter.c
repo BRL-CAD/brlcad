@@ -780,7 +780,7 @@ struct faceuse *fu;
 	 * the geometry
 	 */
 	pt = vu->v_p->vg_p->coord;
-	dist = NMG_DIST_PT_PLANE(pt, fu->f_p->fg_p->N);
+	dist = DIST_PT_PLANE(pt, fu->f_p->fg_p->N);
 
 	if ( !NEAR_ZERO(dist, bs->tol.dist) )  return;
 
@@ -1848,7 +1848,7 @@ struct faceuse	*fu2;
 			fu2lg = fu2lu->l_p->lg_p;
 			NMG_CK_LOOP_G(fu2lg);
 
-			if (! NMG_EXTENT_OVERLAP( fu2lg->min_pt, fu2lg->max_pt,
+			if (! V3RPP_OVERLAP( fu2lg->min_pt, fu2lg->max_pt,
 			    lg->min_pt, lg->max_pt)) continue;
 
 			nmg_isect_plane_loop_face(bs, lu, fu2);
@@ -2132,7 +2132,7 @@ CONST struct rt_tol	*tol;
 			pl2[0], pl2[1], pl2[2], pl2[3]);
 	}
 
-	if ( !NMG_EXTENT_OVERLAP(f2->fg_p->min_pt, f2->fg_p->max_pt,
+	if ( !V3RPP_OVERLAP(f2->fg_p->min_pt, f2->fg_p->max_pt,
 	    f1->fg_p->min_pt, f1->fg_p->max_pt) )  return;
 
 	/* Extents of face1 overlap face2 */
@@ -2202,7 +2202,7 @@ CONST struct rt_tol	*tol;
 	}
 
 	/* See if shells overlap */
-	if ( ! NMG_EXTENT_OVERLAP(sa1->min_pt, sa1->max_pt,
+	if ( ! V3RPP_OVERLAP(sa1->min_pt, sa1->max_pt,
 	    sa2->min_pt, sa2->max_pt) )
 		return;
 
@@ -2222,7 +2222,7 @@ CONST struct rt_tol	*tol;
 		NMG_CK_FACE_G(f1->fg_p);
 
 		/* See if face f1 overlaps shell2 */
-		if( ! NMG_EXTENT_OVERLAP(sa2->min_pt, sa2->max_pt,
+		if( ! V3RPP_OVERLAP(sa2->min_pt, sa2->max_pt,
 		    f1->fg_p->min_pt, f1->fg_p->max_pt) )
 			continue;
 

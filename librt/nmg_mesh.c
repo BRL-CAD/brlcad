@@ -145,7 +145,7 @@ struct edgeuse *eu1, *eu2;
 	cosangle = VDOT(plvec1, plvec2);
 
 	VADD2(test_pt, pt, plvec2);
-	dist = NMG_DIST_PT_PLANE(test_pt, Norm1);
+	dist = DIST_PT_PLANE(test_pt, Norm1);
 
 	if (rt_g.NMG_debug & DEBUG_MESH) {
 		VPRINT("\tplvec1", plvec1);

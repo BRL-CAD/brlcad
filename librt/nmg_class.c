@@ -414,7 +414,7 @@ CONST struct rt_tol	*tol;
 	if (rt_g.NMG_debug & DEBUG_CLASSIFY)
 		VPRINT("pt_inout_s: ", pt);
 
-	if (! NMG_EXTENT_OVERLAP(s->sa_p->min_pt,s->sa_p->max_pt,pt,pt) )  {
+	if (! V3RPP_OVERLAP(s->sa_p->min_pt,s->sa_p->max_pt,pt,pt) )  {
 		if (rt_g.NMG_debug & DEBUG_CLASSIFY)
 			rt_log("	OUTSIDE, extents don't overlap\n");
 

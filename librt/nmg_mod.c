@@ -1437,7 +1437,7 @@ struct faceuse *fu;
 		overlap = 0;
 		for (RT_LIST_FOR(lu2, loopuse, &fu->lu_hd)) {
 			if (lu == lu2) continue;
-			if (NMG_EXTENT_OVERLAP(
+			if (V3RPP_OVERLAP(
 			    lu->lg_p->min_pt, lu->lg_p->max_pt,
 			    lu2->lg_p->min_pt, lu2->lg_p->max_pt) ) {
 				overlap
