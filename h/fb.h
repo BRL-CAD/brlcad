@@ -290,6 +290,11 @@ extern int	fb_sim_getcursor();
 	}
 #define FB_CK_FBIO(_p)	FB_CKMAG(_p, FB_MAGIC, "FBIO" )
 
+/* tcl.c */
+/* The presence of Tcl_Interp as an arg prevents giving arg list */
+extern void fb_tcl_setup();
+extern int Fb_Init();
+
 /* vers.c (created by libfb/Cakefile) */
 extern char fb_version[];
 
