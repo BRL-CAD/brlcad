@@ -74,7 +74,8 @@ char *tblXXX;
 }
 
 /*
- *
+ *	"Paint" the elements of a face with a meaning.  For example
+ *	mark everything in a face as being part of a 2-manifold
  */
 static void paint_face(fu, paint_table, paint_color, paint_meaning, tbl)
 struct faceuse *fu;
@@ -95,8 +96,13 @@ int paint_color;
 			continue;
 
 		for (RT_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
+			NMG_CK_EDGEUSE(eu);
+			NMG_CK_EDGEUSE(eu->eumate_p);
 			eur = nmg_radial_face_edge_in_shell(eu);
+			NMG_CK_EDGEUSE(eur);
+			NMG_CK_FACEUSE(eur->up.lu_p->up.fu_p);
 			newfu = eur->up.lu_p->up.fu_p;
+
 
 			while (NMG_MANIFOLDS(tbl, newfu) & NMG_2MANIFOLD &&
 			    eur != eu->eumate_p) {
@@ -106,7 +112,8 @@ int paint_color;
 			}
 
 			if (newfu->orientation == OT_SAME)
-				paint_face(newfu,paint_table,paint_color,tbl);
+				paint_face(newfu,paint_table,paint_color,
+					paint_meaning,tbl);
 			else {
 				/* mark this group as being interior */
 				paint_meaning[paint_color] = PAINT_INTERIOR;
