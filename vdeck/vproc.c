@@ -1,6 +1,6 @@
 /*
-	@(#) vproc.c			retrieved: 8/13/86 at 08:25:53,
-	@(#) version 2.4		last edit: 2/1/85 at 13:53:02.
+	@(#) vproc.c			retrieved: 8/13/86 at 08:26:13,
+	@(#) version 2.5		last edit: 3/29/85 at 15:13:08.
 
 	Written by Gary S. Moss.
 	All rights reserved, Ballistic Research Laboratory.
@@ -419,6 +419,7 @@ builddir()
 				record.u_id,
 				record.u_id );
 			ndir--;
+			dp--;
 			break;
 		}
 		dp++;
