@@ -28,6 +28,10 @@ if [info exists env(MGED_HTML_DIR)] {
         set mged_html_dir [lindex $auto_path 0]/../html/mged
 }
 
+if ![info exists mged_color_scheme] {
+    color_scheme_init
+}
+
 if ![info exists use_grid_gm] {
     set use_grid_gm 1
 }
@@ -168,6 +172,7 @@ proc gui_create_default { args } {
     global dm_insert_char_flag
     global mged_comb
     global use_grid_gm
+    global mged_color_scheme
 
     if {$mged_default_dt == ""} {
 	set mged_default_dt [dm_bestXType $mged_default_gdisplay]
@@ -430,10 +435,13 @@ menu .$id.menubar.file.pref -tearoff $do_tearoffs
 	-menu .$id.menubar.file.pref.cle
 .$id.menubar.file.pref add cascade -label "Special Characters" -underline 0\
 	-menu .$id.menubar.file.pref.special_chars
-.$id.menubar.file.pref add cascade -label "Wireframe Highlight Color" -underline 0\
-	-menu .$id.menubar.file.pref.wireframe_highlight_color
-.$id.menubar.file.pref add cascade -label "Default Wireframe Color" -underline 0\
-	-menu .$id.menubar.file.pref.default_wireframe_color
+.$id.menubar.file.pref add command -label "Color Schemes..." -underline 6\
+	-command "color_scheme_build $id \"Color Schemes\" [list $mged_color_scheme(primary_map)]\
+	\"Faceplate Colors\" [list $mged_color_scheme(secondary_map)]"
+#.$id.menubar.file.pref add cascade -label "Wireframe Highlight Color" -underline 0\
+#	-menu .$id.menubar.file.pref.wireframe_highlight_color
+#.$id.menubar.file.pref add cascade -label "Default Wireframe Color" -underline 0\
+#	-menu .$id.menubar.file.pref.default_wireframe_color
 
 menu .$id.menubar.file.pref.units -tearoff $do_tearoffs
 .$id.menubar.file.pref.units add radiobutton -value um -variable mged_display(units)\
@@ -611,8 +619,8 @@ menu .$id.menubar.settings -tearoff $do_tearoffs
 	-menu .$id.menubar.settings.grid_spacing
 .$id.menubar.settings add cascade -label "Framebuffer" -underline 0\
 	-menu .$id.menubar.settings.fb
-.$id.menubar.settings add cascade -label "Pane Background Color" -underline 5\
-	-menu .$id.menubar.settings.bgColor
+#.$id.menubar.settings add cascade -label "Pane Background Color" -underline 5\
+#	-menu .$id.menubar.settings.bgColor
 .$id.menubar.settings add cascade -label "View Axes Position" -underline 0\
 	-menu .$id.menubar.settings.vap
 
@@ -699,26 +707,26 @@ menu .$id.menubar.settings.fb -tearoff $do_tearoffs
 	-label "Listen For Clients" -underline 0\
 	-command "set_listen $id" -state disabled
 
-menu .$id.menubar.settings.bgColor -tearoff $do_tearoffs
-.$id.menubar.settings.bgColor add command -label black -underline 0\
-	-command "mged_apply $id \"dm bg 0 0 0\""
-.$id.menubar.settings.bgColor add command -label white -underline 0\
-	-command "mged_apply $id \"dm bg 255 255 255\""
-.$id.menubar.settings.bgColor add command -label red -underline 0\
-	-command "mged_apply $id \"dm bg 255 0 0\""
-.$id.menubar.settings.bgColor add command -label green -underline 0\
-	-command "mged_apply $id \"dm bg 0 255 0\""
-.$id.menubar.settings.bgColor add command -label blue -underline 0\
-	-command "mged_apply $id \"dm bg 0 0 255\""
-.$id.menubar.settings.bgColor add command -label yellow -underline 0\
-	-command "mged_apply $id \"dm bg 255 255 0\""
-.$id.menubar.settings.bgColor add command -label cyan -underline 0\
-	-command "mged_apply $id \"dm bg 0 255 255\""
-.$id.menubar.settings.bgColor add command -label magenta -underline 0\
-	-command "mged_apply $id \"dm bg 255 0 255\""
-.$id.menubar.settings.bgColor add separator
-.$id.menubar.settings.bgColor add command -label "Color Tool..." -underline 6\
-	-command "choosePaneColor $id"
+#menu .$id.menubar.settings.bgColor -tearoff $do_tearoffs
+#.$id.menubar.settings.bgColor add command -label black -underline 0\
+#	-command "mged_apply $id \"dm bg 0 0 0\""
+#.$id.menubar.settings.bgColor add command -label white -underline 0\
+#	-command "mged_apply $id \"dm bg 255 255 255\""
+#.$id.menubar.settings.bgColor add command -label red -underline 0\
+#	-command "mged_apply $id \"dm bg 255 0 0\""
+#.$id.menubar.settings.bgColor add command -label green -underline 0\
+#	-command "mged_apply $id \"dm bg 0 255 0\""
+#.$id.menubar.settings.bgColor add command -label blue -underline 0\
+#	-command "mged_apply $id \"dm bg 0 0 255\""
+#.$id.menubar.settings.bgColor add command -label yellow -underline 0\
+#	-command "mged_apply $id \"dm bg 255 255 0\""
+#.$id.menubar.settings.bgColor add command -label cyan -underline 0\
+#	-command "mged_apply $id \"dm bg 0 255 255\""
+#.$id.menubar.settings.bgColor add command -label magenta -underline 0\
+#	-command "mged_apply $id \"dm bg 255 0 255\""
+#.$id.menubar.settings.bgColor add separator
+#.$id.menubar.settings.bgColor add command -label "Color Tool..." -underline 6\
+#	-command "choosePaneColor $id"
 
 menu .$id.menubar.settings.vap -tearoff $do_tearoffs
 .$id.menubar.settings.vap add radiobutton -value 0 -variable mged_v_axes_pos($id)\
@@ -740,8 +748,8 @@ menu .$id.menubar.settings.vap -tearoff $do_tearoffs
 menu .$id.menubar.settings.grid -tearoff $do_tearoffs
 .$id.menubar.settings.grid add command -label "Anchor..." -underline 0\
 	-command "do_grid_anchor $id"
-.$id.menubar.settings.grid add command -label "Color..." -underline 0\
-	-command "do_grid_color $id"
+#.$id.menubar.settings.grid add command -label "Color..." -underline 0\
+#	-command "do_grid_color $id"
 .$id.menubar.settings.grid add cascade -label "Spacing" -underline 1\
 	-menu .$id.menubar.settings.grid.spacing
 .$id.menubar.settings.grid add separator
@@ -1140,6 +1148,7 @@ if {[info procs mged_MenuFirstEntry] == ""} {
 cmd_init $id
 setupmv $id
 aim $id $mged_active_dm($id)
+cs_set active 1
 
 if { $join_c } {
     jcs $id
@@ -1165,6 +1174,9 @@ bind $mged_top($id) <KeyPress> { break }
 
 set dbname [_mged_opendb]
 set_wm_title $id $dbname
+
+# Force display manager windows to update their respective color schemes
+mged_apply_local $id "cs_set active \[cs_set active\]"
 
 wm protocol $mged_top($id) WM_DELETE_WINDOW "gui_destroy_default $id"
 wm geometry $mged_top($id) -0+0
@@ -1529,37 +1541,27 @@ proc set_active_dm { id } {
     global view_ring
     global use_grid_gm
 
-    if { 1 } {
-	set vloc [string range $mged_dm_loc($id) 0 0]
-	set hloc [string range $mged_dm_loc($id) 1 1]
-	set tmp_dm $mged_top($id).$mged_dm_loc($id)
+    set vloc [string range $mged_dm_loc($id) 0 0]
+    set hloc [string range $mged_dm_loc($id) 1 1]
+    set tmp_dm $mged_top($id).$mged_dm_loc($id)
 
 # Nothing to do
-	if { $tmp_dm == $mged_active_dm($id) } {
-	    return
-	}
-
-	trace vdelete mged_display($mged_active_dm($id),fps) w "ia_changestate $id"
-
-	# unhighlight
-	$mged_small_dmc($id) configure -bg #d9d9d9
-
-	set mged_active_dm($id) $tmp_dm
-	set mged_small_dmc($id) $mged_dmc($id).$vloc.$hloc
-    } else {
-	# unhighlight
-	$mged_small_dmc($id) configure -bg #d9d9d9
-	
-	trace vdelete mged_display($mged_active_dm($id),fps) w "ia_changestate $id"
-
-	set vloc [string range $mged_dm_loc($id) 0 0]
-	set hloc [string range $mged_dm_loc($id) 1 1]
-	set mged_active_dm($id) $mged_top($id).$mged_dm_loc($id)
-	set mged_small_dmc($id) $mged_dmc($id).$vloc.$hloc
+    if { $tmp_dm == $mged_active_dm($id) } {
+	return
     }
 
-    # highlight
-    $mged_small_dmc($id) configure -bg yellow
+    trace vdelete mged_display($mged_active_dm($id),fps) w "ia_changestate $id"
+
+    # make inactive
+    winset $mged_active_dm($id)
+    cs_set active 0
+
+    set mged_active_dm($id) $tmp_dm
+    set mged_small_dmc($id) $mged_dmc($id).$vloc.$hloc
+
+    # make active
+    winset $mged_active_dm($id)
+    cs_set active 1
 
     trace variable mged_display($mged_active_dm($id),fps) w "ia_changestate $id"
 
