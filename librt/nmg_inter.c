@@ -139,6 +139,8 @@ static int	nmg_isect_edge2p_face2p RT_ARGS((struct nmg_inter_struct *is,
 			struct edgeuse *eu, struct faceuse *fu,
 			struct faceuse *eu_fu));
 
+static struct nmg_inter_struct	*nmg_hack_last_is;	/* see nmg_isect2d_final_cleanup() */
+
 
 /*
  *		N M G _ I N S E R T _ F U _ V U _ I N _ O T H E R _ L I S T
@@ -331,6 +333,8 @@ struct face		*f1;
 
 	NMG_CK_INTER_STRUCT(is);
 	NMG_CK_FACE(f1);
+	nmg_hack_last_is = is;
+
 	fg = f1->fg_p;
 	NMG_CK_FACE_G(fg);
 	is->face = f1;
@@ -364,6 +368,41 @@ struct face		*f1;
 	for( i = (3*is->maxindex)-1-2; i >= 0; i -= 3 )  {
 		VSET( &is->vert2d[i], 0, 0, -1 );
 	}
+}
+
+/*
+ *			N M G _ I S E C T 2 D _ C L E A N U P.
+ *
+ *  Common routine to zap 2d vertex cache, and release dynamic storage.
+ */
+void
+nmg_isect2d_cleanup(is)
+struct nmg_inter_struct	*is;
+{
+	NMG_CK_INTER_STRUCT(is);
+
+	nmg_hack_last_is = (struct nmg_inter_struct *)NULL;
+
+	if( !is->vert2d )  return;
+	rt_free( (char *)is->vert2d, "vert2d");
+	is->vert2d = (fastf_t *)NULL;
+}
+
+/*
+ *			N M G _ I S E C T 2 D _ F I N A L _ C L E A N U P
+ *
+ *  XXX Hack routine used for storage reclamation by G-JACK for
+ *  XXX calculation of the reportcard without gobbling lots of memory
+ *  XXX on rt_bomb() longjmp()s.
+ *  Can be called by the longjmp handler with impunity.
+ *  If a pointer to busy dynamic memory is still handy, it will be freed.
+ *  If not, no harm done.
+ */
+void
+nmg_isect2d_final_cleanup()
+{
+	if( nmg_hack_last_is && nmg_hack_last_is->magic == NMG_INTER_STRUCT_MAGIC )
+		nmg_isect2d_cleanup( nmg_hack_last_is );
 }
 
 /*
@@ -1465,7 +1504,7 @@ struct faceuse		*fu2;
 
 		ret = nmg_isect_edge2p_face2p( &is2, eu1, fu2, fu1 );
 
-		if( is2.vert2d )  rt_free( (char *)is2.vert2d, "vert2d");
+		nmg_isect2d_cleanup( &is2 );
 		/*
 		 *  Because nmg_isect_edge2p_face2p() calls the face cutter,
 		 *  vu's in lone lu's that are listed in the current l1 or
@@ -2140,10 +2179,7 @@ nmg_region_v_unique( fu2->s_p->r_p, &is->tol );
 	}
 
 	/* Zap 2d cache, we are switching faces now */
-	if(is->vert2d)  {
-		rt_free( (char *)is->vert2d, "vert2d" );
-		is->vert2d = NULL;
-	}
+	nmg_isect2d_cleanup(is);
 
 	/* For every edge in f2, intersect with f1, incl. cutjoin */
 f2_again:
@@ -2551,10 +2587,7 @@ struct faceuse		*fu2;
     	}
 
 	/* Zap 2d cache, we should be switching faces now */
-	if(is->vert2d)  {
-		rt_free( (char *)is->vert2d, "vert2d" );
-		is->vert2d = NULL;
-	}
+	nmg_isect2d_cleanup(is);
 
 	/* Project the intersect line into 2D.  Build matrix first. */
 	nmg_isect2d_prep( is, fu1->f_p );
@@ -2850,7 +2883,7 @@ rt_log("co-planar faces.\n");
 		break;
 	}
 
-	if(bs.vert2d)  rt_free( (char *)bs.vert2d, "vert2d" );
+	nmg_isect2d_cleanup( &bs );
 
 	/* Eliminate any OT_BOOLPLACE self-loops now. */
 	nmg_sanitize_fu( fu1 );
@@ -3219,6 +3252,8 @@ nmg_ck_vs_in_region( s2->r_p, tol );
 	/* clean things up now that the intersections have been built */
 	nmg_sanitize_s_lv(s1, OT_BOOLPLACE);
 	nmg_sanitize_s_lv(s2, OT_BOOLPLACE);
+
+	nmg_isect2d_cleanup(&is);
 
 	if( rt_g.NMG_debug & DEBUG_VERIFY )  {
 		nmg_vshell( &s1->r_p->s_hd, s1->r_p );
