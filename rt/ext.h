@@ -49,6 +49,7 @@ extern int		report_progress;	/* !0 = user wants progress report */
 extern struct application	ap;
 extern vect_t		left_eye_delta;
 extern int		rt_verbosity;
+extern int		save_overlaps;		/* flag for setting rti_save_overlaps */
 
 /***** variables shared with worker() ******/
 extern int		stereo;			/* stereo viewing */

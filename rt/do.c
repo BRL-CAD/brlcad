@@ -84,6 +84,7 @@ extern int	finalframe;		/* frame to halt at */
 extern int	curframe;		/* current frame number */
 extern char	*outputfile;		/* name of base of output file */
 extern int	interactive;		/* human is watching results */
+extern int	save_overlaps;		/* flag for setting rti_save_overlaps */
 /***** end variables shared with rt.c *****/
 
 /***** variables shared with refract.c *****/
@@ -450,6 +451,7 @@ struct bu_structparse set_parse[] = {
 #if !defined(__alpha)	/* XXX Alpha does not support this initialization! */
 	{"%d",	1, "width",	byteoffset(width),		BU_STRUCTPARSE_FUNC_NULL },
 	{"%d",	1, "height",	byteoffset(height),		BU_STRUCTPARSE_FUNC_NULL },
+	{"%d",	1, "save_overlaps", byteoffset(save_overlaps),	BU_STRUCTPARSE_FUNC_NULL },
 	{"%f",	1, "perspective", byteoffset(rt_perspective),	BU_STRUCTPARSE_FUNC_NULL },
 	{"%f",	1, "angle",	byteoffset(rt_perspective),	BU_STRUCTPARSE_FUNC_NULL },
 	{"%f",  1, "rt_bot_minpieces", byteoffset(rt_bot_minpieces),BU_STRUCTPARSE_FUNC_NULL },

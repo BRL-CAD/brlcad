@@ -92,6 +92,8 @@ extern char	version[];		/* From vers.c */
 
 extern struct resource	resource[];	/* from opt.c */
 
+int	save_overlaps=0;	/* flag for setting rti_save_overlaps */
+
 /*
  *			S I G I N F O _ H A N D L E R
  */
@@ -250,6 +252,7 @@ char **argv;
 	rtip->rti_nugrid_dimlimit = nugrid_dimlimit;
 	rtip->rti_nu_gfactor = nu_gfactor;
 	rtip->useair = use_air;
+	rtip->rti_save_overlaps = save_overlaps;
 	if( rt_dist_tol > 0 )  {
 		rtip->rti_tol.dist = rt_dist_tol;
 		rtip->rti_tol.dist_sq = rt_dist_tol * rt_dist_tol;
