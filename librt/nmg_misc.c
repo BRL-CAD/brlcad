@@ -47,7 +47,80 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 RT_EXTERN( struct edgeuse *nmg_find_e, (struct vertex *v1, struct vertex *v2, struct shell *s, struct edge *e ) );
 
 void
-nmg_get_fu_snurb_norm( fu, vu, norm )
+nmg_snurb_fu_eval( fu, u, v, pt_on_srf )
+CONST struct faceuse *fu;
+CONST fastf_t u;
+CONST fastf_t v;
+point_t pt_on_srf;
+{
+	struct face *f;
+	struct snurb srf;
+	hpoint_t tmp_pt;
+
+	NMG_CK_FACEUSE( fu );
+
+	f = fu->f_p;
+	NMG_CK_FACE( f );
+	if( !f->g.magic_p )
+	{
+		rt_log( "nmg_snurb_fu_get_norm: face has no geometry (x%x)\n", f );
+		rt_bomb( "nmg_snurb_fu_get_norm: bad face\n" );
+	}
+	if( *f->g.magic_p != NMG_FACE_G_SNURB_MAGIC )
+	{
+		rt_log( "nmg_snurb_fu_get_norm: face is not a NURB face (x%x)\n", f );
+		rt_bomb( "nmg_snurb_fu_get_norm: bad face\n" );
+	}
+
+	nmg_hack_snurb( &srf, f->g.snurb_p );
+	VSETALLN( tmp_pt, 0.0, 4 );
+	rt_nurb_s_eval( &srf, u, v, tmp_pt );
+
+	if( RT_NURB_IS_PT_RATIONAL(srf.pt_type) )
+	{
+		double f;
+
+		f = 1.0 / tmp_pt[3];
+		VSCALE( pt_on_srf, tmp_pt, f );
+	}
+	else
+		VMOVE( pt_on_srf, tmp_pt )
+}
+
+void
+nmg_snurb_fu_get_norm( fu, u, v, norm )
+CONST struct faceuse *fu;
+CONST fastf_t u;
+CONST fastf_t v;
+vect_t norm;
+{
+	struct face *f;
+	struct snurb srf;
+
+	NMG_CK_FACEUSE( fu );
+
+	f = fu->f_p;
+	NMG_CK_FACE( f );
+	if( !f->g.magic_p )
+	{
+		rt_log( "nmg_snurb_fu_get_norm: face has no geometry (x%x)\n", f );
+		rt_bomb( "nmg_snurb_fu_get_norm: bad face\n" );
+	}
+	if( *f->g.magic_p != NMG_FACE_G_SNURB_MAGIC )
+	{
+		rt_log( "nmg_snurb_fu_get_norm: face is not a NURB face (x%x)\n", f );
+		rt_bomb( "nmg_snurb_fu_get_norm: bad face\n" );
+	}
+
+	nmg_hack_snurb( &srf, f->g.snurb_p );
+	rt_nurb_s_norm( &srf, u, v, norm );
+
+	if( (fu->orientation != OT_SAME) != (f->flip != 0 ) )
+		VREVERSE( norm, norm )
+}
+
+void
+nmg_snurb_fu_get_norm_at_vu( fu, vu, norm )
 CONST struct faceuse *fu;
 CONST struct vertexuse *vu;
 vect_t norm;
@@ -60,42 +133,23 @@ vect_t norm;
 	NMG_CK_FACEUSE( fu );
 	NMG_CK_VERTEXUSE( vu );
 
-	f = fu->f_p;
-	if( !f->g.magic_p )
-	{
-		rt_log( "nmg_get_fu_snurb_norm: face has no geometry (x%x)\n", f );
-		rt_bomb( "nmg_get_fu_snurb_norm: bad face\n" );
-	}
-	if( *f->g.magic_p != NMG_FACE_G_SNURB_MAGIC )
-	{
-		rt_log( "nmg_get_fu_snurb_norm: face is not a NURB face (x%x)\n", f );
-		rt_bomb( "nmg_get_fu_snurb_norm: bad face\n" );
-	}
-
 	if( !vu->a.magic_p )
 	{
-		rt_log( "nmg_get_fu_snurb_norm: vertexuse does not have an attribute (x%x)\n", vu );
-		rt_bomb( "nmg_get_fu_snurb_norm: bad VU\n" );
+		rt_log( "nmg_snurb_fu_get_norm_at_vu: vertexuse does not have an attribute (x%x)\n", vu );
+		rt_bomb( "nmg_snurb_fu_get_norm_at_vu: bad VU\n" );
 	}
 
 	if( *vu->a.magic_p != NMG_VERTEXUSE_A_CNURB_MAGIC )
 	{
-		rt_log( "nmg_get_fu_snurb_norm: vertexuse does not have a cnurb attribute (x%x)\n", vu );
-		rt_bomb( "nmg_get_fu_snurb_norm: bad VU\n" );
+		rt_log( "nmg_snurb_fu_get_norm_at_vu: vertexuse does not have a cnurb attribute (x%x)\n", vu );
+		rt_bomb( "nmg_snurb_fu_get_norm_at_vu: bad VU\n" );
 	}
 
 	va = vu->a.cnurb_p;
-	VMOVE( uvw, va->param );
-	if( uvw[2] )
-	{
-		uvw[0] = uvw[0]/uvw[2];
-		uvw[1] = uvw[1]/uvw[2];
-	}
-	nmg_hack_snurb( &srf, f->g.snurb_p );
-	rt_nurb_s_norm( &srf, uvw[0], uvw[1], norm );
+	NMG_CK_VERTEXUSE_A_CNURB( va );
 
-	if( (fu->orientation != OT_SAME) != (f->flip != 0 ) )
-		VREVERSE( norm, norm )
+	nmg_snurb_fu_get_norm( fu, va->param[0], va->param[1], norm );
+
 }
 
 void
@@ -364,7 +418,7 @@ long *flags;
 		if( *fu->f_p->g.magic_p == NMG_FACE_G_PLANE_MAGIC )
 			NMG_GET_FU_NORMAL( normal, fu )
 		else if( *fu->f_p->g.magic_p == NMG_FACE_G_SNURB_MAGIC )
-			nmg_get_fu_snurb_norm( fu, eu1->vu_p, normal );
+			nmg_snurb_fu_get_norm_at_vu( fu, eu1->vu_p, normal );
 
 		if( rt_g.NMG_debug & DEBUG_BASIC )
 			rt_log( "fu normal is ( %g %g %g )\n" , V3ARGS( normal ) );
