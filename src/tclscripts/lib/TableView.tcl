@@ -78,7 +78,7 @@
 	method deleteRow {i}
 	method insertRow {i rdata}
 	method insertDefaultRow {i {def {}}}
-	method moveRow {src dest}
+	method moveRow {srcIndex destIndex}
 
 	# methods that operate on columns
 	method appendCol {label cdata}
@@ -110,9 +110,16 @@
 	# methods that modify the appearance/behavior of
 	# row or column labels
 	method bindRowLabel {i args}
+	method bindRowLabels {args}
+	method cgetRowLabel {i option}
 	method configRowLabel {i args}
+	method configRowLabels {args}
+	method getRowLabelIndex {w}
+	method getLastRowLabelIndex {}
+	method setLastRowLabelIndex {i}
 	method bindColLabel {j args}
 	method configColLabel {j args}
+	method configColLabel_win {w args}
 
 	# methods that operate on column labels
 	method getColLabel {j}
@@ -143,12 +150,22 @@
 
 	method handleConfigure {}
 	method growCol {j weight}
+	method getHighlightRow {}
 	method highlightRow {i}
+	method unhighlightRow {}
+
+	method sortByCol {j type order}
+	method sortByCol_win {w type order}
+	method searchCol {j i str}
+	method flashRow {i n interval}
     }
 
     protected {
+	variable lastRowLabelIndex 0
+
+	# This has been moved to Table.tcl
 	# string marking this row as a separator
-	common SEP_MARK "XXX_SEP"
+	#common SEP_MARK "XXX_SEP"
 
 	# table of associated data
 	variable table
@@ -165,7 +182,7 @@
 	# number of columns
 	variable vcols
 
-	# number of viewable rows (fixed at creation)
+	# number of viewable rows
 	variable vrows 3
 
 	# number of data rows
@@ -198,12 +215,14 @@
 	variable colColors
 
 	# entry options
-	variable entryOptionList {-bg -cursor -exportselection -fg -font 
-	    -highlightbackground -highlightcolor -highlightthickness
-	    -insertbackground -insertborderwidth -insertofftime 
-	    -insertontime -insertwidth -invcmd -justify -relief
-	    -selectbackground -selectborderwidth -selectforeground
-	    -show -state -validate -vcmd -width -xscrollcommand}
+	variable entryOptionList { \
+	       -bg -cursor -disabledforeground -exportselection -fg -font \
+	       -highlightbackground -highlightcolor -highlightthickness \
+	       -insertborderwidth -insertofftime -insertbackground \
+	       -insertontime -insertwidth -invcmd -justify -relief \
+	       -selectbackground -selectborderwidth -selectforeground \
+	       -show -state -validate -vcmd -width -xscrollcommand
+	}
 
 	# label options
 	variable labelOptionList {-activebackground -activeforeground -anchor
@@ -293,7 +312,7 @@
 }
 
 ::itcl::body TableView::destructor {} {
-    delete object $table
+    ::itcl::delete object $table
 }
 
 ################################ Public Methods ################################
@@ -425,37 +444,17 @@
     insertRow $i [getDefaultRow $def]
 }
 
-::itcl::body TableView::moveRow {src dest} {
-    if {![$table isValidRow $src]} {
-	error "moveRow: invalid source index ($src)"
-	return
-    }
+::itcl::body TableView::moveRow {srcIndex destIndex} {
+    $table moveRow $srcIndex $destIndex
 
-    if {![$table isValidRow $dest]} {
-	error "moveRow: invalid destination index ($dest)"
-	return
+    # if row is viewable update entries
+    if {$firstrow <= $destIndex && $destIndex <= $lastrow} {
+	scroll 0
+    } else {
+	updateDrows
+	updateVscroll
     }
-
-    # nothing to do
-    if {$src == $dest} {
-	return
-    }
-
-    # since the table will be modified after
-    # the delete, we need to modify the destination
-    if {$src < $dest} {
-	incr dest -1
-    }
-
-    set row [$table getRow $src]
-    $table deleteRow $src
-    insertRow $dest $row
 }
-
-#
-# Note - Dynamic columns always work on the last column. Afterwards,
-#        simple adjustments are made to correct the view.
-#
 
 ::itcl::body TableView::appendCol {label cdata} {
     incr vcols
@@ -478,12 +477,6 @@
 	}
     }
     activateTraces
-
-    #grid columnconfigure $itk_interior $vcols -weight 1
-
-    # repack the vertical bar
-    #grid $itk_component(vscroll) -row 1 -column 2 -rowspan $vrows -sticky ns
-    #grid columnconfigure $itk_interior [expr {$vcols + 1}] -weight 0
 
     initColColors
     packSepAll
@@ -508,6 +501,42 @@
 	$itk_component(cl$_j) configure -text [lindex $labels $_j]
     }
 
+    if {$j != $vcols} {
+	# decide which row to use for configuring the rows of a column
+	if {$highlightRow != 1} {
+	    set trow e1
+	} else {
+	    set trow e2
+	}
+
+	# Since we are really deleting the last column, we need to
+	# shift the bindings and configurations options for the entries
+	# and column labels to the left (starting at j)
+	for {set j1 $j; set j2 [expr {$j + 1}]} {$j2 <= $vcols} {incr j1; incr j2} {
+	    # shift entry bindings from j2 to j1
+	    set elist [bind $itk_component(e1,$j2)]
+	    foreach event $elist {
+		bindCol $j1 $event [bind $itk_component(e1,$j2) $event]
+	    }
+
+	    # shift entry configuration options from j2 to j1
+	    foreach o $entryOptionList {
+		configCol $j1 $o [$itk_component($trow,$j2) cget $o]
+	    }
+
+	    # shift column label bindings from j2 to j1
+	    set clist [bind $itk_component(cl$j2)]
+	    foreach event $clist {
+		bindColLabel $j1 $event [bind $itk_component(cl$j2) $event]
+	    }
+
+	    # shift column label configuration options from j2 to j1
+	    foreach o $labelOptionList {
+		configColLabel $j1 $o [$itk_component(cl$j2) cget $o]
+	    }
+	}
+    }
+
     # delete last label
     deleteColLabel $vcols
 
@@ -516,10 +545,7 @@
 	deleteEntry $i $vcols
     }
 
-    # repack the vertical bar
     incr vcols -1
-    #grid $itk_component(vscroll) -row 1 -column 2 -rowspan $vrows -sticky ns
-    #grid columnconfigure $itk_interior [expr {$vcols + 1}] -weight 0
 
     initColColors
     packSepAll
@@ -565,40 +591,44 @@
 	set trow e2
     }
 
-    # since we really create a column at the end, we
-    # need to shift the bindings and configuration options
+    # Since we really create a column at the end, we need
+    # to shift the bindings and configuration options for
+    # the entries and the column labels to the right (starting at the end)
     set elist {}
+    set clist {}
     # note - we are not shifting the -textvariable option
     for {set j1 [expr {$vcols - 1}]; set j2 $vcols} {$j < $j2} {incr j1 -1; incr j2 -1} {
-	# shift bindings from j1 to j2
+	# shift entry bindings from j1 to j2
 	set elist [bind $itk_component(e1,$j1)]
-
 	foreach event $elist {
 	    bindCol $j2 $event [bind $itk_component(e1,$j1) $event]
 	}
 
-	# shift configuration options from j1 to j2
+	# shift entry configuration options from j1 to j2
 	foreach o $entryOptionList {
 	    configCol $j2 $o [$itk_component($trow,$j1) cget $o]
 	}
+
+	# shift column label bindings from j1 to j2
+	set clist [bind $itk_component(cl$j1)]
+	foreach event $clist {
+	    bindColLabel $j2 $event [bind $itk_component(cl$j1) $event]
+	}
+
+	# shift column label configuration options from j1 to j2
+	foreach o $labelOptionList {
+	    configColLabel $j2 $o [$itk_component(cl$j1) cget $o]
+	}
     }
 
-    # now turn off the bindings for column j
+    # Now, turn off the bindings for column j
+    # for both the entries and the column label
     foreach event $elist {
 	bindCol $j $event {}
     }
-
-    # use default configuration for column j
-    #    foreach o $entryOptionList {
-    #	set config [$itk_component($trow,$j1) configure $o]
-    #	configCol $j $o [lindex $config end-1]
-    #    }
-
-    #grid columnconfigure $itk_interior $vcols -weight 1
-
-    # repack the vertical bar
-    #grid $itk_component(vscroll) -row 1 -column 2 -rowspan $vrows -sticky ns
-    #grid columnconfigure $itk_interior [expr {$vcols + 1}] -weight 0
+    foreach event $clist {
+	bindColLabel $j $event {}
+    }
 
     initColColors
     packSepAll
@@ -626,9 +656,17 @@
 }
 
 ::itcl::body TableView::appendSep {text} {
-    set srow [getDefaultRow]
-    set srow [lreplace $srow 0 0 [eval list $SEP_MARK $text]]
-    appendRow $srow
+    set data [lreplace [getDefaultRow] 0 0 [eval list $::Table::SEP_MARK $text]]
+
+    foreach datum $data {
+	if {$datum == {}} {
+	    lappend rdata $::Table::SEP_MARK
+	} else {
+	    lappend rdata $datum
+	}
+    }
+
+    appendRow $rdata
 }
 
 ::itcl::body TableView::deleteSep {i} {
@@ -636,15 +674,23 @@
 }
 
 ::itcl::body TableView::insertSep {i text} {
-    set srow [getDefaultRow]
-    set srow [lreplace $srow 0 0 [eval list $SEP_MARK $text]]
-    insertRow $i $srow
+    set data [lreplace [getDefaultRow] 0 0 [eval list $::Table::SEP_MARK $text]]
+
+    foreach datum $data {
+	if {$datum == {}} {
+	    lappend rdata $::Table::SEP_MARK
+	} else {
+	    lappend rdata $datum
+	}
+    }
+
+    insertRow $i $rdata
 }
 
 ::itcl::body TableView::getSepText {i} {
     set srow [$table getRow $i]
     set item1 [lindex $srow 0]
-    if {[lindex $item1 0] == $SEP_MARK} {
+    if {[lindex $item1 0] == $::Table::SEP_MARK} {
 	return [lrange $item1 1 end]
     }
 
@@ -653,7 +699,7 @@
 
 ::itcl::body TableView::setSepText {i text} {
     set item1 [$table getEntry $i 1] 
-    if {[lindex $item1 0] == $SEP_MARK} {
+    if {[lindex $item1 0] == $::Table::SEP_MARK} {
 	if {2 <= [llength $item1]} {
 	    # replace existing text
 	    set item1 [eval lreplace \$item1 1 end $text]
@@ -737,7 +783,7 @@
 }
 
 ::itcl::body TableView::shiftColTracesLeft {j} {
-    if {$j == 1} {
+    if {$j == $vcols} {
 	return
     }
 
@@ -746,7 +792,7 @@
     }
 
     # now shift traces left
-    for {set j1 [expr {$j - 1}]; set j2 $j} {$j1 < $vcols} {incr j1; incr j2} {
+    for {set j1 $j; set j2 [expr {$j + 1}]} {$j1 < $vcols} {incr j1; incr j2} {
 	# delete previous traces
 	foreach vt [trace vinfo evar(1,$j1)] {
 	    if {[llength $vt] == 2} {
@@ -835,12 +881,52 @@
     eval bind $itk_component(rl$i) $args
 }
 
+::itcl::body TableView::bindRowLabels {args} {
+    for {set i 1} {$i <= $vrows} {incr i} {
+	eval bind $itk_component(rl$i) $args
+    }
+}
+
+::itcl::body TableView::cgetRowLabel {i option} {
+    if {![string is digit $i] || $i < 1 || $vrows < $i} {
+	error "TableView::cgetRowLabel: bad row number - $i, must be in the range 1-$vrows"
+    }
+
+    eval $itk_component(rl$i) cget $option
+}
+
 ::itcl::body TableView::configRowLabel {i args} {
     if {![string is digit $i] || $i < 1 || $vrows < $i} {
 	error "TableView::configRowLabel: bad row number - $i, must be in the range 1-$vrows"
     }
 
     eval $itk_component(rl$i) configure $args
+}
+
+::itcl::body TableView::configRowLabels {args} {
+    for {set i 1} {$i <= $vrows} {incr i} {
+	eval $itk_component(rl$i) configure $args
+    }
+}
+
+::itcl::body TableView::getRowLabelIndex {w} {
+    if {![winfo exists $w]} {
+	return 0
+    }
+
+    if {[regsub {^.+rl([0-9]+)$} $w {\1} i]} {
+	return [expr $firstrow + $i - 1]
+    }
+
+    return 0
+}
+
+::itcl::body TableView::getLastRowLabelIndex {} {
+    return $lastRowLabelIndex
+}
+
+::itcl::body TableView::setLastRowLabelIndex {i} {
+    set lastRowLabelIndex $i
 }
 
 ::itcl::body TableView::bindColLabel {j args} {
@@ -857,6 +943,11 @@
     }
 
     eval $itk_component(cl$j) configure $args
+}
+
+::itcl::body TableView::configColLabel_win {w args} {
+    set j [getColIndex $w]
+    eval configColLabel $j $args
 }
 
 ::itcl::body TableView::getColLabel {j} {
@@ -996,15 +1087,24 @@
 }
 
 ::itcl::body TableView::getRowIndex {w} {
+    if {![winfo exists $w]} {
+	return 0
+    }
+
     # Strip away everything except the row number.
     #
-    # First try entry
+    # Trying entry
     if {[regsub {^.+e([0-9]+),[0-9]+$} $w {\1} i]} {
 	return [expr $firstrow + $i - 1]
     }
 
     # Trying separator
     if {[regsub {^.+sl([0-9]+)$} $w {\1} i]} {
+	return [expr $firstrow + $i - 1]
+    }
+
+    # Trying row label
+    if {[regsub {^.+rl([0-9]+)$} $w {\1} i]} {
 	return [expr $firstrow + $i - 1]
     }
 
@@ -1017,8 +1117,8 @@
 	error "TableView::getDataRowIndex: $w is not a valid entry window"
     }
 
-    set di [$table countData $ri $SEP_MARK]
-    if {![$table isData $firstrow $SEP_MARK] && $di < $firstrow} {
+    set di [$table countData $ri $::Table::SEP_MARK]
+    if {![$table isData $firstrow $::Table::SEP_MARK] && $di < $firstrow} {
 	incr di
     }
 
@@ -1030,6 +1130,11 @@
     #
     # First try entry
     if {[regsub {^.+e[0-9]+,([0-9]+)$} $w {\1} j]} {
+	return $j
+    }
+
+    # Trying column label
+    if {[regsub {^.+cl([0-9]+)$} $w {\1} j]} {
 	return $j
     }
 
@@ -1066,7 +1171,16 @@
 }
 
 ::itcl::body TableView::getDefaultSepRow {{def {}}} {
-    return [lreplace [getDefaultRow $def] 0 0 "$SEP_MARK {}"]
+    set data [lreplace [getDefaultRow $def] 0 0 "$::Table::SEP_MARK {}"]
+    foreach datum $data {
+	if {$datum == {}} {
+	    lappend rdata $::Table::SEP_MARK
+	} else {
+	    lappend rdata $datum
+	}
+    }
+
+    return $rdata
 }
 
 ::itcl::body TableView::getDefaultCol {{def {}}} {
@@ -1091,6 +1205,14 @@
     #grid columnconfigure $itk_interior $j -weight $weight
 }
 
+## - getHighlightRow
+#
+# Returns the value of highlightRow
+#
+::itcl::body TableView::getHighlightRow {} {
+    return $highlightRow
+}
+
 ## - highlightRow
 #
 # A nonzero digit indicates which data row to highlight.
@@ -1109,6 +1231,71 @@
     } else {
 	scroll 0
     }
+}
+
+## - unhighlightRow
+#
+# Turn off row highlighting
+#
+::itcl::body TableView::unhighlightRow {} {
+    set highlightRow 0
+    scroll 0
+}
+
+## - sortByCol
+#
+# Sort the table using column j
+#
+::itcl::body TableView::sortByCol {j type order} {
+    $table sortByCol $j $type $order
+    scroll 0
+}
+
+## - sortByCol_win
+#
+# Sort the table using the column that $w is in
+#
+::itcl::body TableView::sortByCol_win {w type order} {
+    set j [getColIndex $w]
+    sortByCol $j $type $order
+}
+
+## - searchCol
+#
+# Search for the string in the specified column
+#
+::itcl::body TableView::searchCol {j i str} {
+    return [$table searchCol $j $i $str]
+}
+
+## - flashRow
+#
+# Scroll to the specified row then flash it n times
+# at the given interval.
+#
+::itcl::body TableView::flashRow {i n interval} {
+    incr n -1
+    if {$n < 0} {
+	return
+    }
+
+    highlightRow $i
+    update
+    for {set t 0} {$t < $n} {incr t} {
+	# Turn of the highlight
+	after $interval
+	unhighlightRow
+	update
+
+	# Turn it back on
+	after $interval
+	highlightRow $i
+	update
+    }
+
+    # Turn of the highlight
+    after $interval
+    unhighlightRow
 }
 
 ################################ Protected Methods ################################
@@ -1139,14 +1326,14 @@
     set ti $firstrow
 
     # di is used to indicate the data row
-    set di [$table countData $firstrow $SEP_MARK]
+    set di [$table countData $firstrow $::Table::SEP_MARK]
 
-    if {![$table isData $firstrow $SEP_MARK] && $di < $firstrow} {
+    if {![$table isData $firstrow $::Table::SEP_MARK] && $di < $firstrow} {
 	incr di
     }
     foreach row $rows {
 	set item1 [lindex $row 0]
-	if {[lindex $item1 0] == $SEP_MARK} {
+	if {[lindex $item1 0] == $::Table::SEP_MARK} {
 
 	    # Here we need to view a separator, but we have widgets
 	    # packed for viewing data.
@@ -1214,8 +1401,16 @@
 	    }
 
 	    # update row label
-	    #$itk_component(rl$gi) configure -text $di
-	    set rlvar($gi) $di
+	    if {$lastRowLabelIndex} {
+		if {$di <= $lastRowLabelIndex} {
+		    set rlvar($gi) $di
+		} else {
+		    set rlvar($gi) ""
+		}
+	    } else {
+		set rlvar($gi) $di
+	    }
+
 	    incr di
 	}
 
@@ -1232,9 +1427,9 @@
     set drows [$table cget -rows]
 
     if {$vrows < $drows} {
-	set invdrows [expr {1.0 / double($drows - 1)}]
+#	set invdrows [expr {1.0 / double($drows - 1)}]
+	set invdrows [expr {1.0 / double($drows)}]
 	set vshown [expr {$vrows * $invdrows}]
-#	set vshown [expr {$vrows / double($drows)}]
     } else {
 	set invdrows 0
 	set vshown 1
@@ -1254,7 +1449,9 @@
 	set y1 0
     }
     set y2 [expr {$y1 + $vshown}]
-    $itk_component(vscroll) set $y1 $y2
+
+    # This is lame (i.e. having to use "after idle ...")
+    after idle "$itk_component(vscroll) set $y1 $y2"
 }
 
 ::itcl::body TableView::activateTraces {} {
@@ -1343,7 +1540,7 @@
 		    bind $itk_component(e$i,$j) $event [bind $itk_component(e1,$j) $event]
 		}
 
-		# configure options for entry e$i,$j using e1,$j
+		# set configure options for entry e$i,$j using e1,$j
 		foreach o $entryOptionList {
 		    $itk_component(e$i,$j) configure $o [$itk_component(e1,$j) cget $o]
 		}
@@ -1355,9 +1552,20 @@
 		bind $itk_component(sl$i) $event [bind $itk_component(sl1) $event]
 	    }
 
-	    # configure options for separator i using sl1
+	    # set configure options for separator i using sl1
 	    foreach o $labelOptionList {
 		$itk_component(sl$i) configure $o [$itk_component(sl1) cget $o]
+	    }
+
+	    # set bindings for row label i using rl1
+	    set elist [bind $itk_component(rl1)]
+	    foreach event $elist {
+		bind $itk_component(rl$i) $event [bind $itk_component(rl1) $event]
+	    }
+
+	    # set configure options for row label i using rl1
+	    foreach o $entryOptionList {
+		$itk_component(rl$i) configure $o [$itk_component(rl1) cget $o]
 	    }
 	}
 
@@ -1381,6 +1589,13 @@
     # repack table
     #grid $itk_component(table) -row 0 -column 1 -sticky nsew
 
+    ##
+    # delete empty rows
+    $table deleteEmptyRows
+
+    ##
+    # Scroll to top so that empty rows will get removed.
+    set firstrow 1
     scroll 0
 }
 
