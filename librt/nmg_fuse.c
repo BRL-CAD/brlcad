@@ -1007,8 +1007,9 @@ CONST struct rt_tol		*tol;
 				}
 				/* Break edge on vertex, but don't fuse yet. */
 				new_eu = nmg_ebreak( v, eu );
-				/* Put new edge into follow-on list */
+				/* Put new edges into follow-on list */
 				nmg_tbl( &new_edgeuses, TBL_INS, &new_eu->l.magic );
+				nmg_tbl( &new_edgeuses, TBL_INS, &eu->l.magic );
 				count++;
 			}
 		}
