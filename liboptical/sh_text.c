@@ -217,7 +217,6 @@ HIDDEN int txt_load_datasource(struct txt_specific *texture, struct db_i *dbInst
 
 			/* !!! need to release the "struct rt_db_internal" but NOT free the binunif */
 			rt_db_free_internal( dbip, (struct resource *)NULL );
-			// bu_free(dbip, "txt_load_datasource");
 
 			/* check size of object */
 			if (texture->tx_binunifp->count < size) {
@@ -441,13 +440,9 @@ char	*dp;
 				if (rdebug & RDEBUG_SHADE )
 					bu_log( "\t %d %d %d weight=%g (from col=%d line=%d)\n", *cp, *(cp+1), *(cp+2), cell_area, col, line );
 
-				//				bu_log("before increment cp=%d *cp=%d RGB (%d, %d, %d)\n", cp, *cp, r,g,b);
-
 				r += (*cp++) * cell_area;
 				g += (*cp++) * cell_area;
 				b += (*cp++) * cell_area;
-
-				//				bu_log("after increment\n");
 			}
 
 		}
