@@ -1466,7 +1466,7 @@ init_sedit()
 	es_keytag = "";
 	get_solid_keypoint( es_keypoint, &es_keytag, &es_int, es_mat );
 
-	es_eu = (struct edgeuse *)NULL;
+	es_eu = (struct edgeuse *)NULL;	/* Reset es_eu */
 
 	sedit_menu();		/* put up menu header */
 
@@ -1851,6 +1851,7 @@ sedit()
 		{
 			mat_t	scalemat;
 
+			es_eu = (struct edgeuse *)NULL;	/* Reset es_eu */
 			if(inpara) {
 				/* accumulate the scale factor */
 				es_scale = es_para[0] / acc_sc_sol;
@@ -1871,6 +1872,7 @@ sedit()
 			vect_t	delta;
 			mat_t	xlatemat;
 
+			es_eu = (struct edgeuse *)NULL;	/* Reset es_eu */
 			if(inpara) {
 				/* Keyboard parameter.
 				 * Apply inverse of es_mat to these
@@ -1892,6 +1894,7 @@ sedit()
 		break;
 	case ECMD_VTRANS:
 		/* translate a vertex */
+		es_eu = (struct edgeuse *)NULL;	/* Reset es_eu */
 		if( es_mvalid )  {
 			/* Mouse parameter:  new position in model space */
 			VMOVE( es_para, es_mparam );
@@ -1981,6 +1984,7 @@ sedit()
 		break;
 
 	case PSCALE:
+		es_eu = (struct edgeuse *)NULL;	/* Reset es_eu */
 		pscale();
 		break;
 
@@ -1998,6 +2002,7 @@ sedit()
 		{
 			mat_t	mat;
 
+			es_eu = (struct edgeuse *)NULL;	/* Reset es_eu */
 			if(inpara) {
 				static mat_t invsolr;
 				/*
@@ -3171,6 +3176,8 @@ sedit_accept()
 
 	if( not_state( ST_S_EDIT, "Solid edit accept" ) )  return;
 
+	es_eu = (struct edgeuse *)NULL;	/* Reset es_eu */
+
 	/* write editing changes out to disc */
 	dp = illump->s_path[illump->s_last];
 
@@ -3202,6 +3209,8 @@ void
 sedit_reject()
 {
 	if( not_state( ST_S_EDIT, "Solid edit reject" ) )  return;
+
+	es_eu = (struct edgeuse *)NULL;	/* Reset es_eu */
 
 	/* Restore the original solid */
 	replot_original_solid( illump );
