@@ -173,6 +173,21 @@ extern int	fb_viewport(FBIO *ifp, int left, int top, int right, int bottom);
 extern int	fb_window(FBIO *ifp, int xcenter, int ycenter);
 extern int	fb_zoom(FBIO *ifp, int xzoom, int yzoom);
 extern int	fb_scursor(FBIO *ifp, int mode, int x, int y);
+
+/*
+ * Some functions and variables we couldn't hide.
+ * Not for general consumption.
+ */
+extern int	_fb_pgin();
+extern int	_fb_pgout();
+extern int	_fb_pgflush();
+extern int	_fb_disk_enable;
+extern int	fb_sim_readrect(FBIO *ifp, int xmin, int ymin, int width, int height, RGBpixel *pp);
+extern int	fb_sim_writerect(FBIO *ifp, int	xmin, int ymin, int width, int height, RGBpixel *pp);
+extern int	fb_sim_view(FBIO *ifp, int xcenter, int ycenter, int xzoom, int yzoom);
+extern int	fb_sim_getview(FBIO *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom);
+extern int	fb_sim_cursor(FBIO *ifp, int mode, int x, int y);
+extern int	fb_sim_getcursor(FBIO *ifp, int *mode, int *x, int *y);
 #else
 extern FBIO	*fb_open();
 extern int	fb_close();
@@ -196,7 +211,6 @@ extern int	fb_viewport();
 extern int	fb_window();
 extern int	fb_zoom();
 extern int	fb_scursor();
-#endif
 
 /*
  * Some functions and variables we couldn't hide.
@@ -212,6 +226,7 @@ extern int	fb_sim_view();
 extern int	fb_sim_getview();
 extern int	fb_sim_cursor();
 extern int	fb_sim_getcursor();
+#endif
 
 /*
  * Copy one RGB pixel to another.
