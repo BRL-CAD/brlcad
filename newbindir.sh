@@ -43,9 +43,9 @@ for i in \
 	cake/Makefile cakeaux/Makefile \
 	remrt/remrt.c libbu/vfont.c \
 	fb/cat-fb.c canon/canonserver.c \
-	h/tcl.h libtk/tkInt.h \
 	mged/cmd.c \
-	brlman/awf brlman/brlman
+	brlman/awf brlman/brlman \
+	libtcl/Cakefile libtk/Cakefile \
 do
 	chmod 775 $i
 	ed - $i << EOF
