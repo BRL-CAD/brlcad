@@ -4,6 +4,13 @@
  * $Revision$
  *
  * $Log$
+ * Revision 2.10  91/08/30  22:37:07  mike
+ * Fixed in-core buffering to operate on the array subscripts, rather than
+ * a (char *) pointer, as this is more portable, and avoids CRAY problems.
+ * In addition, turned off the in-core buffering on CRAY1 (and X and Y)
+ * systems, as it consumes an extra 256 Kbytes, which on smaller Crays
+ * isn't worth it.  Their I/O is plenty fast, and memory is usually tight.
+ * 
  * Revision 2.9  91/08/30  20:29:44  mike
  * Added extern int read().
  * 
@@ -696,7 +703,7 @@ disk_line	atl;
 	return obuff + off;
 }
 
-#if !defined(pdp11) && !defined(CRAY1)
+#if !defined(pdp11) && !defined(CRAY1) & !defined(__CRAY1)
 /* Cache the first 64 disk blocks of temp file in memory, and block align */
 #define	INCORB	64
 char	incorb[(INCORB+1)*BSIZ];
