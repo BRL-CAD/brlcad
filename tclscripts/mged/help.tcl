@@ -43,6 +43,7 @@ set mged_help_data(build_region) {{[-a region_number] tag start end} {build a re
 set mged_help_data(c)		$helplib_data(wdb_comb_std)
 set mged_help_data(cat)		$helplib_data(wdb_cat)
 set mged_help_data(center)	$helplib_data(vo_center)
+set mged_help_data(closedb)	{{}	{close any open database}}
 set mged_help_data(color)	$helplib_data(wdb_color)
 set mged_help_data(comb)	$helplib_data(wdb_comb)
 set mged_help_data(comb_color)	{{comb R G B}	{assign a color to a combination (like 'mater')}}

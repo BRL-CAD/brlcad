@@ -501,10 +501,10 @@ proc gui { args } {
 			{ { summary "Create or initialize the .mgedrc startup file with default variable settings." }
 	{ see_also } }
 	.$id.menubar.file add command -label "Close" -underline 0 \
-			-command "gui_destroy $id"
-	hoc_register_menu_data "File" "Close" "Close Window"\
-			{ { summary "Close this graphical user interface." }
-	{ see_also } }
+			-command "closedb"
+	hoc_register_menu_data "File" "Close" "Close Database"\
+			{ { summary "Close any presently open database." }
+	{ see_also opendb } }
 	.$id.menubar.file add command -label "Exit" -underline 1 -command _mged_quit
 	hoc_register_menu_data "File" "Exit" "Exit MGED"\
 			{ { summary "Exit MGED." }
