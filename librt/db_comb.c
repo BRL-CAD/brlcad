@@ -61,6 +61,41 @@ struct tree_list {
 RT_EXTERN( union tree *db_mkbool_tree , (struct tree_list *tree_list , int howfar ) );
 RT_EXTERN( union tree *db_mkgift_tree , (struct tree_list *tree_list , int howfar , struct db_tree_state *tsp ) );
 
+#define STAT_ROT	1
+#define STAT_XLATE	2
+#define STAT_PERSP	4
+#define STAT_SCALE	8
+/*
+ *			M A T _ C A T E G O R I Z E
+ *
+ *  Describe with a bit vector the effects this matrix will have.
+ */
+int
+mat_categorize( matp )
+CONST mat_t	matp;
+{
+	int	status = 0;
+
+	if( !matp )  return 0;
+
+	if( matp[0] != 1.0 || matp[5] != 1.0 || matp[10] != 1.0 )
+		status |= STAT_ROT;
+
+	if( matp[MDX] != 0.0 ||
+	    matp[MDY] != 0.0 ||
+	    matp[MDZ] != 0.0 )
+		status |= STAT_XLATE;
+
+	if( matp[12] != 0.0 ||
+	    matp[13] != 0.0 ||
+	    matp[14] != 0.0 )
+		status |= STAT_PERSP;
+
+	if( matp[15] != 1.0 )  status |= STAT_SCALE;
+
+	return status;
+}
+
 /*
  *			D B _ T R E E _ N L E A V E S
  *
@@ -400,6 +435,230 @@ double				local2mm;
 }
 
 /*
+ *			R T _ G E T _ C O M B
+ *
+ *  A convenience wrapper to retrive a combination from the database
+ *  into internal form.
+ *
+ *  Returns -
+ *	-1	FAIL
+ *	 0	OK
+ *
+ *  This should be eliminated in favor of rt_db_get_internal().
+ */
+int
+rt_get_comb( ip, dp, matp, dbip )
+struct rt_db_internal	*ip;
+CONST struct directory	*dp;
+CONST matp_t		matp;
+CONST struct db_i	*dbip;
+{
+	struct bu_external	ext;
+
+	RT_CK_DIR(dp);
+	RT_CHECK_DBI( dbip );
+
+	/* Load the entire combination into contiguous memory */
+	BU_INIT_EXTERNAL( &ext );
+	if( db_get_external( &ext, dp, dbip ) < 0 )
+		return -1;
+
+	/* Switch out to right routine, based on database version */
+	if( rt_comb_v4_import( ip, &ext, matp ) < 0 )
+		return -1;
+
+	db_free_external( &ext );
+	return 0;
+}
+
+/*
+ *			D B _ T R E E _ D E S C R I B E
+ */
+void
+db_tree_describe( vls, tp, indented, lvl, mm2local )
+struct bu_vls		*vls;
+CONST union tree	*tp;
+int			indented;
+int			lvl;
+double			mm2local;
+{
+	int	status;
+
+	BU_CK_VLS(vls);
+
+	if( !tp )
+	{
+		/* no tree, probably an empty combination */
+		bu_vls_strcat( vls, "-empty-\n" );
+		return;
+	}
+	RT_CK_TREE(tp);
+	switch( tp->tr_op )  {
+
+	case OP_DB_LEAF:
+		status = mat_categorize( tp->tr_l.tl_mat );
+
+		/* One per line, out onto the vls */
+		if( !indented )  bu_vls_spaces( vls, 2*lvl );
+		bu_vls_strcat( vls, tp->tr_l.tl_name );
+		if( status & STAT_ROT ) {
+			fastf_t	az, el;
+			bn_ae_vec( &az, &el, tp->tr_l.tl_mat ?
+				tp->tr_l.tl_mat : bn_mat_identity );
+			bu_vls_printf( vls, 
+				" az=%g, el=%g, ",
+				az, el );
+		}
+		if( status & STAT_XLATE ) {
+			bu_vls_printf( vls, " [%g,%g,%g]",
+				tp->tr_l.tl_mat[MDX]*mm2local,
+				tp->tr_l.tl_mat[MDY]*mm2local,
+				tp->tr_l.tl_mat[MDZ]*mm2local);
+		}
+		if( status & STAT_SCALE ) {
+			bu_vls_printf( vls, " scale %g",
+				1.0/tp->tr_l.tl_mat[15] );
+		}
+		if( status & STAT_PERSP ) {
+			bu_vls_printf( vls, 
+				" Perspective=[%g,%g,%g]??",
+				tp->tr_l.tl_mat[12],
+				tp->tr_l.tl_mat[13],
+				tp->tr_l.tl_mat[14] );
+		}
+		bu_vls_printf( vls, "\n" );
+		return;
+
+		/* This node is known to be a binary op */
+	case OP_UNION:
+		if(!indented) bu_vls_spaces( vls, 2*lvl );
+		bu_vls_strcat( vls, "u " );
+		goto bin;
+	case OP_INTERSECT:
+		if(!indented) bu_vls_spaces( vls, 2*lvl );
+		bu_vls_strcat( vls, "+ " );
+		goto bin;
+	case OP_SUBTRACT:
+		if(!indented) bu_vls_spaces( vls, 2*lvl );
+		bu_vls_strcat( vls, "- " );
+		goto bin;
+	case OP_XOR:
+		if(!indented) bu_vls_spaces( vls, 2*lvl );
+		bu_vls_strcat( vls, "^ " );
+bin:
+		db_tree_describe( vls, tp->tr_b.tb_left, 1, lvl+1, mm2local );
+		db_tree_describe( vls, tp->tr_b.tb_right, 0, lvl+1, mm2local );
+		return;
+
+		/* This node is known to be a unary op */
+	case OP_NOT:
+		if(!indented) bu_vls_spaces( vls, 2*lvl );
+		bu_vls_strcat( vls, "! " );
+		goto unary;
+	case OP_GUARD:
+		if(!indented) bu_vls_spaces( vls, 2*lvl );
+		bu_vls_strcat( vls, "G " );
+		goto unary;
+	case OP_XNOP:
+		if(!indented) bu_vls_spaces( vls, 2*lvl );
+		bu_vls_strcat( vls, "X " );
+unary:
+		db_tree_describe( vls, tp->tr_b.tb_left, 1, lvl+1, mm2local );
+		return;
+
+	case OP_NOP:
+		if(!indented) bu_vls_spaces( vls, 2*lvl );
+		bu_vls_strcat( vls, "NOP\n" );
+		return;
+
+	default:
+		bu_log("db_tree_describe: bad op %d\n", tp->tr_op);
+		bu_bomb("db_tree_describe\n");
+	}
+}
+
+/*
+ *			D B _ C O M B _ D E S C R I B E
+ */
+db_comb_describe(str, comb, verbose, mm2local)
+struct rt_vls	*str;
+struct rt_comb_internal	*comb;
+int		verbose;
+double		mm2local;
+{
+	RT_CK_COMB(comb);
+
+	if( comb->region_flag ) {
+		bu_vls_printf( str,
+		       "REGION id=%d  (air=%d, los=%d, GIFTmater=%d) ",
+			comb->region_id,
+			comb->aircode,
+			comb->los,
+			comb->GIFTmater );
+	}
+
+	bu_vls_strcat( str, "--\n" );
+	if( bu_vls_strlen(&comb->shader) > 0 ) {
+		bu_vls_printf( str,
+			"Shader '%s'\n",
+			bu_vls_addr(&comb->shader) );
+	}
+
+	if( comb->rgb_valid ) {
+		bu_vls_printf( str,
+			"Color %d %d %d\n",
+			comb->rgb[0],
+			comb->rgb[1],
+			comb->rgb[2]);
+	}
+
+	if( bu_vls_strlen(&comb->shader) > 0 || comb->rgb_valid )  {
+		if( comb->inherit ) {
+			bu_vls_strcat( str, 
+	"(These material properties override all lower ones in the tree)\n");
+		}
+	}
+
+	if( comb->tree )  {
+		if( verbose )  {
+			db_tree_describe( str, comb->tree, 0, 1, mm2local );
+		} else {
+			rt_pr_tree_vls( str, comb->tree );
+		}
+	} else {
+		bu_vls_strcat( str, "(empty tree)\n");
+	}
+}
+
+/*==================== BEGIN table.c rt_functab interface ========== */
+
+/*
+ *			R T _ C O M B _ I M P O R T
+ */
+int
+rt_comb_import(ip, ep, mat)
+struct rt_db_internal	*ip;
+CONST struct rt_external *ep;
+CONST mat_t		mat;
+{
+	/* XXX Switch out to right routine, based on database version */
+	return rt_comb_v4_import( ip, ep, mat );
+}
+
+/*
+ *			R T _ C O M B _ E X P O R T
+ */
+int
+rt_comb_export(ep, ip, local2mm)
+struct rt_external	*ep;
+CONST struct rt_db_internal *ip;
+double			local2mm;
+{
+	/* XXX Switch out to right routine, based on database version */
+	return rt_comb_v4_export( ep, ip, local2mm );
+}
+
+/*
  *			R T _ C O M B _ I F R E E
  *
  *  Free the storage associated with the rt_db_internal version of this combination.
@@ -427,39 +686,26 @@ struct rt_db_internal	*ip;
 }
 
 /*
- *			R T _ G E T _ C O M B
- *
- *  A convenience wrapper to retrive a combination from the database
- *  into internal form.
- *
- *  Returns -
- *	-1	FAIL
- *	 0	OK
+ *			R T _ C O M B _ D E S C R I B E
  */
 int
-rt_get_comb( ip, dp, matp, dbip )
-struct rt_db_internal	*ip;
-CONST struct directory	*dp;
-CONST matp_t		matp;
-CONST struct db_i	*dbip;
+rt_comb_describe(str, ip, verbose, mm2local)
+struct rt_vls	*str;
+struct rt_db_internal *ip;
+int		verbose;
+double		mm2local;
 {
-	struct bu_external	ext;
+	struct rt_comb_internal	*comb;
 
-	RT_CK_DIR(dp);
-	RT_CHECK_DBI( dbip );
+	RT_CK_DB_INTERNAL(ip);
+	comb = (struct rt_comb_internal *)ip->idb_ptr;
+	RT_CK_COMB(comb);
 
-	/* Load the entire combination into contiguous memory */
-	BU_INIT_EXTERNAL( &ext );
-	if( db_get_external( &ext, dp, dbip ) < 0 )
-		return -1;
-
-	/* Switch out to right routine, based on database version */
-	if( rt_comb_v4_import( ip, &ext, matp ) < 0 )
-		return -1;
-
-	db_free_external( &ext );
+	db_comb_describe( str, comb, verbose, mm2local );
 	return 0;
 }
+
+/*==================== END g_comb.c / table.c interface ========== */
 
 /*
  *			D B _ W R A P _ V 4 _ E X T E R N A L
@@ -498,7 +744,7 @@ CONST struct directory	*dp;
  *			R T _ V 4 _ E X P O R T
  *
  *  Soup-to-nuts v4 export, for combinations and geometry.
- *  (See also rt_db_put_internal() ).
+ *  XXX should be phased out in favor of rt_db_put_internal().
  *  The next step after this is probably to call db_put_external().
  *  (which needs to be changed to not do the NAMEMOVE.)
  */
