@@ -127,7 +127,7 @@ do
 	fi
 done
 
-# This will set Shell variables MACHINE, UNIXTYPE, and HAS_TCP
+# This will set Shell variables MACHINE, UNIXTYPE, HAS_TCP, and BASEDIR
 eval `machinetype.sh -b`
 
 DISTDIR=/m/dist/.
@@ -273,20 +273,20 @@ benchmark)
 	if test x$NFS = x1
 	then	sh $0 relink
 	fi
-	(cd ${DIRPRE}libsysv${DIRSUF} &&  cake -k)
-	(cd ${DIRPRE}bench${DIRSUF} && cake -k)
-	(cd ${DIRPRE}libwdb${DIRSUF} &&  cake -k)
+	(cd ${DIRPRE}libsysv${DIRSUF};  cake -k)
+	(cd ${DIRPRE}bench${DIRSUF};  cake -k)
+	(cd ${DIRPRE}libwdb${DIRSUF};  cake -k)
 	if test ${HAS_TCP} = 1
 	then
-		(cd ${DIRPRE}libpkg${DIRSUF} &&  cake -k)  # needed for IF_REMOTE
+		(cd ${DIRPRE}libpkg${DIRSUF};  cake -k)  # needed for IF_REMOTE
 	fi
-	(cd ${DIRPRE}libfb${DIRSUF} && cake -k)
-	(cd ${DIRPRE}libbu${DIRSUF} && cake -k)
-	(cd ${DIRPRE}libbn${DIRSUF} && cake -k)
-	(cd ${DIRPRE}librt${DIRSUF} && cake -k)
-	(cd ${DIRPRE}conv${DIRSUF} && cake -k)
-	(cd ${DIRPRE}db${DIRSUF} && cake -k)
-	(cd ${DIRPRE}rt${DIRSUF} && cake -k)
+	(cd ${DIRPRE}libfb${DIRSUF};  cake -k)
+	(cd ${DIRPRE}libbu${DIRSUF};  cake -k)
+	(cd ${DIRPRE}libbn${DIRSUF};  cake -k)
+	(cd ${DIRPRE}librt${DIRSUF};  cake -k)
+	(cd ${DIRPRE}conv${DIRSUF}; cake -k)
+	(cd ${DIRPRE}db${DIRSUF}; cake -k)
+	(cd ${DIRPRE}rt${DIRSUF};  cake -k)
 	;;
 
 #  These directives operate in the machine-specific directories
@@ -300,13 +300,13 @@ benchmark)
 all)
 	for dir in ${BDIRS}; do
 		echo -------------------------------- ${DIRPRE}${dir}${DIRSUF};
-		( cd ${DIRPRE}${dir}${DIRSUF} && cake -k )
+		( cd ${DIRPRE}${dir}${DIRSUF}; cake -k )
 	done;;
 
 clean|noprod|clobber|lint)
 	for dir in ${BDIRS}; do
 		echo -------------------------------- ${DIRPRE}${dir}${DIRSUF};
-		( cd ${DIRPRE}${dir}${DIRSUF} && cake -k ${TARGET} )
+		( cd ${DIRPRE}${dir}${DIRSUF}; cake -k ${TARGET} )
 	done;;
 
 # Listing of source directories
@@ -327,11 +327,11 @@ ls-bin)
 install|install-nobak|uninstall)
 	for dir in ${ADIRS}; do
 		echo -------------------------------- ${dir};
-		( cd ${dir} && cake -k ${TARGET} )
+		( cd ${dir}; cake -k ${TARGET} )
 	done
 	for dir in ${BDIRS}; do
 		echo -------------------------------- ${DIRPRE}${dir}${DIRSUF};
-		( cd ${DIRPRE}${dir}${DIRSUF} && cake -k ${TARGET} )
+		( cd ${DIRPRE}${dir}${DIRSUF}; cake -k ${TARGET} )
 	done;;
 
 #  These directives operate in the source directory
@@ -341,7 +341,7 @@ install|install-nobak|uninstall)
 install-man|inst-dist|print|typeset|nroff)
 	for dir in ${ADIRS} ${BDIRS}; do
 		echo -------------------------------- ${dir};
-		( cd ${dir} && cake -k ${TARGET} )
+		( cd ${dir}; cake -k ${TARGET} )
 	done;;
 
 #  These directives are for managing the multi-machine objects.
@@ -388,7 +388,7 @@ wc)
 tcl)
 	for dir in ${TDIRS}; do
 		echo -------------------------------- ${DIRPRE}${dir}${DIRSUF};
-		( cd ${DIRPRE}${dir}${DIRSUF} && cake -k )
+		( cd ${DIRPRE}${dir}${DIRSUF}; cake -k )
 	done;;
 
 install-tcl)
@@ -396,7 +396,7 @@ install-tcl)
 	cp -r libtk/library/* /usr/brlcad/tk
 	for dir in ${TDIRS}; do
 		echo -------------------------------- ${DIRPRE}${dir}${DIRSUF};
-		( cd ${DIRPRE}${dir}${DIRSUF} && cake -k install )
+		( cd ${DIRPRE}${dir}${DIRSUF}; cake -k install )
 	done;;
 
 shell)
