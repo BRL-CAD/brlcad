@@ -22,7 +22,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "./iges_struct.h"
 #include "./iges_extern.h"
-#include "/m/cad/librt/debug.h"
+#include "../librt/debug.h"
 
 /* translations to get knot vectors in first quadrant */
 static fastf_t u_translation=0.0;
