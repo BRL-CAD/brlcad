@@ -27,7 +27,7 @@ chgrpprog="${CHGRPPROG-chgrp}"
 stripprog="${STRIPPROG-strip}"
 rmprog="${RMPROG-rm}"
 
-instcmd="$mvprog"
+instcmd="$cpprog"
 chmodcmd=""
 chowncmd=""
 chgrpcmd=""
