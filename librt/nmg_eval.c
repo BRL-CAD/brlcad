@@ -29,10 +29,6 @@ static char RCSnmg_eval[] = "@(#)$Header$ (BRL)";
 #include "nmg.h"
 #include "raytrace.h"
 
-/* XXX move to raytrace.h, for nmg_info.c entries */
-RT_EXTERN(struct faceuse *nmg_find_fu_with_fg_in_s, (CONST struct shell *s1,
-				CONST struct faceuse *fu2));
-
 struct nmg_bool_state  {
 	struct shell	*bs_dest;
 	struct shell	*bs_src;
@@ -71,6 +67,64 @@ static CONST char	*nmg_class_names[] = {
 	"outAonB",
 	"*BAD*CLASS*"
 };
+
+/*
+ *			N M G _ C K _ L U _ O R I E N T A T I O N
+ *
+ *  Make sure that the lu and fu orientation flags are consistent with
+ *  the geometric arrangement of the vertices and the faceuse normal.
+ */
+void
+nmg_ck_lu_orientation( lu, tolp )
+struct loopuse		*lu;
+CONST struct rt_tol	*tolp;
+{
+	struct rt_tol	tol;
+	int		ccw;
+	struct faceuse	*fu;
+	plane_t		peqn;
+
+	NMG_CK_LOOPUSE(lu);
+	fu = lu->up.fu_p;		/* parent had better be faceuse */
+	NMG_CK_FACEUSE(fu);
+
+	NMG_GET_FU_PLANE( peqn, fu );
+
+	if( tolp )  {
+		RT_CK_TOL(tolp);
+		tol = *tolp;		/* struct copy */
+	} else {
+		/* Build something suitable, when no user tol is handy */
+		tol.magic = RT_TOL_MAGIC;
+		tol.dist = 0.005;
+		tol.dist_sq = tol.dist * tol.dist;
+		tol.perp = 0;
+		tol.para = 1;
+	}
+	ccw = nmg_loop_is_ccw(lu, peqn, &tol);
+	if (rt_g.NMG_debug & DEBUG_BOOLEVAL)  {
+		rt_log("nmg_ck_lu_orientation(x%x) ccw=%d, fu=%s, lu=%s\n",
+			lu,
+			ccw,
+			nmg_orientation(fu->orientation),
+			nmg_orientation(lu->orientation)
+		);
+	}
+	if( ccw == 0 )
+		return;		/* can't determine geometric orientation */
+
+
+	if( ((fu->orientation == OT_SAME) == (lu->orientation == OT_SAME) ) &&
+	     ccw != 1 )  {
+		rt_log("nmg_ck_lu_orientation() lu=x%x, ccw=%d, fu_orient=%s, lu_orient=%s\n", lu,
+			ccw,
+			nmg_orientation(fu->orientation),
+			nmg_orientation(lu->orientation)
+		);
+	     	rt_bomb("nmg_ck_lu_orientation() loop orientation flags do not match geometry\n");
+	}
+}
+
 
 /*
  *			N M G _ C L A S S _ N A M E
@@ -290,40 +344,12 @@ struct nmg_bool_state *bs;
 
 			NMG_CK_LOOPUSE(lu);
 			NMG_CK_LOOP( lu->l_p );
+			/* XXX It would be handy to have a user 'tol' here */
 #if 0
 			if (rt_g.NMG_debug & DEBUG_BOOLEVAL)
 #endif
 			{
-				/* XXX Needing a tol here is just for debugging */
-				struct rt_tol	tol;
-				int		ccw;
-
-				tol.magic = RT_TOL_MAGIC;
-				tol.dist = 0.005;
-				tol.dist_sq = tol.dist * tol.dist;
-				tol.perp = 0;
-				tol.para = 1;
-				ccw = nmg_loop_is_ccw(lu, peqn, &tol);
-				if (rt_g.NMG_debug & DEBUG_BOOLEVAL)  {
-					rt_log("lu=x%x, ccw=%d, fu_orient=%s, lu_orient=%s\n", lu,
-						ccw,
-						nmg_orientation(fu->orientation),
-						nmg_orientation(lu->orientation)
-					);
-				}
-				if( ccw != 0 )  {
-					if( ((fu->orientation == OT_SAME) ==
-					     (lu->orientation == OT_SAME) ) &&
-					     ccw != 1 )  {
-						rt_log("lu=x%x, ccw=%d, fu_orient=%s, lu_orient=%s\n", lu,
-							ccw,
-							nmg_orientation(fu->orientation),
-							nmg_orientation(lu->orientation)
-						);
-					     	rt_bomb("loop orientation flags do not match geometry\n");
-					}
-					
-				}
+				nmg_ck_lu_orientation( lu, (struct rt_tol *)0 );
 			}
 			switch( nmg_eval_action( (genptr_t)lu->l_p, bs ) )  {
 			case BACTION_KILL:
@@ -381,7 +407,12 @@ struct nmg_bool_state *bs;
 				if (rt_g.NMG_debug & DEBUG_BOOLEVAL)
 			    		rt_log("faceuse x%x flipped\n", fu);
 				if( fu->s_p != bs->bs_dest )  {
+#if 1
+rt_log("nmg_reverse_face_and_radials(fu=x%x)\n", fu);
 					nmg_reverse_face_and_radials( fu );
+#else
+					nmg_reverse_face( fu );
+#endif
 				} else {
 					nmg_reverse_face( fu );
 				}
