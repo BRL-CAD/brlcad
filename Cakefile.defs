@@ -1186,7 +1186,7 @@ set -S2 "/bin/sh"
 #	define XINCDIR	/usr/X11R6/include
 /*#	define	LEX_OPTS	-l*/
 #	if BUILD_OPTIMIZED	
-#		define	OPTIMIZER	-O3  -fno-common -ffast-math -fstrength-reduce -fexpensive-optimizations /* -faltivec */
+#		define	OPTIMIZER	-O3  -fno-common -ffast-math -fstrength-reduce -fexpensive-optimizations /* -faltivec -funroll-loops -mdynamic-no-pic  (should be on..: -finline-functions) -fnew-ra*/
 #	else
 #		define	OPTIMIZER	-g -fno-common
 #	endif
