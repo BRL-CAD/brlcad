@@ -34,7 +34,7 @@
 #include <rle.h>
 #include <sys/types.h>
 #include <time.h>
-#include "font.h"
+#include "./font.h"
 
 /*
  * Program parameters defaults
