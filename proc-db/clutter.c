@@ -281,7 +281,7 @@ int	nsolids;	/* number of solids for this layer */
 		/* Consider fusing points here, for visual complexity */
 
 		sprintf( name, "%s%d", crname, index++ );
-		mk_arb8( stdout, name, pt );
+		mk_arb8( stdout, name, (CONST point_t *)pt );
 		(void)mk_addmember( name, &head, WMOP_UNION );
 
 		for( i=0; i<8; i++ )  {
@@ -410,7 +410,7 @@ double	size;
 			VSET( pt[1], xbase+size, ybase, vpos);
 			VSET( pt[2], xbase+size/2, ybase+size, vpos);
 			VSET( pt[3], xbase+size/2, ybase+size*sin60/3, vpos+height );
-			mk_arb4( stdout, name, pt );
+			mk_arb4( stdout, name, (CONST point_t *)pt );
 			vpos += height;
 			break;
 		case 3:
