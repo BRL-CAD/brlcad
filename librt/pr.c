@@ -443,6 +443,8 @@ CONST union tree *tree;
 		return( (char *)NULL );
 	RT_CK_TREE(tree);
 	if( tree->tr_op == OP_UNION || tree->tr_op == OP_SUBTRACT || tree->tr_op == OP_INTERSECT )
+	{
+		char *blankl,*blankr;
 
 		left = rt_pr_tree_str( tree->tr_b.tb_left );
 		right = rt_pr_tree_str( tree->tr_b.tb_right );
@@ -457,36 +459,31 @@ CONST union tree *tree;
 			case OP_INTERSECT:
 				op = '+';
 				break;
-		return_length = strlen( left ) + strlen( right ) + 4;
-		if( op == 'u' )
-			return_length += 4;
-		return_length = strlen( left ) + strlen( right ) + 8;
-		if( op == 'u' )
-		{
-			char *blankl,*blankr;
-		return_str = (char *)bu_malloc( return_length , "rt_pr_tree_str: return string" );
-			blankl = strchr( left , ' ' );
-			blankr = strchr( right , ' ' );
-			if( blankl && blankr )
-				sprintf( return_str , "(%s) %c (%s)" , left , op , right );
-			else if( blankl && !blankr )
-				sprintf( return_str , "(%s) %c %s" , left , op , right );
-			else if( !blankl && blankr )
-				sprintf( return_str , "%s %c (%s)" , left , op , right );
-			else
-				sprintf( return_str , "%s %c %s" , left , op , right );
 		}
+		return_length = strlen( left ) + strlen( right ) + 8;
+		return_str = (char *)bu_malloc( return_length , "rt_pr_tree_str: return string" );
+
+		blankl = strchr( left , ' ' );
+		blankr = strchr( right , ' ' );
+		if( blankl && blankr )
+			sprintf( return_str , "(%s) %c (%s)" , left , op , right );
+		else if( blankl && !blankr )
+			sprintf( return_str , "(%s) %c %s" , left , op , right );
+		else if( !blankl && blankr )
 			sprintf( return_str , "%s %c (%s)" , left , op , right );
 		else
+			sprintf( return_str , "%s %c %s" , left , op , right );
 
 		if( tree->tr_b.tb_left->tr_op != OP_DB_LEAF )
 			bu_free( (genptr_t)left , "rt_pr_tree_str: left string" );
 		if( tree->tr_b.tb_right->tr_op != OP_DB_LEAF )
 			bu_free( (genptr_t)right , "rt_pr_tree_str: right string" );
 		return  return_str;
-	else if( tree->tr_op == OP_DB_LEAF ) {
-	else if( tree->tr_op == OP_DB_LEAF )
 	}
+	else if( tree->tr_op == OP_DB_LEAF )
+		return bu_strdup(tree->tr_l.tl_name) ;
+	else if( tree->tr_op == OP_REGION )
+		return( db_path_to_string( &tree->tr_c.tc_ctsp->cts_p ) );
 
 	return (char *)NULL;
 }
