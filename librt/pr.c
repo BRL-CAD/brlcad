@@ -331,6 +331,8 @@ int lvl;			/* recursion level */
 {
 	register int i;
 
+	RT_CK_TREE(tp);
+
 	bu_log("%.8x ", tp);
 	for( i=lvl; i>0; i-- )
 		bu_log("  ");
