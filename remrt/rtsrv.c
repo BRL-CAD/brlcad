@@ -760,6 +760,37 @@ char *buf;
 	(void)free(buf);
 }
 
+/**** Other replacement routines from libbu/log.c ****/
+int	bu_log_indent_cur_level = 0; /* formerly rt_g.rtg_logindent */
+/*
+ *			B U _ L O G _ I N D E N T _ D E L T A
+ *
+ *  Change indentation level by indicated number of characters.
+ *  Call with a large negative number to cancel all indentation.
+ */
+void
+bu_log_indent_delta( delta )
+int	delta;
+{
+	if( (bu_log_indent_cur_level += delta) < 0 )
+		bu_log_indent_cur_level = 0;
+}
+
+/*
+ *			B U _ L O G _ I N D E N T _ V L S
+ *
+ *  For multi-line vls generators, honor logindent level like bu_log() does,
+ *  and prefix the proper number of spaces.
+ *  Should be called at the front of each new line.
+ */
+void
+bu_log_indent_vls( v )
+struct bu_vls	*v;
+{
+	bu_vls_spaces( v, bu_log_indent_cur_level );
+}
+
+
 /*
  *			B U _ L O G
  *
