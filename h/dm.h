@@ -68,11 +68,11 @@
 #define DM_WHITE_R	DM_COLOR_HI
 #define DM_WHITE_G	DM_COLOR_HI
 #define DM_WHITE_B	DM_COLOR_HI
-#define DM_BLACK	DM_BLACK_R,DM_BLACK_G,DM_BLACK_B
-#define DM_RED		DM_RED_R,DM_RED_G,DM_RED_B
-#define DM_BLUE		DM_BLUE_R,DM_BLUE_G,DM_BLUE_B
-#define DM_YELLOW	DM_YELLOW_R,DM_YELLOW_G,DM_YELLOW_B
-#define DM_WHITE	DM_WHITE_R,DM_WHITE_G,DM_WHITE_B
+#define DM_BLACK	DM_BLACK_R, DM_BLACK_G, DM_BLACK_B
+#define DM_RED		DM_RED_R, DM_RED_G, DM_RED_B
+#define DM_BLUE		DM_BLUE_R, DM_BLUE_G, DM_BLUE_B
+#define DM_YELLOW	DM_YELLOW_R, DM_YELLOW_G, DM_YELLOW_B
+#define DM_WHITE	DM_WHITE_R, DM_WHITE_G, DM_WHITE_B
 #define DM_COPY_COLOR(_dr,_dg,_db,_sr,_sg,_sb){\
 	(_dr) = (_sr);\
 	(_dg) = (_sg);\
@@ -103,10 +103,10 @@ struct dm {
   int (*dm_drawBegin)();	/* formerly dmr_prolog */
   int (*dm_drawEnd)();		/* formerly dmr_epilog */
   int (*dm_normal)();
-  int (*dm_newrot)();
+  int (*dm_loadMatrix)();
   int (*dm_drawString2D)();	/* formerly dmr_puts */
   int (*dm_drawLine2D)();	/* formerly dmr_2d_line */
-  int (*dm_drawVertex2D)();
+  int (*dm_drawPoint2D)();
   int (*dm_drawVList)();	/* formerly dmr_object */
   int (*dm_setColor)();
   int (*dm_setLineAttr)();	/* currently - linewidth, (not-)dashed */
@@ -136,15 +136,16 @@ struct dm {
   struct bu_vls dm_dName;	/* Display name */
 };
 
+#define DM_OPEN(_type,_argc,_argv) dm_open(_type,_argc,_argv)
 #define DM_CLOSE(_dmp) _dmp->dm_close(_dmp)
 #define DM_DRAW_BEGIN(_dmp) _dmp->dm_drawBegin(_dmp)
 #define DM_DRAW_END(_dmp) _dmp->dm_drawEnd(_dmp)
 #define DM_NORMAL(_dmp) _dmp->dm_normal(_dmp)
-#define DM_NEWROT(_dmp,_mat,_eye) _dmp->dm_newrot(_dmp,_mat,_eye)
+#define DM_LOADMATRIX(_dmp,_mat,_eye) _dmp->dm_loadMatrix(_dmp,_mat,_eye)
 #define DM_DRAW_STRING_2D(_dmp,_str,_x,_y,_size,_use_aspect)\
      _dmp->dm_drawString2D(_dmp,_str,_x,_y,_size,_use_aspect)
 #define DM_DRAW_LINE_2D(_dmp,_x1,_y1,_x2,_y2) _dmp->dm_drawLine2D(_dmp,_x1,_y1,_x2,_y2)
-#define DM_DRAW_VERTEX_2D(_dmp,_x,_y) _dmp->dm_drawVertex2D(_dmp,_x,_y)
+#define DM_DRAW_POINT_2D(_dmp,_x,_y) _dmp->dm_drawPoint2D(_dmp,_x,_y)
 #define DM_DRAW_VLIST(_dmp,_vlist) _dmp->dm_drawVList(_dmp,_vlist)
 #define DM_SET_COLOR(_dmp,_r,_g,_b,_strict) _dmp->dm_setColor(_dmp,_r,_g,_b,_strict)
 #define DM_SET_LINE_ATTR(_dmp,_width,_dashed) _dmp->dm_setLineAttr(_dmp,_width,_dashed)
