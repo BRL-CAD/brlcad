@@ -38,7 +38,7 @@ char	**argv;
 		if( n <= 0 )
 			break;
 		if( n < L )
-			bzero( &data[n], (L-n)*sizeof(*data) );
+			bzero( (char *)&data[n], (L-n)*sizeof(*data) );
 
 		max1 = data[0];
 		for( i = 1; i < L/2; i++ ) {

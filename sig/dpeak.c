@@ -41,7 +41,7 @@ char	**argv;
 		if( n <= 0 )
 			break;
 		if( n < L )
-			bzero( &data[n], (L-n)*sizeof(*data) );
+			bzero( (char *)&data[n], (L-n)*sizeof(*data) );
 
 		last2 = last1 = 0;
 		numpeaks = 0;

@@ -367,7 +367,7 @@ char	**argv;
 	fbp = fb_open( NULL, 0, 0 );
 	fb_clear( fbp, PIXEL_NULL );
 
-	bzero( f, 512*sizeof(*f) );
+	bzero( (char *)f, 512*sizeof(*f) );
 	fhnewz( f, 512 );
 
 	/*
@@ -378,7 +378,7 @@ char	**argv;
 	z = 0;
 	while( fread( inbuf, sizeof(*inbuf), size, stdin ) != 0 ) {
 		/* Left to Right */
-		/*bzero( f, 512*sizeof(*f) );*/
+		/*bzero( (char *)f, 512*sizeof(*f) );*/
 		for( i = 0; i < 512; i++ ) {
 			f[i] = 4*z;	/* up 4 for every z back */
 		}

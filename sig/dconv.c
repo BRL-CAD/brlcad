@@ -84,7 +84,7 @@ M += 1;
 	while( (i = fread(&xbuf[M-1], sizeof(*xbuf), L, stdin)) > 0 ) {
 		if( i < L ) {
 			/* pad the end with zero's */
-			bzero( &xbuf[M-1+i], (L-i)*sizeof(*savebuffer) );
+			bzero( (char *)&xbuf[M-1+i], (L-i)*sizeof(*savebuffer) );
 		}
 		bcopy( savebuffer, xbuf, (M-1)*sizeof(*savebuffer) );
 		bcopy( &xbuf[L], savebuffer, (M-1)*sizeof(*savebuffer) );

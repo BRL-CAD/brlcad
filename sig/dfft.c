@@ -91,7 +91,7 @@ char **argv;
 	while ((n = fread(data, sizeof(*data), L, stdin)) > 0) {
 		if (n != L) {
 			fprintf( stderr, "dfft: warning - partial record, adding %d zeros\n", L-n );
-			bzero(&data[n], L-n);
+			bzero( (char *)&data[n], L-n);
 		}
 
 		/* Do a spectrum */

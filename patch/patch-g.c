@@ -107,7 +107,7 @@ char	*argv[];
 	RT_LIST_INIT( &heade.l);
 	RT_LIST_INIT( &headf.l);
 
-	bzero(list,sizeof(list));
+	bzero( (char *)list,sizeof(list));
 
 	if ( isatty(fileno(stdout)) ){
 		(void)fputs("attempting to send binary output to tty, aborting!\n",stderr);

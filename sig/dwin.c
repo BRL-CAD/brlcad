@@ -103,7 +103,7 @@ char **argv;
 	xform_end = xform_start + L-1;
 
 	/* initialize data buffer */
-	bzero( buf, BSIZE*sizeof(*buf) );
+	bzero( (char *)buf, BSIZE*sizeof(*buf) );
 	buf_start = -BSIZE;
 	buf_num = BSIZE;
 	buf_index = 0;
@@ -198,14 +198,14 @@ buf_start, buf_num, num_to_read, buf_index );
 	n = fread( &buf[buf_num], sizeof(*buf), num_to_read, stdin );
 	if( n == 0 ) {
 		/*fprintf( stderr, "EOF\n" );*/
-		bzero( &buf[buf_num],
+		bzero( (char *)&buf[buf_num],
 			sizeof(*buf)*num_to_read );
 		return;
 	}
 	input_sample += n;
 	buf_num += n;
 	if( n < num_to_read ) {
-		bzero( &buf[buf_num],
+		bzero( (char *)&buf[buf_num],
 			sizeof(*buf)*(num_to_read-n) );
 		clearerr(stdin);	/* XXX HACK */
 	}
