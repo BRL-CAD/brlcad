@@ -596,6 +596,31 @@ char *h;
 }
 
 /*
+ *			N M G _ P R _ E U _ E N D P O I N T S
+ */
+void 
+nmg_pr_eu_endpoints(eu, h)
+CONST struct edgeuse *eu;
+char *h;
+{
+	struct vertex_g	*vg1, *vg2;
+
+	MKPAD(h);
+	NMG_CK_EDGEUSE(eu);
+
+	vg1 = eu->vu_p->v_p->vg_p;
+	vg2 = eu->eumate_p->vu_p->v_p->vg_p;
+	NMG_CK_VERTEX_G(vg1);
+	NMG_CK_VERTEX_G(vg2);
+
+	rt_log("%sEDGEUSE %8x\n%s  (%g, %g, %g) -- (%g, %g, %g)\n", h, eu, h,
+		V3ARGS(vg1->coord),
+		V3ARGS(vg2->coord) );
+
+	Return;
+}
+
+/*
  *			N M G _ P R _ V G
  */
 void 
