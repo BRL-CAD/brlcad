@@ -1318,63 +1318,76 @@ Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
-	mat_t temp;
-	vect_t s_point, point, v_work, model_pt;
+  int iflag = 0;
+  mat_t temp;
+  vect_t s_point, point, v_work, model_pt;
 
-	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
-	  return TCL_ERROR;
+  if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+    return TCL_ERROR;
 
-	if( not_state( ST_O_EDIT, "Object Rotation" ) )
-	  return TCL_ERROR;
+  if( not_state( ST_O_EDIT, "Object Rotation" ) )
+    return TCL_ERROR;
 
-	update_views = 1;
+  /* Check for -i option */
+  if(argv[1][0] == '-' && argv[1][1] == 'i'){
+    iflag = 1;  /* treat arguments as incremental values */
+    ++argv;
+    --argc;
+  }
 
-	if(movedir != ROTARROW) {
-		/* NOT in object rotate mode - put it in obj rot */
+  update_views = 1;
+
+  if(movedir != ROTARROW) {
+    /* NOT in object rotate mode - put it in obj rot */
 #if 0
 		dmp->dm_light( dmp, LIGHT_ON, BE_O_ROTATE );
 		dmp->dm_light( dmp, LIGHT_OFF, BE_O_SCALE );
 		dmp->dm_light( dmp, LIGHT_OFF, BE_O_XY );
 #endif
 		movedir = ROTARROW;
-	}
+  }
 
-	/* find point for rotation to take place wrt */
-	MAT4X3PNT(model_pt, es_mat, es_keypoint);
-	MAT4X3PNT(point, modelchanges, model_pt);
+  /* find point for rotation to take place wrt */
+  MAT4X3PNT(model_pt, es_mat, es_keypoint);
+  MAT4X3PNT(point, modelchanges, model_pt);
 
-	/* Find absolute translation vector to go from "model_pt" to
-	 * 	"point" without any of the rotations in "modelchanges"
-	 */
-	VSCALE(s_point, point, modelchanges[15]);
-	VSUB2(v_work, s_point, model_pt);
+  /* Find absolute translation vector to go from "model_pt" to
+   * 	"point" without any of the rotations in "modelchanges"
+   */
+  VSCALE(s_point, point, modelchanges[15]);
+  VSUB2(v_work, s_point, model_pt);
 
-	/* REDO "modelchanges" such that:
-	 *	1. NO rotations (identity)
-	 *	2. trans == v_work
-	 *	3. same scale factor
-	 */
-	mat_idn(temp);
-	MAT_DELTAS(temp, v_work[X], v_work[Y], v_work[Z]);
-	temp[15] = modelchanges[15];
-	mat_copy(modelchanges, temp);
+  /* REDO "modelchanges" such that:
+   *	1. NO rotations (identity)
+   *	2. trans == v_work
+   *	3. same scale factor
+   */
+  mat_idn(temp);
+  MAT_DELTAS(temp, v_work[X], v_work[Y], v_work[Z]);
+  temp[15] = modelchanges[15];
+  mat_copy(modelchanges, temp);
 
-	/* build new rotation matrix */
-	mat_idn(temp);
-	buildHrot(temp, atof(argv[1])*degtorad,
-			atof(argv[2])*degtorad,
-			atof(argv[3])*degtorad );
+  /* build new rotation matrix */
+  mat_idn(temp);
+  buildHrot(temp, atof(argv[1])*degtorad,
+	    atof(argv[2])*degtorad,
+	    atof(argv[3])*degtorad );
 
-/*XXX*/ mat_copy(acc_rot_sol, temp); /* used to rotate solid/object axis */
+  if(iflag){
+    /* apply accumulated rotations */
+    mat_mul2(acc_rot_sol, temp);
+  }
 
-	/* Record the new rotation matrix into the revised
-	 *	modelchanges matrix wrt "point"
-	 */
-	wrt_point(modelchanges, temp, modelchanges, point);
+  /*XXX*/ mat_copy(acc_rot_sol, temp); /* used to rotate solid/object axis */
+  
+  /* Record the new rotation matrix into the revised
+   *	modelchanges matrix wrt "point"
+   */
+  wrt_point(modelchanges, temp, modelchanges, point);
 
-	new_mats();
+  new_mats();
 
-	return TCL_OK;
+  return TCL_OK;
 }
 
 /* allow precise changes to object scaling, both local & global */
