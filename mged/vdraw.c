@@ -623,18 +623,18 @@ char **argv;
 	switch(	c ) {
 	case 'c': 	/*center*/
 		MAT_DELTAS_GET_NEG(pos, toViewcenter);
-		sprintf(result_string,"%.12e %.12e %.12e", pos[0], pos[1], pos[2]);
+		sprintf(result_string,"%.12g %.12g %.12g", pos[0], pos[1], pos[2]);
 		Tcl_AppendResult(interp, result_string, (char *)NULL);
 		return TCL_OK;
 	case 's':	/*size*/
 		/* don't use base2local, because rt doesn't */
-		sprintf(result_string,"%.12e", Viewscale * 2.0);
+		sprintf(result_string,"%.12g", Viewscale * 2.0);
 		Tcl_AppendResult(interp, result_string, (char *)NULL);
 		return TCL_OK;
 	case 'e':	/*eye*/
 		VSET(temp, 0, 0, 1);
 		MAT4X3PNT(pos, view2model, temp);
-		sprintf(result_string,"%.12e %.12e %.12e",pos[0],pos[1],pos[2]);
+		sprintf(result_string,"%.12g %.12g %.12g",pos[0],pos[1],pos[2]);
 		Tcl_AppendResult(interp, result_string, (char *)NULL);
 		return TCL_OK;
 	case 'y':	/*ypr*/
@@ -646,7 +646,7 @@ char **argv;
 			return TCL_ERROR;
 		}
 		VSCALE(temp, temp, 180.0/M_PI);	
-		sprintf(result_string,"%.12e %.12e %.12e",temp[0],temp[1],temp[2]);
+		sprintf(result_string,"%.12g %.12g %.12g",temp[0],temp[1],temp[2]);
 		Tcl_AppendResult(interp, result_string, (char *)NULL);
 		return TCL_OK;
 	case 'a': 	/* aet*/
@@ -662,12 +662,12 @@ char **argv;
 		if (temp[0] < 180.0 ) temp[0] += 180;
 		temp[1] = -temp[1];
 		temp[2] = -temp[2];
-		sprintf(result_string,"%.12e %.12e %.12e",temp[0],temp[1],temp[2]);
+		sprintf(result_string,"%.12g %.12g %.12g",temp[0],temp[1],temp[2]);
 		Tcl_AppendResult(interp, result_string, (char *)NULL);
 		return TCL_OK;
 	case 'q':	/*quat*/
 		quat_mat2quat(quat,Viewrot);
-		sprintf(result_string,"%.12e %.12e %.12e %.12e", quat[0],quat[1],quat[2],quat[3]);
+		sprintf(result_string,"%.12g %.12g %.12g %.12g", quat[0],quat[1],quat[2],quat[3]);
 		Tcl_AppendResult(interp, result_string, (char *)NULL);
 		return TCL_OK;
 	default:				
@@ -693,7 +693,7 @@ char **argv;
 	fastf_t size;
 	int in_quat, in_center, in_eye, in_ypr, in_aet, in_size;
 	int i, res;
-	vect_t dir, dirz, temp;
+	vect_t dir, norm, temp;
 	mat_t mymat;
 
 	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
@@ -825,20 +825,9 @@ char **argv;
 		VSUB2( dir, center, eye);
 		Viewscale = MAGNITUDE(dir);
 		if (Viewscale < 0.00005) Viewscale = 0.00005;
-		/* use current vehicle z-dir as backup */
-		VSET(temp, 0.0, 1.0, 0.0);
-		mat_trn( mymat, Viewrot);
-		MAT4X3PNT( dirz, mymat, temp);
-		if ((fabs(dirz[0]) < VDIVIDE_TOL)&&(fabs(dirz[1])<VDIVIDE_TOL)){
-			/* or use vehicle -x as backup */
-			if ( dir[2] >= 0.0) {
-				VSET(temp, 0.0, 0.0, 1.0);
-			} else {
-				VSET(temp, 0.0, 0.0, -1.0);
-			}
-			MAT4X3PNT( dirz, mymat, temp);
-		}
-		anim_dirz2mat(mymat, dir, dirz);
+		/* use current eye norm as backup if dir vertical*/
+		VSET(norm, -Viewrot[0], -Viewrot[1], 0.0);
+		anim_dirn2mat(mymat, dir, norm);
 		anim_v_permute(mymat);
 		mat_trn(Viewrot, mymat);
 	}
