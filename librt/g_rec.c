@@ -288,7 +288,7 @@ struct rt_i		*rtip;
 
 		/* X */
 		VSET( P, 1.0, 0, 0 );		/* bounding plane normal */
-		MAT3XVEC( w1, R, P );		/* map plane into local coord syst */
+		MAT3X3VEC( w1, R, P );		/* map plane into local coord syst */
 		/* 1st end ellipse (no Z part) */
 		tmp = magsq_a * w1[X] * w1[X] + magsq_b * w1[Y] * w1[Y];
 		if( tmp > 1.0e-8 )
@@ -311,7 +311,7 @@ struct rt_i		*rtip;
 
 		/* Y */
 		VSET( P, 0, 1.0, 0 );		/* bounding plane normal */
-		MAT3XVEC( w1, R, P );		/* map plane into local coord syst */
+		MAT3X3VEC( w1, R, P );		/* map plane into local coord syst */
 		/* 1st end ellipse (no Z part) */
 		tmp = magsq_a * w1[X] * w1[X] + magsq_b * w1[Y] * w1[Y];
 		if( tmp > 1.0e-8 )
@@ -334,7 +334,7 @@ struct rt_i		*rtip;
 
 		/* Z */
 		VSET( P, 0, 0, 1.0 );		/* bounding plane normal */
-		MAT3XVEC( w1, R, P );		/* map plane into local coord syst */
+		MAT3X3VEC( w1, R, P );		/* map plane into local coord syst */
 		/* 1st end ellipse (no Z part) */
 		tmp = magsq_a * w1[X] * w1[X] + magsq_b * w1[Y] * w1[Y];
 		if( tmp > 1.0e-8 )
