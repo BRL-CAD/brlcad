@@ -157,10 +157,12 @@ proc gui_create_default { args } {
     global do_tearoffs
     global freshline
     global scratchline
+    global vi_overwrite_flag
     global vi_change_flag
     global vi_delete_flag
     global vi_search_flag
     global vi_search_char
+    global vi_search_dir
     global bob_testing
 
 # set defaults
@@ -898,10 +900,12 @@ beginning_of_line .$id.t
 set moveView(.$id.t) 0
 set freshline(.$id.t) 1
 set scratchline(.$id.t) ""
+set vi_overwrite_flag(.$id.t) 0
 set vi_change_flag(.$id.t) 0
 set vi_delete_flag(.$id.t) 0
 set vi_search_flag(.$id.t) 0
 set vi_search_char(.$id.t) ""
+set vi_search_dir(.$id.t) ""
 
 .$id.t tag configure sel -background #fefe8e
 .$id.t tag configure result -foreground blue3
@@ -939,6 +943,7 @@ pack .$id.tf -side top -fill both -expand yes
 #==============================================================================
 # PHASE 5: Creation of other auxilary windows
 #==============================================================================
+mview_build_menubar $id
 
 #==============================================================================
 # PHASE 6: Further setup
@@ -975,7 +980,8 @@ share_menu $mged_top($id).ul $mged_top($id).ll
 share_menu $mged_top($id).ul $mged_top($id).lr
 
 do_rebind_keys $id
-set_wm_title $id
+set dbname [_mged_opendb]
+set_wm_title $id $dbname
 
 wm protocol $mged_top($id) WM_DELETE_WINDOW "gui_destroy_default $id"
 wm geometry $mged_top($id) -0+0
@@ -1367,31 +1373,49 @@ proc set_active_dm { id } {
     do_view_ring_entries $id s
     do_view_ring_entries $id d
 
-    set_wm_title $id
+    set dbname [_mged_opendb]
+    set_wm_title $id $dbname
 }
 
-proc set_wm_title { id } {
+proc set_wm_title { id dbname } {
     global mged_top
+    global mged_dmc
     global mged_dm_loc
 
-    if {$mged_dm_loc($id) == "ul"} {
-	wm title $mged_top($id) "MGED Interaction Window ($id) - Upper Left"
-    } elseif {$mged_dm_loc($id) == "ur"} {
-	wm title $mged_top($id) "MGED Interaction Window ($id) - Upper Right"
-    } elseif {$mged_dm_loc($id) == "ll"} {
-	wm title $mged_top($id) "MGED Interaction Window ($id) - Lower Left"
-    } elseif {$mged_dm_loc($id) == "lr"} {
-	wm title $mged_top($id) "MGED Interaction Window ($id) - Lower Right"
+    if {$mged_top($id) == $mged_dmc($id)} {
+	if {$mged_dm_loc($id) == "ul"} {
+	    wm title $mged_top($id) "MGED 5.0 Graphics Window ($id) - $dbname - Upper Left"
+	    wm title .$id "MGED 5.0 Command Window ($id) - $dbname - Upper Left"
+	} elseif {$mged_dm_loc($id) == "ur"} {
+	    wm title $mged_top($id) "MGED 5.0 Graphics Window ($id) - $dbname - Upper Right"
+	    wm title .$id "MGED 5.0 Command Window ($id) - $dbname - Upper Right"
+	} elseif {$mged_dm_loc($id) == "ll"} {
+	    wm title $mged_top($id) "MGED 5.0 Graphics Window ($id) - $dbname - Lower Left"
+	    wm title .$id "MGED 5.0 Command Window ($id) - $dbname - Lower Left"
+	} elseif {$mged_dm_loc($id) == "lr"} {
+	    wm title $mged_top($id) "MGED 5.0 Graphics Window ($id) - $dbname - Lower Right"
+	    wm title .$id "MGED 5.0 Command Window ($id) - $dbname - Lower Right"
+	}
+    } else {
+	if {$mged_dm_loc($id) == "ul"} {
+	    wm title $mged_top($id) "MGED 5.0 Command Window ($id) - $dbname - Upper Left"
+	} elseif {$mged_dm_loc($id) == "ur"} {
+	    wm title $mged_top($id) "MGED 5.0 Command Window ($id) - $dbname - Upper Right"
+	} elseif {$mged_dm_loc($id) == "ll"} {
+	    wm title $mged_top($id) "MGED 5.0 Command Window ($id) - $dbname - Lower Left"
+	} elseif {$mged_dm_loc($id) == "lr"} {
+	    wm title $mged_top($id) "MGED 5.0 Command Window ($id) - $dbname - Lower Right"
+	}
     }
 }
 
-proc do_last_visited { id } {
-    global mged_top
-    global slidersflag
-
-    unaim $id
-    wm title $mged_top($id) "MGED Interaction Window ($id) - Last Visited"
-}
+#proc do_last_visited { id } {
+#    global mged_top
+#    global slidersflag
+#
+#    unaim $id
+#    wm title $mged_top($id) "MGED Graphics Window ($id) - Last Visited"
+#}
 
 proc set_cmd_win { id } {
     global cmd_win
@@ -1786,5 +1810,13 @@ proc set_fb { id } {
 	.$id.menubar.settings.fb entryconfigure 7 -state disabled
 	.$id.menubar.modes entryconfigure 10 -state disabled
 	set mged_listen($id) 0
+    }
+}
+
+proc new_db_callback { dbname } {
+    global mged_players
+
+    foreach id $mged_players {
+	set_wm_title $id $dbname
     }
 }
