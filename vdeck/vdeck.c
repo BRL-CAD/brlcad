@@ -553,25 +553,23 @@ genptr_t		client_data;
  *
  *  Re-use the librt "soltab" structures here, for our own purposes.
  */
-union tree *gettree_leaf( tsp, pathp, ep, id, client_data )
+union tree *gettree_leaf( tsp, pathp, ip, client_data )
 struct db_tree_state	*tsp;
 struct db_full_path	*pathp;
-struct rt_external	*ep;
-int			id;
+struct rt_db_internal	*ip;
 genptr_t		client_data;
 {
 	register fastf_t	f;
 	register struct soltab	*stp;
 	union tree		*curtree;
 	struct directory	*dp;
-	struct rt_db_internal	intern;
 	struct rt_vls		sol;
 	register int		i;
 	register matp_t		mat;
 
 	RT_VLS_INIT( &sol );
 
-	RT_CK_EXTERNAL(ep);
+	RT_CK_DB_INTERNAL(ip);
 	dp = DB_FULL_PATH_CUR_DIR(pathp);
 
 	/* Determine if this matrix is an identity matrix */
@@ -626,7 +624,7 @@ next_one:
 
 	GETSTRUCT(stp, soltab);
 	stp->l.magic = RT_SOLTAB_MAGIC;
-	stp->st_id = id;
+	stp->st_id = ip->idb_type;
 	stp->st_dp = dp;
 	if( mat )  {
 		stp->st_matp = (matp_t)rt_malloc( sizeof(mat_t), "st_matp" );
@@ -640,26 +638,18 @@ next_one:
 	VSETALL( stp->st_max, -INFINITY );
 	VSETALL( stp->st_min,  INFINITY );
 
-	RT_INIT_DB_INTERNAL(&intern);
-	if( rt_functab[id].ft_import( &intern, ep, stp->st_matp ? stp->st_matp : rt_identity, tsp->ts_dbip ) < 0 )  {
-		rt_log("rt_gettree_leaf(%s):  solid import failure\n", dp->d_namep );
-		if( intern.idb_ptr )  rt_functab[id].ft_ifree( &intern );
-		if( stp->st_matp )  rt_free( (char *)stp->st_matp, "st_matp");
-		rt_free( (char *)stp, "struct soltab");
-		return( TREE_NULL );		/* BAD */
-	}
-	RT_CK_DB_INTERNAL( &intern );
+	RT_CK_DB_INTERNAL( ip );
 
 	if(debug)  {
 		struct rt_vls	str;
 		rt_vls_init( &str );
 		/* verbose=1, mm2local=1.0 */
-		if( rt_functab[id].ft_describe( &str, &intern, 1, 1.0 ) < 0 )  {
+		if( ip->idb_meth->ft_describe( &str, ip, 1, 1.0 ) < 0 )  {
 			rt_log("rt_gettree_leaf(%s):  solid describe failure\n",
 			    dp->d_namep );
 		}
-		rt_log( "%s:  %s", dp->d_namep, rt_vls_addr( &str ) );
-		rt_vls_free( &str );
+		bu_log( "%s:  %s", dp->d_namep, rt_vls_addr( &str ) );
+		bu_vls_free( &str );
 	}
 
 	/* For now, just link them all onto the same list */
@@ -670,33 +660,33 @@ next_one:
 	/* Solid number is stp->st_bit + delsol */
 
 	/* Process appropriate solid type.				*/
-	switch( intern.idb_type )  {
+	switch( ip->idb_type )  {
 	case ID_TOR:
-		addtor( &sol, (struct rt_tor_internal *)intern.idb_ptr,
+		addtor( &sol, (struct rt_tor_internal *)ip->idb_ptr,
 		    dp->d_namep, stp->st_bit+delsol );
 		break;
 	case ID_ARB8:
-		addarb( &sol, (struct rt_arb_internal *)intern.idb_ptr,
+		addarb( &sol, (struct rt_arb_internal *)ip->idb_ptr,
 		    dp->d_namep, stp->st_bit+delsol );
 		break;
 	case ID_ELL:
-		addell( &sol, (struct rt_ell_internal *)intern.idb_ptr,
+		addell( &sol, (struct rt_ell_internal *)ip->idb_ptr,
 		    dp->d_namep, stp->st_bit+delsol );
 		break;
 	case ID_TGC:
-		addtgc( &sol, (struct rt_tgc_internal *)intern.idb_ptr,
+		addtgc( &sol, (struct rt_tgc_internal *)ip->idb_ptr,
 		    dp->d_namep, stp->st_bit+delsol );
 		break;
 	case ID_ARS:
-		addars( &sol, (struct rt_ars_internal *)intern.idb_ptr,
+		addars( &sol, (struct rt_ars_internal *)ip->idb_ptr,
 		    dp->d_namep, stp->st_bit+delsol );
 		break;
 	case ID_HALF:
-		addhalf( &sol, (struct rt_half_internal *)intern.idb_ptr,
+		addhalf( &sol, (struct rt_half_internal *)ip->idb_ptr,
 		    dp->d_namep, stp->st_bit+delsol );
 		break;
 	case ID_ARBN:
-		addarbn( &sol, (struct rt_arbn_internal *)intern.idb_ptr,
+		addarbn( &sol, (struct rt_arbn_internal *)ip->idb_ptr,
 		    dp->d_namep, stp->st_bit+delsol );
 		break;
 	case ID_PIPE:
@@ -704,9 +694,9 @@ next_one:
 	default:
 		(void) fprintf( stderr,
 		    "vdeck: '%s' Solid type %s has no corresponding COMGEOM solid, skipping\n",
-		    dp->d_namep, rt_functab[id].ft_name );
+		    dp->d_namep, ip->idb_meth->ft_name );
 		vls_itoa( &sol, stp->st_bit+delsol, 5 );
-		rt_vls_strcat( &sol, rt_functab[id].ft_name );
+		rt_vls_strcat( &sol, ip->idb_meth->ft_name );
 		vls_blanks( &sol, 5*10 );
 		rt_vls_strcat( &sol, dp->d_namep );
 		rt_vls_strcat( &sol, "\n");
@@ -715,9 +705,6 @@ next_one:
 
 	rt_vls_fwrite( solfp, &sol );
 	rt_vls_free( &sol );
-
-	/* Free storage for internal form */
-	if( intern.idb_ptr )  rt_functab[id].ft_ifree( &intern );
 
 found_it:
 	GETUNION( curtree, tree );
