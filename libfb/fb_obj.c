@@ -275,7 +275,7 @@ fbo_clear_tcl(clientData, interp, argc, argv)
 	int status;
 	RGBpixel pixel;
 	unsigned char *ms;
-	int r, g, b;
+
 
 	if (argc < 2 || 3 < argc) {
 		struct bu_vls vls;
@@ -523,8 +523,8 @@ fbo_pixel_tcl(clientData, interp, argc, argv)
 	struct fb_obj *fbop = (struct fb_obj *)clientData;
 	struct bu_vls vls;
 	int x, y; 	/* pixel position */
-	int r, g, b;
 	RGBpixel pixel;
+
 
 	if (argc < 4)
 		goto error;
@@ -604,11 +604,11 @@ fbo_cell_tcl(clientData, interp, argc, argv)
 	int xmin, ymin;
 	int width;
 	int height;
-	int red, green, blue;
 	int i;
-	char buffer[64];
 	RGBpixel pixel;
 	unsigned char *pp;
+
+
     
 	if (argc != 7) {
 		bu_vls_init(&vls);
@@ -692,7 +692,7 @@ fbo_flush_tcl(clientData, interp, argc, argv)
      char **argv;
 {
 	struct fb_obj *fbop = (struct fb_obj *)clientData;
-	struct bu_vls vls;
+
 
 	if (argc != 2) {
 		struct bu_vls vls;
@@ -823,10 +823,10 @@ fbo_rect_tcl(clientData, interp, argc, argv)
 	int xmax, ymax;
 	int width;
 	int height;
-	int red, green, blue;
 	int i;
-	char buffer[64];
 	RGBpixel pixel;
+
+
     
 	if (argc != 7) {
 		bu_vls_init(&vls);
@@ -982,7 +982,6 @@ fbo_tcllist2color(interp, string, pixel)
      char *string;
      RGBpixel pixel;
 {
-    int ncolors, code;
     int r, g, b;
 
     if (sscanf(string, "%d %d %d", &r, &g, &b) != 3) {

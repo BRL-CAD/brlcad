@@ -380,8 +380,10 @@ FBIO	*ifp;
 	int	pixsize;
 	int	size;
 	int	i;
+#if IRIX < 5
 	char	*old_brk;
 	char	*new_brk;
+#endif
 	char	*sp;
 	int	new = 0;
 
