@@ -1818,7 +1818,7 @@ CONST char			*attr;
 		else if( attr[0] == 'f' )
 		{
 			int indx;
-			/* Retrieve one face, as list of 3tuple coordinates */
+			/* Retrieve one face, as list of 3 3tuple coordinates */
 			if( attr[1] == '\0' )
 			{
 				for( i=0 ; i<bot->num_faces ; i++ )  {
@@ -1842,7 +1842,7 @@ CONST char			*attr;
 			}
 			else
 			{
-				i = atoi( &attr[1] ) - 1;
+				i = atoi( &attr[1] );
 				if( i < 0 || i >=bot->num_faces )
 				{
 					bu_vls_printf( &vls, "face number %d out of range (0..%d)", i, bot->num_faces-1 );
@@ -1983,7 +1983,7 @@ char			**argv;
 			}
 			else
 			{
-				i = atoi( &(argv[0][2]) ) - 1;
+				i = atoi( &(argv[0][2]) );
 				if( i < 0 || i >= bot->num_faces )
 				{
 					Tcl_SetResult( interp, "Face number out of range", TCL_STATIC );
@@ -2051,7 +2051,7 @@ char			**argv;
 		    }
 		  else
 		    {
-		      i = atoi( &argv[0][1] ) - 1;
+		      i = atoi( &argv[0][1] );
 		      if( i < 0 || i >= bot->num_vertices )
 			{
 			  Tcl_SetResult( interp, "vertex number out of range!!!", TCL_STATIC );
@@ -2124,7 +2124,7 @@ char			**argv;
 		      }
 		    else
 		      {
-			i = atoi( &argv[0][1] ) - 1;
+			i = atoi( &argv[0][1] );
 			if( i < 0 || i >= bot->num_faces )
 			  {
 			    Tcl_SetResult( interp, "face number out of range!!!", TCL_STATIC );
@@ -2178,7 +2178,7 @@ char			**argv;
 		      }
 		    else
 		      {
-			i = atoi( &argv[0][1] ) - 1;
+			i = atoi( &argv[0][1] );
 			if( i < 0 || i >= bot->num_faces )
 			  {
 			    Tcl_SetResult( interp, "face number out of range!!!", TCL_STATIC );
