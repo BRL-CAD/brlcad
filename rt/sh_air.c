@@ -255,6 +255,7 @@ struct partition *PartHeadp;
 	 * in the partition list,
 	 * set ap->a_dist to distance to that object
 	 */
+	return 0;
 }
 int
 tmist_miss( ap )
@@ -263,6 +264,7 @@ register struct application *ap;
 	/* we missed?!  This is bogus!
 	 * but set ap->a_dist to something big
 	 */
+	return 0;
 }
 
 /*
@@ -320,7 +322,7 @@ char	*dp;
 	else step_dist = dist / (fastf_t)meters;
 
 	for (dt=0.0 ; dt <= dist ; dt += step_dist) {
-		memcpy(my_ap, ap, sizeof(struct application));
+		memcpy((char *)&my_ap, (char *)ap, sizeof(struct application));
 		VJOIN1(my_ap.a_ray.r_pt, in_pt, dt, my_ap.a_ray.r_dir);
 		VSET(my_ap.a_ray.r_dir, 0.0, 0.0, -1.0);
 		my_ap.a_hit = tmist_hit;
@@ -336,6 +338,7 @@ char	*dp;
 		/* XXX integrate in the effects of this meter of air */
 
 	}
+	tau = 42;
 
 
 	swp->sw_transmit = exp(-tau);
