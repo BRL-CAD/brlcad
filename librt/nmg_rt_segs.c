@@ -878,10 +878,10 @@ struct nmg_ptbl *next_tbl;
 static void
 visitor(l_p, tbl, after)
 long *l_p;
-struct nmg_ptbl *tbl;
+genptr_t tbl;
 int after;
 {
-	(void)nmg_tbl(tbl, TBL_INS_UNIQUE, l_p);
+	(void)nmg_tbl( (struct nmg_ptbl *)tbl, TBL_INS_UNIQUE, l_p);
 }
 
 /*
