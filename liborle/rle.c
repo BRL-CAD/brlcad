@@ -1,7 +1,7 @@
 /*
-	SCCS id:	@(#) librle.c	1.13
-	Last edit: 	3/12/86 at 16:48:37	G S M
-	Retrieved: 	8/13/86 at 10:29:40
+	SCCS id:	@(#) librle.c	1.14
+	Last edit: 	4/29/86 at 15:11:48	G S M
+	Retrieved: 	8/13/86 at 10:29:59
 	SCCS archive:	/m/cad/librle/RCS/s.librle.c
 
 	Author : Gary S. Moss, BRL.
@@ -15,7 +15,7 @@
  */
 #if ! defined( lint )
 static
-char	sccsTag[] = "@(#) librle.c	1.13	last edit 3/12/86 at 16:48:37";
+char	sccsTag[] = "@(#) librle.c	1.14	last edit 4/29/86 at 15:11:48";
 #endif
 #include <stdio.h>
 #include <fb.h>
@@ -607,13 +607,11 @@ Pixel	*scan_buf;
 rle_encode_ln( fp, scan_buf )
 register FILE	*fp;
 Pixel		*scan_buf;
-	{
-	register Pixel *scan_p = &scan_buf[w_setup.h_xpos];
-	register Pixel *last_p = &scan_buf[w_setup.h_xpos+w_setup.h_xlen];
-	register int	i;
-	register int	color;		/* holds current color */
-	register int	nseg;		/* number of non-bg run segments */
-
+	{	register Pixel *scan_p = &scan_buf[w_setup.h_xpos];
+		register Pixel *last_p = &scan_buf[w_setup.h_xpos+(w_setup.h_xlen-1)];
+		register int	i;
+		register int	color;		/* holds current color */
+		register int	nseg;		/* number of non-bg run segments */
 	if( _bg_flag )
 		{
 		if( (nseg = _bg_Get_Runs( scan_p, last_p )) == -1 )
@@ -631,8 +629,7 @@ Pixel		*scan_buf;
 		return	0;
 		}
 	if( _bw_flag )
-		{
-		register Pixel *pixelp;
+		{	register Pixel *pixelp;
 		/* Compute NTSC Black & White in blue row.		*/
 		for( pixelp=scan_p; pixelp <= last_p; pixelp++ )
 			pixelp->blue =  .35 * pixelp->red +
@@ -645,11 +642,9 @@ Pixel		*scan_buf;
 		{
 		if( _bw_flag && color != 2 )
 			continue;
-
 		SetColor( color );
 		if( runs[0].first != scan_p )
-			{	register int	runlen = (runs[0].first-1) -
-							 scan_p;
+			{	register int	runlen = runs[0].first-scan_p;
 			SkipPixels( runlen );
 			}
 		for( i = 0; i < nseg; i++ )
@@ -675,9 +670,8 @@ Pixel		*scan_buf;
 _bg_Get_Runs( pixelp, endpix )
 register Pixel *pixelp;
 register Pixel *endpix;
-	{
-	/* find non-background runs */
-	register int	nseg = 0;
+	{	/* find non-background runs */
+		register int	nseg = 0;
 	while( pixelp <= endpix && nseg < NSEG )
 		{
 		if(	pixelp->red != _bg_pixel.red
@@ -696,20 +690,15 @@ register Pixel *endpix;
 		    		 )
 				)
 				pixelp++;
-
 			/* last pixel in segment */
 			runs[nseg++].last = pixelp-1;
 			}
 		pixelp++;
 		}
-	if( rle_verbose )
-		(void) fprintf( stderr," (%d segments)\n", nseg );
 	if( nseg >= NSEG )
 		{
 		(void) fprintf( stderr,
-				"Encoding incomplete, " );
-		(void) fprintf( stderr, 
-				"segment array 'runs[%d]' is full!\n",
+		"Encoding incomplete, segment array 'runs[%d]' is full!\n",
 				NSEG
 				);
 		return	-1;
@@ -721,13 +710,11 @@ register Pixel *endpix;
 	Encode a segment, 'seg', for specified 'color'.
  */
 _encode_Seg_Color( fp, seg, color )
-FILE	*fp;
+FILE		*fp;
 register int	seg;
 register int	color;
-	{
-	static Pixel *data_p;
-	static Pixel *last_p;
-
+	{	static Pixel *data_p;
+		static Pixel *last_p;
 	switch( color )
 		{
 		case 0:
@@ -754,12 +741,10 @@ _encode_Segment( fp, data_p, last_p )
 FILE		*fp;
 register Pixel	*data_p;
 register Pixel	*last_p;
-	{
-	register Pixel	*pixelp;
-	register Pixel	*runs_p = data_p;
-	register int	state = DATA;
-	register u_char	runval = data_p->CUR;
-
+	{	register Pixel	*pixelp;
+		register Pixel	*runs_p = data_p;
+		register int	state = DATA;
+		register u_char	runval = data_p->CUR;
 	for( pixelp = data_p + 1; pixelp <= last_p; pixelp++ )
 		{
 		switch( state )
@@ -776,7 +761,7 @@ register Pixel	*last_p;
 				runval = pixelp->CUR;
 				runs_p = pixelp;
 				}
-				break;
+			break;
 		case RUN2:
 			if( runval == pixelp->CUR )
 				{
@@ -785,10 +770,11 @@ register Pixel	*last_p;
 				/* Flush out data sequence encountered
 					before this run
 				 */
-				_put_Data(	fp,
-						&(data_p->CUR),
-					 	runs_p-data_p
-					 	);
+				if( runs_p > data_p )
+					_put_Data(	fp,
+							&(data_p->CUR),
+						 	runs_p-data_p
+						 	);
 				}
 			else
 				{ /* Not a run, but maybe this starts one. */
@@ -818,6 +804,7 @@ register Pixel	*last_p;
 			PutRun( runval, pixelp - runs_p );
 			}
 		else
+		if( pixelp > data_p )
 			_put_Data( fp, &data_p->CUR, pixelp - data_p );
 	return;
 	}
@@ -829,11 +816,8 @@ HIDDEN void
 _put_Data( fp, cp, n )
 register FILE	*fp;
 register u_char *cp;
-int	n;
-	{
-	register int	count = n;
-	if( count == 0 )
-		return;
+int		n;
+	{	register int	count = n;
 	RByteData(n-1);
 
 	/* More STDIO optimization, watch out...			*/
