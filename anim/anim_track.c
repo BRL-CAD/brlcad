@@ -228,8 +228,8 @@ char **argv;
 		}
 		printf("end;\n");
 	}
-	cfree(x);
-	cfree(wh);
+	free(x);
+	free(wh);
 }
 
 #define OPT_STR "b:d:cf:i:r:w:se"

@@ -122,11 +122,11 @@ char **argv;
 			}
 		}
 	}
-	cfree(arrayd);
+	free(arrayd);
 	for (x=y;x<y+ocount+icount;x++){
 		cfree(x->list);
 	}
-	cfree(y);
+	free(y);
 	exit(0);
 }
 

@@ -254,9 +254,9 @@ char **argv;
 	}
 	rle_puteof( &out_hdr );
 	rle_raw_free( &in_hdr, scan, nraw );
-	cfree( stretch );
-	cfree( slide );
-	cfree( histo );
+	free( stretch );
+	free( slide );
+	free( histo );
     }
 
     if ( rle_cnt == 0 || (rle_err != RLE_EOF && rle_err != RLE_EMPTY) )
