@@ -80,7 +80,7 @@ rt_log("Cut: Tree Depth=%d, Leaf Len=%d\n", rt_cutDepth, rt_cutLen );
 	 * Always do this, because application debugging uses it too.
 	 */
 	{
-		FAST fastf_t f, diff;
+		register fastf_t f, diff;
 
 		diff = (rtip->mdl_max[X] - rtip->mdl_min[X]);
 		f = (rtip->mdl_max[Y] - rtip->mdl_min[Y]);
@@ -610,12 +610,12 @@ vect_t a, b;
 register fastf_t *min, *max;
 {
 	static vect_t diff;
-	static double sv;
-	static double st;
-	static double mindist, maxdist;
 	register fastf_t *pt = &a[0];
 	register fastf_t *dir = &diff[0];
 	register int i;
+	register double sv;
+	register double st;
+	register double mindist, maxdist;
 
 	mindist = -INFINITY;
 	maxdist = INFINITY;
@@ -652,8 +652,8 @@ register fastf_t *min, *max;
 	if( mindist > 1 || maxdist < 0 )
 		return(0);	/* MISS */
 
-	if( mindist <= 0 && maxdist >= 1 )
-		return(1);	/* HIT, no clipping needed */
+	if( mindist >= 0 && maxdist <= 1 )
+		return(1);	/* HIT within box, no clipping needed */
 
 	/* Don't grow one end of a contained segment */
 	if( mindist < 0 )
