@@ -2749,5 +2749,5 @@ f_binary(     ClientData	clientData,
 	}
 
 	/* should never get here */
-	return TCL_ERROR;
+	/* return TCL_ERROR; */
 }
