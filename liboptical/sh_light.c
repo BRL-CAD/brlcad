@@ -918,10 +918,7 @@ static int
 light_vis(los)
 struct light_obs_stuff *los;
 {
-	fastf_t f;
-	float t;
 	struct application sub_ap;
-	int tmp;
 	double radius, angle, x, y; 
 	point_t shoot_pt;
 	vect_t shoot_dir;
@@ -1046,11 +1043,11 @@ struct light_obs_stuff *los;
 			bu_log("light visible: %s\n", los->lp->lt_name);
 
 #if RT_MULTISPECTRAL
-		if (swp->msw_intensity[i] == BN_TABDATA_NULL) {
-			swp->msw_intensity[i] = sub_ap.a_spectrum;
+		if (los->swp->msw_intensity[i] == BN_TABDATA_NULL) {
+			los->swp->msw_intensity[i] = sub_ap.a_spectrum;
 		} else {
-			bn_tabdata_add(swp->msw_intensity[i],
-				       swp->msw_intensity[i],
+			bn_tabdata_add(los->swp->msw_intensity[i],
+				       los->swp->msw_intensity[i],
 				       sub_ap.a_spectrum);
 
 			bn_tabdata_free(sub_ap.a_spectrum);
@@ -1086,12 +1083,9 @@ int have;
 	register fastf_t *intensity;
 #endif
 	register fastf_t *tl_p;
-	register fastf_t f;
 	int vis_ray;
 	int tot_vis_rays;
 	int visibility;
-	vect_t light_tmp;
-	int ret;
 	struct light_obs_stuff los;
 	static int rand_idx;
 
@@ -1251,7 +1245,7 @@ int have;
 			 *  radius; this presently makes a cubical light 
 			 *  source distribution.
 			 */
-			f = lp->lt_radius * 0.9;
+			f = lp->lt_radius * 0.7;
 			tolight[X] = lp->lt_pos[X] +
 			    bn_rand_half(ap->a_resource->re_randptr)*f -
 			    swp->sw_hit.hit_point[X];
