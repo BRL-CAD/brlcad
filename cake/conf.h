@@ -46,6 +46,16 @@ typedef	long	Cast;
 #	define	CPP_OPTIONS	"-D__CAKE__c1"
 #endif
 
+#if __MACHINETYPE__cr2
+#	define	CPP		"/lib/cpp"
+#	define	CPP_OPTIONS	"-D__CAKE__cr2"
+#endif
+
+#if __MACHINETYPE__xmp
+#	define	CPP		"/lib/cpp"
+#	define	CPP_OPTIONS	"-D__CAKE__xmp"
+#endif
+
 #if __MACHINETYPE__bsdi
 	/* BSDI from Rob Colstad */
 #	define	CPP		"/usr/ucb/cpp"
