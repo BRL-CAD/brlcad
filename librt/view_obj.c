@@ -87,7 +87,7 @@ struct view_obj HeadViewObj;		/* head of view object list */
 
 static struct bu_cmdtab vo_cmds[] = 
 {
-	{"aet",			vo_aet_tcl},
+	{"ae",			vo_aet_tcl},
 	{"arot",		vo_arot_tcl},
 	{"base2local",		vo_base2local_tcl},
 	{"center",		vo_center_tcl},
@@ -465,7 +465,7 @@ vo_aet_cmd(struct view_obj	*vop,
  * Get or set the azimuth, elevation and twist.
  *
  * Usage:
- *        procname aet [[-i] az el [tw]]
+ *        procname ae [[-i] az el [tw]]
  */
 static int
 vo_aet_tcl(ClientData	clientData,
