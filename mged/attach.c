@@ -5,10 +5,17 @@
  *	attach		attach to a given display processor
  *	release		detach from current display processor
  *  
- * Source -
+ *  Author -
+ *	Michael John Muuss
+ *  
+ *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005
+ *  
+ *  Copyright Notice -
+ *	This software is Copyright (C) 1985 by the United States Army.
+ *	All rights reserved.
  */
 #ifndef lint
 static char RCSid[] = "@(#)$Header$ (BRL)";
@@ -16,14 +23,14 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include <stdio.h>
 #include "ged_types.h"
-#include "db.h"
+#include "../h/db.h"
 #include "ged.h"
 #include "solid.h"
 #include "dm.h"
 
 static int	Nu_input();	/* Quite necessary */
 static void	Nu_void();
-static int	Nu_int0(), Nu_int1();
+static int	Nu_int0();
 static unsigned Nu_unsign();
 
 struct dm dm_Null = {
@@ -37,21 +44,27 @@ struct dm dm_Null = {
 	Nu_int0,
 	Nu_unsign, Nu_unsign,
 	Nu_void,
+	Nu_void,
 	0,
 	0.0,
 	"nu", "Null Display"
 };
-extern struct dm dm_Mg, dm_Vg, dm_Tek, dm_Rat, dm_Ps;
+extern struct dm dm_Mg, dm_Vg, dm_Tek, dm_Rat;
+#ifdef PS300
+extern struct dm_Ps;
+#endif
 
 struct dm *dmp = &dm_Null;	/* Ptr to current Display Manager package */
 
 /* The [0] entry will be the startup default */
 static struct dm *which_dm[] = {
-	&dm_Ps,
 	&dm_Mg,
 	&dm_Vg,
 	&dm_Tek,
 	&dm_Rat,
+#ifdef PS300
+	&dm_Ps,
+#endif PS300
 	&dm_Null,
 	0
 };
@@ -62,7 +75,7 @@ release()
 
 	/* Delete all references to display processor memory */
 	FOR_ALL_SOLIDS( sp )  {
-		memfree( &(dmp->dmr_map), sp->s_bytes, sp->s_addr );
+		memfree( &(dmp->dmr_map), sp->s_bytes, (unsigned long)sp->s_addr );
 		sp->s_bytes = 0;
 		sp->s_addr = 0;
 	}
@@ -88,12 +101,12 @@ char *name;
 		if( dmp->dmr_open() )
 			break;
 
-		printf("ATTACHING %s (%s)\n",
+		(void)printf("ATTACHING %s (%s)\n",
 			dmp->dmr_name, dmp->dmr_lname);
 
 		FOR_ALL_SOLIDS( sp )  {
 			/* Write vector subs into new display processor */
-			if( (sp->s_bytes = dmp->dmr_cvtvecs( sp )) > 0 )  {
+			if( (sp->s_bytes = dmp->dmr_cvtvecs( sp )) != 0 )  {
 				sp->s_addr = memalloc( &(dmp->dmr_map), sp->s_bytes );
 				if( sp->s_addr == 0 )  break;
 				sp->s_bytes = dmp->dmr_load(sp->s_addr, sp->s_bytes);
@@ -102,24 +115,24 @@ char *name;
 				sp->s_bytes = 0;
 			}
 		}
-		dmp->dmr_viewchange();
+		dmp->dmr_viewchange( 0, SOLID_NULL );	/* complete change */
 		dmaflag++;
 		return;
 	}
-	printf("attach(%s): BAD\n", name);
+	(void)printf("attach(%s): BAD\n", name);
 	dmp = &dm_Null;
 }
 
 static int Nu_int0() { return(0); }
-static int Nu_int1() { return(1); }
 static void Nu_void() { ; }
 static unsigned Nu_unsign() { return(0); }
 
+/* ARGSUSED */
 static
 Nu_input( fd, noblock )
 {
 	long readfds = (1<<fd);
-	(void)_select( 32, &readfds, 0L, 0L, (char *)0 );
+	(void)select( 32, &readfds, 0L, 0L, (char *)0 );
 	return(1);
 }
 
@@ -134,10 +147,10 @@ get_attached()
 	register struct dm **dp;
 
 	while(1)  {
-		printf("attach (");
+		(void)printf("attach (");
 		for( dp = &which_dm[0]; *dp != (struct dm *)0; dp++ )
-			printf("%s|", (*dp)->dmr_name);
-		printf(")[%s]? ", which_dm[0]->dmr_name);
+			(void)printf("%s|", (*dp)->dmr_name);
+		(void)printf(")[%s]? ", which_dm[0]->dmr_name);
 		(void)gets( line );		/* Null terminated */
 		if( feof(stdin) )  quit();
 		if( line[0] == '\0' )  {

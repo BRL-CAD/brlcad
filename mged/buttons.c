@@ -3,16 +3,33 @@
  *
  * Functions -
  *	buttons		Process button-box functions
+ *	press		button function request
+ *	state_err	state error printer
+ *
+ *  Author -
+ *	Michael John Muuss
+ *  
+ *  Source -
+ *	SECAD/VLD Computing Consortium, Bldg 394
+ *	The U. S. Army Ballistic Research Laboratory
+ *	Aberdeen Proving Ground, Maryland  21005
+ *  
+ *  Copyright Notice -
+ *	This software is Copyright (C) 1985 by the United States Army.
+ *	All rights reserved.
  */
+#ifndef lint
+static char RCSid[] = "@(#)$Header$ (BRL)";
+#endif
 
 #include	<math.h>
 #include "ged_types.h"
 #include "ged.h"
-#include "dir.h"
+#include "objdir.h"
 #include "solid.h"
 #include "menu.h"
 #include "dm.h"
-#include "db.h"
+#include "../h/db.h"
 #include "sedit.h"
 
 extern void	perror();
@@ -126,9 +143,9 @@ char *str;{
 	if( str[0] == '?' )  {
 		register int i=0;
 		for( bp = button_table; bp->bu_code >= 0; bp++ )  {
-			printf("%s, ", bp->bu_name );
+			(void)printf("%s, ", bp->bu_name );
 			if( ++i > 4 )  {
-				putchar('\n');
+				(void)putchar('\n');
 				i = 0;
 			}
 		}
@@ -163,6 +180,7 @@ label_button(bnum)
 		return( bp->bu_name );
 	}
 	(void)printf("label_button(%d):  Not a defined operation\n", bnum);
+	return("");
 }
 
 static void bv_top()  {

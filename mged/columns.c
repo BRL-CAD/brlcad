@@ -8,22 +8,30 @@
  *	col_putchar	Called to annotate an item
  *	col_eol		Called to end a line
  *
- * Source -
+ *  Author -
+ *	Michael John Muuss
+ *
+ *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005
+ *
+ *  Copyright Notice -
+ *	This software is Copyright (C) 1985 by the United States Army.
+ *	All rights reserved.
  */
 #ifndef lint
 static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include <stdio.h>
-#include "db.h"		/* for NAMESIZE */
+#include "../h/db.h"		/* for NAMESIZE */
 
 static int	col_count;		/* names listed on current line */
 static int	col_len;		/* length of previous name */
 #define	COLUMNS	((80 + NAMESIZE - 1) / NAMESIZE)
 
+void
 col_item(cp)
 register char *cp;
 {
@@ -47,6 +55,7 @@ register char *cp;
 #undef	COLUMNS
 }
 
+void
 col_putchar(c)
 char c;
 {
@@ -54,6 +63,7 @@ char c;
 	col_len++;
 }
 
+void
 col_eol()
 {
 	if ( col_count != 0 )		/* partial line */

@@ -11,6 +11,7 @@
  *	dir_delete	Delete entry from directory
  *	db_delete	Delete entry from database
  *	db_getrec	Get a record from database
+ *	db_getmany	Retrieve several records from database
  *	db_putrec	Put record to database
  *	db_alloc	Find a contiguous block of database storage
  *	db_grow		Increase size of existing database entry
@@ -21,12 +22,21 @@
  *	dir_title	Change the target title
  *	dir_nref	Count number of times each db element referenced
  *	regexp_match	Does regular exp match given string?
+ *	dir_summary	Summarize contents of directory by categories
  *	f_tops		Prints top level items in database
  *
- * Source -
+ *  Authors -
+ *	Michael John Muuss
+ *	Keith A. Applin
+ *  
+ *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005
+ *  
+ *  Copyright Notice -
+ *	This software is Copyright (C) 1985 by the United States Army.
+ *	All rights reserved.
  */
 #ifndef lint
 static char RCSid[] = "@(#)$Header$ (BRL)";
@@ -37,16 +47,17 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include	<string.h>
 #include	<signal.h>
 #include "ged_types.h"
-#include "db.h"
+#include "../h/db.h"
 #include "ged.h"
 #include "solid.h"
-#include "dir.h"
-#include "vmath.h"
+#include "objdir.h"
+#include "../h/vmath.h"
 #include "dm.h"
 
 extern int	read();
 extern long	lseek();
 extern char	*malloc();
+extern void	exit(), free(), perror();
 
 static struct directory *DirHead = DIR_NULL;
 
@@ -74,10 +85,12 @@ char	cur_title[128];			/* current target title */
 
 char	*filename;			/* Name of database file */
 static int read_only = 0;		/* non-zero when read-only */
+void	conversions();
 
 /*
  *  			D B _ O P E N
  */
+void
 db_open( name )
 char *name;
 {
@@ -124,7 +137,7 @@ dir_build()  {
 		}
 		/* save the title */
 		cur_title[0] = '\0';
-		strcat(cur_title, record.i.i_title);
+		(void)strcat(cur_title, record.i.i_title);
 	}
 
 	(void)lseek( objfd, 0L, 0 );
@@ -148,7 +161,7 @@ dir_build()  {
 			continue;
 		}
 		if( record.u_id == ID_ARS_A )  {
-			dir_add( record.a.a_name, addr, DIR_SOLID, record.a.a_totlen+1 );
+			(void)dir_add( record.a.a_name, addr, DIR_SOLID, record.a.a_totlen+1 );
 
 			/* Skip remaining B type records.	*/
 			(void)lseek( objfd,
@@ -159,7 +172,7 @@ dir_build()  {
 		}
 
 		if( record.u_id == ID_SOLID )  {
-			dir_add( record.s.s_name, addr, DIR_SOLID, 1 );
+			(void)dir_add( record.s.s_name, addr, DIR_SOLID, 1 );
 			continue;
 		}
 		if( record.u_id == ID_P_HEAD )  {
@@ -172,12 +185,12 @@ dir_build()  {
 				if( j != sizeof(rec) )
 					break;
 				if( rec.u_id != ID_P_DATA )  {
-					lseek( objfd, -(sizeof(rec)), 1 );
+					(void)lseek( objfd, -(sizeof(rec)), 1 );
 					break;
 				}
 				nrec++;
 			}
-			dir_add( record.p.p_name, addr, DIR_SOLID, nrec );
+			(void)dir_add( record.p.p_name, addr, DIR_SOLID, nrec );
 			continue;
 		}
 		if( record.u_id != ID_COMB )  {
@@ -192,7 +205,7 @@ dir_build()  {
 			continue;
 		}
 
-		dir_add( record.c.c_name,
+		(void)dir_add( record.c.c_name,
 			addr,
 			record.c.c_flags == 'R' ?
 				DIR_COMB|DIR_REGION : DIR_COMB,
@@ -216,7 +229,6 @@ dir_build()  {
 void
 dir_print()  {
 	register struct directory	*dp;
-	register char	*cp;		/* -> name char to output */
 
 	(void)signal( SIGINT, sig2 );	/* allow interupts */
 	for( dp = DirHead; dp != DIR_NULL; dp = dp->d_forw )  {
@@ -293,7 +305,7 @@ register char *cp;
 	register char	*base;
 	register char	*current;
 
-	if( (base = malloc( strlen(cp)+1 )) == (char *)0 )  {
+	if( (base = malloc( (unsigned)(strlen(cp)+1) )) == (char *)0 )  {
 		(void)printf("strdup:  unable to allocate memory");
 		return( (char *) 0);
 	}
@@ -351,7 +363,7 @@ struct directory *dp;
 
 	for( i=0; i < dp->d_len; i++ )
 		db_putrec( dp, &zapper, i );
-	memfree( &dbfreep, dp->d_len, dp->d_addr/(sizeof(union record)) );
+	memfree( &dbfreep, (unsigned)dp->d_len, dp->d_addr/(sizeof(union record)) );
 	dp->d_len = 0;
 	dp->d_addr = -1;
 }
@@ -375,7 +387,7 @@ union record *where;
 		where->u_id = '\0';	/* undefined id */
 		return;
 	}
-	(void)lseek( objfd, dp->d_addr + offset * sizeof(union record), 0 );
+	(void)lseek( objfd, (long)(dp->d_addr + offset * sizeof(union record)), 0 );
 	i = read( objfd, (char *)where, sizeof(union record) );
 	if( i != sizeof(union record) )  {
 		perror("db_getrec");
@@ -404,7 +416,7 @@ union record *where;
 		where->u_id = '\0';	/* undefined id */
 		return;
 	}
-	(void)lseek( objfd, dp->d_addr + offset * sizeof(union record), 0 );
+	(void)lseek( objfd, (long)(dp->d_addr + offset * sizeof(union record)), 0 );
 	i = read( objfd, (char *)where, len * sizeof(union record) );
 	if( i != len * sizeof(union record) )  {
 		perror("db_getmany");
@@ -437,7 +449,7 @@ int offset;
 			dp->d_namep, offset, dp->d_len );
 		return;
 	}
-	(void)lseek( objfd, dp->d_addr + offset * sizeof(union record), 0 );
+	(void)lseek( objfd, (long)(dp->d_addr + offset * sizeof(union record)), 0 );
 	i = write( objfd, (char *)where, sizeof(union record) );
 	if( i != sizeof(union record) )  {
 		perror("db_putrec");
@@ -467,7 +479,7 @@ int count;
 		return;
 	}
 top:
-	if( (addr = memalloc( &dbfreep, count )) == 0L )  {
+	if( (addr = memalloc( &dbfreep, (unsigned)count )) == 0L )  {
 		/* No contiguous free block, append to file */
 		dp->d_addr = objfdend;
 		dp->d_len = count;
@@ -497,7 +509,6 @@ int count;
 	register int i;
 	union record rec;
 	struct directory olddir;
-	unsigned long addr;
 
 	if( read_only )  {
 		(void)printf("db_grow on READ-ONLY file\n");
@@ -512,13 +523,13 @@ int count;
 	}
 
 	/* Try to extend into free space immediately following current obj */
-	if( memget( &dbfreep, count, dp->d_addr/sizeof(union record) ) == 0L )
+	if( memget( &dbfreep, (unsigned)count, (unsigned long)(dp->d_addr/sizeof(union record)) ) == 0L )
 		goto hard;
 
 	/* Check to see if granules are all really availible (sanity check) */
 	for( i=0; i < count; i++ )  {
-		(void)lseek( objfd, dp->d_addr +
-			((dp->d_len + i) * sizeof(union record)), 0 );
+		(void)lseek( objfd, (long)(dp->d_addr +
+			((dp->d_len + i) * sizeof(union record))), 0 );
 		(void)read( objfd, (char *)&rec, sizeof(union record) );
 		if( rec.u_id != ID_FREE )  {
 			(void)printf("db_grow:  FREE record wasn't?! (id%d)\n",
@@ -583,6 +594,7 @@ f_memprint()
 
 /*	builds conversion factors given the local unit
  */
+void
 conversions( local )
 int local;
 {
@@ -630,6 +642,7 @@ int local;
 }
 
 /* change the local unit of the description */
+void
 dir_units( new_unit )
 int new_unit;
 {
@@ -654,6 +667,7 @@ int new_unit;
 }
 
 /* change the title of the description */
+void
 dir_title( )
 {
 
@@ -674,7 +688,7 @@ dir_title( )
 
 	record.i.i_title[0] = '\0';
 
-	strcat(record.i.i_title, cur_title);
+	(void)strcat(record.i.i_title, cur_title);
 
 	(void)write(objfd, (char *)&record, sizeof record);
 }
@@ -685,29 +699,33 @@ dir_title( )
  * Count the number of time each directory member is referenced
  * by a COMBination record.
  */
+void
 dir_nref( )
 {
-	register struct directory *dp, *tdp;
-	register int i;
-	union record record;
+	register struct directory *dp;
+	register FILE *fp;
+	union record rec;
 
 	/* First, clear any existing counts */
 	for( dp = DirHead; dp != DIR_NULL; dp = dp->d_forw )
 		dp->d_nref = 0;
 
-	for( dp = DirHead; dp != DIR_NULL; dp = dp->d_forw )  {
-		if( !(dp->d_flags&DIR_COMB) )
-			continue;
-		for( i=1; i < dp->d_len; i++ )  {
-			db_getrec( dp, &record, i );
-			if( record.M.m_brname[0] != '\0' &&
-			    (tdp = lookup(record.M.m_brname, LOOKUP_QUIET)) != DIR_NULL )
-				tdp->d_nref++;
-			if( record.M.m_instname[0] != '\0' &&
-			    (tdp = lookup(record.M.m_instname, LOOKUP_QUIET)) != DIR_NULL )
-				tdp->d_nref++;
-		}
+	/* Read through the whole database, looking only at MEMBER records */
+	if( (fp = fopen( filename, "r" )) == NULL )  {
+		(void)printf("dir_nref: fdopen failed\n");
+		return;
 	}
+	while(fread( (char *)&rec, sizeof(rec), 1, fp ) == 1 && !feof(fp))  {
+		if( rec.u_id != ID_MEMB )
+			continue;
+		if( rec.M.m_brname[0] != '\0' &&
+		    (dp = lookup(rec.M.m_brname, LOOKUP_QUIET)) != DIR_NULL )
+			dp->d_nref++;
+		if( rec.M.m_instname[0] != '\0' &&
+		    (dp = lookup(rec.M.m_instname, LOOKUP_QUIET)) != DIR_NULL )
+			dp->d_nref++;
+	}
+	(void)fclose(fp);
 }
 
 /*
@@ -723,6 +741,7 @@ dir_nref( )
  *			(i.e. str[1-58] matches str1, str2, ... str5, str8)
  *		\	Escapes special characters.
  */
+int
 regexp_match(	 pattern,  string )
 register char	*pattern, *string;
 {
@@ -803,11 +822,11 @@ dir_summary(flag)
 		if( dp->d_flags & DIR_BRANCH )
 			br++;
 	}
-	printf("Summary:\n");
-	printf("  %5d solids\n", sol);
-	printf("  %5d regions, %d non-region combinations\n", reg, comb);
-	printf("  %5d branch names\n", br);
-	printf("  %5d total objects\n", sol+reg+comb );
+	(void)printf("Summary:\n");
+	(void)printf("  %5d solids\n", sol);
+	(void)printf("  %5d regions, %d non-region combinations\n", reg, comb);
+	(void)printf("  %5d branch names\n", br);
+	(void)printf("  %5d total objects\n", sol+reg+comb );
 
 	if( flag == 0 )
 		return;

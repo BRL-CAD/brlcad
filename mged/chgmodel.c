@@ -6,11 +6,33 @@
  * Changes to the tree structure of the model are done in chgtree.c
  *
  * Functions -
+ *	f_itemair	add/modify item and air codes of a region
+ *	f_modify	add/modify material code and los percent
+ *	f_mirror	mirror image
+ *	f_extrude	"extrude" command -- project an ARB face
+ *	f_arbdef	define ARB8 using rot fb angles to define face
+ *	f_edcomb	modify combination record info
+ *	f_mirface	mirror an ARB face
+ *	f_units		change local units of description
+ *	f_title		change current title of description
+ *	aexists		announce already exists
+ *	f_make		create new solid of given type
+ *	f_rot_obj	allow precise changes to object rotation
+ *	f_sc_obj	allow precise changes to object scaling
+ *	f_tr_obj	allow precise changes to object translation
  *
- * Source -
+ *  Author -
+ *	Michael John Muuss
+ *	Keith A. Applin
+ *
+ *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005
+ *  
+ *  Copyright Notice -
+ *	This software is Copyright (C) 1985 by the United States Army.
+ *	All rights reserved.
  */
 #ifndef lint
 static char RCSid[] = "@(#)$Header$ (BRL)";
@@ -20,17 +42,18 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include	<signal.h>
 #include	<stdio.h>
 #include "ged_types.h"
-#include "db.h"
+#include "../h/db.h"
 #include "sedit.h"
 #include "ged.h"
-#include "dir.h"
+#include "objdir.h"
 #include "solid.h"
 #include "dm.h"
-#include "vmath.h"
+#include "../h/vmath.h"
 
 extern void	perror();
 extern int	atoi(), execl(), fork(), nice(), wait();
 extern long	time();
+extern char	*strcat();
 
 void	aexists();
 
@@ -704,8 +727,8 @@ f_title()
 
 	cur_title[0] = '\0';
 	for(i=1; i<numargs; i++) {
-		strcat(cur_title, cmd_args[i]);
-		strcat(cur_title, " ");
+		(void)strcat(cur_title, cmd_args[i]);
+		(void)strcat(cur_title, " ");
 	}
 
 	dir_title();
@@ -747,8 +770,8 @@ f_make()  {
 		record.s.s_cgtype = ARB8;
 		VSET( &record.s.s_values[0*3],
 			-toViewcenter[MDX] +254,
-			-toViewcenter[MDX] -254,
-			-toViewcenter[MDX] -254 );
+			-toViewcenter[MDY] -254,
+			-toViewcenter[MDZ] -254 );
 		VSET( &record.s.s_values[1*3],  0, 508, 0 );
 		VSET( &record.s.s_values[2*3],  0, 508, 508 );
 		VSET( &record.s.s_values[3*3],  0, 0, 508 );
@@ -761,8 +784,8 @@ f_make()  {
 		record.s.s_cgtype = ARB7;
 		VSET( &record.s.s_values[0*3],
 			-toViewcenter[MDX] +254,
-			-toViewcenter[MDX] -254,
-			-toViewcenter[MDX] -127 );
+			-toViewcenter[MDY] -254,
+			-toViewcenter[MDZ] -127 );
 		VSET( &record.s.s_values[1*3],  0, 508, 0 );
 		VSET( &record.s.s_values[2*3],  0, 508, 508 );
 		VSET( &record.s.s_values[3*3],  0, 0, 254 );
@@ -775,8 +798,8 @@ f_make()  {
 		record.s.s_cgtype = ARB6;
 		VSET( &record.s.s_values[0*3],
 			-toViewcenter[MDX] +254,
-			-toViewcenter[MDX] -254,
-			-toViewcenter[MDX] -254 );
+			-toViewcenter[MDY] -254,
+			-toViewcenter[MDZ] -254 );
 		VSET( &record.s.s_values[1*3],  0, 508, 0 );
 		VSET( &record.s.s_values[2*3],  0, 508, 508 );
 		VSET( &record.s.s_values[3*3],  0, 0, 508 );
@@ -789,8 +812,8 @@ f_make()  {
 		record.s.s_cgtype = ARB5;
 		VSET( &record.s.s_values[0*3],
 			-toViewcenter[MDX] +254,
-			-toViewcenter[MDX] -254,
-			-toViewcenter[MDX] -254 );
+			-toViewcenter[MDY] -254,
+			-toViewcenter[MDZ] -254 );
 		VSET( &record.s.s_values[1*3],  0, 508, 0 );
 		VSET( &record.s.s_values[2*3],  0, 508, 508 );
 		VSET( &record.s.s_values[3*3],  0, 0, 508 );
@@ -803,8 +826,8 @@ f_make()  {
 		record.s.s_cgtype = ARB4;
 		VSET( &record.s.s_values[0*3],
 			-toViewcenter[MDX] +254,
-			-toViewcenter[MDX] -254,
-			-toViewcenter[MDX] -254 );
+			-toViewcenter[MDY] -254,
+			-toViewcenter[MDZ] -254 );
 		VSET( &record.s.s_values[1*3],  0, 508, 0 );
 		VSET( &record.s.s_values[2*3],  0, 508, 508 );
 		VSET( &record.s.s_values[3*3],  0, 508, 508 );
@@ -884,7 +907,7 @@ f_make()  {
 		(void)printf("make ars not implimented yet\n");
 		return;
 	} else {
-		printf("make:  %s is not a known primitive\n", cmd_args[2]);
+		(void)printf("make:  %s is not a known primitive\n", cmd_args[2]);
 		return;
 	}
 

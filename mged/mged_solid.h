@@ -1,4 +1,24 @@
 /*
+ *  			S O L I D . H
+ *
+ *  Author -
+ *	Michael John Muuss
+ *  
+ *  Source -
+ *	SECAD/VLD Computing Consortium, Bldg 394
+ *	The U. S. Army Ballistic Research Laboratory
+ *	Aberdeen Proving Ground, Maryland  21005
+ *  
+ *  Copyright Notice -
+ *	This software is Copyright (C) 1985 by the United States Army.
+ *	All rights reserved.
+ *
+ *  $Header$
+ */
+extern void	free();
+extern char	*malloc();
+
+/*
  *	Solids structure definition
  */
 #define MAX_PATH	8	/* Maximum depth of path */
@@ -29,7 +49,7 @@ extern int		ndrawn;
 #define GET_SOLID(p)    { if( ((p)=FreeSolid) == SOLID_NULL )  { \
 			p = (struct solid *)malloc(sizeof(struct solid)); \
 			  if( p == SOLID_NULL )  {\
-				printf("GETSOLID: malloc failed\n"); \
+				(void)printf("GETSOLID: malloc failed\n"); \
 				no_memory = 2; \
 			  } \
 			} else { \

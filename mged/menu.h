@@ -1,7 +1,21 @@
-/*	SCCSID	%W%	%E%	*/
 /*
-	menu.h -- definitions for GED menu
-*/
+ *			M E N U . H
+ *
+ *  Author -
+ *	Bob Suckling
+ *  
+ *  Source -
+ *	SECAD/VLD Computing Consortium, Bldg 394
+ *	The U. S. Army Ballistic Research Laboratory
+ *	Aberdeen Proving Ground, Maryland  21005
+ *  
+ *  Copyright Notice -
+ *	This software is Copyright (C) 1985 by the United States Army.
+ *	All rights reserved.
+ *
+ *  $Header$
+ */
+
 /*
  * shape of menu array cells
  */

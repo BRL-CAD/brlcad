@@ -4,12 +4,22 @@
  * Functions -
  *	cmdline		Process commands typed on the keyboard
  *	parse_line	Parse command line into argument vector
+ *	f_press		hook for displays with no buttons
+ *	f_summary	do directory summary
  *	do_cmd		Check arg counts, run a command
  *
- * Source -
+ *  Authors -
+ *	Michael John Muuss
+ *	Charles M. Kennedy
+ *
+ *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005
+ *  
+ *  Copyright Notice -
+ *	This software is Copyright (C) 1985 by the United States Army.
+ *	All rights reserved.
  */
 #ifndef lint
 static char RCSid[] = "@(#)$Header$ (BRL)";
@@ -19,13 +29,13 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include	<signal.h>
 #include	<stdio.h>
 #include "ged_types.h"
-#include "db.h"
+#include "../h/db.h"
 #include "sedit.h"
 #include "ged.h"
-#include "dir.h"
+#include "objdir.h"
 #include "solid.h"
 #include "dm.h"
-#include "vmath.h"
+#include "../h/vmath.h"
 
 extern void	perror();
 extern int	atoi(), execl(), fork(), nice(), wait();
@@ -221,8 +231,8 @@ parse_line()
 
 	/* Handle "!" shell escape char so the shell can parse the line */
 	if( *lp == '!' )  {
-		system( &line[1] );
-		printf("!\n");
+		(void)system( &line[1] );
+		(void)printf("!\n");
 		return(1);		/* Don't process command line! */
 	}
 
@@ -230,14 +240,14 @@ parse_line()
 	if( (*lp != ' ') && (*lp != '\t') && (*lp != '\0') )
 		numargs++;		/* holds # of args */
 
-	for( lp = &line[0]; *lp != '\0'; *lp++ )  {
+	for( lp = &line[0]; *lp != '\0'; lp++ )  {
 		if( (*lp == ' ') || (*lp == '\t') || (*lp == '\n') )  {
 			*lp = '\0';
 			lp1 = lp + 1;
 			if( (*lp1 != ' ') && (*lp1 != '\t') &&
 			    (*lp1 != '\n') && (*lp1 != '\0') )  {
 				if( numargs >= MAXARGS )  {
-					printf("More than %d arguments, excess flushed\n", MAXARGS);
+					(void)printf("More than %d arguments, excess flushed\n", MAXARGS);
 					cmd_args[MAXARGS] = (char *)0;
 					return(0);
 				}
@@ -266,7 +276,7 @@ do_cmd()
 	register struct funtab *ftp;
 
 	if( numargs == 0 )  {
-		printf("no command entered, type ? for help\n");
+		(void)printf("no command entered, type ? for help\n");
 		return;
 	}
 
@@ -410,7 +420,7 @@ f_summary()
 			flags |= DIR_COMB;
 			break;
 		default:
-			printf("summary:  S R or G are only valid parmaters\n");
+			(void)printf("summary:  S R or G are only valid parmaters\n");
 			break;
 	}
 	dir_summary(flags);

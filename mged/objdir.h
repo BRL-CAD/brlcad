@@ -2,7 +2,22 @@
  *			D I R . H
  *
  * The in-core object directory
+ *
+ *  Author -
+ *	Michael John Muuss
+ *  
+ *  Source -
+ *	SECAD/VLD Computing Consortium, Bldg 394
+ *	The U. S. Army Ballistic Research Laboratory
+ *	Aberdeen Proving Ground, Maryland  21005
+ *  
+ *  Copyright Notice -
+ *	This software is Copyright (C) 1985 by the United States Army.
+ *	All rights reserved.
+ *
+ *  $Header$
  */
+
 struct directory  {
 	char		*d_namep;	/* pointer to name string */
 	long		d_addr;		/* disk address in obj file */

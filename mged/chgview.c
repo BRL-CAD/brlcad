@@ -2,13 +2,41 @@
  *			C H G V I E W . C
  *
  * Functions -
+ *	f_center	(DEBUG) force view center
+ *	f_vrot		(DEBUG) force view rotation
+ *	f_view		(DEBUG) force view size
+ *	f_blast		zap the display, then edit anew
+ *	f_edit		edit something (add to visible display)
+ *	f_evedit	Evaluated edit something (add to visible display)
+ *	f_delobj	delete an object or several from the display
+ *	f_debug		(DEBUG) print solid info?
+ *	f_regdebug	toggle debugging state
+ *	f_list		list object information
+ *	f_zap		zap the display -- everything dropped
+ *	f_status	print view info
+ *	f_fix		fix display processor after hardware error
+ *	f_refresh	request display refresh
+ *	f_rt		ray-trace
+ *	f_saveview	save the current view parameters
+ *	f_attach	attach display device
+ *	f_release	release display device
  *	eraseobj	Drop an object from the visible list
  *	pr_solids	Print info about visible list
+ *	f_ill		illuminate the named object
+ *	f_sed		simulate pressing "solid edit" then illuminate
+ *	f_knob		simulate knob twist
  *
- * Source -
+ *  Author -
+ *	Michael John Muuss
+ *
+ *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005
+ *  
+ *  Copyright Notice -
+ *	This software is Copyright (C) 1985 by the United States Army.
+ *	All rights reserved.
  */
 #ifndef lint
 static char RCSid[] = "@(#)$Header$ (BRL)";
@@ -18,13 +46,13 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include	<signal.h>
 #include	<stdio.h>
 #include "ged_types.h"
-#include "db.h"
+#include "../h/db.h"
 #include "sedit.h"
 #include "ged.h"
-#include "dir.h"
+#include "objdir.h"
 #include "solid.h"
 #include "dm.h"
-#include "vmath.h"
+#include "../h/vmath.h"
 
 extern void	perror();
 extern int	atoi(), execl(), fork(), nice(), wait();
@@ -36,10 +64,11 @@ extern int	numargs;	/* number of args */
 extern char	*cmd_args[];	/* array of pointers to args */
 
 static void	eedit();
-
+void	f_zap();
 
 /* DEBUG -- force view center */
 /* Format: C x y z	*/
+void
 f_center()
 {
 	/* must convert from the local unit to the base unit */
@@ -50,6 +79,7 @@ f_center()
 	dmaflag++;
 }
 
+void
 f_vrot()
 {
 	/* Actually, it would be nice if this worked all the time */
@@ -64,6 +94,7 @@ f_vrot()
 
 /* DEBUG -- force viewsize */
 /* Format: view size	*/
+void
 f_view()
 {
 	float f;
@@ -76,6 +107,7 @@ f_view()
 
 /* ZAP the display -- then edit anew */
 /* Format: B object	*/
+void
 f_blast()
 {
 
@@ -97,6 +129,7 @@ f_blast()
 
 /* Edit something (add to visible display) */
 /* Format: e object	*/
+void
 f_edit()
 {
 	drawreg = 0;
@@ -106,6 +139,7 @@ f_edit()
 
 /* Evaluated Edit something (add to visible display) */
 /* E object */
+void
 f_evedit()
 {
 	drawreg = 1;
@@ -167,11 +201,11 @@ eedit()
 
 	(void)printf("vectorized in %ld sec\n", etime - stime );
 	dmaflag = 1;
-	dmp->dmr_viewchange();		/* alert DM */
 }
 
 /* Delete an object or several objects from the display */
 /* Format: d object1 object2 .... objectn */
+void
 f_delobj()
 {
 	register struct directory *dp;
@@ -182,14 +216,15 @@ f_delobj()
 			eraseobj( dp );
 	}
 	dmaflag = 1;
-	dmp->dmr_viewchange();		/* alert DM */
 }
 
+void
 f_debug()
 {
 	pr_solids( &HeadSolid );
 }
 
+void
 f_regdebug()
 {
 	if( numargs <= 1 )
@@ -201,6 +236,7 @@ f_regdebug()
 
 /* List object information */
 /* Format: l object	*/
+void
 f_list()
 {
 	register struct directory *dp;
@@ -238,7 +274,8 @@ f_list()
 		db_getrec( dp, &record, 1 );
 		/* convert vertex from the base unit to the local unit */
 		(void)printf(" vertex      %.4f %.4f %.4f\n",
-			record.b.b_values[0]*base2local, record.b.b_values[1]*base2local,
+			record.b.b_values[0]*base2local,
+			record.b.b_values[1]*base2local,
 			record.b.b_values[2]*base2local );
 		return;
 	}
@@ -272,9 +309,11 @@ f_list()
 			(void)printf(" (Rotated)");
 		if( Mat[MDX] != 0.0 || Mat[MDY] != 0.0 || Mat[MDZ] != 0.0 )
 			(void)printf(" [%f,%f,%f]",
-				Mat[MDX]*base2local, Mat[MDY]*base2local, Mat[MDZ]*base2local);
+				Mat[MDX]*base2local,
+				Mat[MDY]*base2local,
+				Mat[MDZ]*base2local);
 		if( Mat[12] != 0.0 || Mat[13] != 0.0 || Mat[14] != 0.0 )
-			printf(" ??Perspective=[%f,%f,%f]??",
+			(void)printf(" ??Perspective=[%f,%f,%f]??",
 				Mat[12], Mat[13], Mat[14] );
 		(void)putchar('\n');
 	}
@@ -283,6 +322,7 @@ f_list()
 
 /* ZAP the display -- everything dropped */
 /* Format: Z	*/
+void
 f_zap()
 {
 	register struct solid *sp;
@@ -294,7 +334,7 @@ f_zap()
 
 	sp=HeadSolid.s_forw;
 	while( sp != &HeadSolid )  {
-		memfree( &(dmp->dmr_map), sp->s_bytes, sp->s_addr );
+		memfree( &(dmp->dmr_map), sp->s_bytes, (unsigned long)sp->s_addr );
 		sp->s_addr = sp->s_bytes = 0;
 		nsp = sp->s_forw;
 		DEQUEUE_SOLID( sp );
@@ -305,12 +345,13 @@ f_zap()
 	dmaflag = 1;
 }
 
+void
 f_status()
 {
-	printf("STATE=%s, ", state_str[state] );
-	printf("maxview=%f, ", maxview*base2local);
-	printf("Viewscale=%f (%f mm)\n", Viewscale*base2local, Viewscale);
-	printf("base2local=%f\n", base2local);
+	(void)printf("STATE=%s, ", state_str[state] );
+	(void)printf("maxview=%f, ", maxview*base2local);
+	(void)printf("Viewscale=%f (%f mm)\n", Viewscale*base2local, Viewscale);
+	(void)printf("base2local=%f\n", base2local);
 	mat_print("toViewcenter", toViewcenter);
 	mat_print("Viewrot", Viewrot);
 	mat_print("model2view", model2view);
@@ -322,19 +363,21 @@ f_status()
 }
 
 /* Fix the display processor after a hardware error, as best we can */
+void
 f_fix()
 {
 	dmp->dmr_restart();
 	dmaflag = 1;		/* causes refresh() */
 }
 
+void
 f_refresh()
 {
-
 	dmaflag = 1;		/* causes refresh() */
 }
 
 #define LEN 32
+void
 f_rt()
 {
 	register char **vp;
@@ -370,7 +413,7 @@ f_rt()
 		if( vp < &vec[LEN] )
 			*vp++ = sp->s_path[0]->d_namep;
 		else
-			printf("ran out of vec for %s\n",
+			(void)printf("ran out of vec for %s\n",
 				sp->s_path[0]->d_namep );
 		sp->s_iflag = UP;
 		for( forw=sp->s_forw; forw != &HeadSolid; forw=forw->s_forw) {
@@ -382,14 +425,14 @@ f_rt()
 
 	vp = &vec[0];
 	while( *vp )
-		printf("%s ", *vp++ );
-	printf("\n");
+		(void)printf("%s ", *vp++ );
+	(void)printf("\n");
 
 	(void)pipe( o_pipe );
 	(void)signal( SIGINT, SIG_IGN );
 	if ( ( pid = fork()) == 0 )  {
-		close(0);
-		dup( o_pipe[0] );
+		(void)close(0);
+		(void)dup( o_pipe[0] );
 		for( i=3; i < 20; i++ )
 			(void)close(i);
 
@@ -399,13 +442,13 @@ f_rt()
 		exit(42);
 	}
 	/* Connect up to pipe */
-	close( o_pipe[0] );
+	(void)close( o_pipe[0] );
 	fp = fdopen( o_pipe[1], "w" );
 
 	/* Send out model2view matrix */
 	for( i=0; i < 16; i++ )
-		fprintf( fp, "%.9e ", model2view[i] );
-	fclose( fp );
+		(void)fprintf( fp, "%.9e ", model2view[i] );
+	(void)fclose( fp );
 	
 	/* Wait for rt to finish */
 	while ((rpid = wait(&retcode)) != pid && rpid != -1)
@@ -427,11 +470,11 @@ f_saveview()
 		perror(cmd_args[1]);
 		return;
 	}
-	fprintf(fp, "#!/bin/sh\nrt -M ");
+	(void)fprintf(fp, "#!/bin/sh\nrt -M ");
 	for( i=2; i < numargs; i++ )
-		fprintf(fp,"%s ", cmd_args[i]);
-	fprintf(fp,"-o %s.pix ", filename);
-	fprintf(fp,"%s ", filename);
+		(void)fprintf(fp,"%s ", cmd_args[i]);
+	(void)fprintf(fp,"-o %s.pix ", filename);
+	(void)fprintf(fp,"%s ", filename);
 
 	/* Find all unique top-level entrys.
 	 *  Mark ones already done with s_iflag == UP
@@ -443,23 +486,23 @@ f_saveview()
 
 		if( sp->s_iflag == UP )
 			continue;
-		fprintf(fp, "%s ", sp->s_path[0]->d_namep);
+		(void)fprintf(fp, "%s ", sp->s_path[0]->d_namep);
 		sp->s_iflag = UP;
 		for( forw=sp->s_forw; forw != &HeadSolid; forw=forw->s_forw) {
 			if( forw->s_path[0] == sp->s_path[0] )
 				forw->s_iflag = UP;
 		}
 	}
-	fprintf(fp," 2>&1 > %s.log", filename);
-	fprintf(fp," <<EOF");
+	(void)fprintf(fp," 2> %s.log", filename);
+	(void)fprintf(fp," <<EOF");
 
 	/* Send out model2view matrix */
 	for( i=0; i < 16; i++ ) {
-		if( (i%4) == 0 )  fprintf(fp, "\n");
-		fprintf( fp, "%.9e ", model2view[i] );
+		if( (i%4) == 0 )  (void)fprintf(fp, "\n");
+		(void)fprintf( fp, "%.9e ", model2view[i] );
 	}
-	fprintf(fp,"\nEOF\n");
-	fclose( fp );
+	(void)fprintf(fp,"\nEOF\n");
+	(void)fclose( fp );
 	
 	FOR_ALL_SOLIDS( sp )
 		sp->s_iflag = DOWN;
@@ -496,7 +539,8 @@ register struct directory *dp;
 		nsp = sp->s_forw;
 		for( i=0; i<=sp->s_last; i++ )  {
 			if( sp->s_path[i] == dp )  {
-				memfree( &(dmp->dmr_map), sp->s_bytes, sp->s_addr );
+				dmp->dmr_viewchange( 2, sp );	/* DEL sol */
+				memfree( &(dmp->dmr_map), sp->s_bytes, (unsigned long)sp->s_addr );
 				DEQUEUE_SOLID( sp );
 				FREE_SOLID( sp );
 				break;
@@ -573,7 +617,7 @@ f_ill()
 		return;
 	}
 	if( lastfound->s_flag != UP )  {
-		printf("%s not visible\n", cmd_args[1]);
+		(void)printf("%s not visible\n", cmd_args[1]);
 		return;
 	}
 	/* Make the specified solid the illuminated solid */
@@ -631,7 +675,7 @@ f_knob()
 		dm_values.dv_yslew = f;
 		break;
 	default:
-		printf("x,y,z for joystick, Z for zoom, X,Y for slew\n");
+		(void)printf("x,y,z for joystick, Z for zoom, X,Y for slew\n");
 		return;
 	}
 }

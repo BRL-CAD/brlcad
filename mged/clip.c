@@ -1,21 +1,25 @@
 /*
  *			C L I P . C
  *
- * Functions -
- *	clip	clip a 2-D integer line segment against the size of the display
+ *  Functions -
+ *	clip	clip a 2-D integer line seg against the size of the display
  *	vclip	clip a 3-D floating line segment against a bounding RPP.
  *
- * Author -
+ *  Authors -
  *	clip() was written by Doug Kingston, 14 October 81
  *	Based on the clipping routine in "Principles of Computer
  *	Graphics" by Newman and Sproull, 1973, McGraw/Hill.
  *
  *	vclip() was adapted from RT by Mike Muuss, 17 January 1985.
  *
- * Source -
+ *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005
+ *  
+ *  Copyright Notice -
+ *	This software is Copyright (C) 1985 by the United States Army.
+ *	All rights reserved.
  */
 #ifndef lint
 static char RCSid[] = "@(#)$Header$ (BRL)";
@@ -23,7 +27,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include <stdio.h>
 #include "ged_types.h"
-#include "vmath.h"
+#include "../h/vmath.h"
 
 static int	code();
 

@@ -4,9 +4,6 @@
  * This file contains all of the definitions local to
  * the GED graphics editor.
  *
- *	U. S. Army Ballistic Research Laboratory
- *
- *
  *	     V E R Y   I M P O R T A N T   N O T I C E ! ! !
  *
  *  Many people in the computer graphics field use post-multiplication,
@@ -36,9 +33,19 @@
  *  This of course requires that the rotation portion be computed
  *  using somewhat different formulas (see buildHrot for both kinds).
  *
+ *  Source -
+ *	SECAD/VLD Computing Consortium, Bldg 394
+ *	The U. S. Army Ballistic Research Laboratory
+ *	Aberdeen Proving Ground, Maryland  21005
+ *  
+ *  Copyright Notice -
+ *	This software is Copyright (C) 1985 by the United States Army.
+ *	All rights reserved.
+ *
+ *  $Header$
  */
 
-extern double	degtorad, radtodeg;	/* Defined in e4.c */
+extern double	degtorad, radtodeg;	/* Defined in usepen.c */
 
 /*
  * All GED files are stored in a fixed base unit (MM).
@@ -89,7 +96,7 @@ extern int	ycross;
  *  For object editing and solid edit, model2objview translates
  *  from model space to view space with all the modelchanges too.
  *
- *  These are allocated storage in e3.c
+ *  These are allocated storage in dozoom.c
  */
 extern float	Viewscale;
 extern mat_t	Viewrot;
@@ -109,7 +116,7 @@ extern float	maxview;
  */
 extern mat_t	identity;
 
-/* defined in e8.c */
+/* defined in chgview.c */
 extern int	drawreg;	/* if > 0, process and draw regions */
 
 /* defined in buttons.c */
@@ -119,21 +126,20 @@ extern mat_t	acc_rot_sol;	/* accumulate solid rotations */
 /* defined in e6.c */
 extern struct directory	*path[];/* 'path' name of this solid */
 extern int	regmemb;	/* # of members left to process in a region */
-extern long	memb_loc;	/* disk loc of present member of proc region */
 extern char	memb_oper;	/* operation for present member of proc region */
 extern int	reg_pathpos;	/* pathpos of a processed region */
 
-/* defined in e2.c */
+/* defined in dodraw.c */
 extern int	reg_error;	/* error encountered in region processing */
 extern int	no_memory;	/* flag indicating memory for drawing is used up */
 
-/* defined in e11.c */
+/* defined in menu.c */
 extern int	menuyy;		/* y-location of selected menu item */
 extern int	menuflag;	/* flag indicating if a menu item is selected */
 
 /*
  * These variables are global for the benefit of
- * the display portion of dozoom. - defined in e12.c
+ * the display portion of dozoom. - defined in adc.c
  */
 extern float	curs_x;		/* cursor X position */
 extern float	curs_y;		/* cursor Y position */
@@ -175,19 +181,19 @@ extern unsigned long	memalloc(), memget();
 #define DOWN	1
 
 /*
- * Entry number of solid in solid table to be illuminated. - defined in e4.c
+ * Entry number of solid in solid table to be illuminated. - defined in usepen.c
  */
 extern struct solid	*illump;/* == 0 if none, else points to ill. solid */
 extern int	sedraw;		/* apply solid editing changes */
 
-/* defined in e9.c */
+/* defined in buttons.c */
 extern int	adcflag;	/* angle/distance cursor in use */
 
-/* defined in e8.c */
+/* defined in chgview.c */
 extern int	inpara;		/* parameter input from keyboard flag */
 extern int	newedge;	/* new edge for arb editing */
 
-/* defined in e4.c */
+/* defined in usepen.c */
 extern int	ipathpos;	/* path index of illuminated element */
 
 #define RARROW		001
@@ -217,7 +223,7 @@ extern int	movedir;	/* RARROW | UARROW | SARROW | ROTARROW */
 /*
  *  Editor States
  */
-extern int state;			/* (defined in e3.c) */
+extern int state;			/* (defined in dozoom.c) */
 extern char *state_str[];		/* identifying strings */
 #define ST_VIEW		1		/* Viewing only */
 #define ST_S_PICK	2		/* Picking for Solid Edit */

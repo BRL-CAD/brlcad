@@ -7,10 +7,19 @@
  * Authors -
  *	Gary Steven Moss
  *
- *	Ballistic Research Laboratory
- *	U. S. Army
- *	December, 1981
+ *  Source -
+ *	SECAD/VLD Computing Consortium, Bldg 394
+ *	The U. S. Army Ballistic Research Laboratory
+ *	Aberdeen Proving Ground, Maryland  21005
+ *  
+ *  Copyright Notice -
+ *	This software is Copyright (C) 1985 by the United States Army.
+ *	All rights reserved.
  */
+#ifndef lint
+static char RCSid[] = "@(#)$Header$ (BRL)";
+#endif
+
 #include <math.h>
 #include "ged_types.h"
 #include "ged.h"
@@ -32,7 +41,7 @@ float	angle2;		/* Angle to dashed wiper */
  * Compute and display the angle/distance cursor.
  */
 void
-adcursor( pos_x, pos_y, rot1, rot2, tick_dist )
+adcursor( tick_dist )
 {
 	static double	pi = 3.14159265358979323264;
 	static float	x1, Y1;	/* not "y1", due to conflict with math lib */
@@ -48,8 +57,8 @@ adcursor( pos_x, pos_y, rot1, rot2, tick_dist )
 	 */
 #define MINVAL	-2048
 #define MAXVAL	 2047
-	idxy[0] = pos_x;
-	idxy[1] = pos_y;
+	idxy[0] = dm_values.dv_xadc;
+	idxy[1] = dm_values.dv_yadc;
 	idxy[0] = (idxy[0] < MINVAL ? MINVAL : idxy[0]);
 	idxy[0] = (idxy[0] > MAXVAL ? MAXVAL : idxy[0]);
 	idxy[1] = (idxy[1] < MINVAL ? MINVAL : idxy[1]);
@@ -64,8 +73,9 @@ adcursor( pos_x, pos_y, rot1, rot2, tick_dist )
 	/*
 	 * Calculate a-d cursor rotation.
 	 */
-	idxy[0] = -rot1;	/* - to make rotation match knob direction */
-	idxy[1] = -rot2;
+	/* - to make rotation match knob direction */
+	idxy[0] = -dm_values.dv_1adc;	/* solid line */
+	idxy[1] = -dm_values.dv_2adc;	/* dashed line */
 	angle1 = ((2047.0 + (float) (idxy[0])) * pi) / (4.0 * 2047.0);
 	angle2 = ((2047.0 + (float) (idxy[1])) * pi) / (4.0 * 2047.0);
 
@@ -109,7 +119,8 @@ adcursor( pos_x, pos_y, rot1, rot2, tick_dist )
 	 * Position tic marks from dial 9.
 	 */
 	/* map -2048 - 2047 into 0 - 4096 * sqrt (2) */
-	c_tdist = ((float)(tick_dist) + 2047.0) * 1.4142136;
+	/* Tick distance */
+	c_tdist = ((float)(dm_values.dv_distadc) + 2047.0) * 1.4142136;
 
 	d1 = c_tdist * cos (angle1);
 	d2 = c_tdist * sin (angle1);

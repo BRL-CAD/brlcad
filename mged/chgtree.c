@@ -5,11 +5,26 @@
  * of the model, and delete solids or combinations or combination elements.
  *
  * Functions -
+ *	f_name		rename an object
+ *	f_copy		copy a solid
+ *	f_instance	create an instance of something
+ *	f_region	add solids to a region or create the region
+ *	f_kill		remove an object or several from the description
+ *	f_group		"grouping" command
+ *	f_delmem	delete members of a combination
  *
- * Source -
+ *  Author -
+ *	Michael John Muuss
+ *	Keith A Applin
+ *
+ *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005
+ *  
+ *  Copyright Notice -
+ *	This software is Copyright (C) 1985 by the United States Army.
+ *	All rights reserved.
  */
 #ifndef lint
 static char RCSid[] = "@(#)$Header$ (BRL)";
@@ -18,13 +33,13 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include	<math.h>
 #include	<stdio.h>
 #include "ged_types.h"
-#include "db.h"
+#include "../h/db.h"
 #include "sedit.h"
 #include "ged.h"
-#include "dir.h"
+#include "objdir.h"
 #include "solid.h"
 #include "dm.h"
-#include "vmath.h"
+#include "../h/vmath.h"
 
 extern int	atoi();
 void	aexists();
@@ -182,7 +197,7 @@ f_region()
 	ident = air = 0;
 	/* Check for even number of arguments */
 	if( numargs & 01 )  {
-		printf("error in number of args!\n");
+		(void)printf("error in number of args!\n");
 		return;
 	}
 	/* Get operation and solid name for each solid */
@@ -281,7 +296,7 @@ top:
 			if( strcmp( cmd_args[i], record.M.m_instname ) != 0 &&
 			    strcmp( cmd_args[i], record.M.m_brname ) != 0 )
 				continue;
-			printf("deleting member %s\n", cmd_args[i] );
+			(void)printf("deleting member %s\n", cmd_args[i] );
 			num_deleted++;
 
 			/* If deleting last member, just truncate */
