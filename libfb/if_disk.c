@@ -29,7 +29,8 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #define FILE_CMAP_ADDR	((long) ifp->if_width*ifp->if_height\
 			*sizeof(RGBpixel))
 
-#define	DISK_DMA_BYTES	(16*1024)
+/* Ensure integer number of pixels per DMA */
+#define	DISK_DMA_BYTES	(16*1024/sizeof(RGBpixel)*sizeof(RGBpixel))
 #define	DISK_DMA_PIXELS	(DISK_DMA_BYTES/sizeof(RGBpixel))
 
 _LOCAL_ int	dsk_dopen(),
@@ -153,7 +154,11 @@ int	count;
 		}
 	while( bytes > 0 )
 		{
+#ifdef never
 		todo = (bytes > DISK_DMA_BYTES ? DISK_DMA_BYTES : bytes);
+#else
+		todo = bytes;
+#endif
 		if( read( ifp->if_fd, (char *) pixelp, todo ) != todo )
 			return	-1;
 		bytes -= todo;
@@ -186,7 +191,11 @@ long	count;
 		}
 	while( bytes > 0 )
 		{
+#ifdef never
 		todo = (bytes > DISK_DMA_BYTES ? DISK_DMA_BYTES : bytes);
+#else
+		todo = bytes;
+#endif
 		if( write( ifp->if_fd, (char *) pixelp, todo ) != todo )
 			return	-1;
 		bytes -= todo;
