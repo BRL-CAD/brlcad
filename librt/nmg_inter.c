@@ -3382,6 +3382,8 @@ nmg_ck_face_worthless_edges( fu2 );
  *  thus there is no face context or intersection line.
  *  If the edges are non-colinear, there will be at most one point of isect.
  *  If the edges are colinear, there may be two.
+ *
+ *  Called from nmg_isect_edge3p_shell()
  */
 static void
 nmg_isect_edge3p_edge3p( is, eu1, eu2 )
@@ -3569,9 +3571,8 @@ struct edgeuse		*eu2;
  *  Intersect one edge with all of another shell.
  *  There is no face context for this edge, because
  *
- *  At present, this routine is used for only two purposes:
- *	1)  Handling wire edge -vs- shell intersection,
- *	2)  From nmg_isect_face3p_shell_int(), for "straddling" edges.
+ *  At present, this routine is used for only one purpose:
+ *	1)  Handling wire edge -vs- shell intersection
  *
  *  The edge will be fully intersected with the shell, potentially
  *  getting trimmed down in the process as crossings of s2 are found.
@@ -3591,6 +3592,8 @@ struct edgeuse		*eu2;
  *
  *  Lots of junk will be put on the vert_list's in 'is';  the caller
  *  should just free the lists without using them.
+ *
+ *  Called by nmg_crackshells().
  */
 static void
 nmg_isect_edge3p_shell( is, eu1, s2 )
@@ -3714,68 +3717,6 @@ out:
 			eu1, s2 );
 	}
 	return;
-}
-
-/*
- *			N M G _ I S E C T _ F A C E 3 P _ S H E L L _ I N T
- *
- *  Intersect all the edges in fu1 that don't lie on any of the faces
- *  of shell s2 with s2, i.e. "interior" edges, where the
- *  endpoints lie on s2, but the edge is not shared with a face of s2.
- *  Such edges wouldn't have been processed by
- *  the NEWLINE version of nmg_isect_two_generic_faces(), so
- *  intersections need to be looked for here.
- *  Fortunately, it's easy to reject everything except edges that need
- *  processing using only the topology structures.
- *
- *  The "_int" at the end of the name is to signify that this routine
- *  does only "interior" edges, and is not a general face/shell intersector.
- */
-void
-nmg_isect_face3p_shell_int( is, fu1, s2 )
-struct nmg_inter_struct	*is;
-struct faceuse	*fu1;
-struct shell	*s2;
-{
-	struct shell	*s1;
-	struct loopuse	*lu1;
-	struct edgeuse	*eu1;
-
-	NMG_CK_INTER_STRUCT(is);
-	NMG_CK_FACEUSE(fu1);
-	NMG_CK_SHELL(s2);
-	s1 = fu1->s_p;
-	NMG_CK_SHELL(s1);
-
-	if (rt_g.NMG_debug & DEBUG_POLYSECT)
-		rt_log("nmg_isect_face3p_shell_int(, fu1=x%x, s2=x%x) START\n", fu1, s2 );
-
-	for( RT_LIST_FOR( lu1, loopuse, &fu1->lu_hd ) )  {
-		NMG_CK_LOOPUSE(lu1);
-		if( RT_LIST_FIRST_MAGIC( &lu1->down_hd ) == NMG_VERTEXUSE_MAGIC)
-			continue;
-		for( RT_LIST_FOR( eu1, edgeuse, &lu1->down_hd ) )  {
-			struct edgeuse		*eu2;
-
-			eu2 = nmg_find_matching_eu_in_s( eu1, s2 );
-			if( eu2	)  {
-rt_log("nmg_isect_face3p_shell_int() eu1=x%x, e1=x%x, eu2=x%x, e2=x%x (nothing to do)\n", eu1, eu1->e_p, eu2, eu2->e_p);
-				/*  Whether the edgeuse is in a face, or a
-				 *  wire edgeuse, the other guys will isect it.
-				 */
-				continue;
-			}
-			/*  vu2a and vu2b are in shell s2, but there is no
-			 *  edge running between them in shell s2.
-			 *  Create a line of intersection, and go to it!.
-			 */
-rt_log("nmg_isect_face3p_shell_int(, s2=x%x) eu1=x%x, no eu2\n", s2, eu1);
-			nmg_isect_edge3p_shell( is, eu1, s2 );
-		}
-	}
-
-	if (rt_g.NMG_debug & DEBUG_POLYSECT)
-		rt_log("nmg_isect_face3p_shell_int(, fu1=x%x, s2=x%x) END\n", fu1, s2 );
 }
 
 /*
