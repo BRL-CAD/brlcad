@@ -1818,6 +1818,82 @@ int void_ok;
 	eu = RT_LIST_PPREV_CIRC(edgeuse, &new_lu->down_hd);
 	NMG_CK_EDGEUSE(eu);
 
+	/* if the original vertexuses had normals,
+	 * copy them to the new vertexuses.
+	 */
+	if( p1->vu_p->a.magic_p && *p1->vu_p->a.magic_p == NMG_VERTEXUSE_A_PLANE_MAGIC )
+	{
+		struct vertexuse *vu;
+		struct faceuse *fu;
+		struct loopuse *lu;
+		vect_t ot_same_normal;
+		vect_t ot_opposite_normal;
+
+		/* get vertexuse normal */
+		VMOVE( ot_same_normal , p1->vu_p->a.plane_p->N );
+		fu = nmg_find_fu_of_vu( p1->vu_p );
+		NMG_CK_FACEUSE( fu );
+		if( fu->orientation == OT_OPPOSITE )
+			VREVERSE( ot_same_normal , ot_same_normal )
+
+		VREVERSE( ot_opposite_normal , ot_same_normal );
+
+		/* look for new vertexuses in new_lu and old_lu */
+		for( RT_LIST_FOR( vu , vertexuse , &p1->vu_p->v_p->vu_hd ) )
+		{
+			if( vu->a.magic_p )
+				continue;
+
+			lu = nmg_find_lu_of_vu( vu );
+			if( lu != old_lu && lu != old_lu->lumate_p &&
+			    lu != new_lu && lu != new_lu->lumate_p )
+				continue;
+
+			/* assign appropriate normal */
+			fu = nmg_find_fu_of_vu( vu );
+			if( fu->orientation == OT_SAME )
+				nmg_vertexuse_nv( vu , ot_same_normal );
+			else if( fu->orientation == OT_OPPOSITE )
+				nmg_vertexuse_nv( vu , ot_opposite_normal );
+		}
+	}
+	if( p2->vu_p->a.magic_p && *p2->vu_p->a.magic_p == NMG_VERTEXUSE_A_PLANE_MAGIC )
+	{
+		struct vertexuse *vu;
+		struct faceuse *fu;
+		struct loopuse *lu;
+		vect_t ot_same_normal;
+		vect_t ot_opposite_normal;
+
+		/* get vertexuse normal */
+		VMOVE( ot_same_normal , p2->vu_p->a.plane_p->N );
+		fu = nmg_find_fu_of_vu( p2->vu_p );
+		NMG_CK_FACEUSE( fu );
+		if( fu->orientation == OT_OPPOSITE )
+			VREVERSE( ot_same_normal , ot_same_normal )
+
+		VREVERSE( ot_opposite_normal , ot_same_normal );
+
+		/* look for new vertexuses in new_lu and old_lu */
+		for( RT_LIST_FOR( vu , vertexuse , &p2->vu_p->v_p->vu_hd ) )
+		{
+			if( vu->a.magic_p )
+				continue;
+
+			lu = nmg_find_lu_of_vu( vu );
+			if( lu != old_lu && lu != old_lu->lumate_p &&
+			    lu != new_lu && lu != new_lu->lumate_p )
+				continue;
+
+			/* assign appropriate normal */
+			fu = nmg_find_fu_of_vu( vu );
+			if( fu->orientation == OT_SAME )
+				nmg_vertexuse_nv( vu , ot_same_normal );
+			else if( fu->orientation == OT_OPPOSITE )
+				nmg_vertexuse_nv( vu , ot_opposite_normal );
+		}
+	}
+
 	/* map it to the 2D plane */
 	map_new_vertexuse(tbl2d, eu->vu_p);
 
