@@ -33,87 +33,96 @@
 #	The Db class wraps LIBRT's database object.
 #
 ::itcl::class Db {
-    protected variable db ""
-    public variable dbfile ""
-
     constructor {filename} {}
     destructor {}
 
-    public method adjust {args}
-    public method attr {args}
-    public method binary {args}
-    public method c {args}
-    public method cat {args}
-    public method color {args}
-    public method comb {args}
-    public method concat {args}
-    public method copyeval {args}
-    public method cp {args}
-    public method dbip {args}
-    public method dump {args}
-    public method dup {args}
-    public method expand {args}
-    public method find {args}
-    public method form {args}
-    public method g {args}
-    public method get {args}
-    public method get_type {args}
-    public method get_dbname {}
-    public method hide {args}
-    public method i {args}
-    public method keep {args}
-    public method kill {args}
-    public method killall {args}
-    public method killtree {args}
-    public method l {args}
-    public method listeval {args}
-    public method ls {args}
-    public method lt {args}
-    public method make_bb {name args}
-    public method make_name {args}
-    public method match {args}
-    public method move_arb_edge {args}
-    public method move_arb_face {args}
-    public method mv {args}
-    public method mvall {args}
-    public method nmg_collapse {args}
-    public method nmg_simplify {args}
-    public method observer {args}
-    public method open {args}
-    public method pathlist {args}
-    public method paths {args}
-    public method prcolor {args}
-    public method push {args}
-    public method put {args}
-    public method r {args}
-    public method rm {args}
-    public method rmap {args}
-    public method rotate_arb_face {args}
-    public method rt_gettrees {args}
-    public method shells {args}
-    public method showmats {args}
-    public method summary {args}
-    public method title {args}
-    public method tol {args}
-    public method tops {args}
-    public method track {args}
-    public method tree {args}
-    public method unhide {args}
-    public method units {args}
-    public method version {args}
-    public method whatid {args}
-    public method whichair {args}
-    public method whichid {args}
-    public method xpush {args}
+    public {
+	variable dbfile ""
 
-    public method ? {}
-    public method apropos {key}
-    public method help {args}
-    public method getUserCmds {}
+	method adjust {args}
+	method attr {args}
+	method binary {args}
+	method c {args}
+	method cat {args}
+	method color {args}
+	method comb {args}
+	method concat {args}
+	method copyeval {args}
+	method cp {args}
+	method dbip {args}
+	method dump {args}
+	method dup {args}
+	method expand {args}
+	method facetize {args}
+	method find {args}
+	method form {args}
+	method g {args}
+	method get {args}
+	method get_type {args}
+	method get_dbname {}
+	method hide {args}
+	method i {args}
+	method importFg4Section {args}
+	method keep {args}
+	method kill {args}
+	method killall {args}
+	method killtree {args}
+	method l {args}
+	method listeval {args}
+	method ls {args}
+	method lt {args}
+	method make_bb {name args}
+	method make_name {args}
+	method match {args}
+	method move_arb_edge {args}
+	method move_arb_face {args}
+	method mv {args}
+	method mvall {args}
+	method nmg_collapse {args}
+	method nmg_simplify {args}
+	method observer {args}
+	method open {args}
+	method pathlist {args}
+	method paths {args}
+	method prcolor {args}
+	method push {args}
+	method put {args}
+	method r {args}
+	method rm {args}
+	method rmap {args}
+	method rotate_arb_face {args}
+	method rt_gettrees {args}
+	method shells {args}
+	method showmats {args}
+	method summary {args}
+	method title {args}
+	method tol {args}
+	method tops {args}
+	method track {args}
+	method tree {args}
+	method unhide {args}
+	method units {args}
+	method version {args}
+	method whatid {args}
+	method whichair {args}
+	method whichid {args}
+	method xpush {args}
 
-    private method help_init {}
+	method ? {}
+	method apropos {key}
+	method help {args}
+	method getUserCmds {}
+    }
 
-    private variable help
+    protected {
+	variable db ""
+    }
+
+    private {
+	variable help
+
+	method help_init {}
+    }
 }
 
 ::itcl::configbody Db::dbfile {
@@ -218,6 +227,10 @@
 
 ::itcl::body Db::expand {args} {
     eval $db expand $args
+}
+
+::itcl::body Db::facetize {args} {
+    eval $db facetize $args
 }
 
 ::itcl::body Db::kill {args} {
@@ -372,6 +385,10 @@
     eval $db i $args
 }
 
+::itcl::body Db::importFg4Section {args} {
+    eval $db importFg4Section $args
+}
+
 ::itcl::body Db::get_dbname {} {
     return $db
 }
@@ -423,6 +440,24 @@
          for the "rm" subcommand, the arguments are attribute names
          for the "append" subcommand, the arguments are attribute name/value pairs } }
 
+    $help add binary	{{(-i|-o) major_type minor_type dest source}
+                {manipulate opaque objects.
+                 Must specify one of -i (for creating or adjusting objects (input))
+                 or -o for extracting objects (output).
+                 If the major type is "u" the minor type must be one of:
+                      "f" -> float
+                      "d" -> double
+                      "c" -> char (8 bit)
+                      "s" -> short (16 bit)
+                      "i" -> int (32 bit)
+                      "l" -> long (64 bit)
+                      "C" -> unsigned char (8 bit)
+                      "S" -> unsigned short (16 bit)
+                      "I" -> unsigned int (32 bit)
+                      "L" -> unsigned long (64 bit)
+                 For input, source is a file name and dest is an object name.
+                 For output source is an object name and dest is a file name.
+                 Only uniform array binary objects (major_type=u) are currently supported}}
     $help add c		{{[-gr] comb_name [boolean_expr]} {create or extend a combination using standard notation}}
     $help add cat	{{<objects>} {list attributes (brief)}}
     $help add color	{{low high r g b str} {make color entry}}
@@ -449,6 +484,9 @@
     $help add ls	{{[-a -c -r -s]} {table of contents}}
     $help add lt	{{object} {return first level tree as list of operator/member pairs}}
     $help add match	{{exp} {returns all database objects matching the given expression}}
+    $help add make_bb	{{bbname object(s)} {make a bounding box (rpp) around the specified objects}}
+    $help add move_arb_edge	{{arb edge pt} {move an arb's edge through pt}}
+    $help add move_arb_face	{{arb face pt} {move an arb's face through pt}}
     $help add mv	{{old new} {rename object}}
     $help add mvall	{{old new} {rename object everywhere}}
     $help add nmg_collapse    {{nmg_solid new_solid maximum_error_distance [minimum_allowed_angle]}	{decimate NMG solid via edge collapse}}
@@ -461,13 +499,16 @@
     $help add put	{{object data} {creates an object}}
     $help add r		{{region <operation solid>} {create or extend a Region combination}}
     $help add rm	{{comb <members>} {remove members from comb}}
+    $help add rmap	{{} {returns a region ids to region(s) mapping}}
     $help add rt_gettrees      {{} {}}
+    $help add rotate_arb_face	{{arb face pt} {rotate an arb's face through pt}}
     $help add shells	{{nmg_model}	{breaks model into seperate shells}}
     $help add showmats	{{path}	{show xform matrices along path}}
     $help add summary	{{[s r g]}	{count/list solid/reg/groups}}
     $help add title	{{?string?} {print or change the title}}
     $help add tol	{{[abs #] [rel #] [norm #] [dist #] [perp #]} {show/set tessellation and calculation tolerances}}
     $help add tops	{{} {find all top level objects}}
+    $help add track	{{args} {create a track}}
     $help add tree	{{[-c] [-i n] [-o outfile] object(s)} {print out a tree of all members of an object}}
     $help add unhide	{{[objects]} {unset the "hidden" flag for the specified objects so they will appear in a "t" or "ls" command output}}
     $help add units	{{[mm|cm|m|in|ft|...]}	{change units}}
