@@ -296,10 +296,21 @@ CONST struct db_i		*dbip;
 	}
 	if( rp[0].c.c_matname[0] != '\0' )
 	{
-		bu_vls_strncpy( &comb->shader , rp[0].c.c_matname, 32 );
-		if( rp[0].c.c_matparm[0] != '\0' )  {
-			bu_vls_putc( &comb->shader, ' ' );
-			bu_vls_strncat( &comb->shader , rp[0].c.c_matparm, 60 );
+		char shader_str[94];
+
+		/* copy shader info to a static string */
+		strncpy( shader_str,  rp[0].c.c_matname, 32 );
+		shader_str[33] = '\0';
+		strcat( shader_str, " " );
+		strncat( shader_str, rp[0].c.c_matparm, 60 );
+		shader_str[93] = '\0';
+
+		/* convert to TCL format and place into comb->shader */
+		if( bu_shader_to_tcl_list( shader_str, &comb->shader ) )
+		{
+			bu_log( "rt_comb_v4_import: Error: Cannot convert following shader to TCL format:\n" );
+			bu_log( "\t%s\n", shader_str );
+			bu_vls_free( &comb->shader );
 		}
 	}
 	/* XXX Separate flags for color inherit, shader inherit, (new) material inherit? */
@@ -332,6 +343,7 @@ CONST struct db_i		*dbip;
 	union record		*rp;
 	int			j;
 	char			*endp;
+	struct bu_vls		tmp_vls;
 
 	RT_CK_DB_INTERNAL( ip );
 	if( ip->idb_type != ID_COMBINATION ) bu_bomb("rt_comb_v4_export() type not ID_COMBINATION");
@@ -414,21 +426,38 @@ CONST struct db_i		*dbip;
 		rp[0].c.c_rgb[1] = comb->rgb[1];
 		rp[0].c.c_rgb[2] = comb->rgb[2];
 	}
-	endp = strchr( bu_vls_addr(&comb->shader), ' ' );
-	if( endp )  {
-		int	len;
-		len = endp - bu_vls_addr(&comb->shader);
-		if( len <= 0 && bu_vls_strlen(&comb->shader) > 0 )  {
-			bu_log("WARNING: leading spaces on shader '%s' implies NULL shader\n",
-				bu_vls_addr(&comb->shader) );
-		}
-		if( len > 32 ) len = 32;
-		strncpy( rp[0].c.c_matname, bu_vls_addr(&comb->shader), len );
-		strncpy( rp[0].c.c_matparm, endp+1, 60 );
-	} else {
-		strncpy( rp[0].c.c_matname, bu_vls_addr(&comb->shader), 32 );
+
+	bu_vls_init( &tmp_vls );
+
+	/* convert TCL list format shader to keyword=value format */
+	if( bu_shader_to_key_eq( bu_vls_addr(&comb->shader), &tmp_vls ) )
+	{
+		bu_log( "rt_comb_v4_export: Error in combination!\n" );
+		bu_log( "\tCannot convert following shader string to keyword=value format:\n" );
+		bu_log( "\t%s\n", bu_vls_addr(&comb->shader) );
 		rp[0].c.c_matparm[0] = '\0';
+		rp[0].c.c_matname[0] = '\0';
 	}
+	else
+	{
+		endp = strchr( bu_vls_addr(&tmp_vls), ' ' );
+		if( endp )  {
+			int	len;
+			len = endp - bu_vls_addr(&tmp_vls);
+			if( len <= 0 && bu_vls_strlen(&tmp_vls) > 0 )  {
+				bu_log("WARNING: leading spaces on shader '%s' implies NULL shader\n",
+					bu_vls_addr(&tmp_vls) );
+			}
+			if( len > 32 ) len = 32;
+			strncpy( rp[0].c.c_matname, bu_vls_addr(&tmp_vls), len );
+			strncpy( rp[0].c.c_matparm, endp+1, 60 );
+		} else {
+			strncpy( rp[0].c.c_matname, bu_vls_addr(&tmp_vls), 32 );
+			rp[0].c.c_matparm[0] = '\0';
+		}
+	}
+	bu_vls_free( &tmp_vls );
+
 	rp[0].c.c_inherit = comb->inherit;
 
 	return 0;		/* OK */
