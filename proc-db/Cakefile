@@ -54,6 +54,9 @@ molecule:	molecule.o
 teapot:		tea.o
 	CC LDFLAGS tea.o LIBWDB LIBRT LIBRT_LIBES LIBES -o teapot
 
+terrain: terrain.o
+	CC LDFLAGS terrain.o LIBWDB LIBRT LIBRT_LIBES LIBES -o terrain
+
 tea_nmg:	tea_nmg.o LIBWDB_DEP LIBRT_DEP
 	CC LDFLAGS tea_nmg.o LIBWDB LIBRT LIBRT_LIBES LIBES -o tea_nmg
 
