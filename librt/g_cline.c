@@ -24,6 +24,7 @@ static char RCSxxx[] = "@(#)$Header$ (BRL)";
 
 #include <stdio.h>
 #include <math.h>
+#include "tcl.h"
 #include "machine.h"
 #include "vmath.h"
 #include "db.h"
@@ -673,4 +674,92 @@ struct rt_db_internal	*ip;
 CONST struct bn_tol		*tol;
 {
 	return( 1 );
+}
+
+int
+rt_cline_tclget( interp, intern, attr )
+Tcl_Interp                      *interp;
+CONST struct rt_db_internal     *intern;
+CONST char                      *attr;
+{
+	register struct rt_cline_internal *cli = 
+		(struct rt_cline_internal *)intern->idb_ptr;
+	Tcl_DString     ds;
+	struct bu_vls   vls;
+	int ret=TCL_OK;
+
+	RT_CLINE_CK_MAGIC( cli );
+
+	Tcl_DStringInit( &ds );
+	bu_vls_init( &vls );
+
+	if( attr == (char *)NULL )
+	{
+		bu_vls_strcpy( &vls, "cline" );
+		bu_vls_printf( &vls, " V {%.25g %.25g %.25g}", V3ARGS( cli->v ) );
+		bu_vls_printf( &vls, " H {%.25g %.25g %.25g}", V3ARGS( cli->h ) );
+		bu_vls_printf( &vls, " R %.25g T %.25g", cli->radius, cli->thickness );
+	}
+	else if( *attr == 'V')
+		bu_vls_printf( &vls, "%.25g %.25g %.25g", V3ARGS( cli->v ) );
+	else if( *attr == 'H' )
+		bu_vls_printf( &vls, "%.25g %.25g %.25g", V3ARGS( cli->h ) );
+	else if( *attr == 'R' )
+		bu_vls_printf( &vls, "%.25g", cli->radius );
+	else if( *attr == 'T' )
+		bu_vls_printf( &vls, "%.25g", cli->thickness );
+	else
+	{
+		bu_vls_strcat( &vls, "ERROR: unrecognized attribute, must be V, H, R, or T!!!" );
+		ret = TCL_ERROR;
+	}
+
+        Tcl_DStringAppendElement( &ds, bu_vls_addr( &vls ) );
+        Tcl_DStringResult( interp, &ds );
+        Tcl_DStringFree( &ds );
+        bu_vls_free( &vls );
+        return( ret );
+}
+
+int
+rt_cline_tcladjust( interp, intern, argc, argv )
+Tcl_Interp              *interp;
+struct rt_db_internal   *intern;
+int                     argc;
+char                    **argv;
+{
+	struct rt_cline_internal *cli =
+		(struct rt_cline_internal *)intern->idb_ptr;
+	int ret;
+	fastf_t *new;
+
+	RT_CK_DB_INTERNAL( intern );
+	RT_CLINE_CK_MAGIC( cli );
+
+	while( argc >= 2 )
+	{
+		int array_len=3;
+
+		if( *argv[0] == 'V' )
+		{
+			new = cli->v;
+			if( (ret=tcl_list_to_fastf_array( interp, argv[1], &new, &array_len ) ) )
+				return( ret );
+		}
+		else if( *argv[0] == 'H' )
+		{
+			new = cli->h;
+			if( (ret=tcl_list_to_fastf_array( interp, argv[1], &new, &array_len ) ) )
+				return( ret );
+		}
+		else if( *argv[0] == 'R' )
+			cli->radius = atof( argv[1] );
+		else if( *argv[0] == 'T' )
+			cli->thickness = atof( argv[1] );
+
+		argc -= 2;
+		argv += 2;
+	}
+
+	return( TCL_OK );
 }
