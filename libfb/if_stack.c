@@ -23,42 +23,46 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "fb.h"
 #include "./fblocal.h"
 
-_LOCAL_ int	stk_dopen(),
-		stk_dclose(),
-		stk_dreset(),
-		stk_dclear(),
-		stk_bread(),
-		stk_bwrite(),
-		stk_cmread(),
-		stk_cmwrite(),
-		stk_viewport_set(),
-		stk_window_set(),
-		stk_zoom_set(),
-		stk_curs_set(),
-		stk_cmemory_addr(),
-		stk_cscreen_addr(),
+_LOCAL_ int	stk_open(),
+		stk_close(),
+		stk_reset(),
+		stk_clear(),
+		stk_read(),
+		stk_write(),
+		stk_rmap(),
+		stk_wmap(),
+		stk_viewport(),
+		stk_window(),
+		stk_zoom(),
+		stk_setcursor(),
+		stk_cursor(),
+		stk_scursor(),
 		stk_readrect(),
 		stk_writerect(),
+		stk_flush(),
+		stk_free(),
 		stk_help();
 
 /* This is the ONLY thing that we normally "export" */
 FBIO stk_interface =  {
-	stk_dopen,		/* device_open		*/
-	stk_dclose,		/* device_close		*/
-	stk_dreset,		/* device_reset		*/
-	stk_dclear,		/* device_clear		*/
-	stk_bread,		/* buffer_read		*/
-	stk_bwrite,		/* buffer_write		*/
-	stk_cmread,		/* colormap_read	*/
-	stk_cmwrite,		/* colormap_write	*/
-	stk_viewport_set,	/* viewport_set		*/
-	stk_window_set,		/* window_set		*/
-	stk_zoom_set,		/* zoom_set		*/
-	stk_curs_set,		/* curs_set		*/
-	stk_cmemory_addr,	/* cursor_move_memory_addr */
-	stk_cscreen_addr,	/* cursor_move_screen_addr */
+	stk_open,		/* device_open		*/
+	stk_close,		/* device_close		*/
+	stk_reset,		/* device_reset		*/
+	stk_clear,		/* device_clear		*/
+	stk_read,		/* buffer_read		*/
+	stk_write,		/* buffer_write		*/
+	stk_rmap,		/* colormap_read	*/
+	stk_wmap,		/* colormap_write	*/
+	stk_viewport,		/* viewport_set		*/
+	stk_window,		/* window_set		*/
+	stk_zoom,		/* zoom_set		*/
+	stk_setcursor,		/* curs_set		*/
+	stk_cursor,		/* cursor_move_memory_addr */
+	stk_scursor,		/* cursor_move_screen_addr */
 	stk_readrect,		/* readrect		*/
 	stk_writerect,		/* writerect		*/
+	stk_flush,		/* flush output		*/
+	stk_free,		/* free resources	*/
 	stk_help,		/* help function	*/
 	"Multiple Device Stacker", /* device description */
 	1024*32,		/* max width		*/
@@ -86,7 +90,7 @@ struct	stkinfo {
 #define	SIL(ptr) ((ptr)->u1.p)		/* left hand side version */
 
 _LOCAL_ int
-stk_dopen( ifp, file, width, height )
+stk_open( ifp, file, width, height )
 FBIO	*ifp;
 char	*file;
 int	width, height;
@@ -159,7 +163,7 @@ int	width, height;
 }
 
 _LOCAL_ int
-stk_dclose( ifp )
+stk_close( ifp )
 FBIO	*ifp;
 {
 	register FBIO **ip = SI(ifp)->if_list;
@@ -173,7 +177,7 @@ FBIO	*ifp;
 }
 
 _LOCAL_ int
-stk_dreset( ifp )
+stk_reset( ifp )
 FBIO	*ifp;
 {
 	register FBIO **ip = SI(ifp)->if_list;
@@ -187,7 +191,7 @@ FBIO	*ifp;
 }
 
 _LOCAL_ int
-stk_dclear( ifp, pp )
+stk_clear( ifp, pp )
 FBIO	*ifp;
 RGBpixel	*pp;
 {
@@ -202,7 +206,7 @@ RGBpixel	*pp;
 }
 
 _LOCAL_ int
-stk_bread( ifp, x, y, pixelp, count )
+stk_read( ifp, x, y, pixelp, count )
 FBIO	*ifp;
 int	x, y;
 RGBpixel	*pixelp;
@@ -218,7 +222,7 @@ int	count;
 }
 
 _LOCAL_ int
-stk_bwrite( ifp, x, y, pixelp, count )
+stk_write( ifp, x, y, pixelp, count )
 FBIO	*ifp;
 int	x, y;
 RGBpixel	*pixelp;
@@ -271,7 +275,7 @@ RGBpixel	*pp;
 }
 
 _LOCAL_ int
-stk_cmread( ifp, cmp )
+stk_rmap( ifp, cmp )
 FBIO	*ifp;
 ColorMap	*cmp;
 {
@@ -285,7 +289,7 @@ ColorMap	*cmp;
 }
 
 _LOCAL_ int
-stk_cmwrite( ifp, cmp )
+stk_wmap( ifp, cmp )
 FBIO	*ifp;
 ColorMap	*cmp;
 {
@@ -300,7 +304,7 @@ ColorMap	*cmp;
 }
 
 _LOCAL_ int
-stk_viewport_set( ifp, left, top, right, bottom )
+stk_viewport( ifp, left, top, right, bottom )
 FBIO	*ifp;
 int	left, top, right, bottom;
 {
@@ -315,7 +319,7 @@ int	left, top, right, bottom;
 }
 
 _LOCAL_ int
-stk_window_set( ifp, x, y )
+stk_window( ifp, x, y )
 FBIO	*ifp;
 int	x, y;
 {
@@ -330,7 +334,7 @@ int	x, y;
 }
 
 _LOCAL_ int
-stk_zoom_set( ifp, x, y )
+stk_zoom( ifp, x, y )
 FBIO	*ifp;
 int	x, y;
 {
@@ -345,7 +349,7 @@ int	x, y;
 }
 
 _LOCAL_ int
-stk_curs_set( ifp, bits, xbits, ybits, xorig, yorig )
+stk_setcursor( ifp, bits, xbits, ybits, xorig, yorig )
 FBIO	*ifp;
 unsigned char *bits;
 int	xbits, ybits;
@@ -362,7 +366,7 @@ int	xorig, yorig;
 }
 
 _LOCAL_ int
-stk_cmemory_addr( ifp, mode, x, y )
+stk_cursor( ifp, mode, x, y )
 FBIO	*ifp;
 int	mode;
 int	x, y;
@@ -378,7 +382,7 @@ int	x, y;
 }
 
 _LOCAL_ int
-stk_cscreen_addr( ifp, mode, x, y )
+stk_scursor( ifp, mode, x, y )
 FBIO	*ifp;
 int	mode;
 int	x, y;
@@ -387,6 +391,34 @@ int	x, y;
 
 	while( *ip != (FBIO *)NULL ) {
 		fb_scursor( (*ip), mode, x, y );
+		ip++;
+	}
+
+	return(0);
+}
+
+_LOCAL_ int
+stk_flush( ifp )
+FBIO	*ifp;
+{
+	register FBIO **ip = SI(ifp)->if_list;
+
+	while( *ip != (FBIO *)NULL ) {
+		fb_flush( (*ip) );
+		ip++;
+	}
+
+	return(0);
+}
+
+_LOCAL_ int
+stk_free( ifp )
+FBIO	*ifp;
+{
+	register FBIO **ip = SI(ifp)->if_list;
+
+	while( *ip != (FBIO *)NULL ) {
+		fb_free( (*ip) );
 		ip++;
 	}
 
