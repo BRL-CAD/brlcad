@@ -52,7 +52,7 @@ BU_EXTERN(void			bu_printfile, (struct bu_file *bfp) );
 
 /* brlcad_path.c */
 BU_EXTERN(int			bu_file_exists, (const char *path) );
-BU_EXTERN(char			*bu_brlcad_path, (const char *rhs) );
+BU_EXTERN(char			*bu_brlcad_path, (const char *rhs, int fail_quietly) );
 /*
  *	General I/O for ASCII files: bu_file support
  */

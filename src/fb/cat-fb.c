@@ -506,7 +506,7 @@ readrailmag(void)
 	char c;
 
 	if ((rmfd = open(LOCAL_RAILMAG, 0)) < 0)
-		if ((rmfd = open(bu_brlcad_path("vfont/railmag"), 0)) < 0) {
+		if ((rmfd = open(bu_brlcad_path("vfont/railmag", 0), 0)) < 0) {
 			/*
 			 *  Provide reasonable default font choices.
 			 *  In the Berkeley VFONT set, the Times

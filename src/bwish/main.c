@@ -204,12 +204,17 @@ Cad_AppInit(Tcl_Interp *interp)
 #endif
 
 	/* Locate the BRL-CAD-specific Tcl scripts */
-	pathname = bu_brlcad_path("");
+	pathname = bu_brlcad_path("", 1);
 
 	bu_vls_init(&vls);
-	bu_vls_printf(&vls, "lappend auto_path %stclscripts %stclscripts/lib %stclscripts/util",
-		      pathname, pathname, pathname);
-	(void)Tcl_Eval(interp, bu_vls_addr(&vls));
+	if (pathname) {
+	  bu_vls_printf(&vls, "lappend auto_path %stclscripts %stclscripts/lib %stclscripts/util",
+			pathname, pathname, pathname);
+	  (void)Tcl_Eval(interp, bu_vls_addr(&vls));
+	} else {
+	  /* hunt for the tclscripts a little since we're probably just not installed yet */
+	  (void)Tcl_Eval(interp, "lappend auto_path /usr/brlcad/tclscripts /usr/brlcad/tclscripts/lib /usr/brlcad/tclscripts/util tclscripts tclscripts/lib tclscripts/lib/util src/tclscripts src/tclscripts/lib src/tclscripts/util ../tclscripts ../tclscripts/lib ../tclscripts/util ../../tclscripts ../../tclscripts/lib ../../tclscripts/util");
+	}
 	bu_vls_free(&vls);
 
 	/* register bwish/btclsh commands */

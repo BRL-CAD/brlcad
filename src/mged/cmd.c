@@ -697,7 +697,7 @@ mged_setup(void)
 	bu_vls_init(&tcl_output_hook);
 
 	/* Locate the BRL-CAD-specific Tcl scripts */
-	filename = bu_brlcad_path( "" );
+	filename = bu_brlcad_path( "", 0 );
 #ifdef WIN32
 	{
 	  /* XXX - nasty little hack to convert paths */
@@ -809,7 +809,7 @@ cmd_setup(void)
 		char		*pathname;
 
 		/* Locate the BRL-CAD-specific Tcl scripts */
-		pathname = bu_brlcad_path("");
+		pathname = bu_brlcad_path("", 0);
 
 #ifdef WIN32
 	{

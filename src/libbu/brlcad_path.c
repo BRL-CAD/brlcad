@@ -66,7 +66,7 @@ bu_file_exists(const char *path)
  *
  */
 char *
-bu_brlcad_path(const char *rhs)
+bu_brlcad_path(const char *rhs, int fail_quietly)
 {
 	static char	result[256];
 	char		*lhs;
@@ -75,6 +75,9 @@ bu_brlcad_path(const char *rhs)
 	if( (lhs = getenv("BRLCAD_ROOT")) != NULL )  {
 		if( bu_file_exists(lhs) )
 			goto ok;
+		if (fail_quietly) {
+		  return NULL;
+		}
 		bu_log("You set environment variable BRLCAD_ROOT to '%s', which does not exist.  Seeking=%s\n", lhs, rhs);
 		bu_bomb("bu_brlcad_path()");
 	}
@@ -96,6 +99,9 @@ bu_brlcad_path(const char *rhs)
 	/* Can't find the BRL-CAD root directory, this is fatal! */
 	/* Could use some huristics here, but being overly clever is probably bad. */
 
+	if (fail_quietly) {
+	  return NULL;
+	}
 	bu_log("\
 Unable to find the directory that BRL-CAD is installed in while seeking: \n\
 	%s\n\
@@ -109,7 +115,7 @@ csh/tcsh users:\n\
 	setenv BRLCAD_ROOT %s\n\
 sh/bash users:\n\
 	BRLCAD_ROOT=%s; export BRLCAD_ROOT\n",
-		rhs, lhs, lhs, lhs);
+	       rhs, lhs, lhs, lhs);
 	bu_bomb("bu_brlcad_path()");
 
 ok:
@@ -123,6 +129,10 @@ ok:
 #endif
 	if( bu_file_exists(result) )
 		return result;			/* OK */
+
+	if (fail_quietly) {
+	  return NULL;
+	}
 
 	bu_log("\
 Unable to find the '%s' subdirectory within the BRL-CAD\n\
