@@ -222,8 +222,8 @@ BU_EXTERN(int		bn_mat_is_equal, (CONST mat_t a, CONST mat_t b,
 #define BN_UNIF_MAGIC	12481632
 #define BN_GAUSS_MAGIC 512256128
 
-#define BN_CK_UNIF(_p) RT_CKMAG(_p, BN_UNIF_MAGIC, "bn_unif")
-#define BN_CK_GAUSS(_p) RT_CKMAG(_p, BN_GAUSS_MAGIC, "bn_gauss")
+#define BN_CK_UNIF(_p) BU_CKMAG(_p, BN_UNIF_MAGIC, "bn_unif")
+#define BN_CK_GAUSS(_p) BU_CKMAG(_p, BN_GAUSS_MAGIC, "bn_gauss")
 
 struct bn_unif {
 	long	magic;
@@ -704,7 +704,7 @@ struct bn_table {
 	fastf_t		x[1];	/* array of nx+1 wavelengths, dynamically sized */
 };
 #define BN_TABLE_MAGIC	0x53706374
-#define BN_CK_TABLE(_p)	RT_CKMAG(_p, BN_TABLE_MAGIC, "bn_table")
+#define BN_CK_TABLE(_p)	BU_CKMAG(_p, BN_TABLE_MAGIC, "bn_table")
 #define BN_TABLE_NULL	((struct bn_table *)NULL)
 
 /* Gets an bn_table, with x[] having size _nx+1 */
@@ -724,7 +724,7 @@ struct bn_tabdata {
 	fastf_t		y[1];		/* array of ny samples, dynamically sized */
 };
 #define BN_TABDATA_MAGIC	0x53736d70
-#define BN_CK_TABDATA(_p)	RT_CKMAG(_p, BN_TABDATA_MAGIC, "bn_tabdata")
+#define BN_CK_TABDATA(_p)	BU_CKMAG(_p, BN_TABDATA_MAGIC, "bn_tabdata")
 #define BN_TABDATA_NULL		((struct bn_tabdata *)NULL)
 
 #define BN_SIZEOF_TABDATA_Y(_tabdata)	sizeof(fastf_t)*((_tabdata)->ny)

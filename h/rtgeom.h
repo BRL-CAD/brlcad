@@ -56,7 +56,7 @@ struct rt_tor_internal {
 	fastf_t	r_b;		/* radius in B direction (typ == r_a) */
 };
 #define RT_TOR_INTERNAL_MAGIC	0x9bffed87
-#define RT_TOR_CK_MAGIC(_p)	RT_CKMAG(_p,RT_TOR_INTERNAL_MAGIC,"rt_tor_internal")
+#define RT_TOR_CK_MAGIC(_p)	BU_CKMAG(_p,RT_TOR_INTERNAL_MAGIC,"rt_tor_internal")
 
 /*
  *	ID_TGC and ID_REC
@@ -71,7 +71,7 @@ struct rt_tgc_internal {
 	vect_t	d;
 };
 #define RT_TGC_INTERNAL_MAGIC	0xaabbdd87
-#define RT_TGC_CK_MAGIC(_p)	RT_CKMAG(_p,RT_TGC_INTERNAL_MAGIC,"rt_tgc_internal")
+#define RT_TGC_CK_MAGIC(_p)	BU_CKMAG(_p,RT_TGC_INTERNAL_MAGIC,"rt_tgc_internal")
 
 /*
  *	ID_ELL, and ID_SPH
@@ -84,7 +84,7 @@ struct rt_ell_internal  {
 	vect_t	c;
 };
 #define RT_ELL_INTERNAL_MAGIC	0x93bb23ff
-#define RT_ELL_CK_MAGIC(_p)	RT_CKMAG(_p,RT_ELL_INTERNAL_MAGIC,"rt_ell_internal")
+#define RT_ELL_CK_MAGIC(_p)	BU_CKMAG(_p,RT_ELL_INTERNAL_MAGIC,"rt_ell_internal")
 
 /*
  *	ID_ARB8
@@ -97,7 +97,7 @@ struct rt_arb_internal {
 	point_t	pt[8];
 };
 #define RT_ARB_INTERNAL_MAGIC	0x9befd010
-#define RT_ARB_CK_MAGIC(_p)	RT_CKMAG(_p,RT_ARB_INTERNAL_MAGIC,"rt_arb_internal")
+#define RT_ARB_CK_MAGIC(_p)	BU_CKMAG(_p,RT_ARB_INTERNAL_MAGIC,"rt_arb_internal")
 
 /*
  *	ID_ARS
@@ -109,7 +109,7 @@ struct rt_ars_internal {
 	fastf_t	**curves;
 };
 #define RT_ARS_INTERNAL_MAGIC	0x77ddbbe3
-#define RT_ARS_CK_MAGIC(_p)	RT_CKMAG(_p,RT_ARS_INTERNAL_MAGIC,"rt_ars_internal")
+#define RT_ARS_CK_MAGIC(_p)	BU_CKMAG(_p,RT_ARS_INTERNAL_MAGIC,"rt_ars_internal")
 
 /*
  *	ID_HALF
@@ -119,7 +119,7 @@ struct rt_half_internal  {
 	plane_t	eqn;
 };
 #define RT_HALF_INTERNAL_MAGIC	0xaa87bbdd
-#define RT_HALF_CK_MAGIC(_p)	RT_CKMAG(_p,RT_HALF_INTERNAL_MAGIC,"rt_half_internal")
+#define RT_HALF_CK_MAGIC(_p)	BU_CKMAG(_p,RT_HALF_INTERNAL_MAGIC,"rt_half_internal")
 
 /*
  *	ID_GRIP
@@ -132,7 +132,7 @@ struct rt_grip_internal {
 	fastf_t	mag;
 };
 #define RT_GRIP_INTERNAL_MAGIC	0x31196205
-#define RT_GRIP_CK_MAGIC(_p)	RT_CKMAG(_p,RT_GRIP_INTERNAL_MAGIC,"rt_grip_internal")
+#define RT_GRIP_CK_MAGIC(_p)	BU_CKMAG(_p,RT_GRIP_INTERNAL_MAGIC,"rt_grip_internal")
 	
 /*
  *	ID_POLY
@@ -149,7 +149,7 @@ struct rt_pg_internal {
 	int	max_npts;		/* maximum value of npts in poly[] */
 };
 #define RT_PG_INTERNAL_MAGIC	0x9bfed887
-#define RT_PG_CK_MAGIC(_p)	RT_CKMAG(_p,RT_PG_INTERNAL_MAGIC,"rt_pg_internal")
+#define RT_PG_CK_MAGIC(_p)	BU_CKMAG(_p,RT_PG_INTERNAL_MAGIC,"rt_pg_internal")
 
 /* ID_BSPLINE */
 #ifdef NMG_H				/* Only if we have seen struct face_g_snurb */
@@ -160,7 +160,7 @@ struct rt_nurb_internal {
 };
 
 #define RT_NURB_INTERNAL_MAGIC	0x002b2bdd
-#define RT_NURB_CK_MAGIC( _p) RT_CKMAG(_p,RT_NURB_INTERNAL_MAGIC,"rt_nurb_internal");
+#define RT_NURB_CK_MAGIC( _p) BU_CKMAG(_p,RT_NURB_INTERNAL_MAGIC,"rt_nurb_internal");
 #endif
 #define RT_NURB_GET_CONTROL_POINT(_s,_u,_v)	((_s)->ctl_points[ \
 	((_v)*(_s)->s_size[0]+(_u))*RT_NURB_EXTRACT_COORDS((_s)->pt_type)])
@@ -186,10 +186,10 @@ struct rt_ebm_internal  {
 	fastf_t		tallness;	/* Z dimension (mm) */
 	mat_t		mat;		/* convert local coords to model space */
 	/* REMAINING ELEMENTS PROVIDED BY IMPORT, UNUSED BY EXPORT */
-	struct rt_mapped_file	*mp;	/* actual data */
+	struct bu_mapped_file	*mp;	/* actual data */
 };
 #define RT_EBM_INTERNAL_MAGIC	0xf901b231
-#define RT_EBM_CK_MAGIC(_p)	RT_CKMAG(_p,RT_EBM_INTERNAL_MAGIC,"rt_ebm_internal")
+#define RT_EBM_CK_MAGIC(_p)	BU_CKMAG(_p,RT_EBM_INTERNAL_MAGIC,"rt_ebm_internal")
 
 /*
  *	ID_VOL
@@ -209,7 +209,7 @@ struct rt_vol_internal  {
 	unsigned char	*map;
 };
 #define RT_VOL_INTERNAL_MAGIC	0x987ba1d0
-#define RT_VOL_CK_MAGIC(_p)	RT_CKMAG(_p,RT_VOL_INTERNAL_MAGIC,"rt_vol_internal")
+#define RT_VOL_CK_MAGIC(_p)	BU_CKMAG(_p,RT_VOL_INTERNAL_MAGIC,"rt_vol_internal")
 
 /*
  *	ID_HF
@@ -231,10 +231,10 @@ struct rt_hf_internal {
 	fastf_t		ylen;		/* model len of HT rpp in "n" dir */
 	fastf_t		zscale;		/* scale of data in ''up'' dir (after file2mm is applied) */
 	/* END USER SETABLE VARIABLES, BEGIN INTERNAL STUFF */
-	struct rt_mapped_file	*mp;	/* actual data */
+	struct bu_mapped_file	*mp;	/* actual data */
 };
 #define RT_HF_INTERNAL_MAGIC	0x4846494d
-#define RT_HF_CK_MAGIC(_p)	RT_CKMAG(_p,RT_HF_INTERNAL_MAGIC,"rt_hf_internal")
+#define RT_HF_CK_MAGIC(_p)	BU_CKMAG(_p,RT_HF_INTERNAL_MAGIC,"rt_hf_internal")
 
 /*
  *	ID_ARBN
@@ -245,7 +245,7 @@ struct rt_arbn_internal  {
 	plane_t	*eqn;
 };
 #define RT_ARBN_INTERNAL_MAGIC	0x18236461
-#define RT_ARBN_CK_MAGIC(_p)	RT_CKMAG(_p,RT_ARBN_INTERNAL_MAGIC,"rt_arbn_internal")
+#define RT_ARBN_CK_MAGIC(_p)	BU_CKMAG(_p,RT_ARBN_INTERNAL_MAGIC,"rt_arbn_internal")
 
 /*
  *	ID_PIPE
@@ -257,7 +257,7 @@ struct rt_pipe_internal {
 	int		pipe_count;
 };
 #define RT_PIPE_INTERNAL_MAGIC	0x7dd7bb3e
-#define RT_PIPE_CK_MAGIC(_p)	RT_CKMAG(_p,RT_PIPE_INTERNAL_MAGIC,"rt_pipe_internal")
+#define RT_PIPE_CK_MAGIC(_p)	BU_CKMAG(_p,RT_PIPE_INTERNAL_MAGIC,"rt_pipe_internal")
 
 /*
  *	ID_PARTICLE
@@ -272,7 +272,7 @@ struct rt_part_internal {
 	int	part_type;		/* sphere, cylinder, cone */
 };
 #define RT_PART_INTERNAL_MAGIC	0xaaccee87
-#define RT_PART_CK_MAGIC(_p)	RT_CKMAG(_p,RT_PART_INTERNAL_MAGIC,"rt_part_internal")
+#define RT_PART_CK_MAGIC(_p)	BU_CKMAG(_p,RT_PART_INTERNAL_MAGIC,"rt_part_internal")
 
 #define RT_PARTICLE_TYPE_SPHERE		1
 #define RT_PARTICLE_TYPE_CYLINDER	2
@@ -289,7 +289,7 @@ struct rt_rpc_internal {
 	fastf_t	rpc_r;	/* scalar half-width of rectangular face */
 };
 #define RT_RPC_INTERNAL_MAGIC	0xaaccee88
-#define RT_RPC_CK_MAGIC(_p)	RT_CKMAG(_p,RT_RPC_INTERNAL_MAGIC,"rt_rpc_internal")
+#define RT_RPC_CK_MAGIC(_p)	BU_CKMAG(_p,RT_RPC_INTERNAL_MAGIC,"rt_rpc_internal")
 
 /*
  *	ID_RHC
@@ -303,7 +303,7 @@ struct rt_rhc_internal {
 	fastf_t	rhc_c;	/* dist from hyperbola to vertex of asymptotes */
 };
 #define RT_RHC_INTERNAL_MAGIC	0xaaccee89
-#define RT_RHC_CK_MAGIC(_p)	RT_CKMAG(_p,RT_RHC_INTERNAL_MAGIC,"rt_rhc_internal")
+#define RT_RHC_CK_MAGIC(_p)	BU_CKMAG(_p,RT_RHC_INTERNAL_MAGIC,"rt_rhc_internal")
 
 /*
  *	ID_EPA
@@ -317,7 +317,7 @@ struct rt_epa_internal {
 	fastf_t	epa_r2;	/* scalar semi-minor axis length */
 };
 #define RT_EPA_INTERNAL_MAGIC	0xaaccee90
-#define RT_EPA_CK_MAGIC(_p)	RT_CKMAG(_p,RT_EPA_INTERNAL_MAGIC,"rt_epa_internal")
+#define RT_EPA_CK_MAGIC(_p)	BU_CKMAG(_p,RT_EPA_INTERNAL_MAGIC,"rt_epa_internal")
 
 /*
  *	ID_EHY
@@ -332,7 +332,7 @@ struct rt_ehy_internal {
 	fastf_t	ehy_c;	/* dist from hyperbola to vertex of asymptotes */
 };
 #define RT_EHY_INTERNAL_MAGIC	0xaaccee91
-#define RT_EHY_CK_MAGIC(_p)	RT_CKMAG(_p,RT_EHY_INTERNAL_MAGIC,"rt_ehy_internal")
+#define RT_EHY_CK_MAGIC(_p)	BU_CKMAG(_p,RT_EHY_INTERNAL_MAGIC,"rt_ehy_internal")
 
 /*
  *	ID_ETO
@@ -346,7 +346,7 @@ struct rt_eto_internal {
 	fastf_t	eto_rd;	/* scalar length of semi-minor of ellipse */
 };
 #define RT_ETO_INTERNAL_MAGIC	0xaaccee92
-#define RT_ETO_CK_MAGIC(_p)	RT_CKMAG(_p,RT_ETO_INTERNAL_MAGIC,"rt_eto_internal")
+#define RT_ETO_CK_MAGIC(_p)	BU_CKMAG(_p,RT_ETO_INTERNAL_MAGIC,"rt_eto_internal")
 
 /*
  *	ID_DSP
@@ -364,10 +364,10 @@ struct rt_dsp_internal{
 	mat_t		dsp_mtos;		/* model to solid space */
 	/* END OF USER SETABLE VARIABLES, BEGIN INTERNAL STUFF */
 	mat_t		dsp_stom;		/* solid to model space */
-	struct rt_mapped_file *dsp_mp;	/* actual data */
+	struct bu_mapped_file *dsp_mp;	/* actual data */
 };
 #define RT_DSP_INTERNAL_MAGIC	0xde6
-#define RT_DSP_CK_MAGIC(_p)	RT_CKMAG(_p,RT_DSP_INTERNAL_MAGIC,"rt_dsp_internal")
+#define RT_DSP_CK_MAGIC(_p)	BU_CKMAG(_p,RT_DSP_INTERNAL_MAGIC,"rt_dsp_internal")
 
 /*
  *	ID_SKETCH
@@ -393,7 +393,7 @@ struct rt_sketch_internal
 	} *curves;			/* array of curves in this sketch */
 };
 #define RT_SKETCH_INTERNAL_MAGIC	0x736b6574	/* sket */
-#define RT_SKETCH_CK_MAGIC(_p)	RT_CKMAG(_p,RT_SKETCH_INTERNAL_MAGIC,"rt_sketch_internal")
+#define RT_SKETCH_CK_MAGIC(_p)	BU_CKMAG(_p,RT_SKETCH_INTERNAL_MAGIC,"rt_sketch_internal")
 
 
 /*
@@ -415,7 +415,7 @@ struct rt_extrude_internal
 	struct rt_sketch_internal	*skt;	/* pointer to referenced sketch */
 };
 #define RT_EXTRUDE_INTERNAL_MAGIC	0x65787472	/* extr */
-#define RT_EXTRUDE_CK_MAGIC(_p)	RT_CKMAG(_p,RT_EXTRUDE_INTERNAL_MAGIC,"rt_extrude_internal")
+#define RT_EXTRUDE_CK_MAGIC(_p)	BU_CKMAG(_p,RT_EXTRUDE_INTERNAL_MAGIC,"rt_extrude_internal")
 
 
 #endif /* SEEN_RTGEOM_H */

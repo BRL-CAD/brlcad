@@ -312,6 +312,7 @@ g/RT_CK_VLBLOCK/s//BN_CK_VLBLOCK/g
 g/BU_BU_/s//BU_/g
 g/bu_bu_/s//bu_/g
 g/bn_bn_/s//bn_/g
+g/bn_pipe/s//rt_pipe/g
 f
 w
 q

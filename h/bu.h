@@ -781,11 +781,11 @@ extern int	bu_debug;
  * };
  *
  * struct bu_structparse data_sp[] ={
- * {"%c", 1,  "char_value", bu_offsetof(data_structure, a_char),   FUNC_NULL}, 
- * {"%s", 32, "char_value", bu_offsetofarray(data_structure, str), FUNC_NULL}, 
- * {"%i", 1,  "char_value", bu_offsetof(data_structure, a_short),  FUNC_NULL}, 
- * {"%d", 1,  "char_value", bu_offsetof(data_structure, a_int),    FUNC_NULL}, 
- * {"%f", 1,  "char_value", bu_offsetof(data_structure, a_double), FUNC_NULL}, 
+ * {"%c", 1,  "char_value", bu_offsetof(data_structure, a_char),   BU_STRUCTPARSE_FUNC_NULL}, 
+ * {"%s", 32, "char_value", bu_offsetofarray(data_structure, str), BU_STRUCTPARSE_FUNC_NULL}, 
+ * {"%i", 1,  "char_value", bu_offsetof(data_structure, a_short),  BU_STRUCTPARSE_FUNC_NULL}, 
+ * {"%d", 1,  "char_value", bu_offsetof(data_structure, a_int),    BU_STRUCTPARSE_FUNC_NULL}, 
+ * {"%f", 1,  "char_value", bu_offsetof(data_structure, a_double), BU_STRUCTPARSE_FUNC_NULL}, 
  * };
  */
 struct bu_structparse {
@@ -816,7 +816,7 @@ struct bu_external  {
 #define BU_EXTERNAL_MAGIC	0x768dbbd0
 #define BU_INIT_EXTERNAL(_p)	{(_p)->ext_magic = BU_EXTERNAL_MAGIC; \
 	(_p)->ext_buf = (genptr_t)NULL; (_p)->ext_nbytes = 0;}
-#define BU_CK_EXTERNAL(_p)	RT_CKMAG(_p, BU_EXTERNAL_MAGIC, "bu_external")
+#define BU_CK_EXTERNAL(_p)	BU_CKMAG(_p, BU_EXTERNAL_MAGIC, "bu_external")
 
 /*----------------------------------------------------------------------*/
 /* color.c */
