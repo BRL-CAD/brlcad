@@ -157,7 +157,9 @@ int			noisy;
 /*
  *			D B _ D I R A D D
  *
- * Add an entry to the directory
+ * Add an entry to the directory.
+ * Try to make the regular path through the code as fast as possible,
+ * to speed up building the table of contents.
  */
 struct directory *
 db_diradd( dbip, name, laddr, len, flags, ptr )
@@ -168,9 +170,8 @@ int			len;
 int			flags;
 genptr_t		ptr;		/* unused client_data from db_scan() */
 {
-	register struct directory **headp;
+	struct directory **headp;
 	register struct directory *dp;
-	char			local[NAMESIZE+2+2];
 
 	RT_CK_DBI(dbip);
 
@@ -179,41 +180,60 @@ genptr_t		ptr;		/* unused client_data from db_scan() */
 			dbip, name, laddr, len, flags );
 	}
 
-	(void)strncpy( local, name, NAMESIZE );	/* Trim the name */
-	local[NAMESIZE] = '\0';			/* ensure null termination */
-
-	if( db_lookup( dbip, local, 0 ) != DIR_NULL )  {
-		register int	c;
-
-		/* Shift right two characters */
-		/* Don't truncate to NAMESIZE, name is just internal */
-		strncpy( local+2, name, NAMESIZE );
-		local[1] = '_';			/* distinctive separater */
-		local[NAMESIZE+2] = '\0';	/* ensure null termination */
-
-		for( c = 'A'; c <= 'Z'; c++ )  {
-			local[0] = c;
-			if( db_lookup( dbip, local, 0 ) == DIR_NULL )
-				break;
-		}
-		if( c > 'Z' )  {
-			bu_log("db_diradd: Duplicate of name '%s', ignored\n",
-				local );
-			return( DIR_NULL );
-		}
-		bu_log("db_diradd: Duplicate of '%s', given temporary name '%s'\n",
-			name, local );
+	if( strchr( name, '/' ) != NULL )  {
+		bu_log("db_diradd() object named '%s' is illegal, ignored\n", name );
+		return DIR_NULL;
 	}
 
-	BU_GETSTRUCT( dp, directory );
-	if( dp == DIR_NULL )
-		return( DIR_NULL );
+	/* Compute hash only once */
+	headp = &(dbip->dbi_Head[db_dirhash(name)]);
+
+	/* Use inline version of db_lookup here, to save re-hash */
+	{
+		register char	n0 = name[0];
+		register char	n1 = name[1];
+		for(dp = *headp; dp != DIR_NULL; dp=dp->d_forw )  {
+			register char	*this;
+			if(
+				n0 == *(this=dp->d_namep)  &&	/* speed */
+				n1 == this[1]  &&	/* speed */
+				strcmp( name, this ) == 0
+			)  {
+				/* Name exists in directory already */
+				char		local[NAMESIZE+2+2];
+				register int	c;
+
+				/* Shift right two characters */
+				/* Don't truncate to NAMESIZE, name is just internal */
+				strncpy( local+2, name, NAMESIZE );
+				local[1] = '_';			/* distinctive separater */
+				local[NAMESIZE+2] = '\0';	/* ensure null termination */
+
+				for( c = 'A'; c <= 'Z'; c++ )  {
+					local[0] = c;
+					if( db_lookup( dbip, local, 0 ) == DIR_NULL )
+						break;
+				}
+				if( c > 'Z' )  {
+					bu_log("db_diradd: Duplicate of name '%s', ignored\n",
+						local );
+					return( DIR_NULL );
+				}
+				bu_log("db_diradd: Duplicate of '%s', given temporary name '%s'\n",
+					name, local );
+				/* Use recursion to simplify the code */
+				return db_diradd( dbip, local, laddr, len, flags, ptr );
+			}
+		}
+	}
+
+	/* 'name' not found in directory, add it */
+	BU_GETSTRUCT( dp, directory );		/* calls bu_malloc */
 	dp->d_magic = RT_DIR_MAGIC;
-	dp->d_namep = bu_strdup( local );
+	dp->d_namep = bu_strdup( name );	/* calls bu_malloc */
 	dp->d_un.file_offset = laddr;
 	dp->d_flags = flags & ~(RT_DIR_INMEM);
 	dp->d_len = len;
-	headp = &(dbip->dbi_Head[db_dirhash(local)]);
 	dp->d_forw = *headp;
 	BU_LIST_INIT( &dp->d_use_hd );
 	*headp = dp;
