@@ -5,6 +5,10 @@
 # @(#)$Header$ (BRL)
 SHELL=/bin/sh
 
+# NetBSD systems need LEXOPTS= -l
+LEXOPTS=
+# LEXOPTS= -l
+
 PROGS = base ccincl later need needed cakesub subcmd usrc gsrc cakeinclude
 
 BINDIR=/usr/brlcad/bin
@@ -18,7 +22,7 @@ base:		base.o pattern_s.o
 		cc -o base base.o pattern_s.o
 
 cakeinclude:	cakeinclude.o ../libsysv/getopt.c
-		cc -D`machinetype.sh -s` -o cakeinclude cakeinclude.o ../libsysv/getopt.c
+		cc -D`../machinetype.sh -s` -o cakeinclude cakeinclude.o ../libsysv/getopt.c
 
 ccincl:		ccincl.o ccincl_s.o
 		cc -o ccincl ccincl.o ccincl_s.o
@@ -48,11 +52,11 @@ gsrc:		gsrc.c
 		cc -o gsrc gsrc.c
 
 ccincl_s.c:	ccincl_s.l
-		lex ccincl_s.l
+		lex $(LEXOPTS) ccincl_s.l
 		@mv lex.yy.c ccincl_s.c
 
 pattern_s.c:	pattern_s.l
-		lex pattern_s.l
+		lex $(LEXOPTS) pattern_s.l
 		@mv lex.yy.c pattern_s.c
 
 clean:		
