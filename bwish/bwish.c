@@ -33,6 +33,7 @@
 #include "vmath.h"
 #include "bn.h"
 #include "raytrace.h"
+#include "dm.h"
 
 extern int cmdInit();
 extern void Cad_Main();

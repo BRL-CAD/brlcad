@@ -36,6 +36,15 @@
 #include "bu.h"
 #include "libtermio.h"
 
+/* defined in cmd.c */
+extern void quit();
+
+/* defined in input.c */
+extern void initInput();
+
+/* defined in libtk/(unix|win|mac)/tk(Unix|Win|Mac)Init.c */
+void TkpDisplayWarning();
+
 #define BWISH_RCFILENAME ".bwishrc"
 
 /*

@@ -40,6 +40,13 @@
 #include "conf.h"
 #include "tcl.h"
 
+#ifdef USE_STRING_H
+#include <string.h>
+#else
+#include <strings.h>
+#endif
+#include <ctype.h>
+
 #include "machine.h"
 #include "externs.h"
 #include "bu.h"
@@ -64,9 +71,13 @@
 
 #define SPACES "                                                                                                                                                                                                                                                                                                           "
 
-extern void quit();
+/* defined in cmd.c */
 extern struct bu_vls *history_prev();
 extern struct bu_vls *history_next();
+extern void quit();
+extern void history_record();
+
+/* defined in bwish.c */
 extern Tcl_Interp *interp;
 
 HIDDEN void inputHandler();
