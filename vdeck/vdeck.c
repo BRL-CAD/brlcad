@@ -156,6 +156,9 @@ void			quit(), abort_sig();
 char			getcmd();
 void			prompt();
 
+void			addarb();
+void			addtgc();
+
 RT_EXTERN(void ewrite, (FILE *fp, CONST char *buf, unsigned bytes) );
 RT_EXTERN(void blank_fill, (FILE *fp, int count) );
 
@@ -331,6 +334,7 @@ out:
  *
  *  This routine turns a union tree into a flat string.
  */
+void
 flatten_tree( vls, tp, op, neg )
 struct rt_vls	*vls;
 union tree	*tp;
@@ -852,6 +856,7 @@ CONST char	*kind;
  *
  *  Process generalized arb.
  */
+void
 addarb( v, gp, name, num )
 struct rt_vls		*v;
 struct rt_arb_internal	*gp;
@@ -1007,6 +1012,7 @@ int			num;
  *
  *	Process generalized truncated cone.
  */
+void
 addtgc( v, gp, name, num )
 struct rt_vls		*v;
 struct rt_tgc_internal	*gp;
