@@ -16,20 +16,20 @@
 
 /* Explicit composition of each product */
 
-firpass:	firpass.o subroutines.o LIBRT
-	CC LDFLAGS firpass.o subroutines.o LIB_PRE''LIBRT RT_LIBES LIBMALLOC LIBES -o firpass
+firpass:	firpass.o subroutines.o
+	CC LDFLAGS firpass.o subroutines.o LIBRT RT_LIBES LIBMALLOC LIBES -o firpass
 
-secpass:        secpass.o subroutines.o LIBRT
-        CC LDFLAGS secpass.o subroutines.o LIB_PRE''LIBRT RT_LIBES LIBMALLOC LIBES -o secpass
+secpass:        secpass.o subroutines.o
+        CC LDFLAGS secpass.o subroutines.o LIBRT RT_LIBES LIBMALLOC LIBES -o secpass
 
-shapefact:  shapefact.o LIBRT
-        CC LDFLAGS shapefact.o LIB_PRE''LIBRT RT_LIBES LIBMALLOC LIBES -o shapefact
+shapefact:  shapefact.o
+        CC LDFLAGS shapefact.o LIBRT RT_LIBES LIBMALLOC LIBES -o shapefact
 
-all_sf:  all_sf.o LIBRT
-        CC LDFLAGS all_sf.o LIB_PRE''LIBRT RT_LIBES LIBMALLOC LIBES -o all_sf
+all_sf:  all_sf.o
+        CC LDFLAGS all_sf.o LIBRT RT_LIBES LIBMALLOC LIBES -o all_sf
 
-display:  display.o LIBRT
-        CC LDFLAGS display.o LIB_PRE''LIBRT RT_LIBES LIBMALLOC LIBES -o display
+display:  display.o
+        CC LDFLAGS display.o LIBRT RT_LIBES LIBMALLOC LIBES -o display
 
 see:	see.o
 	CC LDFLAGS -I/usr/X11/include see.o -L/usr/X11/lib -lX11 -o see
