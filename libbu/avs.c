@@ -30,6 +30,16 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 #include "bu.h"
 
 /*
+ *  Some (but not all) attribute name and value string pointers are
+ *  taken from an on-disk format bu_external block,
+ *  while others have been bu_strdup()ed and need to be freed.
+ *  This macro indicates whether the pointer needs to be freed or not.
+ */
+#define AVS_IS_FREEABLE(_avsp, _p)	\
+	( (_avsp)->readonly_max == NULL || \
+	    ((_p) < (_avsp)->readonly_min || (_p) > (_avsp)->readonly_max) )
+
+/*
  *			B U _ A V S _ I N I T
  */
 void
@@ -94,8 +104,7 @@ CONST char	*value;
 
 	for( BU_AVS_FOR(app, avp) )  {
 		if( strcmp( app->name, attribute ) != 0 )  continue;
-		if( avp->readonly_max &&
-		    (app->value < avp->readonly_min || app->value > avp->readonly_max) )
+		if( AVS_IS_FREEABLE(avp, app->value) )
 			bu_free( (genptr_t)app->value, "app->value" );
 		app->value = bu_strdup( value );
 		return 1;
@@ -185,16 +194,14 @@ CONST char	*attribute;
 
 	for( BU_AVS_FOR(app, avp) )  {
 		if( strcmp( app->name, attribute ) != 0 )  continue;
-		if( avp->readonly_max &&
-		    (app->name < avp->readonly_min || app->name > avp->readonly_max) )
+		if( AVS_IS_FREEABLE( avp, app->name ) )
 			bu_free( (genptr_t)app->name, "app->name" );
 		app->name = NULL;	/* sanity */
-		if( avp->readonly_max &&
-		    (app->value < avp->readonly_min || app->value > avp->readonly_max) )
+		if( AVS_IS_FREEABLE( avp, app->value ) )
 			bu_free( (genptr_t)app->value, "app->value" );
 		app->value = NULL;	/* sanity */
 
-		/* Move last one down to fit */
+		/* Move last one down to replace it */
 		epp = &avp->avp[avp->count--];
 		if( app != epp )  {
 			*app = *epp;		/* struct copy */
@@ -217,18 +224,16 @@ bu_avs_free( struct bu_attribute_value_set *avp )
 	BU_CK_AVS(avp);
 
 	for( BU_AVS_FOR(app, avp) )  {
-		if( avp->readonly_max &&
-		    (app->name < avp->readonly_min || app->name > avp->readonly_max) )
+		if( AVS_IS_FREEABLE( avp, app->name ) )
 			bu_free( (genptr_t)app->name, "app->name" );
 		app->name = NULL;	/* sanity */
-		if( avp->readonly_max &&
-		    (app->value < avp->readonly_min || app->value > avp->readonly_max) )
+		if( AVS_IS_FREEABLE( avp, app->value ) )
 			bu_free( (genptr_t)app->value, "app->value" );
 		app->value = NULL;	/* sanity */
 	}
-	bu_free( (genptr_t)avp->avp, "avp->avp" );
-	avp->magic = -1L;
+	bu_free( (genptr_t)avp->avp, "bu_avs_free avp->avp" );
 }
+
 
 /*
  *			B U _ A V S _ P R I N T
