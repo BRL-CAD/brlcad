@@ -840,18 +840,22 @@ AC_CHECK_HEADERS( \
 	sys/mman.h \
 	sys/param.h \
 	sys/select.h \
+	sys/sched.h \
 	sys/socket.h \
 	sys/stat.h \
 	sys/statfs.h \
+	sys/sysmp.h \
 	sys/time.h \
 	sys/timeb.h \
 	sys/types.h \
 	sys/unistd.h \
+	sys/wait.h \
 	syslog.h \
 	termcap.h \
 	termio.h \
 	termios.h \
 	time.h \
+	ulocks.h \
 	unistd.h \
 	utime.h \
 	values.h \
@@ -1341,6 +1345,7 @@ AC_CHECK_FUNCS(\
 	nl_langinfo \
 	panic \
 	pow \
+	prtcl \
 	putenv \
 	re_comp \
 	realpath \
@@ -1367,6 +1372,7 @@ AC_CHECK_FUNCS(\
 	strtol \
 	strtoul \
 	strtoull \
+	sysmp \
 	tzset \
 	uname \
 	utime\
