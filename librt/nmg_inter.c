@@ -164,7 +164,7 @@ struct vertexuse	*dualvu;		/* vu's dual in other shell.  May be NULL */
 		nmg_tbl( is->l1, TBL_INS_UNIQUE, (long *)&vu->l.magic );
 		duals = is->s2;		/* other shell */
 		dualfu = is->fu2;
-		if( is->fu1 && is->fu1->s_p != is->s1 ) rt_bomb("fu1/s1 mismatch\n");
+		if( is->fu1 && is->fu1->s_p != is->s1 ) rt_bomb("nmg_enlist_vu() fu1/s1 mismatch\n");
 		if( fuv != is->fu1 )  {
 			rt_log("fuv=x%x, fu1=x%x, fu2=x%x\n", fuv, is->fu1, is->fu2);
 			rt_bomb("nmg_enlist_vu() vu/fu1 mis-match\n");
@@ -173,7 +173,7 @@ struct vertexuse	*dualvu;		/* vu's dual in other shell.  May be NULL */
 		nmg_tbl( is->l2, TBL_INS_UNIQUE, (long *)&vu->l.magic );
 		duals = is->s1;		/* other shell */
 		dualfu = is->fu1;
-		if( is->fu2 && is->fu2->s_p != is->s2 ) rt_bomb("fu2/s2 mismatch\n");
+		if( is->fu2 && is->fu2->s_p != is->s2 ) rt_bomb("nmg_enlist_vu() fu2/s2 mismatch\n");
 		if( fuv != is->fu2 )  {
 			rt_log("fuv=x%x, fu1=x%x, fu2=x%x\n", fuv, is->fu1, is->fu2);
 			rt_bomb("nmg_enlist_vu() vu/fu2 mis-match\n");
@@ -185,15 +185,19 @@ struct vertexuse	*dualvu;		/* vu's dual in other shell.  May be NULL */
 	}
 
 	if( dualvu )  {
-		if( vu->v_p != dualvu->v_p )  rt_bomb("dual vu has different vertex\n");
-		if( nmg_find_s_of_vu(dualvu) != duals )  rt_bomb("dual vu shell mis-match\n");
-		if( dualfu && nmg_find_fu_of_vu(dualvu) != dualfu) rt_bomb("dual vu has wrong fu\n");
+		if( vu->v_p != dualvu->v_p )  rt_bomb("nmg_enlist_vu() dual vu has different vertex\n");
+		if( nmg_find_s_of_vu(dualvu) != duals )  {
+			rt_log("nmg_enlist_vu(vu=x%x) sv=x%x, s1=x%x, s2=x%x, sdual=x%x\n",
+				vu, sv, is->s1, is->s2, nmg_find_s_of_vu(dualvu) );
+			rt_bomb("nmg_enlist_vu() dual vu shell mis-match\n");
+		}
+		if( dualfu && nmg_find_fu_of_vu(dualvu) != dualfu) rt_bomb("nmg_enlist_vu() dual vu has wrong fu\n");
 	}
 
 	/* Second, search for vu's dual */
 	if( dualfu )  {
 		NMG_CK_FACEUSE(dualfu);
-		if( dualfu->s_p != duals )  rt_bomb("dual fu's shell is not dual's shell?\n");
+		if( dualfu->s_p != duals )  rt_bomb("nmg_enlist_vu() dual fu's shell is not dual's shell?\n");
 		if( !dualvu && !(dualvu = nmg_find_v_in_face( vu->v_p, dualfu )) )  {
 			/* Not found, make self-loop in dualfu */
 			lu = nmg_mlv( &dualfu->l.magic, vu->v_p, OT_BOOLPLACE );
@@ -2057,19 +2061,19 @@ struct faceuse		*fu1;		/* fu that eu1 is from */
 		nmg_enlist_vu( is, vu1a, nmg_isect_vert2p_face2p( is, vu1a, fu2 ) );
 		nmg_enlist_vu( is, vu1b, nmg_isect_vert2p_face2p( is, vu1b, fu2 ) );
 	}
-	nmg_tbl( &eutab, TBL_FREE, (long *)0 );
 
 	/* Run infinite line containing eu1 through fu2 */
-	total_splits = nmg_isect_line2_face2p( is, &vert_list2, fu2, fu1 );
+	total_splits = nmg_isect_line2_face2p( is, fu2, eu1->e_p, &eutab );
 
 	/* Now, run line through fu1, if eu1 is not wire */
 	if( fu1 )  {
-		total_splits += nmg_isect_line2_face2p( is,
-			&vert_list1, fu1, fu2 );
+		/* We are intersecting with ourself */
+		total_splits += nmg_isect_line2_face2p( is, fu1, eu1->e_p, &eutab );
 	}
 	if (rt_g.NMG_debug & DEBUG_POLYSECT )
 		rt_log("nmg_isect_edge2p_face2p(): total_splits=%d\n", lu, total_splits);
 
+	nmg_tbl( &eutab, TBL_FREE, (long *)0 );
 	if( total_splits <= 0 )  goto out;
 
     	if (rt_g.NMG_debug & DEBUG_FCUT) {
@@ -2118,6 +2122,16 @@ do_ret:
  *  edgeuses, only split existing ones and add new ones.
  *  It might reduce complexity to unbreak edges in here, but that
  *  would violate the assumption of edgeuses not vanishing.
+ *
+ *  Call tree -
+ *	nmg_isect_vert2p_face2p()
+ *	nmg_isect_edge2p_face2p()
+ *		nmg_isect_vert2p_face2p()
+ *		nmg_isect_line2_face2p()
+ *			nmg_isect_line2_vertex2()
+ *			nmg_isect_line2_edgegeom2p()
+ *		nmg_purge_unwanted_intersection_points()
+ *		nmg_face_cutjoin()
  */
 static void
 nmg_isect_two_face2p( is, fu1, fu2 )
@@ -2414,22 +2428,20 @@ out:
  *
  *  If this lone vertex lies along the intersect line, then add it to
  *  the lists.
+ *
+ *  Called from nmg_isect_line2_face2p().
  */
 void
-nmg_isect_line2_vertex2( is, list1, vu1, fu1, fu2 )
+nmg_isect_line2_vertex2( is, vu1, fu1 )
 struct nmg_inter_struct	*is;
-struct nmg_ptbl		*list1;
 struct vertexuse	*vu1;
 struct faceuse		*fu1;
-struct faceuse		*fu2;
 {
 	point_t		v2d;
 
 	NMG_CK_INTER_STRUCT(is);
-	NMG_CK_PTBL(list1);
 	NMG_CK_VERTEXUSE(vu1);
 	NMG_CK_FACEUSE(fu1);
-	NMG_CK_FACEUSE(fu2);
 
 	if (rt_g.NMG_debug & DEBUG_POLYSECT)
 		rt_log("nmg_isect_line2_vertex2(vu=x%x)\n", vu1);
@@ -2443,6 +2455,88 @@ struct faceuse		*fu2;
 		rt_log("nmg_isect_line2_vertex2(vu=x%x) line hits vertex v=x%x\n", vu1, vu1->v_p);
 
 	nmg_enlist_vu( is, vu1, 0 );
+}
+
+/*
+ *
+ *  Given two pointer tables filled with edgeuses representing two different
+ *  edge geometry lines, see if there is a common vertex of intersection.
+ *  If so, enlist the intersection.
+ *
+ *  Returns -
+ *	1	intersection found
+ *	0	no intersection
+ */
+int
+nmg_isect_two_ptbls( is, t1, t2 )
+struct nmg_inter_struct		*is;
+CONST struct nmg_ptbl		*t1;
+CONST struct nmg_ptbl		*t2;
+{
+	CONST struct edgeuse	**eu1;
+	CONST struct edgeuse	**eu2;
+	struct vertexuse	*vu1a;
+	struct vertexuse	*vu1b;
+
+	NMG_CK_INTER_STRUCT(is);
+	NMG_CK_PTBL(t1);
+
+	for( eu1 = (CONST struct edgeuse **)NMG_TBL_LASTADDR(t1);
+	     eu1 >= (CONST struct edgeuse **)NMG_TBL_BASEADDR(t1); eu1--
+	)  {
+		struct vertex	*v1a;
+		struct vertex	*v1b;
+
+		vu1a = (*eu1)->vu_p;
+		vu1b = RT_LIST_PNEXT_CIRC( edgeuse, (*eu1) )->vu_p;
+		NMG_CK_VERTEXUSE(vu1a);
+		NMG_CK_VERTEXUSE(vu1b);
+		v1a = vu1a->v_p;
+		v1b = vu1b->v_p;
+
+		for( eu2 = (CONST struct edgeuse **)NMG_TBL_LASTADDR(t2);
+		     eu2 >= (CONST struct edgeuse **)NMG_TBL_BASEADDR(t2); eu2--
+		)  {
+			register struct vertexuse	*vu2a;
+			register struct vertexuse	*vu2b;
+
+			vu2a = (*eu2)->vu_p;
+			vu2b = RT_LIST_PNEXT_CIRC( edgeuse, (*eu2) )->vu_p;
+			NMG_CK_VERTEXUSE(vu2a);
+			NMG_CK_VERTEXUSE(vu2b);
+
+			if( v1a == vu2a->v_p )  {
+				vu1b = vu2a;
+				goto enlist;
+			}
+			if( v1a == vu2b->v_p )  {
+				vu1b = vu2b;
+				goto enlist;
+			}
+			if( v1b == vu2a->v_p )  {
+				vu1a = vu1b;
+				vu1b = vu2a;
+				goto enlist;
+			}
+			if( v1b == vu2b->v_p )  {
+				vu1a = vu1b;
+				vu1b = vu2b;
+				goto enlist;
+			}
+		}
+	}
+	return 0;
+enlist:
+	/* Two vu's are now vu1a, vu1b */
+	/* Bypass error check in nmg_enlist_vu() */
+	if( nmg_find_s_of_vu(vu1a) == nmg_find_s_of_vu(vu1b) )  vu1b = 0;
+
+	if (rt_g.NMG_debug & DEBUG_POLYSECT)  {
+		rt_log("nmg_isect_two_ptbls() intersection! vu=x%x, vu_dual=x%x\n",
+			vu1a, vu1b );
+	}
+	nmg_enlist_vu( is, vu1a, vu1b );
+	return 1;
 }
 
 /*
@@ -2463,16 +2557,23 @@ struct faceuse		*fu2;
  *
  *  In this routine, two non-colinear lines will intersect in exactly one pt.
  *
+ *  In some cases, the line actually represents an edge_geometry.
+ *  In that case, a topological search for an existing vertex of intersection
+ *  between the two edge_geometries must be performed before attempting
+ *  any geometry comparisons.
+ *
+ *  Called by nmg_isect_line2_face2p().
+ *
  *  Returns -
  *	Number of times an edge is broken (0 or >=1).
  */
 int
-nmg_isect_line2_edgegeom2p( is, list, eu1, fu1, fu2 )
+nmg_isect_line2_edgegeom2p( is, eu1, fu1, e, line_eutab )
 struct nmg_inter_struct	*is;
-struct nmg_ptbl		*list;
 struct edgeuse		*eu1;
 struct faceuse		*fu1;
-struct faceuse		*fu2;
+struct edge		*e;		/* optional: edge generating the line */
+struct nmg_ptbl		*line_eutab;	/* optional */
 {
 	point_t		eu1_pt2d;	/* 2D */
 	point_t		eu1_end2d;	/* 2D */
@@ -2496,18 +2597,35 @@ struct faceuse		*fu2;
 	eutab.magic = 0;
 
 	NMG_CK_INTER_STRUCT(is);
-	NMG_CK_PTBL(list);
 	NMG_CK_EDGEUSE(eu1);
 	NMG_CK_FACEUSE(fu1);
-	NMG_CK_FACEUSE(fu2);
+	if( e )  NMG_CK_EDGE(e);
+	if( line_eutab )  NMG_CK_PTBL(line_eutab);
 
 	eg1 = eu1->e_p->eg_p;
-	/* Might this be null? */
 	NMG_CK_EDGE_G(eg1);
 
 	if (rt_g.NMG_debug & DEBUG_POLYSECT)  {
 		rt_log("nmg_isect_line2_edgegeom2p(eg1=x%x, fu1=x%x) eu1=x%x START\n",
 			eg1, fu1, eu1);
+	}
+
+	/* If the edge generated this line, colinearity is assured. */
+	if( e && e->eg_p == eg1 )  {
+		if (rt_g.NMG_debug & DEBUG_POLYSECT)  {
+			rt_log("\tThis edge generated the line.  Enlisting.\n");
+		}
+		for( eup = (struct edgeuse **)NMG_TBL_LASTADDR(line_eutab);
+		     eup >= (struct edgeuse **)NMG_TBL_BASEADDR(line_eutab);
+		     eup--
+		)  {
+			vu1a = (*eup)->vu_p;
+			vu1b = RT_LIST_PNEXT_CIRC( edgeuse, (*eup) )->vu_p;
+			nmg_enlist_vu(is, vu1a, 0);
+			nmg_enlist_vu(is, vu1b, 0);
+		}
+		ret = 0;
+		goto out;
 	}
 
 	/*  The 3D line in is->pt and is->dir is prepared by our caller. */
@@ -2563,8 +2681,8 @@ struct faceuse		*fu2;
 		a = rt_distsq_line3_pt3( is->pt, is->dir, vu1a->v_p->vg_p->coord );
 		b = rt_distsq_line3_pt3( is->pt, is->dir, vu1b->v_p->vg_p->coord );
 		if (rt_g.NMG_debug & DEBUG_POLYSECT)  {
-			rt_log("\tColinearity check *eup=x%x, a=%g, b=%g\n",
-				*eup, a, b);
+			rt_log("\tColinearity check *eup=x%x, a^2=%g, b^2=%g, tol^2=%g\n",
+				*eup, a, b, is->tol.dist_sq);
 		}
 		if( a > is->tol.dist_sq || b > is->tol.dist_sq )
 			continue;
@@ -2618,14 +2736,27 @@ struct faceuse		*fu2;
 		goto out;
 	}
 
+not_colinear:
 	/*
 	 *  Found the ONE point in 2D where the two lines intersect.
+	 *  First step:  a topological search of the two intersect lines
+	 *  for a common vertex.
+	 */
+	if( line_eutab && nmg_isect_two_ptbls( is, &eutab, line_eutab ) )  {
+		/* Topological intersection has been enlisted.  Done. */
+		if (rt_g.NMG_debug & DEBUG_POLYSECT)  {
+			rt_log("\tTopological intersection enlisted.\n");
+		}
+		ret = 0;	/* No broken edges */
+		goto out;
+	}
+
+	/*
 	 *  Before we believe that the rt_isect_line2_line2()'s hit point
 	 *  is the place to break our edge, search for the vertex
 	 *  closest to the line.  If it's within tolerance, use *that*
 	 *  rather than breaking the edge.
 	 */
-not_colinear:
 	min_dist_sq = INFINITY;
 	for( eup = (struct edgeuse **)NMG_TBL_LASTADDR(&eutab);
 	     eup >= (struct edgeuse **)NMG_TBL_BASEADDR(&eutab); eup--
@@ -2827,17 +2958,19 @@ out:
  *  See the comment in nmg_isect_two_generic_faces() for details
  *  on the constraints on this ray, and the algorithm.
  *
+ *  In some cases, the line actually represents an edge_geometry.
+ *
  *  Called by nmg_isect_edge2p_face2p().
  *
  *  Return -
  *	number of edges broken
  */
 int
-nmg_isect_line2_face2p(is, list, fu1, fu2)
+nmg_isect_line2_face2p(is, fu1, e, line_eutab)
 struct nmg_inter_struct	*is;
-struct nmg_ptbl		*list;
 struct faceuse		*fu1;
-struct faceuse		*fu2;
+struct edge		*e;		/* optional: edge of line */
+struct nmg_ptbl		*line_eutab;	/* optional */
 {
 	struct loopuse		*lu1;
 	int			nbreak = 0;
@@ -2845,9 +2978,9 @@ struct faceuse		*fu2;
 	unsigned char		*tags;
 
 	NMG_CK_INTER_STRUCT(is);
-	NMG_CK_PTBL(list);
 	NMG_CK_FACEUSE(fu1);
-	NMG_CK_FACEUSE(fu2);
+	if( e )  NMG_CK_EDGE(e);
+	if( line_eutab )  NMG_CK_PTBL(line_eutab);
 	m = fu1->s_p->r_p->m_p;
 	NMG_CK_MODEL(m);
 
@@ -2888,7 +3021,7 @@ struct faceuse		*fu2;
 			/* Intersect line with lone vertex vu1 */
 			vu1 = RT_LIST_FIRST( vertexuse, &lu1->down_hd );
 			NMG_CK_VERTEXUSE(vu1);
-			nmg_isect_line2_vertex2( is, list, vu1, fu1, fu2 );
+			nmg_isect_line2_vertex2( is, vu1, fu1 );
 			/* nbreak is not incremented for a vert on the line */
 			continue;
 		}
@@ -2899,7 +3032,7 @@ struct faceuse		*fu2;
 			/* If this eu's eg has been seen before, nothing more to do */
 			if( eg1 && !NMG_INDEX_FIRST_TIME(tags, eg1) )  continue;
 
-			nbreak += nmg_isect_line2_edgegeom2p( is, list, eu1, fu1, fu2 );
+			nbreak += nmg_isect_line2_edgegeom2p( is, eu1, fu1, e, line_eutab );
 
 			if( rt_g.NMG_debug & DEBUG_VERIFY )  {
 				nmg_fu_touchingloops(fu1);
@@ -2977,7 +3110,7 @@ nmg_fu_touchingloops(fu2);
     	}
 
 	/* XXX Is an optimization based upon the return code here possible? */
-	(void)nmg_isect_line2_face2p(is, &vert_list1, fu1, fu2);
+	(void)nmg_isect_line2_face2p(is, fu1, 0, 0);
 
 	if( rt_g.NMG_debug & DEBUG_VERIFY )  {
 nmg_fu_touchingloops(fu1);
@@ -3005,7 +3138,7 @@ nmg_fu_touchingloops(fu2);
 	is->s1 = fu2->s_p;
 	is->fu2 = fu1;
 	is->fu1 = fu2;
-	(void)nmg_isect_line2_face2p(is, &vert_list2, fu2, fu1);
+	(void)nmg_isect_line2_face2p(is, fu2, 0, 0);
 
 	if( rt_g.NMG_debug & DEBUG_VERIFY )  {
 nmg_fu_touchingloops(fu1);
