@@ -2334,6 +2334,16 @@ int wdb_export(
 void wdb_close( struct rt_wdb *wdbp );
 
 /* db_anim.c */
+extern struct animate  *db_parse_1anim(struct db_i     *dbip,
+				       int             argc,
+				       const char      **argv);
+
+extern int db_parse_anim(struct db_i     *dbip,
+			 int             argc,
+			 const char              **argv);
+
+
+
 BU_EXTERN(int db_add_anim, (struct db_i *dbip, struct animate *anp, int root) );
 BU_EXTERN(int db_do_anim, (struct animate *anp, mat_t stack, mat_t arc,
 	struct mater_info *materp) );
@@ -2637,6 +2647,11 @@ BU_EXTERN(void rt_add_res_stats, (struct rt_i *rtip, struct resource *resp) );
 					/* Tally stats into struct rt_i */
 extern void rt_res_pieces_clean(struct resource *resp,
 			   struct rt_i *rtip);
+/* tree.c */
+extern int rt_bound_tree( const union tree	*tp,
+			  vect_t		tree_min,
+			  vect_t		tree_max);
+
 
 /* vlist.c */
 BU_EXTERN(struct bn_vlblock *	rt_vlblock_init, () );
@@ -3046,6 +3061,13 @@ BU_EXTERN(void			nmg_pl_lu_around_eu, (CONST struct edgeuse *eu));
 BU_EXTERN(void			nmg_pr_fus_in_fg, (CONST long *fg_magic));
 
 /* From nmg_misc.c */
+extern int rt_dist_line3_line3(fastf_t dist[2],
+		    CONST point_t p1,
+		    CONST point_t p2,
+		    CONST vect_t d1,
+		    CONST vect_t d2,
+			       CONST struct bn_tol *tol);
+
 BU_EXTERN(int			nmg_snurb_calc_lu_uv_orient, (CONST struct loopuse *lu));
 BU_EXTERN(void			nmg_snurb_fu_eval, (CONST struct faceuse *fu,
 				CONST fastf_t u,

@@ -573,7 +573,6 @@ extern float bn_rand_halftab[BN_RANDHALFTABSIZE];
 /* random numbers 0..1 except when benchmarking, when this is always 0.5 */
 #define bn_rand0to1(_q)	(bn_rand_half(_q)+0.5)
 
-
 #define	BN_SINTABSIZE		2048
 extern double bn_sin_scale;
 #define bn_tab_sin(_a)	(((_a) > 0) ? \
@@ -581,6 +580,7 @@ extern double bn_sin_scale;
 	(-bn_sin_table[(int)((0.5- (_a)*bn_sin_scale))&(BN_SINTABSIZE-1)] ) )
 extern CONST float bn_sin_table[BN_SINTABSIZE];
 
+extern void bn_mathtab_constant();
 
 
 /*----------------------------------------------------------------------*/
