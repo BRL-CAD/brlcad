@@ -538,6 +538,7 @@ struct partition *PartHeadp;
 	RT_CK_TABDATA(pixelp);
 
 	degK = 10000;	/* XXX extract from region! */
+degK = 700;
 
 	VJOIN1( hitp->hit_point, ap->a_ray.r_pt,
 		hitp->hit_dist, ap->a_ray.r_dir );
@@ -565,7 +566,7 @@ struct partition *PartHeadp;
 	}
 
 	rt_spect_black_body( pixelp, degK, 3 );
-#if 0
+#if 1
 if( cosine < 0.2 ) rt_log("@@@@@@\n");
 if( cm2 > 10 ) rt_log("****\n");
 rt_log("area=%g, cos = %g, a*c = %g, pfrac = %g\n", cm2, cosine, cm2*cosine, powerfrac );
