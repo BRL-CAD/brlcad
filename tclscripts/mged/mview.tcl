@@ -75,49 +75,49 @@ proc openmv { id w wc dpy dtype S } {
 
 proc menu_accelerator_bindings { id w pos } {
     bind $w <Alt-ButtonPress-1> "set mged_dm_loc($id) $pos; set_active_dm $id;\
-	    tk_popup .$id.settings.m %X %Y; break"
+	    tk_popup .$id.menubar.settings %X %Y; break"
     bind $w <Alt-ButtonPress-2> "set mged_dm_loc($id) $pos; set_active_dm $id;\
-	    tk_popup .$id.settings.m.cm_mb %X %Y; break"
+	    tk_popup .$id.menubar.settings.mouse_behavior %X %Y; break"
     bind $w <Alt-F> "set mged_dm_loc($id) $pos; set_active_dm $id;\
-	    tk_popup .$id.file.m %X %Y; break"
+	    tk_popup .$id.menubar.file %X %Y; break"
     bind $w <Alt-f> "set mged_dm_loc($id) $pos; set_active_dm $id;\
-	    tk_popup .$id.file.m %X %Y; break"
+	    tk_popup .$id.menubar.file %X %Y; break"
     bind $w <Alt-E> "set mged_dm_loc($id) $pos; set_active_dm $id;\
-	    tk_popup .$id.edit.m %X %Y; break"
+	    tk_popup .$id.menubar.edit %X %Y; break"
     bind $w <Alt-e> "set mged_dm_loc($id) $pos; set_active_dm $id;\
-	    tk_popup .$id.edit.m %X %Y; break"
+	    tk_popup .$id.menubar.edit %X %Y; break"
     bind $w <Alt-C> "set mged_dm_loc($id) $pos; set_active_dm $id;\
-	    tk_popup .$id.create.m %X %Y; break"
+	    tk_popup .$id.menubar.create %X %Y; break"
     bind $w <Alt-c> "set mged_dm_loc($id) $pos; set_active_dm $id;\
-	    tk_popup .$id.create.m %X %Y; break"
+	    tk_popup .$id.menubar.create %X %Y; break"
     bind $w <Alt-V> "set mged_dm_loc($id) $pos; set_active_dm $id;\
-	    tk_popup .$id.view.m %X %Y; break"
+	    tk_popup .$id.menubar.view %X %Y; break"
     bind $w <Alt-v> "set mged_dm_loc($id) $pos; set_active_dm $id;\
-	    tk_popup .$id.view.m %X %Y; break"
+	    tk_popup .$id.menubar.view %X %Y; break"
     bind $w <Alt-R> "set mged_dm_loc($id) $pos; set_active_dm $id;\
-	    tk_popup .$id.viewring.m %X %Y; break"
+	    tk_popup .$id.menubar.viewring %X %Y; break"
     bind $w <Alt-r> "set mged_dm_loc($id) $pos; set_active_dm $id;\
-	    tk_popup .$id.viewring.m %X %Y; break"
+	    tk_popup .$id.menubar.viewring %X %Y; break"
     bind $w <Alt-M> "set mged_dm_loc($id) $pos; set_active_dm $id;\
-	    tk_popup .$id.modes.m %X %Y; break"
+	    tk_popup .$id.menubar.modes %X %Y; break"
     bind $w <Alt-m> "set mged_dm_loc($id) $pos; set_active_dm $id;\
-	    tk_popup .$id.modes.m %X %Y; break"
+	    tk_popup .$id.menubar.modes %X %Y; break"
     bind $w <Alt-S> "set mged_dm_loc($id) $pos; set_active_dm $id;\
-	    tk_popup .$id.settings.m %X %Y; break"
+	    tk_popup .$id.menubar.settings %X %Y; break"
     bind $w <Alt-s> "set mged_dm_loc($id) $pos; set_active_dm $id;\
-	    tk_popup .$id.settings.m %X %Y; break"
+	    tk_popup .$id.menubar.settings %X %Y; break"
     bind $w <Alt-T> "set mged_dm_loc($id) $pos; set_active_dm $id;\
-	    tk_popup .$id.tools.m %X %Y; break"
+	    tk_popup .$id.menubar.tools %X %Y; break"
     bind $w <Alt-t> "set mged_dm_loc($id) $pos; set_active_dm $id;\
-	    tk_popup .$id.tools.m %X %Y; break"
+	    tk_popup .$id.menubar.tools %X %Y; break"
     bind $w <Alt-O> "set mged_dm_loc($id) $pos; set_active_dm $id;\
-	    tk_popup .$id.other.m %X %Y; break"
+	    tk_popup .$id.menubar.other %X %Y; break"
     bind $w <Alt-o> "set mged_dm_loc($id) $pos; set_active_dm $id;\
-	    tk_popup .$id.other.m %X %Y; break"
+	    tk_popup .$id.menubar.other %X %Y; break"
     bind $w <Alt-H> "set mged_dm_loc($id) $pos; set_active_dm $id;\
-	    tk_popup .$id.help.m %X %Y; break"
+	    tk_popup .$id.menubar.help %X %Y; break"
     bind $w <Alt-h> "set mged_dm_loc($id) $pos; set_active_dm $id;\
-	    tk_popup .$id.help.m %X %Y; break"
+	    tk_popup .$id.menubar.help %X %Y; break"
 }
 
 proc packmv { id } {
