@@ -850,6 +850,16 @@ struct structparse {
 #define FUNC_NULL	((void (*)())0)
 
 /*
+ *			R T _ I M E X P O R T
+ */
+struct rt_imexport  {
+	char		im_fmt[4];		/* "len", "indir", or "%f", etc */
+	int		im_offset;		/* byte offset in struct */
+	int		im_count;		/* # of repetitions */
+};
+#define RT_IMEXPORT_NULL	((struct rt_imexport *)0)
+
+/*
  *			H I S T O G R A M
  */
 struct histogram  {
@@ -1161,6 +1171,8 @@ RT_EXTERN(double rt_read_timer, (char *str, int len) );
 RT_EXTERN(int rt_plot_solid, (FILE *fp, struct rt_i *rtip, struct soltab *stp) );
 					/* Release storage assoc with rt_i */
 RT_EXTERN(void rt_clean, (struct rt_i *rtip) );
+RT_EXTERN(char *rt_struct_export, (int *olen, char *base, struct rt_imexport *imp) );
+RT_EXTERN(int rt_struct_import, (char *base, struct rt_imexport *imp, char *buf) );
 
 /* The matrix math routines */
 RT_EXTERN(double mat_atan2, (double y, double x) );
