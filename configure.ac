@@ -1,10 +1,10 @@
- dnl **************************
+dnl **************************
 dnl ** BRL-CAD configure.ac **
 dnl **************************
 dnl $Id$
 
 AC_INIT(librt/bool.c)
-AC_PREREQ(2.14)
+AC_PREREQ(2.50)
 
 MAJOR_VERSION=6
 MINOR_VERSION=1
@@ -13,7 +13,9 @@ CONFIG_DATE=`date +%Y%m%d`
 BRLCAD_VERSION="$MAJOR_VERSION.$MINOR_VERSION.$PATCH_VERSION"
 echo "Configuring BRL-CAD Release $BRLCAD_VERSION, Build $CONFIG_DATE"
 
-AC_CANONICAL_TARGET([])
+AC_CANONICAL_HOST
+AC_CANONICAL_TARGET
+
 AM_INIT_AUTOMAKE(brlcad, $BRLCAD_VERSION.$CONFIG_DATE)
 AM_CONFIG_HEADER(h/config.h)
 
@@ -22,8 +24,43 @@ dnl ***********************
 dnl *** Check arguments ***
 dnl ***********************
 
-# XXX gcc-specific option
-CFLAGS="$CFLAGS "'-I$(top_srcdir)/h -fno-strict-aliasing'
+# Allow user to specify flags without relying on environment
+AC_ARG_WITH(cflags, AC_HELP_STRING(--with-cflags,
+		    [Specify additional flags to pass to the C compiler]) ,
+	[
+		if test "x$withval" != "xno" ; then
+			CFLAGS="$CFLAGS $withval"
+		fi
+	]	
+)
+AC_ARG_WITH(cppflags, AC_HELP_STRING(--with-cppflags,
+		      [Specify additional flags to pass to C preprocessor]) ,
+	[
+		if test "x$withval" != "xno"; then
+			CPPFLAGS="$CPPFLAGS $withval"
+		fi
+	]
+)
+AC_ARG_WITH(ldflags, AC_HELP_STRING(--with-ldflags,
+		     [Specify additional flags to pass to linker]) ,
+	[
+		if test "x$withval" != "xno" ; then
+			LDFLAGS="$LDFLAGS $withval"
+		fi
+	]	
+)
+AC_ARG_WITH(libs, AC_HELP_STRING(--with-libs,
+		  [Specify additional libraries to link against]) ,
+	[
+		if test "x$withval" != "xno" ; then
+			LIBS="$LIBS $withval"
+		fi
+	]	
+)
+
+if test "$GCC" = "yes" || test "$GCC" = "egcs" ; then
+	CFLAGS="$CFLAGS "'-I$(top_srcdir)/h -fno-strict-aliasing'
+fi
 
 # XXX pthread lib stuff should go away (and be made proper lib check)
 case "$target" in
@@ -105,6 +142,18 @@ if ! test "x$enable_doxygen" = "xno" ; then
 	fi
 fi
 AM_CONDITIONAL(DOC, test "x$enable_doxygen" = "xyes")
+
+AC_MSG_CHECKING(compiler and flags for sanity)
+AC_TRY_RUN([
+#include <stdio.h>
+int main(){exit(0);}
+	],
+	[	AC_MSG_RESULT(yes) ],
+	[
+		AC_MSG_RESULT(no)
+		AC_MSG_ERROR([*** compiler cannot create working executables, check config.log ***])
+	]
+)
 
 
 dnl ***************************
@@ -483,8 +532,15 @@ dnl **********************
 echo
 echo BRL-CAD Release $BRLCAD_VERSION, Build $CONFIG_DATE
 echo
-echo CFLAGS  = $CFLAGS
-echo LDFLAGS = $LDFLAGS
+echo            Binaries: ${prefix}
+echo Configuration files: ${sysconfdir}
+echo        Manual pages: ${mandir}
+echo
+echo CC       = ${CC}
+echo CFLAGS   = ${CFLAGS}
+echo CPPFLAGS = ${CPPFLAGS}
+echo LDFLAGS  = ${LDFLAGS}
+echo LIBS     = ${LIBS}
 echo
 echo Build Tcl ............................: yes
 echo Build Tk .............................: yes
@@ -494,10 +550,9 @@ echo Build libregex .......................: yes
 echo Build libpng .........................: yes
 echo Build libz ...........................: yes
 echo 
-echo With Java Developer Kit support ......: $with_jdk
-echo With X11 support .....................: yes
-echo With Open GL support .................: yes
-echo 
+echo Java Developer Kit support ...........: $with_jdk
+echo X11 support ..........................: yes
+echo Open GL support ......................: yes
 echo Enable run-time debugging ............: yes
 echo
 echo Build static libraries ...............: $enable_static
