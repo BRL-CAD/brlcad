@@ -461,11 +461,9 @@ struct rt_i	*rtip;
  *  Returns -
  *	<0	failure
  *	 0	OK
- *
- *  XXX This shouldn't be bn_, but rt_!
  */
 int
-bn_vlist_solid( vhead, rtip, stp )
+rt_vlist_solid( vhead, rtip, stp )
 struct rt_i		*rtip;
 struct soltab		*stp;
 struct bu_list		*vhead;
@@ -473,7 +471,7 @@ struct bu_list		*vhead;
 	struct rt_db_internal		intern;
 
 	if( rt_db_get_internal( &intern, stp->st_dp, rtip->rti_dbip, stp->st_matp ) < 0 )  {
-		bu_log("bn_vlist_solid(%s): rt_db_get_internal() failed\n",
+		bu_log("rt_vlist_solid(%s): rt_db_get_internal() failed\n",
 			stp->st_name);
 		return(-1);			/* FAIL */
 	}
@@ -485,7 +483,7 @@ struct bu_list		*vhead;
 		&rtip->rti_ttol,
 		&rtip->rti_tol
 	    ) < 0 )  {
-		bu_log("bn_vlist_solid(%s): ft_plot() failure\n",
+		bu_log("rt_vlist_solid(%s): ft_plot() failure\n",
 			stp->st_name);
 		rt_db_free_internal( &intern );
 	    	return(-2);
@@ -519,8 +517,8 @@ struct soltab		*stp;
 
 	BU_LIST_INIT( &vhead );
 
-	if( bn_vlist_solid( &vhead, rtip, stp ) < 0 )  {
-		bu_log("rt_plot_solid(%s): bn_vlist_solid() failed\n",
+	if( rt_vlist_solid( &vhead, rtip, stp ) < 0 )  {
+		bu_log("rt_plot_solid(%s): rt_vlist_solid() failed\n",
 			stp->st_name);
 		return(-1);			/* FAIL */
 	}
