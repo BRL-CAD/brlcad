@@ -60,11 +60,11 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <math.h>
 
 /*  Need the following for rt_shootray.  */
-#include "/n/walrus/usr/brlcad/include/machine.h"
-#include "/n/walrus/usr/brlcad/include/externs.h"
-#include "/n/walrus/usr/brlcad/include/vmath.h"
-#include "/n/walrus/usr/brlcad/include/raytrace.h"
-#include "/n/walrus/usr/brlcad/include/msr.h"
+#include "machine.h"
+#include "externs.h"
+#include "vmath.h"
+#include "raytrace.h"
+#include "msr.h"
 
 
 #define PI 3.14159265358979323846262	/*  Pi.  */

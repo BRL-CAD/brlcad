@@ -40,10 +40,10 @@
 #include <math.h>
 #include <string.h>
 
-#include "/n/walrus/usr/brlcad/include/machine.h"
-#include "/n/walrus/usr/brlcad/include/externs.h"
-#include "/n/walrus/usr/brlcad/include/vmath.h"
-#include "/n/walrus/usr/brlcad/include/raytrace.h"
+#include "machine.h"
+#include "externs.h"
+#include "vmath.h"
+#include "raytrace.h"
 
 #define MAXFIL 26	/*  Maximum number of char in file name.  */
 #define TOL 1e-10	/*  Tolerance, if two numbers are w/in this  */

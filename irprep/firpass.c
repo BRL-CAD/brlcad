@@ -58,10 +58,10 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 # include <strings.h>
 #endif
 
-#include "/n/walrus/usr/brlcad/include/machine.h"
-#include "/n/walrus/usr/brlcad/include/externs.h"
-#include "/n/walrus/usr/brlcad/include/vmath.h"
-#include "/n/walrus/usr/brlcad/include/raytrace.h"
+#include "machine.h"
+#include "externs.h"
+#include "vmath.h"
+#include "raytrace.h"
 
 #define BLANK " "	/*  Define a blank.  */
 #define ADJTOL 1.e-1	/*  Tolerance for adjacent regions.  */
