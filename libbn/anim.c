@@ -903,6 +903,25 @@ int s_colon;
         printf("\n");
 }
 
+
+
+/* ANIM_MAT_PRINTF - print out 4X4 matrix
+ * formstr must be less than twenty chars
+ */
+void anim_mat_printf(m,formstr,linestr,endstr)
+mat_t m;
+char *formstr;
+char *linestr;
+char *endstr;
+{
+	char mystr[80];
+	sprintf(mystr,"%s%s%s%s%%s",formstr,formstr,formstr,formstr);
+        printf(mystr, m[0], m[1], m[2], m[3], linestr);
+        printf(mystr, m[4], m[5], m[6], m[7], linestr);
+        printf(mystr, m[8], m[9], m[10], m[11], linestr);
+        printf(mystr, m[12], m[13], m[14], m[15], endstr);
+}
+
 /* ANIM_VIEW_REV - Reverse the direction of a view matrix, keeping it
  * right-side up
  */
