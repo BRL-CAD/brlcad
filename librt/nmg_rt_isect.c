@@ -1412,69 +1412,19 @@ point_t pt;
 	NMG_CK_HITMISS(myhit);
 	NMG_CK_HITMISS_LISTS(a_hit, rd);
 }
-
-/*	I S E C T _ R A Y _ E D G E U S E
- *
- *	Intersect ray with edgeuse.  If they pass within tolerance, a hit
- *	is generated.
- *
- */
-static void
-isect_ray_edgeuse(rd, eu_p)
+isect_ray_cnurb(rd, eu_p)
+struct ray_data *rd;
+struct edgeuse *eu_p;
+{
+}
+isect_ray_lseg(rd, eu_p)
 struct ray_data *rd;
 struct edgeuse *eu_p;
 {
 	int status;
 	struct hitmiss *myhit;
-	double dist_along_ray;
 	int vhit1, vhit2;
-
-	NMG_CK_EDGEUSE(eu_p);
-	NMG_CK_EDGEUSE(eu_p->eumate_p);
-	NMG_CK_EDGE(eu_p->e_p);
-	NMG_CK_VERTEXUSE(eu_p->vu_p);
-	NMG_CK_VERTEXUSE(eu_p->eumate_p->vu_p);
-	NMG_CK_VERTEX(eu_p->vu_p->v_p);
-	NMG_CK_VERTEX(eu_p->eumate_p->vu_p->v_p);
-
-	if (rt_g.NMG_debug & DEBUG_RT_ISECT) {
-		rt_log("isect_ray_edgeuse (%g %g %g) -> (%g %g %g)",
-			eu_p->vu_p->v_p->vg_p->coord[0],
-			eu_p->vu_p->v_p->vg_p->coord[1],
-			eu_p->vu_p->v_p->vg_p->coord[2],
-			eu_p->eumate_p->vu_p->v_p->vg_p->coord[0],
-			eu_p->eumate_p->vu_p->v_p->vg_p->coord[1],
-			eu_p->eumate_p->vu_p->v_p->vg_p->coord[2]);
-	}
-
-	if (eu_p->e_p != eu_p->eumate_p->e_p)
-		rt_bomb("edgeuse mate has step-father\n");
-
-	if (rt_g.NMG_debug & DEBUG_RT_ISECT)
-		rt_log("\n\tLooking for previous hit on edge 0x%08x ...\n",
-			eu_p->e_p);
-
-	if (myhit = NMG_INDEX_GET(rd->hitmiss, eu_p->e_p)) {
-		if (RT_LIST_MAGIC_OK((struct rt_list *)myhit, NMG_RT_HIT_MAGIC)) {
-			/* previously hit vertex or edge */
-			if (rt_g.NMG_debug & DEBUG_RT_ISECT)
-				rt_log("\tedge previously hit\n");
-			return;
-		} else if (RT_LIST_MAGIC_OK((struct rt_list *)myhit, NMG_RT_HIT_SUB_MAGIC)) {
-			if (rt_g.NMG_debug & DEBUG_RT_ISECT)
-				rt_log("\tvertex of edge previously hit\n");
-			return;
-		} else if (RT_LIST_MAGIC_OK((struct rt_list *)myhit, NMG_RT_MISS_MAGIC)) {
-			if (rt_g.NMG_debug & DEBUG_RT_ISECT)
-				rt_log("\tedge previously missed\n");
-			return;
-		} else {
-			nmg_rt_bomb(rd, "what happened?\n");
-		}
-	}
-
-	if (rt_g.NMG_debug & DEBUG_RT_ISECT)
-		rt_log("\t No previous hit\n");
+	double dist_along_ray;
 
 	status = rt_isect_line_lseg( &dist_along_ray,
 			rd->rp->r_pt, rd->rp->r_dir, 
@@ -1572,6 +1522,77 @@ struct edgeuse *eu_p;
 
 			break;
 		}
+	}
+}
+/*	I S E C T _ R A Y _ E D G E U S E
+ *
+ *	Intersect ray with edgeuse.  If they pass within tolerance, a hit
+ *	is generated.
+ *
+ */
+static void
+isect_ray_edgeuse(rd, eu_p)
+struct ray_data *rd;
+struct edgeuse *eu_p;
+{
+	int status;
+	struct hitmiss *myhit;
+	int vhit1, vhit2;
+
+	NMG_CK_EDGEUSE(eu_p);
+	NMG_CK_EDGEUSE(eu_p->eumate_p);
+	NMG_CK_EDGE(eu_p->e_p);
+	NMG_CK_VERTEXUSE(eu_p->vu_p);
+	NMG_CK_VERTEXUSE(eu_p->eumate_p->vu_p);
+	NMG_CK_VERTEX(eu_p->vu_p->v_p);
+	NMG_CK_VERTEX(eu_p->eumate_p->vu_p->v_p);
+
+	if (rt_g.NMG_debug & DEBUG_RT_ISECT) {
+		rt_log("isect_ray_edgeuse (%g %g %g) -> (%g %g %g)",
+			eu_p->vu_p->v_p->vg_p->coord[0],
+			eu_p->vu_p->v_p->vg_p->coord[1],
+			eu_p->vu_p->v_p->vg_p->coord[2],
+			eu_p->eumate_p->vu_p->v_p->vg_p->coord[0],
+			eu_p->eumate_p->vu_p->v_p->vg_p->coord[1],
+			eu_p->eumate_p->vu_p->v_p->vg_p->coord[2]);
+	}
+
+	if (eu_p->e_p != eu_p->eumate_p->e_p)
+		rt_bomb("edgeuse mate has step-father\n");
+
+	if (rt_g.NMG_debug & DEBUG_RT_ISECT)
+		rt_log("\n\tLooking for previous hit on edge 0x%08x ...\n",
+			eu_p->e_p);
+
+	if (myhit = NMG_INDEX_GET(rd->hitmiss, eu_p->e_p)) {
+		if (RT_LIST_MAGIC_OK((struct rt_list *)myhit, NMG_RT_HIT_MAGIC)) {
+			/* previously hit vertex or edge */
+			if (rt_g.NMG_debug & DEBUG_RT_ISECT)
+				rt_log("\tedge previously hit\n");
+			return;
+		} else if (RT_LIST_MAGIC_OK((struct rt_list *)myhit, NMG_RT_HIT_SUB_MAGIC)) {
+			if (rt_g.NMG_debug & DEBUG_RT_ISECT)
+				rt_log("\tvertex of edge previously hit\n");
+			return;
+		} else if (RT_LIST_MAGIC_OK((struct rt_list *)myhit, NMG_RT_MISS_MAGIC)) {
+			if (rt_g.NMG_debug & DEBUG_RT_ISECT)
+				rt_log("\tedge previously missed\n");
+			return;
+		} else {
+			nmg_rt_bomb(rd, "what happened?\n");
+		}
+	}
+
+	if (rt_g.NMG_debug & DEBUG_RT_ISECT)
+		rt_log("\t No previous hit\n");
+
+	switch (*eu_p->g.magic_p) {
+	case NMG_EDGE_G_LSEG_MAGIC:
+		isect_ray_lseg(rd, eu_p);
+		break;
+	case NMG_EDGE_G_CNURB_MAGIC:
+		isect_ray_cnurb(rd, eu_p);
+		break;
 	}
 }
 
@@ -1787,74 +1808,24 @@ plane_t norm;
 	NMG_CK_HITMISS(myhit);
 
 }
+isect_ray_snurb_face(fu_p, fg_p)
+struct faceuse *fu_p;
+struct face_g_snurb *fg_p;
+{
+}
 
-/*	I S E C T _ R A Y _ F A C E U S E
- *
- *	check to see if ray hits face.
- */
-static void
-isect_ray_faceuse(rd, fu_p)
+isect_ray_planar_face(rd, fu_p, fg_p)
 struct ray_data *rd;
 struct faceuse *fu_p;
+struct face_g_plane *fg_p;
 {
-	fastf_t			dist;
-	struct loopuse		*lu_p;
-	point_t			plane_pt;
-	struct hitmiss		*myhit;
-	int			code;
 	plane_t			norm;
+	int			code;
+	fastf_t			dist;
+	struct hitmiss		*myhit;
 	struct fu_pt_info	*fpi;
-
-	if (rt_g.NMG_debug & DEBUG_RT_ISECT)
-		rt_log("isect_ray_faceuse(0x%08x, faceuse:0x%08x/face:0x%08x)\n",
-			rd, fu_p, fu_p->f_p);
-
-	NMG_CK_FACEUSE(fu_p);
-	NMG_CK_FACEUSE(fu_p->fumate_p);
-	NMG_CK_FACE(fu_p->f_p);
-	NMG_CK_FACE_G_PLANE(fu_p->f_p->g.plane_p);
-
-
-	/* if this face already processed, we are done. */
-	if (myhit = NMG_INDEX_GET(rd->hitmiss, fu_p->f_p)) {
-		if (RT_LIST_MAGIC_OK((struct rt_list *)myhit,
-		    NMG_RT_HIT_MAGIC)) {
-			if (rt_g.NMG_debug & DEBUG_RT_ISECT)
-				rt_log(" previously hit\n");
-		} else if (RT_LIST_MAGIC_OK((struct rt_list *)myhit,
-		    NMG_RT_HIT_SUB_MAGIC)) {
-			if (rt_g.NMG_debug & DEBUG_RT_ISECT)
-				rt_log(" previously hit sub-element\n");
-		} else if (RT_LIST_MAGIC_OK((struct rt_list *)myhit,
-		    NMG_RT_MISS_MAGIC)) {
-			if (rt_g.NMG_debug & DEBUG_RT_ISECT)
-				rt_log(" previously missed\n");
-		} else {
-			rt_log("%s %d:\n\tBad magic %ld (0x%08x) for hitmiss struct for faceuse 0x%08x\n",
-				__FILE__, __LINE__,
-				myhit->l.magic, myhit->l.magic, fu_p);
-			nmg_rt_bomb(rd, "Was I hit or not?\n");
-		}
-		return;
-	}
-
-
-	/* bounding box intersection */
-	if (!rt_in_rpp(rd->rp, rd->rd_invdir,
-	    fu_p->f_p->min_pt, fu_p->f_p->max_pt) ) {
-		GET_HITMISS(myhit);
-		NMG_INDEX_ASSIGN(rd->hitmiss, fu_p->f_p, myhit);
-		myhit->hit.hit_private = (genptr_t)fu_p->f_p;
-		RT_LIST_MAGIC_SET(&myhit->l, NMG_RT_MISS_MAGIC);
-		RT_LIST_INSERT(&rd->rd_miss, &myhit->l);
-	    	NMG_CK_HITMISS(myhit);
-
-		if (rt_g.NMG_debug & DEBUG_RT_ISECT)
-			rt_log("missed bounding box\n");
-		return;
-	}
-
-	if (rt_g.NMG_debug & DEBUG_RT_ISECT) rt_log(" hit bounding box \n");
+	point_t			plane_pt;
+	struct loopuse		*lu_p;
 
 	/* perform the geometric intersection of the ray with the plane 
 	 * of the face.
@@ -1990,6 +1961,79 @@ struct faceuse *fu_p;
 		isect_ray_loopuse(rd, lu_p);
 
 	NMG_FPI_FREE( fpi );
+}
+/*	I S E C T _ R A Y _ F A C E U S E
+ *
+ *	check to see if ray hits face.
+ */
+static void
+isect_ray_faceuse(rd, fu_p)
+struct ray_data *rd;
+struct faceuse *fu_p;
+{
+
+	struct hitmiss		*myhit;
+
+	if (rt_g.NMG_debug & DEBUG_RT_ISECT)
+		rt_log("isect_ray_faceuse(0x%08x, faceuse:0x%08x/face:0x%08x)\n",
+			rd, fu_p, fu_p->f_p);
+
+	NMG_CK_FACEUSE(fu_p);
+	NMG_CK_FACEUSE(fu_p->fumate_p);
+	NMG_CK_FACE(fu_p->f_p);
+	NMG_CK_FACE_G_PLANE(fu_p->f_p->g.plane_p);
+
+
+	/* if this face already processed, we are done. */
+	if (myhit = NMG_INDEX_GET(rd->hitmiss, fu_p->f_p)) {
+		if (RT_LIST_MAGIC_OK((struct rt_list *)myhit,
+		    NMG_RT_HIT_MAGIC)) {
+			if (rt_g.NMG_debug & DEBUG_RT_ISECT)
+				rt_log(" previously hit\n");
+		} else if (RT_LIST_MAGIC_OK((struct rt_list *)myhit,
+		    NMG_RT_HIT_SUB_MAGIC)) {
+			if (rt_g.NMG_debug & DEBUG_RT_ISECT)
+				rt_log(" previously hit sub-element\n");
+		} else if (RT_LIST_MAGIC_OK((struct rt_list *)myhit,
+		    NMG_RT_MISS_MAGIC)) {
+			if (rt_g.NMG_debug & DEBUG_RT_ISECT)
+				rt_log(" previously missed\n");
+		} else {
+			rt_log("%s %d:\n\tBad magic %ld (0x%08x) for hitmiss struct for faceuse 0x%08x\n",
+				__FILE__, __LINE__,
+				myhit->l.magic, myhit->l.magic, fu_p);
+			nmg_rt_bomb(rd, "Was I hit or not?\n");
+		}
+		return;
+	}
+
+
+	/* bounding box intersection */
+	if (!rt_in_rpp(rd->rp, rd->rd_invdir,
+	    fu_p->f_p->min_pt, fu_p->f_p->max_pt) ) {
+		GET_HITMISS(myhit);
+		NMG_INDEX_ASSIGN(rd->hitmiss, fu_p->f_p, myhit);
+		myhit->hit.hit_private = (genptr_t)fu_p->f_p;
+		RT_LIST_MAGIC_SET(&myhit->l, NMG_RT_MISS_MAGIC);
+		RT_LIST_INSERT(&rd->rd_miss, &myhit->l);
+	    	NMG_CK_HITMISS(myhit);
+
+		if (rt_g.NMG_debug & DEBUG_RT_ISECT)
+			rt_log("missed bounding box\n");
+		return;
+	}
+
+	if (rt_g.NMG_debug & DEBUG_RT_ISECT) rt_log(" hit bounding box \n");
+
+
+	switch (*fu_p->f_p->g.magic_p) {
+	case NMG_FACE_G_PLANE_MAGIC:
+		isect_ray_planar_face(rd, fu_p, fu_p->f_p->g.plane_p);
+		break;
+	case NMG_FACE_G_SNURB_MAGIC:
+		isect_ray_snurb_face(rd, fu_p, fu_p->f_p->g.snurb_p);
+		break;
+	}
 }
 
 
