@@ -96,7 +96,7 @@ static struct cmdtab cmdtab[] = {
 	"area", f_area,
 	"arot", f_arot,
 	"attach", f_attach,
-	"autosize", f_autosize,
+	"autoview", f_autoview,
 	"B", f_blast,
 	"bev", f_bev,
 	"bot_face_fuse", f_bot_face_fuse,
