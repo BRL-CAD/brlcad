@@ -44,7 +44,7 @@ char CopyRight_Notice[] = "@(#) Copyright (C) 1985 by the United States Army";
 
 struct resource rt_uniresource;		/* Resources for uniprocessor */
 
-#ifdef cray
+#ifdef CRAY
 #define AUTO register
 #else
 #define AUTO auto
@@ -236,10 +236,10 @@ int
 rt_shootray( ap )
 register struct application *ap;
 {
-	AUTO struct shootray_status ss;
-	AUTO struct seg		new_segs;	/* from solid intersections */
-	AUTO struct seg		waiting_segs;	/* awaiting rt_boolweave() */
-	AUTO struct seg		finished_segs;	/* processed by rt_boolweave() */
+	struct shootray_status	ss;
+	struct seg		new_segs;	/* from solid intersections */
+	struct seg		waiting_segs;	/* awaiting rt_boolweave() */
+	struct seg		finished_segs;	/* processed by rt_boolweave() */
 	AUTO int		ret;
 	AUTO fastf_t		last_bool_start;
 	AUTO union bitv_elem	*solidbits;	/* bits for all solids shot so far */
