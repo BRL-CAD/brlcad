@@ -112,7 +112,9 @@ struct partition *PartHeadp;
 	/* Check to see if eye is "inside" the solid */
 	if( hitp->hit_dist < 0.0 )  {
 		/* XXX */
-		rt_log("radhit:  GAK, eye inside solid\n");
+		rt_log("radhit:  GAK, eye inside solid (%g)\n", hitp->hit_dist );
+		for( pp=PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw )
+			rt_pr_pt(pp);
 		return(0);
 	}
 
@@ -224,6 +226,8 @@ struct application *ap;
 	vect_t temp, aimpt;
 	union radrec r;
 
+	rt_log( "Ray Spacing: %f rays/cm\n", 10.0*(npts/viewsize) );
+
 	/* Header Record */
 	bzero( &r, sizeof(r) );
 
@@ -274,10 +278,10 @@ struct partition *PartHeadp;
 	LOCAL vect_t work;
 
 	for( pp=PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw )
-		if( pp->pt_outhit->hit_dist >= 0.0 )  break;
+		if( pp->pt_outhit->hit_dist >= 1.0e-10 )  break;
 	if( pp == PartHeadp )  {
-		rt_log("radhit:  no hit out front?\n");
-		return(0);
+		rt_log("hiteye:  no hit out front?\n");
+		return(1);
 	}
 	hitp = pp->pt_inhit;
 	if( hitp->hit_dist >= INFINITY )  {
@@ -285,12 +289,14 @@ struct partition *PartHeadp;
 		return(1);
 	}
 	/* Check to see if eye is "inside" the solid */
-	if( hitp->hit_dist < 0.0 )  {
+	if( hitp->hit_dist < -1.0e-10 )  {
 		/* XXX */
-		rt_log("hiteye:  GAK, eye inside solid\n");
+		rt_log("hiteye:  GAK2, eye inside solid (%g)\n", hitp->hit_dist );
+		for( pp=PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw )
+			rt_pr_pt(pp);
 		return(0);
 	}
-	RT_HIT_NORM( hitp, pp->pt_inseg->seg_stp, &(ap->a_ray) );
+	/*RT_HIT_NORM( hitp, pp->pt_inseg->seg_stp, &(ap->a_ray) );*/
 
 	VSUB2( work, firstray.r_pt, ap->a_ray.r_pt );
 	if( hitp->hit_dist * hitp->hit_dist > MAGSQ(work) )
@@ -505,3 +511,5 @@ fprintf( stderr, "PREC %d, buf = %d, totbuf = %d\n", precnum, buf, totbuf );
 
 	return( 1 );
 }
+
+mlib_free() { ; }
