@@ -111,6 +111,7 @@ db5_realloc( struct db_i *dbip, struct directory *dp, struct bu_external *ep )
 		if(rt_g.debug&DEBUG_DB) bu_log("db5_realloc(%s) current allocation is exactly right.\n", dp->d_namep);
 		return 0;
 	}
+	if( dp->d_addr == -1L )  BU_ASSERT_LONG( dp->d_len, ==, 0 );
 
 	baseaddr = dp->d_addr;
 	baselen = dp->d_len;
