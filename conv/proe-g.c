@@ -895,6 +895,7 @@ char line[MAX_LINE_LEN];
 	if( strncmp( &line[start] , "solid" , 5 ) && strncmp( &line[start] , "SOLID" , 5 ) )
 	{
 		bu_log( "Convert_part: Called for non-part\n%s\n" , line );
+		nmg_km( m );
 		return;
 	}
 
