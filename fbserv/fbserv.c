@@ -306,6 +306,7 @@ char *buf;
 {
 	int	x, y, num;
 	char	rbuf[4+1];
+	int	ret;
 	int	type;
 
 	x = fbgetlong( &buf[0*4] );
