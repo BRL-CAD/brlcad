@@ -74,6 +74,7 @@
     public method put {args}
     public method r {args}
     public method rm {args}
+    public method rmap {args}
     public method rotate_arb_face {args}
     public method rt_gettrees {args}
     public method shells {args}
@@ -264,6 +265,10 @@
 
 ::itcl::body Db::rm {args} {
     eval $db rm $args
+}
+
+::itcl::body Db::rmap {args} {
+    eval $db rmap $args
 }
 
 ::itcl::body Db::rotate_arb_face {args} {

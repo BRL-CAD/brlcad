@@ -99,6 +99,7 @@ option add *Mged.height 400 widgetDefault
 	method r {args}
 	method report {args}
 	method rm {args}
+	method rmap {args}
 	method rotate_arb_face {args}
 	method rt_gettrees {args}
 	method set_transparency {args}
@@ -306,6 +307,10 @@ option add *Mged.height 400 widgetDefault
 
 ::itcl::body Mged::rm {args} {
     eval $db rm $args
+}
+
+::itcl::body Mged::rmap {args} {
+    eval $db rmap $args
 }
 
 ::itcl::body Mged::rotate_arb_face {args} {
