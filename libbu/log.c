@@ -3,11 +3,18 @@
  *
  *  BRL-CAD support library, error logging routine.
  *  Note that the user may provide his own logging routine,
- *  by replacing this function.  That is why it is in file of it's own.
+ *  by replacing these functions.  That is why this is in file of it's own.
  *  For example, LGT and RTSRV take advantage of this.
  *
- *  Functions -
- *	bu_log		Called to log library events.
+ *  Primary Functions (replacements MUST implement all these) -
+ *	bu_log			Called to log library events.
+ *	bu_log_indent_delta	Change global indentation level
+ *	bu_log_indent_vls	Apply indentation level (used by librt/pr.c)
+ *
+ *  Specialty Functions -
+ *	bu_log_add_hook		Start catching log events (used by mged/cmd.c)
+ *	bu_log_delete_hook
+ *	bu_putchar
  *
  *  Authors -
  *	Michael John Muuss
@@ -40,7 +47,7 @@ static char RCSlog[] = "@(#)$Header$ (ARL)";
 #include "externs.h"
 #include "bu.h"
 
-static int	bu_indent_cur_level = 0; /* formerly rt_g.rtg_logindent */
+static int	bu_log_indent_cur_level = 0; /* formerly rt_g.rtg_logindent */
 /*
  *			B U _ L O G _ I N D E N T _ D E L T A
  *
@@ -51,8 +58,8 @@ void
 bu_log_indent_delta( delta )
 int	delta;
 {
-	if( (bu_indent_cur_level += delta) < 0 )
-		bu_indent_cur_level = 0;
+	if( (bu_log_indent_cur_level += delta) < 0 )
+		bu_log_indent_cur_level = 0;
 }
 
 /*
@@ -66,15 +73,17 @@ void
 bu_log_indent_vls( v )
 struct bu_vls	*v;
 {
-	bu_vls_spaces( v, bu_indent_cur_level );
+	bu_vls_spaces( v, bu_log_indent_cur_level );
 }
 
 
-static struct bu_hook_list {
+struct bu_hook_list {
 	struct rt_list	l;
 	bu_hook_t	hookfunc;
 	genptr_t 	clientdata;
-} bu_log_hook_list = {
+};
+
+static struct bu_hook_list bu_log_hook_list = {
 	{	RT_LIST_HEAD_MAGIC, 
 		&bu_log_hook_list.l, 
 		&bu_log_hook_list.l
@@ -90,7 +99,7 @@ static int bu_log_first_time = 1;
 static int bu_log_hooks_called = 0;
 
 /*
- *			B U _ A D D _ H O O K
+ *			B U _ L O G _ A D D _ H O O K
  *
  *  Adds a hook to the list of bu_log hooks.  The top (newest) one of these
  *  will be called with its associated client data and a string to be
@@ -101,7 +110,7 @@ static int bu_log_hooks_called = 0;
  */
 
 void
-bu_add_hook( func, clientdata )
+bu_log_add_hook( func, clientdata )
 bu_hook_t func;
 genptr_t clientdata;
 {
@@ -110,8 +119,7 @@ genptr_t clientdata;
     /* Grab a hunk of memory for a new node, and put it at the head of the
        list */
 
-    toadd = (struct bu_hook_list *)bu_malloc(sizeof(struct bu_hook_list),
-					    "bu_log hook");
+    GETSTRUCT(toadd, bu_hook_list);
     toadd->hookfunc = func;
     toadd->clientdata = clientdata;
     toadd->l.magic = BUHOOK_LIST_MAGIC;
@@ -121,13 +129,13 @@ genptr_t clientdata;
 
 
 /*
- *			B U _ D E L E T E _ H O O K
+ *			B U _ L O G _ D E L E T E _ H O O K
  *
  *  Removes the hook matching the function and clientdata parameters from
  *  the hook list.  Note that it is not necessarily the active (top) hook.
  */
 void
-bu_delete_hook( func, clientdata )
+bu_log_delete_hook( func, clientdata )
 bu_hook_t func;
 genptr_t clientdata;
 {
@@ -144,7 +152,7 @@ genptr_t clientdata;
 }
 
 HIDDEN void
-bu_call_hooks( buf )
+bu_log_call_hooks( buf )
 genptr_t	buf;
 {
     bu_hook_t hookfunc;		/* for clarity */
@@ -161,9 +169,9 @@ genptr_t	buf;
 }
 
 /*
- *			B U _ I N D E N T _ L E V E L
+ *			B U _ L O G _ D O _ I N D E N T _ L E V E L
  *
- *  This subroutine is used to append bu_indent_cur_level spaces
+ *  This subroutine is used to append bu_log_indent_cur_level spaces
  *  into a printf() format specifier string, after each newline
  *  character is encountered.
  *  It exists primarily for bu_shootray() to affect the indentation
@@ -172,7 +180,7 @@ genptr_t	buf;
  */
 
 HIDDEN void
-bu_indent_level( new, old )
+bu_log_do_indent_level( new, old )
 struct bu_vls *new;
 register char *old;
 {
@@ -181,7 +189,7 @@ register char *old;
     while (*old) {
 	bu_vls_putc(new, (int)(*old));
 	if (*old == '\n') {
-	    i = bu_indent_cur_level;
+	    i = bu_log_indent_cur_level;
 	    while (i-- > 0)
 		bu_vls_putc(new, ' ');
 	}
@@ -205,13 +213,13 @@ int c;
 	char buf[2];
 	buf[0] = (char)c;
 	buf[1] = '\0';
-	bu_call_hooks(buf);
+	bu_log_call_hooks(buf);
     }
 
-    if (bu_indent_cur_level > 0 && c == '\n') {
+    if (bu_log_indent_cur_level > 0 && c == '\n') {
 	int i;
 
-	i = bu_indent_cur_level;
+	i = bu_log_indent_cur_level;
 	while (i-- > 0)
 	    bu_putchar(' ');
     }
@@ -247,11 +255,11 @@ char *fmt;
 
 #if defined(HAVE_STDARG_H)                  /* ANSI C */
     va_start(ap, fmt);
-    if (bu_indent_cur_level > 0) {
+    if (bu_log_indent_cur_level > 0) {
 	struct bu_vls newfmt;
 
 	bu_vls_init(&newfmt);
-	bu_indent_level(&newfmt, fmt);
+	bu_log_do_indent_level(&newfmt, fmt);
 	bu_vls_vprintf(&output, bu_vls_addr(&newfmt), ap);
 	bu_vls_free(&newfmt);
     } else {
@@ -261,22 +269,22 @@ char *fmt;
 #  if defined(HAVE_VARARGS_H)
     va_start(ap);
     fmt = va_arg(ap, char *);
-    if (bu_indent_cur_level > 0) {
+    if (bu_log_indent_cur_level > 0) {
 	struct bu_vls newfmt;
 
 	bu_vls_init(&newfmt);
-	bu_indent_level(&newfmt, fmt);
+	bu_log_do_indent_level(&newfmt, fmt);
 	bu_vls_vprintf(&output, bu_vls_addr(&newfmt), ap);
 	bu_vls_free(&newfmt);
     } else {
 	bu_vls_vprintf(&output, fmt, ap);
     }
 #  else                                     /* Cray XMP */
-    if (bu_indent_cur_level > 0) {
+    if (bu_log_indent_cur_level > 0) {
 	struct bu_vls newfmt;
 
 	bu_vls_init(&newfmt);
-	bu_indent_level(&newfmt, fmt);
+	bu_log_do_indent_level(&newfmt, fmt);
 	bu_vls_printf(&output, bu_vls_addr(&newfmt), a,b,c,d,e,f,g,h,i,j);
 	bu_vls_free(&newfmt);
     } else {
@@ -304,7 +312,7 @@ char *fmt;
 	}
 
     } else {
-	bu_call_hooks(bu_vls_addr(&output));
+	bu_log_call_hooks(bu_vls_addr(&output));
     }
 
 #if defined(HAVE_STDARG_H) || defined(HAVE_VARARGS_H)
@@ -346,11 +354,11 @@ char *fmt;
 
 #if defined(HAVE_STDARG_H)                  /* ANSI C */
     va_start(ap, fmt);
-    if (bu_indent_cur_level > 0) {
+    if (bu_log_indent_cur_level > 0) {
 	struct bu_vls newfmt;
 
 	bu_vls_init(&newfmt);
-	bu_indent_level(&newfmt, fmt);
+	bu_log_do_indent_level(&newfmt, fmt);
 	bu_vls_vprintf(&output, bu_vls_addr(&newfmt), ap);
 	bu_vls_free(&newfmt);
     } else {
@@ -361,22 +369,22 @@ char *fmt;
     va_start(ap);
     fp = va_arg(ap, FILE *);
     fmt = va_arg(ap, char *);
-    if (bu_indent_cur_level > 0) {
+    if (bu_log_indent_cur_level > 0) {
 	struct bu_vls newfmt;
 
 	bu_vls_init(&newfmt);
-	bu_indent_level(&newfmt, fmt);
+	bu_log_do_indent_level(&newfmt, fmt);
 	bu_vls_vprintf(&output, bu_vls_addr(&newfmt), ap);
 	bu_vls_free(&newfmt);
     } else {
 	bu_vls_vprintf(&output, fmt, ap);
     }
 #  else                                     /* Cray XMP */
-    if (bu_indent_cur_level > 0) {
+    if (bu_log_indent_cur_level > 0) {
 	struct bu_vls newfmt;
 
 	bu_vls_init(&newfmt);
-	bu_indent_level(&newfmt, fmt);
+	bu_log_do_indent_level(&newfmt, fmt);
 	bu_vls_printf(&output, bu_vls_addr(&newfmt), a,b,c,d,e,f,g,h,i,j);
 	bu_vls_free(&newfmt);
     } else {
@@ -398,7 +406,7 @@ char *fmt;
 	}
 
     } else {
-	bu_call_hooks(bu_vls_addr(&output));
+	bu_log_call_hooks(bu_vls_addr(&output));
     }
 
 #if defined(HAVE_STDARG_H) || defined(HAVE_VARARGS_H)
