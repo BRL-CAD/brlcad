@@ -333,6 +333,7 @@ f_debugmem( argc, argv )
 int	argc;
 char	**argv;
 {
+	(void)signal( SIGINT, sig2 );	/* allow interupts */
 	rt_prmem("Invoked via MGED command");
 }
 
