@@ -87,18 +87,22 @@ CONST mat_t	m;
 
 	sprintf(obuf, "MATRIX %s:\n  ", title);
 	cp = obuf+strlen(obuf);
-	for(i=0; i<16; i++)  {
-		sprintf(cp, " %8.3f", m[i]);
-		cp += strlen(cp);
-		if( i == 15 )  {
-			break;
-		} else if( (i&3) == 3 )  {
-			*cp++ = '\n';
-			*cp++ = ' ';
-			*cp++ = ' ';
+	if( !m )  {
+		strcat( obuf, "(Identity)" );
+	} else {
+		for(i=0; i<16; i++)  {
+			sprintf(cp, " %8.3f", m[i]);
+			cp += strlen(cp);
+			if( i == 15 )  {
+				break;
+			} else if( (i&3) == 3 )  {
+				*cp++ = '\n';
+				*cp++ = ' ';
+				*cp++ = ' ';
+			}
 		}
+		*cp++ = '\0';
 	}
-	*cp++ = '\0';
 	bu_log("%s\n", obuf);
 }
 
