@@ -1,22 +1,29 @@
 /*
-	SCCS id:	@(#) parsarg.c	2.3
-	Last edit: 	12/20/85 at 19:03:51
-	Retrieved: 	8/13/86 at 08:02:09
-	SCCS archive:	/m/cad/vdeck/RCS/s.parsarg.c
-
-	Author:		Gary S. Moss
-			U. S. Army Ballistic Research Laboratory
-			Aberdeen Proving Ground
-			Maryland 21005-5066
-			(301)278-6647 or AV-298-6647
-*/
-#if ! defined( lint )
-static
-char	sccsTag[] = "@(#) parsarg.c	2.3	last edit 12/20/85 at 19:03:51";
+ *			P A R S A R G . C
+ *
+ *  Author:		Gary S. Moss
+ *  
+ *  Source -
+ *	SECAD/VLD Computing Consortium, Bldg 394
+ *	The U. S. Army Ballistic Research Laboratory
+ *	Aberdeen Proving Ground, Maryland  21005-5066
+ *  
+ *  Copyright Notice -
+ *	This software is Copyright (C) 1986 by the United States Army.
+ *	All rights reserved.
+ */
+#ifndef lint
+static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
+
 #include <stdio.h>
 #include <signal.h>
+#ifdef BSD
+#include <strings.h>
+#else
 #include <string.h>
+#endif
+
 #include "./vextern.h"
 
 /*	p a r s A r g ( )

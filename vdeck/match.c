@@ -1,21 +1,28 @@
 /*
-	SCCS id:	@(#) match.c	1.1
-	Last edit: 	2/1/85 at 13:51:37
-	Retrieved: 	6/16/86 at 20:29:40
-	SCCS archive:	/vld/src/vdeck/s.match.c
-
-	Author:		Gary S. Moss
-			U. S. Army Ballistic Research Laboratory
-			Aberdeen Proving Ground
-			Maryland 21005-5066
-			(301)278-6647 or AV-283-6647
-*/
-#if ! defined( lint )
-static
-char	sccsTag[] = "@(#) match.c	1.1	last edit 2/1/85 at 13:51:37";
+ *			M A T C H . C
+ *
+ *  Author:		Gary S. Moss
+ *  
+ *  Source -
+ *	SECAD/VLD Computing Consortium, Bldg 394
+ *	The U. S. Army Ballistic Research Laboratory
+ *	Aberdeen Proving Ground, Maryland  21005-5066
+ *  
+ *  Copyright Notice -
+ *	This software is Copyright (C) 1986 by the United States Army.
+ *	All rights reserved.
+ */
+#ifndef lint
+static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
+
 #include <stdio.h>
+#ifdef BSD
+#include <strings.h>
+#else
 #include <string.h>
+#endif
+
 #include "./vextern.h"
 
 #define NUL	'\0'
