@@ -76,7 +76,7 @@ FILE *fd;
 	max = 0;
 
 
-	while (count=fread((void *)buffer, sizeof(short), 10240, fd)) {
+	while ( (count=fread((void *)buffer, sizeof(short), 10240, fd)) ) {
 		for (i=0 ; i < count ; ++i) {
 			sum += (double)buffer[i];
 			sum_sq += (double)(buffer[i]) * (double)(buffer[i]);

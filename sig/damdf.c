@@ -12,6 +12,8 @@
 #include <strings.h>
 #endif
 
+#include <stdlib.h>
+#include <unistd.h>
 #include <stdio.h>
 #include <math.h>
 #include "machine.h"
