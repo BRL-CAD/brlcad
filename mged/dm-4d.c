@@ -97,8 +97,8 @@ static int	min_scr_z;		/* based on getgdesc(GD_ZMIN) */
 static int	max_scr_z;		/* based on getgdesc(GD_ZMAX) */
 /* End modifiable variables */
 
-
-static char ir_title[] = "BRL MGED";
+static int	ir_fd;			/* GL file descriptor to select() on */
+static CONST char ir_title[] = "BRL MGED";
 static int perspective_mode = 0;	/* Perspective flag */
 static int perspective_angle =3;	/* Angle of perspective */
 static int perspective_table[] = { 
@@ -652,6 +652,8 @@ Ir_open()
 	deflinestyle( 1, 0xCF33 );
 	setlinestyle( 0 );
 
+	ir_fd = qgetfd();
+
 	return(0);
 }
 
@@ -1153,7 +1155,7 @@ int		noblock;
 	if( (width = sysconf(_SC_OPEN_MAX)) <= 0 )
 		width = 32;
 	files = *input;		/* save, for restore on each loop */
-	/* FD_SET( gl_fd, &files ); */
+	FD_SET( ir_fd, &files );
 
 	/*
 	 * Check for input on the keyboard or on the polled registers.
@@ -1173,6 +1175,7 @@ int		noblock;
 		i = qtest();
 		if( i != 0 )  {
 			FD_ZERO( input );
+			FD_SET( ir_fd, input );
 			break;		/* There is device input */
 		}
 		*input = files;
@@ -1201,7 +1204,7 @@ input_waiting:
 	 * First, process any messages that came in.
 	 */
 
-	if( i != 0 )
+	if( FD_ISSET( ir_fd, input ) )
 		checkevents();
 
 	return;
