@@ -1719,13 +1719,18 @@ struct edgeuse *eu_p;
 	if (rt_g.NMG_debug & DEBUG_RT_ISECT)
 		bu_log("\t No previous hit\n");
 
-	switch (*eu_p->g.magic_p) {
-	case NMG_EDGE_G_LSEG_MAGIC:
+	if ( !eu_p->g.magic_p )
 		isect_ray_lseg(rd, eu_p);
-		break;
-	case NMG_EDGE_G_CNURB_MAGIC:
-		isect_ray_cnurb(rd, eu_p);
-		break;
+	else
+	{
+		switch (*eu_p->g.magic_p) {
+		case NMG_EDGE_G_LSEG_MAGIC:
+			isect_ray_lseg(rd, eu_p);
+			break;
+		case NMG_EDGE_G_CNURB_MAGIC:
+			isect_ray_cnurb(rd, eu_p);
+			break;
+		}
 	}
 }
 
@@ -1964,7 +1969,7 @@ plane_t norm;
  * improve speed, but too large will produce errors. Perhaps a routine to calculate
  * an appropriate UV_TOL could be constructed.
  */
-#define UV_TOL  1.0e-5
+#define UV_TOL  1.0e-6
 
 void
 isect_ray_snurb_face(rd, fu, fg)
