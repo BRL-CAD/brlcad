@@ -17,6 +17,7 @@ extern FILE	*outfp;
 
 extern int	reg_total;
 extern int	version;
+extern int	verbose;
 
 struct rcard  {
 	char	rc_num[5];
@@ -46,10 +47,16 @@ getregion()
 	int	inst_num;
 	char *cp;
 
+	reg_num = 0;		/* safety */
+
 	/* Pre-load very first region card */
 	if( getline( &rcard, sizeof(rcard), "region card" ) == EOF )  {
 		printf("getregion: premature EOF\n");
 		return( -1 );
+	}
+	if( getint( &rcard, 0, 5 ) != 1 )  {
+		printf("First region card not #1\ncard='%s'\n", &rcard);
+		return(-1);
 	}
 
 top:
@@ -58,8 +65,7 @@ top:
 	for( card=0; ; card++ )  {
 		if( card == 0 )  {
 			/* First card is already in input buffer */
-			rcard.rc_null = 0;	/* Null terminate rc_num */
-			reg_num = atoi( rcard.rc_num );
+			reg_num = getint( &rcard, 0, 5 );
 
 			/* -1 region number terminates table */
 			if( reg_num < 0 ) 
@@ -77,8 +83,7 @@ top:
 				printf("getregion: premature EOF\n");
 				return( -1 );
 			}
-			rcard.rc_null = 0;	/* Null terminate rc_num */
-			if( atoi( rcard.rc_num ) != 0 )  {
+			if( getint( &rcard, 0, 5 ) != 0 )  {
 				/* finished with this region */
 				break;
 			}
@@ -158,7 +163,7 @@ top:
 		}
 	}
 
-	col_pr( wmp[reg_num].wm_name );
+	if(verbose) col_pr( wmp[reg_num].wm_name );
 
 	/* The region will be output later in getid(), below */
 
@@ -216,6 +221,7 @@ printf("reg_num=%d,id=%d,air=%d,mat=%d,los=%d\n", reg_num,id,air,mat,los);
 		wp = &wmp[reg_num];
 		if( wp->wm_forw == wp )  {
 			char	paren[32];
+			if( !verbose)  continue;
 			/* Denote an empty region */
 			sprintf( paren, "(%s)", wp->wm_name );
 			col_pr( paren );
@@ -228,7 +234,7 @@ printf("reg_num=%d,id=%d,air=%d,mat=%d,los=%d\n", reg_num,id,air,mat,los);
 		/* Add region to the one group that it belongs to. */
 		group_add( id, wp->wm_name );
 
-		col_pr( wp->wm_name );
+		if(verbose) col_pr( wp->wm_name );
 	}
 }
 
@@ -319,7 +325,7 @@ group_write()
 		/* Make a non-region combination */
 		mk_lfcomb( outfp, wp->wm_name, wp, 0 );
 
-		col_pr( wp->wm_name );
+		if(verbose) col_pr( wp->wm_name );
 	}
 	/* Could make all-encompasing "all.g" group here */
 }
