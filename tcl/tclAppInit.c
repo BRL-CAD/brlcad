@@ -9,9 +9,9 @@
  *
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
+ *
+ * SCCS: @(#) tclAppInit.c 1.17 96/03/26 12:45:29
  */
-
-static char sccsid[] = "@(#) tclAppInit.c 1.13 95/06/08 10:55:54";
 
 #include "tcl.h"
 
@@ -22,6 +22,10 @@ static char sccsid[] = "@(#) tclAppInit.c 1.13 95/06/08 10:55:54";
 
 extern int matherr();
 int *tclDummyMathPtr = (int *) matherr;
+
+#ifdef TCL_TEST
+EXTERN int		Tcltest_Init _ANSI_ARGS_((Tcl_Interp *interp));
+#endif /* TCL_TEST */
 
 /*
  *----------------------------------------------------------------------
@@ -76,6 +80,14 @@ Tcl_AppInit(interp)
 	return TCL_ERROR;
     }
 
+#ifdef TCL_TEST
+    if (Tcltest_Init(interp) == TCL_ERROR) {
+	return TCL_ERROR;
+    }
+    Tcl_StaticPackage(interp, "Tcltest", Tcltest_Init,
+            (Tcl_PackageInitProc *) NULL);
+#endif /* TCL_TEST */
+
     /*
      * Call the init procedures for included packages.  Each call should
      * look like this:
@@ -99,6 +111,6 @@ Tcl_AppInit(interp)
      * then no user-specific startup file will be run under any conditions.
      */
 
-    tcl_RcFileName = "~/.tclshrc";
+    Tcl_SetVar(interp, "tcl_rcFileName", "~/.tclshrc", TCL_GLOBAL_ONLY);
     return TCL_OK;
 }
