@@ -185,19 +185,23 @@ cat << EOF > ${IN_FILE}
 	HAS_SYMLINKS=1;
 #endif
 
-#if defined(sparc)
+#if defined(sun) && defined(sparc)
 #	undef	sun
 #	undef	sun4
 	MACHINE=sun4;
-#if	defined(__STDC__) && __STDC__ == 0
-/*		Solaris 2.x (SunOS 5.x), cc default is -Xt */
-		UNIXTYPE=SYSV;
-#	else
-/*		Older SunOS */
-		UNIXTYPE=BSD;
-#endif
 	HAS_TCP=1;
 	HAS_SYMLINKS=1;
+
+	if [ -x /usr/bin/uname ] ; then
+		if expr \`/usr/bin/uname -r\` : '4\.*' > /dev/null; then
+			UNIXTYPE=BSD;
+		else
+			UNIXTYPE=SYSV;
+		fi
+	else
+		/* No uname.  Must be 1.X */
+		UNIXTYPE=BSD;
+	fi
 #endif
 
 #if defined(NeXT)
