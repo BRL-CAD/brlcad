@@ -49,12 +49,7 @@ extern int	args;
 extern int	argcnt;
 extern char	**promp;
 
-static union record record;
 static int	cgarbs();
-
-#define XCOORD 0
-#define YCOORD 1
-#define ZCOORD 2
 
 char *p_arb3pt[] = {
 	"Enter X, Y, Z for point 1: ",
@@ -81,13 +76,24 @@ f_3ptarb( argc, argv )
 int	argc;
 char	**argv;
 {
-	int i, solve;
-	vect_t	vec1;
-	vect_t	vec2;
-	fastf_t	pt4[2], length, thick;
-	vect_t	norm;
-	fastf_t	ndotv;
-	struct directory *dp;
+	int			i, solve;
+	int			ngran;
+	vect_t			vec1;
+	vect_t			vec2;
+	fastf_t			pt4[2], length, thick;
+	vect_t			norm;
+	fastf_t			ndotv;
+	char			name[NAMESIZE+2];
+	struct directory	*dp;
+	struct rt_db_internal	internal;
+	struct rt_external	external;
+	struct rt_arb_internal	*aip;
+
+	RT_INIT_DB_INTERNAL( &internal );
+	internal.idb_type = ID_ARB8;
+	internal.idb_ptr = (genptr_t)rt_malloc( sizeof(struct rt_arb_internal) , "rt_arb_internal" );
+	aip = (struct rt_arb_internal *)internal.idb_ptr;
+	aip->magic = RT_ARB_INTERNAL_MAGIC;
 
 	args = numargs;
 	argcnt = 0;
@@ -95,8 +101,8 @@ char	**argv;
 	/* interupts */
 	(void)signal( SIGINT, sig2 );
 
-	for(i=0; i<24; i++) {
-		record.s.s_values[i] = 0.0;
+	for(i=0; i<8; i++) {
+		VSET( aip->pt[i] , 0.0 , 0.0 , 0.0 );
 	}
 
 	/* get the arb name */
@@ -114,7 +120,7 @@ char	**argv;
 		(void)printf("Names are limited to %d charscters\n",NAMESIZE-1);
 		return;
 	}
-	NAMEMOVE( cmd_args[1], record.s.s_name );
+	strcpy( name , cmd_args[1] );
 
 	/* read the three points */
 	promp = &p_arb3pt[0];
@@ -140,9 +146,7 @@ char	**argv;
 
 	for(i=0; i<3; i++) {
 		/* the three given vertices */
-		record.s.s_values[i] = atof( cmd_args[(i+2)] ) * local2base;
-		record.s.s_values[(i+3)] = atof( cmd_args[(i+5)] ) * local2base;
-		record.s.s_values[(i+6)] = atof( cmd_args[(i+8)] ) * local2base;
+		VSET( aip->pt[i] , atof( cmd_args[i*3+2] )*local2base , atof( cmd_args[i*3+3] )*local2base , atof( cmd_args[i*3+4] )*local2base );
 	}
 
 coordin:  	/* sent here to input coordinate to find again */
@@ -157,7 +161,7 @@ coordin:  	/* sent here to input coordinate to find again */
 				args += argcnt;
 				goto coordin;
 			}
-			solve = XCOORD;
+			solve = X;
 			args += argcnt;
 			(void)printf("Enter the Y, Z coordinate values: ");
 			argcnt = getcmd(args);
@@ -178,7 +182,7 @@ coordin:  	/* sent here to input coordinate to find again */
 				args += argcnt;
 				goto coordin;
 			}
-			solve = YCOORD;
+			solve = Y;
 			args += argcnt;
 			(void)printf("Enter the X, Z coordinate values: ");
 			argcnt = getcmd(args);
@@ -199,7 +203,7 @@ coordin:  	/* sent here to input coordinate to find again */
 				args += argcnt;
 				goto coordin;
 			}
-			solve = ZCOORD;
+			solve = Z;
 			args += argcnt;
 			(void)printf("Enter the X, Y coordinate values: ");
 			argcnt = getcmd(args);
@@ -232,42 +236,38 @@ thickagain:
 	args += argcnt;
 	thick *= local2base;
 
-	record.s.s_id = ID_SOLID;
-	record.s.s_type = GENARB8;
-	record.s.s_cgtype = ARB8;
-
-	ndotv = VDOT( &record.s.s_values[0], norm );
+	ndotv = VDOT( aip->pt[0], norm );
 
 	switch( solve ) {
 
-		case XCOORD:
+		case X:
 			/* solve for x-coord of 4th point */
-			record.s.s_values[10] = pt4[0];	/* y-coord */
-			record.s.s_values[11] = pt4[1]; 	/* z-coord */
-			record.s.s_values[9] =  ( ndotv
-						- norm[1] * record.s.s_values[10]
-						- norm[2] * record.s.s_values[11])
-						/ norm[0];	/* x-coord */
+			aip->pt[3][Y] = pt4[0];		/* y-coord */
+			aip->pt[3][Z] = pt4[1]; 	/* z-coord */
+			aip->pt[3][X] =  ( ndotv
+					- norm[Y] * aip->pt[3][Y]
+					- norm[Z] * aip->pt[3][Z])
+					/ norm[X];	/* x-coord */
 		break;
 
-		case YCOORD:
+		case Y:
 			/* solve for y-coord of 4th point */
-			record.s.s_values[9] = pt4[0];	/* x-coord */
-			record.s.s_values[11] = pt4[1]; 	/* z-coord */
-			record.s.s_values[10] =  ( ndotv
-						- norm[0] * record.s.s_values[9]
-						- norm[2] * record.s.s_values[11])
-						/ norm[1];	/* y-coord */
+			aip->pt[3][X] = pt4[0];		/* x-coord */
+			aip->pt[3][Z] = pt4[1]; 	/* z-coord */
+			aip->pt[3][Y] =  ( ndotv
+					- norm[X] * aip->pt[3][X]
+					- norm[Z] * aip->pt[3][Z])
+					/ norm[Y];	/* y-coord */
 		break;
 
-		case ZCOORD:
+		case Z:
 			/* solve for z-coord of 4th point */
-			record.s.s_values[9] = pt4[0];	/* x-coord */
-			record.s.s_values[10] = pt4[1]; 	/* y-coord */
-			record.s.s_values[11] =  ( ndotv
-						- norm[0] * record.s.s_values[9]
-						- norm[1] * record.s.s_values[10])
-						/ norm[2];	/* z-coord */
+			aip->pt[3][X] = pt4[0];		/* x-coord */
+			aip->pt[3][Y] = pt4[1]; 	/* y-coord */
+			aip->pt[3][Z] =  ( ndotv
+					- norm[X] * aip->pt[3][X]
+					- norm[Y] * aip->pt[3][Y])
+					/ norm[Z];	/* z-coord */
 		break;
 
 		default:
@@ -277,34 +277,38 @@ thickagain:
 	}
 
 	/* calculate the remaining 4 vertices */
-	for(i=0; i<3; i++) {
-		record.s.s_values[(i+12)] = record.s.s_values[i]
-						+ (thick * norm[i]);
-		record.s.s_values[(i+15)] = record.s.s_values[(i+3)]
-						+ (thick * norm[i]);
-		record.s.s_values[(i+18)] = record.s.s_values[(i+6)]
-						+ (thick * norm[i]);
-		record.s.s_values[(i+21)] = record.s.s_values[(i+9)]
-						+ (thick * norm[i]);
+	for(i=0; i<4; i++) {
+		VJOIN1( aip->pt[i+4] , aip->pt[i] , thick , norm );
 	}
 
-	/* convert to vector notation */
-	for(i=3; i<=21; i+=3) {
-		VSUB2(&record.s.s_values[i], &record.s.s_values[i],
-			&record.s.s_values[0]);
+	if( rt_functab[internal.idb_type].ft_export( &external, &internal, local2base ) < 0 )
+	{
+		rt_log( "f_3ptarb: export failure\n" );
+		rt_functab[internal.idb_type].ft_ifree( &internal );
+		return;
 	}
+	rt_functab[internal.idb_type].ft_ifree( &internal );   /* free internal rep */
 
 	/* no interuprts */
 	(void)signal( SIGINT, SIG_IGN );
 
-	if( (dp = db_diradd( dbip, record.s.s_name, -1, 0, DIR_SOLID)) == DIR_NULL ||
-	    db_alloc( dbip, dp, 1 ) < 0 )  {
+	ngran = (external.ext_nbytes+sizeof(union record)-1) / sizeof(union record);
+	if( (dp = db_diradd( dbip, name, -1L, ngran, DIR_SOLID)) == DIR_NULL ||
+	    db_alloc( dbip, dp, 1 ) < 0 )
+	    {
+	    	db_free_external( &external );
 	    	ALLOC_ERR_return;
 	    }
-	if( db_put( dbip,  dp, &record, 0, 1 ) < 0 )  WRITE_ERR_return;
+
+	if (db_put_external( &external, dp, dbip ) < 0 )
+	{
+		db_free_external( &external );
+		WRITE_ERR_return;
+	}
+	db_free_external( &external );
 
 	/* draw the "made" solid */
-	f_edit( 2, cmd_args );	/* depends on name being in cmd_args[1] */
+	f_edit( 2, cmd_args );	/* depends on solid name being in cmd_args[1] */
 }
 
 
@@ -327,13 +331,24 @@ f_rfarb( argc, argv )
 int	argc;
 char	**argv;
 {
-	struct directory *dp;
-	int	i;
-	int	solve[3];
-	fastf_t	pt[3][2];
-	fastf_t	thick, rota, fba;
-	vect_t	norm;
-	fastf_t	ndotv;
+	struct directory	*dp;
+	int			i;
+	int			solve[3];
+	int			ngran;
+	char			name[NAMESIZE+2];
+	fastf_t			pt[3][2];
+	fastf_t			thick, rota, fba;
+	vect_t			norm;
+	fastf_t			ndotv;
+	struct rt_db_internal	internal;
+	struct rt_external	external;
+	struct rt_arb_internal	*aip;
+
+	RT_INIT_DB_INTERNAL( &internal );
+	internal.idb_type = ID_ARB8;
+	internal.idb_ptr = (genptr_t)rt_malloc( sizeof(struct rt_arb_internal) , "rt_arb_internal" );
+	aip = (struct rt_arb_internal *)internal.idb_ptr;
+	aip->magic = RT_ARB_INTERNAL_MAGIC;
 
 	/* interupts */
 	(void)signal( SIGINT, sig2 );
@@ -341,8 +356,8 @@ char	**argv;
 	args = numargs;
 	argcnt = 0;
 
-	for(i=0; i<24; i++) {
-		record.s.s_values[i] = 0.0;
+	for(i=0; i<8; i++) {
+		VSET( aip->pt[i] , 0.0 , 0.0 , 0.0 );
 	}
 
 	/* get the arb name */
@@ -360,7 +375,7 @@ char	**argv;
 		(void)printf("Names are limited to %d charscters\n",NAMESIZE-1);
 		return;
 	}
-	NAMEMOVE( cmd_args[1], record.s.s_name );
+	strcpy( name , cmd_args[1] );
 
 	/* read the known point */
 	promp = &p_rfin[0];
@@ -370,9 +385,8 @@ char	**argv;
 			return;
 		args += argcnt;
 	}
-	for(i=0; i<3; i++) {
-		record.s.s_values[i] = atof(cmd_args[i+2]) * local2base;
-	}
+
+	VSET( aip->pt[0] , atof(cmd_args[2])*local2base , atof(cmd_args[3])*local2base , atof(cmd_args[4])*local2base );
 
 	(void)printf("Enter ROTATION angle (deg): ");
 	argcnt = getcmd(args);
@@ -401,7 +415,7 @@ coordagain:	/* sent here to redo a point */
 					args += argcnt;
 					goto coordagain;
 				}
-				solve[i] = XCOORD;
+				solve[i] = X;
 				args += argcnt;
 				(void)printf("Enter the Y, Z coordinate values: ");
 				argcnt = getcmd(args);
@@ -422,7 +436,7 @@ coordagain:	/* sent here to redo a point */
 					args += argcnt;
 					goto coordagain;
 				}
-				solve[i] = YCOORD;
+				solve[i] = Y;
 				args += argcnt;
 				(void)printf("Enter the X, Z coordinate values: ");
 				argcnt = getcmd(args);
@@ -443,7 +457,7 @@ coordagain:	/* sent here to redo a point */
 					args += argcnt;
 					goto coordagain;
 				}
-				solve[i] = ZCOORD;
+				solve[i] = Z;
 				args += argcnt;
 				(void)printf("Enter the X, Y coordinate values: ");
 				argcnt = getcmd(args);
@@ -476,38 +490,36 @@ thckagain:
 	args += argcnt;
 	thick *= local2base;
 
-	record.s.s_id = ID_SOLID;
-	record.s.s_type = GENARB8;
-	record.s.s_cgtype = ARB8;
-
-	ndotv = VDOT( &record.s.s_values[0], norm );
+	ndotv = VDOT( aip->pt[0], norm );
 
 	/* calculate the unknown coordinate for points 2,3,4 */
 	for(i=0; i<3; i++) {
+		int j;
+		j = i+1;
 
 		switch( solve[i] ) {
-			case XCOORD:
-				record.s.s_values[3*i+4] = pt[i][0];
-				record.s.s_values[3*i+5] = pt[i][1];
-				record.s.s_values[3*i+3] = ( ndotv
-					- norm[1] * record.s.s_values[3*i+4]
-					- norm[2] * record.s.s_values[3*i+5])
+			case X:
+				aip->pt[j][Y] = pt[i][0];
+				aip->pt[j][Z] = pt[i][1];
+				aip->pt[j][X] = ( ndotv
+					- norm[1] * aip->pt[j][Y]
+					- norm[2] * aip->pt[j][Z])
 					/ norm[0];
 			break;
-			case YCOORD:
-				record.s.s_values[3*i+3] = pt[i][0];
-				record.s.s_values[3*i+5] = pt[i][1];
-				record.s.s_values[3*i+4] = ( ndotv
-					- norm[0] * record.s.s_values[3*i+3]
-					- norm[2] * record.s.s_values[3*i+5])
+			case Y:
+				aip->pt[j][X] = pt[i][0];
+				aip->pt[j][Z] = pt[i][1];
+				aip->pt[j][Y] = ( ndotv
+					- norm[0] * aip->pt[j][X]
+					- norm[2] * aip->pt[j][Z])
 					/ norm[1];
 			break;
-			case ZCOORD:
-				record.s.s_values[3*i+3] = pt[i][0];
-				record.s.s_values[3*i+4] = pt[i][1];
-				record.s.s_values[3*i+5] = ( ndotv
-					- norm[0] * record.s.s_values[3*i+3]
-					- norm[1] * record.s.s_values[3*i+4])
+			case Z:
+				aip->pt[j][X] = pt[i][0];
+				aip->pt[j][Y] = pt[i][1];
+				aip->pt[j][Z] = ( ndotv
+					- norm[0] * aip->pt[j][X]
+					- norm[1] * aip->pt[j][Y])
 					/ norm[2];
 			break;
 
@@ -517,34 +529,38 @@ thckagain:
 	}
 
 	/* calculate the remaining 4 vertices */
-	for(i=0; i<3; i++) {
-		record.s.s_values[(i+12)] = record.s.s_values[i]
-						+ (thick * norm[i]);
-		record.s.s_values[(i+15)] = record.s.s_values[(i+3)]
-						+ (thick * norm[i]);
-		record.s.s_values[(i+18)] = record.s.s_values[(i+6)]
-						+ (thick * norm[i]);
-		record.s.s_values[(i+21)] = record.s.s_values[(i+9)]
-						+ (thick * norm[i]);
+	for(i=0; i<4; i++) {
+		VJOIN1( aip->pt[i+4] , aip->pt[i] , thick , norm );
 	}
 
-	/* convert to vector notation */
-	for(i=3; i<=21; i+=3) {
-		VSUB2(&record.s.s_values[i], &record.s.s_values[i],
-			&record.s.s_values[0]);
+	if( rt_functab[internal.idb_type].ft_export( &external, &internal, local2base ) < 0 )
+	{
+		rt_log( "f_3ptarb: export failure\n" );
+		rt_functab[internal.idb_type].ft_ifree( &internal );
+		return;
 	}
+	rt_functab[internal.idb_type].ft_ifree( &internal );   /* free internal rep */
 
 	/* no interuprts */
 	(void)signal( SIGINT, SIG_IGN );
 
-	if( (dp = db_diradd( dbip, record.s.s_name, -1, 0, DIR_SOLID)) == DIR_NULL ||
-	    db_alloc( dbip, dp, 1 ) < 0  )  {
+	ngran = (external.ext_nbytes+sizeof(union record)-1) / sizeof(union record);
+	if( (dp = db_diradd( dbip, name, -1L, ngran, DIR_SOLID)) == DIR_NULL ||
+	    db_alloc( dbip, dp, 1 ) < 0 )
+	    {
+	    	db_free_external( &external );
 	    	ALLOC_ERR_return;
+	    }
+
+	if (db_put_external( &external, dp, dbip ) < 0 )
+	{
+		db_free_external( &external );
+		WRITE_ERR_return;
 	}
-	if( db_put( dbip,  dp, &record, 0, 1 ) < 0 )  WRITE_ERR_return;
+	db_free_external( &external );
 
 	/* draw the "made" solid */
-	f_edit( 2, cmd_args );	/* depends on name being in cmd_args[1] */
+	f_edit( 2, cmd_args );	/* depends on solid name being in cmd_args[1] */
 }
 
 /* ------------------------------ old way ------------------------------ */
