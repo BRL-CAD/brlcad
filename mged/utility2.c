@@ -507,8 +507,10 @@ int flag;
 {
 
 	struct directory *nextdp;
+	struct rt_db_internal intern;
 	mat_t new_xlate;
 	int nparts, i, k;
+	int id;
 	struct bu_vls str;
 
 	bu_vls_init( &str );
@@ -583,9 +585,17 @@ int flag;
 	}
 
 	/* NOTE - only reach here if flag == LISTEVAL */
-	/* do_list will print actual solid name */
 	Tcl_AppendResult(interp, "/", (char *)NULL);
-	do_list( &str, dp, 1 );
+	if( (id=rt_db_get_internal( &intern, dp, dbip, xform )) < 0 )
+	{
+		Tcl_AppendResult(interp, "rt_db_get_internal(", dp->d_namep,
+                        ") failure", (char *)NULL );
+		return;
+	}
+	bu_vls_printf( &str, "%16s:\n", dp->d_namep );
+	if( rt_functab[id].ft_describe( &str, &intern, 1, base2local ) < 0 )
+		Tcl_AppendResult(interp, dp->d_namep, ": describe error\n", (char *)NULL);
+	rt_functab[id].ft_ifree( &intern );
 	Tcl_AppendResult(interp, bu_vls_addr(&str), (char *)NULL);
 }
 
@@ -1206,6 +1216,44 @@ mat_t xform;
 
 static struct directory *Copy_object();
 
+HIDDEN void
+Do_copy_membs( dbip, comb, comb_leaf, user_ptr1, user_ptr2, user_ptr3 )
+struct db_i		*dbip;
+struct rt_comb_internal *comb;
+union tree		*comb_leaf;
+genptr_t		user_ptr1, user_ptr2, user_ptr3;
+{
+	struct directory	*dp;
+	struct directory	*dp_new;
+	mat_t			new_xform;
+	matp_t			xform;
+
+	RT_CK_DBI( dbip );
+	RT_CK_TREE( comb_leaf );
+
+	if( (dp=db_lookup( dbip, comb_leaf->tr_l.tl_name, LOOKUP_QUIET)) == DIR_NULL )
+		return;
+
+	xform = (matp_t)user_ptr1;
+
+	/* apply transform matrix for this arc */
+	bn_mat_mul( new_xform, xform, comb_leaf->tr_l.tl_mat );
+
+	/* Copy member with current tranform matrix */
+	if( (dp_new=Copy_object( dp, new_xform )) == DIR_NULL )
+	{
+	  Tcl_AppendResult(interp, "Failed to copy object ",
+			   dp->d_namep, "\n", (char *)NULL);
+	  return;
+	}
+
+	/* replace member name with new copy */
+	NAMEMOVE( dp_new->d_namep, comb_leaf->tr_l.tl_name );
+
+	/* make transform for this arc the identity matrix */
+	bn_mat_idn( comb_leaf->tr_l.tl_mat );
+}
+
 static struct directory *
 Copy_comb( dp, xform )
 struct directory *dp;
@@ -1213,7 +1261,8 @@ mat_t xform;
 {
 	struct object_use *use;
 	struct directory *found;
-	union record *rp;
+	struct rt_db_internal intern;
+	struct rt_comb_internal *comb;
 	mat_t new_xform;
 	int i;
 
@@ -1231,38 +1280,14 @@ mat_t xform;
 	}
 
 	/* if we can't get records for this combination, just leave it alone */
-	if( (rp=db_getmrec( dbip , dp )) == (union record *)0 )
+	if( rt_db_get_internal( &intern, dp, dbip, (mat_t *)NULL ) < 0 )
 		return( dp );
+	comb = (struct rt_comb_internal *)intern.idb_ptr;
 
 	/* copy members */
-	for( i=1 ; i<dp->d_len ; i++ )
-	{
-		mat_t arc_mat;
-		struct directory *dp2;
-		struct directory *dp_new;
-
-		/* ignore members that don't exist */
-		if( (dp2=db_lookup( dbip, rp[i].M.m_instname, 0 )) == DIR_NULL )
-			continue;
-
-		/* apply transform matrix for this arc */
-		rt_mat_dbmat( arc_mat, rp[i].M.m_mat );
-		bn_mat_mul( new_xform, xform, arc_mat );
-
-		/* Copy member with current tranform matrix */
-		if( (dp_new=Copy_object( dp2, new_xform )) == DIR_NULL )
-		{
-		  Tcl_AppendResult(interp, "Failed to copy object ",
-				   dp2->d_namep, "\n", (char *)NULL);
-		  return( DIR_NULL );
-		}
-
-		/* replace member name with new copy */
-		NAMEMOVE( dp_new->d_namep, rp[i].M.m_instname );
-
-		/* make transform for this arc the identity matrix */
-		rt_dbmat_mat( rp[i].M.m_mat, bn_mat_identity );
-	}
+	if( comb->tree )
+		db_tree_funcleaf( dbip, comb, comb->tree, Do_copy_membs,
+			(genptr_t)xform, (genptr_t)NULL, (genptr_t)NULL );
 
 	/* Get a use of this object */
 	found = DIR_NULL;
@@ -1290,22 +1315,12 @@ mat_t xform;
 	  return( DIR_NULL );
 	}
 
-	if( found != dp )
+	if( rt_db_put_internal( found, dbip, &intern ) < 0 )
 	{
-	  if( db_alloc( dbip, found, dp->d_len ) < 0 )
-	    {
-	      Tcl_AppendResult(interp, "Cannot allocate space for combination ",
-			       found->d_namep, "\n", (char *)NULL);
-	      return( DIR_NULL );
-	    }
-	  NAMEMOVE( found->d_namep, rp[0].c.c_name );
-	}
-
-	if( db_put( dbip, found, rp, 0, found->d_len ) < 0 )
-	{
-	  Tcl_AppendResult(interp,  "Failed to write combination ",
-			   found->d_namep, " to database\n", (char *)NULL);
-	  return( DIR_NULL );
+		Tcl_AppendResult(interp, "rt_db_put_internal failed for ", dp->d_namep,
+			"\n", (char *)NULL );
+		rt_comb_ifree( &intern );
+		return( DIR_NULL );
 	}
 
 	return( found );
@@ -1322,6 +1337,24 @@ mat_t xform;
 		return( Copy_solid( dp, xform ) );
 	else
 		return( Copy_comb( dp, xform ) );
+}
+
+HIDDEN void
+Do_ref_incr( dbip, comb, comb_leaf, user_ptr1, user_ptr2, user_ptr3 )
+struct db_i		*dbip;
+struct rt_comb_internal *comb;
+union tree		*comb_leaf;
+genptr_t		user_ptr1, user_ptr2, user_ptr3;
+{
+	struct directory *dp;
+
+	RT_CK_DBI( dbip );
+	RT_CK_TREE( comb_leaf );
+
+	if( (dp = db_lookup( dbip, comb_leaf->tr_l.tl_name, LOOKUP_QUIET)) == DIR_NULL )
+		return;
+
+	dp->d_nref++;
 }
 
 int
@@ -1357,29 +1390,18 @@ char **argv;
 
 		for( dp=dbip->dbi_Head[i] ; dp!=DIR_NULL ; dp=dp->d_forw )
 		{
-			union record *rp;
+			struct rt_db_internal intern;
+			struct rt_comb_internal *comb;
 
 			if( dp->d_flags & DIR_SOLID )
 				continue;
 
-			if( (rp=db_getmrec( dbip , dp )) == (union record *)0 )
-			{
-			  Tcl_AppendResult(interp, "Cannot get records for ", dp->d_namep,
-					   "\n", (char *)NULL);
-			  return TCL_ERROR;
-			}
-
-			for( j=1 ; j<dp->d_len ; j++ )
-			{
-				struct directory *dp2;
-
-				dp2 = db_lookup( dbip, rp[j].M.m_instname, 0 );
-				if( dp2 == DIR_NULL )
-					continue;
-
-				dp2->d_nref++;
-			}
-			bu_free( (genptr_t)rp, "rp[]" );
+			if( rt_db_get_internal( &intern, dp, dbip, (mat_t *)NULL ) < 0 )
+				TCL_READ_ERR_return;
+			comb = (struct rt_comb_internal *)intern.idb_ptr;
+			if( comb->tree )
+				db_tree_funcleaf( dbip, comb, comb->tree, Do_ref_incr, (genptr_t )NULL, (genptr_t )NULL, (genptr_t )NULL );
+			rt_comb_ifree( &intern );
 		}
 	}
 
