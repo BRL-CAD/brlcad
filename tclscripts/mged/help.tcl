@@ -144,7 +144,7 @@ set mged_help_data(labelvert)	{{object[s]}	{label vertices of wireframes of obje
 set mged_help_data(listeval)	{{}	{lists 'evaluated' path solids}}
 set mged_help_data(loadtk)	{{[DISPLAY]}	{initializes the Tk window library}}
 set mged_help_data(lookat)	{{x y z}	{adjust view to look at given coordinates}}
-set mged_help_data(ls)		{{[-a -c -r -s -l]}	{table of contents}}
+set mged_help_data(ls)		{{[-a -c -r -s -p -l]}	{table of contents}}
 set mged_help_data(M)		{{1|0 xpos ypos}	{invoke a traditional MGED mouse event}}
 set mged_help_data(make)	{{-t | name <arb8|arb7|arb6|arb5|arb4|arbn|ars|bot|ehy|ell|ell1|epa|eto|extrude|grip|half|nmg|part|pipe|rcc|rec|rhc|rpc|rpp|sketch|sph|tec|tgc|tor|trc>}	{create a primitive}}
 set mged_help_data(make_bb)	{{new_rpp_name obj1_or_path1 [list of objects or paths ...]}	{make a bounding box solid enclosing specified objects/paths}}

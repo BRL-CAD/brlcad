@@ -2668,7 +2668,7 @@ a similar function, but moves the eye_pt without changing the viewing direction.
 </DD>
 <HR>
 
-<DT><a NAME="ls"><B>ls</B> [<I>-a -c -r -s -l</I>]  [<I>objects</I>]</DT>
+<DT><a NAME="ls"><B>ls</B> [<I>-a -c -r -s -p -l</I>]  [<I>objects</I>]</DT>
 
 <DD>The ``ls'' command with no <I>object</I> argument lists the name of
      every object in the
@@ -2681,7 +2681,8 @@ a similar function, but moves the eye_pt without changing the viewing direction.
        <li> a - list all objects in the database
        <li> c - list all non-hidden combinations in the database
        <li> r - list all non-hidden regions in the database
-       <li> s - list all non-hidden solids in the database
+       <li> s - list all non-hidden primitives in the database
+       <li> p - list all non-hidden primitives in the database
        <li> l - use long format showing object name, object type, major type, minor type, and length
      </ul>
 
@@ -2698,8 +2699,8 @@ a similar function, but moves the eye_pt without changing the viewing direction.
 	        (output is formatted) <br>
 	<kbd>mged></kbd> <b>ls -a solid*</b><br>
 	     -- list all objects with names beginning with ``solid''<br>
-	<kbd>mged></kbd> <b>ls -s wheel*</b><br>
-	     -- list all solids with names beginning with ``wheel''<br>
+	<kbd>mged></kbd> <b>ls -p wheel*</b><br>
+	     -- list all primitives with names beginning with ``wheel''<br>
 	<kbd>mged></kbd> <b>ls -r wheel*</b><br>
 	     -- list all regions with names beginning with ``wheel''<br>
 	<kbd>mged></kbd> <b>ls -c suspension*</b><br>
