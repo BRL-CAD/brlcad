@@ -205,14 +205,13 @@ struct rt_i		*rtip;
 	LOCAL fastf_t	magsq_b, magsq_h, magsq_r;
 	LOCAL fastf_t	mag_b, mag_h, mag_r;
 	LOCAL fastf_t	f;
-	LOCAL mat_t	mtemp;
 	LOCAL mat_t	R;
 	LOCAL mat_t	Rinv;
 	LOCAL mat_t	S;
-	LOCAL mat_t	SS;
 	LOCAL vect_t	invsq;	/* [ 1/(|H|**2), 1/(|R|**2), 1/(|B|**2) ] */
 
 	RT_CK_DB_INTERNAL(ip);
+	RT_CK_TOL(tol);
 	xip = (struct rt_rpc_internal *)ip->idb_ptr;
 	RT_RPC_CK_MAGIC(xip);
 
@@ -914,7 +913,6 @@ struct rt_tol		*tol;
 	int		i, j, n;
 	fastf_t		b, *back, f, *front, h, rh;
 	fastf_t		dtol, ntol;
-	point_t 	p1, p2;
 	vect_t		Bu, Hu, Ru;
 	LOCAL mat_t	R;
 	LOCAL mat_t	invR;
@@ -925,7 +923,6 @@ struct rt_tol		*tol;
 	struct vertex	**vfront, **vback, **vtemp, *vertlist[4];
 	vect_t		*norms;
 	fastf_t		r_sq_over_b;
-	struct edgeuse	*eu, *eu2;
 
 	NMG_CK_MODEL( m );
 	RT_CK_TOL( tol );
