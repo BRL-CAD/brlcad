@@ -1424,7 +1424,8 @@ CONST struct rt_tol	*tol;
  *
  *  Given a parametric line defined by PT + t * DIR and a point A,
  *  return the closest distance between the line and the point.
- *  It is necessary that DIR have unit length.
+ *
+ *  'dir' need not have unit length.
  *
  *  Return -
  *	Distance
@@ -1441,7 +1442,9 @@ CONST point_t	a;
 	register fastf_t	FdotD;
 
 	VSUB2( f, pt, a );
-	FdotD = VDOT( f, dir );
+	if( (FdotD = MAGNITUDE(dir)) <= SMALL_FASTF )
+		return 0.0;
+	FdotD = VDOT( f, dir ) / FdotD;
 	if( (FdotD = VDOT( f, f ) - FdotD * FdotD ) <= SMALL_FASTF )
 		return(0.0);
 	return( sqrt(FdotD) );
@@ -1452,7 +1455,8 @@ CONST point_t	a;
  *
  *  Given a parametric line defined by PT + t * DIR and a point A,
  *  return the square of the closest distance between the line and the point.
- *  It is necessary that DIR have unit length.
+ *
+ *  'dir' need not have unit length.
  *
  *  Return -
  *	Distance squared
@@ -1467,7 +1471,9 @@ CONST point_t	a;
 	register fastf_t	FdotD;
 
 	VSUB2( f, pt, a );
-	FdotD = VDOT( f, dir );
+	if( (FdotD = MAGNITUDE(dir)) <= SMALL_FASTF )
+		return 0.0;
+	FdotD = VDOT( f, dir ) / FdotD;
 	if( (FdotD = VDOT( f, f ) - FdotD * FdotD ) <= SMALL_FASTF )
 		return(0.0);
 	return FdotD;
@@ -1478,7 +1484,8 @@ CONST point_t	a;
  *
  *  Given a parametric line defined by PT + t * DIR,
  *  return the closest distance between the line and the origin.
- *  It is necessary that DIR have unit length.
+ *
+ *  'dir' need not have unit length.
  *
  *  Return -
  *	Distance
@@ -1490,7 +1497,9 @@ CONST vect_t	dir;
 {
 	register fastf_t	PTdotD;
 
-	PTdotD = VDOT( pt, dir );
+	if( (PTdotD = MAGNITUDE(dir)) <= SMALL_FASTF )
+		return 0.0;
+	PTdotD = VDOT( pt, dir ) / PTdotD;
 	if( (PTdotD = VDOT( pt, pt ) - PTdotD * PTdotD ) <= SMALL_FASTF )
 		return(0.0);
 	return( sqrt(PTdotD) );
@@ -1500,7 +1509,8 @@ CONST vect_t	dir;
  *
  *  Given a parametric line defined by PT + t * DIR and a point A,
  *  return the closest distance between the line and the point.
- *  It is necessary that DIR have unit length.
+ *
+ *  'dir' need not have unit length.
  *
  *  Return -
  *	Distance
@@ -1515,7 +1525,9 @@ CONST point_t	a;
 	register fastf_t	FdotD;
 
 	VSUB2_2D( f, pt, a );
-	FdotD = VDOT_2D( f, dir );
+	if( (FdotD = sqrt(MAGSQ_2D(dir))) <= SMALL_FASTF )
+		return 0.0;
+	FdotD = VDOT_2D( f, dir ) / FdotD;
 	if( (FdotD = VDOT_2D( f, f ) - FdotD * FdotD ) <= SMALL_FASTF )
 		return(0.0);
 	return( sqrt(FdotD) );
@@ -1526,7 +1538,8 @@ CONST point_t	a;
  *
  *  Given a parametric line defined by PT + t * DIR and a point A,
  *  return the closest distance between the line and the point, squared.
- *  It is necessary that DIR have unit length.
+ *
+ *  'dir' need not have unit length.
  *
  *  Return -
  *	Distance squared
@@ -1541,7 +1554,9 @@ CONST point_t	a;
 	register fastf_t	FdotD;
 
 	VSUB2_2D( f, pt, a );
-	FdotD = VDOT_2D( f, dir );
+	if( (FdotD = sqrt(MAGSQ_2D(dir))) <= SMALL_FASTF )
+		return 0.0;
+	FdotD = VDOT_2D( f, dir ) / FdotD;
 	if( (FdotD = VDOT_2D( f, f ) - FdotD * FdotD ) <= SMALL_FASTF )
 		return(0.0);
 	return( FdotD );
