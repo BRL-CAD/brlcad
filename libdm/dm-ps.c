@@ -73,7 +73,7 @@ struct dm dm_ps = {
   Nu_int0,
   Nu_int0,
   Nu_int0,
-  Nu_int0,
+  0,
   0,				/* no displaylist */
   0,                            /* no stereo */
   PLOTBOUND,
@@ -106,8 +106,7 @@ static mat_t psmat;
  *
  */
 struct dm *
-ps_open(eventHandler, argc, argv)
-int (*eventHandler)();
+ps_open(argc, argv)
 int argc;
 char *argv[];
 {
@@ -119,7 +118,6 @@ char *argv[];
     return DM_NULL;
 
   *dmp = dm_ps;  /* struct copy */
-  dmp->dm_eventHandler = eventHandler;
 
   dmp->dm_vars = (genptr_t)bu_calloc(1, sizeof(struct ps_vars), "ps_open: ps_vars");
   if(dmp->dm_vars == (genptr_t)NULL){

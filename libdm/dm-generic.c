@@ -27,30 +27,29 @@ extern struct dm *pex_open();
 #endif
 
 struct dm *
-dm_open(type, eventHandler, argc, argv)
+dm_open(type, argc, argv)
 int type;
-int (*eventHandler)();
 int argc;
 char *argv[];
 {
   switch(type){
   case DM_TYPE_NULL:
-    return Nu_open(eventHandler, argc, argv);
+    return Nu_open(argc, argv);
   case DM_TYPE_PLOT:
-    return plot_open(eventHandler, argc, argv);
+    return plot_open(argc, argv);
   case DM_TYPE_PS:
-    return ps_open(eventHandler, argc, argv);
+    return ps_open(argc, argv);
 #ifdef DM_X
   case DM_TYPE_X:
-    return X_open(eventHandler, argc, argv);
+    return X_open(argc, argv);
 #endif
 #ifdef DM_OGL
   case DM_TYPE_OGL:
-    return ogl_open(eventHandler, argc, argv);
+    return ogl_open(argc, argv);
 #endif
 #ifdef DM_GLX
   case DM_TYPE_GLX:
-    return glx_open(eventHandler, argc, argv);;
+    return glx_open(argc, argv);;
 #endif
 #ifdef DM_PEX
   case DM_TYPE_PEX:

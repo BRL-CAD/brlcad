@@ -73,7 +73,7 @@ struct dm dm_plot = {
   Nu_int0,
   Nu_int0,
   Nu_int0,
-  Nu_int0,
+  0,
   0,			/* no displaylist */
   0,                    /* no stereo */
   PLOTBOUND,
@@ -103,8 +103,7 @@ static mat_t plotmat;
  *
  */
 struct dm *
-plot_open(eventHandler, argc, argv)
-int (*eventHandler)();
+plot_open(argc, argv)
 int argc;
 char *argv[];
 {
@@ -116,7 +115,6 @@ char *argv[];
     return DM_NULL;
 
   *dmp = dm_plot; /* struct copy */
-  dmp->dm_eventHandler = eventHandler;
 
   dmp->dm_vars = (genptr_t)bu_calloc(1, sizeof(struct plot_vars), "plot_open: plot_vars");
   if(dmp->dm_vars == (genptr_t)NULL){
