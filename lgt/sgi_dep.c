@@ -919,11 +919,14 @@ int	fps;
 	if( fps > HZ )
 		fps = HZ;
 
-	/* Get origin of frame buffer window (source).			*/
+	/* Get origin of frame buffer window (source). */
 	getorigin( &xwin, &ywin );
 
-	/* Get size of frame buffer window (source).			*/
-	getsize( &xsiz, &ysiz );
+	/* Get size of frame buffer window (source). */
+	/* getsize( &xsiz, &ysiz ); */
+	xsiz = fb_getwidth( fbiop );
+	ysiz = fb_getheight( fbiop );
+
 	wid = xsiz / framesz;
 	xpos = ypos = xsiz / 2;
 	zoom = 1;
@@ -936,14 +939,14 @@ int	fps;
 	if( fb_window( fbiop, xpos, ypos ) == -1 )
 		rt_log( "Can not set window <%d,%d>.\n", xpos, ypos );
 
-	/* Create destination window for movie, with user positioning.	*/
+	/* Create destination window for movie, with user positioning. */
 	prefsize( framesz, framesz );
 	if( (movie_gid = winopen( "movie" )) == -1 )
 		{
 		fb_log( "No more graphics ports available.\n" );
 		return;
 		}
-	/* Adjust window position optimally for fast "rectcopy()".	*/
+	/* Adjust window position optimally for fast "rectcopy()". */
 	getorigin( &movie_xwin, &movie_ywin );
 	if( ((xwin - movie_xwin) % 16) != 0 )
 		movie_xwin += (xwin - movie_xwin) % 16;
@@ -952,6 +955,9 @@ int	fps;
 	winmove( movie_xwin, movie_ywin );
 
 	fullscrn();
+	RGBmode();	/* By pass color table, interpret pixel RGB values. */
+	gconfig();
+
 	qdevice( MIDDLEMOUSE );
 	for( ; ; )
 	for( i = 0; i < wid; i++ )
