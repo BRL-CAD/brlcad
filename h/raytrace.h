@@ -541,6 +541,7 @@ struct rt_g {
 	int		debug;		/* non-zero for debug, see debug.h */
 	union cutter	*rtg_CutFree;	/* cut Freelist */
 	/*  Definitions necessary to interlock in a parallel environment */
+	int		rtg_parallel;	/* !0 = trying to use multi CPUs */
 	int		res_syscall;	/* lock on system calls */
 	int		res_worker;	/* lock on work to do */
 	int		res_stats;	/* lock on statistics */
