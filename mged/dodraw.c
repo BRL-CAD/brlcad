@@ -312,6 +312,7 @@ union tree		*curtree;
 {
 	struct nmgregion	*r;
 	struct rt_list		vhead;
+	int			failed;
 
 	RT_CK_TESS_TOL(tsp->ts_ttol);
 	RT_CK_TOL(tsp->ts_tol);
@@ -328,11 +329,13 @@ union tree		*curtree;
 
 	if( curtree->tr_op == OP_NOP )  return  curtree;
 
-	(void)nmg_model_fuse( *tsp->ts_m, tsp->ts_tol );
-	curtree = nmg_booltree_evaluate( curtree, tsp->ts_tol );
-	if( !curtree )  return (union tree *)NULL;
-	if( curtree->tr_op != OP_NMG_TESS )  rt_bomb("mged_nmg_region_end() bad tr_op\n");
+	failed = nmg_boolean( curtree, *tsp->ts_m, tsp->ts_tol );
+	if( failed )  {
+		db_free_tree( curtree );
+		return (union tree *)NULL;
+	}
 	r = curtree->tr_d.td_r;
+	NMG_CK_REGION(r);
 
 	if( mged_do_not_draw_nmg_solids_during_debugging && r )  {
 		db_free_tree( curtree );
@@ -1050,6 +1053,7 @@ char	**argv;
 	struct rt_db_internal	intern;
 	struct directory	*dp;
 	int			ngran;
+	int			failed;
 
 	RT_CHECK_DBI(dbip);
 
@@ -1119,14 +1123,13 @@ char	**argv;
 	/* Now, evaluate the boolean tree into ONE region */
 	rt_log("facetize:  evaluating boolean expressions\n");
 
-	(void)nmg_model_fuse( mged_nmg_model, &mged_tol );
-	mged_facetize_tree = nmg_booltree_evaluate( mged_facetize_tree, &mged_tol );
-	if( mged_facetize_tree == 0 || mged_facetize_tree->tr_op != OP_NMG_TESS ||
-	    mged_facetize_tree->tr_d.td_r == 0 )  {
+	failed = nmg_boolean( mged_facetize_tree, mged_nmg_model, &mged_tol );
+	if( failed )  {
 		rt_log("facetize:  no resulting region, aborting\n");
-		if( mged_facetize_tree ) db_free_tree( mged_facetize_tree );
+		db_free_tree( mged_facetize_tree );
 	    	mged_facetize_tree = (union tree *)NULL;
 		nmg_km( mged_nmg_model );
+		mged_nmg_model = (struct model *)NULL;
 		return CMD_BAD;
 	}
 	/* New region remains part of this nmg "model" */
@@ -1208,6 +1211,7 @@ char	**argv;
 	char			op;
 	char			*edit_args[2];
 	int			ngran;
+	int			failed;
 
 	RT_CHECK_DBI( dbip );
 
@@ -1342,14 +1346,13 @@ char	**argv;
 	/* Now, evaluate the boolean tree into ONE region */
 	rt_log("bev:  evaluating boolean expressions\n");
 
-	(void)nmg_model_fuse( mged_nmg_model, &mged_tol );
-	tmp_tree = nmg_booltree_evaluate( tmp_tree, &mged_tol );
-	if( tmp_tree == 0 || tmp_tree->tr_op != OP_NMG_TESS ||
-	    tmp_tree->tr_d.td_r == 0 )  {
+	failed = nmg_boolean( tmp_tree, mged_nmg_model, &mged_tol );
+	if( failed )  {
 		rt_log("bev:  no resulting region, aborting\n");
-		if( tmp_tree ) db_free_tree( tmp_tree );
+		db_free_tree( tmp_tree );
 	    	tmp_tree = (union tree *)NULL;
 		nmg_km( mged_nmg_model );
+		mged_nmg_model = (struct model *)NULL;
 		return CMD_BAD;
 	}
 	/* New region remains part of this nmg "model" */
