@@ -14,6 +14,7 @@
  *	Mike Muuss		(Optimization)
  *	Peter F. Stiller	(Curvature)
  *	Phillip Dykstra		(Curvature)
+ *	Bill Homer		(Vectorization)
  *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
@@ -822,6 +823,442 @@ struct application	*ap;
 	return( segp );
 }
 
+
+#define SEG_MISS(SEG)           (SEG).seg_stp=(struct soltab *) 0;
+/*
+ *			T G C _ V S H O T
+ *
+ *  The Homer vectorized version.
+ */
+void
+tgc_vshot( stp, rp, segp, n, resp )
+struct soltab		*stp[];
+register struct xray	*rp[];
+struct  seg            segp[]; /* array of segs (results returned) */
+int                         n; /* Number of ray/object pairs */
+struct resource         *resp; /* pointer to a list of free segs */
+{
+	register struct tgc_specific	*tgc;
+	register int		ix;
+	LOCAL vect_t		pprime;
+	LOCAL vect_t		dprime;
+	LOCAL vect_t		work;
+	LOCAL fastf_t		k[4], pt[2];
+	LOCAL fastf_t		t, b, zval, dir;
+	LOCAL fastf_t		t_scale, alf1, alf2;
+	LOCAL int		npts;
+	LOCAL int		intersect;
+	LOCAL vect_t		cor_pprime;	/* corrected P prime */
+	LOCAL fastf_t		cor_proj;	/* corrected projected dist */
+	LOCAL int		i;
+	LOCAL poly		*C;	/*  final equation	*/
+	LOCAL poly		Xsqr, Ysqr;
+	LOCAL poly		R, Rsqr;
+
+        /* Allocate space for polys and roots */
+        C = (poly *)rt_malloc(n * sizeof(poly), "tor poly");
+ 
+        /* Initialize seg_stp to assume hit (zero will then flag miss) */
+#       include "noalias.h"
+        for(ix = 0; ix < n; ix++) segp[ix].seg_stp = stp[ix];
+
+    /* for each ray/cone pair */
+#   include "noalias.h"
+    for(ix = 0; ix < n; ix++) {
+
+#if !CRAY       /* XXX currently prevents vectorization on cray */
+	if (segp[ix].seg_stp == 0) continue; /* == 0 signals skip ray */
+#endif
+
+	tgc = (struct tgc_specific *)stp[ix]->st_specific;
+
+	/* find rotated point and direction */
+	MAT4X3VEC( dprime, tgc->tgc_ScShR, rp[ix]->r_dir );
+
+	/*
+	 *  A vector of unit length in model space (r_dir) changes length in
+	 *  the special unit-tgc space.  This scale factor will restore
+	 *  proper length after hit points are found.
+	 */
+	t_scale = 1/MAGNITUDE( dprime );
+	VSCALE( dprime, dprime, t_scale );	/* VUNITIZE( dprime ); */
+
+	if( NEAR_ZERO( dprime[Z], RT_PCOEF_TOL ) )
+		dprime[Z] = 0.0;	/* prevent rootfinder heartburn */
+
+	/* Use segp[i].seg_in.hit_normal as tmp to hold dprime */
+	VMOVE( segp[i].seg_in.hit_normal, dprime );
+ 
+	VSUB2( work, rp[ix]->r_pt, tgc->tgc_V );
+	MAT4X3VEC( pprime, tgc->tgc_ScShR, work );
+
+	/* Use segp[i].seg_out.hit_normal as tmp to hold pprime */
+	VMOVE( segp[i].seg_out.hit_normal, pprime );
+
+	/* Translating ray origin along direction of ray to closest
+	 * pt. to origin of solids coordinate system, new ray origin
+	 * is 'cor_pprime'.
+	 */
+	cor_proj = VDOT( pprime, dprime );
+	VSCALE( cor_pprime, dprime, cor_proj );
+	VSUB2( cor_pprime, pprime, cor_pprime );
+
+	/*
+	 *  Given a line and the parameters for a standard cone, finds
+	 *  the roots of the equation for that cone and line.
+	 *  Returns the number of real roots found.
+	 * 
+	 *  Given a line and the cone parameters, finds the equation
+	 *  of the cone in terms of the variable 't'.
+	 *
+	 *  The equation for the cone is:
+	 *
+	 *      X**2 * Q**2  +  Y**2 * R**2  -  R**2 * Q**2 = 0
+	 *
+	 *  where	R = a + ((c - a)/|H'|)*Z 
+	 *		Q = b + ((d - b)/|H'|)*Z
+	 *
+	 *  First, find X, Y, and Z in terms of 't' for this line, then
+	 *  substitute them into the equation above.
+	 *
+	 *  Express each variable (X, Y, and Z) as a linear equation
+	 *  in 'k', eg, (dprime[X] * k) + cor_pprime[X], and
+	 *  substitute into the cone equation.
+	 */
+	Xsqr.dgr = 2;
+	Xsqr.cf[0] = dprime[X] * dprime[X];
+	Xsqr.cf[1] = 2.0 * dprime[X] * cor_pprime[X];
+	Xsqr.cf[2] = cor_pprime[X] * cor_pprime[X];
+
+	Ysqr.dgr = 2;
+	Ysqr.cf[0] = dprime[Y] * dprime[Y];
+	Ysqr.cf[1] = 2.0 * dprime[Y] * cor_pprime[Y];
+	Ysqr.cf[2] = cor_pprime[Y] * cor_pprime[Y];
+
+	R.dgr = 1;
+	R.cf[0] = dprime[Z] * tgc->tgc_CdAm1;
+	/* A vector is unitized (tgc->tgc_A == 1.0) */
+	R.cf[1] = (cor_pprime[Z] * tgc->tgc_CdAm1) + 1.0;
+
+	/* (void) polyMul( &R, &R, &Rsqr ); inline expands to: */
+                Rsqr.dgr = 2;
+                Rsqr.cf[0] = R.cf[0] * R.cf[0];
+                Rsqr.cf[1] = R.cf[0] * R.cf[1] +
+                                 R.cf[1] * R.cf[0];
+                Rsqr.cf[2] = R.cf[1] * R.cf[1];
+
+	/*
+	 *  If the eccentricities of the two ellipses are the same,
+	 *  then the cone equation reduces to a much simpler quadratic
+	 *  form.  Otherwise it is a (gah!) quartic equation.
+	 */
+	if ( tgc->tgc_AD_CB ){
+		/* (void) polyAdd( &Xsqr, &Ysqr, &sum ); and */
+		/* (void) polySub( &sum, &Rsqr, &C ); inline expand to */
+		C[ix].dgr = 2;
+		C[ix].cf[0] = Xsqr.cf[0] + Ysqr.cf[0] - Rsqr.cf[0];
+		C[ix].cf[1] = Xsqr.cf[1] + Ysqr.cf[1] - Rsqr.cf[1];
+		C[ix].cf[2] = Xsqr.cf[2] + Ysqr.cf[2] - Rsqr.cf[2];
+	} else {
+		LOCAL poly	Q, Qsqr;
+
+		Q.dgr = 1;
+		Q.cf[0] = dprime[Z] * tgc->tgc_DdBm1;
+		/* B vector is unitized (tgc->tgc_B == 1.0) */
+		Q.cf[1] = (cor_pprime[Z] * tgc->tgc_DdBm1) + 1.0;
+
+		/* (void) polyMul( &Q, &Q, &Qsqr ); inline expands to */
+			Qsqr.dgr = 2;
+			Qsqr.cf[0] = Q.cf[0] * Q.cf[0];
+			Qsqr.cf[1] = Q.cf[0] * Q.cf[1] +
+					 Q.cf[1] * Q.cf[0];
+			Qsqr.cf[2] = Q.cf[1] * Q.cf[1];
+
+		/* (void) polyMul( &Qsqr, &Xsqr, &T1 ); inline expands to */
+			C[ix].dgr = 4;
+			C[ix].cf[0] = Qsqr.cf[0] * Xsqr.cf[0];
+			C[ix].cf[1] = Qsqr.cf[0] * Xsqr.cf[1] +
+					 Qsqr.cf[1] * Xsqr.cf[0];
+			C[ix].cf[2] = Qsqr.cf[0] * Xsqr.cf[2] +
+					 Qsqr.cf[1] * Xsqr.cf[1] +
+					 Qsqr.cf[2] * Xsqr.cf[0];
+			C[ix].cf[3] = Qsqr.cf[1] * Xsqr.cf[2] +
+					 Qsqr.cf[2] * Xsqr.cf[1];
+			C[ix].cf[4] = Qsqr.cf[2] * Xsqr.cf[2];
+
+		/* (void) polyMul( &Rsqr, &Ysqr, &T2 ); and */
+		/* (void) polyAdd( &T1, &T2, &sum ); inline expand to */
+			C[ix].cf[0] += Rsqr.cf[0] * Ysqr.cf[0];
+			C[ix].cf[1] += Rsqr.cf[0] * Ysqr.cf[1] +
+					 Rsqr.cf[1] * Ysqr.cf[0];
+			C[ix].cf[2] += Rsqr.cf[0] * Ysqr.cf[2] +
+					 Rsqr.cf[1] * Ysqr.cf[1] +
+					 Rsqr.cf[2] * Ysqr.cf[0];
+			C[ix].cf[3] += Rsqr.cf[1] * Ysqr.cf[2] +
+					 Rsqr.cf[2] * Ysqr.cf[1];
+			C[ix].cf[4] += Rsqr.cf[2] * Ysqr.cf[2];
+
+		/* (void) polyMul( &Rsqr, &Qsqr, &T3 ); and */
+		/* (void) polySub( &sum, &T3, &C ); inline expand to */
+			C[ix].cf[0] -= Rsqr.cf[0] * Qsqr.cf[0];
+			C[ix].cf[1] -= Rsqr.cf[0] * Qsqr.cf[1] +
+					 Rsqr.cf[1] * Qsqr.cf[0];
+			C[ix].cf[2] -= Rsqr.cf[0] * Qsqr.cf[2] +
+					 Rsqr.cf[1] * Qsqr.cf[1] +
+					 Rsqr.cf[2] * Qsqr.cf[0];
+			C[ix].cf[3] -= Rsqr.cf[1] * Qsqr.cf[2] +
+					 Rsqr.cf[2] * Qsqr.cf[1];
+			C[ix].cf[4] -= Rsqr.cf[2] * Qsqr.cf[2];
+		}
+
+	}
+
+    /* It seems impractical to try to vectorize finding and sorting roots. */
+    for(ix = 0; ix < n; ix++){
+	if (segp[ix].seg_stp == 0) continue; /* == 0 signals skip ray */
+
+	/* Again, check for the equal eccentricities case. */
+	if ( C[ix].dgr == 2 ){
+		FAST fastf_t roots;
+
+		/* Find the real roots the easy way. */
+		if( (roots = C[ix].cf[1]*C[ix].cf[1]-4*C[ix].cf[0]*C[ix].cf[2]
+		    ) < 0 ) {
+			npts = 0;	/* no real roots */
+		} else {
+			roots = sqrt(roots);
+			k[0] = (roots - C[ix].cf[1]) * 0.5 / C[ix].cf[0];
+			k[1] = (roots + C[ix].cf[1]) * (-0.5) / C[ix].cf[0];
+			npts = 2;
+		}
+	} else {
+		LOCAL complex	val[MAXP];	/* roots of final equation */
+		register int	l;
+		register int nroots;
+
+		/*  The equation is 4th order, so we expect 0 to 4 roots */
+		nroots = polyRoots( &C[ix] , val );
+
+		/*  Only real roots indicate an intersection in real space.
+		 *
+		 *  Look at each root returned; if the imaginary part is zero
+		 *  or sufficiently close, then use the real part as one value
+		 *  of 't' for the intersections
+		 */
+		for ( l=0, npts=0; l < nroots; l++ ){
+			if ( NEAR_ZERO( val[l].im, 0.0001 ) )
+				k[npts++] = val[l].re;
+		}
+		/* Here, 'npts' is number of points being returned */
+		if ( npts != 0 && npts != 2 && npts != 4 ){
+			rt_log("tgc:  reduced %d to %d roots\n",nroots,npts);
+			rt_pr_roots( nroots, val );
+		}
+	}
+
+	/*
+	 * Reverse above translation by adding distance to all 'k' values.
+	 */
+	for( i = 0; i < npts; ++i )
+		k[i] -= cor_proj;
+
+	if ( npts != 0 && npts != 2 && npts != 4 ){
+		rt_log("tgc(%s):  %d intersects != {0,2,4}\n",
+			stp[ix]->st_name, npts );
+		SEG_MISS(segp[ix]);			/* No hit	*/
+		continue;
+	}
+
+	/* Most distant to least distant	*/
+	rt_pt_sort( k, npts );
+
+	/* Now, k[0] > k[npts-1] */
+
+	/* General Cone may have 4 intersections, but	*
+	 * Truncated Cone may only have 2.		*/
+
+#define OUT		0
+#define	IN		1
+
+	/*		Truncation Procedure
+	 *
+	 *  Determine whether any of the intersections found are
+	 *  between the planes truncating the cone.
+	 */
+	intersect = 0;
+	tgc = (struct tgc_specific *)stp[ix]->st_specific;
+	for ( i=0; i < npts; i++ ){
+		/* segp[ix].seg_in.hit_normal holds dprime */
+		/* segp[ix].seg_out.hit_normal holds pprime */
+		zval = k[i]*segp[ix].seg_in.hit_normal[Z] +
+			segp[ix].seg_out.hit_normal[Z];
+		/* Height vector is unitized (tgc->tgc_sH == 1.0) */
+		if ( zval < 1.0 && zval > 0.0 ){
+			if ( ++intersect == 2 )  {
+				pt[IN] = k[i];
+			}  else
+				pt[OUT] = k[i];
+		}
+	}
+	/* Reuse C to hold values of intersect and k. */
+	C[ix].dgr = intersect;
+	C[ix].cf[OUT] = pt[OUT];
+	C[ix].cf[IN]  = pt[IN];
+    }
+
+    /* for each ray/cone pair */
+#   include "noalias.h"
+    for(ix = 0; ix < n; ix++) {
+	if (segp[ix].seg_stp == 0) continue; /* Skip */
+
+	tgc = (struct tgc_specific *)stp[ix]->st_specific;
+	intersect = C[ix].dgr;
+	pt[OUT] = C[ix].cf[OUT];
+	pt[IN]  = C[ix].cf[IN];
+	/* segp[ix].seg_out.hit_normal holds pprime */
+	VMOVE( pprime, segp[ix].seg_out.hit_normal );
+	/* segp[ix].seg_in.hit_normal holds dprime */
+	VMOVE( dprime, segp[ix].seg_in.hit_normal );
+
+	if ( intersect == 2 ){
+		/*  If two between-plane intersections exist, they are
+		 *  the hit points for the ray.
+		 */
+		segp[ix].seg_in.hit_dist = pt[IN] * t_scale;
+		segp[ix].seg_in.hit_private = &tgc_compute[0];	/* compute N */
+		VJOIN1( segp[ix].seg_in.hit_vpriv, pprime, pt[IN], dprime );
+
+		segp[ix].seg_out.hit_dist = pt[OUT] * t_scale;
+		segp[ix].seg_out.hit_private = &tgc_compute[0];	/* compute N */
+		VJOIN1( segp[ix].seg_out.hit_vpriv, pprime, pt[OUT], dprime );
+	} else if ( intersect == 1 ) {
+		char *nflag;	/* tgc_compute[1] = normal, [2] = reverse normal */
+		/*
+		 *  If only one between-plane intersection exists (pt[OUT]),
+		 *  then the other intersection must be on
+		 *  one of the planar surfaces (pt[IN]).
+		 *
+		 *  Find which surface it lies on by calculating the 
+		 *  X and Y values of the line as it intersects each
+		 *  plane (in the standard coordinate system), and test
+		 *  whether this lies within the governing ellipse.
+		 */
+		if( dprime[Z] == 0.0 )  {
+#if 0
+			rt_log("tgc: dprime[Z] = 0!\n" );
+#endif
+			SEG_MISS(segp[ix]);
+			continue;
+		}
+		b = ( -pprime[Z] )/dprime[Z];
+		/*  Height vector is unitized (tgc->tgc_sH == 1.0) */
+		t = ( 1.0 - pprime[Z] )/dprime[Z];
+
+		VJOIN1( work, pprime, b, dprime );
+		/* A and B vectors are unitized (tgc->tgc_A == _B == 1.0) */
+		/* alf1 = ALPHA(work[X], work[Y], 1.0, 1.0 ) */
+		alf1 = work[X]*work[X] + work[Y]*work[Y];
+
+		VJOIN1( work, pprime, t, dprime );
+		/* Must scale C and D vectors */
+		alf2 = ALPHA(work[X], work[Y], tgc->tgc_AAdCC,tgc->tgc_BBdDD);
+
+		if ( alf1 <= 1.0 ){
+			pt[IN] = b;
+			nflag = &tgc_compute[2]; /* copy reverse normal */
+		} else if ( alf2 <= 1.0 ){
+			pt[IN] = t;
+			nflag = &tgc_compute[1];	/* copy normal */
+		} else {
+			/* intersection apparently invalid  */
+#if 0
+			rt_log("tgc(%s):  only 1 intersect\n", stp->st_name);
+#endif
+			SEG_MISS(segp[ix]);
+			continue;
+		}
+
+		/* pt[OUT] on skin, pt[IN] on end */
+		if ( pt[OUT] >= pt[IN] )  {
+			segp[ix].seg_in.hit_dist = pt[IN] * t_scale;
+			segp[ix].seg_in.hit_private = nflag;
+
+			segp[ix].seg_out.hit_dist = pt[OUT] * t_scale;
+			segp[ix].seg_out.hit_private = &tgc_compute[0];	/* compute N */
+			/* transform-space vector needed for normal */
+			VJOIN1( segp[ix].seg_out.hit_vpriv, pprime, pt[OUT], dprime );
+		} else {
+			segp[ix].seg_in.hit_dist = pt[OUT] * t_scale;
+			/* transform-space vector needed for normal */
+			segp[ix].seg_in.hit_private = &tgc_compute[0];	/* compute N */
+			VJOIN1( segp[ix].seg_in.hit_vpriv, pprime, pt[OUT], dprime );
+
+			segp[ix].seg_out.hit_dist = pt[IN] * t_scale;
+			segp[ix].seg_out.hit_private = nflag;
+		}
+	} else {
+
+	/*  If all conic interections lie outside the plane,
+	 *  then check to see whether there are two planar
+	 *  intersections inside the governing ellipses.
+	 *
+	 *  But first, if the direction is parallel (or nearly
+	 *  so) to the planes, it (obviously) won't intersect
+	 *  either of them.
+	 */
+	if( dprime[Z] == 0.0 ) {
+		SEG_MISS(segp[ix]);
+		continue;
+	}
+
+	dir = VDOT( tgc->tgc_N, rp[i]->r_dir );	/* direc */
+	if ( NEAR_ZERO( dir, RT_DOT_TOL ) ) {
+		SEG_MISS(segp[ix]);
+		continue;
+	}
+
+	b = ( -pprime[Z] )/dprime[Z];
+	/* Height vector is unitized (tgc->tgc_sH == 1.0) */
+	t = ( 1.0 - pprime[Z] )/dprime[Z];
+
+	VJOIN1( work, pprime, b, dprime );
+	/* A and B vectors are unitized (tgc->tgc_A == _B == 1.0) */
+	/* alpf = ALPHA(work[0], work[1], 1.0, 1.0 ) */
+	alf1 = work[X]*work[X] + work[Y]*work[Y];
+
+	VJOIN1( work, pprime, t, dprime );
+	/* Must scale C and D vectors. */
+	alf2 = ALPHA(work[X], work[Y], tgc->tgc_AAdCC,tgc->tgc_BBdDD);
+
+	/*  It should not be possible for one planar intersection
+	 *  to be outside its ellipse while the other is inside ...
+	 *  but I wouldn't take any chances.
+	 */
+	if ( alf1 > 1.0 || alf2 > 1.0 ) {
+		SEG_MISS(segp[ix]);
+		continue;
+	}
+
+	/*  Use the dot product (found earlier) of the plane
+	 *  normal with the direction vector to determine the
+	 *  orientation of the intersections.
+	 */
+	if ( dir > 0.0 ){
+		segp[ix].seg_in.hit_dist = b * t_scale;
+		segp[ix].seg_in.hit_private = &tgc_compute[2];	/* reverse normal */
+
+		segp[ix].seg_out.hit_dist = t * t_scale;
+		segp[ix].seg_out.hit_private = &tgc_compute[1];	/* normal */
+	} else {
+		segp[ix].seg_in.hit_dist = t * t_scale;
+		segp[ix].seg_in.hit_private = &tgc_compute[1];	/* normal */
+
+		segp[ix].seg_out.hit_dist = b * t_scale;
+		segp[ix].seg_out.hit_private = &tgc_compute[2];	/* reverse normal */
+	}
+	}
+    } /* end for each ray/cone pair */
+}
 
 /*
  *			R T _ P T _ S O R T
