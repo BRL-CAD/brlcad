@@ -952,16 +952,16 @@ CONST char	*filename;
 }
 
 /*
- *			R T _ P R _ T A B L E
+ *			B N _ P R _ T A B L E
  */
 void
-rt_pr_table( title, tabp )
+bn_pr_table( title, tabp )
 CONST char		*title;
 CONST struct bn_table	*tabp;
 {
 	int	j;
 
-	bu_log("rt_pr_table(%s):\n", title);
+	bu_log("%s\n", title);
 	BN_CK_TABLE(tabp);
 
 	for( j=0; j <= tabp->nx; j++ )  {
@@ -970,16 +970,16 @@ CONST struct bn_table	*tabp;
 }
 
 /*
- *			R T _ P R _ T A B D A T A
+ *			B N _ P R _ T A B D A T A
  */
 void
-rt_pr_tabdata( title, data )
+bn_pr_tabdata( title, data )
 CONST char		*title;
 CONST struct bn_tabdata	*data;
 {
 	int	j;
 
-	bu_log("rt_pr_tabdata(%s): ", title);
+	bu_log("%s: ", title);
 	BN_CK_TABDATA(data);
 
 	for( j=0; j < data->ny; j++ )  {
