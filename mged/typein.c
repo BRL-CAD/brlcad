@@ -966,6 +966,9 @@ struct solidrec *in;
 {
 	register dbfloat_t *iv;
 	register fastf_t *ov;
+#ifdef mips
+	register fastf_t * o_ptr;
+#endif
 	fastf_t	points[3*8];
 	register int i;
 	fastf_t r1, r2, r3, r4;
@@ -988,6 +991,7 @@ struct solidrec *in;
 		return(0);	/* Success */
 
 	case RPP:
+#ifdef !mips
 		VSET( O1, Xmax, Ymin, Zmin );
 		VSET( O2, Xmax, Ymax, Zmin );
 		VSET( O3, Xmax, Ymax, Zmax );
@@ -996,6 +1000,40 @@ struct solidrec *in;
 		VSET( O6, Xmin, Ymax, Zmin );
 		VSET( O7, Xmin, Ymax, Zmax );
 		VSET( O8, Xmin, Ymin, Zmax );
+#else
+		o_ptr = ov;
+		*(o_ptr++)   = in->s_values[1];
+		*(o_ptr++) = in->s_values[2];
+		*(o_ptr++) = in->s_values[4];
+
+		*(o_ptr++) = in->s_values[1];
+		*(o_ptr++) = in->s_values[3];
+		*(o_ptr++) = in->s_values[4];
+
+		*(o_ptr++) = in->s_values[1];
+		*(o_ptr++) = in->s_values[3];
+		*(o_ptr++) = in->s_values[5];
+
+		*(o_ptr++) = in->s_values[1];
+		*(o_ptr++) = in->s_values[2];
+		*(o_ptr++) = in->s_values[5];
+
+		*(o_ptr++) = in->s_values[0];
+		*(o_ptr++) = in->s_values[2];
+		*(o_ptr++) = in->s_values[4];
+
+		*(o_ptr++) = in->s_values[0];
+		*(o_ptr++) = in->s_values[3];
+		*(o_ptr++) = in->s_values[4];
+
+		*(o_ptr++) = in->s_values[0];
+		*(o_ptr++) = in->s_values[3];
+		*(o_ptr++) = in->s_values[5];
+
+		*(o_ptr++) = in->s_values[0];
+		*(o_ptr++) = in->s_values[2];
+		*(o_ptr++) = in->s_values[5];
+#endif
 		goto ccommon;
 
 	case BOX:
