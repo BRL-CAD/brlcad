@@ -308,11 +308,13 @@ void (*errlog)();
 
 	if( bind(netfd, (char *)&sinme, sizeof(sinme)) < 0 )  {
 		pkg_perror( errlog, "pkg_open: bind" );
+		close(netfd);
 		return(PKC_ERROR);
 	}
 
 	if( connect(netfd, (char *)&sinhim, sizeof(sinhim)) < 0 )  {
 		pkg_perror( errlog, "pkg_open: client connect" );
+		close(netfd);
 		return(PKC_ERROR);
 	}
 #endif
@@ -326,6 +328,7 @@ void (*errlog)();
 
 	if( connect(netfd, (char *)&sinhim) < 0 )  {
 		pkg_perror( errlog, "pkg_open: client connect" );
+		close(netfd);
 		return(PKC_ERROR);
 	}
 #endif
@@ -439,18 +442,21 @@ void (*errlog)();
 
 	if( bind(pkg_listenfd, &sinme, sizeof(sinme)) < 0 )  {
 		pkg_perror( errlog, "pkg_permserver: bind" );
+		close(pkg_listenfd);
 		return(-1);
 	}
 
 	if( backlog > 5 )  backlog = 5;
 	if( listen(pkg_listenfd, backlog) < 0 )  {
 		pkg_perror( errlog, "pkg_permserver:  listen" );
+		close(pkg_listenfd);
 		return(-1);
 	}
 #endif
 #ifdef SGI_EXCELAN
 	if( (pkg_listenfd = socket(SOCK_STREAM,0,&sinme,SO_ACCEPTCONN|SO_KEEPALIVE)) < 0 )  {
 		pkg_perror( errlog, "pkg_permserver:  socket" );
+		close(pkg_listenfd);
 		return(-1);
 	}
 #endif
