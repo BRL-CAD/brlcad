@@ -23,7 +23,10 @@
 all&:
 	@echo "SRCDIR:  all done"
 
-pkgIndex.tcl tclIndex:
+pkgIndex.tcl:
+	../../../tclscripts/ampi.tcl ../../../tclscripts/rtwizard/lib
+
+tclIndex:
 	../../../tclscripts/ami.tcl ../../../tclscripts/rtwizard/lib
 
 clean&:
