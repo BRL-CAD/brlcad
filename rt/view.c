@@ -201,7 +201,6 @@ struct partition *PartHeadp;
 {
 	register struct partition *pp = PartHeadp->pt_forw;
 	register struct hit *hitp= pp->pt_inhit;
-	LOCAL long inten;
 	LOCAL fastf_t diffuse2, cosI2;
 	LOCAL fastf_t diffuse1, cosI1;
 	LOCAL fastf_t diffuse0, cosI0;
@@ -278,19 +277,17 @@ struct partition *PartHeadp;
 	if( b > 255 ) b = 255;
 	if( r<0 || g<0 || b<0 )  {
 		VPRINT("@@ Negative RGB @@", work0);
-		inten = 0x0080FF80;
-	} else {
-		inten = (b << 16) |		/* B */
-			(g <<  8) |		/* G */
-			(r);			/* R */
+		r = 0x80;
+		g = 0xFF;
+		b = 0x80;
 	}
 
 	if( ikfd > 0 )
-		ikwpixel( ap->a_x, ap->a_y, inten);
+		ikwpixel( ap->a_x, ap->a_y, (b<<16)|(g<<8)|(r) );
 	if( outfd > 0 )  {
-		*pixelp++ = inten & 0xFF;	/* R */
-		*pixelp++ = (inten>>8) & 0xFF;	/* G */
-		*pixelp++ = (inten>>16) & 0xFF;	/* B */
+		*pixelp++ = r & 0xFF;
+		*pixelp++ = g & 0xFF;
+		*pixelp++ = b & 0xFF;
 	}
 }
 
@@ -358,7 +355,6 @@ struct partition *PartHeadp;
 	register struct partition *pp = PartHeadp->pt_forw;
 	register struct hit *hitp= pp->pt_inhit;
 	LOCAL struct application shadow_ap;
-	LOCAL long inten;
 	LOCAL int r,g,b;
 	LOCAL int light_visible;
 
@@ -373,12 +369,13 @@ struct partition *PartHeadp;
 
 	/* Check to see if we hit the light source */
 	if( strncmp( pp->pt_inseg->seg_stp->st_name, "LIGHT", 5 )==0 )  {
-		inten = 0x00FFFFFF;	/* white */
+		r = g = b = 0xFF;	/* White */
 		goto done;
 	}
 	/* Check to see if eye is "inside" the solid */
 	if( hitp->hit_dist < 0.0 )  {
-		inten = 0xffL;		/* red */
+		r = 0xFF;
+		g = b = 0;
 		if(debug)fprintf(stderr,"colorview:  eye inside solid\n");
 		goto done;
 	}
@@ -469,19 +466,17 @@ struct partition *PartHeadp;
 	if( g > 255 ) g = 255;
 	if( b > 255 ) b = 255;
 	if( r<0 || g<0 || b<0 )  {
-		inten = 0x0080FF80;
-	} else {
-		inten = (b << 16) |		/* B */
-			(g <<  8) |		/* G */
-			(r);			/* R */
+		r = 0x80;
+		g = 0xFF;
+		b = 0x80;
 	}
 done:
 	if( ikfd > 0 )
-		ikwpixel( ap->a_x, ap->a_y, inten);
+		ikwpixel( ap->a_x, ap->a_y, (b<<16)|(g<<8)|(r) );
 	if( outfd > 0 )  {
-		*pixelp++ = inten & 0xFF;	/* R */
-		*pixelp++ = (inten>>8) & 0xFF;	/* G */
-		*pixelp++ = (inten>>16) & 0xFF;	/* B */
+		*pixelp++ = r & 0xFF;
+		*pixelp++ = g & 0xFF;
+		*pixelp++ = b & 0xFF;
 	}
 }
 
