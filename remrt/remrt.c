@@ -167,13 +167,14 @@ struct servers {
 	int		sr_index;	/* fr_servinit[] index */
 	/* Timings */
 	struct timeval	sr_sendtime;	/* time of last sending */
-	double		sr_l_elapsed;	/* elapsed sec for last scanline */
-	double		sr_w_elapsed;	/* weighted average of elapsed times */
-	double		sr_s_elapsed;	/* sum of all elapsed times */
-	double		sr_sq_elapsed;	/* sum of all elapsed times squared */
+	double		sr_l_elapsed;	/* last: elapsed sec/pixel */
+	double		sr_w_elapsed;	/* weighted avg: elapsed sec/pixel */
+	double		sr_s_elapsed;	/* sum of elapsed sec/pixel */
+	double		sr_sq_elapsed;	/* sum of elapsed sec/pixel squared */
 	double		sr_l_cpu;	/* cpu sec for last scanline */
 	double		sr_s_cpu;	/* sum of all cpu times */
-	int		sr_nlines;	/* number of lines summed over */
+	int		sr_nsamp;	/* number of samples summed over */
+	double		sr_l_percent;	/* last: percent of CPU */
 } servers[MAXSERVERS];
 #define SERVERS_NULL	((struct servers *)0)
 
@@ -491,7 +492,7 @@ struct pkg_conn *pc;
 	sp->sr_work.li_forw = sp->sr_work.li_back = &(sp->sr_work);
 	sp->sr_started = SRST_NEW;
 	sp->sr_curframe = FRAME_NULL;
-	sp->sr_lump = 3;
+	sp->sr_lump = 32;
 	sp->sr_index = fd;
 	sp->sr_host = ihp;
 
@@ -821,7 +822,7 @@ register struct frame *fr;
 	GET_LIST(lp);
 	lp->li_frame = fr;
 	lp->li_start = 0;
-	lp->li_stop = fr->fr_height-1;	/* last scanline # */
+	lp->li_stop = fr->fr_width*fr->fr_height-1;	/* last pixel # */
 	APPEND_LIST( lp, fr->fr_todo.li_back );
 }
 
@@ -976,6 +977,11 @@ top:
 				sp->sr_curframe = fr;
 			}
 
+#define ASSIGNMENT_TIME		5	/* seconds */
+			sp->sr_lump = ASSIGNMENT_TIME / sp->sr_w_elapsed;
+			if( sp->sr_lump < 32 )  sp->sr_lump = 32;
+			if( sp->sr_lump > fr->fr_width )  sp->sr_lump = fr->fr_width;
+
 			a = lp->li_start;
 			b = a+sp->sr_lump-1;	/* work increment */
 			if( b >= lp->li_stop )  {
@@ -989,7 +995,7 @@ top:
 			printf("fr%d %d..%d -> %s\n", fr->fr_number,
 				a, b, sp->sr_host->ht_name);
 
-			/* Record newly allocated scanlines */
+			/* Record newly allocated pixel range */
 			GET_LIST(lp);
 			lp->li_frame = fr;
 			lp->li_start = a;
@@ -998,7 +1004,7 @@ top:
 			if( fr->fr_start.tv_sec == 0 )  {
 				(void)gettimeofday( &fr->fr_start, (struct timezone *)0 );
 			}
-			send_do_lines( sp, a, b );
+			send_do_lines( sp, a, b, fr->fr_number );
 			goto top;
 		}
 		if( sp >= &servers[MAXSERVERS] )  return;	/* no free servers */
@@ -1130,6 +1136,7 @@ char *buf;
 	register struct frame *fr;
 	struct line_info	info;
 	struct timeval		tvnow;
+	int			npix;
 
 	(void)gettimeofday( &tvnow, (struct timezone *)0 );
 
@@ -1141,7 +1148,9 @@ char *buf;
 		fprintf(stderr,"struct_inport error, %d, %d\n", i, info.li_len);
 		return;
 	}
-fprintf(stderr,"PIXELS y=%d, rays=%d, cpu=%g\n", info.li_y, info.li_nrays, info.li_cpusec );
+fprintf(stderr,"PIXELS fr=%d, pix=%d..%d, rays=%d, cpu=%g\n",
+info.li_frame, info.li_startpix, info.li_endpix,
+info.li_nrays, info.li_cpusec );
 
 	/* Stash pixels in memory in bottom-to-top .pix order */
 	if( fr->fr_picture == (char *)0 )  {
@@ -1156,36 +1165,38 @@ fprintf(stderr,"PIXELS y=%d, rays=%d, cpu=%g\n", info.li_y, info.li_nrays, info.
 		}
 		bzero( fr->fr_picture, i );
 	}
-	i = fr->fr_width*3;
+	npix = info.li_endpix - info.li_startpix + 1;
+	i = npix*3;
 	if( pc->pkc_len - info.li_len < i )  {
 		fprintf(stderr,"short scanline, s/b=%d, was=%d\n",
 			i, pc->pkc_len - info.li_len );
 		i = pc->pkc_len - info.li_len;
+		/* Should re-queue missing pixels, if this is a problem */
 	}
-	bcopy( buf+info.li_len, fr->fr_picture + info.li_y*fr->fr_width*3, i );
+	bcopy( buf+info.li_len, fr->fr_picture + info.li_startpix*3, i );
 
 	/* If display attached, also draw it */
 	if( fbp != FBIO_NULL )  {
 		write_fb( buf + info.li_len, fr,
-			info.li_y*fr->fr_width + 0,
-			info.li_y*fr->fr_width + i/3 );
+			info.li_startpix, info.li_endpix+1 );
 	}
 	if(buf) (void)free(buf);
 
 	/* Stash the statistics that came back */
 	fr->fr_nrays += info.li_nrays;
 	fr->fr_cpu += info.li_cpusec;
-	sp->sr_l_elapsed = tvdiff( &tvnow, &sp->sr_sendtime );
+	sp->sr_l_elapsed = tvdiff( &tvnow, &sp->sr_sendtime ) / npix;
 	sp->sr_w_elapsed = 0.9 * sp->sr_w_elapsed + 0.1 * sp->sr_l_elapsed;
 	sp->sr_sendtime = tvnow;		/* struct copy */
 	sp->sr_l_cpu = info.li_cpusec;
 	sp->sr_s_cpu += info.li_cpusec;
 	sp->sr_s_elapsed += sp->sr_l_elapsed;
 	sp->sr_sq_elapsed += sp->sr_l_elapsed * sp->sr_l_elapsed;
-	sp->sr_nlines++;
+	sp->sr_nsamp++;
+	sp->sr_l_percent = info.li_percent;
 
 	/* Remove from work list */
-	list_remove( &(sp->sr_work), info.li_y );
+	list_remove( &(sp->sr_work), info.li_startpix, info.li_endpix );
 	if( running && sp->sr_work.li_forw == &(sp->sr_work) )
 		schedule();
 }
@@ -1193,36 +1204,39 @@ fprintf(stderr,"PIXELS y=%d, rays=%d, cpu=%g\n", info.li_y, info.li_nrays, info.
 /*
  *			L I S T _ R E M O V E
  *
- * Given pointer to head of list of ranges, remove the item that's done
+ * Given pointer to head of list of ranges, remove the range that's done
  */
-list_remove( lhp, line )
+list_remove( lhp, a, b )
 register struct list *lhp;
 {
 	register struct list *lp;
+
 	for( lp=lhp->li_forw; lp != lhp; lp=lp->li_forw )  {
-		if( lp->li_start == line )  {
-			if( lp->li_stop == line )  {
+		if( lp->li_start == a )  {
+			if( lp->li_stop == b )  {
 				DEQUEUE_LIST(lp);
 				return;
 			}
-			lp->li_start++;
+			lp->li_start = b+1;
 			return;
 		}
-		if( lp->li_stop == line )  {
-			lp->li_stop--;
+		if( lp->li_stop == b )  {
+			lp->li_stop = a-1;
 			return;
 		}
-		if( line > lp->li_stop )  continue;
-		if( line < lp->li_start ) continue;
+		if( a > lp->li_stop )  continue;
+		if( b < lp->li_start ) continue;
 		/* Need to split range into two ranges */
-		/* (start..line-1) and (line+1..stop) */
+		/* (start..a-1) and (b+1..stop) */
 		{
 			register struct list *lp2;
-			printf("splitting range into %d %d %d\n", lp->li_start, line, lp->li_stop);
+			printf("splitting range into (%d %d) (%d %d)\n",
+				lp->li_start, a-1,
+				b+1, lp->li_stop);
 			GET_LIST(lp2);
-			lp2->li_start = line+1;
+			lp2->li_start = b+1;
 			lp2->li_stop = lp->li_stop;
-			lp->li_stop = line-1;
+			lp->li_stop = a-1;
 			APPEND_LIST( lp2, lp );
 			return;
 		}
@@ -1371,11 +1385,11 @@ register struct frame *fr;
 /*
  *			S E N D _ D O _ L I N E S
  */
-send_do_lines( sp, start, stop )
+send_do_lines( sp, start, stop, fr )
 register struct servers *sp;
 {
 	char obuf[128];
-	sprintf( obuf, "%d %d", start, stop );
+	sprintf( obuf, "%d %d %d", start, stop, fr );
 	if( pkg_send( MSG_LINES, obuf, strlen(obuf)+1, sp->sr_pc ) < 0 )
 		dropclient(sp->sr_pc);
 
@@ -1973,7 +1987,7 @@ char	**argv;
 			printf(" frame %d\n", sp->sr_curframe->fr_number);
 		else
 			printf("\n");
-		num = sp->sr_nlines<=0 ? 1 : sp->sr_nlines;
+		num = sp->sr_nsamp<=0 ? 1 : sp->sr_nsamp;
 		printf("\tlast:  elapsed=%g, cpu=%g\n",
 			sp->sr_l_elapsed,
 			sp->sr_l_cpu );

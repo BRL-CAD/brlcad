@@ -225,8 +225,6 @@ char **argv;
 #endif
 	}
 
-	rt_log("%s\n", RCSid+13 );
-
 	WorkHead.li_forw = WorkHead.li_back = &WorkHead;
 	nowait.tv_sec = 0;
 	nowait.tv_usec = 0;
@@ -461,7 +459,11 @@ char *buf;
 /* 
  *			P H _ L I N E S
  *
- *  Compute some pixels.
+ *
+ *  Process pixels from 'a' to 'b' inclusive.
+ *  The results are sent back all at once.
+ *  Limitation:  may not do more than 'width' pixels at once,
+ *  because that is the size of the buffer (for now).
  */
 void
 ph_lines(pc, buf)
@@ -469,7 +471,12 @@ struct pkg_comm *pc;
 char *buf;
 {
 	register struct list	*lp;
-	auto int	a,b;
+	auto int	a,b, fr;
+	struct line_info	info;
+	register struct rt_i	*rtip = ap.a_rt_i;
+	int	len;
+	char	*cp;
+	int	pix_offset;
 
 	if( debug > 1 )  fprintf(stderr, "ph_lines: %s\n", buf );
 	if( !seen_start )  {
@@ -483,57 +490,51 @@ char *buf;
 
 	a=0;
 	b=0;
-	if( sscanf( buf, "%d %d", &a, &b ) != 2 )  {
+	fr=0;
+	if( sscanf( buf, "%d %d %d", &a, &b, &fr ) != 3 )  {
 		rt_log("ph_lines:  %s conversion error\n", buf );
 		exit(2);
 	}
 
-	do_work( a, b );
+	rtip->rti_nrays = 0;
+	info.li_startpix = a;
+	info.li_endpix = b;
+	info.li_frame = fr;
 
-	(void)free(buf);
-}
+	rt_prep_timer();
+	do_run( a, b );
+	info.li_nrays = rtip->rti_nrays;
+	info.li_cpusec = rt_read_timer( (char *)0, 0 );
+	info.li_percent = 42.0;	/* for now */
 
-/*
- *			D O _ W O R K
- *
- *  Process scanlines from 'a' to 'b', inclusive, sending each back
- *  as soon as it's done.
- */
-do_work(a, b)
-{
-	struct line_info	info;
-	register struct rt_i	*rtip = ap.a_rt_i;
-	register int	y;
-	int	len;
-	char	*cp;
+	len = 0;
+	cp = struct_export( &len, (stroff_t)&info, desc_line_info );
+	if( cp == (char *)0 )  {
+		rt_log("struct_export failure\n");
+		exit(98);
+	}
 
-	if(debug) fprintf(stderr,"do_work %d %d\n", a, b);
-
-	for( y = a; y <= b; y++)  {
-
-		rtip->rti_nrays = 0;
-		rt_prep_timer();
-
-		do_run( y*width + 0, y*width + width - 1 );
-
-		info.li_y = y;
-		info.li_nrays = rtip->rti_nrays;
-		info.li_cpusec = rt_read_timer( (char *)0, 0 );
-		info.li_realsec = 0;	/* real time */
-
-		len = 0;
-		cp = struct_export( &len, (stroff_t)&info, desc_line_info );
-		if( cp == (char *)0 )  {
-			rt_log("struct_export failure\n");
-			break;
-		}
-
-		if(debug)fprintf(stderr,"PIXELS y=%d, rays=%d, cpu=%g\n", info.li_y, info.li_nrays, info.li_cpusec);
-		if( pkg_2send( MSG_PIXELS, cp, len,
-			scanbuf, width*3, pcsrv ) < 0 )
-			fprintf(stderr,"MSG_PIXELS send error\n");
+	if(debug)  {
+		fprintf(stderr,"PIXELS fr=%d pix=%d..%d, rays=%d, cpu=%g\n",
+			info.li_frame,
+			info.li_startpix, info.li_endpix,
+			info.li_nrays, info.li_cpusec);
+	}
+	if( (pix_offset = a % width) != 0 )  {
+		/* Temporary hack to repair damage done by rt/view.c */
+		char	newbuf[4096*3];
+		int	pix_len;		/* len of 1st part */
+		pix_len = width-pix_offset;
+		bcopy( scanbuf+pix_offset*3, newbuf, pix_len*3 );
+		bcopy( scanbuf, newbuf+pix_len*3, pix_offset*3 );
+		bcopy( newbuf, scanbuf, width*3 );
+	}
+	if( pkg_2send( MSG_PIXELS, cp, len, scanbuf, (b-a+1)*3, pcsrv ) < 0 )  {
+		fprintf(stderr,"MSG_PIXELS send error\n");
 		(void)free(cp);
 	}
+
+	(void)free(buf);
 }
 
 int print_on = 1;
