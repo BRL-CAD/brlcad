@@ -253,7 +253,7 @@ struct dm dm_4d = {
 extern struct device_values dm_values;	/* values read from devices */
 
 static void     establish_perspective();
-static void     next_perspective();
+static void     set_perspective();
 static void	establish_lighting();
 static void	establish_zbuffer();
 
@@ -269,7 +269,7 @@ struct structparse Ir_vparse[] = {
 	{"%d",  1, "zbuffer",		(int)&zbuffer_on,	establish_zbuffer },
 	{"%d",  1, "lighting",		(int)&lighting_on,	establish_lighting },
 	{"%d",  1, "perspective",       (int)&perspective_mode, establish_perspective },
-	{"%d",  1, "next_perspective",(int)&dummy_perspective,  next_perspective },
+	{"%d",  1, "set_perspective",(int)&dummy_perspective,  set_perspective },
 	{"%d",  1, "focus",             (int)&focus,            FUNC_NULL },
 	{"%d",  1, "no_faceplate",	(int)&no_faceplate,	refresh_hook },
 	{"%d",  1, "has_zbuf",		(int)&ir_has_zbuf,	refresh_hook },
@@ -2517,7 +2517,7 @@ establish_perspective()
    perspective_angle is set to the value of (dummy_perspective - 1).
 */
 static void
-next_perspective()
+set_perspective()
 {
   /* set perspective matrix */
   if(dummy_perspective > 0)
@@ -2530,7 +2530,10 @@ next_perspective()
 		  "set perspective %d\n",
 		  perspective_table[perspective_angle] );
 
-  /* just in case the "!" is used with the set command */
+  /*
+     Just in case the "!" is used with the set command. This
+     allows us to toggle through more than two values.
+   */
   dummy_perspective = 1;
 
   dmaflag = 1;
@@ -3089,7 +3092,7 @@ char	**argv;
 	  return CMD_OK;
 	}
 
-	if( !strcmp( argv[0], "mouse")){
+	if( !strcmp( argv[0], "mouse" )){
 	  int up;
 	  int xpos;
 	  int ypos;

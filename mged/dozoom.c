@@ -543,7 +543,7 @@ int axis;
 	  MAT4X3PNT(m1, acc_rot_sol, a1);
 	  MAT4X3PNT(m2, acc_rot_sol, a2);
 #if 1
-	  /* apply translations */
+	  /* apply scale and translations */
 	  m1[X] = Viewscale*m1[X] + e_axis_pos[X];
 	  m1[Y] = Viewscale*m1[Y] + e_axis_pos[Y];
 	  m1[Z] = Viewscale*m1[Z] + e_axis_pos[Z];
