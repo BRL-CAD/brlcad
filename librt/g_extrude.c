@@ -1728,8 +1728,11 @@ char                    **argv;
 		}
 		else if( *argv[0] =='K' )
 			extr->keypoint = atoi( argv[1] );
-		else if( *argv[0] == 'S' )
-			NAMEMOVE( argv[1], extr->sketch_name );
+		else if( *argv[0] == 'S' ) {
+			if( extr->sketch_name )
+				bu_free( (char *)extr->sketch_name, "rt_extrude_tcladjust: sketch_name" );
+			extr->sketch_name = bu_strdup( argv[1] );
+		}
 
 		argc -= 2;
 		argv += 2;
