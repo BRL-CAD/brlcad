@@ -1141,6 +1141,10 @@ CONST struct rt_tol	*tol;
 	s = nmg_find_s_of_eu(eu);
 	NMG_CK_SHELL(s);
 
+	if (rt_g.NMG_debug & DEBUG_BASIC)  {
+		rt_log("nmg_check_radial(eu=x%x, tol)\n", eu);
+	}
+
 	eu1 = eu;
 
 	/* If this eu is a wire, advance to first non-wire. */
@@ -1151,13 +1155,13 @@ CONST struct rt_tol	*tol;
 
 	curr_orient = fu->orientation;
 	eur = eu->radial_p;
+	eurstart = eur;
 
 	/* skip the wire edges in the radial direction from eu. */
 	while( (fu = nmg_find_fu_of_eu(eur)) == (struct faceuse *)NULL )  {
 		eur = eur->eumate_p->radial_p;
+		if( eur == eurstart )  return 0;
 	}
-
-	eurstart = eur;
 
 	NMG_CK_EDGEUSE(eur);
 	do {
@@ -1182,6 +1186,7 @@ CONST struct rt_tol	*tol;
 			}
 			eur = eur->eumate_p->radial_p;
 			NMG_CK_EDGEUSE(eur);
+			if( eur == eurstart )  return 0;
 
 			/* Can't check faceuse orientation parity for
 			 * things from another shell;  parity is conserved
@@ -1223,11 +1228,6 @@ CONST struct rt_tol	*tol;
 		NMG_CK_FACEUSE(eu1->up.lu_p->up.fu_p);
 		curr_orient = eu1->up.lu_p->up.fu_p->orientation;
 		eur = eu1->radial_p;
-		/* Skip wires */
-		while( nmg_find_fu_of_eu(eur) == (struct faceuse *)NULL )  {
-			eur = eur->eumate_p->radial_p;
-		}
-
 	} while (eur != eurstart);
 	return(0);
 }
