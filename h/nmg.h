@@ -80,6 +80,19 @@
 \012BOOLEVAL\011CLASSIFY\
 \010BOOL\7PLOTEM\6POLYSECT\5CUTLOOP\4XXX\3XXX\2PL_SLOW\1PL_ANIM"
 
+/*
+ *  Macros for providing function prototypes, regardless of whether
+ *  the compiler understands them or not.
+ *  It is vital that the argument list given for "args" be enclosed
+ *  in parens.
+ *  The setting of USE_PROTOTYPES is done in machine.h
+ */
+#if USE_PROTOTYPES
+#	define	NMG_ARGS(args)			args
+#else
+#	define	NMG_ARGS(args)			()
+#endif
+
 /* Boolean operations */
 #define NMG_BOOL_SUB 1		/* subtraction */
 #define NMG_BOOL_ADD 2		/* addition/union */
@@ -400,8 +413,16 @@ struct loopuse_a {
 /*
  *			E D G E
  *
- *  To find all the uses of this edge, use eu_p for one edge,
+ *  To find all edgeuses of an edge, use eu_p to get an arbitrary edgeuse,
  *  then wander around either eumate_p or radial_p from there.
+ *
+ *  Only the first vertex of an edge is kept in an edgeuse (eu->vu_p).
+ *  The other vertex can be found by either eu->eumate_p->vu_p or
+ *  by RT_LIST_PNEXT_CIRC(edgeuse,eu)->vu_p.  Note that the first
+ *  form gives a vertexuse in the faceuse of *opposite* orientation,
+ *  while the second form gives a vertexuse in the faceuse of the correct
+ *  orientation.  If going on to the vertex (vu_p->v_p), both forms
+ *  are identical.
  */
 struct edge {
 	long			magic;
@@ -677,5 +698,62 @@ struct nmg_struct_counts {
 #define NMG_SET_MANIFOLD(_t,_p,_v) NMG_INDEX_OR(_t, _p, _v)
 #define NMG_MANIFOLDS(_t, _p)	   NMG_INDEX_VALUE(_t, (_p)->index)
 #define NMG_CP_MANIFOLD(_t, _p, _q) (_t)[(_p)->index] = (_t)[(_q)->index]
+
+/*
+ *  Function table, for use with nmg_visit()
+ *  Indended to have same generally the organization as nmg_struct_counts.
+ *  The handler's args are long* to allow generic handlers to be written,
+ *  in which case the magic number at long* specifies the object type.
+ *
+ *  The "vis_" prefix means the handler is visited only once.
+ *  The "bef_" and "aft_" prefixes are called (respectively) before
+ *  and after recursing into subsidiary structures.
+ *  The 3rd arg is 0 for a "bef_" call, and 1 for an "aft_" call,
+ *  to allow generic handlers to be written, if desired.
+ */
+struct nmg_visit_handlers {
+	void	(*bef_model) NMG_ARGS((long *, genptr_t, int));
+	void	(*aft_model) NMG_ARGS((long *, genptr_t, int));
+
+	void	(*vis_model_a) NMG_ARGS((long *, genptr_t, int));
+
+	void	(*bef_region) NMG_ARGS((long *, genptr_t, int));
+	void	(*aft_region) NMG_ARGS((long *, genptr_t, int));
+
+	void	(*vis_region_a) NMG_ARGS((long *, genptr_t, int));
+
+	void	(*bef_shell) NMG_ARGS((long *, genptr_t, int));
+	void	(*aft_shell) NMG_ARGS((long *, genptr_t, int));
+
+	void	(*vis_shell_a) NMG_ARGS((long *, genptr_t, int));
+
+	void	(*bef_faceuse) NMG_ARGS((long *, genptr_t, int));
+	void	(*aft_faceuse) NMG_ARGS((long *, genptr_t, int));
+
+	void	(*vis_faceuse_a) NMG_ARGS((long *, genptr_t, int));
+	void	(*vis_face) NMG_ARGS((long *, genptr_t, int));
+	void	(*vis_face_g) NMG_ARGS((long *, genptr_t, int));
+
+	void	(*bef_loopuse) NMG_ARGS((long *, genptr_t, int));
+	void	(*aft_loopuse) NMG_ARGS((long *, genptr_t, int));
+
+	void	(*vis_loopuse_a) NMG_ARGS((long *, genptr_t, int));
+	void	(*vis_loop) NMG_ARGS((long *, genptr_t, int));
+	void	(*vis_loop_g) NMG_ARGS((long *, genptr_t, int));
+
+	void	(*bef_edgeuse) NMG_ARGS((long *, genptr_t, int));
+	void	(*aft_edgeuse) NMG_ARGS((long *, genptr_t, int));
+
+	void	(*vis_edgeuse_a) NMG_ARGS((long *, genptr_t, int));
+	void	(*vis_edge) NMG_ARGS((long *, genptr_t, int));
+	void	(*vis_edge_g) NMG_ARGS((long *, genptr_t, int));
+
+	void	(*bef_vertexuse) NMG_ARGS((long *, genptr_t, int));
+	void	(*aft_vertexuse) NMG_ARGS((long *, genptr_t, int));
+
+	void	(*vis_vertexuse_a) NMG_ARGS((long *, genptr_t, int));
+	void	(*vis_vertex) NMG_ARGS((long *, genptr_t, int));
+	void	(*vis_vertex_g) NMG_ARGS((long *, genptr_t, int));
+};
 
 #endif
