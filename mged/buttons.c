@@ -348,75 +348,95 @@ bv_rate_toggle(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 int
 bv_top(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
-  /* Top view */
-  setview( 0.0, 0.0, 0.0 );
-  return TCL_OK;
+	/* Top view */
+	setview(0.0, 0.0, 0.0);
+	return TCL_OK;
 }
 
 int
 bv_bottom(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
-  /* Bottom view */
-  setview( 180.0, 0.0, 0.0 );
-  return TCL_OK;
+	/* Bottom view */
+	setview(180.0, 0.0, 0.0);
+	return TCL_OK;
 }
 
 int
 bv_right(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
-  /* Right view */
-  setview( 270.0, 0.0, 0.0 );
-  return TCL_OK;
+	/* Right view */
+	setview(270.0, 0.0, 0.0);
+	return TCL_OK;
 }
 
 int
 bv_left(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
-  /* Left view */
-  setview( 270.0, 0.0, 180.0 );
-  return TCL_OK;
+	/* Left view */
+	setview(270.0, 0.0, 180.0);
+	return TCL_OK;
 }
 
 int
 bv_front(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
-  /* Front view */
-  setview( 270.0, 0.0, 270.0 );
-  return TCL_OK;
+	/* Front view */
+	setview(270.0, 0.0, 270.0);
+	return TCL_OK;
 }
 
 int
 bv_rear(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
-  /* Rear view */
-  setview( 270.0, 0.0, 90.0 );
-  return TCL_OK;
+	/* Rear view */
+	setview(270.0, 0.0, 90.0);
+	return TCL_OK;
 }
 
 int
-bv_vrestore(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+bv_vrestore(ClientData	clientData,
+	    Tcl_Interp	*interp,
+	    int		argc,
+	    char	**argv)
 {
   /* restore to saved view */
-  if ( vsaved )  {
-    view_state->vs_Viewscale = sav_vscale;
-    MAT_COPY( view_state->vs_Viewrot, sav_viewrot );
-    MAT_COPY( view_state->vs_toViewcenter, sav_toviewcenter );
-    new_mats();
+	if (vsaved) {
+#ifdef MGED_USE_VIEW_OBJ
+		view_state->vs_vop->vo_scale = sav_vscale;
+		MAT_COPY(view_state->vs_vop->vo_rotation, sav_viewrot);
+		MAT_COPY(view_state->vs_vop->vo_center, sav_toviewcenter);
+#else
+		view_state->vs_Viewscale = sav_vscale;
+		MAT_COPY( view_state->vs_Viewrot, sav_viewrot );
+		MAT_COPY( view_state->vs_toViewcenter, sav_toviewcenter );
+#endif
+		new_mats();
 
-    (void)mged_svbase();
-  }
-  return TCL_OK;
+		(void)mged_svbase();
+	}
+
+	return TCL_OK;
 }
 
 int
-bv_vsave(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+bv_vsave(ClientData	clientData,
+	 Tcl_Interp	*interp,
+	 int		argc,
+	 char		**argv)
 {
-  /* save current view */
-  sav_vscale = view_state->vs_Viewscale;
-  MAT_COPY( sav_viewrot, view_state->vs_Viewrot );
-  MAT_COPY( sav_toviewcenter, view_state->vs_toViewcenter );
-  vsaved = 1;
-  return TCL_OK;
+#ifdef MGED_USE_VIEW_OBJ
+	/* save current view */
+	sav_vscale = view_state->vs_vop->vo_scale;
+	MAT_COPY(sav_viewrot, view_state->vs_vop->vo_rotation);
+	MAT_COPY(sav_toviewcenter, view_state->vs_vop->vo_center);
+#else
+	/* save current view */
+	sav_vscale = view_state->vs_Viewscale;
+	MAT_COPY( sav_viewrot, view_state->vs_Viewrot );
+	MAT_COPY( sav_toviewcenter, view_state->vs_toViewcenter );
+#endif
+	vsaved = 1;
+	return TCL_OK;
 }
 
 /*
@@ -444,36 +464,36 @@ bv_adcursor(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
 int
 bv_reset(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)  {
-  /* Reset view such that all solids can be seen */
-  size_reset();
-  setview( 0.0, 0.0, 0.0 );
-  (void)mged_svbase();
-  return TCL_OK;
+	/* Reset view such that all solids can be seen */
+	size_reset();
+	setview(0.0, 0.0, 0.0);
+	(void)mged_svbase();
+	return TCL_OK;
 }
 
 int
 bv_45_45(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)  {
-  setview( 270.0+45.0, 0.0, 270.0-45.0 );
-  return TCL_OK;
+	setview(270.0+45.0, 0.0, 270.0-45.0);
+	return TCL_OK;
 }
 
 int
 bv_35_25(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)  {
-  /* Use Azmuth=35, Elevation=25 in GIFT's backwards space */
-  setview( 270.0+25.0, 0.0, 270.0-35.0 );
-  return TCL_OK;
+	/* Use Azmuth=35, Elevation=25 in GIFT's backwards space */
+	setview(270.0+25.0, 0.0, 270.0-35.0);
+	return TCL_OK;
 }
 
 /* returns 0 if error, !0 if success */
 static int
 ill_common()  {
 	/* Common part of illumination */
-	if(BU_LIST_IS_EMPTY(&HeadSolid.l)) {
+	if(BU_LIST_IS_EMPTY(&dgop->dgo_headSolid)) {
 	  Tcl_AppendResult(interp, "no solids in view\n", (char *)NULL);
 	  return(0);	/* BAD */
 	}
 
-	illump = BU_LIST_NEXT(solid, &HeadSolid.l);/* any valid solid would do */
+	illump = BU_LIST_NEXT(solid, &dgop->dgo_headSolid);/* any valid solid would do */
 	illump->s_iflag = UP;
 	edobj = 0;		/* sanity */
 	edsol = 0;		/* sanity */
@@ -637,7 +657,7 @@ be_accept(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)  {
 		mmenu_set_all( MENU_L1, MENU_NULL );
 		mmenu_set_all( MENU_L2, MENU_NULL );
 
-		FOR_ALL_SOLIDS(sp, &HeadSolid.l)
+		FOR_ALL_SOLIDS(sp, &dgop->dgo_headSolid)
 			sp->s_iflag = DOWN;
 
 		illump = SOLID_NULL;
@@ -719,7 +739,7 @@ be_reject(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)  {
 	illump = SOLID_NULL;		/* None selected */
 
 	/* Clear illumination flags */
-	FOR_ALL_SOLIDS(sp, &HeadSolid.l)
+	FOR_ALL_SOLIDS(sp, &dgop->dgo_headSolid)
 		sp->s_iflag = DOWN;
 	color_soltab();
 	(void)chg_state( state, ST_VIEW, "Edit Reject" );

@@ -276,13 +276,21 @@ int	which_eye;
 	struct dm_list *save_dm_list = curr_dm_list;
 
 	ndrawn = 0;
+#ifdef MGED_USE_VIEW_OBJ
+	inv_viewsize = view_state->vs_vop->vo_invSize;
+#else
 	inv_viewsize = 1 / VIEWSIZE;
+#endif
 
 	/*
 	 * Draw all solids not involved in an edit.
 	 */
 	if( mged_variables->mv_perspective <= 0 && eye_pos_scr[Z] == 1.0 )  {
+#ifdef MGED_USE_VIEW_OBJ
+		mat = view_state->vs_vop->vo_model2view;
+#else
 		mat = view_state->vs_model2view;
+#endif
 	} else {
 		/*
 		 *  There are two strategies that could be used:
@@ -319,7 +327,11 @@ VPRINT("h", h);
 		switch(which_eye)  {
 		case 0:
 			/* Non-stereo case */
+#ifdef MGED_USE_VIEW_OBJ
+			mat = view_state->vs_vop->vo_model2view;
+#else
 			mat = view_state->vs_model2view;
+#endif
 /* XXX hack */
 #define HACK 0
 #if !HACK
@@ -347,13 +359,21 @@ bn_mat_print("perspective_mat", perspective_mat);
 			break;
 		case 1:
 			/* R */
+#ifdef MGED_USE_VIEW_OBJ
+			mat = view_state->vs_vop->vo_model2view;
+#else
 			mat = view_state->vs_model2view;
+#endif
 			eye[X] = eye_delta_scr;
 			deering_persp_mat( perspective_mat, l, h, eye );
 			break;
 		case 2:
 			/* L */
+#ifdef MGED_USE_VIEW_OBJ
+			mat = view_state->vs_vop->vo_model2view;
+#else
 			mat = view_state->vs_model2view;
+#endif
 			eye[X] = -eye_delta_scr;
 			deering_persp_mat( perspective_mat, l, h, eye );
 			break;
@@ -364,7 +384,11 @@ bn_mat_print("perspective_mat", perspective_mat);
 
 	DM_LOADMATRIX( dmp, mat, which_eye );
 
+#if 1
+	FOR_ALL_SOLIDS(sp, &dgop->dgo_headSolid)  {
+#else
 	FOR_ALL_SOLIDS(sp, &HeadSolid.l)  {
+#endif
 		sp->s_flag = DOWN;		/* Not drawn yet */
 		/* If part of object edit, will be drawn below */
 		if( sp->s_iflag == UP )
@@ -478,7 +502,11 @@ bn_mat_print("perspective_mat", perspective_mat);
 		       color_scheme->cs_geo_hl[1],
 		       color_scheme->cs_geo_hl[2], 1);
 
+#if 1
+	FOR_ALL_SOLIDS(sp, &dgop->dgo_headSolid)  {
+#else
 	FOR_ALL_SOLIDS(sp, &HeadSolid.l)  {
+#endif
 		/* Ignore all objects not being edited */
 		if (sp->s_iflag != UP)
 			continue;
@@ -549,11 +577,11 @@ createDList(struct solid *sp)
  * Create Display Lists
  */
 void
-createDLists(struct solid *hsp)
+createDLists(struct bu_list *hsp)
 {
   register struct solid *sp;
 
-  FOR_ALL_SOLIDS(sp, &hsp->l){
+  FOR_ALL_SOLIDS(sp, hsp){
     createDList(sp);
   }
 }
@@ -598,11 +626,11 @@ createDListALL(struct solid *sp)
  * for a description.
  */
 void
-createDListsAll(struct solid *hsp)
+createDListsAll(struct bu_list *hsp)
 {
   struct solid *sp;
 
-  FOR_ALL_SOLIDS(sp, &hsp->l){
+  FOR_ALL_SOLIDS(sp, hsp){
     createDListALL(sp);
   }
 }

@@ -198,7 +198,7 @@ char **argv;
 	    save_dlp = curr_dm_list;
 
 	    curr_dm_list = dlp1;
-	    createDLists(&HeadSolid);
+	    createDLists(&dgop->dgo_headSolid);
 
 	    /* restore */
 	    curr_dm_list = save_dlp;

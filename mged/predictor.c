@@ -240,9 +240,14 @@ predictor_frame()
 	for( i=0; i < nframes; i++ )  {
 		bn_mat_mul2( view_state->vs_ModelDelta, predictor );
 	}
+#ifdef MGED_USE_VIEW_OBJ
+	bn_mat_mul(predictorXv2m, predictor, view_state->vs_vop->vo_view2model);
+	MAT_DELTAS_GET_NEG(center_m, view_state->vs_vop->vo_center);
+#else
 	bn_mat_mul( predictorXv2m, predictor, view_state->vs_view2model );
-
 	MAT_DELTAS_GET_NEG( center_m, view_state->vs_toViewcenter );
+#endif
+
 	MAT4X3PNT( framecenter_m, predictor, center_m );
 #if 0
 	MAT4X3PNT( framecenter_v, view_state->vs_model2view, framecenter_m );

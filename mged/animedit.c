@@ -3677,7 +3677,7 @@ char **argv;
 	topc = build_tops(topv, topv+2000);
 	{
 		register struct solid *sp;
-		FOR_ALL_SOLIDS(sp, &HeadSolid.l) {
+		FOR_ALL_SOLIDS(sp, &dgop->dgo_headSolid) {
 			sp->s_iflag=DOWN;
 		}
 	}

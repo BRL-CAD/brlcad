@@ -197,7 +197,11 @@ double				val;
   }
 
   bu_vls_init(&vls);
+#ifdef MGED_USE_VIEW_OBJ
+  bu_vls_printf(&vls, "knob %s %f", mptr->scroll_cmd, val*view_state->vs_vop->vo_scale*base2local);
+#else
   bu_vls_printf(&vls, "knob %s %f", mptr->scroll_cmd, val*view_state->vs_Viewscale*base2local);
+#endif
   Tcl_Eval(interp, bu_vls_addr(&vls));
   bu_vls_free(&vls);
 }

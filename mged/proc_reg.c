@@ -15,6 +15,7 @@
 static const char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
+#if 0
 #include "conf.h"
 
 #include <stdio.h>
@@ -776,8 +777,8 @@ struct bu_list *head;
 HIDDEN struct bu_list *
 eval_op( A, op, B )
 struct bu_list *A;
-struct bu_list *B;
 int op;
+struct bu_list *B;
 {
 	struct seg *sega, *segb, *tmp, *next;
 	struct bu_list ret, ons, ins;
@@ -1989,190 +1990,49 @@ int	argc;
 char	**argv;
 {
 	int	initial_blank_screen;
-	char perf_message[128];
-	register int    c;
 	register struct dm_list *dmlp;
 	register struct dm_list *save_dmlp;
 	register struct cmd_list *save_cmd_list;
+	int ret;
 
-	if(argc < 2){
-	  struct bu_vls vls;
+	CHECK_DBI_NULL;
+	initial_blank_screen = BU_LIST_IS_EMPTY(&dgop->dgo_headSolid);
 
-	  bu_vls_init(&vls);
-	  bu_vls_printf(&vls, "help E");
-	  Tcl_Eval(interp, bu_vls_addr(&vls));
-	  bu_vls_free(&vls);
-	  return TCL_ERROR;
-	}
+	if ((ret = dgo_E_cmd(dgop, interp, argc, argv)) != TCL_OK)
+		return ret;
 
-/*	bu_debug = BU_DEBUG_MEM_CHECK; */
-	if( bu_debug&BU_DEBUG_MEM_CHECK && bu_mem_barriercheck() )
-		bu_log( "Error at start of 'E'\n" );
-
-	do_polysolids = 0;
-	mged_wireframe_color_override = 0;
-
-	/* Parse options. */
-	bu_optind = 1;          /* re-init bu_getopt() */
-	while( (c=bu_getopt(argc,argv,"sC:")) != EOF ) {
-		switch(c) {
-		case 'C':
-			{
-				int		r,g,b;
-				register char	*cp = bu_optarg;
-
-				r = atoi(cp);
-				while( (*cp >= '0' && *cp <= '9') )  cp++;
-				while( *cp && (*cp < '0' || *cp > '9') ) cp++;
-				g = atoi(cp);
-				while( (*cp >= '0' && *cp <= '9') )  cp++;
-				while( *cp && (*cp < '0' || *cp > '9') ) cp++;
-				b = atoi(cp);
-
-				if( r < 0 || r > 255 )  r = 255;
-				if( g < 0 || g > 255 )  g = 255;
-				if( b < 0 || b > 255 )  b = 255;
-
-				mged_wireframe_color_override = 1;
-				mged_wireframe_color[0] = r;
-				mged_wireframe_color[1] = g;
-				mged_wireframe_color[2] = b;
-			}
-			break;
-		case 's':
-			do_polysolids = 1;
-			break;
-		default:
-			{
-				struct bu_vls vls;
-
-				bu_vls_init(&vls);
-				bu_vls_printf(&vls, "help %s", argv[0]);
-				Tcl_Eval(interp, bu_vls_addr(&vls));
-				bu_vls_free(&vls);
-
-				return TCL_ERROR;
-			}
-		}
-	}
-	argc -= bu_optind;
-	argv += bu_optind;
-
-	initial_blank_screen = BU_LIST_IS_EMPTY(&HeadSolid.l);
-	eraseobjpath(interp, argc, argv, LOOKUP_QUIET, 0);
-
-	mged_ttol.magic = RT_TESS_TOL_MAGIC;
-	mged_ttol.abs = mged_abs_tol;
-	mged_ttol.rel = mged_rel_tol;
-	mged_ttol.norm = mged_nrm_tol;
-
-	if( !ap )
-	{
-		ap = (struct application *)bu_calloc( 1, sizeof( struct application ), "Big E app" );
-		ap->a_resource = &rt_uniresource;
-		rt_uniresource.re_magic = RESOURCE_MAGIC;
-		if( BU_LIST_UNINITIALIZED( &rt_uniresource.re_nmgfree ) )
-			BU_LIST_INIT( &rt_uniresource.re_nmgfree );
-	}
-
-	bu_ptbl_init( &leaf_list, 8, "leaf_list" );
-
-	if( setjmp( jmp_env ) == 0 )
-		(void)signal( SIGINT, sig3 ); /* allow interupts */
-	else
-	{
-		bu_ptbl_free( &leaf_list );
-		return( TCL_OK );
-	}
-
-	rtip = rt_new_rti( dbip );
-	rtip->rti_tol = mged_tol;	/* struct copy */
-	ap->a_rt_i = rtip;
-
-	nvectors = 0;
-	(void)time( &start_time );
-
-	if( rt_gettrees( rtip, argc, (const char **)argv, 1 ) )
-	{
-		bu_ptbl_free( &leaf_list );
-		(void)signal( SIGINT, SIG_IGN );
-
-		/* do not do an rt_free_rti() (closes the database!!!!) */
-		rt_clean( rtip );
-
-		bu_free( (char *)rtip, "rt_i structure for 'E'" );
-
-		Tcl_AppendResult(interp, "Failed to get objects\n", (char *)NULL);
-		return TCL_ERROR;
-	}
-	{
-		struct region *rp;
-		union E_tree *eptr;
-		struct bu_list vhead;
-		struct db_tree_state ts;
-		struct db_full_path path;
-
-		BU_LIST_INIT( &vhead );
-
-		for( BU_LIST_FOR( rp, region, &(rtip->HeadRegion) ) )  {
-			num_halfs = 0;
-			eptr = build_etree( rp->reg_treetop );
-
-			if( num_halfs )
-				fix_halfs();
-
-			Eplot( eptr, &vhead );
-			free_etree( eptr );
-			bu_ptbl_reset( &leaf_list );
-			ts.ts_mater = rp->reg_mater;
-			db_string_to_path( &path, dbip, rp->reg_name );
-			drawH_part2( 0, &vhead, &path, &ts, SOLID_NULL );
-			db_free_full_path( &path );
-		}
-		/* do not do an rt_free_rti() (closes the database!!!!) */
-		rt_clean( rtip );
-
-		bu_free( (char *)rtip, "rt_i structure for 'E'" );
-	}
-
-	(void)time( &etime );
-
-	(void)signal( SIGINT, SIG_IGN );
-
-	/* free leaf_list */
-	bu_ptbl_free( &leaf_list );
+	update_views = 1;
 
 	save_dmlp = curr_dm_list;
 	save_cmd_list = curr_cmd_list;
 	FOR_ALL_DISPLAYS(dmlp, &head_dm_list.l){
-	  curr_dm_list = dmlp;
-	  if(curr_dm_list->dml_tie)
-	    curr_cmd_list = curr_dm_list->dml_tie;
-	  else
-	    curr_cmd_list = &head_cmd_list;
+		curr_dm_list = dmlp;
+		if (curr_dm_list->dml_tie)
+			curr_cmd_list = curr_dm_list->dml_tie;
+		else
+			curr_cmd_list = &head_cmd_list;
 
-	  /* If we went from blank screen to non-blank, resize */
-	  if (mged_variables->mv_autosize  && initial_blank_screen &&
-	      BU_LIST_NON_EMPTY(&HeadSolid.l)) {
-	    struct view_ring *vrp;
+		/* If we went from blank screen to non-blank, resize */
+		if (mged_variables->mv_autosize  && initial_blank_screen &&
+		    BU_LIST_NON_EMPTY(&dgop->dgo_headSolid)) {
+			struct view_ring *vrp;
 
-	    size_reset();
-	    new_mats();
-	    (void)mged_svbase();
+			size_reset();
+			new_mats();
+			(void)mged_svbase();
 
-	    for(BU_LIST_FOR(vrp, view_ring, &view_state->vs_headView.l))
-	      vrp->vr_scale = view_state->vs_Viewscale;
-	  }
-
-	  color_soltab();
+			for (BU_LIST_FOR(vrp, view_ring, &view_state->vs_headView.l))
+#ifdef MGED_USE_VIEW_OBJ
+				vrp->vr_scale = view_state->vs_vop->vo_scale;
+#else
+			vrp->vr_scale = view_state->vs_Viewscale;
+#endif
+		}
 	}
 
 	curr_dm_list = save_dmlp;
 	curr_cmd_list = save_cmd_list;
 
-	sprintf(perf_message, "E: %ld vectors in %ld sec\n", nvectors, (long)(etime - start_time) );
-	Tcl_AppendResult(interp, perf_message, (char *)NULL);
-
-	update_views = 1;
 	return TCL_OK;
 }
+#endif

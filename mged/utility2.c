@@ -30,6 +30,7 @@
 #include "wdb.h"
 #include "./ged.h"
 #include "./sedit.h"
+#include "./cmd.h"
 #include "../librt/debug.h"	/* XXX */
 
 int
@@ -111,7 +112,7 @@ char **argv;
 
 		new_argv = (char **)bu_calloc( lim+1, sizeof( char *), "f_eac: new_argv" );
 		new_argc = rt_split_cmd( new_argv, lim+1, bu_vls_addr( &v ) );
-		retval = f_edit( clientData, interp, new_argc, new_argv );
+		retval = cmd_draw( clientData, interp, new_argc, new_argv );
 		bu_free( (genptr_t)new_argv, "f_eac: new_argv" );
 		bu_vls_free( &v );
 		(void)signal( SIGINT, SIG_IGN );

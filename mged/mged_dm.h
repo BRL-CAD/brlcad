@@ -24,6 +24,10 @@
 #include "fb.h" /* FBIO */
 #include "pkg.h" /* struct pkg_conn */
 
+#if 1
+#define MGED_USE_VIEW_OBJ
+#endif
+
 #define DO_NEW_EDIT_MATS
 
 #define DO_DISPLAY_LISTS
@@ -217,8 +221,10 @@ struct _view_state {
   int		vs_rc;
   int		vs_flag;
 
+#ifdef MGED_USE_VIEW_OBJ
+  struct view_obj	*vs_vop;
+#else
   fastf_t	vs_Viewscale;
-  fastf_t	vs_i_Viewscale;
   fastf_t	vs_azimuth;
   fastf_t	vs_elevation;
   fastf_t	vs_twist;
@@ -226,6 +232,8 @@ struct _view_state {
   mat_t		vs_toViewcenter;
   mat_t		vs_model2view;
   mat_t		vs_view2model;
+#endif
+  fastf_t	vs_i_Viewscale;
   mat_t		vs_model2objview;
   mat_t		vs_objview2model;
   mat_t		vs_ModelDelta;		/* changes to Viewrot this frame */

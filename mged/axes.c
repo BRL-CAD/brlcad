@@ -179,10 +179,38 @@ int linewidth;
 void
 draw_e_axes()
 {
-  point_t v_ap1;                 /* axes position in view coordinates */
-  point_t v_ap2;                 /* axes position in view coordinates */
-  mat_t rot_mat;
+	point_t v_ap1;                 /* axes position in view coordinates */
+	point_t v_ap2;                 /* axes position in view coordinates */
+	mat_t rot_mat;
 
+#ifdef MGED_USE_VIEW_OBJ
+	if (state == ST_S_EDIT) {
+		MAT4X3PNT(v_ap1, view_state->vs_vop->vo_model2view, e_axes_pos);
+		MAT4X3PNT(v_ap2, view_state->vs_vop->vo_model2view, curr_e_axes_pos);
+	} else if(state == ST_O_EDIT) {
+		point_t m_ap2;
+
+		MAT4X3PNT(v_ap1, view_state->vs_vop->vo_model2view, es_keypoint);
+		MAT4X3PNT(m_ap2, modelchanges, es_keypoint);
+		MAT4X3PNT(v_ap2, view_state->vs_vop->vo_model2view, m_ap2);
+	} else
+		return;
+
+	draw_axes(v_ap1,
+		  view_state->vs_vop->vo_rotation,
+		  axes_state->ax_edit_size1 * INV_GED,
+		  color_scheme->cs_edit_axes1,
+		  color_scheme->cs_edit_axes_label1,
+		  axes_state->ax_edit_linewidth1);
+
+	bn_mat_mul(rot_mat, view_state->vs_vop->vo_rotation, acc_rot_sol);
+	draw_axes(v_ap2,
+		  rot_mat,
+		  axes_state->ax_edit_size2 * INV_GED,
+		  color_scheme->cs_edit_axes2,
+		  color_scheme->cs_edit_axes_label2,
+		  axes_state->ax_edit_linewidth2);
+#else
   if(state == ST_S_EDIT){
     MAT4X3PNT(v_ap1, view_state->vs_model2view, e_axes_pos);
     MAT4X3PNT(v_ap2, view_state->vs_model2view, curr_e_axes_pos);
@@ -209,15 +237,25 @@ draw_e_axes()
 	    color_scheme->cs_edit_axes2,
 	    color_scheme->cs_edit_axes_label2,
 	    axes_state->ax_edit_linewidth2);
+#endif
 }
 
 void
 draw_m_axes()
 {
-  point_t m_ap;			/* axes position in model coordinates, mm */
-  point_t v_ap;			/* axes position in view coordinates */
+	point_t m_ap;			/* axes position in model coordinates, mm */
+	point_t v_ap;			/* axes position in view coordinates */
 
-  VSCALE(m_ap, axes_state->ax_model_pos, local2base);
+	VSCALE(m_ap, axes_state->ax_model_pos, local2base);
+#ifdef MGED_USE_VIEW_OBJ
+	MAT4X3PNT(v_ap, view_state->vs_vop->vo_model2view, m_ap);
+	draw_axes(v_ap,
+		  view_state->vs_vop->vo_rotation,
+		  axes_state->ax_model_size * INV_GED,
+		  color_scheme->cs_model_axes,
+		  color_scheme->cs_model_axes_label,
+		  axes_state->ax_model_linewidth);
+#else
   MAT4X3PNT(v_ap, view_state->vs_model2view, m_ap);
   draw_axes(v_ap,
 	    view_state->vs_Viewrot,
@@ -225,6 +263,7 @@ draw_m_axes()
 	    color_scheme->cs_model_axes,
 	    color_scheme->cs_model_axes_label,
 	    axes_state->ax_model_linewidth);
+#endif
 }
 
 void
@@ -238,7 +277,11 @@ draw_v_axes()
        0.0);
 
   draw_axes(v_ap,
+#ifdef MGED_USE_VIEW_OBJ
+	    view_state->vs_vop->vo_rotation,
+#else
 	    view_state->vs_Viewrot,
+#endif
 	    axes_state->ax_view_size * INV_GED,
 	    color_scheme->cs_view_axes,
 	    color_scheme->cs_view_axes_label,

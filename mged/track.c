@@ -43,6 +43,7 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 #include "wdb.h"
 #include "./ged.h"
 #include "./mged_dm.h"
+#include "./cmd.h"
 
 extern void aexists();
 
@@ -535,7 +536,7 @@ tryagain:	/* sent here to try next set of names */
 		arglist[0] = "e";
 		arglist[1] = grpname;
 		arglist[2] = NULL;
-		edit_result = f_edit( clientData, interp, 2, arglist );
+		edit_result = cmd_draw( clientData, interp, 2, arglist );
 	}
 
 	Trackpos += 10;

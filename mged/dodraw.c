@@ -44,6 +44,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "externs.h"
 #include "./mged_solid.h"
 #include "./mged_dm.h"
+#include "./cmd.h"
 
 #include "../librt/debug.h"	/* XXX */
 
@@ -146,7 +147,7 @@ long	us;		/* microseconds of extra delay */
 	av[0] = "overlay";
 	av[1] = file;
 	av[2] = NULL;
-	(void)f_overlay((ClientData)NULL, interp, 2, av);
+	(void)cmd_overlay((ClientData)NULL, interp, 2, av);
 
 	do {
 		event_check( 1 );	/* Take any device events */
@@ -879,7 +880,7 @@ drawH_part2(
 		GET_SOLID(sp, &FreeSolid.l);
 		/* NOTICE:  The structure is dirty & not initialized for you! */
 
-		sp->s_dlist = BU_LIST_LAST(solid, &HeadSolid.l)->s_dlist + 1;
+		sp->s_dlist = BU_LIST_LAST(solid, &dgop->dgo_headSolid)->s_dlist + 1;
 	} else {
 		/* Just updating an existing solid.
 		 *  'tsp' and 'pathpos' will not be used
@@ -938,7 +939,7 @@ drawH_part2(
 	if( !existing_sp )  {
 		/* Add to linked list of solid structs */
 		bu_semaphore_acquire( RT_SEM_MODEL );
-		BU_LIST_APPEND(HeadSolid.l.back, &sp->l);
+		BU_LIST_APPEND(dgop->dgo_headSolid.back, &sp->l);
 		bu_semaphore_release( RT_SEM_MODEL );
 	} else {
 		/* replacing existing solid -- struct already linked in */
@@ -1157,13 +1158,13 @@ cvt_vlblock_to_solids(
 		av[0] = "d";
 		av[1] = shortname;
 		av[2] = NULL;
-		(void)f_erase((ClientData)NULL, interp, 2, av);
+		(void)cmd_erase((ClientData)NULL, interp, 2, av);
 	} else {
 		av[0] = "kill";
 		av[1] = "-f";
 		av[2] = shortname;
 		av[3] = NULL;
-		(void)f_kill((ClientData)NULL, interp, 3, av);
+		(void)cmd_kill((ClientData)NULL, interp, 3, av);
 	}
 
 	for( i=0; i < vbp->nused; i++ )  {
@@ -1249,10 +1250,10 @@ invent_solid(
 	sp->s_color[1] = sp->s_basecolor[1] = (rgb>> 8) & 0xFF;
 	sp->s_color[2] = sp->s_basecolor[2] = (rgb    ) & 0xFF;
 	sp->s_regionid = 0;
-	sp->s_dlist = BU_LIST_LAST(solid, &HeadSolid.l)->s_dlist + 1;
+	sp->s_dlist = BU_LIST_LAST(solid, &dgop->dgo_headSolid)->s_dlist + 1;
 
 	/* Solid successfully drawn, add to linked list of solid structs */
-	BU_LIST_APPEND(HeadSolid.l.back, &sp->l);
+	BU_LIST_APPEND(dgop->dgo_headSolid.back, &sp->l);
 
 #ifdef DO_DISPLAY_LISTS
 	createDListALL(sp);
@@ -1832,7 +1833,7 @@ char	**argv;
 	  av[2] = NULL;
 
 	  /* draw the new solid */
-	  return f_edit( clientData, interp, 2, av );
+	  return cmd_draw( clientData, interp, 2, av );
 	}
 }
 
@@ -1888,7 +1889,7 @@ char	**argv;
 		if( (dp = db_lookup( dbip, argv[i], LOOKUP_NOISY )) == NULL )
 			continue;
 
-		FOR_ALL_SOLIDS(sp, &HeadSolid.l)  {
+		FOR_ALL_SOLIDS(sp, &dgop->dgo_headSolid)  {
 			if( db_full_path_search( &sp->s_fullpath, dp ) )  {
 #if 0
 				add_solid_path_to_result(interp, sp);

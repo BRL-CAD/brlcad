@@ -325,7 +325,11 @@ find_pipept_nearest_pt( const struct bu_list *pipe_hd, const point_t pt )
 
 	/* get a direction vector in model space corresponding to z-direction in view */
 	VSET( work, 0.0, 0.0, 1.0 )
+#ifdef MGED_USE_VIEW_OBJ
+	MAT4X3VEC(dir, view_state->vs_vop->vo_view2model, work)
+#else
 	MAT4X3VEC( dir, view_state->vs_view2model, work )
+#endif
 
 	for( BU_LIST_FOR( ps, wdb_pipept, pipe_hd ) )
 	{

@@ -53,6 +53,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./mged_solid.h"
 #include "./mged_dm.h"
 #include "./mgedtcl.h"
+#include "./cmd.h"
 
 extern void solid_list_callback(); /* chgview.c */
 extern struct db_tree_state	mged_initial_tree_state;	/* dodraw.c */
@@ -61,73 +62,24 @@ extern struct rt_tess_tol	mged_ttol;	/* XXX needs to replace mged_abs_tol, et.al
 
 void	aexists();
 
-/* Create an instance of something */
-/* Format: i object combname [op]	*/
-int
-f_instance(clientData, interp, argc, argv)
-ClientData clientData;
-Tcl_Interp *interp;
-int	argc;
-char	**argv;
-{
-	char oper;
-	struct bu_list	head;
-
-	CHECK_DBI_NULL;
-	CHECK_READ_ONLY;
-
-	BU_LIST_INIT(&head);
-
-	if(argc < 3 || 4 < argc){
-	  struct bu_vls vls;
-
-	  bu_vls_init(&vls);
-	  bu_vls_printf(&vls, "help i");
-	  Tcl_Eval(interp, bu_vls_addr(&vls));
-	  bu_vls_free(&vls);
-	  return TCL_ERROR;
-	}
-
-	if( db_lookup( dbip, argv[1], LOOKUP_NOISY ) == DIR_NULL )
-	  return TCL_ERROR;
-
-	oper = WMOP_UNION;
-	if( argc == 4 )
-		oper = argv[3][0];
-	if(oper != WMOP_UNION && oper != WMOP_SUBTRACT &&	oper != WMOP_INTERSECT) {
-	  struct bu_vls tmp_vls;
-
-	  bu_vls_init(&tmp_vls);
-	  bu_vls_printf(&tmp_vls, "bad operation: %c\n", oper );
-	  Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
-	  bu_vls_free(&tmp_vls);
-	  return TCL_ERROR;
-	}
-	mk_addmember( argv[2], &head, oper );
-
-	if( mk_comb( wdbp, argv[1], &head,
-	    0, NULL, NULL, NULL,
-	    0, 0, 0, 0,
-	    0, 1, 1 ) < 0 )
-	{
-		Tcl_AppendResult(interp,
-			"An error has occured while adding '",
-			argv[1], "' to the database.\n", (char *)NULL);
-		TCL_ERROR_RECOVERY_SUGGESTION;
-		return TCL_ERROR;
-	}
-	return TCL_OK;
-}
-
 /* Remove an object or several from the description */
 /* Format: kill [-f] object1 object2 .... objectn	*/
 int
-f_kill(
-	ClientData clientData,
-	Tcl_Interp *interp,
-	int	argc,
-	char	**argv)
+cmd_kill(ClientData	clientData,
+	 Tcl_Interp	*interp,
+	 int		argc,
+	 char		**argv)
 {
+#if 0
+	int ret;
+
+	CHECK_DBI_NULL;
+
+	ret = wdb_kill_cmd(wdbp, interp, argc, argv);
+	solid_list_callback();
+
+	return ret;
+#else
 	register int		i;
 	struct directory	*dp;
 	struct directory	*dpp[2] = {DIR_NULL, DIR_NULL};
@@ -171,57 +123,7 @@ f_kill(
 
 	solid_list_callback();
 	return TCL_OK;
-}
-
-/* Grouping command */
-/* Format: g groupname object1 object2 .... objectn	*/
-int
-f_group(clientData, interp, argc, argv)
-ClientData clientData;
-Tcl_Interp *interp;
-int	argc;
-char	**argv;
-{
-	register int i;
-	struct bu_list	head;
-
-	CHECK_DBI_NULL;
-	CHECK_READ_ONLY;
-
-	BU_LIST_INIT(&head);
-
-	if(argc < 3){
-	  struct bu_vls vls;
-
-	  bu_vls_init(&vls);
-	  bu_vls_printf(&vls, "help g");
-	  Tcl_Eval(interp, bu_vls_addr(&vls));
-	  bu_vls_free(&vls);
-	  return TCL_ERROR;
-	}
-
-	/* get objects to add to group */
-	for( i = 2; i < argc; i++ )  {
-		if( db_lookup( dbip,  argv[i], LOOKUP_NOISY) != DIR_NULL )  {
-			/* Add to list */
-			(void)mk_addmember( argv[i], &head, WMOP_UNION );
-		}  else
-		  Tcl_AppendResult(interp, "skip member ", argv[i], "\n", (char *)NULL);
-	}
-
-	/* Do them all at once */
-	if( mk_comb( wdbp, argv[1], &head,
-	    0, NULL, NULL, NULL,
-	    0, 0, 0, 0,
-	    0, 1, 1 ) < 0 )
-	{
-		Tcl_AppendResult(interp,
-			"An error has occured while adding '",
-			argv[1], "' to the database.\n", (char *)NULL);
-		TCL_ERROR_RECOVERY_SUGGESTION;
-		return TCL_ERROR;
-	}
-	return TCL_OK;
+#endif
 }
 
 /* Copy a cylinder and position at end of original cylinder
@@ -298,7 +200,7 @@ char	**argv;
 	  av[2] = NULL;
 
 	  /* draw the new solid */
-	  (void)f_edit( clientData, interp, 2, av );
+	  (void)cmd_draw( clientData, interp, 2, av );
 	}
 
 	if(state == ST_VIEW) {
@@ -442,29 +344,6 @@ fail:
 }
 
 /*
- *			P A T H L I S T _ L E A F _ F U N C
- */
-static union tree *
-pathlist_leaf_func( tsp, pathp, ip, client_data )
-struct db_tree_state	*tsp;
-struct db_full_path	*pathp;
-struct rt_db_internal	*ip;
-genptr_t		client_data;
-{
-	char	*str;
-
-	RT_CK_FULL_PATH( pathp );
-	RT_CK_DB_INTERNAL(ip);
-
-	str = db_path_to_string( pathp );
-
-	Tcl_AppendElement( interp, str );
-
-	bu_free( (genptr_t)str, "path string" );
-	return TREE_NULL;
-}
-
-/*
  *			C M D _ P A T H L I S T
  *
  *  Given the name(s) of a database node(s), return a TCL list of all
@@ -473,35 +352,14 @@ genptr_t		client_data;
  *  Similar to the "tree" command, only suitable for programs, not humans.
  */
 int
-cmd_pathlist(clientData, interp, argc, argv)
-ClientData	clientData;
-Tcl_Interp	*interp;
-int		argc;
-char	        **argv;
+cmd_pathlist(ClientData	clientData,
+	     Tcl_Interp	*interp,
+	     int	argc,
+	     char	**argv)
 {
   CHECK_DBI_NULL;
 
-  if(argc < 2){
-    struct bu_vls vls;
-
-    bu_vls_init(&vls);
-    bu_vls_printf(&vls, "help pathlist");
-    Tcl_Eval(interp, bu_vls_addr(&vls));
-    bu_vls_free(&vls);
-    return TCL_ERROR;
-  }
-
-  mged_initial_tree_state.ts_ttol = &mged_ttol;
-  mged_initial_tree_state.ts_tol = &mged_tol;
-
-  if( db_walk_tree( dbip, argc-1, (const char **)argv+1, 1,
-		    &mged_initial_tree_state,
-		    0, 0, pathlist_leaf_func, (genptr_t)NULL ) < 0 )  {
-    Tcl_AppendResult(interp, "db_walk_tree() error", (char *)NULL);
-    return TCL_ERROR;
-  }
-
-  return TCL_OK;
+  return wdb_pathlist_cmd(wdbp, interp, argc, argv);
 }
 
 /*
@@ -517,7 +375,7 @@ register struct db_full_path	*pathp;
 
 	RT_CK_FULL_PATH(pathp);
 
-	FOR_ALL_SOLIDS(sp, &HeadSolid.l)  {
+	FOR_ALL_SOLIDS(sp, &dgop->dgo_headSolid)  {
 		if( !db_identical_full_paths( pathp, &sp->s_fullpath ) )  continue;
 
 		/* Paths are the same */
@@ -576,7 +434,7 @@ char      	**argv;
 		Tcl_AppendResult(interp, "MGED state is not VIEW", (char *)NULL);
 		return TCL_ERROR;
 	}
-	if(BU_LIST_IS_EMPTY(&HeadSolid.l)) {
+	if(BU_LIST_IS_EMPTY(&dgop->dgo_headSolid)) {
 		Tcl_AppendResult(interp, "no solids in view", (char *)NULL);
 		return TCL_ERROR;
 	}
@@ -607,7 +465,7 @@ char      	**argv;
 #endif
 
 	/* Patterned after  ill_common() ... */
-	illump = BU_LIST_NEXT(solid, &HeadSolid.l);/* any valid solid would do */
+	illump = BU_LIST_NEXT(solid, &dgop->dgo_headSolid);/* any valid solid would do */
 	edobj = 0;		/* sanity */
 	movedir = 0;		/* No edit modes set */
 	MAT_IDN( modelchanges );	/* No changes yet */

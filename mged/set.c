@@ -335,7 +335,11 @@ void
 set_absolute_view_tran()
 {
   /* calculate absolute_tran */
+#ifdef MGED_USE_VIEW_OBJ
+  MAT4X3PNT(view_state->vs_absolute_tran, view_state->vs_vop->vo_model2view, view_state->vs_orig_pos);
+#else
   MAT4X3PNT(view_state->vs_absolute_tran, view_state->vs_model2view, view_state->vs_orig_pos);
+#endif
   /* This is used in f_knob()  ---- needed in case absolute_tran is set from Tcl */
   VMOVE(view_state->vs_last_absolute_tran, view_state->vs_absolute_tran);
 }
@@ -347,9 +351,15 @@ set_absolute_model_tran()
   point_t diff;
 
   /* calculate absolute_model_tran */
+#ifdef MGED_USE_VIEW_OBJ
+  MAT_DELTAS_GET_NEG(new_pos, view_state->vs_vop->vo_center);
+  VSUB2(diff, view_state->vs_orig_pos, new_pos);
+  VSCALE(view_state->vs_absolute_model_tran, diff, 1/view_state->vs_vop->vo_scale);
+#else
   MAT_DELTAS_GET_NEG(new_pos, view_state->vs_toViewcenter);
   VSUB2(diff, view_state->vs_orig_pos, new_pos);
   VSCALE(view_state->vs_absolute_model_tran, diff, 1/view_state->vs_Viewscale);
+#endif
   /* This is used in f_knob()  ---- needed in case absolute_model_tran is set from Tcl */
   VMOVE(view_state->vs_last_absolute_model_tran, view_state->vs_absolute_model_tran);
 }
@@ -376,7 +386,7 @@ set_dlist()
       if (dlp1->dml_dmp->dm_displaylist &&
 	  dlp1->dml_dlist_state->dl_active == 0) {
 	curr_dm_list = dlp1;
-	createDLists(&HeadSolid);
+	createDLists(&dgop->dgo_headSolid);
 	dlp1->dml_dlist_state->dl_active = 1;
 	dlp1->dml_dirty = 1;
       }
@@ -407,8 +417,9 @@ set_dlist()
 	if (BU_LIST_IS_HEAD(dlp2, &head_dm_list.l)) {
 	  dlp1->dml_dlist_state->dl_active = 0;
 	  DM_FREEDLISTS(dlp1->dml_dmp,
-			HeadSolid.s_dlist,
-			BU_LIST_LAST(solid, &HeadSolid.l)->s_dlist - HeadSolid.s_dlist + 1);
+			BU_LIST_FIRST(solid, &dgop->dgo_headSolid)->s_dlist,
+			BU_LIST_LAST(solid, &dgop->dgo_headSolid)->s_dlist -
+			BU_LIST_FIRST(solid, &dgop->dgo_headSolid)->s_dlist + 1);
 	}
       }
     }

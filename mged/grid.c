@@ -95,7 +95,11 @@ set_grid_draw()
 
   /* This gets done at most one time. */
   if(grid_auto_size && grid_state->gr_draw){
+#ifdef MGED_USE_VIEW_OBJ
+    fastf_t res = view_state->vs_vop->vo_size*base2local / 64.0;
+#else
     fastf_t res = VIEWSIZE*base2local / 64.0;
+#endif
 
     grid_state->gr_res_h = res;
     grid_state->gr_res_v = res;
@@ -145,7 +149,11 @@ draw_grid()
 	inv_grid_res_h= 1.0 / grid_state->gr_res_h;
 	inv_grid_res_v= 1.0 / grid_state->gr_res_v;
 
+#ifdef MGED_USE_VIEW_OBJ
+	sf = view_state->vs_vop->vo_scale*base2local;
+#else
 	sf = view_state->vs_Viewscale*base2local;
+#endif
 	inv_sf = 1.0 / sf;
 	inv_aspect = 1.0 / dmp->dm_aspect; 
 
@@ -170,7 +178,11 @@ draw_grid()
 	
 
 	VSCALE(model_grid_anchor, grid_state->gr_anchor, local2base);
+#ifdef MGED_USE_VIEW_OBJ
+	MAT4X3PNT(view_grid_anchor, view_state->vs_vop->vo_model2view, model_grid_anchor);
+#else
 	MAT4X3PNT(view_grid_anchor, view_state->vs_model2view, model_grid_anchor);
+#endif
 	VSCALE(view_grid_anchor_local, view_grid_anchor, sf);
 
 	VSET(view_lleft_corner, -1.0, -inv_aspect, 0.0);
@@ -237,14 +249,22 @@ snap_to_grid(
       NEAR_ZERO(grid_state->gr_res_v, (fastf_t)SMALL_FASTF))
     return;
 
+#ifdef MGED_USE_VIEW_OBJ
+  sf = view_state->vs_vop->vo_scale*base2local;
+#else
   sf = view_state->vs_Viewscale*base2local;
+#endif
   inv_sf = 1 / sf;
 
   VSET(view_pt, *mx, *my, 0.0);
   VSCALE(view_pt, view_pt, sf);  /* view_pt now in local units */
 
   VSCALE(model_grid_anchor, grid_state->gr_anchor, local2base);
+#ifdef MGED_USE_VIEW_OBJ
+  MAT4X3PNT(view_grid_anchor, view_state->vs_vop->vo_model2view, model_grid_anchor);
+#else
   MAT4X3PNT(view_grid_anchor, view_state->vs_model2view, model_grid_anchor);
+#endif
   VSCALE(view_grid_anchor, view_grid_anchor, sf);  /* view_grid_anchor now in local units */
 
   grid_units_h = (view_grid_anchor[X] - view_pt[X]) / grid_state->gr_res_h;
@@ -288,6 +308,16 @@ snap_keypoint_to_grid()
 	  return;
   }
 
+#ifdef MGED_USE_VIEW_OBJ
+  if (state == ST_S_EDIT) {
+	  MAT4X3PNT(view_pt, view_state->vs_vop->vo_model2view, curr_e_axes_pos);
+  } else {
+	  MAT4X3PNT(model_pt, modelchanges, e_axes_pos);
+	  MAT4X3PNT(view_pt, view_state->vs_vop->vo_model2view, model_pt);
+  }
+  snap_to_grid(&view_pt[X], &view_pt[Y]);
+  MAT4X3PNT(model_pt, view_state->vs_vop->vo_view2model, view_pt);
+#else
   if (state == ST_S_EDIT) {
 	  MAT4X3PNT(view_pt, view_state->vs_model2view, curr_e_axes_pos);
   } else {
@@ -296,6 +326,7 @@ snap_keypoint_to_grid()
   }
   snap_to_grid(&view_pt[X], &view_pt[Y]);
   MAT4X3PNT(model_pt, view_state->vs_view2model, view_pt);
+#endif
   VSCALE(model_pt, model_pt, base2local);
 
   bu_vls_init(&cmd);
@@ -314,24 +345,33 @@ snap_keypoint_to_grid()
 void
 snap_view_center_to_grid()
 {
-  point_t view_pt, model_pt;
+	point_t view_pt, model_pt;
 
-  if (dbip == DBI_NULL)
-	  return;
+	if (dbip == DBI_NULL)
+		return;
 
-  MAT_DELTAS_GET_NEG(model_pt, view_state->vs_toViewcenter);
-  MAT4X3PNT(view_pt, view_state->vs_model2view, model_pt);
-  snap_to_grid(&view_pt[X], &view_pt[Y]);
-  MAT4X3PNT(model_pt, view_state->vs_view2model, view_pt);
+#ifdef MGED_USE_VIEW_OBJ
+	MAT_DELTAS_GET_NEG(model_pt, view_state->vs_vop->vo_center);
+	MAT4X3PNT(view_pt, view_state->vs_vop->vo_model2view, model_pt);
+	snap_to_grid(&view_pt[X], &view_pt[Y]);
+	MAT4X3PNT(model_pt, view_state->vs_vop->vo_view2model, view_pt);
 
-  MAT_DELTAS_VEC_NEG(view_state->vs_toViewcenter, model_pt);
-  new_mats();
+	MAT_DELTAS_VEC_NEG(view_state->vs_vop->vo_center, model_pt);
+#else
+	MAT_DELTAS_GET_NEG(model_pt, view_state->vs_toViewcenter);
+	MAT4X3PNT(view_pt, view_state->vs_model2view, model_pt);
+	snap_to_grid(&view_pt[X], &view_pt[Y]);
+	MAT4X3PNT(model_pt, view_state->vs_view2model, view_pt);
 
-  VSCALE(model_pt, model_pt, base2local);
+	MAT_DELTAS_VEC_NEG(view_state->vs_toViewcenter, model_pt);
+#endif
+	new_mats();
 
-  /* save new center in local units */
-  VMOVE(dml_work_pt, model_pt);
-  dml_mouse_dx = dml_mouse_dy = 0;
+	VSCALE(model_pt, model_pt, base2local);
+
+	/* save new center in local units */
+	VMOVE(dml_work_pt, model_pt);
+	dml_mouse_dx = dml_mouse_dy = 0;
 }
 
 /*
@@ -350,7 +390,11 @@ round_to_grid(fastf_t *view_dx, fastf_t *view_dy)
       NEAR_ZERO(grid_state->gr_res_v, (fastf_t)SMALL_FASTF))
     return;
 
+#ifdef MGED_USE_VIEW_OBJ
+  sf = view_state->vs_vop->vo_scale*base2local;
+#else
   sf = view_state->vs_Viewscale*base2local;
+#endif
   inv_sf = 1 / sf;
 
   /* convert mouse distance to grid units */
@@ -393,15 +437,24 @@ snap_view_to_grid(fastf_t view_dx, fastf_t view_dy)
   round_to_grid(&view_dx, &view_dy);
 
   VSET(view_pt, view_dx, view_dy, 0.0);
-  MAT4X3PNT(model_pt, view_state->vs_view2model, view_pt);
 
+#ifdef MGED_USE_VIEW_OBJ
+  MAT4X3PNT(model_pt, view_state->vs_vop->vo_view2model, view_pt);
+  MAT_DELTAS_GET_NEG(vcenter, view_state->vs_vop->vo_center);
+#else
+  MAT4X3PNT(model_pt, view_state->vs_view2model, view_pt);
   MAT_DELTAS_GET_NEG(vcenter, view_state->vs_toViewcenter);
+#endif
   VSUB2(diff, model_pt, vcenter);
   VSCALE(diff, diff, base2local);
   VSUB2(model_pt, dml_work_pt, diff);
 
   VSCALE(model_pt, model_pt, local2base);
+#ifdef MGED_USE_VIEW_OBJ
+  MAT_DELTAS_VEC_NEG(view_state->vs_vop->vo_center, model_pt);
+#else
   MAT_DELTAS_VEC_NEG(view_state->vs_toViewcenter, model_pt);
+#endif
   new_mats();
 }
 

@@ -181,7 +181,7 @@ char **argv;
 				av[0] = "kill";
 				av[1] = red_tmpcomb;
 				av[2] = NULL;
-				(void)f_kill(clientData, interp, 2, av);
+				(void)cmd_kill(clientData, interp, 2, av);
 			}
 		} else {
 			Tcl_AppendResult(interp, "Because the database is READ-ONLY no changes were made.\n", (char *)NULL);
@@ -847,7 +847,7 @@ char **argv;
     av[0] = "kill";
     av[1] = red_tmpcomb;
     av[2] = NULL;
-    (void)f_kill(clientData, interp, 2, av);
+    (void)cmd_kill(clientData, interp, 2, av);
   }
 
   (void)unlink(red_tmpfil);
@@ -1778,7 +1778,7 @@ struct directory *dp;
   av[1] = name;
   av[2] = NULL;
   av[3] = NULL;
-  (void)f_kill((ClientData)NULL, interp, 2, av);
+  (void)cmd_kill((ClientData)NULL, interp, 2, av);
 
   av[0] = "mv";
   av[1] = red_tmpcomb;

@@ -68,6 +68,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "wdb.h"
 #include "./ged.h"
 #include "./mged_dm.h"
+#include "./cmd.h"
 
 void	aexists();
 
@@ -739,7 +740,7 @@ do_new_update:
 	new_cmd[0] = "e";
 	new_cmd[1] = name;
 	new_cmd[2] = (char *)NULL;
-	(void)f_edit( clientData, interp, 2, new_cmd );
+	(void)cmd_draw( clientData, interp, 2, new_cmd );
 
 	if( do_solid_edit )  {
 		/* Also kick off solid edit mode */

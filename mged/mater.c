@@ -253,7 +253,7 @@ color_soltab(void)
 	register struct solid *sp;
 	register struct mater *mp;
 
-	FOR_ALL_SOLIDS( sp, &HeadSolid.l )  {
+	FOR_ALL_SOLIDS( sp, &dgop->dgo_headSolid )  {
 		sp->s_cflag = 0;
 
 	        /* the user specified the color, so use it */

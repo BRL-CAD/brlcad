@@ -38,12 +38,19 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 /* Usage:  overlay file.plot [name] */
 int
-f_overlay(
-	ClientData clientData,
-	Tcl_Interp *interp,
-	int	argc,
-	char	**argv)
+cmd_overlay(ClientData	clientData,
+	    Tcl_Interp	*interp,
+	    int		argc,
+	    char	**argv)
 {
+#if 1
+	int		ret;
+
+	if ((ret = dgo_overlay_cmd(dgop, interp, argc, argv)) == TCL_OK)
+		update_views = 1;
+
+	return ret;
+#else
 	char		*name;
 	FILE		*fp;
 	int		ret;
@@ -70,7 +77,11 @@ f_overlay(
 	}
 
 	vbp = rt_vlblock_init();
+#ifdef MGED_USE_VIEW_OBJ
+	ret = rt_uplot_to_vlist(vbp, fp, view_state->vs_vop->vo_scale * 0.01);
+#else
 	ret = rt_uplot_to_vlist( vbp, fp, view_state->vs_Viewscale * 0.01 );
+#endif
 	fclose(fp);
 	if( ret < 0 )  {
 		rt_vlblock_free(vbp);
@@ -82,6 +93,7 @@ f_overlay(
 	rt_vlblock_free(vbp);
 	update_views = 1;
 	return TCL_OK;
+#endif
 }
 
 /* Usage:  labelvert solid(s) */
@@ -112,15 +124,20 @@ char	**argv;
 
 	vbp = rt_vlblock_init();
 	MAT_IDN(mat);
+#ifdef MGED_USE_VIEW_OBJ
+	bn_mat_inv(mat, view_state->vs_vop->vo_rotation);
+	scale = view_state->vs_vop->vo_size / 100;		/* divide by # chars/screen */
+#else
 	bn_mat_inv( mat, view_state->vs_Viewrot );
 	scale = VIEWSIZE / 100;		/* divide by # chars/screen */
+#endif
 
 	for( i=1; i<argc; i++ )  {
 		struct solid	*s;
 		if( (dp = db_lookup( dbip, argv[i], LOOKUP_NOISY )) == DIR_NULL )
 			continue;
 		/* Find uses of this solid in the solid table */
-		FOR_ALL_SOLIDS(s, &HeadSolid.l)  {
+		FOR_ALL_SOLIDS(s, &dgop->dgo_headSolid)  {
 			if( db_full_path_search( &s->s_fullpath, dp ) )  {
 				rt_label_vlist_verts( vbp, &s->s_vlist, mat, scale, base2local );
 			}

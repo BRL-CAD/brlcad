@@ -51,6 +51,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "externs.h"
 #include "./mged_solid.h"
 #include "./mged_dm.h"
+#include "./cmd.h"
 
 BU_EXTERN( void nmg_invert_shell , ( struct shell *s , const struct bn_tol *tol ) );
 
@@ -533,7 +534,7 @@ char **argv;
 		arglist[0] = "e";
 		arglist[1] = newname;
 		arglist[2] = NULL;
-		return f_edit(clientData, interp, 2, arglist );
+		return cmd_draw(clientData, interp, 2, arglist );
 	}
 end:
 	(void)signal( SIGINT, SIG_IGN );

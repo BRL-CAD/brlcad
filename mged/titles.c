@@ -262,6 +262,27 @@ dotitles(struct bu_vls *overlay_vls)
 	  Tcl_SetVar(interp, bu_vls_addr(&vls), "", TCL_GLOBAL_ONLY);
 	}
 
+#ifdef MGED_USE_VIEW_OBJ
+	sprintf(cent_x, "%.3f", -view_state->vs_vop->vo_center[MDX]*base2local);
+	sprintf(cent_y, "%.3f", -view_state->vs_vop->vo_center[MDY]*base2local);
+	sprintf(cent_z, "%.3f", -view_state->vs_vop->vo_center[MDZ]*base2local);
+	bu_vls_trunc(&vls, 0);
+	bu_vls_printf(&vls, "cent=(%s %s %s)", cent_x, cent_y, cent_z);
+	Tcl_SetVar(interp, bu_vls_addr(&curr_dm_list->dml_center_name),
+		   bu_vls_addr(&vls), TCL_GLOBAL_ONLY);
+
+	sprintf(size, "sz=%.3f", view_state->vs_vop->vo_size*base2local);
+	Tcl_SetVar(interp, bu_vls_addr(&curr_dm_list->dml_size_name),
+		    size, TCL_GLOBAL_ONLY);
+
+	bu_vls_trunc(&vls, 0);
+	bu_vls_printf(&vls, "%s(units)", MGED_DISPLAY_VAR);
+	Tcl_SetVar(interp, bu_vls_addr(&vls),
+		   (char *)bu_units_string(dbip->dbi_local2base), TCL_GLOBAL_ONLY);
+
+	bu_vls_trunc(&vls, 0);
+	bu_vls_printf(&vls, "az=%3.2f  el=%3.2f  tw=%3.2f", V3ARGS(view_state->vs_vop->vo_aet));
+#else
 	sprintf(cent_x, "%.3f", -view_state->vs_toViewcenter[MDX]*base2local);
 	sprintf(cent_y, "%.3f", -view_state->vs_toViewcenter[MDY]*base2local);
 	sprintf(cent_z, "%.3f", -view_state->vs_toViewcenter[MDZ]*base2local);
@@ -284,6 +305,7 @@ dotitles(struct bu_vls *overlay_vls)
 		      view_state->vs_azimuth,
 		      view_state->vs_elevation,
 		      view_state->vs_twist);
+#endif
 	Tcl_SetVar(interp, bu_vls_addr(&curr_dm_list->dml_aet_name),
 		   bu_vls_addr(&vls), TCL_GLOBAL_ONLY);
 
@@ -464,12 +486,17 @@ if(mged_variables->mv_faceplate){
 	bu_vls_printf(&vls,
 		      " cent=(%s, %s, %s), %s %s, ", cent_x, cent_y, cent_z,
 		      size, bu_units_string(dbip->dbi_local2base));
+#ifdef MGED_USE_VIEW_OBJ
+	bu_vls_printf(&vls, "az=%3.2f el=%3.2f tw=%3.2f ang=(%s, %s, %s)", V3ARGS(view_state->vs_vop->vo_aet),
+		      ang_x, ang_y, ang_z);
+#else
 	bu_vls_printf(&vls,
 		       "az=%3.2f el=%3.2f tw=%3.2f ang=(%s, %s, %s)",
 		      view_state->vs_azimuth,
 		      view_state->vs_elevation,
 		      view_state->vs_twist,
 		      ang_x, ang_y, ang_z);
+#endif
 	DM_SET_FGCOLOR(dmp,
 		       color_scheme->cs_status_text1[0],
 		       color_scheme->cs_status_text1[1],
@@ -493,7 +520,11 @@ if(mged_variables->mv_faceplate){
 	if( adc_state->adc_draw ) {
 	  fastf_t f;
 
+#ifdef MGED_USE_VIEW_OBJ
+	  f = view_state->vs_vop->vo_scale * base2local;
+#else
 	  f = view_state->vs_Viewscale * base2local;
+#endif
 	  /* Angle/Distance cursor */
 	  bu_vls_trunc(&vls, 0);
 	  bu_vls_printf( &vls,

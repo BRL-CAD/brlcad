@@ -42,6 +42,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "raytrace.h"
 #include "./ged.h"
 #include "./mged_dm.h"
+#include "./cmd.h"
 
 extern int	newargs;
 extern char	**promp;
@@ -298,7 +299,7 @@ char	**argv;
 	  av[2] = NULL;
 
 	  /* draw the "made" solid */
-	  return f_edit( clientData, interp, 2, av );
+	  return cmd_draw( clientData, interp, 2, av );
 	}
 }
 
@@ -555,7 +556,7 @@ char	**argv;
 	  av[2] = NULL;
 
 	  /* draw the "made" solid */
-	  return f_edit( clientData, interp, 2, av );
+	  return cmd_draw( clientData, interp, 2, av );
 	}
 }
 

@@ -149,11 +149,25 @@ vr_viewpoint_hook()
 	bu_vls_init_if_uninit(&old_str);
 	bu_vls_init(&str);
 
+#ifdef MGED_USE_VIEW_OBJ
+	quat_mat2quat(orient, view_state->vs_vop->vo_rotation);
+#else
 	quat_mat2quat( orient, view_state->vs_Viewrot );
+#endif
 
 	/* Need to send current viewpoint to VR mgr */
 	/* XXX more will be needed */
 	/* Eye point, quaturnion for orientation */
+#ifdef MGED_USE_VIEW_OBJ
+	bu_vls_printf(&str, "pov %e %e %e   %e %e %e %e   %e   %e %e %e  %e\n", 
+		      -view_state->vs_vop->vo_center[MDX],
+		      -view_state->vs_vop->vo_center[MDY],
+		      -view_state->vs_vop->vo_center[MDZ],
+		      V4ARGS(orient),
+		      view_state->vs_vop->vo_scale,
+		      V3ARGS(eye_pos_scr),
+		      mged_variables->mv_perspective);
+#else
 	bu_vls_printf( &str, "pov %e %e %e   %e %e %e %e   %e   %e %e %e  %e\n", 
 		-view_state->vs_toViewcenter[MDX],
 		-view_state->vs_toViewcenter[MDY],
@@ -163,6 +177,7 @@ vr_viewpoint_hook()
 		V3ARGS(eye_pos_scr),
 		mged_variables->mv_perspective
 		);
+#endif
 
 	if( strcmp( bu_vls_addr(&old_str), bu_vls_addr(&str) ) == 0 )  {
 		bu_vls_free( &str );
@@ -215,6 +230,17 @@ char	*argv[];
 	  return TCL_ERROR;
 	}
 
+#ifdef MGED_USE_VIEW_OBJ
+	view_state->vs_vop->vo_center[MDX] = -atof(argv[1]);
+	view_state->vs_vop->vo_center[MDY] = -atof(argv[2]);
+	view_state->vs_vop->vo_center[MDZ] = -atof(argv[3]);
+	orient[0] = atof(argv[4]);
+	orient[1] = atof(argv[5]);
+	orient[2] = atof(argv[6]);
+	orient[3] = atof(argv[7]);
+	quat_quat2mat(view_state->vs_vop->vo_rotation, orient);
+	view_state->vs_vop->vo_scale = atof(argv[8]);
+#else
 	view_state->vs_toViewcenter[MDX] = -atof(argv[1]);
 	view_state->vs_toViewcenter[MDY] = -atof(argv[2]);
 	view_state->vs_toViewcenter[MDZ] = -atof(argv[3]);
@@ -224,6 +250,7 @@ char	*argv[];
 	orient[3] = atof(argv[7]);
 	quat_quat2mat( view_state->vs_Viewrot, orient );
 	view_state->vs_Viewscale = atof(argv[8]);
+#endif
 	eye_pos_scr[X] = atof(argv[9]);		/* interpreted in dozoom.c */
 	eye_pos_scr[Y] = atof(argv[10]);
 	eye_pos_scr[Z] = atof(argv[11]);

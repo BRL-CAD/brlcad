@@ -331,104 +331,6 @@ char	**argv;
 	return TCL_OK;
 }
 
-/*
- *			F _ K E E P
- *
- *  	Save named objects in specified file.
- *	Good for pulling parts out of one model for use elsewhere.
- */
-BU_EXTERN(void node_write, (struct db_i *dbip, struct directory *dp, genptr_t ptr));
-
-void
-node_write( dbip, dp, ptr )
-struct db_i	*dbip;
-register struct directory *dp;
-genptr_t	ptr;
-{
-	struct rt_wdb	*keepfp = (struct rt_wdb *)ptr;
-	struct bu_external	ext;
-
-	RT_CK_WDB(keepfp);
-
-	if( dp->d_nref++ > 0 )
-		return;		/* already written */
-
-	if( db_get_external( &ext, dp, dbip ) < 0 )
-		READ_ERR_return;
-	if( wdb_export_external( keepfp, &ext, dp->d_namep, dp->d_flags, dp->d_minor_type ) < 0 )
-		WRITE_ERR_return;
-}
-
-int
-f_keep(clientData, interp, argc, argv)
-ClientData clientData;
-Tcl_Interp *interp;
-int	argc;
-char	**argv;
-{
-	struct rt_wdb		*keepfp;
-	register struct directory *dp;
-	struct bu_vls		title;
-	register int		i;
-	struct db_i		*new_dbip;
-
-	CHECK_DBI_NULL;
-
-	if(argc < 3){
-	  struct bu_vls vls;
-
-	  bu_vls_init(&vls);
-	  bu_vls_printf(&vls, "help keep");
-	  Tcl_Eval(interp, bu_vls_addr(&vls));
-	  bu_vls_free(&vls);
-	  return TCL_ERROR;
-	}
-
-	/* First, clear any existing counts */
-	for( i = 0; i < RT_DBNHASH; i++ )  {
-		for( dp = dbip->dbi_Head[i]; dp != DIR_NULL; dp = dp->d_forw )
-			dp->d_nref = 0;
-	}
-
-	/* Alert user if named file already exists */
-	if( (new_dbip = db_open( argv[1], "w" )) !=  DBI_NULL  &&
-	    (keepfp = wdb_dbopen( new_dbip, RT_WDB_TYPE_DB_DISK ) ) != NULL )  {
-		Tcl_AppendResult(interp, "keep:  appending to '", argv[1],
-			   "'\n", (char *)NULL);
-	} else {
-		/* Create a new database */
-		if( (keepfp = wdb_fopen( argv[1] ) ) == NULL )  {
-			perror( argv[1] );
-			return TCL_ERROR;
-		}
-	}
-	
-	/* ident record */
-	bu_vls_init( &title );
-	bu_vls_strcat( &title, "Parts of: " );
-	bu_vls_strcat( &title, dbip->dbi_title );
-
-	if( db_update_ident( keepfp->dbip, bu_vls_addr(&title), dbip->dbi_local2base ) < 0 )  {
-		perror("fwrite");
-		Tcl_AppendResult(interp, "db_update_ident() failed\n", (char *)NULL);
-		wdb_close(keepfp);
-		bu_vls_free( &title );
-		return TCL_ERROR;
-	}
-	bu_vls_free( &title );
-
-	for(i = 2; i < argc; i++) {
-		if( (dp = db_lookup( dbip, argv[i], LOOKUP_NOISY)) == DIR_NULL )
-			continue;
-		db_functree( dbip, dp, node_write, node_write, &rt_uniresource, (genptr_t)keepfp );
-	}
-
-	wdb_close(keepfp);
-
-	return TCL_OK;
-}
-
-
 HIDDEN void
 Change_name( dbip, comb, comb_leaf, old_ptr, new_ptr )
 struct db_i		*dbip;
@@ -459,12 +361,16 @@ genptr_t		old_ptr, new_ptr;
  *
  */
 int
-f_killall(
-	ClientData clientData,
-	Tcl_Interp *interp,
-	int	argc,
-	char	**argv)
+cmd_killall(ClientData	clientData,
+	    Tcl_Interp	*interp,
+	    int		argc,
+	    char	**argv)
 {
+#if 0
+	CHECK_DBI_NULL;
+
+	return wdb_killall_cmd(wdbp, interp, argc, argv);
+#else
 	register int	i,k;
 	register struct directory *dp;
 	struct rt_db_internal	intern;
@@ -543,7 +449,8 @@ f_killall(
 	/* reuse argv[] */
 	argv[0] = "kill";
 	(void)signal( SIGINT, SIG_IGN );
-	return f_kill( clientData, interp, argc, argv );
+	return cmd_kill( clientData, interp, argc, argv );
+#endif
 }
 
 
@@ -553,12 +460,16 @@ f_killall(
  *
  */
 int
-f_killtree(
-	ClientData clientData,
-	Tcl_Interp *interp,
-	int	argc,
-	char	**argv)
+cmd_killtree(ClientData	clientData,
+	     Tcl_Interp *interp,
+	     int	argc,
+	     char	**argv)
 {
+#if 0
+	CHECK_DBI_NULL;
+
+	return wdb_kill_cmd(wdbp, interp, argc, argv);
+#else
 	register struct directory *dp;
 	register int i;
 
@@ -589,6 +500,7 @@ f_killtree(
 	(void)signal( SIGINT, SIG_IGN );
 	solid_list_callback();
 	return TCL_OK;
+#endif
 }
 
 /*

@@ -96,6 +96,7 @@ extern double	degtorad, radtodeg;	/* Defined in usepen.c */
 extern struct db_i	*dbip;		       /* defined in ged.c */
 extern int		 dbih;		       /* defined in ged.c */
 extern struct rt_wdb	*wdbp;			/* defined in ged.c */
+extern struct dg_obj	*dgop;			/* defined in ged.c */
 #define	base2local	(dbip->dbi_base2local)
 #define local2base	(dbip->dbi_local2base)
 #define	cur_title	(dbip->dbi_title)      /* current model title */
@@ -537,12 +538,12 @@ f_wmater(
 
 
 /* chgtree.c */
-int f_kill(
+int cmd_kill(
 	ClientData clientData,
 	Tcl_Interp *interp,
 	int	argc,
 	char	**argv);
-int f_name(
+int cmd_name(
 	ClientData clientData,
 	Tcl_Interp *interp,
 	int	argc,
@@ -585,20 +586,9 @@ int f_zap(
 	Tcl_Interp *interp,
 	int	argc,
 	char	**argv);
-int knob_rot(
-	vect_t rvec,
-	char origin,
-	int model_flag,
-	int view_flag,
-	int edit_flag);
 int mged_erot_xyz(
 	char origin,
 	vect_t rvec);
-int mged_etran(const point_t pt);
-int mged_mtran(const vect_t tvec);
-int mged_otran(const vect_t tvec);
-int mged_vtran(const vect_t tvec);
-int mged_tran(const vect_t tvec);
 int mged_svbase(void);
 int mged_vrot_xyz(
 	char origin,
@@ -652,12 +642,12 @@ void vls_long_dpp(
 
 /* dir.c */
 void dir_summary(int flag);
-int f_killall(
+int cmd_killall(
 	ClientData clientData,
 	Tcl_Interp *interp,
 	int	argc,
 	char	**argv);
-int f_killtree(
+int cmd_killtree(
 	ClientData clientData,
 	Tcl_Interp *interp,
 	int	argc,
@@ -698,9 +688,9 @@ void add_solid_path_to_result(
 
 /* dozoom.c */
 void createDList(struct solid *sp);
-void createDLists(struct solid *hsp);
+void createDLists(struct bu_list *hsp);
 void createDListALL(struct solid *sp);
-void createDListsAll(struct solid *hsp);
+void createDListsAll(struct bu_list *hsp);
 void freeDListsAll(unsigned int dlist, int range);
 
 /* edarb.c */

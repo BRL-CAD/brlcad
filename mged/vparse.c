@@ -31,16 +31,21 @@
 #include "./mged_dm.h"
 
 void
-mged_vls_struct_parse(vls, title, how_to_parse, structp, argc, argv)
-struct bu_vls *vls;
-char *title;
-struct bu_structparse *how_to_parse;
-char *structp;
-int argc;
-char *argv[];
+mged_vls_struct_parse(struct bu_vls		*vls,
+		      char			*title,
+		      struct bu_structparse	*how_to_parse,
+		      char			*structp,
+		      int			argc,
+		      char			*argv[])
 {
-  struct bu_vls tmp_vls;
+	struct bu_vls tmp_vls;
 
+#if 0
+	/*XXX
+	 *	We need a few routines in libbu that write
+	 *	to a vls in human readable format.
+	 */
+#else
   bu_vls_init(&tmp_vls);
   start_catching_output(vls);
 
@@ -59,6 +64,7 @@ char *argv[];
 
   stop_catching_output(vls);
   bu_vls_free(&tmp_vls);
+#endif
 }
 
 void

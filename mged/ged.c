@@ -80,6 +80,7 @@ in all countries except the USA.  All rights reserved.";
 #include "./mged_solid.h"
 #include "./sedit.h"
 #include "./mged_dm.h"
+#include "./cmd.h"
 
 #ifndef	LOGFILE
 #define LOGFILE	"/vld/lib/gedlog"	/* usage log */
@@ -140,6 +141,7 @@ int pipe_out[2];
 int pipe_err[2];
 struct db_i *dbip = DBI_NULL;	/* database instance pointer */
 struct rt_wdb *wdbp = RT_WDB_NULL;
+struct dg_obj *dgop = RT_DGO_NULL;
 int update_views = 0;
 int (*cmdline_hook)() = NULL;
 jmp_buf	jmp_env;		/* For non-local gotos */
@@ -176,6 +178,10 @@ struct bn_tol	mged_tol;		/* calculation tolerance */
 struct bu_vls mged_prompt;
 void pr_prompt(), pr_beep();
 int mged_bomb_hook();
+
+#ifdef MGED_USE_VIEW_OBJ
+void mged_view_obj_callback();
+#endif
 
 #ifdef USE_PROTOTYPES
 Tcl_FileProc stdin_input;
@@ -334,13 +340,15 @@ char **argv;
 	BU_GETSTRUCT(view_state, _view_state);
 	view_state->vs_rc = 1;
 	view_ring_init(curr_dm_list->dml_view_state, (struct _view_state *)NULL);
+#ifndef MGED_USE_VIEW_OBJ
 	/* init rotation matrix */
 	view_state->vs_Viewscale = 500;		/* => viewsize of 1000mm (1m) */
 	MAT_IDN( view_state->vs_Viewrot );
 	MAT_IDN( view_state->vs_toViewcenter );
-	MAT_IDN( view_state->vs_ModelDelta );
 	MAT_DELTAS_GET_NEG(view_state->vs_orig_pos, view_state->vs_toViewcenter);
 	view_state->vs_i_Viewscale = view_state->vs_Viewscale;
+#endif
+	MAT_IDN( view_state->vs_ModelDelta );
 
 	am_mode = AMM_IDLE;
 	owner = 1;
@@ -366,8 +374,6 @@ char **argv;
 
 	rt_prep_timer();		/* Initialize timer */
 
-	new_mats();
-
 	es_edflag = -1;		/* no solid editing just now */
 
 	bu_vls_init(&input_str);
@@ -378,9 +384,12 @@ char **argv;
 
 	/* Get set up to use Tcl */
 	mged_setup();
+	new_mats();
+
 	mmenu_init();
 	btn_head_menu(0,0,0);
 	mged_link_vars(curr_dm_list);
+
 
 	{
 	  struct bu_vls vls;
@@ -391,7 +400,7 @@ char **argv;
 	  bu_vls_free(&vls);
 	}
 
-	setview( 0.0, 0.0, 0.0 );
+	setview(0.0, 0.0, 0.0);
 
 	if(dpy_string == (char *)NULL)
 	  dpy_string = getenv("DISPLAY");
@@ -1373,9 +1382,15 @@ event_check( int non_blocking )
       non_blocking++;
       bu_vls_init(&vls);
       bu_vls_printf(&vls, "knob -i -e aX %f aY %f aZ %f\n",
+#ifdef MGED_USE_VIEW_OBJ
+		    edit_rate_model_tran[X] * 0.05 * view_state->vs_vop->vo_scale * base2local,
+		    edit_rate_model_tran[Y] * 0.05 * view_state->vs_vop->vo_scale * base2local,
+		    edit_rate_model_tran[Z] * 0.05 * view_state->vs_vop->vo_scale * base2local);
+#else
 		    edit_rate_model_tran[X] * 0.05 * view_state->vs_Viewscale * base2local,
 		    edit_rate_model_tran[Y] * 0.05 * view_state->vs_Viewscale * base2local,
 		    edit_rate_model_tran[Z] * 0.05 * view_state->vs_Viewscale * base2local);
+#endif
 	
       Tcl_Eval(interp, bu_vls_addr(&vls));
       bu_vls_free(&vls);
@@ -1407,9 +1422,15 @@ event_check( int non_blocking )
       non_blocking++;
       bu_vls_init(&vls);
       bu_vls_printf(&vls, "knob -i -e aX %f aY %f aZ %f\n",
+#ifdef MGED_USE_VIEW_OBJ
+		    edit_rate_view_tran[X] * 0.05 * view_state->vs_vop->vo_scale * base2local,
+		    edit_rate_view_tran[Y] * 0.05 * view_state->vs_vop->vo_scale * base2local,
+		    edit_rate_view_tran[Z] * 0.05 * view_state->vs_vop->vo_scale * base2local);
+#else
 		    edit_rate_view_tran[X] * 0.05 * view_state->vs_Viewscale * base2local,
 		    edit_rate_view_tran[Y] * 0.05 * view_state->vs_Viewscale * base2local,
 		    edit_rate_view_tran[Z] * 0.05 * view_state->vs_Viewscale * base2local);
+#endif
 	
       Tcl_Eval(interp, bu_vls_addr(&vls));
       bu_vls_free(&vls);
@@ -1473,9 +1494,15 @@ event_check( int non_blocking )
 	non_blocking++;
 	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "knob -i -m aX %f aY %f aZ %f\n",
+#ifdef MGED_USE_VIEW_OBJ
+		      view_state->vs_rate_model_tran[X] * 0.05 * view_state->vs_vop->vo_scale * base2local,
+		      view_state->vs_rate_model_tran[Y] * 0.05 * view_state->vs_vop->vo_scale * base2local,
+		      view_state->vs_rate_model_tran[Z] * 0.05 * view_state->vs_vop->vo_scale * base2local);
+#else
 		      view_state->vs_rate_model_tran[X] * 0.05 * view_state->vs_Viewscale * base2local,
 		      view_state->vs_rate_model_tran[Y] * 0.05 * view_state->vs_Viewscale * base2local,
 		      view_state->vs_rate_model_tran[Z] * 0.05 * view_state->vs_Viewscale * base2local);
+#endif
 
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
@@ -1500,9 +1527,15 @@ event_check( int non_blocking )
 	non_blocking++;
 	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "knob -i -v aX %f aY %f aZ %f",
+#ifdef MGED_USE_VIEW_OBJ
+		      view_state->vs_rate_tran[X] * 0.05 * view_state->vs_vop->vo_scale * base2local,
+		      view_state->vs_rate_tran[Y] * 0.05 * view_state->vs_vop->vo_scale * base2local,
+		      view_state->vs_rate_tran[Z] * 0.05 * view_state->vs_vop->vo_scale * base2local);
+#else
 		      view_state->vs_rate_tran[X] * 0.05 * view_state->vs_Viewscale * base2local,
 		      view_state->vs_rate_tran[Y] * 0.05 * view_state->vs_Viewscale * base2local,
 		      view_state->vs_rate_tran[Z] * 0.05 * view_state->vs_Viewscale * base2local);
+#endif
 
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
@@ -1839,6 +1872,9 @@ reset_input_strings()
 void
 new_mats()
 {
+#ifdef MGED_USE_VIEW_OBJ
+	vo_update(view_state->vs_vop, interp, 0);
+#else
 	bn_mat_mul( view_state->vs_model2view, view_state->vs_Viewrot, view_state->vs_toViewcenter );
 	view_state->vs_model2view[15] = view_state->vs_Viewscale;
 	bn_mat_inv( view_state->vs_view2model, view_state->vs_model2view );
@@ -1883,6 +1919,7 @@ new_mats()
 	  bn_mat_inv( view_state->vs_objview2model, view_state->vs_model2objview );
 	}
 	view_state->vs_flag = 1;
+#endif
 }
 
 #ifdef DO_NEW_EDIT_MATS
@@ -1898,12 +1935,31 @@ new_edit_mats()
       continue;
 
     curr_dm_list = p;
+#ifdef MGED_USE_VIEW_OBJ
+    bn_mat_mul( view_state->vs_model2objview, view_state->vs_vop->vo_model2view, modelchanges );
+#else
     bn_mat_mul( view_state->vs_model2objview, view_state->vs_model2view, modelchanges );
+#endif
     bn_mat_inv( view_state->vs_objview2model, view_state->vs_model2objview );
     view_state->vs_flag = 1;
   }
 
   curr_dm_list = save_dm_list;
+}
+#endif
+
+#ifdef MGED_USE_VIEW_OBJ
+void
+mged_view_obj_callback(genptr_t		clientData,
+		       struct view_obj	*vop)
+{
+	struct _view_state *vsp = (struct _view_state *)clientData;
+
+	if (state != ST_VIEW) {
+		bn_mat_mul(vsp->vs_model2objview, vop->vo_model2view, modelchanges);
+		bn_mat_inv(vsp->vs_objview2model, vsp->vs_model2objview);
+	}
+	vsp->vs_flag = 1;
 }
 #endif
 
@@ -2171,7 +2227,7 @@ f_opendb(
 		rt_material_head = save_materp;
 
 		/* Clear out anything in the display */
-		f_zap(clientData, interp, 1, av);
+		cmd_zap(clientData, interp, 1, av);
 
 		/* Close the Tcl database objects */
 		Tcl_Eval(interp, "db close; .inmem close");
@@ -2187,6 +2243,18 @@ f_opendb(
 
 		log_event( "CEASE", "(close)" );
 	}
+
+#ifdef MGED_USE_VIEW_OBJ
+	{
+		register struct dm_list *dmlp;
+
+		/* update local2base and base2local variables for all view objects */
+		FOR_ALL_DISPLAYS(dmlp, &head_dm_list.l) {
+			dmlp->dml_view_state->vs_vop->vo_local2base = dbip->dbi_local2base;
+			dmlp->dml_view_state->vs_vop->vo_base2local = dbip->dbi_base2local;
+		}
+	}
+#endif
 
 	if( dbip->dbi_read_only )
 		bu_vls_printf(&msg, "%s: READ ONLY\n", dbip->dbi_filename);
@@ -2238,6 +2306,8 @@ f_opendb(
 		bu_vls_free(&msg);
 		return TCL_ERROR;
 	}
+
+	dgop->dgo_wdbp = wdbp;
 #endif
 
 	/* Perhaps do something special with the GUI */

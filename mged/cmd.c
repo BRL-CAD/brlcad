@@ -112,6 +112,10 @@ extern int bot_vertex_fuse(), bot_condense();
 struct cmd_list head_cmd_list;
 struct cmd_list *curr_cmd_list;
 
+#ifdef MGED_USE_VIEW_OBJ
+extern void mged_view_obj_callback();
+#endif
+
 int glob_compat_mode = 1;
 int output_as_return = 1;
 
@@ -150,13 +154,13 @@ static struct cmdtab cmdtab[] = {
 	{"arb", f_arbdef},
 	{"arced", f_arced},
 	{"area", f_area},
-	{"arot", f_arot},
+	{"arot", cmd_arot},
 #ifdef DM_X
 	{"attach", f_attach},
 #endif
 	{"attr",	cmd_attr},
-	{"autoview", f_autoview},
-	{"B", f_blast},
+	{"autoview", cmd_autoview},
+	{"B", cmd_blast},
 	{"bev", f_bev},
 	{"import_body", cmd_import_body},
 	{"export_body", cmd_export_body},
@@ -175,8 +179,8 @@ static struct cmdtab cmdtab[] = {
 	{"copymat", f_copymat},
 	{"cp", cmd_copy},
 	{"cpi", f_copy_inv},
-	{"d", f_erase},
-	{"dall", f_erase_all},
+	{"d", cmd_erase},
+	{"dall", cmd_erase_all},
 	{"db_glob", cmd_mged_glob},
 	{"dbconcat", cmd_concat},
 	{"dbfind", cmd_find},
@@ -192,12 +196,12 @@ static struct cmdtab cmdtab[] = {
 #ifdef DM_X
 	{"dm", f_dm},
 #endif
-	{"draw", f_edit},
+	{"draw", cmd_draw},
 	{"dup", cmd_dup},
 #ifdef DM_X
-	{"E", f_evedit},
+	{"E", cmd_E},
 #endif
-	{"e", f_edit},
+	{"e", cmd_draw},
 	{"eac", f_eac},
 	{"echo", cmd_echo},
 	{"edcodes", f_edcodes},
@@ -205,23 +209,23 @@ static struct cmdtab cmdtab[] = {
 	{"edcomb", f_edcomb},
 	{"edgedir", f_edgedir},
 	{"edmater", f_edmater},
-	{"erase", f_erase},
-	{"erase_all", f_erase_all},
+	{"erase", cmd_erase},
+	{"erase_all", cmd_erase_all},
 #ifdef DM_X
-	{"ev", f_ev},
+	{"ev", cmd_ev},
 #endif
 	{"eqn", f_eqn},
 	{"exit", f_quit},
 	{"extrude", f_extrude},
 	{"expand", cmd_expand},
-	{"eye_pt", f_eye_pt},
+	{"eye_pt", cmd_eye_pt},
 	{"e_muves", f_e_muves},
 	{"facedef", f_facedef},
 	{"facetize", f_facetize},
 	{"form",	cmd_form},
 	{"fracture", f_fracture},
 	{"front",	bv_front},
-	{"g", f_group},
+	{"g", cmd_group},
 	{"get",		cmd_get},
 	{"get_comb", cmd_get_comb},
 	{"get_dbip", cmd_get_ptr},
@@ -238,7 +242,7 @@ static struct cmdtab cmdtab[] = {
 	{"hide", cmd_hide },
 	{"history", f_history},
 	{"hist", cmd_hist},
-	{"i", f_instance},
+	{"i", cmd_instance},
 	{"idents", f_tables},
 	{"ill", f_ill},
 	{"in", f_in},
@@ -246,11 +250,11 @@ static struct cmdtab cmdtab[] = {
 	{"item", f_itemair},
 	{"joint", f_joint},
 	{"journal", f_journal},
-	{"keep", f_keep},
+	{"keep", cmd_keep},
 	{"keypoint", f_keypoint},
-	{"kill", f_kill},
-	{"killall", f_killall},
-	{"killtree", f_killtree},
+	{"kill", cmd_kill},
+	{"killall", cmd_killall},
+	{"killtree", cmd_killtree},
 	{"knob", f_knob},
 	{"l", cmd_list},
 	{"l_muves", f_l_muves},
@@ -260,7 +264,7 @@ static struct cmdtab cmdtab[] = {
 #ifdef DM_X
 	{"loadtk", cmd_tk},
 #endif
-	{"lookat", f_lookat},
+	{"lookat", cmd_lookat},
 	{"ls", cmd_ls},
 	{"M", f_mouse},
 	{"make", f_make},
@@ -283,7 +287,7 @@ static struct cmdtab cmdtab[] = {
 	{"model2grid_lu", f_model2grid_lu},
 	{"model2view", f_model2view},
 	{"model2view_lu", f_model2view_lu},
-	{"mrot", f_mrot},
+	{"mrot", cmd_mrot},
 	{"mv", cmd_name},
 	{"mvall", cmd_mvall},
 	{"nirt", f_nirt},
@@ -298,11 +302,11 @@ static struct cmdtab cmdtab[] = {
 	{"oill",		be_o_illuminate},
 #endif
 	{"opendb", f_opendb},
-	{"orientation", f_orientation},
+	{"orientation", cmd_orientation},
 	{"orot", f_rot_obj},
 	{"oscale", f_sc_obj},
 	{"output_hook", cmd_output_hook},
-	{"overlay", f_overlay},
+	{"overlay", cmd_overlay},
 	{"ox",		be_o_x},
 	{"oxy",		be_o_xy},
 	{"oxscale",	be_o_xscale},
@@ -348,6 +352,7 @@ static struct cmdtab cmdtab[] = {
 	{"regions", f_tables},
 	{"reject",	be_reject},
 	{"release", f_release},
+	{"solid_report", cmd_solid_report},
 	{"reset",	bv_reset},
 	{"restore",	bv_vrestore},
 	{"right",	bv_right},
@@ -355,13 +360,14 @@ static struct cmdtab cmdtab[] = {
 	{"rm", cmd_remove},
 	{"rmater", f_rmater},
 	{"rmats", f_rmats},
-	{"rot", f_rot},
+	{"rot", cmd_rot},
 	{"rotobj", f_rot_obj},
 	{"rrt", f_rrt},
 	{"rset", f_rset},
-	{"rt", f_rt},
-	{"rt_abort", cmd_rt_abort},
-	{"rtcheck", f_rtcheck},
+	{"rt", cmd_rt},
+	{"rtabort", cmd_rtabort},
+	{"rtcheck", cmd_rtcheck},
+	{"rtedge", cmd_rt},
 	{"rt_gettrees", cmd_rt_gettrees},
 	{"save",		bv_vsave},
 #if 0
@@ -369,19 +375,20 @@ static struct cmdtab cmdtab[] = {
 #endif
 	{"savekey", f_savekey},
 	{"saveview", f_saveview},
-	{"sca", f_sca},
+	{"sca", cmd_sca},
 	{"sed", f_sed},
 	{"sedit",	be_s_edit},
 	{"sed_apply", f_sedit_apply},
 	{"sed_reset", f_sedit_reset},
 	{"set_more_default", cmd_set_more_default},
-	{"setview", f_setview},
+	{"setview", cmd_setview},
 	{"shader", f_shader},
 	{"share", f_share},
 	{"shells", cmd_shells},
 	{"showmats", cmd_showmats},
 	{"sill",		be_s_illuminate},
 	{"size", f_size},
+	{"solid_report", cmd_solid_report},
 	{"solids", f_tables},
 	{"solids_on_ray", cmd_solids_on_ray},
 	{"srot",		be_s_rotate},
@@ -397,10 +404,10 @@ static struct cmdtab cmdtab[] = {
 	{"ted", f_tedit},
 	{"tie", f_tie},
 	{"title", cmd_title},
-	{"tol", f_tol},
+	{"tol", cmd_tol},
 	{"top",		bv_top},
 	{"tops", cmd_tops},
-	{"tra", f_tra},
+	{"tra", cmd_tra},
 	{"track", f_amtrack},
 	{"translate", f_tr_obj},
 	{"tree", cmd_tree},
@@ -411,8 +418,10 @@ static struct cmdtab cmdtab[] = {
 	{"vdraw", cmd_vdraw},
 	{"view", f_view},
 	{"view_ring", f_view_ring},
+#if 0
 	{"viewget", cmd_viewget},
 	{"viewset", cmd_viewset},
+#endif
 	{"viewsize", f_size},		/* alias "size" for saveview scripts */
 	{"view2grid_lu", f_view2grid_lu},
 	{"view2model", f_view2model},
@@ -421,7 +430,7 @@ static struct cmdtab cmdtab[] = {
 	{"vnirt", f_vnirt},
 	{"vquery_ray", f_vnirt},
 	{"vrmgr", f_vrmgr},
-	{"vrot", f_vrot},
+	{"vrot", cmd_vrot},
 #if 0
 	{"vrot_center", f_vrot_center},
 #endif
@@ -433,10 +442,10 @@ static struct cmdtab cmdtab[] = {
 	{"who", cmd_who},
 	{"winset", f_winset},
 	{"wmater", f_wmater},
-	{"x", f_debug},
+	{"x", cmd_solid_report},
 	{"xpush", cmd_xpush},
-	{"Z", f_zap},
-	{"zoom", f_zoom},
+	{"Z", cmd_zap},
+	{"zoom", cmd_zoom},
 	{"zoomin",	bv_zoomin},
 	{"zoomout",	bv_zoomout},
 	{0, 0}
@@ -795,10 +804,25 @@ mged_setup()
 	/* Initialize libbn */
 	Bn_Init(interp);
 
-	/* Initialize librt */
+	/* Initialize librt (includes database, drawable geometry and view objects) */
 	if (Rt_Init(interp) == TCL_ERROR) {
 		bu_log("Rt_Init error %s\n", interp->result);
 	}
+
+#if 1
+	/* initialize MGED's drawable geometry object */
+	dgop = dgo_open_cmd("mged", wdbp);
+
+#ifdef MGED_USE_VIEW_OBJ
+	view_state->vs_vop = vo_open_cmd("");
+	view_state->vs_vop->vo_callback = mged_view_obj_callback;
+	view_state->vs_vop->vo_clientData = view_state;
+	view_state->vs_vop->vo_scale = 500;
+	view_state->vs_vop->vo_size = 2.0 * view_state->vs_vop->vo_scale;
+	view_state->vs_vop->vo_invSize = 1.0 / view_state->vs_vop->vo_size;
+	MAT_DELTAS_GET_NEG(view_state->vs_orig_pos, view_state->vs_vop->vo_center);
+#endif
+#endif
 
 	/* register commands */
 	cmd_setup();
@@ -2433,7 +2457,7 @@ char **argv;
 	av[1] = argv[2];
 	av[2] = NULL;
 
-	return f_edit(clientData, interp, 2, av);
+	return cmd_draw(clientData, interp, 2, av);
 }
 
 /*			F _ M A K E _ N A M E
@@ -2449,6 +2473,7 @@ cmd_make_name(ClientData	clientData,
 	      char		**argv)
 {
 	CHECK_DBI_NULL;
+
 	return wdb_make_name_cmd(wdbp, interp, argc, argv);
 }
 
@@ -2489,14 +2514,18 @@ char	**argv;
 		return TCL_ERROR;
 	}
 
+#if 0
 	if (setjmp(jmp_env) == 0)
 		(void)signal(SIGINT, sig3);  /* allow interupts */
         else
 		return TCL_OK;
+#endif
 
 	ret = wdb_pathsum_cmd(wdbp, interp, argc, argv);
 
+#if 0
 	(void)signal( SIGINT, SIG_IGN );
+#endif
 	return ret;
 }
 
@@ -2513,7 +2542,6 @@ char **argv;
 	int ret;
 
 	CHECK_DBI_NULL;
-	CHECK_READ_ONLY;
 
 	if (argc < 3) {
 		Tcl_AppendResult(interp, MORE_ARGS_STR,
@@ -2552,7 +2580,6 @@ int argc;
 char **argv;
 {
 	CHECK_DBI_NULL;
-	CHECK_READ_ONLY;
 
 	return wdb_push_cmd(wdbp, interp, argc, argv);
 }
@@ -2565,7 +2592,6 @@ int argc;
 char **argv;
 {
 	CHECK_DBI_NULL;
-	CHECK_READ_ONLY;
 
 	return wdb_hide_cmd(wdbp, interp, argc, argv);
 }
@@ -2578,7 +2604,6 @@ int argc;
 char **argv;
 {
 	CHECK_DBI_NULL;
-	CHECK_READ_ONLY;
 
 	return wdb_unhide_cmd(wdbp, interp, argc, argv);
 }
@@ -2631,7 +2656,6 @@ int argc;
 char **argv;
 {
 	CHECK_DBI_NULL;
-	CHECK_READ_ONLY;
 
 	return wdb_make_bb_cmd(wdbp, interp, argc, argv);
 }
@@ -2718,10 +2742,12 @@ cmd_tree(ClientData	clientData,
 
 	CHECK_DBI_NULL;
 
+#if 0
 	if (setjmp(jmp_env) == 0)
 		(void)signal(SIGINT, sig3);  /* allow interupts */
 	else
 		return TCL_OK;
+#endif
 
 	/*
 	 * The tree command is wrapped by tclscripts/tree.tcl and calls this
@@ -2730,7 +2756,9 @@ cmd_tree(ClientData	clientData,
 	argv[0] = "tree";
 	ret = wdb_tree_cmd(wdbp, interp, argc, argv);
 
+#if 0
 	(void)signal(SIGINT, SIG_IGN);
+#endif
 	return ret;
 }
 
@@ -2747,7 +2775,6 @@ cmd_mvall(ClientData	clientData,
 	char		**argv)
 {
 	CHECK_DBI_NULL;
-	CHECK_READ_ONLY;
 
 	return wdb_move_all_cmd(wdbp, interp, argc, argv);
 }
@@ -2871,6 +2898,7 @@ cmd_units(ClientData	clientData,
 	  int		argc,
 	  char		**argv)
 {
+	register struct dm_list *dmlp;
 	int		ret;
 	fastf_t		sf;
 
@@ -2883,6 +2911,13 @@ cmd_units(ClientData	clientData,
 	sf = dbip->dbi_base2local / sf;
 	update_grids(sf);
 	update_views = 1;
+
+#ifdef MGED_USE_VIEW_OBJ
+	FOR_ALL_DISPLAYS(dmlp, &head_dm_list.l) {
+		dmlp->dml_view_state->vs_vop->vo_local2base = dbip->dbi_local2base;
+		dmlp->dml_view_state->vs_vop->vo_base2local = dbip->dbi_base2local;
+	}
+#endif
 
 	return ret;
 }
@@ -2930,14 +2965,18 @@ cmd_cat(ClientData	clientData,
 
 	CHECK_DBI_NULL;
 
+#if 0
 	if (setjmp(jmp_env) == 0)
 		(void)signal(SIGINT, sig3);	/* allow interupts */
 	else
 		return TCL_OK;
+#endif
 
 	ret = wdb_cat_cmd(wdbp, interp, argc, argv);
 
+#if 0
 	(void)signal(SIGINT, SIG_IGN);
+#endif
 	return ret;
 }
 
@@ -3003,7 +3042,7 @@ cmd_copy(ClientData	clientData,
 	av[2] = NULL;
 
 	/* draw the new object */
-	return f_edit(clientData, interp, 2, av);
+	return cmd_draw(clientData, interp, 2, av);
 }
 
 /*
@@ -3055,4 +3094,235 @@ cmd_find(ClientData	clientData,
 	CHECK_DBI_NULL;
 
 	return wdb_find_cmd(wdbp, interp, argc, argv);
+}
+
+/* Grouping command */
+/* Format: g groupname object1 object2 .... objectn	*/
+int
+cmd_group(ClientData	clientData,
+	  Tcl_Interp	*interp,
+	  int		argc,
+	  char		**argv)
+{
+	CHECK_DBI_NULL;
+
+	return wdb_group_cmd(wdbp, interp, argc, argv);
+}
+
+/* Create an instance of something */
+/* Format: i object combname [op]	*/
+int
+cmd_instance(ClientData	clientData,
+	     Tcl_Interp *interp,
+	     int	argc,
+	     char	**argv)
+{
+	CHECK_DBI_NULL;
+
+	return wdb_instance_cmd(wdbp, interp, argc, argv);
+}
+
+int
+cmd_keep(ClientData	clientData,
+	 Tcl_Interp	*interp,
+	 int		argc,
+	 char		**argv)
+{
+	CHECK_DBI_NULL;
+
+	return wdb_keep_cmd(wdbp, interp, argc, argv);
+}
+
+/*
+ *			C M D _ L I S T
+ *
+ *  List object information, verbose, in GIFT-compatible format.
+ *  Format: l object
+ */
+int
+cmd_list(ClientData	clientData,
+	 Tcl_Interp	*interp,
+	 int		argc,
+	 char		**argv)
+{
+	int recurse=0;
+
+	CHECK_DBI_NULL;
+
+	if (argc > 1 && argv[1][0] == '-' && argv[1][1] == 'r' && argv[1][2] == '\0')
+		recurse = 1;
+
+	/*
+	 * Here we have no usable arguments,
+	 * so we better be in an edit state.
+	 */
+	if ((argc == 1 || argc == 2 && recurse) && illump != SOLID_NULL) {
+		register int	i;
+		struct bu_vls	vls;
+		int		ret;
+		int		ac;
+		char		*av[4];
+
+		bu_vls_init(&vls);
+
+		if (state == ST_S_EDIT)
+			db_path_to_vls( &vls, &illump->s_fullpath );
+		else if (state == ST_O_EDIT) {
+			int i;
+			for( i=0; i < ipathpos; i++ ) {
+				bu_vls_printf(&vls, "/%s",
+					      DB_FULL_PATH_GET(&illump->s_fullpath,i)->d_namep );
+			}
+		} else
+			return TCL_ERROR;
+
+		if (recurse) {
+			av[0] = "l";
+			av[1] = "-r";
+			av[2] = bu_vls_addr(&vls);
+			av[3] = (char *)NULL;
+			ac = 3;
+		} else {
+			av[0] = "l";
+			av[1] = bu_vls_addr(&vls);
+			av[2] = (char *)NULL;
+			ac = 2;
+		}
+		ret = wdb_list_cmd(wdbp, interp, ac, av);
+		bu_vls_free(&vls);
+		return ret;
+	} else {
+		return wdb_list_cmd(wdbp, interp, argc, argv);
+	}
+}
+
+/*
+ *			F _ T O L
+ *
+ *  "tol"	displays current settings
+ *  "tol abs #"	sets absolute tolerance.  # > 0.0
+ *  "tol rel #"	sets relative tolerance.  0.0 < # < 1.0
+ *  "tol norm #" sets normal tolerance, in degrees.
+ *  "tol dist #" sets calculational distance tolerance
+ *  "tol perp #" sets calculational normal tolerance.
+ */
+int
+cmd_tol(ClientData	clientData,
+	Tcl_Interp	*interp,
+	int		argc,
+	char		**argv)
+{
+	CHECK_DBI_NULL;
+
+	return wdb_tol_cmd(wdbp, interp, argc, argv);
+}
+
+/* defined in chgview.c */
+extern int edit_com();
+
+/* ZAP the display -- then edit anew */
+/* Format: B object	*/
+int
+cmd_blast(ClientData	clientData,
+	  Tcl_Interp	*interp,
+	  int		argc,
+	  char		**argv)
+{
+
+	dgo_zap_cmd(dgop, interp);
+
+	return edit_com(argc, argv, 1, 1);
+}
+
+/* Edit something (add to visible display) */
+/* Format: e object	*/
+int
+cmd_draw(ClientData	clientData,
+	 Tcl_Interp	*interp,
+	 int		argc,
+	 char		**argv)
+{
+	return edit_com(argc, argv, 1, 1);
+}
+
+/* Format: ev objects	*/
+int
+cmd_ev(ClientData	clientData,
+       Tcl_Interp *interp,
+       int	argc,
+       char	**argv)
+{
+	return edit_com(argc, argv, 3, 1);
+}
+
+/*
+ *			C M D _ V D R A W
+ */
+int
+cmd_vdraw(ClientData	clientData,
+	  Tcl_Interp	*interp,
+	  int		argc,
+	  char		**argv)
+{
+	return dgo_vdraw_cmd(dgop, interp, argc, argv);
+}
+
+/*
+ *			C M D _ E
+ *
+ *  The "Big E" command.
+ *  Evaluated Edit something (add to visible display)
+ *  Usage: E object(s)
+ */
+int
+cmd_E(ClientData	clientData,
+	 Tcl_Interp	*interp,
+	 int		argc,
+	 char	**argv)
+{
+	int	initial_blank_screen;
+	register struct dm_list *dmlp;
+	register struct dm_list *save_dmlp;
+	register struct cmd_list *save_cmd_list;
+	int ret;
+
+	CHECK_DBI_NULL;
+	initial_blank_screen = BU_LIST_IS_EMPTY(&dgop->dgo_headSolid);
+
+	if ((ret = dgo_E_cmd(dgop, interp, argc, argv)) != TCL_OK)
+		return ret;
+
+	update_views = 1;
+
+	save_dmlp = curr_dm_list;
+	save_cmd_list = curr_cmd_list;
+	FOR_ALL_DISPLAYS(dmlp, &head_dm_list.l){
+		curr_dm_list = dmlp;
+		if (curr_dm_list->dml_tie)
+			curr_cmd_list = curr_dm_list->dml_tie;
+		else
+			curr_cmd_list = &head_cmd_list;
+
+		/* If we went from blank screen to non-blank, resize */
+		if (mged_variables->mv_autosize  && initial_blank_screen &&
+		    BU_LIST_NON_EMPTY(&dgop->dgo_headSolid)) {
+			struct view_ring *vrp;
+
+			size_reset();
+			new_mats();
+			(void)mged_svbase();
+
+			for (BU_LIST_FOR(vrp, view_ring, &view_state->vs_headView.l))
+#ifdef MGED_USE_VIEW_OBJ
+				vrp->vr_scale = view_state->vs_vop->vo_scale;
+#else
+			vrp->vr_scale = view_state->vs_Viewscale;
+#endif
+		}
+	}
+
+	curr_dm_list = save_dmlp;
+	curr_cmd_list = save_cmd_list;
+
+	return TCL_OK;
 }

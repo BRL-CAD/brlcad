@@ -48,6 +48,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./ged.h"
 #include "./mged_solid.h"
 #include "./mged_dm.h"
+#include "./cmd.h"
 
 void	ext4to6(),old_ext4to6();
 
@@ -704,7 +705,11 @@ char	**argv;
 	arb->magic = RT_ARB_INTERNAL_MAGIC;
 
 	/* put vertex of new solid at center of screen */
+#ifdef MGED_USE_VIEW_OBJ
+	VSET(arb->pt[0], -view_state->vs_vop->vo_center[MDX], -view_state->vs_vop->vo_center[MDY], -view_state->vs_vop->vo_center[MDZ]);
+#else
 	VSET( arb->pt[0] , -view_state->vs_toViewcenter[MDX] , -view_state->vs_toViewcenter[MDY] , -view_state->vs_toViewcenter[MDZ] );
+#endif
 
 	/* calculate normal vector defined by rot,fb */
 	norm1[0] = cos(fb) * cos(rota);
@@ -756,7 +761,7 @@ char	**argv;
 	  av[2] = NULL;
 
 	  /* draw the "made" solid */
-	  return f_edit( clientData, interp, 2, av );
+	  return cmd_draw( clientData, interp, 2, av );
 	}
 }
 

@@ -388,7 +388,7 @@ mged_attach(
   share_dlist(curr_dm_list);
 
   if(displaylist && mged_variables->mv_dlist && !dlist_state->dl_active){
-    createDLists(&HeadSolid); 
+    createDLists(&dgop->dgo_headSolid); 
     dlist_state->dl_active = 1;
   }
 #endif
@@ -616,7 +616,10 @@ struct dm_list *initial_dm_list;
   dlist_state->dl_rc = 1;
 
   BU_GETSTRUCT(view_state, _view_state);
-  *view_state = *initial_dm_list->dml_view_state;		/* struct copy */
+  *view_state = *initial_dm_list->dml_view_state;			/* struct copy */
+  view_state->vs_vop = vo_open_cmd("");
+  *view_state->vs_vop = *initial_dm_list->dml_view_state->vs_vop;	/* struct copy */
+  view_state->vs_vop->vo_clientData = view_state;
   view_state->vs_rc = 1;
   view_ring_init(curr_dm_list->dml_view_state, (struct _view_state *)NULL);
 

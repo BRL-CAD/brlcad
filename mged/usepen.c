@@ -289,7 +289,7 @@ illuminate( y )  {
 	 */
 	count = ((fastf_t)y + GED_MAX) * ndrawn / GED_RANGE;
 
-	FOR_ALL_SOLIDS(sp, &HeadSolid.l)  {
+	FOR_ALL_SOLIDS(sp, &dgop->dgo_headSolid)  {
 		/* Only consider solids which are presently in view */
 		if( sp->s_flag == UP )  {
 		        if( count-- == 0 ) {
@@ -352,13 +352,13 @@ f_aip(
     sp = illump;
     sp->s_iflag = DOWN;
     if(argc == 1 || *argv[1] == 'f'){
-      if(BU_LIST_NEXT_IS_HEAD(sp, &HeadSolid.l))
-	sp = BU_LIST_NEXT(solid, &HeadSolid.l);
+      if(BU_LIST_NEXT_IS_HEAD(sp, &dgop->dgo_headSolid))
+	sp = BU_LIST_NEXT(solid, &dgop->dgo_headSolid);
       else
 	sp = BU_LIST_PNEXT(solid, sp);
     }else if(*argv[1] == 'b'){
-      if(BU_LIST_PREV_IS_HEAD(sp, &HeadSolid.l))
-	sp = BU_LIST_PREV(solid, &HeadSolid.l);
+      if(BU_LIST_PREV_IS_HEAD(sp, &dgop->dgo_headSolid))
+	sp = BU_LIST_PREV(solid, &dgop->dgo_headSolid);
       else
 	sp = BU_LIST_PLAST(solid, sp);
     }else{
@@ -375,67 +375,6 @@ f_aip(
 }
 
 /*
- *			B U I L D H R O T
- *
- * This routine builds a Homogeneous rotation matrix, given
- * alpha, beta, and gamma as angles of rotation.
- *
- * NOTE:  Only initialize the rotation 3x3 parts of the 4x4
- * There is important information in dx,dy,dz,s .
- */
-void
-buildHrot( matp_t mat, double alpha, double beta, double ggamma )
-{
-	static fastf_t calpha, cbeta, cgamma;
-	static fastf_t salpha, sbeta, sgamma;
-
-	calpha = cos( alpha );
-	cbeta = cos( beta );
-	cgamma = cos( ggamma );
-
-	salpha = sin( alpha );
-	sbeta = sin( beta );
-	sgamma = sin( ggamma );
-
-	/*
-	 * compute the new rotation to apply to the previous
-	 * viewing rotation.
-	 * Alpha is angle of rotation about the X axis, and is done third.
-	 * Beta is angle of rotation about the Y axis, and is done second.
-	 * Gamma is angle of rotation about Z axis, and is done first.
-	 */
-#ifdef m_RZ_RY_RX
-	/* view = model * RZ * RY * RX (Neuman+Sproul, premultiply) */
-	mat[0] = cbeta * cgamma;
-	mat[1] = -cbeta * sgamma;
-	mat[2] = -sbeta;
-
-	mat[4] = -salpha * sbeta * cgamma + calpha * sgamma;
-	mat[5] = salpha * sbeta * sgamma + calpha * cgamma;
-	mat[6] = -salpha * cbeta;
-
-	mat[8] = calpha * sbeta * cgamma + salpha * sgamma;
-	mat[9] = -calpha * sbeta * sgamma + salpha * cgamma;
-	mat[10] = calpha * cbeta;
-#endif
-	/* This is the correct form for this version of GED */
-	/* view = RX * RY * RZ * model (Rodgers, postmultiply) */
-	/* Point thumb along axis of rotation.  +Angle as hand closes */
-	mat[0] = cbeta * cgamma;
-	mat[1] = -cbeta * sgamma;
-	mat[2] = sbeta;
-
-	mat[4] = salpha * sbeta * cgamma + calpha * sgamma;
-	mat[5] = -salpha * sbeta * sgamma + calpha * cgamma;
-	mat[6] = -salpha * cbeta;
-
-	mat[8] = -calpha * sbeta * cgamma + salpha * sgamma;
-	mat[9] = calpha * sbeta * sgamma + salpha * cgamma;
-	mat[10] = calpha * cbeta;
-}
-
-
-/*
  *  			W R T _ V I E W
  *  
  *  Given a model-space transformation matrix "change",
@@ -447,13 +386,22 @@ wrt_view( mat_t out, const mat_t change, const mat_t in )
 {
 	static mat_t t1, t2;
 
-	bn_mat_mul( t1, view_state->vs_toViewcenter, in );
-	bn_mat_mul( t2, change, t1 );
+#ifdef MGED_USE_VIEW_OBJ
+	bn_mat_mul(t1, view_state->vs_vop->vo_center, in);
+	bn_mat_mul(t2, change, t1);
 
 	/* Build "fromViewcenter" matrix */
-	MAT_IDN( t1 );
-	MAT_DELTAS( t1, -view_state->vs_toViewcenter[MDX], -view_state->vs_toViewcenter[MDY], -view_state->vs_toViewcenter[MDZ] );
-	bn_mat_mul( out, t1, t2 );
+	MAT_IDN(t1);
+	MAT_DELTAS(t1, -view_state->vs_vop->vo_center[MDX], -view_state->vs_vop->vo_center[MDY], -view_state->vs_vop->vo_center[MDZ]);
+#else
+	bn_mat_mul(t1, view_state->vs_toViewcenter, in);
+	bn_mat_mul(t2, change, t1);
+
+	/* Build "fromViewcenter" matrix */
+	MAT_IDN(t1);
+	MAT_DELTAS(t1, -view_state->vs_toViewcenter[MDX], -view_state->vs_toViewcenter[MDY], -view_state->vs_toViewcenter[MDZ]);
+#endif
+	bn_mat_mul(out, t1, t2);
 }
 
 /*
@@ -600,7 +548,7 @@ f_matpick(
 	}
 got:
 	/* Include all solids with same tree top */
-	FOR_ALL_SOLIDS(sp, &HeadSolid.l)  {
+	FOR_ALL_SOLIDS(sp, &dgop->dgo_headSolid)  {
 		for( j = 0; j <= ipathpos; j++ )  {
 			if( DB_FULL_PATH_GET(&sp->s_fullpath,j) !=
 			    DB_FULL_PATH_GET(&illump->s_fullpath,j) )
