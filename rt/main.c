@@ -111,6 +111,7 @@ char **argv;
 
 	/* Before option processing, get default number of processors */
 	npsw = rt_avail_cpus();		/* Use all that are present */
+	if( npsw > DEFAULT_PSW )  npsw = DEFAULT_PSW;
 
 	/* Process command line options */
 	if ( !get_args( argc, argv ) )  {
