@@ -256,12 +256,12 @@ struct partition *PartHeadp;
 		    ap->a_level > MAX_BOUNCE )  {
 		    	if( rdebug&RDEBUG_SHOWERR )  {
 				VSET( ap->a_color, 9, 0, 0 );	/* RED */
+				rt_log("colorview:  eye inside %s (x=%d, y=%d, lvl=%d)\n",
+					pp->pt_inseg->seg_stp->st_name,
+					ap->a_x, ap->a_y, ap->a_level);
 		    	} else {
 		    		VSETALL( ap->a_color, 0.18 );	/* 18% Grey */
 		    	}
-			rt_log("colorview:  eye inside %s (x=%d, y=%d, lvl=%d)\n",
-				pp->pt_inseg->seg_stp->st_name,
-				ap->a_x, ap->a_y, ap->a_level);
 			return(1);
 		}
 		/* Push on to exit point, and trace on from there */
