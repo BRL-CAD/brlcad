@@ -103,8 +103,17 @@ extern int mged_slider_link_vars();
 /* defined in chgmodel.c */
 extern void set_localunit_TclVar();
 
+/* defined in dodraw.c */
+extern unsigned char geometry_default_color[];
+
+/* defined in libdm/dm-Null.c */
 extern struct dm dm_Null;
+
+/* defined in set.c */
 extern struct _mged_variables default_mged_variables;
+
+/* defined in color_scheme.c */
+extern struct _color_scheme default_color_scheme;
 
 int pipe_out[2];
 int pipe_err[2];
@@ -301,7 +310,8 @@ char **argv;
 	bu_vls_strcpy(&tkName, "nu");
 	BU_GETSTRUCT(curr_dm_list->s_info, shared_info);
 	BU_GETSTRUCT(mged_variables, _mged_variables);
-        *mged_variables = default_mged_variables;
+	*mged_variables = default_mged_variables;	/* struct copy */
+	*color_scheme = default_color_scheme;		/* struct copy */
 	am_mode = AMM_IDLE;
 	rc = 1;
 	owner = 1;
@@ -401,8 +411,6 @@ char **argv;
 	  /* Command line may have more than 2 args, opendb only wants 2 */
 	  if(f_opendb( (ClientData)NULL, interp, 2, argv ) == TCL_ERROR)
 	    mged_finish(1);
-	  else
-	    bu_log("%s", interp->result);
 	}
 
 	if( dbip != DBI_NULL && (read_only_flag || dbip->dbi_read_only) )
@@ -415,6 +423,14 @@ char **argv;
 	if(interactive){
 	  /* This is an interactive mged, process .mgedrc */
 	  do_rc();
+#if 1
+	  /*
+	   * Initialze variables here in case the user specified changes
+	   * to the defaults in their .mgedrc file.
+	   */
+	  *mged_variables = default_mged_variables;	/* struct copy */
+	  *color_scheme = default_color_scheme;		/* struct copy */
+#endif
 
 	  if(classic_mged)
 	    get_attached();
@@ -1484,17 +1500,20 @@ refresh()
   struct bu_vls overlay_vls;
   struct bu_vls tmp_vls;
   register int do_overlay = 1;
+  double elapsed_time = -1;
+
+  rt_prep_timer();
 
   save_dm_list = curr_dm_list;
   FOR_ALL_DISPLAYS(p, &head_dm_list.l){
-    double	elapsed_time;
-
     /*
      * if something has changed, then go update the display.
      * Otherwise, we are happy with the view we have
      */
     curr_dm_list = p;
     if(mapped && (update_views || dmaflag || dirty)) {
+      VMOVE(geometry_default_color,color_scheme->geo_def);
+
       if(dbip != DBI_NULL){
 	if(do_overlay){
 	  bu_vls_init(&overlay_vls);
@@ -1510,8 +1529,10 @@ refresh()
       if( mged_variables->predictor )
 	predictor_frame();
 
+#if 1
       rt_prep_timer();
       elapsed_time = -1;		/* timer running */
+#endif
 
       DM_DRAW_BEGIN(dmp);	/* update displaylist prolog */
 
@@ -1558,30 +1579,34 @@ refresh()
 	if (adc_draw)
 	  adcursor();
 
+	if(mged_variables->v_axes)
+	  draw_v_axes();
+
+	if(mged_variables->m_axes)
+	  draw_m_axes();
+
+	if(mged_variables->e_axes &&
+	   (state == ST_S_EDIT || state == ST_O_EDIT))
+	  draw_e_axes();
+
 	/* Display titles, etc., if desired */
 	bu_vls_strcpy(&tmp_vls, bu_vls_addr(&overlay_vls));
 	dotitles(&tmp_vls);
 	bu_vls_trunc(&tmp_vls, 0);
       }
 
-      if(mged_variables->v_axes)
-	draw_v_axes();
-
-      if(mged_variables->m_axes)
-	draw_m_axes();
-
-      if(mged_variables->e_axes &&
-	 (state == ST_S_EDIT || state == ST_O_EDIT))
-	draw_e_axes();
-
       /* Draw center dot */
-      DM_SET_FGCOLOR(dmp, DM_YELLOW_R, DM_YELLOW_G, DM_YELLOW_B, 1);
+      DM_SET_FGCOLOR(dmp,
+		     color_scheme->fp_center_dot[0],
+		     color_scheme->fp_center_dot[1],
+		     color_scheme->fp_center_dot[2], 1);
       DM_DRAW_POINT_2D(dmp, 0.0, 0.0);
 
       DM_DRAW_END(dmp);
 
       dirty = 0;
 
+#if 0
       if (elapsed_time < 0)  {
 	(void)rt_get_timer( (struct bu_vls *)0, &elapsed_time );
 	/* Only use reasonable measurements */
@@ -1590,8 +1615,20 @@ refresh()
 	  frametime = 0.9 * frametime + 0.1 * elapsed_time;
 	}
       }
+#endif
     }
   }
+
+#if 1
+  if (elapsed_time < 0)  {
+    (void)rt_get_timer( (struct bu_vls *)0, &elapsed_time );
+    /* Only use reasonable measurements */
+    if( elapsed_time > 1.0e-5 && elapsed_time < 30 )  {
+      /* Smoothly transition to new speed */
+      frametime = 0.9 * frametime + 0.1 * elapsed_time;
+    }
+  }
+#endif
 
   FOR_ALL_DISPLAYS(p, &head_dm_list.l)
     p->s_info->_dmaflag = 0;
@@ -1956,8 +1993,10 @@ char	**argv;
 	perror( argv[1] );
 	bu_log("Create new database (y|n)[n]? ");
 	(void)fgets(line, sizeof(line), stdin);
-	if( line[0] != 'y' && line[0] != 'Y' )
-	    return TCL_OK;
+	if( line[0] != 'y' && line[0] != 'Y' ) {
+	  bu_log("Warning: no database is currently opened!\n");
+	  return TCL_OK;
+	}
       }else{
 	int status;
 	struct bu_vls vls;
@@ -1973,11 +2012,10 @@ char	**argv;
 	status = Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 
-	if(status != TCL_OK)
+	if(status != TCL_OK || interp->result[0] != '0') {
+	  bu_log("Warning: no database is currently opened!\n");
 	  return TCL_OK;
-
-	if(interp->result[0] != '0')
-	  return TCL_OK;
+	}
       }
     } else { /* not initializing mged */
       if(argc == 2){
