@@ -5,11 +5,11 @@ Installing the BRL-CAD Package
 .br
 Release 4.4
 .sp
-10-October-1994
+4-January-1995
 .AU
 Michael John Muuss
 .AI
-US Army Research Laboratory
+U.S. Army Research Laboratory
 APG, MD  21005-5068
 <Mike@ARL.MIL>
 .NH 1
@@ -1110,6 +1110,9 @@ FORTRAN Compiler Configuration
 .PP
 The full path to the FORTRAN compiler is specified in the symbol FC.
 The default value is /usr/bin/f77.
+Note that there is no longer a single line of FORTRAN code in
+the BRL-CAD Package, but the Cakefiles still suport it,
+as a little user-developed code is still in FORTRAN.
 .NH 3
 Host Name
 .PP
@@ -1490,15 +1493,6 @@ kindly provided by Henry Spencer at U of Toronto Zoology,
 In this way, all systems can have nicely formatted manual pages online,
 while leaving the sources for the manual pages in \fBnroff\fR format.
 .NH 2
-C to FORTRAN Linkage
-.PP
-The Whetstone benchmark is written in FORTRAN, with a subroutine
-in C for determining timings.  The linkage between the two languages
-is very system dependent, and you are likely to have to fiddle with
-the C code to obtain correct operation.  It was felt that the benefit
-of having this well known benchmark on the tape was worth braving
-the non-portability for.
-.NH 2
 DEC VAX, 4.1 BSD and DEC Ultrix
 .PP
 The C compiler on 4.1 BSD UNIX systems, and on DEC Ultrix systems
@@ -1718,6 +1712,18 @@ SunView changing the process group of \fBmged\fR when the local graphics
 window is opened.
 If you are a Bourne Shell user and you experience this problem,
 try running \fBcsh\fR before starting \fBmged\fR.
+.NH 2
+DEC ALPHA PROBLEMS
+.PP
+The DEC Alpha system running DEC OSF/1 V3.0 has a bug in /bin/sh
+which causes the shell to segmentation fault when executing this line:
+.br
+              eval `grep '^RELEASE=' ../gen.sh`
+.br
+in the files newvers.sh and sharedlibvers.sh.  There are workarounds
+included in both files, simply comment out the defective line and
+uncomment the workaround, and all will be well.
+A bug report has been filed with the vendor.
 .NH 1
 ENHANCEMENTS
 .PP
