@@ -11,3 +11,8 @@ clobber:
 	rm -f *.log *.pix	# last try
 
 EXTRA_DIST = lgt.sh perf.sh pretty.sh recheck.sh run.sh try.sh
+
+benchmark: all
+	sh run.sh
+
+bench: benchmark
