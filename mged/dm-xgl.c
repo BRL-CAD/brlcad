@@ -400,7 +400,7 @@ XGL_open()
 		dup2(p0[1], 1);		/* stdout to parent */
 		dup2(p1[0], 0);		/* stdin from parent */
 		dup2(p3[0], cmd_fd);	/* special "command" from parent */
-		for(fds = getdtablesize(); fds > 4; close(--fds));
+		for(fds = sysconf(_SC_OPEN_MAX); fds > 4; close(--fds));
 
 		xv_init(0);		/* init xview */
 		init_create_icons();	/* create icon */
@@ -1635,7 +1635,7 @@ int	fd;
 	FD_ZERO(&readfds);
 	FD_SET(fd, &readfds);
 
-	if(select(getdtablesize(), &readfds, NULL, NULL, &timeout) > 0) {
+	if(select(sysconf(_SC_OPEN_MAX), &readfds, NULL, NULL, &timeout) > 0) {
 		return(1);
 	} else {
 		return(0);

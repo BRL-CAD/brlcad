@@ -1137,7 +1137,7 @@ int		noblock;
 
 	if (ir_debug)
 		fprintf(stderr, "Ir_input()\n");
-	if( (width = getdtablesize()) <= 0 )
+	if( (width = sysconf(_SC_OPEN_MAX)) <= 0 )
 		width = 32;
 	files = *input;		/* save, for restore on each loop */
 	/* FD_SET( gl_fd, &files ); */

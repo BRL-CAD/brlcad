@@ -429,7 +429,7 @@ int		noblock;
 	int		cnt;
 	register int	i;
 
-	if( (width = getdtablesize()) <= 0 )
+	if( (width = sysconf(_SC_OPEN_MAX)) <= 0 )
 		width = 32;
 
 	files = *input;		/* save, for restore on each loop */

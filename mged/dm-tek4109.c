@@ -481,7 +481,7 @@ int		noblock;
 	int		width;
 	int		cnt;
 
-	if( (width = getdtablesize()) <= 0 )
+	if( (width = sysconf(_SC_OPEN_MAX)) <= 0 )
 		width = 32;
 
 	if( second_fd )  FD_SET( second_fd, input );
