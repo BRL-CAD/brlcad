@@ -271,6 +271,8 @@ CONST struct rt_tol	*tol;
 
 		/* find a place to insert eu2 on eu1's edge */
 		for ( iteration2=0; iteration2 < 10000; iteration2++ ) {
+			/* XXX If 2 faces share face geom, this is the place */
+
 			abs1 = nmg_measure_fu_angle( eu1, xvec, yvec, zvec );
 			abs2 = nmg_measure_fu_angle( eu2, xvec, yvec, zvec );
 			absr = nmg_measure_fu_angle( eu1->radial_p, xvec, yvec, zvec );
@@ -313,7 +315,17 @@ CONST struct rt_tol	*tol;
 		 *  (or somewhere).
 		 */
 		if( code < 0 ) {
-			rt_log("nmg_radial_join_eu: WARNING 2 faces should have been fused, may be ambiguous.\n");
+			struct faceuse	*fu1, *fu2;
+			fu1 = eu1->up.lu_p->up.fu_p;
+			fu2 = eu2->up.lu_p->up.fu_p;
+			NMG_CK_FACEUSE(fu1);
+			NMG_CK_FACEUSE(fu2);
+/* XXX This check should be done before nmg_angle_in_wedge() call above. */
+			if( fu1->f_p->fg_p == fu2->f_p->fg_p )  {
+				rt_log("nmg_radial_join_eu: NOTICE: 2 faces already share geometry,  horay!\n");
+			} else {
+				rt_log("nmg_radial_join_eu: WARNING 2 faces should have been fused, may be ambiguous. abs1=%e, absr=%e, asb2=%e\n", abs1*rt_radtodeg, absr*rt_radtodeg, abs2*rt_radtodeg);
+			}
 		}
 
 		/* find the next use of the edge eu2 is on.  If eu2 and it's
