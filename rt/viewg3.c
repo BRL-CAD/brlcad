@@ -411,8 +411,10 @@ register struct partition *PartHeadp;
 		 * but the condition has been seen.
 		 */
 		if( comp_thickness <= 0 )  {
-			rt_log("ERROR: comp_thickness=%g at h=%g, v=%g (x=%d, y=%d)\n",
-				comp_thickness, hv[0], hv[1], ap->a_x, ap->a_y);
+			VJOIN1( pp->pt_inhit->hit_point , ap->a_ray.r_pt ,pp->pt_inhit->hit_dist , ap->a_ray.r_dir );
+			VJOIN1( pp->pt_outhit->hit_point , ap->a_ray.r_pt ,pp->pt_outhit->hit_dist , ap->a_ray.r_dir );
+			rt_log("ERROR: comp_thickness=%g for region id = %d at h=%g, v=%g (x=%d, y=%d), partition at x%x\n",
+				comp_thickness, region_id, hv[0], hv[1], ap->a_x, ap->a_y , pp );
 			rt_pr_partitions(ap->a_rt_i, PartHeadp, "Defective partion:");
 			rt_log("Send this output to Sue Muuss (sue@brl.mil)\n");
 		}
