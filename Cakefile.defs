@@ -811,7 +811,7 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 #	define	LIBRT_TIMER	timer42
 /*	for "ncurses" change "-lcurses" to "-lncurses" (Caldera OpenLinux, RedHat) */
 #	define	LIBTERMLIB	-lncurses
-#	define	LIBFB_CONFIG	-DIF_REMOTE -I''XINCDIR -DIF_X
+#	define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB -I''XINCDIR -DIF_X
 #	define	LIBFB_LIBES	LIBPKG -L''XLIBDIR -lX11
 #	define	LIBFB_OBJS	if_remote if_ab if_X if_X24
 #	define	LIBDM_OBJS	dm-X
@@ -856,7 +856,7 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 #	endif
 
 #	define	LIBRT_TIMER	timer42
-#	define	LIBFB_CONFIG	-DIF_REMOTE -I''XINCDIR -DIF_X
+#	define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB -I''XINCDIR -DIF_X
 #	define	LIBFB_LIBES	LIBPKG -L''XLIBDIR -lX11
 #	define	LIBFB_OBJS	if_remote if_ab if_X if_X24
 #	define	LIBDM_OBJS	dm-X
@@ -864,7 +864,7 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 #       define  LIBDM_LIBES     LIBTK LIBTCL LIBTCL_LIBES
 #	define	MGED_OBJS	dm-X dm-generic
 #	define	MGED_CONFIG	-DDM_X -I''XINCDIR -DBRLCAD_TCL_LIBRARY='"'TCLSCRIPTSDIR'"'
-#	define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lX11 -lipc
+#	define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lX11 -lXi
 #	define	TCL_DEFS	OPTIMIZER -DTCL_LIBRARY='"'TCLLIBDIR'"' -DTCL_PACKAGE_PATH='"'TCLLIBDIR'"' -DHAVE_UNISTD_H=1 -DHAVE_SYS_TIME_H=1 -DTIME_WITH_SYS_TIME=1 -DHAVE_TM_ZONE=1 -DHAVE_TM_GMTOFF=1 -DHAVE_TIMEZONE_VAR=1 -DSTDC_HEADERS=1 -DHAVE_SYS_IOCTL_H=1 -DHAVE_SYS_FILIO_H=1
 /* #	define	LIBTCL_LIBES	-ldl */
 #	define	TK_DEFS		-DTK_LIBRARY='"'TKLIBDIR'"' -DHAVE_UNISTD_H=1 -DHAVE_LIMITS_H=1 -DSTDC_HEADERS=1  -I''XINCDIR
@@ -885,7 +885,7 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 #	define	XLIBDIR	/usr/X11/lib
 
 #	define	LIBRT_TIMER	timer42
-#	define	LIBFB_CONFIG	-DIF_REMOTE -I''XINCDIR -DIF_X
+#	define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB -I''XINCDIR -DIF_X
 #	define	LIBFB_LIBES	LIBPKG -L''XLIBDIR -lX11 -lipc
 #	define	LIBFB_OBJS	if_remote if_ab if_X if_X24
 #	define	LIBDM_OBJS	dm-X
@@ -1076,7 +1076,7 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 #		define	XINCDIR		/usr/X11/include
 #		define	XLIBDIR		/usr/X11/lib
 #		define	LIBFB_OBJS	if_remote if_ab if_sun if_X if_X24
-#		define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB \
+#		define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB -DIF_SUN \
 			-I''XINCDIR -DIF_X
 #		define	LIBFB_LIBES	LIBPKG -L''XLIBDIR -lX11
 #		define	MGED_OBJS	dm-X dm-generic
@@ -1258,7 +1258,7 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 #endif
 #	endif
 
-#	define	LIBFB_CONFIG	-DIF_REMOTE -I''XINCDIR -DIF_X
+#	define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB -I''XINCDIR -DIF_X
 #	define	LIBFB_LIBES	LIBPKG -L''XLIBDIR -lX11
 #	define	LIBFB_OBJS	if_remote if_ab if_X if_X24
 
@@ -1382,7 +1382,7 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 #	endif
 #	if 1
 /*		Normal Configuration */
-#		define	LIBFB_CONFIG	-DIF_REMOTE -DIF_PTTY -DIF_AB
+#		define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB
 #		define	LIBFB_OBJS	if_remote if_ab
 #		define	LIBFB_LIBES	LIBPKG
 #	else
