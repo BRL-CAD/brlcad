@@ -7823,6 +7823,7 @@ char	**argv;
   return mged_param(interp, argc-1, argvect);
 }
 
+#if 0
 /*
  *  Returns -
  *	1	solid edit claimes the rotate event
@@ -7880,6 +7881,7 @@ double	xangle, yangle, zangle;
 
 	return 1;
 }
+#endif
 
 /*
  *			L A B E L _ E D I T E D _ S O L I D
