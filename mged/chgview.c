@@ -1156,8 +1156,8 @@ char	**argv;
 		}
 
 		rt_log( "Calculational tolerances:\n" );
-		rt_log( "\tdistance = %g\n\tperpendicularity = %g (cosine of %g degrees)\n",
-			mged_tol.dist, mged_tol.perp, acos( mged_tol.perp)*rt_radtodeg );
+		rt_log( "\tdistance = %g %s\n\tperpendicularity = %g (cosine of %g degrees)\n",
+			mged_tol.dist*base2local, rt_units_string(local2base), mged_tol.perp, acos( mged_tol.perp)*rt_radtodeg );
 		return CMD_OK;
 	}
 
@@ -1197,8 +1197,8 @@ char	**argv;
 				rt_log("Calculational distance tolerance must be positive\n");
 				return CMD_BAD;
 			}
-			mged_tol.dist = f;
-			mged_tol.dist_sq = f*f;
+			mged_tol.dist = f*local2base;
+			mged_tol.dist_sq = mged_tol.dist * mged_tol.dist;
 		}
 		else if( argv[argind][0] == 'p' ) {
 			/* Calculational perpendicularity tolerance */
