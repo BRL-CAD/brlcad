@@ -35,7 +35,7 @@
 #include "shadework.h"
 
 
-#define	PM_MAPS		3
+#define	PM_MAPS		4
 
 #define	PM_GLOBAL	0
 #define	PM_CAUSTIC	1
