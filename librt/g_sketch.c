@@ -1238,9 +1238,44 @@ CONST struct rt_sketch_internal *sketch_ip;
 				}
 			}
 
-			crv_out->segments = bu_calloc( BU_PTBL_END( &curves ), sizeof( genptr_t ), "crv_out->segments" );
-			for( k=0 ; k<BU_PTBL_END( &curves ) ; k++ )
-				crv_out->segments = (genptr_t)BU_PTBL_GET( &curves, k );
+			switch( *lng )
+			{
+				int l;
+
+				case CURVE_LSEG_MAGIC:
+				{
+					struct line_seg *lsg;
+
+					lsg = (struct line_seg *)lng;
+					lsg->curves = (struct curve **)bu_calloc( BU_PTBL_END( &curves ),
+						sizeof( struct curve *), "lsg->curves" );
+					for( l=0 ; l<BU_PTBL_END( &curves ) ; l++ )
+						lsg->curves[l] = (struct curve *)BU_PTBL_GET( &curves, l );
+				}
+				break;
+				case CURVE_CARC_MAGIC:
+				{
+					struct carc_seg *csg;
+
+					csg = (struct carc_seg *)lng;
+					csg->curves = (struct curve **)bu_calloc( BU_PTBL_END( &curves ),
+						sizeof( struct curve *), "csg->curves" );
+					for( l=0 ; l<BU_PTBL_END( &curves ) ; l++ )
+						csg->curves[l] = (struct curve *)BU_PTBL_GET( &curves, l );
+				}
+				break;
+				case CURVE_NURB_MAGIC:
+				{
+					struct nurb_seg *nsg;
+
+					nsg = (struct nurb_seg *)lng;
+					nsg->curves = (struct curve **)bu_calloc( BU_PTBL_END( &curves ),
+						sizeof( struct curve *), "nsg->curves" );
+					for( l=0 ; l<BU_PTBL_END( &curves ) ; l++ )
+						nsg->curves[l] = (struct curve *)BU_PTBL_GET( &curves, l );
+				}
+				break;
+			}
 			bu_ptbl_trunc( &curves, 0 );
 		}
 	}
