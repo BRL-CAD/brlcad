@@ -704,15 +704,15 @@ register struct application *ap;
 
 	if(rt_g.debug&(DEBUG_ALLRAYS|DEBUG_SHOOT|DEBUG_PARTITION|DEBUG_ALLHITS)) {
 		bu_log_indent_delta(2);
-		bu_log("\n**********shootray cpu=%d  %d,%d lvl=%d (%s)\n",
+		bu_log("\n**********shootray cpu=%d  %d,%d lvl=%d a_onehit=%d (%s)\n",
 			resp->re_cpu,
 			ap->a_x, ap->a_y,
 			ap->a_level,
+			ap->a_onehit,
 			ap->a_purpose != (char *)0 ? ap->a_purpose : "?" );
-		bu_log("Pnt (%g, %g, %g) a_onehit=%d\n",
+		bu_log("Pnt (%.20G, %.20G, %.20G)\nDir (%.20G, %.20G, %.20G)\n",
 			V3ARGS(ap->a_ray.r_pt),
-			ap->a_onehit );
-		VPRINT("Dir", ap->a_ray.r_dir);
+			V3ARGS(ap->a_ray.r_dir) );
 	}
 	if(RT_BADVEC(ap->a_ray.r_pt)||RT_BADVEC(ap->a_ray.r_dir))  {
 		bu_log("\n**********shootray cpu=%d  %d,%d lvl=%d (%s)\n",
