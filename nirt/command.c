@@ -587,7 +587,10 @@ int			ctp;
     ap.a_miss = if_bmiss;
     if (nirt_debug & DEBUG_BACKOUT)
 	bu_log("Backing out from (%g %g %g) via (%g %g %g)\n",
-	    V3ARGS(ap.a_ray.r_pt), V3ARGS(ap.a_ray.r_dir));
+	       ap.a_ray.r_pt[0] * base2local,
+	       ap.a_ray.r_pt[1] * base2local,
+	       ap.a_ray.r_pt[2] * base2local,
+	       V3ARGS(ap.a_ray.r_dir));
 
     (void) rt_shootray( &ap );
 
