@@ -487,7 +487,7 @@ int pathpos;
 				(void)printf("**WARNING** group= %s is member of region= ",record.c.c_name);
 				for(i=0;i<pathpos;i++)
 					(void)printf("/%s",path[i]->d_namep);
-				(void)printf("\n");
+				(void)printf("\n\r");
 			}
 			if(lastmemb)
 				regflag = lastmemb = 0;
@@ -540,10 +540,6 @@ int pathpos;
 	}
 
 	/* not a combination  -  should have a solid */
-	if(record.u_id != ID_SOLID && record.u_id != ID_ARS_A) {
-		(void)printf("bad record type '%c' should be 'S' or 'A'\n",record.u_id);
-		return;
-	}
 
 	/* last (bottom) position */
 	path[pathpos] = dp;
