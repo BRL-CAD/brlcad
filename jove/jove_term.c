@@ -4,6 +4,10 @@
  * $Revision$
  *
  * $Log$
+ * Revision 1.4  84/10/03  21:51:40  dpk
+ * Added code to disable use of scrolling regions if you dont have
+ * both SR and SF (and CS for that matter).
+ * 
  * Revision 1.3  84/10/03  21:48:13  dpk
  * Numerous bug fixes/enhancements.
  * 
@@ -146,8 +150,11 @@ getTERM()
 	if (XS)
 		SO = SE = 0;
 
-	if (! (CS && SR && SF))		/* We really need all three! */
+	if (CS && !SR)
 		CS = SR = SF = 0;
+
+	if (CS && !SF)
+		SF = "\n";
 
 	disp_opt_init();
 }
