@@ -118,10 +118,10 @@ pixbackgnd:	pixbackgnd.o
 	CC LDFLAGS -o pixbackgnd pixbackgnd.o LIBES
 
 pixbgstrip:	pixbgstrip.o
-	CC LDFLAGS -o pixbgstrip pixbgstrip.o LIBFB LIBFB_LIBES LIBES
+	CC LDFLAGS -o pixbgstrip pixbgstrip.o LIBFB LIBFB_LIBES LIBBN LIBES
 
 bw-a:		bw-a.o
-	CC LDFLAGS -o bw-a bw-a.o LIBFB LIBFB_LIBES LIBES
+	CC LDFLAGS -o bw-a bw-a.o LIBFB LIBFB_LIBES LIBBN LIBES
 
 bw-imp:	bw-imp.o
 	CC LDFLAGS -o bw-imp bw-imp.o LIBES
@@ -196,10 +196,10 @@ pixembed:	pixembed.o
 	CC LDFLAGS -o pixembed pixembed.o LIBES
 
 pixcut:	pixcut.o
-	CC LDFLAGS -o pixcut pixcut.o LIBFB LIBFB_LIBES LIBES
+	CC LDFLAGS -o pixcut pixcut.o LIBFB LIBFB_LIBES LIBBN LIBES
 
 pixpaste:	pixpaste.o
-	CC LDFLAGS -o pixpaste pixpaste.o LIBFB LIBFB_LIBES LIBES
+	CC LDFLAGS -o pixpaste pixpaste.o LIBFB LIBFB_LIBES LIBBN LIBES
 
 pixstat:	pixstat.o
 	CC LDFLAGS -o pixstat pixstat.o LIBES
@@ -287,22 +287,22 @@ bwshrink: bwshrink.o
 	CC LDFLAGS -o bwshrink bwshrink.o LIBES
 
 pixhalve: pixhalve.o
-	CC LDFLAGS -o pixhalve pixhalve.o LIBFB LIBFB_LIBES LIBES
+	CC LDFLAGS -o pixhalve pixhalve.o LIBFB LIBFB_LIBES LIBBN LIBES
 
 pix-ps: pix-ps.o
 	CC LDFLAGS -o pix-ps pix-ps.o LIBES
 
 pix-ppm: pix-ppm.o
-	CC LDFLAGS -o pix-ppm pix-ppm.o LIBFB LIBFB_LIBES LIBES
+	CC LDFLAGS -o pix-ppm pix-ppm.o LIBFB LIBFB_LIBES LIBBN LIBES
 
 pcd-pix: pcd-pix.o
 	CC LDFLAGS -o pcd-pix pcd-pix.o LIBES
 
 pix-yuv: pix-yuv.o
-	CC LDFLAGS -o pix-yuv pix-yuv.o LIBFB LIBFB_LIBES LIBES
+	CC LDFLAGS -o pix-yuv pix-yuv.o LIBFB LIBFB_LIBES LIBBN LIBES
 
 yuv-pix: yuv-pix.o
-	CC LDFLAGS -o yuv-pix yuv-pix.o LIBFB LIBFB_LIBES LIBES
+	CC LDFLAGS -o yuv-pix yuv-pix.o LIBFB LIBFB_LIBES LIBBN LIBES
 
 plstat: plstat.o
 	CC LDFLAGS -o plstat plstat.o LIBPLOT LIBES
@@ -332,7 +332,7 @@ mst:	mst.o
 	CC LDFLAGS -o mst mst.o LIBREDBLACK LIBBU LIBBU_LIBES LIBES
 
 double-asc:	double-asc.o
-	CC LDFLAGS -o double-asc double-asc.o LIBPLOT LIBFB LIBFB_LIBES LIBBU LIBBU_LIBES LIBES
+	CC LDFLAGS -o double-asc double-asc.o LIBPLOT LIBFB LIBFB_LIBES LIBBU LIBBU_LIBES LIBBN LIBES
 
 bwthresh: bwthresh.o
 	CC LDFLAGS -o bwthresh bwthresh.o LIBES
@@ -365,9 +365,9 @@ pixblend:	pixblend.o
 	CC LDFLAGS -o pixblend pixblend.o LIBES
 
 pixmorph:	pixmorph.o
-	CC LDFLAGS -o pixmorph pixmorph.o LIBFB LIBFB_LIBES LIBES
+	CC LDFLAGS -o pixmorph pixmorph.o LIBFB LIBFB_LIBES LIBBN LIBES
 
 pixborder:	pixborder.o
-	CC LDFLAGS -o pixborder pixborder.o LIBFB LIBFB_LIBES LIBES
+	CC LDFLAGS -o pixborder pixborder.o LIBFB LIBFB_LIBES LIBBN LIBES
 
 #include "../Cakefile.rules"

@@ -458,7 +458,7 @@ char **argv;
     }
 
     if (autosize) {
-	if (fb_common_file_size(&pa_width, &pa_height, argv[1], 3) == 0) {
+	if (bn_common_file_size(&pa_width, &pa_height, argv[1], 3) == 0) {
 	    fprintf(stderr, "pixmorph: unable to autosize\n");
 	    return 1;
 	}

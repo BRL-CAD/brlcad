@@ -129,7 +129,7 @@ char	**argv;
 	/* autosize input? */
 	if( fileinput && autosize ) {
 		int	w, h;
-		if( fb_common_file_size(&w, &h, file_name, 3) ) {
+		if( bn_common_file_size(&w, &h, file_name, 3) ) {
 			file_width = w;
 			file_height = h;
 		} else {

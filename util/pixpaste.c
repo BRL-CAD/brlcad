@@ -179,7 +179,7 @@ int argc; char **argv;
 	/* Should we autosize the original? */
 	if (orig_isfile && orig_autosize) {
 		int w,h;
-		if (fb_common_file_size(&w, &h, orig_name, num_bytes)) {
+		if (bn_common_file_size(&w, &h, orig_name, num_bytes)) {
 			org_width = w;
 			org_height = h;
 		} else {
@@ -191,7 +191,7 @@ int argc; char **argv;
 	/* Should we autosize the paste file? */
 	if (paste_isfile && paste_autosize) {
 		int w,h;
-		if (fb_common_file_size(&w, &h, paste_name, num_bytes)) {
+		if (bn_common_file_size(&w, &h, paste_name, num_bytes)) {
 			paste_width = w;
 			paste_height = h;
 		} else {
