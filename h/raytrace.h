@@ -1530,7 +1530,10 @@ RT_EXTERN(struct soltab *rt_find_solid, (CONST struct rt_i *rtip,
 					/* Parse arbitrary data structure */
 RT_EXTERN(int rt_structparse, (CONST struct rt_vls *vls,
 	CONST struct structparse *tab, char *base ) );
-		/* Print arbitrary data structure for human consuption*/
+		/* Print arbitrary data structure for human consumption*/
+RT_EXTERN(void rt_vls_item_print, (struct rt_vls *vp,
+	CONST struct structparse *tab, CONST char *base ) );
+          /* Print single element from data structure for Tcl consumption */
 RT_EXTERN(void rt_structprint, (CONST char *title,
 	CONST struct structparse *tab, CONST char *base ) );
 		/* Print arbitrary data structure to vls for rt_structparse */
