@@ -160,6 +160,49 @@ struct rt_db_internal	*ip;
 }
 
 /*
+ *			R T _ F W R I T E _ I N T E R N A L
+ *
+ *  Put an object in internal format out onto a file in external format.
+ *  Used by LIBWDB.
+ *
+ *  Can't really require a dbip parameter, as many callers won't have one.
+ *
+ *  Returns -
+ *	0	OK
+ *	<0	error
+ */
+int
+rt_fwrite_internal( fp, name, ip, conv2mm )
+FILE				*fp;
+CONST char			*name;
+CONST struct rt_db_internal	*ip;
+double				conv2mm;
+{
+	struct bu_external	ext;
+
+	RT_CK_DB_INTERNAL(ip);
+	RT_CK_FUNCTAB( ip->idb_meth );
+
+	if( ip->idb_meth->ft_export( &ext, ip, conv2mm, NULL /*dbip*/ ) < 0 )  {
+		bu_log("rt_file_put_internal(%s): solid export failure\n",
+			name );
+		db_free_external( &ext );
+		return(-2);				/* FAIL */
+	}
+	BU_CK_EXTERNAL( &ext );
+
+	if( db_fwrite_external( fp, name, &ext ) < 0 )  {
+		bu_log("rt_fwrite_internal(%s): db_fwrite_external() error\n",
+			name );
+		db_free_external( &ext );
+		return(-3);
+	}
+	db_free_external( &ext );
+	return(0);
+
+}
+
+/*
  *			R T _ D B _ F R E E _ I N T E R N A L
  */
 void
