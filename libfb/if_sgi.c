@@ -56,8 +56,7 @@ extern char *malloc();
  *  Defines for dealing with SGI Graphics Engine Pipeline
  */
 union gepipe {
-	unsigned char uc;
-	char	c;
+	unsigned short us;
 	short	s;
 	long	l;
 	float	f;
@@ -390,13 +389,13 @@ int	count;
 	register int scan_count;
 	int xpos, ypos;
 	register int i;
-	register unsigned char *cp;
+	register char *cp;
 	int ret;
 
 	ret = count;	/* save count */
 	xpos = x;
 	ypos = y;
-	cp = (unsigned char *)(*pixelp);
+	cp = (char *)(*pixelp);
 	while( count > 0 )  {
 		if( ypos >= ifp->if_max_width )  return(0);
 		if ( count >= ifp->if_width )  {
@@ -409,7 +408,6 @@ int	count;
 		hole->s = 0x0912;		/* cmov2s */
 		hole->s = xpos;
 		hole->s = ypos;
-		GEP_END(hole)->s = (0xFF<<8)|8;	/* im_last_passthru(0) */
 
 		for( i=scan_count; i > 0; )  {
 			register short chunk;
@@ -438,9 +436,9 @@ int	count;
 			i -= chunk;
 			if ( _sgi_cmap_flag == FALSE )  {
 				for( ; chunk>0; chunk--)  {
-					hole->s = *cp++;
-					hole->s = *cp++;
-					hole->s = *cp++;
+					hole->us = *cp++;
+					hole->us = *cp++;
+					hole->us = *cp++;
 				}
 			} else {
 				for( ; chunk>0; chunk-- )  {
@@ -450,12 +448,12 @@ int	count;
 				}
 			}
 		}
-		GEP_END(hole)->s = (0xFF<<8)|8;	/* im_last_passthru(0) */
 
 		count -= scan_count;
 		xpos = 0;
 		ypos++;		/* 1st quadrant */
 	}
+	GEP_END(hole)->s = (0xFF<<8)|8;	/* im_last_passthru(0) */
 	return(ret);
 }
 
