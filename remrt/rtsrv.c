@@ -81,6 +81,7 @@ extern void worker();
 /***** variables shared with worker() ******/
 struct application ap;
 vect_t		left_eye_delta;
+int		report_progress;	/* !0 = user wants progress report */
 /***** end variables shared with worker() *****/
 
 /***** variables shared with do.c *****/
