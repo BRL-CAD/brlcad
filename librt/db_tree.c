@@ -1214,7 +1214,11 @@ union tree		 *(*leaf_func)();
 
 		curtree = db_recurse( &ctsp->cts_s, &ctsp->cts_p, region_start_statepp );
 		if( curtree == TREE_NULL )  {
-			rt_log("db_walk_subtree()/db_recurse() FAIL\n");
+			char	*str;
+			str = db_path_to_string( &(ctsp->cts_p) );
+			rt_log("db_walk_subtree() FAIL on '%s'\n", str);
+			rt_free( str, "path string" );
+
 			db_free_combined_tree_state( ctsp );
 			/* Result is an empty tree */
 			tp->tr_op = OP_NOP;
