@@ -87,6 +87,10 @@ rt_log( "Get_nurb_surf( %d )\n" , entityno );
 	Readint( &i , "" );
 	Readint( &i , "" );
 	rational = !i;
+if( rational )
+rt_log( "\tSurface is rational\n" );
+else
+rt_log( "\tSurface is not rational\n" );
 	ncoords = 3+rational;
 	pt_type = RT_NURB_MAKE_PT_TYPE( ncoords , RT_NURB_PT_XYZ , rational );
 	Readint( &i , "" );
@@ -127,6 +131,7 @@ rt_log( "Get_nurb_surf( %d )\n" , entityno );
 	else
 		u_translation = 0.0;
 
+rt_log( "\t translations are %g and %g\n" , u_translation, v_translation );
 	for( j=0 ; j<n_cols ; j++ )
 		for( i=0 ; i<n_rows ; i++ )
 		{
@@ -138,11 +143,20 @@ rt_log( "Get_nurb_surf( %d )\n" , entityno );
 		for( i=0 ; i<n_rows ; i++ )
 		{
 			Readcnv( &a , "" );
-			srf->ctl_points[CTL_INDEX(i,j)] = a;
+			if( rational )
+				srf->ctl_points[CTL_INDEX(i,j)] = a*srf->ctl_points[CTL_INDEX(i,j)+3];
+			else
+				srf->ctl_points[CTL_INDEX(i,j)] = a;
 			Readcnv( &a , "" );
-			srf->ctl_points[CTL_INDEX(i,j)+1] = a;
+			if( rational )
+				srf->ctl_points[CTL_INDEX(i,j)+1] = a*srf->ctl_points[CTL_INDEX(i,j)+3];
+			else
+				srf->ctl_points[CTL_INDEX(i,j)+1] = a;
 			Readcnv( &a , "" );
-			srf->ctl_points[CTL_INDEX(i,j)+2] = a;
+			if( rational )
+				srf->ctl_points[CTL_INDEX(i,j)+2] = a*srf->ctl_points[CTL_INDEX(i,j)+3];
+			else
+				srf->ctl_points[CTL_INDEX(i,j)+2] = a;
 		}
 	Readdbl( &a , "" );
 	u_min = a;
@@ -229,6 +243,10 @@ rt_log( "Get_cnurb( %d )\n" ,  entity_no );
 	Readint( &i, "" );	/* open or closed */
 	Readint( &i, "" );	/* polynomial */
 	rational = !i;
+if( rational )
+rt_log( "\tCurve is rational\n") ;
+else
+rt_log( "\tCurve is not rational\n") ;
 	Readint( &i, "" );	/* periodic */
 
 	if( rational )
@@ -274,8 +292,16 @@ rt_log( "Get_cnurb( %d )\n" ,  entity_no );
 			Readcnv( &y , "" );
 			Readcnv( &z , "" );
 		}
-		crv->ctl_points[i*ncoords] = y + u_translation;
-		crv->ctl_points[i*ncoords+1] = x + v_translation;
+		if( rational )
+		{
+			crv->ctl_points[i*ncoords] = (y + u_translation) * crv->ctl_points[i*ncoords+2];
+			crv->ctl_points[i*ncoords+1] = (x + v_translation) * crv->ctl_points[i*ncoords+2];
+		}
+		else
+		{
+			crv->ctl_points[i*ncoords] = y + u_translation;
+			crv->ctl_points[i*ncoords+1] = x + v_translation;
+		}
 	}
 
 	return( crv );
@@ -288,13 +314,26 @@ fastf_t u,v;
 struct snurb *srf;
 {
 	point_t uvw;
-	point_t pt_on_srf;
+	hpoint_t pt_on_srf;
 	struct vertexuse *vu1;
 
 	NMG_CK_VERTEXUSE( vu );
 	NMG_CK_SNURB( srf );
 
+	VSETALLN( pt_on_srf, 0.0, 4 )
+
+rt_log( "In Assign_vu_geom( vu, %g, %g, srf )\n", u, v );
+
 	rt_nurb_s_eval( srf, u, v, pt_on_srf );
+rt_log( "rt_nurb_s_eval gives ( %g %g %g %g )\n" , V4ARGS( pt_on_srf ) );
+	if( RT_NURB_IS_PT_RATIONAL( srf->pt_type ) )
+	{
+		fastf_t scale;
+
+		scale = 1.0/pt_on_srf[3];
+		VSCALE( pt_on_srf, pt_on_srf, scale );
+rt_log( "After scaling: ( %g %g %g )\n", V3ARGS( pt_on_srf ) );
+	}
 	nmg_vertex_gv( vu->v_p, pt_on_srf );
 	VSET( uvw, u, v, 1.0 );
 
@@ -968,7 +1007,8 @@ rt_g.NMG_debug = 1;
 	}
 	rt_log( "Converted %d Trimmed Sufaces successfully out of %d total Trimmed Sufaces\n" , convsurf , totsurfs );
 
-	(void)nmg_model_fuse( m , &tol );
+/*	(void)nmg_model_fuse( m , &tol ); */
+	(void)nmg_model_vertex_fuse( m, &tol );
 
 nmg_vmodel( m );
 nmg_pr_m( m );
