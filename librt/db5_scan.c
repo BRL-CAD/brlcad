@@ -42,6 +42,8 @@ BU_EXTERN(CONST unsigned char *db5_get_raw_internal_ptr, (struct db5_raw_interna
 /*
  *			D B 5 _ H E A D E R _ I S _ V A L I D
  *
+ *  Verify that this is a valid header for a BRL-CAD v5 database.
+ *
  *  Returns -
  *	0	Not valid v5 header
  *	1	Valid v5 header
@@ -56,6 +58,8 @@ CONST unsigned char *hp;
 	if( hp[7] != DB5HDR_MAGIC2 )  return 0;
 
 	/* hflags */
+	if( (odp->db5h_hflags & DB5HDR_HFLAGS_DLI_MASK) != DB5HDR_HFLAGS_DLI_HEADER_OBJECT )
+		return 0;
 	if( (odp->db5h_hflags & DB5HDR_HFLAGS_NAME_PRESENT) )  return 0;
 	if( ((odp->db5h_hflags & DB5HDR_HFLAGS_OBJECT_WIDTH_MASK) >> DB5HDR_HFLAGS_OBJECT_WIDTH_SHIFT)
 	    != DB5HDR_WIDTHCODE_8BIT )  return 0;
@@ -68,8 +72,8 @@ CONST unsigned char *hp;
 	    != DB5HDR_WIDTHCODE_8BIT )  return 0;
 
 	/* major and minor type */
-	if( odp->db5h_major_type != DB5HDR_MAJORTYPE_DLI )  return 0;
-	if( odp->db5h_minor_type != DB5HDR_MINORTYPE_DLI_HEADER )  return 0;
+	if( odp->db5h_major_type != DB5HDR_MAJORTYPE_RESERVED )  return 0;
+	if( odp->db5h_minor_type != 0 )  return 0;
 
 	/* Check length, known to be 8-bit.  Header len=1 8-byte chunk. */
 	if( hp[5] != 1 )  return 0;
@@ -182,6 +186,7 @@ CONST unsigned char		*cp;
 	if( cp[0] != DB5HDR_MAGIC1 )  return 0;
 
 	/* hflags */
+	rip->h_dli = (cp[1] & DB5HDR_HFLAGS_DLI_MASK);
 	rip->h_object_width = (cp[1] & DB5HDR_HFLAGS_OBJECT_WIDTH_MASK) >>
 		DB5HDR_HFLAGS_OBJECT_WIDTH_SHIFT;
 	rip->h_name_present = (cp[1] & DB5HDR_HFLAGS_NAME_PRESENT);
@@ -196,7 +201,8 @@ CONST unsigned char		*cp;
 	rip->major_type = cp[3];
 	rip->minor_type = cp[4];
 
-	if(rt_g.debug&DEBUG_DB) bu_log("db5_crack_disk_header() h_object_width=%d, h_name_present=%d, i_object_width=%d, i_attributes_present=%d, i_body_present=%d, i_zzz=%d, major=%d, minor=%d\n",
+	if(rt_g.debug&DEBUG_DB) bu_log("db5_crack_disk_header() h_dli=%d, h_object_width=%d, h_name_present=%d, i_object_width=%d, i_attributes_present=%d, i_body_present=%d, i_zzz=%d, major=%d, minor=%d\n",
+		rip->h_dli,
 		rip->h_object_width,
 		rip->h_name_present,
 		rip->i_object_width,
@@ -456,8 +462,8 @@ genptr_t		client_data;	/* unused client_data from db_scan() */
 
 	RT_CK_DBI(dbip);
 
-	if( rip->major_type == DB5HDR_MAJORTYPE_DLI )  {
-		if( rip->minor_type != DB5HDR_MINORTYPE_DLI_FREE )  return;
+	if( rip->h_dli == DB5HDR_HFLAGS_DLI_HEADER_OBJECT )  return;
+	if( rip->h_dli == DB5HDR_HFLAGS_DLI_FREE_STORAGE )  {
 		/* Record available free storage */
 		rt_memfree( &(dbip->dbi_freep), rip->object_length, laddr );
 		return;
@@ -589,8 +595,9 @@ bu_log("WARNING:  %s is BRL-CAD v5 format.\nWARNING:  You probably need a newer 
  *  Any of name, attrib, and body may be null.
  */
 void
-db5_export_object3( out, name, attrib, body, major, minor, zzz )
+db5_export_object3( out, dli, name, attrib, body, major, minor, zzz )
 struct bu_external		*out;			/* output */
+int				dli;
 CONST char			*name;
 CONST struct bu_external	*attrib;
 CONST struct bu_external	*body;
@@ -643,7 +650,8 @@ int				zzz;		/* compression, someday */
 	odp->db5h_magic1 = DB5HDR_MAGIC1;
 
 	/* hflags */
-	odp->db5h_hflags = h_width << DB5HDR_HFLAGS_OBJECT_WIDTH_SHIFT;
+	odp->db5h_hflags = (h_width << DB5HDR_HFLAGS_OBJECT_WIDTH_SHIFT) |
+			(dli & DB5HDR_HFLAGS_DLI_MASK);
 	if( name )  odp->db5h_hflags |= DB5HDR_HFLAGS_NAME_PRESENT;
 
 	/* iflags */
@@ -771,38 +779,16 @@ FILE		*fp;
 CONST char	*title;
 double		local2mm;
 {
-	unsigned char	header[8];
 	struct attribute_value_pair avp[3];
 	struct bu_vls		units;
 	struct bu_external	out;
 	struct bu_external	attr;
 
-	header[0] = DB5HDR_MAGIC1;
-
-	/* hflags */
-	header[1] = DB5HDR_WIDTHCODE_8BIT << DB5HDR_HFLAGS_OBJECT_WIDTH_SHIFT;
-
-	/* iflags */
-	header[2] = DB5HDR_IFLAGS_ZZZ_UNCOMPRESSED |
-		(DB5HDR_WIDTHCODE_8BIT << DB5HDR_IFLAGS_INTERIOR_WIDTH_SHIFT);
-
-	/* major and minor type */
-	header[3] = DB5HDR_MAJORTYPE_DLI;
-	header[4] = DB5HDR_MINORTYPE_DLI_HEADER;
-
-	header[5] = 1;		/* One 8-byte chunk, encoded as WIDTHCODE_8BIT */
-
-	header[6] = 0;		/* pad */
-	header[7] = DB5HDR_MAGIC2;
-
-	if( fwrite( header, sizeof(header), 1, fp ) != 1 )  {
-		bu_log("db5_write_ident() write error\n");
-		return -1;
-	}
-
-	/* We should get the same result if we do this */
-	/* No harm in writing two headers, for testing */
-	db5_export_object3( &out, NULL, NULL, NULL, DB5HDR_MAJORTYPE_DLI, DB5HDR_MINORTYPE_DLI_HEADER, DB5HDR_IFLAGS_ZZZ_UNCOMPRESSED );
+	/* First, write the header object */
+	db5_export_object3( &out, DB5HDR_HFLAGS_DLI_HEADER_OBJECT,
+		NULL, NULL, NULL,
+		DB5HDR_MAJORTYPE_RESERVED, 0,
+		DB5HDR_IFLAGS_ZZZ_UNCOMPRESSED );
 	bu_fwrite_external( fp, &out );
 	bu_free_external( &out );
 
@@ -818,7 +804,10 @@ double		local2mm;
 	avp[2].value = NULL;
 
 	db5_export_attributes( &attr, avp );
-	db5_export_object3( &out, "_GLOBAL", &attr, NULL, DB5HDR_MAJORTYPE_ATTRIBUTE_ONLY, 0, DB5HDR_IFLAGS_ZZZ_UNCOMPRESSED);
+	db5_export_object3( &out, DB5HDR_HFLAGS_DLI_APPLICATION_DATA_OBJECT,
+		"_GLOBAL", &attr, NULL,
+		DB5HDR_MAJORTYPE_ATTRIBUTE_ONLY, 0,
+		DB5HDR_IFLAGS_ZZZ_UNCOMPRESSED);
 	bu_fwrite_external( fp, &out );
 	bu_free_external( &out );
 	bu_free_external( &attr );

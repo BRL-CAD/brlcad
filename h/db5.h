@@ -22,30 +22,6 @@
 #define DB5_H seen
 
 /*
- *  The "raw internal" form of one database object.
- *  This is what the low-level database routines will operate on.
- *  Magic number1 has already been checked, and is not stored.
- */
-struct db5_raw_internal {
-	long		magic;
-	unsigned char	h_object_width;		/* DB5HDR_WIDTHCODE_x */
-	unsigned char	h_name_present;
-	unsigned char	i_object_width;		/* DB5HDR_WIDTHCODE_x */
-	unsigned char	i_attributes_present;
-	unsigned char	i_body_present;
-	unsigned char	i_zzz;
-	unsigned char	major_type;
-	unsigned char	minor_type;
-	long		object_length;		/* in bytes, on disk */
-	long		name_length;
-	char		*name;
-	long		interior_length;
-	unsigned char	*interior;
-	unsigned char	*buf;		/* if non-null needs to be bu_free()ed */
-};
-#define DB5_RAW_INTERNAL_MAGIC	0x64357269	/* "d5ri" */
-
-/*
  * The format of an object's header as it exists on disk,
  * as best we can describe its variable size with a "C" structure.
  */
@@ -63,12 +39,10 @@ struct db5_ondisk_header {
 #define DB5HDR_MAGIC2	0x35		/* '5' */
 
 /* hflags */
-#if 0
 #define DB5HDR_HFLAGS_DLI_MASK				0x03
 #define DB5HDR_HFLAGS_DLI_APPLICATION_DATA_OBJECT	0
 #define DB5HDR_HFLAGS_DLI_HEADER_OBJECT			1
 #define DB5HDR_HFLAGS_DLI_FREE_STORAGE			2
-#endif
 #define DB5HDR_HFLAGS_NAME_PRESENT			0x20
 #define DB5HDR_HFLAGS_OBJECT_WIDTH_MASK			0xc0
 #define DB5HDR_HFLAGS_OBJECT_WIDTH_SHIFT		6
@@ -89,15 +63,11 @@ struct db5_ondisk_header {
 #define DB5HDR_IFLAGS_INTERIOR_WIDTH_SHIFT		6
 
 /* major_type */
+#define DB5HDR_MAJORTYPE_RESERVED			0
 #define DB5HDR_MAJORTYPE_BRLCAD_NONGEOM			1
 #define DB5HDR_MAJORTYPE_BRLCAD_GEOMETRY		2
 #define DB5HDR_MAJORTYPE_OPAQUE_BINARY			3
 #define DB5HDR_MAJORTYPE_ATTRIBUTE_ONLY			4
-#define DB5HDR_MAJORTYPE_DLI				255
-
-/* minor_type */
-#define DB5HDR_MINORTYPE_DLI_FREE			1
-#define DB5HDR_MINORTYPE_DLI_HEADER			2
 
 /*************************************************************************
  *
@@ -106,6 +76,31 @@ struct db5_ondisk_header {
  *	It may want to live in a different header file.
  *
  ************************************************************************/
+
+/*
+ *  The "raw internal" form of one database object.
+ *  This is what the low-level database routines will operate on.
+ *  Magic number1 has already been checked, and is not stored.
+ */
+struct db5_raw_internal {
+	long		magic;
+	unsigned char	h_object_width;		/* DB5HDR_WIDTHCODE_x */
+	unsigned char	h_dli;
+	unsigned char	h_name_present;
+	unsigned char	i_object_width;		/* DB5HDR_WIDTHCODE_x */
+	unsigned char	i_attributes_present;
+	unsigned char	i_body_present;
+	unsigned char	i_zzz;
+	unsigned char	major_type;
+	unsigned char	minor_type;
+	long		object_length;		/* in bytes, on disk */
+	long		name_length;
+	char		*name;
+	long		interior_length;
+	unsigned char	*interior;
+	unsigned char	*buf;		/* if non-null needs to be bu_free()ed */
+};
+#define DB5_RAW_INTERNAL_MAGIC	0x64357269	/* "d5ri" */
 
 struct attribute_value_pair {
 	char	*name;
