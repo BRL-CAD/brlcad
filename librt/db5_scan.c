@@ -158,7 +158,7 @@ db_diradd5(
 		if( minor_type == ID_COMBINATION )  {
 
 			dp->d_flags = DIR_COMB;
-			if( avs->count == 0 )  break;
+			if( !avs || avs->count == 0 )  break;
 			/*
 			 *  check for the "region=" attribute.
 			 */
