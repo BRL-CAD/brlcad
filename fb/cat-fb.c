@@ -30,7 +30,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include <stdio.h>
-
+#include "machine.h"
 #include "fb.h"
 #include "vfont-if.h"
 
