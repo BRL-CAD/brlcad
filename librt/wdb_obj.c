@@ -210,6 +210,7 @@ static int wdb_group_tcl(ClientData clientData, Tcl_Interp *interp, int argc, ch
 static int wdb_remove_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 static int wdb_region_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 static int wdb_comb_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
+static int wdb_facetize_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 static int wdb_find_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 static int wdb_which_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 static int wdb_title_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
@@ -230,6 +231,7 @@ static int wdb_units_tcl(ClientData clientData, Tcl_Interp *interp, int argc, ch
 static int wdb_hide_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 static int wdb_unhide_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 static int wdb_xpush_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
+static int wdb_smooth_bot_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 static int wdb_showmats_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 static int wdb_nmg_collapse_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 static int wdb_nmg_simplify_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
@@ -4098,11 +4100,7 @@ wdb_find_cmd(struct rt_wdb	*wdbp,
 }
 
 static int
-wdb_facetize_tcl(clientData, interp, argc, argv)
-     ClientData clientData;
-     Tcl_Interp *interp;
-     int     argc;
-     char    **argv;
+wdb_facetize_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
 	struct rt_wdb *wdbp = (struct rt_wdb *)clientData;
 
