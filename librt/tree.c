@@ -189,6 +189,7 @@ int			id;
 	struct rt_db_internal	intern;
 	register int		i;
 	register matp_t		mat;
+	int			have_match;
 
 	RT_CK_EXTERNAL(ep);
 	dp = DB_FULL_PATH_CUR_DIR(pathp);
@@ -210,36 +211,45 @@ int			id;
 	/*
 	 *  Check to see if this exact solid has already been processed.
 	 *  Match on leaf name and matrix.
-	 *  XXX There is a race on reading rti_headsolid here, prob. not harmful.
+	 *
+	 *  To avoid a race with updating rti_headsolid, this whole
+	 *  loop must be within a critical section.
 	 */
+	have_match = 0;
+	RES_ACQUIRE( &rt_g.res_model );	/* enter critical section */
 	for( RT_LIST( stp, soltab, &(rt_tree_rtip->rti_headsolid) ) )  {
-
-		RT_CHECK_SOLTAB(stp);				/* debug */
-
-		/* Leaf solids must be the same */
+		/* Leaf solids must be the same before comparing matrices */
 		if( dp != stp->st_dp )  continue;
 
 		if( mat == (matp_t)0 )  {
 			if( stp->st_matp == (matp_t)0 )  {
-				if( rt_g.debug & DEBUG_SOLIDS )
-					rt_log("rt_gettree_leaf:  %s re-referenced (ident)\n",
-						dp->d_namep );
-				goto found_it;
+				have_match = 1;
+				break;
 			}
-			goto next_one;
+			continue;
 		}
-		if( stp->st_matp == (matp_t)0 )  goto next_one;
+		if( stp->st_matp == (matp_t)0 )  continue;
+#		include "noalias.h"
 		for( i=0; i<16; i++ )  {
 			f = mat[i] - stp->st_matp[i];
 			if( !NEAR_ZERO(f, 0.0001) )
 				goto next_one;
 		}
 		/* Success, we have a match! */
-		if( rt_g.debug & DEBUG_SOLIDS )
-			rt_log("rt_gettree_leaf:  %s re-referenced\n",
-				dp->d_namep );
-		goto found_it;
+		have_match = 1;
+		break;
 next_one: ;
+	}
+	RES_RELEASE( &rt_g.res_model );	/* leave critical section */
+	if( have_match )  {
+		/* stp now points to re-referenced solid */
+		if( rt_g.debug & DEBUG_SOLIDS )  {
+			rt_log( mat ?
+			    "rt_gettree_leaf:  %s re-referenced\n" :
+			    "rt_gettree_leaf:  %s re-referenced (ident)\n",
+				dp->d_namep );
+		}
+		goto found_it;
 	}
 
 	GETSTRUCT(stp, soltab);
@@ -249,8 +259,10 @@ next_one: ;
 	if( mat )  {
 		stp->st_matp = (matp_t)rt_malloc( sizeof(mat_t), "st_matp" );
 		mat_copy( stp->st_matp, mat );
+		mat = stp->st_matp;
 	} else {
 		stp->st_matp = mat;
+		mat = (matp_t)rt_identity;
 	}
 	stp->st_specific = (genptr_t)0;
 
@@ -259,7 +271,7 @@ next_one: ;
 	VSETALL( stp->st_min,  INFINITY );
 
     	RT_INIT_DB_INTERNAL(&intern);
-	if( rt_functab[id].ft_import( &intern, ep, stp->st_matp ? stp->st_matp : rt_identity ) < 0 )  {
+	if( rt_functab[id].ft_import( &intern, ep, mat ) < 0 )  {
 		rt_log("rt_gettree_leaf(%s):  solid import failure\n", dp->d_namep );
 	    	if( intern.idb_ptr )  rt_functab[id].ft_ifree( &intern );
 		if( stp->st_matp )  rt_free( (char *)stp->st_matp, "st_matp");
@@ -295,7 +307,9 @@ next_one: ;
     	if( intern.idb_ptr )  rt_functab[id].ft_ifree( &intern );
 	id = stp->st_id;	/* type may have changed in prep */
 
-	/* For now, just link them all onto the same list */
+	/*
+	 *  Link this new solid onto the list.  Critical section.
+	 */
 	RES_ACQUIRE( &rt_g.res_model );	/* enter critical section */
 	RT_LIST_INSERT( &(rt_tree_rtip->rti_headsolid), &(stp->l) );
 	stp->st_bit = rt_tree_rtip->nsolids++;
@@ -578,6 +592,7 @@ register fastf_t *ff;
 register dbfloat_t *fp;
 register int n;
 {
+#	include "noalias.h"
 	while( n-- )  {
 		*ff++ = *fp++;
 		*ff++ = *fp++;
