@@ -199,7 +199,7 @@ long		offset;		/* byte offset from start of file */
 	got = read( dbip->dbi_fd, addr, count );
 #else
 	(void)fseek( dbip->dbi_fp, offset, 0 );
-	got = fread( addr, count, 1, dbip->dbi_fp );
+	got = fread( addr, 1, count, dbip->dbi_fp );
 #endif
 	RES_RELEASE( &rt_g.res_syscall );
 	if( got != count )  {
@@ -254,7 +254,7 @@ long		offset;
 	got = write( dbip->dbi_fd, addr, count );
 #else
 	(void)fseek( dbip->dbi_fp, offset, 0 );
-	got = fwrite( addr, count, 1, dbip->dbi_fp );
+	got = fwrite( addr, 1, count, dbip->dbi_fp );
 #endif
 	RES_RELEASE( &rt_g.res_syscall );
 	if( got != count )  {
