@@ -17,7 +17,9 @@
 *	   model coordinates for plotting in model coordinates;
 *			and
 *	3) concatenate the scales and a copy of the original image into a
-*	   a composite that it printed on standard out.
+*	   a composite that it printed on standard out.  For the moment this
+*	   is achieved by saying " cat file.pl scale.pl >> out.file ".  Later
+*	   this will be handled by scale.c as an fread() and fwrite().
 *
 *
 *  Authors -
@@ -80,8 +82,11 @@ int	argc;
 {
 
 
+	mat_t		private;	/* local, for passing to read_rt_file */
 	int		ret;		/* return code from functions */
 
+
+	mat_idn(private);		/* makes an identity matrix */
 
 	/* Check to see that the correct format is given, else print
 	 * usage message.
@@ -92,14 +97,21 @@ int	argc;
 		exit(-1);
 	}
 
-	/* Send pointer to stdin to read_rt_file, and send pointer to
-	 * to stdout to layout_n_plot. */
+	/* Send pointer read_rt_file() a pointer to local model2view matrix 
+	 * and to stdin. Send lay_out_n_plot() a pointer to stdout and to
+	 * the inverted private matrix, which is now view2model.  In inverting
+	 * the matrix in main(), greater modularity and reusability is gained
+	 * for lay_out_n_plot().
+	 */
 
-	ret = read_rt_file(&view2model[0]);
+	ret = read_rt_file(stdin, &private[0]);
 	if(ret == ERROR)  {
 		exit(-1);
 	}
-	ret = layout_n_plot(stdout);
+
+	mat_inv(view2model, private);
+
+	ret = layout_n_plot(stdout, &view2model[0]);
 	if(ret == ERROR)  {
 		exit(-1);
 	}
@@ -112,16 +124,18 @@ int	argc;
 /*
  *		L A Y O U T _ N _ P L O T
  *
- *  This routine lays out the scale in view coordinates.  It then translates
- *  all the points into model coordinates and plots them in a file.
- *  It takes stdout as its parameter: this makes it very general.  Lastly,
- *  it returns SUCCESS or ERROR.
+ *	CAVEAT: this routine needs to be rewritten to allow for
+ *		generalization and an arbitrary number of ticks!
+ *
+ *  This routine lays out the scale in view coordinates.  It receives a
+ *  pointer to a view2model matrix and to stdout.  This makes it very
+ *  general.  Lastly, it returns SUCCESS or ERROR.
  */
 
 int
-layout_n_plot(outfp)
+layout_n_plot(outfp, matp)
 FILE	*outfp;
-
+mat_t	*matp;
 {
 
 	/*  For now all the variables will be declared here.  If necessary,
@@ -198,13 +212,13 @@ FILE	*outfp;
 	 * It is hokey, and not meant to compile at this time.
 	 */
 
-	MAT4X3PNT(m_leftpt, view2model, v_leftpt);
-	MAT4X3PNT(m_rightpt, view2model, v_rightpt);
+	MAT4X3PNT(m_leftpt, *matp, v_leftpt);
+	MAT4X3PNT(m_rightpt, *matp, v_rightpt);
 
-	MAT4X3PNT(m_ltick_top, view2model, v_ltick_top);
-	MAT4X3PNT(m_ltick_bot, view2model, v_ltick_bot);
-	MAT4X3PNT(m_rtick_top, view2model, v_rtick_top);
-	MAT4X3PNT(m_rtick_bot, view2model, v_rtick_bot);
+	MAT4X3PNT(m_ltick_top, *matp, v_ltick_top);
+	MAT4X3PNT(m_ltick_bot, *matp, v_ltick_bot);
+	MAT4X3PNT(m_rtick_top, *matp, v_rtick_top);
+	MAT4X3PNT(m_rtick_bot, *matp, v_rtick_bot);
 
 	/* Now plot these coordinates and the tick marks on the scale
 	 * in model space.  Plot on stdout (later this should be outfp).
@@ -239,11 +253,13 @@ FILE	*outfp;
  * This routine reads an rt_log file line by line until it either finds
  * view, orientation, eye_postion, and size of the model, or it hits the
  * end of file.  When a colon is found, sscanf() retrieves the
- * necessary information.  It returns SUCCESS or ERROR.
+ * necessary information.  It takes a file pointer and a matrix
+ * pointer as parameters.  It returns SUCCESS or ERROR.
  */
 
 int
-read_rt_file(matp)
+read_rt_file(infp, matp)
+FILE	*infp;
 mat_t 	*matp;
 {
 
@@ -279,13 +295,13 @@ mat_t 	*matp;
 
 	/* feof returns 1 on failure */
 
-	while( feof(stdin) == 0 )  {
+	while( feof(infp) == 0 )  {
 
 		/* clear the buffer */	
 		for( i = 0; i < BUFF_LEN; i++ )  {
 			string[i] = '\0';
 		}
-		ret = fgets(string, BUFF_LEN, stdin);
+		ret = fgets(string, BUFF_LEN, infp);
 		if( ret == NULL )  {
 /*			fprintf(stderr, "read_rt_log: read failure on file %s\n",
  *				string);
@@ -313,7 +329,7 @@ mat_t 	*matp;
 			/* Check to make sure the first char. is not a NULL;
 			 * if it is, go back for a new line.
 			 */
-			if( string[0] == NULL )  {
+			if( string[i] == '\0' )  {
 				break;
 			}
 			if( string[i] == ':')  {
@@ -434,8 +450,9 @@ mat_t 	*matp;
 	fprintf(stderr, "eye_pos= %g, %g, %g\n", eye_pos[0], eye_pos[1], eye_pos[2]);
 	fprintf(stderr, "size= %gmm\n", m_size);
 
-	/* Build the view2model matrix.  Variables used only for this
-	 * transaction are initialized here.
+	/* Build the view2model matrix (matp points at this).  Variables 
+	 * used only for this transaction are initialized here.
+	 * 
 	 */
 
 
@@ -445,12 +462,9 @@ mat_print("view2model", view2model);
 	rotate[15] = 0.5 * m_size;
 	mat_idn( xlate );
 	MAT_DELTAS( xlate, -eye_pos[0], -eye_pos[1], -eye_pos[2] );
-	mat_mul( tmp_mat, rotate, xlate );
+	mat_mul( matp, rotate, xlate );
 
-mat_print("tmp_mat", tmp_mat);
-
-	mat_inv( matp, tmp_mat );
-
+mat_print("tmp_mat", *matp);
 mat_print("new view2model", view2model);
 	
 	return(SUCCESS);
