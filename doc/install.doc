@@ -1720,9 +1720,15 @@ which causes the shell to segmentation fault when executing this line:
 .br
               eval `grep '^RELEASE=' ../gen.sh`
 .br
-in the files newvers.sh and sharedlibvers.sh.  There are workarounds
-included in both files, simply comment out the defective line and
-uncomment the workaround, and all will be well.
+in the files newvers.sh and sharedlibvers.sh, which is of course a
+perfectly good shell command.  The error message is a bit cryptic and
+will look like this:
+.br
+ ../newvers.sh libsysv_version "BRL-CAD System V Compatibility Library"
+ ../newvers.sh: no space
+.br
+There are workarounds included in both shell scripts, simply comment out
+the defective line and uncomment the workaround, and all will be well.
 A bug report has been filed with the vendor.
 .NH 1
 ENHANCEMENTS
