@@ -33,7 +33,6 @@
 		RTDIR/mathtab.o \
 		RTDIR/material.o RTDIR/refract.o \
 		RTDIR/wray.o \
-		RTDIR/turb.o \
 		LIBPKG LIBPKG_LIBES \
 		LIBOPTICAL \
 		LIBRT LIBBN LIBBU LIBBU_LIBES LIBTCL LIBTCL_LIBES LIBES
