@@ -468,6 +468,34 @@ typedef long	bitv_t;		/* largest integer type */
 #define	const	/**/
 #endif
 
+#if defined(sparc) && defined(SYSV)
+/********************************
+ *				*
+ *   Sun Running Solaris 2.X    *
+ *   aka SunOS 5.X              *
+ *				*
+ ********************************/
+
+#define IEEE_FLOAT 1		/* Uses IEEE style floating point */
+typedef double	fastf_t;	/* double|float, "Fastest" float type */
+#define LOCAL	auto		/* static|auto, for serial|parallel cpu */
+#define FAST	register	/* LOCAL|register, for fastest floats */
+typedef long	bitv_t;		/* largest integer type */
+#define BITV_SHIFT	5	/* log2( bits_wide(bitv_t) ) */
+
+/* RES_INIT, RES_ACQUIRE, RES_RELEASE are subroutines */
+#define MAX_PSW		20	/* need to increase this for Super Dragon? */
+#define DEFAULT_PSW	20
+#define PARALLEL	1
+
+# if __STDC__ == 0
+	/* == 0 -Xt in partial ANSI (transition) mode */
+#	undef __STDC__
+#	define __STDC__	1
+# endif
+
+#endif
+
 #ifndef LOCAL
 /********************************
  *				*
