@@ -6,7 +6,7 @@ EXTRA_DIST = rtwizard.tcl
 
 .PHONY : tclIndex
 tclIndex:
-	$(top_builddir)/bwish/bwish $(top_srcdir)/tclscripts/ami.tcl $(top_srcdir)/tclscripts/rtwizard
+	echo 'set auto_index(::RtWizard::main) [list source [file join $$dir rtwizard.tcl]]' > tclIndex
 
 pkgIndex.tcl:
 	$(top_srcdir)/tclscripts/ampi.tcl $(top_srcdir)/tclscripts/rtwizard

@@ -7,4 +7,5 @@ tcl_DATA = tclIndex
 
 .PHONY : tclIndex
 tclIndex:
-	$(top_builddir)/bwish/bwish $(top_srcdir)/tclscripts/ami.tcl $(top_srcdir)/tclscripts/util
+	grep '^[ \t]*proc' *tcl *tk | sed 's,\([^:]*\):[ \t]*proc[ \t]*\([a-zA-Z0-9_?/:-][a-zA-Z0-9_?/:-]*\).*,set auto_index(\2) [list source [file join \$$dir \1]],' > tclIndex
+
