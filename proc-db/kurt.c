@@ -30,8 +30,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "raytrace.h"
 #include "wdb.h"
 
-#include "../librt/polyno.h"
-
 mat_t	identity;
 double degtorad = 0.0174532925199433;
 
