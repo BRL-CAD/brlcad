@@ -1,5 +1,5 @@
 /*
- *			B O O L
+ *			B O O L . C
  *
  * Ray Tracing program, Boolean region evaluator.
  *
@@ -17,11 +17,15 @@
  *
  * Author -
  *	Michael John Muuss
- *
- *	U. S. Army Ballistic Research Laboratory
- *	April 13, 1984
- *
- * $Revision$
+ *  
+ *  Source -
+ *	SECAD/VLD Computing Consortium, Bldg 394
+ *	The U. S. Army Ballistic Research Laboratory
+ *	Aberdeen Proving Ground, Maryland  21005
+ *  
+ *  Copyright Notice -
+ *	This software is Copyright (C) 1985 by the United States Army.
+ *	All rights reserved.
  */
 #ifndef lint
 static char RCSid[] = "@(#)$Header$ (BRL)";

@@ -3,17 +3,23 @@
  *
  * Ray Tracing program shot coordinator.
  *
- * Author -
+ *  Author -
  *	Michael John Muuss
  *
- *	U. S. Army Ballistic Research Laboratory
- *	May 1, 1984
- *
- * $Revision$
+ *  Source -
+ *	SECAD/VLD Computing Consortium, Bldg 394
+ *	The U. S. Army Ballistic Research Laboratory
+ *	Aberdeen Proving Ground, Maryland  21005
+ *  
+ *  Copyright Notice -
+ *	This software is Copyright (C) 1985 by the United States Army.
+ *	All rights reserved.
  */
 #ifndef lint
 static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
+
+char CopyRight_Notice[] = "@(#) Copyright (C) 1985 by the United States Army";
 
 #include <stdio.h>
 #include "vmath.h"

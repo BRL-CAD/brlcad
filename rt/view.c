@@ -1,7 +1,8 @@
 /*
  *			V I E W
  *
- * Ray Tracing program, lighting model
+ * Ray Tracing program, sample lighting models.  Part of the
+ * RT program proper.
  *
  *  Many varied and wonderous "lighting models" are implemented.
  *  The notion of output format is randomly mixed in as well.
@@ -13,18 +14,22 @@
  *	4	Gwyn format ray files
  *	5	3-light debugging model
  *
- * Authors -
- *	Michael John Muuss
- *	Gary Moss
- *
- *	U. S. Army Ballistic Research Laboratory
- *	March 27, 1984
- *
- * Notes -
+ *  Notes -
  *	The normals on all surfaces point OUT of the solid.
  *	The incomming light rays point IN.  Thus the sign change.
  *
- * $Revision$
+ *  Authors -
+ *	Michael John Muuss
+ *	Gary S. Moss
+ *  
+ *  Source -
+ *	SECAD/VLD Computing Consortium, Bldg 394
+ *	The U. S. Army Ballistic Research Laboratory
+ *	Aberdeen Proving Ground, Maryland  21005
+ *  
+ *  Copyright Notice -
+ *	This software is Copyright (C) 1985 by the United States Army.
+ *	All rights reserved.
  */
 #ifndef lint
 static char RCSid[] = "@(#)$Header$ (BRL)";

@@ -9,10 +9,14 @@
  *	Jeff Hanes		(Programming)
  *	Michael John Muuss	(RT adaptation)
  *
- * U. S. Army Ballistic Research Laboratory
- * August, 1984
- *
- * $Revision$
+ *  Source -
+ *	SECAD/VLD Computing Consortium, Bldg 394
+ *	The U. S. Army Ballistic Research Laboratory
+ *	Aberdeen Proving Ground, Maryland  21005
+ *  
+ *  Copyright Notice -
+ *	This software is Copyright (C) 1985 by the United States Army.
+ *	All rights reserved.
  */
 #ifndef lint
 static char RCSid[] = "@(#)$Header$ (BRL)";
@@ -21,7 +25,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <stdio.h>
 #include "vmath.h"
 #include "raytrace.h"
-#include "db.h"
+#include "../h/db.h"
 #include "debug.h"
 
 #include "./polyno.h"

@@ -1,12 +1,17 @@
 /*
- *			T I M E R . C
+ *			T I M E R 4 2 . C
  *
  * Function -
- *	To provide timing information for RT.
+ *	To provide timing information for RT when running on 4.2 BSD UNIX.
  *
- * Based on CSH sh.time.c module.
- *
- * $Revision$
+ *  Source -
+ *	SECAD/VLD Computing Consortium, Bldg 394
+ *	The U. S. Army Ballistic Research Laboratory
+ *	Aberdeen Proving Ground, Maryland  21005
+ *  
+ *  Copyright Notice -
+ *	This software is Copyright (C) 1985 by the United States Army.
+ *	All rights reserved.
  */
 #ifndef lint
 static char RCSid[] = "@(#)$Header$ (BRL)";

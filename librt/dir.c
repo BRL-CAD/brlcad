@@ -3,13 +3,23 @@
  *
  * Ray Tracing program, GED database directory manager.
  *
- * Author -
+ *  Functions -
+ *	dir_build	Read GED database, build directory
+ *	dir_lookup	Look up name in directory
+ *	dir_add		Add entry to directory
+ *	strdup		Duplicate string
+ *
+ *  Author -
  *	Michael John Muuss
- *
- *	U. S. Army Ballistic Research Laboratory
- *	April 2, 1984
- *
- * $Revision$
+ *  
+ *  Source -
+ *	SECAD/VLD Computing Consortium, Bldg 394
+ *	The U. S. Army Ballistic Research Laboratory
+ *	Aberdeen Proving Ground, Maryland  21005
+ *  
+ *  Copyright Notice -
+ *	This software is Copyright (C) 1985 by the United States Army.
+ *	All rights reserved.
  */
 #ifndef lint
 static char RCSid[] = "@(#)$Header$";
@@ -17,7 +27,7 @@ static char RCSid[] = "@(#)$Header$";
 
 #include <stdio.h>
 #include "vmath.h"
-#include "db.h"
+#include "../h/db.h"
 #include "rtdir.h"
 #include "debug.h"
 
@@ -162,7 +172,7 @@ register char *str;
 }
 
 /*
- *			D I R A D D
+ *			D I R _ A D D
  *
  * Add an entry to the directory
  */

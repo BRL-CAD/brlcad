@@ -3,9 +3,20 @@
  *
  * Function -
  *	To provide timing information for RT.
- *	THIS VERSION FOR System FIVE, Release TWO.
+ *	This version for System V, Release TWO.
+ *	(This merely determines elapsed time, not CPU time, alas)
  *
- * $Revision$
+ *  Author -
+ *	Michael John Muuss
+ *  
+ *  Source -
+ *	SECAD/VLD Computing Consortium, Bldg 394
+ *	The U. S. Army Ballistic Research Laboratory
+ *	Aberdeen Proving Ground, Maryland  21005
+ *  
+ *  Copyright Notice -
+ *	This software is Copyright (C) 1985 by the United States Army.
+ *	All rights reserved.
  */
 #ifndef lint
 static char RCSid[] = "@(#)$Header $ (BRL)";

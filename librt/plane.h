@@ -2,12 +2,21 @@
  *  			P L A N E . H
  *
  *  This header file describes the plane_specific structure, which
- *  is common to ARB8 and ARS processing.
+ *  is for ARS processing.
  *  
- * U. S. Army Ballistic Research Laboratory
- * May 1, 1984
+ *  Author -
+ *	Michael John Muuss
+ *  
+ *  Source -
+ *	SECAD/VLD Computing Consortium, Bldg 394
+ *	The U. S. Army Ballistic Research Laboratory
+ *	Aberdeen Proving Ground, Maryland  21005
+ *  
+ *  Copyright Notice -
+ *	This software is Copyright (C) 1985 by the United States Army.
+ *	All rights reserved.
  *
- * $Revision$
+ *  $Header$
  */
 
 #define MAXPTS	4			/* All we need are 4 points */

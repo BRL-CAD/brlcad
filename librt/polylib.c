@@ -1,6 +1,34 @@
 /*
- *  		P O L Y L I B . C
+ *  			P O L Y L I B . C
+ *
+ *	Library for dealing with polynomials.
+ *
+ *  Functions -
+ *	polyMul		Multiply two polynomials
+ *	polyScal	Scale a polynomial
+ *	polyAdd		Add two polynomials
+ *	polySub		Subtract two polynomials
+ *	synDiv		Divide 1 poly into another using Synthetic Division
+ *	quadratic	Solve quadratic formula
+ *	cubic		Solve cubic forumla
+ *	pr_poly		Print a polynomial
+ *
+ *  Author -
+ *	Jeff Hanes
+ *  
+ *  Source -
+ *	SECAD/VLD Computing Consortium, Bldg 394
+ *	The U. S. Army Ballistic Research Laboratory
+ *	Aberdeen Proving Ground, Maryland  21005
+ *  
+ *  Copyright Notice -
+ *	This software is Copyright (C) 1985 by the United States Army.
+ *	All rights reserved.
  */
+#ifndef lint
+static char RCSid[] = "@(#)$Header$ (BRL)";
+#endif
+
 #include <stdio.h>
 #include <math.h>
 #include <signal.h>
@@ -242,7 +270,6 @@ register complex	root[];
  */
 static jmp_buf abort_buf;
 static void cubic_catch()  {
-	fprintf(stderr,"cubic FPE\n");
 	longjmp(abort_buf, 1);	/* return error code */
 }
 
@@ -258,7 +285,10 @@ register complex	root[];
 	sav=signal(SIGFPE, cubic_catch);
 	if( setjmp( abort_buf ) )  {
 		signal(SIGFPE, sav);
-		pr_poly(eqn);
+		if( debug & DEBUG_ROOTS )  {
+			fprintf(stderr,"cubic Floating Point Error on:\n");
+			pr_poly(eqn);
+		}
 		return(0);	/* FAIL */
 	}
 

@@ -1,15 +1,20 @@
 /*
  *			R T
  *
- * Ray Tracing program
+ *  Demonstration Ray Tracing main program, using RT library.
+ *  Invoked by MGED for quick pictures.
  *
- * Author -
+ *  Author -
  *	Michael John Muuss
  *
- *	U. S. Army Ballistic Research Laboratory
- *	March 27, 1984
- *
- * $Revision$
+ *  Source -
+ *	SECAD/VLD Computing Consortium, Bldg 394
+ *	The U. S. Army Ballistic Research Laboratory
+ *	Aberdeen Proving Ground, Maryland  21005
+ *  
+ *  Copyright Notice -
+ *	This software is Copyright (C) 1985 by the United States Army.
+ *	All rights reserved.
  */
 #ifndef lint
 static char RCSid[] = "@(#)$Header$ (BRL)";
