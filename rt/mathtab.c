@@ -26,8 +26,9 @@ static char RCSmathtab[] = "@(#)$Header$ (BRL)";
 #include "machine.h"
 #include "./mathtab.h"
 
-#define	PI	3.1415926535898
-#define	TWOPI	6.283185307179
+double	pi =	3.1415926535898;
+double	twopi =	6.283185307179;
+double halfpi =	1.570796326794896615;
 
 float *rand_ptr = rand_tab-1;
 
