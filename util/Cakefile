@@ -46,7 +46,7 @@
 /* Explicit composition of each product */
 
 wavelet: wavelet.o LIBFB_DEP LIBBU_DEP
-	CC LDFLAGS -o wavelet wavelet.o LIBFB LIBFB_LIBES -lbn -lbu LIBBN LIBBU LIBBU_LIBES LIBES
+	CC LDFLAGS -o wavelet wavelet.o LIBFB LIBFB_LIBES LIBBN LIBBU LIBBU_LIBES LIBES
 
 png_info:	png_info.o LIBBU_DEP LIBPNG_DEP LIBZ_DEP
 	cc LDFLAGS -o png_info png_info.o LIBPNG LIBZ LIBBN LIBBU LIBBU_LIBES LIBES
