@@ -33,6 +33,8 @@
  *----------------------------------------------------------------------
  */
 
+#include <stdio.h>
+
 char *
 strstr(string, substring)
     register char *string;	/* String to search. */
