@@ -161,6 +161,9 @@
  *	/Za		for ANSI C
  *	/D "WIN32"	to fire this rule
  */
+# if !__STDC__
+#	error "STDC is not properly set on WIN32 build, add /Za to Project Settings / Project Options"
+# endif
 #	define HAVE_STDLIB_H	1
 #	define HAVE_STDARG_H	1
 #	define HAVE_STRING_H	1
