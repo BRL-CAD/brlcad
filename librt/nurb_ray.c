@@ -27,6 +27,9 @@
 #include "nurb.h"
 #include "../librt/debug.h"
 
+
+void rt_nurb_pbound();
+
 struct face_g_snurb *
 rt_nurb_project_srf( srf, plane1, plane2)
 CONST struct face_g_snurb *srf;
@@ -459,6 +462,7 @@ top:
 	return (struct rt_nurb_uv_hit *)h;
 }
 
+void
 rt_nurb_pbound( srf, vmin, vmax)
 struct face_g_snurb * srf;
 point_t vmin, vmax;
