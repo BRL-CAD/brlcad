@@ -126,6 +126,7 @@ struct mipsinfo {
 	int	mi_rgb_ct;
 	short	mi_cmap_flag;
 	int	mi_shmid;
+	int	mi_memwidth;		/* width of scanline in if_mem */
 };
 #define	MIPS(ptr)	((struct mipsinfo *)((ptr)->u1.p))
 #define	MIPSL(ptr)	((ptr)->u1.p)		/* left hand side version */
@@ -139,10 +140,10 @@ struct mipsinfo {
 
 #define MARGIN	4			/* # pixels margin to screen edge */
 #define BANNER	18			/* Size of MEX title banner */
-#define WIN_L	(1280-ifp->if_width-MARGIN)
-#define WIN_R	(1280-1-MARGIN)
+#define WIN_L	(ifp->if_max_width - ifp->if_width-MARGIN)
+#define WIN_R	(ifp->if_max_width - 1 - MARGIN)
 #define WIN_B	MARGIN
-#define WIN_T	(ifp->if_height-1+MARGIN)
+#define WIN_T	(ifp->if_height - 1 + MARGIN)
 
 static int map_size;			/* # of color map slots available */
 
@@ -205,16 +206,15 @@ FBIO	*ifp;
 
 
 	errno = 0;
-	pixsize = 1024 * 1280 * sizeof(RGBpixel);
-	size = pixsize + sizeof(struct mips_cmap);
-	size = (size + 4096-1) & ~(4096-1);
 
 	if( (ifp->if_mode & MODE_1MASK) == MODE_1MALLOC )  {
 		/*
-		 *  XXX In this mode, we REALLY should only malloc
-		 *  XXX as much memory as we need, rather than perhaps 4x
-		 *  XXX as much.  (eg, 512x512 wanted, 1024x1280 acquired).
+		 *  In this mode, only malloc as much memory as is needed.
 		 */
+		MIPS(ifp)->mi_memwidth = ifp->if_width;
+		pixsize = ifp->if_height * ifp->if_width * sizeof(RGBpixel);
+		size = pixsize + sizeof(struct mips_cmap);
+
 		sp = malloc( size );
 		if( sp == 0 )  {
 			fb_log("mips_getmem: frame buffer memory malloc failed\n");
@@ -228,6 +228,12 @@ FBIO	*ifp;
 
 		return(0);
 	}
+
+	/* The shared memory section never changes size */
+	MIPS(ifp)->mi_memwidth = ifp->if_max_width;
+	pixsize = ifp->if_max_height * ifp->if_max_width * sizeof(RGBpixel);
+	size = pixsize + sizeof(struct mips_cmap);
+	size = (size + 4096-1) & ~(4096-1);
 
 	/* First try to attach to an existing one */
 	if( (MIPS(ifp)->mi_shmid = shmget( SHMEM_KEY, size, 0 )) < 0 )  {
@@ -393,7 +399,7 @@ register FBIO	*ifp;
 
 		for( y = ymin; y <= ymax; y++ )  {
 			ip = (unsigned char *)
-				&ifp->if_mem[(y*1024+xmin)*sizeof(RGBpixel)];
+				&ifp->if_mem[(y*MIPS(ifp)->mi_memwidth+xmin)*sizeof(RGBpixel)];
 
 			l = xscroff;
 			b = yscroff + (y-ymin)*MIPS(ifp)->mi_yzoom;
@@ -401,6 +407,7 @@ register FBIO	*ifp;
 			if ( MIPS(ifp)->mi_cmap_flag == FALSE )  {
 				for( i=xwidth; i > 0; i--)  
 				{
+					/* XXX could this be im_RGBcolor? */
  					RGBcolor( ip[RED], ip[GRN], ip[BLU]);
 					r = l + MIPS(ifp)->mi_xzoom - 1;
 					im_rectfs( l, b, r, t );
@@ -432,7 +439,7 @@ register FBIO	*ifp;
 		register long amount, n;
 
 		ip = (unsigned char *)
-			&ifp->if_mem[(y*1024+xmin)*sizeof(RGBpixel)];
+			&ifp->if_mem[(y*MIPS(ifp)->mi_memwidth+xmin)*sizeof(RGBpixel)];
 
 		im_cmov2s(xscroff, yscroff +( y - ymin) );
 
@@ -456,9 +463,6 @@ register FBIO	*ifp;
 				}
 				amount = amount;
 			}
-#ifdef never
-			im_freepipe;
-#endif
 			GEWAIT;
 		} else {
 			n = xwidth;
@@ -480,16 +484,14 @@ register FBIO	*ifp;
 				}
 				amount = amount;
 			}
-#ifdef never
-			im_freepipe;
-#endif
 			GEWAIT;
 		}
 	}
 	/*
 	 *  Releasing the pipe has been moved outside the main scanline
 	 *  loop, to prevent the kernel from switching windows
-	 *  from scanline to scanline as several windows repaint
+	 *  from scanline to scanline as several windows repaint.
+	 *  Kernel pre-emption still happens, but much less often.
 	 */
 	im_freepipe;
 	GEWAIT;
@@ -786,7 +788,7 @@ register RGBpixel	*pp;
 		register int cnt;
 
 		/* Slightly simplistic -- runover to right border */
-		for( cnt=1024*ifp->if_height-1; cnt > 0; cnt-- )  {
+		for( cnt=MIPS(ifp)->mi_memwidth*ifp->if_height-1; cnt > 0; cnt-- )  {
 			*op++ = (*pp)[RED];
 			*op++ = (*pp)[GRN];
 			*op++ = (*pp)[BLU];
@@ -795,7 +797,7 @@ register RGBpixel	*pp;
 		RGBcolor((short)((*pp)[RED]), (short)((*pp)[GRN]), (short)((*pp)[BLU]));
 	} else {
 		RGBcolor( (short) 0, (short) 0, (short) 0);
-		bzero( ifp->if_mem, 1024*ifp->if_height*sizeof(RGBpixel) );
+		bzero( ifp->if_mem, MIPS(ifp)->mi_memwidth*ifp->if_height*sizeof(RGBpixel) );
 	}
 	clear();
 	return(0);
@@ -879,7 +881,7 @@ int	count;
 	ypos = y;
 
 	while( count > 0 )  {
-		ip = &ifp->if_mem[(ypos*1024+xpos)*sizeof(RGBpixel)];
+		ip = &ifp->if_mem[(ypos*MIPS(ifp)->mi_memwidth+xpos)*sizeof(RGBpixel)];
 
 		if ( count >= ifp->if_width-xpos )  {
 			scan_count = ifp->if_width-xpos;
@@ -939,7 +941,7 @@ int	count;
 		else
 			scan_count = count;
 
-		op = (unsigned char *)&ifp->if_mem[(ymem*1024+xmem)*sizeof(RGBpixel)];
+		op = (unsigned char *)&ifp->if_mem[(ymem*MIPS(ifp)->mi_memwidth+xmem)*sizeof(RGBpixel)];
 
 		if( ifp->if_zoomflag )  {
 			register Scoord l, b, r, t;
