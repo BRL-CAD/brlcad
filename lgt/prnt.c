@@ -15,11 +15,10 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./lgt.h"
 #include "./tree.h"
 #include "./screen.h"
+#include "./ascii.h"
 #include "./extern.h"
 static char	*usage[] =
 	{
-"",
-"l g t (2.3)",
 "",
 "Usage:",
 "",
@@ -166,7 +165,7 @@ prnt_Lgt_Status()
 	(void) printf( "%-2d", max_bounce );
 	(void) SetStandout();
 	PROGRAM_NM_MOVE();
-	(void) printf( " LGT (%s) ",  *version == '%' ? "EXP" : version );
+	(void) printf( " LGT %s", version );
 	if( ged_file != NULL )
 		{
 		F_GED_DB_MOVE();
@@ -258,16 +257,69 @@ prnt_IR_Status()
 	return;
 	}
 
+/*	p r n t _ P a g e d _ M e n u ( )				*/
+void
+prnt_Paged_Menu( menu )
+register char	**menu;
+	{	register int	done = FALSE;
+		int		lines =	(PROMPT_LINE-TOP_SCROLL_WIN);
+	if( ! tty )
+		{
+		for( ; *menu != NULL; menu++ )
+			rt_log( "%s\n", *menu );
+		return;
+		}
+	for( ; *menu != NULL && ! done;  )
+		{
+		for( ; lines > 0 && *menu != NULL; menu++, --lines )
+			prnt_Scroll( "%-*s\n", co, *menu );
+		if( *menu != NULL )
+			done = ! do_More( &lines );
+		prnt_Prompt( "" );
+		}
+	(void) fflush( stdout );
+	return;
+	}
+
+int
+do_More( linesp )
+int	*linesp;
+	{	register int	ret = TRUE;
+	if( ! tty )
+		return	TRUE;
+	save_Tty( 0 );
+	set_Raw( 0 );
+	clr_Echo( 0 );
+	SetStandout();
+	prnt_Prompt( "-- More -- " );
+	ClrStandout();
+	(void) fflush( stdout );
+	switch( get_Char() )
+		{
+	case 'q' :
+	case 'n' :
+		ret = FALSE;
+		break;
+	case LF :
+	case CR :
+		*linesp = 1;
+		break;
+	default :
+		*linesp = (PROMPT_LINE-TOP_SCROLL_WIN);
+		break;
+		}
+	reset_Tty( 0 );
+	return	ret;
+	}
+
+
 /*	p r n t _ M e n u ( )						*/
 void
 prnt_Menu()
-	{	register char	**p;
-	for( p = lgt_menu; *p != NULL; p++ )
-		prnt_Scroll( "%-*s\n", co, *p );
+	{
+	prnt_Paged_Menu( lgt_menu );
 	if( ir_mapping )
-		for( p = ir_menu; *p != NULL; p++ )
-			prnt_Scroll( "%-*s\n", co, *p );
-	(void) fflush( stdout );
+		prnt_Paged_Menu( ir_menu );
 	return;
 	}
 
@@ -392,6 +444,8 @@ va_dcl
 		/* End of line detected by existance of a newline.	*/
 		newline = fmt[strlen( fmt )-1] == '\n';
 		}
+	else
+		(void) _doprnt( fmt, ap, stderr );
 	va_end( ap );
 	RES_RELEASE( &rt_g.res_malloc );		/* unlock */
 	return;
