@@ -74,6 +74,39 @@ struct bu_vls tcl_output_hook;
 Tcl_Interp *interp = NULL;
 Tk_Window tkwin;
 
+/* nirt stuff */
+#define NIRT_EVEN_COLOR "255 255 0"
+#define NIRT_ODD_COLOR "0 255 255"
+#define NIRT_VOID_COLOR "255 0 255"
+#define NIRT_RAY_BASENAME "nirt_ray"
+#define NIRT_FMT "nirt_fmt"
+
+struct bu_vls nirt_even_color;
+struct bu_vls nirt_odd_color;
+struct bu_vls nirt_void_color;
+struct bu_vls nirt_basename;
+
+struct nirt_fmt {
+  struct bu_vls tclName;
+  struct bu_vls fmt;
+};
+struct nirt_fmt *nirt_fmts;
+
+struct nirt_fmt_data {
+  char type;
+  char *fmt;
+};
+
+struct nirt_fmt_data def_nirt_fmt_data[] = {
+  {'r', "\"Origin (x y z) = (%.2f %.2f %.2f)  (h v d) = (%.2f %.2f %.2f)\\nDirection (x y z) = (%.4f %.4f %.4f)  (az el) = (%.2f %.2f)\\n\" x_orig y_orig z_orig h v d_orig x_dir y_dir z_dir a e"},
+  {'h', "\"    Region Name               Entry (x y z)              LOS  Obliq_in\\n\""},
+  {'p', "\"%-20s (%9.3f %9.3f %9.3f) %8.2f %8.3f\\n\" reg_name x_in y_in z_in los obliq_in"},
+  {'f', "\"\""},
+  {'m', "\"You missed the target\\n\""},
+  {'o', "\"OVERLAP: '%s' and '%s' xyz_in=(%g %g %g) los=%g\\n\" ov_reg1_name ov_reg2_name ov_x_in ov_y_in ov_z_in ov_los"},
+  {(char)NULL, (char *)NULL}
+};
+/* End nirt format stuff */
 
 /*
  *			C M D _ L E F T _ M O U S E
@@ -356,6 +389,7 @@ static struct cmdtab cmdtab[] = {
 	"viewget", cmd_viewget,
 	"viewset", cmd_viewset,
 	"view2model", f_view2model,
+	"vnirt", f_vnirt,
 	"vrmgr", f_vrmgr,
 	"vrot", f_vrot,
 	"vrot_center", f_vrot_center,
@@ -692,6 +726,8 @@ mged_setup()
 {
 	struct bu_vls str;
 	char *filename;
+	struct nirt_fmt_data *nfdp;
+	register int i, n;
 
 	/* The following is for GUI output hooks: contains name of function to
 	   run with output */
@@ -868,6 +904,41 @@ mged_setup()
 	bu_vls_strcpy( &str, "mged_display(state)" );
 	Tcl_SetVar(interp, bu_vls_addr(&str), state_str[state],
 		   TCL_GLOBAL_ONLY);
+
+	/* initialize nirt variables */
+	bu_vls_init(&nirt_even_color);
+	bu_vls_init(&nirt_odd_color);
+	bu_vls_init(&nirt_void_color);
+	bu_vls_init(&nirt_basename);
+
+	bu_vls_strcpy(&nirt_basename, "nirt_ray_basename");
+	Tcl_SetVar(interp, bu_vls_addr(&nirt_basename), NIRT_RAY_BASENAME, TCL_GLOBAL_ONLY);
+
+	/* nirt color variables */
+	bu_vls_strcpy(&nirt_even_color, "nirt_ray_colors(even)");
+	Tcl_SetVar(interp, bu_vls_addr(&nirt_even_color), NIRT_EVEN_COLOR, TCL_GLOBAL_ONLY);
+	bu_vls_strcpy(&nirt_odd_color, "nirt_ray_colors(odd)");
+	Tcl_SetVar(interp, bu_vls_addr(&nirt_odd_color), NIRT_ODD_COLOR, TCL_GLOBAL_ONLY);
+	bu_vls_strcpy(&nirt_void_color, "nirt_ray_colors(void)");
+	Tcl_SetVar(interp, bu_vls_addr(&nirt_void_color), NIRT_VOID_COLOR, TCL_GLOBAL_ONLY);
+
+	/* nirt format variables */
+	n = 0;
+	for(nfdp = def_nirt_fmt_data; nfdp->fmt != (char *)NULL; ++nfdp)
+	  ++n;
+
+	nirt_fmts = (struct nirt_fmt *)bu_malloc(sizeof(struct nirt_fmt) * n, "nirt_fmts");
+	for(i = 0; i < n; ++i){
+	  bu_vls_init(&nirt_fmts[i].tclName);
+	  bu_vls_init(&nirt_fmts[i].fmt);
+
+	  bu_vls_printf(&nirt_fmts[i].tclName, "%s(%c)",
+			NIRT_FMT, def_nirt_fmt_data[i].type);
+	  bu_vls_strcpy(&nirt_fmts[i].fmt, def_nirt_fmt_data[i].fmt);
+
+	  Tcl_SetVar(interp, bu_vls_addr(&nirt_fmts[i].tclName),
+		     bu_vls_addr(&nirt_fmts[i].fmt), TCL_GLOBAL_ONLY);
+	}
 
 	Tcl_ResetResult(interp);
 
@@ -1961,7 +2032,11 @@ f_aim(clientData, interp, argc, argv)
 	save_cclp = curr_cmd_list;
 	curr_dm_list = dlp;
 	curr_cmd_list = clp;
+
+#ifdef DO_SCROLL_UPDATES
 	set_scroll();
+#endif
+
 	curr_dm_list = save_cdlp;
 	curr_cmd_list = save_cclp;
 
