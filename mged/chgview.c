@@ -971,31 +971,125 @@ f_knob()
 	}
 }
 
-/* Load view matrixes from a file.  rmats filename */
+/*
+ *			F _ R M A T S
+ *
+ * Load view matrixes from a file.  rmats filename [mode]
+ *
+ * Modes:
+ *	-1	put eye in viewcenter (default)
+ *	0	put eye in viewcenter, don't rotate.
+ *	1	leave view alone, animate solid named "EYE"
+ */
 void
 f_rmats()
 {
 	register FILE *fp;
-	vect_t eye_model;
+	register struct directory *dp;
+	register struct solid *sp;
+	union record	rec;
+	vect_t	eye_model;
+	vect_t	xlate;
+	vect_t	sav_center;
+	vect_t	sav_start;
+	int	mode;
+	fastf_t	scale;
+	mat_t	rot;
+	register struct veclist *vp;
+	register int nvec;
+
+	if( not_state( ST_VIEW, "animate from matrix file") )
+		return;
 
 	if( (fp = fopen(cmd_args[1], "r")) == NULL )  {
 		perror(cmd_args[1]);
 		return;
 	}
+	mode = -1;
+	if( numargs > 2 )
+		mode = atoi(cmd_args[2]);
+	switch(mode)  {
+	case 1:
+		if( (dp=lookup("EYE",LOOKUP_NOISY)) == DIR_NULL )  {
+			mode = -1;
+			break;
+		}
+		db_getrec( dp, &rec, 0 );
+		FOR_ALL_SOLIDS(sp)  {
+			if( sp->s_path[sp->s_last] == dp )  {
+				VMOVE( sav_start, sp->s_vlist->vl_pnt );
+				VMOVE( sav_center, sp->s_center );
+				printf("animating EYE solid\n");
+				goto work;
+			}
+		}
+		/* Fall through */
+	default:
+	case -1:
+		mode = -1;
+		printf("default mode:  eyepoint at (0,0,1) viewspace\n");
+		break;
+	case 0:
+		printf("rotation supressed, center is eyepoint\n");
+		break;
+	}
+work:
 	/* If user hits ^C, this will stop, but will leave hanging filedes */
 	(void)signal(SIGINT, cur_sigint);
 	while( !feof( fp ) &&
-	       rt_read( fp, &Viewscale, eye_model, Viewrot ) >= 0 )  {
-		if( numargs > 2 )
+	    rt_read( fp, &scale, eye_model, rot ) >= 0 )  {
+	    	switch(mode)  {
+	    	case -1:
+	    		/* First step:  put eye in center */
+		       	Viewscale = scale;
+		       	mat_copy( Viewrot, rot );
+			MAT_DELTAS( toViewcenter,
+				-eye_model[X],
+				-eye_model[Y],
+				-eye_model[Z] );
+	    		new_mats();
+	    		/* Second step:  put eye in front */
+	    		VSET( xlate, 0, 0, -1 );	/* correction factor */
+	    		MAT4X3PNT( eye_model, view2model, xlate );
+			MAT_DELTAS( toViewcenter,
+				-eye_model[X],
+				-eye_model[Y],
+				-eye_model[Z] );
+	    		new_mats();
+	    		break;
+	    	case 0:
+		       	Viewscale = scale;
 			mat_idn(Viewrot);	/* top view */
-		MAT_DELTAS( toViewcenter,
-			-eye_model[X],
-			-eye_model[Y],
-			-eye_model[Z] );
-		new_mats();
+			MAT_DELTAS( toViewcenter,
+				-eye_model[X],
+				-eye_model[Y],
+				-eye_model[Z] );
+			new_mats();
+	    		break;
+	    	case 1:
+	    		/* Adjust center for displaylist devices */
+	    		VMOVE( sp->s_center, eye_model );
+
+	    		/* Adjust vector list for non-dl devices */
+	    		VSUB2( xlate, eye_model, sp->s_vlist->vl_pnt );
+			nvec = sp->s_vlen;
+			for( vp = sp->s_vlist; nvec-- > 0; vp++ )  {
+				VADD2( vp->vl_pnt, vp->vl_pnt, xlate );
+			}
+	    		break;
+	    	}
 		dmaflag = 1;
 		refresh();	/* Draw new display */
 	}
+	if( mode == 1 )  {
+    		VMOVE( sp->s_center, sav_center );
+    		VSUB2( xlate, sav_start, sp->s_vlist->vl_pnt );
+		nvec = sp->s_vlen;
+		for( vp = sp->s_vlist; nvec-- > 0; vp++ )  {
+			VADD2( vp->vl_pnt, vp->vl_pnt, xlate );
+		}
+	}
+	dmaflag = 1;
 	fclose(fp);
 }
 
