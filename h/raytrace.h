@@ -1262,12 +1262,10 @@ RT_EXTERN(double rt_read_timer, (char *str, int len) );
 RT_EXTERN(int rt_plot_solid, (FILE *fp, struct rt_i *rtip, struct soltab *stp) );
 					/* Release storage assoc with rt_i */
 RT_EXTERN(void rt_clean, (struct rt_i *rtip) );
-RT_EXTERN(struct rt_external  *rt_struct_export, (genptr_t base, struct rt_imexport *imp) );
+RT_EXTERN(int rt_struct_export, (struct rt_external *ext, genptr_t base, struct rt_imexport *imp) );
 RT_EXTERN(int rt_struct_import, (genptr_t base, struct rt_imexport *imp, struct rt_external *ext) );
-RT_EXTERN(void rt_struct_free, (struct rt_external *ext) );
-RT_EXTERN(int rt_struct_buf_size, (struct rt_imexport *imp) );
 RT_EXTERN(int rt_struct_put, (FILE *fp, struct rt_external *ext) );
-RT_EXTERN(struct rt_external *rt_struct_get, (FILE *fp) );
+RT_EXTERN(int rt_struct_get, (struct rt_external *ext, FILE *fp) );
 
 /* The matrix math routines */
 RT_EXTERN(double mat_atan2, (double y, double x) );
