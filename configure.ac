@@ -47,11 +47,15 @@ dnl
 AC_PREREQ(2.50)
 
 AC_INIT(BRL-CAD, 7.0, [http://brlcad.org], brlcad)
-dnl put configure stuff here
 
+dnl If any of the version numbers are incremented up to a 2-digit
+dnl number, remember to add an asterisk to both echo lines below.
+dnl
+dnl See HACKING for details on how to properly update the version
 MAJOR_VERSION=7
 MINOR_VERSION=0
 PATCH_VERSION=0
+
 CONFIG_DATE=`date +%Y%m%d`
 CONFIG_TIME="`date '+%H %M %S'`"
 BRLCAD_VERSION="$MAJOR_VERSION.$MINOR_VERSION.$PATCH_VERSION"
