@@ -36,6 +36,10 @@
 #		define HAS_OPENGL	1	/* OpenGL */
 #	endif
 #	define HAVE_GETOPT_H	1
+#	define HAVE_REGEX_DECL	1
+#	define HAVE_SBRK_DECL	1
+#	define HAVE_STDLIB_H	1
+#	define HAVE_UNISTD_H	1
 #endif
 
 #if defined(_GNU_SOURCE)
@@ -133,7 +137,7 @@
  *
  *	HAVE_SHELL_ESCAPE	Typically UNIX-only functions.
  *	HAVE_UNIX_IO
- *	HAVE_SBRK
+ *	HAVE_SBRK		Set if unistd.h declares sbrk().
  *	HAVE_UNIX_DOMAIN_SOCKETS
  */
 
