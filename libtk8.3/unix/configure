@@ -3435,7 +3435,7 @@ case $SHLIB_LD in
       TK_LD_SEARCH_FLAGS=`echo ${TK_CC_SEARCH_FLAGS} |sed -e "s|-Wl,||g" -e "s|,| |g"`
       ;;
     *)
-      TK_LD_SEARCH_FLAGS="${TK_CC_SEARCH_FLAGS}"
+      TK_LD_SEARCH_FLAGS=""
       ;;
 esac
 
