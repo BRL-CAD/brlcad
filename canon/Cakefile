@@ -20,6 +20,7 @@
  * The following is necessary because SGI's <sys/dsreq.h> won't pass the
  * -ansiposix flag on their own compiler under Irix 4.0.1 or 5.  Sigh.
  */
+
 #if defined(__CAKE__irix4)
 # undef CFLAGS
 # define CFLAGS -O -DIRIX=4 -I../h
