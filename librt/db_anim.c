@@ -387,7 +387,7 @@ int
 db_parse_anim( dbip, argc, argv )
 struct db_i	*dbip;
 int		argc;
-char		**argv;
+CONST char		**argv;
 {
 	struct db_tree_state	ts;
 	struct animate		*anp;
