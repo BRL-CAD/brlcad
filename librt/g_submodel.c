@@ -75,6 +75,8 @@ struct submodel_specific {
 #define RT_SUBMODEL_SPECIFIC_MAGIC	0x73756253	/* subS */
 #define RT_CK_SUBMODEL_SPECIFIC(_p)	BU_CKMAG(_p,RT_SUBMODEL_SPECIFIC_MAGIC,"submodel_specific")
 
+CONST extern struct rt_functab rt_submodelhook_functab;
+
 /*
  *  			R T _ S U B M O D E L _ P R E P
  *  
@@ -100,6 +102,7 @@ struct rt_i		*rtip;
 	struct submodel_specific	*submodel;
 	struct rt_i			*sub_rtip;
 	struct db_i			*sub_dbip;
+	struct soltab			*sub_stp;
 	vect_t	radvec;
 	vect_t	diam;
 	char	*argv[2];
@@ -110,12 +113,14 @@ struct rt_i		*rtip;
 
 /* XXX How do we match a previous exact use of this file and treetop list,
  * XXX so as to get any sort of efficiency out of instancing it?
+ * XXX That would be stilly, because then they would overlap!  Don't bother.
  */
 	if( sip->file[0] == '\0' )  {
 		/* No .g file name given, tree is in current .g file */
 		sub_dbip = rtip->rti_dbip;
 	} else {
 		/* XXX Might want to cache & reuse dbip's, to save scans */
+		/* XXX Create a db_open_mappedfile() interface */
 		if( (sub_dbip = db_open( sip->file, "r" )) == DBI_NULL )
 		    	return -1;
 		/* XXX How to see if scan has already been done? */
@@ -155,13 +160,19 @@ struct rt_i		*rtip;
 
 	/* OK, it's going to work. */
 
-	/* Register ourselves with containing rtip, for linked
-	 * preps, frees, etc.
+	/*
+	 *  Record the "up" pointer from the sub model.
 	 */
-#if 0
-	bu_ptbl_insert_unique( &rtip->rti_sub_rtip, (long *)sub_rtip );
-	sub_rtip->rti_up = (genptr_t)stp;
-#endif
+	sub_rtip->rti_up = stp;
+
+	/*
+	 *  Visit all solids in sub_rtip and change their st_meth
+	 *  pointers to our hook routines,
+	 *  for coordinate system transformations.
+	 */
+	RT_VISIT_ALL_SOLTABS_START( sub_stp, sub_rtip )  {
+		sub_stp->st_meth = &rt_submodelhook_functab;
+	} RT_VISIT_ALL_SOLTABS_END
 
 	
 	BU_GETSTRUCT( submodel, submodel_specific );
@@ -327,9 +338,10 @@ struct seg		*seghead;
 /* XXX Need a per-processor place to stash this new ray! (Application struct) */
 /* Need to malloc it, and queue it for destruction in caller's application struct */
 	/* shootray already computed a_ray.r_min & r_max for us */
-	/* Make starting point reasonable once in local coord system */
-	VJOIN1( startpt, ap->a_ray.r_pt, ap->a_ray.r_min, ap->a_ray.r_dir );
-	MAT4X3PNT( nap.a_ray.r_pt, submodel->m2subm, startpt );
+	/* Construct the ray in submodel coords. */
+	/* Do this in a repeatable way */
+	/* Distances differ only by a scale factor of m[15] */
+	MAT4X3PNT( nap.a_ray.r_pt, submodel->m2subm, ap->a_ray.r_pt );
 	MAT4X3VEC( nap.a_ray.r_dir, submodel->m2subm, ap->a_ray.r_dir );
 
 	if( rt_shootray( &nap ) <= 0 )  return 0;	/* MISS */
@@ -759,3 +771,392 @@ struct rt_db_internal	*ip;
 	bu_free( (genptr_t)sip, "submodel ifree" );
 	ip->idb_ptr = GENPTR_NULL;	/* sanity */
 }
+
+
+
+/* ============================================================ */
+/*								*/
+/*	Hooks applied to all solids in the submodel,		*/
+/*	to intermediate between model and submodel coords.	*/
+/*								*/
+/* ============================================================ */
+
+/*
+ *  			R T _ S U B M O D E L H O O K _ P R E P
+ */
+int
+rt_submodelhook_prep( stp, ip, rtip )
+struct soltab		*stp;
+struct rt_db_internal	*ip;
+struct rt_i		*rtip;
+{
+	bu_bomb("rt_submodelhook_prep()\n");
+	/* NOTREACHED */
+}
+
+/*
+ *			R T _ S U B M O D E L H O O K _ P R I N T
+ */
+void
+rt_submodelhook_print( stp )
+register CONST struct soltab *stp;
+{
+	rt_functab[stp->st_id].ft_print(stp);
+}
+
+/*
+ *  			R T _ S U B M O D E L H O O K _ S H O T
+ *  
+ *  Intersect a ray with an object in a submodel.
+ *  If an intersection occurs, a struct seg will be acquired
+ *  and filled in.
+ *  
+ *  Returns -
+ *  	0	MISS
+ *	>0	HIT
+ */
+int
+rt_submodelhook_shot( stp, rp, ap, seghead )
+struct soltab		*stp;
+register struct xray	*rp;
+struct application	*ap;
+struct seg		*seghead;
+{
+	return rt_functab[stp->st_id].ft_shot( stp, rp, ap, seghead );
+}
+
+/*
+ *			R T _ S U B M O D E L H O O K _ V S H O T
+ *
+ *  Vectorized version.
+ */
+void
+rt_submodelhook_vshot( stp, rp, segp, n, ap )
+struct soltab	       *stp[]; /* An array of solid pointers */
+struct xray		*rp[]; /* An array of ray pointers */
+struct  seg            segp[]; /* array of segs (results returned) */
+int		  	    n; /* Number of ray/object pairs */
+struct application	*ap;
+{
+	bu_bomb("rt_submodelhook_vshot\n");
+}
+
+/*
+ *  			R T _ S U B M O D E L H O O K _ N O R M
+ *  
+ *  Given ONE ray distance, return the normal and entry/exit point.
+ *
+ *  Pass the original ray through the world-to-submodel transform,
+ *  then send the normal back through the inverse transform.
+ */
+void
+rt_submodelhook_norm( hitp, stp, rp )
+register struct hit	*hitp;
+struct soltab		*stp;
+register struct xray	*rp;
+{
+	struct rt_i	*sub_rtip;
+	struct soltab	*upper_stp;	/* The submodel "solid" */
+	struct xray	sub_xray;
+	vect_t		sub_norm;
+	register struct submodel_specific *submodel;
+
+	sub_rtip = stp->st_rtip;
+	RT_CK_RTI(sub_rtip);
+	upper_stp = sub_rtip->rti_up;
+	RT_CK_SOLTAB(upper_stp);
+	submodel = (struct submodel_specific *)upper_stp->st_specific;
+	RT_CK_SUBMODEL_SPECIFIC(submodel);
+
+	/* Reconstruct the ray in submodel coords */
+	MAT4X3PNT( sub_xray.r_pt, submodel->m2subm, rp->r_pt );
+	MAT4X3VEC( sub_xray.r_dir, submodel->m2subm, rp->r_dir );
+
+	rt_functab[stp->st_id].ft_norm( hitp, stp, &sub_xray );
+
+	/* Convert the normal back to model coords */
+	VMOVE( sub_norm, hitp->hit_normal );
+	MAT4X3VEC( hitp->hit_normal, submodel->subm2m, sub_norm );
+}
+
+/* XXX move to vmath.h */
+#define MAT4X3SCALOR(o,m,i) \
+	{(o) = (i) / (m)[15];}
+
+/*
+ *			R T _ S U B M O D E L H O O K _ C U R V E
+ *
+ *  Return the curvature of the submodel solid.
+ */
+void
+rt_submodelhook_curve( cvp, hitp, stp )
+register struct curvature *cvp;
+register struct hit	*hitp;
+struct soltab		*stp;
+{
+	struct rt_i	*sub_rtip;
+	struct soltab	*upper_stp;	/* The submodel "solid" */
+	struct xray	sub_xray;
+	struct hit	sub_hit;
+	vect_t		sub_pdir;
+	register struct submodel_specific *submodel;
+/* XXX How do we get original ray??? */
+struct xray *rp = (struct xray *)NULL;
+bu_bomb("rt_submodelhook_curve() -- no rp?\n");
+
+	sub_rtip = stp->st_rtip;
+	RT_CK_RTI(sub_rtip);
+	upper_stp = sub_rtip->rti_up;
+	RT_CK_SOLTAB(upper_stp);
+	submodel = (struct submodel_specific *)upper_stp->st_specific;
+	RT_CK_SUBMODEL_SPECIFIC(submodel);
+
+	/* Reconstruct the ray in submodel coords */
+	sub_xray.magic = RT_RAY_MAGIC;
+	sub_xray.index = -42;
+	MAT4X3PNT( sub_xray.r_pt, submodel->m2subm, rp->r_pt );
+	MAT4X3VEC( sub_xray.r_dir, submodel->m2subm, rp->r_dir );
+
+	/*
+	 * Convert the dist, point, & normal back to submodel coords.
+	 */
+	sub_hit = *hitp;		/* struct copy */
+	/* Rescale the distance */
+	MAT4XSCALOR( sub_hit.hit_dist, submodel->m2subm, hitp->hit_dist );
+	/* Recompute the hit point */
+	VJOIN1( sub_hit.hit_point, sub_xray.r_pt, sub_hit.hit_dist, sub_xray.r_dir );
+	/* Convert the surface normal */
+	MAT4X3VEC( sub_hit.hit_normal, submodel->m2subm, hitp->hit_normal );
+	sub_hit.hit_rayp = &sub_xray;
+
+	rt_functab[stp->st_id].ft_curve( cvp, &sub_hit, stp );
+
+	/* Convert the pdir back to model coords */
+	VMOVE( sub_pdir, cvp->crv_pdir );
+	MAT4X3VEC( cvp->crv_pdir, submodel->subm2m, sub_pdir );
+
+	/* The curvature numbers don't change */
+}
+
+/*
+ *  			R T _ S U B M O D E L H O O K _ U V
+ *  
+ *  For a hit on the surface of an submodelhook, return the (u,v) coordinates
+ *  of the hit point, 0 <= u,v <= 1.
+ *  u = azimuth
+ *  v = elevation
+ */
+void
+rt_submodelhook_uv( ap, stp, hitp, uvp )
+struct application	*ap;
+struct soltab		*stp;
+register struct hit	*hitp;
+register struct uvcoord	*uvp;
+{
+	struct rt_i	*sub_rtip;
+	struct soltab	*upper_stp;	/* The submodel "solid" */
+	struct hit	sub_hit;
+	register struct submodel_specific *submodel;
+	struct application	sub_ap;
+
+	sub_rtip = stp->st_rtip;
+	RT_CK_RTI(sub_rtip);
+	upper_stp = sub_rtip->rti_up;
+	RT_CK_SOLTAB(upper_stp);
+	submodel = (struct submodel_specific *)upper_stp->st_specific;
+	RT_CK_SUBMODEL_SPECIFIC(submodel);
+
+	/* Have to convert application struct, for "ray footprint" stuff */
+	sub_ap = *ap;			/* struct copy */
+
+	/* Reconstruct the ray in submodel coords */
+	sub_ap.a_ray.magic = RT_RAY_MAGIC;
+	sub_ap.a_ray.index = -42;
+	MAT4X3PNT( sub_ap.a_ray.r_pt, submodel->m2subm, ap->a_ray.r_pt );
+	MAT4X3VEC( sub_ap.a_ray.r_dir, submodel->m2subm, ap->a_ray.r_dir );
+
+	/*
+	 * Convert the dist, point, & normal back to submodel coords.
+	 */
+	sub_hit = *hitp;		/* struct copy */
+	/* Rescale the distance */
+	MAT4XSCALOR( sub_hit.hit_dist, submodel->m2subm, hitp->hit_dist );
+	/* Recompute the hit point */
+	VJOIN1( sub_hit.hit_point, sub_ap.a_ray.r_pt, sub_hit.hit_dist, sub_ap.a_ray.r_dir );
+	/* Convert the surface normal */
+	MAT4X3VEC( sub_hit.hit_normal, submodel->m2subm, hitp->hit_normal );
+	sub_hit.hit_rayp = &sub_ap.a_ray;
+
+	rt_functab[stp->st_id].ft_uv( ap, stp, &sub_hit, uvp );
+
+	/* No transformation of u and v values are necessary */
+}
+
+/*
+ *		R T _ S U B M O D E L H O O K _ F R E E
+ */
+void
+rt_submodelhook_free( stp )
+register struct soltab *stp;
+{
+	rt_functab[stp->st_id].ft_free( stp );
+}
+
+/*
+ *			R T _ S U B M O D E L H O O K _ C L A S S
+ */
+int
+rt_submodelhook_class( stp, min, max, tol )
+CONST struct soltab    *stp;
+CONST vect_t		min, max;
+CONST struct bn_tol    *tol;
+{
+	struct rt_i	*sub_rtip;
+	struct soltab	*upper_stp;	/* The submodel "solid" */
+	register struct submodel_specific *submodel;
+	point_t		sub_min, sub_max;
+	struct bn_tol	sub_tol;
+
+	sub_rtip = stp->st_rtip;
+	RT_CK_RTI(sub_rtip);
+	upper_stp = sub_rtip->rti_up;
+	RT_CK_SOLTAB(upper_stp);
+	submodel = (struct submodel_specific *)upper_stp->st_specific;
+	RT_CK_SUBMODEL_SPECIFIC(submodel);
+	
+	/* Transform min and max points */
+	MAT4X3PNT( sub_min, submodel->m2subm, min );
+	MAT4X3PNT( sub_max, submodel->m2subm, max );
+
+	/* Scale tol */
+	sub_tol.magic = tol->magic;
+	MAT4XSCALOR(sub_tol.dist, submodel->m2subm, tol->dist );
+	sub_tol.dist_sq = sub_tol.dist * sub_tol.dist;
+	sub_tol.perp = sub_tol.perp;
+	sub_tol.para = sub_tol.para;
+
+	return rt_functab[stp->st_id].ft_classify( stp, sub_min, sub_max, &sub_tol );
+}
+
+/*
+ *			R T _ S U B M O D E L H O O K _ P L O T
+ */
+int
+rt_submodelhook_plot( vhead, ip, ttol, tol )
+struct bu_list		*vhead;
+struct rt_db_internal	*ip;
+CONST struct rt_tess_tol *ttol;
+CONST struct bn_tol	*tol;
+{
+	bu_bomb("rt_submodelhook_plot\n");
+	/* NOTREACHED */
+}
+
+/*
+ *			R T _ S U B M O D E L H O O K _ T E S S
+ *
+ *  Returns -
+ *	-1	failure
+ *	 0	OK.  *r points to nmgregion that holds this tessellation.
+ */
+int
+rt_submodelhook_tess( r, m, ip, ttol, tol )
+struct nmgregion	**r;
+struct model		*m;
+struct rt_db_internal	*ip;
+CONST struct rt_tess_tol *ttol;
+CONST struct bn_tol	*tol;
+{
+	bu_bomb("rt_submodelhook_tess\n");
+	/* NOTREACHED */
+}
+
+/*
+ *			R T _ S U B M O D E L H O O K _ I M P O R T
+ *
+ */
+int
+rt_submodelhook_import( ip, ep, mat, dbip )
+struct rt_db_internal		*ip;
+CONST struct bu_external	*ep;
+register CONST mat_t		mat;
+CONST struct db_i		*dbip;
+{
+	bu_bomb("rt_submodelhook_import\n");
+	/* NOTREACHED */
+}
+
+/*
+ *			R T _ S U B M O D E L H O O K _ E X P O R T
+ */
+int
+rt_submodelhook_export( ep, ip, local2mm, dbip )
+struct bu_external		*ep;
+CONST struct rt_db_internal	*ip;
+double				local2mm;
+CONST struct db_i		*dbip;
+{
+	bu_bomb("rt_submodelhook_export\n");
+	/* NOTREACHED */
+}
+
+/*
+ *			R T _ S U B M O D E L H O O K _ D E S C R I B E
+ *
+ *  Make human-readable formatted presentation of this solid.
+ *  First line describes type of solid.
+ *  Additional lines are indented one tab, and give parameter values.
+ */
+int
+rt_submodelhook_describe( str, ip, verbose, mm2local )
+struct bu_vls		*str;
+CONST struct rt_db_internal	*ip;
+int			verbose;
+double			mm2local;
+{
+	bu_bomb("rt_submodelhook_describe\n");
+	/* NOTREACHED */
+}
+
+/*
+ *			R T _ S U B M O D E L H O O K _ I F R E E
+ *
+ *  Free the storage associated with the rt_db_internal version of this solid.
+ */
+void
+rt_submodelhook_ifree( ip )
+struct rt_db_internal	*ip;
+{
+	rt_functab[ip->idb_type].ft_ifree( ip );
+}
+
+/*
+ *			R T _ S U B M O D E L H O O K _ X F O R M
+ *
+ *  Create transformed version of internal form.  Free *ip if requested.
+ *  Implement this if it's faster than doing an export/import cycle.
+ */
+int
+rt_submodelhook_xform( op, mat, ip, free )
+struct rt_db_internal	*op;
+CONST mat_t		mat;
+struct rt_db_internal	*ip;
+int			free;
+{
+	bu_bomb("rt_submodelhook_xform\n");
+	/* NOTREACHED */
+}
+
+CONST struct rt_functab rt_submodelhook_functab = {
+	RT_FUNCTAB_MAGIC, "ID_SUBMODELHOOK", "submdhk",
+		0,		/* hooks only */
+		rt_submodelhook_prep,	rt_submodelhook_shot,	rt_submodelhook_print,	rt_submodelhook_norm,
+		rt_submodelhook_uv,		rt_submodelhook_curve,	rt_submodelhook_class,	rt_submodelhook_free,
+		rt_submodelhook_plot,	NULL,		rt_submodelhook_tess,	NULL,
+		rt_submodelhook_import,	rt_submodelhook_export,	rt_submodelhook_ifree,
+		rt_submodelhook_describe,	rt_submodelhook_xform,	NULL,
+		0, 0,
+/* 		rt_parsetab_tclget, rt_parsetab_tcladjust, rt_parsetab_tclform, */
+		NULL, NULL, NULL,
+		NULL,
+};
