@@ -38,6 +38,8 @@
 #include "cmd.h"		/* this includes bu.h */
 #include "vmath.h"
 #include "bn.h"
+#include "db.h"
+#include "mater.h"
 #include "raytrace.h"
 #include "wdb.h"
 
@@ -95,6 +97,8 @@ static int wdb_find_tcl();
 static int wdb_which_tcl();
 static int wdb_title_tcl();
 static int wdb_tree_tcl();
+static int wdb_color_tcl();
+static int wdb_prcolor_tcl();
 
 static void wdb_deleteProc();
 static void wdb_deleteProc_rt();
@@ -102,6 +106,8 @@ static void wdb_deleteProc_rt();
 static int wdb_trace();
 
 int wdb_cmpdirname();
+void wdb_vls_col_item();
+void wdb_vls_col_eol();
 void wdb_vls_col_pr4v();
 void wdb_vls_line_dpp();
 void wdb_do_list();
@@ -141,10 +147,11 @@ static struct bu_cmdtab wdb_cmds[] = {
 	"whichid",	wdb_which_tcl,
 	"title",	wdb_title_tcl,
 	"tree",		wdb_tree_tcl,
-#if 0
-	"cat",		wdb_cat_tcl,
 	"color",	wdb_color_tcl,
 	"prcolor",	wdb_prcolor_tcl,
+#if 0
+	"analyze",	wdb_analyze_tcl,
+	"cat",		wdb_cat_tcl,
 	"comb_color",	wdb_comb_color_tcl,
 	"copymat",	wdb_copymat_tcl,
 	"copyeval",	wdb_copyeval_tcl,
@@ -3007,6 +3014,208 @@ wdb_tree_tcl(clientData, interp, argc, argv)
 	return TCL_OK;
 }
 
+/*
+ *  			W D B _ C O L O R _ P U T R E C
+ *  
+ *  Used to create a database record and get it written out to a granule.
+ *  In some cases, storage will need to be allocated.
+ */
+static void
+wdb_color_putrec(mp, interp, dbip)
+     register struct mater *mp;
+     Tcl_Interp *interp;
+     struct db_i *dbip;
+{
+	struct directory dir;
+	union record rec;
+
+	if (dbip->dbi_read_only)
+		return;
+
+	rec.md.md_id = ID_MATERIAL;
+	rec.md.md_low = mp->mt_low;
+	rec.md.md_hi = mp->mt_high;
+	rec.md.md_r = mp->mt_r;
+	rec.md.md_g = mp->mt_g;
+	rec.md.md_b = mp->mt_b;
+
+	/* Fake up a directory entry for db_* routines */
+	dir.d_namep = "color_putrec";
+	dir.d_magic = RT_DIR_MAGIC;
+	dir.d_flags = 0;
+
+	if (mp->mt_daddr == MATER_NO_ADDR) {
+		/* Need to allocate new database space */
+		if (db_alloc(dbip, &dir, 1) < 0) {
+			Tcl_AppendResult(interp,
+					 "Database alloc error, aborting\n",
+					 (char *)NULL);
+			return;
+		}
+		mp->mt_daddr = dir.d_addr;
+	} else {
+		dir.d_addr = mp->mt_daddr;
+		dir.d_len = 1;
+	}
+
+	if (db_put(dbip, &dir, &rec, 0, 1) < 0) {
+		Tcl_AppendResult(interp,
+				 "Database write error, aborting\n",
+				 (char *)NULL);
+		return;
+	}
+}
+
+/*
+ *  			W D B _ C O L O R _ Z A P R E C
+ *  
+ *  Used to release database resources occupied by a material record.
+ */
+static void
+wdb_color_zaprec(mp, interp, dbip)
+     register struct mater *mp;
+     Tcl_Interp *interp;
+     struct db_i *dbip;
+{
+	struct directory dir;
+
+	if (dbip->dbi_read_only || mp->mt_daddr == MATER_NO_ADDR)
+		return;
+
+	dir.d_magic = RT_DIR_MAGIC;
+	dir.d_namep = "color_zaprec";
+	dir.d_len = 1;
+	dir.d_addr = mp->mt_daddr;
+	dir.d_flags = 0;
+
+	if (db_delete(dbip, &dir) < 0) {
+		Tcl_AppendResult(interp,
+				 "Database delete error, aborting\n",
+				 (char *)NULL);
+		return;
+	}
+	mp->mt_daddr = MATER_NO_ADDR;
+}
+
+/*
+ * Usage:
+ *        procname color low high r g b
+ */
+static int
+wdb_color_tcl(clientData, interp, argc, argv)
+     ClientData clientData;
+     Tcl_Interp *interp;
+     int     argc;
+     char    **argv;
+{
+	struct rt_wdb *wdbp = (struct rt_wdb *)clientData;
+	register struct mater *newp,*next_mater;
+
+	if (wdbp->dbip->dbi_read_only) {
+		Tcl_AppendResult(interp, "Database is read-only!\n", (char *)NULL);
+		return TCL_ERROR;
+	}
+
+	if (argc != 7) {
+		struct bu_vls vls;
+
+		bu_vls_init(&vls);
+		bu_vls_printf(&vls, "helplib wdb_color");
+		Tcl_Eval(interp, bu_vls_addr(&vls));
+		bu_vls_free(&vls);
+		return TCL_ERROR;
+	}
+
+	/* Delete all color records from the database */
+	newp = rt_material_head;
+	while (newp != MATER_NULL) {
+		next_mater = newp->mt_forw;
+		wdb_color_zaprec(newp, interp, wdbp->dbip);
+		newp = next_mater;
+	}
+
+	/* construct the new color record */
+	BU_GETSTRUCT(newp, mater);
+	newp->mt_low = atoi(argv[2]);
+	newp->mt_high = atoi(argv[3]);
+	newp->mt_r = atoi(argv[4]);
+	newp->mt_g = atoi(argv[5]);
+	newp->mt_b = atoi(argv[6]);
+	newp->mt_daddr = MATER_NO_ADDR;		/* not in database yet */
+
+	/* Insert new color record in the in-memory list */
+	rt_insert_color(newp);
+
+	/* Write new color records for all colors in the list */
+	newp = rt_material_head;
+	while (newp != MATER_NULL) {
+		next_mater = newp->mt_forw;
+		wdb_color_putrec(newp, interp, wdbp->dbip);
+		newp = next_mater;
+	}
+
+	return TCL_OK;
+}
+
+static void
+wdb_pr_mater(mp, interp, ccp, clp)
+     register struct mater	*mp;
+     Tcl_Interp			*interp;
+     int			*ccp;
+     int			*clp;
+{
+	char buf[128];
+	struct bu_vls vls;
+
+	bu_vls_init(&vls);
+
+	(void)sprintf(buf, "%5d..%d", mp->mt_low, mp->mt_high );
+	wdb_vls_col_item(&vls, buf, ccp, clp);
+	(void)sprintf( buf, "%3d,%3d,%3d", mp->mt_r, mp->mt_g, mp->mt_b);
+	wdb_vls_col_item(&vls, buf, ccp, clp);
+	wdb_vls_col_eol(&vls, ccp, clp);
+
+	Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+	bu_vls_free(&vls);
+}
+
+/*
+ * Usage:
+ *        procname prcolor
+ */
+static int
+wdb_prcolor_tcl(clientData, interp, argc, argv)
+     ClientData clientData;
+     Tcl_Interp *interp;
+     int     argc;
+     char    **argv;
+{
+	struct rt_wdb *wdbp = (struct rt_wdb *)clientData;
+	register struct mater *mp;
+	int col_count = 0;
+	int col_len = 0;
+
+	if (argc != 2) {
+		struct bu_vls vls;
+
+		bu_vls_init(&vls);
+		bu_vls_printf(&vls, "helplib wdb_prcolor");
+		Tcl_Eval(interp, bu_vls_addr(&vls));
+		bu_vls_free(&vls);
+		return TCL_ERROR;
+	}
+
+	if (rt_material_head == MATER_NULL) {
+		Tcl_AppendResult(interp, "none\n", (char *)NULL);
+		return TCL_OK;
+	}
+
+	for (mp = rt_material_head; mp != MATER_NULL; mp = mp->mt_forw)
+		wdb_pr_mater(mp, interp, &col_count, &col_len);
+
+	return TCL_OK;
+}
+
 #if 0
 /*
  * Usage:
@@ -3024,6 +3233,7 @@ wdb__tcl(clientData, interp, argc, argv)
 #endif
 
 /****************** utility routines ********************/
+
 /*
  *			D B O _ C M P D I R N A M E
  *
@@ -3041,6 +3251,55 @@ wdb_cmpdirname(a, b)
 	dp1 = (struct directory **)a;
 	dp2 = (struct directory **)b;
 	return( strcmp( (*dp1)->d_namep, (*dp2)->d_namep));
+}
+
+#define RT_TERMINAL_WIDTH 80
+#define RT_COLUMNS ((RT_TERMINAL_WIDTH + RT_NAMESIZE - 1) / RT_NAMESIZE)
+
+/*
+ *			V L S _ C O L _ I T E M
+ */
+void
+wdb_vls_col_item(str, cp, ccp, clp)
+     struct bu_vls	*str;
+     register char	*cp;
+     int		*ccp;   /* column count pointer */
+     int		*clp;   /* column length pointer */
+{
+	/* Output newline if last column printed. */
+	if (*ccp >= RT_COLUMNS || (*clp+RT_NAMESIZE-1) >= RT_TERMINAL_WIDTH) {
+		/* line now full */
+		bu_vls_putc(str, '\n');
+		*ccp = 0;
+	} else if (*ccp != 0) {
+		/* Space over before starting new column */
+		do {
+			bu_vls_putc(str, ' ');
+			++*clp;
+		}  while ((*clp % RT_NAMESIZE) != 0);
+	}
+	/* Output string and save length for next tab. */
+	*clp = 0;
+	while (*cp != '\0') {
+		bu_vls_putc(str, *cp);
+		++cp;
+		++*clp;
+	}
+	++*ccp;
+}
+
+/*
+ */
+void
+wdb_vls_col_eol(str, ccp, clp)
+     struct bu_vls	*str;
+     int		*ccp;
+     int		*clp;
+{
+	if (*ccp != 0)		/* partial line */
+		bu_vls_putc(str, '\n');
+	*ccp = 0;
+	*clp = 0;
 }
 
 /*
