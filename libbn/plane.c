@@ -851,35 +851,23 @@ CONST mat_t	mat;
 CONST point_t	imin;
 CONST point_t	imax;
 {
-	point_t		rmin, rmax;
-	point_t		pt;
+	point_t	local;		/* vertex point in local coordinates */
+	point_t	model;		/* vertex point in model coordinates */
 
-	MAT4X3PNT( rmin, mat, imin );
-	MAT4X3PNT( rmax, mat, imax );
+#define ROT_VERT( a, b, c )  \
+	VSET( local, a[X], b[Y], c[Z] ); \
+	MAT4X3PNT( model, mat, local ); \
+	VMINMAX( omin, omax, model ) \
 
-	VSET( omin, rmin[X], rmin[Y], rmin[Z] );
-	VMOVE( omax, omin );
-
-	VSET( pt, rmax[X], rmin[Y], rmin[Z] );
-	VMINMAX( omin, omax, pt );
-
-	VSET( pt, rmin[X], rmax[Y], rmin[Z] );
-	VMINMAX( omin, omax, pt );
-
-	VSET( pt, rmax[X], rmax[Y], rmin[Z] );
-	VMINMAX( omin, omax, pt );
-
-	VSET( pt, rmin[X], rmin[Y], rmax[Z] );
-	VMINMAX( omin, omax, pt );
-
-	VSET( pt, rmax[X], rmin[Y], rmax[Z] );
-	VMINMAX( omin, omax, pt );
-
-	VSET( pt, rmin[X], rmax[Y], rmax[Z] );
-	VMINMAX( omin, omax, pt );
-
-	VSET( pt, rmax[X], rmax[Y], rmax[Z] );
-	VMINMAX( omin, omax, pt );
+	ROT_VERT( imin, imin, imin );
+	ROT_VERT( imin, imin, imax );
+	ROT_VERT( imin, imax, imin );
+	ROT_VERT( imin, imax, imax );
+	ROT_VERT( imax, imin, imin );
+	ROT_VERT( imax, imin, imax );
+	ROT_VERT( imax, imax, imin );
+	ROT_VERT( imax, imax, imax );
+#undef ROT_VERT
 }
 
 /*
