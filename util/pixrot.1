@@ -6,16 +6,21 @@ pixrot \- rotate, invert, or reverse a color pix file
 [
 .RB [ \-# bytes]
 .RB [ \-rifb ]
-nx ny \<\ file.pix \>\ newfile.pix
+.RB [ \-s\  squaresize]
+.RB [ \-w\  in_width]
+.RB [ \-n\  in_height]
+\<\ file.pix \>\ newfile.pix
 .SH DESCRIPTION
 .I Pixrot
 will rotate, invert, or reverse a color
 .IR pix (5)
-format file.
-.I Nx
+format file.  The
+.I \-w
 and
-.I ny
-specify the input file x and y sizes in pixels.
+.I \-n
+flags specify the input file width and number of scan lines in pixels.
+The can both be set to same same value via
+.I \-s.
 .PP
 The
 .B \-r
@@ -46,7 +51,7 @@ is the number of bytes per pixel.  Thus this program
 can be used to manipulate rectangles of other data types, such as
 an array of floating point numbers, files of text, etc.
 .SH METHOD
-A fairly large buffer is kept in core so that, file size permitting,
+A fairly large buffer is kept in memory so that, file size permitting,
 the entire rotation can occur without seeking on input or output.
 In any event, the algorithm is designed to process the input sequentially,
 so that if any seeking is required, it will happen on output only.  If
