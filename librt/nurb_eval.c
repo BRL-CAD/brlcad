@@ -34,10 +34,11 @@
  */
 
 fastf_t *
-rt_nurb_s_eval( srf, u, v )
+rt_nurb_s_eval( srf, u, v, final_value )
 CONST struct snurb *srf;
 fastf_t	u;
 fastf_t v;
+fastf_t * final_value;
 {
 	fastf_t * mesh_ptr = srf->ctl_points;
 	fastf_t * curves;
@@ -46,7 +47,6 @@ fastf_t v;
 	int	col_size = srf->s_size[RT_NURB_SPLIT_COL];
 	fastf_t * c_ptr;
 	fastf_t * diff_curve, *ev_pt;
-	fastf_t * final_value;
 	int	k_index;
 	int	coords = RT_NURB_EXTRACT_COORDS(srf->pt_type);
 
@@ -102,15 +102,14 @@ fastf_t v;
 		final_value[k] = ev_pt[k];
 
 	rt_free ( (char *)diff_curve, "rt_nurb_s_eval: diff curve" );
-
-	return final_value;
 }
 
 
 fastf_t *
-rt_nurb_c_eval( crv, param)
+rt_nurb_c_eval( crv, param, final_value)
 CONST struct cnurb *crv;
 fastf_t param;
+fastf_t * final_value;
 {
 	fastf_t * pnts;
 	fastf_t * final_value;
@@ -140,8 +139,6 @@ fastf_t param;
 		final_value[i] = ev_pt[i];
 
 	rt_free( (char *) pnts, "rt_nurb_c_eval");
-
-	return final_value;
 }
 
 
