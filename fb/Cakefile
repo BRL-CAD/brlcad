@@ -137,12 +137,12 @@ gif-fb:		gif-fb.o LIBFB_DEP
 	CC LDFLAGS -o gif-fb gif-fb.o LIBFB LIBFB_LIBES LIBES
 
 spm-fb:		spm-fb.o LIBFB_DEP
-	CC LDFLAGS -o spm-fb spm-fb.o LIBRT LIBFB LIBFB_LIBES LIBRT_LIBES LIBES
+	CC LDFLAGS -o spm-fb spm-fb.o LIBRT LIBFB LIBFB_LIBES LIBBU LIBBU_LIBES LIBES
 
 polar-fb:		polar-fb.o LIBFB_DEP
 	CC LDFLAGS -o polar-fb polar-fb.o LIBFB LIBFB_LIBES LIBES
 
 cell-fb:		cell-fb.o LIBFB_DEP
-	CC LDFLAGS -o cell-fb cell-fb.o LIBFB LIBFB_LIBES LIBRT LIBRT_LIBES LIBES
+	CC LDFLAGS -o cell-fb cell-fb.o LIBFB LIBFB_LIBES LIBRT LIBBU LIBBU_LIBES LIBES
 
 #include "../Cakefile.rules"
