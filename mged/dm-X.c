@@ -168,6 +168,8 @@ X_close()
     XFreeGC(dpy, gc);
     Tk_DestroyWindow(xtkwin);
     Tcl_DeleteInterp(xinterp);
+	/* to prevent events being processed after window destroyed */
+	win = -1;
 }
 
 /*
