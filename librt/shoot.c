@@ -922,6 +922,10 @@ out:
  *  The computation of entry and exit distance is mandatory, as the final
  *  test catches the majority of misses.
  *
+ * Important note -
+ *  This version is optimized to return a "miss" if the ray enters the
+ *  RPP *behind* the start point.  In general this is not a good idea.
+ *
  *  Returns -
  *	 0  if ray does not hit RPP,
  *	!0  if ray hits RPP.
@@ -1095,8 +1099,11 @@ register fastf_t *max;
 	rp->r_min = -INFINITY;
 	rp->r_max = INFINITY;
 
+VPRINT("r_pt ", pt);
+VPRINT("r_dir", rp->r_dir);
+VPRINT("min  ", min);
+VPRINT("max  ", max);
 	/* X axis */
-rt_log("r_dir[X] = %g\n", rp->r_dir[X]);
 	if( rp->r_dir[X] < 0.0 )  {
 		/* Heading towards smaller numbers */
 		/* if( *min > *pt )  miss */
@@ -1137,7 +1144,6 @@ rt_log("r_min=%g, r_max=%g\n", rp->r_min, rp->r_max);
 
 	/* Y axis */
 	pt++; invdir++; max++; min++;
-rt_log("r_dir[Y] = %g\n", rp->r_dir[Y]);
 	if( rp->r_dir[Y] < 0.0 )  {
 		/* Heading towards smaller numbers */
 		/* if( *min > *pt )  miss */
@@ -1173,7 +1179,6 @@ rt_log("r_min=%g, r_max=%g\n", rp->r_min, rp->r_max);
 
 	/* Z axis */
 	pt++; invdir++; max++; min++;
-rt_log("r_dir[Z] = %g\n", rp->r_dir[Z]);
 	if( rp->r_dir[Z] < 0.0 )  {
 		/* Heading towards smaller numbers */
 		/* if( *min > *pt )  miss */
