@@ -4,6 +4,9 @@
  * $Revision$
  *
  * $Log$
+ * Revision 2.6  91/08/30  18:46:05  mike
+ * Changed from BSD index/rindex nomenclature to SYSV strchr/strrchr.
+ * 
  * Revision 2.5  91/08/30  18:11:04  mike
  * Made explicit that termcap.h to be used is the local version
  * 
@@ -471,7 +474,7 @@ char *fname;
 	else
 		cp = fname;
 
-	if (strlen(cp) > 13)
+	if ( (int)strlen(cp) > 13)
 		complain("Cannot make backup name; \"%s\" too long", cp);
 #endif
 	cp = emalloc (len+2);

@@ -4,6 +4,9 @@
  * $Revision$
  *
  * $Log$
+ * Revision 2.2  91/08/30  18:11:09  mike
+ * Made explicit that termcap.h to be used is the local version
+ * 
  * Revision 2.1  91/08/30  17:54:41  mike
  * Changed #include directives to distinguish between local and system header
  * files.
@@ -216,7 +219,7 @@ WINDOW	*new;
 		new->w_char = curchar;
 	}
 	DotTo(new->w_line, new->w_char);
-	if (curchar > strlen(linebuf))
+	if (curchar > (int)strlen(linebuf))
 		new->w_char = curchar = strlen(linebuf);
 	curwind = new;
 }
