@@ -7,7 +7,7 @@
 
 if test "$1" = ""
 then
-	echo "Usage: show.sh file.pix [flags]"
+	echo "Usage: show file.pix [flags]"
 	echo "	Regardless of file type, try to show it on the framebuffer."
 	exit 1
 fi
@@ -24,42 +24,48 @@ fi
 
 eval `pixinfo.sh $FILE`	# sets BASE, SUFFIX, WIDTH, HEIGHT
 
+if test "$FB_WIDTH" = ""
+then
+	FB_WIDTH=1280
+	FB_HEIGHT=1024
+fi
+
 case $SUFFIX in
 pix)
-	if test $WIDTH -gt 1280 -o $HEIGHT -gt 1024
+	if test $WIDTH -gt $FB_WIDTH -o $HEIGHT -gt $FB_HEIGHT
 	then
-		decimate 3 $WIDTH $HEIGHT 1280 1024 <$FILE | pix-fb -w1280 -n1024
+		decimate 3 $WIDTH $HEIGHT $FB_WIDTH $FB_HEIGHT <$FILE | pix-fb -w$FB_WIDTH -n$FB_HEIGHT
 	else
 		pix-fb -w$WIDTH -n$HEIGHT $FLAGS $FILE
 	fi;;
 bw)
-	if test $WIDTH -gt 1280 -o $HEIGHT -gt 1024
+	if test $WIDTH -gt $FB_WIDTH -o $HEIGHT -gt $FB_HEIGHT
 	then
-		decimate 1 $WIDTH $HEIGHT 1280 1024 <$FILE | bw-fb -w1280 -n1024
+		decimate 1 $WIDTH $HEIGHT $FB_WIDTH $FB_HEIGHT <$FILE | bw-fb -w$FB_WIDTH -n$FB_HEIGHT
 	else
 		bw-fb -w$WIDTH -n$HEIGHT $FLAGS $FILE
 	fi;;
 rle)
-	if test $WIDTH -gt 1280 -o $HEIGHT -gt 1024
+	if test $WIDTH -gt $FB_WIDTH -o $HEIGHT -gt $FB_HEIGHT
 	then
 		rle-pix $FILE | \
-		decimate 3 $WIDTH $HEIGHT 1280 1024 | pix-fb -w1280 -n1024
+		decimate 3 $WIDTH $HEIGHT $FB_WIDTH $FB_HEIGHT | pix-fb -w$FB_WIDTH -n$FB_HEIGHT
 	else
 		rle-fb $FLAGS $FILE
 	fi;;
 jpg|jpeg)
-	if test $WIDTH -gt 1280 -o $HEIGHT -gt 1024
+	if test $WIDTH -gt $FB_WIDTH -o $HEIGHT -gt $FB_HEIGHT
 	then
 		jpeg-fb -F"/dev/mem -" $FLAGS $FILE | \
-		decimate 3 $WIDTH $HEIGHT 1280 1024 | pix-fb -w1280 -n1024
+		decimate 3 $WIDTH $HEIGHT $FB_WIDTH $FB_HEIGHT | pix-fb -w$FB_WIDTH -n$FB_HEIGHT
 	else
 		jpeg-fb $FLAGS $FILE
 	fi;;
 gif)
-	if test $WIDTH -gt 1280 -o $HEIGHT -gt 1024
+	if test $WIDTH -gt $FB_WIDTH -o $HEIGHT -gt $FB_HEIGHT
 	then
 		gif-fb -c -F"/dev/mem -" $FILE | \
-		decimate 3 $WIDTH $HEIGHT 1280 1024 | pix-fb -w1280 -n1024
+		decimate 3 $WIDTH $HEIGHT $FB_WIDTH $FB_HEIGHT | pix-fb -w$FB_WIDTH -n$FB_HEIGHT
 	else
 		gif-fb -co $FLAGS $FILE
 	fi;;
