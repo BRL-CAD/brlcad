@@ -387,7 +387,7 @@ register FBIO	*ifp;
 
 			l = xscroff;
 			b = yscroff + (y-ymin)*SGI(ifp)->si_yzoom;
-			t = b + SGI(ifp)->si_yzoom;
+			t = b + SGI(ifp)->si_yzoom - 1;
 			if ( SGI(ifp)->si_cmap_flag == FALSE )  {
 				for( i=xwidth; i > 0; i--)  {
 					switch( ifp->if_mode ) {
@@ -406,7 +406,7 @@ register FBIO	*ifp;
 						hole->s = COLOR_APPROX(ip);
 						break;
 					}
-					r = l + SGI(ifp)->si_xzoom;
+					r = l + SGI(ifp)->si_xzoom - 1;
 					/* left bottom right top: rectfs( l, b, r, t ); */
 					hole->s = GEmovepoly | GEPA_2S;
 					hole->s = l;
@@ -421,7 +421,7 @@ register FBIO	*ifp;
 					hole->s = l;
 					hole->s = t;
 					hole->s = GEclosepoly;	/* Last? */
-					l = r;
+					l = r + 1;
 					ip += sizeof(RGBpixel);
 				}
 				continue;
@@ -451,7 +451,7 @@ register FBIO	*ifp;
 						hole->s = COLOR_APPROX(new);
 						break;
 					}
-					r = l + SGI(ifp)->si_xzoom;
+					r = l + SGI(ifp)->si_xzoom - 1;
 					/* left bottom right top: rectfs( l, b, r, t ); */
 					hole->s = GEmovepoly | GEPA_2S;
 					hole->s = l;
@@ -466,7 +466,7 @@ register FBIO	*ifp;
 					hole->s = l;
 					hole->s = t;
 					hole->s = GEclosepoly;	/* Last? */
-					l = r;
+					l = r + 1;
 					ip += sizeof(RGBpixel);
 				}
 				continue;
@@ -908,7 +908,7 @@ int	count;
 
 			l = xscr;
 			b = yscr;
-			t = b + SGI(ifp)->si_yzoom;
+			t = b + SGI(ifp)->si_yzoom - 1;
 			for( i=scan_count; i > 0; i-- )  {
 
 				switch( ifp->if_mode )  {
@@ -927,7 +927,7 @@ int	count;
 					hole->s = COLOR_APPROX(cp);
 					break;
 				}
-				r = l + SGI(ifp)->si_xzoom;
+				r = l + SGI(ifp)->si_xzoom - 1;
 
 				/* left bottom right top: rectfs( l, b, r, t ); */
 				hole->s = GEmovepoly | GEPA_2S;
@@ -943,7 +943,7 @@ int	count;
 				hole->s = l;
 				hole->s = t;
 				hole->s = GEclosepoly;	/* Last? */
-				l = r;
+				l = r + 1;
 
 				*op++ = *cp++;
 				*op++ = *cp++;
@@ -1492,6 +1492,10 @@ register FBIO *ifp;
 			/* This could be bad news.  Should we re-write
 			 * the color map? */
 			fb_log("sgw_inqueue:  modechange?\n");
+			break;
+		case MOUSEX :
+		case MOUSEY :
+		case KEYBD :
 			break;
 		default:
 			fb_log("sgw_inqueue:  event %d unknown\n", ev);
