@@ -27,7 +27,11 @@ static char RCSmaterial[] = "@(#)$Header$ (BRL)";
 #include "./material.h"
 #include "./rdebug.h"
 
+extern double	atof();
+
 struct mfuncs *mfHead = MF_NULL;	/* Head of list of materials */
+
+static char *mdefault = "default";	/* Name of default material */
 
 /*
  *			M L I B _ A D D
@@ -35,7 +39,7 @@ struct mfuncs *mfHead = MF_NULL;	/* Head of list of materials */
  *  Internal routine to add an array of mfuncs structures to the linked
  *  list of material routines.
  */
-HIDDEN void
+void
 mlib_add( mfp )
 register struct mfuncs *mfp;
 {
@@ -44,36 +48,6 @@ register struct mfuncs *mfp;
 		mfp->mf_forw = mfHead;
 		mfHead = mfp;
 	}
-}
-
-/*
- *			M L I B _ I N I T
- *
- *  Enrole the various materials.  Single point of explicit interface with
- *  the materials modules.
- */
-void
-mlib_init()
-{
-	extern struct mfuncs phg_mfuncs[];
-	extern struct mfuncs light_mfuncs[];
-	extern struct mfuncs cloud_mfuncs[];
-	extern struct mfuncs spm_mfuncs[];
-	extern struct mfuncs txt_mfuncs[];
-	extern struct mfuncs stk_mfuncs[];
-	extern struct mfuncs cook_mfuncs[];
-	extern struct mfuncs marble_mfuncs[];
-	extern struct mfuncs stxt_mfuncs[];
-
-	mlib_add( phg_mfuncs );
-	mlib_add( light_mfuncs );
-	mlib_add( cloud_mfuncs );
-	mlib_add( spm_mfuncs );
-	mlib_add( txt_mfuncs );
-	mlib_add( stk_mfuncs );
-	mlib_add( cook_mfuncs );
-	mlib_add( marble_mfuncs );
-	mlib_add( stxt_mfuncs );
 }
 
 /*
@@ -91,23 +65,29 @@ register struct region *rp;
 	register struct mfuncs *mfp;
 	int	ret;
 	char	param[256];
+	char	*material;
 
 	if( rp->reg_mfuncs != (char *)0 )  {
 		rt_log("mlib_setup:  region %s already setup\n", rp->reg_name );
 		return(-1);
 	}
-	if( rp->reg_mater.ma_matname[0] == '\0' )
-		goto def;
+	material = rp->reg_mater.ma_matname;
+	if( material[0] == '\0' )
+		material = mdefault;
+retry:
 	for( mfp=mfHead; mfp != MF_NULL; mfp = mfp->mf_forw )  {
-		if( rp->reg_mater.ma_matname[0] != mfp->mf_name[0]  ||
-		    strcmp( rp->reg_mater.ma_matname, mfp->mf_name ) != 0 )
+		if( material[0] != mfp->mf_name[0]  ||
+		    strcmp( material, mfp->mf_name ) != 0 )
 			continue;
 		goto found;
 	}
 	rt_log("mlib_setup(%s):  material not known, default assumed\n",
-		rp->reg_mater.ma_matname );
-def:
-	mfp = phg_mfuncs;		/* default */
+		material );
+	if( material != mdefault )  {
+		material = mdefault;
+		goto retry;
+	}
+	return(-1);
 found:
 	rp->reg_mfuncs = (char *)mfp;
 	rp->reg_udata = (char *)0;
@@ -116,8 +96,10 @@ found:
 
 	if( (ret = mfp->mf_setup( rp, param, &rp->reg_udata )) < 0 )  {
 		/* What to do if setup fails? */
-		if( mfp != phg_mfuncs )
-			goto def;
+		if( material != mdefault )  {
+			material = mdefault;
+			goto retry;
+		}
 	}
 	return(ret);		/* Good or bad, as mf_setup says */
 }
@@ -220,10 +202,24 @@ int *base;		/* base address of users structure */
 				continue;
 			loc = (char *)(((mp_off_ty)base) +
 					((int)mp->mp_offset));
-			if( mp->mp_fmt[1] == 'C' )
+			switch( mp->mp_fmt[1] )  {
+			case 'C':
 				mlib_rgb( loc, value );
-			else
+				break;
+			case 'f':
+				/*  Silicon Graphics sucks wind.
+				 *  On the 3-D machines, float==double,
+				 *  which breaks the scanf() strings.
+				 *  So, here we cause "%f" to store into
+				 *  a double.  This is the "generic"
+				 *  floating point read.  Humbug.
+				 */
+				*((double *)loc) = atof( value );
+				break;
+			default:
 				(void)sscanf( value, mp->mp_fmt, loc );
+				break;
+			}
 			goto out;
 		}
 		rt_log("mlib_parse:  %s=%s not a valid arg\n", name, value);
