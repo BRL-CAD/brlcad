@@ -168,7 +168,9 @@ struct pt_node {
 	struct pt_node	*next;	/* ptr to next pt */
 };
 
-extern void	rt_ell();
+RT_EXTERN(void	rt_ell, (fastf_t *ov, CONST fastf_t *V, CONST fastf_t *A,
+			CONST fastf_t *B, int sides) );
+
 
 /*
  *  			R T _ E P A _ P R E P
@@ -194,22 +196,20 @@ struct rt_i		*rtip;
 	struct rt_epa_internal		*xip;
 	register struct epa_specific	*epa;
 	CONST struct rt_tol		*tol = &rtip->rti_tol;
-	LOCAL fastf_t	magsq_a, magsq_h;
+	LOCAL fastf_t	magsq_h;
 	LOCAL fastf_t	mag_a, mag_h;
 	LOCAL fastf_t	f, r1, r2;
-	LOCAL mat_t	mtemp;
 	LOCAL mat_t	R;
 	LOCAL mat_t	Rinv;
 	LOCAL mat_t	S;
-	LOCAL vect_t	invsq;	/* [ 1/(|H|**2), 1/(|A|**2), 1/(|B|**2) ] */
-	LOCAL vect_t	B;
 
 	RT_CK_DB_INTERNAL(ip);
+	RT_CK_TOL(tol);
 	xip = (struct rt_epa_internal *)ip->idb_ptr;
 	RT_EPA_CK_MAGIC(xip);
 
 	/* compute |A| |H| */
-	mag_a = magsq_a = MAGSQ( xip->epa_Au );
+	mag_a = sqrt( MAGSQ( xip->epa_Au ) );
 	mag_h = sqrt( magsq_h = MAGSQ( xip->epa_H ) );
 	r1 = xip->epa_r1;
 	r2 = xip->epa_r2;
@@ -629,15 +629,15 @@ struct rt_db_internal	*ip;
 CONST struct rt_tess_tol *ttol;
 struct rt_tol		*tol;
 {
-	fastf_t		dtol, f, mag_a, mag_h, ntol, r1, r2, theta;
+	fastf_t		dtol, f, mag_a, mag_h, ntol, r1, r2;
 	fastf_t		**ellipses, theta_new, theta_prev, ell_ang();
-	int		*pts_dbl, face, i, j, nseg, tmpseg;
+	int		*pts_dbl, i, j, nseg;
 	int		jj, na, nb, nell, recalc_b;
 	LOCAL mat_t	R;
 	LOCAL mat_t	invR;
 	LOCAL struct rt_epa_internal	*xip;
 	point_t		p1;
-	struct pt_node	*old, *pos_a, *pos_b, *pts_a, *pts_b, *rt_ptalloc();
+	struct pt_node	*pos_a, *pos_b, *pts_a, *pts_b, *rt_ptalloc();
 	vect_t		A, Au, B, Bu, Hu, V, Work;
 	
 	RT_CK_DB_INTERNAL(ip);
@@ -760,7 +760,6 @@ struct rt_tol		*tol;
 		/* free mem for old approximation of parabola */
 		pos_b = pts_b;
 		while ( pos_b ) {
-			old = pos_b;
 			rt_free( (char *)pos_b, "pt_node" );
 			pos_b = pos_b->next;
 		}
@@ -815,7 +814,7 @@ struct rt_tol		*tol;
 
 		ellipses[i] = (fastf_t *)rt_malloc(3*(nseg+1)*sizeof(fastf_t),
 			"pts ell");
-		rt_ell( ellipses[i], V, A, B, nseg, ntol, dtol );
+		rt_ell( ellipses[i], V, A, B, nseg );
 		
 		i++;
 		pos_a = pos_a->next;
@@ -892,7 +891,7 @@ register fastf_t	*ov;
 fastf_t			*A, *B, *h_vec, t;
 int			sides;
 {
-	fastf_t	a, ang, b, theta, x, y, sqrt_1mt;
+	fastf_t	ang, theta, x, y, sqrt_1mt;
 	int	n;
 	vect_t partial_t, partial_ang;
 
@@ -914,16 +913,20 @@ int			sides;
 }
 
 
+/*
+ *			R T _ E L L
+ *
+ *  Generate an ellipsoid with the specified number of sides approximating it.
+ */
 void
 rt_ell( ov, V, A, B, sides )
 register fastf_t	*ov;
-register fastf_t	*V;
-fastf_t			*A, *B;
+register CONST fastf_t	*V;
+CONST fastf_t		*A, *B;
 int			sides;
 {
-	fastf_t	a, ang, b, theta, x, y;
-	int	n, ret	;
-	point_t	p0, p1;
+	fastf_t	ang, theta, x, y;
+	int	n;
 	
 	theta = 2 * rt_pi / sides;
 	ang = 0.;
@@ -949,7 +952,6 @@ fastf_t	a, b, dtol, ntol;
 point_t	p1;
 {
 	fastf_t	dist, intr, m, theta0, theta1;
-	int	n, ret;
 	point_t	mpt, p0;
 	vect_t	norm_line, norm_ell;
 	
@@ -998,18 +1000,16 @@ struct rt_tol		*tol;
 {
 	fastf_t		dtol, f, mag_a, mag_h, ntol, r1, r2;
 	fastf_t		**ellipses, **normals, theta_new, theta_prev;
-	int		*pts_dbl, face, i, j, nseg, tmpseg;
+	int		*pts_dbl, face, i, j, nseg;
 	int		*segs_per_ell;
 	int		jj, na, nb, nell, recalc_b;
 	LOCAL mat_t	R;
 	LOCAL mat_t	invR;
 	LOCAL struct rt_epa_internal	*xip;
 	point_t		p1;
-	struct pt_node	*old, *pos_a, *pos_b, *pts_a, *pts_b, *rt_ptalloc();
+	struct pt_node	*pos_a, *pos_b, *pts_a, *pts_b, *rt_ptalloc();
 	struct shell	*s;
 	struct faceuse	**outfaceuses;
-	struct loopuse	*lu;
-	struct edgeuse	*eu, *eu2;
 	struct vertex	*vertp[3];
 	struct vertex	***vells = (struct vertex ***)NULL;
 	vect_t		A, Au, B, Bu, Hu, V;
@@ -1142,7 +1142,6 @@ struct rt_tol		*tol;
 		/* free mem for old approximation of parabola */
 		pos_b = pts_b;
 		while ( pos_b ) {
-			old = pos_b;
 			rt_free( (char *)pos_b, "pt_node" );
 			pos_b = pos_b->next;
 		}
@@ -1214,7 +1213,7 @@ struct rt_tol		*tol;
 			"pts ell");
 		segs_per_ell[i] = nseg;
 		normals[i] = (fastf_t *)rt_malloc(3*(nseg+1)*sizeof(fastf_t), "rt_epa_tess_ normals" );
-		rt_ell( ellipses[i], V, A, B, nseg, ntol, dtol );
+		rt_ell( ellipses[i], V, A, B, nseg );
 		ell_norms( normals[i], A_orig, B_orig, xip->epa_H, t, nseg );
 
 		i++;

@@ -168,6 +168,10 @@ struct pt_node {
 	struct pt_node	*next;	/* ptr to next pt */
 };
 
+/* From g_epa.c */
+RT_EXTERN(void	rt_ell, (fastf_t *ov, CONST fastf_t *V, CONST fastf_t *A,
+			CONST fastf_t *B, int sides) );
+
 /*
  *  			R T _ E H Y _ P R E P
  *  
@@ -192,22 +196,20 @@ struct rt_i		*rtip;
 	struct rt_ehy_internal		*xip;
 	register struct ehy_specific	*ehy;
 	CONST struct rt_tol		*tol = &rtip->rti_tol;
-	LOCAL fastf_t	magsq_a, magsq_h;
+	LOCAL fastf_t	magsq_h;
 	LOCAL fastf_t	mag_a, mag_h;
 	LOCAL fastf_t	c, f, r1, r2;
-	LOCAL mat_t	mtemp;
 	LOCAL mat_t	R;
 	LOCAL mat_t	Rinv;
 	LOCAL mat_t	S;
-	LOCAL vect_t	invsq;	/* [ 1/(|H|**2), 1/(|A|**2), 1/(|B|**2) ] */
-	LOCAL vect_t	B;
 
 	RT_CK_DB_INTERNAL(ip);
+	RT_CK_TOL(tol);
 	xip = (struct rt_ehy_internal *)ip->idb_ptr;
 	RT_EHY_CK_MAGIC(xip);
 
 	/* compute |A| |H| */
-	mag_a = magsq_a = MAGSQ( xip->ehy_Au );
+	mag_a = sqrt( MAGSQ( xip->ehy_Au ) );
 	mag_h = sqrt( magsq_h = MAGSQ( xip->ehy_H ) );
 	r1 = xip->ehy_r1;
 	r2 = xip->ehy_r2;
@@ -643,12 +645,12 @@ struct rt_tol		*tol;
 {
 	fastf_t		c, dtol, f, mag_a, mag_h, ntol, r1, r2;
 	fastf_t		**ellipses, theta_prev, theta_new, ell_ang();
-	int		*pts_dbl, face, i, j, nseg;
+	int		*pts_dbl, i, j, nseg;
 	int		jj, na, nb, nell, recalc_b;
 	LOCAL mat_t	R;
 	LOCAL mat_t	invR;
 	point_t		p1;
-	struct pt_node	*old, *pos_a, *pos_b, *pts_a, *pts_b, *rt_ptalloc();
+	struct pt_node	*pos_a, *pos_b, *pts_a, *pts_b, *rt_ptalloc();
 	LOCAL struct rt_ehy_internal	*xip;
 	vect_t		A, Au, B, Bu, Hu, V, Work;
 
@@ -777,7 +779,6 @@ struct rt_tol		*tol;
 		/* free mem for old approximation of hyperbola */
 		pos_b = pts_b;
 		while ( pos_b ) {
-			old = pos_b;
 			rt_free( (char *)pos_b, "pt_node" );
 			pos_b = pos_b->next;
 		}
@@ -837,7 +838,7 @@ struct rt_tol		*tol;
 
 		ellipses[i] = (fastf_t *)rt_malloc(3*(nseg+1)*sizeof(fastf_t),
 			"pts ell");
-		rt_ell( ellipses[i], V, A, B, nseg, ntol, dtol );
+		rt_ell( ellipses[i], V, A, B, nseg );
 		
 		i++;
 		pos_a = pos_a->next;
@@ -922,7 +923,7 @@ struct rt_db_internal	*ip;
 CONST struct rt_tess_tol *ttol;
 struct rt_tol		*tol;
 {
-	fastf_t		c, dtol, f, mag_a, mag_h, ntol, r1, r2, theta;
+	fastf_t		c, dtol, f, mag_a, mag_h, ntol, r1, r2;
 	fastf_t		**ellipses, theta_prev, theta_new, ell_ang();
 	int		*pts_dbl, face, i, j, nseg;
 	int		jj, na, nb, nell, recalc_b;
@@ -930,11 +931,11 @@ struct rt_tol		*tol;
 	LOCAL mat_t	invR;
 	LOCAL struct rt_ehy_internal	*xip;
 	point_t		p1;
-	struct pt_node	*old, *pos_a, *pos_b, *pts_a, *pts_b, *rt_ptalloc();
+	struct pt_node	*pos_a, *pos_b, *pts_a, *pts_b, *rt_ptalloc();
 	struct shell	*s;
 	struct faceuse	**outfaceuses;
 	struct loopuse	*lu;
-	struct edgeuse	*eu, *eu2;
+	struct edgeuse	*eu;
 	struct vertex	*vertp[3];
 	struct vertex	***vells = (struct vertex ***)NULL;
 	vect_t		A, Au, B, Bu, Hu, V;
@@ -1064,7 +1065,6 @@ struct rt_tol		*tol;
 		/* free mem for old approximation of hyperbola */
 		pos_b = pts_b;
 		while ( pos_b ) {
-			old = pos_b;
 			rt_free( (char *)pos_b, "pt_node" );
 			pos_b = pos_b->next;
 		}
@@ -1130,7 +1130,7 @@ struct rt_tol		*tol;
 
 		ellipses[i] = (fastf_t *)rt_malloc(3*(nseg+1)*sizeof(fastf_t),
 			"pts ell");
-		rt_ell( ellipses[i], V, A, B, nseg, ntol, dtol );
+		rt_ell( ellipses[i], V, A, B, nseg );
 		
 		i++;
 		pos_a = pos_a->next;
