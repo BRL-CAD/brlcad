@@ -849,7 +849,7 @@ int		other_rs_state;
 		/* Single vertexuse at this dist */
 		if(rt_g.NMG_debug&DEBUG_COMBINE)
 			rt_log("single vertexuse at index %d\n", cur);
-		nmg_face_state_transition( rs->vu[cur], rs, cur, 0, other_rs_state );
+		nmg_face_state_transition( rs, cur, 0, other_rs_state );
 		nmg_2face_plot( rs->fu1, rs->fu2 );
 		return cur+1;
 	}
@@ -873,7 +873,7 @@ int		other_rs_state;
 
 	/* Process vu list, up to cutoff index 'm', which can be less than j */
 	for( k = cur; k < m; k++ )  {
-		nmg_face_state_transition( rs->vu[k], rs, k, 1, other_rs_state );
+		nmg_face_state_transition( rs, k, 1, other_rs_state );
 		nmg_2face_plot( rs->fu1, rs->fu2 );
 	}
 	rs->vu[j-1] = rs->vu[m-1]; /* for next iteration's lookback */
@@ -1295,13 +1295,13 @@ static CONST struct state_transitions nmg_state_is_in[17] = {
  *			N M G _ F A C E _ S T A T E _ T R A N S I T I O N
  */
 int
-nmg_face_state_transition( vu, rs, pos, multi, other_rs_state )
-struct vertexuse	*vu;
+nmg_face_state_transition( rs, pos, multi, other_rs_state )
 struct nmg_ray_state	*rs;
 int			pos;
 int			multi;
 int			other_rs_state;
 {
+	struct vertexuse	*vu;
 	int			assessment;
 	int			old_state;
 	int			new_state;
@@ -1315,6 +1315,7 @@ int			other_rs_state;
 	int			e_assessment;
 	int			action;
 
+	vu = rs->vu[pos];
 	NMG_CK_VERTEXUSE(vu);
 	assessment = nmg_assess_vu( rs, pos );
 	old_state = rs->state;
