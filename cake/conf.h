@@ -139,6 +139,13 @@ typedef	long	Cast;
 #endif
 
 #if __MACHINETYPE__sun5
+#if defined( __GNUC__ )
+	/* GNU compiler */
+#	define	CPP		"gcc"
+#	define	CPP_OPTIONS	"-E"
+#	define	CPP_OPTIONS2	"-traditional"
+#	define	CPP_OPTIONS3	 "-D__CAKE__SunOS5"
+#else
 	/* SunOS 5 with unbundled compilers */
 #	define	CPP		"cc"
 	/*
@@ -151,6 +158,7 @@ typedef	long	Cast;
 #	define	CPP_OPTIONS2	"-Xs"
 /* XXX This next symbol is irregular, and needs to be changed */
 #	define	CPP_OPTIONS3	"-D__CAKE__SunOS5"
+#endif
 #endif
 
 /*
