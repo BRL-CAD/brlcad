@@ -41,26 +41,28 @@
 static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
+#include "conf.h"
+
 #include <stdio.h>
-#define _BSD_TYPES		/* Needed for IRIX 5.0.1 */
 #include <ctype.h>
 #include <signal.h>
 #include <errno.h>
-#if __STDC__ && !apollo
+#if defined(HAVE_STDARG_H)
 # include <stdarg.h>
-#else
+#elif defined(HAVE_VARARGS_H)
 # include <varargs.h>
 #endif
+#include <sys/time.h>		/* For struct timeval */
 
-#ifdef BSD
-# ifndef CRAY2
+#if defined(BSD) && !defined(CRAY2)
 #	include <syslog.h>
-# endif
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>		/* For htonl(), etc */
 #endif
 
+#include <sys/socket.h>
+#include <netinet/in.h>		/* For htonl(), etc */
+
+#include "machine.h"
+#include "externs.h"		/* For malloc, getopt */
 #include "fb.h"
 #include "pkg.h"
 
@@ -69,7 +71,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #define NET_LONG_LEN	4	/* # bytes to network long */
 
-extern	char	*malloc();
 extern	int	_fb_disk_enable;
 
 static	void	comm_error();
@@ -96,10 +97,6 @@ Usage: fbserv port_num\n\
           [-W width] [-N height] port_num frame_buffer\n\
           (for a single-frame-buffer server)\n\
 ";
-
-extern int	getopt();
-extern char	*optarg;
-extern int	optind;
 
 get_args( argc, argv )
 register char **argv;
@@ -241,9 +238,15 @@ int argc; char **argv;
 
 		/* loop forever handling clients */
 		while( !got_fb_free ) {
-			int	infds, fds;
-			infds = (1<<netfd);	/*XXX (1<<fbfd) */
-			if( (fds = bsdselect( infds, 1, 0 )) == 0 ) {
+			fd_set infds;
+			struct timeval tv;
+
+			FD_ZERO(&infds);
+			FD_SET(netfd, &infds);	/* XXX FD_SET(fbfd, &infds) */
+			tv.tv_sec = 1L;
+			tv.tv_usec = 0L;
+			if( (select( netfd+1, &infds, (fd_set *)0, (fd_set *)0, 
+				     &tv )) == 0 ) {
 				/* Process fb events while waiting for client */
 				/*printf("select timeout waiting for client\n");*/
 				fb_poll(fbp);
@@ -351,15 +354,21 @@ do1()
 	 * but libfb event handling requires us to break it up.
 	 */
 	for(;;) {
-		long	infds;
-		long	fds;
+		fd_set	infds;
+		struct timeval tv;
+
 		if( pkg_process( rem_pcp ) < 0 ) {
 			printf("pkg_process error encountered\n");
 			continue;
 		}
-		infds = (1<<rem_pcp->pkc_fd);
-		if( (fds = bsdselect( infds, 1, 0 )) != 0 ) {
-			/*printf("select returned %d\n", fds);*/
+
+		FD_ZERO( &infds );
+		FD_SET( rem_pcp->pkc_fd, &infds );
+		tv.tv_sec = 1L;
+		tv.tv_usec = 0L;
+
+		if( select( rem_pcp->pkc_fd+1, &infds, (fd_set *)0, 
+			    (fd_set *)0, &tv ) != 0 ){
 			if( pkg_suckin( rem_pcp ) <= 0 ) {
 				/* Probably EOF */
 				break;
