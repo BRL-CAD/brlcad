@@ -10749,17 +10749,28 @@ struct rt_tol *tol;
 	NMG_CK_SHELL( s );
 	RT_CK_TOL( tol );
 
-	for( RT_LIST_FOR( fu, faceuse, &s->fu_hd ) )
+	fu = RT_LIST_FIRST( faceuse, &s->fu_hd );
+	while( RT_LIST_NOT_HEAD( &fu->l, &s->fu_hd ) )
 	{
+		struct faceuse *fu_next;
 		struct loopuse *lu;
+		int empty_fu=0;
 
 		NMG_CK_FACEUSE( fu );
 
-		if( fu->orientation != OT_SAME )
-			continue;
+		fu_next = RT_LIST_PNEXT( faceuse, &fu->l );
 
-		for( RT_LIST_FOR( lu, loopuse, &fu->lu_hd ) )
+		if( fu->orientation != OT_SAME )
 		{
+			fu = fu_next;
+			continue;
+		}
+
+		lu = RT_LIST_FIRST( loopuse, &fu->lu_hd );
+
+		while( RT_LIST_NOT_HEAD( &lu->l, &fu->lu_hd ) )
+		{
+			struct loopuse *lu_next;
 			struct edge *ep1,*ep2;
 			struct edgeuse *eu;
 			struct edgeuse *eu_next;
@@ -10768,8 +10779,13 @@ struct rt_tol *tol;
 
 			NMG_CK_LOOPUSE( lu );
 
+			lu_next = RT_LIST_PNEXT( loopuse, &lu->l );
+
 			if( RT_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
+			{
+				lu = lu_next;
 				continue;
+			}
 
 			eu = RT_LIST_FIRST( edgeuse, &lu->down_hd );
 			while( RT_LIST_NOT_HEAD( &eu->l, &lu->down_hd ) )
@@ -10777,11 +10793,14 @@ struct rt_tol *tol;
 				struct vertex *v1,*v2,*v3;
 				struct vertex_g *vg1,*vg2,*vg3;
 				struct vertexuse *vu;
+				struct vertexuse *next_vu;
 				struct edgeuse *eu_tmp;
 				point_t pca;
 				fastf_t dist;
 				int skip;
+				int empty_lu=0;
 
+				v1 = eu->vu_p->v_p;
 				ep1 = eu->e_p;
 				eu_next = RT_LIST_PNEXT_CIRC( edgeuse, &eu->l );
 				ep2 = eu_next->e_p;
@@ -10855,16 +10874,54 @@ struct rt_tol *tol;
 				}
 				nmg_keu( eu_next );
 
-				/* move all uses of eu to vertex v3 */
-				eu_tmp = eu->eumate_p;
-				do
+				/* move all ep1 EU's using v2 to vertex v3 */
+				vu = RT_LIST_FIRST( vertexuse, &v2->vu_hd );
+				while( RT_LIST_NOT_HEAD( &vu->l, &v2->vu_hd ) )
 				{
+					NMG_CK_VERTEXUSE( vu );
+					next_vu = RT_LIST_PNEXT( vertexuse, &vu->l );
+					if( *vu->up.magic_p != NMG_EDGEUSE_MAGIC )
+					{
+						vu = next_vu;
+						continue;
+					}
+
+					eu_tmp = vu->up.eu_p;
+					NMG_CK_EDGEUSE( eu );
+
+					if( eu->e_p != ep1 )
+					{
+						vu = next_vu;
+						continue;
+					}
+
 					nmg_movevu( eu_tmp->vu_p, v3 );
-					eu_tmp = eu_tmp->radial_p->eumate_p;
-				} while( eu_tmp != eu->eumate_p );
+
+					vu = next_vu;
+					continue;
+				}
+
+				if( RT_LIST_IS_EMPTY( &lu->down_hd ) )
+				{
+					empty_lu = 1;
+					empty_fu = nmg_klu( lu );
+				}
+				if( empty_lu )
+					break;
 
 			}
+
+			if( empty_fu )
+				break;
+			lu = lu_next;
 		}
+		if( empty_fu )
+		{
+			if( fu_next == fu->fumate_p )
+				fu_next = RT_LIST_NEXT( faceuse, &fu_next->l );
+			(void)nmg_kfu( fu );
+		}
+		fu = fu_next;
 	}
 	return( count );
 }
