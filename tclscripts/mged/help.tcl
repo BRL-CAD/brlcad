@@ -26,7 +26,7 @@ set mged_help_data(arot)            {{x y z angle} {rotate about axis x,y,z by a
 set mged_help_data(attach)	{{[-d display_string] [-i init_script] [-n name]
 	      [-t is_toplevel] [-W width] [-N height]
 	      [-S square_size] win_type}	{attach to a display manager}}
-set mged_help_data(B)		{{<objects>}	{clear screen, edit objects}}
+set mged_help_data(B)		{{-C#/#/# <objects>}	{clear screen, edit objects}}
 set mged_help_data(bev)		{{[-t] [-P#] new_obj obj1 op obj2 op obj3 op ...}	{boolean evaluation of objects via NMG's}}
 set mged_help_data(c)		{{[-gr] comb_name [boolean_expr]}	{create or extend a combination using standard notation}}
 set mged_help_data(cat)		{{<objects>}	{list attributes (brief)}}
@@ -52,11 +52,11 @@ set mged_help_data(debugnmg)	{{[hex code]}	{show/set debugging bit vector for NM
 set mged_help_data(decompose)	{{nmg_solid [prefix]}	{decompose nmg_solid into maximally connected shells}}
 set mged_help_data(delay)	{{sec usec}	{delay for the specified amount of time}}
 set mged_help_data(dm)		{{set var [val]}	{do display-manager specific command}}
-set mged_help_data(draw)	{{<objects>}	{draw objects}}
+set mged_help_data(draw)	{{-C#/#/# <objects>}	{draw objects}}
 set mged_help_data(dup)		{{file [prefix]}	{check for dup names in 'file'}}
 set mged_help_data(E)		{{ [-s] <objects>}	{evaluated edit of objects. Option 's' provides a slower,
         but better fidelity evaluation}}
-set mged_help_data(e)		{{<objects>}	{edit objects}}
+set mged_help_data(e)		{{-C#/#/# <objects>}	{edit objects}}
 set mged_help_data(eac)		{{air_code(s)}	{display all regions with given air code}}
 set mged_help_data(echo)	{{[text]}	{echo arguments back}}
 set mged_help_data(edcodes)	{{object(s)}	{edit region ident codes}}
