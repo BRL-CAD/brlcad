@@ -45,7 +45,7 @@ class Db {
     public method tops {args}
     public method rt_gettrees {args}
     public method dump {args}
-    public method dbip {args}
+    public method dbip {}
     public method ls {args}
     public method l {args}
     public method listeval {args}
