@@ -31,9 +31,10 @@ char	*cerrfmt = " \\* [FW] \\* :\\([^:]*\\): \\([0-9][0-9]*\\):";
 	 */
 # else
 #    if	(defined(__sgi) && defined(__mips))
-char	*cerrfmt = "[^:]*: Error: \\([^:]*\\), line \\([0-9][0-9]*\\):";
+char	*cerrfmt = "[^:]*: [^:]*: \\([^:]*\\), line \\([0-9][0-9]*\\):";
 	/* SGI has a new format, too.
 	 * accom: Error: filename, line linenum: error message.
+	 *         ^___ or "Warning ###" here
 	 */
 #    else
 char	*cerrfmt = "\"\\([^:]*\\)\", line \\([0-9][0-9]*\\):";
