@@ -748,7 +748,8 @@ struct bu_vls  {
 #define BU_SEM_SYSCALL	0
 #define BU_SEM_LISTS	1
 #define BU_SEM_BN_NOISE	2
-#define BU_SEM_LAST	(BU_SEM_BN_NOISE+1)	/* allocate this many for LIBBU+LIBBN */
+#define BU_SEM_MAPPEDFILE 3
+#define BU_SEM_LAST	(BU_SEM_MAPPEDFILE+1)	/* allocate this many for LIBBU+LIBBN */
 /*
  *  Automatic restart capability in bu_bomb().
  *  The return from BU_SETJUMP is the return from the setjmp().
