@@ -163,6 +163,28 @@ struct partition	*ph;
 }
 
 /*
+ *	    B U I L D _ P A T H _ N A M E _ O F _ S O L I D ( )
+ *
+ *	Builds the slash-separated path name for a struct solid.
+ */
+void build_path_name_of_solid (vp, sp)
+
+struct rt_vls	*vp;
+struct solid	*sp;
+
+{
+    int		i;
+
+    rt_vls_trunc(vp, 0);
+    for (i = 0; i < sp -> s_last; ++i)
+    {
+	rt_vls_strcat(vp, sp -> s_path[i] -> d_namep);
+	rt_vls_strcat(vp, "/");
+    }
+    rt_vls_strcat(vp, sp -> s_path[sp -> s_last] -> d_namep);
+}
+
+/*
  *			R P T _ S O L I D S
  *
  *		Hit handler for use by rt_shootray().
@@ -171,7 +193,9 @@ struct partition	*ph;
  *	the segment list.  Rpt_solids() sorts the solids along
  *	the ray by first encounter.  As a side-effect, rpt_solids()
  *	stores in ap->a_uptr the address of a null-terminated array
- *	of the sorted solid names.  It returns 1.
+ *	of the sorted solid names.  If ap->a_user is nonzero,
+ *	rpt_solids() stashes the complete path name for each solid,
+ *	otherwise, just its basename.  It returns 1.
  */
 
 static int rpt_solids (ap, ph)
@@ -182,17 +206,22 @@ struct partition	*ph;
 {
     char			**result;
     int				i;
+    int				full_path; /* Get full path, not just base? */
     struct partition		*pp;
     rb_tree			*solids;
-    struct seg			*sh;
-    struct seg			*sp;
+    struct seg			*segh;
+    struct seg			*segp;
+    struct solid		*sp;
     struct sol_name_dist	*old_sol;
     struct sol_name_dist	*sol;
+    struct rt_vls		v;
     static int			(*orders[])() =
 				{
 				    sol_comp_name,
 				    sol_comp_dist
 				};
+
+    full_path = ap -> a_user;
 
     /*
      *	Initialize the solid list
@@ -204,43 +233,86 @@ struct partition	*ph;
     }
     solids -> rbt_print = print_solid;
     rb_uniq_on(solids, ORDER_BY_NAME);
+    printf("HELLO %s:%d\n", __FILE__, __LINE__);
 
-    /*
-     *	Get the list of segments along this ray
-     *	and seek to its head
-     */
-    RT_CKMAG(ph, PT_HD_MAGIC, "partition head");
-    pp = ph -> pt_forw;
-    RT_CKMAG(pp, PT_MAGIC, "partition structure");
-    for (sh = pp -> pt_inseg;
-	    *((long *) sh) != RT_LIST_HEAD_MAGIC;
-	    sh = (struct seg *) (sh -> l.forw))
-	RT_CKMAG(sh, RT_SEG_MAGIC, "segment structure");
-
-    /*
-     *	March down the list of segments
-     */
-    for (sp = (struct seg *) (sh -> l.forw);
-	    sp != sh;
-	    sp = (struct seg *) sp -> l.forw)
+    if (1)
     {
-	RT_CKMAG(sp, RT_SEG_MAGIC, "seg structure");
-	
-	sol = mk_solid(sp -> seg_stp -> st_name, sp -> seg_in.hit_dist);
-	if (rb_insert(solids, (void *) sol) < 0)
+	printf("HELLO %s:%d\n", __FILE__, __LINE__);
+	/*
+	 *	March down the partition list
+	 */
+	for (pp = ph -> pt_forw; pp != ph; pp = pp -> pt_forw)
 	{
-	    old_sol = (struct sol_name_dist *) rb_curr(solids, ORDER_BY_NAME);
-	    RT_CKMAG(old_sol, SOL_NAME_DIST_MAGIC, "sol_name_dist structure");
-	    if (sol -> dist >= old_sol -> dist)
-		free_solid(sol);
-	    else
+	    sol = mk_solid(pp -> pt_regionp -> reg_name, (fastf_t) 3.0);
+	    if (rb_insert(solids, (void *) sol) < 0)
 	    {
-		rb_delete(solids, ORDER_BY_NAME);
-		rb_insert(solids, sol);
-		free_solid(old_sol);
+		old_sol = (struct sol_name_dist *)
+			    rb_curr(solids, ORDER_BY_NAME);
+		RT_CKMAG(old_sol, SOL_NAME_DIST_MAGIC,
+		    "sol_name_dist structure");
+		if (sol -> dist >= old_sol -> dist)
+		    free_solid(sol);
+		else
+		{
+		    rb_delete(solids, ORDER_BY_NAME);
+		    rb_insert(solids, sol);
+		    free_solid(old_sol);
+		}
 	    }
 	}
     }
+    else
+    {
+	printf("HELLO %s:%d\n", __FILE__, __LINE__);
+	rt_vls_init(&v);
+	rt_log("Path names for all solids...\n");
+	FOR_ALL_SOLIDS(sp)
+	{
+	    build_path_name_of_solid (&v, sp);
+	    printf("%s\n", rt_vls_addr(&v));
+	}
+	rt_log("...the end\n");
+
+	/*
+	 *	Get the list of segments along this ray
+	 *	and seek to its head
+	 */
+	RT_CKMAG(ph, PT_HD_MAGIC, "partition head");
+	pp = ph -> pt_forw;
+	RT_CKMAG(pp, PT_MAGIC, "partition structure");
+	for (segh = pp -> pt_inseg;
+		*((long *) segh) != RT_LIST_HEAD_MAGIC;
+		segh = (struct seg *) (segh -> l.forw))
+	    RT_CKMAG(segh, RT_SEG_MAGIC, "segment structure");
+
+	/*
+	 *	March down the segment list
+	 */
+	for (segp = (struct seg *) (segh -> l.forw);
+		segp != segh;
+		segp = (struct seg *) segp -> l.forw)
+	{
+	    RT_CKMAG(segp, RT_SEG_MAGIC, "seg structure");
+	    
+	    sol = mk_solid(segp -> seg_stp -> st_name, segp -> seg_in.hit_dist);
+	    if (rb_insert(solids, (void *) sol) < 0)
+	    {
+		old_sol = (struct sol_name_dist *)
+			    rb_curr(solids, ORDER_BY_NAME);
+		RT_CKMAG(old_sol, SOL_NAME_DIST_MAGIC,
+		    "sol_name_dist structure");
+		if (sol -> dist >= old_sol -> dist)
+		    free_solid(sol);
+		else
+		{
+		    rb_delete(solids, ORDER_BY_NAME);
+		    rb_insert(solids, sol);
+		    free_solid(old_sol);
+		}
+	    }
+	}
+    }
+    printf("HELLO %s:%d\n", __FILE__, __LINE__);
 
     result = (char **)
 		rt_malloc((solids -> rbt_nm_nodes + 1) * sizeof(char *),
@@ -280,26 +352,29 @@ struct partition	*ph;
 }
 
 /*
- *		S K E W E R _ S O L I D S
+ *		    S K E W E R _ S O L I D S
  *
  *	Fire a ray at some geometry and obtain a list of
  *	the solids encountered, sorted by first intersection.
  *
- *	The function has four parameters: the model and objects
- *	at which to fire (in an argc/argv pair) and the origination
- *	point and direction for the ray.  So long as it could find
- *	the objects in the model, skewer_solids() returns a
- *	null-terminated array of solid names.  Otherwise, it returns 0.
+ *	The function has five parameters: the model and objects at which
+ *	to fire (in an argc/argv pair) the origination point and direction
+ *	for the ray, and a result-format specifier.  So long as it could
+ *	find the objects in the model, skewer_solids() returns a null-
+ *	terminated array of solid names.  Otherwise, it returns 0.  If
+ *	full_path is nonzero, then the entire path for each solid is
+ *	recorded.  Otherwise, only the basename is recorded.
  *
  *	N.B. - It is the caller's responsibility to free the array
  *	of solid names.
  */
-char **skewer_solids (argc, argv, ray_orig, ray_dir)
+char **skewer_solids (argc, argv, ray_orig, ray_dir, full_path)
 
 int		argc;
 CONST char	**argv;
 point_t		ray_orig;
 vect_t		ray_dir;
+int		full_path;
 
 {
     struct application	ap;
@@ -332,7 +407,7 @@ vect_t		ray_dir;
     ap.a_resource = RESOURCE_NULL;
     ap.a_overlap = no_op;
     ap.a_onehit = 0;
-    ap.a_uptr = (genptr_t) &sol_list;
+    ap.a_user = 1;	/* Requests full paths to solids, not just basenames */
     ap.a_rt_i = rtip;
     ap.a_zero1 = ap.a_zero2 = 0;
     ap.a_purpose = "skewer_solids()";
