@@ -267,7 +267,6 @@ CONST struct loopuse	*lu;
 	vect_t		delta;
 	pointp_t	lu_pt;
 	fastf_t		dist;
-	struct edgeuse	*eu;
 	struct loop_g	*lg;
 
 	NMG_CK_LOOPUSE(lu);
@@ -293,6 +292,7 @@ CONST struct loopuse	*lu;
 	}
 
 	if (RT_LIST_FIRST_MAGIC(&lu->down_hd) == NMG_EDGEUSE_MAGIC) {
+		register struct edgeuse	*eu;
 		for (RT_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
 			
 			nmg_class_pt_eu(fpi, eu);
@@ -311,7 +311,7 @@ CONST struct loopuse	*lu;
 		switch (NMG_INDEX_GET(fpi->tbl, vu->v_p)) {
 		case NMG_FPI_TOUCHED:
 			if (fpi->vu_func && fpi->allhits == NMG_FPI_PERUSE)
-				fpi->vu_func(eu->vu_p, fpi);
+				fpi->vu_func(vu, fpi);
 			/* fallthrough */
 		case NMG_FPI_MISSED:
 			/* if this point were going to be the "closest"
