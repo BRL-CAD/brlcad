@@ -347,16 +347,18 @@ int	nwords;
 	}
 	if( strcmp( words[0], "ae" ) == 0 )  {
 		mat_t	mat;
-		fastf_t	az, el, twist;
+		fastf_t	az, el;
 
 		if( nwords < 3 )  return(-1);
 		/* Expects azimuth, elev, optional twist */
 		az = atof(words[1]);
 		el = atof(words[2]);
+#if 0
 		if( nwords == 3 )
 			twist = 0.0;
 		else
 			twist = atof(words[3]);
+#endif
 		bn_mat_idn( mat );
 		/* XXX does not take twist, for now XXX */
 		bn_mat_ae( mat, az, el );
