@@ -103,12 +103,12 @@ char **argv;
 		int		xcent, ycent, xzoom, yzoom;
 		if( fb_rmap( fbp, &cmap ) >= 0 )  {
 			if( !fb_is_linear_cmap( &cmap ) )  {
-				fprintf(stderr, "fbclear: NOTE: non-linear colormap in effect.  -c flag can correct this.\n");
+				fprintf(stderr, "fbclear: NOTE: non-linear colormap in effect.  -c flag loads linear colormap.\n");
 			}
 		}
 		(void)fb_getview( fbp, &xcent, &ycent, &xzoom, &yzoom );
 		if( xzoom != 1 || yzoom != 1 )  {
-			fprintf(stderr, "fbclear:  NOTE: framebuffer is zoomed.  -c can correct this.\n");
+			fprintf(stderr, "fbclear:  NOTE: framebuffer is zoomed.  -c will un-zoom.\n");
 		}
 	}
 
