@@ -406,6 +406,152 @@ CONST struct rt_tol	*tol;
 	}
 }
 
+/*
+ *			N M G _ J S
+ *
+ *  Join two shells into one.
+ *  This is mostly an up-pointer re-labeling activity, as it is left up to
+ *  the caller to ensure that there are no non-explicit intersections.
+ *
+ *  Upon return, s2 will no longer exist.
+ */
+void
+nmg_js( s1, s2 )
+register struct shell	*s1;		/* destination */
+register struct shell	*s2;		/* source */
+{
+	struct faceuse	*fu2;
+	struct faceuse	*nextfu;
+	struct loopuse	*lu;
+	struct loopuse	*nextlu;
+	struct edgeuse	*eu;
+	struct edgeuse	*nexteu;
+	struct vertexuse *vu;
+	struct vertex	*v;
+
+	NMG_CK_SHELL(s1);
+	NMG_CK_SHELL(s2);
+
+	if( rt_g.NMG_debug & DEBUG_VERIFY )
+		nmg_vshell( &s1->r_p->s_hd, s1->r_p );
+
+	/*
+	 *  For each face in the shell, process all the loops in the face,
+	 *  and then handle the face and all loops as a unit.
+	 */
+	fu2 = RT_LIST_FIRST( faceuse, &s2->fu_hd );
+	while( RT_LIST_NOT_HEAD( fu2, &s2->fu_hd ) )  {
+		struct faceuse	*fu1;
+
+		nextfu = RT_LIST_PNEXT( faceuse, fu2 );
+
+		/* Faceuse mates will be handled at same time as OT_SAME fu */
+		if( fu2->orientation != OT_SAME )  {
+			fu2 = nextfu;
+			continue;
+		}
+
+		/* Consider this face */
+		NMG_CK_FACEUSE(fu2);
+		NMG_CK_FACE(fu2->f_p);
+
+		if( nextfu == fu2->fumate_p )
+			nextfu = RT_LIST_PNEXT(faceuse, nextfu);
+
+		/* If there is a face in the destination shell that
+		 * shares face geometry with this face, then
+		 * move all the loops into the other face,
+		 * and eliminate this redundant face.
+		 */
+		fu1 = nmg_find_fu_with_fg_in_s( s1, fu2 );
+		if( fu1 )  {
+rt_log("nmg_js(): shared face_g, doing nmg_jf()\n");
+			nmg_jf( fu1, fu2 );
+			/* fu2 pointer is invalid here */
+			fu2 = fu1;
+		} else {
+			nmg_mv_fu_between_shells( s1, s2, fu2 );
+		}
+		nmg_face_fix_radial_parity( fu2 );
+
+		fu2 = nextfu;
+	}
+#if 0
+	if( rt_g.NMG_debug & DEBUG_VERIFY )
+		nmg_vshell( &s1->r_p->s_hd, s1->r_p );
+#endif
+
+	/*
+	 *  For each loop in the shell, process.
+	 *  Each loop is either a wire-loop, or a vertex-with-self-loop.
+	 *  Both get the same treatment.
+	 */
+	lu = RT_LIST_FIRST( loopuse, &s2->lu_hd );
+	while( RT_LIST_NOT_HEAD( lu, &s2->lu_hd ) )  {
+		nextlu = RT_LIST_PNEXT( loopuse, lu );
+
+		NMG_CK_LOOPUSE(lu);
+		NMG_CK_LOOP( lu->l_p );
+		if( nextlu == lu->lumate_p )
+			nextlu = RT_LIST_PNEXT(loopuse, nextlu);
+
+		nmg_mv_lu_between_shells( s1, s2, lu );
+		lu = nextlu;
+	}
+#if 0
+	if( rt_g.NMG_debug & DEBUG_VERIFY )
+		nmg_vshell( &s1->r_p->s_hd, s1->r_p );
+#endif
+
+	/*
+	 *  For each wire-edge in the shell, ...
+	 */
+	eu = RT_LIST_FIRST( edgeuse, &s2->eu_hd );
+	while( RT_LIST_NOT_HEAD( eu, &s2->eu_hd ) )  {
+		nexteu = RT_LIST_PNEXT( edgeuse, eu );
+
+		/* Consider this edge */
+		NMG_CK_EDGEUSE(eu);
+		NMG_CK_EDGE( eu->e_p );
+		if( nexteu == eu->eumate_p )
+			nexteu = RT_LIST_PNEXT(edgeuse, nexteu);
+		nmg_mv_eu_between_shells( s1, s2, eu );
+		eu = nexteu;
+	}
+#if 0
+	if( rt_g.NMG_debug & DEBUG_VERIFY )
+		nmg_vshell( &s1->r_p->s_hd, s1->r_p );
+#endif
+
+	/*
+	 * Final case:  shell of a single vertexuse
+	 */
+	if( vu = s2->vu_p )  {
+		NMG_CK_VERTEXUSE( vu );
+		NMG_CK_VERTEX( vu->v_p );
+		nmg_mv_vu_between_shells( s1, s2, vu );
+		s2->vu_p = (struct vertexuse *)0;	/* sanity */
+	}
+	if( rt_g.NMG_debug & DEBUG_VERIFY )
+		nmg_vshell( &s1->r_p->s_hd, s1->r_p );
+
+	if( RT_LIST_NON_EMPTY( &s2->fu_hd ) )  {
+		rt_bomb("nmg_js():  s2 still has faces!\n");
+	}
+	if( RT_LIST_NON_EMPTY( &s2->lu_hd ) )  {
+		rt_bomb("nmg_js():  s2 still has wire loops!\n");
+	}
+	if( RT_LIST_NON_EMPTY( &s2->eu_hd ) )  {
+		rt_bomb("nmg_js():  s2 still has wire edges!\n");
+	}
+	if(s2->vu_p) {
+		rt_bomb("nmg_js():  s2 still has verts!\n");
+	}
+
+	/* s2 is completely empty now, which is an invalid condition */
+	nmg_ks( s2 );
+}
+
 /************************************************************************
  *									*
  *				FACE Routines				*
@@ -1023,6 +1169,125 @@ register struct faceuse	*fu;
 		rt_log("ERROR nmg_reverse_face(fu=x%x), orientation=%d.\n",
 			fu, fu->orientation );
 	}
+}
+
+/*
+ *			N M G _ F A C E _ F I X _ R A D I A L _ P A R I T Y
+ *
+ *  Around an edge, consider all the edgeuses that belong to a single shell.
+ *  The faceuses pertaining to those edgeuses must maintain the appropriate
+ *  parity with their radial faceuses, so that OT_SAME is always radial to
+ *  OT_SAME, and OT_OPPOSITE is always radial to OT_OPPOSITE.
+ *
+ *  If a radial edgeuse is encountered that belongs to *this* face, then
+ *  it might not have been processed by this routine yet, and is ignored
+ *  for the purposes of checking parity.
+ *
+ *  When moving faces between shells, sometimes this parity relationship
+ *  needs to be fixed, which can be easily accomplished by exchanging
+ *  the incorrect edgeuse with it's mate in the radial edge linkages.
+ *
+ *  XXX Note that this routine will not work right in the presence of
+ *  XXX dangling faces.
+ */
+int
+nmg_face_fix_radial_parity( fu )
+struct faceuse *fu;
+{
+	struct loopuse *lu;
+	struct edgeuse *eu;
+	struct faceuse *fu2;
+	struct shell	*s;
+	long		count = 0;
+
+	NMG_CK_FACEUSE( fu );
+	s = fu->s_p;
+	NMG_CK_SHELL(s);
+
+	/* Make sure we are now dealing with the OT_SAME faceuse */
+	if( fu->orientation == OT_SAME )
+		fu2 = fu;
+	else
+		fu2 = fu->fumate_p;
+
+	for( RT_LIST_FOR( lu , loopuse , &fu2->lu_hd ) )  {
+		NMG_CK_LOOPUSE( lu );
+
+		/* skip loops of a single vertex */
+		if( RT_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
+			continue;
+
+		/*
+		 *  Consider every edge of this loop.
+		 *  Initial sequencing is:
+		 *    before(radial), eu, eumate, after(radial)
+		 */
+		for( RT_LIST_FOR( eu , edgeuse , &lu->down_hd ) )  {
+			struct edgeuse	*eumate;
+			struct edgeuse	*before;
+			struct edgeuse	*sbefore;	/* searched before */
+			struct edgeuse	*after;
+
+			eumate = eu->eumate_p;
+			before = eu->radial_p;
+			after = eumate->radial_p;
+			NMG_CK_EDGEUSE(eumate);
+			NMG_CK_EDGEUSE(before);
+			NMG_CK_EDGEUSE(after);
+
+			/* If no other edgeuses around edge, done. */
+			if( before == eumate )
+				continue;
+
+			/*
+			 *  Search in 'before' direction, until it's in
+			 *  same shell.  Also ignore edgeuses from this FACE,
+			 *  as they may not have been fixed yet.
+			 */
+			for( sbefore = before;
+			     sbefore != eu && sbefore != eumate;
+			     sbefore = sbefore->eumate_p->radial_p
+			)  {
+				struct faceuse	*bfu;
+				if( nmg_find_s_of_eu(sbefore) != s )  continue;
+
+				bfu = nmg_find_fu_of_eu(sbefore);
+				/* If edgeuse isn't part of a faceuse, skip */
+				if( !bfu )  continue;
+				if( bfu->f_p == fu->f_p )  continue;
+				/* Found a candidate */
+				break;
+			}
+
+			/* If search found no others from this shell, done. */
+			if( sbefore == eu || sbefore == eumate )
+				continue;
+
+			/*
+			 *  'eu' is in an OT_SAME faceuse.
+			 *  If the first faceuse in the 'before' direction
+			 *  from this shell is OT_SAME, no fix is required.
+			 */
+			if( sbefore->up.lu_p->up.fu_p->orientation == OT_SAME )
+				continue;
+
+			/*
+			 *  Rearrange order to be: before, eumate, eu, after.
+			 *  NOTE: do NOT use sbefore here.
+			 */
+			before->radial_p = eumate;
+			eumate->radial_p = before;
+
+			after->radial_p = eu;
+			eu->radial_p = after;
+			count++;
+			if( rt_g.NMG_debug & DEBUG_BASIC )  {
+				rt_log("nmg_face_fix_radial_parity() exchanging eu=x%x & eumate=x%x on edge x%x\n",
+					eu, eumate, eu->e_p);
+			}
+		}
+	}
+	return count;
 }
 
 /*
@@ -2284,8 +2549,11 @@ CONST struct rt_tol	*tol;
 	}
 
 	if( lu->orientation == geom_orient )  return;
-	rt_log("nmg_lu_reorient(x%x):  changing orientation: %s to %s\n",
-		lu, nmg_orientation(lu->orientation), nmg_orientation(geom_orient) );
+	if( rt_g.NMG_debug & DEBUG_BASIC )  {
+		rt_log("nmg_lu_reorient(x%x):  changing orientation: %s to %s\n",
+			lu, nmg_orientation(lu->orientation),
+			nmg_orientation(geom_orient) );
+	}
 
 	lu->orientation = geom_orient;
 	lu->lumate_p->orientation = geom_orient;
