@@ -371,8 +371,13 @@ char *buf;
 	register int i;
 	register char *cp = buf;
 	register struct rt_i *rtip = ap.a_rt_i;
+	register char	*sp;
+	register char	*ep;
+	int		len;
 
 	if( debug )  fprintf(stderr, "ph_matrix: %s\n", buf );
+
+#if 0
 	/* Visible part is from -1 to +1 in view space */
 	viewsize = atof(cp);
 	while( *cp && *cp++ != ' ') ;
@@ -385,6 +390,24 @@ char *buf;
 		while( *cp && *cp++ != ' ') ;
 		Viewrotscale[i] = atof(cp);
 	}
+#else
+	len = strlen(buf);
+	ep = buf+len;
+	sp = buf;
+	cp = buf;
+	while( sp < ep )  {
+		extern struct command_tab rt_cmdtab[];	/* from do.c */
+		/* Find next semi-colon */
+		while( *cp && *cp != ';' )  cp++;
+		*cp++ = '\0';
+		/* Process this command */
+		if( rt_do_cmd( rtip, sp, rt_cmdtab ) < 0 )  {
+			rt_log("error on '%s'\n", sp );
+			exit(1);
+		}
+		sp = cp;
+	}
+#endif
 
 	/*
 	 * initialize application -- it will allocate 1 line and
