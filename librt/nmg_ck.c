@@ -1206,6 +1206,8 @@ CONST struct rt_tol	*tol;
 		NMG_CK_FACEUSE(fu);
 		if (fu->orientation != curr_orient &&
 		    eur != eu1->eumate_p ) {
+		    	char buf[80];
+
 			p = eu1->vu_p->v_p->vg_p->coord;
 			q = eu1->eumate_p->vu_p->v_p->vg_p->coord;
 			rt_log("nmg_check_radial(): Radial orientation problem at edge %g %g %g -> %g %g %g\n",
@@ -1218,6 +1220,11 @@ CONST struct rt_tol	*tol;
 				eu1->eumate_p->vu_p );
 			nmg_face_lu_plot( eur->up.lu_p, eur->vu_p,
 				eur->eumate_p->vu_p );
+
+		    	sprintf(buf, "Orientation problem %g %g %g -> %g %g %g\n"
+				p[0], p[1], p[2], q[0], q[1], q[2]);
+
+		    	nmg_stash_model_to_file("radial.g", m, buf);
 
 			nmg_pr_fu_around_eu( eu1, tol );
 
