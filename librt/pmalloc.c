@@ -59,6 +59,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <stdio.h>
 #include <math.h>
 #include "machine.h"
+#include "externs.h"
 #include "bu.h"
 #include "vmath.h"
 #include "bn.h"
@@ -88,7 +89,6 @@ typedef	long	Size;
 
 #ifndef CURBRK
 #define CURBRK	sbrk(0)
-extern char *sbrk();
 #else  /* CURBRK */
 #	if	CURBRK == curbrk
 extern Size curbrk;
@@ -104,7 +104,6 @@ extern Size curbrk;
 
 #ifndef BRK
 #define BRK(x)	brk(x)
-extern char *brk();
 #endif /* Not BRK */
 
 /* END of machine dependent portion */
@@ -144,9 +143,6 @@ static void mllcerr();
 static void mlfree_end();
 
 extern void (*mlabort)();
-
-extern void rt_pfree();
-extern char *rt_pmalloc(), *rt_prealloc();
 
 #define debug 1
 #ifdef debug
@@ -197,7 +193,7 @@ void (*mlabort)() = {0};	/* ptr to optional user-provided error handler */
 
 char *
 rt_pmalloc(nbytes, pmem)
-Size nbytes;
+long nbytes;
 struct rt_pm_res *pmem;
 {
 	register struct overhead *p, *q;
@@ -229,14 +225,14 @@ Size orig_size=nbytes;
 	/* obtain additional memory from system */
 	{
 		register Size i;
-		char *ret;
+		int ret;
 
 		bu_semaphore_acquire( BU_SEM_SYSCALL );
 		p = (struct overhead *)CURBRK;
 		i = ((Size)p)&(NALIGN-1);
 		if (i != 0)
 			p = (struct overhead *)((char *)p + NALIGN - i);
-		ret = BRK((char *)p + nbytes);
+		ret = BRK(((char *)p) + nbytes);
 		bu_semaphore_release( BU_SEM_SYSCALL );
 
 		if( ret )
@@ -520,7 +516,7 @@ register struct rt_pm_res *pmem;
 
 	if (p->ov_magic == MAGIC_BUSY) {
 		oendfree = endfree;	endfree = 0;
-		rt_pfree(mem);	/* free it but don't let it contract break */
+		rt_pfree(mem, pmem);	/* free it but don't let it contract break */
 		endfree = oendfree;
 	}
 
@@ -549,7 +545,7 @@ register struct rt_pm_res *pmem;
 	/* if at break, grow in place */
 	
 	bu_semaphore_acquire( BU_SEM_SYSCALL );
-	if (p->ov_magic == MAGIC_FREE && ((char *)p + p->ov_length) == CURBRK) {
+	if (p->ov_magic == MAGIC_FREE && ((char *)p + p->ov_length) == (char *)CURBRK) {
 		nbytes += sizeof(struct overhead);
 
 		BRK((char *)p + nbytes);
