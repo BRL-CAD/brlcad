@@ -4,6 +4,9 @@
  * $Revision$
  *
  * $Log$
+ * Revision 2.0  84/12/26  16:45:33  dpk
+ * System as distributed to Berkeley 26 Dec 84
+ * 
  * Revision 1.2  83/12/16  00:07:36  dpk
  * Added distinctive RCS header
  * 
@@ -551,7 +554,6 @@ register int	linenum;
    It actually works thougth ... */
 
 extern struct screenline	*Screen;
-extern struct screenline	*Savelines;
 int	InMode = 0;
 int	DClen = 0;
 int	MDClen = 0;
@@ -571,7 +573,6 @@ disp_opt_init()
 	MIClen = (M_IC ? strlen(M_IC) : 9999);
 	if (IM) IMlen = strlen(IM);
 	if (CE) CElen = strlen(CE);
-	Savelines = (struct screenline *)emalloc(LI*sizeof (struct screenline));
 }
 
 IDchar(new, lineno, col)
