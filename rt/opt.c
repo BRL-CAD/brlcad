@@ -62,7 +62,7 @@ char		*scanbuf;		/* For optional output buffering */
 int		incr_mode = 0;		/* !0 for incremental resolution */
 int		incr_level;		/* current incremental level */
 int		incr_nlevel;		/* number of levels */
-int		npsw = DEFAULT_PSW;	/* number of worker PSWs to run */
+int		npsw = 1;		/* number of worker PSWs to run */
 struct resource	resource[MAX_PSW];	/* memory resources */
 /***** end variables shared with worker() *****/
 
