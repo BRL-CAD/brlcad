@@ -72,6 +72,8 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #if defined(sun) || (defined(alliant) && !defined(i860)) || \
 	defined(ardent) || \
 	defined(stellar) || defined(sparc) || defined(mips) || \
+	(defined(sgi) && defined(mips)) || \
+	(defined(__sgi) && defined(__mips)) || \
 	defined(pyr) || defined(apollo) || defined(aux)
 
 	/*  These systems already operate in
