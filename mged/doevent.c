@@ -320,7 +320,10 @@ XMotionEvent *xmotion;
 	  VSUB2(diff, model_pt, vcenter);
 	  VSCALE(diff, diff, base2local);
 	  VADD2(model_pt, dml_work_pt, diff);
-	  bu_vls_printf(&cmd, "p %lf %lf %lf", model_pt[X], model_pt[Y], model_pt[Z]);
+	  if (state == ST_S_EDIT)
+		  bu_vls_printf(&cmd, "p %lf %lf %lf", model_pt[X], model_pt[Y], model_pt[Z]);
+	  else
+		  bu_vls_printf(&cmd, "translate %lf %lf %lf", model_pt[X], model_pt[Y], model_pt[Z]);
 	}else
 	  bu_vls_printf(&cmd, "knob -i aX %lf aY %lf\n",
 			fx*view_state->vs_Viewscale*base2local, fy*view_state->vs_Viewscale*base2local);
