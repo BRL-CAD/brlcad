@@ -129,6 +129,7 @@ int	r, g, b;
  *
  *  Plot a single vertexuse
  */
+void
 nmg_vu_to_vlist( vhead, vu )
 struct rt_list		*vhead;
 struct vertexuse	*vu;
@@ -153,6 +154,7 @@ struct vertexuse	*vu;
  *
  *  Plot a list of edgeuses.  The last edge is joined back to the first.
  */
+void
 nmg_eu_to_vlist( vhead, eu_hd )
 struct rt_list	*vhead;
 struct rt_list	*eu_hd;
@@ -197,6 +199,7 @@ struct rt_list	*eu_hd;
  *
  *  Plot a list of loopuses.
  */
+void
 nmg_lu_to_vlist( vhead, lu_hd, poly_markers, normal )
 struct rt_list	*vhead;
 struct rt_list	*lu_hd;
@@ -575,7 +578,8 @@ point_t		next_base;
 /*
  *			N M G _ P L _ V
  */
-void nmg_pl_v(fp, v, b)
+void
+nmg_pl_v(fp, v, b)
 FILE		*fp;
 struct vertex	*v;
 long		*b;
@@ -702,7 +706,8 @@ int		red, green, blue;
 /*
  *			N M G _ P L _ L U
  */
-void nmg_pl_lu(fp, lu, b, red, green, blue)
+void
+nmg_pl_lu(fp, lu, b, red, green, blue)
 FILE		*fp;
 struct loopuse	*lu;
 long		*b;
@@ -728,7 +733,8 @@ int		red, green, blue;
 /*
  *			M N G _ P L _ F U
  */
-void nmg_pl_fu(fp, fu, b, red, green, blue)
+void
+nmg_pl_fu(fp, fu, b, red, green, blue)
 FILE		*fp;
 struct faceuse	*fu;
 long		*b;
@@ -751,7 +757,8 @@ int		red, green, blue;
  *  Note that "b" should probably be defined a level higher,
  *  to reduce malloc/free calls when plotting multiple shells.
  */
-void nmg_pl_s(fp, s)
+void
+nmg_pl_s(fp, s)
 FILE		*fp;
 struct shell	*s;
 {
@@ -802,7 +809,8 @@ struct shell	*s;
 /*
  *			N M G _ P L _ R
  */
-void nmg_pl_r(fp, r)
+void
+nmg_pl_r(fp, r)
 FILE		*fp;
 struct nmgregion *r;
 {
@@ -816,7 +824,8 @@ struct nmgregion *r;
 /*
  *			N M G _ P L _ M
  */
-void nmg_pl_m(fp, m)
+void
+nmg_pl_m(fp, m)
 FILE		*fp;
 struct model	*m;
 {
@@ -836,7 +845,8 @@ struct model	*m;
 /*
  *			N M G _ V L B L O C K _ V
  */
-void nmg_vlblock_v(vbp, v, tab)
+void
+nmg_vlblock_v(vbp, v, tab)
 struct rt_vlblock	*vbp;
 struct vertex		*v;
 long			*tab;
@@ -866,7 +876,8 @@ long			*tab;
 /*
  *			N M G _ V L B L O C K _ E
  */
-void nmg_vlblock_e(vbp, e, tab, red, green, blue, fancy)
+void
+nmg_vlblock_e(vbp, e, tab, red, green, blue, fancy)
 struct rt_vlblock	*vbp;
 struct edge	*e;
 long		*tab;
@@ -911,7 +922,8 @@ int		fancy;
 /*
  *			M N G _ V L B L O C K _ E U
  */
-void nmg_vlblock_eu(vbp, eu, tab, red, green, blue, fancy)
+void
+nmg_vlblock_eu(vbp, eu, tab, red, green, blue, fancy)
 struct rt_vlblock	*vbp;
 struct edgeuse		*eu;
 long			*tab;
@@ -970,7 +982,8 @@ int			fancy;
 /*
  *			N M G _ V L B L O C K _ L U
  */
-void nmg_vlblock_lu(vbp, lu, tab, red, green, blue, fancy)
+void
+nmg_vlblock_lu(vbp, lu, tab, red, green, blue, fancy)
 struct rt_vlblock	*vbp;
 struct loopuse	*lu;
 long		*tab;
@@ -1000,7 +1013,8 @@ int		fancy;
 /*
  *			M N G _ V L B L O C K _ F U
  */
-void nmg_vlblock_fu(vbp, fu, tab, fancy)
+void
+nmg_vlblock_fu(vbp, fu, tab, fancy)
 struct rt_vlblock	*vbp;
 struct faceuse	*fu;
 long		*tab;
@@ -1025,7 +1039,8 @@ int		fancy;
 /*
  *			N M G _ V L B L O C K _ S
  */
-void nmg_vlblock_s(vbp, s, fancy)
+void
+nmg_vlblock_s(vbp, s, fancy)
 struct rt_vlblock	*vbp;
 struct shell	*s;
 int		fancy;
@@ -1080,7 +1095,8 @@ int		fancy;
 /*
  *			N M G _ V L B L O C K _ R
  */
-void nmg_vlblock_r(vbp, r, fancy)
+void
+nmg_vlblock_r(vbp, r, fancy)
 struct rt_vlblock	*vbp;
 struct nmgregion *r;
 int		fancy;
@@ -1095,7 +1111,8 @@ int		fancy;
 /*
  *			N M G _ V L B L O C K _ M
  */
-void nmg_vlblock_m(vbp, m, fancy)
+void
+nmg_vlblock_m(vbp, m, fancy)
 struct rt_vlblock	*vbp;
 struct model	*m;
 int		fancy;
@@ -1116,7 +1133,8 @@ int		fancy;
 /*
  *  Plot all edgeuses around an edge
  */
-void nmg_pl_around_edge(fd, b, eu)
+void
+nmg_pl_around_edge(fd, b, eu)
 FILE		*fd;
 long		*b;
 struct edgeuse	*eu;
@@ -1133,7 +1151,8 @@ struct edgeuse	*eu;
  *  If another use of this edge is in another shell, plot all the
  *  uses around this edge.
  */
-void nmg_pl_edges_in_2_shells(fd, b, eu)
+void
+nmg_pl_edges_in_2_shells(fd, b, eu)
 FILE		*fd;
 long		*b;
 struct edgeuse	*eu;
@@ -1162,7 +1181,8 @@ struct edgeuse	*eu;
 	} while (eur != eu);
 }
 
-void nmg_pl_isect(filename, s)
+void
+nmg_pl_isect(filename, s)
 char		*filename;
 struct shell	*s;
 {

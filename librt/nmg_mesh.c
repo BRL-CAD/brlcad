@@ -301,7 +301,8 @@ struct rt_list *hd;
  *
  *	make sure that all shareable edges of fu1/fu2 are indeed shared
  */
-void nmg_mesh_faces(fu1, fu2)
+void
+nmg_mesh_faces(fu1, fu2)
 struct faceuse *fu1, *fu2;
 {
 	struct loopuse *lu1, *lu2;

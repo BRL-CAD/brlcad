@@ -61,7 +61,8 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
  *  The reason for the register variable is to leave the argument variable
  *  unmodified;  this may aid debugging in event of a core dump.
  */
-struct model *nmg_find_model( magic_p_arg )
+struct model *
+nmg_find_model( magic_p_arg )
 long	*magic_p_arg;
 {
 	register long	*magic_p = magic_p_arg;
@@ -122,7 +123,8 @@ top:
  *	Create a new model Essentially
  *	this creates a minimal model system.
  */
-struct model *nmg_mm()
+struct model *
+nmg_mm()
 {
 	struct model *m;
 
@@ -144,7 +146,8 @@ struct model *nmg_mm()
  *	Create a new model, and an "empty" region to go with it.  Essentially
  *	this creates a minimal model system.
  */
-struct model *nmg_mmr()
+struct model *
+nmg_mmr()
 {
 	struct model *m;
 	struct nmgregion *r;
@@ -170,7 +173,8 @@ struct model *nmg_mmr()
  *	Create a new (2nd, 3rd, ...) region in model consisting of a minimal
  *	shell.
  */
-struct nmgregion *nmg_mrsv(m)
+struct nmgregion *
+nmg_mrsv(m)
 struct model *m;
 {
 	struct nmgregion *r;
@@ -197,7 +201,8 @@ struct model *m;
  *	Create a new shell in a specified region.  The shell will consist
  *	of a single vertexuse and vertex (which are also created).
  */
-struct shell *nmg_msv(r_p)
+struct shell *
+nmg_msv(r_p)
 struct nmgregion	*r_p;
 {
 	struct shell 		*s;
@@ -226,7 +231,8 @@ struct nmgregion	*r_p;
  *
  *	Make Vertexuse on existing vertex
  */
-struct vertexuse *nmg_mvu(v, upptr)
+struct vertexuse *
+nmg_mvu(v, upptr)
 struct vertex *v;
 long *upptr;		/* pointer to parent struct */
 {
@@ -259,7 +265,8 @@ long *upptr;		/* pointer to parent struct */
  *
  *	Make Vertex, Vertexuse
  */
-struct vertexuse *nmg_mvvu(upptr)
+struct vertexuse *
+nmg_mvvu(upptr)
 long *upptr;
 {
 	struct vertex	*v;
@@ -296,7 +303,8 @@ long *upptr;
  *	2)  The returned edgeuse is the first item on the shell's
  *	eu_hd list, followed immediately by the mate.
  */
-struct edgeuse *nmg_me(v1, v2, s)
+struct edgeuse *
+nmg_me(v1, v2, s)
 struct vertex *v1, *v2;
 struct shell *s;
 {
@@ -374,7 +382,8 @@ struct shell *s;
  * Make edge on vertexuse.
  * Vertexuse must be sole element of either a shell or a loopuse.
  */
-struct edgeuse *nmg_meonvu(vu)
+struct edgeuse *
+nmg_meonvu(vu)
 struct vertexuse *vu;
 {
 	struct edge *e;
@@ -481,7 +490,8 @@ struct vertexuse *vu;
  * succeed, then the edgeuses are moved from the parameter list
  * to the loop, and the loops are inserted into the shell
  */
-struct loopuse *nmg_ml(s)
+struct loopuse *
+nmg_ml(s)
 struct shell *s;
 {
 	struct loop *l;
@@ -599,7 +609,8 @@ struct shell *s;
  *
  *	Move a vertexuse to a new vertex
  */
-void nmg_movevu(vu, v)
+void
+nmg_movevu(vu, v)
 struct vertexuse *vu;
 struct vertex *v;
 {
@@ -625,7 +636,8 @@ struct vertex *v;
  *
  *	Kill vertexuse
  */
-void nmg_kvu(vu)
+void
+nmg_kvu(vu)
 register struct vertexuse *vu;
 {
 	struct vertex	*v;
@@ -668,7 +680,8 @@ register struct vertexuse *vu;
  *	Any children found are brutally murdered as well.
  *	The faceuses are dequeued from the parent shell's list here.
  */
-void nmg_kfu(fu1)
+void
+nmg_kfu(fu1)
 struct faceuse *fu1;
 {
 	struct faceuse *fu2;
@@ -729,7 +742,8 @@ struct faceuse *fu1;
  *	We support the concept of killing a loop with no children to
  *	support the routine "nmg_demote_lu"
  */
-void nmg_klu(lu1)
+void
+nmg_klu(lu1)
 struct loopuse *lu1;
 {
 	struct loopuse *lu2;
@@ -815,7 +829,8 @@ struct loopuse *lu1;
  *	make a face from a pair of loopuses.  The loopuses must be direct
  *	children of a shell.  The new face will be a child of the same shell.
  */
-struct faceuse *nmg_mf(lu1)
+struct faceuse *
+nmg_mf(lu1)
 struct loopuse *lu1;
 {
 	struct face *f;
@@ -878,7 +893,8 @@ struct loopuse *lu1;
  *
  *	Delete an edgeuse & it's mate on a shell/loop.
  */
-void nmg_keu(eu1)
+void
+nmg_keu(eu1)
 register struct edgeuse *eu1;
 {
 	register struct edgeuse *eu2;
@@ -992,7 +1008,8 @@ register struct edgeuse *eu1;
  *
  *	Kill a shell and all children
  */
-void nmg_ks(s)
+void
+nmg_ks(s)
 struct shell *s;
 {
 
@@ -1020,7 +1037,8 @@ struct shell *s;
  *
  *	Kill a region and all shells in it
  */
-void nmg_kr(r)
+void
+nmg_kr(r)
 struct nmgregion *r;
 {
 
@@ -1041,7 +1059,8 @@ struct nmgregion *r;
  *
  *	Kill an entire model
  */
-void nmg_km(m)
+void
+nmg_km(m)
 struct model *m;
 {
 	NMG_CK_MODEL(m);
@@ -1059,7 +1078,8 @@ struct model *m;
  *
  *	Associate some coordinates with a vertex
  */
-void nmg_vertex_gv(v, pt)
+void
+nmg_vertex_gv(v, pt)
 struct vertex *v;
 pointp_t	pt;
 {
@@ -1086,7 +1106,8 @@ pointp_t	pt;
  *
  *	Build the bounding box for a loop
  */
-void nmg_loop_g(l)
+void
+nmg_loop_g(l)
 struct loop *l;
 {
 	struct edgeuse	*eu;
@@ -1135,7 +1156,8 @@ struct loop *l;
  *
  *	Assign plane equation to face and compute bounding box
  */
-void nmg_face_g(fu, p)
+void
+nmg_face_g(fu, p)
 struct faceuse *fu;
 plane_t p;
 {
@@ -1171,7 +1193,8 @@ plane_t p;
  *
  *	Build the bounding box for a face
  */
-void nmg_face_bb(f)
+void
+nmg_face_bb(f)
 struct face *f;
 {
 	struct face_g	*fg;
@@ -1213,7 +1236,8 @@ struct face *f;
  *
  *	Build the bounding box for a shell
  */
-void nmg_shell_a(s)
+void
+nmg_shell_a(s)
 struct shell *s;
 {
 	struct shell_a *sa;
@@ -1286,7 +1310,8 @@ struct shell *s;
  *
  *	build attributes/extents for all shells in a region
  */
-void nmg_region_a(r)
+void
+nmg_region_a(r)
 struct nmgregion *r;
 {
 	register struct shell	*s;
@@ -1325,7 +1350,8 @@ struct nmgregion *r;
  *  Implicit return -
  *	The loopuse is inserted at the head of the appropriate list.
  */
-struct loopuse *nmg_mlv(magic, v, orientation)
+struct loopuse *
+nmg_mlv(magic, v, orientation)
 long		*magic;
 struct vertex	*v;
 int		orientation;
@@ -1435,7 +1461,8 @@ int		orientation;
  *		1	Loopuse was on a single vertex.  Nothing done
  *		0	Loopse edges moved to shell, loopuse deleted.
  */
-int nmg_demote_lu(lu1)
+int
+nmg_demote_lu(lu1)
 struct loopuse *lu1;
 {
 	struct edgeuse *eu1;
@@ -1499,7 +1526,8 @@ struct loopuse *lu1;
  *	on the given vertex.
  *	If it does not, then one is created.
  */
-void nmg_ensure_vertex(v, s)
+void
+nmg_ensure_vertex(v, s)
 struct vertex	*v;
 struct shell	*s;
 {
@@ -1529,7 +1557,8 @@ struct shell	*s;
  *		1	Edge was not a wire edge.  Nothing done.
  *		0	edge decomposed into verticies.
  */
-int nmg_demote_eu(eu)
+int
+nmg_demote_eu(eu)
 struct edgeuse *eu;
 {
 	struct shell	*s;

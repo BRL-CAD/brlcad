@@ -416,6 +416,7 @@ static int	nmg_eval_count = 0;	/* debug -- plot file numbering */
  *  Descend the "great chain of being" from the face to loop to edge
  *  to vertex, saving or demoting along the way.
  */
+void
 nmg_eval_shell( s, bs )
 register struct shell	*s;
 struct nmg_bool_state *bs;
@@ -795,6 +796,7 @@ int			singletons;
 	return(0);
 }
 
+int
 nmg_find_vertex_in_facelist( v, hd )
 register struct vertex	*v;
 struct rt_list		*hd;
@@ -810,6 +812,7 @@ struct rt_list		*hd;
 	return(0);
 }
 
+int
 nmg_find_edge_in_edgelist( e, hd )
 struct edge	*e;
 struct rt_list	*hd;
@@ -825,6 +828,7 @@ struct rt_list	*hd;
 	return(0);
 }
 
+int
 nmg_find_edge_in_looplist( e, hd )
 struct edge	*e;
 struct rt_list	*hd;
@@ -849,6 +853,7 @@ struct rt_list	*hd;
 	return(0);
 }
 
+int
 nmg_find_edge_in_facelist( e, hd )
 struct edge	*e;
 struct rt_list	*hd;
@@ -864,6 +869,7 @@ struct rt_list	*hd;
 	return(0);
 }
 
+int
 nmg_find_loop_in_facelist( l, fu_hd )
 struct loop	*l;
 struct rt_list	*fu_hd;
@@ -892,6 +898,7 @@ struct rt_list	*fu_hd;
  *  Remove lone vertices (stored as wire loops on a single vertex) that
  *  match vertices in a face loop, wire loop, or wire edge.
  */
+void
 nmg_rm_redundancies(s)
 struct shell	*s;
 {
@@ -994,6 +1001,7 @@ struct shell	*s;
  *
  *  Called from nmg_eval_shell
  */
+void
 nmg_eval_plot( bs, num, delay )
 struct nmg_bool_state	*bs;
 int		num;

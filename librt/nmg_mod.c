@@ -157,7 +157,8 @@ CONST struct rt_tol	*tol;
  *	to counter this behavior, and
  *	to effect the proper vertex order in the final face loop.
  */
-struct faceuse *nmg_cface(s, verts, n)
+struct faceuse *
+nmg_cface(s, verts, n)
 struct shell *s;
 struct vertex *verts[];
 int n;
@@ -250,7 +251,8 @@ int n;
  *	to counter this behavior, and
  *	to effect the proper vertex order in the final face loop.
  */
-struct faceuse *nmg_cmface(s, verts, n)
+struct faceuse *
+nmg_cmface(s, verts, n)
 struct shell	*s;
 struct vertex	**verts[];
 int		n;
@@ -386,7 +388,8 @@ int		n;
  *		    <-------.   <-----.
  *		       mate	 mate
  */
-struct edgeuse *nmg_eusplit(v, oldeu)
+struct edgeuse *
+nmg_eusplit(v, oldeu)
 struct vertex *v;
 struct edgeuse *oldeu;
 {
@@ -573,7 +576,8 @@ struct edgeuse *oldeu;
  *	used by eudst.  eusrc is made to be immediately radial to eudst.
  *	if eusrc does not share the same vertices as eudst, we bomb.
  */
-void nmg_moveeu(eudst, eusrc)
+void
+nmg_moveeu(eudst, eusrc)
 struct edgeuse *eudst, *eusrc;
 {
 	struct edgeuse	*eudst_mate;
@@ -648,7 +652,8 @@ struct edgeuse *eudst, *eusrc;
  *	on the edge), it and its mate are "unglued" from the edge, and 
  *	associated with a new edge structure.
  */
-void nmg_unglueedge(eu)
+void
+nmg_unglueedge(eu)
 struct edgeuse *eu;
 {
 #if UNGLUE_MAKES_VERTICES
@@ -726,7 +731,8 @@ struct edgeuse *eu;
  *	v1 inherits all the vertexuses presently pointing to v2,
  *	and v2 is then destroyed.
  */
-void nmg_jv(v1, v2)
+void
+nmg_jv(v1, v2)
 register struct vertex	*v1;
 register struct vertex	*v2;
 {
@@ -799,7 +805,8 @@ struct shell *s;
  *		pointer to the new edge which took the place of the parameter
  *	edge.
  */
-struct edge *nmg_esplit(v, e)
+struct edge *
+nmg_esplit(v, e)
 struct vertex *v;
 struct edge *e;
 {
@@ -907,7 +914,8 @@ struct edge *e;
  *	  <-A'--. <---. <-eu'--.
  *	          eu2     eumate
  */
-struct edgeuse *nmg_eins(eu)
+struct edgeuse *
+nmg_eins(eu)
 struct edgeuse *eu;
 {
 	struct edgeuse	*eumate;
@@ -965,7 +973,8 @@ struct edgeuse *eu;
  *	coordinates given.  
  *	
  */
-struct vertexuse *nmg_find_vu_in_face(pt, fu, tol)
+struct vertexuse *
+nmg_find_vu_in_face(pt, fu, tol)
 CONST point_t		pt;
 struct faceuse		*fu;
 CONST struct rt_tol	*tol;
@@ -1072,7 +1081,8 @@ int n;
  *
  *	find an edgeuse in a shell between a pair of verticies
  */
-struct edgeuse *nmg_findeu(v1, v2, s, eup)
+struct edgeuse *
+nmg_findeu(v1, v2, s, eup)
 struct vertex *v1, *v2;
 struct shell *s;
 struct edgeuse *eup;

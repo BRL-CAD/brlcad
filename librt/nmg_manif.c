@@ -76,8 +76,7 @@ char *tbl;
 /*
  *
  */
-static void
-paint_face(fu, paint_table, paint_color, paint_meaning, tbl)
+static void paint_face(fu, paint_table, paint_color, paint_meaning, tbl)
 struct faceuse *fu;
 char *paint_table, *paint_meaning, *tbl;
 int paint_color;
@@ -116,8 +115,7 @@ int paint_color;
 	}
 }
 
-static void
-set_edge_sub_manifold(tbl, eu_p, manifold)
+static void set_edge_sub_manifold(tbl, eu_p, manifold)
 char *tbl;
 struct edgeuse *eu_p;
 char manifold;
@@ -136,8 +134,7 @@ char manifold;
 }
 
 
-static void
-set_loop_sub_manifold(tbl, lu_p, manifold)
+static void set_loop_sub_manifold(tbl, lu_p, manifold)
 char *tbl;
 struct loopuse *lu_p;
 char manifold;
@@ -160,8 +157,7 @@ char manifold;
 	} else
 		rt_bomb("bad child of loopuse\n");
 }
-static void
-set_face_sub_manifold(tbl, fu_p, manifold)
+static void set_face_sub_manifold(tbl, fu_p, manifold)
 char *tbl;
 struct faceuse *fu_p;
 char manifold;

@@ -456,7 +456,7 @@ struct model	*m;
 	}
 
 #if 1
-rt_log("nmg_m_reindex() oldmax=%d, newmax=%d\n", m->maxindex, newindex );
+ rt_log("nmg_m_reindex() oldmax=%d, newmax=%d\n", m->maxindex, newindex );
 #endif
 	m->maxindex = newindex;
 }

@@ -42,7 +42,8 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
  *
  *  Verify vertex geometry
  */
-void nmg_vvg(vg)
+void
+nmg_vvg(vg)
 struct vertex_g *vg;
 {
 	NMG_CK_VERTEX_G(vg);
@@ -53,7 +54,8 @@ struct vertex_g *vg;
  *
  *  Verify a vertex
  */
-void nmg_vvertex(v, vup)
+void
+nmg_vvertex(v, vup)
 struct vertex *v;
 struct vertexuse *vup;
 {
@@ -70,7 +72,8 @@ struct vertexuse *vup;
 }
 
 /* Verify vertex attributes */
-void nmg_vvua(vua)
+void
+nmg_vvua(vua)
 struct vertexuse_a *vua;
 {
 	NMG_CK_VERTEXUSE_A(vua);
@@ -81,7 +84,8 @@ struct vertexuse_a *vua;
  *
  *  Verify vertexuse
  */
-void nmg_vvu(vu, up_magic_p)
+void
+nmg_vvu(vu, up_magic_p)
 struct vertexuse *vu;
 long		*up_magic_p;
 {
@@ -104,14 +108,16 @@ long		*up_magic_p;
 }
 
 /* Verify edgeuse attributes */
-void nmg_veua(eua)
+void
+nmg_veua(eua)
 struct edgeuse_a *eua;
 {
 	NMG_CK_EDGEUSE_A(eua);
 }
 
 /* Verify edge geometry */
-void nmg_veg(eg)
+void
+nmg_veg(eg)
 struct edge_g *eg;
 {
 	NMG_CK_EDGE_G(eg);
@@ -122,7 +128,8 @@ struct edge_g *eg;
  *
  *  Verify edge
  */
-void nmg_vedge(e, eup)
+void
+nmg_vedge(e, eup)
 struct edge *e;
 struct edgeuse *eup;
 {
@@ -171,7 +178,8 @@ struct edgeuse *eup;
  *
  *  Verify edgeuse
  */
-void nmg_veu(hp, up_magic_p)
+void
+nmg_veu(hp, up_magic_p)
 struct rt_list	*hp;
 long	*up_magic_p;
 {
@@ -227,7 +235,8 @@ long	*up_magic_p;
  *
  *  Verify loop geometry
  */
-void nmg_vlg(lg)
+void
+nmg_vlg(lg)
 struct loop_g *lg;
 {
 	int i;
@@ -244,7 +253,8 @@ struct loop_g *lg;
  *
  *  Verify loop
  */
-void nmg_vloop(l, lup)
+void
+nmg_vloop(l, lup)
 struct loop *l;
 struct loopuse *lup;
 {
@@ -268,7 +278,8 @@ struct loopuse *lup;
 }
 
 /* Verify loop attributes */
-void nmg_vlua(lua)
+void
+nmg_vlua(lua)
 struct loopuse_a *lua;
 {
 	NMG_CK_LOOPUSE_A(lua);
@@ -279,7 +290,8 @@ struct loopuse_a *lua;
  *
  *  Verify loopuse
  */
-void nmg_vlu(hp, up)
+void
+nmg_vlu(hp, up)
 struct rt_list	*hp;
 {
 	struct loopuse *lu;
@@ -337,7 +349,8 @@ struct rt_list	*hp;
  *
  *  Verify face geometry
  */
-void nmg_vfg(fg)
+void
+nmg_vfg(fg)
 struct face_g *fg;
 {
 	int i;
@@ -361,7 +374,8 @@ struct face_g *fg;
  *
  *  Verify face
  */
-void nmg_vface(f, fup)
+void
+nmg_vface(f, fup)
 struct face *f;
 struct faceuse *fup;
 {
@@ -383,7 +397,8 @@ struct faceuse *fup;
 }
 
 /* Verify faceuse attributes */
-void nmg_vfua(fua)
+void
+nmg_vfua(fua)
 struct faceuse_a *fua;
 {
 	NMG_CK_FACEUSE_A(fua);
@@ -394,7 +409,8 @@ struct faceuse_a *fua;
  *
  *	Validate a list of faceuses
  */
-void nmg_vfu(hp, s)
+void
+nmg_vfu(hp, s)
 struct rt_list	*hp;
 struct shell *s;
 {
@@ -450,7 +466,8 @@ struct shell *s;
  *
  *	validate a list of shells and all elements under them
  */
-void nmg_vshell(hp, r)
+void
+nmg_vshell(hp, r)
 struct rt_list	*hp;
 struct nmgregion *r;
 {
@@ -516,7 +533,8 @@ struct nmgregion *r;
  *
  *	validate a list of nmgregions and all elements under them
  */
-void nmg_vregion(hp, m)
+void
+nmg_vregion(hp, m)
 struct rt_list	*hp;
 struct model *m;
 {
@@ -546,7 +564,8 @@ struct model *m;
  *
  *	validate an NMG model and all elements in it.
  */
-void nmg_vmodel(m)
+void
+nmg_vmodel(m)
 struct model *m;
 {
 	NMG_CK_MODEL(m);
@@ -566,6 +585,7 @@ struct model *m;
 /*
  *			N M G _ C K _ E
  */
+void
 nmg_ck_e(eu, e, str)
 struct edgeuse *eu;
 struct edge *e;
@@ -598,6 +618,7 @@ char *str;
 /*
  *			N M G _ C K _ V U
  */
+void
 nmg_ck_vu(parent, vu, str)
 long *parent;
 struct vertexuse *vu;
@@ -617,6 +638,7 @@ char *str;
 /*
  *			N M G _ C K _ E U
  */
+void
 nmg_ck_eu(parent, eu, str)
 long *parent;
 struct edgeuse *eu;
@@ -684,6 +706,7 @@ char *str;
 /*
  *			N M G _ C K _ L G
  */
+void
 nmg_ck_lg(l, lg, str)
 struct loop *l;
 struct loop_g *lg;
@@ -702,6 +725,7 @@ char *str;
 /*
  *			N M G _ C K _ L
  */
+void
 nmg_ck_l(lu, l, str)
 struct loopuse *lu;
 struct loop *l;
@@ -725,6 +749,7 @@ char *str;
 /*
  *			N M G _ C K _ L U
  */
+void
 nmg_ck_lu(parent, lu, str)
 long *parent;
 struct loopuse *lu;
@@ -786,6 +811,7 @@ char *str;
 /*
  *			N M G _ C K _ F G
  */
+void
 nmg_ck_fg(f, fg, str)
 struct face *f;
 struct face_g *fg;
@@ -809,6 +835,7 @@ char *str;
 /* 
  *			N M G _ C K _ F
  */
+void
 nmg_ck_f(fu, f, str)
 struct faceuse *fu;
 struct face *f;
@@ -832,6 +859,7 @@ char *str;
 /*
  *			N M G _ C K _ F U
  */
+void
 nmg_ck_fu(s, fu, str)
 struct shell *s;
 struct faceuse *fu;

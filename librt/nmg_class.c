@@ -941,7 +941,8 @@ CONST struct rt_tol	*tol;
  *
  *	Classify one shell WRT the other shell
  */
-void nmg_class_shells(sA, sB, classlist, tol)
+void
+nmg_class_shells(sA, sB, classlist, tol)
 struct shell	*sA;
 struct shell	*sB;
 long		*classlist[4];

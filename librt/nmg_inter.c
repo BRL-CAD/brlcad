@@ -703,7 +703,8 @@ CONST struct rt_tol	*tol;
  *	Split the components of two shells wherever they may intersect,
  *	in preparation for performing boolean operations on the shells.
  */
-void nmg_crackshells(s1, s2, tol)
+void
+nmg_crackshells(s1, s2, tol)
 struct shell		*s1;
 struct shell		*s2;
 CONST struct rt_tol	*tol;
