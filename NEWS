@@ -11,8 +11,9 @@ entire history of the project is available through CVS.
 --- 2005-01-XX  Release 7.0.4                                      ---
 ----------------------------------------------------------------------
 
-This minor release fixes several build issues experienced on certain
-platforms including Gentoo, Debian, and certain users of Mac OS X.
+This minor release update fixes several build issues experienced on
+certain platforms including Debian and Mac OS X.  Special thanks to 
+Cliff Vapp for quickly getting us an ebuild for Gentoo set up.
 
 
 ----------------------------------------------------------------------
