@@ -59,6 +59,7 @@ extern void	worker();
 extern struct application ap;
 extern int	hypersample;		/* number of extra rays to fire */
 extern point_t	eye_model;		/* model-space location of eye */
+extern fastf_t  eye_backoff;		/* dist of eye from center */
 extern int	width;			/* # of pixels in X */
 extern int	height;			/* # of lines in Y */
 extern mat_t	Viewrotscale;
@@ -638,6 +639,6 @@ double azim, elev;
 	Viewrotscale[15] = 0.5*viewsize;	/* Viewscale */
 	mat_mul( model2view, Viewrotscale, toEye );
 	mat_inv( view2model, model2view );
-	VSET( temp, 0, 0, 1.414 );
+	VSET( temp, 0, 0, eye_backoff );
 	MAT4X3PNT( eye_model, view2model, temp );
 }
