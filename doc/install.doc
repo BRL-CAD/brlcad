@@ -1571,6 +1571,31 @@ releases earlier than 4.0 \(em they don't work well.
 Similarly, IRIX 6.0 had not been released at the time BRL-CAD Release 4.4
 was being finalized, so it is unclear how well this combination will work.
 Contact ARL for an errata sheet when IRIX 6.0 is available.
+.PP
+When compiling on IRIX 4.0.5, the module \fBlibrt/machine.c\fR
+trips over an SGI C compiler bug, producing the following warning:
+.br
+/usr/bin/cc -G 9 -ansiposix -DIRIX=4 -O2 -I''../h -DSYSV -c ../librt/machine.c
+.br
+accom: Warning 182: ../librt/machine.c, line 297: void * and function pointers are not convertible to each other
+.br
+        void    (*func)() = (void (*)())arg;
+.br
+This warning can safely be ignored.
+.PP
+When linking (loading) programs on IRIX 4.0.5 which use LIBRT and thus
+use the SGI multi-processing library \fB-lmpc\fR, the following
+spurious warning messages are produced:
+.nf
+/usr/bin/ld:^M
+Warning: _oserror: multiply defined
+        previous (used) definition from '/usr/lib/libmpc.a';
+        new (ignored) definition from '/usr/lib/libc_s.a'
+Warning: _setoserror: multiply defined
+        previous (used) definition from '/usr/lib/libmpc.a';
+        new (ignored) definition from '/usr/lib/libc_s.a'
+.fi
+These warnings can safely be ignored;  we could find no way to suppress them.
 .NH 2
 ALLIANT WARNINGS
 .PP
@@ -1752,6 +1777,13 @@ Note that this software is still experimental in this release, and can only
 operate on very simple cases.
 .PP
 There are lots of new image processing and signal processing tools.
+.NH 1
+UPGRADING FROM RELEASE 4.0 to 4.4
+.PP
+Release 4.4 is a maintenance release.
+Binary geometry databases (``.g'' files) are upwards compatible from
+Release 4.0 to Release 4.4, but \fInot\fR backwards compatible.
+Many new tools are provided as well.
 .NH 1
 WORK IN PROGRES
 .PP
