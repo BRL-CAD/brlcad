@@ -221,6 +221,21 @@ register struct db_i	*dbip;
 		dbip->dbi_filename, dbip, dbip->dbi_uses );
 
 	if( (--dbip->dbi_uses) > 0 )  return;
+	/* Use count is now zero */
+
+	if( dbip->dbi_mf )  {
+		/*
+		 *  We're using an instance of a memory mapped file.
+		 *  We have two choices:
+		 *  Either deassociate from the memory mapped file
+		 *  by clearing dbi_mf->apbuf, or
+		 *  keeping our already-scanned dbip ready for
+		 *  further use, with our dbi_uses counter at 0.
+		 *  For speed of re-open, at the price of some address space,
+		 *  the second choice is taken.
+		 */
+		return;
+	}
 
 #ifdef HAVE_UNIX_IO
 	(void)close( dbip->dbi_fd );
