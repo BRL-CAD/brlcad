@@ -58,6 +58,7 @@
 extern int optind;
 extern char *optarg;
 
+int upright;
 int input_mode, output_mode, length, input_units, output_units;
 int input_perm, output_perm, input_inv, output_inv;
 
@@ -66,17 +67,13 @@ int argc;
 char **argv;
 {
 	int num_read;
-	fastf_t	angle[3],quat[4],matrix[16],tmatrix[16];
+	fastf_t	temp[3], temp2[3],angle[3],quat[4],matrix[16],tmatrix[16];
 	void anim_zyx2mat(),anim_ypr2mat(),anim_quat2mat(), anim_mat_print();
 	int anim_mat2ypr(),anim_mat2zyx(),anim_mat2quat();
 
 	if(!parse_args(argc,argv)) {
 		fprintf(stderr,"Get_args error.\n");
 		exit(0);
-	}
-
-	if (input_perm&&output_perm) {
-		input_perm = output_perm = 0;
 	}
 
 	/* read data */
@@ -129,6 +126,13 @@ char **argv;
 		}
 		if (input_perm){
 			anim_v_unpermute(matrix);
+		}
+		/* end of input conversion, begin output conversion*/
+
+		if (upright) { /* force right-side up */
+			VSET(temp, matrix[0], matrix[4], matrix[8]);
+			VSET(temp2, matrix[1], matrix[5], matrix[9]);
+			anim_dirn2mat(matrix,temp,temp2);
 		}
 		if (output_perm){
 			anim_v_permute(matrix);
@@ -184,6 +188,7 @@ char **argv;
 	char *cp;
 
 	/* defaults */
+	upright = 0;
 	input_mode = QUAT;
 	output_mode = QUAT;
 	input_units = DEGREES;
@@ -221,6 +226,9 @@ char **argv;
 				break;
 			case 'v':
 				output_perm = 1;
+				break;
+			case 'u':
+				upright = 1;
 				break;
 			default:
 				fprintf(stderr,"anim_orient: unknown output option: %c\n",c);

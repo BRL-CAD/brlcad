@@ -4,7 +4,7 @@ anim_orient - convert between orientation formats
 .SH SYNOPSIS
 .B anim_orient 
 .B [q|y|a|z|m][vri]
-.B [q|y|a|z|m][vri]
+.B [q|y|a|z|m][vriu]
 .B < in.table 
 .B > out.table
 .SH DESCRIPTION
@@ -13,7 +13,8 @@ is a filter which translates a table of orientation
 information from one format to another. The method used is to convert
 the input format to a matrix, then convert the matrix to the desired
 output format. The input format is specified in the first argument, and
-the output format is specified in the second. The orientation formats
+the output format is specified in the second. 
+The orientation formats
 must be one of the following: 
 .B q 
 (quaternion), 
@@ -25,18 +26,19 @@ must be one of the following:
 (x-y-z angles), or
 .B m 
 (rotation matrix).
-In addition, the input and output formats may be modified by the 
+In addition, the output format may be modified by the
+.B u option, and the input and output formats may be modified by the 
 .BR r ,
 .BR i ,
-or
+and
 .B v
 options. The 
 .B r 
 option specifies that angles are read or written in radians, rather
 than degrees. The
-.B i
+.BR i , v ,
 and 
-.B v 
+.B u
 options are explained below.
 
 To clearly understand the operation of anim_orient, it is important to
@@ -51,7 +53,7 @@ In order
 to represent orientations with rotations, we
 must define a default initial orientation for the object.
 Then a given matrix, quaternion, or set of angles represents the orientation 
-resulting from applying the rotation to the object.
+resulting from applying the rotation to the initial object orientation.
 
 If no modifying codes are specified, anim_orient assumes that the
 default orientation of the object in question faces the positive
@@ -62,7 +64,7 @@ objects
 are modeled, and the default assumed by other animation routines such as
 anim_script. If the 
 .B v 
-code is specified, then the default orientation
+code is specified, then the default orientation  
 is taken to be facing the negative z-direction, with the world x-axis
 pointing to the object's right and the y-axis pointing up. This is the
 default orientation of the eye in 
@@ -71,7 +73,7 @@ and
 .IR rt . 
 Some common uses of the v
 option are demonstrated in the examples section.
-
+.PP
 The input and output format codes are:
 .TP
 .BR q : 
@@ -112,10 +114,11 @@ numbers form a 4x4 matrix, although only the nine elements in the upper
 left corner are actually used. This is the format used at the interior of
 the conversion routine. It is a transformation from initial orientation to 
 a new orientation.
-
-The
+.PP
+The input and ouput modification codes are:
+.TP
 .B i
-code is used in conjunction with any of the format codes to represent
+This code is used in conjunction with any of the format codes to represent
 the inverse transformation. Under the 
 .B i 
 code, a matrix, quaternion, or
@@ -137,9 +140,21 @@ by
 .I mged 
 and 
 .IR rt . 
-The viewrot matrix is a model-to-view matrix, which
+The viewrot matrix is a model-to-view matrix, which is
 the transpose (inverse) of the matrix which would conceptually be
 applied to an eye object to put it in the desired place in the model.
+.TP
+.B v
+When this option is specified, the corresponding rotation is considered
+applied to the default view orientation, rather than the default object
+orientation, as explained above.
+.TP
+.B u
+This option forces the output orientation to be upright, or "right-side
+up", where the z-axis is the up direction. In terms of yaw, pitch, and
+roll, this means that the roll is forced to zero. Because this is a 
+one-way operation, it can only be applied to the output orientation, not
+the input.
 
 .SH EXAMPLES
 .sp
@@ -178,6 +193,11 @@ Given the yaw, pitch, and roll of an object, find the yaw, pitch, and
 roll which would bring it back to the default position.
 .sp
 	anim_orient y yi < in.table > out.table
+.sp
+Force a table of view quaternions to represent "right-side up"
+orientations.
+.sp 
+	anim_orient qv qvu < in.table > out.table
 .SH BUGS
 There are built-in trouble spots which occur, in ypr, xyz, or aet
 formats, when the pitch, y-rotation, or elevation is an odd multiple of 90
