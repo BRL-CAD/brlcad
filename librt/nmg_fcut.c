@@ -662,7 +662,75 @@ struct nmg_ptbl *b;
 	return;
 }
 
+/*
+ *	T B L _ V S O R T
+ *	sort list of vertices in fu1 on plane of fu2 
+ *
+ *	W A R N I N G:
+ *		This function makes gross assumptions about the contents
+ *	and structure of an nmg_ptbl list!  If I could figure a way of folding
+ *	this into the nmg_tbl routine, I would do it.
+ */
+static void tbl_vsort(b, fu1, fu2, pt, dir)
+struct nmg_ptbl *b;		/* table of vertexuses on intercept line */
+struct faceuse	*fu1, *fu2;
+point_t		pt;
+vect_t		dir;
+{
+	point_t		min_pt;
+	vect_t		vect;
+	union {
+		struct vertexuse **vu;
+		long **magic_p;
+	} p;
+	struct vertexuse *tvu;
+	fastf_t *mag, tmag;
+	int i, j;
 
+	mag = (fastf_t *)rt_calloc(b->end, sizeof(fastf_t),
+					"vector magnitudes for sort");
+
+	p.magic_p = b->buffer;
+	/* check vertexuses and compute distance from start of line */
+	for(i = 0 ; i < b->end ; ++i) {
+		NMG_CK_VERTEXUSE(p.vu[i]);
+
+		VSUB2(vect, pt, p.vu[i]->v_p->vg_p->coord);
+		mag[i] = MAGNITUDE(vect);
+	}
+
+	/* a trashy bubble-head sort, because I hope this list is never
+	 * very long.
+	 */
+	for(i=0 ; i < b->end - 1 ; ++i) {
+		for (j=i+1; j < b->end ; ++j) {
+			if (mag[i] > mag[j]) {
+				tvu = p.vu[i];
+				p.vu[i] = p.vu[j];
+				p.vu[j] = tvu;
+
+				tmag = mag[i];
+				mag[i] = mag[j];
+				mag[j] = tmag;
+			}
+		}
+	}
+	/*
+	 * We should do something here to "properly"
+	 * order vertexuses which share a vertex
+	 * or whose coordinates are equal.
+	 *
+	 * Just what should be done & how is not
+	 * clear to me at this hour of the night.
+	 * for (i=0 ; i < b->end - 1 ; ++i) {
+	 *	if (p.vu[i]->v_p == p.vu[i+1]->v_p ||
+	 *	    VAPPROXEQUAL(p.vu[i]->v_p->vg_p->coord,
+	 *	    p.vu[i+1]->v_p->vg_p->coord, VDIVIDE_TOL) ) {
+	 *	}
+	 * }
+	 */
+	rt_free((char *)mag, "vector magnitudes");
+}
 
 /*
  *			N M G _ F A C E _ C O M B I N E
@@ -675,10 +743,13 @@ struct nmg_ptbl *b;
  *	vertices, thus subdividing loops and combining single-vertex loops
  *	with loops containing edges.
  */
-void nmg_face_combine(b, fu1, fu2)
+void nmg_face_combine(b, fu1, fu2, pt, dir)
 struct nmg_ptbl *b;		/* table of vertexuses in fu1 on intercept line */
-struct faceuse *fu1, *fu2;	/* fu1 = face being worked, */
-{				/* fu2 here for plane equation */
+struct faceuse	*fu1;		/* Face being worked */
+struct faceuse	*fu2;		/* fu2 here for plane equation */
+point_t		pt;		/* line of intersection */
+vect_t		dir;
+{
 	plane_t plane_eq;	/* the plane of the other face */
 	int i;
 	union {
@@ -709,6 +780,8 @@ struct faceuse *fu1, *fu2;	/* fu1 = face being worked, */
 		}
 	}
 
+	/* Sort vertexuse list */
+	tbl_vsort(b, fu1, fu2, pt, dir);
 
 	/* validate vertexuse list, and maybe print some useful diagnostics
 	 */
