@@ -438,6 +438,16 @@ BU_EXTERN(void	bn_wlt_1d_long_reconstruct, (long *tbuf, long *buf,
 BU_EXTERN(void			bn_cx_div, (bn_complex_t *ap, CONST bn_complex_t *bp) );
 BU_EXTERN(void			bn_cx_sqrt, (bn_complex_t *op, CONST bn_complex_t *ip) );
 
+/* const.c */
+extern CONST double bn_pi;
+extern CONST double bn_twopi;
+extern CONST double bn_halfpi;
+extern CONST double bn_invpi;
+extern CONST double bn_inv2pi;
+extern CONST double bn_inv255;
+extern CONST double bn_degtorad;
+extern CONST double bn_radtodeg;
+
 /* poly.c */
 BU_EXTERN(struct bn_poly *	bn_poly_mul, (struct bn_poly *product,
 				CONST struct bn_poly *m1, CONST struct bn_poly *m2));
