@@ -468,10 +468,22 @@ char    **argv;
   curr_dm_list = dmlp;
   dmp = *dp;
 
-  if(argc == 2)
-    /* Use local display */
-    dm_var_init(o_dm_list, ":0");
-  else
+  if(argc == 2){
+    char  *envp;
+    char  hostname[80];
+    char  display[82];
+
+    /* get or create the default display */
+    if( (envp = getenv("DISPLAY")) == NULL ) {
+      /* Env not set, use local host */
+      gethostname( hostname, 80 );
+      hostname[79] = '\0';
+      (void)sprintf( display, "%s:0", hostname );
+      envp = display;
+    }
+
+    dm_var_init(o_dm_list, envp);
+  }else
     dm_var_init(o_dm_list, argv[2]);
 
   no_memory = 0;
