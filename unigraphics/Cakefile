@@ -6,14 +6,14 @@
 #define MANSECTION	1
 
 #include "../Cakefile.defs"
-#if defined(UGOPEN_LIBES)
+#if defined(UGOPEN_DIR)
 #define PRODUCTS ug-g
 #else
 #define PRODUCTS /**/
 #endif
 #include "../Cakefile.prog"
 
-#if defined(UGOPEN_LIBES)
+#if defined(UGOPEN_DIR)
 
 #define FILES ug-g ug_misc
 
