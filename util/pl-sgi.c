@@ -277,7 +277,8 @@ view_loop()
 			callobj( o );
 		swapbuffers();
 
-		if( !feof(stdin) && select() ) {
+		/* What was this select() ?? */
+		if( !feof(stdin) /* && select()*/ ) {
 			double	max[3], min[3];
 			makeobj( maxobj );
 			uplot( max, min );
@@ -414,6 +415,8 @@ Coord max[3], min[3];
 	long	l;
 	char	str[180];
 	double	d[8];
+	int 	o;
+
 	/* We have to keep the "current position" ourselves
 	 * for the silly labels, since the SGI can't give
 	 * us the graphics position inside an object!
