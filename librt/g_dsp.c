@@ -58,13 +58,14 @@ static const char RCSdsp[] = "@(#)$Header$ (BRL)";
 #include <setjmp.h>
 
 #define ORDERED_ISECT 1
+/* #define FULL_DSP_DEBUGGING 1 */
 
 #define DIM_BB_CHILDREN 4
 #define NUM_BB_CHILDREN (DIM_BB_CHILDREN*DIM_BB_CHILDREN)
 
 struct dsp_rpp {
-	unsigned short dsp_min[3];
-	unsigned short dsp_max[3];
+    unsigned short dsp_min[3];
+    unsigned short dsp_max[3];
 };
 
 /* This structure contains a bounding box for a portion of the DSP
@@ -81,7 +82,8 @@ struct dsp_bb {
      * dsp_b_ch_dim is typically DIM_BB_CHILDREN,DIM_BB_CHILDREN
      * except for "border" areas of the array
      */
-    int			dspb_ch_dim[2];	/* dimensions of children[] */
+    unsigned short	dspb_subcell_size;/* XXX This is not yet computed */
+    unsigned short	dspb_ch_dim[2];	/* dimensions of children[] */
     struct dsp_bb	*dspb_children[NUM_BB_CHILDREN];
 };
 #define MAGIC_dsp_bb 234
@@ -92,9 +94,8 @@ struct dsp_bb {
  */
 #define LAYER(l, x,y) l->p[l->dim[1]*y+x]
 struct dsp_bb_layer {
-    /*	int	cell_size;	XXX Do we actually use this? */
-	int	dim[2];		/* the dimensions of the array at element p */
-	struct dsp_bb *p;	/* array of dsp_bb's for this level */
+    int	dim[2];		/* the dimensions of the array at element p */
+    struct dsp_bb *p;	/* array of dsp_bb's for this level */
 };
 
 
@@ -119,17 +120,6 @@ extern void rt_binunif_ifree( struct rt_db_internal	*ip );
 #define ZMID 6
 #define ZTOP 7
 
-/* access to the array */
-#define DSP(_p,_x,_y) ( \
-	((unsigned short *)(((struct rt_dsp_internal *)_p)->dsp_buf))[ \
-		(_y) * ((struct rt_dsp_internal *)_p)->dsp_xcnt + (_x) ] )
-
-#define XCNT(_p) (((struct rt_dsp_internal *)_p)->dsp_xcnt)
-#define YCNT(_p) (((struct rt_dsp_internal *)_p)->dsp_ycnt)
-
-#define XSIZ(_p) (_p->dsp_i.dsp_xcnt - 1)
-
-#define YSIZ(_p) (_p->dsp_i.dsp_ycnt - 1)
 
 
 /* per-solid ray tracing form of solid, including precomputed terms
@@ -138,20 +128,55 @@ extern void rt_binunif_ifree( struct rt_db_internal	*ip );
  *  a dsp_specific to a rt_dsp_intermal.
  */
 struct dsp_specific {
-	struct rt_dsp_internal dsp_i;	/* MUST BE FIRST */
-	double		dsp_pl_dist[BBOX_PLANES];
-	int		xsiz;
-	int		ysiz;
-	int		layers;
-	struct dsp_bb_layer *layer;
-	struct dsp_bb *bb_array;
+    struct rt_dsp_internal dsp_i;	/* MUST BE FIRST */
+    double		dsp_pl_dist[BBOX_PLANES];
+    int		xsiz;
+    int		ysiz;
+    int		layers;
+    struct dsp_bb_layer *layer;
+    struct dsp_bb *bb_array;
 };
 
+
+
+/* access to the array */
+#ifdef FULL_DSP_DEBUGGING
+#define DSP(_p,_x,_y) dsp_val(_p, _x, _y)
+unsigned short
+dsp_val(struct rt_dsp_internal *dsp_i, unsigned x, unsigned y)
+{
+    RT_DSP_CK_MAGIC(dsp_i);
+
+    if (x >= dsp_i->dsp_xcnt || y >= dsp_i->dsp_ycnt) {
+	bu_log("%s:%d xy: %u,%u cnt: %u,%u\n",
+	       __FILE__, __LINE__, x, y, dsp_i->dsp_xcnt, dsp_i->dsp_ycnt);
+	bu_bomb("");
+    }
+
+    return dsp_i->dsp_buf[ y * dsp_i->dsp_xcnt + x ];
+} 
+#else
+# define DSP(_p,_x,_y) ( \
+	( \
+	 (unsigned short *) \
+	  ((_p)->dsp_buf) \
+	)[ \
+	     (_y) * ((struct rt_dsp_internal *)_p)->dsp_xcnt + (_x) ] )
+#endif
+
+# define XCNT(_p) (((struct rt_dsp_internal *)_p)->dsp_xcnt)
+# define YCNT(_p) (((struct rt_dsp_internal *)_p)->dsp_ycnt)
+# define XSIZ(_p) (_p->dsp_i.dsp_xcnt - 1)
+# define YSIZ(_p) (_p->dsp_i.dsp_ycnt - 1)
+
+
+
+
 struct bbox_isect {
-	double	in_dist;
-	double	out_dist;
-	int	in_surf;
-	int	out_surf;
+    double	in_dist;
+    double	out_dist;
+    int	in_surf;
+    int	out_surf;
 };
 
 
@@ -180,15 +205,15 @@ struct isect_stuff {
 
 /* plane equations (minus offset distances) for bounding RPP */
 static const vect_t	dsp_pl[BBOX_PLANES] = {
-	{-1.0, 0.0, 0.0},
-	{ 1.0, 0.0, 0.0},
+    {-1.0, 0.0, 0.0},
+    { 1.0, 0.0, 0.0},
 
-	{0.0, -1.0, 0.0},
-	{0.0,  1.0, 0.0},
+    {0.0, -1.0, 0.0},
+    {0.0,  1.0, 0.0},
 
-	{0.0, 0.0, -1.0},
-	{0.0, 0.0,  1.0},
-	{0.0, 0.0,  1.0},
+    {0.0, 0.0, -1.0},
+    {0.0, 0.0,  1.0},
+    {0.0, 0.0,  1.0},
 };
 
 /*
@@ -202,21 +227,21 @@ hook_mtos_from_stom(
 		    genptr_t			base,		    
 		    char			*p)
 {
-	struct rt_dsp_internal *dsp_ip = (struct rt_dsp_internal *)base;
+    struct rt_dsp_internal *dsp_ip = (struct rt_dsp_internal *)base;
 
-	bn_mat_inv(dsp_ip->dsp_mtos, dsp_ip->dsp_stom);
+    bn_mat_inv(dsp_ip->dsp_mtos, dsp_ip->dsp_stom);
 }
 static void
 hook_file(
-		    const struct bu_structparse	*ip,
-		    const char 			*sp_name,
-		    genptr_t			base,		    
-		    char			*p)
+	  const struct bu_structparse	*ip,
+	  const char 			*sp_name,
+	  genptr_t			base,		    
+	  char			*p)
 {
-	struct rt_dsp_internal *dsp_ip = (struct rt_dsp_internal *)base;
+    struct rt_dsp_internal *dsp_ip = (struct rt_dsp_internal *)base;
 
-	dsp_ip->dsp_datasrc = RT_DSP_SRC_V4_FILE;
-	dsp_ip->dsp_bip = (struct rt_db_internal *)NULL;
+    dsp_ip->dsp_datasrc = RT_DSP_SRC_V4_FILE;
+    dsp_ip->dsp_bip = (struct rt_db_internal *)NULL;
 }
 
 #define DSP_O(m) offsetof(struct rt_dsp_internal, m)
@@ -226,27 +251,25 @@ hook_file(
  *	These are only used when editing a v4 database
  */
 const struct bu_structparse rt_dsp_parse[] = {
-	{"%S",	1, "file", DSP_O(dsp_name), hook_file },
-	{"%d",  1, "sm", DSP_O(dsp_smooth), BU_STRUCTPARSE_FUNC_NULL },
-	{"%d",	1, "w", DSP_O(dsp_xcnt), BU_STRUCTPARSE_FUNC_NULL },
-	{"%d",	1, "n", DSP_O(dsp_ycnt), BU_STRUCTPARSE_FUNC_NULL },
-	{"%f", 16, "stom", DSP_AO(dsp_stom), hook_mtos_from_stom },
-	{"",	0, (char *)0, 0,	BU_STRUCTPARSE_FUNC_NULL }
+    {"%S",	1, "file", DSP_O(dsp_name), hook_file },
+    {"%d",  1, "sm", DSP_O(dsp_smooth), BU_STRUCTPARSE_FUNC_NULL },
+    {"%d",	1, "w", DSP_O(dsp_xcnt), BU_STRUCTPARSE_FUNC_NULL },
+    {"%d",	1, "n", DSP_O(dsp_ycnt), BU_STRUCTPARSE_FUNC_NULL },
+    {"%f", 16, "stom", DSP_AO(dsp_stom), hook_mtos_from_stom },
+    {"",	0, (char *)0, 0,	BU_STRUCTPARSE_FUNC_NULL }
 };
 
 const struct bu_structparse rt_dsp_ptab[] = {
-	{"%S",	1, "file", DSP_O(dsp_name), BU_STRUCTPARSE_FUNC_NULL },
-	{"%d",  1, "sm", DSP_O(dsp_smooth), BU_STRUCTPARSE_FUNC_NULL },
-	{"%d",	1, "w", DSP_O(dsp_xcnt), BU_STRUCTPARSE_FUNC_NULL },
-	{"%d",	1, "n", DSP_O(dsp_ycnt), BU_STRUCTPARSE_FUNC_NULL },
-	{"%f", 16, "stom", DSP_AO(dsp_stom), BU_STRUCTPARSE_FUNC_NULL },
-	{"",	0, (char *)0, 0,	BU_STRUCTPARSE_FUNC_NULL }
+    {"%S",	1, "file", DSP_O(dsp_name), BU_STRUCTPARSE_FUNC_NULL },
+    {"%d",  1, "sm", DSP_O(dsp_smooth), BU_STRUCTPARSE_FUNC_NULL },
+    {"%d",	1, "w", DSP_O(dsp_xcnt), BU_STRUCTPARSE_FUNC_NULL },
+    {"%d",	1, "n", DSP_O(dsp_ycnt), BU_STRUCTPARSE_FUNC_NULL },
+    {"%f", 16, "stom", DSP_AO(dsp_stom), BU_STRUCTPARSE_FUNC_NULL },
+    {"",	0, (char *)0, 0,	BU_STRUCTPARSE_FUNC_NULL }
 };
 
 static int plot_file_num=0;
-#if 0
-static int plot_em=1;
-#endif
+
 
 /*	P L O T _ R P P
  *
@@ -255,19 +278,19 @@ static int plot_em=1;
 static void
 plot_rpp(FILE *fp, struct bound_rpp *rpp, int r, int g, int b)
 {
-	pl_color(fp, r, g, b);
+    pl_color(fp, r, g, b);
 
-	pd_3move(fp, rpp->min[X], rpp->min[Y], rpp->min[Z]);
-	pd_3cont(fp, rpp->max[X], rpp->min[Y], rpp->min[Z]);
-	pd_3cont(fp, rpp->max[X], rpp->max[Y], rpp->min[Z]);
-	pd_3cont(fp, rpp->min[X], rpp->max[Y], rpp->min[Z]);
-	pd_3cont(fp, rpp->min[X], rpp->min[Y], rpp->min[Z]);
+    pd_3move(fp, rpp->min[X], rpp->min[Y], rpp->min[Z]);
+    pd_3cont(fp, rpp->max[X], rpp->min[Y], rpp->min[Z]);
+    pd_3cont(fp, rpp->max[X], rpp->max[Y], rpp->min[Z]);
+    pd_3cont(fp, rpp->min[X], rpp->max[Y], rpp->min[Z]);
+    pd_3cont(fp, rpp->min[X], rpp->min[Y], rpp->min[Z]);
 
-	pd_3cont(fp, rpp->min[X], rpp->min[Y], rpp->max[Z]);
-	pd_3cont(fp, rpp->max[X], rpp->min[Y], rpp->max[Z]);
-	pd_3cont(fp, rpp->max[X], rpp->max[Y], rpp->max[Z]);
-	pd_3cont(fp, rpp->min[X], rpp->max[Y], rpp->max[Z]);
-	pd_3cont(fp, rpp->min[X], rpp->min[Y], rpp->max[Z]);
+    pd_3cont(fp, rpp->min[X], rpp->min[Y], rpp->max[Z]);
+    pd_3cont(fp, rpp->max[X], rpp->min[Y], rpp->max[Z]);
+    pd_3cont(fp, rpp->max[X], rpp->max[Y], rpp->max[Z]);
+    pd_3cont(fp, rpp->min[X], rpp->max[Y], rpp->max[Z]);
+    pd_3cont(fp, rpp->min[X], rpp->min[Y], rpp->max[Z]);
 }
 
 
@@ -278,11 +301,11 @@ plot_rpp(FILE *fp, struct bound_rpp *rpp, int r, int g, int b)
 static void
 plot_dsp_bb(FILE *fp, struct dsp_bb *dsp_bb,
 	    struct dsp_specific *dsp,
-	    int r, int g, int b)
+	    int r, int g, int b, int blather)
 {
-	fastf_t *stom = &dsp->dsp_i.dsp_stom[0];
-	struct bound_rpp rpp;
-	point_t pt;
+    fastf_t *stom = &dsp->dsp_i.dsp_stom[0];
+    struct bound_rpp rpp;
+    point_t pt;
 
     DSP_BB_CK(dsp_bb);
 
@@ -292,8 +315,9 @@ plot_dsp_bb(FILE *fp, struct dsp_bb *dsp_bb,
     VMOVE(pt, dsp_bb->dspb_rpp.dsp_max); /* int->float conversion */
     MAT4X3PNT(rpp.max, stom, pt);
 
-    bu_log("  dsp_bb (%g %g %g)  (%g %g %g)\n",
-	   V3ARGS(rpp.min), V3ARGS(rpp.max) );
+    if (blather)
+	bu_log(" (%g %g %g) (%g %g %g)\n",
+	       V3ARGS(rpp.min), V3ARGS(rpp.max) );
 
     plot_rpp(fp, &rpp, r, g, b);
 }
@@ -316,15 +340,15 @@ draw_dsp_bb(int *plotnum,
 	bu_bomb("");
     }
 
-    bu_log("plotting %s ", buf);
+    bu_log("plotting %s", buf);
     bb = *dsp_bb; /* struct copy */
     bb.dspb_rpp.dsp_min[Z] = 0.0;
-    plot_dsp_bb(fp, &bb, dsp, r, g, b);
+    plot_dsp_bb(fp, &bb, dsp, r, g, b, 1);
 
     return fp;
 }
 
-
+#define PLOT_LAYERS
 #ifdef PLOT_LAYERS
 /*	P L O T _ L A Y E R S
  *
@@ -334,61 +358,58 @@ draw_dsp_bb(int *plotnum,
 static void
 plot_layers(struct dsp_specific *dsp_sp)
 {
-	FILE *fp;
-	int l, x, y, n, tot;
-	char buf[32];
-	static int colors[7][3] = {
-		{255, 0, 0},
-		{0, 255, 0},
-		{0, 0, 255},
-		{255, 255, 0},
-		{255, 0, 255},
-		{0, 255, 255},
-		{255, 255, 255}
-	};
-	int r, g, b, c;
-	struct dsp_bb *d_bb;
+    FILE *fp;
+    int l, x, y, n;
+    char buf[32];
+    static int colors[7][3] = {
+	{255, 0, 0},
+	{0, 255, 0},
+	{0, 0, 255},
+	{255, 255, 0},
+	{255, 0, 255},
+	{0, 255, 255},
+	{255, 255, 255}
+    };
+    int r, g, b, c;
+    struct dsp_bb *d_bb;
 
-	for (l=0 ; l < dsp_sp->layers ; l++) {
-		sprintf(buf, "Dsp_layer%d.pl", l);
-		fp=fopen(buf, "w");
-		if ( fp == (FILE *)NULL ) {
-			bu_log("%s:%d error opening %s\n", __FILE__, __LINE__,
-			       buf);
-			return;
-		}
-		
-		c = l % 6;
-		r = colors[c][0];
-		g = colors[c][1];
-		b = colors[c][2];
+    for (l=0 ; l < dsp_sp->layers ; l++) {
+	bu_semaphore_acquire( BU_SEM_SYSCALL);
+	sprintf(buf, "Dsp_layer%d.pl", l);
+	fp=fopen(buf, "w");
+	bu_semaphore_release( BU_SEM_SYSCALL);
+	if ( fp == (FILE *)NULL ) {
+	    bu_log("%s:%d error opening %s\n", __FILE__, __LINE__,
+		   buf);
+	    return;
+	} else 
+	    bu_log("plotting \"%s\" dim:%d,%d\n", buf, 
+		   dsp_sp->layer[l].dim[X],
+		   dsp_sp->layer[l].dim[Y]);		
+	c = l % 6;
+	r = colors[c][0];
+	g = colors[c][1];
+	b = colors[c][2];
+
+	for (y=0 ; y < dsp_sp->layer[l].dim[Y] ; y+= 2 ) {
+	    for (x=0 ; x < dsp_sp->layer[l].dim[X] ; x+= 2 ) {
+		n = y * dsp_sp->layer[l].dim[X] + x;
+		d_bb = &dsp_sp->layer[l].p[n];
+		plot_dsp_bb(fp, d_bb, dsp_sp, r, g, b, 0);
 
 #if 0
 		if (RT_G_DEBUG & DEBUG_HF)
-			bu_log("plot layer %d dim:%d,%d\n", l, 
-			       dsp_sp->layer[l].dim[X],
-			       dsp_sp->layer[l].dim[Y]);
+		    bu_log("\t%d,%d ch_dim:%d,%d  min:(%d %d %d)  max:(%d %d %d)\n",
+			   x, y,
+			   d_bb->dspb_ch_dim[X],
+			   d_bb->dspb_ch_dim[Y],
+			   V3ARGS(d_bb->dspb_rpp.dsp_min),
+			   V3ARGS(d_bb->dspb_rpp.dsp_max));
 #endif
-		tot = dsp_sp->layer[l].dim[Y] *  dsp_sp->layer[l].dim[X];
-		for (y=1 ; y < dsp_sp->layer[l].dim[Y] ; y+= 2 ) {
-			for (x=1 ; x < dsp_sp->layer[l].dim[X] ; x+= 2 ) {
-				n = y * dsp_sp->layer[l].dim[X] + x;
-				d_bb = &dsp_sp->layer[l].p[n];
-				plot_dsp_bb(fp, d_bb, dsp_sp,
-					    r, g, b);
-
-#if 0
-				if (RT_G_DEBUG & DEBUG_HF)
-					bu_log("\t%d,%d ch_dim:%d,%d  min:(%d %d %d)  max:(%d %d %d)\n",
-					       x, y,
-					       d_bb->dspb_ch_dim[X],
-					       d_bb->dspb_ch_dim[Y],
-					       V3ARGS(d_bb->dspb_rpp.dsp_min),
-					       V3ARGS(d_bb->dspb_rpp.dsp_max));
-#endif
-			}
-		}
+	    }
 	}
+	fclose(fp);
+    }
 }
 #endif
 
@@ -425,19 +446,24 @@ plot_cell_top(struct isect_stuff *isect,
 
     DSP_BB_CK(dsp_bb);
 
+    bu_semaphore_acquire( BU_SEM_SYSCALL);
     if (style)
 	sprintf(buf, "dsp_cell_isect%04d.pl", cnt++);
     else
 	sprintf(buf, "dsp_cell_top%04d.pl", plotcnt++);
 
-    if ( (fp=fopen(buf, "w")) == (FILE *)NULL) {
+    fp=fopen(buf, "w");
+
+    bu_semaphore_release( BU_SEM_SYSCALL);
+
+    if ( fp == (FILE *)NULL) {
 	bu_log("error opening \"%s\"\n", buf);
 	return;
     } else {
 	bu_log("plotting %s flags 0x%x\n\t", buf, hitflags);
     }
 
-    plot_dsp_bb(fp, dsp_bb, isect->dsp, 128, 128, 128);
+    plot_dsp_bb(fp, dsp_bb, isect->dsp, 128, 128, 128, 1);
 
     /* plot the triangulation */
     pl_color(fp, 255, 255, 255);
@@ -485,39 +511,39 @@ plot_cell_top(struct isect_stuff *isect,
  */
 static void
 dsp_print_v4(vls, dsp_ip)
-struct bu_vls *vls;
-const struct rt_dsp_internal *dsp_ip;
+     struct bu_vls *vls;
+     const struct rt_dsp_internal *dsp_ip;
 {
-	point_t pt, v;
-	RT_DSP_CK_MAGIC(dsp_ip);
-	BU_CK_VLS(&dsp_ip->dsp_name);
+    point_t pt, v;
+    RT_DSP_CK_MAGIC(dsp_ip);
+    BU_CK_VLS(&dsp_ip->dsp_name);
 
-	bu_vls_init( vls );
+    bu_vls_init( vls );
 
-	bu_vls_printf( vls, "Displacement Map\n  file='%s' w=%d n=%d sm=%d ",
-		       bu_vls_addr(&dsp_ip->dsp_name),
-		       dsp_ip->dsp_xcnt,
-		       dsp_ip->dsp_ycnt,
-		       dsp_ip->dsp_smooth);
+    bu_vls_printf( vls, "Displacement Map\n  file='%s' w=%d n=%d sm=%d ",
+		   bu_vls_addr(&dsp_ip->dsp_name),
+		   dsp_ip->dsp_xcnt,
+		   dsp_ip->dsp_ycnt,
+		   dsp_ip->dsp_smooth);
 
-	VSETALL(pt, 0.0);
+    VSETALL(pt, 0.0);
 
-	MAT4X3PNT(v, dsp_ip->dsp_stom, pt);
+    MAT4X3PNT(v, dsp_ip->dsp_stom, pt);
 
-	bu_vls_printf( vls, " (origin at %g %g %g)mm\n", V3ARGS(v));
+    bu_vls_printf( vls, " (origin at %g %g %g)mm\n", V3ARGS(v));
 
-	bu_vls_printf( vls, "  stom=\n");
-	bu_vls_printf( vls, "  %8.3f %8.3f %8.3f %8.3f\n",
-		V4ARGS(dsp_ip->dsp_stom) );
+    bu_vls_printf( vls, "  stom=\n");
+    bu_vls_printf( vls, "  %8.3f %8.3f %8.3f %8.3f\n",
+		   V4ARGS(dsp_ip->dsp_stom) );
 
-	bu_vls_printf( vls, "  %8.3f %8.3f %8.3f %8.3f\n",
-		V4ARGS( &dsp_ip->dsp_stom[4]) );
+    bu_vls_printf( vls, "  %8.3f %8.3f %8.3f %8.3f\n",
+		   V4ARGS( &dsp_ip->dsp_stom[4]) );
 
-	bu_vls_printf( vls, "  %8.3f %8.3f %8.3f %8.3f\n",
-		V4ARGS( &dsp_ip->dsp_stom[8]) );
+    bu_vls_printf( vls, "  %8.3f %8.3f %8.3f %8.3f\n",
+		   V4ARGS( &dsp_ip->dsp_stom[8]) );
 
-	bu_vls_printf( vls, "  %8.3f %8.3f %8.3f %8.3f\n",
-		V4ARGS( &dsp_ip->dsp_stom[12]) );
+    bu_vls_printf( vls, "  %8.3f %8.3f %8.3f %8.3f\n",
+		   V4ARGS( &dsp_ip->dsp_stom[12]) );
 }
 
 /*	D S P _ P R I N T _ V 5
@@ -526,63 +552,63 @@ const struct rt_dsp_internal *dsp_ip;
  */
 static void
 dsp_print_v5(vls, dsp_ip)
-struct bu_vls *vls;
-const struct rt_dsp_internal *dsp_ip;
+     struct bu_vls *vls;
+     const struct rt_dsp_internal *dsp_ip;
 {
-	point_t pt, v;
-	RT_DSP_CK_MAGIC(dsp_ip);
-	BU_CK_VLS(&dsp_ip->dsp_name);
+    point_t pt, v;
+    RT_DSP_CK_MAGIC(dsp_ip);
+    BU_CK_VLS(&dsp_ip->dsp_name);
 
-	bu_vls_init( vls );
+    bu_vls_init( vls );
 
-	bu_vls_printf( vls, "Displacement Map\n" );
+    bu_vls_printf( vls, "Displacement Map\n" );
 
-	switch (dsp_ip->dsp_datasrc) {
-	case RT_DSP_SRC_FILE:
-		bu_vls_printf( vls, "  file");
-		break;
-	case RT_DSP_SRC_OBJ:
-		bu_vls_printf( vls, "  obj");
-		break;
-	default:
-		bu_vls_printf( vls, "unk src type'%c'", dsp_ip->dsp_datasrc);
-		break;
-	}
+    switch (dsp_ip->dsp_datasrc) {
+    case RT_DSP_SRC_FILE:
+	bu_vls_printf( vls, "  file");
+	break;
+    case RT_DSP_SRC_OBJ:
+	bu_vls_printf( vls, "  obj");
+	break;
+    default:
+	bu_vls_printf( vls, "unk src type'%c'", dsp_ip->dsp_datasrc);
+	break;
+    }
 
-	bu_vls_printf( vls, "='%s'\n  w=%d n=%d sm=%d ",
-		       bu_vls_addr(&dsp_ip->dsp_name),
-		       dsp_ip->dsp_xcnt,
-		       dsp_ip->dsp_ycnt,
-		       dsp_ip->dsp_smooth);
+    bu_vls_printf( vls, "='%s'\n  w=%d n=%d sm=%d ",
+		   bu_vls_addr(&dsp_ip->dsp_name),
+		   dsp_ip->dsp_xcnt,
+		   dsp_ip->dsp_ycnt,
+		   dsp_ip->dsp_smooth);
 
-	switch (dsp_ip->dsp_cuttype) {
-	case DSP_CUT_DIR_ADAPT:
-	    bu_vls_printf( vls, "cut=ad" ); break;
-	case DSP_CUT_DIR_llUR:
-	    bu_vls_printf( vls, "cut=lR" ); break;
-	case DSP_CUT_DIR_ULlr:
-	    bu_vls_printf( vls, "cut=Lr" ); break;
-	}
+    switch (dsp_ip->dsp_cuttype) {
+    case DSP_CUT_DIR_ADAPT:
+	bu_vls_printf( vls, "cut=ad" ); break;
+    case DSP_CUT_DIR_llUR:
+	bu_vls_printf( vls, "cut=lR" ); break;
+    case DSP_CUT_DIR_ULlr:
+	bu_vls_printf( vls, "cut=Lr" ); break;
+    }
 
 
-	VSETALL(pt, 0.0);
+    VSETALL(pt, 0.0);
 
-	MAT4X3PNT(v, dsp_ip->dsp_stom, pt);
+    MAT4X3PNT(v, dsp_ip->dsp_stom, pt);
 
-	bu_vls_printf( vls, " (origin at %g %g %g)mm\n", V3ARGS(v));
+    bu_vls_printf( vls, " (origin at %g %g %g)mm\n", V3ARGS(v));
 
-	bu_vls_printf( vls, "  stom=\n");
-	bu_vls_printf( vls, "  %8.3f %8.3f %8.3f %8.3f\n",
-		V4ARGS(dsp_ip->dsp_stom) );
+    bu_vls_printf( vls, "  stom=\n");
+    bu_vls_printf( vls, "  %8.3f %8.3f %8.3f %8.3f\n",
+		   V4ARGS(dsp_ip->dsp_stom) );
 
-	bu_vls_printf( vls, "  %8.3f %8.3f %8.3f %8.3f\n",
-		V4ARGS( &dsp_ip->dsp_stom[4]) );
+    bu_vls_printf( vls, "  %8.3f %8.3f %8.3f %8.3f\n",
+		   V4ARGS( &dsp_ip->dsp_stom[4]) );
 
-	bu_vls_printf( vls, "  %8.3f %8.3f %8.3f %8.3f\n",
-		V4ARGS( &dsp_ip->dsp_stom[8]) );
+    bu_vls_printf( vls, "  %8.3f %8.3f %8.3f %8.3f\n",
+		   V4ARGS( &dsp_ip->dsp_stom[8]) );
 
-	bu_vls_printf( vls, "  %8.3f %8.3f %8.3f %8.3f\n",
-		V4ARGS( &dsp_ip->dsp_stom[12]) );
+    bu_vls_printf( vls, "  %8.3f %8.3f %8.3f %8.3f\n",
+		   V4ARGS( &dsp_ip->dsp_stom[12]) );
 }
 
 /*
@@ -590,28 +616,28 @@ const struct rt_dsp_internal *dsp_ip;
  */
 void
 rt_dsp_print( stp )
-register const struct soltab *stp;
+     register const struct soltab *stp;
 {
-	register const struct dsp_specific *dsp =
-		(struct dsp_specific *)stp->st_specific;
-	struct bu_vls vls;
+    register const struct dsp_specific *dsp =
+	(struct dsp_specific *)stp->st_specific;
+    struct bu_vls vls;
  
 
-	RT_DSP_CK_MAGIC(dsp);
-	BU_CK_VLS(&dsp->dsp_i.dsp_name);
+    RT_DSP_CK_MAGIC(dsp);
+    BU_CK_VLS(&dsp->dsp_i.dsp_name);
 
-	switch (stp->st_rtip->rti_dbip->dbi_version) {
-	case 4: 
-		dsp_print_v4(&vls, &(dsp->dsp_i) );
-		break;
-	case 5:
-		dsp_print_v5(&vls, &(dsp->dsp_i) );
-		break;
-	}
+    switch (stp->st_rtip->rti_dbip->dbi_version) {
+    case 4: 
+	dsp_print_v4(&vls, &(dsp->dsp_i) );
+	break;
+    case 5:
+	dsp_print_v5(&vls, &(dsp->dsp_i) );
+	break;
+    }
 
-	bu_log("%s", bu_vls_addr( &vls));
+    bu_log("%s", bu_vls_addr( &vls));
 
-	if (BU_VLS_IS_INITIALIZED( &vls )) bu_vls_free( &vls );
+    if (BU_VLS_IS_INITIALIZED( &vls )) bu_vls_free( &vls );
 
 }
 
@@ -623,223 +649,239 @@ register const struct soltab *stp;
 static void
 dsp_layers(struct dsp_specific *dsp, unsigned short *d_min, unsigned short *d_max)
 {
-	int idx, i, j, k, curr_layer, x, y, xs, ys, xv, yv, tot;
-	unsigned short dsp_min, dsp_max, cell_min, cell_max;
-	unsigned short elev;
-	struct dsp_bb *dsp_bb;
-	struct dsp_rpp *t;
-	struct dsp_bb_layer *curr, *prev;
+    int idx, i, j, k, curr_layer, x, y, xs, ys, xv, yv, tot;
+    unsigned short dsp_min, dsp_max, cell_min, cell_max;
+    unsigned short elev;
+    struct dsp_bb *dsp_bb;
+    struct dsp_rpp *t;
+    struct dsp_bb_layer *curr, *prev;
+    unsigned short subcell_size;
 
-	/* First we compute the total number of struct dsp_bb's we will need */
-	xs = dsp->xsiz;
-	ys = dsp->ysiz;
-	tot = xs * ys;
-	dsp->layers = 1;
-	while ( xs > 1 || ys > 1 ) {
-		xv = xs / DIM_BB_CHILDREN;
-		yv = ys / DIM_BB_CHILDREN;
-		if (xs % DIM_BB_CHILDREN) xv++;
-		if (ys % DIM_BB_CHILDREN) yv++;
+    /* First we compute the total number of struct dsp_bb's we will need */
+    xs = dsp->xsiz;
+    ys = dsp->ysiz;
+    tot = xs * ys;
+    bu_log("layer %d   %dx%d\n", 0, xs, ys);
+    dsp->layers = 1;
+    while ( xs > 1 || ys > 1 ) {
+	xv = xs / DIM_BB_CHILDREN;
+	yv = ys / DIM_BB_CHILDREN;
+	if (xs % DIM_BB_CHILDREN) xv++;
+	if (ys % DIM_BB_CHILDREN) yv++;
 
-		if (RT_G_DEBUG & DEBUG_HF)
-			bu_log("layer %d   %dx%d\n", dsp->layers, xv, yv);
-
-		tot += xv * yv;
-
-		if (xv > 0) xs = xv;
-		else xs = 1;
-
-		if (yv > 0) ys = yv;
-		else ys = 1;
-		dsp->layers++;
-	}
-
-
+#ifdef FULL_DSP_DEBUGGING
 	if (RT_G_DEBUG & DEBUG_HF)
-		bu_log("%d layers total\n", dsp->layers);
-
-
-	/* allocate the struct dsp_bb's we will need */
-	dsp->layer = bu_malloc(dsp->layers * sizeof(struct dsp_bb_layer),
-			       "dsp_bb_layers array");
-	dsp->bb_array = bu_malloc(tot * sizeof(struct dsp_bb), "dsp_bb array");
-
-	/* now we fill in the "lowest" layer of struct dsp_bb's from the
-	 * raw data
-	 */
-	dsp->layer[0].dim[X] = dsp->xsiz;
-	dsp->layer[0].dim[Y] = dsp->ysiz;
-	dsp->layer[0].p = dsp->bb_array;
-
-	xs = dsp->xsiz;
-	ys = dsp->ysiz;
-
-	dsp_min = 0xffff;
-	dsp_max = 0;
-
-	for (y=0 ; y < YSIZ(dsp) ; y++) {
-
-		cell_min = 0xffff;
-		cell_max = 0;
-
-		for (x=0 ; x < XSIZ(dsp) ; x++) {
-
-#if 0
-			if (RT_G_DEBUG & DEBUG_HF)
-				bu_log("filling %d,%d\n", x, y);
+	    bu_log("layer %d   %dx%d\n", dsp->layers, xv, yv);
 #endif
-			elev = DSP(dsp, x, y);
-			cell_min = cell_max = elev;
+	tot += xv * yv;
 
-			elev = DSP(dsp, x+1, y);
-			V_MIN(cell_min, elev);
-			V_MAX(cell_max, elev);
+	if (xv > 0) xs = xv;
+	else xs = 1;
 
-			elev = DSP(dsp, x, y+1);
-			V_MIN(cell_min, elev);
-			V_MAX(cell_max, elev);
+	if (yv > 0) ys = yv;
+	else ys = 1;
+	dsp->layers++;
+    }
 
-			elev = DSP(dsp, x+1, y+1);
-			V_MIN(cell_min, elev);
-			V_MAX(cell_max, elev);
 
-			/* factor the cell min/max into the overall min/max */
-			V_MIN(dsp_min, cell_min);
-			V_MAX(dsp_max, cell_max);
-
-			/* fill in the dsp_rpp cell min/max */
-			i = y*XSIZ(dsp) + x;
-			dsp_bb = &dsp->layer[0].p[i];
-			VSET(dsp_bb->dspb_rpp.dsp_min, x, y, cell_min);
-			VSET(dsp_bb->dspb_rpp.dsp_max, x+1, y+1, cell_max);
-
-			/* There are no "children" of a layer 0 element */
-			dsp_bb->dspb_ch_dim[X] = 0;
-			dsp_bb->dspb_ch_dim[Y] = 0;
-			for (k=0 ; k < NUM_BB_CHILDREN ; k++ ) {
-				dsp_bb->dspb_children[k] = 
-					(struct dsp_bb *)NULL;
-			}
-			dsp_bb->magic = MAGIC_dsp_bb;
-#if 0
-			dlog("cell %d,%d min: %d,%d,%d  max: %d,%d,%d\n",
-			     x, y, V3ARGS(dsp_bb->dspb_rpp.dsp_min),
-			     V3ARGS(dsp_bb->dspb_rpp.dsp_max) );
+#ifdef FULL_DSP_DEBUGGING
+    if (RT_G_DEBUG & DEBUG_HF)
+	bu_log("%d layers total\n", dsp->layers);
 #endif
 
-			/* XXX should we compute the triangle orientation and
-			 * save it here too?
-			 */
-		}
+    /* allocate the struct dsp_bb's we will need */
+    dsp->layer = bu_malloc(dsp->layers * sizeof(struct dsp_bb_layer),
+			   "dsp_bb_layers array");
+    dsp->bb_array = bu_malloc(tot * sizeof(struct dsp_bb), "dsp_bb array");
+
+    /* now we fill in the "lowest" layer of struct dsp_bb's from the
+     * raw data
+     */
+    dsp->layer[0].dim[X] = dsp->xsiz;
+    dsp->layer[0].dim[Y] = dsp->ysiz;
+    dsp->layer[0].p = dsp->bb_array;
+
+    xs = dsp->xsiz;
+    ys = dsp->ysiz;
+
+    dsp_min = 0xffff;
+    dsp_max = 0;
+
+    for (y=0 ; y < YSIZ(dsp) ; y++) {
+
+	cell_min = 0xffff;
+	cell_max = 0;
+
+	for (x=0 ; x < XSIZ(dsp) ; x++) {
+
+#if 0
+	    if (RT_G_DEBUG & DEBUG_HF)
+		bu_log("filling %d,%d\n", x, y);
+#endif
+	    elev = DSP(&dsp->dsp_i, x, y);
+	    cell_min = cell_max = elev;
+
+	    elev = DSP(&dsp->dsp_i, x+1, y);
+	    V_MIN(cell_min, elev);
+	    V_MAX(cell_max, elev);
+
+	    elev = DSP(&dsp->dsp_i, x, y+1);
+	    V_MIN(cell_min, elev);
+	    V_MAX(cell_max, elev);
+
+	    elev = DSP(&dsp->dsp_i, x+1, y+1);
+	    V_MIN(cell_min, elev);
+	    V_MAX(cell_max, elev);
+
+	    /* factor the cell min/max into the overall min/max */
+	    V_MIN(dsp_min, cell_min);
+	    V_MAX(dsp_max, cell_max);
+
+	    /* fill in the dsp_rpp cell min/max */
+	    i = y*XSIZ(dsp) + x;
+	    dsp_bb = &dsp->layer[0].p[i];
+	    VSET(dsp_bb->dspb_rpp.dsp_min, x, y, cell_min);
+	    VSET(dsp_bb->dspb_rpp.dsp_max, x+1, y+1, cell_max);
+
+	    dsp_bb->dspb_subcell_size = 0;
+
+	    /* There are no "children" of a layer 0 element */
+	    dsp_bb->dspb_ch_dim[X] = 0;
+	    dsp_bb->dspb_ch_dim[Y] = 0;
+	    for (k=0 ; k < NUM_BB_CHILDREN ; k++ ) {
+		dsp_bb->dspb_children[k] = 
+		    (struct dsp_bb *)NULL;
+	    }
+	    dsp_bb->magic = MAGIC_dsp_bb;
+#if 0
+	    dlog("cell %d,%d min: %d,%d,%d  max: %d,%d,%d\n",
+		 x, y, V3ARGS(dsp_bb->dspb_rpp.dsp_min),
+		 V3ARGS(dsp_bb->dspb_rpp.dsp_max) );
+#endif
+
+	    /* XXX should we compute the triangle orientation and
+	     * save it here too?
+	     */
 	}
+    }
 
-	*d_min = dsp_min;
-	*d_max = dsp_max;
-
-
-	if (RT_G_DEBUG & DEBUG_HF)
-			bu_log("filled first layer\n");
+    *d_min = dsp_min;
+    *d_max = dsp_max;
 
 
-	/* now we compute successive layers from the initial layer */
-	for (curr_layer = 1 ; curr_layer < dsp->layers ; curr_layer++ ) {
-		/* compute the number of cells in each direction for this layer */
-		xs = dsp->layer[curr_layer-1].dim[X];
-		if (xs % DIM_BB_CHILDREN)  
-			dsp->layer[curr_layer].dim[X] =
-				xs / DIM_BB_CHILDREN + 1;
-		else			  
-			dsp->layer[curr_layer].dim[X] =
-				xs / DIM_BB_CHILDREN;
+    if (RT_G_DEBUG & DEBUG_HF)
+	bu_log("layer 0 filled\n");
 
-		ys = dsp->layer[curr_layer-1].dim[Y];
-		if (ys % DIM_BB_CHILDREN) 
-			dsp->layer[curr_layer].dim[Y] = 
-				ys / DIM_BB_CHILDREN + 1;
-		else			  
-			dsp->layer[curr_layer].dim[Y] = 
-				ys / DIM_BB_CHILDREN;
+    subcell_size = 1;
+
+    /* now we compute successive layers from the initial layer */
+    for (curr_layer = 1 ; curr_layer < dsp->layers ; curr_layer++ ) {
+	/* compute the number of cells in each direction for this layer */
+
+	xs = dsp->layer[curr_layer-1].dim[X];
+	if (xs % DIM_BB_CHILDREN)  
+	    dsp->layer[curr_layer].dim[X] =
+		xs / DIM_BB_CHILDREN + 1;
+	else			  
+	    dsp->layer[curr_layer].dim[X] =
+		xs / DIM_BB_CHILDREN;
+
+	ys = dsp->layer[curr_layer-1].dim[Y];
+	if (ys % DIM_BB_CHILDREN) 
+	    dsp->layer[curr_layer].dim[Y] = 
+		ys / DIM_BB_CHILDREN + 1;
+	else			  
+	    dsp->layer[curr_layer].dim[Y] = 
+		ys / DIM_BB_CHILDREN;
 		
-		/* set the start of the array for this layer */
-		dsp->layer[curr_layer].p = &dsp->layer[curr_layer-1].p[
-				    dsp->layer[curr_layer-1].dim[X] *
-				    dsp->layer[curr_layer-1].dim[Y] ];
+	/* set the start of the array for this layer */
+	dsp->layer[curr_layer].p = 
+	    &dsp->layer[curr_layer-1].p[
+		dsp->layer[curr_layer-1].dim[X] *
+		dsp->layer[curr_layer-1].dim[Y] ];
 
-		curr = &dsp->layer[curr_layer];
-		prev = &dsp->layer[curr_layer-1];
+	curr = &dsp->layer[curr_layer];
+	prev = &dsp->layer[curr_layer-1];
 
-		if (RT_G_DEBUG & DEBUG_HF)
-			bu_log("layer %d\n", curr_layer);
+	if (RT_G_DEBUG & DEBUG_HF)
+	    bu_log("layer %d  subcell size %d\n", curr_layer, subcell_size);
 
-		/* walk the grid and fill in the values for this layer */
-		for (y=0 ; y < curr->dim[Y] ; y++ ) {
-			for (x=0 ; x < curr->dim[X] ; x++ ) {
-				int n, xp, yp;
-				/* x,y are in the coordinates in the current
-				 * layer.  xp,yp are the coordinates of the
-				 * same area in the previous (lower) layer.
-				 */
-				xp = x * DIM_BB_CHILDREN;
-				yp = y * DIM_BB_CHILDREN;
+	/* walk the grid and fill in the values for this layer */
+	for (y=0 ; y < curr->dim[Y] ; y++ ) {
+	    for (x=0 ; x < curr->dim[X] ; x++ ) {
+		int n, xp, yp;
+		/* x,y are in the coordinates in the current
+		 * layer.  xp,yp are the coordinates of the
+		 * same area in the previous (lower) layer.
+		 */
+		xp = x * DIM_BB_CHILDREN;
+		yp = y * DIM_BB_CHILDREN;
 
-				/* initialize the current dsp_bb cell */
-				dsp_bb = &curr->p[y*curr->dim[X]+x];
-				dsp_bb->magic = MAGIC_dsp_bb;
-				n = (int)pow( (double)DIM_BB_CHILDREN, (double)curr_layer);
-				VSET(dsp_bb->dspb_rpp.dsp_min,
-				     x * n, y * n, 0x0ffff);
-				VSET(dsp_bb->dspb_rpp.dsp_max,
-				     x * n, y * n, 0);
+		/* initialize the current dsp_bb cell */
+		dsp_bb = &curr->p[y*curr->dim[X]+x];
+		dsp_bb->magic = MAGIC_dsp_bb;
+		n = (int)pow( (double)DIM_BB_CHILDREN, (double)curr_layer);
+		VSET(dsp_bb->dspb_rpp.dsp_min,
+		     x * n, y * n, 0x0ffff);
+		VSET(dsp_bb->dspb_rpp.dsp_max,
+		     x * n, y * n, 0);
 
-				tot = 0;
+		/* record the dimensions of our children */
+		dsp_bb->dspb_subcell_size = subcell_size;
+
+
+		tot = 0;
 #if 0
-				dlog("  cell %d,%d  (%d,%d-%d,%d)\n", x, y, 
-					       dsp_bb->dspb_rpp.dsp_min[X],
-					       dsp_bb->dspb_rpp.dsp_min[Y],
-					       (x+1) * n, (y+1)*n);
+		dlog("  cell %d,%d  (%d,%d-%d,%d)\n", x, y, 
+		     dsp_bb->dspb_rpp.dsp_min[X],
+		     dsp_bb->dspb_rpp.dsp_min[Y],
+		     (x+1) * n, (y+1)*n);
 #endif
-				i=0;
-				for (j=0 ; j < DIM_BB_CHILDREN && (yp+j) < prev->dim[Y] ; j++) {
-					for (i=0 ; i < DIM_BB_CHILDREN && (xp+i) < prev->dim[X]; i++) {
+		i=0;
+		for (j=0 ; j<DIM_BB_CHILDREN && (yp+j)<prev->dim[Y] ; j++) {
+		    for (i=0 ; i<DIM_BB_CHILDREN && (xp+i)<prev->dim[X]; i++) {
 
-						idx = (yp+j) * prev->dim[X] + xp+i;
+			idx = (yp+j) * prev->dim[X] + xp+i;
 
-						t = &prev->p[ idx ].dspb_rpp;
+			t = &prev->p[ idx ].dspb_rpp;
 
-						VMINMAX(dsp_bb->dspb_rpp.dsp_min, dsp_bb->dspb_rpp.dsp_max, t->dsp_min);
-						VMINMAX(dsp_bb->dspb_rpp.dsp_min, dsp_bb->dspb_rpp.dsp_max, t->dsp_max);
+			VMINMAX(dsp_bb->dspb_rpp.dsp_min,
+				dsp_bb->dspb_rpp.dsp_max, t->dsp_min);
+			VMINMAX(dsp_bb->dspb_rpp.dsp_min,
+				dsp_bb->dspb_rpp.dsp_max, t->dsp_max);
 
-						dsp_bb->dspb_children[tot++] = &prev->p[ idx ];
+			dsp_bb->dspb_children[tot++] = &prev->p[ idx ];
 
 #if 0
-						dlog("\t\tsubcell %d,%d min: %d,%d,%d  max: %d,%d,%d\n",
-						     xp+i, yp+j, V3ARGS(t->dsp_min), V3ARGS(t->dsp_max) );
+			dlog("\t\tsubcell %d,%d min: %d,%d,%d  max: %d,%d,%d\n",
+			     xp+i, yp+j, V3ARGS(t->dsp_min), V3ARGS(t->dsp_max) );
 
-						if (RT_G_DEBUG & DEBUG_HF) 
-						    if (i+1 >= DIM_BB_CHILDREN || xp+i+1 >= prev->dim[X])
-							bu_log("\n");
+			if (RT_G_DEBUG & DEBUG_HF) 
+			    if (i+1 >= DIM_BB_CHILDREN || xp+i+1 >= prev->dim[X])
+				bu_log("\n");
 #endif
-					}
-				}
-#if 0
-				dlog("\t\txy: %d,%d, ij:%d,%d min:%d,%d,%d max:%d,%d,%d\n",
-				     x, y, i, j,
-				     V3ARGS(dsp_bb->dspb_rpp.dsp_min),
-				     V3ARGS(dsp_bb->dspb_rpp.dsp_max) );
-#endif
-
-				dsp_bb->dspb_ch_dim[X] = i;
-				dsp_bb->dspb_ch_dim[Y] = j;
-			}
+		    }
 		}
+#if 0
+		dlog("\t\txy: %d,%d, ij:%d,%d min:%d,%d,%d max:%d,%d,%d\n",
+		     x, y, i, j,
+		     V3ARGS(dsp_bb->dspb_rpp.dsp_min),
+		     V3ARGS(dsp_bb->dspb_rpp.dsp_max) );
+#endif
+
+		dsp_bb->dspb_ch_dim[X] = i;
+		dsp_bb->dspb_ch_dim[Y] = j;
+	    }
 	}
+	subcell_size *= DIM_BB_CHILDREN;
+    }
 
 #ifdef PLOT_LAYERS
-	if (RT_G_DEBUG & DEBUG_HF) {
-		plot_layers(dsp);
-		bu_log("_  x:%d y:%d min %d max %d\n",
-		       XCNT(dsp), YCNT(dsp), dsp_min, dsp_max);
-	}
+    if (RT_G_DEBUG & DEBUG_HF) {
+	plot_layers(dsp);
+	bu_log("_  x:%d y:%d min %d max %d\n",
+	       XCNT(dsp), YCNT(dsp), dsp_min, dsp_max);
+    }
 #endif
 }
 
@@ -861,104 +903,104 @@ dsp_layers(struct dsp_specific *dsp, unsigned short *d_min, unsigned short *d_ma
  */
 int
 rt_dsp_prep( stp, ip, rtip )
-struct soltab		*stp;
-struct rt_db_internal	*ip;
-struct rt_i		*rtip;
+     struct soltab		*stp;
+     struct rt_db_internal	*ip;
+     struct rt_i		*rtip;
 {
-	struct rt_dsp_internal		*dsp_ip;
-	register struct dsp_specific	*dsp;
-	unsigned short dsp_min, dsp_max;
-	point_t pt, bbpt;
-	vect_t work;
-	fastf_t f;
+    struct rt_dsp_internal		*dsp_ip;
+    register struct dsp_specific	*dsp;
+    unsigned short dsp_min, dsp_max;
+    point_t pt, bbpt;
+    vect_t work;
+    fastf_t f;
 
-	if (RT_G_DEBUG & DEBUG_HF)
-		bu_log("rt_dsp_prep()\n");
+    if (RT_G_DEBUG & DEBUG_HF)
+	bu_log("rt_dsp_prep()\n");
 
-	RT_CK_DB_INTERNAL(ip);
-	dsp_ip = (struct rt_dsp_internal *)ip->idb_ptr;
-	RT_DSP_CK_MAGIC(dsp_ip);
-	BU_CK_VLS(&dsp_ip->dsp_name);
+    RT_CK_DB_INTERNAL(ip);
+    dsp_ip = (struct rt_dsp_internal *)ip->idb_ptr;
+    RT_DSP_CK_MAGIC(dsp_ip);
+    BU_CK_VLS(&dsp_ip->dsp_name);
 
-	switch (dsp_ip->dsp_datasrc) {
-	case RT_DSP_SRC_V4_FILE: 
-	case RT_DSP_SRC_FILE:
-	    BU_CK_MAPPED_FILE(dsp_ip->dsp_mp);
-	    break;
-	case RT_DSP_SRC_OBJ:
-	    break;
-	}
-
-
-	BU_GETSTRUCT( dsp, dsp_specific );
-	stp->st_specific = (genptr_t) dsp;
-	dsp->dsp_i = *dsp_ip;		/* struct copy */
-
-	bu_semaphore_acquire( RT_SEM_MODEL);
-	++dsp_ip->dsp_mp->uses;
-	bu_semaphore_release( RT_SEM_MODEL);
-
-	dsp->xsiz = dsp_ip->dsp_xcnt-1;	/* size is # cells or values-1 */
-	dsp->ysiz = dsp_ip->dsp_ycnt-1;	/* size is # cells or values-1 */
+    switch (dsp_ip->dsp_datasrc) {
+    case RT_DSP_SRC_V4_FILE: 
+    case RT_DSP_SRC_FILE:
+	BU_CK_MAPPED_FILE(dsp_ip->dsp_mp);
+	break;
+    case RT_DSP_SRC_OBJ:
+	break;
+    }
 
 
-	/* compute the multi-resolution bounding boxes */
-	dsp_layers(dsp, &dsp_min, &dsp_max);
+    BU_GETSTRUCT( dsp, dsp_specific );
+    stp->st_specific = (genptr_t) dsp;
+    dsp->dsp_i = *dsp_ip;		/* struct copy */
+
+    bu_semaphore_acquire( RT_SEM_MODEL);
+    ++dsp_ip->dsp_mp->uses;
+    bu_semaphore_release( RT_SEM_MODEL);
+
+    dsp->xsiz = dsp_ip->dsp_xcnt-1;	/* size is # cells or values-1 */
+    dsp->ysiz = dsp_ip->dsp_ycnt-1;	/* size is # cells or values-1 */
 
 
-	/* record the distance to each of the bounding planes */
-	dsp->dsp_pl_dist[XMIN] = 0.0;
-	dsp->dsp_pl_dist[XMAX] = (fastf_t)dsp->xsiz;
-	dsp->dsp_pl_dist[YMIN] = 0.0;
-	dsp->dsp_pl_dist[YMAX] = (fastf_t)dsp->ysiz;
-	dsp->dsp_pl_dist[ZMIN] = 0.0;
-	dsp->dsp_pl_dist[ZMAX] = (fastf_t)dsp_max;
-	dsp->dsp_pl_dist[ZMID] = (fastf_t)dsp_min;
+    /* compute the multi-resolution bounding boxes */
+    dsp_layers(dsp, &dsp_min, &dsp_max);
 
-	/* compute enlarged bounding box and spere */
+
+    /* record the distance to each of the bounding planes */
+    dsp->dsp_pl_dist[XMIN] = 0.0;
+    dsp->dsp_pl_dist[XMAX] = (fastf_t)dsp->xsiz;
+    dsp->dsp_pl_dist[YMIN] = 0.0;
+    dsp->dsp_pl_dist[YMAX] = (fastf_t)dsp->ysiz;
+    dsp->dsp_pl_dist[ZMIN] = 0.0;
+    dsp->dsp_pl_dist[ZMAX] = (fastf_t)dsp_max;
+    dsp->dsp_pl_dist[ZMID] = (fastf_t)dsp_min;
+
+    /* compute enlarged bounding box and spere */
 
 #define BBOX_PT(_x, _y, _z) \
 	VSET(pt, (fastf_t)_x, (fastf_t)_y, (fastf_t)_z); \
 	MAT4X3PNT(bbpt, dsp_ip->dsp_stom, pt); \
 	VMINMAX( stp->st_min, stp->st_max, bbpt)
 
-	BBOX_PT(-.1,		    -.1,		        -.1);
-	BBOX_PT(dsp_ip->dsp_xcnt+.1, -.1,		        -.1);
-	BBOX_PT(dsp_ip->dsp_xcnt+.1, dsp_ip->dsp_ycnt+.1, -1);
-	BBOX_PT(-.1,		    dsp_ip->dsp_ycnt+.1, -1);
-	BBOX_PT(-.1,		    -.1,		        dsp_max+.1);
-	BBOX_PT(dsp_ip->dsp_xcnt+.1, -.1,		        dsp_max+.1);
-	BBOX_PT(dsp_ip->dsp_xcnt+.1, dsp_ip->dsp_ycnt+.1, dsp_max+.1);
-	BBOX_PT(-.1,		    dsp_ip->dsp_ycnt+.1, dsp_max+.1);
+    BBOX_PT(-.1,		    -.1,		        -.1);
+    BBOX_PT(dsp_ip->dsp_xcnt+.1, -.1,		        -.1);
+    BBOX_PT(dsp_ip->dsp_xcnt+.1, dsp_ip->dsp_ycnt+.1, -1);
+    BBOX_PT(-.1,		    dsp_ip->dsp_ycnt+.1, -1);
+    BBOX_PT(-.1,		    -.1,		        dsp_max+.1);
+    BBOX_PT(dsp_ip->dsp_xcnt+.1, -.1,		        dsp_max+.1);
+    BBOX_PT(dsp_ip->dsp_xcnt+.1, dsp_ip->dsp_ycnt+.1, dsp_max+.1);
+    BBOX_PT(-.1,		    dsp_ip->dsp_ycnt+.1, dsp_max+.1);
 
 #undef BBOX_PT
 
-	VADD2SCALE( stp->st_center, stp->st_min, stp->st_max, 0.5 );
-	VSUB2SCALE( work, stp->st_max, stp->st_min, 0.5 );
+    VADD2SCALE( stp->st_center, stp->st_min, stp->st_max, 0.5 );
+    VSUB2SCALE( work, stp->st_max, stp->st_min, 0.5 );
 
-	f = work[X];
-	if (work[Y] > f )  f = work[Y];
-	if (work[Z] > f )  f = work[Z];
-	stp->st_aradius = f;
-	stp->st_bradius = MAGNITUDE(work);
+    f = work[X];
+    if (work[Y] > f )  f = work[Y];
+    if (work[Z] > f )  f = work[Z];
+    stp->st_aradius = f;
+    stp->st_bradius = MAGNITUDE(work);
 
-	if (RT_G_DEBUG & DEBUG_HF) {
-		bu_log("  model space bbox (%g %g %g) (%g %g %g)\n",
-			V3ARGS(stp->st_min),
-			V3ARGS(stp->st_max));
-	}
+    if (RT_G_DEBUG & DEBUG_HF) {
+	bu_log("  model space bbox (%g %g %g) (%g %g %g)\n",
+	       V3ARGS(stp->st_min),
+	       V3ARGS(stp->st_max));
+    }
 
 
-	switch (dsp_ip->dsp_datasrc) {
-	case RT_DSP_SRC_V4_FILE: 
-	case RT_DSP_SRC_FILE:
-	    BU_CK_MAPPED_FILE(dsp_ip->dsp_mp);
-	    break;
-	case RT_DSP_SRC_OBJ:
-	    break;
-	}
+    switch (dsp_ip->dsp_datasrc) {
+    case RT_DSP_SRC_V4_FILE: 
+    case RT_DSP_SRC_FILE:
+	BU_CK_MAPPED_FILE(dsp_ip->dsp_mp);
+	break;
+    case RT_DSP_SRC_OBJ:
+	break;
+    }
 
-	return 0;
+    return 0;
 }
 
 static void
@@ -976,9 +1018,12 @@ plot_seg(struct isect_stuff *isect,
     static int segnum =0;
 
     /* plot the bounding box and the seg */
+    bu_semaphore_acquire( BU_SEM_SYSCALL);
     sprintf(fname, "dsp_seg%04d.pl", segnum++);
+    fp=fopen(fname, "w");
+    bu_semaphore_release( BU_SEM_SYSCALL);
 
-    if ((fp=fopen(fname, "w")) != (FILE *)NULL) {
+    if (fp != (FILE *)NULL) {
 	bu_log("plotting %s\n", fname);
 
 	MAT4X3PNT(rpp.min, stom, bbmin);
@@ -992,7 +1037,9 @@ plot_seg(struct isect_stuff *isect,
 	pl_color(fp, r, g, b);
 	pdv_3line(fp, rpp.min, rpp.max);
 
+	bu_semaphore_acquire( BU_SEM_SYSCALL);
 	fclose(fp);
+	bu_semaphore_release( BU_SEM_SYSCALL);
     }
 }
 
@@ -1018,22 +1065,24 @@ add_seg(struct isect_stuff *isect,
 
 {
     struct seg *seg;
+    double tt = isect->tol->dist;
 #ifndef ORDERED_ISECT
-    struct seg *seg_p;
+    struct bu_list *spot;
 #endif
 
     dlog("add_seg %g %g line %d\n", in_hit->hit_dist, out_hit->hit_dist, line);
 
+    tt *= tt;
+
 #ifdef ORDERED_ISECT
     if (BU_LIST_NON_EMPTY(&isect->seglist) ) {
-	double tt = isect->tol->dist;
 	/* if the new in-distance equals the old out distance
 	 * we just extend the old segment 
 	 */
 	seg = BU_LIST_LAST(seg, &isect->seglist);
-	if ( fabs(seg->seg_out.hit_dist - in_hit->hit_dist) <= (tt*tt) ) {
+	if ( fabs(seg->seg_out.hit_dist - in_hit->hit_dist) <= tt) {
 
-	    seg->seg_out = *out_hit; /* struct copy */
+	    seg->seg_out = *out_hit; /* struct copy  most expensive line */
 	    seg->seg_out.hit_magic = RT_HIT_MAGIC;
 	    seg->seg_out.hit_vpriv[Z] = 1; /* flag as out-hit */
 
@@ -1044,6 +1093,38 @@ add_seg(struct isect_stuff *isect,
 	    return 0;
 	}
     }
+#else
+    /* insert the segment in the list by in-hit distance */
+    if (RT_G_DEBUG & DEBUG_HF) {
+	bu_log("searching for insertion point for seg w in/out dist %g %g\n",
+	       in_hit->hit_dist, out_hit->hit_dist);
+    }
+    for ( BU_LIST_FOR(seg, seg, &isect->seglist) ) {
+	dlog("checking %g->%g seg\n", seg->seg_in.hit_dist,
+	     seg->seg_out.hit_dist);
+	/* found the spot for this one */
+	if ( fabs(seg->seg_out.hit_dist - in_hit->hit_dist) <= tt ) {
+	    seg->seg_out = *out_hit; /* struct copy */
+	    seg->seg_out.hit_magic = RT_HIT_MAGIC;
+	    seg->seg_out.hit_vpriv[Z] = 1; /* flag as out-hit */
+
+	    if (RT_G_DEBUG & DEBUG_HF) {
+		bu_log("extending previous seg to %g\n",
+		       out_hit->hit_dist);
+		plot_seg(isect, in_hit, out_hit, bbmin, bbmax, r, g, b);
+	    }
+	    return 0;
+	}
+	if (in_hit->hit_dist < seg->seg_in.hit_dist) {
+	    spot = &seg->l;
+	    dlog("insert before this one\n");
+	    goto found_spot;
+	}
+    }
+    spot = &isect->seglist;
+    seg = BU_LIST_LAST(seg, &isect->seglist);
+    dlog("insert at end\n");
+ found_spot:
 #endif
 
     RT_GET_SEG(seg, isect->ap->a_resource);
@@ -1061,6 +1142,7 @@ add_seg(struct isect_stuff *isect,
 
     seg->seg_stp = isect->stp;
 
+#ifdef FULL_DSP_DEBUGGING
     if (VDOT(seg->seg_in.hit_normal, isect->r.r_dir) > 0 ) {
 	bu_log("----------------------------------------------------------\n");
 	bu_log("pixel %d,%d bogus seg in, inward normal\nN: %g %g %g\nd: %g %g %g\n",
@@ -1075,29 +1157,18 @@ add_seg(struct isect_stuff *isect,
 	       V3ARGS(seg->seg_out.hit_normal), V3ARGS(isect->r.r_dir) );
 	bu_bomb("");
     }
-
+#endif
 
 #ifdef ORDERED_ISECT
     BU_LIST_INSERT(&isect->seglist, &seg->l);
 #else
-    /* insert the segment in the list by in-hit distance */
-    for ( BU_LIST_FOR(seg_p, seg, &isect->seglist) ) {
-	fp = (FILE *)NULL;
-	if (seg->seg_in.hit_dist < seg_p->seg_in.hit_dist) {
-	    /* found the spot for this one */
-	    BU_LIST_INSERT(&(seg_p->l), &seg->l);
-	    goto done;
-	}
-    }
-    /* this one goes in the end of the list */
-    BU_LIST_INSERT(&isect->seglist, &seg->l);
- done:
-
+    BU_LIST_INSERT(spot, &seg->l);
+#endif
 
     if (seg->seg_in.hit_dist > seg->seg_out.hit_dist) {
 	bu_log("DSP:  Adding inside-out seg\n");
     }
-#endif
+
     if (RT_G_DEBUG & DEBUG_HF)
 	plot_seg(isect, in_hit, out_hit, bbmin, bbmax, r, g, b);
 
@@ -1131,6 +1202,7 @@ isect_ray_triangle(struct isect_stuff *isect,
     double hitdist;	/* distance to ray/trianlge intercept */
     double toldist;	/* distance tolerance from isect->tol */
 
+#ifdef FULL_DSP_DEBUGGING
     if (RT_G_DEBUG & DEBUG_HF) {
 	fastf_t *stom = &isect->dsp->dsp_i.dsp_stom[0];
 
@@ -1147,6 +1219,7 @@ isect_ray_triangle(struct isect_stuff *isect,
 	       V3ARGS(C), V3ARGS(P));
 
     }
+#endif
     VSUB2(AB, B, A);
     VSUB2(AC, C, A);
 
@@ -1168,6 +1241,7 @@ isect_ray_triangle(struct isect_stuff *isect,
 
     VJOIN1(P, isect->r.r_pt, hitdist, isect->r.r_dir);
 
+#ifdef FULL_DSP_DEBUGGING
     if (RT_G_DEBUG & DEBUG_HF) {
 	FILE *fp;
 	char buf[32];
@@ -1175,8 +1249,12 @@ isect_ray_triangle(struct isect_stuff *isect,
 	fastf_t *stom = &isect->dsp->dsp_i.dsp_stom[0];
 	point_t p1, p2;
 
+	bu_semaphore_acquire( BU_SEM_SYSCALL);
 	sprintf(buf, "dsp_tri%03d.pl", plotnum++);
-	if ( (fp=fopen(buf, "w")) == (FILE *)NULL) {
+	fp=fopen(buf, "w");
+	bu_semaphore_release( BU_SEM_SYSCALL);
+
+	if ( fp == (FILE *)NULL) {
 	    bu_log("%s:%d error opening \"%s\"\n", __FILE__, __LINE__, buf);
 	    bu_bomb("");
 	} else
@@ -1195,10 +1273,13 @@ isect_ray_triangle(struct isect_stuff *isect,
 	MAT4X3PNT(p2, stom, isect->r.r_pt);
 	pdv_3line(fp, p1, p2);
 
+	bu_semaphore_acquire( BU_SEM_SYSCALL);
 	fclose(fp);
+	bu_semaphore_release( BU_SEM_SYSCALL);
 
 	bu_log("  dist:%g plane point: %g %g %g\n", hitdist, V3ARGS(p2));
     }
+#endif
     /* We project the system into the XY plane at this point to determine
      * if the ray_plane_isect_pt is within the bounds of the triangle
      *
@@ -1235,11 +1316,13 @@ isect_ray_triangle(struct isect_stuff *isect,
 
 
     VSUB2(AP, P, A);
+#ifdef FULL_DSP_DEBUGGING
     if (RT_G_DEBUG & DEBUG_HF) {
 	VPRINT("  AP", AP);
 	VPRINT("  AB", AB);
 	VPRINT("  AC", AC);
     }
+#endif
     /*	Oridnarily, in 2D we would say:
      *
      *    beta = AB[X] * AP[X] + AB[Y] * AP[Y];
@@ -1267,6 +1350,7 @@ isect_ray_triangle(struct isect_stuff *isect,
     alphabbeta[0] = alpha;
     alphabbeta[1] = beta;
 
+#ifdef FULL_DSP_DEBUGGING
     if (alpha < -toldist ) {
 	dlog("alpha < 0\n");
 	return 0;
@@ -1279,6 +1363,10 @@ isect_ray_triangle(struct isect_stuff *isect,
 	dlog("alpha+beta > 1\n");
 	return 0;
     }
+#else
+    if (alpha < -toldist || beta < -toldist || (alpha+beta) > (1.0 + toldist))
+	return 0;
+#endif
 
     hitp->hit_dist = hitdist;
     VMOVE(hitp->hit_normal, N);
@@ -1294,27 +1382,28 @@ isect_ray_triangle(struct isect_stuff *isect,
  */
 static int
 permute_cell(point_t A, 
-	point_t B, 
-	point_t C, 
-	point_t D, 
-	struct isect_stuff *isect, 
-	struct dsp_bb *dsp_bb)
+	     point_t B, 
+	     point_t C, 
+	     point_t D, 
+	     struct isect_stuff *isect, 
+	     struct dsp_bb *dsp_bb)
 {
     int x, y;
 
     DSP_BB_CK(dsp_bb);
 
-	if (RT_G_DEBUG & DEBUG_HF) {
-	    VPRINT("\tA", A);
-	    VPRINT("\tB", B);
-	    VPRINT("\tC", C);
-	    VPRINT("\tD", D);
-	}
-
+#ifdef FULL_DSP_DEBUGGING
+    if (RT_G_DEBUG & DEBUG_HF) {
+	VPRINT("\tA", A);
+	VPRINT("\tB", B);
+	VPRINT("\tC", C);
+	VPRINT("\tD", D);
+    }
+#endif
 
     switch (isect->dsp->dsp_i.dsp_cuttype) {
     case DSP_CUT_DIR_llUR:
-	return DSP_CUT_DIR_llUR;
+	return  DSP_CUT_DIR_llUR;
 	break;
 
     case DSP_CUT_DIR_ADAPT: {
@@ -1351,20 +1440,29 @@ permute_cell(point_t A,
 	hi[X] = dsp_bb->dspb_rpp.dsp_max[X] + 1;
 	hi[Y] = dsp_bb->dspb_rpp.dsp_max[Y] + 1;
 
+	/* a little bounds checking */
+	if (lo[X] < 0) lo[X] = 0;
+	if (lo[Y] < 0) lo[Y] = 0;
+	if (hi[X] > isect->dsp->xsiz) 
+	    hi[X] = isect->dsp->xsiz;
+
+	if (hi[Y] > isect->dsp->ysiz)
+	    hi[Y] = isect->dsp->ysiz;
+
 	/* compute curvature along the A->D direction */
 	h1 = DSP(&isect->dsp->dsp_i, lo[X], lo[Y]);
 	h2 = A[Z];
 	h3 = D[Z];
-	h4 = DSP(isect->dsp, hi[X], hi[Y]);
+	h4 = DSP(&isect->dsp->dsp_i, hi[X], hi[Y]);
 
 	cAD = fabs(h3 + h1 - 2*h2 ) + fabs( h4 + h2 - 2*h3 );
 
 
 	/* compute curvature along the B->C direction */
-	h1 = DSP(isect->dsp, hi[X], lo[Y]);
+	h1 = DSP(&isect->dsp->dsp_i, hi[X], lo[Y]);
 	h2 = B[Z];
 	h3 = C[Z];
-	h4 = DSP(isect->dsp, lo[X], hi[Y]);
+	h4 = DSP(&isect->dsp->dsp_i, lo[X], hi[Y]);
 
 	cBC = fabs(h3 + h1 - 2*h2 ) + fabs( h4 + h2 - 2*h3 );
 
@@ -1373,7 +1471,8 @@ permute_cell(point_t A,
 	    if (RT_G_DEBUG & DEBUG_HF)
 		bu_log("A-D cut\n");
 
-	    return DSP_CUT_DIR_llUR;
+	    return  DSP_CUT_DIR_llUR;
+
 	}
 
 	/* prefer the B-C cut */
@@ -1383,9 +1482,9 @@ permute_cell(point_t A,
 	VMOVE(D, C);
 	VMOVE(C, tmp);
 	if (RT_G_DEBUG & DEBUG_HF)
-		bu_log("B-C cut\n");
+	    bu_log("B-C cut\n");
 
-	return DSP_CUT_DIR_ULlr;
+	return  DSP_CUT_DIR_ULlr;
 
 	break;
     }
@@ -1400,22 +1499,22 @@ permute_cell(point_t A,
 	 */
 	x = dsp_bb->dspb_rpp.dsp_min[X];
 	y = dsp_bb->dspb_rpp.dsp_min[Y];
-	VSET(B, x, y, DSP(isect->dsp, x, y) );
+	VSET(B, x, y, DSP(&isect->dsp->dsp_i, x, y) );
 
 	x = dsp_bb->dspb_rpp.dsp_max[X];
-	VSET(A, x, y, DSP(isect->dsp, x, y) );
+	VSET(A, x, y, DSP(&isect->dsp->dsp_i, x, y) );
 
 	y = dsp_bb->dspb_rpp.dsp_max[Y];
-	VSET(C, x, y, DSP(isect->dsp, x, y) );
+	VSET(C, x, y, DSP(&isect->dsp->dsp_i, x, y) );
 
 	x = dsp_bb->dspb_rpp.dsp_min[X];
-	VSET(D, x, y, DSP(isect->dsp, x, y) );
+	VSET(D, x, y, DSP(&isect->dsp->dsp_i, x, y) );
 
 	return DSP_CUT_DIR_ULlr;
 	break;
     }
     bu_log("%s:%d Unknown DSP cut direction: %d\n",
-	       __FILE__, __LINE__, isect->dsp->dsp_i.dsp_cuttype);
+	   __FILE__, __LINE__, isect->dsp->dsp_i.dsp_cuttype);
     bu_bomb("");
     /* not reached */
     return -1;
@@ -1449,25 +1548,28 @@ permute_cell(point_t A,
  */
 static int
 check_bbpt_hit_elev(int i,	/* indicates face of cell */
-		   point_t A,
-		   point_t B,
-		   point_t C,
-		   point_t D,
-		   point_t P)
+		    point_t A,
+		    point_t B,
+		    point_t C,
+		    point_t D,
+		    point_t P)
 {
     double slope = 0.0;
     double delta = 0.0;
     double origin = 0.0;
 
+#ifdef FULL_DSP_DEBUGGING
     dlog("check_bbpt_hit_elev(");
-
+#endif
     switch (i) {
     case XMIN:
 	/* the minimal YZ plane.  Top view:	*   *
 	 *					|    
 	 *					*   *		
 	 */
+#ifdef FULL_DSP_DEBUGGING
 	dlog("XMIN)\n");
+#endif
 	slope = C[Z] - A[Z];
 	delta = P[Y] - A[Y];
 	origin = A[Z];
@@ -1477,7 +1579,9 @@ check_bbpt_hit_elev(int i,	/* indicates face of cell */
 	 *					    |    
 	 *					*   *
 	 */
+#ifdef FULL_DSP_DEBUGGING
 	dlog("XMAX)\n");
+#endif
 	slope = D[Z] - B[Z];
 	delta = P[Y] - B[Y];
 	origin = B[Z];
@@ -1487,7 +1591,9 @@ check_bbpt_hit_elev(int i,	/* indicates face of cell */
 	 *
 	 *					* - *
 	 */
+#ifdef FULL_DSP_DEBUGGING
 	dlog("YMIN)\n");
+#endif
 	slope = B[Z] - A[Z];
 	delta = P[X] - A[X];
 	origin = A[Z];
@@ -1497,21 +1603,27 @@ check_bbpt_hit_elev(int i,	/* indicates face of cell */
 	 *	    
 	 *					*   *
 	 */
+#ifdef FULL_DSP_DEBUGGING
 	dlog("YMAX)\n");
+#endif
 	slope = D[Z] - C[Z];
 	delta = P[X] - C[X];
 	origin = C[Z];
 	break;
     case ZMIN:
+#ifdef FULL_DSP_DEBUGGING
 	dlog("ZMIN)\n");
+#endif
 	return 1;
 	break;
     case ZMAX:
+#ifdef FULL_DSP_DEBUGGING
 	dlog("ZMAX)\n");
+#endif
 	return 0;
 	break;
     default:
-	bu_log("%s:%d Coding error, bad face\n", __FILE__, __LINE__);
+	bu_log("%s:%d Coding error, bad face %d\n", __FILE__, __LINE__, i);
 	bu_bomb("");
 	break;
     }
@@ -1533,7 +1645,6 @@ isect_ray_cell_top(struct isect_stuff *isect, struct dsp_bb *dsp_bb)
 {
     point_t A, B, C, D, P;
     int x, y;
-    int direction;
     double ab_first[2], ab_second[2];
     struct hit hits[4];	/* list of hits that are valid */
     struct hit *hitp;
@@ -1541,8 +1652,7 @@ isect_ray_cell_top(struct isect_stuff *isect, struct dsp_bb *dsp_bb)
     int cond, i;
     int hitcount = 0;
     point_t bbmin, bbmax;
-    double dot;
-    double v1, v2;
+    double dot, dot2;
 
 
     dlog("isect_ray_cell_top\n");
@@ -1558,18 +1668,19 @@ isect_ray_cell_top(struct isect_stuff *isect, struct dsp_bb *dsp_bb)
      */
     x = dsp_bb->dspb_rpp.dsp_min[X];
     y = dsp_bb->dspb_rpp.dsp_min[Y];
-    VSET(A, x, y, DSP(isect->dsp, x, y) );
+    VSET(A, x, y, DSP(&isect->dsp->dsp_i, x, y) );
     
     x = dsp_bb->dspb_rpp.dsp_max[X];
-    VSET(B, x, y, DSP(isect->dsp, x, y) );
+    VSET(B, x, y, DSP(&isect->dsp->dsp_i, x, y) );
 
     y = dsp_bb->dspb_rpp.dsp_max[Y];
-    VSET(D, x, y, DSP(isect->dsp, x, y) );
+    VSET(D, x, y, DSP(&isect->dsp->dsp_i, x, y) );
 
     x = dsp_bb->dspb_rpp.dsp_min[X];
-    VSET(C, x, y, DSP(isect->dsp, x, y) );
+    VSET(C, x, y, DSP(&isect->dsp->dsp_i, x, y) );
 
 
+#ifdef DEBUG_FULL
     if (RT_G_DEBUG & DEBUG_HF) {
 	point_t p1, p2;
 
@@ -1583,7 +1694,7 @@ isect_ray_cell_top(struct isect_stuff *isect, struct dsp_bb *dsp_bb)
 
 	plot_cell_top(isect, dsp_bb, A, B, C, D, hits, 3, 0);
     }
-
+#endif
 
 
     /* first order of business is to discard any "fake" hits on the 
@@ -1636,7 +1747,7 @@ isect_ray_cell_top(struct isect_stuff *isect, struct dsp_bb *dsp_bb)
 
 
 
-    direction = permute_cell(A, B, C, D, isect, dsp_bb);
+    (void)permute_cell(A, B, C, D, isect, dsp_bb);
 
     if ((cond=isect_ray_triangle(isect, B, D, A, &hits[1], ab_first)) > 0.0){
 	/* hit triangle */
@@ -1716,11 +1827,11 @@ isect_ray_cell_top(struct isect_stuff *isect, struct dsp_bb *dsp_bb)
 	if (hitf & (1<<i)) {
 	    if (hitp) {
 
-		v2 = VDOT(isect->r.r_dir, hits[i].hit_normal);
+		dot2 = VDOT(isect->r.r_dir, hits[i].hit_normal);
 
 		/* if we have two entry points then pick the first one */
-		if ( v2 < 0.0 ) {
-		    dlog("v2(%g) < 0.0\n", v2);
+		if ( dot2 < 0.0 ) {
+		    dlog("dot2(%g) < 0.0\n", dot2);
 		    if (hitp->hit_dist > hits[i].hit_dist) {
 			dlog("skipping duplicate entry point at dist %g\n",
 			     hitp->hit_dist);
@@ -1755,9 +1866,8 @@ isect_ray_cell_top(struct isect_stuff *isect, struct dsp_bb *dsp_bb)
 		    bu_log("in-hit at dist %g\n", hits[i].hit_dist);
 		}
 		hitp = &hits[i];
-		v1 = dot;
 	    }
-	} else dlog("no data at %d\n", i);
+	}
     }
 
     if (hitp && hitcount > 1) {
@@ -1804,13 +1914,13 @@ isect_ray_cell_top(struct isect_stuff *isect, struct dsp_bb *dsp_bb)
  *  Implicit return -
  *	rp->r_min = dist from start of ray to point at which ray ENTERS solid
  *	rp->r_max = dist from start of ray to point at which ray LEAVES solid
- *
- * XXX need to return surface number for in/out
+ *	isect->dmin
+ *	isect->dmax
  */
 int
 dsp_in_rpp(struct isect_stuff *isect,
-	  register const fastf_t *min,
-	  register const fastf_t *max)
+	   register const fastf_t *min,
+	   register const fastf_t *max)
 {
     struct xray		*rp = &isect->r;    
     /* inverses of rp->r_dir[] */
@@ -1923,7 +2033,7 @@ dsp_in_rpp(struct isect_stuff *isect,
     isect->dmax = dmax;
     return(1);		/* HIT */
 }
-
+#ifdef ORDERED_ISECT
 static int
 isect_ray_dsp_bb(struct isect_stuff *isect, struct dsp_bb *dsp_bb);
 
@@ -1947,27 +2057,23 @@ recurse_dsp_bb(struct isect_stuff *isect,
     double	tX, tY;		/* dist from hit pt. to next cell boundary */
     double	curr_dist;
     short	cX, cY;		/* coordinates of current cell */
-    short	csX, csY;	/* coordinates of current cell */
+    short	cs;		/* cell X,Y dimension */
     short	stepX, stepY;	/* dist to step in child array for each dir */
     short	stepPX, stepPY;
     double 	out_dist;
     struct dsp_bb **p;
     fastf_t *stom = &isect->dsp->dsp_i.dsp_stom[0];
     point_t pt, v;
-
+    int loop = 0;
     
     DSP_BB_CK(dsp_bb);
 
     /* compute the size of a cell in each direction */
-    csX = (dsp_bb->dspb_rpp.dsp_max[X] - dsp_bb->dspb_rpp.dsp_min[X] + 1) / 
-	dsp_bb->dspb_ch_dim[X];
-
-    csY = (dsp_bb->dspb_rpp.dsp_max[Y] - dsp_bb->dspb_rpp.dsp_min[Y] + 1) /
-	dsp_bb->dspb_ch_dim[Y];
+    cs = dsp_bb->dspb_subcell_size;
 
     /* compute current cell */
-    cX = (minpt[X] - bbmin[X]) / csX;
-    cY = (minpt[Y] - bbmin[Y]) / csY;
+    cX = (minpt[X] - bbmin[X]) / cs;
+    cY = (minpt[Y] - bbmin[Y]) / cs;
 
     /* a little bounds checking because a hit on XMAX or YMAX looks like
      * it should be in the next cell outside the box
@@ -1975,8 +2081,10 @@ recurse_dsp_bb(struct isect_stuff *isect,
     if (cX >= dsp_bb->dspb_ch_dim[X]) cX = dsp_bb->dspb_ch_dim[X] - 1;
     if (cY >= dsp_bb->dspb_ch_dim[Y]) cY = dsp_bb->dspb_ch_dim[Y] - 1;
 
-    dlog("recurse_dsp_bb  cell size: %d %d  current cell: %d %d\n",
-	 csX, csY, cX, cY);
+#ifdef FULL_DSP_DEBUGGING
+    dlog("recurse_dsp_bb  cell size: %d  current cell: %d %d\n",
+	 cs, cX, cY);
+#endif
 
     tX = tY = curr_dist = isect->r.r_min;
 
@@ -1986,18 +2094,18 @@ recurse_dsp_bb(struct isect_stuff *isect,
 	 * to traverse a cell (travel a unit distance) along the
 	 * X axis of the grid
 	 */
-	tDX = -csX / isect->r.r_dir[X];
+	tDX = -cs / isect->r.r_dir[X];
 
 	/* tX is the distance along the ray to the first cell 
 	 * boundary in the X direction beyond our hit point (minpt)
 	 */
-	tX += ( (bbmin[X] + (cX * csX)) - minpt[X]) / isect->r.r_dir[X];
+	tX += ( (bbmin[X] + (cX * cs)) - minpt[X]) / isect->r.r_dir[X];
     } else {
 	stepPX = stepX = 1;
-	tDX = csX / isect->r.r_dir[X];
+	tDX = cs / isect->r.r_dir[X];
 	    
 	if (isect->r.r_dir[X] > 0.0)
-	    tX += ((bbmin[X] + ((cX+1) * csX)) - minpt[X]) / isect->r.r_dir[X];
+	    tX += ((bbmin[X] + ((cX+1) * cs)) - minpt[X]) / isect->r.r_dir[X];
 	else
 	    tX = MAX_FASTF; /* infinite distance to next X boundary */
     }
@@ -2006,15 +2114,15 @@ recurse_dsp_bb(struct isect_stuff *isect,
 	/* distance in dspb_children we have to move to step in Y dir */
 	stepY = -1;
 	stepPY = -dsp_bb->dspb_ch_dim[X];
-	tDY = -csY / isect->r.r_dir[Y];
-	tY += ( (bbmin[Y] + (cY * csY)) - minpt[Y]) / isect->r.r_dir[Y];
+	tDY = -cs / isect->r.r_dir[Y];
+	tY += ( (bbmin[Y] + (cY * cs)) - minpt[Y]) / isect->r.r_dir[Y];
     } else {
 	stepY = 1;
 	stepPY = dsp_bb->dspb_ch_dim[X];
-	tDY = csY / isect->r.r_dir[Y];
+	tDY = cs / isect->r.r_dir[Y];
 	
 	if (isect->r.r_dir[Y] > 0.0)
-	    tY += ((bbmin[Y] + ((cY+1) * csY)) - minpt[Y]) / isect->r.r_dir[Y];
+	    tY += ((bbmin[Y] + ((cY+1) * cs)) - minpt[Y]) / isect->r.r_dir[Y];
 	else
 	    tY = MAX_FASTF;
     }
@@ -2027,15 +2135,17 @@ recurse_dsp_bb(struct isect_stuff *isect,
     do {
 	/* intersect with the current cell */
 	if (RT_G_DEBUG & DEBUG_HF) {
-	    bu_log("intersecting sub-cell %d %d  dist:%g out:%g\n",
-		   cX, cY, curr_dist, out_dist);
-
+	    if (loop)
+		bu_log("\nisect sub-cell %d %d  in dist:%g ",
+		       cX, cY, curr_dist, out_dist);
+	    else {
+		bu_log("isect sub-cell %d %d  in dist:%g ",
+		       cX, cY, curr_dist, out_dist);
+		loop = 1;
+	    }
 	    VJOIN1(pt, isect->r.r_pt, curr_dist, isect->r.r_dir);
 	    MAT4X3PNT(v, stom, pt);
-	    bu_log("in_pt %g %g %g", V3ARGS(v));
-	    VJOIN1(pt, isect->r.r_pt, out_dist, isect->r.r_dir);
-	    MAT4X3PNT(v, stom, pt);
-	    bu_log(" out %g %g %g\n", V3ARGS(v));
+	    bu_log("pt %g %g %g\n", V3ARGS(v));
 	}
 
 	/* get pointer to the current child cell.  Note the extra level
@@ -2044,38 +2154,30 @@ recurse_dsp_bb(struct isect_stuff *isect,
 	 * to be sure to increment the offset in the array, not the child
 	 * pointer.
 	 */
-	if (p != &dsp_bb->dspb_children[dsp_bb->dspb_ch_dim[X] * cY + cX]) {
-	    bu_bomb("ptr oops\n");
-	}
-	if (RT_G_DEBUG & DEBUG_HF) {
+
+	if (RT_G_DEBUG & DEBUG_HF)
 	    bu_log_indent_delta(4);
-	    bu_log("\n");
-	}
+
 	if (isect_ray_dsp_bb(isect, *p)) return 1;
 
-	/* figure out which cell is next */
-	if (RT_G_DEBUG & DEBUG_HF) {
-	    bu_log_indent_delta(-4); bu_log("\n");
-	    bu_log("tX: %g tY: %g\n", tX, tY);
-	    VJOIN1(pt, isect->r.r_pt, tX, isect->r.r_dir);
-	    MAT4X3PNT(v, stom, pt);
-	    bu_log("next x crossing: %g %g %g\n", V3ARGS(v));
-	    VJOIN1(pt, isect->r.r_pt, tY, isect->r.r_dir);
-	    MAT4X3PNT(v, stom, pt);
-	    bu_log("next y crossing: %g %g %g\n", V3ARGS(v));
-	}
+	if (RT_G_DEBUG & DEBUG_HF)
+	    bu_log_indent_delta(-4);
 
+	/* figure out which cell is next */
 	if (tX < tY) {
 	    cX += stepX;  /* track cell offset for debugging */
 	    p += stepPX;
+#ifdef FULL_DSP_DEBUGGING
 	    dlog("stepping X to %d because %g < %g\n", cX, tX, tY);
-
+#endif
 	    curr_dist = tX;
 	    tX += tDX;
 	} else {
 	    cY += stepY;  /* track cell offset for debugging */
 	    p += stepPY;
+#ifdef FULL_DSP_DEBUGGING
 	    dlog("stepping Y to %d because %g >= %g\n", cX, tX, tY);
+#endif
 	    curr_dist = tY;
 	    tY += tDY;
 	}
@@ -2083,7 +2185,7 @@ recurse_dsp_bb(struct isect_stuff *isect,
 
     return 0;
 }
-
+#endif
 
 /*
  *	I S E C T _ R A Y _ D S P _ B B
@@ -2106,6 +2208,7 @@ isect_ray_dsp_bb(struct isect_stuff *isect, struct dsp_bb *dsp_bb)
     static int plotnum;
     fastf_t *stom; 
     point_t pt;
+    struct xray *r = &isect->r; /* Does this buy us anything? */
 
     if (dsp_bb) {
 	DSP_BB_CK(dsp_bb);
@@ -2115,12 +2218,10 @@ isect_ray_dsp_bb(struct isect_stuff *isect, struct dsp_bb *dsp_bb)
     }
 
     if (RT_G_DEBUG & DEBUG_HF) {
-	bu_log("isect_ray_dsp_bb( (%d,%d,%d) (%d,%d,%d))\n",
+	bu_log("\nisect_ray_dsp_bb( (%d,%d,%d) (%d,%d,%d))\n",
 	       V3ARGS(dsp_bb->dspb_rpp.dsp_min),
 	       V3ARGS(dsp_bb->dspb_rpp.dsp_max));
     }
-
-    min_z = dsp_bb->dspb_rpp.dsp_min[Z];
 
     /* check to see if we miss the RPP for this area entirely */
     VMOVE(bbmax, dsp_bb->dspb_rpp.dsp_max);
@@ -2131,22 +2232,29 @@ isect_ray_dsp_bb(struct isect_stuff *isect, struct dsp_bb *dsp_bb)
 
     if ( ! dsp_in_rpp(isect, bbmin, bbmax) ) {
 	/* missed it all, just return */
+
 	if (RT_G_DEBUG & DEBUG_HF) {
 	    bu_log("missed... ");
-
 	    fclose(draw_dsp_bb(&plotnum, dsp_bb, isect->dsp, 0, 150, 0));
 	}
+
 	return 0;
     }
 
     /* At this point we know that we've hit the overall bounding box */
 
-    VJOIN1(minpt, isect->r.r_pt, isect->r.r_min, isect->r.r_dir);
-    VJOIN1(maxpt, isect->r.r_pt, isect->r.r_max, isect->r.r_dir);
+    VJOIN1(minpt, r->r_pt, r->r_min, r->r_dir);
+    VJOIN1(maxpt, r->r_pt, r->r_max, r->r_dir);
+    /* We could do the following:
+     *
+     * however, we only need the Z values now, and benchmarking show
+     * that this is an expensive
+     */
     if (RT_G_DEBUG & DEBUG_HF) {
 
 	stom = &isect->dsp->dsp_i.dsp_stom[0];
 
+	bu_log("hit b-box ");
 	fp = draw_dsp_bb(&plotnum, dsp_bb, isect->dsp, 200, 200, 100);
 
 	pl_color(fp, 150, 150, 255);
@@ -2162,20 +2270,22 @@ isect_ray_dsp_bb(struct isect_stuff *isect, struct dsp_bb *dsp_bb)
     /* if both hits are UNDER the top of the "foundation" pillar, we can
      * just add a segment for that range and return
      */
+    min_z = dsp_bb->dspb_rpp.dsp_min[Z];
+
     if (minpt[Z] < min_z && maxpt[Z] < min_z) {
 	/* add hit segment */
 	struct hit seg_in, seg_out;
 
 	seg_in.hit_magic = RT_HIT_MAGIC;
-	seg_in.hit_dist = isect->r.r_min;
+	seg_in.hit_dist = r->r_min;
 	VMOVE(seg_in.hit_point, minpt);
 	VMOVE(seg_in.hit_normal, dsp_pl[isect->dmin]);
-	    /* hit_priv   */
-	    /* hit_private */
+	/* hit_priv   */
+	/* hit_private */
 	seg_in.hit_surfno = isect->dmin;
-	    /* hit_rayp */
+	/* hit_rayp */
 
-	seg_out.hit_dist = isect->r.r_max;
+	seg_out.hit_dist = r->r_max;
 
 	VMOVE(seg_out.hit_point, minpt);
 	VMOVE(seg_out.hit_normal, dsp_pl[isect->dmax]);
@@ -2211,9 +2321,16 @@ isect_ray_dsp_bb(struct isect_stuff *isect, struct dsp_bb *dsp_bb)
 	int i;
 	/* there are children, so we recurse */
 	i = dsp_bb->dspb_ch_dim[X] * dsp_bb->dspb_ch_dim[Y] - 1;
+	if (RT_G_DEBUG & DEBUG_HF)
+	    bu_log_indent_delta(4);
+
 	for ( ; i >= 0 ; i--)
 	    isect_ray_dsp_bb(isect, dsp_bb->dspb_children[i]);
-	return;
+
+	if (RT_G_DEBUG & DEBUG_HF)
+	    bu_log_indent_delta(-4);
+
+	return 0;
 
 #endif
     }
@@ -2251,15 +2368,15 @@ isect_ray_dsp_bb(struct isect_stuff *isect, struct dsp_bb *dsp_bb)
 	/* hit rpp */
 	struct hit in_hit, out_hit;
 
-	VJOIN1(minpt, isect->r.r_pt, isect->r.r_min, isect->r.r_dir);
-	VJOIN1(maxpt, isect->r.r_pt, isect->r.r_max, isect->r.r_dir);
+	VJOIN1(minpt, r->r_pt, r->r_min, r->r_dir);
+	VJOIN1(maxpt, r->r_pt, r->r_max, r->r_dir);
 
-	in_hit.hit_dist = isect->r.r_min;
+	in_hit.hit_dist = r->r_min;
 	in_hit.hit_surfno = isect->dmin;
 	VMOVE(in_hit.hit_point, minpt);
 	VMOVE(in_hit.hit_normal, dsp_pl[isect->dmin]);
 
-	out_hit.hit_dist = isect->r.r_max;
+	out_hit.hit_dist = r->r_max;
 	out_hit.hit_surfno = isect->dmax;
 	VMOVE(out_hit.hit_point, maxpt);
 	VMOVE(out_hit.hit_normal, dsp_pl[isect->dmax]);
@@ -2284,138 +2401,137 @@ isect_ray_dsp_bb(struct isect_stuff *isect, struct dsp_bb *dsp_bb)
  */
 int
 rt_dsp_shot( stp, rp, ap, seghead )
-struct soltab		*stp;
-register struct xray	*rp;
-struct application	*ap;
-struct seg		*seghead;
+     struct soltab		*stp;
+     register struct xray	*rp;
+     struct application	*ap;
+     struct seg		*seghead;
 {
-	register struct dsp_specific *dsp =
-		(struct dsp_specific *)stp->st_specific;
-	register struct seg *segp;
-	int	i;
-	vect_t	dir;	/* temp storage */
-	vect_t	v;
-	struct isect_stuff isect;
+    register struct dsp_specific *dsp =
+	(struct dsp_specific *)stp->st_specific;
+    register struct seg *segp;
+    int	i;
+    vect_t	dir;	/* temp storage */
+    vect_t	v;
+    struct isect_stuff isect;
 
-	RT_DSP_CK_MAGIC(dsp);
-	BU_CK_VLS(&dsp->dsp_i.dsp_name);
+    RT_DSP_CK_MAGIC(dsp);
+    BU_CK_VLS(&dsp->dsp_i.dsp_name);
 
-	switch (dsp->dsp_i.dsp_datasrc) {
-	case RT_DSP_SRC_V4_FILE: 
-	case RT_DSP_SRC_FILE:
-	    BU_CK_MAPPED_FILE(dsp->dsp_i.dsp_mp);
-	    break;
-	case RT_DSP_SRC_OBJ:
-	    break;
+    switch (dsp->dsp_i.dsp_datasrc) {
+    case RT_DSP_SRC_V4_FILE: 
+    case RT_DSP_SRC_FILE:
+	BU_CK_MAPPED_FILE(dsp->dsp_i.dsp_mp);
+	break;
+    case RT_DSP_SRC_OBJ:
+	break;
+    }
+
+    /* 
+     * map ray into the coordinate system of the dsp 
+     */
+    MAT4X3PNT(isect.r.r_pt, dsp->dsp_i.dsp_mtos, rp->r_pt);
+    MAT4X3VEC(dir, dsp->dsp_i.dsp_mtos, rp->r_dir);
+    VMOVE(isect.r.r_dir, dir);
+    VUNITIZE(isect.r.r_dir);
+
+    /* wrap a bunch of things together */
+    isect.ap = ap;
+    isect.stp = stp;
+    isect.dsp = (struct dsp_specific *)stp->st_specific;
+    isect.tol = &ap->a_rt_i->rti_tol;
+    VINVDIR(isect.inv_dir, isect.r.r_dir);
+    BU_LIST_INIT(&isect.seglist);
+
+
+    if (RT_G_DEBUG & DEBUG_HF) {
+	bu_log("rt_dsp_shot(pt:(%g %g %g)\n\tdir[%g]:(%g %g %g))\n    pixel(%d,%d)\n",
+	       V3ARGS(rp->r_pt),
+	       MAGNITUDE(rp->r_dir),
+	       V3ARGS(rp->r_dir),
+	       ap->a_x, ap->a_y);
+
+	bn_mat_print("mtos", dsp->dsp_i.dsp_mtos);
+	bu_log("Solid space ray pt:(%g %g %g)\n", V3ARGS(isect.r.r_pt));
+	bu_log("\tdir[%g]: [%g %g %g]\n\tunit_dir(%g %g %g)\n",
+	       MAGNITUDE(dir),
+	       V3ARGS(dir),
+	       V3ARGS(isect.r.r_dir));
+    }
+
+    /* We look at the topmost layer of the bounding-box tree and
+     * make sure that it has dimension 1.  Otherwise, something is wrong
+     */
+    if (isect.dsp->layer[isect.dsp->layers-1].dim[X] != 1 ||
+	isect.dsp->layer[isect.dsp->layers-1].dim[Y] != 1) {
+	bu_log("%s:%d how do i find the topmost layer?\n",
+	       __FILE__, __LINE__);
+	bu_bomb("");
+    }
+
+
+    /* intersect the ray with the bounding rpps */
+    (void)isect_ray_dsp_bb(&isect, isect.dsp->layer[isect.dsp->layers-1].p);
+
+    /* if we missed it all, give up now */
+    if (BU_LIST_IS_EMPTY(&isect.seglist))
+	return 0;
+
+    /* map hit distances back to model space */
+    i = 0;
+    for (BU_LIST_FOR(segp, seg, &isect.seglist)) {
+	i += 2;
+	if (RT_G_DEBUG & DEBUG_HF) {
+	    bu_log("solid in:%6g out:%6g\t",
+		   segp->seg_in.hit_dist,
+		   segp->seg_out.hit_dist);
 	}
 
-	/* 
-	 * map ray into the coordinate system of the dsp 
-	 */
-	MAT4X3PNT(isect.r.r_pt, dsp->dsp_i.dsp_mtos, rp->r_pt);
-	MAT4X3VEC(dir, dsp->dsp_i.dsp_mtos, rp->r_dir);
-	VMOVE(isect.r.r_dir, dir);
-	VUNITIZE(isect.r.r_dir);
+	VSCALE(dir, isect.r.r_dir, segp->seg_in.hit_dist);
+	MAT4X3VEC(v, dsp->dsp_i.dsp_stom, dir)
+	    segp->seg_in.hit_dist = MAGNITUDE(v);
+	if (VDOT(v, rp->r_dir) < 0.0) segp->seg_in.hit_dist *= -1.0;
 
-	/* wrap a bunch of things together */
-	isect.ap = ap;
-	isect.stp = stp;
-	isect.dsp = (struct dsp_specific *)stp->st_specific;
-	isect.tol = &ap->a_rt_i->rti_tol;
-	VINVDIR(isect.inv_dir, isect.r.r_dir);
-	BU_LIST_INIT(&isect.seglist);
+	VSCALE(dir, isect.r.r_dir, segp->seg_out.hit_dist);
+	MAT4X3VEC(v, dsp->dsp_i.dsp_stom, dir)
+	    segp->seg_out.hit_dist = MAGNITUDE(v);
+	if (VDOT(v, rp->r_dir) < 0.0) segp->seg_out.hit_dist *= -1.0;
 
+	if (segp->seg_in.hit_dist > segp->seg_out.hit_dist) {
+	    bu_log("Pixel %d %d seg inside out %g %g\n",
+		   ap->a_x, ap->a_y,
+		   segp->seg_in.hit_dist,
+		   segp->seg_out.hit_dist);
+	}
+
+	MAT4X3VEC(v, dsp->dsp_i.dsp_mtos, segp->seg_in.hit_normal);
+	VMOVE(segp->seg_in.hit_normal, v);
+	VUNITIZE( segp->seg_in.hit_normal );
+
+	MAT4X3VEC(v, dsp->dsp_i.dsp_mtos, segp->seg_out.hit_normal);
+	VMOVE(segp->seg_out.hit_normal, v);
+	VUNITIZE( segp->seg_out.hit_normal );
 
 	if (RT_G_DEBUG & DEBUG_HF) {
-	    bu_log("rt_dsp_shot(pt:(%g %g %g)\n\tdir[%g]:(%g %g %g))\n    pixel(%d,%d)\n",
-			V3ARGS(rp->r_pt),
-			MAGNITUDE(rp->r_dir),
-			V3ARGS(rp->r_dir),
-			ap->a_x, ap->a_y);
-
-	    bn_mat_print("mtos", dsp->dsp_i.dsp_mtos);
-	    bu_log("Solid space ray pt:(%g %g %g)\n", V3ARGS(isect.r.r_pt));
-	    bu_log("\tdir[%g]: [%g %g %g]\n\tunit_dir(%g %g %g)\n",
-			MAGNITUDE(dir),
-			V3ARGS(dir),
-			V3ARGS(isect.r.r_dir));
+	    bu_log("model in:%6g out:%6g\n",
+		   segp->seg_in.hit_dist,
+		   segp->seg_out.hit_dist);
 	}
+    }
 
-	/* We look at the topmost layer of the bounding-box tree and
-	 * make sure that it has dimension 1.  Otherwise, something is wrong
-	 */
-	if (isect.dsp->layer[isect.dsp->layers-1].dim[X] != 1 ||
-	    isect.dsp->layer[isect.dsp->layers-1].dim[Y] != 1) {
-	    bu_log("%s:%d how do i find the topmost layer?\n",
-		   __FILE__, __LINE__);
-	    bu_bomb("");
-	}
+    if (RT_G_DEBUG & DEBUG_HF) {
+	double NdotD;
+	double d;
+	static const plane_t plane = {0.0, 0.0, -1.0, 0.0};
 
+	NdotD = VDOT(plane, rp->r_dir);
+	d = - ( (VDOT(plane, rp->r_pt) - plane[H]) / NdotD);	
+	bu_log("rp -> Z=0 dist: %g\n", d);
+    }
 
-	/* intersect the ray with the bounding rpps */
-	(void)isect_ray_dsp_bb(&isect, isect.dsp->layer[isect.dsp->layers-1].p);
+    /* transfer list of hitpoints */
+    BU_LIST_APPEND_LIST( &(seghead->l), &isect.seglist);
 
-
-	/* if we missed it all, give up now */
-	if (BU_LIST_IS_EMPTY(&isect.seglist))
-		return 0;
-
-	/* map hit distances back to model space */
-	i = 0;
-	for (BU_LIST_FOR(segp, seg, &isect.seglist)) {
-		i += 2;
-		if (RT_G_DEBUG & DEBUG_HF) {
-			bu_log("solid in:%6g out:%6g\t",
-				segp->seg_in.hit_dist,
-				segp->seg_out.hit_dist);
-		}
-
-		VSCALE(dir, isect.r.r_dir, segp->seg_in.hit_dist);
-		MAT4X3VEC(v, dsp->dsp_i.dsp_stom, dir)
-		segp->seg_in.hit_dist = MAGNITUDE(v);
-		if (VDOT(v, rp->r_dir) < 0.0) segp->seg_in.hit_dist *= -1.0;
-
-		VSCALE(dir, isect.r.r_dir, segp->seg_out.hit_dist);
-		MAT4X3VEC(v, dsp->dsp_i.dsp_stom, dir)
-		segp->seg_out.hit_dist = MAGNITUDE(v);
-		if (VDOT(v, rp->r_dir) < 0.0) segp->seg_out.hit_dist *= -1.0;
-
-		if (segp->seg_in.hit_dist > segp->seg_out.hit_dist) {
-			bu_log("Pixel %d %d seg inside out %g %g\n",
-				ap->a_x, ap->a_y,
-				segp->seg_in.hit_dist,
-				segp->seg_out.hit_dist);
-		}
-
-		MAT4X3VEC(v, dsp->dsp_i.dsp_mtos, segp->seg_in.hit_normal);
-		VMOVE(segp->seg_in.hit_normal, v);
-		VUNITIZE( segp->seg_in.hit_normal );
-
-		MAT4X3VEC(v, dsp->dsp_i.dsp_mtos, segp->seg_out.hit_normal);
-		VMOVE(segp->seg_out.hit_normal, v);
-		VUNITIZE( segp->seg_out.hit_normal );
-
-		if (RT_G_DEBUG & DEBUG_HF) {
-			bu_log("model in:%6g out:%6g\n",
-			segp->seg_in.hit_dist,
-			segp->seg_out.hit_dist);
-		}
-	}
-
-	if (RT_G_DEBUG & DEBUG_HF) {
-		double NdotD;
-		double d;
-		static const plane_t plane = {0.0, 0.0, -1.0, 0.0};
-
-		NdotD = VDOT(plane, rp->r_dir);
-		d = - ( (VDOT(plane, rp->r_pt) - plane[H]) / NdotD);	
-		bu_log("rp -> Z=0 dist: %g\n", d);
-	}
-
-	/* transfer list of hitpoints */
-	BU_LIST_APPEND_LIST( &(seghead->l), &isect.seglist);
-
-	return i;
+    return i;
 }
 
 #define RT_DSP_SEG_MISS(SEG)	(SEG).seg_stp=RT_SOLTAB_NULL
@@ -2427,16 +2543,16 @@ struct seg		*seghead;
  */
 void
 rt_dsp_vshot( stp, rp, segp, n, ap )
-struct soltab	       *stp[]; /* An array of solid pointers */
-struct xray		*rp[]; /* An array of ray pointers */
-struct  seg            segp[]; /* array of segs (results returned) */
-int		  	    n; /* Number of ray/object pairs */
-struct application	*ap;
+     struct soltab	       *stp[]; /* An array of solid pointers */
+     struct xray		*rp[]; /* An array of ray pointers */
+     struct  seg            segp[]; /* array of segs (results returned) */
+     int		  	    n; /* Number of ray/object pairs */
+     struct application	*ap;
 {
-	if (RT_G_DEBUG & DEBUG_HF)
-		bu_log("rt_dsp_vshot()\n");
+    if (RT_G_DEBUG & DEBUG_HF)
+	bu_log("rt_dsp_vshot()\n");
 
-	(void)rt_vstub( stp, rp, segp, n, ap );
+    (void)rt_vstub( stp, rp, segp, n, ap );
 }
 
 /***********************************************************************
@@ -2446,58 +2562,58 @@ struct application	*ap;
  */
 static void
 compute_normal_at_gridpoint(N, dsp, x, y, fd, bool)
-vect_t N;
-struct dsp_specific *dsp;
-int x, y;
-FILE *fd;
-int bool;
+     vect_t N;
+     struct dsp_specific *dsp;
+     int x, y;
+     FILE *fd;
+     int bool;
 {
-	/*  Gridpoint specified is "B" we compute normal by taking the
-	 *  cross product of the vectors  A->C, D->E
-	 *
-	 * 		E
-	 *
-	 *		|
-	 *
-	 *	A   -	B   -	C
-	 *
-	 *		|
-	 *
-	 *		D
-	 */
+    /*  Gridpoint specified is "B" we compute normal by taking the
+     *  cross product of the vectors  A->C, D->E
+     *
+     * 		E
+     *
+     *		|
+     *
+     *	A   -	B   -	C
+     *
+     *		|
+     *
+     *		D
+     */
 	
-	point_t A, C, D, E, tmp;
-	vect_t Vac, Vde;
+    point_t A, C, D, E, tmp;
+    vect_t Vac, Vde;
 
-	if (x == 0) {	VSET(tmp, x, y, DSP(dsp, x, y) );	}
-	else {		VSET(tmp, x-1, y, DSP(dsp, x-1, y) );	}
-	MAT4X3PNT(A, dsp->dsp_i.dsp_stom, tmp);
+    if (x == 0) {	VSET(tmp, x, y, DSP(&dsp->dsp_i, x, y) );	}
+    else {		VSET(tmp, x-1, y, DSP(&dsp->dsp_i, x-1, y) );	}
+    MAT4X3PNT(A, dsp->dsp_i.dsp_stom, tmp);
 
-	if (x >= XSIZ(dsp)) {	VSET(tmp, x, y,  DSP(dsp, x, y) ); } 
-	else {			VSET(tmp, x+1, y,  DSP(dsp, x+1, y) );	}
-	MAT4X3PNT(C, dsp->dsp_i.dsp_stom, tmp);
+    if (x >= XSIZ(dsp)) {	VSET(tmp, x, y,  DSP(&dsp->dsp_i, x, y) ); } 
+    else {			VSET(tmp, x+1, y,  DSP(&dsp->dsp_i, x+1, y) );	}
+    MAT4X3PNT(C, dsp->dsp_i.dsp_stom, tmp);
 
 
-	if (y == 0) {	VSET(tmp, x, y, DSP(dsp, x, y) ); }
-	else {		VSET(tmp, x, y-1, DSP(dsp, x, y-1) );	}
-	MAT4X3PNT(D, dsp->dsp_i.dsp_stom, tmp);
+    if (y == 0) {	VSET(tmp, x, y, DSP(&dsp->dsp_i, x, y) ); }
+    else {		VSET(tmp, x, y-1, DSP(&dsp->dsp_i, x, y-1) );	}
+    MAT4X3PNT(D, dsp->dsp_i.dsp_stom, tmp);
 
-	if (y >= YSIZ(dsp)) {	VSET(tmp, x, y, DSP(dsp, x, y) ); }
-	else {			VSET(tmp, x, y+1, DSP(dsp, x, y+1) );	}
-	MAT4X3PNT(E, dsp->dsp_i.dsp_stom, tmp);
+    if (y >= YSIZ(dsp)) {	VSET(tmp, x, y, DSP(&dsp->dsp_i, x, y) ); }
+    else {			VSET(tmp, x, y+1, DSP(&dsp->dsp_i, x, y+1) );	}
+    MAT4X3PNT(E, dsp->dsp_i.dsp_stom, tmp);
 
-	if (fd && bool) {
-		pl_color(fd, 220, 220, 90);
-		pdv_3line(fd, A, C);
-		pdv_3line(fd, D, E);
-	}
+    if (fd && bool) {
+	pl_color(fd, 220, 220, 90);
+	pdv_3line(fd, A, C);
+	pdv_3line(fd, D, E);
+    }
 
-	VSUB2(Vac, C, A);
-	VSUB2(Vde, E, D);
+    VSUB2(Vac, C, A);
+    VSUB2(Vde, E, D);
 
-	VCROSS(N, Vac, Vde);
+    VCROSS(N, Vac, Vde);
 
-	VUNITIZE(N);
+    VUNITIZE(N);
 }
 
 /*
@@ -2507,9 +2623,9 @@ int bool;
  */
 void
 rt_dsp_norm( hitp, stp, rp )
-register struct hit	*hitp;
-struct soltab		*stp;
-register struct xray	*rp;
+     register struct hit	*hitp;
+     struct soltab		*stp;
+     register struct xray	*rp;
 {
     vect_t N, t, tmp, A, B, C, D;
     char buf[32];
@@ -2570,16 +2686,15 @@ register struct xray	*rp;
 
     if (RT_G_DEBUG & DEBUG_HF) {
 	bu_semaphore_acquire( BU_SEM_SYSCALL);
-	sprintf(buf, "dsp%02d.pl", plot_file_num++);
+	sprintf(buf, "dsp_gourand%02d.pl", plot_file_num++);
+	fd=fopen(buf, "w");
 	bu_semaphore_release( BU_SEM_SYSCALL);
 
-	bu_log("plotting normals in %s\n", buf);
-	bu_semaphore_acquire( BU_SEM_SYSCALL);
-	if ((fd=fopen(buf, "w")) == (FILE *)NULL) {
-	    bu_semaphore_release( BU_SEM_SYSCALL);
-	    bu_bomb("Couldn't open plot file\n");
+	if (fd == (FILE *)NULL) {
+	    bu_log("Couldn't open plot file \"%s\"\n", buf);
+	    bu_bomb("");
 	} else {
-	    bu_log("plotting %s\n", buf);
+	    bu_log("plotting normals in %s\n", buf);
 	}
     }
 
@@ -2607,27 +2722,26 @@ register struct xray	*rp;
 	/* Plot the normals we just got */
 	pl_color(fd, 220, 220, 90);
 
-	VSET(tmp, x,   y,   DSP(dsp, x,   y));
+	VSET(tmp, x,   y,   DSP(&dsp->dsp_i, x,   y));
 	MAT4X3PNT(A, dsp->dsp_i.dsp_stom, tmp);
 	VJOIN1(tmp, A, len, Anorm);
 	pdv_3line(fd, A, tmp);
 
-	VSET(tmp, x+1, y,   DSP(dsp, x+1, y));
+	VSET(tmp, x+1, y,   DSP(&dsp->dsp_i, x+1, y));
 	MAT4X3PNT(B, dsp->dsp_i.dsp_stom, tmp);
 	VJOIN1(tmp, B, len, Bnorm);
 	pdv_3line(fd, B, tmp);
 
-	VSET(tmp, x+1, y+1, DSP(dsp, x+1, y+1));
+	VSET(tmp, x+1, y+1, DSP(&dsp->dsp_i, x+1, y+1));
 	MAT4X3PNT(D, dsp->dsp_i.dsp_stom, tmp);
 	VJOIN1(tmp, D, len, Dnorm);
 	pdv_3line(fd, D, tmp);
 
-	VSET(tmp, x,   y+1, DSP(dsp, x,   y+1));
+	VSET(tmp, x,   y+1, DSP(&dsp->dsp_i, x,   y+1));
 	MAT4X3PNT(C, dsp->dsp_i.dsp_stom, tmp);
 	VJOIN1(tmp, C, len, Cnorm);
 	pdv_3line(fd, C, tmp);
 
-	bu_semaphore_release( BU_SEM_SYSCALL);
     }
 
     /* transform the hit point into DSP space for determining interpolation */
@@ -2695,15 +2809,13 @@ register struct xray	*rp;
     VMOVE(hitp->hit_normal, N);
 
     if (RT_G_DEBUG & DEBUG_HF) {
-	if (fd) {
-	    bu_semaphore_acquire( BU_SEM_SYSCALL);
 	    pl_color(fd, 255, 255, 255);
 	    VJOIN1(tmp, hitp->hit_point, len, hitp->hit_normal);
 	    pdv_3line(fd, hitp->hit_point, tmp);
 
+	    bu_semaphore_acquire( BU_SEM_SYSCALL);
 	    fclose(fd);
 	    bu_semaphore_release( BU_SEM_SYSCALL);
-	}
     }
 }
 
@@ -2714,18 +2826,18 @@ register struct xray	*rp;
  */
 void
 rt_dsp_curve( cvp, hitp, stp )
-register struct curvature *cvp;
-register struct hit	*hitp;
-struct soltab		*stp;
+     register struct curvature *cvp;
+     register struct hit	*hitp;
+     struct soltab		*stp;
 {
 
-	if (RT_G_DEBUG & DEBUG_HF)
-		bu_log("rt_dsp_curve()\n");
+    if (RT_G_DEBUG & DEBUG_HF)
+	bu_log("rt_dsp_curve()\n");
 
- 	cvp->crv_c1 = cvp->crv_c2 = 0;
+    cvp->crv_c1 = cvp->crv_c2 = 0;
 
-	/* any tangent direction */
- 	bn_vec_ortho( cvp->crv_pdir, hitp->hit_normal );
+    /* any tangent direction */
+    bn_vec_ortho( cvp->crv_pdir, hitp->hit_normal );
 }
 
 /*
@@ -2738,95 +2850,95 @@ struct soltab		*stp;
  */
 void
 rt_dsp_uv( ap, stp, hitp, uvp )
-struct application	*ap;
-struct soltab		*stp;
-register struct hit	*hitp;
-register struct uvcoord	*uvp;
+     struct application	*ap;
+     struct soltab		*stp;
+     register struct hit	*hitp;
+     register struct uvcoord	*uvp;
 {
-	register struct dsp_specific *dsp =
-		(struct dsp_specific *)stp->st_specific;
-	point_t pt;
-	vect_t tmp;
-	double r;
-	fastf_t min_r_U, min_r_V;
-	vect_t norm;
-	vect_t rev_dir;
-	fastf_t dot_N;
-	vect_t UV_dir;
-	vect_t U_dir, V_dir;
-	fastf_t U_len, V_len;
-	double one_over_len;
+    register struct dsp_specific *dsp =
+	(struct dsp_specific *)stp->st_specific;
+    point_t pt;
+    vect_t tmp;
+    double r;
+    fastf_t min_r_U, min_r_V;
+    vect_t norm;
+    vect_t rev_dir;
+    fastf_t dot_N;
+    vect_t UV_dir;
+    vect_t U_dir, V_dir;
+    fastf_t U_len, V_len;
+    double one_over_len;
 
-	MAT4X3PNT(pt, dsp->dsp_i.dsp_mtos, hitp->hit_point);
+    MAT4X3PNT(pt, dsp->dsp_i.dsp_mtos, hitp->hit_point);
 
-	/* compute U, V */
-	uvp->uv_u = pt[X] / (double)XSIZ(dsp);
-	CLAMP(uvp->uv_u, 0.0, 1.0);
+    /* compute U, V */
+    uvp->uv_u = pt[X] / (double)XSIZ(dsp);
+    CLAMP(uvp->uv_u, 0.0, 1.0);
 
-	uvp->uv_v = pt[Y] / (double)YSIZ(dsp);
-	CLAMP(uvp->uv_v, 0.0, 1.0);
+    uvp->uv_v = pt[Y] / (double)YSIZ(dsp);
+    CLAMP(uvp->uv_v, 0.0, 1.0);
 
 
-	/* du, dv indicate the extent of the ray radius in UV coordinates.
-	 * To compute this, transform unit vectors from solid space to model
-	 * space.  We remember the length of the resultant vectors and then
-	 * unitize them to get u,v directions in model coordinate space.
-	 * 
+    /* du, dv indicate the extent of the ray radius in UV coordinates.
+     * To compute this, transform unit vectors from solid space to model
+     * space.  We remember the length of the resultant vectors and then
+     * unitize them to get u,v directions in model coordinate space.
+     * 
 
-	 */
-	VSET( tmp, XSIZ(dsp), 0.0, 0.0 )
+     */
+    VSET( tmp, XSIZ(dsp), 0.0, 0.0 )
 	MAT4X3VEC( U_dir,  dsp->dsp_i.dsp_stom, tmp )
 	U_len = MAGNITUDE( U_dir );
-	one_over_len = 1.0/U_len;
-	VSCALE( U_dir, U_dir, one_over_len )
+    one_over_len = 1.0/U_len;
+    VSCALE( U_dir, U_dir, one_over_len )
 
 	VSET( tmp, 0.0, YSIZ(dsp), 0.0 )
 	MAT4X3VEC( V_dir,  dsp->dsp_i.dsp_stom, tmp )
 	V_len = MAGNITUDE( V_dir );
-	one_over_len = 1.0/V_len;
-	VSCALE( V_dir, V_dir, one_over_len )
+    one_over_len = 1.0/V_len;
+    VSCALE( V_dir, V_dir, one_over_len )
 
 	/* divide the hit-point radius by the U/V unit length distance */
 	r = ap->a_rbeam + ap->a_diverge * hitp->hit_dist;
-	min_r_U = r / U_len;
-	min_r_V = r / V_len;
+    min_r_U = r / U_len;
+    min_r_V = r / V_len;
 
-	/* compute UV_dir, a vector in the plane of the hit point (surface)
-	 * which points in the anti-rayward direction
-	 */
-	VREVERSE( rev_dir, ap->a_ray.r_dir )
+    /* compute UV_dir, a vector in the plane of the hit point (surface)
+     * which points in the anti-rayward direction
+     */
+    VREVERSE( rev_dir, ap->a_ray.r_dir )
 	VMOVE( norm, hitp->hit_normal )
 	dot_N = VDOT( rev_dir, norm );
-	VJOIN1( UV_dir, rev_dir, -dot_N, norm )
+    VJOIN1( UV_dir, rev_dir, -dot_N, norm )
 	VUNITIZE( UV_dir )
 
 	if (NEAR_ZERO( dot_N, SMALL_FASTF ) ) {
-		/* ray almost perfectly 90 degrees to surface */
-		uvp->uv_du = 0.5;
-		uvp->uv_dv = 0.5;
+	    /* ray almost perfectly 90 degrees to surface */
+	    uvp->uv_du = 0.5;
+	    uvp->uv_dv = 0.5;
 	} else {
-		/* somehow this computes the extent of U and V in the radius */
-		uvp->uv_du = (r / U_len) * VDOT( UV_dir, U_dir ) / dot_N;
-		uvp->uv_dv = (r / V_len) * VDOT( UV_dir, V_dir ) / dot_N;
+	    /* somehow this computes the extent of U and V in the radius */
+	    uvp->uv_du = (r / U_len) * VDOT( UV_dir, U_dir ) / dot_N;
+	    uvp->uv_dv = (r / V_len) * VDOT( UV_dir, V_dir ) / dot_N;
 	}
 
-	if (uvp->uv_du < 0.0 )
-		uvp->uv_du = -uvp->uv_du;
-	if (uvp->uv_du < min_r_U )
-		uvp->uv_du = min_r_U;
+    if (uvp->uv_du < 0.0 )
+	uvp->uv_du = -uvp->uv_du;
+    if (uvp->uv_du < min_r_U )
+	uvp->uv_du = min_r_U;
 
-	if (uvp->uv_dv < 0.0 )
-		uvp->uv_dv = -uvp->uv_dv;
-	if (uvp->uv_dv < min_r_V )
-		uvp->uv_dv = min_r_V;
+    if (uvp->uv_dv < 0.0 )
+	uvp->uv_dv = -uvp->uv_dv;
+    if (uvp->uv_dv < min_r_V )
+	uvp->uv_dv = min_r_V;
 
-	if (RT_G_DEBUG & DEBUG_HF)
-		bu_log("rt_dsp_uv(pt:%g,%g siz:%d,%d)\n U_len=%g V_len=%g\n r=%g rbeam=%g diverge=%g dist=%g\n u=%g v=%g du=%g dv=%g\n",
-			pt[X], pt[Y], XSIZ(dsp), YSIZ(dsp), 
-			U_len, V_len,
-			r, ap->a_rbeam, ap->a_diverge, hitp->hit_dist,
-			uvp->uv_u, uvp->uv_v,
-			uvp->uv_du, uvp->uv_dv);
+    if (RT_G_DEBUG & DEBUG_HF)
+	bu_log("rt_dsp_uv(pt:%g,%g siz:%d,%d)\n U_len=%g V_len=%g\n r=%g rbeam=%g diverge=%g dist=%g\n u=%g v=%g du=%g dv=%g\n",
+	       pt[X], pt[Y], XSIZ(dsp), YSIZ(dsp), 
+	       U_len, V_len,
+	       r, ap->a_rbeam, ap->a_diverge, hitp->hit_dist,
+	       uvp->uv_u, uvp->uv_v,
+	       uvp->uv_du, uvp->uv_dv);
 }
 
 /*
@@ -2834,26 +2946,26 @@ register struct uvcoord	*uvp;
  */
 void
 rt_dsp_free( stp )
-register struct soltab *stp;
+     register struct soltab *stp;
 {
-	register struct dsp_specific *dsp =
-		(struct dsp_specific *)stp->st_specific;
+    register struct dsp_specific *dsp =
+	(struct dsp_specific *)stp->st_specific;
 
-	if (RT_G_DEBUG & DEBUG_HF)
-		bu_log("rt_dsp_free()\n");
+    if (RT_G_DEBUG & DEBUG_HF)
+	bu_log("rt_dsp_free()\n");
 
-	switch (dsp->dsp_i.dsp_datasrc) {
-	case RT_DSP_SRC_V4_FILE: 
-	case RT_DSP_SRC_FILE:
-	    BU_CK_MAPPED_FILE(dsp->dsp_i.dsp_mp);
-	    bu_close_mapped_file(dsp->dsp_i.dsp_mp);
-	    break;
-	case RT_DSP_SRC_OBJ:
-	    break;
-	}
+    switch (dsp->dsp_i.dsp_datasrc) {
+    case RT_DSP_SRC_V4_FILE: 
+    case RT_DSP_SRC_FILE:
+	BU_CK_MAPPED_FILE(dsp->dsp_i.dsp_mp);
+	bu_close_mapped_file(dsp->dsp_i.dsp_mp);
+	break;
+    case RT_DSP_SRC_OBJ:
+	break;
+    }
 
 
-	bu_free( (char *)dsp, "dsp_specific" );
+    bu_free( (char *)dsp, "dsp_specific" );
 }
 
 /*
@@ -2862,10 +2974,10 @@ register struct soltab *stp;
 int
 rt_dsp_class()
 {
-	if (RT_G_DEBUG & DEBUG_HF)
-		bu_log("rt_dsp_class()\n");
+    if (RT_G_DEBUG & DEBUG_HF)
+	bu_log("rt_dsp_class()\n");
 
-	return(0);
+    return(0);
 }
 
 /*
@@ -2873,26 +2985,26 @@ rt_dsp_class()
  */
 int
 rt_dsp_plot( vhead, ip, ttol, tol )
-struct bu_list		*vhead;
-struct rt_db_internal	*ip;
-const struct rt_tess_tol *ttol;
-const struct bn_tol	*tol;
+     struct bu_list		*vhead;
+     struct rt_db_internal	*ip;
+     const struct rt_tess_tol *ttol;
+     const struct bn_tol	*tol;
 {
-	struct rt_dsp_internal	*dsp_ip =
-		(struct rt_dsp_internal *)ip->idb_ptr;
-	point_t m_pt;
-	point_t s_pt;
-	int x, y;
-	int step;
-	int xlim = dsp_ip->dsp_xcnt - 1;
-	int ylim = dsp_ip->dsp_ycnt - 1;
-	int xfudge, yfudge;
+    struct rt_dsp_internal	*dsp_ip =
+	(struct rt_dsp_internal *)ip->idb_ptr;
+    point_t m_pt;
+    point_t s_pt;
+    int x, y;
+    int step;
+    int xlim = dsp_ip->dsp_xcnt - 1;
+    int ylim = dsp_ip->dsp_ycnt - 1;
+    int xfudge, yfudge;
 
-	if (RT_G_DEBUG & DEBUG_HF)
-		bu_log("rt_dsp_plot()\n");
+    if (RT_G_DEBUG & DEBUG_HF)
+	bu_log("rt_dsp_plot()\n");
 
-	RT_CK_DB_INTERNAL(ip);
-	RT_DSP_CK_MAGIC(dsp_ip);
+    RT_CK_DB_INTERNAL(ip);
+    RT_DSP_CK_MAGIC(dsp_ip);
 
 
 #define MOVE() \
@@ -2904,134 +3016,134 @@ const struct bn_tol	*tol;
 	RT_ADD_VLIST( vhead, m_pt, BN_VLIST_LINE_DRAW )
 
 
-	/* Draw the Bottom */
-	VSETALL(s_pt, 0.0);
+    /* Draw the Bottom */
+    VSETALL(s_pt, 0.0);
+    MOVE();
+
+    s_pt[X] = xlim;
+    DRAW();
+
+    s_pt[Y] = ylim;
+    DRAW();
+
+    s_pt[X] = 0.0;
+    DRAW();
+
+    s_pt[Y] = 0.0;
+    DRAW();
+
+
+    /* Draw the corners */
+    s_pt[Z] = DSP(dsp_ip, 0, 0);
+    DRAW();
+
+    VSET(s_pt, xlim, 0.0, 0.0);
+    MOVE();
+    s_pt[Z] = DSP(dsp_ip, xlim, 0);
+    DRAW();
+
+
+    VSET(s_pt, xlim, ylim, 0.0);
+    MOVE();
+    s_pt[Z] = DSP(dsp_ip, xlim, ylim);
+    DRAW();
+
+    VSET(s_pt, 0.0, ylim, 0.0);
+    MOVE();
+    s_pt[Z] = DSP(dsp_ip, 0, ylim);
+    DRAW();
+
+
+    /* Draw the outside line of the top 
+     * We draw the four sides of the top at full resolution.
+     * This helps edge matching.
+     * The inside of the top, we draw somewhat coarser
+     */
+    for (y=0 ; y < dsp_ip->dsp_ycnt ; y += ylim ) {
+	VSET(s_pt, 0.0, y, DSP(dsp_ip, 0, y));
 	MOVE();
 
+	for (x=0 ; x < dsp_ip->dsp_xcnt ; x++) {
+	    s_pt[X] = x;
+	    s_pt[Z] = DSP(dsp_ip, x, y);
+	    DRAW();
+	}
+    }
+
+
+    for (x=0 ; x < dsp_ip->dsp_xcnt ; x += xlim ) {
+	VSET(s_pt, x, 0.0, DSP(dsp_ip, x, 0));
+	MOVE();
+
+	for (y=0 ; y < dsp_ip->dsp_ycnt ; y++) {
+	    s_pt[Y] = y;
+	    s_pt[Z] = DSP(dsp_ip, x, y);
+	    DRAW();
+	}
+    }
+
+    /* now draw the body of the top */
+    if (ttol->rel )  {
+	int	rstep;
+	rstep = dsp_ip->dsp_xcnt;
+	V_MAX( rstep, dsp_ip->dsp_ycnt );
+	step = (int)(ttol->rel * rstep);
+    } else { 
+	int goal = 10000;
+	goal -= 5;
+	goal -= 8 + 2 * (dsp_ip->dsp_xcnt+dsp_ip->dsp_ycnt);
+
+	if (goal <= 0) return 0;
+
+	/* Compute data stride based upon producing no more than 'goal' vectors */
+	step = ceil(
+		    sqrt( 2*(xlim)*(ylim) /
+			  (double)goal )
+		    );
+    }
+    if (step < 1 )  step = 1;
+
+
+    xfudge = (dsp_ip->dsp_xcnt % step + step) / 2 ;
+    yfudge = (dsp_ip->dsp_ycnt % step + step) / 2 ;
+
+    if (xfudge < 1) xfudge = 1;
+    if (yfudge < 1) yfudge = 1;
+
+    for (y=yfudge ; y < ylim ; y += step ) {
+	VSET(s_pt, 0.0, y, DSP(dsp_ip, 0, y));
+	MOVE();
+
+	for (x=xfudge ; x < xlim ; x+=step ) {
+	    s_pt[X] = x;
+	    s_pt[Z] = DSP(dsp_ip, x, y);
+	    DRAW();
+	}
+		
 	s_pt[X] = xlim;
+	s_pt[Z] = DSP(dsp_ip, xlim, y);
 	DRAW();
 
+    }
+
+    for (x=xfudge ; x < xlim ; x += step ) {
+	VSET(s_pt, x, 0.0, DSP(dsp_ip, x, 0));
+	MOVE();
+		
+	for (y=yfudge ; y < ylim ; y+=step) {
+	    s_pt[Y] = y;
+	    s_pt[Z] = DSP(dsp_ip, x, y);
+	    DRAW();
+	}
+		
 	s_pt[Y] = ylim;
+	s_pt[Z] = DSP(dsp_ip, x, ylim);
 	DRAW();
-
-	s_pt[X] = 0.0;
-	DRAW();
-
-	s_pt[Y] = 0.0;
-	DRAW();
-
-
-	/* Draw the corners */
-	s_pt[Z] = DSP(dsp_ip, 0, 0);
-	DRAW();
-
-	VSET(s_pt, xlim, 0.0, 0.0);
-	MOVE();
-	s_pt[Z] = DSP(dsp_ip, xlim, 0);
-	DRAW();
-
-
-	VSET(s_pt, xlim, ylim, 0.0);
-	MOVE();
-	s_pt[Z] = DSP(dsp_ip, xlim, ylim);
-	DRAW();
-
-	VSET(s_pt, 0.0, ylim, 0.0);
-	MOVE();
-	s_pt[Z] = DSP(dsp_ip, 0, ylim);
-	DRAW();
-
-
-	/* Draw the outside line of the top 
-	 * We draw the four sides of the top at full resolution.
-	 * This helps edge matching.
-	 * The inside of the top, we draw somewhat coarser
-	 */
-	for (y=0 ; y < dsp_ip->dsp_ycnt ; y += ylim ) {
-		VSET(s_pt, 0.0, y, DSP(dsp_ip, 0, y));
-		MOVE();
-
-		for (x=0 ; x < dsp_ip->dsp_xcnt ; x++) {
-			s_pt[X] = x;
-			s_pt[Z] = DSP(dsp_ip, x, y);
-			DRAW();
-		}
-	}
-
-
-	for (x=0 ; x < dsp_ip->dsp_xcnt ; x += xlim ) {
-		VSET(s_pt, x, 0.0, DSP(dsp_ip, x, 0));
-		MOVE();
-
-		for (y=0 ; y < dsp_ip->dsp_ycnt ; y++) {
-			s_pt[Y] = y;
-			s_pt[Z] = DSP(dsp_ip, x, y);
-			DRAW();
-		}
-	}
-
-	/* now draw the body of the top */
-	if (ttol->rel )  {
-		int	rstep;
-		rstep = dsp_ip->dsp_xcnt;
-		V_MAX( rstep, dsp_ip->dsp_ycnt );
-		step = (int)(ttol->rel * rstep);
-	} else { 
-		int goal = 10000;
-		goal -= 5;
-		goal -= 8 + 2 * (dsp_ip->dsp_xcnt+dsp_ip->dsp_ycnt);
-
-		if (goal <= 0) return 0;
-
-		/* Compute data stride based upon producing no more than 'goal' vectors */
-		step = ceil(
-			sqrt( 2*(xlim)*(ylim) /
-				(double)goal )
-			);
-	}
-	if (step < 1 )  step = 1;
-
-
-	xfudge = (dsp_ip->dsp_xcnt % step + step) / 2 ;
-	yfudge = (dsp_ip->dsp_ycnt % step + step) / 2 ;
-
-	if (xfudge < 1) xfudge = 1;
-	if (yfudge < 1) yfudge = 1;
-
-	for (y=yfudge ; y < ylim ; y += step ) {
-		VSET(s_pt, 0.0, y, DSP(dsp_ip, 0, y));
-		MOVE();
-
-		for (x=xfudge ; x < xlim ; x+=step ) {
-			s_pt[X] = x;
-			s_pt[Z] = DSP(dsp_ip, x, y);
-			DRAW();
-		}
-		
-		s_pt[X] = xlim;
-		s_pt[Z] = DSP(dsp_ip, xlim, y);
-		DRAW();
-
-	}
-
-	for (x=xfudge ; x < xlim ; x += step ) {
-		VSET(s_pt, x, 0.0, DSP(dsp_ip, x, 0));
-		MOVE();
-		
-		for (y=yfudge ; y < ylim ; y+=step) {
-			s_pt[Y] = y;
-			s_pt[Z] = DSP(dsp_ip, x, y);
-			DRAW();
-		}
-		
-		s_pt[Y] = ylim;
-		s_pt[Z] = DSP(dsp_ip, x, ylim);
-		DRAW();
-	}
+    }
 
 #undef MOVE
 #undef DRAW
-	return(0);
+    return(0);
 }
 
 /*
@@ -3043,22 +3155,22 @@ const struct bn_tol	*tol;
  */
 int
 rt_dsp_tess( r, m, ip, ttol, tol )
-struct nmgregion	**r;
-struct model		*m;
-struct rt_db_internal	*ip;
-const struct rt_tess_tol *ttol;
-const struct bn_tol	*tol;
+     struct nmgregion	**r;
+     struct model		*m;
+     struct rt_db_internal	*ip;
+     const struct rt_tess_tol *ttol;
+     const struct bn_tol	*tol;
 {
-	LOCAL struct rt_dsp_internal	*dsp_ip;
+    LOCAL struct rt_dsp_internal	*dsp_ip;
 
-	if (RT_G_DEBUG & DEBUG_HF)
-		bu_log("rt_dsp_tess()\n");
+    if (RT_G_DEBUG & DEBUG_HF)
+	bu_log("rt_dsp_tess()\n");
 
-	RT_CK_DB_INTERNAL(ip);
-	dsp_ip = (struct rt_dsp_internal *)ip->idb_ptr;
-	RT_DSP_CK_MAGIC(dsp_ip);
+    RT_CK_DB_INTERNAL(ip);
+    dsp_ip = (struct rt_dsp_internal *)ip->idb_ptr;
+    RT_DSP_CK_MAGIC(dsp_ip);
 
-	return(-1);
+    return(-1);
 }
 
 
@@ -3071,52 +3183,52 @@ const struct bn_tol	*tol;
  */
 static int
 get_file_data(struct rt_dsp_internal	*dsp_ip,
-	     struct rt_db_internal	*ip,
-	     const struct bu_external	*ep,
-	     register const mat_t	mat,
-	     const struct db_i		*dbip)
+	      struct rt_db_internal	*ip,
+	      const struct bu_external	*ep,
+	      register const mat_t	mat,
+	      const struct db_i		*dbip)
 {
-	struct bu_mapped_file		*mf;
-	int				count, in_cookie, out_cookie;
+    struct bu_mapped_file		*mf;
+    int				count, in_cookie, out_cookie;
 
 
-	/* get file */
-	mf = dsp_ip->dsp_mp = 
-		bu_open_mapped_file_with_path(dbip->dbi_filepath,
-			bu_vls_addr(&dsp_ip->dsp_name), "dsp");
-	if (!mf) {
-		bu_log("mapped file open failed\n");
-		return -1;
+    /* get file */
+    mf = dsp_ip->dsp_mp = 
+	bu_open_mapped_file_with_path(dbip->dbi_filepath,
+				      bu_vls_addr(&dsp_ip->dsp_name), "dsp");
+    if (!mf) {
+	bu_log("mapped file open failed\n");
+	return -1;
+    }
+
+    if (dsp_ip->dsp_mp->buflen != dsp_ip->dsp_xcnt*dsp_ip->dsp_ycnt*2) {
+	bu_log("DSP buffer wrong size");
+	return -1;
+    }
+
+    in_cookie = bu_cv_cookie("nus"); /* data is network unsigned short */
+    out_cookie = bu_cv_cookie("hus");
+
+    if ( bu_cv_optimize(in_cookie) != bu_cv_optimize(out_cookie) ) {
+	int got;
+	/* if we're on a little-endian machine we convert the
+	 * input file from network to host format
+	 */
+	count = dsp_ip->dsp_xcnt * dsp_ip->dsp_ycnt;
+	mf->apbuflen = count * sizeof(unsigned short);
+	mf->apbuf = bu_malloc(mf->apbuflen, "apbuf");
+
+	got = bu_cv_w_cookie(mf->apbuf, out_cookie, mf->apbuflen,
+			     mf->buf,    in_cookie, count);
+	if (got != count) {
+	    bu_log("got %d != count %d", got, count);
+	    bu_bomb("\n");
 	}
-
-	if (dsp_ip->dsp_mp->buflen != dsp_ip->dsp_xcnt*dsp_ip->dsp_ycnt*2) {
-		bu_log("DSP buffer wrong size");
-		return -1;
-	}
-
-	in_cookie = bu_cv_cookie("nus"); /* data is network unsigned short */
-	out_cookie = bu_cv_cookie("hus");
-
-	if ( bu_cv_optimize(in_cookie) != bu_cv_optimize(out_cookie) ) {
-		int got;
-		/* if we're on a little-endian machine we convert the
-		 * input file from network to host format
-		 */
-		count = dsp_ip->dsp_xcnt * dsp_ip->dsp_ycnt;
-		mf->apbuflen = count * sizeof(unsigned short);
-		mf->apbuf = bu_malloc(mf->apbuflen, "apbuf");
-
-		got = bu_cv_w_cookie(mf->apbuf, out_cookie, mf->apbuflen,
-				     mf->buf,    in_cookie, count);
-		if (got != count) {
-			bu_log("got %d != count %d", got, count);
-			bu_bomb("\n");
-		}
-		dsp_ip->dsp_buf = dsp_ip->dsp_mp->apbuf;
-	} else {
-		dsp_ip->dsp_buf = dsp_ip->dsp_mp->buf;
-	}
-	return 0;
+	dsp_ip->dsp_buf = dsp_ip->dsp_mp->apbuf;
+    } else {
+	dsp_ip->dsp_buf = dsp_ip->dsp_mp->buf;
+    }
+    return 0;
 }
 
 /*	G E T _ O B J _ D A T A
@@ -3130,28 +3242,28 @@ get_obj_data(struct rt_dsp_internal	*dsp_ip,
 	     register const mat_t	mat,
 	     const struct db_i		*dbip)
 {
-	struct rt_binunif_internal	*bip;
+    struct rt_binunif_internal	*bip;
 
-	BU_GETSTRUCT(dsp_ip->dsp_bip, rt_db_internal);
+    BU_GETSTRUCT(dsp_ip->dsp_bip, rt_db_internal);
 
-	if (rt_retrieve_binunif(dsp_ip->dsp_bip, dbip,
-				bu_vls_addr( &dsp_ip->dsp_name) ))
-		return -1;
+    if (rt_retrieve_binunif(dsp_ip->dsp_bip, dbip,
+			    bu_vls_addr( &dsp_ip->dsp_name) ))
+	return -1;
 
-	if (RT_G_DEBUG & DEBUG_HF)
-		bu_log("db_internal magic: 0x%08x  major: %d minor:%d\n",
-		       dsp_ip->dsp_bip->idb_magic,
-		       dsp_ip->dsp_bip->idb_major_type,
-		       dsp_ip->dsp_bip->idb_minor_type);
+    if (RT_G_DEBUG & DEBUG_HF)
+	bu_log("db_internal magic: 0x%08x  major: %d minor:%d\n",
+	       dsp_ip->dsp_bip->idb_magic,
+	       dsp_ip->dsp_bip->idb_major_type,
+	       dsp_ip->dsp_bip->idb_minor_type);
 
-	bip = dsp_ip->dsp_bip->idb_ptr;
+    bip = dsp_ip->dsp_bip->idb_ptr;
 
-	if (RT_G_DEBUG & DEBUG_HF)
-		bu_log("binunif magic: 0x%08x  type: %d count:%d data[0]:%u\n",
-		       bip->magic, bip->type, bip->count, bip->u.uint16[0]);
+    if (RT_G_DEBUG & DEBUG_HF)
+	bu_log("binunif magic: 0x%08x  type: %d count:%d data[0]:%u\n",
+	       bip->magic, bip->type, bip->count, bip->u.uint16[0]);
 
-	dsp_ip->dsp_buf = bip->u.uint16;
-	return 0;
+    dsp_ip->dsp_buf = bip->u.uint16;
+    return 0;
 }
 
 /*
@@ -3169,32 +3281,32 @@ dsp_get_data(struct rt_dsp_internal	*dsp_ip,
 	     register const mat_t	mat,
 	     const struct db_i		*dbip)
 {
-	mat_t				tmp;
+    mat_t				tmp;
 
-	/* Apply Modeling transform */
-	MAT_COPY(tmp, dsp_ip->dsp_stom);
-	bn_mat_mul(dsp_ip->dsp_stom, mat, tmp);
+    /* Apply Modeling transform */
+    MAT_COPY(tmp, dsp_ip->dsp_stom);
+    bn_mat_mul(dsp_ip->dsp_stom, mat, tmp);
 	
-	bn_mat_inv(dsp_ip->dsp_mtos, dsp_ip->dsp_stom);
+    bn_mat_inv(dsp_ip->dsp_mtos, dsp_ip->dsp_stom);
 
-	switch (dsp_ip->dsp_datasrc) {
-	case RT_DSP_SRC_FILE:
-	case RT_DSP_SRC_V4_FILE:
-		if (RT_G_DEBUG & DEBUG_HF)
-			bu_log("getting data from file\n");
-		return get_file_data(dsp_ip, ip, ep, mat, dbip);
-		break;
-	case RT_DSP_SRC_OBJ:
-		if (RT_G_DEBUG & DEBUG_HF)
-			bu_log("getting data from object\n");
-		return get_obj_data(dsp_ip, ip, ep, mat, dbip);
-		break;
-	default:
-		bu_log("%s:%d Odd dsp data src '%c' s/b '%c' or '%c'\n", 
-		       __FILE__, __LINE__, dsp_ip->dsp_datasrc,
-		       RT_DSP_SRC_FILE, RT_DSP_SRC_OBJ);
-		return -1;
-	}
+    switch (dsp_ip->dsp_datasrc) {
+    case RT_DSP_SRC_FILE:
+    case RT_DSP_SRC_V4_FILE:
+	if (RT_G_DEBUG & DEBUG_HF)
+	    bu_log("getting data from file\n");
+	return get_file_data(dsp_ip, ip, ep, mat, dbip);
+	break;
+    case RT_DSP_SRC_OBJ:
+	if (RT_G_DEBUG & DEBUG_HF)
+	    bu_log("getting data from object\n");
+	return get_obj_data(dsp_ip, ip, ep, mat, dbip);
+	break;
+    default:
+	bu_log("%s:%d Odd dsp data src '%c' s/b '%c' or '%c'\n", 
+	       __FILE__, __LINE__, dsp_ip->dsp_datasrc,
+	       RT_DSP_SRC_FILE, RT_DSP_SRC_OBJ);
+	return -1;
+    }
 }
 
 /*
@@ -3205,14 +3317,14 @@ dsp_get_data(struct rt_dsp_internal	*dsp_ip,
  */
 int
 rt_dsp_import( ip, ep, mat, dbip )
-struct rt_db_internal		*ip;
-const struct bu_external	*ep;
-register const mat_t		mat;
-const struct db_i		*dbip;
+     struct rt_db_internal		*ip;
+     const struct bu_external	*ep;
+     register const mat_t		mat;
+     const struct db_i		*dbip;
 {
-	LOCAL struct rt_dsp_internal	*dsp_ip;
-	union record			*rp;
-	struct bu_vls			str;
+    LOCAL struct rt_dsp_internal	*dsp_ip;
+    union record			*rp;
+    struct bu_vls			str;
 
 
 
@@ -3226,64 +3338,64 @@ const struct db_i		*dbip;
 	ip->idb_ptr = (genptr_t)NULL; \
 	return -2
 
-	BU_CK_EXTERNAL( ep );
-	rp = (union record *)ep->ext_buf;
+    BU_CK_EXTERNAL( ep );
+    rp = (union record *)ep->ext_buf;
 
-	if (RT_G_DEBUG & DEBUG_HF)
-		bu_log("rt_dsp_import(%s)\n", rp->ss.ss_args);
-/*----------------------------------------------------------------------*/
-
-
-
-	/* Check record type */
-	if (rp->u_id != DBID_STRSOL )  {
-		bu_log("rt_dsp_import: defective record\n");
-		return(-1);
-	}
-
-	RT_CK_DB_INTERNAL( ip );
-	ip->idb_type = ID_DSP;
-	ip->idb_meth = &rt_functab[ID_DSP];
-	ip->idb_ptr = bu_malloc( sizeof(struct rt_dsp_internal), "rt_dsp_internal");
-	dsp_ip = (struct rt_dsp_internal *)ip->idb_ptr;
-	dsp_ip->magic = RT_DSP_INTERNAL_MAGIC;
-
-	/* set defaults */
-	/* XXX bu_struct_parse does not set the null?
-	 * memset(&dsp_ip->dsp_name[0], 0, DSP_NAME_LEN); 
-	 */
-	dsp_ip->dsp_xcnt = dsp_ip->dsp_ycnt = 0;
-
-	dsp_ip->dsp_smooth = 1;
-	MAT_IDN(dsp_ip->dsp_stom);
-	MAT_IDN(dsp_ip->dsp_mtos);
-
-	bu_vls_init( &str );
-	bu_vls_strcpy( &str, rp->ss.ss_args );
-	if (bu_struct_parse( &str, rt_dsp_parse, (char *)dsp_ip ) < 0) {
-		if (BU_VLS_IS_INITIALIZED( &str )) bu_vls_free( &str );
-		IMPORT_FAIL("parse error");
-	}
+    if (RT_G_DEBUG & DEBUG_HF)
+	bu_log("rt_dsp_import(%s)\n", rp->ss.ss_args);
+    /*----------------------------------------------------------------------*/
 
 
-	/* Validate parameters */
-	if (dsp_ip->dsp_xcnt == 0 || dsp_ip->dsp_ycnt == 0) {
-		IMPORT_FAIL("zero dimension on map");
-	}
-	
-	if (dsp_get_data(dsp_ip, ip, ep, mat, dbip)) {
-		IMPORT_FAIL("DSP data");
-	}
 
-	if (RT_G_DEBUG & DEBUG_HF) {
-		bu_vls_trunc(&str, 0);
-		bu_vls_struct_print( &str, rt_dsp_ptab, (char *)dsp_ip);
-		bu_log("  imported as(%s)\n", bu_vls_addr(&str));
+    /* Check record type */
+    if (rp->u_id != DBID_STRSOL )  {
+	bu_log("rt_dsp_import: defective record\n");
+	return(-1);
+    }
 
-	}
+    RT_CK_DB_INTERNAL( ip );
+    ip->idb_type = ID_DSP;
+    ip->idb_meth = &rt_functab[ID_DSP];
+    ip->idb_ptr = bu_malloc( sizeof(struct rt_dsp_internal), "rt_dsp_internal");
+    dsp_ip = (struct rt_dsp_internal *)ip->idb_ptr;
+    dsp_ip->magic = RT_DSP_INTERNAL_MAGIC;
 
+    /* set defaults */
+    /* XXX bu_struct_parse does not set the null?
+     * memset(&dsp_ip->dsp_name[0], 0, DSP_NAME_LEN); 
+     */
+    dsp_ip->dsp_xcnt = dsp_ip->dsp_ycnt = 0;
+
+    dsp_ip->dsp_smooth = 1;
+    MAT_IDN(dsp_ip->dsp_stom);
+    MAT_IDN(dsp_ip->dsp_mtos);
+
+    bu_vls_init( &str );
+    bu_vls_strcpy( &str, rp->ss.ss_args );
+    if (bu_struct_parse( &str, rt_dsp_parse, (char *)dsp_ip ) < 0) {
 	if (BU_VLS_IS_INITIALIZED( &str )) bu_vls_free( &str );
-	return(0);			/* OK */
+	IMPORT_FAIL("parse error");
+    }
+
+
+    /* Validate parameters */
+    if (dsp_ip->dsp_xcnt == 0 || dsp_ip->dsp_ycnt == 0) {
+	IMPORT_FAIL("zero dimension on map");
+    }
+	
+    if (dsp_get_data(dsp_ip, ip, ep, mat, dbip)) {
+	IMPORT_FAIL("DSP data");
+    }
+
+    if (RT_G_DEBUG & DEBUG_HF) {
+	bu_vls_trunc(&str, 0);
+	bu_vls_struct_print( &str, rt_dsp_ptab, (char *)dsp_ip);
+	bu_log("  imported as(%s)\n", bu_vls_addr(&str));
+
+    }
+
+    if (BU_VLS_IS_INITIALIZED( &str )) bu_vls_free( &str );
+    return(0);			/* OK */
 }
 
 
@@ -3294,50 +3406,50 @@ const struct db_i		*dbip;
  */
 int
 rt_dsp_export( ep, ip, local2mm, dbip )
-struct bu_external		*ep;
-const struct rt_db_internal	*ip;
-double				local2mm;
-const struct db_i		*dbip;
+     struct bu_external		*ep;
+     const struct rt_db_internal	*ip;
+     double				local2mm;
+     const struct db_i		*dbip;
 {
-	struct rt_dsp_internal	*dsp_ip;
-	struct rt_dsp_internal	dsp;
-	union record		*rec;
-	struct bu_vls		str;
+    struct rt_dsp_internal	*dsp_ip;
+    struct rt_dsp_internal	dsp;
+    union record		*rec;
+    struct bu_vls		str;
 
 
-	RT_CK_DB_INTERNAL(ip);
-	if (ip->idb_type != ID_DSP )  return(-1);
-	dsp_ip = (struct rt_dsp_internal *)ip->idb_ptr;
-	RT_DSP_CK_MAGIC(dsp_ip);
-	BU_CK_VLS(&dsp_ip->dsp_name);
+    RT_CK_DB_INTERNAL(ip);
+    if (ip->idb_type != ID_DSP )  return(-1);
+    dsp_ip = (struct rt_dsp_internal *)ip->idb_ptr;
+    RT_DSP_CK_MAGIC(dsp_ip);
+    BU_CK_VLS(&dsp_ip->dsp_name);
 
 
-	BU_CK_EXTERNAL(ep);
-	ep->ext_nbytes = sizeof(union record)*DB_SS_NGRAN;
-	ep->ext_buf = bu_calloc( 1, ep->ext_nbytes, "dsp external");
-	rec = (union record *)ep->ext_buf;
+    BU_CK_EXTERNAL(ep);
+    ep->ext_nbytes = sizeof(union record)*DB_SS_NGRAN;
+    ep->ext_buf = bu_calloc( 1, ep->ext_nbytes, "dsp external");
+    rec = (union record *)ep->ext_buf;
 
-	dsp = *dsp_ip;	/* struct copy */
+    dsp = *dsp_ip;	/* struct copy */
 
-	/* Since libwdb users may want to operate in units other
-	 * than mm, we offer the opportunity to scale the solid
-	 * (to get it into mm) on the way out.
-	 */
-	dsp.dsp_stom[15] *= local2mm;
+    /* Since libwdb users may want to operate in units other
+     * than mm, we offer the opportunity to scale the solid
+     * (to get it into mm) on the way out.
+     */
+    dsp.dsp_stom[15] *= local2mm;
 
-	bu_vls_init( &str );
-	bu_vls_struct_print( &str, rt_dsp_ptab, (char *)&dsp);
-	if (RT_G_DEBUG & DEBUG_HF)	
-		bu_log("rt_dsp_export(%s)\n", bu_vls_addr(&str) );
+    bu_vls_init( &str );
+    bu_vls_struct_print( &str, rt_dsp_ptab, (char *)&dsp);
+    if (RT_G_DEBUG & DEBUG_HF)	
+	bu_log("rt_dsp_export(%s)\n", bu_vls_addr(&str) );
 
-	rec->ss.ss_id = DBID_STRSOL;
-	strncpy( rec->ss.ss_keyword, "dsp", NAMESIZE-1 );
-	strncpy( rec->ss.ss_args, bu_vls_addr(&str), DB_SS_LEN-1 );
+    rec->ss.ss_id = DBID_STRSOL;
+    strncpy( rec->ss.ss_keyword, "dsp", NAMESIZE-1 );
+    strncpy( rec->ss.ss_args, bu_vls_addr(&str), DB_SS_LEN-1 );
 
 
-	if (BU_VLS_IS_INITIALIZED( &str )) bu_vls_free( &str );
+    if (BU_VLS_IS_INITIALIZED( &str )) bu_vls_free( &str );
 
-	return(0);
+    return(0);
 }
 
 
@@ -3351,60 +3463,60 @@ const struct db_i		*dbip;
  */
 int
 rt_dsp_import5( ip, ep, mat, dbip )
-struct rt_db_internal		*ip;
-const struct bu_external	*ep;
-register const mat_t		mat;
-const struct db_i		*dbip;
+     struct rt_db_internal		*ip;
+     const struct bu_external	*ep;
+     register const mat_t		mat;
+     const struct db_i		*dbip;
 {
-	struct rt_dsp_internal	*dsp_ip;
-	unsigned char		*cp;
+    struct rt_dsp_internal	*dsp_ip;
+    unsigned char		*cp;
 
 
 
-	BU_CK_EXTERNAL( ep );
+    BU_CK_EXTERNAL( ep );
 
-	BU_ASSERT_LONG( ep->ext_nbytes, >, 141 );
+    BU_ASSERT_LONG( ep->ext_nbytes, >, 141 );
 
-	RT_CK_DB_INTERNAL( ip );
+    RT_CK_DB_INTERNAL( ip );
 
-	ip->idb_type = ID_DSP;
-	ip->idb_meth = &rt_functab[ID_DSP];
-	dsp_ip = ip->idb_ptr = 
-		bu_malloc( sizeof(struct rt_dsp_internal), "rt_dsp_internal");
-	memset(dsp_ip, 0, sizeof(*dsp_ip));
+    ip->idb_type = ID_DSP;
+    ip->idb_meth = &rt_functab[ID_DSP];
+    dsp_ip = ip->idb_ptr = 
+	bu_malloc( sizeof(struct rt_dsp_internal), "rt_dsp_internal");
+    memset(dsp_ip, 0, sizeof(*dsp_ip));
 
-	dsp_ip->magic = RT_DSP_INTERNAL_MAGIC;
+    dsp_ip->magic = RT_DSP_INTERNAL_MAGIC;
 
-	/* get x, y counts */
-	cp = (unsigned char *)ep->ext_buf;
+    /* get x, y counts */
+    cp = (unsigned char *)ep->ext_buf;
 
-	dsp_ip->dsp_xcnt = (unsigned) bu_glong( cp );
-	cp += SIZEOF_NETWORK_LONG;
+    dsp_ip->dsp_xcnt = (unsigned) bu_glong( cp );
+    cp += SIZEOF_NETWORK_LONG;
 
-	dsp_ip->dsp_ycnt = (unsigned) bu_glong( cp );
-	cp += SIZEOF_NETWORK_LONG;
+    dsp_ip->dsp_ycnt = (unsigned) bu_glong( cp );
+    cp += SIZEOF_NETWORK_LONG;
 
-	/* convert matrix */
-	ntohd((unsigned char *)dsp_ip->dsp_stom, cp, 16);
-	cp += SIZEOF_NETWORK_DOUBLE * 16;
-	bn_mat_inv(dsp_ip->dsp_mtos, dsp_ip->dsp_stom);
+    /* convert matrix */
+    ntohd((unsigned char *)dsp_ip->dsp_stom, cp, 16);
+    cp += SIZEOF_NETWORK_DOUBLE * 16;
+    bn_mat_inv(dsp_ip->dsp_mtos, dsp_ip->dsp_stom);
 
-	/* convert smooth flag */
-	dsp_ip->dsp_smooth = bu_gshort( cp );
-	cp += SIZEOF_NETWORK_SHORT;
+    /* convert smooth flag */
+    dsp_ip->dsp_smooth = bu_gshort( cp );
+    cp += SIZEOF_NETWORK_SHORT;
 
-	dsp_ip->dsp_datasrc = *cp;
-	cp++;
+    dsp_ip->dsp_datasrc = *cp;
+    cp++;
 
-	/* convert name of data location */
-	bu_vls_init( &dsp_ip->dsp_name );
-	bu_vls_strcpy( &dsp_ip->dsp_name, (char *)cp );
+    /* convert name of data location */
+    bu_vls_init( &dsp_ip->dsp_name );
+    bu_vls_strcpy( &dsp_ip->dsp_name, (char *)cp );
 
-	if (dsp_get_data(dsp_ip, ip, ep, mat, dbip)) {
-		IMPORT_FAIL("unable to read DSP data");
-	}
+    if (dsp_get_data(dsp_ip, ip, ep, mat, dbip)) {
+	IMPORT_FAIL("unable to read DSP data");
+    }
 
-	return 0; /* OK */
+    return 0; /* OK */
 }
 
 /*
@@ -3414,58 +3526,58 @@ const struct db_i		*dbip;
  */
 int
 rt_dsp_export5( ep, ip, local2mm, dbip )
-struct bu_external		*ep;
-const struct rt_db_internal	*ip;
-double				local2mm;
-const struct db_i		*dbip;
+     struct bu_external		*ep;
+     const struct rt_db_internal	*ip;
+     double				local2mm;
+     const struct db_i		*dbip;
 {
-	struct rt_dsp_internal	*dsp_ip;
-	unsigned long		name_len;
-	unsigned char		*cp;
+    struct rt_dsp_internal	*dsp_ip;
+    unsigned long		name_len;
+    unsigned char		*cp;
 
-	RT_CK_DB_INTERNAL(ip);
-	if (ip->idb_type != ID_DSP )  return(-1);
-	dsp_ip = (struct rt_dsp_internal *)ip->idb_ptr;
-	RT_DSP_CK_MAGIC(dsp_ip);
+    RT_CK_DB_INTERNAL(ip);
+    if (ip->idb_type != ID_DSP )  return(-1);
+    dsp_ip = (struct rt_dsp_internal *)ip->idb_ptr;
+    RT_DSP_CK_MAGIC(dsp_ip);
 
-	name_len = bu_vls_strlen(&dsp_ip->dsp_name) + 1;
+    name_len = bu_vls_strlen(&dsp_ip->dsp_name) + 1;
 
-	BU_CK_EXTERNAL(ep);
-	ep->ext_nbytes = 139 + name_len;
-	ep->ext_buf = bu_malloc( ep->ext_nbytes, "dsp external");
-	cp = (unsigned char *)ep->ext_buf;
+    BU_CK_EXTERNAL(ep);
+    ep->ext_nbytes = 139 + name_len;
+    ep->ext_buf = bu_malloc( ep->ext_nbytes, "dsp external");
+    cp = (unsigned char *)ep->ext_buf;
 
-	memset(ep->ext_buf, 0, ep->ext_nbytes);
+    memset(ep->ext_buf, 0, ep->ext_nbytes);
 
 
-	/* Now we fill the buffer with the data, making sure everything is
-	 * converted to Big-Endian IEEE
-	 */
+    /* Now we fill the buffer with the data, making sure everything is
+     * converted to Big-Endian IEEE
+     */
 
-	bu_plong( cp, (unsigned long)dsp_ip->dsp_xcnt );
-	cp += SIZEOF_NETWORK_LONG;
+    bu_plong( cp, (unsigned long)dsp_ip->dsp_xcnt );
+    cp += SIZEOF_NETWORK_LONG;
 
-	bu_plong( cp, (unsigned long)dsp_ip->dsp_ycnt );
-	cp += SIZEOF_NETWORK_LONG;
+    bu_plong( cp, (unsigned long)dsp_ip->dsp_ycnt );
+    cp += SIZEOF_NETWORK_LONG;
 
-	/* Since libwdb users may want to operate in units other
-	 * than mm, we offer the opportunity to scale the solid
-	 * (to get it into mm) on the way out.
-	 */
-	dsp_ip->dsp_stom[15] *= local2mm;
+    /* Since libwdb users may want to operate in units other
+     * than mm, we offer the opportunity to scale the solid
+     * (to get it into mm) on the way out.
+     */
+    dsp_ip->dsp_stom[15] *= local2mm;
 
-	htond(cp, (unsigned char *)dsp_ip->dsp_stom, 16);
-	cp += SIZEOF_NETWORK_DOUBLE * 16;
+    htond(cp, (unsigned char *)dsp_ip->dsp_stom, 16);
+    cp += SIZEOF_NETWORK_DOUBLE * 16;
 
-	bu_pshort( cp, (int)dsp_ip->dsp_smooth );
-	cp += SIZEOF_NETWORK_SHORT;
+    bu_pshort( cp, (int)dsp_ip->dsp_smooth );
+    cp += SIZEOF_NETWORK_SHORT;
 
-	*cp = dsp_ip->dsp_datasrc;
-	cp++;
+    *cp = dsp_ip->dsp_datasrc;
+    cp++;
 
-	strncpy((char *)cp, bu_vls_addr(&dsp_ip->dsp_name), name_len);
+    strncpy((char *)cp, bu_vls_addr(&dsp_ip->dsp_name), name_len);
 
-	return 0; /* OK */
+    return 0; /* OK */
 }
 
 
@@ -3480,27 +3592,27 @@ const struct db_i		*dbip;
  */
 int
 rt_dsp_describe( str, ip, verbose, mm2local )
-struct bu_vls		*str;
-const struct rt_db_internal *ip;
-int			verbose;
-double			mm2local;
+     struct bu_vls		*str;
+     const struct rt_db_internal *ip;
+     int			verbose;
+     double			mm2local;
 {
-	register struct rt_dsp_internal	*dsp_ip =
-		(struct rt_dsp_internal *)ip->idb_ptr;
-	struct bu_vls vls;
+    register struct rt_dsp_internal	*dsp_ip =
+	(struct rt_dsp_internal *)ip->idb_ptr;
+    struct bu_vls vls;
 
 
-	if (RT_G_DEBUG & DEBUG_HF)
-		bu_log("rt_dsp_describe()\n");
+    if (RT_G_DEBUG & DEBUG_HF)
+	bu_log("rt_dsp_describe()\n");
 
-	RT_DSP_CK_MAGIC(dsp_ip);
+    RT_DSP_CK_MAGIC(dsp_ip);
 
-	dsp_print_v5(&vls, dsp_ip);
-	bu_vls_vlscat( str, &vls );
+    dsp_print_v5(&vls, dsp_ip);
+    bu_vls_vlscat( str, &vls );
 
-	if (BU_VLS_IS_INITIALIZED( &vls )) bu_vls_free( &vls );
+    if (BU_VLS_IS_INITIALIZED( &vls )) bu_vls_free( &vls );
 
-	return(0);
+    return(0);
 }
 
 /*
@@ -3510,37 +3622,37 @@ double			mm2local;
  */
 void
 rt_dsp_ifree( ip )
-struct rt_db_internal	*ip;
+     struct rt_db_internal	*ip;
 {
-	register struct rt_dsp_internal	*dsp_ip;
+    register struct rt_dsp_internal	*dsp_ip;
 
-	if (RT_G_DEBUG & DEBUG_HF)
-		bu_log("rt_dsp_ifree()\n");
+    if (RT_G_DEBUG & DEBUG_HF)
+	bu_log("rt_dsp_ifree()\n");
 
-	RT_CK_DB_INTERNAL(ip);
-	dsp_ip = (struct rt_dsp_internal *)ip->idb_ptr;
-	RT_DSP_CK_MAGIC(dsp_ip);
+    RT_CK_DB_INTERNAL(ip);
+    dsp_ip = (struct rt_dsp_internal *)ip->idb_ptr;
+    RT_DSP_CK_MAGIC(dsp_ip);
 
-	if (dsp_ip->dsp_mp) {
-		BU_CK_MAPPED_FILE(dsp_ip->dsp_mp);
-		bu_close_mapped_file(dsp_ip->dsp_mp);
-	}
+    if (dsp_ip->dsp_mp) {
+	BU_CK_MAPPED_FILE(dsp_ip->dsp_mp);
+	bu_close_mapped_file(dsp_ip->dsp_mp);
+    }
 
-	if (dsp_ip->dsp_bip) {
-		rt_binunif_ifree( (struct rt_db_internal *) dsp_ip->dsp_bip);
-	}
+    if (dsp_ip->dsp_bip) {
+	rt_binunif_ifree( (struct rt_db_internal *) dsp_ip->dsp_bip);
+    }
 
-	dsp_ip->magic = 0;			/* sanity */
-	dsp_ip->dsp_mp = (struct bu_mapped_file *)0;
+    dsp_ip->magic = 0;			/* sanity */
+    dsp_ip->dsp_mp = (struct bu_mapped_file *)0;
 
-	if (BU_VLS_IS_INITIALIZED(&dsp_ip->dsp_name)) 
-		bu_vls_free(  &dsp_ip->dsp_name );
-	else
-		bu_log("Freeing Bogus DSP, VLS string not initialized\n");
+    if (BU_VLS_IS_INITIALIZED(&dsp_ip->dsp_name)) 
+	bu_vls_free(  &dsp_ip->dsp_name );
+    else
+	bu_log("Freeing Bogus DSP, VLS string not initialized\n");
 
 
-	bu_free( (char *)dsp_ip, "dsp ifree" );
-	ip->idb_ptr = GENPTR_NULL;	/* sanity */
+    bu_free( (char *)dsp_ip, "dsp ifree" );
+    ip->idb_ptr = GENPTR_NULL;	/* sanity */
 }
 
 /* Important when concatenating source files together */
