@@ -321,6 +321,7 @@ static struct cmdtab cmdtab[] = {
 	{"rrt", f_rrt},
 	{"rset", f_rset},
 	{"rt", f_rt},
+	{"rt_abort", cmd_rt_abort},
 	{"rtcheck", f_rtcheck},
 	{"save",		bv_vsave},
 #if 0
