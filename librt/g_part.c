@@ -1635,20 +1635,24 @@ const struct db_i		*dbip;
 
 	part = (struct rt_part_internal *)ip->idb_ptr;
 	part->part_magic = RT_PART_INTERNAL_MAGIC;
-
+	
 	/* Convert from database (network) to internal (host) format */
 	ntohd( (unsigned char *)vec, ep->ext_buf, 8 );
-
+	
 	/* Apply modeling transformations */
 	MAT4X3PNT( part->part_V, mat, &vec[0*3] );
 	MAT4X3VEC( part->part_H, mat, &vec[1*3] );
 	if( (part->part_vrad = vec[2*3] / mat[15]) < 0 )  {
-		bu_free( ip->idb_ptr, "rt_part_internal" );
-		return(-2);
+	  bu_free( ip->idb_ptr, "rt_part_internal" );
+	  ip->idb_ptr=NULL;
+	  bu_log("unable to import particle, negative v radius\n");
+	  return(-2);
 	}
 	if( (part->part_hrad = vec[2*3+1] / mat[15]) < 0 )  {
-		bu_free( ip->idb_ptr, "rt_part_internal" );
-		return(-3);
+	  bu_free( ip->idb_ptr, "rt_part_internal" );
+	  ip->idb_ptr=NULL;
+	  bu_log("unable to import particle, negative h radius\n");
+	  return(-3);
 	}
 
 	if( part->part_vrad > part->part_hrad )  {
@@ -1659,8 +1663,10 @@ const struct db_i		*dbip;
 		minrad = part->part_vrad;
 	}
 	if( maxrad <= 0 )  {
-		bu_free( ip->idb_ptr, "rt_part_internal" );
-		return(-4);
+	  bu_free( ip->idb_ptr, "rt_part_internal" ); 
+	  ip->idb_ptr=NULL;
+	  bu_log("unable to import particle, negative radius\n");
+	  return(-4);
 	}
 
 	if( MAGSQ( part->part_H ) * 1000000 < maxrad * maxrad )  {
