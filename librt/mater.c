@@ -101,7 +101,7 @@ register struct mater *newp;
 	for( mp = MaterHead; mp != MATER_NULL; mp = mp->mt_forw )  {
 		if( mp->mt_low == newp->mt_low  &&
 		    mp->mt_high <= newp->mt_high )  {
-			(void)fprintf(stderr,"dropping overwritten entry:\n");
+			(void)fprintf(stderr,"dropping overwritten region-id based material property entry:\n");
 			newp->mt_forw = mp->mt_forw;
 			rt_pr_mater( mp );
 			*mp = *newp;		/* struct copy */
@@ -112,7 +112,7 @@ register struct mater *newp;
 		if( mp->mt_low  < newp->mt_low  &&
 		    mp->mt_high > newp->mt_high )  {
 			/* New range entirely contained in old range; split */
-			(void)fprintf(stderr,"Splitting into 3 ranges\n");
+			(void)fprintf(stderr,"Splitting region-id based material property entry into 3 ranges\n");
 			GETSTRUCT( zot, mater );
 			*zot = *mp;		/* struct copy */
 			zot->mt_daddr = MATER_NO_ADDR;
@@ -130,7 +130,7 @@ register struct mater *newp;
 		}
 		if( mp->mt_high > newp->mt_low )  {
 			/* Overlap to the left: Shorten preceeding entry */
-			(void)fprintf(stderr,"Shortening lhs range, from:\n");
+			(void)fprintf(stderr,"Shortening region-id based material property entry lhs range, from:\n");
 			rt_pr_mater( mp );
 			(void)fprintf(stderr,"to:\n");
 			mp->mt_high = newp->mt_low-1;
@@ -148,7 +148,7 @@ register struct mater *newp;
 			goto check_overlap;
 		}
 	}
-	(void)fprintf(stderr,"fell out of rt_insert_color loop, append to end\n");
+	(void)fprintf(stderr,"fell out of rt_insert_color loop, append region-id based material property entry to end of list\n");
 	/* Append at end */
 	newp->mt_forw = MATER_NULL;
 	mp->mt_forw = newp;
@@ -162,14 +162,14 @@ check_overlap:
 			/* Drop this mater struct */
 			zot = newp->mt_forw;
 			newp->mt_forw = zot->mt_forw;
-			(void)fprintf(stderr,"dropping overlaping entry:\n");
+			(void)fprintf(stderr,"dropping overlaping region-id based material property entry:\n");
 			rt_pr_mater( zot );
 			free( zot );
 			continue;
 		}
 		if( newp->mt_high >= newp->mt_forw->mt_low )  {
 			/* Shorten this mater struct, then done */
-			(void)fprintf(stderr,"Shortening rhs range, from:\n");
+			(void)fprintf(stderr,"Shortening region-id based material property entry rhs range, from:\n");
 			rt_pr_mater( newp->mt_forw );
 			(void)fprintf(stderr,"to:\n");
 			newp->mt_forw->mt_low = newp->mt_high+1;
