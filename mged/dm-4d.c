@@ -79,6 +79,7 @@ static int devmotionnotify;
 static int devbuttonpress;
 static int devbuttonrelease;
 #endif
+
 #include <gl/gl.h>		/* SGI IRIS library */
 #include <gl/device.h>		/* SGI IRIS library */
 #include <gl/get.h>		/* SGI IRIS library */
@@ -96,9 +97,13 @@ static int devbuttonrelease;
 #include "externs.h"
 #include "./solid.h"
 
+#define TRY_PIPES 1
 #define YSTEREO		491	/* subfield height, in scanlines */
 #define YOFFSET_LEFT	532	/* YSTEREO + YBLANK ? */
 
+#if TRY_PIPES
+extern int ged_pipe[];
+#endif
 extern inventory_t	*getinvent();
 
 /* Display Manager package interface */
@@ -118,8 +123,12 @@ void	Ir_statechange(), Ir_viewchange(), Ir_colorchange();
 void	Ir_window(), Ir_debug();
 int	Ir_dm();
 #if MIXED_MODE
-int    Ircheckevents();
 void   Ir_loadGLX();
+#ifdef USE_PROTOTYPES
+Tk_GenericProc Ircheckevents;
+#else
+int Ircheckevents();
+#endif
 #else
 void    Ircheckevents();
 #endif
@@ -134,6 +143,9 @@ static int	lighting_on = 0;	/* Lighting model on */
 static int	ir_debug;		/* 2 for basic, 3 for full */
 static int	no_faceplate = 0;	/* Don't draw faceplate */
 static int	ir_linewidth = 1;	/* Line drawing width */
+static int      focus = 0;              /* send key events to the command window */
+static int      dummy_perspective = 1;
+static int      perspective_mode = 0;	/* Perspective flag */
 /*
  * These are derived from the hardware inventory -- user can change them,
  * but the results may not be pleasing.  Mostly, this allows them to be seen.
@@ -148,8 +160,6 @@ static int	max_scr_z;		/* based on getgdesc(GD_ZMAX) */
 
 static int	ir_fd;			/* GL file descriptor to select() on */
 static CONST char ir_title[] = "BRL MGED";
-static int dummy_perspective = 1;
-static int perspective_mode = 0;	/* Perspective flag */
 static int perspective_angle =3;	/* Angle of perspective */
 static int perspective_table[] = { 
 	30, 45, 60, 90 };
@@ -260,6 +270,7 @@ struct structparse Ir_vparse[] = {
 	{"%d",  1, "lighting",		(int)&lighting_on,	establish_lighting },
 	{"%d",  1, "perspective",       (int)&perspective_mode, establish_perspective },
 	{"%d",  1, "next_perspective",(int)&dummy_perspective,  next_perspective },
+	{"%d",  1, "focus",             (int)&focus,            FUNC_NULL },
 	{"%d",  1, "no_faceplate",	(int)&no_faceplate,	refresh_hook },
 	{"%d",  1, "has_zbuf",		(int)&ir_has_zbuf,	refresh_hook },
 	{"%d",  1, "has_rgb",		(int)&ir_has_rgb,	Ir_colorchange },
@@ -1803,12 +1814,25 @@ annoying when running remotely. */
 
 #if 0
 if(eventPtr->type == Expose)
-  rt_log("%d\t%d\tevent type - %d\tcount - %d\n",
+  rt_log("Ircheckevents:%d\t%d\tevent type - %d\tcount - %d\n",
 	 win, eventPtr->xany.window, eventPtr->type, eventPtr->xexpose.count);
 else if( eventPtr->type == ConfigureNotify )
-  rt_log("%d\t%d\tevent type - %d\n",
+  rt_log("Ircheckevents:%d\t%d\tevent type - %d\n",
 	 win, eventPtr->xany.window, eventPtr->type, eventPtr->xexpose.count);
 #endif
+if(focus && eventPtr->type == KeyPress){
+  char buffer[1];
+  int status;
+
+  XLookupString(&(eventPtr->xkey), buffer, 1,
+		(KeySym *)NULL, (XComposeStatus *)NULL);
+
+#if TRY_PIPES
+  write(ged_pipe[1], buffer, 1);
+#endif
+
+  return TCL_ERROR;
+}
 
 
   /* Now getting X events */
@@ -3296,5 +3320,3 @@ char	**argv;
 
 #endif
 }
-
-
