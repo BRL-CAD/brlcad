@@ -62,7 +62,7 @@ f_analyze()
 			break;
 
 		default:
-			state_err( "ARB Analyze" );
+			state_err( "Default ARB Analyze" );
 			return;
 		}
 		mat_mul(new_mat, modelchanges, es_mat);
@@ -91,16 +91,12 @@ f_analyze()
 	}
 
 	/* analyze each face */
-/*
 	(void)printf("FACE     DIR COSINES   ROT   FB      EQN COEFs       SURFACE AREA\n");
-*/
 	for(i=0; i<6; i++) 
 		anal_face( i );
 
 	/* analyze each edge */
-/*
 	(void)printf("EDGE   LENGTH\n");
-*/
 	for(i=0; i<12; i++)
 		anal_edge( i );
 }
