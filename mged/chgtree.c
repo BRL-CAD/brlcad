@@ -863,7 +863,7 @@ char	        **argv;
   if(dbip == DBI_NULL)
     return TCL_OK;
 
-  if(argc < 1 || MAXARGS < argc){
+  if(argc < 2 || MAXARGS < argc){
     struct bu_vls vls;
 
     bu_vls_init(&vls);
