@@ -208,6 +208,24 @@ extern char	*realloc();
 	}
 #endif
 
+#ifdef __STDC__
+#define BU_ASSERT_DOUBLE(_lhs,_relation,_rhs)	\
+	if( !((_lhs) _relation (_rhs)) )  { \
+		bu_log("BU_ASSERT_DOUBLE( " #_lhs #_relation #_rhs " ) failed, lhs=%lf, rhs=%lf, file %s, line %d\n", \
+			(double)(_lhs), (double)(_rhs),\
+			__FILE__, __LINE__ ); \
+		bu_bomb("BU_ASSERT_DOUBLE failure\n"); \
+	}
+#else
+#define BU_ASSERT_DOUBLE(_lhs,_relation,_rhs)	\
+	if( !((_lhs) _relation (_rhs)) )  { \
+		bu_log("BU_ASSERT_DOUBLE( _lhs _relation _rhs ) failed, lhs=%lf, rhs=%lf, file %s, line %d\n", \
+			(long)(_lhs), (long)(_rhs),\
+			__FILE__, __LINE__ ); \
+		bu_bomb("BU_ASSERT_DOUBLE failure\n"); \
+	}
+#endif
+
 /*----------------------------------------------------------------------*/
 /* list.c */
 /*
