@@ -47,10 +47,10 @@
 
 */
 
-#define X_DBG	1
+#define X_DBG	0
 #define UPD_DBG 0
 #define BLIT_DBG 0
-#define EVENT_DBG 1
+#define EVENT_DBG 0
 
 #define HAVE_MMAP 1
 
@@ -351,6 +351,9 @@ printf("X24_open() mode:0x%x\n", mode);
 		width = ifp->if_max_width;
 	if (height > ifp->if_max_height) 
 		height = ifp->if_max_height;
+
+	ifp->if_width = width;
+	ifp->if_height = height;
 
 	ifp->if_xzoom = 1;
 	ifp->if_yzoom = 1;
