@@ -116,16 +116,7 @@ char *file, *obj;
 int minus_o;
 {
 	int i;
-	/*
-	 *  We need to work to get the output pixels and scanlines
-	 *  in order before we can run in parallel.  Something like
-	 *  view.c does in its dynamic buffering mode.
-	 */
-	if (rt_g.rtg_parallel) {
-		rt_g.rtg_parallel = 0;
-		bu_log("rtxray: Can't do parallel yet, using one CPU\n");
-	}
-
+	
 	pixsize = 3;		/* Frame buffer */
 
 	/*
@@ -139,8 +130,13 @@ int minus_o;
 	}
 	
 	if( minus_o ) {
-		/* output is to a file */
-		return(0);		/* don't open frame buffer */
+	    /*
+	     * Output is to a file stream.
+	     * Do not open a framebuffer, do not allow parallel
+	     * processing since we can't seek to the rows.
+	     */
+	    rt_g.rtg_parallel = 0;
+	    return(0);
 	}
 	
 	return(1);		/* we need a framebuffer */
