@@ -131,7 +131,7 @@ if ![info exists mged_default(faceplate)] {
 }
 
 if ![info exists mged_default(orig_gui)] {
-    set mged_default(orig_gui) 1
+    set mged_default(orig_gui) 0
 }
 
 if ![info exists mged_default(zclip)] {
