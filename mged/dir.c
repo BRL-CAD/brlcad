@@ -60,9 +60,6 @@ void	killtree();
 
 static void printnode();
 
-extern int numargs, maxargs;		/* defined in cmd.c */
-extern char *cmd_args[];		/* defined in cmd.c */
-
 /*
  *			D I R _ G E T S P A C E
  *
@@ -92,10 +89,9 @@ register int num_entries;
 	}
 
 	/* Allocate and cast num_entries worth of pointers */
-	if( (dir_basep = (struct directory **) malloc( num_entries *
-	  sizeof(dp))) == (struct directory **) 0) {
-	  	(void) printf( "dir_getspace:  unable to allocate memory");
-	}
+	dir_basep = (struct directory **) rt_malloc(
+		(num_entries+1) * sizeof(struct directory *),
+		"dir_getspace *dir[]" );
 	return(dir_basep);
 }
 
@@ -106,33 +102,33 @@ register int num_entries;
  * in the object file.
  */
 void
-dir_print() {
+dir_print(argc, argv)
+int	argc;
+char	**argv;
+{
 	register struct directory *dp;
 	register int i;
 	struct directory **dirp, **dirp0;
 
 	(void)signal( SIGINT, sig2);	/* allow interupts */
 
-	/* Get some memory */
-	if( (dirp = dir_getspace( numargs - 1)) == (struct directory **) 0) {
-	  	(void) printf( "dir_print:  unable to get memory");
-	  	return;
-	}
-	dirp0 = dirp;
-
-	if( numargs > 1) {
+	if( argc > 1) {
 		/* Just list specified names */
+		dirp = dir_getspace( argc-1 );
+		dirp0 = dirp;
 		/*
 		 * Verify the names, and add pointers to them to the array.
 		 */
-		for( i = 1; i < numargs; i++ )  {
-			if( (dp = db_lookup( dbip, cmd_args[i], LOOKUP_NOISY)) ==
+		for( i = 1; i < argc; i++ )  {
+			if( (dp = db_lookup( dbip, argv[i], LOOKUP_NOISY)) ==
 			  DIR_NULL )
 				continue;
 			*dirp++ = dp;
 		}
 	} else {
 		/* Full table of contents */
+		dirp = dir_getspace(0);		/* Enough for all */
+		dirp0 = dirp;
 		/*
 		 * Walk the directory list adding pointers (to the directory
 		 * entries) to the array.
@@ -142,7 +138,7 @@ dir_print() {
 				*dirp++ = dp;
 	}
 	col_pr4v( dirp0, (int)(dirp - dirp0));
-	free( dirp0);
+	rt_free( (char *)dirp0, "dir_getspace dp[]" );
 }
 
 /*
@@ -151,7 +147,9 @@ dir_print() {
  *  Debugging aid:  dump memory maps
  */
 void
-f_memprint()
+f_memprint(argc, argv)
+int	argc;
+char	**argv;
 {
 	(void)printf("Display manager free map:\n");
 	memprint( &(dmp->dmr_map) );
@@ -307,10 +305,7 @@ dir_summary(flag)
 	/* Print all names matching the flags parameter */
 	/* THIS MIGHT WANT TO BE SEPARATED OUT BY CATEGORY */
 	
-	if( (dirp = dir_getspace(0)) == (struct directory **) 0) {
-	  	(void) printf( "dir_summary:  unable to get memory");
-	  	return;
-	}
+	dirp = dir_getspace(0);
 	dirp0 = dirp;
 	/*
 	 * Walk the directory list adding pointers (to the directory entries
@@ -321,7 +316,7 @@ dir_summary(flag)
 			if( dp->d_flags & flag )
 				*dirp++ = dp;
 	col_pr4v( dirp0, (int)(dirp - dirp0));
-	free( dirp0);
+	rt_free( (char *)dirp0, "dir_getspace" );
 }
 
 /*
@@ -331,7 +326,9 @@ dir_summary(flag)
  *  TODO:  Perhaps print all objects, sorted by use count, as an option?
  */
 void
-f_tops()
+f_tops(argc, argv)
+int	argc;
+char	**argv;
 {
 	register struct directory *dp;
 	register int i;
@@ -343,10 +340,7 @@ f_tops()
 	/*
 	 * Find number of possible entries and allocate memory
 	 */
-	if( (dirp = dir_getspace(0)) == (struct directory **) 0) {
-	  	(void) printf( "f_tops:  unable to get memory");
-	  	return;
-	}
+	dirp = dir_getspace(0);
 	dirp0 = dirp;
 	/*
 	 * Walk the directory list adding pointers (to the directory entries
@@ -361,7 +355,7 @@ f_tops()
 				*dirp++ = dp;
 			}
 	col_pr4v( dirp0, (int)(dirp - dirp0));
-	free( dirp0);
+	rt_free( (char *)dirp0, "dir_getspace" );
 }
 
 /*
@@ -382,6 +376,8 @@ f_tops()
 int
 cmd_glob()
 {
+	extern int numargs, maxargs;		/* defined in cmd.c */
+	extern char *cmd_args[];		/* defined in cmd.c */
 	static char word[64];
 	register char *pattern;
 	register struct directory	*dp;
@@ -466,7 +462,9 @@ cmd_glob()
  *  Find all references to the named objects.
  */
 void
-f_find()
+f_find(argc, argv)
+int	argc;
+char	**argv;
 {
 	register int	i,j,k;
 	register struct directory *dp;
@@ -485,9 +483,9 @@ f_find()
 			for( j=1; j < dp->d_len; j++ )  {
 				if( rp[j].M.m_instname[0] == '\0' )
 					continue;
-				for( k=0; k<numargs; k++ )  {
+				for( k=0; k<argc; k++ )  {
 					if( strncmp( rp[j].M.m_instname,
-					    cmd_args[k], NAMESIZE) != 0 )
+					    argv[k], NAMESIZE) != 0 )
 						continue;
 					(void)printf("%s:  member of %s\n",
 						rp[j].M.m_instname,
@@ -506,7 +504,9 @@ f_find()
  *  when defining the object, and when referencing it.
  */
 void
-f_prefix()
+f_prefix(argc, argv)
+int	argc;
+char	**argv;
 {
 	register int	i,j,k;	
 	register union record *rp;
@@ -514,26 +514,26 @@ f_prefix()
 	char		tempstring[NAMESIZE+2];
 
 	/* First, check validity, and change node names */
-	for( i = 2; i < numargs; i++) {
-		if( (dp = db_lookup( dbip, cmd_args[i], LOOKUP_NOISY )) == DIR_NULL) {
-			cmd_args[i] = "";
+	for( i = 2; i < argc; i++) {
+		if( (dp = db_lookup( dbip, argv[i], LOOKUP_NOISY )) == DIR_NULL) {
+			argv[i] = "";
 			continue;
 		}
 
-		if( strlen(cmd_args[1]) + strlen(cmd_args[i]) > NAMESIZE) {
+		if( strlen(argv[1]) + strlen(argv[i]) > NAMESIZE) {
 			printf("'%s%s' too long, must be less than %d characters.\n",
-				cmd_args[1], cmd_args[i],
+				argv[1], argv[i],
 				NAMESIZE);
-			cmd_args[i] = "";
+			argv[i] = "";
 			continue;
 		}
 
-		(void) strcpy( tempstring, cmd_args[1]);
-		(void) strcat( tempstring, cmd_args[i]);
+		(void) strcpy( tempstring, argv[1]);
+		(void) strcat( tempstring, argv[i]);
 
 		if( db_lookup( dbip, tempstring, LOOKUP_QUIET ) != DIR_NULL ) {
 			aexists( tempstring );
-			cmd_args[i] = "";
+			argv[i] = "";
 			continue;
 		}
 		/*  Change object name in the directory. */
@@ -552,12 +552,12 @@ f_prefix()
 			for( j=1; j < dp->d_len; j++ )  {
 				if( rp[j].M.m_instname[0] == '\0' )
 					continue;
-				for( k=2; k<numargs; k++ )  {
+				for( k=2; k<argc; k++ )  {
 					if( strncmp( rp[j].M.m_instname,
-					    cmd_args[k], NAMESIZE) != 0 )
+					    argv[k], NAMESIZE) != 0 )
 						continue;
-					(void)strcpy( tempstring, cmd_args[1]);
-					(void)strcat( tempstring, cmd_args[k]);
+					(void)strcpy( tempstring, argv[1]);
+					(void)strcat( tempstring, argv[k]);
 					(void)strncpy(rp[j].M.m_instname,
 						tempstring, NAMESIZE);
 					(void)db_put( dbip, dp, rp, 0, dp->d_len );
@@ -595,7 +595,10 @@ register struct directory *dp;
 }
 
 void
-f_keep() {
+f_keep(argc, argv)
+int	argc;
+char	**argv;
+{
 	register struct directory *dp;
 	register int		i;
 
@@ -605,8 +608,8 @@ f_keep() {
 			dp->d_nref = 0;
 	}
 
-	if( (keepfd = creat( cmd_args[1], 0644 )) < 0 )  {
-		perror( cmd_args[1] );
+	if( (keepfd = creat( argv[1], 0644 )) < 0 )  {
+		perror( argv[1] );
 		return;
 	}
 	
@@ -618,8 +621,8 @@ f_keep() {
 	sprintf(record.i.i_title, "Parts of: %s", cur_title);	/* XXX len */
 	(void)write(keepfd, (char *)&record, sizeof record);
 
-	for(i = 2; i < numargs; i++) {
-		if( (dp = db_lookup( dbip, cmd_args[i], LOOKUP_NOISY)) == DIR_NULL )
+	for(i = 2; i < argc; i++) {
+		if( (dp = db_lookup( dbip, argv[i], LOOKUP_NOISY)) == DIR_NULL )
 			continue;
 		db_functree( dbip, dp, node_write, node_write );
 	}
@@ -633,16 +636,19 @@ f_keep() {
  *	Print out a list of all members and submembers of an object.
  */
 void
-f_tree() {
+f_tree(argc, argv)
+int	argc;
+char	**argv;
+{
 	register struct directory *dp;
 	register int j;
 
 	(void) signal( SIGINT, sig2);  /* Allow interrupts */
 
-	for ( j = 1; j < numargs; j++) {
+	for ( j = 1; j < argc; j++) {
 		if( j > 1 )
 			putchar( '\n' );
-		if( (dp = db_lookup( dbip, cmd_args[j], LOOKUP_NOISY )) == DIR_NULL )
+		if( (dp = db_lookup( dbip, argv[j], LOOKUP_NOISY )) == DIR_NULL )
 			continue;
 		printnode(dp, 0, 0);
 	}
@@ -704,16 +710,19 @@ int cont;		/* non-zero when continuing partly printed line */
  *	Print out a list of all members and submembers of an object.
  */
 void
-f_tree() {
+f_tree(argc, argv)
+int	argc;
+char	**argv;
+{
 	register struct directory *dp;
 	register int j;
 
 	(void) signal( SIGINT, sig2);  /* Allow interrupts */
 
-	for ( j = 1; j < numargs; j++) {
+	for ( j = 1; j < argc; j++) {
 		if( j > 1 )
 			putchar( '\n' );
-		if( (dp = db_lookup( dbip, cmd_args[j], LOOKUP_NOISY )) == DIR_NULL )
+		if( (dp = db_lookup( dbip, argv[j], LOOKUP_NOISY )) == DIR_NULL )
 			continue;
 		printnode(dp, 0, 0);
 	}
@@ -777,32 +786,34 @@ char prefix;
  *
  */
 void
-f_mvall()
+f_mvall(argc, argv)
+int	argc;
+char	**argv;
 {
 	register int	i,j,k;	
 	register union record *rp;
 	register struct directory *dp;
 
-	if( strlen(cmd_args[2]) > NAMESIZE ) {
+	if( strlen(argv[2]) > NAMESIZE ) {
 		(void)printf("ERROR: name length limited to %d characters\n",
 				NAMESIZE);
 		return;
 	}
 
 	/* rename the record itself */
-	if( (dp = db_lookup( dbip, cmd_args[1], LOOKUP_NOISY )) == DIR_NULL)
+	if( (dp = db_lookup( dbip, argv[1], LOOKUP_NOISY )) == DIR_NULL)
 		return;
-	if( db_lookup( dbip, cmd_args[2], LOOKUP_QUIET ) != DIR_NULL ) {
-		aexists( cmd_args[2]);
+	if( db_lookup( dbip, argv[2], LOOKUP_QUIET ) != DIR_NULL ) {
+		aexists( argv[2]);
 		return;
 	}
 	/*  Change object name in the directory. */
-	if( db_rename( dbip, dp, cmd_args[2] ) < 0 )
-		printf("error in rename to %s\n", cmd_args[2] );
+	if( db_rename( dbip, dp, argv[2] ) < 0 )
+		printf("error in rename to %s\n", argv[2] );
 
 	/* Change name in the file */
 	(void)db_get( dbip,  dp, &record, 0 , 1);
-	NAMEMOVE( cmd_args[2], record.c.c_name );
+	NAMEMOVE( argv[2], record.c.c_name );
 	(void)db_put( dbip, dp, &record, 0, 1 );
 
 	/* Examine all COMB nodes */
@@ -816,12 +827,12 @@ f_mvall()
 			for( j=1; j < dp->d_len; j++ )  {
 				if( rp[j].M.m_instname[0] == '\0' )
 					continue;
-				for( k=2; k<numargs; k++ )  {
+				for( k=2; k<argc; k++ )  {
 					if( strncmp( rp[j].M.m_instname,
-					    cmd_args[1], NAMESIZE) != 0 )
+					    argv[1], NAMESIZE) != 0 )
 						continue;
 					(void)strncpy(rp[j].M.m_instname,
-						cmd_args[2], NAMESIZE);
+						argv[2], NAMESIZE);
 					(void)db_put( dbip, dp, rp, 0, dp->d_len );
 				}
 			}
@@ -838,7 +849,9 @@ f_mvall()
  *
  */
 void
-f_killall()
+f_killall(argc, argv)
+int	argc;
+char	**argv;
 {
 	register int	i,j,k;
 	register union record *rp;
@@ -860,9 +873,9 @@ again:
 			for( j=1; j < dp->d_len; j++ )  {
 				if( rp[j].M.m_instname[0] == '\0' )
 					continue;
-				for( k=1; k<numargs; k++ )  {
+				for( k=1; k<argc; k++ )  {
 					if( strncmp( rp[j].M.m_instname,
-					    cmd_args[k], NAMESIZE) != 0 )
+					    argv[k], NAMESIZE) != 0 )
 						continue;
 
 					/* Remove this reference */
@@ -876,8 +889,8 @@ again:
 	}
 
 	/* ALL references removed...now KILL the object[s] */
-	/* reuse cmd_args[] */
-	f_kill();
+	/* reuse argv[] */
+	f_kill( argc, argv );
 }
 
 
@@ -887,15 +900,17 @@ again:
  *
  */
 void
-f_killtree()
+f_killtree(argc, argv)
+int	argc;
+char	**argv;
 {
 	register struct directory *dp;
 	register int i;
 
 	(void)signal( SIGINT, sig2 );	/* allow interupts */
 
-	for(i=1; i<numargs; i++) {
-		if( (dp = db_lookup( dbip, cmd_args[i], LOOKUP_NOISY) ) == DIR_NULL )
+	for(i=1; i<argc; i++) {
+		if( (dp = db_lookup( dbip, argv[i], LOOKUP_NOISY) ) == DIR_NULL )
 			continue;
 		db_functree( dbip, dp, killtree, killtree );
 	}
