@@ -24,13 +24,14 @@ SHELL=/bin/sh
 export SHELL
 
 # Set to 0 for non-NFS environment (default), 1 for NFS configuration.
-NFS=1
+NFS=0
 
 # Label number for this CAD Release,
 # RCS main Revision number, and date.
 #RELEASE=M.N;	RCS_REVISION=X;		REL=DATE=dd-mmm-yy
-#RELEASE=4.1;	RCS_REVISION=10;	REL_DATE=Today
-RELEASE=4.0;	RCS_REVISION=10;	REL_DATE=12-Oct-91
+#RELEASE=4.2;	RCS_REVISION=10;	REL_DATE=Today
+RELEASE=4.1;	RCS_REVISION=10;	REL_DATE=17-March-92
+#RELEASE=4.0;	RCS_REVISION=10;	REL_DATE=12-Oct-91
 #RELEASE=3.31;	RCS_REVISION=9;		REL_DATE=5-Oct-91	# Beta+18
 #RELEASE=3.30;	RCS_REVISION=9;		REL_DATE=22-Sept-91	# Beta+17
 #RELEASE=3.29;	RCS_REVISION=9;		REL_DATE=10-Sept-91	# Beta+16
@@ -127,7 +128,7 @@ TOP_FILES="Copyright* README Cakefile* Makefile \
 ADIRS="h doc pix vfont whetstone awf brlman"
 
 # Has no Cakefile, just copy it verbatim.  Only used in "dist" command.
-CDIRS="cake cakeaux papers contributed patch"
+CDIRS="cake cakeaux papers contributed"
 
 # Source directories that will have Machine specific binary directories
 # These will be built in the order listed.
@@ -160,6 +161,7 @@ BDIRS="bench \
 	util \
 	fbed \
 	lgt \
+	patch \
 	vas4 \
 	vdeck \
 	sig \
@@ -181,7 +183,7 @@ then
 fi
 
 # If this is not an SGI 4D, eliminate SGI-specific directories
-if test "${MACHINE}" != "4d"
+if test "${MACHINE}" != "4d" -a "${MACHINE}" != "5d"
 then
 	BDIRS=`echo ${BDIRS} | sed -e  's/edpix//'`
 fi
@@ -427,7 +429,7 @@ arch)
 	echo "${ARCHIVE} created"
 
 	FTP_ARCHIVE=/usr/spool/ftp/tmp/cad${RELEASE}.tar
-	KEY=atlonglast		# Encryption key
+	KEY=notreally		# Encryption key
 	echo "encryption key is /$KEY/"
 	EXCLUDE=/tmp/cad-exclude
 	rm -f ${EXCLUDE}
