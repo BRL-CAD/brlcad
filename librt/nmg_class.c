@@ -1354,3 +1354,132 @@ CONST struct rt_tol	*tol;
 		(void)class_vu_vs_s(sA->vu_p, sB, classlist, tol);
 	}
 }
+
+/*	N M G _ C L A S S I F Y _ P T _ L O O P
+ *
+ *	A generally available interface to nmg_class_pt_l
+ *
+ *	returns the classification from nmg_class_pt_l
+ *	or a (-1) on error
+ */
+int
+nmg_classify_pt_loop( pt , lu , tol )
+CONST point_t pt;
+CONST struct loopuse *lu;
+CONST struct rt_tol *tol;
+{
+	struct neighbor	closest;
+	struct faceuse *fu;
+	vect_t n;
+	fastf_t dist;
+
+	NMG_CK_LOOPUSE( lu );
+	RT_CK_TOL( tol );
+
+	if( *lu->up.magic_p != NMG_FACEUSE_MAGIC )
+	{
+		rt_log( "nmg_classify_pt_loop: lu not part of a faceuse!!\n" );
+		return( -1 );
+	}
+
+	fu = lu->up.fu_p;
+
+	/* Validate distance from point to plane */
+	NMG_GET_FU_PLANE( n, fu );
+	if( (dist=fabs(DIST_PT_PLANE( pt, n ))) > tol->dist )  {
+		rt_log("nmg_classify_pt_l() ERROR, point (%g,%g,%g) not on face, dist=%g\n",
+			V3ARGS(pt), dist );
+		return( -1 );
+	}
+
+
+	/* find the closest approach in this face to the projected point */
+	closest.dist = MAX_FASTF;
+	closest.p.eu = (struct edgeuse *)NULL;
+	closest.class = NMG_CLASS_AoutB;	/* default return */
+
+	nmg_class_pt_l( &closest , pt , lu , tol );
+
+	return( closest.class );
+}
+
+/*	N M G _ C L A S S I F Y _ L U _ L U
+ *
+ *	Generally available classifier for
+ *	determining if one loop is within another
+ *
+ *	returns classification based on nmg_class_pt_l results
+ */
+int
+nmg_classify_lu_lu( lu1 , lu2 , tol )
+CONST struct loopuse *lu1,*lu2;
+CONST struct rt_tol *tol;
+{
+	struct faceuse *fu1,*fu2;
+	struct edgeuse *eu;
+	struct neighbor	closest;
+
+	NMG_CK_LOOPUSE( lu1 );
+	NMG_CK_LOOPUSE( lu2 );
+	RT_CK_TOL( tol );
+
+	if( lu1 == lu2 )
+		return( NMG_CLASS_AonBshared );
+
+	if( *lu1->up.magic_p != NMG_FACEUSE_MAGIC )
+	{
+		rt_log( "nmg_classify_lu_lu: lu1 not part of a faceuse\n" );
+		return( -1 );
+	}
+
+	if( *lu2->up.magic_p != NMG_FACEUSE_MAGIC )
+	{
+		rt_log( "nmg_classify_lu_lu: lu2 not part of a faceuse\n" );
+		return( -1 );
+	}
+
+	fu1 = lu1->up.fu_p;
+	fu2 = lu2->up.fu_p;
+
+	if( fu1->f_p != fu2->f_p )
+	{
+		rt_log( "nmg_classify_lu_lu: loops are not in same face\n" );
+		return( -1 );
+	}
+
+	/* find the closest approach in this face to the projected point */
+	closest.dist = MAX_FASTF;
+	closest.p.eu = (struct edgeuse *)NULL;
+	closest.class = NMG_CLASS_AoutB;	/* default return */
+
+	if( RT_LIST_FIRST_MAGIC( &lu1->down_hd ) == NMG_VERTEXUSE_MAGIC )
+	{
+		struct vertexuse *vu;
+		struct vertex_g *vg;
+
+		vu = RT_LIST_FIRST( vertexuse , &lu1->down_hd );
+		NMG_CK_VERTEXUSE( vu );
+		vg = vu->v_p->vg_p;
+		NMG_CK_VERTEX_G( vg );
+		nmg_class_pt_l( &closest , vg->coord , lu2 , tol );
+
+		return( closest.class );
+		
+	}
+
+	for( RT_LIST_FOR( eu , edgeuse , &lu1->down_hd ) )
+	{
+		struct vertex_g *vg;
+
+		NMG_CK_EDGEUSE( eu );
+
+		vg = eu->vu_p->v_p->vg_p;
+		NMG_CK_VERTEX_G( vg );
+		nmg_class_pt_l( &closest , vg->coord , lu2 , tol );
+
+		if( closest.class != NMG_CLASS_AonBshared )
+			return( closest.class );
+	}
+
+	return( NMG_CLASS_AonBshared );
+}
