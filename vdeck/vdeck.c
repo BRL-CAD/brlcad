@@ -1275,7 +1275,6 @@ register matp_t	om, im1, im2;
 		}
 	return;
 	}
-
 /*	m a t X v e c ( )
 	Multiply the vector "iv" by the matrix "im" and store the result
 	in the vector "ov".
