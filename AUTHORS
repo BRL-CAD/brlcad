@@ -2,18 +2,18 @@ BRL-CAD Contributors
 ====================
 
 The BRL-CAD development team would like to take this opportunity to
-thank the many people and organizations who have contributed to
-BRL-CAD over the years.
+thank the many people and organizations who have contributed to make
+BRL-CAD the package that it is today.
 
 BRL-CAD was originally conceived and written for the most part by the
 late Michael John Muuss.  He is the original primary architect and
-author.  The package has since been improved upon by Mike and the
-Advanced Computer Systems Team at the U.S. Army Research Laboratory,
-as well as by many others around the world.  While Mike is sadly no
-longer with us, his work lives on in testament to his intellect and
-indomitable spirit through the contributions and improvements by
-others.  We strive to recognize those groups and individuals that have
-helped make BRL-CAD the package that it is today here.
+author.  The package has since been improved upon over the years by
+Mike and the Advanced Computer Systems Team at the U.S. Army Research
+Laboratory (* see note), as well as by many others around the world.
+His work lives on in testament to his intellect and indomitable spirit
+through the contributions and improvements by others.  We strive to
+recognize those groups and individuals that have helped make BRL-CAD
+the package that it is today here.
 
 Contributions are separated into a few major sections depending on the
 level and type of involvement that the individual maintained.
@@ -24,8 +24,10 @@ are listed at the bottom.
 
 Names are optionally followed by the organizations that may have
 supported their involvement to some degree, also listed in
-chronological order, though many individuals have supported the
-package of their own accord and on their own time.  
+chronological order.  Many individuals including many with affiliated
+organizations have also supported the package of their own accord and
+on their own time.  Participation and contributions are graciously
+appreciated.
 
 Active developers are denoted with an "**", meaning that they have
 been actively involved within the past 12 months.
@@ -275,7 +277,6 @@ TO BE FILED
 
 Becker, David
 
-
 Davies, Steve
 
 Dender, Dan
@@ -355,6 +356,15 @@ Stanley, Charles
 U.S. Army Ballistic Research Laboratory (??? maybe maybe didn't contribute)
 
 --- 
+
+* The U.S. Army Research Laboratory (ARL) was formerly named the
+U.S. Army Ballistic Research Laboratory (BRL).  Persons who
+contributed entirely before the name change reflect the original name,
+whereas persons who continued contributions or began contributions
+after the name change reflect the new name.
+
+** The contributor is an active developer, meaning that they have been
+actively involved with the BRL-CAD development within the past 12 months.
 
 If any corrections or additions need to be made, please contact one of
 the active core developers.  Additionally, you may send inquiries,
