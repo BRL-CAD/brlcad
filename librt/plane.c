@@ -765,30 +765,37 @@ double rt_dist_pt_lseg(pca, a, b, p)
 point_t pca, a, b, p;
 {
 	vect_t ENDPTtoP, AtoB;
-	double dist, APdist;
+	double Pr_prop;		/* projection of a-p onto a-b as a proportion of a-b */
+	double distance;	/* distance of point from lseg */
 	
 	VSUB2(ENDPTtoP, p, a);
 	VSUB2(AtoB, b, a);
 
-	dist = VDOT(ENDPTtoP, AtoB) / MAGSQ(AtoB);
-	if (dist <= 1.0 && dist >= 0.0) {
-		/* pt is along edge of lseg */
-		VSCALE(pca, AtoB, dist);
+	/* compute distance along line to pca */
+	Pr_prop = VDOT(ENDPTtoP, AtoB) / MAGSQ(AtoB);
+
+	if (Pr_prop < 1.0 && Pr_prop > 0.0) {
+		/* pt is along edge of lseg, scale AtoB by Pr_prop to
+		 * egt a vector from A to the P.C.A.
+		 */
+		VJOIN1(pca, a, Pr_prop, AtoB);
 		VUNITIZE(AtoB);
-		return(rt_dist_line_point(a, AtoB, p));
+
+		distance = rt_dist_line_point(a, AtoB, p);
+
+		return(distance);
 	}
 
 	/* pt is closer to an endpoint than to the line segment */
 
-	APdist = MAGNITUDE(ENDPTtoP);
-	VSUB2(ENDPTtoP, p, b);
-	dist = MAGNITUDE(ENDPTtoP);
-
-	if (APdist < dist) {
+	if (Pr_prop >= 1.0) {
+		VSUB2(ENDPTtoP, p, b);
+		VMOVE(pca, b);
+	} else {
 		VMOVE(pca, a);
-		return(APdist);
 	}
 
-	VMOVE(pca, b);
-	return(dist);
+	distance = MAGNITUDE(ENDPTtoP);
+
+	return(distance);
 }
