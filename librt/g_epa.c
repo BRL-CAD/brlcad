@@ -767,8 +767,12 @@ struct rt_tol		*tol;
 		/* free mem for old approximation of parabola */
 		pos_b = pts_b;
 		while ( pos_b ) {
+			struct pt_node *next;
+
+			/* get next node before freeing */
+			next = pos_b->next;
 			rt_free( (char *)pos_b, "pt_node" );
-			pos_b = pos_b->next;
+			pos_b = next;
 		}
 		/* construct parabola along semi-major axis of epa
 		 * using same z coords as parab along semi-minor axis
