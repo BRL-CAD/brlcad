@@ -49,9 +49,25 @@
 #include <time.h>
 #include "tcl.h"
 
+/*	Stuff needed from db.h */
 #ifndef NAMESIZE
+
 #define NAMESIZE 16
 #define NAMEMOVE(from,to)       (void)strncpy(to, from, NAMESIZE)
+
+#define ID_NO_UNIT	0		/* unspecified */
+#define ID_MM_UNIT	1		/* milimeters (preferred) */
+#define ID_CM_UNIT	2		/* centimeters */
+#define ID_M_UNIT	3		/* meters */
+#define ID_IN_UNIT	4		/* inches */
+#define ID_FT_UNIT	5		/* feet */
+
+#define ARB4	4	/* tetrahedron */
+#define ARB5	5	/* pyramid */
+#define ARB6	6	/* extruded triangle */
+#define ARB7	7	/* weird 7-vertex shape */
+#define ARB8	8	/* hexahedron */
+
 #endif
 
 #if USE_PROTOTYPES
