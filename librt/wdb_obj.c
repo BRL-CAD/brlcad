@@ -81,6 +81,8 @@ HIDDEN void wdb_killtree_callback();
 HIDDEN int wdb_copy_tcl();
 HIDDEN int wdb_move_tcl();
 HIDDEN int wdb_move_all_tcl();
+HIDDEN int wdb_concat_tcl();
+HIDDEN int wdb_dup_tcl();
 
 HIDDEN void wdb_deleteProc();
 HIDDEN void wdb_deleteProc_rt();
@@ -97,6 +99,11 @@ HIDDEN void wdb_do_list();
 struct wdb_obj HeadWDBObj;	/* head of BRLCAD database object list */
 
 HIDDEN Tcl_Interp *curr_interp;		/* current Tcl interpreter */
+HIDDEN struct db_i *curr_dbip;		/* current dbip */
+HIDDEN char wdb_prestr[RT_NAMESIZE];
+HIDDEN int wdb_ncharadd;
+HIDDEN int wdb_num_dups;
+HIDDEN struct directory	**wdb_dup_dirp;
 
 /* input path */
 HIDDEN struct directory *wdb_objects[WDB_MAX_LEVELS];
@@ -131,6 +138,8 @@ HIDDEN struct bu_cmdtab wdb_cmds[] = {
 	"cp",		wdb_copy_tcl,
 	"mv",		wdb_move_tcl,
 	"mvall",	wdb_move_all_tcl,
+	"concat",	wdb_concat_tcl,
+	"dup",		wdb_dup_tcl,
 #if 0
 	"c",		wdb_comb_std_tcl,
 	"cat",		wdb_cat_tcl,
@@ -138,10 +147,8 @@ HIDDEN struct bu_cmdtab wdb_cmds[] = {
 	"color",	wdb_color_tcl,
 	"prcolor",	wdb_prcolor_tcl,
 	"comb_color",	wdb_comb_color_tcl,
-	"concat",	wdb_concat_tcl,
 	"copymat",	wdb_copymat_tcl,
 	"copyeval",	wdb_copyeval_tcl,
-	"dup",		wdb_dup_tcl,
 	"find",		wdb_find_tcl,
 	"g",		wdb_group_tcl,
 	"i",		wdb_instance_tcl,
@@ -1970,6 +1977,346 @@ wdb_move_all_tcl(clientData, interp, argc, argv)
 	}
 
 	bu_ptbl_free(&stack);
+	return TCL_OK;
+}
+
+HIDDEN void
+wdb_do_update(dbip, comb, comb_leaf, user_ptr1, user_ptr2, user_ptr3)
+struct db_i		*dbip;
+struct rt_comb_internal *comb;
+union tree		*comb_leaf;
+genptr_t		user_ptr1, user_ptr2, user_ptr3;
+{
+	char	mref[RT_NAMESIZE+2];
+	char	*prestr;
+	int	*ncharadd;
+
+	if(dbip == DBI_NULL)
+	  return;
+
+	RT_CK_DBI(dbip);
+	RT_CK_TREE(comb_leaf);
+
+	ncharadd = (int *)user_ptr1;
+	prestr = (char *)user_ptr2;
+
+	(void)strncpy(mref, prestr, *ncharadd);
+	(void)strncpy(mref+(*ncharadd),
+		comb_leaf->tr_l.tl_name,
+		RT_NAMESIZE-(*ncharadd) );
+	bu_free(comb_leaf->tr_l.tl_name, "comb_leaf->tr_l.tl_name");
+	comb_leaf->tr_l.tl_name = bu_strdup(mref);
+}
+
+/*
+ *			W D B _ D I R _ A D D
+ *
+ *  Add a solid or conbination from an auxillary database
+ *  into the primary database.
+ */
+HIDDEN int
+wdb_dir_add(input_dbip, name, laddr, len, flags)
+     register struct db_i	*input_dbip;
+     register char		*name;
+     long			laddr;
+     int			len;
+     int			flags;
+{
+	register struct directory *input_dp;
+	register struct directory *dp;
+	struct rt_db_internal intern;
+	struct rt_comb_internal *comb;
+	char			local[RT_NAMESIZE+2+2];
+
+	if (input_dbip->dbi_magic != DBI_MAGIC)
+		bu_bomb("wdb_dir_add:  bad dbip\n");
+
+	/* Add the prefix, if any */
+	if (wdb_ncharadd > 0) {
+		(void)strncpy(local, wdb_prestr, wdb_ncharadd);
+		(void)strncpy(local+wdb_ncharadd, name, RT_NAMESIZE-wdb_ncharadd);
+	} else {
+		(void)strncpy(local, name, RT_NAMESIZE);
+	}
+	local[RT_NAMESIZE] = '\0';
+		
+	/* Look up this new name in the existing (main) database */
+	if ((dp = db_lookup(curr_dbip, local, LOOKUP_QUIET)) != DIR_NULL) {
+		register int	c;
+		char		loc2[RT_NAMESIZE+2+2];
+
+		/* This object already exists under the (prefixed) name */
+		/* Protect the database against duplicate names! */
+		/* Change object names, but NOT any references made by combinations. */
+		(void)strncpy( loc2, local, RT_NAMESIZE );
+		/* Shift name right two characters, and further prefix */
+		strncpy(local+2, loc2, RT_NAMESIZE-2);
+		local[1] = '_';			/* distinctive separater */
+		local[RT_NAMESIZE] = '\0';	/* ensure null termination */
+
+		for (c = 'A'; c <= 'Z'; c++) {
+			local[0] = c;
+			if ((dp = db_lookup(curr_dbip, local, LOOKUP_QUIET)) == DIR_NULL)
+				break;
+		}
+		if (c > 'Z') {
+			Tcl_AppendResult(curr_interp,
+					 "wdb_dir_add: Duplicate of name '",
+					 local, "', ignored\n", (char *)NULL);
+			return 0;
+		}
+		Tcl_AppendResult(curr_interp,
+				 "mged_dir_add: Duplicate of '",
+				 loc2, "' given new name '",
+				 local, "'\nYou should have used the 'dup' command to detect this,\nand then specified a prefix for the 'concat' command.\n");
+	}
+
+	/* First, register this object in input database */
+	if ((input_dp = db_diradd(input_dbip, name, laddr, len, flags)) == DIR_NULL)
+		return(-1);
+
+	/* Then, register a new object in the main database */
+	if ((dp = db_diradd(curr_dbip, local, -1L, len, flags)) == DIR_NULL)
+		return(-1);
+	if(db_alloc(curr_dbip, dp, len) < 0)
+		return(-1);
+
+	if (rt_db_get_internal(&intern, input_dp, input_dbip, (fastf_t *)NULL) < 0) {
+		Tcl_AppendResult(curr_interp, "Database read error, aborting\n", (char *)NULL);
+		if (db_delete(curr_dbip, dp) < 0 ||
+		    db_dirdelete(curr_dbip, dp) < 0) {
+			Tcl_AppendResult(curr_interp, "Database write error, aborting\n", (char *)NULL);
+		}
+	    	/* Abort processing on first error */
+		return -1;
+	}
+
+	/* Update the name, and any references */
+	if (flags & DIR_SOLID) {
+		Tcl_AppendResult(curr_interp,
+				 "adding solid '",
+				 local, "'\n", (char *)NULL);
+		if ((wdb_ncharadd + strlen(name)) > (unsigned)RT_NAMESIZE)
+			Tcl_AppendResult(curr_interp,
+					 "WARNING: solid name \"",
+					 wdb_prestr, name, "\" truncated to \"",
+					 local, "\"\n", (char *)NULL);
+
+		bu_free((genptr_t)dp->d_namep, "mged_dir_add: dp->d_namep");
+		dp->d_namep = bu_strdup(local);
+	} else {
+		register int i;
+		char	mref[RT_NAMESIZE+2];
+
+		Tcl_AppendResult(curr_interp,
+				 "adding  comb '",
+				 local, "'\n", (char *)NULL);
+		bu_free((genptr_t)dp->d_namep, "mged_dir_add: dp->d_namep");
+		dp->d_namep = bu_strdup(local);
+
+		/* Update all the member records */
+		comb = (struct rt_comb_internal *)intern.idb_ptr;
+		if (wdb_ncharadd && comb->tree) {
+			db_tree_funcleaf(curr_dbip, comb, comb->tree, wdb_do_update,
+					  (genptr_t)&wdb_ncharadd, (genptr_t)wdb_prestr, (genptr_t)NULL);
+		}
+	}
+
+	if (rt_db_put_internal(dp, curr_dbip, &intern) < 0) {
+		Tcl_AppendResult(curr_interp,
+				 "Failed writing ",
+				 dp->d_namep, " to database\n", (char *)NULL);
+		return( -1 );
+	}
+
+	return 0;
+}
+
+/*
+ *  Concatenate another GED file into the current file.
+ *
+ * Usage:
+ *        procname concat file.g prefix
+ */
+HIDDEN int
+wdb_concat_tcl(clientData, interp, argc, argv)
+     ClientData clientData;
+     Tcl_Interp *interp;
+     int     argc;
+     char    **argv;
+{
+	struct wdb_obj *wdbop = (struct wdb_obj *)clientData;
+	struct db_i		*newdbp;
+	int bad = 0;
+
+	if (wdbop->wdb_wp->dbip->dbi_read_only) {
+		Tcl_AppendResult(interp, "Database is read-only!\n", (char *)NULL);
+		return TCL_ERROR;
+	}
+
+	if (argc != 4) {
+		struct bu_vls vls;
+
+		bu_vls_init(&vls);
+		bu_vls_printf(&vls, "helplib wdb_concat");
+		Tcl_Eval(interp, bu_vls_addr(&vls));
+		bu_vls_free(&vls);
+		return TCL_ERROR;
+	}
+
+	if (strcmp(argv[3], "/") == 0) {
+		/* No prefix desired */
+		(void)strcpy(wdb_prestr, "\0");
+	} else {
+		(void)strcpy(wdb_prestr, argv[3]);
+	}
+
+	if ((wdb_ncharadd = strlen(wdb_prestr)) > 12) {
+		wdb_ncharadd = 12;
+		wdb_prestr[12] = '\0';
+	}
+
+	/* open the input file */
+	if ((newdbp = db_open(argv[2], "r")) == DBI_NULL) {
+		perror(argv[2]);
+		Tcl_AppendResult(interp, "concat: Can't open ",
+				 argv[2], "\n", (char *)NULL);
+		return TCL_ERROR;
+	}
+
+	curr_interp = interp;
+	curr_dbip = wdbop->wdb_wp->dbip;
+
+	/* Scan new database, adding everything encountered. */
+	if (db_scan(newdbp, wdb_dir_add, 1) < 0) {
+		Tcl_AppendResult(interp, "concat: db_scan failure\n", (char *)NULL);
+		bad = 1;	
+		/* Fall through, to close off database */
+	}
+
+	/* Free all the directory entries, and close the input database */
+	db_close(newdbp);
+
+	sync();		/* just in case... */
+
+	return bad ? TCL_ERROR : TCL_OK;
+}
+
+/*
+ *			W D B _ D I R _ C H E C K
+ *
+ * Check a name against the global directory.
+ */
+int
+wdb_dir_check(input_dbip, name, laddr, len, flags)
+register struct db_i	*input_dbip;
+register char		*name;
+long			laddr;
+int			len;
+int			flags;
+{
+	struct directory	*dupdp;
+	char			local[RT_NAMESIZE+2];
+
+	if (curr_dbip == DBI_NULL)
+		return 0;
+
+	if (input_dbip->dbi_magic != DBI_MAGIC)
+		bu_bomb("mged_dir_check:  bad dbip\n");
+
+	/* Add the prefix, if any */
+	if (wdb_ncharadd > 0) {
+		(void)strncpy( local, wdb_prestr, wdb_ncharadd );
+		(void)strncpy( local+wdb_ncharadd, name, RT_NAMESIZE-wdb_ncharadd );
+	} else {
+		(void)strncpy( local, name, RT_NAMESIZE );
+	}
+	local[RT_NAMESIZE] = '\0';
+		
+	/* Look up this new name in the existing (main) database */
+	if ((dupdp = db_lookup(curr_dbip, local, LOOKUP_QUIET)) != DIR_NULL) {
+		/* Duplicate found, add it to the list */
+		wdb_num_dups++;
+		*wdb_dup_dirp++ = dupdp;
+	}
+	return 0;
+}
+
+/*
+ * Usage:
+ *        procname dup file.g prefix
+ */
+HIDDEN int
+wdb_dup_tcl(clientData, interp, argc, argv)
+     ClientData clientData;
+     Tcl_Interp *interp;
+     int     argc;
+     char    **argv;
+{
+	struct wdb_obj *wdbop = (struct wdb_obj *)clientData;
+
+	struct db_i		*newdbp = DBI_NULL;
+	struct directory	**dirp0 = (struct directory **)NULL;
+	struct bu_vls vls;
+
+	if (argc != 4) {
+		struct bu_vls vls;
+
+		bu_vls_init(&vls);
+		bu_vls_printf(&vls, "helplib wdb_dup");
+		Tcl_Eval(interp, bu_vls_addr(&vls));
+		bu_vls_free(&vls);
+		return TCL_ERROR;
+	}
+
+	(void)strcpy(wdb_prestr, argv[3]);
+	wdb_num_dups = 0;
+	if ((wdb_ncharadd = strlen(wdb_prestr)) > 12) {
+		wdb_ncharadd = 12;
+		wdb_prestr[12] = '\0';
+	}
+
+	/* open the input file */
+	if ((newdbp = db_open(argv[2], "r")) == DBI_NULL) {
+		perror(argv[2]);
+		Tcl_AppendResult(interp, "dup: Can't open ", argv[2], "\n", (char *)NULL);
+		return TCL_ERROR;
+	}
+
+	Tcl_AppendResult(interp, "\n*** Comparing ", wdbop->wdb_wp->dbip->dbi_filename,
+			 "  with ", argv[2], " for duplicate names\n", (char *)NULL);
+	if (wdb_ncharadd) {
+		Tcl_AppendResult(interp, "  For comparison, all names in ",
+				 argv[2], " were prefixed with:  ", wdb_prestr, "\n", (char *)NULL);
+	}
+
+	/* Get array to hold names of duplicates */
+	if ((wdb_dup_dirp = wdb_getspace(wdbop->wdb_wp->dbip, 0)) == (struct directory **) 0) {
+		Tcl_AppendResult(interp, "f_dup: unable to get memory\n", (char *)NULL);
+		db_close( newdbp );
+		return TCL_ERROR;
+	}
+	dirp0 = wdb_dup_dirp;
+
+	curr_interp = interp;
+	curr_dbip = wdbop->wdb_wp->dbip;
+
+	/* Scan new database for overlaps */
+	if (db_scan(newdbp, wdb_dir_check, 0) < 0) {
+		Tcl_AppendResult(interp, "dup: db_scan failure\n", (char *)NULL);
+		bu_free((genptr_t)dirp0, "wdb_getspace array");
+		db_close(newdbp);
+		return TCL_ERROR;
+	}
+
+	bu_vls_init(&vls);
+	wdb_vls_col_pr4v(&vls, dirp0, (int)(wdb_dup_dirp - dirp0));
+	bu_vls_printf(&vls, "\n -----  %d duplicate names found  -----\n", wdb_num_dups);
+	Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+	bu_vls_free(&vls);
+	bu_free((genptr_t)dirp0, "wdb_getspace array");
+	db_close(newdbp);
+
 	return TCL_OK;
 }
 
