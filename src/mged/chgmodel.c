@@ -1928,6 +1928,10 @@ f_make(ClientData	clientData,
 		VSET( sketch_ip->u_vec, 1.0, 0.0, 0.0 );
 		VSET( sketch_ip->v_vec, 0.0, 1.0, 0.0 );
 		VSET( sketch_ip->V, -view_state->vs_vop->vo_center[MDX] , -view_state->vs_vop->vo_center[MDY] , -view_state->vs_vop->vo_center[MDZ]-view_state->vs_vop->vo_scale*0.5 );
+#if 0
+		/* XXX this creates a "default" sketch object -- this
+		   code should probably be made optional somewhere
+		   else now? */
 		sketch_ip->vert_count = 7;
 		sketch_ip->verts = (point2d_t *)bu_calloc( sketch_ip->vert_count, sizeof( point2d_t ), "sketch_ip->verts" );
 		sketch_ip->verts[0][0] = 0.25*view_state->vs_vop->vo_scale;
@@ -1989,6 +1993,13 @@ f_make(ClientData	clientData,
 		csg->radius = -1.0;
 		csg->center_is_left = 1;
 		csg->orientation = 0;
+#else
+		sketch_ip->vert_count = 0;
+		sketch_ip->verts = (point2d_t *)NULL;
+		sketch_ip->skt_curve.seg_count = 0;
+		sketch_ip->skt_curve.reverse = (int *)NULL;
+		sketch_ip->skt_curve.segments = (genptr_t *)NULL;
+#endif
 	} else if( strcmp( argv[2], "superell" ) == 0 )  {
 
 
