@@ -69,8 +69,6 @@ extern int	errno;
 extern char	*shmat();
 static int	linger();
 
-extern int	fb_sim_readrect(), fb_sim_writerect();
-
 /* CONFIGURATION NOTES:
 
 	If you have 4 Megabytes of memory, best limit the window sizes
@@ -111,6 +109,7 @@ _LOCAL_ int	sun_dopen(),
 		sun_curs_set(),
 		sun_cmemory_addr(),
 		sun_cscreen_addr(),
+		sun_free(),
 		sun_help();
 
 /* This is the ONLY thing that we "export" */
@@ -131,6 +130,8 @@ FBIO sun_interface = {
 		sun_cscreen_addr,
 		fb_sim_readrect,
 		fb_sim_writerect,
+		fb_null,		/* flush */
+		sun_free,		/* free */
 		sun_help,
 		"SUN SunView or raw Pixwin",
 		XMAXWINDOW,	/* max width */
@@ -1150,6 +1151,55 @@ FBIO	*ifp;
 			fb_log("sun_dclose shmdt failed, errno=%d\n", errno);
 			return -1;
 		}
+	} else {
+		/* free private memory */
+		(void)free( ifp->if_mem );
+	}
+	(void) free( (char *) SUNL(ifp) );
+	SUNL(ifp) = NULL;
+	return	0;
+}
+
+/*
+ *			S U N _ F R E E
+ *
+ *  Like close, but also releases shared memory if any.
+ */
+_LOCAL_ int
+sun_free(ifp)
+FBIO	*ifp;
+{
+	register Pixrect *p;
+	register int i;
+
+	if( SUNL(ifp) == (char *) NULL ) {
+		fb_log( "sun_free: frame buffer not open.\n" );
+		return	-1;
+	}
+	if( sun_pixwin ) {
+		/* child or single process */
+		alarm( 0 ); /* Turn off window redraw daemon. */
+		window_set(SUN(ifp)->frame, FRAME_NO_CONFIRM, TRUE, 0);
+		window_destroy(SUN(ifp)->frame);
+		imagepw = NULL;
+	}
+	else {
+		/* if the user hasn't requested a lingering buffer, clear the 
+		 * colormap so that we can see to log in on the console again
+		 */
+		if( (SUN(ifp)->su_mode & MODE_2MASK) != MODE_2LINGERING) {
+			p = SUNPR(ifp);
+			redmap[0] = grnmap[0] = blumap[0] = 255;
+			for (i=1 ; i < 256 ; ++i)
+				redmap[i] = grnmap[i] = blumap[i] = 0;
+			pr_putcolormap(p, 0, 256, redmap, grnmap, blumap);
+		}
+		pr_close( SUNPR(ifp) );
+	}
+	/* free up memory associated with image */
+	if( SUN(ifp)->su_shmid >= 0 ) {
+		/* release shared memory */
+		sun_zapmem();
 	} else {
 		/* free private memory */
 		(void)free( ifp->if_mem );
