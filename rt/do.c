@@ -861,7 +861,10 @@ int framenumber;
 		rtip->nshots, rtip->nhits, rtip->nmiss );
 	rt_log("pruned %.1f%%:  %ld model RPP, %ld dups skipped, %ld solid RPP\n",
 		rtip->nshots>0?((double)rtip->nhits*100.0)/rtip->nshots:100.0,
-		rtip->nmiss_model, rtip->nmiss_tree, rtip->nmiss_solid );
+		rtip->nmiss_model, rtip->ndup, rtip->nmiss_solid );
+	rt_log("%8d empty boxnodes (%s)\n", rtip->nempty_cells,
+	       rtip->rti_space_partition == RT_PART_NUGRID ? "NUGrid" :
+	       "NUBSPT" );
 	rt_log(
 		"Frame %5d: %8d pixels in %10.2f sec = %10.2f pixels/sec\n",
 		framenumber,
