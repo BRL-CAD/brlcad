@@ -27,43 +27,51 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <stdio.h>
 #include "fb.h"
 
+extern int	getopt();
+extern char	*optarg;
+extern int	optind;
+
 #define	MAXSCAN	(16*1024)	/* Largest input file scan line length */
 
 FBIO	*fbp;
 
 char	ibuf[MAXSCAN];		/* Allow us to see parts of big files */
-Pixel	obuf[1024];
-int	size, initx, inity;
-int	outsize;
-int	offx, offy;
+Pixel	obuf[MAXSCAN];
+
+int	height;				/* input height */
+int	width;				/* input width */
+int	scr_xoff, scr_yoff;
+int	file_xoff, file_yoff;
 int	clear = 0;
+int	inverse = 0;
 int	redflag   = 0;
 int	greenflag = 0;
 int	blueflag  = 0;
 
-char	*Usage = "usage: bw-fb [-h -i -c -r -g -b] [-o xoff yoff] [width] [xorig] [yorig] < file.bw\n";
+char *file_name;
+FILE *infp;
 
-main( argc, argv )
-int argc; char **argv;
+char	usage[] = "\
+Usage: bw-fb [-h -i -c -r -g -b]\n\
+	[-x file_xoff] [-y file_yoff] [-X scr_xoff] [-Y scr_yoff]\n\
+	[-s squaresize] [-H height] [-W width] [file.pix]\n";
+
+get_args( argc, argv )
+register char **argv;
 {
-	int	x, y, n;
-	int	default_size;
-	int	inverted = 0;
+	register int c;
 
-	default_size = 512;
-	offx = offy = 0;
-
-	/* Check for flags */
-	while( argc > 1 && argv[1][0] == '-' )  {
-		switch( argv[1][1] )  {
+	while ( (c = getopt( argc, argv, "hicrgbx:y:X:Y:s:H:W:" )) != EOF )  {
+		switch( c )  {
 		case 'h':
-			default_size = 1024;
+			/* high-res */
+			height = width = 1024;
 			break;
 		case 'i':
-			inverted++;
+			inverse = 1;
 			break;
 		case 'c':
-			clear++;
+			clear = 1;
 			break;
 		case 'r':
 			redflag = 1;
@@ -74,62 +82,105 @@ int argc; char **argv;
 		case 'b':
 			blueflag = 1;
 			break;
-		case 'o':
-			offx = atoi( argv[2] );
-			offy = atoi( argv[3] );
-			argv += 2;
-			argc -= 2;
+		case 'x':
+			file_xoff = atoi(optarg);
 			break;
+		case 'y':
+			file_yoff = atoi(optarg);
+			break;
+		case 'X':
+			scr_xoff = atoi(optarg);
+			break;
+		case 'Y':
+			scr_yoff = atoi(optarg);
+			break;
+		case 's':
+			/* square size */
+			height = width = atoi(optarg);
+			break;
+		case 'H':
+			height = atoi(optarg);
+			break;
+		case 'W':
+			width = atoi(optarg);
+			break;
+
+		default:		/* '?' */
+			return(0);
 		}
-		argc--;
-		argv++;
+	}
+
+	if( optind >= argc )  {
+		if( isatty(fileno(stdin)) )
+			return(0);
+		file_name = "-";
+		infp = stdin;
+	} else {
+		file_name = argv[optind];
+		if( (infp = fopen(file_name, "r")) == NULL )  {
+			(void)fprintf( stderr,
+				"pix-fb: cannot open \"%s\" for reading\n",
+				file_name );
+			return(0);
+		}
+	}
+
+	if ( argc > ++optind )
+		(void)fprintf( stderr, "pix-fb: excess argument(s) ignored\n" );
+
+	return(1);		/* OK */
+}
+
+main( argc, argv )
+int argc; char **argv;
+{
+	register int	x, y, n;
+
+	height = width = 512;		/* Defaults */
+
+	if ( !get_args( argc, argv ) )  {
+		(void)fputs(usage, stderr);
+		return 1;
 	}
 
 	/* If no color planes were selected, load them all */
 	if( redflag == 0 && greenflag == 0 && blueflag == 0 )
 		redflag = greenflag = blueflag = 1;
 
-	if( argc > 4 || isatty(fileno(stdin)) ) {
-		fputs( Usage, stderr );
-		exit( 1 );
-	}
-
-	size = ( argc > 1 ) ? atoi( argv[1] ) : default_size;
-	initx = ( argc > 2 ) ? atoi( argv[2] ) : 0;
-	inity = ( argc > 3 ) ? (atoi( argv[3] )) : 0;
-
-	outsize = (size > default_size) ? default_size : size;
-
 	/* Check the scan line size */
-	if( size-offx > MAXSCAN ) {
-		fprintf( stderr, "bw-fb: not compiled for files that large.\n" );
+	if( width-file_xoff > MAXSCAN ) {
+		fprintf( stderr, "bw-fb: not compiled for files that wide.\n" );
 		exit( 2 );
 	}
 
 	/* Open Display Device */
-	if ((fbp = fb_open( NULL, default_size, default_size )) == NULL ) {
+	if ((fbp = fb_open( NULL, width, height )) == NULL ) {
 		fprintf( stderr, "fb_open failed\n");
 		exit( 3 );
 	}
 
 	if( clear ) fb_clear(fbp, PIXEL_NULL);
 
-	if( offy != 0 ) fseek( stdin, offy*size, 1 );
-	for( y = inity; y < outsize; y++ )  {
-		if( offx != 0 ) fseek( stdin, offx, 1 );
-		n = fread( &ibuf[0], sizeof( char ), size-offx, stdin );
-		if( n <= 0 ) exit( 0 );
+	if( file_yoff != 0 ) fseek( infp, file_yoff*width*height, 1 );
+
+	for( y = scr_yoff; y < height; y++ )  {
+		if( file_xoff != 0 )
+			fseek( infp, file_xoff, 1 );
+		n = fread( &ibuf[0], sizeof( char ), width-file_xoff, infp );
+		if( n <= 0 ) break;
 		/*
 		 * If we are not loading all color planes, we have
 		 * to do a pre-read.
 		 */
 		if( redflag == 0 || greenflag == 0 || blueflag == 0 ) {
-			if( inverted )
-				fb_read( fbp, initx, default_size-1-y, &obuf[0], outsize );
+			if( inverse )
+				n = fb_read( fbp, scr_xoff, fb_getheight(fbp)-1-y,
+					&obuf[0], width );
 			else
-				fb_read( fbp, initx, y, &obuf[0], outsize );
+				n = fb_read( fbp, scr_xoff, y, &obuf[0], width );
+			if( n < 0 )  break;
 		}
-		for( x = 0; x < outsize; x++ ) {
+		for( x = 0; x < width; x++ ) {
 			if( redflag )
 				obuf[x].red   = ibuf[x];
 			if( greenflag )
@@ -137,10 +188,11 @@ int argc; char **argv;
 			if( blueflag )
 				obuf[x].blue  = ibuf[x];
 		}
-		if( inverted )
-			fb_write( fbp, initx, default_size-1-y, &obuf[0], outsize );
+		if( inverse )
+			fb_write( fbp, scr_xoff, fb_getheight(fbp)-1-y,
+				&obuf[0], width );
 		else
-			fb_write( fbp, initx, y, &obuf[0], outsize );
+			fb_write( fbp, scr_xoff, y, &obuf[0], width );
 	}
 
 	fb_close( fbp );

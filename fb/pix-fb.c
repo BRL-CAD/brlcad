@@ -1,8 +1,7 @@
 /*
  *  			P I X - F B . C
  *  
- *  Dumb little program to take bottom-up pixel files and
- *  send them to a framebuffer.
+ *  Program to take bottom-up pixel files and send them to a framebuffer.
  *  
  *  Author -
  *	Michael John Muuss
@@ -23,113 +22,149 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <stdio.h>
 #include "fb.h"
 
+extern int	getopt();
+extern char	*optarg;
+extern int	optind;
+
 #define MAX_LINE	2048		/* Max pixels/line */
 static char scanline[MAX_LINE*3];	/* 1 scanline pixel buffer */
 static int scanbytes;			/* # of bytes of scanline */
+
+char *file_name;
+FILE *infp;
 
 Pixel outline[MAX_LINE];
 
 int inverse = 0;			/* Draw upside-down */
 int clear = 0;
+int height;				/* input height */
+int width;				/* input width */
 
 FBIO *fbp;
 
-char usage[] = "Usage: pix-fb [-h] [-i] [-c] [width] <file.pix\n";
+char usage[] = "\
+Usage: pix-fb [-h -i -c] [-s squaresize] [-H height] [-W width] [file.pix]\n";
+
+get_args( argc, argv )
+register char **argv;
+{
+	register int c;
+
+	while ( (c = getopt( argc, argv, "hics:H:W:" )) != EOF )  {
+		switch( c )  {
+		case 'h':
+			/* high-res */
+			height = width = 1024;
+			break;
+		case 's':
+			/* square size */
+			height = width = atoi(optarg);
+			break;
+		case 'H':
+			height = atoi(optarg);
+			break;
+		case 'W':
+			width = atoi(optarg);
+			break;
+		case 'i':
+			inverse = 1;
+			break;
+		case 'c':
+			clear = 1;
+			break;
+
+		default:		/* '?' */
+			return(0);
+		}
+	}
+
+	if( optind >= argc )  {
+		if( isatty(fileno(stdin)) )
+			return(0);
+		file_name = "-";
+		infp = stdin;
+	} else {
+		file_name = argv[optind];
+		if( (infp = fopen(file_name, "r")) == NULL )  {
+			(void)fprintf( stderr,
+				"pix-fb: cannot open \"%s\" for reading\n",
+				file_name );
+			return(0);
+		}
+	}
+
+	if ( argc > ++optind )
+		(void)fprintf( stderr, "pix-fb: excess argument(s) ignored\n" );
+
+	return(1);		/* OK */
+}
 
 main(argc, argv)
 int argc;
 char **argv;
 {
 	static int y;
-	static int infd;
-	static int nlines;		/* Square:  nlines, npixels/line */
-	static int fbsize;
 
-	if( argc < 1 || isatty(fileno(stdin)) )  {
-		fprintf(stderr,"%s", usage);
-		exit(1);
+	height = width = 512;		/* Defaults */
+
+	if ( !get_args( argc, argv ) )  {
+		(void)fputs(usage, stderr);
+		return 1;
 	}
 
-	fbsize = 512;
-	nlines = 512;
-	while( argc > 1 && argv[1][0] == '-' )  {
-		if( strcmp( argv[1], "-h" ) == 0 )  {
-			fbsize = 1024;
-			nlines = 1024;
-			argc--; argv++;
-			continue;
-		}
-		if( strcmp( argv[1], "-i" ) == 0 )  {
-			inverse++;
-			argc--; argv++;
-			continue;
-		}
-		if( strcmp( argv[1], "-c" ) == 0 )  {
-			clear++;
-			argc--; argv++;
-			continue;
-		}
-	}
-	infd = 0;	/* stdin */
+	scanbytes = width * 3;
 
-	if( argc == 2 )
-		nlines = atoi(argv[1] );
-	if( argc > 2 )  {
-		fprintf(stderr,"%s", usage);
-		exit(1);
-	}
-
-	scanbytes = nlines * 3;
-
-	if( (fbp = fb_open( NULL, fbsize, fbsize )) == NULL )  {
+	if( (fbp = fb_open( NULL, height, width )) == NULL )  {
 		fprintf(stderr,"fb_open failed\n");
 		exit(12);
 	}
-	if( clear )
-		fb_clear( fbp, (Pixel *) 0 );
+	if( clear )  {
+		fb_clear( fbp, PIXEL_NULL );
+		fb_wmap( fbp, COLORMAP_NULL );
+	}
 	/* Zoom in, in the center of view */
-	fb_zoom( fbp, fbsize/nlines, fbsize/nlines );
-	fb_window( fbp, nlines/2, nlines/2 );
+	fb_zoom( fbp, fb_getwidth(fbp)/width, fb_getheight(fbp)/height );
+	fb_window( fbp, width/2, height/2 );
 
 	if( !inverse )  {
 		/* Normal way -- bottom to top */
-		for( y=0; y < nlines; y++ )  {
+		for( y=0; y < height; y++ )  {
 			register char *in;
 			register Pixel *out;
 			register int i;
 
-			if( fread( (char *)scanline, scanbytes, 1, stdin ) != 1 )
+			if( fread( (char *)scanline, scanbytes, 1, infp ) != 1 )
 				break;
 
 			in = scanline;
 			out = outline;
-			for( i=0; i<nlines; i++ )  {
+			for( i=0; i<width; i++ )  {
 				out->red = *in++;
 				out->green = *in++;
 				out->blue = *in++;
 				out++;
 			}
-			fb_write( fbp, 0, y, outline, nlines );
+			fb_write( fbp, 0, y, outline, width );
 		}
 	}  else  {
 		/* Inverse -- top to bottom */
-		for( y = nlines-1; y >= 0; y-- )  {
+		for( y = height-1; y >= 0; y-- )  {
 			register char *in;
 			register Pixel *out;
 			register int i;
 
-			if( fread( (char *)scanline, scanbytes, 1, stdin ) != 1 )
+			if( fread( (char *)scanline, scanbytes, 1, infp ) != 1 )
 				break;
 
 			in = scanline;
 			out = outline;
-			for( i=0; i<nlines; i++ )  {
+			for( i=0; i<width; i++ )  {
 				out->red = *in++;
 				out->green = *in++;
 				out->blue = *in++;
 				(out++)->spare = 0;
 			}
-			fb_write( fbp, 0, y, outline, nlines );
+			fb_write( fbp, 0, y, outline, width );
 		}
 	}
 	fb_close( fbp );
