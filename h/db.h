@@ -98,7 +98,7 @@ union record  {
 #define DBID_NMG	'N'	/* NMG solid */
 #define	DBID_SKETCH	'd'	/* 2D sketch */
 #define	DBID_EXTR	'e'	/* solid of extrusion */
-#define DBID_FGP	'f'	/* FASTGEN4 plate mode solid */
+#define DBID_CLINE	'c'	/* FASTGEN4 CLINE solid */
 #define	DBID_BOT	't'	/* Bag o' triangles */
 
 	char	u_size[DB_MINREC];	/* Minimum record size */
@@ -382,17 +382,16 @@ union record  {
 		unsigned char	skt_count[4];		/* number of additional granules */
 	} skt;
 
-	/* FASTGEN4 plate mode solid */
-	struct fgp_rec {
-		char	fgp_id;			/* DBID_FGP */
-		char	fgp_pad;
-		char	fgp_name[NAMESIZE];		/* name of this solid */
-		char	fgp_ref_sol[NAMESIZE];		/* referenced solid name */
-		unsigned char	fgp_thickness[8];	/* thickness of plate */
-		unsigned char	fgp_mode[4];		/* mode: 1 -> thickness is centered no hit point
-							 *       2 -> thickness extends in ray direction from hit point
-							 */
-	} fgp;
+	/* FASTGEN4 CLINE element */
+	struct cline_rec {
+		char	cli_id;			/* DBID_CLINE */
+		char	cli_pad;
+		char	cli_name[NAMESIZE];
+		unsigned char	cli_V[8*3];	/* vertex */
+		unsigned char	cli_h[8*3];	/* height vector */
+		unsigned char	cli_radius[8];	/* radius */
+		unsigned char	cli_thick[8];	/* plate thickness (0 means volume mode) */
+	} cli;
 
 	/* Bag o' triangles
 	 *  The vertices are stored in an array

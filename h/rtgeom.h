@@ -435,31 +435,29 @@ struct rt_extrude_internal
 	char		curve_name[SKETCH_NAME_LEN];	/* name of curve (in sketch) to be extruded */
 	struct rt_sketch_internal	*skt;	/* pointer to referenced sketch */
 };
+
+/*	Note that the u_vec and v_vec are not unit vectors, their magnitude and direction are
+ *	used for scaling and rotation
+ */
 #define RT_EXTRUDE_INTERNAL_MAGIC	0x65787472	/* extr */
 #define RT_EXTRUDE_CK_MAGIC(_p)	BU_CKMAG(_p,RT_EXTRUDE_INTERNAL_MAGIC,"rt_extrude_internal")
 
 /*
- *	ID_FGP
+ *	ID_CLINE
+ *
+ *	Implementation of FASTGEN CLINE element
  */
 
-struct rt_fgp_internal
+struct rt_cline_internal
 {
 	long		magic;
-	fastf_t		thickness;
-	int		mode;
-	char		referenced_solid[NAMELEN];
-
-	/* the following is used by import, ignored by export */
-	mat_t		xform;
-	struct directory *ref_dp;
-	CONST struct db_i	*dbip;
+	point_t		v;
+	vect_t		h;
+	fastf_t		radius;
+	fastf_t		thickness; 	/* zero thickness means volume mode */
 };
-
-#define	RT_FGP_CENTER_MODE	1	/* thickness is centered about hit point */
-#define RT_FGP_FRONT_MODE	2	/* thickness is appended to hit point in ray direction */
-
-#define	RT_FGP_INTERNAL_MAGIC		0x706c6174	/* plat */
-#define RT_FGP_CK_MAGIC(_p)	BU_CKMAG(_p,RT_FGP_INTERNAL_MAGIC,"rt_fgp_internal")
+#define	RT_CLINE_INTERNAL_MAGIC		0x43767378	/* CLIN */
+#define RT_CLINE_CK_MAGIC(_p)	BU_CKMAG(_p,RT_CLINE_INTERNAL_MAGIC,"rt_cline_internal")
 
 /*
  *	ID_BOT
