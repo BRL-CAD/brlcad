@@ -26,8 +26,8 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "vmath.h"
 #include "raytrace.h"
 
-#include "./complex.h"
-#include "./polyno.h"
+#include "../librt/complex.h"
+#include "../librt/polyno.h"
 
 mat_t	identity;
 double degtorad = 0.0174532925199433;
