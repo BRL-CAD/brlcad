@@ -165,80 +165,6 @@ set -S2 "/bin/sh"
 #	define	LIBRT_TIMER	timer42
 #endif
 
-#if defined(__CAKE__irix4) || (defined(__sgi) && defined(__mips))
-/*	Silicon Graphics 4D, running IRIX 4.0 "Cypress" and X-windows */
-#	undef	sgi
-#	define	MTYPE	5d
-#	if 0	/* PRODUCTION=1 */
-/*		This version for production: optimization & shared libraries */
-#		define	OPTIMIZER	-O2
-/*		Use shared libraries */
-#		define	SHARED	_s
-#	else
-/*		This version for debugging with DBX */
-#		define	OPTIMIZER	-g
-#		define	SHARED	/**/
-#	endif
-#	define	GFLAG		-G 7
-#	define	TCL_DEFS OPTIMIZER -DTCL_LIBRARY='"'TCLLIBDIR'"' -DTCL_PACKAGE_PATH='"'TCLLIBDIR'"' -DHAVE_UNISTD_H=1 -DHAVE_SYS_TIME_H=1 -DTIME_WITH_SYS_TIME=1 -DHAVE_TZNAME=1 -DHAVE_TIMEZONE_VAR=1 -Dvfork=fork -DHAVE_SYS_IOCTL_H=1
-#	define	TK_DEFS	OPTIMIZER -DTK_LIBRARY='"'TKLIBDIR'"' -DHAVE_UNISTD_H=1 -DHAVE_LIMITS_H=1 -D__CHAR_UNSIGNED__=1
-/*	ANSI+POSIX mode is used over ANSI, to get fdopen(), etc, defined. */
-#	define  CC_OPTS		GFLAG -ansiposix -DIRIX=4
-#	define	IRIX	4
-#	define	STANDARD_LIBES	-lm -lmalloc -lc''SHARED
-#	define	LIBBU_LIBES	-lmpc
-#	define	LGT_CONFIG	GFLAG -lmpc
-#if 1
-#	define	XINCDIR	/usr/X11/include
-#	define	XLIBDIR	/usr/X11/lib
-#else
-#	define	XINCDIR	/usr/include/X11
-#	define	XLIBDIR	/usr/lib
-#endif
-
-#	define	LIBFB_OBJS	if_remote if_ab if_4d if_X if_X24
-#	define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB -DIF_4D -DBSD=43 -I''XINCDIR -DIF_X
-#	define	LIBFB_LIBES	-L''XLIBDIR -lX11''SHARED LIBPKG -lgl''SHARED
-#	if 0	/* PRODUCTION=1 */
-/*		X11 for MGED */
-#		define	MGED_OBJS	dm-4d dm-X dm-ogl dm-glx
-#		define	MGED_CONFIG	GFLAG -DIR_KNOBS=8 -DIR_BUTTONS=32 -DDM_4D -DDM_X -I''XINCDIR -DDM_OGL -DDM_GLX
-#		define	MGED_LIBES	-L''XLIBDIR -lX11''SHARED -lgl''SHARED
-#	else
-#if 0
-/*		Lee Butler experimental version */
-#		define	MGED_OBJS	dm-4d mged_widget dm-X
-#		define	MGED_CONFIG	GFLAG -DIR_WIDGETS=1 -DIR_KNOBS=8 -DIR_BUTTONS=32 -DDM_4D -DDM_X -I''XINCDIR
-#		define	MGED_LIBES	-L../libforms/FORMS -lforms -lfm''SHARED -L''XLIBDIR -lX11''SHARED -lgl''SHARED
-#else
-#		define MGED_OBJS	dm-4d dm-X
-#		define MGED_CONFIG	GFLAG -DIR_KNOBS=8 -DIR_BUTTONS=32 -DDM_4D -DDM_X -I''XINCDIR -DMGED_TCL_LIBRARY=\\\\"/n/vapor/m/cad/tclscripts\\\\"
-#		define MGED_LIBES	-L''XLIBDIR -lX11 -lgl_s
-#endif
-#	endif
-#	define	HAS_TCP	1
-
-#if 1
-/*      Experimental     */
-#	define  CC_OPTS		GFLAG -DIRIX=4
-#	define	CC	/usr/gnu/bin/gcc
-#else
-#	define	CC	/usr/bin/cc
-#endif
-#	define	LD_OPTS		GFLAG
-#	define	RANLIB	ranlib5.sh
-#	define	GETHOST	hostname
-#	define	LIBPKG_CONFIG	-I/usr/include/bsd -DBSD=43
-#	define	RFBD_CONFIG	-I/usr/include/bsd -DBSD=43
-#	define	LIBRT_TIMER	timer42
-#	if 1
-/*		Under Irix 4.0.5, the SGI-provided LEX and YACC don't work */
-#		define	LEX	/usr/gnu/bin/flex
-#		define	YACC	/usr/gnu/bin/bison
-#		define	YACC_OPTS	-y -d
-#	endif
-#endif
-
 #if defined(__CAKE__irix5)
 /*	Silicon Graphics 4D, running IRIX 5.0 */
 #	undef	sgi
@@ -259,46 +185,37 @@ set -S2 "/bin/sh"
 /*		Shared library version support */
 #		define	GFLAG		-KPIC
 #		define	ARCH_SUF	so
-#		define	LIBVERS ../sharedlibvers.sh
+#		define	LIBVERS ../sh/sharedlibvers.sh
 #		define	BUILD_LIBRARY	ld -shared -o
 #		define	RANLIB	true
 /*		Note that /usr/lib MUST go first on -rpath, so that -lmalloc is the system one */
 #		define	STANDARD_LIBES	-lm -lmalloc -lc''SHARED -rpath /usr/lib:LIBDIR
 /*		When debugging libraries, -m and -v are helpful LD_OPTS */
 #		define	LD_OPTS		GFLAG
-#		define	LIBFB_LIBES	LIBPKG -L''XLIBDIR -lX11''SHARED -lgl''SHARED
-#		define	MGED_LIBES	-L''XLIBDIR -lX11''SHARED -lgl''SHARED
-#		define	TCL_MGED_LIBES	-L''XLIBDIR -lX11''SHARED -lgl''SHARED -lGL
+#		define	LIBFB_LIBES	LIBPKG LIBTK LIBTCL -L''XLIBDIR -lX11''SHARED -lgl''SHARED -lGL''SHARED
+#		define	LIBDM_LIBES	LIBTK LIBTCL
+#		define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi''SHARED -lXext''SHARED -lX11''SHARED -lgl''SHARED -lGL''SHARED
+#		define  LIBDM_SAMPLER_LIBES 	MGED_LIBES
 #	else
 /*		Static linked executables */
 #		define	GFLAG		
 #		define	RANLIB	ranlib5.sh
 #		define	STANDARD_LIBES	-L/usr/lib -lm -lmalloc -lc_s
 #		define	LD_OPTS		GFLAG
-#if 0
-#       define  XINCDIR /usr/X11/include
-#       define  XLIBDIR /usr/X11/lib
-#else
-#       define  XINCDIR /usr/include/X11
-#       define  XLIBDIR /usr/lib
-#endif
-#if 0
-#		define	LIBFB_LIBES	LIBPKG -L''XLIBDIR -lGL -lgl -lXt -lXm -lX11
-#else
+#		if 0
+#			define  XINCDIR /usr/X11/include
+#			define  XLIBDIR /usr/X11/lib
+#		else
+#			define  XINCDIR /usr/include/X11
+#			define  XLIBDIR /usr/lib
+#		endif
+
+#		define	LIBDM_LIBES	LIBTK LIBTCL
 #		define	LIBFB_LIBES	LIBPKG LIBTK LIBTCL -L''XLIBDIR -lX11_s -lgl_s -lGL
-#endif
-#		define	TCL_MGED_LIBES	-L''XLIBDIR -lX11_s -lgl_s -lGL_s
-#if 0
-#		define	MGED_LIBES	-L''XLIBDIR -lX11_s -lgl_s -lGL
-#else
-#	if 1
-#		define	MGED_LIBES	LIBDM -L''XLIBDIR -lXi -lXext -lX11_s -lgl_s -lGL
-#	else
-/* Experiment with Mesa library */
-#		define	MGED_LIBES	LIBDM -L''XLIBDIR -lXi -lXext -lX11_s -lgl_s -L../.libMesa.6d -lMesaGL
+#		define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11_s -lgl_s -lGL
+#		define  LIBDM_SAMPLER_LIBES	MGED_LIBES
 #	endif
-#endif
-#	endif
+
 /* -ansiposix	ANSI+POSIX mode is used over ANSI, to get fdopen(), etc, defined. */
 #	define  CC_OPTS		GFLAG -ansiposix -DIRIX=5
 #	define	IRIX	5
@@ -306,38 +223,15 @@ set -S2 "/bin/sh"
 #	define	TCL_DEFS OPTIMIZER -DTCL_LIBRARY='"'TCLLIBDIR'"' -DTCL_PACKAGE_PATH='"'TCLLIBDIR'"' -DHAVE_UNISTD_H=1 -DHAVE_SYS_TIME_H=1 -DTIME_WITH_SYS_TIME=1 -DHAVE_TZNAME=1 -DHAVE_TIMEZONE_VAR=1 -DSTDC_HEADERS=1 -DNEED_MATHERR=1 -Dvfork=fork -DHAVE_BSDGETTIMEOFDAY=1 -DHAVE_SYS_IOCTL_H=1 -DHAVE_SYS_FILIO_H=1
 #	define	TK_DEFS	OPTIMIZER -DTK_LIBRARY='"'TKLIBDIR'"' -DHAVE_UNISTD_H=1 -DHAVE_LIMITS_H=1 -DSTDC_HEADERS=1 -D__CHAR_UNSIGNED__=1
 
-# if 0
-#	define	LIBFB_OBJS	if_remote if_ab if_4d if_X if_X24
-
-# else
-/*	Carl's test version */
 #	define	LIBFB_OBJS	if_remote if_ab if_4d if_X if_X24 if_ogl
-# endif
-#if 0
-#	define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB -DIF_4D -DIF_5D -DBSD=43 -DIF_X -I''XINCDIR
-#else
 #	define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB -DIF_4D -DIF_5D -DIF_OGL -DBSD=43 -DIF_X -I''XINCDIR -DFB_USING_TCL_TK
-#endif
 
-# if 0
-#	define	MGED_OBJS	dm-4d dm-X
-#	define	MGED_CONFIG	GFLAG -DIR_KNOBS=8 -DIR_BUTTONS=32 -DDM_4D -DDM_X -I''XINCDIR
-# else
-/* 	Carl's test version */
-#if 0
 #	define	LIBMESA_CONFIG	-DFBIND=2
 #	define  LIBDM_OBJS	dm-X dm-ogl dm-glx
-#	define	LIBDM_CONFIG	-DIR_KNOBS=8 -DIR_BUTTONS=32 -DDM_OGL
+#	define	LIBDM_CONFIG	-DIR_KNOBS=8 -DIR_BUTTONS=32 -DDM_X -DDM_OGL -DDM_GLX
 #	define	MGED_OBJS	dm-X dm-ogl dm-glx
-#	define	MGED_CONFIG	GFLAG -DIR_KNOBS=8 -DIR_BUTTONS=32 -DDM_X -DDM_OGL -DDM_GLX -I''XINCDIR -DMGED_TCL_LIBRARY=\\\\"/m/cad/tclscripts\\\\"
-#else
-#	define	LIBMESA_CONFIG	-DFBIND=2
-#	define  LIBDM_OBJS	dm-X dm-ogl dm-glx
-#	define	LIBDM_CONFIG	-DIR_KNOBS=8 -DIR_BUTTONS=32 -DDM_OGL
-#	define	MGED_OBJS	dm-X dm-ogl dm-glx
-#	define	MGED_CONFIG	GFLAG -DIR_KNOBS=8 -DIR_BUTTONS=32 -DDM_X -DDM_OGL -DDM_GLX -I''XINCDIR -DMGED_TCL_LIBRARY=\\\\"/m/cad/tclscripts\\\\"
-#endif
-# endif
+#	define	MGED_CONFIG	GFLAG -DIR_KNOBS=8 -DIR_BUTTONS=32 -DDM_X -DDM_OGL -DDM_GLX -I''XINCDIR -DBRLCAD_TCL_LIBRARY='"'TCLSCRIPTSDIR'"'
+
 #	define	HAS_TCP	1
 #	define	CC	/usr/bin/cc
 #	define	GETHOST	hostname
@@ -373,7 +267,7 @@ set -S2 "/bin/sh"
 #	if 0	/* PRODUCTION=1 */
 /*		Shared library version support */
 #		define	ARCH_SUF	so
-#		define	LIBVERS ../sharedlibvers.sh
+#		define	LIBVERS ../sh/sharedlibvers.sh
 #		define	BUILD_LIBRARY	ld -mips4 -shared -o
 #		define	RANLIB	true
 #		define	STANDARD_LIBES	-lm -lmalloc -lc -rpath /usr/lib64:LIBDIR
@@ -393,142 +287,22 @@ set -S2 "/bin/sh"
 #	define	LGT_CONFIG	GFLAG
 
 /* GAK!  No GL library in 64-bit mode, only OpenGL!  ARRRRGH! */
-#if 1
 #	define	LIBFB_OBJS	if_remote if_ab if_X if_X24 if_ogl
 #	define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB -DBSD=43 -DIF_X -I''XINCDIR -DIF_OGL -DFB_USING_TCL_TK
-#if 0
-#	define	LIBFB_LIBES	LIBPKG -L''XLIBDIR -lgl -lX11
-#else
 #       define  LIBFB_LIBES     LIBPKG LIBTK LIBTCL -L''XLIBDIR -lX11 -lGL
-#endif
-#else
-#	define	LIBFB_OBJS	if_remote if_ab if_X if_X24
-#	define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB -DBSD=43 -DIF_X -I''XINCDIR
-#	define	LIBFB_LIBES	LIBPKG -L''XLIBDIR -lX11 
-#endif
-#if 1
 #	define	LIBDM_OBJS	dm-X dm-ogl
 #	define	LIBDM_CONFIG	-DIR_KNOBS=8 -DIR_BUTTONS=32 -DDM_X -DDM_OGL
-#else
-#	define  LIBDM_OBJS      dm-X
-#	define	LIBDM_CONFIG	-DIR_KNOBS=8 -DIR_BUTTONS=32 -DDM_X 
-#endif
+#	define	LIBDM_LIBES	LIBTK LIBTCL
 #	define	MGED_OBJS	dm-X dm-ogl
-#	define	MGED_CONFIG	GFLAG -DIR_KNOBS=8 -DIR_BUTTONS=32 -DDM_X -DDM_OGL -I''XINCDIR -DMGED_TCL_LIBRARY=\\\\"/m/cad/tclscripts\\\\"
-#	define	MGED_LIBES	LIBDM -L''XLIBDIR -lXi -lXext -lX11 -lGL
+#	define	MGED_CONFIG	GFLAG -DIR_KNOBS=8 -DIR_BUTTONS=32 -DDM_X -DDM_OGL -I''XINCDIR -DBRLCAD_TCL_LIBRARY='"'TCLSCRIPTSDIR'"'
+#	define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -lGL
+#	define	LIBDM_SAMPLER_LIBES MGED_LIBES
 #	define	HAS_TCP	1
 #	define	CC	cc
 #	define	GETHOST	hostname
 #	define	LIBPKG_CONFIG	-DBSD=43
 #	define	RFBD_CONFIG	-DBSD=43
 #	define	LIBRT_TIMER	timer42
-#endif
-
-#if defined(__CAKE__sun3)
-/*	Sun-3 hardware, SunOS 3.4, SunOS 4.0 */
-#	undef	sun
-#	undef	sun3
-#	define	MTYPE	sun3
-#	define	BSD	42
-#	define	HAS_TCP	1
-/*	Select correct floating point flag, -fswitch if unsure */
-#	if 1	/* PRODUCTION=1 */
-/*		Using the Sun Compiler (the default) */
-#		if 0
-/*			Generic unoptimized Sun configuration */
-#			define	CC_OPTS	-fswitch -PIC
-#			define OPTIMIZER	-g
-#		else
-/*			Model-specific floating point options */
-/*#			define	CC_OPTS	-PIC -ffpa */
-/*#			define	CC_OPTS	-PIC -ffpa /usr/lib/ffpa.il*/
-/*#			define	CC_OPTS	-PIC -f68881 -g*/
-/*#			define	CC_OPTS	-PIC -f68881 /usr/lib/f68881.il*/
-/*#			define	LD_OPTS	-PIC -f68881*/
-#			define	CC_OPTS	-PIC -f68881
-#		endif
-/*		Shared library support on Sun compiler */
-#		define	ARCH_SUF	so
-#		define	LIBVERS		../sharedlibvers.sh
-#		define	BUILD_LIBRARY	ld -Bdynamic -o
-#		define	RANLIB	true
-#		define	STANDARD_LIBES	-L''LIBDIR -lm
-#	else
-/*		Using the Gnu C Compiler */
-#		define	CC	gcc
-#		define	CC_OPTS	-traditional -fstrength-reduce \
-				-fomit-frame-pointer -finline-functions
-#	endif
-#	define	FC_OPTS	CC_OPTS
-#	ifndef	LD_OPTS
-#		define	LD_OPTS	CC_OPTS
-#	endif
-#	define	LIBRT_TIMER	timer42
-
-#	define	sun_openwin 1	/* PRODUCTION=1 */
-#	undef	sun_x11
-#	undef	sun_no_opts
-#	undef	sun_x11_gds
-
-#	ifdef sun_openwin
-/*		Sun with SunOS 4.1.1 and OpenWindows configuration */
-#		define	XINCDIR		/usr/openwin/include
-#		define	XLIBDIR		/usr/openwin/lib
-#		define	LIBFB_OBJS	if_remote if_ab if_X if_X24
-#		define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB \
-			-I''XINCDIR -DIF_X
-#		define	LIBFB_LIBES	LIBPKG -L''XLIBDIR -lX11
-#		define	MGED_OBJS	dm-X
-#		define	MGED_CONFIG	-DDM_X -I''XINCDIR
-#		define	MGED_LIBES	-L''XLIBDIR -lX11
-#	endif
-#	ifdef sun_x11
-/*		Sun with site-provided MIT X11 configuration */
-#		define	XINCDIR		/usr/X11/include
-#		define	XLIBDIR		/usr/X11/lib
-#		define	LIBFB_OBJS	if_remote if_ab if_sun if_X if_X24
-#		define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB \
-			-I''XINCDIR -DIF_X
-#		define	LIBFB_LIBES	LIBPKG -L''XLIBDIR -lX11
-#		define	MGED_OBJS	dm-X
-#		define	MGED_CONFIG	-DDM_X -I''XINCDIR
-#		define	MGED_LIBES	-L''XLIBDIR -lX11
-#	endif
-#	ifdef sun_no_opts
-/*		Old SunOS 3 configuration -- no X or OpenWindows, only SunTools */
-#		define	LIBFB_OBJS	if_remote if_ab if_sun
-#		define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB -DIF_SUN
-#		define	LIBFB_LIBES	LIBPKG -lsuntool -lsunwindow -lpixrect
-#		define	MGED_OBJS	dm-sun
-#		define	MGED_CONFIG	-DDM_SUNPW
-#		define	MGED_LIBES	-lsuntool -lsunwindow -lpixrect
-#	endif
-#	ifdef sun_x11_gds
-/*		Sun with X11 configuration and TekSource GDS hardware*/
-#		define	XINCDIR		/usr/X11/include
-#		define	XLIBDIR		/usr/X11/lib
-#		define	LIBFB_OBJS	if_remote if_ab if_sun if_X if_X24 if_ts
-#		define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB -DIF_SUN -DIF_TS \
-			-I''XINCDIR -DIF_X
-#		define	LIBFB_LIBES	LIBPKG -lsuntool -lsunwindow -lpixrect \
-			-L''XLIBDIR -lX11 -lgds
-#		define	MGED_OBJS	dm-sun dm-X
-#		define	MGED_CONFIG	-DDM_SUNPW -DDM_X -I''XINCDIR
-#		define	MGED_LIBES	-lsuntool -lsunwindow -lpixrect \
-			-L''XLIBDIR -lX11
-#	endif
-#	if 0
-/*		XMGED requires a Motif license and include/X11/Xm/Xm.h */
-#		define  XMGED_ALLOCA
-#		define	XMGED_OBJS	dm-X
-#		define	XMGED_CONFIG	-DDM_X -DDMX_SIGNALS -D_BSD_SIGNALS -DXMGED -I''XINCDIR
-#		define	XMGED_LIBES	-lXm -lXt -L''XLIBDIR -lXi -lX11 -ll
-#	endif
-#	if 0
-/*		"Unbundled" (i.e. "improved") compilers.  Use if you have them */
-#		define	CC	/usr/lang/cc
-#		define	FC	/usr/lang/f77
-#	endif
 #endif
 
 #if defined(__CAKE__sun4)
@@ -547,14 +321,14 @@ set -S2 "/bin/sh"
 #	if 0
 /*		Shared library support */
 #		define	ARCH_SUF	so
-#		define	LIBVERS		sharedlibvers.sh
+#		define	LIBVERS		../sh/sharedlibvers.sh
 #		define	BUILD_LIBRARY	ld -Bdynamic -o
 #		define	RANLIB	true
 #		define	STANDARD_LIBES	-L''LIBDIR -lm
 #	else
 /*		Static libraries */
 #		define	ARCH_SUF	a
-#		define	LIBVERS		newvers.sh
+#		define	LIBVERS		../sh/newvers.sh
 #		define	STANDARD_LIBES	-lm
 #		define	RANLIB	ranlib
 #	endif
@@ -571,9 +345,13 @@ set -S2 "/bin/sh"
 #		define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB \
 			-I''XINCDIR -DIF_X
 #		define	LIBFB_LIBES	LIBPKG -L''XLIBDIR -lX11
+#		define	LIBDM_OBJS	dm-X
+#		define	LIBDM_CONFIG	-DDM_X -I''XINCDIR
+#		define  LIBDM_LIBES     LIBTK LIBTCL
 #		define	MGED_OBJS	dm-X
 #		define	MGED_CONFIG	-DDM_X -I''XINCDIR
-#		define	MGED_LIBES	-L''XLIBDIR -lX11 -ly
+#		define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly
+		define  LIBDM_SAMPLER_LIBES     MGED_LIBES
 #	else
 /*		Sun with site-provided MIT X11. */
 #		define	XINCDIR		/usr/X11/include
@@ -583,18 +361,22 @@ set -S2 "/bin/sh"
 			-I''XINCDIR -DIF_X
 #		define	LIBFB_LIBES	LIBPKG -L''XLIBDIR -lX11
 #		if 0
-#		define	LIBDM_OBJS	dm-X dm-ogl
-#		define	LIBDM_CONFIG	-DUSE_MESA_GL -DDM_X -DDM_OGL -I''XINCDIR
-#		define  LIBMESA_CONFIG  -DFBIND=2 -I''XINCDIR
-#		define	MGED_CONFIG	-DUSE_MESA_GL -DDM_X -DDM_OGL -I''XINCDIR -DMGED_TCL_LIBRARY=\\\\"/m/cad/tclscripts\\\\" -DDOUBLE_BUFFERING_WITH_PIXMAPS
-#		define	MGED_OBJS	dm-X dm-ogl
-$#		define	MGED_LIBES	LIBDM -L''XLIBDIR -lXi -lXext -lX11 -ly -L../.libMesa.sun4 -lMesaGL
+#			define	LIBDM_OBJS	dm-X dm-ogl
+#			define	LIBDM_CONFIG	-DUSE_MESA_GL -DDM_X -DDM_OGL -I''XINCDIR
+#			define  LIBDM_LIBES     LIBTK LIBTCL	
+#			define  LIBMESA_CONFIG  -DFBIND=2 -I''XINCDIR
+#			define	MGED_CONFIG	-DUSE_MESA_GL -DDM_X -DDM_OGL -I''XINCDIR -DBRLCAD_TCL_LIBRARY='"'TCLSCRIPTSDIR'"' -DDOUBLE_BUFFERING_WITH_PIXMAPS
+#			define	MGED_OBJS	dm-X dm-ogl
+$#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../.libMesa.sun4 -lMesaGL
+#			define  LIBDM_SAMPLER_LIBES	MGED_LIBES
 #		else
-#		define	LIBDM_OBJS	dm-X
-#		define	LIBDM_CONFIG	-DDM_X -I''XINCDIR
-#		define	MGED_CONFIG	-DDM_X -I''XINCDIR -DMGED_TCL_LIBRARY=\\\\"/m/cad/tclscripts\\\\" -DDOUBLE_BUFFERING_WITH_PIXMAPS
-#		define	MGED_OBJS	dm-X
-#		define	MGED_LIBES	LIBDM -L''XLIBDIR -lXi -lXext -lX11 -ly
+#			define	LIBDM_OBJS	dm-X
+#			define	LIBDM_CONFIG	-DDM_X -I''XINCDIR
+#			define  LIBDM_LIBES     LIBTK LIBTCL
+#			define	MGED_CONFIG	-DDM_X -I''XINCDIR -DBRLCAD_TCL_LIBRARY='"'TCLSCRIPTSDIR'"' -DDOUBLE_BUFFERING_WITH_PIXMAPS
+#			define	MGED_OBJS	dm-X
+#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly
+#			define  LIBDM_SAMPLER_LIBES	MGED_LIBES
 #		endif
 
 #	endif
@@ -645,7 +427,7 @@ $#		define	MGED_LIBES	LIBDM -L''XLIBDIR -lXi -lXext -lX11 -ly -L../.libMesa.sun4
 /*	Shared library support */
 #	if 1	/* shared libraries */
 #		define	ARCH_SUF	so
-#		define	LIBVERS		../sharedlibvers.sh
+#		define	LIBVERS		../sh/sharedlibvers.sh
 #		define	BUILD_LIBRARY	ld -Bdynamic -G -h PRODUCTS[[LIBVERS]] -o
 #	endif
 #	define	RANLIB		true
@@ -669,10 +451,12 @@ $#		define	MGED_LIBES	LIBDM -L''XLIBDIR -lXi -lXext -lX11 -ly -L../.libMesa.sun4
 #  if 1	/* PRODUCTION=1 */
 #	define	LIBMESA_CONFIG	-DFBIND=2
 #	define	LIBDM_OBJS	dm-X
-#	define	LIBDM_CONFIG	 -I''XINCDIR
+#	define	LIBDM_CONFIG	-DDM_x  -I''XINCDIR
+#	define	LIBDM_LIBES	LIBTK LIBTCL
 #	define	MGED_OBJS	dm-X
 #	define	MGED_CONFIG	-DDM_X -I''XINCDIR
-#	define	MGED_LIBES	LIBDM -L''XLIBDIR -R''XLIBDIR -lX11 -lnsl -lsocket
+#	define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -R''XLIBDIR -lX11 -lnsl -lsocket
+#	define	LIBDM_SAMPLER_LIBES MGED_LIBES
 #  else
 /*	Compiling XGL requires SDK (Solaris Developer's Kit) */
 #	define	XGLHOME		/opt/SUNWits/Graphics-sw/xgl-3.0
@@ -682,15 +466,6 @@ $#		define	MGED_LIBES	LIBDM -L''XLIBDIR -lXi -lXext -lX11 -ly -L../.libMesa.sun4
 				-R''XGLHOME/lib \
 				-lX11 -lxgl -lnsl -lsocket -lXi
 #  endif
-
-/*	XMGED requires a Motif license and include/X11/Xm/Xm.h */
-/*	/usr/dt is where Motif lives, starting with SunOS 5.4 */
-#	define  XMGED_ALLOCA
-#	define	XMGED_OBJS	dm-X
-#	define	XMGED_CONFIG	-DDM_X -DDMX_SIGNALS -DXMGED -I''XINCDIR -I/usr/dt/include
-#	define	XMGED_LIBES	-L/usr/dt/lib -R/usr/dt/lib -lXm \
-				-L''XLIBDIR -R''XLIBDIR -lXt -lXi -lXext \
-				-lX11 -ll -lnsl -lsocket
 
 #endif
 
@@ -780,40 +555,6 @@ $#		define	MGED_LIBES	LIBDM -L''XLIBDIR -lXi -lXext -lX11 -ly -L../.libMesa.sun4
 #	define	MGED_LIBES	-lX11 -lnet
 #endif
 
-#if defined(__CAKE__c1)
-#	undef	convex
-#	undef	c1
-#	define	MTYPE	c1
-#	define	BSD	43
-#	define	HAS_TCP	1
-
-#	define	XINCDIR	/usr/X11/include
-#	define	XLIBDIR	/usr/X11/lib
-
-#	define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB -DIF_X -I''XINCDIR
-#	define	LIBFB_OBJS	if_remote if_ab if_X if_X24
-#	define	LIBFB_LIBES	LIBPKG -L''XLIBDIR -lX11
-#	define	LIBRT_TIMER	timer42
-#	define 	MGED_OBJS	dm-X
-#	define	MGED_CONFIG	-DDM_X -I''XINCDIR
-#	define	MGED_LIBES	-L''XLIBDIR -lX11
-#	define  XMGED_ALLOCA    alloca
-#	define	XMGED_OBJS	dm-X
-#	define	XMGED_CONFIG	-DDM_X -DXMGED -I''XINCDIR
-#	define	XMGED_LIBES	-L''XLIBDIR -lXm -lXt -lXext -lX11
-#	define	FC	/usr/convex/fc
-/*	Must run in IEEE mode, not native mode */
-#	define	CC_OPTS -D__STDC__=1
-#	if 0
-/*		-O0 -O1 are scalar, -O1 for vectors, -O2 for parallel */
-#		define	OPTIMIZER	-O2
-#		if 1
-#		else
-#			define	CC_OPTS	-DVECTORIZE -fn
-#		endif
-#	endif
-#endif
-
 #if defined(__CAKE__linux)
 /*	IBM PC or clone running Linux */
 #	undef	li
@@ -837,7 +578,7 @@ $#		define	MGED_LIBES	LIBDM -L''XLIBDIR -lXi -lXext -lX11 -ly -L../.libMesa.sun4
 #		define	CC	gcc
 #		define	CC_OPTS -b i486-linuxelf -fPIC
 #		define	ARCH_SUF	so
-#		define	LIBVERS ../sharedlibvers.sh
+#		define	LIBVERS ../sh/sharedlibvers.sh
 #		define	BUILD_LIBRARY	gcc -b i486-linuxelf -shared -o
 #		define	RANLIB	true
 #		define	STANDARD_LIBES	-lm -lc -Wl,-rpath -Wl,/usr/lib:LIBDIR
@@ -851,9 +592,13 @@ $#		define	MGED_LIBES	LIBDM -L''XLIBDIR -lXi -lXext -lX11 -ly -L../.libMesa.sun4
 #	define	LIBFB_CONFIG	-DIF_REMOTE -I''XINCDIR -DIF_X
 #	define	LIBFB_LIBES	LIBPKG -L''XLIBDIR -lX11
 #	define	LIBFB_OBJS	if_remote if_ab if_X if_X24
+#	define	LIBDM_OBJS	dm-X
+#	define	LIBDM_CONFIG	-DDM_X
+#	define 	LIBDM_LIBES	LIBTK LIBTCL
 #	define	MGED_OBJS	dm-X
 #	define	MGED_CONFIG	-DDM_X -I''XINCDIR
-#	define	MGED_LIBES	-L''XLIBDIR -lX11
+#	define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lX11
+#	define	LIBDM_SAMPLER_LIBES MGED_LIBES
 #endif
 
 #if defined(__CAKE__bsdi)
@@ -873,9 +618,44 @@ $#		define	MGED_LIBES	LIBDM -L''XLIBDIR -lXi -lXext -lX11 -ly -L../.libMesa.sun4
 #	define	LIBFB_CONFIG	-DIF_REMOTE -I''XINCDIR -DIF_X
 #	define	LIBFB_LIBES	LIBPKG -L''XLIBDIR -lX11 -lipc
 #	define	LIBFB_OBJS	if_remote if_ab if_X if_X24
+#	define	LIBDM_OBJS	dm-X
+#	define	LIBDM_CONFIG	-DDM_X
+#       define  LIBDM_LIBES     LIBTK LIBTCL
 #	define	MGED_OBJS	dm-X
 #	define	MGED_CONFIG	-DDM_X -I''XINCDIR
-#	define	MGED_LIBES	-L''XLIBDIR -lX11 -lipc
+#	define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lX11 -lipc
+#	define	LIBDM_SAMPLER_LIBES MGED_LIBES
+#endif
+
+#if defined(__CAKE__ibm)
+/*	IBM RS/6000 running AIX */
+#	undef	ibm
+#	define	MTYPE	ibm
+#	define  CC      /bin/cc
+#	define	CC_OPTS	-qlanglvl=ansi -D__unix
+#	define	OPTIMIZER	-O
+#	define	HAS_TCP	1
+#	define	LIBTERMLIB	-lcurses
+#	define	LIBRT_TIMER	timerunix
+#	define	LIBPKG_CONFIG	-I/usr/include/netinet -DBSD=42
+#	if	0
+/*      X and remote fb */
+#		define  LIBFB_OBJS      if_remote if_X if_X24
+#		define  LIBFB_CONFIG    -DIF_REMOTE -DIF_X -I''XINCDIR
+#		define	LIBFB_LIBES	LIBPKG -L''XLIBDIR -lX11
+#	else
+/*      And the next two are for all the rest. */
+#		define  LIBFB_OBJS      if_remote
+#		define  LIBFB_CONFIG    -DIF_REMOTE
+#		define	LIBFB_LIBES	LIBPKG
+#	endif
+#       define  LIBDM_OBJS      dm-X
+#       define  LIBDM_CONFIG    -DDM_X
+#       define  LIBDM_LIBES     LIBTK LIBTCL
+#	define	MGED_OBJS	dm-X
+#	define	MGED_CONFIG	-DDM_X -I''XINCDIR
+#	define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lX11
+#	define	LIBDM_SAMPLER_LIBES MGED_LIBES
 #endif
 
 /****************************************************************
@@ -886,6 +666,180 @@ $#		define	MGED_LIBES	LIBDM -L''XLIBDIR -lXi -lXext -lX11 -ly -L../.libMesa.sun4
  *								*
  ****************************************************************/
 
+#if defined(__CAKE__irix4) || (defined(__sgi) && defined(__mips))
+/*	Silicon Graphics 4D, running IRIX 4.0 "Cypress" and X-windows */
+#	undef	sgi
+#	define	MTYPE	5d
+#	if 0	/* PRODUCTION=1 */
+/*		This version for production: optimization & shared libraries */
+#		define	OPTIMIZER	-O2
+/*		Use shared libraries */
+#		define	SHARED	_s
+#	else
+/*		This version for debugging with DBX */
+#		define	OPTIMIZER	-g
+#		define	SHARED	/**/
+#	endif
+#	define	GFLAG		-G 7
+#	define	TCL_DEFS OPTIMIZER -DTCL_LIBRARY='"'TCLLIBDIR'"' -DTCL_PACKAGE_PATH='"'TCLLIBDIR'"' -DHAVE_UNISTD_H=1 -DHAVE_SYS_TIME_H=1 -DTIME_WITH_SYS_TIME=1 -DHAVE_TZNAME=1 -DHAVE_TIMEZONE_VAR=1 -Dvfork=fork -DHAVE_SYS_IOCTL_H=1
+#	define	TK_DEFS	OPTIMIZER -DTK_LIBRARY='"'TKLIBDIR'"' -DHAVE_UNISTD_H=1 -DHAVE_LIMITS_H=1 -D__CHAR_UNSIGNED__=1
+/*	ANSI+POSIX mode is used over ANSI, to get fdopen(), etc, defined. */
+#	define  CC_OPTS		GFLAG -ansiposix -DIRIX=4
+#	define	IRIX	4
+#	define	STANDARD_LIBES	-lm -lmalloc -lc''SHARED
+#	define	LIBBU_LIBES	-lmpc
+#	define	LGT_CONFIG	GFLAG -lmpc
+#if 1
+#	define	XINCDIR	/usr/X11/include
+#	define	XLIBDIR	/usr/X11/lib
+#else
+#	define	XINCDIR	/usr/include/X11
+#	define	XLIBDIR	/usr/lib
+#endif
+
+#	define	LIBFB_OBJS	if_remote if_ab if_4d if_X if_X24
+#	define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB -DIF_4D -DBSD=43 -I''XINCDIR -DIF_X
+#	define	LIBFB_LIBES	LIBPKG -L''XLIBDIR -lX11''SHARED LIBPKG -lgl''SHARED
+#	if 0	/* PRODUCTION=1 */
+/*		X11 for MGED */
+#		define	MGED_OBJS	dm-4d dm-X dm-ogl dm-glx
+#		define	MGED_CONFIG	GFLAG -DIR_KNOBS=8 -DIR_BUTTONS=32 -DDM_4D -DDM_X -I''XINCDIR -DDM_OGL -DDM_GLX
+#		define	MGED_LIBES	-L''XLIBDIR -lX11''SHARED -lgl''SHARED
+#	else
+#if 0
+/*		Lee Butler experimental version */
+#		define	MGED_OBJS	dm-4d mged_widget dm-X
+#		define	MGED_CONFIG	GFLAG -DIR_WIDGETS=1 -DIR_KNOBS=8 -DIR_BUTTONS=32 -DDM_4D -DDM_X -I''XINCDIR
+#		define	MGED_LIBES	-L../libforms/FORMS -lforms -lfm''SHARED -L''XLIBDIR -lX11''SHARED -lgl''SHARED
+#else
+#		define MGED_OBJS	dm-4d dm-X
+#		define MGED_CONFIG	GFLAG -DIR_KNOBS=8 -DIR_BUTTONS=32 -DDM_4D -DDM_X -I''XINCDIR -DMGED_TCL_LIBRARY=\\\\"/n/vapor/m/cad/tclscripts/mged\\\\"
+#		define MGED_LIBES	-L''XLIBDIR -lX11 -lgl_s
+#endif
+#	endif
+#	define	HAS_TCP	1
+
+#if 1
+/*      Experimental     */
+#	define  CC_OPTS		GFLAG -DIRIX=4
+#	define	CC	/usr/gnu/bin/gcc
+#else
+#	define	CC	/usr/bin/cc
+#endif
+#	define	LD_OPTS		GFLAG
+#	define	RANLIB	ranlib5.sh
+#	define	GETHOST	hostname
+#	define	LIBPKG_CONFIG	-I/usr/include/bsd -DBSD=43
+#	define	RFBD_CONFIG	-I/usr/include/bsd -DBSD=43
+#	define	LIBRT_TIMER	timer42
+#	if 1
+/*		Under Irix 4.0.5, the SGI-provided LEX and YACC don't work */
+#		define	LEX	/usr/gnu/bin/flex
+#		define	YACC	/usr/gnu/bin/bison
+#		define	YACC_OPTS	-y -d
+#	endif
+#endif
+
+#if defined(__CAKE__sun3)
+/*	Sun-3 hardware, SunOS 3.4, SunOS 4.0 */
+#	undef	sun
+#	undef	sun3
+#	define	MTYPE	sun3
+#	define	BSD	42
+#	define	HAS_TCP	1
+/*	Select correct floating point flag, -fswitch if unsure */
+#	if 1	/* PRODUCTION=1 */
+/*		Using the Sun Compiler (the default) */
+#		if 0
+/*			Generic unoptimized Sun configuration */
+#			define	CC_OPTS	-fswitch -PIC
+#			define OPTIMIZER	-g
+#		else
+/*			Model-specific floating point options */
+/*#			define	CC_OPTS	-PIC -ffpa */
+/*#			define	CC_OPTS	-PIC -ffpa /usr/lib/ffpa.il*/
+/*#			define	CC_OPTS	-PIC -f68881 -g*/
+/*#			define	CC_OPTS	-PIC -f68881 /usr/lib/f68881.il*/
+/*#			define	LD_OPTS	-PIC -f68881*/
+#			define	CC_OPTS	-PIC -f68881
+#		endif
+/*		Shared library support on Sun compiler */
+#		define	ARCH_SUF	so
+#		define	LIBVERS		../sh/sharedlibvers.sh
+#		define	BUILD_LIBRARY	ld -Bdynamic -o
+#		define	RANLIB	true
+#		define	STANDARD_LIBES	-L''LIBDIR -lm
+#	else
+/*		Using the Gnu C Compiler */
+#		define	CC	gcc
+#		define	CC_OPTS	-traditional -fstrength-reduce \
+				-fomit-frame-pointer -finline-functions
+#	endif
+#	define	FC_OPTS	CC_OPTS
+#	ifndef	LD_OPTS
+#		define	LD_OPTS	CC_OPTS
+#	endif
+#	define	LIBRT_TIMER	timer42
+
+#	define	sun_openwin 1	/* PRODUCTION=1 */
+#	undef	sun_x11
+#	undef	sun_no_opts
+#	undef	sun_x11_gds
+
+#	ifdef sun_openwin
+/*		Sun with SunOS 4.1.1 and OpenWindows configuration */
+#		define	XINCDIR		/usr/openwin/include
+#		define	XLIBDIR		/usr/openwin/lib
+#		define	LIBFB_OBJS	if_remote if_ab if_X if_X24
+#		define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB \
+			-I''XINCDIR -DIF_X
+#		define	LIBFB_LIBES	LIBPKG -L''XLIBDIR -lX11
+#		define	MGED_OBJS	dm-X
+#		define	MGED_CONFIG	-DDM_X -I''XINCDIR
+#		define	MGED_LIBES	-L''XLIBDIR -lX11
+#	endif
+#	ifdef sun_x11
+/*		Sun with site-provided MIT X11 configuration */
+#		define	XINCDIR		/usr/X11/include
+#		define	XLIBDIR		/usr/X11/lib
+#		define	LIBFB_OBJS	if_remote if_ab if_sun if_X if_X24
+#		define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB \
+			-I''XINCDIR -DIF_X
+#		define	LIBFB_LIBES	LIBPKG -L''XLIBDIR -lX11
+#		define	MGED_OBJS	dm-X
+#		define	MGED_CONFIG	-DDM_X -I''XINCDIR
+#		define	MGED_LIBES	-L''XLIBDIR -lX11
+#	endif
+#	ifdef sun_no_opts
+/*		Old SunOS 3 configuration -- no X or OpenWindows, only SunTools */
+#		define	LIBFB_OBJS	if_remote if_ab if_sun
+#		define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB -DIF_SUN
+#		define	LIBFB_LIBES	LIBPKG -lsuntool -lsunwindow -lpixrect
+#		define	MGED_OBJS	dm-sun
+#		define	MGED_CONFIG	-DDM_SUNPW
+#		define	MGED_LIBES	-lsuntool -lsunwindow -lpixrect
+#	endif
+#	ifdef sun_x11_gds
+/*		Sun with X11 configuration and TekSource GDS hardware*/
+#		define	XINCDIR		/usr/X11/include
+#		define	XLIBDIR		/usr/X11/lib
+#		define	LIBFB_OBJS	if_remote if_ab if_sun if_X if_X24 if_ts
+#		define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB -DIF_SUN -DIF_TS \
+			-I''XINCDIR -DIF_X
+#		define	LIBFB_LIBES	LIBPKG -lsuntool -lsunwindow -lpixrect \
+			-L''XLIBDIR -lX11 -lgds
+#		define	MGED_OBJS	dm-sun dm-X
+#		define	MGED_CONFIG	-DDM_SUNPW -DDM_X -I''XINCDIR
+#		define	MGED_LIBES	-lsuntool -lsunwindow -lpixrect \
+			-L''XLIBDIR -lX11
+#	endif
+#	if 0
+/*		"Unbundled" (i.e. "improved") compilers.  Use if you have them */
+#		define	CC	/usr/lang/cc
+#		define	FC	/usr/lang/f77
+#	endif
+#endif
+
 #if defined(__CAKE__alpha)
 /*	DEC Alpha AXP running OSF/1 Version 3 */
 #	undef	alpha
@@ -894,7 +848,7 @@ $#		define	MGED_LIBES	LIBDM -L''XLIBDIR -lXi -lXext -lX11 -ly -L../.libMesa.sun4
 #	if 1	/* PRODUCTION=1 */
 /*		Shared library version support */
 #		define	ARCH_SUF	so
-#		define	LIBVERS ../sharedlibvers.sh
+#		define	LIBVERS ../sh/sharedlibvers.sh
 #		define	BUILD_LIBRARY	ld -S -shared -o
 #		define	EXTRA_OBJ_NO_DEPENDENCY	-lm -lc
 #		define	RANLIB	true
@@ -910,6 +864,36 @@ $#		define	MGED_LIBES	LIBDM -L''XLIBDIR -lXi -lXext -lX11 -ly -L../.libMesa.sun4
 #	define	LIBFB_CONFIG	-DIF_REMOTE
 #	define	LIBFB_LIBES	LIBPKG
 #	define	LIBRT_TIMER	timer42
+#endif
+
+#if defined(__CAKE__c1)
+#	undef	convex
+#	undef	c1
+#	define	MTYPE	c1
+#	define	BSD	43
+#	define	HAS_TCP	1
+
+#	define	XINCDIR	/usr/X11/include
+#	define	XLIBDIR	/usr/X11/lib
+
+#	define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB -DIF_X -I''XINCDIR
+#	define	LIBFB_OBJS	if_remote if_ab if_X if_X24
+#	define	LIBFB_LIBES	LIBPKG -L''XLIBDIR -lX11
+#	define	LIBRT_TIMER	timer42
+#	define 	MGED_OBJS	dm-X
+#	define	MGED_CONFIG	-DDM_X -I''XINCDIR
+#	define	MGED_LIBES	-L''XLIBDIR -lX11
+#	define	FC	/usr/convex/fc
+/*	Must run in IEEE mode, not native mode */
+#	define	CC_OPTS -D__STDC__=1
+#	if 0
+/*		-O0 -O1 are scalar, -O1 for vectors, -O2 for parallel */
+#		define	OPTIMIZER	-O2
+#		if 1
+#		else
+#			define	CC_OPTS	-DVECTORIZE -fn
+#		endif
+#	endif
 #endif
 
 #if defined(__CAKE__aux)
@@ -941,38 +925,6 @@ $#		define	MGED_LIBES	LIBDM -L''XLIBDIR -lXi -lXext -lX11 -ly -L../.libMesa.sun4
 #	define	MGED_OBJS	dm-X
 #	define	MGED_CONFIG	-DDM_X -I''XINCDIR
 #	define	MGED_LIBES	-L''XLIBDIR -lX11
-#endif
-
-#if defined(__CAKE__ibm)
-/*	IBM RS/6000 running AIX */
-#	undef	ibm
-#	define	MTYPE	ibm
-#	define  CC      /bin/cc
-#	define	CC_OPTS	-qlanglvl=ansi -D__unix
-#	define	OPTIMIZER	-O
-#	define	HAS_TCP	1
-#	define	LIBTERMLIB	-lcurses
-#	define	LIBRT_TIMER	timerunix
-#	define	LIBPKG_CONFIG	-I/usr/include/netinet -DBSD=42
-#	if	0
-/*      X and remote fb */
-#		define  LIBFB_OBJS      if_remote if_X if_X24
-#		define  LIBFB_CONFIG    -DIF_REMOTE -DIF_X -I''XINCDIR
-#		define	LIBFB_LIBES	LIBPKG -L''XLIBDIR -lX11
-#	else
-/*      And the next two are for all the rest. */
-#		define  LIBFB_OBJS      if_remote
-#		define  LIBFB_CONFIG    -DIF_REMOTE
-#		define	LIBFB_LIBES	LIBPKG
-#	endif
-#	define	MGED_OBJS	dm-X
-#	define	MGED_CONFIG	-DDM_X -I''XINCDIR
-#	define	MGED_LIBES	-L''XLIBDIR -lX11
-#	define  XMGED_OBJS      dm-X
-#	define  XMGED_CONFIG    -DDM_X
-#	define  XMGED_LIBES     -L/usr/lpp/X11/Motif1.2/lib -L''XLIBDIR \
-				-L../lib -lXm -lXt -lX11 -lm -lXext -ll -lXi
-#	define  XMGED_ALLOCA alloca
 #endif
 
 #if defined(__CAKE__at)
@@ -1018,7 +970,7 @@ $#		define	MGED_LIBES	LIBDM -L''XLIBDIR -lXi -lXext -lX11 -ly -L../.libMesa.sun4
 #	define	STANDARD_LIBES	-lm
 
 #	define	BUILD_LIBRARY	ld -x -Bshareable -Bforcearchive -o
-#	define	LIBVERS	../sharedlibvers.sh
+#	define	LIBVERS	../sh/sharedlibvers.sh
 #	define	ARCH_SUF	so
 #	define	RANLIB	true
 
@@ -1302,10 +1254,6 @@ $#		define	MGED_LIBES	LIBDM -L''XLIBDIR -lXi -lXext -lX11 -ly -L../.libMesa.sun4
 #	define  MGED_CONFIG     -DDM_X -I''XINCDIR
 /* XXX MGED_LIBES shouldn't need Motif stuff at all. */
 #	define  MGED_LIBES      -L/usr/lib/Motif1.2 -L''XLIBDIR  -lXm  -lXt -lX11 -lm
-#	define	XMGED_OBJS	dm-X
-#	define	XMGED_CONFIG	-DDM_X -DXMGED /* -DDMX_SIGNALS -I''XINCDIR */
-#	define	XMGED_LIBES	-L/usr/lib/Motif1.2 -L''XLIBDIR  -lXm  -lXt -lX11 -lm
-#	define	XMGED_ALLOC 
 #endif
 
 #if defined(__CAKE__ard)
@@ -1484,6 +1432,10 @@ $#		define	MGED_LIBES	LIBDM -L''XLIBDIR -lXi -lXext -lX11 -ly -L../.libMesa.sun4
 #	define	LIBFB_LIBES	/**/
 #endif
 
+#ifndef LIBDM_LIBES
+#	define	LIBDM_LIBES	/**/
+#endif
+
 /* Various configuration flags that default to nothing */
 
 #ifndef LIBMESA_CONFIG
@@ -1571,7 +1523,12 @@ $#		define	MGED_LIBES	LIBDM -L''XLIBDIR -lXi -lXext -lX11 -ly -L../.libMesa.sun4
 #	define	VFONTDIR	/usr/brlcad/vfont
 #	define	TCLLIBDIR	/usr/brlcad/tcl
 #	define	TKLIBDIR	/usr/brlcad/tk
+#if 0
 #	define	TCLSCRIPTSDIR	/usr/brlcad/tclscripts
+#else
+/*XXX For development only */
+#	define	TCLSCRIPTSDIR	/m/cad/tclscripts
+#endif
 #endif
 
 #if	!defined(XLIBDIR)
