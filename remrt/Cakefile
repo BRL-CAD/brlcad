@@ -52,6 +52,7 @@
 		RTDIR/sh_paint.o \
 		RTDIR/sh_noise.o \
 		RTDIR/sh_prj.o \
+		RTDIR/sh_grass.o \
 		LIBPKG LIBPKG_LIBES \
 		LIBRT LIBBN LIBBU LIBBU_LIBES LIBTCL LIBTCL_LIBES LIBES
 
