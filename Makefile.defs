@@ -24,7 +24,6 @@
 #								#
 #  Author -							#
 #	Michael John Muuss					#
-#	BRL/SECAD, August 1986					#
 #								#
 #  Source -							#
 #	SECAD/VLD Computing Consortium, Bldg 394		#
@@ -35,6 +34,8 @@
 #	This Makefile draws heavily on Doug Gwyn's		#
 #	VLD Standard Makefile, and Doug Kingston's		#
 #	MMDF Global Makefile.					#
+#								#
+#  $Header$		#
 #								#
 #################################################################
 
@@ -62,6 +63,7 @@ SYSTEM		= -DBSD
 #SUN3#SYSTEM	= -DBSD -ffpa
 #SUN3#SYSTEM	= -DBSD -fswitch
 #PYRAMID#SYSTEM	= -DBSD -Dvoid=int
+#ULTRIX1#SYSTEM	= -DBSD -Dvoid=int
 
 #################################################################
 #								#
@@ -73,12 +75,14 @@ SYSTEM		= -DBSD
 #	SGI34	SGI release 3.4 and below, with EXCELAN TCP.	#
 #	SGI35	SGI release 3.5 and above, with real TCP.	#
 #	UNICOS20	Cray UNICOS 2.0, with TCP		#
+#	SUN3		SUN UNIX version 3.2 or above		#
 #								#
 #################################################################
 
 #SGI#SYSVERS	= SGI34
 #SGI#SYSVERS	= SGI35
 #CRAY#SYSVERS	= UNICOS20
+#SUN#SYSVERS	= SUN3
 
 #################################################################
 #								#
@@ -99,6 +103,16 @@ SYSTEM		= -DBSD
 
 #################################################################
 #								#
+#		Configuration for remrt				#
+#								#
+#################################################################
+
+#SGI34#REMRT_CONFIG	= -I/usr/include/EXOS -DSGI_EXCELAN
+#SGI35#REMRT_CONFIG	= -I/usr/include/bsd -DBSD
+#CRAY#REMRT_CONFIG	= -I/usr/win-include -DBSD -DSHORT_IDENT -DCRAY
+
+#################################################################
+#								#
 #		Configuration for rfbd				#
 #								#
 #################################################################
@@ -115,6 +129,7 @@ SYSTEM		= -DBSD
 #	if_adage	Adage RDS-3000 ("Ikonas")		#
 #	if_sgi		SGI IRIS display			#
 #	if_ptty		AT&T 5620 w/special Moss layer		#
+#	if_sun		SUNView interface
 #								#
 #  Edit all three LIBFB_* lines below similarly.		#
 #  NOTES:							#
@@ -133,15 +148,19 @@ LIBFB_CFILES	= if_remote.c \
 		  if_adage.c \
 		  if_ptty.c
 #SGI#		  if_sgi.c
+#SUN#		  if_sun.c
 LIBFB_OBJS	= if_remote.o ../libpkg/pkg.o \
 		  if_adage.o \
 		  if_ptty.o
 #SGI35#		  if_sgi.o
 #SGI34#		  if_sgi.o sgiselect.o
+#SUN#		  if_sun.o
 LIBFB_CONFIG	= -DIF_REMOTE \
 		  -DIF_ADAGE \
 		  -DIF_PTTY
+#USNA#		  -DIF_ADAGE -DGM256
 #SGI#		  -DIF_SGI	# -DMC_68010
+#SUN#		  -DIF_SUN
 #								#
 #################################################################
 
@@ -154,9 +173,23 @@ LIBFB_CONFIG	= -DIF_REMOTE \
 #	timerunix	Generic UNIX, System III, V, etc.	#
 #	timer52brl	For BRL's System 5-under-4.n BSD	#
 #	timerhep	Denelcor HEP				#
-#	timercray	Cray-X/MP, COS or UNIX, Cray-2		#
+#	timercray	Cray-X/MP or Cray-2, UNICOS		#
 LIBRT_TIMER	= timer42
 #SYSV#LIBRT_TIMER	= timerunix
+#CRAY#LIBRT_TIMER	= timercray
+#								#
+#################################################################
+
+#################################################################
+#								#
+#		Configuration for RT				#
+#								#
+#	Mostly useful for specification of multi-processing	#
+#	versions of libc, etc.					#
+#	On parallel machines, if h/machine.h does not define	#
+#	the PARALLEL flag, it should be done here.		#
+#								#
+#CRAY#RT_CONFIG	= -L/lib/multi -lu
 #								#
 #################################################################
 
@@ -164,16 +197,19 @@ LIBRT_TIMER	= timer42
 #								#
 #		Configuration for mged				#
 #								#
+# If you wish MGED usage logging, add				#
+#	-DLOGFILE=/file/name to MGED_CONFIG			#
+#								#
 # At present, MGED operates on these types of			#
 # display hardware by default:					#
 #	dm-plot		any UNIX-plot filter			#
-#	dm-vg		Vector General 3300			#
-#	dm-mg		Megatek 7250				#
 #	dm-tek		Tektronix 4014 and family		#
 #	dm-tek4109	Tektronix 4109				#
 # and also supports these optional display devices:		#
+#	dm-vg		Vector General 3300			#
+#	dm-mg		Megatek 7250				#
 #	dm-ir		SGI IRIS 2400,3030  (uses lib -lgl2)	#
-#	dm-sunpw	SUN 3.0 Pixwin (uses lib -lpr -lpw)	#
+#	dm-sun		SUN 3.2 Pixwin				#
 #	dm-rat		Raster Tech One/80			#
 #	dm-ps		E&S Picture System 300			#
 #	dm-mer		Megatek Merlin 9200	[ Marginal ]	#
@@ -181,14 +217,21 @@ LIBRT_TIMER	= timer42
 #								#
 #  Specify all OPTIONAL display managers to attach.		#
 #								#
+# The MG and VG drivers are only interesting on a VAX
+MGED_CFILES	= dm-mg.c dm-vg.c
+MGED_OBJS	= dm-mg.o dm-vg.o
+MGED_CONFIG	= -DDM_MG -DDM_VG
+MGED_LIBES	=
+#
 #SGI#MGED_CFILES	= dm-ir.c
 #SGI#MGED_OBJS	= dm-ir.o
 #SGI#MGED_CONFIG	= -DDM_IR	# -DMC_68010
+#SGIXNS#MGED_CONFIG	= -DDM_IR -DNONBLOCK	# -DMC_68010
 #SGI35#MGED_LIBES	= -lbsd -lgl2
 #SGI34#MGED_LIBES	= ../libfb/sgiselect.o -lgl2
 #								#
-#SUN#MGED_CFILES	= dm-sunpw.c
-#SUN#MGED_OBJS	= dm-sunpw.o
+#SUN#MGED_CFILES	= dm-sun.c
+#SUN#MGED_OBJS	= dm-sun.o
 #SUN#MGED_CONFIG	= -DDM_SUNPW
 #SUN#MGED_LIBES	= -lsuntool -lsunwindow -lpixrect
 #								#
@@ -217,8 +260,6 @@ CC		= /bin/cc
 SHELL		= /bin/sh
 #VLD#SHELL	= /usr/5bin/sh
 
-GET		= /usr/5bin/get
-
 MAKE		= /bin/make
 
 # Makefiles to print
@@ -235,13 +276,14 @@ RANLIB		= ranlib
 #SGI#RANLIB	= ranlib
 
 # Place to install binary executable
-#VLD#BINDIR	= /vld/bin
 BINDIR		= /usr/brl/bin
+#VLD#BINDIR	= /vld/bin
 
 # Place to install (and find) libraries
-#VLD#LIBDIR	= /vld/lib
 LIBDIR		= /usr/brl/lib
+#VLD#LIBDIR	= /vld/lib
 
+# Suffix for archives.  Won't change for most UNIX machines, but...
 ARCH_SUF	= a
 #CRAY#ARCH_SUF	= o
 
@@ -251,8 +293,13 @@ LIBRT		= ../librt/librt.${ARCH_SUF}
 LIBPLOT		= ../libplot3/libplot3.${ARCH_SUF}
 LIBRLE		= ../librle/librle.${ARCH_SUF}
 LIBPKG		= ../libpkg/libpkg.${ARCH_SUF}
+LIBSPL		= ../libspl/libspl.${ARCH_SUF}
+LIBTERMLIB	= -ltermlib
+#CRAY#LIBTERMLIB	= -lcurses
 LIBTERMIO	= ../libtermio/libtermio.${ARCH_SUF}
 LIBCURSOR	= ../libcursor/libcursor.${ARCH_SUF}
+LIBMALLOC	= ../libmalloc/libmalloc.${ARCH_SUF}
+#SUN#LIBMALLOC	=	# Forced to use SUN's malloc
 LIBSYSV		= ../libsysv/libsysv.${ARCH_SUF}
 #SYSV#LIBSYSV	=
 
@@ -283,9 +330,10 @@ LDFLAGS 	= ${SYSTEM} ${PROFILE}
 
 # Lint Flags
 LINT		= lint
-LFLAGS		= -hbvxacL ${SYSTEM} ${CONFIGDEFS}
+LFLAGS		= -hbvxac ${SYSTEM} ${CONFIGDEFS}
 #SYSV#LFLAGS	= ${SYSTEM} ${CONFIGDEFS}
 
+# Name of the object module archiver, for use with the loader.
 AR		= ar
 #CRAY#AR	= ../cray-ar.sh
 
@@ -299,21 +347,30 @@ LLIBES		= -lm
 INS		= cp
 
 # Command string to typeset manual pages
-TYPESET_MAN1	= /usr/5lib/troff -Ti300 /usr/lib/tmac/tmac.an 
-TYPESET_MAN2	= | /usr/5bin/dimp -t | qpr -q im117-raw
-#TYPESET_MAN1	= /usr/5lib/troff -Ti10 /usr/lib/tmac/tmac.an 
-#TYPESET_MAN2	= | /usr/5bin/di10 -t | qpr -q im328-raw
+# Usage is:   ${TYPESET_MAN1} *.${MANSECTION} ${TYPESET_MAN2}
+#
+# im117-raw is Chuck's office
+TYPESET_MAN1	= tbl /usr/lib/tmac/tmac.an
+TYPESET_MAN2	= | /usr/5lib/troff -Ti300 | /usr/5bin/dimp -t | \
+		    qpr -q im217-raw
+#TYPESET_MAN1	= tbl /usr/lib/tmac/tmac.an 
+#TYPESET_MAN2	= | /usr/5lib/troff -Ti10 | /usr/5bin/di10 -t | \
+		    qpr -q im328-raw
 #TYPESET_MAN1	= troff -man
 #TYPESET_MAN2	= 
 
 #################################################################
 #								#
 #  Definition of master source machine, and master distribution	#
-#  directory.  Please don't change these values			#
+#  directory.  Please don't change these values.		#
+#  When the current host is == MASTERHOST, the "make install"	#
+#  rules will also handle the distribution source management.	#
+#  Even if you have lots of disk space, you don't want that	#
+#  to happen.							#
 #								#
 #################################################################
-DISTRIBUTION	= /m/dist
 MASTERHOST	= brl-vgr
+DISTRIBUTION	= /m/dist
 
 #################################################################
 #								#
