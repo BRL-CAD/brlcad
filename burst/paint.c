@@ -32,7 +32,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #define DEBUG_SPALLFB	0
 
 /* Offset frame buffer coordinates to center of cell from grid lines. */
-#define CenterCell(b)	(b += round( (fastf_t) zoom / 2.0 ))
+#define CenterCell(b)	(b += fround( (fastf_t) zoom / 2.0 ))
 
 /* Compare one RGB pixel to another. */
 #define	SAMERGB(a,b)	((a)[RED] == (b)[RED] &&\
@@ -180,8 +180,8 @@ register struct application	*ap;
 	CenterCell( x );	/* center of cell */
 	CenterCell( y );
 	celldist = ap->a_cumlen/cellsz * zoom;
-	x = round( x + Dot( ap->a_ray.r_dir, gridhor ) * celldist );
-	y = round( y + Dot( ap->a_ray.r_dir, gridver ) * celldist );
+	x = fround( x + Dot( ap->a_ray.r_dir, gridhor ) * celldist );
+	y = fround( y + Dot( ap->a_ray.r_dir, gridver ) * celldist );
 	bu_semaphore_acquire( RT_SEM_STATS );
 	err = fb_write( fbiop, x, y, pixel, 1 );
 	bu_semaphore_release( RT_SEM_STATS );

@@ -1535,7 +1535,7 @@ register fastf_t	*vec;
 
 	RETURN CODES: the nearest integer to f.
  */
-int round( f )
+int fround( f )
 fastf_t	f;
 	{	register int a;
 	a = f;

@@ -62,7 +62,7 @@ extern bool findIdents();
 extern bool readColors();
 extern bool readIdents();
 extern int notify();
-extern int round();
+extern int fround();
 extern void closeUi();
 extern void colorPartition();
 extern void exitCleanly();
