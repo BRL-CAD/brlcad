@@ -789,6 +789,28 @@ struct bu_external  {
 #define BU_CK_EXTERNAL(_p)	RT_CKMAG(_p, BU_EXTERNAL_MAGIC, "bu_external")
 
 /*----------------------------------------------------------------------*/
+/* file.c */
+/*
+ *	General I/O for ASCII files: bu_file support
+ */
+struct bu_file  {
+	long		file_magic;
+	FILE		*file_ptr;	/* the actual file */
+	char		*file_name;
+	struct bu_vls	file_buf;	/* contents of current line */
+	char		*file_bp;	/* pointer into current line */
+	int		file_linenm;
+	char		file_comment;	/* the comment character */
+	int		file_buflen;	/* length of intact buffer */
+};
+typedef struct bu_file		BU_FILE;
+#define BU_FILE_MAGIC		0x6275666c
+#define BU_CK_FILE(_fp)		BU_CKMAG(_fp, BU_FILE_MAGIC, "bu_file")
+
+#define bu_stdin		(&bu_iob[0])
+extern BU_FILE			bu_iob[1];
+
+/*----------------------------------------------------------------------*/
 /*
  *  Declarations of external functions in LIBBU.
  *  Source file names listed alphabetically.
@@ -998,6 +1020,12 @@ BU_EXTERN(void			bu_vls_printf, (struct bu_vls *vls, char *fmt, ... ) );
 #if 0
 BU_EXTERN(void			bu_vls_blkset, (struct bu_vls *vp, int len, int ch) );
 #endif
+
+/* file.c */
+BU_EXTERN(struct bu_file	*bu_fopen, (char *fname, char *type) );
+BU_EXTERN(int			bu_fclose, (struct bu_file *bfp) );
+BU_EXTERN(int			bu_fgetc, (struct bu_file *bfp) );
+BU_EXTERN(void			bu_printfile, (struct bu_file *bfp) );
 
 /* vers.c (created by the Cakefile) */
 extern CONST char		bu_version[];
