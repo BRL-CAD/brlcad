@@ -324,7 +324,7 @@ char **argv;
 	RES_INIT( &rt_g.res_model );
 	/* DO NOT USE bu_log() before this point! */
 
-	bu_log("load average = %d, using %d of %d cpus\n",
+	bu_log("load average = %f, using %d of %d cpus\n",
 		load,
 		npsw, avail_cpus );
 	if( max_cpus <= 0 )  {
