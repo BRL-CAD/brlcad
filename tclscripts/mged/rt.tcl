@@ -411,7 +411,7 @@ proc do_Raytrace { id } {
 		append rt_cmd " -w $width -n $height"
 		set width "$width.0"
 		set height "$height.0"
-		set aspect [expr $width / $height]
+		set aspect [expr {$width / $height}]
 		append rt_cmd " -V $aspect"
 	    } else {
 		set aspect 1
@@ -1049,6 +1049,7 @@ proc rt_cook_dest { id raw_dest } {
     global fb_overlay
 
     if {$raw_dest == ""} {
+	set rt_control($id,cooked_dest) ""
 	return
     }
 
