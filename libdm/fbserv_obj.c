@@ -33,8 +33,8 @@
 #include "bu.h"
 #include "vmath.h"
 #include "raytrace.h"
+#include "dm.h"
 #include "../libfb/pkgtypes.h"
-#include "./fbserv_obj.h"
 
 int fbs_open();
 int fbs_close();
@@ -109,41 +109,41 @@ fbs_open(interp, fbsp, port)
   register int i;
 
   /* Already listening; nothing more to do. */
-  if (fbsp->fbs_listener.l_fd >= 0) {
+  if (fbsp->fbs_listener.fbsl_fd >= 0) {
     return TCL_OK;
   }
 
-  fbsp->fbs_listener.l_port = port;
+  fbsp->fbs_listener.fbsl_port = port;
 
   /* Try a reasonable number of times to hang a listen */
   for (i = 0; i < MAX_PORT_TRIES; ++i) {
-    if (fbsp->fbs_listener.l_port < 1024)
-      sprintf(portname,"%d", fbsp->fbs_listener.l_port + 5559);
+    if (fbsp->fbs_listener.fbsl_port < 1024)
+      sprintf(portname,"%d", fbsp->fbs_listener.fbsl_port + 5559);
     else
-      sprintf(portname,"%d", fbsp->fbs_listener.l_port);
+      sprintf(portname,"%d", fbsp->fbs_listener.fbsl_port);
 
     /*
      * Hang an unending listen for PKG connections
      */
-    if ((fbsp->fbs_listener.l_fd = pkg_permserver(portname, 0, 0, comm_error)) < 0)
-      ++fbsp->fbs_listener.l_port;
+    if ((fbsp->fbs_listener.fbsl_fd = pkg_permserver(portname, 0, 0, comm_error)) < 0)
+      ++fbsp->fbs_listener.fbsl_port;
     else
       break;
   }
 
-  if (fbsp->fbs_listener.l_fd < 0) {
+  if (fbsp->fbs_listener.fbsl_fd < 0) {
     bu_vls_init(&vls);
     bu_vls_printf(&vls, "fbs_open: failed to hang a listen on ports %d - %d\n",
-	   fbsp->fbs_listener.l_port, fbsp->fbs_listener.l_port + MAX_PORT_TRIES - 1);
+	   fbsp->fbs_listener.fbsl_port, fbsp->fbs_listener.fbsl_port + MAX_PORT_TRIES - 1);
     Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
     bu_vls_free(&vls);
 
-    fbsp->fbs_listener.l_port = -1;
+    fbsp->fbs_listener.fbsl_port = -1;
 
     return TCL_ERROR;
   }
 
-  Tcl_CreateFileHandler(fbsp->fbs_listener.l_fd, TCL_READABLE,
+  Tcl_CreateFileHandler(fbsp->fbs_listener.fbsl_fd, TCL_READABLE,
 			new_client_handler, (ClientData)&fbsp->fbs_listener);
 
   return TCL_OK;
@@ -160,9 +160,9 @@ fbs_close(interp, fbsp)
   for(i = 0; i < MAX_CLIENTS; ++i)
     drop_client(fbsp, i);
 
-  Tcl_DeleteFileHandler(fbsp->fbs_listener.l_fd);
-  close(fbsp->fbs_listener.l_fd);
-  fbsp->fbs_listener.l_fd = -1;
+  Tcl_DeleteFileHandler(fbsp->fbs_listener.fbsl_fd);
+  close(fbsp->fbs_listener.fbsl_fd);
+  fbsp->fbs_listener.fbsl_fd = -1;
 
   return TCL_OK;
 }
@@ -182,16 +182,16 @@ new_client(fbsp, pcp)
 
   for (i = MAX_CLIENTS-1; i >= 0; i--) {
     /* this slot is being used */
-    if (fbsp->fbs_clients[i].c_fd != 0)
+    if (fbsp->fbs_clients[i].fbsc_fd != 0)
       continue;
 
     /* Found an available slot */
-    fbsp->fbs_clients[i].c_fd = pcp->pkc_fd;
-    fbsp->fbs_clients[i].c_pkg = pcp;
-    fbsp->fbs_clients[i].c_fbsp = fbsp;
+    fbsp->fbs_clients[i].fbsc_fd = pcp->pkc_fd;
+    fbsp->fbs_clients[i].fbsc_pkg = pcp;
+    fbsp->fbs_clients[i].fbsc_fbsp = fbsp;
     setup_socket(pcp->pkc_fd);
 
-    Tcl_CreateFileHandler(fbsp->fbs_clients[i].c_fd, TCL_READABLE,
+    Tcl_CreateFileHandler(fbsp->fbs_clients[i].fbsc_fd, TCL_READABLE,
 			  existing_client_handler, (ClientData)&fbsp->fbs_clients[i]);
 
     return;
@@ -209,15 +209,15 @@ drop_client(fbsp, sub)
      struct fbserv_obj *fbsp;
      int sub;
 {
-  if(fbsp->fbs_clients[sub].c_pkg != PKC_NULL)  {
-    pkg_close(fbsp->fbs_clients[sub].c_pkg);
-    fbsp->fbs_clients[sub].c_pkg = PKC_NULL;
+  if(fbsp->fbs_clients[sub].fbsc_pkg != PKC_NULL)  {
+    pkg_close(fbsp->fbs_clients[sub].fbsc_pkg);
+    fbsp->fbs_clients[sub].fbsc_pkg = PKC_NULL;
   }
 
-  if(fbsp->fbs_clients[sub].c_fd != 0)  {
-    Tcl_DeleteFileHandler(fbsp->fbs_clients[sub].c_fd);
-    close(fbsp->fbs_clients[sub].c_fd);
-    fbsp->fbs_clients[sub].c_fd = 0;
+  if(fbsp->fbs_clients[sub].fbsc_fd != 0)  {
+    Tcl_DeleteFileHandler(fbsp->fbs_clients[sub].fbsc_fd);
+    close(fbsp->fbs_clients[sub].fbsc_fd);
+    fbsp->fbs_clients[sub].fbsc_fd = 0;
   }
 }
 
@@ -229,9 +229,9 @@ new_client_handler(clientData, mask)
 ClientData clientData;
 int mask;
 {
-  struct listener *lp = (struct listener *)clientData;
-  struct fbserv_obj *fbsp = lp->l_fbsp;
-  int fd = lp->l_fd;
+  struct fbserv_listener *fbslp = (struct fbserv_listener *)clientData;
+  struct fbserv_obj *fbsp = fbslp->fbsl_fbsp;
+  int fd = fbslp->fbsl_fd;
 
   new_client(fbsp, pkg_getclient(fd, pkg_switch, comm_error, 0));
 }
@@ -245,18 +245,18 @@ ClientData clientData;
 int mask;
 {
   register int i;
-  struct client *clp = (struct client *)clientData;
-  struct fbserv_obj *fbsp = clp->c_fbsp;
-  int fd = clp->c_fd;
+  struct fbserv_client *fbscp = (struct fbserv_client *)clientData;
+  struct fbserv_obj *fbsp = fbscp->fbsc_fbsp;
+  int fd = fbscp->fbsc_fd;
   int npp;			/* number of processed packages */
 
   curr_fbp = fbsp->fbs_fbp;
 
   for (i = MAX_CLIENTS-1; i >= 0; i--) {
-    if (fbsp->fbs_clients[i].c_fd == 0)
+    if (fbsp->fbs_clients[i].fbsc_fd == 0)
       continue;
 
-    if ((npp = pkg_process(fbsp->fbs_clients[i].c_pkg)) < 0)
+    if ((npp = pkg_process(fbsp->fbs_clients[i].fbsc_pkg)) < 0)
       bu_log("pkg_process error encountered (1)\n");
 
 #if 0
@@ -264,17 +264,17 @@ int mask;
       dirty = 1;
 #endif
 
-    if (fbsp->fbs_clients[i].c_fd != fd)
+    if (fbsp->fbs_clients[i].fbsc_fd != fd)
       continue;
 
-    if (pkg_suckin(fbsp->fbs_clients[i].c_pkg) <= 0) {
+    if (pkg_suckin(fbsp->fbs_clients[i].fbsc_pkg) <= 0) {
       /* Probably EOF */
       drop_client(fbsp, i);
 
       continue;
     }
 
-    if ((npp = pkg_process(fbsp->fbs_clients[i].c_pkg)) < 0)
+    if ((npp = pkg_process(fbsp->fbs_clients[i].fbsc_pkg)) < 0)
       bu_log("pkg_process error encountered (2)\n");
 
 #if 0
