@@ -155,6 +155,7 @@
 #	define	HAVE_STDARG_H	1
 #	define	HAVE_XOSDEFS_H	1
 #	define	HAVE_GETHOSTNAME	1
+#	define	HAVE_GETOPT_DECL	1
 #	define	HAVE_GETOPT	1
 #	define	HAVE_REGEX	1
 #	define	HAVE_STRCHR	1
