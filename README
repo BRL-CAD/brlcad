@@ -1,26 +1,69 @@
 .\" $Header$
-.nf
-.ce 7
-BALLISTIC RESEARCH LABORATORY
+.TL
+README
 .sp
-SOLID MODELING SYSTEM
-and
-RAY-TRACING BENCHMARK
-.sp
-DISTRIBUTION PACKAGE
-Release 2.3
-(2-Nov-87)
-.fi
-.sp
+The Ballistic Research Laboratory CAD Package
+.br
+Release 3.0
+.br
+(4-Sept-1988)
+.RT
 .IP "VERSION"
 .sp
-This document is printed from the README file in the CAD distribution.
-The printed copies are usually somewhat older
-than the version on the actual distribution tape.  When attempting to
-install the software, please refer to the version from the distribution
-tape.
+This document is printed from the README file in the BRL-CAD distribution.
+The version in the printed manuals are usually somewhat older
+than the version on the actual distribution tape.
+When attempting to
+install the software, please refer to the documentation
+versions actually contained on the distribution tape.
+.sp
+.IP CONTENTS
+.sp
+This README file exists only to provide you a brief roadmap to
+the contents of the BRL-CAD distribution tape.
+The information on how to read the tape,
+install and operate the software,
+and perform the benchmark tests have become sufficiently large
+that they are now each a standalone document.
+.sp
+Please note that
+this distribution package does \fInot\fR include
+the various military-specific model
+analysis tools such as GIFT, SAR, SLAVE, VAST, etc., nor does it
+include any military databases.
+If you desire to have access to this material,
+please contact Keith Applin at (301)-278-6647.
+.sp
+.IP "INSTALLATION"
+.sp
+To install the BRL-CAD Package see the instructions in doc/install.doc.
+This file includes directions on the best way to read the distribution
+tape,
+as well as details on how to configure and install the software.
+This file also includes directions on how to compile and run
+the benchmark tests.
+.sp
+.IP "BENCHMARK"
+.sp
+See the paper in doc/benchmark.doc for information on
+analyzing the results of the benchmark tests.
+Comparisons between various different computers are listed.
+.sp
+.IP "BACKGROUND MATERIAL"
+.sp
+For overview information on the whole package, consult
+the overview paper in the file papers/overview, and
+the brlcad(1) manual page in the file util/brlcad.1.
+For a discussion of the significance of this software,
+read the paper "Understanding the Preparation and Analysis of Solid
+Models", included in the file papers/solid-models.
 .sp
 .IP "DISTRIBUTION DETAILS"
+.sp
+This section is included in the README file for two purposes.
+First, we wish to remind you of the terms of this limited distribution.
+Second, if you have obtained a copy of the printed documentation, and now
+wish to obtain a copy of the software, the procedures are listed here.
 .sp
 To obtain a copy of the distribution, you should send the authors:
 .sp
@@ -28,24 +71,27 @@ To obtain a copy of the distribution, you should send the authors:
 half-inch magtape is the strongly preferred format, and can be written
 at either 1600 or 6250 bpi, in TAR format with 10k byte records. For
 sites with no half-inch tape drives, Silicon Graphics and SUN tape
-cartridges can also be accommodated.
+cartridges can also be accommodated, using QIC-24 format.
 .sp
 2)  A letter indicating:
 .sp
 .nf
 	-- Who you are
-	-- What the BRL CAD package is to be used for
+	-- What the BRL-CAD package is to be used for
 	-- The equipment and operating system(s) you plan on using
 	-- That you agree to the conditions listed below.
 .fi
 .sp
+It is vital that your letter include a sentence acknowledging your
+agreement to the conditions, such as "We agree to the
+conditions of the distribution listed in your letter".
 This software is an unpublished work that is not generally available to the
 public, except through the terms of this limited distribution.
 The United States Department of the Army grants a royalty-free,
 nonexclusive, nontransferable license and right to use,
 free of charge, with the following terms and conditions:
 .sp
-1.  The BRL CAD package source files will not be disclosed to third
+1.  The BRL-CAD package source files will not be disclosed to third
 parties.  BRL needs to know who has what, and what it is being used for.
 .sp
 2.  BRL will be credited should the software be used in a product or written
@@ -71,6 +117,7 @@ All requests from US citizens, or from US government agencies should be
 sent to:
 .sp
 .nf
+.ne 1i
 	Ballistic Research Lab
 	Attn: Mike Muuss
 	APG, MD  21005-5066
@@ -83,1047 +130,25 @@ the United States in Washington DC. Have your Ambassador submit the
 request to:
 .sp
 .nf
+.ne 1i
 	Army Headquarters
 	Attn: DAMI-FL
 	Washington, DC  20310
 .fi
 .sp
-.IP CONTENTS
-.sp
-What you have here is a collection of software which includes:
-.sp
-.nf
-.ta 0.5i 1.5i
-	libsysv	Some System-V compatibility routines
-	mged	A solid-model editor
-	librt	A solid-model ray-tracing library
-	libspl	A B-spline library
-	rt	A ray-tracing lighting model, for rendering
-	db	Several solid-model databases, in ASCII form
-	conv	ASCII/binary database converters
-	bench	Scripts to drive the RT benchmark
-	pix	Reference images for the RT benchmark, in ASCII form
-	libpkg	A "message-passing" interface to TCP network links
-	libfb	A generic frame-buffer library
-	rfbd	TCP server for remote frame-buffer access
-	libtermio	A library to handle terminal mode setting
-	libplot3	A public-domain 2-D and 3-D UNIX-Plot library
-	libtig	Some plotting routines built on libplot3
-	librle	A Run-Length-Encoding library (originally from UofUtah)
-	libmalloc	The Princeton malloc(3) -- a better malloc
-	libwdb	A library for procedurally writing databases
-	util	Zillions of image-handling utilities, as tools
-	fbed	Frame-buffer image editor
-	vdeck	Convert mged models to GIFT-format card decks.
-	dmdfb	libfb support for layers in Teletype 5620 DMD terminal
-	whetstone	FORTRAN Whetstone benchmark
-	dhrystone	"C" Dhyrstone benchmark
-.fi
-.sp
-This distribution does NOT include the various BRL-specific model
-analysis tools such as GIFT, SAR, SLAVE, VAST, etc.
-.sp
-For overview information on the whole package, consult the brlcad(1)
-manual page, in the util/ directory, and the overview paper in
-paper/overview. For a discussion of the significance of this software,
-read the paper "Understanding the Preparation and Analysis of Solid
-Models", included in the paper/ directory.
-.sp
-The first sections of this file discuss how to configure and compile
-just enough software to run the benchmark.  After the benchmark results
-are presented, information about configuring and installing the full
-software package is presented.  If you encounter difficulty with
-running the benchmark, you might wish to build the full package, to
-take advantage of the image tools in tracking down your trouble.
-.sp
-.IP "BENCHMARK BACKGROUND"
-.sp
-This file describes how to set up enough of the CAD package to
-run a benchmark test of the RT ray-tracing program on the sample
-databases provided.  Each run will produce a 512x512x24 bit color
-shaded image in a "bench/xxx.pix" file, and a run log in "bench/xxx.log".
-Reference copies of the images are provided as "pix/xxx.pix" and
-"pix/xxx.log".  The sample databases provided are processed in
-order of increasing difficulty, and each produces a colorful image.  In
-each picture there are two light sources; the primary source is located
-near the center of the model (the white ball), and the secondary light
-source is located at the "eye" position.
-.sp
-moss.g  --  This is a simple model, containing a yellow torus,
-a green ellipsoid, a bluish cube, a pink truncated (distorted) cone,
-all sitting on a blue plate.  Note the shadowing, and "specular splash".
-.sp
-world.g -- The same model as moss.g, but with various rendering
-features enabled.  The model is enclosed in a hollow cloud sphere.
-The plate is a mirror, the egg is crystal, the box has a debugging
-texture map applied.
-.sp
-star.g  --  A familiar sight to Star Trek fans;  a low-detail exterior
-of the ship "Enterprise".  The hull is white, with some other structures
-in other colors.  The small red object in the foreground is the
-shuttlecraft Galileo, to scale.
-.sp
-bldg391.g  --  An exploded view of a two-story imaginary computer site,
-including various walls, red stairways, green disk drives, etc.
-The lower floor is a mirror, the upper floor is glass.
-.sp
-The RT benchmark requires a binary database for input ("pix/xxx.g"), and
-produces a binary image as output ("bench/xxx.pix"), along with a log
-file ("bench/xxx.log").  To make this distribution machine independent,
-both the databases and the reference copies of the images are provided
-in an ASCII format in the "db" and "pix" directories, and
-ascii-to-binary converters are provided.  If you are running this
-benchmark on a non-UNIX machine that has difficulty writing binary
-streams, change the "-o file.pix" flag to "-O file.a_pix" and RT
-will write the ASCII form directly.  For more discussion, consult
-the doc/pix.5 and conv/asc2pix.1 manual pages.
-.sp
-.IP "THE BENCHMARK."
-.sp
-These steps are involved in loading the software and running the benchmark
-on a UNIX system:
-.sp
-.nf
-1)  Load the distribution.
-	mkdir cad
-	cd cad
-	tar x
-(On System V, use ``tar xo'' instead, to forgo chown-ing away the files).
-.sp
-2)  Edit the various header files and Makefiles (see below for details).
-	ed Makefile.defs
-	ed h/machine.h                  # defaults OK for 32-bit systems
-.sp
-3)  Compile everything, and convert the databases and reference images.
-	make benchmark
-.sp
-4)  Run the benchmark.  Make sure that the answers match the reference files
-to within plus-or-minus one in each color (see pixdiff(1)).
-	cd bench
-	sh run                  # takes several VAX hours.
-	cd ..
-.fi
-.sp
-5)  Compare the execution times in the "bench/xxx.log" files with the
-VAX-11/780 (with hardware FPA) times which are given in the
-"pix/xxx.log" files.
-.sp
-.IP "BENCHMARK CONFIGURATION"
-.sp
-1)  Compilations in each directory involve four Makefiles, "Makefile"
-which invokes \fImake\fR with three \fB-f\fR arguments,
-"../Makefile.defs", "./Makefile.loc", and "../Makefile.rules".
-This structure allows all configuration of this package to be
-concentrated in Makefile.defs, with per-directory configuration
-information in Makefile.loc files in each sub-directory, and
-overall compilation and installation rules spelled out in Makefile.rules.
-While this structure may seem overwhelming at first, it generally makes
-the task of configuration very simple.
-.sp
-The first configuration step is to edit the "Makefile.defs" file in
-the top directory of the distribution. As distributed, this file is
-configured for a 4.n BSD Berkeley UNIX system on a VAX. In a future
-version of the distribution, the main alternatives for this file will
-all be provided; right now, a variety of things generally will need to
-be tailored. Makefile.defs.xmp, Makefile.defs.gould, Makefile.defs.sun,
-and Makefile.defs.sgi can be used as examples, but please do not just
-use them without careful review.
-.sp
-Everything is clearly marked;  #SYSV# appears near symbols that need to
-be changed to run on a System V UNIX. Certain vendor-specific settings
-are similarly marked, e.g., #SGI#, #GOULD#, #ALLIANT#, #XMP#, #CRAY2#,
-etc.
-.sp
-Select the correct value for SYSTEM.
-.sp
-At present, SYSVERS should be defined only when specifically called for,
-presently on Silicon Graphics (SGI), Cray, and Sun machines.  The
-complete list of current settings is in Makefile.defs. For the SGI, set
-SYSVERS to either SGI34 for Release 3.4 and below, or SGI35 for Release
-3.5 and above. If you do not have the TCP option on your SGI, don't
-define either.
-.sp
-Configuration of libfb.  Full details on configuring the framebuffer
-library are provided in the "Full Configuration" section, below. If you
-just desire to run the benchmark but not display images, this library is
-still necessary, as the debug and disk-file interfaces are always
-provided.  In this case, the LIBFB_CFILES, LIBFB_OBJS, and LIBFB_CONFIG
-lines should be null lists, ie:
-.sp
-.nf
-	LIBFB_CFILES	=
-	LIBFB_OBJS	=
-	LIBFB_CONFIG	=
-.fi
-.sp
-In the case of extreme difficulty, a no-op stub version of libfb
-is provided in rt/libfb-dummy.c.
-.sp
-The timer configuration LIBRT_TIMER must be specified, based on the
-version of UNIX you are using. This timer module is for providing CPU
-and elapsed time indications.  If your system has a vendor-specific clock
-with more resolution than the normal UNIX library provides, you should
-create your own system-specific timerXXX.c module. The line is
-distributed as:
-.sp
-.nf
-.ta 0.5i 2i 3i 4i 5i 6i
-	LIBRT_TIMER	= timer42
-.sp
-For System V, select instead:
-.sp
-	LIBRT_TIMER	= timerunix
-.sp
-.ne 2i
-The full range of choices are:
-.TS
-center box;
-l l.
-timer42	4.2 BSD, 4.3 BSD (Berkeley UNIX)
-timerunix	Generic UNIX, System III, V, etc.
-timer52brl	For BRL's System 5-under-4.n BSD
-timerhep	Denelcor HEP
-timercray	Cray X-MP running UNICOS (UNIX)
-timercos	Cray X-MP running COS
-.TE
-.fi
-.sp
-2)  The file "h/machine.h" has a number of configuration
-options, including the setting of:
-.sp
-.TS
-center box;
-l l.
-fastf_t	fastest "C" floating point type (\fBfloat\fR or \fBdouble\fR)
-LOCAL	\fBstatic\fR or \fBauto\fR, for fastest local data type.
-FAST	LOCAL or register, for FAST fastf_t variables.
-PARALLEL	Defined for parallel processors.
-.TE
-.sp
-VAX, GOULD, Cray, Alliant and HEP examples are provided. The defaults
-should be correct for reasonable 32-bit serial computers.  Note that
-K&R ``C'' specifies that all floating point calculations must be done
-as \fBdouble\fR, so it is usually fastest to set fastf_t to
-\fBdouble\fR. Also note that when fastf_t is \fBfloat\fR in 32-bit IEEE
-or IBM style floating point, not enough accuracy is carried to correctly
-process large models. See the "Silicon Graphics Warnings" section for
-more information.
-.sp
-3)  It is important to run "make depend" in the top directory of the
-distribution each time these Makefiles are changed.  For libfb, mged,
-and librt, it is also necessary to run "make clean" in those directories
-after making related changes to the Makefiles, because the binaries
-of some modules depend on configuration options selected in the Makefiles.
-Failure to do this is the single most common cause of difficulty
-when experimenting with the configuration of this software.
-.sp
-.IP "BENCHMARK RESULTS"
-.sp
-In the tradition of Dongarra, the Rays/sec figure is considered the
-"RT Figure of Merit" (RTFM).  Note that the RTFM can only be compared
-between different runs on the \fIsame\fR database;  it is not meaningful
-to compare RTFM numbers between different databases. The Rays/sec number
-for a multi-processor machine is for "aggregate CPU cluster seconds",
-rather than rays/total CPU seconds (which remains fairly constant on
-good parallel machines). Worthy finalists to date are listed below.
-Entries are omitted for tests in which correct results were not
-obtained.
-.sp
-.TS
-center box;
-l l.
-System Name	Configuration
-_	_
-alliant	Alliant FX/8 (8 CEs, 9 IPs, 64 Mbytes), Concentrix 3.0
-amsaa-seer	Gould PN 9080, w/MACCs, UTX 2.0, 4x4Mb mem boards
-ardec-3	Pyramid 90Mx, Dual-CPU, OSx 2.5, 16 Mbytes
-bob.brl.mil	Cray-2, SN 2009, 4.3ns clock
-brl-patton	Cray X-MP/48, SN213, COS V115BF2, 8.5ns clock
-brl-spark	Gould PN 9050, no MACC, UTX 1.2, 2x4Mb mem boards
-brl-vat	VAX 750, FPA, 4.2 BSD
-brl-vector	Alliant FX/8 (8 CEs, 6 IPs, 32 Mbytes), Concentrix 2.0
-brl-vgr	VAX 780, FPA, 4.3 BSD
-brl-virus	Sun-3/50, 15 Mhz clock, 12 Mhz 68881, Sun UNIX 3.2
-brl-vista	SGI 3030, w/FP chip, UNIX release 3.5
-brl-vmb	Gould PN 9080, no MACCs, UTX 2.0, 12x1Mb mem boards
-brl-vhs	Silicon Graphics 4D/60T, 12.5 Mhz clock 8MB memory
-c1east	Convex C1 XP (2 IOPs, 4 Multibus, 4-way disk striping, 64 Mbytes), Convex Unix 6.0.1.12
-elxsi-gnu	Elxsi 6420, BSD 4.2 16 MB
-elxsi-gnuy	Elxsi 6420, Sys Vr2, 16MB
-elxsi-m1	Elxsi 6410, BSD 4.2 16 MB
-hep	Denelcor HEP, 4 PEMs
-indigo	SGI Iris 3030, FPA, GL2-W3.5
-multiflow	Multiflow Trace 7/200 (PRELIMINARY)
-nrl-xmp	Cray X-MP/12, COS V115, 9.5ns clock
-nrtc-785	VAX 785, FPA, VMS+Eunice_4.1
-nrtc-dryer	Ridge 330, ROS
-nrtc-gremlin	ISI 68020, no FP hardware, 4.2 BSD
-snm2	Cray 1-M, SN2, UNICOS 2.0
-tek4132	Tektronix 4132, 32082 fpp, UTek 2.3
-utah-gr	VAX 785, FPA, 4.3 BSD
-utah-ug	VAX 8600, FPA, 4.3 BSD
-violet	VaxStationII GPX, Ultrix 1.2
-vortac	Sun-3/160, 16.67 Mhz clock, 12 Mhz 68881, Sun 3.2
-.TE
-.fi
-.sp
-.TS
-center box;
-c s c s
-c c c l
-n n n l.
-FILE:  "bench/moss.log"	Release 2.3
-=
-Pix/sec	Ray/sec	*780	Machine & OS
-_
-  83.2	  118.8	  1.00	brl-vgr
- 262.8	  375.4	  3.16	brl-vmb, UTX 2.0
- 670.9	  958.3	  8.07	brl-vhs, -O2 optimization
-1418.7	 1856.7	 15.63	bob.brl.mil, 1 CPU, UNICOS 3.0, CC -O
-1851.7	 2423.5	 20.40	bob.brl.mil, 1 CPU, UNICOS 3.0, VCC -O
-2420.2	 3456.5	 29.10	brl-patton, 1 CPU, no vectors, UNICOS 2.1
-.TE
-.sp
-.TS
-center box;
-c s c s
-c c c l
-n n n l.
-FILE:  "bench/moss.log"	Release 1.20
-=
-Pix/sec	Ray/sec	*780	Machine & OS
-_
-  12.3	   17.6	  0.16	nrtc-gremlin
-  56.4	   80.5	  0.72	tek4132
-  57.2	   81.6	  0.73	brl-vat
-  75.4	  107.7	  0.96	violet
-  78.5	  112.1	  1.00	brl-vgr
-  81.2	  115.9	  1.03	indigo
-  81.5	  116.4	  1.04	brl-vista
-  83.3	  119.0	  1.06	violet w/fast_sqrt
-  86.7	  123.8	  1.10	nrtc-785
-  89.2	  127.3	  1.14	brl-virus
- 103.8	  148.2	  1.32	vortac
- 134.3	  191.8	  1.71	utah-gr
- 158.6	  226.5	  2.02	nrtc-dryer
- 266.7	  380.5	  3.39	elxsi-m1
- 269.4	  384.7	  3.43	brl-spark, UTX 1.2
- 289.5	  413.4	  3.69	brl-spark, UTX 2.0
- 289.9	  413.9	  3.69	brl-vmb, UTX 2.0
- 318.5	  454.8	  4.06	c1east, Convex Unix 6.0.1.12, vanilla cc
- 332.6	  460.7	  4.11	amsaa-seer, UTX 2.0
- 345.2	  492.9	  4.40	brl-vector, 1 CE, no vectors (1.00X)
- 364.5	  520.6	  4.64	elxsi-gnu BSD 4.2
- 364.9	  521.1	  4.64	utah-ug
- 365.3	  521.6	  4.66	c1east, Convex Unix 6.0.1.12, vc -O1 (scalar)
- 365.9	  527.7	  4.71	c1east, Convex Unix 6.0.1.12, vc -O2 (vector)
- 451.5	  644.7	  5.75	elxsi-gnuy SysV
- 591.9	  845.2	  7.54	multiflow (preliminary)
- 679.8	  904.9	  8.07	brl-vector, 2 CEs, no vectors (1.84X)
-1018.2	 1375.5	 12.27	brl-vector, 3 CEs, no vectors (2.79X)
-1309.5	 1813.5	 16.17	brl-vector, 4 CEs, no vectors (3.68X)
-1396.6	 1994.3	 17.79	nrl-xmp, no vectors, no optim
-1722.5	 2364.1	 21.08	brl-vector, 5 CEs, no vectors (4.80X)
-1745.0	 2492.9	 22.24	snm2, no vectors, no optim
-1752.1	 2502.0	 22.32	hep, 1 PEM, npsw=10
-2040.8	 2811.4	 25.08	brl-vector, 6 CEs, no vectors (5.7X)
-2330.7	 3248.8	 28.98	brl-vector, 7 CEs, no vectors (6.5X)
-2418.3	 3453.3	 30.81	brl-patton, 1 CPU, no vectors, no optim (1.00X)
-2632.2	 3677.3	 32.80	brl-vector, 8 CEs, no vecotrs (7.46X)
-2786.0	 3972.9	 35.44	alliant, 8 CEs, no vectors
-2840.3	 4055.9	 36.18	hep, 1 PEM, npsw=40
-4802.1	 6856.5	 61.16	brl-patton, 2 CPUs, no vectors, no optim (1.99X)
-7148.1	10205.1	 91.04	brl-patton, 3 CPUs, no vectors, no optim (2.96X)
-9331.8	13320.2	118.82	brl-patton, 4 CPUs, no vectors, no optim (3.86X)
-.TE
-.sp
-.TS
-center box;
-c s c s
-c c c l
-n n n l.
-FILE:  "bench/world.log"	Release 2.3
-=
-Pix/sec	Ray/sec	*780	Machine & OS
-_
-  36.0	   64.9	  1.00	brl-vgr
- 121.3	  218.6	  3.37	brl-vmb, UTX 2.0
- 302.6	  545.6	  9.41	brl-vhs, -O2 optimization
- 479.3	  801.9	 12.36	bob.brl.mil, 1 CPU, UNICOS 3.0, CC -O
- 625.0	 1045.7	 16.11	bob.brl.mil, 1 CPU, UNICOS 3.0, VCC -O
- 938.4	 1691.8	 26.07	brl-patton, 1 CPU, no vectors, UNICOS 2.1
-.TE
-.sp
-.TS
-center box;
-c s c s
-c c c l
-n n n l.
-FILE:  "bench/world.log"	Release 1.20
-=
-Pix/sec	Ray/sec	*780	Machine & OS
-_
-  24.4	   44.0	 0.69	tek4132
-  32.3	   57.3	 0.90	violet
-  35.5	   63.0	 0.99	violet, w/fast_sqrt
-  35.9	   63.6	 1.00	brl-vgr
-  38.5	   68.4	 1.08	ardec-3
-  39.4	   69.9	 1.10	brl-virus
-  45.6	   81.0	 1.27	vortac
-  48.1	   85.3	 1.34	indigo
-  48.4	   86.0	 1.35	brl-vista
-  59.6	  105.8	 1.66	utah-gr
- 128.5	  228.0	 3.58	brl-vector, 1 CE, no vectors
- 130.7	  232.0	 3.65	brl-spark, UTX 2.0
- 131.1	  232.2	 3.65	elxsi-m1
- 131.5	  233.4	 3.67	brl-vmb, UTX 2.0
- 142.2	  252.4	 3.97	c1east, Convex Unix 6.0.1.12, vanilla cc
- 148.3	  263.2	 4.14	amsaa-seer, UTX 2.0
- 160.8	  285.3	 4.49	c1east, Convex Unix 6.0.1.12, vc -O1 (scalar)
- 161.9	  287.4	 4.52	c1east, Convex Unix 6.0.1.12, vc -O2 (vector)
- 164.6	  292.1	 4.59	utah-cs
- 177.7	  315.4	 4.96	elxsi-gnu BSD 4.2
- 196.8	  349.3	 5.49	elxsi-gnuy SysV
- 247.6	  439.5	 6.91	multiflow (preliminary)
- 257.3	  424.6	 6.68	brl-vector, 2 CEs, no vectors
- 379.1	  650.0	10.22	brl-vector, 3 CEs, no vectors
- 491.3	  845.5	13.29	brl-vector, 4 CEs, no vectors
- 642.16	 1104.4	17.36	brl-vector, 5 CEs, no vectors
- 762.38	 1319.0	20.74	brl-vector, 6 CEs, no vectors
- 853.3	 1514.3	23.81	brl-patton, 1 CPU, no vectors
- 880.42	 1533.0	24.10	brl-vector, 7 CEs, no vectors
- 987.62	 1724.2	27.11	brl-vector, 8 CEs, no vectors
- 1039.2	 1840.0	28.93	alliant, 8 CEs, no vectors
-.TE
-.fi
-.sp
-.TS
-center box;
-c s c s
-c c c l
-n n n l.
-FILE:  "bench/star.log"	Release 2.3
-=
-Pix/sec	Ray/sec	*780	Machine & OS
-_
-  30.5	   36.5	 1.00	brl-vgr
- 156.0	  186.4	 5.11	brl-vmb, UTX 2.0
- 374.0	  447.0	12.25	brl-vhs, -O2 optimization
- 482.2	  574.1	15.73	bob.brl.mil, 1 CPU, UNICOS 3.0, CC -O
- 604.2	  719.3	19.71	bob.brl.mil, 1 CPU, UNICOS 3.0, VCC -O
- 978.2	 1169.0	32.03	brl-patton, 1 CPU, no vectors, UNICOS 2.1
-.TE
-.sp
-.TS
-center box;
-c s c s
-c c c l
-n n n l.
-FILE:  "bench/star.log"	Release 1.20
-=
-Pix/sec	Ray/sec	*780	Machine & OS
-_
-  28.4	   33.9	 0.62	tek4132
-  37.4	   44.7	 0.81	violet
-  41.9	   50.0	 0.91	violet, w/fast_sqrt
-  46.0	   55.0	 1.00	brl-vgr
-  47.7	   57.0	 1.04	brl-virus
-  47.8	   57.2	 1.04	ardec-3
-  55.1	   65.8	 1.20	vortac
-  75.2	   89.9	 1.64	utah-gr
- 150.6	  180.0	 3.27	brl-vector, 1 CE, no vectors (1.00X)
- 171.4	  204.8	 3.72	elxsi-m1
- 172.0	  205.6	 3.74	c1east, Convex Unix 6.0.1.12, vanilla cc
- 176.2	  210.6	 3.83	brl-vmb, UTX 2.0
- 178.8	  213.8	 3.89	brl-spark, UTX 2.0
- 191.4	  228.7	 4.16	c1east, Convex Unix 6.0.1.12, vc -O2 (vector)
- 192.9	  230.5	 4.20	c1east, Convex Unix 6.0.1.12, vc -O1 (scalar)
- 198.7	  237.4	 4.32	utah-cs
- 206.5	  246.8	 4.49	amsaa-seer, UTX 2.0
- 221.3	  264.4	 4.81	elxsi-gnu BSD 4.2
- 221.4	  264.6	 4.81	elxsi-gnuy SysV
- 262.0	  313.1	 5.69	multiflow (preliminary)
- 294.1	  349.3	 6.35	brl-vector, 2 CE, no vectors (1.94X)
- 443.4	  523.4	 9.52	brl-vector, 3 CE, no vectors (2.91X)
- 577.9	  686.0	12.47	brl-vector, 4 CEs, no vectors (3.81X)
- 733.3	  870.2	15.82	brl-vector, 5 CEs, no vectors (4.83X)
- 883.1	 1051.6	19.12	brl-vector, 6 CEs, no vectors (5.84X)
-1035.2	 1232.3	22.41	brl-vector, 7 CEs, no vectors (6.85X)
-1063.7	 1271.2	23.11	brl-patton, 1 CPU, no vectors (1.00X)
-1153.8	 1375.4	25.01	brl-vector, 8 CEs, no vectors (7.64X)
-1219.9	 1457.2	26.49	alliant, 8 CEs, no vectors
-2110.6	 2522.2	45.86	brl-patton, 2 CPUs, no vectors (1.98X)
-3138.2	 3749.9	68.18	brl-patton, 3 CPUs, no vectors (2.95X)
-4147.1	 4955.6	90.10	brl-patton, 4 CPUs, no vectors (3.90X)
-.TE
-.sp
-.TS
-center box;
-c s c s
-c c c l
-n n n l.
-FILE:  "bench/bldg391.log"	Release 2.3
-=
-Pix/sec	Ray/sec	*780	Machine & OS
-_
-  23.0	   34.2	 1.00	brl-vgr
- 132.0	  196.2	 5.74	brl-vgr, UTX 2.0
- 278.6	  414.1	12.11	brl-vhs, -O2 optimization
- 383.7	  500.3	15.62	bob.brl.mil, 1 CPU, UNICOS 3.0, CC -O
- 467.4	  609.4	17.82	bob.brl.mil, 1 CPU, UNICOS 3.0, VCC -O
- 702.1	 1043.6	30.51	brl-patton, 1 CPU, no vectors, UNICOS 2.1
-.TE
-.sp
-.TS
-center box;
-c s c s
-c c c l
-n n n l.
-FILE:  "bench/bldg391.log"	Release 1.20
-=
-Pix/sec	Ray/sec	*780	Machine & OS
-_
-  21.1	   31.4	 0.62	tek4132
-  29.7	   44.1	 0.87	violet
-  31.1	   46.3	 0.91	violet, w/fast_sqrt
-  34.1	   50.7	 1.00	brl-vgr
-  35.2	   52.4	 1.03	brl-virus
-  40.9	   60.7	 1.20	vortac
-  58.2	   86.5	 1.71	utah-gr
-  68.5	  101.8	 2.01	indigo
-  68.8	  102.3	 2.02	brl-vista
- 105.7	  157.1	 3.10	brl-vector, 1 CE, no vectors (1.00X)
- 127.4	  189.3	 3.73	elxsi-m1
- 129.4	  192.3	 3.80	c1east, Convex Unix 6.0.1.12, vanilla cc
- 141.3	  210.0	 4.14	c1east, Convex Unix 6.0.1.12, vc -O2 (vector)
- 142.6	  211.9	 4.18	brl-spark, UTX 2.0
- 143.0	  212.6	 4.19	brl-vmb, UTX 2.0
- 144.7	  215.1	 4.24	c1east, Convex Unix 6.0.1.12, vc -O1 (scalar)
- 145.5	  216.2	 4.27	utah-cs
- 162.2	  241.0	 4.75	amsaa-seer, UTX 2.0
- 162.8	  242.0	 4.77	elxsi-gnu BSD 4.2
- 162.9	  242.1	 4.77	elxsi-gnu SysV
- 210.6	  312.6	 6.17	brl-vector, 2 CEs, no vectors (1.98X)
- 227.7	  338.9	 6.68	multiflow (preliminary)
- 310.9	  459.9	 9.07	brl-vector, 3 CEs, no vectors (2.93X)
- 405.2	  600.7	11.85	brl-vector, 4 CEs, no vectors (3.82X)
- 523.5	  775.9	15.3	brl-vector, 5 CEs, no vectors (4.93X)
- 620.0	  918.0	18.1	brl-vector, 6 CEs, no vectors (5.84X)
- 691.2	 1027.3	20.26	brl-patton, 1 CPU, no vectors
- 719.0	 1065.9	21	brl-vector, 7 CEs, no vectors (6.78X)
- 814.6	 1208.4	23.83	brl-vector, 8 CEs, no vectors (7.69X)
- 852.4	 1266.4	24.98	alliant, 8 CEs, no vectors
-.TE
-.fi
-.sp 2
-It would be greatly appreciated if you would return to BRL any
-statistics that you gather, including:  which BRL CAD release
-was used, the manufacturer of the machine,
-hardware and software version numbers, presence or absence of floating
-point hardware, and the name (preferably InterNet or UUCP) of the
-specific machine used.
-.sp
-.IP "FURTHER OPTIMIZATIONS"
-.sp
-After initial testing, you may wish to go back and enable the special
-assembler version of sqrt(), by uncommenting and editing the FAST_SQRT
-line in "librt/Makefile.loc".  4.2BSD VAX and Gould UTX 1.2 versions
-are provided.  Note that the 4.3BSD VAX library sqrt() is even faster
-than this one by more than 40%.
-.sp
-The file "h/vmath.h" has macros for numerous common vector operations;
-if your system has hardware support for vector operations, after getting
-the program working you would profit greatly from changing these macros
-to machine-specific code.  The most important macros are MAT4X3VEC and
-MAT4X3PNT.
-See also "rt/machine.c".
-If you do this, please submit the "rays/sec" figures for the
-original as well as the optimized runs.
-.sp
-BRL is currently attempting explicit vector extensions to the C language,
-as well as working with compilers that detect implicit vectorization.
-This work will be included in a subsequent release.
-.sp
-.IP "SILICON GRAPHICS WARNINGS"
-.sp
-If you are attempting to run the benchmark on an SGI IRIS, beware of the
-\fBlong float\fR -vs- \fBdouble\fR controversy.  The SGI C compiler
-converts both \fBfloat\fR and \fBdouble\fR to 32-bit single-precision
-numbers. While the current release of librt is believed to generally
-operate correctly in spite of this, beware of the RT program failing to
-find roots, or being unable to perform a "box push". Unfortunately, the
-"star.pix" RT benchmark will will fail due to lack of floating point
-precision, and generate lots of diagnostics, filling your disk.
-.sp
-SGI software release version 3.3.1, 3.4, and 3.5 have a defective
-library version of hypot();  be aware of the (slower) substitute in
-"rt/machine.c".
-.sp
-Operations of the form "*fp += incr;" are known to compile incorrectly
-on release 3.5 when "fp" is declared as "\fBregister double\fR *fp"
-(or \fBregister float\fR).  The one known instance of this in
-util/bwmod.c has been "fixed" with a #\fBifdef\fR sgi.
-.sp
-When running MGED on a 3.5 Iris with XNS networking, there is no
-select() capability, so non-blocking I/O has to be used instead.
-This has two undesirable side effects.  First, it puts MGED into
-a hard loop polling the workstation keyboard.  Second, it seems to
-have an interaction with control-S/control-Q flow control -- if you
-suspend output, most of it will be discarded.  However, MGED is
-still usable in this configuraition.
-.sp
-Currently there are no good solutions to these problems.  Voice your
-opinions to the vendor.
-.sp
-It is very useful to add a "gclear" account to each SGI, so that after
-using the screen in 24-bit mode you can regain control of the screen by
-typing "gclear", whether or not you are logged in.  Add this line
-to /etc/passwd:
-.sp
-gclear::4:5::/tmp:/usr/bin/gclear
-.sp
-.IP "CRAY XMP WARNING"
-.sp
-If you are running the benchmark on a Cray XMP, as I'm sure all of you
-are, the world.pix and bldg391.pix images will have a single byte in the
-blue channel off by 1, out in the cloud background.  This is not to be
-considered an error.
-.sp
-.IP "FULL INSTALLATION"
-.sp
-The steps involved in installing the full BRL CAD package
-on a UNIX system are these:
-.sp
-.nf
-.ta 0.5i 2i 3i 4i 5i 6i
-1)  Load the distribution.
-	mkdir cad
-	cd cad
-	tar x
-(On System V, use ``tar xo'' instead, to forgo chown-ing away the files).
-.sp
-2)  Edit the various header files and Makefiles (see below).
-	ed Makefile.defs
-	ed h/machine.h	                  # defaults OK for 32-bit systems
-	ed Makefile		# to remove IF_REMOTE
-.sp
-3)  Compile everything.
-	make all
-.sp
-4)  After everything compiles, install everything.
-	make install
-.sp
-.IP "FULL CONFIGURATION"
-.sp
-The following assumes that you have already loaded the distribution per
-step 1 of "The Benchmark" section, and performed the configuration
-outlined in the "Benchmark Configuration" section, above.
-.sp
-Note that if you are configuring the software for more than one type of
-computer, you will have to go through this configuration procedure
-separately for each system.  Configuration questions apply only to
-the hardware available on the particular system presently being
-configured. If you have several types of machine sharing a single
-filesystem using NFS, be certain to have a separate CAD tree for each
-machine, to keep the binaries separate.
-.sp
-You may wish to install the package in directories other than where BRL
-does. In general, all CAD executable programs are installed in BINDIR
-(/usr/brl/bin), with libraries going in LIBDIR (/usr/brl/lib). Users are
-told to find the CAD-related include files in INCLUDE_DIR
-(/usr/include/brlcad). Be certain to examine these defines in
-Makefile.defs. The remote-frame-buffer daemon is installed in
-/usr/brl/etc, see rfbd/Makefile.loc.  If you wish to use the BRL
-directories, you may need to run (as root):
-.br
-.nf
- 	mkdir /usr/include/brlcad
- 	mkdir /usr/brl 
-	mkdir /usr/brl/bin
- 	mkdir /usr/brl/lib
- 	mkdir /usr/brl/etc
-.fi
-.br
-and then use chown(1) and chmod(1) to suit.
-.sp
-The configuration for libfb must be edited to reflect the display
-hardware that you have.  Even if your system has no display hardware,
-this library is necessary, as the debug and disk-file interfaces are
-always useful.  (Lacking any displays at all, you may be able to utilize
-the bw-impress(1) program to produce pictures on an Imagen
-laser-printer).
-.sp
-.TS
-center box;
-l l.
-	STANDARD
-_
-file	Manipulate disk image
-debug	Print library calls
-_
-	OPTIONAL
-_
-remote	Network access to remote display
-adage	Adage RDS-3000 ("Ikonas")
-sgi	SGI Iris display
-sun	SunView interface
-ptty	AT&T 5620 w/special Moss layer
-ug	Ultra Graphics
-rat	Raster Technology One/80
-.TE
-.sp
-In the case of no display hardware at all, the
-LIBFB_CFILES, LIBFB_OBJS, and LIBFB_CONFIG lines should be null lists,
-ie:
-.sp
-.ta 0.5i 2i 3i 4i 5i 6i
-.nf
-	LIBFB_CFILES	=
-	LIBFB_OBJS	=
-	LIBFB_CONFIG	=
-.fi
-.sp
-If this is a SUN system of release 3.2 or higher, the display is
-configured by:
-.sp
-.nf
-	LIBFB_CFILES	= if_remote.c if_sun.c
-	LIBFB_OBJS	= if_remote.o ../libpkg/pkg.o if_sun.o
-	LIBFB_CONFIG	= -DIF_REMOTE -DIF_SUN
-.fi
-.sp
-If this is an SGI system of release 3.5, the display is configured by:
-.sp
-.nf
-	LIBFB_CFILES	= if_sgi.c
-	LIBFB_OBJS	= if_sgi.o
-	LIBFB_CONFIG	= -DIF_SGI
-.fi
-.sp
-If this is an SGI system of release 3.4 or earlier with Excelan TCP
-support, the display can be supported by:
-.sp
-.nf
-	LIBFB_CFILES	= if_sgi.c
-	LIBFB_OBJS	= if_sgi.o sgiselect.o
-	LIBFB_CONFIG	= -DIF_SGI
-.fi
-.sp
-When using the framebuffer library on the SGI, it is necessary to modify
-certain kernel limits in the binary image of your kernel to be able to
-use a large block of shared memory.  Follow the directions in
-libfb/if_sgi.c, and then reboot your workstation to allow the changes to
-take effect.  There are claims that on some SGI machines, this may
-cause unreliable operation, so be certain to keep a backup kernel.
-.sp
-If this is a TCP-capable system, you will want to include the remote
-frame-buffer capability;  the defaults already provide for this. If you
-are using a system which does not have TCP capability, you must edit the
-top-level Makefile and remove the "needed for IF_REMOTE" line in the
-"benchmark" rule, to prevent compiling "libpkg", in addition to
-configuring in Makefile.defs.  For no remote capability, be certain
-that IF_REMOTE \fIet. al.\fR are not defined in the LIBFB_CONFIG lines.
-Build a remote-framebuffer-only library with:
-.sp
-.nf
-	LIBFB_CFILES	= if_remote.c
-	LIBFB_OBJS	= if_remote.o ../libpkg/pkg.o
-	LIBFB_CONFIG	= -DIF_REMOTE
-.fi
-.sp
-To offer in-bound remote framebuffer service, you may wish to compile
-"rfbd", the remote-framebuffer daemon. If you wish to do this, you must
-also add the IF_REMOTE capability to libfb. If your system does not support
-inetd(8), then rfbd should be started in /etc/rc.local. However, if your
-system does support inetd(8), then rfbd must be started with this
-/etc/inetd.conf entry:
-.sp
-.nf
-remotefb stream tcp     nowait  nobody  /usr/brl/etc/rfbd       rfbd
-.sp
-This depends on having a ``nobody'' user, so be certain that your
-/etc/passwd file contains a line like this.  (The choice of UID and
-GID of -2 is intentional).
-.sp
-nobody:*:-2:-2:NFS Unprivileged user:/nonexistent:/dev/null
-.sp
-Also, be certain to add this line to /etc/services:
-.sp
-remotefb        5558/tcp                        # Remote Frame Buffer
-.fi
-.sp
-Note that systems with multiple display devices, or for systems that
-have a display and also wish to use the remote capability, multiple
-entries should be made.  For example, on
-a TCP-capable SGI system of release 3.5, the typical configuration is:
-.sp
-.nf
-	LIBFB_CFILES	= if_sgi.c if_remote.c
-	LIBFB_OBJS	= if_sgi.o if_remote.o ../libpkg/pkg.o
-	LIBFB_CONFIG	= -DIF_SGI -DIF_REMOTE
-.fi
-.sp
-As distributed, the remote, Adage, and Pseudo-tty (Teletype DMD 5620)
-interfaces are all enabled.  You will almost certainly wish to change
-this;  failure to do so is the second most common source of difficulties in
-installing this distribution. If you change the configuration of libfb
-partway through building the system, be certain to run "cd libfb; make
-clean; make depend" before recompiling other programs, because the
-Makefiles and binaries change based on the configuration options in
-Makefile.defs.
-.sp
-The file h/rle.h has a #\fBif\fR statement that will need modification if
-your machine is a "Little-Endian" machine and your machine is not
-a VAX.  "Big-Endian" machines will work without modification.
-A Big-Endian machine has byte [0] on the left of the word, like IBM,
-while a Little-Endian machine has byte [0] on the right side of the word,
-like DEC.  Some of the RLE code needs to know.
-.sp
-The MGED (multi-device model editor) needs to be configured.
-At present, all versions of MGED have support for these types of
-display devices by default:
-.TS
-center box;
-l l.
-plot	any UNIX-plot filter
-tek	Tektronix 4014 and family
-tek4109	Tektronix 4109
-.TE
-These optional display devices are also supported,
-when specifically configured:
-.TS
-center box;
-l l.
-ir	SGI IRIS 2400, 3030
-sun	SUN 3.2 Pixwin
-vg	Vector General 3300
-mg	Megatek 7250
-rat	Raster Tech One/180,380
-rat80	Raster Tech One/80
-ps	E&S Picture System 300
-mer	Megatek Merlin 9200 [Marginal]
-sab	Saber w/GOPS [Marginal]
-.TE
-Necessary vendor-supplied libraries must be listed on the MGED_LIBES line.
-.sp
-To configure just the default set of displays, specify:
-.sp
-.nf
-.ta 0.5i 2i 3i 4i 5i 6i
-	MGED_CFILES	=
-	MGED_OBJS	=
-	MGED_CONFIG	=
-	MGED_LIBES	=
-.sp
-To configure an SGI Iris ("ir") running 3.5 with TCP networking, specify:
-.sp
-	MGED_CFILES	= dm-ir.c
-	MGED_OBJS	= dm-ir.o
-	MGED_CONFIG	= -DDM_IR
-	MGED_LIBES	= -lbsd -lgl2
-.sp
-To configure an SGI Iris ("ir") running 3.5 with XNS networking, specify:
-.sp
-	MGED_CFILES	= dm-ir.c
-	MGED_OBJS	= dm-ir.o
-	MGED_CONFIG	= -DDM_IR -DNONBLOCK
-	MGED_LIBES	= -lbsd -lgl2
-.sp
-To configure an SGI Iris ("ir") running 3.4, specify:
-.sp
-	MGED_CFILES	= dm-ir.c
-	MGED_OBJS	= dm-ir.o
-	MGED_CONFIG	= -DDM_IR
-	MGED_LIBES	= ../libfb/sgiselect.o -lgl2
-.sp
-To configure a SUN, specify:
-.sp
-	MGED_CFILES	= dm-sunpw.c
-	MGED_OBJS	= dm-sunpw.o
-	MGED_CONFIG	= -DDM_SUNPW
-	MGED_LIBES	= -lsuntool -lsunwindow -lpixrect
-.fi
-and remember always to run MGED under a gfxtool window.
-Also note that SUN support is still rudamentary, and there are problems
-with (a) running RT from within MGED, and (b) using MGED on a color SUN.
-.sp
-In all cases,
-be certain to properly define the MGED_VERS variable.
-.sp
-If this is a machine without TCP network capability, you will also have
-to edit the top level Makefile to remove rfbd and libpkg from the
-PRODUCTS list.
-.sp
-.IP "KNOWN PROBLEMS"
-.sp
-The Whetstone benchmark is written in FORTRAN, with a subroutine
-in C for determining timings.  The linkage between the two languages
-is very system dependent, and you are likely to have to fiddle with
-the C code to obtain correct operation.  It was felt that the benefit
-of having this well known benchmark on the tape was worth braving
-the non-portability for.
-.sp
-.IP "NON-PROBLEMS"
-.sp
-There are several portions of the "make all" sequence that generate
-messages that might appear to be errors, but are actually intentional.
-It is regretable that we are not yet able to suppress these.
-Any instances of the message "**** Error code 1 (ignored)" are not
-actual errors, but are by-products of the Makefile using the
-test(1) command to configure itself.
-Another non-error message is:
-.nf
----------- h
-make  -  -f ../Makefile.defs -f Makefile.loc -f ../Makefile.rules depend
-make -k -  -f ../Makefile.defs -f Makefile.loc -f ../Makefile.rules
-Too many command lines for `noprod'
-echo "No clobbering the header files"
-No clobbering the header files
-.fi
-.sp
-On the Silicon Graphics, when building libfb, these three messages are
-harmless:
-.nf
-ranlib: warning: libfb.a(oldbbox.o): no symbol table
-ranlib: warning: libfb.a(oldfont.o): no symbol table
-ranlib: warning: libfb.a(stopwatch.o): no symbol table
-.fi
-.sp
-When running a "make install", the db and pix directories will report
-``Make:  Don't know how to make install.  Stop.'', which is OK.
-Also, error messages of the form
-``cp: *.1.stub: No such file or directory'' and
-``cp: *.doc: No such file or directory'' and the like are
-also OK.  The Makefiles are complicated enough as it is.
-.sp
-.IP "IMAGE DISPLAY"
-.sp
-If you have a suitable framebuffer, you will probably wish to
-display the images generated by the benchmark, and compare them
-to the reference images.  A pix(5) file is a sequence of \fBunsigned char\fR
-triples written RGB in the range 0 to 255.  The first pixel goes in
-the lower left corner of the screen, and subsequent pixels write to the
-right; subsequent scan lines are displayed above earlier ones.  (First
-quadrant display).  See doc/pix.5 for more details.
-.sp
-Programs for dealing with images are in the "util" directory. To display
-a pix(5) file on a framebuffer, set environment variable FB_FILE
-(see brlcad(1) for details), and run pix-fb.  Note that by leaving
-FB_FILE unset, your default display will be used.
-.sp
-.nf
-	cd bench
-	pix-fb moss.pix
-.fi
-.sp
-If the images computed on your machine do not match the reference images,
-the program "util/pixdiff" will compute a pix file that will highlight
-the differences for you, and report a summary of bytes equal, off-by-1,
-and off-by-many, e.g.,
-.sp
-.nf
-	pixdiff moss.pix ../pix/moss.pix \(or pix-fb
-.fi
-.sp
-For a display of the relative magnitude of the differences at
-each pixel, use "util/bwdiff" instead, e.g.,
-.sp
-.nf
-	bwdiff moss.pix ../pix/moss.pix \(or pix-fb
-or
-	bwdiff moss.pix ../pix/moss.pix \(or \\
-	bwmod -s 128 -m 4 -a 128 \(or pix-fb
-.fi
-.sp
-and for statistics on the differences, use
-.sp
-.nf
-	bwdiff moss.pix ../pix/moss.pix \(or pixstat
-.fi
-.sp
-.IP "ENHANCEMENTS"
-.sp
-It is expected that new releases of this software will be issued roughly
-semi-annually. Information about new releases will be routinely provided
-to recipients of this software.  If your address changes, please let us
-know, so we can update our records.
-.sp
-If you develop additional software for the BRL CAD environment that
-you would be willing to share, please send it to us for inclusion
-in the next release.
-The first such inclusion is the Utah Raster Toolkit, included "as is"
-in the directory utah-raster.  Note that the current BRL CAD
-distribution uses Edition-2 of the Utah RLE file format, while the
-Utah Raster Toolkit uses Edition-3.  In a subsequent release, all
-the BRL CAD tools will have been converted to use the Edition-3
-format and library interface.  Image conversion aids exist in the
-programs utah-raster/get/getfb.c to display Edition-3 RLE images
-on libfb supported displays, and utah-raster/tools/jwp/pixtorle.c
-to convert pix(5) images into Edition-3 RLE images.
-Note that BRL considers the RLE format a long-term image storage format,
-with pix(5) format used for image manipulation, while Utah uses RLE
-format for all manipulation stages as well.
-.sp
-.IP "ADDING SUPPORT FOR NEW DISPLAYS"
-.sp
-If you desire to add support for a new display, there are only two
-modules that you will have to create.  The first will be for the
-framebuffer library (see libfb(3) for more details).  A template for
-creating interfaces to new devices is provided as libfb/if_TEMPLATE.c.
-The second module needed is an MGED display manager, like mged/dm-XX.c.
-Here, the task is somewhat harder, as two major modes of behavior are
-supported:  displaylist and refresh.  You should examine display
-managers for devices similar to yours, and proceed from there.
-We would be most interested in obtaining any additional display modules
-that you might develop.
-.sp
-.IP "UPGRADING FROM RELEASE 1.20 to 2.0"
-.sp
-This release contains only minor external changes from Release 1.20,
-but for complete safety, you should save the old binary to "conv/g2asc"
-someplace safe, so that if you find the binary format of the database
-incompatable you can convert your old databases from binary to ASCII
-form. Having to do this is system dependent (only Sun, SGI, and Alliant
-users are likely to be affected), but it difficult to recover from
-without having saved the old converter (or your old distribution tape).
-.sp
-.IP "UPGRADING FROM RELEASE 2.0"
-.sp
-Primarily, this release is a maintenance release, with lots of little
-nits resolved, along with a few new features.  The major weak area is
-still Sun display support.  In particular, using RT from within MGED
-fails miserably.
-.sp
-This release contains different and better support for multiple lights
-in RT, along with a standardized shader interface, and stackable
-shaders. Support for polygonal objects is now correct, but slow. The
-spline code has been significantly improved. Some contributed code for
-the Raster Technologies One/80 has been included, but is untested.  The
-library for procedurally generating databases ``libwdb'' is now
-included, along with some example uses in the directory ``proc-db''.
-The program ``rtwalk'' generates a viewpoint animation control script
-that takes the eye between given start and end points, without walking
-through any geometry.  This is especially interesting when used on
-complex scenes like those made by proc-db/clutter.c.
-.sp
-.IP "WORK IN PROGRESS"
-.sp
-We are hard at work on a variety of new features, the most significant are:
-(*) a substantial package for animation specification and preview,
-(*) code to replace the "big-E" command, to convert the CSG model into
-a polygonal approximation, for certain analysis codes, and to drive
-display hardware with fast polygon rendering,
-(*) additional primitive types,
-(*) MGED improvements, including merging common database-handling code
-with librt, and a consolidation of the MGED and LIBRT geometry modules.
-.sp
+Because distribution tapes are written by various members of the
+development team in their spare time, and because of vagaries in
+the supply of printed manuals, the turnaround time for responding
+to distribution requests varies from 1 to 12 weeks.
+.sp
+.ne 1i
 .IP "COMMUNICATION"
 .sp
-You are invited to participate in the BRL CAD software electronic
-mailing list, called
+You are invited to participate in the DARPA InterNet (aka "ARPANET")
+electronic mailing list on the BRL-CAD software, which is called
 .sp .5
 .ti +1i
-<CAD @ BRL.ARPA>.
+<CAD @ BRL.MIL>.
 .sp .5
 Bug reports and discussions of new features
 are the main topics;  volume of messages has been light (so far).
@@ -1131,18 +156,17 @@ Direct your bug reports to this address.  Request a subscription by
 sending to
 .sp .5
 .ti +1i
-<CAD-REQUEST @ BRL.ARPA>.
+<CAD-REQUEST @ BRL.MIL>.
 .sp .5
-If you find bugs, please report your experiences.  While BRL makes no
+If you find bugs, please report your experiences via E-mail.
+While BRL makes no
 offer of support, we are most interested in hearing about your
-experiences. Enough people have been pestering us by phone with the most
-basic questions that we can no longer offer telephone assistance.
-Therefore, electronic mail is vastly preferred over telephone contact.
+experiences.
 .sp
-We are currently trying to organize a BRL CAD Package Conference, to
-be held in the spring of 1988.  If you are interested in attending,
+The BRL-CAD Symposium '88 was a big success.
+If you would be interested in attending the Symposium in '89,
 and especially if you would like to make a presentation, please
-contact Keith Applin <Keith@BRL.ARPA>, or call 301-278-6647.
+contact Keith Applin <Keith@BRL.MIL>, or call 301-278-6647.
 .sp
 .KS
 .nf
@@ -1154,6 +178,6 @@ Best Wishes,
   APG, MD. 21005-5066
   USA
 .sp
-ArpaNet:  <Mike @ BRL.ARPA>
+ArpaNet:  <Mike @ BRL.MIL>
 .KE
 .fi
