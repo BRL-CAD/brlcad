@@ -991,7 +991,7 @@ struct solidrec *in;
 		return(0);	/* Success */
 
 	case RPP:
-#ifdef !mips
+#ifndef mips
 		VSET( O1, Xmax, Ymin, Zmin );
 		VSET( O2, Xmax, Ymax, Zmin );
 		VSET( O3, Xmax, Ymax, Zmax );
