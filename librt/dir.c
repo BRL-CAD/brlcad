@@ -38,16 +38,6 @@ static struct directory *DirHead = DIR_NULL;
 int	ged_fd = -1;		/* FD of object file */
 extern char *malloc();
 
-static char *units_str[] = {
-	"none",
-	"mm",
-	"cm",
-	"meters",
-	"inches",
-	"feet",
-	"extra"
-};
-
 /*
  *			D I R _ B U I L D
  *
@@ -60,9 +50,10 @@ static char *units_str[] = {
  *	-1	Fatal Error
  */
 int
-dir_build(filename, noisy)
+dir_build(filename, buf, len)
 char *filename;
-int noisy;
+char *buf;
+int len;
 {
 	static union record	record;
 	static long	addr;
@@ -71,12 +62,13 @@ int noisy;
 		perror(filename);
 		return(-1);
 	}
+	buf[0] = '\0';
 
 	(void)lseek( ged_fd, 0L, 0 );
 	(void)read( ged_fd, (char *)&record, sizeof record );
 	if( record.u_id != ID_IDENT )  {
-		(void)fprintf(stderr,"Warning:  File is not a proper GED database\n");
-		(void)fprintf(stderr,"This database should be converted before further use.\n");
+		rtlog("WARNING:  File is not a proper GED database\n");
+		rtlog("This database should be converted before further use.\n");
 	}
 	(void)lseek( ged_fd, 0L, 0 );
 	while(1)  {
@@ -87,13 +79,11 @@ int noisy;
 
 		if( record.u_id == ID_IDENT )  {
 			if( strcmp( record.i.i_version, ID_VERSION) != 0 )  {
-				(void)fprintf(stderr,"File is Version %s, Program is version %s\n",
+				rtlog("WARNING: File is Version %s, Program is version %s\n",
 					record.i.i_version, ID_VERSION );
 			}
-			if(noisy)
-				(void)fprintf(stderr,"%s (units=%s)\n",
-					record.i.i_title,
-					units_str[record.i.i_units] );
+			if( buf[0] == '\0' )
+				strncpy( buf, record.i.i_title, len );
 			continue;
 		}
 		if( record.u_id == ID_FREE )  {
@@ -137,7 +127,7 @@ int noisy;
 			continue;
 		}
 		if( record.u_id != ID_COMB )  {
-			(void)fprintf(stderr, "dir_build:  unknown record %c (0%o)\n",
+			rtlog("dir_build:  unknown record %c (0%o)\n",
 				record.u_id, record.u_id );
 			/* skip this record */
 			continue;
@@ -179,7 +169,7 @@ register char *str;
 	}
 
 	if( noisy )
-		fprintf(stderr, "dir_lookup:  could not find '%s'\n", str );
+		rtlog("dir_lookup:  could not find '%s'\n", str );
 	return( DIR_NULL );
 }
 
