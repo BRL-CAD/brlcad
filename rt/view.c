@@ -437,10 +437,11 @@ struct partition *PartHeadp;
 	sw.sw_transmit = sw.sw_reflect = 0.0;
 	sw.sw_refrac_index = 1.0;
 	sw.sw_xmitonly = 0;		/* want full data */
+	sw.sw_inputs = 0;		/* no fields filled yet */
 	VSETALL( sw.sw_color, 1 );
 	VSETALL( sw.sw_basecolor, 1 );
 
-	viewshade( ap, pp, &sw );
+	(void)viewshade( ap, pp, &sw );
 
 	/* As a special case for now, handle reflection & refraction */
 	if( sw.sw_reflect > 0 || sw.sw_transmit > 0 )
@@ -448,19 +449,14 @@ struct partition *PartHeadp;
 
 	VMOVE( ap->a_color, sw.sw_color );
 	ap->a_user = 1;		/* Signal view_pixel:  HIT */
-	return(1);		/* "ret" isn't reliable yet */
+	return(1);
 }
 
 /*
  *			V I E W S H A D E
  *
- *  Call the material-specific shading function.
- *
- *  Note that only hit_dist is valid in pp_inhit.
- *  RT_HIT_NORM() must be called if hit_norm is needed,
- *  after which pt_inflip must be handled.
- *  ft_uv() routines must have hit_point computed
- *  in advance.
+ *  Call the material-specific shading function, after making certain
+ *  that all shadework fields desired have been provided.
  *
  *  Returns -
  *	0 on failure
@@ -475,7 +471,7 @@ register struct shadework *swp;
 	register struct mfuncs *mfp;
 	register struct region *rp;
 	register struct light_specific *lp;
-	int i;
+	register int	want;
 
 	swp->sw_hit = *(pp->pt_inhit);		/* struct copy */
 
@@ -501,43 +497,111 @@ register struct shadework *swp;
 
 	if( swp->sw_hit.hit_dist < 0.0 )
 		swp->sw_hit.hit_dist = 0.0;	/* Eye inside solid */
-	if( mfp->mf_inputs & (MFI_HIT|MFI_NORMAL|MFI_LIGHT|MFI_UV) )  {
+
+	want = mfp->mf_inputs;
+
+	/* If light information is not needed, set the light
+	 * array to "safe" values,
+	 * and claim that the light is visible, in case they are used.
+	 */
+	if( swp->sw_xmitonly )  want &= ~MFI_LIGHT;
+	if( !(want & MFI_LIGHT) )  {
+		register int	i;
+
+		for( i = ap->a_rt_i->rti_nlights*3 - 1; i >= 0; i-- )
+			swp->sw_intensity[i] = 1;
+
+		for( i=0, lp=LightHeadp; lp; lp = lp->lt_forw, i++ )
+			swp->sw_visible[i] = (char *)lp;
+	}
+
+	/* If optional inputs are required, have them computed */
+	if( want & (MFI_HIT|MFI_NORMAL|MFI_LIGHT|MFI_UV) )  {
 		VJOIN1( swp->sw_hit.hit_point, ap->a_ray.r_pt,
 			swp->sw_hit.hit_dist, ap->a_ray.r_dir );
+		swp->sw_inputs |= MFI_HIT;
 	}
-	if( mfp->mf_inputs & MFI_NORMAL )  {
+	if( (swp->sw_inputs & want) != want )
+		shade_inputs( ap, pp, swp, want );
+
+	/* Invoke the actual shader (may be a tree of them) */
+	(void)mfp->mf_render( ap, pp, swp, rp->reg_udata );
+
+	return(1);
+}
+
+/*
+ *			S H A D E _ I N P U T S
+ *
+ *  Compute the necessary fields in the shadework structure.
+ *
+ *  Note that only hit_dist is valid in pp_inhit.
+ *  RT_HIT_NORM() must be called if hit_norm is needed,
+ *  after which pt_inflip must be handled.
+ *  ft_uv() routines must have hit_point computed
+ *  in advance.
+ *
+ *  If MFI_LIGHT is not on, the presumption is that the sw_visible[]
+ *  array is not needed, or has been handled elsewhere.
+ */
+shade_inputs( ap, pp, swp, want )
+struct application *ap;
+register struct partition *pp;
+register struct shadework *swp;
+register int	want;
+{
+	register struct light_specific *lp;
+	register int	have;
+
+	/* These calcuations all have MFI_HIT as a pre-requisite */
+	if( want & (MFI_NORMAL|MFI_LIGHT|MFI_UV) )
+		want |= MFI_HIT;
+
+	have = swp->sw_inputs;
+	want &= ~have;		/* we don't want what we already have */
+
+	if( want & MFI_HIT )  {
+		VJOIN1( swp->sw_hit.hit_point, ap->a_ray.r_pt,
+			swp->sw_hit.hit_dist, ap->a_ray.r_dir );
+		have |= MFI_HIT;
+	}
+
+	if( want & MFI_NORMAL )  {
 		if( pp->pt_inhit->hit_dist < 0.0 )  {
 			/* Eye inside solid, orthoview */
 			VREVERSE( swp->sw_hit.hit_normal, ap->a_ray.r_dir );
 		} else {
 			FAST fastf_t f;
 			/* Get surface normal for hit point */
-			/* Stupid SysV PCC needs this on one line */
+			/* Stupid SysV CPP needs this on one line */
 			RT_HIT_NORM( &(swp->sw_hit), pp->pt_inseg->seg_stp, &(ap->a_ray) );
 
-			/* Temporary check to make sure normals are OK */
+#ifdef never
 			if( swp->sw_hit.hit_normal[X] < -1.01 || swp->sw_hit.hit_normal[X] > 1.01 ||
 			    swp->sw_hit.hit_normal[Y] < -1.01 || swp->sw_hit.hit_normal[Y] > 1.01 ||
 			    swp->sw_hit.hit_normal[Z] < -1.01 || swp->sw_hit.hit_normal[Z] > 1.01 )  {
-			    	VPRINT("viewshade: N", swp->sw_hit.hit_normal);
+			    	VPRINT("shade_inputs: N", swp->sw_hit.hit_normal);
 				VSET( swp->sw_color, 9, 9, 0 );	/* Yellow */
-				return(0);
+				return;
 			}
+#endif
 			if( pp->pt_inflip )  {
 				VREVERSE( swp->sw_hit.hit_normal, swp->sw_hit.hit_normal );
 				pp->pt_inflip = 0;	/* shouldnt be needed now??? */
 			}
-			/* More temporary checking */
+
+			/* Temporary check to make sure normals are OK */
 			if( (f=VDOT( ap->a_ray.r_dir, swp->sw_hit.hit_normal )) > 0 )  {
-				rt_log("viewshade: flipped normal %d %d %s dot=%g\n",
+				rt_log("shade_inputs: flipped normal %d %d %s dot=%g\n",
 					ap->a_x, ap->a_y,
 					pp->pt_inseg->seg_stp->st_name, f);
 				VPRINT("Dir ", ap->a_ray.r_dir);
 				VPRINT("Norm", swp->sw_hit.hit_normal);
 			}
 		}
+		have |= MFI_NORMAL;
 	}
-	if( mfp->mf_inputs & MFI_UV )  {
+	if( want & MFI_UV )  {
 		if( pp->pt_inhit->hit_dist < 0.0 )  {
 			/* Eye inside solid, orthoview */
 			swp->sw_uv.uv_u = swp->sw_uv.uv_v = 0.5;
@@ -549,89 +613,90 @@ register struct shadework *swp;
 		}
 		if( swp->sw_uv.uv_u < 0 || swp->sw_uv.uv_u > 1 ||
 		    swp->sw_uv.uv_v < 0 || swp->sw_uv.uv_v > 1 )  {
-			rt_log("viewshade:  bad u,v=%g,%g du,dv=%g,%g seg=%s\n",
+			rt_log("shade_inputs:  bad u,v=%g,%g du,dv=%g,%g seg=%s\n",
 				swp->sw_uv.uv_u, swp->sw_uv.uv_v,
 				swp->sw_uv.uv_du, swp->sw_uv.uv_dv,
 				pp->pt_inseg->seg_stp->st_name );
 			VSET( swp->sw_color, 0, 9, 0 );	/* Green */
-			return(1);
+			return;
 		}
+		have |= MFI_UV;
 	}
-	/*
-	 *  Determine light visibility
-	 */
-	for( i=0, lp=LightHeadp; lp; lp = lp->lt_forw, i++ )  {
-		register fastf_t f;
+	if( want & MFI_LIGHT )  {
+		register int	i;
 		register fastf_t *intensity;
+		register fastf_t f;
 		struct application sub_ap;
 
-		intensity = swp->sw_intensity+3*i;
+		/*
+		 *  Determine light visibility
+		 */
+		for( i=0, lp=LightHeadp, intensity = swp->sw_intensity;
+			lp;
+			lp = lp->lt_forw, i++, intensity += 3
+		)  {
+			if( !(lp->lt_explicit) )  {
+				/* If this is an implicit light,
+			  	 * then just claim the light is visible.
+				 */
+				swp->sw_visible[i] = (char *)lp;
+				VSETALL( intensity, 1 );
+				continue;
+			}
 
-		if( !(lp->lt_explicit) ||
-		    !(mfp->mf_inputs & MFI_LIGHT) ||
-		    swp->sw_xmitonly
-		  )  {
-			/* IF:
-		  	 *  -- this is an implicit light, or
-		  	 *  -- the shader does not want visibility info, or
-		  	 *  -- this is visibility ray wanting xmit data only
-		  	 * THEN just claim the light is visible
+			/*
+			 *  An explicit light source, and the shader desires
+			 *  light visibility information.
+			 *  Fire ray at light source to check for shadowing.
+			 *  (This SHOULD actually return an energy value)
+			 *  Dither light pos for penumbra by +/- 0.5 light radius;
+			 *  this presently makes a cubical light source distribution.
 			 */
-			swp->sw_visible[i] = (char *)lp;
-			VSETALL( intensity, 1 );
-			continue;
-		}
+			sub_ap = *ap;			/* struct copy */
+			f = lp->lt_radius * 0.9;
+			sub_ap.a_ray.r_dir[X] =  lp->lt_pos[X] + rand_half()*f - swp->sw_hit.hit_point[X];
+			sub_ap.a_ray.r_dir[Y] =  lp->lt_pos[Y] + rand_half()*f - swp->sw_hit.hit_point[Y];
+			sub_ap.a_ray.r_dir[Z] =  lp->lt_pos[Z] + rand_half()*f - swp->sw_hit.hit_point[Z];
+			VUNITIZE( sub_ap.a_ray.r_dir );
 
-		/*
-		 *  An explicit light source, and the shader desires
-		 *  light visibility information.
-		 *  Fire ray at light source to check for shadowing.
-		 *  (This SHOULD actually return an energy value)
-		 *  Dither light pos for penumbra by +/- 0.5 light radius;
-		 *  this presently makes a cubical light source distribution.
-		 */
-		sub_ap = *ap;			/* struct copy */
-		f = lp->lt_radius * 0.9;
-		sub_ap.a_ray.r_dir[X] =  lp->lt_pos[X] + rand_half()*f - swp->sw_hit.hit_point[X];
-		sub_ap.a_ray.r_dir[Y] =  lp->lt_pos[Y] + rand_half()*f - swp->sw_hit.hit_point[Y];
-		sub_ap.a_ray.r_dir[Z] =  lp->lt_pos[Z] + rand_half()*f - swp->sw_hit.hit_point[Z];
-		VUNITIZE( sub_ap.a_ray.r_dir );
+			/*
+			 * See if ray from hit point to light lies within light beam
+			 */
+			if( -VDOT(sub_ap.a_ray.r_dir, lp->lt_aim) < lp->lt_cosangle )  {
+				/* dark (outside of light beam) */
+				swp->sw_visible[i] = (char *)0;
+				continue;
+			}
+			if( !(lp->lt_shadows) )  {
+				/* "fill light" in beam, don't care about shadows */
+				swp->sw_visible[i] = (char *)lp;
+				VSETALL( intensity, 1 );
+				continue;
+			}
+			VMOVE( sub_ap.a_ray.r_pt, swp->sw_hit.hit_point );
+			sub_ap.a_hit = light_hit;
+			sub_ap.a_miss = light_miss;
+			sub_ap.a_level = 0;
 
-		/*
-		 * See if ray from hit point to light lies within light beam
-		 */
-		if( -VDOT(sub_ap.a_ray.r_dir, lp->lt_aim) < lp->lt_cosangle )  {
-			/* dark (outside of light beam) */
-			swp->sw_visible[i] = (char *)0;
-			continue;
+			VSETALL( sub_ap.a_color, 1 );	/* vis intens so far */
+			sub_ap.a_purpose = lp->lt_name;	/* name of light shot at */
+			if( rt_shootray( &sub_ap ) )  {
+				/* light visible */
+				swp->sw_visible[i] = (char *)lp;
+				VMOVE( intensity, sub_ap.a_color );
+			} else {
+				/* dark (light obscured) */
+				swp->sw_visible[i] = (char *)0;
+			}
 		}
-		if( !(lp->lt_shadows) )  {
-			/* "fill light" in beam, don't care about shadows */
-			swp->sw_visible[i] = (char *)lp;
-			VSETALL( intensity, 1 );
-			continue;
-		}
-		VMOVE( sub_ap.a_ray.r_pt, swp->sw_hit.hit_point );
-		sub_ap.a_hit = light_hit;
-		sub_ap.a_miss = light_miss;
-		sub_ap.a_level = 0;
-
-		VSETALL( sub_ap.a_color, 1 );	/* vis intens so far */
-		sub_ap.a_purpose = lp->lt_name;	/* name of light shot at */
-		if( rt_shootray( &sub_ap ) )  {
-			/* light visible */
-			swp->sw_visible[i] = (char *)lp;
-			VMOVE( intensity, sub_ap.a_color );
-		} else {
-			/* dark (light obscured) */
-			swp->sw_visible[i] = (char *)0;
-		}
+		have |= MFI_LIGHT;
 	}
 
-	/* Invoke the actual shader (may be a tree of them) */
-	(void)mfp->mf_render( ap, pp, swp, rp->reg_udata );
+	/* Record which fields were filled in */
+	swp->sw_inputs = have;
 
-	return(1);
+	if( (want & have) != want )
+		rt_log("shade_inputs:  unable to satisfy request for x%x\n", want);
 }
 
 /*
