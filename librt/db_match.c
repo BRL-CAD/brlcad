@@ -200,6 +200,6 @@ struct db_i    *dbip;
 			db_tree_funcleaf( dbip, comb, comb->tree,
 					  db_count_refs, (genptr_t)NULL,
 					  (genptr_t)NULL, (genptr_t)NULL );
-			rt_db_free_internal( &intern );
+			intern.idb_meth->ft_ifree( &intern );
 		}
 }
