@@ -1137,7 +1137,7 @@ CONST struct db_i		*dbip;
 		return(-1);
 	}
 
-	RT_INIT_DB_INTERNAL( ip );
+	RT_CK_DB_INTERNAL( ip );
 	ip->idb_type = ID_ELL;
 	ip->idb_meth = &rt_functab[ID_ELL];
 	ip->idb_ptr = bu_malloc( sizeof(struct rt_ell_internal), "rt_ell_internal");
@@ -1206,13 +1206,13 @@ register CONST mat_t		mat;
 CONST struct db_i		*dbip;
 {
 	struct rt_ell_internal	*eip;
-	fastf_t			vec[3*4];
+	fastf_t			vec[ELEMENTS_PER_VECT*4];
 
+	RT_CK_DB_INTERNAL( ip );
 	BU_CK_EXTERNAL( ep );
 
-	BU_ASSERT_LONG( ep->ext_nbytes, ==, SIZEOF_NETWORK_DOUBLE * 3*4 );
+	BU_ASSERT_LONG( ep->ext_nbytes, ==, SIZEOF_NETWORK_DOUBLE * ELEMENTS_PER_VECT*4 );
 
-	RT_INIT_DB_INTERNAL( ip );
 	ip->idb_type = ID_ELL;
 	ip->idb_meth = &rt_functab[ID_ELL];
 	ip->idb_ptr = bu_malloc( sizeof(struct rt_ell_internal), "rt_ell_internal");
@@ -1221,13 +1221,13 @@ CONST struct db_i		*dbip;
 	eip->magic = RT_ELL_INTERNAL_MAGIC;
 
 	/* Convert from database (network) to internal (host) format */
-	ntohd( (unsigned char *)vec, ep->ext_buf, 3*4 );
+	ntohd( (unsigned char *)vec, ep->ext_buf, ELEMENTS_PER_VECT*4 );
 
 	/* Apply modeling transformations */
-	MAT4X3PNT( eip->v, mat, &vec[0*3] );
-	MAT4X3VEC( eip->a, mat, &vec[1*3] );
-	MAT4X3VEC( eip->b, mat, &vec[2*3] );
-	MAT4X3VEC( eip->c, mat, &vec[3*3] );
+	MAT4X3PNT( eip->v, mat, &vec[0*ELEMENTS_PER_VECT] );
+	MAT4X3VEC( eip->a, mat, &vec[1*ELEMENTS_PER_VECT] );
+	MAT4X3VEC( eip->b, mat, &vec[2*ELEMENTS_PER_VECT] );
+	MAT4X3VEC( eip->c, mat, &vec[3*ELEMENTS_PER_VECT] );
 
 	return 0;		/* OK */
 }
@@ -1249,7 +1249,7 @@ double				local2mm;
 CONST struct db_i		*dbip;
 {
 	struct rt_ell_internal	*eip;
-	fastf_t			vec[3*4];
+	fastf_t			vec[ELEMENTS_PER_VECT*4];
 
 	RT_CK_DB_INTERNAL(ip);
 	if( ip->idb_type != ID_ELL )  return -1;
@@ -1257,17 +1257,17 @@ CONST struct db_i		*dbip;
 	RT_ELL_CK_MAGIC(eip);
 
 	BU_INIT_EXTERNAL(ep);
-	ep->ext_nbytes = SIZEOF_NETWORK_DOUBLE * 3*4;
+	ep->ext_nbytes = SIZEOF_NETWORK_DOUBLE * ELEMENTS_PER_VECT*4;
 	ep->ext_buf = (genptr_t)bu_malloc( ep->ext_nbytes, "ell external");
 
 	/* scale 'em into local buffer */
-	VSCALE( &vec[0*3], eip->v, local2mm );
-	VSCALE( &vec[1*3], eip->a, local2mm );
-	VSCALE( &vec[2*3], eip->b, local2mm );
-	VSCALE( &vec[3*3], eip->c, local2mm );
+	VSCALE( &vec[0*ELEMENTS_PER_VECT], eip->v, local2mm );
+	VSCALE( &vec[1*ELEMENTS_PER_VECT], eip->a, local2mm );
+	VSCALE( &vec[2*ELEMENTS_PER_VECT], eip->b, local2mm );
+	VSCALE( &vec[3*ELEMENTS_PER_VECT], eip->c, local2mm );
 
 	/* Convert from internal (host) to database (network) format */
-	htond( ep->ext_buf, (unsigned char *)vec, 3*4 );
+	htond( ep->ext_buf, (unsigned char *)vec, ELEMENTS_PER_VECT*4 );
 
 	return 0;
 }
@@ -1362,7 +1362,7 @@ struct rt_db_internal	*ip;
  *  In order to orient loop CCW, need to start with 0,1-->0,0 transition
  *  at the south pole.
  */
-static CONST fastf_t rt_ell_uvw[5*3] = {
+static CONST fastf_t rt_ell_uvw[5*ELEMENTS_PER_VECT] = {
 	0, 1, 0,
 	0, 0, 0,
 	1, 0, 0,
@@ -1517,8 +1517,8 @@ CONST struct bn_tol		*tol;
 
 	/* Loop always has Counter-Clockwise orientation (CCW) */
 	for( i=0; i < 4; i++ )  {
-		nmg_vertexuse_a_cnurb( eu->vu_p, &rt_ell_uvw[i*3] );
-		nmg_vertexuse_a_cnurb( eu->eumate_p->vu_p, &rt_ell_uvw[(i+1)*3] );
+		nmg_vertexuse_a_cnurb( eu->vu_p, &rt_ell_uvw[i*ELEMENTS_PER_VECT] );
+		nmg_vertexuse_a_cnurb( eu->eumate_p->vu_p, &rt_ell_uvw[(i+1)*ELEMENTS_PER_VECT] );
 		eu = BU_LIST_NEXT( edgeuse, &eu->l );
 	}
 
