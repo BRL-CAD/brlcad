@@ -4,6 +4,9 @@
  * $Revision$
  *
  * $Log$
+ * Revision 10.2  93/10/26  05:57:41  mike
+ * ANSI C
+ * 
  * Revision 10.1  91/10/12  06:54:03  mike
  * Release_4.0
  * 
@@ -469,6 +472,7 @@ char	*bufname,
 		pid;
 	char	buff[LBSIZE];
 	extern int	ninbuf;
+	int	status = 0;
 
 	message("Starting up...");
 	pop_wind(bufname, clobber);
@@ -504,7 +508,6 @@ char	*bufname,
 		ignore(write(1, "Execl failed", 12));
 		exit(1);
 	} else {
-		int	status;
 		char	*mess;
 
 		ignore(close(p[1]));
@@ -523,9 +526,8 @@ char	*bufname,
 		while (wait(&status) != pid)
 			;
 		ttyset(1);
-		return status;
 	}
-	return 0;
+	return status;
 }
 
 /* Send a region to shell.  Now we can beautify C and sort programs */
