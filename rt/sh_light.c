@@ -233,9 +233,14 @@ light_init()
 	for( lp = LightHeadp; lp; lp = lp->lt_forw )  {
 		nlights++;
 		if( lp->lt_fraction > 0 )  continue;	/* overridden */
+		if( lp->lt_intensity <= 0 )
+			lp->lt_intensity = 1;		/* keep non-neg */
 		inten += lp->lt_intensity;
 	}
-	inten *= (1 - AmbientIntensity);
+
+	/* Compute total emitted energy, including ambient */
+	inten *= (1 + AmbientIntensity);
+
 	for( lp = LightHeadp; lp; lp = lp->lt_forw )  {
 		if( lp->lt_fraction > 0 )  continue;	/* overridden */
 		lp->lt_fraction = lp->lt_intensity / inten;
