@@ -23,7 +23,7 @@
 
 /* data for solid editing */
 extern union record es_rec;		/* current solid record */
-extern union record es_orig;		/* original solid record */
+
 #define es_name	es_rec.s.s_name
 #define es_type	es_rec.s.s_cgtype	/* COMGEOM solid type */
 #define es_gentype es_rec.s.s_type	/* GED general solid type */
