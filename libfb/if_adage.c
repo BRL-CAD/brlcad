@@ -2,8 +2,9 @@
  *			I F _ A D A G E . C
  *
  *  Authors -
- *	Mike J. Muuss
+ *	Phil Dykstra
  *	Gary S. Moss
+ *	Mike J. Muuss
  *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
@@ -554,16 +555,6 @@ adage_zoom_set( ifp, x, y )
 FBIO	*ifp;
 register int	x, y;
 {
-	/* From RDS 3000 Programming Reference Manual, June 1982, section
-	 * 5.3 Notes, page 5-12.
-	 * In HIRES mode, horizontal zoom must be accomplished as follows:
-	 * 1.   To go from a ratio of 1:1 to 2:1 you must double the
-	 * 	pixel clock rate, rather than use the zoom register.
-	 * 2.   Thereafter you can increment the zoom register, while
-	 * 	leaving the pixel clock rate doubled.
-	  ----------
-	  Actually, life is not that simple..., and this doesn't work.
-	 */
 
 	/*
 	 *  While page 5-6 claims that the zoom range is 1..256:1,
@@ -577,15 +568,47 @@ register int	x, y;
 	IKI(ifp)->x_zoom = x;
 	IKI(ifp)->y_zoom = y;
 
-	/* Ikonas zoom factor is actually a replication count */
-	IKI(ifp)->ikfbcmem.fbc_xzoom = x-1;
-	IKI(ifp)->ikfbcmem.fbc_yzoom = y-1;
+	/*
+	 * From RDS 3000 Programming Reference Manual, June 1982, section
+	 * 5.3 Notes, page 5-12.
+	 * In HIRES mode, horizontal zoom must be accomplished as follows:
+	 * 1.   To go from a ratio of 1:1 to 2:1 you must double the
+	 * 	pixel clock rate, rather than use the zoom register.
+	 * 2.   Thereafter you can increment the zoom register, while
+	 * 	leaving the pixel clock rate doubled.
+	 */
+	if( IKI(ifp)->mode == 2 )  {
+		if( x > 1 )  {
+			/* PIXELCLOCK rate experimentally determined as 41 */
+			IKI(ifp)->ikfbcmem.fbc_Hcontrol =
+				FBCH_PIXELCLOCK(41) | FBCH_DRIVEBPCK;
+			if( x >= 4 )
+				IKI(ifp)->ikfbcmem.fbc_xzoom = (x>>1)-1;
+			else
+				IKI(ifp)->ikfbcmem.fbc_xzoom = 0;
+			if( x & 1 )  fb_log("Unable to do odd X zooms properly in HIRES\n");
+		} else {
+			IKI(ifp)->ikfbcmem.fbc_Hcontrol =
+				ikfbc_setup[2].fbc_Hcontrol;
+			IKI(ifp)->ikfbcmem.fbc_xzoom = 0;
+		}
+		if( lseek( ifp->if_fd, FBCVC*4L, 0 ) == -1 ||
+		    write( ifp->if_fd, &(IKI(ifp)->ikfbcmem.fbc_Lcontrol), 4 ) != 4 ) {
+			fb_log( "adage_zoom_set : FBCVC write failed.\n" );
+			return	-1;
+		}
+		
+	} else {
+		IKI(ifp)->ikfbcmem.fbc_xzoom = x-1;
+	}
+	IKI(ifp)->ikfbcmem.fbc_yzoom = y-1;	/* replication count */
+
 	if( lseek( ifp->if_fd, FBCZOOM*4L, 0 ) == -1 ) {
 		fb_log( "adage_zoom_set : lseek failed.\n" );
 		return	-1;
 	}
 	if( write( ifp->if_fd, &(IKI(ifp)->ikfbcmem.fbc_xzoom), 4 ) != 4 ) {
-		fb_log( "adage_zoom_set : write failed.\n" );
+		fb_log( "adage_zoom_set : FBCZOOM write failed.\n" );
 		return	-1;
 	}
 	return	0;
@@ -631,7 +654,6 @@ int	x, y;
 	ikx = x - (ifp->if_width / IKI(ifp)->x_zoom)/2;
 	iky = y + (ifp->if_height / IKI(ifp)->y_zoom)/2 - 1;
 	iky = ifp->if_height-1-iky;		/* q1 -> q4 */
-fprintf(stderr,"window(%d,%d), ikx,y=%d,%d\n", x, y, ikx, iky);
 
 	/*
  	 *  These formulas are taken from section 5.2.3.2.4 (page 5-5)
@@ -656,7 +678,6 @@ fprintf(stderr,"window(%d,%d), ikx,y=%d,%d\n", x, y, ikx, iky);
 		break;
 	}
 	y_window /= IKI(ifp)->y_zoom;
-fprintf(stderr,"y_viewport=%d, top_margin=%d, y_window=%d+%d\n", y_viewport, top_margin, y_window, iky);
 
 	if( IKI(ifp)->mode != 2 )
 		IKI(ifp)->ikfbcmem.fbc_xwindow = ikx << 2;	/* lores */
