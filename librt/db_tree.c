@@ -1044,6 +1044,10 @@ union tree	*tp;
 	case OP_NMG_TESS:
 		{
 			struct nmgregion *r = tp->tr_d.td_r;
+			if( tp->tr_d.td_name )  {
+				rt_free( (char *)tp->tr_d.td_name, "region name" );
+				tp->tr_d.td_name = (CONST char *)NULL;
+			}
 			if( r == (struct nmgregion *)NULL )  {
 				rt_log("db_free_tree: OP_NMG_TESS, r=NULL\n");
 				break;

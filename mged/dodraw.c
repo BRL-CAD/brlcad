@@ -328,11 +328,14 @@ union tree		*curtree;
 
 	if( curtree->tr_op == OP_NOP )  return  curtree;
 
-	r = nmg_booltree_evaluate( curtree, tsp->ts_tol );
+	curtree = nmg_booltree_evaluate( curtree, tsp->ts_tol );
+	if( !curtree )  return (union tree *)NULL;
+	if( curtree->tr_op != OP_NMG_TESS )  rt_bomb("mged_nmg_region_end() bad tr_op\n");
+	r = curtree->tr_d.td_r;
 
 	if( mged_do_not_draw_nmg_solids_during_debugging && r )  {
-		nmg_kr(r);
-		return curtree;
+		db_free_tree( curtree );
+		return (union tree *)NULL;
 	}
 
 	if (mged_nmg_triangulate) {
@@ -362,12 +365,14 @@ union tree		*curtree;
 		drawH_part2( 0, &vhead, pathp, tsp, SOLID_NULL );
 
 		/* NMG region is no longer necessary, only vlist remains */
-		if( !mged_draw_edge_uses )
-			nmg_kr( r );
+		if( !mged_draw_edge_uses )  {
+			db_free_tree( curtree );
+			return (union tree *)NULL;
+		}
 	}
 
-	/* Return original tree -- it needs to be freed (by caller) */
-	return( curtree );
+	/* Return tree -- it needs to be freed (by caller) */
+	return curtree;
 }
 
 /*
@@ -1043,7 +1048,6 @@ char	**argv;
 	struct rt_external	ext;
 	struct rt_db_internal	intern;
 	struct directory	*dp;
-	struct nmgregion	*r;
 	int			ngran;
 
 	RT_CHECK_DBI(dbip);
@@ -1114,17 +1118,22 @@ char	**argv;
 	/* Now, evaluate the boolean tree into ONE region */
 	rt_log("facetize:  evaluating boolean expressions\n");
 
-	r = nmg_booltree_evaluate( mged_facetize_tree, &mged_tol );
-	if( r == 0 )  {
+	mged_facetize_tree = nmg_booltree_evaluate( mged_facetize_tree, &mged_tol );
+	if( mged_facetize_tree == 0 || mged_facetize_tree->tr_op != OP_NMG_TESS ||
+	    mged_facetize_tree->tr_d.td_r == 0 )  {
 		rt_log("facetize:  no resulting region, aborting\n");
+		if( mged_facetize_tree ) db_free_tree( mged_facetize_tree );
+	    	mged_facetize_tree = (union tree *)NULL;
 		nmg_km( mged_nmg_model );
 		return CMD_BAD;
 	}
 	/* New region remains part of this nmg "model" */
-	NMG_CK_REGION( r );
+	NMG_CK_REGION( mged_facetize_tree->tr_d.td_r );
+	rt_log("facetize:  %s\n", mged_facetize_tree->tr_d.td_name );
 
 	/* Free boolean tree */
 	db_free_tree( mged_facetize_tree );
+    	mged_facetize_tree = (union tree *)NULL;
 
 	/* Triangulate model, if requested */
 	if( triangulate )
@@ -1191,7 +1200,6 @@ char	**argv;
 	struct rt_external	ext;
 	struct rt_db_internal	intern;
 	struct directory	*dp;
-	struct nmgregion	*r;
 	union tree		*tmp_tree;
 	char			op;
 	char			*edit_args[2];
@@ -1330,14 +1338,18 @@ char	**argv;
 	/* Now, evaluate the boolean tree into ONE region */
 	rt_log("bev:  evaluating boolean expressions\n");
 
-	r = nmg_booltree_evaluate( tmp_tree, &mged_tol );
-	if( r == 0 )  {
+	tmp_tree = nmg_booltree_evaluate( tmp_tree, &mged_tol );
+	if( tmp_tree == 0 || tmp_tree->tr_op != OP_NMG_TESS ||
+	    tmp_tree->tr_d.td_r == 0 )  {
 		rt_log("bev:  no resulting region, aborting\n");
+		if( tmp_tree ) db_free_tree( tmp_tree );
+	    	tmp_tree = (union tree *)NULL;
 		nmg_km( mged_nmg_model );
 		return CMD_BAD;
 	}
 	/* New region remains part of this nmg "model" */
-	NMG_CK_REGION( r );
+	NMG_CK_REGION( tmp_tree->tr_d.td_r );
+	rt_log("facetize:  %s\n", mged_facetize_tree->tr_d.td_name );
 
 	nmg_vmodel( mged_nmg_model );
 
