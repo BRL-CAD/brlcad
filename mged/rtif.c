@@ -1525,7 +1525,7 @@ char		**argv;
     
     rt_vls_init(&vls);
     start_catching_output(&vls);
-    snames = skewer_solids(rt_cmd_vec_len, rt_cmd_vec, ray_orig, ray_dir);
+    snames = skewer_solids(rt_cmd_vec_len, rt_cmd_vec, ray_orig, ray_dir, 1);
     stop_catching_output(&vls);
 
     if (snames == 0)
