@@ -24,6 +24,7 @@
 #include "conf.h"
 
 #include <stdio.h>
+#include <string.h>
 #include <time.h>
 
 #include "machine.h"
@@ -94,6 +95,7 @@ extern int	output_is_binary;	/* !0 means output is binary */
  *  Called at the start of a run.
  *  Returns 1 if framebuffer should be opened, else 0.
  */
+int
 view_init( ap, file, obj, minus_o )
 register struct application *ap;
 char *file, *obj;

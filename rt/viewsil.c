@@ -47,7 +47,7 @@ static	unsigned char *scanbuf;
  *  the command line, or from within an animation script.
  */
 struct bu_structparse view_parse[] = {
-	"",	0, (char *)0,	0,	BU_STRUCTPARSE_FUNC_NULL
+	{"",	0, (char *)0,	0,	BU_STRUCTPARSE_FUNC_NULL}
 };
 
 /*
@@ -73,6 +73,7 @@ int	raymiss();
  *  Called by main() at the start of a run.
  *  Returns 1 if framebuffer should be opened, else 0.
  */
+int
 view_init( ap, file, obj, minus_o )
 register struct application *ap;
 char	*file;

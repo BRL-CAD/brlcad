@@ -34,6 +34,7 @@ static char RCSrt[] = "@(#)$Header$ (BRL)";
 #include "raytrace.h"
 #include "rtprivate.h"
 #include "../librt/debug.h"
+#include "plot3.h"
 
 char	usage[] = "\
 Usage:  rtwalk [options] startXYZ destXYZ model.g objects...\n\
@@ -89,6 +90,7 @@ void		write_matrix();
 /*
  *			G E T _ A R G S
  */
+int
 get_args( argc, argv )
 register char **argv;
 {
@@ -123,6 +125,7 @@ register char **argv;
 /*
  *			M A I N
  */
+int
 main(argc, argv)
 int argc;
 char **argv;
@@ -365,7 +368,7 @@ advance:	;
 	exit(1);
 }
 
-hit( ap, PartHeadp )
+int hit( ap, PartHeadp )
 register struct application *ap;
 struct partition *PartHeadp;
 {
@@ -390,6 +393,7 @@ struct partition *PartHeadp;
 	return(1);	/* HIT */
 }
 
+int
 miss()
 {
 	return(0);

@@ -34,6 +34,7 @@ static char RCSrt[] = "@(#)$Header$ (BRL)";
 #include "raytrace.h"
 #include "rtprivate.h"
 #include "../librt/debug.h"
+#include "plot3.h"
 
 char	usage[] = "\
 Usage:  rtshot [options] model.g objects...\n\
@@ -68,6 +69,7 @@ extern int hit(), miss();
 /*
  *			M A I N
  */
+int
 main(argc, argv)
 int argc;
 char **argv;
@@ -266,7 +268,7 @@ err:
 	return(0);
 }
 
-hit( ap, PartHeadp )
+int hit( ap, PartHeadp )
 register struct application *ap;
 struct partition *PartHeadp;
 {
@@ -349,7 +351,7 @@ struct partition *PartHeadp;
 	return(1);
 }
 
-miss( ap )
+int miss( ap )
 register struct application *ap;
 {
 	bu_log("missed\n");

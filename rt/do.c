@@ -600,6 +600,13 @@ int framenumber;
 	if (rt_verbosity & VERBOSE_VIEWDETAIL)
 		bu_log("Tree: %d solids in %d regions\n",
 			rtip->nsolids, rtip->nregions );
+
+	if (Query_one_pixel) {
+		query_rdebug = rdebug;
+		query_debug = rt_g.debug;
+		rt_g.debug = rdebug = 0;
+	}
+
 	if( rtip->nsolids <= 0 )  {
 		bu_log("rt ERROR: No solids\n");
 		exit(3);

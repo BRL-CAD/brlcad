@@ -114,6 +114,72 @@ int view_init( register struct application *ap,
 
 	return(0);		/* no framebuffer needed */
 }
+/*
+ *  Output a physical record (256 logical records)
+ *
+ *  Turns on -1 flags in unused logical records
+ */
+int
+writephysrec( fp )
+FILE *fp;
+{
+	union radrec	skiprec;
+	long	length;
+static int totbuf = 0;
+int buf = 0;
+
+	/* Pad out the record if not full */
+	bzero( (char *)&skiprec, sizeof(skiprec) );
+	skiprec.p.pad[16] = -1;
+	while( precindex < 256 ) {
+		bcopy( &skiprec, &physrec[precindex*sizeof(union radrec)], sizeof(skiprec) );
+		precindex++;
+buf++;
+	}
+
+	length = sizeof(physrec);
+	fwrite( &length, sizeof(length), 1, fp );
+	if( fwrite( physrec, sizeof(physrec), 1, fp ) != 1 ) {
+		bu_log( "writephysrec: error writing physical record\n" );
+		return( 0 );
+	}
+	fwrite( &length, sizeof(length), 1, fp );
+
+	bzero( (char *)physrec, sizeof(physrec) );	/* paranoia */
+	precindex = 0;
+	precnum++;
+
+totbuf += buf;
+/*fprintf( stderr, "PREC %d, buf = %d, totbuf = %d\n", precnum, buf, totbuf );*/
+
+	return( 1 );
+}
+
+/*
+ *  Write a logical record
+ *
+ *  Outputs the current physical record if full.
+ */
+int
+writerec( rp, fp )
+union radrec *rp;
+FILE *fp;
+{
+	if( precindex >= 256 ) {
+		if( writephysrec( fp ) == 0 )
+			return( 0 );
+	}
+	bcopy( rp, &physrec[precindex*sizeof(*rp)], sizeof(*rp) );
+
+	precindex++;
+	recnum++;
+
+	if( precindex >= 256 ) {
+		if( writephysrec( fp ) == 0 )
+			return( 0 );
+	}
+	return( 1 );
+}
 
 /* beginning of a frame */
 void
@@ -496,71 +562,6 @@ struct rayinfo *rp;
 	writerec( &r, outfp );
 }
 
-/*
- *  Write a logical record
- *
- *  Outputs the current physical record if full.
- */
-int
-writerec( rp, fp )
-union radrec *rp;
-FILE *fp;
-{
-	if( precindex >= 256 ) {
-		if( writephysrec( fp ) == 0 )
-			return( 0 );
-	}
-	bcopy( rp, &physrec[precindex*sizeof(*rp)], sizeof(*rp) );
 
-	precindex++;
-	recnum++;
-
-	if( precindex >= 256 ) {
-		if( writephysrec( fp ) == 0 )
-			return( 0 );
-	}
-	return( 1 );
-}
-
-/*
- *  Output a physical record (256 logical records)
- *
- *  Turns on -1 flags in unused logical records
- */
-int
-writephysrec( fp )
-FILE *fp;
-{
-	union radrec	skiprec;
-	long	length;
-static int totbuf = 0;
-int buf = 0;
-
-	/* Pad out the record if not full */
-	bzero( (char *)&skiprec, sizeof(skiprec) );
-	skiprec.p.pad[16] = -1;
-	while( precindex < 256 ) {
-		bcopy( &skiprec, &physrec[precindex*sizeof(union radrec)], sizeof(skiprec) );
-		precindex++;
-buf++;
-	}
-
-	length = sizeof(physrec);
-	fwrite( &length, sizeof(length), 1, fp );
-	if( fwrite( physrec, sizeof(physrec), 1, fp ) != 1 ) {
-		bu_log( "writephysrec: error writing physical record\n" );
-		return( 0 );
-	}
-	fwrite( &length, sizeof(length), 1, fp );
-
-	bzero( (char *)physrec, sizeof(physrec) );	/* paranoia */
-	precindex = 0;
-	precnum++;
-
-totbuf += buf;
-/*fprintf( stderr, "PREC %d, buf = %d, totbuf = %d\n", precnum, buf, totbuf );*/
-
-	return( 1 );
-}
 
 void application_init () {}

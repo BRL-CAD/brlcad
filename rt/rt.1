@@ -306,6 +306,15 @@ the default is usually set for the maximum number of processors,
 while on shared multi-processors, such as SuperComputers,
 usually just one processor is used by default.
 .TP
+.B \-Q x,y
+Query pixel ray with debugging.  The option is used to 
+specify a single pixel for which the debug flags should be turned on.  
+The computation of all other pixels will be performed without debugging.
+This is similar to the \-b option, except that it does not limit rendering
+to the single ray.  The entire image is computed.  This option is useful in
+debugging problems which arise from specific computation sequences (such as
+the order of random numbers previously drawn).
+.TP
 .B \-R
 requests that overlapping regions not be reported. (confilcts with -r)
 .TP

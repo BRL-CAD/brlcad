@@ -73,6 +73,7 @@ int	raymiss();
  *  Called by main() at the start of a run.
  *  Returns 1 if framebuffer should be opened, else 0.
  */
+int
 view_init( ap, file, obj, minus_o )
 register struct application *ap;
 char	*file;

@@ -20,6 +20,7 @@ static char RCSrefract[] = "@(#)$Header$ (BRL)";
 #include "conf.h"
 
 #include <stdio.h>
+#include <string.h>
 #include <math.h>
 #include "machine.h"
 #include "vmath.h"
@@ -28,6 +29,12 @@ static char RCSrefract[] = "@(#)$Header$ (BRL)";
 #include "rtprivate.h"
 #include "shadefuncs.h"
 #include "shadework.h"
+#include "plot3.h"
+
+extern int viewshade(struct application *ap,
+		     register const struct partition *pp,
+		     register struct shadework *swp);
+
 
 int	max_ireflect = 5;	/* Maximum internal reflection level */
 int	max_bounces = 5;	/* Maximum recursion level */

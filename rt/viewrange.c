@@ -35,6 +35,7 @@ static char RCSrayrange[] = "@(#)$Header$";
 #include "raytrace.h"
 #include "./ext.h"
 #include "rtprivate.h"
+#include "plot3.h"
 
 #define CELLNULL ( (struct cell *) 0)
 

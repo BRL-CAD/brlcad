@@ -52,6 +52,11 @@ int		rpt_dist = 0;		/* report distance to each pixel */
 /***** end of sharing with viewing model *****/
 
 /***** variables shared with worker() ******/
+int		query_x;
+int		query_y;
+int		Query_one_pixel;
+int		query_rdebug;
+int		query_debug;
 int		stereo = 0;		/* stereo viewing */
 int		hypersample=0;		/* number of extra rays to fire */
 int		jitter=0;		/* jitter ray starting positions */
@@ -131,8 +136,9 @@ int get_args( int argc, register char **argv )
 
 	bu_optind = 1;		/* restart */
 
+
 #define GETOPT_STR	\
-	".:,:@:a:b:c:d:e:f:g:ij:l:n:o:p:q:rs:v:w:x:A:BC:D:E:F:G:H:IJ:K:MN:O:P:RST:U:V:X:!:"
+	".:,:@:a:b:c:d:e:f:g:ij:l:n:o:p:q:rs:v:w:x:A:BC:D:E:F:G:H:IJ:K:MN:O:P:Q:RST:U:V:X:!:"
 
 	while( (c=bu_getopt( argc, argv, GETOPT_STR )) != EOF )  {
 		switch( c )  {
@@ -359,6 +365,10 @@ int get_args( int argc, register char **argv )
 					MAX_PSW, MAX_PSW);
 				npsw = MAX_PSW;
 			}
+			break;
+		case 'Q':
+			Query_one_pixel = ! Query_one_pixel;
+			sscanf(bu_optarg, "%d,%d\n", &query_x, &query_y);
 			break;
 		case 'B':
 			/*  Remove all intentional random effects

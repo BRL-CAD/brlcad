@@ -46,6 +46,7 @@ static char RCSrayhide[] = "@(#)$Header$ (BRL)";
 #include "raytrace.h"
 #include "./ext.h"
 #include "rtprivate.h"
+#include "plot3.h"
 
 #define SEEKING_START_PT 0
 #define FOUND_START_PT 1

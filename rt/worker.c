@@ -50,6 +50,12 @@ int		reproj_max;	/* out of total number of pixels */
 int cur_pixel;			/* current pixel number, 0..last_pixel */
 int last_pixel;			/* last pixel number */
 
+extern int		query_x;
+extern int		query_y;
+extern int		Query_one_pixel;
+extern int		query_rdebug;
+extern int		query_debug;
+
 /*
  *			G R I D _ S E T U P
  *
@@ -386,6 +392,17 @@ genptr_t	arg;
 				a.a_x = pixelnum%width;
 				a.a_y = pixelnum/width;
 			}
+
+			if (Query_one_pixel) {
+				if (a.a_x == query_x && a.a_y == query_y) {
+					rdebug = query_rdebug;
+					rt_g.debug = query_debug;
+				} else {
+					rt_g.debug = rdebug = 0;
+				}
+			}
+
+
 
 			if( sub_grid_mode )  {
 				if( a.a_x < sub_xmin || a.a_x > sub_xmax )

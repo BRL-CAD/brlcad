@@ -6,9 +6,35 @@
  *	Things to support the "rt" program and the link to liboptical
  *
  */
+/* wray.c */
+extern void wray(register struct partition *pp,
+		 register struct application *ap,
+		 FILE *fp,
+		 const vect_t	inormal);
+
+extern void wraypts(vect_t	in,
+		    vect_t	inorm,
+		    vect_t	out,
+		    int		id,
+		    struct application *ap,
+		    FILE	*fp);
+
+extern void wraypaint(vect_t start,
+		      vect_t norm,
+		      int paint, 
+		      struct application *ap,
+		      FILE *fp);
+
+/* shade.c */
+
 
 /* opt.c */
 extern int get_args( int argc, char **argv );
+extern int		query_x;
+extern int		query_y;
+extern int		Query_one_pixel;
+extern int		query_rdebug;
+extern int		query_debug;
 
 /* view.c */
 #if 0

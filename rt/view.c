@@ -88,6 +88,12 @@ extern int	max_ireflect;		/* from refract.c */
 extern int	curframe;		/* from main.c */
 extern fastf_t	frame_delta_t;		/* from main.c */
 
+extern int viewshade(struct application *ap,
+		     register const struct partition *pp,
+		     register struct shadework *swp);
+
+
+
 struct region	env_region;		/* environment map region */
 
 vect_t ambient_color = { 1, 1, 1 };	/* Ambient white light */
@@ -593,7 +599,7 @@ void view_cleanup(struct rt_i	*rtip)
  *  Background texture mapping could be done here.
  *  For now, return a pleasant dark blue.
  */
-static hit_nothing( ap )
+static int hit_nothing( ap )
 register struct application *ap;
 {
 	if( rdebug&RDEBUG_MISSPLOT )  {
