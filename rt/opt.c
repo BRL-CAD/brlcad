@@ -23,6 +23,7 @@ static char RCSrt[] = "@(#)$Header$ (BRL)";
 #include <ctype.h>
 #include <math.h>
 #include "machine.h"
+#include "externs.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "fb.h"
@@ -31,14 +32,10 @@ static char RCSrt[] = "@(#)$Header$ (BRL)";
 #include "./rdebug.h"
 #include "../librt/debug.h"
 
-extern int	getopt();
-extern char	*optarg;
-extern int	optind;
-
 extern int	rdebug;			/* RT program debugging (not library) */
 
 /***** Variables shared with viewing model *** */
-int		hex_out = 0;		/* Binary or Hex .pix output file */
+int		doubles_out = 0;	/* u_char or double .pix output file */
 double		AmbientIntensity = 0.4;	/* Ambient light intensity */
 double		azimuth, elevation;
 int		lightmodel = 0;		/* Select lighting model */
@@ -102,7 +99,7 @@ register char **argv;
 	optind = 1;		/* restart */
 
 #define GETOPT_STR	\
-	"a:b:c:e:f:g:il:n:o:p:rs:w:x:A:BC:D:E:F:G:H:IJ:K:MO:P:SU:V:X:"
+	"a:b:c:e:g:il:n:o:p:rs:w:x:A:BC:D:E:F:G:H:IJ:K:MO:P:SU:V:X:"
 
 	while( (c=getopt( argc, argv, GETOPT_STR )) != EOF )  {
 		switch( c )  {
@@ -175,8 +172,6 @@ register char **argv;
 			sscanf( optarg, "%x", &rdebug );
 			break;
 
-		case 'f':
-			/* "Fast" - arg's worth of pixels - historical */
 		case 's':
 			/* Square size */
 			i = atoi( optarg );
@@ -221,14 +216,14 @@ register char **argv;
 			lightmodel = atoi( optarg );
 			break;
 		case 'O':
-			/* Output pixel file name, Hex format */
+			/* Output pixel file name, double precision format */
 			outputfile = optarg;
-			hex_out = 1;
+			doubles_out = 1;
 			break;
 		case 'o':
-			/* Output pixel file name, binary format */
+			/* Output pixel file name, unsigned char format */
 			outputfile = optarg;
-			hex_out = 0;
+			doubles_out = 0;
 			break;
 		case 'p':
 			rt_perspective = atof( optarg );
