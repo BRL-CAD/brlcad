@@ -321,7 +321,7 @@ body Command::end_word {} {
 
 body Command::backward_delete_char {} {
     set w $itk_component(text)
-    catch {$w tag remove sel sel.first promptEnd}
+#    catch {$w tag remove sel sel.first promptEnd}
     if [$w compare insert > promptEnd] {
 	$w mark set insert {insert - 1c}
 	$w delete insert
@@ -331,7 +331,7 @@ body Command::backward_delete_char {} {
 
 body Command::delete_char {} {
     set w $itk_component(text)
-    catch {$w tag remove sel sel.first promptEnd}
+#    catch {$w tag remove sel sel.first promptEnd}
     if {[$w compare insert >= promptEnd] && [$w compare insert < {end - 2c}]} {
 	$w delete insert
 	cursor_highlight
