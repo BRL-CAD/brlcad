@@ -16,6 +16,10 @@
 #include "./mathtab.h"
 #include "./rdebug.h"
 
+#ifndef M_PI
+#define M_PI            3.14159265358979323846
+#endif
+
 #define SHADE_CONT	0
 #define SHADE_ABORT_GRASS	1	/* bit_flag */
 #define SHADE_ABORT_STACK	2	/* bit_flag */
