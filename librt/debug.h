@@ -36,7 +36,7 @@
 #define DEBUG_ARB8	0x00000080	/* 8 Print voluminus ARB8 details */
 #define DEBUG_SPLINE	0x00000100	/* 9 Splines */
 #define DEBUG_ANIM	0x00000200	/* 10 Animation */
-#define DEBUG_EBM	0x00000400	/* 11 Extruded bit-map solids */
+#define DEBUG_ANIM_FULL	0x00000400	/* 11 Animation matrices */
 #define DEBUG_VOL	0x00000800	/* 12 Volume solids */
 
 /* Options useful for debugging the library */
@@ -52,6 +52,7 @@
 #define DEBUG_TREEWALK	0x00200000	/* 22 Database tree traversal */
 #define DEBUG_TESTING	0x00400000	/* 23 One-shot debugging flag */
 #define DEBUG_ADVANCE	0x00800000	/* 24 Cell-to-cell space partitioning */
+#define DEBUG_EBM	0x01000000	/* 25 Extruded bit-map solids */
 
 /* These will cause binary debugging output */
 #define DEBUG_PLOTBOX	0x80000000	/* 32 Plot(3) bounding boxes and cuts */
