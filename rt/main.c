@@ -28,17 +28,36 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "raytrace.h"
 #include "debug.h"
 
+#ifdef HEP
+# include <synch.h>
+#endif
+
 extern char usage[];
 
 extern double atof();
 
 /***** Variables shared with viewing model *** */
-double AmbientIntensity = 0.3;	/* Ambient light intensity */
+double AmbientIntensity = 0.4;	/* Ambient light intensity */
 double azimuth, elevation;
 int lightmodel;		/* Select lighting model */
 mat_t view2model;
 mat_t model2view;
 /***** end of sharing with viewing model *****/
+
+/***** variables shared with worker() */
+static int	perspective=0;	/* perspective view -vs- parallel view */
+static vect_t	dx_model;	/* view delta-X as model-space vector */
+static vect_t	dy_model;	/* view delta-Y as model-space vector */
+static point_t	eye_model;	/* model-space location of eye */
+static point_t	viewbase_model;	/* model-space location of viewplane corner */
+static int npts;	/* # of points to shoot: x,y */
+int npsw = 1;		/* HEP: number of worker PSWs to run */
+void worker();
+int work_word;		/* semaphored (x<<16)|y */
+#ifdef HEP
+char *scanbuf;		/*** Output buffering, for parallelism */
+#endif
+/***** end variables shared with worker() */
 
 /*
  *			M A I N
@@ -52,14 +71,9 @@ char **argv;
 	static int matflag = 0;		/* read matrix from stdin */
 	static double utime;
 	char *title_file, *title_obj;	/* name of file and first object */
-	int	perspective=0;	/* perspective view -vs- parallel view */
 	float	zoomout=1;	/* >0 zoom out factor, 0..1 zoom in factor */
-	vect_t	dx_model;	/* view delta-X as model-space vector */
-	vect_t	dy_model;	/* view delta-Y as model-space vector */
-	point_t	eye_model;	/* model-space location of eye */
-	point_t	viewbase_model;	/* model-space location of viewplane corner */
 	static int outfd;	/* fd of optional pixel output file */
-	static int npts;	/* # of points to shoot: x,y */
+	register int x,y;
 
 	npts = 512;
 	azimuth = -35.0;			/* GIFT defaults */
@@ -118,6 +132,10 @@ char **argv;
 				zoomout = atof( &argv[0][2] );
 			if( zoomout <= 0 )  zoomout = 1;
 			break;
+		case 'P':
+			/* Number of parallel workers */
+			npsw = atoi( &argv[0][2] );
+			break;
 		default:
 			fprintf(stderr,"rt:  Option '%c' unknown\n", argv[0][1]);
 			fprintf(stderr, usage);
@@ -130,6 +148,12 @@ char **argv;
 		fprintf(stderr, usage);
 		exit(2);
 	}
+	RES_RELEASE( &res_pt );
+	RES_RELEASE( &res_seg );
+	RES_RELEASE( &res_malloc );
+#ifdef HEP
+	scanbuf = vmalloc( npts*npts*3 + sizeof(long), "scanbuf" );
+#endif
 
 	title_file = argv[0];
 	title_obj = argv[1];
@@ -173,6 +197,18 @@ char **argv;
 		mdl_min[X], mdl_max[X],
 		mdl_min[Y], mdl_max[Y],
 		mdl_min[Z], mdl_max[Z] );
+
+#ifdef HEP
+	(void)Disete( &work_word );
+	if( npsw < 1 || npsw > 128 )
+		npsw = 4;
+	vfree( vmalloc( (20+npsw)*2048, "worker prefetch"), "worker");
+	rtlog("creating %d worker PSWs\n", npsw );
+	for( x=0; x<npsw; x++ )  {
+		Dcreate( worker, &ap );
+	}
+	rtlog("creates done\n");
+#endif
 
 do_more:
 	if( !matflag )  {
@@ -247,25 +283,25 @@ do_more:
 	fflush(stderr);
 	prep_timer();	/* start timing actual run */
 
-	for( ap.a_y = npts-1; ap.a_y >= 0; ap.a_y--)  {
-		for( ap.a_x = 0; ap.a_x < npts; ap.a_x++)  {
-			VJOIN2( ap.a_ray.r_pt, viewbase_model,
-				ap.a_x, dx_model, 
-				(npts-ap.a_y-1), dy_model );
-			if( perspective )  {
-				VSUB2( ap.a_ray.r_dir,
-					ap.a_ray.r_pt, eye_model );
-				VUNITIZE( ap.a_ray.r_dir );
-				VMOVE( ap.a_ray.r_pt, eye_model );
-			}
-
-			ap.a_level = 0;		/* recursion level */
-			shootray( &ap );
-			view_pixel( &ap );
+	for( y = npts-1; y >= 0; y--)  {
+		for( x = 0; x < npts; x++)  {
+#ifndef HEP
+			work_word = (x<<16) | y;
+			worker( &ap );
+#else
+			/* Wait until empty, then fill */
+			Diawrite( &work_word, (x<<16) | y );
+#endif
 		}
+#ifndef HEP
 		view_eol( &ap );	/* End of scan line */
+#endif
 	}
+#ifndef HEP
 	view_end( &ap );		/* End of application */
+#else
+	write( outfd, scanbuf, npts*npts*3 );
+#endif
 
 	/*
 	 *  All done.  Display run statistics.
@@ -282,4 +318,71 @@ do_more:
 
 	if( matflag )  goto do_more;
 	return(0);
+}
+
+/*
+ *  			W O R K E R
+ *  
+ *  Compute one pixel, and store it.
+ */
+void
+worker( ap )
+register struct application *ap;
+{
+	LOCAL struct application a;
+	LOCAL vect_t tempdir;
+	register int com;
+
+	VMOVE( a.a_ray.r_dir, ap->a_ray.r_dir );
+	a.a_hit = ap->a_hit;
+	a.a_miss = ap->a_miss;
+	a.a_onehit = 1;
+#ifndef HEP
+	{
+		com = work_word;
+#else
+	while(1)  {
+		com = Diaread( &work_word );
+#endif
+		a.a_x = (com>>16)&0xFFFF;
+		a.a_y = (com&0xFFFF);
+		VJOIN2( a.a_ray.r_pt, viewbase_model,
+			a.a_x, dx_model, 
+			(npts-a.a_y-1), dy_model );
+		if( perspective )  {
+			VSUB2( a.a_ray.r_dir,
+				a.a_ray.r_pt, eye_model );
+			VUNITIZE( a.a_ray.r_dir );
+			VMOVE( a.a_ray.r_pt, eye_model );
+		}
+
+		a.a_level = 0;		/* recursion level */
+		shootray( &a );
+#ifndef HEP
+		view_pixel( &a );
+#else
+		{
+			register char *pixelp;
+			register int r,g,b;
+			/* .pix files go bottom to top */
+			pixelp = scanbuf+(((npts-a.a_y-1)*npts)+a.a_x)*3;
+			r = a.a_color[0]*255.;
+			g = a.a_color[1]*255.;
+			b = a.a_color[2]*255.;
+			/* Truncate glints, etc */
+			if( r > 255 )  r=255;
+			if( g > 255 )  g=255;
+			if( b > 255 )  b=255;
+			if( r<0 || g<0 || b<0 )  {
+				rtlog("Negative RGB %d,%d,%d\n", r, g, b );
+				r = 0x80;
+				g = 0xFF;
+				b = 0x80;
+			}
+			*pixelp++ = r ;
+			*pixelp++ = g ;
+			*pixelp++ = b ;
+		}
+#endif
+	}
 }
