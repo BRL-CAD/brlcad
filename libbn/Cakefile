@@ -10,7 +10,9 @@
 
 #define FILES	\
 	complex \
+	const \
 	mat \
+	plane \
 	poly \
 	qmath \
 	rand \

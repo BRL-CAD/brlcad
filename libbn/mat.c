@@ -61,10 +61,16 @@ static char RCSmat[] = "@(#)$Header$ (BRL)";
 #include "bu.h"
 #include "vmath.h"
 #include "bn.h"
-#include "raytrace.h" /* for rt_tol */
+
 
 CONST double	mat_degtorad = 0.0174532925199433;
 CONST double	mat_radtodeg = 57.29577951308230698802;
+CONST mat_t	mat_identity = {
+		1.0, 0.0, 0.0, 0.0,
+		0.0, 1.0, 0.0, 0.0,
+		0.0, 0.0, 1.0, 0.0,
+		0.0, 0.0, 0.0, 1.0
+};
 
 /*
  *			M A T _ P R I N T
@@ -114,6 +120,8 @@ double	y,x;
 	return( atan2( y, x ) );
 }
 
+#if 0  /********* Deprecated for macros that call memcpy() *********/
+
 /*
  *			M A T _ Z E R O
  *
@@ -132,6 +140,7 @@ mat_t	m;
 }
 
 
+
 /*
  *			M A T _ I D N
  *
@@ -141,17 +150,12 @@ void
 mat_idn( m )
 register mat_t	m;
 {
-	/* Clear everything first */
-	mat_zero( m );
-
-	/* Set ones in the diagonal */
-	m[0] = m[5] = m[10] = m[15] = 1.0;
+	memcpy(m, mat_identity, sizeof(m));
 }
-
 
 /*
  *			M A T _ C O P Y
- *
+ * XXX how about just 
  * Copy the matrix
  */
 void
@@ -167,6 +171,7 @@ register CONST mat_t	src;
 		dest[i] = src[i];
 }
 
+#endif	/******************* deprecated *******************/
 
 /*
  *			M A T _ M U L
@@ -1052,7 +1057,7 @@ int
 mat_is_equal(a, b, tol)
 CONST mat_t	a;
 CONST mat_t	b;
-CONST struct rt_tol	*tol;
+CONST struct bn_tol	*tol;
 {
 	register int i;
 	register double f;
