@@ -159,7 +159,7 @@ char *argv[];
       bu_struct_print("dm_X internal variables", X_vparse, (CONST char *)&((struct x_vars *)dmp->dm_vars.priv_vars)->mvars );
     } else if( argc == 2 ) {
       bu_vls_struct_item_named( &vls, X_vparse, argv[1], (CONST char *)&((struct x_vars *)dmp->dm_vars.priv_vars)->mvars, ',');
-      bu_log( "%s\n", bu_vls_addr(&vls) );
+      bu_log( "%s", bu_vls_addr(&vls) );
     } else {
       bu_vls_printf( &vls, "%s=\"", argv[1] );
       bu_vls_from_argv( &vls, argc-2, argv+2 );
