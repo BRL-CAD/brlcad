@@ -23,6 +23,8 @@
 static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
+#include "conf.h"
+
 #include <stdio.h>
 #include <math.h>
 #include "machine.h"
@@ -33,11 +35,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #define B_SPLINE_DEFINED 1		/* currently wdb.h needs this */
 
 #include "wdb.h"
-
-#ifdef SYSV
-#define bzero(str,n)		memset( str, '\0', n )
-#define bcopy(from,to,count)	memcpy( to, from, count )
-#endif
 
 /*
  *			M K _ B S O L I D
