@@ -44,9 +44,6 @@
 int Vo_Init();
 
 static int vo_open_tcl();
-#if 0
-static int vo_close_tcl();
-#endif
 static int vo_size_tcl();
 static int vo_invSize_tcl();
 static int vo_aet_tcl();
@@ -94,9 +91,6 @@ static struct bu_cmdtab vo_cmds[] =
 	{"arot",		vo_arot_tcl},
 	{"base2local",		vo_base2local_tcl},
 	{"center",		vo_center_tcl},
-#if 0
-	{"close",		vo_close_tcl},
-#endif
 	{"coord",		vo_coord_tcl},
 	{"eye",			vo_eye_tcl},
 	{"eye_pos",		vo_eye_pos_tcl},
@@ -165,38 +159,6 @@ vo_deleteProc(ClientData clientData)
 	BU_LIST_DEQUEUE(&vop->l);
 	bu_free((genptr_t)vop, "vo_deleteProc: vop");
 }
-
-#if 0
-/*
- * Close a view object.
- *
- * USAGE:
- *        procname close
- */
-static int
-vo_close_tcl(clientData, interp, argc, argv)
-     ClientData      clientData;
-     Tcl_Interp      *interp;
-     int             argc;
-     char            **argv;
-{
-	struct bu_vls vls;
-	struct view_obj *vop = (struct view_obj *)clientData;
-
-	if (argc != 2) {
-		bu_vls_init(&vls);
-		bu_vls_printf(&vls, "helplib vo_close");
-		Tcl_Eval(interp, bu_vls_addr(&vls));
-		bu_vls_free(&vls);
-		return TCL_ERROR;
-	}
-
-	/* Among other things, this will call vo_deleteProc. */
-	Tcl_DeleteCommand(interp, bu_vls_addr(&vop->vo_name));
-
-	return TCL_OK;
-}
-#endif
 
 /*
  * Create an command/object named "oname" in "interp".
@@ -444,7 +406,7 @@ vo_aet_cmd(struct view_obj	*vop,
 		if ((n = bn_decode_vect(aet, argv[1])) == 2)
 			aet[2] = 0;
 		else if (n != 3)
-			goto error;
+			goto bad;
 
 		if (iflag) {
 			VADD2(vop->vo_aet, vop->vo_aet, aet);
@@ -487,7 +449,7 @@ vo_aet_cmd(struct view_obj	*vop,
 		return TCL_OK;
 	}
 
-error:
+ bad:
 	/* compose error message */
 	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "helplib vo_aet");
@@ -501,7 +463,7 @@ error:
  * Get or set the azimuth, elevation and twist.
  *
  * Usage:
- *        procname 
+ *        procname aet [[-i] az el [tw]]
  */
 static int
 vo_aet_tcl(ClientData	clientData,
@@ -604,12 +566,20 @@ vo_center_cmd(struct view_obj	*vop,
 			if (bn_decode_vect(center, argv[1]) != 3)
 				goto bad;
 		} else {
-			if (sscanf(argv[1], "%lf", &center[X]) != 1)
-				goto bad;
-			if (sscanf(argv[2], "%lf", &center[Y]) != 1)
-				goto bad;
-			if (sscanf(argv[3], "%lf", &center[Z]) != 1)
-				goto bad;
+			if (sscanf(argv[1], "%lf", &center[X]) != 1) {
+				Tcl_AppendResult(interp, "vo_center: bad X value - ", argv[1], "\n", (char *)0);
+				return TCL_ERROR;
+			}
+
+			if (sscanf(argv[2], "%lf", &center[Y]) != 1) {
+				Tcl_AppendResult(interp, "vo_center: bad Y value - ", argv[2], "\n", (char *)0);
+				return TCL_ERROR;
+			}
+
+			if (sscanf(argv[3], "%lf", &center[Z]) != 1) {
+				Tcl_AppendResult(interp, "vo_center: bad Z value - ", argv[3], "\n", (char *)0);
+				return TCL_ERROR;
+			}
 		}
 
 		vo_center(vop, interp, center);
@@ -716,7 +686,7 @@ vo_pmodel2view_cmd(struct view_obj	*vop,
  * Get the pmodel2view matrix.
  *
  * Usage:
- *        procname 
+ *        procname pmodel2view
  */
 static int
 vo_pmodel2view_tcl(ClientData	clientData,
@@ -757,7 +727,7 @@ vo_view2model_cmd(struct view_obj	*vop,
 
 /*
  * Usage:
- *        procname 
+ *        procname view2model
  */
 static int
 vo_view2model_tcl(ClientData	clientData,
@@ -886,30 +856,32 @@ vo_eye_cmd(struct view_obj	*vop,
 	   int			argc,
 	   char 		**argv)
 {
-	point_t	eye_model;
-	vect_t	xlate;
-	vect_t	new_cent;
+	point_t		eye_model;
+	vect_t		xlate;
+	vect_t		new_cent;
+	struct bu_vls 	vls;
 
-	if (argc != 2 && argc != 4) {
-		struct bu_vls vls;
-
-		bu_vls_init(&vls);
-		bu_vls_printf(&vls, "helplib vo_eye");
-		Tcl_Eval(interp, bu_vls_addr(&vls));
-		bu_vls_free(&vls);
-		return TCL_ERROR;
-	}
+	if (argc != 2 && argc != 4)
+		goto bad;
 
 	if (argc == 2) {
 		if (bn_decode_vect(eye_model, argv[1]) != 3)
-			return TCL_ERROR;
+			goto bad;
 	} else {
-		if (sscanf(argv[1], "%lf", &eye_model[X]) != 1)
+		if (sscanf(argv[1], "%lf", &eye_model[X]) != 1) {
+			Tcl_AppendResult(interp, "vo_eye: bad X value - ", argv[1], "\n", (char *)0);
 			return TCL_ERROR;
-		if (sscanf(argv[2], "%lf", &eye_model[Y]) != 1)
+		}
+
+		if (sscanf(argv[2], "%lf", &eye_model[Y]) != 1) {
+			Tcl_AppendResult(interp, "vo_eye: bad Y value - ", argv[2], "\n", (char *)0);
 			return TCL_ERROR;
-		if (sscanf(argv[3], "%lf", &eye_model[Z]) != 1)
+		}
+
+		if (sscanf(argv[3], "%lf", &eye_model[Z]) != 1) {
+			Tcl_AppendResult(interp, "vo_eye: bad Z value - ", argv[3], "\n", (char *)0);
 			return TCL_ERROR;
+		}
 	}
 
 	VSCALE(eye_model, eye_model, vop->vo_local2base);
@@ -927,6 +899,13 @@ vo_eye_cmd(struct view_obj	*vop,
 	vo_update(vop, interp, 1);
 
 	return TCL_OK;
+
+ bad:
+	bu_vls_init(&vls);
+	bu_vls_printf(&vls, "helplib vo_eye");
+	Tcl_Eval(interp, bu_vls_addr(&vls));
+	bu_vls_free(&vls);
+	return TCL_ERROR;
 }
 
 /*
@@ -952,20 +931,31 @@ vo_eye_pos_cmd(struct view_obj	*vop,
 	       int		argc,
 	       char 		**argv)
 {
-	vect_t eye_pos;
+	vect_t		eye_pos;
+	struct bu_vls	vls;
 
-	if (argc != 2) {
-		struct bu_vls vls;
+	if (argc != 2 && argc != 4)
+		goto bad;
 
-		bu_vls_init(&vls);
-		bu_vls_printf(&vls, "helplib vo_eye_pos");
-		Tcl_Eval(interp, bu_vls_addr(&vls));
-		bu_vls_free(&vls);
-		return TCL_ERROR;
+	if (argc == 2) {
+		if (bn_decode_vect(eye_pos, argv[1]) != 3)
+			goto bad;
+	} else {
+		if (sscanf(argv[1], "%lf", &eye_pos[X]) != 1) {
+			Tcl_AppendResult(interp, "vo_eye_pos: bad X value - ", argv[1], "\n", (char *)0);
+			return TCL_ERROR;
+		}
+
+		if (sscanf(argv[2], "%lf", &eye_pos[Y]) != 1) {
+			Tcl_AppendResult(interp, "vo_eye_pos: bad Y value - ", argv[2], "\n", (char *)0);
+			return TCL_ERROR;
+		}
+
+		if (sscanf(argv[3], "%lf", &eye_pos[Z]) != 1) {
+			Tcl_AppendResult(interp, "vo_eye_pos: bad Z value - ", argv[3], "\n", (char *)0);
+			return TCL_ERROR;
+		}
 	}
-
-	if (bn_decode_vect(eye_pos, argv[1]) != 3)
-		return TCL_ERROR;
 
 	VSCALE(eye_pos, eye_pos, vop->vo_local2base);
 	VMOVE(vop->vo_eye_pos, eye_pos);
@@ -977,6 +967,13 @@ vo_eye_pos_cmd(struct view_obj	*vop,
 	vo_update(vop, interp, 1);
 
 	return TCL_OK;
+
+ bad:
+	bu_vls_init(&vls);
+	bu_vls_printf(&vls, "helplib vo_eye_pos");
+	Tcl_Eval(interp, bu_vls_addr(&vls));
+	bu_vls_free(&vls);
+	return TCL_ERROR;
 }
 
 /*
@@ -1017,12 +1014,20 @@ vo_lookat_cmd(struct view_obj	*vop,
 		if (bn_decode_vect(look, argv[1]) != 3)
 			goto bad;
 	} else {
-		if (sscanf(argv[1], "%lf", &look[X]) != 1)
-			goto bad;
-		if (sscanf(argv[2], "%lf", &look[Y]) != 1)
-			goto bad;
-		if (sscanf(argv[3], "%lf", &look[Z]) != 1)
-			goto bad;
+		if (sscanf(argv[1], "%lf", &look[X]) != 1) {
+			Tcl_AppendResult(interp, "vo_lookat: bad X value - ", argv[1], "\n", (char *)0);
+			return TCL_ERROR;
+		}
+
+		if (sscanf(argv[2], "%lf", &look[Y]) != 1) {
+			Tcl_AppendResult(interp, "vo_lookat: bad Y value - ", argv[2], "\n", (char *)0);
+			return TCL_ERROR;
+		}
+
+		if (sscanf(argv[3], "%lf", &look[Z]) != 1) {
+			Tcl_AppendResult(interp, "vo_lookat: bad Z value - ", argv[3], "\n", (char *)0);
+			return TCL_ERROR;
+		}
 	}
 
 	VSCALE(look, look, vop->vo_local2base);
@@ -1075,26 +1080,34 @@ vo_orientation_cmd(struct view_obj	*vop,
 		   int			argc,
 		   char 		**argv)
 {
-	quat_t quat;
+	quat_t		quat;
+	struct bu_vls	vls;
 
-	if (argc != 2) {
-		struct bu_vls vls;
+	if (argc != 2 && argc != 5)
+		goto bad;
 
-		bu_vls_init(&vls);
-		bu_vls_printf(&vls, "helplib vo_orient");
-		Tcl_Eval(interp, bu_vls_addr(&vls));
-		bu_vls_free(&vls);
-		return TCL_ERROR;
-	}
+	if (argc == 2) {
+		if (bn_decode_quat(quat, argv[1]) != 4)
+			goto bad;
+	} else {
+		int	i;
 
-	if (bn_decode_quat(quat, argv[1]) != 4) {
-		return TCL_ERROR;
+		for (i = 1; i < 5; ++i)
+			if (sscanf(argv[i], "%lf", &quat[i-1]) != 1)
+				goto bad;
 	}
 
 	quat_quat2mat(vop->vo_rotation, quat);
 	vo_update(vop, interp, 1);
 
 	return TCL_OK;
+
+ bad:
+	bu_vls_init(&vls);
+	bu_vls_printf(&vls, "helplib vo_orient");
+	Tcl_Eval(interp, bu_vls_addr(&vls));
+	bu_vls_free(&vls);
+	return TCL_ERROR;
 }
 
 /*
@@ -1118,14 +1131,14 @@ vo_pov_cmd(struct view_obj	*vop,
 	   int			argc,
 	   char 		**argv)
 {
-	vect_t center;
-	quat_t quat;
-	vect_t eye_pos;
-	fastf_t scale;
-	fastf_t perspective;
+	vect_t		center;
+	quat_t		quat;
+	vect_t		eye_pos;
+	fastf_t		scale;
+	fastf_t		perspective;
 
 	if (argc != 6) {
-		struct bu_vls vls;
+		struct bu_vls	vls;
 
 		bu_vls_init(&vls);
 		bu_vls_printf(&vls, "helplib vo_pov");
@@ -1137,22 +1150,27 @@ vo_pov_cmd(struct view_obj	*vop,
 	/***************** Get the arguments *******************/
 
 	if (bn_decode_vect(center, argv[1]) != 3) {
+		Tcl_AppendResult(interp, "vo_pov: bad center - ", argv[1], "\n", (char *)0);
 		return TCL_ERROR;
 	}
 
 	if (bn_decode_quat(quat, argv[2]) != 4) {
+		Tcl_AppendResult(interp, "vo_pov: bad quat - ", argv[2], "\n", (char *)0);
 		return TCL_ERROR;
 	}
 
 	if (sscanf(argv[3], "%lf", &scale) != 1) {
+		Tcl_AppendResult(interp, "vo_pov: bad scale - ", argv[3], "\n", (char *)0);
 		return TCL_ERROR;
 	}
 
 	if (bn_decode_vect(eye_pos, argv[4]) != 3) {
+		Tcl_AppendResult(interp, "vo_pov: bad eye position - ", argv[4], "\n", (char *)0);
 		return TCL_ERROR;
 	}
 
-	if (sscanf(argv[3], "%lf", &perspective) != 1) {
+	if (sscanf(argv[5], "%lf", &perspective) != 1) {
+		Tcl_AppendResult(interp, "vo_pov: bad perspective - ", argv[5], "\n", (char *)0);
 		return TCL_ERROR;
 	}
 
@@ -1226,8 +1244,7 @@ vo_zoom_cmd(struct view_obj	*vop,
 	}
 
 	if (sscanf(argv[1], "%lf", &sf) != 1) {
-		Tcl_AppendResult(interp, "bad zoom value - ",
-				 argv[1], (char *)0);
+		Tcl_AppendResult(interp, "bad zoom value - ", argv[1], "\n", (char *)0);
 		return TCL_ERROR;
 	}
 
@@ -1476,50 +1493,56 @@ vo_rot_cmd(struct view_obj	*vop,
 	   char 		**argv,
 	   int			(*func)())
 {
-	vect_t rvec;
-	mat_t rmat;
-	char coord = vop->vo_coord;
+	vect_t		rvec;
+	mat_t		rmat;
+	char		coord = vop->vo_coord;
+	struct bu_vls	vls;
 
-	if (argc < 2 || 3 < argc) {
-		struct bu_vls vls;
-
-		bu_vls_init(&vls);
-		bu_vls_printf(&vls, "helplib vo_rot");
-		Tcl_Eval(interp, bu_vls_addr(&vls));
-		bu_vls_free(&vls);
-
-		return TCL_ERROR;
-	}
+	if (argc < 2 || 5 < argc)
+		goto bad;
 
 	/* process coord flag */
-	if (argc == 3) {
-		if (argv[1][0] == '-' &&
-		    (argv[1][1] == 'v' || argv[1][1] == 'm') &&
-		    argv[1][2] == '\0') {
-			coord = argv[1][1];
-			--argc;
-			++argv;
-		} else {
-			struct bu_vls vls;
-
-			bu_vls_init(&vls);
-			bu_vls_printf(&vls, "helplib vo_rot");
-			Tcl_Eval(interp, bu_vls_addr(&vls));
-			bu_vls_free(&vls);
-
-			return TCL_ERROR;
-		}
+	if (argv[1][0] == '-' && (argv[1][1] == 'v' || argv[1][1] == 'm') && argv[1][2] == '\0') {
+		coord = argv[1][1];
+		--argc;
+		++argv;
 	}
 
-	if (bn_decode_vect(rvec, argv[1]) != 3) {
-		Tcl_AppendResult(interp, "vo_rot: bad xyz - ", argv[1], (char *)NULL);
-		return TCL_ERROR;
+	if (argc != 2 && argc != 4)
+		goto bad;
+
+	if (argc == 2) {
+		if (bn_decode_vect(rvec, argv[1]) != 3)
+			goto bad;
+	} else {
+		if (sscanf(argv[1], "%lf", &rvec[X]) != 1) {
+			Tcl_AppendResult(interp, "vo_rot: bad X value - ", argv[1], "\n", (char *)0);
+			return TCL_ERROR;
+		}
+
+		if (sscanf(argv[2], "%lf", &rvec[Y]) != 1) {
+			Tcl_AppendResult(interp, "vo_rot: bad Y value - ", argv[2], "\n", (char *)0);
+			return TCL_ERROR;
+		}
+
+		if (sscanf(argv[3], "%lf", &rvec[Z]) != 1) {
+			Tcl_AppendResult(interp, "vo_rot: bad Z value - ", argv[3], "\n", (char *)0);
+			return TCL_ERROR;
+		}
 	}
 
 	VSCALE(rvec, rvec, -1.0);
 	bn_mat_angles(rmat, rvec[X], rvec[Y], rvec[Z]);
 
 	return vo_rot(vop, interp, coord, vop->vo_rotate_about, rmat, func);
+
+ bad:
+	bu_vls_init(&vls);
+	bu_vls_printf(&vls, "helplib vo_rot");
+	Tcl_Eval(interp, bu_vls_addr(&vls));
+	bu_vls_free(&vls);
+
+	return TCL_ERROR;
 }
 
 /*
@@ -1580,53 +1603,59 @@ vo_tra_cmd(struct view_obj	*vop,
 	   char 		**argv,
 	   int			(*func)())
 {
-	vect_t tvec;
-	char coord = vop->vo_coord;
+	vect_t		tvec;
+	char		coord = vop->vo_coord;
+	struct bu_vls	vls;
 
-	if (argc < 2 || 3 < argc) {
-		struct bu_vls vls;
-
-		bu_vls_init(&vls);
-		bu_vls_printf(&vls, "helplib vo_tra");
-		Tcl_Eval(interp, bu_vls_addr(&vls));
-		bu_vls_free(&vls);
-
-		return TCL_ERROR;
-	}
+	if (argc < 2 || 5 < argc)
+		goto bad;
 
 	/* process coord flag */
-	if (argc == 3) {
-		if (argv[1][0] == '-' &&
-		    (argv[1][1] == 'v' || argv[1][1] == 'm') &&
-		    argv[1][2] == '\0') {
-			coord = argv[1][1];
-			--argc;
-			++argv;
-		} else {
-			struct bu_vls vls;
+	if (argv[1][0] == '-' && (argv[1][1] == 'v' || argv[1][1] == 'm') && argv[1][2] == '\0') {
+		coord = argv[1][1];
+		--argc;
+		++argv;
+	}
 
-			bu_vls_init(&vls);
-			bu_vls_printf(&vls, "helplib vo_tra");
-			Tcl_Eval(interp, bu_vls_addr(&vls));
-			bu_vls_free(&vls);
+	if (argc != 2 && argc != 4)
+		goto bad;
 
+	if (argc == 2) {
+		if (bn_decode_vect(tvec, argv[1]) != 3)
+			goto bad;
+	} else {
+		if (sscanf(argv[1], "%lf", &tvec[X]) != 1) {
+			Tcl_AppendResult(interp, "vo_tra: bad X value - ", argv[1], "\n", (char *)0);
+			return TCL_ERROR;
+		}
+
+		if (sscanf(argv[2], "%lf", &tvec[Y]) != 1) {
+			Tcl_AppendResult(interp, "vo_tra: bad Y value - ", argv[2], "\n", (char *)0);
+			return TCL_ERROR;
+		}
+
+		if (sscanf(argv[3], "%lf", &tvec[Z]) != 1) {
+			Tcl_AppendResult(interp, "vo_tra: bad Z value - ", argv[3], "\n", (char *)0);
 			return TCL_ERROR;
 		}
 	}
 
-	if (bn_decode_vect(tvec, argv[1]) != 3) {
-		Tcl_AppendResult(interp, "vo_tra: bad xyz - ", argv[1], (char *)NULL);
-		return TCL_ERROR;
-	}
-
 	return vo_tra(vop, interp, coord, tvec, func);
+
+ bad:
+	bu_vls_init(&vls);
+	bu_vls_printf(&vls, "helplib vo_tra");
+	Tcl_Eval(interp, bu_vls_addr(&vls));
+	bu_vls_free(&vls);
+
+	return TCL_ERROR;
 }
 
 /*
  * Translate the view according to xyz.
  *
  * Usage:
- *	procname tra xyz
+ *	procname tra [-v|-m] xyz
  */
 static int
 vo_tra_tcl(ClientData	clientData,
@@ -1666,10 +1695,8 @@ vo_slew_cmd(struct view_obj	*vop,
 		int	n;
 
 		if ((n = bn_decode_vect(svec, argv[1])) != 3) {
-			if (n != 2) {
-				Tcl_AppendResult(interp, "vo_slew: bad xyz - ", argv[1], (char *)0);
-				return TCL_ERROR;
-			}
+			if (n != 2)
+				goto bad;
 
 			svec[Z] = 0.0;
 		}
@@ -1679,18 +1706,18 @@ vo_slew_cmd(struct view_obj	*vop,
 
 	if (argc == 3 || argc == 4) {
 		if (sscanf(argv[1], "%lf", &svec[X]) != 1) {
-			Tcl_AppendResult(interp, "vo_slew: bad x value - ", argv[1], "\n", (char *)0);
+			Tcl_AppendResult(interp, "vo_slew: bad X value - ", argv[1], "\n", (char *)0);
 			return TCL_ERROR;
 		}
 
 		if (sscanf(argv[2], "%lf", &svec[Y]) != 1) {
-			Tcl_AppendResult(interp, "vo_slew: bad y value - ", argv[2], "\n", (char *)0);
+			Tcl_AppendResult(interp, "vo_slew: bad Y value - ", argv[2], "\n", (char *)0);
 			return TCL_ERROR;
 		}
 
 		if (argc == 4) {
 			if (sscanf(argv[3], "%lf", &svec[Z]) != 1) {
-				Tcl_AppendResult(interp, "vo_slew: bad z value - ", argv[3], "\n", (char *)0);
+				Tcl_AppendResult(interp, "vo_slew: bad Z value - ", argv[3], "\n", (char *)0);
 				return TCL_ERROR;
 			}
 		} else
@@ -1699,6 +1726,7 @@ vo_slew_cmd(struct view_obj	*vop,
 		return vo_slew(vop, interp, svec);
 	}
 
+ bad:
 	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "helplib vo_slew");
 	Tcl_Eval(interp, bu_vls_addr(&vls));
@@ -1874,8 +1902,8 @@ vo_keypoint_cmd(struct view_obj	*vop,
 		int		argc,
 		char 		**argv)
 {
-	struct bu_vls vls;
-	vect_t tvec;
+	struct bu_vls	vls;
+	vect_t		tvec;
 
 	/* Get the keypoint */
 	if (argc == 1) {
@@ -1889,16 +1917,29 @@ vo_keypoint_cmd(struct view_obj	*vop,
 
 	/* Set the keypoint */
 	if (argc == 2) {
-		if (bn_decode_vect(tvec, argv[1]) != 3) {
-			Tcl_AppendResult(interp, "vo_keypoint: bad xyz - ", argv[1], (char *)0);
+		if (bn_decode_vect(tvec, argv[1]) != 3)
+			goto bad;
+	} else if (argc == 4) {
+		if (sscanf(argv[1], "%lf", &tvec[X]) != 1) {
+			Tcl_AppendResult(interp, "vo_keypoint: bad X value - ", argv[1], "\n", (char *)0);
 			return TCL_ERROR;
 		}
 
-		VSCALE(vop->vo_keypoint, tvec, vop->vo_local2base)
-		return TCL_OK;
+		if (sscanf(argv[2], "%lf", &tvec[Y]) != 1) {
+			Tcl_AppendResult(interp, "vo_keypoint: bad Y value - ", argv[2], "\n", (char *)0);
+			return TCL_ERROR;
+		}
+
+		if (sscanf(argv[3], "%lf", &tvec[Z]) != 1) {
+			Tcl_AppendResult(interp, "vo_keypoint: bad Z value - ", argv[3], "\n", (char *)0);
+			return TCL_ERROR;
+		}
 	}
 
-	/* return help message */
+	VSCALE(vop->vo_keypoint, tvec, vop->vo_local2base);
+	return TCL_OK;
+
+ bad:
 	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "helplib vo_keypoint");
 	Tcl_Eval(interp, bu_vls_addr(&vls));
@@ -1935,11 +1976,9 @@ vo_keypoint_tcl(ClientData	clientData,
 void
 vo_setview(struct view_obj	*vop,
 	   Tcl_Interp		*interp,
-	   double		a1,
-	   double		a2,
-	   double		a3)		/* DOUBLE angles, in degrees */
+	   vect_t		rvec)		/* DOUBLE angles, in degrees */
 {
-	bn_mat_angles(vop->vo_rotation, a1, a2, a3);
+	bn_mat_angles(vop->vo_rotation, rvec[X], rvec[Y], rvec[Z]);
 	vo_update(vop, interp, 1);
 }
 
@@ -1949,38 +1988,41 @@ vo_setview_cmd(struct view_obj	*vop,
 	       int		argc,
 	       char 		**argv)
 {
-	double	x, y, z;
+	vect_t		rvec;
+	struct bu_vls	vls;
 
-	if (argc < 4 || 4 < argc) {
-		struct bu_vls vls;
+	if (argc != 2 && argc != 4)
+		goto bad;
 
-		bu_vls_init(&vls);
-		bu_vls_printf(&vls, "helplib vo_setview");
-		Tcl_Eval(interp, bu_vls_addr(&vls));
-		bu_vls_free(&vls);
-		return TCL_ERROR;
+	if (argc == 2) {
+		if (bn_decode_vect(rvec, argv[1]) != 3)
+			goto bad;
+	} else {
+		if (sscanf(argv[1], "%lf", &rvec[X]) != 1) {
+			Tcl_AppendResult(interp, "vo_setview_cmd: bad X value - ", argv[1], "\n", (char *)0);
+			return TCL_ERROR;
+		}
+
+		if (sscanf(argv[2], "%lf", &rvec[Y]) != 1) {
+			Tcl_AppendResult(interp, "vo_setview_cmd: bad Y value - ", argv[2], "\n", (char *)0);
+			return TCL_ERROR;
+		}
+
+		if (sscanf(argv[3], "%lf", &rvec[Z]) != 1) {
+			Tcl_AppendResult(interp, "vo_setview_cmd: bad Z value - ", argv[3], "\n", (char *)0);
+			return TCL_ERROR;
+		}
 	}
 
-	if (sscanf(argv[1], "%lf", &x) < 1) {
-		Tcl_AppendResult(interp, "vo_setview_cmd: bad x value - ",
-				 argv[1], "\n", (char *)0);
-		return TCL_ERROR;
-	}
-
-	if (sscanf(argv[2], "%lf", &y) < 1) {
-		Tcl_AppendResult(interp, "vo_setview_cmd: bad y value - ",
-				 argv[2], "\n", (char *)0);
-		return TCL_ERROR;
-	}
-
-	if (sscanf(argv[3], "%lf", &z) < 1) {
-		Tcl_AppendResult(interp, "vo_setview_cmd: bad z value - ",
-				 argv[3], "\n", (char *)0);
-		return TCL_ERROR;
-	}
-
-	vo_setview(vop, interp, x, y, z);
+	vo_setview(vop, interp, rvec);
 	return TCL_OK;
+
+ bad:
+	bu_vls_init(&vls);
+	bu_vls_printf(&vls, "helplib vo_setview");
+	Tcl_Eval(interp, bu_vls_addr(&vls));
+	bu_vls_free(&vls);
+	return TCL_ERROR;
 }
 
 /*
@@ -2010,7 +2052,7 @@ vo_arot_cmd(struct view_obj	*vop,
 	vect_t axis;
 	fastf_t angle;
 
-	if (argc != 4) {
+	if (argc != 5) {
 		struct bu_vls vls;
 
 		bu_vls_init(&vls);
@@ -2020,22 +2062,22 @@ vo_arot_cmd(struct view_obj	*vop,
 		return TCL_ERROR;
 	}
 
-	if (sscanf(argv[1], "%lf", &axis[X]) < 1) {
-		Tcl_AppendResult(interp, "vo_arot: bad x value - ", argv[1], "\n", (char *)0);
+	if (sscanf(argv[1], "%lf", &axis[X]) != 1) {
+		Tcl_AppendResult(interp, "vo_arot: bad X value - ", argv[1], "\n", (char *)0);
 		return TCL_ERROR;
 	}
 
-	if (sscanf(argv[2], "%lf", &axis[Y]) < 1) {
-		Tcl_AppendResult(interp, "vo_arot: bad y value - ", argv[2], "\n", (char *)0);
+	if (sscanf(argv[2], "%lf", &axis[Y]) != 1) {
+		Tcl_AppendResult(interp, "vo_arot: bad Y value - ", argv[2], "\n", (char *)0);
 		return TCL_ERROR;
 	}
 
-	if (sscanf(argv[3], "%lf", &axis[Z]) < 1) {
-		Tcl_AppendResult(interp, "vo_arot: bad z value - ", argv[3], "\n", (char *)0);
+	if (sscanf(argv[3], "%lf", &axis[Z]) != 1) {
+		Tcl_AppendResult(interp, "vo_arot: bad Z value - ", argv[3], "\n", (char *)0);
 		return TCL_ERROR;
 	}
 
-	if (sscanf(argv[4], "%lf", &angle) < 1) {
+	if (sscanf(argv[4], "%lf", &angle) != 1) {
 		Tcl_AppendResult(interp, "vo_arot: bad angle - ", argv[4], "\n", (char *)0);
 		return TCL_ERROR;
 	}
@@ -2050,7 +2092,7 @@ vo_arot_cmd(struct view_obj	*vop,
 
 /*
  * Usage:
- *        procname arot 
+ *        procname arot x y z angle
  */
 static int
 vo_arot_tcl(ClientData	clientData,
@@ -2069,37 +2111,29 @@ vo_vrot_cmd(struct view_obj	*vop,
 	    int			argc,
 	    char 		**argv)
 {
-	vect_t rvec;
-	mat_t rmat;
+	vect_t		rvec;
+	mat_t		rmat;
+	struct bu_vls	vls;
 
-	if (argc != 2 && argc != 4) {
-		struct bu_vls vls;
-
-		bu_vls_init(&vls);
-		bu_vls_printf(&vls, "helplib vo_vrot");
-		Tcl_Eval(interp, bu_vls_addr(&vls));
-		bu_vls_free(&vls);
-		return TCL_ERROR;
-	}
+	if (argc != 2 && argc != 4)
+		goto bad;
 
 	if (argc == 2) {
-		if (bn_decode_vect(rvec, argv[1]) != 3) {
-			Tcl_AppendResult(interp, "vo_vrot: bad xyz - ", argv[1], (char *)0);
-			return TCL_ERROR;
-		}
+		if (bn_decode_vect(rvec, argv[1]) != 3)
+			goto bad;
 	} else {
 		if (sscanf(argv[1], "%lf", &rvec[X]) < 1) {
-			Tcl_AppendResult(interp, "vo_vrot: bad x value - ", argv[1], "\n", (char *)0);
+			Tcl_AppendResult(interp, "vo_vrot: bad X value - ", argv[1], "\n", (char *)0);
 			return TCL_ERROR;
 		}
 
 		if (sscanf(argv[2], "%lf", &rvec[Y]) < 1) {
-			Tcl_AppendResult(interp, "vo_vrot: bad y value - ", argv[2], "\n", (char *)0);
+			Tcl_AppendResult(interp, "vo_vrot: bad Y value - ", argv[2], "\n", (char *)0);
 			return TCL_ERROR;
 		}
 
 		if (sscanf(argv[3], "%lf", &rvec[Z]) < 1) {
-			Tcl_AppendResult(interp, "vo_vrot: bad z value - ", argv[3], "\n", (char *)0);
+			Tcl_AppendResult(interp, "vo_vrot: bad Z value - ", argv[3], "\n", (char *)0);
 			return TCL_ERROR;
 		}
 	}
@@ -2108,6 +2142,13 @@ vo_vrot_cmd(struct view_obj	*vop,
 	bn_mat_angles(rmat, rvec[X], rvec[Y], rvec[Z]);
 
 	return vo_rot(vop, interp, 'v', vop->vo_rotate_about, rmat, (int (*)())0);
+
+bad:
+	bu_vls_init(&vls);
+	bu_vls_printf(&vls, "helplib vo_vrot");
+	Tcl_Eval(interp, bu_vls_addr(&vls));
+	bu_vls_free(&vls);
+	return TCL_ERROR;
 }
 
 /*
@@ -2132,37 +2173,29 @@ vo_mrot_cmd(struct view_obj	*vop,
 	    char 		**argv,
 	    int			(*func)())
 {
-	vect_t rvec;
-	mat_t rmat;
+	vect_t		rvec;
+	mat_t		rmat;
+	struct bu_vls	vls;
 
-	if (argc != 2 && argc != 4) {
-		struct bu_vls vls;
-
-		bu_vls_init(&vls);
-		bu_vls_printf(&vls, "helplib vo_mrot");
-		Tcl_Eval(interp, bu_vls_addr(&vls));
-		bu_vls_free(&vls);
-		return TCL_ERROR;
-	}
+	if (argc != 2 && argc != 4)
+		goto bad;
 
 	if (argc == 2) {
-		if (bn_decode_vect(rvec, argv[1]) != 3) {
-			Tcl_AppendResult(interp, "vo_mrot: bad xyz - ", argv[1], (char *)0);
-			return TCL_ERROR;
-		}
+		if (bn_decode_vect(rvec, argv[1]) != 3)
+			goto bad;
 	} else {
 		if (sscanf(argv[1], "%lf", &rvec[X]) < 1) {
-			Tcl_AppendResult(interp, "vo_mrot: bad x value - ", argv[1], "\n", (char *)0);
+			Tcl_AppendResult(interp, "vo_mrot: bad X value - ", argv[1], "\n", (char *)0);
 			return TCL_ERROR;
 		}
 
 		if (sscanf(argv[2], "%lf", &rvec[Y]) < 1) {
-			Tcl_AppendResult(interp, "vo_mrot: bad y value - ", argv[2], "\n", (char *)0);
+			Tcl_AppendResult(interp, "vo_mrot: bad Y value - ", argv[2], "\n", (char *)0);
 			return TCL_ERROR;
 		}
 
 		if (sscanf(argv[3], "%lf", &rvec[Z]) < 1) {
-			Tcl_AppendResult(interp, "vo_mrot: bad z value - ", argv[3], "\n", (char *)0);
+			Tcl_AppendResult(interp, "vo_mrot: bad Z value - ", argv[3], "\n", (char *)0);
 			return TCL_ERROR;
 		}
 	}
@@ -2171,6 +2204,13 @@ vo_mrot_cmd(struct view_obj	*vop,
 	bn_mat_angles(rmat, rvec[X], rvec[Y], rvec[Z]);
 
 	return vo_rot(vop, interp, 'm', vop->vo_rotate_about, rmat, func);
+
+ bad:
+	bu_vls_init(&vls);
+	bu_vls_printf(&vls, "helplib vo_mrot");
+	Tcl_Eval(interp, bu_vls_addr(&vls));
+	bu_vls_free(&vls);
+	return TCL_ERROR;
 }
 
 /*
