@@ -322,9 +322,18 @@ int flag;
 
 			oper_ok = 0;
 
-			(void)fprintf(tabptr," %-4d%5d%5d%5d%5d  ",numreg,record.c.c_regionid,
-					record.c.c_aircode,record.c.c_material,
-					record.c.c_los);
+			/*
+			 * This format depends on %4d getting wider
+			 * when the numbers exceeds 9999.
+			 * MUVES *depends* on the fields being white-space
+			 * separated, but doesn't care about field width.
+			 * Lack of spaces also confuses the IDENT command's sort.
+			 */
+			(void)fprintf(tabptr,
+				" %-4d %4d %4d %4d %4d  ",
+				numreg,record.c.c_regionid,
+				record.c.c_aircode,record.c.c_material,
+				record.c.c_los);
 			for(k=0;k<pathpos;k++) {
 				(void)fprintf(tabptr,"/%s",path[k]->d_namep);
 			}
