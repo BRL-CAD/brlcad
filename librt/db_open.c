@@ -249,6 +249,11 @@ register struct db_i	*dbip;
 	if( dbip->dbi_filename )
 		rt_free( dbip->dbi_filename, "dbi_filename" );
 
+	db_free_anim( dbip );
+
+	/* dbi_freep */
+	/* dbi_inmem */
+
 	/* Free all directory entries */
 	for( i=0; i < RT_DBNHASH; i++ )  {
 		for( dp = dbip->dbi_Head[i]; dp != DIR_NULL; )  {
