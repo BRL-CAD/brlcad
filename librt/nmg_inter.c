@@ -64,32 +64,6 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #define ISECT_SPLIT1	2
 #define ISECT_SPLIT2	4
 
-struct nmg_inter_struct {
-	long		magic;
-	struct bu_ptbl	*l1;		/* vertexuses on the line of */
-	struct bu_ptbl *l2;		/* intersection between planes */
-	fastf_t		*mag1;		/* Distances along intersection line */
-	fastf_t		*mag2;		/* for each vertexuse in l1 and l2. */
-	int		mag_len;	/* Array size of mag1 and mag2 */
-	struct shell	*s1;
-	struct shell	*s2;
-	struct faceuse	*fu1;		/* null if l1 comes from a wire */
-	struct faceuse	*fu2;		/* null if l2 comes from a wire */
-	struct bn_tol	tol;
-	int		coplanar;	/* a flag */
-	struct edge_g_lseg	*on_eg;		/* edge_g for line of intersection */
-	point_t		pt;		/* 3D line of intersection */
-	vect_t		dir;
-	point_t		pt2d;		/* 2D projection of isect line */
-	vect_t		dir2d;
-	fastf_t		*vert2d;	/* Array of 2d vertex projections [index] */
-	int		maxindex;	/* size of vert2d[] */
-	mat_t		proj;		/* Matrix to project onto XY plane */
-	CONST long	*twod;		/* ptr to face/edge of 2d projection */
-};
-#define NMG_INTER_STRUCT_MAGIC	0x99912120
-#define NMG_CK_INTER_STRUCT(_p)	NMG_CKMAG(_p, NMG_INTER_STRUCT_MAGIC, "nmg_inter_struct")
-
 struct ee_2d_state {
 	struct nmg_inter_struct	*is;
 	struct edgeuse	*eu;
@@ -98,31 +72,16 @@ struct ee_2d_state {
 	vect_t	dir;
 };
 
-RT_EXTERN(void			nmg_isect2d_prep, (struct nmg_inter_struct *is,
-				CONST long *assoc_use));
-RT_EXTERN(CONST struct vertexuse *nmg_loop_touches_self, (CONST struct loopuse *lu));
-RT_EXTERN(void			nmg_isect_line2_face2pNEW, (struct nmg_inter_struct *is,
-				struct faceuse *fu1, struct faceuse *fu2,
-				struct bu_ptbl *eu1_list,
-				struct bu_ptbl *eu2_list));
 
-static int	nmg_isect_edge2p_face2p RT_ARGS((struct nmg_inter_struct *is,
+static int	nmg_isect_edge2p_face2p BU_ARGS((struct nmg_inter_struct *is,
 			struct edgeuse *eu, struct faceuse *fu,
 			struct faceuse *eu_fu));
-struct edgeuse *	nmg_break_eu_on_v RT_ARGS((struct edgeuse *eu1,
-			struct vertex *v2, struct faceuse *fu,
-			struct nmg_inter_struct *is));
-RT_EXTERN(struct vertexuse *	nmg_enlist_vu, (struct nmg_inter_struct	*is,
-				CONST struct vertexuse *vu,
-				struct vertexuse *dualvu,
-				fastf_t dist));
-RT_EXTERN(void			nmg_isect2d_cleanup, (struct nmg_inter_struct *is));
-RT_EXTERN(void			nmg_isect_vert2p_face2p, (struct nmg_inter_struct *is,
-				struct vertexuse *vu1, struct faceuse *fu2));
 
 
 static struct nmg_inter_struct	*nmg_hack_last_is;	/* see nmg_isect2d_final_cleanup() */
 
+/*
+ */
 struct vertexuse *
 nmg_make_dualvu( v, fu, tol )
 struct vertex *v;
@@ -2380,6 +2339,8 @@ do_ret:
 	return ret;
 }
 
+/*
+ */
 void
 nmg_enlist_one_vu( is,   vu,  dist )
 struct nmg_inter_struct	*is;
@@ -3871,8 +3832,8 @@ void
 nmg_isect_eu_fu( is, verts, eu, fu )
 struct nmg_inter_struct *is;
 struct bu_ptbl		*verts;
-struct faceuse          *fu;
 struct edgeuse		*eu;
+struct faceuse          *fu;
 {
 	struct model *m;
 	struct vertex_g *vg1,*vg2;
@@ -7231,7 +7192,8 @@ struct faceuse *fu1,*fu2;
 int
 nmg_faces_can_be_intersected( bs, fu1, fu2, tol )
 struct nmg_inter_struct *bs;
-CONST struct faceuse *fu1,*fu2;
+CONST struct faceuse *fu1;
+CONST struct faceuse *fu2;
 CONST struct bn_tol *tol;
 {
 	plane_t pl1,pl2;
@@ -7408,7 +7370,8 @@ CONST struct bn_tol *tol;
  */
 void
 nmg_isect_two_generic_faces(fu1, fu2, tol)
-struct faceuse		*fu1, *fu2;
+struct faceuse		*fu1;
+struct faceuse		*fu2;
 CONST struct bn_tol	*tol;
 {
 	struct nmg_inter_struct	bs;

@@ -1993,6 +1993,32 @@ struct nmg_radial {
 #define NMG_RADIAL_MAGIC	0x52614421	/* RaD! */
 #define NMG_CK_RADIAL(_p)	NMG_CKMAG(_p, NMG_RADIAL_MAGIC, "nmg_radial")
 
+struct nmg_inter_struct {
+	long		magic;
+	struct bu_ptbl	*l1;		/* vertexuses on the line of */
+	struct bu_ptbl *l2;		/* intersection between planes */
+	fastf_t		*mag1;		/* Distances along intersection line */
+	fastf_t		*mag2;		/* for each vertexuse in l1 and l2. */
+	int		mag_len;	/* Array size of mag1 and mag2 */
+	struct shell	*s1;
+	struct shell	*s2;
+	struct faceuse	*fu1;		/* null if l1 comes from a wire */
+	struct faceuse	*fu2;		/* null if l2 comes from a wire */
+	struct bn_tol	tol;
+	int		coplanar;	/* a flag */
+	struct edge_g_lseg	*on_eg;		/* edge_g for line of intersection */
+	point_t		pt;		/* 3D line of intersection */
+	vect_t		dir;
+	point_t		pt2d;		/* 2D projection of isect line */
+	vect_t		dir2d;
+	fastf_t		*vert2d;	/* Array of 2d vertex projections [index] */
+	int		maxindex;	/* size of vert2d[] */
+	mat_t		proj;		/* Matrix to project onto XY plane */
+	CONST long	*twod;		/* ptr to face/edge of 2d projection */
+};
+#define NMG_INTER_STRUCT_MAGIC	0x99912120
+#define NMG_CK_INTER_STRUCT(_p)	NMG_CKMAG(_p, NMG_INTER_STRUCT_MAGIC, "nmg_inter_struct")
+
 /*****************************************************************
  *                                                               *
  *          Applications interface to the RT library             *
@@ -3159,7 +3185,158 @@ BU_EXTERN(void			nmg_ck_vs_in_region, (CONST struct nmgregion *r,
 
 
 /* From nmg_inter.c */
+BU_EXTERN(struct vertexuse	*nmg_make_dualvu,
+				(struct vertex *v,
+				struct faceuse *fu,
+				CONST struct bn_tol *tol));
+BU_EXTERN(struct vertexuse	*nmg_enlist_vu, (struct nmg_inter_struct	*is,
+				CONST struct vertexuse *vu,
+				struct vertexuse *dualvu,
+				fastf_t dist));
+BU_EXTERN(void			nmg_isect2d_prep, (struct nmg_inter_struct *is,
+				CONST long *assoc_use));
+BU_EXTERN(void			nmg_isect2d_cleanup, (struct nmg_inter_struct *is));
+BU_EXTERN(void			nmg_isect2d_final_cleanup, ());
+BU_EXTERN(void			nmg_isect_vert2p_face2p, (struct nmg_inter_struct *is,
+				struct vertexuse *vu1, struct faceuse *fu2));
+BU_EXTERN(struct edgeuse	*nmg_break_eu_on_v, (struct edgeuse *eu1,
+				struct vertex *v2, struct faceuse *fu,
+				struct nmg_inter_struct *is));
+BU_EXTERN(void			nmg_break_eg_on_v,
+				(CONST struct edge_g_lseg	*eg,
+				struct vertex		*v,
+				CONST struct bn_tol	*tol));
+BU_EXTERN(int			nmg_isect_2colinear_edge2p,
+				(struct edgeuse	*eu1,
+				struct edgeuse	*eu2,
+				struct faceuse		*fu,
+				struct nmg_inter_struct	*is,
+				struct bu_ptbl		*l1,
+				struct bu_ptbl		*l2));
+BU_EXTERN(int			nmg_isect_edge2p_edge2p,
+				(struct nmg_inter_struct	*is,
+				struct edgeuse		*eu1,
+				struct edgeuse		*eu2,
+				struct faceuse		*fu1,
+				struct faceuse		*fu2));
+BU_EXTERN(int			nmg_isect_construct_nice_ray,
+				(struct nmg_inter_struct	*is,
+				struct faceuse		*fu2));
+BU_EXTERN(void			nmg_enlist_one_vu,
+				(struct nmg_inter_struct	*is,
+				CONST struct vertexuse	*vu,
+				fastf_t			dist));
+BU_EXTERN(int			nmg_isect_line2_edge2p,
+				(struct nmg_inter_struct	*is,
+				struct bu_ptbl		*list,
+				struct edgeuse		*eu1,
+				struct faceuse		*fu1,
+				struct faceuse		*fu2));
+BU_EXTERN(void			nmg_isect_line2_vertex2,
+				(struct nmg_inter_struct	*is,
+				struct vertexuse	*vu1,
+				struct faceuse		*fu1));
+BU_EXTERN(int			nmg_isect_two_ptbls,
+				(struct nmg_inter_struct		*is,
+				CONST struct bu_ptbl		*t1,
+				CONST struct bu_ptbl		*t2));
+BU_EXTERN(struct edge_g_lseg	*nmg_find_eg_on_line,
+				(CONST long		*magic_p,
+				CONST point_t		pt,
+				CONST vect_t		dir,
+				CONST struct bn_tol	*tol));
+BU_EXTERN(int 			nmg_k0eu, (struct vertex	*v));
+BU_EXTERN(struct vertex		*nmg_repair_v_near_v,
+				(struct vertex		*hit_v,
+				struct vertex		*v,
+				CONST struct edge_g_lseg	*eg1,
+				CONST struct edge_g_lseg	*eg2,
+				int			bomb,
+				CONST struct bn_tol	*tol));
+BU_EXTERN(struct vertex		*nmg_search_v_eg,
+				(CONST struct edgeuse		*eu,
+				int				second,
+				CONST struct edge_g_lseg	*eg1,
+				CONST struct edge_g_lseg	*eg2,
+				struct vertex		*hit_v,
+				CONST struct bn_tol		*tol));
+BU_EXTERN(struct vertex		*nmg_common_v_2eg,
+				(struct edge_g_lseg	*eg1,
+				struct edge_g_lseg	*eg2,
+				CONST struct bn_tol	*tol));
+BU_EXTERN(int			nmg_is_vertex_on_inter,
+				(struct vertex *v,
+				struct faceuse *fu1,
+				struct faceuse *fu2,
+				struct nmg_inter_struct *is));
+BU_EXTERN(void			nmg_isect_eu_verts,
+				(struct edgeuse *eu,
+				struct vertex_g *vg1,
+				struct vertex_g *vg2,
+				struct bu_ptbl *verts,
+				struct bu_ptbl *inters,
+				CONST struct bn_tol *tol));
+BU_EXTERN(void			nmg_isect_eu_eu,
+				(struct edgeuse *eu1,
+				struct vertex_g *vg1a,
+				struct vertex_g *vg1b,
+				vect_t dir1,
+				struct edgeuse *eu2,
+				struct bu_ptbl *verts,
+				struct bu_ptbl *inters,
+				CONST struct bn_tol *tol));
+BU_EXTERN(void			nmg_isect_eu_fu,
+				(struct nmg_inter_struct *is,
+				struct bu_ptbl		*verts,
+				struct edgeuse		*eu,
+				struct faceuse          *fu));
+BU_EXTERN(void			nmg_isect_fu_jra,
+				(struct nmg_inter_struct	*is,
+				struct faceuse		*fu1,
+				struct faceuse		*fu2,
+				struct bu_ptbl		*eu1_list,
+				struct bu_ptbl		*eu2_list));
+BU_EXTERN(void			nmg_isect_line2_face2pNEW, (struct nmg_inter_struct *is,
+				struct faceuse *fu1, struct faceuse *fu2,
+				struct bu_ptbl *eu1_list,
+				struct bu_ptbl *eu2_list));
+BU_EXTERN(int			nmg_is_eu_on_line3,
+				(CONST struct edgeuse	*eu,
+				CONST point_t		pt,
+				CONST vect_t		dir,
+				CONST struct bn_tol	*tol));
+BU_EXTERN(struct edge_g_lseg	*nmg_find_eg_between_2fg,
+				(CONST struct faceuse	*ofu1,
+				CONST struct faceuse	*fu2,
+				CONST struct bn_tol	*tol));
+BU_EXTERN(struct edgeuse	*nmg_does_fu_use_eg,
+				(CONST struct faceuse	*fu1,
+				CONST long		*eg));
+BU_EXTERN(int			rt_line_on_plane,
+				(CONST point_t	pt,
+				CONST vect_t	dir,
+				CONST plane_t	plane,
+				CONST struct bn_tol	*tol));
+BU_EXTERN(void			nmg_cut_lu_into_coplanar_and_non,
+				(struct loopuse *lu,
+				plane_t pl,
+				struct nmg_inter_struct *is));
+BU_EXTERN(void			nmg_check_radial_angles,
+				(char *str,
+				struct shell *s,
+				CONST struct bn_tol *tol));
+BU_EXTERN(int			nmg_faces_can_be_intersected,
+				(struct nmg_inter_struct *bs,
+				CONST struct faceuse *fu1,
+				CONST struct faceuse *fu2,
+				CONST struct bn_tol *tol));
+BU_EXTERN(void			nmg_isect_two_generic_faces,
+				(struct faceuse		*fu1,
+				struct faceuse		*fu2,
+				CONST struct bn_tol	*tol));
 BU_EXTERN(void			nmg_crackshells, (struct shell *s1, struct shell *s2, CONST struct bn_tol *tol) );
+BU_EXTERN(int			nmg_fu_touchingloops, (CONST struct faceuse *fu));
+
 
 /* From nmg_index.c */
 BU_EXTERN(int			nmg_index_of_struct, (CONST long *p) );
