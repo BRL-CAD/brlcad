@@ -296,9 +296,9 @@ struct mem_map **pp;
 {
 	register struct mem_map *curp;
 
-	bu_log("rt_memprint(x%x)\n", *pp);
+	bu_log("rt_memprint(x%x):  address, length\n", *pp);
 	for( curp = *pp; curp; curp = curp->m_nxtp )
-		bu_log(" a=x%lx, l=%d\n", curp->m_addr, curp->m_size );
+		bu_log(" a=x%.8lx, l=%.5d\n", curp->m_addr, curp->m_size );
 }
 
 /*
