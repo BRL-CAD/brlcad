@@ -45,11 +45,11 @@ FBIO debug_interface =
 		deb_cmemory_addr,
 		deb_cscreen_addr,
 		"Debugging Interface",
-		1024,			/* max width */
-		1024,			/* max height */
+		8*1024,			/* max width */
+		8*1024,			/* max height */
 		"/dev/debug",
-		0,			/* current width (init 0) */
-		0,			/* current height (init 0) */
+		512,			/* current width (init 0) */
+		512,			/* current height (init 0) */
 		-1,			/* file descriptor */
 		PIXEL_NULL,		/* page_base */
 		PIXEL_NULL,		/* page_curp */
