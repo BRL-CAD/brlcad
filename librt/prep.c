@@ -41,15 +41,16 @@ HIDDEN void	rt_solid_bitfinder();
 extern struct resource	rt_uniresource;		/* from shoot.c */
 
 /*
- *  			R T _ P R E P
+ *  			R T _ P R E P _ P A R A L L E L
  *  
  *  This routine should be called just before the first call to rt_shootray().
  *  It should only be called ONCE per execution, unless rt_clean() is
  *  called inbetween.
  */
 void
-rt_prep(rtip)
-register struct rt_i *rtip;
+rt_prep_parallel(rtip, ncpu)
+register struct rt_i	*rtip;
+int			ncpu;
 {
 	register struct region *regp;
 	register struct soltab *stp;
@@ -190,7 +191,7 @@ register struct rt_i *rtip;
 	rt_regionfix(rtip);
 
 	/* Partition space */
-	rt_cut_it(rtip);
+	rt_cut_it(rtip, ncpu);
 
 	/* Plot bounding RPPs */
 	if( (rt_g.debug&DEBUG_PLOTBOX) )  {
@@ -213,6 +214,19 @@ register struct rt_i *rtip;
 			(void)fclose(plotfp);
 		}
 	}
+}
+
+/*
+ *			R T _ P R E P
+ *
+ *  Compatability stub.  Only uses 1 CPU.
+ */
+void
+rt_prep(rtip)
+register struct rt_i *rtip;
+{
+	RT_CK_RTI(rtip);
+	rt_prep_parallel(rtip, 1);
 }
 
 /*
