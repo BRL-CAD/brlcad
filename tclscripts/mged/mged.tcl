@@ -796,6 +796,37 @@ proc help {args}	{
 	}
 }
 
+proc ? {} {
+    global help_data
+
+    set i 1
+    foreach cmd [lsort [array names help_data]] {
+	append info [format "%-16s" $cmd]
+	if { ![expr $i % 4] } {
+	    append info "\n"
+	}
+	incr i
+    }
+    return $info
+}
+
+proc apropos key {
+    global help_data
+
+    set info ""
+    foreach cmd [lsort [array names help_data]] {
+	if {[string first $key $cmd] != -1} {
+	    append info "$cmd "
+	} elseif {[string first $key [lindex $help_data($cmd) 0]] != -1} {
+	    append info "$cmd "
+	} elseif {[string first $key [lindex $help_data($cmd) 1]] != -1} {
+	    append info "$cmd "
+	}
+    }
+
+    return $info
+}
+
 
 
 
