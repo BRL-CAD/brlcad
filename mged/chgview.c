@@ -334,6 +334,9 @@ char	**argv;
 {
 	if( argc >= 2 )  {
 		sscanf( argv[1], "%x", &rt_g.debug );
+	} else {
+		rt_printb( "Possible flags", -1, DEBUG_FORMAT );
+		rt_log("\n");
 	}
 	rt_printb( "librt rt_g.debug", rt_g.debug, DEBUG_FORMAT );
 	rt_log("\n");
@@ -355,6 +358,9 @@ char	**argv;
 {
 	if( argc >= 2 )  {
 		sscanf( argv[1], "%x", &rt_g.NMG_debug );
+	} else {
+		rt_printb( "possible flags", -1, NMG_DEBUG_FORMAT );
+		rt_log("\n");
 	}
 	rt_printb( "librt rt_g.NMG_debug", rt_g.NMG_debug, NMG_DEBUG_FORMAT );
 	rt_log("\n");
