@@ -106,12 +106,11 @@ char	**argv;
 		air = atoi( argv[3] );
 	}
 
-	if( rt_get_comb( &intern, dp, (mat_t *)NULL, dbip ) < 0 )  {
-		Tcl_AppendResult(interp, "rt_get_comb(", dp->d_namep,
-			") failure", (char *)NULL );
-		return TCL_ERROR;
+	if( rt_db_get_internal( &intern, dp, dbip, (mat_t *)NULL ) < 0 )  {
+		TCL_READ_ERR_return;
 	}
 	comb = (struct rt_comb_internal *)intern.idb_ptr;
+	RT_CK_COMB(comb);
 	comb->region_id = ident;
 	comb->aircode = air;
 	if( rt_db_put_internal( dp, dbip, &intern ) < 0 )  {
@@ -606,7 +605,7 @@ char	**argv;
 	register struct directory *proto;
 	register struct directory *dp;
 	register int i, j, k;
-	union record	*rec;
+	struct rt_db_internal	internal;
 	mat_t mirmat;
 	mat_t temp;
 	int ngran;
@@ -636,23 +635,12 @@ char	**argv;
 
 	if( proto->d_flags & DIR_SOLID )
 	{
-		struct rt_db_internal	internal;
-		struct bu_external	ext;
 		int			id;
 
-		BU_INIT_EXTERNAL( &ext );
-		RT_INIT_DB_INTERNAL( &internal );
-
-/* XXX should be able to use rt_db_get_internal() */
-		if( db_get_external( &ext, proto, dbip ) < 0 )
-			return TCL_ERROR;
-
-		id = rt_id_solid( &ext );
-		if( rt_functab[id].ft_import( &internal, &ext, bn_mat_identity ) < 0 )  {
+		id = rt_db_get_internal( &internal, proto, dbip, NULL );
+		if( id < 0 )  {
 		  Tcl_AppendResult(interp, "f_mirror(", argv[1], argv[2],
 			   "):  solid import failure\n", (char *)NULL);
-		  if( internal.idb_ptr )  rt_functab[id].ft_ifree( &internal );
-		  db_free_external( &ext );
 		  return TCL_ERROR;				/* FAIL */
 		}
 		RT_CK_DB_INTERNAL( &internal );
@@ -1084,63 +1072,36 @@ char	**argv;
 			}
 		}
 
-/* XXX should be able to just db_diradd(), then rt_db_put_internal() */
-		if( rt_functab[internal.idb_type].ft_export( &ext, &internal, 1.0 ) < 0 )
-		{
-		  Tcl_AppendResult(interp, "f_mirror: export failure\n", (char *)NULL);
-		  rt_functab[internal.idb_type].ft_ifree( &internal );
-		  return TCL_ERROR;
-		}
-		rt_functab[internal.idb_type].ft_ifree( &internal );   /* free internal rep */
-
 		/* no interuprts */
 		(void)signal( SIGINT, SIG_IGN );
 
-/* XXX shouldn't have to do ngran or db_alloc() here */
-		ngran = (ext.ext_nbytes+sizeof(union record)-1) / sizeof(union record);
-		if( (dp = db_diradd( dbip, argv[2], -1L, ngran, DIR_SOLID)) == DIR_NULL ||
-		    db_alloc( dbip, dp, 1 ) < 0 )
-		    {
-		    	db_free_external( &ext );
+		if( (dp = db_diradd( dbip, argv[2], -1L, 0, DIR_SOLID)) == DIR_NULL )  {
 		    	TCL_ALLOC_ERR_return;
-		    }
-
-		if (db_put_external( &ext, dp, dbip ) < 0 )
-		{
-			db_free_external( &ext );
+		}
+		if( rt_db_put_internal( dp, dbip, &internal ) < 0 )  {
 			TCL_WRITE_ERR_return;
 		}
-		db_free_external( &ext );
-
 	} else if( proto->d_flags & DIR_COMB ) {
-/*MIKE*/
-		if( (rec = db_getmrec( dbip, proto )) == (union record *)0 ) {
-		  TCL_READ_ERR_return;
-		}
+		struct rt_comb_internal	*comb;
 
-		if( (dp = db_diradd( dbip, argv[2], -1, proto->d_len, proto->d_flags ) ) == DIR_NULL ||
-		    db_alloc( dbip, dp, proto->d_len ) < 0 )  {
-		  TCL_ALLOC_ERR_return;
+		/* XXX should be able to use rt_db_get_internal() as above */
+		if( rt_get_comb( &internal, proto, (mat_t *)NULL, dbip ) < 0 )  {
+			Tcl_AppendResult(interp, "rt_get_comb(", proto->d_namep,
+				") failure", (char *)NULL );
+			TCL_READ_ERR_return;
 		}
-		NAMEMOVE(argv[2], rec[0].c.c_name);
+		comb = (struct rt_comb_internal *)internal.idb_ptr;
 		bn_mat_idn( mirmat );
 		mirmat[k*5] = -1.0;
-/* use db_tree_mul_dbleaf( comb->tree ); */
-		for( i=1; i < proto->d_len; i++) {
-			mat_t	xmat;
+		if( comb->tree )
+			db_tree_mul_dbleaf( comb->tree, mirmat );
 
-			if(rec[i].u_id != ID_MEMB) {
-			  Tcl_AppendResult(interp, "f_mirror: bad db record\n", (char *)NULL);
-			  return TCL_ERROR;
-			}
-			rt_mat_dbmat( xmat, rec[i].M.m_mat );
-			bn_mat_mul(temp, mirmat, xmat);
-			rt_dbmat_mat( rec[i].M.m_mat, temp );
+		if( (dp = db_diradd( dbip, argv[2], -1, 0, proto->d_flags ) ) == DIR_NULL )  {
+			TCL_ALLOC_ERR_return;
 		}
-		if( db_put( dbip, dp, rec, 0, dp->d_len ) < 0 ) {
-		  TCL_WRITE_ERR_return;
+		if( rt_db_put_internal( dp, dbip, &internal ) < 0 )  {
+			TCL_WRITE_ERR_return;
 		}
-		bu_free((genptr_t)rec, "record");
 	} else {
 	  Tcl_AppendResult(interp, argv[2], ": Cannot mirror\n", (char *)NULL);
 	  return TCL_ERROR;
