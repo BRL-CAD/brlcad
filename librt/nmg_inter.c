@@ -123,7 +123,7 @@ CONST struct faceuse	*fu;	/* for plane equation */
 	v2d[2] = pt2d[2] = 0;		/* flag */
 
 	if( !NEAR_ZERO( pt[2], is->tol.dist ) )  {
-		rt_log("nmg_get_2d_vertex ERROR #%d (%g,%g,%g) becomes (%g,%g) %g != zero!\n",
+		rt_log("nmg_get_2d_vertex ERROR #%d (%g %g %g) becomes (%g,%g) %g != zero!\n",
 			v->index, V3ARGS(vg->coord), V3ARGS(pt) );
 		if( !NEAR_ZERO( pt[2], 10*is->tol.dist ) )  {
 			rt_log("nmg_get_2d_vertex(,fu=%x) f=x%x, is->face=%x\n",
@@ -135,7 +135,7 @@ CONST struct faceuse	*fu;	/* for plane equation */
 	}
 
 	if (rt_g.NMG_debug & DEBUG_POLYSECT)  {
-		rt_log("2d #%d (%g,%g,%g) becomes (%g,%g) %g\n",
+		rt_log("2d #%d (%g %g %g) becomes (%g,%g) %g\n",
 			v->index, V3ARGS(vg->coord), V3ARGS(pt) );
 	}
 }
@@ -741,12 +741,12 @@ struct faceuse		*fu2;		/* fu of eu2, for error checks */
 	VMOVE( is->pt, vu1a->v_p->vg_p->coord );		/* 3D line */
 	VSUB2( is->dir, vu1b->v_p->vg_p->coord, is->pt );
 
-	nmg_get_2d_vertex( eu1_start, vu1a->v_p, is, fu1 );	/* 2D line */
-	nmg_get_2d_vertex( eu1_end, vu1b->v_p, is, fu1 );
+	nmg_get_2d_vertex( eu1_start, vu1a->v_p, is, fu2 );	/* 2D line */
+	nmg_get_2d_vertex( eu1_end, vu1b->v_p, is, fu2 );
 	VSUB2( eu1_dir, eu1_end, eu1_start );
 
-	nmg_get_2d_vertex( eu2_start, vu2a->v_p, is, fu1 );
-	nmg_get_2d_vertex( eu2_end, vu2b->v_p, is, fu1 );
+	nmg_get_2d_vertex( eu2_start, vu2a->v_p, is, fu2 );
+	nmg_get_2d_vertex( eu2_end, vu2b->v_p, is, fu2 );
 	VSUB2( eu2_dir, eu2_end, eu2_start );
 
 	dist[0] = dist[1] = 0;	/* for clean prints, below */
@@ -1506,7 +1506,7 @@ struct faceuse		*eu_fu;		/* fu that eu is from */
     	if (rt_g.NMG_debug & (DEBUG_POLYSECT|DEBUG_FCUT|DEBUG_MESH)
     	    && rt_g.NMG_debug & DEBUG_PLOTEM) {
     		static int fno=1;
-    	    	nmg_pl_2fu( "Isect_faces%d.pl", fno++, fu, eu_fu, 0 );
+    	    	nmg_pl_2fu( "Isect_2d_faces%d.pl", fno++, fu, eu_fu, 0 );
     	}
 
 nmg_fu_touchingloops(fu);
