@@ -27,6 +27,7 @@
 		\L\D\F\L\A\G\S=\"LDFLAGS\"; \
 		SHAREDVER=[[LIBVERS]]; \
 		export \C\C \C\F\L\A\G\S \R\A\N\L\I\B \L\D\F\L\A\G\S \S\H\A\R\E\D\V\E\R; \
+		cp ../SRCDIR/zlib.h .; \
 		../SRCDIR/configure CONFIG_OPTS; \
 		../SRCDIR/fix_makefile.sh FIX_FILE  >  Makefile.MTYPE)
 #else
@@ -37,6 +38,7 @@
 		\L\D\S\H\A\R\E\D=\"LDSHARED\"; \
 		SHAREDVER=[[LIBVERS]]; \
 		export \C\C \C\F\L\A\G\S \R\A\N\L\I\B \L\D\F\L\A\G\S \L\D\S\H\A\R\E\D \S\H\A\R\E\D\V\E\R; \
+		cp ../SRCDIR/zlib.h .; \
 		../SRCDIR/configure CONFIG_OPTS; \
 		../SRCDIR/fix_makefile.sh FIX_FILE  >  Makefile.MTYPE)
 #endif
