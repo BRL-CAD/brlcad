@@ -1582,9 +1582,10 @@ char			*buf;
 	int		sched_update = 0;
 	int		last_i;
 	char		nbuf[32];
-	int		total_bits;
+	long		total_bits;
 	fastf_t		average_mbps;
 	fastf_t		burst_mbps;	/* a lower bound only */
+	int		network_overhead;
 
 	blend1 = 0.8;
 	blend2 = 1 - blend1;
@@ -1687,16 +1688,21 @@ check_others:
 		if( rtt > ms_rt_max )  ms_rt_max = rtt;
 	}
 
+	/* Calculate network bandwidth consumed in non-raytracing time */
 	total_bits = width * height * 3 * 8;
 	average_mbps = total_bits / interval / 1000000.0;
 	/* burst_mbps is still too low; it's a lower bound. */
 	burst_mbps = total_bits / (interval - ms_rt_min/1000) / 1000000.0;
 
-	bu_log("%s%6d ms, %5.1f Mbps, %4.1f fps, %d/%d %s\n",
+	/* Calculate "network overhead" as % of total time */
+	network_overhead = (int)(((double)ms_total - ms_rt_max) / (double)ms_total * 100);
+
+	bu_log("%s%6d ms, %5.1f Mbps, %4.1f fps, %2d%%net %d/%d %s\n",
 		stamp(),
 		ms_total,
 		burst_mbps,
 		1.0/interval,
+		network_overhead,
 		ms_1st_done, ms_all_done,
 		nbuf );
 
