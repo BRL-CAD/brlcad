@@ -35,6 +35,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include	<fcntl.h>
 #include	<stdio.h>
 #include	<string.h>
+#include	<signal.h>
 #include "ged_types.h"
 #include "db.h"
 #include "ged.h"
@@ -217,6 +218,7 @@ dir_print()  {
 	register struct directory	*dp;
 	register char	*cp;		/* -> name char to output */
 
+	(void)signal( SIGINT, sig2 );	/* allow interupts */
 	for( dp = DirHead; dp != DIR_NULL; dp = dp->d_forw )  {
 		col_item( dp->d_namep );
 		if( dp->d_flags & DIR_COMB )
@@ -788,6 +790,7 @@ dir_summary(flag)
 	register struct directory *dp;
 	static int sol, comb, reg, br;
 
+	(void)signal( SIGINT, sig2 );	/* allow interupts */
 	sol = comb = reg = br = 0;
 	for( dp = DirHead; dp != DIR_NULL; dp = dp->d_forw )  {
 		if( dp->d_flags & DIR_SOLID )
@@ -828,6 +831,7 @@ f_tops()
 {
 	register struct directory *dp;
 
+	(void)signal( SIGINT, sig2 );	/* allow interupts */
 	dir_nref();
 	for( dp = DirHead; dp != DIR_NULL; dp = dp->d_forw )  {
 		if( dp->d_nref > 0 )
