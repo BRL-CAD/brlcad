@@ -7,14 +7,16 @@ items are on top, older topics are on the bottom.
 
 THESE SHOULD HAPPEN BEFORE SOURCEFORGE UPLOAD
 
-* write up initial README
+* write up README, NEWS, HACKING, TODO, BUGS
 
-* remove license speak for an immediate preliminary release
+* put legal headers in place
+
+* put style footers in place
+
+* convert loops and test
 
 
 THESE SHOULD HAPPEN BEFORE THE NEXT RELEASE
-
-* modify file headers to add license info
 
 * Update libpng to address CERT Technical Cyber Security Alert
   TA04-217A
