@@ -1185,30 +1185,33 @@ char	**argv;
 			bu_ptbl_reset( &stack );
 			/* visit each leaf in the combination */
 			comb_leaf = comb->tree;
-			while( !done )
+			if( comb_leaf )
 			{
-				while( comb_leaf->tr_op != OP_DB_LEAF )
+				while( !done )
 				{
-					bu_ptbl_ins( &stack, (long *)comb_leaf );
-					comb_leaf = comb_leaf->tr_b.tb_left;
-				}
-				if( !strncmp( comb_leaf->tr_l.tl_name, argv[1], NAMESIZE ) )
-				{
-					bu_free( comb_leaf->tr_l.tl_name, "comb_leaf->tr_l.tl_name" );
-					comb_leaf->tr_l.tl_name = bu_strdup( argv[2] );
-					changed = 1;
-				}
+					while( comb_leaf->tr_op != OP_DB_LEAF )
+					{
+						bu_ptbl_ins( &stack, (long *)comb_leaf );
+						comb_leaf = comb_leaf->tr_b.tb_left;
+					}
+					if( !strncmp( comb_leaf->tr_l.tl_name, argv[1], NAMESIZE ) )
+					{
+						bu_free( comb_leaf->tr_l.tl_name, "comb_leaf->tr_l.tl_name" );
+						comb_leaf->tr_l.tl_name = bu_strdup( argv[2] );
+						changed = 1;
+					}
 
-				if( BU_PTBL_END( &stack ) < 1 )
-				{
-					done = 1;
-					break;
-				}
-				comb_leaf = (union tree *)BU_PTBL_GET( &stack, BU_PTBL_END( &stack )-1 );
-				if( comb_leaf->tr_op != OP_DB_LEAF )
-				{
-					bu_ptbl_rm( &stack, (long *)comb_leaf );
-					comb_leaf = comb_leaf->tr_b.tb_right;
+					if( BU_PTBL_END( &stack ) < 1 )
+					{
+						done = 1;
+						break;
+					}
+					comb_leaf = (union tree *)BU_PTBL_GET( &stack, BU_PTBL_END( &stack )-1 );
+					if( comb_leaf->tr_op != OP_DB_LEAF )
+					{
+						bu_ptbl_rm( &stack, (long *)comb_leaf );
+						comb_leaf = comb_leaf->tr_b.tb_right;
+					}
 				}
 			}
 
