@@ -45,14 +45,16 @@ col_item(cp)
 register char *cp;
 {
 	/* Output newline if last column printed. */
-	if ( col_count >= COLUMNS )  {	/* line now full */
+	if ( (col_count+NAMESIZE-1) >= COLUMNS )  {
+		/* line now full */
 		(void)putchar( '\n' );
 		col_count = 0;
 	} else if ( col_count != 0 ) {
-		/* Tab to start column. */
-		do
-			(void)putchar( '\t' );
-		while ( (col_len += 8) < NAMESIZE );
+		/* Space over before starting new column */
+		do {
+			(void)putchar( ' ' );
+			col_len++;
+		}  while ( (col_len % NAMESIZE) != 0 );
 	}
 	/* Output string and save length for next tab. */
 	col_len = 0;
