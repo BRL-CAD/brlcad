@@ -2559,6 +2559,11 @@ dgo_invent_solid(dgop, interp, name, vhead, rgb, copy)
 	sp->s_regionid = 0;
 	sp->s_dlist = BU_LIST_LAST(solid, &dgop->dgo_headSolid)->s_dlist + 1;
 
+	sp->s_uflag = 0;
+	sp->s_dflag = 0;
+	sp->s_cflag = 0;
+	sp->s_wflag = 0;
+
 	/* Solid successfully drawn, add to linked list of solid structs */
 	BU_LIST_APPEND(dgop->dgo_headSolid.back, &sp->l);
 
