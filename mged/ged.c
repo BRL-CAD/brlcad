@@ -121,13 +121,9 @@ static char *units_str[] = {
 	"extra"
 };
 
-FILE *infile;
-FILE *outfile;
-
 void
 pr_prompt()  {
-	(void)fprintf(outfile, "mged> ");
-	(void)fflush(outfile);
+	rt_log("mged> ");
 }
 
 /* 
@@ -140,22 +136,16 @@ char **argv;
 {
 	int	rateflag = 0;
 
-	/* In some ANSI implementations, symbol "stdin" is a variable. */
-	infile = stdin;
-/*	outfile = stdout; */
-	outfile = stderr;
-
 	/* Check for proper invocation */
 	if( argc < 2 )  {
-		(void)fprintf(outfile, "Usage:  %s database [command]\n",
-		  argv[0]);
+		rt_log("Usage:  %s database [command]\n", argv[0]);
 		return(1);		/* NOT finish() */
 	}
 
 	/* Identify ourselves if interactive */
 	if( argc == 2 )  {
 		interactive = 1;
-		(void)fprintf(outfile, "%s\n", version+5);	/* skip @(#) */
+		rt_log("%s\n", version+5);	/* skip @(#) */
 	}
 
 	(void)signal( SIGPIPE, SIG_IGN );
@@ -267,7 +257,7 @@ char **argv;
 		else
 			cur_sigint = sig2;	/* back to here w/!0 return */
 	} else {
-		(void)fprintf(outfile, "\nAborted.\n");
+		rt_log("\nAborted.\n");
 		/* If parallel routine was interrupted, need to reset */
 		RES_RELEASE( &rt_g.res_syscall );
 		RES_RELEASE( &rt_g.res_worker );
@@ -427,10 +417,10 @@ if( cmdline_hook )  {if( (*cmdline_hook)(&str)) pr_prompt();} else
 		}
 		break;
 	default:
-		(void)fprintf(outfile, "pen(%d,%d,x%x) -- bad dm press code\n",
-		dm_values.dv_xpen,
-		dm_values.dv_ypen,
-		dm_values.dv_penpress);
+		rt_log("pen(%d,%d,x%x) -- bad dm press code\n",
+			dm_values.dv_xpen,
+			dm_values.dv_ypen,
+			dm_values.dv_penpress);
 		break;
 	}
 
@@ -919,14 +909,12 @@ char	**argv;
 		if( isatty(0) ) {
 
 		    perror( argv[1] );
-		    (void)fprintf(outfile, "Create new database (y|n)[n]? ");
-		    fflush(outfile);
-		    (void)fgets(line, sizeof(line), infile);
+		    rt_log("Create new database (y|n)[n]? ");
+		    (void)fgets(line, sizeof(line), stdin);
 		    if( line[0] != 'y' && line[0] != 'Y' )
 			exit(0);		/* NOT finish() */
 		} else
-		    (void)fprintf(outfile,
-		    	"Creating new database \"%s\"\n", argv[1]);
+		    rt_log("Creating new database \"%s\"\n", argv[1]);
 			
 
 		if( (dbip = db_create( argv[1] )) == DBI_NULL )  {
