@@ -381,3 +381,21 @@ int			verbose;
 		bu_log("  %.8x %s\n", *lp, bu_identify_magic(**lp) );
 	}
 }
+
+/*			B U _ P T B L _ T R U N C
+ *
+ *	truncate a bu_ptbl
+ */
+void
+bu_ptbl_trunc( tbl, end )
+struct bu_ptbl		*tbl;
+int			end;
+{
+	BU_CK_PTBL(tbl);
+
+	if( tbl->end <= end )
+		return;
+
+	tbl->end = end;
+	return;
+}
