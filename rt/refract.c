@@ -313,6 +313,7 @@ do_exit:
 		sub_ap.a_miss = ap->a_miss;
 		sub_ap.a_onehit = ap->a_onehit;
 		sub_ap.a_level = ap->a_level+1;
+		sub_ap.a_uptr = ap->a_uptr;
 		if( code == 3 )  {
 			sub_ap.a_purpose = "rr recurse on next glass";
 		}  else  {
