@@ -258,14 +258,14 @@
 	::scrollbar $itk_interior.vscroll -orient vertical \
 		-command [::itcl::code $this yview]
     } {}
-    grid $itk_component(vscroll) -row 0 -col 2 -sticky ns
+    grid $itk_component(vscroll) -row 0 -column 2 -sticky ns
 
     # build horizontal scrollbar
     itk_component add hscroll {
 	::scrollbar $itk_interior.hscroll -orient horizontal \
 		-command [::itcl::code $this xview]
     } {}
-    grid $itk_component(hscroll) -row 1 -col 1 -sticky ew
+    grid $itk_component(hscroll) -row 1 -column 1 -sticky ew
 
     buildTable
     initColColors
@@ -453,7 +453,7 @@
     # update labels
     lappend labels $label
     buildColLabel $vcols
-    grid $itk_component(cl$vcols) -row 0 -col $vcols -sticky nsew
+    grid $itk_component(cl$vcols) -row 0 -column $vcols -sticky nsew
 
     # update entries
     deactivateTraces
@@ -461,7 +461,7 @@
 	buildEntry $i $vcols
 	if {[grid info $itk_component(rl$i)] != ""} {
 	    grid $itk_component(e$i,$vcols) \
-		-row $i -col $vcols -sticky nsew
+		-row $i -column $vcols -sticky nsew
 	}
     }
     activateTraces
@@ -469,7 +469,7 @@
     #grid columnconfigure $itk_interior $vcols -weight 1
 
     # repack the vertical bar
-    #grid $itk_component(vscroll) -row 1 -col 2 -rowspan $vrows -sticky ns
+    #grid $itk_component(vscroll) -row 1 -column 2 -rowspan $vrows -sticky ns
     #grid columnconfigure $itk_interior [expr {$vcols + 1}] -weight 0
 
     initColColors
@@ -505,7 +505,7 @@
 
     # repack the vertical bar
     incr vcols -1
-    #grid $itk_component(vscroll) -row 1 -col 2 -rowspan $vrows -sticky ns
+    #grid $itk_component(vscroll) -row 1 -column 2 -rowspan $vrows -sticky ns
     #grid columnconfigure $itk_interior [expr {$vcols + 1}] -weight 0
 
     initColColors
@@ -526,7 +526,7 @@
 
     # build another column label at the end
     buildColLabel $vcols
-    grid $itk_component(cl$vcols) -row 0 -col $vcols -sticky nsew
+    grid $itk_component(cl$vcols) -row 0 -column $vcols -sticky nsew
 
     # update label text
     for {set jtmp $j} {$jtmp <= $vcols} {incr jtmp} {
@@ -539,7 +539,7 @@
 	buildEntry $i $vcols
 	if {[grid info $itk_component(rl$i)] != ""} {
 	    grid $itk_component(e$i,$vcols) \
-		-row $i -col $vcols -sticky nsew
+		-row $i -column $vcols -sticky nsew
 	}
     }
     activateTraces
@@ -584,7 +584,7 @@
     #grid columnconfigure $itk_interior $vcols -weight 1
 
     # repack the vertical bar
-    #grid $itk_component(vscroll) -row 1 -col 2 -rowspan $vrows -sticky ns
+    #grid $itk_component(vscroll) -row 1 -column 2 -rowspan $vrows -sticky ns
     #grid columnconfigure $itk_interior [expr {$vcols + 1}] -weight 0
 
     initColColors
@@ -1138,7 +1138,7 @@
 	    # Here we need to view a separator, but we have widgets
 	    # packed for viewing data.
 	    if {[grid info $itk_component(rl$gi)] != ""} {
-#		grid $itk_component(sl$gi) -row $gi -col 1 -columnspan [expr {$vcols - 1}] -sticky nsew
+#		grid $itk_component(sl$gi) -row $gi -column 1 -columnspan [expr {$vcols - 1}] -sticky nsew
 		raise $itk_component(sl$gi)
 		    
 
@@ -1160,13 +1160,13 @@
 	    # for viewing a separator.
 	    if {[grid info $itk_component(sl$gi)] != ""} {
 		# pack row label
-#		grid $itk_component(rl$gi) -row $gi -col 0 -sticky nsew
+#		grid $itk_component(rl$gi) -row $gi -column 0 -sticky nsew
 		raise $itk_component(rl$gi)
 
 		set j 1
 		foreach val $row {
 		    # pack row entry
-#		    grid $itk_component(e$gi,$j) -row $gi -col $j -sticky nsew
+#		    grid $itk_component(e$gi,$j) -row $gi -column $j -sticky nsew
 		    raise $itk_component(e$gi,$j)
 
 		    set evar($gi,$j) $val
@@ -1357,7 +1357,7 @@
     # repack the vertical bar
     if {0} {
 	if {0 < $vrows} {
-	    grid $itk_component(vscroll) -row 1 -col 2 -rowspan $vrows -sticky ns
+	    grid $itk_component(vscroll) -row 1 -column 2 -rowspan $vrows -sticky ns
 	} else {
 	    grid forget $itk_component(vscroll)
 	}
@@ -1366,7 +1366,7 @@
     packSepAll
 
     # repack table
-    #grid $itk_component(table) -row 0 -col 1 -sticky nsew
+    #grid $itk_component(table) -row 0 -column 1 -sticky nsew
 
     scroll 0
 }
@@ -1414,17 +1414,17 @@
 ::itcl::body TableView::packRow {i} {
     # pack row label
     grid $itk_component(rl$i) \
-	-row $i -col 0 -sticky nsew
+	-row $i -column 0 -sticky nsew
 
     for {set j 1} {$j <= $vcols} {incr j} {
 	grid $itk_component(e$i,$j) \
-	    -row $i -col $j -sticky nw
+	    -row $i -column $j -sticky nw
     }
 }
 
 ::itcl::body TableView::packAll {} {
     for {set j 1} {$j <= $vcols} {incr j} {
-	grid $itk_component(cl$j) -row 0 -col $j -sticky nsew
+	grid $itk_component(cl$j) -row 0 -column $j -sticky nsew
     }
 
     for {set i 1} {$i <= $vrows} {incr i} {
@@ -1436,7 +1436,7 @@
 
 ::itcl::body TableView::packSepAll {} {
     for {set i 1} {$i <= $vrows} {incr i} {
-	grid $itk_component(sl$i) -row $i -col 1 \
+	grid $itk_component(sl$i) -row $i -column 1 \
 	    -columnspan $vcols -sticky nsew
     }
 }
@@ -1565,12 +1565,12 @@
 
     # pack row label 0
     grid $itk_component(rl0) \
-	-row 0 -col 0 -sticky nw
+	-row 0 -column 0 -sticky nw
 
     # create column labels
     for {set j 1} {$j <= $vcols} {incr j} {
 	buildColLabel $j
-	grid $itk_component(cl$j) -row 0 -col $j -sticky nsew
+	grid $itk_component(cl$j) -row 0 -column $j -sticky nsew
     }
 
     for {set i 1} {$i <= $vrows} {incr i} {
@@ -1583,8 +1583,8 @@
     pack $itk_component(table) -expand yes -fill both
     $itk_component(canvas) create window 0 0 -tags tableTag \
             -window $itk_component(table) -anchor nw
-    grid $itk_component(rowLabels) -row 0 -col 0 -sticky nw
-    grid $itk_component(canvas) -row 0 -col 1 -sticky nsew
+    grid $itk_component(rowLabels) -row 0 -column 0 -sticky nw
+    grid $itk_component(canvas) -row 0 -column 1 -sticky nsew
 
     bind $itk_component(canvas) <Configure> [::itcl::code $this configureCanvas]
     bind $itk_component(table) <Configure> [::itcl::code $this configureTable]
