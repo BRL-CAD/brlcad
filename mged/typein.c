@@ -25,6 +25,7 @@
  *	epa_in		reads elliptical paraboloid params from keyboard
  *	ehy_in		reads elliptical hyperboloid params from keyboard
  *	eto_in		reads elliptical torus params from keyboard
+ *	part_in		reads particle params from keyboard
  *	checkv		checks for zero vector from keyboard
  *
  * Authors -
@@ -329,6 +330,17 @@ char *p_rpc[] = {
 	"Enter rectangular half-width, r: "
 };
 
+char *p_part[] = {
+	"Enter X, Y, Z of vertex: ",
+	"Enter Y: ",
+	"Enter Z: ",
+	"Enter X, Y, Z, of vector H: ",
+	"Enter Y: ",
+	"Enter Z: ",
+	"Enter v end radius: ",
+	"Enter h end radius: "
+};
+
 char *p_rhc[] = {
 	"Enter X, Y, Z of vertex: ",
 	"Enter Y: ",
@@ -410,7 +422,7 @@ char **argv;
 				rcc_in(), rhc_in(), rpc_in(), rpp_in(),
 				sph_in(), tec_in(), tgc_in(), tor_in(),
 				trc_in(), ebm_in(), vol_in(), hf_in(),
-				dsp_in(), submodel_in();
+				dsp_in(), submodel_in(), part_in();
 
 	if(dbip == DBI_NULL)
 	  return TCL_OK;
@@ -605,6 +617,10 @@ char **argv;
 		nvals = 3*3 + 2;
 		menu = p_eto;
 		fn_in = eto_in;
+	} else if( strcmp( argv[2], "part" ) == 0 )  {
+		nvals = 2*3 + 2;
+		menu = p_part;
+		fn_in = part_in;
 	} else {
 	  Tcl_AppendResult(interp, "f_in:  ", argv[2], " is not a known primitive\n",
 			   (char *)NULL);
@@ -1560,6 +1576,46 @@ struct rt_db_internal	*intern;
 	VSET( aip->pt[7], xmin, ymin, zmax );
 
 	return(0);	/* success */
+}
+
+/*   P A R T _ I N ( ) :	reads particle parameters from keyboard
+ *				returns 0 if successful read
+ *					1 if unsuccessful read
+ */
+int
+part_in(cmd_argvs, intern)
+char			*cmd_argvs[];
+struct rt_db_internal	*intern;
+{
+	int			i;
+	struct rt_part_internal *part_ip;
+
+	if(dbip == DBI_NULL)
+	  return TCL_OK;
+
+	intern->idb_type = ID_PARTICLE;
+	intern->idb_ptr = (genptr_t)bu_malloc( sizeof(struct rt_part_internal),
+		"rt_part_internal" );
+	part_ip = (struct rt_part_internal *)intern->idb_ptr;
+	part_ip->part_magic = RT_PART_INTERNAL_MAGIC;
+
+	for (i = 0; i < ELEMENTS_PER_PT; i++) {
+		part_ip->part_V[i] = atof(cmd_argvs[3+i]) * local2base;
+		part_ip->part_H[i] = atof(cmd_argvs[6+i]) * local2base;
+	}
+	part_ip->part_vrad = atof(cmd_argvs[9]) * local2base;
+	part_ip->part_hrad = atof(cmd_argvs[10]) * local2base;
+
+	if (MAGNITUDE(part_ip->part_H) < RT_LEN_TOL
+		|| part_ip->part_vrad <= RT_LEN_TOL
+		|| part_ip->part_hrad <= RT_LEN_TOL) {
+	  Tcl_AppendResult(interp,
+			   "ERROR, height, v radius and h radius must be greater than zero!\n",
+			   (char *)NULL);
+	  return(1);    /* failure */
+	}
+
+	return(0);      /* success */
 }
 
 /*   R P C _ I N ( ) :   	reads rpc parameters from keyboard
