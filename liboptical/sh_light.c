@@ -39,6 +39,7 @@ static const char RCSsh_light[] = "@(#)$Header$ (ARL)";
 #include "plot3.h"
 #include "rtprivate.h"
 #include "light.h"
+#include "photonmap.h"
 
 #if RT_MULTISPECTRAL
 #include "spectrum.h"
@@ -276,7 +277,9 @@ char	*dp;
 		bn_tabdata_scale( swp->msw_color, lsp->lt_spectrum, f );
 	}
 #else
-	VSCALE( swp->sw_color, lsp->lt_color, f );
+	if (!PM_Activated) {
+	  VSCALE( swp->sw_color, lsp->lt_color, f );
+	}
 #endif
 	return(1);
 }
