@@ -3037,7 +3037,8 @@ rt_dsp_uv( ap, stp, hitp, uvp )
      * space.  We remember the length of the resultant vectors and then
      * unitize them to get u,v directions in model coordinate space.
      * 
-
+     * XXX There is a bug in this code, which shows up in odd diagonals
+     * when raytracing straight down on a DSP
      */
     VSET( tmp, XSIZ(dsp), 0.0, 0.0 )
 	MAT4X3VEC( U_dir,  dsp->dsp_i.dsp_stom, tmp )
@@ -3164,6 +3165,10 @@ rt_dsp_plot( vhead, ip, ttol, tol )
     RT_CK_DB_INTERNAL(ip);
     RT_DSP_CK_MAGIC(dsp_ip);
 
+    if (! dsp_ip->dsp_mp ) {
+	bu_log("cannot find data for DSP\n");
+	return 0;
+    }
 
 #define MOVE(_pt) \
 	MAT4X3PNT(m_pt, dsp_ip->dsp_stom, _pt); \
@@ -3405,7 +3410,7 @@ rt_dsp_tess( r, m, ip, ttol, tol )
  *	Retrieve data for DSP from external file.
  *	Returns:
  *		0 Success
- *		!0 Failuer
+ *		!0 Failure
  */
 static int
 get_file_data(struct rt_dsp_internal	*dsp_ip,
@@ -3424,7 +3429,7 @@ get_file_data(struct rt_dsp_internal	*dsp_ip,
 				      bu_vls_addr(&dsp_ip->dsp_name), "dsp");
     if (!mf) {
 	bu_log("mapped file open failed\n");
-	return -1;
+	return 0;
     }
 
     if (dsp_ip->dsp_mp->buflen != dsp_ip->dsp_xcnt*dsp_ip->dsp_ycnt*2) {
