@@ -24,8 +24,6 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "common.h"
 
-
-
 #include "machine.h"
 
 #if defined(HAVE_REGEX)
