@@ -66,17 +66,9 @@ struct nurb_hit {
 
 #define NULL_HIT  (struct nurb_hit *)0
 
-struct uv_hit {
-	struct uv_hit * next;
-	int sub;
-	fastf_t u, v;
-};
-
 RT_EXTERN(int rt_nurb_grans, (struct snurb * srf));
 RT_EXTERN(struct nurb_hit *rt_conv_uv, (struct nurb_specific *n,
-	struct xray *r, struct uv_hit *h));
-RT_EXTERN(struct uv_hit *rt_nurb_intersect, (struct snurb * srf,
-	plane_t plane1, plane_t plane2));
+	struct xray *r, struct rt_nurb_uv_hit *h));
 RT_EXTERN(struct nurb_hit *rt_return_nurb_hit, (struct nurb_hit * head));
 
 
@@ -250,7 +242,7 @@ struct seg		*seghead;
 	while( nurb != (struct nurb_specific *) 0 )
 	{
 		struct nurb_b_list * n;
-		struct uv_hit *hp;
+		struct rt_nurb_uv_hit *hp;
 
 		n = nurb->b_list;
 		while( n != (struct nurb_b_list *)0)
@@ -261,11 +253,12 @@ struct seg		*seghead;
 				continue;
 			}
 
-			hp = (struct uv_hit *) rt_nurb_intersect(
-				n->srf, plane1, plane2);
-			while( hp != (struct uv_hit *)0)
+#define UV_TOL	1.0e-6	/* Paper says 1.0e-4 is reasonable for 1k images, not close up */
+			hp = rt_nurb_intersect(
+				n->srf, plane1, plane2, UV_TOL );
+			while( hp != (struct rt_nurb_uv_hit *)0)
 			{
-				struct uv_hit * o;
+				struct rt_nurb_uv_hit * o;
 
 				if( rt_g.debug & DEBUG_SPLINE )
 					rt_log("hit at %d %d sub = %d u = %f v = %f\n",
@@ -277,7 +270,7 @@ struct seg		*seghead;
 				o = hp;
 				hp = hp->next;
 				rt_free( (char *)o,
-					"rt_nurb_shot:uv_hit structure");
+					"rt_nurb_shot:rt_nurb_uv_hit structure");
 
 				rt_nurb_add_hit( &hit_list, hit);
 			}
@@ -801,161 +794,11 @@ register CONST mat_t		mat;
 	return (0);
 }
 
-struct uv_hit *
-rt_nurb_intersect( srf, plane1, plane2)
-struct snurb * srf;
-plane_t plane1;
-plane_t plane2;
-{
-	struct uv_hit * h;
-	struct snurb 	* psrf,
-			* s_list,
-			* osrf;
-	int 		dir,
-			sub;
-
-	point_t 	vmin,
-			vmax;
-	fastf_t 	u[2],
-			v[2];
-
-
-	h = (struct uv_hit *) 0;
-	/* project the surface to a 2 dimensional problem */
-	s_list = (struct snurb * ) rt_nurb_project_srf(
-		srf, plane2, plane1);
-
-	if( rt_g.debug & DEBUG_SPLINE )
-		rt_nurb_s_print("srf", s_list);
-
-
-	s_list->dir = 1;
-
-	while ( s_list != ( struct snurb *)0)
-	{
-		int flat;
-		
-		psrf = s_list;
-		s_list = s_list->next;
-
-		sub = 0;
-		flat = 0;
-		dir = psrf->dir;
-		
-		while(!flat)
-		{
-			fastf_t smin, smax;
-
-			sub++;
-			dir = (dir == 0)?1:0;	/* change direction */
-			
-			if( rt_g.debug & DEBUG_SPLINE )
-				rt_nurb_s_print("psrf", psrf);
-
-			rt_nurb_pbound( psrf, vmin, vmax);
-
-			/* Check for origin to be included in the bounding box */
-			if( !(vmin[0] <= 0.0 && vmin[1] <= 0.0 &&
-				vmax[0] >= 0.0 && vmax[1] >= 0.0 ))
-			{
-				flat = 1;
-				rt_nurb_free_snurb( psrf );
-				continue;
-			}
-
-			rt_nurb_clip_srf( psrf, dir, &smin, &smax);
-
-			if( (smax - smin) > .8)
-			{
-				struct snurb * s;
-
-				s = (struct snurb *) rt_nurb_s_split(
-					psrf, dir );
-				s->dir = dir;
-				s->next->dir = dir;
-				s->next->next = s_list;
-				s_list = s->next;
-				
-				rt_nurb_free_snurb( psrf );
-
-				psrf = s;
-				psrf->next = (struct snurb *) 0;
-				continue;
-			}
-			if( smin > 1.0 || smax < 0.0 )
-			{
-				flat = 1;
-				rt_nurb_free_snurb( psrf );
-				
-				continue;
-			}
-			if ( dir == RT_NURB_SPLIT_ROW)
-			{
-		                smin = (1.0 - smin) * psrf->u_knots.knots[0] +
-                		        smin * psrf->u_knots.knots[
-		                        psrf->u_knots.k_size -1];
-		                smax = (1.0 - smax) * psrf->u_knots.knots[0] +
-		                        smax * psrf->u_knots.knots[
-                		        psrf->u_knots.k_size -1];
-			} else
-			{
-	                        smin = (1.0 - smin) * psrf->v_knots.knots[0] +
-        	                        smin * psrf->v_knots.knots[
-                	                psrf->v_knots.k_size -1];
-                        	smax = (1.0 - smax) * psrf->v_knots.knots[0] +
-                                	smax * psrf->v_knots.knots[
-	                                psrf->v_knots.k_size -1];
-			}
-
-			osrf = psrf;
-			psrf = (struct snurb *)	rt_nurb_region_from_srf(
-				osrf, dir, smin, smax);
-
-			psrf->dir = dir;
-			rt_nurb_free_snurb(osrf);
-
-			u[0] = psrf->u_knots.knots[0];
-			u[1] = psrf->u_knots.knots[psrf->u_knots.k_size -1];
-
-			v[0] = psrf->v_knots.knots[0];
-			v[1] = psrf->v_knots.knots[psrf->v_knots.k_size -1];
-			
-#define UV_TOL	1.0e-6	/* Paper says 1.0e-4 is reasonable for 1k images, not close up */
-                        if( (u[1] - u[0]) < UV_TOL && (v[1] - v[0]) < UV_TOL)
-                        {
-				struct uv_hit * hit;
-                        	hit = (struct uv_hit *) rt_malloc(
-                        		sizeof( struct uv_hit), 
-                        		"rt_nurb_intersect:uv_hit structure");
-                        	hit->next = (struct uv_hit *)0;
-                        	hit->sub = sub;
-                        	hit->u = (u[0] + u[1])/2.0;
-                        	hit->v = (v[0] + v[1])/2.0;
-                        	
-                        	if( h == (struct uv_hit *)0)
-                        		h = hit;
-                        	else
-                        	{
-                        		hit->next = h;
-                        		h = hit;
-                        	}
-                        	flat = 1;
-                        	rt_nurb_free_snurb( psrf );
-                        }
-			if( (u[1] - u[0]) > (v[1] - v[0]) )
-				dir = 1;
-			else dir = 0;
-		}
-	}
-
-	return (struct uv_hit *)h;
-}
-
 struct nurb_hit *
 rt_conv_uv( n, r, h)
 struct nurb_specific * n;
 struct xray * r;
-struct uv_hit * h;
+struct rt_nurb_uv_hit * h;
 {
 	struct nurb_hit * hit;
 	fastf_t * pt;
