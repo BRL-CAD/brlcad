@@ -1213,6 +1213,7 @@ struct hitmiss *myhit;
 	double cos_angle;
 	double inb_cos_angle = 2.0;
 	double outb_cos_angle = -1.0;
+	struct shell *s;
 	struct faceuse *fu;
 	struct faceuse *inb_fu;
 	struct faceuse *outb_fu;
@@ -1243,6 +1244,7 @@ struct hitmiss *myhit;
 
 	myhit->in_out = 0;
 
+	s = nmg_find_s_of_eu( eu );
 
 	faces_found = 0;
 	eu_p = eu->e_p->eu_p;
@@ -1260,6 +1262,9 @@ struct hitmiss *myhit;
 				goto next_edgeuse;
 			}
 
+			if( fu->s_p != s )
+				goto next_edgeuse;
+
 			if (nmg_find_eu_leftvec(edge_left, eu_p)) {
 				rt_log("edgeuse not part of faceuse");
 				goto next_edgeuse;
@@ -1274,9 +1279,11 @@ struct hitmiss *myhit;
 			cos_angle = VDOT(edge_left, rd->rp->r_dir);
 
 			if (rt_g.NMG_debug & DEBUG_RT_ISECT)
+			{
 				rt_log("left_vect:(%g %g %g)  cos_angle:%g\n",
 					edge_left[0], edge_left[1],
 					edge_left[2], cos_angle);
+			}
 
 			if (cos_angle < inb_cos_angle) {
 				inb_cos_angle = cos_angle;
@@ -1379,6 +1386,8 @@ next_edgeuse:	eu_p = eu_p->eumate_p->radial_p;
 			rt_log("OUT_ON\n"); break;
 		case HMG_HIT_ON_OUT:
 			rt_log("ON_OUT\n"); break;
+		case HMG_HIT_ON_ON:
+			rt_log("ON_ON\n"); break;
 		default:
 			rt_log("?_?\n"); break;
 		}
