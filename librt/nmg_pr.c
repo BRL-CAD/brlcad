@@ -567,7 +567,8 @@ char *h;
 			int ncoords;
 
 			rt_log( "%sEDGE_G_CNURB %8x\n" , h , eg_c );
-			rt_log( "%s  order=%d, %d ctl pts\n", h, eg_c->order, eg_c->c_size );
+			rt_log( "%s  order=%d, %d ctl pts, pt_type=%d\n",
+				h, eg_c->order, eg_c->c_size, eg_c->pt_type );
 			rt_log( "%s  knot vector (len=%d):", h, eg_c->k.k_size );
 			for( i=0 ; i<eg_c->k.k_size ; i++ )
 				rt_log( " %f", eg_c->k.knots[i] );
