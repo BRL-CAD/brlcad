@@ -330,13 +330,9 @@ f_aip(
   }
 
   if (!ndrawn){
-      Tcl_AppendResult(interp, "aip: no solids displayed\n", (char *)NULL);
-      return TCL_ERROR;
-    }
-    else if (state != ST_S_PICK && state != ST_O_PICK  && state != ST_O_PATH)
-    {
-      state_err("advance the illumination pointer");
-      return TCL_ERROR;
+	  return TCL_OK;
+  } else if (state != ST_S_PICK && state != ST_O_PICK  && state != ST_O_PATH) {
+	  return TCL_OK;
   }
 
   if(state == ST_O_PATH){
