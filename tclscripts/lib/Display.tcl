@@ -48,6 +48,7 @@ class Display {
     public method rt {args}
     public method rtabort {{gi 0}}
     public method rtcheck {args}
+    public method rtedge {args}
     public method autoview {{g_index 0}}
     public method attach_view {}
     public method attach_drawable {dg}
@@ -189,6 +190,25 @@ body Display::rtcheck {args} {
 
     set v_obj [View::get_viewname]
     eval $geo rtcheck $v_obj -F $itk_option(-listen) $args
+}
+
+body Display::rtedge {args} {
+    set len [llength $args]
+
+    if {$len > 1 && [lindex $args 0] == "-geo"} {
+	set index [lindex $args 1]
+	set args [lrange $args 2 end]
+	set geo [lindex $geolist $index]
+    } else {
+	set geo [lindex $geolist 0]
+    }
+
+    if {$geo == ""} {
+	return "rtedge: bad geometry index"
+    }
+
+    set v_obj [View::get_viewname]
+    eval $geo rtedge $v_obj -F $itk_option(-listen) -w $width -n $height -V $aspect $args
 }
 
 body Display::autoview {{g_index 0}} {
@@ -573,14 +593,14 @@ body Display::doBindings {} {
     bind $itk_component(dm) <Alt-Control-Shift-ButtonPress-3> "[code $this scale_mode %x %y]; break"
 
     # Key Bindings
-    bind $itk_component(dm) 3 "$this aet \"35 25 0\"; break"
-    bind $itk_component(dm) 4 "$this aet \"45 45 0\"; break"
-    bind $itk_component(dm) f "$this aet \"0 0 0\"; break"
-    bind $itk_component(dm) R "$this aet \"180 0 0\"; break"
-    bind $itk_component(dm) r "$this aet \"270 0 0\"; break"
-    bind $itk_component(dm) l "$this aet \"90 0 0\"; break"
-    bind $itk_component(dm) t "$this aet \"0 90 0\"; break"
-    bind $itk_component(dm) b "$this aet \"0 270 0\"; break"
+    bind $itk_component(dm) 3 "$this ae \"35 25 0\"; break"
+    bind $itk_component(dm) 4 "$this ae \"45 45 0\"; break"
+    bind $itk_component(dm) f "$this ae \"0 0 0\"; break"
+    bind $itk_component(dm) R "$this ae \"180 0 0\"; break"
+    bind $itk_component(dm) r "$this ae \"270 0 0\"; break"
+    bind $itk_component(dm) l "$this ae \"90 0 0\"; break"
+    bind $itk_component(dm) t "$this ae \"0 90 0\"; break"
+    bind $itk_component(dm) b "$this ae \"0 270 0\"; break"
     bind $itk_component(dm) <F2> "[code $this toggle_zclip]; break"
     bind $itk_component(dm) <F3> "[code $this toggle_perspective]; break"
     bind $itk_component(dm) <F4> "[code $this toggle_zbuffer]; break"
