@@ -130,7 +130,7 @@ RGBpixel 	*pixelp;
 			(unsigned long)ifp,
 			(*pixelp)[RED], (*pixelp)[GRN], (*pixelp)[BLU] );
 	}
-#endif NEVER
+#endif /* NEVER */
 
 	if( ifp->if_pno == -1 )
 		if( _fb_pgin( ifp, ifp->if_pixcur / ifp->if_ppixels ) == -1 )
@@ -172,7 +172,7 @@ RGBpixel	*pixelp;
 			(unsigned long)ifp, (unsigned long)pixelp,
 			(*pixelp)[RED], (*pixelp)[GRN], (*pixelp)[BLU] );
 	}
-#endif NEVER
+#endif /* NEVER */
 
 	return	0;
 }

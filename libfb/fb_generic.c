@@ -167,7 +167,7 @@ int	width, height;
 		*ifp = remote_interface;
 		goto found_interface;
 	}
-#endif IF_REMOTE
+#endif /* IF_REMOTE */
 	/* Assume it's a disk file */
 	if( _disk_enable ) {
 		*ifp = disk_interface;
