@@ -1621,6 +1621,11 @@ hoc_register_menu_data "Tools" "Color Editor..." "Color Editor"\
 #.$id.menubar.tools add checkbutton -offvalue 0 -onvalue 1 -variable mged_gui($id,classic_buttons)\
 #	-label "Classic Menu Tool..." -underline 0\
 #	-command "toggle_button_menu $id"
+.$id.menubar.tools add separator
+.$id.menubar.tools add command -label "Command Window" -underline 0\
+	-command "raise .$id"
+.$id.menubar.tools add command -label "Geometry Window" -underline 0\
+	-command "raise $mged_gui($id,top)"
 
 menu .$id.menubar.help -title "Help" -tearoff $mged_default(tearoff_menus)
 .$id.menubar.help add command -label "About MGED" -underline 0\
