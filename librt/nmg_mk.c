@@ -1098,7 +1098,7 @@ pointp_t	pt;
 
 	NMG_CK_VERTEX(v);
 
-	if (v->vg_p) {
+	if (vg = v->vg_p) {
 		NMG_CK_VERTEX_G(v->vg_p);
 	}
 	else {
