@@ -330,7 +330,7 @@ getsolid()
 		VADD3( T(5), D(0), D(3), D(2) );
 		VADD4( T(6), D(0), D(3), D(2), D(1) );
 		VADD3( T(7), D(0), D(3), D(1) );
-		return( mk_arb8( outfp, name, (CONST point_t *)tmp ) );
+		return( mk_arb8( outfp, name, &tmp[0][X] ) );
 	}
 
 	if( strcmp( solid_type, "raw" ) == 0 ||
@@ -347,7 +347,7 @@ getsolid()
 		VADD3( T(5), D(0), D(3), D(2) );
 		VMOVE( T(6), T(5) );
 		VADD3( T(7), D(0), D(3), D(1) );
-		return( mk_arb8( outfp, name, (CONST point_t *)tmp ) );
+		return( mk_arb8( outfp, name, &tmp[0][X] ) );
 	}
 
 	if( strcmp( solid_type, "rvw" ) == 0 )  {
@@ -381,7 +381,7 @@ getsolid()
 		VADD2( T(5), T(1), c );
 		VMOVE( T(6), T(5) );
 		VADD2( T(7), T(3), c );
-		return( mk_arb8( outfp, name, (CONST point_t *)tmp ) );
+		return( mk_arb8( outfp, name, &tmp[0][X] ) );
 	}
 
 	if( strcmp( solid_type, "arw" ) == 0) {
@@ -398,20 +398,20 @@ getsolid()
 
 		VADD3( T(6), D(0), D(1), D(3) );
 		VMOVE( T(7), T(6) );
-		return( mk_arb8( outfp, name, (CONST point_t *)tmp) );
+		return( mk_arb8( outfp, name, &tmp[0][X]) );
 	}
 
 	if( strcmp( solid_type, "arb8" ) == 0 )  {
 		if( getsoldata( dd, 8*3, sol_work ) < 0 )
 			return(-1);
-		return( mk_arb8( outfp, name, (CONST point_t *)dd ) );
+		return( mk_arb8( outfp, name, dd ) );
 	}
 
 	if( strcmp( solid_type, "arb7" ) == 0 )  {
 		if( getsoldata( dd, 7*3, sol_work ) < 0 )
 			return(-1);
 		VMOVE( D(7), D(4) );
-		return( mk_arb8( outfp, name, (CONST point_t *)dd ) );
+		return( mk_arb8( outfp, name, dd ) );
 	}
 
 	if( strcmp( solid_type, "arb6" ) == 0 )  {
@@ -421,7 +421,7 @@ getsolid()
 		VMOVE( D(7), D(5) );
 		VMOVE( D(6), D(5) );
 		VMOVE( D(5), D(4) );
-		return( mk_arb8( outfp, name, (CONST point_t *)dd ) );
+		return( mk_arb8( outfp, name, dd ) );
 	}
 
 	if( strcmp( solid_type, "arb5" ) == 0 )  {
@@ -430,13 +430,13 @@ getsolid()
 		VMOVE( D(5), D(4) );
 		VMOVE( D(6), D(4) );
 		VMOVE( D(7), D(4) );
-		return( mk_arb8( outfp, name, (CONST point_t *)dd ) );
+		return( mk_arb8( outfp, name, dd ) );
 	}
 
 	if( strcmp( solid_type, "arb4" ) == 0 )  {
 		if( getsoldata( dd, 4*3, sol_work ) < 0 )
 			return(-1);
-		return( mk_arb4( outfp, name, (CONST point_t *)dd ) );
+		return( mk_arb4( outfp, name, dd ) );
 	}
 
 	if( strcmp( solid_type, "rcc" ) == 0 )  {
