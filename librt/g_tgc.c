@@ -517,7 +517,8 @@ struct seg		*seghead;
 	LOCAL vect_t		pprime;
 	LOCAL vect_t		dprime;
 	LOCAL vect_t		work;
-	LOCAL fastf_t		k[4], pt[2];
+	LOCAL fastf_t		k[6];
+	LOCAL int		hit_type[6];
 	LOCAL fastf_t		t, b, zval, dir;
 	LOCAL fastf_t		t_scale;
 	LOCAL fastf_t		alf1, alf2;
@@ -646,7 +647,9 @@ struct seg		*seghead;
 			register fastf_t	f;
 			roots = sqrt(roots);
 			k[0] = (roots - C.cf[1]) * (f = 0.5 / C.cf[0]);
+			hit_type[0] = TGC_NORM_BODY;
 			k[1] = (roots + C.cf[1]) * -f;
+			hit_type[1] = TGC_NORM_BODY;
 			npts = 2;
 		}
 	} else {
@@ -703,8 +706,10 @@ struct seg		*seghead;
 		 *  of 't' for the intersections
 		 */
 		for ( l=0, npts=0; l < nroots; l++ ){
-			if ( NEAR_ZERO( val[l].im, 1e-10 ) )
+			if ( NEAR_ZERO( val[l].im, 1e-10 ) ) {
+				hit_type[npts] = TGC_NORM_BODY;
 				k[npts++] = val[l].re;
+			}
 		}
 		/* Here, 'npts' is number of points being returned */
 		if ( npts != 0 && npts != 2 && npts != 4 ){
@@ -720,86 +725,31 @@ struct seg		*seghead;
 		k[i] += cor_proj;
 	}
 
-	if ( npts != 0 && npts != 2 && npts != 4 ){
-		bu_log("tgc(%s):  %d intersects != {0,2,4}\n",
-		    stp->st_name, npts );
-		return(0);			/* No hit */
-	}
-
-	/* Sort Most distant to least distant: rt_pt_sort( k, npts ) */
-	{
-		register fastf_t	u;
-		register short		lim, n;
-
-		for( lim = npts-1; lim > 0; lim-- )  {
-			for( n = 0; n < lim; n++ )  {
-				if( (u=k[n]) < k[n+1] )  {
-					/* bubble larger towards [0] */
-					k[n] = k[n+1];
-					k[n+1] = u;
-				}
-			}
-		}
-	}
-	/* Now, k[0] > k[npts-1] */
-
-	/* General Cone may have 4 intersections, but	*
-	 * Truncated Cone may only have 2.		*/
-
-#define OUT		0
-#define	IN		1
-
-	/*		Truncation Procedure
-	 *
-	 *  Determine whether any of the intersections found are
-	 *  between the planes truncating the cone.
+	/*
+	 * Eliminate hits beyond the end planes
 	 */
-	intersect = 0;
-	for ( i=0; i < npts; i++ ){
+	i = 0;
+	while( i < npts ) {
 		zval = k[i]*dprime[Z] + pprime[Z];
 		/* Height vector is unitized (tgc->tgc_sH == 1.0) */
-		if ( zval < 1.0 && zval > 0.0 ){
-			if ( ++intersect == 2 )  {
-				pt[IN] = k[i];
-			}  else {
-				pt[OUT] = k[i];
+		if ( zval >= 1.0 || zval <= 0.0 ){
+			int j;
+			/* drop this hit */
+			npts--;
+			for( j=i ; j<npts ; j++ ) {
+				hit_type[j] = hit_type[j+1];
+				k[j] = k[j+1];
 			}
+		} else {
+			i++;
 		}
 	}
-	if ( intersect == 2 ){
-		/*  If two between-plane intersections exist, they are
-		 *  the hit points for the ray.
-		 */
-		RT_GET_SEG( segp, ap->a_resource );
-		segp->seg_stp = stp;
 
-		segp->seg_in.hit_dist = pt[IN] * t_scale;
-		segp->seg_in.hit_surfno = TGC_NORM_BODY;	/* compute N */
-		VJOIN1( segp->seg_in.hit_vpriv, pprime, pt[IN], dprime );
-
-		segp->seg_out.hit_dist = pt[OUT] * t_scale;
-		segp->seg_out.hit_surfno = TGC_NORM_BODY;	/* compute N */
-		VJOIN1( segp->seg_out.hit_vpriv, pprime, pt[OUT], dprime );
-
-		BU_LIST_INSERT( &(seghead->l), &(segp->l) );
-		return(2);
-	}
-	if ( intersect == 1 )  {
-		int	nflag;
-		/*
-		 *  If only one between-plane intersection exists (pt[OUT]),
-		 *  then the other intersection must be on
-		 *  one of the planar surfaces (pt[IN]).
-		 *
-		 *  Find which surface it lies on by calculating the 
-		 *  X and Y values of the line as it intersects each
-		 *  plane (in the standard coordinate system), and test
-		 *  whether this lies within the governing ellipse.
-		 */
-		if( NEAR_ZERO( dprime[Z], SMALL_FASTF ) )  {
-			bu_log("tgc: dprime[Z] = 0!\n" );
-			return(0);
-		}
+	/*
+	 * Consider intersections with the end ellipses
+	 */
+	dir = VDOT( tgc->tgc_N, rp->r_dir );
+	if( !NEAR_ZERO( dprime[Z], SMALL_FASTF ) && !NEAR_ZERO( dir, RT_DOT_TOL ) )  {
 		b = ( -pprime[Z] )/dprime[Z];
 		/*  Height vector is unitized (tgc->tgc_sH == 1.0) */
 		t = ( 1.0 - pprime[Z] )/dprime[Z];
@@ -810,107 +760,114 @@ struct seg		*seghead;
 		alf1 = work[X]*work[X] + work[Y]*work[Y];
 
 		VJOIN1( work, pprime, t, dprime );
+
 		/* Must scale C and D vectors */
 		alf2 = ALPHA(work[X], work[Y], tgc->tgc_AAdCC,tgc->tgc_BBdDD);
 
 		if ( alf1 <= 1.0 ){
-			pt[IN] = b;
-			nflag = TGC_NORM_BOT; /* copy reverse normal */
-		} else if ( alf2 <= 1.0 ){
-			pt[IN] = t;
-			nflag = TGC_NORM_TOP;	/* copy normal */
-		} else {
-			/* intersection apparently invalid  */
-			bu_log("tgc(%s):  only 1 intersect\n", stp->st_name);
-			bu_log( "\t (%d %d): ray pt = (%g %g %g), dir = (%g %g %g)\n",
-				ap->a_x, ap->a_y,
-				V3ARGS( ap->a_ray.r_pt ),
-				V3ARGS( ap->a_ray.r_dir ) );
-			return(0);
+			hit_type[npts] = TGC_NORM_BOT;
+			k[npts++] = b;
 		}
+		if ( alf2 <= 1.0 ){
+			hit_type[npts] = TGC_NORM_TOP;
+			k[npts++] = t;
+		}
+	}
 
+
+	/* Sort Most distant to least distant: rt_pt_sort( k, npts ) */
+	{
+		register fastf_t	u;
+		register short		lim, n;
+		register int		type;
+
+		for( lim = npts-1; lim > 0; lim-- )  {
+			for( n = 0; n < lim; n++ )  {
+				if( (u=k[n]) < k[n+1] )  {
+					/* bubble larger towards [0] */
+					type = hit_type[n];
+					hit_type[n] = hit_type[n+1];
+					hit_type[n+1] = type;
+					k[n] = k[n+1];
+					k[n+1] = u;
+				}
+			}
+		}
+	}
+	/* Now, k[0] > k[npts-1] */
+
+	if( npts%2 ) {
+		/* odd number of hits!!!
+		 * perhaps we got two hits on an edge
+		 * check for duplicate hit distances
+		 */
+
+		for( i=npts-1 ; i>0 ; i-- ) {
+			fastf_t diff;
+
+			diff = k[i-1] - k[i];	/* non-negative due to sorting */
+			if( diff < ap->a_rt_i->rti_tol.dist ) {
+				/* remove this duplicate hit */
+				int j;
+
+				npts--;
+				for( j=i ; j<npts ; j++ ) {
+					hit_type[j] = hit_type[j+1];
+					k[j] = k[j+1];
+				}
+
+				/* now have even number of hits */
+				break;
+			}
+		}
+	}
+
+	if ( npts != 0 && npts != 2 && npts != 4 ){
+		bu_log("tgc(%s):  %d intersects != {0,2,4}\n",
+		    stp->st_name, npts );
+		bu_log( "\tray: pt = (%g %g %g), dir = (%g %g %g)\n",
+			V3ARGS( ap->a_ray.r_pt ),
+			V3ARGS( ap->a_ray.r_dir ) );
+		for( i=0 ; i<npts ; i++ ) {
+			bu_log( "\t%g", k[i]*t_scale );
+		}
+		bu_log( "\n" );
+		return(0);			/* No hit */
+	}
+
+	intersect = 0;
+	for( i=npts-1 ; i>0 ; i -= 2 ) {
 		RT_GET_SEG( segp, ap->a_resource );
 		segp->seg_stp = stp;
-		/* pt[OUT] on skin, pt[IN] on end */
-		if ( pt[OUT] >= pt[IN] )  {
-			segp->seg_in.hit_dist = pt[IN] * t_scale;
-			segp->seg_in.hit_surfno = nflag;
 
-			segp->seg_out.hit_dist = pt[OUT] * t_scale;
-			segp->seg_out.hit_surfno = TGC_NORM_BODY;	/* compute N */
-			/* transform-space vector needed for normal */
-			VJOIN1( segp->seg_out.hit_vpriv, pprime, pt[OUT], dprime );
+		segp->seg_in.hit_dist = k[i] * t_scale;
+		segp->seg_in.hit_surfno = hit_type[i];
+		if( segp->seg_in.hit_surfno == TGC_NORM_BODY ) {
+			VJOIN1( segp->seg_in.hit_vpriv, pprime, k[i], dprime );
 		} else {
-			segp->seg_in.hit_dist = pt[OUT] * t_scale;
-			/* transform-space vector needed for normal */
-			segp->seg_in.hit_surfno = TGC_NORM_BODY;	/* compute N */
-			VJOIN1( segp->seg_in.hit_vpriv, pprime, pt[OUT], dprime );
-
-			segp->seg_out.hit_dist = pt[IN] * t_scale;
-			segp->seg_out.hit_surfno = nflag;
+			if( dir > 0.0 ) {
+				segp->seg_in.hit_surfno = TGC_NORM_BOT;
+			} else {
+				segp->seg_in.hit_surfno = TGC_NORM_TOP;
+			}
 		}
 
+		segp->seg_out.hit_dist = k[i-1] * t_scale;
+		segp->seg_out.hit_surfno = hit_type[i-1];
+		if( segp->seg_out.hit_surfno == TGC_NORM_BODY ) {
+			VJOIN1( segp->seg_out.hit_vpriv, pprime, k[i-1], dprime );
+		} else {
+			if( dir > 0.0 ) {
+				segp->seg_out.hit_surfno = TGC_NORM_TOP;
+			} else {
+				segp->seg_out.hit_surfno = TGC_NORM_BOT;
+			}
+		}
+		intersect++;
 		BU_LIST_INSERT( &(seghead->l), &(segp->l) );
-		return(2);
 	}
 
-	/*  If all conic interections lie outside the plane,
-	 *  then check to see whether there are two planar
-	 *  intersections inside the governing ellipses.
-	 *
-	 *  But first, if the direction is parallel (or nearly
-	 *  so) to the planes, it (obviously) won't intersect
-	 *  either of them.
-	 */
-	if( NEAR_ZERO( dprime[Z], SMALL_FASTF ) )
-		return(0);
-
-	dir = VDOT( tgc->tgc_N, rp->r_dir );	/* direc */
-	if ( NEAR_ZERO( dir, RT_DOT_TOL ) )
-		return(0);
-
-	b = ( -pprime[Z] )/dprime[Z];
-	/* Height vector is unitized (tgc->tgc_sH == 1.0) */
-	t = ( 1.0 - pprime[Z] )/dprime[Z];
-
-	VJOIN1( work, pprime, b, dprime );
-	/* A and B vectors are unitized (tgc->tgc_A == _B == 1.0) */
-	/* alpf = ALPHA(work[0], work[1], 1.0, 1.0 ) */
-	alf1 = work[X]*work[X] + work[Y]*work[Y];
-
-	VJOIN1( work, pprime, t, dprime );
-	/* Must scale C and D vectors. */
-	alf2 = ALPHA(work[X], work[Y], tgc->tgc_AAdCC,tgc->tgc_BBdDD);
-
-	/*  It should not be possible for one planar intersection
-	 *  to be outside its ellipse while the other is inside ...
-	 *  but I wouldn't take any chances.
-	 */
-	if ( alf1 > 1.0 || alf2 > 1.0 )
-		return(0);
-
-	RT_GET_SEG( segp, ap->a_resource );
-	segp->seg_stp = stp;
-
-	/*  Use the dot product (found earlier) of the plane
-	 *  normal with the direction vector to determine the
-	 *  orientation of the intersections.
-	 */
-	if ( dir > 0.0 ){
-		segp->seg_in.hit_dist = b * t_scale;
-		segp->seg_in.hit_surfno = TGC_NORM_BOT;	/* reverse normal */
-
-		segp->seg_out.hit_dist = t * t_scale;
-		segp->seg_out.hit_surfno = TGC_NORM_TOP;	/* normal */
-	} else {
-		segp->seg_in.hit_dist = t * t_scale;
-		segp->seg_in.hit_surfno = TGC_NORM_TOP;	/* normal */
-
-		segp->seg_out.hit_dist = b * t_scale;
-		segp->seg_out.hit_surfno = TGC_NORM_BOT;	/* reverse normal */
-	}
-	BU_LIST_INSERT( &(seghead->l), &(segp->l) );
-	return(2);
+	return( intersect );
 }
 
 #define RT_TGC_SEG_MISS(SEG)	(SEG).seg_stp=RT_SOLTAB_NULL
