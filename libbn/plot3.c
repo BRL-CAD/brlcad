@@ -429,8 +429,8 @@ double x1, y1, x2, y2;
 void
 pdv_3space( plotfp, min, max )
 register FILE *plotfp;
-vect_t	min;
-vect_t	max;
+CONST vect_t	min;
+CONST vect_t	max;
 {
 	unsigned char	out[6*8+1];
 
@@ -464,7 +464,7 @@ double x1, y1, z1, x2, y2, z2;
 void
 pdv_3point( plotfp, pt )
 register FILE *plotfp;
-vect_t	pt;
+CONST vect_t	pt;
 {
 	unsigned char	out[3*8+1];
 
@@ -494,7 +494,7 @@ double x, y, z;
 void
 pdv_3move( plotfp, pt )
 register FILE *plotfp;
-vect_t	pt;
+CONST vect_t	pt;
 {
 	unsigned char	out[3*8+1];
 
@@ -524,7 +524,7 @@ double x, y, z;
 void
 pdv_3cont( plotfp, pt )
 register FILE *plotfp;
-vect_t	pt;
+CONST vect_t	pt;
 {
 	unsigned char	out[3*8+1];
 
@@ -554,7 +554,7 @@ double x, y, z;
 void
 pdv_3line( plotfp, a, b )
 register FILE *plotfp;
-vect_t	a, b;
+CONST vect_t	a, b;
 {
 	unsigned char	out[6*8+1];
 
@@ -588,7 +588,7 @@ double x1, y1, z1, x2, y2, z2;
 void
 pdv_3box( plotfp, a, b )
 register FILE *plotfp;
-vect_t	a, b;
+CONST vect_t	a, b;
 {
 	pd_3move( plotfp, a[X], a[Y], a[Z] );
 	/* first side */
