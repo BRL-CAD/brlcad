@@ -572,7 +572,7 @@ static void be_reject()  {
 		{
 			union record *recp;
 
-			recp = db_getmrec( illump );
+			recp = db_getmrec( illump->s_path[illump->s_last] );
 			illump = redraw( illump, recp, es_mat );
 			free( (char *)recp );
 		}
