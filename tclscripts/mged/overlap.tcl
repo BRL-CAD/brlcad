@@ -462,8 +462,20 @@ proc overlap_tool { id } {
 	set over_cont($id,ray) "ray"
 	radiobutton $over_cont($id,top).raytrace -variable over_cont($id,ray) -value "ray" -command "ray_setup $id"
 	label $over_cont($id,top).ray_lab -text "Raytrace to find overlaps"
+	hoc_register_data $over_cont($id,top).raytrace "Raytrace to Find Overlaps" {
+		{summary "Select this option to do raytracing to discover overlaps" }
+	}
+	hoc_register_data $over_cont($id,top).ray_lab "Raytrace to Find Overlaps" {
+		{summary "Select this option to do raytracing to discover overlaps" }
+	}
 	radiobutton $over_cont($id,top).glint -variable over_cont($id,ray) -value "glint" -command "glint_setup $id"
 	label $over_cont($id,top).glint_lab -text "Read overlaps from g_lint output"
+	hoc_register_data $over_cont($id,top).glint "Read Overlaps from a file" {
+		{summary "Select this option to read an overlap file produced from 'g_lint -s'" }
+	}
+	hoc_register_data $over_cont($id,top).glint_lab "Read Overlaps from a file" {
+		{summary "Select this option to read an overlap file produced from 'g_lint -s'" }
+	}
 
 	frame $over_cont($id,top).ray_fr
 	label $over_cont($id,top).ray_fr.objs_l -text "Object(s)"
