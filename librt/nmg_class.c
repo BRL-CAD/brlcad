@@ -251,25 +251,43 @@ CONST struct rt_tol	*tol;
  	if( dist >= closest->dist - tol->dist )  {
  		/*
  		 *  Distances are very nearly the same.
- 		 *  If "closest" result so far was a NMG_CLASS_AinB or
-		 *  or NMG_CLASS_AonB, then keep it,
- 		 *  otherwise, replace that result with whatever we find
- 		 *  here.  Logic:  Two touching loops, one concave ("A")
-		 *  which wraps around part of the other ("B"), with the
- 		 *  point inside A near the contact with B.  If loop B is
-		 *  processed first, the closest result will be NMG_CLASS_AoutB,
- 		 *  and when loop A is visited the distances will be exactly
- 		 *  equal, not giving A a chance to claim it's hit.
+		 *
+ 		 *  If closest eu and this eu are from the same lu,
+ 		 *  and the earlier result was OUT, that's all it takes
+ 		 *  to decide things.
  		 */
- 		if( closest->class == NMG_CLASS_AinB ||
-		    closest->class == NMG_CLASS_AonBshared )  {
+ 		if( closest->p.eu && closest->p.eu->up.lu_p == eu->up.lu_p )  {
+ 			if( closest->class == NMG_CLASS_AoutB ||
+			    closest->class == NMG_CLASS_AonBshared )  {
+		 		if(rt_g.NMG_debug & DEBUG_CLASSIFY)
+					rt_log("\t\tSkipping, earlier eu from same lu at same dist, is OUT or ON.\n");
+	 			return;
+ 			}
 	 		if(rt_g.NMG_debug & DEBUG_CLASSIFY)
-				rt_log("\t\tSkipping, earlier eu at same dist, is IN or ON\n");
- 			return;
- 		}
- 		if(rt_g.NMG_debug & DEBUG_CLASSIFY)
-			rt_log("\t\tEarlier eu at same dist, is OUT, continue processing.\n");
- 	}
+				rt_log("\t\tEarlier eu from same lu at same dist, is IN, continue processing.\n");
+		} else {
+			/*
+	 		 *  If this is now a new lu, it is more complicated.
+	 		 *  If "closest" result so far was a NMG_CLASS_AinB or
+			 *  or NMG_CLASS_AonB, then keep it,
+	 		 *  otherwise, replace that result with whatever we find
+	 		 *  here.  Logic:  Two touching loops, one concave ("A")
+			 *  which wraps around part of the other ("B"), with the
+	 		 *  point inside A near the contact with B.  If loop B is
+			 *  processed first, the closest result will be NMG_CLASS_AoutB,
+	 		 *  and when loop A is visited the distances will be exactly
+	 		 *  equal, not giving A a chance to claim it's hit.
+	 		 */
+	 		if( closest->class == NMG_CLASS_AinB ||
+			    closest->class == NMG_CLASS_AonBshared )  {
+		 		if(rt_g.NMG_debug & DEBUG_CLASSIFY)
+					rt_log("\t\tSkipping, earlier eu from other another lu at same dist, is IN or ON\n");
+	 			return;
+	 		}
+	 		if(rt_g.NMG_debug & DEBUG_CLASSIFY)
+				rt_log("\t\tEarlier eu from other lu at same dist, is OUT, continue processing.\n");
+		}
+	}
 
 	/* Plane hit point is closer to this edgeuse than previous one(s) */
 	if (rt_g.NMG_debug & DEBUG_CLASSIFY) {
@@ -458,6 +476,9 @@ CONST struct rt_tol	*tol;
  *
  *  The algorithm used is to find the edge which the point is closest
  *  to, and classifiy with respect to that.
+ *
+ *  All loops have to be searched together, to account for holes inside
+ *  exterior loops, potentially with solid parts inside those holes.
  *
  *  "ignore_lu" is optional.  When non-null, it points to a loopuse (and it's
  *  mate) which will not be considered in the assessment of this point.
