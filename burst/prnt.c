@@ -22,7 +22,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <time.h>
 #include <string.h>
 
-#include <Sc/Sc.h>
+#include "./Sc.h"
 
 #include "machine.h"
 #include "vmath.h"
@@ -190,7 +190,7 @@ prntAspectInit()
 	projarea *= projarea;
 	if(	outfile[0] != NUL
 	    &&	fprintf(outfp,
-			"%c % 8.4f % 8.4f % 5.2f % 10.2f %-6s% 9.6f\n",
+			"%c % 8.4f % 8.4f % 5.2f % 10.2f %-6s % 9.6f\n",
 			PB_ASPECT_INIT,
 			viewazim*DEGRAD, /* attack azimuth in degrees */
 			viewelev*DEGRAD, /* attack elevation in degrees */
@@ -364,10 +364,15 @@ fixed_exit_normal:
 		ScaleVec( ohitp->hit_normal, -1.0 );
 		goto fixed_exit_normal;
 		}
-	rotangle = atan2( ohitp->hit_normal[Y], ohitp->hit_normal[X] );
-	rotangle *= DEGRAD; /* convert to degrees */
-	if( rotangle < 0.0 )
-		rotangle += 360.0;
+	if( ohitp->hit_normal[Y] == 0.0 && ohitp->hit_normal[X] == 0.0 )
+		rotangle = 0.0;
+	else
+		{
+		rotangle = atan2( ohitp->hit_normal[Y], ohitp->hit_normal[X] );
+		rotangle *= DEGRAD; /* convert to degrees */
+		if( rotangle < 0.0 )
+			rotangle += 360.0;
+		}
 	sinfbangle = Dot( ohitp->hit_normal, zaxis );
 
 	los = (cpp->pt_outhit->hit_dist-ihitp->hit_dist)*unitconv;
@@ -464,7 +469,10 @@ unsigned rayno;		/* ray number for this burst point */
 		return;
 	cosxr = -Dot( shotdir, raydir ); /* shotdir is reverse of X' */
 	cosyr = Dot( gridhor, raydir );
-	azim = atan2( cosyr, cosxr );
+	if( cosyr == 0.0 && cosxr == 0.0 )
+		azim = 0.0;
+	else
+		azim = atan2( cosyr, cosxr );
 	sinelev = Dot( gridver, raydir );
 	if(	fprintf( outfp,
 			"%c % 8.3f % 8.3f % 6u\n",
