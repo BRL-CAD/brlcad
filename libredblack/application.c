@@ -7,6 +7,12 @@
 #include <string.h>
 #include "redblack.h"
 
+#define		ORDER_LASTNAME		0
+#define		ORDER_FIRSTNAME		1
+#define		ORDER_PARTY		2
+#define		DEMOCRAT		0
+#define		REPUBLICAN		1
+
 typedef struct
 {
     long 	magic;		  /* Magic no. for integrity check */
@@ -21,34 +27,46 @@ typedef struct
  */
 last_name_sort (void *v1, void *v2)
 {
-    record *r1 = v1;
-    record *r2 = v2;
+    record	*r1 = v1;
+    record	*r2 = v2;
 
     return(strcmp(r1 -> last, r2 -> last));
 }
 
 first_name_sort (void *v1, void *v2)
 {
-    record *r1 = v1;
-    record *r2 = v2;
+    record	*r1 = v1;
+    record	*r2 = v2;
 
     return(strcmp(r1 -> first, r2 -> first));
 }
 
 party_sort (void *v1, void *v2)
 {
-    record *r1 = v1;
-    record *r2 = v2;
+    record	*r1 = v1;
+    record	*r2 = v2;
 
     return ((r1 -> party < r2 -> party) ? -1 :
 	    (r1 -> party > r2 -> party) ? 1 : 0);
 }
 
-#define		ORDER_LASTNAME		0
-#define		ORDER_FIRSTNAME		1
-#define		ORDER_PARTY		2
-#define		DEMOCRAT		0
-#define		REPUBLICAN		1
+void describe_president (void *v)
+{
+    record	*p = v;
+
+    if (*((long *)(p)) != (RECORD_MAGIC))
+    {
+	fprintf(stderr,
+	    "Error: Bad %s pointer x%x s/b x%x was x%x, file %s, line %d\n", \
+	    "president record", p, RECORD_MAGIC, *((long *)(p)),
+	    __FILE__, __LINE__);
+	exit (0);
+    }
+    printf("%-16s %-16s %s\n",
+	p -> last, p -> first,
+	(p -> party == DEMOCRAT) ? "Democrat" : "Republican");
+    fflush(stdout);
+}
 
 /* 
  *	The main driver
@@ -56,8 +74,9 @@ party_sort (void *v1, void *v2)
 main ()
 {
     int			i;
+    int			nm_presidents;
     rb_tree		*tree;
-    static record	pres[10] = 
+    static record	pres[] = 
 			{
 			    {RECORD_MAGIC, "Roosevelt", "Franklin", DEMOCRAT},
 			    {RECORD_MAGIC, "Truman", "Harry", DEMOCRAT},
@@ -68,7 +87,8 @@ main ()
 			    {RECORD_MAGIC, "Ford", "Gerald", REPUBLICAN},
 			    {RECORD_MAGIC, "Carter", "Jimmy", DEMOCRAT},
 			    {RECORD_MAGIC, "Reagan", "Ronald", REPUBLICAN},
-			    {RECORD_MAGIC, "Bush", "George", REPUBLICAN}
+			    {RECORD_MAGIC, "Bush", "George", REPUBLICAN},
+			    {RECORD_MAGIC, "Clinton", "Bill", DEMOCRAT}
 			};
     record		*r;
     static char		*order_string[] =
@@ -80,6 +100,7 @@ main ()
 			    last_name_sort, first_name_sort, party_sort
 			};
 
+    nm_presidents = sizeof(pres) / sizeof(record);
     comp_func[0] = last_name_sort;
     if ((tree = rb_create("First test", 3, comp_func)) == RB_TREE_NULL)
     {
@@ -87,14 +108,24 @@ main ()
 	exit (1);
     }
 
-    for (i = 0; i < 10; ++i)
+    printf("There are %d presidents\n", nm_presidents);
+    for (i = 0; i < nm_presidents; ++i)
 	rb_insert(tree, (void *) &(pres[i]));
 
     for (i = 0; i < 3; ++i)
     {
 	r = (record *) rb_min(tree, i);
-
 	printf("Smallest %s is for %s %s\n",
 	    order_string[i], r -> first, r -> last);
+	r = (record *) rb_max(tree, i);
+	printf("Largest %s is for %s %s\n",
+	    order_string[i], r -> first, r -> last);
     }
+
+    printf("\n\n\nBy last name...\n");
+	rb_walk(tree, ORDER_LASTNAME, describe_president);
+    printf("\n\n\nBy first name...\n");
+	rb_walk(tree, ORDER_FIRSTNAME, describe_president);
+    printf("\n\n\nBy party...\n");
+	rb_walk(tree, ORDER_PARTY, describe_president);
 }
