@@ -1465,6 +1465,7 @@ BU_EXTERN(int			bu_avs_remove, (struct bu_attribute_value_set *avp,
 				const char *attribute));
 BU_EXTERN(void			bu_avs_free, (struct bu_attribute_value_set *avp));
 extern void			bu_avs_print( const struct bu_attribute_value_set *avp, const char *title );
+extern void bu_avs_add_nonunique( struct bu_attribute_value_set *avsp, char *attribute, char *value );
 
 /* badmagic.c */
 BU_EXTERN(void			bu_badmagic, (const long *ptr, long magic,

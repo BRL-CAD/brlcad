@@ -280,3 +280,37 @@ bu_avs_print( const struct bu_attribute_value_set *avsp, const char *title )
 		bu_log(" %s = %s\n", avpp->name, avpp->value );
 	}
 }
+
+/*
+ *			B U _ A V S _ A D D _ N O N U N I Q U E
+ *
+ *	Add a name/value pair even if the name already exists in this AVS
+ */
+void
+bu_avs_add_nonunique( struct bu_attribute_value_set *avsp, char *attribute, char *value )
+{
+	struct bu_attribute_value_pair *app;
+
+	BU_CK_AVS(avsp);
+
+	if( avsp->count >= avsp->max )  {
+		/* Allocate more space first */
+		avsp->max += 4;
+		if( avsp->avp ) {
+			avsp->avp = (struct bu_attribute_value_pair *)bu_realloc(
+			  avsp->avp,  avsp->max * sizeof(struct bu_attribute_value_pair),
+				"attribute_value_pair.avp[] (add)" );
+		} else {
+			avsp->avp = (struct bu_attribute_value_pair *)bu_malloc(
+				avsp->max * sizeof(struct bu_attribute_value_pair ),
+			       "attribute_value_pair.avp[] (add)" );
+		}
+	}
+
+	app = &avsp->avp[avsp->count++];
+	app->name = bu_strdup(attribute);
+	if( value )
+		app->value = bu_strdup(value);
+	else
+		app->value = (char *)NULL;
+}
