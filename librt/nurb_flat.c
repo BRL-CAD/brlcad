@@ -34,7 +34,7 @@ fastf_t epsilon;		/* Epsilon value for flatness testing */
 	register fastf_t 	max_dist;
 	int	dir;
 	fastf_t        * mesh_ptr = srf->mesh->ctl_points;
-	int	coords = EXTRACT_COORDS(srf->mesh->pt_type);
+	int	coords = RT_NURB_EXTRACT_COORDS(srf->mesh->pt_type);
 	int	j, i, k;
 	int	mesh_elt;
 	vect_t          p1, p2, p3, p4, v1, v2, v3;
@@ -47,15 +47,15 @@ fastf_t epsilon;		/* Epsilon value for flatness testing */
 
 	dir = srf->dir;
 
-	otherdir = (dir == ROW) ? COL : ROW;
+	otherdir = (dir == RT_NURB_SPLIT_ROW) ? RT_NURB_SPLIT_COL : RT_NURB_SPLIT_ROW;
 
 	max_row_dist = max_col_dist = -INFINITY;
 
 	crv = (fastf_t * ) rt_malloc( sizeof(fastf_t) * 
-	    EXTRACT_COORDS(srf->mesh->pt_type) * srf->mesh->s_size[1], 
+	    RT_NURB_EXTRACT_COORDS(srf->mesh->pt_type) * srf->mesh->s_size[1], 
 	    "rt_nurb_s_flat: crv");
 
-	/* Test Row and COL curves for flatness, 
+	/* Test Row and RT_NURB_SPLIT_COL curves for flatness, 
 	 * If a curve is not flat than get distance to line */
 
 	/* Test Row Curves */
@@ -64,7 +64,7 @@ fastf_t epsilon;		/* Epsilon value for flatness testing */
 		fastf_t rdist;
 		for (j = 0; 
 		    j < (srf->mesh->s_size[1] * 
-			EXTRACT_COORDS(srf->mesh->pt_type)); 
+			RT_NURB_EXTRACT_COORDS(srf->mesh->pt_type)); 
 		    j++)
 			crv[j] = *mesh_ptr++;
 
@@ -76,7 +76,7 @@ fastf_t epsilon;		/* Epsilon value for flatness testing */
 	rt_free( (char *)crv, "rt_nurb_s_flat: crv" );
 
 	crv = (fastf_t * ) rt_malloc(sizeof(fastf_t) * 
-	    EXTRACT_COORDS(srf->mesh->pt_type) *  
+	    RT_NURB_EXTRACT_COORDS(srf->mesh->pt_type) *  
 	    srf->mesh->s_size[0], 	"rt_nurb_s_flat: crv");
 
 	for (i = 0; i < (coords * srf->mesh->s_size[1]); i += coords) {
@@ -103,9 +103,9 @@ fastf_t epsilon;		/* Epsilon value for flatness testing */
 
 	if ( max_dist > epsilon) {
 		if ( max_row_dist > max_col_dist )
-			return ROW;
+			return RT_NURB_SPLIT_ROW;
 		else
-			return COL;
+			return RT_NURB_SPLIT_COL;
 	}
 
 	/* Test the corners to see if they lie in a plane. */
@@ -117,7 +117,7 @@ fastf_t epsilon;		/* Epsilon value for flatness testing */
 
 	mesh_ptr = srf->mesh->ctl_points;
 
-	if ( !EXTRACT_RAT(srf->mesh->pt_type) ) {
+	if ( !RT_NURB_IS_PT_RATIONAL(srf->mesh->pt_type) ) {
 
 		VMOVE(p1, mesh_ptr);
 		VMOVE(p2,
@@ -166,7 +166,7 @@ fastf_t epsilon;		/* Epsilon value for flatness testing */
 	nrmln = MAGNITUDE(nrm);
 
 	if (APX_EQ(nrmln, 0.0))
-		return FLAT;
+		return RT_NURB_SPLIT_FLAT;
 
 	VSUB2(v3, p4, p1);
 
@@ -175,7 +175,7 @@ fastf_t epsilon;		/* Epsilon value for flatness testing */
 	if (dist > epsilon)
 		return otherdir;
 
-	return FLAT;		/* Must be flat */
+	return RT_NURB_SPLIT_FLAT;		/* Must be flat */
 
 }
 
@@ -198,8 +198,8 @@ int	pt_type;
 	int	coords;
 	int	rational;
 
-	coords = EXTRACT_COORDS( pt_type);
-	rational = EXTRACT_RAT( pt_type);
+	coords = RT_NURB_EXTRACT_COORDS( pt_type);
+	rational = RT_NURB_IS_PT_RATIONAL( pt_type);
 	max_dist = -INFINITY;
 
 	if ( !rational) {

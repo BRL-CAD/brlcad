@@ -34,16 +34,16 @@ plane_t plane1, plane2;
 	int	rational;
 	int	i;
 
-	rational = EXTRACT_RAT( srf->mesh->pt_type);
+	rational = RT_NURB_IS_PT_RATIONAL( srf->mesh->pt_type);
 
-	n_pt_type = MAKE_PT_TYPE( 2, PT_PROJ, 0);
+	n_pt_type = RT_NURB_MAKE_PT_TYPE( 2, RT_NURB_PT_PROJ, 0);
 
 	psrf = (struct snurb *) rt_nurb_new_snurb( srf->order[0], srf->order[1],
 	    srf->u_knots->k_size, srf->v_knots->k_size,
 	    srf->mesh->s_size[0], srf->mesh->s_size[1], n_pt_type);
 
 	psrf->next = (struct snurb *)0;
-	psrf->dir = COL;
+	psrf->dir = RT_NURB_SPLIT_COL;
 
 	for ( i = 0; i < srf->u_knots->k_size; i++) {
 		psrf->u_knots->knots[i] = srf->u_knots->knots[i];
@@ -75,8 +75,8 @@ plane_t plane1, plane2;
 			    mp1[2] * plane2[2] - plane2[3];
 		}
 
-		mp1 += EXTRACT_COORDS(srf->mesh->pt_type);
-		mp2 += EXTRACT_COORDS(psrf->mesh->pt_type);
+		mp1 += RT_NURB_EXTRACT_COORDS(srf->mesh->pt_type);
+		mp2 += RT_NURB_EXTRACT_COORDS(psrf->mesh->pt_type);
 	}
 
 	return (struct snurb *) psrf;
@@ -124,7 +124,7 @@ fastf_t *min, *max;
 	col_size = srf->mesh->s_size[1];
 	row_size = srf->mesh->s_size[0];
 
-	coords = EXTRACT_COORDS(srf->mesh->pt_type);
+	coords = RT_NURB_EXTRACT_COORDS(srf->mesh->pt_type);
 
 	p1 = srf->mesh->ctl_points;
 	p2 = srf->mesh->ctl_points + coords * (col_size - 1);
@@ -134,7 +134,7 @@ fastf_t *min, *max;
 	    (row_size - 1)) + 
 	    ((col_size - 1) * coords);
 
-	if ( dir == ROW) {
+	if ( dir == RT_NURB_SPLIT_ROW) {
 		v1[0] = p1[0] - p3[0];
 		v1[1] = p1[1] - p3[1];
 
@@ -159,7 +159,7 @@ fastf_t *min, *max;
 	*min = 1.0e8;
 	*max = -1.0e8;
 
-	if( dir == ROW)
+	if( dir == RT_NURB_SPLIT_ROW)
 	{
 		ch = (struct internal_convex_hull *) rt_malloc(
 			sizeof( struct internal_convex_hull) * col_size,
@@ -289,7 +289,7 @@ fastf_t param1, param2;
 	struct snurb *region;
 	struct knot_vector *new_knots;
 
-	if ( dir == ROW) {
+	if ( dir == RT_NURB_SPLIT_ROW) {
 		new_knots = (struct knot_vector *) rt_malloc( 
 		    sizeof( struct knot_vector ), 
 		    "region from srf knot vector");

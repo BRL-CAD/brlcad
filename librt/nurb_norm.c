@@ -77,7 +77,7 @@ fastf_t u, v;
 
 		ve = (fastf_t *) rt_nurb_s_eval( srf, u, p);		
 	
-		if( EXTRACT_RAT(srf->mesh->pt_type))
+		if( RT_NURB_IS_PT_RATIONAL(srf->mesh->pt_type))
 		{
 			ue[0] = ue[0] / ue[3];
 			ue[1] = ue[1] / ue[3];
@@ -131,11 +131,11 @@ fastf_t u, v;
 
 		ue = (fastf_t *) rt_nurb_s_eval( srf, p, v);
 		
-		vsrf = (struct snurb *) rt_nurb_s_diff(srf, COL);
+		vsrf = (struct snurb *) rt_nurb_s_diff(srf, RT_NURB_SPLIT_COL);
 
 		ve = (fastf_t *) rt_nurb_s_eval(vsrf, u, v);
 
-		if( EXTRACT_RAT(srf->mesh->pt_type) )
+		if( RT_NURB_IS_PT_RATIONAL(srf->mesh->pt_type) )
 		{
 			fastf_t w, inv_w;
 			
@@ -193,10 +193,10 @@ fastf_t u, v;
 
 		ve = (fastf_t *) rt_nurb_s_eval( srf, p, v);
 
-		usrf = (struct snurb *) rt_nurb_s_diff(srf, ROW);
+		usrf = (struct snurb *) rt_nurb_s_diff(srf, RT_NURB_SPLIT_ROW);
 		ue = (fastf_t *) rt_nurb_s_eval(usrf, u, v);
 
-		if( EXTRACT_RAT(srf->mesh->pt_type) )
+		if( RT_NURB_IS_PT_RATIONAL(srf->mesh->pt_type) )
 		{
 			fastf_t w, inv_w;
 			
@@ -234,14 +234,14 @@ fastf_t u, v;
 	}
 	
 	/* Case Non Rational (order > 2, order > 2) */
-	if( !EXTRACT_RAT(srf->mesh->pt_type))
+	if( !RT_NURB_IS_PT_RATIONAL(srf->mesh->pt_type))
 	{
 
 		norm = (fastf_t *) rt_malloc( sizeof( fastf_t) * 3, 
 			"rt_nurb_norm: fastf_t for norm");
 
-		usrf = (struct snurb *) rt_nurb_s_diff( srf, ROW);
-		vsrf = (struct snurb *) rt_nurb_s_diff( srf, COL);
+		usrf = (struct snurb *) rt_nurb_s_diff( srf, RT_NURB_SPLIT_ROW);
+		vsrf = (struct snurb *) rt_nurb_s_diff( srf, RT_NURB_SPLIT_COL);
 
 		ue = (fastf_t *) rt_nurb_s_eval(usrf, u,v);
 		ve = (fastf_t *) rt_nurb_s_eval(vsrf, u,v);
@@ -258,7 +258,7 @@ fastf_t u, v;
 	}
 
 	/* Case Rational (order > 2, order > 2) */
-	if( EXTRACT_RAT(srf->mesh->pt_type))
+	if( RT_NURB_IS_PT_RATIONAL(srf->mesh->pt_type))
 	{
 		fastf_t w, inv_w;
 		vect_t unorm, vnorm;
@@ -269,8 +269,8 @@ fastf_t u, v;
 
 		se = (fastf_t *) rt_nurb_s_eval(srf, u, v);
 
-		usrf = (struct snurb *) rt_nurb_s_diff( srf, ROW);
-		vsrf = (struct snurb *) rt_nurb_s_diff( srf, COL);
+		usrf = (struct snurb *) rt_nurb_s_diff( srf, RT_NURB_SPLIT_ROW);
+		vsrf = (struct snurb *) rt_nurb_s_diff( srf, RT_NURB_SPLIT_COL);
 
 		ue = (fastf_t *) rt_nurb_s_eval(usrf, u,v);
 

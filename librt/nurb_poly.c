@@ -48,14 +48,14 @@ struct snurb *srf;
 	    (srf->mesh->s_size[0] - 1));
 
 	/* If the point is rational then divide out the w component */
-	if ( EXTRACT_RAT(srf->mesh->pt_type)) {
+	if ( RT_NURB_IS_PT_RATIONAL(srf->mesh->pt_type)) {
 		int	w_index;
 
-		if ( EXTRACT_PT_TYPE( srf->mesh->pt_type) == PT_XY)
+		if ( RT_NURB_EXTRACT_PT_TYPE( srf->mesh->pt_type) == RT_NURB_PT_XY)
 			w_index = 2;
-		else if ( EXTRACT_PT_TYPE( srf->mesh->pt_type) == PT_UV)
+		else if ( RT_NURB_EXTRACT_PT_TYPE( srf->mesh->pt_type) == RT_NURB_PT_UV)
 			w_index = 2;
-		else if ( EXTRACT_PT_TYPE( srf->mesh->pt_type) == PT_XYZ)
+		else if ( RT_NURB_EXTRACT_PT_TYPE( srf->mesh->pt_type) == RT_NURB_RT_NURB_PT_XYZ)
 			w_index = 3;
 		else /* assume the forth coordinate */
 			w_index = 3;

@@ -50,7 +50,7 @@ struct s_mesh * m;
 {
 	int i,j,k;
 	fastf_t * m_ptr = m->ctl_points;
-	int evp = EXTRACT_COORDS( m->pt_type);
+	int evp = RT_NURB_EXTRACT_COORDS( m->pt_type);
 
 	for( i = 0; i < m->s_size[0]; i++)
 	{

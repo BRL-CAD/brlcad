@@ -48,7 +48,7 @@ int	pt_type;
 		i;				/* oslo loop */
 	int	coords;
 
-	coords = EXTRACT_COORDS( pt_type);
+	coords = RT_NURB_EXTRACT_COORDS( pt_type);
 
 	c_ptr = new_pts;
 

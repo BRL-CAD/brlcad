@@ -39,7 +39,7 @@ struct snurb * srf;
 		n->v_knots->knots[i] =  srf->v_knots->knots[i];
 
 	for ( i = 0; i <  srf->mesh->s_size[0] * srf->mesh->s_size[1] * 
-		EXTRACT_COORDS(srf->mesh->pt_type); i++)
+		RT_NURB_EXTRACT_COORDS(srf->mesh->pt_type); i++)
 	{
 
 		n->mesh->ctl_points[i] = srf->mesh->ctl_points[i];

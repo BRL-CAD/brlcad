@@ -41,9 +41,9 @@
 
 /* Define parametric directions for splitting. */
 
-#define ROW 0
-#define COL 1
-#define FLAT 2
+#define RT_NURB_SPLIT_ROW 0
+#define RT_NURB_SPLIT_COL 1
+#define RT_NURB_SPLIT_FLAT 2
 
 /* Definition of NURB point types and coordinates 
  * Bit:	  8765 4321 0
@@ -60,20 +60,20 @@
  */
 
 /* point types */
-#define PT_XY 	1			/* x,y coordintes */
-#define PT_XYZ	2			/* x,y,z coordinates */
-#define PT_UV	3			/* trim u,v parameter space */
-#define PT_DATA 4			/* random data */
-#define PT_PROJ	5			/* Projected Surface */
+#define RT_NURB_PT_XY 	1			/* x,y coordintes */
+#define RT_NURB_RT_NURB_PT_XYZ	2			/* x,y,z coordinates */
+#define RT_NURB_PT_UV	3			/* trim u,v parameter space */
+#define RT_NURB_PT_DATA 4			/* random data */
+#define RT_NURB_PT_PROJ	5			/* Projected Surface */
 
-#define RAT	1
-#define NONRAT  0
+#define RT_NURB_PT_RATIONAL	1
+#define RT_NURB_PT_NONRAT 	0
 
-#define MAKE_PT_TYPE(n,t,h)	((n<<5) | (t<<1) | h)
-#define EXTRACT_COORDS(pt)	(pt>>5)
-#define EXTRACT_PT_TYPE(pt)		((pt>>1) & 0x0f)
-#define EXTRACT_RAT(pt)		(pt & 0x1)
-#define STRIDE(pt)		(EXTRACT_COORDS(pt) * sizeof( fastf_t))
+#define RT_NURB_MAKE_PT_TYPE(n,t,h)	((n<<5) | (t<<1) | h)
+#define RT_NURB_EXTRACT_COORDS(pt)	(pt>>5)
+#define RT_NURB_EXTRACT_PT_TYPE(pt)		((pt>>1) & 0x0f)
+#define RT_NURB_IS_PT_RATIONAL(pt)		(pt & 0x1)
+#define RT_NURB_STRIDE(pt)		(RT_NURB_EXTRACT_COORDS(pt) * sizeof( fastf_t))
 
 struct knot_vector {
 	int	k_size;			/* knot vector size */

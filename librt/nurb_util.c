@@ -35,7 +35,7 @@ int u_order, v_order, n_u_knots, n_v_knots, n_rows, n_cols, pt_type;
 	srf->next = (struct snurb *) 0;
 	srf->order[0] = u_order;
 	srf->order[1] = v_order;
-	srf->dir = ROW;
+	srf->dir = RT_NURB_SPLIT_ROW;
 
 	srf->u_knots = ( struct knot_vector *) rt_malloc ( 
 		sizeof ( struct knot_vector ), "rt_nurb_new_snurb: u kv struct");    
@@ -57,7 +57,7 @@ int u_order, v_order, n_u_knots, n_v_knots, n_rows, n_cols, pt_type;
 	srf->mesh->s_size[1] = n_cols;
 	srf->mesh->pt_type = pt_type;
 	
-	pnum = sizeof (fastf_t) * n_rows * n_cols * EXTRACT_COORDS(pt_type);
+	pnum = sizeof (fastf_t) * n_rows * n_cols * RT_NURB_EXTRACT_COORDS(pt_type);
 	srf->mesh->ctl_points = ( fastf_t *) rt_malloc( 
 		pnum, "rt_nurb_new_snurb: control mesh points");
 
@@ -94,7 +94,7 @@ int order, n_knots, n_pts, pt_type;
 	crv->mesh->pt_type = pt_type;
 
 	crv->mesh->ctl_points = (fastf_t *)
-		rt_malloc( sizeof(fastf_t) * EXTRACT_COORDS(pt_type) *
+		rt_malloc( sizeof(fastf_t) * RT_NURB_EXTRACT_COORDS(pt_type) *
 			n_pts, 
 			"rt_nurb_new_cnurb: mesh point values");
 
@@ -154,10 +154,10 @@ struct cnurb * crv;
 	rt_nurb_print_pt_type(crv->mesh->pt_type);
 	fprintf(stderr,"\tmesh = {\n");
 	for( ptr = &crv->mesh->ctl_points[0], i= 0;
-		i < crv->mesh->c_size; i++, ptr += EXTRACT_COORDS(crv->mesh->pt_type))
+		i < crv->mesh->c_size; i++, ptr += RT_NURB_EXTRACT_COORDS(crv->mesh->pt_type))
 	{
 		fprintf(stderr,"\t\t");
-		for(j = 0; j < EXTRACT_COORDS(crv->mesh->pt_type); j++)
+		for(j = 0; j < RT_NURB_EXTRACT_COORDS(crv->mesh->pt_type); j++)
 			fprintf(stderr,"%4.5f\t", ptr[j]);
 		fprintf(stderr,"\n");
 
@@ -213,7 +213,7 @@ struct s_mesh * m;
 
 	int i,j,k;
 	fastf_t * m_ptr = m->ctl_points;
-	int evp = EXTRACT_COORDS(m->pt_type);
+	int evp = RT_NURB_EXTRACT_COORDS(m->pt_type);
 
 	fprintf(stderr,"\t[%d] [%d]\n", m->s_size[0], m->s_size[1] );
 
@@ -227,7 +227,7 @@ struct s_mesh * m;
 				fprintf(stderr,"%f    ", m_ptr[k]);
 
 			fprintf(stderr,"\n");
-			m_ptr += EXTRACT_COORDS(m->pt_type);
+			m_ptr += RT_NURB_EXTRACT_COORDS(m->pt_type);
 		}
 		fprintf(stderr,"\n");
 	}
@@ -240,17 +240,17 @@ int c;
 	fastf_t flt;
 	int coords, rat;
 
-	coords = EXTRACT_COORDS(c);
-	rat = EXTRACT_RAT(c);
+	coords = RT_NURB_EXTRACT_COORDS(c);
+	rat = RT_NURB_IS_PT_RATIONAL(c);
 	
-	if( EXTRACT_PT_TYPE(c) == PT_XY)
-		fprintf(stderr,"Point Type = PT_XY");
+	if( RT_NURB_EXTRACT_PT_TYPE(c) == RT_NURB_PT_XY)
+		fprintf(stderr,"Point Type = RT_NURB_PT_XY");
 	else 
-	if( EXTRACT_PT_TYPE(c) == PT_XYZ)
-		fprintf(stderr,"Point Type = PT_XYX");
+	if( RT_NURB_EXTRACT_PT_TYPE(c) == RT_NURB_RT_NURB_PT_XYZ)
+		fprintf(stderr,"Point Type = RT_NURB_PT_XYX");
 	else 
-	if( EXTRACT_PT_TYPE(c) == PT_UV)
-		fprintf(stderr,"Point Type = PT_UV");
+	if( RT_NURB_EXTRACT_PT_TYPE(c) == RT_NURB_PT_UV)
+		fprintf(stderr,"Point Type = RT_NURB_PT_UV");
 
 	if( rat )
 		fprintf(stderr,"W\n");

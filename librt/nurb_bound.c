@@ -60,11 +60,11 @@ point_t bmin, bmax;
 	}
 
 	p_ptr = srf->mesh->ctl_points;
-	coords = EXTRACT_COORDS(srf->mesh->pt_type);
-	rat =    EXTRACT_RAT(srf->mesh->pt_type);
+	coords = RT_NURB_EXTRACT_COORDS(srf->mesh->pt_type);
+	rat =    RT_NURB_IS_PT_RATIONAL(srf->mesh->pt_type);
 
-	for ( i = ( srf->mesh->s_size[ROW] * 
-	    srf->mesh->s_size[COL] ); i > 0; i--) {
+	for ( i = ( srf->mesh->s_size[RT_NURB_SPLIT_ROW] * 
+	    srf->mesh->s_size[RT_NURB_SPLIT_COL] ); i > 0; i--) {
 		if ( !rat ) {
 			VMINMAX( bmin, bmax, p_ptr );
 		} else if ( rat  ) {
@@ -103,8 +103,8 @@ point_t bmin, bmax;
 	}
 
 	p_ptr = crv->mesh->ctl_points;
-	coords = EXTRACT_COORDS(crv->mesh->pt_type);
-	rat =    EXTRACT_RAT(crv->mesh->pt_type);
+	coords = RT_NURB_EXTRACT_COORDS(crv->mesh->pt_type);
+	rat =    RT_NURB_IS_PT_RATIONAL(crv->mesh->pt_type);
 
 	for ( i = crv->mesh->c_size; i > 0; i--) {
 		if ( !rat ) {
@@ -139,8 +139,8 @@ register struct snurb *srf;
 	register int	i;
 
 	mp = srf->mesh->ctl_points;
-	i = srf->mesh->s_size[ROW] * 
-	    srf->mesh->s_size[COL] * 
+	i = srf->mesh->s_size[RT_NURB_SPLIT_ROW] * 
+	    srf->mesh->s_size[RT_NURB_SPLIT_COL] * 
 	    srf->mesh->pt_type;
 	for ( ; i > 0; i--, mp++)  {
 		/* Sanity checking */

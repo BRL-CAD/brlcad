@@ -46,11 +46,11 @@ fastf_t v;
 	cvp = (struct curvature *) rt_malloc(sizeof( struct curvature),
 		"rt_nurb_curvature: struct curvature");
 
-	us = (struct snurb *) rt_nurb_s_diff(srf, ROW);
-	vs = (struct snurb *) rt_nurb_s_diff(srf, COL);
-	uus = (struct snurb *) rt_nurb_s_diff(us, ROW);
-	vvs = (struct snurb *) rt_nurb_s_diff(vs, COL);
-	uvs = (struct snurb *) rt_nurb_s_diff(vs, ROW);
+	us = (struct snurb *) rt_nurb_s_diff(srf, RT_NURB_SPLIT_ROW);
+	vs = (struct snurb *) rt_nurb_s_diff(srf, RT_NURB_SPLIT_COL);
+	uus = (struct snurb *) rt_nurb_s_diff(us, RT_NURB_SPLIT_ROW);
+	vvs = (struct snurb *) rt_nurb_s_diff(vs, RT_NURB_SPLIT_COL);
+	uvs = (struct snurb *) rt_nurb_s_diff(vs, RT_NURB_SPLIT_ROW);
 	
 	se = (fastf_t *) rt_nurb_s_eval(srf, u, v);
 	ue = (fastf_t *) rt_nurb_s_eval(us, u,v);
@@ -65,7 +65,7 @@ fastf_t v;
 	rt_nurb_free_snurb( vvs);
 	rt_nurb_free_snurb( uvs);
 
-	if( EXTRACT_RAT( srf->mesh->pt_type ))
+	if( RT_NURB_IS_PT_RATIONAL( srf->mesh->pt_type ))
 	{
 		for( i = 0; i < 3; i++)
 		{
