@@ -43,6 +43,7 @@ static char RCSview[] = "@(#)$Header$ (BRL)";
 #include "mater.h"
 #include "raytrace.h"
 #include "fb.h"
+#include "./ext.h"
 #include "./rdebug.h"
 #include "./material.h"
 #include "./mathtab.h"
@@ -554,6 +555,7 @@ struct partition *PartHeadp;
 		}
 	}
 
+	bzero( (char *)&sw, sizeof(sw) );
 	sw.sw_transmit = sw.sw_reflect = 0.0;
 	sw.sw_refrac_index = 1.0;
 	sw.sw_extinction = 0;
@@ -566,7 +568,7 @@ struct partition *PartHeadp;
 
 	/* As a special case for now, handle reflection & refraction */
 	if( sw.sw_reflect > 0 || sw.sw_transmit > 0 )
-		(void)rr_render( ap, pp, &sw, pp->pt_regionp->reg_udata );
+		(void)rr_render( ap, pp, &sw );
 
 	VMOVE( ap->a_color, sw.sw_color );
 	ap->a_user = 1;		/* Signal view_pixel:  HIT */
