@@ -47,7 +47,9 @@ static char RCSscale[] = "@(#)$Header$ (BRL)";
 #include <stdio.h>
 #include <math.h>
 #include "machine.h"
+#include "bu.h"
 #include "vmath.h"
+#include "bn.h"
 #include "wdb.h"
 #include "raytrace.h"
 #include "plot3.h"
