@@ -34,6 +34,8 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #include <stdio.h>
 #include <ctype.h>
 #include <signal.h>
+#include <fcntl.h>
+#include <pwd.h>
 #include <errno.h>
 #include <netdb.h>
 #include <math.h>
@@ -90,6 +92,7 @@ FILE		*ifp;
 FILE		*ofp;
 
 char		*start_dir;
+char		**main_argv;
 
 static char	usage[] = "\
 Usage:  rtmon [-d#]\n\
@@ -154,7 +157,7 @@ int	fd;
 	bu_vls_free( &str );
 }
 
-CONST char *rtnode_paths[] = {
+CONST char *prog_paths[] = {
 	".",
 	"/m/cad/.remrt.8d",
 	"/n/vapor/m/cad/.remrt.8d",
@@ -168,16 +171,17 @@ CONST char *rtnode_paths[] = {
  *			R U N _ R T N O D E
  */
 void
-run_rtnode(fd, argv)
+run_prog(fd, argv, program)
 int	fd;
 char	**argv;
+char	*program;	/* name of program to run */
 {
 	CONST char **pp;
 	struct bu_vls	path;
 
 	bu_vls_init(&path);
 
-	argv[0] = "rtnode";
+	argv[0] = program;
 
 	/* Set up environment variables appropriately */
 	if( access( "/m/cad/libtcl/library/.", X_OK ) == 0 )  {
@@ -191,9 +195,10 @@ char	**argv;
 		putenv( "TK_LIBRARY=/usr/brlcad/libtk/library" );
 	}
 
-	for( pp = rtnode_paths; *pp != NULL; pp++ )  {
+	for( pp = prog_paths; *pp != NULL; pp++ )  {
 		bu_vls_strcpy( &path, *pp );
-		bu_vls_strcat( &path, "/rtnode" );
+		bu_vls_putc( &path, '/' );
+		bu_vls_strcat( &path, program );
 		if( access( bu_vls_addr(&path), X_OK ) )  continue;
 
 		if( fork() == 0 )  {
@@ -209,7 +214,7 @@ char	**argv;
 		fflush(ofp);
 		return;
 	}
-	fprintf(ofp, "FAIL Unable to locate rtnode executable\n");
+	fprintf(ofp, "FAIL Unable to locate %s executable\n", program);
 	fflush(ofp);
 }
 
@@ -304,12 +309,17 @@ int	fd;
 			continue;
 		}
 		if( strcmp( argv[0], "rtnode" ) == 0 )  {
-			run_rtnode(fd, argv);
+			run_prog(fd, argv, "rtnode");
 			continue;
 		}
 		if( strcmp( argv[0], "find" ) == 0 )  {
 			find(fd, argv);
 			continue;
+		}
+		if( strcmp( argv[0], "restart" ) == 0 )  {
+			kill( getppid(), SIGUSR1 );
+			fprintf( ofp, "OK restart signal sent\n");
+			exit(0);
 		}
 		if( strcmp( argv[0], "quit" ) == 0 )
 			exit(0);
@@ -342,6 +352,63 @@ register char **argv;
 }
 
 /*
+ *			B E C O M E _ U S E R
+ *
+ *  Returns -
+ *	1	Didn't work, but nothing we can do about it.
+ *	0	OK
+ *	-1	Failure to find user name.
+ */
+int
+become_user( name )
+CONST char	*name;
+{
+	struct passwd	*pw;
+
+	if( getuid() != 0 )  return 1;
+
+	setpwent();
+	if( (pw = getpwnam(name)) == NULL )  return -1;
+	setgid(pw->pw_gid);
+	setuid(pw->pw_uid);
+	if( getuid() != pw->pw_uid )  {
+		fprintf(stderr, "rtmon: wanted %d, got %d?\n", pw->pw_uid, getuid() );
+		if( getuid() == 0 )  return -1;
+		return 1;
+	}
+	return 0;
+}
+
+/*
+ *			R E S T A R T _ S I G N A L
+ *
+ *  Have main process re-exec itself, if possible.
+ */
+void
+restart_signal(foo)
+int	foo;
+{
+	char	buf[32];
+
+	/* Re-establish handler, in case restart does not work */
+	(void)signal( SIGUSR1, restart_signal );
+
+	sprintf( buf, "%d", atoi(main_argv[1])+1 );
+
+	/* If argv[0] has full path, use it */
+	if( access( main_argv[0], X_OK ) == 0 )  {
+		execl( main_argv[0], main_argv[0], buf, NULL );
+		perror(main_argv[0]);
+	}
+	/* Try to find our executable in one of the usual places. */
+	run_prog( 2, main_argv, "rtmon" );
+
+	/* If that doesn't work either, just go back to what we were doing. */
+	fprintf(stderr, "rtmon: unable to reload, continuing.\n");
+	return;
+}
+
+/*
  *			M A I N
  */
 main(argc, argv)
@@ -355,6 +422,8 @@ char	*argv[];
 	int	listenfd;
 	int	on = 1;
 
+	main_argv = argv;
+
 	if ( !get_args( argc, argv ) ) {
 		(void)fputs(usage, stderr);
 		exit( 1 );
@@ -362,19 +431,29 @@ char	*argv[];
 
 	close(0);	/* shut stdin */
 
+	setuid(0);	/* in case we're only set-uid */
+
 	/* Set real-time scheduler priority.  May need root privs. */
 	bu_set_realtime();
 
-	/* XXX Drop down to normal user privs */
-	/* If "cmike" in /etc/passwd", use that, else use "mike" */
-	setgid(42);
-	setuid(53);
+	/* Drop down to normal user privs */
+	if( become_user( "cmike" ) != 0 )  {
+		if( become_user( "mike" ) != 0 )  {
+			/* Failsafe to prevent running as root */
+			setgid(42);
+			setuid(53);
+			if(getuid()==0) exit(42);
+		}
+	}
 
 	/* Find current directory */
 	if( (start_dir = getcwd(NULL,4096-8)) == NULL )  {
 		perror("getcwd");
 		start_dir = ".";
 	}
+
+	/* Accept restart signals */
+	(void)signal( SIGUSR1, restart_signal );
 
 	/* Hang a listen */
 	bzero((char *)&sinme, sizeof(sinme));
@@ -401,6 +480,11 @@ char	*argv[];
 		perror( "rtmon: bind" );
 		close(listenfd);
 		return -2;
+	}
+
+	if( fcntl(listenfd, F_SETFD, FD_CLOEXEC ) < 0 )  {
+		perror("rtmon: FD_CLOEXEC");
+		/* Keep going */
 	}
 
 	if( listen(listenfd, 5) < 0 )  {
