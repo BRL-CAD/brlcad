@@ -782,7 +782,6 @@ pathHmat( sp, matp, depth )
 register struct solid *sp;
 matp_t matp;
 {
-	register union record	*rp;
 	register struct directory *parentp;
 	register struct directory *kidp;
 	register int		j;
@@ -1143,10 +1142,8 @@ char	**argv;
 	int			ncpu;
 	int			triangulate;
 	char			*newname;
-	struct bu_external	ext;
 	struct rt_db_internal	intern;
 	struct directory	*dp;
-	int			ngran;
 	int			failed;
 	int			mged_nmg_use_tnurbs = 0;
 
@@ -1292,41 +1289,19 @@ char	**argv;
 	intern.idb_ptr = (genptr_t)mged_nmg_model;
 	mged_nmg_model = (struct model *)NULL;
 
-	BU_INIT_EXTERNAL( &ext );
-
-	/* Scale change on export is 1.0 -- no change */
-	if( rt_functab[ID_NMG].ft_export( &ext, &intern, 1.0 ) < 0 )  {
-	  Tcl_AppendResult(interp, "facetize(", newname, "):  solid export failure\n",
-			   (char *)NULL);
-	  if( intern.idb_ptr )  rt_functab[ID_NMG].ft_ifree( &intern );
-	  db_free_external( &ext );
-	  return TCL_ERROR;				/* FAIL */
-	}
-	rt_functab[ID_NMG].ft_ifree( &intern );
-	mged_facetize_tree->tr_d.td_r = (struct nmgregion *)NULL;
-
-	ngran = (ext.ext_nbytes + sizeof(union record)-1)/sizeof(union record);
-	if( (dp=db_diradd( dbip, newname, -1, ngran, DIR_SOLID)) == DIR_NULL ||
-	    db_alloc( dbip, dp, ngran ) < 0 )  {
-	    	TCL_ALLOC_ERR_return;
+	if( (dp=db_diradd( dbip, newname, -1L, 0, DIR_SOLID)) == DIR_NULL )
+	{
+		Tcl_AppendResult(interp, "Cannot add ", newname, " to directory\n", (char *)NULL );
+		return TCL_ERROR;
 	}
 
-	if( db_put_external( &ext, dp, dbip ) < 0 )  {
-		db_free_external( &ext );
+	if( rt_db_put_internal( dp, dbip, &intern ) < 0 )
+	{
+		rt_db_free_internal( &intern );
 		TCL_WRITE_ERR_return;
 	}
-
-	{
-	  struct bu_vls tmp_vls;
-
-	  bu_vls_init(&tmp_vls);
-	  bu_vls_printf(&tmp_vls, "facetize:  wrote %.2f Kbytes to database\n",
-			ext.ext_nbytes / 1024.0 );
-	  Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
-	  bu_vls_free(&tmp_vls);
-	}
-
-	db_free_external( &ext );
+	
+	mged_facetize_tree->tr_d.td_r = (struct nmgregion *)NULL;
 
 	/* Free boolean tree, and the regions in it */
 	db_free_tree( mged_facetize_tree );
@@ -1353,12 +1328,10 @@ char	**argv;
 	int			ncpu;
 	int			triangulate;
 	char			*newname;
-	struct bu_external	ext;
 	struct rt_db_internal	intern;
 	struct directory	*dp;
 	union tree		*tmp_tree;
 	char			op;
-	int			ngran;
 	int			failed;
 
 	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
@@ -1560,40 +1533,19 @@ char	**argv;
 	intern.idb_ptr = (genptr_t)mged_nmg_model;
 	mged_nmg_model = (struct model *)NULL;
 
-	BU_INIT_EXTERNAL( &ext );
-
-	/* Scale change on export is 1.0 -- no change */
-	if( rt_functab[ID_NMG].ft_export( &ext, &intern, 1.0 ) < 0 )  {
-	  Tcl_AppendResult(interp, "bev(", newname, "):  solid export failure\n", (char *)NULL);
-	  if( intern.idb_ptr )  rt_functab[ID_NMG].ft_ifree( &intern );
-	  db_free_external( &ext );
-	  return TCL_ERROR;
-	}
-	rt_functab[ID_NMG].ft_ifree( &intern );
-	tmp_tree->tr_d.td_r = (struct nmgregion *)NULL;
-
-	ngran = (ext.ext_nbytes + sizeof(union record)-1)/sizeof(union record);
-	if( (dp=db_diradd( dbip, newname, -1, ngran, DIR_SOLID)) == DIR_NULL ||
-	    db_alloc( dbip, dp, ngran ) < 0 )  {
-	  TCL_ALLOC_ERR_return;
+	if( (dp=db_diradd( dbip, newname, -1L, 0, DIR_SOLID)) == DIR_NULL )
+	{
+		Tcl_AppendResult(interp, "Cannot add ", newname, " to directory\n", (char *)NULL );
+		return TCL_ERROR;
 	}
 
-	if( db_put_external( &ext, dp, dbip ) < 0 )  {
-		db_free_external( &ext );
+	if( rt_db_put_internal( dp, dbip, &intern ) < 0 )
+	{
+		rt_db_free_internal( &intern );
 		TCL_WRITE_ERR_return;
 	}
 
-	{
-	  struct bu_vls tmp_vls;
-
-	  bu_vls_init(&tmp_vls);
-	  bu_vls_printf(&tmp_vls, "bev:  wrote %.2f Kbytes to database\n",
-			ext.ext_nbytes / 1024.0 );
-	  Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
-	  bu_vls_free(&tmp_vls);
-	}
-
-	db_free_external( &ext );
+	tmp_tree->tr_d.td_r = (struct nmgregion *)NULL;
 
 	/* Free boolean tree, and the regions in it. */
 	db_free_tree( tmp_tree );
