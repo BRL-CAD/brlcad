@@ -31,7 +31,6 @@ class cadwidgets::CellPlot {
     public method createCell {x1 y1 x2 y2 args}
 
     private method transform {x1 y1 x2 y2}
-    private method configureWinCB {width height}
 
     private variable min 0.0
     private variable max 1.0
@@ -65,7 +64,8 @@ configbody cadwidgets::CellPlot::range {
 
 body cadwidgets::CellPlot::constructor {args} {
     eval itk_initialize $args
-    ::bind [childsite] <Configure> [code $this configureWinCB %w %h]
+    ::bind [childsite] <Configure> \
+	    [code $this configure -width %w -height %h]
 }
 
 ## - createCell
@@ -89,13 +89,4 @@ body cadwidgets::CellPlot::transform {x1 y1 x2 y2} {
     set ty2 [expr {$itk_option(-height) - \
 	    (($y2 - $min) * $sf * $itk_option(-width))}]
     return "$tx1 $ty1 $tx2 $ty2"
-}
-
-## - configureWinCB
-#
-# Keep width and height options in sync
-# with actual window size.
-#
-body cadwidgets::CellPlot::configureWinCB {width height} {
-    configure -width $width -height $height
 }
