@@ -28,6 +28,7 @@ set helplib_data(dm_listen)		{{[port]} {Set/get the port used to listen for fram
 set helplib_data(dm_size)		{{[width [height]]} {Set/get the window size}}
 set helplib_data(dm_getaspect)		{{} {Get window's aspect ratio }}
 set helplib_data(dm_observer)		{{cmd [args]} {Attach/detach observer to/from list}}
+
 set helplib_data(wdb_close)		{{} {close/destroy this database object}}
 set helplib_data(wdb_comb_std)		{{[-gr] comb_name [boolean_expr]}	{create or extend a combination using standard notation}}
 set helplib_data(wdb_reopen)		{{[filename]} {open a database}}
@@ -65,40 +66,46 @@ set helplib_data(wdb_instance)		{{obj comb [op]} {add instance of obj to comb}}
 set helplib_data(wdb_observer)		{{cmd [args]} {Attach/detach observer to/from list}}
 set helplib_data(wdb_make_bb)		{{bbname object(s)} {make a bounding box (rpp) around the specified objects}}
 set helplib_data(wdb_make_name)		{{template | -s [num]}	{make an object name not occuring in the database}}
+set helplib_data(wdb_pathlist)		{{name(s)}	{list all paths from name(s) to leaves}}
 set helplib_data(wdb_xpush)		{{object} {push object path transformations to solids, creating solids if necessary}}
 set helplib_data(wdb_shells)		{{nmg_model}	{breaks model into seperate shells}}
 set helplib_data(wdb_showmats)		{{path}	{show xform matrices along path}}
 set helplib_data(wdb_nmg_collapse)	{{nmg_solid new_solid maximum_error_distance [minimum_allowed_angle]}	{decimate NMG solid via edge collapse}}
 set helplib_data(wdb_nmg_simplify)	{{[arb|tgc|ell|poly] new_solid nmg_solid}	{simplify nmg_solid, if possible}}
-set helplib_data(vo_arot)		{{x y z angle} {rotate angle degrees about the axis specified by xyz}}
-set helplib_data(vo_close)		{{} {close/destroy this view object}}
-set helplib_data(vo_size)		{{vsize} {set/get the view size}}
-set helplib_data(vo_invSize)		{{} {get the inverse view size}}
+
 set helplib_data(vo_aet)		{{["az el tw"]} {set/get the azimuth, elevation and twist}}
-set helplib_data(vo_rmat)		{{[mat]} {set/get the rotation matrix}}
+set helplib_data(vo_arot)		{{x y z angle} {rotate angle degrees about the axis specified by xyz}}
+set helplib_data(vo_base2local)		{{} {get base2local conversion factor}}
 set helplib_data(vo_center)		{{["x y z"]} {set/get the view center}}
-set helplib_data(vo_model2view)		{{} {get the model2view matrix}}
-set helplib_data(vo_pmodel2view)	{{} {get the pmodel2view matrix}}
-set helplib_data(vo_view2model)		{{} {get the view2model matrix}}
-set helplib_data(vo_pmat)		{{[mat]} {set/get the perspective matrix}}
-set helplib_data(vo_perspective)	{{[angle]} {set/get the perspective angle}}
+set helplib_data(vo_close)		{{} {close/destroy this view object}}
+set helplib_data(vo_coord)		{{[m|v]} {set/get the coodinate system}}
 set helplib_data(vo_eye)		{{"x y z"} {set the eyepoint}}
 set helplib_data(vo_eye_pos)		{{"x y z"} {set the eye position}}
-set helplib_data(vo_lookat)		{{"x y z"} {set the look-at point}}
-set helplib_data(vo_mrot)		{{x y z} {rotate view using model x,y,z}}
-set helplib_data(vo_orient)		{{quat} {set the orientation from quaternion}}
-set helplib_data(vo_pov)		{{args} {center quat scale eye_pos perspective}}
-set helplib_data(vo_zoom)		{{sf} {zoom view by specified scale factor}}
-set helplib_data(vo_units)		{{unit_spec} {set/get units}}
-set helplib_data(vo_base2local)		{{} {get base2local conversion factor}}
-set helplib_data(vo_local2base)		{{} {get local2base conversion factor}}
-set helplib_data(vo_rot)		{{"x y z"} {rotate the view}}
-set helplib_data(vo_tra)		{{"x y z"} {translate the view}}
-set helplib_data(vo_slew)		{{"x y"} {slew the view}}
-set helplib_data(vo_observer)		{{cmd [args]} {Attach/detach observer to/from list}}
-set helplib_data(vo_coord)		{{[m|v]} {set/get the coodinate system}}
+set helplib_data(vo_invSize)		{{} {get the inverse view size}}
 set helplib_data(vo_keypoint)		{{[point]} {set/get the keypoint}}
+set helplib_data(vo_local2base)		{{} {get local2base conversion factor}}
+set helplib_data(vo_lookat)		{{"x y z"} {set the look-at point}}
+set helplib_data(vo_model2view)		{{} {get the model2view matrix}}
+set helplib_data(vo_mrot)		{{x y z} {rotate view using model x,y,z}}
+set helplib_data(vo_observer)		{{cmd [args]} {Attach/detach observer to/from list}}
+set helplib_data(vo_orient)		{{quat} {set the orientation from quaternion}}
+set helplib_data(vo_perspective)	{{[angle]} {set/get the perspective angle}}
+set helplib_data(vo_pmat)		{{[mat]} {set/get the perspective matrix}}
+set helplib_data(vo_pmodel2view)	{{} {get the pmodel2view matrix}}
+set helplib_data(vo_pov)		{{args} {center quat scale eye_pos perspective}}
+set helplib_data(vo_rmat)		{{[mat]} {set/get the rotation matrix}}
+set helplib_data(vo_rot)		{{"x y z"} {rotate the view}}
 set helplib_data(vo_rotate_about)	{{[e|k|m|v]} {set/get the rotate about point}}
+set helplib_data(vo_sca)		{{sfactor} {scale by sfactor}}
+set helplib_data(vo_setview)		{{x y z} {set the view given angles x, y, and z in degrees}}
+set helplib_data(vo_size)		{{vsize} {set/get the view size}}
+set helplib_data(vo_slew)		{{"x y"} {slew the view}}
+set helplib_data(vo_tra)		{{"x y z"} {translate the view}}
+set helplib_data(vo_units)		{{unit_spec} {set/get units}}
+set helplib_data(vo_view2model)		{{} {get the view2model matrix}}
+set helplib_data(vo_vrot)		{{xdeg ydeg zdeg} {rotate viewpoint}}
+set helplib_data(vo_zoom)		{{sf} {zoom view by specified scale factor}}
+
 set helplib_data(dgo_close)		{{} {close/destroy this drawable geometry object}}
 set helplib_data(dgo_open)		{{name wdb_obj} {open/create a new drawable geometry object}}
 set helplib_data(dgo_headSolid)		{{} {return pointer to solid list}}
@@ -114,6 +121,7 @@ set helplib_data(dgo_blast)		{{object(s)} {erase all currently displayed geometr
 set helplib_data(dgo_rtcheck)		{{view_obj [args]} {}}
 set helplib_data(dgo_assoc)		{{[wdb_obj]} {set/get the associated database object}}
 set helplib_data(dgo_observer)		{{cmd [args]} {Attach/detach observer to/from list}}
+set helplib_data(dgo_overlay)		{{file.plot [name]}	{read UNIX-Plot as named overlay}}
 set helplib_data(dgo_report)		{{[lvl]} {print solid table & vector list}}
 set helplib_data(dgo_who)		{{[r(eal)|p(hony)|b(oth)]}	{list the top-level objects currently being displayed}}
 set helplib_data(cho_close)		{{} {close/destroy this command history object}}
