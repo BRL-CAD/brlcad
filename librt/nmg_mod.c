@@ -177,6 +177,11 @@ int n;
 	}
 
 	if (verts) {
+		for (i=0 ; i < n ; ++i) {
+			if (verts[i]) {
+				NMG_CK_VERTEX(verts[i]);
+			}
+		}
 		lu = nmg_mlv(&s->l.magic, verts[n-1], OT_SAME);
 		fu = nmg_mf(lu);
 		vu = RT_LIST_FIRST(vertexuse, &lu->down_hd);
@@ -207,18 +212,23 @@ int n;
 /*
  *			N M G _ C M F A C E
  *
- *	Create a loop within a face for a 3-manifold shell,
+ *	Create a face with exactly one exterior loop (and no holes),
  *	given a list of pointers to vertices.
+ *	Intended to help create a "3-manifold" shell, where
+ *	each edge has only two faces alongside of it.
+ *	(Shades of winged edges!)
  *
  *	"verts" is an array of "n" pointers to pointers to (struct vertex).
  *	"s" is the parent shell for the new face.
- *	The face will consist of a single loop
- *	made from edges between the n vertices.  Before an edge is created
+ *
+ *	The new face will consist of a single loop
+ *	made from n edges between the n vertices.  Before an edge is created
  *	between a pair of verticies, we check to see if there is already an
- *	edge with a single use-pair (in this shell) between the two verticies.
- *	If such an edge can be found, the newly created edge will "use-share"
- *	the existing edge.  This greatly facilitates the construction of
- *	shells from a series of points/faces.
+ *	edge with exactly one edgeuse+mate (in this shell)
+ *	that runs between the two verticies.
+ *	If such an edge can be found, the newly created edgeuses will just
+ *	use the existing edge.
+ *	This means that no special call to nmg_gluefaces() is needed later.
  *
  *	If a pointer in verts is a pointer to a null vertex pointer, a new
  *	vertex is created.  In this way, new verticies can be created
@@ -239,10 +249,7 @@ int n;
  *	-------				---------
  *
  *
- *	The vertices should be listed in
- *	"counter-clockwise" (CCW) order if this is an ordinary face (loop),
- *	and in "clockwise" (CW) order if this is an interior
- * 	("hole" or "subtracted") face (loop).
+ *	The vertices *must* be listed in "counter-clockwise" (CCW) order.
  *	This routine makes only topology, without reference to any geometry.
  *
  *	Note that this routine inserts new vertices (by edge use splitting)
@@ -250,6 +257,9 @@ int n;
  *	Therefore, the caller's vertices are traversed in reverse order
  *	to counter this behavior, and
  *	to effect the proper vertex order in the final face loop.
+ *
+ *	Also note that this routine uses one level more of indirection
+ *	in the verts[] array than nmg_cface().
  */
 struct faceuse *
 nmg_cmface(s, verts, n)
@@ -308,13 +318,11 @@ int		n;
 	}
 
 	for (i = n-2 ; i >= 0 ; i--) {
-		lu = RT_LIST_FIRST( loopuse, &fu->lu_hd );
-		NMG_CK_LOOPUSE(lu);
 		euold = RT_LIST_FIRST( edgeuse, &lu->down_hd );
 		NMG_CK_EDGEUSE(euold);
 
 		if (rt_g.NMG_debug & DEBUG_CMFACE)
-			rt_log("euold: %8x\n", euold);
+			rt_log("nmg_cmface() euold: %8x\n", euold);
 
 		/* look for pre-existing edge between these
 		 * verticies
@@ -327,11 +335,11 @@ int		n;
 				nmg_moveeu(eur, eu);
 
 				if (rt_g.NMG_debug & DEBUG_CMFACE)
-					rt_log("found another edgeuse (%8x) between %8x and %8x\n",
+					rt_log("nmg_cmface() found another edgeuse (%8x) between %8x and %8x\n",
 						eur, *verts[i+1], *verts[i]);
 			} else {
 				if (rt_g.NMG_debug & DEBUG_CMFACE)
-				    rt_log("didn't find edge from verts[%d]%8x to verts[%d]%8x\n",
+				    rt_log("nmg_cmface() didn't find edge from verts[%d]%8x to verts[%d]%8x\n",
 					i+1, *verts[i+1], i, *verts[i]);
 			}
 		} else {
@@ -339,7 +347,7 @@ int		n;
 			*verts[i] = eu->vu_p->v_p;
 
 			if (rt_g.NMG_debug & DEBUG_CMFACE)  {
-				rt_log("*verts[%d] was null, is now %8x\n",
+				rt_log("nmg_cmface() *verts[%d] was null, is now %8x\n",
 					i, *verts[i]);
 			}
 		}
@@ -349,7 +357,7 @@ int		n;
 		nmg_moveeu(eur, euold);
 	} else  {
 	    if (rt_g.NMG_debug & DEBUG_CMFACE)
-		rt_log("didn't find edge from verts[%d]%8x to verts[%d]%8x\n",
+		rt_log("nmg_cmface() didn't find edge from verts[%d]%8x to verts[%d]%8x\n",
 			n-1, *verts[n-1], 0, *verts[0]);
 	}
 	return (fu);
