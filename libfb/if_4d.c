@@ -106,7 +106,7 @@ FBIO gt_interface =
 		gt_cmemory_addr,
 		fb_null,		/* cscreen_addr */
 		gt_help,
-		"SGI 4D60/GT",
+		"SGI 4D/GT",
 		XMAXSCREEN+1,		/* max width */
 		YMAXSCREEN+1,		/* max height */
 		"/dev/sgi",
@@ -217,11 +217,8 @@ struct modeflags {
 		"Private memory - else shared" },
 	{ 'l',	MODE_2MASK, MODE_2LINGERING,
 		"Lingering window - else transient" },
-#ifdef never				
-	/* doesn't work quite right yet... */
 	{ 'f',	MODE_3MASK, MODE_3FULLSCR, 
 		"Full centered screen - else windowed" },
-#endif
 	{ 't',	MODE_4MASK, MODE_4HZ30,
 		"Thirty Hz (e.g. Dunn) - else 60 Hz" },
 	{ 'n',	MODE_5MASK, MODE_5GENLOCK,
@@ -236,7 +233,7 @@ struct modeflags {
 static RGBpixel	rgb_table[4096];
 
 struct gt_pix {
-	unsigned char alpha;
+	unsigned char alpha;	/* this will always be zero */
 	unsigned char blue;
 	unsigned char green;
 	unsigned char red;
@@ -410,8 +407,8 @@ register FBIO	*ifp;
 	short xwidth;
 
 
-	readsource(SRC_ZBUFFER);
-	backbuffer(TRUE);
+	readsource(SRC_ZBUFFER);	/* source for rectcopy() */
+	backbuffer(TRUE);		/* dest for rectcopy() */
 	frontbuffer(FALSE);
 
 	xscroff = yscroff = 0;
@@ -752,6 +749,21 @@ int	width, height;
 			/* This hack is necessary until windows persist from
 			 * process to process */
 
+	/* In full screen mode, center the image on the
+	 * usable part of the screen, either high-res, or NTSC
+	 */
+	if( (ifp->if_mode & MODE_3MASK) == MODE_3FULLSCR )  {
+		int	xleft, ybot;
+		xleft = (ifp->if_max_width)/2 - ifp->if_width/2;
+		ybot = (ifp->if_max_height)/2 - ifp->if_height/2;
+		viewport( xleft, xleft + ifp->if_width,
+			  ybot, ybot + ifp->if_height );
+		ortho2( (Coord)0, (Coord)ifp->if_width,
+			(Coord)0, (Coord)ifp->if_height );
+		/* set input focus to current window, so that
+		 * we can manipulate the cursor icon */
+		winattach();
+	}
 
 	/* Must initialize these window state variables BEFORE calling
 		"gt_getmem", because this function can indirectly trigger
@@ -896,7 +908,16 @@ out:
 	 *  We have no way of knowing if there are other libfb windows
 	 *  still open.
 	 */
+#if 0
 	blanktime( (long) 67 * 60 * 20L );
+#else
+	/*
+	 *  Set an 8 minute screensaver blanking, which will light up
+	 *  the screen again if it was dark, and will protect it otherwise.
+	 *  The 4D has a hardware botch limiting the time to 2**15 frames.
+	 */
+	blanktime( (long) 32767L );
+#endif
 
 	/* Restore initial operation mode, if this was 30Hz */
 	if( (ifp->if_mode & MODE_4MASK) == MODE_4HZ30 )
@@ -1060,7 +1081,6 @@ register int	count;
 {
 	register short scan_count;	/* # pixels on this scanline */
 	register unsigned char *cp;
-	register unsigned char *op;
 	int xscr, yscr;
 	int ret;
 
@@ -1103,31 +1123,30 @@ register int	count;
 		else
 			scan_count = count;
 
-		op = (unsigned char *)&ifp->if_mem[
-			(ymem*GT(ifp)->mi_memwidth+xmem)*sizeof(RGBpixel)];
+		/* Move original pixels to shared memory buffer */
+		memcpy( (char *)&ifp->if_mem[
+		    (ymem*GT(ifp)->mi_memwidth+xmem)*sizeof(RGBpixel)],
+		    cp, scan_count*sizeof(RGBpixel) );
 
-		if ( GT(ifp)->mi_cmap_flag == FALSE )  
-		{
+		if ( GT(ifp)->mi_cmap_flag == FALSE )  {
 			n = scan_count;
-			while( n  )
-			{
-				ip->alpha = 0;
-				ip->red = *op++ = *cp++;
-				ip->green = *op++ = *cp++;
-				ip->blue = *op++ = *cp++;
+			while( n  )  {
+				/* alpha channel is always zero */
+				ip->red = cp[0];
+				ip->green = cp[1];
+				ip->blue = cp[2];
+				cp += 3;
 				ip++;
 				n--;
 			}
-		} 
-		else 
-		{
+		} else {
 			n = scan_count;
-			while( n )
-			{
-				ip->alpha = 0;
-				ip->red = CMR(ifp)[*op++ = *cp++];
-				ip->green = CMG(ifp)[*op++ = *cp++];
-				ip->blue = CMB(ifp)[*op++ = *cp++];
+			while( n )  {
+				/* alpha channel is always zero */
+				ip->red = CMR(ifp)[cp[0]];
+				ip->green = CMG(ifp)[cp[1]];
+				ip->blue = CMB(ifp)[cp[2]];
+				cp += 3;
 				ip++;
 				n--;
 			}
@@ -1442,12 +1461,12 @@ FBIO	*ifp;
 
 	fb_log( "Description: %s\n", gt_interface.if_type );
 	fb_log( "Device: %s\n", ifp->if_name );
-	fb_log( "Max width height: %d %d\n",
-		gt_interface.if_max_width,
-		gt_interface.if_max_height );
+	fb_log( "Maximum width height: %d %d\n",
+		ifp->if_max_width,
+		ifp->if_max_height );
 	fb_log( "Default width height: %d %d\n",
-		gt_interface.if_width,
-		gt_interface.if_height );
+		ifp->if_width,
+		ifp->if_height );
 	fb_log( "Usage: /dev/sgi[options]\n" );
 	for( mfp = modeflags; mfp->c != '\0'; mfp++ ) {
 		fb_log( "   %c   %s\n", mfp->c, mfp->help );
