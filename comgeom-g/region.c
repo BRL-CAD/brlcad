@@ -114,7 +114,6 @@ top:
 
 		/* Scan each of the 9 fields on the card */
 		for( i=0; i<9; i++, cp += 7 )  {
-			struct wmember	*membp;
 			char	nbuf[32];
 			char	*np;
 
@@ -170,8 +169,7 @@ top:
 				namecvt( inst_num, inst_name, 's' );
 			reg_reg_flag = 0;
 
-			membp = mk_addmember( inst_name, &wmp[reg_num] );
-			membp->wm_op = op;
+			(void)mk_addmember( inst_name, &wmp[reg_num], op );
 		}
 	}
 
@@ -327,7 +325,7 @@ char		*name;
 	i = 0;
 
 add:
-	(void)mk_addmember( name, &groups[i].grp_wm );
+	(void)mk_addmember( name, &groups[i].grp_wm, WMOP_UNION );
 }
 
 group_write()
