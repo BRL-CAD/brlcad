@@ -31,7 +31,7 @@
 	nmg_rt_isect nmg_rt_segs nmg_manif \
 	nmg_visit nmg_info nmg_pr \
 	units vert nmg_extrude nmg_tri nmg_fuse nmg_pt_fu \
-	rtassoc \
+	rtassoc wdb tcl \
 	pr LIBRT_TIMER storage global \
 	rt_dspline \
         nurb_basis nurb_bound nurb_diff nurb_eval nurb_flat \
