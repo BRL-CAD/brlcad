@@ -28,9 +28,9 @@ struct solid  {
 	vect_t	s_center;	/* Center point of solid, in model space */
 	unsigned s_addr;	/* Display processor's core address */
 	unsigned s_bytes;	/* Display processor's core length */
-	struct veclist *s_vlist;/* Pointer to unclipped vector list */
+	struct vlist *s_vlist;/* Pointer to unclipped vector list */
 	int	s_vlen;		/* Len of unclipped vector list (structs) */
-	struct veclist *s_clipv;/* Pointer to clipped vector list */
+	struct vlist *s_clipv;/* Pointer to clipped vector list */
 	int	s_clen;		/* Len of clipped vector list (structs) */
 	struct directory *s_path[MAX_PATH];	/* Full `path' name */
 	char	s_last;		/* index of last path element */
@@ -61,7 +61,7 @@ extern int		ndrawn;
 	} }
 
 #define FREE_SOLID(p) {(p)->s_forw = FreeSolid; FreeSolid = (p); \
-	if((p)->s_vlist) (void)free((char *)(p)->s_vlist); \
+	if((p)->s_vlist) FREE_VL((p)->s_vlist); \
 	(p)->s_vlist = 0; (p)->s_addr = 0; }
 
 #define FOR_ALL_SOLIDS(p)  \
