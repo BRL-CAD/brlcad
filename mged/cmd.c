@@ -1894,17 +1894,17 @@ f_tie(clientData, interp, argc, argv)
 
 int
 f_ps(clientData, interp, argc, argv)
-	ClientData clientData;
-	Tcl_Interp *interp;
-	int argc;
-	char *argv[];
+     ClientData clientData;
+     Tcl_Interp *interp;
+     int argc;
+     char *argv[];
 {
 	int status;
 	char *av[2];
 	struct dm_list *dml;
 	struct _view_state *vsp;
 
-	if(argc < 2){
+	if (argc < 2) {
 		struct bu_vls vls;
 
 		bu_vls_init(&vls);
@@ -1920,8 +1920,6 @@ f_ps(clientData, interp, argc, argv)
 		return TCL_ERROR;
 
 	vsp = view_state;  /* save state info pointer */
-	view_state = dml->dml_view_state;  /* use dml's state info */
-	*mged_variables = *dml->dml_mged_variables; /* struct copy */
 
 	bu_free((genptr_t)menu_state,"f_ps: menu_state");
 	menu_state = dml->dml_menu_state;
