@@ -10,6 +10,7 @@
 #include <math.h>
 #include "machine.h"
 #include "vmath.h"
+#include "plot3.h"
 #include "raytrace.h"
 #include "./material.h"
 #include "./mathtab.h"
@@ -66,6 +67,7 @@ struct plant {
 #define GRASSRAY_MAGIC 2048
 struct grass_ray {
 	long		magic;
+	double		occlusion;
 	struct xray	r;
 	double		d_min;
 	double		d_max;
@@ -74,7 +76,11 @@ struct grass_ray {
 	double		radius;
 	struct bn_tol	tol;
 	struct hit	hit;
+	FILE 		*fd;
+	struct application *ap;
 };
+#define grass_ray_MAGIC 0x2461
+#define CK_grass_r(_p) RT_CKMAG(_p, grass_ray_MAGIC, "grass_ray")
 
 /*
  * the shader specific structure contains all variables which are unique
@@ -83,6 +89,7 @@ struct grass_ray {
 struct grass_specific {
 	long	magic;	/* magic # for memory validity check, must come 1st */
 	int	debug;
+	FILE 	*fd;
 	double	cell[2];	/* size of a cell in Region coordinates */
 	double	ppc;		/* mean # plants_per_cell */
 	double	ppcd;		/* deviation of plants_per_cell */
@@ -108,10 +115,11 @@ static CONST
 struct grass_specific grass_defaults = {
 	grass_MAGIC,
 	0,
+	(FILE *)0,
 	{400.0, 400.0},			/* cell */
 	5.0,				/* plants_per_cell */
 	3.0,				/* deviation of plants_per_cell */
-	300.0,				/* "t" mean length of leaf */
+	300.0,				/* "t" mean length of leaf (mm)*/
 	3.0,				/* max width (mm) of blade segment */
 	4,				/* # segs per blade */
 	1.0,				/* seg ratio */
@@ -195,8 +203,8 @@ struct grass_specific *grass_sp;
 	double val;
 
 	VSCALE(c, cell, grass_sp->size);  /* int/float conv */
-
 	VADD2(c, c, grass_sp->delta);
+
 	val = fabs(bn_noise_fbm(c, grass_sp->h_val, grass_sp->lacunarity,
 			grass_sp->octaves));
 	
@@ -208,7 +216,7 @@ struct grass_specific *grass_sp;
 static void
 print_plant(str, plant)
 char *str;
-struct plant *plant;
+CONST struct plant *plant;
 {
 	int blade, seg;
 
@@ -233,10 +241,11 @@ struct plant *plant;
  *
  */
 static void
-blade_rot(o, i, m)
+blade_rot(o, i, m, root)
 struct blade *o;
 struct blade *i;
 mat_t m;
+CONST point_t root;
 {
 	struct blade tmp;
 	int seg;
@@ -246,9 +255,9 @@ mat_t m;
 		tmp = *i;	/* struct copy */
 		i = &tmp;
 	}
-	VSETALL(pt, 0.0);
-	VMOVE(o->pmin, pt);
-	VMOVE(o->pmax, pt);
+	VMOVE(pt, root);
+	VMOVE(o->pmin, root);
+	VMOVE(o->pmax, root);
 
 	o->segs = i->segs;
 	o->tot_len = 0.0;
@@ -274,7 +283,7 @@ double a;
 	bn_mat_zrot(m, sin(a), cos(a));
 
 	for (blade=0 ; blade < pl->blades ; blade++) {
-		blade_rot(&pl->b[blade], &pl->b[blade], m);
+		blade_rot(&pl->b[blade], &pl->b[blade], m, pl->root);
 	}
 }
 
@@ -329,11 +338,10 @@ struct grass_specific *grass_sp;
   vect_t left;
   int blade, seg;
   mat_t m, r;
-  point_t pt;
   double start_angle;
   double seg_delta_angle;
   double angle;
-  double val, tmp, len;
+  double val, tmp;
   double seg_len;
 
   grass_sp->proto.magic = PLANT_MAGIC;
@@ -396,7 +404,7 @@ struct grass_specific *grass_sp;
       		left, grass_sp->proto.b[blade].leaf[seg].blade);
         VUNITIZE(grass_sp->proto.b[blade].leaf[seg].N);
     }
-    blade_rot(&grass_sp->proto.b[blade], &grass_sp->proto.b[blade], m);
+    blade_rot(&grass_sp->proto.b[blade], &grass_sp->proto.b[blade], m, grass_sp->proto.root);
     bn_mat_mul2(r, m);
   }
 
@@ -494,6 +502,7 @@ struct rt_i		*rtip;	/* New since 4.4 release */
 	mat_inv(grass_sp->sh_to_m, grass_sp->m_to_sh);
 
 	if( rdebug&RDEBUG_SHADE) {
+
 		bu_struct_print( " Parameters:", grass_print_tab, (char *)grass_sp );
 		mat_print( "m_to_sh", grass_sp->m_to_sh );
 		mat_print( "sh_to_m", grass_sp->sh_to_m );
@@ -528,26 +537,68 @@ char *cp;
 	rt_free( cp, "grass_specific" );
 }
 
-
 static void
-make_bush(pl, c, cell_pos, grass_sp, w)
+plot_bush(pl, r)
+struct plant 		*pl;
+struct grass_ray	*r;
+{
+	int blade, seg;
+	point_t pt;
+
+	bu_semaphore_acquire(BU_SEM_SYSCALL);
+	pl_color(r->fd, 150, 250, 150);
+
+	for (blade=0 ; blade < pl->blades ; blade++) {
+
+		VMOVE(pt, pl->root);
+		pdv_3move(r->fd, pt);
+
+		for (seg=0 ; seg < pl->b[blade].segs ; seg++ ) {
+
+			VJOIN1(pt, pt,  pl->b[blade].leaf[seg].len,
+				 pl->b[blade].leaf[seg].blade);
+
+			pdv_3cont(r->fd, pt);
+		}
+	}
+
+#if 1
+	/* plot bounding Box */
+	pl_color(r->fd, 100, 200, 100);
+	pdv_3move(r->fd, pl->pmin);
+	pd_3cont(r->fd, pl->pmin[X], pl->pmin[Y], pl->pmin[Z]);
+	pd_3cont(r->fd, pl->pmax[X], pl->pmin[Y], pl->pmin[Z]);
+	pd_3cont(r->fd, pl->pmax[X], pl->pmax[Y], pl->pmin[Z]);
+	pd_3cont(r->fd, pl->pmin[X], pl->pmax[Y], pl->pmin[Z]);
+	pd_3cont(r->fd, pl->pmin[X], pl->pmin[Y], pl->pmin[Z]);
+
+	pd_3cont(r->fd, pl->pmin[X], pl->pmin[Y], pl->pmax[Z]);
+	pd_3cont(r->fd, pl->pmax[X], pl->pmin[Y], pl->pmax[Z]);
+	pd_3cont(r->fd, pl->pmax[X], pl->pmax[Y], pl->pmax[Z]);
+	pd_3cont(r->fd, pl->pmin[X], pl->pmax[Y], pl->pmax[Z]);
+	pd_3cont(r->fd, pl->pmin[X], pl->pmin[Y], pl->pmax[Z]);
+
+#endif
+	pl_color(r->fd, 255, 255, 255);
+	bu_semaphore_release(BU_SEM_SYSCALL);
+}
+static void
+make_bush(pl, seed, cell_pos, grass_sp, w, r)
 struct plant 			*pl;
-point_t				c;	/* derived from cell_num */
+double 				seed;	/* derived from cell_num */
 CONST point_t			cell_pos;
 CONST struct grass_specific 	*grass_sp;
-double w;		/* cell specific weght for count, height */
+double				w; /* cell specific weght for count, height */
+struct grass_ray		*r;
 {
 	point_t pt;
-	vect_t left;
 	int blade, seg;
-	double val;
-	double foo;
-	int idx;
-
+	unsigned idx;
 
 	if (rdebug&RDEBUG_SHADE)
-		bu_log("make_bush(%g %g %g, ... %g)\n", V3ARGS(c), w);
+		bu_log("make_bush(%g, ... %g)\n", seed, w);
 
+	CK_grass_SP(grass_sp);
 
 	*pl = grass_sp->proto; /* struct copy */
 
@@ -555,27 +606,19 @@ double w;		/* cell specific weght for count, height */
 	VMOVE(pl->root, cell_pos);
 	pl->root[Z] = 0.0;
 
-
-	idx = (int)(c[X] + c[Y]);
-	BN_RANDSEED(idx, idx);
+	BN_RANDSEED(idx, seed);
 	pl->root[X] += BN_RANDOM(idx) * grass_sp->cell[X];
 
-	idx *= (int)(c[X] + c[Y]);
-	BN_RANDSEED(idx, idx);
 	pl->root[Y] += BN_RANDOM(idx) * grass_sp->cell[Y];
-
 
 	/* set up for bounding box computation */
 	VADD2(pl->pmin, pl->pmin, pl->root);
 	VADD2(pl->pmax, pl->pmax, pl->root);
 
-
 	VSCALE(pt, pl->root, grass_sp->size);
-
 
 	plant_scale(pl, w);	/* must come first */
 	plant_rot(pl, BN_RANDOM(idx) * M_PI * 2.0);/* computes bounding box */
-
 
 	/* set bounding boxes */
 	for (blade=0 ; blade < pl->blades ; blade++) {
@@ -589,6 +632,7 @@ double w;		/* cell specific weght for count, height */
 		VMINMAX(pl->pmin, pl->pmax, pl->b[blade].pmin);
 		VMINMAX(pl->pmin, pl->pmax, pl->b[blade].pmax);
 	}
+	if (rdebug&RDEBUG_SHADE && r->fd) plot_bush(pl, r);
 }
 
 
@@ -596,11 +640,8 @@ double w;		/* cell specific weght for count, height */
 /*	Intersect ray with leaf segment.  We already know we're within
  *	max width of the segment.
  *
- *	Return:
- *		0	missed
- *		1	hit something
  */
-static int
+static void
 hit_blade(bl, r, swp, grass_sp, seg, ldist, blade_num, fract)
 CONST struct blade *bl;
 struct grass_ray *r;
@@ -618,6 +659,9 @@ double fract;
 	/* get the hit point/PCA */
 	if (rdebug&RDEBUG_SHADE)
 		bu_log("\t  hit_blade()\n");
+
+	r->occlusion = 1.0;
+	return;
 
 
 	if (ldist[0] < r->hit.hit_dist) {
@@ -656,25 +700,23 @@ double fract;
 		}
 
 
-		return SHADE_ABORT_GRASS;
+		return /* SHADE_ABORT_GRASS */;
 	} else {
 		if (rdebug&RDEBUG_SHADE)
 			bu_log("abandon hit in cell: %g > %g\n",
 				ldist[0], r->hit.hit_dist);
 	}
-	return SHADE_CONT;
+	return /* SHADE_CONT */;
 }
+
 
 /*	intersect ray with leaves of single blade
  *
- *	Return:
- *		0	missed
- *		1	hit something
  */
-static int
+static void
 isect_blade(bl, root, r, swp, grass_sp, blade_num)
 CONST struct blade *bl;
-point_t root;
+CONST point_t root;
 struct grass_ray *r;
 struct shadework	*swp;	/* defined in material.h */
 CONST struct grass_specific *grass_sp;
@@ -699,6 +741,7 @@ int blade_num;
 
 	if (rdebug&RDEBUG_SHADE)
 		bu_log("\t  isect_blade()\n");
+
 
 	BU_CKMAG(bl, BLADE_MAGIC, "blade");
 
@@ -745,12 +788,6 @@ int blade_num;
 		if (blade_num < BLADE_LAST) {
 			blade_width = bl->width * (1.0 - fract);
 		} else {
-#if 0
-			if (fract > .9)
-				blade_width = bl->width * 1.1;
-			else
-				blade_width = bl->width * .5;
-#endif
 			blade_width = .5 * bl->width * (1.0 - fract);
 		}
 
@@ -760,8 +797,11 @@ int blade_num;
 					dist, PCA_ray_radius,
 					bl->width);
 
-			return hit_blade(bl, r, swp, grass_sp, seg, ldist,
+			hit_blade(bl, r, swp, grass_sp, seg, ldist,
 				blade_num, fract);
+
+			if (r->occlusion >= 1.0) return;
+
 		}
 		if (rdebug&RDEBUG_SHADE) bu_log("\t    (missed aside)\n");
 
@@ -770,18 +810,17 @@ iter:
 		VJOIN1(pt, pt, bl->leaf[seg].len, bl->leaf[seg].blade);
 		seg++;
 	}
-
-	return SHADE_CONT;
 }
 
-static int
+
+static void
 isect_plant(pl, r, swp, grass_sp)
 CONST struct plant *pl;
 struct grass_ray *r;
 struct shadework	*swp;	/* defined in material.h */
 CONST struct grass_specific *grass_sp;
 {
-	int i, status;
+	int i;
 
 	CK_grass_SP(grass_sp);
 	BU_CKMAG(r, GRASSRAY_MAGIC, "grass_ray");
@@ -791,6 +830,7 @@ CONST struct grass_specific *grass_sp;
 		bu_log("isect_plant()\n");
 		print_plant("plant", pl);
 	}
+
 	r->r.r_min = r->r.r_max = 0.0;
 	if (! rt_in_rpp(&r->r, r->rev, pl->pmin, pl->pmax) ) {
 		if( rdebug&RDEBUG_SHADE) {
@@ -807,7 +847,7 @@ CONST struct grass_specific *grass_sp;
 			VPRINT("\tout_pt", out_pt);
 			bu_log("MISSED BBox\n");
 		}
-		return 0;
+		return;
 	} else { 
 		if( rdebug&RDEBUG_SHADE) {
 			point_t in_pt, out_pt;
@@ -822,16 +862,15 @@ CONST struct grass_specific *grass_sp;
 	
 			VJOIN1(out_pt, r->r.r_pt, r->r.r_max, r->r.r_dir);
 			VPRINT("\tout_pt", out_pt);
+			bu_log("HIT BBox\n");
 		}
 	}
 
 	for (i=0 ; i < pl->blades ; i++) {
-		status = isect_blade(&pl->b[i], pl->root, r, swp, grass_sp, i);
-		if (status) 
-			return status;
+		isect_blade(&pl->b[i], pl->root, r, swp, grass_sp, i);
+		if (r->occlusion >= 1.0)
+			return;
 	}
-
-	return 0;
 }
 
 
@@ -893,24 +932,46 @@ double radius;	/* radius of ray */
 		return SHADE_CONT;
 }
 
+static void
+plot_cell(cell, r, grass_sp)
+long			cell[3];	/* cell number (such as 5,3) */
+struct grass_ray	*r;
+struct grass_specific	*grass_sp;
+{
+	point_t cell_pos;
+
+	CK_grass_SP(grass_sp);
+
+	CELL_POS(cell_pos, grass_sp, cell);
+	bu_log("plotting cell %d,%d (%g,%g) %g %g\n",
+		V2ARGS(cell), V2ARGS(cell_pos), V2ARGS(grass_sp->cell));
+
+	bu_semaphore_acquire(BU_SEM_SYSCALL);
+	pl_color(r->fd, 100, 100, 200);
+
+	pd_3move(r->fd, cell_pos[X], cell_pos[Y], 0.0);
+	pd_3cont(r->fd, cell_pos[X]+grass_sp->cell[X], cell_pos[Y], 0.0);
+	pd_3cont(r->fd, cell_pos[X]+grass_sp->cell[X], cell_pos[Y]+grass_sp->cell[Y], 0.0);
+	pd_3cont(r->fd, cell_pos[X], cell_pos[Y]+grass_sp->cell[Y], 0.0);
+	pd_3cont(r->fd, cell_pos[X], cell_pos[Y], 0.0);
+	pl_color(r->fd, 255, 255, 255);
+	bu_semaphore_release(BU_SEM_SYSCALL);
+
+}
 
 /*	I S E C T _ C E L L
  *
  *  Intersects a region-space ray with a grid cell of grass.
  *
- *
- *
- *  Return:
- *	0	continue grid marching
- *	~0	hit something
  */
-static int
-isect_cell(cell, r, swp, out_dist, grass_sp)
+static void
+isect_cell(cell, r, swp, out_dist, grass_sp, curr_dist)
 long			cell[3];	/* cell number (such as 5,3) */
 struct grass_ray	*r;
 double 			out_dist;
 struct shadework	*swp;
 struct grass_specific	*grass_sp;
+double curr_dist;
 {
 	point_t c;		/* float version of cell # */
 	point_t cell_pos;	/* origin of cell in region coordinates */
@@ -919,13 +980,41 @@ struct grass_specific	*grass_sp;
 	int p;		/* current plant number (loop variable) */
 	int ppc;	/* # plants in this cell */
 	struct plant pl;
-	int hit = 0;
 	double dist_to_cell;
+	double seed;
 
 	CK_grass_SP(grass_sp);
 
-	if (rdebug&RDEBUG_SHADE)
+	if( rdebug&RDEBUG_SHADE) {
+		static int plot_num = 0;
+		char buf[32];
+		point_t cell_in_pt;
+		point_t cell_out_pt;	/* not really */
+
 		bu_log("isect_cell(%ld,%ld)\n", V2ARGS(cell));
+
+
+		bu_semaphore_acquire(BU_SEM_SYSCALL);
+		sprintf(buf, "g_ray%d,%d_%d_cell%ld,%ld_.pl",
+			r->ap->a_x, r->ap->a_y, plot_num++, cell[0], cell[1]);
+		r->fd = fopen(buf, "w");
+		if (r->fd) {
+			if (swp->sw_xmitonly)
+				pl_color(r->fd, 255, 255, 55);
+			else
+				pl_color(r->fd, 255, 55, 55);
+
+			VJOIN1(cell_in_pt, r->r.r_pt, curr_dist, r->r.r_dir);
+			VJOIN1(cell_out_pt, r->r.r_pt, out_dist, r->r.r_dir);
+
+			pdv_3move(r->fd, cell_in_pt);
+			pdv_3cont(r->fd, cell_out_pt);
+			pl_color(r->fd, 255, 255, 255);
+		}
+
+		bu_semaphore_release(BU_SEM_SYSCALL);
+		if (r->fd) plot_cell(cell, r, grass_sp);
+	}
 
 
 	/* get coords of cell */
@@ -935,9 +1024,9 @@ struct grass_specific	*grass_sp;
 	dist_to_cell = MAGNITUDE(v);
 
 	
+
 	/* radius of ray at cell origin */
 	val = r->radius + r->diverge * dist_to_cell;
-
 
 	if (rdebug&RDEBUG_SHADE)
 		bu_log("\t  ray radius @cell %g = %g, %g, %g   (%g)\n\t   cell:%g,%g\n",
@@ -945,22 +1034,29 @@ struct grass_specific	*grass_sp;
 			V2ARGS(grass_sp->cell));
 
 	if (val > grass_sp->blade_width * 3) {
-		return stat_cell(cell_pos, r, grass_sp, swp, dist_to_cell, val);
+		stat_cell(cell_pos, r, grass_sp, swp, dist_to_cell, val);
+		return;
 	}
 
 	/* Figure out how many plants are in this cell */
+
 	val = plants_this_cell(cell, grass_sp);
+
 	ppc = grass_sp->ppc + grass_sp->ppcd * val;
 
-	VSCALE(c, cell, grass_sp->size);
-
-	if (rdebug&RDEBUG_SHADE)
+	if (rdebug&RDEBUG_SHADE) {
 		bu_log("cell pos(%g,%g .. %g,%g)\n", V2ARGS(cell_pos),
 			cell_pos[X]+grass_sp->cell[X],
 			cell_pos[Y]+grass_sp->cell[Y]);
 
-	if (rdebug&RDEBUG_SHADE)
 		bu_log("%d plants  ppc:%g v:%g\n", ppc, grass_sp->ppcd, val);
+	}
+
+	/* Get origin of cell in noise space (without delta)
+	 * to use for computing seed needed by make_bush
+	 */
+	VSCALE(c, cell, grass_sp->size);
+
 
 	/* intersect the ray with each plant */
 	for (p=0 ;  p < ppc ; p++) {
@@ -968,18 +1064,17 @@ struct grass_specific	*grass_sp;
 		CK_grass_SP(grass_sp);
 		BU_CKMAG(r, GRASSRAY_MAGIC, "grass_ray");
 
-		make_bush(&pl, c, cell_pos, grass_sp, val);
+		make_bush(&pl, c[X]+c[Y],  cell_pos, grass_sp, val, r);
 
 		CK_grass_SP(grass_sp);
 		BU_CKMAG(r, GRASSRAY_MAGIC, "grass_ray");
 		BU_CKMAG(&pl, PLANT_MAGIC, "plant");
 
-		hit |= isect_plant(&pl, r, swp, grass_sp);
+		isect_plant(&pl, r, swp, grass_sp);
+		if (r->occlusion >= 1.0) return;
 
 		VSCALE(c, c, grass_sp->lacunarity);
 	}
-
-	return hit;
 }
 
 
@@ -997,22 +1092,24 @@ struct grass_specific	*grass_sp;
  * -1,-1  0001  0,-1 0002  1,-1 0004
  *
  *
+ * A set flag indicates that the cell has NOT been processed
+ *
  *  Return:
  *	0	continue grid marching
  *	!0	abort grid marching
  */
-static int
-do_cells(cell_num, r, flags, swp, out_dist, grass_sp)
+static void
+do_cells(cell_num, r, flags, swp, out_dist, grass_sp, curr_dist)
 long			cell_num[3];
 struct grass_ray	*r;
 short 			flags;		/* which adj cells need processing */
 double 			out_dist;
 struct shadework	*swp;	/* defined in material.h */
 struct grass_specific	*grass_sp;
+double			curr_dist;
 {
 	int x, y;
 	long cell[3];
-	int hit = 0;
 
 #define FLAG(x,y) ((1 << ((y+1)*3)) << (x+1))
 #define ISDONE(x,y,flags) ( ! (FLAG(x,y) & flags))
@@ -1025,13 +1122,7 @@ struct grass_specific	*grass_sp;
 
 	for (y=-1; y < 2 ; y++) {
 		for (x=-1; x < 2 ; x++) {
-#if 0
-			short f;
-			f = FLAG(x,y);
-			if( rdebug&RDEBUG_SHADE)
-				bu_log("\n0%03o &\n0%03o = %d ",
-					flags, f, (flags & f) != 0 );
-#endif
+
 			if ( ISDONE(x,y,flags) ) continue;
 
 			cell[X] = cell_num[X] + x;
@@ -1040,10 +1131,11 @@ struct grass_specific	*grass_sp;
 			if( rdebug&RDEBUG_SHADE)
 				bu_log("checking relative cell %2d,%2d at(%d,%d)\n",
 					x, y, V2ARGS(cell));
-			hit |= isect_cell(cell, r, swp, out_dist, grass_sp);
+
+			isect_cell(cell, r, swp, out_dist, grass_sp, curr_dist);
+			if (r->occlusion >= 1.0) return;
 		}
 	}
-	return hit;
 }
 
 /*
@@ -1075,7 +1167,9 @@ char			*dp;	/* ptr to the shader-specific struct */
 	long		tD_iter[2];
 	long		cell_num[3];	/* cell number */
 	long		old_cell_num[3];	/* cell number */
-	int		status;
+	point_t		in_pt_m;	/* model space in/out */
+	point_t		out_pt_m;
+
 
 	/* check the validity of the arguments we got */
 	RT_AP_CHECK(ap);
@@ -1085,22 +1179,17 @@ char			*dp;	/* ptr to the shader-specific struct */
 	if( rdebug&RDEBUG_SHADE)
 		bu_struct_print( "grass_render Parameters:", grass_print_tab, (char *)grass_sp );
 
-#if 0
-	if (swp->sw_xmitonly) {
-		if( rdebug&RDEBUG_SHADE)
-			bu_log("grass no shadows\n");
-		swp->sw_transmit = 1.0;
-		return 0;
-	}
-#endif
-	swp->sw_transmit = 1.0;
+	VMOVE(in_pt_m, swp->sw_hit.hit_point);
 
+	swp->sw_transmit = 1.0;
 
 	/* XXX now how would you transform the tolerance structure
 	 * to the local coordinate space ?
 	 */
 	gr.magic = GRASSRAY_MAGIC;
+	gr.occlusion = 0.0;
 
+		
 #if 1
 	gr.tol = ap->a_rt_i->rti_tol;
 #else
@@ -1108,6 +1197,8 @@ char			*dp;	/* ptr to the shader-specific struct */
 	gr.tol.dist = grass_sp->blade_width;
 	gr.tol.dist_sq = grass_sp->blade_width * grass_sp->blade_width;
 #endif
+	gr.ap = ap;
+
 	/* Convert everything over to "Region" space.
 	 * First the ray and its radius then
 	 * the in/out points
@@ -1120,25 +1211,28 @@ char			*dp;	/* ptr to the shader-specific struct */
 	/* In Hit point */
 	MAT4X3PNT(in_pt, grass_sp->m_to_sh, swp->sw_hit.hit_point);
 
-	/* The only thing we can really do is get (possibly 3 different)
-	 * radii in the Region coordinate system
+	/* The only thing we can really do to get the size of the
+	 * ray footprint at the In Hit point is get 3 (possibly different)
+	 * radii in the Region coordinate system.  We construct a unit vector
+	 * in model space with equal X,Y,Z and transform it to region space.
 	 */
 	radius = ap->a_rbeam + swp->sw_hit.hit_dist * ap->a_diverge;
 	VSETALL(v, radius);
 	VUNITIZE(v);
 	MAT4X3VEC(in_rad, grass_sp->m_to_sh, v);
 
-	VSUB2(v, gr.r.r_pt, in_pt);
-
 	gr.radius = ap->a_rbeam;   /* XXX Bogus if Region != Model space */
 	gr.diverge = ap->a_diverge;/* XXX Bogus if Region != Model space */
 
 	/* Out point */
-	VJOIN1(v, ap->a_ray.r_pt, pp->pt_outhit->hit_dist, ap->a_ray.r_dir);
-	MAT4X3VEC(out_pt, grass_sp->m_to_sh, v);
+	VJOIN1(out_pt_m, ap->a_ray.r_pt, pp->pt_outhit->hit_dist,
+		ap->a_ray.r_dir);
+	MAT4X3VEC(out_pt, grass_sp->m_to_sh, out_pt_m);
 	radius = ap->a_rbeam + pp->pt_outhit->hit_dist * ap->a_diverge;
 	VSETALL(v, radius);
 	MAT4X3VEC(out_rad, grass_sp->m_to_sh, v);
+
+
 
 	/* set up a DDA grid to march through. */
 	VSUB2(v, in_pt, gr.r.r_pt);
@@ -1155,7 +1249,8 @@ char			*dp;	/* ptr to the shader-specific struct */
 	MAT4X3VEC(gr.hit.hit_normal, grass_sp->m_to_sh, swp->sw_hit.hit_normal);
 
 	if( rdebug&RDEBUG_SHADE) {
-		bu_log("Pt: (%g %g %g)\nRPt:(%g %g %g)\n", V3ARGS(ap->a_ray.r_pt),
+		bu_log("Pt: (%g %g %g)\nRPt:(%g %g %g)\n",
+			V3ARGS(ap->a_ray.r_pt),
 			V3ARGS(gr.r.r_pt));
 		bu_log("Dir: (%g %g %g)\nRDir:(%g %g %g)\n", V3ARGS(ap->a_ray.r_dir),
 			V3ARGS(gr.r.r_dir));
@@ -1233,8 +1328,9 @@ char			*dp;	/* ptr to the shader-specific struct */
 	 * -1, 0  0010  0, 0 0020  1, 0 0040
 	 * -1,-1  0001  0,-1 0002  1,-1 0004
 	 *
+	 * A set bit indicates that the cell has NOT been processed.
 	 */
-	flags = 0777;
+	flags = 0777;	/* no ajacent cells processed */
 	VMOVE(curr_pt, in_pt);
 	cell_num[X] = (long)(in_pt[X] / grass_sp->cell[X]);
 	cell_num[Y] = (long)(in_pt[Y] / grass_sp->cell[Y]);
@@ -1258,8 +1354,9 @@ char			*dp;	/* ptr to the shader-specific struct */
 				bu_log("cell pos: %g %g\n", V2ARGS(cell_pos));
 		}
 
-		if (status = do_cells(cell_num, &gr, flags,
-		    swp, out_dist, grass_sp))
+
+		do_cells(cell_num, &gr, flags, swp, out_dist, grass_sp, curr_dist);
+		if (gr.occlusion >= 1.0)
 			goto done;
 
 		VMOVE(old_cell_num, cell_num);
@@ -1303,9 +1400,10 @@ char			*dp;	/* ptr to the shader-specific struct */
 	/* Missed everything */
 
 
+
+
 	if (grass_sp->debug && !swp->sw_xmitonly) {
 		/* show the cell positions on the ground */
-		int plants;
 		double bc;
 
 		bc =  plants_this_cell(cell_num, grass_sp);
@@ -1323,12 +1421,22 @@ char			*dp;	/* ptr to the shader-specific struct */
 	}
 
 
+
 	(void)rr_render( ap, pp, swp );
+
+done:
+	if ( rdebug&RDEBUG_SHADE) {
+		bu_semaphore_acquire(BU_SEM_SYSCALL);
+		fflush(gr.fd);
+		fclose(gr.fd);
+		bu_semaphore_release(BU_SEM_SYSCALL);
+	}
+
+#if 0
 
 	/* Tell stacker to abort shading */
 	return 0;
 
-done:
 	if( rdebug&RDEBUG_SHADE)
 		bu_log("Hit grass blades\n");
 
@@ -1371,7 +1479,7 @@ done:
 		bu_log("MAG(Rnormal)%g, MAG(Mnormal)%g\n", MAGNITUDE(gr.hit.hit_normal), MAGNITUDE(swp->sw_hit.hit_normal));
 	}
 	VUNITIZE(swp->sw_hit.hit_normal);
-
+#endif
 
 	return 1;
 
