@@ -104,8 +104,7 @@ char	**argv;
 	rgb[0] = 240;	/* gold/brown */
 	rgb[1] = 180;
 	rgb[2] = 64;
-	mk_comb( stdout, "plane.r", 1, 1, "", "", rgb, 0 );
-	mk_memb( stdout, "plane", identity, WMOP_UNION );
+	mk_region1( stdout, "plane.r", "plane", NULL, NULL, rgb );
 	(void)mk_addmember( "plane.r", &head, WMOP_UNION );
 
 	/* Create the display pillars */
@@ -275,9 +274,8 @@ struct wmember *headp;
 	/* Needs to be in a region, with color!  */
 	get_rgb(rgb);
 	i = PICK_MAT;
-	mk_comb( stdout, rname, 1, 1,
-		mtab[i].mt_name, mtab[i].mt_param, rgb, 0 );
-	mk_memb( stdout, sname, identity, WMOP_UNION );
+	mk_region1( stdout, rname, sname,
+		mtab[i].mt_name, mtab[i].mt_param, rgb );
 
 	(void)mk_addmember( rname, &head, WMOP_UNION );
 	wp = mk_addmember( oname, &head, WMOP_UNION );
@@ -306,10 +304,9 @@ struct wmember *headp;
 	sprintf( sname, "%s.s", rname );
 	sprintf( args, "texture file=%s;plastic", file );
 	mk_rpp( stdout, sname, cmin, cmax );
-	mk_comb( stdout, rname, 1, 1,
+	mk_region1( stdout, rname, sname,
 		"stack", args,
-		(unsigned char *)0, 0 );
-	mk_memb( stdout, sname, identity, WMOP_UNION );
+		(unsigned char *)0 );
 
 	(void)mk_addmember( rname, headp, WMOP_UNION );
 }
