@@ -32,9 +32,15 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #include "machine.h"
 #include "externs.h"			/* for getopt() */
 #include "bu.h"
+#include "vmath.h"
+#include "bn.h"
+#include "db.h"
+#include "raytrace.h"
 #include "redblack.h"
 
 rb_tree		*assignment;	/* Relabeling assignment */
+struct db_i	*dbip;		/* Instance of BRL-CAD database */
+
 
 /************************************************************************
  *									*
@@ -54,14 +60,16 @@ struct curr_id
 
 struct remap_reg
 {
-    struct bu_list	l;
-    char		*rr_name;
+    struct bu_list		l;
+    char			*rr_name;
+    struct directory		*rr_dp;
+    struct rt_db_internal	*rr_ip;
 };
 #define	rr_magic	l.magic
 #define	REMAP_REG_NULL	((struct remap_reg *) 0)
 #define	REMAP_REG_MAGIC	0x726d7267
 
-static int		debug = 1;
+static int		debug = 0;
 
 /************************************************************************
  *									*
@@ -116,6 +124,34 @@ int	depth;
 }
 
 /*
+ *		P R I N T _ N O N E M P T Y _ C U R R _ I D ( )
+ *
+ */
+void print_nonempty_curr_id (v, depth)
+
+void	*v;
+int	depth;
+
+{
+    struct curr_id	*cip = (struct curr_id *) v;
+    struct remap_reg	*rp;
+
+    BU_CKMAG(cip, CURR_ID_MAGIC, "curr_id");
+
+    if (BU_LIST_NON_EMPTY(&(cip -> ci_regions)))
+    {
+	bu_log(" curr_id <x%x> %d %d...\n",
+	    cip, cip -> ci_id, cip -> ci_newid);
+	for (BU_LIST_FOR(rp, remap_reg, &(cip -> ci_regions)))
+	{
+	    BU_CKMAG(rp, REMAP_REG_MAGIC, "remap_reg");
+
+	    bu_log("  %s\n", rp -> rr_name);
+	}
+    }
+}
+
+/*
  *		F R E E _ C U R R _ I D ( )
  *
  */
@@ -143,8 +179,11 @@ char	*region_name;
 
     rp -> rr_magic = REMAP_REG_MAGIC;
 
-    rp -> rr_name = (char *) bu_malloc(strlen(region_name), "region name");
+    rp -> rr_name = (char *) bu_malloc(strlen(region_name) + 1, "region name");
     strcpy(rp -> rr_name, region_name);
+
+    rp -> rr_dp = DIR_NULL;
+    rp -> rr_ip = (struct rt_db_internal *) 0;
 
     return (rp);
 }
@@ -360,6 +399,7 @@ char	*sf_name;
 			    "Range out of order",
 			    (sfp -> file_bp) - bu_vls_addr(&(sfp -> file_buf))
 			    - 1);
+			exit (-1);
 		    }
 		    for (i = num1; i <= num2; ++i)
 		    {
@@ -387,7 +427,7 @@ char	*sf_name;
 			"Syntax error",
 			(sfp -> file_bp) - bu_vls_addr(&(sfp -> file_buf))
 			- 1);
-		    break;
+		    exit (-1);
 	    }
 	    break;
 	}
@@ -404,10 +444,12 @@ char	*sf_name;
     }
 }
 
-void record_region (region_name, region_id)
+void record_region (region_name, region_id, dp, ip)
 
-char	*region_name;
-int	region_id;
+char			*region_name;
+int			region_id;
+struct directory	*dp;
+struct rt_db_internal	*ip;
 
 {
     struct curr_id	*cip;
@@ -415,8 +457,88 @@ int	region_id;
 
     cip = lookup_curr_id(region_id);
     rp = mk_remap_reg(region_name);
+    rp -> rr_dp = dp;
+    rp -> rr_ip = ip;
     BU_LIST_INSERT(&(cip -> ci_regions), &(rp -> l));
 }
+
+void db_init(db_name)
+
+char	*db_name;
+
+{
+    int				i;
+    struct directory		*dp;
+    struct rt_comb_internal	*comb;
+    struct rt_db_internal	intern;
+
+    bu_log("db_init(%s)...\n", db_name);
+
+    if ((dbip = db_open(db_name, "r+w")) == DBI_NULL)
+    {
+	bu_log("Cannot open database file '%s'\n", db_name);
+	exit (1);
+    }
+    db_scan(dbip, (int (*)()) db_diradd, 1);
+
+    for (i = 0; i < RT_DBNHASH; ++i)
+	for (dp = dbip -> dbi_Head[i]; dp != DIR_NULL; dp = dp -> d_forw)
+	{
+	    if (!(dp -> d_flags & DIR_REGION))
+		continue;
+	    if (rt_db_get_internal(&intern, dp, dbip, (mat_t *) NULL) < 0)
+	    {
+		bu_log("remapid: rt_db_get_internal(%s) failed.  ",
+		    dp -> d_namep);
+		bu_log("This shouldn't happen\n");
+		exit (1);
+	    }
+	    comb = (struct rt_comb_internal *) intern.idb_ptr;
+	    RT_CK_COMB(comb);
+	    record_region(dp -> d_namep, comb -> region_id, dp, &intern);
+	}
+}
+
+/*
+ *		W R I T E _ A S S I G N M E N T ( )
+ *
+ */
+void write_assignment (v, depth)
+
+void	*v;
+int	depth;
+
+{
+    int				region_id;
+    struct curr_id		*cip = (struct curr_id *) v;
+    struct remap_reg		*rp;
+    struct rt_comb_internal	*comb;
+
+    BU_CKMAG(cip, CURR_ID_MAGIC, "curr_id");
+
+    if (BU_LIST_NON_EMPTY(&(cip -> ci_regions)))
+    {
+	region_id = cip -> ci_newid;
+	bu_log(" curr_id <x%x> %d %d...\n",
+	    cip, cip -> ci_id, region_id);
+	for (BU_LIST_FOR(rp, remap_reg, &(cip -> ci_regions)))
+	{
+	    BU_CKMAG(rp, REMAP_REG_MAGIC, "remap_reg");
+
+	    comb = (struct rt_comb_internal *) rp -> rr_ip -> idb_ptr;
+	    RT_CK_COMB(comb);
+	    comb -> region_id = region_id;
+	    if (rt_db_put_internal(rp -> rr_dp, dbip, rp -> rr_ip) < 0)
+	    {
+		bu_log("remapid: rt_db_put_internal(%s) failed.  ",
+		    rp -> rr_dp -> d_namep);
+		bu_log("This shouldn't happen\n");
+		exit (1);
+	    }
+	}
+    }
+}
+
 
 /*
  *			   P R I N T _ U S A G E ( )
@@ -491,18 +613,18 @@ char	*argv[];
      */
     read_spec (sfp, sf_name);
 
-    if (debug)
-	rb_walk1(assignment, print_curr_id, INORDER);
-
+#if 0
     record_region("USA", 1776);
     record_region("Will", 7);
     record_region("Griff", 8);
     record_region("Jake", 11);
     record_region("Chad", 11);
+#endif
+
+    db_init(db_name);
 
     if (debug)
-    {
-	bu_log(" . . . . . . . . . . .. .\n");
-	rb_walk1(assignment, print_curr_id, INORDER);
-    }
+	rb_walk1(assignment, print_nonempty_curr_id, INORDER);
+    else
+	rb_walk1(assignment, write_assignment, INORDER);
 }
