@@ -400,8 +400,8 @@ char	**argv;
  *			D O _ L I S T
  */
 void
-do_list( outfp, dp, verbose )
-FILE	*outfp;
+do_list( outstrp, dp, verbose )
+struct rt_vls	*outstrp;
 register struct directory *dp;
 int	verbose;
 {
@@ -412,8 +412,9 @@ int	verbose;
 	struct rt_db_internal	intern;
 	mat_t			ident;
 	struct rt_vls		str;
+	rt_vls_init( &str );
 
-	fprintf( outfp, "%s:  ", dp->d_namep);
+	rt_vls_printf( outstrp, "%s:  ", dp->d_namep );
 	RT_INIT_EXTERNAL(&ext);
 	if( db_get_external( &ext, dp, dbip ) < 0 )  {
 		rt_log("db_get_external(%s) failure\n", dp->d_namep);
@@ -424,26 +425,35 @@ int	verbose;
 	/* XXX This should be converted to _import and _describe routines! */
 	if( rp[0].u_id == ID_COMB )  {
 		/* Combination */
-		(void)fprintf( outfp, "%s (len %d) ", dp->d_namep, dp->d_len-1 );
-		if( rp[0].c.c_flags == 'R' )
-			rt_log("REGION id=%d  (air=%d, los=%d, GIFTmater=%d) ",
+		rt_vls_printf( outstrp, "%s (len %d) ", dp->d_namep, 
+			       dp->d_len-1 );
+		if( rp[0].c.c_flags == 'R' ) {
+			rt_vls_printf( outstrp,
+			       "REGION id=%d  (air=%d, los=%d, GIFTmater=%d) ",
 				rp[0].c.c_regionid,
 				rp[0].c.c_aircode,
 				rp[0].c.c_los,
 				rp[0].c.c_material );
-		(void)fprintf(outfp,"--\n");
-		if( rp[0].c.c_matname[0] )
-			(void)fprintf(outfp,"Material '%s' '%s'\n",
+		}
+		rt_vls_strcat( outstrp, "--\n" );
+		if( rp[0].c.c_matname[0] ) {
+			rt_vls_printf( outstrp,
+				"Material '%s' '%s'\n",
 				rp[0].c.c_matname,
 				rp[0].c.c_matparm);
-		if( rp[0].c.c_override == 1 )
-			(void)fprintf(outfp,"Color %d %d %d\n",
+		}
+		if( rp[0].c.c_override == 1 ) {
+			rt_vls_printf( outstrp,
+				"Color %d %d %d\n",
 				rp[0].c.c_rgb[0],
 				rp[0].c.c_rgb[1],
 				rp[0].c.c_rgb[2]);
+		}
 		if( rp[0].c.c_matname[0] || rp[0].c.c_override )  {
-			if( rp[0].c.c_inherit == DB_INH_HIGHER )
-				(void)fprintf(outfp,"(These material properties override all lower ones in the tree)\n");
+			if( rp[0].c.c_inherit == DB_INH_HIGHER ) {
+				rt_vls_strcat( outstrp, 
+	"(These material properties override all lower ones in the tree)\n");
+			}
 		}
 
 		for( i=1; i < dp->d_len; i++ )  {
@@ -459,7 +469,8 @@ int	verbose;
 			/* See if this matrix does anything */
 			rt_mat_dbmat( xmat, rp[i].M.m_mat );
 
-			if( xmat[0] != 1.0 || xmat[5] != 1.0 || xmat[10] != 1.0 )
+			if( xmat[0] != 1.0 || xmat[5] != 1.0 
+						|| xmat[10] != 1.0 )
 				status |= STAT_ROT;
 
 			if( xmat[MDX] != 0.0 ||
@@ -475,31 +486,41 @@ int	verbose;
 			if( xmat[15] != 1.0 )  status |= STAT_SCALE;
 
 			if( verbose )  {
-				(void)fprintf(outfp,"  %c %s",
-					rp[i].M.m_relation, rp[i].M.m_instname );
-				if( status & STAT_ROT )  {
+				rt_vls_printf( outstrp, "  %c %s",
+					rp[i].M.m_relation, 
+					rp[i].M.m_instname );
+				if( status & STAT_ROT ) {
 					fastf_t	az, el;
 					ae_vec( &az, &el, xmat );
-					(void)fprintf(outfp," az=%g, el=%g, ", az, el );
+					rt_vls_printf( outstrp, 
+						" az=%g, el=%g, ",
+						az, el );
 				}
-				if( status & STAT_XLATE )
-					(void)fprintf(outfp," [%g,%g,%g]",
+				if( status & STAT_XLATE ) {
+					rt_vls_printf( outstrp, " [%g,%g,%g]",
 						xmat[MDX]*base2local,
 						xmat[MDY]*base2local,
 						xmat[MDZ]*base2local);
-				if( status & STAT_SCALE )
-					(void)fprintf(outfp," scale %g", 1.0/xmat[15] );
-				if( status & STAT_PERSP )
-					(void)fprintf(outfp," ??Perspective=[%g,%g,%g]??",
+				}
+				if( status & STAT_SCALE ) {
+					rt_vls_printf( outstrp, " scale %g",
+						1.0/xmat[15] );
+				}
+				if( status & STAT_PERSP ) {
+					rt_vls_printf( outstrp, 
+						" ??Perspective=[%g,%g,%g]??",
 						xmat[12], xmat[13], xmat[14] );
+				}
 				rt_log("\n");
 			} else {
-				char	buf[132];
-				register char	*cp = buf;
+				register char	*cp;
 
-				(void)sprintf(buf, "%c %s",
-					rp[i].M.m_relation, rp[i].M.m_instname );
+				rt_vls_trunc( &str, 0 );
+				rt_vls_printf( &str, "%c %s",
+					rp[i].M.m_relation, 
+					rp[i].M.m_instname );
 
+				cp = rt_vls_addr( &str );
 				if( status )  {
 					cp += strlen(cp);
 					*cp++ = '/';
@@ -509,7 +530,8 @@ int	verbose;
 					if( status & STAT_PERSP) *cp++ = 'P';
 					*cp = '\0';
 				}
-				col_item( buf );
+				col_item( rt_vls_addr(&str) );
+				rt_vls_trunc( &str, 0 );
 			}
 		}
 		if( !verbose )  col_eol();
@@ -522,16 +544,17 @@ int	verbose;
 		rt_log("%s: database import error\n", dp->d_namep);
 		goto out;
 	}
-	rt_vls_init( &str );
+
 	if( rt_functab[id].ft_describe( &str, &intern,
 	    verbose, base2local ) < 0 )
 		rt_log("%s: describe error\n", dp->d_namep);
 	rt_functab[id].ft_ifree( &intern );
-	fputs( rt_vls_addr( &str ), outfp );
-	rt_vls_free( &str );
+	rt_vls_vlscat( outstrp, &str );
 
 out:
 	db_free_external( &ext );
+
+	rt_vls_free( &str );
 }
 
 /* List object information, verbose */
@@ -543,14 +566,22 @@ char	**argv;
 {
 	register struct directory *dp;
 	register int arg;
+	struct rt_vls str;
+
+
+	rt_vls_init( &str );
 	
 	(void)signal( SIGINT, sig2 );	/* allow interupts */
 	for( arg = 1; arg < argc; arg++ )  {
 		if( (dp = db_lookup( dbip, argv[arg], LOOKUP_NOISY )) == DIR_NULL )
 			continue;
 
-		do_list( stderr, dp, 99 );	/* very verbose */
+		rt_vls_trunc( &str, 0 );
+		do_list( &str, dp, 99 );	/* very verbose */
+		rt_log( rt_vls_addr(&str) );
 	}
+
+	rt_vls_free( &str );
 
 	return CMD_OK;
 }
@@ -564,14 +595,21 @@ char	**argv;
 {
 	register struct directory *dp;
 	register int arg;
+	struct rt_vls str;
+
+	rt_vls_init( &str );
 	
 	(void)signal( SIGINT, sig2 );	/* allow interupts */
 	for( arg = 1; arg < argc; arg++ )  {
 		if( (dp = db_lookup( dbip, argv[arg], LOOKUP_NOISY )) == DIR_NULL )
 			continue;
 
-		do_list( stderr, dp, 0 );	/* non-verbose */
+		rt_vls_trunc( &str, 0 );
+		do_list( &str, dp, 0 );	/* non-verbose */
+		rt_log( rt_vls_addr(&str) );
 	}
+
+	rt_vls_free( &str );
 
 	return CMD_OK;
 }

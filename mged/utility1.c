@@ -279,6 +279,9 @@ int flag;
 	int nparts, i, k;
 	int	nsoltemp;
 	int dchar = 0;
+	struct rt_vls str;
+
+	rt_vls_init( &str );
 
 	if( pathpos >= MAX_LEVELS ) {
 		rt_log("nesting exceeds %d levels\n",MAX_LEVELS);
@@ -426,7 +429,7 @@ int flag;
 		rt_log("tables: number of solids > max (%d)\n",MAXSOL);
 		exit(10);
 	}
-	(void)lseek(idfd, 0L, 2);
+	(void)lseek(idfd, (off_t)0L, 2);
 	(void)write(idfd, &identt, sizeof identt);
 	nsoltemp = numsol;
 
@@ -448,7 +451,8 @@ int flag;
 	}
 
 	/* Pretty-print the solid */
-	do_list( tabptr, dp, 1 );		/* verbose */
+	do_list( &str, dp, 1 );		/* verbose */
+	fprintf(tabptr, rt_vls_addr(&str));
 }
 
 

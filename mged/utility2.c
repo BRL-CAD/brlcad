@@ -349,6 +349,9 @@ int flag;
 	struct directory *nextdp;
 	mat_t new_xlate;
 	int nparts, i, k;
+	struct rt_vls str;
+
+	rt_vls_init( &str );
 
 	if( pathpos >= MAX_LEVELS ) {
 		rt_log("nesting exceeds %d levels\n",MAX_LEVELS);
@@ -414,7 +417,8 @@ int flag;
 	/* NOTE - only reach here if flag == LISTEVAL */
 	/* do_list will print actual solid name */
 	rt_log("/");
-	do_list( stderr, dp, 1 );
+	do_list( &str, dp, 1 );
+	rt_log( rt_vls_addr(&str) );
 }
 
 /*

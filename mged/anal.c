@@ -121,9 +121,13 @@ char	*argv[];
 			return CMD_BAD;
 		}
 
-		do_list( stderr, ndp, 1 );
+		rt_vls_trunc( &v, 0 );		
+		do_list( &v, ndp, 1 );
+		rt_log( rt_vls_addr(&v) );
+		rt_vls_trunc( &v, 0 );
+
 		do_anal(&v, &intern);
-		fputs( rt_vls_addr(&v), stderr );
+		rt_log( rt_vls_addr(&v) );
 		rt_vls_free(&v);
 		rt_db_free_internal( &intern );
 	}
