@@ -44,9 +44,9 @@ typedef long	bitv_t;		/* largest integer type */
 #define	RES_ACQUIRE(ptr)	(void)Daread(ptr)	/* wait full set empty */
 #define RES_RELEASE(ptr)	(void)Daset(ptr,3)	/* set full */
 #define MAX_PSW		128	/* Max number of process streams */
+#define DEFAULT_PSW	MAX_PSW
 #define PARALLEL	1
-
-#endif HEP
+#endif
 
 
 #ifdef alliant
@@ -68,6 +68,7 @@ typedef long	bitv_t;		/* largest integer type */
 #define RES_RELEASE(ptr)	*(ptr)=0;
 
 #define MAX_PSW		8	/* Max number of processors */
+#define DEFAULT_PSW	MAX_PSW
 #define PARALLEL	1
 
 #endif
@@ -87,6 +88,7 @@ typedef long	bitv_t;		/* largest integer type */
 #define BITV_SHIFT	6	/* log2( bits_wide(bitv_t) ) */
 
 #define MAX_PSW		4	/* Max number of processors */
+#define DEFAULT_PSW	1
 #define PARALLEL	1
 
 /**#define CRAY_COS	1	/* Running on Cray under COS w/bugs */
@@ -126,6 +128,7 @@ typedef long	bitv_t;		/* largest integer type */
 
 /* RES_INIT, RES_ACQUIRE, RES_RELEASE are subroutines, for now */
 #define MAX_PSW		4	/* # processors, max */
+#define DEFAULT_PSW	MAX_PSW
 #define PARALLEL	1
 #endif
 
@@ -146,7 +149,8 @@ typedef long	bitv_t;		/* largest integer type */
 #define RES_INIT(ptr)		;
 #define RES_ACQUIRE(ptr)	;
 #define RES_RELEASE(ptr)	;
-#define MAX_PSW	1		/* only one processor, max */
+#define MAX_PSW		1	/* only one processor, max */
+#define DEFAULT_PSW	1
 
 #endif
 
@@ -177,4 +181,4 @@ typedef long	bitv_t;		/* largest integer type */
 #define HIDDEN	/***/		/* (nil)|static, for func's local to 1 file */
 #endif
 
-#endif MACHINE_H
+#endif
