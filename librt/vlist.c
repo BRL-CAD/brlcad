@@ -308,7 +308,7 @@ CONST char	*name;
 		register int	nused = vp->nused;
 		register point_t *pt = vp->pt;
 		for( i = 0; i < nused; i++,pt++ )  {
-			htond( bp, (char *)pt, 3 );
+			htond( bp, (unsigned char *)pt, 3 );
 			bp += 3*8;
 		}
 	}
@@ -348,7 +348,7 @@ CONST unsigned char	*buf;
 		int	cmd;
 
 		cmd = *bp++;
-		ntohd( (char *)point, pp, 3 );
+		ntohd( (unsigned char *)point, pp, 3 );
 		pp += 3*8;
 		/* This macro might be expanded inline, for performance */
 		RT_ADD_VLIST( hp, point, cmd );
@@ -571,7 +571,8 @@ double			char_size;
 					break;
 				case TIEEE:
 					fread( inbuf, 8, 1, fp );
-					ntohd( &arg[i], inbuf, 1 );
+					ntohd( (unsigned char *)&arg[i],
+					    (unsigned char *)inbuf, 1 );
 					break;
 				case TSTRING:
 					j = 0;
