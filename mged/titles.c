@@ -179,8 +179,7 @@ register struct bu_vls	*vp;
  * NOTE that this routine depends on being called AFTER dozoom();
  */
 void
-dotitles(call_dm)
-int call_dm;
+dotitles()
 {
 	register int    i;
 	register int    x, y;			/* for menu computations */
@@ -278,13 +277,6 @@ int call_dm;
 	Tcl_SetVar2(interp, MGED_DISPLAY_VAR, "keypoint", "", TCL_GLOBAL_ONLY);
 	Tcl_SetVar2(interp, MGED_DISPLAY_VAR, "fps", "", TCL_GLOBAL_ONLY);
 
-#if 1
-	if (!call_dm) {
-	    bu_vls_free(&vls);
-	    return;
-	}
-#endif
-
 	dmp->dm_setLineAttr(dmp, 1, 0); /* linewidth - 1, not dashed */
 
 	/* Label the vertices of the edited solid */
@@ -309,13 +301,7 @@ int call_dm;
 		}
 	}
 
-#if 0
-	if (!call_dm) {
-	    bu_vls_free(&vls);
-	    return;
-	}
-#endif
-
+if(mged_variables.faceplate){
 	/* Line across the bottom, above two bottom status lines */
 	dmp->dm_setColor(dmp, DM_YELLOW, 1);
 	dmp->dm_drawLine2D( dmp, XMIN, TITLE_YBASE-TEXT1_DY, XMAX,
@@ -425,6 +411,7 @@ int call_dm;
 	 *
 	 * This way the adc info will be displayed during editing
 	 */
+} /* if faceplate !0 */
 
 	if( mged_variables.adcflag ) {
 		/* Angle/Distance cursor */
