@@ -355,7 +355,6 @@ do1()
 			/*printf("select returned %d\n", fds);*/
 			if( pkg_suckin( rem_pcp ) <= 0 ) {
 				/* Probably EOF */
-				printf("pkg_suckin error or EOF\n");
 				break;
 			}
 		} else {
@@ -669,6 +668,25 @@ char *buf;
 }
 
 void
+rfbgetcursor(pcp, buf)
+struct pkg_conn *pcp;
+char *buf;
+{
+	int	ret;
+	int	mode, x, y;
+	char	rbuf[4*NET_LONG_LEN+1];
+
+	ret = fb_getcursor( fbp, &mode, &x, &y );
+	(void)pkg_plong( &rbuf[0*NET_LONG_LEN], ret );
+	(void)pkg_plong( &rbuf[1*NET_LONG_LEN], mode );
+	(void)pkg_plong( &rbuf[2*NET_LONG_LEN], x );
+	(void)pkg_plong( &rbuf[3*NET_LONG_LEN], y );
+	pkg_send( MSG_RETURN, rbuf, 4*NET_LONG_LEN, pcp );
+	if( buf ) (void)free(buf);
+}
+
+/*OLD*/
+void
 rfbscursor(pcp, buf)
 struct pkg_conn *pcp;
 char *buf;
@@ -685,6 +703,7 @@ char *buf;
 	if( buf ) (void)free(buf);
 }
 
+/*OLD*/
 void
 rfbwindow(pcp, buf)
 struct pkg_conn *pcp;
@@ -701,6 +720,7 @@ char *buf;
 	if( buf ) (void)free(buf);
 }
 
+/*OLD*/
 void
 rfbzoom(pcp, buf)
 struct pkg_conn *pcp;
@@ -714,6 +734,45 @@ char *buf;
 
 	(void)pkg_plong( &rbuf[0], fb_zoom( fbp, x, y ) );
 	pkg_send( MSG_RETURN, rbuf, NET_LONG_LEN, pcp );
+	if( buf ) (void)free(buf);
+}
+
+void
+rfbview(pcp, buf)
+struct pkg_conn *pcp;
+char *buf;
+{
+	int	ret;
+	int	xcenter, ycenter, xzoom, yzoom;
+	char	rbuf[NET_LONG_LEN+1];
+
+	xcenter = pkg_glong( &buf[0*NET_LONG_LEN] );
+	ycenter = pkg_glong( &buf[1*NET_LONG_LEN] );
+	xzoom = pkg_glong( &buf[2*NET_LONG_LEN] );
+	yzoom = pkg_glong( &buf[3*NET_LONG_LEN] );
+
+	ret = fb_view( fbp, xcenter, ycenter, xzoom, yzoom );
+	(void)pkg_plong( &rbuf[0], ret );
+	pkg_send( MSG_RETURN, rbuf, NET_LONG_LEN, pcp );
+	if( buf ) (void)free(buf);
+}
+
+void
+rfbgetview(pcp, buf)
+struct pkg_conn *pcp;
+char *buf;
+{
+	int	ret;
+	int	xcenter, ycenter, xzoom, yzoom;
+	char	rbuf[5*NET_LONG_LEN+1];
+
+	ret = fb_getview( fbp, &xcenter, &ycenter, &xzoom, &yzoom );
+	(void)pkg_plong( &rbuf[0*NET_LONG_LEN], ret );
+	(void)pkg_plong( &rbuf[1*NET_LONG_LEN], xcenter );
+	(void)pkg_plong( &rbuf[2*NET_LONG_LEN], ycenter );
+	(void)pkg_plong( &rbuf[3*NET_LONG_LEN], xzoom );
+	(void)pkg_plong( &rbuf[4*NET_LONG_LEN], yzoom );
+	pkg_send( MSG_RETURN, rbuf, 5*NET_LONG_LEN, pcp );
 	if( buf ) (void)free(buf);
 }
 
@@ -785,6 +844,15 @@ char *buf;
 		(void)pkg_plong( rbuf, ret );
 		pkg_send( MSG_RETURN, rbuf, NET_LONG_LEN, pcp );
 	}
+	if( buf ) (void)free(buf);
+}
+
+void
+rfbpoll(pcp, buf)
+struct pkg_conn *pcp;
+char *buf;
+{
+	(void)fb_poll( fbp );
 	if( buf ) (void)free(buf);
 }
 
