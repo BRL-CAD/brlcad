@@ -55,10 +55,10 @@ struct resource rt_uniresource;		/* Resources for uniprocessor */
 
 #define NUGRID_T_SETUP(_ax,_cval,_cno)	\
 	if( ssp->rstep[_ax] > 0 ) { \
-		ssp->tv[_ax] = (nu_axis[_ax][_cno].nu_epos - _cval) * \
+		ssp->tv[_ax] = t0 + (nu_axis[_ax][_cno].nu_epos - _cval) * \
 					    ssp->inv_dir[_ax]; \
 	} else if( ssp->rstep[_ax] < 0 ) { \
-		ssp->tv[_ax] = (nu_axis[_ax][_cno].nu_spos - _cval) * \
+		ssp->tv[_ax] = t0 + (nu_axis[_ax][_cno].nu_spos - _cval) * \
 					    ssp->inv_dir[_ax]; \
 	} else { \
 		ssp->tv[_ax] = INFINITY; \
