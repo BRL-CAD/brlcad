@@ -48,7 +48,7 @@ struct resource rt_uniresource;		/* Resources for uniprocessor */
 #ifdef CRAY
 #define AUTO register
 #else
-#define AUTO auto
+#define AUTO /*let the compiler decide*/
 #endif
 
 /* compare two bounding RPPs;  return true if disjoint */
