@@ -270,10 +270,14 @@ struct nmg_ptbl *b;
 		last_class;	/* points not on given plane */
 	struct edgeuse *eun, *eul;
 
+	if (rt_g.NMG_debug & DEBUG_GRAZING)
+		rt_log("justgrazing:\n");
+
 	NMG_CK_VERTEXUSE(vu);
 	if( *vu->up.magic_p != NMG_EDGEUSE_MAGIC )  {
 		/* This is sometimes a loop of a single vertex */
-		rt_log("justgrazing() vu->up is not edgeuse, skipping\n");
+		rt_log("justgrazing() vu->up is not edgeuse, (%s) skipping\n",
+			nmg_identify_magic(*vu->up.magic_p));
 		return(1);
 	}
 	NMG_CK_EDGEUSE(vu->up.eu_p);
@@ -708,6 +712,8 @@ struct nmg_ptbl *b;
 
 /*	C H E C K _ V E R T L I N K
  *
+ *	The two verticies starting at *i_p in the table share the same vertex.
+ *	pick which one we should ignore.
  */
 static void check_vertlink(i_p, b)
 int *i_p;
@@ -733,13 +739,18 @@ struct nmg_ptbl *b;
 
 	eu_jnext = NMG_LIST_PNEXT_CIRC(edgeuse, &vul.v[j]->up.eu_p->l);
 	eu_inext = NMG_LIST_PNEXT_CIRC(edgeuse, &vul.v[i]->up.eu_p->l);
+
+	/* if the "j" vertexuse is for edgeuse and the vertexuse at the
+	 * other end of the edgeuse is in the list "after" j, then we toss
+	 * out the "i" vertexuse and go onward
+	 */
 	if (*vul.v[j]->up.magic_p == NMG_EDGEUSE_MAGIC &&
 	    nmg_tbl(b, TBL_LOC, (long *)eu_jnext->vu_p) > j) {
 		/* ignore i */
 		if (rt_g.NMG_debug & DEBUG_COMBINE)
 			rt_log("\tignore i (%d) for j (%d)\n", i, j);
 
-	    	/* if this was a "temporary" loopuse, take care of
+	    	/* if "i" was a "temporary" loopuse, take care of
 	    	 * tagging it as "not-in-use"
 	    	 */
 	    	if (*vul.v[i]->up.magic_p == NMG_LOOPUSE_MAGIC &&
@@ -757,6 +768,11 @@ struct nmg_ptbl *b;
 	    		
 	    	*i_p = j;
 	}
+
+	/* if the "i" vertexuse is for edgeuse and the vertexuse at the
+	 * other end of the edgeuse is in the list "after" j, then we toss
+	 * out the "j" vertexuse and go onward
+	 */
 	if (*vul.v[i]->up.magic_p == NMG_EDGEUSE_MAGIC &&
 	    nmg_tbl(b, TBL_LOC, (long *)eu_inext->vu_p) > j) {
 		/* switch i & j to ignore j */
@@ -786,6 +802,9 @@ struct nmg_ptbl *b;
 		*i_p = j;
 
 	} else {
+		/* neither edgeuse has the "next" vertexuse in the list of
+		 * points on the intersection line
+		 */
 
 		lu_i = nmg_lu_of_vu(vul.v[i]);
 		lu_j = nmg_lu_of_vu(vul.v[j]);
@@ -800,6 +819,10 @@ struct nmg_ptbl *b;
 			}
 	    	}
 
+		/* if there's another vertex in the loop of "i" before there's
+		 *  another vertex in the loop of "j", we use the "i"
+		 * vertexuse, and skip the "j" vertexuse
+		 */
 		if (lu_k == lu_i) {
 			if (rt_g.NMG_debug & DEBUG_COMBINE)
 				rt_log("\tuse to i's (%d) loop (discard j:%d)", i, j);
@@ -846,6 +869,9 @@ struct nmg_ptbl *b;
 			*i_p = j;
 
 		} else
+			/* neither the "i" nor "j" loops have another vertex
+			 * in the list after "j"
+			 */
 			rt_bomb("I don't know how to doooooo this\n");
 	}
 
@@ -913,7 +939,20 @@ struct faceuse *fu1, *fu2;	/* fu1 = face being worked, */
 				p.vu[i]->v_p->vg_p->coord[Y],
 				p.vu[i]->v_p->vg_p->coord[Z]);
 			if (*p.vu[i]->up.magic_p == NMG_EDGEUSE_MAGIC) {
-				rt_log("EDGEUSE\n");
+				register struct vertex_g *tmpvg;
+
+				NMG_CK_EDGEUSE(p.vu[i]->up.eu_p->eumate_p);
+				NMG_CK_VERTEXUSE(p.vu[i]->up.eu_p->eumate_p->vu_p);
+				NMG_CK_VERTEX(p.vu[i]->up.eu_p->eumate_p->vu_p->v_p);
+
+				tmpvg = p.vu[i]->up.eu_p->eumate_p->vu_p->v_p->vg_p;
+
+				NMG_CK_VERTEX_G(tmpvg);
+				rt_log("EDGEUSE -> %g, %g, %g\n",
+					tmpvg->coord[0],
+					tmpvg->coord[1],
+					tmpvg->coord[2]);
+
 				nmg_pl_eu(fp, p.vu[i]->up.eu_p, &tbl, 180, 180, 180);
 
 			} else if (*p.vu[i]->up.magic_p == NMG_LOOPUSE_MAGIC) {
