@@ -85,7 +85,7 @@ top:
 		rt_memdebug = (struct memdebug *)calloc(
 			rt_memdebug_len, sizeof(struct memdebug) );
 	} else {
-		int	old_len;
+		int	old_len = rt_memdebug_len;
 		rt_memdebug_len *= 4;
 		rt_memdebug = (struct memdebug *)realloc(
 			(char *)rt_memdebug,
