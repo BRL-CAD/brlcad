@@ -353,7 +353,7 @@ register CONST vect_t	h;
 		v[Y] = h[Y];
 		v[Z] = h[Z];
 	}  else  {
-		if( h[W] == 0.0 )  {
+		if( h[W] == SMALL_FASTF )  {
 			rt_log("mat_htov_move: divide by %f!\n", h[W]);
 			return;
 		}
@@ -372,16 +372,25 @@ mat_print( title, m )
 CONST char	*title;
 CONST mat_t	m;
 {
-	register int i;
+	register int	i;
+	char		obuf[1024];	/* sprintf may be non-PARALLEL */
+	register char	*cp;
 
-	rt_log("MATRIX %s:\n  ", title);
+	sprintf(obuf, "MATRIX %s:\n  ", title);
+	cp = obuf+strlen(obuf);
 	for(i=0; i<16; i++)  {
-		rt_log(" %8.3f", m[i]);
-		if( i == 15 )
-			rt_log("\n");
-		else if( (i&3) == 3 )
-			rt_log("\n  ");
+		sprintf(cp, " %8.3f", m[i]);
+		cp += strlen(cp);
+		if( i == 15 )  {
+			break;
+		} else if( (i&3) == 3 )  {
+			*cp++ = '\n';
+			*cp++ = ' ';
+			*cp++ = ' ';
+		}
 	}
+	*cp++ = '\0';
+	rt_log("%s\n", obuf);
 }
 
 /*
