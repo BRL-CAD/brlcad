@@ -28,9 +28,17 @@
 #endif
 #define EXTRA_PRODUCTS	tclsh
 
-PRODUCTS: Makefile.MTYPE cache.MTYPE EXTRA_PRODUCTS
-	make `echo CAKEFLAGS | tr '\040' '\012' | grep -- -s` -f Makefile.MTYPE CAKEFLAGS
+/* Rule to see if cake is running with -s flag */
+#define MINUS_S	[[echo CAKEFLAGS | tr '\040' '\012' | sed -n -e /-s/p ]]
+
+PRODUCTS: Makefile.MTYPE cache.MTYPE
+	make MINUS_S -f Makefile.MTYPE CAKEFLAGS EXTRA_PRODUCTS
 	AFTER_MAKE
+
+EXTRA_PRODUCTS: Makefile.MTYPE cache.MTYPE
+	make MINUS_S -f Makefile.MTYPE CAKEFLAGS EXTRA_PRODUCTS
+	AFTER_MAKE
+
 
 Makefile.MTYPE cache.MTYPE:		if not exist Makefile.MTYPE or not exist cache.MTYPE
 	( \C\F\L\A\G\S=\"GFLAG OPTIMIZER PROFILER\"; \

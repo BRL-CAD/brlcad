@@ -7,6 +7,12 @@
 
 #include "../Cakefile.defs"
 
+/* Since we're building a library, we can't also list a regular
+ * program (like tclsh) in the PRODUCTS rule, it will confuse
+ * the BUILD_LIBRARY rule in Cakefile.defs.
+ * Hence the EXTRA_PRODUCTS dodge
+ */
+
 #if defined( NFS )
 #define TCL_DIR	.libtcl.MTYPE
 #else
@@ -19,20 +25,28 @@
 			 --exec-prefix=BASEDIR --prefix=BASEDIR \
 			 --x-includes=XINCDIR --x-libraries=XLIBDIR \
 			 --with-tcl=../TCL_DIR --quiet
-#define PRODUCTS	[[echo libtk''TCLTK_VERS.a]] wish
+#define PRODUCTS	[[echo libtk''TCLTK_VERS.a]]
 #define	AFTER_MAKE	/**/
 #else
 #define TK_OPTS	--srcdir=[[pwd]]/../SRCDIR/"unix" --enable-shared \
 			 --cache-file cache.MTYPE --exec-prefix=BASEDIR --prefix=BASEDIR \
 			 --x-includes=XINCDIR --x-libraries=XLIBDIR \
 			 --with-tcl=../TCL_DIR --quiet
-#define PRODUCTS	[[echo libtk''TCLTK_VERS.so]] wish
+#define PRODUCTS	[[echo libtk''TCLTK_VERS.so]]
 #define	SHARED_PRODUCT  libtk''TCLTK_VERS.so''[[LIBVERS]]
 #define	AFTER_MAKE	mv -f libtk''TCLTK_VERS.so SHARED_PRODUCT ; sharedliblink.sh SHARED_PRODUCT
 #endif
+#define EXTRA_PRODUCTS	wish
+
+/* Rule to see if cake is running with -s flag */
+#define MINUS_S	[[echo CAKEFLAGS | tr '\040' '\012' | sed -n -e /-s/p ]]
 
 PRODUCTS: Makefile.MTYPE cache.MTYPE
-	make `echo CAKEFLAGS | tr '\040' '\012' | grep -- -s` -f Makefile.MTYPE
+	make MINUS_S -f Makefile.MTYPE CAKEFLAGS EXTRA_PRODUCTS
+	AFTER_MAKE
+
+EXTRA_PRODUCTS: Makefile.MTYPE cache.MTYPE
+	make MINUS_S -f Makefile.MTYPE CAKEFLAGS EXTRA_PRODUCTS
 	AFTER_MAKE
 
 Makefile.MTYPE cache.MTYPE:		if not exist Makefile.MTYPE or not exist cache.MTYPE
