@@ -24,8 +24,18 @@ extern char	*index();
 /*
  * get option letter from argument vector
  */
+
+#if defined(__convexc__)
+/* brain dead Convex compiler/loader won't let us redefine a variable declared
+ * and initialized in their library, despite the fact that we don't even use
+ * that module of their library!
+ */
+extern int opterr;		/* set to zero to suppress errors */
+extern int optind;		/* index into parent argv vector */
+#else
 int	opterr = 1;		/* set to zero to suppress errors */
 int	optind = 1;		/* index into parent argv vector */
+#endif
 int	optopt;			/* character checked for validity */
 char	*optarg;		/* argument associated with option */
 
