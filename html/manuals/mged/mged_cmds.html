@@ -2408,7 +2408,7 @@ objects, not MUVES components).
 </DD>
 <HR>
 
-<DT><a NAME="make"><B>make</B> <I>new_solid type</I></DT>
+<DT><a NAME="make"><B>make</B> <I>-t | new_solid type</I></DT>
 
 <DD>The ``make'' command creates a <I>new_solid</I> of the indicated type. The <I>new_solid</I>
 is sized according to the current viewsize, and is dependent on the <I>type</I>.
@@ -2445,6 +2445,8 @@ The possible values for <I>type</I> are:
 	<DD>
 	<kbd>mged></kbd> <b>make solida sph</b><br>
 	-- create a sphere named <I>solida</I><br>
+	<kbd>mged></kbd> <b>make -t</b><br>
+	-- return a list of solid types handled by <I>make</I>
 	</DD>
 	</DL>
 </DD>
