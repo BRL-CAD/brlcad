@@ -305,7 +305,9 @@ Ir_open()
 		if( (j = bmap[i]) != 0 )
 			invbmap[j] = i;
 	}
+# if 0
 	ir_dbtext(ir_title);
+# endif
 #endif
 
 	qdevice(F1KEY);	/* pf1 key for depthcue switching */
@@ -572,15 +574,21 @@ double ratio;
 			/* Draw as polygons, with header markers */
 			first = 1;
 			for( vp = sp->s_vlist; vp != VL_NULL; vp = vp->vl_forw )  {
+				float	norm[3];
 				switch( vp->vl_draw )  {
 				case 2:
-					/* Normal, perhaps? */
+					/* Start poly marker & normal */
 					if( first )
 						first = 0;
 					else
 						endpolygon();
 					concave(TRUE);
 					bgnpolygon();
+					/* Set surface normal (vl_pnt points outward) */
+					norm[X] = vp->vl_pnt[X];
+					norm[Y] = vp->vl_pnt[Y];
+					norm[Z] = vp->vl_pnt[Z];
+					n3f(norm);
 					break;
 				case 0:
 					/* Move, not draw */
@@ -835,8 +843,10 @@ checkevents()  {
 #endif
 				if(button0)
 					ir_dbtext("Help Key");
+# if 0
 				else
 					ir_dbtext(ir_title);
+# endif
 				continue;
 				
 			}
@@ -1294,9 +1304,12 @@ next:		;
 /*
  *  I R _ D B T E X T
  *
- *  Call dbtext to print cute messages on the button box,
+ *  Used to call dbtext to print cute messages on the button box,
  *  if you have one.  Has to shift everythign to upper case
  *  since the box goes off the deep end with lower case.
+ *
+ *  Because not all SGI button boxes have text displays,
+ *  this now needs to go to stdout in order to be useful.
  */
  
 ir_dbtext(str)
@@ -1307,10 +1320,14 @@ ir_dbtext(str)
 	char	buf[9];
 	register char *cp;
 
+# if 0
 	for(i = 0, cp = buf; i < 8 && *str; i++, cp++, str++)
 		*cp = islower(*str) ?  toupper(*str) : *str;
 	*cp = 0;
 	dbtext(buf);
+# else
+	printf("dm-4d: You pressed Help key and '%s'\n", str);
+# endif
 #else
 	return;
 #endif
