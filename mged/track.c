@@ -43,8 +43,10 @@ void		bottom(), top(), crregion(), itoa();
  *	F _ A M T R A C K ( ) :	adds track given "wheel" info
  *
  */
-void
-f_amtrack(  )
+int
+f_amtrack( argc, argv  )
+int argc;
+char **argv;
 {
 
 	register struct directory *dp;
@@ -75,7 +77,7 @@ f_amtrack(  )
 	args += argcnt;
 	if( fw[0] <= lw[0] ) {
 		(void)printf("First wheel after last wheel - STOP\n");
-		return;
+		return CMD_BAD;
 	}
 	(void)printf("Enter Z of the roadwheels: ");
 	argcnt = getcmd(args);
@@ -86,7 +88,7 @@ f_amtrack(  )
 	fw[2] = lw[2] = atof( cmd_args[args] ) * local2base;
 	if( fw[2] <= 0 ) {
 		(void)printf("Radius <= 0 - STOP\n");
-		return;
+		return CMD_BAD;
 	}
 	args += argcnt;
 
@@ -96,7 +98,7 @@ f_amtrack(  )
 	dw[0] = atof( cmd_args[args] ) * local2base;
 	if( dw[0] >= lw[0] ) {
 		(void)printf("DRIVE wheel not in the rear - STOP \n");
-		return;
+		return CMD_BAD;
 	}
 	args += argcnt;
 	(void)printf("Enter Z of the drive (REAR) wheel: ");
@@ -108,7 +110,7 @@ f_amtrack(  )
 	dw[2] = atof( cmd_args[args] ) * local2base;
 	if( dw[2] <= 0 ) {
 		(void)printf("Radius <= 0 - STOP\n");
-		return;
+		return CMD_BAD;
 	}
 	args += argcnt;
 
@@ -119,7 +121,7 @@ f_amtrack(  )
 	args += argcnt;
 	if( iw[0] <= fw[0] ) {
 		(void)printf("IDLER wheel not in the front - STOP \n");
-		return;
+		return CMD_BAD;
 	}
 	(void)printf("Enter Z of the idler (FRONT) wheel: ");
 	argcnt = getcmd(args);
@@ -130,7 +132,7 @@ f_amtrack(  )
 	iw[2] = atof( cmd_args[args] ) * local2base;
 	if( iw[2] <= 0 ) {
 		(void)printf("Radius <= 0 - STOP\n");
-		return;
+		return CMD_BAD;
 	}
 	args += argcnt;
 
@@ -144,7 +146,7 @@ f_amtrack(  )
 	tr[1] = atof( cmd_args[args] ) * local2base;
 	if( tr[0] == tr[1] ) {
 		(void)printf("MIN == MAX ... STOP\n");
-		return;
+		return CMD_BAD;
 	}
 	if( tr[0] > tr[1] ) {
 		(void)printf("MIN > MAX .... will switch\n");
@@ -157,7 +159,7 @@ f_amtrack(  )
 	tr[2] = atof( cmd_args[args] ) * local2base;
 	if( tr[2] <= 0 ) {
 		(void)printf("Track thickness <= 0 - STOP\n");
-		return;
+		return CMD_BAD;
 	}
 
 	solname[0] = regname[0] = grpname[0] = 't';
@@ -203,7 +205,7 @@ tryagain:	/* sent here to try next set of names */
 			solname[8] = regname[8] = '\0';
 			if( (Trackpos += 10) > 500 ) {
 				(void)printf("Track: naming error -- STOP\n");
-				return;
+				return CMD_BAD;
 			}
 			goto tryagain;
 		}
@@ -226,7 +228,7 @@ tryagain:	/* sent here to try next set of names */
 	record.s.s_type = GENARB8;
 	record.s.s_cgtype = BOX;		/* BOX */
 	if( wrobj(solname) ) 
-		return;
+		return CMD_BAD;
 
 	solname[8] = '\0';
 
@@ -239,7 +241,7 @@ tryagain:	/* sent here to try next set of names */
 	crname(solname, 2);
 	(void)strcpy(record.s.s_name, solname);
 	if( wrobj( solname ) )
-		return;
+		return CMD_BAD;
 	solname[8] = '\0';
 	/* idler dummy rcc */
 	record.s.s_values[6] = iw[2];
@@ -249,7 +251,7 @@ tryagain:	/* sent here to try next set of names */
 	crname(solname, 3);
 	(void)strcpy(record.s.s_name, solname);
 	if( wrobj( solname ) )
-		return;
+		return CMD_BAD;
 	solname[8] = '\0';
 
 	/* find idler track dummy arb8 */
@@ -261,7 +263,7 @@ tryagain:	/* sent here to try next set of names */
 	record.s.s_cgtype = ARB8;		/* arb8 */
 	crdummy(iw, tr, 1);
 	if( wrobj(solname) )
-		return;
+		return CMD_BAD;
 	solname[8] = '\0';
 
 	/* track slope to drive */
@@ -273,7 +275,7 @@ tryagain:	/* sent here to try next set of names */
 	(void)strcpy(record.s.s_name, solname);
 	record.s.s_cgtype = BOX;		/* box */
 	if(wrobj(solname))
-		return;
+		return CMD_BAD;
 	solname[8] = '\0';
 
 	/* track around drive */
@@ -285,7 +287,7 @@ tryagain:	/* sent here to try next set of names */
 	crname(solname, 6);
 	(void)strcpy(record.s.s_name, solname);
 	if( wrobj(solname) )
-		return;
+		return CMD_BAD;
 	solname[8] = '\0';
 
 	/* drive dummy rcc */
@@ -296,7 +298,7 @@ tryagain:	/* sent here to try next set of names */
 	crname(solname, 7);
 	(void)strcpy(record.s.s_name, solname);
 	if( wrobj(solname) )
-		return;
+		return CMD_BAD;
 	solname[8] = '\0';
 
 	/* drive dummy arb8 */
@@ -308,7 +310,7 @@ tryagain:	/* sent here to try next set of names */
 	record.s.s_cgtype = ARB8;		/* arb8 */
 	crdummy(dw, tr, 2);
 	if( wrobj(solname) )
-		return;
+		return CMD_BAD;
 	solname[8] = '\0';
 	
 	/* track bottom */
@@ -318,7 +320,7 @@ tryagain:	/* sent here to try next set of names */
 	crname(solname, 9);
 	(void)strcpy(record.s.s_name, solname);
 	if( wrobj(solname) )
-		return;
+		return CMD_BAD;
 	solname[8] = '\0';
 
 	/* track top */
@@ -331,7 +333,7 @@ tryagain:	/* sent here to try next set of names */
 	crname(solname, 10);
 	(void)strcpy(record.s.s_name, solname);
 	if( wrobj(solname) )
-		return;
+		return CMD_BAD;
 	solname[8] = '\0';
 
 	/* add the regions */
@@ -348,12 +350,12 @@ tryagain:	/* sent here to try next set of names */
 		crname(regname, i);
 		(void)strcpy(record.c.c_name, regname);
 		if( wrobj(regname) )
-			return;
+			return CMD_BAD;
 		regname[8] = '\0';
 		crname(regname, i+4);
 		(void)strcpy(record.c.c_name, regname);
 		if( wrobj(regname) )
-			return;
+			return CMD_BAD;
 	}
 	regname[8] = '\0';
 
@@ -441,6 +443,8 @@ tryagain:	/* sent here to try next set of names */
 	mat_default = mat;
 	los_default = los;
 	grpname[5] = solname[8] = regname[8] = '\0';
+
+	return CMD_OK;
 }
 
 void
