@@ -918,7 +918,7 @@ char line[MAX_LINE_LEN];
 		strcpy( name, forced_name );
 	else if( stl_format ) /* build a name from the file name */
 	{
-		char tmp_str[NAME_LENGTH+1];
+		char tmp_str[512];
 		char *ptr;
 		int len, suff_len;
 
@@ -926,14 +926,16 @@ char line[MAX_LINE_LEN];
 		obj = obj_count;
 
 		/* copy the file name into our work space */
-		strncpy( tmp_str, input_file, NAME_LENGTH );
-		if( strlen( input_file ) >= NAME_LENGTH )
-			tmp_str[NAME_LENGTH] = '\0';
+		strncpy( tmp_str, input_file, 512 );
+		tmp_str[511] = '\0';
 
 		/* eliminate a trailing ".stl" */
-		ptr = strstr( tmp_str, ".stl" );
-		if( ptr )
-			*ptr = '\0';
+		len = strlen( tmp_str );
+		if( len > 4 )
+		{
+			if( !strncmp( &tmp_str[len-5], ".stl", 4 ) )
+				tmp_str[len-5] = '\0';
+		}
 
 		/* skip over all characters prior to the last '/' */
 		ptr = strrchr( tmp_str, '/' );
@@ -943,14 +945,15 @@ char line[MAX_LINE_LEN];
 			ptr++;
 
 		/* now copy what is left to the name */
-		strcpy( name, ptr );
+		strncpy( name, ptr, NAMESIZE-1 );
+		name[NAMESIZE-1] = '\0';
 		sprintf( tmp_str, "_%d", obj_count );
 		len = strlen( name );
 		suff_len = strlen( tmp_str );
 		if( len + suff_len < NAMESIZE-3 )
 			strcat( name, tmp_str );
 		else
-			sprintf( &name[NAMESIZE-suff_len-3], tmp_str );
+			sprintf( &name[NAMESIZE-suff_len-4], tmp_str );
 	}
 	else
 		strcpy( name, "noname" );
