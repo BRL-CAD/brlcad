@@ -50,3 +50,63 @@ proc get_listbox_entry { w x y } {
 
     return [$w get @$x,$y]
 }
+
+
+## - lbdcHack
+#
+# Listbox double click hack.
+#
+proc lbdcHack {w x y t id type path} {
+    global mged_gui
+    global mged_default
+
+    switch $type {
+	s -
+	c {
+	    set item [get_listbox_entry $w $x $y]
+	}
+	m {
+	    set item [$w index @$x,$y]
+	}
+    }
+
+    if {$mged_gui($id,lastButtonPress) == 0 ||
+        $mged_gui($id,lastItem) != $item ||
+        [expr {abs($mged_gui($id,lastButtonPress) - $t) > $mged_default(doubleClickTol)}]} {
+
+	switch $type {
+	    s {
+		solid_illum $item
+	    }
+	    c {
+		set spath [comb_get_solid_path $item]
+		set path_pos [comb_get_path_pos $spath $item]
+		matrix_illum $spath $path_pos
+	    }
+	    m {
+		matrix_illum $path $item
+	    }
+	}
+    } else {
+	switch $type {
+	    s {
+		set mged_gui($id,mgs_path) $item
+		bind $w <ButtonRelease-1> \
+			"destroy [winfo parent $w]; break"
+	    }
+	    c {
+		set mged_gui($id,mgc_comb) $item
+		bind $w <ButtonRelease-1> \
+			"destroy [winfo parent $w]; break"
+	    }
+	    m {
+		set mged_gui($id,mgs_pos) $item
+		bind $w <ButtonRelease-1> \
+			"destroy [winfo parent $w]; break"
+	    }
+	}
+    }
+
+    set mged_gui($id,lastButtonPress) $t
+    set mged_gui($id,lastItem) $item
+}
