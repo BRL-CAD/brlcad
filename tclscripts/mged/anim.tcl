@@ -30,25 +30,25 @@ proc sketch_init_main {} {
 	# global variable initialisations
 	uplevel #0 set mged_sketch_init_main 1
 	#hack
-	uplevel #0 set mged_sketch_anim_path "/m/cad/anim/"
+	uplevel #0 set mged_sketch_anim_path "/m/cad/.anim.6d/"
 	#hack
 	uplevel #0 set mged_sketch_tab_path "/m/cad/.tab.6d/"
 	uplevel #0 set mged_sketch_temp1 "./_mged_sketch_temp1_"
 	uplevel #0 set mged_sketch_temp2 "./_mged_sketch_temp2_"
-	puts whosever
+
+	#allow button 2 to activate buttons
 	uplevel #0 { set mged_sketch_bindclasses {Button Radiobutton Checkbutton Menubutton}}
-	puts whatever
 	upvar #0 mged_sketch_bindclasses wlist
-	puts inever
 	foreach wclass $wlist {
+		#save previous bindings
 		uplevel #0 [list set mged_sketch_bindB($wclass) [bind $wclass <Button-2>] ]
 		uplevel #0 [list set mged_sketch_bindBR($wclass) [bind $wclass <ButtonRelease-2>] ]
 		uplevel #0 [list set mged_sketch_bindBM($wclass) [bind $wclass <B2-Motion>] ]
+		#add new bindings
 		bind $wclass <Button-2> +[bind $wclass <Button-1>]
 		bind $wclass <ButtonRelease-2> +[bind $wclass <ButtonRelease-1>]
 		bind $wclass <B2-Motion> +[bind $wclass <B1-Motion>]
 	}
-	puts younever
 }
 
 proc sketch_popup_main { {p .} } {
@@ -577,10 +577,14 @@ proc sketch_do_spline { mode } {
 	#write vertices to temp2, result to temp1
 	set fo [open $mged_sketch_temp2 w]
 	set length [vdraw r l]
-	if { $length < 3 } {
-		puts {Need at least three vertices}
+	if { $length < 2 } {
+		puts {Need at least two vertices}
 		close $fo
 		return -1
+	} elseif { $length == 2 } {
+		set cmdstr "linear"
+	} else {
+		set cmdstr $mode
 	}
 
 	sketch_write_to_fd $fo $length
@@ -592,7 +596,7 @@ proc sketch_do_spline { mode } {
 	set fo [open "| ${mged_sketch_tab_path}tabinterp -q > $mged_sketch_temp1" w]
 	puts $fo "file $mged_sketch_temp2 0 1 2;"
 	puts $fo [concat times $start $end $mged_sketch_fps {;}]
-	puts $fo "interp $mode 0 1 2;"
+	puts $fo "interp $cmdstr 0 1 2;"
 	# catch can be removed when tabinterp -q option is installed
 	catch {close $fo}
 	exec rm $mged_sketch_temp2
@@ -2497,7 +2501,7 @@ proc sketch_popup_objanim { p {mode obj} } {
 		entry $root.f2.e0 -width 20 -textvariable mged_sketch_objname
 		checkbutton $root.cb1 -text "Relative Displacement" \
 			-variable mged_sketch_objdisp -offvalue "-d" -onvalue "-c"
-		checkbutton $root.cb2 -text "Relative Rotation" \
+		checkbutton $root.cb2 -text "Relative Orientation" \
 			-variable mged_sketch_objrot -offvalue "-b" -onvalue "-a"
 		uplevel #0 set mged_sketch_objrv 0
 		$root.cb1 deselect
@@ -2647,8 +2651,14 @@ proc sketch_objanim { objorview } {
 		}
 		"view curve:" {
 			set type text
-			set w $mged_sketch_vwidget.${mged_sketch_vprefix}$src.t
-			if { [info commands $w ] == ""} {
+			set w ""
+			foreach ved [sketch_vcurve_list] {
+				if { [sketch_vcurve_get_label $ved] == $src} {
+					set w $ved.t
+					break
+				}
+			}
+			if { $w == ""} {
 				tk_dialog ._sketch_msg {Couldn't find view curve} \
 				"Couldn't find view curve $src." \
 				{} 0 {OK}
@@ -2657,8 +2667,14 @@ proc sketch_objanim { objorview } {
 		}
 		"table editor:" {
 			set type text
-			set w $mged_sketch_table_prefix$src.t
-			if { [info commands $w ] == ""} {
+			set w ""
+			foreach ted [sketch_table_list] {
+				if { [sketch_table_get_label $ted] == $src } {
+					set w $ted.t
+					break
+				}
+			}
+			if { $w  == ""} {
 				tk_dialog ._sketch_msg {Couldn't find editor} \
 				  "Couldn't find table editor $src. \
 				   (Text editor identifier must be an integer)." \
