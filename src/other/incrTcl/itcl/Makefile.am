@@ -38,4 +38,4 @@ install-data-hook:
 	    echo "Installing $$i" ; \
 	    $(INSTALL_DATA) $$i $(DESTDIR)$(pkglibdir)/. ; \
 	done;
-	$(INSTALL_DATA) pkgIndex.tcl $(DESTDIR)$(pkglibdir)/. 
+	$(INSTALL_DATA) $(top_srcdir)/src/other/incrTcl/itcl/pkgIndex.tcl $(DESTDIR)$(pkglibdir)/. 
