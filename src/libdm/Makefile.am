@@ -18,6 +18,9 @@ SRCS = \
 	query.c \
 	tcl.c 
 
+# need to test this as a dm-ogl.c replacement
+EXTRA_DIST = dm-ogl_win.c
+
 libdm_la_SOURCES = \
 	$(SRCS) \
 	vers.c
