@@ -2269,7 +2269,7 @@ f_sed(
 
 	  save_result = Tcl_GetObjResult(interp);
 	  Tcl_IncrRefCount(save_result);
-	  be_reject(clientData, interp, 0, argv);
+	  button(BE_REJECT);
 	  Tcl_SetObjResult(interp, save_result);
 	  Tcl_DecrRefCount(save_result);
 	  return TCL_ERROR;
