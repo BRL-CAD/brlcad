@@ -37,8 +37,8 @@
 extern int cmdInit();
 extern void Cad_Main();
 
-HIDDEN int Cad_AppInit();
-HIDDEN Tk_Window tkwin;
+static int Cad_AppInit();
+Tk_Window tkwin;
 
 Tcl_Interp *interp;
 
@@ -63,7 +63,7 @@ main(argc, argv)
 	return 0;
 }
 
-HIDDEN int
+static int
 Cad_AppInit(interp)
      Tcl_Interp *interp;
 {
@@ -140,12 +140,14 @@ Cad_AppInit(interp)
 		bu_log("Dm_Init error %s\n", interp->result);
 		return TCL_ERROR;
 	}
+	Tcl_StaticPackage(interp, "Dm", Dm_Init, (Tcl_PackageInitProc *) NULL);
 
 	/* Initialize libfb */
 	if (Fb_Init(interp) == TCL_ERROR) {
 		bu_log("Fb_Init error %s\n", interp->result);
 		return TCL_ERROR;
 	}
+	Tcl_StaticPackage(interp, "Fb", Fb_Init, (Tcl_PackageInitProc *) NULL);
 
 	/* Initialize libbu */
 	bu_tcl_setup(interp);
@@ -154,7 +156,11 @@ Cad_AppInit(interp)
 	bn_tcl_setup(interp);
 
 	/* Initialize librt */
-	rt_tcl_setup(interp);
+	if (Rt_Init(interp) == TCL_ERROR) {
+		bu_log("Rt_Init error %s\n", interp->result);
+		return TCL_ERROR;
+	}
+	Tcl_StaticPackage(interp, "Rt", Rt_Init, (Tcl_PackageInitProc *) NULL);
 
 	if ((tkwin = Tk_MainWindow(interp)) == NULL)
 		return TCL_ERROR;
