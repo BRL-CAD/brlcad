@@ -23,9 +23,12 @@
 
 SHELL		= /bin/sh
 
+# Main rule (default):
 all:
 	-@sh gen.sh all
 
+help:
+	-@sh gen.sh help
 benchmark:
 	-@sh gen.sh $@
 depend:
