@@ -4,6 +4,9 @@
  * $Revision$
  *
  * $Log$
+ * Revision 2.0  84/12/26  16:47:33  dpk
+ * System as distributed to Berkeley 26 Dec 84
+ * 
  * Revision 1.2  83/12/16  00:09:16  dpk
  * Added distinctive RCS header
  * 
@@ -138,8 +141,9 @@ SpellCom()
 	if (IsModified(curbuf))
 		SaveFile();
 
+	ignore(sprintf(command, "spell %s", curbuf->b_fname));	/* DAG */
 	ignore(UnixToBuf("Spell", 1, !exp_p, "/bin/sh", "sh", "-c",
-			sprintf(command, "spell %s", curbuf->b_fname), 0));
+			command, 0));	/* DAG -- don't use sprintf return value */
 	NotModified();
 	Bof();		/* Beginning of (error messages) file */
 	errwind = curwind;
