@@ -250,7 +250,7 @@ CONST char				*value;	/* string containing value */
 			return(-1);
 			break;
 		}
-		if( !(sdp->sp_hook) )  {
+		if( sdp->sp_hook )  {
 			sdp->sp_hook( sdp, name, base, value );
 		}
 		return(0);		/* OK */
