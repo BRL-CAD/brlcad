@@ -468,8 +468,8 @@ typedef double	fastf_t;	/* double|float, "Fastest" float type */
 typedef long	bitv_t;		/* largest integer type */
 #define BITV_SHIFT	5	/* log2( bits_wide(bitv_t) ) */
 
-#define MAX_PSW		20	/* need to increase this for Super Dragon? */
-#define DEFAULT_PSW	20
+#define MAX_PSW		256	/* need to increase this for Super Dragon? */
+#define DEFAULT_PSW	64
 #define PARALLEL	1
 
 #endif
