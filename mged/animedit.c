@@ -80,7 +80,7 @@ static struct funtab {
 	char *ft_name;
 	char *ft_parms;
 	char *ft_comment;
-	void (*ft_func)(int, char **);
+	void (*ft_func)MGED_ARGS((int, char **));
 	int  ft_min;
 	int  ft_max;
 } joint_tab[] = {
@@ -1463,7 +1463,7 @@ struct rt_vls *str;
 				free_joint(jp);
 				return 0;
 			}
-			if (!parse_vect(&jp->location, fip, str)) {
+			if (!parse_vect(&jp->location[0], fip, str)) {
 				skip_group(fip,str);
 				free_joint(jp);
 				return 0;
@@ -1679,7 +1679,7 @@ struct rt_vls *str;
 	switch (token.t_key.value) {
 	case ID_FIXED:
 		pp->type = ID_FIXED;
-		if (!parse_vect(&pp->point, fip, str)) return 0;
+		if (!parse_vect(&pp->point[0], fip, str)) return 0;
 		return gobble_token(RT_LEX_SYMBOL, SYM_END, fip, str);
 		break;
 	case ID_SPH:
