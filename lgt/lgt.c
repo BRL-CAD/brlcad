@@ -154,6 +154,7 @@ tty_sig:
 	/* Main loop.							*/
 	user_Interaction();
 	/*NOTREACHED*/
+	return	99; /* Stupid UTX compiler considers this as reachable. */
 	}
 
 /*	i n t e r p o l a t e _ F r a m e ( )				*/
