@@ -551,6 +551,9 @@ CONST struct rt_tol	*tol;
 		if( nextfu == fu2->fumate_p )
 			nextfu = RT_LIST_PNEXT(faceuse, nextfu);
 
+		/* First, ensure faceuse orientation parity is harmonious */
+		nmg_fu_harmonize_radial_parity( fu2, s1, tol );
+
 		/* If there is a face in the destination shell that
 		 * shares face geometry with this face, then
 		 * move all the loops into the other face,
@@ -1363,6 +1366,69 @@ register struct faceuse	*fu;
 	if (rt_g.NMG_debug & DEBUG_BASIC)  {
 		rt_log("nmg_reverse_face(fu=x%x) fumate=x%x\n", fu, fumate);
 	}
+}
+
+/*
+ *			N M G _ E U _ H A R M O N I Z E _ R A D I A L _ P A R I T Y
+ *
+ *  Note that since this routine is called in the middle of shuffling
+ *  faces between shells, it can't use nmg_eu_2s_orient_bad() on just
+ *  one of the shells, it must do both at once.
+ *
+ *  If the parity around eu1 isn't good now while some parts are still in s2,
+ *  it won't get any better after re-labeling everything into s1.
+ *  So fix it here.
+ */
+void
+nmg_eu_harmonize_radial_parity( eu1, s2, tol )
+struct edgeuse		*eu1;
+struct shell		*s2;
+CONST struct rt_tol	*tol;
+{
+	struct shell	*s1;
+
+	NMG_CK_EDGEUSE(eu1);
+	NMG_CK_SHELL(s2);
+	RT_CK_TOL(tol);
+
+	s1 = nmg_find_s_of_eu( eu1 );
+	if( s1 == s2 )  rt_bomb("nmg_eu_harmonize_radial_parity() s1==s2\n");
+
+	if( nmg_eu_2s_orient_bad( eu1, s1, s2, tol ) )  {
+		/* XXX Take remedial action */
+		rt_bomb("nmg_eu_harmonize_radial_parity() bad combined radial parity\n");
+	}
+}
+
+/*
+ *			N M G _ F U _ H A R M O N I Z E _ R A D I A L _ P A R I T Y
+ */
+int	/* XXX s/b void */
+nmg_fu_harmonize_radial_parity( fu1, s2, tol )
+struct faceuse		*fu1;
+struct shell		*s2;
+CONST struct rt_tol	*tol;
+{
+	struct loopuse	*lu1;
+	struct edgeuse	*eu1;
+
+	NMG_CK_FACEUSE(fu1);
+	NMG_CK_SHELL(s2);
+	RT_CK_TOL(tol);
+	if (rt_g.NMG_debug & DEBUG_BASIC)  {
+		rt_log("nmg_fu_harmonize_radial_parity(fu=x%x, s2=x%x)\n", fu1, s2);
+	}
+
+	for( RT_LIST_FOR( lu1, loopuse, &fu1->lu_hd ) )  {
+		NMG_CK_LOOPUSE(lu1);
+		if( RT_LIST_FIRST_MAGIC(&lu1->down_hd) == NMG_VERTEXUSE_MAGIC )
+			continue;
+		for( RT_LIST_FOR( eu1, edgeuse, &lu1->down_hd ) )  {
+			NMG_CK_EDGEUSE( eu1 );
+			nmg_eu_harmonize_radial_parity( eu1, s2, tol );
+		}
+	}
+
 }
 
 /*
