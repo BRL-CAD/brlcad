@@ -1,7 +1,7 @@
 /*
-	SCCS id:	@(#) rle.h	1.3
-	Last edit: 	3/22/85 at 14:00:10	G S M
-	Retrieved: 	8/13/86 at 10:31:00
+	SCCS id:	@(#) rle.h	1.4
+	Last edit: 	3/22/85 at 14:23:00	G S M
+	Retrieved: 	8/13/86 at 10:31:04
 	SCCS archive:	/m/cad/librle/RCS/s.rle.h
 
 	Modified for by :	Gary S. Moss
@@ -77,3 +77,7 @@ extern int	_bg_flag;
 extern int	_bw_flag;
 extern int	_cm_flag;
 extern Pixel	_bg_pixel;
+
+/* Global flags for general use.					*/
+extern int	rle_debug;
+extern int	rle_verbose;
