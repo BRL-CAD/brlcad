@@ -231,109 +231,108 @@ a <I>mged</I> mouse event.
 The <I>-i</I> option, if specified, causes the given value(s)
 to be treated as increments. Note that the <I>-i</I> option is ignored
 when getting values or when used with subcommands where this option
-makes no sense. <I>Adc</I> accepts the following subcommands:
-
-	<ul>
-	<li><DT><B>vars</B></DT>
+makes no sense. You can also control the position, angles, and radius
+of the ADC using a knob or the <a href="#knob">knob</a> command.
+<I>Adc</I> accepts the following subcommands:
+<br><br>
+	<DL>
+	<DT><B>vars</B></DT>
 	<DD>Returns a list of all ADC variables and their values (i.e. var = val).
 	</DD>
 
-	<li><DT><B>draw</B> [<I>0|1</I>]</DT>
+	<DT><B>draw</B> [<I>0|1</I>]</DT>
 	<DD>Set or get the draw parameter.
 	</DD>
 
-	<li><DT><B>a1</B> [<I>angle</I>]</DT>
+	<DT><B>a1</B> [<I>angle</I>]</DT>
 	<DD>Set or get angle1 in degrees.
 	</DD>
 
-	<li><DT><B>a2</B> [<I>angle</I>]</DT>
+	<DT><B>a2</B> [<I>angle</I>]</DT>
 	<DD>Set or get angle2 in degrees.
 	</DD>
 
-	<li><DT><B>dst</B> [<I>distance</I>]</DT>
+	<DT><B>dst</B> [<I>distance</I>]</DT>
 	<DD>Set or get radius (distance) of tick in local units.
 	</DD>
 
-	<li><DT><B>odst</B> [<I>distance</I>]</DT>
+	<DT><B>odst</B> [<I>distance</I>]</DT>
 	<DD>Set or get radius (distance) of tick (+-2047).
 	</DD>
 
-	<li><DT><B>hv</B> [<I>position</I>]</DT>
+	<DT><B>hv</B> [<I>position</I>]</DT>
 	<DD>Set or get position (grid coordinates and local units).
 	</DD>
 
-	<li><DT><B>xyz</B> [<I>position</I>]</DT>
+	<DT><B>xyz</B> [<I>position</I>]</DT>
 	<DD>Set or get position (model coordinates and local units).
 	</DD>
 
-	<li><DT><B>x</B> [<I>xpos</I>]</DT>
+	<DT><B>x</B> [<I>xpos</I>]</DT>
 	<DD>Set or get horizontal position (+-2047).
 	</DD>
 
-	<li><DT><B>y</B> [<I>ypos</I>]</DT>
+	<DT><B>y</B> [<I>ypos</I>]</DT>
 	<DD>Set or get vertical position (+-2047).
 	</DD>
 
-	<li><DT><B>dh</B> <I>distance</I></DT>
+	<DT><B>dh</B> <I>distance</I></DT>
 	<DD>Add to horizontal position (grid coordinates and local units).
 	</DD>
 
-	<li><DT><B>dv</B> <I>distance</I></DT>
+	<DT><B>dv</B> <I>distance</I></DT>
 	<DD>Add to vertical position (grid coordinates and local units).
 	</DD>
 
-	<li><DT><B>dx</B> <I>distance</I></DT>
+	<DT><B>dx</B> <I>distance</I></DT>
 	<DD>Add to X position (model coordinates and local units).
 	</DD>
 
-	<li><DT><B>dy</B> <I>distance</I></DT>
+	<DT><B>dy</B> <I>distance</I></DT>
 	<DD>Add to Y position (model coordinates and local units).
 	</DD>
 
-	<li><DT><B>dz</B> <I>distance</I></DT>
+	<DT><B>dz</B> <I>distance</I></DT>
 	<DD>Add to Z position (model coordinates and local units).
 	</DD>
 
-	<li><DT><B>anchor_pos</B> [<I>0|1</I>]</DT>
+	<DT><B>anchor_pos</B> [<I>0|1</I>]</DT>
 	<DD>Anchor ADC to current position in model coordinates.
 	</DD>
 
-	<li><DT><B>anchor_a1</B> [<I>0|1</I>]</DT>
+	<DT><B>anchor_a1</B> [<I>0|1</I>]</DT>
 	<DD>Anchor angle1 to go through anchorpoint_a1.
 	</DD>
 
-	<li><DT><B>anchor_a2</B> [<I>0|1</I>]</DT>
+	<DT><B>anchor_a2</B> [<I>0|1</I>]</DT>
 	<DD>Anchor angle2 to go through anchorpoint_a2.
 	</DD>
 
-	<li><DT><B>anchor_dst</B> [<I>0|1</I>]</DT>
+	<DT><B>anchor_dst</B> [<I>0|1</I>]</DT>
 	<DD>Anchor tick distance to go through anchorpoint_dst.
 	</DD>
 
-	<li><DT><B>anchorpoint_a1</B> [<I>x y z</I>]</DT>
+	<DT><B>anchorpoint_a1</B> [<I>x y z</I>]</DT>
 	<DD>Set or get anchor point for angle1 (model coordinates and local units).
 	</DD>
 
-	<li><DT><B>anchorpoint_a2</B> [<I>x y z</I>]</DT>
+	<DT><B>anchorpoint_a2</B> [<I>x y z</I>]</DT>
 	<DD>Set or get anchor point for angle2 (model coordinates and local units).
 	</DD>
 
-	<li><DT><B>anchorpoint_dst</B> [<I>x y z</I>]</DT>
+	<DT><B>anchorpoint_dst</B> [<I>x y z</I>]</DT>
 	<DD>Set or get anchor point for tick distance (model coordinates and local units).
 	</DD>
 
-	<li><DT><B>reset</B></DT>
+	<DT><B>reset</B></DT>
 	<DD>Reset all values to their defaults.
 	</DD>
 
-	<li><DT><B>help</B></DT>
+	<DT><B>help</B></DT>
 	<DD>Print the help message.
 	</DD>
-	</ul>
-
-	<br>You can also control the position, angles, and radius
-	of the ADC using a knob or the <a href="#knob">knob</a> command.
-
+	</DL>
+<br>
 	<DL>
 	<DT><big>Examples:</big></DT>
 	<DD>
@@ -1117,7 +1116,7 @@ before the next command will be processed.
 <DD>The ``dm'' command provides a means to interact with the display manager at a
      lower level. <I>Dm</I> accepts the following subcommands:
 </DD>
-<br>
+<br><br>
 	<DL>
 	<DT><B>set</B> [<I>var</I> [<I>val</I>]]</DT>
 	<DD>The ``set'' subcommand provides a means to set or query display manager
@@ -1190,7 +1189,7 @@ before the next command will be processed.
 	    appropriately before being passed to the <a href="#knob">knob</a> command.
 	</DD>
 	</DL>
-
+<br>
      <DL>
        <DT><big>Examples:</big></DT>
        <DD>
@@ -3222,57 +3221,57 @@ vector (<I>dx dy dz</I>).
 Without a subcommand, the usage message is printed.
 <I>Qray</I> accepts the following subcommands:
 </DD>
-
-	<ul>
-	<li><DT><b>vars</b></DT>
+<br><br>
+	<DL>
+	<DT><b>vars</b></DT>
 	<DD>Print a list of all query ray variables.
 	</DD>
 
-	<li><DT><b>basename</b> [<I>str</I>]</DT>
+	<DT><b>basename</b> [<I>str</I>]</DT>
 	<DD>If <I>str</I> is specified, then set basename to <I>str</I>.
 	Otherwise, return the basename.<br>
 	Note - basename is the name used to create the fake solid names corresponding
 	to the query ray. There will be one fake solid for every color used along the ray.
 	</DD>
 
-	<li><DT><b>effects</b> [<I>t|g|b</I>]</DT>
+	<DT><b>effects</b> [<I>t|g|b</I>]</DT>
 	<DD>Set or get the type of <I>effects</I> that will occur when
 	firing a query ray. The effects of firing a ray can be either
 	<I>t</I> for textual output, <I>g</I> for graphical output or
 	<I>b</I> for both textual and graphical.
 	</DD>
 
-	<li><DT><b>echo</b> [<I>0|1</I>]</DT>
+	<DT><b>echo</b> [<I>0|1</I>]</DT>
 	<DD>Set or get the value of <I>echo</I>.
 	If set to 1, the actual nirt command used will be echoed to the screen.
 	</DD>
 
-	<li><DT><b>oddcolor</b> [<I>r g b</I>]</DT>
+	<DT><b>oddcolor</b> [<I>r g b</I>]</DT>
 	<DD>Set or get the color of odd partitions.
 	</DD>
 
-	<li><DT><b>evencolor</b> [<I>r g b</I>]</DT>
+	<DT><b>evencolor</b> [<I>r g b</I>]</DT>
 	<DD>Set or get the color of even partitions.
 	</DD>
 
-	<li><DT><b>voidcolor</b> [<I>r g b</I>]</DT>
+	<DT><b>voidcolor</b> [<I>r g b</I>]</DT>
 	<DD>Set or get the color of areas where the ray passes through nothing.
 	</DD>
 
-	<li><DT><b>overlapcolor</b> [<I>r g b</I>]</DT>
+	<DT><b>overlapcolor</b> [<I>r g b</I>]</DT>
 	<DD>Set or get the color of areas that overlap.
 	</DD>
 
-	<li><DT><b>fmt</b> [<I>r|h|p|f|m|o</I> [<I>str</I>]]</DT>
+	<DT><b>fmt</b> [<I>r|h|p|f|m|o</I> [<I>str</I>]]</DT>
 	<DD>Set or get the format string(s). See the <I>man</I> page
 	of <I>nirt</I> for more details.
 	</DD>
 
-	<li><DT><b>help</b></DT>
+	<DT><b>help</b></DT>
 	<DD>Print the usage message.
 	</DD>
-	</ul>
-
+	</DL>
+<br>
 	<DL>
 	<DT><big>Examples:</big></DT>
 	<DD>
@@ -3984,56 +3983,56 @@ current state, view size of the current display manager, the conversion
 factor from local model units to the base units (mm) stored in the database, and the
 view matrices of the current display manager.
 <I>Status</I> accepts the following subcommands:
-
-	<ul>
-	<li><DT><b>state</b></DT>
+<br><br>
+	<DL>
+	<DT><b>state</b></DT>
 	<DD>Get the current state of MGED (i.e. "VIEWING", "SOL PICK",
 	"SOL EDIT", "OBJ PICK", "OBJ PATH","OBJ EDIT", or "VERTPICK").
 	</DD>
 
-	<li><DT><b>Viewscale</b></DT>
+	<DT><b>Viewscale</b></DT>
 	<DD>Get the view scale.
 	</DD>
 
-	<li><DT><b>base2local</b></DT>
+	<DT><b>base2local</b></DT>
 	<DD>Get the conversion factor from base units (mm) to local units.
 	</DD>
 
-	<li><DT><b>local2base</b></DT>
+	<DT><b>local2base</b></DT>
 	<DD>Get the conversion factor from local units to base units (mm).
 	</DD>
 
-	<li><DT><b>toViewcenter</b></DT>
+	<DT><b>toViewcenter</b></DT>
 	<DD>Get the matrix that describes the location of the view center.
 	</DD>
 
-	<li><DT><b>Viewrot</b></DT>
+	<DT><b>Viewrot</b></DT>
 	<DD>Get the matrix describes the view orientation.
 	</DD>
 
-	<li><DT><b>model2view</b></DT>
+	<DT><b>model2view</b></DT>
 	<DD>Get the model to view conversion matrix.
 	</DD>
 
-	<li><DT><b>view2model</b></DT>
+	<DT><b>view2model</b></DT>
 	<DD>Get the view to model conversion matrix.
 	</DD>
 
-	<li><DT><b>model2objview</b></DT>
+	<DT><b>model2objview</b></DT>
 	<DD>Get the model to view conversion matrix. This matrix
 	also includes changes made during editing.
 	</DD>
 
-	<li><DT><b>objview2model</b></DT>
+	<DT><b>objview2model</b></DT>
 	<DD>Get the view to model conversion matrix. This matrix
 	also includes changes made during editing.
 	</DD>
 
-	<li><DT><b>help</b></DT>
+	<DT><b>help</b></DT>
 	<DD>Print the usage message.
 	</DD>
-	</ul>
-
+	</DL>
+<br>
 	<DL>
 	<DT><big>Examples:</big></DT>
 	<DD>
@@ -4622,33 +4621,33 @@ All textual arguments may be abbreviated by their first letter.
 
 <DD>Get/set view parameters (local units). <I>View</I> accepts
 the following subcommands:
-
+<br><br>
 	<DL>
-	<DT><b>center [<I>x y z</I>]</b></DT>
+	<DT><b>center</b> [<I>x y z</I>]</DT>
 	<DD>Get/set the view center of the current view.
 	</DD>
 
-	<DT><b>size [<I>val</I>]</b></DT>
+	<DT><b>size</b> [<I>val</I>]</DT>
 	<DD>Get/set the view size of the current view.
 	</DD>
 
-	<DT><b>eye [<I>x y z</I>]</b></DT>
+	<DT><b>eye</b> [<I>x y z</I>]</DT>
 	<DD>Get/set the eye point of the current view.
 	</DD>
 
-	<DT><b>ypr [<I>y p r</I>]</b></DT>
+	<DT><b>ypr</b> [<I>y p r</I>]</DT>
 	<DD>Get/set the yaw, pitch and roll of the current view.
 	</DD>
 
-	<DT><b>quat [<I>v1 v2 v3 v4</I>]</b></DT>
+	<DT><b>quat</b> [<I>v1 v2 v3 v4</I>]</DT>
 	<DD>Get/set the view in the form of a quaternion.
 	</DD>
 
-	<DT><b>aet [<I>a e t</I>]</b></DT>
+	<DT><b>aet</b> [<I>a e t</I>]</DT>
 	<DD>Get/set the azimuth, elevation and twist of the current view.
 	</DD>
 	</DL>
-
+<br>
 	<DL>
 	<DT><big>Examples:</big></DT>
 	<DD>

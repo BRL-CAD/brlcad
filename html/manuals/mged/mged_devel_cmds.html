@@ -32,33 +32,32 @@ clicking the middle mouse button or by using the
 
 <DT><a NAME="cmd_win"><B>cmd_win</B> <I>subcommand</I></DT>
 <DD>This command is used to maintain internal command window structures.
-<I>Cmd_win</I> accepts several subcommands to accomplish
-this task.
-
-	<ul>
-	<li><DT><B>open</B> <I>id</I></DT>
+<I>Cmd_win</I> accepts the following subcommands:
+<br><br>
+	<DL>
+	<DT><B>open</B> <I>id</I></DT>
 	<DD>This subcommand is used to create the internal data structures
 		for a new command window. If <I>id</I> is already in use,
 		nothing is changed.
 	</DD>
 
-	<li><DT><B>close</B> <I>id</I></DT>
+	<DT><B>close</B> <I>id</I></DT>
 	<DD>This subcommand releases <I>id</I>'s internal data structures. If the referenced
 	command window is <a href="#tie">tied</a> to a display
 	manager, then that association is also removed.
 	</DD>
 
-	<li><DT><B>set</B> <I>id</I></DT>
+	<DT><B>set</B> <I>id</I></DT>
 	<DD>This subcommand sets the current command window to <I>id</I>. If this
 	     command window is <a href="#tie">tied</a> to a display manager, that display
 	     manager becomes the current display manager.
 	</DD>
 
-	<li><DT><B>get</B></DT>
+	<DT><B>get</B></DT>
 	<DD>This subcommand returns the id of the current command window.
 	</DD>
-	</ul>
-
+	</DL>
+<br>
 	<DL>
 		<DT><big>Examples:</big></DT>
 		<DD>
@@ -79,26 +78,26 @@ this task.
 
 <DD> This command is used to maintain the ``collaborative session''. The
 ``collaborative session'' is a list whose members share a view and view ring among
-the upper right display manager panes. <I>Collaborate</I> accepts several
-subcommands to accomplish this task.
-
-	<ul>
-	<li><DT><B>join</B> <I>id</I></DT>
+the upper right display manager panes. <I>Collaborate</I> accepts the following
+subcommands:
+<br><br>
+	<DL>
+	<DT><B>join</B> <I>id</I></DT>
 	<DD> This causes the GUI associated with <I>id</I> to join
 	the collaborative session.
 	</DD>
 
-	<li><DT><B>quit</B> <I>id</I></DT>
+	<DT><B>quit</B> <I>id</I></DT>
 	<DD> This causes the GUI associated with <I>id</I> to quit
 	the collaborative session.
 	</DD>
 
-	<li><DT><B>show</B></DT>
+	<DT><B>show</B></DT>
 	<DD> This returns the list of participants (ids) in the
 	collaborative session.
 	</DD>
-	</ul>
-
+	</DL>
+<br>
 	<DL>
 		<DT><big>Examples:</big></DT>
 		<DD>
@@ -196,25 +195,25 @@ Note that this GUI must have been created with the
 
 <DT><a NAME="hist"><B>hist</B> <I>subcommand</I></DT>
 <DD>This command is used to maintain command history. <I>Hist</I> accepts
-several subcommands.
-
-	<ul>
-	<li><DT><B>add</B> <I>command</I></DT>
+the following subcommands:
+<br><br>
+	<DL>
+	<DT><B>add</B> <I>command</I></DT>
 	<DD> This adds <I>command</I> to the <a href="mged_cmds.html#history">history</a>
 	list of commands executed during the current <I>mged</I> session.
 	If <I>command</I> is more than one word, it must be surrounded
 	by braces (i.e. {make box arb8}).
 	</DD>
 
-	<li><DT><B>next</B></DT>
+	<DT><B>next</B></DT>
 	<DD> This returns the next command in the command history list.
 	</DD>
 
-	<li><DT><B>prev</B></DT>
+	<DT><B>prev</B></DT>
 	<DD> This returns the previous command in the command history list.
 	</DD>
-	</ul>
-
+	</DL>
+<br>
 	<DL>
 	<DT><big>Examples:</big></DT>
 		<DD>
@@ -592,36 +591,42 @@ convert it to model coordinates (local units).
 The view ring is simply a list of views that is owned by a display manager.
 Views can be added or removed from this list. The views on this list can
 also be traversed or queried.
-<I>View_ring</I> accepts several subcommands.
-
-	<ul>
-	<li><DT><B>add</B></DT>
+<I>View_ring</I> accepts the following subcommands.
+<br><br>
+	<DL>
+	<DT><B>add</B></DT>
 	<DD>This subcommand adds the current view to the view ring.
 	</DD>
-	<li><DT><B>next</B></DT>
+	
+	<DT><B>next</B></DT>
 	<DD>This subcommand makes the next view on the view ring the current view.
 	</DD>
-	<li><DT><B>prev</B></DT>
+
+	<DT><B>prev</B></DT>
 	<DD>This subcommand makes the previous view on the view ring the current view.
 	</DD>
-	<li><DT><B>toggle</B></DT>
+
+	<DT><B>toggle</B></DT>
 	<DD>This subcommand toggles between the current view and the last view.
 	</DD>
-	<li><DT><B>delete</B> <I>vid</I></DT>
+	
+	<DT><B>delete</B> <I>vid</I></DT>
 	<DD>This subcommand removes/deletes the view with a view id of <I>vid</I>
 	from the view ring. Note - the last view cannot be removed (i.e. there is
 	always one view on the view ring).
 	</DD>
-	<li><DT><B>goto</B> <I>vid</I></DT>
+	
+	<DT><B>goto</B> <I>vid</I></DT>
 	<DD>This subcommand makes the view with a view id of <I>vid</I>
 	the current view.
 	</DD>
-	<li><DT><B>get</B> [<I>-a</I>]</DT>
+	
+	<DT><B>get</B> [<I>-a</I>]</DT>
 	<DD>This subcommand returns the id of the current view. If <I>-a</I> is specified,
 	all view ids on the view ring are returned.
 	</DD>
-	</ul>
-
+	</DL>
+<br>
 	<DL>
 	<DT><big>Examples:</big></DT>
 		<DD>
