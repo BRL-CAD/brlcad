@@ -44,7 +44,7 @@ static char RCSid[] = "$Header$";
 #include "../librt/debug.h"
 
 RT_EXTERN(union tree *do_region_end, (struct db_tree_state *tsp, struct db_full_path *pathp, union tree *curtree));
-RT_EXTERN( struct face *nmg_find_top_face , (struct shell *s , long *flags ));
+RT_EXTERN( struct face *nmg_find_top_face , (struct shell *s, int *dir, long *flags ));
 
 static char	usage[] = "Usage:\n\
 	%s [-v] [-xX lvl] [-a abs_tol] [-r rel_tol] [-n norm_tol] [-s surroundings_code] [-i idents_output_file] [-o out_file] brlcad_db.g object(s)\n\
@@ -187,8 +187,9 @@ long *flags;
 		struct face *f;
 		struct faceuse *fu;
 		vect_t normal;
+		int dir;
 
-		f = nmg_find_top_face( s , flags );
+		f = nmg_find_top_face( s, &dir, flags );
 		fu = f->fu_p;
 		if( fu->orientation != OT_SAME )
 			fu = fu->fumate_p;
@@ -196,7 +197,7 @@ long *flags;
 			rt_bomb( "nmg_find_void_shells: Neither faceuse nor mate have OT_SAME orient\n" );
 
 		NMG_GET_FU_NORMAL( normal , fu );
-		if( normal[Z] > 0.0 )
+		if( normal[dir] > 0.0 )
 		{
 			NMG_INDEX_ASSIGN( flags , s , 1 )	/* external shell */
 		}
@@ -213,6 +214,7 @@ struct nmgregion *r;
 long *flags;
 CONST struct rt_tol *ttol;
 {
+	struct model *m;
 	struct shell *s;
 	struct faceuse *fu;
 	struct loopuse *lu;
@@ -220,6 +222,8 @@ CONST struct rt_tol *ttol;
 	int ext_shell_id=1;
 
 	NMG_CK_REGION( r );
+
+	m = r->m_p;
 
 	if( !r->ra_p )
 		nmg_region_a( r , ttol );
@@ -235,11 +239,12 @@ CONST struct rt_tol *ttol;
 		{
 			struct shell *void_s;
 			struct face *ext_f;
+			int dir;
 
 			/* identify this external shell */
 			NMG_INDEX_ASSIGN( flags , s , ++ext_shell_id );
 
-			ext_f = nmg_find_top_face( s , flags );
+			ext_f = nmg_find_top_face( s, &dir, flags );
 
 			/* found an external shell, look for voids */
 			for( RT_LIST_FOR( void_s , shell , &r->s_hd ) )
@@ -255,7 +260,6 @@ CONST struct rt_tol *ttol;
 
 				if( NMG_INDEX_GET( flags , void_s ) == (-1) )
 				{
-					struct face *int_f;
 					struct shell *test_s;
 					int breakout=0;
 					int not_in_this_shell=0;
@@ -299,25 +303,16 @@ CONST struct rt_tol *ttol;
 					if( not_in_this_shell )
 						continue;
 
-					int_f = nmg_find_top_face( void_s , flags );
-
 					/* Make sure there are no other external shells between these two */
 					for( RT_LIST_FOR( test_s , shell , &r->s_hd ) )
 					{
 						if( NMG_INDEX_GET( flags , test_s ) > 1 )
 						{
-							struct face *test_f;
 
 							if( !V3RPP1_IN_RPP2( void_s->sa_p->min_pt , void_s->sa_p->max_pt , test_s->sa_p->min_pt , test_s->sa_p->max_pt ) )
 								continue;
 
-							test_f = nmg_find_top_face( test_s , flags );
-							if( test_f->max_pt[Z] > int_f->max_pt[Z]
-							    && test_f->max_pt[Z] < ext_f->max_pt[Z] )
-							{
-								wrong_void = 1;
-								break;
-							}
+							/* XXXX check for wrong_void, set to one if wrong */
 						}
 					}
 					if( wrong_void )
@@ -365,6 +360,7 @@ struct db_full_path *pathp;
 			return;
 		}
 	}
+#if 0
 
 	/* First make sure that each shell is broken down into maximally connected shells
 	 * and while we're at it, split touching loops
@@ -447,6 +443,7 @@ struct db_full_path *pathp;
 		else if( NMG_INDEX_GET( flags , s ) > (-2) )
 			rt_log( "Shell x%x is incorrectly marked as %d\n" , s , NMG_INDEX_GET( flags , s ) );
 	}
+#endif
 
 	/* Output each shell as a TANKILL object */
 	nmg_tbl( &vertices , TBL_INIT , NULL );
@@ -936,6 +933,7 @@ union tree		*curtree;
 
 out:
 	GETUNION(curtree, tree);
+	curtree->magic = RT_TREE_MAGIC;
 	curtree->tr_op = OP_NOP;
 	return(curtree);
 }

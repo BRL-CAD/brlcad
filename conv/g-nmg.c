@@ -388,6 +388,7 @@ union tree		*curtree;
 
 out:
 	GETUNION(curtree, tree);
+	curtree->magic = RT_TREE_MAGIC;
 	curtree->tr_op = OP_NOP;
 	return(curtree);
 }
