@@ -1,5 +1,5 @@
 #include "conf.h"
-#include "tcl.h"
+#include "tk.h"
 #include "machine.h"
 #include "externs.h"
 #include "bu.h"
@@ -11,6 +11,9 @@ extern int dm_name2type();
 extern char **dm_names();
 extern char *dm_type2name();
 extern int *dm_types();
+#if 0
+extern int dm_send_xevent;
+#endif
 
 static int dm_best_type_tcl();
 static int dm_best_name_tcl();
@@ -18,6 +21,9 @@ static int dm_name2type_tcl();
 static int dm_names_tcl();
 static int dm_type2name_tcl();
 static int dm_types_tcl();
+#if 0
+static int dm_send_xevent_tcl();
+#endif
 
 struct cmdtab {
   char *ct_name;
@@ -31,6 +37,9 @@ static struct cmdtab cmdtab[] = {
   "dm_names", dm_names_tcl,
   "dm_type2name", dm_type2name_tcl,
   "dm_types", dm_types_tcl,
+#if 0
+  "dm_send_xevent", dm_send_xevent_tcl,
+#endif
   0, 0
 };
 
@@ -212,3 +221,46 @@ char    **argv;
 
   return TCL_OK;
 }
+
+#if 0
+/*XXX experimenting */
+static int
+dm_send_xevent_tcl(clientData, interp, argc, argv)
+ClientData	clientData;
+Tcl_Interp     *interp;
+int		argc;
+char	      **argv;
+{
+  Tk_Window tk_w;
+  Display *dpy;
+  Window w;
+  int type;
+  int propagate;
+
+  if(argc != 4){
+    struct bu_vls vls;
+
+    bu_vls_init(&vls)
+    bu_vls_printf(&vls, "helplib dm_send_xevent");
+    Tcl_Eval(interp, bu_vls_addr(&vls));
+    bu_vls_free(&vls);
+    return TCL_ERROR;
+  }
+
+  tk_w = Tk_NameToWindow(interp, argv[1], tkwin);
+  dpy = Tk_Display(tk_w);
+  w = Tk_WindowId(tk_w);
+
+  if(sscanf(argv[2], "%d", &type) != 1){
+    Tcl_AppendResult(interp, "dm_send_xevent_tcl: failed to get event type", (char *)NULL);
+    return TCL_ERROR;
+  }
+
+  if(sscanf(argv[2], "%d", &propagate) != 1){
+    Tcl_AppendResult(interp, "dm_send_xevent_tcl: failed to get propagation", (char *)NULL);
+    return TCL_ERROR;
+  }
+
+  return dm_send_xevent(dpy, w, type, propagate, argv[3]);
+}
+#endif
