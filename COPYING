@@ -1,28 +1,55 @@
-Re-distribution of this software is restricted, as described in your
-"Statement of Terms and Conditions for the Release of The BRL-CAD
-Package" agreement.
+BRL-CAD is open source software controlled and maintained by the
+BRL-CAD developers.  The individual BRL-CAD authors retain the
+copyright to their respective contributions unless otherwise noted or
+arranged.
 
-Portions of this software and the associated databases and images are
-Copyright (C) 1985-2004 by the United States Army in all countries
-except the USA.  Unauthorized redistribution in any form is
-prohibited. Recipients of this distribution are authorized unlimited
-use within their corporation, organization, or agency.
+BRL-CAD is covered by several licenses including but not limited to
+the GNU General Public License (GPL), the GNU Library General Public
+License (LGPL), a Berkeley Software Distribution (BSD) license, and
+the GNU Free Documentation License.  The specific terms of BRL-CAD's
+licenses should be included in the doc/legal/ directory of the source
+code distribution and should be consulted for more details,
+information, and implications of each license.
 
-The mark "BRL-CAD" is a Registered Trademark of the United States
-Army.  All rights reserved.
+You should have received a copy of the GNU General Public License and
+the GNU Library General Public License along with this distribution;
+if not, write to the Free Software Foundation, Inc., 59 Temple Place,
+Suite 330, Boston, MA 02111-1307 USA.
+
+The BRL-CAD package utilizes and redistributes copies of several 3rd
+party source code, libraries, and/or applications.  Said 3rd party
+source code, libraries, and/or applications all retain their
+respective licenses and copyrights and should be referred to
+individually for their terms.  When referring to BRL-CAD source code,
+documentation, and/or libraries, this is not meant to include or imply
+3rd party source code, libraries, and/or applications unless
+specifically stated otherwise.  The majority of the 3rd party source
+code, libraries, and applications included with BRL-CAD are located in
+the src/other/ directory of the source code distribution.
+
+BRL-CAD consists primarily of libraries, applications, documentation,
+and build infrastructure.  The BRL-CAD libraries include the headers
+in the include/ directory as well as all of the directories that begin
+with the prefix "lib" in the src/ directory (e.g. src/librt/).  All of
+BRL-CAD's libraries are covered by the terms of the LGPL.  BRL-CAD's
+documentation consists of manual pages located throughout the package,
+the majority of files in the doc/ directory, and the top-level
+administrative files (e.g. README and AUTHORS).  All of BRL-CAD's
+documentation is covered by the terms of the GNU Free Documentation
+License.  All of BRL-CAD's build infrastructure, including many useful
+build and test scripts located in the misc/ directory are provided
+either under an unrestrictive BSD-style license or said files are in
+the public domain.  The rest of the BRL-CAD package, with the
+exception of the src/other directory and not including the library
+directories in src/, is covered by the terms of the GPL unless
+specifically denoted otherwise.
 
 There is no warranty or other guarantee of fitness for this software,
-it is provided solely "as is".  Bug reports or fixes must be sent to
-ARL, which may or may not act on them.
+it is provided solely "as is".  Bug reports or fixes should be sent to
+the BRL-CAD developers via the SourceForge project site at
+http://sourceforge.net/projects/bzflag/, which may or may not be acted
+upon.
 
-This software was developed by and is proprietary to the United States
-Government, and any use of the software without the written permission
-of the US Army Research Laboratory is strictly prohibited. Any
-unauthorized use of the software will be construed as an infringement
-of the Government's rights and will subject the unauthorized user to
-action(s) for infringement damages. (BRL MFR 380-15, Feb-88)
+The mark "BRL-CAD" is a Registered Trademark of the United States
+Army.  All rights are reserved.
 
-The software in the "contributed" directory is Public Domain,
-Distribution Unlimited.  In addition, certain other modules in the
-BRL-CAD package bear this designation.  Files so marked are available
-for unlimited use.
