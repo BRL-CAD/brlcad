@@ -184,11 +184,11 @@ proc read_output { id } {
 
 	set inn [read $over_cont($id,fd)]
 	if { [eof $over_cont($id,fd)] } {
-		close $over_cont($id,fd)
+		catch "close $over_cont($id,fd)"
 		if { [string length $inn] > 0 } {
 			append over_cont($id,glint_ret) $inn
 		}
-		exec rm /tmp/g_lint_error
+		catch "exec rm /tmp/g_lint_error"
 		$over_cont($id,top).status configure -text "Processing output..."
 		update
 
@@ -209,6 +209,19 @@ proc read_output { id } {
 # run 'g_lint' and display the frame containing the fixing options
 proc fix_overlaps { id } {
 	global over_cont 
+
+	# check on validity of objects for raytracing
+	set bad_objs ""
+	foreach obj $over_cont($id,objs) {
+		catch {set ret [t $obj]}
+		if { [string first $obj $ret] != 0 } {
+			lappend bad_objs $obj
+		}
+	}
+	if { [llength $bad_objs] > 0 } {
+		tk_messageBox -icon error -type ok -title "Bad Object Names" -message "Unrecognized object names:\n$bad_objs"
+		return
+	}
 
 	set over_cont($id,glint_ret) ""
 	set size_in_mm [expr $over_cont($id,local2base) * $over_cont($id,size)]
@@ -390,9 +403,11 @@ proc overlap_tool { id } {
 	set over_cont($id,objs) "all"
 	set over_cont($id,az) 0
 	set over_cont($id,el) 0
-	set over_cont($id,size) 10
 	set over_cont($id,local2base) $local2base
 	set over_cont($id,localunit) $localunit
+
+	# set initial cell size to 100mm
+	set over_cont($id,size) [expr 100 / $local2base]
 
 	toplevel $over_cont($id,top)
 	wm title $over_cont($id,top) "Fix Overlaps"
