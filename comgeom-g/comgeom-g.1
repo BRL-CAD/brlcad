@@ -24,6 +24,10 @@ The default input is COMGEOM version 5.
 Version 4 can be converted by specifying the
 .B \-v4
 flag.
+For the time being, the DoE MORSE/RAFFLE format (believed to be the
+original MAGIC format) can be converted by specifying the
+.B \-v1
+flag.
 .PP
 By default, the program
 .I comgeom-g
@@ -33,7 +37,14 @@ database, some users prefer to have various status reports that
 indicate the progress of the conversion.
 This can be selected by specifying the
 .B \-d1
-flag.
+flag (debug level 1).
+.PP
+The units used in a COMGEOM file are specified on a header record.
+The units of an MGED database are always milimeters.
+.I comgeom-g
+performs automatic units conversion using the built-in units conversion
+feature of
+\fIlibwdb\fR(3).
 .SH EXAMPLE
 .I
 comgeom-g < file.cg > file.g
@@ -44,12 +55,6 @@ Familiarity with GIFT COMGEOM terminology will be helpful.
 It is expected that the input file should be a valid COMGEOM model.
 While quite a bit of input checking is performed, wildly incorrect
 input may produce amusing results.
-.PP
-There is presently no units conversion.
-Most COMGEOM models are specified in inches, while
-MGED models \fImust\fR be stored in milimeters.
-This conversion awaits addition of automatic units conversion in
-\fIlibwdb\fR(3).
 .SH SEE ALSO
 brlcad(1), mged(1), libwdb(3)
 .SH AUTHOR
