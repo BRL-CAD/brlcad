@@ -147,34 +147,36 @@ AM_CONFIG_HEADER([include/config.h])
 # to an automake bug in older version, so restore those files if
 # needed.
 for file in COPYING INSTALL ; do
-	if ! test -f "$srcdir/$file" ; then
+	curr="$srcdir/$file"
+	if ! test -f "$curr" ; then
 		continue
 	fi
-	if ! test -f "$srcdir/misc/${file}.backup" ; then
+	back="$srcdir/misc/${file}.backup"
+	if ! test -f "$back" ; then
 		continue
 	fi
 
 	AC_MSG_CHECKING([whether ${file} needs to be restored])
-	content="`cat $srcdir/${file}`"
-	backup="`cat $srcdir/misc/${file}.backup`"
-	if test "x$content" = "x$backup" ; then
+	current="`cat $curr`"
+	backup="`cat $back`"
+	if test "x$current" = "x$backup" ; then
 		AC_MSG_RESULT(no)
 	else
-		content_rev="`grep \$Revision ${srcdir}/${file} | awk '{print $2}' | sed 's/\.//g'`"
-		if test "x$content_rev" = "x" ; then
-			content_rev=0
+		current_rev=`grep '$Revision' "$curr" | awk '{print $2}' | sed 's/\.//g'`
+		if test "x$current_rev" = "x" ; then
+			current_rev=0
 		fi
-		backup_rev="`grep \$Revision ${srcdir}/misc/${file} | awk '{print $2}' | sed 's/\.//g'`"
+		backup_rev=`grep '$Revision' "$back" | awk '{print $2}' | sed 's/\.//g'`
 		if test "x$backup_rev" = "x" ; then
 			backup_rev=0
 		fi
-		if test "$content_rev" -gt "$backup_rev" ; then
+		if test "$current_rev" -gt "$backup_rev" ; then
 			AC_MSG_RESULT(no)
 			# new version from cvs.. back it up
-			cp -pr "$srcdir/${file}" "$srcdir/misc/${file}.backup"
+			cp -pr "$curr" "$back"
 		else
 			AC_MSG_RESULT(yes)
-			cp -pr "$srcdir/misc/${file}.backup" "$srcdir/${file}"
+			cp -pr "$back" "$curr"
 		fi
 	fi
 done
