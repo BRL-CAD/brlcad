@@ -1241,14 +1241,15 @@ f_tops()
 /*
  *			C M D _ G L O B
  *  
- *  Assist routine for command processor.  If the current word
- *  in the cmd_args[] array contains "*", "?" or "[", then this
- *  word is potentially a regular expression, and we will tromp
- *  through the entire in-core directory searching for a match.
- *  If no match is found, the original word remains untouched
- *  and this routine was an expensive no-op.  If any match is
- *  found, it replaces the original word.  All matches are sought
- *  for, up to the limit of the cmd_args[] array.
+ *  Assist routine for command processor.  If the current word in
+ *  the cmd_args[] array contains "*", "?", "[", or "\" then this word
+ *  is potentially a regular expression, and we will tromp through the
+ *  entire in-core directory searching for a match. If no match is
+ *  found, the original word remains untouched and this routine was an
+ *  expensive no-op.  If any match is found, it replaces the original
+ *  word. Escape processing is also done done in this module.  If there
+ *  are no matches, but there are escapes, the current word is modified.
+ *  All matches are sought for, up to the limit of the cmd_args[] array.
  *
  *  Returns 0 if no expansion happened, !0 if we matched something.
  */
@@ -1259,39 +1260,38 @@ cmd_glob()
 	register char *pattern;
 	register struct directory	*dp;
 	register int i;
+	int escaped = 0;
 	int orig_numargs = numargs;
 
-	strncpy( word, cmd_args[numargs-1], sizeof(word)-1 );
-	/* If * ? or [ are present, this is a regular expression */
+	strncpy( word, cmd_args[numargs], sizeof(word)-1 );
+	/* If * ? [ or \ are present, this is a regular expression */
 	pattern = word;
-	while( *pattern )  {
-		if( *pattern == '\n' ||
-		    *pattern == ' '  ||
-		    *pattern == '\t' )
+	do {
+		if( *pattern == '\0' )
 			return(0);		/* nothing to do */
 		if( *pattern == '*' ||
 		    *pattern == '?' ||
-		    *pattern++ == '[' )
-			goto hard;
-	}
-	return(0);				/* nothing to do */
-hard:
-	/* First, null terminate (sigh) */
-	pattern = &word[-1];
-	while( *++pattern )  {
-		if( *pattern == '\n' ||
-		    *pattern == ' '  ||
-		    *pattern == '\t' )  {
-			*pattern = '\0';
+		    *pattern == '[' ||
+		    *pattern == '\\' )
 			break;
-		    }
-	}
-			
+	} while( *pattern++);
+
+	/* Note if there are any escapes */
+	for( pattern = word; *pattern; pattern++)
+		if( *pattern == '\\') {
+			escaped++;
+			break;
+		}
+
 	/* Search for pattern matches.
-	 * First, save the pattern, and remove it from cmd_args,
-	 * as it will be overwritten by the expansions.
+	 * First, save the pattern (in word), and remove it from
+	 * cmd_args, as it will be overwritten by the expansions.
+	 * If any matches are found, we do not have to worry about
+	 * '\' escapes since the match coming from dp->d_namep is placed
+	 * into cmd_args.  Only in the case of no matches do we have
+	 * to do escape crunching.
 	 */
-	numargs--;
+
 	for( i = 0; i < NHASH; i++ )  {
 		for( dp = DirHead[i]; dp != DIR_NULL; dp = dp->d_forw )  {
 			if( !regexp_match( word, dp->d_namep ) )
@@ -1300,17 +1300,36 @@ hard:
 			cmd_args[numargs++] = dp->d_namep;
 			if( numargs >= maxargs )  {
 				(void)printf("%s: expansion stopped after %d matches\n", word, maxargs);
-				return(1);	/* limited success */
+				break;
 			}
 		}
 	}
-	/* If we failed to do any expansion, leave the word untouched */
-	if( numargs == orig_numargs-1 )  {
-		(void)printf("%s: no match\n", word);
-		numargs++;
-		return(0);		/* found nothing */
+	/* If one or matches occurred, decrement final numargs,
+	 * otherwise, do escape processing if needed.
+	 */
+
+	if( numargs > orig_numargs )  {
+		numargs--;
+		return(1);
+	} else if(escaped) {
+		char *temp;
+		temp = pattern = cmd_args[numargs];
+		do {
+			if(*pattern != '\\') {
+				*temp = *pattern;
+				temp++;
+			} else if(*(pattern + 1) == '\\') {
+				*temp = *pattern;
+				pattern++;
+				temp++;
+			}
+		} while(*pattern++);
+
+		/* Elide the rare pattern which becomes null ("\<NULL>") */
+		if(*(cmd_args[numargs]) == '\0')
+			numargs--;
 	}
-	return(1);			/* success */
+	return(0);		/* found nothing */
 }
 
 /*
