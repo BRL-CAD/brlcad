@@ -615,15 +615,17 @@ char	*dp;
  *			E N V M A P _ S E T U P
  */
 HIDDEN int
-envmap_setup( rp, matparm, dpp )
+envmap_setup( rp, matparm, dpp, rtip )
 register struct region *rp;
 struct rt_vls *matparm;
 char	**dpp;
+struct rt_i	*rtip;
 {
 	register char	*cp;
 	struct rt_vls	material;
 
 	RT_VLS_CHECK( matparm );
+	RT_CK_RTI(rtip);
 	if( env_region.reg_mfuncs )  {
 		rt_log("envmap_setup:  second environment map ignored\n");
 		return(0);		/* drop region */
@@ -657,7 +659,7 @@ char	**dpp;
 	strncpy( env_region.reg_mater.ma_matparm, cp,
 		sizeof(rp->reg_mater.ma_matparm) );
 
-	if( mlib_setup( &env_region ) < 0 )
+	if( mlib_setup( &env_region, rtip ) < 0 )
 		rt_log("envmap_setup() material '%s' failed\n", env_region.reg_mater );
 	rt_vls_free( &material );
 	return(0);		/* This region should be dropped */

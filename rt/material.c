@@ -61,13 +61,17 @@ register struct mfuncs *mfp;
  *	 1	success
  */
 int
-mlib_setup( rp )
-register struct region *rp;
+mlib_setup( rp, rtip )
+register struct region	*rp;
+struct rt_i		*rtip;
 {
 	register struct mfuncs *mfp;
 	int	ret;
 	struct rt_vls	param;
 	char	*material;
+
+	RT_CK_REGION(rp);
+	RT_CK_RTI(rtip);
 
 	if( rp->reg_mfuncs != (char *)0 )  {
 		rt_log("mlib_setup:  region %s already setup\n", rp->reg_name );
@@ -100,7 +104,7 @@ found:
 	rp->reg_mfuncs = (char *)mfp;
 	rp->reg_udata = (char *)0;
 
-	if( (ret = mfp->mf_setup( rp, &param, &rp->reg_udata, mfp )) < 0 )  {
+	if( (ret = mfp->mf_setup( rp, &param, &rp->reg_udata, mfp, rtip )) < 0 )  {
 		rt_log("ERROR mlib_setup(%s) failed. Material='%s', param='%s'.\n",
 			rp->reg_name, material, RT_VLS_ADDR(&param) );
 		if( material != mdefault )  {

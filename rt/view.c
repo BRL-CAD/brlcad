@@ -358,7 +358,7 @@ struct rt_i	*rtip;
 	 *  may be clear how to repackage this operation.
 	 */
 	for( regp=rtip->HeadRegion; regp != REGION_NULL; )  {
-		switch( mlib_setup( regp ) )  {
+		switch( mlib_setup( regp, rtip ) )  {
 		case -1:
 		default:
 			rt_log("mlib_setup failure on %s\n", regp->reg_name);
