@@ -99,9 +99,11 @@ struct bu_vls   ray_data_file;  /* file name for ray data output */
 /***** end variables shared with viewg3.c *****/
 
 /***** variables shared with g_cline.c ******/
-
 extern fastf_t rt_cline_radius;
 /***** end variables shared with g_cline.c ******/
+
+/***** variables for frame buffer black pixel rendering *****/
+extern FBIO	*pixmap;		/* pixel map for rerendering of black pixels */
 
 
 void		def_tree();
@@ -774,7 +776,8 @@ int framenumber;
 		 *  reading and writing, but must do it's own positioning.
 		 */
 		{
-			struct stat sb;
+			struct		stat	sb;
+			int			n;
 			if( stat( framename, &sb ) >= 0 && sb.st_size > 0 )  {
 				/* File exists, with partial results */
 				register int	fd;
@@ -783,6 +786,10 @@ int framenumber;
 					perror( framename );
 					if( matflag )  return(0);	/* OK */
 					return(-1);			/* Bad */
+				}
+				/* Read existing pix data into the frame buffer */
+				if (sb.st_size) {
+					n= fread(pixmap,1,sb.st_size,outfp);
 				}
 			}
 		}
