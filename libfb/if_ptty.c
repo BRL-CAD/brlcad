@@ -76,6 +76,9 @@ FBIO ptty_interface =
 		0
 		};
 
+_LOCAL_	int	output_Scan();
+_LOCAL_ int	put_Run();
+_LOCAL_ int	rgb_To_Dither_Val();
 
 /*ARGSUSED*/
 _LOCAL_ int
@@ -234,7 +237,7 @@ int	nframes, framesz, fps;
 	of 1 scan line of 'ct' pixels.
 	Output to stdout.
  */
-_LOCAL_
+_LOCAL_ int
 output_Scan( ifp, pixels, ct )
 FBIO		*ifp;
 register RGBpixel	*pixels;
@@ -284,7 +287,7 @@ int		ct;
 	return	write( ifp->if_fd, "\n", 1 );
 	}
 
-_LOCAL_
+_LOCAL_ int
 put_Run( ifp, ct, val )
 register FBIO	*ifp;
 register int	ct;
@@ -305,7 +308,7 @@ int		val;
 	return	0;
 	}
 
-_LOCAL_
+_LOCAL_ int
 rgb_To_Dither_Val( pixel )
 register RGBpixel	*pixel;
 	{

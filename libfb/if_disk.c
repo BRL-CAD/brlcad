@@ -74,6 +74,8 @@ FBIO disk_interface =
 		0
 		};
 
+_LOCAL_ int	disk_color_clear();
+
 _LOCAL_ int
 dsk_dopen( ifp, file, width, height )
 FBIO	*ifp;

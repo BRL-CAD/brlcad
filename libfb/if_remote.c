@@ -363,6 +363,6 @@ struct pkg_conn *pcp;
 char *buf;
 {
 	fb_log( "remote: %s", buf );
-	(void)free(buf);
+	free(buf);
 	return	0;	/* Declared as integer function in pkg_switch. */
 }
