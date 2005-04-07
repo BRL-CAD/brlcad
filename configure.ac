@@ -903,6 +903,9 @@ AC_CHECK_HEADER(regex.h,
 		AC_DEFINE(HAVE_REGEX_H,1,[Define to 1 if you have the '<regex.h>' header file])
 		found_regex_h=yes )
 
+#################### Begin java check ##############################
+OLD_CPPFLAGS="$CPPFLAGS"
+CPPFLAGS="$CPPFLAGS $JAVA_CFLAGS"
 found_jni_h=no
 AC_CHECK_HEADER(JavaVM/jni.h, 
 		AC_DEFINE(HAVE_JAVAVM_JNI_H,1,[Define to 1 if you have the '<JavaVM/jni.h>' header file])
@@ -962,7 +965,8 @@ if test "x$search_for_jni_h_more" != "xno" ; then
 		AC_MSG_NOTICE([{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{])
 	fi
 fi
-
+CPPFLAGS="$OLD_CPPFLAGS"
+###################### End java check ##############################
 
 dnl **********************************
 dnl *** Check for types/structures ***
