@@ -36,8 +36,9 @@
 ###
 #
 # Script for generating a Mac OS X disk mounting image (.dmg) from a
-# clean installation.  The dmg should be compatible with all versions
-# of the autodiskmount daemon (tested on 10.2 and 10.3).
+# clean installation. The script should work on 10.2+, this script
+# itself though, may require a recent version for some of the hdiutil
+# options.
 #
 # Author: Christopher Sean Morrison
 #
@@ -47,7 +48,7 @@ NAME="$1"
 MAJOR_VERSION="$2"
 MINOR_VERSION="$3"
 PATCH_VERSION="$4"
-DMG_CAPACITY=100
+DMG_CAPACITY=650
 
 if [ "x$NAME" = "x" ] ; then
     echo "Usage: $0 title major_version minor_version patch_version [background] [contents ...]"
@@ -78,7 +79,8 @@ shift 4
 #fi
 
 VERSION="${MAJOR_VERSION}.${MINOR_VERSION}.${PATCH_VERSION}"
-DMG="${NAME}-${VERSION}.dmg"
+DMG_NAME="${NAME}-${VERSION}"
+DMG="${DMG_NAME}.dmg"
 if [ -d "$DMG" ] ; then
     echo "ERROR: there is a directory of same name in the way of creating $DMG"
     exit 1
@@ -117,17 +119,30 @@ if [ -f "$DMG" ] ; then
     fi
 fi
 
-hdiutil create "$DMG" -megabytes $DMG_CAPACITY -layout NONE
+if [ -f "${DMG}.sparseimage" ] ; then
+    rm -f "${DMG}.sparseimage"
+    if [ ! "x$?" = "x0" ] ; then
+	echo "ERROR: unable to successfully remove the previous ${DMG}.sparseimage"
+	exit 1
+    fi
+    if [ -f "${DMG}.sparseimage" ] ; then
+	echo "ERROR: ${DMG}.sparseimage is in the way"
+	exit 1
+    fi
+fi
+
+echo hdiutil create "$DMG" -megabytes $DMG_CAPACITY -layout NONE -type SPARSE -volname $DMG_NAME
+hdiutil create "$DMG" -megabytes $DMG_CAPACITY -layout NONE -type SPARSE -volname $DMG_NAME
 if [ ! "x$?" = "x0" ] ; then
     echo "ERROR: hdiutil failed to complete successfully"
     exit 1
 fi
-if [ ! -f "$DMG" ] ; then
-    echo "ERROR: hdiutil failed to create $DMG"
+if [ ! -f "${DMG}.sparseimage" ] ; then
+    echo "ERROR: hdiutil failed to create ${DMG}.sparseimage"
     exit 1
 fi
 
-hdidDisk=`hdid -nomount "$DMG" | head -1 | grep '/dev/disk[0-9]*' | awk '{print $1}'`
+hdidDisk=`hdid -nomount "${DMG}.sparseimage" | head -1 | grep '/dev/disk[0-9]*' | awk '{print $1}'`
 if [ ! "x$?" = "x0" ] ; then
     echo "ERROR: unable to successfully get the hdid device name"
     exit 1
@@ -137,7 +152,7 @@ if [ "x$hdidDisk" = "x" ] ; then
     exit 1
 fi
 
-/sbin/newfs_hfs -w -v ${NAME}-${VERSION} -b 4096 $hdidDisk
+/sbin/newfs_hfs -w -v ${DMG_NAME} -b 4096 $hdidDisk
 if [ ! "x$?" = "x0" ] ; then
     echo "ERROR: unable to successfully create a new hfs filesystem on $hdidDisk"
     exit 1
@@ -149,7 +164,7 @@ if [ ! "x$?" = "x0" ] ; then
     exit 1
 fi
 
-hdidMountedDisk=`hdid $DMG | head -1 | grep '/dev/disk[0-9]*' | awk '{print $1}'`
+hdidMountedDisk=`hdid ${DMG}.sparseimage | head -1 | grep '/dev/disk[0-9]*' | awk '{print $1}'`
 if [ ! "x$?" = "x0" ] ; then
     echo "ERROR: unable to successfully get the mounted hdid device name"
     exit 1
@@ -160,7 +175,7 @@ if [ "x$hdidMountedDisk" = "x" ] ; then
 fi
 
 timeout=20
-VOL_DIR="/Volumes/${NAME}-${VERSION}"
+VOL_DIR="/Volumes/${DMG_NAME}"
 while [ $timeout -gt 0 ] ; do
     if [ -d "$VOL_DIR" ] ; then
 	timeout=1
@@ -170,20 +185,24 @@ while [ $timeout -gt 0 ] ; do
 done
 if [ ! -d "$VOL_DIR" ] ; then
     echo "ERROR: timed out waiting for $DMG to mount"
+    hdiutil eject $hdidMountedDisk
     exit 1
 fi
 
-PKG_NAME="${NAME}-${VERSION}.pkg"
-if [ -d "${PKG_NAME}" ] ; then
-    if [ ! -r "${PKG_NAME}" ] ; then
+PKG="${DMG_NAME}.pkg"
+if [ -d "/tmp/$PKG" ] ; then
+    PKG="/tmp/${DMG_NAME}.pkg"
+fi
+if [ -d "$PKG" ] ; then
+    if [ ! -r "$PKG" ] ; then
 	echo "ERROR: unable to read the installer package"
 	hdiutil eject $hdidMountedDisk
 	exit 1
     fi
 
-    cp -pR "$PKG_NAME" "${VOL_DIR}/."
+    cp -pR "$PKG" "${VOL_DIR}/."
     if [ ! "x$?" = "x0" ] ; then
-	echo "ERROR: unable to successfully copy $PKG_NAME to $VOL_DIR"
+	echo "ERROR: unable to successfully copy $PKG to $VOL_DIR"
 	hdiutil eject $hdidMountedDisk
 	exit 1
     fi
@@ -204,6 +223,12 @@ while [ ! "x$*" = "x" ] ; do
 	exit 1
     fi
 
+    argname="`basename $ARG`"
+    if [ "x$argname" = "x" ] ; then
+	echo "ERROR: unable to determine the $ARG base name"
+	exit 1
+    fi
+
     if [ -d "$ARG" ] ; then
 	cp -pR "$ARG" "${VOL_DIR}/."
 	if [ ! "x$?" = "x0" ] ; then
@@ -211,6 +236,11 @@ while [ ! "x$*" = "x" ] ; do
 	    hdiutil eject $hdidMountedDisk
 	    exit 1
 	fi
+	if [ ! -d "${VOL_DIR}/${argname}" ] ; then
+	    echo "ERROR: $argname failed to copy to the disk image"
+	    exit 1
+	fi
+
     elif [ -f "$ARG" ] ; then
 
 	cp -p "$ARG" "${VOL_DIR}/."
@@ -219,12 +249,45 @@ while [ ! "x$*" = "x" ] ; do
 	    hdiutil eject $hdidMountedDisk
 	    exit 1
 	fi
+	if [ ! -f "${VOL_DIR}/${argname}" ] ; then
+	    echo "ERROR: $argname failed to copy to the disk image"
+	    exit 1
+	fi
 
-	filename="`basename $ARG`"
-	if [ ! "x$filename" = "x" ] ; then
-	    background="`echo $filename | sed 's/^[bB][aA][cC][kK][gG][rR][oO][uU][nN][dD]\.[a-zA-Z][a-zA-Z][a-zA-Z]*$/__bg__/'`"
-	    if [ "x$background" = "x__bg__" ] ; then
-		echo "$ARG is a background"
+	background="`echo $argname | sed 's/^[bB][aA][cC][kK][gG][rR][oO][uU][nN][dD]\.[a-zA-Z][a-zA-Z][a-zA-Z]*$/__bg__/'`"
+	if [ "x$background" = "x__bg__" ] ; then
+
+	    if [ ! -f "${VOL_DIR}/.background" ] ; then
+
+		if [ -x /Developer/Tools/SetFile ] ; then
+		    /Developer/Tools/SetFile -a V "${VOL_DIR}/${argname}"
+		    if [ ! "x$?" = "x0" ] ; then
+			echo "ERROR: unable to successfully set $argname invisible"
+			hdiutil eject $hdidMountedDisk
+			exit 1
+		    fi
+		fi
+
+		cp -p "${VOL_DIR}/$argname" "${VOL_DIR}/.background"
+		if [ ! "x$?" = "x0" ] ; then
+		    echo "ERROR: unable to successfully copy $argname to .background"
+		    hdiutil eject $hdidMountedDisk
+		    exit 1
+		fi
+		if [ ! -f "${VOL_DIR}/.background" ] ; then
+		    echo "ERROR: unable to copy the background image to .background on the disk image"
+		    hdiutil eject $hdidMountedDisk
+		    exit 1
+		fi
+		
+		if [ -x /Developer/Tools/SetFile ] ; then
+		    /Developer/Tools/SetFile -a V "${VOL_DIR}/.background"
+		    if [ ! "x$?" = "x0" ] ; then
+			echo "ERROR: unable to successfully set .background invisible"
+			hdiutil eject $hdidMountedDisk
+			exit 1
+		    fi
+		fi
 	    fi
 	fi
     else
@@ -240,33 +303,34 @@ if [ ! "x$?" = "x0" ] ; then
     exit 1
 fi
 
-mv "$DMG" "${DMG}.prep.dmg"
-if [ ! "x$?" = "x0" ] ; then
-    echo "ERROR: unable to successfully rename $DMG to ${DMG}.prep.dmg"
-    exit 1
-fi
-if [ ! -f "${DMG}.prep.dmg" ] ; then
-    echo "ERROR: failed to rename $DMG to ${DMG}.prep.dmg"
-    exit 1
-fi
+#mv "$DMG" "${DMG}.prep.dmg"
+#if [ ! "x$?" = "x0" ] ; then
+#    echo "ERROR: unable to successfully rename $DMG to ${DMG}.prep.dmg"
+#    exit 1
+#fi
+#if [ ! -f "${DMG}.prep.dmg" ] ; then
+#    echo "ERROR: failed to rename $DMG to ${DMG}.prep.dmg"
+#    exit 1
+#fi
 
-hdiutil convert "${DMG}.prep.dmg" -format UDCO -o "$DMG"
+# UDCO for pre 10.2
+hdiutil convert "${DMG}.sparseimage" -o "$DMG" -format UDZO -imagekey zlib-level=9
 if [ ! "x$?" = "x0" ] ; then
     echo "ERROR: unable to successfully compress $DMG via hdiutil convert"
     exit 1
 fi
 if [ ! -f "$DMG" ] ; then
-    echo "ERROR: hdiutil failed to compress ${DMG}.prep.dmg to $DMG"
+    echo "ERROR: hdiutil failed to compress ${DMG}.sparseimage to $DMG"
     exit 1
 fi
 
-rm "${DMG}.prep.dmg"
+rm "${DMG}.sparseimage"
 if [ ! "x$?" = "x0" ] ; then
-    echo "ERROR: unable to successfully remove the ${DMG}.prep.dmg temporary"
+    echo "ERROR: unable to successfully remove the ${DMG}.sparseimage temporary"
     exit 1
 fi
-if [ -f "${DMG}.prep.dmg" ] ; then
-    echo "ERROR: the ${DMG}.prep.dmg temporary still exists"
+if [ -f "${DMG}.sparseimage" ] ; then
+    echo "ERROR: the ${DMG}.sparseimage temporary still exists"
     exit 1
 fi
 
