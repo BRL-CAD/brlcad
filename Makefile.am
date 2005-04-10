@@ -104,7 +104,7 @@ $(PACKAGE_NAME)-$(VERSION).pkg:
 $(PACKAGE_NAME)-$(VERSION).dmg: $(PACKAGE_NAME)-$(VERSION).pkg
 	@$(ECHO) "Building a Disk Image for Mac OS X"
 	@$(ECHO)
-	@${SH} $(top_srcdir)/sh/make_dmg.sh "$(PACKAGE_NAME)" "$(MAJOR_VERSION)" "$(MINOR_VERSION)" "$(PATCH_VERISION)" "$(top_srcdir)/misc/macosx/background.png"
+	@${SH} $(top_srcdir)/sh/make_dmg.sh "$(PACKAGE_NAME)" "$(MAJOR_VERSION)" "$(MINOR_VERSION)" "$(PATCH_VERSION)" "$(top_srcdir)/misc/macosx/background.png"
 
 # using home is probably not a great choice..
 $(PACKAGE)-$(VERSION).rpm: $(PACKAGE)-$(VERSION).tar.gz
