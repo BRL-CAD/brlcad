@@ -82,10 +82,20 @@ if [ "x$RESOURCES" = "x" ] ; then
     RESOURCES="none>>make_pkg_sh<<none"
 else
     if [ ! -d "$RESOURCES" ] ; then
-	echo "ERROR: specified resource path (${RESOURCES}) is not a directory"
+	echo "ERROR: specified resource path (${RESOURCES}) is not a readable directory"
 	exit 1
     fi
 fi    
+
+PRE_PWD="`pwd`"
+VERSION="${MAJOR_VERSION}.${MINOR_VERSION}.${PATCH_VERSION}"
+PKG_NAME="${NAME}-${VERSION}"
+PKG="${PKG_NAME}.pkg"
+
+if [ -f "$PKG" ] ; then
+    echo "ERROR: there is a file with the same name in the way of creating $PKG"
+    exit 1
+fi
 
 if [ "x`id -u`" != "x0" ] ; then
     echo "$0 requires superuser privileges, restarting via sudo"
@@ -93,23 +103,109 @@ if [ "x`id -u`" != "x0" ] ; then
     exit $?
 fi
 
+exists_writeable=no
+if [ -d "$PKG" ] ; then
+    if [ -w "$PKG" ] ; then
+	exists_writeable=yes
+    fi
 
-VERSION="${MAJOR_VERSION}.${MINOR_VERSION}.${PATCH_VERSION}"
-PKG_NAME="${NAME}-${VERSION}"
-mkdir "${PKG_NAME}.pkg"
-if [ ! -d "${PKG_NAME}.pkg" ] ; then
+else
+    mkdir "$PKG" > /dev/null 2>&1
+    if [ ! -d "$PKG" ] ; then
+	echo "WARNING: unable to create the package directory in `pwd` (perhaps it's an NFS filesystem?)"
+	
+	if [ ! -w /tmp/. ] ; then
+	    echo "ERROR: unable to write to /tmp for creating the package"
+	    exit 1
+	fi
+
+	cd /tmp
+
+	if [ -d "$PKG" ] ; then
+	    if [ -w "$PKG" ] ; then
+		exists_writeable=yes
+	    fi
+	else
+	    mkdir "$PKG"
+	    if [ ! -d "$PKG" ] ; then
+		echo "ERROR: unable to use /tmp for creating the package"
+		exit 1
+	    fi
+
+	    rmdir "$PKG"
+	    if [ ! "x$?" = "x0" ] ; then
+		echo "ERROR: unexpected failure while testing removal of $PKG"
+		exit 1
+	    fi
+	fi
+	
+	if [ ! -d "${RESOURCES}" ] ; then
+	    if [ -d "${PRE_PWD}/${RESOURCES}" ] ; then
+		RESOURCES="${PRE_PWD}/${RESOURCES}"
+	    fi
+	fi
+    else
+	rmdir "$PKG"
+	if [ ! "x$?" = "x0" ] ; then
+	    echo "ERROR: unexpected failure while testing removal of $PKG"
+	    exit 1
+	fi
+    fi
+fi
+
+if [ "x$exists_writeable" = "xyes" ] ; then
+    remove=""
+    while [ "x$remove" = "x" ] ; do
+	echo "WARNING: Installer package ($PKG) already exists in `pwd`, remove it?"
+	echo -n "yes/no? "
+	read remove
+	case x$remove in
+	    x[yY][eE][sS])
+	        remove=yes
+		;;
+	    x[yY])
+	        remove=yes
+		;;
+	    x[nN][oO])
+	        remove=no
+		;;
+	    x[nN])
+	        remove=no
+		;;
+	    *)
+		remove=""
+		;;
+	esac
+    done
+
+    if [ "x$remove" = "xyes" ] ; then
+	rm -rf "$PKG"
+    fi
+fi
+
+if [ -f "$PKG" ] ; then
+    echo "ERROR: cannot continue with $PKG in the way"
+    exit 1
+fi
+if [ -d "$PKG" ] ; then
+    echo "ERROR: cannot continue with directory $PKG in the way"
+    exit 1
+fi
+    
+mkdir "$PKG" > /dev/null 2>&1
+if [ ! -d "$PKG" ] ; then
     echo "ERROR: unable to create the package directory"
     exit 1
 fi
 
-mkdir "${PKG_NAME}.pkg/Contents"
-if [ ! -d "${PKG_NAME}.pkg/Contents" ] ; then
+mkdir "$PKG/Contents"
+if [ ! -d "$PKG/Contents" ] ; then
     echo "ERROR: unable to create the package contents directory"
     exit 1
 fi
 
-mkdir "${PKG_NAME}.pkg/Contents/Resources"
-if [ ! -d "${PKG_NAME}.pkg/Contents/Resources" ] ; then
+mkdir "$PKG/Contents/Resources"
+if [ ! -d "$PKG/Contents/Resources" ] ; then
     echo "ERROR: unable to create the package resources directory"
     exit 1
 fi
@@ -120,22 +216,22 @@ if [ ! "x$RESOURCES" = "xnone>>make_pkg_sh<<none" ] ; then
 	exit 1
     fi
     
-    cp -R "${RESOURCES}/" "${PKG_NAME}.pkg/Contents/Resources"
+    cp -R "${RESOURCES}" "$PKG/Contents/Resources"
     if [ $? != 0 ] ; then
 	echo "ERROR: unable to copy the resource directory contents"
 	exit 1
     fi
 fi
 
-cat > "${PKG_NAME}.pkg/Contents/PkgInfo" <<EOF
+cat > "$PKG/Contents/PkgInfo" <<EOF
 pmkrpkg1
 EOF
-if [ ! -f "${PKG_NAME}.pkg/Contents/PkgInfo" ] ; then
+if [ ! -f "$PKG/Contents/PkgInfo" ] ; then
     echo "ERROR: unable to create PkgInfo file"
     exit 1
 fi
 
-cat > "${PKG_NAME}.pkg/Contents/Info.plist" <<EOF
+cat > "$PKG/Contents/Info.plist" <<EOF
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
@@ -175,61 +271,61 @@ cat > "${PKG_NAME}.pkg/Contents/Info.plist" <<EOF
 </dict>
 </plist>
 EOF
-if [ ! -f "${PKG_NAME}.pkg/Contents/Info.plist" ] ; then
+if [ ! -f "$PKG/Contents/Info.plist" ] ; then
     echo "ERROR: unable to create Info.plist file"
     exit 1
 fi
 
-mkdir ${PKG_NAME}.pkg/Contents/Root
+mkdir "$PKG/Contents/Root"
 if [ $? != 0 ] ; then
     echo "ERROR: unable to successfully create the archive root"
     exit 1
 fi
-if [ ! -d "${PKG_NAME}.pkg/Contents/Root" ] ; then
-    echo "ERROR: ${PKG_NAME}.pkg/Contents/Root could not be created"
+if [ ! -d "$PKG/Contents/Root" ] ; then
+    echo "ERROR: $PKG/Contents/Root could not be created"
     exit 1
 fi
 
-chmod 1775 "${PKG_NAME}.pkg/Contents/Root"
+chmod 1775 "$PKG/Contents/Root"
 if [ $? != 0 ] ; then
     echo "ERROR: unable to set the mode on the archive root"
     exit 1
 fi
 
-chown root:admin "${PKG_NAME}.pkg/Contents/Root"
+chown root:admin "$PKG/Contents/Root"
 if [ $? != 0 ] ; then
     echo "ERROR: unable to set the owner/group on the archive root"
     exit 1
 fi
 
-pax -p e -rw "$ARCHIVE" "${PKG_NAME}.pkg/Contents/Root"
+pax -p e -rw "$ARCHIVE" "$PKG/Contents/Root"
 if [ $? != 0 ] ; then
     echo "ERROR: unable to successfully create the archive root of $ARCHIVE"
     exit 1
 fi
 
-pax -z -w -x cpio -s ",${PKG_NAME}.pkg/Contents/Root,.," "${PKG_NAME}.pkg/Contents/Root" > "${PKG_NAME}.pkg/Contents/Archive.pax.gz"
+pax -z -w -x cpio -s ",$PKG/Contents/Root,.," "$PKG/Contents/Root" > "$PKG/Contents/Archive.pax.gz"
 if [ $? != 0 ] ; then
     echo "ERROR: unable to successfully create a compressed pax archive"
     exit 1
 fi
-if [ ! -f "${PKG_NAME}.pkg/Contents/Archive.pax.gz" ] ; then
+if [ ! -f "$PKG/Contents/Archive.pax.gz" ] ; then
     echo "ERROR: compressed pax archive does not exist"
     exit 1
 fi
 
-mkbom "${PKG_NAME}.pkg/Contents/Root" "${PKG_NAME}.pkg/Contents/Archive.bom"
+mkbom "$PKG/Contents/Root" "$PKG/Contents/Archive.bom"
 if [ $? != 0 ] ; then
     echo "ERROR: unable to successfully generate a bill of materials"
     exit 1
 fi
-if [ ! -f "${PKG_NAME}.pkg/Contents/Archive.bom" ] ; then
+if [ ! -f "$PKG/Contents/Archive.bom" ] ; then
     echo "ERROR: bill of materials file does not exist"
     exit 1
 fi
 
-rm -rf "${PKG_NAME}.pkg/Contents/Root"
-if [ -d "${PKG_NAME}.pkg/Contents/Root" ] ; then
+rm -rf "$PKG/Contents/Root"
+if [ -d "$PKG/Contents/Root" ] ; then
     echo "ERROR: unable to remove temporary BOM root"
     exit 1
 fi
@@ -246,24 +342,24 @@ if [ "x$INST_SIZE" = "x" ] ; then
     exit 1
 fi
 
-COMP_SIZE=`ls -l "${PKG_NAME}.pkg/Contents/Archive.pax.gz" | awk '{print $5}'`
+COMP_SIZE=`ls -l "$PKG/Contents/Archive.pax.gz" | awk '{print $5}'`
 COMP_SIZE=`echo "$COMP_SIZE 1024 / p" | dc`
 if [ "x$COMP_SIZE" = "x" ] ; then
     echo "ERROR: unable to get the compressed archive size"
     exit 1
 fi
 
-cat > "${PKG_NAME}.pkg/Contents/Resources/${PKG_NAME}.sizes" <<EOF
+cat > "$PKG/Contents/Resources/${PKG_NAME}.sizes" <<EOF
 NumFiles $NUM_FILES
 InstalledSize $INST_SIZE
 CompressedSize $COMP_SIZE
 EOF
-if [ ! -f "${PKG_NAME}.pkg/Contents/Resources/${PKG_NAME}.sizes" ] ; then
+if [ ! -f "$PKG/Contents/Resources/${PKG_NAME}.sizes" ] ; then
     echo "ERROR: unable to create the ${PKG_NAME}.size file"
     exit 1
 fi
 
-cat > "${PKG_NAME}.pkg/Contents/Resources/${PKG_NAME}.info" <<EOF
+cat > "$PKG/Contents/Resources/${PKG_NAME}.info" <<EOF
 Title $NAME
 Version $VERSION
 Description $NAME $VERSION
@@ -281,12 +377,12 @@ OverwritePermissions NO
 InstallFat NO
 RootVolumeOnly NO
 EOF
-if [ ! -f "${PKG_NAME}.pkg/Contents/Resources/${PKG_NAME}.info" ] ; then
+if [ ! -f "$PKG/Contents/Resources/${PKG_NAME}.info" ] ; then
     echo "ERROR: unable to create the ${PKG_NAME}.info file"
     exit 1
 fi
 
-cat > "${PKG_NAME}.pkg/Contents/Resources/Description.plist" <<EOF
+cat > "$PKG/Contents/Resources/Description.plist" <<EOF
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
@@ -302,31 +398,33 @@ cat > "${PKG_NAME}.pkg/Contents/Resources/Description.plist" <<EOF
 </dict>
 </plist>
 EOF
-if [ ! -f "${PKG_NAME}.pkg/Contents/Resources/Description.plist" ] ; then
+if [ ! -f "$PKG/Contents/Resources/Description.plist" ] ; then
     echo "ERROR: unable to create the Description.plist file"
     exit 1
 fi
 
-ln -s ../Archive.bom "${PKG_NAME}.pkg/Contents/Resources/${PKG_NAME}.bom"
+ln -s ../Archive.bom "$PKG/Contents/Resources/${PKG_NAME}.bom"
 if [ $? != 0 ] ; then
     echo "ERROR: unable to successfully create a symbolic link to the Archive.bom"
     exit 1
 fi
-if [ ! -h "${PKG_NAME}.pkg/Contents/Resources/${PKG_NAME}.bom" ] ; then
+if [ ! -h "$PKG/Contents/Resources/${PKG_NAME}.bom" ] ; then
     echo "ERROR: symbolic link ${PKG_NAME}.bom does not exist"
     exit 1
 fi
 
-ln -s ../Archive.pax.gz "${PKG_NAME}.pkg/Contents/Resources/${PKG_NAME}.pax.gz"
+ln -s ../Archive.pax.gz "$PKG/Contents/Resources/${PKG_NAME}.pax.gz"
 if [ $? != 0 ] ; then
     echo "ERROR: unable to successfully create a symbolic link to the Archive.pax.gz"
     exit 1
 fi
-if [ ! -h "${PKG_NAME}.pkg/Contents/Resources/${PKG_NAME}.pax.gz" ] ; then
+if [ ! -h "$PKG/Contents/Resources/${PKG_NAME}.pax.gz" ] ; then
     echo "ERROR: symbolic link ${PKG_NAME}.pax.gz does not exist"
     exit 1
 fi
 
+echo "CREATED `pwd`/$PKG"
+cd "$PRE_PWD"
 # woo hoo .. done
 
 # Local Variables:
