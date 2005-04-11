@@ -7,7 +7,9 @@ EXTRA_PROGRAMS = \
 	openUp
 
 EXTRA_DIST = \
-	$(openUp_SOURCES)
+	$(openUp_SOURCES) \
+	README \
+	background.png
 
 SUBDIRS = \
 	Resources
