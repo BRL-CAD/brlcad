@@ -190,7 +190,9 @@ if [ ! -d "$VOL_DIR" ] ; then
 fi
 
 PKG="${DMG_NAME}.pkg"
-if [ -d "/tmp/$PKG" ] ; then
+if [ -d "$PKG" ] ; then
+    :
+elif [ -d "/tmp/$PKG" ] ; then
     PKG="/tmp/${DMG_NAME}.pkg"
 fi
 if [ -d "$PKG" ] ; then
