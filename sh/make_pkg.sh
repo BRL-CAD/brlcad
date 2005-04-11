@@ -100,7 +100,31 @@ fi
 if [ "x`id -u`" != "x0" ] ; then
     echo "$0 requires superuser privileges, restarting via sudo"
     sudo "$0" "$1" "$2" "$3" "$4" "$5" "$6" "$7" "$8" "$9"
-    exit $?
+    retval="$?"
+    if [ ! "x$retval" = "x0" ] ; then
+	exit $retval
+    fi
+    if [ ! -d "$PKG" ] ; then
+	if [ -d "/tmp/$PKG" ] ; then
+	    cp -pR /tmp/$PKG .
+	    if [ ! "x$?" = "x0" ] ; then
+		echo "ERROR: unsuccessfully moved /tmp/$PKG to `pwd`"
+		exit 1
+	    fi
+	    if [ ! -d "$PKG" ] ; then
+		echo "ERROR: unable to move /tmp/$PKG to `pwd`"
+		exit 1
+	    fi
+	else
+	    echo "ERROR: sanity check .. could not find $PKG"
+	    exit 1
+	fi
+    fi
+    if [ -d "$PKG" ] ; then
+	echo "CREATED `pwd`/$PKG"
+    fi
+
+    exit 0
 fi
 
 exists_writeable=no
@@ -423,7 +447,6 @@ if [ ! -h "$PKG/Contents/Resources/${PKG_NAME}.pax.gz" ] ; then
     exit 1
 fi
 
-echo "CREATED `pwd`/$PKG"
 cd "$PRE_PWD"
 # woo hoo .. done
 
