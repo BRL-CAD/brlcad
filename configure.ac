@@ -177,7 +177,7 @@ dnl *** Check arguments ***
 dnl ***********************
 
 AC_MSG_CHECKING([... a r g u m e n t s ])
-AC_MSG_RESULT([])
+AC_MSG_RESULT([(1 of 9)])
 
 dnl Arguments that are auto should check both yes and no values,
 dnl otherwise there only needs to be a check for not no to imply a yes
@@ -569,7 +569,7 @@ dnl *** Check for programs ***
 dnl **************************
 
 AC_MSG_CHECKING([... p r o g r a m s ])
-AC_MSG_RESULT([])
+AC_MSG_RESULT([(2 of 9)])
 
 AC_LANG(C)
 
@@ -686,7 +686,7 @@ dnl *** Check for libraries ***
 dnl ***************************
 
 AC_MSG_CHECKING([... l i b r a r i e s ])
-AC_MSG_RESULT([])
+AC_MSG_RESULT([(3 of 9)])
 
 dnl check if there is a threading library that links
 thread_link_works=no
@@ -804,7 +804,7 @@ dnl *** Check for headers ***
 dnl *************************
 
 AC_MSG_CHECKING([... h e a d e r s ])
-AC_MSG_RESULT([])
+AC_MSG_RESULT([(4 of 9)])
 
 AC_HEADER_STDC
 AC_PATH_X
@@ -973,7 +973,7 @@ dnl *** Check for types/structures ***
 dnl **********************************
 
 AC_MSG_CHECKING([... t y p e s ])
-AC_MSG_RESULT([])
+AC_MSG_RESULT([(5 of 9)])
 
 AC_C_CHAR_UNSIGNED
 AC_HEADER_STAT
@@ -1019,7 +1019,7 @@ dnl *** Check for compiler characteristics ***
 dnl ******************************************
 
 AC_MSG_CHECKING([... c o m p i l e r ])
-AC_MSG_RESULT([])
+AC_MSG_RESULT([(6 of 9)])
 
 dnl include the BRL-CAD include directory
 CPPFLAGS="$CPPFLAGS -I\$(top_srcdir)/include"
@@ -1319,7 +1319,7 @@ dnl *** Check for functions ***
 dnl ***************************
 
 AC_MSG_CHECKING([... f u n c t i o n s ])
-AC_MSG_RESULT([])
+AC_MSG_RESULT([(7 of 9)])
 
 AC_TYPE_SIGNAL
 AC_CHECK_FUNCS(\
@@ -1420,7 +1420,7 @@ dnl *** Check for system services ***
 dnl *********************************
 
 AC_MSG_CHECKING([... s e r v i c e s ])
-AC_MSG_RESULT([])
+AC_MSG_RESULT([(8 of 9)])
 
 dnl *** java ***
 if test "x$only_rts" != "xno" ; then
@@ -1729,7 +1729,7 @@ dnl *** Configure Makefiles and output ***
 dnl **************************************
 
 AC_MSG_CHECKING([... o u t p u t ])
-AC_MSG_RESULT([])
+AC_MSG_RESULT([(9 of 9)])
 
 AM_CONDITIONAL(BUILD_JOVE, [test "x$build_jove" = "xyes"])
 # XXX only irix can build libtkglx right now?
