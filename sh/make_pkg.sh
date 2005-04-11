@@ -240,7 +240,7 @@ if [ ! "x$RESOURCES" = "xnone>>make_pkg_sh<<none" ] ; then
 	exit 1
     fi
     
-    cp -R "${RESOURCES}" "$PKG/Contents/Resources"
+    cp -R "${RESOURCES}/" "$PKG/Contents/Resources"
     if [ $? != 0 ] ; then
 	echo "ERROR: unable to copy the resource directory contents"
 	exit 1
