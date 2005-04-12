@@ -82,6 +82,11 @@ MAINTAINERCLEANFILES = Makefile.in
 
 $(PACKAGE)-$(VERSION).tar.gz: dist
 
+# Build a Mac OS X Installer .pkg -- make sure the package resources
+# reflect the correct version.  we specifically do not use an autoconf
+# template so that the file may be edited without doing a configure
+# (which would also cause a need to regenerate the template to keep in
+# sync every time it's edited).
 $(PACKAGE_NAME)-$(VERSION).pkg:
 	@if ! test -f "install.$(host_triplet).log" ; then \
 	  $(ECHO) ; \
@@ -99,9 +104,18 @@ $(PACKAGE_NAME)-$(VERSION).pkg:
 	@$(ECHO) "Warning: this package target presently assumes that the install directory"
 	@$(ECHO) "         does not contain extra files and comprises a full clean install."
 	@$(ECHO)
+	@if test -f "$(top_srcdir)/misc/macosx/Resources/ReadMe.rtfd/TXT.rtf" ; then \
+	  perl -pi -e "s/BRL-CAD [0-9]*\.[0-9]*\.[0-9]/BRL-CAD $(VERSION)/g" $(top_srcdir)/misc/macosx/Resources/ReadMe.rtfd/TXT.rtf ; \
+	fi
+	@if test -f "$(top_srcdir)/misc/macosx/Resources/Welcome.rtfd/TXT.rtf" ; then \
+	  perl -pi -e "s/BRL-CAD [0-9]*\.[0-9]*\.[0-9]/BRL-CAD $(VERSION)/g" $(top_srcdir)/misc/macosx/Resources/Welcome.rtfd/TXT.rtf ; \
+	fi
 	@${SH} $(top_srcdir)/sh/make_pkg.sh "$(PACKAGE_NAME)" "$(MAJOR_VERSION)" "$(MINOR_VERSION)" "$(PATCH_VERSION)" "$(DESTDIR)$(prefix)" "$(top_srcdir)/misc/macosx/Resources"
 
-$(PACKAGE_NAME)-$(VERSION).dmg: $(PACKAGE_NAME)-$(VERSION).pkg
+openUp:
+	cd misc/macosx && make openUp
+
+$(PACKAGE_NAME)-$(VERSION).dmg: $(PACKAGE_NAME)-$(VERSION).pkg openUp
 	@$(ECHO) "Building a Disk Image for Mac OS X"
 	@$(ECHO)
 	@${SH} $(top_srcdir)/sh/make_dmg.sh "$(PACKAGE_NAME)" "$(MAJOR_VERSION)" "$(MINOR_VERSION)" "$(PATCH_VERSION)" "$(top_srcdir)/misc/macosx/background.png"
