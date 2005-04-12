@@ -71,6 +71,7 @@ fi
 shift 4
 
 DMG_CAPACITY=250
+OPENUP=`dirname $0`/misc/macosx/openUp
 
 PATH=/bin:/usr/bin:/usr/sbin
 LC_ALL=C
@@ -174,6 +175,12 @@ if [ ! "x$?" = "x0" ] ; then
     exit 1
 fi
 
+VOL_DIR="/Volumes/${DMG_NAME}"
+if [ -d "$VOL_DIR" ] ; then
+    echo "ERROR: there is already a disk mounted at $VOL_DIR"
+    exit 1
+fi
+
 hdidMountedDisk=`hdid ${DMG}.sparseimage | head -1 | grep '/dev/disk[0-9]*' | awk '{print $1}'`
 if [ ! "x$?" = "x0" ] ; then
     echo "ERROR: unable to successfully get the mounted hdid device name"
@@ -185,7 +192,6 @@ if [ "x$hdidMountedDisk" = "x" ] ; then
 fi
 
 timeout=20
-VOL_DIR="/Volumes/${DMG_NAME}"
 while [ $timeout -gt 0 ] ; do
     if [ -d "$VOL_DIR" ] ; then
 	timeout=1
@@ -309,6 +315,14 @@ while [ ! "x$*" = "x" ] ; do
     fi
 done
 
+if [ -x "$OPENUP" ] ; then
+    $OPENUP "${VOL_DIR}/."
+    if [ ! "x$?" = "x0" ] ; then
+	echo "ERROR: sanity check failure -- unexpected error returned from $OPENUP ($?)"
+	exit 1
+    fi
+fi
+    
 hdiutil eject $hdidMountedDisk
 if [ ! "x$?" = "x0" ] ; then
     echo "ERROR: unable to successfully eject $hdidMountedDisk"
