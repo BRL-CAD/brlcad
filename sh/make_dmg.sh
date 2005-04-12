@@ -48,7 +48,7 @@ NAME="$1"
 MAJOR_VERSION="$2"
 MINOR_VERSION="$3"
 PATCH_VERSION="$4"
-DMG_CAPACITY=650
+DMG_CAPACITY=250
 
 if [ "x$NAME" = "x" ] ; then
     echo "Usage: $0 title major_version minor_version patch_version [background] [contents ...]"
