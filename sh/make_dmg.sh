@@ -72,7 +72,7 @@ if [ "x$PATCH_VERSION" = "x" ] ; then
 fi
 shift 4
 
-PATH=/bin:/usr/bin
+PATH=/bin:/usr/bin:/usr/sbin
 LC_ALL=C
 umask 002
 

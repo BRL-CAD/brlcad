@@ -87,7 +87,7 @@ else
     fi
 fi    
 
-PATH=/bin:/usr/bin
+PATH=/bin:/usr/bin:/usr/sbin
 LC_ALL=C
 umask 002
 
