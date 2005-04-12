@@ -5,6 +5,7 @@ SUBDIRS = \
 	legal
 
 data_DATA = \
+	README.IRIX \
 	README.MacOSX \
 	anim.txt \
 	benchmark.tr \

@@ -227,28 +227,11 @@ operates.
 `configure' also accepts some other, not widely useful, options.  Run
 `configure --help' for more details.
 
+Please refer to the doc/README.* documents for platform-specific
+compilation options, installation details, and other notes.
 
-
-
-IRIX Note:
-        Note by setting the compiler flags, configure seems to skip the check 
-	for maximum shell command line length is skipped.  Be careful not to 
-	place the source in adirectory too deep.  The libtool script wrapper 
-	which runs bwish builds a command line that is too long for the shell 
-	to handle.  So for example, placing the source in:
-		/vld3/butler/BRLCAD/mips64_brlcad-7.2.0
-	is known to cause a build failure.  On the other hand, the
-	following:
-		/vld3/butler/BRLCAD/m6_72
-	resulted in a successful build.
-
-For IRIX 64bit build:
-	export SGI_ABI=-64
-	./configure CC=cc CFLAGS=-64 LDFLAGS=-64 --enable-64bit-build
-
-For IRIX 23bit build:
-	export SGI_ABI=-n32
-	./configure CC=cc 
+	doc/README.IRIX
+	doc/README.MacOSX
 
 ---
 $Revision$
