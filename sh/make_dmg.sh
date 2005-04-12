@@ -226,6 +226,7 @@ if [ -d "$PKG" ] ; then
     fi
 fi
 
+found_background=no
 while [ ! "x$*" = "x" ] ; do
     ARG="$1"
     shift
@@ -272,11 +273,9 @@ while [ ! "x$*" = "x" ] ; do
 	    exit 1
 	fi
 
-	background="`echo $argname | sed 's/^[bB][aA][cC][kK][gG][rR][oO][uU][nN][dD]\.[a-zA-Z][a-zA-Z][a-zA-Z]*$/__bg__/'`"
-	if [ "x$background" = "x__bg__" ] ; then
-
-	    if [ ! -f "${VOL_DIR}/.background" ] ; then
-
+	if [ "x$found_background" = "xno" ] ; then
+	    background="`echo $argname | sed 's/^[bB][aA][cC][kK][gG][rR][oO][uU][nN][dD]\.[a-zA-Z][a-zA-Z][a-zA-Z]*$/__bg__/'`"
+	    if [ "x$background" = "x__bg__" ] ; then
 		if [ -x /Developer/Tools/SetFile ] ; then
 		    /Developer/Tools/SetFile -a V "${VOL_DIR}/${argname}"
 		    if [ ! "x$?" = "x0" ] ; then
@@ -284,27 +283,7 @@ while [ ! "x$*" = "x" ] ; do
 			hdiutil eject $hdidMountedDisk
 			exit 1
 		    fi
-		fi
-
-		cp -p "${VOL_DIR}/$argname" "${VOL_DIR}/.background"
-		if [ ! "x$?" = "x0" ] ; then
-		    echo "ERROR: unable to successfully copy $argname to .background"
-		    hdiutil eject $hdidMountedDisk
-		    exit 1
-		fi
-		if [ ! -f "${VOL_DIR}/.background" ] ; then
-		    echo "ERROR: unable to copy the background image to .background on the disk image"
-		    hdiutil eject $hdidMountedDisk
-		    exit 1
-		fi
-		
-		if [ -x /Developer/Tools/SetFile ] ; then
-		    /Developer/Tools/SetFile -a V "${VOL_DIR}/.background"
-		    if [ ! "x$?" = "x0" ] ; then
-			echo "ERROR: unable to successfully set .background invisible"
-			hdiutil eject $hdidMountedDisk
-			exit 1
-		    fi
+		    found_background=yes
 		fi
 	    fi
 	fi
