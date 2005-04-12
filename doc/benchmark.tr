@@ -190,7 +190,7 @@ ex-art	Pentium-P90, 16MB, 256K cache, BSD/OS 2.0,
 hawks	486DX/33, 24MB, 256K cache, BSD/OS 2.0
 orac	486/100, 20MB, No cache, BSD/OS 2.0 (laptop)
 pk	Cray C90, C916/161024, UNICOS 8.0.2.4
-vapor	SGI, 18* 75 MHz R8000 IP21, 1024G RAM 8-way, Irix 6.0
+vapor	SGI, 18* 75 MHz R8000 IP21, 1024M RAM 8-way, Irix 6.0
 vblt	66 MHz 486DX2/66, 16M RAM, Linux 1.1.73
 vgr	DEC VAX-11/780 w/FPA, 64M RAM, 4.3 BSD
 vision	Sun-3/280 w/68881 FPA, 16M RAM, SunOS 4.1.1
@@ -198,8 +198,8 @@ voyage	SGI, 4* 25 MHz R3000 IP7, 56M RAM, Irix 4.0.1
 whiz	SGI Ingido**2, 100 MHz IP22, 96M RAM, Irix 5.2
 waffle	SGI, 4* 25 MHz R3000 IP7, 64M RAM, Irix 4.0.5 (heavy network use)
 warp	Sun SPARCstation 5, 32M RAM, SunOS 4.1.4
-wax	SGI, 24* 150 MHz R4400 IP19, 1024G RAM 4-way, Irix 5.2
-wilson	SGI, 8* 100 MHz R4400 IP19, 1024G RAM 8-way, Irix 5.2
+wax	SGI, 24* 150 MHz R4400 IP19, 1024M RAM 4-way, Irix 5.2
+wilson	SGI, 8* 100 MHz R4400 IP19, 1024M RAM 8-way, Irix 5.2
 wilted	Sun-4/25 ELC, 16M RAM, SunOS 4.1.1
 wimp	33 MHz 386DX/33 w/387, 256k cache, 16M RAM, BSDI 2.0beta2
 wimpy	Sun SS10BSX-GX, 2* 50 MHz SuperSPARC, 64M RAM, SunOS 5.4
