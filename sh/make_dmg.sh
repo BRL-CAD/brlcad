@@ -36,9 +36,9 @@
 ###
 #
 # Script for generating a Mac OS X disk mounting image (.dmg) from a
-# clean installation. The script should work on 10.2+, this script
-# itself though, may require a recent version for some of the hdiutil
-# options.
+# clean installation. The script should generate a .dmg that works on
+# 10.2+ but may require a recent version of Mac OS X to successfully
+# generate the disk mounting image.
 #
 # Author: Christopher Sean Morrison
 #
@@ -48,8 +48,6 @@ NAME="$1"
 MAJOR_VERSION="$2"
 MINOR_VERSION="$3"
 PATCH_VERSION="$4"
-DMG_CAPACITY=250
-
 if [ "x$NAME" = "x" ] ; then
     echo "Usage: $0 title major_version minor_version patch_version [background] [contents ...]"
     echo "ERROR: must specify a title for the package name"
@@ -71,6 +69,8 @@ if [ "x$PATCH_VERSION" = "x" ] ; then
     exit 1
 fi
 shift 4
+
+DMG_CAPACITY=250
 
 PATH=/bin:/usr/bin:/usr/sbin
 LC_ALL=C
