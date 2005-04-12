@@ -72,11 +72,22 @@ if [ "x$PATCH_VERSION" = "x" ] ; then
 fi
 shift 4
 
-#if [ "x`id -u`" != "x0" ] ; then
-#    echo "This script requires superuser privileges, restarting via sudo"
-#    sudo "$0" "$1" "$2" "$3" "$4" "$5" "$6" "$7" "$8" "$9"
-#    exit $?
-#fi
+PATH=/bin:/usr/bin
+LC_ALL=C
+umask 002
+
+# TMPDIR=/tmp
+if [ "x$TMPDIR" = "x" ] || [ ! -w $TMPDIR ] ; then
+    if [ -w /usr/tmp ] ; then
+	TMPDIR=/usr/tmp
+    elif [ -w /var/tmp ] ; then
+	TMPDIR=/var/tmp
+    elif [ -w /tmp ] ; then
+	TMPDIR=/tmp
+    else
+	TMPDIR=.
+    fi
+fi
 
 VERSION="${MAJOR_VERSION}.${MINOR_VERSION}.${PATCH_VERSION}"
 DMG_NAME="${NAME}-${VERSION}"
@@ -131,7 +142,6 @@ if [ -f "${DMG}.sparseimage" ] ; then
     fi
 fi
 
-echo hdiutil create "$DMG" -megabytes $DMG_CAPACITY -layout NONE -type SPARSE -volname $DMG_NAME
 hdiutil create "$DMG" -megabytes $DMG_CAPACITY -layout NONE -type SPARSE -volname $DMG_NAME
 if [ ! "x$?" = "x0" ] ; then
     echo "ERROR: hdiutil failed to complete successfully"
@@ -304,16 +314,6 @@ if [ ! "x$?" = "x0" ] ; then
     echo "ERROR: unable to successfully eject $hdidMountedDisk"
     exit 1
 fi
-
-#mv "$DMG" "${DMG}.prep.dmg"
-#if [ ! "x$?" = "x0" ] ; then
-#    echo "ERROR: unable to successfully rename $DMG to ${DMG}.prep.dmg"
-#    exit 1
-#fi
-#if [ ! -f "${DMG}.prep.dmg" ] ; then
-#    echo "ERROR: failed to rename $DMG to ${DMG}.prep.dmg"
-#    exit 1
-#fi
 
 # UDCO for pre 10.2
 hdiutil convert "${DMG}.sparseimage" -o "$DMG" -format UDZO -imagekey zlib-level=9

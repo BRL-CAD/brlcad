@@ -87,6 +87,23 @@ else
     fi
 fi    
 
+PATH=/bin:/usr/bin
+LC_ALL=C
+umask 002
+
+# TMPDIR=/tmp
+if [ "x$TMPDIR" = "x" ] || [ ! -w $TMPDIR ] ; then
+    if [ -w /usr/tmp ] ; then
+	TMPDIR=/usr/tmp
+    elif [ -w /var/tmp ] ; then
+	TMPDIR=/var/tmp
+    elif [ -w /tmp ] ; then
+	TMPDIR=/tmp
+    else
+	TMPDIR=.
+    fi
+fi
+
 PRE_PWD="`pwd`"
 VERSION="${MAJOR_VERSION}.${MINOR_VERSION}.${PATCH_VERSION}"
 PKG_NAME="${NAME}-${VERSION}"
@@ -105,14 +122,14 @@ if [ "x`id -u`" != "x0" ] ; then
 	exit $retval
     fi
     if [ ! -d "$PKG" ] ; then
-	if [ -d "/tmp/$PKG" ] ; then
-	    cp -pR /tmp/$PKG .
+	if [ -d "${TMPDIR}/$PKG" ] ; then
+	    cp -pR ${TMPDIR}/$PKG .
 	    if [ ! "x$?" = "x0" ] ; then
-		echo "ERROR: unsuccessfully moved /tmp/$PKG to `pwd`"
+		echo "ERROR: unsuccessfully moved ${TMPDIR}/$PKG to `pwd`"
 		exit 1
 	    fi
 	    if [ ! -d "$PKG" ] ; then
-		echo "ERROR: unable to move /tmp/$PKG to `pwd`"
+		echo "ERROR: unable to move ${TMPDIR}/$PKG to `pwd`"
 		exit 1
 	    fi
 	else
@@ -138,12 +155,12 @@ else
     if [ ! -d "$PKG" ] ; then
 	echo "WARNING: unable to create the package directory in `pwd` (perhaps it's an NFS filesystem?)"
 	
-	if [ ! -w /tmp/. ] ; then
-	    echo "ERROR: unable to write to /tmp for creating the package"
+	if [ ! -w ${TMPDIR}/. ] ; then
+	    echo "ERROR: unable to write to ${TMPDIR} for creating the package"
 	    exit 1
 	fi
 
-	cd /tmp
+	cd ${TMPDIR}
 
 	if [ -d "$PKG" ] ; then
 	    if [ -w "$PKG" ] ; then
@@ -152,7 +169,7 @@ else
 	else
 	    mkdir "$PKG"
 	    if [ ! -d "$PKG" ] ; then
-		echo "ERROR: unable to use /tmp for creating the package"
+		echo "ERROR: unable to use ${TMPDIR} for creating the package"
 		exit 1
 	    fi
 
