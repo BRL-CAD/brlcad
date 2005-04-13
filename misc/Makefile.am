@@ -8,6 +8,7 @@ EXTRA_DIST = \
 	Cakefile.defs \
 	Description.txt \
 	batch-indent-region.el \
+	brlcad.spec.in \
 	enigma \
 	libtool.m4
 
@@ -18,6 +19,7 @@ SUBDIRS = \
 
 DISTCLEANFILES = \
 	COPYING.backup \
+	brlcad.spec \
 	compile \
 	config.guess \
 	config.guess.backup \

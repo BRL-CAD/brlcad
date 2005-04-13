@@ -59,13 +59,11 @@ EXTRA_DIST = \
 	README \
 	TODO \
 	autogen.sh \
-	brlcad.spec.in \
 	libtool
 
 DISTCLEANFILES = \
 	$(CONFIG_CACHE) \
 	aclocal.m4 \
-	brlcad.spec \
 	config.log \
 	config.status \
 	configure \
@@ -125,7 +123,7 @@ $(PACKAGE)-$(VERSION).rpm: $(PACKAGE)-$(VERSION).tar.gz
 	@$(ECHO) "Building binary RPM for RedHat Linux"
 	@$(ECHO)
 	@CP@ $(PACKAGE)-$(VERSION).tar.gz ${HOME}/rpm/SOURCES/
-	rpmbuild -ba $(PACKAGE).spec
+	rpmbuild -ba $(top_builddir)/misc/brlcad.spec
 	@CP@ ${HOME}/rpm/RPMS/i386/$(PACKAGE)-$(VERSION)-*.i386.rpm .
 	@touch $(PACKAGE)-$(VERSION).rpm
 	@$(ECHO) "WARNING: Fake make placeholder created as $(PACKAGE)-$(VERSION).rpm"
@@ -135,7 +133,7 @@ $(PACKAGE)-$(VERSION).rpm: $(PACKAGE)-$(VERSION).tar.gz
 $(PACKAGE)-$(VERSION).src.rpm: $(PACKAGE)-$(VERSION).tar.gz
 	@$(ECHO) "Building source RPM for RedHat Linux"
 	@CP@ $(PACKAGE)-$(VERSION).tar.gz ${HOME}/rpm/SOURCES/
-	rpmbuild -ba $(PACKAGE).spec
+	rpmbuild -ba $(top_builddir)/misc/brlcad.spec
 	@CP@ ${HOME}/rpm/SRPMS/$(PACKAGE)-$(VERSION)-*.src.rpm .
 	@touch $(PACKAGE)-$(VERSION).src.rpm
 	@$(ECHO) "WARNING: Fake make placeholder created as $(PACKAGE)-$(VERSION).src.rpm"

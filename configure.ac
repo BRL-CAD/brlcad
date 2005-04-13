@@ -1961,6 +1961,7 @@ AC_CONFIG_FILES([
 	include/Makefile
 	m4/Makefile
 	misc/Makefile
+	misc/brlcad.spec
 	misc/macosx/Makefile
 	misc/macosx/Resources/Makefile
 	misc/macosx/Resources/ReadMe.rtfd/Makefile
@@ -2099,7 +2100,6 @@ AC_CONFIG_FILES([
 	src/util/Makefile
 	src/vas4/Makefile
 	src/vdeck/Makefile
- 	brlcad.spec
 ])
 
 AC_OUTPUT
