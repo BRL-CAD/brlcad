@@ -177,8 +177,8 @@
     protected method toggle_perspective {}
     protected method toggle_perspective_angle {}
     protected method toggle_transparency {}
-    protected method idle_mode {}
 
+    public method idle_mode {}
     public method rotate_mode {x y}
     public method translate_mode {x y}
     public method scale_mode {x y}
