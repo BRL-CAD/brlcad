@@ -45,8 +45,7 @@
 #	the regdef ident number is incremented.
 #
 #	Author:
-#		John R. Anderson <jra@arl.army.mil>
-#		AMSRL-SL-BE
+#		John R. Anderson
 #
 
 proc build_region { args } {

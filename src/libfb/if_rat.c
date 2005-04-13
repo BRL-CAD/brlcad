@@ -34,7 +34,7 @@
  *  BRL NOTE: We have not been able to test this interface in a long
  *   time.  LIBFB has changed several times since then so this code
  *   may not even compile any longer.  If you make changes to this
- *   please let us know. <phil@brl.mil>
+ *   please let us know.
  */
 #ifndef lint
 static char RCSid[] = "@(#)$Header$ (BRL)";

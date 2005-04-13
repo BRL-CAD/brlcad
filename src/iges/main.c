@@ -210,7 +210,7 @@ char *argv[];
 	}
 
 	bu_log( "%s", version+5);
-	bu_log( "Please direct bug reports to <jra@brl.mil>\n\n" );
+	bu_log( "Please direct bug reports to <bugs@brlcad.org>\n\n" );
 
 	/* Initialize some variables */
 	ntypes = NTYPES;

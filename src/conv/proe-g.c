@@ -25,8 +25,7 @@
  * Code to convert ascii output from Pro/Engineer to BRL-CAD
  * The required output is from the Pro/Develop application proe-brl
  * that must be initiated from the "BRL-CAD" option of Pro/Engineer's
- * "EXPORT" menu.  The Pro/develop application may be obtained via
- * anonymous FTP from ftp.brl.mil or via email from "jra@arl.mil"
+ * "EXPORT" menu.
  *
  *  Author -
  *	John R. Anderson

@@ -496,7 +496,7 @@ rayhit(struct application *ap, register struct partition *PartHeadp, struct seg 
 			bu_log("ERROR: comp_thickness=%g for region id = %d at h=%g, v=%g (x=%d, y=%d), partition at x%x\n",
 				comp_thickness, region_id, hv[0], hv[1], ap->a_x, ap->a_y , pp );
 			rt_pr_partitions(ap->a_rt_i, PartHeadp, "Defective partion:");
-			bu_log("Send this output to Sue Muuss (sue@brl.mil)\n");
+			bu_log("Send this output to the BRL-CAD Developers (devs@brlcad.org)\n");
 			if ( ! (RT_G_DEBUG & DEBUG_ARB8)) {
 				rt_g.debug |= DEBUG_ARB8;
 				rt_shootray(ap);

@@ -210,7 +210,7 @@ char	*argv[];
 	port_setlinebuf( stderr );
 
 	bu_log( "%s", version+5);
-	bu_log( "Please direct bug reports to <acst@arl.army.mil>\n\n" );
+	bu_log( "Please direct bug reports to <bugs@brlcad.org>\n\n" );
 
 	tree_state = rt_initial_tree_state;	/* struct copy */
 	tree_state.ts_tol = &tol;

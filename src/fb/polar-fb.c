@@ -24,7 +24,7 @@
  *	This routine plots normalized polar functions on a frame buffer.
  *
  *  Author -
- *	Paul J. Tanenbaum <pjt@brl.mil>
+ *	Paul J. Tanenbaum
  *  
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394

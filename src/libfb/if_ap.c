@@ -20,7 +20,7 @@
 *  BRL NOTE: This is only the scant beginnings of an Apollo interface.
 *   We have no way of testing this, and given the changes in LIBFB this
 *   code may not even compile any longer.  If you make improvements to
-*   this please let us know. <phil@brl.mil>
+*   this please let us know.
 */
 
 

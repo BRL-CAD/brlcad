@@ -22,7 +22,7 @@
 #
 #  F S _ D I A L O G
 #
-#  Author	Lee A. Butler	<butler@arl.mil>
+#  Author	Lee A. Butler
 #
 #  A file selection dialog, which is not unlike the one present in netscape.
 #  Uses straight Tcl/Tk with no extensions, and no bitmaps

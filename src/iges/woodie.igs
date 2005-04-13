@@ -3,7 +3,7 @@ This file was created by 'brl-iges'                                     S0000002
 It is a conversion from a BRLCAD model                                  S0000003
 ,,5Hman.g,10Hwoodsman.g,30H'brl-iges' by John R. Anderson,3H1.0,32,,,,, G0000001
 5Hman.g,1.0,2,2HMM,,,13H910514.212219,1e-39,1e+73,                      G0000002
-30HJohn R. Anderson (jra@brl.mil),                                      G0000003
+16HJohn R. Anderson,                                      G0000003
 39HU.S. Army Ballistic Research Laboratory,6,0;                         G0000004
      184       1       0       0       0       0       0       000000000D0000001
      184       0       0       1       0                   man.g       0D0000002

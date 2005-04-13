@@ -409,7 +409,7 @@ proc init_qray_adv { id } {
     frame $top.gridFF1
     label $top.fmtL -text "Query Ray Formats"
     hoc_register_data $top.fmtL "Query Ray Formats"\
-	    { { summary "Ask pjt@arl.mil about the six different
+	    { { summary "Ask pjt@arl.army.mil about the six different
 format strings that can be set." } }
 
     label $top.rayL  -text "Ray" -anchor e
