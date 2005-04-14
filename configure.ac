@@ -823,8 +823,8 @@ dnl check if utahrle library links
 utahrle_link_works=no
 UTAHRLE=""
 # checking for rle_hdr_init is NOT sufficient to get urt 3.x
-AC_CHECK_LIB(utahrle, rle_get_raw, utahrle_link_works=yes ; UTAHRLE="-lutahrle",
-    [AC_CHECK_LIB(rle, rle_get_raw, utahrle_link_works=yes ; UTAHRLE="-lrle")]
+AC_CHECK_LIB(utahrle, rle_getraw, utahrle_link_works=yes ; UTAHRLE="-lutahrle",
+    [AC_CHECK_LIB(rle, rle_getraw, utahrle_link_works=yes ; UTAHRLE="-lrle")]
 )
 
 dnl check if a math library links
