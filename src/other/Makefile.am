@@ -1,21 +1,21 @@
 # $Id$
 
 if BUILD_REGEX
-REGEX=libregex
+REGEXDIR=libregex
 else !BUILD_REGEX
-REGEX=
+REGEXDIR=
 endif
 
 if BUILD_ZLIB
-Z=libz
+ZDIR=libz
 else !BUILD_ZLIB
-Z=
+ZDIR=
 endif
 
 if BUILD_PNG
-PNG=libpng
+PNGDIR=libpng
 else !BUILD_PNG
-PNG=
+PNGDIR=
 endif
 
 if BUILD_JOVE
@@ -25,9 +25,17 @@ JOVEDIR=
 endif
 
 if BUILD_LIBTKGLX
-TKGLX=libtkGLX
+TKGLXDIR=libtkGLX
 else !BUILD_LIBTKGLX
-TKGLX=
+TKGLXDIR=
+endif
+
+if BUILD_URT
+URTDIR=URToolkit
+UTAHRLEDIR=libutahrle
+else !BUILD_URT
+URTDIR=
+UTAHRLEDIR=
 endif
 
 if ONLY_BENCHMARK
@@ -39,15 +47,16 @@ if ONLY_RTS
 SUBDIRS = libtcl
 
 else !ONLY_RTS
+# do not sort SUBDIRS
 SUBDIRS = \
-	${Z} \
-	${PNG} \
-	${REGEX} \
-	${TKGLX} \
-	awf \
+	${ZDIR} \
+	${PNGDIR} \
+	${REGEXDIR} \
+	${TKGLXDIR} \
 	${JOVEDIR} \
-	libutahrle \
-	URToolkit \
+	$(UTAHRLEDIR) \
+	$(URTDIR) \
+	awf \
 	libtcl \
 	libtk \
 	incrTcl \

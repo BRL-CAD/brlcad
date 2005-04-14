@@ -303,7 +303,7 @@ AC_ARG_ENABLE(64bit-build, AC_HELP_STRING(--enable-64bit-build,
 dnl build_regex has alias(es)
 build_regex=auto
 AC_ARG_ENABLE(regex-build, AC_HELP_STRING(--enable-regex-build,
-		[Build and use the included regular expression library (default=auto)]),
+		[Build the included regular expression library (default=auto)]),
 	[if test "x$enableval" = "xno" ; then
 		build_regex=no
 	elif test "x$enableval" = "xyes" ; then
@@ -315,7 +315,7 @@ AC_ARG_ENABLE(regex-build, AC_HELP_STRING(--enable-regex-build,
 dnl build_png has alias(es)
 build_png=auto
 AC_ARG_ENABLE(png-build, AC_HELP_STRING(--enable-png-build,
-		[Build and use the included Portable Network Graphics library (default=auto)]),
+		[Build the included Portable Network Graphics library (default=auto)]),
 	[if test "x$enableval" = "xno" ; then
 		build_png=no
 	elif test "x$enableval" = "xyes" ; then
@@ -327,11 +327,23 @@ AC_ARG_ENABLE(png-build, AC_HELP_STRING(--enable-png-build,
 dnl build_zlib has alias(es)
 build_zlib=auto
 AC_ARG_ENABLE(zlib-build, AC_HELP_STRING(--enable-zlib-build,
-		[Build and use the included zlib compression library (default=auto)]),
+		[Build the included zlib compression library (default=auto)]),
 	[if test "x$enableval" = "xno" ; then
 		build_zlib=no
 	elif test "x$enableval" = "xyes" ; then
 		build_zlib=yes
+	fi]
+)
+
+# force enable/disable building of utah raster toolkit
+dnl build_urt has alias(es)
+build_urt=auto
+AC_ARG_ENABLE(urt-build, AC_HELP_STRING(--enable-urt-build,
+		[Build the included Utah Raster Toolkit (default=auto)]),
+	[if test "x$enableval" = "xno" ; then
+		build_urt=no
+	elif test "x$enableval" = "xyes" ; then
+		build_urt=yes
 	fi]
 )
 
@@ -496,8 +508,61 @@ AC_ARG_ENABLE(libz-build,,
 		build_zlib=yes
 	fi]
 )
-AC_MSG_CHECKING(whether to build the data compression library)
+AC_MSG_CHECKING(whether to build the zlib compression library)
 AC_MSG_RESULT($build_zlib)
+
+# alias to force building urt
+AC_ARG_ENABLE(urt,,
+	[if test "x$enableval" = "xno" ; then
+		build_urt=no
+	elif test "x$enableval" = "xyes" ; then
+		build_urt=yes
+	fi]
+)
+AC_ARG_ENABLE(urtoolkit,,
+	[if test "x$enableval" = "xno" ; then
+		build_urt=no
+	elif test "x$enableval" = "xyes" ; then
+		build_urt=yes
+	fi]
+)
+AC_ARG_ENABLE(rle,,
+	[if test "x$enableval" = "xno" ; then
+		build_urt=no
+	elif test "x$enableval" = "xyes" ; then
+		build_urt=yes
+	fi]
+)
+AC_ARG_ENABLE(utah,,
+	[if test "x$enableval" = "xno" ; then
+		build_urt=no
+	elif test "x$enableval" = "xyes" ; then
+		build_urt=yes
+	fi]
+)
+AC_ARG_ENABLE(utahrle,,
+	[if test "x$enableval" = "xno" ; then
+		build_urt=no
+	elif test "x$enableval" = "xyes" ; then
+		build_urt=yes
+	fi]
+)
+AC_ARG_ENABLE(libutah,,
+	[if test "x$enableval" = "xno" ; then
+		build_urt=no
+	elif test "x$enableval" = "xyes" ; then
+		build_urt=yes
+	fi]
+)
+AC_ARG_ENABLE(libutahrle,,
+	[if test "x$enableval" = "xno" ; then
+		build_urt=no
+	elif test "x$enableval" = "xyes" ; then
+		build_urt=yes
+	fi]
+)
+AC_MSG_CHECKING(whether to build the Utah Raster Toolkit)
+AC_MSG_RESULT($build_urt)
 
 # optimized alias
 AC_ARG_ENABLE(optimization,,
@@ -746,13 +811,21 @@ AC_CHECK_LIB(c, regcomp, regex_link_works=yes ; REGEX="-lc",
     )]
 )
 
+dnl check if a png library links
+png_link_works=no
+AC_CHECK_LIB(png, png_access_version_number, png_link_works=yes)
+
 dnl check if zlib library links
 z_link_works=no
 AC_CHECK_LIB(z, deflate, z_link_works=yes)
 
-dnl check if a png library links
-png_link_works=no
-AC_CHECK_LIB(png, png_access_version_number, png_link_works=yes)
+dnl check if utahrle library links
+utahrle_link_works=no
+UTAHRLE=""
+# checking for rle_hdr_init is NOT sufficient to get urt 3.x
+AC_CHECK_LIB(utahrle, rle_get_raw, utahrle_link_works=yes ; UTAHRLE="-lutahrle",
+    [AC_CHECK_LIB(rle, rle_get_raw, utahrle_link_works=yes ; UTAHRLE="-lrle")]
+)
 
 dnl check if a math library links
 m_link_works=no
@@ -1539,6 +1612,10 @@ dnl *** libz ***
 dnl See if zlib library support works
 zlib_works=no
 AC_MSG_CHECKING(for zlib compression functionality)
+PRELDFLAGS="$LDFLAGS"
+if test "x$z_link_works" = "xyes" ; then
+	LDFLAGS="$LDFLAGS -lz"
+fi
 AC_TRY_RUN([
 #include <zlib.h>
 int main () {
@@ -1548,6 +1625,9 @@ int main () {
 	],
 	[zlib_works=yes]
 )
+if test "x$z_link_works" = "xyes" ; then
+	LDFLAGS="$PRELDFLAGS"
+fi
 AC_MSG_RESULT($zlib_works)
 
 dnl figure out whether we need to build libz
@@ -1581,6 +1661,60 @@ else
 	AC_MSG_RESULT(no)
 fi
 AC_SUBST(LIBZ)
+
+dnl *** utah raster toolkit ***
+dnl See if libutahrle seems to work
+urt_works=no
+AC_MSG_CHECKING(for Utah Raster Toolkit library functionality)
+PRELIBS="$LIBS"
+if test "x$utahrle_link_works" = "xyes" ; then
+	LIBS="$LIBS $UTAHRLE"
+fi
+AC_TRY_RUN([
+#include <rle.h>
+int main () {
+    rle_hdr header = *rle_hdr_init( NULL );
+    return 0;
+}
+	],
+	[urt_works=yes]
+)
+if test "x$utahrle_link_works" = "xyes" ; then
+	LIBS="$PRELIBS"
+fi
+AC_MSG_RESULT($urt_works)
+
+dnl figure out whether we need to build urt
+build_brlcad_urt="no (using system)"
+if test "x$build_urt" = "xyes" ; then
+	build_brlcad_urt=yes
+else
+	if test "x$build_urt" = "xno" ; then
+		if test "x$urt_works" != "xyes" ; then
+			BC_RETRY_CONFIGURE([$0])
+			AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
+			AC_MSG_NOTICE([Try adding --enable-urt-build])
+			AC_MSG_ERROR([*** Utah Raster Toolkit was disabled, yet no usable RLE system library was found ***])
+		fi
+	else
+		dnl automatic detection
+		if test "x$urt_works" = "xno" ; then
+			build_brlcad_urt=yes
+		fi
+	fi
+fi
+AC_MSG_CHECKING(whether to build the Utah Raster Toolkit)
+RLE=""
+if test "x$build_brlcad_urt" = "xyes" ; then
+	RLE='${top_builddir}/src/other/libutahrle/libutahrle.la'
+	AC_MSG_RESULT(yes)
+else
+	if test "x$utahrle_link_works" = "xyes" ; then
+		RLE="$UTAHRLE"
+	fi
+	AC_MSG_RESULT(no)
+fi
+AC_SUBST(RLE)
 
 dnl *** libthread ***
 AC_MSG_CHECKING(for threading library availability)
@@ -1737,6 +1871,7 @@ AM_CONDITIONAL(BUILD_LIBTKGLX, [test "x$host_os" = "xirix6.5"])
 AM_CONDITIONAL(BUILD_PNG, [test "x$build_brlcad_png" = "xyes"])
 AM_CONDITIONAL(BUILD_REGEX, [test "x$build_brlcad_regex" = "xyes"])
 AM_CONDITIONAL(BUILD_ZLIB, [test "x$build_brlcad_zlib" = "xyes"])
+AM_CONDITIONAL(BUILD_URT, [test "x$build_brlcad_urt" = "xyes"])
 AM_CONDITIONAL(JAVA, [test "x$with_java" != "xno"])
 AM_CONDITIONAL(ONLY_BENCHMARK, [test "x$only_benchmark" != "xno"])
 AM_CONDITIONAL(ONLY_RTS, [test "x$only_rts" != "xno"])
@@ -1808,9 +1943,6 @@ AC_SUBST(ORLE)
 
 PKG='${top_builddir}/src/libpkg/libpkg.la'
 AC_SUBST(PKG)
-
-RLE='${top_builddir}/src/other/libutahrle/libutahrle.la'
-AC_SUBST(RLE)
 
 LIBRT='${top_builddir}/src/librt/librt.la'
 AC_SUBST(LIBRT)
@@ -2154,6 +2286,7 @@ echo Build Tcl ............................: yes
 echo Build libpng .........................: $build_brlcad_png
 echo Build libregex .......................: $build_brlcad_regex
 echo Build libz ...........................: $build_brlcad_zlib
+echo Build Utah Raster Toolkit.............: $build_brlcad_urt
 echo Build jove ...........................: $build_jove
 echo 
 echo Java Developer Kit support ...........: $with_java
