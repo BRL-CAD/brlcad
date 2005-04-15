@@ -587,10 +587,11 @@ considered compatible with each other.
 The MINOR_VERSION is updated more frequently and serves the dual role
 as previously mentioned of easily identifying a build as a public
 release.  A minor version update is generally issued after significant
-development activity (generally a month or more of activity) has been
+development activity (generally several months of activity) has been
 tested and deemed sufficiently stable.  When a stable release is made,
-it is tagged as a maintenance branch in cvs (see doc/cvspolicy.txt)
-and patch releases are performed on that branch.
+it may (but not necessarily) be tagged as a maintenance branch in CVS
+(see doc/cvspolicy.txt) with patch releases being performed on that
+branch.
 
 The PATCH_VERSION may and should be updated as frequently as is
 necessary.  Every public maintenance release should increment the
