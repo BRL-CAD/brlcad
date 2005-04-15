@@ -163,6 +163,7 @@ option add *QuadDisplay.height 400 widgetDefault
     public method setModelAxesTickInterval {args}
     public method setModelAxesTicksPerMajor {args}
 
+    public method idle_mode {}
     public method rotate_mode {x y}
     public method translate_mode {x y}
     public method scale_mode {x y}
@@ -781,6 +782,10 @@ option add *QuadDisplay.height 400 widgetDefault
     if {$tpm != ""} {
 	return [lindex $tpm 4]
     }
+}
+
+::itcl::body QuadDisplay::idle_mode {} {
+    eval $itk_component($itk_option(-pane)) idle_mode
 }
 
 ::itcl::body QuadDisplay::rotate_mode {x y} {
