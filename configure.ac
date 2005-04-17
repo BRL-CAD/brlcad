@@ -187,39 +187,9 @@ dnl value.  Arguments should only set their flag as to whether they
 dnl are enabled -- usage of that flag should be handled by the 
 dnl appropriate section further below.
 
-# Allow user to specify flags without relying on environment
-AC_ARG_WITH(cflags, AC_HELP_STRING(--with-cflags,
-		[Specify additional flags to pass to the C compiler]),
-	[
-		if test "x$withval" != "xno" ; then
-			CFLAGS="$CFLAGS $withval"
-		fi
-	]	
-)
-AC_ARG_WITH(cppflags, AC_HELP_STRING(--with-cppflags,
-		[Specify additional flags to pass to C preprocessor]),
-	[
-		if test "x$withval" != "xno"; then
-			CPPFLAGS="$CPPFLAGS $withval"
-		fi
-	]
-)
-AC_ARG_WITH(ldflags, AC_HELP_STRING(--with-ldflags,
-		[Specify additional flags to pass to linker]),
-	[
-		if test "x$withval" != "xno" ; then
-			LDFLAGS="$LDFLAGS $withval"
-		fi
-	]	
-)
-AC_ARG_WITH(libs, AC_HELP_STRING(--with-libs,
-		[Specify additional libraries to link against]),
-	[
-		if test "x$withval" != "xno" ; then
-			LIBS="$LIBS $withval"
-		fi
-	]	
-)
+# provides convenience argument handlers for specifying CFLAGS,
+# LDFLAGS, CPPFLAGS, and LIBS using --with argument handlers.
+BC_WITH_FLAG_ARGS
 
 # use the jdk
 JAVA_CFLAGS=
