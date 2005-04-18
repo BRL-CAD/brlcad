@@ -1,4 +1,4 @@
-#                      S E A R C H . M 4
+#                       F L A G S . M 4
 # BRL-CAD
 #
 # Copyright (C) 2005 United States Government as represented by
