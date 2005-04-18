@@ -38,13 +38,38 @@ URTDIR=
 UTAHRLEDIR=
 endif
 
+if BUILD_TCL
+TCLDIR=libtcl
+else !BUILD_TCL
+TCLDIR=
+endif
+
+if BUILD_TK
+TKDIR=libtk
+else !BUILD_TK
+TKDIR=
+endif
+
+if BUILD_ITCL
+ITCLDIR=incrTcl
+else !BUILD_ITCL
+ITCLDIR=
+endif
+
+if BUILD_IWIDGETS
+IWIDGETSDIR=iwidgets
+else !BUILD_IWIDGETS
+IWIDGETSDIR=
+endif
+
+
 if ONLY_BENCHMARK
-SUBDIRS = libtcl
+SUBDIRS = ${TCLDIR}
 
 else !ONLY_BENCHMARK
 
 if ONLY_RTS
-SUBDIRS = libtcl
+SUBDIRS = ${TCLDIR}
 
 else !ONLY_RTS
 # do not sort SUBDIRS
@@ -56,11 +81,11 @@ SUBDIRS = \
 	${JOVEDIR} \
 	$(UTAHRLEDIR) \
 	$(URTDIR) \
-	awf \
-	libtcl \
-	libtk \
-	incrTcl \
-	iwidgets
+	${TCLDIR} \
+	${TKDIR} \
+	${ITCLDIR} \
+	${IWIDGETSDIR} \
+	awf
 
 endif
 # end ONLY_RTS
