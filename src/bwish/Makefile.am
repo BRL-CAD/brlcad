@@ -19,8 +19,8 @@ bwish_LDADD = \
 	${DM} \
 	${FB} \
 	${LIBRT} \
-	${ITK_LIBS} \
-	${ITCL_LIBS} \
+	${ITK} \
+	${ITCL} \
 	${TERMIO}
 
 btclsh_SOURCES = \
@@ -31,7 +31,7 @@ btclsh_SOURCES = \
 
 btclsh_LDADD = \
 	${LIBRT} \
-	${ITCL_LIBS} \
+	${ITCL} \
 	${TERMIO}
 
 # hack to work around the irix compiler crashing on the libtool btclsh
