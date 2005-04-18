@@ -132,19 +132,19 @@ wavelet_SOURCES = wavelet.c
 wavelet_LDADD = ${BN} ${FB}
 
 png_info_SOURCES = png_info.c
-png_info_LDADD = ${BN} ${LIBPNG}
+png_info_LDADD = ${BN} ${PNG}
 
 pix_png_SOURCES = pix-png.c
-pix_png_LDADD = ${BN} ${LIBPNG}
+pix_png_LDADD = ${BN} ${PNG}
 
 png_pix_SOURCES = png-pix.c
-png_pix_LDADD = ${BN} ${LIBPNG}
+png_pix_LDADD = ${BN} ${PNG}
 
 bw_png_SOURCES = bw-png.c
-bw_png_LDADD = ${BN} ${LIBPNG}
+bw_png_LDADD = ${BN} ${PNG}
 
 png_bw_SOURCES = png-bw.c
-png_bw_LDADD = ${BN} ${LIBPNG}
+png_bw_LDADD = ${BN} ${PNG}
 
 dunncolor_SOURCES = dunncolor.c dunncomm.c
 

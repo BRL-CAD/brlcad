@@ -54,10 +54,10 @@ fbcbars_SOURCES = fbcbars.c
 fbcbars_LDADD = ${FB}
 
 png_fb_SOURCES = png-fb.c 
-png_fb_LDADD = ${FB} ${LIBPNG}
+png_fb_LDADD = ${FB} ${PNG}
 
 fb_png_SOURCES = fb-png.c cmap-crunch.c 
-fb_png_LDADD = ${FB} ${LIBPNG}
+fb_png_LDADD = ${FB} ${PNG}
 
 pix_fb_SOURCES = pix-fb.c 
 pix_fb_LDADD = ${FB} ${BN}
