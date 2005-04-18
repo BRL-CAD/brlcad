@@ -1840,15 +1840,19 @@ AC_TRY_RUN([
 #ifndef TCL_MINOR_VERSION
 #  error Unknown minor version of Tcl
 #endif
+#include <stdio.h>
 int main() {
     Tcl_Interp *interp;
     interp = Tcl_CreateInterp();
     if (Tcl_Init(interp) == TCL_ERROR) {
+	printf("Tcl_Init returned error\n");
 	return 1;
     }
 #if TCL_MAJOR_VERSION < 8
+    printf("major version < 8\n");
     return 1;
 #elif TCl_MAJOR_VERSION == 8 && TCL_MINOR_VERSION < 4
+    printf("minor version < 4\n");
     return 1;
 #endif 
     return 0;
@@ -1902,34 +1906,38 @@ fi
 AC_SUBST(TCL)
 
 
+dnl *** libtk ***
+dnl forced to on for now since ours is modified with the Bezier Canvas support
+build_brlcad_tk=yes
+
 
 dnl *** incrTcl ***
-dnl See if libitcl and libitk seem to work
+dnl See if libitcl and libitk seem to work, make sure it's not dependant upon libtcl
 itcl_works=no
 AC_MSG_CHECKING(for incrTcl library functionality)
 PRELIBS="$LIBS"
+PRECPPFLAGS="$CPPFLAGS"
 if test "x$itcl_link_works" = "xyes" ; then
-	LIBS="$LIBS $LIBITCL"
+	LIBS="$LIBS $LIBITCL $LIBTCL"
+	CPPFLAGS="$CPPFLAGS -Iinclude"
 fi
 AC_TRY_RUN([
-#ifdef HAVE_ITCL_H
-#  include <itcl.h>
-#endif
+#include <itcl.h>
 #ifndef ITCL_MAJOR_VERSION
-#  error Unknown major version of Tcl
+#  error Unknown major version of incrTcl
 #endif
 #ifndef ITCL_MINOR_VERSION
-#  error Unknown minor version of Tcl
+#  error Unknown minor version of incrTcl
 #endif
+#include <stdio.h>
 int main() {
-    Tcl_Interp *interp;
-    interp = Tcl_CreateInterp();
-    if (Itcl_Init(interp) == TCL_ERROR) {
-	return 1;
-    }
+    Itcl_Stack stack;
+    Itcl_InitStack(&stack);
 #if ITCL_MAJOR_VERSION < 3
+    printf("major version < 3\n");
     return 1;
 #elif ITCl_MAJOR_VERSION == 3 && ITCL_MINOR_VERSION < 2
+    printf("minorversion < 2\n");
     return 1;
 #endif 
     return 0;
@@ -1939,10 +1947,11 @@ int main() {
 )
 if test "x$itcl_link_works" = "xyes" ; then
 	LIBS="$PRELIBS"
+	CPPFLAGS="$PRECPPFLAGS"
 fi
 AC_MSG_RESULT($itcl_works)
 
-dnl figure out whether we need to build Tcl
+dnl figure out whether we need to build incrTcl
 build_brlcad_itcl="no (using system)"
 if test "x$build_itcl" = "xyes" ; then
 	build_brlcad_itcl=yes
