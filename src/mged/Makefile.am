@@ -103,16 +103,16 @@ mged_SOURCES = \
 
 mged_LINK = $(LIBTOOL) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) -o $@
 mged_LDADD = \
-	${TCL} \
-	${TK} \
-	${ITCL_LIBS} \
-	${ITK_LIBS} \
 	${TERMIO} \
 	${WDB} \
 	${DM} \
 	${FB} \
 	${SYSV} \
-	${LIBPNG}
+	${TCL} \
+	${TK} \
+	${ITK} \
+	${ITCL} \
+	${PNG}
 
 cad_boundp_SOURCES = cad_boundp.c
 cad_boundp_LDADD = ${BU}
