@@ -272,7 +272,7 @@ AC_ARG_ENABLE(64bit-build, AC_HELP_STRING(--enable-64bit-build,
 )
 
 # force enable/disable building of libregex
-dnl build_regex has alias(es)
+dnl build_regex has aliases
 build_regex=auto
 AC_ARG_ENABLE(regex-build, AC_HELP_STRING(--enable-regex-build,
 		[Build the included regular expression library (default=auto)]),
@@ -284,7 +284,7 @@ AC_ARG_ENABLE(regex-build, AC_HELP_STRING(--enable-regex-build,
 )
 
 # force enable/disable building of libpng
-dnl build_png has alias(es)
+dnl build_png has aliases
 build_png=auto
 AC_ARG_ENABLE(png-build, AC_HELP_STRING(--enable-png-build,
 		[Build the included Portable Network Graphics library (default=auto)]),
@@ -296,7 +296,7 @@ AC_ARG_ENABLE(png-build, AC_HELP_STRING(--enable-png-build,
 )
 
 # force enable/disable building of zlib
-dnl build_zlib has alias(es)
+dnl build_zlib has aliases
 build_zlib=auto
 AC_ARG_ENABLE(zlib-build, AC_HELP_STRING(--enable-zlib-build,
 		[Build the included zlib compression library (default=auto)]),
@@ -308,7 +308,7 @@ AC_ARG_ENABLE(zlib-build, AC_HELP_STRING(--enable-zlib-build,
 )
 
 # force enable/disable building of utah raster toolkit
-dnl build_urt has alias(es)
+dnl build_urt has aliases
 build_urt=auto
 AC_ARG_ENABLE(urt-build, AC_HELP_STRING(--enable-urt-build,
 		[Build the included Utah Raster Toolkit (default=auto)]),
@@ -316,6 +316,42 @@ AC_ARG_ENABLE(urt-build, AC_HELP_STRING(--enable-urt-build,
 		build_urt=no
 	elif test "x$enableval" = "xyes" ; then
 		build_urt=yes
+	fi]
+)
+
+# force enable/disable building of Tcl
+dnl build_tcl has aliases
+build_tcl=auto
+AC_ARG_ENABLE(tcl-build, AC_HELP_STRING(--enable-tcl-build,
+		[Build the included Tcl (default=auto)]),
+	[if test "x$enableval" = "xno" ; then
+		build_tcl=no
+	elif test "x$enableval" = "xyes" ; then
+		build_tcl=yes
+	fi]
+)
+
+# force enable/disable building of incrTcl
+dnl build_itcl has aliases
+build_itcl=auto
+AC_ARG_ENABLE(itcl-build, AC_HELP_STRING(--enable-itcl-build,
+		[Build the included incrTcl (default=auto)]),
+	[if test "x$enableval" = "xno" ; then
+		build_itcl=no
+	elif test "x$enableval" = "xyes" ; then
+		build_itcl=yes
+	fi]
+)
+
+# force enable/disable building of iwidgets
+dnl build_iwidgets has aliases
+build_iwidgets=auto
+AC_ARG_ENABLE(iwidgets-build, AC_HELP_STRING(--enable-iwidgets-build,
+		[Build the included iwidgets (default=auto)]),
+	[if test "x$enableval" = "xno" ; then
+		build_widgets=no
+	elif test "x$enableval" = "xyes" ; then
+		build_widgets=yes
 	fi]
 )
 
@@ -531,6 +567,67 @@ AC_ARG_ENABLE(libutahrle,,
 		build_urt=no
 	elif test "x$enableval" = "xyes" ; then
 		build_urt=yes
+	fi]
+)
+AC_MSG_CHECKING(whether to build the Utah Raster Toolkit)
+AC_MSG_RESULT($build_urt)
+
+# aliases to force building tcl
+AC_ARG_ENABLE(libtcl,,
+	[if test "x$enableval" = "xno" ; then
+		build_tcl=no
+	elif test "x$enableval" = "xyes" ; then
+		build_tcl=yes
+	fi]
+)
+AC_ARG_ENABLE(libtcl-build,,
+	[if test "x$enableval" = "xno" ; then
+		build_tcl=no
+	elif test "x$enableval" = "xyes" ; then
+		build_tcl=yes
+	fi]
+)
+AC_MSG_CHECKING(whether to build the Tcl library)
+AC_MSG_RESULT($build_tcl)
+
+# aliases to force building itcl
+AC_ARG_ENABLE(libitcl,,
+	[if test "x$enableval" = "xno" ; then
+		build_itcl=no
+	elif test "x$enableval" = "xyes" ; then
+		build_itcl=yes
+	fi]
+)
+AC_ARG_ENABLE(libitcl-build,,
+	[if test "x$enableval" = "xno" ; then
+		build_itcl=no
+	elif test "x$enableval" = "xyes" ; then
+		build_itcl=yes
+	fi]
+)
+AC_ARG_ENABLE(incrtcl,,
+	[if test "x$enableval" = "xno" ; then
+		build_itcl=no
+	elif test "x$enableval" = "xyes" ; then
+		build_itcl=yes
+	fi]
+)
+AC_ARG_ENABLE(incrtcl-build,,
+	[if test "x$enableval" = "xno" ; then
+		build_itcl=no
+	elif test "x$enableval" = "xyes" ; then
+		build_itcl=yes
+	fi]
+)
+AC_MSG_CHECKING(whether to build the incrTcl library)
+AC_MSG_RESULT($build_itcl)
+
+# aliases to force building iwidgets
+AC_ARG_ENABLE(iwidgets,,
+	[if test "x$enableval" = "xno" ; then
+		build_iwidgets=no
+	elif test "x$enableval" = "xyes" ; then
+		build_iwidgets=yes
 	fi]
 )
 AC_MSG_CHECKING(whether to build the Utah Raster Toolkit)
@@ -799,6 +896,26 @@ AC_CHECK_LIB(utahrle, rle_getraw, utahrle_link_works=yes ; UTAHRLE="-lutahrle",
     [AC_CHECK_LIB(rle, rle_getraw, utahrle_link_works=yes ; UTAHRLE="-lrle")]
 )
 
+dnl check if libtcl library links
+tcl_link_works=no
+LIBTCL=""
+AC_CHECK_LIB(tcl8.6, Tcl_Main, tcl_link_works=yes ; LIBTCL="-ltcl8.6",
+    [AC_CHECK_LIB(tcl8.5, Tcl_Main, tcl_link_works=yes ; LIBTCL="-ltcl8.5",
+	[AC_CHECK_LIB(tcl8.4, Tcl_Main, tcl_link_works=yes ; LIBTCL="-ltcl8.4",
+	    [AC_CHECK_LIB(tcl, Tcl_Main, tcl_link_works=yes ; LIBTCL="-ltcl")]
+	)]
+    )]
+)
+
+dnl check if libitcl library links (might want to check libitk too)
+itcl_link_works=no
+LIBITCL=""
+AC_CHECK_LIB(itcl3.3, Itcl_Init, itcl_link_works=yes ; LIBITCL="-litcl3.3",
+    [AC_CHECK_LIB(itcl3.2, Itcl_Init, itcl_link_works=yes ; LIBITCL="-litcl3.2",
+        [AC_CHECK_LIB(itcl, Itcl_Init, itcl_link_works=yes ; LIBITCL="-litcl")]
+    )]
+)
+
 dnl check if a math library links
 m_link_works=no
 LIBM=""
@@ -866,6 +983,8 @@ AC_CHECK_HEADERS( \
 	float.h \
 	getopt.h \
 	gl/device.h \
+	itcl.h \
+	itk.h \
 	langinfo.h \
 	limits.h \
 	locale.h \
@@ -877,6 +996,7 @@ AC_CHECK_HEADERS( \
 	netinet/in.h \
 	pthread.h \
 	pwd.h \
+	rle.h \
 	sgtty.h \
 	socket.h \
 	stdarg.h \
@@ -903,6 +1023,7 @@ AC_CHECK_HEADERS( \
 	sys/unistd.h \
 	sys/wait.h \
 	syslog.h \
+	tcl.h \
 	termcap.h \
 	termio.h \
 	termios.h \
@@ -1013,6 +1134,7 @@ fi
 CPPFLAGS="$OLD_CPPFLAGS"
 ###################### End java check ##############################
 
+
 dnl **********************************
 dnl *** Check for types/structures ***
 dnl **********************************
@@ -1042,7 +1164,7 @@ AC_CACHE_VAL(tcl_cv_union_wait,
     AC_TRY_LINK([#include <sys/types.h>
 #include <sys/wait.h>], [
 union wait x;
-WIFEXITED(x);           /* Generates an error if WIFEXITED
+ WIFEXITED(x);           /* Generates an error if WIFEXITED
                          * uses an int. */
     ], tcl_cv_union_wait=yes, tcl_cv_union_wait=no))
 AC_MSG_RESULT($tcl_cv_union_wait)
@@ -1482,6 +1604,7 @@ if test "x$only_rts" != "xno" ; then
 	AC_MSG_RESULT(yes)
 fi
 
+
 dnl *** libpng ***
 png_works=no
 AC_MSG_CHECKING(for portable network graphics functionality)
@@ -1525,14 +1648,16 @@ else
 	fi
 fi
 AC_MSG_CHECKING(whether to build the included portable network graphics library)
+PNG=""
 if test "x$build_brlcad_png" = "xyes" ; then
-	LIBPNG='${top_builddir}/src/other/libpng/libpng.la'
+	PNG='${top_builddir}/src/other/libpng/libpng.la'
 	AC_MSG_RESULT(yes)
 else
-	LIBPNG="-lpng"
+	PNG="-lpng"
 	AC_MSG_RESULT(no)
 fi
-AC_SUBST(LIBPNG)
+AC_SUBST(PNG)
+
 
 dnl *** libregex ***
 dnl See if regular expression support works
@@ -1579,6 +1704,7 @@ else
 	AC_MSG_RESULT(no)
 fi
 AC_SUBST(REGEX_LIBS)
+
 
 dnl *** libz ***
 dnl See if zlib library support works
@@ -1634,6 +1760,7 @@ else
 fi
 AC_SUBST(LIBZ)
 
+
 dnl *** utah raster toolkit ***
 dnl See if libutahrle seems to work
 urt_works=no
@@ -1643,7 +1770,9 @@ if test "x$utahrle_link_works" = "xyes" ; then
 	LIBS="$LIBS $UTAHRLE"
 fi
 AC_TRY_RUN([
-#include <rle.h>
+#ifdef HAVE_RLE_H
+#  include <rle.h>
+#endif
 int main () {
     rle_hdr header = *rle_hdr_init( NULL );
     return 0;
@@ -1688,6 +1817,224 @@ else
 fi
 AC_SUBST(RLE)
 
+
+dnl *** Tcl ***
+dnl See if libtcl seems to work
+tcl_works=no
+AC_MSG_CHECKING(for Tcl library functionality)
+PRELIBS="$LIBS"
+if test "x$tcl_link_works" = "xyes" ; then
+	LIBS="$LIBS $LIBTCL"
+fi
+AC_TRY_RUN([
+#ifdef HAVE_TCL_H
+#  include <tcl.h>
+#endif
+#ifndef TCL_MAJOR_VERSION
+#  error Unknown major version of Tcl
+#endif
+#ifndef TCL_MINOR_VERSION
+#  error Unknown minor version of Tcl
+#endif
+int main() {
+    Tcl_Interp *interp;
+    interp = Tcl_CreateInterp();
+    if (Tcl_Init(interp) == TCL_ERROR) {
+	return 1;
+    }
+#if TCL_MAJOR_VERSION < 8
+    return 1;
+#elif TCl_MAJOR_VERSION == 8 && TCL_MINOR_VERSION < 4
+    return 1;
+#endif 
+    return 0;
+}
+	],
+	[tcl_works=yes]
+)
+if test "x$tcl_link_works" = "xyes" ; then
+	LIBS="$PRELIBS"
+fi
+AC_MSG_RESULT($tcl_works)
+
+dnl figure out whether we need to build Tcl
+build_brlcad_tcl="no (using system)"
+if test "x$build_tcl" = "xyes" ; then
+	build_brlcad_tcl=yes
+else
+	if test "x$build_tcl" = "xno" ; then
+		if test "x$tcl_works" = "xno" ; then
+			BC_RETRY_CONFIGURE([$0])
+			AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
+			AC_MSG_NOTICE([Try adding --enable-tcl-build])
+			AC_MSG_ERROR([*** Tcl was disabled, yet no usable libtcl system library was found ***])
+		fi
+	else
+		dnl automatic detection
+		if test "x$tcl_works" = "xno" ; then
+			build_brlcad_tcl=yes
+		fi
+	fi
+fi
+AC_MSG_CHECKING(whether to build Tcl)
+TCL_VERSION="8.4"
+AC_SUBST(TCL_VERSION)
+TCL_MAJOR_VERSION=8
+AC_SUBST(TCL_MAJOR_VERSION)
+TCL_MINOR_VERSION=4
+AC_SUBST(TCL_MINOR_VERSION)
+TCL_PATCH_LEVEL=".6"
+AC_SUBST(TCL_PATCH_LEVEL)
+TCL=""
+if test "x$build_brlcad_tcl" = "xyes" ; then
+	TCL='${top_builddir}/src/other/libtcl/libtcl${TCL_VERSION}.la '"${SOCKET}"
+	AC_MSG_RESULT(yes)
+else
+	if test "x$tcl_link_works" = "xyes" ; then
+		TCL="$LIBTCL"
+	fi
+	AC_MSG_RESULT(no)
+fi
+AC_SUBST(TCL)
+
+
+
+dnl *** incrTcl ***
+dnl See if libitcl and libitk seem to work
+itcl_works=no
+AC_MSG_CHECKING(for incrTcl library functionality)
+PRELIBS="$LIBS"
+if test "x$itcl_link_works" = "xyes" ; then
+	LIBS="$LIBS $LIBITCL"
+fi
+AC_TRY_RUN([
+#ifdef HAVE_ITCL_H
+#  include <itcl.h>
+#endif
+#ifndef ITCL_MAJOR_VERSION
+#  error Unknown major version of Tcl
+#endif
+#ifndef ITCL_MINOR_VERSION
+#  error Unknown minor version of Tcl
+#endif
+int main() {
+    Tcl_Interp *interp;
+    interp = Tcl_CreateInterp();
+    if (Itcl_Init(interp) == TCL_ERROR) {
+	return 1;
+    }
+#if ITCL_MAJOR_VERSION < 3
+    return 1;
+#elif ITCl_MAJOR_VERSION == 3 && ITCL_MINOR_VERSION < 2
+    return 1;
+#endif 
+    return 0;
+}
+	],
+	[itcl_works=yes]
+)
+if test "x$itcl_link_works" = "xyes" ; then
+	LIBS="$PRELIBS"
+fi
+AC_MSG_RESULT($itcl_works)
+
+dnl figure out whether we need to build Tcl
+build_brlcad_itcl="no (using system)"
+if test "x$build_itcl" = "xyes" ; then
+	build_brlcad_itcl=yes
+else
+	if test "x$build_itcl" = "xno" ; then
+		if test "x$itcl_works" = "xno" ; then
+			BC_RETRY_CONFIGURE([$0])
+			AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
+			AC_MSG_NOTICE([Try adding --enable-itcl-build])
+			AC_MSG_ERROR([*** incrTcl was disabled, yet no usable libitcl system library was found ***])
+		fi
+	else
+		dnl automatic detection
+		if test "x$itcl_works" = "xno" ; then
+			build_brlcad_itcl=yes
+		fi
+	fi
+fi
+AC_MSG_CHECKING(whether to build incrTcl)
+
+dnl itcl/itk
+ITCL_VERSION="3.3"
+AC_SUBST(ITCL_VERSION)
+ITCL=""
+if test "x$build_brlcad_itcl" = "xyes" ; then
+	ITCL='${top_builddir}/src/other/incrTcl/libitcl${ITCL_VERSION}.la'
+	ITK='${top_builddir}/src/other/incrTcl/libitk${ITCL_VERSION}.la'
+	AC_MSG_RESULT(yes)
+else
+	if test "x$itcl_link_works" = "xyes" ; then
+		ITCL="$LIBITCL"
+		ITK="$LIBITK"
+	fi
+	AC_MSG_RESULT(no)
+fi
+AC_SUBST(ITCL)
+AC_SUBST(ITK)
+
+
+dnl *** iwidgets ***
+dnl See if the iwidgets are available
+iwidgets_works=no
+AC_MSG_CHECKING(for iwidgets functionality)
+PRELIBS="$LIBS"
+if test "x$tcl_link_works" = "xyes" ; then
+	LIBS="$LIBS $LIBTCL"
+fi
+dnl this test is probably not sufficient if iwidgets is not locateable
+dnl in the tcl auto_path.
+AC_TRY_RUN([
+#ifdef HAVE_TCL_H
+#  include <tcl.h>
+#endif
+int main() {
+    Tcl_Interp *interp;
+    const char *cmd = "package require iwidgets";
+    interp = Tcl_CreateInterp();
+    if (Itcl_Init(interp) == TCL_ERROR) {
+	return 1;
+    }
+    if (Tcl_Eval(interp, cmd) != TCL_OK || interp->result[0] != '\0') {
+	return 1;
+    }
+    return 0;
+}
+	],
+	[iwidgets_works=yes]
+)
+if test "x$tcl_link_works" = "xyes" ; then
+	LIBS="$PRELIBS"
+fi
+AC_MSG_RESULT($iwidgets_works)
+
+dnl figure out whether we need to install the iwidgets package
+build_brlcad_iwidgets="no (using system)"
+if test "x$build_iwidgets" = "xyes" ; then
+	build_brlcad_iwidgets=yes
+else
+	if test "x$build_iwidgets" = "xno" ; then
+		if test "x$iwidgets_works" = "xno" ; then
+			BC_RETRY_CONFIGURE([$0])
+			AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
+			AC_MSG_NOTICE([Try adding --enable-iwidgets-build])
+			AC_MSG_ERROR([*** iwidgets was disabled, yet no usable iwidgets system package was found ***])
+		fi
+	else
+		dnl automatic detection
+		if test "x$iwidgets_works" = "xno" ; then
+			build_brlcad_iwidgets=yes
+		fi
+	fi
+fi
+AC_MSG_CHECKING(whether to install iwidgets)
+AC_MSG_RESULT($build_brlcad_iwidgets)
+
+
 dnl *** libthread ***
 AC_MSG_CHECKING(for threading library availability)
 AC_MSG_RESULT($thread_link_works)
@@ -1713,6 +2060,7 @@ main () {
 )
 AC_MSG_RESULT($thread_works)
 
+
 dnl *** X11 ***
 AC_PATH_X
 AC_PATH_XTRA
@@ -1724,6 +2072,7 @@ X_CFLAGS="-I${X_PREFIX}/include"
 AC_SUBST(X_LIBS)
 X_LIBS="-L${X_PREFIX}/lib -lX11 -lXi"
 AC_SUBST(X_PREFIX)
+
 
 dnl *** libgl ***
 AC_MSG_CHECKING(whether to link with the OpenGL library)
@@ -1837,17 +2186,23 @@ dnl **************************************
 AC_MSG_CHECKING([... o u t p u t ])
 AC_MSG_RESULT([(9 of 9)])
 
-AM_CONDITIONAL(BUILD_JOVE, [test "x$build_jove" = "xyes"])
-# XXX only irix can build libtkglx right now?
-AM_CONDITIONAL(BUILD_LIBTKGLX, [test "x$host_os" = "xirix6.5"])
+AM_CONDITIONAL(BUILD_TCL, [test "x$build_brlcad_tcl" = "xyes"])
+AM_CONDITIONAL(BUILD_TK, [test "x$build_brlcad_tk" = "xyes"])
+AM_CONDITIONAL(BUILD_ITCL, [test "x$build_brlcad_itcl" = "xyes"])
+AM_CONDITIONAL(BUILD_IWIDGETS, [test "x$build_brlcad_iwidgets" = "xyes"])
 AM_CONDITIONAL(BUILD_PNG, [test "x$build_brlcad_png" = "xyes"])
 AM_CONDITIONAL(BUILD_REGEX, [test "x$build_brlcad_regex" = "xyes"])
 AM_CONDITIONAL(BUILD_ZLIB, [test "x$build_brlcad_zlib" = "xyes"])
 AM_CONDITIONAL(BUILD_URT, [test "x$build_brlcad_urt" = "xyes"])
+AM_CONDITIONAL(BUILD_JOVE, [test "x$build_jove" = "xyes"])
+
 AM_CONDITIONAL(JAVA, [test "x$with_java" != "xno"])
+
 AM_CONDITIONAL(ONLY_BENCHMARK, [test "x$only_benchmark" != "xno"])
 AM_CONDITIONAL(ONLY_RTS, [test "x$only_rts" != "xno"])
 
+# XXX only irix can build libtkglx right now?
+AM_CONDITIONAL(BUILD_LIBTKGLX, [test "x$host_os" = "xirix6.5"])
 
 dnl Any combination of the different optimizations listed below may individually be 
 dnl optionally turned off by commenting out the unwanted defines in the config file.
@@ -1944,20 +2299,10 @@ fi
 AC_SUBST(BTCLSH_DEPENDENCY)
 
 dnl Need to update version number(s) in src/other/libtcl/Makefile.am
-TCL_VERSION="8.4"
-AC_SUBST(TCL_VERSION)
-TCL_MAJOR_VERSION=8
-AC_SUBST(TCL_MAJOR_VERSION)
-TCL_MINOR_VERSION=4
-AC_SUBST(TCL_MINOR_VERSION)
-TCL_PATCH_LEVEL=".6"
-AC_SUBST(TCL_PATCH_LEVEL)
 TCL_LIBRARY='${prefix}/lib/tcl${TCL_VERSION}'
 AC_SUBST(TCL_LIBRARY)
 TCL_PACKAGE_PATH="'${libdir}'"
 AC_SUBST(TCL_PACKAGE_PATH)
-TCL='${top_builddir}/src/other/libtcl/libtcl${TCL_VERSION}.la '"${SOCKET}"
-AC_SUBST(TCL)
 TCLSTUB='${top_builddir}/src/other/libtcl/generic/libtclstub.la'
 AC_SUBST(TCLSTUB)
 
@@ -2025,14 +2370,6 @@ TK='${top_builddir}/src/other/libtk/libtk${TK_VERSION}.la'
 AC_SUBST(TK)
 TKSTUB='${top_builddir}/src/other/libtk/generic/libtkstub.la'
 AC_SUBST(TKSTUB)
-
-dnl itcl/itk
-ITCL_VERSION="3.3"
-AC_SUBST(ITCL_VERSION)
-ITCL_LIBS='${top_builddir}/src/other/incrTcl/libitcl${ITCL_VERSION}.la'
-AC_SUBST(ITCL_LIBS)
-ITK_LIBS='${top_builddir}/src/other/incrTcl/libitk${ITCL_VERSION}.la'
-AC_SUBST(ITK_LIBS)
 
 dnl sample applications
 SAMPLE_APPLICATIONS_DIR='${prefix}/sample_applications'
@@ -2250,11 +2587,11 @@ echo "CPPFLAGS = ${CPPFLAGS}"
 echo "LDFLAGS  = ${LDFLAGS}"
 echo "LIBS     = ${LIBS}"
 echo
-echo Build IWidgets .......................: yes
-echo Build Itcl/Itk .......................: yes
-echo Build Tcl ............................: yes
+echo Build Tcl ............................: $build_brlcad_tcl
 # we have to build Tk as it's been customized with tkCanvBezier
-# echo Build Tk .............................: yes
+# echo Build Tk .............................: $build_brlcad_tk
+echo Build Itcl/Itk .......................: $build_brlcad_itcl
+echo Build IWidgets .......................: $build_brlcad_iwidgets
 echo Build libpng .........................: $build_brlcad_png
 echo Build libregex .......................: $build_brlcad_regex
 echo Build libz ...........................: $build_brlcad_zlib
