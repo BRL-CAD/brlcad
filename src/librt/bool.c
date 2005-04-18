@@ -44,13 +44,11 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 
 #include "common.h"
 
-
-
 #include <stdio.h>
 #ifdef HAVE_STRING_H
-#include <string.h>
+#  include <string.h>
 #else
-#include <strings.h>
+#  include <strings.h>
 #endif
 #include "machine.h"
 #include "vmath.h"
@@ -61,6 +59,7 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 /* Boolean values.  Not easy to change, but defined symbolicly */
 #define FALSE	0
 #define TRUE	1
+
 
 RT_EXTERN(void rt_grow_boolstack, (struct resource *resp) );
 int rt_tree_max_raynum(register const union tree *,
