@@ -844,7 +844,11 @@ CURSES=""
 AC_CHECK_LIB(ncurses, tputs, curses_lib_works=yes ; CURSES="-lncurses",
     [AC_CHECK_LIB(curses, tputs, curses_lib_works=yes ; CURSES="-lcurses",
 	[AC_CHECK_LIB(termlib, tputs, curses_lib_works=yes ; CURSES="-ltermlib",
-	    [AC_CHECK_LIB(termcap, tputs, curses_lib_works=yes ; CURSES="-ltermcap")]
+	    [AC_CHECK_LIB(termcap, tputs, curses_lib_works=yes ; CURSES="-ltermcap",
+	    	[AC_CHECK_LIB(terminfo, tputs, curses_lib_works=yes ; CURSES="-lterminfo",
+		    [AC_CHECK_LIB(ocurses, tputs, curses_lib_works=yes ; CURSES="-locurses")]
+		)]
+	    )]
 	)]
     )]
 )
