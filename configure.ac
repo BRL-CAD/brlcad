@@ -421,7 +421,7 @@ AC_ARG_ENABLE(profiling, AC_HELP_STRING(--enable-profiling,
 ###
 # argument aliases
 # they need to go below here in order for --help to consolidate the
-# blank line to exactly one line in the right place
+# blank line that it inserts to exactly one line in the right place
 ###
 
 # run-time debugging
