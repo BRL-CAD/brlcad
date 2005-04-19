@@ -882,7 +882,7 @@ unary:
 	}
 
 out:
-	free( (char *)argv);		/* not bu_free() */
+	Tcl_Free( (char *)argv);		/* not bu_free(), not free() */
 	return tp;
 }
 
