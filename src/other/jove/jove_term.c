@@ -33,8 +33,9 @@ static const char RCSid[] = "@(#)$Header$";
 
 /* Termcap definitions */
 
-char	*UP,	/* Move cursor up */
-	*CS,	/* Change scrolling */
+extern char	*UP; /* Move cursor up */
+extern char	*BC; /* Back space */
+char	*CS,	/* Change scrolling */
 	*SO,	/* Start standout */
 	*SE,	/* End standout */
 	*CM,	/* The cursor motion string */
@@ -54,7 +55,6 @@ char	*UP,	/* Move cursor up */
 	*IM,	/* Insert mode */
 	*EI,	/* End insert mode */
 	*LL,	/* Move to last line, first column of screen */
-	*BC,	/* Back space */
 	*M_AL,	/* Meta Add line (takes arg) */
 	*M_DL,	/* Meta Delete line (takes arg) */
 	*M_IC,	/* Meta Insert Char (takes arg) */
