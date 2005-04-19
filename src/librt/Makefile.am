@@ -146,7 +146,7 @@ librt_la_LIBADD = \
 	${BN} \
 	${BU} \
 	${TCL} \
-	${REGEX_LIBS} \
+	${REGEX} \
 	${LIBM}
 
 include_HEADERS = \
