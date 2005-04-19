@@ -92,10 +92,12 @@ static void	LoadTP(void), LoadTCS(void);
 /* This is a global buffer for the name of the terminal.	*/
 char		termName[MAX_TERM_LEN] = "UNKNOWN";
 
+/* from termcap/termlib library */
+extern char	*BC, /* Backspace.				*/
+		*UP; /* Cursor up one line.			*/
+
 /* Individual terminal control strings (TCS).			*/
-char		*BC, /* Backspace.				*/
-		*UP, /* Cursor up one line.			*/
-		*CS, /* Change scrolling region.		*/
+char		*CS, /* Change scrolling region.		*/
 		*SO, /* Begin standout mode.			*/
 		*SE, /* End standout mode.			*/
 		*CE, /* Clear to end of line.			*/
