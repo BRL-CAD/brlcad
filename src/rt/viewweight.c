@@ -237,10 +237,10 @@ void	view_end(struct application *ap)
 		conversion = 0.001;  /* kg/gram */
 		strcpy( units, "kg" );
 		strcpy( unit2, "m" );
-	} else if( dbp->dbi_base2local == 10.0 )  {
+	} else if( dbp->dbi_base2local == 0.1 )  {
 		/* cm */
 		strcpy( units, "grams" );
-		strcpy( unit2, "in." );
+		strcpy( unit2, "cm." );
 	} else {
 		bu_log("Warning: base2mm=%g, using default of %s--%s\n",
 		       dbp->dbi_base2local, units, unit2 );
