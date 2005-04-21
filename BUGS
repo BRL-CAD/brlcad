@@ -15,6 +15,11 @@ on-going issues.
 Recent Bugs
 -----------
 
+* rtarea doesn't compute an area on smp linux pthreading systems. The
+  global int that is used to aggregate the number of hits for
+  commputing the exposed area is not shared with the forked child, so
+  it results in no hits getting aggregated.
+
 * sketches extruded with non-square AB vectors results in inner sketch
   components not getting scaled properly.
 
