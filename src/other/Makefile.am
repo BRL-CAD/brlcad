@@ -62,6 +62,12 @@ else !BUILD_IWIDGETS
 IWIDGETSDIR=
 endif
 
+if BUILD_TERMLIB
+TERMLIBDIR=libtermlib
+else !BUILD_TERMLIB
+TERMLIBDIR=
+endif
+
 
 if ONLY_BENCHMARK
 SUBDIRS = ${TCLDIR}
@@ -85,6 +91,7 @@ SUBDIRS = \
 	${TKDIR} \
 	${ITCLDIR} \
 	${IWIDGETSDIR} \
+	${TERMLIBDIR} \
 	awf
 
 endif
