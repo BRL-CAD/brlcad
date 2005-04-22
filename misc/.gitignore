@@ -2,6 +2,7 @@ COPYING.backup
 INSTALL.backup
 Makefile
 Makefile.in
+brlcad.spec
 compile
 config.guess
 config.guess.backup
