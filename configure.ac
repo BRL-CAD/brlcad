@@ -355,6 +355,18 @@ AC_ARG_ENABLE(iwidgets-build, AC_HELP_STRING(--enable-iwidgets-build,
 	fi]
 )
 
+# force enable/disable building of termlib
+dnl build_termlib has aliases
+build_termlib=auto
+AC_ARG_ENABLE(termlib-build, AC_HELP_STRING(--enable-termlib-build,
+		[Build the included termlib library (default=auto)]),
+	[if test "x$enableval" = "xno" ; then
+		build_termlib=no
+	elif test "x$enableval" = "xyes" ; then
+		build_termlib=yes
+	fi]
+)
+
 # doxygen
 AC_MSG_CHECKING(whether to generate documentation with doxygen)
 use_doxygen=no
@@ -703,6 +715,31 @@ AC_ARG_ENABLE(iwidgets,,
 AC_MSG_CHECKING(whether to build the Utah Raster Toolkit)
 AC_MSG_RESULT($build_urt)
 
+# aliases to force building termlib
+AC_ARG_ENABLE(termlib,,
+	[if test "x$enableval" = "xno" ; then
+		build_termlib=no
+	elif test "x$enableval" = "xyes" ; then
+		build_termlib=yes
+	fi]
+)
+AC_ARG_ENABLE(libtermlib,,
+	[if test "x$enableval" = "xno" ; then
+		build_termlib=no
+	elif test "x$enableval" = "xyes" ; then
+		build_termlib=yes
+	fi]
+)
+AC_ARG_ENABLE(libterm,,
+	[if test "x$enableval" = "xno" ; then
+		build_termlib=no
+	elif test "x$enableval" = "xyes" ; then
+		build_termlib=yes
+	fi]
+)
+AC_MSG_CHECKING(whether to build the termlib library)
+AC_MSG_RESULT($build_urt)
+
 # optimized alias
 AC_ARG_ENABLE(optimization,,
 	[if test "x$enable_optimization" != "xno" ; then
@@ -908,15 +945,16 @@ AC_CHECK_LIB(c, sproc, thread_link_works=yes ; LIBTHREAD="-lc",
     )]
 )
 
-dnl need curses, would prefer ncurses
-curses_lib_works=no
-CURSES=""
-AC_CHECK_LIB(ncurses, tputs, curses_lib_works=yes ; CURSES="-lncurses",
-    [AC_CHECK_LIB(curses, tputs, curses_lib_works=yes ; CURSES="-lcurses",
-	[AC_CHECK_LIB(termlib, tputs, curses_lib_works=yes ; CURSES="-ltermlib",
-	    [AC_CHECK_LIB(termcap, tputs, curses_lib_works=yes ; CURSES="-ltermcap",
-	    	[AC_CHECK_LIB(terminfo, tputs, curses_lib_works=yes ; CURSES="-lterminfo",
-		    [AC_CHECK_LIB(ocurses, tputs, curses_lib_works=yes ; CURSES="-locurses")]
+dnl find a curses or other terminal library
+LIBTERMLIB=""
+AC_CHECK_LIB(termlib, tputs, LIBTERMLIB="-ltermlib",
+    [AC_CHECK_LIB(ncurses, tputs, LIBTERMLIB="-lncurses",
+	[AC_CHECK_LIB(curses, tputs, LIBTERMLIB="-lcurses",
+	    [AC_CHECK_LIB(termcap, tputs, LIBTERMLIB="-ltermcap",
+	    	[AC_CHECK_LIB(terminfo, tputs, LIBTERMLIB="-lterminfo",
+		    [AC_CHECK_LIB(tinfo, tputs, LIBTERMLIB="-ltinfo",
+			[AC_CHECK_LIB(ocurses, tputs, LIBTERMLIB="-locurses")]
+		    )]
 		)]
 	    )]
 	)]
@@ -946,21 +984,20 @@ xmu_link_works=no
 AC_CHECK_LIB(Xmu, XmuLookupStandardColormap, xmu_link_works=yes)
 
 dnl detect a useable system regular expression library
-regex_link_works=no
-REGEX=""
-AC_CHECK_LIB(c, regcomp, regex_link_works=yes ; REGEX="-lc",
-    [AC_CHECK_LIB(regex, regcomp, regex_link_works=yes ; REGEX="-lregex",
-	[AC_CHECK_LIB(compat, regcomp, regex_link_works=yes ; REGEX="-lcompat")]
+LIBREGEX=""
+AC_CHECK_LIB(c, regcomp, LIBREGEX="-lc",
+    [AC_CHECK_LIB(regex, regcomp, LIBREGEX="-lregex",
+	[AC_CHECK_LIB(compat, regcomp, LIBREGEX="-lcompat")]
     )]
 )
 
 dnl check if a png library links
-png_link_works=no
-AC_CHECK_LIB(png, png_access_version_number, png_link_works=yes)
+LIBPNG=""
+AC_CHECK_LIB(png, png_access_version_number, LIBPNG="-lpng")
 
 dnl check if zlib library links
-z_link_works=no
-AC_CHECK_LIB(z, deflate, z_link_works=yes)
+LIBZLIB=""
+AC_CHECK_LIB(z, deflate, LIBZLIB="-lz")
 
 dnl check if utahrle library links
 utahrle_link_works=no
@@ -1012,7 +1049,7 @@ AC_CHECK_LIB(socket, socket, socket_link_works=yes ; LIBSOCKET="-lsocket")
 dnl check if a network socket library links
 nsl_link_works=no
 LIBNSL=""
-AC_CHECK_LIB(nsl, gethostbyaddr, nsl_link_works=yes)
+AC_CHECK_LIB(nsl, gethostbyaddr, nsl_link_works=yes ; LIBNSL="-lnsl")
 
 dnl check if a malloc library links
 malloc_link_works=no
@@ -1108,9 +1145,12 @@ AC_CHECK_HEADERS( \
 	syslog.h \
 	tcl.h \
 	termcap.h \
+	terminfo.h \
 	termio.h \
 	termios.h \
+	termlib.h \
 	time.h \
+	tinfo.h \
 	ulocks.h \
 	unistd.h \
 	utime.h \
@@ -1691,10 +1731,8 @@ fi
 dnl *** libpng ***
 png_works=no
 AC_MSG_CHECKING(for portable network graphics functionality)
-if test "x$png_link_works" = "xyes" ; then
-  PRELDFLAGS="$LDFLAGS"
-  LDFLAGS="$LDFLAGS -lpng"
-fi
+PRELDFLAGS="$LDFLAGS"
+LDFLAGS="$LDFLAGS $LIBPNG"
 AC_TRY_RUN([
 #include <png.h>
 main() {
@@ -1704,9 +1742,7 @@ main() {
 	],
 	[png_works=yes]
 )
-if test "x$png_link_works" = "xyes" ; then
-  LDFLAGS="$PRELDFLAGS"
-fi
+LDFLAGS="$PRELDFLAGS"
 AC_MSG_RESULT($png_works)
 
 dnl figure out whether we need to build libpng
@@ -1736,7 +1772,7 @@ if test "x$build_brlcad_png" = "xyes" ; then
 	PNG='${top_builddir}/src/other/libpng/libpng.la'
 	AC_MSG_RESULT(yes)
 else
-	PNG="-lpng"
+	PNG="$LIBPNG"
 	AC_MSG_RESULT(no)
 fi
 AC_SUBST(PNG)
@@ -1746,6 +1782,8 @@ dnl *** libregex ***
 dnl See if regular expression support works
 regex_works=no
 AC_MSG_CHECKING(for regular expression functionality)
+PRELDFLAGS="$LDFLAGS"
+LDFLAGS="$LDFLAGS $LIBREGEX"
 AC_TRY_RUN([
 #include <sys/types.h>
 #include <regex.h>
@@ -1758,6 +1796,7 @@ int main() {
         ],
 	[regex_works=yes]
 )
+LDFLAGS="$PRELDFLAGS"
 AC_MSG_RESULT($regex_works)
 
 dnl figure out whether we need to build libregex
@@ -1780,13 +1819,15 @@ else
 	fi
 fi
 AC_MSG_CHECKING(whether to build the included regular expression library)
+REGEX=""
 if test "x$build_brlcad_regex" = "xyes" ; then
-	REGEX_LIBS='${top_builddir}/src/other/libregex/libregex.la'
+	REGEX='${top_builddir}/src/other/libregex/libregex.la'
 	AC_MSG_RESULT(yes)
 else
+	REGEX="$LIBREGEX"
 	AC_MSG_RESULT(no)
 fi
-AC_SUBST(REGEX_LIBS)
+AC_SUBST(REGEX)
 
 
 dnl *** libz ***
@@ -1794,9 +1835,7 @@ dnl See if zlib library support works
 zlib_works=no
 AC_MSG_CHECKING(for zlib compression functionality)
 PRELDFLAGS="$LDFLAGS"
-if test "x$z_link_works" = "xyes" ; then
-	LDFLAGS="$LDFLAGS -lz"
-fi
+LDFLAGS="$LDFLAGS $LIBZLIB"
 AC_TRY_RUN([
 #include <zlib.h>
 int main () {
@@ -1806,9 +1845,7 @@ int main () {
 	],
 	[zlib_works=yes]
 )
-if test "x$z_link_works" = "xyes" ; then
-	LDFLAGS="$PRELDFLAGS"
-fi
+LDFLAGS="$PRELDFLAGS"
 AC_MSG_RESULT($zlib_works)
 
 dnl figure out whether we need to build libz
@@ -1836,9 +1873,7 @@ if test "x$build_brlcad_zlib" = "xyes" ; then
 	LIBZ='${top_builddir}/src/other/libz/libz.la'
 	AC_MSG_RESULT(yes)
 else
-	if test "x$z_link_works" = "xyes" ; then
-		LIBZ='-lz'
-	fi
+	LIBZ="$LIBZLIB"
 	AC_MSG_RESULT(no)
 fi
 AC_SUBST(LIBZ)
@@ -1921,12 +1956,15 @@ AC_TRY_RUN([
 #endif
 #include <stdio.h>
 int main() {
+    Tcl_Time time;
     Tcl_Interp *interp;
     interp = Tcl_CreateInterp();
     if (Tcl_Init(interp) == TCL_ERROR) {
 	printf("Tcl_Init returned error\n");
 	return 1;
     }
+    /* Tcl_GetTime is an 8.4 symbol */
+    Tcl_GetTime(&time);
 #if TCL_MAJOR_VERSION < 8
     printf("major version < 8\n");
     return 1;
@@ -1985,9 +2023,16 @@ fi
 AC_SUBST(TCL)
 
 
-dnl *** libtk ***
-dnl forced to on for now since ours is modified with the Bezier Canvas support
+dnl *** Tk ***
+dnl make sure Tk is enabled (required for Bezier canvas modifications)
 build_brlcad_tk=yes
+dnl Need to update version number(s) in src/other/libtk/Makefile.am too
+TK_VERSION="8.4"
+AC_SUBST(TK_VERSION)
+TK_LIBRARY='${prefix}/lib/tk${TK_VERSION}'
+AC_SUBST(TK_LIBRARY)
+TK='${top_builddir}/src/other/libtk/libtk${TK_VERSION}.la'
+AC_SUBST(TK)
 
 
 dnl *** incrTcl ***
@@ -2153,6 +2198,81 @@ main () {
 AC_MSG_RESULT($thread_works)
 
 
+dnl *** libtermlib ***
+dnl See if termlib library support works
+termlib_works=no
+AC_MSG_CHECKING(for termlib functionality)
+PRELDFLAGS="$LDFLAGS"
+LDFLAGS="$LDFLAGS $LIBTERMLIB"
+AC_TRY_RUN([
+#ifdef HAVE_TERMLIB_H
+#  include <termlib.h>
+#else
+#  if HAVE_NCURSES_H
+#    include <ncurses.h>
+#  else
+#    ifdef HAVE_CURSES_H
+#      include <curses.h>
+#    else
+#      ifdef HAVE_TERMCAP_H
+#        include <termcap.h>
+#      else
+#        ifdef HAVE_TERMINFO_H
+#          include <terminfo.h>
+#        else
+#          ifdef HAVE_TINFO_H
+#            include <tinfo.h>
+#          endif
+#        endif
+#      endif
+#    endif
+#  endif
+#  if HAVE_TERM_H
+#    include <term.h>
+#  endif
+#endif
+int main () {
+  char buffer[2048] = {0};
+  int result = tgetent(buffer, "vt100");
+  return 0;
+}
+	],
+	[termlib_works=yes]
+)
+LDFLAGS="$PRELDFLAGS"
+AC_MSG_RESULT($termlib_works)
+
+dnl figure out whether we need to build libtermlib
+build_brlcad_termlib="no (using system)"
+if test "x$build_termlib" = "xyes" ; then
+	build_brlcad_termlib=yes
+else
+	if test "x$build_termlib" = "xno" ; then
+		if test "x$termlib_works" != "xyes" ; then
+			BC_RETRY_CONFIGURE([$0])
+			AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
+			AC_MSG_NOTICE([Try adding --enable-termlib-build])
+			AC_MSG_ERROR([*** Building termlib was disabled, yet no system termcap or curses library was found ***])
+		fi
+	else
+		dnl automatic detection
+		if test "x$termlib_works" = "xno" ; then
+			build_brlcad_termlib=yes
+		fi
+	fi
+fi
+AC_MSG_CHECKING(whether to build the included termlib library)
+TERMLIB=""
+if test "x$build_brlcad_termlib" = "xyes" ; then
+	TERMLIB='${top_builddir}/src/other/libtermlib/libtermlib.la'
+	AC_MSG_RESULT(yes)
+else
+	TERMLIB="$LIBTERMLIB"
+	AC_MSG_RESULT(no)
+fi
+AC_SUBST(TERMLIB)
+
+
 dnl *** X11 ***
 AC_PATH_X
 AC_PATH_XTRA
@@ -2179,11 +2299,6 @@ dnl XXX the HAS_SGIGL define should go away eventually
 if test "x$sgigl_link_works" = "xyes" ; then
 	AC_DEFINE(HAS_SGIGL, 1, Irix GL is present.)
 fi
-
-dnl *** curses ***
-AC_MSG_CHECKING(whether to link with the curses library)
-AC_MSG_RESULT($curses_lib_works)
-AC_SUBST(CURSES)
 
 dnl *** libm ***
 AC_MSG_CHECKING(whether to link with the math library)
@@ -2286,6 +2401,7 @@ AM_CONDITIONAL(BUILD_PNG, [test "x$build_brlcad_png" = "xyes"])
 AM_CONDITIONAL(BUILD_REGEX, [test "x$build_brlcad_regex" = "xyes"])
 AM_CONDITIONAL(BUILD_ZLIB, [test "x$build_brlcad_zlib" = "xyes"])
 AM_CONDITIONAL(BUILD_URT, [test "x$build_brlcad_urt" = "xyes"])
+AM_CONDITIONAL(BUILD_TERMLIB, [test "x$build_brlcad_termlib" = "xyes"])
 AM_CONDITIONAL(BUILD_JOVE, [test "x$build_jove" = "xyes"])
 
 AM_CONDITIONAL(JAVA, [test "x$with_java" != "xno"])
@@ -2452,14 +2568,6 @@ AC_SUBST(TCL_STUB_LIB_PATH)
 TCL_THREADS=0
 AC_SUBST(TCL_THREADS)
 
-dnl tk
-dnl Need to update version number(s) in src/other/libtk/Makefile.am
-TK_VERSION="8.4"
-AC_SUBST(TK_VERSION)
-TK_LIBRARY='${prefix}/lib/tk${TK_VERSION}'
-AC_SUBST(TK_LIBRARY)
-TK='${top_builddir}/src/other/libtk/libtk${TK_VERSION}.la'
-AC_SUBST(TK)
 TKSTUB='${top_builddir}/src/other/libtk/generic/libtkstub.la'
 AC_SUBST(TKSTUB)
 
@@ -2592,6 +2700,7 @@ AC_CONFIG_FILES([
 	src/other/libtcl/library/tcltest/Makefile
 	src/other/libtcl/unix/Makefile
 	src/other/libtcl/unix/tclConfig.sh
+	src/other/libtermlib/Makefile
 	src/other/libtk/Makefile
 	src/other/libtk/doc/Makefile
 	src/other/libtk/generic/Makefile
@@ -2686,7 +2795,8 @@ echo Build Itcl/Itk .......................: $build_brlcad_itcl
 echo Build IWidgets .......................: $build_brlcad_iwidgets
 echo Build libpng .........................: $build_brlcad_png
 echo Build libregex .......................: $build_brlcad_regex
-echo Build libz ...........................: $build_brlcad_zlib
+echo Build zlib ...........................: $build_brlcad_zlib
+echo Build termlib ........................: $build_brlcad_termlib
 echo Build Utah Raster Toolkit.............: $build_brlcad_urt
 echo Build jove ...........................: $build_jove
 echo 
