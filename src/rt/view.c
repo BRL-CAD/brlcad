@@ -1515,7 +1515,7 @@ bu_log("mallocing curr_float_frame\n");
 
 		memcpy(ap,&bakapp,sizeof(struct application));
 		/* Set callback for ray hit */
-		ap -> a_hit= colorview;
+		ap->a_hit= colorview;
 
 		}
 		break;
