@@ -480,11 +480,39 @@ AC_ARG_ENABLE(regex,,
 		build_regex=yes
 	fi]
 )
+AC_ARG_ENABLE(libregex,,
+	[if test "x$enableval" = "xno" ; then
+		build_regex=no
+	elif test "x$enableval" = "xyes" ; then
+		build_regex=yes
+	fi]
+)
+AC_ARG_ENABLE(libregex-build,,
+	[if test "x$enableval" = "xno" ; then
+		build_regex=no
+	elif test "x$enableval" = "xyes" ; then
+		build_regex=yes
+	fi]
+)
 AC_MSG_CHECKING(whether to build the regular expression library)
 AC_MSG_RESULT($build_regex)
 
 # alias to force building libpng
 AC_ARG_ENABLE(png,,
+	[if test "x$enableval" = "xno" ; then
+		build_png=no
+	elif test "x$enableval" = "xyes" ; then
+		build_png=yes
+	fi]
+)
+AC_ARG_ENABLE(libpng,,
+	[if test "x$enableval" = "xno" ; then
+		build_png=no
+	elif test "x$enableval" = "xyes" ; then
+		build_png=yes
+	fi]
+)
+AC_ARG_ENABLE(libpng-build,,
 	[if test "x$enableval" = "xno" ; then
 		build_png=no
 	elif test "x$enableval" = "xyes" ; then
@@ -573,6 +601,13 @@ AC_MSG_CHECKING(whether to build the Utah Raster Toolkit)
 AC_MSG_RESULT($build_urt)
 
 # aliases to force building tcl
+AC_ARG_ENABLE(tcl,,
+	[if test "x$enableval" = "xno" ; then
+		build_tcl=no
+	elif test "x$enableval" = "xyes" ; then
+		build_tcl=yes
+	fi]
+)
 AC_ARG_ENABLE(libtcl,,
 	[if test "x$enableval" = "xno" ; then
 		build_tcl=no
@@ -591,6 +626,27 @@ AC_MSG_CHECKING(whether to build the Tcl library)
 AC_MSG_RESULT($build_tcl)
 
 # aliases to force building itcl
+AC_ARG_ENABLE(itcl,,
+	[if test "x$enableval" = "xno" ; then
+		build_itcl=no
+	elif test "x$enableval" = "xyes" ; then
+		build_itcl=yes
+	fi]
+)
+AC_ARG_ENABLE(itk,,
+	[if test "x$enableval" = "xno" ; then
+		build_itcl=no
+	elif test "x$enableval" = "xyes" ; then
+		build_itcl=yes
+	fi]
+)
+AC_ARG_ENABLE(itk-build,,
+	[if test "x$enableval" = "xno" ; then
+		build_itcl=no
+	elif test "x$enableval" = "xyes" ; then
+		build_itcl=yes
+	fi]
+)
 AC_ARG_ENABLE(libitcl,,
 	[if test "x$enableval" = "xno" ; then
 		build_itcl=no
@@ -598,7 +654,21 @@ AC_ARG_ENABLE(libitcl,,
 		build_itcl=yes
 	fi]
 )
+AC_ARG_ENABLE(libitk,,
+	[if test "x$enableval" = "xno" ; then
+		build_itcl=no
+	elif test "x$enableval" = "xyes" ; then
+		build_itcl=yes
+	fi]
+)
 AC_ARG_ENABLE(libitcl-build,,
+	[if test "x$enableval" = "xno" ; then
+		build_itcl=no
+	elif test "x$enableval" = "xyes" ; then
+		build_itcl=yes
+	fi]
+)
+AC_ARG_ENABLE(libitk-build,,
 	[if test "x$enableval" = "xno" ; then
 		build_itcl=no
 	elif test "x$enableval" = "xyes" ; then
