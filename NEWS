@@ -10,6 +10,7 @@ entire history of the project is available through CVS.
 --- 2005-05-XX  Release 7.2.3                                      ---
 ----------------------------------------------------------------------
 
+* fixed smp linux rtarea calculation bug - Sean Morrison
 * fixed rtweight cm units bug - Lee Butler
 * fixed asc2g double-free warnings bug - Sean Morrison
 * added rtarea manpage documentation - Sean Morrison
