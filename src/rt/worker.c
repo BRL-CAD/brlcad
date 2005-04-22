@@ -55,7 +55,7 @@ static const char RCSworker[] = "@(#)$Header$ (BRL)";
 #include "fb.h"					/* Added because RGBpixel is now needed in do_pixel() */
 
 /* for fork/pipe linux timing hack */
-#if defined(linux)
+#if defined(USE_FORKED_THREADS)
 #  include <sys/select.h>
 #  include <sys/types.h>
 #  include <sys/wait.h>
@@ -285,7 +285,7 @@ void do_run( int a, int b )
 		 * XXX this should somehow only apply to a build on a 2.4
 		 * linux kernel.
 		 */
-#  if defined(linux)
+#  if defined(USE_FORKED_THREADS) 
 		pid = fork();
 		if (pid < 0) {
 			perror("fork failed");
@@ -295,7 +295,7 @@ void do_run( int a, int b )
 
 			bu_parallel( worker, npsw, NULL );
 
-#  if defined(linux)
+#  if defined(USE_FORKED_THREADS)
 			/* send raytrace instance data back to the parent */
 			if (write(p[1], resource, sizeof(resource[0]) * npsw) == -1) {
 				perror("Unable to write to the communication pipe");
@@ -326,7 +326,7 @@ void do_run( int a, int b )
 
 	} /* end parallel case */
 
-#  if defined(linux )
+#  if defined(USE_FORKED_THREADS)
 	if( rt_g.rtg_parallel ) {
 		tmp_res = (struct resource *)buffer;
 	} else {
