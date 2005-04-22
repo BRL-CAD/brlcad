@@ -41,13 +41,38 @@
 # span days or multiple days.
 #
 # sh elapsed.sh 12 03 24
+#   or
+# some_date=`date`
+# ..
+# sh elapsed.sh $some_date
 #
 # $(#)$Header$ (BRL)
 
 ARGS="$*"
+ARG_1="$1"
 ARG_2="$2"
 ARG_4="$4"
 CONFIG_TIME="$ARGS"
+
+ONLY_SECONDS=no
+case "x$ARG_1" in
+    x-[sS]) ONLY_SECONDS=yes ; shift ;;
+    x--[sS]) ONLY_SECONDS=yes ; shift ;;
+    x-[sS][eE][cC][oO][nN][dD][sS]) ONLY_SECONDS=yes ; shift ;;
+    x--[sS][eE][cC][oO][nN][dD][sS]) ONLY_SECONDS=yes ; shift ;;
+    x-*) usage="Usage: $0 time"
+	echo "$usage" 1>&2
+	echo "Unrecognized option [$1]"
+	exit 1
+	;;
+esac
+if test "x$ONLY_SECONDS" = "xyes" ; then
+    ARGS="$*"
+    ARG_1="$1"
+    ARG_2="$2"
+    ARG_4="$4"
+    CONFIG_TIME="$ARGS"
+fi
 
 # force locale setting to C so things like date output as expected
 LC_ALL=C
@@ -109,6 +134,14 @@ fi
 
 # break out the elapsed time into seconds, minutes, and hours
 sec_elapsed="`expr $total_post - $total_pre`"
+# echo sec_elapsed is $total_post - $total_pre 1>&2
+
+# if we only need to report the number of seconds elapsed, then we're done
+if test "x$ONLY_SECONDS" = "xyes" ; then
+    echo "$sec_elapsed"
+    exit 0
+fi
+
 min_elapsed="0"
 if test ! "x$sec_elapsed" = "x0" ; then
 	min_elapsed="`expr $sec_elapsed / 60`"
