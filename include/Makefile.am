@@ -56,12 +56,16 @@ headers_libtk = \
 	tkIntXlibDecls.h \
 	tkPlatDecls.h
 
+headers_libtermlib = \
+	libterm.h
+
 brlcadinclude_wanted = \
 	$(headers_libutahrle) \
 	$(headers_libpng) \
 	$(headers_libitcl) \
 	$(headers_libtcl) \
 	$(headers_libtk) \
+	$(headers_libtermlib) \
 	XtndRunsv.h \
 	anim.h \
 	cmd.h \
