@@ -80,19 +80,21 @@ Options:\n\
  -x #		Set librt debug flags\n\
 ";
 
-int	rayhit(), raymiss();
+int rayhit(struct application *ap, struct partition *PartHeadp, struct seg *segHeadp);
+int raymiss(register struct application *ap);
 
 /*
  *  			V I E W _ I N I T
  *
  */
-
 int
-view_init( ap, file, obj, minus_o )
-register struct application *ap;
-char *file, *obj;
+view_init( register struct application *ap, char *file, char *obj )
 {
-
+#if defined(USE_FORKED_THREADS)
+    printf("\n*** WARNING *** WARNING *** WARNING *** WARNING *** WARNING ***\nLimiting the number of processors to 1 for proper area calculations\n\n");
+    npsw = 1;
+    rt_g.rtg_parallel = 0;
+#endif
 	ap->a_hit = rayhit;
 	ap->a_miss = raymiss;
 	ap->a_onehit = 1;
@@ -102,6 +104,8 @@ char *file, *obj;
 
 	output_is_binary = 0;		/* output is printable ascii */
 
+	hit_count = 0;
+
 	return(0);		/* No framebuffer needed */
 }
 
@@ -109,15 +113,13 @@ char *file, *obj;
  *			V I E W _ 2 I N I T
  *
  *  View_2init is called by do_frame(), which in turn is called by
- *  main() in rt.c.  It writes the view-specific COVART header.
+ *  main().  It writes the view-specific COVART header.
  * 
  */
 void
 view_2init( ap )
 struct application	*ap;
 {
-	hit_count = 0;
-
 	cell_area = cell_width * cell_height;
 
 	return;
@@ -131,7 +133,7 @@ struct application	*ap;
  *  do_frame().
  */
 int
-raymiss()
+raymiss(register struct application *ap)
 {
 	return(0);
 }
@@ -152,9 +154,7 @@ view_pixel()
  *
  */
 int
-rayhit( ap, PartHeadp )
-struct application *ap;
-register struct partition *PartHeadp;
+rayhit(struct application *ap, struct partition *PartHeadp, struct seg *segHeadp)
 {
 	register struct partition *pp = PartHeadp->pt_forw;
 
@@ -164,7 +164,6 @@ register struct partition *PartHeadp;
 	bu_semaphore_acquire( BU_SEM_SYSCALL );
 	hit_count++;
 	bu_semaphore_release( BU_SEM_SYSCALL );
-
 
 	return(0);
 }
@@ -184,14 +183,13 @@ void	view_eol()
  *
  */
 void
-view_end()
+view_end(struct application *ap)
 {
 	fastf_t total_area=0.0;
 
-
 	total_area = cell_area * (fastf_t)hit_count;
 
-	bu_log( "Area = %g square mm (%g square meters)\n", total_area, total_area / 1000000.0 );
+	bu_log( "Area = %g square mm (%g square meters)\n\n", total_area, total_area / 1000000.0 );
 }
 
 void view_setup() {}
