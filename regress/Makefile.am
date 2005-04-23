@@ -1,6 +1,6 @@
-.PHONY : regression regress test moss.pix lights.pix solids.pix shaders.pix spdi.pix iges
+.PHONY : regression regress test moss.pix lights.pix solids.pix shaders.pix spdi.pix iges weight
 
-regression: solids.pix shaders.pix spdi.pix moss.pix lights.pix Makefile iges
+regression: solids.pix shaders.pix spdi.pix moss.pix lights.pix Makefile iges weight
 
 regress: regression
 
@@ -23,6 +23,9 @@ spdi.pix: spdi.sh
 
 iges:
 	${SH} iges.sh $(prefix) $(top_srcdir)
+
+weight: weight.sh
+	${SH} weight.sh $(prefix) $(top_srcdir)
 
 # these are here because they go in the distribution but are not installed
 EXTRA_DIST = \
@@ -80,7 +83,12 @@ CLEANFILES = \
 	spdi.pix \
 	spdi_diff.pix \
 	spdi_mged.log \
-	spdi_ref.pix
+	spdi_ref.pix \
+	weight.log \
+	weight.g \
+	weight.out \
+	weight.ref \
+	wgt.out
 
 MOSTLYCLEANFILES = \
 	lights.log \
@@ -90,7 +98,8 @@ MOSTLYCLEANFILES = \
 	moss.asc \
 	moss.log \
 	solids.log \
-	spdi.log
+	spdi.log \
+	weight.log
 
 MAINTAINERCLEANFILES = Makefile.in
 
