@@ -75,7 +75,7 @@
 #   5) All generated log files (e.g. *.log* after running run.sh)
 #   6) Anything else you think might be relevant to performance
 #
-# Original Authors:
+# Authors -
 #  Mike Muuss
 #  Christopher Sean Morrison
 #
