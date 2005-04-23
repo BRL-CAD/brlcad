@@ -1,6 +1,6 @@
-if BUILD_REGEX
+# $Id$
+
 lib_LTLIBRARIES = libregex.la
-endif
 
 libregex_la_SOURCES  =	\
 	regcomp.c	\
