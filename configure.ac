@@ -181,253 +181,73 @@ dnl ***********************
 AC_MSG_CHECKING([... a r g u m e n t s ])
 AC_MSG_RESULT([(1 of 9)])
 
-dnl Arguments that are auto should check both yes and no values,
-dnl otherwise there only needs to be a check for not no to imply a yes
-dnl value.  Arguments should only set their flag as to whether they
-dnl are enabled -- usage of that flag should be handled by the 
-dnl appropriate section further below.
+dnl *** enable options ***
+
+# only build benchmark
+BC_ARG_ENABLE([only_benchmark], [only-benchmark], [Only build the components necessary for the benchmark], [no])
+
+# only build librtserver
+BC_ARG_ENABLE([only_rts], [only-rtserver], [Only build the components necessary for the raytrace server], [no])
+
+# run-time debugging 
+BC_ARG_ENABLE([build_runtime_debug], [runtime-debug], [Enable run-time debug checking], [yes])
+
+# enable 64-bit builds
+BC_ARG_ENABLE([build_64bit], [64bit-build], [Enable 64-bit compilation mode], [auto])
+
+# force enable/disable building of libregex
+BC_ARG_ENABLE([build_regex], [regex-build], [Build the included regular expression library], [auto])
+
+# force enable/disable building of libpng
+BC_ARG_ENABLE([build_png], [png-build], [Build the included Portable Network Graphics library], [auto])
+
+# force enable/disable building of zlib
+BC_ARG_ENABLE([build_zlib], [zlib-build], [Build the included zlib compression library], [auto])
+
+# force enable/disable building of utah raster toolkit
+BC_ARG_ENABLE([build_urt], [urt-build], [Build the included Utah Raster Toolkit], [auto])
+
+# force enable/disable building of Tcl
+BC_ARG_ENABLE([build_tcl], [tcl-build], [Build the included Tcl], [auto])
+
+# force enable/disable building of incrTcl
+BC_ARG_ENABLE([build_itcl], [itcl-build], [Build the included incrTcl], [auto])
+
+# force enable/disable building of iwidgets
+BC_ARG_ENABLE([build_iwidgets], [iwidgets-build], [Install the included iwidgets], [auto])
+
+# force enable/disable building of termlib
+BC_ARG_ENABLE([build_termlib], [termlib-build], [Build the included termlib library], [auto])
+
+# doxygen - XXX unimplemented
+use_doxygen=no
+#BC_ARG_ENABLE([use_doxygen], [doxygen], [Enable documentation generation with doxygen], [no])
+#AC_MSG_CHECKING(whether to generate documentation with doxygen)
+#AC_MSG_RESULT($use_doxygen)
+
+# jove
+BC_ARG_ENABLE([build_jove], [jove], [Enable compilation of jove], [no])
+
+# optimized
+BC_ARG_ENABLE([use_optimized], [optimized], [Enable optimized compilation], [no])
+
+# warnings
+BC_ARG_ENABLE([use_warnings], [warnings], [Enable verbose compilation warnings], [no])
+
+# debug
+BC_ARG_ENABLE([use_debug], [debug], [Enable debug symbols], [yes])
+
+# profiling
+BC_ARG_ENABLE([use_profiling], [profiling], [Enable profiling], [no])
+
+dnl *** with options ***
 
 # provides convenience argument handlers for specifying CFLAGS,
 # LDFLAGS, CPPFLAGS, and LIBS using --with argument handlers.
 BC_WITH_FLAG_ARGS
 
 # use the jdk
-JAVA_CFLAGS=
-JAVA_LDFLAGS=
-with_java=no
-AC_ARG_WITH(jdk, AC_HELP_STRING(--with-jdk=path,
-		[Specify location of Java Development Kit]),
-	[
-		JAVA_CFLAGS="-I$withval/include -I$withval/include/`uname | tr [A-Z] [a-z]`"
-		with_java=yes
-        ]
-)
-
-case "$target" in
-	*-*-darwin*)
-		JAVA_CFLAGS="-framework JavaVM"
-		JAVA_LDFLAGS="-shrext .jnilib -framework JavaVM"
-		with_java=yes
-		;;
-esac
-
-AC_SUBST(JAVA_CFLAGS)
-AC_SUBST(JAVA_LDFLAGS)
-
-# only build benchmark
-AC_MSG_CHECKING(whether to only build benchmark)
-only_benchmark=no
-AC_ARG_ENABLE(only-benchmark, AC_HELP_STRING(--enable-only-benchmark,
-		[Only build the components necessary for the benchmark suite (default=no)]),
-	[if test "x$enableval" != "xno" ; then
-		only_benchmark=yes
-	fi]
-)
-AC_MSG_RESULT($only_benchmark)
-
-# only build librtserver
-AC_MSG_CHECKING(whether to only build librtserver)
-only_rts=no
-warn_only_both=no
-AC_ARG_ENABLE(only-rtserver, AC_HELP_STRING(--enable-only-rtserver,
-		[Only build the components necessary for the raytrace server (default=no)]),
-	[if test "x$enableval" != "xno" ; then
-		only_rts=yes
-		if test "x$only_benchmark" != "xno" ; then
-			warn_only_both=yes
-		fi
-	fi]
-)
-AC_MSG_RESULT($only_rts)
-if test "x$warn_only_both" != "xno" ; then
-	AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
-	AC_MSG_WARN([Requesting BOTH benchmark and librtserver "only"?])
-	AC_MSG_WARN([Building both benchmark and librtserver])
-	AC_MSG_NOTICE([{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{])
-fi
-
-
-# run-time debugging 
-dnl has aliases
-build_runtime_debug=yes
-AC_ARG_ENABLE(runtime-debug, AC_HELP_STRING(--disable-runtime-debug,
-		[disable runtime debug for performance (default=no)]),
-	[if test "x$enableval" = "xno" ; then
-		build_runtime_debug=no
-	elif test "x$enableval" = "xyes" ; then
-		build_runtime_debug=yes
-	fi]
-)
-
-# enable 64-bit builds
-dnl has aliases
-build_64bit=auto
-AC_ARG_ENABLE(64bit-build, AC_HELP_STRING(--enable-64bit-build,
-		[enable 64-bit compilation mode (default=auto)]),
-	[if test "x$enableval" = "xno" ; then
-		build_64bit=no
-	elif test "x$enableval" = "xyes" ; then
-		build_64bit=yes
-	fi]
-)
-
-# force enable/disable building of libregex
-dnl build_regex has aliases
-build_regex=auto
-AC_ARG_ENABLE(regex-build, AC_HELP_STRING(--enable-regex-build,
-		[Build the included regular expression library (default=auto)]),
-	[if test "x$enableval" = "xno" ; then
-		build_regex=no
-	elif test "x$enableval" = "xyes" ; then
-		build_regex=yes
-	fi]
-)
-
-# force enable/disable building of libpng
-dnl build_png has aliases
-build_png=auto
-AC_ARG_ENABLE(png-build, AC_HELP_STRING(--enable-png-build,
-		[Build the included Portable Network Graphics library (default=auto)]),
-	[if test "x$enableval" = "xno" ; then
-		build_png=no
-	elif test "x$enableval" = "xyes" ; then
-		build_png=yes
-	fi]
-)
-
-# force enable/disable building of zlib
-dnl build_zlib has aliases
-build_zlib=auto
-AC_ARG_ENABLE(zlib-build, AC_HELP_STRING(--enable-zlib-build,
-		[Build the included zlib compression library (default=auto)]),
-	[if test "x$enableval" = "xno" ; then
-		build_zlib=no
-	elif test "x$enableval" = "xyes" ; then
-		build_zlib=yes
-	fi]
-)
-
-# force enable/disable building of utah raster toolkit
-dnl build_urt has aliases
-build_urt=auto
-AC_ARG_ENABLE(urt-build, AC_HELP_STRING(--enable-urt-build,
-		[Build the included Utah Raster Toolkit (default=auto)]),
-	[if test "x$enableval" = "xno" ; then
-		build_urt=no
-	elif test "x$enableval" = "xyes" ; then
-		build_urt=yes
-	fi]
-)
-
-# force enable/disable building of Tcl
-dnl build_tcl has aliases
-build_tcl=auto
-AC_ARG_ENABLE(tcl-build, AC_HELP_STRING(--enable-tcl-build,
-		[Build the included Tcl (default=auto)]),
-	[if test "x$enableval" = "xno" ; then
-		build_tcl=no
-	elif test "x$enableval" = "xyes" ; then
-		build_tcl=yes
-	fi]
-)
-
-# force enable/disable building of incrTcl
-dnl build_itcl has aliases
-build_itcl=auto
-AC_ARG_ENABLE(itcl-build, AC_HELP_STRING(--enable-itcl-build,
-		[Build the included incrTcl (default=auto)]),
-	[if test "x$enableval" = "xno" ; then
-		build_itcl=no
-	elif test "x$enableval" = "xyes" ; then
-		build_itcl=yes
-	fi]
-)
-
-# force enable/disable building of iwidgets
-dnl build_iwidgets has aliases
-build_iwidgets=auto
-AC_ARG_ENABLE(iwidgets-build, AC_HELP_STRING(--enable-iwidgets-build,
-		[Build the included iwidgets (default=auto)]),
-	[if test "x$enableval" = "xno" ; then
-		build_widgets=no
-	elif test "x$enableval" = "xyes" ; then
-		build_widgets=yes
-	fi]
-)
-
-# force enable/disable building of termlib
-dnl build_termlib has aliases
-build_termlib=auto
-AC_ARG_ENABLE(termlib-build, AC_HELP_STRING(--enable-termlib-build,
-		[Build the included termlib library (default=auto)]),
-	[if test "x$enableval" = "xno" ; then
-		build_termlib=no
-	elif test "x$enableval" = "xyes" ; then
-		build_termlib=yes
-	fi]
-)
-
-# doxygen
-AC_MSG_CHECKING(whether to generate documentation with doxygen)
-use_doxygen=no
-AC_ARG_ENABLE(doxygen, AC_HELP_STRING(--enable-doxygen,
-		[enable documentation generation with doxygen (default=no)]),
-	[if test "xenable_doxygen" != "xno" ; then
-		use_doxygen=yes
-	fi]
-)
-AC_MSG_RESULT($use_doxygen)
-
-# jove
-AC_MSG_CHECKING(whether to compile jove or not)
-build_jove=no
-AC_ARG_ENABLE(jove, AC_HELP_STRING(--enable-jove,
-		[enable compilation of jove (default=no)]),
-	[if test "x$enable_jove" != "xno" ; then
-		build_jove=yes
-	fi]
-)
-AC_MSG_RESULT($build_jove)
-
-# optimized
-dnl optimized has aliases
-use_optimized=no
-AC_ARG_ENABLE(optimized, AC_HELP_STRING(--enable-optimized,
-		[enable optimized compilation (default=no)]),
-	[if test "x$enable_optimized" != "xno" ; then
-		use_optimized=yes
-	fi]
-)
-
-# warnings
-dnl warnings has aliases
-use_warnings=no
-AC_ARG_ENABLE(warnings, AC_HELP_STRING(--enable-warnings,
-		[enable verbose compilation warnings (default=no)]),
-	[if test "x$enable_warnings" != "xno" ; then
-		use_warnings=yes
-	fi]
-)
-
-# debug
-dnl debug has aliases
-use_debug=yes
-AC_ARG_ENABLE(debug, AC_HELP_STRING(--disable-debug,
-		[disable debug symbols (default=no)]),
-	[if test "x$disable_debug" != "xno" ; then
-		use_debug=no
-	fi]
-)
-
-# profiling
-dnl profiling has aliases
-use_profiling=no
-AC_ARG_ENABLE(profiling, AC_HELP_STRING(--enable-profiling,
-		[enable profiling (default=no)]),
-	[if test "x$enable_profiling" != "xno" ; then
-		use_profiling=yes
-	fi]
-)
+BC_ARG_WITH([with_java], [jdk], [Specify path to the Java Development Kit], [no])
 
 
 ###
@@ -436,361 +256,165 @@ AC_ARG_ENABLE(profiling, AC_HELP_STRING(--enable-profiling,
 # blank line that it inserts to exactly one line in the right place
 ###
 
-# run-time debugging
-AC_ARG_ENABLE(run-time-debug,,
-	[if test "x$enable_run_time_debug" = "xno" ; then
-		build_runtime_debug=no
-	elif test "x$enable_run_time_debug" = "xyes" ; then
-		build_runtime_debug=yes
-	fi]
-)
-AC_ARG_ENABLE(runtime-debugging,,
-	[if test "x$enable_run_time_debug" = "xno" ; then
-		build_runtime_debug=no
-	elif test "x$enable_run_time_debug" = "xyes" ; then
-		build_runtime_debug=yes
-	fi]
-)
-AC_ARG_ENABLE(run-time-debugging,,
-	[if test "x$enable_run_time_debug" = "xno" ; then
-		build_runtime_debug=no
-	elif test "x$enable_run_time_debug" = "xyes" ; then
-		build_runtime_debug=yes
-	fi]
-)
+# aliases for building only the benchmark (help uses only-benchmark)
+BC_ARG_ALIAS([only_benchmark], [only-bench])
+BC_ARG_ALIAS([only_benchmark], [only-benchmarks])
+BC_ARG_ALIAS([only_benchmark], [bench-only])
+BC_ARG_ALIAS([only_benchmark], [benchmark-only])
+BC_ARG_ALIAS([only_benchmark], [benchmarks-only])
+AC_MSG_CHECKING(whether to only build benchmark)
+AC_MSG_RESULT($only_benchmark)
 
-# 64-bit compilation
-AC_ARG_ENABLE(64bit,,
-	[if test "x$enable_64bit" = "xno" ; then
-		build_64bit=no
-	elif test "x$enable_64bit" = "xyes" ; then
-		build_64bit=yes
-	fi]
-)
-AC_ARG_ENABLE(64-bit,,
-	[if test "x$enable_64bit" = "xno" ; then
-		build_64bit=no
-	elif test "x$enable_64bit" = "xyes" ; then
-		build_64bit=yes
-	fi]
-)
-AC_ARG_ENABLE(64-bit-build,,
-	[if test "x$enable_64bit" = "xno" ; then
-		build_64bit=no
-	elif test "x$enable_64bit" = "xyes" ; then
-		build_64bit=yes
-	fi]
-)
+# aliases for building only the raytrace server (help uses only-rtserver)
+BC_ARG_ALIAS([only_rts], [only-rts])
+BC_ARG_ALIAS([only_rts], [only-librtserver])
+BC_ARG_ALIAS([only_rts], [rts-only])
+BC_ARG_ALIAS([only_rts], [rtserver-only])
+BC_ARG_ALIAS([only_rts], [librtserver-only])
+AC_MSG_CHECKING(whether to only build the raytrace server)
+AC_MSG_RESULT($only_rts)
+
+# run-time debugging (help uses runtime-debug)
+BC_ARG_ALIAS([build_runtime_debug], [run-time-debug])
+BC_ARG_ALIAS([build_runtime_debug], [runtime-debugging])
+BC_ARG_ALIAS([build_runtime_debug], [run-time-debugging])
+AC_MSG_CHECKING(whether to use run-time debug checks)
+AC_MSG_RESULT($build_runtime_debug)
+
+# 64-bit compilation (help uses 64bit-build)
+BC_ARG_ALIAS([build_64bit], [64])
+BC_ARG_ALIAS([build_64bit], [64bit])
+BC_ARG_ALIAS([build_64bit], [64-bit])
+BC_ARG_ALIAS([build_64bit], [64-build])
+BC_ARG_ALIAS([build_64bit], [64-bit-build])
 AC_MSG_CHECKING(whether to compile in 64-bit mode)
 AC_MSG_RESULT($build_64bit)
 
-# alias to force building libregex
-AC_ARG_ENABLE(regex,,
-	[if test "x$enableval" = "xno" ; then
-		build_regex=no
-	elif test "x$enableval" = "xyes" ; then
-		build_regex=yes
-	fi]
-)
-AC_ARG_ENABLE(libregex,,
-	[if test "x$enableval" = "xno" ; then
-		build_regex=no
-	elif test "x$enableval" = "xyes" ; then
-		build_regex=yes
-	fi]
-)
-AC_ARG_ENABLE(libregex-build,,
-	[if test "x$enableval" = "xno" ; then
-		build_regex=no
-	elif test "x$enableval" = "xyes" ; then
-		build_regex=yes
-	fi]
-)
+# force building libregex (help uses regex-build)
+BC_ARG_ALIAS([build_regex], [regex])
+BC_ARG_ALIAS([build_regex], [libregex])
+BC_ARG_ALIAS([build_regex], [libregex-build])
 AC_MSG_CHECKING(whether to build the regular expression library)
 AC_MSG_RESULT($build_regex)
 
-# alias to force building libpng
-AC_ARG_ENABLE(png,,
-	[if test "x$enableval" = "xno" ; then
-		build_png=no
-	elif test "x$enableval" = "xyes" ; then
-		build_png=yes
-	fi]
-)
-AC_ARG_ENABLE(libpng,,
-	[if test "x$enableval" = "xno" ; then
-		build_png=no
-	elif test "x$enableval" = "xyes" ; then
-		build_png=yes
-	fi]
-)
-AC_ARG_ENABLE(libpng-build,,
-	[if test "x$enableval" = "xno" ; then
-		build_png=no
-	elif test "x$enableval" = "xyes" ; then
-		build_png=yes
-	fi]
-)
+# aliases to force building libpng (help uses png-build)
+BC_ARG_ALIAS([build_png], [png])
+BC_ARG_ALIAS([build_png], [libpng])
+BC_ARG_ALIAS([build_png], [libpng-build])
 AC_MSG_CHECKING(whether to build the PNG library)
 AC_MSG_RESULT($build_png)
 
-# alias to force building zlib
-AC_ARG_ENABLE(zlib,,
-	[if test "x$enableval" = "xno" ; then
-		build_zlib=no
-	elif test "x$enableval" = "xyes" ; then
-		build_zlib=yes
-	fi]
-)
-AC_ARG_ENABLE(libz,,
-	[if test "x$enableval" = "xno" ; then
-		build_zlib=no
-	elif test "x$enableval" = "xyes" ; then
-		build_zlib=yes
-	fi]
-)
-AC_ARG_ENABLE(libz-build,,
-	[if test "x$enableval" = "xno" ; then
-		build_zlib=no
-	elif test "x$enableval" = "xyes" ; then
-		build_zlib=yes
-	fi]
-)
+# aliases to force building zlib (help uses zlib-build)
+BC_ARG_ALIAS([build_zlib], [zlib])
+BC_ARG_ALIAS([build_zlib], [libz])
+BC_ARG_ALIAS([build_zlib], [libz-build])
 AC_MSG_CHECKING(whether to build the zlib compression library)
 AC_MSG_RESULT($build_zlib)
 
-# alias to force building urt
-AC_ARG_ENABLE(urt,,
-	[if test "x$enableval" = "xno" ; then
-		build_urt=no
-	elif test "x$enableval" = "xyes" ; then
-		build_urt=yes
-	fi]
-)
-AC_ARG_ENABLE(urtoolkit,,
-	[if test "x$enableval" = "xno" ; then
-		build_urt=no
-	elif test "x$enableval" = "xyes" ; then
-		build_urt=yes
-	fi]
-)
-AC_ARG_ENABLE(rle,,
-	[if test "x$enableval" = "xno" ; then
-		build_urt=no
-	elif test "x$enableval" = "xyes" ; then
-		build_urt=yes
-	fi]
-)
-AC_ARG_ENABLE(utah,,
-	[if test "x$enableval" = "xno" ; then
-		build_urt=no
-	elif test "x$enableval" = "xyes" ; then
-		build_urt=yes
-	fi]
-)
-AC_ARG_ENABLE(utahrle,,
-	[if test "x$enableval" = "xno" ; then
-		build_urt=no
-	elif test "x$enableval" = "xyes" ; then
-		build_urt=yes
-	fi]
-)
-AC_ARG_ENABLE(libutah,,
-	[if test "x$enableval" = "xno" ; then
-		build_urt=no
-	elif test "x$enableval" = "xyes" ; then
-		build_urt=yes
-	fi]
-)
-AC_ARG_ENABLE(libutahrle,,
-	[if test "x$enableval" = "xno" ; then
-		build_urt=no
-	elif test "x$enableval" = "xyes" ; then
-		build_urt=yes
-	fi]
-)
+# aliases to force building urt (help uses urt-build)
+BC_ARG_ALIAS([build_urt], [urt])
+BC_ARG_ALIAS([build_urt], [urtoolkit])
+BC_ARG_ALIAS([build_urt], [rle])
+BC_ARG_ALIAS([build_urt], [utah])
+BC_ARG_ALIAS([build_urt], [utahrle])
+BC_ARG_ALIAS([build_urt], [libutah])
+BC_ARG_ALIAS([build_urt], [librle])
+BC_ARG_ALIAS([build_urt], [libutahrle])
+BC_ARG_ALIAS([build_urt], [utahrastertoolkit])
+BC_ARG_ALIAS([build_urt], [utah-raster-toolkit])
+BC_ARG_ALIAS([build_urt], [urtoolkit-build])
+BC_ARG_ALIAS([build_urt], [rle-build])
+BC_ARG_ALIAS([build_urt], [utah-build])
+BC_ARG_ALIAS([build_urt], [utahrle-build])
+BC_ARG_ALIAS([build_urt], [libutah-build])
+BC_ARG_ALIAS([build_urt], [librle-build])
+BC_ARG_ALIAS([build_urt], [libutahrle-build])
+BC_ARG_ALIAS([build_urt], [utahrastertoolkit-build])
+BC_ARG_ALIAS([build_urt], [utah-raster-toolkit-build])
 AC_MSG_CHECKING(whether to build the Utah Raster Toolkit)
 AC_MSG_RESULT($build_urt)
 
-# aliases to force building tcl
-AC_ARG_ENABLE(tcl,,
-	[if test "x$enableval" = "xno" ; then
-		build_tcl=no
-	elif test "x$enableval" = "xyes" ; then
-		build_tcl=yes
-	fi]
-)
-AC_ARG_ENABLE(libtcl,,
-	[if test "x$enableval" = "xno" ; then
-		build_tcl=no
-	elif test "x$enableval" = "xyes" ; then
-		build_tcl=yes
-	fi]
-)
-AC_ARG_ENABLE(libtcl-build,,
-	[if test "x$enableval" = "xno" ; then
-		build_tcl=no
-	elif test "x$enableval" = "xyes" ; then
-		build_tcl=yes
-	fi]
-)
+# aliases to force building tcl (help uses tcl-build)
+BC_ARG_ALIAS([build_tcl], [tcl])
+BC_ARG_ALIAS([build_tcl], [libtcl])
+BC_ARG_ALIAS([build_tcl], [libtcl-build])
 AC_MSG_CHECKING(whether to build the Tcl library)
 AC_MSG_RESULT($build_tcl)
 
-# aliases to force building itcl
-AC_ARG_ENABLE(itcl,,
-	[if test "x$enableval" = "xno" ; then
-		build_itcl=no
-	elif test "x$enableval" = "xyes" ; then
-		build_itcl=yes
-	fi]
-)
-AC_ARG_ENABLE(itk,,
-	[if test "x$enableval" = "xno" ; then
-		build_itcl=no
-	elif test "x$enableval" = "xyes" ; then
-		build_itcl=yes
-	fi]
-)
-AC_ARG_ENABLE(itk-build,,
-	[if test "x$enableval" = "xno" ; then
-		build_itcl=no
-	elif test "x$enableval" = "xyes" ; then
-		build_itcl=yes
-	fi]
-)
-AC_ARG_ENABLE(libitcl,,
-	[if test "x$enableval" = "xno" ; then
-		build_itcl=no
-	elif test "x$enableval" = "xyes" ; then
-		build_itcl=yes
-	fi]
-)
-AC_ARG_ENABLE(libitk,,
-	[if test "x$enableval" = "xno" ; then
-		build_itcl=no
-	elif test "x$enableval" = "xyes" ; then
-		build_itcl=yes
-	fi]
-)
-AC_ARG_ENABLE(libitcl-build,,
-	[if test "x$enableval" = "xno" ; then
-		build_itcl=no
-	elif test "x$enableval" = "xyes" ; then
-		build_itcl=yes
-	fi]
-)
-AC_ARG_ENABLE(libitk-build,,
-	[if test "x$enableval" = "xno" ; then
-		build_itcl=no
-	elif test "x$enableval" = "xyes" ; then
-		build_itcl=yes
-	fi]
-)
-AC_ARG_ENABLE(incrtcl,,
-	[if test "x$enableval" = "xno" ; then
-		build_itcl=no
-	elif test "x$enableval" = "xyes" ; then
-		build_itcl=yes
-	fi]
-)
-AC_ARG_ENABLE(incrtcl-build,,
-	[if test "x$enableval" = "xno" ; then
-		build_itcl=no
-	elif test "x$enableval" = "xyes" ; then
-		build_itcl=yes
-	fi]
-)
+# aliases to force building itcl (help uses itcl-build)
+BC_ARG_ALIAS([build_itcl], [itcl])
+BC_ARG_ALIAS([build_itcl], [itk])
+BC_ARG_ALIAS([build_itcl], [libitcl])
+BC_ARG_ALIAS([build_itcl], [libitk])
+BC_ARG_ALIAS([build_itcl], [incrtcl])
+BC_ARG_ALIAS([build_itcl], [itk-build])
+BC_ARG_ALIAS([build_itcl], [libitcl-build])
+BC_ARG_ALIAS([build_itcl], [libitk-build])
+BC_ARG_ALIAS([build_itcl], [incrtcl-build])
 AC_MSG_CHECKING(whether to build the incrTcl library)
 AC_MSG_RESULT($build_itcl)
 
-# aliases to force building iwidgets
-AC_ARG_ENABLE(iwidgets,,
-	[if test "x$enableval" = "xno" ; then
-		build_iwidgets=no
-	elif test "x$enableval" = "xyes" ; then
-		build_iwidgets=yes
-	fi]
-)
+# aliases to force building iwidgets (help uses iwidgets-build)
+BC_ARG_ALIAS([build_iwidgets], [iwidgets])
 AC_MSG_CHECKING(whether to build the Utah Raster Toolkit)
 AC_MSG_RESULT($build_urt)
 
-# aliases to force building termlib
-AC_ARG_ENABLE(termlib,,
-	[if test "x$enableval" = "xno" ; then
-		build_termlib=no
-	elif test "x$enableval" = "xyes" ; then
-		build_termlib=yes
-	fi]
-)
-AC_ARG_ENABLE(libtermlib,,
-	[if test "x$enableval" = "xno" ; then
-		build_termlib=no
-	elif test "x$enableval" = "xyes" ; then
-		build_termlib=yes
-	fi]
-)
-AC_ARG_ENABLE(libterm,,
-	[if test "x$enableval" = "xno" ; then
-		build_termlib=no
-	elif test "x$enableval" = "xyes" ; then
-		build_termlib=yes
-	fi]
-)
+# aliases to force building termlib (help uses termlib-build)
+BC_ARG_ALIAS([build_termlib], [termlib])
+BC_ARG_ALIAS([build_termlib], [termcap])
+BC_ARG_ALIAS([build_termlib], [libtermlib])
+BC_ARG_ALIAS([build_termlib], [libtermcap])
+BC_ARG_ALIAS([build_termlib], [termcap-build])
+BC_ARG_ALIAS([build_termlib], [libtermlib-build])
+BC_ARG_ALIAS([build_termlib], [libtermcap-build])
 AC_MSG_CHECKING(whether to build the termlib library)
 AC_MSG_RESULT($build_urt)
 
-# optimized alias
-AC_ARG_ENABLE(optimization,,
-	[if test "x$enable_optimization" != "xno" ; then
-		use_optimized=yes
-	fi]
-)
-AC_ARG_ENABLE(optimizations,,
-	[if test "x$enable_optimizations" != "xno" ; then
-		use_optimized=yes
-	fi]
-)
+# jove aliases (help uses jove)
+BC_ARG_ALIAS([build_jove], [jove-build])
+AC_MSG_CHECKING(whether to compile jove or not)
+AC_MSG_RESULT($build_jove)
+
+# optimized aliases (help uses optimized)
+BC_ARG_ALIAS([use_optimized], [optimize])
+BC_ARG_ALIAS([use_optimized], [optimization])
+BC_ARG_ALIAS([use_optimized], [optimizations])
 AC_MSG_CHECKING(whether to enable optimized compilation)
 AC_MSG_RESULT($use_optimized)
 
-# debug alias
-AC_ARG_ENABLE(debugging,,
-	[if test "x$disable_debug" != "xno" ; then
-		use_debug=no
-	fi]
-)
-AC_MSG_CHECKING(whether to disable debug mode compilation)
-AC_MSG_RESULT($use_debug)
-
-# profiling alias
-AC_ARG_ENABLE(profile,,
-	[if test "x$enable_profile" != "xno" ; then
-		use_profiling=yes
-	fi]
-)
-AC_ARG_ENABLE(profiled,,
-	[if test "x$enable_profiled" != "xno" ; then
-		use_profiling=yes
-	fi]
-)
-AC_MSG_CHECKING(whether to enable profile mode compilation)
-AC_MSG_RESULT($use_profiling)
-
-# verbose warnings alias
-AC_ARG_ENABLE(verbose-warnings,,
-	[if test "x$enable_verbose_warnings" != "xno" ; then
-		use_warnings=yes
-	fi]
-)
-AC_ARG_ENABLE(warning,,
-	[if test "x$enable_warning" != "xno" ; then
-		use_warnings=yes
-	fi]
-)
+# verbose warning aliases (help uses warnings)
+BC_ARG_ALIAS([use_warnings], [verbose])
+BC_ARG_ALIAS([use_warnings], [warning])
+BC_ARG_ALIAS([use_warnings], [warnings])
+BC_ARG_ALIAS([use_warnings], [verbose-warnings])
+BC_ARG_ALIAS([use_warnings], [warnings-verbose])
 AC_MSG_CHECKING(whether to enable verbose compilation warnings)
 AC_MSG_RESULT($use_warnings)
 
+# debug aliases (help uses debug)
+BC_ARG_ALIAS([use_debug], [debugging])
+AC_MSG_CHECKING(whether to disable debug mode compilation)
+AC_MSG_RESULT($use_debug)
+
+# profiling aliases (help uses profiling)
+BC_ARG_ALIAS([use_profiling], [profile])
+BC_ARG_ALIAS([use_profiling], [profiled])
+AC_MSG_CHECKING(whether to enable profile mode compilation)
+AC_MSG_RESULT($use_profiling)
+
+# with java aliases (help uses jdk)
+BC_ARG_WITH_ALIAS([with_java], [java])
+
+
+# make sure multiple "only" options were not given
+if test "x$only_benchmark" != "xno" ; then
+	if test "x$only_rts" != "xno" ; then
+		AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
+		AC_MSG_WARN([Requesting BOTH benchmark and librtserver "only"?])
+		AC_MSG_WARN([Building both benchmark and librtserver])
+		AC_MSG_NOTICE([{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{])
+	fi
+fi
 
 # override the default autoconf cflags if user has not modified them
 if test "x$CFLAGS" = "x" ; then
@@ -1080,6 +704,23 @@ sgigl_link_works=no
 LIBSGIGL=""
 AC_CHECK_LIB(gl, getvideo, sgigl_link_works=yes ; LIBSGIGL="-lgl")
 
+dnl check for java
+JAVA_CFLAGS=
+JAVA_LDFLAGS=
+if test "x$with_java" = "xyes" ; then
+	JAVA_CFLAGS="-I$with_java_val/include -I$with_java_val/include/`uname | tr [A-Z] [a-z]`"
+fi
+# XXX this should go away and become proper library or compiler option checks
+case "$target" in
+	*-*-darwin*)
+		JAVA_CFLAGS="-framework JavaVM"
+		JAVA_LDFLAGS="-shrext .jnilib -framework JavaVM"
+		with_java=yes
+		;;
+esac
+AC_SUBST(JAVA_CFLAGS)
+AC_SUBST(JAVA_LDFLAGS)
+
 
 dnl *************************
 dnl *** Check for headers ***
@@ -1165,6 +806,8 @@ AC_CHECK_HEADER(sys/sched.h,
 		[
 #include <sys/sched.h>
 ])
+
+# XXX cached opengl header checks cause bad things to happen without a configure ERROR halt
 
 AC_CHECK_HEADER(sys/stat.h, AC_DEFINE(HAVE_UNIX_IO,, Fix this, sys/types.h and sys/stat.h ...))
 AC_CHECK_HEADER(sys/time.h, AC_DEFINE(TIME_WITH_SYS_TIME,1,sys/time.h))
