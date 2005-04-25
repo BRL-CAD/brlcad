@@ -36,41 +36,41 @@ ifftc_SOURCES = \
 	ditsplitc.c \
 	ifftc.c
 
-rfft16.c:	fftc
-	./fftc 16 > rfft16.c
+rfft16.c:	fftc$(EXEEXT)
+	./fftc$(EXEEXT) 16 > rfft16.c
 
-rfft32.c:	fftc
-	./fftc 32 > rfft32.c
+rfft32.c:	fftc$(EXEEXT)
+	./fftc$(EXEEXT) 32 > rfft32.c
 
-rfft64.c:	fftc
-	./fftc 64 > rfft64.c
+rfft64.c:	fftc$(EXEEXT)
+	./fftc$(EXEEXT) 64 > rfft64.c
 
-rfft128.c:	fftc
-	./fftc 128 > rfft128.c
+rfft128.c:	fftc$(EXEEXT)
+	./fftc$(EXEEXT) 128 > rfft128.c
 
-rfft256.c:	fftc
-	./fftc 256 > rfft256.c
+rfft256.c:	fftc$(EXEEXT)
+	./fftc$(EXEEXT) 256 > rfft256.c
 
-rfft512.c:	fftc
-	./fftc 512 > rfft512.c
+rfft512.c:	fftc$(EXEEXT)
+	./fftc$(EXEEXT) 512 > rfft512.c
 
-irfft16.c:	ifftc
-	./ifftc 16 > irfft16.c
+irfft16.c:	ifftc$(EXEEXT)
+	./ifftc$(EXEEXT) 16 > irfft16.c
 
-irfft32.c:	ifftc
-	./ifftc 32 > irfft32.c
+irfft32.c:	ifftc$(EXEEXT)
+	./ifftc$(EXEEXT) 32 > irfft32.c
 
-irfft64.c:	ifftc
-	./ifftc 64 > irfft64.c
+irfft64.c:	ifftc$(EXEEXT)
+	./ifftc$(EXEEXT) 64 > irfft64.c
 
-irfft128.c:	ifftc
-	./ifftc 128 > irfft128.c
+irfft128.c:	ifftc$(EXEEXT)
+	./ifftc$(EXEEXT) 128 > irfft128.c
 
-irfft256.c:	ifftc
-	./ifftc 256 > irfft256.c
+irfft256.c:	ifftc$(EXEEXT)
+	./ifftc$(EXEEXT) 256 > irfft256.c
 
-irfft512.c:	ifftc
-	./ifftc 512 > irfft512.c
+irfft512.c:	ifftc$(EXEEXT)
+	./ifftc$(EXEEXT) 512 > irfft512.c
 
 vers.c: $(SRCS)
 	@SH@ $(top_srcdir)/sh/vers.sh fft_version "BRL-CAD FFT Library" > $@
