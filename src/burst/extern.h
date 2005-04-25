@@ -52,14 +52,6 @@
 #  include <stdlib.h>
 #endif
 
-#ifdef SYSV
-extern long	lrand48();
-#else
-#if !defined(linux)
-extern long	random();
-#endif
-#endif
-
 /* External variables from termlib. */
 extern char *CS, *DL;
 extern int CO, LI;
