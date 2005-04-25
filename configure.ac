@@ -804,6 +804,9 @@ AC_CHECK_HEADERS( \
 AC_CHECK_HEADER(sys/sched.h,
 		AC_DEFINE(HAVE_SYS_SCHED_H, 1, Define to 1 if you have the <sys/sched.h> header file.),,
 		[
+#ifdef HAVE_PTHREAD_H
+#  include <pthread.h>
+#endif
 #include <sys/sched.h>
 ])
 
