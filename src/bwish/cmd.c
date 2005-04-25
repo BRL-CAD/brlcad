@@ -45,20 +45,21 @@
 #include "common.h"
 
 #ifdef HAVE_STRING_H
-#include <string.h>
+#  include <string.h>
 #else
-#include <strings.h>
+#  include <strings.h>
 #endif
 
 #ifdef BWISH
-#include "tk.h"
+#  include "tk.h"
 #else
-#include "tcl.h"
+#  include "tcl.h"
 #endif
 
 #include "machine.h"
 #include "cmd.h"
 #include "libtermio.h"
+
 
 /* defined in tcl.c */
 extern void Cad_Exit(int status);
@@ -123,6 +124,7 @@ cmd_quit(ClientData	clientData,
 
 /***************************** BWISH/BTCLSH COMMAND HISTORY *****************************/
 
+HIDDEN int historyInitialized=0;
 HIDDEN void
 historyInit(void)
 {
@@ -135,6 +137,7 @@ historyInit(void)
 #if 0
     journalfp = NULL;
 #endif
+    historyInitialized=1;
 }
 
 /*
@@ -161,6 +164,12 @@ history_record(struct bu_vls *cmdp, struct timeval *start, struct timeval *finis
     new_hist->h_start = *start;
     new_hist->h_finish = *finish;
     new_hist->h_status = status;
+
+    /* make sure the list is initialized before attempting to add this entry */
+    if (!historyInitialized) {
+	historyInit();
+    }
+
     BU_LIST_INSERT(&(histHead.l), &(new_hist->l));
 
     /* As long as this isn't our first command to record after setting
