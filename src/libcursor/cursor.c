@@ -20,25 +20,14 @@
  */
 /** @file cursor.c
  *
+ * Author:		Gary S. Moss
+ * 			U. S. Army Ballistic Research Laboratory
+ *			Aberdeen Proving Ground
+ *			Maryland 21005-5066
  */
-
-/*LINTLIBRARY*/
-/*
-	Author:		Gary S. Moss
-			U. S. Army Ballistic Research Laboratory
-			Aberdeen Proving Ground
-			Maryland 21005-5066
-*/
 #ifndef lint
 static const char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
-/*
-	Originally extracted from SCCS archive:
-		SCCS id:	@(#) libcursor.c	1.13
-		Last edit: 	2/4/87 at 12:42:12
-		Retrieved: 	2/4/87 at 12:42:39
-		SCCS archive:	/v/src/libcursor/s.libcursor.c
- */
 
 #include "common.h"
 
@@ -46,24 +35,35 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include <stdlib.h>
 
 #ifdef HAVE_STRING_H
-#include <string.h>
+#  include <string.h>
 #else
-#include <strings.h>
+#  include <strings.h>
 #endif
 
-
-#ifdef HAVE_NCURSES_H
-#  include <ncurses.h>
+#ifdef HAVE_TERMLIB_H
+#  include <termlib.h>
 #else
-#  ifdef HAVE_CURSES_H
-#    include <curses.h>
+#  if HAVE_NCURSES_H
+#    include <ncurses.h>
+#  else
+#    ifdef HAVE_CURSES_H
+#      include <curses.h>
+#    else
+#      ifdef HAVE_TERMCAP_H
+#        include <termcap.h>
+#      else
+#        ifdef HAVE_TERMINFO_H
+#          include <terminfo.h>
+#        else
+#          ifdef HAVE_TINFO_H
+#            include <tinfo.h>
+#          endif
+#        endif
+#      endif
+#    endif
 #  endif
-#endif
-#ifdef HAVE_TERM_H
-#  include <term.h>
-#else
-#  ifdef HAVE_TERMCAP_H
-#    include <termcap.h>
+#  if HAVE_TERM_H
+#    include <term.h>
 #  endif
 #endif
 
