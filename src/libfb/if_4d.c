@@ -428,7 +428,7 @@ FBIO	*ifp;
 		new = 1;
 	}
 
-#if IRIX < 5
+#if defined (IRIX) && IRIX < 5
 	/* Move up the existing break, to leave room for later malloc()s */
 	old_brk = sbrk(0);
 	new_brk = (char *)(6 * (XMAXSCREEN+1) * 1024L);
