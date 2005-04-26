@@ -37,8 +37,6 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "common.h"
 
-
-
 #include <stdio.h>
 #include <math.h>
 #include "machine.h"
@@ -46,6 +44,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "vmath.h"
 #include "bn.h"
 #include "raytrace.h"
+
 #include "./ged.h"
 #include "./mged_solid.h"
 #include "./sedit.h"
