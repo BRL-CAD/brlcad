@@ -44,15 +44,13 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "common.h"
 
-
-
 #include <stdio.h>
 #include <signal.h>
 #include <math.h>
 #ifdef HAVE_STRING_H
-#include <string.h>
+#  include <string.h>
 #else
-#include <strings.h>
+#  include <strings.h>
 #endif
 
 #include "machine.h"
@@ -72,14 +70,14 @@ extern struct rt_db_internal	es_int;
 extern struct rt_db_internal	es_int_orig;
 extern struct bn_tol		mged_tol;		/* from ged.c */
 
-/* face definitions for each arb type */
-int arb_faces[5][24] = {
-	{0,1,2,3, 0,1,4,5, 1,2,4,5, 0,2,4,5, -1,-1,-1,-1, -1,-1,-1,-1},	/* ARB4 */
-	{0,1,2,3, 4,0,1,5, 4,1,2,5, 4,2,3,5, 4,3,0,5, -1,-1,-1,-1},	/* ARB5 */
-	{0,1,2,3, 1,2,4,6, 0,4,6,3, 4,1,0,5, 6,2,3,7, -1,-1,-1,-1},	/* ARB6 */
-	{0,1,2,3, 4,5,6,7, 0,3,4,7, 1,2,6,5, 0,1,5,4, 3,2,6,4},		/* ARB7 */
-	{0,1,2,3, 4,5,6,7, 0,4,7,3, 1,2,6,5, 0,1,5,4, 3,2,6,7},		/* ARB8 */
-};
+/* from librt */
+extern const int rt_arb_faces[5][24];
+extern short earb8[12][18];
+extern short earb7[12][18];
+extern short earb6[10][18];
+extern short earb5[9][18];
+extern short earb4[5][18];
+
 
 /*
  *  			E D I T A R B
@@ -94,137 +92,14 @@ int arb_faces[5][24] = {
  *
  */
 
-/*  The storage for the "specific" ARB types is :
- *
- *	ARB4	0 1 2 0 3 3 3 3
- *	ARB5	0 1 2 3 4 4 4 4
- *	ARB6	0 1 2 3 4 4 5 5
- *	ARB7	0 1 2 3 4 5 6 4
- *	ARB8	0 1 2 3 4 5 6 7
- */
-
-/* Another summary of how the vertices of ARBs are stored:
- *
- * Vertices:	1	2	3	4	5	6	7	8
- * Location----------------------------------------------------------------
- *	ARB8	0	1	2	3	4	5	6	7
- *	ARB7	0	1	2	3	4,7	5	6
- *	ARB6	0	1	2	3	4,5	6,7
- * 	ARB5	0	1	2	3	4,5,6,7
- *	ARB4	0,3	1	2	4,5,6,7
- */
-
-/* The following arb editing arrays generally contain the following:
- *
- *	location 	comments
- *------------------------------------------------------------------------
- *	0,1		edge end points
- * 	2,3		bounding planes 1 and 2
- *	4, 5,6,7	plane 1 to recalculate, using next 3 points
- *	8, 9,10,11	plane 2 to recalculate, using next 3 points
- *	12, 13,14,15	plane 3 to recalculate, using next 3 points
- *	16,17		points (vertices) to recalculate
- *
- *
- * Each line is repeated for each edge (or point) to move
-*/
-
-/* edit array for arb8's */
-#if 1
-short earb8[12][18] = {
-#else
-static short earb8[12][18] = {
-#endif
-	{0,1, 2,3, 0,0,1,2, 4,0,1,4, -1,0,0,0, 3,5},	/* edge 12 */
-	{1,2, 4,5, 0,0,1,2, 3,1,2,5, -1,0,0,0, 3,6},	/* edge 23 */
-	{2,3, 3,2, 0,0,2,3, 5,2,3,6, -1,0,0,0, 1,7},	/* edge 34 */
-	{0,3, 4,5, 0,0,1,3, 2,0,3,4, -1,0,0,0, 2,7},	/* edge 41 */
-	{0,4, 0,1, 2,0,4,3, 4,0,1,4, -1,0,0,0, 7,5},	/* edge 15 */
-	{1,5, 0,1, 4,0,1,5, 3,1,2,5, -1,0,0,0, 4,6},	/* edge 26 */
-	{4,5, 2,3, 4,0,5,4, 1,4,5,6, -1,0,0,0, 1,7},	/* edge 56 */
-	{5,6, 4,5, 3,1,5,6, 1,4,5,6, -1,0,0,0, 2,7},	/* edge 67 */
-	{6,7, 3,2, 5,2,7,6, 1,4,6,7, -1,0,0,0, 3,4},	/* edge 78 */
-	{4,7, 4,5, 2,0,7,4, 1,4,5,7, -1,0,0,0, 3,6},	/* edge 58 */
-	{2,6, 0,1, 3,1,2,6, 5,2,3,6, -1,0,0,0, 5,7},	/* edge 37 */
-	{3,7, 0,1, 2,0,3,7, 5,2,3,7, -1,0,0,0, 4,6},	/* edge 48 */
-};
-
-/* edit array for arb7's */
-#if 1
-short earb7[12][18] = {
-#else
-static short earb7[12][18] = {
-#endif
-	{0,1, 2,3, 0,0,1,2, 4,0,1,4, -1,0,0,0, 3,5},	/* edge 12 */
-	{1,2, 4,5, 0,0,1,2, 3,1,2,5, -1,0,0,0, 3,6},	/* edge 23 */
-	{2,3, 3,2, 0,0,2,3, 5,2,3,6, -1,0,0,0, 1,4},	/* edge 34 */
-	{0,3, 4,5, 0,0,1,3, 2,0,3,4, -1,0,0,0, 2,-1},	/* edge 41 */
-	{0,4, 0,5, 4,0,5,4, 2,0,3,4, 1,4,5,6, 1,-1},	/* edge 15 */
-	{1,5, 0,1, 4,0,1,5, 3,1,2,5, -1,0,0,0, 4,6},	/* edge 26 */
-	{4,5, 5,3, 2,0,3,4, 4,0,5,4, 1,4,5,6, 1,-1},	/* edge 56 */
-	{5,6, 4,5, 3,1,6,5, 1,4,5,6, -1,0,0,0, 2, -1},	/* edge 67 */
-	{2,6, 0,1, 5,2,3,6, 3,1,2,6, -1,0,0,0, 4,5},	/* edge 37 */
-	{4,6, 4,3, 2,0,3,4, 5,3,4,6, 1,4,5,6, 2,-1},	/* edge 57 */
-	{3,4, 0,1, 4,0,1,4, 2,0,3,4, 5,2,3,4, 5,6},	/* edge 45 */
-	{-1,-1, -1,-1, 5,2,3,4, 4,0,1,4, 8,2,1,-1, 6,5},	/* point 5 */
-};
-
-/* edit array for arb6's */
-#if 1
-short earb6[10][18] = {
-#else
-static short earb6[10][18] = {
-#endif
-	{0,1, 2,1, 3,0,1,4, 0,0,1,2, -1,0,0,0, 3,-1},	/* edge 12 */
-	{1,2, 3,4, 1,1,2,5, 0,0,1,2, -1,0,0,0, 3,4},	/* edge 23 */
-	{2,3, 1,2, 4,2,3,5, 0,0,2,3, -1,0,0,0, 1,-1},	/* edge 34 */
-	{0,3, 3,4, 2,0,3,5, 0,0,1,3, -1,0,0,0, 4,2},	/* edge 14 */
-	{0,4, 0,1, 3,0,1,4, 2,0,3,4, -1,0,0,0, 6,-1},	/* edge 15 */
-	{1,4, 0,2, 3,0,1,4, 1,1,2,4, -1,0,0,0, 6,-1},	/* edge 25 */
-	{2,6, 0,2, 4,6,2,3, 1,1,2,6, -1,0,0,0, 4,-1},	/* edge 36 */
-	{3,6, 0,1, 4,6,2,3, 2,0,3,6, -1,0,0,0, 4,-1},	/* edge 46 */
-	{-1,-1, -1,-1, 2,0,3,4, 1,1,2,4, 3,0,1,4, 6,-1},/* point 5 */
-	{-1,-1, -1,-1, 2,0,3,6, 1,1,2,6, 4,2,3,6, 4,-1},/* point 6 */
-};
-
-/* edit array for arb5's */
-#if 1
-short earb5[9][18] = {
-#else
-static short earb5[9][18] = {
-#endif
-	{0,1, 4,2, 0,0,1,2, 1,0,1,4, -1,0,0,0, 3,-1},	/* edge 12 */
-	{1,2, 1,3, 0,0,1,2, 2,1,2,4, -1,0,0,0, 3,-1},	/* edge 23 */
-	{2,3, 2,4, 0,0,2,3, 3,2,3,4, -1,0,0,0, 1,-1},	/* edge 34 */
-	{0,3, 1,3, 0,0,1,3, 4,0,3,4, -1,0,0,0, 2,-1},	/* edge 14 */
-	{0,4, 0,2, 9,0,0,0, 9,0,0,0, 9,0,0,0, -1,-1},	/* edge 15 */
-	{1,4, 0,3, 9,0,0,0, 9,0,0,0, 9,0,0,0, -1,-1},	/* edge 25 */
-	{2,4, 0,4, 9,0,0,0, 9,0,0,0, 9,0,0,0, -1,-1}, 	/* edge 35 */
-	{3,4, 0,1, 9,0,0,0, 9,0,0,0, 9,0,0,0, -1,-1},	/* edge 45 */
-	{-1,-1, -1,-1, 9,0,0,0, 9,0,0,0, 9,0,0,0, -1,-1},	/* point 5 */
-};
-
-/* edit array for arb4's */
-#if 1
-short earb4[5][18] = {
-#else
-static short earb4[5][18] = {
-#endif
-	{-1,-1, -1,-1, 9,0,0,0, 9,0,0,0, 9,0,0,0, -1,-1},	/* point 1 */
-	{-1,-1, -1,-1, 9,0,0,0, 9,0,0,0, 9,0,0,0, -1,-1},	/* point 2 */
-	{-1,-1, -1,-1, 9,0,0,0, 9,0,0,0, 9,0,0,0, -1,-1},	/* point 3 */
-	{-1,-1, -1,-1, 9,0,0,0, 9,0,0,0, 9,0,0,0, -1,-1},	/* dummy */
-	{-1,-1, -1,-1, 9,0,0,0, 9,0,0,0, 9,0,0,0, -1,-1},	/* point 4 */
-};
-
-
 int
 editarb( vect_t pos_model )
 {
 	static int pt1, pt2, bp1, bp2, newp, p1, p2, p3;
 	short *edptr;		/* pointer to arb edit array */
 	short *final;		/* location of points to redo */
-	static int i, *iptr;
+	static int i;
+	const int *iptr;
 	struct rt_arb_internal *arb;
 
 	arb = (struct rt_arb_internal *)es_int.idb_ptr;
@@ -346,7 +221,7 @@ bu_log("redo plane %d with points %d %d %d\n",newp+1,p1+1,p2+1,p3+1);
 		for(i=0; i<3; i++) {
 			if( (newp = *edptr++) == -1 )
 				break;
-			iptr = &arb_faces[es_type-4][4*newp];
+			iptr = &rt_arb_faces[es_type-4][4*newp];
 			p1 = *iptr++;
 			p2 = *iptr++;
 			p3 = *iptr++;

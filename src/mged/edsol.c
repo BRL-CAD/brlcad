@@ -44,14 +44,12 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "common.h"
 
-
-
 #include <stdio.h>
 #include <math.h>
 #ifdef HAVE_STRING_H
-#include <string.h>
+#  include <string.h>
 #else
-#include <strings.h>
+#  include <strings.h>
 #endif
 
 #include <sys/types.h>
@@ -72,12 +70,15 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./sedit.h"
 #include "./mged_dm.h"
 
+
 #if 1
 #define TRY_EDIT_NEW_WAY
 #endif
 
 extern struct bn_tol		mged_tol;	/* from ged.c */
 
+/* from librt */
+extern const int rt_arb_faces[5][24];
 extern short earb4[5][18];
 extern short earb5[9][18];
 extern short earb6[10][18];
@@ -248,7 +249,6 @@ int	es_menu;		/* item selected from menu */
 #define MENU_SUPERELL_SCALE_C	115
 #define MENU_SUPERELL_SCALE_ABC	116
 
-extern int arb_faces[5][24];	/* from edarb.c */
 
 struct menu_item cline_menu[] = {
 	{ "CLINE MENU",		(void (*)())NULL, 0 },
@@ -2204,19 +2204,19 @@ set_e_axes_pos(int both)
 			case ECMD_ARB_MOVE_FACE:
 				switch (es_type) {
 				case ARB4:
-					i = arb_faces[0][es_menu * 4];
+					i = rt_arb_faces[0][es_menu * 4];
 					break;
 				case ARB5:
-					i = arb_faces[1][es_menu * 4];  		
+					i = rt_arb_faces[1][es_menu * 4];  		
 					break;
 				case ARB6:
-					i = arb_faces[2][es_menu * 4];  		
+					i = rt_arb_faces[2][es_menu * 4];  		
 					break;
 				case ARB7:
-					i = arb_faces[3][es_menu * 4];  		
+					i = rt_arb_faces[3][es_menu * 4];  		
 					break;
 				case ARB8:
-					i = arb_faces[4][es_menu * 4];  		
+					i = rt_arb_faces[4][es_menu * 4];  		
 					break;
 				default:
 					i = 0;
@@ -8727,11 +8727,11 @@ rt_arb_calc_planes(
 	type -= 4;	/* ARB4 at location 0, ARB5 at 1, etc */
 
 	for(i=0; i<6; i++) {
-		if(arb_faces[type][i*4] == -1)
+		if(rt_arb_faces[type][i*4] == -1)
 			break;	/* faces are done */
-		p1 = arb_faces[type][i*4];
-		p2 = arb_faces[type][i*4+1];
-		p3 = arb_faces[type][i*4+2];
+		p1 = rt_arb_faces[type][i*4];
+		p2 = rt_arb_faces[type][i*4+1];
+		p3 = rt_arb_faces[type][i*4+2];
 
 		if( bn_mk_plane_3pts( planes[i],
 		    arb->pt[p1], arb->pt[p2], arb->pt[p3], tol ) < 0 )  {
@@ -8739,7 +8739,7 @@ rt_arb_calc_planes(
 
 		  bu_vls_init(&tmp_vls);
 		  bu_vls_printf(&tmp_vls, "rt_arb_calc_planes: No eqn for face %d%d%d%d\n",
-				p1+1, p2+1, p3+1, arb_faces[type][i*4+3]+1);
+				p1+1, p2+1, p3+1, rt_arb_faces[type][i*4+3]+1);
 		  Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
 			bu_vls_free(&tmp_vls);
 		  return -1;

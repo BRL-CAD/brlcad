@@ -38,8 +38,6 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "common.h"
 
-
-
 #include <stdio.h>
 #include <math.h>
 #include "machine.h"
@@ -53,11 +51,16 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./mged_solid.h"
 #include "./mged_dm.h"
 
+
 /* Conversion factor for Gallons to cubic millimeters */
 #define GALLONS_TO_MM3 3785411.784
 
 extern struct rt_db_internal	es_int;	/* from edsol.c */
 extern struct bn_tol		mged_tol;		/* from ged.c */
+
+/* from librt */
+extern const int rt_arb_faces[5][24];
+
 
 static void	do_anal(struct bu_vls *vp, const struct rt_db_internal *ip);
 static void	arb_anal(struct bu_vls *vp, const struct rt_db_internal *ip);
@@ -398,10 +401,10 @@ anal_face(struct bu_vls *vp, int face, fastf_t *center_pt, const struct rt_arb_i
 	if(dbip == DBI_NULL)
 	  return 0;
 
-	a = arb_faces[type][face*4+0];
-	b = arb_faces[type][face*4+1];
-	c = arb_faces[type][face*4+2];
-	d = arb_faces[type][face*4+3];
+	a = rt_arb_faces[type][face*4+0];
+	b = rt_arb_faces[type][face*4+1];
+	c = rt_arb_faces[type][face*4+2];
+	d = rt_arb_faces[type][face*4+3];
 
 	if(a == -1)
 		return 0;
@@ -433,15 +436,15 @@ anal_face(struct bu_vls *vp, int face, fastf_t *center_pt, const struct rt_arb_i
 
 	/* find the surface area of this face */
 	for(i=0; i<3; i++) {
-		j = arb_faces[type][face*4+i];
-		k = arb_faces[type][face*4+i+1];
+		j = rt_arb_faces[type][face*4+i];
+		k = rt_arb_faces[type][face*4+i+1];
 		VSUB2(v_temp, arb->pt[k], arb->pt[j]);
 		len[i] = MAGNITUDE( v_temp );
 	}
 	len[4] = len[2];
-	j = arb_faces[type][face*4+0];
+	j = rt_arb_faces[type][face*4+0];
 	for(i=2; i<4; i++) {
-		k = arb_faces[type][face*4+i];
+		k = rt_arb_faces[type][face*4+i];
 		VSUB2(v_temp, arb->pt[k], arb->pt[j]);
 		len[((i*2)-1)] = MAGNITUDE( v_temp );
 	}
