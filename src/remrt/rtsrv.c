@@ -35,37 +35,36 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "common.h"
 
-#if IRIX == 4
-#define _BSD_COMPAT	1
-#endif
-
 #ifdef HAVE_UNISTD_H
-#include <unistd.h>
+#  include <unistd.h>
 #endif
 #include <stdio.h>
 #ifdef HAVE_STRING_H
-#include <string.h>
+#  include <string.h>
 #else
-#include <strings.h>
+#  include <strings.h>
 #endif
 #ifdef HAVE_STDARG_H
-# include <stdarg.h>
+#  include <stdarg.h>
 #else
-# include <varargs.h>
+#  include <varargs.h>
 #endif
 
 #include <sys/time.h>
 
 #ifdef HAVE_SYS_IOCTL_H
-# include <sys/ioctl.h>
-# include <sys/resource.h>
+#  include <sys/ioctl.h>
+#  include <sys/resource.h>
 #endif
 
 #ifdef HAVE_SYS_SOCKET_H
-# include <sys/socket.h>
+#  include <sys/socket.h>
 #endif
 
-#undef	VMIN
+#ifdef VMIN
+#  undef VMIN
+#endif
+
 #include "machine.h"
 #include "bu.h"
 #include "vmath.h"
