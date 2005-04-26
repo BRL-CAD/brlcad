@@ -63,10 +63,6 @@
 static const char RCSid[] = "@(#)$Header$ (ARL)";
 #endif
 
-#if defined(IRIX) && IRIX==5
-#  define	_BSD_COMPAT
-#endif
-
 #include "common.h"
 
 #include <stdio.h>
