@@ -16,10 +16,12 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include <stdio.h>
 
-#if IRIX >= 5
-#include <sys/file.h>
-#else
-#include <fcntl.h>
+#ifdef HAVE_SYS_FILE_H
+#  include <sys/file.h>
+#endif
+
+#ifdef HAVE_FCNTL_H
+#  include <fcntl.h>
 #endif
 
 #if HAVE_SYS_IOCTL_COMPAT_H
