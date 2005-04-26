@@ -233,7 +233,7 @@ typedef long bitv_t;
 /* assume only one processor for now */
 #define MAX_PSW	4
 #define DEFAULT_PSW	1
-#define PARALLEL	1
+#define PARALLEL	0
 #define MALLOC_NOT_MP_SAFE 1
 
 #endif /* WIN32 */
