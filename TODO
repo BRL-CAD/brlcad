@@ -12,6 +12,10 @@ THESE SHOULD HAPPEN BEFORE THE NEXT RELEASE
 
 THESE ARE LOWER PRIORITY
 
+* add benchmark support to compute a stability/error metric to
+  continue raytracing until the mean variance is below some threshold
+  (to get stable values).
+
 * add dynamic geometry support. i.e. the ability to modify the parsed
   in-memory geometry tree on the fly via api calls (e.g. to add holes)
 
@@ -58,15 +62,10 @@ THESE BREAK PROTOCOL AND ARE BACKWARDS INCOMPATIBLE
   primitive types.  this includes modifying the major/minor code or
   combinations/regions and binary objects
 
-* make benchmarks scale over time by performing multi-resolution
-  raytrace iterations of increasing size
-
 ---
 
 See the project task tracker for more to do items and future planning
 efforts.  http://sf.net/pm/?group_id=105292
 
 TODO items should be formated to column 70 (M-q in emacs), no tabs
-
-
 
