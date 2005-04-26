@@ -45,10 +45,6 @@ typedef int bool;			/* Boolean data */
 #define 	false	0
 #define 	true	1
 
-#if defined(mips) && ! defined(IRIX3_3)
-#define IRIX3_3		1	/* Assume running release 3.3 or later. */
-#endif
-
 typedef char *pointer;		/* generic pointer (void *) */
 
 #if !defined(__STDC__)
