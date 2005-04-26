@@ -45,22 +45,6 @@ typedef int bool;			/* Boolean data */
 #define 	false	0
 #define 	true	1
 
-#if defined(mips) && ! defined(IRIX3_3)
-#define IRIX3_3		1	/* Assume running release 3.3 or later. */
-#endif
-
-#if ! IRIX3_3 || ! defined(__SYS_TYPES_H__)
-/* Defined in <sys/types.h> under IRIX3.3. */
-typedef unsigned char u_char;		/* unsigned integer types */
-typedef unsigned short	u_short;
-
-#ifdef	pdp11
-typedef long		u_long;		/* (not in Ritchie compiler) */
-#else
-typedef unsigned long	u_long;
-#endif
-#endif
-
 typedef char *pointer;		/* generic pointer (void *) */
 
 #define	const		/* nothing */	/* (undefine for ANSI C) */
