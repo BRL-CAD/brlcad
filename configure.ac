@@ -208,13 +208,13 @@ BC_ARG_ENABLE([build_zlib], [zlib-build], [Build the included zlib compression l
 BC_ARG_ENABLE([build_urt], [urt-build], [Build the included Utah Raster Toolkit], [auto])
 
 # force enable/disable building of Tcl
-BC_ARG_ENABLE([build_tcl], [tcl-build], [Build the included Tcl], [auto])
+BC_ARG_ENABLE([build_tcl], [tcl-build], [Build the included Tcl], [yes])
 
 # force enable/disable building of incrTcl
 BC_ARG_ENABLE([build_itcl], [itcl-build], [Build the included incrTcl], [yes])
 
 # force enable/disable building of iwidgets
-BC_ARG_ENABLE([build_iwidgets], [iwidgets-build], [Install the included iwidgets], [auto])
+BC_ARG_ENABLE([build_iwidgets], [iwidgets-build], [Install the included iwidgets], [yes])
 
 # force enable/disable building of termlib
 BC_ARG_ENABLE([build_termlib], [termlib-build], [Build the included termlib library], [auto])
