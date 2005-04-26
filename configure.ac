@@ -946,7 +946,10 @@ AC_TYPE_SIZE_T
 dnl XXX - union wait testing from tcl8.4's configure.in, should be revamped.
 AC_MSG_CHECKING([union wait])
 AC_CACHE_VAL(tcl_cv_union_wait,
-    AC_TRY_LINK([#include <sys/types.h>
+    AC_TRY_LINK([
+#ifdef HAVE_SYS_TYPES_H
+#  include <sys/types.h>
+#endif
 #include <sys/wait.h>], [
 union wait x;
  WIFEXITED(x);           /* Generates an error if WIFEXITED
@@ -1447,7 +1450,9 @@ AC_MSG_CHECKING(for regular expression functionality)
 PRELDFLAGS="$LDFLAGS"
 LDFLAGS="$LDFLAGS $LIBREGEX"
 AC_TRY_RUN([
-#include <sys/types.h>
+#ifdef HAVE_SYS_TYPES_H
+#  include <sys/types.h>
+#endif
 #include <regex.h>
 int main() {
   regex_t re;
