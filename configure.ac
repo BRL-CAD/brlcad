@@ -827,8 +827,24 @@ AC_CHECK_HEADER(sys/mount.h,
 AC_CHECK_HEADER(term.h,
 		AC_DEFINE(HAVE_TERM_H, 1, Define to 1 if you have the <term.h> header file.),,
 		[
-#ifdef HAVE_CURSES_H
-#  include <curses.h>
+#if HAVE_NCURSES_H
+#  include <ncurses.h>
+#else
+#  ifdef HAVE_CURSES_H
+#    include <curses.h>
+#  else
+#    ifdef HAVE_TERMCAP_H
+#      include <termcap.h>
+#    else
+#      ifdef HAVE_TERMINFO_H
+#        include <terminfo.h>
+#      else
+#        ifdef HAVE_TINFO_H
+#          include <tinfo.h>
+#        endif
+#      endif
+#    endif
+#  endif
 #endif
 #include <term.h>
 ])
