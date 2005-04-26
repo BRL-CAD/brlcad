@@ -79,7 +79,7 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 #  include <varargs.h>
 #endif
 
-#if defined(BSD) && !defined(CRAY2)
+#if HAVE_SYSLOG_H
 #  include <syslog.h>
 #endif
 
