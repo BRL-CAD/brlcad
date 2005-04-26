@@ -414,13 +414,6 @@ ogl_getmem(FBIO *ifp)
 	char	*sp;
 	int	new = 0;
 
-#if 0
-	if( sizeof(struct ogl_pixel) != sizeof(long) )  {
-		fb_log("Warning, ogl_pixel=%d, long=%d bytes\n",
-			sizeof(struct ogl_pixel), sizeof(long) );
-	}
-#endif
-
 	errno = 0;
 
 	if( (ifp->if_mode & MODE_1MASK) == MODE_1MALLOC )  {
