@@ -36,6 +36,7 @@
 
 #include "solid.h"
 
+/* instantiated in dozoom.c */
 extern struct solid	FreeSolid;	/* Head of freelist */
 extern struct solid	HeadSolid;	/* Head of doubly linked solid tab */
 
