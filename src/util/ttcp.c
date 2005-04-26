@@ -69,7 +69,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include <sys/resource.h>
 #endif
 
-#if IRIX == 5
+#if defined (IRIX) && IRIX == 5
 /* we need a struct timeval */
 struct timeval {
         long    tv_sec;         /* seconds */
