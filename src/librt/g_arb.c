@@ -58,14 +58,12 @@ static const char RCSarb[] = "@(#)$Header$ (BRL)";
 
 #include "common.h"
 
-
-
 #include <stdio.h>
 #include <math.h>
 #ifdef HAVE_STRING_H
-#include <string.h>
+#  include <string.h>
 #else
-#include <strings.h>
+#  include <strings.h>
 #endif
 #include "machine.h"
 #include "bu.h"
@@ -77,6 +75,7 @@ static const char RCSarb[] = "@(#)$Header$ (BRL)";
 #include "nurb.h"
 #include "rtgeom.h"
 #include "./debug.h"
+
 
 #define RT_SLOPPY_DOT_TOL	0.0087	/* inspired by RT_DOT_TOL, but less tight (.5 deg) */
 
@@ -1928,11 +1927,7 @@ rt_arb_move_edge(Tcl_Interp		*interp,
 */
 
 /* edit array for arb8's */
-#if 1
 short earb8[12][18] = {
-#else
-static short earb8[12][18] = {
-#endif
 	{0,1, 2,3, 0,0,1,2, 4,0,1,4, -1,0,0,0, 3,5},	/* edge 12 */
 	{1,2, 4,5, 0,0,1,2, 3,1,2,5, -1,0,0,0, 3,6},	/* edge 23 */
 	{2,3, 3,2, 0,0,2,3, 5,2,3,6, -1,0,0,0, 1,7},	/* edge 34 */
@@ -1948,11 +1943,7 @@ static short earb8[12][18] = {
 };
 
 /* edit array for arb7's */
-#if 1
 short earb7[12][18] = {
-#else
-static short earb7[12][18] = {
-#endif
 	{0,1, 2,3, 0,0,1,2, 4,0,1,4, -1,0,0,0, 3,5},	/* edge 12 */
 	{1,2, 4,5, 0,0,1,2, 3,1,2,5, -1,0,0,0, 3,6},	/* edge 23 */
 	{2,3, 3,2, 0,0,2,3, 5,2,3,6, -1,0,0,0, 1,4},	/* edge 34 */
@@ -1968,11 +1959,7 @@ static short earb7[12][18] = {
 };
 
 /* edit array for arb6's */
-#if 1
 short earb6[10][18] = {
-#else
-static short earb6[10][18] = {
-#endif
 	{0,1, 2,1, 3,0,1,4, 0,0,1,2, -1,0,0,0, 3,-1},	/* edge 12 */
 	{1,2, 3,4, 1,1,2,5, 0,0,1,2, -1,0,0,0, 3,4},	/* edge 23 */
 	{2,3, 1,2, 4,2,3,5, 0,0,2,3, -1,0,0,0, 1,-1},	/* edge 34 */
@@ -1986,11 +1973,7 @@ static short earb6[10][18] = {
 };
 
 /* edit array for arb5's */
-#if 1
 short earb5[9][18] = {
-#else
-static short earb5[9][18] = {
-#endif
 	{0,1, 4,2, 0,0,1,2, 1,0,1,4, -1,0,0,0, 3,-1},	/* edge 12 */
 	{1,2, 1,3, 0,0,1,2, 2,1,2,4, -1,0,0,0, 3,-1},	/* edge 23 */
 	{2,3, 2,4, 0,0,2,3, 3,2,3,4, -1,0,0,0, 1,-1},	/* edge 34 */
@@ -2003,11 +1986,7 @@ static short earb5[9][18] = {
 };
 
 /* edit array for arb4's */
-#if 1
 short earb4[5][18] = {
-#else
-static short earb4[5][18] = {
-#endif
 	{-1,-1, -1,-1, 9,0,0,0, 9,0,0,0, 9,0,0,0, -1,-1},	/* point 1 */
 	{-1,-1, -1,-1, 9,0,0,0, 9,0,0,0, 9,0,0,0, -1,-1},	/* point 2 */
 	{-1,-1, -1,-1, 9,0,0,0, 9,0,0,0, 9,0,0,0, -1,-1},	/* point 3 */
