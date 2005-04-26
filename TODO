@@ -12,6 +12,15 @@ THESE SHOULD HAPPEN BEFORE THE NEXT RELEASE
 
 THESE ARE LOWER PRIORITY
 
+* add dynamic geometry support. i.e. the ability to modify the parsed
+  in-memory geometry tree on the fly via api calls (e.g. to add holes)
+
+* convert the documentation to docbook and integrate their generation
+  with the build system.
+
+* investigate why g-iges followed by iges-g on a single box results in
+  permuted vertex lists
+
 * have x11/tk mged output a helpful message when DISPLAY is unset
 
 * need non-generic installation instructions
@@ -42,8 +51,6 @@ THESE ARE LOWER PRIORITY
 
 * add nfs support and ability to safely interrupt benchmark
 
-* investigate why g-iges followed by iges-g on a single box results in
-  permuted vertex lists
 
 THESE BREAK PROTOCOL AND ARE BACKWARDS INCOMPATIBLE
 
