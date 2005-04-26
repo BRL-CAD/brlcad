@@ -4592,82 +4592,105 @@ dgo_bot_check_leaf(struct db_tree_state		*tsp,
 		   struct rt_db_internal	*ip,
 		   genptr_t			client_data)
 {
-  union tree *curtree;
-  int  ac = 1;
-  char *av[2];
-  struct dg_client_data *dgcdp = (struct dg_client_data *)client_data;
+    union tree *curtree;
+    int  ac = 1;
+    char *av[2];
+    struct dg_client_data *dgcdp = (struct dg_client_data *)client_data;
 
-  av[0] = db_path_to_string(pathp);
-  av[1] = (char *)0;
+    av[0] = db_path_to_string(pathp);
+    av[1] = (char *)0;
 
-  /* Indicate success by returning something other than TREE_NULL */
-  RT_GET_TREE(curtree, tsp->ts_resp);
-  curtree->magic = RT_TREE_MAGIC;
-  curtree->tr_op = OP_NOP;
+    /* Indicate success by returning something other than TREE_NULL */
+    RT_GET_TREE(curtree, tsp->ts_resp);
+    curtree->magic = RT_TREE_MAGIC;
+    curtree->tr_op = OP_NOP;
 
-  /*
-   * Use dgop->dgo_shaded_mode if set and not being overridden. Otherwise use dgcdp->shaded_mode_override.
-   */
-#if 1
-  switch (dgcdp->dmode) {
-#else
-  switch (dgcdp->dgop->dgo_shaded_mode && dgcdp->shaded_mode_override < 0
-	  ? dgcdp->dgop->dgo_shaded_mode : dgcdp->shaded_mode_override) {
-#endif
-  case DGO_SHADED_MODE_BOTS:
-    if (ip->idb_major_type == DB5_MAJORTYPE_BRLCAD &&
-	(ip->idb_minor_type == DB5_MINORTYPE_BRLCAD_BOT ||
-	 ip->idb_minor_type == DB5_MINORTYPE_BRLCAD_POLY))
-      dgo_drawtrees(dgcdp->dgop, dgcdp->interp, ac, av, 3, client_data);
-    else {
-      /* save shaded mode states */
-      int save_dgo_shaded_mode = dgcdp->dgop->dgo_shaded_mode;
-      int save_shaded_mode_override = dgcdp->shaded_mode_override;
-      int save_dmode = dgcdp->dmode;
+    /*
+     * Use dgop->dgo_shaded_mode if set and not being overridden. Otherwise use dgcdp->shaded_mode_override.
+     */
 
-      /* turn shaded mode off for this non-bot/non-poly object */
-      dgcdp->dgop->dgo_shaded_mode = 0;
-      dgcdp->shaded_mode_override = -1;
-      dgcdp->dmode = DGO_WIREFRAME;
+    switch (dgcdp->dmode) {
+    case DGO_SHADED_MODE_BOTS:
+	if (ip->idb_major_type == DB5_MAJORTYPE_BRLCAD &&
+	    ip->idb_minor_type == DB5_MINORTYPE_BRLCAD_BOT) {
+	    struct bu_list vhead;
 
-      dgo_drawtrees(dgcdp->dgop, dgcdp->interp, ac, av, 1, client_data);
+	    BU_LIST_INIT(&vhead);
+	    
+	    (void)rt_bot_plot_poly(&vhead, ip, tsp->ts_ttol, tsp->ts_tol);
+	    dgo_drawH_part2(0, &vhead, pathp, tsp, SOLID_NULL, dgcdp);
+	} else if (ip->idb_major_type == DB5_MAJORTYPE_BRLCAD &&
+		   ip->idb_minor_type == DB5_MINORTYPE_BRLCAD_POLY) {
+	    struct bu_list vhead;
 
-      /* restore shaded mode states */
-      dgcdp->dgop->dgo_shaded_mode = save_dgo_shaded_mode;
-      dgcdp->shaded_mode_override = save_shaded_mode_override;
-      dgcdp->dmode = save_dmode;
+	    BU_LIST_INIT(&vhead);
+	    
+	    (void)rt_pg_plot_poly(&vhead, ip, tsp->ts_ttol, tsp->ts_tol);
+	    dgo_drawH_part2(0, &vhead, pathp, tsp, SOLID_NULL, dgcdp);
+	} else {
+	    /* save shaded mode states */
+	    int save_dgo_shaded_mode = dgcdp->dgop->dgo_shaded_mode;
+	    int save_shaded_mode_override = dgcdp->shaded_mode_override;
+	    int save_dmode = dgcdp->dmode;
+
+	    /* turn shaded mode off for this non-bot/non-poly object */
+	    dgcdp->dgop->dgo_shaded_mode = 0;
+	    dgcdp->shaded_mode_override = -1;
+	    dgcdp->dmode = DGO_WIREFRAME;
+
+	    dgo_drawtrees(dgcdp->dgop, dgcdp->interp, ac, av, 1, client_data);
+
+	    /* restore shaded mode states */
+	    dgcdp->dgop->dgo_shaded_mode = save_dgo_shaded_mode;
+	    dgcdp->shaded_mode_override = save_shaded_mode_override;
+	    dgcdp->dmode = save_dmode;
+	}
+
+	break;
+    case DGO_SHADED_MODE_ALL:
+	if (ip->idb_major_type == DB5_MAJORTYPE_BRLCAD &&
+	    ip->idb_minor_type != DB5_MINORTYPE_BRLCAD_PIPE) {
+	    if (ip->idb_minor_type == DB5_MINORTYPE_BRLCAD_BOT) {
+		struct bu_list vhead;
+
+		BU_LIST_INIT(&vhead);
+	    
+		(void)rt_bot_plot_poly(&vhead, ip, tsp->ts_ttol, tsp->ts_tol);
+		dgo_drawH_part2(0, &vhead, pathp, tsp, SOLID_NULL, dgcdp);
+	    } else if (ip->idb_minor_type == DB5_MINORTYPE_BRLCAD_POLY) {
+		struct bu_list vhead;
+
+		BU_LIST_INIT(&vhead);
+
+		(void)rt_pg_plot_poly(&vhead, ip, tsp->ts_ttol, tsp->ts_tol);
+		dgo_drawH_part2(0, &vhead, pathp, tsp, SOLID_NULL, dgcdp);
+	    } else
+		dgo_drawtrees(dgcdp->dgop, dgcdp->interp, ac, av, 3, client_data);
+	} else {
+	    /* save shaded mode states */
+	    int save_dgo_shaded_mode = dgcdp->dgop->dgo_shaded_mode;
+	    int save_shaded_mode_override = dgcdp->shaded_mode_override;
+	    int save_dmode = dgcdp->dmode;
+
+	    /* turn shaded mode off for this pipe object */
+	    dgcdp->dgop->dgo_shaded_mode = 0;
+	    dgcdp->shaded_mode_override = -1;
+	    dgcdp->dmode = DGO_WIREFRAME;
+
+	    dgo_drawtrees(dgcdp->dgop, dgcdp->interp, ac, av, 1, client_data);
+
+	    /* restore shaded mode states */
+	    dgcdp->dgop->dgo_shaded_mode = save_dgo_shaded_mode;
+	    dgcdp->shaded_mode_override = save_shaded_mode_override;
+	    dgcdp->dmode = save_dmode;
+	}
+
+	break;
     }
 
-    break;
-  case DGO_SHADED_MODE_ALL:
-    if (ip->idb_major_type == DB5_MAJORTYPE_BRLCAD &&
-	ip->idb_minor_type != DB5_MINORTYPE_BRLCAD_PIPE)
-	 dgo_drawtrees(dgcdp->dgop, dgcdp->interp, ac, av, 3, client_data);
-    else {
-      /* save shaded mode states */
-      int save_dgo_shaded_mode = dgcdp->dgop->dgo_shaded_mode;
-      int save_shaded_mode_override = dgcdp->shaded_mode_override;
-      int save_dmode = dgcdp->dmode;
+    bu_free((genptr_t)av[0], "dgo_bot_check_leaf: av[0]");
 
-      /* turn shaded mode off for this pipe object */
-      dgcdp->dgop->dgo_shaded_mode = 0;
-      dgcdp->shaded_mode_override = -1;
-      dgcdp->dmode = DGO_WIREFRAME;
-
-      dgo_drawtrees(dgcdp->dgop, dgcdp->interp, ac, av, 1, client_data);
-
-      /* restore shaded mode states */
-      dgcdp->dgop->dgo_shaded_mode = save_dgo_shaded_mode;
-      dgcdp->shaded_mode_override = save_shaded_mode_override;
-      dgcdp->dmode = save_dmode;
-    }
-
-    break;
-  }
-
-  bu_free((genptr_t)av[0], "dgo_bot_check_leaf: av[0]");
-
-  return curtree;
+    return curtree;
 }
 
 /*
