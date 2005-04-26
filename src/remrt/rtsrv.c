@@ -56,7 +56,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include <sys/time.h>
 
-#ifndef SYSV
+#ifdef HAVE_SYS_IOCTL_H
 # include <sys/ioctl.h>
 # include <sys/resource.h>
 #endif
@@ -115,7 +115,7 @@ char		*beginptr;		/* sbrk() at start of program */
 extern fastf_t	rt_dist_tol;		/* Value for rti_tol.dist */
 extern fastf_t	rt_perp_tol;		/* Value for rti_tol.perp */
 extern int	rdebug;			/* RT program debugging (not library) */
-int		rt_verbosity = -1;
+extern int	rt_verbosity;		/* from liboptical */
 static char idbuf[132];			/* First ID record info */
 
 /* State flags */
@@ -289,7 +289,7 @@ main(int argc, char **argv)
 		(void)dup(0);			/* to fd 1 */
 		(void)dup(0);			/* to fd 2 */
 
-#ifndef SYSV
+#if defined(HAVE_SYS_IOCTL_H) && defined(TIOCNOTTY)
 		n = open("/dev/tty", 2);
 		if (n >= 0) {
 			(void)ioctl(n, TIOCNOTTY, 0);
