@@ -9,13 +9,6 @@ THESE SHOULD HAPPEN BEFORE THE NEXT RELEASE
 
 * make opengl optional via configure without editing files
 
-* add checks for termcap and curses to skip building those components
-
-* add checks for urt to skip building it
-
-* add checks for system libs and optionally build our libs only if
-  they don't have suitable system libs (namely, libtcl)
-
 
 THESE ARE LOWER PRIORITY
 
