@@ -1627,16 +1627,16 @@ int main() {
     Tcl_Interp *interp;
     interp = Tcl_CreateInterp();
     if (Tcl_Init(interp) == TCL_ERROR) {
-	printf("Tcl_Init returned error\n");
+	fprintf(stderr, "Tcl_Init returned error\n");
 	return 1;
     }
     /* Tcl_GetTime is an 8.4 symbol */
     Tcl_GetTime(&time);
 #if TCL_MAJOR_VERSION < 8
-    printf("major version < 8\n");
+    fprintf(stderr, "major version < 8\n");
     return 1;
 #elif TCl_MAJOR_VERSION == 8 && TCL_MINOR_VERSION < 4
-    printf("minor version < 4\n");
+    fprintf(stderr, "minor version < 4\n");
     return 1;
 #endif 
     return 0;
@@ -1725,10 +1725,10 @@ int main() {
     Itcl_Stack stack;
     Itcl_InitStack(&stack);
 #if ITCL_MAJOR_VERSION < 3
-    printf("major version < 3\n");
+    fprintf(stderr, "major version < 3\n");
     return 1;
 #elif ITCl_MAJOR_VERSION == 3 && ITCL_MINOR_VERSION < 2
-    printf("minorversion < 2\n");
+    fprintf(stderr, "minorversion < 2\n");
     return 1;
 #endif 
     return 0;
