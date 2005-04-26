@@ -39,13 +39,11 @@
  */
 #include "common.h"
 
-
-
 #include <stdio.h>
 #ifdef HAVE_STRING_H
-#include <string.h>
+#  include <string.h>
 #else
-#include <strings.h>
+#  include <strings.h>
 #endif
 #include <fcntl.h>
 #include <math.h>
@@ -56,7 +54,6 @@
 #include <io.h>
 #endif
 
-
 #include "tcl.h"
 #include "machine.h"
 #include "cmd.h"			/* includes bu.h */
@@ -66,6 +63,7 @@
 #include "raytrace.h"
 #include "rtgeom.h"
 #include "solid.h"
+
 
 struct dg_client_data {
 	struct dg_obj		*dgop;
@@ -136,11 +134,9 @@ extern void	dgo_free_qray(struct dg_obj *dgop);
 extern int	dgo_nirt_cmd(struct dg_obj *dgop, struct view_obj *vop, Tcl_Interp *interp, int argc, char **argv);
 extern int	dgo_vnirt_cmd(struct dg_obj *dgop, struct view_obj *vop, Tcl_Interp *interp, int argc, char **argv);
 
-static int dgo_open_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-#if 0
-static int dgo_close_tcl();
-#endif
 int dgo_cmd(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
+
+static int dgo_open_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 static int dgo_headSolid_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 static int dgo_illum_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 static int dgo_label_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
@@ -158,9 +154,6 @@ static int dgo_get_eyemodel_tcl(ClientData clientData, Tcl_Interp *interp, int a
 static int dgo_zap_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 static int dgo_blast_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 static int dgo_assoc_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-#if 0
-static int dgo_tol_tcl();
-#endif
 static int dgo_rtcheck_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 static int dgo_observer_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 static int dgo_report_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
@@ -193,7 +186,7 @@ static void dgo_print_schain(struct dg_obj *dgop, Tcl_Interp *interp, int lvl);
 static void dgo_print_schain_vlcmds(struct dg_obj *dgop, Tcl_Interp *interp);
 
 struct dg_obj HeadDGObj;	/* head of drawable geometry object list */
-struct solid FreeSolid;		/* head of free solid list */
+static struct solid FreeSolid;		/* head of free solid list */
 
 
 static struct bu_cmdtab dgo_cmds[] = {
