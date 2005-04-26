@@ -199,13 +199,13 @@ static void choose_color (RGBpixel col, struct cell *me,
 /*
  * From do.c
  */
-#if CRAY
+#if defined (CRAY)
 #	define byteoffset(_i)	(((int)&(_i)))	/* actually a word offset */
 #else
-#  if IRIX > 5 && _MIPS_SIM != _MIPS_SIM_ABI32
+#  if defined(IRIX) && IRIX > 5 && _MIPS_SIM != _MIPS_SIM_ABI32
 #	define byteoffset(_i)	((size_t)__INTADDR__(&(_i)))
 #  else
-#    if sgi || __convexc__ || ultrix || _HPUX_SOURCE
+#    if defined(sgi) || defined(__convexc__) || defined(ultrix) || defined(_HPUX_SOURCE)
 /* "Lazy" way.  Works on reasonable machines with byte addressing */
 #	define byteoffset(_i)	((int)((char *)&(_i)))
 #    else
@@ -218,6 +218,7 @@ static void choose_color (RGBpixel col, struct cell *me,
 #    endif
 #  endif
 #endif
+
 /* Viewing module specific "set" variables */
 struct bu_structparse view_parse[] = {
 /*XXX need to investigate why this doesn't work on Windows */
