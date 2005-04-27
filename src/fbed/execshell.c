@@ -81,11 +81,7 @@ exec_Shell(char **args)
 		default :
 			{	register int pid;
 				int stat_loc;
-#if STD_SIGNAL_DECLS
 				register void (*istat)(), (*qstat)(), (*cstat)();
-#else
-				register int (*istat)(), (*qstat)(), (*cstat)();
-#endif
 #if !defined(SIGCLD) && defined(SIGCHLD)
 #	define SIGCLD	SIGCHLD		/* BSD and POSIX name */
 #endif

@@ -26,33 +26,6 @@
 			(301)278-6651 or DSN 298-6651
 */
 
-/* Set pre-processor switch for getting signal() handler declarations right.
- */
-
-#if defined(sun) && ! defined(SunOS4)
-/* For Suns running older releases, compile with -DSunOS4=0 to suppress
-	bogus warning messages. */
-#define SunOS4	1
-#endif
-#if __STDC__ || (defined(SYSV) && ! defined(cray)) || SunOS4
-#define STD_SIGNAL_DECLS 1
-#else
-#define STD_SIGNAL_DECLS 0
-#endif
-
-/*
- * Note: all files that include this one should have the following set of
- *       includes *before* #include "./extern.h".
- *
- * #include "fb.h"
- *
- * #include "./std.h"
- * #include "./ascii.h"
- * #include "./font.h"
- * #include "./try.h"
- *
- */
-
 /* For production use, set to "static" */
 #ifndef STATIC
 #define STATIC static

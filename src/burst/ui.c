@@ -1595,14 +1595,8 @@ HmItem *itemp;
 	return;
 	}
 
-#if STD_SIGNAL_DECLS
-/*ARGSUSED*/
 void
-#else
-int
-#endif
-intr_sig( sig )
-int sig;
+intr_sig( int sig )
 	{	static Input input[] =
 			{
 			{ "Really quit ? ", "n", "%d", "y or n" },
@@ -1623,11 +1617,7 @@ int sig;
 			return;
 			}
 		}
-#if STD_SIGNAL_DECLS
 	return;
-#else
-	return	sig;
-#endif
 	}
 
 void

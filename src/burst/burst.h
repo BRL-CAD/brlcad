@@ -85,13 +85,6 @@ typedef char *pointer;			/* generic pointer */
 #define SGI_WINCLOSE_BUG 0
 #endif
 
-/* allow for BSD screw-up, declaring signal handlers as 'int' functions */
-#if STD_C || (defined(SYSV) && ! defined(cray))
-#define STD_SIGNAL_DECLS 1
-#else
-#define STD_SIGNAL_DECLS 0
-#endif
-
 /* menu configuration */
 #define MENU_LFT	1
 #define MENU_TOP	2

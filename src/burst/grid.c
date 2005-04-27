@@ -1781,22 +1781,12 @@ fastf_t	azim, elev;
 	return;
 	}
 
-#if STD_SIGNAL_DECLS
-/*ARGSUSED*/
 void
-#else
-int
-#endif
-abort_RT( sig )
-int	sig;
+abort_RT( int sig )
 	{
 	(void) signal( SIGINT, abort_RT );
 	userinterrupt = 1;
-#if STD_SIGNAL_DECLS
 	return;
-#else
-	return	sig;
-#endif
 	}
 
 #if 0

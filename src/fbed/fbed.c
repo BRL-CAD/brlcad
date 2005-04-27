@@ -120,11 +120,7 @@ STATIC int do_Bitpad(register Point *pointp);
 STATIC int fb_Setup(void);
 STATIC int pars_Argv(int argc, register char **argv);
 STATIC int push_Macro(char *buf);
-#if STD_SIGNAL_DECLS
 STATIC void general_Handler(int sig);
-#else
-STATIC int general_Handler();
-#endif
 STATIC void init_Try(void);
 STATIC void fb_Paint(register int x0, register int y0, register int x1, register int y1, RGBpixel (*color));
 STATIC void fb_Wind(void);
@@ -2021,11 +2017,7 @@ fb_Paint(register int x0, register int y0, register int x1, register int y1, RGB
 	}
 
 /*	g e n e r a l _ H a n d l e r ( ) */
-#if STD_SIGNAL_DECLS
 STATIC void
-#else
-STATIC int
-#endif
 general_Handler(int sig)
 {
 	switch( sig )
@@ -2098,11 +2090,7 @@ general_Handler(int sig)
 		break;
 		}
 	(void) signal( sig, general_Handler );
-#if STD_SIGNAL_DECLS
 	return;
-#else
-	return sig;
-#endif
 	}
 
 /*	i n i t _ T t y ( ) */

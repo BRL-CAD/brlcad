@@ -1700,12 +1700,7 @@ cons_Vector(register fastf_t *vec, fastf_t azim, fastf_t elev)
 /*
 	void abort_RT( int sig )
  */
-/*ARGSUSED*/
-#if STD_SIGNAL_DECLS
 void
-#else
-int
-#endif
 abort_RT(int sig)
 {
 	bu_semaphore_acquire( BU_SEM_SYSCALL );
@@ -1713,12 +1708,8 @@ abort_RT(int sig)
 	(void) fb_flush( fbiop );
 	user_interrupt = true;
 	bu_semaphore_release( BU_SEM_SYSCALL );
-#if STD_SIGNAL_DECLS
 	return;
-#else
-	return	sig;
-#endif
-	}
+}
 
 /*
 	fastf_t myIpow( register fastf_t d, register int n )

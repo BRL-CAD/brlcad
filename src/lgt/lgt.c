@@ -77,11 +77,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 int	ready_Output_Device(int frame);
 void	close_Output_Device(int frame);
-#if STD_SIGNAL_DECLS
 STATIC void	intr_sig(int sig);
-#else
-STATIC int	intr_sig();
-#endif
 STATIC void	init_Lgts(void);
 void		exit_Neatly(int status);
 int		key_Frame(void);
@@ -330,21 +326,12 @@ close_Output_Device(int frame)
 	return;
 	}
 
-#if STD_SIGNAL_DECLS
 STATIC void
-#else
-STATIC int
-#endif
-/*ARGSUSED*/
 intr_sig(int sig)
 {
 	(void) signal( SIGINT, intr_sig );
-#if STD_SIGNAL_DECLS
 	return;
-#else
-	return	sig;
-#endif
-	}
+}
 
 /*	i n i t _ L g t s ( )
 	Set certain default lighting info.

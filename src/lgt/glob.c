@@ -182,11 +182,7 @@ int y_fb_origin = 0;		/* Display origin top-most pixel.	*/
 struct resource	resource[MAX_PSW]; /* Memory resources.			*/
 struct rt_i	*rt_ip;		/* Globals from RT library.		*/
 
-#if STD_SIGNAL_DECLS
 void (*norml_sig)(), (*abort_sig)();
-#else
-int (*norml_sig)(), (*abort_sig)();
-#endif
 
 /*
  * Local Variables:

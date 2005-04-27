@@ -92,11 +92,7 @@ int
 exec_Shell(char **args)
 {	register int child_pid;
 		static char error_buf[32];
-#if STD_SIGNAL_DECLS
 		void (*intr_sig)(), (*quit_sig)();
-#else
-		int (*intr_sig)(), (*quit_sig)();
-#endif
 	if( args[0] == NULL )
 		{ char	*arg_sh = getenv( "SHELL" );
 		/* $SHELL, if set, DFL_SHELL otherwise.			*/

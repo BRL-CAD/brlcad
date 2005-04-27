@@ -3806,11 +3806,7 @@ pars_Argv(int argc, register char **argv)
 	}
 
 /*ARGSUSED*/
-#if STD_SIGNAL_DECLS
 void
-#else
-int
-#endif
 stop_sig(int sig)
 {	int	pid = getpid();
 	EVENT_MOVE();
@@ -3822,11 +3818,7 @@ stop_sig(int sig)
 #endif
 	(void) signal( sig, stop_sig );
 	(void) f_Redraw( (HMitem *) 0, (char **) 0 );
-#if STD_SIGNAL_DECLS
 	return;
-#else
-	return	sig;
-#endif
 	}
 
 /* Below are global entry points for getting to function table from

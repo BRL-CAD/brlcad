@@ -55,19 +55,6 @@
 #define SGI_WINCLOSE_BUG 0
 #endif
 
-/* Set pre-processor switch for getting signal() handler declarations right.
- */
-#if defined(sun) && ! defined(SunOS4)
-/* For Suns running older releases, compile with -DSunOS4=0 to suppress
-	bogus warning messages. */
-#define SunOS4	1
-#endif
-#if __STDC__ || (defined(SYSV) && ! defined(cray)) || SunOS4 || defined(__convexc__)
-#define STD_SIGNAL_DECLS 1
-#else
-#define STD_SIGNAL_DECLS 0
-#endif
-
 /* Set pre_processor switch to make up for SGI 3000 series math library. */
 #if defined(sgi) && ! defined(mips)
 #define SINGLE_PRECISION 1
@@ -75,15 +62,9 @@
 #define SINGLE_PRECISION 0
 #endif
 
-#if STD_SIGNAL_DECLS
 extern void (*norml_sig)(), (*abort_sig)();
 extern void abort_RT();
 extern void stop_sig();
-#else
-extern int (*norml_sig)(), (*abort_sig)();
-extern int abort_RT();
-extern int stop_sig();
-#endif
 
 /* other functions */
 extern char *get_Input();

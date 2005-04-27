@@ -127,15 +127,9 @@ extern void clr_Tabs();
 extern void reset_Tty();
 extern void save_Tty();
 
-#if STD_SIGNAL_DECLS
 extern void (*norml_sig)(), (*abort_sig)();
 extern void abort_RT();
 extern void intr_sig();
-#else
-extern int (*norml_sig)(), (*abort_sig)();
-extern int abort_RT();
-extern int intr_sig();
-#endif
 
 extern Colors colorids;
 extern FBIO *fbiop;
