@@ -110,14 +110,11 @@ bu_open_mapped_file(const char *name, const char *appl)
 	int			ret;
 
 	if( bu_debug&BU_DEBUG_MAPPED_FILE )
-		bu_log("bu_open_mapped_file(%s, %s) sbrk=x%lx\n",
-			name, appl?appl:"(NIL)",
-#ifdef HAVE_SBRK_DECL
-			(long)sbrk(0)
+#ifdef HAVE_SBRK
+		bu_log("bu_open_mapped_file(%s, %s) sbrk=x%lx\n", name, appl?appl:"(NIL)", (long)sbrk(0));
 #else
-			0
+		bu_log("bu_open_mapped_file(%s, %s)\n", name, appl?appl:"(NIL)");
 #endif
-			);
 
 	/* See if file has already been mapped, and can be shared */
 	bu_semaphore_acquire(BU_SEM_MAPPEDFILE);
@@ -296,13 +293,9 @@ dont_reuse:
 
 	if( bu_debug&BU_DEBUG_MAPPED_FILE )  {
 		bu_pr_mapped_file("1st_open", mp);
-		bu_log("bu_open_mapped_file() sbrk=x%lx\n",
-#ifdef HAVE_SBRK_DECL
-			(long)sbrk(0)
-#else
-			0
+#ifdef HAVE_SBRK
+		bu_log("bu_open_mapped_file() sbrk=x%lx\n", (long)sbrk(0));
 #endif
-			);
 	}
 	return mp;
 

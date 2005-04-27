@@ -141,7 +141,7 @@ siginfo_handler(int arg)
 void
 memory_summary(void)
 {
-#ifdef HAVE_SBRK_DECL
+#ifdef HAVE_SBRK
 	if (rt_verbosity & VERBOSE_STATS)  {
 		long	mdelta = bu_n_malloc - n_malloc;
 		long	fdelta = bu_n_free - n_free;
@@ -186,7 +186,7 @@ int main(int argc, char **argv)
 
 	bu_setlinebuf( stderr );
 
-#ifdef HAVE_SBRK_DECL
+#ifdef HAVE_SBRK
 	beginptr = (char *) sbrk(0);
 #endif
 	azimuth = 35.0;			/* GIFT defaults */
