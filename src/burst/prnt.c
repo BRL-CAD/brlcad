@@ -151,7 +151,15 @@ locPerror( msg )
 char    *msg;
 	{
 	if( errno > 0 && errno < sys_nerr )
+#ifdef HAVE_STRERROR
+		brst_log( "%s: %s\n", msg, strerror(errno) );
+#else
+#  ifdef WIN32
+		brst_log( "%s: %s\n", msg, _sys_errlist[errno] );
+#  else
 		brst_log( "%s: %s\n", msg, sys_errlist[errno] );
+#  endif
+#endif
 	else
 		brst_log( "BUG: errno not set, shouldn't call perror.\n" );
 	return;

@@ -102,8 +102,15 @@ char **argv;
     fflush(outf);
     if (ferror(outf))
     {
-	fprintf(stderr, "into: %s, \"%s\" not modified\n",
-	    sys_errlist[errno], argv[1]);
+#ifdef HAVE_STRERROR
+	fprintf(stderr, "into: %s, \"%s\" not modified\n", strerror(errno), argv[1]);
+#else
+#  ifdef WIN32
+	fprintf(stderr, "into: %s, \"%s\" not modified\n", _sys_errlist[errno], argv[1]);
+#  else
+	fprintf(stderr, "into: %s, \"%s\" not modified\n", sys_errlist[errno], argv[1]);
+#  endif
+#endif
 	unlink(buf);
 	exit(1);
     }

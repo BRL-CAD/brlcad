@@ -1552,13 +1552,13 @@ pkg_perror(void (*errlog) (/* ??? */), char *s)
 			sprintf(errbuf, "%s: errno=%d\n", s, errno);
 		}
 #else
-#ifdef WIN32
+#  ifdef WIN32
 	if ( errno >= 0 && errno < _sys_nerr ) {
 		sprintf( errbuf, "%s: %s\n", s, _sys_errlist[errno] );
-#else
+#  else
 	if ( errno >= 0 && errno < sys_nerr ) {
 		sprintf( errbuf, "%s: %s\n", s, sys_errlist[errno] );
-#endif
+#  endif
 #endif
 		errlog( errbuf );
 	} else {
