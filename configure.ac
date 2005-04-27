@@ -1363,10 +1363,6 @@ AC_CHECK_FUNC(memmove, , [AC_DEFINE(NO_MEMMOVE,, From Tcl -- No memmove)
 		          AC_DEFINE(NO_STRING_H,, From Tcl -- No string)])
 AC_CHECK_FUNC(opendir, , [AC_DEFINE(USE_DIRENT2_H,, From Tcl -- use dirent2)])
 
-# XXX duplicate for decl (needs to go away)
-AC_CHECK_FUNC(getopt, AC_DEFINE(HAVE_GETOPT_DECL,1,getopt))
-AC_CHECK_FUNC(strdup, AC_DEFINE(HAVE_STRDUP_DECL,1,strdup))
-
 
 dnl *********************************
 dnl *** Check for system services ***
