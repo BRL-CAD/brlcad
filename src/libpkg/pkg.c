@@ -1544,20 +1544,40 @@ pkg_perror(void (*errlog) (/* ??? */), char *s)
 {
 
 #if HAVE_STRERROR_R
+#  define VALID_ERRNO (strlen(errbuf) < MAX_ERRBUF_SIZE)
+#else
+#  if HAVE_STRERROR
+#    define VALID_ERRNO errno < sys_nerr
+#  else
+#    ifdef WIN32
+#      define VALID_ERRNO errno < _sys_nerr
+#    else
+#      define VALID_ERRNO errno < sys_nerr
+#    endif
+#  endif
+#endif
+
+#if HAVE_STRERROR_R
 	int ret = 0;
 	sprintf( errbuf, "%s: ", s);
-	if ((errno >= 0) && (strlen(errbuf) < MAX_ERRBUF_SIZE)) {
+#endif
+
+	if ( errno >= 0 && VALID_ERRNO ) {
+
+#if HAVE_STRERROR_R
 	       	ret = strerror_r(errno, errbuf+strlen(errbuf), MAX_ERRBUF_SIZE-strlen(errbuf));
 		if (ret != 0) {
 			sprintf(errbuf, "%s: errno=%d\n", s, errno);
 		}
 #else
-#  ifdef WIN32
-	if ( errno >= 0 && errno < _sys_nerr ) {
-		sprintf( errbuf, "%s: %s\n", s, _sys_errlist[errno] );
+#  if HAVE_STRERROR
+		sprintf( errbuf, "%s: %s\n", s, syserr(errno) );
 #  else
-	if ( errno >= 0 && errno < sys_nerr ) {
+#    ifdef WIN32
+		sprintf( errbuf, "%s: %s\n", s, _sys_errlist[errno] );
+#    else
 		sprintf( errbuf, "%s: %s\n", s, sys_errlist[errno] );
+#    endif
 #  endif
 #endif
 		errlog( errbuf );
