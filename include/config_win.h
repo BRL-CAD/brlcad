@@ -60,7 +60,6 @@
 #define HAVE_MATHERR	1
 #define HAVE_MEMORY_H	1
 #define HAVE_OFF_T	1
-#define HAVE_POPEN_DECL	1
 #define HAVE_STRCHR	1
 #define HAVE_STRDUP	1
 #define HAVE_STRDUP_DECL	1

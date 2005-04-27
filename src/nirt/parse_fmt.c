@@ -644,9 +644,6 @@ void direct_output(char *buffer, com_table *ctp)
     int 	i = 0;      /* current position on the *buffer        */
     FILE	*newf;
     static char	*new_dest;
-#if !defined(HAVE_POPEN_DECL) && !defined(CRAY2)
-    RT_EXTERN(FILE *popen, (const char *command, const char *type) );
-#endif
     static FILE	*(*openfunc)() = 0;
 
     while (isspace(*(buffer+i)))
