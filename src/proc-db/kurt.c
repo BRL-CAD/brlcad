@@ -151,7 +151,7 @@ do_cell(struct val *vp, double xc, double yc)
 	vp->v_n = 0;
 	vp->v_x = xc;
 	vp->v_y = yc;
-	nroots = rt_poly_roots( &polynom, roots );
+	nroots = rt_poly_roots( &polynom, roots, "" );
 	if( nroots < 0 || (nroots & 1) == 0 )  {
 		fprintf(stderr,"%d roots?\n", nroots);
 		return;
