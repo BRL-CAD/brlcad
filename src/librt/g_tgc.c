@@ -703,7 +703,7 @@ rt_tgc_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 		    (Rsqr.cf[2] * Qsqr.cf[2]);
 
 		/*  The equation is 4th order, so we expect 0 to 4 roots */
-		nroots = rt_poly_roots( &C , val );
+		nroots = rt_poly_roots( &C , val, stp->st_dp->d_namep );
 
 		/*  Only real roots indicate an intersection in real space.
 		 *
@@ -1089,7 +1089,7 @@ rt_tgc_vshot(struct soltab **stp, register struct xray **rp, struct seg *segp, i
 			register int nroots;
 
 			/*  The equation is 4th order, so we expect 0 to 4 roots */
-			nroots = rt_poly_roots( &C[ix] , val );
+			nroots = rt_poly_roots( &C[ix] , val, (*stp)->st_dp->d_namep );
 
 			/*  Only real roots indicate an intersection in real space.
 		 *

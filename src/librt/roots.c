@@ -48,9 +48,11 @@ static const char RCSroots[] = "@(#)$Header$ (BRL)";
 #include "bn.h"
 #include "raytrace.h"
 
-int		rt_poly_roots(register bn_poly_t *eqn, register bn_complex_t *roots);
-void	rt_poly_eval_w_2derivatives(register bn_complex_t *cZ, register bn_poly_t *eqn, register bn_complex_t *b, register bn_complex_t *c, register bn_complex_t *d), rt_poly_deflate(register bn_poly_t *oldP, register bn_complex_t *root);
-int	rt_poly_findroot(register bn_poly_t *eqn, register bn_complex_t *nxZ), rt_poly_checkroots(register bn_poly_t *eqn, bn_complex_t *roots, register int nroots);
+int	rt_poly_roots(register bn_poly_t *eqn, register bn_complex_t *roots, const char *name);
+void	rt_poly_eval_w_2derivatives(register bn_complex_t *cZ, register bn_poly_t *eqn, register bn_complex_t *b, register bn_complex_t *c, register bn_complex_t *d);
+void	rt_poly_deflate(register bn_poly_t *oldP, register bn_complex_t *root);
+int	rt_poly_findroot(register bn_poly_t *eqn, register bn_complex_t *nxZ, const char *str);
+int	rt_poly_checkroots(register bn_poly_t *eqn, bn_complex_t *roots, register int nroots);
 
 /*
  *			R T _ P O L Y _ R O O T S
@@ -65,7 +67,8 @@ int	rt_poly_findroot(register bn_poly_t *eqn, register bn_complex_t *nxZ), rt_po
  */
 int
 rt_poly_roots(register bn_poly_t	*eqn,	/* equation to be solved */
-	      register bn_complex_t	roots[])/* space to put roots found */
+	      register bn_complex_t	roots[],
+	      const char *name)/* space to put roots found */
 {
 	register int	n;		/* number of roots found	*/
 	LOCAL fastf_t	factor;		/* scaling factor for copy	*/
@@ -117,7 +120,7 @@ rt_poly_roots(register bn_poly_t	*eqn,	/* equation to be solved */
 		 *  This method requires a small nudge off the real axis.
 		 */
 		bn_cx_cons( &roots[n], 0.0, SMALL );
-		if ( (rt_poly_findroot( eqn, &roots[n] )) < 0 )
+		if ( (rt_poly_findroot( eqn, &roots[n], name )) < 0 )
 			return(n);	/* return those we found, anyways */
 
 		if ( fabs(roots[n].im) > 1.0e-5* fabs(roots[n].re) ){
@@ -172,9 +175,9 @@ rt_poly_roots(register bn_poly_t	*eqn,	/* equation to be solved */
  *
  */
 int
-rt_poly_findroot(register bn_poly_t *eqn, register bn_complex_t *nxZ)
-                  	     	/* polynomial			*/
-                     	     	/* initial guess for root	*/
+rt_poly_findroot(register bn_poly_t *eqn, /* polynomial */
+		 register bn_complex_t *nxZ, /* initial guess for root	*/
+		 const char *str)
 {
 	LOCAL bn_complex_t  p0, p1, p2;	/* evaluated polynomial+derivatives */
 	LOCAL bn_complex_t  p1_H;		/* p1 - H, temporary */
@@ -238,8 +241,8 @@ rt_poly_findroot(register bn_poly_t *eqn, register bn_complex_t *nxZ)
 	}
 
 	/* If the thing hasn't converged yet, it probably won't. */
-	bu_log("rt_poly_findroot:  didn't converge in %d iterations, b=%g, diff=%g\n",
-		i, b, diff);
+	bu_log("rt_poly_findroot:  didn't converge in %d iterations, b=%g, diff=%g  %s\n",
+		i, b, diff, str);
 	bu_log("nxZ=%gR+%gI, p0=%gR+%gI\n", nxZ->re, nxZ->im, p0.re, p0.im);
 	return(-1);		/* ERROR */
 }

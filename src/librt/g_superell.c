@@ -416,9 +416,9 @@ rt_superell_shot(struct soltab *stp, register struct xray *rp, struct applicatio
   equation.cf[1] = 2 * newShotDir[X] * newShotPoint[X] * superell->superell_invmsAu + 2 * newShotDir[Y] * newShotPoint[Y] * superell->superell_invmsBu + 2 * newShotDir[Z] * newShotPoint[Z] * superell->superell_invmsCu;
   equation.cf[2] = newShotDir[X] * newShotDir[X] * superell->superell_invmsAu  + newShotDir[Y] * newShotDir[Y] * superell->superell_invmsBu + newShotDir[Z] * newShotDir[Z] * superell->superell_invmsCu;
 
-  if ( (i = rt_poly_roots( &equation, complexRoot)) != 2 ) {
+  if ( (i = rt_poly_roots( &equation, complexRoot, stp->st_dp->d_namep)) != 2 ) {
     if (i != 0) {
-      bu_log("superell, rt_poly_roots() 2 != %d\n", i);
+      bu_log("superell: rt_poly_roots() 2 != %d\n", i);
       bn_pr_roots(stp->st_name, complexRoot, i);
     }
     return (0); /* MISS */

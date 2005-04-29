@@ -3046,7 +3046,8 @@ RT_EXPORT BU_EXTERN(void rt_ell_16pts,
 /* roots.c */
 RT_EXPORT BU_EXTERN(int rt_poly_roots,
 		    (bn_poly_t *eqn,
-		     bn_complex_t roots[]));
+		     bn_complex_t roots[],
+		     const char *name));
 
 
 /* db_io.c */

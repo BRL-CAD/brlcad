@@ -445,7 +445,7 @@ rt_eto_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 	/*  It is known that the equation is 4th order.  Therefore,
 	 *  if the root finder returns other than 4 roots, error.
 	 */
-	if ( (i = rt_poly_roots( &C, val )) != 4 ){
+	if ( (i = rt_poly_roots( &C, val, stp->st_dp->d_namep )) != 4 ){
 		if( i != 0 )  {
 			bu_log("eto:  rt_poly_roots() 4!=%d\n", i);
 			bn_pr_roots( stp->st_name, val, i );

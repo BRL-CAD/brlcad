@@ -582,7 +582,7 @@ bend_pipe_shot(struct soltab *stp, register struct xray *rp, struct application 
 	/*  It is known that the equation is 4th order.  Therefore,
 	 *  if the root finder returns other than 4 roots, error.
 	 */
-	if ( (root_count = rt_poly_roots( &C, val )) != 4 ){
+	if ( (root_count = rt_poly_roots( &C, val, stp->st_dp->d_namep )) != 4 ){
 		if( (root_count) != 0 )  {
 			bu_log("tor:  rt_poly_roots() 4!=%d\n", root_count);
 			bn_pr_roots( stp->st_name, val, root_count );
@@ -658,7 +658,7 @@ bend_pipe_shot(struct soltab *stp, register struct xray *rp, struct application 
 	/*  It is known that the equation is 4th order.  Therefore,
 	 *  if the root finder returns other than 4 roots, error.
 	 */
-	if ( (root_count = rt_poly_roots( &C, val )) != 4 ){
+	if ( (root_count = rt_poly_roots( &C, val, stp->st_dp->d_namep)) != 4 ){
 		if( root_count != 0 )  {
 			bu_log("tor:  rt_poly_roots() 4!=%d\n", root_count);
 			bn_pr_roots( stp->st_name, val, root_count );
