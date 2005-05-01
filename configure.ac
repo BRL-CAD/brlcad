@@ -744,6 +744,7 @@ AC_CHECK_HEADERS( \
 	float.h \
 	getopt.h \
 	gl/device.h \
+	io.h \
 	itcl.h \
 	itk.h \
 	langinfo.h \
