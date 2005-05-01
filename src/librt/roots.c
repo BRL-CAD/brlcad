@@ -67,8 +67,8 @@ int	rt_poly_checkroots(register bn_poly_t *eqn, bn_complex_t *roots, register in
  */
 int
 rt_poly_roots(register bn_poly_t	*eqn,	/* equation to be solved */
-	      register bn_complex_t	roots[],
-	      const char *name)/* space to put roots found */
+	      register bn_complex_t	roots[], /* space to put roots found */
+	      const char *name) /* name of the primitive being checked */
 {
 	register int	n;		/* number of roots found	*/
 	LOCAL fastf_t	factor;		/* scaling factor for copy	*/
@@ -241,8 +241,8 @@ rt_poly_findroot(register bn_poly_t *eqn, /* polynomial */
 	}
 
 	/* If the thing hasn't converged yet, it probably won't. */
-	bu_log("rt_poly_findroot:  didn't converge in %d iterations, b=%g, diff=%g  %s\n",
-		i, b, diff, str);
+	bu_log("rt_poly_findroot: solving for %s didn't converge in %d iterations, b=%g, diff=%g\n",
+		str, i, b, diff);
 	bu_log("nxZ=%gR+%gI, p0=%gR+%gI\n", nxZ->re, nxZ->im, p0.re, p0.im);
 	return(-1);		/* ERROR */
 }
