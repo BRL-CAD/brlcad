@@ -63,7 +63,6 @@ struct solid  {
 			 */
 };
 
-RT_EXPORT extern struct solid FreeSolid; /* head of free solid list */
 
 /*
  * "Standard" flag settings
