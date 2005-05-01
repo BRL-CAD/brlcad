@@ -675,7 +675,7 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
 #define V3ARGS(a)	(a)[X], (a)[Y], (a)[Z]
 #define V4ARGS(a)	(a)[X], (a)[Y], (a)[Z], (a)[W]
 
-/* Print vector name and components on stdout */
+/* Print vector name and components on stderr */
 #define V2PRINT(a,b)	\
 	(void)fprintf(stderr,"%s (%g, %g)\n", a, V2ARGS(b) );
 #define VPRINT(a,b)	\
