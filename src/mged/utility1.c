@@ -42,7 +42,10 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "common.h"
 
 #include <stdio.h>
-#ifndef HAVE_PWD_H
+#ifdef HAVE_SYS_TYPES_H
+#  include <sys/types.h>
+#endif
+#ifdef HAVE_PWD_H
 #  include <pwd.h>
 #endif
 #include <signal.h>
@@ -1129,7 +1132,7 @@ f_tables(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	(void)fprintf(tabptr,"3 -6         \n");
 	(void)fprintf(tabptr,"4 -5         \n");
 #ifndef WIN32
-	(void)fprintf(tabptr,"5 -4         user         : %s\n",getpwuid(getuid())->pw_gecos);
+	(void)fprintf(tabptr,"5 -4         user         : %s\n", getpwuid(getuid())->pw_gecos);
 #else
 	{
 	char uname[256]; 
