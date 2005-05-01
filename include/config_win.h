@@ -47,78 +47,91 @@
 # endif
 
 #define BRLCAD_ROOT ""
+#define INSTALL_DIRECTORY "C:/brlcad7_0"
 
-#define HAVE_CALLOC	1
-#define HAVE_STDLIB_H	1
-#define HAVE_STDARG_H	1
-#define HAVE_STRING_H	1
-#define HAVE_GL_GL_H	1
 #define HAS_OPENGL	1
+#define HAVE_CALLOC	1
+#define HAVE_ERRNO_H	1
+#define HAVE_FCNTL_H	1
 #define HAVE_FLOAT_H	1
 #define HAVE_GETHOSTNAME	1
+#define HAVE_GL_GL_H	1
+#define HAVE_IO_H	1
 #define HAVE_LIMITS_H	1
 #define HAVE_MATHERR	1
 #define HAVE_MEMORY_H	1
 #define HAVE_OFF_T	1
+#define HAVE_PWD_H	1
+#define HAVE_REGEX_H	1
+#define HAVE_STDARG_H	1
+#define HAVE_STDLIB_H	1
+#define HAVE_STRCHR	1
 #define HAVE_STRCHR	1
 #define HAVE_STRDUP	1
 #define HAVE_STRDUP_DECL	1
+#define HAVE_STRING_H	1
+#define HAVE_SYS_TIME	1
+#define HAVE_TIME	1
+#define HAVE_TIME_H	1
 #define HAVE_VARARGS_H	1
 #define HAVE_VFORK	1
 #define HAVE_VPRINTF	1
-#define USE_PROTOTYPES	1
-#define HAVE_REGEX_H	1
-#define HAVE_STRCHR 1
-#define HAVE_TIME 1
-#define HAVE_SYS_TIME 1
-#define bzero(str,n)		memset( str, 0, n )
-#define bcopy(from,to,count)	memcpy( to, from, count )
 #define REVERSE_IEEE	yes
-#define INSTALL_DIRECTORY "C:/brlcad7_0"
-#define HAVE_TIME_H 1
-#define HAVE_FCNTL_H 1
-#define HAVE_ERRNO_H 1
+#define USE_PROTOTYPES	1
 
+/* XXX - do not rely on config_win.h providing these headers.  they
+ * will be removed at some point.
+ */
 #include <windows.h>
 #include <io.h>
 
-#if 0
-#	define HAVE_STDLIB_H	1
-#	define HAVE_STDARG_H	1
-#	define HAVE_STRING_H	1
-#endif
-#define stat _stat
-#define hypot _hypot
-#define fdopen _fdopen
-#define off_t _off_t
-#undef rad1
-#undef rad2
-#define isascii __isascii
-#define chmod _chmod
-#define popen _popen
-#define open _open
-#define read _read
-#define close _close
-#define fstat _fstat
-#define O_RDONLY _O_RDONLY
-#define O_RDWR _O_RDWR
+#define bzero(str,n)		memset( str, 0, n )
+#define bcopy(from,to,count)	memcpy( to, from, count )
+
+#define	isnan _isnan
+#define MAXPATHLEN _MAX_PATH
 #define O_CREAT _O_CREAT
 #define O_EXCL _O_EXCL
-#define MAXPATHLEN _MAX_PATH
-#define fileno _fileno
-#define write _write
-#define getpid _getpid
+#define O_RDONLY _O_RDONLY
+#define O_RDWR _O_RDWR
 #define access _access
-#define pclose _pclose
-#define strdup _strdup
-#define	isnan _isnan
-#define isatty _isatty
+#define chmod _chmod
+#define close _close
+#define commit _commit
 #define creat _creat
+#define dup _dup
+#define dup2 _dup2
+#define eof _eof
+#define fdopen _fdopen
+#define fileno _fileno
+#define fstat _fstat
+#define getpid _getpid
+#define hypot _hypot
+#define isascii __isascii
+#define isatty _isatty
+#define locking _locking
+#define lseek _lseek
 #define mktemp _mktemp
-#undef OUT
-#undef IN
+#define off_t _off_t
+#define open _open
+#define pclose _pclose
+#define pipe _pipe
+#define popen _popen
+#define read _read
+#define setmode _setmode
+#define sopen _sopen
+#define stat _stat
+#define strdup _strdup
+#define tell _tell
+#define umask _umask
+#define unlink _unlink
+#define write _write
 #undef DELETE
+#undef IN
+#undef OUT
 #undef complex
+#undef rad1
+#undef rad2
 
 #endif /* if defined(WIN32) */
 
