@@ -69,6 +69,7 @@ brlcadinclude_wanted = \
 	$(headers_libtermlib) \
 	XtndRunsv.h \
 	anim.h \
+	brlcad.h \
 	cmd.h \
 	conf.h \
 	compat4.h \
