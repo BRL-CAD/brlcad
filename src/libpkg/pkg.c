@@ -61,52 +61,54 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <stdlib.h>
 #include <stdio.h>
 #include <ctype.h>		/* used by inet_addr() routine, below */
+
 #ifndef WIN32
-#undef BSD	/* /usr/include/sys/param.h redefines this */
-#include <sys/param.h>
-#include <sys/time.h>
+#  undef BSD	/* /usr/include/sys/param.h redefines this */
+#  include <sys/param.h>
+#  include <sys/time.h>
 #endif
+
 #if !defined(vax)
-#include <time.h>
+#  include <time.h>
 #endif
+
 #ifndef WIN32
-#include <sys/socket.h>
-#include <sys/ioctl.h>		/* for FIONBIO */
-#include <netinet/in.h>		/* for htons(), etc */
-#include <netdb.h>
-#include <netinet/tcp.h>	/* for TCP_NODELAY sockopt */
-#include <arpa/inet.h>		/* for inet_addr() */
-#undef LITTLE_ENDIAN		/* defined in netinet/{ip.h,tcp.h} */
+#  include <sys/socket.h>
+#  include <sys/ioctl.h>		/* for FIONBIO */
+#  include <netinet/in.h>		/* for htons(), etc */
+#  include <netdb.h>
+#  include <netinet/tcp.h>	/* for TCP_NODELAY sockopt */
+#  include <arpa/inet.h>		/* for inet_addr() */
+#  undef LITTLE_ENDIAN		/* defined in netinet/{ip.h,tcp.h} */
 #else
-#include <io.h>
-#include <process.h>
-#include <winsock.h>
+#  include <process.h>
+#  include <winsock.h>
 #endif
 
 #ifdef HAVE_STRING_H
-#include <string.h>
+#  include <string.h>
 #else
-#include <strings.h>
+#  include <strings.h>
 #endif
 
 #include "machine.h"
 
 /* Not all systems with "BSD Networking" include UNIX Domain sockets */
 #ifdef HAVE_UNIX_DOMAIN_SOCKETS
-# include <sys/un.h>		/* UNIX Domain sockets */
+#  include <sys/un.h>		/* UNIX Domain sockets */
 #endif
 
 #ifdef n16
 /* Encore multimax */
-# include <sys/h/socket.h>
-# include <sys/ioctl.h>
-# include <sys/netinet/in.h>
-# include <sys/aux/netdb.h>
-# include <sys/netinet/tcp.h>
+#  include <sys/h/socket.h>
+#  include <sys/ioctl.h>
+#  include <sys/netinet/in.h>
+#  include <sys/aux/netdb.h>
+#  include <sys/netinet/tcp.h>
 #endif
 
 #ifdef HAVE_WRITEV
-# include <sys/uio.h>		/* for struct iovec (writev) */
+#  include <sys/uio.h>		/* for struct iovec (writev) */
 #endif
 
 #include <errno.h>
@@ -114,10 +116,10 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #if defined(__stardent)
 /* <sys/byteorder.h> seems to be wrong, and this is a LITTLE_ENDIAN machine */
-#	undef	htons
-#	define	htons(x)	((((x)&0xFF)<<8)|(((x)>>8)&0xFF))
-#	undef	htonl
-#	define	htonl(x)	( \
+#  undef	htons
+#  define	htons(x)	((((x)&0xFF)<<8)|(((x)>>8)&0xFF))
+#  undef	htonl
+#  define	htonl(x)	( \
 	((((x)    )&0xFF)<<24) | \
 	((((x)>> 8)&0xFF)<<16) | \
 	((((x)>>16)&0xFF)<< 8) | \

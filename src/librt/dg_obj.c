@@ -50,10 +50,6 @@
 #include <signal.h>
 #include "common.h"
 
-#ifdef WIN32
-#include <io.h>
-#endif
-
 #include "tcl.h"
 #include "machine.h"
 #include "cmd.h"			/* includes bu.h */
