@@ -2205,31 +2205,11 @@ db_walk_dispatcher(int cpu, genptr_t arg)
  *	 0	OK
  */
 int
-db_walk_tree(struct db_i *dbip, int argc, const char **argv, int ncpu, const struct db_tree_state *init_state, int (*reg_start_func) (struct db_tree_state *, struct db_full_path *, const struct rt_comb_internal *, genptr_t), union tree *(*reg_end_func) (struct db_tree_state *, struct db_full_path *, union tree *, genptr_t), union tree *(*leaf_func) (struct db_tree_state *, struct db_full_path *, struct rt_db_internal *, genptr_t), genptr_t client_data)
-           	      
-   		     
-          	       
-   		     
-                                       
-   		                           
-			                       /*tsp*/ 
-			                      /*pathp*/ 
-			                                /* combp */ 
-			                    
-		   
-            	                         
-			                       /*tsp*/ 
-			                      /*pathp*/ 
-			             /*curtree*/ 
-			                    
-		   
-            	                      
-			                       /*tsp*/ 
-			                      /*pathp*/ 
-			                        /*ip*/ 
-			                    
-		   
-        	            
+db_walk_tree(struct db_i *dbip, int argc, const char **argv, int ncpu, const struct db_tree_state *init_state, 
+	     int (*reg_start_func) (struct db_tree_state *, struct db_full_path *, const struct rt_comb_internal *, genptr_t),
+	     union tree *(*reg_end_func) (struct db_tree_state *, struct db_full_path *, union tree *, genptr_t), 
+	     union tree *(*leaf_func) (struct db_tree_state *, struct db_full_path *, struct rt_db_internal *, genptr_t), 
+	     genptr_t client_data)
 {
 	union tree		*whole_tree = TREE_NULL;
 	int			new_reg_count;
