@@ -145,7 +145,7 @@ else
 	AC_MSG_RESULT(it should not)
 	AM_INIT_AUTOMAKE([no-dependencies])
 fi
-AM_CONFIG_HEADER([include/config.h])
+AM_CONFIG_HEADER([include/brlcad_config.h])
 
 # a secondary automated automake may blow away COPYING & INSTALL due
 # to an automake bug in older version, so restore those files if

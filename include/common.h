@@ -41,17 +41,19 @@
 #ifndef __COMMON_H__
 #define __COMMON_H__
 
-#ifndef PACKAGE
-#  ifdef HAVE_CONFIG_H
-#    include "config.h"
-#  else
-#    include <brlcad/config.h>
-#  endif
-#endif
-
 #ifdef __win32
-#  include "config_win.h"
-#endif
+#  ifdef HAVE_CONFIG_H
+#    include "config_win.h"
+#  else
+#    include <brlcad/config_win.h>
+#  endif
+#else
+#  ifdef HAVE_CONFIG_H
+#    include "brlcad_config.h"
+#  else
+#    include <brlcad/brlcad_config.h>
+#  endif
+#endif  /* __win32 */
 
 #endif  /* __COMMON_H__ */
 
