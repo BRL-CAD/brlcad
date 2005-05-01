@@ -5,6 +5,7 @@ brlcadincludedir = $(includedir)/brlcad
 brlcadinclude_required = \
 	RtServerImpl.h \
 	bn.h \
+	brlcad_version.h \
 	bu.h \
 	common.h \
 	config.h \
@@ -142,9 +143,6 @@ endif
 
 endif
 # end ONLY_BENCHMARK
-
-noinst_HEADERS = \
-	brlcad_version.h
 
 brlcad_version.h:
 	@sh $(top_srcdir)/sh/vers.sh brlcad_version "BRL-CAD" > $@
