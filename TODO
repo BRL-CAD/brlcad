@@ -12,6 +12,9 @@ THESE SHOULD HAPPEN BEFORE THE NEXT RELEASE
 
 THESE ARE LOWER PRIORITY
 
+* write scripts that parse the sf.net tracker data and generate
+  automatic reports for release.
+
 * add benchmark support to compute a stability/error metric to
   continue raytracing until the mean variance is below some threshold
   (to get stable values).
