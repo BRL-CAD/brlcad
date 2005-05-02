@@ -308,6 +308,236 @@ leaf_tess(struct db_tree_state *tsp, struct db_full_path *pathp, struct rt_db_in
 	return( nmg_booltree_leaf_tess(tsp, pathp, ip, client_data) );
 }
 
+
+/* converts a geometry path to a vrml-compliant id.  a buffer is
+ * allocated for use, it's the responsibility of the caller to free
+ * it.
+ *
+ * fortunately '/' is valid, so the paths should convert mostly
+ * untouched.  it is probably technically possible to name something
+ * in mged such that two conversions will result in the same name, but
+ * it should be an extremely rare situation.
+ */
+static void path_2_vrml_id(struct bu_vls *id, const char *path) {
+    static int counter = 0;
+    unsigned int i;
+    char c;
+
+    /* poof go the previous contents just in case */
+    bu_vls_trunc(id, 0);
+
+    if (path == NULL) {
+	bu_vls_printf(id, "NO_PATH_%d", counter++);
+    }
+
+    /* disallow any character from the
+     * ISO-IEC-14772-IS-VRML97WithAmendment1 spec that's not
+     * allowed for the first char.
+     */
+    c = *path;
+    switch (c) {
+	/* numbers */
+	case 0x30:
+	    bu_vls_strcat(id, "_ZERO");
+	    break;
+	case 0x31:
+	    bu_vls_strcat(id, "_ONE");
+	    break;
+	case 0x32:
+	    bu_vls_strcat(id, "_TWO");
+	    break;
+	case 0x33:
+	    bu_vls_strcat(id, "_THREE");
+	    break;
+	case 0x34:
+	    bu_vls_strcat(id, "_FOUR");
+	    break;
+	case 0x35:
+	    bu_vls_strcat(id, "_FIVE");
+	    break;
+	case 0x36:
+	    bu_vls_strcat(id, "_SIX");
+	    break;
+	case 0x37:
+	    bu_vls_strcat(id, "_SEVEN");
+	    break;
+	case 0x38:
+	    bu_vls_strcat(id, "_EIGHT");
+	    break;
+	case 0x39:
+	    bu_vls_strcat(id, "_NINE");
+	    break;
+	case 0x0:
+	case 0x1:
+	case 0x2:
+	case 0x3:
+	case 0x4:
+	case 0x5:
+	case 0x6:
+	case 0x7:
+	case 0x8:
+	case 0x9:
+	case 0x10:
+	case 0x11:
+	case 0x12:
+	case 0x13:
+	case 0x14:
+	case 0x15:
+	case 0x16:
+	case 0x17:
+	case 0x18:
+	case 0x19:
+	case 0x20:
+	    /* control codes */
+	    bu_vls_strcat(id, "_CTRL_");
+	    break;
+	case 0x22:
+	    /* " */
+	    bu_vls_strcat(id, "_QUOT_");
+	    break;
+	case 0x23:
+	    /* # */
+	    bu_vls_strcat(id, "_NUM_");
+	    break;
+	case 0x27:
+	    /* ' */
+	    bu_vls_strcat(id, "_APOS_");
+	    break;
+	case 0x2b:
+	    /* + */
+	    bu_vls_strcat(id, "_PLUS_");
+	    break;
+	case 0x2c:
+	    /* , */
+	    bu_vls_strcat(id, "_COMMA_");
+	    break;
+	case 0x2d:
+	    /* - */
+	    bu_vls_strcat(id, "_MINUS_");
+	    break;
+	case 0x2e:
+	    /* . */
+	    bu_vls_strcat(id, "_DOT_");
+	    break;
+	case 0x5b:
+	    /* [ */
+	    bu_vls_strcat(id, "_LBRK_");
+	    break;
+	case 0x5c:
+	    /* \ */
+	    bu_vls_strcat(id, "_BACK_");
+	    break;
+	case 0x5d:
+	    /* ] */
+	    bu_vls_strcat(id, "_RBRK_");
+	    break;
+	case 0x7b:
+	    /* { */
+	    bu_vls_strcat(id, "_LBRC_");
+	    break;
+	case 0x7d:
+	    /* } */
+	    bu_vls_strcat(id, "_RBRC_");
+	    break;
+	case 0x7f:
+	    /* DEL */
+	    bu_vls_strcat(id, "_DEL_");
+	    break;	
+	default:
+	    bu_vls_putc(id, c);
+	    break;
+    }
+
+    /* convert the invalid path characters to something valid */
+    for (i=1; i < strlen(path); i++) {
+	c = *(path+i);
+
+	/* disallow any character from the
+	 * ISO-IEC-14772-IS-VRML97WithAmendment1 spec that's not
+	 * allowed for subsequent characters.  only difference is that
+	 * #'s and numbers are allowed.
+	 */
+	switch (c) {
+	    case 0x0:
+	    case 0x1:
+	    case 0x2:
+	    case 0x3:
+	    case 0x4:
+	    case 0x5:
+	    case 0x6:
+	    case 0x7:
+	    case 0x8:
+	    case 0x9:
+	    case 0x10:
+	    case 0x11:
+	    case 0x12:
+	    case 0x13:
+	    case 0x14:
+	    case 0x15:
+	    case 0x16:
+	    case 0x17:
+	    case 0x18:
+	    case 0x19:
+	    case 0x20:
+		/* control codes */
+		bu_vls_strcat(id, "_CTRL_");
+		break;
+	    case 0x22:
+		/* " */
+		bu_vls_strcat(id, "_QUOT_");
+		break;
+	    case 0x27:
+		/* ' */
+		bu_vls_strcat(id, "_APOS_");
+		break;
+	    case 0x2b:
+		/* + */
+		bu_vls_strcat(id, "_PLUS_");
+		break;
+	    case 0x2c:
+		/* , */
+		bu_vls_strcat(id, "_COMMA_");
+		break;
+	    case 0x2d:
+		/* - */
+		bu_vls_strcat(id, "_MINUS_");
+		break;
+	    case 0x2e:
+		/* . */
+		bu_vls_strcat(id, "_DOT_");
+		break;
+	    case 0x5b:
+		/* [ */
+		bu_vls_strcat(id, "_LBRK_");
+		break;
+	    case 0x5c:
+		/* \ */
+		bu_vls_strcat(id, "_BACK_");
+		break;
+	    case 0x5d:
+		/* ] */
+		bu_vls_strcat(id, "_RBRK_");
+		break;
+	    case 0x7b:
+		/* { */
+		bu_vls_strcat(id, "_LBRC_");
+		break;
+	    case 0x7d:
+		/* } */
+		bu_vls_strcat(id, "_RBRC_");
+		break;
+	    case 0x7f:
+		/* DEL */
+		bu_vls_strcat(id, "_DEL_");
+		break;	
+	    default:
+		bu_vls_putc(id, c);
+		break;
+	}  /* switch c */
+    }  /* loop over chars */
+}
+
+
 /*
  *			M A I N
  */
@@ -482,7 +712,7 @@ main(int argc, char **argv)
 			continue;
 		}
 
-		fprintf ( fp_out, "#Includes group %s\n", argv[i]);
+		fprintf ( fp_out, "# Includes group %s\n", argv[i]);
 
 		/* light source must be a combibation */
 		if( !(dp->d_flags & DIR_COMB) )
@@ -539,6 +769,7 @@ nmg_2_vrml(FILE *fp, struct db_full_path *pathp, struct model *m, struct mater_i
 	int is_light=0;
 	float r,g,b;
 	point_t ave_pt;
+	struct bu_vls shape_name;
 	char *full_path;
 	/*There may be a better way to capture the region_id, than getting the rt_comb_internal structure, 
 	 * (and may be a better way to capture the rt_comb_internal struct), but for now I just copied the
@@ -561,6 +792,8 @@ nmg_2_vrml(FILE *fp, struct db_full_path *pathp, struct model *m, struct mater_i
 
 	if( !(dp->d_flags & DIR_COMB) )
 		return;
+
+	bu_vls_init(&shape_name);
 
 	id = rt_db_get_internal( &intern, dp, dbip, (matp_t)NULL, &rt_uniresource );
 	if( id < 0 )
@@ -616,10 +849,11 @@ nmg_2_vrml(FILE *fp, struct db_full_path *pathp, struct model *m, struct mater_i
 	}
 	else
 	{
-		fprintf( fp, "\t\tShape { \n");
+		path_2_vrml_id(&shape_name, full_path);
+		fprintf( fp, "\t\tDEF %s Shape { \n", bu_vls_addr(&shape_name));
+
 		fprintf( fp, "\t\t\t# Component_ID: %d   %s\n",comb->region_id,full_path);
 		fprintf( fp, "\t\t\tappearance Appearance { \n");
-
 
 		if( strncmp( "plastic", mat.shader, 7 ) == 0 )
 		{
@@ -726,7 +960,7 @@ nmg_2_vrml(FILE *fp, struct db_full_path *pathp, struct model *m, struct mater_i
 /*			fprintf( fp, "\t\t\t\tmaterial Material {\n" );
  *			fprintf( fp, "\t\t\t\t\tdiffuseColor %g %g %g \n", r, g, b );
  *			fprintf( fp, "\t\t\t\t\tspecularColor %g %g %g \n\t\t\t\t}\n", 1.0, 1.0, 1.0 );
-*/
+ */
 		}
 	}
 
@@ -929,12 +1163,17 @@ nmg_2_vrml(FILE *fp, struct db_full_path *pathp, struct model *m, struct mater_i
 		else
 			fprintf( fp, "\t\tPointLight {\n\t\t\ton TRUE\n\t\t\tintensity 1\n\t\t\tcolor %g %g %g\n\t\t\tlocation %g %g %g\n\t\t}\n",r,g,b,V3ARGS( ave_pt ) );
 	}
+
+	bu_vls_free(&vls);
+	bu_vls_free(&shape_name);
+	
 	BARRIER_CHECK;
 }
 
 void
 bot2vrml( struct plate_mode *pmp, struct db_full_path *pathp, int region_id )
 {
+	struct bu_vls shape_name;
 	char *path_str;
 	int appearance;
 	struct rt_bot_internal *bot;
@@ -946,9 +1185,14 @@ bot2vrml( struct plate_mode *pmp, struct db_full_path *pathp, int region_id )
 
 	path_str = db_path_to_string( pathp );
 
-	fprintf( fp_out, "\t\tShape {\n\t\t\t# Component_ID: %d   %s\n",
-		 region_id, path_str );
+	bu_vls_init(&shape_name);
+	path_2_vrml_id(&shape_name, path_str);
+
+	fprintf( fp_out, "\t\tDEF %s Shape {\n\t\t\t# Component_ID: %d   %s\n",
+		 bu_vls_addr(&shape_name), region_id, path_str );
+
 	bu_free( path_str, "result of db_path_to_string" );
+	bu_vls_free(&shape_name);
 
 	appearance = region_id / 1000;
 	appearance = appearance * 1000 + 999;
