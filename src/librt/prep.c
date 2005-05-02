@@ -23,7 +23,6 @@
  *  Manage one-time preparations to be done before actual
  *  ray-tracing can commence.
  *
- *
  *  Author -
  *	Michael John Muuss
  *  
@@ -39,25 +38,25 @@ static const char RCSprep[] = "@(#)$Header$ (BRL)";
 
 #include "common.h"
 
-
-
 #include <stdio.h>
 #include <math.h>
 #ifdef HAVE_STRING_H
-#include <string.h>
+#  include <string.h>
 #else
-#include <strings.h>
+#  include <strings.h>
 #endif
+#ifdef HAVE_UNISTD_H
+#  include <unistd.h>
+#endif
+
 #include "machine.h"
 #include "bu.h"
 #include "vmath.h"
 #include "bn.h"
 #include "raytrace.h"
 #include "plot3.h"
+
 #include "./debug.h"
-#if !defined(WIN32)
-#include <unistd.h>
-#endif
 
 BU_EXTERN(void		rt_ck, (struct rt_i	*rtip));
 
@@ -236,13 +235,17 @@ rt_prep_parallel(register struct rt_i *rtip, int ncpu)
 		return;
 	}
 
-	if( rtip->nsolids <= 0 )  {
-		if( rtip->rti_air_discards > 0 )
-			bu_log("rt_prep_parallel(%s,%d): %d primitives discarded due to air regions\n",
-				rtip->rti_dbip->dbi_filename,
-				rtip->rti_dbip->dbi_uses,
-				rtip->rti_air_discards );
-		rt_bomb("rt_prep_parallel:  no primitives left to prep");
+	if( rtip->nsolids <= 0 ) {
+	    if( rtip->rti_air_discards > 0 )
+		bu_log("rt_prep_parallel(%s,%d): %d primitives discarded due to air regions\n",
+		       rtip->rti_dbip->dbi_filename,
+		       rtip->rti_dbip->dbi_uses,
+		       rtip->rti_air_discards );
+	    rt_bomb("rt_prep_parallel:  no primitives left to prep\n");
+	}
+
+	if ( rtip->nregions <= 0 )  {
+	    rt_bomb("rt_prep_parallel:  no regions left to prep\n");
 	}
 
 	/* In case everything is a halfspace, set a minimum space */
@@ -280,9 +283,7 @@ rt_prep_parallel(register struct rt_i *rtip, int ncpu)
 	 *  Set this region's bit in the bit vector of every solid
 	 *  contained in the subtree.
 	 */
-	rtip->Regions = (struct region **)bu_calloc(
-		rtip->nregions, sizeof(struct region *),
-		"rtip->Regions[]" );
+	rtip->Regions = (struct region **)bu_calloc(rtip->nregions, sizeof(struct region *), "rtip->Regions[]" );
 	if(RT_G_DEBUG&DEBUG_REGIONS)  bu_log("rt_prep_parallel(%s,%d) about to optimize regions\n",
 			rtip->rti_dbip->dbi_filename,
 			rtip->rti_dbip->dbi_uses);
