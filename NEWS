@@ -27,6 +27,7 @@ Also included now is a simplified BSD termlib library, decoupling the
 build system from any system dependancy beyond framebuffer facilities
 and the standard C library.
 
+* vrml-g now writes out DEF names for exported shapes - Sean Morrison
 * iterative scalable benchmark computations - Sean Morrison
 * added logging of ray details when root solver fails - Sean Morrison
 * added logging of solid name when root solver fails - Lee Butler
