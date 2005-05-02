@@ -437,11 +437,20 @@ rt_tor_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 	 *  if the root finder returns other than 4 roots, error.
 	 */
 	if ( (i = rt_poly_roots( &C, val, stp->st_dp->d_namep )) != 4 ){
-		if( i != 0 )  {
-			bu_log("tor:  rt_poly_roots() 4!=%d\n", i);
-			bn_pr_roots( stp->st_name, val, i );
+	    if( i > 0 )  {
+		bu_log("tor:  rt_poly_roots() 4!=%d\n", i);
+		bn_pr_roots( stp->st_name, val, i );
+	    } else if (i < 0) {
+		static int reported=0;
+		bu_log("The root solver failed to converge on a solution for %s\n", stp->st_dp->d_namep);
+		if (!reported) {
+		    VPRINT("while shooting from:\t", rp->r_pt);
+		    VPRINT("while shooting at:\t", rp->r_dir);
+		    bu_log("Additional torus convergence failure details will be suppressed.\n");
+		    reported=1;
 		}
-		return(0);		/* MISS */
+	    }
+	    return(0);		/* MISS */
 	}
 
 	/*  Only real roots indicate an intersection in real space.
@@ -656,18 +665,27 @@ rt_tor_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
 
 	/* Unfortunately finding the 4th order roots are too ugly to inline */
 	for(i = 0; i < n; i++){
-		if( segp[i].seg_stp == 0) continue;	/* Skip */
-
-		/*  It is known that the equation is 4th order.  Therefore,
-	 	*  if the root finder returns other than 4 roots, error.
-	 	*/
-		if ( (num_roots = rt_poly_roots( &(C[i]), &(val[i][0]), (*stp)->st_dp->d_namep )) != 4 ){
-			if( num_roots != 0 )  {
-				bu_log("tor:  rt_poly_roots() 4!=%d\n", num_roots);
-				bn_pr_roots( "tor", val[i], num_roots );
-			}
-			SEG_MISS(segp[i]);		/* MISS */
+	    if( segp[i].seg_stp == 0) continue;	/* Skip */
+	    
+	    /*  It is known that the equation is 4th order.  Therefore,
+	     *  if the root finder returns other than 4 roots, error.
+	     */
+	    if ( (num_roots = rt_poly_roots( &(C[i]), &(val[i][0]), (*stp)->st_dp->d_namep )) != 4 ){
+		if( num_roots > 0 )  {
+		    bu_log("tor:  rt_poly_roots() 4!=%d\n", num_roots);
+		    bn_pr_roots( "tor", val[i], num_roots );
+		} else if (num_roots < 0) {
+		    static int reported=0;
+		    bu_log("The root solver failed to converge on a solution for %s\n", stp[i]->st_dp->d_namep);
+		    if (!reported) {
+			VPRINT("while shooting from:\t", rp[i]->r_pt);
+			VPRINT("while shooting at:\t", rp[i]->r_dir);
+			bu_log("Additional torus convergence failure details will be suppressed.\n");
+			reported=1;
+		    }
 		}
+		SEG_MISS(segp[i]);		/* MISS */
+	    }
 	}
 
 	/* for each ray/torus pair */

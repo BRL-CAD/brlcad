@@ -583,13 +583,22 @@ bend_pipe_shot(struct soltab *stp, register struct xray *rp, struct application 
 	 *  if the root finder returns other than 4 roots, error.
 	 */
 	if ( (root_count = rt_poly_roots( &C, val, stp->st_dp->d_namep )) != 4 ){
-		if( (root_count) != 0 )  {
-			bu_log("tor:  rt_poly_roots() 4!=%d\n", root_count);
-			bn_pr_roots( stp->st_name, val, root_count );
+	    if( root_count > 0 )  {
+		bu_log("tor:  rt_poly_roots() 4!=%d\n", root_count);
+		bn_pr_roots( stp->st_name, val, root_count );
+	    } else if (root_count < 0) {
+		static int reported=0;
+		bu_log("The root solver failed to converge on a solution for %s\n", stp->st_dp->d_namep);
+		if (!reported) {
+		    VPRINT("while shooting from:\t", rp->r_pt);
+		    VPRINT("while shooting at:\t", rp->r_dir);
+		    bu_log("Additional pipe convergence failure details will be suppressed.\n");
+		    reported=1;
 		}
-		return;	/* MISSED */
+	    }
+	    return;	/* MISSED */
 	}
-
+	
 	/*  Only real roots indicate an intersection in real space.
 	 *
 	 *  Look at each root returned; if the imaginary part is zero
@@ -659,11 +668,20 @@ bend_pipe_shot(struct soltab *stp, register struct xray *rp, struct application 
 	 *  if the root finder returns other than 4 roots, error.
 	 */
 	if ( (root_count = rt_poly_roots( &C, val, stp->st_dp->d_namep)) != 4 ){
-		if( root_count != 0 )  {
-			bu_log("tor:  rt_poly_roots() 4!=%d\n", root_count);
-			bn_pr_roots( stp->st_name, val, root_count );
+	    if( root_count > 0 )  {
+		bu_log("tor:  rt_poly_roots() 4!=%d\n", root_count);
+		bn_pr_roots( stp->st_name, val, root_count );
+	    } else if (root_count < 0) {
+		static int reported=0;
+		bu_log("The root solver failed to converge on a solution for %s\n", stp->st_dp->d_namep);
+		if (!reported) {
+		    VPRINT("while shooting from:\t", rp->r_pt);
+		    VPRINT("while shooting at:\t", rp->r_dir);
+		    bu_log("Additional pipe convergence failure details will be suppressed.\n");
+		    reported=1;
 		}
-		return;	/* MISSED */
+	    }
+	    return;	/* MISSED */
 	}
 
 	/*  Only real roots indicate an intersection in real space.

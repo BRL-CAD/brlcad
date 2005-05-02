@@ -217,12 +217,12 @@ rt_superell_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rti
   magsq_c = MAGSQ( eip->c );
   
   if( magsq_a < rtip->rti_tol.dist || magsq_b < rtip->rti_tol.dist || magsq_c < rtip->rti_tol.dist ) {
-    bu_log("superell(%s):  zero length A(%g), B(%g), or C(%g) vector\n",
+    bu_log("superell(%s):  near-zero length A(%g), B(%g), or C(%g) vector\n",
 	   stp->st_name, magsq_a, magsq_b, magsq_c );
     return(1);		/* BAD */
   }
   if (eip->n < rtip->rti_tol.dist || eip->e < rtip->rti_tol.dist) {
-    bu_log("superell(%s):  zero length <n,e> curvature (%g, %g) causes problems\n", 
+    bu_log("superell(%s):  near-zero length <n,e> curvature (%g, %g) causes problems\n", 
 	   stp->st_name, eip->n, eip->e);
     /* BAD */
   }
@@ -369,7 +369,6 @@ rt_superell_shot(struct soltab *stp, register struct xray *rp, struct applicatio
 {
   static int counter=10;
 
-#if 1
   register struct superell_specific *superell = (struct superell_specific *)stp->st_specific;
   LOCAL bn_poly_t equation; /* equation of superell to be solved */
   LOCAL vect_t translated;  /* translated shot vector */
@@ -417,11 +416,20 @@ rt_superell_shot(struct soltab *stp, register struct xray *rp, struct applicatio
   equation.cf[2] = newShotDir[X] * newShotDir[X] * superell->superell_invmsAu  + newShotDir[Y] * newShotDir[Y] * superell->superell_invmsBu + newShotDir[Z] * newShotDir[Z] * superell->superell_invmsCu;
 
   if ( (i = rt_poly_roots( &equation, complexRoot, stp->st_dp->d_namep)) != 2 ) {
-    if (i != 0) {
-      bu_log("superell: rt_poly_roots() 2 != %d\n", i);
-      bn_pr_roots(stp->st_name, complexRoot, i);
-    }
-    return (0); /* MISS */
+      if (i > 0) {
+	  bu_log("superell: rt_poly_roots() 2 != %d\n", i);
+	  bn_pr_roots(stp->st_name, complexRoot, i);
+      } else if (i < 0) {
+	  static int reported=0;
+	  bu_log("The root solver failed to converge on a solution for %s\n", stp->st_dp->d_namep);
+	  if (!reported) {
+	      VPRINT("while shooting from:\t", rp->r_pt);
+	      VPRINT("while shooting at:\t", rp->r_dir);
+	      bu_log("Additional superellipsoid convergence failure details will be suppressed.\n");
+	      reported=1;
+	  }
+      }
+      return (0); /* MISS */
   }
 
   /* XXX BEGIN CUT */
@@ -524,62 +532,6 @@ rt_superell_shot(struct soltab *stp, register struct xray *rp, struct applicatio
   }
 
   return 1;
-#else
-  /* XXX ell code */
-	register struct superell_specific *superell =
-		(struct superell_specific *)stp->st_specific;
-	register struct seg *segp;
-	LOCAL vect_t	dprime;		/* D' */
-	LOCAL vect_t	pprime;		/* P' */
-	LOCAL vect_t	xlated;		/* translated vector */
-	LOCAL fastf_t	dp, dd;		/* D' dot P', D' dot D' */
-	LOCAL fastf_t	k1, k2;		/* distance constants of solution */
-	FAST fastf_t	root;		/* root of radical */
-
-	/* out, Mat, vect */
-	MAT4X3VEC( dprime, superell->superell_SoR, rp->r_dir );
-	VSUB2( xlated, rp->r_pt, superell->superell_V );
-	MAT4X3VEC( pprime, superell->superell_SoR, xlated );
-
-	dp = VDOT( dprime, pprime );
-	dd = VDOT( dprime, dprime );
-
-	if( (root = dp*dp - dd * (VDOT(pprime,pprime)-1.0)) < 0 )
-		return(0);		/* No hit */
-	root = sqrt(root);
-
-	RT_GET_SEG(segp, ap->a_resource);
-	segp->seg_stp = stp;
-	if( (k1=(-dp+root)/dd) <= (k2=(-dp-root)/dd) )  {
-		/* k1 is entry, k2 is exit */
-		segp->seg_in.hit_dist = k1;
-		segp->seg_out.hit_dist = k2;
-
-		/* !!! please room */
-		if (counter > 0) {
-		  bu_log("realroot: in %d  out %d\n", k1, k2);
-		  counter--;
-		}
-
-	} else {
-		/* k2 is entry, k1 is exit */
-		segp->seg_in.hit_dist = k2;
-		segp->seg_out.hit_dist = k1;
-
-		/* !!! please room */
-		if (counter > 0) {
-		  bu_log("realroot: in %d  out %d\n", k2, k1);
-		  counter--;
-		}
-
-	}
-
-
-	BU_LIST_INSERT( &(seghead->l), &(segp->l) );
-	return(2);			/* HIT */
-
-
-#endif
 }
 
 

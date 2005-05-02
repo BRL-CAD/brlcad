@@ -446,9 +446,18 @@ rt_eto_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 	 *  if the root finder returns other than 4 roots, error.
 	 */
 	if ( (i = rt_poly_roots( &C, val, stp->st_dp->d_namep )) != 4 ){
-		if( i != 0 )  {
+		if( i > 0 )  {
 			bu_log("eto:  rt_poly_roots() 4!=%d\n", i);
 			bn_pr_roots( stp->st_name, val, i );
+		} else if (i < 0) {
+		    static int reported=0;
+		    bu_log("The root solver failed to converge on a solution for %s\n", stp->st_dp->d_namep);
+		    if (!reported) {
+			VPRINT("while shooting from:\t", rp->r_pt);
+			VPRINT("while shooting at:\t", rp->r_dir);
+			bu_log("Additional elliptical torus convergence failure details will be suppressed.\n");
+			reported=1;
+		    }
 		}
 		return(0);		/* MISS */
 	}

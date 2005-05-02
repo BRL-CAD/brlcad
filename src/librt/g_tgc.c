@@ -718,9 +718,18 @@ rt_tgc_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 			}
 		}
 		/* Here, 'npts' is number of points being returned */
-		if ( npts != 0 && npts != 2 && npts != 4 ){
+		if ( npts != 0 && npts != 2 && npts != 4 && npts > 0 ){
 			bu_log("tgc:  reduced %d to %d roots\n",nroots,npts);
 			bn_pr_roots( stp->st_name, val, nroots );
+		} else if (nroots < 0) {
+		    static int reported=0;
+		    bu_log("The root solver failed to converge on a solution for %s\n", stp->st_dp->d_namep);
+		    if (!reported) {
+			VPRINT("while shooting from:\t", rp->r_pt);
+			VPRINT("while shooting at:\t", rp->r_dir);
+			bu_log("Additional truncated general cone convergence failure details will be suppressed.\n");
+			reported=1;
+		    }
 		}
 	}
 
@@ -1102,9 +1111,18 @@ rt_tgc_vshot(struct soltab **stp, register struct xray **rp, struct seg *segp, i
 					k[npts++] = val[l].re;
 			}
 			/* Here, 'npts' is number of points being returned */
-			if ( npts != 0 && npts != 2 && npts != 4 ){
+			if ( npts != 0 && npts != 2 && npts != 4 && npts > 0 ){
 				bu_log("tgc:  reduced %d to %d roots\n",nroots,npts);
 				bn_pr_roots( "tgc", val, nroots );
+			} else if (nroots < 0) {
+			    static int reported=0;
+			    bu_log("The root solver failed to converge on a solution for %s\n", stp[ix]->st_dp->d_namep);
+			    if (!reported) {
+				VPRINT("while shooting from:\t", rp[ix]->r_pt);
+				VPRINT("while shooting at:\t", rp[ix]->r_dir);
+				bu_log("Additional truncated general cone convergence failure details will be suppressed.\n");
+				reported=1;
+			    }
 			}
 		}
 
