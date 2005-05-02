@@ -1,7 +1,7 @@
 Makefile
 Makefile.in
 brlcad_version.h
-config.h
-config.h.in
+brlcad_config.h
+brlcad_config.h.in
 stamp-h1
 version
