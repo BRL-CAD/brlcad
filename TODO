@@ -53,8 +53,6 @@ THESE ARE LOWER PRIORITY
 
 * add support for levels of detail
 
-* add nfs support and ability to safely interrupt benchmark
-
 
 THESE BREAK PROTOCOL AND ARE BACKWARDS INCOMPATIBLE
 
