@@ -1001,9 +1001,18 @@ do_ae(double azim, double elev)
 	struct rt_i *rtip = ap.a_rt_i;
 
 	if( rtip->nsolids <= 0 )
-		rt_bomb("do_ae: no solids active\n");
-	if( rtip->mdl_max[X] >= INFINITY || rtip->mdl_max[X] <= -INFINITY )
-		rt_bomb("do_ae: infinite model bounds?\n");
+	    rt_bomb("do_ae: no solids active\n");
+	if ( rtip->nregions <= 0 )
+	    rt_bomb("do_ae: no regions active\n");
+
+	if( rtip->mdl_max[X] >= INFINITY ) {
+	    bu_log("do_ae: infinite model bounds? setting a unit minimum\n");
+	    VSETALL( rtip->mdl_min, -1 );
+	}
+	if ( rtip->mdl_max[X] <= -INFINITY ) {
+	    bu_log("do_ae: infinite model bounds? setting a unit maximum\n");
+	    VSETALL( rtip->mdl_max, 1 );
+	}
 
 	/*
 	 *  Enlarge the model RPP just slightly, to avoid nasty
