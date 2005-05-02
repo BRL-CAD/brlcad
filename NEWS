@@ -10,10 +10,28 @@ entire history of the project is available through CVS.
 --- 2005-05-XX  Release 7.2.3                                      ---
 ----------------------------------------------------------------------
 
+The release marks the beginning of a series of benchmark suite
+enchancements.  The benchmark suite will now iteratively increase the
+number of rays being shot until a minimum amount of time has elapsed
+per raytrace test.  The resulting computations provide a more stable
+ray-trace figure of merit (rtfm) and allows the benchmark test to
+scale to very high-performance machines without intervention.  The
+current default time window of 60 seconds implies that the benchmark
+suite will now take somewhere between 6 and 12 minutes to complete.
+
+In addition, this release continues to improve the build process by
+allowing for more individualized selection of which components a
+compiled for installation.  If useable system libraries are found at
+the time of configuration, the build process will skip building them.
+Also included now is a simplified BSD termlib library, decoupling the
+build system from any system dependancy beyond framebuffer facilities
+and the standard C library.
+
+* iterative scalable benchmark computations - Sean Morrison
 * added logging of ray details when root solver fails - Sean Morrison
-* added logging of solid name when findroot fails - Lee Butler
+* added logging of solid name when root solver fails - Lee Butler
 * fixed smp linux rtarea calculation bug - Sean Morrison
-* fixed rtweight cm units bug - Lee Butler
+* fixed rtweight centimeter units computation bug - Lee Butler
 * fixed asc2g double-free warnings bug - Sean Morrison
 * added rtarea manpage documentation - Sean Morrison
 * fixed compilation support for Sparc 64 - Sean Morrison
