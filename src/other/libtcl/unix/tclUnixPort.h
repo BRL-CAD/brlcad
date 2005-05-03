@@ -25,9 +25,7 @@
 #ifndef _TCLUNIXPORT
 #define _TCLUNIXPORT
 
-#ifdef HAVE_CONFIG_H
-#include <config.h>
-#endif
+#include <common.h>
 
 #ifndef _TCLINT
 #   include "tclInt.h"
