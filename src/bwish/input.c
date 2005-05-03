@@ -43,16 +43,12 @@
  *  
  */
 
-#ifdef HAVE_CONFIG_H
-# include "config.h"
-#endif
-
 #include "common.h"
 
 /* system headers */
 #include <time.h>
 #if defined(IRIX) && IRIX == 5
-#define _BSD_COMPAT
+#  define _BSD_COMPAT
 #endif
 #include <sys/time.h>
 #if defined(HAVE_UNISTD_H)

@@ -30,15 +30,13 @@
 static const char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
-#ifdef HAVE_CONFIG_H
-# include "config.h"
-#endif
+#include "common.h"
 
 #ifndef DEBUG
-#define NDEBUG
-#define STATIC static
+#  define NDEBUG
+#  define STATIC static
 #else
-#define STATIC
+#  define STATIC
 #endif
 
 #include <assert.h>
@@ -48,9 +46,6 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include <time.h>
 #include <string.h>
 #include <signal.h>
-
-#include "common.h"
-
 
 #include "./vecmath.h"
 #include "machine.h"

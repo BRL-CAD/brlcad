@@ -22,11 +22,12 @@
  *
  *  Header file for the BRL-CAD common definitions.
  *
- *  This header wraps the system-specific encapsulation of config.h
- *  and removes need to conditionally include config.h everywhere.
- *  The common definitions are symbols common to the platform being
- *  built that are either detected via configure or hand crafted, as
- *  is the case for the win32 platform.
+ *  This header wraps the system-specific encapsulation of
+ *  brlcad_config.h and removes need to conditionally include
+ *  brlcad_config.h everywhere based on HAVE_CONFIG_H.  The common
+ *  definitions are symbols common to the platform being built that
+ *  are either detected via configure or hand crafted, as is the case
+ *  for the win32 platform.
  *
  *  Author -
  *	Christopher Sean Morrison

@@ -35,9 +35,7 @@
 #ifndef __FENCE_H__
 #define __FENCE_H__
 
-#ifdef HAVE_CONFIG_H
-# include "config.h"
-#endif
+#include "common.h"
 
 #include <stdio.h>
 #include <stdlib.h>

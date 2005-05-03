@@ -5,7 +5,7 @@
  *
  */
 
-#include <config.h>
+#include "common.h"
 
 /* jove.h header file to be included by EVERYONE */
 #include <stdio.h>

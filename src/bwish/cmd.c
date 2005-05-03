@@ -38,10 +38,6 @@
  *  
  */
 
-#ifdef HAVE_CONFIG_H
-# include "config.h"
-#endif
-
 #include "common.h"
 
 #ifdef HAVE_STRING_H

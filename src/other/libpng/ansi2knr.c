@@ -236,53 +236,36 @@ BY ANY OTHER PARTY.
 #include <stdio.h>
 #include <ctype.h>
 
-#if HAVE_CONFIG_H
-
-/*
-   For properly autoconfiguring ansi2knr, use AC_CONFIG_HEADER(config.h).
-   This will define HAVE_CONFIG_H and so, activate the following lines.
- */
-
-# if STDC_HEADERS || HAVE_STRING_H
+#ifdef HAVE_STRING_H
 #  include <string.h>
-# else
+#else
 #  include <strings.h>
-# endif
-
-#else /* not HAVE_CONFIG_H */
+#endif
 
 /* Otherwise do it the hard way */
 
-# ifdef BSD
-#  include <strings.h>
-# else
-#  ifdef VMS
+#ifdef VMS
     extern int strlen(), strncmp();
-#  else
-#   include <string.h>
-#  endif
-# endif
-
-#endif /* not HAVE_CONFIG_H */
+#endif
 
 #if STDC_HEADERS
-# include <stdlib.h>
+#  include <stdlib.h>
 #else
 /*
    malloc and free should be declared in stdlib.h,
    but if you've got a K&R compiler, they probably aren't.
  */
-# ifdef MSDOS
-#  include <malloc.h>
-# else
-#  ifdef VMS
+#  ifdef MSDOS
+#    include <malloc.h>
+#  else
+#    ifdef VMS
      extern char *malloc();
      extern void free();
-#  else
+#    else
      extern char *malloc(size_t);
      extern int free(void *);
+#    endif
 #  endif
-# endif
 
 #endif
 

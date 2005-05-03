@@ -39,19 +39,14 @@
  *
  */
 
-#ifdef HAVE_CONFIG_H
-# include "config.h"
-#endif
-
 #include "common.h"
-
 
 #include <stdio.h>
 #include <ctype.h>
 #ifdef BWISH
-#include "tk.h"
+#  include "tk.h"
 #else
-#include "tcl.h"
+#  include "tcl.h"
 #endif
 #include "tclInt.h"
 #include "machine.h"

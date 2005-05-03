@@ -34,18 +34,13 @@
  *  
  */
 
-#ifdef HAVE_CONFIG_H
-# include "config.h"
-#endif
-
 #include "common.h"
 
-
 #ifdef BWISH
-#include "itk.h"
+#  include "itk.h"
 #else
-#include "itcl.h"
-#include "tclInt.h"
+#  include "itcl.h"
+#  include "tclInt.h"
 #endif
 
 #include "machine.h"
@@ -54,7 +49,7 @@
 #include "bn.h"
 #include "raytrace.h"
 #ifdef BWISH
-#include "dm.h"
+#  include "dm.h"
 #endif
 
 /* XXX -- it's probably a bad idea to import itcl/itk/iwidgets into

@@ -25,10 +25,9 @@
 #define CONFIG_H seen
 
 #if defined(WIN32)
-/*XXX
-  This is temporary (atleast until a
-  config.h is auto-generated on windows)
-*/
+/* XXX - This is temporary (atleast until a brlcad_config.h is
+ * auto-generated on windows)
+ */
 #define __STDC__ 1
 
 #pragma warning( disable : 4244 4305 4018)
