@@ -41,33 +41,31 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 
 #include "common.h"
 
-
-
 #ifdef HAVE_STRING_H
-#include <string.h>
+#  include <string.h>
 #else
-#include <strings.h>
+#  include <strings.h>
 #endif
 
 #include <stdio.h>
 #include <ctype.h>
 #include <math.h>
-#if defined(HAVE_UNIX_IO)
-# include <sys/types.h>
-# include <sys/stat.h>
+#ifdef HAVE_SYS_TYPES_H
+#  include <sys/types.h>
 #endif
-
+#ifdef HAVE_SYS_STAT_H
+#  include <sys/stat.h>
+#endif
 
 #include "machine.h"
 #include "vmath.h"
 #include "raytrace.h"
 
+
 int	debug = 0;
 
-char	*prototype;		/* Contains full text of prototype document */
-
-void	get_proto(char *file);
-void	do_lines(FILE *fp);
+void	get_proto(char **buffer, char *file);
+void	do_lines(FILE *fp, char *buffer);
 void	out_mat(matp_t m, FILE *fp);
 int	str2chan_index( char *s );
 int	multi_words( char *words[], int	nwords );
@@ -80,48 +78,69 @@ int	multi_words( char *words[], int	nwords );
 int
 main(int argc, char **argv)
 {
-	FILE	*table;
+    char	*prototype;		/* Contains full text of prototype document */
+    char	proto_file[256] = {0};
 
-	if( argc < 1 || argc > 3 )  {
-		fprintf(stderr,"Usage:  tabsub prototype_file [table_file]\n");
-		exit(12);
+    FILE	*table;
+    char	table_file[256] = {0};
+    
+    if( argc < 2 || argc > 3 )  {
+	fprintf(stderr,"Usage:  tabsub prototype_file [table_file]\n");
+	exit(12);
+    }
+    strncpy(proto_file, argv[1], 255);
+
+    /* Acquire in-core copy of prototype file */
+    get_proto( &prototype, proto_file );
+    
+    if( argc < 3 )  {
+	table = stdin;
+    } else {
+	strncpy(table_file, argv[2], 255);
+	if( (table = fopen( table_file, "r" )) == NULL )  {
+	    perror( table_file );
+	    exit(3);
 	}
-
-	/* Acquire in-core copy of prototype file */
-	get_proto( argv[1] );
-
-	if( argc < 3 )  {
-		table = stdin;
-	} else {
-		if( (table = fopen( argv[2], "r" )) == NULL )  {
-			perror( argv[2] );
-			exit(3);
-		}
-	}
-	do_lines( table );
-	return 0;
+    }
+    do_lines( table, prototype );
+    return 0;
 }
 
 void
-get_proto(char *file)
+get_proto(char **buffer, char *file)
 {
-	struct stat	sb;
-	int	fd;
+    struct stat	sb;
+    int	fd;
+    int bytes_read = 0;
 
-	if( (fd = open( file, 0 )) < 0 || stat( file, &sb ) < 0 )  {
-		perror(file);
-		exit(1);
-	}
-	if( sb.st_size == 0 )  {
-		fprintf(stderr,"tabsub:  %s is empty\n", file );
-		exit(1);
-	}
-	prototype = bu_malloc( sb.st_size+4, "prototype document");
-	if( read( fd, prototype, sb.st_size ) != sb.st_size )  {
-		perror(file);
-		exit(2);
-	}
-	prototype[sb.st_size] = '\0';
+    if (file == NULL) {
+	bu_log("tabsub: get_proto given null file name\n");
+	return;
+    }
+
+    if ( (fd = open( file, 0 )) < 0) {
+	perror(file);
+	exit(1);
+    }
+
+    if (fstat( fd, &sb ) != 0 )  {
+	perror(file);
+	exit(1);
+    }
+
+    if( sb.st_size == 0 )  {
+	fprintf(stderr,"tabsub:  %s is empty\n", file );
+	exit(1);
+    }
+    *buffer = bu_malloc( sb.st_size+4, "prototype document");
+    bytes_read = read( fd, *buffer, (size_t)sb.st_size );
+    if ( bytes_read != sb.st_size )  {
+	printf("only read %d bytes (expecting %ld)\n", bytes_read, (long)sb.st_size);
+	perror(file);
+	exit(2);
+    }
+    (*buffer)[sb.st_size] = '\0';
+    return;
 }
 
 #define	NCHANS	1024
@@ -135,7 +154,7 @@ int	nwords;				/* # words in chanwords[] */
 char	*tokenwords[NTOKENWORDS+1];
 
 void
-do_lines(FILE *fp)
+do_lines(FILE *fp, char *buffer)
 {
 #define TOKLEN	128
 	char	token[TOKLEN];
@@ -157,14 +176,14 @@ do_lines(FILE *fp)
 			continue;
 
 		if(debug)  {
-			fprintf(stderr, "Prototype=\n%s", prototype);
+			fprintf(stderr, "Prototype=\n%s", buffer);
 			fprintf(stderr, "Line %d='%s'\n", line, linebuf);
 		}
 
 		/* Here, there is no way to check for too many words */
 		nwords = rt_split_cmd( chanwords, NCHANS+1, linebuf );
 
-		for( cp=prototype; *cp != '\0'; )  {
+		for( cp=buffer; *cp != '\0'; )  {
 			if(debug) fputc( *cp, stderr );
 			/* Copy all plain text, verbatim */
 			if( *cp != '@' )  {
