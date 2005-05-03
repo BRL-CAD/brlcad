@@ -5,10 +5,10 @@ brlcadincludedir = $(includedir)/brlcad
 brlcadinclude_required = \
 	RtServerImpl.h \
 	bn.h \
+	brlcad_config.h \
 	brlcad_version.h \
 	bu.h \
 	common.h \
-	config.h \
 	config_win.h \
 	raytrace.h \
 	rtgeom.h \
