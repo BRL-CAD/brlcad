@@ -48,14 +48,12 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "common.h"
 
-
-
 #include <stdio.h>
 #include <math.h>
 #ifdef HAVE_STRING_H
-#include <string.h>
+#  include <string.h>
 #else
-#include <strings.h>
+#  include <strings.h>
 #endif
 
 #include "machine.h"
@@ -152,9 +150,7 @@ struct command_tab cmdtab[] = {
  *			M A I N
  */
 int
-main( argc, argv )
-int	argc;
-char	**argv;
+main( int argc, char **argv )
 {
 	register char	*buf;
 	register int	ret;
@@ -189,9 +185,7 @@ char	**argv;
  *   XXX this really should go in librt/cmd.c as rt_help_cmd().
  */
 int
-cm_help( argc, argv )
-int	argc;
-char	**argv;
+cm_help( int argc, char **argv )
 {
 	register struct command_tab	*ctp;
 
@@ -213,9 +207,7 @@ char	**argv;
  *			C M _ F I L E
  */
 int
-cm_file( argc, argv )
-int	argc;
-char	**argv;
+cm_file( int argc, char **argv )
 {
 	FILE	*fp;
 	char	*file;
@@ -394,9 +386,7 @@ create_chan( char *num, int len, char *itag )
  *  Dump the indicated input channels, or all, if none specified.
  */
 int
-cm_idump( argc, argv )
-int	argc;
-char	**argv;
+cm_idump( int argc, char **argv )
 {
 	register int	ch;
 	register int	i;
@@ -419,8 +409,7 @@ char	**argv;
  *  Print input channel values.
  */
 void
-pr_ichan( ch )
-register int		ch;
+pr_ichan( int ch )
 {
 	register struct chan	*cp;
 	register int		i;
@@ -472,9 +461,7 @@ output()
  *			C M _ T I M E S
  */
 int
-cm_times( argc, argv )
-int	argc;
-char	**argv;
+cm_times( int argc, char **argv )
 {
 	double		a, b;
 	register int	i;
@@ -509,9 +496,7 @@ char	**argv;
  *			C M _ I N T E R P
  */
 int
-cm_interp( argc, argv )
-int	argc;
-char	**argv;
+cm_interp( int argc, char **argv )
 {
 	int	interp = 0;
 	int	periodic = 0;
@@ -677,8 +662,7 @@ again:
  *			N E X T _ I N T E R P O L A T E
  */
 void
-next_interpolate( chp )
-register struct chan	*chp;
+next_interpolate( struct chan *chp )
 {
 	register int	t;		/* output time index */
 	register int	i;		/* input time index */
@@ -711,9 +695,7 @@ register struct chan	*chp;
  *  the input and output is sorted in increasing time values.
  */
 void
-step_interpolate( chp, times )
-register struct chan	*chp;
-register fastf_t	*times;
+step_interpolate( struct chan *chp, fastf_t *times )
 {
 	register int	t;		/* output time index */
 	register int	i;		/* input time index */
@@ -752,9 +734,7 @@ register fastf_t	*times;
  *  the input and output arrays are sorted in increasing time values.
  */
 void
-linear_interpolate( chp, times )
-register struct chan	*chp;
-register fastf_t	*times;
+linear_interpolate( struct chan *chp, fastf_t *times )
 {
 	register int	t;		/* output time index */
 	register int	i;		/* input time index */
@@ -802,9 +782,7 @@ register fastf_t	*times;
  *  This is really just a hack to allow multiplying the time by a constant.
  */
 void
-rate_interpolate( chp, times )
-register struct chan	*chp;
-register fastf_t	*times;
+rate_interpolate( struct chan *chp, fastf_t *times )
 {
 	register int	t;		/* output time index */
 	register double	ival;
@@ -827,9 +805,7 @@ register fastf_t	*times;
  *
  */
 void
-accel_interpolate( chp, times )
-register struct chan	*chp;
-register fastf_t	*times;
+accel_interpolate( struct chan *chp, fastf_t *times )
 {
 	register int	t;		/* output time index */
 	double	ival;
@@ -1017,9 +993,7 @@ bad:
  *  Input time values are meaningless.
  */
 int
-cm_rate( argc, argv )
-int	argc;
-char	**argv;
+cm_rate( int argc, char **argv )
 {
 	register struct chan	*chp;
 	int	ch;
@@ -1044,9 +1018,7 @@ char	**argv;
  *  Input time values are meaningless.
  */
 int
-cm_accel( argc, argv )
-int	argc;
-char	**argv;
+cm_accel( int argc, char **argv )
 {
 	register struct chan	*chp;
 	int	ch;
@@ -1073,9 +1045,7 @@ char	**argv;
  *  time stamps, because only the "x" input times are used.
  */
 void
-quat_interpolate( x, y, z, w, times )
-struct chan	*x, *y, *z, *w;
-register fastf_t	*times;
+quat_interpolate( struct chan *x, struct chan *y, struct chan *z, struct chan *w, fastf_t *times )
 {
 	register int	t;		/* output time index */
 	register int	i;		/* input time index */
@@ -1202,9 +1172,7 @@ register fastf_t	*times;
 }
 
 int
-cm_next( argc, argv )
-int	argc;
-char	*argv[];
+cm_next( int argc, char **argv )
 {
 	int	ochan, ichan;
 	int	offset = 1;
