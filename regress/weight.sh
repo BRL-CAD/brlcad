@@ -25,7 +25,6 @@ RT Weight Program Output:
 Database Title: "Untitled BRL-CAD Database"
 
 
-Density Table Used:/Users/butler/src/BRLCAD/brlcad/regress/.density
 
 Material  Density(g/cm^3)  Name
     1         7.8295       steel
@@ -53,7 +52,7 @@ Centroid: X = 0.5 cm.
 Total mass = 7.82943 grams
 
 EOF
-grep -v Time wgt.out > weight.out
+grep -v "Time Stamp" wgt.out | grep -v "Density Table Used" > weight.out
 
 cmp -s weight.out weight.ref
 
