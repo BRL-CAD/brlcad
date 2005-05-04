@@ -184,8 +184,11 @@ cmd_import_body(ClientData clientData, Tcl_Interp *interp, int argc, char **argv
 	mged_print_result( TCL_ERROR );
 	return TCL_ERROR;
     }
-    if (RT_G_DEBUG & DEBUG_VOL)
-	    bu_log ("File '%s' is %d bytes long\n", argv[2], stat_buf.st_size);
+
+    if (RT_G_DEBUG & DEBUG_VOL) {
+	bu_log ("File '%s' is %ld bytes long\n", argv[2], (long)stat_buf.st_size);
+    }
+
     if( (fd = open( argv[2], O_RDONLY  )) == -1 ) {
 	bu_vls_init( &vls );
 	bu_vls_printf( &vls,
@@ -210,11 +213,11 @@ cmd_import_body(ClientData clientData, Tcl_Interp *interp, int argc, char **argv
 		    "rt_binunif_internal");
 	    bip->magic = RT_BINUNIF_INTERNAL_MAGIC;
 	    bip->type = minor_code;
-	    bip->u.uint8 = (unsigned char *) bu_malloc(stat_buf.st_size, "binunif");
+	    bip->u.uint8 = (unsigned char *) bu_malloc((size_t)stat_buf.st_size, "binunif");
     if (RT_G_DEBUG & DEBUG_VOL)
 	    bu_log("Created an rt_binunif_internal for type '%s' (minor=%d)\n", descrip, minor_code);
 
-	    gotten = read( fd, (void *) (bip->u.uint8), stat_buf.st_size);
+	    gotten = read( fd, (void *) (bip->u.uint8), (size_t)stat_buf.st_size);
 	    if (gotten == -1) {
 		perror( "import_body" );
 		return TCL_ERROR;
