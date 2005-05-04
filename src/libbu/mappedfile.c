@@ -49,35 +49,34 @@ static const char libbu_mappedfile_RCSid[] = "@(#)$Header$ (ARL)";
 
 #include "common.h"
 
-
-
 #include <stdio.h>
 #include <math.h>
 #include <fcntl.h>
 #ifdef HAVE_UNISTD_H
-#include <unistd.h>
+#  include <unistd.h>
 #endif
 #ifdef HAVE_STRING_H
-#include <string.h>
+#  include <string.h>
 #else
-#include <strings.h>
+#  include <strings.h>
 #endif
 
 #include "machine.h"
 
 #ifdef HAVE_UNIX_IO
-# include <sys/types.h>
-# include <sys/stat.h>
+#  include <sys/types.h>
+#  include <sys/stat.h>
 #endif
 
 #ifdef HAVE_SYS_MMAN_H
-# include <sys/mman.h>
-# if !defined(MAP_FAILED)
+#  include <sys/mman.h>
+#  if !defined(MAP_FAILED)
 #    define MAP_FAILED	((void *)-1)	/* Error return from mmap() */
-# endif
+#  endif
 #endif
 
 #include "bu.h"
+
 
 static struct bu_list	bu_mapped_file_list = {
 	0,
@@ -135,7 +134,7 @@ bu_open_mapped_file(const char *name, const char *appl)
 			if( ret < 0 )  goto do_reuse;	/* File vanished from disk, mapped copy still OK */
 			if( sb.st_size != mp->buflen )  {
 				bu_log("bu_open_mapped_file(%s) WARNING: File size changed from %ld to %ld, opening new version.\n",
-					name, mp->buflen, sb.st_size );
+					name, (long)mp->buflen, (long)sb.st_size );
 				goto dont_reuse;
 			}
 			if( sb.st_mtime != mp->modtime )  {
@@ -195,7 +194,7 @@ dont_reuse:
 	if( appl ) mp->appl = bu_strdup( appl );
 
 #ifdef HAVE_UNIX_IO
-	mp->buflen = sb.st_size;
+	mp->buflen = (size_t)sb.st_size;
 	mp->modtime = sb.st_mtime;
 #  ifdef HAVE_SYS_MMAN_H
 
