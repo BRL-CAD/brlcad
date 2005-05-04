@@ -42,15 +42,14 @@ static const char RCSid[] = "$Header$";
 
 #include "common.h"
 
-
 #include <stdio.h>
 #include <math.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #ifdef HAVE_STRING_H
-#include <string.h>
+#  include <string.h>
 #else
-#include <strings.h>
+#  include <strings.h>
 #endif
 
 #include "machine.h"
@@ -62,6 +61,7 @@ static const char RCSid[] = "$Header$";
 #include "../librt/debug.h"
 #include "tcl.h"
 #include "mater.h"
+
 
 static struct mater *mater_hd1=MATER_NULL, *mater_hd2=MATER_NULL;
 
