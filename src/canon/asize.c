@@ -101,7 +101,7 @@ fb_common_file_size( widthp, heightp, filename, pixel_size )
      int	pixel_size;		/* bytes per pixel */
 {
     struct	stat	sbuf;
-    int	size;
+    long int	size;
     register char	*cp;
 
     *widthp = *heightp = 0;		/* sanity */
@@ -147,7 +147,7 @@ int
 fb_common_image_size( widthp, heightp, npixels )
      int	*widthp;		/* pointer to returned width */
      int	*heightp;		/* pointer to returned height */
-     register int	npixels;	/* Number of pixels */
+     register long int	npixels;	/* Number of pixels */
 {
     register struct	sizes	*sp;
     int			root;
