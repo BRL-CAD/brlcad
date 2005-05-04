@@ -50,8 +50,8 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 /* This table does not need to include any square sizes */
 struct sizes {
-    int	width;		/* image width in pixels */
-    int	height;		/* image height in pixels */
+    unsigned long int	width;		/* image width in pixels */
+    unsigned long int	height;		/* image height in pixels */
 };
 struct sizes fb_common_sizes[] = {
     {  160,  120 },		/* quarter 640x480 */
@@ -95,19 +95,24 @@ struct sizes fb_common_sizes[] = {
  */
 int
 fb_common_file_size( widthp, heightp, filename, pixel_size )
-     int	*widthp;		/* pointer to returned width */
-     int	*heightp;		/* pointer to returned height */
+     unsigned long int	*widthp;		/* pointer to returned width */
+     unsigned long int	*heightp;		/* pointer to returned height */
      char	*filename;		/* image file to stat */
      int	pixel_size;		/* bytes per pixel */
 {
     struct	stat	sbuf;
-    long int	size;
+    unsigned long int	size;
     register char	*cp;
 
     *widthp = *heightp = 0;		/* sanity */
 
-    if( filename == NULL || *filename == '\0' )
+    if (pixel_size <= 0) {
+	return 0;
+    }
+
+    if( filename == NULL || *filename == '\0' ) {
 	return	0;
+    }
 
     /* Skip over directory names, if any */
     cp = strchr( filename, '/' );
@@ -127,7 +132,7 @@ fb_common_file_size( widthp, heightp, filename, pixel_size )
     if( stat( filename, &sbuf ) < 0 )
 	return	0;
 
-    size = sbuf.st_size / pixel_size;
+    size = (unsigned long)(sbuf.st_size / pixel_size);
 
     return fb_common_image_size( widthp, heightp, size );
 }
@@ -145,12 +150,12 @@ fb_common_file_size( widthp, heightp, filename, pixel_size )
  */
 int
 fb_common_image_size( widthp, heightp, npixels )
-     int	*widthp;		/* pointer to returned width */
-     int	*heightp;		/* pointer to returned height */
-     register long int	npixels;	/* Number of pixels */
+     unsigned long int	*widthp;		/* pointer to returned width */
+     unsigned long int	*heightp;		/* pointer to returned height */
+     register unsigned long int	npixels;	/* Number of pixels */
 {
     register struct	sizes	*sp;
-    int			root;
+    long int	       root;
 
     if( npixels <= 0 )
 	return	0;
@@ -166,7 +171,7 @@ fb_common_image_size( widthp, heightp, npixels )
     }
 
     /* If the size is a perfect square, then use that. */
-    root = (int)(sqrt((double)npixels)+0.999);
+    root = (long int)(sqrt((double)npixels)+0.999);
     if( root*root == npixels )  {
 	*widthp = root;
 	*heightp = root;
