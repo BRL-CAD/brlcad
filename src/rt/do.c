@@ -800,8 +800,8 @@ do_frame(int framenumber)
 					return(-1);			/* Bad */
 				}
 				/* Read existing pix data into the frame buffer */
-				if (sb.st_size) {
-					(void)fread(pixmap,1,sb.st_size,outfp);
+				if (sb.st_size > 0) {
+					(void)fread(pixmap,1,(size_t)sb.st_size,outfp);
 				}
 			}
 		}
