@@ -38,15 +38,13 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "common.h"
 
-
-
 #include <stdio.h>
 #include <math.h>
 #include <sys/stat.h>
 #ifdef HAVE_STRING_H
-#include <string.h>
+#  include <string.h>
 #else
-#include <strings.h>
+#  include <strings.h>
 #endif
 
 #include "machine.h"
@@ -54,10 +52,11 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "bu.h"
 #include "bn.h"
 
+
 /* This table does not need to include any square sizes */
 struct sizes {
-	int	width;		/* image width in pixels */
-	int	height;		/* image height in pixels */
+	unsigned long int	width;		/* image width in pixels */
+	unsigned long int	height;		/* image height in pixels */
 };
 struct sizes fb_common_sizes[] = {
 	{  160,  120 },		/* quarter 640x480 */
@@ -102,27 +101,33 @@ struct sizes fb_common_sizes[] = {
  *	1	width and height returned
  */
 int
-bn_common_file_size(int *widthp, int *heightp, const char *filename, int pixel_size)
+bn_common_file_size(unsigned long int *widthp, unsigned long int *heightp, const char *filename, int pixel_size)
    	        		/* pointer to returned width */
    	         		/* pointer to returned height */
           	          	/* image file to stat */
    	           		/* bytes per pixel */
 {
 	struct	stat	sbuf;
-	int	size;
+	unsigned long int	size;
 	register const char	*cp;
 
 	*widthp = *heightp = 0;		/* sanity */
 
-	if( filename == NULL || *filename == '\0' )
-		return	0;
+	if (pixel_size <= 0) {
+	    return 0;
+	}
+
+	if( filename == NULL || *filename == '\0' ) {
+	    return 0;
+	}
 
 	/* Skip over directory names, if any */
 	cp = strchr( filename, '/' );
-	if( cp )
-		cp++;			/* skip over slash */
-	else
-		cp = filename;		/* no slash */
+	if( cp ) {
+	    cp++;			/* skip over slash */
+	} else {
+	    cp = filename;		/* no slash */
+	}
 
 	if( bn_common_name_size( widthp, heightp, cp ) )
 	        return 1;
@@ -130,7 +135,7 @@ bn_common_file_size(int *widthp, int *heightp, const char *filename, int pixel_s
 	if( stat( filename, &sbuf ) < 0 )
 		return	0;
 
-	size = sbuf.st_size / pixel_size;
+	size = (unsigned long int)(sbuf.st_size / pixel_size);
 
 	return bn_common_image_size( widthp, heightp, size );
 }
@@ -148,7 +153,7 @@ bn_common_file_size(int *widthp, int *heightp, const char *filename, int pixel_s
  */
 
 int
-bn_common_name_size(int *widthp, int *heightp, const char *name)
+bn_common_name_size(unsigned long int *widthp, unsigned long int *heightp, const char *name)
    	        		/* pointer to returned width */
    	         		/* pointer to returned height */
           	      		        /* name to parse */
@@ -159,7 +164,7 @@ bn_common_name_size(int *widthp, int *heightp, const char *name)
     while( *cp )  {
 	cp = strchr( cp, '-' );		/* Find a minus sign */
 	if( cp == NULL )  break;
-	if( sscanf(cp, "-w%d-n%d", widthp, heightp ) == 2 )
+	if( sscanf(cp, "-w%lu-n%lu", widthp, heightp ) == 2 )
 	    return 1;
 	cp++;				/* skip over the minus */
     }
@@ -167,7 +172,6 @@ bn_common_name_size(int *widthp, int *heightp, const char *name)
     /* If we got here, we didn't see the answer in the name. */
     return 0;
 }
-
 
 
 
@@ -183,13 +187,13 @@ bn_common_name_size(int *widthp, int *heightp, const char *name)
  *	1	width and height returned
  */
 int
-bn_common_image_size(int *widthp, int *heightp, register int npixels)
+bn_common_image_size(unsigned long int *widthp, unsigned long int *heightp, register unsigned long int npixels)
    	        		/* pointer to returned width */
    	         		/* pointer to returned height */
             	        	/* Number of pixels */
 {
 	register struct	sizes	*sp;
-	int			root;
+	long int		root;
 
 	if( npixels <= 0 )
 		return	0;
@@ -205,7 +209,7 @@ bn_common_image_size(int *widthp, int *heightp, register int npixels)
 	}
 
 	/* If the size is a perfect square, then use that. */
-	root = (int)(sqrt((double)npixels)+0.999);
+	root = (long int)(sqrt((double)npixels)+0.999);
 	if( root*root == npixels )  {
 		*widthp = root;
 		*heightp = root;
