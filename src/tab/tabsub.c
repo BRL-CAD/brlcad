@@ -132,7 +132,7 @@ get_proto(char **buffer, char *file)
 	fprintf(stderr,"tabsub:  %s is empty\n", file );
 	exit(1);
     }
-    *buffer = bu_malloc( sb.st_size+4, "prototype document");
+    *buffer = bu_malloc( (size_t)(sb.st_size+4), "prototype document");
     bytes_read = read( fd, *buffer, (size_t)sb.st_size );
     if ( bytes_read != sb.st_size )  {
 	printf("only read %d bytes (expecting %ld)\n", bytes_read, (long)sb.st_size);
