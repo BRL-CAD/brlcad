@@ -201,8 +201,8 @@ main(int ac, char *av[])
 		return -1;
 	}
 	    
-	count = sb.st_size;
-	buf1 = bu_malloc(sb.st_size, "buf1");
+	count = (unsigned long)sb.st_size;
+	buf1 = bu_malloc((size_t)sb.st_size, "buf1");
 
 	next_arg++;
 
@@ -215,7 +215,7 @@ main(int ac, char *av[])
 	if (sb.st_size != count)
 		bu_bomb("**** ERROR **** file size mis-match\n");
 
-	buf2 = bu_malloc(sb.st_size, "buf2");
+	buf2 = bu_malloc((size_t)sb.st_size, "buf2");
 
 	count = count >> 1; /* convert count of char to count of short */
 

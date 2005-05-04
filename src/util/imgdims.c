@@ -169,7 +169,7 @@ main (int argc, char **argv)
 	    goto done;
 	else
 	{
-	    nm_bytes = stat_buf.st_size;
+	    nm_bytes = (int)stat_buf.st_size;
 	    if (bytes_per_pixel == -1)
 		bytes_per_pixel = pixel_size(argument);
 	}
