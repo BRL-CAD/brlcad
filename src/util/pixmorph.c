@@ -48,9 +48,8 @@
 #include "common.h"
 
 #ifdef HAVE_UNISTD_H
-# include <unistd.h>
+#  include <unistd.h>
 #endif
-                                                                                                                                                                            
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -120,7 +119,7 @@ struct lineseg {
  */
 
 void
-cross_dissolve(unsigned char *morph, unsigned char *wa, unsigned char *wb, int dissolvefrac, int numpixels)
+cross_dissolve(unsigned char *morph, unsigned char *wa, unsigned char *wb, int dissolvefrac, long int numpixels)
 {
     register int i;
 
@@ -141,14 +140,18 @@ cross_dissolve(unsigned char *morph, unsigned char *wa, unsigned char *wb, int d
  */
 
 void
-warp_image(unsigned char *dest, unsigned char *src, struct lineseg *lines, int which, int width, int height, int numlines, double a, double b, double p)
+warp_image(unsigned char *dest, unsigned char *src, 
+	   struct lineseg *lines, int which, 
+	   long int width, long int height, 
+	   long int numlines, 
+	   double a, double b, double p)
 {
-    register int i, j, k, width3;
+    register long int i, j, k, width3;
     struct lineseg *tlines;
 
     width3 = width*3;
     for (i = 0; i < height; i++) {
-	fprintf(stderr, "line %d   \r", height-i);
+	fprintf(stderr, "line %ld   \r", height-i);
 	fflush(stderr);
 	for (j = 0; j < width; j++, dest += 3) {
 	    double dsum_x, dsum_y, weightsum, x_x, x_y, new_x, new_y,
@@ -162,7 +165,7 @@ warp_image(unsigned char *dest, unsigned char *src, struct lineseg *lines, int w
 	    for (k = 0, tlines = lines; k < numlines; k++, tlines++) {
 		register double x_minus_p_x, x_minus_p_y, u, v, x, y, weight,
  		                dist, tmpx, tmpy;
-		register int l2;
+		register long int l2;
 
 		/* This is a fairly straightforward implementation of the
 		   algorithm in Beier and Neely's paper.
@@ -191,7 +194,7 @@ warp_image(unsigned char *dest, unsigned char *src, struct lineseg *lines, int w
 		} else
 		    dist = fabs(v);
 
-		l2 = (int)dist;
+		l2 = (long int)dist;
 		if (l2 > MAXLEN-1) l2 = MAXLEN-1;
 
 		if (weightlookup[l2] > -0.5)
@@ -281,9 +284,12 @@ warp_image(unsigned char *dest, unsigned char *src, struct lineseg *lines, int w
  
 
 int
-lines_read(FILE *fp, int numlines, struct lineseg *lines, int width, int height, double warpfrac, double pb)
+lines_read(FILE *fp, long int numlines, 
+	   struct lineseg *lines, 
+	   long int width, long int height, 
+	   double warpfrac, double pb)
 {
-    register int i, j;
+    register long int i, j;
     double x1, y1, x2, y2, x3, y3, x4, y4;
 
     for (i = 0; i < numlines; i++, lines++) {
@@ -341,18 +347,20 @@ lines_read(FILE *fp, int numlines, struct lineseg *lines, int width, int height,
  */
 
 void
-lines_headerinfo(FILE *fp, double *ap, double *bp, double *pp, int *np)
+lines_headerinfo(FILE *fp, double *ap, double *bp, double *pp, long int *np)
 {
-    if (fscanf(fp, "%lf %lf %lf %d ", ap, bp, pp, np) < 4) {
+    if (fscanf(fp, "%lf %lf %lf %ld ", ap, bp, pp, np) < 4) {
 	fprintf(stderr, "pixmorph: cannot read header info in lines file\n");
 	exit(1);
     }
 }
 
 int
-get_args(int argc, char **argv, char **picAnamep, char **picBnamep, char **linesfilenamep, double *warpfracp, int *dissolvefracp, int *autosizep, int *widthp, int *heightp)
+get_args(int argc, char **argv, char **picAnamep, char **picBnamep, char **linesfilenamep, 
+	 double *warpfracp, int *dissolvefracp, long int *autosizep, 
+	 long int *widthp, long int *heightp)
 {
-    register int c;
+    register long int c;
 
     *autosizep = 1;
     *widthp = *heightp = 0;
@@ -360,11 +368,11 @@ get_args(int argc, char **argv, char **picAnamep, char **picBnamep, char **lines
     while ((c = getopt(argc, argv, "w:n:")) != EOF) {
 	switch (c) {
 	case 'w':
-	    *widthp = atoi(optarg);
+	    *widthp = atol(optarg);
 	    *autosizep = 0;
 	    break;
 	case 'n':
-	    *heightp = atoi(optarg);
+	    *heightp = atol(optarg);
 	    *autosizep = 0;
 	    break;
 	default:
@@ -385,15 +393,15 @@ get_args(int argc, char **argv, char **picAnamep, char **picBnamep, char **lines
 }
 
 int
-pix_readpixels(FILE *fp, int numpix, unsigned char *pixarray)
+pix_readpixels(FILE *fp, long int numpix, unsigned char *pixarray)
 {
-    return fread(pixarray, 3, numpix, fp);
+    return fread(pixarray, 3, (size_t)numpix, fp);
 }
 
 int
-pix_writepixels(int numpix, unsigned char *pixarray)
+pix_writepixels(long int numpix, unsigned char *pixarray)
 {
-    return fwrite(pixarray, 3, numpix, stdout);
+    return fwrite(pixarray, 3, (size_t)numpix, stdout);
 }
     
 int
@@ -401,14 +409,14 @@ main(int argc, char **argv)
 {
     char *picAname, *picBname, *linesfilename;
     FILE *picA, *picB, *linesfile;
-    int pa_width = 0, pa_height = 0;
+    long int pa_width = 0, pa_height = 0;
     int dissolvefrac;
     double warpfrac;
     unsigned char *pa, *pb, *wa, *wb, *morph;
     double a, b, p;
-    int numlines;
+    long int numlines;
     struct lineseg *lines;
-    register int i;
+    register long int i;
     int autosize;
 #if 0
     npsw = bu_avail_cpus();
@@ -466,12 +474,12 @@ main(int argc, char **argv)
 	
 	if (pa_width > 0) {
 	    pa_height = sb.st_size/(3*pa_width);
-	    fprintf(stderr, "width = %d, size = %ld, so height = %d\n",
+	    fprintf(stderr, "width = %ld, size = %ld, so height = %ld\n",
 		   pa_width, (long)sb.st_size, pa_height);
 	} else if (pa_height > 0) pa_width = sb.st_size/(3*pa_height);
 
 	if (pa_width <= 0 || pa_height <= 0) {
-	    fprintf(stderr, "pixmorph: Bogus image dimensions: %d %d\n",
+	    fprintf(stderr, "pixmorph: Bogus image dimensions: %ld %ld\n",
 		    pa_width, pa_height);
 	    return 1;
 	}
@@ -499,12 +507,12 @@ main(int argc, char **argv)
     fprintf(stderr, "pixmorph: Reading images and lines file.\n");
     
     if (pix_readpixels(picA, pa_width*pa_height, pa) < pa_width*pa_height) {
-	fprintf(stderr, "Error reading %d pixels from %s\n",
+	fprintf(stderr, "Error reading %ld pixels from %s\n",
 		pa_width*pa_height, picAname);
 	return 1;
     }
     if (pix_readpixels(picB, pa_width*pa_height, pb) < pa_width*pa_height) {
-	fprintf(stderr, "Error reading %d pixels from %s\n",
+	fprintf(stderr, "Error reading %ld pixels from %s\n",
 		pa_width*pa_height,  picBname);
 	return 1;
     }
@@ -517,7 +525,7 @@ main(int argc, char **argv)
     lines = (struct lineseg *)malloc(numlines * sizeof(struct lineseg));
     numlines = lines_read(linesfile, numlines, lines,
 			  pa_width, pa_height, warpfrac, p*b);
-    fprintf(stderr, "pixmorph: %d line segments read\n", numlines);
+    fprintf(stderr, "pixmorph: %ld line segments read\n", numlines);
 
     /* Warp the images */
     
@@ -545,13 +553,6 @@ main(int argc, char **argv)
 
     return 0;
 }
-
-    
-
-    
-
-    
-    
 
 /*
  * Local Variables:
