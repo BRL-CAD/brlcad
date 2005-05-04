@@ -140,18 +140,18 @@ struct bn_tol {
 
 /* asize.c */
 BN_EXPORT BU_EXTERN(int bn_common_file_size,
-		    (int *width,
-		     int *height,
+		    (unsigned long int *width,
+		     unsigned long int *height,
 		     const char *filename,
 		     int pixel_size));
 BN_EXPORT BU_EXTERN(int bn_common_name_size,
-		    (int *width,
-		     int *height,
+		    (unsigned long int *width,
+		     unsigned long int *height,
 		     const char *name));
 BN_EXPORT BU_EXTERN(int bn_common_image_size,
-		    (int *width,
-		     int *height,
-		     int num_pixels));
+		    (unsigned long int *width,
+		     unsigned long int *height,
+		     unsigned long int num_pixels));
 
 /*----------------------------------------------------------------------*/
 /* anim.c */
