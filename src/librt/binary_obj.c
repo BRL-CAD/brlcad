@@ -95,7 +95,7 @@ mk_binunif(
 	bip->magic = RT_BINUNIF_INTERNAL_MAGIC;
 	bip->type = minor_type;
 
-	num_items = st.st_size / item_length;
+	num_items = (long)(st.st_size / item_length);
 	obj_length = num_items * item_length;
 
 	/* just copy the bytes */
