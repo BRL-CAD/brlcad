@@ -27,6 +27,7 @@ libraries.  Also now included is a simplified termlib library,
 decoupling the build system from any system dependancies beyond
 framebuffer facilities and the standard C library.
 
+* fixed mged help for whichid, whatid, and whichair - Sean Morrison
 * fixed dsp primitive bug when using binary objects - Sean Morrison
 * fixed tabsub 64bit filesystem file read bug - Sean Morrison
 * vrml-g now writes out DEF names for exported shapes - Sean Morrison
