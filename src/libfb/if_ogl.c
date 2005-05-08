@@ -503,7 +503,7 @@ success:
 		ogl_cminit( ifp );
 	return(0);
 fail:
-	fb_log("ogl_getmem:  Unable to attach to shared memory.\nConsult comment in cad/libfb/if_4d.c for details\n");
+	fb_log("ogl_getmem:  Unable to attach to shared memory.\n");
 	if( (sp = calloc( 1, size )) == NULL )  {
 		fb_log("ogl_getmem:  malloc failure\n");
 		return(-1);
