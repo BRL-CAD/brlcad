@@ -8517,7 +8517,7 @@ wdb_binary_cmd(struct rt_wdb	*wdbp,
 
 		file_name = *argv;
 
-		if( mk_binunif( wdbp, obj_name, file_name, minor_type ) ) {
+		if( rt_mk_binunif( wdbp, obj_name, file_name, minor_type ) ) {
 			Tcl_AppendResult(interp, "Error creating ", obj_name,
 					 (char *)NULL );
 			return TCL_ERROR;

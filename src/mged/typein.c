@@ -45,6 +45,7 @@
  *	ehy_in		reads elliptical hyperboloid params from keyboard
  *	eto_in		reads elliptical torus params from keyboard
  *	part_in		reads particle params from keyboard
+ *	binunif_in	creates a binary object from a datafile
  *	extrude_in	reads extrude params from keyboard
  *	superell_in		reads params for all SUPERELLs
  *	checkv		checks for zero vector from keyboard
@@ -66,15 +67,13 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "common.h"
 
-
-
 #include <signal.h>
 #include <stdio.h>
 #include <math.h>
 #ifdef HAVE_STRING_H
-#include <string.h>
+#  include <string.h>
 #else
-#include <strings.h>
+#  include <strings.h>
 #endif
 
 #include "machine.h"
@@ -87,6 +86,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./ged.h"
 #include "./mged_dm.h"
 #include "./cmd.h"
+
 
 void	aexists(char *name);
 
@@ -933,7 +933,7 @@ binunif_in(char **cmd_argvs, struct rt_db_internal *intern, const char *name)
 			bu_log( "Unrecognized minor type (%c)\n", *cmd_argvs[3] );
 			return 1;
 	}
-	if( mk_binunif( wdbp, name, cmd_argvs[4], minor_type ) ) {
+	if( rt_mk_binunif( wdbp, name, cmd_argvs[4], minor_type ) ) {
 		bu_log( "Failed to create binary object %s from file %s\n",
 			name, cmd_argvs[4] );
 		return 1;

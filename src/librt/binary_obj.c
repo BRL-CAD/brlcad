@@ -24,7 +24,6 @@
  *  Assumes that some of the structure of such databases are known
  *  by the calling routines.
  *
- *
  *  Return codes of 0 are OK, -1 signal an error.
  *
  *  Authors -
@@ -39,14 +38,15 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "common.h"
 
-
-
 #include <stdio.h>
 #include <sys/stat.h>
 #include <math.h>
 #ifdef HAVE_STRING_H
-#include <string.h>
+#  include <string.h>
+#else
+#  include <strings.h>
 #endif
+
 #include "machine.h"
 #include "bu.h"
 #include "vmath.h"
@@ -55,12 +55,9 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "raytrace.h"
 #include "wdb.h"
 
+
 int
-mk_binunif(
-	   struct rt_wdb *wdbp,
-	   const char *obj_name,
-	   const char *file_name,
-	   unsigned int minor_type)
+rt_mk_binunif(struct rt_wdb *wdbp, const char *obj_name, const char *file_name, unsigned int minor_type)
 {
 	struct stat st;
 	unsigned int major_type=DB5_MAJORTYPE_BINARY_UNIF;
