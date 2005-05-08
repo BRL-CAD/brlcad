@@ -219,6 +219,50 @@ WDB_EXPORT WDB_EXTERN(int mk_arbn, (struct rt_wdb *fp, const char *name, int neq
 WDB_EXPORT WDB_EXTERN(int mk_ars, (struct rt_wdb *fp, const char *name, int ncurves, int pts_per_curve,
 			fastf_t	*curves[]) );
 
+typedef enum {
+    WDB_BINUNIF_FLOAT,
+    WDB_BINUNIF_DOUBLE,
+    WDB_BINUNIF_CHAR,
+    WDB_BINUNIF_UCHAR,
+    WDB_BINUNIF_SHORT,
+    WDB_BINUNIF_USHORT,
+    WDB_BINUNIF_INT,
+    WDB_BINUNIF_UINT,
+    WDB_BINUNIF_LONG,
+    WDB_BINUNIF_ULONG,
+    WDB_BINUNIF_LONGLONG,
+    WDB_BINUNIF_ULONGLONG,
+    WDB_BINUNIF_INT8,
+    WDB_BINUNIF_UINT8,
+    WDB_BINUNIF_INT16,
+    WDB_BINUNIF_UINT16,
+    WDB_BINUNIF_INT32,
+    WDB_BINUNIF_UINT32,
+    WDB_BINUNIF_INT64,
+    WDB_BINUNIF_UINT64,
+    WDB_BINUNIF_FILE_FLOAT,
+    WDB_BINUNIF_FILE_DOUBLE,
+    WDB_BINUNIF_FILE_CHAR,
+    WDB_BINUNIF_FILE_UCHAR,
+    WDB_BINUNIF_FILE_SHORT,
+    WDB_BINUNIF_FILE_USHORT,
+    WDB_BINUNIF_FILE_INT,
+    WDB_BINUNIF_FILE_UINT,
+    WDB_BINUNIF_FILE_LONG,
+    WDB_BINUNIF_FILE_ULONG,
+    WDB_BINUNIF_FILE_LONGLONG,
+    WDB_BINUNIF_FILE_ULONGLONG,
+    WDB_BINUNIF_FILE_INT8,
+    WDB_BINUNIF_FILE_UINT8,
+    WDB_BINUNIF_FILE_INT16,
+    WDB_BINUNIF_FILE_UINT16,
+    WDB_BINUNIF_FILE_INT32,
+    WDB_BINUNIF_FILE_UINT32,
+    WDB_BINUNIF_FILE_INT64,
+    WDB_BINUNIF_FILE_UINT64
+} wdb_binunif;
+WDB_EXPORT WDB_EXTERN(int mk_binunif, (struct rt_wdb *fp, const char *name, const genptr_t data, wdb_binunif data_type, off_t count) );
+
 #define mk_bsolid(fp,name,nsurf,res)	+++error_obsolete_libwdb_routine+++
 #define mk_bsurf(fp,srf)		+++error_obsolete_libwdb_routine+++
 

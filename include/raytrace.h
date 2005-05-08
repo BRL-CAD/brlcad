@@ -6734,11 +6734,12 @@ RT_EXPORT BU_EXTERN(int	vo_sca_cmd,
 		     int (*func)()));
 
 /* defined in binary_obj.c */
-RT_EXPORT BU_EXTERN(int mk_binunif,
+RT_EXPORT BU_EXTERN(int rt_mk_binunif,
 		    (struct rt_wdb *wdbp,
 		     const char *obj_name,
 		     const char *file_name,
-		     unsigned int minor_type));
+		     unsigned int minor_type,
+		     off_t max_count));
 
 #ifdef WIN32
 /* defined in g_dsp.c */

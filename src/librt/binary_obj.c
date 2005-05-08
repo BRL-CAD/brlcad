@@ -57,7 +57,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 
 int
-rt_mk_binunif(struct rt_wdb *wdbp, const char *obj_name, const char *file_name, unsigned int minor_type)
+rt_mk_binunif(struct rt_wdb *wdbp, const char *obj_name, const char *file_name, unsigned int minor_type, off_t max_count)
 {
 	struct stat st;
 	unsigned int major_type=DB5_MAJORTYPE_BINARY_UNIF;
@@ -93,6 +93,12 @@ rt_mk_binunif(struct rt_wdb *wdbp, const char *obj_name, const char *file_name, 
 	bip->type = minor_type;
 
 	num_items = (long)(st.st_size / item_length);
+	
+	/* maybe only a partial file read */
+	if (max_count > 0 && max_count < num_items) {
+	    num_items = max_count;
+	}
+
 	obj_length = num_items * item_length;
 
 	/* just copy the bytes */

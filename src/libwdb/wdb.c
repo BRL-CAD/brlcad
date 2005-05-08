@@ -51,10 +51,9 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "common.h"
 
-
-
 #include <stdio.h>
 #include <math.h>
+
 #include "machine.h"
 #include "bu.h"
 #include "vmath.h"
@@ -62,6 +61,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "rtgeom.h"
 #include "raytrace.h"
 #include "wdb.h"
+
 
 /*
  *			M K _ H A L F
@@ -587,6 +587,220 @@ mk_eto(
 	eto->eto_rd = sminor;
 
 	return wdb_export( wdbp, name, (genptr_t)eto, ID_ETO, mk_conv2mm );
+}
+
+/*
+ *			M K _ B I N U N I F
+ *
+ * Make a uniform binary data object from an array or a data file.
+ * Read 'count' values from 'data'.  If 'data_type' is a file, 'count'
+ * may be used to only read a subset of a file's contents.  If 'data'
+ * is already an in-memory buffer of memory, 'count' values will be
+ * copied (which is count * sizeof(data_type) bytes).
+ *
+ * Files can use a non-positive 'count' to mean "read the whole file",
+ * pre-loaded data, however, must provide a positive 'count' otherwise
+ * an embty binunif will be created.
+ */
+int
+mk_binunif(
+	struct rt_wdb *wdbp,
+	const char *name,
+	const genptr_t data,
+	wdb_binunif data_type,
+	off_t count)
+{
+	struct rt_binunif_internal *binunif;
+	unsigned int minor_type = 0;
+	int from_file = 0;
+	int bytes = 0;
+	int nosign = 0;
+
+	switch (data_type) {
+	    case WDB_BINUNIF_FILE_FLOAT:
+		from_file = 1;
+	    case WDB_BINUNIF_FLOAT:
+		bytes = sizeof(float);
+		minor_type = DB5_MINORTYPE_BINU_FLOAT;
+		break;
+	    case WDB_BINUNIF_FILE_DOUBLE:
+		from_file = 1;
+	    case WDB_BINUNIF_DOUBLE:
+		bytes = sizeof(double);
+		minor_type = DB5_MINORTYPE_BINU_DOUBLE;
+		break;
+
+	    case WDB_BINUNIF_FILE_INT8:
+		from_file = 1;
+	    case WDB_BINUNIF_INT8:
+		bytes = 1;
+		break;
+	    case WDB_BINUNIF_FILE_UINT8:
+		from_file = 1;
+	    case WDB_BINUNIF_UINT8:
+		nosign = 1;
+		bytes = 1;
+		break;
+	    case WDB_BINUNIF_FILE_INT16:
+		from_file = 1;
+	    case WDB_BINUNIF_INT16:
+		bytes = 2;
+		break;
+	    case WDB_BINUNIF_FILE_UINT16:
+		from_file = 1;
+	    case WDB_BINUNIF_UINT16:
+		nosign = 1;
+		bytes = 2;
+		break;
+	    case WDB_BINUNIF_FILE_INT32:
+		from_file = 1;
+	    case WDB_BINUNIF_INT32:
+		bytes = 4;
+		break;
+	    case WDB_BINUNIF_FILE_UINT32:
+		from_file = 1;
+	    case WDB_BINUNIF_UINT32:
+		nosign = 1;
+		bytes = 4;
+		break;
+	    case WDB_BINUNIF_FILE_INT64:
+		from_file = 1;
+	    case WDB_BINUNIF_INT64:
+		bytes = 8;
+		break;
+	    case WDB_BINUNIF_FILE_UINT64:
+		from_file = 1;
+	    case WDB_BINUNIF_UINT64:
+		nosign = 1;
+		bytes = 8;
+		break;
+
+	    case WDB_BINUNIF_FILE_CHAR:
+		from_file = 1;
+	    case WDB_BINUNIF_CHAR:
+		bytes = sizeof(char);
+		break;
+	    case WDB_BINUNIF_FILE_UCHAR:
+		from_file = 1;
+	    case WDB_BINUNIF_UCHAR:
+		nosign = 1;
+		bytes = sizeof(unsigned char);
+		break;
+	    case WDB_BINUNIF_FILE_SHORT:
+		from_file = 1;
+	    case WDB_BINUNIF_SHORT:
+		bytes = sizeof(short);
+		break;
+	    case WDB_BINUNIF_FILE_USHORT:
+		from_file = 1;
+	    case WDB_BINUNIF_USHORT:
+		nosign = 1;
+		bytes = sizeof(unsigned short);
+		break;
+	    case WDB_BINUNIF_FILE_INT:
+		from_file = 1;
+	    case WDB_BINUNIF_INT:
+		bytes = sizeof(int);
+		break;
+	    case WDB_BINUNIF_FILE_UINT:
+		from_file = 1;
+	    case WDB_BINUNIF_UINT:
+		nosign = 1;
+		bytes = sizeof(unsigned int);
+		break;
+	    case WDB_BINUNIF_FILE_LONG:
+		from_file = 1;
+	    case WDB_BINUNIF_LONG:
+		bytes = sizeof(long);
+		break;
+	    case WDB_BINUNIF_FILE_ULONG:
+		from_file = 1;
+	    case WDB_BINUNIF_ULONG:
+		nosign = 1;
+		bytes = sizeof(unsigned long);
+		break;
+	    case WDB_BINUNIF_FILE_LONGLONG:
+		from_file = 1;
+	    case WDB_BINUNIF_LONGLONG:
+		bytes = sizeof(long long);
+		break;
+	    case WDB_BINUNIF_FILE_ULONGLONG:
+		from_file = 1;
+	    case WDB_BINUNIF_ULONGLONG:
+		nosign = 1;
+		bytes = sizeof(unsigned long long);
+		break;
+	    default:
+		bu_log("Unknown binunif data source type: %d", data_type);
+		return 1;
+	}
+
+	/* the floating point types already have their minor type set */
+	if (!minor_type) {
+	    switch (bytes) {
+		case 1:
+		    if (nosign) {
+			minor_type = DB5_MINORTYPE_BINU_8BITINT_U;
+		    } else {
+			minor_type = DB5_MINORTYPE_BINU_8BITINT;
+		    }
+		    break;
+		case 2:
+		    if (nosign) {
+			minor_type = DB5_MINORTYPE_BINU_16BITINT_U;
+		    } else {
+			minor_type = DB5_MINORTYPE_BINU_16BITINT;
+		    }
+		    break;
+		case 4:
+		    if (nosign) {
+			minor_type = DB5_MINORTYPE_BINU_16BITINT_U;
+		    } else {
+			minor_type = DB5_MINORTYPE_BINU_16BITINT;
+		    }
+		    break;
+		case 8:
+		    if (nosign) {
+			minor_type = DB5_MINORTYPE_BINU_32BITINT_U;
+		    } else {
+			minor_type = DB5_MINORTYPE_BINU_32BITINT;
+		    }
+		    break;
+		case 16:
+		    if (nosign) {
+			minor_type = DB5_MINORTYPE_BINU_64BITINT_U;
+		    } else {
+			minor_type = DB5_MINORTYPE_BINU_64BITINT;
+		    }
+		    break;
+	    }
+	}
+
+	/* sanity check that our sizes are correct */
+	if (bytes != db5_type_sizeof_h_binu(minor_type)) {
+	    bu_log("mk_binunif: size inconsistency found, bytes=%d expecting bytes=%d\n",
+		   bytes, db5_type_sizeof_h_binu(minor_type));
+	    bu_log("Warning: the uniform-array binary data object was NOT created");
+	    return -1;
+	}
+
+	/* use the librt load-from-file routine? */
+	if (from_file) {
+	    return rt_mk_binunif( wdbp, name, (char *)data, minor_type, count );
+	}
+
+	/* count must be non-negative */
+	if (count < 0) {
+	    count = 0;
+	}
+
+	/* loading from data already in memory */
+	BU_GETSTRUCT( binunif, rt_binunif_internal );
+	binunif->magic = RT_BINUNIF_INTERNAL_MAGIC;
+	binunif->type = minor_type;
+	binunif->count = count;
+	memcpy(binunif->u.int8, data, count * bytes);
+	return wdb_export( wdbp, name, (genptr_t)binunif, ID_BINUNIF, mk_conv2mm );
 }
 
 /*

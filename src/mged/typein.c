@@ -478,7 +478,8 @@ char *p_eto[] = {
 
 char *p_binunif[] = {
 	"Enter minor type (f,d,c,s,i,L,C,S,I, or L): ",
-	"Enter name of file containing the data: "
+	"Enter name of file containing the data: ",
+	"Enter number of values to read (-1 for entire file): "
 };
 
 char *p_extrude[] = {
@@ -802,7 +803,7 @@ f_in(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 			Tcl_AppendResult(interp, "in: the binunif primitive is not supported by this command when using an old style database", (char *)NULL);
 			return TCL_ERROR;
 		} else {
-			nvals = 2;
+			nvals = 3;
 			menu = p_binunif;
 			fn_in = binunif_in;
 			do_solid_edit = 0;
@@ -933,7 +934,7 @@ binunif_in(char **cmd_argvs, struct rt_db_internal *intern, const char *name)
 			bu_log( "Unrecognized minor type (%c)\n", *cmd_argvs[3] );
 			return 1;
 	}
-	if( rt_mk_binunif( wdbp, name, cmd_argvs[4], minor_type ) ) {
+	if( rt_mk_binunif( wdbp, name, cmd_argvs[4], minor_type, atol(cmd_argvs[5]) ) ) {
 		bu_log( "Failed to create binary object %s from file %s\n",
 			name, cmd_argvs[4] );
 		return 1;
