@@ -1175,9 +1175,7 @@ add_seg(struct isect_stuff *isect,
      */
     delta = out_hit->hit_dist - in_hit->hit_dist;
 
-
     if (delta == 0.0) {
-	bu_log("short seg %g\n", delta);
 	return 0;
     }
 
