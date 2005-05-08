@@ -312,7 +312,7 @@ WDB_EXPORT void mk_add_pipe_pt(
 	double bendradius );
 WDB_EXPORT void mk_pipe_init( struct bu_list *headp );
 
-/* strsol.c */
+/* strsol primitives */
 WDB_EXPORT WDB_EXTERN(int mk_dsp, (struct rt_wdb *fp, const char *name, const char *file,
 			int xdim, int ydim, const matp_t mat));
 WDB_EXPORT WDB_EXTERN(int mk_ebm, (struct rt_wdb *fp, const char *name, const char *file,
@@ -320,9 +320,9 @@ WDB_EXPORT WDB_EXTERN(int mk_ebm, (struct rt_wdb *fp, const char *name, const ch
 WDB_EXPORT WDB_EXTERN(int mk_vol, (struct rt_wdb *fp, const char *name, const char *file,
 			int xdim, int ydim, int zdim, int lo, int hi,
 			const vect_t cellsize, const matp_t mat));
-#define mk_strsol(fp,name,solid,arg)	+++error_obsolete_libwdb_routine+++
 WDB_EXPORT WDB_EXTERN(int mk_submodel, (struct rt_wdb *fp, const char *name, const char *file,
 			const char *treetop, int meth));
+#define mk_strsol(fp,name,solid,arg)	+++error_obsolete_libwdb_routine+++
 
 /*
  *  The polysolid has been replaced by the BoT.
