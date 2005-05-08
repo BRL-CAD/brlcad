@@ -266,9 +266,9 @@ set mged_help_data(vquery_ray)	{{x y}  	{trace a single ray from x y}}
 set mged_help_data(vrot)	$helplib_data(vo_vrot)
 set mged_help_data(wcodes)	{{filename object(s)}	{write region ident codes to filename}}
 set mged_help_data(wdb_binary)	$helplib_data(wdb_binary)
-set mged_help_data(whatid)	helplib_data(wdb_whatid)
-set mged_help_data(whichair)	helplib_data(wdb_whichair)
-set mged_help_data(whichid)	helplib_data(wdb_whichid)
+set mged_help_data(whatid)	$helplib_data(wdb_whatid)
+set mged_help_data(whichair)	$helplib_data(wdb_whichair)
+set mged_help_data(whichid)	$helplib_data(wdb_whichid)
 set mged_help_data(which_shader)	{{Shader(s)}	{lists all combinations using the given shaders}}
 set mged_help_data(who)		$helplib_data(dgo_who)
 set mged_help_data(wmater)	{{filename comb(s)}	{write combination materials to filename}}
