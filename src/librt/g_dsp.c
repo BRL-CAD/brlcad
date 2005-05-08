@@ -3134,10 +3134,25 @@ rt_dsp_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
     RT_CK_DB_INTERNAL(ip);
     RT_DSP_CK_MAGIC(dsp_ip);
 
-    if (! dsp_ip->dsp_mp ) {
-	bu_log("cannot find data for DSP\n");
-	return 0;
+    switch (dsp_ip->dsp_datasrc) {
+	case RT_DSP_SRC_V4_FILE: 
+	case RT_DSP_SRC_FILE:
+	    BU_CK_MAPPED_FILE(dsp_ip->dsp_mp);
+	    if (! dsp_ip->dsp_mp ) {
+		bu_log("cannot find data for DSP\n");
+		return 0;
+	    }
+	    break;
+	case RT_DSP_SRC_OBJ:
+	    RT_CK_DB_INTERNAL(dsp_ip->dsp_bip);
+	    RT_CK_BINUNIF(dsp_ip->dsp_bip->idb_ptr);
+	    if (! dsp_ip->dsp_bip ) {
+		bu_log("cannot find data for DSP\n");
+		return 0;
+	    }
+	    break;
     }
+
 
 #define MOVE(_pt) \
 	MAT4X3PNT(m_pt, dsp_ip->dsp_stom, _pt); \
