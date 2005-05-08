@@ -71,20 +71,18 @@
 #ifndef WDB_H
 #define WDB_H seen
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+__BEGIN_DECLS
 
 #ifndef WDB_EXPORT
-#   if defined(WIN32) && !defined(__CYGWIN__) && defined(BRLCAD_DLL)
-#      ifdef WDB_EXPORT_DLL
-#         define WDB_EXPORT __declspec(dllexport)
-#      else
-#         define WDB_EXPORT __declspec(dllimport)
-#      endif
-#   else
-#      define WDB_EXPORT
-#   endif
+#  if defined(WIN32) && !defined(__CYGWIN__) && defined(BRLCAD_DLL)
+#    ifdef WDB_EXPORT_DLL
+#      define WDB_EXPORT __declspec(dllexport)
+#    else
+#      define WDB_EXPORT __declspec(dllimport)
+#    endif
+#  else
+#    define WDB_EXPORT
+#  endif
 #endif
 
 /*
@@ -94,11 +92,11 @@ extern "C" {
  *  in parens.
  */
 #if __STDC__ || USE_PROTOTYPES
-#	define	WDB_EXTERN(type_and_name,args)	extern type_and_name args
-#	define	WDB_ARGS(args)			args
+#  define WDB_EXTERN(type_and_name,args)	extern type_and_name args
+#  define WDB_ARGS(args)			args
 #else
-#	define	WDB_EXTERN(type_and_name,args)	extern type_and_name()
-#	define	WDB_ARGS(args)			()
+#  define WDB_EXTERN(type_and_name,args)	extern type_and_name()
+#  define WDB_ARGS(args)			()
 #endif
 
 /*
@@ -451,9 +449,7 @@ WDB_EXPORT WDB_EXTERN( int make_hole_in_prepped_regions, ( struct rt_wdb *wdbp,
 						struct bu_ptbl *regions ) );
 
 
-#ifdef __cplusplus
-}
-#endif
+__END_DECLS
 
 #endif /* WDB_H */
 

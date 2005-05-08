@@ -27,24 +27,24 @@
 #ifndef SEEN_OPTICAL_H
 #define SEEN_OPTICAL_H seen
 
+#include "common.h"
+
 #include "bu.h"
 #include "shadefuncs.h"
 #include "shadework.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+__BEGIN_DECLS
 
 #ifndef OPTICAL_EXPORT
-#   if defined(WIN32) && !defined(__CYGWIN__) && defined(BRLCAD_DLL)
-#      ifdef OPTICAL_EXPORT_DLL
-#         define OPTICAL_EXPORT __declspec(dllexport)
-#      else
-#         define OPTICAL_EXPORT __declspec(dllimport)
-#      endif
-#   else
-#      define OPTICAL_EXPORT
-#   endif
+#  if defined(WIN32) && !defined(__CYGWIN__) && defined(BRLCAD_DLL)
+#    ifdef OPTICAL_EXPORT_DLL
+#      define OPTICAL_EXPORT __declspec(dllexport)
+#    else
+#      define OPTICAL_EXPORT __declspec(dllimport)
+#    endif
+#  else
+#    define OPTICAL_EXPORT
+#  endif
 #endif
 
 /* defined in init.c */
@@ -208,9 +208,8 @@ struct floatpixel {
 	char	ff_color[3];
 };
 
-#ifdef __cplusplus
-}
-#endif
+__END_DECLS
+
 #endif /* SEEN_OPTICAL_H */
 
 /*

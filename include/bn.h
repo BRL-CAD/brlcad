@@ -63,22 +63,21 @@
  *  $Header$
  */
 
-#ifndef SEEN_BN_H
-#define SEEN_BN_H seen
-#ifdef __cplusplus
-extern "C" {
-#endif
+#ifndef __BN_H__
+#define __BN_H__
+
+__BEGIN_DECLS
 
 #ifndef BN_EXPORT
-#if defined(WIN32) && !defined(__CYGWIN__) && defined(BRLCAD_DLL)
-#ifdef BN_EXPORT_DLL
-#define BN_EXPORT __declspec(dllexport)
-#else
-#define BN_EXPORT __declspec(dllimport)
-#endif
-#else
-#define BN_EXPORT
-#endif
+#  if defined(WIN32) && !defined(__CYGWIN__) && defined(BRLCAD_DLL)
+#    ifdef BN_EXPORT_DLL
+#      define BN_EXPORT __declspec(dllexport)
+#    else
+#      define BN_EXPORT __declspec(dllimport)
+#    endif
+#  else
+#    define BN_EXPORT
+#  endif
 #endif
 
 #define BN_H_VERSION	"@(#)$Header$ (BRL)"
@@ -1752,9 +1751,8 @@ BN_EXPORT BU_EXTERN(void tp_setup,
 BN_EXPORT extern const char		bn_version[];
 /*----------------------------------------------------------------------*/
 
-#ifdef __cplusplus
-}
-#endif
+__END_DECLS
+
 #endif /* SEEN_BN_H */
 
 /*

@@ -33,9 +33,9 @@
 #ifndef SEEN_LIGHT_H
 #define SEEN_LIGHT_H seen
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#include "common.h"
+
+__BEGIN_DECLS
 
 struct light_pt {
 	point_t	lp_pt;
@@ -90,9 +90,8 @@ OPTICAL_EXPORT BU_EXTERN(void light_obs,
 			  struct shadework *swp,
 			  int have));
 
-#ifdef __cplusplus
-}
-#endif
+__END_DECLS
+
 #endif /* SEEN_LIGHT_H */
 
 /*

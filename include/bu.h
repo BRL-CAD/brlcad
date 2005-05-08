@@ -64,20 +64,18 @@
 /* Included for Tcl_Interp definition */
 #include "tcl.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+__BEGIN_DECLS
 
 #ifndef BU_EXPORT
-#if defined(WIN32) && !defined(__CYGWIN__) && defined(BRLCAD_DLL)
-#ifdef BU_EXPORT_DLL
-#define BU_EXPORT __declspec(dllexport)
-#else
-#define BU_EXPORT __declspec(dllimport)
-#endif
-#else
-#define BU_EXPORT
-#endif
+#  if defined(WIN32) && !defined(__CYGWIN__) && defined(BRLCAD_DLL)
+#    ifdef BU_EXPORT_DLL
+#      define BU_EXPORT __declspec(dllexport)
+#    else
+#      define BU_EXPORT __declspec(dllimport)
+#    endif
+#  else
+#    define BU_EXPORT
+#  endif
 #endif
 
 #include <setjmp.h>
@@ -2509,10 +2507,8 @@ BU_EXPORT BU_EXTERN(struct bu_hash_entry *bu_hash_tbl_first,
 BU_EXPORT BU_EXTERN(struct bu_hash_entry *bu_hash_tbl_next,
 		    (struct bu_hash_record *rec));
 
+__END_DECLS
 
-#ifdef __cplusplus
-}
-#endif
 #endif /* SEEN_BU_H */
 
 /*

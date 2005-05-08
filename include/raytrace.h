@@ -75,20 +75,18 @@
 #include "nmg.h"
 #endif
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+__BEGIN_DECLS
 
 #ifndef RT_EXPORT
-#if defined(WIN32) && !defined(__CYGWIN__) && defined(BRLCAD_DLL)
-#ifdef RT_EXPORT_DLL
-#define RT_EXPORT __declspec(dllexport)
-#else
-#define RT_EXPORT __declspec(dllimport)
-#endif
-#else
-#define RT_EXPORT
-#endif
+#  if defined(WIN32) && !defined(__CYGWIN__) && defined(BRLCAD_DLL)
+#    ifdef RT_EXPORT_DLL
+#      define RT_EXPORT __declspec(dllexport)
+#    else
+#      define RT_EXPORT __declspec(dllimport)
+#    endif
+#  else
+#    define RT_EXPORT
+#  endif
 #endif
 
 #define RAYTRACE_H_VERSION	"@(#)$Header$ (BRL)"
@@ -6736,7 +6734,7 @@ RT_EXPORT BU_EXTERN(int	vo_sca_cmd,
 		     int (*func)()));
 
 /* defined in binary_obj.c */
-RT_EXPORT BU_EXTERN(int mk_binunif,
+RT_EXPORT BU_EXTERN(int rt_mk_binunif,
 		    (struct rt_wdb *wdbp,
 		     const char *obj_name,
 		     const char *file_name,
@@ -6777,9 +6775,7 @@ RT_EXPORT extern const char *rt_vlist_cmd_descriptions[];
 /* vers.c (created by librt/Cakefile) */
 RT_EXPORT extern const char rt_version[];
 
-#ifdef __cplusplus
-}
-#endif
+__END_DECLS
 
 #endif /* RAYTRACE_H */
 

@@ -38,9 +38,8 @@
 
 #ifndef SEEN_COMPAT4_H
 #define SEEN_COMPAT4_H seen
-#ifdef __cplusplus
-extern "C" {
-#endif
+
+__BEGIN_DECLS
 
 /* raytrace.h macro replacements */
 #define GETSTRUCT	BU_GETSTRUCT
@@ -470,9 +469,8 @@ extern "C" {
 #define rt_vlist_2string( vhead, string, x, y, scale, theta )	\
 	bn_vlist_2string( vhead, &rt_g.rtg_vlfree, string, x, y, scale, theta )
 
-#ifdef __cplusplus
-}
-#endif
+__END_DECLS
+
 #endif /* SEEN_COMPAT4_H */
 
 #endif /* DONT_USE_COMPAT4_H */

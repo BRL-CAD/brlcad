@@ -12,16 +12,17 @@
 /* Header for class mil_army_arl_muves_rtserver_RtServerImpl */
 
 #ifndef _Included_mil_army_arl_muves_rtserver_RtServerImpl
-#define _Included_mil_army_arl_muves_rtserver_RtServerImpl
-#ifdef __cplusplus
-extern "C" {
-#endif
-#undef mil_army_arl_muves_rtserver_RtServerImpl_serialVersionUID
-#define mil_army_arl_muves_rtserver_RtServerImpl_serialVersionUID -3215090123894869218LL
-#undef mil_army_arl_muves_rtserver_RtServerImpl_serialVersionUID
-#define mil_army_arl_muves_rtserver_RtServerImpl_serialVersionUID -4100238210092549637LL
-#undef mil_army_arl_muves_rtserver_RtServerImpl_serialVersionUID
-#define mil_army_arl_muves_rtserver_RtServerImpl_serialVersionUID 4974527148936298033LL
+#  define _Included_mil_army_arl_muves_rtserver_RtServerImpl
+
+__BEGIN_DECLS
+
+#  undef mil_army_arl_muves_rtserver_RtServerImpl_serialVersionUID
+#  define mil_army_arl_muves_rtserver_RtServerImpl_serialVersionUID -3215090123894869218LL
+#  undef mil_army_arl_muves_rtserver_RtServerImpl_serialVersionUID
+#  define mil_army_arl_muves_rtserver_RtServerImpl_serialVersionUID -4100238210092549637LL
+#  undef mil_army_arl_muves_rtserver_RtServerImpl_serialVersionUID
+#  define mil_army_arl_muves_rtserver_RtServerImpl_serialVersionUID 4974527148936298033LL
+
 /*
  * Class:     mil_army_arl_muves_rtserver_RtServerImpl
  * Method:    rtsInit
@@ -160,9 +161,8 @@ JNIEXPORT jobject JNICALL Java_mil_army_arl_services_RtService_getItemTree
 JNIEXPORT jobject JNICALL Java_mil_army_arl_services_RtService_getBoundingBox
   (JNIEnv *, jobject, jint);
 
-#ifdef __cplusplus
-}
-#endif
+__END_DECLS
+
 #endif
 
 /*

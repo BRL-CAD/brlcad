@@ -81,9 +81,9 @@
 #ifndef VMATH_H
 #define VMATH_H seen
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#include "common.h"
+
+__BEGIN_DECLS
 
 #ifndef M_PI
 
@@ -1147,9 +1147,7 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
 	(_lo1)[Y] >= (_lo2)[Y] && (_hi1)[Y] <= (_hi2)[Y] && \
 	(_lo1)[Z] >= (_lo2)[Z] && (_hi1)[Z] <= (_hi2)[Z] )
 
-#ifdef __cplusplus
-}
-#endif
+__END_DECLS
 
 #endif /* VMATH_H */
 

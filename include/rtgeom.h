@@ -54,9 +54,9 @@
 #ifndef SEEN_RTGEOM_H
 #define SEEN_RTGEOM_H seen
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#include "common.h"
+
+__BEGIN_DECLS
 
 #undef r_a /* defined on alliant in <machine/reg.h> included in signal.h */
 
@@ -549,10 +549,7 @@ struct rt_bot_internal
 #define	RT_BOT_INTERNAL_MAGIC		0x626F7472	/* botr */
 #define RT_BOT_CK_MAGIC(_p)	BU_CKMAG(_p,RT_BOT_INTERNAL_MAGIC,"rt_bot_internal")
 
-
-#ifdef __cplusplus
-}
-#endif
+__END_DECLS
 
 #endif /* SEEN_RTGEOM_H */
 

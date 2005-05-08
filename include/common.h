@@ -42,6 +42,8 @@
 #ifndef __COMMON_H__
 #define __COMMON_H__
 
+/* include the venerable config.h file.  use a pregenerated one for
+ * windows when we cannot autogenerate it easily. */
 #ifdef __win32
 #  ifdef HAVE_CONFIG_H
 #    include "config_win.h"
@@ -55,6 +57,15 @@
 #    include <brlcad/brlcad_config.h>
 #  endif
 #endif  /* __win32 */
+
+/* provide declaration markers for header externals */
+#ifdef __cplusplus
+#  define __BEGIN_DECLS   extern "C" {
+#  define __END_DECLS     }
+#else
+#  define __BEGIN_DECLS
+#  define __END_DECLS
+#endif
 
 #endif  /* __COMMON_H__ */
 
