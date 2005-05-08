@@ -19,14 +19,6 @@ scale more effectively to high-performance machines without requiring
 intervention.  The current default time window of 60 seconds implies
 that the benchmark suite will now take about 10 minutes to complete.
 
-In addition, this release continues to improve the build process by
-allowing for more individualized selection of which components are
-compiled for installation.  If useable system libraries are found at
-the time of configuration, the build process will skip building those
-libraries.  Also now included is a simplified termlib library,
-decoupling the build system from any system dependancies beyond
-framebuffer facilities and the standard C library.
-
 * uniform binary objects from partial file data - Sean morrison
 * added libwdb interface to uniform binary objects - Sean Morrison
 * fixed mged help for whichid, whatid, and whichair - Sean Morrison
