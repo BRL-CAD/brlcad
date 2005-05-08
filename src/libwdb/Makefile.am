@@ -7,7 +7,9 @@ SRCS = \
 	ars.c \
 	bot.c \
 	cline.c \
+	dsp.c \
 	dynamic_geometry.c \
+	ebm.c \
 	export.c \
 	extr.c \
 	id.c \
@@ -17,8 +19,10 @@ SRCS = \
 	pipe.c \
 	reg.c \
 	skt.c \
+	submodel.c \
 	strsol.c \
 	units.c \
+	vol.c \
 	wdb.c
 
 libwdb_la_LDFLAGS = -version-info 19:1

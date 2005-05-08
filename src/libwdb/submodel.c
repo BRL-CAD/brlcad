@@ -1,4 +1,4 @@
-/*                        S T R S O L . C
+/*                       S U B M O D E L . C
  * BRL-CAD
  *
  * Copyright (C) 1994-2005 United States Government as represented by
@@ -18,19 +18,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file strsol.c
- *
- *  Library for writing strsol solids to MGED databases.
- *  Assumes that some of the structure of such databases are known
- *  by the calling routines.
- *
- *
- *  Note that routines which are passed point_t or vect_t or mat_t
- *  parameters (which are call-by-address) must be VERY careful to
- *  leave those parameters unmodified (eg, by scaling), so that the
- *  calling routine is not surprised.
- *
- *  Return codes of 0 are OK, -1 signal an error.
+/** @file submodel.c
  *
  *  Authors -
  *	John R. Anderson
@@ -52,36 +40,31 @@
 #include "wdb.h"
 #include "db.h"
 
-#if 0
+
 /*
- *			M K _ S T R S O L
+ *			M K _ S U B M O D E L
  *
- *  This routine is not intended for general use.
- *  It exists primarily to support the converter ASC2G and to
- *  permit the rapid development of new string solids.
+ *  Create a submodel solid.
+ *  If file is NULL or "", the treetop refers to the current database.
+ *  Treetop is the name of a single database object in 'file'.
+ *  meth is 0 (RT_PART_NUBSPT) or 1 (RT_PART_NUGRID).
+ *  method 0 is what is normally used.
  */
 int
-mk_strsol( fp, name, string_solid, string_arg )
-FILE		*fp;
-const char	*name;
-const char	*string_solid;
-const char	*string_arg;
+mk_submodel(struct rt_wdb *fp, const char *name, const char *file, const char *treetop, int meth)
 {
-	union record	rec[DB_SS_NGRAN];
+	struct rt_submodel_internal *in;
 
-	BU_ASSERT_LONG( mk_version, <=, 4 );
+	BU_GETSTRUCT( in, rt_submodel_internal );
+	in->magic = RT_SUBMODEL_INTERNAL_MAGIC;
+	bu_vls_init( &in->file );
+	if( file )  bu_vls_strcpy( &in->file, file );
+	bu_vls_init( &in->treetop );
+	bu_vls_strcpy( &in->treetop, treetop );
+	in->meth = meth;
 
-	bzero( (char *)rec, sizeof(rec) );
-	rec[0].ss.ss_id = DBID_STRSOL;
-	NAMEMOVE( name, rec[0].ss.ss_name );
-	strncpy( rec[0].ss.ss_keyword, string_solid, sizeof(rec[0].ss.ss_keyword)-1 );
-	strncpy( rec[0].ss.ss_args, string_arg, DB_SS_LEN-1 );
-
-	if( fwrite( (char *)rec, sizeof(rec), 1, fp ) != 1 )
-		return -1;
-	return 0;
+	return wdb_export( fp, name, (genptr_t)in, ID_SUBMODEL, mk_conv2mm );
 }
-#endif
 
 /*
  * Local Variables:
