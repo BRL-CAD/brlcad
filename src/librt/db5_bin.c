@@ -37,12 +37,11 @@ static const char RCSell[] = "@(#)$Header$ (BRL)";
 
 #include "common.h"
 
-
-
 #include <stdio.h>
 #include <math.h>
 #include <string.h>
 #include <ctype.h>
+
 #include "machine.h"
 #include "bu.h"
 #include "vmath.h"
@@ -52,6 +51,7 @@ static const char RCSell[] = "@(#)$Header$ (BRL)";
 #include "nurb.h"
 #include "rtgeom.h"
 #include "./debug.h"
+
 
 /* this array depends on the values of the definitions of the DB5_MINORTYPE_BINU_... in db5.h */
 const char *binu_types[]={
@@ -402,16 +402,7 @@ rt_binunif_export5( struct bu_external		*ep,
 	    case DB5_MINORTYPE_BINU_16BITINT:
 	    case DB5_MINORTYPE_BINU_16BITINT_U:
 		ep->ext_nbytes = bip->count * 2;
-		ep->ext_buf = (genptr_t)bu_malloc( ep->ext_nbytes,
-		    "binunif external");
-#if 0
-		ssrcp = (unsigned short *) bip->u.uint8;
-		destp = (unsigned char *) ep->ext_buf;
-		for (i = 0; i < bip->count; ++i, ++destp, ++ssrcp) {
-		    (void) bu_pshort( destp, *ssrcp );
-		    bu_log("Just put from %d", *ssrcp);
-		}
-#else
+		ep->ext_buf = (genptr_t)bu_malloc( ep->ext_nbytes, "binunif external");
 		in_cookie = bu_cv_cookie("hus");
 		out_cookie = bu_cv_cookie("nus");
 		if (bu_cv_optimize(in_cookie) != bu_cv_optimize(out_cookie)) {
@@ -430,19 +421,16 @@ rt_binunif_export5( struct bu_external		*ep,
 		    bcopy( (char *) bip->u.uint8, (char *) ep->ext_buf,
 			ep->ext_nbytes );
 		}
-#endif
 		break;
 	    case DB5_MINORTYPE_BINU_32BITINT:
 	    case DB5_MINORTYPE_BINU_32BITINT_U:
 		ep->ext_nbytes = bip->count * 4;
-		ep->ext_buf = (genptr_t)bu_malloc( ep->ext_nbytes,
-		    "binunif external");
+		ep->ext_buf = (genptr_t)bu_malloc( ep->ext_nbytes, "binunif external");
 
 		lsrcp = (unsigned long *) bip->u.uint8;
 		destp = (unsigned char *) ep->ext_buf;
 		for (i = 0; i < bip->count; ++i, ++destp, ++lsrcp) {
 		    (void) bu_plong( destp, *lsrcp );
-		    bu_log("Just put from %ld", *lsrcp);
 		}
 		break;
 	    case DB5_MINORTYPE_BINU_64BITINT:
