@@ -1382,7 +1382,7 @@ if test "x$only_rts" != "xno" ; then
 		AC_MSG_NOTICE([Try adding --with-jdk=/path/to/jdk to find jni.h])
 		AC_MSG_ERROR([*** Cannot locate jni.h for building librtserver ***])
 	else 
-		AC_MSG_NOTICE([with-jdk: $with_java])
+		AC_MSG_NOTICE([$with_java ($with_java_val)])
 	fi
 	AC_MSG_RESULT(yes)
 fi
