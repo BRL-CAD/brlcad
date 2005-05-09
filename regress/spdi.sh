@@ -46,7 +46,7 @@ EOF
 
 echo "rendering..."
 
-$BIN/rt -M -B -o spdi.pix $2/regress/spdi.g 'all.g' 2>> spdi.log <<EOF
+$BIN/rt -M -B -o spdi.pix spdi.g 'all.g' 2>> spdi.log <<EOF
 viewsize 3.200000000000000e+03;
 orientation 0.000000000000000e+00 0.000000000000000e+00 0.000000000000000e+00 1.000000000000000e+00;
 eye_pt 0.000000000000000e+00 0.000000000000000e+00 2.413000000000000e+03;

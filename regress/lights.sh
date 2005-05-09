@@ -30,7 +30,7 @@ $BIN/asc2g lights.asc lights.g
 rm -f lights.asc
 
 /bin/echo rendering lights...
-$BIN/rt -M -B -p30 -o lights.pix $2/regress/lights.g 'all.g' 2> lights.log <<EOF
+$BIN/rt -M -B -p30 -o lights.pix lights.g 'all.g' 2> lights.log <<EOF
 viewsize 1.600000000000000e+02;
 orientation 0.000000000000000e+00 0.000000000000000e+00 0.000000000000000e+00 1.000000000000000e+00;
 eye_pt 0.000000000000000e+00 0.000000000000000e+00 7.950000000000000e+01;
