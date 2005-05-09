@@ -20,7 +20,7 @@
  */
 /** @file if_ogl.c
  *
- *  BRL Frame Buffer Library interface for OpenGL.
+ *  Frame Buffer Library interface for OpenGL.
  *
  *  There are several different Frame Buffer modes supported.
  *  Set your environment FB_FILE to the appropriate type.

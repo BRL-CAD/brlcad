@@ -19,9 +19,8 @@
  * information.
  */
 /** @file if_ogl_win32.c
- *			I F _ O G L . C
  *
- *  BRL Frame Buffer Library interface for OpenGL.
+ *  Frame Buffer Library interface for OpenGL.
  *
  *  There are several different Frame Buffer modes supported.
  *  Set your environment FB_FILE to the appropriate type.
@@ -47,19 +46,16 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 
 #include "common.h"
 
-
 #include <signal.h>
-
 #include <stdio.h> 
 #include <stdlib.h>  
 #include <ctype.h>
-#include <signal.h>
 #include <errno.h>
 #ifdef HAVE_GL_GL_H
 #  include <GL/gl.h>
 #endif
-
 #undef RED
+
 #include "tk.h"
 #include "tkPlatDecls.h"
 #include "machine.h"

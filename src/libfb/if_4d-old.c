@@ -21,7 +21,7 @@
 /** @file if_4d-old.c
  *			I F _ 4 D . C
  *
- *  BRL Frame Buffer Library interface for SGI Iris-4D.
+ *  Frame Buffer Library interface for SGI Iris-4D.
  *  Support for the 3030/2400 series ("Iris-3D") is in if_sgi.c
  *  However, both are called /dev/sgi
  *
