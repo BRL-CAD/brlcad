@@ -783,14 +783,14 @@ ogl_open(FBIO *ifp, char *file, int width, int height)
 
 	signal( SIGUSR1, sigkid);
 
-	if( (f = fork()) > 0 )  {
+	if( (f = fork()) != 0 )  {
 	    /* Parent process */
 	    int k;
 
-	    for(k=0; k< 20; k++)  {
-		(void) close(k);
+	    /* parent doesn't need these any more */
+	    for (k=0; k < 20; k++) {
+		close(k);
 	    }
-
 
 	    /*
 	     *  Wait until the child dies, of whatever cause,
@@ -1184,13 +1184,13 @@ ogl_close(FBIO *ifp)
      *
      *  The simple for i=0..20 loop will not work, because that
      *  smashes some window-manager files.  Therefore, we content
-     *  ourselves with eliminating stdin, stdout, and stderr,
-     *  (fd 0,1,2), in the hopes that this will successfully
-     *  terminate any pipes or network connections.  
+     *  ourselves with eliminating stdin and stdout (fd 0,1), in the
+     *  hopes that this will successfully terminate any pipes or
+     *  network connections.  Standard error is used to print
+     *  framebuffer debug messages, so it's kept around.
      */
     fclose( stdin );
     fclose( stdout );
-    fclose( stderr );
 
     /* Ignore likely signals, perhaps in the background,
      * from other typing at the keyboard
@@ -2150,15 +2150,50 @@ do_event(FBIO *ifp)
 		    expose_callback(ifp, &event);
 		break;
 	    case ButtonPress:
-		break;
-	    case ButtonRelease:
-		OGL(ifp)->alive = 0;
-		break;
-	    case KeyPress:
-		break;
-	    case KeyRelease:
-		OGL(ifp)->alive = 0;
-		break;
+		{
+		    int button = (int) event.xbutton.button;
+		    if (button == Button1) {
+			/* Check for single button mouse remap.
+			 * ctrl-1 => 2
+			 * meta-1 => 3
+			 */
+			if (event.xbutton.state & ControlMask)
+			    button = Button2;
+			else if (event.xbutton.state & Mod1Mask)
+			    button = Button3;
+		    }
+
+		    switch(button){
+			case Button1:
+			    break;
+			case Button2:
+			    {
+				int	x, y;
+				int	ix, iy;
+				unsigned char	cp[3] = {0};
+
+				x = event.xbutton.x;
+				y = event.xbutton.y;
+
+				if(x < 0 || y < 0){
+				    fb_log("No RGB (outside image viewport)\n");
+				    break;
+				}
+
+				fb_log("At image (%d, %d), real RGB=(%3d %3d %3d) UNIMPLEMENTED\n",
+				       x, y, cp[RED], cp[GRN], cp[BLU]);
+
+				break;
+			    }
+			case Button3:
+			    OGL(ifp)->alive = 0;
+			    break;
+			default:
+			    fb_log("unhandled mouse event\n");
+			    break;
+		    }
+		    break;
+		}
 	    case ConfigureNotify:
 		{
 		    XConfigureEvent *conf = (XConfigureEvent *)&event;
