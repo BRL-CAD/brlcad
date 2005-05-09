@@ -1,18 +1,20 @@
 #!/bin/sh
 
 HOSTS="wopr liu amdws2 vast"
-MASTERHOST="void"
+MASTERHOST="1234"
 
 export MYNAME=`hostname | awk -F '.' '{print $1}'`
 export START_TIME=`date "+%y%m%H%M"`
 export LOG_FILE=`pwd`/${MYNAME}_${START_TIME}.log
 
-if [ X`hostname` == X$MASTERHOST ] ; then
+if [ X$MYNAME == X$MASTERHOST ] ; then
+	/bin/echo fetching archive
     rm -rf $HOSTS brlcad
-    cvs  -z3 -d:pserver:anonymous@cvs.sf.net:/cvsroot/brlcad co -P brlcad > $LOG_FILE 2>&1
+    export CVS_RSH=ssh
+    cvs  -z3 -d:ext:lbutler@cvs.sf.net:/cvsroot/brlcad co -P brlcad > $LOG_FILE 2>&1
 
     cd brlcad
-    /bin/sh ./autogen.sh > $LOG_FILE 2>&1
+    /bin/sh ./autogen.sh >> $LOG_FILE 2>&1
 
     cd ..
     for i in $HOSTS ; do
