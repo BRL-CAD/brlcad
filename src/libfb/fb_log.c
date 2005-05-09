@@ -73,16 +73,16 @@ fb_log( char *fmt, va_dcl va_alist )
 {
     va_list		ap;
     va_start( ap );
-# ifdef HAVE_VPRINTF
+#    ifdef HAVE_VPRINTF
     (void) vfprintf( stderr, fmt, ap);
-# else
+#     else
     (void) _doprnt( fmt, ap, stderr );
-# endif
+#     endif
     va_end( ap );
     return;
 }
 
-# else /* defined(HAVE_VARARGS_H) */
+#  else /* defined(HAVE_VARARGS_H) */
 
 void
 fb_log( fmt, a,b,c,d,e,f,g,h,i )
@@ -91,8 +91,7 @@ fb_log( fmt, a,b,c,d,e,f,g,h,i )
     fprintf( stderr, fmt, a,b,c,d,e,f,g,h,i );
 }
 
-#  else
-#    error "No means to fb_log"
+
 #  endif	/* defined(HAVE_VARARGS_H) */
 #endif  /* defined(HAVE_STDARG_H) */
 
