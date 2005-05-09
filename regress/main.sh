@@ -36,7 +36,9 @@ rm -f $MYNAME $BUILD_DIR
 mkdir $BUILD_DIR
 cd $BUILD_DIR
 
+VERSION=`../brlcad/configure -V | awk '/BRL/ {print $NF}' | sed 's/\./-/g'`
+
 /bin/echo $MYNAME $ARCHITECTURE starting configure >> $LOG_FILE
-../brlcad/configure $CONF_FLAGS --prefix=/usr/brlcad/rel-7.2.2/$ARCHITECTURE >> $LOG_FILE 2>&1
+../brlcad/configure $CONF_FLAGS --prefix=/usr/brlcad/rel-${VERSION}/$ARCHITECTURE >> $LOG_FILE 2>&1
 $MAKE_CMD > build.log 2>&1
 make install >& install.log 2>&1
