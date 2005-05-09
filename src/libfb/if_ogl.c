@@ -1200,8 +1200,10 @@ ogl_close(FBIO *ifp)
     (void)signal( SIGQUIT, SIG_IGN );
     (void)signal( SIGALRM, SIG_IGN );
 
-    while( OGL(ifp)->alive )
+    while( OGL(ifp)->alive ) {
 	do_event(ifp);
+	sleep(1);
+    }
 
     return 0;
 }
