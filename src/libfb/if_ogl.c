@@ -878,19 +878,22 @@ ogl_open(FBIO *ifp, char *file, int width, int height)
     }
 
     /* Open an OpenGL context with this visual*/
-    if (multiple_windows){	/* force indirect context */
+    if (multiple_windows) {	/* force indirect context */
 	OGL(ifp)->glxc = glXCreateContext(OGL(ifp)->dispp,
-					  OGL(ifp)->vip, 0, GL_FALSE);
+					  OGL(ifp)->vip, 0, False);
     } else {		/* try direct context */
 	OGL(ifp)->glxc = glXCreateContext(OGL(ifp)->dispp,
-					  OGL(ifp)->vip, 0, GL_TRUE);
+					  OGL(ifp)->vip, 0, True);
+    }
+    direct = glXIsDirect(OGL(ifp)->dispp,OGL(ifp)->glxc);
+    if (!direct) {
+	/* we failed to get a direct context, so we must acquire/release the context */
+	multiple_windows=1;
     }
 
-    if (CJDEBUG){
-	direct = glXIsDirect(OGL(ifp)->dispp,OGL(ifp)->glxc);
-	printf("Context is %s.\n", direct ? "direct" : "indirect");
+    if (CJDEBUG) {
+	fb_log("Framebuffer drawing context is %s.\n", direct ? "direct" : "indirect");
     }
-
 
     /* Create a colormap for this visual */
     SGI(ifp)->mi_cmap_flag = !is_linear_cmap(ifp);
