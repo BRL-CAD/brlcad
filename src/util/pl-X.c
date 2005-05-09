@@ -242,7 +242,8 @@ main(int argc, char **argv)
 	}
 
 	XFlush( dpy );
-	sleep( 3 );
+	sleep( 1 );
+	return 0;
 }
 
 getargs(struct uplot *up)

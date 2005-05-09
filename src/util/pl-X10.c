@@ -240,7 +240,8 @@ char	**argv;
 	}
 
 	XFlush();
-	sleep( 3 );
+	sleep( 1 );
+	return 0;
 }
 
 getargs( up )
