@@ -19,6 +19,7 @@ scale more effectively to high-performance machines without requiring
 intervention.  The current default time window of 60 seconds implies
 that the benchmark suite will now take about 10 minutes to complete.
 
+* throttle cpu usage on lingering OpenGL frambuffers - Sean Morrison
 * uniform binary objects from partial file data - Sean morrison
 * added libwdb interface to uniform binary objects - Sean Morrison
 * fixed mged help for whichid, whatid, and whichair - Sean Morrison
