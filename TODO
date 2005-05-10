@@ -11,6 +11,10 @@ THESE SHOULD HAPPEN BEFORE THE NEXT RELEASE
 
 * make opengl optional via configure without editing files
 
+* make sure sgi knobs work
+
+* variance/deviation to benchmarks
+
 
 THESE ARE LOWER PRIORITY
 
