@@ -210,8 +210,7 @@ db_diradd5(
 }
 
 struct directory *
-db5_diradd(
-	   struct db_i			*dbip,
+db5_diradd(struct db_i			*dbip,
 	   const struct db5_raw_internal *rip,
 	   long				laddr,
 	   genptr_t			client_data )
@@ -242,6 +241,8 @@ db5_diradd(
 	case DB5_MAJORTYPE_BRLCAD:
 		if( rip->minor_type == ID_COMBINATION )  {
 			struct bu_attribute_value_set	avs;
+
+			bu_avs_init_empty(&avs);
 
 			dp->d_flags = DIR_COMB;
 			if( rip->attributes.ext_nbytes == 0 )  break;
@@ -355,9 +356,11 @@ db_dirbuild( struct db_i *dbip )
 		struct bu_attribute_value_set	avs;
 		const char		*cp;
 
+		bu_avs_init_empty(&avs);
+
 		/* File is v5 format */
 #if 0
-bu_log("NOTICE:  %s is BRL-CAD v5 format.\n", dbip->dbi_filename);
+		bu_log("NOTICE:  %s is BRL-CAD v5 format.\n", dbip->dbi_filename);
 #endif
 		dbip->dbi_version = 5;
 		if( db5_scan( dbip, db5_diradd_handler, NULL ) < 0 )  {
