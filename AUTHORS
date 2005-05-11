@@ -41,6 +41,16 @@ then in the will, then in reality."
                 - Mike Muuss
 
 
+PROJECT ADMINISTRATORS
+----------------------
+
+Open Source Point of Contact
+  Morrison, Christopher Sean  <morrison@brlcad.org>
+
+U.S. Army Research Laboratory Point of Contact
+  Butler, Lee  <butler@arl.army.mil>
+
+
 DEVELOPERS
 ----------
 
@@ -74,7 +84,7 @@ U.S. Army Research Laboratory
 Butler, Lee A  <butler@arl.army.mil>  **
 U.S. Army Research Laboratory
 
-Johnson, Christopher T  <cjohnson@cyberpaladin.com>  **
+Johnson, Christopher T  <cjohnson@cyberpaladin.com>
 Geometric Solutions, Inc.
 JRMTech, Inc.
 Paladin Software, Inc.
@@ -82,7 +92,7 @@ Paladin Software, Inc.
 Markowski, Michael J
 U.S. Army Research Laboratory (??? brl only)
 
-Anderson, John R  <jra@arl.army.mil>  **
+Anderson, John R  <jra@arl.army.mil>
 U.S. Army Research Laboratory
 
 Tanenbaum, Paul J
@@ -111,14 +121,14 @@ U.S. Army Research Laboratory
 Shumaker, Justin  **
 Quantum Research International, Inc.
 
-Greenwald, Erik  <erikg@arl.army.mil>
+Greenwald, Erik  <erikg@arl.army.mil>  **
 U.S. Army Research Laboratory
 
 
 MATHEMATICAL, ALGORITHMIC, AND GEOMETRIC SUPPORT
 ------------------------------------------------
 
-Davisson, Edwin
+Davisson, Edwin  **
 U.S. Army Research Laboratory
 
 Reed, Jr., Harry
@@ -128,7 +138,7 @@ U.S. Army Ballistic Research Laboratory
 Applin, Keith A
 U.S. Army Research Laboratory
 
-Kregel, Dwayne
+Kregel, Dwayne  **
 Survice Engineering, Inc.
 
 
@@ -231,9 +241,9 @@ Survice Engineering, Inc.
 Bokkers, Wim
 TNO Prins Maurits Laboratory
 
-Cliff Yapp
+Yapp, Cliff
 
-Pedro Giffuni
+Giffuni, Pedro
 
 
 CORPORATE AND ORGANIZATION SUPPORT
@@ -274,6 +284,11 @@ Computer Graphics Unit, MCC
 Industrieanlagen-Betriebsgesellschaft mbH (IABG)
 
 TNO Prins Maurits Laboratory
+
+Free Software Foundation
+
+Open Source Technology Group
+  SourceForge.net, freshmeat.net
 
 
 TO BE FILED
@@ -364,8 +379,8 @@ U.S. Army Ballistic Research Laboratory (??? maybe maybe didn't contribute)
 * The U.S. Army Research Laboratory (ARL) was formerly named the
 U.S. Army Ballistic Research Laboratory (BRL).  Persons who
 contributed entirely before the name change reflect the original name,
-whereas persons who continued contributions or began contributions
-after the name change reflect the new name.
+whereas persons who continued or began contributions after the name
+change reflect the new name.
 
 ** The contributor is an active developer, meaning that they have been
 actively involved with the BRL-CAD development within the past 12 months.
