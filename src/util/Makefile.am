@@ -158,6 +158,7 @@ mac_pix_SOURCES = mac-pix.c
 sun_pix_SOURCES = sun-pix.c
 
 ttcp_SOURCES = ttcp.c
+ttcp_LDADD = ${LIBSOCKET} ${LIBNSL}
 
 pixmerge_SOURCES = pixmerge.c
 
