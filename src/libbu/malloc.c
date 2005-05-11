@@ -248,7 +248,12 @@ bu_alloc(alloc_t type, unsigned int cnt, unsigned int sz, const char *str)
 	    break;
 	  case CALLOC:
 #if defined(HAVE_CALLOC)
-	    ptr = calloc(cnt, sz);
+	      if( bu_debug&(BU_DEBUG_MEM_CHECK|BU_DEBUG_MEM_QCHECK) )  {
+		  ptr = malloc(size);
+		  bzero(ptr, size);
+	      } else {
+		  ptr = calloc(cnt, sz);
+	      }
 #else
 	    ptr = malloc(size);
 	    bzero(ptr, size);
