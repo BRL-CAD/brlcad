@@ -1041,10 +1041,11 @@ dgo_overlay_cmd(struct dg_obj	*dgop,
 		name = argv[3];
 
 #if defined(WIN32) && !defined(__CYGWIN__)
-	if ((fp = fopen(argv[1], "rb")) == NULL) {
+#  define PL_MODE "rb"
 #else
-	if ((fp = fopen(argv[1], "r")) == NULL) {
+#  define PL_MODE "r"
 #endif
+	if ((fp = fopen(argv[1], PL_MODE)) == NULL) {
 		Tcl_AppendResult(interp, "dgo_overlay: failed to open file - ",
 				 argv[1], "\n", (char *)NULL);
 
@@ -1406,6 +1407,7 @@ dgo_rt_cmd(struct dg_obj	*dgop,
 		}
 		*vp++ = argv[i];
 	}
+	/* XXX why is this different for win32 only? */
 #ifdef WIN32
 	{
 	    char buf[512];
