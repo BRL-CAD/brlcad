@@ -730,13 +730,6 @@ db5_import_attributes( struct bu_attribute_value_set *avs, const struct bu_exter
 	cp = (const char *)ap->ext_buf;
 	ep = (const char *)ap->ext_buf+ap->ext_nbytes;
 
-/* Use AVS_ADD to copy the values from the external buffer instead of
- * using them directly without copying.  This presumes ap will not get
- * free'd before we're done with the avs.  Preference should be to
- * leave AVS_ADD undefined for performance reasons.
- */
-/* #define AVS_ADD 1 */
-
 	/* Null "name" string indicates end of attribute list */
 	while( *cp != '\0' )  {
 	    const char *name = cp;
@@ -745,29 +738,34 @@ db5_import_attributes( struct bu_attribute_value_set *avs, const struct bu_exter
 		return -1;
 	    }
 	    cp += strlen(cp)+1;	/* value */
-#ifdef AVS_ADD
-	    bu_avs_add( avs, name, cp );
-#endif
 	    cp += strlen(cp)+1;	/* next name */
 	    count++;
 	}
 	/* Ensure we're exactly at the end */
 	BU_ASSERT_PTR( cp+1, ==, ep );
 
-#ifndef AVS_ADD
 	bu_avs_init( avs, count, "db5_import_attributes" );
 
-	/* expand the readonly section if necessary */
-	if ( (!avs->readonly_min) || ((genptr_t)avs->readonly_min > (genptr_t)ap->ext_buf) ) {
-	    avs->readonly_min = (genptr_t)ap->ext_buf;
-	}
-	if ( (!avs->readonly_max) || ((genptr_t)avs->readonly_max < (genptr_t)(avs->readonly_min + ap->ext_nbytes)) ) {
-	    avs->readonly_max = (genptr_t)avs->readonly_min + ap->ext_nbytes;
-	}
+	/* Second pass -- populate attributes.  Peek inside struct for non AVS_ADD. */
 
+/* Use AVS_ADD to copy the values from the external buffer instead of
+ * using them directly without copying.  This presumes ap will not get
+ * free'd before we're done with the avs.  Preference should be to
+ * leave AVS_ADD undefined for performance reasons.
+ */
+#define AVS_ADD 0
+
+#ifdef AVS_ADD
+	cp = (const char *)ap->ext_buf;
+	while( *cp != '\0' )  {
+	    const char *name = cp;  /* name */
+	    cp += strlen(cp)+1; /* value */
+	    bu_avs_add( avs, name, cp );
+	    cp += strlen(cp)+1; /* next name */
+	}
+#else
 	/* Conserve malloc/free activity -- use strings in input buffer */
 	/* Signal region of memory that input comes from */
-	/* Second pass -- populate attributes.  Peek inside struct. */
 	cp = (const char *)ap->ext_buf;
 	app = avs->avp;
 	while( *cp != '\0' )  {
@@ -778,7 +776,16 @@ db5_import_attributes( struct bu_attribute_value_set *avs, const struct bu_exter
 	    app++;
 	    avs->count++;
 	}
+
+	/* expand the readonly section if necessary */
+	if ( (!avs->readonly_min) || ((genptr_t)avs->readonly_min > (genptr_t)ap->ext_buf) ) {
+	    avs->readonly_min = (genptr_t)ap->ext_buf;
+	}
+	if ( (!avs->readonly_max) || ((genptr_t)avs->readonly_max < (genptr_t)(avs->readonly_min + ap->ext_nbytes)) ) {
+	    avs->readonly_max = (genptr_t)avs->readonly_min + ap->ext_nbytes;
+	}
 #endif
+
 	BU_ASSERT_PTR( cp+1, ==, ep );
 	BU_ASSERT_LONG( avs->count, <=, avs->max );
 	BU_ASSERT_LONG( avs->count, ==, count );
@@ -968,6 +975,7 @@ db5_update_attributes( struct directory *dp, struct bu_attribute_value_set *avsp
 		return -3;
 	}
 
+	bu_avs_init( &old_avs, 4, "db5_update_attributes" );
 	if( raw.attributes.ext_buf )  {
 		if( db5_import_attributes( &old_avs, &raw.attributes ) < 0 )  {
 			bu_log("db5_update_attributes(%s):  mal-formed attributes in database\n",
@@ -975,8 +983,6 @@ db5_update_attributes( struct directory *dp, struct bu_attribute_value_set *avsp
 			bu_free_external( &ext );
 			return -8;
 		}
-	} else {
-		bu_avs_init( &old_avs, 4, "db5_update_attributes" );
 	}
 
 	bu_avs_merge( &old_avs, avsp );
@@ -1643,8 +1649,6 @@ db5_get_attributes( const struct db_i *dbip, struct bu_attribute_value_set *avs,
 			bu_free_external( &ext );
 			return -3;
 		}
-	} else {
-		bu_avs_init( avs, 0, "db_get_attributes" );
 	}
 
 	bu_free_external( &ext );
