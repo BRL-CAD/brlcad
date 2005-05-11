@@ -145,7 +145,7 @@ void
 locPerror( msg )
 char    *msg;
 	{
-	if( errno > 0 && errno < sys_nerr )
+	if( errno > 0 )
 #ifdef HAVE_STRERROR
 		brst_log( "%s: %s\n", msg, strerror(errno) );
 #else
