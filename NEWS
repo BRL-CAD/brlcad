@@ -11,7 +11,7 @@ entire history of the project is available through CVS.
 ----------------------------------------------------------------------
 
 The release marks the beginning of a series of benchmark suite
-enchancements.  The benchmark suite will now iteratively increase the
+enhancements.  The benchmark suite will now iteratively increase the
 number of rays being shot until a minimum amount of time has elapsed
 per render.  The resulting computations provide a more stable
 ray-trace figure of merit (rtfm) and allows the benchmark tests to
