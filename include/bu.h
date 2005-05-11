@@ -1067,9 +1067,9 @@ struct bu_attribute_value_set {
 	long				magic;
 	int				count;	/* # valid entries in avp */
 	int				max;	/* # allocated slots in avp */
+	genptr_t			readonly_min;
+	genptr_t			readonly_max;
 	struct bu_attribute_value_pair	*avp;	/* array[max] */
-	char				*readonly_min;
-	char				*readonly_max;
 };
 #define BU_AVS_MAGIC		0x41765321	/* AvS! */
 #define BU_CK_AVS(_avp)		BU_CKMAG(_avp, BU_AVS_MAGIC, "bu_attribute_value_set")
@@ -1085,7 +1085,7 @@ struct bu_attribute_value_set {
  */
 #define AVS_IS_FREEABLE(_avsp, _p)	\
 	( (_avsp)->readonly_max == NULL || \
-	    ((_p) < (_avsp)->readonly_min || (_p) > (_avsp)->readonly_max) )
+	    ((genptr_t)(_p) < (genptr_t)(_avsp)->readonly_min || (genptr_t)(_p) > (genptr_t)(_avsp)->readonly_max) )
 
 /*----------------------------------------------------------------------*/
 /* vls.c */
