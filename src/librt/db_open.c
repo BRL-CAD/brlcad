@@ -42,26 +42,22 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "common.h"
 
-
-
 #include <stdio.h>
 #ifdef HAVE_UNISTD_H
-#include <unistd.h>
+#  include <unistd.h>
 #endif
 #include <fcntl.h>
 #ifdef HAVE_STRING_H
-#include <string.h>
+#  include <string.h>
 #else
-#include <strings.h>
+#  include <strings.h>
 #endif
-
-#include "machine.h"
-
 #ifdef HAVE_UNIX_IO
 # include <sys/types.h>
 # include <sys/stat.h>
 #endif
 
+#include "machine.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "db.h"
@@ -95,6 +91,7 @@ db_open(const char *name,
 {
 	register struct db_i	*dbip = DBI_NULL;
 	register int		i;
+	char **argv;
 
 	if(RT_G_DEBUG&DEBUG_DB) bu_log("db_open(%s, %s)\n", name, mode );
 
@@ -174,13 +171,11 @@ db_open(const char *name,
 	dbip->dbi_filename = bu_strdup(name);
 
 	/* XXX At some point, expand with getenv("BRLCAD_FILE_PATH"); */
-	{
-		char **argv = (char **)bu_malloc( 3 * sizeof(char *), "dbi_filepath[3]" );
-		argv[0] = bu_strdup( "." );
-		argv[1] = bu_dirname( name );
-		argv[2] = NULL;
-		dbip->dbi_filepath = argv;
-	}
+	argv = (char **)bu_malloc( 3 * sizeof(char *), "dbi_filepath[3]" );
+	argv[0] = bu_strdup( "." );
+	argv[1] = bu_dirname( name );
+	argv[2] = NULL;
+	dbip->dbi_filepath = argv;
 
 	/* determine version */
 	dbip->dbi_version = db_get_version( dbip );
