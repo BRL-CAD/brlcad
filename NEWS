@@ -33,6 +33,7 @@ benchmark suite will now take about 15 minutes to complete.
 * iterative scalable benchmark computations - Sean Morrison
 * added logging of ray details when root solver fails - Sean Morrison
 * added logging of solid name when root solver fails - Lee Butler
+* build now includes a termlib library - Sean Morrison
 * fixed smp linux rtarea calculation bug - Sean Morrison
 * fixed rtweight centimeter units computation bug - Lee Butler
 * fixed asc2g double-free warnings bug - Sean Morrison
