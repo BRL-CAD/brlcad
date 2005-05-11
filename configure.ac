@@ -207,6 +207,9 @@ BC_ARG_ENABLE([build_zlib], [zlib-build], [Build the included zlib compression l
 # force enable/disable building of utah raster toolkit
 BC_ARG_ENABLE([build_urt], [urt-build], [Build the included Utah Raster Toolkit], [auto])
 
+# force enable/disable building of termlib
+BC_ARG_ENABLE([build_termlib], [termlib-build], [Build the included termlib library], [auto])
+
 # force enable/disable building of Tcl
 BC_ARG_ENABLE([build_tcl], [tcl-build], [Build the included Tcl], [yes])
 
@@ -216,14 +219,11 @@ BC_ARG_ENABLE([build_itcl], [itcl-build], [Build the included incrTcl], [yes])
 # force enable/disable building of iwidgets
 BC_ARG_ENABLE([build_iwidgets], [iwidgets-build], [Install the included iwidgets], [yes])
 
-# force enable/disable building of termlib
-BC_ARG_ENABLE([build_termlib], [termlib-build], [Build the included termlib library], [auto])
-
 # doxygen - XXX unimplemented
 use_doxygen=no
 #BC_ARG_ENABLE([use_doxygen], [doxygen], [Enable documentation generation with doxygen], [no])
 #AC_MSG_CHECKING(whether to generate documentation with doxygen)
-#AC_MSG_RESULT($use_doxygen)
+#AC_MSG_RESULT($bc_use_doxygen)
 
 # jove
 BC_ARG_ENABLE([build_jove], [jove], [Enable compilation of jove], [no])
@@ -263,7 +263,7 @@ BC_ARG_ALIAS([only_benchmark], [bench-only])
 BC_ARG_ALIAS([only_benchmark], [benchmark-only])
 BC_ARG_ALIAS([only_benchmark], [benchmarks-only])
 AC_MSG_CHECKING(whether to only build benchmark)
-AC_MSG_RESULT($only_benchmark)
+AC_MSG_RESULT($bc_only_benchmark)
 
 # aliases for building only the raytrace server (help uses only-rtserver)
 BC_ARG_ALIAS([only_rts], [only-rts])
@@ -272,14 +272,14 @@ BC_ARG_ALIAS([only_rts], [rts-only])
 BC_ARG_ALIAS([only_rts], [rtserver-only])
 BC_ARG_ALIAS([only_rts], [librtserver-only])
 AC_MSG_CHECKING(whether to only build the raytrace server)
-AC_MSG_RESULT($only_rts)
+AC_MSG_RESULT($bc_only_rts)
 
 # run-time debugging (help uses runtime-debug)
 BC_ARG_ALIAS([build_runtime_debug], [run-time-debug])
 BC_ARG_ALIAS([build_runtime_debug], [runtime-debugging])
 BC_ARG_ALIAS([build_runtime_debug], [run-time-debugging])
 AC_MSG_CHECKING(whether to use run-time debug checks)
-AC_MSG_RESULT($build_runtime_debug)
+AC_MSG_RESULT($bc_build_runtime_debug)
 
 # 64-bit compilation (help uses 64bit-build)
 BC_ARG_ALIAS([build_64bit], [64])
@@ -288,28 +288,28 @@ BC_ARG_ALIAS([build_64bit], [64-bit])
 BC_ARG_ALIAS([build_64bit], [64-build])
 BC_ARG_ALIAS([build_64bit], [64-bit-build])
 AC_MSG_CHECKING(whether to compile in 64-bit mode)
-AC_MSG_RESULT($build_64bit)
+AC_MSG_RESULT($bc_build_64bit)
 
 # force building libregex (help uses regex-build)
 BC_ARG_ALIAS([build_regex], [regex])
 BC_ARG_ALIAS([build_regex], [libregex])
 BC_ARG_ALIAS([build_regex], [libregex-build])
 AC_MSG_CHECKING(whether to build the regular expression library)
-AC_MSG_RESULT($build_regex)
+AC_MSG_RESULT($bc_build_regex)
 
 # aliases to force building libpng (help uses png-build)
 BC_ARG_ALIAS([build_png], [png])
 BC_ARG_ALIAS([build_png], [libpng])
 BC_ARG_ALIAS([build_png], [libpng-build])
 AC_MSG_CHECKING(whether to build the PNG library)
-AC_MSG_RESULT($build_png)
+AC_MSG_RESULT($bc_build_png)
 
 # aliases to force building zlib (help uses zlib-build)
 BC_ARG_ALIAS([build_zlib], [zlib])
 BC_ARG_ALIAS([build_zlib], [libz])
 BC_ARG_ALIAS([build_zlib], [libz-build])
 AC_MSG_CHECKING(whether to build the zlib compression library)
-AC_MSG_RESULT($build_zlib)
+AC_MSG_RESULT($bc_build_zlib)
 
 # aliases to force building urt (help uses urt-build)
 BC_ARG_ALIAS([build_urt], [urt])
@@ -332,14 +332,14 @@ BC_ARG_ALIAS([build_urt], [libutahrle-build])
 BC_ARG_ALIAS([build_urt], [utahrastertoolkit-build])
 BC_ARG_ALIAS([build_urt], [utah-raster-toolkit-build])
 AC_MSG_CHECKING(whether to build the Utah Raster Toolkit)
-AC_MSG_RESULT($build_urt)
+AC_MSG_RESULT($bc_build_urt)
 
 # aliases to force building tcl (help uses tcl-build)
 BC_ARG_ALIAS([build_tcl], [tcl])
 BC_ARG_ALIAS([build_tcl], [libtcl])
 BC_ARG_ALIAS([build_tcl], [libtcl-build])
 AC_MSG_CHECKING(whether to build the Tcl library)
-AC_MSG_RESULT($build_tcl)
+AC_MSG_RESULT($bc_build_tcl)
 
 # aliases to force building itcl (help uses itcl-build)
 BC_ARG_ALIAS([build_itcl], [itcl])
@@ -352,12 +352,13 @@ BC_ARG_ALIAS([build_itcl], [libitcl-build])
 BC_ARG_ALIAS([build_itcl], [libitk-build])
 BC_ARG_ALIAS([build_itcl], [incrtcl-build])
 AC_MSG_CHECKING(whether to build the incrTcl library)
-AC_MSG_RESULT($build_itcl)
+AC_MSG_RESULT($bc_build_itcl)
 
 # aliases to force building iwidgets (help uses iwidgets-build)
 BC_ARG_ALIAS([build_iwidgets], [iwidgets])
-AC_MSG_CHECKING(whether to build the Utah Raster Toolkit)
-AC_MSG_RESULT($build_urt)
+BC_ARG_ALIAS([build_iwidgets], [install-iwidgets])
+AC_MSG_CHECKING(whether to install the iwidgets library)
+AC_MSG_RESULT($bc_build_iwidgets)
 
 # aliases to force building termlib (help uses termlib-build)
 BC_ARG_ALIAS([build_termlib], [termlib])
@@ -368,19 +369,19 @@ BC_ARG_ALIAS([build_termlib], [termcap-build])
 BC_ARG_ALIAS([build_termlib], [libtermlib-build])
 BC_ARG_ALIAS([build_termlib], [libtermcap-build])
 AC_MSG_CHECKING(whether to build the termlib library)
-AC_MSG_RESULT($build_urt)
+AC_MSG_RESULT($bc_build_termlib)
 
 # jove aliases (help uses jove)
 BC_ARG_ALIAS([build_jove], [jove-build])
 AC_MSG_CHECKING(whether to compile jove or not)
-AC_MSG_RESULT($build_jove)
+AC_MSG_RESULT($bc_build_jove)
 
 # optimized aliases (help uses optimized)
 BC_ARG_ALIAS([use_optimized], [optimize])
 BC_ARG_ALIAS([use_optimized], [optimization])
 BC_ARG_ALIAS([use_optimized], [optimizations])
 AC_MSG_CHECKING(whether to enable optimized compilation)
-AC_MSG_RESULT($use_optimized)
+AC_MSG_RESULT($bc_use_optimized)
 
 # verbose warning aliases (help uses warnings)
 BC_ARG_ALIAS([use_warnings], [verbose])
@@ -389,26 +390,28 @@ BC_ARG_ALIAS([use_warnings], [warnings])
 BC_ARG_ALIAS([use_warnings], [verbose-warnings])
 BC_ARG_ALIAS([use_warnings], [warnings-verbose])
 AC_MSG_CHECKING(whether to enable verbose compilation warnings)
-AC_MSG_RESULT($use_warnings)
+AC_MSG_RESULT($bc_use_warnings)
 
 # debug aliases (help uses debug)
 BC_ARG_ALIAS([use_debug], [debugging])
 AC_MSG_CHECKING(whether to disable debug mode compilation)
-AC_MSG_RESULT($use_debug)
+AC_MSG_RESULT($bc_use_debug)
 
 # profiling aliases (help uses profiling)
 BC_ARG_ALIAS([use_profiling], [profile])
 BC_ARG_ALIAS([use_profiling], [profiled])
 AC_MSG_CHECKING(whether to enable profile mode compilation)
-AC_MSG_RESULT($use_profiling)
+AC_MSG_RESULT($bc_use_profiling)
 
 # with java aliases (help uses jdk)
 BC_ARG_WITH_ALIAS([with_java], [java])
+AC_MSG_CHECKING(whether to compile with the Java Development Kit)
+AC_MSG_RESULT($bc_with_java)
 
 
 # make sure multiple "only" options were not given
-if test "x$only_benchmark" != "xno" ; then
-	if test "x$only_rts" != "xno" ; then
+if test "x$bc_only_benchmark" != "xno" ; then
+	if test "x$bc_only_rts" != "xno" ; then
 		AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
 		AC_MSG_WARN([Requesting BOTH benchmark and librtserver "only"?])
 		AC_MSG_WARN([Building both benchmark and librtserver])
@@ -534,7 +537,7 @@ fi
 
 AC_DEFINE(EXTERN_STDOUT,,[Stdout is extern])
 
-if test "x$use_doxygen" = "xyes" ; then
+if test "x$bc_use_doxygen" = "xyes" ; then
 	AC_PATH_PROG(DOXYGEN, doxygen, , $PATH)
 	if test "x$DOXYGEN" = "x" ; then
 		BC_RETRY_CONFIGURE([$0])
@@ -543,7 +546,7 @@ if test "x$use_doxygen" = "xyes" ; then
 	fi
 fi
 AC_MSG_CHECKING(whether to enable doxygen)
-AC_MSG_RESULT($use_doxygen)
+AC_MSG_RESULT($bc_use_doxygen)
 
 
 dnl ***************************
@@ -707,8 +710,8 @@ AC_CHECK_LIB(gl, getvideo, sgigl_link_works=yes ; LIBSGIGL="-lgl")
 dnl check for java
 JAVA_CFLAGS=
 JAVA_LDFLAGS=
-if test "x$with_java" = "xyes" ; then
-	JAVA_CFLAGS="-I$with_java_val/include -I$with_java_val/include/`uname | tr [A-Z] [a-z]`"
+if test "x$bc_with_java" = "xyes" ; then
+	JAVA_CFLAGS="-I$bc_with_java_val/include -I$bc_with_java_val/include/`uname | tr [A-Z] [a-z]`"
 fi
 # XXX this should go away and become proper library or compiler option checks
 case "$target" in
@@ -867,18 +870,18 @@ AC_CHECK_HEADER(jni.h,
 		found_jni_h=yes )
 search_for_jni_h_more=no
 if test "x$found_jni_h" = "xno" ; then
-	if test "x$with_java" != "xno" ; then
+	if test "x$bc_with_java" != "xno" ; then
 		with_java=no
 		search_for_jni_h_more=yes
-		if test "x$only_benchmark" != "xno" ; then
-			if test "x$only_rts" = "xno" ; then
+		if test "x$bc_only_benchmark" != "xno" ; then
+			if test "x$bc_only_rts" = "xno" ; then
 				search_for_jni_h_more=no
 			fi
 		fi
 	fi
 else
 	# even though --with-jdk was not given, header was found and is needed
-	if test "x$only_rts" != "xno" ; then
+	if test "x$bc_only_rts" != "xno" ; then
 		with_java=yes
 	fi
 fi
@@ -1053,7 +1056,7 @@ if test "x$search_paths_first_flag_works" = "xno" ; then
 fi
 
 dnl 64bit compilation flags
-if test "x$build_64bit" = "xyes" ; then
+if test "x$bc_build_64bit" = "xyes" ; then
 	found_64bit_flag=no
 
 	AC_MSG_CHECKING([if configure snuck on a 32bit flag to ld])
@@ -1150,7 +1153,7 @@ if test "x$build_64bit" = "xyes" ; then
 fi
 
 dnl optimization flags
-if test "x$use_optimized" != "xno" ; then
+if test "x$bc_use_optimized" != "xno" ; then
 	O3_flag="-O3"
 	AC_MSG_CHECKING([if the compiler understands $O3_flag])
 	O3_flag_works=yes
@@ -1183,7 +1186,7 @@ if test "x$use_optimized" != "xno" ; then
 fi
 
 dnl debug flags
-if test "x$use_debug" != "xno" ; then
+if test "x$bc_use_debug" != "xno" ; then
 	g_flag="-g"
 	AC_MSG_CHECKING([if the compiler understands $g_flag])
 	g_flag_works=yes
@@ -1201,7 +1204,7 @@ if test "x$use_debug" != "xno" ; then
 fi
 
 dnl profile flags
-if test "x$use_profiling" != "xno" ; then
+if test "x$bc_use_profiling" != "xno" ; then
 	pg_flag="-pg"
 	AC_MSG_CHECKING([if the compiler understands $pg_flag])
 	pg_flag_works=yes
@@ -1219,7 +1222,7 @@ if test "x$use_profiling" != "xno" ; then
 fi
 
 dnl verbose warning flags
-if test "x$use_warnings" != "xno" ; then
+if test "x$bc_use_warnings" != "xno" ; then
 	warning_flag="-W -Wall -Wundef -Wfloat-equal -Wshadow -Wunreachable-code -Winline -Wconversion"
 		# XXX also of interest
 		# -Wmissing-declarations -Wmissing-prototypes -Wstrict-prototypes -pedantic -ansi -Werror
@@ -1373,16 +1376,16 @@ AC_MSG_CHECKING([... s e r v i c e s ])
 AC_MSG_RESULT([(8 of 9)])
 
 dnl *** java ***
-if test "x$only_rts" != "xno" ; then
+if test "x$bc_only_rts" != "xno" ; then
 	AC_MSG_CHECKING(if java seems to be available)
-	if test "x$with_java" = "xno" ; then
+	if test "x$bc_with_java" = "xno" ; then
 		AC_MSG_RESULT(no)
 		BC_RETRY_CONFIGURE([$0])
 		AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
 		AC_MSG_NOTICE([Try adding --with-jdk=/path/to/jdk to find jni.h])
 		AC_MSG_ERROR([*** Cannot locate jni.h for building librtserver ***])
 	else 
-		AC_MSG_NOTICE([$with_java ($with_java_val)])
+		AC_MSG_NOTICE([$bc_with_java ($bc_with_java_val)])
 	fi
 	AC_MSG_RESULT(yes)
 fi
@@ -1407,10 +1410,10 @@ AC_MSG_RESULT($png_works)
 
 dnl figure out whether we need to build libpng
 build_brlcad_png="no (using system)"
-if test "x$build_png" = "xyes" ; then
+if test "x$bc_build_png" = "xyes" ; then
 	build_brlcad_png=yes
 else
-	if test "x$build_png" = "xno" ; then
+	if test "x$bc_build_png" = "xno" ; then
 		if test "x$png_works" != "xyes" ; then
 			BC_RETRY_CONFIGURE([$0])
 			AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
@@ -1463,10 +1466,10 @@ AC_MSG_RESULT($regex_works)
 
 dnl figure out whether we need to build libregex
 build_brlcad_regex="no (using system)"
-if test "x$build_regex" = "xyes" ; then
+if test "x$bc_build_regex" = "xyes" ; then
 	build_brlcad_regex=yes
 else
-	if test "x$build_regex" = "xno" ; then
+	if test "x$bc_build_regex" = "xno" ; then
 		if test "x$regex_works" != "xyes" ; then
 			BC_RETRY_CONFIGURE([$0])
 			AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
@@ -1512,10 +1515,10 @@ AC_MSG_RESULT($zlib_works)
 
 dnl figure out whether we need to build libz
 build_brlcad_zlib="no (using system)"
-if test "x$build_zlib" = "xyes" ; then
+if test "x$bc_build_zlib" = "xyes" ; then
 	build_brlcad_zlib=yes
 else
-	if test "x$build_zlib" = "xno" ; then
+	if test "x$bc_build_zlib" = "xno" ; then
 		if test "x$zlib_works" != "xyes" ; then
 			BC_RETRY_CONFIGURE([$0])
 			AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
@@ -1567,10 +1570,10 @@ AC_MSG_RESULT($urt_works)
 
 dnl figure out whether we need to build urt
 build_brlcad_urt="no (using system)"
-if test "x$build_urt" = "xyes" ; then
+if test "x$bc_build_urt" = "xyes" ; then
 	build_brlcad_urt=yes
 else
-	if test "x$build_urt" = "xno" ; then
+	if test "x$bc_build_urt" = "xno" ; then
 		if test "x$urt_works" != "xyes" ; then
 			BC_RETRY_CONFIGURE([$0])
 			AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
@@ -1646,10 +1649,10 @@ AC_MSG_RESULT($tcl_works)
 
 dnl figure out whether we need to build Tcl
 build_brlcad_tcl="no (using system)"
-if test "x$build_tcl" = "xyes" ; then
+if test "x$bc_build_tcl" = "xyes" ; then
 	build_brlcad_tcl=yes
 else
-	if test "x$build_tcl" = "xno" ; then
+	if test "x$bc_build_tcl" = "xno" ; then
 		if test "x$tcl_works" = "xno" ; then
 			BC_RETRY_CONFIGURE([$0])
 			AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
@@ -1739,10 +1742,10 @@ AC_MSG_RESULT($itcl_works)
 
 dnl figure out whether we need to build incrTcl
 build_brlcad_itcl="no (using system)"
-if test "x$build_itcl" = "xyes" ; then
+if test "x$bc_build_itcl" = "xyes" ; then
 	build_brlcad_itcl=yes
 else
-	if test "x$build_itcl" = "xno" ; then
+	if test "x$bc_build_itcl" = "xno" ; then
 		if test "x$itcl_works" = "xno" ; then
 			BC_RETRY_CONFIGURE([$0])
 			AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
@@ -1813,10 +1816,10 @@ AC_MSG_RESULT($iwidgets_works)
 
 dnl figure out whether we need to install the iwidgets package
 build_brlcad_iwidgets="no (using system)"
-if test "x$build_iwidgets" = "xyes" ; then
+if test "x$bc_build_iwidgets" = "xyes" ; then
 	build_brlcad_iwidgets=yes
 else
-	if test "x$build_iwidgets" = "xno" ; then
+	if test "x$bc_build_iwidgets" = "xno" ; then
 		if test "x$iwidgets_works" = "xno" ; then
 			BC_RETRY_CONFIGURE([$0])
 			AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
@@ -1906,10 +1909,10 @@ AC_MSG_RESULT($termlib_works)
 
 dnl figure out whether we need to build libtermlib
 build_brlcad_termlib="no (using system)"
-if test "x$build_termlib" = "xyes" ; then
+if test "x$bc_build_termlib" = "xyes" ; then
 	build_brlcad_termlib=yes
 else
-	if test "x$build_termlib" = "xno" ; then
+	if test "x$bc_build_termlib" = "xno" ; then
 		if test "x$termlib_works" != "xyes" ; then
 			BC_RETRY_CONFIGURE([$0])
 			AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
@@ -1996,7 +1999,7 @@ AC_SUBST(LIBDL)
 dnl *** 64-bit compilation ***
 dnl figure out whether we are building 64-bit
 build_brlcad_64bit="no"
-if test "x$build_64bit" = "xyes" ; then
+if test "x$bc_build_64bit" = "xyes" ; then
 	if test "x$pointer_size" != "x8" ; then
 		AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
 		AC_MSG_NOTICE([Try removing --enable-64bit-build or modifying the CFLAGS/LDFLAGS])
@@ -2004,7 +2007,7 @@ if test "x$build_64bit" = "xyes" ; then
 	fi
 	build_brlcad_64bit=yes
 else
-	if test "x$build_64bit" = "xno" ; then
+	if test "x$bc_build_64bit" = "xno" ; then
 		if test "x$pointer_size" = "x8" ; then
 			AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
 			AC_MSG_NOTICE([Try removing --disable-64bit-build or modifying the CFLAGS/LDFLAGS])
@@ -2064,12 +2067,12 @@ AM_CONDITIONAL(BUILD_REGEX, [test "x$build_brlcad_regex" = "xyes"])
 AM_CONDITIONAL(BUILD_ZLIB, [test "x$build_brlcad_zlib" = "xyes"])
 AM_CONDITIONAL(BUILD_URT, [test "x$build_brlcad_urt" = "xyes"])
 AM_CONDITIONAL(BUILD_TERMLIB, [test "x$build_brlcad_termlib" = "xyes"])
-AM_CONDITIONAL(BUILD_JOVE, [test "x$build_jove" = "xyes"])
+AM_CONDITIONAL(BUILD_JOVE, [test "x$bc_build_jove" = "xyes"])
 
-AM_CONDITIONAL(JAVA, [test "x$with_java" != "xno"])
+AM_CONDITIONAL(JAVA, [test "x$bc_with_java" != "xno"])
 
-AM_CONDITIONAL(ONLY_BENCHMARK, [test "x$only_benchmark" != "xno"])
-AM_CONDITIONAL(ONLY_RTS, [test "x$only_rts" != "xno"])
+AM_CONDITIONAL(ONLY_BENCHMARK, [test "x$bc_only_benchmark" != "xno"])
+AM_CONDITIONAL(ONLY_RTS, [test "x$bc_only_rts" != "xno"])
 
 # XXX only irix can build libtkglx right now?
 AM_CONDITIONAL(BUILD_LIBTKGLX, [test "x$host_os" = "xirix6.5"])
@@ -2095,7 +2098,7 @@ dnl      with the integer constant 0.  note that turning this flag on will remov
 dnl      capability to output debug messages and commands that take a debug-level args
 dnl      will not output as expected.  see h/raytrace.h for the implementation details.
 
-if test "x$build_runtime_debug" = "xno" ; then
+if test "x$bc_build_runtime_debug" = "xno" ; then
 	AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
 	AC_MSG_WARN([While disabling run-time debugging should increase])
 	AC_MSG_WARN([performance, it will likewise remove several])
@@ -2460,24 +2463,24 @@ echo Build libregex .......................: $build_brlcad_regex
 echo Build zlib ...........................: $build_brlcad_zlib
 echo Build termlib ........................: $build_brlcad_termlib
 echo Build Utah Raster Toolkit.............: $build_brlcad_urt
-echo Build jove ...........................: $build_jove
+echo Build jove ...........................: $bc_build_jove
 echo 
-echo Java Developer Kit support ...........: $with_java
+echo Java Developer Kit support ...........: $bc_with_java
 echo X11 support ..........................: yes
 echo Open GL support ......................: yes
-echo Enable run-time debugging ............: $build_runtime_debug
+echo Enable run-time debugging ............: $bc_build_runtime_debug
 echo
 echo Build 64-bit release .................: $build_brlcad_64bit
-echo Build optimized release ..............: $use_optimized
-echo Build debug release ..................: $use_debug
-echo Build profile release ................: $use_profiling
+echo Build optimized release ..............: $bc_use_optimized
+echo Build debug release ..................: $bc_use_debug
+echo Build profile release ................: $bc_use_profiling
 echo Build static libraries ...............: $enable_static
 echo Build shared/dynamic libraries .......: $enable_shared
-echo Print verbose compilation warnings ...: $use_warnings
+echo Print verbose compilation warnings ...: $bc_use_warnings
 echo
-echo Only build benchmark suite ...........: $only_benchmark
-echo Only build librtserver ...............: $only_rts
-echo Generate doxygen documentation .......: $use_doxygen
+echo Only build benchmark suite ...........: $bc_only_benchmark
+echo Only build librtserver ...............: $bc_only_rts
+echo Generate doxygen documentation .......: $bc_use_doxygen
 echo
 if test "x$time_elapsed" != "xunknown" ; then
 echo Elapsed configuration time ...........: $time_elapsed

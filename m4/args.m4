@@ -82,23 +82,23 @@ dnl	[ifelse([$3], [], [enable $2 (default=$4)], [$3 (default=$4)] )]
 dnl)
 
 # BC_ARG_ENABLE 1:[$1] 2:[$2] 3:[$3] 4:[$4]
-[$1]=[$4]
+bc_[$1]=[$4]
 AC_ARG_ENABLE([$2], AC_HELP_STRING([--enable-$2], [$3 (default=$4)]), 
 	[
 	case "x$enableval" in
 		x[[yY]][[eE]][[sS]])
-			[$1]=yes
+			bc_[$1]=yes
 			;;
 		x[[nN]][[oO]])
-			[$1]=no
+			bc_[$1]=no
 			;;
 		x)
-			[$1]=yes
+			bc_[$1]=yes
 			;;
 		x*)
-			echo "*** WARNING *** WARNING *** WARNING *** WARNING *** WARNING ***"
-			echo "Unexpected value of [$enableval] to --enable-[$2] (expecting yes/no)"
-			[$1]="$enableval"
+			AC_MSG_NOTICE([*** WARNING *** WARNING *** WARNING *** WARNING *** WARNING ***])
+			AC_MSG_NOTICE([Unexpected value of [$enableval] to --enable-[$2] (expecting yes/no)])
+			bc_[$1]="$enableval"
 			;;
 	esac
 	]
@@ -112,17 +112,16 @@ AC_ARG_ENABLE([$2],,
 	[
 	case "x$enableval" in
 		x[[yY]][[eE]][[sS]])
-			[$1]=yes
+			bc_[$1]=yes
 			;;
 		x[[nN]][[oO]])
-			[$1]=no
+			bc_[$1]=no
 			;;
 		x)
-			echo "FOUND DEFAULT ENABLE"
-			[$1]=yes
+			bc_[$1]=yes
 			;;
 		x*)
-			[$1]="$enableval"
+			bc_[$1]="$enableval"
 			;;
 	esac
 	]
@@ -133,26 +132,26 @@ AC_ARG_ENABLE([$2],,
 
 AC_DEFUN([BC_ARG_WITH], [
 # BC_ARG_WITH 1:[$1] 2:[$2] 3:[$3] 4:[$4] 5:[$5]
-[$1]=[$4]
-[$1]_val=[$5]
+bc_[$1]=[$4]
+bc_[$1]_val=[$5]
 AC_ARG_WITH([$2], AC_HELP_STRING([--with-$2], [$3]), 
 	[
 	case "x$withval" in
 		x[[yY]][[eE]][[sS]])
-			[$1]=yes
-			[$1]_val=yes
+			bc_[$1]=yes
+			bc_[$1]_val=yes
 			;;
 		x[[nN]][[oO]])
-			[$1]=no
-			[$1]_val=no
+			bc_[$1]=no
+			bc_[$1]_val=no
 			;;
 		x)
-			[$1]=yes
-			[$1]_val="$withval"
+			bc_[$1]=yes
+			bc_[$1]_val="$withval"
 			;;
 		x*)
-			[$1]=yes
-			[$1]_val="$withval"
+			bc_[$1]=yes
+			bc_[$1]_val="$withval"
 			;;
 	esac
 	]
@@ -166,20 +165,20 @@ AC_ARG_WITH([$2],,
 	[
 	case "x$withval" in
 		x[[yY]][[eE]][[sS]])
-			[$1]=yes
-			[$1]_val=yes
+			bc_[$1]=yes
+			bc_[$1]_val=yes
 			;;
 		x[[nN]][[oO]])
-			[$1]=no
-			[$1]_val=no
+			bc_[$1]=no
+			bc_[$1]_val=no
 			;;
 		x)
-			[$1]=yes
-			[$1]_val="$withval"
+			bc_[$1]=yes
+			bc_[$1]_val="$withval"
 			;;
 		x*)
-			[$1]=yes
-			[$1]_val="$withval"
+			bc_[$1]=yes
+			bc_[$1]_val="$withval"
 			;;
 	esac
 	]
