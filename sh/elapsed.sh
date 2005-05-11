@@ -128,7 +128,7 @@ total_pre="`expr $hour_seconds_before + $min_seconds_before + $pre_sec`"
 
 # if the end time is smaller than the start time, we have gone back in
 # time so assume that the clock turned over a day.
-if test $total_post -le $total_pre ; then
+if test $total_post -lt $total_pre ; then
 	total_post="`expr $total_post + 86400`"
 fi
 
