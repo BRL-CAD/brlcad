@@ -15,9 +15,10 @@ enchancements.  The benchmark suite will now iteratively increase the
 number of rays being shot until a minimum amount of time has elapsed
 per render.  The resulting computations provide a more stable
 ray-trace figure of merit (rtfm) and allows the benchmark tests to
-scale more effectively to high-performance machines without requiring
-intervention.  The current default time window of 60 seconds implies
-that the benchmark suite will now take about 10 minutes to complete.
+scale more effectively to increasingly higher-performance machines
+without requiring intervention.  The current default testing time
+window minimum of 60 seconds elapsed wallclock time implies that the
+benchmark suite will now take about 15 minutes to complete.
 
 * fixed libbu run-time memory corruption checking - Sean Morrison
 * prevent indirect OpenGL framebuffers from crashing - Sean Morrison
