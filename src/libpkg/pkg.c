@@ -1560,8 +1560,8 @@ pkg_perror(void (*errlog) (/* ??? */), char *s)
 	}
 #else
 #  if HAVE_STRERROR
-	sprintf( errbuf, "%s: %s\n", s, syserr(errno) );
 #  else
+	sprintf( errbuf, "%s: %s\n", s, strerror(errno) );
 #    ifdef WIN32
 	sprintf( errbuf, "%s: %s\n", s, _sys_errlist[errno] );
 #    else
