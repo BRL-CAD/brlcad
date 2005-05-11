@@ -620,8 +620,8 @@ successfully performed:
 
 0) All code is commited to CVS.
 
-1) Verify that NEWS and the Changelog include a comment for all
-relevant and significant items added since the previous release.
+1) Verify that the NEWS file includes a comment for all relevant and
+significant items added since the previous release.
 
 2) All existing manpages are updated with the latest changes.
 
