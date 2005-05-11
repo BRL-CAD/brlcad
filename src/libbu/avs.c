@@ -36,17 +36,16 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 
 #include "common.h"
 
-
-
 #include <stdio.h>
 #ifdef HAVE_STRING_H
-#include <string.h>
+#  include <string.h>
 #else
-#include <strings.h>
+#  include <strings.h>
 #endif
 
 #include "machine.h"
 #include "bu.h"
+
 
 /*
  *			B U _ A V S _ I N I T _ E M P T Y
@@ -137,8 +136,8 @@ bu_avs_add(struct bu_attribute_value_set *avsp, const char *attribute, const cha
 			  avsp->avp,  avsp->max * sizeof(struct bu_attribute_value_pair),
 				"attribute_value_pair.avp[] (add)" );
 		} else {
-			avsp->avp = (struct bu_attribute_value_pair *)bu_malloc(
-				avsp->max * sizeof(struct bu_attribute_value_pair ),
+			avsp->avp = (struct bu_attribute_value_pair *)bu_calloc(
+				avsp->max, sizeof(struct bu_attribute_value_pair ),
 			       "attribute_value_pair.avp[] (add)" );
 		}
 	}
@@ -221,10 +220,10 @@ bu_avs_remove(struct bu_attribute_value_set *avsp, const char *attribute)
 	if( avsp->count ) {
 		for( BU_AVS_FOR(app, avsp) )  {
 			if( strcmp( app->name, attribute ) != 0 )  continue;
-			if( AVS_IS_FREEABLE( avsp, app->name ) )
+			if( app->name && AVS_IS_FREEABLE( avsp, app->name ) )
 				bu_free( (genptr_t)app->name, "app->name" );
 			app->name = NULL;	/* sanity */
-			if( AVS_IS_FREEABLE( avsp, app->value ) )
+			if( app->value && AVS_IS_FREEABLE( avsp, app->value ) )
 				bu_free( (genptr_t)app->value, "app->value" );
 			app->value = NULL;	/* sanity */
 			
@@ -247,24 +246,31 @@ bu_avs_remove(struct bu_attribute_value_set *avsp, const char *attribute)
 void
 bu_avs_free( struct bu_attribute_value_set *avsp )
 {
-	struct bu_attribute_value_pair *app;
-
-	BU_CK_AVS(avsp);
-
-	if( avsp->max < 1 )
-		return;
-
-	if( avsp->count ) {
-		for( BU_AVS_FOR(app, avsp) )  {
-			if( AVS_IS_FREEABLE( avsp, app->name ) )
-				bu_free( (genptr_t)app->name, "app->name" );
-			app->name = NULL;	/* sanity */
-			if( app->value && AVS_IS_FREEABLE( avsp, app->value ) )
-				bu_free( (genptr_t)app->value, "app->value" );
-			app->value = NULL;	/* sanity */
-		}
+    struct bu_attribute_value_pair *app;
+    
+    BU_CK_AVS(avsp);
+    
+    if( avsp->max < 1 )
+	return;
+    
+    if( avsp->count ) {
+	for( BU_AVS_FOR(app, avsp) )  {
+	    if( app->name && AVS_IS_FREEABLE( avsp, app->name ) ) {
+		bu_free( (genptr_t)app->name, "app->name" );
+	    }
+	    app->name = NULL;	/* sanity */
+	    if( app->value && AVS_IS_FREEABLE( avsp, app->value ) ) {
+		bu_free( (genptr_t)app->value, "app->value" );
+	    }
+	    app->value = NULL;	/* sanity */
 	}
+	avsp->count = 0;
+    }
+    if ( avsp->avp ) {
 	bu_free( (genptr_t)avsp->avp, "bu_avs_free avsp->avp" );
+	avsp->avp = NULL; /* sanity */
+	avsp->max = 0;
+    }
 }
 
 
