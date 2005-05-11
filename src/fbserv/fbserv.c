@@ -353,9 +353,13 @@ main(int argc, char **argv)
 
 	init_syslog();
 	while( (netfd = pkg_permserver(portname, 0, 0, comm_error)) < 0 ) {
-		sleep(5);
+	    static int error_count=0;
+	    sleep(1);
+	    if (error_count++ < 60) {
 		continue;
-		/*exit(1);*/
+	    }
+	    comm_error("Unable to start the stand-alone framebuffer daemon after 60 seconds, giving up.");
+	    exit(1);
 	}
 
 	while(1) {
