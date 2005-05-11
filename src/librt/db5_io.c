@@ -744,7 +744,11 @@ db5_import_attributes( struct bu_attribute_value_set *avs, const struct bu_exter
 	/* Ensure we're exactly at the end */
 	BU_ASSERT_PTR( cp+1, ==, ep );
 
-	//	bu_avs_init( avs, count, "db5_import_attributes" );
+	/* not really needed for AVS_ADD since bu_avs_add will
+	 * incrementally allocate as it needs it. but one alloc is
+	 * better than many in case there are many attributes.
+	 */
+	bu_avs_init( avs, count, "db5_import_attributes" );
 
 	/* Second pass -- populate attributes.  Peek inside struct for non AVS_ADD. */
 
@@ -753,9 +757,9 @@ db5_import_attributes( struct bu_attribute_value_set *avs, const struct bu_exter
  * free'd before we're done with the avs.  Preference should be to
  * leave AVS_ADD undefined for performance reasons.
  */
-#define AVS_ADD 0
+#define AVS_ADD 1
 
-#ifdef AVS_ADD
+#if AVS_ADD
 	cp = (const char *)ap->ext_buf;
 	while( *cp != '\0' )  {
 	    const char *name = cp;  /* name */
