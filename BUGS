@@ -15,7 +15,10 @@ on-going issues.
 Recent Bugs
 -----------
 
-* vrml exporter (and probably others) doesn't export primitives
+* setting src/librt/db5_io.c's AVS_ADD off in db5_import_attributes
+  causes bad things to happen and it really shouldn't.
+
+  vrml exporter (and * probably others) doesn't export primitives
   directly as one might expect like the ray-tracers, only regions.
 
 * if you turn off compilation of tcl/itcl, btclsh/mged fail to find
