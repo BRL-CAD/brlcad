@@ -1391,7 +1391,6 @@ dgo_rt_cmd(struct dg_obj	*dgop,
 #else
 	*vp++ = "rt";
 #endif
-	*vp++ = "-s512";
 	*vp++ = "-M";
 
 	if (vop->vo_perspective > 0) {
@@ -2032,7 +2031,6 @@ dgo_rtcheck_cmd(struct dg_obj	*dgop,
 # else
 	*vp++ = "rtcheck";
 # endif
-	*vp++ = "-s50";
 	*vp++ = "-M";
 	for (i=1; i < argc; i++)
 		*vp++ = argv[i];
@@ -2129,7 +2127,6 @@ dgo_rtcheck_cmd(struct dg_obj	*dgop,
 	/* WIN32 */
 	vp = &dgop->dgo_rt_cmd[0];
 	*vp++ = "rtcheck";
-	*vp++ = "-s50";
 	*vp++ = "-M";
 	for (i=1; i < argc; i++)
 		*vp++ = argv[i];
