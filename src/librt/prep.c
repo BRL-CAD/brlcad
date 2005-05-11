@@ -1181,6 +1181,7 @@ int rt_load_attrs( struct rt_i *rtip, char **attrs )
 		if( (dp=db_lookup( rtip->rti_dbip, reg_name, LOOKUP_NOISY ) ) == DIR_NULL )
 			continue;
 
+		bu_avs_init_empty(&avs);
 		if( db5_get_attributes( rtip->rti_dbip, &avs, dp ) ) {
 			bu_log( "rt_load_attrs: Failed to get attributes for region %s\n", reg_name );
 			continue;

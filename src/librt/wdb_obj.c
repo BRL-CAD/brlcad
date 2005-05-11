@@ -7503,7 +7503,7 @@ wdb_attr_cmd(struct rt_wdb	*wdbp,
 		return TCL_ERROR;
 	}
 
-	
+	bu_avs_init_empty(&avs);
 	if( db5_get_attributes( wdbp->dbip, &avs, dp ) ) {
 		Tcl_AppendResult(interp,
 				 "Cannot get attributes for object ", dp->d_namep, "\n", (char *)NULL );
@@ -9197,6 +9197,7 @@ wdb_do_list(struct db_i		*dbip,
 
 		bu_vls_strcat( outstrp, dp->d_namep );
 		bu_vls_strcat( outstrp, ": global attributes object\n" );
+		bu_avs_init_empty(&avs);
 		if( db5_get_attributes( dbip, &avs, dp ) ) {
 			Tcl_AppendResult(interp, "Cannot get attributes for ", dp->d_namep,
 					 "\n", (char *)NULL );
