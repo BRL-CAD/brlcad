@@ -58,6 +58,7 @@ static const char RCSprep[] = "@(#)$Header$ (BRL)";
 
 #include "./debug.h"
 
+
 BU_EXTERN(void		rt_ck, (struct rt_i	*rtip));
 
 HIDDEN void	rt_solid_bitfinder(register union tree *treep, struct region *regp, struct resource *resp);
@@ -605,10 +606,9 @@ rt_plot_solid(
  *  Special case, resp == rt_uniresource, rtip may be NULL (but give it if you have it).
  */
 void
-rt_init_resource(
-	struct resource *resp,
-	int		cpu_num,
-	struct rt_i	*rtip)
+rt_init_resource(struct resource *resp,
+		 int		cpu_num,
+		 struct rt_i	*rtip)
 {
 
 	if( resp == &rt_uniresource )  {

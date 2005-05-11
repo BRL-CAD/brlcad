@@ -104,6 +104,7 @@ main(int argc, char *argv[])
 		printf( "%s\n" , argv[i] );
 
 		dp = db_lookup( dbip , argv[i] , 1 );
+
 		if( rt_db_get_internal( &ip, dp, dbip, NULL, &rt_uniresource ) < 0 )  {
 			bu_log("import of %s failed\n", dp->d_namep);
 			continue;
