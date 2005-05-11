@@ -19,6 +19,7 @@ scale more effectively to high-performance machines without requiring
 intervention.  The current default time window of 60 seconds implies
 that the benchmark suite will now take about 10 minutes to complete.
 
+* fixed libbu run-time memory corruption checking - Sean Morrison
 * prevent indirect OpenGL framebuffers from crashing - Sean Morrison
 * throttle cpu usage on lingering OpenGL framebuffers - Sean Morrison
 * uniform binary objects from partial file data - Sean morrison
