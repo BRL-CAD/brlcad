@@ -36,13 +36,11 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 
 #include "common.h"
 
-
-
 #include <stdio.h>
 #ifdef HAVE_STRING_H
-#include <string.h>
+#  include <string.h>
 #else
-#include <strings.h>
+#  include <strings.h>
 #endif
 
 #include "machine.h"
@@ -712,8 +710,6 @@ db5_make_free_object( struct bu_external *ep, long length )
  *  The upshot of this is that bu_avs_add() and bu_avs_remove() can
  *  be safely used with this *avs.
  *
- *  The input *avs should not have been previously initialized.
- *
  *  Returns -
  *	>0	count of attributes successfully imported
  *	-1	Error, mal-formed input
@@ -724,7 +720,7 @@ db5_import_attributes( struct bu_attribute_value_set *avs, const struct bu_exter
 	const char	*cp;
 	const char	*ep;
 	int		count = 0;
-
+	struct bu_attribute_value_pair *app;
 
 	BU_CK_EXTERNAL(ap);
 
@@ -734,56 +730,62 @@ db5_import_attributes( struct bu_attribute_value_set *avs, const struct bu_exter
 	cp = (const char *)ap->ext_buf;
 	ep = (const char *)ap->ext_buf+ap->ext_nbytes;
 
+/* Use AVS_ADD to copy the values from the external buffer instead of
+ * using them directly without copying.  This presumes ap will not get
+ * free'd before we're done with the avs.  Preference should be to
+ * leave AVS_ADD undefined for performance reasons.
+ */
+/* #define AVS_ADD 1 */
+
 	/* Null "name" string indicates end of attribute list */
 	while( *cp != '\0' )  {
-		if( cp >= ep )  {
-			bu_log("db5_import_attributes() ran off end of buffer, database is corrupted\n");
-			return -1;
-		}
-		cp += strlen(cp)+1;	/* name */
-		cp += strlen(cp)+1;	/* value */
-		count++;
+	    const char *name = cp;
+	    if( cp >= ep )  {
+		bu_log("db5_import_attributes() ran off end of buffer, database is probably corrupted\n");
+		return -1;
+	    }
+	    cp += strlen(cp)+1;	/* value */
+#ifdef AVS_ADD
+	    bu_avs_add( avs, name, cp );
+#endif
+	    cp += strlen(cp)+1;	/* next name */
+	    count++;
 	}
 	/* Ensure we're exactly at the end */
 	BU_ASSERT_PTR( cp+1, ==, ep );
 
-	bu_avs_init( avs, count+3, "db5_import_attributes" );
+#ifndef AVS_ADD
+	bu_avs_init( avs, count, "db5_import_attributes" );
 
-#if 0
-	/* XXX regression test "shaders.sh" bombs when this code is used! */
+	/* expand the readonly section if necessary */
+	if ( (!avs->readonly_min) || ((genptr_t)avs->readonly_min > (genptr_t)ap->ext_buf) ) {
+	    avs->readonly_min = (genptr_t)ap->ext_buf;
+	}
+	if ( (!avs->readonly_max) || ((genptr_t)avs->readonly_max < (genptr_t)(avs->readonly_min + ap->ext_nbytes)) ) {
+	    avs->readonly_max = (genptr_t)avs->readonly_min + ap->ext_nbytes;
+	}
+
 	/* Conserve malloc/free activity -- use strings in input buffer */
 	/* Signal region of memory that input comes from */
-	avs->readonly_min = ap->ext_buf;
-	avs->readonly_max = avs->readonly_min + ap->ext_nbytes-1;
-
 	/* Second pass -- populate attributes.  Peek inside struct. */
 	cp = (const char *)ap->ext_buf;
 	app = avs->avp;
 	while( *cp != '\0' )  {
-		app->name = cp;
-		cp += strlen(cp)+1;	/* name */
-		app->value = cp;
-		cp += strlen(cp)+1;	/* value */
-		app++;
-		avs->count++;
-	}
-	app->name = NULL;
-	app->value = NULL;
-#else
-	/* Expensive but safer version */
-	cp = (const char *)ap->ext_buf;
-	while( *cp != '\0' )  {
-		const char	*newname = cp;
-		cp += strlen(cp)+1;	/* name */
-		bu_avs_add( avs, newname, cp );
-		cp += strlen(cp)+1;	/* value */
+	    app->name = cp;  /* name */
+	    cp += strlen(cp)+1;
+	    app->value = cp;  /* value */
+	    cp += strlen(cp)+1;
+	    app++;
+	    avs->count++;
 	}
 #endif
 	BU_ASSERT_PTR( cp+1, ==, ep );
-	BU_ASSERT_LONG( avs->count, <, avs->max );
+	BU_ASSERT_LONG( avs->count, <=, avs->max );
 	BU_ASSERT_LONG( avs->count, ==, count );
 
-if(bu_debug & BU_DEBUG_AVS)  bu_avs_print(avs, "db5_import_attributes");
+	if(bu_debug & BU_DEBUG_AVS) {
+	    bu_avs_print(avs, "db5_import_attributes");
+	}
 	return avs->count;
 }
 
