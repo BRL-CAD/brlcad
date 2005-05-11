@@ -1,13 +1,5 @@
 2005-05-11  brlcad  <brlcad@users.sourceforge.net>
 
-	* src/util/Makefile.am: ttcp needs socket and nsl (solaris choked)
-
-	* src/burst/prnt.c: avoid sys_nerr for solaris
-
-	* src/libpkg/pkg.c: s/syserr/strerror/
-
-	* ChangeLog: changelog entries from 7.2.2 to 7.2.4 for release
-
 	* NEWS, README, configure.ac:
 	Prepare for release 7.2.4, set the version. (release date 2005-05-11)
 
