@@ -744,7 +744,7 @@ db5_import_attributes( struct bu_attribute_value_set *avs, const struct bu_exter
 	/* Ensure we're exactly at the end */
 	BU_ASSERT_PTR( cp+1, ==, ep );
 
-	bu_avs_init( avs, count, "db5_import_attributes" );
+	//	bu_avs_init( avs, count, "db5_import_attributes" );
 
 	/* Second pass -- populate attributes.  Peek inside struct for non AVS_ADD. */
 
@@ -1461,6 +1461,10 @@ rt_db_external5_to_internal5(
 		return -1;		/* FAIL */
 	}
 
+	if (ip->idb_avs.magic != BU_AVS_MAGIC) {
+	    bu_avs_init_empty( &ip->idb_avs );
+	}
+
 	/* If attributes are present in the object, make them available
 	 * in the internal form.
 	 */
@@ -1470,8 +1474,6 @@ rt_db_external5_to_internal5(
 				name );
 			return -8;
 		}
-	} else {
-		bu_avs_init_empty( &ip->idb_avs );
 	}
 
 	if( !raw.body.ext_buf )  {
