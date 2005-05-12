@@ -67,8 +67,10 @@ fi
 
 # Obtain RELEASE number
 if test -r $path_to_vers_sh/../configure.ac ; then
-	version_script=`grep VERSION $path_to_vers_sh/../configure.ac | grep -v SUBST | head -4`
-	eval $version_script
+	for i in 1 2 3 4 ; do
+		version_script="`grep VERSION $path_to_vers_sh/../configure.ac | grep -v SUBST | head -$i | tail -1`"
+		eval "$version_script"
+	done
 	if test ! "x$BRLCAD_VERSION" = "x" ; then
 		RELEASE="$BRLCAD_VERSION"
 	else
