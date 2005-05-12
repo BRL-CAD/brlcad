@@ -45,7 +45,7 @@ benchmark suite will now take about 15 minutes to complete.
 * fixed rtweight centimeter units computation bug - Lee Butler
 * fixed asc2g double-free warnings bug - Sean Morrison
 * added rtarea manpage documentation - Sean Morrison
-* fixed compilation support for Sparc 64 - Sean Morrison
+* fixed compilation support for Solaris - Sean Morrison
 * removed redirection usage examples in g2asc docs - Sean Morrison
 
 
