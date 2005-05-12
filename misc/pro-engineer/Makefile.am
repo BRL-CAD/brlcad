@@ -99,7 +99,7 @@ plugin: proe-brl
 	@@ECHO@ "---"
 	@@ECHO@ "Run 'make unlock' to unlock the Pro-Engineer plugin for distribution"
 	@@ECHO@ "Run 'make install' to install the Pro-Engineer plugin"
-	@@ECHO# "You will need to edit protk.dat to use this plugin instead of libproe2brl.so"
+	@@ECHO@ "You will need to edit protk.dat to use this plugin instead of libproe2brl.so"
 	@@ECHO@
 
 plugin2: libproe2brl.so
