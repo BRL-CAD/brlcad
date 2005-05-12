@@ -37,7 +37,7 @@ CC = cc -n32 -mips4 -woff 1521
 # Compiler Flags
 DEFS        = -DPRO_MACHINE=23 -DPRO_OS=3
 OPTS        = -r10000 -ansi -no_exceptions -O2 -OPT:Olimit=0
-CFLAGS      = $(OPTS) $(DEFS) $(INCS)
+CFLAGS      = $(OPTS) $(DEFS) $(INCS) -DHAVE_CONFIG_H
 
 # uncomment this if you want to ignore "multiply defined" warnings
 # from the linker
