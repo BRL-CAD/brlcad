@@ -718,7 +718,7 @@ case "$target" in
 	*-*-darwin*)
 		JAVA_CFLAGS="-framework JavaVM"
 		JAVA_LDFLAGS="-shrext .jnilib -framework JavaVM"
-		with_java=yes
+		bc_with_java=yes
 		;;
 esac
 AC_SUBST(JAVA_CFLAGS)
@@ -871,7 +871,7 @@ AC_CHECK_HEADER(jni.h,
 search_for_jni_h_more=no
 if test "x$found_jni_h" = "xno" ; then
 	if test "x$bc_with_java" != "xno" ; then
-		with_java=no
+		bc_with_java=no
 		search_for_jni_h_more=yes
 		if test "x$bc_only_benchmark" != "xno" ; then
 			if test "x$bc_only_rts" = "xno" ; then
@@ -882,7 +882,7 @@ if test "x$found_jni_h" = "xno" ; then
 else
 	# even though --with-jdk was not given, header was found and is needed
 	if test "x$bc_only_rts" != "xno" ; then
-		with_java=yes
+		bc_with_java=yes
 	fi
 fi
 if test "x$search_for_jni_h_more" != "xno" ; then
@@ -906,7 +906,7 @@ if test "x$search_for_jni_h_more" != "xno" ; then
 			found_jni_h=yes )
 
 	if test "x$found_jni_h" != "xno" ; then
-		with_java=yes
+		bc_with_java=yes
 		AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
 		AC_MSG_WARN([jni.h was found by hunting through the JavaVM framework])
 		AC_MSG_WARN([This means you probably need to install the latest Java SDK])
