@@ -456,9 +456,17 @@ int main(int argc, char **argv)
 #endif
 
 	if( !matflag )  {
+		int frame_retval;
 		def_tree( rtip );		/* Load the default trees */
 		do_ae( azimuth, elevation );
-		(void)do_frame( curframe );
+		frame_retval = do_frame( curframe );
+		if (frame_retval != 0) {
+		    /* Release the framebuffer, if any */
+		    if( fbp != FBIO_NULL ) {
+			fb_close(fbp);
+		    }
+		    return 1;
+		}
 	} else if( !isatty(fileno(stdin)) && old_way( stdin ) )  {
 		; /* All is done */
 	} else {
