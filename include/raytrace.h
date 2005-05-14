@@ -6739,7 +6739,7 @@ RT_EXPORT BU_EXTERN(int rt_mk_binunif,
 		     const char *obj_name,
 		     const char *file_name,
 		     unsigned int minor_type,
-		     off_t max_count));
+		     long max_count));
 
 #ifdef WIN32
 /* defined in g_dsp.c */

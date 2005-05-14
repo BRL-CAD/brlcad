@@ -46,6 +46,10 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #else
 #  include <strings.h>
 #endif
+#ifdef HAVE_SYS_TYPES_H
+#  include <sys/types.h>
+#endif
+#include <limits.h>
 
 #include "machine.h"
 #include "bu.h"
@@ -55,14 +59,18 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "raytrace.h"
 #include "wdb.h"
 
+#ifndef __LONG_MAX__
+#  define __LONG_MAX__ 2147483647L
+#endif
+
 
 int
-rt_mk_binunif(struct rt_wdb *wdbp, const char *obj_name, const char *file_name, unsigned int minor_type, off_t max_count)
+rt_mk_binunif(struct rt_wdb *wdbp, const char *obj_name, const char *file_name, unsigned int minor_type, long max_count)
 {
 	struct stat st;
 	unsigned int major_type=DB5_MAJORTYPE_BINARY_UNIF;
-	long num_items=-1;
-	long obj_length=-1;
+	long long num_items=-1;
+	long long obj_length=-1;
 	int item_length=0;
 	struct bu_mapped_file *bu_fd;
 	struct rt_binunif_internal *bip;
@@ -100,6 +108,11 @@ rt_mk_binunif(struct rt_wdb *wdbp, const char *obj_name, const char *file_name, 
 	}
 
 	obj_length = num_items * item_length;
+
+	if (obj_length > __LONG_MAX__) {
+	    bu_log("Unable to create binary objects larger than %ld bytes\n", __LONG_MAX__);
+	    return -1;
+	}
 
 	/* just copy the bytes */
 	bip->count = num_items;
