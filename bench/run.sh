@@ -93,6 +93,9 @@ echo "================================="
 # force locale setting to C so things like date output as expected
 LC_ALL=C
 
+# save the precious args
+ARGS="$*"
+
 echo Looking for RT...
 # find the raytracer
 # RT environment variable overrides
@@ -177,333 +180,195 @@ if test "x${TIMEFRAME}" = "x" ; then
 fi
 echo "Using [$TIMEFRAME] for TIMEFRAME"
 
+# allow a debug hook, but don't announce it
+if test "x${DEBUG}" = "x" ; then
+#    DEBUG=1
+    :
+fi
 echo 
+
+#
+# run file_prefix geometry hypersample [..rt args..]
+#   runs a single benchmark test assuming the following are preset:
+#
+#   RT := path/name of the raytracer to use
+#   DB :+ path to the geometry file
+#
+# it is assumed that stdin will be the view/frame input
+#
+run ( ) {
+    run_geomname="$1" ; shift
+    run_geometry="$1" ; shift
+    run_hypersample="$1" ; shift
+    run_args="$*"
+    run_view="`cat`"
+
+    if test "x$DEBUG" != "x" ; then
+	echo "DEBUG: Running $RT -B -M -s512 -H${run_hypersample} -J0 ${run_args} -o ${run_geomname}.pix ${DB}/${run_geomname}.g ${run_geometry}"
+    fi
+
+    $RT -B -M -s512 -H${run_hypersample} -J0 ${run_args} \
+	-o ${run_geomname}.pix \
+	${DB}/${run_geomname}.g ${run_geometry} \
+	2> ${run_geomname}.log <<EOF
+$run_view
+EOF
+    retval=$?
+    if test "x$DEBUG" != "x" ; then
+	echo "DEBUG: Running $RT returned $retval"
+    fi
+    return $retval
+}
+
+#
+# benchmark test_name geometry [..rt args..]
+#   runs a series of benchmark tests assuming the following are preset:
+#
+#   TIMEFRAME := maximum amount of wallclock time to spend per test
+#
+# is is assumed that stdin will be the view/frame input
+#
+benchmark ( ) {
+    benchmark_testname="$1" ; shift
+    benchmark_geometry="$1" ; shift
+    benchmark_args="$*"
+
+    if test "x$benchmark_testname" = "x" ; then
+	echo "ERROR: argument mismatch, benchmark is missing the test name"
+	return 1
+    fi
+    if test "x$benchmark_geometry" = "x" ; then
+	echo "ERROR: argument mismatch, benchmark is missing the test geometry"
+	return 1
+    fi
+    if test "x$DEBUG" != "x" ; then
+	echo "DEBUG: Beginning benchmark testing on $benchmark_testname using $benchmark_geometry"
+    fi
+
+    benchmark_view="`cat`"
+
+    echo +++++ ${benchmark_testname}
+    benchmark_elapsed=0
+    benchmark_hypersample=0
+    benchmark_frame=0
+    while test $benchmark_elapsed -lt $TIMEFRAME ; do
+
+	if test -f ${benchmark_testname}.pix; then mv -f ${benchmark_testname}.pix ${benchmark_testname}.pix.$$; fi
+	if test -f ${benchmark_testname}.log; then mv -f ${benchmark_testname}.log ${benchmark_testname}.log.$$; fi
+
+	benchmark_start_time="`date '+%H %M %S'`"
+
+	run $benchmark_testname $benchmark_geometry $benchmark_hypersample $benchmark_args << EOF
+$benchmark_view
+start $benchmark_frame;
+end;
+EOF
+	retval=$?
+	if test -f ${benchmark_testname}.pix.$benchmark_frame ; then mv -f ${benchmark_testname}.pix.$benchmark_frame ${benchmark_testname}.pix ; fi
+	
+	if test $retval != 0 ; then
+	    echo "RAYTRACE ERROR"
+	    break
+	fi
+	
+	# compute how long we took, rounding up to at least one second to prevent division by zero
+	benchmark_elapsed="`$path_to_run_sh/../sh/elapsed.sh --seconds $benchmark_start_time`"
+	if test $benchmark_elapsed -eq 0 ; then
+	    benchmark_elapsed=1
+	fi
+	if test "x$benchmark_hypersample" = "x0" ; then
+	    if test "x$DEBUG" != "x" ; then
+		echo "DEBUG: ${benchmark_elapsed}s real elapsed,	1 ray/pixel,	`expr 262144 / $benchmark_elapsed` pixels/s (inexact wallclock)"
+	    fi
+	    benchmark_hypersample=1
+	else
+	    if test "x$DEBUG" != "x" ; then
+		echo "DEBUG: ${benchmark_elapsed}s real elapsed,	`expr $benchmark_hypersample + 1` rays/pixel,	`expr \( 262144 \* \( $benchmark_hypersample + 1 \) / $benchmark_elapsed \)` pixels/s (inexact wallclock)"
+	    fi
+	    benchmark_hypersample="`expr $benchmark_hypersample + $benchmark_hypersample + 1`"
+	fi
+	benchmark_frame="`expr $benchmark_frame + 1`"
+	grep RTFM ${benchmark_testname}.log
+    done
+
+    if test -f gmon.out; then mv -f gmon.out gmon.${benchmark_testname}.out; fi
+    ${CMP} $path_to_run_sh/../pix/${benchmark_testname}.pix ${benchmark_testname}.pix
+    if test $? = 0 ; then
+	echo ${benchmark_testname}.pix:  answers are RIGHT
+    else
+	echo ${benchmark_testname}.pix:  WRONG WRONG WRONG WRONG WRONG WRONG
+    fi
+
+    if test "x$DEBUG" != "x" ; then
+	echo "DEBUG: Done benchmark testing on $benchmark_testname"
+    fi
+    return $retval
+}
+
 
 # Run the tests
 
-echo +++++ moss
-elapsed=0
-hypersample=0
-frame=0
-while test $elapsed -lt $TIMEFRAME ; do
-
-if test -f moss.pix; then mv -f moss.pix moss.pix.$$; fi
-if test -f moss.log; then mv -f moss.log moss.log.$$; fi
-
-START_TIME="`date '+%H %M %S'`"
-$RT -B -M -s512 -H${hypersample} -J0 $* \
-  -o moss.pix \
-  $DB/moss.g all.g \
-  2> moss.log \
-  << EOF
+benchmark moss all.g $ARGS << EOF
 viewsize 1.572026215e+02;
 eye_pt 6.379990387e+01 3.271768951e+01 3.366661453e+01;
-viewrot -5.735764503e-01 8.191520572e-01 0.000000000e+00 
-0.000000000e+00 -3.461886346e-01 -2.424038798e-01 9.063078165e-01 
+viewrot -5.735764503e-01 8.191520572e-01 0.000000000e+00 0.000000000e+00
+	-3.461886346e-01 -2.424038798e-01 9.063078165e-01 0.000000000e+00
+	7.424039245e-01 5.198368430e-01 4.226182699e-01 0.000000000e+00
+	0.000000000e+00 0.000000000e+00 0.000000000e+00 1.000000000e+00 ;
+EOF
+
+benchmark world all.g $ARGS << EOF
+viewsize 1.572026215e+02;
+eye_pt 6.379990387e+01 3.271768951e+01 3.366661453e+01;
+viewrot -5.735764503e-01 8.191520572e-01 0.000000000e+00 0.000000000e+00
+	-3.461886346e-01 -2.424038798e-01 9.063078165e-01 
 0.000000000e+00 7.424039245e-01 5.198368430e-01 4.226182699e-01 
 0.000000000e+00 0.000000000e+00 0.000000000e+00 0.000000000e+00 
 1.000000000e+00 ;
-start $frame;
-end;
 EOF
-ret=$?
-if test -f moss.pix.$frame ; then mv -f moss.pix.$frame moss.pix ; fi
 
-if test $ret != 0 ; then
-    echo "RAYTRACE ERROR"
-    break
-fi
-
-elapsed="`$path_to_run_sh/../sh/elapsed.sh --seconds $START_TIME`"
-if test "x$hypersample" = "x0" ; then
-#    echo "${elapsed}s real elapsed,	1 ray/pixel,	`expr 262144 / $elapsed` primary rays/s (inexact wallclock)"
-    hypersample=1
-else
-#    echo "${elapsed}s real elapsed,	`expr $hypersample + 1` rays/pixel,	`expr \( 262144 \* \( $hypersample + 1 \) / $elapsed \)` primary rays/s (inexact wallclock)"
-    hypersample="`expr $hypersample + $hypersample + 1`"
-fi
-frame="`expr $frame + 1`"
-grep RTFM moss.log
-done
-
-if test -f gmon.out; then mv -f gmon.out gmon.moss.out; fi
-${CMP} $path_to_run_sh/../pix/moss.pix moss.pix
-if test $? = 0 ; then
-    echo moss.pix:  answers are RIGHT
-else
-    echo moss.pix:  WRONG WRONG WRONG WRONG WRONG WRONG
-fi
-
-
-echo +++++ world
-elapsed=0
-hypersample=0
-frame=0
-while test $elapsed -lt $TIMEFRAME ; do
-
-if test -f world.pix; then mv -f world.pix world.pix.$$; fi
-if test -f world.log; then mv -f world.log world.log.$$; fi
-
-START_TIME="`date '+%H %M %S'`"
-$RT -B -M -s512 -H${hypersample} -J0 $* \
-  -o world.pix \
-  $DB/world.g all.g \
-  2> world.log \
-  << EOF
-viewsize 1.572026215e+02;
-eye_pt 6.379990387e+01 3.271768951e+01 3.366661453e+01;
-viewrot -5.735764503e-01 8.191520572e-01 0.000000000e+00
-0.000000000e+00 -3.461886346e-01 -2.424038798e-01 9.063078165e-01 
-0.000000000e+00 7.424039245e-01 5.198368430e-01 4.226182699e-01 
-0.000000000e+00 0.000000000e+00 0.000000000e+00 0.000000000e+00 
-1.000000000e+00 ;
-start $frame;
-end;
-EOF
-ret=$?
-if test -f world.pix.$frame ; then mv -f world.pix.$frame world.pix ; fi
-
-if test $ret != 0 ; then
-    echo "RAYTRACE ERROR"
-    break
-fi
-
-elapsed="`$path_to_run_sh/../sh/elapsed.sh --seconds $START_TIME`"
-if test "x$hypersample" = "x0" ; then
-#    echo "${elapsed}s real elapsed,	1 ray/pixel,	`expr 262144 / $elapsed` primary rays/s (inexact wallclock)"
-    hypersample=1
-else
-#    echo "${elapsed}s real elapsed,	`expr $hypersample + 1` rays/pixel,	`expr \( 262144 \* \( $hypersample + 1 \) / $elapsed \)` primary rays/s (inexact wallclock)"
-    hypersample="`expr $hypersample + $hypersample + 1`"
-fi
-frame="`expr $frame + 1`"
-grep RTFM world.log
-done
-
-if test -f gmon.out; then mv -f gmon.out gmon.world.out; fi
-${CMP} $path_to_run_sh/../pix/world.pix world.pix
-if test $? = 0 ; then
-    echo world.pix:  answers are RIGHT
-else
-    echo world.pix:  WRONG WRONG WRONG WRONG WRONG WRONG
-fi
-
-
-echo +++++ star
-elapsed=0
-hypersample=0
-frame=0
-while test $elapsed -lt $TIMEFRAME ; do
-
-if test -f star.pix; then mv -f star.pix star.pix.$$; fi
-if test -f star.log; then mv -f star.log star.log.$$; fi
-
-START_TIME="`date '+%H %M %S'`"
-$RT -B -M -s512 -H${hypersample} -J0 $* \
-  -o star.pix \
-  $DB/star.g all \
-  2> star.log \
-  <<EOF
+benchmark star all $ARGS << EOF
 viewsize 2.500000000e+05;
 eye_pt 2.102677960e+05 8.455500000e+04 2.934714650e+04;
 viewrot -6.733560560e-01 6.130643360e-01 4.132114880e-01 0.000000000e+00 
-5.539599410e-01 4.823888300e-02 8.311441420e-01 0.000000000e+00 
-4.896120540e-01 7.885590550e-01 -3.720948210e-01 0.000000000e+00 
-0.000000000e+00 0.000000000e+00 0.000000000e+00 1.000000000e+00 ;
-start $frame;
-end;
+	5.539599410e-01 4.823888300e-02 8.311441420e-01 0.000000000e+00 
+	4.896120540e-01 7.885590550e-01 -3.720948210e-01 0.000000000e+00 
+	0.000000000e+00 0.000000000e+00 0.000000000e+00 1.000000000e+00 ;
 EOF
-ret=$?
-if test -f star.pix.$frame ; then mv -f star.pix.$frame star.pix ; fi
 
-if test $ret != 0 ; then
-    echo "RAYTRACE ERROR"
-    break
-fi
-
-elapsed="`$path_to_run_sh/../sh/elapsed.sh --seconds $START_TIME`"
-if test "x$hypersample" = "x0" ; then
-#    echo "${elapsed}s real elapsed,	1 ray/pixel,	`expr 262144 / $elapsed` primary rays/s (inexact wallclock)"
-    hypersample=1
-else
-#    echo "${elapsed}s real elapsed,	`expr $hypersample + 1` rays/pixel,	`expr \( 262144 \* \( $hypersample + 1 \) / $elapsed \)` primary rays/s (inexact wallclock)"
-    hypersample="`expr $hypersample + $hypersample + 1`"
-fi
-frame="`expr $frame + 1`"
-grep RTFM star.log
-done
-
-if test -f gmon.out; then mv -f gmon.out gmon.star.out; fi
-${CMP} $path_to_run_sh/../pix/star.pix star.pix
-if test $? = 0 ; then
-    echo star.pix:  answers are RIGHT
-else
-    echo star.pix:  WRONG WRONG WRONG WRONG WRONG WRONG
-fi
-
-
-echo +++++ bldg391
-elapsed=0
-hypersample=0
-frame=0
-while test $elapsed -lt $TIMEFRAME ; do
-
-if test -f bldg391.pix; then mv -f bldg391.pix bldg391.pix.$$; fi
-if test -f bldg391.log; then mv -f bldg391.log bldg391.log.$$; fi
-
-START_TIME="`date '+%H %M %S'`"
-$RT -B -M -s512 -H${hypersample} -J0 $* \
-  -o bldg391.pix \
-  $DB/bldg391.g all.g \
-  2> bldg391.log \
-  <<EOF
+benchmark bldg391 all.g $ARGS << EOF
 viewsize 1.800000000e+03;
 eye_pt 6.345012207e+02 8.633251343e+02 8.310771484e+02;
-viewrot -5.735764503e-01 8.191520572e-01 0.000000000e+00 
-0.000000000e+00 -3.461886346e-01 -2.424038798e-01 9.063078165e-01 
-0.000000000e+00 7.424039245e-01 5.198368430e-01 4.226182699e-01 
-0.000000000e+00 0.000000000e+00 0.000000000e+00 0.000000000e+00 
-1.000000000e+00 ;
-start $frame;
-end;
+viewrot -5.735764503e-01 8.191520572e-01 0.000000000e+00 0.000000000e+00
+	-3.461886346e-01 -2.424038798e-01 9.063078165e-01 0.000000000e+00
+	7.424039245e-01 5.198368430e-01 4.226182699e-01 0.000000000e+00
+	0.000000000e+00 0.000000000e+00 0.000000000e+00 1.000000000e+00;
 EOF
-ret=$?
-if test -f bldg391.pix.$frame ; then mv -f bldg391.pix.$frame bldg391.pix ; fi
 
-if test $ret != 0 ; then
-    echo "RAYTRACE ERROR"
-    break
-fi
-
-elapsed="`$path_to_run_sh/../sh/elapsed.sh --seconds $START_TIME`"
-if test "x$hypersample" = "x0" ; then
-#    echo "${elapsed}s real elapsed,	1 ray/pixel,	`expr 262144 / $elapsed` primary rays/s (inexact wallclock)"
-    hypersample=1
-else
-#    echo "${elapsed}s real elapsed,	`expr $hypersample + 1` rays/pixel,	`expr \( 262144 \* \( $hypersample + 1 \) / $elapsed \)` primary rays/s (inexact wallclock)"
-    hypersample="`expr $hypersample + $hypersample + 1`"
-fi
-frame="`expr $frame + 1`"
-grep RTFM bldg391.log
-done
-
-if test -f gmon.out; then mv -f gmon.out gmon.bldg391.out; fi
-${CMP} $path_to_run_sh/../pix/bldg391.pix bldg391.pix
-if test $? = 0 ; then
-    echo bldg391.pix:  answers are RIGHT
-else
-    echo bldg391.pix:  WRONG WRONG WRONG WRONG WRONG WRONG
-fi
-
-
-echo +++++ m35
-elapsed=0
-hypersample=0
-frame=0
-while test $elapsed -lt $TIMEFRAME ; do
-
-if test -f m35.pix; then mv -f m35.pix m35.pix.$$; fi
-if test -f m35.log; then mv -f m35.log m35.log.$$; fi
-
-START_TIME="`date '+%H %M %S'`"
-$RT -B -M -s512 -H${hypersample} -J0 $* \
-  -o m35.pix \
-  $DB/m35.g all.g \
-  2> m35.log \
-  << EOF
+benchmark m35 all.g $ARGS <<EOF
 viewsize 6.787387985e+03;
 eye_pt 3.974533127e+03 1.503320754e+03 2.874633221e+03;
 viewrot -5.527838919e-01 8.332423558e-01 1.171090926e-02 0.000000000e+00 
--4.815587087e-01 -3.308784486e-01 8.115544728e-01 0.000000000e+00 
-6.800964482e-01 4.429747496e-01 5.841593895e-01 0.000000000e+00 
-0.000000000e+00 0.000000000e+00 0.000000000e+00 1.000000000e+00 ;
-start $frame;
-end;
+	-4.815587087e-01 -3.308784486e-01 8.115544728e-01 0.000000000e+00 
+	6.800964482e-01 4.429747496e-01 5.841593895e-01 0.000000000e+00 
+	0.000000000e+00 0.000000000e+00 0.000000000e+00 1.000000000e+00 ;
 EOF
-ret=$?
-if test -f m35.pix.$frame ; then mv -f m35.pix.$frame m35.pix ; fi
 
-if test $ret != 0 ; then
-    echo "RAYTRACE ERROR"
-    break
-fi
-
-elapsed="`$path_to_run_sh/../sh/elapsed.sh --seconds $START_TIME`"
-if test "x$hypersample" = "x0" ; then
-#    echo "${elapsed}s real elapsed,	1 ray/pixel,	`expr 262144 / $elapsed` primary rays/s (inexact wallclock)"
-    hypersample=1
-else
-#    echo "${elapsed}s real elapsed,	`expr $hypersample + 1` rays/pixel,	`expr \( 262144 \* \( $hypersample + 1 \) / $elapsed \)` primary rays/s (inexact wallclock)"
-    hypersample="`expr $hypersample + $hypersample + 1`"
-fi
-frame="`expr $frame + 1`"
-grep RTFM m35.log
-done
-
-if test -f gmon.out; then mv -f gmon.out gmon.m35.out; fi
-${CMP} $path_to_run_sh/../pix/m35.pix m35.pix
-if test $? = 0 ; then
-    echo m35.pix:  answers are RIGHT
-else
-    echo m35.pix:  WRONG WRONG WRONG WRONG WRONG WRONG
-fi
-
-
-echo +++++ sphflake
-elapsed=0
-hypersample=0
-frame=0
-while test $elapsed -lt $TIMEFRAME ; do
-
-if test -f sphflake.pix; then mv -f sphflake.pix sphflake.pix.$$; fi
-if test -f sphflake.log; then mv -f sphflake.log sphflake.log.$$; fi
-
-START_TIME="`date '+%H %M %S'`"
-$RT -B -M -s512 -H${hypersample} -J0 $* \
-  -o sphflake.pix \
-  $DB/sphflake.g \
-  "scene.r" \
-  2> sphflake.log \
-  << EOF
+benchmark sphflake scene.r $ARGS <<EOF
 viewsize 2.556283261452611e+04;
 orientation 4.406810841785839e-01 4.005093234738861e-01 5.226451688385938e-01 6.101102288499644e-01;
 eye_pt 2.418500583758302e+04 -3.328563644344796e+03 8.489926952850350e+03;
-start $frame;
-end;
 EOF
-ret=$?
-if test -f sphflake.pix.$frame ; then mv -f sphflake.pix.$frame sphflake.pix ; fi
-
-if test $ret != 0 ; then
-    echo "RAYTRACE ERROR"
-    break
-fi
-
-elapsed="`$path_to_run_sh/../sh/elapsed.sh --seconds $START_TIME`"
-if test "x$hypersample" = "x0" ; then
-#    echo "${elapsed}s real elapsed,	1 ray/pixel,	`expr 262144 / $elapsed` primary rays/s (inexact wallclock)"
-    hypersample=1
-else
-#    echo "${elapsed}s real elapsed,	`expr $hypersample + 1` rays/pixel,	`expr \( 262144 \* \( $hypersample + 1 \) / $elapsed \)` primary rays/s (inexact wallclock)"
-    hypersample="`expr $hypersample + $hypersample + 1`"
-fi
-frame="`expr $frame + 1`"
-grep RTFM sphflake.log
-done
 
 
-if test -f gmon.out; then mv -f gmon.out gmon.sphflake.out; fi
-${CMP} $path_to_run_sh/../pix/sphflake.pix sphflake.pix
-if test $? = 0 ; then
-    echo sphflake.pix:  answers are RIGHT
-else
-    echo sphflake.pix:  WRONG WRONG WRONG WRONG WRONG WRONG
-fi
+# Compute and output the results
 
-if test x$UNIXTYPE = xBSD ; then
-    HOST=`hostname`
-else
-    HOST=`uname -n`
+HOST="`hostname`"
+if test $? != 0 ; then
+    HOST="`uname -n`"
+    if test $? != 0 ; then
+	HOST="unknown"
+    fi
 fi
 
 sh $path_to_run_sh/../bench/perf.sh "$HOST" "`date`" "$*" >> summary
