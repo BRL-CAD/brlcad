@@ -55,6 +55,7 @@
 #   DB - the directory to the database geometry (e.g. ../db)
 #   CMP - the path to a pixcmp tool (e.g. ./pixcmp)
 #   TIMEFRAME - the minimum number of seconds each trace needs to take
+#   DEBUG - turn on extra debug output for testing/development
 #
 # The TIMEFRAME option was added after several years to ensure that
 # each individual benchmark run will consume at least a minimum amount
