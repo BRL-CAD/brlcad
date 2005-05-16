@@ -46,6 +46,21 @@
 # ..
 # sh elapsed.sh $some_date
 #
+# Alternatively, the script can be used as a utility function in
+# scripts.  With the --seconds argument, the number of seconds that
+# have elapsed since the given date is output as a single number
+# instead of "pretty printing" the elapsed time.  This is often useful
+# for scripts that need to track elapsed time.  Another special mode
+# is when you only pass a single number to the script, it is presumed
+# to be an elapsed number of seconds that you simply wish to "pretty
+# print".  The --seconds and single number mode complement each other.
+#
+# sh elapsed.sh --seconds $some_prev_date
+#   or
+# sh elapsed.sh 542
+#   or
+# sh elapsed.sh `sh elapsed.sh --seconds $some_prev_date`
+#
 # $(#)$Header$ (BRL)
 
 ARGS="$*"
@@ -111,6 +126,17 @@ fi
 pre_hour="`echo $CONFIG_TIME | awk '{print $1}'`"
 pre_min="`echo $CONFIG_TIME | awk '{print $2}'`"
 pre_sec="`echo $CONFIG_TIME | awk '{print $3}'`"
+
+if test "x$pre_sec" = "x" ; then
+    if test "x$pre_min" = "x" ; then
+        # presume single value in CONFIG_TIME is elapsed seconds
+	if test ! "x$pre_hour" = "x" ; then
+	    pre_sec="`expr $post_sec - $pre_hour`"
+	    pre_hour=""
+	fi
+    fi
+fi
+
 if test "x$pre_hour" = "x" ; then
     pre_hour="$post_hour"
 fi
