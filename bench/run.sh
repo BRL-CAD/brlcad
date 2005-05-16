@@ -191,6 +191,18 @@ echo "Using [$DEVIATION] for DEVIATION"
 if test "x${MAXTIME}" = "x" ; then
     MAXTIME=300
 fi
+echo "Using [$MAXTIME] for MAXTIME"
+
+# let the user know about how long this might take
+mintime="`expr $TIMEFRAME \* 6`"
+echo "Minimum run time is `$path_to_run_sh/../sh/elapsed.sh $mintime`"
+maxtime="`expr $MAXTIME \* 6`"
+echo "Maximum run time is `$path_to_run_sh/../sh/elapsed.sh $maxtime`"
+estimate="`expr $mintime \* 3`"
+if test $estimate -gt $maxtime ; then
+    estimate="$maxtime"
+fi
+echo "Estimated   time is `$path_to_run_sh/../sh/elapsed.sh $estimate`"
 
 # allow a debug hook, but don't announce it
 if test "x${DEBUG}" = "x" ; then
@@ -346,6 +358,10 @@ EOF
 
 # Run the tests
 
+start="`date '+%H %M %S'`"
+echo "Running the BRL-CAD Benchmark tests... please wait ..."
+echo
+
 benchmark moss all.g $ARGS << EOF
 viewsize 1.572026215e+02;
 eye_pt 6.379990387e+01 3.271768951e+01 3.366661453e+01;
@@ -397,6 +413,11 @@ viewsize 2.556283261452611e+04;
 orientation 4.406810841785839e-01 4.005093234738861e-01 5.226451688385938e-01 6.101102288499644e-01;
 eye_pt 2.418500583758302e+04 -3.328563644344796e+03 8.489926952850350e+03;
 EOF
+
+echo
+echo "... Done."
+echo
+echo "Total time spent testing: `$path_to_run_sh/../sh/elapsed.sh $start`"
 
 
 # Compute and output the results
