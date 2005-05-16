@@ -181,17 +181,27 @@ if test "x${TIMEFRAME}" = "x" ; then
 fi
 echo "Using [$TIMEFRAME] for TIMEFRAME"
 
-# maximum deviation percentage
-if test "x${DEVIATION}" = "x" ; then
-    DEVIATION=10
-fi
-echo "Using [$DEVIATION] for DEVIATION"
-
 # approximate maximum time in seconds that a given test is allowed to take
 if test "x${MAXTIME}" = "x" ; then
     MAXTIME=300
 fi
+if test $MAXTIME -le $TIMEFRAME ; then
+    echo "ERROR: MAXTIME must be greater or equal to TIMEFRAME"
+    exit 1
+fi
 echo "Using [$MAXTIME] for MAXTIME"
+
+# maximum deviation percentage
+if test "x${DEVIATION}" = "x" ; then
+    DEVIATION=3
+fi
+echo "Using [$DEVIATION] for DEVIATION"
+
+# maximum number of iterations to average
+if test "x${AVERAGE}" = "x" ; then
+    AVERAGE=3
+fi
+echo "Using [$AVERAGE] for AVERAGE"
 
 # let the user know about how long this might take
 mintime="`expr $TIMEFRAME \* 6`"
@@ -210,6 +220,7 @@ if test "x${DEBUG}" = "x" ; then
     :
 fi
 echo 
+
 
 #
 # run file_prefix geometry hypersample [..rt args..]
@@ -244,6 +255,162 @@ EOF
     return $retval
 }
 
+
+#
+# average [..numbers..]
+#   computes the integer average for a set of given numbers
+#
+average ( ) {
+    average_nums="$*"
+
+    if test "x$average_nums" = "x" ; then
+	echo "ERROR: no numbers provided to average"
+	exit 1
+    fi
+
+    total=0
+    count=0
+    for num in $average_nums ; do
+	total="`expr $total + $num`"
+	count="`expr $count + 1`"
+    done
+
+    if test $count -eq 0 ; then
+	echo "ERROR: unexpected count in average"
+	exit 1
+    fi
+
+    echo "`expr $total / $count`"
+    return 0
+}
+
+
+#
+# getvals count [..numbers..]
+#   extracts up to count integer values from a set of numbers
+#
+getvals ( ) {
+    getvals_count="$1" ; shift
+    getvals_nums="$*"
+
+    if test "x$getvals_count" = "x" ; then
+	getvals_count=10000
+    elif test $getvals_count -eq 0 ; then
+	echo ""
+	return 0
+    fi
+
+    if test "x$getvals_nums" = "x" ; then
+	echo ""
+	return 0
+    fi
+
+    # get up to count values from the nums provided
+    getvals_got=""
+    getvals_counted=0
+    for getvals_num in $getvals_nums ; do
+	if test $getvals_counted -ge $getvals_count ; then
+	    break
+	fi
+	# getvals_int="`echo $getvals_num | sed 's/\.[0-9]*//'`"
+	getvals_int=`awk "BEGIN {print int($getvals_num+0.5)}"`
+	getvals_got="$getvals_got $getvals_int"
+	getvals_counted="`expr $getvals_counted + 1`"
+    done
+    
+    echo "$getvals_got"
+    return $getvals_counted
+}
+
+
+#
+# variance count [..numbers..]
+#   computes an integer variance for up to count numbers
+#
+variance ( ) {
+    variance_count="$1" ; shift
+    variance_nums="$*"
+
+    if test "x$variance_count" = "x" ; then
+	variance_count=10000
+    elif test $variance_count -eq 0 ; then
+	echo "ERROR: cannot compute variance of zero numbers"
+	exit 1
+    fi
+
+    if test "x$variance_nums" = "x" ; then
+	echo "ERROR: no numbers provided to compute variance for"
+	exit 1
+    fi
+    
+    # get up to count values from the nums provided
+    variance_got="`getvals $variance_count $variance_nums`"
+    variance_counted="$?"
+
+    if test $variance_counted -eq 0 ; then
+	echo "ERROR: unexpected zero count in variance"
+	exit 1
+    fi
+
+    # compute the average of the nums we got
+    variance_average="`average $variance_got`"
+
+    # compute the variance numerator of the population
+    variance_error=0
+    for variance_num in $variance_got ; do
+	variance_err_sq="`expr \( $variance_num - $variance_average \) \* \( $variance_num - $variance_average \)`"
+	variance_error="`expr $variance_error + $variance_err_sq`"
+    done
+
+    # echo the variance result
+    echo "`expr $variance_error / $variance_counted`"
+}
+
+
+#
+# sqrt number
+#   computes the square root of some number
+#
+sqrt ( ) {
+    sqrt_number="$1"
+
+    if test "x$sqrt_number" = "x" ; then
+	echo "ERROR: cannot compute the square root of nothing"
+	exit 1
+    elif test $sqrt_number -lt 0 > /dev/null 2>&1 ; then
+	echo "ERROR: square root of negative numbers is only in your imagination"
+	exit 1
+    fi
+
+    sqrt_have_dc=yes
+    echo "1 1 + p" | dc 2>&1 >/dev/null
+    if test ! x$? = x0 ; then
+	sqrt_have_dc=no
+    fi
+
+    sqrt_root=""
+    if test "x$sqrt_have_dc" = "xyes" ; then
+	sqrt_root=`echo "$sqrt_number v p" | dc`
+    else
+	sqrt_have_bc=yes
+	echo "1 + 1" | bc 2>&1 >/dev/null
+	if test ! "x$?" = "x0" ; then
+	    sqrt_have_bc=no
+	fi
+
+	if test "x$sqrt_have_bc" = "xyes" ; then
+	    sqrt_root=`echo "sqrt($sqrt_number)" | bc`
+	else
+	    sqrt_root=`awk "BEGIN {print sqrt($sqrt_number)}"`
+	fi
+    fi
+
+    echo `awk "BEGIN {print int($sqrt_root+0.5)}"`
+
+    return
+}
+
+
 #
 # benchmark test_name geometry [..rt args..]
 #   runs a series of benchmark tests assuming the following are preset:
@@ -272,74 +439,111 @@ benchmark ( ) {
     benchmark_view="`cat`"
 
     echo +++++ ${benchmark_testname}
-    benchmark_elapsed=0
+    benchmark_overall_elapsed=0
     benchmark_hypersample=0
     benchmark_frame=0
-    while test $benchmark_elapsed -lt $TIMEFRAME ; do
+    benchmark_rtfms=""
+    benchmark_percent=100
 
-	if test -f ${benchmark_testname}.pix; then mv -f ${benchmark_testname}.pix ${benchmark_testname}.pix.$$; fi
-	if test -f ${benchmark_testname}.log; then mv -f ${benchmark_testname}.log ${benchmark_testname}.log.$$; fi
+    while test $benchmark_overall_elapsed -lt $MAXTIME ; do
 
-	benchmark_start_time="`date '+%H %M %S'`"
+	benchmark_elapsed=0
+	while test $benchmark_elapsed -lt $TIMEFRAME ; do
 
-	run $benchmark_testname $benchmark_geometry $benchmark_hypersample $benchmark_args << EOF
+	    if test -f ${benchmark_testname}.pix; then mv -f ${benchmark_testname}.pix ${benchmark_testname}.pix.$$; fi
+	    if test -f ${benchmark_testname}.log; then mv -f ${benchmark_testname}.log ${benchmark_testname}.log.$$; fi
+	    
+	    benchmark_start_time="`date '+%H %M %S'`"
+
+	    run $benchmark_testname $benchmark_geometry $benchmark_hypersample $benchmark_args << EOF
 $benchmark_view
 start $benchmark_frame;
 end;
 EOF
-	retval=$?
-	if test -f ${benchmark_testname}.pix.$benchmark_frame ; then mv -f ${benchmark_testname}.pix.$benchmark_frame ${benchmark_testname}.pix ; fi
+	    retval=$?
+	    if test -f ${benchmark_testname}.pix.$benchmark_frame ; then mv -f ${benchmark_testname}.pix.$benchmark_frame ${benchmark_testname}.pix ; fi
 	
-	if test $retval != 0 ; then
-	    echo "RAYTRACE ERROR"
+	    if test $retval != 0 ; then
+		echo "RAYTRACE ERROR"
+		break
+	    fi
+	
+	    # compute how long we took, rounding up to at least one
+	    # second to prevent division by zero.
+	    benchmark_elapsed="`$path_to_run_sh/../sh/elapsed.sh --seconds $benchmark_start_time`"
+	    if test $benchmark_elapsed -eq 0 ; then
+		benchmark_elapsed=1
+	    fi
+	    if test "x$benchmark_hypersample" = "x0" ; then
+
+	        # just finished the first frame
+		if test "x$DEBUG" != "x" ; then
+		    echo "DEBUG: ${benchmark_elapsed}s real elapsed,	1 ray/pixel,	`expr 262144 / $benchmark_elapsed` pixels/s (inexact wallclock)"
+		fi
+		benchmark_hypersample=1
+		benchmark_frame="`expr $benchmark_frame + 1`"
+	    else
+		if test "x$DEBUG" != "x" ; then
+		    echo "DEBUG: ${benchmark_elapsed}s real elapsed,	`expr $benchmark_hypersample + 1` rays/pixel,	`expr \( 262144 \* \( $benchmark_hypersample + 1 \) / $benchmark_elapsed \)` pixels/s (inexact wallclock)"
+		fi
+
+
+	        # increase the number of rays exponentially if we are
+	        # considerably faster than the TIMEFRAME required.
+		if test `expr $benchmark_elapsed \* 32` -le ${TIMEFRAME} ; then
+		    # 32x increase, skip four frames
+		    benchmark_hypersample="`expr $benchmark_hypersample \* 32 + 31`"
+		    benchmark_frame="`expr $benchmark_frame + 5`"
+		elif test `expr $benchmark_elapsed \* 16` -le ${TIMEFRAME} ; then
+		    # 16x increase, skip three frames
+		    benchmark_hypersample="`expr $benchmark_hypersample \* 16 + 15`"
+		    benchmark_frame="`expr $benchmark_frame + 4`"
+		elif test `expr $benchmark_elapsed \* 8` -le ${TIMEFRAME} ; then
+		    # 8x increase, skip two frames
+		    benchmark_hypersample="`expr $benchmark_hypersample \* 8 + 7`"
+		    benchmark_frame="`expr $benchmark_frame + 3`"
+		elif test `expr $benchmark_elapsed \* 4` -le ${TIMEFRAME} ; then
+		    # 4x increase, skip a frame
+		    benchmark_hypersample="`expr $benchmark_hypersample \* 4 + 3`"
+		    benchmark_frame="`expr $benchmark_frame + 2`"
+		else
+		    # 2x increase
+		    benchmark_hypersample="`expr $benchmark_hypersample + $benchmark_hypersample + 1`"
+		    benchmark_frame="`expr $benchmark_frame + 1`"
+		fi
+	    fi
+
+	    # save the rtfm for variance computations then print it
+	    benchmark_rtfm_line="`grep RTFM ${benchmark_testname}.log`"
+	    benchmark_rtfm="`echo $benchmark_rtfm_line | awk '{print $9}'`"
+	    benchmark_rtfms="$benchmark_rtfm $benchmark_rtfms"
+	    echo "$benchmark_rtfm_line"
+	done
+
+	# outer loop for variance/deviation testing of last AVERAGE runs
+	benchmark_variance="`variance $AVERAGE $benchmark_rtfms`"
+	benchmark_deviation="`sqrt $benchmark_variance`"
+	benchmark_percent=`awk "BEGIN {print int(($benchmark_deviation / $benchmark_rtfm * 100)+0.5)}"`
+
+	if test "x$DEBUG" != "x" ; then
+	    benchmark_vals="`getvals $AVERAGE $benchmark_rtfms`"
+	    benchmark_avg="`average $benchmark_vals`"
+	    benchmark_avgpercent=`awk "BEGIN {print $benchmark_deviation / $benchmark_avg * 100}"`
+	    echo "DEBUG: average=$benchmark_avg ; variance=$benchmark_variance ; deviation=$benchmark_deviation ($benchmark_avgpercent%) ; last run was ${benchmark_percent}%"
+	fi
+
+	# early exit if we have a stable number
+	if test $benchmark_percent -le $DEVIATION ; then
 	    break
 	fi
-	
-	# compute how long we took, rounding up to at least one second
-	# to prevent division by zero
-	benchmark_elapsed="`$path_to_run_sh/../sh/elapsed.sh --seconds $benchmark_start_time`"
-	if test $benchmark_elapsed -eq 0 ; then
-	    benchmark_elapsed=1
-	fi
-	if test "x$benchmark_hypersample" = "x0" ; then
 
-	    # just finished the first frame
-	    if test "x$DEBUG" != "x" ; then
-		echo "DEBUG: ${benchmark_elapsed}s real elapsed,	1 ray/pixel,	`expr 262144 / $benchmark_elapsed` pixels/s (inexact wallclock)"
-	    fi
-	    benchmark_hypersample=1
-	    benchmark_frame="`expr $benchmark_frame + 1`"
-	else
-	    if test "x$DEBUG" != "x" ; then
-		echo "DEBUG: ${benchmark_elapsed}s real elapsed,	`expr $benchmark_hypersample + 1` rays/pixel,	`expr \( 262144 \* \( $benchmark_hypersample + 1 \) / $benchmark_elapsed \)` pixels/s (inexact wallclock)"
-	    fi
+	benchmark_overall_elapsed="`expr $benchmark_overall_elapsed + $benchmark_elapsed`"
 
-	    # increase the number of rays exponentially if we are
-	    # considerably faster than the TIMEFRAME required
-	    if test `expr $benchmark_elapsed \* 32` -le ${TIMEFRAME} ; then
-		# 32x increase, skip four frames
-		benchmark_hypersample="`expr $benchmark_hypersample \* 32 + 31`"
-		benchmark_frame="`expr $benchmark_frame + 5`"
-	    elif test `expr $benchmark_elapsed \* 16` -le ${TIMEFRAME} ; then
-		# 16x increase, skip three frames
-		benchmark_hypersample="`expr $benchmark_hypersample \* 16 + 15`"
-		benchmark_frame="`expr $benchmark_frame + 4`"
-	    elif test `expr $benchmark_elapsed \* 8` -le ${TIMEFRAME} ; then
-		# 8x increase, skip two frames
-		benchmark_hypersample="`expr $benchmark_hypersample \* 8 + 7`"
-		benchmark_frame="`expr $benchmark_frame + 3`"
-	    elif test `expr $benchmark_elapsed \* 4` -le ${TIMEFRAME} ; then
-		# 4x increase, skip a frame
-		benchmark_hypersample="`expr $benchmark_hypersample \* 4 + 3`"
-		benchmark_frame="`expr $benchmark_frame + 2`"
-	    else
-		# 2x increase
-		benchmark_hypersample="`expr $benchmark_hypersample + $benchmark_hypersample + 1`"
-		benchmark_frame="`expr $benchmark_frame + 1`"
-	    fi
-	fi
-	grep RTFM ${benchmark_testname}.log
+	# undo the hypersample increase back one step
+	benchmark_hypersample="`expr \( \( $benchmark_hypersample + 1 \) / 2 \) - 1`"
     done
+
+    # hopefully the last run is a stable representative of the performance
 
     if test -f gmon.out; then mv -f gmon.out gmon.${benchmark_testname}.out; fi
     ${CMP} $path_to_run_sh/../pix/${benchmark_testname}.pix ${benchmark_testname}.pix
@@ -348,7 +552,7 @@ EOF
     else
 	echo ${benchmark_testname}.pix:  WRONG WRONG WRONG WRONG WRONG WRONG
     fi
-
+    
     if test "x$DEBUG" != "x" ; then
 	echo "DEBUG: Done benchmark testing on $benchmark_testname"
     fi
@@ -417,7 +621,7 @@ EOF
 echo
 echo "... Done."
 echo
-echo "Total time spent testing: `$path_to_run_sh/../sh/elapsed.sh $start`"
+echo "Total testing time elapsed: `$path_to_run_sh/../sh/elapsed.sh $start`"
 
 
 # Compute and output the results
