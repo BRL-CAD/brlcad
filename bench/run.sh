@@ -195,7 +195,7 @@ echo "Using [$TIMEFRAME] for TIMEFRAME"
 if test "x${MAXTIME}" = "x" ; then
     MAXTIME=300
 fi
-if test $MAXTIME -le $TIMEFRAME ; then
+if test $MAXTIME -lt $TIMEFRAME ; then
     echo "ERROR: MAXTIME must be greater or equal to TIMEFRAME"
     exit 1
 fi
@@ -212,6 +212,19 @@ if test "x${AVERAGE}" = "x" ; then
     AVERAGE=3
 fi
 echo "Using [$AVERAGE] for AVERAGE"
+echo
+
+# determine raytracer version
+echo "RT reports the following version information:"
+versions="`$RT 2>&1 | grep BRL-CAD`"
+if test "x$versions" = "x" ; then
+    echo "Unknown"
+else
+    cat <<EOF
+$versions
+EOF
+fi
+echo
 
 # let the user know about how long this might take
 mintime="`expr $TIMEFRAME \* 6`"
@@ -274,7 +287,7 @@ average ( ) {
     average_nums="$*"
 
     if test "x$average_nums" = "x" ; then
-	echo "ERROR: no numbers provided to average"
+	echo "ERROR: no numbers provided to average" 1>&2
 	exit 1
     fi
 
@@ -286,7 +299,7 @@ average ( ) {
     done
 
     if test $count -eq 0 ; then
-	echo "ERROR: unexpected count in average"
+	echo "ERROR: unexpected count in average" 1>&2
 	exit 1
     fi
 
@@ -344,12 +357,12 @@ variance ( ) {
     if test "x$variance_count" = "x" ; then
 	variance_count=10000
     elif test $variance_count -eq 0 ; then
-	echo "ERROR: cannot compute variance of zero numbers"
+	echo "ERROR: cannot compute variance of zero numbers" 1>&2
 	exit 1
     fi
 
     if test "x$variance_nums" = "x" ; then
-	echo "ERROR: no numbers provided to compute variance for"
+	echo "ERROR: cannot compute variance of nothing" 1>&2
 	exit 1
     fi
     
@@ -358,7 +371,7 @@ variance ( ) {
     variance_counted="$?"
 
     if test $variance_counted -eq 0 ; then
-	echo "ERROR: unexpected zero count in variance"
+	echo "ERROR: unexpected zero count in variance" 1>&2
 	exit 1
     fi
 
@@ -385,10 +398,10 @@ sqrt ( ) {
     sqrt_number="$1"
 
     if test "x$sqrt_number" = "x" ; then
-	echo "ERROR: cannot compute the square root of nothing"
+	echo "ERROR: cannot compute the square root of nothing" 1>&2
 	exit 1
     elif test $sqrt_number -lt 0 > /dev/null 2>&1 ; then
-	echo "ERROR: square root of negative numbers is only in your imagination"
+	echo "ERROR: square root of negative numbers is only in your imagination" 1>&2
 	exit 1
     fi
 
@@ -449,11 +462,12 @@ benchmark ( ) {
     benchmark_view="`cat`"
 
     echo +++++ ${benchmark_testname}
-    benchmark_overall_elapsed=0
     benchmark_hypersample=0
     benchmark_frame=0
     benchmark_rtfms=""
     benchmark_percent=100
+    benchmark_start_time="`date '+%H %M %S'`"
+    benchmark_overall_elapsed=0
 
     while test $benchmark_overall_elapsed -lt $MAXTIME ; do
 
@@ -463,7 +477,7 @@ benchmark ( ) {
 	    if test -f ${benchmark_testname}.pix; then mv -f ${benchmark_testname}.pix ${benchmark_testname}.pix.$$; fi
 	    if test -f ${benchmark_testname}.log; then mv -f ${benchmark_testname}.log ${benchmark_testname}.log.$$; fi
 	    
-	    benchmark_start_time="`date '+%H %M %S'`"
+	    benchmark_frame_start_time="`date '+%H %M %S'`"
 
 	    run $benchmark_testname $benchmark_geometry $benchmark_hypersample $benchmark_args << EOF
 $benchmark_view
@@ -480,7 +494,8 @@ EOF
 	
 	    # compute how long we took, rounding up to at least one
 	    # second to prevent division by zero.
-	    benchmark_elapsed="`$path_to_run_sh/../sh/elapsed.sh --seconds $benchmark_start_time`"
+	    benchmark_elapsed="`$path_to_run_sh/../sh/elapsed.sh --seconds $benchmark_frame_start_time`"
+	    echo "elapsed is $benchmark_elapsed"
 	    if test $benchmark_elapsed -eq 0 ; then
 		benchmark_elapsed=1
 	    fi
@@ -526,19 +541,38 @@ EOF
 	    # save the rtfm for variance computations then print it
 	    benchmark_rtfm_line="`grep RTFM ${benchmark_testname}.log`"
 	    benchmark_rtfm="`echo $benchmark_rtfm_line | awk '{print $9}'`"
+	    if test "x$benchmark_rtfm" = "x" ; then
+		benchmark_rtfm="0"
+	    fi
 	    benchmark_rtfms="$benchmark_rtfm $benchmark_rtfms"
-	    echo "$benchmark_rtfm_line"
+	    if test ! "x$benchmark_rtfm_line" = "x" ; then
+		echo "$benchmark_rtfm_line"
+	    fi
+
+	    # see if we need to break out early
+	    benchmark_overall_elapsed="`$path_to_run_sh/../sh/elapsed.sh --seconds $benchmark_start_time`"
+	    if test $benchmark_overall_elapsed -ge $MAXTIME ; then
+		break;
+	    fi
 	done
 
-	# outer loop for variance/deviation testing of last AVERAGE runs
+	# outer loop for variance/deviation testing of last AVERAGE frames
 	benchmark_variance="`variance $AVERAGE $benchmark_rtfms`"
 	benchmark_deviation="`sqrt $benchmark_variance`"
-	benchmark_percent=`awk "BEGIN {print int(($benchmark_deviation / $benchmark_rtfm * 100)+0.5)}"`
+	if test $benchmark_rtfm -eq 0 ; then
+	    benchmark_percent=0
+	else
+	    benchmark_percent=`awk "BEGIN {print int(($benchmark_deviation / $benchmark_rtfm * 100)+0.5)}"`
+	fi
 
 	if test "x$DEBUG" != "x" ; then
 	    benchmark_vals="`getvals $AVERAGE $benchmark_rtfms`"
 	    benchmark_avg="`average $benchmark_vals`"
-	    benchmark_avgpercent=`awk "BEGIN {print $benchmark_deviation / $benchmark_avg * 100}"`
+	    if test $benchmark_avg -eq 0 ; then
+		benchmark_avgpercent=0
+	    else
+		benchmark_avgpercent=`awk "BEGIN {print $benchmark_deviation / $benchmark_avg * 100}"`
+	    fi
 	    echo "DEBUG: average=$benchmark_avg ; variance=$benchmark_variance ; deviation=$benchmark_deviation ($benchmark_avgpercent%) ; last run was ${benchmark_percent}%"
 	fi
 
@@ -547,7 +581,7 @@ EOF
 	    break
 	fi
 
-	benchmark_overall_elapsed="`expr $benchmark_overall_elapsed + $benchmark_elapsed`"
+	benchmark_overall_elapsed="`$path_to_run_sh/../sh/elapsed.sh --seconds $benchmark_start_time`"
 
 	# undo the hypersample increase back one step
 	benchmark_hypersample="`expr \( \( $benchmark_hypersample + 1 \) / 2 \) - 1`"
@@ -651,10 +685,16 @@ if test $ret != 0 ; then
     exit $ret
 else
     echo
-    echo "Summary:"
+    echo "Summary Details:"
     tail -2 summary
 fi
-echo
+vgr="`tail -1 summary | awk '{print int($9)}'`"
+if test ! "x$vgr" = "x" ; then
+    echo
+    echo "Benchmark computations indicate an approximate VGR performance metric of $vgr"
+    echo
+fi
+
 echo Testing complete, read $path_to_run_sh/../doc/benchmark.tr for more details on the BRL-CAD Benchmark.
 
 # Local Variables:
