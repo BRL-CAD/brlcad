@@ -55,14 +55,24 @@
 #   DB - the directory to the database geometry (e.g. ../db)
 #   CMP - the path to a pixcmp tool (e.g. ./pixcmp)
 #   TIMEFRAME - the minimum number of seconds each trace needs to take
+#   MAXTIME - the maximum number of seconds to spend on any test
+#   DEVIATION - the minimum sufficient % deviation from the average
+#   AVERAGE - how many frames to average together
 #   DEBUG - turn on extra debug output for testing/development
 #
-# The TIMEFRAME option was added after several years to ensure that
-# each individual benchmark run will consume at least a minimum amount
-# of wallclock time to be considered useful/stable.  When a test is
-# run and it completes in less than TIMEFRAME, the raytrace is
-# restarted using double the number of rays from the previous run.
-# These additional rays are hypersampled but without any jitter.
+# The TIMEFRAME, MAXTIME, DEVIATION, and AVERAGE options control how
+# the benchmark will proceed including how long it should take.  Each
+# individual benchmark run will consume at least a minimum TIMEFRAME
+# of wallclock time so that the results can stabilize.  After
+# consuming at least the minimum TIMEFRAME, additional frames may be
+# computed until the standard deviation from the last AVERAGE count of
+# frames is below the specified DEVIATION.  When a test is run and it
+# completes in less than TIMEFRAME, the raytrace is restarted using
+# double the number of rays from the previous run.  If the machine is
+# fast enough, the benchmark may accelerate the number or rays being
+# fired.  These additional rays are hypersampled but without any
+# jitter, so it's effectively performing a multiplier amount of work
+# over the initial frame.
 #
 # Plese send your BRL-CAD Benchmark results to the developers along with
 # detailed system information to <devs@brlcad.org>.  Include at least:
