@@ -175,11 +175,22 @@ else
     echo "Using [$CMP] for CMP"
 fi
 
-# determine the minimum time requirement for a single test run
+# determine the minimum time requirement in seconds for a single test run
 if test "x${TIMEFRAME}" = "x" ; then
-    TIMEFRAME=60
+    TIMEFRAME=32
 fi
 echo "Using [$TIMEFRAME] for TIMEFRAME"
+
+# maximum deviation percentage
+if test "x${DEVIATION}" = "x" ; then
+    DEVIATION=10
+fi
+echo "Using [$DEVIATION] for DEVIATION"
+
+# approximate maximum time in seconds that a given test is allowed to take
+if test "x${MAXTIME}" = "x" ; then
+    MAXTIME=300
+fi
 
 # allow a debug hook, but don't announce it
 if test "x${DEBUG}" = "x" ; then
@@ -272,23 +283,49 @@ EOF
 	    break
 	fi
 	
-	# compute how long we took, rounding up to at least one second to prevent division by zero
+	# compute how long we took, rounding up to at least one second
+	# to prevent division by zero
 	benchmark_elapsed="`$path_to_run_sh/../sh/elapsed.sh --seconds $benchmark_start_time`"
 	if test $benchmark_elapsed -eq 0 ; then
 	    benchmark_elapsed=1
 	fi
 	if test "x$benchmark_hypersample" = "x0" ; then
+
+	    # just finished the first frame
 	    if test "x$DEBUG" != "x" ; then
 		echo "DEBUG: ${benchmark_elapsed}s real elapsed,	1 ray/pixel,	`expr 262144 / $benchmark_elapsed` pixels/s (inexact wallclock)"
 	    fi
 	    benchmark_hypersample=1
+	    benchmark_frame="`expr $benchmark_frame + 1`"
 	else
 	    if test "x$DEBUG" != "x" ; then
 		echo "DEBUG: ${benchmark_elapsed}s real elapsed,	`expr $benchmark_hypersample + 1` rays/pixel,	`expr \( 262144 \* \( $benchmark_hypersample + 1 \) / $benchmark_elapsed \)` pixels/s (inexact wallclock)"
 	    fi
-	    benchmark_hypersample="`expr $benchmark_hypersample + $benchmark_hypersample + 1`"
+
+	    # increase the number of rays exponentially if we are
+	    # considerably faster than the TIMEFRAME required
+	    if test `expr $benchmark_elapsed \* 32` -le ${TIMEFRAME} ; then
+		# 32x increase, skip four frames
+		benchmark_hypersample="`expr $benchmark_hypersample \* 32 + 31`"
+		benchmark_frame="`expr $benchmark_frame + 5`"
+	    elif test `expr $benchmark_elapsed \* 16` -le ${TIMEFRAME} ; then
+		# 16x increase, skip three frames
+		benchmark_hypersample="`expr $benchmark_hypersample \* 16 + 15`"
+		benchmark_frame="`expr $benchmark_frame + 4`"
+	    elif test `expr $benchmark_elapsed \* 8` -le ${TIMEFRAME} ; then
+		# 8x increase, skip two frames
+		benchmark_hypersample="`expr $benchmark_hypersample \* 8 + 7`"
+		benchmark_frame="`expr $benchmark_frame + 3`"
+	    elif test `expr $benchmark_elapsed \* 4` -le ${TIMEFRAME} ; then
+		# 4x increase, skip a frame
+		benchmark_hypersample="`expr $benchmark_hypersample \* 4 + 3`"
+		benchmark_frame="`expr $benchmark_frame + 2`"
+	    else
+		# 2x increase
+		benchmark_hypersample="`expr $benchmark_hypersample + $benchmark_hypersample + 1`"
+		benchmark_frame="`expr $benchmark_frame + 1`"
+	    fi
 	fi
-	benchmark_frame="`expr $benchmark_frame + 1`"
 	grep RTFM ${benchmark_testname}.log
     done
 
