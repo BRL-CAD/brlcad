@@ -1556,47 +1556,8 @@ process_dimension_entities_code( int code )
 		block_name = bu_strdup( line );
 		break;
 	case 0:
-		/* insert this dimension */
-		get_layer();
-		BU_GETSTRUCT( new_state, state_data );
-		*new_state = *curr_state;
-		if( verbose ) {
-			bu_log( "Created a new state for DIMENSION\n" );
-		}
-		for( BU_LIST_FOR( blk, block_list, &block_head ) ) {
-		    if (block_name) {
-			if( !strcmp( blk->block_name, block_name ) ) {
-			    break;
-			}
-		    }
-		}
-		if( BU_LIST_IS_HEAD( blk, &block_head ) ) {
-			bu_log( "ERROR: INSERT references non-existent block (%s)\n", line );
-			bu_log( "\tignoring missing block\n" );
-			blk = NULL;
-		}
-		new_state->curr_block = blk;
-		if( verbose && blk ) {
-			bu_log( "Inserting block %s\n", blk->block_name );
-		}
-
-		if (block_name) {
-		    bu_free( block_name, "block_name" );
-		}
-		
-		if( new_state->curr_block ) {
-			BU_LIST_PUSH( &state_stack, &(curr_state->l) );
-			curr_state = new_state;
-			new_state = NULL;
-			fseek( dxf, curr_state->curr_block->offset, SEEK_SET );
-			curr_state->state = ENTITIES_SECTION;
-			curr_state->sub_state = UNKNOWN_ENTITY_STATE;
-			if( verbose ) {
-				bu_log( "Changing state for INSERT\n" );
-				bu_log( "seeked to %ld\n", curr_state->curr_block->offset );
-			}
-		}
-
+		curr_state->sub_state = UNKNOWN_ENTITY_STATE;
+		process_entities_code[curr_state->sub_state]( code );
 		break;
 	}
 
