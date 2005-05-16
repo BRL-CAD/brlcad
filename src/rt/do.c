@@ -922,20 +922,16 @@ do_frame(int framenumber)
 		bu_log("pruned %.1f%%:  %ld model RPP, %ld dups skipped, %ld solid RPP\n",
 			rtip->nshots>0?((double)rtip->nhits*100.0)/rtip->nshots:100.0,
 			rtip->nmiss_model, rtip->ndup, rtip->nmiss_solid );
-		bu_log(
-			"Frame %5d: %8d pixels in %10.2f sec = %10.2f pixels/sec\n",
+		bu_log("Frame %2d: %10d pixels in %9.2f sec = %12.2f pixels/sec\n",
 			framenumber,
 			width*height, nutime, ((double)(width*height))/nutime );
-		bu_log(
-			"Frame %5d: %8d rays   in %10.2f sec = %10.2f rays/sec (RTFM)\n",
+		bu_log("Frame %2d: %10d rays   in %9.2f sec = %12.2f rays/sec (RTFM)\n",
 			framenumber,
 			rtip->rti_nrays, nutime, ((double)(rtip->rti_nrays))/nutime );
-		bu_log(
-			"Frame %5d: %8d rays   in %10.2f sec = %10.2f rays/CPU_sec\n",
+		bu_log("Frame %2d: %10d rays   in %9.2f sec = %12.2f rays/CPU_sec\n",
 			framenumber,
 			rtip->rti_nrays, utime, ((double)(rtip->rti_nrays))/utime );
-		bu_log(
-			"Frame %5d: %8d rays   in %10.2f sec = %10.2f rays/sec (wallclock)\n",
+		bu_log("Frame %2d: %10d rays   in %9.2f sec = %12.2f rays/sec (wallclock)\n",
 			framenumber,
 			rtip->rti_nrays,
 			wallclock, ((double)(rtip->rti_nrays))/wallclock );
