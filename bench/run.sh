@@ -336,7 +336,7 @@ getvals ( ) {
 	    break
 	fi
 	# getvals_int="`echo $getvals_num | sed 's/\.[0-9]*//'`"
-	getvals_int=`awk "BEGIN {print int($getvals_num+0.5)}"`
+	getvals_int=`echo $getvals_num | awk '{print int($1+0.5)}'`
 	getvals_got="$getvals_got $getvals_int"
 	getvals_counted="`expr $getvals_counted + 1`"
     done
@@ -424,11 +424,11 @@ sqrt ( ) {
 	if test "x$sqrt_have_bc" = "xyes" ; then
 	    sqrt_root=`echo "sqrt($sqrt_number)" | bc`
 	else
-	    sqrt_root=`awk "BEGIN {print sqrt($sqrt_number)}"`
+	    sqrt_root=`echo $sqrt_number | awk '{print sqrt($1)}'`
 	fi
     fi
 
-    echo `awk "BEGIN {print int($sqrt_root+0.5)}"`
+    echo `echo $sqrt_root | awk '{print int($1+0.5)}'`
 
     return
 }
@@ -561,7 +561,7 @@ EOF
 	if test $benchmark_rtfm -eq 0 ; then
 	    benchmark_percent=0
 	else
-	    benchmark_percent=`awk "BEGIN {print int(($benchmark_deviation / $benchmark_rtfm * 100)+0.5)}"`
+	    benchmark_percent=`echo $benchmark_deviation $benchmark_rtfm | awk '{print int(($1 / $2 * 100)+0.5)}'`
 	fi
 
 	if test "x$DEBUG" != "x" ; then
@@ -570,7 +570,7 @@ EOF
 	    if test $benchmark_avg -eq 0 ; then
 		benchmark_avgpercent=0
 	    else
-		benchmark_avgpercent=`awk "BEGIN {print $benchmark_deviation / $benchmark_avg * 100}"`
+		benchmark_avgpercent=`echo $benchmark_deviation $benchmark_avg | awk '{print $1 / $2 * 100}"`
 	    fi
 	    echo "DEBUG: average=$benchmark_avg ; variance=$benchmark_variance ; deviation=$benchmark_deviation ($benchmark_avgpercent%) ; last run was ${benchmark_percent}%"
 	fi
@@ -691,8 +691,8 @@ vgr="`tail -1 summary | awk '{print int($9+0.5)}'`"
 if test ! "x$vgr" = "x" ; then
     echo
     echo "Benchmark results indicate an approximate VGR performance metric of $vgr"
-    ln=`awk "BEGIN {printf \"%.2f\", log($vgr)}"`
-    log=`awk "BEGIN {printf \"%.2f\", log($vgr) / log(10)}"`
+    ln=`echo $vgr | awk '{printf "%.2f", log($1)}'`
+    log=`echo $vgr | awk '{printf "%.2f", log($1) / log(10)}'`
     echo "Logarithmic VGR metric is $log  (natural logarithm is $ln)"
     echo
     echo "These numbers seem to indicate that this machine is approximately $vgr times"
