@@ -219,8 +219,8 @@ int main(int argc, char **argv)
 			bu_version+5
 		      );	/* +5 to skip @(#) */
 	}
-#ifdef PRODUCTION
-	(void)fprintf(stderr, "Running with production compilation\n");
+#if defined(NO_BOMBING_MACROS) || defined(NO_MAGIC_CHECKING) || defined(NO_BADRAY_CECHKING) || defined(NO_DEBUG_CHECKING)
+	(void)fprintf(stderr, "WARNING: Run-time debugging is disabled for extra performance\n");
 #endif
 
 	/* Identify what host we're running on */
