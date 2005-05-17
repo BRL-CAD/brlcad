@@ -495,7 +495,6 @@ EOF
 	    # compute how long we took, rounding up to at least one
 	    # second to prevent division by zero.
 	    benchmark_elapsed="`$path_to_run_sh/../sh/elapsed.sh --seconds $benchmark_frame_start_time`"
-	    echo "elapsed is $benchmark_elapsed"
 	    if test $benchmark_elapsed -eq 0 ; then
 		benchmark_elapsed=1
 	    fi
@@ -540,7 +539,7 @@ EOF
 
 	    # save the rtfm for variance computations then print it
 	    benchmark_rtfm_line="`grep RTFM ${benchmark_testname}.log`"
-	    benchmark_rtfm="`echo $benchmark_rtfm_line | awk '{print $9}'`"
+	    benchmark_rtfm="`echo $benchmark_rtfm_line | awk '{print int($9+0.5)}'`"
 	    if test "x$benchmark_rtfm" = "x" ; then
 		benchmark_rtfm="0"
 	    fi
@@ -688,14 +687,43 @@ else
     echo "Summary Details:"
     tail -2 summary
 fi
-vgr="`tail -1 summary | awk '{print int($9)}'`"
+vgr="`tail -1 summary | awk '{print int($9+0.5)}'`"
 if test ! "x$vgr" = "x" ; then
     echo
-    echo "Benchmark computations indicate an approximate VGR performance metric of $vgr"
+    echo "Benchmark results indicate an approximate VGR performance metric of $vgr"
+    ln=`awk "BEGIN {printf \"%.2f\", log($vgr)}"`
+    log=`awk "BEGIN {printf \"%.2f\", log($vgr) / log(10)}"`
+    echo "Logarithmic VGR metric is $log  (natural logarithm is $ln)"
+    echo
+    echo "These numbers seem to indicate that this machine is approximately $vgr times"
+    echo "faster than the reference machine being used for comparison, a VAX 11/780"
+    echo "running 4.3 BSD named VGR.  These results are in fact approximately $log"
+    echo "orders of magnitude faster than the reference."
+    echo
+
+    # See if this looks like an optimized build
+    if test -f "$path_to_run_sh/Makefile" ; then
+	optimized=`grep O3 "$path_to_run_sh/Makefile" | wc | awk '{print $1}'`
+	if test $optimized -gt 0 ; then
+	    echo "WARNING: This may not be an optimized compilation of BRL-CAD."
+	    echo "Performance results may not be optimal. (configure with --enable-optimized)"
+	    echo
+	fi
+    fi
+
+    echo "Here are some other approximated VGR results for perspective:"
+    echo "   120 on a 200MHz R5000 running IRIX 6.5"
+    echo "   250 on a 500 MHz Pentium III running RedHat 7.1"
+    echo "   550 on a dual 450 MHz UltraSPARC II running SunOS 5.8"
+    echo "  1000 on a dual 500 MHz G4 PowerPC running Mac OS X 10.2"
+    echo "  1500 on a dual 1.66 GHz Athlon MP 2000+ running RedHat 7.3"
+    echo "  9000 on an 8 CPU 1.3 GHz Power4 running AIX 5.1"
+    echo " 65000 on a 512 CPU 400 MHz R12000 Running IRIX 6.5"
     echo
 fi
 
-echo Testing complete, read $path_to_run_sh/../doc/benchmark.tr for more details on the BRL-CAD Benchmark.
+echo "Testing complete."
+echo "Read $path_to_run_sh/../doc/benchmark.tr for more details on the BRL-CAD Benchmark."
 
 # Local Variables:
 # mode: sh
