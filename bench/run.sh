@@ -701,16 +701,6 @@ if test ! "x$vgr" = "x" ; then
     echo "orders of magnitude faster than the reference."
     echo
 
-    # See if this looks like an optimized build
-    if test -f "$path_to_run_sh/Makefile" ; then
-	optimized=`grep O3 "$path_to_run_sh/Makefile" | wc | awk '{print $1}'`
-	if test $optimized -eq 0 ; then
-	    echo "WARNING: This may not be an optimized compilation of BRL-CAD."
-	    echo "Performance results may not be optimal. (configure with --enable-optimized)"
-	    echo
-	fi
-    fi
-
     echo "Here are some other approximated VGR results for perspective:"
     echo "   120 on a 200MHz R5000 running IRIX 6.5"
     echo "   250 on a 500 MHz Pentium III running RedHat 7.1"
@@ -720,6 +710,30 @@ if test ! "x$vgr" = "x" ; then
     echo "  9000 on an 8 CPU 1.3 GHz Power4 running AIX 5.1"
     echo " 65000 on a 512 CPU 400 MHz R12000 Running IRIX 6.5"
     echo
+fi
+
+# See if this looks like a run-time disabled build
+if test -f moss.g ; then
+    runtime=`grep "debugging is disabled" moss.g | wc | awk '{print $1}'`
+    if test $runtime -gt 0 ; then
+	echo "WARNING: This appears to be a compilation of BRL-CAD that has run-time"
+	echo "debugging disabled.  While this will generally give the best"
+	echo "performance results and is useful for long render tasks, but it is"
+	echo "generally not considered when comparing benchmark performance metrics."
+	echo "Official benchmark results are optimized builds with all run-time"
+	echo "features enabled."
+	echo "(configure with --enable-runtime-debug and --enable-optimized)"
+    fi
+fi
+
+# See if this looks like an optimized build
+if test -f "$path_to_run_sh/Makefile" ; then
+    optimized=`grep O3 "$path_to_run_sh/Makefile" | wc | awk '{print $1}'`
+    if test $optimized -eq 0 ; then
+	echo "WARNING: This may not be an optimized compilation of BRL-CAD."
+	echo "Performance results may not be optimal. (configure with --enable-optimized)"
+	echo
+    fi
 fi
 
 echo "Testing complete."
