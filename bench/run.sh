@@ -690,10 +690,12 @@ fi
 vgr="`tail -1 summary | awk '{print int($9+0.5)}'`"
 if test ! "x$vgr" = "x" ; then
     echo
+    echo "#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#"
     echo "Benchmark results indicate an approximate VGR performance metric of $vgr"
     ln=`echo $vgr | awk '{printf "%.2f", log($1)}'`
     log=`echo $vgr | awk '{printf "%.2f", log($1) / log(10)}'`
     echo "Logarithmic VGR metric is $log  (natural logarithm is $ln)"
+    echo "#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#"
     echo
     echo "These numbers seem to indicate that this machine is approximately $vgr times"
     echo "faster than the reference machine being used for comparison, a VAX 11/780"
@@ -722,7 +724,11 @@ if test -f moss.g ; then
 	echo "generally not considered when comparing benchmark performance metrics."
 	echo "Official benchmark results are optimized builds with all run-time"
 	echo "features enabled."
-	echo "(configure with --enable-runtime-debug and --enable-optimized)"
+	echo
+	echo "For proper results, run 'make clean' and recompile using the"
+	echo "following configure options:"
+	echo "    --enable-runtime-debug  --enable-optimized  --disable-debug"
+	echo
     fi
 fi
 
@@ -731,7 +737,11 @@ if test -f "$path_to_run_sh/Makefile" ; then
     optimized=`grep O3 "$path_to_run_sh/Makefile" | wc | awk '{print $1}'`
     if test $optimized -eq 0 ; then
 	echo "WARNING: This may not be an optimized compilation of BRL-CAD."
-	echo "Performance results may not be optimal. (configure with --enable-optimized)"
+	echo "Performance results may not be optimal."
+	echo
+	echo "For proper results, run 'make clean' and recompile using the"
+	echo "following configure options:"
+	echo "    --enable-optimized  --disable-debug"
 	echo
     fi
 fi
