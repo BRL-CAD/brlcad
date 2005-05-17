@@ -704,7 +704,7 @@ if test ! "x$vgr" = "x" ; then
     # See if this looks like an optimized build
     if test -f "$path_to_run_sh/Makefile" ; then
 	optimized=`grep O3 "$path_to_run_sh/Makefile" | wc | awk '{print $1}'`
-	if test $optimized -gt 0 ; then
+	if test $optimized -eq 0 ; then
 	    echo "WARNING: This may not be an optimized compilation of BRL-CAD."
 	    echo "Performance results may not be optimal. (configure with --enable-optimized)"
 	    echo
