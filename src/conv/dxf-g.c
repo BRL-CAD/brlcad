@@ -517,7 +517,7 @@ get_layer()
 	/* do we already have a layer by this name and color */
 	curr_layer = -1;
 	for( i = 1 ; i < next_layer ; i++ ) {
-		if( !color_by_layer && !ignore_colors ) {
+		if( !color_by_layer && !ignore_colors && curr_color != 256 ) {
 			if( layers[i]->color_number == curr_color && !strcmp( curr_layer_name, layers[i]->name ) ) {
 				curr_layer = i;
 				break;
@@ -789,15 +789,19 @@ process_tables_layer_code( int code )
 			bu_free( curr_layer_name, "curr_layer_name" );
 		}
 		curr_layer_name = make_brlcad_name( line );
+		if( verbose) {
+		    bu_log( "In LAYER in TABLES, layer name = %s\n", curr_layer_name );
+		}
 		break;
 	case 62:	/* layer color */
 		curr_color = atoi( line );
+		if( verbose) {
+		    bu_log( "In LAYER in TABLES, layer color = %d\n", curr_color );
+		}
 		break;
 	case 0:		/* text string */
-		if( color_by_layer ) {
-			if( curr_layer_name && curr_color ) {
-				get_layer();
-			}
+		if( curr_layer_name && curr_color ) {
+			get_layer();
 		}
 
 		if( curr_layer_name ) {
@@ -1393,6 +1397,9 @@ process_line_entities_code( int code )
 			bu_free( curr_layer_name, "curr_layer_name" );
 		}
 		curr_layer_name = make_brlcad_name( line );
+		if( verbose ) {
+		    bu_log( "LINE is in layer: %s\n", curr_layer_name );
+		}
 		break;
 	case 10:
 	case 20:
@@ -1556,9 +1563,54 @@ process_dimension_entities_code( int code )
 		block_name = bu_strdup( line );
 		break;
 	case 0:
-		curr_state->sub_state = UNKNOWN_ENTITY_STATE;
-		process_entities_code[curr_state->sub_state]( code );
-		break;
+	       if( block_name != NULL  ) {
+		   /* insert this dimension block */
+		   get_layer();
+		   BU_GETSTRUCT( new_state, state_data );
+		   *new_state = *curr_state;
+		   if( verbose ) {
+                       bu_log( "Created a new state for DIMENSION\n" );
+		   }
+		   for( BU_LIST_FOR( blk, block_list, &block_head ) ) {
+		       if (block_name) {
+			   if( !strcmp( blk->block_name, block_name ) ) {
+			       break;
+			   }
+		       }
+		   }
+		   if( BU_LIST_IS_HEAD( blk, &block_head ) ) {
+                       bu_log( "ERROR: DIMENSION references non-existent block (%s)\n", block_name );
+                       bu_log( "\tignoring missing block\n" );
+                       blk = NULL;
+		   }
+		   new_state->curr_block = blk;
+		   if( verbose && blk ) {
+                       bu_log( "Inserting block %s\n", blk->block_name );
+		   }
+
+		   if (block_name) {
+		       bu_free( block_name, "block_name" );
+		   }
+
+		   if( new_state->curr_block ) {
+                       BU_LIST_PUSH( &state_stack, &(curr_state->l) );
+                       curr_state = new_state;
+                       new_state = NULL;
+                       fseek( dxf, curr_state->curr_block->offset, SEEK_SET );
+                       curr_state->state = ENTITIES_SECTION;
+                       curr_state->sub_state = UNKNOWN_ENTITY_STATE;
+                       if( verbose ) {
+			   bu_log( "Changing state for INSERT\n" );
+			   bu_log( "seeked to %ld\n", curr_state->curr_block->offset );
+                       }
+		   }
+	       }
+	       else
+	       {
+		   curr_state->sub_state = UNKNOWN_ENTITY_STATE;
+		   process_entities_code[curr_state->sub_state]( code );
+	       }
+	       break;
 	}
 
 	return( 0 );
