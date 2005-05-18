@@ -147,6 +147,8 @@ AM_CPPFLAGS = \
 	-I${top_srcdir}/src/other/libtk/bitmaps \
 	-I${top_srcdir}/src/other/libtk/generic \
 	-I${top_srcdir}/src/other/libtk/unix \
+	-I${top_srcdir}/src/other/libtk/mac \
+	-I${top_srcdir}/src/other/libtk/win \
 	@X_CFLAGS@
 
 .PHONY : test
