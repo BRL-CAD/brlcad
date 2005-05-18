@@ -120,13 +120,68 @@ else
     echo ...using $RT from RT environment variable setting
 fi
 
-echo Looking for geometry database directory...
+echo Looking for benchmark geometry ...
 # find geometry database directory if we do not already know where it is
 # DB environment variable overrides
 if test "x${DB}" = "x" ; then
     if test -f "$path_to_run_sh/../db/sphflake.g" ; then
-	echo ...found $path_to_run_sh/../db
+	echo ...found .g geometry files in $path_to_run_sh/../db
 	DB="$path_to_run_sh/../db"
+    elif test -f "sphflake.g" ; then
+	echo ...found .g geometry files in .
+	DB="."
+    elif test -f "$path_to_run_sh/../db/sphflake.asc" ; then
+	echo ...found ascii geometry files in $path_to_run_sh/../db
+
+	echo Looking for asc2g converter ...
+	if test "x${ASC2G}" = "x" ; then
+	    ASC2G="asc2g"
+	    if test -x "$path_to_run_sh/../src/conv/asc2g" ; then
+		echo ...found $path_to_run_sh/../src/conv/asc2g
+		ASC2G="$path_to_run_sh/../src/conv/asc2g"
+	    elif test -f "$path_to_run_sh/../src/conv/asc2g.c" ; then
+		echo ...need to compile asc2g
+
+		for compiler in $CC gcc cc ; do
+		    COMPILE="$compiler"
+
+		    if test "x$COMPILE" = "x" ; then
+			continue
+		    fi
+
+		    $COMPILE -o asc2g "$path_to_run_sh/../src/conv/asc2g" -I"$path_to_run_sh/../include" -DHAVE_CONFIG_H -L/usr/brlcad/lib -L"$path_to_run_sh/../src/libwdb/.libs" -L"$path_to_run_sh/../src/librt/.libs" -L"$path_to_run_sh/../src/libbu/.libs" -L"$path_to_run_sh/../src/libbn/.libs" -L"$path_to_run_sh/../src/other/libtcl/.libs" -lwdb -lrt -lbu -lbn -ltcl
+		    if test "x$?" = "x0" ; then
+			break
+		    fi
+		    if test -f "asc2g" ; then
+			break
+		    fi
+		done
+		
+		if test -f "asc2g" ; then
+		    echo ...compiled asc2g with $COMPILE -o asc2g src/conv/asc2g.c
+		    ASC2G="./asc2g"
+		fi
+	    fi
+	else
+	    echo ...using $ASC2G from ASC2G environment variable setting
+	fi
+
+	failed=no
+	for geometry in moss world star bldg391 m35 sphflake ; do
+	    echo ... creating ${geometry}.g
+	    $ASC2G "$path_to_run_sh/../db/${geometry}.asc" ${geometry}.g
+	    if test "x$?" != "x0" ; then
+		if test ! -f ${geometry}.g ; then
+		    failed=yes
+		    break;
+		fi
+	    fi
+	done
+	if test "x$failed" = "xno" ; then
+	    DB="."
+	    echo ...using $DB for geometry database directory
+	fi
     fi
 else
     echo ...using $DB from DB environment variable setting
@@ -144,20 +199,24 @@ if test "x${CMP}" = "x" ; then
 	    echo ...need to build pixcmp
 
 	    for compiler in $CC gcc cc ; do
-		CC=$compiler
+		COMPILE="$compiler"
 
-		$CC "$path_to_run_sh/pixcmp.c" >& /dev/null
+		if test "x$COMPILE" = "x" ; then
+		    continue
+		fi
+
+		$COMPILE -o pixcmp "$path_to_run_sh/pixcmp.c"
 		if test "x$?" = "x0" ; then
 		    break
 		fi
-		if test -f "$path_to_run_sh/pixcmp" ; then
+		if test -f "pixcmp" ; then
 		    break;
 		fi
 	    done
 	    
-	    if test -f "$path_to_run_sh/pixcmp" ; then
-		echo ...built pixcmp with $CC
-		CMP="$path_to_run_sh/pixcmp"
+	    if test -f "pixcmp" ; then
+		echo ...built pixcmp with $COMPILE -o pixcmp pixcmp.c
+		CMP="./pixcmp"
 	    fi
 	fi
     fi
