@@ -22,12 +22,12 @@ Since 1979, the U.S. Army Research Laboratory has been developing and
 distributing the BRL-CAD solid modeling package for a wide range of
 military and industrial applications.  The package is primarily used
 for the design and analysis of vehicles, mechanical parts,
-architecture, and various signature analyses.  BRL-CAD is also used in
+architecture, and various signature analysis work.  BRL-CAD is also used in
 radiation dose planning and education where it's used to to aid
 teaching fundamental computer graphics and CSG modeling concepts to
 primary, secondary, and higher education students.
 
-BRL-CAD was released as open ource in December 2004 with portions
+BRL-CAD was released as open source in December 2004 with portions
 licensed under the GPL, LGPL, GFDL, and BSD license.  See the COPYING
 file for more details.
 
