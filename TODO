@@ -1,7 +1,7 @@
 BRL-CAD to do list
 ==================
 
-Included below is a list of things that are scheduled or desireable to
+Included below is a list of things that are scheduled or desirable to
 be done at some point.  Most recently added items are on top, older
 topics are on the bottom.  This is not an official list, it's more a
 scratch pad for the developers to use for tracking development ideas.
@@ -44,7 +44,7 @@ THESE ARE LOWER PRIORITY
 * fix reference to a "Create Solid" submenu on pdf page 18 (page 6) of
   volume II
 
-* recheck AquaTk useability so we can decouple mac build from X11
+* recheck AquaTk usability so we can decouple mac build from X11
 
 * write up the history of brlcad
 
@@ -63,7 +63,7 @@ THESE ARE LOWER PRIORITY
 * add support for levels of detail
 
 
-THESE BREAK PROTOCOL AND ARE BACKWARDS INCOMPATIBLE
+THESE BREAK PROTOCOL AND ARE BACKWARD INCOMPATIBLE
 
 * fix the database I/O writing to properly support the addition of new
   primitive types.  this includes modifying the major/minor code or
