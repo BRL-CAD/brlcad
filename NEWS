@@ -150,8 +150,8 @@ COPYING file for more details and information.
 ----------------------------------------------------------------------
 
 BRL-CAD's source code has undergone major restructuring with a
-complete replacement of the build sytem and conversion of the sources
-towards standards compliance.
+complete replacement of the build system and conversion of the sources
+toward standards compliance.
 
 
 SOURCES REORGANIZED
@@ -197,7 +197,7 @@ g-nff converter for exporting to the NFF file format.  There is
 experimental initial support for a new super ellipsoid primitive type
 for advanced curvature shapes.  There are a few new procedural
 database generators including one for creating geometry of an image as
-well as generic vegitation.
+well as generic vegetation.
 
 
 WINDOWS SUPPORT
@@ -206,7 +206,7 @@ This release marks the first release with initial support for the
 Windows operating system platform.  All of the core BRL-CAD libraries
 as well as several tools (including mged, rt, nirt, asc2g, and more)
 have completed the conversion.  While not yet a holistic port, all of
-the libraries and the core utilites have been ported and the rest will
+the libraries and the core utilities have been ported and the rest will
 soon follow.
 
 
@@ -339,7 +339,7 @@ there have been numerous improvements. These include:
 
   These allows user to automatically generate more complex primitives
   from existing ones. For example, rcc-cap creates an ellipsoidal top
-  for a right circular cylinder.  The list of accellerators includes:
+  for a right circular cylinder.  The list of accelerators includes:
   rcc-blend, rcc-cap, rcc-tgc, rpp-arch, rpp-cap, rpp-arch, tor-rcc,
   and sph-part.
 
@@ -535,11 +535,11 @@ DEPRECATED FEATURES
     remove the ability to run g2asc and asc2g on streaming data.
 
 
-SPECIAL ACKNOWLEGEMENT
+SPECIAL ACKNOWLEDGMENT
 
 This release is the last to introduce new features developed by Mike
 Muuss. Mike embodied a unique blend of unparalleled intellect,
-unquenchable cur iosity, and unending enthusiasm to advance the
+unquenchable curiosity, and unending enthusiasm to advance the
 capabilities and performance of everything and everyone he touched. He
 was the original architect of BRL-CAD and for 20 years guided its
 development and emergence as one of the most advanced physically based
@@ -624,7 +624,7 @@ NEW UTILITIES
 There is new conversion tools available now for converting BRL-CAD to
 ACAD (General Dynamics) for XPATCH, Alias|Wavefront, Compaq (Digital
 Equipment) OFF, and VRML.  Likewise, there are tools for converting
-Cyberware digitizations, NASTRAN, and 3D systems stereolithography
+Cyberware digitization, NASTRAN, and 3D systems stereolithography
 (stl) formats into BRL-CAD geometry.
 
 Using the g_diff command, you can compare .g files and report
