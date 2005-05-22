@@ -74,21 +74,22 @@ contact one of the BRL-CAD developers.
 COMPILE AND INSTALL
 -------------------
 
-In order to compile and install BRL-CAD from a source distribution,
-the following steps may be taken for a full default install:
+See the INSTALL file for details on configuring, compiling, and
+installing BRL-CAD.  In order to compile and install BRL-CAD from a
+source distribution, the following steps may be taken for a full
+default install:
 
   ./configure
   make
   make install
 
 If you do not have a configure script in your source tree (at the same
-level as this README file), you have likely obtained a copy of the
-sources from CVS.  In that situation, a relatively up-to-date version
-of the GNU Build System (autoconf, automake, & libtool) will need to
-be installed and the autogen.sh script will need to be run
-successfully in order to generate the configure script first:
+level as this README file), you will need a relatively up-to-date
+version of the GNU Build System (autoconf, automake, & libtool)
+installed.  The autogen.sh script will need to be run successfully in
+order to generate the configure script first:
 
-  ./autogen.sh
+  sh autogen.sh
   ./configure
   make
   make install
