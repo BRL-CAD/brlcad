@@ -41,18 +41,16 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "common.h"
 
-
-
 #include <stdio.h>
 #include <math.h>
 #include <signal.h>
 #ifdef HAVE_STRING_H
-#include <string.h>
+#  include <string.h>
 #else
-#include <strings.h>
+#  include <strings.h>
 #endif
 #ifndef WIN32
-#include <sys/time.h>
+#  include <sys/time.h>
 #endif
 #include <time.h>
 
@@ -71,13 +69,14 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "bn.h"
 #include "rtgeom.h"
 #include "raytrace.h"
+
 #include "./ged.h"
 #include "./cmd.h"
 #include "./mged_solid.h"
 #include "./mged_dm.h"
 #include "./sedit.h"
-
 #include "./mgedtcl.h"
+
 
 int bv_zoomin(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 int bv_zoomout(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);

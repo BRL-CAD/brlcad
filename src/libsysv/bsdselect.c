@@ -39,8 +39,8 @@
 
 #if defined(__sgi)
 #	define _BSD_TYPES		/* Needed for IRIX 5.0.1 */
-#		include <sys/types.h>
-#		include <sys/time.h>
+#	include <sys/types.h>
+#	include <sys/time.h>
 #endif
 
 #ifdef FD_SET
