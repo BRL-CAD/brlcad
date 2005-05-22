@@ -36,8 +36,6 @@ THESE ARE LOWER PRIORITY
 
 * have x11/tk mged output a helpful message when DISPLAY is unset
 
-* need non-generic installation instructions
-
 * consider providing installation and post configuration support
   scripts
 
