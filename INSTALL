@@ -300,8 +300,9 @@ After BRL-CAD is installed, you can test the installation via:
 This will run a series of tests on the installed sources to make sure
 that they behave as they should.  Similarly, simply running `rt'
 and/or `mged' are good tests of basic functionality.  Running `rt'
-without any options should display a usage message.  Running `mged'
-without any options will start the solid modeler GUI.
+without any options should display version information and a usage
+message.  Running `mged' without any options will start the GUI-based
+solid modeler applicaation.
 
 
 REPORTING PROBLEMS
@@ -311,8 +312,8 @@ Please report any bugs encountered to the project bug tracker at
 http://sourceforge.net/tracker/?group_id=105292&atid=640802
 
 Similarly, please post any request for feature enhancements or support
-request to http://sourceforge.net/tracker/?group_id=105292&atid=640805
-and http://sourceforge.net/tracker/?group_id=105292&atid=640803
+to http://sourceforge.net/tracker/?group_id=105292&atid=640805 and
+http://sourceforge.net/tracker/?group_id=105292&atid=640803
 respectively.
 
 
