@@ -786,7 +786,7 @@ if test -f moss.g ; then
 	echo
 	echo "For proper results, run 'make clean' and recompile using the"
 	echo "following configure options:"
-	echo "    --enable-runtime-debug  --enable-optimized  --disable-debug"
+	echo "    --enable-runtime-debug  --enable-optimized"
 	echo
     fi
 fi
@@ -800,7 +800,7 @@ if test -f "$path_to_run_sh/Makefile" ; then
 	echo
 	echo "For proper results, run 'make clean' and recompile using the"
 	echo "following configure options:"
-	echo "    --enable-optimized  --disable-debug"
+	echo "    --enable-optimized"
 	echo
     fi
 fi
