@@ -326,8 +326,7 @@ run ( ) {
 
     $RT -B -M -s512 -H${run_hypersample} -J0 ${run_args} \
 	-o ${run_geomname}.pix \
-	${DB}/${run_geomname}.g ${run_geometry} \
-	2> ${run_geomname}.log <<EOF
+	${DB}/${run_geomname}.g ${run_geometry} 1>&2 <<EOF
 $run_view
 EOF
     retval=$?
@@ -538,18 +537,14 @@ benchmark ( ) {
 	    
 	    benchmark_frame_start_time="`date '+%H %M %S'`"
 
-	    run $benchmark_testname $benchmark_geometry $benchmark_hypersample $benchmark_args << EOF
+	    run $benchmark_testname $benchmark_geometry $benchmark_hypersample $benchmark_args 2> ${benchmark_testname}.log << EOF
 $benchmark_view
 start $benchmark_frame;
 end;
 EOF
 	    retval=$?
+
 	    if test -f ${benchmark_testname}.pix.$benchmark_frame ; then mv -f ${benchmark_testname}.pix.$benchmark_frame ${benchmark_testname}.pix ; fi
-	
-	    if test $retval != 0 ; then
-		echo "RAYTRACE ERROR"
-		break
-	    fi
 	
 	    # compute how long we took, rounding up to at least one
 	    # second to prevent division by zero.
@@ -607,12 +602,25 @@ EOF
 		echo "$benchmark_rtfm_line"
 	    fi
 
+	    # did we fail?
+	    if test $retval != 0 ; then
+		echo "RAYTRACE ERROR"
+		break
+	    fi
+
 	    # see if we need to break out early
 	    benchmark_overall_elapsed="`$path_to_run_sh/../sh/elapsed.sh --seconds $benchmark_start_time`"
 	    if test $benchmark_overall_elapsed -ge $MAXTIME ; then
 		break;
 	    fi
 	done
+
+	if test "x$benchmark_rtfm" = "x" ; then
+	    benchmark_rtfm="0"
+	fi
+	if test "x$benchmark_rtfms" = "x" ; then
+	    benchmark_rtfms="0"
+	fi
 
 	# outer loop for variance/deviation testing of last AVERAGE frames
 	benchmark_variance="`variance $AVERAGE $benchmark_rtfms`"
@@ -681,10 +689,9 @@ benchmark world all.g $ARGS << EOF
 viewsize 1.572026215e+02;
 eye_pt 6.379990387e+01 3.271768951e+01 3.366661453e+01;
 viewrot -5.735764503e-01 8.191520572e-01 0.000000000e+00 0.000000000e+00
-	-3.461886346e-01 -2.424038798e-01 9.063078165e-01 
-0.000000000e+00 7.424039245e-01 5.198368430e-01 4.226182699e-01 
-0.000000000e+00 0.000000000e+00 0.000000000e+00 0.000000000e+00 
-1.000000000e+00 ;
+	-3.461886346e-01 -2.424038798e-01 9.063078165e-01 0.000000000e+00
+	7.424039245e-01 5.198368430e-01 4.226182699e-01 0.000000000e+00
+	0.000000000e+00 0.000000000e+00 0.000000000e+00 1.000000000e+00 ;
 EOF
 
 benchmark star all $ARGS << EOF
