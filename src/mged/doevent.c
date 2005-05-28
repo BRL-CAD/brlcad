@@ -42,7 +42,7 @@
 #ifdef DM_X
 #  include "tk.h"
 #  include <X11/Xutil.h>
-#ifndef WIN32
+#ifndef _WIN32
 #  include <X11/extensions/XI.h>
 #  include <X11/extensions/XInput.h>
 #endif
@@ -139,7 +139,7 @@ XEvent *eventPtr;
   }
 
     /* windows fix - for now */
-#ifdef WIN32
+#ifdef _WIN32
   if(eventHandler == NULL)
 	  return TCL_CONTINUE;
 #endif

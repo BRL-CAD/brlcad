@@ -24,14 +24,13 @@
 
 #include "common.h"
 
-
-#include "tcl.h"
-
 #define PLOTBOUND       1000.0  /* Max magnification in Rot matrix */
 #include <stdio.h>
-#ifndef WIN32
-#include <sys/time.h>
+#ifdef HAVE_SYS_TIME_H
+#  include <sys/time.h>
 #endif
+
+#include "tcl.h"
 #include "machine.h"
 #include "bu.h"
 #include "vmath.h"

@@ -69,7 +69,7 @@ extern struct rt_db_internal	es_int;
 extern struct rt_db_internal	es_int_orig;
 
 static char	tmpfil[17];
-#ifndef WIN32
+#ifndef _WIN32
 static char	*tmpfil_init = "/tmp/GED.aXXXXXX";
 #else
 static char	*tmpfil_init = "c:\\GED.aXXXXXX";
@@ -101,7 +101,7 @@ f_tedit(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	  return TCL_ERROR;
 
 	strcpy(tmpfil, tmpfil_init);
-#ifdef WIN32
+#ifdef _WIN32
 	(void)mktemp(tmpfil);
 	i=creat(tmpfil, 0600);
 #else
@@ -828,7 +828,7 @@ readsolid(void)
 }
 
 
-#ifdef WIN32
+#ifdef _WIN32
 
 /* Run $EDITOR on temp file */
 editit( file )

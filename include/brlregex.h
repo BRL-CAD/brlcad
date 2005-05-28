@@ -45,7 +45,7 @@
 #include "common.h"
 
 #ifndef SYSV_EXPORT
-#  if defined(WIN32) && !defined(__CYGWIN__) && defined(BRLCAD_DLL)
+#  if defined(_WIN32) && !defined(__CYGWIN__) && defined(BRLCAD_DLL)
 #    ifdef SYSV_EXPORT_DLL
 #      define SYSV_EXPORT __declspec(dllexport)
 #    else

@@ -74,7 +74,7 @@
 __BEGIN_DECLS
 
 #ifndef WDB_EXPORT
-#  if defined(WIN32) && !defined(__CYGWIN__) && defined(BRLCAD_DLL)
+#  if defined(_WIN32) && !defined(__CYGWIN__) && defined(BRLCAD_DLL)
 #    ifdef WDB_EXPORT_DLL
 #      define WDB_EXPORT __declspec(dllexport)
 #    else

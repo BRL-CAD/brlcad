@@ -97,11 +97,12 @@ struct bu_semaphores {
 
 #include <sys/wait.h>
 
-#ifndef WIN32
-static char		bu_lockfile[] = "/usr/tmp/bu_lockXXXXXX";
-#else
+#ifdef _WIN32
 static char		bu_lockfile[] = "C:\\bu_lockXXXXXX";
+#else
+static char		bu_lockfile[] = "/usr/tmp/bu_lockXXXXXX";
 #endif
+
 static usptr_t		*bu_lockstuff = 0;
 extern int		_utrace;
 

@@ -67,7 +67,7 @@ loc_Perror(char *msg)
 	if( errno >= 0 )
 		bu_log( "%s: %s\n", msg, strerror(errno) );
 #else
-#  ifdef WIN32
+#  ifdef _WIN32
 	if( errno >= 0 && errno < _sys_nerr )
 		bu_log( "%s: %s\n", msg, _sys_errlist[errno] );
 #  else

@@ -163,7 +163,7 @@ char	*buffer;
     last_cmd = buffer;
   } else {
     if ((*shell == '\0') && (shell = getenv("SHELL")) == 0) {
-#ifndef WIN32
+#ifndef _WIN32
       shell = DFLT_SHELL;
 #else
       shell = "cmd.exe";

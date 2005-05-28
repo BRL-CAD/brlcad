@@ -26,7 +26,7 @@
 
 #define XVARS_MV_O(_m) offsetof(struct dm_xvars, _m)
 
-#ifdef WIN32
+#ifdef _WIN32
 struct dm_xvars {
   HDC  hdc;      // device context of device that OpenGL calls are to be drawn on
   Display *dpy;

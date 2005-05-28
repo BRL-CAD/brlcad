@@ -42,21 +42,21 @@
 
 #include <string.h>	/* for strerror() */
 
-#ifndef WIN32
-#ifdef BSD
-#undef BSD
-#include <sys/param.h>
-#else
-#include <sys/param.h>
-#endif
+#ifndef _WIN32
+#  ifdef BSD
+#    undef BSD
+#    include <sys/param.h>
+#  else
+#    include <sys/param.h>
+#  endif
 #endif
 
 #include <ctype.h>
 #include <math.h>
 #ifdef HAVE_STRING_H
-# include <string.h>
+#  include <string.h>
 #else
-# include <strings.h>
+#  include <strings.h>
 #endif
 
 #include "machine.h"

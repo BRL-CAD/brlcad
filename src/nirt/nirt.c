@@ -42,16 +42,18 @@ static const char RCSid[] = "$Header$";
 
 #include "common.h"
 
-
-
 #include <stdio.h>
 #include <ctype.h>
 #if HAVE_STRING_H
-# include <string.h>
+#  include <string.h>
 #else
-# include <strings.h>
+#  include <strings.h>
 #endif
 #include <math.h>
+
+#ifdef HAVE_FCNTL_H
+#  include <fcntl.h>
+#endif
 
 #include "machine.h"
 #include "bu.h"
@@ -59,11 +61,6 @@ static const char RCSid[] = "$Header$";
 #include "raytrace.h"
 #include "./nirt.h"
 #include "./usrfmt.h"
-
-#ifdef WIN32
-#include <fcntl.h>
-#endif
-
 
 
 extern int	rt_bot_minpieces;	/* from g_bot.c */
@@ -351,9 +348,9 @@ main (int argc, char **argv)
     void		   print_item(char *buffer, com_table *ctp);
     void		   shoot();
 
-	#ifdef WIN32
+#ifdef _WIN32
 	_fmode = _O_BINARY;
-	#endif
+#endif
 
 
     BU_LIST_INIT(&script_list);

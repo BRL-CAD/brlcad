@@ -450,7 +450,7 @@ extern int rt_bot_tri_per_piece;
 #endif
 struct bu_structparse set_parse[] = {
 /*XXX need to investigate why this doesn't work on Windows */
-#if !defined(__alpha) && !defined(WIN32) /* XXX Alpha does not support this initialization! */
+#if !defined(__alpha) && !defined(_WIN32) /* XXX Alpha does not support this initialization! */
 	{"%d",	1, "width",	byteoffset(width),		BU_STRUCTPARSE_FUNC_NULL },
 	{"%d",	1, "height",	byteoffset(height),		BU_STRUCTPARSE_FUNC_NULL },
 	{"%d",	1, "save_overlaps", byteoffset(save_overlaps),	BU_STRUCTPARSE_FUNC_NULL },
@@ -808,7 +808,7 @@ do_frame(int framenumber)
 #endif
 
 		/* Ordinary case for creating output file */
-#if defined(WIN32) && !defined(__CYGWIN__)
+#if defined(_WIN32) && !defined(__CYGWIN__)
 		if( outfp == NULL && (outfp = fopen( framename, "w+b" )) == NULL )  {
 #else
 		if( outfp == NULL && (outfp = fopen( framename, "w" )) == NULL )  {

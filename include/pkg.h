@@ -39,7 +39,7 @@
 #define PKG_H_SEENYET
 
 #ifndef PKG_EXPORT
-#   if defined(WIN32) && !defined(__CYGWIN__) && defined(BRLCAD_DLL)
+#   if defined(_WIN32) && !defined(__CYGWIN__) && defined(BRLCAD_DLL)
 #      ifdef PKG_EXPORT_DLL
 #         define PKG_EXPORT __declspec(dllexport)
 #      else

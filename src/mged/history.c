@@ -39,12 +39,12 @@
 #include <stdio.h>
 #include <signal.h>
 #ifdef HAVE_STRING_H
-#include <string.h>
+#  include <string.h>
 #else
-#include <strings.h>
+#  include <strings.h>
 #endif
-#ifndef WIN32
-#include <sys/time.h>
+#ifdef HAVE_SYS_TIME_H
+#  include <sys/time.h>
 #endif
 #include <time.h>
 

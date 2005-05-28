@@ -225,7 +225,7 @@ static struct bu_cmdtab dgo_cmds[] = {
 	{(char *)0,		(int (*)())0}
 };
 
-#ifdef WIN32
+#ifdef _WIN32
 Tcl_Channel chan1;
 #endif
 
@@ -1040,7 +1040,7 @@ dgo_overlay_cmd(struct dg_obj	*dgop,
 	else
 		name = argv[3];
 
-#if defined(WIN32) && !defined(__CYGWIN__)
+#if defined(_WIN32) && !defined(__CYGWIN__)
 #  define PL_MODE "rb"
 #else
 #  define PL_MODE "r"
@@ -1407,7 +1407,7 @@ dgo_rt_cmd(struct dg_obj	*dgop,
 		*vp++ = argv[i];
 	}
 	/* XXX why is this different for win32 only? */
-#ifdef WIN32
+#ifdef _WIN32
 	{
 	    char buf[512];
 
@@ -1811,7 +1811,7 @@ dgo_tol_tcl(clientData, interp, argc, argv)
 #endif
 
 struct rtcheck {
-#ifdef WIN32
+#ifdef _WIN32
 	HANDLE			fd;
 	HANDLE			hProcess;
 	DWORD			pid;
@@ -1868,7 +1868,7 @@ dgo_wait_status(Tcl_Interp *interp, int status)
 	bu_vls_free(&tmp_vls);
 }
 
-#ifndef WIN32
+#ifndef _WIN32
 static void
 dgo_rtcheck_vector_handler(ClientData clientData, int mask)
 {
@@ -2004,7 +2004,7 @@ dgo_rtcheck_cmd(struct dg_obj	*dgop,
 {
 	register char **vp;
 	register int i;
-#ifndef WIN32
+#ifndef _WIN32
 	int	pid; 	 
 	int	i_pipe[2];	/* object reads results for building vectors */
 	int	o_pipe[2];	/* object writes view parameters */
@@ -2024,7 +2024,7 @@ dgo_rtcheck_cmd(struct dg_obj	*dgop,
 	vect_t temp;
 	vect_t eye_model;
 
-#ifndef WIN32
+#ifndef _WIN32
 	vp = &dgop->dgo_rt_cmd[0];
 # if 1
 	*vp++ = argv[0];
@@ -2124,7 +2124,7 @@ dgo_rtcheck_cmd(struct dg_obj	*dgop,
 
 	return TCL_OK;
 #else
-	/* WIN32 */
+	/* _WIN32 */
 	vp = &dgop->dgo_rt_cmd[0];
 	*vp++ = "rtcheck";
 	*vp++ = "-M";
@@ -2479,7 +2479,7 @@ dgo_report_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 }
 
 
-#ifndef WIN32
+#ifndef _WIN32
 int
 dgo_rtabort_cmd(struct dg_obj	*dgop,
 		Tcl_Interp	*interp,
@@ -4035,7 +4035,7 @@ dgo_rt_write(struct dg_obj	*dgop,
 	(void)fprintf(fp, "end;\n");
 }
 
-#ifndef WIN32
+#ifndef _WIN32
 static void
 dgo_rt_output_handler(ClientData	clientData,
 		      int		mask)
@@ -4198,7 +4198,7 @@ dgo_run_rt(struct dg_obj *dgop,
 {
 	register int	i;
 	FILE		*fp_in;
-#ifndef WIN32
+#ifndef _WIN32
 	int		pipe_in[2];
 	int		pipe_err[2];
 #else
@@ -4212,7 +4212,7 @@ dgo_run_rt(struct dg_obj *dgop,
 #endif
 	vect_t		eye_model;
 	struct run_rt	*run_rtp;
-#ifndef WIN32
+#ifndef _WIN32
 	int		pid; 	 
 
 	(void)pipe(pipe_in);

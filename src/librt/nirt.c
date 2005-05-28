@@ -46,33 +46,30 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "common.h"
 
-
-
 #include <stdio.h>
 #ifdef HAVE_STRING_H
-#include <string.h>
+#  include <string.h>
 #else
-#include <strings.h>
+#  include <strings.h>
 #endif
 #include <math.h>
 #include <signal.h>
-#ifndef WIN32
-#include <sys/time.h>		/* For struct timeval */
+#ifdef HAVE_SYS_TIME_H
+#  include <sys/time.h>		/* For struct timeval */
 #endif
 #include <sys/stat.h>		/* for chmod() */
 
-#include "tcl.h"
+#ifdef HAVE_FCNTL_H
+#  include <fcntl.h>
+#endif
 
+#include "tcl.h"
 #include "machine.h"
 #include "bu.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "solid.h"
 #include "./qray.h"
-
-#ifdef WIN32
-#include <fcntl.h>
-#endif
 
 /* defined in qray.c */
 extern void dgo_qray_data_to_vlist(struct dg_obj *dgop, struct bn_vlblock *vbp, struct dg_qray_dataList *headp, fastf_t *dir, int do_overlaps);
@@ -99,7 +96,7 @@ dgo_nirt_cmd(struct dg_obj	*dgop,
 	FILE *fp_out, *fp_err;
 	int pid, rpid;
 	int retcode;
-#ifndef WIN32
+#ifndef _WIN32
 	int pipe_in[2];
 	int pipe_out[2];
 	int pipe_err[2];
@@ -229,7 +226,7 @@ dgo_nirt_cmd(struct dg_obj	*dgop,
 				count = cp - val;
 
 done:
-#ifndef WIN32
+#ifndef _WIN32
 	    if(*val == '\0')
 	      bu_vls_printf(&o_vls, " fmt r \"\\n\" ");
 	    else{
@@ -308,7 +305,7 @@ done:
 	} else
 		Tcl_AppendResult(interp, "\nFiring from view center...\n", (char *)NULL);
 
-#ifndef WIN32
+#ifndef _WIN32
 	(void)pipe(pipe_in);
 	(void)pipe(pipe_out);
 	(void)pipe(pipe_err);
@@ -543,7 +540,7 @@ done:
 	(void)fclose(fp_err);
 
 	
-#ifndef WIN32
+#ifndef _WIN32
 
 	/* Wait for program to finish */
 	while ((rpid = wait(&retcode)) != pid && rpid != -1)

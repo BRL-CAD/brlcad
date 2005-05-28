@@ -117,7 +117,7 @@ FILE	*tabptr;
 char ctemp[7];
 
 static char	tmpfil[17];
-#ifndef WIN32
+#ifndef _WIN32
 static char	*tmpfil_init = "/tmp/GED.aXXXXXX";
 #else
 static char	*tmpfil_init = "C:\\GED.aXXXXXX";
@@ -195,7 +195,7 @@ f_edcodes(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
   argv += (bu_optind - 1);
 
   strcpy(tmpfil, tmpfil_init);
-#ifdef WIN32
+#ifdef _WIN32
   (void)mktemp(tmpfil);
   i=creat(tmpfil, 0600);
 #else
@@ -1131,7 +1131,7 @@ f_tables(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	(void)fprintf(tabptr,"2 -7         file name    : %s\n",dbip->dbi_filename);    
 	(void)fprintf(tabptr,"3 -6         \n");
 	(void)fprintf(tabptr,"4 -5         \n");
-#ifndef WIN32
+#ifndef _WIN32
 	(void)fprintf(tabptr,"5 -4         user         : %s\n", getpwuid(getuid())->pw_gecos);
 #else
 	{

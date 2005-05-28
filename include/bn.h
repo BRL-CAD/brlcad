@@ -69,7 +69,7 @@
 __BEGIN_DECLS
 
 #ifndef BN_EXPORT
-#  if defined(WIN32) && !defined(__CYGWIN__) && defined(BRLCAD_DLL)
+#  if defined(_WIN32) && !defined(__CYGWIN__) && defined(BRLCAD_DLL)
 #    ifdef BN_EXPORT_DLL
 #      define BN_EXPORT __declspec(dllexport)
 #    else

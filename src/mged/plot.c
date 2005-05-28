@@ -291,7 +291,7 @@ f_area(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	char tol_str[32];
 	char *tol_ptr;
 
-#ifndef WIN32
+#ifndef _WIN32
 	/* XXX needs fixing */
 
 	CHECK_DBI_NULL;

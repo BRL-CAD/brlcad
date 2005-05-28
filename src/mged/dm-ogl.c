@@ -173,7 +173,7 @@ static int
 Ogl_doevent(ClientData	clientData,
 	    XEvent	*eventPtr)
 {
-#ifndef WIN32
+#ifndef _WIN32
 	if (!glXMakeCurrent(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
 			    ((struct dm_xvars *)dmp->dm_vars.pub_vars)->win,
 			    ((struct ogl_vars *)dmp->dm_vars.priv_vars)->glxc))

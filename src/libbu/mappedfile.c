@@ -235,7 +235,7 @@ dont_reuse:
 
 	/* Read it in with stdio, with no clue how big it is */
 	bu_semaphore_acquire(BU_SEM_SYSCALL);
-#if defined(WIN32) && !defined(__CYGWIN__)
+#if defined(_WIN32) && !defined(__CYGWIN__)
 	fp = fopen( name, "rb");
 #else
 	fp = fopen( name, "r");

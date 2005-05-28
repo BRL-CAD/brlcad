@@ -60,10 +60,13 @@
  *  $Header$
  */
 
-#ifndef WIN32
-#include <sys/time.h>
+#include "common.h"
+
+#ifdef HAVE_SYS_TIME_H
+#  include <sys/time.h>
 #endif
 #include <time.h>
+
 #include "tcl.h"
 #include "wdb.h"
 

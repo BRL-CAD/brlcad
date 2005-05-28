@@ -85,7 +85,7 @@ void set_tran();
 void	aexists(char *name);
 
 static char	tmpfil[17];
-#ifndef WIN32
+#ifndef _WIN32
 static char	*tmpfil_init = "/tmp/GED.aXXXXXX";
 #else
 static char	*tmpfil_init = "C:\\GED.aXXXXXX";
@@ -364,7 +364,7 @@ f_edmater(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
   }
 
   strcpy(tmpfil, tmpfil_init);
-#ifdef WIN32
+#ifdef _WIN32
   (void)mktemp(tmpfil);
   i=creat(tmpfil, 0600);
 #else

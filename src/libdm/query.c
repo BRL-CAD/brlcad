@@ -24,19 +24,15 @@
 
 #include "common.h"
 
-
 #ifdef HAVE_STRING_H
-#include <string.h>
+#  include <string.h>
 #endif
 
-#if 0
-#include "tk.h"
-#else
+#ifdef HAVE_X11_XLIB_H
+#  include <X11/Xlib.h>
+#endif
+
 #include "tcl.h"
-#ifndef WIN32
-#include <X11/Xlib.h>
-#endif
-#endif
 
 #include "machine.h"
 #include "bu.h"

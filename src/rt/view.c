@@ -157,7 +157,7 @@ static int overlay = 0;
 /* Viewing module specific "set" variables */
 struct bu_structparse view_parse[] = {
 /*XXX need to investigate why this doesn't work on Windows */
-#if !defined(__alpha) && !defined(WIN32) /* XXX Alpha does not support this initialization! */
+#if !defined(__alpha) && !defined(_WIN32) /* XXX Alpha does not support this initialization! */
 	{"%f",	1, "gamma",	bu_byteoffset(gamma_corr),		BU_STRUCTPARSE_FUNC_NULL },
 	{"%d",	1, "bounces",	bu_byteoffset(max_bounces),		BU_STRUCTPARSE_FUNC_NULL },
 	{"%d",	1, "ireflect",	bu_byteoffset(max_ireflect),		BU_STRUCTPARSE_FUNC_NULL },

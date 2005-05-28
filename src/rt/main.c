@@ -51,8 +51,12 @@ static const char RCSrt[] = "@(#)$Header$ (BRL)";
 #include <ctype.h>
 #include <signal.h>
 #include <math.h>
-#ifndef WIN32
+#ifdef HAVE_UNISTD_H
 #  include <unistd.h>
+#endif
+
+#ifdef HAVE_FCNTL_H
+#  include <fcntl.h>
 #endif
 
 #include "machine.h"
@@ -62,10 +66,6 @@ static const char RCSrt[] = "@(#)$Header$ (BRL)";
 #include "./ext.h"
 #include "rtprivate.h"
 #include "../librt/debug.h"
-
-#ifdef WIN32
-#  include <fcntl.h>
-#endif
 
 
 extern char	usage[];
@@ -173,7 +173,7 @@ int main(int argc, char **argv)
 	struct bu_vls	times;
 	int i;
 
-#ifdef WIN32
+#ifdef _WIN32
 #if 1
 	_setmode(_fileno(stdin), _O_BINARY);
 	_setmode(_fileno(stdout), _O_BINARY);
@@ -227,7 +227,7 @@ int main(int argc, char **argv)
 	if (rt_verbosity & VERBOSE_LIBVERSIONS) {
 		char	hostname[512];
 		hostname[0] = '\0';
-#ifndef WIN32
+#ifndef _WIN32
 		if( gethostname( hostname, sizeof(hostname) ) >= 0 &&
 		    hostname[0] != '\0' )
 			(void)fprintf(stderr, "Running on %s\n", hostname);

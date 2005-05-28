@@ -78,7 +78,7 @@
 __BEGIN_DECLS
 
 #ifndef RT_EXPORT
-#  if defined(WIN32) && !defined(__CYGWIN__) && defined(BRLCAD_DLL)
+#  if defined(_WIN32) && !defined(__CYGWIN__) && defined(BRLCAD_DLL)
 #    ifdef RT_EXPORT_DLL
 #      define RT_EXPORT __declspec(dllexport)
 #    else
@@ -1205,7 +1205,7 @@ struct vd_curve {
  */
 struct run_rt {
 	struct bu_list		l;
-#ifdef WIN32
+#ifdef _WIN32
 	HANDLE			fd;
 	HANDLE			hProcess;
 	DWORD			pid;
@@ -6741,7 +6741,7 @@ RT_EXPORT BU_EXTERN(int rt_mk_binunif,
 		     unsigned int minor_type,
 		     long max_count));
 
-#ifdef WIN32
+#ifdef _WIN32
 /* defined in g_dsp.c */
 RT_EXPORT BU_EXTERN(void rt_dsp_ifree,
 		    (struct rt_db_internal *ip));

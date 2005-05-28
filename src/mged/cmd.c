@@ -49,7 +49,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #else
 #  include <strings.h>
 #endif
-#ifndef WIN32
+#ifdef HAVE_SYS_TIME_H
 #  include <sys/time.h>
 #endif
 #include <time.h>
@@ -148,7 +148,7 @@ struct bu_vls tcl_output_hook;
 
 Tcl_Interp *interp = NULL;
 
-#ifdef WIN32
+#ifdef _WIN32
 void gettimeofday(struct timeval *tp, struct timezone *tzp);
 #endif
 
@@ -712,7 +712,7 @@ mged_setup(void)
 
 	/* Locate the BRL-CAD-specific Tcl scripts */
 	filename = bu_brlcad_path( "", 0 );
-#ifdef WIN32
+#ifdef _WIN32
 	{
 	  /* XXX - nasty little hack to convert paths */
 	  int i;
@@ -723,7 +723,7 @@ mged_setup(void)
 	}
 #endif
 
-#ifdef WIN32
+#ifdef _WIN32
 #ifdef _DEBUG
 	Tcl_FindExecutable("mged_d");
 #else
@@ -779,7 +779,7 @@ mged_setup(void)
 #endif
 
 	bu_vls_init(&str);
-#ifdef WIN32
+#ifdef _WIN32
 	bu_vls_printf(&str,
 		      "set auto_path [linsert $auto_path 0 \"%stclscripts/mged\" \"%stclscripts\" \"%stclscripts/lib\" \"%stclscripts/util\" \"%stclscripts/geometree\"]", filename, filename, filename, filename, filename);
 #else
@@ -838,7 +838,7 @@ cmd_setup(void)
 		/* Locate the BRL-CAD-specific Tcl scripts */
 		pathname = bu_brlcad_path("", 0);
 
-#ifdef WIN32
+#ifdef _WIN32
 	{
 		/* XXXXXXXXXXXXXXX UGLY XXXXXXXXXXXXXXXXXX*/
 	int i;
@@ -1523,7 +1523,7 @@ int
 f_comm(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
 
-#ifndef WIN32
+#ifndef _WIN32
 
 	register int pid, rpid;
 	int retcode;
@@ -1599,7 +1599,7 @@ f_sync(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 		return TCL_ERROR;
 	}
 // XXXXXXXXXXXXXXX FIX LATER XXXXXXXXXXXXXXXXXx
-#ifndef WIN32
+#ifndef _WIN32
 	sync();
 #endif
     
@@ -3314,7 +3314,7 @@ cmd_bot_decimate( ClientData	clientData,
 	return wdb_bot_decimate_cmd( wdbp, interp, argc, argv );
 }
 
-#ifdef WIN32
+#ifdef _WIN32
 /* limited to seconds only */
 void gettimeofday(struct timeval *tp, struct timezone *tzp)
 {

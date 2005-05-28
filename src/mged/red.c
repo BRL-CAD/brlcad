@@ -37,14 +37,12 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "common.h"
 
-
-
 #include <stdio.h>
 #include <signal.h>
 #ifdef HAVE_STRING_H
-#	include <string.h>
+#  include <string.h>
 #else
-#	include <strings.h>
+#  include <strings.h>
 #endif
 #include <errno.h>
 
@@ -59,7 +57,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 extern int cmd_name(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 
 static char	red_tmpfil[17];
-#ifndef WIN32
+#ifndef _WIN32
 static char	*red_tmpfil_init = "/tmp/GED.aXXXXXX";
 #else
 static char	*red_tmpfil_init = "C:\\GED.aXXXXXX";
@@ -118,7 +116,7 @@ f_red(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 		comb = (struct rt_comb_internal *)intern.idb_ptr;
 
 		/* Make a file for the text editor */
-#ifdef WIN32
+#ifdef _WIN32
 		(void)mktemp( red_tmpfil );
 #else
 		if ((fd = mkstemp(red_tmpfil)) < 0) {
@@ -140,7 +138,7 @@ f_red(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	{
 		comb = (struct rt_comb_internal *)NULL;
 		/* Make a file for the text editor */
-#ifdef WIN32
+#ifdef _WIN32
 		(void)mktemp( red_tmpfil );
 #else
 		if ((fd = mkstemp(red_tmpfil)) < 0) {

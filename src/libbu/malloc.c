@@ -98,7 +98,7 @@ const char bu_strdup_message[] = "bu_strdup string";
 extern const char bu_vls_message[];	/* from vls.c */
 
 
-#ifdef WIN32
+#ifdef _WIN32
 char *sbrk(i)
 {
 	return( (char *)0 );
@@ -374,7 +374,7 @@ bu_free(genptr_t ptr, const char *str)
 	bu_semaphore_acquire(BU_SEM_SYSCALL);
 #endif
 /* Windows does not like */
-#ifndef WIN32
+#ifndef _WIN32
 	*((int *)ptr) = -1;	/* zappo! */
 #endif
 	free(ptr);

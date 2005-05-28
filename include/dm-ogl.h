@@ -50,7 +50,7 @@ struct modifiable_ogl_vars {
 };
 
 struct ogl_vars {
-#ifndef WIN32
+#ifndef _WIN32
   GLXContext glxc;
 #else
   HGLRC glxc;

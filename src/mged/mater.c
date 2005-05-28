@@ -73,7 +73,7 @@ void color_soltab(void);
 void color_putrec(register struct mater *mp), color_zaprec(register struct mater *mp);
 
 static char	tmpfil[17];
-#ifndef WIN32
+#ifndef _WIN32
 static char	*tmpfil_init = "/tmp/GED.aXXXXXX";
 #else
 static char	*tmpfil_init = "c:\\GED.aXXXXXX";
@@ -112,7 +112,7 @@ f_edcolor(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	}
 
 	strcpy(tmpfil, tmpfil_init);
-#ifdef WIN32
+#ifdef _WIN32
 	(void)mktemp(tmpfil);
 	if ((fp = fopen(tmpfil, "w")) == NULL) {
 		perror(tmpfil);

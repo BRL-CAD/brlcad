@@ -100,12 +100,12 @@ as represented by the U.S. Army Research Laboratory.  All rights reserved.";
 #include "./mged_dm.h"
 #include "./cmd.h"
 
-#ifdef WIN32
+#ifdef _WIN32
 #define R_OK 2
 #define W_OK 4
 #endif
 
-#ifndef WIN32
+#ifndef _WIN32
 #ifndef	LOGFILE
 #define LOGFILE	"/vld/lib/gedlog"	/* usage log */
 #endif
@@ -227,7 +227,7 @@ int mged_bomb_hook(genptr_t clientData, genptr_t str);
 void mged_view_obj_callback(genptr_t clientData, struct view_obj *vop);
 
 #ifdef USE_PROTOTYPES
-#ifndef WIN32
+#ifndef _WIN32
 Tcl_FileProc stdin_input;
 Tcl_FileProc std_out_or_err;
 #else
@@ -250,12 +250,12 @@ main(int argc, char **argv)
 	int	c;
 	int	read_only_flag=0;
 
-#ifdef WIN32
+#ifdef _WIN32
 	Tcl_Channel chan;
 #endif
 
 
-#ifdef WIN32
+#ifdef _WIN32
 	_fmode = _O_BINARY;
 #endif
 
@@ -271,7 +271,7 @@ main(int argc, char **argv)
 				break;
 			case 'n':		/* "not new" == "classic" */
 			case 'c':
-#ifndef WIN32
+#ifndef _WIN32
 				classic_mged = 1;
 #else
 				MessageBox(NULL,"-c OPTION NOT AVAILABLE","NOT SUPPORTED",MB_OK);
@@ -316,7 +316,7 @@ main(int argc, char **argv)
 	  }
 	}
 
-#ifndef WIN32
+#ifndef _WIN32
 	(void)signal( SIGPIPE, SIG_IGN );
 #endif
 
@@ -532,7 +532,7 @@ main(int argc, char **argv)
 	      exit(1);
 	    }
 
-#ifndef WIN32
+#ifndef _WIN32
 	    (void)pipe(pipe_out);
 	    (void)pipe(pipe_err);
 	    
@@ -550,7 +550,7 @@ main(int argc, char **argv)
 	    /* close stdin */
 	    (void)close(0);
 #  endif
-#endif  /* WIN32 */
+#endif  /* _WIN32 */
 
 	    bu_add_hook(&bu_bomb_hook_list, mged_bomb_hook, GENPTR_NULL);
 	  }
@@ -580,7 +580,7 @@ main(int argc, char **argv)
 	}
 
 	if(classic_mged || !interactive){
-#ifndef WIN32
+#ifndef _WIN32
 	  Tcl_CreateFileHandler(STDIN_FILENO, TCL_READABLE,
 				stdin_input, (ClientData)STDIN_FILENO);
 #else
@@ -605,7 +605,7 @@ main(int argc, char **argv)
 	  Tcl_Eval(interp, bu_vls_addr(&vls));
 	  bu_vls_free(&vls);
 
-#ifndef WIN32
+#ifndef _WIN32
 	  /* to catch output from routines that do not use bu_log */
 	  Tcl_CreateFileHandler(pipe_out[0], TCL_READABLE,
 				std_out_or_err, (ClientData)pipe_out[0]);
@@ -677,13 +677,13 @@ stdin_input(ClientData clientData, int mask)
     int count;
     char ch;
     struct bu_vls temp;
-#ifndef WIN32
+#ifndef _WIN32
     long fd;
 #else
 	HANDLE fd;
 #endif
 
-#ifndef WIN32
+#ifndef _WIN32
     fd = (long)clientData;
 #else	
     fd = (HANDLE)clientData;      
@@ -759,7 +759,7 @@ stdin_input(ClientData clientData, int mask)
     {
       char buf[4096];
       int index;
-#  ifdef WIN32
+#  ifdef _WIN32
       ReadFile(fd,buf,4096,&count,NULL);
 #  else
       count = read((int)fd, (void *)buf, 4096);
@@ -1264,7 +1264,7 @@ cmd_stuff_str(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 void
 std_out_or_err(ClientData clientData, int mask)
 {
-#ifndef WIN32
+#ifndef _WIN32
   int fd = (int)((long)clientData & 0xFFFF);	/* fd's will be small */
 #else
   HANDLE fd = clientData;
@@ -1276,7 +1276,7 @@ std_out_or_err(ClientData clientData, int mask)
 
   /* Get data from stdout or stderr */
 
-#ifndef WIN32
+#ifndef _WIN32
   if((count = read((int)fd, line, MAXLINE)) == 0)
 #else
   if((!ReadFile(fd, line, MAXLINE,&count,0)))
@@ -1806,7 +1806,7 @@ log_event(char *event, char *arg)
 	timep[24] = '\0';	/* Chop off \n */
 
 	bu_vls_init(&line);
-#ifndef WIN32
+#ifndef _WIN32
 	bu_vls_printf(&line, "%s [%s] time=%ld uid=%d (%s) %s\n",
 		      event,
 		      dmp->dm_name,
@@ -1830,7 +1830,7 @@ log_event(char *event, char *arg)
 	}
 #endif
 
-#ifndef WIN32
+#ifndef _WIN32
 	if( (logfd = open( LOGFILE, O_WRONLY|O_APPEND )) >= 0 )  {
 		(void)write( logfd, bu_vls_addr(&line), (unsigned)bu_vls_strlen(&line) );
 		(void)close( logfd );
@@ -1905,7 +1905,7 @@ quit(void)
 /*
  *  			S I G 2
  */
-#ifndef WIN32
+#ifndef _WIN32
 void
 sig2(int sig)
 {
@@ -2165,7 +2165,7 @@ f_opendb(
 		/*
 	         * Check to see if we can access the database
 	         */
-#ifndef WIN32
+#ifndef _WIN32
 		if (access(argv[1], R_OK|W_OK) != 0 && errno != ENOENT) {
 			perror(argv[1]);
 			return TCL_ERROR;

@@ -45,9 +45,9 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "common.h"
 
 #ifdef HAVE_STRING_H
-#include <string.h>
+#  include <string.h>
 #else
-#include <strings.h>
+#  include <strings.h>
 #endif
 
 #include <stdio.h>
@@ -61,8 +61,8 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "raytrace.h"
 #include "wdb.h"
 #include "mater.h"
-#ifdef WIN32
-#include <fcntl.h>
+#ifdef HAVE_FCNTL_H
+#  include <fcntl.h>
 #endif
 
 #define BUFSIZE			(8*1024)	/* input line buffer size */
@@ -135,7 +135,7 @@ int
 main(int argc, char **argv)
 {
 	char c1[3];
-#ifdef WIN32
+#ifdef _WIN32
 	_fmode = _O_BINARY;
 #endif
 
@@ -145,6 +145,8 @@ main(int argc, char **argv)
 		bu_log( "%s", usage );
 		exit( 1 );
 	}
+
+	Tcl_FindExecutable(argv[0]);
 
 	ifp = fopen(argv[1],"r");
 	if( !ifp )  perror(argv[1]);
@@ -171,9 +173,7 @@ main(int argc, char **argv)
 
 		rewind( ifp );
 		BU_LIST_INIT(&rt_g.rtg_headwdb.l);
-#ifdef WIN32
-		Tcl_FindExecutable("asc2g");
-#endif
+
 		interp = Tcl_CreateInterp();
 		if (wdb_init_obj(interp, ofp, db_name) != TCL_OK ||
 		    wdb_create_cmd(interp, ofp, db_name) != TCL_OK) {

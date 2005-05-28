@@ -93,7 +93,7 @@ bu_brlcad_path(const char *rhs, int fail_quietly)
 		goto ok;
 
 	if( (lhs = getenv("BRLCAD_ROOT")) != NULL )  {
-#ifdef WIN32
+#ifdef _WIN32
 	    {
 		int len = strlen(lhs);
 
@@ -152,7 +152,7 @@ sh/bash users:\n\
 	bu_bomb("bu_brlcad_path()");
 
 ok:
-#ifndef WIN32
+#ifndef _WIN32
 	sprintf(result, "%s/%s", lhs, rhs );
 #else
 	if(strcmp(rhs,"")==0)

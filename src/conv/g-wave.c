@@ -43,9 +43,9 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include <stdio.h>
 #include <math.h>
 #ifdef HAVE_STRING_H
-#include <string.h>
+#  include <string.h>
 #else
-#include <strings.h>
+#  include <strings.h>
 #endif
 #if defined(HAVE_UNISTD_H)
 #  include <unistd.h>
@@ -54,8 +54,8 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #    include <sys/unistd.h>
 #  endif
 #endif
-#ifdef WIN32
-#include <fcntl.h>
+#ifdef HAVE_FCNTL_H
+#  include <fcntl.h>
 #endif
 
 /* interface headers */
@@ -116,7 +116,7 @@ main(int argc, char **argv)
 	register int	c;
 	double		percent;
 
-#ifdef WIN32
+#ifdef _WIN32
 	_fmode = _O_BINARY;
 #endif
 

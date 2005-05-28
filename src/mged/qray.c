@@ -33,14 +33,12 @@
 
 #include "common.h"
 
-
-
 #include <stdio.h>
 
 #ifdef HAVE_STRING_H
-#include <string.h>
+#  include <string.h>
 #else
-#include <strings.h>
+#  include <strings.h>
 #endif
 
 #include "machine.h"
@@ -65,7 +63,7 @@ static struct qray_color qray_even_color = { 255, 255, 0 };
 static struct qray_color qray_void_color = { 255, 0, 255 };
 static struct qray_color qray_overlap_color = { 255, 255, 255 };
 
-#ifndef WIN32
+#ifndef _WIN32
 static struct qray_fmt_data def_qray_fmt_data[] = {
   {'r', "\"Origin (x y z) = (%.2f %.2f %.2f)  (h v d) = (%.2f %.2f %.2f)\\nDirection (x y z) = (%.4f %.4f %.4f)  (az el) = (%.2f %.2f)\\n\" x_orig y_orig z_orig h v d_orig x_dir y_dir z_dir a e"},
   {'h', "\"    Region Name               Entry (x y z)              LOS  Obliq_in\\n\""},

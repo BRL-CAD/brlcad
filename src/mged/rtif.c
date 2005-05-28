@@ -46,17 +46,15 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "common.h"
 
-
-
 #include <stdio.h>
 #ifdef HAVE_STRING_H
-#include <string.h>
+#  include <string.h>
 #else
-#include <strings.h>
+#  include <strings.h>
 #endif
 #include <math.h>
 #include <signal.h>
-#ifndef WIN32
+#ifdef HAVE_SYS_TIME_H
 #  include <sys/time.h>		/* For struct timeval */
 #endif
 #include <sys/stat.h>		/* for chmod() */
@@ -76,16 +74,13 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./qray.h"
 #include "./cmd.h"
 
-#ifdef WIN32
+#ifdef HAVE_FCNTL_H
 #  include <fcntl.h>
 #endif
+
 
 extern int mged_svbase(void);
 extern void set_perspective(); /* from set.c */
-
-#ifdef WIN32
-#  include <fcntl.h>
-#endif
 
 /* from ged.c -- used to open databases quietly */
 extern int interactive;
@@ -96,7 +91,7 @@ static int tree_walk_needed;
 struct run_rt head_run_rt;
 
 struct rtcheck {
-#ifdef WIN32
+#ifdef _WIN32
 	HANDLE			fd;
 	HANDLE			hProcess;
 	DWORD			pid;
@@ -412,7 +407,7 @@ cmd_rtabort(ClientData clientData,
 	return dgo_rtabort_cmd(dgop, interp, argc, argv);
 }
 
-#ifndef WIN32
+#ifndef _WIN32
 static void
 rt_output_handler(ClientData clientData, int mask)
 {
@@ -562,7 +557,7 @@ rt_set_eye_model(fastf_t *eye_model)
   }
 }
 
-#ifndef WIN32
+#ifndef _WIN32
 /*
  *			R U N _ R T
  */
@@ -771,7 +766,7 @@ cmd_rt(ClientData	clientData,
 
 	ptr = bu_brlcad_path("bin", 1);
 	if (ptr) {
-#ifdef WIN32
+#ifdef _WIN32
 	    sprintf(buf, "\"%s/%s\"", ptr, argv[0]);
 #else
 	    sprintf(buf, "%s/%s", ptr, argv[0]);
@@ -901,7 +896,7 @@ cmd_rtcheck(ClientData	clientData,
 
 	ptr = bu_brlcad_path("bin", 1);
 	if (ptr) {
-#ifdef WIN32
+#ifdef _WIN32
 	    sprintf(buf, "\"%s/%s\"", ptr, argv[0]);
 #else
 	    sprintf(buf, "%s/%s", ptr, argv[0]);
@@ -1709,7 +1704,7 @@ f_nirt(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	int pid;
 	int rpid;
 	int retcode;
-#ifndef WIN32
+#ifndef _WIN32
 	int pipe_in[2];
 	int pipe_out[2];
 	int pipe_err[2];
@@ -1858,7 +1853,7 @@ f_nirt(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	      count = cp - val;
 
 done:
-#ifndef WIN32
+#ifndef _WIN32
 	    if(*val == '\0')
 	      bu_vls_printf(&o_vls, " fmt r \"\\n\" ");
 	    else{
@@ -1909,7 +1904,7 @@ done:
 
 	for( i=1; i < argc; i++ )
 		*vp++ = argv[i];
-#ifdef WIN32
+#ifdef _WIN32
 	{
 	    char buf[512];
 
@@ -1934,7 +1929,7 @@ done:
 	else
 	  Tcl_AppendResult(interp, "\nFiring from view center...\n", (char *)NULL);
 
-#ifndef WIN32
+#ifndef _WIN32
 	(void)pipe( pipe_in );
 	(void)pipe( pipe_out );
 	(void)pipe( pipe_err );
@@ -2151,7 +2146,7 @@ done:
 	  Tcl_AppendResult(interp, line, (char *)NULL);
 	(void)fclose(fp_err);
 
-#ifndef WIN32
+#ifndef _WIN32
 
 	/* Wait for program to finish */
 	while ((rpid = wait(&retcode)) != pid && rpid != -1)

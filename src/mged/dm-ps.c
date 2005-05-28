@@ -37,11 +37,9 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "common.h"
 
-
-
 #include <stdio.h>
-#ifndef WIN32
-#include <sys/time.h>		/* for struct timeval */
+#ifdef HAVE_SYS_TIME_H
+#  include <sys/time.h>		/* for struct timeval */
 #endif
 #include "machine.h"
 #include "bu.h"
@@ -51,6 +49,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./ged.h"
 #include "./mged_dm.h"
 #include "dm-ps.h"
+
 
 extern void dm_var_init(struct dm_list *initial_dm_list);
 

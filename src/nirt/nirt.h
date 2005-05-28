@@ -80,13 +80,13 @@
 #define	made_it()	bu_log("Made it to %s:%d\n", __FILE__, __LINE__)
 
 /*	MACROS WITH ARGUMENTS	*/
-#ifndef WIN32
+#ifndef _WIN32
 /* already defined */
-#define	max(a,b)	(((a)>(b))?(a):(b))
-#define	min(a,b)	(((a)<(b))?(a):(b))
+#  define	max(a,b)	(((a)>(b))?(a):(b))
+#  define	min(a,b)	(((a)<(b))?(a):(b))
 #endif
 #if !defined(abs)
-# define	abs(a)	((a)>=0 ? (a):(-a))
+#  define	abs(a)	((a)>=0 ? (a):(-a))
 #endif
 #define	com_usage(c)	fprintf (stderr, "Usage:  %s %s\n", \
 				c -> com_name, c -> com_args);

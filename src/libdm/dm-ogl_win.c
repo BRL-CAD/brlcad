@@ -75,7 +75,7 @@ extern int vectorThreshold;	/* defined in libdm/tcl.c */
 #endif
 
 static int ogl_actively_drawing;
-#ifndef WIN32
+#ifndef _WIN32
 HIDDEN XVisualInfo *ogl_choose_visual();
 #else
 HIDDEN PIXELFORMATDESCRIPTOR *ogl_choose_visual();
@@ -205,7 +205,7 @@ ogl_open(interp, argc, argv)
   int nclass = 0;
   struct bu_vls str;
   struct bu_vls init_proc_vls;
-#ifndef WIN32
+#ifndef _WIN32
   int j, k;
   int ndevices;
   int unused;
@@ -290,7 +290,7 @@ ogl_open(interp, argc, argv)
   /* this is important so that ogl_configureWin knows to set the font */
   ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct = NULL;
 
-#ifndef WIN32
+#ifndef _WIN32
   if((tmp_dpy = XOpenDisplay(bu_vls_addr(&dmp->dm_dName))) == NULL){
     bu_vls_free(&init_proc_vls);
     (void)ogl_close(dmp);
@@ -339,7 +339,7 @@ ogl_open(interp, argc, argv)
 	dmp->dm_width;
   }
 
-#ifndef WIN32
+#ifndef _WIN32
   XCloseDisplay(tmp_dpy);
 #endif
 
@@ -375,7 +375,7 @@ ogl_open(interp, argc, argv)
   }
 
   if( ((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin == NULL ) {
-/*#ifdef WIN32*/
+/*#ifdef _WIN32*/
 #if 0
       Tcl_AppendResult(interp, "open_ogl: Failed to open ",
 		       bu_vls_addr(&dmp->dm_pathName),
@@ -397,7 +397,7 @@ ogl_open(interp, argc, argv)
 		&dmp->dm_pathName);
 
   if (Tcl_Eval(interp, bu_vls_addr(&str)) == TCL_ERROR) {
-/*#ifdef WIN32*/
+/*#ifdef _WIN32*/
 #if 0
       Tcl_AppendResult(interp, "open_ogl: _init_dm failed\n");
 #else
@@ -419,7 +419,7 @@ ogl_open(interp, argc, argv)
 		     dmp->dm_width,
 		     dmp->dm_height);
 
-#ifndef WIN32
+#ifndef _WIN32
   /* must do this before MakeExist */
   if((((struct dm_xvars *)dmp->dm_vars.pub_vars)->vip=ogl_choose_visual(dmp,
 				    ((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin)) == NULL){
@@ -437,7 +437,7 @@ ogl_open(interp, argc, argv)
     Tk_WindowId(((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin);
   dmp->dm_id = ((struct dm_xvars *)dmp->dm_vars.pub_vars)->win;
 
-#ifdef WIN32
+#ifdef _WIN32
   hwnd = TkWinGetHWND(((struct dm_xvars *)dmp->dm_vars.pub_vars)->win);
   hdc = GetDC(hwnd);
   ((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc = hdc;
@@ -614,7 +614,7 @@ Done:
   glLoadIdentity();
   ((struct ogl_vars *)dmp->dm_vars.priv_vars)->face_flag = 1;	/* faceplate matrix is on top of stack */
 
-#ifdef WIN32
+#ifdef _WIN32
     if (!wglMakeCurrent((HDC)NULL, (HGLRC)NULL)) {
 	LPVOID buf;
 
@@ -648,7 +648,7 @@ struct dm *dmp2;
 {
   GLfloat backgnd[4];
   GLfloat vf;
-#ifndef WIN32
+#ifndef _WIN32
   GLXContext old_glxContext;
 #else
   HGLRC old_glxContext;
@@ -662,7 +662,7 @@ struct dm *dmp2;
 
     old_glxContext = ((struct ogl_vars *)dmp1->dm_vars.priv_vars)->glxc;
 
-#ifndef WIN32
+#ifndef _WIN32
     if ((((struct ogl_vars *)dmp1->dm_vars.priv_vars)->glxc =
 	 glXCreateContext(((struct dm_xvars *)dmp1->dm_vars.pub_vars)->dpy,
 			  ((struct dm_xvars *)dmp1->dm_vars.pub_vars)->vip,
@@ -752,7 +752,7 @@ struct dm *dmp2;
     ((struct ogl_vars *)dmp1->dm_vars.priv_vars)->face_flag = 1; /* faceplate matrix is on top of stack */
 
     /* destroy old context */
-#ifndef WIN32
+#ifndef _WIN32
     glXMakeCurrent(((struct dm_xvars *)dmp1->dm_vars.pub_vars)->dpy, None, NULL);
     glXDestroyContext(((struct dm_xvars *)dmp1->dm_vars.pub_vars)->dpy, old_glxContext);
 #else
@@ -765,7 +765,7 @@ struct dm *dmp2;
 
     old_glxContext = ((struct ogl_vars *)dmp2->dm_vars.priv_vars)->glxc;
 
-#ifndef WIN32
+#ifndef _WIN32
     if ((((struct ogl_vars *)dmp2->dm_vars.priv_vars)->glxc =
 	 glXCreateContext(((struct dm_xvars *)dmp2->dm_vars.pub_vars)->dpy,
 			  ((struct dm_xvars *)dmp2->dm_vars.pub_vars)->vip,
@@ -846,7 +846,7 @@ struct dm *dmp2;
     ((struct ogl_vars *)dmp2->dm_vars.priv_vars)->face_flag = 1; /* faceplate matrix is on top of stack */
 
     /* destroy old context */
-#ifndef WIN32
+#ifndef _WIN32
     glXMakeCurrent(((struct dm_xvars *)dmp2->dm_vars.pub_vars)->dpy, None, NULL);
     glXDestroyContext(((struct dm_xvars *)dmp2->dm_vars.pub_vars)->dpy, old_glxContext);
 #else
@@ -870,7 +870,7 @@ struct dm *dmp;
 {
     if(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy){
 	if(((struct ogl_vars *)dmp->dm_vars.priv_vars)->glxc){
-#ifndef WIN32
+#ifndef _WIN32
 	    glXMakeCurrent(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy, None, NULL);
 	    glXDestroyContext(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
 			      ((struct ogl_vars *)dmp->dm_vars.priv_vars)->glxc);
@@ -919,7 +919,7 @@ struct dm *dmp;
 
     ogl_actively_drawing = 1;
 
-#ifndef WIN32
+#ifndef _WIN32
     if (!glXMakeCurrent(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
 			((struct dm_xvars *)dmp->dm_vars.pub_vars)->win,
 			((struct ogl_vars *)dmp->dm_vars.priv_vars)->glxc)){
@@ -1000,7 +1000,7 @@ struct dm *dmp;
     }
 
     if (((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.doublebuffer){
-#ifndef WIN32
+#ifndef _WIN32
 	glXSwapBuffers(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
 		       ((struct dm_xvars *)dmp->dm_vars.pub_vars)->win);
 #else
@@ -1037,7 +1037,7 @@ struct dm *dmp;
     glFinish();
 #endif
 
-#ifdef WIN32
+#ifdef _WIN32
     if (!wglMakeCurrent((HDC)NULL, (HGLRC)NULL)) {
 	LPVOID buf;
 
@@ -1458,7 +1458,7 @@ ogl_setBGColor(struct dm *dmp,
     ((struct ogl_vars *)dmp->dm_vars.priv_vars)->b = b / 255.0;
 
     if (((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.doublebuffer) {
-#ifndef WIN32
+#ifndef _WIN32
 	if (!glXMakeCurrent(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
 			    ((struct dm_xvars *)dmp->dm_vars.pub_vars)->win,
 			    ((struct ogl_vars *)dmp->dm_vars.priv_vars)->glxc)) {
@@ -1470,7 +1470,7 @@ ogl_setBGColor(struct dm *dmp,
 	    return TCL_ERROR;
 	}
 
-#ifndef WIN32
+#ifndef _WIN32
 	glXSwapBuffers(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
 		       ((struct dm_xvars *)dmp->dm_vars.pub_vars)->win);
 #else
@@ -1543,7 +1543,7 @@ int w[6];
 }
 
 #define OGL_DO_STEREO 1
-#ifndef WIN32
+#ifndef _WIN32
 /* currently, get a double buffered rgba visual that works with Tk and
  * OpenGL
  */
@@ -1746,7 +1746,7 @@ ogl_choose_visual(struct dm *dmp,
 #endif
 
 
-#ifndef WIN32
+#ifndef _WIN32
 /* 
  *			O G L _ C O N F I G U R E W I N
  *
@@ -2114,7 +2114,7 @@ int lighting_on;
     dmp->dm_light = lighting_on;
     ((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.lighting_on = dmp->dm_light;
 
-#ifndef WIN32
+#ifndef _WIN32
     if (!glXMakeCurrent(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
 			((struct dm_xvars *)dmp->dm_vars.pub_vars)->win,
 			((struct ogl_vars *)dmp->dm_vars.priv_vars)->glxc)) {
@@ -2156,7 +2156,7 @@ ogl_setTransparency(struct dm *dmp,
     dmp->dm_transparency = transparency_on;
     ((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.transparency_on = dmp->dm_transparency;
 
-#ifndef WIN32
+#ifndef _WIN32
     if (!glXMakeCurrent(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
 			((struct dm_xvars *)dmp->dm_vars.pub_vars)->win,
 			((struct ogl_vars *)dmp->dm_vars.priv_vars)->glxc)){
@@ -2188,7 +2188,7 @@ ogl_setDepthMask(struct dm *dmp,
 
     dmp->dm_depthMask = enable;
 
-#ifndef WIN32
+#ifndef _WIN32
     if (!glXMakeCurrent(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
 			((struct dm_xvars *)dmp->dm_vars.pub_vars)->win,
 			((struct ogl_vars *)dmp->dm_vars.priv_vars)->glxc)){
@@ -2219,7 +2219,7 @@ int zbuffer_on;
     dmp->dm_zbuffer = zbuffer_on;
     ((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.zbuffer_on = dmp->dm_zbuffer;
 
-#ifndef WIN32
+#ifndef _WIN32
     if (!glXMakeCurrent(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
 			((struct dm_xvars *)dmp->dm_vars.pub_vars)->win,
 			((struct ogl_vars *)dmp->dm_vars.priv_vars)->glxc)){
@@ -2254,7 +2254,7 @@ unsigned int list;
     if (dmp->dm_debugLevel)
 	bu_log("ogl_beginDList()\n");
 
-#ifndef WIN32
+#ifndef _WIN32
     if (!glXMakeCurrent(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
 			((struct dm_xvars *)dmp->dm_vars.pub_vars)->win,
 			((struct ogl_vars *)dmp->dm_vars.priv_vars)->glxc)){
@@ -2302,7 +2302,7 @@ int range;
     if (dmp->dm_debugLevel)
 	bu_log("ogl_freeDLists()\n");
 
-#ifndef WIN32
+#ifndef _WIN32
     if (!glXMakeCurrent(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
 			((struct dm_xvars *)dmp->dm_vars.pub_vars)->win,
 			((struct ogl_vars *)dmp->dm_vars.priv_vars)->glxc)){

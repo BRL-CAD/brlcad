@@ -197,13 +197,13 @@ struct taskcontrol {
 void
 bu_nice_set(int newnice)
 {
-#ifdef WIN32
+#ifdef _WIN32
   if (bu_debug)
     bu_log("bu_nice_set() Priority NOT changed\n");
   
   return;
 
-#else  /* not WIN32 */
+#else  /* not _WIN32 */
   int opri, npri;
 
 #  ifdef BSD
@@ -230,7 +230,7 @@ bu_nice_set(int newnice)
 
   if( bu_debug ) bu_log("bu_nice_set() Priority changed from %d to %d\n", opri, npri);
 
-#endif  /* WIN32 */
+#endif  /* _WIN32 */
 }
 
 
@@ -520,7 +520,7 @@ fastf_t
 bu_get_load_average(void)
 {
 	double	load = -1.0;
-#ifndef WIN32
+#ifndef _WIN32
 	FILE	*fp;
 
 	fp = popen("PATH=/bin:/usr/bin:/usr/ucb:/usr/bsd; export PATH; uptime|sed -e 's/.*average: //' -e 's/,.*//' ", "r");
@@ -546,15 +546,15 @@ bu_get_load_average(void)
  *
  *  Returns the number of processors presently available for "public" use.
  */
-#ifndef WIN32
-#define PUBLIC_CPUS1	"/var/tmp/public_cpus"
-#define PUBLIC_CPUS2	"/usr/tmp/public_cpus"
+#ifndef _WIN32
+#  define PUBLIC_CPUS1	"/var/tmp/public_cpus"
+#  define PUBLIC_CPUS2	"/usr/tmp/public_cpus"
 #endif
 int
 bu_get_public_cpus(void)
 {
 	int	avail_cpus = bu_avail_cpus();
-#ifndef WIN32
+#ifndef _WIN32
 	int	public_cpus = 1;
 	FILE	*fp;
 

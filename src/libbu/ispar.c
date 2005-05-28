@@ -57,7 +57,7 @@ int	bu_pid_of_initiating_thread = 0;	/* don't declare in h/bu.h */
  *  A clean way for bu_bomb() to tell if this is a parallel application.
  *  If bu_parallel() is active, this routine will return non-zero.
  */
-#ifndef WIN32
+#ifndef _WIN32
 int
 bu_is_parallel(void)
 {

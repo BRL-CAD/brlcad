@@ -40,11 +40,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-#if 0
-static char sccsid[] = "@(#)regexec.c	8.3 (Berkeley) 3/20/94";
-#else
 static char rcsid[] = "$NetBSD: regexec.c,v 1.6 1995/02/27 13:29:48 cgd Exp $";
-#endif
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -61,10 +57,10 @@ static char rcsid[] = "$NetBSD: regexec.c,v 1.6 1995/02/27 13:29:48 cgd Exp $";
 #include <limits.h>
 #include <ctype.h>
 
-#if defined(WIN32)
-#include "brlregex.h"
+#if defined(_WIN32)
+#  include "brlregex.h"
 #else
-#include "regex.h"
+#  include "regex.h"
 #endif
 #include "./utils.h"
 #include "./regex2.h"

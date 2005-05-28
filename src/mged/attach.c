@@ -41,16 +41,16 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "common.h"
 
-
 #ifdef HAVE_STRING_H
 #  include <string.h>
 #else
 #  include <strings.h>
 #endif
 #include <stdio.h>
-#ifndef WIN32
-#include <sys/time.h>		/* for struct timeval */
+#ifdef HAVE_SYS_TIME_H
+#  include <sys/time.h>		/* for struct timeval */
 #endif
+
 #include "machine.h"
 #include "bu.h"
 #ifdef DM_X
@@ -62,6 +62,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "vmath.h"
 #include "raytrace.h"
 #include "dm-Null.h"
+
 #include "./ged.h"
 #include "./titles.h"
 #include "./sedit.h"
@@ -79,7 +80,7 @@ extern int Plot_dm_init(struct dm_list *o_dm_list, int argc, char **argv);
 extern int PS_dm_init(struct dm_list *o_dm_list, int argc, char **argv);
 
 #ifdef DM_X
-#ifndef WIN32
+#ifndef _WIN32
 extern int X_dm_init();
 extern void X_fb_open();
 #endif
@@ -102,7 +103,7 @@ extern void set_port(void);		/* defined in fbserv.c */
 extern void predictor_init(void);	/* defined in predictor.c */
 extern void view_ring_init(struct _view_state *vsp1, struct _view_state *vsp2); /* defined in chgview.c */
 
-#ifndef WIN32
+#ifndef _WIN32
 extern void Tk_CreateCanvasBezierType();
 #endif
 
@@ -136,7 +137,7 @@ struct w_dm which_dm[] = {
   { DM_TYPE_PLOT, "plot", Plot_dm_init },  /* DM_PLOT_INDEX defined in mged_dm.h */
   { DM_TYPE_PS, "ps", PS_dm_init },      /* DM_PS_INDEX defined in mged_dm.h */
 #ifdef DM_X
-#ifndef WIN32
+#ifndef _WIN32
   { DM_TYPE_X, "X", X_dm_init },
 #endif
 #ifdef DM_OGL
@@ -321,7 +322,7 @@ print_valid_dm(void)
 {
     Tcl_AppendResult(interp, "\tThe following display manager types are valid: ", (char *)NULL);
 #ifdef DM_X
-#ifndef WIN32
+#ifndef _WIN32
     Tcl_AppendResult(interp, "X  ", (char *)NULL);
 #endif
 #ifdef DM_OGL
@@ -491,7 +492,7 @@ gui_setup(char *dstr)
   }
 
   /* Add Bezier Curves to the canvas widget */
-#ifndef WIN32
+#ifndef _WIN32
   Tk_CreateCanvasBezierType();
 #endif
 
@@ -522,7 +523,7 @@ gui_setup(char *dstr)
   }
 
   /* Add Bezier Curves to the canvas widget */
-#ifndef WIN32
+#ifndef _WIN32
   Tk_CreateCanvasBezierType();
 #endif
 
@@ -723,12 +724,12 @@ void
 mged_fb_open(void)
 {
 #ifdef DM_X
-#ifndef WIN32
+#ifndef _WIN32
   if(dmp->dm_type == DM_TYPE_X)
     X_fb_open();
 #endif
 #ifdef DM_OGL
-#ifndef WIN32
+#ifndef _WIN32
   else 
 #endif
 if(dmp->dm_type == DM_TYPE_OGL)

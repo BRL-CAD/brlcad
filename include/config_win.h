@@ -24,7 +24,7 @@
 #ifndef CONFIG_H
 #define CONFIG_H seen
 
-#if defined(WIN32)
+#if defined(_WIN32)
 /* XXX - This is temporary (atleast until a brlcad_config.h is
  * auto-generated on windows)
  */
@@ -35,11 +35,9 @@
     4305 truncation
 	4018 signed/unsigned mismatch
 */
-/* Microsoft VisualC++ 6.0 on WinNT 4.0 */
 /*
  * Ensure that Project Settings / Project Options includes
  *	/Za		for ANSI C
- *	/D "WIN32"	to fire this rule
  */
 # if !__STDC__
 #	error "STDC is not properly set on WIN32 build, add /Za to Project Settings / Project Options"
@@ -106,6 +104,7 @@
 #define fstat _fstat
 #define getpid _getpid
 #define hypot _hypot
+#define ioctl ioctlsocket
 #define isascii __isascii
 #define isatty _isatty
 #define locking _locking
@@ -120,7 +119,10 @@
 #define setmode _setmode
 #define sopen _sopen
 #define stat _stat
+#define strcasecmp _stricmp
 #define strdup _strdup
+#define strncmp _strncmp
+#define sys_errlist _sys_errlist
 #define tell _tell
 #define umask _umask
 #define unlink _unlink
@@ -132,7 +134,7 @@
 #undef rad1
 #undef rad2
 
-#endif /* if defined(WIN32) */
+#endif /* if defined(_WIN32) */
 
 #endif /* CONFIG_H */
 

@@ -39,14 +39,14 @@
 #endif
 #include <math.h>
 
-#if defined(DM_X) || defined(WIN32)
+#if defined(DM_X) || defined(_WIN32)
 #  include "tk.h"
 #  include <X11/Xutil.h>
 #else
 #  include "tcl.h"
 #endif
 
-#ifdef WIN32
+#ifdef _WIN32
 #  include <tkwinport.h>
 #else
 #  if 1
@@ -69,13 +69,13 @@
 #include "png.h"
 #include "zlib.h"
 
-#if defined(DM_X) || defined(WIN32)
+#if defined(DM_X) || defined(_WIN32)
 
 #include "dm-X.h"
 #include "dm_xvars.h"
 
 #ifdef DM_OGL
-#  ifndef WIN32
+#  ifdef HAVE_GL_GLX_H
 #    include <GL/glx.h>
 #  endif
 #  include <GL/gl.h>
@@ -87,7 +87,7 @@ extern int ogl_close_existing();
 #endif /* DM_OGL */
 
 #ifdef USE_FBSERV
-#  ifndef WIN32
+#  ifndef _WIN32
 /* These functions live in libfb. */
 extern int _X24_open_existing();
 extern int X24_close_existing();
@@ -95,7 +95,7 @@ extern int X24_close_existing();
 extern int fb_refresh();
 #endif /* USE_FBSERV */
 
-#endif /* DM_X || WIN32 */
+#endif /* DM_X || _WIN32 */
 
 
 static int dmo_open_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
@@ -142,7 +142,7 @@ static int dmo_sync_tcl(ClientData clientData, Tcl_Interp *interp, int argc, cha
 static int dmo_size_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 static int dmo_get_aspect_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 static int dmo_observer_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-#ifndef WIN32
+#ifndef _WIN32
 static int dmo_png_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 #endif
 static int dmo_clearBufferAfter_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
@@ -188,7 +188,7 @@ static struct bu_cmdtab dmo_cmds[] = {
 	{"normal",		dmo_normal_tcl},
 	{"observer",		dmo_observer_tcl},
 	{"perspective",		dmo_perspective_tcl},
-#ifndef WIN32
+#ifndef _WIN32
 	{"png",		        dmo_png_tcl},
 #endif
 #ifdef USE_FBSERV
@@ -330,7 +330,7 @@ dmo_open_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 		}
 	}
 
-#ifndef WIN32
+#ifndef _WIN32
 #ifdef DM_X
 	/* find display manager type */
 	if (argv[2][0] == 'X' || argv[2][0] == 'x')
@@ -2681,7 +2681,7 @@ dmo_perspective_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **
 }
 
 
-#ifndef WIN32
+#ifndef _WIN32
 
 #if 1
 #define DM_REVERSE_COLOR_BYTE_ORDER(_shift,_mask) { \
@@ -3183,7 +3183,7 @@ dmo_openFb(dmop, interp)
 	}
 
 	switch (dmop->dmo_dmp->dm_type) {
-#ifndef WIN32
+#ifndef _WIN32
 	case DM_TYPE_X:
 		*dmop->dmo_fbs.fbs_fbp = X24_interface; /* struct copy */
 
@@ -3248,7 +3248,7 @@ dmo_closeFb(dmop)
 	_fb_pgflush(dmop->dmo_fbs.fbs_fbp);
 
 	switch (dmop->dmo_dmp->dm_type) {
-#ifndef WIN32
+#ifndef _WIN32
 	case DM_TYPE_X:
 		X24_close_existing(dmop->dmo_fbs.fbs_fbp);
 		break;

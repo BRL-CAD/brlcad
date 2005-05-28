@@ -125,7 +125,7 @@ db_open(const char *name,
 		if( (dbip->dbi_fp = fdopen( dbip->dbi_fd, "r" )) == NULL )
 			goto fail;
 #else /* HAVE_UNIX_IO */
-#if defined(WIN32) && !defined(__CYGWIN__)
+#if defined(_WIN32) && !defined(__CYGWIN__)
 		if( (dbip->dbi_fp = fopen( name, "rb")) == NULL )
 			goto fail;
 #else
@@ -146,7 +146,7 @@ db_open(const char *name,
 			if( (dbip->dbi_fp = fdopen( dbip->dbi_fd, "r+w" )) == NULL )
 				goto fail;
 #		else /* HAVE_UNIX_IO */
-#if defined(WIN32) && !defined(__CYGWIN__)
+#if defined(_WIN32) && !defined(__CYGWIN__)
 			if( (dbip->dbi_fp = fopen( name, "r+b")) == NULL )
 				goto fail;
 #else
@@ -217,7 +217,7 @@ db_create(const char *name,
 
 	if(RT_G_DEBUG&DEBUG_DB) bu_log("db_create(%s, %d)\n", name, version );
 
-#if defined(WIN32) && !defined(__CYGWIN__)
+#if defined(_WIN32) && !defined(__CYGWIN__)
 	if( (fp = fopen( name, "w+b" )) == NULL )  {
 		perror(name);
 		return(DBI_NULL);
@@ -444,13 +444,13 @@ db_sync(struct db_i *dbip)
 
 	bu_semaphore_acquire(BU_SEM_SYSCALL);
 
-#ifdef WIN32
+#ifdef _WIN32
 	fflush(dbip->dbi_fp);
 #elif defined(HAVE_UNIX_IO)
 	fsync(dbip->dbi_fd);
 #else
 	sync();
-#endif /* WIN32 */
+#endif /* _WIN32 */
 
 	bu_semaphore_release(BU_SEM_SYSCALL);
 }

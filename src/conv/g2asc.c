@@ -43,15 +43,17 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
  
 #include "common.h"
 
-
-
 #include <stdio.h>
 #ifdef HAVE_STRING_H
-#include <string.h>
+#  include <string.h>
 #else
-#include <strings.h>
+#  include <strings.h>
 #endif
 #include <ctype.h>
+#ifdef HAVE_FCNTL_H
+#  include <fcntl.h>
+#endif
+
 #include "machine.h"
 #include "vmath.h"
 #include "db.h"
@@ -59,9 +61,6 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "wdb.h"
 #include "rtgeom.h"
 #include "tcl.h"
-#ifdef WIN32
-#include <fcntl.h>
-#endif
 
 const mat_t	id_mat = {
 	1.0, 0.0, 0.0, 0.0,
@@ -138,12 +137,12 @@ main(int argc, char **argv)
 {
 	int i;
 
-#ifdef WIN32
+#ifdef _WIN32
 	_fmode = _O_BINARY;
 #endif
 
 	iname = "-";
-#ifdef WIN32
+#ifdef _WIN32
 	ifp = fopen(iname, "r");
 #else
 	ifp = stdin;
@@ -183,6 +182,8 @@ main(int argc, char **argv)
 		exit(1);
 	}
 
+	Tcl_FindExecutable(argv[0]);
+
 	rt_init_resource( &rt_uniresource, 0, NULL );
 
 	/* First, determine what version database this is */
@@ -202,10 +203,6 @@ main(int argc, char **argv)
 			bu_log( "Please use the \"g2asc input.g output.g\" form\n" );
 			exit( 1 );
 		}
-
-#ifdef WIN32
-		Tcl_FindExecutable("g2asc");
-#endif
 
 		bu_log("Exporting Release 6 database\n" );
 		bu_log("  Note that the Release 6 binary format is machine independent.\n");

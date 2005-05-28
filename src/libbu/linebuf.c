@@ -47,7 +47,7 @@ static const char libbu_linebuf_RCSid[] = "@(#)$Header$ (ARL)";
 void
 bu_setlinebuf(FILE *fp)
 {
-#ifdef WIN32
+#ifdef _WIN32
 	(void) setvbuf( fp, (char *) NULL, _IOLBF, BUFSIZ );
 #else
 #ifdef BSD

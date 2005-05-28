@@ -39,19 +39,17 @@ static const char RCSconcat[] = "@(#)$Header$ (BRL)";
 
 #include "common.h"
 
-
-
 #include <stdio.h>
-#ifndef WIN32
-#include <pwd.h>
+#ifdef HAVE_PWD_H
+#  include <pwd.h>
 #endif
 #include <signal.h>
 #include <math.h>
 #include <time.h>
 #ifdef HAVE_STRING_H
-#include <string.h>
+#  include <string.h>
 #else
-#include <strings.h>
+#  include <strings.h>
 #endif
 
 #include "machine.h"

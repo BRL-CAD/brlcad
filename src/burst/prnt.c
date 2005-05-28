@@ -149,7 +149,7 @@ char    *msg;
 #ifdef HAVE_STRERROR
 		brst_log( "%s: %s\n", msg, strerror(errno) );
 #else
-#  ifdef WIN32
+#  ifdef _WIN32
 		brst_log( "%s: %s\n", msg, _sys_errlist[errno] );
 #  else
 		brst_log( "%s: %s\n", msg, sys_errlist[errno] );

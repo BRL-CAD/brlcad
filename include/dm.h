@@ -25,7 +25,7 @@
 #define SEEN_DM_H
 
 #ifndef DM_EXPORT
-#if defined(WIN32) && !defined(__CYGWIN__) && defined(BRLCAD_DLL)
+#if defined(_WIN32) && !defined(__CYGWIN__) && defined(BRLCAD_DLL)
 #  ifdef DM_EXPORT_DLL
 #    define DM_EXPORT __declspec(dllexport)
 #  else

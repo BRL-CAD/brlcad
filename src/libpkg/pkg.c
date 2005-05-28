@@ -62,7 +62,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <stdio.h>
 #include <ctype.h>		/* used by inet_addr() routine, below */
 
-#ifndef WIN32
+#ifndef _WIN32
 #  undef BSD	/* /usr/include/sys/param.h redefines this */
 #  include <sys/param.h>
 #  include <sys/time.h>
@@ -72,7 +72,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #  include <time.h>
 #endif
 
-#ifndef WIN32
+#ifndef _WIN32
 #  include <sys/socket.h>
 #  include <sys/ioctl.h>		/* for FIONBIO */
 #  include <netinet/in.h>		/* for htons(), etc */
@@ -496,13 +496,8 @@ pkg_getclient(int fd, struct pkg_switch *switchp, void (*errlog) (/* ??? */), in
 #ifdef FIONBIO
 	if(nodelay)  {
 		onoff = 1;
-#ifdef WIN32
-		if( ioctlsocket(fd, FIONBIO, &onoff) < 0 )
-			pkg_perror( errlog, "pkg_getclient: FIONBIO 1" );
-#else
 		if( ioctl(fd, FIONBIO, &onoff) < 0 )
 			pkg_perror( errlog, "pkg_getclient: FIONBIO 1" );
-#endif
 	}
 #endif
 	do  {
@@ -510,7 +505,7 @@ pkg_getclient(int fd, struct pkg_switch *switchp, void (*errlog) (/* ??? */), in
 		if (s2 < 0) {
 			if(errno == EINTR)
 				continue;
-#ifdef WIN32
+#ifdef _WIN32
 			if(errno == WSAEWOULDBLOCK)
 				return(PKC_NULL);
 #else
@@ -524,17 +519,10 @@ pkg_getclient(int fd, struct pkg_switch *switchp, void (*errlog) (/* ??? */), in
 #ifdef FIONBIO
 	if(nodelay)  {		
 		onoff = 0;
-		#ifdef WIN32
-		if( ioctlsocket(fd, FIONBIO, &onoff) < 0 )
-			pkg_perror( errlog, "pkg_getclient: FIONBIO 2" );
-		if( ioctlsocket(s2, FIONBIO, &onoff) < 0 )
-			pkg_perror( errlog, "pkg_getclient: FIONBIO 3");
-#else
 		if( ioctl(fd, FIONBIO, &onoff) < 0 )
 			pkg_perror( errlog, "pkg_getclient: FIONBIO 2" );
 		if( ioctl(s2, FIONBIO, &onoff) < 0 )
 			pkg_perror( errlog, "pkg_getclient: FIONBIO 3");
-#endif
 	}
 #endif
 
@@ -1562,11 +1550,7 @@ pkg_perror(void (*errlog) (/* ??? */), char *s)
 #  if HAVE_STRERROR
 #  else
 	sprintf( errbuf, "%s: %s\n", s, strerror(errno) );
-#    ifdef WIN32
-	sprintf( errbuf, "%s: %s\n", s, _sys_errlist[errno] );
-#    else
 	sprintf( errbuf, "%s: %s\n", s, sys_errlist[errno] );
-#    endif
 #  endif
 #endif
 	errlog( errbuf );

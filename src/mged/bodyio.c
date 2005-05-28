@@ -37,25 +37,23 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "common.h"
 
-
-
 #include <stdio.h>
-#ifndef WIN32
-#include <pwd.h>
+#ifdef HAVE_PWD_H
+#  include <pwd.h>
 #endif
 #include <signal.h>
 #include <math.h>
 #include <time.h>
 #ifdef HAVE_STRING_H
-#include <string.h>
+#  include <string.h>
 #else
-#include <strings.h>
+#  include <strings.h>
 #endif
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-#ifndef WIN32
-#include <unistd.h>
+#ifdef HAVE_UNISTD_H
+#  include <unistd.h>
 #endif
 #include <errno.h>
 
@@ -323,7 +321,7 @@ cmd_export_body(ClientData clientData, Tcl_Interp *interp, int argc, char **argv
     /*
      *	Do the writing
      */
-#ifndef WIN32
+#ifndef _WIN32
     if( (fd = creat( argv[1], S_IRWXU | S_IRGRP | S_IROTH  )) == -1 ) {
 #else
 		if( (fd = creat( argv[1], _S_IREAD | _S_IWRITE  )) == -1 ) { 
