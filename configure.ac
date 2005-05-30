@@ -781,6 +781,7 @@ AC_CHECK_HEADERS( \
 	sys/socket.h \
 	sys/stat.h \
 	sys/statfs.h \
+	sys/sysctl.h \
 	sys/sysmp.h \
 	sys/time.h \
 	sys/timeb.h \
@@ -1299,6 +1300,7 @@ AC_CHECK_FUNCS(\
 	ftime \
 	ftruncate \
 	getcwd \
+	getenv \
 	gethostbyaddr \
 	gethostbyname \
 	gethostname \
@@ -1347,6 +1349,7 @@ AC_CHECK_FUNCS(\
 	strtol \
 	strtoul \
 	strtoull \
+	sysctl \
 	sysmp \
 	tzset \
 	uname \
