@@ -179,10 +179,6 @@ HIDDEN int rt_gettree_region_start(struct db_tree_state *tsp, struct db_full_pat
  *  out into the serial section.  (rt_tree_region_assign, rt_bound_tree)
  */
 HIDDEN union tree *rt_gettree_region_end(register struct db_tree_state *tsp, struct db_full_path *pathp, union tree *curtree, genptr_t client_data)
-         /*const*/                     	     
-/*const*/                    	       
-          			         
-        			            
 {
 	struct region		*rp;
 	struct directory	*dp;
@@ -213,7 +209,7 @@ HIDDEN union tree *rt_gettree_region_end(register struct db_tree_state *tsp, str
 	rp->reg_gmater = tsp->ts_gmater;
 	rp->reg_los = tsp->ts_los;
 
-	if( tsp->ts_attrs.count ) {
+	if( tsp->ts_attrs.count && tsp->ts_attrs.avp ) {
 		rp->attr_values = (struct bu_mro **)bu_calloc( tsp->ts_attrs.count+1,
 				     sizeof( struct bu_mro *), "regp->attr_values" );
 		for( i=0 ; i<tsp->ts_attrs.count ; i++ ) {
@@ -221,8 +217,9 @@ HIDDEN union tree *rt_gettree_region_end(register struct db_tree_state *tsp, str
 							"rp->attr_values[i]" );
 			bu_mro_init_with_string( rp->attr_values[i], tsp->ts_attrs.avp[i].value );
 		}
-	} else
+	} else {
 		rp->attr_values = (struct bu_mro **)NULL;
+	}
 
 	rp->reg_mater = tsp->ts_mater;		/* struct copy */
 	if( tsp->ts_mater.ma_shader )
