@@ -35,7 +35,7 @@
 #
 ###
 # A Shell script to extract the benchmark statistics, and build an
-# entry suitable for the tables in doc/benchmark.doc.
+# entry suitable for the tables in doc/benchmark.tr.
 # Note well that the command-line args may have embedded spaces.
 #  Mike Muuss & Susan Muuss, 11-Sept-88.
 #  @(#)$Header$ (BRL)
