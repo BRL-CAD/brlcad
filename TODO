@@ -9,8 +9,6 @@ scratch pad for the developers to use for tracking development ideas.
 
 THESE SHOULD HAPPEN BEFORE THE NEXT RELEASE
 
-* install benchmark suite and example geometry
-
 * libbu whereis support for relocatable mged/bwish and locating
   resources at run-time.
 
