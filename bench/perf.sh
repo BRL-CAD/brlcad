@@ -67,13 +67,23 @@ NEW_FILES=" \
 	m35.log \
 	sphflake.log \
 "
+
+REF_DIR="../pix"
+if test -f "$path_to_perf_sh/../pix/sphflake.log" ; then
+    REF_DIR="$path_to_perf_sh/../pix"
+elif test -f "$path_to_perf_sh/sphflake.log" ; then
+    REF_DIR="$path_to_perf_sh"
+elif test -f "$path_to_perf_sh/../share/brlcad/pix/sphflake.log" ; then
+    REF_DIR="$path_to_perf_sh/../share/brlcad/pix"
+fi
+
 REF_FILES=" \
-	$path_to_perf_sh/../pix/moss.log \
-	$path_to_perf_sh/../pix/world.log \
-	$path_to_perf_sh/../pix/star.log \
-	$path_to_perf_sh/../pix/bldg391.log \
-	$path_to_perf_sh/../pix/m35.log \
-	$path_to_perf_sh/../pix/sphflake.log \
+	$REF_DIR/moss.log \
+	$REF_DIR/world.log \
+	$REF_DIR/star.log \
+	$REF_DIR/bldg391.log \
+	$REF_DIR/m35.log \
+	$REF_DIR/sphflake.log \
 "
 
 for i in $NEW_FILES $REF_FILES ;  do
