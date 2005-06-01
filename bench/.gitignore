@@ -2,4 +2,5 @@
 *.log.*
 *.pix
 *.pix.*
+benchmark
 pixcmp
