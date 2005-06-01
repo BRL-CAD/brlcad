@@ -52,8 +52,10 @@
 # it may be run in a stand-alone environment:
 #
 #   RT - the rt binary (e.g. ../src/rt/rt or /usr/brlcad/bin/rt)
-#   DB - the directory to the database geometry (e.g. ../db)
-#   CMP - the path to a pixcmp tool (e.g. ./pixcmp)
+#   DB - the directory containing the reference geometry (e.g. ../db)
+#   PIX - the directory containing the reference images (e.g. ../pix)
+#   CMP - the name of a pixcmp tool (e.g. ./pixcmp)
+#   ELP - the name of an elapsed time tool (e.g. ../sh/elapsed.sh)
 #   TIMEFRAME - the minimum number of seconds each trace needs to take
 #   MAXTIME - the maximum number of seconds to spend on any test
 #   DEVIATION - the minimum sufficient % deviation from the average
@@ -74,12 +76,13 @@
 # jitter, so it's effectively performing a multiplier amount of work
 # over the initial frame.
 #
-# Plese send your BRL-CAD Benchmark results to the developers along with
-# detailed system information to <devs@brlcad.org>.  Include at least:
+# Plese send your BRL-CAD Benchmark results to the developers along
+# with detailed system information to <devs@brlcad.org>.  Include at
+# least:
 #
 #   0) Operating system type and version (e.g. uname -a)
 #   1) Compiler name and version (e.g. gcc --version)
-#   2) CPU configuration(s) (e.g. cat /proc/cpuinfo or hinv or sysctl -a)
+#   2) CPU configuration (e.g. cat /proc/cpuinfo or hinv or sysctl -a)
 #   3) Cache (data and/or instruction) details for L1/L2/L3 and system
 #      (e.g. cat /proc/cpuinfo or hinv or sysctl -a)
 #   4) Output from this script (e.g. ./run.sh > run.sh.log 2>&1)
@@ -112,21 +115,33 @@ echo Looking for RT...
 # RT environment variable overrides
 if test "x${RT}" = "x" ; then
     # see if we find the rt binary
-    if test -x "$path_to_run_sh/../src/rt" ; then
+    if test -x "$path_to_run_sh/../src/rt/rt" ; then
 	echo ...found $path_to_run_sh/../src/rt/rt
 	RT="$path_to_run_sh/../src/rt/rt"
+    elif test -x "$path_to_run_sh/rt" ; then
+	echo ...found $path_to_run_sh/rt
+	RT="$path_to_run_sh/rt"
+    elif test -x "$path_to_run_sh/../bin/rt" ; then
+	echo ...found $path_to_run_sh/../bin/rt
+	RT="$path_to_run_sh/../bin/rt"
     fi
 else
     echo ...using $RT from RT environment variable setting
 fi
 
 echo Looking for benchmark geometry ...
-# find geometry database directory if we do not already know where it is
-# DB environment variable overrides
+# find geometry database directory if we do not already know where it
+# is. DB environment variable overrides
 if test "x${DB}" = "x" ; then
     if test -f "$path_to_run_sh/../db/sphflake.g" ; then
 	echo ...found .g geometry files in $path_to_run_sh/../db
 	DB="$path_to_run_sh/../db"
+    elif test -f "$path_to_run_sh/sphflake.g" ; then
+	echo ...found .g geometry files in $path_to_run_sh
+	DB="$path_to_run_sh"
+    elif test -f "$path_to_run_sh/../share/brlcad/db/sphflake.g" ; then
+	echo ...found .g geometry files in $path_to_run_sh/../share/brlcad/db
+	DB="$path_to_run_sh/../share/brlcad/db"
     elif test -f "sphflake.g" ; then
 	echo ...found .g geometry files in .
 	DB="."
@@ -187,6 +202,24 @@ else
     echo ...using $DB from DB environment variable setting
 fi
 
+echo Looking for benchmark images ...
+# find pix reference image directory if we do not already know where
+# it is.  PIX environment variable overrides
+if test "x${PIX}" = "x" ; then
+    if test -f "$path_to_run_sh/../pix/sphflake.pix" ; then
+	echo ...found .pix image files in $path_to_run_sh/../pix
+	PIX="$path_to_run_sh/../pix"
+    elif test -f "$path_to_run_sh/sphflake.pix" ; then
+	echo ...found .pix image files in $path_to_run_sh
+	PIX="$path_to_run_sh"
+    elif test -f "$path_to_run_sh/../share/brlcad/pix/sphflake.pix" ; then
+	echo ...found .pix image files in $path_to_run_sh/../share/brlcad/pix
+	PIX="$path_to_run_sh/../share/brlcad/pix"
+    fi
+else
+    echo ...using $PIX from PIX environment variable setting
+fi
+
 echo Checking for pixel comparison utility...
 # find pixel comparison utility
 # CMP environment variable overrides
@@ -224,6 +257,24 @@ else
     echo ...using $CMP from CMP environment variable setting
 fi
 
+echo Checking for time elapsed utility...
+# find time elapsed script
+# ELP environment variable overrides
+if test "x${ELP}" = "x" ; then
+    if test -x $path_to_run_sh/../sh/elapsed.sh ; then
+	echo ...found $path_to_run_sh/../sh/elapsed.sh
+	ELP="$path_to_run_sh/../sh/elapsed.sh"
+    elif test -x $path_to_run_sh/elapsed.sh ; then
+	echo ...found $path_to_run_sh/elapsed.sh
+	ELP="$path_to_run_sh/elapsed.sh"
+    elif test -x $path_to_run_sh/../bin/elapsed.sh ; then
+	echo ...found $path_to_run_sh/../bin/elapsed.sh
+	ELP="$path_to_run_sh/../bin/elapsed.sh"
+    fi
+else
+    echo ...using $ELP from ELP environment variable setting
+fi
+
 # print results or choke
 if test "x${RT}" = "x" ; then
     echo "ERROR:  Could not find the BRL-CAD raytracer"
@@ -237,11 +288,23 @@ if test "x${DB}" = "x" ; then
 else
     echo "Using [$DB] for DB"
 fi
+if test "x${PIX}" = "x" ; then
+    echo "ERROR:  Could not find the BRL-CAD reference images"
+    exit 1
+else
+    echo "Using [$PIX] for PIX"
+fi
 if test "x${CMP}" = "x" ; then
     echo "ERROR:  Could not find the BRL-CAD pixel comparison utility"
     exit 1
 else
     echo "Using [$CMP] for CMP"
+fi
+if test "x${ELP}" = "x" ; then
+    echo "ERROR:  Could not find the BRL-CAD time elapsed script"
+    exit 1
+else
+    echo "Using [$ELP] for ELP"
 fi
 
 # determine the minimum time requirement in seconds for a single test run
@@ -287,14 +350,14 @@ echo
 
 # let the user know about how long this might take
 mintime="`expr $TIMEFRAME \* 6`"
-echo "Minimum run time is `$path_to_run_sh/../sh/elapsed.sh $mintime`"
+echo "Minimum run time is `$ELP $mintime`"
 maxtime="`expr $MAXTIME \* 6`"
-echo "Maximum run time is `$path_to_run_sh/../sh/elapsed.sh $maxtime`"
+echo "Maximum run time is `$ELP $maxtime`"
 estimate="`expr $mintime \* 3`"
 if test $estimate -gt $maxtime ; then
     estimate="$maxtime"
 fi
-echo "Estimated   time is `$path_to_run_sh/../sh/elapsed.sh $estimate`"
+echo "Estimated   time is `$ELP $estimate`"
 
 # allow a debug hook, but don't announce it
 if test "x${DEBUG}" = "x" ; then
@@ -548,7 +611,10 @@ EOF
 	
 	    # compute how long we took, rounding up to at least one
 	    # second to prevent division by zero.
-	    benchmark_elapsed="`$path_to_run_sh/../sh/elapsed.sh --seconds $benchmark_frame_start_time`"
+	    benchmark_elapsed="`$ELP --seconds $benchmark_frame_start_time`"
+	    if test "x$benchmark_elapsed" = "x" ; then
+		benchmark_elapsed=1
+	    fi
 	    if test $benchmark_elapsed -eq 0 ; then
 		benchmark_elapsed=1
 	    fi
@@ -609,7 +675,7 @@ EOF
 	    fi
 
 	    # see if we need to break out early
-	    benchmark_overall_elapsed="`$path_to_run_sh/../sh/elapsed.sh --seconds $benchmark_start_time`"
+	    benchmark_overall_elapsed="`$ELP --seconds $benchmark_start_time`"
 	    if test $benchmark_overall_elapsed -ge $MAXTIME ; then
 		break;
 	    fi
@@ -647,7 +713,7 @@ EOF
 	    break
 	fi
 
-	benchmark_overall_elapsed="`$path_to_run_sh/../sh/elapsed.sh --seconds $benchmark_start_time`"
+	benchmark_overall_elapsed="`$ELP --seconds $benchmark_start_time`"
 
 	# undo the hypersample increase back one step
 	benchmark_hypersample="`expr \( \( $benchmark_hypersample + 1 \) / 2 \) - 1`"
@@ -656,7 +722,7 @@ EOF
     # hopefully the last run is a stable representative of the performance
 
     if test -f gmon.out; then mv -f gmon.out gmon.${benchmark_testname}.out; fi
-    ${CMP} $path_to_run_sh/../pix/${benchmark_testname}.pix ${benchmark_testname}.pix
+    ${CMP} ${PIX}/${benchmark_testname}.pix ${benchmark_testname}.pix
     if test $? = 0 ; then
 	echo ${benchmark_testname}.pix:  answers are RIGHT
     else
@@ -730,7 +796,7 @@ EOF
 echo
 echo "... Done."
 echo
-echo "Total testing time elapsed: `$path_to_run_sh/../sh/elapsed.sh $start`"
+echo "Total testing time elapsed: `$ELP $start`"
 
 
 # Compute and output the results
@@ -743,7 +809,19 @@ if test $? != 0 ; then
     fi
 fi
 
-sh $path_to_run_sh/../bench/perf.sh "$HOST" "`date`" "$*" >> summary
+if test -f "$path_to_run_sh/perf.sh" ; then
+    PERF="$path_to_run_sh/perf.sh"
+elif test -f "$path_to_run_sh/../bench/perf.sh" ; then
+    PERF="$path_to_run_sh/../bench/perf.sh"
+else
+    # see if it is in our path
+    PERF="perf.sh"
+    $PERF > /dev/null 2>&1
+    if test "x$?" != "x1" ; then
+	PERF="false"
+    fi
+fi
+sh "$PERF" "$HOST" "`date`" "$*" >> summary
 ret=$?
 if test $ret != 0 ; then
     tail -1 summary
