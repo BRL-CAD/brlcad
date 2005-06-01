@@ -9,13 +9,13 @@ scratch pad for the developers to use for tracking development ideas.
 
 THESE SHOULD HAPPEN BEFORE THE NEXT RELEASE
 
-* libbu whereis support for relocatable mged/bwish and locating
-  resources at run-time.
-
 * make sure sgi knobs work
 
 
 THESE ARE LOWER PRIORITY
+
+* libbu whereis support for relocatable mged/bwish and locating
+  resources at run-time.
 
 * make opengl optional via configure without editing files
 
