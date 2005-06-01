@@ -417,6 +417,7 @@ fi
 
 for file in AUTHORS COPYING ChangeLog INSTALL NEWS README ; do
   if test ! -f $file ; then
+    $VERBOSE_ECHO "Touching ${file} since it does not exist"
     touch $file
   fi
 done
@@ -426,14 +427,14 @@ done
 # protect COPYING & INSTALL from overwrite #
 ############################################
 for file in COPYING INSTALL ; do
-  if test -f $file ; then
-    if test -d "${_aux_dir}" ; then
-      if test ! -f "${_aux_dir}/${file}.backup" ; then
-	$VERBOSE_ECHO "cp -pf ${file} \"${_aux_dir}/${file}.backup\""
-	cp -pf ${file} "${_aux_dir}/${file}.backup"
-      fi
-    fi
+  if test ! -f $file ; then
+    continue
   fi
+  if test ! -d "${_aux_dir}" ; then
+    continue
+  fi
+  $VERBOSE_ECHO "cp -pf ${file} \"${_aux_dir}/${file}.backup\""
+  cp -pf ${file} "${_aux_dir}/${file}.backup"
 done
 
 
@@ -580,6 +581,7 @@ fi
 #########################################
 # restore COPYING & INSTALL from backup #
 #########################################
+spacer=no
 if test "x$HAVE_SED" = "xyes" ; then
     for file in COPYING INSTALL ; do
 	curr="$file"
@@ -595,16 +597,22 @@ if test "x$HAVE_SED" = "xyes" ; then
 	backup="`cat $back`"
 	if test "x$current" != "x$backup" ; then
 	    current_rev=`grep '$Revision' "$curr" | sed 's/.*[^0-9]\([0-9][0-9]*\.[0-9][0-9]*\)[^0-9].*/\1/' | sed 's/\.//g'`
+	    $VERBOSE_ECHO "Revision of $curr is \"${current_rev}\""
 	    if test "x$current_rev" = "x" ; then
 		current_rev=0
 	    fi
 	    backup_rev=`grep '$Revision' "$back" | sed 's/.*[^0-9]\([0-9][0-9]*\.[0-9][0-9]*\)[^0-9].*/\1/' | sed 's/\.//g'`
+	    $VERBOSE_ECHO "Revision of $back is \"${backup_rev}\""
 	    if test "x$backup_rev" = "x" ; then
 		backup_rev=0
 	    fi
 	    if test "$current_rev" -lt "$backup_rev" ; then
-		echo "need to restore backup of $file"
+		if test "x$spacer" = "xno" ; then
+		    $VERBOSE_ECHO
+		    spacer=yes
+		fi
 		# restore the backup
+		$VERBOSE_ECHO "Need to restore $file from backup (automake -f clobbered it)"
 		$VERBOSE_ECHO "cp -pf \"$back\" \"${curr}\""
 		cp -pf "$back" "$curr"
 	    fi
