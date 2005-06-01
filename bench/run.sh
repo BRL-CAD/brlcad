@@ -891,7 +891,7 @@ if test -f "$path_to_run_sh/Makefile" ; then
 fi
 
 echo "Testing complete."
-echo "Read $path_to_run_sh/../doc/benchmark.tr for more details on the BRL-CAD Benchmark."
+echo "Read the benchmark.tr document for more details on the BRL-CAD Benchmark."
 
 # Local Variables:
 # mode: sh
