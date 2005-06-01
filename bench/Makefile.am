@@ -10,17 +10,24 @@ clobber:
 	rm -f *.log.* *.pix.*	# old versions
 	rm -f *.log *.pix	# last try
 
+dist_bin_SCRIPTS = \
+	benchmark \
+	perf.sh
+
 EXTRA_DIST = \
+	${dist_bin_SCRIPTS} \
 	lgt.sh \
-	perf.sh \
 	pretty.sh \
 	recheck.sh \
 	run.sh \
 	try.sh
 
-.PHONY : benchmark bench
+benchmark: run.sh
+	cp run.sh benchmark
 
-benchmark: all
+.PHONY : run bench
+
+run: all
 	${SH} run.sh
 
-bench: benchmark
+bench: run
