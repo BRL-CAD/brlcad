@@ -1,24 +1,39 @@
 # $Id$
 
-EXTRA_DIST = \
-	bldg391.log \
+BENCHMARK_PIX = \
 	bldg391.pix \
+	m35.pix \
+	moss.pix \
+	sphflake.pix \
+	star.pix \
+	world.pix
+
+
+PIX = \
+	${BENCHMARK_PIX} \
 	golf_ball.pix \
 	lgt1.pix \
 	lgt2.pix \
 	lgt3.pix \
-	m35.log \
-	m35.pix \
-	moss.log \
-	moss.pix \
 	mworld.pix \
+	toilet.pix
+
+LOG = \
+	bldg391.log \
+	m35.log \
+	moss.log \
 	sphflake.log \
-	sphflake.pix \
 	star.log \
-	star.pix \
-	toilet.pix \
-	world.log \
-	world.pix
-	
+	world.log
+
+EXTRA_DIST = \
+	${BENCHMARK_PIX} \
+	${PIX} \
+	${LOG}
+
+pixdir = $(datadir)/brlcad/pix
+pix_DATA = \
+	${BENCHMARK_PIX} \
+	${LOG}
 
 MAINTAINERCLEANFILES = Makefile.in
