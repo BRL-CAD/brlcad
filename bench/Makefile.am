@@ -31,3 +31,6 @@ run: all
 	${SH} run.sh
 
 bench: run
+
+CLEANFILES = \
+	benchmark
