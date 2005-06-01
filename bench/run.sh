@@ -822,13 +822,21 @@ else
     fi
 fi
 sh "$PERF" "$HOST" "`date`" "$*" >> summary
-ret=$?
-if test $ret != 0 ; then
+perf_ret=$?
+
+echo
+echo "The following files have been generated and/or modified:"
+echo "  *.log ..... final log files for each individual raytrace test"
+echo "  *.pix ..... final pix image files for each individual raytrace test"
+echo "  *.log.* ... log files for previous frames and raytrace tests"
+echo "  *.pix.* ... pix image files for previous frames and raytrace tests"
+echo "  summary ... performance results summary, 2 lines per run"
+
+if test $perf_ret != 0 ; then
     tail -1 summary
-    exit $ret
+    exit $perf_ret
 else
     echo
-    echo "Summary Details:"
     tail -2 summary
 fi
 vgr="`tail -1 summary | awk '{print int($9+0.5)}'`"
