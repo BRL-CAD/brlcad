@@ -12,7 +12,7 @@ THESE SHOULD HAPPEN BEFORE THE NEXT RELEASE
 * make sure sgi knobs work
 
 
-THESE ARE LOWER PRIORITY
+THESE ARE LOWER PRIORITY OR FOR FUTURE RELEASES
 
 * libbu whereis support for relocatable mged/bwish and locating
   resources at run-time.
