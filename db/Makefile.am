@@ -48,7 +48,9 @@ EXTRA_DIST = \
 	${MODELS} \
 	db.php
 
-EXTRA_DATA = ${MODELS:asc=g}
+dbdir = $(datadir)/brlcad/db
+db_DATA = ${MODELS:asc=g}
+
 BUILT_SOURCES = ${MODELS:asc=g}
 
 MOSTLYCLEANFILES = ${MODELS:asc=g}
