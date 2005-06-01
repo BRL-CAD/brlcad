@@ -10,6 +10,7 @@ entire history of the project is available through CVS.
 --- 2005-06-XX  Release 7.2.5                                      ---
 ----------------------------------------------------------------------
 
+* added 'benchmark' tool and install benchmark suite - Sean Morrison
 * improved installation instructions - Sean Morrison
 * fixed various typos in top level documents - Chuck Kennedy
 * added summary and explanation of benchmark results - Sean Morrison
