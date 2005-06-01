@@ -1,17 +1,25 @@
 # $Id$
 
 bin_SCRIPTS = \
+	elapsed.sh \
 	any-png.sh \
 	cadbug.sh \
+	cray.sh \
+	indent.sh \
+	machinetype.sh \
+	pixinfo.sh \
+	pixread.sh \
+	pixwrite.sh \
+	sgisnap.sh \
+	show.sh
+
+EXTRA_DIST = \
+	$(bin_SCRIPTS) \
 	cakeinclude.sh \
 	copyright.sh \
-	cray.sh \
-	elapsed.sh \
 	footer.sh \
 	header.sh \
-	indent.sh \
 	ldAix.sh \
-	machinetype.sh \
 	make_deb.sh \
 	make_dmg.sh \
 	make_pkg.sh \
@@ -20,12 +28,5 @@ bin_SCRIPTS = \
 	make_bz2.sh \
 	make_tgz.sh \
 	make_zip.sh \
-	pixinfo.sh \
-	pixread.sh \
-	pixwrite.sh \
-	sgisnap.sh \
-	show.sh \
 	vers.sh
-
-EXTRA_DIST = $(bin_SCRIPTS)
 
