@@ -108,10 +108,10 @@ mged_LDADD = \
 	${DM} \
 	${FB} \
 	${SYSV} \
-	${TCL} \
 	${TK} \
 	${ITK} \
 	${ITCL} \
+	${TCL} \
 	${PNG}
 
 cad_boundp_SOURCES = cad_boundp.c
