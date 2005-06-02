@@ -113,7 +113,10 @@ int be_o_zscale(ClientData clientData, Tcl_Interp *interp, int argc, char **argv
 void mged_setup(void), cmd_setup(void), mged_compat(struct bu_vls *dest, struct bu_vls *src, int use_first);
 void mged_print_result(int status);
 void mged_global_variable_setup(Tcl_Interp *interp);
-int f_bot_fuse(ClientData clientData, Tcl_Interp *interp, int argc, char **argv), f_bot_condense(ClientData clientData, Tcl_Interp *interp, int argc, char **argv), f_bot_face_fuse(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
+int f_bot_fuse(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
+int f_bot_condense(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
+int f_bot_face_fuse(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
+int f_bot_merge(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 extern int f_hide(), f_unhide();
 
 
@@ -195,6 +198,7 @@ static struct cmdtab cmdtab[] = {
 	{"export_body", cmd_export_body},
 #endif
 	{"dbbinary", f_binary},
+	{"bot_merge", f_bot_merge},
 	{"bot_face_fuse", f_bot_face_fuse},
 	{"bot_face_sort", cmd_bot_face_sort},
 	{"bot_condense", f_bot_condense},
@@ -2065,6 +2069,189 @@ mged_global_variable_setup(Tcl_Interp *interp)
 	bu_vls_strcpy(&edit_info_vls, "edit_info");
 }
 
+int
+f_bot_merge(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+{
+	struct directory *dp, *new_dp;
+	struct rt_db_internal intern;
+	struct rt_bot_internal **bots;
+	int i, idx, retval;
+	int avail_vert, avail_face, face;
+	
+
+	CHECK_DBI_NULL;
+	CHECK_READ_ONLY;
+
+	if (argc < 2) {
+	  Tcl_AppendResult(interp, "Usage:\nbot_merge bot_dest bot1_src [botn_src]\n", (char *)NULL );
+	  return TCL_ERROR;
+	}
+
+	bots = bu_calloc(sizeof(struct rt_bot_internal), argc, "bot internal");
+
+	retval = TCL_OK;
+
+
+	/* create a new bot */
+	BU_GETSTRUCT(bots[0], rt_bot_internal);
+	bots[0]->mode = 0;
+	bots[0]->orientation = RT_BOT_UNORIENTED;
+	bots[0]->bot_flags = 0;
+	bots[0]->num_vertices = 0;
+	bots[0]->num_faces = 0;
+	bots[0]->faces = (int *)0;
+	bots[0]->vertices = (fastf_t *)0;
+	bots[0]->thickness = (fastf_t *)0;
+	bots[0]->face_mode = (struct bu_bitv*)0;
+	bots[0]->num_normals = 0;
+	bots[0]->normals = (fastf_t *)0;
+	bots[0]->num_face_normals = 0;
+	bots[0]->face_normals = 0;
+	bots[0]->magic = RT_BOT_INTERNAL_MAGIC;
+
+
+
+
+	/* read in all the bots */
+	for (idx=1,i=2 ; i < argc ; i++ ) {
+	    if ((dp = db_lookup(dbip, argv[i], LOOKUP_NOISY)) == DIR_NULL) {
+		continue;
+	    }
+
+	    if( rt_db_get_internal( &intern, dp, dbip, bn_mat_identity, &rt_uniresource ) < 0 ) {
+		Tcl_AppendResult(interp, "rt_db_get_internal(", argv[i], ") error\n", (char *)NULL);
+		retval = TCL_ERROR;
+		continue;
+	    }
+
+	    if( intern.idb_type != ID_BOT ) 	{
+		Tcl_AppendResult(interp, argv[i], " is not a BOT solid!!!  skipping\n", (char *)NULL );
+		retval = TCL_ERROR;
+		continue;
+	    }
+
+	    bots[idx] = (struct rt_bot_internal *)intern.idb_ptr;
+
+	    intern.idb_ptr = (genptr_t)0;
+
+	    RT_BOT_CK_MAGIC( bots[idx] );
+
+	    bots[0]->num_vertices += bots[idx]->num_vertices;
+	    bots[0]->num_faces += bots[idx]->num_faces;
+
+	    idx++;
+	}
+
+	if (idx == 1) return TCL_ERROR;
+
+
+
+	for (i=1 ; i < idx ; i++ ) {
+	    /* check for surface normals */
+	    if (bots[0]->mode) {
+		if (bots[0]->mode != bots[i]->mode) {
+		    bu_log("Warning: not all bots share same mode\n");
+		}
+	    } else {
+		bots[0]->mode = bots[i]->mode;
+	    }
+
+
+	    if (bots[i]->bot_flags & RT_BOT_HAS_SURFACE_NORMALS) bots[0]->bot_flags |= RT_BOT_HAS_SURFACE_NORMALS;
+	    if (bots[i]->bot_flags & RT_BOT_USE_NORMALS) bots[0]->bot_flags |= RT_BOT_USE_NORMALS;
+
+	    if (bots[0]->orientation) {
+		if (bots[i]->orientation == RT_BOT_UNORIENTED) {
+		    bots[0]->orientation = RT_BOT_UNORIENTED;
+		} else {
+		    bots[i]->magic = 1; /* set flag to reverse order of faces */
+		}
+	    } else {
+		bots[0]->orientation = bots[i]->orientation;
+	    }
+	}
+
+
+	bots[0]->vertices = bu_calloc(bots[0]->num_vertices*3, sizeof(fastf_t), "verts");
+	bots[0]->faces = bu_calloc(bots[0]->num_faces*3, sizeof(int), "verts");
+	avail_vert = 0;
+	avail_face = 0;
+
+
+	for (i=1 ; i < idx ; i++ ) {
+	    /* copy the vertices */
+	    memcpy( &bots[0]->vertices[3*avail_vert], bots[i]->vertices, bots[i]->num_vertices*3*sizeof(fastf_t));
+
+	    /* copy/convert the faces, potentially maintaining a common orientation */
+	    if (bots[0]->orientation != RT_BOT_UNORIENTED && bots[i]->magic != RT_BOT_INTERNAL_MAGIC) {
+		/* copy and reverse */
+		for (face=0 ; face < bots[i]->num_faces ; face++) {
+		    /* copy the 3 verts of this face and convert to new index */
+		    bots[0]->faces[avail_face*3+face*3+2] = bots[i]->faces[face*3  ] + avail_vert;
+		    bots[0]->faces[avail_face*3+face*3+1] = bots[i]->faces[face*3+1] + avail_vert;
+		    bots[0]->faces[avail_face*3+face*3  ] = bots[i]->faces[face*3+2] + avail_vert;
+		}
+	    } else {
+		/* just copy */
+		for (face=0 ; face < bots[i]->num_faces ; face++) {
+		    /* copy the 3 verts of this face and convert to new index */
+		    bots[0]->faces[avail_face*3+face*3  ] = bots[i]->faces[face*3  ] + avail_vert;
+		    bots[0]->faces[avail_face*3+face*3+1] = bots[i]->faces[face*3+1] + avail_vert;
+		    bots[0]->faces[avail_face*3+face*3+2] = bots[i]->faces[face*3+2] + avail_vert;
+		}
+	    }
+
+	    /* copy surface normals */
+	    if (bots[0]->bot_flags == RT_BOT_HAS_SURFACE_NORMALS) {
+		bu_log("not yet copying surface normals\n");
+		if (bots[i]->bot_flags == RT_BOT_HAS_SURFACE_NORMALS) {
+		} else {
+		}
+	    }
+
+
+
+	    avail_vert += bots[i]->num_vertices;
+	    avail_face += bots[i]->num_faces;
+	}
+
+	RT_INIT_DB_INTERNAL(&intern);
+	intern.idb_type = ID_BOT;
+	intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
+	intern.idb_minor_type = DB5_MINORTYPE_BRLCAD_BOT;
+	intern.idb_meth = &rt_functab[ID_BOT]; 
+	intern.idb_ptr = (genptr_t)bots[0];
+
+	if( (new_dp=db_diradd( dbip, argv[1], -1L, 0, DIR_SOLID, (genptr_t)&intern.idb_type)) == DIR_NULL )
+	{
+		Tcl_AppendResult(interp, "Cannot add ", argv[1], " to directory\n", (char *)NULL );
+		return TCL_ERROR;
+	}
+
+	if( rt_db_put_internal( new_dp, dbip, &intern, &rt_uniresource ) < 0 )
+	{
+		rt_db_free_internal( &intern, &rt_uniresource );
+		TCL_WRITE_ERR_return;
+	}
+
+
+	bu_free(bots[0]->vertices, "verts");
+	bu_free(bots[0]->faces, "faces");
+#if 0
+	for (i=0 ; i < idx ; i++) {
+	    if( bots[i]->thickness) bu_free(bots[i]->thickness, "thickness");
+	    if( bots[i]->normals) bu_free(bots[i]->normals, "normals");
+	    if( bots[i]->face_normals) bu_free(bots[i]->face_normals, "face_normals");
+	    bu_free(bots[i]->vertices, "verts");
+	    bu_free(bots[i]->faces, "faces");
+	}
+#else
+	bu_log("leaking memory\n");
+#endif
+	bu_free(bots, "bots");
+
+	return retval;
+}
 int
 f_bot_face_fuse(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
