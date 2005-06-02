@@ -15,6 +15,8 @@ on-going issues.
 Recent Bugs
 -----------
 
+* rtcheck manpage and usage does not mention -g option
+
 * libfb and libdm have hardcoded XMAXSCREEN and YMAXSCREEN values that
   are easily being surpassed on certain systems..
 
