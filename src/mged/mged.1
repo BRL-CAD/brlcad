@@ -3,7 +3,7 @@
 mged \- multi-display interactive combinatorial solid geometry editor
 .SH SYNOPSIS
 .B mged
-[-r] database.g [mged_command]
+[-r] [-c] [-f] database.g [mged_command]
 .SH DESCRIPTION
 .I mged\^
 interactively edits the specified database file
@@ -51,8 +51,11 @@ The input is not from a terminal, but instead from a file or
 shell-script ``here document''.
 No display manager is attached to.
 (c)  interactive mode.
-The ".mgedrc" file is processed, then the user is prompted for which
-display manager they wish to attach to, with a question like:
+.br
+The ".mgedrc" file is processed and then either a multiple window
+graphical user interface (GUI) is presented or the user is prompted
+for which display manager they wish to attach to, with a question
+like:
 .br
   attach (nu|tek|tek4109|ps|plot|sgi|X)[nu]?
 .PP
@@ -63,6 +66,11 @@ as a path name for the file to be used.
 (b) If the environment variable HOME is set, then HOME/.mgedrc
 is used.
 (c) If the file ".mgedrc" exists in the current directory, it is used.
+.PP
+Whether or not mged presents a multiple window GUI depends on whether
+or not it is running in "classic" mode.  By default, it will create a
+multiple window GUI and automatically detach from the executing
+terminal so it may run as a background process.
 .SH MODES
 The "set" command can be used to select various operating modes for
 .I mged\^.
@@ -85,6 +93,19 @@ The
 option to
 .I mged
 opens the database in a read-only mode.
+.PP
+The
+.I -c
+option to
+.I mged
+will run in "classic" mode.
+.PP
+The
+.I -f
+option to
+.I mged
+will prevent the application from automatically detaching and running
+in the background.
 .SH "X11 NOTES"
 When using
 .I mged\^
