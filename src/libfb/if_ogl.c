@@ -79,10 +79,6 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 /*WWW these come from Iris gl gl.h*/
 #define XMAXSCREEN	1279
 #define YMAXSCREEN	1023	
-#define XMAXMEDIUM	1023
-#define YMAXMEDIUM	767
-#define XMAX170		645
-#define YMAX170		484
 
 /* Internal callbacks etc.*/
 _LOCAL_ void		do_event(FBIO *ifp);
