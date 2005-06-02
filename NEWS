@@ -10,6 +10,7 @@ entire history of the project is available through CVS.
 --- 2005-06-XX  Release 7.2.5                                      ---
 ----------------------------------------------------------------------
 
+* synchronized mged startup message with gui creation- Sean Morrison
 * added -f option to mged to prevent backgrounding - Sean Morrison
 * added 'benchmark' tool and install benchmark suite - Sean Morrison
 * improved installation instructions - Sean Morrison
