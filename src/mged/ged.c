@@ -191,6 +191,7 @@ int		classic_mged=0;
 #else
 int		classic_mged=1;
 #endif
+int		run_in_foreground=0;
 char		*dpy_string = (char *)NULL;
 static int	mged_init_flag = 1;	/* >0 means in initialization stage */
 
@@ -250,6 +251,10 @@ main(int argc, char **argv)
 	int	c;
 	int	read_only_flag=0;
 
+	pid_t	pid;
+	int	parent_pipe[2];
+	int	use_pipe = 0;
+
 #ifdef _WIN32
 	Tcl_Channel chan;
 #endif
@@ -259,7 +264,7 @@ main(int argc, char **argv)
 	_fmode = _O_BINARY;
 #endif
 
-	while ((c = bu_getopt(argc, argv, "d:hicnrx:X:")) != EOF)
+	while ((c = bu_getopt(argc, argv, "d:hficnrx:X:")) != EOF)
 	{
 		switch( c )
 		{
@@ -282,6 +287,9 @@ main(int argc, char **argv)
 				break;
 			case 'X':
 	                        sscanf( bu_optarg, "%x", (unsigned int *)&bu_debug );
+				break;
+			case 'f':
+				run_in_foreground = 1;  /* run in foreground */
 				break;
 			default:
 				fprintf( stdout, "Unrecognized option (%c)\n", c );
@@ -329,14 +337,34 @@ main(int argc, char **argv)
 	cur_sigint = signal( SIGINT, SIG_IGN );		/* sample */
 	(void)signal( SIGINT, cur_sigint );		/* restore */
 
-	if( !classic_mged ) {
-		pid_t pid;
+	if( !classic_mged && !run_in_foreground ) {
+		int buffer[2] = {0};
+
+		fprintf( stdout, "Initializing and backgrounding, please wait..." );
+		fflush( stdout );
+
+		if (pipe(parent_pipe) == -1) {
+		    perror("pipe failed");
+		} else {
+		    use_pipe=1;
+		}
 
 		pid = fork();
 		if( pid > 0 ) {
-			fprintf( stdout, "Backgrounding, please wait...\n" );
-			sleep( 3 );	/* just so it does not appear that MGED has died */
-			exit( 0 );
+		    /* just so it does not appear that MGED has died,
+		     * wait until the gui is up before exiting the
+		     * parent process (child sends us a byte).
+		     */
+		    if (use_pipe) {
+			if (read(parent_pipe[0], buffer, 1) == -1) {
+			    perror("Unable to read from communication pipe");
+			}
+			fprintf(stdout, "done\n");
+		    } else {
+			/* no pipe, so just wait a little while */
+			sleep(3);
+		    }
+		    exit( 0 );
 		}
 	}
 
@@ -518,6 +546,7 @@ main(int argc, char **argv)
 	  } else {
 	    struct bu_vls vls;
 	    int status;
+	    int buffer[2] = {0};
 	    
 	    /* make this a process group leader */
 	    setpgid(0, 0);
@@ -526,10 +555,23 @@ main(int argc, char **argv)
 	    bu_vls_strcpy(&vls, "gui");
 	    status = Tcl_Eval(interp, bu_vls_addr(&vls));
 	    bu_vls_free(&vls);
-	    
+
 	    if (status != TCL_OK) {
 	      bu_log("%s", interp->result);
 	      exit(1);
+	    }
+
+	    /* if we are going to run in the background, let the
+	     * parent process know that we are done initializing so
+	     * that it may exit.
+	     */
+	    if( !run_in_foreground && use_pipe ) {
+		if (write(parent_pipe[1], buffer, 1) == -1) {
+		    perror("Unable to write to communication pipe");
+		}
+		if (close(parent_pipe[1]) == -1) {
+		    perror("Unable to close communication pipe");
+		}
 	    }
 
 #ifndef _WIN32
