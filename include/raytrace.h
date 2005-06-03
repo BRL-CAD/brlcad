@@ -2698,7 +2698,7 @@ RT_EXPORT BU_EXTERN(int rt_split_cmd,
 /* do cmd from string via cmd table */
 RT_EXPORT BU_EXTERN(int rt_do_cmd,
 		    (struct rt_i *rtip,
-		     char *lp,
+		     const char *ilp,
 		     const struct command_tab *tp));
 
 
