@@ -10,8 +10,25 @@ entire history of the project is available through CVS.
 --- 2005-06-XX  Release 7.2.5                                      ---
 ----------------------------------------------------------------------
 
-* synchronized mged startup message with gui creation- Sean Morrison
+Additional modifications were made to the benchmark suite including
+the addition of iterative frames that compare the stability of the
+performance results being observed.  The benchmark will continue to
+render frames of a designated time-complexity until the numbers are
+either stable or a maximum time window is reached.  The benchmark
+output now describes what the results mean and provides reference
+numbers for comparison.  The benchmark suite is also now included in
+the default installation as a command-line tool named 'benchmark'.
+
+In conjunction with the benchmark suite's requirements, some example
+geometry databases are now provided as part of the default install as
+are the corresponding reference benchmark images and logs.  They are
+intended to provide new users with sample geometry models to work
+with; and custom configurations may disable the installation of the
+additional geometry databases if so desired.
+
+* synchronized mged startup message with gui creation - Sean Morrison
 * added -f option to mged to prevent backgrounding - Sean Morrison
+* install example geometry databases - Sean Morrison
 * added 'benchmark' tool and install benchmark suite - Sean Morrison
 * improved installation instructions - Sean Morrison
 * fixed various typos in top level documents - Chuck Kennedy
