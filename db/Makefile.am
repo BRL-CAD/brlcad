@@ -15,9 +15,17 @@ G2A=$(top_builddir)/src/conv/g2asc
 		echo "$(A2G) does not exist" ; \
 	fi
 
-MODELS = \
-	axis.asc \
+BENCHMARK_MODELS = \
 	bldg391.asc \
+	m35.asc \
+	moss.asc \
+	sphflake.asc \
+	star.asc \
+	world.asc
+
+MODELS = \
+	$(BENCHMARK_MODELS) \
+	axis.asc \
 	boolean-ops.asc \
 	castle.asc \
 	cornell.asc \
@@ -30,18 +38,13 @@ MODELS = \
 	kman.asc \
 	ktank.asc \
 	lgt-test.asc \
-	m35.asc \
-	moss.asc \
 	pic.asc \
 	prim.asc \
-	sphflake.asc \
-	star.asc \
 	tank_car.asc \
 	terra.asc \
 	truck.asc \
 	wave.asc \
 	woodsman.asc \
-	world.asc \
 	xmp.asc
 
 EXTRA_DIST = \
@@ -49,9 +52,18 @@ EXTRA_DIST = \
 	db.php
 
 dbdir = $(datadir)/brlcad/db
-db_DATA = ${MODELS:asc=g}
 
+if INSTALL_MODELS
+db_DATA = ${MODELS:asc=g}
 BUILT_SOURCES = ${MODELS:asc=g}
+
+else !INSTALL_MODELS
+db_DATA = ${BENCHMARK_MODELS:asc=g}
+BUILT_SOURCES = ${BENCHMARK_MODELS:asc=g}
+
+endif
+# end INSTALL_MODELS
+
 
 MOSTLYCLEANFILES = ${MODELS:asc=g}
 

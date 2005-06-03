@@ -220,13 +220,16 @@ BC_ARG_ENABLE([build_itcl], [itcl-build], [Build the included incrTcl], [yes])
 BC_ARG_ENABLE([build_iwidgets], [iwidgets-build], [Install the included iwidgets], [yes])
 
 # doxygen - XXX unimplemented
-use_doxygen=no
+bc_use_doxygen=no
 #BC_ARG_ENABLE([use_doxygen], [doxygen], [Enable documentation generation with doxygen], [no])
 #AC_MSG_CHECKING(whether to generate documentation with doxygen)
 #AC_MSG_RESULT($bc_use_doxygen)
 
 # jove
 BC_ARG_ENABLE([build_jove], [jove], [Enable compilation of jove], [no])
+
+# example geometry
+BC_ARG_ENABLE([install_geometry], [models-install], [Enable installation of example geometry models], [yes])
 
 # optimized
 BC_ARG_ENABLE([use_optimized], [optimized], [Enable optimized compilation], [no])
@@ -375,6 +378,20 @@ AC_MSG_RESULT($bc_build_termlib)
 BC_ARG_ALIAS([build_jove], [jove-build])
 AC_MSG_CHECKING(whether to compile jove or not)
 AC_MSG_RESULT($bc_build_jove)
+
+BC_ARG_ALIAS([install_geometry], [models])
+BC_ARG_ALIAS([install_geometry], [install-models])
+BC_ARG_ALIAS([install_geometry], [geometry-install])
+BC_ARG_ALIAS([install_geometry], [geometry])
+BC_ARG_ALIAS([install_geometry], [install-geometry])
+BC_ARG_ALIAS([install_geometry], [example-models-install])
+BC_ARG_ALIAS([install_geometry], [example-models])
+BC_ARG_ALIAS([install_geometry], [install-example-models])
+BC_ARG_ALIAS([install_geometry], [example-geometry-install])
+BC_ARG_ALIAS([install_geometry], [example-geometry])
+BC_ARG_ALIAS([install_geometry], [install-example-geometry])
+AC_MSG_CHECKING(whether to install example geometry databases)
+AC_MSG_RESULT($bc_install_geometry)
 
 # optimized aliases (help uses optimized)
 BC_ARG_ALIAS([use_optimized], [optimize])
@@ -2071,6 +2088,7 @@ AM_CONDITIONAL(BUILD_ZLIB, [test "x$build_brlcad_zlib" = "xyes"])
 AM_CONDITIONAL(BUILD_URT, [test "x$build_brlcad_urt" = "xyes"])
 AM_CONDITIONAL(BUILD_TERMLIB, [test "x$build_brlcad_termlib" = "xyes"])
 AM_CONDITIONAL(BUILD_JOVE, [test "x$bc_build_jove" = "xyes"])
+AM_CONDITIONAL(INSTALL_MODELS, [test "x$bc_install_geometry" = "xyes"])
 
 AM_CONDITIONAL(JAVA, [test "x$bc_with_java" != "xno"])
 
@@ -2484,6 +2502,7 @@ echo
 echo Only build benchmark suite ...........: $bc_only_benchmark
 echo Only build librtserver ...............: $bc_only_rts
 echo Generate doxygen documentation .......: $bc_use_doxygen
+echo Install example geometry models ......: $bc_install_geometry
 echo
 if test "x$time_elapsed" != "xunknown" ; then
 echo Elapsed configuration time ...........: $time_elapsed
