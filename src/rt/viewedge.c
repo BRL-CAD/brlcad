@@ -63,7 +63,8 @@ extern 	FBIO	*fbp;			/* Framebuffer handle */
 extern	fastf_t	viewsize;
 extern	int	lightmodel;
 extern	int	width, height;
-extern int	per_processor_chunk;
+extern	int	per_processor_chunk;
+extern	int	default_background;
 
 static	int pixsize = 0;		/* bytes per pixel in scanline */
 
@@ -497,6 +498,22 @@ view_2init( struct application *ap )
 						    "blend buffer" );
       }	
     }
+  }
+
+  /* if non-default/inverted background was requested, swap the
+   * foreground and background colors.
+   */
+  if (!default_background) {
+      color tmp;
+      tmp[RED] = fgcolor[RED];
+      tmp[GRN] = fgcolor[GRN];
+      tmp[BLU] = fgcolor[BLU];
+      fgcolor[RED] = bgcolor[RED];
+      fgcolor[GRN] = bgcolor[GRN];
+      fgcolor[BLU] = bgcolor[BLU];
+      bgcolor[RED] = tmp[RED];
+      bgcolor[GRN] = tmp[GRN];
+      bgcolor[BLU] = tmp[BLU];
   }
  
   /*
