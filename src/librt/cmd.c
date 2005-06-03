@@ -184,20 +184,24 @@ rt_split_cmd(char **argv, int lim, register char *lp)
  *  Slice up input buffer into whitespace separated "words",
  *  look up the first word as a command, and if it has the
  *  correct number of args, call that function.
- *  The input buffer is altered in the process.
  *
  *  Expected to return -1 to halt command processing loop.
  *
  *  Based heavily on mged/cmd.c by Chuck Kennedy.
  */
 int
-rt_do_cmd(struct rt_i *rtip, register char *lp, register const struct command_tab *tp)
+rt_do_cmd(struct rt_i *rtip, const char *ilp, register const struct command_tab *tp)
            		      			/* FUTURE:  for globbing */
              		    
                                  	    
 {
 	register int	nwords;			/* number of words seen */
 	char		*cmd_args[MAXWORDS+1];	/* array of ptrs to args */
+	char 		*lp;
+	int		retval;
+
+	lp = bu_malloc(strlen(ilp)+1, "rt_do_cmd lp");
+	strcpy(lp, ilp);
 
 	nwords = rt_split_cmd( cmd_args, MAXWORDS, lp );
 	if( nwords <= 0 )
@@ -209,15 +213,18 @@ rt_do_cmd(struct rt_i *rtip, register char *lp, register const struct command_ta
 				/* the length of "n" is not significant, just needs to be big enough */
 		    strncmp( cmd_args[0], tp->ct_cmd, MAXWORDS ) != 0 )
 			continue;
-		if( (nwords >= tp->ct_min) &&
-		    (nwords <= tp->ct_max) )  {
-			return( tp->ct_func( nwords, cmd_args ) );
+		if( (nwords >= tp->ct_min) && (nwords <= tp->ct_max) ) {
+		    retval = tp->ct_func( nwords, cmd_args );
+		    bu_free(lp, "rt_do_cmd lp");
+		    return retval;
 		}
 		bu_log("rt_do_cmd Usage: %s %s\n\t%s\n",
 			tp->ct_cmd, tp->ct_parms, tp->ct_comment );
+		bu_free(lp, "rt_do_cmd lp");
 		return(-1);		/* ERROR */
 	}
 	bu_log("rt_do_cmd(%s):  command not found\n", cmd_args[0]);
+	bu_free(lp, "rt_do_cmd lp");
 	return(-1);			/* ERROR */
 }
 
