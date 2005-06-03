@@ -1378,11 +1378,13 @@ int arbn_in(int argc, char **argv, struct rt_db_internal *intern, char **prompt)
 	arbn->magic = RT_ARBN_INTERNAL_MAGIC;
 	arbn->neqn = num_planes;
 	arbn->eqn = (plane_t *)bu_calloc( arbn->neqn, sizeof( plane_t ), "arbn planes" );
+
+	/* Normal is unscaled, should have unit length; d is scaled */
 	for( i=0 ; i<arbn->neqn ; i++ ) {
 		arbn->eqn[i][0] = atof( argv[4+i*4] );
 		arbn->eqn[i][1] = atof( argv[4+i*4+1] );
 		arbn->eqn[i][2] = atof( argv[4+i*4+2] );
-		arbn->eqn[i][3] = atof( argv[4+i*4+3] );
+		arbn->eqn[i][3] = atof( argv[4+i*4+3] ) * local2base;
 	}
 
 	return CMD_OK;
