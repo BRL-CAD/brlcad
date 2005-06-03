@@ -67,6 +67,7 @@ int		doubles_out = 0;	/* u_char or double .pix output file */
 double		azimuth, elevation;
 int		lightmodel = 0;		/* Select lighting model */
 int		rpt_overlap = 1;	/* report overlapping region names */
+int		default_background = 1; /* Default is black */
 /***** end of sharing with viewing model *****/
 
 /***** variables shared with worker() ******/
@@ -166,7 +167,7 @@ int get_args( int argc, register char **argv )
 
 
 #define GETOPT_STR	\
-	".:,:@:a:b:c:d:e:f:g:h:ij:l:n:o:p:q:rs:tv:w:x:A:BC:D:E:F:G:H:IJ:K:MN:O:P:Q:RST:U:V:X:!:"
+	".:,:@:a:b:c:d:e:f:g:h:ij:l:n:o:p:q:rs:tv:w:x:A:BC:D:E:F:G:H:IJ:K:MN:O:P:Q:RST:U:V:WX:!:"
 
 	while( (c=bu_getopt( argc, argv, GETOPT_STR )) != EOF )  {
 		switch( c )  {
@@ -336,6 +337,10 @@ int get_args( int argc, register char **argv )
 				fprintf(stderr,"height=%d out of range\n", i);
 			else
 				height = i;
+			break;
+		case 'W':
+			(void)rt_do_cmd( (struct rt_i *)0, "set background=1.0/1.0/1.0", rt_cmdtab );
+			default_background = 0;
 			break;
 		case 'w':
 			i = atoi( bu_optarg );
