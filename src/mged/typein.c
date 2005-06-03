@@ -1301,9 +1301,9 @@ bot_in(int argc, char **argv, struct rt_db_internal *intern, char **prompt)
 
 	for( i=0 ; i<num_verts ; i++ )
 	{
-		bot->vertices[i*3] = atof( argv[7+i*3] );
-		bot->vertices[i*3+1] = atof( argv[8+i*3] );
-		bot->vertices[i*3+2] = atof( argv[9+i*3] );
+		bot->vertices[i*3] = atof( argv[7+i*3] ) * local2base;
+		bot->vertices[i*3+1] = atof( argv[8+i*3] ) * local2base;
+		bot->vertices[i*3+2] = atof( argv[9+i*3] ) * local2base;
 	}
 
 	arg_count = 7 + num_verts*3;
@@ -1332,7 +1332,7 @@ bot_in(int argc, char **argv, struct rt_db_internal *intern, char **prompt)
 				Tcl_AppendResult(interp, "Invalid face mode (must be 0 or 1)\n", (char *)NULL );
 				return CMD_BAD;
 			}
-			bot->thickness[i] = atof( argv[arg_count + i*2 + 1] );
+			bot->thickness[i] = atof( argv[arg_count + i*2 + 1] ) * local2base;
 		}
 	}
 
