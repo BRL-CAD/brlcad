@@ -391,6 +391,21 @@ view_init( struct application *ap, char *file, char *obj, int minus_o )
     bu_bomb ("rtedge: occlusion mode set, but no objects were specified.\n");
   }
 
+  /* if non-default/inverted background was requested, swap the
+   * foreground and background colors.
+   */
+  if (!default_background) {
+      color tmp;
+      tmp[RED] = fgcolor[RED];
+      tmp[GRN] = fgcolor[GRN];
+      tmp[BLU] = fgcolor[BLU];
+      fgcolor[RED] = bgcolor[RED];
+      fgcolor[GRN] = bgcolor[GRN];
+      fgcolor[BLU] = bgcolor[BLU];
+      bgcolor[RED] = tmp[RED];
+      bgcolor[GRN] = tmp[GRN];
+      bgcolor[BLU] = tmp[BLU];
+  }
 
   if( minus_o ) {
     /*
@@ -498,22 +513,6 @@ view_2init( struct application *ap )
 						    "blend buffer" );
       }	
     }
-  }
-
-  /* if non-default/inverted background was requested, swap the
-   * foreground and background colors.
-   */
-  if (!default_background) {
-      color tmp;
-      tmp[RED] = fgcolor[RED];
-      tmp[GRN] = fgcolor[GRN];
-      tmp[BLU] = fgcolor[BLU];
-      fgcolor[RED] = bgcolor[RED];
-      fgcolor[GRN] = bgcolor[GRN];
-      fgcolor[BLU] = bgcolor[BLU];
-      bgcolor[RED] = tmp[RED];
-      bgcolor[GRN] = tmp[GRN];
-      bgcolor[BLU] = tmp[BLU];
   }
  
   /*
