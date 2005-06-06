@@ -1350,6 +1350,7 @@ AC_CHECK_FUNCS(\
 	socket \
 	sqrt \
 	srand48 \
+	stat \
 	strcasecmp \
 	strchr \
 	strcpy \
