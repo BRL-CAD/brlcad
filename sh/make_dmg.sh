@@ -71,7 +71,7 @@ fi
 shift 4
 
 DMG_CAPACITY=250
-OPENUP=`dirname $0`/misc/macosx/openUp
+OPENUP=`dirname $0`/../misc/macosx/openUp
 
 PATH=/bin:/usr/bin:/usr/sbin
 LC_ALL=C
@@ -245,6 +245,7 @@ while [ ! "x$*" = "x" ] ; do
     argname="`basename $ARG`"
     if [ "x$argname" = "x" ] ; then
 	echo "ERROR: unable to determine the $ARG base name"
+	hdiutil eject $hdidMountedDisk
 	exit 1
     fi
 
@@ -257,6 +258,7 @@ while [ ! "x$*" = "x" ] ; do
 	fi
 	if [ ! -d "${VOL_DIR}/${argname}" ] ; then
 	    echo "ERROR: $argname failed to copy to the disk image"
+	    hdiutil eject $hdidMountedDisk
 	    exit 1
 	fi
 
@@ -270,21 +272,32 @@ while [ ! "x$*" = "x" ] ; do
 	fi
 	if [ ! -f "${VOL_DIR}/${argname}" ] ; then
 	    echo "ERROR: $argname failed to copy to the disk image"
+	    hdiutil eject $hdidMountedDisk
 	    exit 1
 	fi
+
+	for dstore in DS_Store .DS_Store ; do
+	    if [ "x$argname" = "x$dstore" ] ; then
+		if [ ! -f "${VOL_DIR}/.DS_Store" ] ; then
+		    mv "${VOL_DIR}/$dstore" "${VOL_DIR}/.DS_Store"
+		    if [ ! "x$?" = "x0" ] ; then
+			echo "ERROR: unable to successfully move $dstore to .DS_Store"
+			hdiutil eject $hdidMountedDisk
+			exit 1
+		    fi
+		    if [ -f "${VOL_DIR}/DS_Store" ] ; then
+			echo "ERROR: unable to move $dstore to .DS_Store"
+			hdiutil eject $hdidMountedDisk
+			exit 1
+		    fi
+		fi
+	    fi
+	done
 
 	if [ "x$found_background" = "xno" ] ; then
 	    background="`echo $argname | sed 's/^[bB][aA][cC][kK][gG][rR][oO][uU][nN][dD]\.[a-zA-Z][a-zA-Z][a-zA-Z]*$/__bg__/'`"
 	    if [ "x$background" = "x__bg__" ] ; then
-		if [ -x /Developer/Tools/SetFile ] ; then
-		    /Developer/Tools/SetFile -a V "${VOL_DIR}/${argname}"
-		    if [ ! "x$?" = "x0" ] ; then
-			echo "ERROR: unable to successfully set $argname invisible"
-			hdiutil eject $hdidMountedDisk
-			exit 1
-		    fi
-		    found_background=yes
-		fi
+		found_background="$argname"
 	    fi
 	fi
     else
@@ -294,14 +307,84 @@ while [ ! "x$*" = "x" ] ; do
     fi
 done
 
+osascript <<EOF
+tell application "Finder"
+    make new Finder window
+    set target of Finder window 1 to disk "$DMG_NAME"
+
+--  set imageFile to file "$found_background" of disk "$DMG_NAME"
+
+    tell Finder window 1
+	set toolbar visible to false
+	set zoomed to false
+	set bounds to {0, 0, 512, 320}
+	set position to {10, 54}
+	set current view to icon view
+
+	tell its icon view options
+	    set icon size to 96
+	    set arrangement to arranged by kind
+	    try
+-- only 10.4
+--		set background picture to imageFile
+	    end try
+	end tell
+    end tell
+end tell
+EOF
+if [ ! "x$?" = "x0" ] ; then
+    echo "ERROR: unable to run osascript successfully to set window properties"
+    hdiutil eject $hdidMountedDisk
+    exit 1
+fi
+
+if [ ! "x$found_background" = "xno" ] ; then
+    echo "You now have one minute to set the background on the disk image."
+    osascript <<EOF
+set oldApp to (path to frontmost application as string)
+tell application "Finder"
+    activate
+end tell
+tell application "System Events"
+	keystroke "j" using command down
+end tell
+say "You now have one minute to set the background on the disk image."
+delay 60
+tell application "System Events"
+	keystroke "j" using command down
+end tell
+tell application oldApp
+	activate
+end tell
+
+EOF
+    if [ ! "x$?" = "x0" ] ; then
+	echo "ERROR: unable to run osascript to set window background"
+	hdiutil eject $hdidMountedDisk
+	exit 1
+    fi
+
+    if [ -x /Developer/Tools/SetFile ] ; then
+	if [ -f "${VOL_DIR}/${found_background}" ] ; then
+	    /Developer/Tools/SetFile -a V "${VOL_DIR}/${found_background}"
+	    if [ ! "x$?" = "x0" ] ; then
+		echo "ERROR: unable to successfully set $found_background invisible"
+		hdiutil eject $hdidMountedDisk
+		exit 1
+	    fi
+	fi
+    fi
+fi
+
 if [ -x "$OPENUP" ] ; then
     $OPENUP "${VOL_DIR}/."
     if [ ! "x$?" = "x0" ] ; then
 	echo "ERROR: sanity check failure -- unexpected error returned from $OPENUP ($?)"
+	hdiutil eject $hdidMountedDisk
 	exit 1
     fi
 fi
-    
+
 hdiutil eject $hdidMountedDisk
 if [ ! "x$?" = "x0" ] ; then
     echo "ERROR: unable to successfully eject $hdidMountedDisk"
