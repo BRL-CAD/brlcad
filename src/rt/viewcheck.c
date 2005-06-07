@@ -81,6 +81,8 @@ Options:\n\
  -V #       View (pixel) aspect ratio (width/height)\n\
  -a #       Azimuth in degrees\n\
  -e #       Elevation in degrees\n\
+ -g #       Grid cell width\n\
+ -G #       Grid cell height\n\ 
  -M         Read matrix, cmds on stdin\n\
  -N #	    Set NMG debug flags\n\
  -o file.pl Specify UNIX-plot output file\n\
