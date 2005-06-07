@@ -48,6 +48,12 @@ using the
 .LP
 The following options are recognized.
 .TP
+.B \-g#
+The grid cell width, in millimeters.  Ordinarily, the cell width is
+computed by dividing the view size by the number of pixels of width.
+This option provides an alternate direct means to set the grid cell
+width.
+.TP
 .B \-s#
 Number of rays to fire in X and Y directions (square grid).
 Default is 512 (512x512).
@@ -71,6 +77,9 @@ Select elevation in degrees.  Used with
 .B \-a
 and conflicts with
 .B \-M
+.TP
+.B \-G
+Sets the grid cell height, in millimeters.
 .TP
 .B \-M
 Read model2view matrix from standard input.
