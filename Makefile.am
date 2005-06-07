@@ -199,7 +199,11 @@ $(PACKAGE)-$(VERSION).bin.zip:
 # the rules #
 #############
 
-.PHONY : benchmark bench regression regress test pkg dmg rpm deb zip tgz tbz
+.PHONY : noprod benchmark bench regression regress test pkg dmg rpm deb zip tgz tbz
+
+noprod:
+	find $(top_builddir) -type d -execdir make clean-binPROGRAMS \;
+	find $(top_builddir) -type d -execdir make clean-libLTLIBRARIES \;
 
 benchmark: all
 	${SH} $(top_srcdir)/bench/run.sh
