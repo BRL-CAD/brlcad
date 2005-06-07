@@ -37,8 +37,6 @@ static const char RCSrt[] = "@(#)$Header$ (BRL)";
 
 #include "common.h"
 
-
-
 #include <stdio.h>
 #include <ctype.h>
 #include <math.h>
@@ -85,8 +83,8 @@ vect_t		dx_model;		/* view delta-X as model-space vect */
 vect_t		dy_model;		/* view delta-Y as model-space vect */
 vect_t		dx_unit;		/* view delta-X as unit-len vect */
 vect_t		dy_unit;		/* view delta-Y as unit-len vect */
-fastf_t		cell_width;		/* model space grid cell width */
-fastf_t		cell_height;		/* model space grid cell height */
+fastf_t		cell_width=0.0;		/* model space grid cell width */
+fastf_t		cell_height=0.0;	/* model space grid cell height */
 int		cell_newsize=0;		/* new grid cell size */
 point_t		eye_model;		/* model-space location of eye */
 fastf_t         eye_backoff = 1.414;	/* dist from eye to center */
