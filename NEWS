@@ -26,6 +26,7 @@ intended to provide new users with sample geometry models to work
 with; and custom configurations may disable the installation of the
 additional geometry databases if so desired.
 
+* documented the rtcheck -g and -G options - Sean Morrison
 * fixed units bug in mged typein of bot and arbn - Daniel Ro§berg
 * added -W option to raytracers for white background - Sean Morrison
 * synchronized mged startup message with gui creation - Sean Morrison
