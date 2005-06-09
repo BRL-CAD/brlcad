@@ -9,10 +9,12 @@ scratch pad for the developers to use for tracking development ideas.
 
 THESE SHOULD HAPPEN BEFORE THE NEXT RELEASE
 
-* make sure sgi knobs work
+* bump it up
 
 
 THESE ARE LOWER PRIORITY OR FOR FUTURE RELEASES
+
+* make sure sgi knobs work
 
 * add a make target that removes only build products
 
