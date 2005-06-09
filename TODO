@@ -14,6 +14,8 @@ THESE SHOULD HAPPEN BEFORE THE NEXT RELEASE
 
 THESE ARE LOWER PRIORITY OR FOR FUTURE RELEASES
 
+* add a make target that removes only build products
+
 * ensure successful build on mingw
 
 * libbu whereis support for relocatable mged/bwish and locating
