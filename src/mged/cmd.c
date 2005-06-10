@@ -117,6 +117,7 @@ int f_bot_fuse(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 int f_bot_condense(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 int f_bot_face_fuse(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 int f_bot_merge(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
+int f_bot_split(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 extern int f_hide(), f_unhide();
 
 
@@ -199,6 +200,7 @@ static struct cmdtab cmdtab[] = {
 #endif
 	{"dbbinary", f_binary},
 	{"bot_merge", f_bot_merge},
+	{"bot_split", f_bot_split},
 	{"bot_face_fuse", f_bot_face_fuse},
 	{"bot_face_sort", cmd_bot_face_sort},
 	{"bot_condense", f_bot_condense},
@@ -2070,6 +2072,77 @@ mged_global_variable_setup(Tcl_Interp *interp)
 }
 
 int
+f_bot_split(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+{
+	struct directory *dp, *new_dp;
+	struct rt_db_internal intern;
+	struct rt_bot_internal **bots;
+	struct rt_bot_internal *bot;
+	int bot_count = 256;
+	int bot_used = 0;
+	int i, idx, retval, edge, faces, e, f ;
+	int * edges;
+	int avail_vert, avail_face, face;
+	
+
+	CHECK_DBI_NULL;
+	CHECK_READ_ONLY;
+
+	if (argc < 2) {
+	  Tcl_AppendResult(interp, "Usage:\nbot_merge bot_dest bot1_src [botn_src]\n", (char *)NULL );
+	  return TCL_ERROR;
+	}
+
+	
+	bots = bu_calloc(sizeof(struct rt_bot_internal), bot_count, "bot internal");
+
+	if ((dp = db_lookup(dbip, argv[1], LOOKUP_NOISY)) == DIR_NULL) {
+	    return TCL_ERROR;
+	}
+
+	if( rt_db_get_internal( &intern, dp, dbip, bn_mat_identity, &rt_uniresource ) < 0 ) {
+	    Tcl_AppendResult(interp, "rt_db_get_internal(", argv[i], ") error\n", (char *)NULL);
+	    return TCL_ERROR;
+	    
+	}
+
+	if( intern.idb_type != ID_BOT ) 	{
+	    Tcl_AppendResult(interp, argv[i], " is not a BOT solid!!!  skipping\n", (char *)NULL );
+	    return TCL_ERROR;
+	}
+
+	bot = (struct rt_bot_internal *)intern.idb_ptr;
+	edges = bu_calloc(bot->num_faces, 3, "num_edges");
+
+
+	for (face=0 ; face < bot->num_faces ; face++) {
+	    int *faceptr = &bot->faces[face*3];
+
+	    for (edge=0 ; edge < 3 ; edge++) {
+
+		for (f=face+1 ; f < bot->num_faces ; f++) {
+		    int *fptr = &bot->faces[f*3];
+
+		    for (e=0 ; e < 3 ; e++) {
+			/* does e match edge? */
+
+			if ( (fptr[e] == faceptr[edge] && fptr[ (e+1) % 3 ] == faceptr[ (edge+1) % 3 ]) ||
+			     (fptr[e] == faceptr[ (edge+1) % 3 ] && fptr[ (e+1) % 3 ] == faceptr[edge]) ) {
+			    /* edge match */
+			    edges[face*3+edge]++;
+			    edges[face*3+edge]++;
+			}
+
+
+		    }
+		}
+	    }
+	}
+
+}
+
+
+int
 f_bot_merge(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
 	struct directory *dp, *new_dp;
@@ -2174,6 +2247,13 @@ f_bot_merge(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
 	bots[0]->vertices = bu_calloc(bots[0]->num_vertices*3, sizeof(fastf_t), "verts");
 	bots[0]->faces = bu_calloc(bots[0]->num_faces*3, sizeof(int), "verts");
+	bu_log("vert:%08x face:%08x\n", bots[0]->vertices, bots[0]->faces);
+
+
+	bots[0]->vertices = bu_calloc(bots[0]->num_vertices*3, sizeof(fastf_t), "verts");
+	bots[0]->faces = bu_calloc(bots[0]->num_faces*3, sizeof(int), "verts");
+
+
 	avail_vert = 0;
 	avail_face = 0;
 
@@ -2234,20 +2314,6 @@ f_bot_merge(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 		TCL_WRITE_ERR_return;
 	}
 
-
-	bu_free(bots[0]->vertices, "verts");
-	bu_free(bots[0]->faces, "faces");
-#if 0
-	for (i=0 ; i < idx ; i++) {
-	    if( bots[i]->thickness) bu_free(bots[i]->thickness, "thickness");
-	    if( bots[i]->normals) bu_free(bots[i]->normals, "normals");
-	    if( bots[i]->face_normals) bu_free(bots[i]->face_normals, "face_normals");
-	    bu_free(bots[i]->vertices, "verts");
-	    bu_free(bots[i]->faces, "faces");
-	}
-#else
-	bu_log("leaking memory\n");
-#endif
 	bu_free(bots, "bots");
 
 	return retval;
