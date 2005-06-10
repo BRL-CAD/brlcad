@@ -2247,12 +2247,6 @@ f_bot_merge(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
 	bots[0]->vertices = bu_calloc(bots[0]->num_vertices*3, sizeof(fastf_t), "verts");
 	bots[0]->faces = bu_calloc(bots[0]->num_faces*3, sizeof(int), "verts");
-	bu_log("vert:%08x face:%08x\n", bots[0]->vertices, bots[0]->faces);
-
-
-	bots[0]->vertices = bu_calloc(bots[0]->num_vertices*3, sizeof(fastf_t), "verts");
-	bots[0]->faces = bu_calloc(bots[0]->num_faces*3, sizeof(int), "verts");
-
 
 	avail_vert = 0;
 	avail_face = 0;
