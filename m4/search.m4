@@ -72,6 +72,14 @@ if test -d "$search_dir" ; then
 		fi
 		bc_found=1
 	fi
+	if test -d "${search_dir}/lib64" ; then
+		if test "x$LDFLAGS" = "x" ; then
+			LDFLAGS="-L${search_dir}/lib64"
+		else
+			LDFLAGS="${LDFLAGS} -L${search_dir}/lib64"
+		fi
+		bc_found=1
+	fi
 	if test -d "${search_dir}/lib" ; then
 		if test "x$LDFLAGS" = "x" ; then
 			LDFLAGS="-L${search_dir}/lib"
