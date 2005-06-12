@@ -1,6 +1,10 @@
 # $Id$
 
-stuffdir = $(prefix)/html/manuals/libbu
+htmldocsdir = $(BRLCAD_DATA_DIR)/doc/html/manuals/libbu
 
-stuff_DATA = cmdhist_obj.html contents.html index.html
-EXTRA_DIST = $(stuff_DATA)
+htmldocs_DATA = \
+	cmdhist_obj.html \
+	contents.html \
+	index.html
+
+EXTRA_DIST = $(htmldocs_DATA)

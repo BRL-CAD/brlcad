@@ -1,7 +1,7 @@
 # $Id$
 
 this_dir = tclscripts/mged
-tcldir = $(prefix)/$(this_dir)
+tcldir = $(BRLCAD_DATA_DIR)/$(this_dir)
 
 scripties = \
 	accel.tcl \
@@ -124,12 +124,6 @@ tcl_SCRIPTS = \
 BUILT_SOURCES = \
 	tclIndex
 
-pkgIndex.tcl:
-	$(top_builddir)/src/bwish/btclsh $(top_srcdir)/src/tclscripts/ampi.tcl $(top_srcdir)/src/$(this_dir)
-
-tclIndex:
-	$(top_builddir)/src/bwish/btclsh $(top_srcdir)/src/tclscripts/ami.tcl $(top_srcdir)/src/$(this_dir)
-
 EXTRA_DIST = \
 	$(dist_tcl_DATA) \
 	$(scripties)
@@ -137,3 +131,9 @@ EXTRA_DIST = \
 CLEANFILES = $(BUILT_SOURCES)
 
 MAINTAINERCLEANFILES = Makefile.in
+
+pkgIndex.tcl:
+	$(top_builddir)/src/bwish/btclsh $(top_srcdir)/src/tclscripts/ampi.tcl $(top_srcdir)/src/$(this_dir)
+
+tclIndex:
+	$(top_builddir)/src/bwish/btclsh $(top_srcdir)/src/tclscripts/ami.tcl $(top_srcdir)/src/$(this_dir)

@@ -4,7 +4,9 @@ SUBDIRS = \
 	html \
 	legal
 
-data_DATA = \
+documentationdir = $(BRLCAD_DATA_DIR)/doc
+
+documentation_DATA = \
 	README.IRIX \
 	README.MacOSX \
 	anim.txt \
@@ -34,7 +36,7 @@ man_MANS = \
 	plot3.5
 
 EXTRA_DIST = \
-	$(data_DATA) \
+	$(documentation_DATA) \
 	$(man_MANS)
 
 MAINTAINERCLEANFILES = Makefile.in

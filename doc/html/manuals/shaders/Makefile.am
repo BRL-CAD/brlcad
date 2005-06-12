@@ -1,6 +1,7 @@
 # $Id$
 
-stuffdir = $(prefix)/html/manuals/shaders
+htmldocsdir = $(BRLCAD_DATA_DIR)/doc/html/manuals/shaders
 
-stuff_DATA = camo.html
-EXTRA_DIST = $(stuff_DATA)
+htmldocs_DATA = camo.html
+
+EXTRA_DIST = $(htmldocs_DATA)

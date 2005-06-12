@@ -1,8 +1,8 @@
 # $Id$
 
-stuffdir = $(prefix)/html/ReleaseNotes/Rel5.0/Summary
+htmldocsdir = $(BRLCAD_DATA_DIR)/doc/html/ReleaseNotes/Rel5.0/Summary
  
-stuff_DATA = \
+htmldocs_DATA = \
 	activem.gif \
 	activep.gif \
 	collapse.gif \
@@ -76,4 +76,4 @@ stuff_DATA = \
 	tsld018.htm \
 	tsld019.htm
 
-EXTRA_DIST = $(stuff_DATA)
+EXTRA_DIST = $(htmldocs_DATA)

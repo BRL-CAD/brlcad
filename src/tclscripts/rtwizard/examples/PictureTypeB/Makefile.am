@@ -1,6 +1,6 @@
 # $Id$
 
-tcldir = $(prefix)/tclscripts/rtwizard/examples/PictureTypeB
+tcldir = $(BRLCAD_DATA_DIR)/tclscripts/rtwizard/examples/PictureTypeB
 
 dist_tcl_DATA = \
 	desc.txt \

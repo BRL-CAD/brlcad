@@ -1,7 +1,13 @@
 # $Id$
 
+htmldocsdir = $(BRLCAD_DATA_DIR)/doc/html/manuals/libdm
 
-stuffdir = $(prefix)/html/manuals/libdm
+htmldocs_DATA = \
+	api.html \
+	contents.html \
+	dm_obj.html \
+	index.html \
+	preface.html \
+	tcl.html
 
-stuff_DATA = api.html contents.html dm_obj.html index.html preface.html tcl.html
-EXTRA_DIST = $(stuff_DATA)
+EXTRA_DIST = $(htmldocs_DATA)

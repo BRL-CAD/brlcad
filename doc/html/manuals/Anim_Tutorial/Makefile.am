@@ -1,8 +1,8 @@
 # $Id$
 
-stuffdir = $(prefix)/html/manuals/Anim_Tutorial
+htmldocsdir = $(BRLCAD_DATA_DIR)/doc/html/manuals/Anim_Tutorial
 
-stuff_DATA = \
+htmldocs_DATA = \
 	Lee_tux.gif \
 	animtbl.gif \
 	chans.html \
@@ -45,4 +45,4 @@ stuff_DATA = \
 	v_eqn1.gif \
 	v_eqn2.gif
 
-EXTRA_DIST = $(stuff_DATA)
+EXTRA_DIST = $(htmldocs_DATA)

@@ -51,7 +51,7 @@ EXTRA_DIST = \
 	${MODELS} \
 	db.php
 
-dbdir = $(datadir)/brlcad/db
+dbdir = $(BRLCAD_DATA_DIR)/db
 
 if INSTALL_MODELS
 db_DATA = ${MODELS:asc=g}
