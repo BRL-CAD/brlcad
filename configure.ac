@@ -55,7 +55,8 @@ dnl
 dnl Features of the GNU Autotools that would require an increase in
 dnl the minimum version requirement are highly discouraged.  Likewise
 dnl discouraged is rolling back support for versions released prior
-dnl to the AC_PREREQ version shown below.
+dnl to the AC_PREREQ version shown below unless extensive testing has
+dnl been performed.
 dnl
 dnl Strive to tame the chaos that is so easily achieved.
 dnl
@@ -137,7 +138,15 @@ if test ! "x$BRLCAD_ROOT" = "x" ; then
 	fi
 fi
 
-AC_MSG_CHECKING([whether dependency tracking should be enabled])
+# set up our default shared/non-shared data install directories
+BRLCAD_DATA_DIR='${pkgdatadir}/${BRLCAD_VERSION}'
+AC_SUBST(BRLCAD_DATA_DIR)
+
+# if this is not a CVS checkout, disable dependency tracking for a
+# faster build. it's not likely that the user is doing development
+# from a source release. at least they really should not given the
+# extra steps that would be necessary for making a proper diff.
+AC_MSG_CHECKING([whether dependency tracking should be enabled]) 
 if test -d $srcdir/CVS ; then
 	AC_MSG_RESULT(it should)
 	AM_INIT_AUTOMAKE
@@ -148,7 +157,7 @@ fi
 AM_CONFIG_HEADER([include/brlcad_config.h])
 
 # a secondary automated automake may blow away COPYING & INSTALL due
-# to an automake bug in older version, so restore those files if
+# to an automake bug in older versions, so restore those files if
 # needed.
 BC_RESTORE_CLOBBERED([COPYING INSTALL], [misc])
 
@@ -2259,7 +2268,7 @@ TKSTUB='${top_builddir}/src/other/libtk/generic/libtkstub.la'
 AC_SUBST(TKSTUB)
 
 dnl sample applications
-SAMPLE_APPLICATIONS_DIR='${prefix}/sample_applications'
+SAMPLE_APPLICATIONS_DIR='$(BRLCAD_DATA_DIR)/sample_applications'
 AC_SUBST(SAMPLE_APPLICATIONS_DIR)
 
 
