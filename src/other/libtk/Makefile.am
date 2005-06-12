@@ -125,7 +125,7 @@ libtk@TK_VERSION@_la_SOURCES = $(libtk_la_SOURCES)
 libtk@TK_VERSION@_la_LDFLAGS = $(libtk_la_LDFLAGS)
 libtk@TK_VERSION@_la_LIBADD = $(libtk_la_LIBADD)
 
-bin_PROGRAMS = wish wish.static
+noinst_PROGRAMS = wish wish.static
 
 # moved from unix to this dir
 wish_SOURCES =
