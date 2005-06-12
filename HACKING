@@ -533,6 +533,14 @@ belong (or what should be removed).  If CVS cannot be used, please
 provide the complete release and build number of the sources you
 worked with.
 
+Any source code that is provided must not modify or conflict with the
+existing COPYING file distribution requirements.  This means that
+library modifications must be LGPL-compatible and changes to
+applications must be GPL-compatible.  Contributors are asked in good
+faith to only provide patches that may legally be incorporated into
+BRL-CAD under the existing distribution provisions described in the
+COPYING file.
+
 Patches that are difficult to apply are difficult to accept.
 
 
@@ -568,9 +576,9 @@ policy document for more details.
 CVS commit access is evaluated on a person-to-person basis at the
 discretion of the existing developers.  If you'd like to have commit
 access, there is usually no need to ask.  Getting involved with the
-other developers and making patches will generally result in
-consideration to grant CVS access over time.  If you have to ask for
-it, you probably won't get it.
+other developers and making patches will generally result in automatic
+consideration for CVS commit access.  If you have to ask for it, you
+probably won't get it.
 
 Those with CVS commit access have a responsibility to ensure that
 other developers are following the guidelines that have been described
@@ -717,6 +725,6 @@ outlets with the details of the new release:
 GETTING HELP
 ------------
 
-See the GETTING STARTED section above.  Basically communicate with the
-existing developers.  There is an IRC channel, e-mail mailing lists,
-and on-line forums.
+See the GETTING STARTED section above.  Basically, communicate with
+the existing developers.  There is an IRC channel, e-mail mailing
+lists, and on-line forums.
