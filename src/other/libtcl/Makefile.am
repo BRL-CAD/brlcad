@@ -97,7 +97,7 @@ libtcl@TCL_VERSION@_la_SOURCES = $(libtcl_la_SOURCES)
 libtcl@TCL_VERSION@_la_LDFLAGS = $(libtcl_la_LDFLAGS)
 libtcl@TCL_VERSION@_la_LIBADD = $(libtcl_la_LIBADD)
 
-bin_PROGRAMS = tclsh tclsh.static
+noinst_PROGRAMS = tclsh tclsh.static
 
 tclsh_SOURCES = 
 tclsh_LDADD = \
