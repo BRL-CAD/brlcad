@@ -608,7 +608,7 @@ mk_binunif(
 	const char *name,
 	const genptr_t data,
 	wdb_binunif data_type,
-	off_t count)
+	long count)
 {
 	struct rt_binunif_internal *binunif;
 	unsigned int minor_type = 0;

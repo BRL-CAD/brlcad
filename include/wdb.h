@@ -139,7 +139,7 @@ WDB_EXPORT int mk_id_editunits(
 /*
  *  Solid conversion routines
  */
-/* wdb.c */
+/* libwdb/wdb.c */
 WDB_EXPORT WDB_EXTERN(int mk_half, (struct rt_wdb *fp, const char *name, const vect_t norm, double d) );
 WDB_EXPORT int mk_grip( 
 	struct rt_wdb *wdbp,
@@ -261,7 +261,7 @@ typedef enum {
     WDB_BINUNIF_FILE_INT64,
     WDB_BINUNIF_FILE_UINT64
 } wdb_binunif;
-WDB_EXPORT WDB_EXTERN(int mk_binunif, (struct rt_wdb *fp, const char *name, const genptr_t data, wdb_binunif data_type, off_t count) );
+WDB_EXPORT WDB_EXTERN(int mk_binunif, (struct rt_wdb *fp, const char *name, const genptr_t data, wdb_binunif data_type, long count) );
 
 #define mk_bsolid(fp,name,nsurf,res)	+++error_obsolete_libwdb_routine+++
 #define mk_bsurf(fp,srf)		+++error_obsolete_libwdb_routine+++
