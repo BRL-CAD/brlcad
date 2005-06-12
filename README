@@ -44,6 +44,7 @@ CONTENTS
   Distribution Details
   Background Material
   Future Events
+  Getting Help
 
 
 GETTING STARTED
@@ -139,8 +140,8 @@ BRL-CAD mailing lists available on the project website at
 http://sourceforge.net/mail/?group_id=105292 including three
 developer-oriented lists, a user list, and a read-only news
 announcement list.  See the posted archives to get a feel for the
-volume of list traffic for each list and to read/search previous
-traffic.
+volume of list traffic for each list and to read/search past
+discussions.
 
 On-line web forums are likewise available on the project site at
 http://sourceforge.net/forum/?group_id=105292
@@ -210,11 +211,27 @@ of Solid Models".
 FUTURE EVENTS
 -------------
 
-It is expected that new releases of this software will be issued
-between once and twice a year.  This number will be heavily variant on
-the level of user involvement and contributions.  Information about
-new releases will be routinely provided by electronic mail to
-recipients of this software.
+It is expected that new releases of BRL-CAD will be issued
+approximately once a month.  A new release is scheduled for
+distribution at the beginning of every month, usually being posted
+sometime within the first week of every month.
+
+Depending on need, demand, and activity, additional releases may also
+be made.  The additional releases will be heavily dependant upon the
+level of user involvement and contributions in particular.
+Information about new releases will be routinely provided by
+electronic mail to recipients of this software as well as to the
+BRL-CAD NEWS mailing list:
+
+  http://sourceforge.net/mail/?group_id=105292
+
+
+GETTING HELP
+------------
+
+Feel free to direct any unanswered questions relating to BRL-CAD via
+e-mail to 'devs@brlcad.org' or to any of the other contact means
+described above in the communications section of this document.
 
 Best Wishes,
 The BRL-CAD Development Team
