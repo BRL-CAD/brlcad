@@ -337,7 +337,7 @@ install-data-local:
 	    if test "x$USER" = "x" ; then \
 		USER="unknown" ; \
 	    fi ; \
-	    $(ECHO) "Installed BRL-CAD Release @BRLCAD_VERSION@ Build @CONFIG_DATE@ by ${USER} on `date` to $(DESTDIR)$(prefix)" >> install.$(host_triplet).log ; \
+	    $(ECHO) "Installed BRL-CAD Release @BRLCAD_VERSION@ Build @CONFIG_DATE@ by ${USER} to $(DESTDIR)$(prefix) on `date`" >> install.$(host_triplet).log ; \
 	fi
 
 
