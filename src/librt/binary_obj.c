@@ -69,8 +69,13 @@ rt_mk_binunif(struct rt_wdb *wdbp, const char *obj_name, const char *file_name, 
 {
 	struct stat st;
 	unsigned int major_type=DB5_MAJORTYPE_BINARY_UNIF;
+#if defined(_WIN32) && !defined(__CYGWIN__)
+	__int64 num_items=-1;
+	__int64 obj_length=-1;
+#else
 	long long num_items=-1;
 	long long obj_length=-1;
+#endif
 	int item_length=0;
 	struct bu_mapped_file *bu_fd;
 	struct rt_binunif_internal *bip;
