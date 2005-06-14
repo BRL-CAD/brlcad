@@ -10,6 +10,7 @@ entire history of the project is available through CVS.
 --- 2005-07-XX  Release 7.3.0                                      ---
 ----------------------------------------------------------------------
 
+* fixed potential infinite loop bug in BoT primitive - Bob Parker
 * added bot_merge mged cmd (combine 2 bots into 1) - Lee Butler
 
 ----------------------------------------------------------------------
