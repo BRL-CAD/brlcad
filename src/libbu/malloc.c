@@ -420,7 +420,12 @@ bu_realloc(register genptr_t ptr, unsigned int cnt, const char *str)
 			fprintf(stderr,"ERROR bu_realloc(x%lx, %s) pointer bad, "
 				"or not allocated with bu_malloc!  Ignored.\n",
 				(long)ptr, str);
-			return;
+			/*
+			 * Since we're ignoring this, atleast return
+			 * the pointer that was passed in. We should
+			 * probably return NULL.
+			 */
+			return ptr;
 		}
 		ptr = (genptr_t)mp;
 		BU_LIST_DEQUEUE(&(mp->q));
