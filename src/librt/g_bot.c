@@ -2514,7 +2514,7 @@ rt_bot_same_orientation( const int *a, const int *b )
 {
 	int i,j;
 
-	for( i=0 ; i<3 ; j++ )
+	for( i=0 ; i<3 ; i++ )
 	{
 		if( a[0] == b[i] )
 		{
