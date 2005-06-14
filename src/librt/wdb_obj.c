@@ -301,6 +301,7 @@ static void wdb_dir_summary(struct db_i *dbip, Tcl_Interp *interp, int flag);
 static struct directory ** wdb_dir_getspace(struct db_i *dbip, register int num_entries);
 static union tree *wdb_pathlist_leaf_func(struct db_tree_state *tsp, struct db_full_path *pathp, struct rt_db_internal *ip, genptr_t client_data);
 HIDDEN union tree *facetize_region_end(struct db_tree_state *tsp, struct db_full_path *pathp, union tree *curtree, genptr_t client_data);
+static int pathListNoLeaf = 0;
 
 
 static struct bu_cmdtab wdb_cmds[] = {
@@ -4475,12 +4476,13 @@ wdb_rmap_cmd(struct rt_wdb	*wdbp,
 
     BU_LIST_INIT(&headIdName.l);
 
-    /* For all regions */
+    /* For all regions not hidden */
     for (i = 0; i < RT_DBNHASH; i++) {
 	for (dp = wdbp->dbip->dbi_Head[i]; dp != DIR_NULL; dp = dp->d_forw) {
 	    int found = 0;
 
-	    if (!(dp->d_flags & DIR_REGION))
+	    if (!(dp->d_flags & DIR_REGION) ||
+		(dp->d_flags & DIR_HIDDEN))
 		continue;
 
 	    if (rt_db_get_internal(&intern,
@@ -8201,7 +8203,7 @@ wdb_pathlist_cmd(struct rt_wdb	*wdbp,
 		 int		argc,
 		 char 		**argv)
 {
-	if (argc < 2) {
+	if (argc < 2 || 3 < argc) {
 		struct bu_vls vls;
 
 		bu_vls_init(&vls);
@@ -8209,6 +8211,16 @@ wdb_pathlist_cmd(struct rt_wdb	*wdbp,
 		Tcl_Eval(interp, bu_vls_addr(&vls));
 		bu_vls_free(&vls);
 		return TCL_ERROR;
+	}
+
+	pathListNoLeaf = 0;
+
+	if (argc == 3) {
+	    if (!strcmp(argv[1], "-noleaf"))
+		pathListNoLeaf = 1;
+
+	    ++argv;
+	    --argc;
 	}
 
 	if (db_walk_tree(wdbp->dbip, argc-1, (const char **)argv+1, 1,
@@ -9583,7 +9595,12 @@ wdb_pathlist_leaf_func(struct db_tree_state	*tsp,
 	RT_CK_FULL_PATH(pathp);
 	RT_CK_DB_INTERNAL(ip);
 
-	str = db_path_to_string(pathp);
+	if (pathListNoLeaf) {
+	    --pathp->fp_len;
+	    str = db_path_to_string(pathp);
+	    ++pathp->fp_len;
+	} else
+	    str = db_path_to_string(pathp);
 
 	Tcl_AppendElement(interp, str);
 
