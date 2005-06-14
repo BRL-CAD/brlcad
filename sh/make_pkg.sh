@@ -339,7 +339,7 @@ if [ $? != 0 ] ; then
     exit 1
 fi
 
-pax -p e -rw "$ARCHIVE" "$PKG/Contents/Root"
+pax -L -p e -rw "$ARCHIVE" "$PKG/Contents/Root"
 if [ $? != 0 ] ; then
     echo "ERROR: unable to successfully create the archive root of $ARCHIVE"
     exit 1
@@ -371,15 +371,23 @@ if [ -d "$PKG/Contents/Root" ] ; then
     exit 1
 fi
 
-NUM_FILES=`find "${ARCHIVE}" -type f | wc | awk '{print $1}'`
+NUM_FILES=`find -L "${ARCHIVE}" -type f | wc | awk '{print $1}'`
 if [ "x$NUM_FILES" = "x" ] ; then
     echo "ERROR: unable to get a file count from $ARCHIVE"
     exit 1
 fi
+if [ "x$NUM_FILES" = "x0" ] ; then
+    echo "ERROR: there are no files to archive"
+    exit 1
+fi
 
-INST_SIZE=`du -k -s "${ARCHIVE}" | awk '{print $1}'`
+INST_SIZE=`du -L -k -s "${ARCHIVE}" | awk '{print $1}'`
 if [ "x$INST_SIZE" = "x" ] ; then
     echo "ERROR: unable to get a usage size from $ARCHIVE"
+    exit 1
+fi
+if [ "x$INST_SIZE" = "x0" ] ; then
+    echo "ERROR: install size is empty"
     exit 1
 fi
 
@@ -387,6 +395,10 @@ COMP_SIZE=`ls -l "$PKG/Contents/Archive.pax.gz" | awk '{print $5}'`
 COMP_SIZE=`echo "$COMP_SIZE 1024 / p" | dc`
 if [ "x$COMP_SIZE" = "x" ] ; then
     echo "ERROR: unable to get the compressed archive size"
+    exit 1
+fi
+if [ "x$COMP_SIZE" = "x0" ] ; then
+    echo "ERROR: compressed archive is empty"
     exit 1
 fi
 
