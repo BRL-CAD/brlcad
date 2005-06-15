@@ -332,6 +332,7 @@ dgo_open_cmd(char		*oname,
 	BU_LIST_INIT(&dgop->dgo_headVDraw);
 	BU_LIST_INIT(&dgop->dgo_observers.l);
 	BU_LIST_INIT(&dgop->dgo_headRunRt.l);
+	dgop->dgo_freeSolids = &FreeSolid;
 
 	dgo_init_qray(dgop);
 
