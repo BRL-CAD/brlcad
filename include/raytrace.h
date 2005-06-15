@@ -1249,6 +1249,7 @@ struct dg_obj {
 	struct bu_list		dgo_headSolid;	/* head of solid list */
 	struct bu_list		dgo_headVDraw;	/* head of vdraw list */
 	struct vd_curve		*dgo_currVHead;	/* current vdraw head */
+	struct solid		*dgo_freeSolids; /* ptr to head of free solid list */
 	char			*dgo_rt_cmd[RT_MAXARGS];
 	int			dgo_rt_cmd_len;
 	struct bu_observer	dgo_observers;
