@@ -40,14 +40,12 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "common.h"
 
-
-
 #include <stdio.h>
 #include <math.h>
 #ifdef HAVE_STRING_H
-#include <string.h>
+#  include <string.h>
 #else
-#include <strings.h>
+#  include <strings.h>
 #endif
 
 #include "machine.h"
@@ -58,6 +56,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "raytrace.h"
 
 #include "./debug.h"
+
 
 BU_EXTERN(void db_ck_tree, (const union tree *tp));
 
@@ -985,6 +984,27 @@ db_follow_path_for_state(struct db_tree_state *tsp, struct db_full_path *total_p
 	return ret;
 }
 
+/*
+ *   D B _ D E T E C T _ C Y C L E
+ *
+ *  Helper routine to detect cyclic references
+ */
+HIDDEN int
+db_detect_cycle( struct db_full_path *pathp, union tree *tp )
+{
+    /* skip the last one added since it is currently being tested. */
+    long int depth = pathp->fp_len - 1;
+
+    /* check the path to see if it is groundhog day */
+    while (--depth >= 0) {
+	if (strcmp(tp->tr_l.tl_name, pathp->fp_names[depth]->d_namep) == 0) {
+	    return 1;
+	}
+    }
+
+    /* not found */
+    return 0;
+}
 
 /*
  *			D B _ R E C U R S E _ S U B T R E E
@@ -1015,6 +1035,27 @@ db_recurse_subtree(union tree *tp, struct db_tree_state *msp, struct db_full_pat
 			tp->tr_l.tl_name = NULL;
 			tp->tr_op = OP_NOP;
 			goto out;
+		}
+
+		/* protect against cyclic geometry */
+		if ( db_detect_cycle( pathp, tp ) ) {
+		    int depth = pathp->fp_len;
+
+		    bu_log("Detected cyclic reference of %s\nPath stack is:\n", tp->tr_l.tl_name);
+		    while (--depth >=0) {
+			bu_log("\tPath depth %d is %s\n", depth, pathp->fp_names[depth]->d_namep);
+		    }
+		    bu_log("WARNING: skipping the cyclic reference lookup\n");
+
+		    /* Lookup of this leaf resulted in a cyclic reference, NOP it out */
+		    if( tp->tr_l.tl_mat )  {
+			bu_free( (char *)tp->tr_l.tl_mat, "tl_mat" );
+			tp->tr_l.tl_mat = NULL;
+		    }
+		    bu_free( tp->tr_l.tl_name, "tl_name" );
+		    tp->tr_l.tl_name = NULL;
+		    tp->tr_op = OP_NOP;
+		    goto out;
 		}
 
 		/* Recursive call */
@@ -1081,6 +1122,7 @@ db_recurse(struct db_tree_state *tsp, struct db_full_path *pathp, struct combine
 	struct directory	*dp;
 	struct rt_db_internal	intern;
 	union tree		*curtree = TREE_NULL;
+	static long int		depth = 0;
 
 	RT_CK_DBTS(tsp);
 	RT_CHECK_DBI( tsp->ts_dbip );
