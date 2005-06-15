@@ -14,7 +14,9 @@
 #ifndef NO_OPEN_PIPES
 /* Need to have a SIGCLD signal catcher. */
 #include <signal.h>
-#include <sys/wait.h>
+#ifdef HAVE_SYS_WAIT_H
+#  include <sys/wait.h>
+#endif
 #include <errno.h>
 
 /* Count outstanding children.  Assume no more than 100 possible. */

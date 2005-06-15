@@ -90,7 +90,9 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 #else
 #  include <strings.h>
 #endif
-#include <sys/wait.h>
+#ifdef HAVE_SYS_WAIT_H
+#  include <sys/wait.h>
+#endif
 
 #include <sys/time.h>		/* For struct timeval */
 

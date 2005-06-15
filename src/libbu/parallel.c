@@ -54,7 +54,9 @@ static const char RCSparallel[] = "@(#)$Header$ (ARL)";
 #  include <sys/time.h>
 #  include <sys/types.h>
 #  include <sys/resource.h>
-#  include <sys/wait.h>
+#  ifdef HAVE_SYS_WAIT_H
+#    include <sys/wait.h>
+#  endif
 #  include <sys/stat.h>
 #  include <sys/sysinfo.h>
 #endif
@@ -63,7 +65,9 @@ static const char RCSparallel[] = "@(#)$Header$ (ARL)";
 #  include <sys/types.h>
 #  include <sys/time.h>
 #  include <sys/resource.h>
-#  include <sys/wait.h>
+#  ifdef HAVE_SYS_WAIT_H
+#    include <sys/wait.h>
+#  endif
 #  include <sys/stat.h>
 #  include <signal.h>
 #endif
@@ -72,7 +76,9 @@ static const char RCSparallel[] = "@(#)$Header$ (ARL)";
 #  include <sys/types.h>
 #  include <sys/time.h>
 #  include <sys/resource.h>
-#  include <sys/wait.h>
+#  ifdef HAVE_SYS_WAIT_H
+#    include <sys/wait.h>
+#  endif
 #  include <sys/stat.h>
 #  include <signal.h>
 #  ifdef BSD

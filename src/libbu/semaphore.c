@@ -95,7 +95,9 @@ struct bu_semaphores {
 # include <malloc.h>
 /* <malloc.h> #include's <stddef.h> */
 
-#include <sys/wait.h>
+#ifdef HAVE_SYS_WAIT_H
+#  include <sys/wait.h>
+#endif
 
 #ifdef _WIN32
 static char		bu_lockfile[] = "C:\\bu_lockXXXXXX";

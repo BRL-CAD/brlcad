@@ -58,7 +58,9 @@ static const char RCSworker[] = "@(#)$Header$ (BRL)";
 #if defined(USE_FORKED_THREADS)
 #  include <sys/select.h>
 #  include <sys/types.h>
-#  include <sys/wait.h>
+#  ifdef HAVE_SYS_WAIT_H
+#    include <sys/wait.h>
+#  endif
 #  include <unistd.h>
 #endif
 
