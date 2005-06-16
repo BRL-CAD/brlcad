@@ -307,12 +307,17 @@ while [ ! "x$*" = "x" ] ; do
     fi
 done
 
+if [ ! "x$found_background" = "xno" ] ; then
+    echo "You now have 30 seconds to set the background on the disk image."
+fi
 osascript <<EOF
+set oldApp to (path to frontmost application as string)
 tell application "Finder"
+    activate
     make new Finder window
     set target of Finder window 1 to disk "$DMG_NAME"
 
---  set imageFile to file "$found_background" of disk "$DMG_NAME"
+--    set imageFile to file "$found_background" of disk "$DMG_NAME"
 
     tell Finder window 1
 	set toolbar visible to false
@@ -330,40 +335,32 @@ tell application "Finder"
 	    end try
 	end tell
     end tell
+
+    tell application "System Events"
+	keystroke "j" using command down
+    end tell
+
+    say "You now have half a minute to set a background on the disk image."
+    delay 30
+
+    tell application "System Events"
+	keystroke "j" using command down
+    end tell
+
+    update disk "$DMG_NAME"
+    close window 1
+end tell
+tell application oldApp
+	activate
 end tell
 EOF
 if [ ! "x$?" = "x0" ] ; then
-    echo "ERROR: unable to run osascript successfully to set window properties"
+    echo "ERROR: unable to run osascript successfully to set initial window properties"
     hdiutil eject $hdidMountedDisk
     exit 1
 fi
 
 if [ ! "x$found_background" = "xno" ] ; then
-    echo "You now have one minute to set the background on the disk image."
-    osascript <<EOF
-set oldApp to (path to frontmost application as string)
-tell application "Finder"
-    activate
-end tell
-tell application "System Events"
-	keystroke "j" using command down
-end tell
-say "You now have one minute to set the background on the disk image."
-delay 60
-tell application "System Events"
-	keystroke "j" using command down
-end tell
-tell application oldApp
-	activate
-end tell
-
-EOF
-    if [ ! "x$?" = "x0" ] ; then
-	echo "ERROR: unable to run osascript to set window background"
-	hdiutil eject $hdidMountedDisk
-	exit 1
-    fi
-
     if [ -x /Developer/Tools/SetFile ] ; then
 	if [ -f "${VOL_DIR}/${found_background}" ] ; then
 	    /Developer/Tools/SetFile -a V "${VOL_DIR}/${found_background}"
@@ -383,6 +380,32 @@ if [ -x "$OPENUP" ] ; then
 	hdiutil eject $hdidMountedDisk
 	exit 1
     fi
+fi
+
+# "recreate" a new Finder window via the open command and set the
+# parameters again before detaching as a last-ditch effort to make the
+# parameters stick.
+open "/Volumes/$DMG_NAME"
+osascript <<EOF
+set oldApp to (path to frontmost application as string)
+tell application "Finder"
+    activate
+    tell Finder window 1
+	set toolbar visible to false
+	set zoomed to false
+	set bounds to {0, 0, 512, 320}
+	set position to {10, 54}
+	set current view to icon view
+    end tell
+    update disk "$DMG_NAME"
+    delay 2
+    close window 1
+end tell
+EOF
+if [ ! "x$?" = "x0" ] ; then
+    echo "ERROR: unable to run osascript successfully (again) to set window properties"
+    hdiutil eject $hdidMountedDisk
+    exit 1
 fi
 
 hdiutil eject $hdidMountedDisk
