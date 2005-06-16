@@ -153,7 +153,7 @@ view_init(register struct application *ap, char *file, char *obj, int minus_o)
 	float dens;
 	register char *ptr = buf;
 
-	i = fscanf(densityfp, "%d %f%s", &index, &dens, buf);
+	i = fscanf(densityfp, "%d %f %[^\n]", &index, &dens, buf);
 	if (i == EOF)
 	    break;
 	if (i != 3) {
