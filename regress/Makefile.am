@@ -39,7 +39,8 @@ EXTRA_DIST = \
 	solids.sh \
 	solidspix.asc \
 	spdi.sh \
-	spdipix.asc
+	spdipix.asc \
+	weight.sh
 
 CLEANFILES = \
 	dsp.dat \
