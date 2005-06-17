@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <math.h>
 
-#include "config.h"
+#include "brlcad_config.h"
 #include "machine.h"		/* machine specific definitions */
 #include "vmath.h"		/* vector math macros */
 #include "raytrace.h"		/* librt interface definitions */

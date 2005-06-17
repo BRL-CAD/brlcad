@@ -4,7 +4,7 @@
 
 #include <math.h>
 #include "tie.h"
-#include "config.h"
+#include "brlcad_config.h"
 #include "rand.h"
 
 

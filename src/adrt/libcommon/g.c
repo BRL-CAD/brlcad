@@ -7,7 +7,7 @@
 #include "tie.h"
 
 #include "umath.h"
-#include "config.h"		/* machine specific definitions */
+#include "brlcad_config.h"		/* machine specific definitions */
 #include "machine.h"		/* machine specific definitions */
 #include "vmath.h"		/* vector math macros */
 #include "raytrace.h"		/* librt interface definitions */

@@ -3,7 +3,7 @@
 #define	_TIE_DEFINE_H
 
 #include <math.h>
-#include "config.h"
+#include "brlcad_config.h"
 
 #define TIE_SINGLE_PREC		1		/* Use Single Precision Math */
 #define	TIE_BSP_NODE_MAX	4		/* Maximum number of triangles that can reside in a given node until it should be split */

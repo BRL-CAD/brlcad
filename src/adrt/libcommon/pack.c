@@ -10,7 +10,7 @@
 #include "umath.h"
 #include "texture_includes.h"
 #include "tienet.h"
-#include "config.h"
+#include "brlcad_config.h"
 #if HAVE_BRLCAD
   #include "g.h"
 #endif

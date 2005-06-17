@@ -4,7 +4,7 @@
 #include <string.h>
 #include <sys/time.h>
 #include "adrt_common.h"
-#include "config.h"
+#include "brlcad_config.h"
 #include "igvt.h"
 #include "tienet.h"
 

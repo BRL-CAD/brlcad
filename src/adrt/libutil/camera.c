@@ -6,7 +6,7 @@
 #include <sys/time.h>
 #include <time.h>
 #include <unistd.h>
-#include "config.h"
+#include "brlcad_config.h"
 #include "image.h"
 #include "umath.h"
 

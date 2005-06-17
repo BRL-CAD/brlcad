@@ -10,7 +10,7 @@
 #include "tienet.h"
 #include "time.h"
 #ifdef HAVE_CONFIG_H
-#include "config.h"
+#include "brlcad_config.h"
 #endif
 
 

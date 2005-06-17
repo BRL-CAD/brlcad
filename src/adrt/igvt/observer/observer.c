@@ -1,4 +1,4 @@
-#include "config.h"
+#include "brlcad_config.h"
 #include "observer.h"
 #include <pthread.h>
 #include <stdio.h>

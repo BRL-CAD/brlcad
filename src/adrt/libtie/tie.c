@@ -30,7 +30,7 @@
  */
 
 #ifdef HAVE_CONFIG_H
-# include "config.h"
+# include "brlcad_config.h"
 #endif
 
 #include "tie.h"
