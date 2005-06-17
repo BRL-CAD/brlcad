@@ -66,6 +66,7 @@ AC_PREREQ(2.52)
 AC_INIT(BRL-CAD, 7.3.0, [http://brlcad.org], brlcad)
 AC_REVISION($Revision$)
 AC_CONFIG_AUX_DIR(misc)
+AM_CONFIG_HEADER([config.h])
 
 dnl See HACKING for details on how to properly update the version
 MAJOR_VERSION=7
@@ -808,6 +809,7 @@ AC_CHECK_HEADERS( \
 	sys/stat.h \
 	sys/statfs.h \
 	sys/sysctl.h \
+	sys/sysinfo.h \
 	sys/sysmp.h \
 	sys/time.h \
 	sys/timeb.h \
@@ -1404,6 +1406,15 @@ dnl *********************************
 
 AC_MSG_CHECKING([... s e r v i c e s ])
 AC_MSG_RESULT([(8 of 9)])
+
+dnl *** SDL ***
+AC_PATH_PROG(SDL_CONFIG_PROG, sdl-config)
+if test "x$SDL_CONFIG_PROG" != "x" ; then
+	AM_PATH_SDL(1.2.0,,AC_MSG_ERROR([Cannot find SDL.]))
+fi
+AC_SUBST(SDL_CFLAGS)
+AC_SUBST(SDL_LIBS)
+
 
 dnl *** java ***
 if test "x$bc_only_rts" != "xno" ; then
@@ -2210,6 +2221,10 @@ AC_SUBST(TCL_PACKAGE_PATH)
 TCLSTUB='${top_builddir}/src/other/libtcl/generic/libtclstub.la'
 AC_SUBST(TCLSTUB)
 
+dnl XXX - hack for justins g.c file
+AM_CONDITIONAL(HAVE_BRLCAD, true)
+AM_CONDITIONAL(HAVE_DOXYGEN, false)
+
 dnl XXX -- hack to make unfixed libtk behave when reading tclConfig.sh
 dnl EXTRA_CFLAGS='-DMAC_OSX_TCL -DHAVE_CFBUNDLE -DUSE_VFORK -DTCL_DEFAULT_ENCODING=\"utf-8\"'
 AC_SUBST(CC)
@@ -2310,6 +2325,21 @@ AC_CONFIG_FILES([
 	pix/Makefile
 	sh/Makefile
 	src/Makefile
+	src/adrt/Makefile
+	src/adrt/libtie/Makefile
+	src/adrt/libtienet/Makefile
+	src/adrt/libcommon/Makefile
+	src/adrt/librender/Makefile
+	src/adrt/libtexture/Makefile
+	src/adrt/libutil/Makefile
+	src/adrt/rise/Makefile
+	src/adrt/rise/master/Makefile
+	src/adrt/rise/slave/Makefile
+	src/adrt/rise/observer/Makefile
+	src/adrt/igvt/Makefile
+	src/adrt/igvt/master/Makefile
+	src/adrt/igvt/slave/Makefile
+	src/adrt/igvt/observer/Makefile
 	src/anim/Makefile
 	src/brlman/Makefile
 	src/burst/Makefile

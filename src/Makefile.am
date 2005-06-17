@@ -27,6 +27,7 @@ kitchensink_dirs = \
 	libmultispectral \
 	libtclcad \
 	libtermio \
+	adrt \
 	anim \
 	brlman \
 	burst \
