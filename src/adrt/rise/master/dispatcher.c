@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/time.h>
-#include "common.h"
+#include "adrt_common.h"
 #include "config.h"
 #include "rise.h"
 #include "tienet.h"

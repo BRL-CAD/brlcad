@@ -1,5 +1,5 @@
 #include "hit.h"
-#include "common.h"
+#include "adrt_common.h"
 #include "umath.h"
 
 void* render_hit(tie_ray_t *ray, tie_id_t *id, tie_tri_t *tri, void *ptr);

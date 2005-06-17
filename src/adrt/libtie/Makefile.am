@@ -7,6 +7,7 @@ libtie_la_SOURCES = tie.c
 include_HEADERS = tie.h
 noinst_HEADERS = define.h struct.h
 
+AM_CFLAGS="-Wall -pedantic -std=c99 -pipe"
 
 LINT=splint $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES)
 lint:

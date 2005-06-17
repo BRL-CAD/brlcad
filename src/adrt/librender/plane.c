@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "common.h"
+#include "adrt_common.h"
 #include "hit.h"
 
 #define thickness 0.02

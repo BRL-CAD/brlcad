@@ -1,7 +1,7 @@
 #include "kelos.h"
 #include <stdio.h>
 #include <stdlib.h>
-#include "common.h"
+#include "adrt_common.h"
 
 void* render_kelos_hit(tie_ray_t *ray, tie_id_t *id, tie_tri_t *tri, void *ptr);
 void render_kelos(tie_t *tie, tie_ray_t *ray, TIE_3 *pixel);

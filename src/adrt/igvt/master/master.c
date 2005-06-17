@@ -12,7 +12,7 @@
 #include "igvt.h"		/* Defines */
 #include "image.h"		/* Image import/export utilities */
 #include "pack.h"		/* Data packing for transport to nodes */
-#include "struct.h"		/* igvt common structs */
+#include "igvt_struct.h"		/* igvt common structs */
 #include "tienet.h"		/* Networking stuff */
 #include "umath.h"		/* Extended math utilities */
 /* Networking Includes */

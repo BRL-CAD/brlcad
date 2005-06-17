@@ -2,7 +2,7 @@
 #define _UTIL_CAMERA_H
 
 
-#include "common.h"
+#include "adrt_common.h"
 #include "tienet.h"
 #include "cdb.h"
 

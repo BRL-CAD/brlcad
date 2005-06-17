@@ -1,6 +1,6 @@
 #include "grid.h"
 #include "hit.h"
-#include "common.h"
+#include "adrt_common.h"
 #include <stdio.h>
 
 #define GRID 5.0

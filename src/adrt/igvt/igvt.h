@@ -2,7 +2,7 @@
 #define _IGVT_H
 
 #include "tie.h"
-#include "common.h"
+#include "adrt_common.h"
 
 
 #define	IGVT_OBSERVER_PORT	1982

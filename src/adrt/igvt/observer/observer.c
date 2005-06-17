@@ -10,7 +10,7 @@
 #include "image.h"
 #include "display.h"
 #include "umath.h"
-#include "struct.h"
+#include "igvt_struct.h"
 #include "tienet.h"
 /* Networking Includes */
 #include <sys/types.h>

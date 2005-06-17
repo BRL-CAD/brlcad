@@ -2,6 +2,6 @@
 #define _RISE_STRUCT_H
 
 #include "tie.h"
-#include "common.h"
+#include "adrt_common.h"
 
 #endif

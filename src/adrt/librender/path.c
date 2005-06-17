@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include "umath.h"
 #include "hit.h"
-#include "common.h"
+#include "adrt_common.h"
 
 
 void render_path_init(render_t *render, int samples) {

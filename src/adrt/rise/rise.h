@@ -2,7 +2,7 @@
 #define _RISE_H
 
 #include "tie.h"
-#include "common.h"
+#include "adrt_common.h"
 
 #define	RISE_OP_CAMERA		0
 
