@@ -1,0 +1,32 @@
+
+  For Mac users:
+
+	ln -s /usr/bin/glibtoolize /usr/bin/libtoolize
+	
+STEP 1 (CONFIGURE CREATION):
+  autoreconf -vis
+
+
+STEP 2 (MAKEFILE FLAGS):
+  XEON or OPTERON:
+  ./configure --enable-optim-xeon --prefix=/d/cluster/FreeBSD/5.2.1/usr/local
+
+  PPC:
+  ./configure --enable-optim-ppc --prefix=/d/cluster/FreeBSD/5.2.1/usr/local
+
+
+STEP 3 (COMPILE):
+  make -j5 
+
+
+
+Running
+
+#igvt_master -p <proj folder> -g <geom file> -l <slave list file>
+
+(project dr in eab1:~justin/humanim/ )
+
+igvt_master -p <proj folder> -g <geom file>
+igvt_slave -H <host>
+igvt_observer -H <host>
+

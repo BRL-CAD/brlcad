@@ -1,0 +1,74 @@
+Environment Shader Reference:
+=============================
+<image size="640 480">
+Sets the image size.
+
+<path samples="64">
+Number of stochastic samples per primary ray.
+
+
+Shader Types:
+=============
+<shader type="stack" name="Material"></shader>
+Used for Stacking shaders.
+
+<shader type="mix" name="Material" shader1="Mat1" shader2="Mat2" mode="add" coef="0.5"></shader>
+Used for Mixing 2 Shaders.
+
+
+Shader Reference:
+=================
+Blend:
+<blend color1="1.0 1.0 1.0" color2="0.0 0.0 0.0">
+Used for blending Checker, Gradient, Clouds, etc...
+
+Bump:
+<bump coef="0.5 0.5 0.5">
+Used for adjusting the normal
+
+Camo:
+<camo size="2.0" octaves="4" absolute="1" color1="0.392 0.392 0.250" color2="0.313 0.286 0.251" color3="0.478 0.305 0.215">
+Sets Pixel color to one of the three color values based on a perlin noise function, maps to U,V,W coordinates of the mesh.
+
+Checker:
+<checker tile="4">
+Creates a 2D Checker pattern based on the U,V spatial coordinates of the mesh.
+
+Clouds:
+<clouds size="5.0" octaves="3" absolute="0" scale="1.0 1.0 1.0" translate="0.0 0.0 0.0">
+Creates a cloud-like texture based on the color fed into it.
+
+Color:
+<color rgb="1.0 1.0 1.0">
+Flat Shading.
+
+Image:
+<image name="file.bmp">
+Maps a bitmap image on the U,V spatial coordinates of the mesh.
+
+Gradient:
+<gradient axis="2">
+Maps a 2 color gradient along the relative axis: 0 is X, 1 is Y, 2 is Z.
+
+Path:
+<path scatter="0.5">
+Path shades input color where scatter defines the roughness of the surface.
+
+Phong:
+<phong ambient="0.500000" specularity="0.200000" shine="50.000000">
+Takes the given pixel color and phong shades it.
+
+Reflection:
+<reflect scatter="0.0">
+Reflects the Ray.
+
+Refraction:
+<refract index="1.5">
+Sets the material's index of refraction.
+
+Transparency:
+<transparency coef="0.5">
+Sets the level of transparency, range is from 0.0 to 1.0.
+
+Stack:
+Only required when programming through the API.
