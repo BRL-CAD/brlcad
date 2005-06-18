@@ -51,6 +51,7 @@ short igvt_observer_endian;
 short igvt_observer_event_queue_size;
 SDL_Event igvt_observer_event_queue[64];
 int igvt_observer_mouse_grab;
+int igvt_observer_event_loop_alive;
 /*******************/
 
 
@@ -68,6 +69,7 @@ void igvt_observer(char *host, int port) {
   ni.port = port;
 
   igvt_observer_event_queue_size = 0;
+  igvt_observer_event_loop_alive = 1;
 
   pthread_mutex_init(&event_mut, 0);
   pthread_mutex_init(&igvt_observer_gui_mut, 0);
@@ -165,6 +167,8 @@ void* igvt_observer_networking(void *ptr) {
       free(comp_buf);
 #endif
       close(sockd);
+
+      igvt_observer_event_loop_alive = 0;
       printf("Observer detatched from master.\n");
       return(NULL);
     }
@@ -231,7 +235,6 @@ void* igvt_observer_networking(void *ptr) {
 
 void igvt_observer_event_loop() {
   SDL_Event event;
-  int alive = 1;
 
 
   util_display_init(screen_w, screen_h);
@@ -242,9 +245,9 @@ void igvt_observer_event_loop() {
 
   tienet_sem_post(&igvt_observer_sdlready_sem);
 
-  SDL_EnableKeyRepeat(50, 50);
+  SDL_EnableKeyRepeat(150, 50);
 
-  while(SDL_WaitEvent(&event) >= 0 && alive) {
+  while(SDL_WaitEvent(&event) >= 0 && igvt_observer_event_loop_alive) {
     switch(event.type) {
       case SDL_KEYDOWN:
         switch(event.key.keysym.sym) {
@@ -259,7 +262,6 @@ void igvt_observer_event_loop() {
             break;
 
           case SDLK_q: /* quit, decouple display, end this function */
-            alive = 0;
             break;
 
           default:

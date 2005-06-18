@@ -59,8 +59,11 @@ short frame_ind_done;
 char igvt_master_slave_data[64];
 int igvt_master_slave_data_len;
 pthread_t igvt_master_networking_thread;
-tfloat igvt_master_azim, igvt_master_elev, igvt_master_scale;
-int mouse_x, mouse_y, igvt_master_active_connections, igvt_master_alive;
+tfloat igvt_master_azim;
+tfloat igvt_master_elev;
+tfloat igvt_master_scale;
+int igvt_master_active_connections;
+int igvt_master_alive;
 igvt_master_socket_t *igvt_master_socklist;
 common_db_t db;
 unsigned char igvt_master_rm;
@@ -331,11 +334,15 @@ void* igvt_master_networking(void *ptr) {
   addrlen = sizeof(observer);
   igvt_master_active_connections = 0;
 
-  while(igvt_master_alive) {
+  while(igvt_master_alive || igvt_master_active_connections) {
     /* wait for some network activity */
     select(highest_fd+1, &readfds, NULL, NULL, NULL);
     /* cycle through each socket and address the activity */
     for(sock = igvt_master_socklist; sock; sock = sock->next) {
+      /* if no longer alive then mark each of the active connections as no longer active */
+      if(!igvt_master_alive)
+        sock->active = 0;
+
       /* check if activity was on this socket */
       if(FD_ISSET(sock->num, &readfds)) {
         if(sock->num == master_socket) {
@@ -359,6 +366,7 @@ void* igvt_master_networking(void *ptr) {
           op = 255;
           /* observer communication */
           error = tienet_recv(sock->num, &op, 1, 0);
+
           /* remove socket from pool if there's an error, i.e slave disconnected */
           if(error || op == IGVT_NET_OP_QUIT || !sock->active) {
             op = IGVT_NET_OP_QUIT;
@@ -642,7 +650,6 @@ void igvt_master_process_events(SDL_Event *event_queue, int event_num, igvt_mast
             break;
 
           case SDLK_F12: /* Server Shutdown and quit*/
-            printf("Shutting down master and exiting.\n");
             igvt_master_alive = 0;
             break;
 
