@@ -33,7 +33,7 @@
  * $Id$
  */
 
-#include "master.h"
+#include "tienet_master.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -44,9 +44,9 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <netdb.h>
-#include "define.h"
 #include "tie.h"
-#include "util.h"
+#include "tienet_define.h"
+#include "tienet_util.h"
 
 #if TN_COMPRESSION
 # include <zlib.h>

@@ -37,10 +37,10 @@
 #define _TIENET_H
 
 
-#include "define.h"
-#include "master.h"
-#include "slave.h"
-#include "util.h"
+#include "tienet_define.h"
+#include "tienet_master.h"
+#include "tienet_slave.h"
+#include "tienet_util.h"
 #include "tie.h"
 
 

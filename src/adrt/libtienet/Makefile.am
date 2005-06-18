@@ -3,7 +3,7 @@
 lib_LTLIBRARIES = libtienet.la
 
 AM_CFLAGS = -D__STRICT_ANSI__ -I${top_srcdir}/src/adrt/libtie
-libtienet_la_SOURCES = master.c slave.c util.c
+libtienet_la_SOURCES = tienet_master.c tienet_slave.c tienet_util.c
 
 include_HEADERS = tienet.h
-noinst_HEADERS = define.h util.h master.h slave.h util.h
+noinst_HEADERS = tienet_define.h tienet_util.h tienet_master.h tienet_slave.h tienet_util.h

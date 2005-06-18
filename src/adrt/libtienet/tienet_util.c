@@ -35,7 +35,7 @@
 
 #include <unistd.h>
 #include <sys/select.h>
-#include "util.h"
+#include "tienet_util.h"
 
 
 void tienet_flip(void *src, void *dest, int size) {

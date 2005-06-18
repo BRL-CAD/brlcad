@@ -33,7 +33,7 @@
  * $Id$
  */
 
-#include "slave.h"
+#include "tienet_slave.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -43,8 +43,8 @@
 #include <netinet/in.h>
 #include <netdb.h>
 #include <string.h>
-#include "define.h"
-#include "util.h"
+#include "tienet_define.h"
+#include "tienet_util.h"
 #if TN_COMPRESSION
 # include <zlib.h>
 #endif

@@ -46,9 +46,7 @@
 #include "texture_includes.h"
 #include "tienet.h"
 #include "brlcad_config.h"
-#if HAVE_BRLCAD
-  #include "g.h"
-#endif
+#include "g.h"
 
 
 #define K *1024
@@ -552,10 +550,8 @@ void common_pack_texture(void **app_data, int *app_ind, char *filename) {
 void common_pack_mesh(common_db_t *db, void **app_data, int *app_ind, char *filename, char *args) {
   if(strstr(filename, ".db")) {
     common_pack_mesh_adrt(db, app_data, app_ind, filename);
-#if HAVE_BRLCAD
   } else if(strstr(filename, ".g")) {
     common_pack_g(app_data, app_ind, filename, args);
-#endif
   } else {
     printf("unknown file format\n");
   }
