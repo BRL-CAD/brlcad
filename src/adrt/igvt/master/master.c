@@ -41,7 +41,6 @@ typedef struct igvt_master_socket_s {
 void igvt_master(int port, int obs_port, char *proj, char *geom_file, char *args, char *list, char *exec, int interval);
 void* igvt_master_networking(void *ptr);
 void igvt_master_result(void *res_buf, int res_len);
-void igvt_master_parse_op(int sock_num);
 void igvt_master_update(void);
 void igvt_master_process_events(SDL_Event *event_queue, int event_num, igvt_master_socket_t *sock);
 
@@ -484,66 +483,6 @@ void* igvt_master_networking(void *ptr) {
 }
 
 
-void igvt_master_parse_op(int sock_num) {
-  unsigned char op;
-
-  tienet_recv(sock_num, &op, 1, 0);
-
-  switch(op) {
-    case IGVT_OBS_OP_RM:
-    {
-      common_work_t work;
-      TIE_3 dir;
-      int dlen;
-      void *mesg;
-
-      /* Update render method on slaves */
-      tienet_recv(sock_num, &op, 1, 0);
-      igvt_master_rm = op;
-
-      if(op == RENDER_METHOD_PLANE) {
-        /* Queue a work unit for a shotline needed for the plane render method */
-        mesg = malloc(sizeof(common_work_t) + 2 * sizeof(TIE_3));
-        dlen = 0;
-
-        work.orig_x = 0;
-        work.orig_y = 0;
-        work.size_x = 0;
-        work.size_y = 0;
-
-        memcpy(&((char *)mesg)[dlen], &work, sizeof(common_work_t));
-        dlen += sizeof(common_work_t);
-
-        memcpy(&((char *)mesg)[dlen], &igvt_master_camera_pos.v[0], sizeof(tfloat));
-        dlen += sizeof(tfloat);
-        memcpy(&((char *)mesg)[dlen], &igvt_master_camera_pos.v[1], sizeof(tfloat));
-        dlen += sizeof(tfloat);
-        memcpy(&((char *)mesg)[dlen], &igvt_master_camera_pos.v[2], sizeof(tfloat));
-        dlen += sizeof(tfloat);
-
-        math_vec_sub(dir, igvt_master_camera_foc, igvt_master_camera_pos);
-        math_vec_unitize(dir);
-
-        memcpy(&((char *)mesg)[dlen], &dir.v[0], sizeof(tfloat));
-        dlen += sizeof(tfloat);
-        memcpy(&((char *)mesg)[dlen], &dir.v[1], sizeof(tfloat));
-        dlen += sizeof(tfloat);
-        memcpy(&((char *)mesg)[dlen], &dir.v[2], sizeof(tfloat));
-        dlen += sizeof(tfloat);
-
-        tienet_master_push(mesg, dlen);
-
-        free(mesg);
-      }
-      break;
-    }
-
-    default:
-      break;
-  }
-}
-
-
 void igvt_master_update() {
   igvt_master_slave_data_len = 0;
 
@@ -595,16 +534,46 @@ void igvt_master_process_events(SDL_Event *event_queue, int event_num, igvt_mast
             break;
 
           case SDLK_3: /* RENDER_METHOD_PLANE */
-            igvt_master_rm = RENDER_METHOD_PLANE;
-#if 0
-            ((char *)igvt_observer_msg)[0] = IGVT_OBS_OP_RM;
-            ((char *)igvt_observer_msg)[1] = RENDER_METHOD_PLANE;
-            igvt_observer_msg_len = 2;
-            igvt_observer_pv_enabled = 1;
-            igvt_observer_pv_pos = camera_pos;
-            math_vec_sub(igvt_observer_pv_dir, camera_foc, camera_pos);
-            math_vec_unitize(igvt_observer_pv_dir);
-#endif
+            {
+              void *mesg;
+              common_work_t work;
+              TIE_3 dir;
+              int dlen;
+
+              igvt_master_rm = RENDER_METHOD_PLANE;
+
+              /* Queue a work unit for a shotline needed for the plane render method */
+              mesg = malloc(sizeof(common_work_t) + 2 * sizeof(TIE_3));
+              dlen = 0;
+
+              work.orig_x = 0;
+              work.orig_y = 0;
+              work.size_x = 0;
+              work.size_y = 0;
+
+              memcpy(&((char *)mesg)[dlen], &work, sizeof(common_work_t));
+              dlen += sizeof(common_work_t);
+
+              memcpy(&((char *)mesg)[dlen], &igvt_master_camera_pos.v[0], sizeof(tfloat));
+              dlen += sizeof(tfloat);
+              memcpy(&((char *)mesg)[dlen], &igvt_master_camera_pos.v[1], sizeof(tfloat));
+              dlen += sizeof(tfloat);
+              memcpy(&((char *)mesg)[dlen], &igvt_master_camera_pos.v[2], sizeof(tfloat));
+              dlen += sizeof(tfloat);
+
+              math_vec_sub(dir, igvt_master_camera_foc, igvt_master_camera_pos);
+              math_vec_unitize(dir);
+
+              memcpy(&((char *)mesg)[dlen], &dir.v[0], sizeof(tfloat));
+              dlen += sizeof(tfloat);
+              memcpy(&((char *)mesg)[dlen], &dir.v[1], sizeof(tfloat));
+              dlen += sizeof(tfloat);
+              memcpy(&((char *)mesg)[dlen], &dir.v[2], sizeof(tfloat));
+              dlen += sizeof(tfloat);
+
+              tienet_master_push(mesg, dlen);
+              free(mesg);
+            }
             break;
 
           case SDLK_4: /* RENDER_METHOD_COMPONENT */
