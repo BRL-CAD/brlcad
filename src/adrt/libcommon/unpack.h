@@ -40,7 +40,7 @@
 #include "camera.h"
 #include "cdb.h"
 #include "env.h"
-#include "texture_includes.h"
+#include "texture.h"
 
 /*** ONLY TEMPORARY ***/
 #define COMMON_PACK_ALL                   0x0001

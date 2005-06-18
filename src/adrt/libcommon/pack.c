@@ -33,17 +33,13 @@
  * $Id$
  */
 
-/*
- * $Id$
- */
-
 #include "pack.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 #include "umath.h"
-#include "texture_includes.h"
+#include "texture.h"
 #include "tienet.h"
 #include "brlcad_config.h"
 #include "g.h"

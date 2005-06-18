@@ -1,4 +1,7 @@
 /*                     A D R T _ C O M M O N . H
+ *
+ * @file adrt_common.h
+ *
  * BRL-CAD
  *
  * Copyright (C) 2002-2005 United States Government as represented by
@@ -17,11 +20,9 @@
  * You should have received a copy of the GNU Lesser General Public
  * License along with this file; see the file named COPYING for more
  * information.
- */
-/** @file adrt_common.h
- *                     A D R T _ C O M M O N . H
  *
- *  Common Library - Main Include
+ *  Comments -
+ *      Common Library - Main Include
  *
  *  Author -
  *      Justin L. Shumaker
@@ -38,7 +39,7 @@
 
 
 #include "tie.h"
-#include "texture.h"
+#include "texture_internal.h"
 #include "render.h"
 
 #define COMMON_BIT_DEPTH_24	0

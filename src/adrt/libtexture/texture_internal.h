@@ -1,6 +1,6 @@
-/*                     C A N I M . H
+/*                     T E X T U R E _ I N T E R N A L . H
  *
- * @file canim.h
+ * @file texture_internal.h
  *
  * BRL-CAD
  *
@@ -22,7 +22,7 @@
  * information.
  *
  *  Comments -
- *      Common Library - Animation Header
+ *      Texture Library - Internal texture include
  *
  *  Author -
  *      Justin L. Shumaker
@@ -34,12 +34,25 @@
  * $Id$
  */
 
-#ifndef _COMMON_ANIM_H
-#define _COMMON_ANIM_H
+#ifndef _TEXTURE_INTERNAL_H
+#define _TEXTURE_INTERNAL_H
+
 
 #include "tie.h"
 #include "adrt_common.h"
 
-extern int common_anim_read(common_anim_t *anim);
+struct texture_s;
+struct mesh_s;
+typedef void texture_init_t(struct texture_s *texture);
+typedef void texture_free_t(struct texture_s *texture);
+typedef void texture_work_t(struct texture_s *texture, struct mesh_s *mesh, tie_ray_t *ray, tie_id_t *id, TIE_3 *pixel);
+
+
+typedef struct texture_s {
+  texture_free_t *free;
+  texture_work_t *work;
+  void *data;
+} texture_t;
+
 
 #endif

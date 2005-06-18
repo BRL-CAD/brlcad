@@ -40,7 +40,6 @@
 #include "unpack.h"
 #include "tienet.h"
 #include "umath.h"
-#include "texture_includes.h"
 
 
 int app_ind;

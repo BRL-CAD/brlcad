@@ -1,4 +1,7 @@
 /*                     M A S T E R . C
+ *
+ * @file master.c
+ *
  * BRL-CAD
  *
  * Copyright (C) 2002-2005 United States Government as represented by
@@ -17,11 +20,9 @@
  * You should have received a copy of the GNU Lesser General Public
  * License along with this file; see the file named COPYING for more
  * information.
- */
-/** @file master.c
- *                     M A S T E R . C
  *
- *  TIE Networking Master
+ *  Comments -
+ *      TIE Networking Master
  *
  *  Author -
  *      Justin L. Shumaker

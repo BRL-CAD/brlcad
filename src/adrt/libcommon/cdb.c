@@ -1,4 +1,7 @@
 /*                     C D B . C
+ *
+ * @file cdb.c
+ *
  * BRL-CAD
  *
  * Copyright (C) 2002-2005 United States Government as represented by
@@ -17,11 +20,9 @@
  * You should have received a copy of the GNU Lesser General Public
  * License along with this file; see the file named COPYING for more
  * information.
- */
-/** @file cdb.c
- *                     C D B . C
  *
- *  Common Library - Core
+ *  Comments -
+ *      Common Library - Database loader
  *
  *  Author -
  *      Justin L. Shumaker

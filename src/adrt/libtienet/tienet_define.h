@@ -1,4 +1,7 @@
 /*                     D E F I N E . H
+ *
+ * @file define.h
+ *
  * BRL-CAD
  *
  * Copyright (C) 2002-2005 United States Government as represented by
@@ -17,11 +20,9 @@
  * You should have received a copy of the GNU Lesser General Public
  * License along with this file; see the file named COPYING for more
  * information.
- */
-/** @file define.h
- *                     D E F I N E . H
  *
- *  TIE Networking Definitions
+ *  Comments -
+ *      TIE Networking Definitions
  *
  *  Author -
  *      Justin L. Shumaker

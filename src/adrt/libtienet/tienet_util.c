@@ -1,4 +1,7 @@
 /*                     U T I L . C
+ *
+ * @file util.c
+ *
  * BRL-CAD
  *
  * Copyright (C) 2002-2005 United States Government as represented by
@@ -17,11 +20,9 @@
  * You should have received a copy of the GNU Lesser General Public
  * License along with this file; see the file named COPYING for more
  * information.
- */
-/** @file util.c
- *                     U T I L . C
  *
- *  TIE Networking Utilities
+ *  Comments -
+ *      TIE Networking Utilities
  *
  *  Author -
  *      Justin L. Shumaker

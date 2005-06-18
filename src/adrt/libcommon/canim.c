@@ -1,4 +1,7 @@
 /*                     C A N I M . C
+ *
+ * @file canim.c
+ *
  * BRL-CAD
  *
  * Copyright (C) 2002-2005 United States Government as represented by
@@ -17,11 +20,9 @@
  * You should have received a copy of the GNU Lesser General Public
  * License along with this file; see the file named COPYING for more
  * information.
- */
-/** @file canim.c
- *                     C A N I M . C
  *
- *  Common Library - Animation Parsing
+ *  Comments -
+ *      Common Library - Animation Data Parser
  *
  *  Author -
  *      Justin L. Shumaker

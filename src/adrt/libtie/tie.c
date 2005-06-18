@@ -1,4 +1,7 @@
 /*                     T I E . C
+ *
+ * @file tie.c
+ *
  * BRL-CAD
  *
  * Copyright (C) 2002-2005 United States Government as represented by
@@ -17,11 +20,20 @@
  * You should have received a copy of the GNU Lesser General Public
  * License along with this file; see the file named COPYING for more
  * information.
- */
-/** @file tie.c
- *                     T I E . C
  *
- *  Triangle Intersection Engine
+ *  @brief support routines for shooting at triangles
+ *  Comments -
+ *      Triangle Intersection Engine
+ *
+ *      The calling sequence is as follows:
+ *        - tie_init()	initialize the data structure
+ *        - tie_push()	add triangles to the universe to be raytraced
+ *        - tie_prep()	build the BSP for the triangles
+ *        - tie_work()	shoot some ray
+ *        - tie_work()	shoot some ray
+ *        - tie_work()	shoot some ray
+ *        - tie_work()	shoot some ray
+ *        - tie_free()	Free up all the memory
  *
  *  Author -
  *      Justin L. Shumaker
@@ -29,19 +41,6 @@
  *  Source -
  *      The U. S. Army Research Laboratory
  *      Aberdeen Proving Ground, Maryland  21005-5068  USA
- *
- * @brief support routines for shooting at triangles
- *
- * The calling sequence is as follows:
- *	- tie_init()	initialize the data structure
- *	- tie_push()	add triangles to the universe to be raytraced
- *	- tie_prep()	build the BSP for the triangles
- *	- tie_work()	shoot some ray
- *	- tie_work()	shoot some ray
- *	- tie_work()	shoot some ray
- *	- tie_work()	shoot some ray
- *	- tie_work()	shoot some ray
- *	- tie_free()	Free up all the memory
  *
  * $Id$
  */
@@ -59,6 +58,7 @@
  *	@li tie_free()	Free up all the memory
  * @{
  */
+
 #ifdef HAVE_CONFIG_H
 # include "brlcad_config.h"
 #endif

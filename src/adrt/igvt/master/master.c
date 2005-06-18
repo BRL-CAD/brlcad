@@ -445,9 +445,6 @@ void* igvt_master_networking(void *ptr) {
                 igvt_master_active_connections = 0;
                 break;
 
-              case IGVT_NET_OP_SHUTDOWN:
-                igvt_master_alive = 0;
-                break;
 
               default:
                 break;
@@ -645,11 +642,8 @@ void igvt_master_process_events(SDL_Event *event_queue, int event_num, igvt_mast
             break;
 
           case SDLK_F12: /* Server Shutdown and quit*/
-#if 0
             printf("Shutting down master and exiting.\n");
-            igvt_observer_master_shutdown = 1;
-            return;
-#endif
+            igvt_master_alive = 0;
             break;
 
           case SDLK_e: /* export frame */
