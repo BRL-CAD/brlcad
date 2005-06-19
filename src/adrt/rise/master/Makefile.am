@@ -1,4 +1,4 @@
-$Id$
+# $Id$
 
 bin_PROGRAMS = rise_master
 
