@@ -68,6 +68,7 @@ common_db_t db;
 unsigned char igvt_master_rm;
 pthread_mutex_t igvt_master_update_mut;
 int igvt_master_mouse_grab;
+int igvt_master_shift_enabled;
 /*******************/
 
 
@@ -83,6 +84,8 @@ void igvt_master(int port, int obs_port, char *proj, char *geom_file, char *args
 
   igvt_master_alive = 1;
   igvt_master_scale = 0.01;
+  igvt_master_mouse_grab = 0;
+  igvt_master_shift_enabled = 0;
 
   igvt_master_camera_pos.v[0] = 1;
   igvt_master_camera_pos.v[1] = 1;
@@ -139,7 +142,7 @@ void igvt_master(int port, int obs_port, char *proj, char *geom_file, char *args
 
     frame_cur_ind = 1 - frame_cur_ind;
 
-#if 1
+#if 0
     frame_num++;
     if(!(frame_num%7)) {
       gettimeofday(&cur, NULL);
@@ -215,6 +218,11 @@ void igvt_master_result(void *res_buf, int res_len) {
     ind += sizeof(tfloat);
     memcpy(&out_hit.v[2], &((unsigned char *)res_buf)[ind], sizeof(tfloat));
     ind += sizeof(tfloat);
+
+    /* Set the Center of of Rotation */
+    igvt_master_cor.v[0] = (in_hit.v[0] + out_hit.v[0]) * 0.5;
+    igvt_master_cor.v[1] = (in_hit.v[1] + out_hit.v[1]) * 0.5;
+    igvt_master_cor.v[2] = (in_hit.v[2] + out_hit.v[2]) * 0.5;
 
     printf("in: [%.3f, %.3f, %.3f] ... out: [%.3f, %.3f, %.3f]\n", in_hit.v[0], in_hit.v[1], in_hit.v[2], out_hit.v[0], out_hit.v[1], out_hit.v[2]);
 
@@ -518,9 +526,15 @@ void igvt_master_process_events(SDL_Event *event_queue, int event_num, igvt_mast
   for(i = 0; i < event_num; i++) {
     update = 0;
     switch(event_queue[i].type) {
+      printf("event_type: %d\n", event_queue[i].type);
       case SDL_KEYDOWN:
         update = 1;
         switch(event_queue[i].key.keysym.sym) {
+          case SDLK_LSHIFT:
+          case SDLK_RSHIFT:
+            igvt_master_shift_enabled = 1;
+            break;
+
           case SDLK_0: /* RENDER_METHOD_PATH */
             igvt_master_rm = RENDER_METHOD_PATH;
             break;
@@ -657,6 +671,18 @@ void igvt_master_process_events(SDL_Event *event_queue, int event_num, igvt_mast
           default:
             break;
         }
+        break;
+
+      case SDL_KEYUP:
+        switch(event_queue[i].key.keysym.sym) {
+          case SDLK_LSHIFT:
+          case SDLK_RSHIFT:
+            igvt_master_shift_enabled = 0;
+            break;
+
+          default:
+            break;
+        }
 
       case SDL_MOUSEBUTTONDOWN:
         update = 1;
@@ -690,8 +716,32 @@ void igvt_master_process_events(SDL_Event *event_queue, int event_num, igvt_mast
             math_vec_mul_scalar(vec3, vec3, (igvt_master_scale*dx));
             math_vec_add(igvt_master_camera_pos, igvt_master_camera_pos, vec3);
           } else if(event_queue[i].button.button & 1<<(SDL_BUTTON_RIGHT-1)) {
-            igvt_master_azim += 0.05*dx;
-            igvt_master_elev += 0.05*dy;
+            /* if the shift key is held down then rotate about Center of Rotation */
+            if(igvt_master_shift_enabled) {
+              TIE_3 vec;
+              tfloat radius, angle;
+
+              vec.v[0] = igvt_master_cor.v[0] - igvt_master_camera_pos.v[0];
+              vec.v[1] = igvt_master_cor.v[1] - igvt_master_camera_pos.v[1];
+              vec.v[2] = 0;
+
+              angle = vec.v[0]*vec.v[0] + vec.v[1]*vec.v[1];
+              radius = sqrt(angle);
+              vec.v[0] /= radius;
+              vec.v[1] /= radius;
+
+              vec.v[0] = vec.v[1] < 0 ? 360.0 - acos(vec.v[0])*math_rad2deg : acos(vec.v[0])*math_rad2deg;
+
+              vec.v[0] -= 0.05*dx;
+              vec.v[0] *= math_deg2rad;
+
+              igvt_master_camera_pos.v[0] = -radius*cos(vec.v[0]) + igvt_master_cor.v[0];
+              igvt_master_camera_pos.v[1] = -radius*sin(vec.v[0]) + igvt_master_cor.v[1];
+              igvt_master_azim -= 0.05*dx;
+            } else {
+              igvt_master_azim += 0.05*dx;
+              igvt_master_elev += 0.05*dy;
+            }
           } else if(event_queue[i].button.button & 1<<(SDL_BUTTON_MIDDLE-1)) {
             igvt_master_camera_pos.v[2] += igvt_master_scale*dy;
 

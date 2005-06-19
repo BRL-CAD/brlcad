@@ -261,9 +261,6 @@ void igvt_observer_event_loop() {
             SDL_ShowCursor(!igvt_observer_mouse_grab);
             break;
 
-          case SDLK_q: /* quit, decouple display, end this function */
-            break;
-
           default:
             break;
         }
