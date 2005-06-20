@@ -588,13 +588,13 @@ thread_link_works=no
 LIBTHREAD=""
 dnl try sgi sproc first
 AC_CHECK_LIB(c, sproc, thread_link_works=yes ; LIBTHREAD="-lc",
-    dnl check for pthreading as next best option
-    dnl XXX need to test HPUX -- may require -lcma with pthreads
-    [AC_CHECK_LIB(pthread, pthread_create, thread_link_works=yes ; LIBTHREAD="-lpthread",
-    	dnl check if the BSD c_r threading library link works
-	[AC_CHECK_LIB(c_r, pthread_create, thread_link_works=yes ; LIBTHREAD="-pthread",
-	    dnl try solaris threading
-	    [AC_CHECK_LIB(thread, thr_create, thread_link_works=yes ; LIBTHREAD="-lthread")]
+    dnl check if the BSD c_r threading library link works
+    [AC_CHECK_LIB(c_r, pthread_create, thread_link_works=yes ; LIBTHREAD="-pthread",
+	dnl try solaris threading
+	[AC_CHECK_LIB(thread, thr_create, thread_link_works=yes ; LIBTHREAD="-lthread",
+	    dnl pthreading is a good default if none of the others are available
+	    dnl XXX need to test HPUX -- may require -lcma with pthreads
+	    [AC_CHECK_LIB(pthread, pthread_create, thread_link_works=yes ; LIBTHREAD="-lpthread")]
 	)]
     )]
 )
