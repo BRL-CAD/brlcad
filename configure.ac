@@ -653,13 +653,21 @@ dnl check if zlib library links
 LIBZLIB=""
 AC_CHECK_LIB(z, deflate, LIBZLIB="-lz")
 
+dnl check if a math library links
+m_link_works=no
+LIBM=""
+AC_CHECK_LIB(m, cos, m_link_works=yes ; LIBM="-lm")
+
 dnl check if utahrle library links
 utahrle_link_works=no
 UTAHRLE=""
 # checking for rle_hdr_init is NOT sufficient to get urt 3.x
-AC_CHECK_LIB(utahrle, rle_getraw, utahrle_link_works=yes ; UTAHRLE="-lutahrle",
-    [AC_CHECK_LIB(rle, rle_getraw, utahrle_link_works=yes ; UTAHRLE="-lrle")]
+PRELIBS="$LIBS"
+LIBS="$LIBS $LIBM"
+AC_CHECK_LIB(utahrle, rle_getraw, utahrle_link_works=yes ; UTAHRLE="-lutahrle $LIBM",
+    [AC_CHECK_LIB(rle, rle_getraw, utahrle_link_works=yes ; UTAHRLE="-lrle $LIBM")]
 )
+LIBS="$PRELIBS"
 
 dnl check if libtcl library links
 tcl_link_works=no
@@ -689,11 +697,6 @@ AC_CHECK_LIB(itk3.3, Itk_Init, itk_link_works=yes ; LIBITK="-litk3.3",
         [AC_CHECK_LIB(itk, Itk_Init, itk_link_works=yes ; LIBITK="-litk")]
     )]
 )
-
-dnl check if a math library links
-m_link_works=no
-LIBM=""
-AC_CHECK_LIB(m, cos, m_link_works=yes ; LIBM="-lm")
 
 dnl check if a socket library links
 socket_link_works=no
