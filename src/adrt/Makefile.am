@@ -16,3 +16,5 @@ endif
 # to the tarball if you don't run automake 'hard' (automake -a
 # instead of automake -a --no-force).
 EXTRA_DIST=depcomp
+
+MAINTAINERCLEANFILES = Makefile.in
