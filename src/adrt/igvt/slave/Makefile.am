@@ -2,11 +2,23 @@
 
 bin_PROGRAMS = igvt_slave
 
-igvt_slave_SOURCES = main.c slave.c
+igvt_slave_SOURCES = \
+	main.c \
+	slave.c
+
 igvt_slave_LDFLAGS = -static
 
-AM_CFLAGS = -D__STRICT_ANSI__ -I.. -I${top_srcdir}/src/adrt/libtie -I${top_srcdir}/src/adrt/libtienet -I${top_srcdir}/src/adrt/libtexture -I${top_srcdir}/src/adrt/libcommon -I${top_srcdir}/src/adrt/librender -I${top_srcdir}/src/adrt/libutil -I${top_srcdir}/src/adrt/igvt
+igvt_slave_CFLAGS = -D__STRICT_ANSI__ -I.. -I${top_srcdir}/src/adrt/libtie -I${top_srcdir}/src/adrt/libtienet -I${top_srcdir}/src/adrt/libtexture -I${top_srcdir}/src/adrt/libcommon -I${top_srcdir}/src/adrt/librender -I${top_srcdir}/src/adrt/libutil -I${top_srcdir}/src/adrt/igvt
 
-LDADD = -lpthread ${top_builddir}/src/adrt/libcommon/libcommon.la ${top_builddir}/src/adrt/librender/librender.la ${top_builddir}/src/adrt/libutil/libutil.la -lm ${top_builddir}/src/adrt/libtexture/libtexture.la ${top_builddir}/src/adrt/libtienet/libtienet.la ${top_builddir}/src/adrt/libtie/libtie.la @LIBZ@
+igvt_slave_LDADD = \
+	${LIBTHREAD} \
+	${top_builddir}/src/adrt/libcommon/libcommon.la \
+	${top_builddir}/src/adrt/librender/librender.la \
+	${top_builddir}/src/adrt/libutil/libutil.la \
+	${LIBM} \
+	${top_builddir}/src/adrt/libtexture/libtexture.la \
+	${top_builddir}/src/adrt/libtienet/libtienet.la \
+	${top_builddir}/src/adrt/libtie/libtie.la \
+	${LIBZ}
 
 noinst_HEADERS = slave.h
