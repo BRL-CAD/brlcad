@@ -12,6 +12,7 @@
 #include "umath.h"
 #include "igvt_struct.h"
 #include "tienet.h"
+#include "splash.h"
 /* Networking Includes */
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -42,6 +43,7 @@ pthread_mutex_t event_mut;
 
 tienet_sem_t igvt_observer_sdlinit_sem;
 tienet_sem_t igvt_observer_sdlready_sem;
+tienet_sem_t igvt_observer_splash_sem;
 
 int screen_w;
 int screen_h;
@@ -52,6 +54,7 @@ short igvt_observer_event_queue_size;
 SDL_Event igvt_observer_event_queue[64];
 int igvt_observer_mouse_grab;
 int igvt_observer_event_loop_alive;
+int igvt_observer_display_init;
 /*******************/
 
 
@@ -76,6 +79,8 @@ void igvt_observer(char *host, int port) {
 
   tienet_sem_init(&igvt_observer_sdlinit_sem, 0);
   tienet_sem_init(&igvt_observer_sdlready_sem, 0);
+  tienet_sem_init(&igvt_observer_splash_sem, 0);
+  igvt_observer_display_init = 1;
 
   /* Launch a thread to handle events */
   pthread_create(&igvt_observer_networking_thread, NULL, igvt_observer_networking, &ni);
@@ -142,7 +147,6 @@ void* igvt_observer_networking(void *ptr) {
 
   /* Screen size is known.  Initialize SDL and continue once it's ready */
   tienet_sem_post(&igvt_observer_sdlinit_sem);
-  tienet_sem_wait(&igvt_observer_sdlready_sem);
 
   /* Allocate memory for frame buffer */
   frame = malloc(screen_w*screen_h*3);
@@ -199,6 +203,12 @@ void* igvt_observer_networking(void *ptr) {
     tienet_recv(sockd, frame, 3*screen_w*screen_h, 0);
 #endif
 
+    if(igvt_observer_display_init) {
+      igvt_observer_display_init = 0;
+      tienet_sem_post(&igvt_observer_splash_sem);
+      tienet_sem_wait(&igvt_observer_sdlready_sem);
+    }
+
     /* Draw Frame */
     util_display_draw(frame);
 
@@ -237,12 +247,20 @@ void igvt_observer_event_loop() {
   SDL_Event event;
 
 
-  util_display_init(screen_w, screen_h);
-  SDL_WM_SetCaption("ADRT_IGVT_Observer", NULL);
+  /* Display Loading Splash Screen */
+  util_display_init(512, 288);
 
-  util_display_text("Loading ...", 10, 4, UTIL_JUSTIFY_LEFT, UTIL_JUSTIFY_TOP);
+  SDL_WM_SetCaption("ADRT_IGVT_Observer - Loading...", NULL);
+  util_display_draw(splash_image.pixel_data);
   util_display_flip();
 
+  tienet_sem_wait(&igvt_observer_splash_sem);
+  util_display_free();
+
+  util_display_init(screen_w, screen_h);
+
+/*  util_display_text("Loading ...", 10, 4, UTIL_JUSTIFY_LEFT, UTIL_JUSTIFY_TOP); */
+  SDL_WM_SetCaption("ADRT_IGVT_Observer", NULL);
   tienet_sem_post(&igvt_observer_sdlready_sem);
 
   SDL_EnableKeyRepeat(150, 50);

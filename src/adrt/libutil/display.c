@@ -56,9 +56,12 @@ void util_display_init(int w, int h) {
   util_display_screen_h = h;
 
   /* Initialize the SDL library */
-  if(SDL_Init(SDL_INIT_VIDEO | SDL_INIT_NOPARACHUTE) < 0) {
-    fprintf(stderr, "Couldn't initialize SDL: %s\n", SDL_GetError());
-    exit(1);
+  if(!SDL_WasInit(SDL_INIT_VIDEO)) {
+    if(SDL_Init(SDL_INIT_VIDEO | SDL_INIT_NOPARACHUTE) < 0) {
+      fprintf(stderr, "Couldn't initialize SDL: %s\n", SDL_GetError());
+      exit(1);
+    }
+  } else {
   }
 
   util_display_screen = SDL_SetVideoMode(util_display_screen_w, util_display_screen_h, 32, SDL_SWSURFACE);
