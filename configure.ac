@@ -2077,9 +2077,9 @@ fi
 if test "x$host_os" = "xirix6.5" ; then
 	# XXX the code that relies on this will be going away, but until then..
 	if test "x$build_brlcad_64bit" = "xyes" ; then
-		CFLAGS="$CFLAGS -DIRIX64"
+		CFLAGS="$CFLAGS -DIRIX64=65"
 	else
-		CFLAGS="$CFLAGS -DIRIX"
+		CFLAGS="$CFLAGS -DIRIX=6"
 	fi
 fi
 
