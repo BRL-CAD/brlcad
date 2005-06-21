@@ -124,7 +124,7 @@ void util_image_save_raw(char *filename, void *image, int w, int h) {
 
 
 void util_image_convert_128to24(void *image24, void *image128, int w, int h) {
-  int	i;
+  int i;
 
   for(i = 0; i < w * h; i++) {
     ((unsigned char *)image24)[3*i+0] = (unsigned char)(255.0 * ((tfloat *)image128)[4*i+0]);
@@ -135,7 +135,7 @@ void util_image_convert_128to24(void *image24, void *image128, int w, int h) {
 
 
 void util_image_convert_32to24(void *image24, void *image32, int w, int h, int endian) {
-  int	i;
+  int i;
 
   for(i = 0; i < w * h; i++) {
     if(endian) {
@@ -149,4 +149,3 @@ void util_image_convert_32to24(void *image24, void *image32, int w, int h, int e
     }
   }
 }
-

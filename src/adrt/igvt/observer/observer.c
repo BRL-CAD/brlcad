@@ -279,6 +279,18 @@ void igvt_observer_event_loop() {
             SDL_ShowCursor(!igvt_observer_mouse_grab);
             break;
 
+          case SDLK_F2:
+            {
+              void *image24;
+
+              /* Screen dump */
+              image24 = malloc(3 * screen_w * screen_h);
+              util_image_convert_32to24(image24, util_display_screen, screen_w, screen_h, 1);
+              util_image_save_ppm("screenshot.ppm", image24, screen_w, screen_h);
+              free(image24);
+            }
+            break;
+
           default:
             break;
         }
