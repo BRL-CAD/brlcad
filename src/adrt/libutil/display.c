@@ -92,6 +92,8 @@ void util_display_init(int w, int h) {
 /*  printf("util_font width: %d, %d\n", util_font.width, util_font.height); */
   memcpy(util_display_font->pixels, util_font.pixel_data, util_font.width * util_font.height * 4);
 
+  SDL_EnableUNICODE(1);
+
   /* Clean up on exit */
   atexit(SDL_Quit);
 }
@@ -179,66 +181,49 @@ void util_display_flip() {
 }
 
 
-void util_display_console(void (*fcb_cmd)(char *cmd)) {
-#if 0
+void util_display_console(char **command_buffer, int *lines, void (*fcb_cmd)(char *commmand, char *response)) {
   SDL_Event event;
   SDL_Rect rect;
   unsigned int color;
   int i, ind;
+  char command[80];
 
-  ind = strlen(text) - 1;
+  command[0] = 0;
+
+  ind = 0;
 
   /* Keyboard handling */
   while(SDL_WaitEvent(&event) >= 0) {
-    /* Box */
-    rect.x = UTIL_DISPLAY_FONT_WIDTH-3;
-    rect.y = UTIL_DISPLAY_FONT_HEIGHT-3;
-    rect.w = (width+2) * UTIL_DISPLAY_FONT_WIDTH+6;
-    rect.h = 3*UTIL_DISPLAY_FONT_HEIGHT+6;
-    color = 0xff606060;
+    /* Draw Command Window */
+    rect.x = 0;
+    rect.y = 0;
+    rect.w = util_display_screen_w;
+    rect.h = util_display_screen_h;
+    color = 0xff000080;
     SDL_FillRect(util_display_screen, &rect, color);
 
-    /* Title */
-    rect.x = UTIL_DISPLAY_FONT_WIDTH-1;
-    rect.y = 1*UTIL_DISPLAY_FONT_HEIGHT-1;
-    rect.w = (width+2) * UTIL_DISPLAY_FONT_WIDTH+2;
-    rect.h = 1*UTIL_DISPLAY_FONT_HEIGHT+2;
-    color = 0xff808080;
-    SDL_FillRect(util_display_screen, &rect, color);
-    util_display_text(title, 2, 1, 0, 0);
-
-    /* Input */
-    rect.x = UTIL_DISPLAY_FONT_WIDTH-1;
-    rect.y = 3*UTIL_DISPLAY_FONT_HEIGHT-1;
-    rect.w = (width+2) * UTIL_DISPLAY_FONT_WIDTH+2;
-    rect.h = 1*UTIL_DISPLAY_FONT_HEIGHT+2;
-    color = 0xff404040;
-    SDL_FillRect(util_display_screen, &rect, color);
-    util_display_text(text, 2, 3, 0, 0);
+    for(i = 0; i < *lines; i++)
+      util_display_text(command_buffer[i], 1, *lines - i + 1, UTIL_JUSTIFY_LEFT, UTIL_JUSTIFY_BOTTOM);
 
     /* Cursor */
-    rect.x = UTIL_DISPLAY_FONT_WIDTH*(3+ind)+1;
-    rect.y = 3*UTIL_DISPLAY_FONT_HEIGHT+1;
-    rect.w = 2;
-    rect.h = 1*UTIL_DISPLAY_FONT_HEIGHT-2;
-    color = 0xffB0B0B0;
+    rect.x = UTIL_DISPLAY_FONT_WIDTH*(ind + 1); /* +1 for '>' */
+    rect.y = util_display_screen_h - UTIL_DISPLAY_FONT_HEIGHT;
+    rect.w = UTIL_DISPLAY_FONT_WIDTH;
+    rect.h = UTIL_DISPLAY_FONT_HEIGHT;
+    color = 0xffffff00;
     SDL_FillRect(util_display_screen, &rect, color);
 
-    rect.x = UTIL_DISPLAY_FONT_WIDTH-3;
-    rect.y = UTIL_DISPLAY_FONT_HEIGHT-3;
-    rect.w = (width+2) * UTIL_DISPLAY_FONT_WIDTH+6;
-    rect.h = 3*UTIL_DISPLAY_FONT_HEIGHT+6;
-    SDL_UpdateRect(util_display_screen, rect.x, rect.y, rect.w, rect.h);
+    /* Input */
+    util_display_text(">", 0, 0, UTIL_JUSTIFY_LEFT, UTIL_JUSTIFY_BOTTOM);
+    util_display_text(command, 1, 0, UTIL_JUSTIFY_LEFT, UTIL_JUSTIFY_BOTTOM);
+
+    SDL_Flip(util_display_screen);
 
     switch(event.type) {
       case SDL_KEYDOWN:
         switch(event.key.keysym.sym) {
-          case SDLK_HOME:
-            ind = -1;
-            break;
-
-          case SDLK_END:
-            ind = strlen(text)-1;
+          case SDLK_BACKQUOTE:
+            return;
             break;
 
           case SDLK_LEFT:
@@ -247,44 +232,35 @@ void util_display_console(void (*fcb_cmd)(char *cmd)) {
             break;
 
           case SDLK_RIGHT:
-            if(ind+1 < strlen(text))
+            if(ind < strlen(command))
               ind++;
             break;
 
-          case SDLK_RETURN:
-            return;
-            break;
-
           case SDLK_BACKSPACE:
-            if(event.key.keysym.mod & KMOD_ALT) {
-              text[0] = NULL;
-              ind = -1;
-            } else {
-              if(ind >= 0) {
-                /* shift characters down */
-                for(i = ind; i < width; i++)
-                  text[i] = text[i+1];
+            if(ind) {
+              for(i = ind-1; i < strlen(command); i++)
+                command[i] = command[i+1];
                 ind--;
-              }
             }
             break;
 
+          case SDLK_RETURN:
+            strcpy(command_buffer[(*lines)++], command);
+            command[0] = 0;
+            ind = 0;
+            break;
+
           default:
-            if(event.key.keysym.sym >= 32 && event.key.keysym.sym < 127) {
-              if(ind+1 < width) {
-                /* shift characters down */
-                for(i = width-1; i > ind; i--)
-                  text[i] = text[i-1];
-                text[++ind] = event.key.keysym.sym;
-              }
+            if(event.key.keysym.unicode & 0x7F) {
+              command[ind++] = event.key.keysym.unicode & 0x7F;
+              command[ind] = 0;
             }
             break;
         }
         break;
 
-        default:
-          break;
+      default:
+        break;
     }
   }
-#endif
 }

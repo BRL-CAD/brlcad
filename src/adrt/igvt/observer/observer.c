@@ -44,6 +44,7 @@ pthread_mutex_t event_mut;
 tienet_sem_t igvt_observer_sdlinit_sem;
 tienet_sem_t igvt_observer_sdlready_sem;
 tienet_sem_t igvt_observer_splash_sem;
+pthread_mutex_t igvt_observer_console_mut;
 
 int screen_w;
 int screen_h;
@@ -80,6 +81,7 @@ void igvt_observer(char *host, int port) {
   tienet_sem_init(&igvt_observer_sdlinit_sem, 0);
   tienet_sem_init(&igvt_observer_sdlready_sem, 0);
   tienet_sem_init(&igvt_observer_splash_sem, 0);
+  pthread_mutex_init(&igvt_observer_console_mut, 0);
   igvt_observer_display_init = 1;
 
   /* Launch a thread to handle events */
@@ -209,6 +211,8 @@ void* igvt_observer_networking(void *ptr) {
       tienet_sem_wait(&igvt_observer_sdlready_sem);
     }
 
+    pthread_mutex_lock(&igvt_observer_console_mut);
+
     /* Draw Frame */
     util_display_draw(frame);
 
@@ -237,21 +241,34 @@ void* igvt_observer_networking(void *ptr) {
 
     util_display_cross();
     util_display_flip();
+
+    pthread_mutex_unlock(&igvt_observer_console_mut);
   }
 
   return(NULL);
 }
 
 
+void igvt_observer_command(char *command, char *response) {
+}
+
+
 void igvt_observer_event_loop() {
   SDL_Event event;
+  char command_buffer[100][80];
+  int lines, i;
+
+
+  lines = 0;
+  for(i = 0; i < 100; i++)
+    command_buffer[i][0] = 0;
 
 
   /* Display Loading Splash Screen */
   util_display_init(512, 288);
 
   SDL_WM_SetCaption("ADRT_IGVT_Observer Loading...", NULL);
-  util_display_draw(splash_image.pixel_data);
+  util_display_draw((void *)splash_image.pixel_data);
   util_display_flip();
 
   tienet_sem_wait(&igvt_observer_splash_sem);
@@ -289,6 +306,13 @@ void igvt_observer_event_loop() {
               util_image_save_ppm("screenshot.ppm", image24, screen_w, screen_h);
               free(image24);
             }
+            break;
+
+          case SDLK_BACKQUOTE:
+            /* Bring up the console */
+            pthread_mutex_lock(&igvt_observer_console_mut);
+            util_display_console((char **)command_buffer, &lines, igvt_observer_command);
+            pthread_mutex_unlock(&igvt_observer_console_mut);
             break;
 
           default:

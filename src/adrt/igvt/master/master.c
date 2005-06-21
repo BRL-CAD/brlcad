@@ -668,6 +668,10 @@ void igvt_master_process_events(SDL_Event *event_queue, int event_num, igvt_mast
             sock->active = 0;
             break;
 
+          case SDLK_BACKQUOTE: /* console */
+            /* reserved for console in observer */
+            break;
+
           default:
             break;
         }
