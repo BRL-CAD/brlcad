@@ -55,6 +55,7 @@ static const char RCSrt[] = "@(#)$Header$ (BRL)";
 #include "raytrace.h"
 #include "fb.h"
 #include "rtprivate.h"
+#include "bu.h"
 
 /***** Variables shared with viewing model *** */
 extern FILE	*outfp;			/* optional pixel output file */
@@ -413,54 +414,19 @@ int cm_closedb(int argc, char **argv)
 /* viewing module specific variables */
 extern struct bu_structparse view_parse[];
 
-#if 0
-/* from librt/g_bot.c */
-extern int rt_bot_minpieces;
-extern int rt_bot_tri_per_piece;
-#endif
-
-/*
- *  Generic settable parameters.
- *  By setting the "base address" to zero in the bu_structparse call,
- *  the actual memory address is given here as the structure offset.
- *
- *  Strictly speaking, the C language only permits initializers of the
- *  form: address +- constant, where here the intent is to measure the
- *  byte address of the indicated variable.
- *  Matching compensation code for the CRAY is located in librt/parse.c
- */
-#if CRAY
-#	define byteoffset(_i)	(((int)&(_i)))	/* actually a word offset */
-#else
-#  if defined (IRIX) && IRIX > 5 && _MIPS_SIM != _MIPS_SIM_ABI32
-#	define byteoffset(_i)	((size_t)__INTADDR__(&(_i)))
-#  else
-#    if sgi || __convexc__ || ultrix || _HPUX_SOURCE
-	/* "Lazy" way.  Works on reasonable machines with byte addressing */
-#	define byteoffset(_i)	((int)((char *)&(_i)))
-#    else
-#       if defined(__ia64__) || defined(__x86_64__) || defined(__sparc64__)
-#		define byteoffset(_i)	((long)(((void *)&(_i))-((void *)0)))
-#	else
-        	/* "Conservative" way of finding # bytes as diff of 2 char ptrs */
-#		define byteoffset(_i)	((int)(((char *)&(_i))-((char *)0)))
-#	endif
-#    endif
-#  endif
-#endif
 struct bu_structparse set_parse[] = {
 /*XXX need to investigate why this doesn't work on Windows */
 #if !defined(__alpha) && !defined(_WIN32) /* XXX Alpha does not support this initialization! */
-	{"%d",	1, "width",	byteoffset(width),		BU_STRUCTPARSE_FUNC_NULL },
-	{"%d",	1, "height",	byteoffset(height),		BU_STRUCTPARSE_FUNC_NULL },
-	{"%d",	1, "save_overlaps", byteoffset(save_overlaps),	BU_STRUCTPARSE_FUNC_NULL },
-	{"%f",	1, "perspective", byteoffset(rt_perspective),	BU_STRUCTPARSE_FUNC_NULL },
-	{"%f",	1, "angle",	byteoffset(rt_perspective),	BU_STRUCTPARSE_FUNC_NULL },
-	{"%d",  1, "rt_bot_minpieces", byteoffset(rt_bot_minpieces),BU_STRUCTPARSE_FUNC_NULL },
-	{"%d",  1, "rt_bot_tri_per_piece", byteoffset(rt_bot_tri_per_piece),BU_STRUCTPARSE_FUNC_NULL },
-	{"%f",  1, "rt_cline_radius", byteoffset(rt_cline_radius),BU_STRUCTPARSE_FUNC_NULL },
-	{"%S",  1, "ray_data_file", byteoffset(ray_data_file),BU_STRUCTPARSE_FUNC_NULL },
-	{"i", byteoffset(view_parse[0]),"View_Module-Specific Parameters", 0, BU_STRUCTPARSE_FUNC_NULL },
+	{"%d",	1, "width",	bu_byteoffset(width),		BU_STRUCTPARSE_FUNC_NULL },
+	{"%d",	1, "height",	bu_byteoffset(height),		BU_STRUCTPARSE_FUNC_NULL },
+	{"%d",	1, "save_overlaps", bu_byteoffset(save_overlaps),	BU_STRUCTPARSE_FUNC_NULL },
+	{"%f",	1, "perspective", bu_byteoffset(rt_perspective),	BU_STRUCTPARSE_FUNC_NULL },
+	{"%f",	1, "angle",	bu_byteoffset(rt_perspective),	BU_STRUCTPARSE_FUNC_NULL },
+	{"%d",  1, "rt_bot_minpieces", bu_byteoffset(rt_bot_minpieces),BU_STRUCTPARSE_FUNC_NULL },
+	{"%d",  1, "rt_bot_tri_per_piece", bu_byteoffset(rt_bot_tri_per_piece),BU_STRUCTPARSE_FUNC_NULL },
+	{"%f",  1, "rt_cline_radius", bu_byteoffset(rt_cline_radius),BU_STRUCTPARSE_FUNC_NULL },
+	{"%S",  1, "ray_data_file", bu_byteoffset(ray_data_file),BU_STRUCTPARSE_FUNC_NULL },
+	{"i", bu_byteoffset(view_parse[0]),"View_Module-Specific Parameters", 0, BU_STRUCTPARSE_FUNC_NULL },
 #endif
 	{"",	0, (char *)0,	0,				BU_STRUCTPARSE_FUNC_NULL }
 };

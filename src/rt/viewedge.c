@@ -47,12 +47,16 @@ static const char RCSviewedge[] = "@(#)$Header$ (BRL)";
 
 #include <stdio.h>
 #include <string.h>
+
 #include "machine.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "rtprivate.h"
 #include "fb.h"
+#include "bu.h"
+
 #include "./ext.h"
+
 
 #define RTEDGE_DEBUG 1
 
@@ -197,59 +201,37 @@ static void choose_color (RGBpixel col, struct cell *me,
 #define Abs( x )        ((x) < 0 ? -(x) : (x))                  /* UNSAFE */
 #endif
 
-/*
- * From do.c
- */
-#if defined (CRAY)
-#	define byteoffset(_i)	(((int)&(_i)))	/* actually a word offset */
-#else
-#  if defined(IRIX) && IRIX > 5 && _MIPS_SIM != _MIPS_SIM_ABI32
-#	define byteoffset(_i)	((size_t)__INTADDR__(&(_i)))
-#  else
-#    if defined(sgi) || defined(__convexc__) || defined(ultrix) || defined(_HPUX_SOURCE)
-/* "Lazy" way.  Works on reasonable machines with byte addressing */
-#	define byteoffset(_i)	((int)((char *)&(_i)))
-#    else
-#       if defined(__ia64__) || defined(__x86_64__) || defined(__sparc64__)
-#		define byteoffset(_i)	((long)(((void *)&(_i))-((void *)0)))
-#	else
-/* "Conservative" way of finding # bytes as diff of 2 char ptrs */
-#		define byteoffset(_i)	((int)(((char *)&(_i))-((char *)0)))
-#	endif
-#    endif
-#  endif
-#endif
 
 /* Viewing module specific "set" variables */
 struct bu_structparse view_parse[] = {
 /*XXX need to investigate why this doesn't work on Windows */
 #if !defined(__alpha) && !defined(_WIN32) /* XXX Alpha does not support this initialization! */
-  {"%d", 1, "detect_regions", byteoffset(detect_regions), BU_STRUCTPARSE_FUNC_NULL},
-  {"%d", 1, "dr", byteoffset(detect_regions), BU_STRUCTPARSE_FUNC_NULL},
-  {"%d", 1, "detect_distance", byteoffset(detect_distance), BU_STRUCTPARSE_FUNC_NULL},
-  {"%d", 1, "dd", byteoffset(detect_distance), BU_STRUCTPARSE_FUNC_NULL},
-  {"%d", 1, "detect_normals", byteoffset(detect_normals), BU_STRUCTPARSE_FUNC_NULL},
-  {"%d", 1, "dn", byteoffset(detect_normals), BU_STRUCTPARSE_FUNC_NULL},
-  {"%d", 1, "detect_ids", byteoffset(detect_ids), BU_STRUCTPARSE_FUNC_NULL},
-  {"%d", 1, "di", byteoffset(detect_ids), BU_STRUCTPARSE_FUNC_NULL},
-  {"%d", 3, "foreground", byteoffset(fgcolor), BU_STRUCTPARSE_FUNC_NULL},
-  {"%d", 3, "fg", byteoffset(fgcolor), BU_STRUCTPARSE_FUNC_NULL},
-  {"%d", 3, "background", byteoffset(bgcolor), BU_STRUCTPARSE_FUNC_NULL},
-  {"%d", 3, "bg", byteoffset(bgcolor), BU_STRUCTPARSE_FUNC_NULL},	
-  {"%d", 1, "overlay", byteoffset(overlay), BU_STRUCTPARSE_FUNC_NULL},
-  {"%d", 1, "ov", byteoffset(overlay), BU_STRUCTPARSE_FUNC_NULL},
-  {"%d", 1, "blend", byteoffset(blend), BU_STRUCTPARSE_FUNC_NULL},
-  {"%d", 1, "bl", byteoffset(blend), BU_STRUCTPARSE_FUNC_NULL},
-  {"%d", 1, "region_color", byteoffset(region_colors), 
+  {"%d", 1, "detect_regions", bu_byteoffset(detect_regions), BU_STRUCTPARSE_FUNC_NULL},
+  {"%d", 1, "dr", bu_byteoffset(detect_regions), BU_STRUCTPARSE_FUNC_NULL},
+  {"%d", 1, "detect_distance", bu_byteoffset(detect_distance), BU_STRUCTPARSE_FUNC_NULL},
+  {"%d", 1, "dd", bu_byteoffset(detect_distance), BU_STRUCTPARSE_FUNC_NULL},
+  {"%d", 1, "detect_normals", bu_byteoffset(detect_normals), BU_STRUCTPARSE_FUNC_NULL},
+  {"%d", 1, "dn", bu_byteoffset(detect_normals), BU_STRUCTPARSE_FUNC_NULL},
+  {"%d", 1, "detect_ids", bu_byteoffset(detect_ids), BU_STRUCTPARSE_FUNC_NULL},
+  {"%d", 1, "di", bu_byteoffset(detect_ids), BU_STRUCTPARSE_FUNC_NULL},
+  {"%d", 3, "foreground", bu_byteoffset(fgcolor), BU_STRUCTPARSE_FUNC_NULL},
+  {"%d", 3, "fg", bu_byteoffset(fgcolor), BU_STRUCTPARSE_FUNC_NULL},
+  {"%d", 3, "background", bu_byteoffset(bgcolor), BU_STRUCTPARSE_FUNC_NULL},
+  {"%d", 3, "bg", bu_byteoffset(bgcolor), BU_STRUCTPARSE_FUNC_NULL},	
+  {"%d", 1, "overlay", bu_byteoffset(overlay), BU_STRUCTPARSE_FUNC_NULL},
+  {"%d", 1, "ov", bu_byteoffset(overlay), BU_STRUCTPARSE_FUNC_NULL},
+  {"%d", 1, "blend", bu_byteoffset(blend), BU_STRUCTPARSE_FUNC_NULL},
+  {"%d", 1, "bl", bu_byteoffset(blend), BU_STRUCTPARSE_FUNC_NULL},
+  {"%d", 1, "region_color", bu_byteoffset(region_colors), 
    BU_STRUCTPARSE_FUNC_NULL},
-  {"%d", 1, "rc", byteoffset(region_colors), BU_STRUCTPARSE_FUNC_NULL},
-  {"%S", 1, "occlusion_objects", byteoffset(occlusion_objects), 
+  {"%d", 1, "rc", bu_byteoffset(region_colors), BU_STRUCTPARSE_FUNC_NULL},
+  {"%S", 1, "occlusion_objects", bu_byteoffset(occlusion_objects), 
    BU_STRUCTPARSE_FUNC_NULL},
-  {"%S", 1, "oo", byteoffset(occlusion_objects), 
+  {"%S", 1, "oo", bu_byteoffset(occlusion_objects), 
    BU_STRUCTPARSE_FUNC_NULL},
-  {"%d", 1, "occlusion_mode", byteoffset(occlusion_mode), 
+  {"%d", 1, "occlusion_mode", bu_byteoffset(occlusion_mode), 
    BU_STRUCTPARSE_FUNC_NULL},
-  {"%d", 1, "om", byteoffset(occlusion_mode), BU_STRUCTPARSE_FUNC_NULL},
+  {"%d", 1, "om", bu_byteoffset(occlusion_mode), BU_STRUCTPARSE_FUNC_NULL},
 #endif
   {"",	0, (char *)0,	0,	BU_STRUCTPARSE_FUNC_NULL }
 };
