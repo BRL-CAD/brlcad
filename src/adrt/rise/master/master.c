@@ -152,7 +152,7 @@ void rise_master_result(void *res_buf, int res_len) {
   }
 
   /* Progress Indicator */
-  printf("Progress: %.0f%%\r", 100 * (tfloat)rise_master_work_ind / (tfloat)rise_master_tile_num);
+  printf("Progress: %.1f%%\r", 100 * (tfloat)rise_master_work_ind / (tfloat)rise_master_tile_num);
   fflush(stdout);
 /*printf("result: %d %d\n", work.orig_x, work.orig_y); */
 
