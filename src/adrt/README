@@ -1,32 +1,43 @@
+ADRT consists of 2 tools RISE (Realistic Image Synthesis Engine) and 
+IGVT (Interactive Geometry Visualization Tool).  Both tools consist of 
+(3) binaries, a master, an observer, and slave.  Below is an example of 
+how to launch IGVT from the command line:
 
-  For Mac users:
+Method 1 - Manually Connecting Compute Nodes
+============================================
+Step 1.
+  igvt_master -p /path/to/project -g /path/to/project/geometry.file
 
-	ln -s /usr/bin/glibtoolize /usr/bin/libtoolize
-	
-STEP 1 (CONFIGURE CREATION):
-  autoreconf -vis
+Step 2.
+  igvt_observer -H master.host.name
 
+Step 3.
+  igvt_slave -H master.host.name
 
-STEP 2 (MAKEFILE FLAGS):
-  XEON or OPTERON:
-  ./configure --enable-optim-xeon --prefix=/d/cluster/FreeBSD/5.2.1/usr/local
-
-  PPC:
-  ./configure --enable-optim-ppc --prefix=/d/cluster/FreeBSD/5.2.1/usr/local
-
-
-STEP 3 (COMPILE):
-  make -j5 
-
+Step 4.
+  repeat step 3 on all slave nodes.
 
 
-Running
+Method 2 - Connecting to Slave Daemons
+============================================
+Step 1.
+  login to each compute node and run igvt_slave& (background process).
 
-#igvt_master -p <proj folder> -g <geom file> -l <slave list file>
+Step 2.
+  igvt_master -p /path/to/project -g /path/to/project/geometry.file -l 
+  slaves.txt (slaves.txt contains each slave hostname per line).
 
-(project dr in eab1:~justin/humanim/ )
+Step 3.
+  igvt_observer -H master.host.name
 
-igvt_master -p <proj folder> -g <geom file>
-igvt_slave -H <host>
-igvt_observer -H <host>
 
+Since RISE is used for generating images, the observer is only supplied 
+to check up on the images progress, which is especially useful for time 
+consuming renderings.
+
+Running configure with --enable-optimized is very important as it will 
+affect performance by almost doubling performance.
+
+To learn more about how the structure of a project file and what 
+geometry files you can feed to igvt or rise please check the doc 
+directory for help with RISE and IGVT.
