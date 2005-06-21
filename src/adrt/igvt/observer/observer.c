@@ -250,7 +250,7 @@ void igvt_observer_event_loop() {
   /* Display Loading Splash Screen */
   util_display_init(512, 288);
 
-  SDL_WM_SetCaption("ADRT_IGVT_Observer - Loading...", NULL);
+  SDL_WM_SetCaption("ADRT_IGVT_Observer Loading...", NULL);
   util_display_draw(splash_image.pixel_data);
   util_display_flip();
 
@@ -259,7 +259,7 @@ void igvt_observer_event_loop() {
 
   util_display_init(screen_w, screen_h);
 
-/*  util_display_text("Loading ...", 10, 4, UTIL_JUSTIFY_LEFT, UTIL_JUSTIFY_TOP); */
+  util_display_text("Loading ...", 10, 4, UTIL_JUSTIFY_LEFT, UTIL_JUSTIFY_TOP);
   SDL_WM_SetCaption("ADRT_IGVT_Observer", NULL);
   tienet_sem_post(&igvt_observer_sdlready_sem);
 
@@ -285,7 +285,7 @@ void igvt_observer_event_loop() {
 
               /* Screen dump */
               image24 = malloc(3 * screen_w * screen_h);
-              util_image_convert_32to24(image24, util_display_screen, screen_w, screen_h, 1);
+              util_image_convert_32to24(image24, util_display_screen->pixels, screen_w, screen_h, 0);
               util_image_save_ppm("screenshot.ppm", image24, screen_w, screen_h);
               free(image24);
             }
