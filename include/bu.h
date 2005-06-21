@@ -1230,7 +1230,7 @@ BU_EXPORT extern int	bu_debug;
 #if defined(CRAY)
 #	define bu_byteoffset(_i)	(((int)&(_i)))	/* actually a word offset */
 #else
-#  if defined(IRIX) && IRIX > 5 && _MIPS_SIM != _MIPS_SIM_ABI32
+#  if defined(IRIX) && IRIX > 5 && _MIPS_SIM != _ABIN32 && _MIPS_SIM != _MIPS_SIM_ABI32
 #      define bu_byteoffset(_i)	((size_t)__INTADDR__(&(_i)))
 #  else
 #    if defined(sgi) || defined(__convexc__) || defined(ultrix) || defined(_HPUX_SOURCE)
