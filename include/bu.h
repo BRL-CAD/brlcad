@@ -1221,6 +1221,11 @@ BU_EXPORT extern int	bu_debug;
 
 /*
  *  Convert address of global data object into byte "offset" from address 0.
+ *
+ *  Strictly speaking, the C language only permits initializers of the
+ *  form: address +- constant, where here the intent is to measure the
+ *  byte address of the indicated variable.
+ *  Matching compensation code for the CRAY is located in librt/parse.c
  */
 #if defined(CRAY)
 #	define bu_byteoffset(_i)	(((int)&(_i)))	/* actually a word offset */
