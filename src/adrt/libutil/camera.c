@@ -1,4 +1,7 @@
 /*                     C A M E R A . C
+ *
+ * @file camera.c
+ *
  * BRL-CAD
  *
  * Copyright (C) 2002-2005 United States Government as represented by
@@ -17,11 +20,9 @@
  * You should have received a copy of the GNU Lesser General Public
  * License along with this file; see the file named COPYING for more
  * information.
- */
-/** @file camera.c
- *                     C A M E R A . C
  *
- *  Utilities Library - Camera
+ *  Comments -
+ *      Utilities Library - Camera
  *
  *  Author -
  *      Justin L. Shumaker

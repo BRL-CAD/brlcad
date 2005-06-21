@@ -1,4 +1,7 @@
 /*                     D I S P L A Y . C
+ *
+ * @file display.c
+ *
  * BRL-CAD
  *
  * Copyright (C) 2002-2005 United States Government as represented by
@@ -17,11 +20,9 @@
  * You should have received a copy of the GNU Lesser General Public
  * License along with this file; see the file named COPYING for more
  * information.
- */
-/** @file display.c
- *                     D I S P L A Y . C
  *
- *  Utilities Library - Display (SDL Stuff)
+ *  Comments -
+ *      Utilities Library - Display (SDL Stuff)
  *
  *  Author -
  *      Justin L. Shumaker

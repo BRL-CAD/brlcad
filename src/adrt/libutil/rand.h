@@ -1,4 +1,7 @@
 /*                     R A N D . H
+ *
+ * @file rand.h
+ *
  * BRL-CAD
  *
  * Copyright (C) 2002-2005 United States Government as represented by
@@ -17,11 +20,9 @@
  * You should have received a copy of the GNU Lesser General Public
  * License along with this file; see the file named COPYING for more
  * information.
- */
-/** @file rand.h
- *                     R A N D . H
  *
- *  Utilities Library - Random Header
+ *  Comments -
+ *      Utilities Library - Random Header
  *
  *  Author -
  *      Justin L. Shumaker

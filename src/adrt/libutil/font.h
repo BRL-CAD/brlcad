@@ -1,4 +1,7 @@
 /*                     F O N T . H
+ *
+ * @file font.h
+ *
  * BRL-CAD
  *
  * Copyright (C) 2002-2005 United States Government as represented by
@@ -17,11 +20,9 @@
  * You should have received a copy of the GNU Lesser General Public
  * License along with this file; see the file named COPYING for more
  * information.
- */
-/** @file font.h
- *                     F O N T . H
  *
- *  Utilities Library - 8x15 character Font
+ *  Comments -
+ *      Utilities Library - 8x15 character Font
  *
  *  Author -
  *      Justin L. Shumaker

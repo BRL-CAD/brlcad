@@ -1,4 +1,7 @@
 /*                     C A M E R A . H
+ *
+ * @file camera.h
+ *
  * BRL-CAD
  *
  * Copyright (C) 2002-2005 United States Government as represented by
@@ -17,11 +20,9 @@
  * You should have received a copy of the GNU Lesser General Public
  * License along with this file; see the file named COPYING for more
  * information.
- */
-/** @file camera.h
- *                     C A M E R A . H
  *
- *  Utilities Library - Camera Header
+ *  Comments -
+ *      Utilities Library - Camera Header
  *
  *  Author -
  *      Justin L. Shumaker
