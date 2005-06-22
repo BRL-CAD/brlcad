@@ -140,7 +140,8 @@ if test ! "x$BRLCAD_ROOT" = "x" ; then
 fi
 
 # set up our default shared/non-shared data install directories
-BRLCAD_DATA_DIR='${pkgdatadir}/${BRLCAD_VERSION}'
+# BRLCAD_DATA_DIR='${pkgdatadir}/${BRLCAD_VERSION}'
+BRLCAD_DATA_DIR='${datadir}'
 AC_SUBST(BRLCAD_DATA_DIR)
 
 # if this is not a CVS checkout, disable dependency tracking for a
