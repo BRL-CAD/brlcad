@@ -5,7 +5,7 @@ LDADD = ${LIBRT} ${FB} ${OPTICAL} ${TCL}
 if ONLY_BENCHMARK
 bin_PROGRAMS = \
 	rt
-else
+else !ONLY_BENCHMARK
 bin_PROGRAMS = \
 	rt \
 	rt_bot_faces \
@@ -33,6 +33,7 @@ noinst_PROGRAMS = \
 	rtexample
 
 endif
+# end of ONLY_BENCHMARK
 
 ALLSRCS = \
 	do.c \
@@ -254,7 +255,7 @@ BUILT_SOURCES = \
 	rtxray_vers.c \
 	vers.c
 
-vers.c: $(ALLSRCS)
+vers.c: $(COMMON) view.c
 	@SH@ $(top_srcdir)/sh/vers.sh version "The BRL-CAD Raytracer RT" > $@
 
 noinst_LIBRARIES = \
