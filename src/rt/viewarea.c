@@ -467,6 +467,93 @@ void	view_eol()
 }
 
 
+typedef enum area_type {
+    PRESENTED_AREA,
+    EXPOSED_AREA
+} area_type_t;
+
+
+/*  p r i n t _ r e g i o n _ a r e a _ l i s t
+ *
+ * Prints a list of region areas sorted alphabetically reporting
+ * either the presented or exposed area 'type' and keeping track of
+ * the 'count' of regions printed.  this routine returns the number of
+ * ray hits across all regions.
+ */
+static long
+print_region_area_list(long *count, struct rt_i *rtip, area_type_t type)
+{
+    struct region *rp;
+    register struct area *cell = (struct area *)NULL;
+    long cumulative = 0;
+
+    struct area_list *listHead = (struct area_list *)bu_malloc(sizeof(struct area_list), "print_area_list area list node allocation");
+    struct area_list *listp;
+    listHead->cell = (struct area *)NULL;
+    listHead->next = (struct area_list *)NULL;
+
+    /* sort the cell entries alphabetically */
+    for( BU_LIST_FOR( rp, region, &(rtip->HeadRegion) ) )  {
+	cell = (struct area *)rp->reg_udata;
+	listp = listHead;
+
+	if (cell) {
+	    if (cell->hits > 0) {
+		struct area_list *prev = (struct area_list *)NULL;
+		struct area_list *newNode;
+
+		while (listp->next) {
+		    if (!listp->cell || (strcmp(cell->name, listp->cell->name) < 0)) {
+			break;
+		    }
+		    prev = listp;
+		    listp = listp->next;
+		}
+
+		newNode = (struct area_list *)bu_malloc(sizeof(struct area_list), "print_area_list area list node allocation");
+		newNode->cell = cell;
+		newNode->next = (struct area_list *)NULL;
+
+		if (!prev) {
+		    listHead = newNode;
+		    newNode->next = listp;
+		} else {
+		    newNode->next = prev->next;
+		    prev->next = newNode;
+		}
+		
+		cumulative += cell->hits;
+		if (count) {
+		    *count++;
+		}
+	    }
+	}
+    }
+
+    if (type == PRESENTED_AREA) {
+	bu_log("\nPresented Region Areas\n======================\n");
+    }
+    if (type == EXPOSED_AREA) {
+	bu_log("\nExposed Region Areas\n====================\n");
+    }
+    for (listp = listHead; listp->cell != NULL;) {
+	struct area_list *prev = listp;
+	cell = listp->cell;
+	if (type == PRESENTED_AREA) {
+	    bu_log("Region %s\t(%ld hits)\t= %18.4lf square mm\t(%.4lf square meters)\n", cell->name, cell->hits, cell_area * (fastf_t)cell->hits, cell_area * (fastf_t)cell->hits / 1000000.0);
+	}
+	if (type == EXPOSED_AREA) {
+	    bu_log("Region %s\t(%ld hits)\t= %18.4lf square mm\t(%.4lf square meters)\n", cell->name, cell->exposures, cell_area * (fastf_t)cell->exposures, cell_area * (fastf_t)cell->exposures / 1000000.0);
+	}
+	listp = listp->next;
+	bu_free(prev, "print_area_list area list node free");
+    }
+    bu_free(listp, "print_area_list area list node free");
+
+    return cumulative;
+}
+
+
 /*
  *			V I E W _ E N D
  *
@@ -494,98 +581,9 @@ view_end(struct application *ap)
     listHead->cell = (struct area *)NULL;
     listHead->next = (struct area_list *)NULL;
 
-    /* sort the cell entries alphabetically */
-    for( BU_LIST_FOR( rp, region, &(rtip->HeadRegion) ) )  {
-	cell = (struct area *)rp->reg_udata;
-	listp = listHead;
+    cumulative = print_region_area_list(&presented_region_count, rtip, PRESENTED_AREA);
 
-	if (cell) {
-	    if (cell->hits > 0) {
-		struct area_list *prev = (struct area_list *)NULL;
-		struct area_list *newNode;
-
-		while (listp->next) {
-		    if (!listp->cell || (strcmp(cell->name, listp->cell->name) < 0)) {
-			break;
-		    }
-		    prev = listp;
-		    listp = listp->next;
-		}
-
-		newNode = (struct area_list *)bu_malloc(sizeof(struct area_list), "view_end area list node allocation");
-		newNode->cell = cell;
-		newNode->next = (struct area_list *)NULL;
-
-		if (!prev) {
-		    listHead = newNode;
-		    newNode->next = listp;
-		} else {
-		    newNode->next = prev->next;
-		    prev->next = newNode;
-		}
-		
-		cumulative += cell->hits;
-		presented_region_count++;
-	    }
-	}
-    }
-    bu_log("\nPresented Region Areas\n======================\n");
-    for (listp = listHead; listp->cell != NULL;) {
-	struct area_list *prev = listp;
-	cell = listp->cell;
-	bu_log("Region %s\t(%ld hits)\t= %18.4lf square mm\t(%.4lf square meters)\n", cell->name, cell->hits, cell_area * (fastf_t)cell->hits, cell_area * (fastf_t)cell->hits / 1000000.0);
-	listp = listp->next;
-	bu_free(prev, "view_end area list node free");
-    }
-    bu_free(listp, "view_end area list node free");
-
-    listHead = (struct area_list *)bu_malloc(sizeof(struct area_list), "view_end area list node allocation");
-    listHead->cell = (struct area *)NULL;
-    listHead->next = (struct area_list *)NULL;
-
-    for( BU_LIST_FOR( rp, region, &(rtip->HeadRegion) ) )  {
-	cell = (struct area *)rp->reg_udata;
-	listp = listHead;
-
-	if (cell) {
-	    if (cell->exposures > 0) {
-		struct area_list *prev = (struct area_list *)NULL;
-		struct area_list *newNode;
-
-		while (listp->next) {
-		    if (!listp->cell || (strcmp(cell->name, listp->cell->name) < 0)) {
-			break;
-		    }
-		    prev = listp;
-		    listp = listp->next;
-		}
-
-		newNode = (struct area_list *)bu_malloc(sizeof(struct area_list), "view_end area list node allocation");
-		newNode->cell = cell;
-		newNode->next = (struct area_list *)NULL;
-
-		if (!prev) {
-		    listHead = newNode;
-		    newNode->next = listp;
-		} else {
-		    newNode->next = prev->next;
-		    prev->next = newNode;
-		}
-
-		exposed_region_count++;
-	    }
-	}
-    }
-    bu_log("\nExposed Region Areas\n====================\n");
-    for (listp = listHead; listp->cell != NULL;) {
-	struct area_list *prev = listp;
-	cell = listp->cell;
-	bu_log("Region %s\t(%ld hits)\t= %18.4lf square mm\t(%.4lf square meters)\n", cell->name, cell->exposures, cell_area * (fastf_t)cell->exposures, cell_area * (fastf_t)cell->exposures / 1000000.0);
-	listp = listp->next;
-	bu_free(prev, "view_end area list node free");
-    }
-    bu_free(listp, "view_end area list node free");
-
+    (void) print_region_area_list(&exposed_region_count, rtip, EXPOSED_AREA);
 
     /* find the maximum assembly depth */
     rp = BU_LIST_FIRST(region, &(rtip->HeadRegion));
@@ -656,9 +654,9 @@ view_end(struct application *ap)
 	while (cell) {
 	    next_cell = cell->assembly;
 	    if (cell->name) {
-		bu_free((char *)cell->name, "viewend assembly name free");
+		bu_free((char *)cell->name, "view_end assembly name free");
 	    }
-	    bu_free(cell, "viewend assembly free");
+	    bu_free(cell, "view_end assembly free");
 	    cell = next_cell;
 	}
     }
@@ -668,7 +666,7 @@ view_end(struct application *ap)
 	cell = (struct area *)rp->reg_udata;
 
 	if (cell) {
-	    bu_free(cell, "viewend area free");
+	    bu_free(cell, "view_end area free");
 	    cell = (struct area *)rp->reg_name = (genptr_t)NULL;
 	}
     }
