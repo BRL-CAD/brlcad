@@ -185,12 +185,14 @@ void util_display_console(char **command_buffer, int *lines, void (*fcb_cmd)(cha
   SDL_Event event;
   SDL_Rect rect;
   unsigned int color;
-  int i, ind;
+  int i, ind, h_ind;
   char command[80];
+  char history[80];
 
   command[0] = 0;
 
   ind = 0;
+  h_ind = 0;
 
   /* Keyboard handling */
   while(SDL_WaitEvent(&event) >= 0) {
@@ -203,7 +205,7 @@ void util_display_console(char **command_buffer, int *lines, void (*fcb_cmd)(cha
     SDL_FillRect(util_display_screen, &rect, color);
 
     for(i = 0; i < *lines; i++)
-      util_display_text(command_buffer[i], 1, *lines - i + 1, UTIL_JUSTIFY_LEFT, UTIL_JUSTIFY_BOTTOM);
+      util_display_text(command_buffer[i], 1, *lines - i, UTIL_JUSTIFY_LEFT, UTIL_JUSTIFY_BOTTOM);
 
     /* Cursor */
     rect.x = UTIL_DISPLAY_FONT_WIDTH*(ind + 1); /* +1 for '>' */
@@ -236,6 +238,30 @@ void util_display_console(char **command_buffer, int *lines, void (*fcb_cmd)(cha
               ind++;
             break;
 
+          case SDLK_UP:
+            if(h_ind) {
+              if(h_ind == *lines)
+                strcpy(history, command);
+              strcpy(command, command_buffer[h_ind-1]);
+              ind = strlen(command);
+
+              if(h_ind)
+                h_ind--;
+            }
+            break;
+
+          case SDLK_DOWN:
+            if(h_ind < *lines) {
+              h_ind++;
+              if(h_ind == *lines) {
+                strcpy(command, history);
+              } else {
+                strcpy(command, command_buffer[h_ind]);
+              }
+              ind = strlen(command);
+            }
+            break;
+
           case SDLK_BACKSPACE:
             if(ind) {
               for(i = ind-1; i < strlen(command); i++)
@@ -248,13 +274,16 @@ void util_display_console(char **command_buffer, int *lines, void (*fcb_cmd)(cha
             strcpy(command_buffer[(*lines)++], command);
             command[0] = 0;
             ind = 0;
+            h_ind = *lines;
             break;
 
           default:
-            if(event.key.keysym.unicode & 0x7F) {
-              command[ind++] = event.key.keysym.unicode & 0x7F;
-              command[ind] = 0;
-            }
+            if(ind < 80)
+              if(event.key.keysym.unicode & 0x7F) {
+                for(i = strlen(command); i >= ind; i--)
+                  command[i+1] = command[i];
+                command[ind++] = event.key.keysym.unicode & 0x7F;
+              }
             break;
         }
         break;

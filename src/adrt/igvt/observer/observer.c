@@ -255,13 +255,14 @@ void igvt_observer_command(char *command, char *response) {
 
 void igvt_observer_event_loop() {
   SDL_Event event;
-  char command_buffer[100][80];
+  char **command_buffer;
   int lines, i;
 
 
   lines = 0;
+  command_buffer = (char **)malloc(sizeof(char *) * 100);
   for(i = 0; i < 100; i++)
-    command_buffer[i][0] = 0;
+    command_buffer[i] = (char *)malloc(80);
 
 
   /* Display Loading Splash Screen */
@@ -311,7 +312,7 @@ void igvt_observer_event_loop() {
           case SDLK_BACKQUOTE:
             /* Bring up the console */
             pthread_mutex_lock(&igvt_observer_console_mut);
-            util_display_console((char **)command_buffer, &lines, igvt_observer_command);
+            util_display_console(command_buffer, &lines, igvt_observer_command);
             pthread_mutex_unlock(&igvt_observer_console_mut);
             break;
 
@@ -330,4 +331,9 @@ void igvt_observer_event_loop() {
       igvt_observer_event_queue[igvt_observer_event_queue_size++] = event;
     pthread_mutex_unlock(&event_mut);
   }
+
+
+  for(i = 0; i < 100; i++)
+    free(command_buffer[i]);
+  free(command_buffer);
 }
