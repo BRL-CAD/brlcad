@@ -238,6 +238,9 @@ bc_use_doxygen=no
 # jove
 BC_ARG_ENABLE([build_jove], [jove], [Enable compilation of jove], [no])
 
+# pro/e plugin
+BC_ARG_ENABLE([build_proe], [pro-engineer-plugin], [Enable compilation of Pro/Engineer plugin], [no])
+
 # example geometry
 BC_ARG_ENABLE([install_geometry], [models-install], [Enable installation of example geometry models], [yes])
 
@@ -389,6 +392,14 @@ BC_ARG_ALIAS([build_jove], [jove-build])
 AC_MSG_CHECKING(whether to compile jove or not)
 AC_MSG_RESULT($bc_build_jove)
 
+# pro/e plugin aliases (help uses pro-engineer-plugin)
+BC_ARG_ALIAS([build_proe], [pro-engineer])
+BC_ARG_ALIAS([build_proe], [proe])
+BC_ARG_ALIAS([build_proe], [proe-plugin])
+AC_MSG_CHECKING(whether to compile the Pro-Engineer plugin)
+AC_MSG_RESULT($bc_build_proe)
+
+# install geometry aliases (help uses models-install)
 BC_ARG_ALIAS([install_geometry], [models])
 BC_ARG_ALIAS([install_geometry], [install-models])
 BC_ARG_ALIAS([install_geometry], [geometry-install])
@@ -2112,6 +2123,7 @@ AM_CONDITIONAL(BUILD_ZLIB, [test "x$build_brlcad_zlib" = "xyes"])
 AM_CONDITIONAL(BUILD_URT, [test "x$build_brlcad_urt" = "xyes"])
 AM_CONDITIONAL(BUILD_TERMLIB, [test "x$build_brlcad_termlib" = "xyes"])
 AM_CONDITIONAL(BUILD_JOVE, [test "x$bc_build_jove" = "xyes"])
+AM_CONDITIONAL(BUILD_PROE, [test "x$bc_build_proe" = "xyes"])
 AM_CONDITIONAL(INSTALL_MODELS, [test "x$bc_install_geometry" = "xyes"])
 
 AM_CONDITIONAL(JAVA, [test "x$bc_with_java" != "xno"])
