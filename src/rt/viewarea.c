@@ -492,6 +492,73 @@ print_region_area_list(long int *count, struct rt_i *rtip, area_type_t type)
 }
 
 
+/*  p r i n t _ a s s e m b l y _ a r e a _ l i s t
+ *
+ * Prints a list of region areas sorted alphabetically reporting
+ * either the presented or exposed area 'type' and keeping track of
+ * the 'count' of regions printed.  this routine returns the number of
+ * ray hits across all regions.
+ */
+static long int
+print_assembly_area_list(struct rt_i *rtip, long int max_depth, area_type_t type)
+{
+    struct region *rp;
+    struct area *cellp;
+    int depth;
+    register struct area *cell = (struct area *)NULL;
+    long int count = 0;
+
+    struct area_list *listHead = (struct area_list *)bu_malloc(sizeof(struct area_list), "print_area_list area list node allocation");
+    struct area_list *listp;
+    listHead->cell = (struct area *)NULL;
+    listHead->next = (struct area_list *)NULL;
+
+    if (type == PRESENTED_AREA) {
+	bu_log("\nPresented Assembly Areas\n========================\n");
+    }
+    if (type == EXPOSED_AREA) {
+	bu_log("\nExposed Assembly Areas\n======================\n");
+    }
+	
+    rp = BU_LIST_FIRST(region, &(rtip->HeadRegion));
+    cell = (struct area *)rp->reg_udata;
+    depth = max_depth;
+    while (depth >= 0) {
+	for (cellp = cell->assembly; cellp; cellp = cellp->assembly) {
+	    int counted_items;
+
+	    if (type == PRESENTED_AREA) {
+		counted_items = cellp->hits;
+	    }
+	    if (type == EXPOSED_AREA) {
+		counted_items = cellp->exposures;
+	    }
+	    if (counted_items && depth == cellp->depth) {
+		int indents = max_depth - depth;
+		while (indents-- > 0) {
+		    if (indents % 2) {
+			bu_log("++");
+		    } else {
+			bu_log("--");
+		    }
+		}
+
+		if (type == PRESENTED_AREA) {
+		    bu_log("Assembly %s\t(%ld hits)\t= %18.4lf square mm\t(%.4lf square meters)\n", cellp->name, cellp->hits, cell_area * (fastf_t)cellp->hits, cell_area * (fastf_t)cellp->hits / 1000000.0);
+		}
+		if (type == EXPOSED_AREA) {
+		    bu_log("Assembly %s\t(%ld hits)\t= %18.4lf square mm\t(%.4lf square meters)\n", cellp->name, cellp->exposures, cell_area * (fastf_t)cellp->exposures, cell_area * (fastf_t)cellp->exposures / 1000000.0);
+		}
+		count++;
+	    }
+	}
+	depth--;
+    }
+
+    return count;
+}
+
+
 /*
  *			V I E W _ E N D
  *
@@ -514,11 +581,6 @@ view_end(struct application *ap)
     long int exposed_region_count = 0;
     long int exposed_assembly_count = 0;
 
-    struct area_list *listHead = (struct area_list *)bu_malloc(sizeof(struct area_list), "view_end area list node allocation");
-    struct area_list *listp;
-    listHead->cell = (struct area *)NULL;
-    listHead->next = (struct area_list *)NULL;
-
     cumulative = print_region_area_list(&presented_region_count, rtip, PRESENTED_AREA);
     (void) print_region_area_list(&exposed_region_count, rtip, EXPOSED_AREA);
 
@@ -531,47 +593,9 @@ view_end(struct application *ap)
 	}
     }
 
-    bu_log("\nPresented Assembly Areas\n========================\n");
-    cell = (struct area *)rp->reg_udata;
-    depth = max_depth;
-    while (depth >= 0) {
-	for (cellp = cell->assembly; cellp; cellp = cellp->assembly) {
-	    if (cellp->hits && depth == cellp->depth) {
-		int indents = max_depth - depth;
-		while (indents-- > 0) {
-		    if (indents % 2) {
-			bu_log("++");
-		    } else {
-			bu_log("--");
-		    }
-		}
-		bu_log("Assembly %s\t(%ld hits)\t= %18.4lf square mm\t(%.4lf square meters)\n", cellp->name, cellp->hits, cell_area * (fastf_t)cellp->hits, cell_area * (fastf_t)cellp->hits / 1000000.0);
-		presented_assembly_count++;
-	    }
-	}
-	depth--;
-    }
+    presented_assembly_count = print_assembly_area_list(rtip, max_depth, PRESENTED_AREA);
 
-    bu_log("\nExposed Assembly Areas\n======================\n");
-    cell = (struct area *)rp->reg_udata;
-    depth = max_depth;
-    while (depth >= 0) {
-	for (cellp = cell->assembly; cellp; cellp = cellp->assembly) {
-	    if (cellp->exposures && depth == cellp->depth) {
-		int indents = max_depth - depth;
-		while (indents-- > 0) {
-		    if (indents % 2) {
-			bu_log("++");
-		    } else {
-			bu_log("--");
-		    }
-		}
-		bu_log("Assembly %s\t(%ld hits)\t= %18.4lf square mm\t(%.4lf square meters)\n", cellp->name, cellp->exposures, cell_area * (fastf_t)cellp->exposures, cell_area * (fastf_t)cellp->exposures / 1000000.0);
-		exposed_assembly_count++;
-	    }
-	}
-	depth--;
-    }
+    exposed_assembly_count = print_assembly_area_list(rtip, max_depth, EXPOSED_AREA);
 
     bu_log("\nSummary\n=======\n");
     total_area = cell_area * (fastf_t)hit_count;
