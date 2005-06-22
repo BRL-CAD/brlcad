@@ -106,6 +106,12 @@ struct area_list {
     struct area_list *next;
 };
 
+typedef enum area_type {
+    PRESENTED_AREA,
+    EXPOSED_AREA
+} area_type_t;
+
+
 int rayhit(struct application *ap, struct partition *PartHeadp, struct seg *segHeadp);
 int raymiss(register struct application *ap);
 
@@ -195,19 +201,23 @@ view_pixel()
 }
 
 
+/* keeps track of how many times we encounter an assembly by
+ * maintaining a simple linked list of them using the same structure
+ * used for regions. 
+ */
 static void
-increment_assembly_exposures(struct area *cell, const char *path)
+increment_assembly_counter(register struct area *cell, const char *path, area_type_t type)
 {
     int l;
     char *buffer;
     int depth;
-
+    
     if (!cell || !path) {
 	return;
     }
 
     l = strlen(path);
-    buffer = bu_calloc(l+1, sizeof(char), "increment_assembly_exposures buffer allocation");
+    buffer = bu_calloc(l+1, sizeof(char), "increment_assembly_counter buffer allocation");
     strncpy(buffer, path, l);
 
     /* trim off the region name */
@@ -218,7 +228,6 @@ increment_assembly_exposures(struct area *cell, const char *path)
 	l--;
     }
     buffer[l-1] = '\0';
-    l--;
 
     /* get the region names, one at a time */
     depth = 0;
@@ -230,8 +239,17 @@ increment_assembly_exposures(struct area *cell, const char *path)
 	    cellp = cell->assembly;
 	    while (cellp->name) {
 		if ( (strcmp(cellp->name, &buffer[l])==0) ) {
-		    if (!cellp->seen) {
-			cellp->exposures++;
+		    if (type == EXPOSED_AREA) {
+			if (!cellp->seen) {
+			    cellp->exposures++;
+			    cellp->seen++;
+			    if (depth > cellp->depth) {
+				cellp->depth = depth;
+			    }
+			}
+		    }
+		    if (type == PRESENTED_AREA) {
+			cellp->hits++;
 			cellp->seen++;
 			if (depth > cellp->depth) {
 			    cellp->depth = depth;
@@ -252,96 +270,22 @@ increment_assembly_exposures(struct area *cell, const char *path)
 		    break;
 		}
 
-		name = (char *)bu_malloc(strlen(&buffer[l])+1, "increment_assembly_exposures assembly name allocation");
+		name = (char *)bu_malloc(strlen(&buffer[l])+1, "increment_assembly_counter assembly name allocation");
 		strcpy(name, &buffer[l]);
 		cellp->name = name;
-		cellp->exposures++;
-		cellp->seen++;
-		if (depth > cellp->depth) {
-		    cellp->depth = depth;
+		if (type == EXPOSED_AREA) {
+		    cellp->exposures++;
 		}
-
-		/* allocate space for the next assembly */
-		cellp->assembly = (struct area *)bu_calloc(1, sizeof(struct area), "increment_assembly_exposures assembly allocation");
-	    }
-
-	    buffer[l-1] = '\0';
-	    depth++;
-	}
-	l--;
-    }
-
-    bu_free(buffer, "increment_assembly_exposures buffer free");
-
-    return;
-}
-
-
-static void
-increment_assembly_hits(register struct area *cell, const char *path)
-{
-    int l;
-    char *buffer;
-    int depth;
-    
-    if (!cell || !path) {
-	return;
-    }
-
-    l = strlen(path);
-    buffer = bu_calloc(l+1, sizeof(char), "increment_assembly_hits buffer allocation");
-    strncpy(buffer, path, l);
-
-    /* trim off the region name */
-    while (l > 0) {
-	if (buffer[l-1] == '/') {
-	    break;
-	}
-	l--;
-    }
-    buffer[l-1] = '\0';
-
-    /* get the region names, one at a time */
-    depth = 0;
-    while (l > 0) {
-	if (buffer[l-1] == '/') {
-	    register struct area *cellp;
-
-	    /* scan the assembly list */
-	    cellp = cell->assembly;
-	    while (cellp->name) {
-		if ( (strcmp(cellp->name, &buffer[l])==0) ) {
+		if (type == PRESENTED_AREA) {
 		    cellp->hits++;
-		    cellp->seen++;
-		    if (depth > cellp->depth) {
-			cellp->depth = depth;
-		    }
-		    break;
 		}
-		cellp = cellp->assembly;
-	    }
-
-	    /* insert a new assembly? */
-	    if (!cellp->name) {
-		char *name;
-
-		/* sanity check */
-		if (cellp->assembly) {
-		    bu_log("Inconsistent assembly list detected\n");
-		    break;
-		}
-
-		name = (char *)bu_malloc(strlen(&buffer[l])+1, "increment_assembly_hits assembly name allocation");
-		strcpy(name, &buffer[l]);
-		cellp->name = name;
-		cellp->hits++;
 		cellp->seen++;
 		if (depth > cellp->depth) {
 		    cellp->depth = depth;
 		}
 
 		/* allocate space for the next assembly */
-		cellp->assembly = (struct area *)bu_calloc(1, sizeof(struct area), "increment_assembly_hits assembly allocation");
+		cellp->assembly = (struct area *)bu_calloc(1, sizeof(struct area), "increment_assembly_counter assembly allocation");
 	    }
 
 	    buffer[l-1] = '\0';
@@ -350,7 +294,7 @@ increment_assembly_hits(register struct area *cell, const char *path)
 	l--;
     }
 
-    bu_free(buffer, "increment_assembly_hits buffer free");
+    bu_free(buffer, "increment_assembly_counter buffer free");
 
     return;
 }
@@ -416,7 +360,7 @@ rayhit(struct application *ap, struct partition *PartHeadp, struct seg *segHeadp
 	    }
 
 	    /* record the parent assemblies */
-	    increment_assembly_exposures(cell, reg->reg_name);
+	    increment_assembly_counter(cell, reg->reg_name, EXPOSED_AREA);
 	}
 
 	/* halt after first non-air */
@@ -448,7 +392,7 @@ rayhit(struct application *ap, struct partition *PartHeadp, struct seg *segHeadp
 	}
 
 	/* record the parent assemblies */
-	increment_assembly_hits(cell, reg->reg_name);
+	increment_assembly_counter(cell, reg->reg_name, PRESENTED_AREA);
     }
     bu_semaphore_release( RT_SEM_RESULTS );
 
@@ -467,12 +411,6 @@ void	view_eol()
 }
 
 
-typedef enum area_type {
-    PRESENTED_AREA,
-    EXPOSED_AREA
-} area_type_t;
-
-
 /*  p r i n t _ r e g i o n _ a r e a _ l i s t
  *
  * Prints a list of region areas sorted alphabetically reporting
@@ -480,12 +418,12 @@ typedef enum area_type {
  * the 'count' of regions printed.  this routine returns the number of
  * ray hits across all regions.
  */
-static long
-print_region_area_list(long *count, struct rt_i *rtip, area_type_t type)
+static long int
+print_region_area_list(long int *count, struct rt_i *rtip, area_type_t type)
 {
     struct region *rp;
     register struct area *cell = (struct area *)NULL;
-    long cumulative = 0;
+    long int cumulative = 0;
 
     struct area_list *listHead = (struct area_list *)bu_malloc(sizeof(struct area_list), "print_area_list area list node allocation");
     struct area_list *listp;
@@ -524,7 +462,7 @@ print_region_area_list(long *count, struct rt_i *rtip, area_type_t type)
 		
 		cumulative += cell->hits;
 		if (count) {
-		    *count++;
+		    (*count)++;
 		}
 	    }
 	}
@@ -582,7 +520,6 @@ view_end(struct application *ap)
     listHead->next = (struct area_list *)NULL;
 
     cumulative = print_region_area_list(&presented_region_count, rtip, PRESENTED_AREA);
-
     (void) print_region_area_list(&exposed_region_count, rtip, EXPOSED_AREA);
 
     /* find the maximum assembly depth */
