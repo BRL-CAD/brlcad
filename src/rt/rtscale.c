@@ -82,7 +82,7 @@ static const char RCSscale[] = "@(#)$Header$ (BRL)";
 char usage[] = "\
 Usage:  rtscale (width) (units) (interval) filename [string] >  file.pl\n\
 	(width)		length of scale in model measurements\n\
-	(units)		sting denoting the unit type,\n\
+	(units)		string denoting the unit type,\n\
 	(interval)	number of intervals on the scale\n\
 	filename	name of log file to be read\n\
 	[string]	optional, descriptive string\n";
