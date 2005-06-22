@@ -1,6 +1,6 @@
 .TH RTAREA 1 BRL-CAD
 .SH NAME
-rtarea \- Calculate exposed surface area
+rtarea \- Calculate exposed and presented surface areas
 .SH SYNOPSIS
 .B rtarea
 [ options ... ]
@@ -8,14 +8,26 @@ model.g
 objects ...
 .SH DESCRIPTION
 .I Rtarea
-calculates the exposed surface area of specified geometry objects from a particular view.  It presently does not compute the entire surface area of objects displayed though that would be a nice feature to have.
+calculates the exposed and presented surface areas of specified
+geometry objects from a particular view.  The summary output includes
+details for individual regions, assemblies (combinations that contain
+regions), and summarized totals.  The exposed area is the occluded 2D
+projection of the specified geometry.  That is to say that if another
+object is in front, it will reduce the amount of exposed area.  The
+presented area is the unoccluded 2D projection of the geometry, where
+hidden objects will report their presented area regardless of any
+objects that are in front.
+.PP
+It presently does not compute the entire surface area of objects
+displayed though that would be a nice feature to have.
+.PP
 The model geometry is the list of
 .I objects
 in the input database
 .IR model.g .
 .TP
 .B \-X\ #
-Set rtarea debug flags to (hexadecimal) number.
+Set rtarea debug flags to a (hexadecimal) number.
 A flag value of 1 causes 3-D plot output to be written to stdout.
 All solid RPPs are plotted as grey boxes, and the walk path is
 in alternating blue and green segments.
@@ -27,7 +39,7 @@ to the plots.  This is useful for immediate path review, eg,
         rtarea -X 1 ... | tiris
 .TP
 .B \-x\ #
-Set librt debug flags to (hexadecimal) number.
+Set librt debug flags to a (hexadecimal) number.
 .TP
 .B \-n\ # of steps
 .TP
