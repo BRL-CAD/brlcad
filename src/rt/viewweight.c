@@ -223,7 +223,8 @@ void	view_end(struct application *ap)
     (void) time( &clock );
     locltime = localtime( &clock );
     timeptr = asctime( locltime );
-	
+
+    /* XXX this should really use bu_units_conversion() and bu_units_string() */
     if( dbp->dbi_base2local == 304.8 )  {
 	/* Feet */
 	strcpy( units, "grams" );
