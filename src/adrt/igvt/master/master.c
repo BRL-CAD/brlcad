@@ -15,6 +15,7 @@
 #include "igvt_struct.h"		/* igvt common structs */
 #include "tienet.h"		/* Networking stuff */
 #include "umath.h"		/* Extended math utilities */
+#include "igvt_python.h"	/* Python Command Interpreter */
 /* Networking Includes */
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -43,7 +44,6 @@ void* igvt_master_networking(void *ptr);
 void igvt_master_result(void *res_buf, int res_len);
 void igvt_master_update(void);
 void igvt_master_process_events(SDL_Event *event_queue, int event_num, igvt_master_socket_t *sock);
-
 
 /***** GLOBALS *****/
 int igvt_master_tile_num;
@@ -455,6 +455,24 @@ void* igvt_master_networking(void *ptr) {
 
                 pthread_mutex_unlock(&igvt_master_update_mut);
                 break;
+
+              case IGVT_NET_OP_MESG:
+                {
+                  char *string, len;
+
+                  string = (char *)malloc(80);
+                  tienet_recv(sock->num, &len, 1, 0);
+                  tienet_recv(sock->num, string, len, 0);
+
+                  igvt_python_command(string);
+
+                  len = strlen(string) + 1;
+                  tienet_send(sock->num, &len, 1, 0);
+                  tienet_send(sock->num, string, len, 0);
+                  free(string);
+                }
+                break;
+
 
               case IGVT_NET_OP_QUIT:
                 igvt_master_active_connections = 0;

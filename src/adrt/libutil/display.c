@@ -188,6 +188,7 @@ void util_display_console(char **command_buffer, int *lines, void (*fcb_cmd)(cha
   int i, ind, h_ind;
   char command[80];
   char history[80];
+  char response[80];
 
   command[0] = 0;
 
@@ -212,7 +213,7 @@ void util_display_console(char **command_buffer, int *lines, void (*fcb_cmd)(cha
     rect.y = util_display_screen_h - UTIL_DISPLAY_FONT_HEIGHT;
     rect.w = UTIL_DISPLAY_FONT_WIDTH;
     rect.h = UTIL_DISPLAY_FONT_HEIGHT;
-    color = 0xffffff00;
+    color = 0xffffffff;
     SDL_FillRect(util_display_screen, &rect, color);
 
     /* Input */
@@ -226,6 +227,14 @@ void util_display_console(char **command_buffer, int *lines, void (*fcb_cmd)(cha
         switch(event.key.keysym.sym) {
           case SDLK_BACKQUOTE:
             return;
+            break;
+
+          case SDLK_HOME:
+            ind = 0;
+            break;
+
+          case SDLK_END:
+            ind = strlen(command);
             break;
 
           case SDLK_LEFT:
@@ -271,6 +280,7 @@ void util_display_console(char **command_buffer, int *lines, void (*fcb_cmd)(cha
             break;
 
           case SDLK_RETURN:
+            fcb_cmd(command, response);
             strcpy(command_buffer[(*lines)++], command);
             command[0] = 0;
             ind = 0;

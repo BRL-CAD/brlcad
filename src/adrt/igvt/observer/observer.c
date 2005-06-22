@@ -56,6 +56,7 @@ SDL_Event igvt_observer_event_queue[64];
 int igvt_observer_mouse_grab;
 int igvt_observer_event_loop_alive;
 int igvt_observer_display_init;
+int igvt_observer_master_socket;
 /*******************/
 
 
@@ -99,7 +100,6 @@ void igvt_observer(char *host, int port) {
 void* igvt_observer_networking(void *ptr) {
   igvt_observer_net_info_t *ni;
   struct timeval start, cur;
-  int sockd;
   struct sockaddr_in my_addr, srv_addr;
   void *frame;
   unsigned int addrlen;
@@ -112,7 +112,7 @@ void* igvt_observer_networking(void *ptr) {
   ni = (igvt_observer_net_info_t *)ptr;
 
   /* create a socket */
-  if((sockd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
+  if((igvt_observer_master_socket = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
     perror("Socket creation error");
     exit(1);
   }
@@ -126,13 +126,13 @@ void* igvt_observer_networking(void *ptr) {
   memcpy((char*)&srv_addr.sin_addr.s_addr, ni->master.h_addr_list[0], ni->master.h_length);
   srv_addr.sin_port = htons(ni->port);
 
-  if(bind(sockd, (struct sockaddr *)&my_addr, sizeof(my_addr)) < 0) {
+  if(bind(igvt_observer_master_socket, (struct sockaddr *)&my_addr, sizeof(my_addr)) < 0) {
     fprintf(stderr, "unable to bind socket, exiting.\n");
     exit(1);
   }
 
   /* connect to master */
-  if(connect(sockd, (struct sockaddr *)&srv_addr, sizeof(srv_addr)) < 0) {
+  if(connect(igvt_observer_master_socket, (struct sockaddr *)&srv_addr, sizeof(srv_addr)) < 0) {
     fprintf(stderr, "cannot connect to master, exiting.\n");
     exit(1);
   }
@@ -141,11 +141,11 @@ void* igvt_observer_networking(void *ptr) {
 
   /* send version and get endian info */
   op = IGVT_NET_OP_INIT;
-  tienet_send(sockd, &op, 1, igvt_observer_endian);
-  tienet_recv(sockd, &igvt_observer_endian, sizeof(short), 0);
+  tienet_send(igvt_observer_master_socket, &op, 1, igvt_observer_endian);
+  tienet_recv(igvt_observer_master_socket, &igvt_observer_endian, sizeof(short), 0);
   igvt_observer_endian = igvt_observer_endian == 1 ? 0 : 1;
-  tienet_recv(sockd, &screen_w, sizeof(int), igvt_observer_endian);
-  tienet_recv(sockd, &screen_h, sizeof(int), igvt_observer_endian);
+  tienet_recv(igvt_observer_master_socket, &screen_w, sizeof(int), igvt_observer_endian);
+  tienet_recv(igvt_observer_master_socket, &screen_h, sizeof(int), igvt_observer_endian);
 
   /* Screen size is known.  Initialize SDL and continue once it's ready */
   tienet_sem_post(&igvt_observer_sdlinit_sem);
@@ -162,17 +162,17 @@ void* igvt_observer_networking(void *ptr) {
   while(1) {
     /* Send request for next frame */
     op = IGVT_NET_OP_FRAME;
-    tienet_send(sockd, &op, 1, igvt_observer_endian);
+    tienet_send(igvt_observer_master_socket, &op, 1, igvt_observer_endian);
 
     /* Check whether to quit here or not */
-    tienet_recv(sockd, &op, 1, igvt_observer_endian);
+    tienet_recv(igvt_observer_master_socket, &op, 1, igvt_observer_endian);
     if(op == IGVT_NET_OP_QUIT) {
       util_display_free();
       free(frame);
 #if igvt_USE_COMPRESSION
       free(comp_buf);
 #endif
-      close(sockd);
+      close(igvt_observer_master_socket);
 
       igvt_observer_event_loop_alive = 0;
       printf("Observer detatched from master.\n");
@@ -182,9 +182,9 @@ void* igvt_observer_networking(void *ptr) {
     /* Send Event Queue to Master */
     pthread_mutex_lock(&event_mut);
 
-    tienet_send(sockd, &igvt_observer_event_queue_size, sizeof(short), igvt_observer_endian);
+    tienet_send(igvt_observer_master_socket, &igvt_observer_event_queue_size, sizeof(short), igvt_observer_endian);
     if(igvt_observer_event_queue_size)
-      tienet_send(sockd, igvt_observer_event_queue, igvt_observer_event_queue_size * sizeof(SDL_Event), igvt_observer_endian);
+      tienet_send(igvt_observer_master_socket, igvt_observer_event_queue, igvt_observer_event_queue_size * sizeof(SDL_Event), igvt_observer_endian);
     igvt_observer_event_queue_size = 0;
 
     pthread_mutex_unlock(&event_mut);
@@ -195,14 +195,14 @@ void* igvt_observer_networking(void *ptr) {
       unsigned long dest_len;
       int comp_size;
 
-      tienet_recv(sockd, &comp_size, sizeof(int), 0);
-      tienet_recv(sockd, comp_buf, comp_size, 0);
+      tienet_recv(igvt_observer_master_socket, &comp_size, sizeof(int), 0);
+      tienet_recv(igvt_observer_master_socket, comp_buf, comp_size, 0);
 
       dest_len = screen_w*screen_h*3;
       uncompress(frame, &dest_len, comp_buf, (unsigned long)comp_size);
     }
 #else
-    tienet_recv(sockd, frame, 3*screen_w*screen_h, 0);
+    tienet_recv(igvt_observer_master_socket, frame, 3*screen_w*screen_h, 0);
 #endif
 
     if(igvt_observer_display_init) {
@@ -211,17 +211,19 @@ void* igvt_observer_networking(void *ptr) {
       tienet_sem_wait(&igvt_observer_sdlready_sem);
     }
 
-    pthread_mutex_lock(&igvt_observer_console_mut);
-
-    /* Draw Frame */
-    util_display_draw(frame);
 
     /* Get the overlay data */
     {
       igvt_overlay_data_t overlay;
       char string[256];
 
-      tienet_recv(sockd, &overlay, sizeof(igvt_overlay_data_t), 0);
+      tienet_recv(igvt_observer_master_socket, &overlay, sizeof(igvt_overlay_data_t), 0);
+
+      /* Wait for the console to unlock */
+      pthread_mutex_lock(&igvt_observer_console_mut);
+
+      /* Draw Frame */
+      util_display_draw(frame);
 
       sprintf(string, "position: %.3f %.3f %.3f", overlay.camera_pos.v[0], overlay.camera_pos.v[1], overlay. camera_pos.v[2]);
       util_display_text(string, 0, 0, UTIL_JUSTIFY_LEFT, UTIL_JUSTIFY_TOP);
@@ -237,12 +239,12 @@ void* igvt_observer_networking(void *ptr) {
 
       sprintf(string, "controller: %s", overlay.controller ? "yes" : "no");
       util_display_text(string, 0, 0, UTIL_JUSTIFY_RIGHT, UTIL_JUSTIFY_BOTTOM);
+
+      util_display_cross();
+      util_display_flip();
+
+      pthread_mutex_unlock(&igvt_observer_console_mut);
     }
-
-    util_display_cross();
-    util_display_flip();
-
-    pthread_mutex_unlock(&igvt_observer_console_mut);
   }
 
   return(NULL);
@@ -250,6 +252,23 @@ void* igvt_observer_networking(void *ptr) {
 
 
 void igvt_observer_command(char *command, char *response) {
+  char op;
+
+  op = IGVT_NET_OP_MESG;
+  tienet_send(igvt_observer_master_socket, &op, 1, 0);
+
+  /* length of command */
+  op = strlen(command);
+  tienet_send(igvt_observer_master_socket, &op, 1, 0);
+
+  /* command */
+  tienet_send(igvt_observer_master_socket, command, op, 0);
+
+  /* get the response */
+  tienet_recv(igvt_observer_master_socket, &op, 1, 0);
+  tienet_recv(igvt_observer_master_socket, response, op, 0);
+
+  printf("response: %s\n", response);
 }
 
 

@@ -16,8 +16,9 @@
 #define IGVT_NET_OP_NOP		0
 #define	IGVT_NET_OP_INIT	1
 #define	IGVT_NET_OP_FRAME	2
-#define	IGVT_NET_OP_QUIT	3
-#define	IGVT_NET_OP_SHUTDOWN	4
+#define IGVT_NET_OP_MESG	3
+#define	IGVT_NET_OP_QUIT	4
+#define	IGVT_NET_OP_SHUTDOWN	5
 
 #define IGVT_OBS_OP_NOP		0	/* Do Nothing */
 #define IGVT_OBS_OP_RM		1	/* Rendering Method */

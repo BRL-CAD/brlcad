@@ -4,6 +4,7 @@ bin_PROGRAMS = igvt_master
 
 igvt_master_SOURCES = \
 	dispatcher.c \
+	igvt_python.c \
 	master.c \
 	main.c
 
@@ -25,4 +26,5 @@ igvt_master_LDADD = \
 
 noinst_HEADERS = \
 	dispatcher.h \
+	igvt_python.h \
 	master.h
