@@ -512,6 +512,52 @@ print_assembly_area_list(struct rt_i *rtip, long int max_depth, area_type_t type
     struct area_list *listp;
     listHead->cell = (struct area *)NULL;
     listHead->next = (struct area_list *)NULL;
+	
+    /* insertion sort based on depth and case */
+    rp = BU_LIST_FIRST(region, &(rtip->HeadRegion));
+    cell = (struct area *)rp->reg_udata;
+    for (cellp = cell->assembly; cellp; cellp = cellp->assembly) {
+	int counted_items;
+	listp = listHead;
+	
+	if (type == PRESENTED_AREA) {
+	    counted_items = cellp->hits;
+	}
+	if (type == EXPOSED_AREA) {
+	    counted_items = cellp->exposures;
+	}
+	if (counted_items) {
+	    struct area_list *prev = (struct area_list *)NULL;
+	    struct area_list *newNode;
+	    
+	    while (listp->next) {
+		if ((!listp->cell) || (cellp->depth > listp->cell->depth)) {
+		    break;
+		}
+		if ((cellp->depth == listp->cell->depth) && (strcmp(cellp->name, listp->cell->name) < 0)) {
+		    break;
+		}
+
+		prev = listp;
+		listp = listp->next;
+	    }
+	    
+	    newNode = (struct area_list *)bu_malloc(sizeof(struct area_list), "print_area_list area list node allocation");
+	    newNode->cell = cellp;
+	    newNode->next = (struct area_list *)NULL;
+	    
+	    if (!prev) {
+		listHead = newNode;
+		newNode->next = listp;
+	    } else {
+		newNode->next = prev->next;
+		prev->next = newNode;
+	    }
+	    
+	    count++;
+	}
+    }
+    
 
     if (type == PRESENTED_AREA) {
 	bu_log("\nPresented Assembly Areas\n========================\n");
@@ -519,41 +565,30 @@ print_assembly_area_list(struct rt_i *rtip, long int max_depth, area_type_t type
     if (type == EXPOSED_AREA) {
 	bu_log("\nExposed Assembly Areas\n======================\n");
     }
-	
-    rp = BU_LIST_FIRST(region, &(rtip->HeadRegion));
-    cell = (struct area *)rp->reg_udata;
-    depth = max_depth;
-    while (depth >= 0) {
-	for (cellp = cell->assembly; cellp; cellp = cellp->assembly) {
-	    int counted_items;
+    for (listp = listHead; listp->cell != NULL;) {
+	int indents = max_depth - listp->cell->depth;
+	struct area_list *prev = listp;
+	cell = listp->cell;
 
-	    if (type == PRESENTED_AREA) {
-		counted_items = cellp->hits;
-	    }
-	    if (type == EXPOSED_AREA) {
-		counted_items = cellp->exposures;
-	    }
-	    if (counted_items && depth == cellp->depth) {
-		int indents = max_depth - depth;
-		while (indents-- > 0) {
-		    if (indents % 2) {
-			bu_log("++");
-		    } else {
-			bu_log("--");
-		    }
-		}
-
-		if (type == PRESENTED_AREA) {
-		    bu_log("Assembly %s\t(%ld hits)\t= %18.4lf square mm\t(%.4lf square meters)\n", cellp->name, cellp->hits, cell_area * (fastf_t)cellp->hits, cell_area * (fastf_t)cellp->hits / 1000000.0);
-		}
-		if (type == EXPOSED_AREA) {
-		    bu_log("Assembly %s\t(%ld hits)\t= %18.4lf square mm\t(%.4lf square meters)\n", cellp->name, cellp->exposures, cell_area * (fastf_t)cellp->exposures, cell_area * (fastf_t)cellp->exposures / 1000000.0);
-		}
-		count++;
+	while (indents-- > 0) {
+	    if (indents % 2) {
+		bu_log("++");
+	    } else {
+		bu_log("--");
 	    }
 	}
-	depth--;
+
+	if (type == PRESENTED_AREA) {
+	    bu_log("Assembly %s\t(%ld hits)\t= %18.4lf square mm\t(%.4lf square meters)\n", cell->name, cell->hits, cell_area * (fastf_t)cell->hits, cell_area * (fastf_t)cell->hits / 1000000.0);
+	}
+	if (type == EXPOSED_AREA) {
+	    bu_log("Assembly %s\t(%ld hits)\t= %18.4lf square mm\t(%.4lf square meters)\n", cell->name, cell->exposures, cell_area * (fastf_t)cell->exposures, cell_area * (fastf_t)cell->exposures / 1000000.0);
+	}
+
+	listp = listp->next;
+	bu_free(prev, "print_area_list area list node free");
     }
+    bu_free(listp, "print_area_list area list node free");
 
     return count;
 }
@@ -574,7 +609,6 @@ view_end(struct application *ap)
 
     int max_depth = 0;
     struct area *cellp;
-    int depth;
 
     long int presented_region_count = 0;
     long int presented_assembly_count = 0;
