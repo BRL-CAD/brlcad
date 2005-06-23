@@ -184,7 +184,6 @@ void util_display_flip() {
 void util_display_editor(char **content_buffer, int *content_lines, char **console_buffer, int *console_lines, void (*fcb_process)(char *content, char *response)) {
   SDL_Event event;
   SDL_Rect rect;
-  unsigned int color;
   int i, h_ind, v_ind, console_y;
   char line[80];
 
@@ -199,16 +198,14 @@ void util_display_editor(char **content_buffer, int *content_lines, char **conso
     rect.y = 0;
     rect.w = util_display_screen_w;
     rect.h = util_display_screen_h;
-    color = 0xff000080;
-    SDL_FillRect(util_display_screen, &rect, color);
+    SDL_FillRect(util_display_screen, &rect, 0xff000080);
 
     /* Cursor */
     rect.x = UTIL_DISPLAY_FONT_WIDTH*(h_ind + 1); /* +1 for '>' */
     rect.y = UTIL_DISPLAY_FONT_HEIGHT*(v_ind + 1);
     rect.w = UTIL_DISPLAY_FONT_WIDTH;
     rect.h = UTIL_DISPLAY_FONT_HEIGHT;
-    color = 0xffffffff;
-    SDL_FillRect(util_display_screen, &rect, color);
+    SDL_FillRect(util_display_screen, &rect, 0xffffffff);
 
     /* Content */
     util_display_text("[Content]", 0, 0, UTIL_JUSTIFY_LEFT, UTIL_JUSTIFY_TOP);
@@ -298,13 +295,13 @@ void util_display_editor(char **content_buffer, int *content_lines, char **conso
                 char *code, response[1024];
                 int n;
 
-                code = (char *)malloc(*content_lines * 80);
+                code = (char *)malloc((*content_lines+1) * 80);
+
                 code[0] = 0;
                 for(i = 0; i <= *content_lines; i++) {
                   strcat(code, content_buffer[i]);
                   strcat(code, "\n");
                 }
-
                 fcb_process(code, response);
 
                 i = 0;

@@ -11,8 +11,11 @@ static PyObject* igvt_python_stdout(PyObject *self, PyObject* args);
 
 
 static PyMethodDef IGVT_Methods[] = {
-    {"stdout",  igvt_python_stdout, METH_VARARGS,
-     "test an external function call."},
+    {"stdout", igvt_python_stdout, METH_VARARGS, "redirected output."},
+#if 0
+    {"camera.set.position", igvt_python_set_camera_position, METH_VARARGS, "set camera position."},
+    {"camera.get.position", igvt_python_get_camera_position, METH_VARARGS, "get camera position."},
+#endif
     {NULL, NULL, 0, NULL}
 };
 
