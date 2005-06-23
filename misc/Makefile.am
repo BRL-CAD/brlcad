@@ -7,14 +7,21 @@ EXTRA_DIST = \
 	$(sample_applications_DATA) \
 	Cakefile.defs \
 	Description.txt \
+	Makefile.defs \
 	batch-indent-region.el \
 	brlcad.spec.in \
 	enigma \
 	libtool.m4
 
+if BUILD_PROE
+PROE_DIR = pro-engineer
+else !BUILD_PROE
+PROE_DIR =
+endif
+
 SUBDIRS = \
+	$(PROE_DIR) \
 	macosx \
-	pro-engineer \
 	vfont
 
 DISTCLEANFILES = \
@@ -32,3 +39,6 @@ DISTCLEANFILES = \
 	mkinstalldirs
 
 MAINTAINERCLEANFILES = Makefile.in
+
+include $(top_srcdir)/misc/Makefile.defs
+
