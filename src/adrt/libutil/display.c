@@ -185,10 +185,12 @@ void util_display_editor(char **content_buffer, int *content_lines, char **conso
   SDL_Event event;
   SDL_Rect rect;
   int i, h_ind, v_ind, console_y;
-  char line[80];
+  char paste[80];
+
 
   h_ind = 0;
   v_ind = 0;
+  paste[0] = 0;
   console_y = (2 * (util_display_screen_h / UTIL_DISPLAY_FONT_HEIGHT)) / 3 + 1;
 
   /* Keyboard handling */
@@ -295,42 +297,67 @@ void util_display_editor(char **content_buffer, int *content_lines, char **conso
           default:
             /* First check for any special commands */
             if(event.key.keysym.mod & KMOD_CTRL) {
-              if(event.key.keysym.sym == 'p') {
-                /* process code */
-                char *code, response[1024];
-                int n;
+              switch(event.key.keysym.sym) {
+                case SDLK_p: /* process code */
+                  {
+                    char *code, response[1024];
+                    int n;
 
-                code = (char *)malloc((*content_lines+1) * 80);
+                    code = (char *)malloc((*content_lines+1) * 80);
 
-                code[0] = 0;
-                for(i = 0; i <= *content_lines; i++) {
-                  strcat(code, content_buffer[i]);
-                  strcat(code, "\n");
-                }
-                fcb_process(code, response);
+                    code[0] = 0;
+                    for(i = 0; i <= *content_lines; i++) {
+                      strcat(code, content_buffer[i]);
+                      strcat(code, "\n");
+                    }
+                    fcb_process(code, response);
 
-                i = 0;
-                n = 0;
-                while(i < strlen(response)) {
-                  console_buffer[*console_lines][n] = response[i];
-                  console_buffer[*console_lines][n+1] = 0;
-                  n++;
-                  if(response[i] == '\n') {
-                    (*console_lines)++;
+                    i = 0;
                     n = 0;
-                  }
-                  i++;
-                }
+                    while(i < strlen(response)) {
+                      console_buffer[*console_lines][n] = response[i];
+                      console_buffer[*console_lines][n+1] = 0;
+                      n++;
+                      if(response[i] == '\n') {
+                        (*console_lines)++;
+                        n = 0;
+                      }
+                      i++;
+                    }
 
-                free(code);
-              } else if(event.key.keysym.sym == 'l') {
-                /* clear buffers */
-                content_buffer[0][0] = 0;
-                console_buffer[0][0] = 0;
-                (*content_lines) = 0;
-                (*console_lines) = 0;
-                h_ind = 0;
-                v_ind = 0;
+                    free(code);
+                  }
+                  break;
+
+                case SDLK_l: /* clear buffers */
+                  content_buffer[0][0] = 0;
+                  console_buffer[0][0] = 0;
+                  (*content_lines) = 0;
+                  (*console_lines) = 0;
+                  h_ind = 0;
+                  v_ind = 0;
+                  break;
+
+                case SDLK_x: /* cut */
+                  strcpy(paste, content_buffer[v_ind]);
+                  for(i = v_ind; i < *content_lines; i++)
+                    strcpy(content_buffer[i], content_buffer[i+1]);
+                  if(*content_lines) {
+                    (*content_lines)--;
+                  } else {
+                    content_buffer[0][0] = 0;
+                  }
+                  h_ind = 0;
+                  break;
+
+                case SDLK_v: /* paste */
+                  for(i = *content_lines; i >= v_ind; i--)
+                    strcpy(content_buffer[i+1], content_buffer[i]);
+                  strcpy(content_buffer[v_ind], paste);
+                  (*content_lines)++;
+                  h_ind = 0;
+                  break;
+
               }
             } else {
               if(h_ind < 80)

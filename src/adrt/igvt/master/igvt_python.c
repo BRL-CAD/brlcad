@@ -1,6 +1,8 @@
 #include "igvt_python.h"
 #include "Python.h"
-
+#undef HAVE_STAT
+#undef HAVE_TM_ZONE
+#include "master.h"
 
 char *igvt_python_response;
 
@@ -8,15 +10,18 @@ char *igvt_python_response;
 void igvt_python_init(void);
 void igvt_python_command(char *command);
 static PyObject* igvt_python_stdout(PyObject *self, PyObject* args);
-static PyObject* igvt_python_get_camera_position(PyObject *self, PyObject* args);
+static PyObject* igvt_python_get_camera_pos(PyObject *self, PyObject* args);
+static PyObject* igvt_python_set_camera_pos(PyObject *self, PyObject* args);
+static PyObject* igvt_python_get_azel(PyObject *self, PyObject* args);
+static PyObject* igvt_python_set_azel(PyObject *self, PyObject* args);
 
 
 static PyMethodDef IGVT_Methods[] = {
     {"stdout", igvt_python_stdout, METH_VARARGS, "redirected output."},
-    {"get_camera_pos", igvt_python_get_camera_position, METH_VARARGS, "get camera position."},
-#if 0
-    {"set_camera_pos", igvt_python_set_camera_position, METH_VARARGS, "set camera position."},
-#endif
+    {"get_camera_pos", igvt_python_get_camera_pos, METH_VARARGS, "get camera position."},
+    {"set_camera_pos", igvt_python_set_camera_pos, METH_VARARGS, "set camera position."},
+    {"get_azel", igvt_python_get_azel, METH_VARARGS, "get azimuth and elevation."},
+    {"set_azel", igvt_python_set_azel, METH_VARARGS, "set azimuth and elevation."},
     {NULL, NULL, 0, NULL}
 };
 
@@ -68,11 +73,31 @@ static PyObject* igvt_python_stdout(PyObject *self, PyObject* args) {
   if(PyArg_ParseTuple(args, "s", &string))
     strcat(igvt_python_response, string);
 
-  return PyInt_FromLong(42L);
+  return PyInt_FromLong(0);
 }
 
 
-/* Getting camera position */
-static PyObject* igvt_python_get_camera_position(PyObject *self, PyObject* args) {
-  return PyInt_FromLong(42L);
+/* Get camera position */
+static PyObject* igvt_python_get_camera_pos(PyObject *self, PyObject* args) {
+  return Py_BuildValue("fff", igvt_master_camera_pos.v[0], igvt_master_camera_pos.v[1], igvt_master_camera_pos.v[2]);
+}
+
+
+/* Set camera position */
+static PyObject* igvt_python_set_camera_pos(PyObject *self, PyObject* args) {
+  PyArg_ParseTuple(args, "fff", &igvt_master_camera_pos.v[0], &igvt_master_camera_pos.v[1], &igvt_master_camera_pos.v[2]);
+  return PyInt_FromLong(0);
+}
+
+
+/* Get azimuth and elevation */
+static PyObject* igvt_python_get_azel(PyObject *self, PyObject* args) {
+  return Py_BuildValue("ff", igvt_master_azim, igvt_master_elev);
+}
+
+
+/* Set azimith and elevation */
+static PyObject* igvt_python_set_azel(PyObject *self, PyObject* args) {
+  PyArg_ParseTuple(args, "ff", &igvt_master_azim, &igvt_master_elev);
+  return PyInt_FromLong(0);
 }

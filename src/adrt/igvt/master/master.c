@@ -9,10 +9,10 @@
 #include "canim.h"		/* Animation Stuff */
 #include "dispatcher.h"		/* Dispatcher that creates work units */
 #include "cdb.h"		/* Common structs and stuff */
-#include "igvt.h"		/* Defines */
+#include "igvt.h"		/* IGVT Defines */
 #include "image.h"		/* Image import/export utilities */
 #include "pack.h"		/* Data packing for transport to nodes */
-#include "igvt_struct.h"		/* igvt common structs */
+#include "igvt_struct.h"	/* igvt common structs */
 #include "tienet.h"		/* Networking stuff */
 #include "umath.h"		/* Extended math utilities */
 #include "igvt_python.h"	/* Python code Interpreter */
@@ -44,6 +44,7 @@ void* igvt_master_networking(void *ptr);
 void igvt_master_result(void *res_buf, int res_len);
 void igvt_master_update(void);
 void igvt_master_process_events(SDL_Event *event_queue, int event_num, igvt_master_socket_t *sock);
+
 
 /***** GLOBALS *****/
 int igvt_master_tile_num;
