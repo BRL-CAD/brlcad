@@ -23,7 +23,7 @@ void render_grid_work(render_t *render, tie_t *tie, tie_ray_t *ray, TIE_3 *pixel
 
   if((m = (common_mesh_t *)tie_work(tie, ray, &id, render_hit, NULL))) {
     /* if X or Y lie in the grid paint it white else make it gray */
-    if(fabs(GRID*id.pos.v[0] - (int)(GRID*id.pos.v[0])) < 0.1*LINE || fabs(GRID*id.pos.v[1] - (int)(GRID*id.pos.v[1])) < 0.1*LINE) {
+    if(fabs(GRID*id.pos.v[0] - (int)(GRID*id.pos.v[0])) < 0.2*LINE || fabs(GRID*id.pos.v[1] - (int)(GRID*id.pos.v[1])) < 0.2*LINE) {
       pixel->v[0] = 0.9;
       pixel->v[1] = 0.9;
       pixel->v[2] = 0.9;

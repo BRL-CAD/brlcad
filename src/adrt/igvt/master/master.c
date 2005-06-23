@@ -737,6 +737,7 @@ void igvt_master_process_events(SDL_Event *event_queue, int event_num, igvt_mast
             math_vec_add(igvt_master_camera_pos, igvt_master_camera_pos, vec);
 
             /* strafe */
+#if 0
             math_vec_sub(vec, igvt_master_camera_foc, igvt_master_camera_pos);
             vec2.v[0] = 0;
             vec2.v[1] = 0;
@@ -744,6 +745,7 @@ void igvt_master_process_events(SDL_Event *event_queue, int event_num, igvt_mast
             math_vec_cross(vec3, vec2, vec);
             math_vec_mul_scalar(vec3, vec3, (igvt_master_scale*dx));
             math_vec_add(igvt_master_camera_pos, igvt_master_camera_pos, vec3);
+#endif
           } else if(event_queue[i].button.button & 1<<(SDL_BUTTON_RIGHT-1)) {
             /* if the shift key is held down then rotate about Center of Rotation */
             if(igvt_master_shift_enabled) {
