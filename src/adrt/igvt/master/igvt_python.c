@@ -8,13 +8,14 @@ char *igvt_python_response;
 void igvt_python_init(void);
 void igvt_python_command(char *command);
 static PyObject* igvt_python_stdout(PyObject *self, PyObject* args);
+static PyObject* igvt_python_get_camera_position(PyObject *self, PyObject* args);
 
 
 static PyMethodDef IGVT_Methods[] = {
     {"stdout", igvt_python_stdout, METH_VARARGS, "redirected output."},
+    {"get_camera_pos", igvt_python_get_camera_position, METH_VARARGS, "get camera position."},
 #if 0
-    {"camera.set.position", igvt_python_set_camera_position, METH_VARARGS, "set camera position."},
-    {"camera.get.position", igvt_python_get_camera_position, METH_VARARGS, "get camera position."},
+    {"set_camera_pos", igvt_python_set_camera_position, METH_VARARGS, "set camera position."},
 #endif
     {NULL, NULL, 0, NULL}
 };
@@ -67,5 +68,11 @@ static PyObject* igvt_python_stdout(PyObject *self, PyObject* args) {
   if(PyArg_ParseTuple(args, "s", &string))
     strcat(igvt_python_response, string);
 
+  return PyInt_FromLong(42L);
+}
+
+
+/* Getting camera position */
+static PyObject* igvt_python_get_camera_position(PyObject *self, PyObject* args) {
   return PyInt_FromLong(42L);
 }

@@ -198,7 +198,7 @@ void util_display_editor(char **content_buffer, int *content_lines, char **conso
     rect.y = 0;
     rect.w = util_display_screen_w;
     rect.h = util_display_screen_h;
-    SDL_FillRect(util_display_screen, &rect, 0xff000080);
+    SDL_FillRect(util_display_screen, &rect, 0xff000040);
 
     /* Cursor */
     rect.x = UTIL_DISPLAY_FONT_WIDTH*(h_ind + 1); /* +1 for '>' */
@@ -214,7 +214,7 @@ void util_display_editor(char **content_buffer, int *content_lines, char **conso
 
     /* Console */
     util_display_text("[Console]", 0, console_y, UTIL_JUSTIFY_LEFT, UTIL_JUSTIFY_TOP);
-    for(i = 0; i <= *console_lines; i++)
+    for(i = 0; i < *console_lines; i++)
       util_display_text(console_buffer[i], 1, i + console_y + 1, UTIL_JUSTIFY_LEFT, UTIL_JUSTIFY_TOP);
 
     SDL_Flip(util_display_screen);
@@ -274,6 +274,11 @@ void util_display_editor(char **content_buffer, int *content_lines, char **conso
                 content_buffer[v_ind][i] = content_buffer[v_ind][i+1];
               h_ind--;
             }
+            break;
+
+          case SDLK_DELETE:
+            for(i = h_ind; i < strlen(content_buffer[v_ind]); i++)
+              content_buffer[v_ind][i] = content_buffer[v_ind][i+1];
             break;
 
           case SDLK_RETURN:
