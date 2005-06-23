@@ -289,10 +289,10 @@ void igvt_observer_event_loop() {
 
 
   /* Display Loading Splash Screen */
-  util_display_init(512, 288);
+  util_display_init(isst_logo.width, isst_logo.height);
 
-  SDL_WM_SetCaption("ADRT_IGVT_Observer Loading...", NULL);
-  util_display_draw((void *)splash_image.pixel_data);
+  SDL_WM_SetCaption("ADRT_ISST_Observer Loading...", NULL);
+  util_display_draw((void *)isst_logo.pixel_data);
   util_display_flip();
 
   tienet_sem_wait(&igvt_observer_splash_sem);
@@ -300,8 +300,7 @@ void igvt_observer_event_loop() {
 
   util_display_init(screen_w, screen_h);
 
-  util_display_text("Loading ...", 10, 4, UTIL_JUSTIFY_LEFT, UTIL_JUSTIFY_TOP);
-  SDL_WM_SetCaption("ADRT_IGVT_Observer", NULL);
+  SDL_WM_SetCaption("ADRT_ISST_Observer", NULL);
   tienet_sem_post(&igvt_observer_sdlready_sem);
 
   SDL_EnableKeyRepeat(150, 50);
