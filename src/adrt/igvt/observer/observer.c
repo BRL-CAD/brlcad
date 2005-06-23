@@ -258,7 +258,7 @@ void igvt_observer_command(char *command, char *response) {
   tienet_send(igvt_observer_master_socket, &op, 1, 0);
 
   /* length of command */
-  op = strlen(command);
+  op = strlen(command) + 1;
   tienet_send(igvt_observer_master_socket, &op, 1, 0);
 
   /* command */
@@ -267,21 +267,23 @@ void igvt_observer_command(char *command, char *response) {
   /* get the response */
   tienet_recv(igvt_observer_master_socket, &op, 1, 0);
   tienet_recv(igvt_observer_master_socket, response, op, 0);
-
-  printf("response: %s\n", response);
 }
 
 
 void igvt_observer_event_loop() {
   SDL_Event event;
-  char **command_buffer;
-  int lines, i;
+  char **command_buffer, **console_buffer;
+  int command_lines, console_lines, i;
 
 
-  lines = 0;
+  command_lines = 0;
+  console_lines = 0;
   command_buffer = (char **)malloc(sizeof(char *) * 100);
-  for(i = 0; i < 100; i++)
+  console_buffer = (char **)malloc(sizeof(char *) * 100);
+  for(i = 0; i < 100; i++) {
     command_buffer[i] = (char *)malloc(80);
+    console_buffer[i] = (char *)malloc(80);
+  }
 
 
   /* Display Loading Splash Screen */
@@ -331,7 +333,7 @@ void igvt_observer_event_loop() {
           case SDLK_BACKQUOTE:
             /* Bring up the console */
             pthread_mutex_lock(&igvt_observer_console_mut);
-            util_display_console(command_buffer, &lines, igvt_observer_command);
+            util_display_console(command_buffer, &command_lines, console_buffer, &console_lines, igvt_observer_command);
             pthread_mutex_unlock(&igvt_observer_console_mut);
             break;
 
@@ -352,7 +354,10 @@ void igvt_observer_event_loop() {
   }
 
 
-  for(i = 0; i < 100; i++)
+  for(i = 0; i < 100; i++) {
     free(command_buffer[i]);
+    free(console_buffer[i]);
+  }
   free(command_buffer);
+  free(console_buffer);
 }

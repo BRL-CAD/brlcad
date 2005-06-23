@@ -27,7 +27,6 @@ kitchensink_dirs = \
 	libmultispectral \
 	libtclcad \
 	libtermio \
-	adrt \
 	anim \
 	brlman \
 	burst \
@@ -101,7 +100,8 @@ endif
 
 DIST_SUBDIRS= \
 	$(SUBDIRS) \
-	canon
+	canon \
+        adrt
 
 MAINTAINERCLEANFILES = \
 	Makefile.in

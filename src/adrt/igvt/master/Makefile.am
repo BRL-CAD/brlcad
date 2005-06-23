@@ -10,9 +10,10 @@ igvt_master_SOURCES = \
 
 igvt_master_LDFLAGS = -static
 
-igvt_master_CFLAGS = @SDL_CFLAGS@ -D__STRICT_ANSI__ -I.. -I${top_srcdir}/src/adrt/libtie -I${top_srcdir}/src/adrt/libtienet -I${top_srcdir}/src/adrt/libtexture -I${top_srcdir}/src/adrt/libcommon -I${top_srcdir}/src/adrt/librender -I${top_srcdir}/src/adrt/libutil -I${top_srcdir}/src/adrt/igvt
+igvt_master_CFLAGS = @SDL_CFLAGS@ -D__STRICT_ANSI__ -I.. -I${top_srcdir}/src/adrt/libtie -I${top_srcdir}/src/adrt/libtienet -I${top_srcdir}/src/adrt/libtexture -I${top_srcdir}/src/adrt/libcommon -I${top_srcdir}/src/adrt/librender -I${top_srcdir}/src/adrt/libutil -I${top_srcdir}/src/adrt/igvt -I/usr/local/include/python2.4
 
 igvt_master_LDADD = \
+	-lpython2.4 \
 	@SDL_LIBS@ \
 	${LIBRT} \
 	${top_builddir}/src/adrt/libcommon/libcommon.la \

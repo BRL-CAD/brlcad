@@ -77,6 +77,10 @@ void igvt_master(int port, int obs_port, char *proj, char *geom_file, char *args
   void *app_data;
   struct timeval start, cur;
 
+
+  /* Initialize Python Command Processor */
+  igvt_python_init();
+
   /* Mutex for everytime the master builds update data to send to nodes */
   pthread_mutex_init(&igvt_master_update_mut, 0);
 
@@ -173,6 +177,8 @@ void igvt_master(int port, int obs_port, char *proj, char *geom_file, char *args
 
   /* End the networking thread */
   pthread_join(igvt_master_networking_thread, NULL);
+
+  igvt_python_free();
 }
 
 
@@ -460,13 +466,13 @@ void* igvt_master_networking(void *ptr) {
                 {
                   char *string, len;
 
-                  string = (char *)malloc(80);
+                  string = (char *)malloc(1024);
                   tienet_recv(sock->num, &len, 1, 0);
                   tienet_recv(sock->num, string, len, 0);
 
                   igvt_python_command(string);
-
                   len = strlen(string) + 1;
+
                   tienet_send(sock->num, &len, 1, 0);
                   tienet_send(sock->num, string, len, 0);
                   free(string);

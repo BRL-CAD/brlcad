@@ -181,14 +181,14 @@ void util_display_flip() {
 }
 
 
-void util_display_console(char **command_buffer, int *lines, void (*fcb_cmd)(char *commmand, char *response)) {
+void util_display_console(char **command_buffer, int *command_lines, char **console_buffer, int *console_lines, void (*fcb_cmd)(char *commmand, char *response)) {
   SDL_Event event;
   SDL_Rect rect;
   unsigned int color;
   int i, ind, h_ind;
   char command[80];
   char history[80];
-  char response[80];
+  char response[1024];
 
   command[0] = 0;
 
@@ -205,8 +205,8 @@ void util_display_console(char **command_buffer, int *lines, void (*fcb_cmd)(cha
     color = 0xff000080;
     SDL_FillRect(util_display_screen, &rect, color);
 
-    for(i = 0; i < *lines; i++)
-      util_display_text(command_buffer[i], 1, *lines - i, UTIL_JUSTIFY_LEFT, UTIL_JUSTIFY_BOTTOM);
+    for(i = 0; i < *console_lines; i++)
+      util_display_text(console_buffer[i], 1, *console_lines - i, UTIL_JUSTIFY_LEFT, UTIL_JUSTIFY_BOTTOM);
 
     /* Cursor */
     rect.x = UTIL_DISPLAY_FONT_WIDTH*(ind + 1); /* +1 for '>' */
@@ -249,7 +249,7 @@ void util_display_console(char **command_buffer, int *lines, void (*fcb_cmd)(cha
 
           case SDLK_UP:
             if(h_ind) {
-              if(h_ind == *lines)
+              if(h_ind == *command_lines)
                 strcpy(history, command);
               strcpy(command, command_buffer[h_ind-1]);
               ind = strlen(command);
@@ -260,9 +260,9 @@ void util_display_console(char **command_buffer, int *lines, void (*fcb_cmd)(cha
             break;
 
           case SDLK_DOWN:
-            if(h_ind < *lines) {
+            if(h_ind < *command_lines) {
               h_ind++;
-              if(h_ind == *lines) {
+              if(h_ind == *command_lines) {
                 strcpy(command, history);
               } else {
                 strcpy(command, command_buffer[h_ind]);
@@ -280,11 +280,37 @@ void util_display_console(char **command_buffer, int *lines, void (*fcb_cmd)(cha
             break;
 
           case SDLK_RETURN:
-            fcb_cmd(command, response);
-            strcpy(command_buffer[(*lines)++], command);
-            command[0] = 0;
-            ind = 0;
-            h_ind = *lines;
+            {
+              char *lines[16];
+              int n;
+
+              response[0] = 0;
+              if(strlen(command))
+                fcb_cmd(command, response);
+
+              /* Append command to the history and console */
+              strcpy(command_buffer[(*command_lines)++], command);
+              strcpy(console_buffer[(*console_lines)++], command);
+
+              /* Place the response onto the console */
+              n = 0;
+              if(strlen(response)) {
+                lines[0] = strtok(response, "\n");
+                if(lines[0]) {
+                  for(n = 1; n < 16; n++) {
+                    lines[n] = strtok(NULL, "\n");
+                    if(!lines[n])
+                      break;
+                  }
+                }
+                for(i = 0; i < n; i++)
+                  strcpy(console_buffer[(*console_lines)++], lines[i]);
+              }
+
+              command[0] = 0;
+              ind = 0;
+              h_ind = *command_lines;
+            }
             break;
 
           default:

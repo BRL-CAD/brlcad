@@ -56,7 +56,7 @@ void util_display_text(char *text, int x, int y, int jh, int jv);
 void util_display_flush(void);
 void util_display_cross(void);
 void util_display_flip(void);
-void util_display_console(char **command_buffer, int *lines, void (*fcb_cmd)(char *commmand, char *response));
+void util_display_console(char **command_buffer, int *command_lines, char **console_buffer, int *console_lines, void (*fcb_cmd)(char *commmand, char *response));
 
 extern SDL_Surface *util_display_screen;
 
