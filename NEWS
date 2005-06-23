@@ -10,6 +10,18 @@ entire history of the project is available through CVS.
 --- 2005-07-XX  Release 7.3.0                                      ---
 ----------------------------------------------------------------------
 
+Driven by user requests, the 'rtarea' command now reports signifcantly
+more information than before including area details for all assemblies
+and regions being rendered.  Both the presented and exposed areas are
+now computed too, including details on how many regions/assemblies are
+hit.  The exposed area is the potentially occluded 2D projection
+whereas the presented area is calculated without consideration for
+occlusions.  That is to say that if an object is in front covering a
+regions or assemblies from a particular view, the exposed area of the
+covered geometry would be reduced but the presented area would not.
+
+* added sorting and hierarchy support to rtarea - Sean Morrison
+* rewrote rtarea for region and assemblies support - Sean Morrison
 * fixed .density file parser bug in rtweight - Daniel Rossberg
 * improve detection and handling of cyclic geometry - Sean Morrison
 * added a -noleaf option to the mged pathlist command - Bob Parker
