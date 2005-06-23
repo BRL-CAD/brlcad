@@ -181,23 +181,20 @@ void util_display_flip() {
 }
 
 
-void util_display_console(char **command_buffer, int *command_lines, char **console_buffer, int *console_lines, void (*fcb_cmd)(char *commmand, char *response)) {
+void util_display_editor(char **content_buffer, int *content_lines, char **console_buffer, int *console_lines, void (*fcb_process)(char *content, char *response)) {
   SDL_Event event;
   SDL_Rect rect;
   unsigned int color;
-  int i, ind, h_ind;
-  char command[80];
-  char history[80];
-  char response[1024];
+  int i, h_ind, v_ind, console_y;
+  char line[80];
 
-  command[0] = 0;
-
-  ind = 0;
   h_ind = 0;
+  v_ind = 0;
+  console_y = (2 * (util_display_screen_h / UTIL_DISPLAY_FONT_HEIGHT)) / 3 + 1;
 
   /* Keyboard handling */
   while(SDL_WaitEvent(&event) >= 0) {
-    /* Draw Command Window */
+    /* Draw Content Window Blue */
     rect.x = 0;
     rect.y = 0;
     rect.w = util_display_screen_w;
@@ -205,20 +202,23 @@ void util_display_console(char **command_buffer, int *command_lines, char **cons
     color = 0xff000080;
     SDL_FillRect(util_display_screen, &rect, color);
 
-    for(i = 0; i < *console_lines; i++)
-      util_display_text(console_buffer[i], 1, *console_lines - i, UTIL_JUSTIFY_LEFT, UTIL_JUSTIFY_BOTTOM);
-
     /* Cursor */
-    rect.x = UTIL_DISPLAY_FONT_WIDTH*(ind + 1); /* +1 for '>' */
-    rect.y = util_display_screen_h - UTIL_DISPLAY_FONT_HEIGHT;
+    rect.x = UTIL_DISPLAY_FONT_WIDTH*(h_ind + 1); /* +1 for '>' */
+    rect.y = UTIL_DISPLAY_FONT_HEIGHT*(v_ind + 1);
     rect.w = UTIL_DISPLAY_FONT_WIDTH;
     rect.h = UTIL_DISPLAY_FONT_HEIGHT;
     color = 0xffffffff;
     SDL_FillRect(util_display_screen, &rect, color);
 
-    /* Input */
-    util_display_text(">", 0, 0, UTIL_JUSTIFY_LEFT, UTIL_JUSTIFY_BOTTOM);
-    util_display_text(command, 1, 0, UTIL_JUSTIFY_LEFT, UTIL_JUSTIFY_BOTTOM);
+    /* Content */
+    util_display_text("[Content]", 0, 0, UTIL_JUSTIFY_LEFT, UTIL_JUSTIFY_TOP);
+    for(i = 0; i <= *content_lines; i++)
+      util_display_text(content_buffer[i], 1, i + 1, UTIL_JUSTIFY_LEFT, UTIL_JUSTIFY_TOP);
+
+    /* Console */
+    util_display_text("[Console]", 0, console_y, UTIL_JUSTIFY_LEFT, UTIL_JUSTIFY_TOP);
+    for(i = 0; i <= *console_lines; i++)
+      util_display_text(console_buffer[i], 1, i + console_y + 1, UTIL_JUSTIFY_LEFT, UTIL_JUSTIFY_TOP);
 
     SDL_Flip(util_display_screen);
 
@@ -230,96 +230,114 @@ void util_display_console(char **command_buffer, int *command_lines, char **cons
             break;
 
           case SDLK_HOME:
-            ind = 0;
+            h_ind = 0;
             break;
 
           case SDLK_END:
-            ind = strlen(command);
+            h_ind = strlen(content_buffer[v_ind]);
+            break;
+
+          case SDLK_PAGEUP:
+            v_ind = 0;
+            break;
+
+          case SDLK_PAGEDOWN:
+            v_ind = *content_lines;
             break;
 
           case SDLK_LEFT:
-            if(ind)
-              ind--;
+            if(h_ind)
+              h_ind--;
             break;
 
           case SDLK_RIGHT:
-            if(ind < strlen(command))
-              ind++;
-            break;
-
-          case SDLK_UP:
-            if(h_ind) {
-              if(h_ind == *command_lines)
-                strcpy(history, command);
-              strcpy(command, command_buffer[h_ind-1]);
-              ind = strlen(command);
-
-              if(h_ind)
-                h_ind--;
-            }
+            if(h_ind < strlen(content_buffer[v_ind]))
+              h_ind++;
             break;
 
           case SDLK_DOWN:
-            if(h_ind < *command_lines) {
-              h_ind++;
-              if(h_ind == *command_lines) {
-                strcpy(command, history);
-              } else {
-                strcpy(command, command_buffer[h_ind]);
-              }
-              ind = strlen(command);
-            }
+            if(v_ind < *content_lines)
+              v_ind++;
+
+            if(h_ind > strlen(content_buffer[v_ind]))
+              h_ind = strlen(content_buffer[v_ind]);
+            break;
+
+          case SDLK_UP:
+            if(v_ind)
+              v_ind--;
+
+            if(h_ind > strlen(content_buffer[v_ind]))
+              h_ind = strlen(content_buffer[v_ind]);
             break;
 
           case SDLK_BACKSPACE:
-            if(ind) {
-              for(i = ind-1; i < strlen(command); i++)
-                command[i] = command[i+1];
-                ind--;
+            if(h_ind) {
+              for(i = h_ind-1; i < strlen(content_buffer[v_ind]); i++)
+                content_buffer[v_ind][i] = content_buffer[v_ind][i+1];
+              h_ind--;
             }
             break;
 
           case SDLK_RETURN:
             {
-              char *lines[16];
-              int n;
-
-              response[0] = 0;
-              if(strlen(command))
-                fcb_cmd(command, response);
-
-              /* Append command to the history and console */
-              strcpy(command_buffer[(*command_lines)++], command);
-              strcpy(console_buffer[(*console_lines)++], command);
-
-              /* Place the response onto the console */
-              n = 0;
-              if(strlen(response)) {
-                lines[0] = strtok(response, "\n");
-                if(lines[0]) {
-                  for(n = 1; n < 16; n++) {
-                    lines[n] = strtok(NULL, "\n");
-                    if(!lines[n])
-                      break;
-                  }
-                }
-                for(i = 0; i < n; i++)
-                  strcpy(console_buffer[(*console_lines)++], lines[i]);
+              h_ind = 0;
+              if(v_ind == *content_lines) {
+                (*content_lines)++;
+                content_buffer[*content_lines][0] = 0;
               }
-
-              command[0] = 0;
-              ind = 0;
-              h_ind = *command_lines;
+              v_ind++;
             }
             break;
 
           default:
-            if(ind < 80)
-              if(event.key.keysym.unicode & 0x7F) {
-                for(i = strlen(command); i >= ind; i--)
-                  command[i+1] = command[i];
-                command[ind++] = event.key.keysym.unicode & 0x7F;
+            /* First check for any special commands */
+            if(event.key.keysym.mod & KMOD_CTRL) {
+              if(event.key.keysym.sym == 'p') {
+                /* process code */
+                char *code, response[1024];
+                int n;
+
+                code = (char *)malloc(*content_lines * 80);
+                code[0] = 0;
+                for(i = 0; i <= *content_lines; i++) {
+                  strcat(code, content_buffer[i]);
+                  strcat(code, "\n");
+                }
+
+                fcb_process(code, response);
+
+                i = 0;
+                n = 0;
+                while(i < strlen(response)) {
+                  console_buffer[*console_lines][n] = response[i];
+                  console_buffer[*console_lines][n+1] = 0;
+                  n++;
+                  if(response[i] == '\n') {
+                    (*console_lines)++;
+                    n = 0;
+                  }
+                  i++;
+                }
+
+                free(code);
+              } else if(event.key.keysym.sym == 'l') {
+                /* clear buffers */
+                content_buffer[0][0] = 0;
+                console_buffer[0][0] = 0;
+                (*content_lines) = 0;
+                (*console_lines) = 0;
+                h_ind = 0;
+                v_ind = 0;
               }
+            } else {
+              if(h_ind < 80)
+                if(event.key.keysym.unicode & 0x7F) {
+                  for(i = strlen(content_buffer[v_ind]); i >= h_ind; i--)
+                    content_buffer[v_ind][i+1] = content_buffer[v_ind][i];
+                  content_buffer[v_ind][h_ind++] = event.key.keysym.unicode & 0x7F;
+                }
+            }
             break;
         }
         break;

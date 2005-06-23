@@ -251,18 +251,18 @@ void* igvt_observer_networking(void *ptr) {
 }
 
 
-void igvt_observer_command(char *command, char *response) {
+void igvt_observer_process(char *content, char *response) {
   char op;
 
   op = IGVT_NET_OP_MESG;
   tienet_send(igvt_observer_master_socket, &op, 1, 0);
 
-  /* length of command */
-  op = strlen(command) + 1;
+  /* length of content */
+  op = strlen(content) + 1;
   tienet_send(igvt_observer_master_socket, &op, 1, 0);
 
-  /* command */
-  tienet_send(igvt_observer_master_socket, command, op, 0);
+  /* content */
+  tienet_send(igvt_observer_master_socket, content, op, 0);
 
   /* get the response */
   tienet_recv(igvt_observer_master_socket, &op, 1, 0);
@@ -272,18 +272,20 @@ void igvt_observer_command(char *command, char *response) {
 
 void igvt_observer_event_loop() {
   SDL_Event event;
-  char **command_buffer, **console_buffer;
-  int command_lines, console_lines, i;
+  char **content_buffer, **console_buffer;
+  int content_lines, console_lines, i;
 
 
-  command_lines = 0;
+  content_lines = 0;
   console_lines = 0;
-  command_buffer = (char **)malloc(sizeof(char *) * 100);
+  content_buffer = (char **)malloc(sizeof(char *) * 100);
   console_buffer = (char **)malloc(sizeof(char *) * 100);
   for(i = 0; i < 100; i++) {
-    command_buffer[i] = (char *)malloc(80);
+    content_buffer[i] = (char *)malloc(80);
     console_buffer[i] = (char *)malloc(80);
   }
+  content_buffer[0][0] = 0;
+  console_buffer[0][0] = 0;
 
 
   /* Display Loading Splash Screen */
@@ -333,7 +335,7 @@ void igvt_observer_event_loop() {
           case SDLK_BACKQUOTE:
             /* Bring up the console */
             pthread_mutex_lock(&igvt_observer_console_mut);
-            util_display_console(command_buffer, &command_lines, console_buffer, &console_lines, igvt_observer_command);
+            util_display_editor(content_buffer, &content_lines, console_buffer, &console_lines, igvt_observer_process);
             pthread_mutex_unlock(&igvt_observer_console_mut);
             break;
 
@@ -355,9 +357,9 @@ void igvt_observer_event_loop() {
 
 
   for(i = 0; i < 100; i++) {
-    free(command_buffer[i]);
+    free(content_buffer[i]);
     free(console_buffer[i]);
   }
-  free(command_buffer);
+  free(content_buffer);
   free(console_buffer);
 }

@@ -41,22 +41,23 @@ sys.stdout = Redirect(sys.stdout)\n\
 sys.stderr = Redirect(sys.stderr)\n\
 ");
 
-  free(igvt_python_response);
 }
 
 
 void igvt_python_free() {
+  free(igvt_python_response);
   Py_Finalize();
 }
 
 
-void igvt_python_command(char *command) {
+void igvt_python_code(char *code) {
   igvt_python_response[0] = 0;
-  PyRun_SimpleString(command);
-  strcpy(command, igvt_python_response);
+  PyRun_SimpleString(code);
+  strcpy(code, igvt_python_response);
 }
 
 
+/* Called once for every line */
 static PyObject* igvt_python_stdout(PyObject *self, PyObject* args) {
   char *string;
 

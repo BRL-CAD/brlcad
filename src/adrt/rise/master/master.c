@@ -104,9 +104,9 @@ void rise_master(int port, int obs_port, char *proj, char *geom_file, char *args
 
       image24 = (unsigned char *)malloc(3 * db.env.img_w * db.env.img_h);
       sprintf(image_name, "image_%.4d.ppm", i);
-//      rise_post_process(rise_master_frame, db.env.img_w, db.env.img_h);
-//      util_image_convert_128to24(image24, rise_master_frame, db.env.img_w, db.env.img_h);
-//      util_image_save_ppm(image_name, image24, db.env.img_w, db.env.img_h);
+      rise_post_process(rise_master_frame, db.env.img_w, db.env.img_h);
+      util_image_convert_128to24(image24, rise_master_frame, db.env.img_w, db.env.img_h);
+      util_image_save_ppm(image_name, image24, db.env.img_w, db.env.img_h);
       free(image24);
     }
 

@@ -15,7 +15,7 @@
 #include "igvt_struct.h"		/* igvt common structs */
 #include "tienet.h"		/* Networking stuff */
 #include "umath.h"		/* Extended math utilities */
-#include "igvt_python.h"	/* Python Command Interpreter */
+#include "igvt_python.h"	/* Python code Interpreter */
 /* Networking Includes */
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -78,7 +78,7 @@ void igvt_master(int port, int obs_port, char *proj, char *geom_file, char *args
   struct timeval start, cur;
 
 
-  /* Initialize Python Command Processor */
+  /* Initialize Python Processor */
   igvt_python_init();
 
   /* Mutex for everytime the master builds update data to send to nodes */
@@ -470,7 +470,7 @@ void* igvt_master_networking(void *ptr) {
                   tienet_recv(sock->num, &len, 1, 0);
                   tienet_recv(sock->num, string, len, 0);
 
-                  igvt_python_command(string);
+                  igvt_python_code(string);
                   len = strlen(string) + 1;
 
                   tienet_send(sock->num, &len, 1, 0);
