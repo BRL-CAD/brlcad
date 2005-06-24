@@ -20,6 +20,7 @@ occlusions.  That is to say that if an object is in front covering a
 regions or assemblies from a particular view, the exposed area of the
 covered geometry would be reduced but the presented area would not.
 
+* added rtarea and rtweight commands to mged - Sean Morrison
 * added sorting and hierarchy support to rtarea - Sean Morrison
 * rewrote rtarea for region and assemblies support - Sean Morrison
 * fixed .density file parser bug in rtweight - Daniel Rossberg
