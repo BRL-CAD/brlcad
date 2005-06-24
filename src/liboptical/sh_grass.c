@@ -35,18 +35,18 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 
 #include "common.h"
 
-
-
 #include <stdio.h>
 #ifdef HAVE_STRING_H
-#include <string.h>
+#  include <string.h>
 #endif
 #include <math.h>
+
 #include "machine.h"
 #include "vmath.h"
 #include "plot3.h"
 #include "raytrace.h"
 #include "rtprivate.h"
+
 
 extern int rr_render(struct application	*ap,
 		     struct partition	*pp,
