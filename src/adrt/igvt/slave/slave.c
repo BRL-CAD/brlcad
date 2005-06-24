@@ -107,20 +107,12 @@ void igvt_slave_work(tie_t *tie, void *data, int size, void **res_buf, int *res_
     ind += sizeof(short);
 
     /* Camera position */
-    memcpy(&pos.v[0], &((char *)data)[ind], sizeof(tfloat));
-    ind += sizeof(tfloat);
-    memcpy(&pos.v[1], &((char *)data)[ind], sizeof(tfloat));
-    ind += sizeof(tfloat);
-    memcpy(&pos.v[2], &((char *)data)[ind], sizeof(tfloat));
-    ind += sizeof(tfloat);
+    memcpy(&pos.v, &((char *)data)[ind], sizeof(TIE_3));
+    ind += sizeof(TIE_3);
 
     /* Camera Focus */
-    memcpy(&foc.v[0], &((char *)data)[ind], sizeof(tfloat));
-    ind += sizeof(tfloat);
-    memcpy(&foc.v[1], &((char *)data)[ind], sizeof(tfloat));
-    ind += sizeof(tfloat);
-    memcpy(&foc.v[2], &((char *)data)[ind], sizeof(tfloat));
-    ind += sizeof(tfloat);
+    memcpy(&foc.v, &((char *)data)[ind], sizeof(TIE_3));
+    ind += sizeof(TIE_3);
 
     /* Update Rendering Method if it has Changed */
     memcpy(&rm, &((char *)data)[ind], 1);
@@ -152,10 +144,16 @@ void igvt_slave_work(tie_t *tie, void *data, int size, void **res_buf, int *res_
 
         case RENDER_METHOD_PLANE:
           {
-            TIE_3 ray_dir;
+            TIE_3 shotline_pos, shotline_dir;
 
-            math_vec_sub(ray_dir, foc, pos);
-            render_plane_init(&db.env.render, pos, ray_dir);
+            /* Extract shotline position and direction */
+            memcpy(&shotline_pos, &((char *)data)[ind], sizeof(TIE_3));
+            ind += sizeof(TIE_3);
+
+            memcpy(&shotline_dir, &((char *)data)[ind], sizeof(TIE_3));
+            ind += sizeof(TIE_3);
+
+            render_plane_init(&db.env.render, shotline_pos, shotline_dir);
           }
           break;
       }

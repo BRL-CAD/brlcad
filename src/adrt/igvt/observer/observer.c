@@ -104,6 +104,8 @@ void* igvt_observer_networking(void *ptr) {
   void *frame;
   unsigned int addrlen;
   unsigned char op;
+  tfloat fps;
+  int frame_num;
 #if IGVT_USE_COMPRESSION
   void *comp_buf;
 #endif
@@ -158,6 +160,8 @@ void* igvt_observer_networking(void *ptr) {
 
 
   gettimeofday(&start, NULL);
+  frame_num = 0;
+
 
   while(1) {
     /* Send request for next frame */
@@ -211,6 +215,15 @@ void* igvt_observer_networking(void *ptr) {
       tienet_sem_wait(&igvt_observer_sdlready_sem);
     }
 
+    /* compute frames per second (fps) */
+    frame_num++;
+    if(!(frame_num % 7)) {
+      gettimeofday(&cur, NULL);
+      fps = (tfloat)(frame_num) / ((cur.tv_sec + (tfloat)cur.tv_usec/1000000.0) - (start.tv_sec + (tfloat)start.tv_usec/1000000.0)),
+      start = cur;
+      frame_num = 0;
+      fflush(stdout);
+    }
 
     /* Get the overlay data */
     {
@@ -230,6 +243,9 @@ void* igvt_observer_networking(void *ptr) {
 
       sprintf(string, "azim: %.3f  elev: %.3f", overlay.azimuth, overlay.elevation);
       util_display_text(string, 0, 1, UTIL_JUSTIFY_LEFT, UTIL_JUSTIFY_TOP);
+
+      sprintf(string, "fps: %.1f", fps);
+      util_display_text(string, 0, 1, UTIL_JUSTIFY_LEFT, UTIL_JUSTIFY_BOTTOM);
 
       sprintf(string, "res: %s", overlay.resolution);
       util_display_text(string, 0, 0, UTIL_JUSTIFY_LEFT, UTIL_JUSTIFY_BOTTOM);

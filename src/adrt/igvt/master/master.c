@@ -51,6 +51,8 @@ int igvt_master_tile_num;
 TIE_3 igvt_master_camera_pos;
 TIE_3 igvt_master_camera_foc;
 TIE_3 igvt_master_cor; /* center of rotation */
+TIE_3 igvt_master_shotline_pos;
+TIE_3 igvt_master_shotline_dir;
 
 void *rgb_frame[2];
 int frame_ind[2];
@@ -92,9 +94,8 @@ void igvt_master(int port, int obs_port, char *proj, char *geom_file, char *args
   igvt_master_mouse_grab = 0;
   igvt_master_shift_enabled = 0;
 
-  igvt_master_camera_pos.v[0] = 1;
-  igvt_master_camera_pos.v[1] = 1;
-  igvt_master_camera_pos.v[2] = 1;
+  math_vec_set(igvt_master_camera_pos, 1, 1, 1);
+  math_vec_set(igvt_master_shotline_pos, 0, 0, 0);
 
   igvt_master_camera_foc = igvt_master_camera_pos;
   igvt_master_camera_foc.v[1] += 1;
@@ -149,7 +150,7 @@ void igvt_master(int port, int obs_port, char *proj, char *geom_file, char *args
 
 #if 0
     frame_num++;
-    if(!(frame_num%7)) {
+    if(!(frame_num % 7)) {
       gettimeofday(&cur, NULL);
       printf("FPS: %.3f  SLAVES: %d    \r",
             (tfloat)(frame_num) / ((cur.tv_sec + (tfloat)cur.tv_usec/1000000.0) - (start.tv_sec + (tfloat)start.tv_usec/1000000.0)),
@@ -516,6 +517,7 @@ void* igvt_master_networking(void *ptr) {
 }
 
 
+/* additional baggage that goes with each work unit */
 void igvt_master_update() {
   igvt_master_slave_data_len = 0;
 
@@ -537,6 +539,14 @@ void igvt_master_update() {
   /* Rendering Method and Data */
   memcpy(&((char *)igvt_master_slave_data)[igvt_master_slave_data_len], &igvt_master_rm, 1);
   igvt_master_slave_data_len += 1;
+
+  if(igvt_master_rm == RENDER_METHOD_PLANE) {
+    memcpy(&((char *)igvt_master_slave_data)[igvt_master_slave_data_len], &igvt_master_shotline_pos, sizeof(TIE_3));
+    igvt_master_slave_data_len += sizeof(TIE_3);
+
+    memcpy(&((char *)igvt_master_slave_data)[igvt_master_slave_data_len], &igvt_master_shotline_dir, sizeof(TIE_3));
+    igvt_master_slave_data_len += sizeof(TIE_3);
+  }
 
   pthread_mutex_unlock(&igvt_master_update_mut);
 }
@@ -573,46 +583,7 @@ void igvt_master_process_events(SDL_Event *event_queue, int event_num, igvt_mast
             break;
 
           case SDLK_3: /* RENDER_METHOD_PLANE */
-            {
-              void *mesg;
-              common_work_t work;
-              TIE_3 dir;
-              int dlen;
-
-              igvt_master_rm = RENDER_METHOD_PLANE;
-
-              /* Queue a work unit for a shotline needed for the plane render method */
-              mesg = malloc(sizeof(common_work_t) + 2 * sizeof(TIE_3));
-              dlen = 0;
-
-              work.orig_x = 0;
-              work.orig_y = 0;
-              work.size_x = 0;
-              work.size_y = 0;
-
-              memcpy(&((char *)mesg)[dlen], &work, sizeof(common_work_t));
-              dlen += sizeof(common_work_t);
-
-              memcpy(&((char *)mesg)[dlen], &igvt_master_camera_pos.v[0], sizeof(tfloat));
-              dlen += sizeof(tfloat);
-              memcpy(&((char *)mesg)[dlen], &igvt_master_camera_pos.v[1], sizeof(tfloat));
-              dlen += sizeof(tfloat);
-              memcpy(&((char *)mesg)[dlen], &igvt_master_camera_pos.v[2], sizeof(tfloat));
-              dlen += sizeof(tfloat);
-
-              math_vec_sub(dir, igvt_master_camera_foc, igvt_master_camera_pos);
-              math_vec_unitize(dir);
-
-              memcpy(&((char *)mesg)[dlen], &dir.v[0], sizeof(tfloat));
-              dlen += sizeof(tfloat);
-              memcpy(&((char *)mesg)[dlen], &dir.v[1], sizeof(tfloat));
-              dlen += sizeof(tfloat);
-              memcpy(&((char *)mesg)[dlen], &dir.v[2], sizeof(tfloat));
-              dlen += sizeof(tfloat);
-
-              tienet_master_push(mesg, dlen);
-              free(mesg);
-            }
+            igvt_master_rm = RENDER_METHOD_PLANE;
             break;
 
           case SDLK_4: /* RENDER_METHOD_COMPONENT */
@@ -638,9 +609,7 @@ void igvt_master_process_events(SDL_Event *event_queue, int event_num, igvt_mast
           case SDLK_LEFT:
             /* strafe left */
             math_vec_sub(vec, igvt_master_camera_foc, igvt_master_camera_pos);
-            vec2.v[0] = 0;
-            vec2.v[1] = 0;
-            vec2.v[2] = 1;
+            math_vec_set(vec2, 0, 0, 1);
             math_vec_cross(vec3, vec2, vec);
             math_vec_mul_scalar(vec3, vec3, (igvt_master_scale*10.0));
             math_vec_add(igvt_master_camera_pos, igvt_master_camera_pos, vec3);
@@ -649,9 +618,7 @@ void igvt_master_process_events(SDL_Event *event_queue, int event_num, igvt_mast
           case SDLK_RIGHT:
             /* strafe right */
             math_vec_sub(vec, igvt_master_camera_foc, igvt_master_camera_pos);
-            vec2.v[0] = 0;
-            vec2.v[1] = 0;
-            vec2.v[2] = 1;
+            math_vec_set(vec2, 0, 0, 1);
             math_vec_cross(vec3, vec2, vec);
             math_vec_mul_scalar(vec3, vec3, (igvt_master_scale*10.0));
             math_vec_sub(igvt_master_camera_pos, igvt_master_camera_pos, vec3);
@@ -759,6 +726,53 @@ void igvt_master_process_events(SDL_Event *event_queue, int event_num, igvt_mast
             }
             break;
 
+          case SDLK_KP0: /* set camera position and direction to shotline position and direction */
+            igvt_master_camera_pos = igvt_master_shotline_pos;
+            /* project and unitize shotline vector onto xy plane */
+            vec = igvt_master_shotline_dir;
+            vec.v[2] = 0;
+            math_vec_unitize(vec);
+
+            igvt_master_azim = vec.v[1] < 0 ? 360.0 - acos(vec.v[0])*math_rad2deg : acos(vec.v[0])*math_rad2deg;
+            igvt_master_elev = asin(igvt_master_shotline_dir.v[2]) * math_rad2deg;
+            break;
+
+
+          case SDLK_KP_PERIOD:
+            {
+              void *mesg;
+              common_work_t work;
+              TIE_3 dir;
+              int dlen;
+
+              /* Queue a work unit for a shotline needed for the plane render method */
+              mesg = malloc(sizeof(common_work_t) + 2 * sizeof(TIE_3));
+              dlen = 0;
+
+              work.orig_x = 0;
+              work.orig_y = 0;
+              work.size_x = 0;
+              work.size_y = 0;
+
+              memcpy(&((char *)mesg)[dlen], &work, sizeof(common_work_t));
+              dlen += sizeof(common_work_t);
+
+              memcpy(&((char *)mesg)[dlen], &igvt_master_camera_pos.v, sizeof(TIE_3));
+              dlen += sizeof(TIE_3);
+
+              math_vec_sub(dir, igvt_master_camera_foc, igvt_master_camera_pos);
+              math_vec_unitize(dir);
+
+              memcpy(&((char *)mesg)[dlen], &dir.v, sizeof(TIE_3));
+              dlen += sizeof(TIE_3);
+
+              igvt_master_shotline_pos = igvt_master_camera_pos;
+              igvt_master_shotline_dir = dir;
+
+              tienet_master_push(mesg, dlen);
+              free(mesg);
+            }
+            break;
 
 
           case SDLK_BACKQUOTE: /* console */
@@ -846,9 +860,7 @@ void igvt_master_process_events(SDL_Event *event_queue, int event_num, igvt_mast
 
             /* strafe */
             math_vec_sub(vec, igvt_master_camera_foc, igvt_master_camera_pos);
-            vec2.v[0] = 0;
-            vec2.v[1] = 0;
-            vec2.v[2] = 1;
+            math_vec_set(vec2, 0, 0, 1);
             math_vec_cross(vec3, vec2, vec);
             math_vec_mul_scalar(vec3, vec3, (igvt_master_scale*dx));
             math_vec_add(igvt_master_camera_pos, igvt_master_camera_pos, vec3);

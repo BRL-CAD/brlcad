@@ -61,6 +61,8 @@
 #define	TIE_PTR_CAST	int
 #endif
 
+
+
 /** 
  *
  */
@@ -72,6 +74,14 @@
  */
 #define math_max3(_a, _b, _c, _d) { \
 	_a = _b > _c ? _b > _d ? _b : _d : _c > _d ? _c : _d; }
+
+/** 
+ *
+ */
+#define	math_vec_set(_a, _b, _c, _d) { \
+	_a.v[0] = _b; \
+	_a.v[1] = _c; \
+	_a.v[2] = _d; }
 
 /** 
  *
