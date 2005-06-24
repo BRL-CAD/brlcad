@@ -23,9 +23,13 @@
  *  Routines to interface to RT, and RT-style command files
  *
  * Functions -
- *	f_rt		ray-trace
- *	f_rrt		ray-trace using any program
- *	f_rtcheck	ray-trace to check for overlaps
+ *	cmd_rt		ray-trace
+ *	cmd_rrt		ray-trace using any program
+ *	cmd_rtabort     abort ray-traces started through mged
+ *	cmd_rtcheck	ray-trace to check for overlaps
+ *	cmd_rtarea	ray-trace to report exposed area
+ *	cmd_rtedge	ray-trace edges for an outline view
+ *	cmd_rtweight	ray-trace to report weight/moments
  *	f_saveview	save the current view parameters
  *	f_loadview	load view parameters from a saveview file
  *	f_rmats		load views from a file
@@ -398,6 +402,11 @@ setup_rt(register char **vp, int printcmd)
   }
 }
 
+
+/*  C M D _ R T A B O R T
+ *
+ *  Abort any raytraces started through mged.
+ */
 int
 cmd_rtabort(ClientData clientData,
 	     Tcl_Interp *interp,
@@ -406,6 +415,7 @@ cmd_rtabort(ClientData clientData,
 {
 	return dgo_rtabort_cmd(dgop, interp, argc, argv);
 }
+
 
 #ifndef _WIN32
 static void
@@ -746,8 +756,9 @@ run_rt()
 }
 #endif
 
+
 /*
- *			F _ R T
+ *  C M D _ R T
  */
 int
 cmd_rt(ClientData	clientData,
@@ -778,14 +789,14 @@ cmd_rt(ClientData	clientData,
 }
 
 /*
- *			F _ R R T
+ *  C M D _ R R T
  *
  *  Invoke any program with the current view & stuff, just like
  *  an "rt" command (above).
  *  Typically used to invoke a remote RT (hence the name).
  */
 int
-f_rrt(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+cmd_rrt(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
 	register char **vp;
 	register int i;
@@ -885,6 +896,11 @@ int mask;
 }
 #endif
 
+
+/*  C M D _ R T C H E C K
+ *
+ *  Run rtcheck command on the current view.
+ */
 int
 cmd_rtcheck(ClientData	clientData,
 	    Tcl_Interp	*interp,
@@ -906,6 +922,87 @@ cmd_rtcheck(ClientData	clientData,
 
 
 	return dgo_rtcheck_cmd(dgop, view_state->vs_vop, interp, argc, argv);
+}
+
+
+/*  C M D _ R T A R E A
+ *
+ *  Run rtarea command on the current view.
+ */
+int
+cmd_rtarea(ClientData	clientData,
+	    Tcl_Interp	*interp,
+	    int		argc,
+	    char	**argv)
+{
+    char *ptr, buf[256];
+	CHECK_DBI_NULL;
+
+	ptr = bu_brlcad_path("bin", 1);
+	if (ptr) {
+#ifdef _WIN32
+	    sprintf(buf, "\"%s/%s\"", ptr, argv[0]);
+#else
+	    sprintf(buf, "%s/%s", ptr, argv[0]);
+#endif
+	    argv[0] = buf;
+	}
+
+	return dgo_rt_cmd(dgop, view_state->vs_vop, interp, argc, argv);
+}
+
+
+/*  C M D _ R T E D G E
+ *
+ *  Run rtedge command on the current view.
+ */
+int
+cmd_rtedge(ClientData	clientData,
+	    Tcl_Interp	*interp,
+	    int		argc,
+	    char	**argv)
+{
+    char *ptr, buf[256];
+	CHECK_DBI_NULL;
+
+	ptr = bu_brlcad_path("bin", 1);
+	if (ptr) {
+#ifdef _WIN32
+	    sprintf(buf, "\"%s/%s\"", ptr, argv[0]);
+#else
+	    sprintf(buf, "%s/%s", ptr, argv[0]);
+#endif
+	    argv[0] = buf;
+	}
+
+	return dgo_rt_cmd(dgop, view_state->vs_vop, interp, argc, argv);
+}
+
+
+/*  C M D _ R T W E I G H T
+ *
+ *  Run rtweight command on the current view.
+ */
+int
+cmd_rtweight(ClientData	clientData,
+	    Tcl_Interp	*interp,
+	    int		argc,
+	    char	**argv)
+{
+    char *ptr, buf[256];
+	CHECK_DBI_NULL;
+
+	ptr = bu_brlcad_path("bin", 1);
+	if (ptr) {
+#ifdef _WIN32
+	    sprintf(buf, "\"%s/%s\"", ptr, argv[0]);
+#else
+	    sprintf(buf, "%s/%s", ptr, argv[0]);
+#endif
+	    argv[0] = buf;
+	}
+
+	return dgo_rt_cmd(dgop, view_state->vs_vop, interp, argc, argv);
 }
 
 
@@ -933,6 +1030,7 @@ basename_without_suffix(register char *p1, register char *suff)
 	strncpy( buf, p2, p1-p2 );
 	return(buf);
 }
+
 
 /*
  *			F _ S A V E V I E W
