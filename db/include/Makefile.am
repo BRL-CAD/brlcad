@@ -5,3 +5,6 @@ EXTRA_DIST = \
 	debug.inc
 
 MAINTAINERCLEANFILES = Makefile.in
+
+include $(top_srcdir)/misc/Makefile.defs
+

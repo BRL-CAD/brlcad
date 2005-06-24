@@ -393,3 +393,5 @@ all-local:
 	  $(ECHO) "Run 'make benchmark' to run the BRL-CAD Benchmark Suite" ;\
 	fi
 	@$(ECHO)
+
+include $(top_srcdir)/misc/Makefile.defs
