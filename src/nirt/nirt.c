@@ -63,8 +63,6 @@ static const char RCSid[] = "$Header$";
 #include "./usrfmt.h"
 
 
-extern int	rt_bot_minpieces;	/* from g_bot.c */
-
 extern char	version[];		/* from vers.c */
 extern void	cm_libdebug();
 extern void	cm_debug();
@@ -322,9 +320,6 @@ main (int argc, char **argv)
     struct bu_list	script_list;	/* For -e and -f options */
     struct script_rec	*srp;
     extern outval	ValTab[];
-    extern int 		optind;		/* index from getopt(3C) */
-    extern char		*optarg;	/* argument from getopt(3C) */
-
     /* FUNCTIONS */
     int                    if_overlap(register struct application *ap, register struct partition *pp, struct region *reg1, struct region *reg2, struct partition *InputHdp);    /* routine if you overlap         */
     int             	   if_hit(struct application *ap, struct partition *part_head, struct seg *finished_segs);        /* routine if you hit target      */
@@ -349,9 +344,14 @@ main (int argc, char **argv)
     void		   shoot();
 
 #ifdef _WIN32
-	_fmode = _O_BINARY;
+#if 1
+    _setmode(_fileno(stdin), _O_BINARY);
+    _setmode(_fileno(stdout), _O_BINARY);
+    _setmode(_fileno(stderr), _O_BINARY);
+#else
+    _fmode = _O_BINARY;
 #endif
-
+#endif
 
     BU_LIST_INIT(&script_list);
 
@@ -361,15 +361,17 @@ main (int argc, char **argv)
     ocname[OVLP_RETAIN] = "retain";
     *ocastring = '\0';
 
+    bu_optind = 1;		/* restart */
+
     /* Handle command-line options */
-    while ((Ch = getopt(argc, argv, OPT_STRING)) != EOF)
+    while ((Ch = bu_getopt(argc, argv, OPT_STRING)) != EOF)
         switch (Ch)
         {
 	    case 'A':
-		attrib_add(optarg);
+		attrib_add(bu_optarg);
 		break;
 	    case 'B':
-		rt_bot_minpieces = atoi( optarg );
+		rt_bot_minpieces = atoi( bu_optarg );
 		break;
 	    case 'b':
 		do_backout = 1;
@@ -386,12 +388,12 @@ main (int argc, char **argv)
 		    show_scripts(&script_list, "after erasure");
 		break;
 	    case 'e':
-		enqueue_script(&script_list, READING_STRING, optarg);
+		enqueue_script(&script_list, READING_STRING, bu_optarg);
 		if (nirt_debug & DEBUG_SCRIPTS)
 		    show_scripts(&script_list, "after enqueueing a literal");
 		break;
 	    case 'f':
-		enqueue_script(&script_list, READING_FILE, optarg);
+		enqueue_script(&script_list, READING_FILE, bu_optarg);
 		if (nirt_debug & DEBUG_SCRIPTS)
 		    show_scripts(&script_list, "after enqueueing a file name");
 		break;
@@ -399,7 +401,7 @@ main (int argc, char **argv)
 		mat_flag = 1;
 		break;
 	    case 'O':
-		sscanf(optarg, "%s", ocastring);
+		sscanf(bu_optarg, "%s", ocastring);
 		break;
 	    case 's':
 		silent_flag = SILENT_YES;	/* Positively yes */
@@ -408,16 +410,16 @@ main (int argc, char **argv)
 		silent_flag = SILENT_NO;	/* Positively no */
 		break;
             case 'x':
-		sscanf( optarg, "%x", (unsigned int *)&rt_g.debug );
+		sscanf( bu_optarg, "%x", (unsigned int *)&rt_g.debug );
 		break;
             case 'X':
-		sscanf( optarg, "%x", (unsigned int *)&nirt_debug );
+		sscanf( bu_optarg, "%x", (unsigned int *)&nirt_debug );
 		break;
             case 'u':
-                if (sscanf(optarg, "%d", &use_of_air) != 1)
+                if (sscanf(bu_optarg, "%d", &use_of_air) != 1)
                 {
                     (void) fprintf(stderr,
-                        "Illegal use-air specification: '%s'\n", optarg);
+                        "Illegal use-air specification: '%s'\n", bu_optarg);
                     exit (1);
                 }
                 break;
@@ -426,7 +428,7 @@ main (int argc, char **argv)
                 printusage();
                 exit (Ch != '?');
         }
-    if (argc - optind < 2)
+    if (argc - bu_optind < 2)
     {
 	printusage();
 	exit (1);
@@ -491,7 +493,7 @@ main (int argc, char **argv)
 	    exit (1);
     }
 
-    db_name = argv[optind];
+    db_name = argv[bu_optind];
 
     /* build directory for target object */
     if (silent_flag != SILENT_YES)
@@ -510,8 +512,8 @@ main (int argc, char **argv)
     rtip -> useair = use_of_air;
     rtip -> rti_save_overlaps = (overlap_claims > 0);
 
-    ++optind;
-    do_rt_gettrees (rtip, argv + optind, argc - optind);
+    ++bu_optind;
+    do_rt_gettrees (rtip, argv + bu_optind, argc - bu_optind);
 
     /* Initialize the table of resource structures */
     rt_init_resource( &res_tab, 0, rtip );
