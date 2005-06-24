@@ -62,7 +62,6 @@ extern outval			ValTab[];
 extern int			overlap_claims;
 extern char			*ocname[];
 extern int			nirt_debug;
-extern int			rt_bot_minpieces;	/* grom g_bot.c */
 
 extern void printusage(void);
 extern void do_rt_gettrees(struct rt_i *rtip, char **object_name, int nm_objects);
