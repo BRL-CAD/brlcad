@@ -693,6 +693,74 @@ void igvt_master_process_events(SDL_Event *event_queue, int event_num, igvt_mast
             sock->active = 0;
             break;
 
+          case SDLK_KP1: /* front, back */
+            {
+              tfloat dist;
+
+              /* distance to center of rotation */
+              math_vec_sub(vec, igvt_master_camera_pos, igvt_master_cor);
+              math_vec_dot(dist, vec, vec);
+              dist = sqrt(dist);
+
+              igvt_master_camera_pos = igvt_master_cor;
+              if(igvt_master_shift_enabled) {
+                igvt_master_camera_pos.v[1] += dist;
+                igvt_master_azim = 270;
+                igvt_master_elev = 0;
+              } else {
+                igvt_master_camera_pos.v[1] -= dist;
+                igvt_master_azim = 90;
+                igvt_master_elev = 0;
+              }
+            }
+            break;
+
+          case SDLK_KP3: /* right, left */
+            {
+              tfloat dist;
+
+              /* distance to center of rotation */
+              math_vec_sub(vec, igvt_master_camera_pos, igvt_master_cor);
+              math_vec_dot(dist, vec, vec);
+              dist = sqrt(dist);
+
+              igvt_master_camera_pos = igvt_master_cor;
+              if(igvt_master_shift_enabled) {
+                igvt_master_camera_pos.v[0] -= dist;
+                igvt_master_azim = 0;
+                igvt_master_elev = 0;
+              } else {
+                igvt_master_camera_pos.v[0] += dist;
+                igvt_master_azim = 180;
+                igvt_master_elev = 0;
+              }
+            }
+            break;
+
+          case SDLK_KP7: /* top, bottom */
+            {
+              tfloat dist;
+
+              /* distance to center of rotation */
+              math_vec_sub(vec, igvt_master_camera_pos, igvt_master_cor);
+              math_vec_dot(dist, vec, vec);
+              dist = sqrt(dist);
+
+              igvt_master_camera_pos = igvt_master_cor;
+              if(igvt_master_shift_enabled) {
+                igvt_master_camera_pos.v[2] -= dist;
+                igvt_master_azim = 0;
+                igvt_master_elev = 90;
+              } else {
+                igvt_master_camera_pos.v[2] += dist;
+                igvt_master_azim = 0;
+                igvt_master_elev = -90;
+              }
+            }
+            break;
+
+
+
           case SDLK_BACKQUOTE: /* console */
             /* reserved for console in observer */
             break;
