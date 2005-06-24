@@ -62,7 +62,9 @@
 	method rt {args}
 	method rtabort {args}
 	method rtcheck {args}
+	method rtarea {args}
 	method rtedge {args}
+	method rtweight {args}
 	method set_transparency {args}
 	method shaded_mode {args}
 	method vdraw {args}
@@ -184,8 +186,16 @@
     eval $dg rtcheck $args
 }
 
+::itcl::body Drawable::rtarea {args} {
+    eval $dg rtarea $args
+}
+
 ::itcl::body Drawable::rtedge {args} {
     eval $dg rtedge $args
+}
+
+::itcl::body Drawable::rtweight {args} {
+    eval $dg rweight $args
 }
 
 ::itcl::body Drawable::set_transparency {args} {
@@ -247,7 +257,9 @@
     $help add rt		{{[options] [-- objects]} {do raytrace of view or specified objects}}
     $help add rtabort		{{} {abort the associated raytraces}}
     $help add rtcheck		{{[options]} {check for overlaps in current view}}
+    $help add rtarea		{{[options] [-- objects]} {calculate area of specified objects}}
     $help add rtedge		{{[options] [-- objects]} {do raytrace of view or specified objects yielding only edges}}
+    $help add rtweight		{{[options] [-- objects]} {calculate weight of specified objects}}
     $help add shaded_mode	{{[0|1|2]}	{get/set shaded mode}}
     $help add vdraw		{{write|insert|delete|read|length|show [args]} {vector drawing (cnuzman)}}
     $help add who		{{[r(eal)|p(hony)|b(oth)]} {list the top-level objects currently being displayed}}

@@ -821,6 +821,25 @@
     eval $geo rtcheck $v_obj -F $itk_option(-listen) $args
 }
 
+::itcl::body Display::rtarea {args} {
+    set len [llength $args]
+
+    if {$len > 1 && [lindex $args 0] == "-geo"} {
+	set index [lindex $args 1]
+	set args [lrange $args 2 end]
+	set geo [lindex $geolist $index]
+    } else {
+	set geo [lindex $geolist 0]
+    }
+
+    if {$geo == ""} {
+	return "rtarea: bad geometry index"
+    }
+
+    set v_obj [View::get_viewname]
+    eval $geo rtarea $v_obj -V $aspect $args
+}
+
 ::itcl::body Display::rtedge {args} {
     set len [llength $args]
 
@@ -838,6 +857,25 @@
 
     set v_obj [View::get_viewname]
     eval $geo rtedge $v_obj -F $itk_option(-listen) -w $width -n $height -V $aspect $args
+}
+
+::itcl::body Display::rtweight {args} {
+    set len [llength $args]
+
+    if {$len > 1 && [lindex $args 0] == "-geo"} {
+	set index [lindex $args 1]
+	set args [lrange $args 2 end]
+	set geo [lindex $geolist $index]
+    } else {
+	set geo [lindex $geolist 0]
+    }
+
+    if {$geo == ""} {
+	return "rtweight: bad geometry index"
+    }
+
+    set v_obj [View::get_viewname]
+    eval $geo rtweight $v_obj -V $aspect $args
 }
 
 ::itcl::body Display::autoview {{g_index 0}} {

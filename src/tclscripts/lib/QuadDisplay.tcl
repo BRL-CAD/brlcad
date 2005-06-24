@@ -119,7 +119,9 @@ option add *QuadDisplay.height 400 widgetDefault
     public method rt {args}
     public method rtabort {{gi 0}}
     public method rtcheck {args}
+    public method rtarea {args}
     public method rtedge {args}
+    public method rtweight {args}
     public method transparency {args}
     public method zbuffer {args}
     public method zclip {args}
