@@ -32,9 +32,6 @@ void rise_observer(char *host, int port);
 void* rise_observer_networking(void *ptr);
 void rise_observer_event_loop(void);
 
-TIE_3 camera_pos;
-TIE_3 camera_foc;
-
 pthread_t rise_observer_networking_thread;
 
 pthread_mutex_t event_mut;

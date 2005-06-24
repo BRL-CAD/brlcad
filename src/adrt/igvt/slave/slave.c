@@ -84,17 +84,17 @@ void igvt_slave_work(tie_t *tie, void *data, int size, void **res_buf, int *res_
     memcpy(&ray.dir.v[2], &((char *)data)[ind], sizeof(tfloat));
     ind += sizeof(tfloat);
 
-    /* Fire the shotline */
+    /* Fire the shot */
     ray.depth = 0;
     render_shotline_work(tie, &ray, &mesg, &dlen);
 
-    /* Make room for shotline data */
+    /* Make room for shot data */
     *res_len = sizeof(common_work_t) + dlen;
     *res_buf = (void *)realloc(*res_buf, *res_len);
 
     ind = 0;
 
-    /* Pack work unit data and shotline data */
+    /* Pack work unit data and shot data */
     memcpy(&((char *)*res_buf)[ind], &work, sizeof(common_work_t));
     ind += sizeof(common_work_t);
 
@@ -144,16 +144,16 @@ void igvt_slave_work(tie_t *tie, void *data, int size, void **res_buf, int *res_
 
         case RENDER_METHOD_PLANE:
           {
-            TIE_3 shotline_pos, shotline_dir;
+            TIE_3 shot_pos, shot_dir;
 
-            /* Extract shotline position and direction */
-            memcpy(&shotline_pos, &((char *)data)[ind], sizeof(TIE_3));
+            /* Extract shot position and direction */
+            memcpy(&shot_pos, &((char *)data)[ind], sizeof(TIE_3));
             ind += sizeof(TIE_3);
 
-            memcpy(&shotline_dir, &((char *)data)[ind], sizeof(TIE_3));
+            memcpy(&shot_dir, &((char *)data)[ind], sizeof(TIE_3));
             ind += sizeof(TIE_3);
 
-            render_plane_init(&db.env.render, shotline_pos, shotline_dir);
+            render_plane_init(&db.env.render, shot_pos, shot_dir);
           }
           break;
       }
@@ -211,7 +211,7 @@ void igvt_slave_mesg(void *mesg, int mesg_len) {
       break;
     }
 
-    case IGVT_OP_SHOTLINE:
+    case IGVT_OP_SHOT:
     {
       int i, n, num, ind;
       char c, name[256];

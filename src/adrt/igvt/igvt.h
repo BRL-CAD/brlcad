@@ -6,10 +6,10 @@
 
 
 #define	IGVT_OBSERVER_PORT	1982
-#define	IGVT_USE_COMPRESSION	0
+#define	IGVT_USE_COMPRESSION	1
 
 #define	IGVT_OP_CAMERA		0
-#define IGVT_OP_SHOTLINE	1
+#define IGVT_OP_SHOT		1
 
 #define	IGVT_PIXEL_FMT		0	/* 0 == unsigned char, 1 ==  tfloat */
 
