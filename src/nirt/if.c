@@ -52,8 +52,6 @@ overlap			*find_ovlp(struct partition *pp);
 void			del_ovlp(overlap *op);
 void			init_ovlp(void);
 
-extern int	rt_defoverlap( struct application *ap, struct partition *pp, struct region *reg1, struct region *reg2, struct partition *pheadp );
-	
 
 int if_hit(struct application *ap, struct partition *part_head, struct seg *finished_segs)
 {
@@ -139,7 +137,7 @@ int if_hit(struct application *ap, struct partition *part_head, struct seg *fini
 	ValTab[VTI_SLOS].value.fval = 0.01 * ValTab[VTI_LOS].value.fval *
 	    part -> pt_regionp -> reg_los;
 	strncpy(regionPN, part->pt_regionp->reg_name, 512);
-	ValTab[VTI_PATH_NAME].value.sval = regionPN;
+	ValTab[VTI_PATH_NAME].value.sval = part->pt_regionp->reg_name;
 	ValTab[VTI_REG_NAME].value.sval = basename(regionPN);
 	ValTab[VTI_REG_ID].value.ival = part -> pt_regionp -> reg_regionid;
 	ValTab[VTI_SURF_NUM_IN].value.ival = part -> pt_inhit -> hit_surfno;
@@ -155,10 +153,9 @@ int if_hit(struct application *ap, struct partition *part_head, struct seg *fini
 #endif
 	{
 	    ValTab[VTI_CLAIMANT_COUNT].value.ival = 1;
-	    strncpy(regionPN, part->pt_regionp->reg_name, 512);
 	    ValTab[VTI_CLAIMANT_LIST].value.sval =
 	    ValTab[VTI_CLAIMANT_LISTN].value.sval =
-		basename(regionPN);
+		ValTab[VTI_REG_NAME].value.sval;
 	}
 	else
 	{
@@ -169,10 +166,12 @@ int if_hit(struct application *ap, struct partition *part_head, struct seg *fini
 	    ValTab[VTI_CLAIMANT_COUNT].value.ival = 0;
 	    for (rpp = part -> pt_overlap_reg; *rpp != REGION_NULL; ++rpp)
 	    {
+		char tmpcp[512];
+
 		if (ValTab[VTI_CLAIMANT_COUNT].value.ival++)
 		    bu_vls_strcat(&claimant_list, " ");
-		strncpy(regionPN, (*rpp)->reg_name, 512);
-		bu_vls_strcat(&claimant_list, basename(regionPN));
+		strncpy(tmpcp, (*rpp)->reg_name, 512);
+		bu_vls_strcat(&claimant_list, basename(tmpcp));
 	    }
 	    ValTab[VTI_CLAIMANT_LIST].value.sval =
 		bu_vls_addr(&claimant_list);
@@ -214,16 +213,22 @@ int if_hit(struct application *ap, struct partition *part_head, struct seg *fini
 
 	while ((ovp = find_ovlp(part)) != OVERLAP_NULL)
 	{
-	    strncpy(regionPN, ovp -> reg1 -> reg_name, 512);
-	    ValTab[VTI_OV_REG1_NAME].value.sval = basename(regionPN);
-	    ValTab[VTI_OV_REG1_ID].value.ival = ovp -> reg1 -> reg_regionid;
-	    strncpy(regionPN, ovp -> reg2 -> reg_name, 512);
-	    ValTab[VTI_OV_REG2_NAME].value.sval = basename(regionPN);
-	    ValTab[VTI_OV_REG2_ID].value.ival = ovp -> reg2 -> reg_regionid;
+#ifdef NIRT_OVLP_PATH
+	    ValTab[VTI_OV_REG1_NAME].value.sval = ovp->reg1->reg_name;
+	    ValTab[VTI_OV_REG2_NAME].value.sval = ovp->reg2->reg_name;
+#else
+	    char *copy_ovlp_reg1 = bu_strdup(ovp->reg1->reg_name);
+	    char *copy_ovlp_reg2 = bu_strdup(ovp->reg2->reg_name);
+
+	    ValTab[VTI_OV_REG1_NAME].value.sval = basename(copy_ovlp_reg1);
+	    ValTab[VTI_OV_REG2_NAME].value.sval = basename(copy_ovlp_reg2);
+#endif
+	    ValTab[VTI_OV_REG1_ID].value.ival = ovp->reg1->reg_regionid;
+	    ValTab[VTI_OV_REG2_ID].value.ival = ovp->reg2->reg_regionid;
 	    ValTab[VTI_OV_SOL_IN].value.sval =
-		(char *)(part -> pt_inseg -> seg_stp -> st_dp -> d_namep);
+		(char *)(part->pt_inseg->seg_stp->st_dp->d_namep);
 	    ValTab[VTI_OV_SOL_OUT].value.sval =
-		(char *)(part -> pt_outseg -> seg_stp -> st_dp -> d_namep);
+		(char *)(part->pt_outseg->seg_stp->st_dp->d_namep);
 	    for (i = 0; i < 3; ++i)
 	    {
 		ov_entry(i) = ovp -> in_point[i];
@@ -233,6 +238,10 @@ int if_hit(struct application *ap, struct partition *part_head, struct seg *fini
 	    ov_exit(D) = target(D) - ovp -> out_dist;
 	    ValTab[VTI_OV_LOS].value.fval = ov_entry(D) - ov_exit(D);
 	    report(FMT_OVLP);
+#ifndef NIRT_OVLP_PATH
+	    bu_free((genptr_t)copy_ovlp_reg1, "copy_ovlp_reg1");
+	    bu_free((genptr_t)copy_ovlp_reg2, "copy_ovlp_reg2");
+#endif
 	    del_ovlp(ovp);
 	}
     }
