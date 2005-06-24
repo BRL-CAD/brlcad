@@ -205,7 +205,9 @@ set helplib_data(dgo_report)		{{[lvl]} {print solid table & vector list}}
 set helplib_data(dgo_rt)		{{[options] [-- objects]}	{do raytrace of view or specified objects}}
 set helplib_data(dgo_rtabort)		{{} {abort the associated raytraces}}
 set helplib_data(dgo_rtcheck)		{{[options]}	{check for overlaps in current view}}
+set helplib_data(dgo_rtarea)		{{[options] [-- objects]}	{report the exposed and presented areas in the current view}}
 set helplib_data(dgo_rtedge)		{{[options] [-- objects]}	{do edge rendering of view or specified objects}}
+set helplib_data(dgo_rtweight)		{{[options] [-- objects]}	{report the approximate weight and centroid of displayed geometry}}
 set helplib_data(dgo_shaded_mode)	{{[0|1|2]}	{get/set shaded mode}}
 set helplib_data(dgo_vdraw)		{{write|insert|delete|read|send|params|open|vlist [args]}	{Expermental drawing (cnuzman)}}
 set helplib_data(dgo_vnirt)		{{[vnirt(1) options] viewX viewY}	{trace a single ray from current view}}
