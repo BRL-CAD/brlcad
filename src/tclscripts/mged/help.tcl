@@ -224,7 +224,9 @@ set mged_help_data(rt)		$helplib_data(dgo_rt)
 set mged_help_data(rt_gettrees)	$helplib_data(wdb_rt_gettrees)
 set mged_help_data(rtabort)	$helplib_data(dgo_rtabort)
 set mged_help_data(rtcheck)	$helplib_data(dgo_rtcheck)
+set mged_help_data(rtarea)	$helplib_data(dgo_rtarea)
 set mged_help_data(rtedge)	$helplib_data(dgo_rtedge)
+set mged_help_data(rtweight)	$helplib_data(dgo_rtweight)
 set mged_help_data(savekey)	{{file [time]}	{save keyframe in file (experimental)}}
 set mged_help_data(saveview)	{{file [args]}	{save view in file for RT}}
 set mged_help_data(sca)		$helplib_data(vo_sca)
