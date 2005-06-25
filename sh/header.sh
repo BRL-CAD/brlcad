@@ -169,6 +169,21 @@ case $FILE in
 	wrap=0
 	commentprefix="#"
 	;;
+    *.am)
+	echo "$FILE is an Automake template file"
+	wrap=0
+	commentprefix="#"
+	;;
+    *.in)
+	echo "$FILE is an Autoconf template file"
+	wrap=0
+	commentprefix="#"
+	;;
+    *.mk)
+	echo "$FILE is a make file"
+	wrap=0
+	commentprefix="#"
+	;;
     *)
 	echo "ERROR: $FILE has an unknown filetype"
 	exit 0
