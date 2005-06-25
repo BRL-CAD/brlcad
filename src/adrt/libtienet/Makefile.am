@@ -7,3 +7,7 @@ libtienet_la_SOURCES = tienet_master.c tienet_slave.c tienet_util.c
 
 include_HEADERS = tienet.h
 noinst_HEADERS = tienet_define.h tienet_util.h tienet_master.h tienet_slave.h tienet_util.h
+
+MAINTAINERCLEANFILES = Makefile.in
+
+include $(top_srcdir)/misc/Makefile.defs

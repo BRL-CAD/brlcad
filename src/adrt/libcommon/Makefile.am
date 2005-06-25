@@ -9,3 +9,7 @@ libcommon_la_LIBADD = ${LIBRT}
 AM_CFLAGS = -I${top_srcdir}/include -I${top_srcdir}/src/adrt/libtie -I${top_srcdir}/src/adrt/libtienet -I${top_srcdir}/src/adrt/libtexture -I${top_srcdir}/src/adrt/librender -I${top_srcdir}/src/adrt/libutil
 
 noinst_HEADERS = adrt_common.h canim.h cdb.h env.h g.h pack.h unpack.h 
+
+MAINTAINERCLEANFILES = Makefile.in
+
+include $(top_srcdir)/misc/Makefile.defs

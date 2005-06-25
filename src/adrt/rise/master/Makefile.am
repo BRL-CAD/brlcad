@@ -30,3 +30,5 @@ noinst_HEADERS = \
 	post.h
 
 MAINTAINERCLEANFILES = Makefile.in
+
+include $(top_srcdir)/misc/Makefile.defs

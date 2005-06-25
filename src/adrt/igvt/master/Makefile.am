@@ -29,3 +29,7 @@ noinst_HEADERS = \
 	dispatcher.h \
 	igvt_python.h \
 	master.h
+
+MAINTAINERCLEANFILES = Makefile.am
+
+include $(top_srcdir)/misc/Makefile.defs

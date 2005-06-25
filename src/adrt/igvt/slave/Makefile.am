@@ -22,3 +22,7 @@ igvt_slave_LDADD = \
 	${LIBZ}
 
 noinst_HEADERS = slave.h
+
+MAINTAINERCLEANFILES = Makefile.in
+
+include $(top_srcdir)/misc/Makefile.defs

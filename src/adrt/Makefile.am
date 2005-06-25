@@ -2,7 +2,6 @@
 
 SUBDIRS = libtie libtienet libcommon librender libtexture libutil rise igvt
 
-
 if HAVE_DOXYGEN
 doxygen:
 	mkdir doxygen
@@ -18,3 +17,5 @@ endif
 EXTRA_DIST=depcomp
 
 MAINTAINERCLEANFILES = Makefile.in
+
+include $(top_srcdir)/misc/Makefile.defs

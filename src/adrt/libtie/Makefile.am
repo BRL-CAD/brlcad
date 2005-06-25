@@ -15,3 +15,7 @@ lint:
 
 clean-local:
 	-rm -f $(HEADERS:.h=.h.lint) $(SOURCES:.c=.c.lint)
+
+MAINTAINERCLEANFILES = Makefile.in
+
+include $(top_srcdir)/misc/Makefile.defs
