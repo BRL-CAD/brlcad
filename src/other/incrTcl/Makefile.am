@@ -52,3 +52,6 @@ libitk@ITCL_VERSION@_la_SOURCES = $(libitk_la_SOURCES)
 
 
 MAINTAINERCLEANFILES = Makefile.in
+
+include $(top_srcdir)/misc/Makefile.defs
+

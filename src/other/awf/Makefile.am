@@ -14,3 +14,6 @@ dist_sysconf_DATA = \
 	pass3
 
 dist_man_MANS = awf.1
+
+include $(top_srcdir)/misc/Makefile.defs
+

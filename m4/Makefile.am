@@ -13,3 +13,6 @@ EXTRA_DIST = \
 	mkdirp.m4
 
 MAINTAINERCLEANFILES = Makefile.in
+
+include $(top_srcdir)/misc/Makefile.defs
+

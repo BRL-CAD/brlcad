@@ -77,3 +77,5 @@ htmldocs_DATA = \
 	tsld019.htm
 
 EXTRA_DIST = $(htmldocs_DATA)
+
+include $(top_srcdir)/misc/Makefile.defs

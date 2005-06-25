@@ -13,3 +13,5 @@ htmldocs_DATA = \
 	small-eagleCAD.gif
 
 EXTRA_DIST = $(htmldocs_DATA)
+
+include $(top_srcdir)/misc/Makefile.defs

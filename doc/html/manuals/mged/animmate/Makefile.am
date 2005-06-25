@@ -69,3 +69,5 @@ htmldocs_DATA = \
 	vscript_doc.html
 
 EXTRA_DIST = $(htmldocs_DATA)
+
+include $(top_srcdir)/misc/Makefile.defs

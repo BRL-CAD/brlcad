@@ -70,3 +70,5 @@ htmldocs_DATA = \
 	tex-html.tcl
 
 EXTRA_DIST = $(htmldocs_DATA)
+
+include $(top_srcdir)/misc/Makefile.defs

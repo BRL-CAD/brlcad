@@ -31,3 +31,6 @@ include_HEADERS = \
 EXTRA_DIST = itcl.decls
 
 MAINTAINERCLEANFILES = Makefile.in
+
+include $(top_srcdir)/misc/Makefile.defs
+

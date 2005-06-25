@@ -30,3 +30,6 @@ EXTRA_DIST = \
 	make_zip.sh \
 	vers.sh
 
+
+include $(top_srcdir)/misc/Makefile.defs
+

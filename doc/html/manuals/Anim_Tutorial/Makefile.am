@@ -46,3 +46,5 @@ htmldocs_DATA = \
 	v_eqn2.gif
 
 EXTRA_DIST = $(htmldocs_DATA)
+
+include $(top_srcdir)/misc/Makefile.defs
