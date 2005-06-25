@@ -163,7 +163,7 @@ case $FILE in
 	wrap=0
 	commentchar="#"
 	;;
-    .am)
+    *.am)
 	echo "$FILE is an Automake template file"
 	mode="Makefile"
 	wrap=0
@@ -171,7 +171,8 @@ case $FILE in
 	# override any indent since 8 is required
 	indentation=8
 	tab_width=8
-    .mk)
+	;;
+    *.mk)
 	echo "$FILE is a make file"
 	mode="Makefile"
 	wrap=0
@@ -179,6 +180,7 @@ case $FILE in
 	# override any indent since 8 is required
 	indentation=8
 	tab_width=8
+	;;
     *)
 	echo "ERROR: $FILE has an unknown filetype"
 	exit 0
