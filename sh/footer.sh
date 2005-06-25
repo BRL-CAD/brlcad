@@ -164,7 +164,8 @@ case $FILE in
 	commentchar="#"
 	;;
     *)
-	echo "WARNING: $FILE has an unknown filetype"
+	echo "ERROR: $FILE has an unknown filetype"
+	exit 0
 	;;
 esac
 
