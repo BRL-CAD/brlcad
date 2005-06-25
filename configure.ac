@@ -2343,20 +2343,23 @@ AC_CONFIG_FILES([
 	sh/Makefile
 	src/Makefile
 	src/adrt/Makefile
-	src/adrt/libtie/Makefile
-	src/adrt/libtienet/Makefile
+	src/adrt/doc/Makefile
+	src/adrt/igvt/Makefile
+	src/adrt/igvt/master/Makefile
+	src/adrt/igvt/observer/Makefile
+	src/adrt/igvt/slave/Makefile
 	src/adrt/libcommon/Makefile
 	src/adrt/librender/Makefile
 	src/adrt/libtexture/Makefile
+	src/adrt/libtie/Makefile
+	src/adrt/libtienet/Makefile
 	src/adrt/libutil/Makefile
+	src/adrt/misc/Makefile
 	src/adrt/rise/Makefile
 	src/adrt/rise/master/Makefile
-	src/adrt/rise/slave/Makefile
 	src/adrt/rise/observer/Makefile
-	src/adrt/igvt/Makefile
-	src/adrt/igvt/master/Makefile
-	src/adrt/igvt/slave/Makefile
-	src/adrt/igvt/observer/Makefile
+	src/adrt/rise/slave/Makefile
+	src/adrt/scripts/Makefile
 	src/anim/Makefile
 	src/brlman/Makefile
 	src/burst/Makefile
