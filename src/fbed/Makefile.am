@@ -40,3 +40,9 @@ man_MANS = fbed.1
 EXTRA_DIST = \
 	$(man_MANS) \
 	font.doc
+
+include $(top_srcdir)/misc/Makefile.defs
+
+FAST_OBJECTS = \
+	$(fbed_OBJECTS) \
+	$(bin_PROGRAMS)

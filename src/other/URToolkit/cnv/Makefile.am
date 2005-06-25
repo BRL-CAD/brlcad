@@ -78,3 +78,38 @@ xbmtorle_SOURCES = xbmtorle.c
 EXTRA_DIST = README
 
 MAINTAINERCLEANFILES = Makefile.in
+
+include $(top_srcdir)/misc/Makefile.defs
+
+FAST_OBJECTS = \
+	$(aliastorle_OBJECTS) \
+	$(cubitorle_OBJECTS) \
+	$(giftorle_OBJECTS) \
+	$(graytorle_OBJECTS) \
+	$(iristorle_OBJECTS) \
+	$(painttorle_OBJECTS) \
+	$(pgmtorle_OBJECTS) \
+	$(ppmtorle_OBJECTS) \
+	$(rastorle_OBJECTS) \
+	$(rawtorle_OBJECTS) \
+	$(rletoabA60_OBJECTS) \
+	$(rletoalias_OBJECTS) \
+	$(rletoascii_OBJECTS) \
+	$(rletocgm_OBJECTS) \
+	$(rletogray_OBJECTS) \
+	$(rletoiris_OBJECTS) \
+	$(rletopaint_OBJECTS) \
+	$(rletoppm_OBJECTS) \
+	$(rletops_OBJECTS) \
+	$(rletorast_OBJECTS) \
+	$(rletoraw_OBJECTS) \
+	$(rletorla_OBJECTS) \
+	$(rletotarga_OBJECTS) \
+	$(rletotiff_OBJECTS) \
+	$(rletovcr_OBJECTS) \
+	$(targatorle_OBJECTS) \
+	$(tifftorle_OBJECTS) \
+	$(vcrtorle_OBJECTS) \
+	$(wasatchrle_OBJECTS) \
+	$(xbmtorle_OBJECTS) \
+	$(bin_PROGRAMS)

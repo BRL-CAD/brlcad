@@ -42,3 +42,10 @@ btclsh_LDADD = \
 	fi
 
 all-am: $(BTCLSH_DEPENDENCY)
+
+include $(top_srcdir)/misc/Makefile.defs
+
+FAST_OBJECTS = \
+	$(bwish_OBJECTS) \
+	$(btclsh_OBJECTS) \
+	$(bin_PROGRAMS)

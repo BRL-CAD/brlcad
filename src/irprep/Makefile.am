@@ -57,3 +57,16 @@ EXTRA_DIST = \
 	see.c \
 	see2.1 \
 	see2.c
+
+include $(top_srcdir)/misc/Makefile.defs
+
+FAST_OBJECTS = \
+	$(all_sf_OBJECTS) \
+	$(showtherm_OBJECTS) \
+	$(firpass_OBJECTS) \
+	$(ir_X_OBJECTS) \
+	$(ir_sgi_OBJECTS) \
+	$(irdisp_OBJECTS) \
+	$(secpass_OBJECTS) \
+	$(shapefact_OBJECTS) \
+	$(bin_PROGRAMS)

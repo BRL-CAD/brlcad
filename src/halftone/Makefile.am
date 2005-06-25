@@ -16,3 +16,9 @@ halftone_LDADD = ${LIBRT} ${FB}
 man_MANS = halftone.1
 
 EXTRA_DIST = $(man_MANS)
+
+include $(top_srcdir)/misc/Makefile.defs
+
+FAST_OBJECTS = \
+	$(halftone_OBJECTS) \
+	$(bin_PROGRAMS)

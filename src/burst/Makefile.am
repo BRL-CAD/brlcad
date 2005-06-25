@@ -63,3 +63,8 @@ untest:
 $(top_builddir)/db/ktank.g:
 	asc2g < $(top_builddir)/db/ktank.asc > $(top_builddir)/db/ktank.g
 
+include $(top_srcdir)/misc/Makefile.defs
+
+FAST_OBJECTS = \
+	$(burst_OBJECTS) \
+	$(bin_PROGRAMS)

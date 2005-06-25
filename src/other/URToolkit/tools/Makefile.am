@@ -94,3 +94,49 @@ EXTRA_DIST = \
 	rleskel.c
 
 MAINTAINERCLEANFILES = Makefile.in
+
+include $(top_srcdir)/misc/Makefile.defs
+
+FAST_OBJECTS = \
+	$(applymap_OBJECTS) \
+	$(avg4_OBJECTS) \
+	$(crop_OBJECTS) \
+	$(fant_OBJECTS) \
+	$(into_OBJECTS) \
+	$(mcut_OBJECTS) \
+	$(mergechan_OBJECTS) \
+	$(pyrmask_OBJECTS) \
+	$(repos_OBJECTS) \
+	$(rleaddcom_OBJECTS) \
+	$(rlebg_OBJECTS) \
+	$(rlebox_OBJECTS) \
+	$(rlecat_OBJECTS) \
+	$(rlecomp_OBJECTS) \
+	$(rledither_OBJECTS) \
+	$(rleflip_OBJECTS) \
+	$(rlegrid_OBJECTS) \
+	$(rlehdr_OBJECTS) \
+	$(rlehisto_OBJECTS) \
+	$(rleinterp_OBJECTS) \
+	$(rleldmap_OBJECTS) \
+	$(rlemandl_OBJECTS) \
+	$(rlenoise_OBJECTS) \
+	$(rlepatch_OBJECTS) \
+	$(rleprint_OBJECTS) \
+	$(rlequant_OBJECTS) \
+	$(rlescale_OBJECTS) \
+	$(rleselect_OBJECTS) \
+	$(rlesetbg_OBJECTS) \
+	$(rlesortmap_OBJECTS) \
+	$(rlespiff_OBJECTS) \
+	$(rlesplice_OBJECTS) \
+	$(rlesplit_OBJECTS) \
+	$(rlestereo_OBJECTS) \
+	$(rleswap_OBJECTS) \
+	$(rlezoom_OBJECTS) \
+	$(smush_OBJECTS) \
+	$(to8_OBJECTS) \
+	$(tobw_OBJECTS) \
+	$(unexp_OBJECTS) \
+	$(unslice_OBJECTS) \
+	$(bin_PROGRAMS)

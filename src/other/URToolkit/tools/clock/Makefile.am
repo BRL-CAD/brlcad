@@ -19,3 +19,6 @@ EXTRA_DIST = \
 	makeFont
 
 MAINTAINERCLEANFILES = Makefile.in
+
+include $(top_srcdir)/misc/Makefile.defs
+

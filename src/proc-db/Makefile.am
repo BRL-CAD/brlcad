@@ -134,3 +134,35 @@ EXTRA_DIST = \
 	$(man_MANS) \
 	apply-mdb.c \
 	nmgxplode.c
+
+include $(top_srcdir)/misc/Makefile.defs
+
+FAST_OBJECTS = \
+	$(bottest_OBJECTS) \
+	$(brickwall_OBJECTS) \
+	$(clutter_OBJECTS) \
+	$(contours_OBJECTS) \
+	$(fence_OBJECTS) \
+	$(globe_OBJECTS) \
+	$(kurt_OBJECTS) \
+	$(molecule_OBJECTS) \
+	$(nmgmodel_OBJECTS) \
+	$(picket_fence_OBJECTS) \
+	$(pipe_OBJECTS) \
+	$(pipetest_OBJECTS) \
+	$(pix2g_OBJECTS) \
+	$(pyramid_OBJECTS) \
+	$(rawbot_OBJECTS) \
+	$(room_OBJECTS) \
+	$(sketch_OBJECTS) \
+	$(sphflake_OBJECTS) \
+	$(spltest_OBJECTS) \
+	$(tea_OBJECTS) \
+	$(tea_nmg_OBJECTS) \
+	$(terrain_OBJECTS) \
+	$(torii_OBJECTS) \
+	$(tube_OBJECTS) \
+	$(vegitation_OBJECTS) \
+	$(wall_OBJECTS) \
+	$(wdb_example_OBJECTS) \
+	$(bin_PROGRAMS)

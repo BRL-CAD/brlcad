@@ -76,3 +76,23 @@ man_MANS = \
 	chan_permute.1
 
 EXTRA_DIST = $(man_MANS)
+
+include $(top_srcdir)/misc/Makefile.defs
+
+FAST_OBJECTS = \
+	$(anim_cascade_OBJECTS) \
+	$(anim_fly_OBJECTS) \
+	$(anim_harddrack_OBJECTS) \
+	$(anim_keyread_OBJECTS) \
+	$(anim_lookat_OBJECTS) \
+	$(anim_offset_OBJECTS) \
+	$(anim_orient_OBJECTS) \
+	$(anim_script_OBJECTS) \
+	$(anim_sort_OBJECTS) \
+	$(anim_time_OBJECTS) \
+	$(anim_track_OBJECTS) \
+	$(anim_turn_OBJECTS) \
+	$(chan_add_OBJECTS) \
+	$(chan_mult_OBJECTS) \
+	$(chan_permute_OBJECTS) \
+	$(bin_PROGRAMS)

@@ -20,3 +20,9 @@ man_MANS = comgeom-g.1
 EXTRA_DIST = \
 	$(man_MANS) \
 	try.sh
+
+include $(top_srcdir)/misc/Makefile.defs
+
+FAST_OBJECTS = \
+	$(comgeom_g_OBJECTS) \
+	$(bin_PROGRAMS)

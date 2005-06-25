@@ -49,3 +49,9 @@ lgt_CFLAGS = -DBEHIND_ME_TOL=0.05
 dist_man_MANS = lgt.1
 
 EXTRA_DIST = resource.c
+
+include $(top_srcdir)/misc/Makefile.defs
+
+FAST_OBJECTS = \
+	$(lgt_OBJECTS) \
+	$(bin_PROGRAMS)

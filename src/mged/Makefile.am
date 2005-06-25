@@ -146,3 +146,11 @@ EXTRA_DIST = \
 CLEANFILES = $(BUILT_SOURCES)
 DISTCLEANFILES = version
 MAINTAINERCLEANFILES = Makefile.in
+
+include $(top_srcdir)/misc/Makefile.defs
+
+FAST_OBJECTS = \
+	$(cad_boundp_OBJECTS) \
+	$(cad_parea_OBJECTS) \
+	$(mged_OBJECTS) \
+	$(bin_PROGRAMS)

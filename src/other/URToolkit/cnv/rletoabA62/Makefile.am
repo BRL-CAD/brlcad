@@ -11,3 +11,6 @@ LDADD = ${RLE}
 EXTRA_DIST = COPYRIGHT
 
 MAINTAINERCLEANFILES = Makefile.in
+
+include $(top_srcdir)/misc/Makefile.defs
+

@@ -286,3 +286,40 @@ EXTRA_DIST = \
 CLEANFILES = $(BUILT_SOURCES)
 DISTCLEANFILES = version
 MAINTAINERCLEANFILES = Makefile.in
+
+include $(top_srcdir)/misc/Makefile.defs
+
+if ONLY_BENCHMARK
+FAST_OBJECTS = \
+	$(rt_SOURCES) \
+	$(bin_PROGRAMS)
+
+else !ONLY_BENCHMARK
+FAST_OBJECTS = \
+	$(rt_OBJECTS) \
+	$(rt_bot_faces_OBJECTS) \
+	$(rt_simple_OBJECTS) \
+	$(rtarea_OBJECTS) \
+	$(rtcell_OBJECTS) \
+	$(rtcheck_OBJECTS) \
+	$(rtedge_OBJECTS) \
+	$(rtfrac_OBJECTS) \
+	$(rtg3_OBJECTS) \
+	$(rthide_OBJECTS) \
+	$(rtpp_OBJECTS) \
+	$(rtrad_OBJECTS) \
+	$(rtrange_OBJECTS) \
+	$(rtray_OBJECTS) \
+	$(rtregis_OBJECTS) \
+	$(rtscale_OBJECTS) \
+	$(rtshot_OBJECTS) \
+	$(rtsil_OBJECTS) \
+	$(rtwalk_OBJECTS) \
+	$(rtweight_OBJECTS) \
+	$(rtxray_OBJECTS) \
+	$(rtexample_OBJECTS) \
+	$(bin_PROGRAMS) \
+	$(noinst_PROGRAMS)
+
+endif
+# end of ONLY_BENCHMARK

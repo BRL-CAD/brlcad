@@ -20,3 +20,12 @@ testfree_LDADD = ${LIBRT}
 
 man_MANS = g_diff.1 g_lint.1
 EXTRA_DIST = $(man_MANS)
+
+include $(top_srcdir)/misc/Makefile.defs
+
+FAST_OBJECTS = \
+	$(g_lint_OBJECTS) \
+	$(g_diff_OBJECTS) \
+	$(solshoot_OBJECTS) \
+	$(testfree_OBJECTS) \
+	$(bin_PROGRAMS)

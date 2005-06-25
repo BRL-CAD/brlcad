@@ -28,3 +28,14 @@ man_MANS = \
 	mk_wire.1
 
 EXTRA_DIST = $(man_MANS)
+
+include $(top_srcdir)/misc/Makefile.defs
+
+FAST_OBJECTS = \
+	$(mk_bolt_OBJECTS) \
+	$(mk_handle_OBJECTS) \
+	$(mk_window_OBJECTS) \
+	$(mk_winfrm_OBJECTS) \
+	$(mk_gastank_OBJECTS) \
+	$(mk_wire_OBJECTS) \
+	$(bin_PROGRAMS)

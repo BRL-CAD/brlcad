@@ -25,3 +25,10 @@ noinst_HEADERS = ihost.h protocol.h
 CLEANFILES = $(BUILT_SOURCES)
 DISTCLEANFILES = version
 MAINTAINERCLEANFILES = Makefile.in
+
+include $(top_srcdir)/misc/Makefile.defs
+
+FAST_OBJECTS = \
+	$(remrt_OBJECTS) \
+	$(rtsrv_OBJECTS) \
+	$(bin_PROGRAMS)

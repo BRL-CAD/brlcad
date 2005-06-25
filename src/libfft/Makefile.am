@@ -96,3 +96,13 @@ DISTCLEANFILES = \
 	version
 
 MAINTAINERCLEANFILES = Makefile.in
+
+include $(top_srcdir)/misc/Makefile.defs
+
+FAST_OBJECTS = \
+	$(libfft_la_OBJECTS) \
+	$(lib_LTLIBRARIES) \
+	$(fftc_OBJECTS) \
+	$(fftest_OBJECTS) \
+	$(ifftc_OBJECTS) \
+	$(bin_PROGRAMS)

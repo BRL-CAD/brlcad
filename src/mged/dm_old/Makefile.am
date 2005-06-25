@@ -12,3 +12,6 @@ EXTRA_DIST = \
 	dm-tek4109.c \
 	dm-xgl.c \
 	dm-xgl.info
+
+include $(top_srcdir)/misc/Makefile.defs
+

@@ -62,3 +62,11 @@ EXTRA_DIST = \
 CLEANFILES = $(BUILT_SOURCES)
 DISTCLEANFILES = version
 MAINTAINERCLEANFILES = Makefile.in
+
+include $(top_srcdir)/misc/Makefile.defs
+
+FAST_OBJECTS = \
+	$(rttherm_OBJECTS) \
+	$(ssamp_bw_OBJECTS) \
+	$(ssampview_OBJECTS) \
+	$(bin_PROGRAMS)

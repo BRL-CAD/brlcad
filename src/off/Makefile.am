@@ -8,3 +8,9 @@ g_off_LDADD = ${LIBRT}
 off_g_SOURCES = off-g.c
 off_g_LDADD = ${LIBRT} ${WDB}
 
+include $(top_srcdir)/misc/Makefile.defs
+
+FAST_OBJECTS = \
+	$(g_off_OBJECTS) \
+	$(off_g_OBJECTS) \
+	$(bin_PROGRAMS)

@@ -117,3 +117,43 @@ EXTRA_DIST = \
 	smod.c
 
 MAINTAINERCLEANFILES = Makefile.in
+
+include $(top_srcdir)/misc/Makefile.defs
+
+FAST_OBJECTS = \
+	$(a_d_OBJECTS) \
+	$(bw_d_OBJECTS) \
+	$(c_d_OBJECTS) \
+	$(d_a_OBJECTS) \
+	$(d_bw_OBJECTS) \
+	$(d_f_OBJECTS) \
+	$(d_i_OBJECTS) \
+	$(d_u_OBJECTS) \
+	$(damdf_OBJECTS) \
+	$(dauto_OBJECTS) \
+	$(dauto2_OBJECTS) \
+	$(dconv_OBJECTS) \
+	$(ddisp_OBJECTS) \
+	$(dfft_OBJECTS) \
+	$(dmod_OBJECTS) \
+	$(dpeak_OBJECTS) \
+	$(dsel_OBJECTS) \
+	$(dstat_OBJECTS) \
+	$(dwin_OBJECTS) \
+	$(f_d_OBJECTS) \
+	$(f_i_OBJECTS) \
+	$(fhor_OBJECTS) \
+	$(i_a_OBJECTS) \
+	$(i_d_OBJECTS) \
+	$(i_f_OBJECTS) \
+	$(ihist_OBJECTS) \
+	$(imod_OBJECTS) \
+	$(istat_OBJECTS) \
+	$(syn_OBJECTS) \
+	$(u_a_OBJECTS) \
+	$(u_bw_OBJECTS) \
+	$(u_d_OBJECTS) \
+	$(u_f_OBJECTS) \
+	$(umod_OBJECTS) \
+	$(ustat_OBJECTS) \
+	$(bin_PROGRAMS)

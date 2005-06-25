@@ -212,3 +212,50 @@ man_MANS = \
 	rle-fb.1
 
 EXTRA_DIST = $(man_MANS)
+
+include $(top_srcdir)/misc/Makefile.defs
+
+FAST_OBJECTS = \
+	$(bw_fb_OBJECTS) \
+	$(cat_fb_OBJECTS) \
+	$(cell_fb_OBJECTS) \
+	$(cmap_fb_OBJECTS) \
+	$(fb_bw_OBJECTS) \
+	$(fb_cmap_OBJECTS) \
+	$(fb_fb_OBJECTS) \
+	$(fb_orle_OBJECTS) \
+	$(fb_pix_OBJECTS) \
+	$(fb_png_OBJECTS) \
+	$(fb_rle_OBJECTS) \
+	$(fbanim_OBJECTS) \
+	$(fbcbars_OBJECTS) \
+	$(fbclear_OBJECTS) \
+	$(fbcmap_OBJECTS) \
+	$(fbcmrot_OBJECTS) \
+	$(fbcolor_OBJECTS) \
+	$(fbfade_OBJECTS) \
+	$(fbframe_OBJECTS) \
+	$(fbfree_OBJECTS) \
+	$(fbgamma_OBJECTS) \
+	$(fbgammamod_OBJECTS) \
+	$(fbgrid_OBJECTS) \
+	$(fbhelp_OBJECTS) \
+	$(fblabel_OBJECTS) \
+	$(fbline_OBJECTS) \
+	$(fbpoint_OBJECTS) \
+	$(fbscanplot_OBJECTS) \
+	$(fbstretch_OBJECTS) \
+	$(fbzoom_OBJECTS) \
+	$(gif_fb_OBJECTS) \
+	$(gif2fb_OBJECTS) \
+	$(orle_fb_OBJECTS) \
+	$(pix_fb_OBJECTS) \
+	$(pixautosize_OBJECTS) \
+	$(pixflip_fb_OBJECTS) \
+	$(pl_fb_OBJECTS) \
+	$(png_fb_OBJECTS) \
+	$(polar_fb_OBJECTS) \
+	$(pp_fb_OBJECTS) \
+	$(rle_fb_OBJECTS) \
+	$(spm_fb_OBJECTS) \
+	$(bin_PROGRAMS)

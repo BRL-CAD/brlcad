@@ -1,6 +1,8 @@
 # $Id$
 
-bin_PROGRAMS = patch-g rpatch
+bin_PROGRAMS = \
+	patch-g \
+	rpatch
 
 patch_g_SOURCES = patch-g.c
 patch_g_LDADD = ${LIBRT} ${WDB}
@@ -18,3 +20,10 @@ EXTRA_DIST = \
 	rpatch.f
 
 MAINTAINERCLEANFILES = Makefile.in
+
+include $(top_srcdir)/misc/Makefile.defs
+
+FAST_OBJECTS = \
+	$(patch_g_OBJECTS) \
+	$(rpatch_OBJECTS) \
+	$(bin_PROGRAMS)

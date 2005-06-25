@@ -47,3 +47,10 @@ vers.c: $(nirt_srcs) Makefile.am
 CLEANFILES = vers.c
 DISTCLEANFILES = version
 MAINTAINERCLEANFILES = Makefile.in
+
+include $(top_srcdir)/misc/Makefile.defs
+
+FAST_OBJECTS = \
+	$(nirt_OBJECTS) \
+	$(showshot_OBJECTS) \
+	$(bin_PROGRAMS)

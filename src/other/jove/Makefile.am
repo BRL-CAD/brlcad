@@ -78,3 +78,10 @@ DISTCLEANFILES = \
 	version.number
 
 MAINTAINERCLEANFILES = Makefile.in
+
+include $(top_srcdir)/misc/Makefile.defs
+
+FAST_OBJECTS = \
+	$(jove_OBJECTS) \
+	$(findcom_OBJECTS) \
+	$(bin_PROGRAMS)

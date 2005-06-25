@@ -193,3 +193,64 @@ sample_applications_DATA = \
 	g-xxx_facets.c
 
 MAINTAINERCLEANFILES = Makefile.in
+
+include $(top_srcdir)/misc/Makefile.defs
+
+if ONLY_BENCHMARK
+FAST_OBJECTS = \
+	$(asc2g_OBJECTS) \
+	$(asc2pix_OBJECTS) \
+	$(g2asc_OBJECTS) \
+	$(pix2asc_OBJECTS) \
+	$(bin_PROGRAMS)
+
+else !ONLY_BENCHMARK
+
+FAST_OBJECTS = \
+	$(asc_nmg_OBJECTS) \
+	$(asc2g_OBJECTS) \
+	$(asc2pix_OBJECTS) \
+	$(bot_bldxf_OBJECTS) \
+	$(bot_raw_OBJECTS) \
+	$(bot_shell_vtk_OBJECTS) \
+	$(conv_vg2g_OBJECTS) \
+	$(cy_g_OBJECTS) \
+	$(dbupgrade_OBJECTS) \
+	$(dxf_g_OBJECTS) \
+	$(enf_g_OBJECTS) \
+	$(euclid_g_OBJECTS) \
+	$(euclid_format_OBJECTS) \
+	$(euclid_unformat_OBJECTS) \
+	$(fast4_g_OBJECTS) \
+	$(g_acad_OBJECTS) \
+	$(g_dxf_OBJECTS) \
+	$(g_euclid_OBJECTS) \
+	$(g_euclid1_OBJECTS) \
+	$(g_nff_OBJECTS) \
+	$(g_nmg_OBJECTS) \
+	$(g_shell.rect_OBJECTS) \
+	$(g_stl_OBJECTS) \
+	$(g_tankill_OBJECTS) \
+	$(g_vrml_OBJECTS) \
+	$(g_wave_OBJECTS) \
+	$(g_x3d_OBJECTS) \
+	$(g2asc_OBJECTS) \
+	$(nastran_g_OBJECTS) \
+	$(nmg_bot_OBJECTS) \
+	$(nmg_rib_OBJECTS) \
+	$(nmg_sgp_OBJECTS) \
+	$(pix2asc_OBJECTS) \
+	$(ply_g_OBJECTS) \
+	$(poly_bot_OBJECTS) \
+	$(proe_g_OBJECTS) \
+	$(stl_g_OBJECTS) \
+	$(tankill_g_OBJECTS) \
+	$(viewpoint_g_OBJECTS) \
+	$(g4_g5_OBJECTS) \
+	$(g5_g4_OBJECTS) \
+	$(g_xxx_OBJECTS) \
+	$(g_xxx_facets_OBJECTS) \
+	$(bin_PROGRAMS)
+
+endif
+# end ONLY_BENCHMARK

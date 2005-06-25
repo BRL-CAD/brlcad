@@ -202,3 +202,12 @@ vers.c: $(SRCS)
 CLEANFILES = $(BUILT_SOURCES)
 DISTCLEANFILES = version
 MAINTAINERCLEANFILES = Makefile.in
+
+include $(top_srcdir)/misc/Makefile.defs
+
+FAST_OBJECTS = \
+	$(librt_la_OBJECTS) \
+	$(lib_LTLIBRARIES) \
+	$(comb_OBJECTS) \
+	$(nurb_example_OBJECTS) \
+	$(noinst_PROGRAMS)
