@@ -16,3 +16,6 @@ dist_brlcadimage_DATA = \
 	pwrdLogo200.gif \
 	pwrdLogo75.gif \
 	tai-ku.gif
+
+include $(top_srcdir)/misc/Makefile.defs
+

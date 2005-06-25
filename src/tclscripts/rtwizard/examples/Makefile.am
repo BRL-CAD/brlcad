@@ -7,3 +7,6 @@ SUBDIRS = \
 	PictureTypeD \
 	PictureTypeE \
 	PictureTypeF
+
+include $(top_srcdir)/misc/Makefile.defs
+

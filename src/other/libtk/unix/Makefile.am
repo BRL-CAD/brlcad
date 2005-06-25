@@ -59,3 +59,6 @@ AM_CPPFLAGS = \
 	@X_CFLAGS@
 
 MAINTAINERCLEANFILES = Makefile.in
+
+include $(top_srcdir)/misc/Makefile.defs
+

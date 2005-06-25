@@ -18,3 +18,6 @@ EXTRA_DIST = \
 	vproc.c
 
 MAINTAINERCLEANFILES = Makefile.in
+
+include $(top_srcdir)/misc/Makefile.defs
+

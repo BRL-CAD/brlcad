@@ -28,3 +28,6 @@ MAINTAINERCLEANFILES = Makefile.in
 
 install-script-hook:
 	ln -fs ${INSTALL_DIR} ${libdir}/iwidgets
+
+include $(top_srcdir)/misc/Makefile.defs
+

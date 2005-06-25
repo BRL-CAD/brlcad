@@ -87,3 +87,7 @@ man_MANS = \
 EXTRA_DIST = \
 	$(man_MANS) \
 	getopt.c
+
+include $(top_srcdir)/misc/Makefile.defs
+
+FAST_OBJECTS = $(libutahrle_la_OBJECTS)

@@ -63,3 +63,6 @@ test:	pngtest
 	./pngtest ${top_srcdir}/src/other/libpng/pngtest.png
 
 MAINTAINERCLEANFILES = Makefile.in
+
+include $(top_srcdir)/misc/Makefile.defs
+

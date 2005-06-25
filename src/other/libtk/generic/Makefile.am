@@ -136,3 +136,6 @@ AM_CPPFLAGS = \
 	-I${top_srcdir}/src/other/libtk/mac \
 	-I${top_srcdir}/src/other/libtk/win \
 	@X_CFLAGS@
+
+include $(top_srcdir)/misc/Makefile.defs
+

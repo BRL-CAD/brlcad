@@ -14,3 +14,6 @@ EXTRA_DIST = \
 	ug-g.c \
 	ug_misc.c \
 	ug_misc.h
+
+include $(top_srcdir)/misc/Makefile.defs
+

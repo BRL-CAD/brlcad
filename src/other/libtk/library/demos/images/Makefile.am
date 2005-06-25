@@ -15,3 +15,6 @@ dist_brlcadimage_DATA = \
 	tcllogo.gif \
 	teapot.ppm
 
+
+include $(top_srcdir)/misc/Makefile.defs
+

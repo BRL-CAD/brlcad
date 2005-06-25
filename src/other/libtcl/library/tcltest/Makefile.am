@@ -7,3 +7,6 @@ brlcadscript_SCRIPTS = \
 	tcltest.tcl
 
 EXTRA_DIST = $(brlcadscript_SCRIPTS)
+
+include $(top_srcdir)/misc/Makefile.defs
+

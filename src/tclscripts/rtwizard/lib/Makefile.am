@@ -44,3 +44,5 @@ pkgIndex.tcl:
 
 tclIndex:
 	$(top_builddir)/src/bwish/btclsh $(top_srcdir)/src/tclscripts/ami.tcl $(top_srcdir)/src/$(this_dir)
+
+include $(top_srcdir)/misc/Makefile.defs

@@ -25,3 +25,6 @@ EXTRA_DIST = itk.decls
 MAINTAINERCLEANFILES = Makefile.in
 
 AM_CFLAGS=@X_CFLAGS@
+
+include $(top_srcdir)/misc/Makefile.defs
+

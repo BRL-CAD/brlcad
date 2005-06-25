@@ -20,3 +20,6 @@ descnames.h:
 EXTRA_DIST = makedescnames.sh
 
 MAINTAINERCLEANFILES = Makefile.in
+
+include $(top_srcdir)/misc/Makefile.defs
+
