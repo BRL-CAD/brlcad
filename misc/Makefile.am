@@ -35,7 +35,6 @@ DISTCLEANFILES = \
 	install-sh \
 	ltmain.sh \
 	ltmain.sh.backup \
-	missing \
 	mkinstalldirs
 
 MAINTAINERCLEANFILES = Makefile.in
