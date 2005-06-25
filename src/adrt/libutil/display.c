@@ -93,6 +93,7 @@ void util_display_init(int w, int h) {
   memcpy(util_display_font->pixels, util_font.pixel_data, util_font.width * util_font.height * 4);
 
   SDL_EnableUNICODE(1);
+  SDL_EnableKeyRepeat(100, 150);
 
   /* Clean up on exit */
   atexit(SDL_Quit);

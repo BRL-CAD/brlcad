@@ -32,8 +32,7 @@
 /* socket structure */
 typedef struct rise_master_socket_s {
   int num;
-  int controller;
-  tienet_sem_t frame_sem;
+  tienet_sem_t update_sem;
   struct rise_master_socket_s *prev;
   struct rise_master_socket_s *next;
 } rise_master_socket_t;
@@ -156,20 +155,20 @@ void rise_master_result(void *res_buf, int res_len) {
   fflush(stdout);
 /*printf("result: %d %d\n", work.orig_x, work.orig_y); */
 
+  /* post update to all nodes that a tile has come in */
+  for(sock = rise_master_socklist; sock; sock = sock->next) {
+    if(sock->next) {
+      if(!sock->update_sem.val)
+        tienet_sem_post(&(sock->update_sem));
+    }
+  }
+
   /* Draw the frame to the screen */
   if(rise_master_work_ind == rise_master_tile_num) {
     /* Save image to disk */
     tienet_sem_post(&rise_master_frame_sem);
 
     rise_master_work_ind = 0;
-
-    for(sock = rise_master_socklist; sock; sock = sock->next) {
-      if(sock->next) {
-        if(!sock->frame_sem.val)
-          tienet_sem_post(&(sock->frame_sem));
-      }
-    }
-
   }
 }
 
@@ -183,12 +182,15 @@ void* rise_master_networking(void *ptr) {
   unsigned int addrlen;
   unsigned char op;
   short endian;
+  void *frame24;
 #if RISE_USE_COMPRESSION
   void *comp_buf;
 #endif
 
 
   port = *(int *)ptr;
+  frame24 = malloc(3 * db.env.img_w * db.env.img_h);
+
 
 #if RISE_USE_COMPRESSION
   comp_buf = malloc(db.env.img_w * db.env.img_h*3);
@@ -243,10 +245,9 @@ void* rise_master_networking(void *ptr) {
             tmp = rise_master_socklist;
             rise_master_socklist = (rise_master_socket_t *)malloc(sizeof(rise_master_socket_t));
             rise_master_socklist->num = new_socket;
-            rise_master_socklist->controller = rise_master_active_connections ? 0 : 1;
             rise_master_socklist->next = tmp;
             rise_master_socklist->prev = NULL;
-            tienet_sem_init(&(rise_master_socklist->frame_sem), 0);
+            tienet_sem_init(&(rise_master_socklist->update_sem), 0);
             tmp->prev = rise_master_socklist;
             if(new_socket > highest_fd)
               highest_fd = new_socket;
@@ -278,32 +279,28 @@ void* rise_master_networking(void *ptr) {
                 tienet_send(sock->num, &db.env.img_w, sizeof(int), 0);
                 tienet_send(sock->num, &db.env.img_h, sizeof(int), 0);
                 tienet_send(sock->num, &common_pack_trinum, sizeof(int), 0);
-                tienet_send(sock->num, &(sock->controller), sizeof(int), 0);
-                break;
-
-              case RISE_NET_OP_GETSTATE:
-                tienet_send(sock->num, cam, sizeof(tfloat)*8, 0);
                 break;
 
               case RISE_NET_OP_FRAME:
-                tienet_sem_wait(&(sock->frame_sem));
+                tienet_sem_wait(&(sock->update_sem));
+                util_image_convert_128to24(frame24, rise_master_frame, db.env.img_w, db.env.img_h);
+
 #if RISE_USE_COMPRESSION
                 {
                   unsigned long dest_len;
                   int comp_size;
-                  dest_len = db.env.img_w * db.env.img_h*3;
+                  dest_len = 3 * db.env.img_w * db.env.img_h;
 
                   /* frame data */
-                  compress(comp_buf, &dest_len, rise_master_frame, db.env.img_w * db.env.img_h*3);
+                  compress(comp_buf, &dest_len, frame24, 3 * db.env.img_w * db.env.img_h);
                   comp_size = dest_len;
                   tienet_send(sock->num, &comp_size, sizeof(int), 0);
                   tienet_send(sock->num, comp_buf, comp_size, 0);
                 }
 #else
                 /* frame data */
-                tienet_send(sock->num, master_frame, db.env.img_w * db.env.img_h * 3, 0);
+                tienet_send(sock->num, frame24, 3 * db.env.img_w * db.env.img_h, 0);
 #endif
-                /* camera data */
                 break;
 
               case RISE_NET_OP_QUIT:
@@ -340,5 +337,6 @@ void* rise_master_networking(void *ptr) {
   for(sock = rise_master_socklist->next; sock; sock = sock->next)
     free(sock->prev);
 
+  free(frame24);
   return 0;
 }

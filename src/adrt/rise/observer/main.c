@@ -81,7 +81,6 @@ int main(int argc, char **argv) {
 			  port = atoi(optarg);
 			  break;
 		  case 'H':
-			  port = TN_MASTER_PORT;
 			  strncpy(host, optarg, 64);
 			  break;
 		  case 'h':

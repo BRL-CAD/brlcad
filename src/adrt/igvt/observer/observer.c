@@ -319,8 +319,6 @@ void igvt_observer_event_loop() {
   SDL_WM_SetCaption("ADRT_ISST_Observer", NULL);
   tienet_sem_post(&igvt_observer_sdlready_sem);
 
-  SDL_EnableKeyRepeat(150, 50);
-
   while(SDL_WaitEvent(&event) >= 0 && igvt_observer_event_loop_alive) {
     switch(event.type) {
       case SDL_KEYDOWN:

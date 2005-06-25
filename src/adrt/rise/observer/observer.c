@@ -35,7 +35,7 @@ void rise_observer_event_loop(void);
 pthread_t rise_observer_networking_thread;
 
 pthread_mutex_t event_mut;
-int screen_w, screen_h, rise_observer_trinum, rise_observer_controller;
+int screen_w, screen_h, rise_observer_trinum;
 short rise_observer_endian, rise_observer_alive, rise_observer_master_shutdown;
 tienet_sem_t rise_observer_sdlinit_sem;
 tienet_sem_t rise_observer_sdlready_sem;
@@ -79,7 +79,6 @@ void* rise_observer_networking(void *ptr) {
   rise_observer_net_info_t *ni;
   struct timeval start, cur;
   int sockd, frame_num;
-  tfloat cam[8];
   struct sockaddr_in my_addr, srv_addr;
   unsigned int addrlen;
   unsigned char op;
@@ -127,13 +126,6 @@ void* rise_observer_networking(void *ptr) {
   tienet_recv(sockd, &screen_w, sizeof(int), rise_observer_endian);
   tienet_recv(sockd, &screen_h, sizeof(int), rise_observer_endian);
   tienet_recv(sockd, &rise_observer_trinum, sizeof(int), rise_observer_endian);
-  tienet_recv(sockd, &rise_observer_controller, sizeof(int), rise_observer_endian);
-
-  op = RISE_NET_OP_GETSTATE;
-  tienet_send(sockd, &op, 1, rise_observer_endian);
-  if(rise_observer_endian) {
-  } else {
-  }
 
   /* Screen size is known.  Initialize SDL and continue once it's ready */
   tienet_sem_post(&rise_observer_sdlinit_sem);
@@ -154,11 +146,6 @@ void* rise_observer_networking(void *ptr) {
       tienet_send(sockd, &op, 1, rise_observer_endian);
       rise_observer_alive = 0;
     } else {
-      if(!rise_observer_controller) {
-        op = RISE_NET_OP_GETSTATE;
-        tienet_send(sockd, &op, 1, rise_observer_endian);
-      }
-
       op = RISE_NET_OP_FRAME;
       tienet_send(sockd, &op, 1, rise_observer_endian);
 
@@ -174,29 +161,20 @@ void* rise_observer_networking(void *ptr) {
         uncompress(frame, &dest_len, comp_buf, (unsigned long)comp_size);
       }
 #else
-      tienet_recv(sockd, (struct sockaddr *)&srv_addr, &addrlen, frame, screen_w*screen_h*3, 0);
+      tienet_recv(sockd, frame, 3 * screen_w * screen_h, 0);
 #endif
-
-      /* camera data */
-      if(rise_observer_endian) {
-      } else {
-      }
-
-      tienet_send(sockd, cam, sizeof(tfloat)*8, 0);
     }
+
+    util_display_draw(frame);
 
     /* Text Overlay */
     util_display_draw(frame);
-    sprintf(string, "Triangles: %.0fk", (tfloat)rise_observer_trinum/(tfloat)1024);
-    util_display_text(string, 0, 0, UTIL_JUSTIFY_RIGHT, UTIL_JUSTIFY_TOP);
-
-    sprintf(string, "RES: %d x %d", screen_w, screen_h);
-    util_display_text(string, 0, 0, UTIL_JUSTIFY_LEFT, UTIL_JUSTIFY_BOTTOM);
-
-    sprintf(string, "Controller: %s", rise_observer_controller ? "yes" : "no");
+    sprintf(string, "Triangles: %.0fk", (tfloat)rise_observer_trinum / (tfloat)1024);
     util_display_text(string, 0, 0, UTIL_JUSTIFY_RIGHT, UTIL_JUSTIFY_BOTTOM);
 
-/*    util_display_flip(frame); */
+    sprintf(string, "RES: %dx%d", screen_w, screen_h);
+    util_display_text(string, 0, 0, UTIL_JUSTIFY_LEFT, UTIL_JUSTIFY_BOTTOM);
+
     util_display_flip();
 
     frame_num++;
@@ -223,18 +201,8 @@ void rise_observer_event_loop() {
   TIE_3 vec, vec2, vec3;
 
 
-  /* Initialize the SDL library */
-  if(SDL_Init(SDL_INIT_VIDEO | SDL_INIT_NOPARACHUTE) < 0) {
-    fprintf(stderr, "Couldn't initialize SDL: %s\n", SDL_GetError());
-    exit(1);
-  }
-  /* Clean up on exit */
-  atexit(SDL_Quit);
-
   util_display_init(screen_w, screen_h);
   tienet_sem_post(&rise_observer_sdlready_sem);
-
-  SDL_EnableKeyRepeat(100, 150);
 
   /* Loop waiting for ESC+Mouse_Button */
   while(SDL_WaitEvent(&event) >= 0) {
@@ -242,41 +210,12 @@ void rise_observer_event_loop() {
     switch(event.type) {
       case SDL_KEYDOWN:
         switch(event.key.keysym.sym) {
-          case SDLK_KP2: /* rotate down */
-            break;
-
-          case SDLK_KP4: /* rotate left */
-            break;
-
-          case SDLK_KP6: /* rotate right */
-            break;
-
-          case SDLK_KP8: /* rotate up */
-            break;
-
-          case SDLK_a: /* strafe left */
-            break;
-
-          case SDLK_c: /* control */
-            break;
-
-          case SDLK_d: /* strafe right */
-            break;
-
-          case SDLK_f: /* strafe right */
-            break;
-
           case SDLK_q: /* quit */
             printf("Detaching from master and exiting.\n");
             rise_observer_alive = 0;
             return;
             break;
 
-          case SDLK_s: /* backwards */
-            break;
-
-          case SDLK_w: /* forward */
-            break;
 
           case SDLK_F12: /* Server Shutdown and quit*/
             printf("Shutting down master and exiting.\n");
