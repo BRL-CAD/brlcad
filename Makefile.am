@@ -83,15 +83,20 @@ DIST_SUBDIRS = \
 	$(bench_dirs) \
 	$(other_dirs)
 
-EXTRA_DIST = \
+documentationdir = $(BRLCAD_DATA_DIR)
+
+documentation_DATA = \
 	AUTHORS \
-	BUGS \
 	COPYING \
-	ChangeLog \
 	HACKING \
 	INSTALL \
 	NEWS \
-	README \
+	README
+
+EXTRA_DIST = \
+	$(documentation_DATA) \
+	BUGS \
+	ChangeLog \
 	TODO \
 	autogen.sh \
 	libtool
