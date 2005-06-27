@@ -540,12 +540,25 @@ void igvt_master_update() {
   memcpy(&((char *)igvt_master_slave_data)[igvt_master_slave_data_len], &igvt_master_rm, 1);
   igvt_master_slave_data_len += 1;
 
-  if(igvt_master_rm == RENDER_METHOD_PLANE) {
-    memcpy(&((char *)igvt_master_slave_data)[igvt_master_slave_data_len], &igvt_master_shot_pos, sizeof(TIE_3));
-    igvt_master_slave_data_len += sizeof(TIE_3);
+  switch(igvt_master_rm) {
+    case RENDER_METHOD_PLANE:
+      memcpy(&((char *)igvt_master_slave_data)[igvt_master_slave_data_len], &igvt_master_shot_pos, sizeof(TIE_3));
+      igvt_master_slave_data_len += sizeof(TIE_3);
 
-    memcpy(&((char *)igvt_master_slave_data)[igvt_master_slave_data_len], &igvt_master_shot_dir, sizeof(TIE_3));
-    igvt_master_slave_data_len += sizeof(TIE_3);
+      memcpy(&((char *)igvt_master_slave_data)[igvt_master_slave_data_len], &igvt_master_shot_dir, sizeof(TIE_3));
+      igvt_master_slave_data_len += sizeof(TIE_3);
+      break;
+
+    case RENDER_METHOD_SPAWL:
+      memcpy(&((char *)igvt_master_slave_data)[igvt_master_slave_data_len], &igvt_master_shot_pos, sizeof(TIE_3));
+      igvt_master_slave_data_len += sizeof(TIE_3);
+
+      memcpy(&((char *)igvt_master_slave_data)[igvt_master_slave_data_len], &igvt_master_shot_dir, sizeof(TIE_3));
+      igvt_master_slave_data_len += sizeof(TIE_3);
+      break;
+
+    default:
+      break;
   }
 
   pthread_mutex_unlock(&igvt_master_update_mut);
@@ -588,6 +601,10 @@ void igvt_master_process_events(SDL_Event *event_queue, int event_num, igvt_mast
 
           case SDLK_4: /* RENDER_METHOD_COMPONENT */
             igvt_master_rm = RENDER_METHOD_COMPONENT;
+            break;
+
+          case SDLK_5: /* RENDER_METHOD_SPAWL */
+            igvt_master_rm = RENDER_METHOD_SPAWL;
             break;
 
           case SDLK_9: /* RENDER_METHOD_GRID */
@@ -845,15 +862,15 @@ void igvt_master_process_events(SDL_Event *event_queue, int event_num, igvt_mast
 
               vec.v[0] = vec.v[1] < 0 ? 360.0 - acos(vec.v[0])*math_rad2deg : acos(vec.v[0])*math_rad2deg;
 
-              vec.v[0] -= 0.05*dx;
+              vec.v[0] -= 0.035*dx;
               vec.v[0] *= math_deg2rad;
 
               igvt_master_camera_pos.v[0] = -radius*cos(vec.v[0]) + igvt_master_cor.v[0];
               igvt_master_camera_pos.v[1] = -radius*sin(vec.v[0]) + igvt_master_cor.v[1];
-              igvt_master_azim -= 0.05*dx;
+              igvt_master_azim -= 0.035*dx;
             } else {
-              igvt_master_azim += 0.05*dx;
-              igvt_master_elev += 0.05*dy;
+              igvt_master_azim += 0.035*dx;
+              igvt_master_elev += 0.035*dy;
             }
           } else if(event_queue[i].button.button & 1<<(SDL_BUTTON_MIDDLE-1)) {
             igvt_master_camera_pos.v[2] += igvt_master_scale*dy;

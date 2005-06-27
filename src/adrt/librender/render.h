@@ -10,6 +10,7 @@
 #include "phong.h"
 #include "plane.h"
 #include "shotline.h"
+#include "spawl.h"
 #include "render_internal.h"
 
 #endif

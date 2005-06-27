@@ -1,39 +1,40 @@
-#include "plane.h"
+#include "spawl.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include "adrt_common.h"
 #include "hit.h"
+#include "umath.h"
 
 #define thickness 0.02
 
-void* render_plane_hit(tie_ray_t *ray, tie_id_t *id, tie_tri_t *tri, void *ptr);
+void* render_spawl_hit(tie_ray_t *ray, tie_id_t *id, tie_tri_t *tri, void *ptr);
 void render_plane(tie_t *tie, tie_ray_t *ray, TIE_3 *pixel);
 
 
-typedef struct render_plane_hit_s {
+typedef struct render_spawl_hit_s {
   tie_id_t id;
   common_mesh_t *mesh;
   tfloat plane[4];
   tfloat mod;
-} render_plane_hit_t;
+} render_spawl_hit_t;
 
 
-void render_plane_init(render_t *render, TIE_3 ray_pos, TIE_3 ray_dir) {
-  render_plane_t *d;
-  TIE_3 list[6], normal, up;
-  tfloat plane[4];
+void render_spawl_init(render_t *render, TIE_3 ray_pos, TIE_3 ray_dir, tfloat angle) {
+  render_spawl_t *d;
+  TIE_3 list[6], normal, up, vec;
+  tfloat plane[4], radius;
 
-  render->work = render_plane_work;
-  render->free = render_plane_free;
+  render->work = render_spawl_work;
+  render->free = render_spawl_free;
 
-  render->data = (render_plane_t *)malloc(sizeof(render_plane_t));
-  d = (render_plane_t *)render->data;
+  render->data = (render_spawl_t *)malloc(sizeof(render_spawl_t));
+  d = (render_spawl_t *)render->data;
 
   d->ray_pos = ray_pos;
   d->ray_dir = ray_dir;
 
-  tie_init(&d->tie, 2);
+  tie_init(&d->tie, 3);
 
   /* Calculate the normal to be used for the plane */
   up.v[0] = 0;
@@ -50,40 +51,55 @@ void render_plane_init(render_t *render, TIE_3 ray_pos, TIE_3 ray_dir) {
   math_vec_dot(plane[3], normal, ray_pos); /* up is really new ray_pos */
   d->plane[3] = -plane[3];
 
-  /* Triangle 1 */
-  list[0].v[0] = ray_pos.v[0];
-  list[0].v[1] = ray_pos.v[1];
-  list[0].v[2] = ray_pos.v[2] - thickness;
+  /******************/
+  /* The Spawl Cone */
+  /******************/
 
-  list[1].v[0] = ray_pos.v[0] + 20*ray_dir.v[0];
-  list[1].v[1] = ray_pos.v[1] + 20*ray_dir.v[1];
-  list[1].v[2] = ray_pos.v[2] + 20*ray_dir.v[2] - thickness;
+  /* Figure out the rotations of the ray direction */
+  vec = ray_dir;
+  vec.v[2] = 0;
 
-  list[2].v[0] = ray_pos.v[0] + 20*ray_dir.v[0];
-  list[2].v[1] = ray_pos.v[1] + 20*ray_dir.v[1];
-  list[2].v[2] = ray_pos.v[2] + 20*ray_dir.v[2] + thickness;
+  angle = vec.v[0]*vec.v[0] + vec.v[1]*vec.v[1];
+  radius = sqrt(angle);
+  vec.v[0] /= radius;
+  vec.v[1] /= radius;
 
-  /* Triangle 2 */
-  list[3].v[0] = ray_pos.v[0];
-  list[3].v[1] = ray_pos.v[1];
-  list[3].v[2] = ray_pos.v[2] - thickness;
+  vec.v[0] = vec.v[1] < 0 ? 360.0 - acos(vec.v[0])*math_rad2deg : acos(vec.v[0])*math_rad2deg;
 
-  list[4].v[0] = ray_pos.v[0] + 20*ray_dir.v[0];
-  list[4].v[1] = ray_pos.v[1] + 20*ray_dir.v[1];
-  list[4].v[2] = ray_pos.v[2] + 20*ray_dir.v[2] + thickness;
+  list[0].v[0] = 0;
+  list[0].v[1] = 0;
+  list[0].v[2] = 0;
 
-  list[5].v[0] = ray_pos.v[0];
-  list[5].v[1] = ray_pos.v[1];
-  list[5].v[2] = ray_pos.v[2] + thickness;
+  list[1].v[0] = 5;
+  list[1].v[1] = -1;
+  list[1].v[2] = 0;
 
+  list[1].v[0] = 5;
+  list[1].v[1] = 1;
+  list[1].v[2] = 0;
 
+  vec.v[0] *= math_deg2rad;
+  
+  /* translate */
+  math_vec_add(list[0], list[0], ray_pos);
+  math_vec_add(list[1], list[1], ray_pos);
+  math_vec_add(list[2], list[2], ray_pos);
 
-  tie_push(&d->tie, list, 2, NULL, 0);
+#if 1
+  list[1].v[0] += 5*cos(vec.v[0]);
+  list[1].v[1] += 5*sin(vec.v[0]);
+
+  list[2].v[0] += 5*cos(vec.v[0]);
+  list[2].v[1] += 5*sin(vec.v[0]);
+#endif
+
+  tie_push(&d->tie, list, 1, NULL, 0);
+
   tie_prep(&d->tie);
 }
 
 
-void render_plane_free(render_t *render) {
+void render_spawl_free(render_t *render) {
   free(render->data);
 }
 
@@ -93,8 +109,8 @@ static void* render_arrow_hit(tie_ray_t *ray, tie_id_t *id, tie_tri_t *tri, void
 }
 
 
-void* render_plane_hit(tie_ray_t *ray, tie_id_t *id, tie_tri_t *tri, void *ptr) {
-  render_plane_hit_t *hit = (render_plane_hit_t *)ptr;
+void* render_spawl_hit(tie_ray_t *ray, tie_id_t *id, tie_tri_t *tri, void *ptr) {
+  render_spawl_hit_t *hit = (render_spawl_hit_t *)ptr;
 
   hit->id = *id;
   hit->mesh = ((common_triangle_t *)(tri->ptr))->mesh;
@@ -102,22 +118,21 @@ void* render_plane_hit(tie_ray_t *ray, tie_id_t *id, tie_tri_t *tri, void *ptr) 
 }
 
 
-void render_plane_work(render_t *render, tie_t *tie, tie_ray_t *ray, TIE_3 *pixel) {
-  render_plane_t *rd;
-  render_plane_hit_t hit;
+void render_spawl_work(render_t *render, tie_t *tie, tie_ray_t *ray, TIE_3 *pixel) {
+  render_spawl_t *rd;
+  render_spawl_hit_t hit;
   TIE_3 vec, color;
   tie_id_t id;
   tfloat t, angle, dot;
 
 
-  rd = (render_plane_t *)render->data;
+  rd = (render_spawl_t *)render->data;
 
-  /* Draw Ballistic Arrow */
+  /* Draw Spawl Cone */
   if(tie_work(&rd->tie, ray, &id, render_arrow_hit, NULL)) {
-    pixel->v[0] = 1.0;
-    pixel->v[1] = 0.0;
+    pixel->v[0] = 0.0;
+    pixel->v[1] = 0.5;
     pixel->v[2] = 0.0;
-    return;
   }
 
   /*
@@ -154,7 +169,7 @@ void render_plane_work(render_t *render, tie_t *tie, tie_ray_t *ray, TIE_3 *pixe
   hit.plane[3] = rd->plane[3];
 
   /* Render Geometry */
-  if(!tie_work(tie, ray, &id, render_plane_hit, &hit))
+  if(!tie_work(tie, ray, &id, render_spawl_hit, &hit))
     return;
 
 
@@ -182,7 +197,8 @@ void render_plane_work(render_t *render, tie_t *tie, tie_ray_t *ray, TIE_3 *pixe
   if(dot < 0) {
 #endif
     /* Shade using inhit */
-    math_vec_mul_scalar((*pixel), color, (dot*0.90));
+    math_vec_mul_scalar(color, color, (dot*0.90));
+    math_vec_add((*pixel), (*pixel), color);
 #if 0
   } else {
     /* shade solid */

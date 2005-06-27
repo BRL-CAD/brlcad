@@ -156,6 +156,22 @@ void igvt_slave_work(tie_t *tie, void *data, int size, void **res_buf, int *res_
             render_plane_init(&db.env.render, shot_pos, shot_dir);
           }
           break;
+
+        case RENDER_METHOD_SPAWL:
+          {
+            TIE_3 shot_pos, shot_dir;
+
+            /* Extract shot position and direction */
+            memcpy(&shot_pos, &((char *)data)[ind], sizeof(TIE_3));
+            ind += sizeof(TIE_3);
+
+            memcpy(&shot_dir, &((char *)data)[ind], sizeof(TIE_3));
+            ind += sizeof(TIE_3);
+
+            render_spawl_init(&db.env.render, shot_pos, shot_dir, 10.0); /* 10 degrees for now */
+          }
+          break;
+
       }
 
       db.env.rm = rm;

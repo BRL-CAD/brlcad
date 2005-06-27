@@ -11,8 +11,11 @@
 #define RENDER_METHOD_KELOS	5
 #define RENDER_METHOD_PLANE	6
 #define RENDER_METHOD_COMPONENT	7
+#define RENDER_METHOD_SPAWL	8
+
 
 #define RENDER_MAX_DEPTH	24
+
 
 struct render_s;
 typedef void render_work_t(struct render_s *render, tie_t *tie, tie_ray_t *ray, TIE_3 *pixel);
