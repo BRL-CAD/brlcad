@@ -145,18 +145,25 @@ fi
 BRLCAD_DATA_DIR='${prefix}'
 AC_SUBST(BRLCAD_DATA_DIR)
 
+# init the venerable automake only _once_ or incur the wrath of
+# several automake bugs (like "aclocal-" and install detection)
+AM_INIT_AUTOMAKE
+
 # if this is not a CVS checkout, disable dependency tracking for a
 # faster build. it's not likely that the user is doing development
 # from a source release. at least they really should not given the
-# extra steps that would be necessary for making a proper diff.
+# extra steps that are necessary for making a proper useful diff.
 AC_MSG_CHECKING([whether dependency tracking should be enabled]) 
 if test -d $srcdir/CVS ; then
 	AC_MSG_RESULT(it should)
-	AM_INIT_AUTOMAKE
 else
 	AC_MSG_RESULT(it should not)
-	AM_INIT_AUTOMAKE([no-dependencies])
-fi
+	AM_MAINTAINER_MODE
+
+	# would also like no-dependencies, but have not figured out
+	# how to set dynamically without causing vast troubles.
+ fi
+
 AM_CONFIG_HEADER([include/brlcad_config.h])
 
 # a secondary automated automake may blow away COPYING & INSTALL due
