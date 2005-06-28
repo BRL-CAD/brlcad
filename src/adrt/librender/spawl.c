@@ -7,6 +7,8 @@
 #include "umath.h"
 
 #define thickness 0.02
+#define TESSELATION 30
+#define SPAWL_LEN 20
 
 void* render_spawl_hit(tie_ray_t *ray, tie_id_t *id, tie_tri_t *tri, void *ptr);
 void render_plane(tie_t *tie, tie_ray_t *ray, TIE_3 *pixel);
@@ -22,8 +24,9 @@ typedef struct render_spawl_hit_s {
 
 void render_spawl_init(render_t *render, TIE_3 ray_pos, TIE_3 ray_dir, tfloat angle) {
   render_spawl_t *d;
-  TIE_3 list[6], normal, up, vec;
-  tfloat plane[4], radius;
+  TIE_3 list[3*TESSELATION], normal, up, vec;
+  tfloat plane[4], radius, t;
+  int i;
 
   render->work = render_spawl_work;
   render->free = render_spawl_free;
@@ -34,7 +37,7 @@ void render_spawl_init(render_t *render, TIE_3 ray_pos, TIE_3 ray_dir, tfloat an
   d->ray_pos = ray_pos;
   d->ray_dir = ray_dir;
 
-  tie_init(&d->tie, 3);
+  tie_init(&d->tie, TESSELATION);
 
   /* Calculate the normal to be used for the plane */
   up.v[0] = 0;
@@ -59,42 +62,34 @@ void render_spawl_init(render_t *render, TIE_3 ray_pos, TIE_3 ray_dir, tfloat an
   vec = ray_dir;
   vec.v[2] = 0;
 
-  angle = vec.v[0]*vec.v[0] + vec.v[1]*vec.v[1];
-  radius = sqrt(angle);
+  radius = sqrt(vec.v[0]*vec.v[0] + vec.v[1]*vec.v[1]);
   vec.v[0] /= radius;
   vec.v[1] /= radius;
 
   vec.v[0] = vec.v[1] < 0 ? 360.0 - acos(vec.v[0])*math_rad2deg : acos(vec.v[0])*math_rad2deg;
 
-  list[0].v[0] = 0;
-  list[0].v[1] = 0;
-  list[0].v[2] = 0;
+  /* triangles to approximate */
+  for(i = 0; i < TESSELATION; i++) {
+    list[3*i+0] = ray_pos;
+    list[3*i+1] = ray_pos;
+    list[3*i+2] = ray_pos;
 
-  list[1].v[0] = 5;
-  list[1].v[1] = -1;
-  list[1].v[2] = 0;
+    t = angle * sin((i * 360 / TESSELATION) * math_deg2rad);
+    list[3*i+1].v[0] += SPAWL_LEN * cos((vec.v[0] + t) * math_deg2rad);
+    list[3*i+1].v[1] += SPAWL_LEN * sin((vec.v[0] + t) * math_deg2rad);
 
-  list[1].v[0] = 5;
-  list[1].v[1] = 1;
-  list[1].v[2] = 0;
+    t = angle * cos((i * 360 / TESSELATION) * math_deg2rad);
+    list[3*i+1].v[2] += SPAWL_LEN * cos(acos(ray_dir.v[2]) + t * math_deg2rad);
 
-  vec.v[0] *= math_deg2rad;
-  
-  /* translate */
-  math_vec_add(list[0], list[0], ray_pos);
-  math_vec_add(list[1], list[1], ray_pos);
-  math_vec_add(list[2], list[2], ray_pos);
+    t = angle * sin(((i+1) * 360 / TESSELATION) * math_deg2rad);
+    list[3*i+2].v[0] += SPAWL_LEN * cos((vec.v[0] + t) * math_deg2rad);
+    list[3*i+2].v[1] += SPAWL_LEN * sin((vec.v[0] + t) * math_deg2rad);
 
-#if 1
-  list[1].v[0] += 5*cos(vec.v[0]);
-  list[1].v[1] += 5*sin(vec.v[0]);
+    t = angle * cos(((i+1) * 360 / TESSELATION) * math_deg2rad);
+    list[3*i+2].v[2] += SPAWL_LEN * cos(acos(ray_dir.v[2]) + t * math_deg2rad);
+  }
 
-  list[2].v[0] += 5*cos(vec.v[0]);
-  list[2].v[1] += 5*sin(vec.v[0]);
-#endif
-
-  tie_push(&d->tie, list, 1, NULL, 0);
-
+  tie_push(&d->tie, list, TESSELATION, NULL, 0);  
   tie_prep(&d->tie);
 }
 
@@ -130,8 +125,8 @@ void render_spawl_work(render_t *render, tie_t *tie, tie_ray_t *ray, TIE_3 *pixe
 
   /* Draw Spawl Cone */
   if(tie_work(&rd->tie, ray, &id, render_arrow_hit, NULL)) {
-    pixel->v[0] = 0.0;
-    pixel->v[1] = 0.5;
+    pixel->v[0] = 0.5;
+    pixel->v[1] = 0.0;
     pixel->v[2] = 0.0;
   }
 

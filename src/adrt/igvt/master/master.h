@@ -10,5 +10,6 @@ extern TIE_3 igvt_master_shot_pos;
 extern TIE_3 igvt_master_shot_dir;
 extern tfloat igvt_master_azim;
 extern tfloat igvt_master_elev;
+extern tfloat igvt_master_spawl_angle;
 
 #endif
