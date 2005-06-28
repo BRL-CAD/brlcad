@@ -1,6 +1,6 @@
 # $Id$
 
-htmldocsdir = $(BRLCAD_DATA_DIR)/doc/html/ReleaseNotes/Rel5.0/Summary
+htmldocsdir = $(BRLCAD_DATA_DIR)/html/ReleaseNotes/Rel5.0/Summary
  
 htmldocs_DATA = \
 	activem.gif \
