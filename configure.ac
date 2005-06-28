@@ -155,15 +155,24 @@ AM_INIT_AUTOMAKE
 # extra steps that are necessary for making a proper useful diff.
 AC_MSG_CHECKING([whether dependency tracking should be enabled]) 
 if test -d $srcdir/CVS ; then
-	AC_MSG_RESULT(it should)
+	if test "x$enable_maintainer_mode" = "x" ; then
+		enable_maintainer_mode="yes"
+		AC_MSG_RESULT([yes])
+	else
+		AC_MSG_RESULT([no (enable-maintainer-mode)])
+	fi
 else
-	AC_MSG_RESULT(it should not)
-	AM_MAINTAINER_MODE
+	AC_MSG_RESULT([no])
 
 	# would also like no-dependencies, but have not figured out
 	# how to set dynamically without causing vast troubles.
- fi
+fi
 
+# disables the build system dependency tracking by default for the
+# automake and autoconf template files.
+AM_MAINTAINER_MODE
+
+# write out all of our definitions to this header
 AM_CONFIG_HEADER([include/brlcad_config.h])
 
 # a secondary automated automake may blow away COPYING & INSTALL due
