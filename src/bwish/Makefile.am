@@ -21,7 +21,10 @@ bwish_LDADD = \
 	${LIBRT} \
 	${ITK} \
 	${ITCL} \
-	${TERMIO}
+	${TERMIO} \
+	${TCL} \
+	${BN} \
+	${BU}
 
 btclsh_SOURCES = \
 	cmd.c \
@@ -33,6 +36,9 @@ btclsh_LDADD = \
 	${LIBRT} \
 	${ITCL} \
 	${TERMIO}
+	${TCL} \
+	${BN} \
+	${BU}
 
 # hack to work around the irix compiler crashing on the libtool btclsh
 # relink attempt when we get to tclscripts.
