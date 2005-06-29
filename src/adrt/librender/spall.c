@@ -1,4 +1,4 @@
-#include "spawl.h"
+#include "spall.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -8,31 +8,31 @@
 
 #define thickness 0.02
 #define TESSELATION 30
-#define SPAWL_LEN 20
+#define SPALL_LEN 20
 
-void* render_spawl_hit(tie_ray_t *ray, tie_id_t *id, tie_tri_t *tri, void *ptr);
+void* render_spall_hit(tie_ray_t *ray, tie_id_t *id, tie_tri_t *tri, void *ptr);
 void render_plane(tie_t *tie, tie_ray_t *ray, TIE_3 *pixel);
 
 
-typedef struct render_spawl_hit_s {
+typedef struct render_spall_hit_s {
   tie_id_t id;
   common_mesh_t *mesh;
   tfloat plane[4];
   tfloat mod;
-} render_spawl_hit_t;
+} render_spall_hit_t;
 
 
-void render_spawl_init(render_t *render, TIE_3 ray_pos, TIE_3 ray_dir, tfloat angle) {
-  render_spawl_t *d;
+void render_spall_init(render_t *render, TIE_3 ray_pos, TIE_3 ray_dir, tfloat angle) {
+  render_spall_t *d;
   TIE_3 list[3*TESSELATION], normal, up, vec;
   tfloat plane[4], radius, t;
   int i;
 
-  render->work = render_spawl_work;
-  render->free = render_spawl_free;
+  render->work = render_spall_work;
+  render->free = render_spall_free;
 
-  render->data = (render_spawl_t *)malloc(sizeof(render_spawl_t));
-  d = (render_spawl_t *)render->data;
+  render->data = (render_spall_t *)malloc(sizeof(render_spall_t));
+  d = (render_spall_t *)render->data;
 
   d->ray_pos = ray_pos;
   d->ray_dir = ray_dir;
@@ -55,7 +55,7 @@ void render_spawl_init(render_t *render, TIE_3 ray_pos, TIE_3 ray_dir, tfloat an
   d->plane[3] = -plane[3];
 
   /******************/
-  /* The Spawl Cone */
+  /* The spall Cone */
   /******************/
 
   /* Figure out the rotations of the ray direction */
@@ -75,18 +75,18 @@ void render_spawl_init(render_t *render, TIE_3 ray_pos, TIE_3 ray_dir, tfloat an
     list[3*i+2] = ray_pos;
 
     t = angle * sin((i * 360 / TESSELATION) * math_deg2rad);
-    list[3*i+1].v[0] += SPAWL_LEN * cos((vec.v[0] + t) * math_deg2rad);
-    list[3*i+1].v[1] += SPAWL_LEN * sin((vec.v[0] + t) * math_deg2rad);
+    list[3*i+1].v[0] += SPALL_LEN * cos((vec.v[0] + t) * math_deg2rad);
+    list[3*i+1].v[1] += SPALL_LEN * sin((vec.v[0] + t) * math_deg2rad);
 
     t = angle * cos((i * 360 / TESSELATION) * math_deg2rad);
-    list[3*i+1].v[2] += SPAWL_LEN * cos(acos(ray_dir.v[2]) + t * math_deg2rad);
+    list[3*i+1].v[2] += SPALL_LEN * cos(acos(ray_dir.v[2]) + t * math_deg2rad);
 
     t = angle * sin(((i+1) * 360 / TESSELATION) * math_deg2rad);
-    list[3*i+2].v[0] += SPAWL_LEN * cos((vec.v[0] + t) * math_deg2rad);
-    list[3*i+2].v[1] += SPAWL_LEN * sin((vec.v[0] + t) * math_deg2rad);
+    list[3*i+2].v[0] += SPALL_LEN * cos((vec.v[0] + t) * math_deg2rad);
+    list[3*i+2].v[1] += SPALL_LEN * sin((vec.v[0] + t) * math_deg2rad);
 
     t = angle * cos(((i+1) * 360 / TESSELATION) * math_deg2rad);
-    list[3*i+2].v[2] += SPAWL_LEN * cos(acos(ray_dir.v[2]) + t * math_deg2rad);
+    list[3*i+2].v[2] += SPALL_LEN * cos(acos(ray_dir.v[2]) + t * math_deg2rad);
   }
 
   tie_push(&d->tie, list, TESSELATION, NULL, 0);  
@@ -94,7 +94,7 @@ void render_spawl_init(render_t *render, TIE_3 ray_pos, TIE_3 ray_dir, tfloat an
 }
 
 
-void render_spawl_free(render_t *render) {
+void render_spall_free(render_t *render) {
   free(render->data);
 }
 
@@ -104,8 +104,8 @@ static void* render_arrow_hit(tie_ray_t *ray, tie_id_t *id, tie_tri_t *tri, void
 }
 
 
-void* render_spawl_hit(tie_ray_t *ray, tie_id_t *id, tie_tri_t *tri, void *ptr) {
-  render_spawl_hit_t *hit = (render_spawl_hit_t *)ptr;
+void* render_spall_hit(tie_ray_t *ray, tie_id_t *id, tie_tri_t *tri, void *ptr) {
+  render_spall_hit_t *hit = (render_spall_hit_t *)ptr;
 
   hit->id = *id;
   hit->mesh = ((common_triangle_t *)(tri->ptr))->mesh;
@@ -113,17 +113,17 @@ void* render_spawl_hit(tie_ray_t *ray, tie_id_t *id, tie_tri_t *tri, void *ptr) 
 }
 
 
-void render_spawl_work(render_t *render, tie_t *tie, tie_ray_t *ray, TIE_3 *pixel) {
-  render_spawl_t *rd;
-  render_spawl_hit_t hit;
+void render_spall_work(render_t *render, tie_t *tie, tie_ray_t *ray, TIE_3 *pixel) {
+  render_spall_t *rd;
+  render_spall_hit_t hit;
   TIE_3 vec, color;
   tie_id_t id;
   tfloat t, angle, dot;
 
 
-  rd = (render_spawl_t *)render->data;
+  rd = (render_spall_t *)render->data;
 
-  /* Draw Spawl Cone */
+  /* Draw spall Cone */
   if(tie_work(&rd->tie, ray, &id, render_arrow_hit, NULL)) {
     pixel->v[0] = 0.5;
     pixel->v[1] = 0.0;
@@ -164,7 +164,7 @@ void render_spawl_work(render_t *render, tie_t *tie, tie_ray_t *ray, TIE_3 *pixe
   hit.plane[3] = rd->plane[3];
 
   /* Render Geometry */
-  if(!tie_work(tie, ray, &id, render_spawl_hit, &hit))
+  if(!tie_work(tie, ray, &id, render_spall_hit, &hit))
     return;
 
 

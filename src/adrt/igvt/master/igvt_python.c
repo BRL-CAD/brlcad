@@ -14,8 +14,8 @@ static PyObject* igvt_python_get_camera_pos(PyObject *self, PyObject* args);
 static PyObject* igvt_python_set_camera_pos(PyObject *self, PyObject* args);
 static PyObject* igvt_python_get_azel(PyObject *self, PyObject* args);
 static PyObject* igvt_python_set_azel(PyObject *self, PyObject* args);
-static PyObject* igvt_python_get_spawl_angle(PyObject *self, PyObject* args);
-static PyObject* igvt_python_set_spawl_angle(PyObject *self, PyObject* args);
+static PyObject* igvt_python_get_spall_angle(PyObject *self, PyObject* args);
+static PyObject* igvt_python_set_spall_angle(PyObject *self, PyObject* args);
 
 
 static PyMethodDef IGVT_Methods[] = {
@@ -24,8 +24,8 @@ static PyMethodDef IGVT_Methods[] = {
     {"set_camera_pos", igvt_python_set_camera_pos, METH_VARARGS, "set camera position."},
     {"get_azel", igvt_python_get_azel, METH_VARARGS, "get azimuth and elevation."},
     {"set_azel", igvt_python_set_azel, METH_VARARGS, "set azimuth and elevation."},
-    {"get_spawl_angle", igvt_python_get_spawl_angle, METH_VARARGS, "get spawl angle."},
-    {"set_spawl_angle", igvt_python_set_spawl_angle, METH_VARARGS, "set spawl angle."},
+    {"get_spall_angle", igvt_python_get_spall_angle, METH_VARARGS, "get spall angle."},
+    {"set_spall_angle", igvt_python_set_spall_angle, METH_VARARGS, "set spall angle."},
     {NULL, NULL, 0, NULL}
 };
 
@@ -107,15 +107,15 @@ static PyObject* igvt_python_set_azel(PyObject *self, PyObject* args) {
 }
 
 
-/* Get spawl angle */
-static PyObject* igvt_python_get_spawl_angle(PyObject *self, PyObject* args) {
-  return Py_BuildValue("f", igvt_master_spawl_angle);
+/* Get spall angle */
+static PyObject* igvt_python_get_spall_angle(PyObject *self, PyObject* args) {
+  return Py_BuildValue("f", igvt_master_spall_angle);
 }
 
 
-/* Set spawl angle */
-static PyObject* igvt_python_set_spawl_angle(PyObject *self, PyObject* args) {
-  PyArg_ParseTuple(args, "f", &igvt_master_spawl_angle);
+/* Set spall angle */
+static PyObject* igvt_python_set_spall_angle(PyObject *self, PyObject* args) {
+  PyArg_ParseTuple(args, "f", &igvt_master_spall_angle);
   return PyInt_FromLong(0);
 }
 

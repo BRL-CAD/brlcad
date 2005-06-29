@@ -157,7 +157,7 @@ void igvt_slave_work(tie_t *tie, void *data, int size, void **res_buf, int *res_
           }
           break;
 
-        case RENDER_METHOD_SPAWL:
+        case RENDER_METHOD_SPALL:
           {
             TIE_3 shot_pos, shot_dir;
             tfloat angle;
@@ -172,7 +172,7 @@ void igvt_slave_work(tie_t *tie, void *data, int size, void **res_buf, int *res_
             memcpy(&angle, &((char *)data)[ind], sizeof(tfloat));
             ind += sizeof(tfloat);
 
-            render_spawl_init(&db.env.render, shot_pos, shot_dir, angle); /* 10 degrees for now */
+            render_spall_init(&db.env.render, shot_pos, shot_dir, angle); /* 10 degrees for now */
           }
           break;
 

@@ -53,7 +53,7 @@ TIE_3 igvt_master_camera_foc;
 TIE_3 igvt_master_cor; /* center of rotation */
 TIE_3 igvt_master_shot_pos;
 TIE_3 igvt_master_shot_dir;
-tfloat igvt_master_spawl_angle;
+tfloat igvt_master_spall_angle;
 
 void *rgb_frame[2];
 int frame_ind[2];
@@ -94,7 +94,7 @@ void igvt_master(int port, int obs_port, char *proj, char *geom_file, char *args
   igvt_master_scale = 0.01;
   igvt_master_mouse_grab = 0;
   igvt_master_shift_enabled = 0;
-  igvt_master_spawl_angle = 10;
+  igvt_master_spall_angle = 10;
 
   math_vec_set(igvt_master_camera_pos, 1, 1, 1);
   math_vec_set(igvt_master_shot_pos, 0, 0, 0);
@@ -551,14 +551,14 @@ void igvt_master_update() {
       igvt_master_slave_data_len += sizeof(TIE_3);
       break;
 
-    case RENDER_METHOD_SPAWL:
+    case RENDER_METHOD_SPALL:
       memcpy(&((char *)igvt_master_slave_data)[igvt_master_slave_data_len], &igvt_master_shot_pos, sizeof(TIE_3));
       igvt_master_slave_data_len += sizeof(TIE_3);
 
       memcpy(&((char *)igvt_master_slave_data)[igvt_master_slave_data_len], &igvt_master_shot_dir, sizeof(TIE_3));
       igvt_master_slave_data_len += sizeof(TIE_3);
 
-      memcpy(&((char *)igvt_master_slave_data)[igvt_master_slave_data_len], &igvt_master_spawl_angle, sizeof(tfloat));
+      memcpy(&((char *)igvt_master_slave_data)[igvt_master_slave_data_len], &igvt_master_spall_angle, sizeof(tfloat));
       igvt_master_slave_data_len += sizeof(tfloat);
       break;
 
@@ -608,8 +608,8 @@ void igvt_master_process_events(SDL_Event *event_queue, int event_num, igvt_mast
             igvt_master_rm = RENDER_METHOD_COMPONENT;
             break;
 
-          case SDLK_5: /* RENDER_METHOD_SPAWL */
-            igvt_master_rm = RENDER_METHOD_SPAWL;
+          case SDLK_5: /* RENDER_METHOD_SPALL */
+            igvt_master_rm = RENDER_METHOD_SPALL;
             break;
 
           case SDLK_9: /* RENDER_METHOD_GRID */
