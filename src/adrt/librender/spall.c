@@ -117,9 +117,9 @@ void render_spall_work(render_t *render, tie_t *tie, tie_ray_t *ray, TIE_3 *pixe
 
   /* Draw spall Cone */
   if(tie_work(&rd->tie, ray, &id, render_arrow_hit, NULL)) {
-    pixel->v[0] = 0.5;
-    pixel->v[1] = 0.0;
-    pixel->v[2] = 0.0;
+    pixel->v[0] = 0.3;
+    pixel->v[1] = 0.3;
+    pixel->v[2] = 0.3;
   }
 
   /*
@@ -171,9 +171,9 @@ void render_spall_work(render_t *render, tie_t *tie, tie_ray_t *ray, TIE_3 *pixe
   
 
   if(hit.mesh->flags == 1) {
-    color.v[0] = 0.3;
+    color.v[0] = 0.9;
     color.v[1] = 0.3;
-    color.v[2] = 0.9;
+    color.v[2] = 0.3;
   } else {
     color.v[0] = 0.8;
     color.v[1] = 0.8;
@@ -184,7 +184,7 @@ void render_spall_work(render_t *render, tie_t *tie, tie_ray_t *ray, TIE_3 *pixe
   if(dot < 0) {
 #endif
     /* Shade using inhit */
-    math_vec_mul_scalar(color, color, (dot*0.90));
+    math_vec_mul_scalar(color, color, (dot*0.60));
     math_vec_add((*pixel), (*pixel), color);
 #if 0
   } else {
@@ -192,7 +192,7 @@ void render_spall_work(render_t *render, tie_t *tie, tie_ray_t *ray, TIE_3 *pixe
     math_vec_sub(vec, ray->pos, hit.id.pos);
     math_vec_unitize(vec);
     angle = vec.v[0]*hit.mod*-hit.plane[0] + vec.v[1]*-hit.mod*hit.plane[1] + vec.v[2]*-hit.mod*hit.plane[2];
-    math_vec_mul_scalar((*pixel), color, (angle*0.90));
+    math_vec_mul_scalar((*pixel), color, (angle*0.60));
   }
 #endif
 

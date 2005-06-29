@@ -54,6 +54,8 @@ TIE_3 igvt_master_cor; /* center of rotation */
 TIE_3 igvt_master_shot_pos;
 TIE_3 igvt_master_shot_dir;
 tfloat igvt_master_spall_angle;
+TIE_3 igvt_master_in_hit;
+TIE_3 igvt_master_out_hit;
 
 void *rgb_frame[2];
 int frame_ind[2];
@@ -95,6 +97,8 @@ void igvt_master(int port, int obs_port, char *proj, char *geom_file, char *args
   igvt_master_mouse_grab = 0;
   igvt_master_shift_enabled = 0;
   igvt_master_spall_angle = 10;
+  math_vec_set(igvt_master_in_hit, 0, 0, 0);
+  math_vec_set(igvt_master_out_hit, 0, 0, 0);
 
   math_vec_set(igvt_master_camera_pos, 1, 1, 1);
   math_vec_set(igvt_master_shot_pos, 0, 0, 0);
@@ -206,35 +210,24 @@ void igvt_master_result(void *res_buf, int res_len) {
 {
     int num;
     char c, name[256];
-    TIE_3 in_hit;
-    TIE_3 out_hit;
 
     /* advance to data */
     ind = sizeof(common_work_t);
 
     printf("******** HIT_LIST *********\n");
     /* first hit */
-    memcpy(&in_hit.v[0], &((unsigned char *)res_buf)[ind], sizeof(tfloat));
-    ind += sizeof(tfloat);
-    memcpy(&in_hit.v[1], &((unsigned char *)res_buf)[ind], sizeof(tfloat));
-    ind += sizeof(tfloat);
-    memcpy(&in_hit.v[2], &((unsigned char *)res_buf)[ind], sizeof(tfloat));
-    ind += sizeof(tfloat);
+    memcpy(&igvt_master_in_hit, &((unsigned char *)res_buf)[ind], sizeof(TIE_3));
+    ind += sizeof(TIE_3);
 
     /* last hit */
-    memcpy(&out_hit.v[0], &((unsigned char *)res_buf)[ind], sizeof(tfloat));
-    ind += sizeof(tfloat);
-    memcpy(&out_hit.v[1], &((unsigned char *)res_buf)[ind], sizeof(tfloat));
-    ind += sizeof(tfloat);
-    memcpy(&out_hit.v[2], &((unsigned char *)res_buf)[ind], sizeof(tfloat));
-    ind += sizeof(tfloat);
+    memcpy(&igvt_master_out_hit, &((unsigned char *)res_buf)[ind], sizeof(TIE_3));
+    ind += sizeof(TIE_3);
 
     /* Set the Center of of Rotation */
-    igvt_master_cor.v[0] = (in_hit.v[0] + out_hit.v[0]) * 0.5;
-    igvt_master_cor.v[1] = (in_hit.v[1] + out_hit.v[1]) * 0.5;
-    igvt_master_cor.v[2] = (in_hit.v[2] + out_hit.v[2]) * 0.5;
+    math_vec_add(igvt_master_cor, igvt_master_in_hit, igvt_master_out_hit);
+    math_vec_mul_scalar(igvt_master_cor, igvt_master_cor, 0.5);
 
-    printf("in: [%.3f, %.3f, %.3f] ... out: [%.3f, %.3f, %.3f]\n", in_hit.v[0], in_hit.v[1], in_hit.v[2], out_hit.v[0], out_hit.v[1], out_hit.v[2]);
+    printf("in: [%.3f, %.3f, %.3f] ... out: [%.3f, %.3f, %.3f]\n", igvt_master_in_hit.v[0], igvt_master_in_hit.v[1], igvt_master_in_hit.v[2], igvt_master_out_hit.v[0], igvt_master_out_hit.v[1], igvt_master_out_hit.v[2]);
 
     /* number of meshes */
     memcpy(&num, &((unsigned char *)res_buf)[ind], sizeof(int));
@@ -552,7 +545,7 @@ void igvt_master_update() {
       break;
 
     case RENDER_METHOD_SPALL:
-      memcpy(&((char *)igvt_master_slave_data)[igvt_master_slave_data_len], &igvt_master_shot_pos, sizeof(TIE_3));
+      memcpy(&((char *)igvt_master_slave_data)[igvt_master_slave_data_len], &igvt_master_in_hit, sizeof(TIE_3));
       igvt_master_slave_data_len += sizeof(TIE_3);
 
       memcpy(&((char *)igvt_master_slave_data)[igvt_master_slave_data_len], &igvt_master_shot_dir, sizeof(TIE_3));
@@ -779,13 +772,13 @@ void igvt_master_process_events(SDL_Event *event_queue, int event_num, igvt_mast
               memcpy(&((char *)mesg)[dlen], &work, sizeof(common_work_t));
               dlen += sizeof(common_work_t);
 
-              memcpy(&((char *)mesg)[dlen], &igvt_master_camera_pos.v, sizeof(TIE_3));
+              memcpy(&((char *)mesg)[dlen], &igvt_master_camera_pos, sizeof(TIE_3));
               dlen += sizeof(TIE_3);
 
               math_vec_sub(dir, igvt_master_camera_foc, igvt_master_camera_pos);
               math_vec_unitize(dir);
 
-              memcpy(&((char *)mesg)[dlen], &dir.v, sizeof(TIE_3));
+              memcpy(&((char *)mesg)[dlen], &dir, sizeof(TIE_3));
               dlen += sizeof(TIE_3);
 
               igvt_master_shot_pos = igvt_master_camera_pos;

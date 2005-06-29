@@ -114,9 +114,9 @@ void render_plane_work(render_t *render, tie_t *tie, tie_ray_t *ray, TIE_3 *pixe
 
   /* Draw Ballistic Arrow */
   if(tie_work(&rd->tie, ray, &id, render_arrow_hit, NULL)) {
-    pixel->v[0] = 1.0;
+    pixel->v[0] = 0.0;
     pixel->v[1] = 0.0;
-    pixel->v[2] = 0.0;
+    pixel->v[2] = 1.0;
     return;
   }
 
@@ -169,9 +169,9 @@ void render_plane_work(render_t *render, tie_t *tie, tie_ray_t *ray, TIE_3 *pixe
   
 
   if(hit.mesh->flags == 1) {
-    color.v[0] = 0.3;
+    color.v[0] = 0.9;
     color.v[1] = 0.3;
-    color.v[2] = 0.9;
+    color.v[2] = 0.3;
   } else {
     color.v[0] = 0.8;
     color.v[1] = 0.8;
