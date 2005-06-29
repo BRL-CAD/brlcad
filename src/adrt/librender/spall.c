@@ -1,4 +1,5 @@
 #include "spall.h"
+#include "render_util.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -6,8 +7,7 @@
 #include "hit.h"
 #include "umath.h"
 
-#define thickness 0.02
-#define TESSELATION 30
+#define TESSELATION 32
 #define SPALL_LEN 20
 
 void* render_spall_hit(tie_ray_t *ray, tie_id_t *id, tie_tri_t *tri, void *ptr);
@@ -24,7 +24,7 @@ typedef struct render_spall_hit_s {
 
 void render_spall_init(render_t *render, TIE_3 ray_pos, TIE_3 ray_dir, tfloat angle) {
   render_spall_t *d;
-  TIE_3 list[3*TESSELATION], normal, up, vec;
+  TIE_3 *tri_list, *vec_list, normal, up, vec;
   tfloat plane[4], radius, t;
   int i;
 
@@ -57,40 +57,32 @@ void render_spall_init(render_t *render, TIE_3 ray_pos, TIE_3 ray_dir, tfloat an
   /******************/
   /* The spall Cone */
   /******************/
+  vec_list = (TIE_3 *)malloc(sizeof(TIE_3) * TESSELATION);
+  tri_list = (TIE_3 *)malloc(sizeof(TIE_3) * TESSELATION * 3);
 
-  /* Figure out the rotations of the ray direction */
-  vec = ray_dir;
-  vec.v[2] = 0;
-
-  radius = sqrt(vec.v[0]*vec.v[0] + vec.v[1]*vec.v[1]);
-  vec.v[0] /= radius;
-  vec.v[1] /= radius;
-
-  vec.v[0] = vec.v[1] < 0 ? 360.0 - acos(vec.v[0])*math_rad2deg : acos(vec.v[0])*math_rad2deg;
+  render_util_spall(ray_dir, angle, TESSELATION, vec_list);
 
   /* triangles to approximate */
   for(i = 0; i < TESSELATION; i++) {
-    list[3*i+0] = ray_pos;
-    list[3*i+1] = ray_pos;
-    list[3*i+2] = ray_pos;
+    tri_list[3*i+0] = ray_pos;
 
-    t = angle * sin((i * 360 / TESSELATION) * math_deg2rad);
-    list[3*i+1].v[0] += SPALL_LEN * cos((vec.v[0] + t) * math_deg2rad);
-    list[3*i+1].v[1] += SPALL_LEN * sin((vec.v[0] + t) * math_deg2rad);
+    math_vec_mul_scalar(tri_list[3*i+1], vec_list[i], SPALL_LEN);
+    math_vec_add(tri_list[3*i+1], tri_list[3*i+1], ray_pos);
 
-    t = angle * cos((i * 360 / TESSELATION) * math_deg2rad);
-    list[3*i+1].v[2] += SPALL_LEN * cos(acos(ray_dir.v[2]) + t * math_deg2rad);
-
-    t = angle * sin(((i+1) * 360 / TESSELATION) * math_deg2rad);
-    list[3*i+2].v[0] += SPALL_LEN * cos((vec.v[0] + t) * math_deg2rad);
-    list[3*i+2].v[1] += SPALL_LEN * sin((vec.v[0] + t) * math_deg2rad);
-
-    t = angle * cos(((i+1) * 360 / TESSELATION) * math_deg2rad);
-    list[3*i+2].v[2] += SPALL_LEN * cos(acos(ray_dir.v[2]) + t * math_deg2rad);
+    if(i == TESSELATION - 1) {
+      math_vec_mul_scalar(tri_list[3*i+2], vec_list[0], SPALL_LEN);
+      math_vec_add(tri_list[3*i+2], tri_list[3*i+2], ray_pos);
+    } else {
+      math_vec_mul_scalar(tri_list[3*i+2], vec_list[i+1], SPALL_LEN);
+      math_vec_add(tri_list[3*i+2], tri_list[3*i+2], ray_pos);
+    }
   }
 
-  tie_push(&d->tie, list, TESSELATION, NULL, 0);  
+  tie_push(&d->tie, tri_list, TESSELATION, NULL, 0);  
   tie_prep(&d->tie);
+
+  free(vec_list);
+  free(tri_list);
 }
 
 
