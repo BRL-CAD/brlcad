@@ -35,7 +35,7 @@ btclsh_SOURCES = \
 btclsh_LDADD = \
 	${LIBRT} \
 	${ITCL} \
-	${TERMIO}
+	${TERMIO} \
 	${TCL} \
 	${BN} \
 	${BU}
