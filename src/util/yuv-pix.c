@@ -53,6 +53,10 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 
 #include <stdio.h>
 
+#ifdef HAVE_FCNTL_H
+# include <fcntl.h>
+#endif
+
 #include "machine.h"
 
 #include "bu.h"

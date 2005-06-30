@@ -33,12 +33,19 @@
 static const char RCSid[] = "@(#)$Header$ (ARL)";
 #endif
 
+#include "brlcad_config.h"
+
 #include <stdio.h>
 #include <string.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <math.h>
+
+#ifdef HAVE_UNISTD_H
+# include <unistd.h>
+#endif
+
 #include "machine.h"
 #include "bu.h"
 #include "vmath.h"

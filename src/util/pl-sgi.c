@@ -39,7 +39,10 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "common.h"
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <math.h>
+
+
 #include "machine.h"		/* to define "sgi" on ANSI compilers */
 
 #if HAS_SGIGL

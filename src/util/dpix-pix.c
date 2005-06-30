@@ -45,6 +45,14 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include <stdio.h>
 #include <stdlib.h>
 
+#ifdef HAVE_UNISTD_H
+# include <unistd.h>
+#endif
+
+#ifdef HAVE_FCNTL_H
+# include <fcntl.h>
+#endif
+
 #include "machine.h"
 
 #define NUM	(1024 * 16)	/* Note the powers of 2 -- v. efficient */

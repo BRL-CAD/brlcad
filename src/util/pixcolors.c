@@ -37,6 +37,7 @@
                                                                                                                                                                             
 
 #include <stdio.h>
+#include <stdlib.h>
 
 #include "machine.h"
 
