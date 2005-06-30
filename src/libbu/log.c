@@ -50,8 +50,6 @@ static const char RCSlog[] = "@(#)$Header$ (ARL)";
 
 #include "common.h"
 
-
-
 #include <stdio.h>
 #include <ctype.h>
 #if defined(HAVE_STDARG_H)
@@ -60,6 +58,9 @@ static const char RCSlog[] = "@(#)$Header$ (ARL)";
 #  if defined(HAVE_VARARGS_H)
 #    include <varargs.h>
 #  endif
+#endif
+#ifdef HAVE_STRING_H
+#  include <string.h>
 #endif
 
 #include "machine.h"
@@ -281,6 +282,11 @@ char *fmt;
 
 #if defined(HAVE_STDARG_H)                  /* ANSI C */
     va_start(ap, fmt);
+
+    if (!fmt || strlen(fmt) == 0) {
+	return;
+    }
+
     if (bu_log_indent_cur_level > 0) {
 	struct bu_vls newfmt;
 
@@ -295,6 +301,11 @@ char *fmt;
 #  if defined(HAVE_VARARGS_H)
     va_start(ap);
     fmt = va_arg(ap, char *);
+
+    if (!fmt || strlen(fmt) == 0) {
+	return;
+    }
+
     if (bu_log_indent_cur_level > 0) {
 	struct bu_vls newfmt;
 
@@ -306,6 +317,10 @@ char *fmt;
 	bu_vls_vprintf(&output, fmt, ap);
     }
 #  else                                     /* Cray XMP */
+    if (!fmt || strlen(fmt) == 0) {
+	return;
+    }
+
     if (bu_log_indent_cur_level > 0) {
 	struct bu_vls newfmt;
 
