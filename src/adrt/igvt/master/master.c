@@ -514,10 +514,17 @@ void* igvt_master_networking(void *ptr) {
 
 /* additional baggage that goes with each work unit */
 void igvt_master_update() {
+  char op;
+
   igvt_master_slave_data_len = 0;
 
   /* Lock things down so that igvt_master_update data doesn't get tainted */
   pthread_mutex_lock(&igvt_master_update_mut);
+
+  /* function */
+  op = IGVT_OP_RENDER;
+  memcpy(&((char *)igvt_master_slave_data)[igvt_master_slave_data_len], &op, 1);
+  igvt_master_slave_data_len += 1;
 
   /* Frame Index */
   memcpy(&((char *)igvt_master_slave_data)[igvt_master_slave_data_len], &frame_cur_ind, sizeof(short));
@@ -753,12 +760,13 @@ void igvt_master_process_events(SDL_Event *event_queue, int event_num, igvt_mast
             break;
 
 
-          case SDLK_KP_PERIOD:
+          case SDLK_KP_DIVIDE: /* shotline */
             {
               void *mesg;
               common_work_t work;
               TIE_3 dir;
               int dlen;
+              char op;
 
               /* Queue a work unit for a shot needed for the plane render method */
               mesg = malloc(sizeof(common_work_t) + 2 * sizeof(TIE_3));
@@ -772,14 +780,69 @@ void igvt_master_process_events(SDL_Event *event_queue, int event_num, igvt_mast
               memcpy(&((char *)mesg)[dlen], &work, sizeof(common_work_t));
               dlen += sizeof(common_work_t);
 
+              /* function */
+              op = IGVT_OP_SHOT;
+              memcpy(&((char *)mesg)[dlen], &op, 1);
+              dlen += 1;
+
+              /* position */
               memcpy(&((char *)mesg)[dlen], &igvt_master_camera_pos, sizeof(TIE_3));
               dlen += sizeof(TIE_3);
 
               math_vec_sub(dir, igvt_master_camera_foc, igvt_master_camera_pos);
               math_vec_unitize(dir);
 
+              /* direction */
               memcpy(&((char *)mesg)[dlen], &dir, sizeof(TIE_3));
               dlen += sizeof(TIE_3);
+
+              igvt_master_shot_pos = igvt_master_camera_pos;
+              igvt_master_shot_dir = dir;
+
+              tienet_master_push(mesg, dlen);
+              free(mesg);
+            }
+            break;
+
+          case SDLK_KP_MULTIPLY: /* spawl cone */
+            {
+              void *mesg;
+              common_work_t work;
+              TIE_3 dir;
+              int dlen;
+              char op;
+
+              /* Queue a work unit for a shot needed for the plane render method */
+              mesg = malloc(sizeof(common_work_t) + 2 * sizeof(TIE_3) + sizeof(tfloat));
+              dlen = 0;
+
+              work.orig_x = 0;
+              work.orig_y = 0;
+              work.size_x = 0;
+              work.size_y = 0;
+
+              memcpy(&((char *)mesg)[dlen], &work, sizeof(common_work_t));
+              dlen += sizeof(common_work_t);
+
+              /* function */
+              op = IGVT_OP_SPALL;
+              memcpy(&((char *)mesg)[dlen], &op, 1);
+              dlen += 1;
+
+              /* position */
+              memcpy(&((char *)mesg)[dlen], &igvt_master_camera_pos, sizeof(TIE_3));
+              dlen += sizeof(TIE_3);
+
+              math_vec_sub(dir, igvt_master_camera_foc, igvt_master_camera_pos);
+              math_vec_unitize(dir);
+
+              /* direction */
+              memcpy(&((char *)mesg)[dlen], &dir, sizeof(TIE_3));
+              dlen += sizeof(TIE_3);
+
+              /* angle */
+              memcpy(&((char *)mesg)[dlen], &igvt_master_spall_angle, sizeof(tfloat));
+              dlen += sizeof(tfloat);
 
               igvt_master_shot_pos = igvt_master_camera_pos;
               igvt_master_shot_dir = dir;

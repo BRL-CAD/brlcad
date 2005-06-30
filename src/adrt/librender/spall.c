@@ -60,7 +60,7 @@ void render_spall_init(render_t *render, TIE_3 ray_pos, TIE_3 ray_dir, tfloat an
   vec_list = (TIE_3 *)malloc(sizeof(TIE_3) * TESSELATION);
   tri_list = (TIE_3 *)malloc(sizeof(TIE_3) * TESSELATION * 3);
 
-  render_util_spall(ray_dir, angle, TESSELATION, vec_list);
+  render_util_spall_vec(ray_dir, angle, TESSELATION, vec_list);
 
   /* triangles to approximate */
   for(i = 0; i < TESSELATION; i++) {
@@ -117,9 +117,9 @@ void render_spall_work(render_t *render, tie_t *tie, tie_ray_t *ray, TIE_3 *pixe
 
   /* Draw spall Cone */
   if(tie_work(&rd->tie, ray, &id, render_arrow_hit, NULL)) {
-    pixel->v[0] = 0.3;
-    pixel->v[1] = 0.3;
-    pixel->v[2] = 0.3;
+    pixel->v[0] = 0.4;
+    pixel->v[1] = 0.4;
+    pixel->v[2] = 0.4;
   }
 
   /*
@@ -184,7 +184,7 @@ void render_spall_work(render_t *render, tie_t *tie, tie_ray_t *ray, TIE_3 *pixe
   if(dot < 0) {
 #endif
     /* Shade using inhit */
-    math_vec_mul_scalar(color, color, (dot*0.60));
+    math_vec_mul_scalar(color, color, (dot*0.50));
     math_vec_add((*pixel), (*pixel), color);
 #if 0
   } else {
@@ -192,7 +192,7 @@ void render_spall_work(render_t *render, tie_t *tie, tie_ray_t *ray, TIE_3 *pixe
     math_vec_sub(vec, ray->pos, hit.id.pos);
     math_vec_unitize(vec);
     angle = vec.v[0]*hit.mod*-hit.plane[0] + vec.v[1]*-hit.mod*hit.plane[1] + vec.v[2]*-hit.mod*hit.plane[2];
-    math_vec_mul_scalar((*pixel), color, (angle*0.60));
+    math_vec_mul_scalar((*pixel), color, (angle*0.50));
   }
 #endif
 

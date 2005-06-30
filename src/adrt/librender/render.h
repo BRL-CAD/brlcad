@@ -9,7 +9,6 @@
 #include "path.h"
 #include "phong.h"
 #include "plane.h"
-#include "shotline.h"
 #include "spall.h"
 #include "render_internal.h"
 
