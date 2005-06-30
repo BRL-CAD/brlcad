@@ -147,7 +147,7 @@ AC_SUBST(BRLCAD_DATA_DIR)
 
 # init the venerable automake only _once_ or incur the wrath of
 # several automake bugs (like "aclocal-" and install detection)
-AM_INIT_AUTOMAKE
+AM_INIT_AUTOMAKE([1.6 dist-zip dist-bzip2])
 
 # if this is not a CVS checkout, disable dependency tracking for a
 # faster build. it's not likely that the user is doing development
