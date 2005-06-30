@@ -1663,11 +1663,11 @@ proc do_light { shade_var id } {
 
 	# Create the scale for shadow rays
 	grid [scale $w.shadows -orient horiz -label "Shadow Rays" \
-		-from 0 -to 9 -bd 3 -relief sunken \
+		-from 0 -to 64 -bd 3 -relief sunken \
 		-command "light_scale $shade_var $id $w.icon"\
 		-variable shader_params($id,light_s) ] \
 		-row 0 -column 2 -rowspan 3 -columnspan 2 -sticky nesw
-        hoc_register_data $w.shadows shadows [list [list summary "number of rays to fire at light source in determining shadow\n0 rays means no shadows"] [list range "0..9"]]
+        hoc_register_data $w.shadows shadows [list [list summary "number of rays to fire at light source in determining shadow\n0 rays means no shadows"] [list range "0..64"]]
 
 
 
@@ -1766,15 +1766,21 @@ proc do_light_apply { shade_var id } {
 }
 
 proc do_light_icon { id } {
-	global shader_params
-
-	set name ""
-
-	append name "light_i" $shader_params($id,light_i) 
-	append name "_v"  $shader_params($id,light_v)
+    global shader_params
+    
+    set name ""
+    
+    append name "light_i" $shader_params($id,light_i) 
+    append name "_v"  $shader_params($id,light_v)
+    
+    # only have shadow images for up to 9 shadow rays
+    if { $shader_params($id,light_s) > 9 } {
+	append name "_s" 9
+    } else {
 	append name "_s"  $shader_params($id,light_s)
-
-	$shader_params($id,icon) configure -image $shader_params($name)
+    }
+    
+    $shader_params($id,icon) configure -image $shader_params($name)
 }
 
 
