@@ -44,11 +44,16 @@ static const char RCSid[] = "$Header$";
 #endif
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <strings.h>
 #include <ctype.h>
 #include <machine.h>
 #include <vmath.h>
 #include <db.h>
+
+#ifdef HAVE_UNISTD_H
+# include <unistd.h>
+#endif
 
 #define		BUF_LEN		128
 #define		OPT_STRING	"n:r:?"
