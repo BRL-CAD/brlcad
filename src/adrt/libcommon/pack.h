@@ -53,7 +53,7 @@
 #define COMMON_PACK_MESH_NEW		0x0400
 
 
-extern	int	common_pack(common_db_t *db, void **app_data, char *proj, char *geom_file, char *args);
+extern	int	common_pack(common_db_t *db, void **app_data, char *proj);
 extern	void	common_pack_write(void **dest, int *ind, void *src, int size);
 
 extern	int	common_pack_trinum;

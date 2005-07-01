@@ -51,7 +51,7 @@
 
 void	common_pack_write(void **dest, int *ind, void *src, int size);
 
-int	common_pack(common_db_t *db, void **app_data, char *proj, char *geom_file, char *args);
+int	common_pack(common_db_t *db, void **app_data, char *proj);
 void	common_pack_camera(common_db_t *db, void **app_data, int *app_ind);
 void	common_pack_env(common_db_t *db, void **app_data, int *app_ind);
 void	common_pack_prop(void **app_data, int *app_ind, char *filename);
@@ -81,20 +81,12 @@ void common_pack_write(void **dest, int *ind, void *src, int size) {
 }
 
 
-int common_pack(common_db_t *db, void **app_data, char *proj, char *geom_file, char *args) {
-  char path[256];
+int common_pack(common_db_t *db, void **app_data, char *proj) {
   short s;
-  int app_ind;
+  int app_ind, i;
 
   common_pack_app_size = 0;
   common_pack_app_mem = 0;
-
-  /* Parse path out of proj and chdir to it */
-  strcpy(path, proj);
-  if(proj[strlen(proj)-1] != '/')
-    strcat(path, "/");
-
-  chdir(path);
 
   common_pack_trinum = 0;
 
@@ -106,20 +98,20 @@ int common_pack(common_db_t *db, void **app_data, char *proj, char *geom_file, c
   s = 0;
   common_pack_write(app_data, &app_ind, &s, sizeof(short));
 
-  /* CAMERA DATA */
-  common_pack_camera(db, app_data, &app_ind);
-
   /* ENVIRONMENT DATA */
   common_pack_env(db, app_data, &app_ind);
 
+  /* CAMERA DATA */
+  common_pack_camera(db, app_data, &app_ind);
+
   /* PROPERTY DATA */
-  common_pack_prop(app_data, &app_ind, "properties.db");
+  common_pack_prop(app_data, &app_ind, db->env.properties_file);
 
   /* TEXTURE DATA */
-  common_pack_texture(app_data, &app_ind, "texture.db");
+  common_pack_texture(app_data, &app_ind, db->env.textures_file);
 
   /* MESH DATA */
-  common_pack_mesh(db, app_data, &app_ind, geom_file, args);
+  common_pack_mesh(db, app_data, &app_ind, db->env.geometry_file, db->env.geometry_file_args);
 
   *app_data = realloc(*app_data, common_pack_app_size);
   return(common_pack_app_size);
@@ -216,6 +208,11 @@ void common_pack_prop(void **app_data, int *app_ind, char *filename) {
 
 
   fh = fopen(filename, "r");
+  if(!fh) {
+    printf("Properties file: %s does not exist, exiting...\n", filename);
+    exit(1);
+  }
+
   prop_num = 0;
   while(fgets(line, 256, fh)) {
     token = strtok(line, ",");
@@ -308,6 +305,10 @@ void common_pack_texture(void **app_data, int *app_ind, char *filename) {
 
 
   fh = fopen(filename, "r");
+  if(!fh) {
+    printf("Textures file: %s does not exist, exiting...\n", filename);
+    exit(1);
+  }
 
 
   while(fgets(line, 256, fh)) {
@@ -575,6 +576,12 @@ void common_pack_mesh_adrt(common_db_t *db, void **app_data, int *app_ind, char 
 
 
   fh = fopen(filename, "rb");
+  if(!fh) {
+    printf("ADRT geometry file: %s does not exist, exiting...\n", filename);
+    exit(1);
+  }
+
+
   /* Get End Position */
   fseek(fh, 0, SEEK_END);
   end = ftell(fh);

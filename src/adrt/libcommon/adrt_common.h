@@ -121,6 +121,12 @@ typedef struct common_env_s {
   int img_hs;	/* hypersamples */
   int tile_w;	/* tile size width */
   int tile_h;	/* tile size height */
+
+  char geometry_file[256];
+  char geometry_file_args[256];
+  char properties_file[256];
+  char textures_file[256];
+  char frames_file[256];
 } common_env_t;
 
 

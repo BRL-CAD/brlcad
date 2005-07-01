@@ -41,6 +41,6 @@
 extern	void	common_env_init(common_env_t *env);
 extern	void	common_env_free(common_env_t *env);
 extern	void	common_env_prep(common_env_t *env);
-extern	void	common_env_read(common_env_t *env);
+extern	void	common_env_read(common_env_t *env, char *fpath);
 
 #endif

@@ -40,12 +40,12 @@
 #include <unistd.h>
 #include "render.h"
 
-
+#if 0
 void common_env_init(common_env_t *env);
 void common_env_free(common_env_t *env);
 void common_env_prep(common_env_t *env);
 void common_env_read(common_env_t *env);
-
+#endif
 
 void common_env_init(common_env_t *env) {
   render_flat_init(&env->render);
@@ -54,6 +54,12 @@ void common_env_init(common_env_t *env) {
   env->img_hs = 1;
   env->tile_w = 40;
   env->tile_h = 40;
+
+  env->geometry_file[0] = 0;
+  env->geometry_file_args[0] = 0;
+  env->properties_file[0] = 0;
+  env->textures_file[0] = 0;
+  env->frames_file[0] = 0;
 }
 
 
@@ -67,16 +73,35 @@ void common_env_prep(common_env_t *env) {
 }
 
 
-void common_env_read(common_env_t *env) {
+void common_env_read(common_env_t *env, char *fpath) {
   FILE *fh;
   char line[256], *token;
 
-  fh = fopen("env.db", "r");
+  fh = fopen(fpath, "r");
+  if(!fh) {
+    printf("Project file: %s does not exist, exiting...\n", fpath);
+    exit(1);
+  }
 
   while(fgets(line, 256, fh)) {
     token = strtok(line, ",");
 
-    if(!strcmp("image_size", token)) {
+    if(!strcmp("geometry_file", token)) {
+      strcpy(env->geometry_file, strtok(NULL, ","));
+      env->geometry_file[strlen(env->geometry_file) - 1] = 0;
+    } else if(!strcmp("geometry_file_args", token)) {
+      strcpy(env->geometry_file_args, strtok(NULL, ","));
+      env->geometry_file_args[strlen(env->geometry_file_args) - 1] = 0;
+    } else if(!strcmp("properties_file", token)) {
+      strcpy(env->properties_file, strtok(NULL, ","));
+      env->properties_file[strlen(env->properties_file) - 1] = 0;
+    } else if(!strcmp("textures_file", token)) {
+      strcpy(env->textures_file, strtok(NULL, ","));
+      env->textures_file[strlen(env->textures_file) - 1] = 0;
+    } else if(!strcmp("frames_file", token)) {
+      strcpy(env->frames_file, strtok(NULL, ","));
+      env->frames_file[strlen(env->frames_file) - 1] = 0;
+    } else if(!strcmp("image_size", token)) {
       token = strtok(NULL, ",");
       env->img_w = atoi(token);
       token = strtok(NULL, ",");

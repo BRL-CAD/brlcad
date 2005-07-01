@@ -39,7 +39,7 @@ typedef struct igvt_master_socket_s {
 } igvt_master_socket_t;
 
 
-void igvt_master(int port, int obs_port, char *proj, char *geom_file, char *args, char *list, char *exec, int interval);
+void igvt_master(int port, int obs_port, char *proj, char *list, char *exec, int interval);
 void* igvt_master_networking(void *ptr);
 void igvt_master_result(void *res_buf, int res_len);
 void igvt_master_update(void);
@@ -78,7 +78,7 @@ int igvt_master_shift_enabled;
 /*******************/
 
 
-void igvt_master(int port, int obs_port, char *proj, char *geom_file, char *args, char *list, char *exec, int interval) {
+void igvt_master(int port, int obs_port, char *proj, char *list, char *exec, int interval) {
   int frame_num, app_size;
   void *app_data;
   struct timeval start, cur;
@@ -133,7 +133,7 @@ void igvt_master(int port, int obs_port, char *proj, char *geom_file, char *args
   /* Parse and pack the application data */
   printf("loading scene... ");
   fflush(stdout);
-  app_size = common_pack(&db, &app_data, proj, geom_file, args);
+  app_size = common_pack(&db, &app_data, proj);
   printf("done.\n");
 
   tienet_master_prep(app_data, app_size);

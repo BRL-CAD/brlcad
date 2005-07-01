@@ -43,13 +43,15 @@
 #include "umath.h"
 
 
-int common_anim_read(common_anim_t *anim);
-
-int common_anim_read(common_anim_t *anim) {
+int common_anim_read(common_anim_t *anim, char *frames_file) {
   FILE *fh;
   char line[256], *token;
 
-  fh = fopen("frame.db", "r");
+  fh = fopen(frames_file, "r");
+  if(!fh) {
+    printf("Frames file: %s does not exist, exiting...\n", frames_file);
+    exit(1);
+  }
 
   anim->frame_num = -1;
   anim->frame_list = NULL;

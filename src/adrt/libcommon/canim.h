@@ -40,6 +40,6 @@
 #include "tie.h"
 #include "adrt_common.h"
 
-extern int common_anim_read(common_anim_t *anim);
+extern int common_anim_read(common_anim_t *anim, char *frames_file);
 
 #endif
