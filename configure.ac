@@ -145,10 +145,6 @@ fi
 BRLCAD_DATA_DIR='${prefix}'
 AC_SUBST(BRLCAD_DATA_DIR)
 
-# init the venerable automake only _once_ or incur the wrath of
-# several automake bugs (like "aclocal-" and install detection)
-AM_INIT_AUTOMAKE([1.6 dist-zip dist-bzip2])
-
 # if this is not a CVS checkout, disable dependency tracking for a
 # faster build. it's not likely that the user is doing development
 # from a source release. at least they really should not given the
@@ -157,16 +153,25 @@ AC_MSG_CHECKING([whether dependency tracking should be enabled])
 if test -d $srcdir/CVS ; then
 	if test "x$enable_maintainer_mode" = "x" ; then
 		enable_maintainer_mode="yes"
-		AC_MSG_RESULT([yes])
-	else
-		AC_MSG_RESULT([no (enable-maintainer-mode)])
 	fi
+	if test "x$enable_dependency_tracking" = "x" ; then
+		enable_dependency_tracking="yes"
+	fi
+	else
+	AC_MSG_RESULT([yes])
 else
+	if test "x$enable_maintainer_mode" = "x" ; then
+		enable_maintainer_mode="no"
+	fi
+	if test "x$enable_dependency_tracking" = "x" ; then
+		enable_dependency_tracking="no"
+	fi
 	AC_MSG_RESULT([no])
-
-	# would also like no-dependencies, but have not figured out
-	# how to set dynamically without causing vast troubles.
 fi
+
+# init the venerable automake only _once_ or incur the wrath of
+# several automake bugs (like "aclocal-" and install detection)
+AM_INIT_AUTOMAKE([1.6 dist-zip dist-bzip2])
 
 # disables the build system dependency tracking by default for the
 # automake and autoconf template files.
