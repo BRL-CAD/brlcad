@@ -38,7 +38,7 @@ typedef struct rise_master_socket_s {
 } rise_master_socket_t;
 
 
-void rise_master(int port, int obs_port, char *proj, char *geom_file, char *args, char *list, char *exec, int interval);
+void rise_master(int port, int obs_port, char *proj, char *list, char *exec, int interval);
 void rise_master_result(void *res_buf, int res_len);
 void* rise_master_networking(void *ptr);
 
@@ -55,7 +55,7 @@ rise_master_socket_t *rise_master_socklist;
 common_db_t db;
 
 
-void rise_master(int port, int obs_port, char *proj, char *geom_file, char *args, char *list, char *exec, int interval) {
+void rise_master(int port, int obs_port, char *proj, char *list, char *exec, int interval) {
   int i, app_size;
   void *app_data;
   char image_name[16];
@@ -90,7 +90,7 @@ void rise_master(int port, int obs_port, char *proj, char *geom_file, char *args
     printf("Preparing frame #%d of %d\n", i+1, db.anim.frame_num);
 
     /* Parse and pack the application data */
-    app_size = common_pack(&db, &app_data, proj, geom_file, args);
+    app_size = common_pack(&db, &app_data, proj);
     tienet_master_prep(app_data, app_size);
 
     /* Fill the work buffer */

@@ -24,19 +24,16 @@
 static struct option longopts[] =
 {
 	{ "exec",	required_argument,	NULL, 'e' },
-	{ "geom",	required_argument,	NULL, 'g' },
-	{ "args",	required_argument,	NULL, 'a' },
 	{ "help",	no_argument,		NULL, 'h' },
 	{ "interval",	required_argument,	NULL, 'i' },
-	{ "obs_port",	required_argument,	NULL, 'O' },
-	{ "port",	required_argument,	NULL, 'P' },
+	{ "obs_port",	required_argument,	NULL, 'o' },
+	{ "port",	required_argument,	NULL, 'p' },
 	{ "version",	no_argument,		NULL, 'v' },
   	{ "list",	required_argument,	NULL, 'l' },
-  	{ "proj",	required_argument,	NULL, 'p' },
 };
 #endif
 
-static char shortopts[] = "e:a:g:i:hO:P:vl:p:";
+static char shortopts[] = "e:i:hvl:p:";
 
 
 static void finish(int sig) {
@@ -47,23 +44,20 @@ static void finish(int sig) {
 
 static void help() {
   printf("%s\n", RISE_VER_DETAIL);
-  printf("%s\n", "usage: rise_master [options]\n\
-  -v\t\tdisplay version\n\
-  -h\t\tdisplay help\n\
-  -P\t\tport number\n\
-  -O\t\tobserver port number\n\
-  -e ...\tfile to execute that starts slaves\n\
-  -i ...\tinterval in minutes between each autosave dump\n\
-  -l ...\tfile containing list of slave hostnames to distribute work to\n\
-  -p ...\tproject directory\n\
-  -g ...\tlocation of geometry file\n\
-  -a ...\targuments to geometry file\n");
+  printf("%s\n", "usage: rise_master [options] [proj_env_file]\n\
+  -h\t\tdisplay help.\n\
+  -p\t\tset master port number.\n\
+  -o\t\tset observer port number.\n\
+  -i\t\tinterval in minutes between each autosave.\n\
+  -l\t\tfile containing list of slaves to use as compute nodes.\n\
+  -e\t\tscript to execute that starts slaves.\n\  
+  -v\t\tdisplay version info.\n");
 }
 
 
 int main(int argc, char **argv) {
   int port = 0, obs_port, c = 0, interval = 1;
-  char proj[64], exec[64], list[64], temp[64], geom[64], args[64];
+  char proj[64], exec[64], list[64], temp[64];
 
 
   signal(SIGINT, finish);
@@ -77,8 +71,6 @@ int main(int argc, char **argv) {
   list[0] = 0;
   exec[0] = 0;
   proj[0] = 0;
-  geom[0] = 0;
-  args[0] = 0;
   port = TN_MASTER_PORT;
   obs_port = RISE_OBSERVER_PORT;
 
@@ -93,20 +85,14 @@ int main(int argc, char **argv) {
 	)!= -1)
   {
 	  switch(c) {
-		  case 'O':
+		  case 'o':
 			  obs_port = atoi(optarg);
 			  break;
-		  case 'P':
+		  case 'p':
 			  port = atoi(optarg);
-			  break;
-		  case 'a':
-			  strncpy(args, optarg, 64);
 			  break;
 		  case 'e':
 			  strncpy(exec, optarg, 64);
-			  break;
-		  case 'g':
-			  strncpy(geom, optarg, 64);
 			  break;
 		  case 'i':
 			  strncpy(temp, optarg, 4);
@@ -116,9 +102,6 @@ int main(int argc, char **argv) {
 			  break;
 		  case 'l':
 			  strncpy(list, optarg, 64);
-			  break;
-		  case 'p':
-			  strncpy(proj, optarg, 64);
 			  break;
 		  case 'h':
 			  help();
@@ -134,12 +117,10 @@ int main(int argc, char **argv) {
   argc -= optind;
   argv += optind;
 
+  strcpy(proj, argv[0]);
+
   if(proj[0]) {
-    if(!geom[0]) {
-      printf("must supply additional argument: -g /path/to/geometry/file\n");
-      return EXIT_FAILURE;
-    }
-    rise_master(port, obs_port, proj, geom, args, list, exec, interval);
+    rise_master(port, obs_port, proj, list, exec, interval);
   } else {
     help();
     return EXIT_FAILURE;

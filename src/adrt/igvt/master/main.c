@@ -26,15 +26,14 @@ static struct option longopts[] =
 	{ "exec",	required_argument,	NULL, 'e' },
 	{ "help",	no_argument,		NULL, 'h' },
 	{ "interval",	required_argument,	NULL, 'i' },
-	{ "obs_port",	required_argument,	NULL, 'O' },
-	{ "port",	required_argument,	NULL, 'P' },
+	{ "obs_port",	required_argument,	NULL, 'o' },
+	{ "port",	required_argument,	NULL, 'p' },
 	{ "version",	no_argument,		NULL, 'v' },
   	{ "list",	required_argument,	NULL, 'l' },
-  	{ "proj",	required_argument,	NULL, 'p' },
 };
 #endif
 
-static char shortopts[] = "e:a:g:i:hO:P:vl:p:";
+static char shortopts[] = "e:i:ho:p:vl:";
 
 
 static void finish(int sig) {
@@ -45,15 +44,14 @@ static void finish(int sig) {
 
 static void help() {
   printf("%s\n", IGVT_VER_DETAIL);
-  printf("%s\n", "usage: igvt_master [options]\n\
-  -v\t\tdisplay version\n\
-  -h\t\tdisplay help\n\
-  -P\t\tport number\n\
-  -O\t\tobserver port number\n\
-  -e ...\tfile to execute that starts slaves\n\
-  -i ...\tinterval in minutes between each autosave dump\n\
-  -l ...\tfile containing list of slave hostnames to distribute work to\n\
-  -p ...\tproject file\n");
+  printf("%s\n", "usage: igvt_master [options] [proj_env_file]\n\
+  -h\t\tdisplay help.\n\
+  -p\t\tset master port number.\n\
+  -o\t\tset observer port number.\n\
+  -i\t\tinterval in minutes between each autosave.\n\
+  -l\t\tfile containing list of slaves to use as compute nodes.\n\
+  -e\t\tscript to execute that starts slaves.\n\
+  -v\t\tdisplay version info.\n");
 }
 
 
@@ -87,14 +85,14 @@ int main(int argc, char **argv) {
 	)!= -1)
   {
 	  switch(c) {
-		  case 'O':
+		  case 'h':
+			  help();
+			  return EXIT_SUCCESS;
+		  case 'o':
 			  obs_port = atoi(optarg);
 			  break;
-		  case 'P':
+		  case 'p':
 			  port = atoi(optarg);
-			  break;
-		  case 'e':
-			  strncpy(exec, optarg, 64);
 			  break;
 		  case 'i':
 			  strncpy(temp, optarg, 4);
@@ -105,12 +103,9 @@ int main(int argc, char **argv) {
 		  case 'l':
 			  strncpy(list, optarg, 64);
 			  break;
-		  case 'p':
-			  strncpy(proj, optarg, 64);
+		  case 'e':
+			  strncpy(exec, optarg, 64);
 			  break;
-		  case 'h':
-			  help();
-			  return EXIT_SUCCESS;
 		  case 'v':
 			  printf("%s\n", IGVT_VER_DETAIL);
 			  return EXIT_SUCCESS;
@@ -121,6 +116,8 @@ int main(int argc, char **argv) {
   }
   argc -= optind;
   argv += optind;
+
+  strcpy(proj, argv[0]);
 
   if(proj[0]) {
     igvt_master(port, obs_port, proj, list, exec, interval);

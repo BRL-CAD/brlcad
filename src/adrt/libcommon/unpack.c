@@ -488,8 +488,10 @@ void common_unpack_mesh(common_db_t *db, void *app_data, int size, tie_t *tie) {
     /* Properties */
     common_unpack_prop_lookup(name, &(db->mesh_list[db->mesh_num-1]->prop));
 
-    /* Triangles */
+    /* Vertices */
     common_unpack_read(app_data, app_ind, &num, sizeof(int), tienet_endian);
+
+    /* Faces */
 
     if(num > tnum) {
       tnum = num;

@@ -42,7 +42,6 @@
 #include "texture.h"
 #include "tienet.h"
 #include "brlcad_config.h"
-#include "g.h"
 
 
 #define K *1024
@@ -57,7 +56,7 @@ void	common_pack_env(common_db_t *db, void **app_data, int *app_ind);
 void	common_pack_prop(void **app_data, int *app_ind, char *filename);
 void	common_pack_texture(void **app_data, int *app_ind, char *filename);
 
-void	common_pack_mesh(common_db_t *db, void **app_data, int *app_ind, char *filename, char *args);
+void	common_pack_mesh(common_db_t *db, void **app_data, int *app_ind, char *filename);
 void	common_pack_mesh_adrt(common_db_t *db, void **app_data, int *app_ind, char *filename);
 
 
@@ -69,14 +68,14 @@ int	common_pack_trinum;
 void common_pack_write(void **dest, int *ind, void *src, int size) {
   if((int)(*ind + size) > (int)common_pack_app_size)
     common_pack_app_size = *ind + size;
-
+/*
   if(common_pack_app_size > common_pack_app_mem) {
     common_pack_app_mem = common_pack_app_size + (16 M);
     *dest = realloc(*dest, common_pack_app_mem);
   }
 
-  memcpy(&(((char*)*dest)[*ind]), src, size);
-
+  memcpy(&(((char *)*dest)[*ind]), src, size);
+*/
   *ind += size;
 }
 
@@ -111,7 +110,7 @@ int common_pack(common_db_t *db, void **app_data, char *proj) {
   common_pack_texture(app_data, &app_ind, db->env.textures_file);
 
   /* MESH DATA */
-  common_pack_mesh(db, app_data, &app_ind, db->env.geometry_file, db->env.geometry_file_args);
+  common_pack_mesh(db, app_data, &app_ind, db->env.geometry_file);
 
   *app_data = realloc(*app_data, common_pack_app_size);
   return(common_pack_app_size);
@@ -544,35 +543,17 @@ void common_pack_texture(void **app_data, int *app_ind, char *filename) {
 }
 
 
-void common_pack_mesh(common_db_t *db, void **app_data, int *app_ind, char *filename, char *args) {
-  if(strstr(filename, ".db")) {
-    common_pack_mesh_adrt(db, app_data, app_ind, filename);
-  } else if(strstr(filename, ".g")) {
-    common_pack_g(app_data, app_ind, filename, args);
-  } else {
-    printf("unknown file format\n");
-  }
+void common_pack_mesh(common_db_t *db, void **app_data, int *app_ind, char *filename) {
+  common_pack_mesh_adrt(db, app_data, app_ind, filename);
 }
 
 
 void common_pack_mesh_adrt(common_db_t *db, void **app_data, int *app_ind, char *filename) {
-  FILE		*fh;
-  TIE_3		v[3], tv[3], min, max;
-  char		c, meshname[256], texturename[256];
-  short		s, endian;
-  int		marker, tri_marker, size, i, j, k, n, num, matrixind, end;
-
-
-  s = COMMON_PACK_MESH;
-  common_pack_write(app_data, app_ind, &s, sizeof(short));
-
-  /* Size of mesh data */
-  marker = *app_ind;
-  *app_ind += sizeof(int);
-
-  /* Number of triangles */
-  tri_marker = *app_ind;
-  *app_ind += sizeof(int);
+  FILE *fh;
+  TIE_3 v;
+  char c, meshname[256], texturename[256];
+  short s, endian;
+  int face[3], marker, size, i, j, k, n, num, matrixind, end;
 
 
   fh = fopen(filename, "rb");
@@ -581,6 +562,12 @@ void common_pack_mesh_adrt(common_db_t *db, void **app_data, int *app_ind, char 
     exit(1);
   }
 
+  s = COMMON_PACK_MESH;
+  common_pack_write(app_data, app_ind, &s, sizeof(short));
+
+  /* Size of mesh data */
+  marker = *app_ind;
+  *app_ind += sizeof(int);
 
   /* Get End Position */
   fseek(fh, 0, SEEK_END);
@@ -591,6 +578,8 @@ void common_pack_mesh_adrt(common_db_t *db, void **app_data, int *app_ind, char 
   fread(&endian, sizeof(short), 1, fh);
   endian = endian == 1 ? 0 : 1;
 
+  /* Check Geometry Revision */
+  fread(&s, sizeof(short), 1, fh);
 
   while(ftell(fh) != end) {
     s = COMMON_PACK_MESH_NEW;
@@ -610,11 +599,28 @@ void common_pack_mesh_adrt(common_db_t *db, void **app_data, int *app_ind, char 
     common_pack_write(app_data, app_ind, &c, sizeof(char));
     common_pack_write(app_data, app_ind, texturename, c);
 
-    /* Triangle Num */
+    /* Pack Number of Vertices */
+    fread(&num, sizeof(int), 1, fh);
+    if(endian) tienet_flip(&num, &num, sizeof(int));
+    common_pack_write(app_data, app_ind, &num, sizeof(int));
+
+    /* Pack Vertices */
+    for(i = 0; i < num; i++) {
+      fread(&v, sizeof(TIE_3), 1, fh);
+      common_pack_write(app_data, app_ind, &v, sizeof(TIE_3));
+    }
+
+    /* Pack Number of Faces */
     fread(&num, sizeof(int), 1, fh);
     if(endian) tienet_flip(&num, &num, sizeof(int));
     common_pack_write(app_data, app_ind, &num, sizeof(int));
     common_pack_trinum += num;
+
+    /* Pack Faces */
+    for(i = 0; i < num; i++) {
+      fread(face, sizeof(int), 3, fh);
+      common_pack_write(app_data, app_ind, face, sizeof(int) * 3);
+    }
 
     /* Determine if Mesh has a Transformation Matrix assigned to it */
     matrixind = -1;
@@ -622,60 +628,11 @@ void common_pack_mesh_adrt(common_db_t *db, void **app_data, int *app_ind, char 
       if(!strcmp(meshname, db->anim.frame_list[0].tlist[n].mesh_name))
         matrixind = n;
 
-    for(i = 0; i < num; i++) {
-      /* Smooth Triangle */
-      fread(&c, sizeof(char), 1, fh);
-      common_pack_write(app_data, app_ind, &c, sizeof(char));
-
-      /* Read 3 Verts */
-      fread(v, sizeof(TIE_3), 3, fh);
-      if(endian)
-        for(j = 0; j < 3; j++)
-          for(k = 0; k < 3; k++)
-            tienet_flip(&v[j].v[k], &v[j].v[k], sizeof(tfloat));
-
-      /* Apply transformation */
-      if(matrixind >= 0)
-        for(n = 0; n < 3; n++) {
-          math_vec_transform(tv[n], v[n], db->anim.frame_list[0].tlist[matrixind].matrix);
-          v[n] = tv[n];
-        }
-      common_pack_write(app_data, app_ind, v, sizeof(TIE_3)*3);
-
-      /* Smooth Normals */
-      if(c) {
-        fread(v, sizeof(TIE_3), 3, fh);
-        if(tienet_endian)
-          for(j = 0; j < 3; j++)
-            for(k = 0; k < 3; k++)
-              tienet_flip(&v[j].v[k], &v[j].v[k], sizeof(tfloat));
-        common_pack_write(app_data, app_ind, v, sizeof(TIE_3)*3);
-      }
-
-      /* Find min and max for mesh */
-      if (!i) {
-        min = v[0];
-        max = v[0];
-      }
-
-      math_vec_min(min, v[0]);
-      math_vec_min(min, v[1]);
-      math_vec_min(min, v[2]);
-
-      math_vec_max(max, v[0]);
-      math_vec_max(max, v[1]);
-      math_vec_max(max, v[2]);
-    }
-
-    /* Write min and max for mesh */
-    common_pack_write(app_data, app_ind, &min, sizeof(TIE_3));
-    common_pack_write(app_data, app_ind, &max, sizeof(TIE_3));
-
     /* Write Matrix */
     if(matrixind >= 0) {
       common_pack_write(app_data, app_ind, db->anim.frame_list[0].tlist[matrixind].matrix, sizeof(tfloat)*16);
     } else{
-      tfloat	matrix[16];
+      tfloat matrix[16];
       math_mat_ident(matrix, 4);
       common_pack_write(app_data, app_ind, matrix, sizeof(tfloat)*16);
     }
@@ -683,8 +640,7 @@ void common_pack_mesh_adrt(common_db_t *db, void **app_data, int *app_ind, char 
 
   fclose(fh);
 
-  size = *app_ind - marker - sizeof(int);
+  size = *app_ind - marker;
   common_pack_write(app_data, &marker, &size, sizeof(int));
-  common_pack_write(app_data, &tri_marker, &common_pack_trinum, sizeof(int));
-  *app_ind = marker + sizeof(int) + size;
+  *app_ind = marker + size;
 }
