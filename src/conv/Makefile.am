@@ -34,6 +34,7 @@ bin_PROGRAMS = \
 	euclid_unformat \
 	fast4-g \
 	g-acad \
+	g-adrt \
 	g-dxf \
 	g-euclid \
 	g-euclid1 \
@@ -85,6 +86,7 @@ g2asc_LDADD = ${WDB} ${LIBRT} ${BN} ${BU} ${TCL}
 g4_g5_LDADD = ${WDB} ${LIBRT} ${BN} ${BU}
 g5_g4_LDADD = ${WDB} ${LIBRT} ${BN} ${BU}
 g_acad_LDADD = ${WDB} ${LIBRT} ${BN} ${BU} 
+g_adrt_LDADD = ${WDB} ${LIBRT} ${BN} ${BU} 
 g_dxf_LDADD = ${WDB} ${LIBRT} ${BN} ${BU} 
 g_euclid1_LDADD = ${LIBRT} ${BN} ${BU} 
 g_euclid_LDADD = ${LIBRT} ${BN} ${BU} 
@@ -128,6 +130,7 @@ g2asc_SOURCES = g2asc.c
 g4_g5_SOURCES = g4-g5.c
 g5_g4_SOURCES = g5-g4.c
 g_acad_SOURCES = g-acad.c 
+g_adrt_SOURCES = g-adrt.c 
 g_dxf_SOURCES = g-dxf.c 
 g_euclid1_SOURCES = g-euclid1.c 
 g_euclid_SOURCES = g-euclid.c 
@@ -223,6 +226,7 @@ FAST_OBJECTS = \
 	$(euclid_unformat_OBJECTS) \
 	$(fast4_g_OBJECTS) \
 	$(g_acad_OBJECTS) \
+	$(g_adrt_OBJECTS) \
 	$(g_dxf_OBJECTS) \
 	$(g_euclid_OBJECTS) \
 	$(g_euclid1_OBJECTS) \
