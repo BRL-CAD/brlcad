@@ -459,6 +459,11 @@ void common_unpack_mesh(common_db_t *db, void *app_data, int size, tie_t *tie) {
 
 
   start = app_ind;
+  vlist = NULL;
+  flist = NULL;
+  tlist = NULL;
+  vmax = 0;
+  fmax = 0;
 
   /* initialize tie with triangle number */
   common_unpack_read(app_data, app_ind, &num, sizeof(int), tienet_endian);
@@ -487,12 +492,19 @@ void common_unpack_mesh(common_db_t *db, void *app_data, int size, tie_t *tie) {
 
     /* Vertices */
     common_unpack_read(app_data, app_ind, &vnum, sizeof(int), tienet_endian);
-    vlist = (TIE_3 *)malloc(vnum * sizeof(TIE_3));
+    if(vnum > vmax) {
+      vmax = vnum;
+      vlist = (TIE_3 *)realloc(vlist, vmax * sizeof(TIE_3));
+    }
     common_unpack_read(app_data, app_ind, vlist, vnum * sizeof(TIE_3), 0);
 
     /* Faces */
     common_unpack_read(app_data, app_ind, &fnum, sizeof(int), tienet_endian);
-    flist = (int *)malloc(fnum * 3 * sizeof(int));
+    if(fnum > fmax) {
+      fmax = fnum;
+      flist = (int *)realloc(flist, fmax * 3 * sizeof(int));
+      tlist = (TIE_3 *)realloc(tlist, fmax * 3 * sizeof(TIE_3));
+    }
     common_unpack_read(app_data, app_ind, flist, fnum * 3 * sizeof(int), 0);
 
     /* Allocate memory for ADRT triangles */
@@ -529,10 +541,11 @@ void common_unpack_mesh(common_db_t *db, void *app_data, int size, tie_t *tie) {
     /* Store inverted matrix */
     math_mat_invert(db->mesh_list[db->mesh_num-1]->matinv, db->mesh_list[db->mesh_num-1]->matrix, 4);
 
-    free(vlist);
-    free(flist);
-    free(tlist);
   } while(app_ind - start < size);
+
+  free(vlist);
+  free(flist);
+  free(tlist);
 }
 
 

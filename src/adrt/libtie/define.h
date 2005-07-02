@@ -50,9 +50,9 @@
 
 /* Type to use for floating precision */
 #if TIE_SINGLE_PREC
-#define	tfloat	float
+#define tfloat float
 #else
-#define	tfloat	double
+#define tfloat double
 #endif
 
 #ifdef LONG_64_BITS
