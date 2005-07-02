@@ -179,14 +179,15 @@ static union tree *leaf_func(struct db_tree_state *tsp,
     register struct soltab *stp;
     union tree *curtree;
     struct directory *dp;
-    register matp_t mat;
-    int hash, i, n, size;
-    struct rt_i *rtip;
-    struct rt_bot_internal *bot;
-    vectp_t vp;
-    vect_t vv, v0, v1, v2;
     struct region_pointer *td = (struct region_pointer *)client_data;
     struct bu_vls *vlsp;
+    struct rt_i *rtip;
+    struct rt_bot_internal *bot;
+    matp_t mat;
+    vect_t vv;
+    vectp_t vp;
+    float vec[3];
+    int hash, i, n, size;
     char c, prop_name[256], reg_name[256];
 
 
@@ -285,10 +286,10 @@ sizeof(char));
 
     for(i = 0; i < bot->num_vertices; i++) {
       /* Change scale from mm to meters */
-      bot->vertices[3*i+0] *= 0.001;
-      bot->vertices[3*i+1] *= 0.001;
-      bot->vertices[3*i+2] *= 0.001;
-      fwrite(&bot->vertices[3*i], sizeof(float), 3, adrt_fh);
+      vec[0] = bot->vertices[3*i+0] * 0.001;
+      vec[1] = bot->vertices[3*i+1] * 0.001;
+      vec[2] = bot->vertices[3*i+2] * 0.001;
+      fwrite(vec, sizeof(float), 3, adrt_fh);
     }
 
     /* Pack number of faces */
@@ -345,7 +346,7 @@ int main(int argc, char *argv[]) {
   short s;
 
   if(argc <= 3) {
-    printf("usage: g-adrt file.g adrt_proj_name [region list]\n");
+    printf("Usage: g-adrt file.g adrt_proj_name [region list]\n");
     exit(1);
   }
 
@@ -385,7 +386,10 @@ int main(int argc, char *argv[]) {
   ts.ts_resp = NULL;
   bu_avs_init(&ts.ts_attrs, 1, "avs in tree_state");
 
-  db_walk_tree(rtip->rti_dbip, argc - 3, &argv[3], 1, &ts, &reg_start_func, &reg_end_func, &leaf_func, (void *)0);
+  /*
+  * Generage a geometry file
+  */
+  db_walk_tree(rtip->rti_dbip, argc - 3, (const char **)&argv[3], 1, &ts, &reg_start_func, &reg_end_func, &leaf_func, (void *)0);
   fclose(adrt_fh);
 
   /*

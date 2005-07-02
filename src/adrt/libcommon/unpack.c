@@ -452,13 +452,12 @@ void common_unpack_texture(void *app_data, int size) {
 
 
 void common_unpack_mesh(common_db_t *db, void *app_data, int size, tie_t *tie) {
-  TIE_3			v[3], *tlist = NULL;
-  char			c, name[256];
-  short			block;
-  int			i, j, k, num, start, tnum;
+  TIE_3 v[3], *vlist, *tlist;
+  char c, name[256];
+  short block;
+  int *flist, i, num, start, vnum, vmax, fnum, fmax;
 
 
-  tnum = 0;
   start = app_ind;
 
   /* initialize tie with triangle number */
@@ -466,8 +465,6 @@ void common_unpack_mesh(common_db_t *db, void *app_data, int size, tie_t *tie) {
   tie_init(tie, num);
 
   do {
-    common_unpack_read(app_data, app_ind, &block, sizeof(short), tienet_endian);
-
     /* Create a Mesh */
     db->mesh_num++;
     db->mesh_list = (common_mesh_t **)realloc(db->mesh_list, sizeof(common_mesh_t *)*db->mesh_num);
@@ -489,62 +486,53 @@ void common_unpack_mesh(common_db_t *db, void *app_data, int size, tie_t *tie) {
     common_unpack_prop_lookup(name, &(db->mesh_list[db->mesh_num-1]->prop));
 
     /* Vertices */
-    common_unpack_read(app_data, app_ind, &num, sizeof(int), tienet_endian);
+    common_unpack_read(app_data, app_ind, &vnum, sizeof(int), tienet_endian);
+    vlist = (TIE_3 *)malloc(vnum * sizeof(TIE_3));
+    common_unpack_read(app_data, app_ind, vlist, vnum * sizeof(TIE_3), 0);
 
     /* Faces */
+    common_unpack_read(app_data, app_ind, &fnum, sizeof(int), tienet_endian);
+    flist = (int *)malloc(fnum * 3 * sizeof(int));
+    common_unpack_read(app_data, app_ind, flist, fnum * 3 * sizeof(int), 0);
 
-    if(num > tnum) {
-      tnum = num;
-      tlist = (TIE_3 *)realloc(tlist, sizeof(TIE_3) * tnum * 3);
-    }
+    /* Allocate memory for ADRT triangles */
+    db->mesh_list[db->mesh_num-1]->tri_num = fnum;
+    db->mesh_list[db->mesh_num-1]->tri_list = (common_triangle_t *)malloc(fnum * sizeof(common_triangle_t));
+    tlist = (TIE_3 *)malloc(fnum * 3 * sizeof(TIE_3));
 
-
-    db->mesh_list[db->mesh_num-1]->tri_num = num;
-    db->mesh_list[db->mesh_num-1]->tri_list = (common_triangle_t *)malloc(num * sizeof(common_triangle_t));
-
-    for(i = 0; i < num; i++) {
+    /* Build the triangle list */
+    for(i = 0; i < fnum; i++) {
       db->mesh_list[db->mesh_num-1]->tri_list[i].mesh = db->mesh_list[db->mesh_num-1];
       db->mesh_list[db->mesh_num-1]->tri_list[i].normals = NULL;
-
-      /* Smooth Triangle */
-      common_unpack_read(app_data, app_ind, &c, sizeof(char), 0);
-
-      /* Triangle */
-      for(j = 0; j < 3; j++)
-        for(k = 0; k < 3; k++)
-          common_unpack_read(app_data, app_ind, &v[j].v[k], sizeof(tfloat), tienet_endian);
-
-      tlist[i*3+0] = v[0];
-      tlist[i*3+1] = v[1];
-      tlist[i*3+2] = v[2];
-
-      if(c) {
-        db->mesh_list[db->mesh_num-1]->tri_list[i].normals = (tfloat *)malloc(sizeof(tfloat)*9);
-        for(j = 0; j < 9; j++)
-          common_unpack_read(app_data, app_ind, &(db->mesh_list[db->mesh_num-1]->tri_list[i].normals[j]), sizeof(tfloat), tienet_endian);
-      }
-
+      tlist[i*3+0] = vlist[flist[3*i+0]];
+      tlist[i*3+1] = vlist[flist[3*i+1]];
+      tlist[i*3+2] = vlist[flist[3*i+2]];
     }
 
 
     /* ADD TRIANGLES TO TIE */
-    tie_push(tie, tlist, num, db->mesh_list[db->mesh_num-1]->tri_list, sizeof(common_triangle_t));
+    tie_push(tie, tlist, fnum, db->mesh_list[db->mesh_num-1]->tri_list, sizeof(common_triangle_t));
 
 
     /* Min and Max */
+#if 0
     for(j = 0; j < 3; j++)
       common_unpack_read(app_data, app_ind, &(db->mesh_list[db->mesh_num-1]->min.v[j]), sizeof(tfloat), tienet_endian);
     for(j = 0; j < 3; j++)
       common_unpack_read(app_data, app_ind, &(db->mesh_list[db->mesh_num-1]->max.v[j]), sizeof(tfloat), tienet_endian);
+#endif
 
     /* Matrix */
-    for(j = 0; j < 16; j++)
-      common_unpack_read(app_data, app_ind, &(db->mesh_list[db->mesh_num-1]->matrix[j]), sizeof(tfloat), tienet_endian);
+    for(i = 0; i < 16; i++)
+      common_unpack_read(app_data, app_ind, &(db->mesh_list[db->mesh_num-1]->matrix[i]), sizeof(tfloat), tienet_endian);
 
+    /* Store inverted matrix */
     math_mat_invert(db->mesh_list[db->mesh_num-1]->matinv, db->mesh_list[db->mesh_num-1]->matrix, 4);
-  } while(app_ind - start < size);
 
-  free(tlist);
+    free(vlist);
+    free(flist);
+    free(tlist);
+  } while(app_ind - start < size);
 }
 
 

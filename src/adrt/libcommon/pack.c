@@ -68,14 +68,13 @@ int	common_pack_trinum;
 void common_pack_write(void **dest, int *ind, void *src, int size) {
   if((int)(*ind + size) > (int)common_pack_app_size)
     common_pack_app_size = *ind + size;
-/*
+
   if(common_pack_app_size > common_pack_app_mem) {
     common_pack_app_mem = common_pack_app_size + (16 M);
     *dest = realloc(*dest, common_pack_app_mem);
   }
 
   memcpy(&(((char *)*dest)[*ind]), src, size);
-*/
   *ind += size;
 }
 
@@ -553,7 +552,7 @@ void common_pack_mesh_adrt(common_db_t *db, void **app_data, int *app_ind, char 
   TIE_3 v;
   char c, meshname[256], texturename[256];
   short s, endian;
-  int face[3], marker, size, i, j, k, n, num, matrixind, end;
+  int face[3], marker_size, marker_trinum, size, i, j, k, n, num, matrixind, end;
 
 
   fh = fopen(filename, "rb");
@@ -565,8 +564,12 @@ void common_pack_mesh_adrt(common_db_t *db, void **app_data, int *app_ind, char 
   s = COMMON_PACK_MESH;
   common_pack_write(app_data, app_ind, &s, sizeof(short));
 
-  /* Size of mesh data */
-  marker = *app_ind;
+  /* Marker for size of all mesh data */
+  marker_size = *app_ind;
+  *app_ind += sizeof(int);
+
+  /* Marker for total number of triangles */
+  marker_trinum = *app_ind;
   *app_ind += sizeof(int);
 
   /* Get End Position */
@@ -582,9 +585,6 @@ void common_pack_mesh_adrt(common_db_t *db, void **app_data, int *app_ind, char 
   fread(&s, sizeof(short), 1, fh);
 
   while(ftell(fh) != end) {
-    s = COMMON_PACK_MESH_NEW;
-    common_pack_write(app_data, app_ind, &s, sizeof(short));
-
     /* Mesh Name */
     fread(&c, sizeof(char), 1, fh);
     fread(meshname, sizeof(char), c, fh);
@@ -640,7 +640,12 @@ void common_pack_mesh_adrt(common_db_t *db, void **app_data, int *app_ind, char 
 
   fclose(fh);
 
-  size = *app_ind - marker;
-  common_pack_write(app_data, &marker, &size, sizeof(int));
-  *app_ind = marker + size;
+  /* pack the total number of triangles */
+  common_pack_write(app_data, &marker_trinum, &common_pack_trinum, sizeof(int));
+
+  /* pack the size of the mesh data */
+  size = *app_ind - marker_size - sizeof(int); /* make sure you're not counting the data size integer */
+  common_pack_write(app_data, &marker_size, &size, sizeof(int));
+
+  *app_ind = marker_size + size;
 }
