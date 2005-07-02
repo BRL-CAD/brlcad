@@ -114,6 +114,9 @@ void util_camera_prep(util_camera_t *camera, common_db_t *db) {
   /* Generate an aspect ratio coefficient */
   aspect = (tfloat)db->env.img_vw / (tfloat)db->env.img_vh;
 
+  /* Free camera view list if already allocated */
+  if(camera->view_list)
+    free(camera->view_list);
 
   /* If there is no depth of field then just generate the standard look vector */
   if(camera->dof == 0.0) {
