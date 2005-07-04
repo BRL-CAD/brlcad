@@ -353,6 +353,11 @@ rt_superell_print(register const struct soltab *stp)
 	VPRINT("V", superell->superell_V);
 }
 
+/* Equation of a superellipsoid:
+ *
+ * f(x) = [ (x^(2/e2) + y^(2/e2))^(e2/e1) + z^(2/e1) ]^(e1/2) - 1
+ */
+
 /*
  *  			R T _ S U P E R E L L _ S H O T
  *  
@@ -408,11 +413,14 @@ rt_superell_shot(struct soltab *stp, register struct xray *rp, struct applicatio
   VSUB2( normalizedShotPoint, newShotPoint, normalizedShotPoint );
 
   /* Now generate the polynomial equation for passing to the root finder */
-  
+
   equation.dgr = 2;
 
+  /* (x^2 / A) + (y^2 / B) + (z^2 / C) - 1 */
   equation.cf[0] = newShotPoint[X] * newShotPoint[X] * superell->superell_invmsAu + newShotPoint[Y] * newShotPoint[Y] * superell->superell_invmsBu + newShotPoint[Z] * newShotPoint[Z] * superell->superell_invmsCu - 1;
+  /* (2xX / A) + (2yY / B) + (2zZ / C) */
   equation.cf[1] = 2 * newShotDir[X] * newShotPoint[X] * superell->superell_invmsAu + 2 * newShotDir[Y] * newShotPoint[Y] * superell->superell_invmsBu + 2 * newShotDir[Z] * newShotPoint[Z] * superell->superell_invmsCu;
+  /* (X^2 / A) + (Y^2 / B) + (Z^2 / C) */
   equation.cf[2] = newShotDir[X] * newShotDir[X] * superell->superell_invmsAu  + newShotDir[Y] * newShotDir[Y] * superell->superell_invmsBu + newShotDir[Z] * newShotDir[Z] * superell->superell_invmsCu;
 
   if ( (i = rt_poly_roots( &equation, complexRoot, stp->st_dp->d_namep)) != 2 ) {
