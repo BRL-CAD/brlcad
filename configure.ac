@@ -157,7 +157,6 @@ if test -d $srcdir/CVS ; then
 	if test "x$enable_dependency_tracking" = "x" ; then
 		enable_dependency_tracking="yes"
 	fi
-	else
 	AC_MSG_RESULT([yes])
 else
 	if test "x$enable_maintainer_mode" = "x" ; then
