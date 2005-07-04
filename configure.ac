@@ -814,6 +814,7 @@ AC_CHECK_HEADERS( \
 	itcl.h \
 	itk.h \
 	langinfo.h \
+	libgen.h \
 	limits.h \
 	locale.h \
 	malloc.h \
