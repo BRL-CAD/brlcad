@@ -351,15 +351,35 @@ main(int argc, char **argv)
 
 		pid = fork();
 		if( pid > 0 ) {
+		    fd_set set;
+		    struct timeval timeout;
+		    int read_result;
+
 		    /* just so it does not appear that MGED has died,
 		     * wait until the gui is up before exiting the
 		     * parent process (child sends us a byte).
 		     */
 		    if (use_pipe) {
+#if 0
 			if (read(parent_pipe[0], buffer, 1) == -1) {
 			    perror("Unable to read from communication pipe");
 			}
-			fprintf(stdout, "done\n");
+#else
+		    
+			FD_ZERO(&set);
+			FD_SET(parent_pipe[0], &set);
+			timeout.tv_sec = 10;
+			timeout.tv_usec = 0;
+			read_result = select(parent_pipe[0], &set, NULL, NULL, &timeout);
+
+			if (read_result == -1) {
+			    perror("Unable to read from communication pipe");
+			} else if (read_result == 0) {
+			    fprintf(stdout, "\nAborted\n");
+			} else {
+			    fprintf(stdout, "Done\n");
+			}
+#endif
 		    } else {
 			/* no pipe, so just wait a little while */
 			sleep(3);
