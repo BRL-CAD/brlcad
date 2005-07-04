@@ -34,7 +34,11 @@ static const char RCSid[] = "$Header$";
 #include <math.h>
 
 #ifdef HAVE_STRING_H
-# include <string.h>
+#  include <string.h>
+#endif
+
+#ifdef HAVE_LIBGEN_H
+#  include <libgen.h>
 #endif
 
 #include "machine.h"
@@ -60,7 +64,6 @@ void			init_ovlp(void);
 int if_hit(struct application *ap, struct partition *part_head, struct seg *finished_segs)
 {
     struct partition	*part;
-    char		*basename(char *string);
     fastf_t		ar = azimuth() * deg2rad;
     fastf_t		er = elevation() * deg2rad;
     int			i;
