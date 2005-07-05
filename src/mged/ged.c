@@ -360,11 +360,6 @@ main(int argc, char **argv)
 		     * parent process (child sends us a byte).
 		     */
 		    if (use_pipe) {
-#if 0
-			if (read(parent_pipe[0], buffer, 1) == -1) {
-			    perror("Unable to read from communication pipe");
-			}
-#else
 		    
 			FD_ZERO(&set);
 			FD_SET(parent_pipe[0], &set);
@@ -379,7 +374,7 @@ main(int argc, char **argv)
 			} else {
 			    fprintf(stdout, "Done\n");
 			}
-#endif
+
 		    } else {
 			/* no pipe, so just wait a little while */
 			sleep(3);
@@ -388,7 +383,7 @@ main(int argc, char **argv)
 		}
 	}
 
-#if 1
+
 	/* If multiple processors might be used, initialize for it.
 	 * Do not run any commands before here.
 	 * Do not use bu_log() or bu_malloc() before here.
@@ -397,7 +392,6 @@ main(int argc, char **argv)
 	  rt_g.rtg_parallel = 1;
 	  bu_semaphore_init( RT_SEM_LAST );
 	}
-#endif
 
 	/* Set up linked lists */
 	BU_LIST_INIT(&HeadSolid.l);
