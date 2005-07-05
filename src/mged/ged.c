@@ -370,7 +370,7 @@ main(int argc, char **argv)
 			FD_SET(parent_pipe[0], &set);
 			timeout.tv_sec = 10;
 			timeout.tv_usec = 0;
-			read_result = select(parent_pipe[0], &set, NULL, NULL, &timeout);
+			read_result = select(parent_pipe[0]+1, &set, NULL, NULL, &timeout);
 
 			if (read_result == -1) {
 			    perror("Unable to read from communication pipe");
