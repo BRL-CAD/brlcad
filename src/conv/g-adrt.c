@@ -21,7 +21,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  *
- *  BRLCAD -> ADRT converter
+ *  BRLCAD -> ADRT Converter
  *
  *  Author -
  *      Justin L. Shumaker
@@ -36,6 +36,8 @@
 #include <math.h>
 #include <stdio.h>
 #include <string.h>
+#include <unistd.h>
+#include <getopt.h>
 
 #include "brlcad_config.h"	/* machine specific definitions */
 #include "machine.h"		/* machine specific definitions */
@@ -54,11 +56,20 @@ typedef struct property_s {
   float color[3];
 } property_t;
 
+typedef struct regmap_s {
+  char name[256];
+  int id;
+} regmap_t;
+
+
 static struct rt_i *rtip;	/* rt_dirbuild returns this */
 FILE *adrt_fh;
 int region_count = 0;
 int prop_num;
 property_t *prop_list;
+int regmap_num;
+regmap_t *regmap_list;
+int use_regmap;
 
 struct bu_vls*	region_name_from_path(struct db_full_path *pathp);
 
@@ -338,23 +349,141 @@ sizeof(char));
 }
 
 
+void load_regmap(char *filename) {
+  FILE *fh;
+  char line[256], name[256], idstr[20], *ptr;
+  int i, ind, id;
+
+  regmap_num = 0;
+  regmap_list = NULL;
+
+  fh = fopen(filename, "r");
+  if(!fh) {
+    printf("region map file \"%s\" not found.\n", filename);
+    return;
+  } else {
+    printf("using region map: %s\n", optarg);
+  }
+
+  while(!feof(fh)) {
+    /* read in the line */
+    fgets(line, 256, fh);
+
+    /* strip off the new line */
+    line[strlen(line)-1] = 0;
+
+    /* replace any tabs with spaces */
+    for(i = 0; i < strlen(line); i++)
+      if(line[i] == '\t')
+        line[i] = ' ';
+
+    /* advance to the first non-space */
+    ind = 0;
+    while(line[ind] == ' ')
+      ind++;
+
+    /* If there is a '#' comment here then continue */
+    if(line[ind] == '#')
+      continue;
+
+    /* advance to the first space while reading the name */
+    i = 0;
+    while(i < 256 && line[ind] != ' ' && ind < strlen(line))
+      name[i++] = line[ind++];
+    name[i] = 0;
+
+    /* skip any lines that are empty */
+    if(!strlen(name))
+      continue;
+
+    /* begin parsing the id's */
+    while(ind < strlen(line)) {
+      /* advance to the first id */
+      while(line[ind] == ' ')
+        ind++;
+
+      /* check for comment */
+      if(line[ind] == '#')
+        break;
+
+      /* advance to the first space while reading the id string */
+      i = 0;
+      while(i < 256 && line[ind] != ' ' && ind < strlen(line))
+        idstr[i++] = line[ind++];
+      idstr[i] = 0;
+
+      /* chesk that there were no spaces after the last id */
+      if(!strlen(idstr))
+        break;
+
+      /* if the id string contains a ':' then it's a range */
+      if(strstr(idstr, ":")) {
+        int hi, lo;
+
+        ptr = strchr(idstr, ':');
+        ptr++;
+        hi = atoi(ptr);
+        strchr(idstr, ':')[0] = 0;
+printf("hi: %d, idstr: -%s- %d\n", hi, idstr, atoi(idstr));
+        lo = atoi(idstr);
+
+        /* insert an entry for the whole range */
+        for(i = 0; i <= hi-lo; i++) {
+          /* Insert one entry into the regmap_list */
+          regmap_list = (regmap_t *)realloc(regmap_list, sizeof(regmap_t) * (regmap_num + 1));
+          strcpy(regmap_list[regmap_num].name, name);
+          regmap_list[regmap_num].id = lo + i;
+          regmap_num++;
+        }
+      } else {
+        /* insert one entry into the regmap_list */
+        regmap_list = (regmap_t *)realloc(regmap_list, sizeof(regmap_t) * (regmap_num + 1));
+        strcpy(regmap_list[regmap_num].name, name);
+        regmap_list[regmap_num].id = atoi(idstr);
+        regmap_num++;
+      }
+
+      printf("regmap_list[%d]: %s - %d\n", regmap_num, regmap_list[regmap_num-1].name, regmap_list[regmap_num-1].id);
+    }
+  }
+}
+
+
 int main(int argc, char *argv[]) {
   int i;
   char idbuf[132], filename[256];
+  char shortopts[] = "r:", c;
   struct db_tree_state ts;
   struct directory *dp;
   short s;
 
+
   if(argc <= 3) {
-    printf("Usage: g-adrt file.g adrt_proj_name [region list]\n");
+    printf("Usage: g-adrt [-r region.map] file.g adrt_project_name [region list]\n");
     exit(1);
   }
 
+  /* Process command line arguments */
+  use_regmap = 0;
+  while((c = getopt(argc, argv, shortopts)) != -1) {
+    switch(c) {
+      case 'r':
+        use_regmap = 1;
+        load_regmap(optarg);
+        break;
+
+      default:
+        break;
+    }
+  }
+  argc -= optind;
+  argv += optind;
+
   /* Open the adrt file */
-  strcpy(filename, argv[2]);
+  strcpy(filename, argv[1]);
   strcat(filename, ".adrt");
   adrt_fh = fopen(filename, "w");
-  printf("Converting...\n", argv[1], filename);
+  printf("converting: %s\n", argv[0]);
 
   /* write 2-byte endian */
   s = 1;
@@ -375,7 +504,7 @@ int main(int argc, char *argv[]) {
   * title string in the header (ID) record.
   */
 
-  if((rtip = rt_dirbuild(argv[1], idbuf, sizeof(idbuf))) == RTI_NULL) {
+  if((rtip = rt_dirbuild(argv[0], idbuf, sizeof(idbuf))) == RTI_NULL) {
     fprintf(stderr,"rtexample: rt_dirbuild failure\n");
     exit(2);
   }
@@ -389,17 +518,17 @@ int main(int argc, char *argv[]) {
   /*
   * Generage a geometry file
   */
-  db_walk_tree(rtip->rti_dbip, argc - 3, (const char **)&argv[3], 1, &ts, &reg_start_func, &reg_end_func, &leaf_func, (void *)0);
+  db_walk_tree(rtip->rti_dbip, argc - 2, (const char **)&argv[2], 1, &ts, &reg_start_func, &reg_end_func, &leaf_func, (void *)0);
   fclose(adrt_fh);
 
   /*
   * Generate an environment file
   */
-  strcpy(filename, argv[2]);
+  strcpy(filename, argv[1]);
   strcat(filename, ".env");
   adrt_fh = fopen(filename, "w");
 
-  strcpy(filename, argv[2]);
+  strcpy(filename, argv[1]);
   strcat(filename, ".adrt");
   fprintf(adrt_fh, "geometry_file,%s\n", filename);
   fprintf(adrt_fh, "properties_file,properties.db\n");
