@@ -306,6 +306,163 @@ static void tie_build_tree(tie_t *tie, tie_bsp_t *node, int depth, TIE_3 min, TI
 
   math_vec_add(center, max, min);
   math_vec_mul_scalar(center, center, 0.5);
+
+#if 0
+  /* Split along largest Axis to keep node sizes relatively cube-like (Naive) */
+  math_vec_sub(vec, max, min);
+
+  /* Determine the largest Axis */
+  if(vec.v[0] >= vec.v[1] && vec.v[0] >= vec.v[2]) {
+    cmax[0].v[0] = center.v[0];
+    cmin[1].v[0] = center.v[0];
+    node->axis = center.v[0];
+    split = 0;
+  } else if(vec.v[1] >= vec.v[0] && vec.v[1] >= vec.v[2]) {
+    cmax[0].v[1] = center.v[1];
+    cmin[1].v[1] = center.v[1];
+    node->axis = center.v[1];
+    split = 1;
+  } else {
+    cmax[0].v[2] = center.v[2];
+    cmin[1].v[2] = center.v[2];
+    node->axis = center.v[2];
+    split = 2;
+  }
+#else
+  /*
+  * Determine which of the 3 axis has the largest sum of entirely split and contained triangles.
+  * If the sum of the largest split is less than or equal to max triangles per node then terminate.
+  */
+{
+  int x[2], y[2], z[2];
+
+  x[0] = 0;
+  x[1] = 0;
+  y[0] = 0;
+  y[1] = 0;
+  z[0] = 0;
+  z[1] = 0;
+
+  for(i = 0; i < node_geom_data->tri_num; i++) {
+    /* X0 - Test */
+    n = 0;
+    for(j = 0; j < 3; j++) {
+      if(node_geom_data->tri_list[i]->data[j].v[0] > center.v[0] &&
+         node_geom_data->tri_list[i]->data[j].v[0] < max.v[0] &&
+         node_geom_data->tri_list[i]->data[j].v[1] > min.v[1] &&
+         node_geom_data->tri_list[i]->data[j].v[1] < max.v[1] &&
+         node_geom_data->tri_list[i]->data[j].v[2] > min.v[2] &&
+         node_geom_data->tri_list[i]->data[j].v[2] < max.v[2]) {
+         n++;
+      }
+    }
+    if(n)
+      x[0]++;
+
+    /* X1 - Test */
+    n = 0;
+    for(j = 0; j < 3; j++) {
+      if(node_geom_data->tri_list[i]->data[j].v[0] > min.v[0] &&
+         node_geom_data->tri_list[i]->data[j].v[0] < center.v[0] &&
+         node_geom_data->tri_list[i]->data[j].v[1] > min.v[1] &&
+         node_geom_data->tri_list[i]->data[j].v[1] < max.v[1] &&
+         node_geom_data->tri_list[i]->data[j].v[2] > min.v[2] &&
+         node_geom_data->tri_list[i]->data[j].v[2] < max.v[2]) {
+         n++;
+      }
+    }
+    if(n)
+      x[1]++;
+
+    /* Y0 - Test */
+    n = 0;
+    for(j = 0; j < 3; j++) {
+      if(node_geom_data->tri_list[i]->data[j].v[0] > min.v[0] &&
+         node_geom_data->tri_list[i]->data[j].v[0] < max.v[0] &&
+         node_geom_data->tri_list[i]->data[j].v[1] > center.v[1] &&
+         node_geom_data->tri_list[i]->data[j].v[1] < max.v[1] &&
+         node_geom_data->tri_list[i]->data[j].v[2] > min.v[2] &&
+         node_geom_data->tri_list[i]->data[j].v[2] < max.v[2]) {
+         n++;
+      }
+    }
+    if(n)
+      y[0]++;
+
+    /* Y1 - Test */
+    n = 0;
+    for(j = 0; j < 3; j++) {
+      if(node_geom_data->tri_list[i]->data[j].v[0] > min.v[0] &&
+         node_geom_data->tri_list[i]->data[j].v[0] < max.v[0] &&
+         node_geom_data->tri_list[i]->data[j].v[1] > min.v[1] &&
+         node_geom_data->tri_list[i]->data[j].v[1] < center.v[1] &&
+         node_geom_data->tri_list[i]->data[j].v[2] > min.v[2] &&
+         node_geom_data->tri_list[i]->data[j].v[2] < max.v[2]) {
+         n++;
+      }
+    }
+    if(n)
+      y[1]++;
+
+    /* Z0 - Test */
+    n = 0;
+    for(j = 0; j < 3; j++) {
+      if(node_geom_data->tri_list[i]->data[j].v[0] > min.v[0] &&
+         node_geom_data->tri_list[i]->data[j].v[0] < max.v[0] &&
+         node_geom_data->tri_list[i]->data[j].v[1] > min.v[1] &&
+         node_geom_data->tri_list[i]->data[j].v[1] < max.v[1] &&
+         node_geom_data->tri_list[i]->data[j].v[2] > center.v[2] &&
+         node_geom_data->tri_list[i]->data[j].v[2] < max.v[2]) {
+         n++;
+      }
+    }
+    if(n)
+      z[0]++;
+
+    /* Z1 - Test */
+    n = 0;
+    for(j = 0; j < 3; j++) {
+      if(node_geom_data->tri_list[i]->data[j].v[0] > min.v[0] &&
+         node_geom_data->tri_list[i]->data[j].v[0] < max.v[0] &&
+         node_geom_data->tri_list[i]->data[j].v[1] > min.v[1] &&
+         node_geom_data->tri_list[i]->data[j].v[1] < max.v[1] &&
+         node_geom_data->tri_list[i]->data[j].v[2] > min.v[2] &&
+         node_geom_data->tri_list[i]->data[j].v[2] < center.v[2]) {
+         n++;
+      }
+    }
+    if(n)
+      z[1]++;
+      
+  }
+
+//  if(x[0]+x[1] <= TIE_BSP_NODE_MAX && y[0]+y[1] <= TIE_BSP_NODE_MAX && z[0]+z[1] <= TIE_BSP_NODE_MAX) {
+  if(x[0]+x[1] == 0 && y[0]+y[1] == 0 && z[0]+z[1] == 0) {
+    /* DONE! */
+    tie->max_tri++;
+    return;
+  }
+
+#if 0
+  /* Determine the largest sum */
+  if(x[0]+x[1] >= y[0]+y[1] && x[0]+x[1] >= z[0]+z[1]) {
+    cmax[0].v[0] = center.v[0];
+    cmin[1].v[0] = center.v[0];
+    node->axis = center.v[0];
+    split = 0;
+  } else if(y[0]+y[1] >= x[0]+x[1] && y[0]+y[1] >= z[0]+z[1]) {
+    cmax[0].v[1] = center.v[1];
+    cmin[1].v[1] = center.v[1];
+    node->axis = center.v[1];
+    split = 1;
+  } else {
+    cmax[0].v[2] = center.v[2];
+    cmin[1].v[2] = center.v[2];
+    node->axis = center.v[2];
+    split = 2;
+  }
+
+#else
   /* Split along largest Axis to keep node sizes relatively cube-like (Naive) */
   math_vec_sub(vec, max, min);
 
@@ -327,6 +484,10 @@ static void tie_build_tree(tie_t *tie, tie_bsp_t *node, int depth, TIE_3 min, TI
     split = 2;
   }
 
+#endif
+}
+
+#endif
 
   /* Allocate 2 children nodes for the parent node */
   node->data = (void*)malloc(sizeof(tie_bsp_t)*2);
@@ -491,7 +652,7 @@ void tie_prep(tie_t *tie) {
   for(i = 0; i < tie->tri_num; i++)
     tie_tri_prep(&tie->tri_list[i]);
 
-/*  printf("max_tri: %d\n", tie->max_tri); */
+  printf("max_tri: %d\n", tie->max_tri);
 /*  exit(0); */ /* uncomment to profile prep phase only */
 }
 
