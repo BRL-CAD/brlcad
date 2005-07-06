@@ -90,6 +90,24 @@ __BEGIN_DECLS
 # include <sys/time.h>
 #endif
 
+
+/** define BU_DIR_SEPARATOR to the directory path separator character
+ */
+#ifdef DIR_SEPARATOR
+#  define BU_DIR_SEPARATOR DIR_SEPARATOR
+#else
+#  ifdef DIR_SEPARATOR_2
+#    define BU_DIR_SEPARATOR DIR_SEPARATOR_2
+#  else
+#    ifdef _WIN32
+#      define BU_DIR_SEPARATOR '\\'
+#    else
+#      define BU_DIR_SEPARATOR '/'
+#    endif  /* _WIN32 */
+#  endif  /* DIR_SEPARATOR_2 */
+#endif  /* DIR_SEPARATOR */
+
+
 /*----------------------------------------------------------------------*/
 /*
  *  System library routines used by LIBBS.
