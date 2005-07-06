@@ -2,7 +2,7 @@
 
 SUBDIRS = animmate
 
-htmldocsdir = $(BRLCAD_DATA_DIR)/html/manuals/mged
+htmldocsdir = $(BRLCAD_DATA)/html/manuals/mged
 
 htmldocs_DATA = \
 	az_el.gif \

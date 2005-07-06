@@ -1,6 +1,6 @@
 # $Id$
 
-htmldocsdir = $(BRLCAD_DATA_DIR)/html/manuals/Anim_Tutorial
+htmldocsdir = $(BRLCAD_DATA)/html/manuals/Anim_Tutorial
 
 htmldocs_DATA = \
 	Lee_tux.gif \

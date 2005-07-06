@@ -1,6 +1,6 @@
 # $Id$
 
-htmldocsdir = $(BRLCAD_DATA_DIR)/html/manuals/libdm
+htmldocsdir = $(BRLCAD_DATA)/html/manuals/libdm
 
 htmldocs_DATA = \
 	api.html \

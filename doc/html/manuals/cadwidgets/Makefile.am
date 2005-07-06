@@ -1,6 +1,6 @@
 # $Id$
 
-htmldocsdir = $(BRLCAD_DATA_DIR)/html/manuals/cadwidgets
+htmldocsdir = $(BRLCAD_DATA)/html/manuals/cadwidgets
 
 htmldocs_DATA = \
 	Command.html \

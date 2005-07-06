@@ -2,7 +2,7 @@
 
 SUBDIRS = Anim_Tutorial ReleaseNotes cadwidgets libbu libdm librt mged shaders
 
-htmldocsdir = $(BRLCAD_DATA_DIR)/html/manuals
+htmldocsdir = $(BRLCAD_DATA)/html/manuals
 
 htmldocs_DATA = \
 	Install.html \

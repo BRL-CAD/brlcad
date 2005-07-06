@@ -1,6 +1,6 @@
 # $Id$
 
-htmldocsdir = $(BRLCAD_DATA_DIR)/html/manuals/mged/animmate
+htmldocsdir = $(BRLCAD_DATA)/html/manuals/mged/animmate
 
 htmldocs_DATA = \
 	anim_cascade.html \

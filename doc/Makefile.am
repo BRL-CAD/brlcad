@@ -4,7 +4,7 @@ SUBDIRS = \
 	html \
 	legal
 
-documentationdir = $(BRLCAD_DATA_DIR)
+documentationdir = $(BRLCAD_DATA)
 
 documentation_DATA = \
 	README.IRIX \
