@@ -83,7 +83,7 @@ DIST_SUBDIRS = \
 	$(bench_dirs) \
 	$(other_dirs)
 
-documentationdir = $(BRLCAD_DATA_DIR)
+documentationdir = $(BRLCAD_DATA)
 
 documentation_DATA = \
 	AUTHORS \
