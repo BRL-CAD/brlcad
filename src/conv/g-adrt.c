@@ -51,10 +51,12 @@
 #endif
 #define ADRT_GEOMETRY_REVISION 0
 
+
 typedef struct property_s {
   char name[256];
   float color[3];
 } property_t;
+
 
 typedef struct regmap_s {
   char name[256];
@@ -133,7 +135,8 @@ static int reg_start_func(struct db_tree_state *tsp,
 			  const struct rt_comb_internal *combp,
 			  genptr_t client_data)
 {
-  char name[256], found, color[3];
+  char name[256], found;
+  unsigned color[3];
   int i;
 
   /* color is here
