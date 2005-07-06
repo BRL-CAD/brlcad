@@ -917,6 +917,8 @@ proc set_text_key_bindings { id } {
 		break
 	    }
 
+	    # common misconception, the delete key actually performs a
+	    # backwards delete by default in Emacs.
 	    bind $w <Delete> {
 		backward_delete_char %W
 		break
