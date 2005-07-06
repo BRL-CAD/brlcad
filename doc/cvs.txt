@@ -5,7 +5,7 @@ The document includes a set of requirements and recommended procedures
 for how to effectively use CVS with this project.  Included are
 details on checking code in and out, effective use of commit messages,
 tag naming conventions, branch management, making releases, and more.
-Basic knowledge of CVS, it's capabilities, and to a lesser extent it's
+Basic knowledge of CVS, its capabilities, and to a lesser extent its
 limitations are beyond the scope of this document.  See the CVS
 website and the "References" section for more information.  That said,
 the following general rules should always be adhered to:
@@ -134,7 +134,7 @@ CHECKING OUT SOURCES
     will checkout using the default implicit :ext: method and will
     need to provide an authorized username.  Be sure to use the "-P"
     checkout option to remove (prune) empty directories.  The "-z9"
-    global CVS option is encouranged to minimze network utilization.
+    global CVS option is encouraged to minimze network utilization.
 
 
     FROM HEAD:
@@ -196,7 +196,7 @@ CHECKING IN SOURCES
     developers.
 
     If you are given commit access, you are expected to
-    read and follow this policy and it's guidelines as well as the
+    read and follow this policy and its guidelines as well as the
     developer's guide.
 
 

@@ -16,7 +16,7 @@ religious wars over what usually come down to personal preferences and
 familiarity that are distractions from making productive progress.
 
 Although BRL-CAD was originally developed and supported primarily by
-the U.S. Army Research Laboratory and it's affiliates, it is now a
+the U.S. Army Research Laboratory and its affiliates, it is now a
 true Open Source project with source code contributions coming from
 around the world.  The U.S. Army Research Laboratory continues to
 support and contribute to BRL-CAD, but now the source code is
@@ -348,7 +348,7 @@ directives and type declarations that may be used where needed.
 Generic platform checks (e.g. #ifdef unix, #ifdef _WIN32) are highly
 discouraged and should not be used.  Replace those checks with tests
 for the actual facility being utilized instead.  The Windows platform
-utilizes it's own manually-generated configure results header.
+utilizes its own manually-generated configure results header.
 (include/config_win.h)
 
 Coding Standards:
@@ -420,14 +420,14 @@ braces should line up with that same statement.
 3) Names
 
 Prefer mixed-case names over underscore-separated ones. (this one is
-less important, as there are vast majorities of both in the code)
+less important, as there are vast quantities of both in the code)
 Variable names should start with a lowercase letter.
   double localVariable; /* ok */
   double LocalVariable; /* bad (looks like class or constructor) */
   double _localVar;     /* bad (looks like member variable)      */
 
 Variables are not to be "decorated" to show their type (i.e. do not
-use Hungarian notation or variations thereof) with aq slight exception
+use Hungarian notation or variations thereof) with a slight exception
 for pointers on occasion.  The name should use a concise, meaningful
 name that is not cryptic (you typing a descriptive name is preferred
 over someone else hunting down what it meant).
