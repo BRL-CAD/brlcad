@@ -44,7 +44,7 @@
 # endif
 
 #define BRLCAD_ROOT ""
-#define INSTALL_DIRECTORY "C:/brlcad7_0"
+#define INSTALL_DIRECTORY "C:/brlcad7_2"
 
 #define HAS_OPENGL	1
 #define HAVE_CALLOC	1
