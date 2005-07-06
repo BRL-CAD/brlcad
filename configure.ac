@@ -103,6 +103,7 @@ echo "***${separator}***"
 AC_SUBST(CONFIG_DATE)
 AC_SUBST(CONFIG_TIME)
 AC_SUBST(BRLCAD_VERSION)
+AC_DEFINE([BRLCAD_VERSION], $BRLCAD_VERSION, "Version of BRL-CAD")
 
 # necessary for proper file creation on nfs volumes
 umask 022
@@ -138,11 +139,36 @@ if test ! "x$BRLCAD_ROOT" = "x" ; then
 	else
 		AC_MSG_ERROR([*** Environment variable BRLCAD_ROOT conflicts with --prefix ***])
 	fi
+else
+	BRLCAD_ROOT='${prefix}'
 fi
+AC_SUBST(BRLCAD_ROOT)
 
 # set up our default shared/non-shared data install directories
-# BRLCAD_DATA_DIR='${pkgdatadir}/${BRLCAD_VERSION}'
-BRLCAD_DATA_DIR='${prefix}'
+# BRLCAD_DATA='${pkgdatadir}/${BRLCAD_VERSION}'
+#         e.g. /usr/local/share/brlcad/7.4.0
+AC_MSG_CHECKING([where BRL-CAD resources are to be installed])
+if test "x$pkgdatadir" = "xNONE" ; then
+	pkgdatadir="${prefix}/share/brlcad"
+fi
+AC_DEFINE_UNQUOTED([BRLCAD_DATA], "${prefix}", "Location where BRL-CAD resources are installed")
+AC_MSG_RESULT($prefix)
+if test ! "x$BRLCAD_DATA" = "x" ; then
+	AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
+	AC_MSG_WARN([BRLCAD_DATA should only be used to override an install directory at runtime])
+	AC_MSG_WARN([BRLCAD_DATA is presently set to "${BRLCAD_DATA}"])
+	AC_MSG_NOTICE([It is highly recommended that BRLCAD_DATA be unset and not used])
+	if test "x$BRLCAD_DATA" = "x$prefix" ; then
+		AC_MSG_WARN([BRLCAD_DATA is not necessary and may cause unexpected behavior])
+		AC_MSG_NOTICE([{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{])
+	else
+		AC_MSG_ERROR([*** Environment variable BRLCAD_DATA conflicts with --prefix or --datadir ***])
+	fi
+else
+	BRLCAD_DATA='${prefix}'
+fi
+AC_SUBST(BRLCAD_DATA)
+BRLCAD_DATA_DIR="$BRLCAD_DATA"
 AC_SUBST(BRLCAD_DATA_DIR)
 
 # if this is not a CVS checkout, disable dependency tracking for a
