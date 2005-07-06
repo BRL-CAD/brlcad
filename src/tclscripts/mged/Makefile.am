@@ -1,7 +1,7 @@
 # $Id$
 
 this_dir = tclscripts/mged
-tcldir = $(BRLCAD_DATA_DIR)/$(this_dir)
+tcldir = $(BRLCAD_DATA)/$(this_dir)
 
 scripties = \
 	accel.tcl \

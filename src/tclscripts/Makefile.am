@@ -10,7 +10,7 @@ SUBDIRS = \
 	util
 
 this_dir = tclscripts
-tcldir = $(BRLCAD_DATA_DIR)/$(this_dir)
+tcldir = $(BRLCAD_DATA)/$(this_dir)
 
 scripties = \
 	ami.tcl \

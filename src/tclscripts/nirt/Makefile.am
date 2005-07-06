@@ -1,7 +1,7 @@
 # $Id$
 
 this_dir = tclscripts/nirt
-tcldir = $(BRLCAD_DATA_DIR)/$(this_dir)
+tcldir = $(BRLCAD_DATA)/$(this_dir)
 
 scripties = \
 	prototype.sh
