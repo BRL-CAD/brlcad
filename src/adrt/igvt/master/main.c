@@ -25,7 +25,7 @@ static struct option longopts[] =
 {
 	{ "exec",	required_argument,	NULL, 'e' },
 	{ "help",	no_argument,		NULL, 'h' },
-	{ "interval",	required_argument,	NULL, 'i' },
+	{ "comp_host",	required_argument,	NULL, 'c' },
 	{ "obs_port",	required_argument,	NULL, 'o' },
 	{ "port",	required_argument,	NULL, 'p' },
 	{ "version",	no_argument,		NULL, 'v' },
@@ -33,7 +33,7 @@ static struct option longopts[] =
 };
 #endif
 
-static char shortopts[] = "e:i:ho:p:vl:";
+static char shortopts[] = "c:e:i:ho:p:vl:";
 
 
 static void finish(int sig) {
@@ -46,18 +46,18 @@ static void help() {
   printf("%s\n", IGVT_VER_DETAIL);
   printf("%s\n", "usage: igvt_master [options] [proj_env_file]\n\
   -h\t\tdisplay help.\n\
-  -p\t\tset master port number.\n\
-  -o\t\tset observer port number.\n\
-  -i\t\tinterval in minutes between each autosave.\n\
-  -l\t\tfile containing list of slaves to use as compute nodes.\n\
+  -c\t\tconnect to component server.\n\
   -e\t\tscript to execute that starts slaves.\n\
+  -l\t\tfile containing list of slaves to use as compute nodes.\n\
+  -o\t\tset observer port number.\n\
+  -p\t\tset master port number.\n\
   -v\t\tdisplay version info.\n");
 }
 
 
 int main(int argc, char **argv) {
-  int port = 0, obs_port = 0, c = 0, interval = 1;
-  char proj[64], exec[64], list[64], temp[64];
+  int port = 0, obs_port = 0, c = 0;
+  char proj[64], exec[64], list[64], temp[64], comp_host[64];
 
 
   signal(SIGINT, finish);
@@ -71,6 +71,7 @@ int main(int argc, char **argv) {
   list[0] = 0;
   exec[0] = 0;
   proj[0] = 0;
+  comp_host[0] = 0;
   port = TN_MASTER_PORT;
   obs_port = IGVT_OBSERVER_PORT;
 
@@ -85,33 +86,37 @@ int main(int argc, char **argv) {
 	)!= -1)
   {
 	  switch(c) {
-		  case 'h':
-			  help();
-			  return EXIT_SUCCESS;
-		  case 'o':
-			  obs_port = atoi(optarg);
-			  break;
-		  case 'p':
-			  port = atoi(optarg);
-			  break;
-		  case 'i':
-			  strncpy(temp, optarg, 4);
-			  interval = atoi(temp);
-			  if(interval < 0) interval = 0;
-			  if(interval > 60) interval = 60;
-			  break;
-		  case 'l':
-			  strncpy(list, optarg, 64);
-			  break;
-		  case 'e':
-			  strncpy(exec, optarg, 64);
-			  break;
-		  case 'v':
-			  printf("%s\n", IGVT_VER_DETAIL);
-			  return EXIT_SUCCESS;
-		default:
-			  help();
-			  return EXIT_FAILURE;
+            case 'c':
+              strncpy(comp_host, optarg, 64);
+              break;
+
+            case 'h':
+              help();
+              return EXIT_SUCCESS;
+
+            case 'o':
+              obs_port = atoi(optarg);
+              break;
+
+            case 'p':
+              port = atoi(optarg);
+              break;
+
+            case 'l':
+              strncpy(list, optarg, 64);
+              break;
+
+            case 'e':
+              strncpy(exec, optarg, 64);
+              break;
+
+            case 'v':
+              printf("%s\n", IGVT_VER_DETAIL);
+              return EXIT_SUCCESS;
+
+            default:
+              help();
+              return EXIT_FAILURE;
 	  }
   }
   argc -= optind;
@@ -120,7 +125,7 @@ int main(int argc, char **argv) {
   strcpy(proj, argv[0]);
 
   if(proj[0]) {
-    igvt_master(port, obs_port, proj, list, exec, interval);
+    igvt_master(port, obs_port, proj, list, exec, comp_host);
   } else {
     help();
     return EXIT_FAILURE;

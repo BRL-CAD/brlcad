@@ -39,7 +39,7 @@ typedef struct igvt_master_socket_s {
 } igvt_master_socket_t;
 
 
-void igvt_master(int port, int obs_port, char *proj, char *list, char *exec, int interval);
+void igvt_master(int port, int obs_port, char *proj, char *list, char *exec, char *comp_host);
 void* igvt_master_networking(void *ptr);
 void igvt_master_result(void *res_buf, int res_len);
 void igvt_master_update(void);
@@ -78,7 +78,7 @@ int igvt_master_shift_enabled;
 /*******************/
 
 
-void igvt_master(int port, int obs_port, char *proj, char *list, char *exec, int interval) {
+void igvt_master(int port, int obs_port, char *proj, char *list, char *exec, char *comp_host) {
   int frame_num, app_size;
   void *app_data;
   struct timeval start, cur;
