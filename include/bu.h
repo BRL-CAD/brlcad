@@ -1652,7 +1652,11 @@ BU_EXPORT BU_EXTERN(void bu_printfile,
 /* brlcad_path.c */
 BU_EXPORT BU_EXTERN(int	bu_file_exists,
 		    (const char *path));
-BU_EXPORT BU_EXTERN(char *bu_brlcad_path,
+BU_EXPORT BU_EXTERN(char *bu_brlcad_path, /* deprecated call */
+		    (const char *rhs, int fail_quietly));
+BU_EXPORT BU_EXTERN(char *bu_brlcad_root,
+		    (const char *rhs, int fail_quietly));
+BU_EXPORT BU_EXTERN(char *bu_brlcad_data,
 		    (const char *rhs, int fail_quietly));
 
 /* fopen_uniq */
@@ -1671,17 +1675,6 @@ BU_EXPORT BU_EXTERN(int bu_fgetc,
 BU_EXPORT BU_EXTERN(void bu_printfile,
 		    (struct bu_file *bfp));
 
-/* brlcad_path.c */
-BU_EXPORT BU_EXTERN(int bu_file_exists,
-		    (const char *path));
-BU_EXPORT BU_EXTERN(char *bu_brlcad_path,
-		    (const char *rhs, int fail_quietly));
-
-/* fopen_uniq */
-BU_EXPORT BU_EXTERN(FILE *bu_fopen_uniq,
-		    (const char *outfmt,
-		     const char *namefmt,
-		     int n));
 /* getopt.c */
 BU_EXPORT extern int			bu_opterr;
 BU_EXPORT extern int			bu_optind;
@@ -2370,6 +2363,19 @@ BU_EXPORT BU_EXTERN(int bu_tcl_shader_to_key_eq,
 		     int	argc,
 		     char	**argv));
 
+BU_EXPORT BU_EXTERN(int bu_tcl_brlcad_root,
+		    (ClientData	clientData,
+		     Tcl_Interp	*interp,
+		     int	 argc,
+		     char	**argv));
+
+BU_EXPORT BU_EXTERN(int bu_tcl_brlcad_data,
+		    (ClientData	clientData,
+		     Tcl_Interp	*interp,
+		     int	 argc,
+		     char	**argv));
+
+/* bu_tcl_brlcad_path is deprecated */
 BU_EXPORT BU_EXTERN(int bu_tcl_brlcad_path,
 		    (ClientData	clientData,
 		     Tcl_Interp	*interp,
