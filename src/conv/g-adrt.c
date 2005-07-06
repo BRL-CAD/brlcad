@@ -133,7 +133,7 @@ static int reg_start_func(struct db_tree_state *tsp,
 			  const struct rt_comb_internal *combp,
 			  genptr_t client_data)
 {
-  char name[256], found;
+  char name[256], found, color[3];
   int i;
 
   /* color is here
@@ -143,32 +143,41 @@ static int reg_start_func(struct db_tree_state *tsp,
    *	bu_vls_addr(combp->shader)
    */
 
-  if(combp->rgb[0] || combp->rgb[1] || combp->rgb[2] || 1) {
-    /* Do a lookup conversion on the name with the region map if used */
-    strcpy(name, pathp->fp_names[pathp->fp_len-1]->d_namep);
+  /* If no color is found, assign them a 75% gray color */
+  color[0] = combp->rgb[0];
+  color[1] = combp->rgb[1];
+  color[2] = combp->rgb[2];
 
-    /* replace the brl-cad name with the regmap name */
-    if(use_regmap)
-      regmap_lookup(name, tsp->ts_regionid);
-
-    found = 0;
-    for(i = 0; i < prop_num; i++) {
-      if(!strcmp(prop_list[i].name, name)) {
-        found = 1;
-        continue;
-      }
-    }
-
-    if(!found) {
-      prop_list = (property_t *)realloc(prop_list, sizeof(property_t) * (prop_num + 1));
-      strcpy(prop_list[prop_num].name, name);
-      prop_list[prop_num].color[0] = combp->rgb[0] / 255.0;
-      prop_list[prop_num].color[1] = combp->rgb[1] / 255.0;
-      prop_list[prop_num].color[2] = combp->rgb[2] / 255.0;
-      prop_num++;
-    }
-/*    printf("reg_start: -%s- [%d,%d,%d]\n", name, combp->rgb[0], combp->rgb[1], combp->rgb[2]); */
+  if(!color[0] && !color[1] && !color[2]) {
+    color[0] = 192;
+    color[1] = 192;
+    color[2] = 192;
   }
+
+  /* Do a lookup conversion on the name with the region map if used */
+  strcpy(name, pathp->fp_names[pathp->fp_len-1]->d_namep);
+
+  /* replace the brl-cad name with the regmap name */
+  if(use_regmap)
+    regmap_lookup(name, tsp->ts_regionid);
+
+  found = 0;
+  for(i = 0; i < prop_num; i++) {
+    if(!strcmp(prop_list[i].name, name)) {
+      found = 1;
+      continue;
+    }
+  }
+
+  if(!found) {
+    prop_list = (property_t *)realloc(prop_list, sizeof(property_t) * (prop_num + 1));
+    strcpy(prop_list[prop_num].name, name);
+    prop_list[prop_num].color[0] = color[0] / 255.0;
+    prop_list[prop_num].color[1] = color[1] / 255.0;
+    prop_list[prop_num].color[2] = color[2] / 255.0;
+    prop_num++;
+  }
+/*    printf("reg_start: -%s- [%d,%d,%d]\n", name, combp->rgb[0], combp->rgb[1], combp->rgb[2]); */
 
   return(0);
 }
