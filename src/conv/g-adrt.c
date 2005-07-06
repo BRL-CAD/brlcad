@@ -73,6 +73,19 @@ int use_regmap;
 
 struct bu_vls*	region_name_from_path(struct db_full_path *pathp);
 
+
+void regmap_lookup(char *name, int id) {
+  int i;
+
+  for(i = 0; i < regmap_num; i++) {
+    if(id == regmap_list[i].id) {
+      strcpy(name, regmap_list[i].name);
+      continue;
+    }
+  }
+}
+
+
 /*
 *  r e g i o n _ n a m e _ f r o m _ p a t h
 *
@@ -120,7 +133,7 @@ static int reg_start_func(struct db_tree_state *tsp,
 			  const struct rt_comb_internal *combp,
 			  genptr_t client_data)
 {
-  char found;
+  char name[256], found;
   int i;
 
   /* color is here
@@ -130,10 +143,17 @@ static int reg_start_func(struct db_tree_state *tsp,
    *	bu_vls_addr(combp->shader)
    */
 
-  if(combp->rgb[0] || combp->rgb[1] || combp->rgb[2]) {
+  if(combp->rgb[0] || combp->rgb[1] || combp->rgb[2] || 1) {
+    /* Do a lookup conversion on the name with the region map if used */
+    strcpy(name, pathp->fp_names[pathp->fp_len-1]->d_namep);
+
+    /* replace the brl-cad name with the regmap name */
+    if(use_regmap)
+      regmap_lookup(name, tsp->ts_regionid);
+
     found = 0;
     for(i = 0; i < prop_num; i++) {
-      if(!strcmp(prop_list[i].name, pathp->fp_names[pathp->fp_len-1]->d_namep)) {
+      if(!strcmp(prop_list[i].name, name)) {
         found = 1;
         continue;
       }
@@ -141,18 +161,14 @@ static int reg_start_func(struct db_tree_state *tsp,
 
     if(!found) {
       prop_list = (property_t *)realloc(prop_list, sizeof(property_t) * (prop_num + 1));
-      strcpy(prop_list[prop_num].name, pathp->fp_names[pathp->fp_len-1]->d_namep);
+      strcpy(prop_list[prop_num].name, name);
       prop_list[prop_num].color[0] = combp->rgb[0] / 255.0;
       prop_list[prop_num].color[1] = combp->rgb[1] / 255.0;
       prop_list[prop_num].color[2] = combp->rgb[2] / 255.0;
       prop_num++;
     }
-/*    printf("reg_start: -%s- [%d,%d,%d]\n", pathp->fp_names[pathp->fp_len-1]->d_namep, combp->rgb[0], combp->rgb[1], combp->rgb[2]); */
+/*    printf("reg_start: -%s- [%d,%d,%d]\n", name, combp->rgb[0], combp->rgb[1], combp->rgb[2]); */
   }
-
-  /* to find the name of the region... it is probably
-  * pathp->fp_names[pathp->fp_len-1]
-  */
 
   return(0);
 }
@@ -212,34 +228,27 @@ static union tree *leaf_func(struct db_tree_state *tsp,
     dp = DB_FULL_PATH_CUR_DIR(pathp);
 
 
-    if (ip->idb_minor_type != ID_BOT) {
-
+    if(ip->idb_minor_type != ID_BOT) {
 #if DEBUG
 	fprintf(stderr, "\"%s\" should be a BOT ", pathp->fp_names[pathp->fp_len-1]->d_namep);
-#endif
-
 	for (i=pathp->fp_len-1; i >= 0 ; i--) {
 	    if (pathp->fp_names[i]->d_flags & DIR_REGION) {
-#if DEBUG
 		fprintf(stderr, "fix region %s\n", pathp->fp_names[i]->d_namep);
-#endif
 		goto found;
 	    } else if (pathp->fp_names[i]->d_flags & DIR_COMB) {
-#if DEBUG
 		fprintf(stderr, "not a combination\n");
-#endif
 	    } else if (pathp->fp_names[i]->d_flags & DIR_SOLID) {
-#if DEBUG
 		fprintf(stderr, "not a primitive\n");
-#endif
 	    }
 	}
-#if DEBUG
 	fprintf(stderr, "didn't find region?\n");
-#endif
     found:
-	return( TREE_NULL );		/* BAD */
+#endif
+      return(TREE_NULL); /* BAD */
     }
+
+/*    printf("region_id: %d\n", tsp->ts_regionid); */
+
     bot = (struct rt_bot_internal *)ip->idb_ptr;
     RT_BOT_CK_MAGIC(bot);
     rtip->nsolids++;
@@ -247,19 +256,24 @@ static union tree *leaf_func(struct db_tree_state *tsp,
     /* Find the Properties Name */
     prop_name[0] = 0;
 
+
     vlsp = region_name_from_path(pathp);
     strcpy(reg_name, bu_vls_strgrab(vlsp));
-    printf("regions processed: %d\r", region_count++);
-    fflush(stdout);
 
     /* Grab the chars from the end till the '/' */
     i = strlen(reg_name)-1;
     while(reg_name[i] != '/' && i > 0)
       i--;
 
+    if(use_regmap)
+      regmap_lookup(reg_name, tsp->ts_regionid);
+
+    /* Display Status */
+    printf("regions processed: %d\r", region_count++);
+    fflush(stdout);
+
     if(i != strlen(reg_name))
       strcpy(prop_name, &reg_name[i+1]);
-
 /*    printf("prop name: -%s-\n", prop_name); */
     bu_free(vlsp, "vls");
 
@@ -278,8 +292,7 @@ static union tree *leaf_func(struct db_tree_state *tsp,
     /* Pack bot/mesh name */
 #if 0
     c = strlen(pathp->fp_names[pathp->fp_len-1]->d_namep) + 1;
-    common_pack_write(common_g_app_data, common_g_app_ind, &c, 
-sizeof(char));
+    common_pack_write(common_g_app_data, common_g_app_ind, &c, sizeof(char));
     common_pack_write(common_g_app_data, common_g_app_ind, pathp->fp_names[pathp->fp_len-1]->d_namep, c);
 #else
     c = strlen(reg_name) + 1;
@@ -424,7 +437,6 @@ void load_regmap(char *filename) {
         ptr++;
         hi = atoi(ptr);
         strchr(idstr, ':')[0] = 0;
-printf("hi: %d, idstr: -%s- %d\n", hi, idstr, atoi(idstr));
         lo = atoi(idstr);
 
         /* insert an entry for the whole range */
@@ -442,8 +454,6 @@ printf("hi: %d, idstr: -%s- %d\n", hi, idstr, atoi(idstr));
         regmap_list[regmap_num].id = atoi(idstr);
         regmap_num++;
       }
-
-      printf("regmap_list[%d]: %s - %d\n", regmap_num, regmap_list[regmap_num-1].name, regmap_list[regmap_num-1].id);
     }
   }
 }
@@ -545,7 +555,7 @@ int main(int argc, char *argv[]) {
   adrt_fh = fopen("properties.db", "w");
   for(i = 0; i < prop_num; i++) {
     fprintf(adrt_fh, "properties,%s\n", prop_list[i].name);
-    fprintf(adrt_fh, "color,%f,%f,%.f\n", prop_list[i].color[0], prop_list[i].color[1], prop_list[i].color[2]);
+    fprintf(adrt_fh, "color,%f,%f,%f\n", prop_list[i].color[0], prop_list[i].color[1], prop_list[i].color[2]);
   }
   fclose(adrt_fh);
 
