@@ -3,6 +3,7 @@
 bin_PROGRAMS = igvt_master
 
 igvt_master_SOURCES = \
+	compnet.c \
 	dispatcher.c \
 	igvt_python.c \
 	master.c \

@@ -9,6 +9,7 @@
 #include "canim.h"		/* Animation Stuff */
 #include "dispatcher.h"		/* Dispatcher that creates work units */
 #include "cdb.h"		/* Common structs and stuff */
+#include "compnet.h"		/* Component Networking, Sends Component Names via Network */
 #include "igvt.h"		/* IGVT Defines */
 #include "image.h"		/* Image import/export utilities */
 #include "pack.h"		/* Data packing for transport to nodes */
@@ -78,18 +79,7 @@ int igvt_master_shift_enabled;
 /*******************/
 
 
-void igvt_master(int port, int obs_port, char *proj, char *list, char *exec, char *comp_host) {
-  int frame_num, app_size;
-  void *app_data;
-  struct timeval start, cur;
-
-
-  /* Initialize Python Processor */
-  igvt_python_init();
-
-  /* Mutex for everytime the master builds update data to send to nodes */
-  pthread_mutex_init(&igvt_master_update_mut, 0);
-
+static void igvt_master_setup_defaults() {
   igvt_master_active_connections = 0;
 
   igvt_master_alive = 1;
@@ -109,26 +99,45 @@ void igvt_master(int port, int obs_port, char *proj, char *list, char *exec, cha
   igvt_master_elev = 0;
   igvt_master_rm = RENDER_METHOD_PHONG;
 
-  /* Parse Env Data */
-  common_db_load(&db, proj);
-
-  /* Initialize tienet master */
-  igvt_master_tile_num = (db.env.img_w * db.env.img_h) / (db.env.tile_w * db.env.tile_h);
-
-  tienet_master_init(port, igvt_master_result, list, exec, 5, IGVT_VER_KEY);
-
   frame_ind[0] = 0;
   frame_ind[1] = 0;
   frame_cur_ind = 0;
   frame_ind_done = 0;
 
   rgb_frame[0] = malloc(3 * db.env.img_w * db.env.img_h);
-  rgb_frame[1]= malloc(3 * db.env.img_w * db.env.img_h);
+  rgb_frame[1] = malloc(3 * db.env.img_w * db.env.img_h);
   memset(rgb_frame[0], 0, 3 * db.env.img_w * db.env.img_h);
   memset(rgb_frame[1], 0, 3 * db.env.img_w * db.env.img_h);
+}
+
+
+void igvt_master(int port, int obs_port, char *proj, char *list, char *exec, char *comp_host) {
+  int frame_num, app_size;
+  void *app_data;
+  struct timeval start, cur;
+
+
+  /* Setup defaults */
+  igvt_master_setup_defaults();
+
+  /* Initialize Python Processor */
+  igvt_python_init();
+
+  /* Mutex for everytime the master builds update data to send to nodes */
+  pthread_mutex_init(&igvt_master_update_mut, 0);
+
+  /* Parse Env Data */
+  common_db_load(&db, proj);
+
+  /* Initialize tienet master */
+  igvt_master_tile_num = (db.env.img_w * db.env.img_h) / (db.env.tile_w * db.env.tile_h);
+  tienet_master_init(port, igvt_master_result, list, exec, 5, IGVT_VER_KEY);
 
   /* Launch a thread to handle networking */
   pthread_create(&igvt_master_networking_thread, NULL, igvt_master_networking,&obs_port);
+
+  /* Connect to the component Server */
+  igvt_compnet_connect(comp_host, IGVT_COMPNET_PORT);
 
   /* Parse and pack the application data */
   printf("loading scene... ");
