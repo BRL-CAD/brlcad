@@ -3,7 +3,7 @@
 SUBDIRS = examples lib
 
 this_dir = tclscripts/rtwizard
-tcldir = $(BRLCAD_DATA_DIR)/$(this_dir)
+tcldir = $(BRLCAD_DATA)/$(this_dir)
 
 scripties = rtwizard.tcl
 

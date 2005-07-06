@@ -1,7 +1,7 @@
 # $Id$
 
 this_dir = tclscripts/rtwizard/lib
-tcldir = $(BRLCAD_DATA_DIR)/$(this_dir)
+tcldir = $(BRLCAD_DATA)/$(this_dir)
 
 scripties = \
 	DbPage.itk \
