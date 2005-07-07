@@ -87,6 +87,10 @@ LC_ALL=C
 CONFIG_DATE=`date +%Y%m%d`
 CONFIG_TIME="`date '+%H %M %S'`"
 BRLCAD_VERSION="$MAJOR_VERSION.$MINOR_VERSION.$PATCH_VERSION"
+AC_DEFINE_UNQUOTED([BRLCAD_VERSION], "$BRLCAD_VERSION", "Version of BRL-CAD")
+AC_SUBST(CONFIG_DATE)
+AC_SUBST(CONFIG_TIME)
+AC_SUBST(BRLCAD_VERSION)
 
 # print out the title with a pretty box computed to wrap around
 title="Configuring BRL-CAD Release $BRLCAD_VERSION, Build $CONFIG_DATE"
@@ -99,11 +103,6 @@ done
 echo "***${separator}***"
 echo "*** ${title} ***"
 echo "***${separator}***"
-
-AC_SUBST(CONFIG_DATE)
-AC_SUBST(CONFIG_TIME)
-AC_SUBST(BRLCAD_VERSION)
-AC_DEFINE([BRLCAD_VERSION], $BRLCAD_VERSION, "Version of BRL-CAD")
 
 # necessary for proper file creation on nfs volumes
 umask 022
