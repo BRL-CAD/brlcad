@@ -31,7 +31,7 @@ EXTRA_DIST = \
 	${PIX} \
 	${LOG}
 
-pixdir = $(BRLCAD_DATA_DIR)/pix
+pixdir = $(BRLCAD_DATA)/pix
 pix_DATA = \
 	${BENCHMARK_PIX} \
 	${LOG}

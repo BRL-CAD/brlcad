@@ -27,7 +27,7 @@ AM_CPPFLAGS = \
 	-I$(PROTOOL_SRC)/includes \
 	-I$(PRODEV_SRC)/includes
 
-proe_brldir = $(BRLCAD_DATA_DIR)/pro-engineer/$(PRO_MACHINE_TYPE)
+proe_brldir = $(BRLCAD_DATA)/pro-engineer/$(PRO_MACHINE_TYPE)
 proe_brl_CFLAGS = $(AM_CFLAGS)
 proe_brl_LDADD = $(PTLIB) $(PDLIB) $(SYSLIBS)
 proe_brl_SOURCES = proe-brl.c
@@ -42,7 +42,7 @@ proe_brl_SOURCES = proe-brl.c
 # libproe2brl_la_CFLAGS = $(AM_CFLAGS)
 # libproe2brl_la_LDFLAGS = -multigot -rpath $(libdir) -T10000000 -B symbolic
 # libproe2brl_la_LIBADD = $(PTLIB_DLL) $(PDLIB_DLL) $(BRLLIBS) $(SYSLIBS)
-# libproe2brl_sodir = $(BRLCAD_DATA_DIR)/pro-engineer/$(PRO_MACHINE_TYPE)
+# libproe2brl_sodir = $(BRLCAD_DATA)/pro-engineer/$(PRO_MACHINE_TYPE)
 
 libproe2brl.so: mk
 	make -f mk dll
@@ -108,9 +108,9 @@ plugin2: libproe2brl.so
 	@@ECHO@ "Run 'make install' to install the Pro-Engineer .so plugin"
 	@@ECHO@
 
-proedir = $(BRLCAD_DATA_DIR)/pro-engineer
-tmsgdir = $(BRLCAD_DATA_DIR)/pro-engineer/text/usascii/
-rsrcdir = $(BRLCAD_DATA_DIR)/pro-engineer/text/usascii/resource/
+proedir = $(BRLCAD_DATA)/pro-engineer
+tmsgdir = $(BRLCAD_DATA)/pro-engineer/text/usascii/
+rsrcdir = $(BRLCAD_DATA)/pro-engineer/text/usascii/resource/
 
 proe_DATA = \
 	install.doc \

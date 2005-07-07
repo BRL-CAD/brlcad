@@ -1,6 +1,6 @@
 # $Id$
 
-sysconfdir = $(BRLCAD_DATA_DIR)/awf
+sysconfdir = $(BRLCAD_DATA)/awf
 dist_sysconf_DATA = \
 	AWF_COPYRIGHT \
 	common \
