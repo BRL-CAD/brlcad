@@ -25,7 +25,7 @@ BWISH=$CADPATH/bwish
 # the next line restarts using bwish \
 exec $BWISH "$0" "$@"
 
-set brlcad_path [bu_brlcad_path bin]
+set brlcad_path [bu_brlcad_root bin]
 set PIXFB [file join $brlcad_path pix-fb]
 set PIXMORPH [file join $brlcad_path pixmorph]
 
