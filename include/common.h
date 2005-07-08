@@ -31,11 +31,11 @@
  *
  *  Author -
  *	Christopher Sean Morrison
- *  
+ *
  *  Source -
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
- *  
+ *
  *  $Header$
  */
 
@@ -44,19 +44,15 @@
 
 /* include the venerable config.h file.  use a pregenerated one for
  * windows when we cannot autogenerate it easily. */
-#ifdef __win32
-#  ifdef HAVE_CONFIG_H
+#ifdef _WIN32
 #    include "config_win.h"
-#  else
-#    include <brlcad/config_win.h>
-#  endif
 #else
 #  ifdef HAVE_CONFIG_H
 #    include "brlcad_config.h"
 #  else
 #    include <brlcad/brlcad_config.h>
 #  endif
-#endif  /* __win32 */
+#endif  /* _WIN32 */
 
 /* provide declaration markers for header externals */
 #ifdef __cplusplus
