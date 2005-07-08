@@ -350,7 +350,7 @@ Tcl_Interp *_interp;
   }
 
   /* Locate the BRL-CAD-specific Tcl scripts */
-  filename = bu_brlcad_path( "tclscripts", 0 );
+  filename = bu_brlcad_data( "tclscripts", 0 );
 
   bu_vls_init(&str);
   bu_vls_init(&str2);
