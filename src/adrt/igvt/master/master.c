@@ -79,7 +79,7 @@ int igvt_master_shift_enabled;
 /*******************/
 
 
-static void igvt_master_setup_defaults() {
+static void igvt_master_setup() {
   igvt_master_active_connections = 0;
 
   igvt_master_alive = 1;
@@ -104,8 +104,12 @@ static void igvt_master_setup_defaults() {
   frame_cur_ind = 0;
   frame_ind_done = 0;
 
+  rgb_frame[0] = NULL;
+  rgb_frame[1] = NULL;
+
   rgb_frame[0] = malloc(3 * db.env.img_w * db.env.img_h);
   rgb_frame[1] = malloc(3 * db.env.img_w * db.env.img_h);
+
   memset(rgb_frame[0], 0, 3 * db.env.img_w * db.env.img_h);
   memset(rgb_frame[1], 0, 3 * db.env.img_w * db.env.img_h);
 }
@@ -117,17 +121,17 @@ void igvt_master(int port, int obs_port, char *proj, char *list, char *exec, cha
   struct timeval start, cur;
 
 
+  /* Parse Env Data */
+  common_db_load(&db, proj);
+
   /* Setup defaults */
-  igvt_master_setup_defaults();
+  igvt_master_setup();
 
   /* Initialize Python Processor */
   igvt_python_init();
 
   /* Mutex for everytime the master builds update data to send to nodes */
   pthread_mutex_init(&igvt_master_update_mut, 0);
-
-  /* Parse Env Data */
-  common_db_load(&db, proj);
 
   /* Initialize tienet master */
   igvt_master_tile_num = (db.env.img_w * db.env.img_h) / (db.env.tile_w * db.env.tile_h);
@@ -137,7 +141,7 @@ void igvt_master(int port, int obs_port, char *proj, char *list, char *exec, cha
   pthread_create(&igvt_master_networking_thread, NULL, igvt_master_networking,&obs_port);
 
   /* Connect to the component Server */
-  igvt_compnet_connect(comp_host, IGVT_COMPNET_PORT);
+//  igvt_compnet_connect(comp_host, IGVT_COMPNET_PORT);
 
   /* Parse and pack the application data */
   printf("loading scene... ");
@@ -247,7 +251,8 @@ void igvt_master_result(void *res_buf, int res_len) {
       ind += 1;
       memcpy(name, &((unsigned char *)res_buf)[ind], c);
       ind += c;
-      printf("name[%d]: %s\n", i, name);
+//      igvt_compnet_update(name, 1);
+/*      printf("name[%d]: %s\n", i, name); */
     }
 }
 #endif

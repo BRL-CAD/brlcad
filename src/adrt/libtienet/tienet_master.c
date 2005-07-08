@@ -72,7 +72,8 @@ typedef struct tienet_master_socket_s {
 } tienet_master_socket_t;
 
 
-void				tienet_master_init(int port, void fcb_result(void *res_buf, int res_len), char *list, char *exec, int buffer_size, int ver_key);
+void				tienet_master_init(int port, void fcb_result(void *res_buf, int res_len), char *
+list, char *exec, int buffer_size, int ver_key);
 void				tienet_master_free(void);
 void				tienet_master_prep(void *app_data, int app_size);
 void				tienet_master_push(void *data, int size);

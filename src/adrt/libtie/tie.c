@@ -307,7 +307,7 @@ static void tie_build_tree(tie_t *tie, tie_bsp_t *node, int depth, TIE_3 min, TI
   math_vec_add(center, max, min);
   math_vec_mul_scalar(center, center, 0.5);
 
-#if 0
+#if 1
   /* Split along largest Axis to keep node sizes relatively cube-like (Naive) */
   math_vec_sub(vec, max, min);
 

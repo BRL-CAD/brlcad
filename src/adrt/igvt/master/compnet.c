@@ -6,6 +6,7 @@
 #include <netdb.h>
 
 int igvt_master_compserv_socket;
+int igvt_master_compserv_active;
 
 /*
 * Establish a connection to the component server.
@@ -13,6 +14,12 @@ int igvt_master_compserv_socket;
 void igvt_compnet_connect(char *host, int port) {
   struct hostent hostent;
   struct sockaddr_in compserv, master;
+
+  igvt_master_compserv_active = 0;
+
+  /* If no host name is supplied then do nothing */
+  if(!strlen(host))
+    return;
 
   /* server address */
   if(gethostbyname(host)) {
@@ -47,10 +54,13 @@ void igvt_compnet_connect(char *host, int port) {
     fprintf(stderr, "cannot connect to master, exiting.\n");
     exit(1);
   }
+
+  /* data may now be transmitted to the server */
+  igvt_master_compserv_active = 1;
 }
 
 /*
 * Update the status of a component
 */
-void igvt_compnet_update(char *string, int status) {
+void igvt_compnet_update(char *string, char status) {
 }

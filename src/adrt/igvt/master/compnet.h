@@ -4,6 +4,6 @@
 #define IGVT_COMPNET_PORT 1983
 
 void igvt_compnet_connect(char *host, int port);
-void igvt_compnet_update(char *string, int status);
+void igvt_compnet_update(char *string, char status);
 
 #endif
