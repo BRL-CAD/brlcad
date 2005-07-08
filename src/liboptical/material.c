@@ -161,6 +161,7 @@ load_dynamic_shader(const char *material,
 {
 	struct mfuncs *shader_mfuncs = (struct mfuncs *)NULL;
 	char libname[MAXPATHLEN];
+	char libpath[MAXPATHLEN];
 	char *cwd = (char *)NULL;
 	int old_rdebug = R_DEBUG;
 	char sh_name[128]; /* XXX constants are bogus */
@@ -204,15 +205,12 @@ load_dynamic_shader(const char *material,
 		goto done;
 
 	/* Look in BRLCAD install dir under lib dir for lib{sh_name}.so */
-	strcpy(libname, bu_brlcad_path("", 0));
-	sprintf( &libname[strlen(libname)], "/lib/lib%s.so", sh_name);
+	sprintf(libpath, "/lib/lib%s.so", sh_name);
+	strcpy(libname, bu_brlcad_root(libpath, 0));
 	if ( (shader_mfuncs = try_load(libname, material, sh_name)) ) 
 		goto done;
 
-
-
 done:
-
 	/* clean up memory allocated */
 	if (cwd) free(cwd);
 
@@ -221,8 +219,6 @@ done:
 		bu_log("loaded from %s\n", libname);
 	else
 		bu_log("Not found\n");
-
-
 
 	rdebug = old_rdebug;
 

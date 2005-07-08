@@ -775,7 +775,7 @@ cmd_rt(ClientData	clientData,
 	    strncmp(argv[0], "_mged_", 6) == 0)
 		argv[0] += 6;
 
-	ptr = bu_brlcad_path("bin", 1);
+	ptr = bu_brlcad_root("bin", 1);
 	if (ptr) {
 #ifdef _WIN32
 	    sprintf(buf, "\"%s/%s\"", ptr, argv[0]);
@@ -910,7 +910,7 @@ cmd_rtcheck(ClientData	clientData,
     char *ptr, buf[256];
 	CHECK_DBI_NULL;
 
-	ptr = bu_brlcad_path("bin", 1);
+	ptr = bu_brlcad_root("bin", 1);
 	if (ptr) {
 #ifdef _WIN32
 	    sprintf(buf, "\"%s/%s\"", ptr, argv[0]);
@@ -938,7 +938,7 @@ cmd_rtarea(ClientData	clientData,
     char *ptr, buf[256];
 	CHECK_DBI_NULL;
 
-	ptr = bu_brlcad_path("bin", 1);
+	ptr = bu_brlcad_root("bin", 1);
 	if (ptr) {
 #ifdef _WIN32
 	    sprintf(buf, "\"%s/%s\"", ptr, argv[0]);
@@ -965,7 +965,7 @@ cmd_rtedge(ClientData	clientData,
     char *ptr, buf[256];
 	CHECK_DBI_NULL;
 
-	ptr = bu_brlcad_path("bin", 1);
+	ptr = bu_brlcad_root("bin", 1);
 	if (ptr) {
 #ifdef _WIN32
 	    sprintf(buf, "\"%s/%s\"", ptr, argv[0]);
@@ -992,7 +992,7 @@ cmd_rtweight(ClientData	clientData,
     char *ptr, buf[256];
 	CHECK_DBI_NULL;
 
-	ptr = bu_brlcad_path("bin", 1);
+	ptr = bu_brlcad_root("bin", 1);
 	if (ptr) {
 #ifdef _WIN32
 	    sprintf(buf, "\"%s/%s\"", ptr, argv[0]);
