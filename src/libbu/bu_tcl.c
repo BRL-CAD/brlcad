@@ -36,32 +36,33 @@
 static const char libbu_bu_tcl_RCSid[] = "@(#)$Header$ (ARL)";
 #endif
 
-
 #include "common.h"
 
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
 #ifdef HAVE_STRING_H
-#include <string.h>
+#  include <string.h>
 #else
-#include <strings.h>
+#  include <strings.h>
 #endif
 #include <ctype.h>
 
 #include "tcl.h"
-
 #include "machine.h"
 #include "cmd.h"		/* this includes bu.h */
 #include "vmath.h"
 #include "bn.h"
+#include "bu.h"
 
 /* defined in libbu/cmdhist_obj.c */
 extern int Cho_Init(Tcl_Interp *interp);
 
 static struct bu_cmdtab bu_cmds[] = {
 	{"bu_units_conversion",		bu_tcl_units_conversion},
+	{"bu_brlcad_data",		bu_tcl_brlcad_data},
 	{"bu_brlcad_path",		bu_tcl_brlcad_path},
+	{"bu_brlcad_root",		bu_tcl_brlcad_root},
 	{"bu_mem_barriercheck",		bu_tcl_mem_barriercheck},
 	{"bu_ck_malloc_ptr",		bu_tcl_ck_malloc_ptr},
 	{"bu_malloc_len_roundup",	bu_tcl_malloc_len_roundup},
@@ -1326,6 +1327,73 @@ bu_tcl_shader_to_key_eq(ClientData	clientData,
 	return TCL_OK;
 }
 
+
+/*****f* libbu/bu_tcl.c
+ *
+ * NAME
+ *	bu_tcl_brlcad_root
+ *
+ * SYNOPSIS
+ *	A tcl wrapper for bu_brlcad_root.
+ *
+ * PARAMETERS
+ *	clientData	- associated data/state
+ *	interp		- tcl interpreter in which this command was registered.
+ *	argc		- number of elements in argv
+ *	argv		- command name and arguments
+ *
+ * RETURN
+ *	Returns TCL_OK if successful, otherwise, TCL_ERROR.
+ */
+int
+bu_tcl_brlcad_root(ClientData	clientData,
+		   Tcl_Interp	*interp,
+		   int		 argc,
+		   char		**argv)
+{
+	if (argc != 2) {
+		Tcl_AppendResult(interp, "Usage: bu_brlcad_root subdir\n",
+				 (char *)NULL);
+		return TCL_ERROR;
+	}
+	Tcl_AppendResult(interp, bu_brlcad_root(argv[1], 0), NULL);
+	return TCL_OK;
+}
+
+
+/*****f* libbu/bu_tcl.c
+ *
+ * NAME
+ *	bu_tcl_brlcad_data
+ *
+ * SYNOPSIS
+ *	A tcl wrapper for bu_brlcad_data.
+ *
+ * PARAMETERS
+ *	clientData	- associated data/state
+ *	interp		- tcl interpreter in which this command was registered.
+ *	argc		- number of elements in argv
+ *	argv		- command name and arguments
+ *
+ * RETURN
+ *	Returns TCL_OK if successful, otherwise, TCL_ERROR.
+ */
+int
+bu_tcl_brlcad_data(ClientData	clientData,
+		   Tcl_Interp	*interp,
+		   int		 argc,
+		   char		**argv)
+{
+	if (argc != 2) {
+		Tcl_AppendResult(interp, "Usage: bu_brlcad_data subdir\n",
+				 (char *)NULL);
+		return TCL_ERROR;
+	}
+	Tcl_AppendResult(interp, bu_brlcad_data(argv[1], 0), NULL);
+	return TCL_OK;
+}
+
+
 /*****f* libbu/bu_tcl.c
  *
  * NAME
@@ -1357,6 +1425,7 @@ bu_tcl_brlcad_path(ClientData	clientData,
 	Tcl_AppendResult(interp, bu_brlcad_path(argv[1], 0), NULL);
 	return TCL_OK;
 }
+
 
 /*****f* libbu/bu_tcl.c
  *
