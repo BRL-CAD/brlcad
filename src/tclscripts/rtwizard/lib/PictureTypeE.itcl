@@ -185,7 +185,7 @@ namespace eval RtWizard {
 	#
 	set gamma 12 ; #[$gp getIntensity]
 
-	set binpath [bu_brlcad_path bin]
+	set binpath [bu_brlcad_root bin]
 	#
 	# Run rt to generate the full-color version of the ghost image
 	#
