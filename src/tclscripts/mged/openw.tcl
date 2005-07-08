@@ -64,7 +64,13 @@ if {![info exists mged_default(tran_factor)]} {
 }
 
 if {![info exists mged_default(html_dir)]} {
-	set mged_default(html_dir) [bu_brlcad_path html/manuals/mged]
+	set mged_default(html_dir) [bu_brlcad_data html/manuals/mged]
+}
+
+if {[info exists env(MGED_HTML_DIR)]} {
+	set mged_html_dir $env(MGED_HTML_DIR)
+} else {
+	set mged_html_dir $mged_default(html_dir)
 }
 
 if {![info exists mged_default(web_browser)]} {
@@ -190,12 +196,6 @@ if {![info exists mged_default(max_text_lines)]} {
 
 if {![info exists mged_default(doubleClickTol)]} {
 	set mged_default(doubleClickTol) 500
-}
-
-if {[info exists env(MGED_HTML_DIR)]} {
-	set mged_html_dir $env(MGED_HTML_DIR)
-} else {
-	set mged_html_dir $mged_default(html_dir)
 }
 
 if {[info exists env(WEB_BROWSER)]} {
