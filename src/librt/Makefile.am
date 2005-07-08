@@ -180,9 +180,6 @@ EXTRA_DIST = \
 	$(sample_applications_DATA) \
 	g_bot_include.c \
 	librt.dsp \
-	librt.dsw \
-	librt.ncb \
-	librt.opt \
 	nmg_junk.c \
 	pmalloc.c \
 	sqrt.gould.s \
