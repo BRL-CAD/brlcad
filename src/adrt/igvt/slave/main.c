@@ -24,13 +24,12 @@
 static struct option longopts[] =
 {
 	{ "help",	no_argument,		NULL, 'h' },
-	{ "port",	required_argument,	NULL, 'P' },
+	{ "port",	required_argument,	NULL, 'p' },
 	{ "threads",	required_argument,	NULL, 't' },
 	{ "version",	no_argument,		NULL, 'v' },
-  	{ "host",	required_argument,	NULL, 'H' }
 };
 #endif
-static char shortopts[] = "XdhP:t:vH:";
+static char shortopts[] = "Xdhp:t:v";
 
 
 static void finish(int sig) {
@@ -44,8 +43,7 @@ static void help() {
   printf("%s", "usage: igvt_slave [options]\n\
   -v\t\tdisplay version\n\
   -h\t\tdisplay help\n\
-  -P\t\tport number\n\
-  -H ...\tconnect to master and shutdown when complete\n\
+  -p\t\tport number\n\
   -t ...\tnumber of threads to launch for processing\n");
 }
 
@@ -60,7 +58,7 @@ int main(int argc, char **argv) {
 
   /* Initialize strings */
   host[0] = 0;
-  port = TN_SLAVE_PORT;
+  port = 0;
 
 
   /* Parse command line options */
@@ -74,32 +72,44 @@ int main(int argc, char **argv) {
 	)!= -1)
   {
 	  switch(c) {
-		  case 'P':
-			  port = atoi(optarg);
-			  break;
-		  case 't':
-			  strncpy(temp, optarg, 4);
-			  threads = atoi(temp);
-			  if(threads < 0) threads = 0;
-			  if(threads > 32) threads = 32;
-			  break;
-		  case 'H':
-			  port = TN_MASTER_PORT;
-			  strncpy(host, optarg, 64);
-			  break;
-		  case 'h':
-			  help();
-			  return EXIT_SUCCESS;
-		  case 'v':
-			  printf("%s\n", IGVT_VER_DETAIL);
-			  return EXIT_SUCCESS;
-		default:
-			  help();
-			  return EXIT_FAILURE;
+            case 'h':
+              help();
+              return EXIT_SUCCESS;
+
+            case 'p':
+              port = atoi(optarg);
+              break;
+
+            case 't':
+              strncpy(temp, optarg, 4);
+              threads = atoi(temp);
+              if(threads < 0) threads = 0;
+              if(threads > 32) threads = 32;
+              break;
+
+           case 'v':
+             printf("%s\n", IGVT_VER_DETAIL);
+             return EXIT_SUCCESS;
+
+           default:
+             help();
+             return EXIT_FAILURE;
 	  }
   }
   argc -= optind;
   argv += optind;
+
+  if(argc)
+    strncpy(host, argv[0], 64);
+
+  if(!host[0]) {
+    if(!port)
+      port = TN_SLAVE_PORT;
+    printf("running as daemon.\n");
+  } else {
+    if(!port)
+      port = TN_MASTER_PORT;
+  }
 
   igvt_slave(port, host, threads);
 

@@ -345,7 +345,7 @@ void* igvt_master_networking(void *ptr) {
 
   /* bind socket */
   if(bind(master_socket, (struct sockaddr *)&master, sizeof(master)) < 0) {
-    fprintf(stderr, "socket already bound, exiting.\n");
+    fprintf(stderr, "observer socket already bound, exiting.\n");
     exit(1);
   }
 

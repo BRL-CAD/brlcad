@@ -65,7 +65,11 @@ void igvt_python_free() {
 
 void igvt_python_code(char *code) {
   igvt_python_response[0] = 0;
+
+printf("CP:1\n");
   PyRun_SimpleString(code);
+printf("CP:2\n");
+
   strcpy(code, igvt_python_response);
 }
 
@@ -74,8 +78,10 @@ void igvt_python_code(char *code) {
 static PyObject* igvt_python_stdout(PyObject *self, PyObject* args) {
   char *string;
 
+printf("CP:A\n");
   if(PyArg_ParseTuple(args, "s", &string))
     strcat(igvt_python_response, string);
+printf("CP:B\n");
 
   return PyInt_FromLong(0);
 }
