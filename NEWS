@@ -21,6 +21,7 @@ regions or assemblies from a particular view, the exposed area of the
 covered geometry would be reduced but the presented area would not.
 The rtarea command was added to mged as well, along with rtweight.
 
+* applied zlib vulnerability patch (CAN-2005-2096) - Sean Morrison
 * increased mged shadow ray selection max to 64 - Sean Morrison
 * added rtarea and rtweight commands to mged - Sean Morrison
 * added sorting and hierarchy support to rtarea - Sean Morrison
