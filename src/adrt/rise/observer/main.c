@@ -26,12 +26,11 @@
 static struct option longopts[] =
 {
 	{ "help",	no_argument,		NULL, 'h' },
-	{ "port",	required_argument,	NULL, 'P' },
+	{ "port",	required_argument,	NULL, 'p' },
 	{ "version",	no_argument,		NULL, 'v' },
-  	{ "host",	required_argument,	NULL, 'H' }
 };
 #endif
-static char shortopts[] = "XhP:vH:";
+static char shortopts[] = "Xhp:v";
 
 
 static void finish(int sig) {
@@ -77,25 +76,33 @@ int main(int argc, char **argv) {
 	)!= -1)
   {
 	  switch(c) {
-		  case 'P':
-			  port = atoi(optarg);
-			  break;
-		  case 'H':
-			  strncpy(host, optarg, 64);
-			  break;
-		  case 'h':
-			  help();
-			  return EXIT_SUCCESS;
-		  case 'v':
-			  printf("RISE %s - Copyright (C) U.S Army Research Laboratory (2003 - 2004)\n", VERSION);
-			  return EXIT_SUCCESS;
-		default:
-			  help();
-			  return EXIT_FAILURE;
+            case 'p':
+              port = atoi(optarg);
+              break;
+
+            case 'H':
+              strncpy(host, optarg, 64);
+              break;
+
+            case 'h':
+              help();
+              return EXIT_SUCCESS;
+
+            case 'v':
+              printf("RISE %s - Copyright (C) U.S Army Research Laboratory (2003 - 2004)\n", VERSION);
+              return EXIT_SUCCESS;
+
+            default:
+              help();
+              return EXIT_FAILURE;
 	  }
   }
+
   argc -= optind;
   argv += optind;
+
+  if(argc)
+    strncpy(host, argv[0], 64);
 
   if(host[0]) {
     printf("Observer mode: connecting to %s on port %d\n", host, port);

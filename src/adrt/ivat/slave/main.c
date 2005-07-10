@@ -40,7 +40,7 @@ static void finish(int sig) {
 
 static void help() {
   printf("%s\n", IVAT_VER_DETAIL);
-  printf("%s", "usage: ivat_slave [options]\n\
+  printf("%s", "usage: ivat_slave [options] [host]\n\
   -v\t\tdisplay version\n\
   -h\t\tdisplay help\n\
   -p\t\tport number\n\
@@ -96,6 +96,7 @@ int main(int argc, char **argv) {
              return EXIT_FAILURE;
 	  }
   }
+
   argc -= optind;
   argv += optind;
 
