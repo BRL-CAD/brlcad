@@ -1,16 +1,16 @@
 # $Id$
 
-bin_PROGRAMS = igvt_slave
+bin_PROGRAMS = ivat_slave
 
-igvt_slave_SOURCES = \
+ivat_slave_SOURCES = \
 	main.c \
 	slave.c
 
-igvt_slave_LDFLAGS = -static
+ivat_slave_LDFLAGS = -static
 
-igvt_slave_CFLAGS = -D__STRICT_ANSI__ -I.. -I${top_srcdir}/src/adrt/libtie -I${top_srcdir}/src/adrt/libtienet -I${top_srcdir}/src/adrt/libtexture -I${top_srcdir}/src/adrt/libcommon -I${top_srcdir}/src/adrt/librender -I${top_srcdir}/src/adrt/libutil -I${top_srcdir}/src/adrt/igvt
+ivat_slave_CFLAGS = -D__STRICT_ANSI__ -I.. -I${top_srcdir}/src/adrt/libtie -I${top_srcdir}/src/adrt/libtienet -I${top_srcdir}/src/adrt/libtexture -I${top_srcdir}/src/adrt/libcommon -I${top_srcdir}/src/adrt/librender -I${top_srcdir}/src/adrt/libutil -I${top_srcdir}/src/adrt/ivat
 
-igvt_slave_LDADD = \
+ivat_slave_LDADD = \
 	${LIBTHREAD} \
 	${top_builddir}/src/adrt/libcommon/libcommon.la \
 	${top_builddir}/src/adrt/librender/librender.la \
