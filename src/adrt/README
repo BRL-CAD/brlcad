@@ -1,22 +1,22 @@
 ADRT consists of 2 tools RISE (Realistic Image Synthesis Engine) and 
-ISST (Interactive Shotline Selection Tool).  Both tools consist of 
+IVAT (Interactive Vulnerability Analysis Tool).  Both tools consist of 
 (3) binaries, a master, an observer, and a slave.  To generate a framework
-that RISE and ISST can use then use the g-adrt converter.  g-adrt takes a
+that RISE and IVAT can use then use the g-adrt converter.  g-adrt takes a
 .g file containing bots and creates an ADRT framework.
 
-Below is an example of how to launch ISST from the command line:
+Below is an example of how to launch IVAT from the command line:
 
 
 Method 1 - Manually Connecting Compute Nodes
 ============================================
 Step 1.
-  isst_master /path/to/project.env
+  ivat_master /path/to/project.env
 
 Step 2.
-  isst_observer master.host.name
+  ivat_observer master.host.name
 
 Step 3.
-  isst_slave master.host.name
+  ivat_slave master.host.name
 
 Step 4.
   repeat step 3 on all slave nodes.
@@ -25,14 +25,14 @@ Step 4.
 Method 2 - Connecting to Slave Daemons
 ============================================
 Step 1.
-  login to each compute node and run isst_slave& (background process).
+  login to each compute node and run ivat_slave& (background process).
 
 Step 2.
-  isst_master -l slaves.txt /path/to/project.env
+  ivat_master -l slaves.txt /path/to/project.env
   (slaves.txt contains each slave hostname per line).
 
 Step 3.
-  isst_observer master.host.name
+  ivat_observer master.host.name
 
 
 Since RISE is used for generating images, the observer is only supplied 
@@ -43,8 +43,8 @@ Running configure with --enable-optimized is very important as it will
 affect performance by almost doubling performance.
 
 To learn more about how the structure of a project file and what 
-geometry files you can feed to isst or rise please check the doc 
-directory for help with RISE and ISST.
+geometry files you can feed to ivat or rise please check the doc 
+directory for help with RISE and IVAT.
 
 
 For additional help please check out the #brlcad channel on IRC (freenode).
