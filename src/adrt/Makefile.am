@@ -1,6 +1,20 @@
 # $Id$
 
-SUBDIRS = libtie libtienet libcommon librender libtexture libutil rise ivat
+SUBDIRS = \
+	libtie \
+	libtienet \
+	libcommon \
+	librender \
+	libtexture \
+	libutil \
+	rise \
+	ivat
+
+DIST_SUBDIRS = \
+	$(SUBDIRS) \
+	doc \
+	misc \
+	scripts
 
 if HAVE_DOXYGEN
 doxygen:
