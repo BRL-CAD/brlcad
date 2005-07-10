@@ -308,10 +308,10 @@ void ivat_observer_event_loop() {
 
 
   /* Display Loading Splash Screen */
-  util_display_init(isst_logo.width, isst_logo.height);
+  util_display_init(ivat_logo.width, ivat_logo.height);
 
-  SDL_WM_SetCaption("ADRT_ISST_Observer Loading...", NULL);
-  util_display_draw((void *)isst_logo.pixel_data);
+  SDL_WM_SetCaption("ADRT_IVAT_Observer Loading...", NULL);
+  util_display_draw((void *)ivat_logo.pixel_data);
   util_display_flip();
 
   tienet_sem_wait(&ivat_observer_splash_sem);
@@ -319,7 +319,7 @@ void ivat_observer_event_loop() {
 
   util_display_init(screen_w, screen_h);
 
-  SDL_WM_SetCaption("ADRT_ISST_Observer", NULL);
+  SDL_WM_SetCaption("ADRT_IVAT_Observer", NULL);
   tienet_sem_post(&ivat_observer_sdlready_sem);
 
   while(SDL_WaitEvent(&event) >= 0 && ivat_observer_event_loop_alive) {
