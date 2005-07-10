@@ -274,15 +274,18 @@ void igvt_observer_process(char *content, char *response) {
   tienet_send(igvt_observer_master_socket, &op, 1, 0);
 
   /* length of content */
-  op = strlen(content) + 1;
-  tienet_send(igvt_observer_master_socket, &op, 1, 0);
+  op = strlen(content);
+  if(strlen(content)) {
+    op += 1;
+    tienet_send(igvt_observer_master_socket, &op, 1, 0);
 
-  /* content */
-  tienet_send(igvt_observer_master_socket, content, op, 0);
+    /* content */
+    tienet_send(igvt_observer_master_socket, content, op, 0);
 
-  /* get the response */
-  tienet_recv(igvt_observer_master_socket, &op, 1, 0);
-  tienet_recv(igvt_observer_master_socket, response, op, 0);
+    /* get the response */
+    tienet_recv(igvt_observer_master_socket, &op, 1, 0);
+    tienet_recv(igvt_observer_master_socket, response, op, 0);
+  }
 }
 
 

@@ -4,9 +4,24 @@
 #include <sys/types.h>
 #include <netinet/in.h>
 #include <netdb.h>
+#include "tienet.h"
 
 int igvt_master_compserv_socket;
 int igvt_master_compserv_active;
+
+
+#define LIST_BASE_ATTS		0
+#define LIST_DEP_ATTS		1
+#define LIST_ALL_ATTS		2
+#define LIST_METRICS		3
+#define GET_BASE_ATTS_STATE	4
+#define GET_ATTS_STATE		5
+#define GET_ATT_STATE		6
+#define SET_BASE_ATTS_01	7
+#define SET_BASE_ATTS_STATE	8
+#define RESET_BASE_ATTS		9
+#define	TERM			128
+
 
 /*
 * Establish a connection to the component server.
@@ -51,7 +66,7 @@ void igvt_compnet_connect(char *host, int port) {
 
   /* connect to master */
   if(connect(igvt_master_compserv_socket, (struct sockaddr *)&compserv, sizeof(compserv)) < 0) {
-    fprintf(stderr, "cannot connect to master, exiting.\n");
+    fprintf(stderr, "cannot connect to component server, exiting.\n");
     exit(1);
   }
 
@@ -63,4 +78,14 @@ void igvt_compnet_connect(char *host, int port) {
 * Update the status of a component
 */
 void igvt_compnet_update(char *string, char status) {
+  char message[256];
+
+  if(!igvt_master_compserv_active)
+    return;
+
+  /* format message */
+  sprintf(message, "%c%s,%d%c", SET_BASE_ATTS_STATE, string, status, TERM);
+
+  /* Send string */
+  tienet_send(igvt_master_compserv_socket, message, strlen(message), 0);
 }

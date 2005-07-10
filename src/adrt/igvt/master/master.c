@@ -141,7 +141,7 @@ void igvt_master(int port, int obs_port, char *proj, char *list, char *exec, cha
   pthread_create(&igvt_master_networking_thread, NULL, igvt_master_networking,&obs_port);
 
   /* Connect to the component Server */
-//  igvt_compnet_connect(comp_host, IGVT_COMPNET_PORT);
+  igvt_compnet_connect(comp_host, IGVT_COMPNET_PORT);
 
   /* Parse and pack the application data */
   printf("loading scene... ");
@@ -251,7 +251,7 @@ void igvt_master_result(void *res_buf, int res_len) {
       ind += 1;
       memcpy(name, &((unsigned char *)res_buf)[ind], c);
       ind += c;
-//      igvt_compnet_update(name, 1);
+      igvt_compnet_update(name, 1);
 /*      printf("name[%d]: %s\n", i, name); */
     }
 }
@@ -475,7 +475,8 @@ void* igvt_master_networking(void *ptr) {
 
               case IGVT_NET_OP_MESG:
                 {
-                  char *string, len;
+                  char *string;
+                  int len;
 
                   string = (char *)malloc(1024);
                   tienet_recv(sock->num, &len, 1, 0);
@@ -486,6 +487,7 @@ void* igvt_master_networking(void *ptr) {
 
                   tienet_send(sock->num, &len, 1, 0);
                   tienet_send(sock->num, string, len, 0);
+
                   free(string);
                 }
                 break;
