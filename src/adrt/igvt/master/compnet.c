@@ -89,3 +89,14 @@ void igvt_compnet_update(char *string, char status) {
   /* Send string */
   tienet_send(igvt_master_compserv_socket, message, strlen(message), 0);
 }
+
+
+void igvt_compnet_reset() {
+  char message;
+
+  if(!igvt_master_compserv_active)
+    return;
+
+  message = RESET_BASE_ATTS;
+  tienet_send(igvt_master_compserv_socket, &message, 1, 0);
+}

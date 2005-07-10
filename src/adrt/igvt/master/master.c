@@ -207,8 +207,9 @@ void igvt_master_result(void *res_buf, int res_len) {
   igvt_master_socket_t *sock;
   common_work_t work;
   unsigned char *rgb_data;
-  int i, ind;
+  int i, ind, num;
   short frame;
+  char c, name[256];
 
 
   /* Work unit data */
@@ -218,16 +219,9 @@ void igvt_master_result(void *res_buf, int res_len) {
     char *mesg;
     short slop;
 
-#if 1
-    /* Read the data */
-{
-    int num;
-    char c, name[256];
-
-    /* advance to data */
+    /* Read and advance to data */
     ind = sizeof(common_work_t);
 
-    printf("******** HIT_LIST *********\n");
     /* first hit */
     memcpy(&igvt_master_in_hit, &((unsigned char *)res_buf)[ind], sizeof(TIE_3));
     ind += sizeof(TIE_3);
@@ -240,11 +234,12 @@ void igvt_master_result(void *res_buf, int res_len) {
     math_vec_add(igvt_master_cor, igvt_master_in_hit, igvt_master_out_hit);
     math_vec_mul_scalar(igvt_master_cor, igvt_master_cor, 0.5);
 
-    printf("in: [%.3f, %.3f, %.3f] ... out: [%.3f, %.3f, %.3f]\n", igvt_master_in_hit.v[0], igvt_master_in_hit.v[1], igvt_master_in_hit.v[2], igvt_master_out_hit.v[0], igvt_master_out_hit.v[1], igvt_master_out_hit.v[2]);
-
     /* number of meshes */
     memcpy(&num, &((unsigned char *)res_buf)[ind], sizeof(int));
     ind += sizeof(int);
+
+    /* reset the component server to collapse all fields */
+    igvt_compnet_reset();
 
     for(i = 0; i < num; i++) {
       memcpy(&c, &((unsigned char *)res_buf)[ind], 1);
@@ -252,10 +247,7 @@ void igvt_master_result(void *res_buf, int res_len) {
       memcpy(name, &((unsigned char *)res_buf)[ind], c);
       ind += c;
       igvt_compnet_update(name, 1);
-/*      printf("name[%d]: %s\n", i, name); */
     }
-}
-#endif
 
     /* Send a message to update hitlist */
     mesg = malloc(sizeof(short) + res_len - sizeof(common_work_t) - 6*sizeof(tfloat));

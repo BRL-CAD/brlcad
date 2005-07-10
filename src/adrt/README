@@ -1,18 +1,22 @@
 ADRT consists of 2 tools RISE (Realistic Image Synthesis Engine) and 
-IGVT (Interactive Geometry Visualization Tool).  Both tools consist of 
-(3) binaries, a master, an observer, and slave.  Below is an example of 
-how to launch IGVT from the command line:
+ISST (Interactive Shotline Selection Tool).  Both tools consist of 
+(3) binaries, a master, an observer, and a slave.  To generate a framework
+that RISE and ISST can use then use the g-adrt converter.  g-adrt takes a
+.g file containing bots and creates an ADRT framework.
+
+Below is an example of how to launch ISST from the command line:
+
 
 Method 1 - Manually Connecting Compute Nodes
 ============================================
 Step 1.
-  igvt_master -p /path/to/project -g /path/to/project/geometry.file
+  isst_master /path/to/project.env
 
 Step 2.
-  igvt_observer -H master.host.name
+  isst_observer master.host.name
 
 Step 3.
-  igvt_slave -H master.host.name
+  isst_slave master.host.name
 
 Step 4.
   repeat step 3 on all slave nodes.
@@ -21,14 +25,14 @@ Step 4.
 Method 2 - Connecting to Slave Daemons
 ============================================
 Step 1.
-  login to each compute node and run igvt_slave& (background process).
+  login to each compute node and run isst_slave& (background process).
 
 Step 2.
-  igvt_master -p /path/to/project -g /path/to/project/geometry.file -l 
-  slaves.txt (slaves.txt contains each slave hostname per line).
+  isst_master -l slaves.txt /path/to/project.env
+  (slaves.txt contains each slave hostname per line).
 
 Step 3.
-  igvt_observer -H master.host.name
+  isst_observer master.host.name
 
 
 Since RISE is used for generating images, the observer is only supplied 
@@ -39,5 +43,8 @@ Running configure with --enable-optimized is very important as it will
 affect performance by almost doubling performance.
 
 To learn more about how the structure of a project file and what 
-geometry files you can feed to igvt or rise please check the doc 
-directory for help with RISE and IGVT.
+geometry files you can feed to isst or rise please check the doc 
+directory for help with RISE and ISST.
+
+
+For additional help please check out the #brlcad channel on IRC (freenode).

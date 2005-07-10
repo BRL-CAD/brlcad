@@ -5,5 +5,6 @@
 
 void igvt_compnet_connect(char *host, int port);
 void igvt_compnet_update(char *string, char status);
+void igvt_compnet_reset();
 
 #endif
