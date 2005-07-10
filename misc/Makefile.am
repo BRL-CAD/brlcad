@@ -22,7 +22,8 @@ endif
 SUBDIRS = \
 	$(PROE_DIR) \
 	macosx \
-	vfont
+	vfont \
+	win32-msvc
 
 DISTCLEANFILES = \
 	COPYING.backup \
