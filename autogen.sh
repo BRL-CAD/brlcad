@@ -426,16 +426,15 @@ done
 ############################################
 # protect COPYING & INSTALL from overwrite #
 ############################################
-for file in COPYING INSTALL ; do
-  if test ! -f $file ; then
-    continue
-  fi
-  if test ! -d "${_aux_dir}" ; then
-    continue
-  fi
-  $VERBOSE_ECHO "cp -pf ${file} \"${_aux_dir}/${file}.backup\""
-  cp -pf ${file} "${_aux_dir}/${file}.backup"
-done
+if test -d "${_aux_dir}" ; then
+  for file in COPYING INSTALL ; do
+    if test ! -f $file ; then
+      continue
+    fi
+    $VERBOSE_ECHO "cp -pf ${file} \"${_aux_dir}/${file}.backup\""
+    cp -pf ${file} "${_aux_dir}/${file}.backup"
+  done
+fi
 
 
 ##################################################
