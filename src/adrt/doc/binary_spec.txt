@@ -2,23 +2,24 @@ Mesh:
 
 name		type	bytes
 =============================
-mesh_name_len	char	1
-mesh_name	char*	0-255
-shader_name_len	char	1
-shader_name	char*	0-255
+endian		short	2
+version		short	2
 
-vert_num	int	4
-  vert_id	int	4
-  coords	ADM_3	12
+loop:
+  mesh_name_len	char	1
+  mesh_name	char*	0-255
+  prop_name_len	char	1
+  prop_name	char*	0-255
 
-face_num	int	4
-  face_pt_id1	int	4
-  face_pt_id2	int	4
-  face_pt_id3	int	4
+  vert_num	int	4
+    loop:
+    vert_id_0	int	4
+    vert_id_1	int	4
+    vert_id_2	int	4
+
+  face_num	int	4
+   loop:
+   face_pt_0	float*	12
+   face_pt_1	float*	12
+   face_pt_2	float*	12
 =============================
-
-Base Mesh Size:
-520 bytes
-
-Vert Size: 28 bytes
-Face Size: 13 bytes
