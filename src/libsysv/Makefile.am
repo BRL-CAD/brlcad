@@ -14,9 +14,6 @@ EXTRA_DIST = \
 	bsdselect.c \
 	getopt.c \
 	libsysv.dsp \
-	libsysv.dsw \
-	libsysv.ncb \
-	libsysv.opt \
 	linebuf.c \
 	memset.c \
 	strchr.c

@@ -23,10 +23,7 @@ EXTRA_DIST = \
 	dm-glx.c \
 	dm-ogl_win.c \
 	dm-pex.c \
-	libdm.dsp \
-	libdm.dsw \
-	libdm.ncb \
-	libdm.opt
+	libdm.dsp
 
 libdm_la_SOURCES = \
 	$(SRCS) \

@@ -72,10 +72,7 @@ man_MANS = \
 
 EXTRA_DIST = \
 	$(man_MANS) \
-	libbu.dsp \
-	libbu.dsw \
-	libbu.ncb \
-	libbu.opt
+	libbu.dsp
 
 AM_CFLAGS = -DPREFIX=\"$(prefix)\"
 

@@ -11,9 +11,6 @@ libtermio_la_SOURCES = \
 
 EXTRA_DIST = \
 	libtermio.dsp \
-	libtermio.dsw \
-	libtermio.ncb \
-	libtermio.opt \
 	termio_win32.c
 
 BUILT_SOURCES = vers.c

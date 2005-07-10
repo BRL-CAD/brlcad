@@ -70,9 +70,6 @@ EXTRA_DIST = \
 	if_ts.c \
 	if_ug.c \
 	libfb.dsp \
-	libfb.dsw \
-	libfb.ncb \
-	libfb.opt \
 	pkgswitch.c \
 	sgiselect.s
 

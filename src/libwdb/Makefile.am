@@ -37,9 +37,6 @@ man_MANS = libwdb.3
 EXTRA_DIST = \
 	$(man_MANS) \
 	libwdb.dsp \
-	libwdb.dsw \
-	libwdb.ncb \
-	libwdb.opt \
 	poly.c \
 	reg4.c \
 	spl.c

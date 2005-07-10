@@ -35,10 +35,7 @@ noinst_HEADERS = \
 EXTRA_DIST = \
 	$(man_MANS) \
 	dist_def.c \
-	nirt.dsp \
-	nirt.dsw \
-	nirt.ncb \
-	nirt.opt
+	nirt.dsp
 
 BUILT_SOURCES = vers.c
 vers.c: $(nirt_srcs) Makefile.am
