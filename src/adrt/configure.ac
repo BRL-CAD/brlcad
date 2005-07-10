@@ -189,7 +189,7 @@ AC_SUBST(BRLCAD_CFLAGS)
 AC_SUBST(BRLCAD_LDFLAGS)
 AM_CONDITIONAL(HAVE_BRLCAD, [test "x$with_brlcadpfx" != "xno"])
 
-AC_CONFIG_FILES([Makefile libtie/Makefile libtienet/Makefile libcommon/Makefile librender/Makefile libtexture/Makefile libutil/Makefile rise/Makefile rise/master/Makefile rise/slave/Makefile rise/observer/Makefile igvt/Makefile igvt/master/Makefile igvt/slave/Makefile igvt/observer/Makefile])
+AC_CONFIG_FILES([Makefile libtie/Makefile libtienet/Makefile libcommon/Makefile librender/Makefile libtexture/Makefile libutil/Makefile rise/Makefile rise/master/Makefile rise/slave/Makefile rise/observer/Makefile ivat/Makefile ivat/master/Makefile ivat/slave/Makefile ivat/observer/Makefile])
 AC_OUTPUT
 
 echo
