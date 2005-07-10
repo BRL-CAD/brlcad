@@ -1,11 +1,9 @@
 # Id: #
 
 EXTRA_DIST = 
-	VertexOps.cpp \
-	VertexOps.h \
 	coherency.c \
-	rename.pl \
-	server.cxx
+	ivat.png \
+	rename.pl
 
 MAINTAINERCLEANFILES = Makefile.in
 
