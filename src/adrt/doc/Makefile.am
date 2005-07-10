@@ -1,9 +1,10 @@
 # $Id$
 
 EXTRA_DIST = \
+	binary_spec.txt \
 	ChangeLog \
-	ShaderRef.txt \
-	binary_spec.txt
+	ivat.txt \
+	rise.txt
 
 MAINTAINERCLEANFILES = Makefile.in
 
