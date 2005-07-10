@@ -1,19 +1,19 @@
 # $Id$
 
-bin_PROGRAMS = igvt_master
+bin_PROGRAMS = ivat_master
 
-igvt_master_SOURCES = \
+ivat_master_SOURCES = \
 	compnet.c \
 	dispatcher.c \
-	igvt_python.c \
+	ivat_python.c \
 	master.c \
 	main.c
 
-igvt_master_LDFLAGS = -static
+ivat_master_LDFLAGS = -static
 
-igvt_master_CFLAGS = @SDL_CFLAGS@ -D__STRICT_ANSI__ -I.. -I${top_srcdir}/src/adrt/libtie -I${top_srcdir}/src/adrt/libtienet -I${top_srcdir}/src/adrt/libtexture -I${top_srcdir}/src/adrt/libcommon -I${top_srcdir}/src/adrt/librender -I${top_srcdir}/src/adrt/libutil -I${top_srcdir}/src/adrt/igvt -I/usr/local/include/python2.4
+ivat_master_CFLAGS = @SDL_CFLAGS@ -D__STRICT_ANSI__ -I.. -I${top_srcdir}/src/adrt/libtie -I${top_srcdir}/src/adrt/libtienet -I${top_srcdir}/src/adrt/libtexture -I${top_srcdir}/src/adrt/libcommon -I${top_srcdir}/src/adrt/librender -I${top_srcdir}/src/adrt/libutil -I${top_srcdir}/src/adrt/ivat -I/usr/local/include/python2.4
 
-igvt_master_LDADD = \
+ivat_master_LDADD = \
 	-lpython2.4 \
 	@SDL_LIBS@ \
 	${LIBRT} \
@@ -28,7 +28,7 @@ igvt_master_LDADD = \
 
 noinst_HEADERS = \
 	dispatcher.h \
-	igvt_python.h \
+	ivat_python.h \
 	master.h
 
 MAINTAINERCLEANFILES = Makefile.am
