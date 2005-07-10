@@ -1,6 +1,6 @@
 # $Id$
 
-SUBDIRS = libtie libtienet libcommon librender libtexture libutil rise igvt
+SUBDIRS = libtie libtienet libcommon librender libtexture libutil rise ivat
 
 if HAVE_DOXYGEN
 doxygen:
