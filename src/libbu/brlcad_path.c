@@ -165,18 +165,6 @@ bu_find_path(char result[MAXPATHLEN], const char *lhs, const char *rhs, struct b
 	return 1;
     }
     
-    /* let the caller give "/usr/brlcad" and "bin" and get "/usr/brlcad/bin" */
-    if ( (*(result+llen-1) != BU_DIR_SEPARATOR) && (rhs[0] != BU_DIR_SEPARATOR) ) {
-	*(result+llen) = BU_DIR_SEPARATOR;
-	llen++;
-    }
-    
-    /* let the caller give "/usr/brlcad/" and "/bin" and get "/usr/brlcad/bin" */
-    if ( (*(result+llen-1) == BU_DIR_SEPARATOR) && (rhs[0] == BU_DIR_SEPARATOR) ) {
-	rhs++;
-	rlen--;
-    }
-    
     /* be safe again */
     llen = strlen(result);
     if (llen + rlen + 3 > MAXPATHLEN) {
@@ -184,7 +172,17 @@ bu_find_path(char result[MAXPATHLEN], const char *lhs, const char *rhs, struct b
 	bu_vls_strcat(searched, where);
 	return 0;
     }
-    
+
+    if ( (*(result+llen-1) != BU_DIR_SEPARATOR) && (rhs[0] != BU_DIR_SEPARATOR) ) {
+	/* let the caller give "/usr/brlcad" and "bin" and get "/usr/brlcad/bin" */
+	*(result+llen) = BU_DIR_SEPARATOR;
+	llen++;
+    } else if ( (*(result+llen-1) == BU_DIR_SEPARATOR) && (rhs[0] == BU_DIR_SEPARATOR) ) {
+	/* let the caller give "/usr/brlcad/" and "/bin" and get "/usr/brlcad/bin"*/
+	rhs++;
+	rlen--;
+    }
+        
     /* found a match */
     strncpy(result+llen+1, rhs, MAXPATHLEN - llen);
     if (bu_file_exists(result)) {
