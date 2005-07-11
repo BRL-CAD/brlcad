@@ -12,17 +12,18 @@ bwish_SOURCES = \
 
 bwish_LINK = $(LIBTOOL) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) -o $@
 
-bwish_CFLAGS = -DBWISH=1 ${X_CFLAGS}
+bwish_CFLAGS = ${X_CFLAGS} -DBWISH=1
 
 bwish_LDADD = \
+	${TK} \
+	${TCL} \
+	${ITK} \
+	${ITCL} \
 	${TCLCAD} \
 	${DM} \
 	${FB} \
 	${LIBRT} \
-	${ITK} \
-	${ITCL} \
 	${TERMIO} \
-	${TCL} \
 	${BN} \
 	${BU}
 
