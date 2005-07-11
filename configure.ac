@@ -167,8 +167,6 @@ else
 	BRLCAD_DATA='${prefix}'
 fi
 AC_SUBST(BRLCAD_DATA)
-BRLCAD_DATA_DIR="$BRLCAD_DATA"
-AC_SUBST(BRLCAD_DATA_DIR)
 
 # if this is not a CVS checkout, disable dependency tracking for a
 # faster build. it's not likely that the user is doing development
