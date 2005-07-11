@@ -16,6 +16,9 @@ THESE SHOULD HAPPEN BEFORE THE NEXT RELEASE
 
 THESE ARE LOWER PRIORITY OR FOR FUTURE RELEASES
 
+* make tkCanvBezier modification to libtk be a convenience library if
+  the compiling user opts to use a system libtk.
+
 * make X11 optional at configure-time
 
 * make the DSP primitive use less memory when data is coming from
