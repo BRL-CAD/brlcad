@@ -195,7 +195,8 @@ void common_pack_prop(void **app_data, int *app_ind, char *filename) {
   FILE *fh;
   common_prop_t def_prop;
   short s;
-  char c, line[256], name[256], *token;
+  char line[256], name[256], *token;
+  unsigned char c;
   int marker, size, prop_num;
 
 
@@ -291,7 +292,8 @@ void common_pack_prop(void **app_data, int *app_ind, char *filename) {
 
 void common_pack_texture(void **app_data, int *app_ind, char *filename) {
   FILE *fh;
-  char c, line[256], *token;
+  char line[256], *token;
+  unsigned char c;
   short s;
   int marker, size;
 
@@ -550,7 +552,8 @@ void common_pack_mesh(common_db_t *db, void **app_data, int *app_ind, char *file
 void common_pack_mesh_adrt(common_db_t *db, void **app_data, int *app_ind, char *filename) {
   FILE *fh;
   TIE_3 v;
-  char c, meshname[256], texturename[256];
+  char meshname[256], texturename[256];
+  unsigned char c;
   short s, endian;
   int face[3], marker_size, marker_trinum, size, i, j, k, n, num, matrixind, end;
 

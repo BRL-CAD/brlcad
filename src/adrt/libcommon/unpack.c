@@ -289,7 +289,7 @@ void common_unpack_prop(void *app_data, int size) {
 void common_unpack_texture(void *app_data, int size) {
   int start;
   short block;
-  char c;
+  unsigned char c;
   texture_t *stack = NULL, *texture = NULL;
 
 
@@ -453,7 +453,8 @@ void common_unpack_texture(void *app_data, int size) {
 
 void common_unpack_mesh(common_db_t *db, void *app_data, int size, tie_t *tie) {
   TIE_3 v[3], *vlist, *tlist;
-  char c, name[256];
+  char name[256];
+  unsigned char c;
   short block;
   int *flist, i, num, start, vnum, vmax, fnum, fmax;
 
