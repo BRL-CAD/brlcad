@@ -184,7 +184,7 @@ bu_find_path(char result[MAXPATHLEN], const char *lhs, const char *rhs, struct b
     }
         
     /* found a match */
-    strncpy(result+llen+1, rhs, MAXPATHLEN - llen);
+   strncpy(result+llen, rhs, MAXPATHLEN - llen);
     if (bu_file_exists(result)) {
 	return 1;
     }
