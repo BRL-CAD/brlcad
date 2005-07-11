@@ -3,6 +3,7 @@
 lib_LTLIBRARIES = libtexture.la
 
 libtexture_la_SOURCES = texture_blend.c texture_bump.c texture_camo.c texture_checker.c texture_clouds.c texture_gradient.c texture_image.c texture_mix.c texture_perlin.c texture_stack.c
+libtexture_la_LDFLAGS = -static
 
 AM_CFLAGS = -I${top_srcdir}/src/adrt/libtie -I${top_srcdir}/src/adrt/libtienet -I${top_srcdir}/src/adrt/libcommon -I${top_srcdir}/src/adrt/librender -I${top_srcdir}/src/adrt/libutil
 

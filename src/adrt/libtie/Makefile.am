@@ -3,6 +3,7 @@
 lib_LTLIBRARIES = libtie.la
 
 libtie_la_SOURCES = tie.c
+libtie_la_LDFLAGS = -static
 
 include_HEADERS = tie.h
 noinst_HEADERS = define.h struct.h

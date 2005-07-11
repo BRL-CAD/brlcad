@@ -3,6 +3,7 @@
 lib_LTLIBRARIES = librender.la
 
 librender_la_SOURCES = component.c flat.c kelos.c grid.c hit.c normal.c path.c plane.c phong.c spall.c render_util.c
+librender_la_LDFLAGS = -static
 
 AM_CFLAGS = -I${top_srcdir}/src/adrt/libtie -I${top_srcdir}/src/adrt/libcommon -I${top_srcdir}/src/adrt/libtexture -I${top_srcdir}/src/adrt/libutil -lm
 
