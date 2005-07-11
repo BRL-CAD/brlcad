@@ -15,6 +15,10 @@ on-going issues.
 Recent Bugs
 -----------
 
+* mged/bwish doesn't work without the required resources being
+  installed (i.e. it won't run from a build directory without an
+  installed version in place)
+
 * mged primitive editor doesn't accept/apply values to disk for
   certain primitives (e.g. sph)
 
