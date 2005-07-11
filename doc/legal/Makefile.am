@@ -1,10 +1,14 @@
 # $Id$
 
-EXTRA_DIST = \
+documentationdir = $(BRLCAD_DATA)/doc/legal
+
+documentation_DATA = \
 	bsd.txt \
 	gfdl.txt \
 	gpl.txt \
 	lgpl.txt
+
+EXTRA_DIST = $(documentation_DATA)
 
 MAINTAINERCLEANFILES = Makefile.in
 
