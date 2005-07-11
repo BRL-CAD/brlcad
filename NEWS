@@ -21,6 +21,7 @@ regions or assemblies from a particular view, the exposed area of the
 covered geometry would be reduced but the presented area would not.
 The rtarea command was added to mged as well, along with rtweight.
 
+* improved mged initialization failure reporting - Sean Morrison
 * applied zlib vulnerability patch (CAN-2005-2096) - Sean Morrison
 * added the adrt rise path-tracer - Justin Shumaker
 * added the adrt ivat triangle ray-tracer - Justin Shumaker
