@@ -37,7 +37,7 @@
 eval `machinetype.sh -v`		# BRL mod: sets $BASEDIR
 PATH=/bin:/usr/bin ; export PATH
 # AWFLIB is where the pieces live
-AWFLIB=${AWFLIB-$BASEDIR/etc}		# BRL mod
+AWFLIB=${AWFLIB-$BASEDIR/share/brlcad/7.4.0/awf}		# BRL mod
 
 tmp=/tmp/awp$$			# tempfile for building pass 2
 errs=/tmp/awe$$		# error messages (awk can't send to stderr)
