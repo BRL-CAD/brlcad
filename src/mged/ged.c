@@ -240,10 +240,24 @@ void stdin_input();
 void std_out_or_err();
 #endif
 
+static void
+notify_parent_done(int parent) {
+    int buffer[2] = {0};
+
+    if (write(parent, buffer, 1) == -1) {
+	perror("Unable to write to communication pipe");
+    }
+    if (close(parent) == -1) {
+	perror("Unable to close communication pipe");
+    }
+
+    return;
+}
+
+
 /* 
  *			M A I N
  */
-
 int
 main(int argc, char **argv)
 {
@@ -357,20 +371,21 @@ main(int argc, char **argv)
 
 		    /* just so it does not appear that MGED has died,
 		     * wait until the gui is up before exiting the
-		     * parent process (child sends us a byte).
+		     * parent process (child sends us a byte after the
+		     * window is displayed).
 		     */
 		    if (use_pipe) {
 		    
 			FD_ZERO(&set);
 			FD_SET(parent_pipe[0], &set);
-			timeout.tv_sec = 10;
+			timeout.tv_sec = 90;
 			timeout.tv_usec = 0;
 			read_result = select(parent_pipe[0]+1, &set, NULL, NULL, &timeout);
 
 			if (read_result == -1) {
 			    perror("Unable to read from communication pipe");
 			} else if (read_result == 0) {
-			    fprintf(stdout, "\nAborted\n");
+			    fprintf(stdout, "Detached\n");
 			} else {
 			    fprintf(stdout, "Done\n");
 			}
@@ -525,8 +540,11 @@ main(int argc, char **argv)
 	  bu_vls_free(&vls);
 
 	  if (status != TCL_OK) {
-	    bu_log("%s", interp->result);
-	    exit(1);
+	      if( !run_in_foreground && use_pipe ) {
+		  notify_parent_done(parent_pipe[1]);
+	      }
+	      bu_log("%s\nMGED Aborted.\n", interp->result);
+	      exit(1);
 	  }
 	}
 
@@ -560,7 +578,7 @@ main(int argc, char **argv)
 	  } else {
 	    struct bu_vls vls;
 	    int status;
-	    int buffer[2] = {0};
+
 	    
 	    /* make this a process group leader */
 	    setpgid(0, 0);
@@ -570,22 +588,17 @@ main(int argc, char **argv)
 	    status = Tcl_Eval(interp, bu_vls_addr(&vls));
 	    bu_vls_free(&vls);
 
-	    if (status != TCL_OK) {
-	      bu_log("%s", interp->result);
-	      exit(1);
-	    }
-
 	    /* if we are going to run in the background, let the
 	     * parent process know that we are done initializing so
 	     * that it may exit.
 	     */
 	    if( !run_in_foreground && use_pipe ) {
-		if (write(parent_pipe[1], buffer, 1) == -1) {
-		    perror("Unable to write to communication pipe");
-		}
-		if (close(parent_pipe[1]) == -1) {
-		    perror("Unable to close communication pipe");
-		}
+		notify_parent_done(parent_pipe[1]);
+	    }
+
+	    if (status != TCL_OK) {
+	      bu_log("%s\nMGED Aborted.\n", interp->result);
+	      exit(1);
 	    }
 
 #ifndef _WIN32
