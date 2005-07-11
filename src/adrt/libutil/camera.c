@@ -47,9 +47,9 @@
 #include "umath.h"
 
 #ifdef HAVE_SYS_SYSINFO_H
-#include <sys/sysinfo.h>
+#  include <sys/sysinfo.h>
 #elif defined(HAVE_SYS_SYSCTL_H)
-#include <sys/sysctl.h>
+#  include <sys/sysctl.h>
 #endif
 
 
