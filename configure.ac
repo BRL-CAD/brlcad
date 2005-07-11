@@ -2344,7 +2344,7 @@ TKSTUB='${top_builddir}/src/other/libtk/generic/libtkstub.la'
 AC_SUBST(TKSTUB)
 
 dnl sample applications
-SAMPLE_APPLICATIONS_DIR='$(BRLCAD_DATA_DIR)/sample_applications'
+SAMPLE_APPLICATIONS_DIR='$(BRLCAD_DATA)/sample_applications'
 AC_SUBST(SAMPLE_APPLICATIONS_DIR)
 
 
