@@ -15,6 +15,9 @@ on-going issues.
 Recent Bugs
 -----------
 
+* mged primitive editor doesn't accept/apply values to disk for
+  certain primitives (e.g. sph)
+
 * photon map cache file doesn't work (seems to crash rt on use)
 
 * enabling perspective mode horks shaded mode, also Z clipping
