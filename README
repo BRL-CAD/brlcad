@@ -6,17 +6,18 @@ BRL-CAD is a powerful Combinatorial/Constructive Solid Geometry (CSG)
 solid modeling system that includes an interactive geometry editor,
 ray-tracing support for rendering and geometric analysis,
 network-distributed framebuffer support, image and signal-processing
-tools, and an embedded scripting language.
+tools, realistic image synthesis path-tracing, and an embedded
+scripting language.
 
 The package is a collection of over 400 tools and utilities across
 over 750,000 lines of source code.  Included is support for various
 geometric data format conversions, image and signal processing
 capabilities, sophisticated ray-tracing based lighting models, network
-distributed ray-tracing, massively parallel ray-tracing, animation
-capabilities, data compression, image handling, and interactive 3-D
-geometric editing.  Included is an implementation of Weiler's
-n-Manifold Geometry (NMG) data structures for surface-based solid
-models and photon mapping.
+distributed ray-tracing, massively parallel ray-tracing,
+high-performance path-tracing, animation capabilities, data
+compression, image handling, and interactive 3-D geometric editing.
+Included is an implementation of Weiler's n-Manifold Geometry (NMG)
+data structures for surface-based solid models and photon mapping.
 
 Since 1979, the U.S. Army Research Laboratory has been developing and
 distributing the BRL-CAD solid modeling package for a wide range of
@@ -126,9 +127,12 @@ after configure, you may run:
 
 If the build is successful, you will see "CORRECT" numbers and a
 performance summary at the end.  The "vgr" line effectively shows you
-approximately how much faster your machine is to a VAX 11/780.  See
-the paper in doc/benchmark.tr for information on analyzing the results
-of the benchmark tests in more detail.
+approximately how much faster your machine is to a VAX 11/780.  After
+installing BRL-CAD, you may run the 'benchmark' tool as well to run
+the BRL-CAD Benchmark.
+
+See the paper in doc/benchmark.tr for information on analyzing and
+comparing the results of the benchmark tests in more detail.
 
 
 COMMUNICATION
@@ -154,10 +158,14 @@ may be found at:
 
 In addition to the above, there is an official BRL-CAD IRC channel on
 the Freenode network that may be reached by joining #brlcad on
-irc.freenode.net connecting via port 6667.  IRC is the preferred
-method of communication to interact with the BRL-CAD developers, to
-get involved with the project, obtain support, or provide direct
-feedback.
+irc.freenode.net connecting via port 6667.  For first-time users,
+there is a web-based IRC client available for certain browsers at:
+
+  http://irc.brlcad.org
+
+IRC is the preferred method of communication to interact with the
+BRL-CAD developers, to get involved with the project, obtain support,
+or provide direct feedback.
 
 
 BUG REPORTS AND FEATURE REQUESTS
@@ -175,16 +183,30 @@ respectively.
 DISTRIBUTION DETAILS
 --------------------
 
-Full service distribution: The Survivability/Vulnerability Information
-Analysis Center (SURVIAC) administers the supported BRL-CAD
-distributions and information exchange programs for ARL.  Full service
-distributions a copy of the full distribution materials on your choice
-of magnetic tape media.  One printed set of BRL-CAD documentation will
-be mailed to you.  Software upgrades will be provided at no additional
-charge, and you will have access to full technical assistance by
-phone, FAX, letter, or E-mail.  Agencies of the Federal Government may
-acquire the full service distribution with a simple MIPR or OGA funds
-transfer.
+BRL-CAD is freely available and distributed in both binary and source
+code form through the BRL-CAD project website on Sourceforge:
+
+  http://sf.net/projects/brlcad/
+
+The package is similarly available via the Concurrent Versions System
+(CVS) software version control repository.  To obtain the latest,
+follow the directions for anonymous checkout at:
+
+  http://sourceforge.net/cvs/?group_id=105292
+
+There is also a paid-for full-service support distribution available
+for those interested through the Survivability/Vulnerability
+Information Analysis Center (SURVIAC).
+
+SURVIAC administers the supported BRL-CAD distributions and
+information exchange programs for the U.S. Army Research Laboratory.
+Full service distributions include a copy of the full distribution
+materials on your choice of magnetic or tape media.  One printed set
+of BRL-CAD documentation will be mailed to you.  Software upgrades
+will also be provided at no additional charge, and you will have
+access to full technical assistance by phone, FAX, letter, or E-mail.
+Agencies of the Federal Government may acquire the full service
+distribution with a simple MIPR or OGA funds transfer.
 
 For further details, contact:
 
@@ -224,6 +246,12 @@ electronic mail to recipients of this software as well as to the
 BRL-CAD NEWS mailing list:
 
   http://sourceforge.net/mail/?group_id=105292
+
+Periodically, training and user group meetings are provided with
+announcements similarly posted to the BRL-CAD NEWS mailing list.
+Several BRL-CAD developers also regularly attend the ACM Siggraph
+conference, the ACM Solid and Physical Modeling conference, and other
+similar conferences, conventions, and symposiums as well.
 
 
 GETTING HELP
