@@ -1,6 +1,6 @@
 ADRT consists of several libraries and tools including the Realistic
-Image Synthesis Engine (RISE).  These tools consist of (3) binaries: a
-master, an observer, and a slave.  To generate a framework that RISE
+Image Synthesis Engine (RISE).  These tools consist of three binaries:
+a master, an observer, and a slave.  To generate a framework that RISE
 can use, look at the g-adrt converter.  g-adrt takes a .g file
 containing bots and creates an ADRT framework.
 
