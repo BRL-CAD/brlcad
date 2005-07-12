@@ -123,34 +123,39 @@ AC_CONFIG_SRCDIR([src/librt/bool.c])
 AC_PREFIX_DEFAULT([/usr/brlcad])
 AC_MSG_CHECKING([where BRL-CAD is to be installed])
 if test "x$prefix" = "xNONE" ; then
-	prefix="$ac_default_prefix"
+	bc_prefix="$ac_default_prefix"
+else
+	# allow a complete override
+	bc_prefix="$prefix"
 fi
-AC_DEFINE_UNQUOTED([BRLCAD_ROOT], "${prefix}", "Location where BRL-CAD is installed")
-AC_MSG_RESULT($prefix)
+AC_DEFINE_UNQUOTED([BRLCAD_ROOT], "${bc_prefix}", "Location BRL-CAD will install to")
+AC_MSG_RESULT($bc_prefix)
 if test ! "x$BRLCAD_ROOT" = "x" ; then
 	AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
 	AC_MSG_WARN([BRLCAD_ROOT should only be used to override an install directory at runtime])
 	AC_MSG_WARN([BRLCAD_ROOT is presently set to "${BRLCAD_ROOT}"])
 	AC_MSG_NOTICE([It is highly recommended that BRLCAD_ROOT be unset and not used])
-	if test "x$BRLCAD_ROOT" = "x$prefix" ; then
+	if test "x$BRLCAD_ROOT" = "x$bc_prefix" ; then
 		AC_MSG_WARN([BRLCAD_ROOT is not necessary and may cause unexpected behavior])
 		AC_MSG_NOTICE([{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{])
 	else
 		AC_MSG_ERROR([*** Environment variable BRLCAD_ROOT conflicts with --prefix ***])
 	fi
 else
-	BRLCAD_ROOT='${prefix}'
+	BRLCAD_ROOT="${bc_prefix}"
 fi
 AC_SUBST(BRLCAD_ROOT)
 
 # set up our default shared/non-shared data install directories
 #         e.g. /usr/local/share/brlcad/7.4.0
 AC_MSG_CHECKING([where BRL-CAD resources are to be installed])
-if test "x$pkgdatadir" = "xNONE" ; then
-	pkgdatadir="${prefix}/share/brlcad"
+if test "x$datadir" = "x\${prefix}/share" ; then
+	bc_data_dir="${bc_prefix}/share/brlcad/${BRLCAD_VERSION}"
+else
+	# allow a complete override
+	bc_data_dir="${datadir}"
 fi
-bc_data_dir='${pkgdatadir}/${BRLCAD_VERSION}'
-AC_DEFINE_UNQUOTED([BRLCAD_DATA], "${bc_data_dir}", "Location where BRL-CAD resources are installed")
+AC_DEFINE_UNQUOTED([BRLCAD_DATA], "${bc_data_dir}", "Location BRL-CAD resources will install to")
 AC_MSG_RESULT($bc_data_dir)
 if test ! "x$BRLCAD_DATA" = "x" ; then
 	AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
