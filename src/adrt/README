@@ -1,39 +1,8 @@
-ADRT consists of 2 tools RISE (Realistic Image Synthesis Engine) and 
-IVAT (Interactive Vulnerability Analysis Tool).  Both tools consist of 
-(3) binaries, a master, an observer, and a slave.  To generate a framework
-that RISE and IVAT can use then use the g-adrt converter.  g-adrt takes a
-.g file containing bots and creates an ADRT framework.
-
-Below is an example of how to launch IVAT from the command line:
-
-
-Method 1 - Manually Connecting Compute Nodes
-============================================
-Step 1.
-  ivat_master /path/to/project.env
-
-Step 2.
-  ivat_observer master.host.name
-
-Step 3.
-  ivat_slave master.host.name
-
-Step 4.
-  repeat step 3 on all slave nodes.
-
-
-Method 2 - Connecting to Slave Daemons
-============================================
-Step 1.
-  login to each compute node and run ivat_slave& (background process).
-
-Step 2.
-  ivat_master -l slaves.txt /path/to/project.env
-  (slaves.txt contains each slave hostname per line).
-
-Step 3.
-  ivat_observer master.host.name
-
+ADRT consists of several libraries and tools including the Realistic
+Image Synthesis Engine (RISE).  These tools consist of (3) binaries: a
+master, an observer, and a slave.  To generate a framework that RISE
+can use, look at the g-adrt converter.  g-adrt takes a .g file
+containing bots and creates an ADRT framework.
 
 Since RISE is used for generating images, the observer is only supplied 
 to check up on the images progress, which is especially useful for time 
@@ -44,7 +13,6 @@ affect performance by almost doubling performance.
 
 To learn more about how the structure of a project file and what 
 geometry files you can feed to ivat or rise please check the doc 
-directory for help with RISE and IVAT.
-
+directory for help with RISE.
 
 For additional help please check out the #brlcad channel on IRC (freenode).

@@ -7,8 +7,7 @@ SUBDIRS = \
 	librender \
 	libtexture \
 	libutil \
-	rise \
-	ivat
+	rise
 
 DIST_SUBDIRS = \
 	$(SUBDIRS) \
