@@ -2389,10 +2389,6 @@ AC_CONFIG_FILES([
 	src/Makefile
 	src/adrt/Makefile
 	src/adrt/doc/Makefile
-	src/adrt/ivat/Makefile
-	src/adrt/ivat/master/Makefile
-	src/adrt/ivat/observer/Makefile
-	src/adrt/ivat/slave/Makefile
 	src/adrt/libcommon/Makefile
 	src/adrt/librender/Makefile
 	src/adrt/libtexture/Makefile
