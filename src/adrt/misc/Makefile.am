@@ -2,7 +2,6 @@
 
 EXTRA_DIST = 
 	coherency.c \
-	ivat.png \
 	rename.pl
 
 MAINTAINERCLEANFILES = Makefile.in
