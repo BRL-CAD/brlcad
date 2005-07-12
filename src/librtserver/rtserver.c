@@ -1145,9 +1145,15 @@ rtserver_thread( void *num )
 				/* initialize hit count */
 				aresult->got_some_hits = 0;
 
+				/* set the desired onehit flag */
+				ap.a_onehit = ajob->maxHits;
+
 				/* do some work
 				 * we may have a bunch of rays for this job
 				 */
+				if( verbose ) {
+				    fprintf( stderr, "Got a job with %d rays\n", BU_PTBL_LEN( &ajob->rtjob_rays ) );
+				}
 				for( j=0 ; j<BU_PTBL_LEN( &ajob->rtjob_rays ) ; j++ ) {
 					struct ray_result *ray_res;
 
@@ -1191,6 +1197,7 @@ rtserver_thread( void *num )
 							VMOVE( ap.a_ray.r_pt, aray->r_pt );
 							VMOVE( ap.a_ray.r_dir, aray->r_dir );
 						}
+						ap.a_ray.index = aray->index;
 						if( verbose ) {
 							fprintf( stderr, "shooting ray (%g %g %g) -> (%g %g %g)\n",
 								 V3ARGS( ap.a_ray.r_pt ), V3ARGS( ap.a_ray.r_dir ) );
@@ -1205,15 +1212,22 @@ rtserver_thread( void *num )
 					 */
 					rts_uber_boolweave( ray_res );
 
-					/* put results on output queue */
-					pthread_mutex_lock( &output_queue_mutex[queue] );
-					BU_LIST_INSERT( &output_queue[queue].l, &aresult->l );
-					pthread_mutex_unlock( &output_queue_mutex[queue] );
+				}
 
-					/* let everyone know that results are available */
-					pthread_mutex_lock( &output_queue_ready_mutex );
-					pthread_cond_broadcast( &output_queue_ready );
-					pthread_mutex_unlock( &output_queue_ready_mutex );
+				/* put results on output queue */
+				if( verbose ) {
+				    fprintf( stderr, "Putting results on output queue\n" );
+				}
+				pthread_mutex_lock( &output_queue_mutex[queue] );
+				BU_LIST_INSERT( &output_queue[queue].l, &aresult->l );
+				pthread_mutex_unlock( &output_queue_mutex[queue] );
+
+				/* let everyone know that results are available */
+				pthread_mutex_lock( &output_queue_ready_mutex );
+				pthread_cond_broadcast( &output_queue_ready );
+				pthread_mutex_unlock( &output_queue_ready_mutex );
+				if( verbose ) {
+				    fprintf(stderr, "Results placed on output qeueue and queue ready broadcast\n" );
 				}
 
 				pthread_mutex_lock( &counter_mutex );
@@ -1349,10 +1363,9 @@ rts_get_any_waiting_result( int sessionid )
  * This routine submits a job to the highest priority queue and waits for the result
  */
 struct rtserver_result *
-rts_submit_job_and_wait( struct rtserver_job *ajob )
+rts_submit_job_to_queue_and_wait( struct rtserver_job *ajob, int queue )
 {
 	int id;
-	int queue=0;
 	int queue_is_empty=0;
 	int sessionid;
 
@@ -1369,13 +1382,23 @@ rts_submit_job_and_wait( struct rtserver_job *ajob )
 
 		if( queue_is_empty ) {
 			/* wait until someone says there is stuff in the queue */
+		    if( verbose ) {
+			fprintf( stderr, "Waiting for output queue to be ready\n" );
+		    }
 			pthread_mutex_lock( &output_queue_ready_mutex );
+			pthread_mutex_unlock( &output_queue_mutex[queue] );
 			pthread_cond_wait( &output_queue_ready, &output_queue_ready_mutex );
 			pthread_mutex_unlock( &output_queue_ready_mutex );
 			queue_is_empty = 0;
+			if( verbose ) {
+			    fprintf( stderr, "Output queue is ready\n" );
+			}
 		}
 
 		/* lock the queue */
+		if( verbose ) {
+		    fprintf( stderr, "Locking the output queue to check for results\n" );
+		}
 		pthread_mutex_lock( &output_queue_mutex[queue] );
 
 		/* check for a result */
@@ -1392,6 +1415,9 @@ rts_submit_job_and_wait( struct rtserver_job *ajob )
 			}
 
 			if( found ) {
+			    if( verbose ) {
+				fprintf( stderr, "Found our result, unlocking the output queue\n" );
+			    }
 
 				/* unlock the queue */
 				pthread_mutex_unlock( &output_queue_mutex[queue] );
@@ -1400,18 +1426,30 @@ rts_submit_job_and_wait( struct rtserver_job *ajob )
 				return( aresult );
 			} else {
 				/* unlock the queue */
-				pthread_mutex_unlock( &output_queue_mutex[queue] );
+			    if( verbose ) {
+				fprintf( stderr, " Did not find our result, unlock queue and set empty to true\n" );
+			    }
 
 				queue_is_empty = 1;
 			}
 		} else {
-			/* unlock the queue */
-			pthread_mutex_unlock( &output_queue_mutex[queue] );
+		    if( verbose ) {
+			fprintf( stderr, "queue is empty, just unlock it and continue\n" );
+		    }
 
 			/* nothing available */
 			queue_is_empty = 1;
 		}
 	}
+}
+
+/* Routine to submit a job and get the results.
+ * This routine submits a job to the highest priority queue and waits for the result
+ */
+struct rtserver_result *
+rts_submit_job_and_wait( struct rtserver_job *ajob )
+{
+    return rts_submit_job_to_queue_and_wait( ajob, 0 );
 }
 
 /*	Routine to create a hash table of all the MUVES component names that appear in this BRL-CAD model
@@ -1653,7 +1691,7 @@ rts_shutdown()
  *
  * inputs:
  *	JNIEnv *env - The JAVA env object (must come from a JNI call)
- *	struct rtserver_result *aresult - The result structure produced by the rtserver
+ *	struct ray_result *ray_res - The ray result structure produced by the rtserver
  *	jobject jstart_pt - A JAVA "point" object (the ray start point)
  *	jobject jdir - A JAVA "direction" object (the ray direction)
  *	jclass point_class - A JAVA class (point)
@@ -1664,7 +1702,7 @@ rts_shutdown()
  *	NULL - something went wrong
  */
 jobject
-build_Java_RayResult( JNIEnv *env, struct rtserver_result *aresult, jobject jstart_pt, jobject jdir, jclass point_class, jclass vect_class )
+build_Java_RayResult( JNIEnv *env, struct ray_result *ray_res, jobject jstart_pt, jobject jdir, jclass point_class, jclass vect_class )
 {
 	/* XXX these jclass and jmethodID objects should be cached as global statics using
 	   (*env)->NewGlobalRef( env, ray_class )
@@ -1673,7 +1711,6 @@ build_Java_RayResult( JNIEnv *env, struct rtserver_result *aresult, jobject jsta
 	jclass ray_class, rayResult_class, partition_class;
 	jmethodID ray_constructor_id, rayResult_constructor_id, point_constructor_id, partition_constructor_id, add_partition_id;
 	jobject jrayResult, jray, jpartition, jinhitPoint, jouthitPoint;
-	struct ray_result *ray_res;
 	struct ray_hit *ahit;
 
 	/* get the JAVA Ray class */
@@ -1726,8 +1763,7 @@ build_Java_RayResult( JNIEnv *env, struct rtserver_result *aresult, jobject jsta
 	}
 
 	/* If we have no hits, we are done, just return the empty RayResult object */
-	if( !aresult->got_some_hits ) {
-		RTS_FREE_RTSERVER_RESULT( aresult );
+	if( BU_LIST_IS_EMPTY( &(ray_res->l) ) ) {
 		return( jrayResult );
 	}
 
@@ -1764,7 +1800,6 @@ build_Java_RayResult( JNIEnv *env, struct rtserver_result *aresult, jobject jsta
 	}
 
 	/* loop through all the hits in the results, and add them to the JAVA RayResult object */
-	ray_res = BU_LIST_FIRST( ray_result, &aresult->resultHead.l );
 	for( BU_LIST_FOR( ahit, ray_hit, &ray_res->hitHead.l ) ) {
 		jdouble in_hit[3], out_hit[3];
 		jfloat inObl, outObl;
@@ -2197,7 +2232,293 @@ Java_mil_army_arl_services_RtService_getLibraryVersion(JNIEnv *env, jobject jobj
 	return( (*env)->NewStringUTF(env, RCSid) );
 }
 
-/* JAVA shootRay method */
+/* JAVA shootArray method
+ *
+ * env - the JNI environment object
+ * jobj - "this" pointer (the caller)
+ * jstart_pt - the base point for this array of rays (row=0, col=0)
+ * jdir - the common direction for every ray in this array
+ * jrow_diff - the vector distance from one row to the next
+ * jcol_diff - the vector distance from one column to the next
+ * num_rows - the number of rows in this array of rays (must be at least 1)
+ * num_cols - the number of columns in this array of rays (must be at least 1)
+ * oneHit - The "one hit" flag to be set in the a_onehit field of the application structure
+ * sessionId - identifies the session that this job is part of (must have come from rts_load_geometry() or rts_open_session())
+ */
+JNIEXPORT jobject JNICALL
+Java_mil_army_arl_services_RtService_shootArray( JNIEnv *env, jobject jobj,
+         jobject jstart_pt, jobject jdir, jobject jrow_diff, jobject jcol_diff, jint num_rows, jint num_cols, jint oneHit, jint sessionId )
+{
+   	jclass point_class, vect_class, rayResult_class, arrayClass;
+	jmethodID point_constructorID, arraySetID;
+	jobjectArray resultsArray; 
+	jfieldID fidvx, fidvy, fidvz;
+	jfieldID fidpx, fidpy, fidpz;
+	jobject jrayResult, jray_start_pt;
+	point_t base_pt;
+	vect_t row_dir, col_dir, ray_dir;
+	struct rtserver_job *ajob;
+	struct xray *aray;
+	struct rtserver_result *aresult;
+	struct ray_result *ray_res;
+	int row, col;
+
+	/* extract base point for array of rays */
+	if( (point_class = (*env)->GetObjectClass( env, jstart_pt ) ) == NULL ) {
+		fprintf( stderr, "Failed to find Point class\n" );
+		(*env)->ExceptionDescribe(env);
+		return( (jobject)NULL );
+	}
+
+	fidpx = (*env)->GetFieldID( env, point_class, "x", "D" );
+	if( fidpx == 0 && (*env)->ExceptionOccurred(env) ) {
+		fprintf( stderr, "Exception thrown while getting x-fid of ray start point\n" );
+		(*env)->ExceptionDescribe(env);
+		return( (jobject)NULL );
+	}
+
+	base_pt[X] = (jdouble)(*env)->GetDoubleField( env, jstart_pt, fidpx );
+	if( (*env)->ExceptionOccurred(env) ) {
+		fprintf( stderr, "Exception thrown while getting x coord of ray start point\n" );
+		(*env)->ExceptionDescribe(env);
+		return( (jobject)NULL );
+	}
+
+	fidpy = (*env)->GetFieldID( env, point_class, "y", "D" );
+	if( fidpy == 0 && (*env)->ExceptionOccurred(env) ) {
+		fprintf( stderr, "Exception thrown while getting y-fid of ray start point\n" );
+		(*env)->ExceptionDescribe(env);
+		return( (jobject)NULL );
+	}
+
+	base_pt[Y] = (*env)->GetDoubleField( env, jstart_pt, fidpy );
+	if( (*env)->ExceptionOccurred(env) ) {
+		fprintf( stderr, "Exception thrown while getting y coord of ray start point\n" );
+		(*env)->ExceptionDescribe(env);
+		return( (jobject)NULL );
+	}
+
+	fidpz = (*env)->GetFieldID( env, point_class, "z", "D" );
+	if( fidpz == 0 && (*env)->ExceptionOccurred(env) ) {
+		fprintf( stderr, "Exception thrown while getting z-fid of ray start point\n" );
+		(*env)->ExceptionDescribe(env);
+		return( (jobject)NULL );
+	}
+
+	base_pt[Z] = (*env)->GetDoubleField( env, jstart_pt, fidpz );
+	if( (*env)->ExceptionOccurred(env) ) {
+		fprintf( stderr, "Exception thrown while getting z coord of ray start point\n" );
+		(*env)->ExceptionDescribe(env);
+		return( (jobject)NULL );
+	}
+
+	/* extract direction vector for the rays */
+	if( (vect_class = (*env)->GetObjectClass( env, jdir ) ) == NULL ) {
+		fprintf( stderr, "Failed to find Vector3 class\n" );
+		(*env)->ExceptionDescribe(env);
+		return( (jobject)NULL );
+	}
+
+	fidvx = (*env)->GetFieldID( env, vect_class, "x", "D" );
+	if( fidvx == 0 && (*env)->ExceptionOccurred(env) ) {
+		fprintf( stderr, "Exception thrown while getting x-fid of ray direction\n" );
+		(*env)->ExceptionDescribe(env);
+		return( (jobject)NULL );
+	}
+
+	ray_dir[X] = (*env)->GetDoubleField( env, jdir, fidvx );
+	if( (*env)->ExceptionOccurred(env) ) {
+		fprintf( stderr, "Exception thrown while getting x coord of ray direction\n" );
+		(*env)->ExceptionDescribe(env);
+		return( (jobject)NULL );
+	}
+
+	fidvy = (*env)->GetFieldID( env, vect_class, "y", "D" );
+	if( fidvy == 0 && (*env)->ExceptionOccurred(env) ) {
+		fprintf( stderr, "Exception thrown while getting y-fid of ray direction\n" );
+		(*env)->ExceptionDescribe(env);
+		return( (jobject)NULL );
+	}
+
+	ray_dir[Y] = (*env)->GetDoubleField( env, jdir, fidvy );
+	if( (*env)->ExceptionOccurred(env) ) {
+		fprintf( stderr, "Exception thrown while getting y coord of ray direction\n" );
+		(*env)->ExceptionDescribe(env);
+		return( (jobject)NULL );
+	}
+
+	fidvz = (*env)->GetFieldID( env, vect_class, "z", "D" );
+	if( fidvz == 0 && (*env)->ExceptionOccurred(env) ) {
+		fprintf( stderr, "Exception thrown while getting z-fid of ray direction\n" );
+		(*env)->ExceptionDescribe(env);
+		return( (jobject)NULL );
+	}
+
+	ray_dir[Z] = (*env)->GetDoubleField( env, jdir, fidvz );
+	if( (*env)->ExceptionOccurred(env) ) {
+		fprintf( stderr, "Exception thrown while getting z coord of ray direction\n" );
+		(*env)->ExceptionDescribe(env);
+		return( (jobject)NULL );
+	}
+
+	/* extract row difference vector (the vector distance from one row to the next) */
+	row_dir[X] = (*env)->GetDoubleField( env, jrow_diff, fidvx );
+	if( (*env)->ExceptionOccurred(env) ) {
+		fprintf( stderr, "Exception thrown while getting x coord of row difference vector\n" );
+		(*env)->ExceptionDescribe(env);
+		return( (jobject)NULL );
+	}
+
+	row_dir[Y] = (*env)->GetDoubleField( env, jrow_diff, fidvy );
+	if( (*env)->ExceptionOccurred(env) ) {
+		fprintf( stderr, "Exception thrown while getting y coord of row difference vector\n" );
+		(*env)->ExceptionDescribe(env);
+		return( (jobject)NULL );
+	}
+
+	row_dir[Z] = (*env)->GetDoubleField( env, jrow_diff, fidvz );
+	if( (*env)->ExceptionOccurred(env) ) {
+		fprintf( stderr, "Exception thrown while getting z coord of row difference vector\n" );
+		(*env)->ExceptionDescribe(env);
+		return( (jobject)NULL );
+	}
+
+	/* extract the column difference vector (the vector distance from column to the next) */
+	col_dir[X] = (*env)->GetDoubleField( env, jcol_diff, fidvx );
+	if( (*env)->ExceptionOccurred(env) ) {
+		fprintf( stderr, "Exception thrown while getting x coord of column difference vector\n" );
+		(*env)->ExceptionDescribe(env);
+		return( (jobject)NULL );
+	}
+
+	col_dir[Y] = (*env)->GetDoubleField( env, jcol_diff, fidvy );
+	if( (*env)->ExceptionOccurred(env) ) {
+		fprintf( stderr, "Exception thrown while getting y coord of column difference vector\n" );
+		(*env)->ExceptionDescribe(env);
+		return( (jobject)NULL );
+	}
+
+	col_dir[Z] = (*env)->GetDoubleField( env, jcol_diff, fidvz );
+	if( (*env)->ExceptionOccurred(env) ) {
+		fprintf( stderr, "Exception thrown while getting z coord of column difference vector\n" );
+		(*env)->ExceptionDescribe(env);
+		(*env)->ExceptionClear(env);
+		return( (jobject)NULL );
+	}
+
+	/* throw an exception if we are asked to build an impossible array */
+	if( num_rows < 1 || num_cols < 1 ) {
+	    jclass rtServerUsageException = (*env)->FindClass( env, "mil/army/arl/muves/rtserver/RtServerUsageException" );
+	    if( rtServerUsageException == 0 ) {
+		return( (jobject)NULL );
+	    }
+	    (*env)->ThrowNew( env, rtServerUsageException, "neither rows nor columns can be less than 1" );
+	    return( (jobject)NULL );
+	}
+
+
+	/* get a job structure */
+	RTS_GET_RTSERVER_JOB( ajob );
+
+	/* assign a unique ID to this job */
+	ajob->rtjob_id = get_unique_jobid();
+	ajob->sessionid = sessionId;
+	ajob->maxHits = oneHit;
+
+	/* add all the requested rays to this job */
+	for( row=0 ; row < num_rows ; row++ ) {
+	    for( col=0 ; col < num_cols ; col++ ) {
+		/* get a ray structure */
+		RTS_GET_XRAY( aray );
+		aray->index = row * num_cols + col;
+		VJOIN2( aray->r_pt, base_pt, (double)row, row_dir, (double)col, col_dir );
+		VMOVE( aray->r_dir, ray_dir );
+
+		/* add the requested ray to this job */
+		RTS_ADD_RAY_TO_JOB( ajob, aray );
+	    }
+	}
+
+	/* run this job */
+	if( verbose ) {
+	    fprintf( stderr, "Submitting a job\n" );
+	}
+	aresult = rts_submit_job_to_queue_and_wait( ajob, 1 );
+	if( verbose ) {
+	    fprintf( stderr, "Got C result\n" );
+	}
+
+	/* create Java array to hold results */
+	if( (rayResult_class = (*env)->FindClass( env, "mil/army/arl/muves/rtserver/RayResult" )) == NULL ) {
+	    fprintf( stderr, "Failed to find RayResult class\n" );
+	    (*env)->ExceptionDescribe(env);
+	    return( (jobject)NULL );
+	}
+	if( (resultsArray = (*env)->NewObjectArray( env, num_rows * num_cols, rayResult_class, (jobject)NULL )) == NULL ) {
+	    fprintf( stderr, "Failed to create array of RayResults\n" );
+	    (*env)->ExceptionDescribe(env);
+	    return( (jobject)NULL );
+	}
+
+	if( (arrayClass = (*env)->FindClass( env, "java/lang/reflect/Array" ) ) == NULL ) {
+	    fprintf( stderr, "Failed to find Array class\n" );
+	    (*env)->ExceptionDescribe(env);
+	    return( (jobject)NULL );
+	}
+
+	/* Get the method to set an element of an array */
+	if( (arraySetID = (*env)->GetStaticMethodID( env, arrayClass, "set", "(Ljava/lang/Object;ILjava/lang/Object;)V" )) == NULL ) {
+	    fprintf( stderr, "Failed to find \"set\" method of Array\n" );
+	    (*env)->ExceptionDescribe(env);
+	    return( (jobject)NULL );
+	}
+
+	/* Get the constructor for a Point */
+	point_constructorID = (*env)->GetMethodID( env, point_class, "<init>", "(DDD)V" );
+	if( point_constructorID == NULL ) {
+	    fprintf( stderr, "Failed to find constructor for Point class\n" );
+	    (*env)->ExceptionDescribe(env);
+	    return( (jobject)NULL );
+	}
+
+	/* build result to return */
+	for( BU_LIST_FOR( ray_res, ray_result, &aresult->resultHead.l ) ) {
+	    struct xray *theRay = &ray_res->the_ray;
+
+	    if( BU_LIST_NON_EMPTY( &ray_res->hitHead.l ) ) {
+		/* build a start Point for this ray */
+		jray_start_pt = (*env)->NewObject( env, point_class, point_constructorID, theRay->r_pt[X], theRay->r_pt[Y], theRay->r_pt[Z] );
+
+		/* build a Java RayResult object for this ray */
+		jrayResult = build_Java_RayResult( env, ray_res, jray_start_pt, jdir, point_class, vect_class );
+	    }
+	    else {
+		jrayResult = (jobject)NULL;
+	    }
+
+	    /* set the element in the result array to this RayResult
+	     * note that the ray "index" indicates where in the array it belongs
+	     */
+	    (*env)->CallStaticVoidMethod( env, arrayClass, arraySetID, resultsArray, theRay->index, jrayResult );
+	    if( (*env)->ExceptionOccurred(env) ) {
+		fprintf( stderr, "Exception thrown while adding result to results array\n" );
+		(*env)->ExceptionDescribe(env);
+		return( (jobject)NULL );
+	    }
+	}
+
+	/* return JAVA result */
+	return( resultsArray );
+}
+
+/* JAVA shootRay method
+ *
+ * env - the JNI environment
+ * jobj - "This" object (the caller)
+ * jstart_pt - the start point for this ray
+ * jdir - the ray direction
+ * sessionId - the identifier for this session (must have come from rts_load_geometry() or rts_open_session() )
+ */
 JNIEXPORT jobject JNICALL
 Java_mil_army_arl_services_RtService_shootRay( JNIEnv *env, jobject jobj,
 	jobject jstart_pt, jobject jdir, jint sessionId )
@@ -2208,6 +2529,7 @@ Java_mil_army_arl_services_RtService_shootRay( JNIEnv *env, jobject jobj,
 	struct rtserver_job *ajob;
 	struct xray *aray;
 	struct rtserver_result *aresult;
+	struct ray_result *ray_res;
 
 	/* get a ray structure */
 	RTS_GET_XRAY( aray );
@@ -2322,10 +2644,17 @@ Java_mil_army_arl_services_RtService_shootRay( JNIEnv *env, jobject jobj,
 	RTS_ADD_RAY_TO_JOB( ajob, aray );
 
 	/* run this job */
+	if( verbose ) {
+	    fprintf( stderr, "Submitting a job\n" );
+	}
 	aresult = rts_submit_job_and_wait( ajob );
+	if( verbose ) {
+	    fprintf( stderr, "Got C result\n" );
+	}
 
 	/* build result to return */
-	jrayResult = build_Java_RayResult( env, aresult, jstart_pt, jdir, point_class, vect_class );
+	ray_res = BU_LIST_FIRST( ray_result, &aresult->resultHead.l );
+	jrayResult = build_Java_RayResult( env, ray_res, jstart_pt, jdir, point_class, vect_class );
 
 	RTS_FREE_RTSERVER_RESULT( aresult );
 
