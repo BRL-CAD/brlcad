@@ -24,7 +24,6 @@ The rtarea command was added to mged as well, along with rtweight.
 * improved mged initialization failure reporting - Sean Morrison
 * applied zlib vulnerability patch (CAN-2005-2096) - Sean Morrison
 * added the adrt rise path-tracer - Justin Shumaker
-* added the adrt ivat triangle ray-tracer - Justin Shumaker
 * increased mged shadow ray selection max to 64 - Sean Morrison
 * added rtarea and rtweight commands to mged - Sean Morrison
 * added sorting and hierarchy support to rtarea - Sean Morrison
