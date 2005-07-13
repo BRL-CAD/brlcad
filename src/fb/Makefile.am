@@ -147,7 +147,7 @@ fb_bw_SOURCES = fb-bw.c
 fb_bw_LDADD = ${FB}
 
 cat_fb_SOURCES = cat-fb.c 
-cat_fb_LDADD = ${FB}
+cat_fb_LDADD = ${FB} ${BU}
 
 gif2fb_SOURCES = gif2fb.c 
 gif2fb_LDADD = ${FB}
