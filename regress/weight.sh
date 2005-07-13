@@ -52,11 +52,17 @@ Centroid: X = 0.5 cm.
 Total mass = 7.82943 grams
 
 EOF
-grep -v "Time Stamp" wgt.out | grep -v "Density Table Used" > weight.out
+ref_values="`grep 0 weight.ref | grep -v 'Time Stamp' | sed 's/ //g'`"
+if [ "x$ref_values" = "x" ] ; then
+    echo "rtweight benchmark failed"
+fi
 
-cmp -s weight.out weight.ref
+out_values="`grep 0 wgt.out | grep -v 'Time Stamp' | sed 's/[ \t]//g'`"
+if [ "x$out_values" = "x" ] ; then
+    echo "rtweight benchmark failed (script error)"
+fi
 
-if  [ X$? = X1 ] ; then
+if  [ "x$ref_values" != "x$out_values" ] ; then
 	echo "rtweight benchmark failed"
 else
 	echo "match"
