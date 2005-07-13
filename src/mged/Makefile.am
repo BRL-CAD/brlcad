@@ -107,6 +107,7 @@ mged_LDADD = \
 	${WDB} \
 	${DM} \
 	${FB} \
+	${BU} \
 	${SYSV} \
 	${TK} \
 	${ITK} \
