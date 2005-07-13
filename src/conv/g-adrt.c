@@ -33,13 +33,15 @@
  * $Id$
  */
 
+#include "common.h"
+
 #include <math.h>
 #include <stdio.h>
 #include <string.h>
-#include <unistd.h>
-#include <getopt.h>
+#ifdef HAVE_UNISTD_H
+#  include <unistd.h>
+#endif
 
-#include "brlcad_config.h"	/* machine specific definitions */
 #include "machine.h"		/* machine specific definitions */
 #include "vmath.h"		/* vector math macros */
 #include "raytrace.h"		/* librt interface definitions */
@@ -487,7 +489,7 @@ int main(int argc, char *argv[]) {
 
   /* Process command line arguments */
   use_regmap = 0;
-  while((c = getopt(argc, argv, shortopts)) != -1) {
+  while((c = bu_getopt(argc, argv, shortopts)) != -1) {
     switch(c) {
       case 'r':
         use_regmap = 1;
@@ -498,8 +500,8 @@ int main(int argc, char *argv[]) {
         break;
     }
   }
-  argc -= optind;
-  argv += optind;
+  argc -= bu_optind;
+  argv += bu_optind;
 
   /* Open the adrt file */
   strcpy(filename, argv[1]);
