@@ -16,13 +16,14 @@ entire history of the project is available through CVS.
 ----------------------------------------------------------------------
 
 This update includes several enhancements and new additions including
-the impressive addition of the Realistic Interactive Synthesis Engine
-(RISE) path-tracer.  RISE is part of the ADRT tool and library suite,
-which provides a high-performance triangle ray-trace engine.  This
-engine serves as the basis for several tools, RISE being the first
-toolset to be released.  This toolset includes a master job manager, a
-slave compute daemon for network distributed processing, and a client
-for observing job progress.
+the impressive addition of the Realistic Image Synthesis Engine (RISE)
+path-tracer.  RISE is part of the Advanced Distributed Ray-Trace
+(ADRT) tool and library suite, which provides a high-performance
+triangle ray-trace engine.  This engine serves as the basis for
+several tools, RISE being the first toolset to be released.  This
+toolset includes a master job manager, a slave compute daemon for
+network distributed processing, and a client for observing job
+progress.
 
 Driven by user requests, the 'rtarea' command now reports signifcantly
 more information than before including area details for all assemblies
