@@ -701,27 +701,40 @@ outlets with the details of the new release:
 
       News on the BRL-CAD website
       http://brlcad.org/
+	with news details
 
       SourceForge Project News
       http://sf.net/projects/brlcad/
+	with news details
 
       BRL-CAD News & Users mailing lists
       brlcad-news@lists.sourceforge.net
       brlcad-users@lists.sourceforge.net
-
-      Freshmeat
-      http://freshmeat.net/projects/brl-cad/
+	with news details
 
       CAD on Linux mailing list
       cad-linux@freelists.org
+	with news details
       cad-linux-dev@freelists.org
+	without news details
+
+      Freshmeat
+      http://freshmeat.net/projects/brl-cad/
+	short without news details
+
+      upFront.ezine
+      Ralph Grabowski
+      ralphg@upfrontezine.com
+	short without news details
 
       Slashdot (if major)
       http://slashdot.org
+	short without news details
 
       Government Computer News (if major)
       Joab Jackson
       jjackson@gcn.com
+	short without news details
 
 15) Sit back and enjoy a beverage for a job well done.
 
