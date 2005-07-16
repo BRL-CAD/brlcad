@@ -1,0 +1,126 @@
+#!/bin/sh
+#                         C U B E . R T
+# BRL-CAD
+#
+# Copyright (C) 2004-2005 United States Government as represented by
+# the U.S. Army Research Laboratory.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+#
+# 1. Redistributions of source code must retain the above copyright
+# notice, this list of conditions and the following disclaimer.
+#
+# 2. Redistributions in binary form must reproduce the above 
+# copyright notice, this list of conditions and the following
+# disclaimer in the documentation and/or other materials provided
+# with the distribution.
+#
+# 3. The name of the author may not be used to endorse or promote
+# products derived from this software without specific prior written
+# permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS
+# OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY
+# DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+# GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+# WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+# NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+# SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#
+###
+# Ensure /bin/sh
+export PATH || (echo "This isn't sh."; sh $0 $*; kill $$)
+path_to_this="`dirname $0`"
+LC_ALL=C
+
+echo Looking for RT...
+# find the raytracer
+# RT environment variable overrides
+if test "x${RT}" = "x" ; then
+    # see if we find the rt binary
+    if test -x "$path_to_this/../src/rt/rt" ; then
+	echo ...found $path_to_this/../src/rt/rt
+	RT="$path_to_this/../src/rt/rt"
+    elif test -x "$path_to_this/rt" ; then
+	echo ...found $path_to_this/rt
+	RT="$path_to_this/rt"
+    elif test -x "$path_to_this/../bin/rt" ; then
+	echo ...found $path_to_this/../bin/rt
+	RT="$path_to_this/../bin/rt"
+    elif test -x "/usr/brlcad/bin/rt" ; then
+	echo ...found /usr/brlcad/bin/rt
+	RT="/usr/brlcad/bin/rt"
+    fi
+else
+    echo ...using $RT from RT environment variable setting
+fi
+
+echo Looking for DB...
+# find the geometry directory
+# DB environment variable overrides
+if test "x${DB}" = "x" ; then
+    # see if we find the db dir
+    if test -d "$path_to_this/../db" ; then
+	echo ...found $path_to_this/../db
+	DB="$path_to_this/../db"
+    elif test -d "$path_to_this/db" ; then
+	echo ...found $path_to_this/db
+	DB="$path_to_this/db"
+    fi
+else
+    echo ...using $DB from DB environment variable setting
+fi
+
+# print results or choke
+if test "x${RT}" = "x" ; then
+    echo "ERROR:  Could not find the BRL-CAD raytracer"
+    exit 1
+else
+    echo "Using [$RT] for RT"
+fi
+if test "x${DB}" = "x" ; then
+    echo "ERROR:  Could not find the BRL-CAD database directory"
+    exit 1
+else
+    echo "Using [$DB] for DB"
+fi
+
+if test -f cube.pix ; then mv cube.pix cube.pix.$$ ; fi
+if test -f cube.log ; then mv cube.log cube.log.$$ ; fi
+
+echo "Ray-tracing to file: cube.pix"
+
+$RT -p90 -f1024 -H3 -M $*\
+  -o cube.pix\
+  ${DB}/cube.g\
+  'all.g' \
+  2> cube.log\
+  <<EOF
+6.847580140e+03
+3.699276190e+03 3.032924070e+03 3.658674860e+03
+-5.735762590e-01 8.191521640e-01 0.000000000e+00 0.000000000e+00 
+-3.461885920e-01 -2.424037690e-01 9.063078880e-01 0.000000000e+00 
+7.424040310e-01 5.198366640e-01 4.226181980e-01 0.000000000e+00 
+0.000000000e+00 0.000000000e+00 0.000000000e+00 1.000000000e+00 
+EOF
+
+if test x$? != x0 ; then
+    echo "ERROR: Ray-trace failed."
+fi
+
+echo "Done.  See cube.log for details."
+
+# Local Variables:
+# mode: sh
+# tab-width: 8
+# sh-indentation: 4
+# sh-basic-offset: 4
+# indent-tabs-mode: t
+# End:
+# ex: shiftwidth=4 tabstop=8
