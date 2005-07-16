@@ -98,7 +98,7 @@
 
 # Ensure /bin/sh
 export PATH || (echo "This isn't sh."; sh $0 $*; kill $$)
-path_to_run_sh=`dirname $0`
+path_to_this=`dirname $0`
 
 
 echo "B R L - C A D   B E N C H M A R K"
@@ -115,15 +115,15 @@ echo Looking for RT...
 # RT environment variable overrides
 if test "x${RT}" = "x" ; then
     # see if we find the rt binary
-    if test -x "$path_to_run_sh/../src/rt/rt" ; then
-	echo ...found $path_to_run_sh/../src/rt/rt
-	RT="$path_to_run_sh/../src/rt/rt"
-    elif test -x "$path_to_run_sh/rt" ; then
-	echo ...found $path_to_run_sh/rt
-	RT="$path_to_run_sh/rt"
-    elif test -x "$path_to_run_sh/../bin/rt" ; then
-	echo ...found $path_to_run_sh/../bin/rt
-	RT="$path_to_run_sh/../bin/rt"
+    if test -x "$path_to_this/../src/rt/rt" ; then
+	echo ...found $path_to_this/../src/rt/rt
+	RT="$path_to_this/../src/rt/rt"
+    elif test -x "$path_to_this/rt" ; then
+	echo ...found $path_to_this/rt
+	RT="$path_to_this/rt"
+    elif test -x "$path_to_this/../bin/rt" ; then
+	echo ...found $path_to_this/../bin/rt
+	RT="$path_to_this/../bin/rt"
     fi
 else
     echo ...using $RT from RT environment variable setting
@@ -133,28 +133,28 @@ echo Looking for benchmark geometry ...
 # find geometry database directory if we do not already know where it
 # is. DB environment variable overrides
 if test "x${DB}" = "x" ; then
-    if test -f "$path_to_run_sh/../db/sphflake.g" ; then
-	echo ...found .g geometry files in $path_to_run_sh/../db
-	DB="$path_to_run_sh/../db"
-    elif test -f "$path_to_run_sh/sphflake.g" ; then
-	echo ...found .g geometry files in $path_to_run_sh
-	DB="$path_to_run_sh"
-    elif test -f "$path_to_run_sh/../share/brlcad/db/sphflake.g" ; then
-	echo ...found .g geometry files in $path_to_run_sh/../share/brlcad/db
-	DB="$path_to_run_sh/../share/brlcad/db"
+    if test -f "$path_to_this/../db/sphflake.g" ; then
+	echo ...found .g geometry files in $path_to_this/../db
+	DB="$path_to_this/../db"
+    elif test -f "$path_to_this/sphflake.g" ; then
+	echo ...found .g geometry files in $path_to_this
+	DB="$path_to_this"
+    elif test -f "$path_to_this/../share/brlcad/db/sphflake.g" ; then
+	echo ...found .g geometry files in $path_to_this/../share/brlcad/db
+	DB="$path_to_this/../share/brlcad/db"
     elif test -f "sphflake.g" ; then
 	echo ...found .g geometry files in .
 	DB="."
-    elif test -f "$path_to_run_sh/../db/sphflake.asc" ; then
-	echo ...found ascii geometry files in $path_to_run_sh/../db
+    elif test -f "$path_to_this/../db/sphflake.asc" ; then
+	echo ...found ascii geometry files in $path_to_this/../db
 
 	echo Looking for asc2g converter ...
 	if test "x${ASC2G}" = "x" ; then
 	    ASC2G="asc2g"
-	    if test -x "$path_to_run_sh/../src/conv/asc2g" ; then
-		echo ...found $path_to_run_sh/../src/conv/asc2g
-		ASC2G="$path_to_run_sh/../src/conv/asc2g"
-	    elif test -f "$path_to_run_sh/../src/conv/asc2g.c" ; then
+	    if test -x "$path_to_this/../src/conv/asc2g" ; then
+		echo ...found $path_to_this/../src/conv/asc2g
+		ASC2G="$path_to_this/../src/conv/asc2g"
+	    elif test -f "$path_to_this/../src/conv/asc2g.c" ; then
 		echo ...need to compile asc2g
 
 		for compiler in $CC gcc cc ; do
@@ -164,7 +164,7 @@ if test "x${DB}" = "x" ; then
 			continue
 		    fi
 
-		    $COMPILE -o asc2g "$path_to_run_sh/../src/conv/asc2g" -I"$path_to_run_sh/../include" -DHAVE_CONFIG_H -L/usr/brlcad/lib -L"$path_to_run_sh/../src/libwdb/.libs" -L"$path_to_run_sh/../src/librt/.libs" -L"$path_to_run_sh/../src/libbu/.libs" -L"$path_to_run_sh/../src/libbn/.libs" -L"$path_to_run_sh/../src/other/libtcl/.libs" -lwdb -lrt -lbu -lbn -ltcl
+		    $COMPILE -o asc2g "$path_to_this/../src/conv/asc2g" -I"$path_to_this/../include" -DHAVE_CONFIG_H -L/usr/brlcad/lib -L"$path_to_this/../src/libwdb/.libs" -L"$path_to_this/../src/librt/.libs" -L"$path_to_this/../src/libbu/.libs" -L"$path_to_this/../src/libbn/.libs" -L"$path_to_this/../src/other/libtcl/.libs" -lwdb -lrt -lbu -lbn -ltcl
 		    if test "x$?" = "x0" ; then
 			break
 		    fi
@@ -185,7 +185,7 @@ if test "x${DB}" = "x" ; then
 	failed=no
 	for geometry in moss world star bldg391 m35 sphflake ; do
 	    echo ... creating ${geometry}.g
-	    $ASC2G "$path_to_run_sh/../db/${geometry}.asc" ${geometry}.g
+	    $ASC2G "$path_to_this/../db/${geometry}.asc" ${geometry}.g
 	    if test "x$?" != "x0" ; then
 		if test ! -f ${geometry}.g ; then
 		    failed=yes
@@ -206,15 +206,15 @@ echo Looking for benchmark images ...
 # find pix reference image directory if we do not already know where
 # it is.  PIX environment variable overrides
 if test "x${PIX}" = "x" ; then
-    if test -f "$path_to_run_sh/../pix/sphflake.pix" ; then
-	echo ...found .pix image files in $path_to_run_sh/../pix
-	PIX="$path_to_run_sh/../pix"
-    elif test -f "$path_to_run_sh/sphflake.pix" ; then
-	echo ...found .pix image files in $path_to_run_sh
-	PIX="$path_to_run_sh"
-    elif test -f "$path_to_run_sh/../share/brlcad/pix/sphflake.pix" ; then
-	echo ...found .pix image files in $path_to_run_sh/../share/brlcad/pix
-	PIX="$path_to_run_sh/../share/brlcad/pix"
+    if test -f "$path_to_this/../pix/sphflake.pix" ; then
+	echo ...found .pix image files in $path_to_this/../pix
+	PIX="$path_to_this/../pix"
+    elif test -f "$path_to_this/sphflake.pix" ; then
+	echo ...found .pix image files in $path_to_this
+	PIX="$path_to_this"
+    elif test -f "$path_to_this/../share/brlcad/pix/sphflake.pix" ; then
+	echo ...found .pix image files in $path_to_this/../share/brlcad/pix
+	PIX="$path_to_this/../share/brlcad/pix"
     fi
 else
     echo ...using $PIX from PIX environment variable setting
@@ -224,11 +224,11 @@ echo Checking for pixel comparison utility...
 # find pixel comparison utility
 # CMP environment variable overrides
 if test "x${CMP}" = "x" ; then
-    if test -x $path_to_run_sh/pixcmp ; then
-	echo ...found $path_to_run_sh/pixcmp
-	CMP="$path_to_run_sh/pixcmp"
+    if test -x $path_to_this/pixcmp ; then
+	echo ...found $path_to_this/pixcmp
+	CMP="$path_to_this/pixcmp"
     else
-	if test -f "$path_to_run_sh/pixcmp.c" ; then
+	if test -f "$path_to_this/pixcmp.c" ; then
 	    echo ...need to build pixcmp
 
 	    for compiler in $CC gcc cc ; do
@@ -238,7 +238,7 @@ if test "x${CMP}" = "x" ; then
 		    continue
 		fi
 
-		$COMPILE -o pixcmp "$path_to_run_sh/pixcmp.c"
+		$COMPILE -o pixcmp "$path_to_this/pixcmp.c"
 		if test "x$?" = "x0" ; then
 		    break
 		fi
@@ -261,15 +261,15 @@ echo Checking for time elapsed utility...
 # find time elapsed script
 # ELP environment variable overrides
 if test "x${ELP}" = "x" ; then
-    if test -x $path_to_run_sh/../sh/elapsed.sh ; then
-	echo ...found $path_to_run_sh/../sh/elapsed.sh
-	ELP="$path_to_run_sh/../sh/elapsed.sh"
-    elif test -x $path_to_run_sh/elapsed.sh ; then
-	echo ...found $path_to_run_sh/elapsed.sh
-	ELP="$path_to_run_sh/elapsed.sh"
-    elif test -x $path_to_run_sh/../bin/elapsed.sh ; then
-	echo ...found $path_to_run_sh/../bin/elapsed.sh
-	ELP="$path_to_run_sh/../bin/elapsed.sh"
+    if test -x $path_to_this/../sh/elapsed.sh ; then
+	echo ...found $path_to_this/../sh/elapsed.sh
+	ELP="$path_to_this/../sh/elapsed.sh"
+    elif test -x $path_to_this/elapsed.sh ; then
+	echo ...found $path_to_this/elapsed.sh
+	ELP="$path_to_this/elapsed.sh"
+    elif test -x $path_to_this/../bin/elapsed.sh ; then
+	echo ...found $path_to_this/../bin/elapsed.sh
+	ELP="$path_to_this/../bin/elapsed.sh"
     fi
 else
     echo ...using $ELP from ELP environment variable setting
@@ -809,10 +809,10 @@ if test $? != 0 ; then
     fi
 fi
 
-if test -f "$path_to_run_sh/perf.sh" ; then
-    PERF="$path_to_run_sh/perf.sh"
-elif test -f "$path_to_run_sh/../bench/perf.sh" ; then
-    PERF="$path_to_run_sh/../bench/perf.sh"
+if test -f "$path_to_this/perf.sh" ; then
+    PERF="$path_to_this/perf.sh"
+elif test -f "$path_to_this/../bench/perf.sh" ; then
+    PERF="$path_to_this/../bench/perf.sh"
 else
     # see if it is in our path
     PERF="perf.sh"
@@ -885,8 +885,8 @@ if test -f moss.g ; then
 fi
 
 # See if this looks like an optimized build
-if test -f "$path_to_run_sh/Makefile" ; then
-    optimized=`grep O3 "$path_to_run_sh/Makefile" | wc | awk '{print $1}'`
+if test -f "$path_to_this/Makefile" ; then
+    optimized=`grep O3 "$path_to_this/Makefile" | wc | awk '{print $1}'`
     if test $optimized -eq 0 ; then
 	echo "WARNING: This may not be an optimized compilation of BRL-CAD."
 	echo "Performance results may not be optimal."
