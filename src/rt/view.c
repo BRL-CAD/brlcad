@@ -1086,25 +1086,22 @@ free_scanlines(void)
  *  Called once, early on in RT setup, before view size is set.
  */
 int
-view_init(register struct application *ap, char *file, char *obj, int minus_o)
+view_init(register struct application *ap, char *file, char *obj, int minus_o, int minus_F)
 {
 	if (rt_verbosity & VERBOSE_LIBVERSIONS)
 		bu_log("%s", liboptical_version+5);
 
 	optical_shader_init(&mfHead);	/* in liboptical/init.c */
 
-	if( minus_o )  {
-		/* Output is destined for a pixel file */
-		return(0);		/* don't open framebuffer */
-	}  else
-	{
-	    if (rpt_dist)
-	    {
-		bu_log("Warning: -d ignored.  Writing to frame buffer\n");
-		rpt_dist = 0;
-	    }
-	    return(1);		/* open a framebuffer */
+	if ( rpt_dist && !minus_o )  {
+	    bu_log("Warning: -d ignored.  Writing to frame buffer only\n");
+	    rpt_dist = 0;
 	}
+
+	if (minus_F || (!minus_o && !minus_F)) {
+	    return 1;		/* open a framebuffer */
+	}
+	return 0;
 }
 
 /*
