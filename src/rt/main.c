@@ -392,7 +392,7 @@ int main(int argc, char **argv)
 	 *  Note that width & height may not have been set yet,
 	 *  since they may change from frame to frame.
 	 */
-	if( view_init( &ap, title_file, title_obj, outputfile!=(char *)0 ) != 0 )  {
+	if( view_init( &ap, title_file, title_obj, outputfile!=(char *)0, framebuffer!=(char *)0 ) != 0 )  {
 		/* Framebuffer is desired */
 		register int xx, yy;
 		int	zoom;
@@ -428,7 +428,8 @@ int main(int argc, char **argv)
 		(void)fb_view( fbp, width/2, height/2,
 			zoom, zoom );
 		bu_semaphore_release( BU_SEM_SYSCALL );
-	} else if( outputfile == (char *)0 )  {
+	}
+	if( (outputfile == (char *)0) && (fbp == FBIO_NULL) )  {
 		/* If not going to framebuffer, or to a file, then use stdout */
 		if( outfp == NULL )  outfp = stdout;
 		/* output_is_binary is changed by view_init, as appropriate */
