@@ -17,9 +17,9 @@ dist_bin_SCRIPTS = \
 EXTRA_DIST = \
 	${dist_bin_SCRIPTS} \
 	lgt.sh \
-	recheck.sh \
 	run.sh \
-	try.sh
+	try.sh \
+	viewdiff.sh
 
 benchmark: run.sh
 	cp run.sh benchmark
