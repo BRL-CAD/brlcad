@@ -262,7 +262,7 @@ Options:\n\
  *  Returns 1 if framebuffer should be opened, else 0.
  */
 int
-view_init( struct application *ap, char *file, char *obj, int minus_o )
+view_init( struct application *ap, char *file, char *obj, int minus_o, int minus_F )
 {
   /*
    *  Allocate a scanline for each processor.
@@ -389,14 +389,13 @@ view_init( struct application *ap, char *file, char *obj, int minus_o )
       bgcolor[BLU] = tmp[BLU];
   }
 
-  if( minus_o ) {
+  if( minus_o && (overlay || blend)) {
     /*
-     * Output is to a file stream.
-     * Do not open a framebuffer, do not allow parallel
-     * processing since we can't seek to the rows.
+     * Output is to a file stream.  Do not allow parallel processing
+     * since we can't seek to the rows.
      */
     rt_g.rtg_parallel = 0;
-    bu_log ("view_init: deactivating parallelism due to minus_o.\n");
+    bu_log ("view_init: deactivating parallelism due to -o option.\n");
     /*
      * The overlay and blend cannot be used in -o mode.
      * Note that the overlay directive takes precendence, they
@@ -404,17 +403,19 @@ view_init( struct application *ap, char *file, char *obj, int minus_o )
      */
     overlay = 0;
     blend = 0;
-    bu_log ("view_init: deactivating overlay and blending due to minus_o.\n");
-    return(0);
+    bu_log ("view_init: deactivating overlay and blending due to -o option.\n");
   }
-  else if (overlay) {      
+
+  if (overlay) {      
     bu_log ("view_init: will perform simple overlay.\n");
-  }
-  else if (blend) {
+  } else if (blend) {
     bu_log ("view_init: will perform blending.\n");
   }
   
-  return(1);		/* we need a framebuffer */
+  if (minus_F || (!minus_o && !minus_F)) {
+      return 1;		/* we need a framebuffer */
+  }
+  return 0;
 }
 
 /* beginning of a frame */
@@ -546,6 +547,7 @@ view_eol( struct application *ap )
 	bu_semaphore_release (BU_SEM_SYSCALL);
       }
     }
+    return;
   }
   else if (blend) {
     /*
@@ -674,8 +676,10 @@ view_eol( struct application *ap )
     bu_semaphore_acquire (BU_SEM_SYSCALL);
     fb_write (fbp, 0, ap->a_y, blendline[cpu], per_processor_chunk);	  
     bu_semaphore_release (BU_SEM_SYSCALL);
+    return;
   } /* end blend */
-  else if( fbp != FBIO_NULL ) {
+
+  if( fbp != FBIO_NULL ) {
     /*
      * Simple whole scanline write to a framebuffer.
      */
@@ -683,7 +687,7 @@ view_eol( struct application *ap )
     fb_write( fbp, 0, ap->a_y, scanline[cpu], per_processor_chunk );
     bu_semaphore_release (BU_SEM_SYSCALL);
   }
-  else if( outfp != NULL ) {
+  if( outfp != NULL ) {
     /*
      * Write to a file.
      */
