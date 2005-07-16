@@ -17,7 +17,6 @@ dist_bin_SCRIPTS = \
 EXTRA_DIST = \
 	${dist_bin_SCRIPTS} \
 	lgt.sh \
-	pretty.sh \
 	recheck.sh \
 	run.sh \
 	try.sh
