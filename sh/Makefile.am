@@ -6,7 +6,6 @@ bin_SCRIPTS = \
 	cadbug.sh \
 	cray.sh \
 	indent.sh \
-	machinetype.sh \
 	pixinfo.sh \
 	pixread.sh \
 	pixwrite.sh \
