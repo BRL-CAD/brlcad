@@ -9,8 +9,6 @@ scratch pad for the developers to use for tracking development ideas.
 
 THESE SHOULD HAPPEN BEFORE THE NEXT RELEASE
 
-* halt awf, brlman, and other tool's usage of machinetype.sh.
-
 * retire machinetype.sh
 
 * integrate isst
