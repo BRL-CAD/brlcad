@@ -264,7 +264,11 @@ bu_brlcad_root(const char *rhs, int fail_quietly)
 
     if (!fail_quietly) {
 	bu_path_results(bu_vls_addr(&searched));
-	bu_log("Unable to find '%s' within the BRL-CAD software installation.\nThis copy of BRL-CAD may not be properly installed.\n\n");
+	if (rhs) {
+	    bu_log("Unable to find '%s' within the BRL-CAD software installation.\nThis copy of BRL-CAD may not be properly installed.\n\n", rhs);
+	} else {
+	    bu_log("Unable to find the BRL-CAD software installation.\nThis copy of BRL-CAD may not be properly installed.\n\n");
+	}
     }
     return NULL;
 }
