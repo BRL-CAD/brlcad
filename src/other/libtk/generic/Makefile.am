@@ -18,7 +18,6 @@ libtkg_la_SOURCES = \
 	tkBitmap.c \
 	tkButton.c \
 	tkCanvArc.c \
-	tkCanvBezier.c \
 	tkCanvBmap.c \
 	tkCanvImg.c \
 	tkCanvLine.c \

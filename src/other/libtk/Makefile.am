@@ -32,7 +32,6 @@ libtk_la_LIBADD = \
 	generic/tkBitmap.lo \
 	generic/tkButton.lo \
 	generic/tkCanvArc.lo \
-	generic/tkCanvBezier.lo \
 	generic/tkCanvBmap.lo \
 	generic/tkCanvImg.lo \
 	generic/tkCanvLine.lo \
