@@ -2408,6 +2408,8 @@ AC_CONFIG_FILES([
 	src/adrt/misc/Makefile
 	src/anim/Makefile
 	src/brlman/Makefile
+	src/brlman/awf
+	src/brlman/brlman
 	src/burst/Makefile
 	src/bwish/Makefile
 	src/canon/Makefile
