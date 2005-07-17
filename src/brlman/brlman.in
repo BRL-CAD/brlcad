@@ -42,29 +42,27 @@
 #  Michael John Muuss, BRL, 23-June-1991.
 #
 #  @(#) $Header$ (BRL)
+path_to_this="`dirname $0`"
 
-if test $# -lt 1
-then
+if test $# -lt 1 ; then
 	echo "Usage: $0 command"
 	echo "  To obtain help about that command"
 	exit 1
 fi
 
+PATH=$path_to_this:@BRLCAD_ROOT@/bin:/bin:/usr/bin:/usr/brlcad/bin ; export PATH
+
 # Use MANPAGER, else use PAGER, else use "more" command.
 MORE="more -s -f"
-if test "$PAGER" != ""
-then
+if test "$PAGER" != "" ; then
 	MORE="${PAGER}"
 fi
-if test "${MANPAGER}" != ""
-then
+if test "${MANPAGER}" != "" ; then
 	MORE="${MANPAGER}"
 fi
 
-eval `machinetype.sh -v`		# sets $BASEDIR
-
 # Ensure that MANPATH is set and has BRL-CAD materials listed first.
-MANPATH=${BASEDIR}/man:${MANPATH}
+MANPATH=@BRLCAD_DATA@/man:${MANPATH}
 
 PATH_ELEMENTS=`echo ${MANPATH} | sed 's/^://
 				s/:://g
@@ -72,12 +70,10 @@ PATH_ELEMENTS=`echo ${MANPATH} | sed 's/^://
 				s/:\\.:/:/g
 				s/:/ /g'`
 
-for PLACE in ${PATH_ELEMENTS}
-do
+for PLACE in ${PATH_ELEMENTS} ; do
 	PATTERN="${PLACE}/man?/$1.?"
 	TRY=`eval echo ${PATTERN}`
-	if test "${TRY}" != "${PATTERN}"
-	then
+	if test "${TRY}" != "${PATTERN}" ; then
 		# Found something(s), format it/them
 		echo ${TRY}
 		awf -man ${TRY} | ${MORE}
