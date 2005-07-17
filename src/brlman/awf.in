@@ -33,11 +33,12 @@
 # NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ###
+path_to_this="`dirname $0`"
 
-eval `machinetype.sh -v`		# BRL mod: sets $BASEDIR
-PATH=/bin:/usr/bin ; export PATH
+PATH=$path_to_this:@BRLCAD_ROOT@/bin:/bin:/usr/bin:/usr/brlcad/bin ; export PATH
+
 # AWFLIB is where the pieces live
-AWFLIB=${AWFLIB-$BASEDIR/share/brlcad/7.4.0/awf}		# BRL mod
+AWFLIB=${AWFLIB-@BRLCAD_DATA@/awf}		# BRL mod
 
 tmp=/tmp/awp$$			# tempfile for building pass 2
 errs=/tmp/awe$$		# error messages (awk can't send to stderr)
