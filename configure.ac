@@ -273,6 +273,9 @@ BC_ARG_ENABLE([build_termlib], [termlib-build], [Build the included termlib libr
 # force enable/disable building of Tcl
 BC_ARG_ENABLE([build_tcl], [tcl-build], [Build the included Tcl], [yes])
 
+# force enable/disable building of Tk
+BC_ARG_ENABLE([build_tk], [tk-build], [Build the included Tk], [yes])
+
 # force enable/disable building of incrTcl
 BC_ARG_ENABLE([build_itcl], [itcl-build], [Build the included incrTcl], [yes])
 
@@ -406,6 +409,13 @@ BC_ARG_ALIAS([build_tcl], [libtcl])
 BC_ARG_ALIAS([build_tcl], [libtcl-build])
 AC_MSG_CHECKING(whether to build the Tcl library)
 AC_MSG_RESULT($bc_build_tcl)
+
+# aliases to force building tk (help uses tk-build)
+BC_ARG_ALIAS([build_tk], [tk])
+BC_ARG_ALIAS([build_tk], [libtk])
+BC_ARG_ALIAS([build_tk], [libtk-build])
+AC_MSG_CHECKING(whether to build the Tk library)
+AC_MSG_RESULT($bc_build_tk)
 
 # aliases to force building itcl (help uses itcl-build)
 BC_ARG_ALIAS([build_itcl], [itcl])
@@ -741,6 +751,17 @@ AC_CHECK_LIB(tcl8.6, Tcl_Main, tcl_link_works=yes ; LIBTCL="-ltcl8.6",
     )]
 )
 
+dnl check if libtk library links
+tk_link_works=no
+LIBTK=""
+AC_CHECK_LIB(tk8.6, Tk_MainLoop, tk_link_works=yes ; LIBTK="-ltk8.6",
+    [AC_CHECK_LIB(tk8.5, Tk_MainLoop, tk_link_works=yes ; LIBTK="-ltk8.5",
+	[AC_CHECK_LIB(tk8.4, Tk_MainLoop, tk_link_works=yes ; LIBTK="-ltk8.4",
+	    [AC_CHECK_LIB(tk, Tk_MainLoop, tk_link_works=yes ; LIBTK="-ltk")]
+	)]
+    )]
+)
+
 dnl check if libitcl library links
 itcl_link_works=no
 LIBITCL=""
@@ -890,6 +911,7 @@ AC_CHECK_HEADERS( \
 	termlib.h \
 	time.h \
 	tinfo.h \
+	tk.h \
 	ulocks.h \
 	unistd.h \
 	utime.h \
@@ -1795,14 +1817,86 @@ AC_SUBST(TCL)
 
 
 dnl *** Tk ***
-dnl make sure Tk is enabled (required for Bezier canvas modifications)
+dnl See if libtk seems to work
+tk_works=no
+AC_MSG_CHECKING(for Tk library functionality)
+PRELIBS="$LIBS"
+if test "x$tk_link_works" = "xyes" ; then
+	LIBS="$LIBS $LIBTK $LIBTCL"
+fi
+AC_TRY_RUN([
+#ifdef HAVE_TK_H
+#  include <tk.h>
+#endif
+#ifndef TK_MAJOR_VERSION
+#  error Unknown major version of Tk
+#endif
+#ifndef TK_MINOR_VERSION
+#  error Unknown minor version of Tk
+#endif
+#include <stdio.h>
+int main() {
+    Tcl_Interp *interp;
+    interp = Tcl_CreateInterp();
+    if (Tcl_Init(interp) == TCL_ERROR) {
+	fprintf(stderr, "Tcl_Init returned error\n");
+	return 1;
+    }
+    if (Tk_Init(interp) == TCL_ERROR) {
+	fprintf(stderr, "Tk_Init returned error\n");
+	return 1;
+    }
+
+#if TK_MAJOR_VERSION < 8
+    fprintf(stderr, "major version < 8\n");
+    return 1;
+#elif TK_MAJOR_VERSION == 8 && TK_MINOR_VERSION < 4
+    fprintf(stderr, "minor version < 4\n");
+    return 1;
+#endif 
+    return 0;
+}
+	],
+	[tk_works=yes]
+)
+if test "x$tk_link_works" = "xyes" ; then
+	LIBS="$PRELIBS"
+fi
+AC_MSG_RESULT($tk_works)
+
+dnl figure out whether we need to build Tk
+build_brlcad_tk="no (using system)"
+if test "x$bc_build_tk" = "xyes" ; then
+	build_brlcad_tk=yes
+else
+	if test "x$bc_build_tk" = "xno" ; then
+		if test "x$tk_works" = "xno" ; then
+			BC_RETRY_CONFIGURE([$0])
+			AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
+			AC_MSG_NOTICE([Try adding --enable-tk-build])
+			AC_MSG_ERROR([*** Tk was disabled, yet no usable libtk system library was found ***])
+		fi
+	else
+		dnl automatic detection
+		if test "x$tk_works" = "xno" ; then
+			build_brlcad_tk=yes
+		fi
+	fi
+fi
 build_brlcad_tk=yes
+AC_MSG_CHECKING(whether to build Tk)
 dnl Need to update version number(s) in src/other/libtk/Makefile.am too
 TK_VERSION="8.4"
 AC_SUBST(TK_VERSION)
 TK_LIBRARY='${prefix}/lib/tk${TK_VERSION}'
 AC_SUBST(TK_LIBRARY)
-TK='${top_builddir}/src/other/libtk/libtk${TK_VERSION}.la'
+if test "x$build_brlcad_tk" = "xyes" ; then
+	TK='${top_builddir}/src/other/libtk/libtk${TK_VERSION}.la'
+	AC_MSG_RESULT(yes)
+else
+	TK="$LIBTK"
+	AC_MSG_RESULT(no)
+fi
 AC_SUBST(TK)
 
 
@@ -2583,8 +2677,7 @@ echo "LDFLAGS  = ${LDFLAGS}"
 echo "LIBS     = ${LIBS}"
 echo
 echo Build Tcl ............................: $build_brlcad_tcl
-# we have to build Tk as it's been customized with tkCanvBezier
-# echo Build Tk .............................: $build_brlcad_tk
+echo Build Tk .............................: $build_brlcad_tk
 echo Build Itcl/Itk .......................: $build_brlcad_itcl
 echo Build IWidgets .......................: $build_brlcad_iwidgets
 echo Build libpng .........................: $build_brlcad_png
