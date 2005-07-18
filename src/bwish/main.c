@@ -210,16 +210,16 @@ Cad_AppInit(Tcl_Interp *interp)
 #endif
 
     /* Locate the BRL-CAD-specific Tcl scripts */
-    pathname = bu_brlcad_data("", 1);
+    pathname = bu_brlcad_data("tclscripts", 0);
 
     bu_vls_init(&vls);
     if (pathname) {
-	bu_vls_printf(&vls, "lappend auto_path %s/tclscripts %s/tclscripts/lib %s/tclscripts/util",
-		      pathname, pathname, pathname);
+	bu_vls_printf(&vls, "lappend auto_path \"%s\" \"%s/lib\" \"%s/util\" \"%s/mged\" \"%s/geometree\"",
+		      pathname, pathname, pathname, pathname, pathname);
 	(void)Tcl_Eval(interp, bu_vls_addr(&vls));
     } else {
-	/* hunt for the tclscripts a little since we're probably just not installed yet */
-	(void)Tcl_Eval(interp, "lappend auto_path tclscripts tclscripts/lib tclscripts/lib/util src/tclscripts src/tclscripts/lib src/tclscripts/util ../tclscripts ../tclscripts/lib ../tclscripts/util ../../tclscripts ../../tclscripts/lib ../../tclscripts/util /usr/brlcad/tclscripts /usr/brlcad/tclscripts/lib /usr/brlcad/tclscripts/util");
+	/* hunt for the tclscripts since we're probably just not installed yet */
+	(void)Tcl_Eval(interp, "lappend auto_path tclscripts tclscripts/lib tclscripts/util tclscripts/mged tclscripts/geometree src/tclscripts src/tclscripts/lib src/tclscripts/util src/tclscripts/mged src/tclscripts/geometree ../tclscripts ../tclscripts/lib ../tclscripts/util ../tclscripts/mged ../tclscripts/geometree ../src/tclscripts ../src/tclscripts/lib ../src/tclscripts/util ../src/tclscripts/mged ../src/tclscripts/geometree ../../tclscripts ../../tclscripts/lib ../../tclscripts/util ../../tclscripts/mged ../../tclscripts/geometree ../../src/tclscripts ../../src/tclscripts/lib ../../src/tclscripts/util ../../src/tclscripts/mged ../../src/tclscripts/geometree");
     }
     bu_vls_free(&vls);
 
