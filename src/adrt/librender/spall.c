@@ -171,13 +171,11 @@ void render_spall_work(render_t *render, tie_t *tie, tie_ray_t *ray, TIE_3 *pixe
   
 
   if(hit.mesh->flags == 1) {
-    color.v[0] = 0.9;
-    color.v[1] = 0.3;
-    color.v[2] = 0.3;
+    math_vec_set(color, 0.9, 0.3, 0.3);
   } else {
-    color.v[0] = 0.8;
-    color.v[1] = 0.8;
-    color.v[2] = 0.7;
+    math_vec_set(color, 0.8, 0.8, 0.7);
+    math_vec_add(color, color, (*pixel));
+    math_vec_mul_scalar(color, color, 0.5);
   }
 
 #if 0
