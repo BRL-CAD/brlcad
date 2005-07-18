@@ -1,4 +1,5 @@
-/* BRL-CAD            T C L C A D . C
+/*                 T C L C A D T K S E T U P . C
+ * BRL-CAD
  *
  * Copyright (C) 2004-2005 United States Government as represented by
  * the U.S. Army Research Laboratory.
@@ -18,10 +19,9 @@
  * information.
  *
  */
-/** @file tclcad.c
+/** @file tclcadTkSetup.c
  *
- *
- * Initialization routines for the BRL-CAD/Tcl links.
+ * Initialization routines for the BRL-CAD/Tk links.
  *
  * Author --
  *    Glenn Durfee
@@ -29,15 +29,11 @@
 
 #include "common.h"
 
-
-
-#include <stdio.h>
-#include <stdlib.h>
-
 #include "tcl.h"
 #include "tk.h"
 
 extern Tk_PhotoImageFormat tkImgFmtPIX;
+
 
 int
 tclcad_tk_setup(Tcl_Interp *interp)
@@ -48,6 +44,7 @@ tclcad_tk_setup(Tcl_Interp *interp)
 
     return TCL_OK;
 }
+
 
 /*
  * Local Variables:
