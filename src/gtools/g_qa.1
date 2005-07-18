@@ -6,16 +6,22 @@
 .SH NAME
 g_qa \- a BRL-CAD geometry analysis tool
 .SH SYNOPSIS
-.BR "g_qa " "[optoins] model.g objects"
+.BR "g_qa " "[options] model.g objects"
 .SH DESCRIPTION
 The 
 .I g_qa 
-program computes weights, volumes and detects overlaps in geometric descriptions.
-The 
+program computes the weight, and volume of the 
 .I objects
-specified are analyzed.
+specified from the given 
+.I model.g
+geometric desctription.
+It also reports overlaps.
+Only the 
+.I objects
+from the database specified on the command line are analyzed.
 It works by shooting grids of rays from the three axis-aligned directions.  
-The grid is progressively refined until the answers from all three grid calculations agree 
+The resulting weight calculations for each axis of computation are compared to each other.
+The grid of rays is progressively refined until the results from all three axes of computation agree 
 within a given tolerance.
 
 .SH OPTIONS
@@ -47,6 +53,12 @@ or
 .B 10in.
 
 .TP
+.B -m hits
+Specifies that the grid be refined until each region has at least 
+.I hits
+ray intersections.
+
+.TP
 .B \-P ncpu
 Specifies that
 .I ncpu
@@ -64,13 +76,10 @@ Specifies a tolerance value which the 3 view computations must be within for com
 Specifies that per-region statistics about volume and weight are desired.
 
 .TP
-.B \-q
-Specifies that the tolerance of at least 10 samples per axis be applied to the smallest region bounding box, not the model bounding box.  This results in much tighter grids, longer runtimes, and higher quality answers.
-.TP
-.B -m hits
-Specifies that the grid be refined until each region has at least 
-.I hits
-ray intersections.
+.B \-q num_samples
+Specifies that the tolerance of at least 
+.I num_samples
+(10 by default) samples per axis be applied to the smallest region bounding box, not the model bounding box.  This results in much tighter grids, longer runtimes, and higher quality answers.
 
 .SH EXAMPLES
 .P
