@@ -18,7 +18,11 @@ solshoot_LDADD = ${LIBRT}
 testfree_SOURCES = testfree.c
 testfree_LDADD = ${LIBRT} 
 
-man_MANS = g_diff.1 g_lint.1
+man_MANS = \
+	g_diff.1 \
+	g_lint.1 \
+	g_qa.1
+
 EXTRA_DIST = $(man_MANS)
 
 include $(top_srcdir)/misc/Makefile.defs
