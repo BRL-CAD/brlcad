@@ -107,6 +107,9 @@ __BEGIN_DECLS
 #  endif  /* DIR_SEPARATOR_2 */
 #endif  /* DIR_SEPARATOR */
 
+#ifndef MAXPATHLEN
+#  define MAXPATHLEN 1024
+#endif
 
 /*----------------------------------------------------------------------*/
 /*
