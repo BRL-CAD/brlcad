@@ -15,7 +15,8 @@ brlcadinclude_required = \
 	rtlist.h \
 	rtprivate.h \
 	rtserver.h \
-	rtstring.h
+	rtstring.h \
+	tclcad.h
 
 headers_libutahrle = \
 	colorquant.h \
