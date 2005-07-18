@@ -159,7 +159,9 @@ bu_find_path(char result[MAXPATHLEN], const char *lhs, const char *rhs, struct b
     }
 
     if (lhs == NULL) {
-	bu_vls_strcat(searched, where);
+	if (searched && where) {
+	    bu_vls_strcat(searched, where);
+	}
 	return 0;
     }
 
@@ -171,7 +173,9 @@ bu_find_path(char result[MAXPATHLEN], const char *lhs, const char *rhs, struct b
     /* be safe */
     if (rlen + 2 > MAXPATHLEN) {
 	bu_log("Warning: path is way too long (%d characters > %d)\n", rlen+2, MAXPATHLEN);
-	bu_vls_strcat(searched, where);
+	if (searched && where) {
+	    bu_vls_strcat(searched, where);
+	}
 	return 0;
     }
     if (!searched || !where) {
@@ -185,7 +189,9 @@ bu_find_path(char result[MAXPATHLEN], const char *lhs, const char *rhs, struct b
 
     /* left-hand path should exist independent of right-hand path */
     if (!bu_file_exists(lhs)) {
-	bu_vls_strcat(searched, where);
+	if (searched && where) {
+	    bu_vls_strcat(searched, where);
+	}
 	return 0;
     }
     
@@ -202,7 +208,9 @@ bu_find_path(char result[MAXPATHLEN], const char *lhs, const char *rhs, struct b
     llen = strlen(result);
     if (llen + rlen + 3 > MAXPATHLEN) {
 	bu_log("Warning: path is way too long (%d characters > %d)\n", llen+rlen+3, MAXPATHLEN);
-	bu_vls_strcat(searched, where);
+	if (searched && where) {
+	    bu_vls_strcat(searched, where);
+	}
 	return 0;
     }
 
@@ -223,7 +231,9 @@ bu_find_path(char result[MAXPATHLEN], const char *lhs, const char *rhs, struct b
     }
     
     /* close, but no match */
-    bu_vls_strcat(searched, where);
+    if (searched && where) {
+	bu_vls_strcat(searched, where);
+    }
     return 0;
 }
 
