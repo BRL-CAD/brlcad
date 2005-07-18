@@ -51,6 +51,8 @@
 #ifdef BWISH
 #  include "dm.h"
 #endif
+#include "tclcad.h"
+
 
 /* XXX -- it's probably a bad idea to import itcl/itk/iwidgets into
  * the global namespace..  allow for easy means to disable the import.
@@ -209,19 +211,8 @@ Cad_AppInit(Tcl_Interp *interp)
     Tk_CreateCanvasBezierType();
 #endif
 
-    /* Locate the BRL-CAD-specific Tcl scripts */
-    pathname = bu_brlcad_data("tclscripts", 0);
-
-    bu_vls_init(&vls);
-    if (pathname) {
-	bu_vls_printf(&vls, "lappend auto_path \"%s\" \"%s/lib\" \"%s/util\" \"%s/mged\" \"%s/geometree\"",
-		      pathname, pathname, pathname, pathname, pathname);
-	(void)Tcl_Eval(interp, bu_vls_addr(&vls));
-    } else {
-	/* hunt for the tclscripts since we're probably just not installed yet */
-	(void)Tcl_Eval(interp, "lappend auto_path tclscripts tclscripts/lib tclscripts/util tclscripts/mged tclscripts/geometree src/tclscripts src/tclscripts/lib src/tclscripts/util src/tclscripts/mged src/tclscripts/geometree ../tclscripts ../tclscripts/lib ../tclscripts/util ../tclscripts/mged ../tclscripts/geometree ../src/tclscripts ../src/tclscripts/lib ../src/tclscripts/util ../src/tclscripts/mged ../src/tclscripts/geometree ../../tclscripts ../../tclscripts/lib ../../tclscripts/util ../../tclscripts/mged ../../tclscripts/geometree ../../src/tclscripts ../../src/tclscripts/lib ../../src/tclscripts/util ../../src/tclscripts/mged ../../src/tclscripts/geometree");
-    }
-    bu_vls_free(&vls);
+    /* Locate the BRL-CAD-specific Tcl scripts, set the auto_path */
+    tclcad_auto_path(interp);
 
     /* register bwish/btclsh commands */
     cmdInit(interp);
