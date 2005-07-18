@@ -1,13 +1,17 @@
-/*
- * tkCanvBezier.c --
- * 
- *	This module provides Bezier curve support for canvases.
+/*                 T K C A N V B E Z I E R . C
+ * BRL-CAD
+ *
+ * Copyright (C) 2004-2005 United States Government as represented by
+ * the U.S. Army Research Laboratory.
  *
  * Distribution status is public domain, distribution unlimited.
+ */
+/** @file tkCanvBezier.c
+ * 
+ * This module provides Bezier curve support for canvases.
  *
- * See the file "license.terms" for information on usage and redistribution
- * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
- *
+ * Author
+ *   John Anderson
  */
 #include <stdio.h>
 #include "tkInt.h"
