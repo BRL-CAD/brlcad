@@ -55,10 +55,6 @@ static const char RCSbrlcad_path[] = "@(#)$Header$ (BRL)";
 #include "machine.h"
 #include "bu.h"
 
-#ifndef MAXPATHLEN
-#  define MAXPATHLEN 1024
-#endif
-
 
 /*
  *			B U _ F I L E _ E X I S T S
@@ -144,7 +140,7 @@ for sh/bash users:\n\
 /* put a left-hand and right-hand path together and test whether they
  * exist or not.  returns boolean on whether a match was found.
  */
-int
+static int
 bu_find_path(char result[MAXPATHLEN], const char *lhs, const char *rhs, struct bu_vls *searched, const char *where)
 {
     int llen,rlen;
@@ -177,9 +173,6 @@ bu_find_path(char result[MAXPATHLEN], const char *lhs, const char *rhs, struct b
 	    bu_vls_strcat(searched, where);
 	}
 	return 0;
-    }
-    if (!searched || !where) {
-	bu_bomb("someone is using the presumably static bu_find_path function wrong");
     }
 
     /* an empty left hand implies current directory (plus a slash is appended later) */
