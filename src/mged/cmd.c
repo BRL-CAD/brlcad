@@ -69,6 +69,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "bn.h"
 #include "rtgeom.h"
 #include "raytrace.h"
+#include "tclcad.h"
 
 #include "./ged.h"
 #include "./cmd.h"
@@ -712,7 +713,6 @@ void
 mged_setup(void)
 {
 	struct bu_vls str;
-	char *pathname;
 	
 	/* The following is for GUI output hooks: contains name of function to
 	   run with output */
@@ -776,32 +776,11 @@ mged_setup(void)
 	mged_variable_setup(interp);
 #endif
 
-	/* Locate the BRL-CAD-specific Tcl scripts */
-	pathname = bu_brlcad_data( "tclscripts", 0 );
-
-#ifdef _WIN32
-	{
-	  /* XXX - nasty little hack to convert paths */
-	  int i;
-	  strcat(pathname,"/");
-	  for (i=0;i<strlen(pathname);i++) {
-	    if(pathname[i]=='\\') 
-	      pathname[i]='/'; }
-	}
-#endif
-
-	bu_vls_init(&str);
-	if (pathname) {
-	    bu_vls_printf(&str, "lappend auto_path \"%s\" \"%s/lib\" \"%s/util\" \"%s/mged\" \"%s/geometree\"", 
-			  pathname, pathname, pathname, pathname, pathname);
-	    (void)Tcl_Eval(interp, bu_vls_addr(&str));
-	} else {
-	    /* hunt for the tclscripts since we're probably just not installed yet */
-	    (void)Tcl_Eval(interp, "lappend auto_path tclscripts tclscripts/lib tclscripts/util tclscripts/mged tclscripts/geometree src/tclscripts src/tclscripts/lib src/tclscripts/util src/tclscripts/mged src/tclscripts/geometree ../tclscripts ../tclscripts/lib ../tclscripts/util ../tclscripts/mged ../tclscripts/geometree ../src/tclscripts ../src/tclscripts/lib ../src/tclscripts/util ../src/tclscripts/mged ../src/tclscripts/geometree ../../tclscripts ../../tclscripts/lib ../../tclscripts/util ../../tclscripts/mged ../../tclscripts/geometree ../../src/tclscripts ../../src/tclscripts/lib ../../src/tclscripts/util ../../src/tclscripts/mged ../../src/tclscripts/geometree");
-	}
+	/* Locate the BRL-CAD-specific Tcl scripts, set the auto_path */
+	tclcad_auto_path(interp);
 
 	/* Tcl needs to write nulls onto subscripted variable names */
-	bu_vls_trunc( &str, 0 );
+	bu_vls_init(&str);
 	bu_vls_printf( &str, "%s(state)", MGED_DISPLAY_VAR );
 	Tcl_SetVar(interp, bu_vls_addr(&str), state_str[state], TCL_GLOBAL_ONLY);
 
@@ -821,6 +800,8 @@ cmd_setup(void)
 {
 	register struct cmdtab *ctp;
 	struct bu_vls temp;
+	struct bu_vls	vls;
+	char		*pathname;
 
 	bu_vls_init(&temp);
 	for (ctp = cmdtab; ctp->ct_name != NULL; ctp++) {
@@ -843,29 +824,25 @@ cmd_setup(void)
 	}
 
 	/* overrides/wraps the built-in tree command */
-	{
-		struct bu_vls	vls;
-		char		*pathname;
 
-		/* Locate the BRL-CAD-specific Tcl scripts */
-		pathname = bu_brlcad_data("", 0);
+	/* Locate the BRL-CAD-specific Tcl scripts */
+	pathname = bu_brlcad_data("tclscripts", 1);
 
 #ifdef _WIN32
 	{
-		/* XXXXXXXXXXXXXXX UGLY XXXXXXXXXXXXXXXXXX*/
-	int i;
-	strcat(pathname,"/");
-	for (i=0;i<strlen(pathname);i++) {
+	    /* XXXXXXXXXXXXXXX UGLY XXXXXXXXXXXXXXXXXX*/
+	    int i;
+	    strcat(pathname,"/");
+	    for (i=0;i<strlen(pathname);i++) {
 		if(pathname[i]=='\\') 
-			pathname[i]='/'; }
+		    pathname[i]='/'; }
 	}
 #endif
 
-		bu_vls_init(&vls);
-		bu_vls_printf(&vls, "source %stclscripts/mged/tree.tcl", pathname);
-		(void)Tcl_Eval(interp, bu_vls_addr(&vls));
-		bu_vls_free(&vls);
-	}
+	bu_vls_init(&vls);
+	bu_vls_printf(&vls, "source %s/mged/tree.tcl", pathname);
+	(void)Tcl_Eval(interp, bu_vls_addr(&vls));
+	bu_vls_free(&vls);
 
 	bu_vls_strcpy(&temp, "glob_compat_mode");
 	Tcl_LinkVar(interp, bu_vls_addr(&temp), (char *)&glob_compat_mode,
