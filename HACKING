@@ -347,9 +347,16 @@ directives and type declarations that may be used where needed.
 
 Generic platform checks (e.g. #ifdef unix, #ifdef _WIN32) are highly
 discouraged and should not be used.  Replace those checks with tests
-for the actual facility being utilized instead.  The Windows platform
-utilizes its own manually-generated configure results header.
-(include/config_win.h)
+for the actual facility being utilized instead.
+
+The Windows platform utilizes its own manually-generated configure
+results header (include/config_win.h) that has to be manually updated
+if new tests are added to the configure.ac template.
+
+The BRL-CAD sources as well as packages linking to BRL-CAD should
+include the common.h header.  They should not include brlcad_config.h
+or config_win.h directly.  The common.h header should be listed before
+any other headers.
 
 Coding Standards:
 
