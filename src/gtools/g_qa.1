@@ -10,23 +10,45 @@ g_qa \- a BRL-CAD geometry analysis tool
 .SH DESCRIPTION
 The 
 .I g_qa 
-program computes the weight, and volume of the 
+program computes and reports the weight, and volume of the 
 .I objects
 specified from the given 
 .I model.g
-geometric desctription.
+geometric description.
 It also reports overlaps.
 Only the 
 .I objects
 from the database specified on the command line are analyzed.
-It works by shooting grids of rays from the three axis-aligned directions.  
-The resulting weight calculations for each axis of computation are compared to each other.
-The grid of rays is progressively refined until the results from all three axes of computation agree 
-within a given tolerance.
+It works by shooting grids of rays from the three axis-aligned directions (sometimes called 
+\fIviews\fR).  
+The resulting weight calculations for each view are compared to each other.
+The grid of rays is progressively refined until the results from all three views
+agree within a user specifiable volumetric tolerance.
+.P
+For weight computation, the density of every region must be specified.  Densities are specified as an index into a table of density values.
+This index is stored in the 
+.I GIFTmater 
+attribute of each region.
+The density table consists of integer index values, and density values specified in grams/cm^3.  An optional text string may follow the density value.  The table is typically created with a text editor, and then imported to the database as the binary object
+.B _DENSITIES.
+.P
+To import a text file into the database, the following comand is used.
+.IP
+mged>
+.B binunif \-i u c _DENSITIES 
+.I filename
+
+.SH WEIGHT REPORTING
+For each object specified on the command line, a volume and weight is calculated and reported.
+
+.SH OVERLAP REPORTING
+
+For each pair of objects which overlap, the tool reports the two regions which overlap, the maximum thickness of the overlap, and the in-hit location of the ray which caused that maximum overlap thickness.
+
 
 .SH OPTIONS
 .TP
-.B -a analysis_flags
+.B \-A analysis_flags
 Specifies which computations are to be performed.  The parameter is one or more of the following:
 .B a, o, w, v,
 for 
@@ -35,29 +57,66 @@ and
 .I volume 
 respectively.  Only those reports requested will be provided.  The default is 
 .I all.
+
+.TP
+.B \-a azimuth_deg
+Sets a rotation (in degrees) of the coordinate system by a given amount about the Z axis.  See also:
+.B \-e
+.TP
+.B \-e elevation_deg
+Sets a rotation (in degrees) of the coordinate system by a given elevation from the XY plane (rotation about X axis?).
+See also
+.B \-a
 .TP
 .B \-f filename
 Specifies that density values should be taken from an external file instead of from the _DENSITIES object in the database.
 .TP
-.B -g gridsize
-
+.B \-g gridspacing\fI[,lim]\fR
 Specifies the spacing between rays in the grids.  The default value is
 50.0mm or a minumum of 10 rays per axis of the bounding box of the
 geometry.  For example, a geometry with a 10x10x10mm bounding box
 would (by default) get a 1mm grid size.  If the user specifies a
 value, it is used.  If that value does not guarantee 10 samples per
 axis, a warning is printed.  If the user does not specify a grid size,
-the program will set the grid size to asure 10 rays/axis.  The gridsize may be specified with units.  For example:
+the program will set the grid size to asure 10 rays/axis.  The gridspacing may be specified with units.  For example:
 .B 5mm
 or 
 .B 10in.
-
+.P
+If the optional 
+.I,lim
+is specified, it indicates a lower bound on how fine the gridspacing may get before processing 
 .TP
-.B -m hits
+.B \-G
+Specifies that the program should create new 
+.I assembly combinations
+in the geometry database to represent the overlap pairs.  If regions 
+.I rod.r
+and 
+.I disk.r
+overlap, this option will cause the creation of an assembly called _OVERLAP_rod.r_disk.r which includes the following items:
+.in +5
+.I rod.r
+.in -5
+.in +5
+.I disk.r
+.in -5
+.in +5
+.I _OVERLAPS_rod.r_disk.r
+The last of these is an object to represent the overlapping area so that it can be easily seen.
+.TP
+.B \-m min_samples
+Specifies that the tolerance of at least 
+.I num_samples
+(10 by default) samples per axis be applied to the smallest region bounding box, not the model bounding box.  This results in much tighter grids, longer runtimes, and higher quality answers.
+.TP
+.B \-n num_hits
 Specifies that the grid be refined until each region has at least 
-.I hits
+.I num_hits
 ray intersections.
-
+The default is 1 (that is, each region must be hit at least once).
+This limit is not applied per-view, but rather per-analysis.
+So for example, it is accepted that a thin object might not be hit from one view at all.
 .TP
 .B \-P ncpu
 Specifies that
@@ -68,23 +127,99 @@ the number of computation threads.  By default, all local cpu's are
 utilized.  This option exists primarily to reduce the number of
 computation threads from the machine maximum.
 .TP
-.B \-t tolerance
-Specifies a tolerance value which the 3 view computations must be within for computation to complete.  The default value is 0.5.
-
+.BI "-r" " bits"
+Specifies which types of reports to produce.
+If, after an optional minus sign,
+.I bits
+begins with either ``0x'' or ``0X'',
+the remainder is interpreted in hexadecimal.
+Otherwise, if
+.I bits
+begins with ``0'',
+the remainder is interpreted in octal.
+Otherwise,
+.I bits
+is interpreted in decimal.
+The meaning of the individual bits is as follows:
+.in +5
+ 1 overlaps
+.in -5
+.in +5
+ 2 contiguous unlike airs
+.in -5
+.in +5
+ 4 unconfined airs
+.in -5
+.in +5
+ 8 air first on rays
+.in -5
+.in +5
+16 air last on rays
+.in -5
+.in +5
+32 vacuums.
+.in -5
+If there was no initial minus sign, then
+.I bits
+specifies which report types to produce.
+The minus sign implies complementation:
+when it is present,
+.I bits
+specifies which report types
+.I not
+to produce.
+The default is 1.
 .TP
-.B \-r
-Specifies that per-region statistics about volume and weight are desired.
-
+.B \-S samples_per_axis_min
+Specifies that the grid spacing will be initially refined so that at least
+.I samples_per_axis_min
+will be shot along each axis of the bounding box of the model.  For example, if the objects specified have a bounding box of 0 0 0 -> 4 3 2 and the grid spacing is 1.0, specifying the option
+.B \-S 4
+will cause the initial grid spacing to be adjusted to 0.5 so that 4 samples will be shot across the Z dimension of the bounding box.
 .TP
-.B \-q num_samples
-Specifies that the tolerance of at least 
-.I num_samples
-(10 by default) samples per axis be applied to the smallest region bounding box, not the model bounding box.  This results in much tighter grids, longer runtimes, and higher quality answers.
+.B \-s samples_per_axis_min
+This is like the 
+.B \-S 
+option except that the smallest bounding box in the model is used instead of the model bounding box.  This typically creates very fine grid spacing, and long runtimes, with high initial accuracy.
+.TP
+.B \-t tol_dist
+Specifies that overlaps less than 
+.I tol_dist
+will not be reported.
+The default is 0.0 so that all overlaps are reported.
+.TP
+.B \-T volume_tolerance
+Specifies a volumetric tolerance value which the 3 view computations must be within for computation to complete.  
+The default value is 0.5 cc  For large complex objects (such as entire vehicles) this values must often be adjusted upwards to achieve
+reasonable runtimes.  
+Given the approximate sampling nature of the algorithm, most of the time the three separate view computations will not agree identically.
+Only one of -T and -W may be specified.  The last one specified on the command line wins.  
+.TP
+.B \-U use_air
+Specifies the Boolean value 
+.I use_air
+which indicates whether regions which are "air" should be included in the raytrace
+.B Unlike other BRL-CAD raytracing applications the default is to include air in the raytracing.
+The 
+.B \-U 0
+option causes raytracing of air to be turned off.
+.TP
+.B \-u units
+Specify the units used when reporting values.  If the command is run from within MGED, the current editing units are provided.  This option can be used to override this behavior.  Possible values include: 
+.I XXX what are the possible values XXX?
+.TP
+.B \-W weight_tolerance
+This is like the volume tolerance (\fI-T\fR), but is applied to the weight computation results, not the volume computation results.  
+Only one of -T and -W may be specified.  The last one specified on the command line wins.  
+The weight computation tolerance is probably more appropriate when doing whole-vehicle analysis
 
 .SH EXAMPLES
 .P
-To compute the weight an volume of objects.
+The following command computes the weight of an object called 
+.I wheel.r
+from the geometry database 
+.I model.g
+and reports the weight, volume, and checks for overlaps.
 .IP
-g_qa -a wv 
-.SH AUTHOR
-.SH 
+g_qa model.g wheel.r
+.P

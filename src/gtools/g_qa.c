@@ -5,7 +5,24 @@ plot the points where overlaps start/stop
 
  *	Designed to be a framework for 3d sampling of the geometry volume.
  *	Options
- *	h	help
+ *	-A flags	Analysis types
+ * 	-a azimuth	
+ *	-e elevation
+ *	-f filename
+ *	-g gridspacing[,lim]
+ *	-G		create groups
+ *	-m min_samples
+ *	-n numhits
+ *	-s samples_per_smallest_bbox
+ *	-S samples_per_model_bbox
+ *	-P ncpu
+ *	-r bits		report types
+ *	-t tol_dist	overlap tolerance
+ *	-T volume_tolerance
+ *	-U aircode	use_air
+ *	-u units	
+ *	-W weight_tolerance
+ *	-h		help
  */
 #include <stdlib.h>
 
