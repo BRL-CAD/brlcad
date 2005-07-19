@@ -1075,11 +1075,17 @@ struct seg		*seghead;
 	fastf_t		toldist, dn_plus_tol;
 	int		trinum;
 
-	RT_CK_PIECESTATE(psp);
+	RT_CK_PIECELIST(plp);
 	stp = plp->stp;
+
+	RT_CK_APPLICATION(ap);
 	resp = ap->a_resource;
 	RT_CK_RESOURCE(resp);
+
+	RT_CK_SOLTAB(stp);
 	bot = (struct bot_specific *)stp->st_specific;
+
+	RT_CK_PIECESTATE(psp);
 	starting_hits = psp->htab.end;
 
 	if( bot->bot_orientation != RT_BOT_UNORIENTED &&
