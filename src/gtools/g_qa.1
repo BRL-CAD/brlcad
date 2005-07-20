@@ -233,19 +233,19 @@ The
 .B \-U 0
 option causes raytracing of air to be turned off.
 .TP
-.B \-V volume_tolerance
-Specifies a volumetric tolerance value which the 3 view computations must be within for computation to complete.  
-The default value is 0.5 cc  For large complex objects (such as entire vehicles) this values must often be adjusted upwards to achieve
-reasonable runtimes (or even completion).  
-Given the approximate sampling nature of the algorithm, most of the time the three separate view computations will not agree identically.
-Only one of -T and -W may be specified.  The last one specified on the command line wins.  
-.TP
 .B \-u units
 Specify the units used when reporting values.  
 If this option is not specified, the current editing units are used.
 This option can be used to override this behavior.
 Possible values include: 
 .I XXX what are the possible values XXX?
+.TP
+.B \-V volume_tolerance
+Specifies a volumetric tolerance value which the 3 view computations must be within for computation to complete.  
+The default value is 0.5 cc  For large complex objects (such as entire vehicles) this values must often be adjusted upwards to achieve
+reasonable runtimes (or even completion).  
+Given the approximate sampling nature of the algorithm, most of the time the three separate view computations will not agree identically.
+Only one of -T and -W may be specified.  The last one specified on the command line wins.  
 .TP
 .B \-W weight_tolerance
 This is like the volume tolerance (\fI-T\fR), but is applied to the weight computation results, not the volume computation results.  

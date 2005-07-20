@@ -49,7 +49,7 @@ plot the points where overlaps start/stop
 #define SEM_WORK RT_SEM_LAST
 
 /* declarations to support use of getopt() system call */
-char *options = "A:a:de:f:g:Gn:P:r:S:s:t:T:U:u:W:";
+char *options = "A:a:de:f:g:Gn:P:r:S:s:t:U:u:V:W:";
 extern char *optarg;
 extern int optind, opterr, getopt();
 
@@ -281,10 +281,11 @@ parse_args(ac, av)
 
 		}
 	    }
-	    bu_log("spacing:%g limit:%g\n", gridSpacing, gridSpacingLimit);
+	    bu_log("grid spacing:%gmm limit:%gmm\n", gridSpacing, gridSpacingLimit);
 	    break;
 	case 'G'	:
 	    makeOverlapAssemblies = 1;
+	    bu_log("-G option unimplemented\n");
 	    break;
 	case 'n'	:
 	    if (sscanf(optarg, "%d", &c) != 1 || c < 0) {
@@ -299,14 +300,14 @@ parse_args(ac, av)
 	    if ((c=atoi(optarg)) > 0 && ncpu > c) ncpu = c;
 	    break;	
 	case 'S'	:
-	    if (sscanf(optarg, "%g", &conv) != 1 || conv <= 0.0) {
+	    if (sscanf(optarg, "%lg", &conv) != 1 || conv <= 0.0) {
 		bu_log("error in specifying minimum samples per model axis: \"%s\"\n", optarg);
 		break;
 	    }
 	    Samples_per_model_axis = conv;
 	    break;
 	case 's'	:
-	    if (sscanf(optarg, "%g", &conv) != 1 || conv <= 0.0) {
+	    if (sscanf(optarg, "%lg", &conv) != 1 || conv <= 0.0) {
 		bu_log("error in specifying minimum samples per primitive axis: \"%s\"\n", optarg);
 		break;
 	    }
@@ -326,6 +327,7 @@ parse_args(ac, av)
 		break;
 	    }
 	    volume_tolerance = conv;
+
 	    break;
 	case 'W'	: 
 	    if (sscanf(optarg, "%lg", &conv) != 1 || conv <= 0.0 ) {
@@ -379,7 +381,7 @@ overlap(struct application *ap, struct partition *pp, struct region *reg1, struc
 	bu_semaphore_release( BU_SEM_SYSCALL );
 
 	if( !(analysis_flags&ANALYSIS_OVERLAPS) ) {
-		bu_log("\nOVERLAP %d: %s\nOVERLAP %d: %s\nOVERLAP %d: depth %gmm\nOVERLAP %d: in_hit_point (%g,%g,%g) mm\nOVERLAP %d: out_hit_point (%g,%g,%g) mm\n------------------------------------------------------------\n",
+		bu_log("\nOVERLAP %d: %s\nOVERLAP %d: %s\nOVERLAP %d: depth %gmm\nOVERLAP %d: in_hit_point (%g,%g,%g)mm\nOVERLAP %d: out_hit_point (%g,%g,%g) mm\n------------------------------------------------------------\n",
 			noverlaps,reg1->reg_name,
 			noverlaps,reg2->reg_name,
 			noverlaps,depth,
@@ -860,7 +862,7 @@ compute_views(struct state *state)
 
     VSCALE(steps, span, inv_spacing);
 
-    bu_log("grid spacing %g mm  %d x %d x %d steps\n", gridSpacing, V3ARGS(steps));
+    bu_log("grid spacing %gmm  %d x %d x %d\n", gridSpacing, V3ARGS(steps));
 
 	for (axis=0 ; axis < num_axes ; axis++) {
 	    state->curr_view = axis;
@@ -912,8 +914,10 @@ terminate_check(struct state *state)
 	    }
 	    delta = hi - low;
 
-	    if (delta < volume_tolerance)
+	    if (delta < volume_tolerance) {
+		bu_log("vol tol %g delta %g\n", volume_tolerance, delta);
 		return 0;
+	    }
 	}
 	if (weight_tolerance) {
 
@@ -1024,7 +1028,6 @@ main(ac,av)
     VSUB2(span, rtip->mdl_max, rtip->mdl_min);
 
     if (options_prep(rtip, span)) return -1;
-    bu_log("flags %0x\n", analysis_flags);
 
     /* initialize some stuff */
     VSETALL(state.lenDensity, 0.0);
