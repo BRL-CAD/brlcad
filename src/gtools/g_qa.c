@@ -18,7 +18,7 @@ plot the points where overlaps start/stop
  *	-P ncpu
  *	-r bits		report types
  *	-t tol_dist	overlap tolerance
- *	-T volume_tolerance
+ *	-V volume_tolerance
  *	-U aircode	use_air
  *	-u units	
  *	-W weight_tolerance
@@ -49,24 +49,51 @@ plot the points where overlaps start/stop
 #define SEM_WORK RT_SEM_LAST
 
 /* declarations to support use of getopt() system call */
-char *options = "hP:g:df:t:m:";
+char *options = "A:a:de:f:g:Gn:P:r:S:s:t:T:U:u:W:";
 extern char *optarg;
 extern int optind, opterr, getopt();
 
 /* variables set by command line flags */
 char *progname = "(noname)";
-int npsw = 1;
-double grid_size = 50.0; /* 50.0mm grid default */
-char user_set_grid_size;
+
+#define ANALYSIS_VOLUME 1
+#define ANALYSIS_WEIGHT 2
+#define ANALYSIS_OVERLAPS 4
+int analysis_flags = ANALYSIS_VOLUME|ANALYSIS_OVERLAPS|ANALYSIS_WEIGHT;
+
+double azimuth_deg;
+double elevation_deg;
+char *densityFileName;
+double gridSpacing = 50.0;
+double gridSpacingLimit = 0.25;
+char makeOverlapAssemblies;
+int require_num_hits = 1;
+int ncpu = 1;
+int report_bits;
+double Samples_per_model_axis = 4.0;
+double Samples_per_prim_axis;
+double overlap_tolerance;
+double volume_tolerance;
+int use_air;
+char *units;
+double weight_tolerance;
+
+
+
 int debug;
 #define dlog if (debug) bu_log
-char *densityFileName;
+
+#if 0
+int npsw = 1;
+double grid_size = 50.0; /* 50.0mm grid default */
 double tol = 0.5;
 int rpt_overlap = 1;
-unsigned minimum_region_hits = 1; /* number of times a region must be hit to be considered sampled */
+
 
 
 double overlap_tol = 0.1;
+#endif
+
 static long	noverlaps;		/* Number of overlaps seen */
 static long	overlap_count;		/* Number of overlap pairs seen */
 static long	unique_overlap_count;	/* Number of unique overlap pairs seen */
@@ -76,19 +103,21 @@ static long	unique_overlap_count;	/* Number of unique overlap pairs seen */
 struct resource	resource[MAX_PSW];	/* memory resources for multi-cpu processing */
 
 struct state {
+    int curr_view;	/* the "view" number we are shooting */
     int u_axis; /* these three are in the range 0..2 inclusive and indicate which axis (X,Y,or Z) */
     int v_axis; /* is being used for the U, V, or invariant vector direction */
     int i_axis;
     int v;	/* this indicates how many "grid_size" steps in the v direction have been taken */
     vect_t lenDensity;
     vect_t volume;
+    vect_t u_dir;
+    vect_t v_dir;
     struct rt_i *rtip;
 };
-
-
 long steps[3]; /* # of "grid_size" steps to take along each axis (X,Y,Z) to cover the face of the bounding rpp? */
-
 vect_t span; /* How much space does the geometry span in each of X,Y,Z directions */
+
+
 
 
 struct density_entry {
@@ -117,6 +146,208 @@ struct overlap_list {
 static struct overlap_list *olist=NULL;	/* root of the list */
 
 
+
+/*
+ *	U S A G E --- tell user how to invoke this program, then exit
+ */
+void
+usage(s)
+     char *s;
+{
+    if (s) (void)fputs(s, stderr);
+
+    (void) fprintf(stderr, "Usage: %s [-P #processors] [-g initial_gridsize] [-t vol_tolerance] [-f density_table_file] [-d(ebug)] geom.g obj [obj...]\n",
+		   progname);
+    exit(1);
+}
+
+/*
+ *	P A R S E _ A R G S --- Parse through command line flags
+ */
+int
+parse_args(ac, av)
+     int ac;
+     char *av[];
+{
+    int  c;
+    char *strrchr();
+    char unitstr[64];
+    double conv;
+
+    if (  ! (progname=strrchr(*av, '/'))  )
+	progname = *av;
+    else
+	++progname;
+
+    /* Turn off getopt's error messages */
+    opterr = 0;
+
+    /* get all the option flags from the command line */
+    while ((c=getopt(ac,av,options)) != EOF)
+	switch (c) {
+	case 'A'	: {
+	    char *p;
+	    analysis_flags = 0;
+	    for (p = optarg; *p ; p++) {
+		switch (*p) {
+		case 'a' :
+		    analysis_flags = ANALYSIS_VOLUME|ANALYSIS_WEIGHT|ANALYSIS_OVERLAPS;
+		    break;
+		case 'o' :
+		    analysis_flags |= ANALYSIS_OVERLAPS;
+		    break;
+		case 'w' :
+		    analysis_flags |= ANALYSIS_WEIGHT;
+		    break;
+		case 'v' :
+		    analysis_flags |= ANALYSIS_VOLUME;
+		    break;
+		}
+	    }
+	}
+	case 'a'	:
+	    bu_log("azimuth not implemented\n");
+	    if (sscanf(optarg, "%lg", &azimuth_deg) != 1) {
+		bu_log("error parsing azimuth \"%s\"\n", optarg);
+	    }
+	    break;
+	case 'e'	:
+	    bu_log("elevation not implemented\n");
+	    if (sscanf(optarg, "%lg", &elevation_deg) != 1) {
+		bu_log("error parsing elevation \"%s\"\n", optarg);
+	    }
+	    break;
+	case 'd'	: debug = !debug; break;
+
+	case 'f'	: densityFileName = optarg; break;
+
+	case 'g'	: {
+#define LEN_UNITS 32
+	    int i, j;
+	    char unit1[LEN_UNITS];
+	    char unit2[LEN_UNITS];
+	    double a, b;
+	    char *p;
+
+	    /* NOTE:  The 32 in this string must match LEN_UNITS  */
+	    i = j = 0;
+
+	    if (p = strchr(optarg, ',')) {
+		*p++ = '\0';
+	    }
+
+	    bu_log("\"%s\"  \"%s\"\n", optarg, p);
+
+	    i = sscanf(optarg, "%lg%s", &a, unit1);
+
+	    if (i > 0) {
+		if (a <= 0.0) {
+		    bu_log("gridSpacing must be a positive value > 0.0, not \"%s\"\n", unit1);
+		    break;
+		}
+		if (i > 1) {
+		    conv = bu_units_conversion(unit1);
+		    if (conv != 0.0)
+			gridSpacing = a * conv;
+		    else {
+			bu_log("bad units specification \"%s\" for %s\n", unit1, optarg);
+			gridSpacing = a;
+		    }
+		} else {
+		    gridSpacing = a;
+		}
+
+	    }
+
+
+	    if (p) {
+		j = sscanf(p, "%lg%s", &b, unit2);
+		if (j > 0)
+		    if (b <= 0.0) {
+			bu_log("gridSpacing must be a positive value > 0.0, not \"%s\"\n", unit1);
+			break;
+		    }
+		    if (j > 1) {
+			conv = bu_units_conversion(unit2);
+			if (conv != 0.0)
+			    gridSpacingLimit = b * conv;
+			else {
+			    bu_log("bad units specification \"%s\" for %s\n", unit2, p);
+			    gridSpacingLimit = b;
+			}
+		    } else {
+			gridSpacingLimit = b;
+		    }
+
+		}
+	    }
+	    bu_log("spacing:%g limit:%g\n", gridSpacing, gridSpacingLimit);
+	    break;
+	case 'G'	:
+	    makeOverlapAssemblies = 1;
+	    break;
+	case 'n'	:
+	    if (sscanf(optarg, "%d", &c) != 1 || c < 0) {
+		bu_log("num_hits must be >= 0, not \"%s\"\n", optarg);
+		break;
+	    }
+	    require_num_hits = c;
+	    break;
+
+	case 'P'	:
+	    /* cannot ask for more cpu's than the machine has */
+	    if ((c=atoi(optarg)) > 0 && ncpu > c) ncpu = c;
+	    break;	
+	case 'S'	:
+	    if (sscanf(optarg, "%g", &conv) != 1 || conv <= 0.0) {
+		bu_log("error in specifying minimum samples per model axis: \"%s\"\n", optarg);
+		break;
+	    }
+	    Samples_per_model_axis = conv;
+	    break;
+	case 's'	:
+	    if (sscanf(optarg, "%g", &conv) != 1 || conv <= 0.0) {
+		bu_log("error in specifying minimum samples per primitive axis: \"%s\"\n", optarg);
+		break;
+	    }
+	    Samples_per_prim_axis = conv;
+	    bu_log("option -s samples_per_axis_min not implemented\n");
+	    break;
+	case 't'	: 
+	    if (sscanf(optarg, "%lg", &conv) != 1 || conv <= 0.0 ) {
+		bu_log("error in overlap tolerance distance \"%s\"\n", optarg);
+		break;
+	    }
+	    overlap_tolerance = conv;
+	    break;
+	case 'V'	: 
+	    if (sscanf(optarg, "%lg", &conv) != 1 || conv <= 0.0 ) {
+		bu_log("error in volume tolerance \"%s\"\n", optarg);
+		break;
+	    }
+	    volume_tolerance = conv;
+	    break;
+	case 'W'	: 
+	    if (sscanf(optarg, "%lg", &conv) != 1 || conv <= 0.0 ) {
+		bu_log("error in weight tolerance \"%s\"\n", optarg);
+		break;
+	    }
+	    weight_tolerance = conv;
+	    break;
+
+	case 'U'	: use_air = atoi(optarg); break;
+	case 'u'	: units = optarg; break;
+	case '?'	:
+	case 'h'	:
+	default		: usage("Bad or help flag specified\n"); break;
+	}
+
+    return(optind);
+}
+
+
+
+
 /*
  *			O V E R L A P
  *
@@ -139,7 +370,7 @@ overlap(struct application *ap, struct partition *pp, struct region *reg1, struc
 	VJOIN1( ihit, rp->r_pt, ihitp->hit_dist, rp->r_dir );
 	VJOIN1( ohit, rp->r_pt, ohitp->hit_dist, rp->r_dir );
 	depth = ohitp->hit_dist - ihitp->hit_dist;
-	if( depth < overlap_tol )
+	if( depth < overlap_tolerance )
 		return(0);
 
 	bu_semaphore_acquire( BU_SEM_SYSCALL );
@@ -147,7 +378,7 @@ overlap(struct application *ap, struct partition *pp, struct region *reg1, struc
 	noverlaps++;
 	bu_semaphore_release( BU_SEM_SYSCALL );
 
-	if( !rpt_overlap ) {
+	if( !(analysis_flags&ANALYSIS_OVERLAPS) ) {
 		bu_log("\nOVERLAP %d: %s\nOVERLAP %d: %s\nOVERLAP %d: depth %gmm\nOVERLAP %d: in_hit_point (%g,%g,%g) mm\nOVERLAP %d: out_hit_point (%g,%g,%g) mm\n------------------------------------------------------------\n",
 			noverlaps,reg1->reg_name,
 			noverlaps,reg2->reg_name,
@@ -216,69 +447,6 @@ overlap(struct application *ap, struct partition *pp, struct region *reg1, struc
 	return(0);	/* No further consideration to this partition */
 }
 
-/*
- *	U S A G E --- tell user how to invoke this program, then exit
- */
-void
-usage(s)
-     char *s;
-{
-    if (s) (void)fputs(s, stderr);
-
-    (void) fprintf(stderr, "Usage: %s [-P #processors] [-g initial_gridsize] [-t vol_tolerance] [-f density_table_file] [-d(ebug)] geom.g obj [obj...]\n",
-		   progname);
-    exit(1);
-}
-
-/*
- *	P A R S E _ A R G S --- Parse through command line flags
- */
-int
-parse_args(ac, av)
-     int ac;
-     char *av[];
-{
-    int  c;
-    char *strrchr();
-    char unitstr[64];
-    double conv;
-
-    if (  ! (progname=strrchr(*av, '/'))  )
-	progname = *av;
-    else
-	++progname;
-
-    /* Turn off getopt's error messages */
-    opterr = 0;
-
-    /* get all the option flags from the command line */
-    while ((c=getopt(ac,av,options)) != EOF)
-	switch (c) {
-	case 'd'	: debug = !debug; break;
-	case 'f'	: densityFileName = optarg; break;
-	case 'g'	:
-	    sscanf(optarg, "%lg%60s", &grid_size, unitstr); 
-	    user_set_grid_size = 1;
-	    conv = bu_units_conversion(unitstr);
-	    if (conv != 0.0) grid_size *= conv;
-	    break;
-	case 'm'	:
-	    if (sscanf(optarg, "%u", &minimum_region_hits) != 1) {
-		bu_log("scan error reading minimum region hit count \"%s\"\n", optarg);
-	    }
-	    break;
-	case 'P'	:
-	    /* cannot ask for more cpu's than the machine has */
-	    if ((c=atoi(optarg)) > 0 && npsw > c) npsw = c;
-	    break;	
-	case 't'	: tol = strtod(optarg, (char **)NULL); break;
-	case '?'	:
-	case 'h'	:
-	default		: usage("Bad or help flag specified\n"); break;
-	}
-
-    return(optind);
-}
 
 void
 multioverlap(struct application *ap, struct partition *pp, struct bu_ptbl *regiontable, struct partition *InputHdp)
@@ -405,6 +573,7 @@ plane_worker (int cpu, genptr_t ptr)
     while (1) {
 	/* get a row to work on */
 	bu_semaphore_acquire(SEM_WORK);
+	/* bu_log("stateV: %d  steps %d\n", state->v, steps[state->v_axis]); */
 	if (state->v >= steps[state->v_axis]) {
 	    state->lenDensity[state->i_axis] += ap.a_color[0]; /* add our length*density value */
 	    state->volume[state->i_axis] += ap.a_color[1]; /* add our length*density value */
@@ -414,7 +583,7 @@ plane_worker (int cpu, genptr_t ptr)
 	v = state->v++;
 	bu_semaphore_release(SEM_WORK);
 
-	v_coord = grid_size * 0.5 + v * grid_size; 
+	v_coord = gridSpacing * 0.5 + v * gridSpacing; 
 
 	state->lenDensity[state->i_axis] = 0.0;
 	state->volume[state->i_axis] = 0.0;
@@ -423,19 +592,21 @@ plane_worker (int cpu, genptr_t ptr)
 	if (state->lenDensity[state->i_axis] == 0.0 || (v&1) == 0) {
 	    /* shoot all the rays in this row */
 	    for (u=0 ; u < steps[state->u_axis]; u++) {
-		ap.a_ray.r_pt[state->u_axis] = ap.a_rt_i->mdl_min[state->u_axis] + u * grid_size + 0.5 * grid_size;
-		ap.a_ray.r_pt[state->v_axis] = ap.a_rt_i->mdl_min[state->v_axis] + v * grid_size + 0.5 * grid_size;
+		ap.a_ray.r_pt[state->u_axis] = ap.a_rt_i->mdl_min[state->u_axis] + u * gridSpacing + 0.5 * gridSpacing;
+		ap.a_ray.r_pt[state->v_axis] = ap.a_rt_i->mdl_min[state->v_axis] + v * gridSpacing + 0.5 * gridSpacing;
 		ap.a_ray.r_pt[state->i_axis] = ap.a_rt_i->mdl_min[state->i_axis];
 
+		/* bu_log("%g %g %g -> %g %g %g\n", V3ARGS(ap.a_ray.r_pt), V3ARGS(ap.a_ray.r_dir));*/
 		(void)rt_shootray( &ap );
 	    }
 	} else {
 	    /* shoot only the rays we need to on this row */
 	    for (u=1 ; u < steps[state->u_axis]; u+=2) {
-		ap.a_ray.r_pt[state->u_axis] = ap.a_rt_i->mdl_min[state->u_axis] + u * grid_size + 0.5 * grid_size;
-		ap.a_ray.r_pt[state->v_axis] = ap.a_rt_i->mdl_min[state->v_axis] + v * grid_size + 0.5 * grid_size;
+		ap.a_ray.r_pt[state->u_axis] = ap.a_rt_i->mdl_min[state->u_axis] + u * gridSpacing + 0.5 * gridSpacing;
+		ap.a_ray.r_pt[state->v_axis] = ap.a_rt_i->mdl_min[state->v_axis] + v * gridSpacing + 0.5 * gridSpacing;
 		ap.a_ray.r_pt[state->i_axis] = ap.a_rt_i->mdl_min[state->i_axis];
 
+		/* bu_log("%g %g %g -> %g %g %g\n", V3ARGS(ap.a_ray.r_pt), V3ARGS(ap.a_ray.r_dir));*/
 		(void)rt_shootray( &ap );
 	    }
 	}
@@ -463,8 +634,8 @@ check_region_values(struct rt_i *rtip)
 	if (regp->reg_udata == (genptr_t)0) {
 	    bu_log("%s was not hit\n", regp->reg_name);
 	    r = 1;
-	} else if (((unsigned)regp->reg_udata) < minimum_region_hits) {
-	    dlog("%s hit only %u times (< %u)\n", regp->reg_name, (unsigned)regp->reg_udata, minimum_region_hits);
+	} else if (((unsigned)regp->reg_udata) < require_num_hits) {
+	    dlog("%s hit only %u times (< %u)\n", regp->reg_name, (unsigned)regp->reg_udata, require_num_hits);
 	    r = 1;
 	}
     }
@@ -475,11 +646,11 @@ check_region_values(struct rt_i *rtip)
 void
 report_results(struct state *state)
 {
-    state->volume[state->i_axis] *= grid_size*grid_size;
+    state->volume[state->i_axis] *= gridSpacing*gridSpacing;
 
     bu_log("\tvolume %lg cu mm  Weight %lg\n",
 	   state->volume[state->i_axis],
-	   state->lenDensity[state->i_axis]*grid_size*grid_size);
+	   state->lenDensity[state->i_axis]*gridSpacing*gridSpacing);
 }
 
 void
@@ -640,7 +811,136 @@ get_densities( struct rt_i * rtip)
     struct directory *dp;
 }
 
+int
+options_prep(struct rt_i *rtip, vect_t span)
+{
+    double newGridSpacing = gridSpacing;
+    int axis;
 
+    /* figure out where the density values are comming from and get them */
+    if (densityFileName) {
+	dlog("density from file\n");
+	if (get_densities_from_file(densityFileName)) {
+	    return -1;
+	}
+    } else {
+	dlog("density from db\n");
+	if (get_densities_from_database(rtip)) {
+	    return -1;
+	}
+    }
+
+    /* refine the grid spacing if the user has set a 
+     * lower bound on the number of rays per model axis 
+     */
+    for (axis=0 ; axis < 3 ; axis++) {
+	if (span[axis] < newGridSpacing*Samples_per_model_axis) {
+	    /* along this axis, the gridSpacing is 
+	     * larger than the model span.  We need to refine.
+	     */
+	    newGridSpacing = span[axis] / Samples_per_model_axis;
+	}
+    }
+
+    if (newGridSpacing != gridSpacing) {
+	bu_log("Grid spacing %gmm is larger than model bounding box axis\n", gridSpacing);
+	bu_log("Adjusted to %gmm to get %g samples per model axis\n", newGridSpacing, Samples_per_model_axis);
+	gridSpacing = newGridSpacing;
+    }
+
+    return 0;
+}
+
+void 
+compute_views(struct state *state)
+{
+    int axis;
+    int num_axes = 3;
+    double inv_spacing = 1.0/gridSpacing;
+
+    VSCALE(steps, span, inv_spacing);
+
+    bu_log("grid spacing %g mm  %d x %d x %d steps\n", gridSpacing, V3ARGS(steps));
+
+	for (axis=0 ; axis < num_axes ; axis++) {
+	    state->curr_view = axis;
+
+	    state->v = 0;
+	    /* xy, yz, zx */
+	    state->u_axis = axis;
+	    state->v_axis = (axis+1) % 3;
+	    state->i_axis = (axis+2) % 3;
+
+
+	    state->u_dir[state->u_axis] = 1;
+	    state->u_dir[state->v_axis] = 0;
+	    state->u_dir[state->i_axis] = 0;
+
+	    state->v_dir[state->u_axis] = 0;
+	    state->v_dir[state->v_axis] = 1;
+	    state->v_dir[state->i_axis] = 0;
+
+
+	    bu_parallel(plane_worker, ncpu, (genptr_t)state); /* xy plane */
+	    report_results(state);
+	}
+
+
+
+}
+
+/*
+ *	t e r m i n a t e _ c h e c k
+ */
+
+int 
+terminate_check(struct state *state)
+{
+    double low, hi, val, delta;
+    int i;
+    int axis_count = 3;
+
+	if (volume_tolerance) {
+	    /* find the range of values for volume */
+	    low = hi = 0.0;
+	    val = state->volume[0];
+	    for (i=1 ; i < axis_count ; i++) {
+		delta = val - state->volume[i];
+
+		if (delta < low) low = delta;
+		if (delta > hi) hi = delta;
+	    }
+	    delta = hi - low;
+
+	    if (delta < volume_tolerance)
+		return 0;
+	}
+	if (weight_tolerance) {
+
+	    low = hi = 0.0;
+	    val = state->lenDensity[0];
+	    for (i=1 ; i < axis_count ; i++) {
+		delta = val - state->lenDensity[i];
+
+		if (delta < low) low = delta;
+		if (delta > hi) hi = delta;
+	    }
+	    delta = hi - low;
+
+	    if (delta < weight_tolerance)
+		return 0;
+
+	}
+
+	/* refine the gridSpacing and try again */
+	gridSpacing *= 0.5;
+	if (gridSpacing < gridSpacingLimit) {
+	    bu_log("grid spacing refined to %g which is below lower limit %g\n", gridSpacingLimit, gridSpacing);
+	    return 0;
+	}
+
+	return 1;
+}	
 /*
  *	M A I N
  *
@@ -667,9 +967,9 @@ main(ac,av)
     double lim, val;
     int crv;
 
+    ncpu = bu_avail_cpus();
 
-    npsw = bu_avail_cpus();
-
+    /* parse command line arguments */
     arg_count = parse_args(ac, av);
 	
     if ((ac-arg_count) < 2) {
@@ -678,9 +978,8 @@ main(ac,av)
 
     bu_semaphore_init(RT_SEM_LAST+2);
 
-    rt_init_resource( &rt_uniresource, npsw, NULL );
+    rt_init_resource( &rt_uniresource, ncpu, NULL );
     bn_rand_init( rt_uniresource.re_randptr, 0 );
-	
 
     /*
      *  Load database.
@@ -691,18 +990,6 @@ main(ac,av)
     if( (rtip=rt_dirbuild(av[arg_count], idbuf, sizeof(idbuf))) == RTI_NULL ) {
 	fprintf(stderr,"rtexample: rt_dirbuild failure\n");
 	exit(2);
-    }
-
-    if ( densityFileName) {
-	dlog("density from file\n");
-	if (get_densities_from_file(densityFileName)) {
-	    return -1;
-	}
-    } else {
-	dlog("density from db\n");
-	if (get_densities_from_database(rtip)) {
-	    return -1;
-	}
     }
 
     /* Walk trees.
@@ -718,7 +1005,7 @@ main(ac,av)
      *  Initialize all the per-CPU memory resources.
      *  The number of processors can change at runtime, init them all.
      */
-    for( i=0; i < npsw; i++ )  {
+    for( i=0; i < ncpu; i++ )  {
 	rt_init_resource( &resource[i], i, rtip );
 	bn_rand_init( resource[i].re_randptr, i );
     }
@@ -727,8 +1014,7 @@ main(ac,av)
      * This gets the database ready for ray tracing.
      * (it precomputes some values, sets up space partitioning, etc.)
      */
-    rt_prep_parallel(rtip,npsw);
-
+    rt_prep_parallel(rtip,ncpu);
 
     /* we now have to subdivide space
      *
@@ -737,95 +1023,23 @@ main(ac,av)
 
     VSUB2(span, rtip->mdl_max, rtip->mdl_min);
 
+    if (options_prep(rtip, span)) return -1;
+    bu_log("flags %0x\n", analysis_flags);
 
-    double set = 0.0;
-    int axis = -1;
-    for (i=0 ; i < 3 ; i++) {
-	if (span[i] < grid_size) {
-	    if (axis != -1) {
-		if (span[i] < span[axis]) {
-		    set = span[i];
-		    axis = i;
-		}
-	    } else {
-		    set = span[i];
-		    axis = i;
-	    }
-	}
-    }
-    if (set != 0.0) {
-	if (user_set_grid_size) {
-		bu_log("Grid size %gmm is larger than bounding box axis.\n", grid_size);
-		bu_log("Consider setting grid size to at least %g\n", span[i]/10.0);
-	} else {
-		bu_log("grid size %gmm is larger than bounding box axis %s.\n", grid_size, 
-		       (axis == 0 ? "X" : (axis == 1 ? "Y" : "Z")));
-		grid_size = set / 10.0;
-		bu_log("Adjusted to %gmm to make at least 10 grid cells per axis\n", set);
-	}
-    }
-
+    /* initialize some stuff */
     VSETALL(state.lenDensity, 0.0);
     VSETALL(state.volume, 0.0);
     state.rtip = rtip;
 
-    lim = tol+1.0;
-    dlog("tol: %g\n", tol);
+    /* compute */
+    do {
 
-    crv = 1;
-    clear_region_values(rtip);
-    while (lim > tol || crv) {
+	compute_views(&state);
 
-	VSCALE(steps, span, 1.0/grid_size);
-
-	bu_log("grid size %g mm  %d x %d x %d steps\n", grid_size, V3ARGS(steps));
-
-	state.u_axis = 0;
-	state.v_axis = 1;
-	state.i_axis = 2;
-	state.v = 0;
-	
-	dlog("\txy %ld x %ld samples.  ", steps[X], steps[Y]);
-	bu_parallel(plane_worker, npsw, (genptr_t)&state); /* xy plane */
-	report_results(&state);
-
-
-	state.u_axis = 0;
-	state.v_axis = 2;
-	state.i_axis = 1;
-	state.v = 0;
-
-	dlog("\txz %d x %d samples.  ", steps[X], steps[Z]);
-	bu_parallel(plane_worker, npsw, (genptr_t)&state); /* xz plane */
-	report_results(&state);
-
-	state.u_axis = 1;
-	state.v_axis = 2;
-	state.i_axis = 0;
-	state.v = 0;
-
-	dlog("\tyz %d x %d samples.  ", steps[Y], steps[Z]);
-	bu_parallel(plane_worker, npsw, (genptr_t)&state); /* yz plane */
-	report_results(&state);
-
-	crv = check_region_values(rtip);
-
-	lim = fabs(state.volume[0] - state.volume[1]);
-	val = fabs(state.volume[0] - state.volume[2]);
-	if (lim > val) lim = val;
-
-	val = fabs(state.volume[1] - state.volume[2]);
-	if (lim < val) lim = val;
-
-	dlog("lim %g\n", lim);
-	grid_size *= 0.5;
-
-    }
-
+    } while (terminate_check(&state));
     report_overlaps();
 
-
-	return(0);
+    return(0);
 }
 
 

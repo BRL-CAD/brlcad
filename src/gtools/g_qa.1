@@ -29,7 +29,37 @@ For weight computation, the density of every region must be specified.  Densitie
 This index is stored in the 
 .I GIFTmater 
 attribute of each region.
-The density table consists of integer index values, and density values specified in grams/cm^3.  An optional text string may follow the density value.  The table is typically created with a text editor, and then imported to the database as the binary object
+.P
+The density table consists of three columns: 
+an integer index value, a floating point density value specified in grams/cm^3, and an optional text string describing the material
+.in -5
+.P
+For example:
+.sp 1
+.in +5
+.br
+1	7.84		Carbon Steel
+.br
+2	7.82		Carbon Tool Steel
+.br
+3	2.7		Aluminum, 6061-T6
+.br
+4	2.74		Aluminum, 7079-T6
+.br
+5	8.9		Copper, pure
+.br
+6	19.32	Gold, pure
+.br
+7	8.03		Stainless, 18Cr-8Ni
+.br
+8	7.47		Stainless 27Cr
+.br
+8	7.715	Steel, tool
+.in -5n
+.P
+The first column is the index value to which the GIFTmater attribute is set to select the given 
+.P
+The table is typically created with a text editor, and then imported to the database as the binary object
 .B _DENSITIES.
 .P
 To import a text file into the database, the following comand is used.
@@ -39,7 +69,9 @@ mged>
 .I filename
 
 .SH WEIGHT REPORTING
-For each object specified on the command line, a volume and weight is calculated and reported.
+If weight calculation is slected, for each 
+.I object
+specified on the command line, a volume and weight is calculated and reported.
 
 .SH OVERLAP REPORTING
 
@@ -70,22 +102,24 @@ See also
 .TP
 .B \-f filename
 Specifies that density values should be taken from an external file instead of from the _DENSITIES object in the database.
+This can be useful when developing the density table with a text editor, prior to importing it to the geometric database.
 .TP
-.B \-g gridspacing\fI[,lim]\fR
-Specifies the spacing between rays in the grids.  The default value is
-50.0mm or a minumum of 10 rays per axis of the bounding box of the
-geometry.  For example, a geometry with a 10x10x10mm bounding box
-would (by default) get a 1mm grid size.  If the user specifies a
-value, it is used.  If that value does not guarantee 10 samples per
-axis, a warning is printed.  If the user does not specify a grid size,
-the program will set the grid size to asure 10 rays/axis.  The gridspacing may be specified with units.  For example:
+.B \-g grid_spacing\fI[,lim]\fR
+Specifies the spacing between rays in the grids.  
+The first value indicates the inital spacing between grid rays.  
+If the optional second argument, "\fI,lim\fR",
+is specified, it indicates a lower bound on how fine the gridspacing may get before computation is terminated.
+The grid spacing may be specified with units.  For example:
 .B 5mm
 or 
 .B 10in.
-.P
-If the optional 
-.I,lim
-is specified, it indicates a lower bound on how fine the gridspacing may get before processing 
+If units are not provided, millimeters are presumed to be the units.
+The default values are 50.0mm and 0.5mm, which is equivalent to specifying: 
+.sp
+.ti +5
+.br
+.B \-g 50.0mm,0.5mm
+
 .TP
 .B \-G
 Specifies that the program should create new 
@@ -96,19 +130,16 @@ and
 .I disk.r
 overlap, this option will cause the creation of an assembly called _OVERLAP_rod.r_disk.r which includes the following items:
 .in +5
+.br
 .I rod.r
-.in -5
-.in +5
+.br
 .I disk.r
-.in -5
-.in +5
+.br
 .I _OVERLAPS_rod.r_disk.r
-The last of these is an object to represent the overlapping area so that it can be easily seen.
-.TP
-.B \-m min_samples
-Specifies that the tolerance of at least 
-.I num_samples
-(10 by default) samples per axis be applied to the smallest region bounding box, not the model bounding box.  This results in much tighter grids, longer runtimes, and higher quality answers.
+.in -5
+
+The last of these is an object to represent the overlapping area so that it can be easily seen.  
+The default is that no groups are created.
 .TP
 .B \-n num_hits
 Specifies that the grid be refined until each region has at least 
@@ -116,7 +147,7 @@ Specifies that the grid be refined until each region has at least
 ray intersections.
 The default is 1 (that is, each region must be hit at least once).
 This limit is not applied per-view, but rather per-analysis.
-So for example, it is accepted that a thin object might not be hit from one view at all.
+So for example, it is accepted that a thin object might not be hit from one view at all, but hit when shooting from other views.
 .TP
 .B \-P ncpu
 Specifies that
@@ -173,27 +204,25 @@ The default is 1.
 .B \-S samples_per_axis_min
 Specifies that the grid spacing will be initially refined so that at least
 .I samples_per_axis_min
-will be shot along each axis of the bounding box of the model.  For example, if the objects specified have a bounding box of 0 0 0 -> 4 3 2 and the grid spacing is 1.0, specifying the option
+will be shot along each axis of the bounding box of the model.
+For example, if the objects specified have a bounding box of 0 0 0 -> 4 3 2 and the grid spacing is 1.0, specifying the option
 .B \-S 4
 will cause the initial grid spacing to be adjusted to 0.5 so that 4 samples will be shot across the Z dimension of the bounding box.
+The default is to assure 10 rays per model grid axis.
+
 .TP
 .B \-s samples_per_axis_min
 This is like the 
 .B \-S 
-option except that the smallest bounding box in the model is used instead of the model bounding box.  This typically creates very fine grid spacing, and long runtimes, with high initial accuracy.
+option except that the smallest bounding box dimensions (for primitive shapes) in the model are
+used instead of the model bounding box.
+This typically creates very fine grid spacing, and long runtimes, with higher accuracy.
 .TP
 .B \-t tol_dist
 Specifies that overlaps less than 
 .I tol_dist
 will not be reported.
 The default is 0.0 so that all overlaps are reported.
-.TP
-.B \-T volume_tolerance
-Specifies a volumetric tolerance value which the 3 view computations must be within for computation to complete.  
-The default value is 0.5 cc  For large complex objects (such as entire vehicles) this values must often be adjusted upwards to achieve
-reasonable runtimes.  
-Given the approximate sampling nature of the algorithm, most of the time the three separate view computations will not agree identically.
-Only one of -T and -W may be specified.  The last one specified on the command line wins.  
 .TP
 .B \-U use_air
 Specifies the Boolean value 
@@ -204,8 +233,18 @@ The
 .B \-U 0
 option causes raytracing of air to be turned off.
 .TP
+.B \-V volume_tolerance
+Specifies a volumetric tolerance value which the 3 view computations must be within for computation to complete.  
+The default value is 0.5 cc  For large complex objects (such as entire vehicles) this values must often be adjusted upwards to achieve
+reasonable runtimes (or even completion).  
+Given the approximate sampling nature of the algorithm, most of the time the three separate view computations will not agree identically.
+Only one of -T and -W may be specified.  The last one specified on the command line wins.  
+.TP
 .B \-u units
-Specify the units used when reporting values.  If the command is run from within MGED, the current editing units are provided.  This option can be used to override this behavior.  Possible values include: 
+Specify the units used when reporting values.  
+If this option is not specified, the current editing units are used.
+This option can be used to override this behavior.
+Possible values include: 
 .I XXX what are the possible values XXX?
 .TP
 .B \-W weight_tolerance
@@ -222,4 +261,8 @@ from the geometry database
 and reports the weight, volume, and checks for overlaps.
 .IP
 g_qa model.g wheel.r
+.P
+To check objects hull, turret, suspension for overlaps only, reporting overlaps and occurence of air first on rays:
+.IP
+g_qa -A o -r 9 model.g hull turret suspension 
 .P
