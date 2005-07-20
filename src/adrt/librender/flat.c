@@ -5,7 +5,7 @@
 
 
 void render_flat_init(render_t *render) {
-  render->work = render_path_work;
+  render->work = render_flat_work;
   render->free = render_flat_free;
 }
 

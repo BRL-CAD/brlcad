@@ -10,7 +10,7 @@
 
 
 void rise_slave(int port, char *host, int threads);
-void rise_slave_init(tie_t *tie, void *app_data, int app_size);
+void rise_slave_init(tie_t *tie, int socknum);
 void rise_slave_free(void);
 void rise_slave_work(tie_t *tie, void *data, int size, void **res_buf, int *res_len);
 void rise_slave_mesg(void *mesg, int mesg_len);
@@ -27,16 +27,18 @@ void rise_slave(int port, char *host, int threads) {
 }
 
 
-void rise_slave_init(tie_t *tie, void *app_data, int app_size) {
+void rise_slave_init(tie_t *tie, int socknum) {
   printf("scene data received\n");
 
   rise_slave_completed = 0;
   util_camera_init(&camera, rise_slave_threads);
 
-  common_unpack(&db, tie, &camera, COMMON_PACK_ALL, app_data, app_size);
+  printf("prepping geometry... ");
+  fflush(stdout);
+  common_unpack(&db, tie, &camera, socknum);
   common_env_prep(&db.env);
   util_camera_prep(&camera, &db);
-  printf("prepping geometry\n");
+  printf("done.\n");
 }
 
 

@@ -12,7 +12,7 @@
 
 
 void isst_slave(int port, char *host, int threads);
-void isst_slave_init(tie_t *tie, void *app_data, int app_size);
+void isst_slave_init(tie_t *tie, int socknum);
 void isst_slave_free(void);
 void isst_slave_work(tie_t *tie, void *data, int size, void **res_buf, int *res_len);
 void isst_slave_mesg(void *mesg, int mesg_len);
@@ -30,16 +30,19 @@ void isst_slave(int port, char *host, int threads) {
 }
 
 
-void isst_slave_init(tie_t *tie, void *app_data, int app_size) {
+void isst_slave_init(tie_t *tie, int socknum) {
   printf("scene data received\n");
 
   isst_slave_completed = 0;
   util_camera_init(&camera, isst_slave_threads);
 
-  common_unpack(&db, tie, &camera, COMMON_PACK_ALL, app_data, app_size);
+  printf("prepping geometry... ");
+  fflush(stdout);
+  common_unpack(&db, tie, &camera, socknum);
   common_env_prep(&db.env);
   util_camera_prep(&camera, &db);
-  printf("prepping geometry\n");
+
+  printf("done.\n");
 }
 
 
@@ -164,6 +167,10 @@ void isst_slave_work(tie_t *tie, void *data, int size, void **res_buf, int *res_
         db.env.render.free(&db.env.render);
 
         switch(rm) {
+          case RENDER_METHOD_DEPTH:
+            render_depth_init(&db.env.render);
+            break;
+
           case RENDER_METHOD_COMPONENT:
             render_component_init(&db.env.render);
             break;

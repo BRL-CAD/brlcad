@@ -604,33 +604,34 @@ void isst_master_process_events(SDL_Event *event_queue, int event_num, isst_mast
             isst_master_shift_enabled = 1;
             break;
 
-          case SDLK_0: /* RENDER_METHOD_PATH */
-            isst_master_rm = RENDER_METHOD_PATH;
-            break;
-
-          case SDLK_1: /* RENDER_METHOD_NORMAL */
-            isst_master_rm = RENDER_METHOD_NORMAL;
-            break;
-
-          case SDLK_2: /* RENDER_METHOD_PHONG */
+          case SDLK_1: /* RENDER_METHOD_PHONG */
             isst_master_rm = RENDER_METHOD_PHONG;
             break;
 
-          case SDLK_3: /* RENDER_METHOD_PLANE */
+          case SDLK_2: /* RENDER_METHOD_PLANE */
             isst_master_rm = RENDER_METHOD_PLANE;
+            break;
+
+          case SDLK_3: /* RENDER_METHOD_SPALL */
+            isst_master_rm = RENDER_METHOD_SPALL;
             break;
 
           case SDLK_4: /* RENDER_METHOD_COMPONENT */
             isst_master_rm = RENDER_METHOD_COMPONENT;
             break;
 
-          case SDLK_5: /* RENDER_METHOD_SPALL */
-            isst_master_rm = RENDER_METHOD_SPALL;
+          case SDLK_8: /* RENDER_METHOD_DEPTH */
+            isst_master_rm = RENDER_METHOD_DEPTH;
             break;
 
           case SDLK_9: /* RENDER_METHOD_GRID */
             isst_master_rm = RENDER_METHOD_GRID;
             break;
+
+          case SDLK_0: /* RENDER_METHOD_NORMAL */
+            isst_master_rm = RENDER_METHOD_NORMAL;
+            break;
+
 
           case SDLK_UP:
             math_vec_sub(vec, isst_master_camera_foc, isst_master_camera_pos);

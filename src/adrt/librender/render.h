@@ -2,6 +2,7 @@
 #define _RENDER_H
 
 #include "component.h"
+#include "depth.h"
 #include "flat.h"
 #include "grid.h"
 #include "kelos.h"

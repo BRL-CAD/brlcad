@@ -41,9 +41,6 @@
 #include "tienet.h"
 #include "umath.h"
 
-
-int app_ind;
-
 int prop_num;
 common_unpack_prop_node_t *prop_list;
 
@@ -52,30 +49,20 @@ common_unpack_texture_node_t *texture_list;
 
 common_prop_t common_unpack_def_prop;
 
-
-#define common_unpack_read(_src, _ind, _dest, _size, _flip) { \
-	memcpy(_dest, &((char*)_src)[_ind], _size); \
-	if(_flip) tienet_flip(&((char*)_src)[_ind], _dest, _size); \
-	_ind += _size; }
-
-
-void	common_unpack(common_db_t *db, tie_t *tie, util_camera_t *camera, int mask, void *app_data, int app_size);
+void	common_unpack(common_db_t *db, tie_t *tie, util_camera_t *camera, int socknum);
 void	common_unpack_free(common_db_t *db);
-void	common_unpack_camera(util_camera_t *camera, void *app_data, int size);
-void	common_unpack_env(common_db_t *db, void *app_data, int size);
-void	common_unpack_prop(void *app_data, int size);
-void	common_unpack_texture(void *app_data, int size);
-void	common_unpack_mesh(common_db_t *db, void *app_data, int size, tie_t *tie);
+void	common_unpack_camera(util_camera_t *camera, int socknum);
+void	common_unpack_env(common_db_t *db, int socknum);
+void	common_unpack_prop(int socknum);
+void	common_unpack_texture(int socknum);
+void	common_unpack_mesh(common_db_t *db, int socknum, tie_t *tie);
 void	common_unpack_prop_lookup(char *name, common_prop_t **prop);
 void	common_unpack_texture_lookup(char *name, texture_t **texture);
 
 
-void common_unpack(common_db_t *db, tie_t *tie, util_camera_t *camera, int mask, void *app_data, int app_size) {
-  int size, marker;
+void common_unpack(common_db_t *db, tie_t *tie, util_camera_t *camera, int socknum) {
+  int size;
   short ver, block;
-
-
-  app_ind = 0;
 
   prop_num = 0;
   prop_list = NULL;
@@ -93,42 +80,18 @@ void common_unpack(common_db_t *db, tie_t *tie, util_camera_t *camera, int mask,
   common_unpack_def_prop.emission = 0.0;
   common_unpack_def_prop.ior = 1.0;
 
-  /* COMMON PROJECT DATA VERSION */
-  common_unpack_read(app_data, app_ind, &ver, sizeof(short), tienet_endian);
+  /* Read in the size of the application data */
+  tienet_recv(socknum, &size, sizeof(int), 0);
 
-  while(app_ind != app_size) {
-    common_unpack_read(app_data, app_ind, &block, sizeof(short), tienet_endian);
-    common_unpack_read(app_data, app_ind, &size, sizeof(int), tienet_endian);
-    marker = app_ind;
-/*    printf("block: %d, %d\n", block, size); */
-    switch(block) {
-      case COMMON_PACK_CAMERA:
-        if(mask & COMMON_PACK_ALL || mask & COMMON_PACK_CAMERA)
-          common_unpack_camera(camera, app_data, size);
-        break;
+  /* Version */
+  tienet_recv(socknum, &ver, sizeof(short), tienet_endian);
 
-      case COMMON_PACK_ENV:
-        if(mask & COMMON_PACK_ALL || mask & COMMON_PACK_ENV)
-          common_unpack_env(db, app_data, size);
-        break;
-
-      case COMMON_PACK_PROP:
-        if(mask & COMMON_PACK_ALL || mask & COMMON_PACK_PROP)
-          common_unpack_prop(app_data, size);
-         break;
-
-      case COMMON_PACK_TEXTURE:
-        if(mask & COMMON_PACK_ALL || mask & COMMON_PACK_TEXTURE)
-          common_unpack_texture(app_data, size);
-        break;
-
-      case COMMON_PACK_MESH:
-        if(mask & COMMON_PACK_ALL || mask & COMMON_PACK_MESH)
-          common_unpack_mesh(db, app_data, size, tie);
-        break;
-    }
-    app_ind = marker + size;
-  }
+  /* Unpack Data */
+  common_unpack_env(db, socknum);
+  common_unpack_camera(camera, socknum);
+  common_unpack_prop(socknum);
+  common_unpack_texture(socknum);
+  common_unpack_mesh(db, socknum, tie);
 }
 
 
@@ -154,50 +117,22 @@ void common_unpack_free(common_db_t *db) {
 }
 
 
-void common_unpack_camera(util_camera_t *camera, void *app_data, int size) {
-  TIE_3		pos, focus;
-  tfloat	tilt, fov, dof;
+void common_unpack_env(common_db_t *db, int socknum) {
+  int ind, size;
+  short block;
 
+  /* size of environment data */
+  tienet_recv(socknum, &size, sizeof(int), 0);
 
-  /* POSITION */
-  common_unpack_read(app_data, app_ind, &pos.v[0], sizeof(tfloat), tienet_endian);
-  common_unpack_read(app_data, app_ind, &pos.v[1], sizeof(tfloat), tienet_endian);
-  common_unpack_read(app_data, app_ind, &pos.v[2], sizeof(tfloat), tienet_endian);
-
-  /* FOCUS */
-  common_unpack_read(app_data, app_ind, &focus.v[0], sizeof(tfloat), tienet_endian);
-  common_unpack_read(app_data, app_ind, &focus.v[1], sizeof(tfloat), tienet_endian);
-  common_unpack_read(app_data, app_ind, &focus.v[2], sizeof(tfloat), tienet_endian);
-
-  /* TILT */
-  common_unpack_read(app_data, app_ind, &tilt, sizeof(tfloat), tienet_endian);
-
-  /* FIELD OF VIEW */
-  common_unpack_read(app_data, app_ind, &fov, sizeof(tfloat), tienet_endian);
-
-  /* DEPTH OF FIELD */
-  common_unpack_read(app_data, app_ind, &dof, sizeof(tfloat), tienet_endian);
-
-  camera->pos = pos;
-  camera->focus = focus;
-  camera->tilt = tilt;
-  camera->fov = fov;
-  camera->dof = dof;
-}
-
-
-void common_unpack_env(common_db_t *db, void *app_data, int size) {
-  int		start;
-  short		block;
-
-
-  start = app_ind;
+  ind = 0;
   do {
-    common_unpack_read(app_data, app_ind, &block, sizeof(short), tienet_endian);
+    tienet_recv(socknum, &block, sizeof(short), tienet_endian);
+    ind += sizeof(short);
     switch(block) {
       case COMMON_PACK_ENV_RM:
         {
-          common_unpack_read(app_data, app_ind, &db->env.rm, sizeof(int), tienet_endian);
+          tienet_recv(socknum, &db->env.rm, sizeof(int), tienet_endian);
+          ind += sizeof(int);
           switch(db->env.rm) {
             case RENDER_METHOD_FLAT:
               render_flat_init(&db->env.render);
@@ -214,7 +149,9 @@ void common_unpack_env(common_db_t *db, void *app_data, int size) {
             case RENDER_METHOD_PATH:
               {
                 int samples;
-                common_unpack_read(app_data, app_ind, &samples, sizeof(int), tienet_endian);
+
+                tienet_recv(socknum, &samples, sizeof(int), tienet_endian);
+                ind += sizeof(int);
                 render_path_init(&db->env.render, samples);
               }
               break;
@@ -227,14 +164,15 @@ void common_unpack_env(common_db_t *db, void *app_data, int size) {
               {
                 TIE_3 ray_pos, ray_dir;
 
-                common_unpack_read(app_data, app_ind, &ray_pos.v[0], sizeof(tfloat), tienet_endian);
-                common_unpack_read(app_data, app_ind, &ray_pos.v[1], sizeof(tfloat), tienet_endian);
-                common_unpack_read(app_data, app_ind, &ray_pos.v[2], sizeof(tfloat), tienet_endian);
+                tienet_recv(socknum, &ray_pos.v[0], sizeof(tfloat), tienet_endian);
+                tienet_recv(socknum, &ray_pos.v[1], sizeof(tfloat), tienet_endian);
+                tienet_recv(socknum, &ray_pos.v[2], sizeof(tfloat), tienet_endian);
 
-                common_unpack_read(app_data, app_ind, &ray_dir.v[0], sizeof(tfloat), tienet_endian);
-                common_unpack_read(app_data, app_ind, &ray_dir.v[1], sizeof(tfloat), tienet_endian);
-                common_unpack_read(app_data, app_ind, &ray_dir.v[2], sizeof(tfloat), tienet_endian);
+                tienet_recv(socknum, &ray_dir.v[0], sizeof(tfloat), tienet_endian);
+                tienet_recv(socknum, &ray_dir.v[1], sizeof(tfloat), tienet_endian);
+                tienet_recv(socknum, &ray_dir.v[2], sizeof(tfloat), tienet_endian);
 
+                ind += 6 * sizeof(tfloat);
                 render_plane_init(&db->env.render, ray_pos, ray_dir);
               }
               break;
@@ -247,55 +185,92 @@ void common_unpack_env(common_db_t *db, void *app_data, int size) {
 
       case COMMON_PACK_ENV_IMAGESIZE:
         {
-          common_unpack_read(app_data, app_ind, &db->env.img_w, sizeof(int), tienet_endian);
-          common_unpack_read(app_data, app_ind, &db->env.img_h, sizeof(int), tienet_endian);
-          common_unpack_read(app_data, app_ind, &db->env.img_hs, sizeof(int), tienet_endian);
+          tienet_recv(socknum, &db->env.img_w, sizeof(int), tienet_endian);
+          tienet_recv(socknum, &db->env.img_h, sizeof(int), tienet_endian);
+          tienet_recv(socknum, &db->env.img_hs, sizeof(int), tienet_endian);
+          ind += 3 * sizeof(int);
         }
         break;
 
       default:
         break;
     }
-  } while(app_ind - start < size);
+  } while(ind < size);
 }
 
 
-void common_unpack_prop(void *app_data, int size) {
-  int			start;
-  char			c;
+void common_unpack_camera(util_camera_t *camera, int socknum) {
+  int size;
+
+  /* size of camera data */
+  tienet_recv(socknum, &size, sizeof(int), 0);
+
+  /* POSITION */
+  tienet_recv(socknum, &camera->pos.v[0], sizeof(tfloat), tienet_endian);
+  tienet_recv(socknum, &camera->pos.v[1], sizeof(tfloat), tienet_endian);
+  tienet_recv(socknum, &camera->pos.v[2], sizeof(tfloat), tienet_endian);
+
+  /* FOCUS */
+  tienet_recv(socknum, &camera->focus.v[0], sizeof(tfloat), tienet_endian);
+  tienet_recv(socknum, &camera->focus.v[1], sizeof(tfloat), tienet_endian);
+  tienet_recv(socknum, &camera->focus.v[2], sizeof(tfloat), tienet_endian);
+
+  /* TILT */
+  tienet_recv(socknum, &camera->tilt, sizeof(tfloat), tienet_endian);
+
+  /* FIELD OF VIEW */
+  tienet_recv(socknum, &camera->fov, sizeof(tfloat), tienet_endian);
+
+  /* DEPTH OF FIELD */
+  tienet_recv(socknum, &camera->dof, sizeof(tfloat), tienet_endian);
+}
 
 
-  start = app_ind;
-  do {
+void common_unpack_prop(int socknum) {
+  int ind, size;
+  char c;
+
+  /* size of property data */
+  tienet_recv(socknum, &size, sizeof(int), 0);
+
+  ind = 0;
+  while(ind < size) {
     prop_num++;
     prop_list = (common_unpack_prop_node_t*)realloc(prop_list, sizeof(common_unpack_prop_node_t)*prop_num);
 
     /* property name */
-    common_unpack_read(app_data, app_ind, &c, sizeof(char), 0);
-    common_unpack_read(app_data, app_ind, prop_list[prop_num-1].name, c, 0);
+    tienet_recv(socknum, &c, sizeof(char), 0);
+    tienet_recv(socknum, prop_list[prop_num-1].name, c, 0);
+    ind += c + 1;
 
     /* property data */
-    common_unpack_read(app_data, app_ind, &prop_list[prop_num-1].prop.color.v[0], sizeof(tfloat), tienet_endian);
-    common_unpack_read(app_data, app_ind, &prop_list[prop_num-1].prop.color.v[1], sizeof(tfloat), tienet_endian);
-    common_unpack_read(app_data, app_ind, &prop_list[prop_num-1].prop.color.v[2], sizeof(tfloat), tienet_endian);
-    common_unpack_read(app_data, app_ind, &prop_list[prop_num-1].prop.density, sizeof(tfloat), tienet_endian);
-    common_unpack_read(app_data, app_ind, &prop_list[prop_num-1].prop.gloss, sizeof(tfloat), tienet_endian);
-    common_unpack_read(app_data, app_ind, &prop_list[prop_num-1].prop.emission, sizeof(tfloat), tienet_endian);
-    common_unpack_read(app_data, app_ind, &prop_list[prop_num-1].prop.ior, sizeof(tfloat), tienet_endian);
-  } while(app_ind - start < size);
+    tienet_recv(socknum, &prop_list[prop_num-1].prop.color.v[0], sizeof(tfloat), tienet_endian);
+    tienet_recv(socknum, &prop_list[prop_num-1].prop.color.v[1], sizeof(tfloat), tienet_endian);
+    tienet_recv(socknum, &prop_list[prop_num-1].prop.color.v[2], sizeof(tfloat), tienet_endian);
+    tienet_recv(socknum, &prop_list[prop_num-1].prop.density, sizeof(tfloat), tienet_endian);
+    tienet_recv(socknum, &prop_list[prop_num-1].prop.gloss, sizeof(tfloat), tienet_endian);
+    tienet_recv(socknum, &prop_list[prop_num-1].prop.emission, sizeof(tfloat), tienet_endian);
+    tienet_recv(socknum, &prop_list[prop_num-1].prop.ior, sizeof(tfloat), tienet_endian);
+    ind += 7 * sizeof(tfloat);
+  }
 }
 
 
-void common_unpack_texture(void *app_data, int size) {
-  int start;
+void common_unpack_texture(int socknum) {
+  texture_t *stack = NULL, *texture = NULL;
+  int ind, size;
   short block;
   unsigned char c;
-  texture_t *stack = NULL, *texture = NULL;
 
+  /* size of texture data */
+  tienet_recv(socknum, &size, sizeof(int), 0);
+  
 
-  start = app_ind;
-  do {
-    common_unpack_read(app_data, app_ind, &block, sizeof(short), tienet_endian);
+  ind = 0;
+  while(ind < size) {
+    tienet_recv(socknum, &block, sizeof(short), tienet_endian);
+    ind += sizeof(short);
+
     switch(block) {
       case TEXTURE_STACK:
         texture_num++;
@@ -304,8 +279,9 @@ void common_unpack_texture(void *app_data, int size) {
         texture_list[texture_num-1].texture = stack = (texture_t *)malloc(sizeof(texture_t));
         texture_stack_init(stack);
 
-        common_unpack_read(app_data, app_ind, &c, sizeof(char), 0);
-        common_unpack_read(app_data, app_ind, texture_list[texture_num-1].name, c, 0);
+        tienet_recv(socknum, &c, sizeof(char), 0);
+        tienet_recv(socknum, texture_list[texture_num-1].name, c, 0);
+        ind += c + 1;
         break;
 
       case TEXTURE_MIX:
@@ -317,13 +293,17 @@ void common_unpack_texture(void *app_data, int size) {
           texture_num++;
           texture_list = (common_unpack_texture_node_t*)realloc(texture_list, sizeof(common_unpack_texture_node_t)*texture_num);
           texture_list[texture_num-1].texture = (texture_t*)malloc(sizeof(texture_t));
-          common_unpack_read(app_data, app_ind, &c, sizeof(char), 0);
-          common_unpack_read(app_data, app_ind, texture_list[texture_num-1].name, c, 0);
-          common_unpack_read(app_data, app_ind, &c, sizeof(char), 0);
-          common_unpack_read(app_data, app_ind, s1, c, 0);
-          common_unpack_read(app_data, app_ind, &c, sizeof(char), 0);
-          common_unpack_read(app_data, app_ind, s2, c, 0);
-          common_unpack_read(app_data, app_ind, &coef, sizeof(tfloat), tienet_endian);
+          tienet_recv(socknum, &c, sizeof(char), 0);
+          tienet_recv(socknum, texture_list[texture_num-1].name, c, 0);
+          ind += c + c+1;
+          tienet_recv(socknum, &c, sizeof(char), 0);
+          tienet_recv(socknum, s1, c, 0);
+          ind += c + c+1;
+          tienet_recv(socknum, &c, sizeof(char), 0);
+          tienet_recv(socknum, s2, c, 0);
+          ind += c + c+1;
+          tienet_recv(socknum, &coef, sizeof(tfloat), tienet_endian);
+          ind += sizeof(tfloat);
           common_unpack_texture_lookup(s1, &texture1);
           common_unpack_texture_lookup(s2, &texture2);
           texture_mix_init(texture_list[texture_num-1].texture, texture1, texture2, coef);
@@ -336,13 +316,15 @@ void common_unpack_texture(void *app_data, int size) {
 
           texture = (texture_t*)malloc(sizeof(texture_t));
           /* COLOR 1 */
-          common_unpack_read(app_data, app_ind, &color1.v[0], sizeof(tfloat), tienet_endian);
-          common_unpack_read(app_data, app_ind, &color1.v[1], sizeof(tfloat), tienet_endian);
-          common_unpack_read(app_data, app_ind, &color1.v[2], sizeof(tfloat), tienet_endian);
+          tienet_recv(socknum, &color1.v[0], sizeof(tfloat), tienet_endian);
+          tienet_recv(socknum, &color1.v[1], sizeof(tfloat), tienet_endian);
+          tienet_recv(socknum, &color1.v[2], sizeof(tfloat), tienet_endian);
+          ind += 3 * sizeof(tfloat);
           /* COLOR 2 */
-          common_unpack_read(app_data, app_ind, &color2.v[0], sizeof(tfloat), tienet_endian);
-          common_unpack_read(app_data, app_ind, &color2.v[1], sizeof(tfloat), tienet_endian);
-          common_unpack_read(app_data, app_ind, &color2.v[2], sizeof(tfloat), tienet_endian);
+          tienet_recv(socknum, &color2.v[0], sizeof(tfloat), tienet_endian);
+          tienet_recv(socknum, &color2.v[1], sizeof(tfloat), tienet_endian);
+          tienet_recv(socknum, &color2.v[2], sizeof(tfloat), tienet_endian);
+          ind += 3 * sizeof(tfloat);
           texture_blend_init(texture, color1, color2);
           texture_stack_push(stack, texture);
         }
@@ -353,9 +335,10 @@ void common_unpack_texture(void *app_data, int size) {
           TIE_3 coef;
 
           texture = (texture_t*)malloc(sizeof(texture_t));
-          common_unpack_read(app_data, app_ind, &coef.v[0], sizeof(tfloat), tienet_endian);
-          common_unpack_read(app_data, app_ind, &coef.v[1], sizeof(tfloat), tienet_endian);
-          common_unpack_read(app_data, app_ind, &coef.v[2], sizeof(tfloat), tienet_endian);
+          tienet_recv(socknum, &coef.v[0], sizeof(tfloat), tienet_endian);
+          tienet_recv(socknum, &coef.v[1], sizeof(tfloat), tienet_endian);
+          tienet_recv(socknum, &coef.v[2], sizeof(tfloat), tienet_endian);
+          ind += 3 * sizeof(tfloat);
           texture_bump_init(texture, coef);
           texture_stack_push(stack, texture);
         }
@@ -366,7 +349,8 @@ void common_unpack_texture(void *app_data, int size) {
           int tile;
 
           texture = (texture_t*)malloc(sizeof(texture_t));
-          common_unpack_read(app_data, app_ind, &tile, sizeof(int), tienet_endian);
+          tienet_recv(socknum, &tile, sizeof(int), tienet_endian);
+          ind += sizeof(int);
           texture_checker_init(texture, tile);
           texture_stack_push(stack, texture);
         }
@@ -379,18 +363,19 @@ void common_unpack_texture(void *app_data, int size) {
           TIE_3 color1, color2, color3;
 
           texture = (texture_t*)malloc(sizeof(texture_t));
-          common_unpack_read(app_data, app_ind, &size, sizeof(tfloat), tienet_endian);
-          common_unpack_read(app_data, app_ind, &octaves, sizeof(int), tienet_endian);
-          common_unpack_read(app_data, app_ind, &absolute, sizeof(int), tienet_endian);
-          common_unpack_read(app_data, app_ind, &color1.v[0], sizeof(tfloat), tienet_endian);
-          common_unpack_read(app_data, app_ind, &color1.v[1], sizeof(tfloat), tienet_endian);
-          common_unpack_read(app_data, app_ind, &color1.v[2], sizeof(tfloat), tienet_endian);
-          common_unpack_read(app_data, app_ind, &color2.v[0], sizeof(tfloat), tienet_endian);
-          common_unpack_read(app_data, app_ind, &color2.v[1], sizeof(tfloat), tienet_endian);
-          common_unpack_read(app_data, app_ind, &color2.v[2], sizeof(tfloat), tienet_endian);
-          common_unpack_read(app_data, app_ind, &color3.v[0], sizeof(tfloat), tienet_endian);
-          common_unpack_read(app_data, app_ind, &color3.v[1], sizeof(tfloat), tienet_endian);
-          common_unpack_read(app_data, app_ind, &color3.v[2], sizeof(tfloat), tienet_endian);
+          tienet_recv(socknum, &size, sizeof(tfloat), tienet_endian);
+          tienet_recv(socknum, &octaves, sizeof(int), tienet_endian);
+          tienet_recv(socknum, &absolute, sizeof(int), tienet_endian);
+          tienet_recv(socknum, &color1.v[0], sizeof(tfloat), tienet_endian);
+          tienet_recv(socknum, &color1.v[1], sizeof(tfloat), tienet_endian);
+          tienet_recv(socknum, &color1.v[2], sizeof(tfloat), tienet_endian);
+          tienet_recv(socknum, &color2.v[0], sizeof(tfloat), tienet_endian);
+          tienet_recv(socknum, &color2.v[1], sizeof(tfloat), tienet_endian);
+          tienet_recv(socknum, &color2.v[2], sizeof(tfloat), tienet_endian);
+          tienet_recv(socknum, &color3.v[0], sizeof(tfloat), tienet_endian);
+          tienet_recv(socknum, &color3.v[1], sizeof(tfloat), tienet_endian);
+          tienet_recv(socknum, &color3.v[2], sizeof(tfloat), tienet_endian);
+          ind += 10*sizeof(tfloat) + 2*sizeof(int);
           texture_camo_init(texture, size, octaves, absolute, color1, color2, color3);
           texture_stack_push(stack, texture);
         }
@@ -403,15 +388,16 @@ void common_unpack_texture(void *app_data, int size) {
           TIE_3 scale, translate;
 
           texture = (texture_t*)malloc(sizeof(texture_t));
-          common_unpack_read(app_data, app_ind, &size, sizeof(tfloat), tienet_endian);
-          common_unpack_read(app_data, app_ind, &octaves, sizeof(int), tienet_endian);
-          common_unpack_read(app_data, app_ind, &absolute, sizeof(int), tienet_endian);
-          common_unpack_read(app_data, app_ind, &scale.v[0], sizeof(tfloat), tienet_endian);
-          common_unpack_read(app_data, app_ind, &scale.v[1], sizeof(tfloat), tienet_endian);
-          common_unpack_read(app_data, app_ind, &scale.v[2], sizeof(tfloat), tienet_endian);
-          common_unpack_read(app_data, app_ind, &translate.v[0], sizeof(tfloat), tienet_endian);
-          common_unpack_read(app_data, app_ind, &translate.v[1], sizeof(tfloat), tienet_endian);
-          common_unpack_read(app_data, app_ind, &translate.v[2], sizeof(tfloat), tienet_endian);
+          tienet_recv(socknum, &size, sizeof(tfloat), tienet_endian);
+          tienet_recv(socknum, &octaves, sizeof(int), tienet_endian);
+          tienet_recv(socknum, &absolute, sizeof(int), tienet_endian);
+          tienet_recv(socknum, &scale.v[0], sizeof(tfloat), tienet_endian);
+          tienet_recv(socknum, &scale.v[1], sizeof(tfloat), tienet_endian);
+          tienet_recv(socknum, &scale.v[2], sizeof(tfloat), tienet_endian);
+          tienet_recv(socknum, &translate.v[0], sizeof(tfloat), tienet_endian);
+          tienet_recv(socknum, &translate.v[1], sizeof(tfloat), tienet_endian);
+          tienet_recv(socknum, &translate.v[2], sizeof(tfloat), tienet_endian);
+          ind += 7*sizeof(tfloat) + 2*sizeof(int);
           texture_clouds_init(texture, size, octaves, absolute, scale, translate);
           texture_stack_push(stack, texture);
         }
@@ -423,10 +409,12 @@ void common_unpack_texture(void *app_data, int size) {
           unsigned char *image;
 
           texture = (texture_t*)malloc(sizeof(texture_t));
-          common_unpack_read(app_data, app_ind, &w, sizeof(short), tienet_endian);
-          common_unpack_read(app_data, app_ind, &h, sizeof(short), tienet_endian);
+          tienet_recv(socknum, &w, sizeof(short), tienet_endian);
+          tienet_recv(socknum, &h, sizeof(short), tienet_endian);
+          ind += 2*sizeof(short);
           image = (unsigned char*)malloc(3*w*h);
-          common_unpack_read(app_data, app_ind, image, 3*w*h, 0);
+          tienet_recv(socknum, image, 3*w*h, 0);
+          ind += 3*w*h;
           texture_image_init(texture, w, h, image);
           texture_stack_push(stack, texture);
           free(image);
@@ -438,7 +426,8 @@ void common_unpack_texture(void *app_data, int size) {
           int axis;
 
           texture = (texture_t*)malloc(sizeof(texture_t));
-          common_unpack_read(app_data, app_ind, &axis, sizeof(int), tienet_endian);
+          tienet_recv(socknum, &axis, sizeof(int), tienet_endian);
+          ind += sizeof(int);
           texture_gradient_init(texture, axis);
           texture_stack_push(stack, texture);
         }
@@ -447,30 +436,35 @@ void common_unpack_texture(void *app_data, int size) {
       default:
         break;
     }
-  } while(app_ind - start < size);
+  }
 }
 
 
-void common_unpack_mesh(common_db_t *db, void *app_data, int size, tie_t *tie) {
+void common_unpack_mesh(common_db_t *db, int socknum, tie_t *tie) {
   TIE_3 v[3], *vlist, *tlist;
   char name[256];
   unsigned char c;
   short block;
-  int *flist, i, num, start, vnum, vmax, fnum, fmax;
+  int ind, size, *flist, i, num, start, vnum, vmax, fnum, fmax;
 
 
-  start = app_ind;
   vlist = NULL;
   flist = NULL;
   tlist = NULL;
   vmax = 0;
   fmax = 0;
 
-  /* initialize tie with triangle number */
-  common_unpack_read(app_data, app_ind, &num, sizeof(int), tienet_endian);
-  tie_init(tie, num);
+  /* size of mesh data */
+  tienet_recv(socknum, &size, sizeof(int), 0);
+  ind = 0;
 
-  do {
+  /* initialize tie with triangle number */
+  tienet_recv(socknum, &num, sizeof(int), tienet_endian);
+  tie_init(tie, num);
+  ind += sizeof(int);
+  
+
+  while(ind < size) {
     /* Create a Mesh */
     db->mesh_num++;
     db->mesh_list = (common_mesh_t **)realloc(db->mesh_list, sizeof(common_mesh_t *)*db->mesh_num);
@@ -480,38 +474,43 @@ void common_unpack_mesh(common_db_t *db, void *app_data, int size, tie_t *tie) {
     db->mesh_list[db->mesh_num-1]->tri_list = NULL;
 
     /* Mesh Name */
-    common_unpack_read(app_data, app_ind, &c, sizeof(char), 0);
-    common_unpack_read(app_data, app_ind, db->mesh_list[db->mesh_num-1]->name, c, 0);
+    tienet_recv(socknum, &c, sizeof(char), 0);
+    tienet_recv(socknum, db->mesh_list[db->mesh_num-1]->name, c, 0);
+    ind += c + 1;
 
     /* Texture */
-    common_unpack_read(app_data, app_ind, &c, sizeof(char), 0);
-    common_unpack_read(app_data, app_ind, name, c, 0);
+    tienet_recv(socknum, &c, sizeof(char), 0);
+    tienet_recv(socknum, name, c, 0);
+    ind += c + 1;
     common_unpack_texture_lookup(name, &(db->mesh_list[db->mesh_num-1]->texture));
 
     /* Properties */
     common_unpack_prop_lookup(name, &(db->mesh_list[db->mesh_num-1]->prop));
 
     /* Vertices */
-    common_unpack_read(app_data, app_ind, &vnum, sizeof(int), tienet_endian);
+    tienet_recv(socknum, &vnum, sizeof(int), tienet_endian);
+    ind += sizeof(int);
     if(vnum > vmax) {
       vmax = vnum;
       vlist = (TIE_3 *)realloc(vlist, vmax * sizeof(TIE_3));
     }
-    common_unpack_read(app_data, app_ind, vlist, vnum * sizeof(TIE_3), 0);
+    tienet_recv(socknum, vlist, vnum * sizeof(TIE_3), 0);
+    ind +=  vnum * sizeof(TIE_3);
 
     /* Faces */
-    common_unpack_read(app_data, app_ind, &fnum, sizeof(int), tienet_endian);
+    tienet_recv(socknum, &fnum, sizeof(int), tienet_endian);
+    ind += sizeof(int);
     if(fnum > fmax) {
       fmax = fnum;
       flist = (int *)realloc(flist, fmax * 3 * sizeof(int));
       tlist = (TIE_3 *)realloc(tlist, fmax * 3 * sizeof(TIE_3));
     }
-    common_unpack_read(app_data, app_ind, flist, fnum * 3 * sizeof(int), 0);
+    tienet_recv(socknum, flist, fnum * 3 * sizeof(int), 0);
+    ind += fnum * 3 * sizeof(int);
 
     /* Allocate memory for ADRT triangles */
     db->mesh_list[db->mesh_num-1]->tri_num = fnum;
     db->mesh_list[db->mesh_num-1]->tri_list = (common_triangle_t *)malloc(fnum * sizeof(common_triangle_t));
-    tlist = (TIE_3 *)malloc(fnum * 3 * sizeof(TIE_3));
 
     /* Build the triangle list */
     for(i = 0; i < fnum; i++) {
@@ -530,19 +529,19 @@ void common_unpack_mesh(common_db_t *db, void *app_data, int size, tie_t *tie) {
     /* Min and Max */
 #if 0
     for(j = 0; j < 3; j++)
-      common_unpack_read(app_data, app_ind, &(db->mesh_list[db->mesh_num-1]->min.v[j]), sizeof(tfloat), tienet_endian);
+      tienet_recv(socknum, &(db->mesh_list[db->mesh_num-1]->min.v[j]), sizeof(tfloat), tienet_endian);
     for(j = 0; j < 3; j++)
-      common_unpack_read(app_data, app_ind, &(db->mesh_list[db->mesh_num-1]->max.v[j]), sizeof(tfloat), tienet_endian);
+      tienet_recv(socknum, &(db->mesh_list[db->mesh_num-1]->max.v[j]), sizeof(tfloat), tienet_endian);
 #endif
 
     /* Matrix */
     for(i = 0; i < 16; i++)
-      common_unpack_read(app_data, app_ind, &(db->mesh_list[db->mesh_num-1]->matrix[i]), sizeof(tfloat), tienet_endian);
+      tienet_recv(socknum, &(db->mesh_list[db->mesh_num-1]->matrix[i]), sizeof(tfloat), tienet_endian);
+    ind += 16 * sizeof(tfloat);
 
     /* Store inverted matrix */
     math_mat_invert(db->mesh_list[db->mesh_num-1]->matinv, db->mesh_list[db->mesh_num-1]->matrix, 4);
-
-  } while(app_ind - start < size);
+  }
 
   free(vlist);
   free(flist);

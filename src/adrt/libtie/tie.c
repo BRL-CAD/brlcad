@@ -232,50 +232,55 @@ static int tie_tri_box_overlap(TIE_3 *center, TIE_3 *half_size, TIE_3 triverts[3
 }
 
 
-static void tie_tri_prep(tie_tri_t *tri) {
-  TIE_3		v1, v2, u, v;
-  int		i1, i2;
+static void tie_tri_prep(tie_t *tie) {
+  TIE_3 v1, v2, u, v;
+  int i, i1, i2;
+  tie_tri_t *tri;
 
-  v1 = tri->data[1];
-  v2 = tri->data[2];
+  for(i = 0; i < tie->tri_num; i++) {
+    tri = &tie->tri_list[i];
 
-  /* Compute Normal */
-  math_vec_sub(u, tri->data[1], tri->data[0]);
-  math_vec_sub(v, tri->data[2], tri->data[0]);
-  math_vec_cross(tri->data[1], u, v);
-  math_vec_unitize(tri->data[1]);
+    v1 = tri->data[1];
+    v2 = tri->data[2];
 
-  /* Compute i1 and i2 */
-  u.v[0] = fabs(tri->data[1].v[0]);
-  u.v[1] = fabs(tri->data[1].v[1]);
-  u.v[2] = fabs(tri->data[1].v[2]);
+    /* Compute Normal */
+    math_vec_sub(u, tri->data[1], tri->data[0]);
+    math_vec_sub(v, tri->data[2], tri->data[0]);
+    math_vec_cross(tri->data[1], u, v);
+    math_vec_unitize(tri->data[1]);
 
-  if(u.v[2] > u.v[1] && u.v[2] > u.v[0]) {
-    i1 = 0;
-    i2 = 1;
-  } else if(u.v[1] > u.v[2] && u.v[1] > u.v[0]) {
-    i1 = 0;
-    i2 = 2;
-  } else {
-    i1 = 1;
-    i2 = 2;
+    /* Compute i1 and i2 */
+    u.v[0] = fabs(tri->data[1].v[0]);
+    u.v[1] = fabs(tri->data[1].v[1]);
+    u.v[2] = fabs(tri->data[1].v[2]);
+
+    if(u.v[2] > u.v[1] && u.v[2] > u.v[0]) {
+      i1 = 0;
+      i2 = 1;
+    } else if(u.v[1] > u.v[2] && u.v[1] > u.v[0]) {
+      i1 = 0;
+      i2 = 2;
+    } else {
+      i1 = 1;
+      i2 = 2;
+    }
+
+    /* compute u1, v2, u2, v2 */
+    tri->data[2].v[1] = v1.v[i1] - tri->data[0].v[i1];
+    tri->data[2].v[2] = v2.v[i1] - tri->data[0].v[i1];
+    tri->v12[0] = v1.v[i2] - tri->data[0].v[i2];
+    tri->v12[1] = v2.v[i2] - tri->data[0].v[i2];
+
+    if(i1 == 0 && i2 == 1) {
+      tri->v12 = (tfloat *)((TIE_PTR_CAST)(tri->v12) + 2);
+    } else if (i1 == 0) {
+      tri->v12 = (tfloat *)((TIE_PTR_CAST)(tri->v12) + 1);
+    }
+
+    /* Compute DotVN */
+    math_vec_mul_scalar(v1, tri->data[0], -1.0);
+    math_vec_dot(tri->data[2].v[0], v1, tri->data[1]);
   }
-
-  /* compute u1, v2, u2, v2 */
-  tri->data[2].v[1] = v1.v[i1] - tri->data[0].v[i1];
-  tri->data[2].v[2] = v2.v[i1] - tri->data[0].v[i1];
-  tri->v12[0] = v1.v[i2] - tri->data[0].v[i2];
-  tri->v12[1] = v2.v[i2] - tri->data[0].v[i2];
-
-  if(i1 == 0 && i2 == 1) {
-    tri->v12 = (tfloat *)((TIE_PTR_CAST)(tri->v12) + 2);
-  } else if (i1 == 0) {
-    tri->v12 = (tfloat *)((TIE_PTR_CAST)(tri->v12) + 1);
-  }
-
-  /* Compute DotVN */
-  math_vec_mul_scalar(v1, tri->data[0], -1.0);
-  math_vec_dot(tri->data[2].v[0], v1, tri->data[1]);
 }
 
 
@@ -286,11 +291,12 @@ static void tie_build_tree(tie_t *tie, tie_bsp_t *node, int depth, TIE_3 min, TI
 
 /*  printf("%f %f %f %f %f %f\n", min.v[0], min.v[1], min.v[2], max.v[0], max.v[1], max.v[2]); */
 
+  tie->max_tri++;
   /* Terminating criteria for BSP subdivision */
   if(node_geom_data->tri_num <= TIE_BSP_NODE_MAX || depth > TIE_BSP_DEPTH_MAX) {
 /*    printf("num: %d, depth: %d\n", node_geom_data->tri_num, depth); */
 /*    if(node_geom_data->tri_num > tie->max_tri) */
-      tie->max_tri++;
+//      tie->max_tri++;
 /*    tie->count += node_geom_data->tri_num; */
     return;
   }
@@ -307,7 +313,7 @@ static void tie_build_tree(tie_t *tie, tie_bsp_t *node, int depth, TIE_3 min, TI
   math_vec_add(center, max, min);
   math_vec_mul_scalar(center, center, 0.5);
 
-#if 1
+#if 0
   /* Split along largest Axis to keep node sizes relatively cube-like (Naive) */
   math_vec_sub(vec, max, min);
 
@@ -445,12 +451,12 @@ static void tie_build_tree(tie_t *tie, tie_bsp_t *node, int depth, TIE_3 min, TI
 
 #if 0
   /* Determine the largest sum */
-  if(x[0]+x[1] >= y[0]+y[1] && x[0]+x[1] >= z[0]+z[1]) {
+  if(x[0]+x[1] <= y[0]+y[1] && x[0]+x[1] <= z[0]+z[1]) {
     cmax[0].v[0] = center.v[0];
     cmin[1].v[0] = center.v[0];
     node->axis = center.v[0];
     split = 0;
-  } else if(y[0]+y[1] >= x[0]+x[1] && y[0]+y[1] >= z[0]+z[1]) {
+  } else if(y[0]+y[1] <= x[0]+x[1] && y[0]+y[1] <= z[0]+z[1]) {
     cmax[0].v[1] = center.v[1];
     cmin[1].v[1] = center.v[1];
     node->axis = center.v[1];
@@ -620,9 +626,7 @@ void tie_free(tie_t *tie) {
  * @return void
  */
 void tie_prep(tie_t *tie) {
-  int		i;
   TIE_3		delta;
-
 
   tie_insert(tie, tie->tri_list, tie->tri_num);
 
@@ -630,9 +634,8 @@ void tie_prep(tie_t *tie) {
     return;
 
   /* Trim BSP back from power of 2 size (set during insert phase) to number of actual triangles */
-  ((tie_geom_t*)(tie->bsp->data))->tri_list = (tie_tri_t**)realloc(((tie_geom_t*)(tie->bsp->data))->tri_list, sizeof(tie_tri_t*) * ((tie_geom_t*)(tie->bsp->data))->tri_num);
+  ((tie_geom_t *)(tie->bsp->data))->tri_list = (tie_tri_t **)realloc(((tie_geom_t *)(tie->bsp->data))->tri_list, sizeof(tie_tri_t *) * ((tie_geom_t *)(tie->bsp->data))->tri_num);
 
-/*    printf("Building BSP: [%.3f,%.3f,%.3f], [%.3f,%.3f,%.3f]\n", iBSPRoot -> Min.v[0], iBSPRoot -> Min.v[1], iBSPRoot -> Min.v[2], iBSPRoot -> Max.v[0], iBSPRoot -> Max.v[1], iBSPRoot -> Max.v[2]); */
   math_vec_sub(delta, tie->max, tie->min);
   /* For now, take largest dimension as basis for TIE_PREC */
   math_max3(TIE_PREC, delta.v[0], delta.v[1], delta.v[2]);
@@ -646,11 +649,10 @@ void tie_prep(tie_t *tie) {
   math_vec_sub(tie->min, tie->min, delta);
   math_vec_add(tie->max, tie->max, delta);
 
-  tie_build_tree(tie, tie->bsp, 0, tie->min, tie->max, ((tie_geom_t*)(tie->bsp->data))->tri_num);
+  tie_build_tree(tie, tie->bsp, 0, tie->min, tie->max, ((tie_geom_t *)(tie->bsp->data))->tri_num);
 
 /*  printf("count: %d\n", tie->count); */
-  for(i = 0; i < tie->tri_num; i++)
-    tie_tri_prep(&tie->tri_list[i]);
+  tie_tri_prep(tie);
 
   printf("max_tri: %d\n", tie->max_tri);
 /*  exit(0); */ /* uncomment to profile prep phase only */
@@ -689,6 +691,7 @@ void* tie_work(tie_t *tie, tie_ray_t *ray, tie_id_t *id, void *(*hitfunc)(tie_ra
   void *result;
 
 
+ray->depth = 0;
   if(!tie->bsp)
     return(NULL);
 
@@ -742,6 +745,7 @@ void* tie_work(tie_t *tie, tie_ray_t *ray, tie_id_t *id, void *(*hitfunc)(tie_ra
       int split;
       tfloat distance_t;
  
+ray->depth++;
      /* Retreive the splitting plane */
       split = ((TIE_PTR_CAST)(node_aligned->data)) & 0x3;
       distance_t = (node_aligned->axis - ray->pos.v[split]) * dirinv[split];
@@ -889,6 +893,7 @@ void* tie_work(tie_t *tie, tie_ray_t *ray, tie_id_t *id, void *(*hitfunc)(tie_ra
 void tie_push(tie_t *tie, TIE_3 *tlist, int tnum, void *plist, int pstride) {
   int i, ind, step;
   void *mem;
+
 
   step = 2 * sizeof(tfloat);
   mem = malloc(tnum * step);

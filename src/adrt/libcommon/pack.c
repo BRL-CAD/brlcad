@@ -120,11 +120,8 @@ void common_pack_camera(common_db_t *db, void **app_data, int *app_ind) {
   short s;
   int marker, size;
 
-  s = COMMON_PACK_CAMERA;
-  common_pack_write(app_data, app_ind, &s, sizeof(short));
   marker = *app_ind;
   *app_ind += sizeof(int);
-
 
   common_pack_write(app_data, app_ind, &db->anim.frame_list[0].pos, sizeof(TIE_3));
   common_pack_write(app_data, app_ind, &db->anim.frame_list[0].focus, sizeof(TIE_3));
@@ -140,15 +137,11 @@ void common_pack_camera(common_db_t *db, void **app_data, int *app_ind) {
 
 
 void common_pack_env(common_db_t *db, void **app_data, int *app_ind) {
-  short s;
   int marker, size;
+  short s;
 
-
-  s = COMMON_PACK_ENV;
-  common_pack_write(app_data, app_ind, &s, sizeof(short));
   marker = *app_ind;
   *app_ind += sizeof(int);
-
 
   s = COMMON_PACK_ENV_RM;
   common_pack_write(app_data, app_ind, &s, sizeof(short));
@@ -194,17 +187,12 @@ void common_pack_env(common_db_t *db, void **app_data, int *app_ind) {
 void common_pack_prop(void **app_data, int *app_ind, char *filename) {
   FILE *fh;
   common_prop_t def_prop;
-  short s;
   char line[256], name[256], *token;
   unsigned char c;
   int marker, size, prop_num;
 
-
-  s = COMMON_PACK_PROP;
-  common_pack_write(app_data, app_ind, &s, sizeof(short));
   marker = *app_ind;
   *app_ind += sizeof(int);
-
 
   fh = fopen(filename, "r");
   if(!fh) {
@@ -294,15 +282,11 @@ void common_pack_texture(void **app_data, int *app_ind, char *filename) {
   FILE *fh;
   char line[256], *token;
   unsigned char c;
-  short s;
   int marker, size;
+  short s;
 
-
-  s = COMMON_PACK_TEXTURE;
-  common_pack_write(app_data, app_ind, &s, sizeof(short));
   marker = *app_ind;
   *app_ind += sizeof(int);
-
 
   fh = fopen(filename, "r");
   if(!fh) {
@@ -563,9 +547,6 @@ void common_pack_mesh_adrt(common_db_t *db, void **app_data, int *app_ind, char 
     printf("ADRT geometry file: %s does not exist, exiting...\n", filename);
     exit(1);
   }
-
-  s = COMMON_PACK_MESH;
-  common_pack_write(app_data, app_ind, &s, sizeof(short));
 
   /* Marker for size of all mesh data */
   marker_size = *app_ind;

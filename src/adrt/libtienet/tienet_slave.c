@@ -53,7 +53,7 @@
 
 void	tienet_slave_init(int port,
                           char *host,
-                          void fcb_init(tie_t *tie, void *app_data, int app_size),
+                          void fcb_init(tie_t *tie, int socknum),
                           void fcb_work(tie_t *tie, void *data, int size, void **res_buf, int *res_len),
                           void fcb_free(void),
                           void fcb_mesg(void *mesg, int mesg_len),
@@ -68,7 +68,7 @@ int	tienet_slave_ver_key;
 
 
 /* init function callback */
-typedef void tienet_slave_fcb_init_t(tie_t *tie, void *app_data, int app_size);
+typedef void tienet_slave_fcb_init_t(tie_t *tie, int socknum);
 tienet_slave_fcb_init_t	*tienet_slave_fcb_init;
 
 /* work function callback */
@@ -85,7 +85,7 @@ tienet_slave_fcb_mesg_t	*tienet_slave_fcb_mesg;
 
 
 void tienet_slave_init(int port, char *host,
-                       void fcb_init(tie_t *tie, void *app_data, int app_size),
+                       void fcb_init(tie_t *tie, int socknum),
                        void fcb_work(tie_t *tie, void *data, int size, void **res_buf, int *res_len),
                        void fcb_free(void),
                        void fcb_mesg(void *mesg, int mesg_len),
@@ -485,18 +485,13 @@ void tienet_slave_daemon(int port) {
 
 
 int tienet_slave_prep(int slave_socket, tie_t *tie) {
-  int app_size;
-  void *app_data;
-
-  /* receive application data */
-  tienet_recv(slave_socket, &app_size, sizeof(int), tienet_endian);
-  app_data = malloc(app_size);
-  tienet_recv(slave_socket, app_data, app_size, 0);
-
-  /* process and prep application data */
-  tienet_slave_fcb_init(tie, app_data, app_size);
-
-  free(app_data);
+  /* 
+  * Process and prep application data.
+  * Passing the slave socket allows slave to process the data
+  * on demand instead of requiring memory to spike by having it
+  * all stored in one big data glob.
+  */
+  tienet_slave_fcb_init(tie, slave_socket);
 
   tie_prep(tie);
   return(0);
