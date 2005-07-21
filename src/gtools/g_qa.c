@@ -4,25 +4,6 @@
 plot the points where overlaps start/stop
 
  *	Designed to be a framework for 3d sampling of the geometry volume.
- *	Options
- *	-A flags	Analysis types
- * 	-a azimuth	
- *	-e elevation
- *	-f filename
- *	-g gridspacing[,lim]
- *	-G		create groups
- *	-m min_samples
- *	-n numhits
- *	-s samples_per_smallest_bbox
- *	-S samples_per_model_bbox
- *	-P ncpu
- *	-r bits		report types
- *	-t tol_dist	overlap tolerance
- *	-V volume_tolerance
- *	-U aircode	use_air
- *	-u units	
- *	-W weight_tolerance
- *	-h		help
  */
 #include <stdlib.h>
 
@@ -55,6 +36,25 @@ extern int optind, opterr, getopt();
 
 /* variables set by command line flags */
 char *progname = "(noname)";
+char *usage_msg = "Usage: %s [options] model object [object...]\n\
+Options:\n\
+\t-A analysis_type (aowv)\n\
+\t-a azimuth_degrees\n\
+\t-a elevation_degrees\n\
+\t-f density_table_filename\n\
+\t-g grid_spacing[,limit]\n\
+\t-n num_hits_required\n\
+\t-P ncpu\n\
+\t-r report_bits\n\
+\t-S samples_per_model_axis\n\
+\t-s samples_per_primitive_axis\n\
+\t-t overlap_tolerance_dist \n\
+\t-U use_air\n\
+\t-u units\n\
+\t-V volume_tolerance\n\
+\t-W weight_tolerance\n\
+";
+
 
 #define ANALYSIS_VOLUME 1
 #define ANALYSIS_WEIGHT 2
@@ -138,10 +138,12 @@ int num_densities;
  *  Note that we could also discriminate at the solid pair level.
  */
 struct overlap_list {
-	struct overlap_list *next;	/* next one */
-	const char 	*reg1;		/* overlapping region 1 */
-	const char	*reg2;		/* overlapping region 2 */
-	long	count;			/* number of time reported */
+    struct overlap_list *next;	/* next one */
+    const char 	*reg1;		/* overlapping region 1 */
+    const char	*reg2;		/* overlapping region 2 */
+    long	count;			/* number of time reported */
+    double max_thickness;
+    vect_t coord;
 };
 static struct overlap_list *olist=NULL;	/* root of the list */
 
@@ -156,10 +158,42 @@ usage(s)
 {
     if (s) (void)fputs(s, stderr);
 
-    (void) fprintf(stderr, "Usage: %s [-P #processors] [-g initial_gridsize] [-t vol_tolerance] [-f density_table_file] [-d(ebug)] geom.g obj [obj...]\n",
-		   progname);
+    (void) fprintf(stderr, usage_msg, progname);
+
     exit(1);
 }
+
+/*
+ *
+ */
+int
+read_units_double(char *buf, double *val)
+{
+    double a, conv;
+    char units[256];
+    int i;
+
+    i = sscanf(buf, "%lg%s", &a, units);
+
+    if (i < 0) return 1;
+    if (i == 1) {
+	*val = a;
+	return 0;
+    }
+    if (i == 2) {
+	*val = a;
+	conv = bu_units_conversion(units);
+	if (conv != 0.0) {
+	    *val = a * conv;
+	    return 0;
+	} 
+	bu_log("Bad units specifier on value \"%s\"\n", buf);
+	return 1;
+    }
+    bu_log("%s sscanf problem on \"%s\"\n", BU_FLSTR, buf);
+    return 1;
+}
+
 
 /*
  *	P A R S E _ A R G S --- Parse through command line flags
@@ -172,7 +206,10 @@ parse_args(ac, av)
     int  c;
     char *strrchr();
     char unitstr[64];
-    double conv;
+#define LEN_UNITS 32
+    int i, j;
+    double a, b;
+    char *p;
 
     if (  ! (progname=strrchr(*av, '/'))  )
 	progname = *av;
@@ -222,12 +259,6 @@ parse_args(ac, av)
 	case 'f'	: densityFileName = optarg; break;
 
 	case 'g'	: {
-#define LEN_UNITS 32
-	    int i, j;
-	    char unit1[LEN_UNITS];
-	    char unit2[LEN_UNITS];
-	    double a, b;
-	    char *p;
 
 	    /* NOTE:  The 32 in this string must match LEN_UNITS  */
 	    i = j = 0;
@@ -238,49 +269,17 @@ parse_args(ac, av)
 
 	    bu_log("\"%s\"  \"%s\"\n", optarg, p);
 
-	    i = sscanf(optarg, "%lg%s", &a, unit1);
-
-	    if (i > 0) {
-		if (a <= 0.0) {
-		    bu_log("gridSpacing must be a positive value > 0.0, not \"%s\"\n", unit1);
-		    break;
-		}
-		if (i > 1) {
-		    conv = bu_units_conversion(unit1);
-		    if (conv != 0.0)
-			gridSpacing = a * conv;
-		    else {
-			bu_log("bad units specification \"%s\" for %s\n", unit1, optarg);
-			gridSpacing = a;
-		    }
-		} else {
-		    gridSpacing = a;
-		}
-
+	    if (read_units_double(optarg, &gridSpacing)) {
+		bu_log("error parsing grid spacing value \"%s\"\n", optarg);
+		exit(-1);
 	    }
-
-
 	    if (p) {
-		j = sscanf(p, "%lg%s", &b, unit2);
-		if (j > 0)
-		    if (b <= 0.0) {
-			bu_log("gridSpacing must be a positive value > 0.0, not \"%s\"\n", unit1);
-			break;
-		    }
-		    if (j > 1) {
-			conv = bu_units_conversion(unit2);
-			if (conv != 0.0)
-			    gridSpacingLimit = b * conv;
-			else {
-			    bu_log("bad units specification \"%s\" for %s\n", unit2, p);
-			    gridSpacingLimit = b;
-			}
-		    } else {
-			gridSpacingLimit = b;
-		    }
-
+		if (read_units_double(p, &gridSpacingLimit)) {
+		    bu_log("error parsing grid spacing limit value \"%s\"\n", p);
+		    exit(-1);
 		}
 	    }
+
 	    bu_log("grid spacing:%gmm limit:%gmm\n", gridSpacing, gridSpacingLimit);
 	    break;
 	case 'G'	:
@@ -299,42 +298,42 @@ parse_args(ac, av)
 	    /* cannot ask for more cpu's than the machine has */
 	    if ((c=atoi(optarg)) > 0 && ncpu > c) ncpu = c;
 	    break;	
+	case 'r'	:
+	    sscanf(optarg, "%i", &report_bits);
+	    bu_log("-r option not implemented yet\n");
+	    break;
 	case 'S'	:
-	    if (sscanf(optarg, "%lg", &conv) != 1 || conv <= 0.0) {
+	    if (sscanf(optarg, "%lg", &a) != 1 || a <= 0.0) {
 		bu_log("error in specifying minimum samples per model axis: \"%s\"\n", optarg);
 		break;
 	    }
-	    Samples_per_model_axis = conv;
+	    Samples_per_model_axis = a;
 	    break;
 	case 's'	:
-	    if (sscanf(optarg, "%lg", &conv) != 1 || conv <= 0.0) {
+	    if (sscanf(optarg, "%lg", &a) != 1 || a <= 0.0) {
 		bu_log("error in specifying minimum samples per primitive axis: \"%s\"\n", optarg);
 		break;
 	    }
-	    Samples_per_prim_axis = conv;
+	    Samples_per_prim_axis = a;
 	    bu_log("option -s samples_per_axis_min not implemented\n");
 	    break;
 	case 't'	: 
-	    if (sscanf(optarg, "%lg", &conv) != 1 || conv <= 0.0 ) {
+	    if (read_units_double(optarg, &overlap_tolerance))
 		bu_log("error in overlap tolerance distance \"%s\"\n", optarg);
-		break;
+		exit(-1);
 	    }
-	    overlap_tolerance = conv;
 	    break;
 	case 'V'	: 
-	    if (sscanf(optarg, "%lg", &conv) != 1 || conv <= 0.0 ) {
+	    if (read_units_double(optarg, &volume_tolerance)) {
 		bu_log("error in volume tolerance \"%s\"\n", optarg);
-		break;
+		exit(-1);
 	    }
-	    volume_tolerance = conv;
-
 	    break;
 	case 'W'	: 
-	    if (sscanf(optarg, "%lg", &conv) != 1 || conv <= 0.0 ) {
+	    if (read_units_double(optarg, &volume_tolerance)) {
 		bu_log("error in weight tolerance \"%s\"\n", optarg);
-		break;
+		exit(-1);
 	    }
-	    weight_tolerance = conv;
 	    break;
 
 	case 'U'	: use_air = atoi(optarg); break;
@@ -403,10 +402,18 @@ overlap(struct application *ap, struct partition *pp, struct region *reg1, struc
 		for( op=olist; op; prev_ol=op, op=op->next ) {
 
 			/* if we already have an entry for this region pair, 
-			 * we increase the counter and return 
+			 * we increase the counter, check the depth and 
+			 * update thickness maximum and entry point if need be
+			 * and return 
 			 */
 			if( (strcmp(reg1->reg_name,op->reg1) == 0) && (strcmp(reg2->reg_name,op->reg2) == 0) ) {
 				op->count++;
+				if (depth > op->max_thickness) {
+				    op->max_thickness = depth;
+				    VMOVE(op->coord, ihit);
+				}
+
+
 				bu_semaphore_release( BU_SEM_SYSCALL );
 				bu_free( (char *) new_op, "overlap list");
 				return	0;	/* already on list */
@@ -415,7 +422,7 @@ overlap(struct application *ap, struct partition *pp, struct region *reg1, struc
 		
 		for( op=olist; op; prev_ol=op, op=op->next ) {
 			/* if this pair was seen in reverse, decrease the unique counter */
-			if ( (strcmp(reg1->reg_name, op->reg2) == 0) && (strcmp(reg2->reg_name, op->reg1) == 0) ) {
+			if ((strcmp(reg1->reg_name, op->reg2) == 0) && (strcmp(reg2->reg_name, op->reg1) == 0)) {
 				unique_overlap_count--;
 				break;
 			}
@@ -434,6 +441,8 @@ overlap(struct application *ap, struct partition *pp, struct region *reg1, struc
 		op->reg2 = reg2->reg_name;
 		op->next = NULL;
 		op->count = 1;
+		op->max_thickness = depth;
+		VMOVE(op->coord, ihit);
 		bu_semaphore_release( BU_SEM_SYSCALL );
 	}
 
@@ -450,6 +459,10 @@ overlap(struct application *ap, struct partition *pp, struct region *reg1, struc
 }
 
 
+/*
+ *	multioverlap
+ *
+ */
 void
 multioverlap(struct application *ap, struct partition *pp, struct bu_ptbl *regiontable, struct partition *InputHdp)
 {
@@ -471,7 +484,10 @@ multioverlap(struct application *ap, struct partition *pp, struct bu_ptbl *regio
 }
 
 
-
+/*
+ *	logoverlap
+ *
+ */
 void
 logoverlap(struct application *ap, const struct partition *pp, const struct bu_ptbl *regiontable, const struct partition *InputHdp)
 {
@@ -488,6 +504,7 @@ logoverlap(struct application *ap, const struct partition *pp, const struct bu_p
  *  (see raytrace.h), and a circular linked list of partitions,
  *  each one describing one in and out segment of one region.
  */
+int
 hit(register struct application *ap, struct partition *PartHeadp, struct seg *segs)
 {
     /* see raytrace.h for all of these guys */
@@ -539,6 +556,7 @@ hit(register struct application *ap, struct partition *PartHeadp, struct seg *se
 /*
  * rt_shootray() was told to call this on a miss.
  */
+int
 miss(register struct application *ap)
 {
 #if 0
@@ -548,6 +566,10 @@ miss(register struct application *ap)
 }
 
 
+/*
+ *	plane_worker 
+ *
+ */
 void
 plane_worker (int cpu, genptr_t ptr)
 {
@@ -614,6 +636,10 @@ plane_worker (int cpu, genptr_t ptr)
 	}
     }
 }
+/*
+ *	clear_region_values
+ *
+ */
 void
 clear_region_values(struct rt_i *rtip)
 {
@@ -625,6 +651,10 @@ clear_region_values(struct rt_i *rtip)
     }
 }
 
+/*
+ *	check_region_values
+ *
+ */
 int
 check_region_values(struct rt_i *rtip)
 {
@@ -645,6 +675,10 @@ check_region_values(struct rt_i *rtip)
     return r;
 }
 
+/*
+ *	report_results
+ *
+ */
 void
 report_results(struct state *state)
 {
@@ -655,6 +689,10 @@ report_results(struct state *state)
 	   state->lenDensity[state->i_axis]*gridSpacing*gridSpacing);
 }
 
+/*
+ *	report_overlaps
+ *
+ */
 void
 report_overlaps()
 {
@@ -665,14 +703,19 @@ report_overlaps()
 	return;
     }
 
-    bu_log("Overlaps\ntotal encountered:%d  total pairs:%d  unique pairs:%d\n", noverlaps, overlap_count, unique_overlap_count);
+    bu_log("Overlaps\ttotal encountered:%d  total pairs:%d  unique pairs:%d\n", noverlaps, overlap_count, unique_overlap_count);
     for( op=olist; op; prev_ol=op, op=op->next ) {
-	bu_log("%s %s\n", op->reg1, op->reg2);
+	bu_log("%s %s  %d times, max_thickness %gmm at %g %g %g\n", op->reg1, op->reg2, op->count,
+	       op->max_thickness, V3ARGS(op->coord));
     }
 }
 
 
 
+/*
+ *	parse_densities_buffer
+ *
+ */
 void
 parse_densities_buffer(char *buf, unsigned long len)
 {
@@ -805,7 +848,11 @@ get_densities_from_database(struct rt_i *rtip)
     parse_densities_buffer(bu->u.int8, bu->count);
     return 0;
 }
+
+
 /*
+ *	get_densities
+ *
  */
 int
 get_densities( struct rt_i * rtip)
@@ -813,6 +860,10 @@ get_densities( struct rt_i * rtip)
     struct directory *dp;
 }
 
+/*
+ *	options_prep
+ *
+ */
 int
 options_prep(struct rt_i *rtip, vect_t span)
 {
@@ -853,6 +904,10 @@ options_prep(struct rt_i *rtip, vect_t span)
     return 0;
 }
 
+/*
+ *	compute_views
+ *
+ */
 void 
 compute_views(struct state *state)
 {
@@ -939,7 +994,7 @@ terminate_check(struct state *state)
 	/* refine the gridSpacing and try again */
 	gridSpacing *= 0.5;
 	if (gridSpacing < gridSpacingLimit) {
-	    bu_log("grid spacing refined to %g which is below lower limit %g\n", gridSpacingLimit, gridSpacing);
+	    bu_log("grid spacing refined to %g which is below lower limit %g\n", gridSpacing, gridSpacingLimit);
 	    return 0;
 	}
 
@@ -977,7 +1032,7 @@ main(ac,av)
     arg_count = parse_args(ac, av);
 	
     if ((ac-arg_count) < 2) {
-	usage("oops\n");
+	usage("Error: Must specify model and objects on command line\n");
     }
 
     bu_semaphore_init(RT_SEM_LAST+2);

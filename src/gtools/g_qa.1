@@ -21,9 +21,9 @@ Only the
 from the database specified on the command line are analyzed.
 It works by shooting grids of rays from the three axis-aligned directions (sometimes called 
 \fIviews\fR).  
-The resulting weight calculations for each view are compared to each other.
+The resulting volume/weight calculations for each view are compared to each other.
 The grid of rays is progressively refined until the results from all three views
-agree within a user specifiable volumetric tolerance.
+agree within a user specifiable tolerance, or a limit on grid refinement is reached.
 .P
 For weight computation, the density of every region must be specified.  Densities are specified as an index into a table of density values.
 This index is stored in the 
@@ -48,24 +48,24 @@ For example:
 .br
 5	8.9		Copper, pure
 .br
-6	19.32	Gold, pure
+6	19.32		Gold, pure
 .br
 7	8.03		Stainless, 18Cr-8Ni
 .br
 8	7.47		Stainless 27Cr
 .br
-8	7.715	Steel, tool
+9	7.715		Steel, tool
 .in -5n
 .P
-The first column is the index value to which the GIFTmater attribute is set to select the given 
+The first column is the index value to which the GIFTmater attribute of a region is set to select the given material type (density value).
 .P
-The table is typically created with a text editor, and then imported to the database as the binary object
-.B _DENSITIES.
-.P
-To import a text file into the database, the following comand is used.
+The table is typically created in an external file using a text editor.  The file is imported to the database
+as the binary object
+.B _DENSITIES
+when complete.  To import the text file into the database, the following comand is used.
 .IP
 mged>
-.B binunif \-i u c _DENSITIES 
+.B dbbinary \-i u c _DENSITIES 
 .I filename
 
 .SH WEIGHT REPORTING
@@ -75,7 +75,7 @@ specified on the command line, a volume and weight is calculated and reported.
 
 .SH OVERLAP REPORTING
 
-For each pair of objects which overlap, the tool reports the two regions which overlap, the maximum thickness of the overlap, and the in-hit location of the ray which caused that maximum overlap thickness.
+For each pair of objects which overlap, the tool reports the two regions which overlap, the maximum line-of-sight thickness of the overlap, and the in-hit location of the ray which caused that maximum overlap thickness.
 
 
 .SH OPTIONS
@@ -105,7 +105,8 @@ Specifies that density values should be taken from an external file instead of f
 This can be useful when developing the density table with a text editor, prior to importing it to the geometric database.
 .TP
 .B \-g grid_spacing\fI[,lim]\fR
-Specifies the spacing between rays in the grids.  
+Specifies the initial spacing between rays in the grids,
+and optionally a limit on how far the grid can be refined.
 The first value indicates the inital spacing between grid rays.  
 If the optional second argument, "\fI,lim\fR",
 is specified, it indicates a lower bound on how fine the gridspacing may get before computation is terminated.
@@ -199,7 +200,8 @@ when it is present,
 specifies which report types
 .I not
 to produce.
-The default is 1.
+The default is 1 (report only overlaps).  To specify all reports, a value of 63 should be used.
+
 .TP
 .B \-S samples_per_axis_min
 Specifies that the grid spacing will be initially refined so that at least
@@ -218,20 +220,20 @@ option except that the smallest bounding box dimensions (for primitive shapes) i
 used instead of the model bounding box.
 This typically creates very fine grid spacing, and long runtimes, with higher accuracy.
 .TP
-.B \-t tol_dist
+.B \-t overlap_tol_dist
 Specifies that overlaps less than 
-.I tol_dist
+.I overlap_tol_dist
 will not be reported.
 The default is 0.0 so that all overlaps are reported.
 .TP
 .B \-U use_air
 Specifies the Boolean value 
 .I use_air
-which indicates whether regions which are "air" should be included in the raytrace
-.B Unlike other BRL-CAD raytracing applications the default is to include air in the raytracing.
+which indicates whether regions which are marked as "air" should be retained and included in the raytrace.
+.B Unlike other BRL-CAD raytracing applications the default is to retain air in the raytracing.
 The 
 .B \-U 0
-option causes raytracing of air to be turned off.
+option causes air regions to be discarded prior to raytracing.
 .TP
 .B \-u units
 Specify the units used when reporting values.  
