@@ -34,14 +34,15 @@
  *	bu_prmem	When debugging, print memory map
  *	bu_strdup	Duplicate a string in dynamic memory
  *	bu_malloc_len_roundup	Optimize sizing of malloc() requests
+ *      bu_free_array	free elements of an array
  *
  *  Author -
  *	Michael John Muuss
+ *      Christopher Sean Morrison
  *  
  *  Source -
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
- *  
  */
 #ifndef lint
 static const char RCSmalloc[] = "@(#)$Header$ (ARL)";
@@ -49,24 +50,29 @@ static const char RCSmalloc[] = "@(#)$Header$ (ARL)";
 
 #include "common.h"
 
-
-
 #include <stdio.h>
 #ifdef HAVE_STRING_H
-# include <string.h>
+#  include <string.h>
 #else
-# include <strings.h>
+#  include <strings.h>
 #endif
 
 #include "machine.h"
 #include "bu.h"
 
+/** this variable controls the libbu debug level */
 int	bu_debug = 0;
 
+
+/** used by the memory allocation routines passed to bu_alloc by
+ * default to indicate whether allocated memory should be zero'd
+ * first.
+ */
 typedef enum {
   MALLOC,
   CALLOC
 } alloc_t;
+
 
 /* These counters are not semaphore-protected, and thus are only estimates */
 long	bu_n_malloc = 0;
@@ -788,6 +794,32 @@ bu_mem_barriercheck(void)
 	bu_semaphore_release( BU_SEM_SYSCALL );
 	return 0;			/* OK */
 }
+
+
+/** b u _ f r e e _ a r r a y
+ *
+ * free up to argc elements of memory allocated to an array without
+ * free'ing the array itself.
+ */
+void bu_free_array(int argc, char *argv[], const char *str)
+{
+  int count = 0;
+
+  if (!argv || argc <= 0) {
+    return;
+  }
+
+  while (count < argc) {
+    if (argv[count]) {
+      bu_free(argv[count], str);
+      argv[count] = NULL;
+    }
+    count++;
+  }
+
+  return;
+}
+
 
 /*
  * Local Variables:
