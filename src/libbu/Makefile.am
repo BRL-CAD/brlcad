@@ -48,6 +48,7 @@ SRCS = \
 	rb_search.c \
 	rb_walk.c \
 	semaphore.c \
+	stat.c \
 	units.c \
 	vfont.c \
 	vls.c \

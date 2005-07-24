@@ -45,41 +45,12 @@ static const char RCSbrlcad_path[] = "@(#)$Header$ (BRL)";
 #else
 #  include <strings.h>
 #endif
-#ifdef HAVE_SYS_STAT_H
-#  include <sys/stat.h>
-#endif
 #ifdef HAVE_SYS_PARAM_H
 #  include <sys/param.h>
 #endif
 
 #include "machine.h"
 #include "bu.h"
-
-
-/*
- *			B U _ F I L E _ E X I S T S
- *
- *  Returns boolean -
- *	1	The given filename exists.
- *	0	The given filename does not exist.
- */
-int
-bu_file_exists(const char *path)
-{
-	struct	stat	sbuf;
-
-	if( path == NULL )  return 0;			/* FAIL */
-
-	/* defined in unistd.h */
-#if defined(F_OK)
-	if( access( path, F_OK )  == 0 )  return 1;	/* OK */
-#endif
-
-	/* does it exist as a filesystem entity? */
-	if( stat( path, &sbuf ) == 0 )  return 1;	/* OK */
-
-	return 0;					/* FAIL */
-}
 
 
 /* print out an error/warning message if we cannot find the specified
