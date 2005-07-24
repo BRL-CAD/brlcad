@@ -53,8 +53,63 @@ static const char RCSbrlcad_path[] = "@(#)$Header$ (BRL)";
 #include "bu.h"
 
 
-/* print out an error/warning message if we cannot find the specified
- * BRLCAD_ROOT
+/** b u _ i p w d
+ *
+ * set/return the path to the initial working directory.
+ * bu_set_argv0() must be called on app startup for the correct pwd to
+ * be acquired/set.
+ */
+static const char *
+bu_ipwd()
+{
+    static const char *pwd = NULL;
+
+    if (pwd) {
+	return pwd;
+    }
+
+#ifdef HAVE_GETENV
+    pwd = getenv("PWD");
+#else
+    pwd = ".";
+#endif
+
+    return pwd;
+}
+
+
+/** b u _ a r g v 0
+ *
+ * set the location of argv[0], used by the brlcad-path-finding
+ * routines when attempting to locate binaries, libraries, and
+ * resources.  this routine may only be called once to set argv0.
+ */
+const char *
+bu_argv0(const char *path)
+{
+    static const char *argv0 = NULL;
+
+    if (argv0) {
+	return (argv0);
+    }
+
+    if (path) {
+	argv0 = path;
+	(void)bu_ipwd();
+    }
+    
+    return argv0;
+}
+
+void prtarg() {
+    bu_log("argv0 is %s\n", bu_argv0(NULL));
+    bu_log("pwd is %s\n", bu_ipwd());
+}
+
+/** b u _ r o o t _ m i s s i n g
+ *
+ *print out an error/warning message if we cannot find the specified
+ * BRLCAD_ROOT (compile-time install path)
  */
 static void
 bu_root_missing(const char *paths)
@@ -80,8 +135,10 @@ for sh/bash users:\n\
 }
 
 
-/* print out an error/warning message if we cannot find the specified
- * BRLCAD_DATA
+/** b u _ d a t a _ m i s s i n g
+ *
+ * print out an error/warning message if we cannot find the specified
+ * BRLCAD_DATA (compile-time install path)
  */
 static void
 bu_data_missing(const char *paths)
