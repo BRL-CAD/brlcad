@@ -52,6 +52,8 @@ SRCS = \
 	units.c \
 	vfont.c \
 	vls.c \
+	whereis.c \
+	which.c \
 	xdr.c
 
 libbu_la_LDFLAGS = -version-info 19:1
