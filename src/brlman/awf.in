@@ -38,23 +38,33 @@ path_to_this="`dirname $0`"
 PATH=$path_to_this:@BRLCAD_ROOT@/bin:/bin:/usr/bin:/usr/brlcad/bin ; export PATH
 
 # AWFLIB is where the pieces live
-AWFLIB=${AWFLIB-@BRLCAD_DATA@/awf}		# BRL mod
+if test -d @BRLCAD_DATA@/awf ; then
+    AWFLIB=${AWFLIB-@BRLCAD_DATA@/awf}
+elif test -d @BRLCAD_ROOT@/share/brlcad/@BRLCAD_VERSION@/awf ; then
+    AWFLIB=${AWFLIB-@BRLCAD_ROOT@/share/brlcad/@BRLCAD_VERSION@/awf}
+elif test -d ${path_to_this}/../share/brlcad/@BRLCAD_VERSION@/awf ; then
+    AWFLIB=${AWFLIB-$path_to_this/../share/brlcad/@BRLCAD_VERSION@/awf}
+fi    
 
 tmp=/tmp/awp$$			# tempfile for building pass 2
 errs=/tmp/awe$$		# error messages (awk can't send to stderr)
 
 case "$1" in
--ms)	mac=ms	;;
--man)	mac=man	;;
-*)	echo "$0: must specify -ms or -man" >&2
+    -ms)
+	mac=ms	
+	;;
+    -man)
+	mac=man
+	;;
+    *)	
+	echo "$0: must specify -ms or -man" >&2
 	exit 2
 	;;
 esac
 shift
 
 dev="$AWFLIB/dev.$TERM"
-if test ! -r $dev
-then
+if test ! -r $dev ; then
 	dev="$AWFLIB/dev.dumb"
 fi
 
@@ -73,13 +83,11 @@ trap "rm -f $tmp $errs ; exit 0" 0 1 2
 	echo ".^b"
 	echo ".^# 1 <prolog>"
 	cat $dev $AWFLIB/common $AWFLIB/mac.$mac
-	if test " $*" = " "
-	then
+	if test " $*" = " " ; then
 		echo ".^# 1 <stdin>"
 		cat
 	else
-		for f
-		do
+		for f ; do
 			echo ".^# 1 $f"
 			cat $f
 		done
@@ -88,8 +96,7 @@ trap "rm -f $tmp $errs ; exit 0" 0 1 2
 ) | awk -f $AWFLIB/pass1 | awk -f $tmp | awk -f $AWFLIB/pass3
 
 # error messages, if any
-if test -s $errs
-then
+if test -s $errs ; then
 	cat $errs >&2
 	exit 1
 else
