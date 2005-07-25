@@ -61,8 +61,23 @@ if test "${MANPAGER}" != "" ; then
 	MORE="${MANPAGER}"
 fi
 
-# Ensure that MANPATH is set and has BRL-CAD materials listed first.
-MANPATH=@BRLCAD_DATA@/man:${MANPATH}
+# Ensure that MANPATH is set and has BRL-CAD materials man dirs listed first.
+
+if test -d "@BRLCAD_ROOT@/share/brlcad/@BRLCAD_VERSION@/man" ; then
+    MANPATH="@BRLCAD_ROOT@/share/brlcad/@BRLCAD_VERSION@/man:$MANPATH"
+fi
+if test -d "${path_to_this}/../share/brlcad/@BRLCAD_VERSION@/man" ; then
+    MANPATH="${path_to_this}/../share/brlcad/@BRLCAD_VERSION@/man:$MANPATH"
+fi
+if test -d "${path_to_this}/../man" ; then
+    MANPATH="${path_to_this}/../man:$MANPATH"
+fi
+if test -d "@BRLCAD_DATA@/man" ; then
+    MANPATH="@BRLCAD_DATA@/man:$MANPATH"
+fi
+if test -d "@BRLCAD_ROOT@/man" ; then
+    MANPATH="@BRLCAD_ROOT@/man:$MANPATH"
+fi
 
 PATH_ELEMENTS=`echo ${MANPATH} | sed 's/^://
 				s/:://g
@@ -77,6 +92,9 @@ for PLACE in ${PATH_ELEMENTS} ; do
 		# Found something(s), format it/them
 		echo ${TRY}
 		awf -man ${TRY} | ${MORE}
+		if test "x$?" = "x0" ; then
+		    break
+		fi
 	fi
 done
 
