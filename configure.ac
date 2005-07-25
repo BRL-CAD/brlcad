@@ -1796,6 +1796,7 @@ else
 fi
 AC_MSG_CHECKING(whether to build Tcl)
 TCL_VERSION="8.4"
+AC_DEFINE_UNQUOTED([TCL_VERSION], "$TCL_VERSION", "Version of Tcl")
 AC_SUBST(TCL_VERSION)
 TCL_MAJOR_VERSION=8
 AC_SUBST(TCL_MAJOR_VERSION)
@@ -1887,6 +1888,7 @@ build_brlcad_tk=yes
 AC_MSG_CHECKING(whether to build Tk)
 dnl Need to update version number(s) in src/other/libtk/Makefile.am too
 TK_VERSION="8.4"
+AC_DEFINE_UNQUOTED([TK_VERSION], "$TK_VERSION", "Version of Tk")
 AC_SUBST(TK_VERSION)
 TK_LIBRARY='${prefix}/lib/tk${TK_VERSION}'
 AC_SUBST(TK_LIBRARY)
@@ -2035,6 +2037,9 @@ else
 fi
 AC_MSG_CHECKING(whether to install iwidgets)
 AC_MSG_RESULT($build_brlcad_iwidgets)
+IWIDGETS_VERSION="4.0.1"
+AC_DEFINE_UNQUOTED([IWIDGETS_VERSION], "$IWIDGETS_VERSION", "Version of iWidgets")
+AC_SUBST(IWIDGETS_VERSION)
 
 
 dnl *** libthread ***
