@@ -4,7 +4,7 @@ SUBDIRS = \
 	doc \
 	generic
 
-INSTALL_DIR = ${libdir}/iwidgets4.0.1
+INSTALL_DIR = ${libdir}/iwidgets${IWIDGETS_VERSION}
 
 brlcadscriptdir = ${INSTALL_DIR}
 brlcadscript_SCRIPTS = iwidgets.tcl pkgIndex.tcl license.terms
