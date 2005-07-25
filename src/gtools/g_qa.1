@@ -25,19 +25,26 @@ The resulting volume/weight calculations for each view are compared to each othe
 The grid of rays is progressively refined until the results from all three views
 agree within a user-specifiable tolerance, or a limit on grid refinement is reached.
 .P
-For weight computation, the density of every region must be specified.  Densities are specified as an index in a table of density values.
+For weight computation, the density of every region must be specified.  
+Densities are specified as an index in a table of density values.
 This index is stored in the 
 .I GIFTmater 
 attribute of each region.
 .P
 The density table consists of three columns: 
-an integer index value, a floating point density value specified in grams/cc, and an optional text string describing the material.
+.IP
+.B An integer index value.
+This is the value the to which the \fIGIFTmater\fR attribute will be set to select this material for the region.
+.IP
+.B A floating point density value.
+This is the density for the material, and is specified in \fBgrams/cc\fR. 
+.IP
+.B An optional name string
+This is a name or description the material.
 .in -5
 .P
 An example file might look like the following:
-.sp 1
-.in +5
-.br
+.IP
 1	7.84		Carbon Steel
 .br
 2	7.82		Carbon Tool Steel
@@ -55,49 +62,111 @@ An example file might look like the following:
 8	7.47		Stainless 27Cr
 .br
 9	7.715		Steel, tool
-.in -5n
-.P
-The first column is the index value to which the \fIGIFTmater\fR attribute of a region is set in order 
-to select the given material type (density value) for the region.
 .P
 The table is typically created in an external file using a text editor.  
+Validation of the table is typically performed using the external file (see the 
+.I \-f
+option below).
 The file is imported to the database as the binary object
 .B _DENSITIES
-when complete.  To import the text file into the database, the following comand is used.
+when complete.  To import the text file into the database, the following comand is used:
 .IP
 mged>
 .B dbbinary \-i u c _DENSITIES 
 .I filename
-
 .SH VOLUME WEIGHT REPORTING
 If weight calculation is selected, for each 
 .I object
 specified on the command line, volume and weight is calculated and reported.
-
 .SH OVERLAP REPORTING
-
 For each pair of objects that overlap, the tool reports the two regions that overlap, the maximum line-of-sight thickness of the overlap, and the in-hit location of the ray that caused that maximum overlap thickness.
-
-
 .SH OPTIONS
 .TP
 .B \-A \fR\fIanalysis_flags\fR
-Specifies which computations are to be performed.  The parameter is one or more of the following:
-.B a, o, w, v,
-for 
-.I all, overlaps, weight
-and 
-.I volume 
-respectively.  Only those reports requested will be provided.  The default is 
-.I all.
+Specifies which computations are to be performed and reported.
+The 
+.I analysis_flags
+parameter is one or more of the following:
+.in +5
+.sp
+\fBvalue	report generated\fR
+.br
+A		all
+.br
+a		adjacent different air
+.br
+b		bounding box dimensions
+.br
+e		external air
+.br
+g		gaps/voids
+.br
+o		overlaps
+.br
+v		volume
+.br
+w		weight
+.sp
+.in -5
+Only those reports requested will be provided.  The default is 
+.B -A A
+to produce all reports.
+
+.B Adjacent different air:
+Detects air volumes which are next to each other but have different air_code values applied to the region.  
+This would typically indicate that the regions are different types of air, 
+such as crew_air (which fills the crew compartment of a vehicle) and engine_air (which surrounds the engine).
+When these different types of air adjoin each other, it is generally considered a modeling error.
+
+.B Bounding box dimensions:
+Reports the dimensions of an axis-aligned box which fully encloses the 
+\fIobjects\fR.
+
+.B External air:
+This causes checks to be made to see if the ray encounters air regions before (or after all) solid objects.
+Typically, only the air inside a building or vehicle is modeled if the purpose of the model is to support analysis of
+that single structure/vehicle.
+There are exceptions, such as when modeling larger environments for more extended analysis purposes.
+
+.B Gaps/voids:
+This reports when there is more than
+.I overlap_tol_dist
+(see the
+.B \-t
+option below)
+between objects on the ray path.
+
+.B Overlaps:
+are two regions which occupy the same space.  
+In the real world, two objects may not occupy the same space.  
+This check is sometimes also known as \fIinterference checking\fR.
+Two objects must overlap by at least 
+.I overlap_tol_dist
+(see the
+.B \-t
+option below)
+to be considered to overlap;
+
+.B Volume:
+Computes the volume of the 
+.I objects
+specified on the command line.
+
+.B Weight:
+Computes the weight of the 
+.I objects
+specified on the command line.
 
 .TP
 .B \-a \fR\fIazimuth_deg\fR
-Sets a rotation (in degrees) of the coordinate system by a given amount about the Z axis.  See also:
+Sets a rotation (in degrees) of the coordinate system by a given amount about the Z axis.  
+The default is 0. 
+See also:
 .B \-e
 .TP
 .B \-e \fR\fIelevation_deg\fR
-Sets a rotation (in degrees) of the coordinate system by a given elevation from the XY plane (rotation about X axis?).
+Sets a rotation (in degrees) of the coordinate system by a given elevation from the XY plane (rotation about X axis?).  
+The default is 0.
 See also
 .B \-a
 .TP
@@ -118,17 +187,18 @@ The grid spacing may be specified with units.  For example:
 or 
 .B 10 in.
 If units are not provided, millimeters are presumed to be the units.
+.IP
 The default values are 50.0 mm and 0.5 mm, which is equivalent to specifying: 
-.sp
-.ti +5
-.br
 .B \-g 50.0mm,0.5mm
-
 .TP
 .B \-G
 Specifies that the program should create new 
 .I assembly combinations
-in the geometry database to represent the overlap pairs.  If regions 
+in the geometry database to represent the overlap pairs.  
+This flag is meaningless if overlap reporting is not turned on with the 
+.B \-A
+option.
+If regions 
 .I rod.r
 and 
 .I disk.r
@@ -149,42 +219,20 @@ The default is that no groups are created.
 Specifies that the grid be refined until each region has at least 
 .I num_hits
 ray intersections.
-The default is 1 (that is, each region must be hit at least once).
 This limit is not applied per-view, but rather per-analysis.
 So for example, it is accepted that a thin object might not be hit from one view at all, but hit when shooting from other views.
+.IP
+The default is 1.  This indicates that each region must be intersected by a ray at least once during the analysis.
 .TP
 .B \-P \fR\fIncpu\fR
 Specifies that
 .I ncpu
-CPUs should be used for performing the calculation.  Note that
-specifying more CPUs than are present on the machine does not increase
-the number of computation threads.  By default, all local CPUs are
-utilized.  This option exists primarily to reduce the number of
+CPUs should be used for performing the calculation.  
+By default, all local CPUs are utilized.  
+This option exists primarily to reduce the number of
 computation threads from the machine maximum.
-.TP
-.BI \-r  \fR\fIreports\fR
-Specifies which types of reports to produce.
-The value
-.I reports
-consists of the the following character values:
-.in +5
-.sp
-\fBvalue	report generated\fR
-.br
-o		overlaps
-.br
-a		contiguous unlike air regions
-.br
-u		unconfined air
-.br
-1		air regions first/last on ray
-.br
-v		vacuums/voids after first hit on ray
-.in -5
-.sp
-So for example specifying 
-.B -r oau1v
-would turn on all checks and reports
+Note that specifying more CPUs than are present on the machine does not increase
+the number of computation threads.  
 .TP
 .B \-S \fR\fIsamples_per_axis_min\fR
 Specifies that the grid spacing will be initially refined so that at least
@@ -203,7 +251,7 @@ option except that the smallest bounding box dimensions (for primitive shapes) i
 used instead of the model bounding box.
 This typically creates very fine, highly accurate grid spacing and long runtimes.
 .TP
-.B \-t \fR\fIoverlap_tol_dist\fR
+.B \-t \fR\fIoverlap_tol_dist[units]\fR
 Specifies that overlaps less than 
 .I overlap_tol_dist
 will not be reported.
@@ -217,15 +265,24 @@ which indicates whether regions which are marked as "air" should be retained and
 The 
 .B \-U 0
 option causes air regions to be discarded prior to raytracing.
+Note that you probably don't want to turn off use_air when asking for various air checking analysis such as 
+.B Air First/Last
+or 
+.B Contiguous unlike air
 .TP
 .B \-u \fR\fIunits\fR
 Specify the units used when reporting values.  
 If this option is not specified, the current editing units are used.
 This option can be used to override this behavior.
 Possible values include: 
-.I XXX what are the possible values XXX?
+Volume
+cm cc m^3
+Distance
+Weight
+g, kg, lb
+
 .TP
-.B \-V \fR\fIvolume_tolerance\fR
+.B \-V \fR\fIvolume_tolerance[units]\fR
 Specifies a volumetric tolerance value that the three view computations must be within for computation to complete.  
 The default value is 0.5 cc.  For large, complex objets (such as entire vehicles), this value must often be 
 increased to achieve reasonable runtimes (or even completion).  
@@ -237,7 +294,7 @@ or
 .B \-W
 may be specified.  If both are specified, the last one specified on the command line is used.
 .TP
-.B \-W \fR\fIweight_tolerance\fR
+.B \-W \fR\fIweight_tolerance[units]\fR
 This is like the volume tolerance, \fB\-T\fR, but is applied to the weight computation results,
 not the volume computation results.  
 Only one of 
@@ -258,7 +315,7 @@ and reports the weight and volume, and checks for overlaps.
 g_qa model.g wheel.r
 .P
 To check objects hull, turret, and suspension for overlaps only,
-and to report overlaps and occurence of air first/last on rays:
+and to report overlaps and occurence of external air.
 .IP
-g_qa -A o -r 1 model.g hull turret suspension 
+g_qa -A oe model.g hull turret suspension 
 .P
