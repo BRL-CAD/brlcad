@@ -104,7 +104,7 @@ int bu_which(char *argv[], int lim, const char *cmd)
 #endif  /* HAVE_GETENV */
 
   /* otherwise use sysctl() to get the PATH */
-#ifdef HAVE_SYSCTL
+#if defined(HAVE_SYSCTL) && defined(CTL_USER) && defined(USER_CS_PATH)
 #  define bu_which_found_path 1
  {
    int mib[2];
