@@ -49,18 +49,16 @@ void isst_master_process_events(SDL_Event *event_queue, int event_num, isst_mast
 
 /***** GLOBALS *****/
 int isst_master_tile_num;
-TIE_3 isst_master_camera_pos;
-TIE_3 isst_master_camera_foc;
+TIE_3 isst_master_camera_position;
+TIE_3 isst_master_camera_focus;
 TIE_3 isst_master_cor; /* center of rotation */
-TIE_3 isst_master_shot_pos;
-TIE_3 isst_master_shot_dir;
+TIE_3 isst_master_shot_position;
+TIE_3 isst_master_shot_direction;
 TIE_3 isst_master_in_hit;
 TIE_3 isst_master_out_hit;
 tfloat isst_master_spall_angle;
 tfloat isst_master_camera_azimuth;
 tfloat isst_master_camera_elevation;
-tfloat isst_master_origin_azimuth;
-tfloat isst_master_origin_elevation;
 
 void *rgb_frame[2];
 int frame_ind[2];
@@ -82,6 +80,8 @@ int isst_master_shift_enabled;
 
 
 static void isst_master_setup() {
+  tfloat celev;
+
   isst_master_active_connections = 0;
 
   isst_master_alive = 1;
@@ -92,14 +92,17 @@ static void isst_master_setup() {
   math_vec_set(isst_master_in_hit, 0, 0, 0);
   math_vec_set(isst_master_out_hit, 0, 0, 0);
 
-  math_vec_set(isst_master_camera_pos, 10, 0, 0);
-  math_vec_set(isst_master_shot_pos, 0, 0, 0);
-  isst_master_camera_foc = isst_master_camera_pos;
-  isst_master_camera_foc.v[1] += 1;
-  isst_master_camera_azimuth = 180;
-  isst_master_camera_elevation = 0;
-  isst_master_origin_azimuth = 0; 
-  isst_master_origin_elevation = 0; 
+  math_vec_set(isst_master_camera_position, 10, 10, 10);
+  math_vec_set(isst_master_shot_position, 0, 0, 0);
+  isst_master_camera_focus = isst_master_camera_position;
+
+  celev = cos(35 * math_deg2rad);
+  isst_master_camera_focus.v[0] -= cos(45 * math_deg2rad) * celev;
+  isst_master_camera_focus.v[1] -= sin(45 * math_deg2rad) * celev;
+  isst_master_camera_focus.v[2] -= sin(35 * math_deg2rad);
+
+  isst_master_camera_azimuth = 45;
+  isst_master_camera_elevation = 35;
 
   isst_master_rm = RENDER_METHOD_PHONG;
 
@@ -234,6 +237,8 @@ void isst_master_result(void *res_buf, int res_len) {
     /* last hit */
     memcpy(&isst_master_out_hit, &((unsigned char *)res_buf)[ind], sizeof(TIE_3));
     ind += sizeof(TIE_3);
+
+printf("in_hit: [%f, %f, %f], out_hit: [%f, %f, %f]\n", isst_master_in_hit.v[0], isst_master_in_hit.v[1], isst_master_in_hit.v[2], isst_master_out_hit.v[0], isst_master_out_hit.v[1], isst_master_out_hit.v[2]);
 
     /* Set the Center of of Rotation */
     math_vec_add(isst_master_cor, isst_master_in_hit, isst_master_out_hit);
@@ -456,11 +461,9 @@ void* isst_master_networking(void *ptr) {
                 {
                   isst_overlay_data_t overlay;
 
-                  overlay.camera_pos = isst_master_camera_pos;
+                  overlay.camera_position = isst_master_camera_position;
                   overlay.camera_azimuth = isst_master_camera_azimuth;
                   overlay.camera_elevation = isst_master_camera_elevation;
-                  overlay.origin_azimuth = isst_master_origin_azimuth;
-                  overlay.origin_elevation = isst_master_origin_elevation;
                   sprintf(overlay.resolution, "%dx%d", db.env.img_w, db.env.img_h);
                   overlay.controller = sock->controller;
 
@@ -547,11 +550,11 @@ void isst_master_update() {
   isst_master_slave_data_len += sizeof(short);
 
   /* Camera Position */
-  memcpy(&((char *)isst_master_slave_data)[isst_master_slave_data_len], isst_master_camera_pos.v, sizeof(TIE_3));
+  memcpy(&((char *)isst_master_slave_data)[isst_master_slave_data_len], isst_master_camera_position.v, sizeof(TIE_3));
   isst_master_slave_data_len += sizeof(TIE_3);
 
   /* Camera Focus */
-  memcpy(&((char *)isst_master_slave_data)[isst_master_slave_data_len], isst_master_camera_foc.v, sizeof(TIE_3));
+  memcpy(&((char *)isst_master_slave_data)[isst_master_slave_data_len], isst_master_camera_focus.v, sizeof(TIE_3));
   isst_master_slave_data_len += sizeof(TIE_3);
 
   /* Rendering Method and Data */
@@ -560,10 +563,10 @@ void isst_master_update() {
 
   switch(isst_master_rm) {
     case RENDER_METHOD_PLANE:
-      memcpy(&((char *)isst_master_slave_data)[isst_master_slave_data_len], &isst_master_shot_pos, sizeof(TIE_3));
+      memcpy(&((char *)isst_master_slave_data)[isst_master_slave_data_len], &isst_master_shot_position, sizeof(TIE_3));
       isst_master_slave_data_len += sizeof(TIE_3);
 
-      memcpy(&((char *)isst_master_slave_data)[isst_master_slave_data_len], &isst_master_shot_dir, sizeof(TIE_3));
+      memcpy(&((char *)isst_master_slave_data)[isst_master_slave_data_len], &isst_master_shot_direction, sizeof(TIE_3));
       isst_master_slave_data_len += sizeof(TIE_3);
       break;
 
@@ -571,7 +574,7 @@ void isst_master_update() {
       memcpy(&((char *)isst_master_slave_data)[isst_master_slave_data_len], &isst_master_in_hit, sizeof(TIE_3));
       isst_master_slave_data_len += sizeof(TIE_3);
 
-      memcpy(&((char *)isst_master_slave_data)[isst_master_slave_data_len], &isst_master_shot_dir, sizeof(TIE_3));
+      memcpy(&((char *)isst_master_slave_data)[isst_master_slave_data_len], &isst_master_shot_direction, sizeof(TIE_3));
       isst_master_slave_data_len += sizeof(TIE_3);
 
       memcpy(&((char *)isst_master_slave_data)[isst_master_slave_data_len], &isst_master_spall_angle, sizeof(tfloat));
@@ -634,33 +637,33 @@ void isst_master_process_events(SDL_Event *event_queue, int event_num, isst_mast
 
 
           case SDLK_UP:
-            math_vec_sub(vec, isst_master_camera_foc, isst_master_camera_pos);
+            math_vec_sub(vec, isst_master_camera_focus, isst_master_camera_position);
             math_vec_mul_scalar(vec, vec, isst_master_scale*10.0);
-            math_vec_add(isst_master_camera_pos, isst_master_camera_pos, vec);
+            math_vec_add(isst_master_camera_position, isst_master_camera_position, vec);
             break;
 
           case SDLK_DOWN:
-            math_vec_sub(vec, isst_master_camera_foc, isst_master_camera_pos);
+            math_vec_sub(vec, isst_master_camera_focus, isst_master_camera_position);
             math_vec_mul_scalar(vec, vec, isst_master_scale*10.0);
-            math_vec_sub(isst_master_camera_pos, isst_master_camera_pos, vec);
+            math_vec_sub(isst_master_camera_position, isst_master_camera_position, vec);
             break;
 
           case SDLK_LEFT:
             /* strafe left */
-            math_vec_sub(vec, isst_master_camera_foc, isst_master_camera_pos);
+            math_vec_sub(vec, isst_master_camera_focus, isst_master_camera_position);
             math_vec_set(vec2, 0, 0, 1);
             math_vec_cross(vec3, vec2, vec);
             math_vec_mul_scalar(vec3, vec3, (isst_master_scale*10.0));
-            math_vec_add(isst_master_camera_pos, isst_master_camera_pos, vec3);
+            math_vec_add(isst_master_camera_position, isst_master_camera_position, vec3);
             break;
 
           case SDLK_RIGHT:
             /* strafe right */
-            math_vec_sub(vec, isst_master_camera_foc, isst_master_camera_pos);
+            math_vec_sub(vec, isst_master_camera_focus, isst_master_camera_position);
             math_vec_set(vec2, 0, 0, 1);
             math_vec_cross(vec3, vec2, vec);
             math_vec_mul_scalar(vec3, vec3, (isst_master_scale*10.0));
-            math_vec_sub(isst_master_camera_pos, isst_master_camera_pos, vec3);
+            math_vec_sub(isst_master_camera_position, isst_master_camera_position, vec3);
             break;
 
           case SDLK_F12: /* Server Shutdown and quit*/
@@ -704,18 +707,18 @@ void isst_master_process_events(SDL_Event *event_queue, int event_num, isst_mast
               tfloat dist;
 
               /* distance to center of rotation */
-              math_vec_sub(vec, isst_master_camera_pos, isst_master_cor);
+              math_vec_sub(vec, isst_master_camera_position, isst_master_cor);
               math_vec_dot(dist, vec, vec);
               dist = sqrt(dist);
 
-              isst_master_camera_pos = isst_master_cor;
+              isst_master_camera_position = isst_master_cor;
               if(isst_master_shift_enabled) {
-                isst_master_camera_pos.v[1] += dist;
-                isst_master_camera_azimuth = 270;
+                isst_master_camera_position.v[0] -= dist;
+                isst_master_camera_azimuth = 180;
                 isst_master_camera_elevation = 0;
               } else {
-                isst_master_camera_pos.v[1] -= dist;
-                isst_master_camera_azimuth = 90;
+                isst_master_camera_position.v[0] += dist;
+                isst_master_camera_azimuth = 0;
                 isst_master_camera_elevation = 0;
               }
             }
@@ -726,18 +729,18 @@ void isst_master_process_events(SDL_Event *event_queue, int event_num, isst_mast
               tfloat dist;
 
               /* distance to center of rotation */
-              math_vec_sub(vec, isst_master_camera_pos, isst_master_cor);
+              math_vec_sub(vec, isst_master_camera_position, isst_master_cor);
               math_vec_dot(dist, vec, vec);
               dist = sqrt(dist);
 
-              isst_master_camera_pos = isst_master_cor;
+              isst_master_camera_position = isst_master_cor;
               if(isst_master_shift_enabled) {
-                isst_master_camera_pos.v[0] -= dist;
-                isst_master_camera_azimuth = 0;
+                isst_master_camera_position.v[1] -= dist;
+                isst_master_camera_azimuth = 270;
                 isst_master_camera_elevation = 0;
               } else {
-                isst_master_camera_pos.v[0] += dist;
-                isst_master_camera_azimuth = 180;
+                isst_master_camera_position.v[1] += dist;
+                isst_master_camera_azimuth = 90;
                 isst_master_camera_elevation = 0;
               }
             }
@@ -748,32 +751,32 @@ void isst_master_process_events(SDL_Event *event_queue, int event_num, isst_mast
               tfloat dist;
 
               /* distance to center of rotation */
-              math_vec_sub(vec, isst_master_camera_pos, isst_master_cor);
+              math_vec_sub(vec, isst_master_camera_position, isst_master_cor);
               math_vec_dot(dist, vec, vec);
               dist = sqrt(dist);
 
-              isst_master_camera_pos = isst_master_cor;
+              isst_master_camera_position = isst_master_cor;
               if(isst_master_shift_enabled) {
-                isst_master_camera_pos.v[2] -= dist;
+                isst_master_camera_position.v[2] -= dist;
                 isst_master_camera_azimuth = 0;
-                isst_master_camera_elevation = 90;
+                isst_master_camera_elevation = -90 + 0.01;
               } else {
-                isst_master_camera_pos.v[2] += dist;
+                isst_master_camera_position.v[2] += dist;
                 isst_master_camera_azimuth = 0;
-                isst_master_camera_elevation = -90;
+                isst_master_camera_elevation = 90 - 0.01;
               }
             }
             break;
 
           case SDLK_KP0: /* set camera position and direction to shot position and direction */
-            isst_master_camera_pos = isst_master_shot_pos;
+            isst_master_camera_position = isst_master_shot_position;
             /* project and unitize shot vector onto xy plane */
-            vec = isst_master_shot_dir;
+            vec = isst_master_shot_direction;
             vec.v[2] = 0;
             math_vec_unitize(vec);
 
             isst_master_camera_azimuth = vec.v[1] < 0 ? 360.0 - acos(vec.v[0])*math_rad2deg : acos(vec.v[0])*math_rad2deg;
-            isst_master_camera_elevation = asin(isst_master_shot_dir.v[2]) * math_rad2deg;
+            isst_master_camera_elevation = asin(isst_master_shot_direction.v[2]) * math_rad2deg;
             break;
 
 
@@ -781,7 +784,7 @@ void isst_master_process_events(SDL_Event *event_queue, int event_num, isst_mast
             {
               void *mesg;
               common_work_t work;
-              TIE_3 dir;
+              TIE_3 direction;
               int dlen;
               char op;
 
@@ -803,18 +806,18 @@ void isst_master_process_events(SDL_Event *event_queue, int event_num, isst_mast
               dlen += 1;
 
               /* position */
-              memcpy(&((char *)mesg)[dlen], &isst_master_camera_pos, sizeof(TIE_3));
+              memcpy(&((char *)mesg)[dlen], &isst_master_camera_position, sizeof(TIE_3));
               dlen += sizeof(TIE_3);
 
-              math_vec_sub(dir, isst_master_camera_foc, isst_master_camera_pos);
-              math_vec_unitize(dir);
+              math_vec_sub(direction, isst_master_camera_focus, isst_master_camera_position);
+              math_vec_unitize(direction);
 
               /* direction */
-              memcpy(&((char *)mesg)[dlen], &dir, sizeof(TIE_3));
+              memcpy(&((char *)mesg)[dlen], &direction, sizeof(TIE_3));
               dlen += sizeof(TIE_3);
 
-              isst_master_shot_pos = isst_master_camera_pos;
-              isst_master_shot_dir = dir;
+              isst_master_shot_position = isst_master_camera_position;
+              isst_master_shot_direction = direction;
 
               tienet_master_push(mesg, dlen);
               free(mesg);
@@ -825,7 +828,7 @@ void isst_master_process_events(SDL_Event *event_queue, int event_num, isst_mast
             {
               void *mesg;
               common_work_t work;
-              TIE_3 dir;
+              TIE_3 direction;
               int dlen;
               char op;
 
@@ -847,22 +850,22 @@ void isst_master_process_events(SDL_Event *event_queue, int event_num, isst_mast
               dlen += 1;
 
               /* position */
-              memcpy(&((char *)mesg)[dlen], &isst_master_camera_pos, sizeof(TIE_3));
+              memcpy(&((char *)mesg)[dlen], &isst_master_camera_position, sizeof(TIE_3));
               dlen += sizeof(TIE_3);
 
-              math_vec_sub(dir, isst_master_camera_foc, isst_master_camera_pos);
-              math_vec_unitize(dir);
+              math_vec_sub(direction, isst_master_camera_focus, isst_master_camera_position);
+              math_vec_unitize(direction);
 
               /* direction */
-              memcpy(&((char *)mesg)[dlen], &dir, sizeof(TIE_3));
+              memcpy(&((char *)mesg)[dlen], &direction, sizeof(TIE_3));
               dlen += sizeof(TIE_3);
 
               /* angle */
               memcpy(&((char *)mesg)[dlen], &isst_master_spall_angle, sizeof(tfloat));
               dlen += sizeof(tfloat);
 
-              isst_master_shot_pos = isst_master_camera_pos;
-              isst_master_shot_dir = dir;
+              isst_master_shot_position = isst_master_camera_position;
+              isst_master_shot_direction = direction;
 
               tienet_master_push(mesg, dlen);
               free(mesg);
@@ -909,19 +912,19 @@ void isst_master_process_events(SDL_Event *event_queue, int event_num, isst_mast
           update = 1;
           if(event_queue[i].button.button & 1<<(SDL_BUTTON_LEFT-1)) {
             /* backward and forward */
-            math_vec_sub(vec, isst_master_camera_foc, isst_master_camera_pos);
+            math_vec_sub(vec, isst_master_camera_focus, isst_master_camera_position);
             math_vec_mul_scalar(vec, vec, (isst_master_scale*dy));
-            math_vec_add(isst_master_camera_pos, isst_master_camera_pos, vec);
+            math_vec_add(isst_master_camera_position, isst_master_camera_position, vec);
 
             /* strafe */
 #if 0
-            math_vec_sub(vec, isst_master_camera_foc, isst_master_camera_pos);
+            math_vec_sub(vec, isst_master_camera_focus, isst_master_camera_position);
             vec2.v[0] = 0;
             vec2.v[1] = 0;
             vec2.v[2] = 1;
             math_vec_cross(vec3, vec2, vec);
             math_vec_mul_scalar(vec3, vec3, (isst_master_scale*dx));
-            math_vec_add(isst_master_camera_pos, isst_master_camera_pos, vec3);
+            math_vec_add(isst_master_camera_position, isst_master_camera_position, vec3);
 #endif
           } else if(event_queue[i].button.button & 1<<(SDL_BUTTON_RIGHT-1)) {
             /* if the shift key is held down then rotate about Center of Rotation */
@@ -929,8 +932,8 @@ void isst_master_process_events(SDL_Event *event_queue, int event_num, isst_mast
               TIE_3 vec;
               tfloat mag, angle;
 
-              vec.v[0] = isst_master_cor.v[0] - isst_master_camera_pos.v[0];
-              vec.v[1] = isst_master_cor.v[1] - isst_master_camera_pos.v[1];
+              vec.v[0] = isst_master_cor.v[0] - isst_master_camera_position.v[0];
+              vec.v[1] = isst_master_cor.v[1] - isst_master_camera_position.v[1];
               vec.v[2] = 0;
 
 #if 0
@@ -948,26 +951,36 @@ void isst_master_process_events(SDL_Event *event_queue, int event_num, isst_mast
               vec.v[0] -= 0.035*dx;
               vec.v[0] *= math_deg2rad;
 
-              isst_master_camera_pos.v[0] = -mag*cos(vec.v[0]) + isst_master_cor.v[0];
-              isst_master_camera_pos.v[1] = -mag*sin(vec.v[0]) + isst_master_cor.v[1];
+              isst_master_camera_position.v[0] = -mag*cos(vec.v[0]) + isst_master_cor.v[0];
+              isst_master_camera_position.v[1] = -mag*sin(vec.v[0]) + isst_master_cor.v[1];
               isst_master_camera_azimuth -= 0.035*dx;
             } else {
               isst_master_camera_azimuth += 0.035*dx;
-              isst_master_camera_elevation += 0.035*dy;
+              isst_master_camera_elevation -= 0.035*dy;
             }
           } else if(event_queue[i].button.button & 1<<(SDL_BUTTON_MIDDLE-1)) {
-            isst_master_camera_pos.v[2] += isst_master_scale*dy;
+            isst_master_camera_position.v[2] += isst_master_scale*dy;
 
             /* strafe */
-            math_vec_sub(vec, isst_master_camera_foc, isst_master_camera_pos);
+            math_vec_sub(vec, isst_master_camera_focus, isst_master_camera_position);
             math_vec_set(vec2, 0, 0, 1);
             math_vec_cross(vec3, vec2, vec);
             math_vec_mul_scalar(vec3, vec3, (isst_master_scale*dx));
-            math_vec_add(isst_master_camera_pos, isst_master_camera_pos, vec3);
+            math_vec_add(isst_master_camera_position, isst_master_camera_position, vec3);
           }
 
-          isst_master_camera_azimuth = fmod(isst_master_camera_azimuth, 360.0);
-          isst_master_camera_elevation = fmod(isst_master_camera_elevation, 360.0);
+          /* Keep azimuth position */
+          if(isst_master_camera_azimuth < 0)
+            isst_master_camera_azimuth += 360;
+          if(isst_master_camera_azimuth > 360)
+            isst_master_camera_azimuth -= 360;
+
+          /* Keep elevation between -90 and +90 */
+          if(isst_master_camera_elevation < -90)
+            isst_master_camera_elevation = -90;
+          if(isst_master_camera_elevation > 90)
+            isst_master_camera_elevation = 90;
+
         }
         break;
 
@@ -977,25 +990,11 @@ void isst_master_process_events(SDL_Event *event_queue, int event_num, isst_mast
 
     if(update) {
       /* Update the camera data based on the current azimuth and elevation */
-      isst_master_camera_foc = isst_master_camera_pos;
+      isst_master_camera_focus = isst_master_camera_position;
       celev = cos(isst_master_camera_elevation * math_deg2rad);
-      isst_master_camera_foc.v[0] += cos(isst_master_camera_azimuth * math_deg2rad) * celev;
-      isst_master_camera_foc.v[1] += sin(isst_master_camera_azimuth * math_deg2rad) * celev;
-      isst_master_camera_foc.v[2] += sin(isst_master_camera_elevation * math_deg2rad);
-
-      /* Update the Origin azimuth and elevation based on the camera position, azimuth = 0 along +X axis */
-      vec = isst_master_camera_pos;
-      vec.v[2] = 0;
-
-      /* origin azimuth */
-      math_vec_unitize(vec);
-      vec.v[0] = vec.v[1] < 0 ? 360.0 - acos(vec.v[0])*math_rad2deg : acos(vec.v[0])*math_rad2deg;
-      isst_master_origin_azimuth = fmod(vec.v[0], 360.0);
-
-      /* origin elevation */
-      vec = isst_master_camera_pos;
-      math_vec_unitize(vec);
-      isst_master_origin_elevation = sin(vec.v[2]);
+      isst_master_camera_focus.v[0] -= cos(isst_master_camera_azimuth * math_deg2rad) * celev;
+      isst_master_camera_focus.v[1] -= sin(isst_master_camera_azimuth * math_deg2rad) * celev;
+      isst_master_camera_focus.v[2] -= sin(isst_master_camera_elevation * math_deg2rad);
     }
   }
 }

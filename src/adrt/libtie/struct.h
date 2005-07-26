@@ -61,6 +61,7 @@ typedef struct tie_ray_s {
   TIE_3		pos;    /* Position */
   TIE_3		dir;    /* Direction */
   short		depth;  /* Depth */
+  short		bsp_depth;
 } tie_ray_t;
 
 /** 
@@ -125,8 +126,6 @@ typedef struct tie_s {
   TIE_3		min, max;
   int		tri_num;
   tie_tri_t	*tri_list;
-
-  int		count;
   int		max_tri;
 } tie_t;
 

@@ -296,8 +296,7 @@ static void tie_build_tree(tie_t *tie, tie_bsp_t *node, int depth, TIE_3 min, TI
   if(node_geom_data->tri_num <= TIE_BSP_NODE_MAX || depth > TIE_BSP_DEPTH_MAX) {
 /*    printf("num: %d, depth: %d\n", node_geom_data->tri_num, depth); */
 /*    if(node_geom_data->tri_num > tie->max_tri) */
-//      tie->max_tri++;
-/*    tie->count += node_geom_data->tri_num; */
+/*      tie->max_tri++; */
     return;
   }
 
@@ -588,7 +587,6 @@ void tie_init(tie_t *tie, int tri_num) {
   tie->bsp = NULL;
   tie->tri_num = 0;
   tie->tri_list = (tie_tri_t *)malloc(sizeof(tie_tri_t) * tri_num);
-  tie->count = 0;
   tie->max_tri = 0;
   tie->rays_fired = 0;
 }
@@ -691,9 +689,10 @@ void* tie_work(tie_t *tie, tie_ray_t *ray, tie_id_t *id, void *(*hitfunc)(tie_ra
   void *result;
 
 
-ray->depth = 0;
   if(!tie->bsp)
     return(NULL);
+
+  ray->bsp_depth = 0;
 
   /*
    * Precompute direction inverse since it's used in a bunch of divides,
@@ -745,7 +744,7 @@ ray->depth = 0;
       int split;
       tfloat distance_t;
  
-ray->depth++;
+     ray->bsp_depth++;
      /* Retreive the splitting plane */
       split = ((TIE_PTR_CAST)(node_aligned->data)) & 0x3;
       distance_t = (node_aligned->axis - ray->pos.v[split]) * dirinv[split];

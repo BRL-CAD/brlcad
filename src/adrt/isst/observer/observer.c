@@ -238,14 +238,11 @@ void* isst_observer_networking(void *ptr) {
       /* Draw Frame */
       util_display_draw(frame);
 
-      sprintf(string, "position: %.3f %.3f %.3f", overlay.camera_pos.v[0], overlay.camera_pos.v[1], overlay. camera_pos.v[2]);
+      sprintf(string, "position: %.3f %.3f %.3f", overlay.camera_position.v[0], overlay.camera_position.v[1], overlay. camera_position.v[2]);
       util_display_text(string, 0, 0, UTIL_JUSTIFY_LEFT, UTIL_JUSTIFY_TOP);
 
-      sprintf(string, "origin_ae: %.3f %.3f", overlay.origin_azimuth, overlay.origin_elevation);
-      util_display_text(string, 0, 1, UTIL_JUSTIFY_LEFT, UTIL_JUSTIFY_TOP);
-
       sprintf(string, "camera_ae: %.3f %.3f", overlay.camera_azimuth, overlay.camera_elevation);
-      util_display_text(string, 0, 2, UTIL_JUSTIFY_LEFT, UTIL_JUSTIFY_TOP);
+      util_display_text(string, 0, 1, UTIL_JUSTIFY_LEFT, UTIL_JUSTIFY_TOP);
 
       sprintf(string, "fps: %.1f", fps);
       util_display_text(string, 0, 1, UTIL_JUSTIFY_LEFT, UTIL_JUSTIFY_BOTTOM);

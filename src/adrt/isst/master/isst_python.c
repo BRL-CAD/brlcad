@@ -11,8 +11,8 @@ void isst_python_init(void);
 void isst_python_command(char *command);
 static PyObject* isst_python_stdout(PyObject *self, PyObject* args);
 static PyObject* isst_python_commands(PyObject *self, PyObject* args);
-static PyObject* isst_python_get_camera_pos(PyObject *self, PyObject* args);
-static PyObject* isst_python_set_camera_pos(PyObject *self, PyObject* args);
+static PyObject* isst_python_get_camera_position(PyObject *self, PyObject* args);
+static PyObject* isst_python_set_camera_position(PyObject *self, PyObject* args);
 static PyObject* isst_python_get_origin_ae(PyObject *self, PyObject* args);
 static PyObject* isst_python_set_origin_ae(PyObject *self, PyObject* args);
 static PyObject* isst_python_get_camera_ae(PyObject *self, PyObject* args);
@@ -25,10 +25,8 @@ static PyObject* isst_python_dump(PyObject *self, PyObject* args);
 static PyMethodDef ISST_Methods[] = {
     {"stdout", isst_python_stdout, METH_VARARGS, "redirected output."},
     {"commands", isst_python_commands, METH_VARARGS, "lists available commands."},
-    {"get_camera_pos", isst_python_get_camera_pos, METH_VARARGS, "get camera position."},
-    {"set_camera_pos", isst_python_set_camera_pos, METH_VARARGS, "set camera position."},
-    {"get_origin_ae", isst_python_get_origin_ae, METH_VARARGS, "get origin azimuth and elevation."},
-    {"set_origin_ae", isst_python_set_origin_ae, METH_VARARGS, "set origin azimuth and elevation."},
+    {"get_camera_position", isst_python_get_camera_position, METH_VARARGS, "get camera position."},
+    {"set_camera_position", isst_python_set_camera_position, METH_VARARGS, "set camera position."},
     {"get_camera_ae", isst_python_get_camera_ae, METH_VARARGS, "get camera azimuth and elevation."},
     {"set_camera_ae", isst_python_set_camera_ae, METH_VARARGS, "set camera azimuth and elevation."},
     {"get_spall_angle", isst_python_get_spall_angle, METH_VARARGS, "get spall angle."},
@@ -97,27 +95,14 @@ static PyObject* isst_python_commands(PyObject *self, PyObject* args) {
 
 
 /* Get camera position */
-static PyObject* isst_python_get_camera_pos(PyObject *self, PyObject* args) {
-  return Py_BuildValue("fff", isst_master_camera_pos.v[0], isst_master_camera_pos.v[1], isst_master_camera_pos.v[2]);
+static PyObject* isst_python_get_camera_position(PyObject *self, PyObject* args) {
+  return Py_BuildValue("fff", isst_master_camera_position.v[0], isst_master_camera_position.v[1], isst_master_camera_position.v[2]);
 }
 
 
 /* Set camera position */
-static PyObject* isst_python_set_camera_pos(PyObject *self, PyObject* args) {
-  PyArg_ParseTuple(args, "fff", &isst_master_camera_pos.v[0], &isst_master_camera_pos.v[1], &isst_master_camera_pos.v[2]);
-  return PyInt_FromLong(0);
-}
-
-
-/* Get origin azimuth and elevation */
-static PyObject* isst_python_get_origin_ae(PyObject *self, PyObject* args) {
-  return Py_BuildValue("ff", isst_master_origin_azimuth, isst_master_origin_elevation);
-}
-
-
-/* Set origin azimith and elevation */
-static PyObject* isst_python_set_origin_ae(PyObject *self, PyObject* args) {
-  PyArg_ParseTuple(args, "ff", &isst_master_origin_azimuth, &isst_master_origin_elevation);
+static PyObject* isst_python_set_camera_position(PyObject *self, PyObject* args) {
+  PyArg_ParseTuple(args, "fff", &isst_master_camera_position.v[0], &isst_master_camera_position.v[1], &isst_master_camera_position.v[2]);
   return PyInt_FromLong(0);
 }
 
@@ -162,10 +147,8 @@ static PyObject* isst_python_dump(PyObject *self, PyObject* args) {
 
     fprintf(fh, "label: %s\n", string);
     fprintf(fh, "========================\n");
-    fprintf(fh, "camera_position: %f %f %f\n", isst_master_camera_pos.v[0], isst_master_camera_pos.v[1], isst_master_camera_pos.v[2]);
-    fprintf(fh, "origin_ae: %f %f\n", isst_master_origin_azimuth, isst_master_origin_elevation);
+    fprintf(fh, "camera_position: %f %f %f\n", isst_master_camera_position.v[0], isst_master_camera_position.v[1], isst_master_camera_position.v[2]);
     fprintf(fh, "camera_ae: %f %f\n", isst_master_camera_azimuth, isst_master_camera_elevation);
-    fprintf(fh, "spall angle: %f\n", isst_master_spall_angle);
     fprintf(fh, "\n");
 
     fclose(fh);
