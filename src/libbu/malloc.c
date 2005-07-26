@@ -212,11 +212,15 @@ bu_memdebug_check(register char *ptr, const char *str)
 }
 
 
-/*
+/**
  *			B U _ A L L O C
  *
  *  This routine only returns on successful allocation.
  *  We promise never to return a NULL pointer; caller doesn't have to check.
+ *
+ *  Requesting allocation of zero bytes is considered a irrecoverable
+ *  mistake in order to fulfill the non-NULL promise.
+ *
  *  Failure results in bu_bomb() being called.
  *
  *  type is 0 for malloc, 1 for calloc
