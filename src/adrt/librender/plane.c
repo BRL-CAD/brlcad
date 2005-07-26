@@ -112,7 +112,7 @@ void render_plane_work(render_t *render, tie_t *tie, tie_ray_t *ray, TIE_3 *pixe
 
   rd = (render_plane_t *)render->data;
 
-  /* Draw Ballistic Arrow */
+  /* Draw Ballistic Arrow - Blue */
   if(tie_work(&rd->tie, ray, &id, render_arrow_hit, NULL)) {
     pixel->v[0] = 0.0;
     pixel->v[1] = 0.0;
@@ -169,12 +169,13 @@ void render_plane_work(render_t *render, tie_t *tie, tie_ray_t *ray, TIE_3 *pixe
   
 
   if(hit.mesh->flags == 1) {
-    math_vec_set(color, 0.9, 0.3, 0.3);
+    math_vec_set(color, 0.9, 0.2, 0.2);
   } else {
-    math_vec_set(color, 0.8, 0.8, 0.7);
-    math_vec_mul_scalar(color, color, 3.0);
+    /* Mix actual color with gray 8:1 */
+    math_vec_set(color, 0.8, 0.8, 0.8);
+    math_vec_mul_scalar(color, color, 7.0);
     math_vec_add(color, color, hit.mesh->prop->color);
-    math_vec_mul_scalar(color, color, 0.25);
+    math_vec_mul_scalar(color, color, 0.125);
   }
 
 #if 0
