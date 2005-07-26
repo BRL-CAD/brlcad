@@ -407,7 +407,7 @@ genptr_t
 bu_realloc(register genptr_t ptr, unsigned int cnt, const char *str)
 {
 	struct memdebug		*mp=NULL;
-	char	*original_ptr = ptr;
+	char	*original_ptr;
 
 	if ( ! ptr ) {
 	    /* This is so we are compatible with system realloc.
@@ -426,6 +426,10 @@ bu_realloc(register genptr_t ptr, unsigned int cnt, const char *str)
 		cnt = (cnt+2*sizeof(long)-1)&(~(sizeof(long)-1));
 	} else if ( bu_debug&BU_DEBUG_MEM_QCHECK ) {
 		struct memqdebug *mp = ((struct memqdebug *)ptr)-1;
+
+		cnt = (cnt + 2*sizeof(struct memqdebug) - 1)
+		    &(~(sizeof(struct memqdebug)-1));
+
 		if (BU_LIST_MAGIC_WRONG(&(mp->q),MDB_MAGIC)) {
 			fprintf(stderr,"ERROR bu_realloc(x%lx, %s) pointer bad, "
 				"or not allocated with bu_malloc!  Ignored.\n",
@@ -440,6 +444,8 @@ bu_realloc(register genptr_t ptr, unsigned int cnt, const char *str)
 		ptr = (genptr_t)mp;
 		BU_LIST_DEQUEUE(&(mp->q));
 	}
+
+	original_ptr = ptr;
 
 #if defined(MALLOC_NOT_MP_SAFE)
 	bu_semaphore_acquire(BU_SEM_SYSCALL);
