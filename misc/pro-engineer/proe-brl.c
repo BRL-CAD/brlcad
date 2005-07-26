@@ -34,6 +34,7 @@
 #include <math.h>
 #include <string.h>
 #include <wchar.h>
+#include <errno.h>
 #include "ProToolkit.h"
 #include "ProAssembly.h"
 #include "ProMessage.h"
@@ -59,8 +60,6 @@
 #include "vmath.h"
 #include "bu.h"
 #include "bn.h"
-
-extern int errno;
 
 static wchar_t  MSGFIL[] = {'u','s','e','r','m','s','g','.','t','x','t','\0'};
 
