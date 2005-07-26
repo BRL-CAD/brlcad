@@ -10,6 +10,7 @@ entire history of the project is available through CVS.
 --- 2005-08-XX  Release 7.4.1                                      ---
 ----------------------------------------------------------------------
 
+* fixed quick memory debugging bug - Jim Hunt
 * improved brlman relocation - Sean Morrison
 * simultaneous -o and -F options to rt, rtedge, rtxray - Sean Morrison
 
