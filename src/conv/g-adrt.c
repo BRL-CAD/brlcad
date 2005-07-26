@@ -229,7 +229,8 @@ static union tree *leaf_func(struct db_tree_state *tsp,
     vectp_t vp;
     float vec[3];
     int hash, i, n, size;
-    char c, prop_name[256], reg_name[256];
+    char prop_name[256], reg_name[256];
+    unsigned char c;
 
 
     RT_CK_DBTS(tsp);
@@ -283,7 +284,7 @@ static union tree *leaf_func(struct db_tree_state *tsp,
       regmap_lookup(reg_name, tsp->ts_regionid);
 
     /* Display Status */
-    printf("regions processed: %d\r", region_count++);
+    printf("regions processed: %d\r", ++region_count);
     fflush(stdout);
 
     if(i != strlen(reg_name))
