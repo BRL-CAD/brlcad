@@ -223,6 +223,7 @@ This limit is not applied per-view, but rather per-analysis.
 So for example, it is accepted that a thin object might not be hit from one view at all, but hit when shooting from other views.
 .IP
 The default is 1.  This indicates that each region must be intersected by a ray at least once during the analysis.
+If the grid spacing limit is reached, processing will end even if this criteria has not been met.
 .TP
 .B \-P \fR\fIncpu\fR
 Specifies that
@@ -270,39 +271,34 @@ Note that you probably don't want to turn off use_air when asking for various ai
 or 
 .B Contiguous unlike air
 .TP
-.B \-u \fR\fIunits\fR
-Specify the units used when reporting values.  
-If this option is not specified, the current editing units are used.
-This option can be used to override this behavior.
-Possible values include: 
-Volume
-cm cc m^3
-Distance
-Weight
-g, kg, lb
+.B \-u \fR\fIdist,vol,wgt\fR
+Specify the units used when reporting values.  Values are provided in the order 
+\fIdistance\fR, \fIvolume\fR, and \fIweight\fR separated by commas.  For example:
+.B \-u ``cm,cu ft,kg''
+or
+.B \-u ,,kg
+Note that unit values with spaces in their names such as
+.I cu ft
+must be contained in quotes for the shell to keep the values together.
 
+The default units are millimeters, cubic millimeters, and grams.
 .TP
 .B \-V \fR\fIvolume_tolerance[units]\fR
 Specifies a volumetric tolerance value that the three view computations must be within for computation to complete.  
-The default value is 0.5 cc.  For large, complex objets (such as entire vehicles), this value must often be 
-increased to achieve reasonable runtimes (or even completion).  
+If volume calculation is selected and this option is not set, then the tolerance is set to 
+1/10,000 of the volume of the model.
+For large, complex objets (such as entire vehicles), this value might need to be 
+set larger to achieve reasonable runtimes (or even completion).  
 Given the approximate sampling nature of the algorithm, the
 three separate view computations will not usually produce identical results.
-Only one of either
-.B \-T
-or
-.B \-W
-may be specified.  If both are specified, the last one specified on the command line is used.
 .TP
 .B \-W \fR\fIweight_tolerance[units]\fR
 This is like the volume tolerance, \fB\-T\fR, but is applied to the weight computation results,
 not the volume computation results.  
-Only one of 
-.B \-T
-or
-.B \-W
-may be specified.  The last one specified on the command line is used.  
+
 The weight computation tolerance is probably more appropriate when doing whole-vehicle analysis.
+If weight computation is selected, it is set to a value equal to the weight of an object 1/100 
+the size of the model, which is made of the most dense material in the table.
 
 .SH EXAMPLES
 .P
