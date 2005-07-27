@@ -10,6 +10,22 @@ entire history of the project is available through CVS.
 --- 2005-08-XX  Release 7.4.1                                      ---
 ----------------------------------------------------------------------
 
+Continuing with the impressive ADRT tool suite being provided by
+Justin Shumaker is the addition of the Interactive Shot Selection Tool
+(ISST).  Using ISST, you can spin large facetized models around in
+real-time, slice through them with rays, and examine the geometric
+components along a given path.  The tool will take advantage of
+clusters and SMP hardware similar to RISE, providing a master job
+manager, a slave compute daemon for network distributed processing,
+and a client for interacting with and viewing the models.
+
+This release also includes the addition of a new geometry "quality
+analysis" tool called g_qa.  This tool is a new tool that combines
+some of the features of rtweight and g_lint, providing a robust means
+for computing the weight and volume of objects while also allowing a
+means to report overlaps, air gaps, external air regions, bounding box
+dimensions, and more.
+
 * added manual page for remapid - John Anderson
 * fixed quick memory debugging bug - Jim Hunt
 * improved brlman relocation - Sean Morrison
