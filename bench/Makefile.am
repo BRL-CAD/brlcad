@@ -22,7 +22,7 @@ EXTRA_DIST = \
 	viewdiff.sh
 
 benchmark: run.sh
-	cp run.sh benchmark
+	cp $(top_srcdir)/bench/run.sh benchmark
 
 .PHONY : run bench
 
