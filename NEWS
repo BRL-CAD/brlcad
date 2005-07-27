@@ -13,6 +13,8 @@ entire history of the project is available through CVS.
 * added manual page for remapid - John Anderson
 * fixed quick memory debugging bug - Jim Hunt
 * improved brlman relocation - Sean Morrison
+* added g_qa geometry quality analysis tool - Lee Butler
+* added adrt interactive shot selection tool - Justin Shumaker
 * simultaneous -o and -F options to rt, rtedge, rtxray - Sean Morrison
 
 ----------------------------------------------------------------------
