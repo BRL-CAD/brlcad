@@ -2,6 +2,7 @@
 
 bin_PROGRAMS = \
 	g_lint \
+	g_qa \
 	g_diff \
 	solshoot \
 	testfree
@@ -11,6 +12,9 @@ g_diff_LDADD = ${LIBRT} ${TCL}
 
 g_lint_SOURCES = g_lint.c
 g_lint_LDADD = ${LIBRT}  
+
+g_qa_SOURCES = g_qa.c
+g_qa_LDADD = ${LIBRT}  
 
 solshoot_SOURCES = solshoot.c
 solshoot_LDADD = ${LIBRT} 
