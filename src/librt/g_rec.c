@@ -548,6 +548,12 @@ hit:
 			nhits--;
 			goto hit;
 		}
+		k1 = hits[0].hit_dist - hits[2].hit_dist;
+		if( NEAR_ZERO( k1, tol_dist ) )  {
+			if(RT_G_DEBUG&DEBUG_ARB8)bu_log("rt_rec_shot(%s): 3 hits, collapsing 1&2\n", stp->st_name);
+			nhits--;
+			goto hit;
+		}
 	}
 	/*  nhits >= 3 */
 	bu_log("rt_rec_shot(%s): %d unique hits?!?  %g, %g, %g, %g\n",
