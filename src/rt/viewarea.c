@@ -662,7 +662,8 @@ view_end(struct application *ap)
 
 	if (cell) {
 	    bu_free(cell, "view_end area free");
-	    cell = (struct area *)rp->reg_name = (genptr_t)NULL;
+	    cell = (genptr_t)NULL;
+	    rp->reg_name = (genptr_t)NULL;
 	}
     }
 
