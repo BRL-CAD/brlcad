@@ -346,15 +346,14 @@ void tienet_slave_daemon(int port) {
     /* send version key, master will respond whether to continue or not */
     tienet_send(master_socket, &tienet_slave_ver_key, sizeof(int), tienet_endian);
 
-    /* If version mismatch then exit */
+    /* If version mismatch then exit, under normal conditions we get TN_OP_OKAY */
     tienet_recv(master_socket, &op, sizeof(short), tienet_endian);
     if(op == TN_OP_COMPLETE)
       return;
 
-    /* Fetch Work Unit */
+    /* Request Work Unit */
     op = TN_OP_REQWORK;
     tienet_send(master_socket, &op, sizeof(short), tienet_endian);
-
 
     data_max = 0;
     data = NULL;
@@ -388,6 +387,7 @@ void tienet_slave_daemon(int port) {
         } else if(op == TN_OP_PREP) {
           /* This can be done better */
 
+printf("PREP_A\n");
           /* Clean and Reinitialize TIE */
           tienet_slave_fcb_free();
 
@@ -396,6 +396,11 @@ void tienet_slave_daemon(int port) {
             close(master_socket);
             exit(0);
           }
+printf("PREP_B\n");
+
+          /* Now that we've been updated, Request a Work Unit */
+          op = TN_OP_REQWORK;
+          tienet_send(master_socket, &op, sizeof(short), tienet_endian);
         } else {
           disconnect += tienet_recv(master_socket, &size, sizeof(int), tienet_endian);
 

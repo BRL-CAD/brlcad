@@ -464,6 +464,8 @@ void* isst_master_networking(void *ptr) {
                   overlay.camera_position = isst_master_camera_position;
                   overlay.camera_azimuth = isst_master_camera_azimuth;
                   overlay.camera_elevation = isst_master_camera_elevation;
+                  overlay.compute_nodes = tienet_master_active_slaves;
+                  overlay.scale = isst_master_scale;
                   sprintf(overlay.resolution, "%dx%d", db.env.img_w, db.env.img_h);
                   overlay.controller = sock->controller;
 

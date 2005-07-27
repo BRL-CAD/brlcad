@@ -8,6 +8,9 @@ typedef struct isst_overlay_data_s {
   tfloat camera_elevation;
   char resolution[12];
   char controller;
+  short compute_nodes;
+  tfloat scale;
 } isst_overlay_data_t;
+
 
 #endif

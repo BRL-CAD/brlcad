@@ -495,7 +495,7 @@ void common_unpack_mesh(common_db_t *db, int socknum, tie_t *tie) {
       vlist = (TIE_3 *)realloc(vlist, vmax * sizeof(TIE_3));
     }
     tienet_recv(socknum, vlist, vnum * sizeof(TIE_3), 0);
-    ind +=  vnum * sizeof(TIE_3);
+    ind += vnum * sizeof(TIE_3);
 
     /* Faces */
     tienet_recv(socknum, &fnum, sizeof(int), tienet_endian);
