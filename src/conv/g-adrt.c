@@ -51,7 +51,7 @@
 #ifndef HUGE
 #define HUGE 3.40282347e+38F
 #endif
-#define ADRT_GEOMETRY_REVISION 0
+#define ADRT_GEOMETRY_REVISION 1
 
 
 typedef struct property_s {
@@ -331,9 +331,26 @@ static union tree *leaf_func(struct db_tree_state *tsp,
       fwrite(vec, sizeof(float), 3, adrt_fh);
     }
 
-    /* Pack number of faces */
-    fwrite(&bot->num_faces, sizeof(int), 1, adrt_fh);
-    fwrite(bot->faces, sizeof(int)*3, bot->num_faces, adrt_fh);
+    if(bot->num_faces < 1<<16) {
+      unsigned short ind;
+
+      c = 0; /* using unsigned shorts */
+      fwrite(&c, 1, 1, adrt_fh);
+
+      /* Pack number of faces */
+      ind = bot->num_faces;
+      fwrite(&ind, sizeof(unsigned short), 1, adrt_fh);
+      for(i = 0; i < 3 * bot->num_faces; i++) {
+        ind = bot->faces[i];
+        fwrite(&ind, sizeof(unsigned short), 1, adrt_fh);
+      }
+    } else {
+      c = 1; /* using ints */
+      fwrite(&c, 1, 1, adrt_fh);
+
+      fwrite(&bot->num_faces, sizeof(int), 1, adrt_fh);
+      fwrite(bot->faces, sizeof(int), 3*bot->num_faces, adrt_fh);
+    }
 
     hash = db_dirhash( dp->d_namep );
 
