@@ -179,7 +179,7 @@ void tienet_slave_worker(int port, char *host) {
   if(op == TN_OP_COMPLETE)
     return;
 
-  /* Fetch Work Unit */
+  /* Request Work Unit */
   op = TN_OP_REQWORK;
   tienet_send(slave_socket, &op, sizeof(short), tienet_endian);
 
@@ -217,6 +217,10 @@ void tienet_slave_worker(int port, char *host) {
         close(slave_socket);
         exit(0);
       }
+
+      /* Now that we've been updated, Request a Work Unit */
+      op = TN_OP_REQWORK;
+      tienet_send(slave_socket, &op, sizeof(short), tienet_endian);
     } else {
       tienet_recv(slave_socket, &size, sizeof(int), tienet_endian);
       if(size > data_max) {
@@ -387,7 +391,6 @@ void tienet_slave_daemon(int port) {
         } else if(op == TN_OP_PREP) {
           /* This can be done better */
 
-printf("PREP_A\n");
           /* Clean and Reinitialize TIE */
           tienet_slave_fcb_free();
 
@@ -396,7 +399,6 @@ printf("PREP_A\n");
             close(master_socket);
             exit(0);
           }
-printf("PREP_B\n");
 
           /* Now that we've been updated, Request a Work Unit */
           op = TN_OP_REQWORK;
@@ -414,7 +416,6 @@ printf("PREP_B\n");
 
           if(!disconnect)
             tienet_slave_fcb_work(&tie, data, size, &res_buf, &res_len);
-
 
           /* Send Result Back, length of: result + op_code + rays_fired + result_length + compression_length */
           if(res_len+sizeof(short)+sizeof(uint64_t)+sizeof(int)+sizeof(long) > data_max) {

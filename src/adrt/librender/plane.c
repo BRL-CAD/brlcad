@@ -84,6 +84,10 @@ void render_plane_init(render_t *render, TIE_3 ray_pos, TIE_3 ray_dir) {
 
 
 void render_plane_free(render_t *render) {
+  render_plane_t *d;
+
+  d = (render_plane_t *)render->data;
+  tie_free(&d->tie);
   free(render->data);
 }
 

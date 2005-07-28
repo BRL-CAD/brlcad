@@ -495,19 +495,19 @@ static void tie_build_tree(tie_t *tie, tie_bsp_t *node, int depth, TIE_3 min, TI
 #endif
 
   /* Allocate 2 children nodes for the parent node */
-  node->data = (void*)malloc(sizeof(tie_bsp_t)*2);
+  node->data = (void *)malloc(2 * sizeof(tie_bsp_t));
 
   ((tie_bsp_t *)(node->data))[0].data = malloc(sizeof(tie_geom_t));
   ((tie_bsp_t *)(node->data))[1].data = malloc(sizeof(tie_geom_t));
 
   /* Initialize Triangle List */
-  child[0] = ((tie_geom_t *)(((tie_bsp_t*)(node->data))[0].data));
-  child[1] = ((tie_geom_t *)(((tie_bsp_t*)(node->data))[1].data));
+  child[0] = ((tie_geom_t *)(((tie_bsp_t *)(node->data))[0].data));
+  child[1] = ((tie_geom_t *)(((tie_bsp_t *)(node->data))[1].data));
 
-  child[0]->tri_list = (tie_tri_t**)malloc(sizeof(tie_tri_t*) * node_geom_data->tri_num);
+  child[0]->tri_list = (tie_tri_t **)malloc(sizeof(tie_tri_t *) * node_geom_data->tri_num);
   child[0]->tri_num = 0;
 
-  child[1]->tri_list = (tie_tri_t**)malloc(sizeof(tie_tri_t*) * node_geom_data->tri_num);
+  child[1]->tri_list = (tie_tri_t **)malloc(sizeof(tie_tri_t *) * node_geom_data->tri_num);
   child[1]->tri_num = 0;
 
 

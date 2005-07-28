@@ -498,15 +498,52 @@ void common_unpack_mesh(common_db_t *db, int socknum, tie_t *tie) {
     ind += vnum * sizeof(TIE_3);
 
     /* Faces */
-    tienet_recv(socknum, &fnum, sizeof(int), tienet_endian);
-    ind += sizeof(int);
-    if(fnum > fmax) {
-      fmax = fnum;
-      flist = (int *)realloc(flist, fmax * 3 * sizeof(int));
-      tlist = (TIE_3 *)realloc(tlist, fmax * 3 * sizeof(TIE_3));
+    /* Determine short or int based indices */
+    tienet_recv(socknum, &c, 1, 0);
+    ind += 1;
+
+    if(c) {
+      tienet_recv(socknum, &fnum, sizeof(int), tienet_endian);
+      ind += sizeof(int);
+
+      if(fnum > fmax) {
+        fmax = fnum;
+        flist = (int *)realloc(flist, fmax * 3 * sizeof(int));
+        tlist = (TIE_3 *)realloc(tlist, fmax * 3 * sizeof(TIE_3));
+      }
+      tienet_recv(socknum, flist, fnum * 3 * sizeof(int), 0);
+      ind += fnum * 3 * sizeof(int);
+    } else {
+      unsigned short sfnum, sind[144];
+      int j, n;
+
+      tienet_recv(socknum, &sfnum, sizeof(unsigned short), tienet_endian);
+      ind += sizeof(unsigned short);
+
+      fnum = sfnum;
+      if(fnum > fmax) {
+        fmax = fnum;
+        flist = (int *)realloc(flist, fmax * 3 * sizeof(int));
+        tlist = (TIE_3 *)realloc(tlist, fmax * 3 * sizeof(TIE_3));
+      }
+
+      i = 0;
+      while(i < fnum) {
+        n = fnum - i > 48 ? 48 : fnum - i;
+        tienet_recv(socknum, &sind, 3 * n * sizeof(unsigned short), 0);
+
+        for(j = 0; j < n; j++) {
+          flist[3*(i+j) + 0] = sind[3*j + 0];
+          flist[3*(i+j) + 1] = sind[3*j + 1];
+          flist[3*(i+j) + 2] = sind[3*j + 2];
+        }
+
+        i += n;
+      }
+
+
+      ind += fnum * 3 * sizeof(unsigned short);
     }
-    tienet_recv(socknum, flist, fnum * 3 * sizeof(int), 0);
-    ind += fnum * 3 * sizeof(int);
 
     /* Allocate memory for ADRT triangles */
     db->mesh_list[db->mesh_num-1]->tri_num = fnum;

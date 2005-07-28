@@ -66,6 +66,7 @@ typedef struct tienet_master_socket_s {
   int idle;	/* When a slave has finished a work unit and there's nothing left for it to work on */
   int prep;	/* 1 == needs new prep data */
   int num;
+  pthread_t thread; /* Thread for each socket used to feed it prep data */
   tienet_master_data_t mesg;	/* Used for a broadcast message */
   tienet_master_data_t work;	/* The work unit currently being processed */
   struct tienet_master_socket_s *prev;
@@ -84,6 +85,7 @@ uint64_t			tienet_master_get_rays_fired(void);
 void				tienet_master_begin(void);
 void				tienet_master_end(void);
 void				tienet_master_wait(void);
+void*				tienet_master_prep_thread(void *ptr);
 
 void				tienet_master_connect_slaves(fd_set *readfds);
 void*				tienet_master_listener(void *ptr);
@@ -127,6 +129,7 @@ void				*tienet_master_res_buf;
 int				tienet_master_res_max;
 pthread_mutex_t			tienet_master_send_mut;
 pthread_mutex_t			tienet_master_push_mut;
+pthread_mutex_t			tienet_master_broadcast_mut;
 
 #if TN_COMPRESSION
 void				*tienet_master_comp_buf;
@@ -194,6 +197,7 @@ void tienet_master_init(int port, void fcb_result(void *res_buf, int res_len), c
   tienet_sem_init(&tienet_master_sem_out, 0);
   pthread_mutex_init(&tienet_master_send_mut, 0);
   pthread_mutex_init(&tienet_master_push_mut, 0);
+  pthread_mutex_init(&tienet_master_broadcast_mut, 0);
   
   /* Start the Listener as a Thread */
   pthread_create(&thread, NULL, tienet_master_listener, NULL);
@@ -323,6 +327,19 @@ void tienet_master_end() {
 
 void tienet_master_wait() {
   tienet_sem_wait(&tienet_master_sem_app);
+}
+
+
+void* tienet_master_prep_thread(void *ptr) {
+  short op;
+  tienet_master_socket_t *sock;
+
+  sock = (tienet_master_socket_t *)ptr;
+  op = TN_OP_PREP;
+  tienet_send(sock->num, &op, sizeof(short), 0);
+  tienet_send(sock->num, &tienet_master_app_size, sizeof(int), 0);
+  tienet_send(sock->num, tienet_master_app_data, tienet_master_app_size, 0);
+  return(0);
 }
 
 
@@ -574,11 +591,8 @@ void* tienet_master_listener(void *ptr) {
               case TN_OP_REQWORK:
                 /* If application/prep data is stale, send latest data */
                 if(sock->prep) {
-                  op = TN_OP_PREP;
-                  tienet_send(sock->num, &op, sizeof(short), 0);
-                  tienet_send(sock->num, &tienet_master_app_size, sizeof(int), 0);
-                  tienet_send(sock->num, tienet_master_app_data, tienet_master_app_size, 0);
                   sock->prep = 0;
+                  pthread_create(&sock->thread, NULL, tienet_master_prep_thread, sock);
                 } else {
                   tienet_master_send_work(sock);
                 }
@@ -638,7 +652,11 @@ void tienet_master_send_work(tienet_master_socket_t *sock) {
     /* Increment counter for work units out */
     tienet_sem_post(&tienet_master_sem_out);
 
-    /* Check to see if a broadcast message is sitting in the queue */
+    /*
+    * Check to see if a broadcast message is sitting in the queue.
+    * The mutex prevents a read and write from occuring at the same time.
+    */
+    pthread_mutex_lock(&tienet_master_broadcast_mut);
     if(sock->mesg.size) {
       op = TN_OP_MESSAGE;
       tienet_send(sock->num, &op, sizeof(short), 0);
@@ -649,6 +667,7 @@ void tienet_master_send_work(tienet_master_socket_t *sock) {
       sock->mesg.data = NULL;
       sock->mesg.size = 0;
     }
+    pthread_mutex_unlock(&tienet_master_broadcast_mut);
 
 
     /* Send Work Unit */
@@ -795,6 +814,9 @@ void tienet_master_shutdown() {
 void tienet_master_broadcast(void *mesg, int mesg_len) {
   tienet_master_socket_t *socket;
 
+  /* Prevent a Read and Write of the broadcast from occuring at the same time */
+  pthread_mutex_lock(&tienet_master_broadcast_mut);
+
   /* Send a message to each available socket */
   for(socket = tienet_master_socket_list; socket; socket = socket->next) {
     /* Only if not master socket */
@@ -804,6 +826,8 @@ void tienet_master_broadcast(void *mesg, int mesg_len) {
       memcpy(socket->mesg.data, mesg, mesg_len);
     }
   }
+
+  pthread_mutex_unlock(&tienet_master_broadcast_mut);
 }
 
 

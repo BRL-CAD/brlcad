@@ -255,7 +255,7 @@ void* isst_observer_networking(void *ptr) {
       util_display_text(string, 0, 0, UTIL_JUSTIFY_RIGHT, UTIL_JUSTIFY_TOP);
 
       /* Multiply by 100 to put this number into a more weidly domain */
-      sprintf(string, "scale: %.2f", overlay.scale * 100.0);
+      sprintf(string, "scale: %.3f", overlay.scale * 100.0);
       util_display_text(string, 0, 1, UTIL_JUSTIFY_RIGHT, UTIL_JUSTIFY_TOP);
 
       sprintf(string, "res: %s", overlay.resolution);
