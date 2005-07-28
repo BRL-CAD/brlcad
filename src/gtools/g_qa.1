@@ -97,7 +97,7 @@ a		adjacent different air
 .br
 b		bounding box dimensions
 .br
-e		external air
+e		exposed air
 .br
 g		gaps/voids
 .br
@@ -122,7 +122,7 @@ When these different types of air adjoin each other, it is generally considered 
 Reports the dimensions of an axis-aligned box which fully encloses the 
 \fIobjects\fR.
 
-.B External air:
+.B Exposed air:
 This causes checks to be made to see if the ray encounters air regions before (or after all) solid objects.
 Typically, only the air inside a building or vehicle is modeled if the purpose of the model is to support analysis of
 that single structure/vehicle.
@@ -134,7 +134,10 @@ This reports when there is more than
 (see the
 .B \-t
 option below)
-between objects on the ray path.
+between objects on the ray path.  Note that not all gaps are errors.  
+For example, gaps between a wheel and a fender are expected (unless external air is modeled).
+Typically, users should perform gap analysis on contained subsets of a model (such as passenger compartments)
+rather than on whole vehicles.
 
 .B Overlaps:
 are two regions which occupy the same space.  
@@ -156,15 +159,18 @@ specified on the command line.
 Computes the weight of the 
 .I objects
 specified on the command line.
-
 .TP
 .B \-a \fR\fIazimuth_deg\fR
+.B Not Implemented.
+.br
 Sets a rotation (in degrees) of the coordinate system by a given amount about the Z axis.  
 The default is 0. 
 See also:
 .B \-e
 .TP
 .B \-e \fR\fIelevation_deg\fR
+.B Not Implemented.
+.br
 Sets a rotation (in degrees) of the coordinate system by a given elevation from the XY plane (rotation about X axis?).  
 The default is 0.
 See also
@@ -192,6 +198,9 @@ The default values are 50.0 mm and 0.5 mm, which is equivalent to specifying:
 .B \-g 50.0mm,0.5mm
 .TP
 .B \-G
+.br
+.B Not Implemented.
+.br
 Specifies that the program should create new 
 .I assembly combinations
 in the geometry database to represent the overlap pairs.  
@@ -234,6 +243,11 @@ This option exists primarily to reduce the number of
 computation threads from the machine maximum.
 Note that specifying more CPUs than are present on the machine does not increase
 the number of computation threads.  
+.TP
+.B \-r
+Indicates that 
+.I g_qa
+should print per-region statistics (weight, volume) as well as the values for the objects specified on the command line.
 .TP
 .B \-S \fR\fIsamples_per_axis_min\fR
 Specifies that the grid spacing will be initially refined so that at least

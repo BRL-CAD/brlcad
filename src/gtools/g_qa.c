@@ -31,7 +31,7 @@
 #define SEM_WORK RT_SEM_LAST
 
 /* declarations to support use of getopt() system call */
-char *options = "A:a:de:f:g:Gn:P:r:S:s:t:U:u:V:W:";
+char *options = "A:a:de:f:g:Gn:P:rS:s:t:U:u:V:W:";
 extern char *optarg;
 extern int optind, opterr, getopt();
 
@@ -68,6 +68,7 @@ double overlap_tolerance;
 double volume_tolerance = -1.0;
 double weight_tolerance = -1.0;
 vect_t grams;
+int print_per_region_stats;
 
 int use_air = 1;
 
@@ -96,8 +97,14 @@ struct state {
     vect_t v_dir;		/* direction of V vector for "current view" */
     struct rt_i *rtip;
 };
-long steps[3]; /* # of "grid_size" steps to take along each axis (X,Y,Z) to cover the face of the bounding rpp? */
-vect_t span; /* How much space does the geometry span in each of X,Y,Z directions */
+/* # of "grid_size" steps to take along each axis (X,Y,Z) 
+ * to cover the face of the bounding rpp?
+ */
+long steps[3]; 
+
+
+/* How much space does the geometry span in each of X,Y,Z directions */
+vect_t span; 
 
 /* the entries in the density table */
 struct density_entry {
@@ -241,6 +248,9 @@ static const struct cvt_tab units_tab[3][40] = {
     }
 };
 
+#define LINE 0
+#define VOL 1
+#define WGT 2
 static const struct cvt_tab *units[3] = { 
     &units_tab[0][0],	/* linear */
     &units_tab[1][0],	/* volume */
@@ -433,6 +443,9 @@ parse_args(int ac, char *av[])
 	    /* cannot ask for more cpu's than the machine has */
 	    if ((c=atoi(optarg)) > 0 && c <= max_cpus ) ncpu = c;
 	    break;	
+	case 'r'	:
+	    print_per_reigon_stats = 1;
+	    break;
 	case 'S'	:
 	    if (sscanf(optarg, "%lg", &a) != 1 || a <= 0.0) {
 		bu_log("error in specifying minimum samples per model axis: \"%s\"\n", optarg);
@@ -494,8 +507,9 @@ parse_args(int ac, char *av[])
 
 		bu_log("Units:\n");
 		for (i=0 ; i < 3 ; i++) {
-		    bu_log("\t%s: %s\n", dim[i], units[i]->name);
+		    bu_log(" %s: %s", dim[i], units[i]->name);
 		}
+		bu_log("\n");
 		break;
 	    }
 
@@ -1055,8 +1069,8 @@ compute_results(struct state *state)
     bu_log("\t");
     if (analysis_flags & ANALYSIS_VOLUME) {
 	bu_log(" volume %lg %s",
-	       state->volume[state->i_axis] / units[1]->val,
-	       units[1]->name
+	       state->volume[state->i_axis] / units[VOL]->val,
+	       units[VOL]->name
 	       );
     }
 
@@ -1064,8 +1078,8 @@ compute_results(struct state *state)
 	grams[state->i_axis] = state->densityLen[state->i_axis]*gridSpacing*gridSpacing;
 
 	bu_log(" Weight %lg %s",
-	       grams[state->i_axis] / units[2]->val,
-	       units[2]->name);
+	       grams[state->i_axis] / units[WGT]->val,
+	       units[WGT]->name);
     }
     bu_log("\n");
 }
@@ -1141,10 +1155,10 @@ options_prep(struct rt_i *rtip, vect_t span)
 
     if (newGridSpacing != gridSpacing) {
 	bu_log("Grid spacing %g %s is larger than model bounding box axis\n",
-	       gridSpacing / units[0]->val, units[0]->name);
+	       gridSpacing / units[LINE]->val, units[LINE]->name);
 
 	bu_log("Adjusted to %g %s to get %g samples per model axis\n",
-	       newGridSpacing / units[0]->val, units[0]->name, Samples_per_model_axis);
+	       newGridSpacing / units[LINE]->val, units[LINE]->name, Samples_per_model_axis);
 
 	gridSpacing = newGridSpacing;
     }
@@ -1154,7 +1168,7 @@ options_prep(struct rt_i *rtip, vect_t span)
     if (analysis_flags & ANALYSIS_VOLUME) {
 	if (volume_tolerance == -1.0) {
 	    volume_tolerance = span[X] * span[Y] * span[Z] * 0.0001;
-	    bu_log("setting volume tolerance to %g %s\n", volume_tolerance / units[2]->val, units[2]->name);
+	    bu_log("setting volume tolerance to %g %s\n", volume_tolerance / units[VOL]->val, units[VOL]->name);
 	} else {
 	    bu_log("volume tolerance   %g\n", volume_tolerance);
 	}
@@ -1292,7 +1306,8 @@ terminate_check(struct state *state)
 	delta = hi - low;
 
 	if (delta < volume_tolerance) {
-	    bu_log("volume computations agree within %g mm^3 which is within tolerance %g mm^3\n", delta, volume_tolerance);
+	    bu_log("volume computations agree within %g mm^3\nwhich is within tolerance %g mm^3\n",
+		   delta, volume_tolerance);
 	    return 0;
 	}
     }
@@ -1307,38 +1322,154 @@ terminate_check(struct state *state)
     return 1;
 }	
 
+/* summary data structure for objects specified on command line */
+struct rpt_tab {
+    char *name;
+    double volume[3];
+    double weight[3];
+};
+
+int
+find_cmd_line_obj(struct rpt_tab *obj_rpt, int tot, char *name)
+{
+    int i;
+
+    for (i=0 ; i < tot ; i++) {
+	if (!strcmp(obj_rpt[i].name, name)) {
+	    return i;
+	}
+    }
+    bu_log("%s Didn't find object named \"%s\"\n", BU_FLSTR, name);
+    bu_bomb("");
+}
+
 /*
  *	summary_reports
  *
  */
 void
-summary_reports(struct state *state, int start, int ac, char *av[], struct rt_i *rtip)
+summary_reports(struct state *state, int start, int ac, char *av[])
 {
-    int i;
+    int i, tot;
     struct region *regp;
+    struct rpt_tab  *obj_rpt;
+   char *p;
+#define BSIZE 1024
+    char region_name[BSIZE];
+    double gss = gridSpacing * gridSpacing;
+    vect_t u;
+    int region_number;
+    int max_name_len = 0;
+    struct rt_i *rtip = state->rtip;
+
+    /* build data structures for the list of
+     * objects the user specified on the command line
+     */
+    obj_rpt = bu_calloc(sizeof(struct rpt_tab), ac-start, "report tables");
+    start++;
+    tot = ac - start;
+    for (i=0 ; i < tot ; i++) {
+	obj_rpt[i].name = av[start+i];
+    } 
 
 
-    /* just some checking on names */
-    bu_log("regions:\n");
-    RT_CK_RTI(rtip);
+    /* pre-compute some values for units conversion */
+    u[LINE] = 1.0/units[LINE]->val;
+    u[VOL] = 1.0/units[VOL]->val;
+    u[WGT] = 1.0/units[WGT]->val;
+
+    /* Find out what the longest region name is */
     for( BU_LIST_FOR( regp, region, &(rtip->HeadRegion) ) )  {
-	RT_CK_REGION(regp);
-
-	bu_log("\t%s\n", regp->reg_name);
+	int m = strlen(regp->reg_name);
+	if (m > max_name_len) max_name_len = m;
     }
 
 
     if (analysis_flags & ANALYSIS_VOLUME) {
-	double avg_vol = state->volume[0] + state->volume[1] + state->volume[2] / 3.0;
 	
-	bu_log("average total volume: %g %s\n", avg_vol / units[1]->val, units[1]->name);
+	bu_log("--- Volume  ---\n  regions:\n");
+	bu_log("\t%*s  Volume (per view) in %s\n", -max_name_len, "Name", units[VOL]->name );
+	for( BU_LIST_FOR( regp, region, &(rtip->HeadRegion) ) )  {
+	    double *v =  ((struct per_region_data *)regp->reg_udata)->len;
+
+	    RT_CK_REGION(regp);
+
+	    /* extract the top-level object for the given region from the name
+	     * ensure null termination of the copied string
+	     */
+	    strncpy(region_name, &regp->reg_name[1], sizeof(region_name)-1);
+	    region_name[sizeof(region_name)-1] = '\0';
+	    if (p = strchr(region_name, '/'))   *p = '\0';
+	    region_number = find_cmd_line_obj(obj_rpt, tot, region_name);
+
+	    /* convert linear to volume estimate */
+	    VSCALE(v, v, gss);
+	    VSCALE(v, v, u[VOL]); /* convert to user units */
+
+	    /* find the top level object for this region, and add the volume to
+	     * the accumulated volume for that object
+	     */
+
+	    VADD2(obj_rpt[region_number].volume, obj_rpt[region_number].volume, v);
+
+	    if (print_per_region_stats)
+		bu_log("\t%*s (%g %g %g)\n", -max_name_len, regp->reg_name, V3ARGS(v));
+	}
+
+	/* print the volume summary */
+	bu_log("  objects:\n");
+	bu_log("\t%*s  Volume (per view) in %s\n", -max_name_len, "Name", units[VOL]->name );
+	for (i=0 ; i < tot ; i++) {
+	    bu_log("\t%*s %g %g %g\n", -max_name_len,
+		   obj_rpt[i].name,
+		   V3ARGS(obj_rpt[i].volume));
+
+	}
+
+	double avg_vol = state->volume[0] + state->volume[1] + state->volume[2] / 3.0;
+	bu_log("  Average total volume: %g %s\n", avg_vol / units[VOL]->val, units[VOL]->name);
     }
     if (analysis_flags & ANALYSIS_WEIGHT) {
-	double avg_densityLen = state->densityLen[0] + state->densityLen[1] + state->densityLen[2] / 3.0;
-	double volume = avg_densityLen * gridSpacing * gridSpacing;
+	bu_log("--- Weight ---\n  regions:\n");
+	bu_log("\t%*s  Weight (per view) %s\n", -max_name_len, "Name", units[WGT]->name );
+	for( BU_LIST_FOR( regp, region, &(rtip->HeadRegion) ) )  {
+	    double *w = ((struct per_region_data *)regp->reg_udata)->lenDensity;
 
-	bu_log("average total weight: %g %s\n", volume * units[2]->val, units[2]->name);
+	    RT_CK_REGION(regp);
+
+	    /* extract the top-level object for the given region from the name
+	     * ensure null termination of the copied string
+	     */
+	    strncpy(region_name, &regp->reg_name[1], sizeof(region_name)-1);
+	    region_name[sizeof(region_name)-1] = '\0';
+	    if (p = strchr(region_name, '/'))   *p = '\0';
+	    region_number = find_cmd_line_obj(obj_rpt, tot, region_name);
+
+	    /* convert linear to volume estimate */
+	    VSCALE(w, w, gss);
+	    VSCALE(w, w, u[WGT]); /* compute weight in user units */
+
+	    VADD2(obj_rpt[region_number].weight, obj_rpt[region_number].weight, w);
+
+	    if (print_per_region_stats)
+		bu_log("\t%*s Weight (%g %g %g)\n", -max_name_len, regp->reg_name, V3ARGS(w));
+	}
+	/* print the weight summary */
+	bu_log("  objects:\n");
+	bu_log("\t%*s  Weight (per view) %s\n", -max_name_len, "Name", units[WGT]->name );
+	for (i=0 ; i < tot ; i++) {
+	    bu_log("\t%*s %g %g %g  %s\n", -max_name_len,
+		   obj_rpt[i].name,
+		   V3ARGS(obj_rpt[i].weight),
+		   units[WGT]->name);
+	}
+
+	double avg_densityLen = state->densityLen[0] + state->densityLen[1] + state->densityLen[2] / 3.0;
+	double weight = avg_densityLen * gridSpacing * gridSpacing;
+
+	bu_log("  Average total weight: %g %s\n", weight / units[WGT]->val);
     }
+
     if (analysis_flags & ANALYSIS_OVERLAPS) report_overlaps();
     if (analysis_flags & ANALYSIS_ADJ_AIR) { }
     if (analysis_flags & ANALYSIS_GAP) { }
@@ -1458,7 +1589,7 @@ main(ac,av)
 
     } while (terminate_check(&state));
 
-    summary_reports(&state, start_objs, ac, av, rtip);
+    summary_reports(&state, start_objs, ac, av);
 
     return(0);
 }
