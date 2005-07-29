@@ -57,6 +57,7 @@
 typedef struct property_s {
   char name[256];
   float color[3];
+  float emission;
 } property_t;
 
 
@@ -180,6 +181,11 @@ static int reg_start_func(struct db_tree_state *tsp,
     prop_list[prop_num].color[0] = color[0] / 255.0;
     prop_list[prop_num].color[1] = color[1] / 255.0;
     prop_list[prop_num].color[2] = color[2] / 255.0;
+    if(strstr(bu_vls_strgrab((struct vu_vls *)&(combp->shader)), "light")) {
+      prop_list[prop_num].emission = 1.0;
+    } else {
+      prop_list[prop_num].emission = 0.0;
+    }
     prop_num++;
   }
 /*    printf("reg_start: -%s- [%d,%d,%d]\n", name, combp->rgb[0], combp->rgb[1], combp->rgb[2]); */
@@ -577,7 +583,7 @@ int main(int argc, char *argv[]) {
   fprintf(adrt_fh, "textures_file,textures.db\n");
   fprintf(adrt_fh, "frames_file,frames.db\n");
   fprintf(adrt_fh, "image_size,640,480,80,80\n");
-  fprintf(adrt_fh, "rendering_method,phong\n");
+  fprintf(adrt_fh, "rendering_method,path,128\n");
 
   fclose(adrt_fh);
 
@@ -588,6 +594,8 @@ int main(int argc, char *argv[]) {
   for(i = 0; i < prop_num; i++) {
     fprintf(adrt_fh, "properties,%s\n", prop_list[i].name);
     fprintf(adrt_fh, "color,%f,%f,%f\n", prop_list[i].color[0], prop_list[i].color[1], prop_list[i].color[2]);
+    if(prop_list[i].emission > 0.0)
+      fprintf(adrt_fh, "emission,%f\n", prop_list[i].emission);
   }
   fclose(adrt_fh);
 
