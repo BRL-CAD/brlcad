@@ -120,6 +120,9 @@ void common_env_read(common_env_t *env, char *fpath) {
       } else if(!strcmp(token, "phong")) {
         env->rm = RENDER_METHOD_PHONG;
         render_phong_init(&env->render);
+      } else if(!strcmp(token, "depth")) {
+        env->rm = RENDER_METHOD_DEPTH;
+        render_depth_init(&env->render);
       } else if(!strcmp(token, "path")) {
         env->rm = RENDER_METHOD_PATH;
         token = strtok(NULL, ",");

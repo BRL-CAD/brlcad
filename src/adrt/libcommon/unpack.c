@@ -146,6 +146,10 @@ void common_unpack_env(common_db_t *db, int socknum) {
               render_phong_init(&db->env.render);
               break;
 
+            case RENDER_METHOD_DEPTH:
+              render_depth_init(&db->env.render);
+              break;
+
             case RENDER_METHOD_PATH:
               {
                 int samples;

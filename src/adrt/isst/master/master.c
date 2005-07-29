@@ -779,7 +779,7 @@ void isst_master_process_events(SDL_Event *event_queue, int event_num, isst_mast
             vec.v[2] = 0;
             math_vec_unitize(vec);
 
-            isst_master_camera_azimuth = fmod(vec.v[1] < 0 ? 180.0 + acos(vec.v[0])*math_rad2deg : acos(vec.v[0])*math_rad2deg, 360.0);
+            isst_master_camera_azimuth = fmod(180 + (vec.v[1] < 0 ? 360.0 - acos(vec.v[0])*math_rad2deg : acos(vec.v[0])*math_rad2deg), 360.0);
             isst_master_camera_elevation = -asin(isst_master_shot_direction.v[2]) * math_rad2deg;
             break;
 
