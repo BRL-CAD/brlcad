@@ -245,6 +245,9 @@ void* isst_observer_networking(void *ptr) {
       sprintf(string, "camera_ae: %.3f %.3f", overlay.camera_azimuth, overlay.camera_elevation);
       util_display_text(string, 0, 1, UTIL_JUSTIFY_LEFT, UTIL_JUSTIFY_TOP);
 
+      sprintf(string, "in_hit: %.3f %.3f %.3f", overlay.in_hit.v[0], overlay.in_hit.v[1], overlay.in_hit.v[2], overlay.out_hit.v[0], overlay.out_hit.v[1], overlay.out_hit.v[2]);
+      util_display_text(string, 0, 2, UTIL_JUSTIFY_LEFT, UTIL_JUSTIFY_TOP);
+
       sprintf(string, "nodes: %d", overlay.compute_nodes);
       util_display_text(string, 0, 0, UTIL_JUSTIFY_LEFT, UTIL_JUSTIFY_BOTTOM);
 

@@ -803,8 +803,10 @@ void* tie_work(tie_t *tie, tie_ray_t *ray, tie_id_t *id, void *(*hitfunc)(tie_ra
 
       /*
       * Intersection point on triangle must lie within the bsp node or it is rejected
+      * Apply TIE_PREC to near and far such that triangles that lie on orthogonal planes
+      * aren't in a precision fuzz boundary.
       */
-      if(t.dist < near || t.dist > far)
+      if(t.dist < near-TIE_PREC || t.dist > far+TIE_PREC)
         continue;
 
       /* Compute Intersection Point (P = O + Dt) */

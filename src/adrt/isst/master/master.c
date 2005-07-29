@@ -465,6 +465,8 @@ void* isst_master_networking(void *ptr) {
                   overlay.camera_azimuth = isst_master_camera_azimuth;
                   overlay.camera_elevation = isst_master_camera_elevation;
                   overlay.compute_nodes = tienet_master_active_slaves;
+                  overlay.in_hit = isst_master_in_hit;
+                  overlay.out_hit = isst_master_out_hit;
                   overlay.scale = isst_master_scale;
                   sprintf(overlay.resolution, "%dx%d", db.env.img_w, db.env.img_h);
                   overlay.controller = sock->controller;
@@ -777,8 +779,8 @@ void isst_master_process_events(SDL_Event *event_queue, int event_num, isst_mast
             vec.v[2] = 0;
             math_vec_unitize(vec);
 
-            isst_master_camera_azimuth = vec.v[1] < 0 ? 360.0 - acos(vec.v[0])*math_rad2deg : acos(vec.v[0])*math_rad2deg;
-            isst_master_camera_elevation = asin(isst_master_shot_direction.v[2]) * math_rad2deg;
+            isst_master_camera_azimuth = fmod(vec.v[1] < 0 ? 180.0 + acos(vec.v[0])*math_rad2deg : acos(vec.v[0])*math_rad2deg, 360.0);
+            isst_master_camera_elevation = -asin(isst_master_shot_direction.v[2]) * math_rad2deg;
             break;
 
 
