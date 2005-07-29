@@ -664,8 +664,9 @@ significant items added since the previous release.
 
 2) All existing manpages are updated with the latest changes.
 
-3) Version numbers (minimally in configure.ac, NEWS, and README) are
-updated appropriately (see VERSION NUMBERS & COMPATIBILITY section).
+3) Update or verify the version numbers minimally in configure.ac,
+NEWS, README, and include/config_win.h (see VERSION NUMBERS &
+COMPATIBILITY section).
 
 4) Update the ChangeLog with entries since the last release; commit
 the updated ChangeLog.  Use the YYYY-MM-DD of the previous release.
