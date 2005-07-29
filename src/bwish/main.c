@@ -86,9 +86,6 @@ main(int argc, char **argv)
 static int
 Cad_AppInit(Tcl_Interp *interp)
 {
-    struct bu_vls vls;
-    char *pathname;
-
     /* Initialize Tcl */
     if (Tcl_Init(interp) == TCL_ERROR) {
 	bu_log("Tcl_Init error %s\n", interp->result);
