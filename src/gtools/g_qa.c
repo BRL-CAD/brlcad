@@ -444,7 +444,7 @@ parse_args(int ac, char *av[])
 	    if ((c=atoi(optarg)) > 0 && c <= max_cpus ) ncpu = c;
 	    break;	
 	case 'r'	:
-	    print_per_reigon_stats = 1;
+	    print_per_region_stats = 1;
 	    break;
 	case 'S'	:
 	    if (sscanf(optarg, "%lg", &a) != 1 || a <= 0.0) {
