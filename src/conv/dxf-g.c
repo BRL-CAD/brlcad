@@ -2133,10 +2133,13 @@ main( int argc, char *argv[] )
 
 	}
 
+
 	if( BU_LIST_NON_EMPTY( &head_all ) ) {
 		struct bu_vls top_name;
 		int count=0;
 
+
+		bu_vls_init(&top_name);
 		bu_vls_strcpy( &top_name, "all" );
 		while( db_lookup( out_fp->dbip, bu_vls_addr( &top_name ), LOOKUP_QUIET ) != DIR_NULL ) {
 			count++;
