@@ -63,7 +63,6 @@ char makeOverlapAssemblies;
 int require_num_hits = 1;
 int ncpu = 1;
 double Samples_per_model_axis = 4.0;
-double Samples_per_prim_axis;
 double overlap_tolerance;
 double volume_tolerance = -1.0;
 double weight_tolerance = -1.0;
@@ -503,14 +502,6 @@ parse_args(int ac, char *av[])
 		break;
 	    }
 	    Samples_per_model_axis = a;
-	    break;
-	case 's'	:
-	    if (sscanf(optarg, "%lg", &a) != 1 || a <= 0.0) {
-		bu_log("error in specifying minimum samples per primitive axis: \"%s\"\n", optarg);
-		break;
-	    }
-	    Samples_per_prim_axis = a;
-	    bu_log("option -s samples_per_axis_min not implemented\n");
 	    break;
 	case 't'	: 
 	    if (read_units_double(&overlap_tolerance, optarg, &units_tab[0][0])) {
@@ -1296,23 +1287,25 @@ options_prep(struct rt_i *rtip, vect_t span)
     /* refine the grid spacing if the user has set a 
      * lower bound on the number of rays per model axis 
      */
-    for (axis=0 ; axis < 3 ; axis++) {
-	if (span[axis] < newGridSpacing*Samples_per_model_axis) {
-	    /* along this axis, the gridSpacing is 
-	     * larger than the model span.  We need to refine.
-	     */
-	    newGridSpacing = span[axis] / Samples_per_model_axis;
+    if (Samples_per_model_axis) {
+	for (axis=0 ; axis < 3 ; axis++) {
+	    if (span[axis] < newGridSpacing*Samples_per_model_axis) {
+		/* along this axis, the gridSpacing is 
+		 * larger than the model span.  We need to refine.
+		 */
+		newGridSpacing = span[axis] / Samples_per_model_axis;
+	    }
 	}
-    }
 
-    if (newGridSpacing != gridSpacing) {
-	bu_log("Grid spacing %g %s is does not allow %g samples per axis\n",
-	       gridSpacing / units[LINE]->val, units[LINE]->name, Samples_per_model_axis);
+	if (newGridSpacing != gridSpacing) {
+	    bu_log("Grid spacing %g %s is does not allow %g samples per axis\n",
+		   gridSpacing / units[LINE]->val, units[LINE]->name, Samples_per_model_axis);
 
-	bu_log("Adjusted to %g %s to get %g samples per model axis\n",
-	       newGridSpacing / units[LINE]->val, units[LINE]->name, Samples_per_model_axis);
+	    bu_log("Adjusted to %g %s to get %g samples per model axis\n",
+		   newGridSpacing / units[LINE]->val, units[LINE]->name, Samples_per_model_axis);
 
-	gridSpacing = newGridSpacing;
+	    gridSpacing = newGridSpacing;
+	}
     }
 
     /* if the vol/weight tolerances are not set, pick something */

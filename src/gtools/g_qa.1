@@ -259,19 +259,6 @@ will cause the initial grid spacing to be adjusted to 0.5 so that 4 samples will
 The default is to assure 10 rays per model grid axis.
 
 .TP
-.B \-s \fR\fIsamples_per_axis_min\fR
-This is like the 
-.B \-S 
-option except that the smallest bounding box dimensions (for primitive shapes) in the model are
-used instead of the model bounding box.
-This typically creates very fine, highly accurate grid spacing and long runtimes.
-.TP
-.B \-t \fR\fIoverlap_tol_dist[units]\fR
-Specifies that overlaps less than 
-.I overlap_tol_dist
-will not be reported.
-The default is 0.0 so that all overlaps are reported.
-.TP
 .B \-U \fR\fIuse_air\fR
 Specifies the Boolean value 
 .I use_air
