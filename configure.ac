@@ -2503,6 +2503,10 @@ AC_CONFIG_FILES([
 	src/adrt/rise/master/Makefile
 	src/adrt/rise/observer/Makefile
 	src/adrt/rise/slave/Makefile
+	src/adrt/isst/Makefile
+	src/adrt/isst/master/Makefile
+	src/adrt/isst/observer/Makefile
+	src/adrt/isst/slave/Makefile
 	src/adrt/scripts/Makefile
 	src/adrt/misc/Makefile
 	src/anim/Makefile
