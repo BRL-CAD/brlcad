@@ -148,7 +148,11 @@ Two objects must overlap by at least
 (see the
 .B \-t
 option below)
-to be considered to overlap;
+to be considered to overlap.  Overlap testing never causes the grid spacing to
+be refined, so it is important to specify the desired spacing for the initial
+grid.  See the 
+.B \-g 
+option below for details on setting the grid spacing.
 
 .B Volume:
 Computes the volume of the 
@@ -249,14 +253,14 @@ Indicates that
 .I g_qa
 should print per-region statistics (weight, volume) as well as the values for the objects specified on the command line.
 .TP
-.B \-S \fR\fIsamples_per_axis_min\fR
+.B \-S \fR\fIsamples_per_model_axis\fR
 Specifies that the grid spacing will be initially refined so that at least
 .I samples_per_axis_min
 will be shot along each axis of the bounding box of the model.
 For example, if the objects specified have a bounding box of 0 0 0 -> 4 3 2 and the grid spacing is 1.0, specifying the option
 .B \-S 4
 will cause the initial grid spacing to be adjusted to 0.5 so that 4 samples will be shot across the Z dimension of the bounding box.
-The default is to assure 10 rays per model grid axis.
+The default is to assure 1 rays per model grid axis.
 
 .TP
 .B \-U \fR\fIuse_air\fR
@@ -283,6 +287,11 @@ Note that unit values with spaces in their names such as
 must be contained in quotes for the shell to keep the values together.
 
 The default units are millimeters, cubic millimeters, and grams.
+.TP
+.B \-v
+Turns on verbose reporting of computation progress.  This is useful for
+learning how the computation is progressing, and what tolerances are causing
+further computation to be necessary.
 .TP
 .B \-V \fR\fIvolume_tolerance[units]\fR
 Specifies a volumetric tolerance value that the three view computations must be within for computation to complete.  
