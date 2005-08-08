@@ -684,8 +684,8 @@ void* tie_work(tie_t *tie, tie_ray_t *ray, tie_id_t *id, void *(*hitfunc)(tie_ra
   tie_tri_t *hit_list[1024], *tri;
   tie_geom_t *data;
   tie_bsp_t *node_aligned;
-  tfloat near, far, dirinv[3];
-  int i, n, stack_ind, hit_count;
+  tfloat near, far, dirinv[3], dist;
+  int i, n, ab[3], split, stack_ind, hit_count;
   void *result;
 
 
@@ -695,31 +695,32 @@ void* tie_work(tie_t *tie, tie_ray_t *ray, tie_id_t *id, void *(*hitfunc)(tie_ra
   ray->bsp_depth = 0;
 
   /*
-   * Precompute direction inverse since it's used in a bunch of divides,
-   * this allows those divides to become fast multiplies.
-   */
-
+  * Precompute direction inverse since it's used in a bunch of divides,
+  * this allows those divides to become fast multiplies.
+  */
   for(i = 0; i < 3; i++) {
     if(ray->dir.v[i] == 0)
       ray->dir.v[i] = TIE_PREC;
     dirinv[i] = 1.0 / ray->dir.v[i];
+    ab[i] = dirinv[i] < 0 ? 1 : 0;
   }
 
   /* Extracting value of splitting plane from tie->bsp pointer */
-  i = ((TIE_PTR_CAST)(((tie_bsp_t *)((TIE_PTR_CAST)tie->bsp & ~0x7L))->data)) & 0x3;
-  if(ray->dir.v[i] < 0) {
-    far = (tie->min.v[i] - ray->pos.v[i]) * dirinv[i];
+  split = ((TIE_PTR_CAST)(((tie_bsp_t *)((TIE_PTR_CAST)tie->bsp & ~0x7L))->data)) & 0x3;
+
+  /* Initialize ray segment */
+  if(ray->dir.v[split] < 0) {
+    far  = (tie->min.v[split] - ray->pos.v[split]) * dirinv[split];
   } else {
-    far = (tie->max.v[i] - ray->pos.v[i]) * dirinv[i];
+    far  = (tie->max.v[split] - ray->pos.v[split]) * dirinv[split];
   }
 
-  /* Determine Geometry with Closest Intersection Pt */
-  id->dist = 0;
   stack_ind = 0;
   stack[0].node = tie->bsp;
   stack[0].near = 0;
   stack[0].far = far;
 
+  /* Process items on the stack */
   while(stack_ind >= 0) {
     near = stack[stack_ind].near;
     far = stack[stack_ind].far;
@@ -729,61 +730,51 @@ void* tie_work(tie_t *tie, tie_ray_t *ray, tie_id_t *id, void *(*hitfunc)(tie_ra
     * give a valid ptr address.
     */
     node_aligned = (tie_bsp_t *)((TIE_PTR_CAST)stack[stack_ind].node & ~0x7L);
-
     stack_ind--;
 
     /*
     * BSP TRAVERSAL
     *
-    * The side of the splitting plane wrt ray position, the sign of the ray direction,
-    * and the distance wrt Near and Far are used to generate 8 possible cases to
-    * determine if nodes: A&B, A, or B are hit.
-    * The following is an optimized and simplified form of the above logic.
+    * 3 conditions can happen here:
+    *   - Ray only intersects the nearest node
+    *   - Ray only intersects the furthest node
+    *   - Ray intersects both nodes, pushing the furthest onto the stack
+    *
+    * Gordon Stoll's Mantra - Rays are Measured in Millions :-)
     */
     while(((TIE_PTR_CAST)(node_aligned->data)) & 0x4) {
-      int split;
-      tfloat distance_t;
- 
-     ray->bsp_depth++;
-     /* Retreive the splitting plane */
+      ray->bsp_depth++;
+
+      /* Retreive the splitting plane */
       split = ((TIE_PTR_CAST)(node_aligned->data)) & 0x3;
-      distance_t = (node_aligned->axis - ray->pos.v[split]) * dirinv[split];
 
+      /* Calculate the projected 1d distance to splitting axis */
+      dist = (node_aligned->axis - ray->pos.v[split]) * dirinv[split];
 
-      if(ray->pos.v[split] < node_aligned->axis) {
-        if(ray->dir.v[split] >= 0 && distance_t < near) {
-          node_aligned = (tie_bsp_t *)((TIE_PTR_CAST)(&((tie_bsp_t *)(node_aligned->data))[1]) & ~0x7L);
-        } else {
-          if(distance_t >= near && distance_t <= far) {
-            /* Intersect Node A then B */
-            stack_ind++;
-            stack[stack_ind].node = &((tie_bsp_t *)(node_aligned->data))[1];
-            stack[stack_ind].near = distance_t;
-            stack[stack_ind].far = far;
-            far = distance_t;
-          }
-          node_aligned = (tie_bsp_t *)((TIE_PTR_CAST)(&((tie_bsp_t *)(node_aligned->data))[0]) & ~0x7L);
-        }
-      } else {
-        if(ray->dir.v[split] < 0 && distance_t < near) {
-          node_aligned = (tie_bsp_t *)((TIE_PTR_CAST)(&((tie_bsp_t *)(node_aligned->data))[0]) & ~0x7L);
-        } else {
-          if(distance_t >= near && distance_t <= far) {
-            /* Intersect Node B then A */
-            stack_ind++;
-            stack[stack_ind].node = &((tie_bsp_t *)(node_aligned->data))[0];
-            stack[stack_ind].near = distance_t;
-            stack[stack_ind].far = far;
-            far = distance_t;
-          }
-          node_aligned = (tie_bsp_t *)((TIE_PTR_CAST)(&((tie_bsp_t *)(node_aligned->data))[1]) & ~0x7L);
-        }
+      /* Nearest Node - Only */
+      if(far < dist) {
+        node_aligned = (tie_bsp_t *)((TIE_PTR_CAST)(&((tie_bsp_t *)(node_aligned->data))[ab[split]]) & ~0x7L);
+        continue;
       }
+
+      /* Furthest Node - Only */
+      if(dist < near) {
+        node_aligned = (tie_bsp_t *)((TIE_PTR_CAST)(&((tie_bsp_t *)(node_aligned->data))[1-ab[split]]) & ~0x7L);
+        continue;
+      }
+
+      /* Nearest Node and Push Furthest */
+      stack_ind++;
+      stack[stack_ind].node = &((tie_bsp_t *)(node_aligned->data))[1-ab[split]];
+      stack[stack_ind].near = dist;
+      stack[stack_ind].far = far;
+      far = dist;
+      node_aligned = (tie_bsp_t *)((TIE_PTR_CAST)(&((tie_bsp_t *)(node_aligned->data))[ab[split]]) & ~0x7L);
     }
 
-
     /*
-    * RAY/TRIANGLE INTERSECTION - Only gets executed on geometry nodes - BSP Traversal Complete
+    * RAY/TRIANGLE INTERSECTION - Only gets executed on geometry nodes.
+    * This part of the function is being executed because the BSP Traversal is Complete.
     */
     hit_count = 0;
 
@@ -823,7 +814,10 @@ void* tie_work(tie_t *tie, tie_ray_t *ray, tie_id_t *id, void *(*hitfunc)(tie_ra
 
       v = (tfloat *)((TIE_PTR_CAST)(tri->v12) & ~0x7L);
 
-      /* Make sure barycentric coordinates fall within the boundaries of the triangle plane */
+      /*
+      * Compute the barycentric coordinates, and make sure the coordinates
+      * fall within the boundaries of the triangle plane.
+      */
       if(fabs(tri->data[2].v[1]) <= TIE_PREC) {
         t.beta = u0 / tri->data[2].v[2];
         if(t.beta < 0 || t.beta > 1)
@@ -845,10 +839,8 @@ void* tie_work(tie_t *tie, tie_ray_t *ray, tie_id_t *id, void *(*hitfunc)(tie_ra
       hit_count++;
     }
 
-    if(!hit_count)
-      continue;
 
-    /* If we hit something, then */
+    /* If we hit something, then sort the hit triangles on demand */
     for(i = 0; i < hit_count; i++) {
       /* Sort the list so that HitList and IDList [n] is in order wrt [i] */
       for(n = i; n < hit_count; n++) {
