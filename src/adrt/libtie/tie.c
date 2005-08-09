@@ -683,7 +683,7 @@ void* tie_work(tie_t *tie, tie_ray_t *ray, tie_id_t *id, void *(*hitfunc)(tie_ra
   tie_id_t t, id_list[1024];
   tie_tri_t *hit_list[1024], *tri;
   tie_geom_t *data;
-  tie_bsp_t *node_aligned;
+  tie_bsp_t *node_aligned, *temp[2];
   tfloat near, far, dirinv[3], dist;
   int i, n, ab[3], split, stack_ind, hit_count;
   void *result;
@@ -751,25 +751,21 @@ void* tie_work(tie_t *tie, tie_ray_t *ray, tie_id_t *id, void *(*hitfunc)(tie_ra
       /* Calculate the projected 1d distance to splitting axis */
       dist = (node_aligned->axis - ray->pos.v[split]) * dirinv[split];
 
-      /* Nearest Node - Only */
-      if(far < dist) {
-        node_aligned = (tie_bsp_t *)((TIE_PTR_CAST)(&((tie_bsp_t *)(node_aligned->data))[ab[split]]) & ~0x7L);
-        continue;
-      }
+      temp[0] = &((tie_bsp_t *)(node_aligned->data))[ab[split]];
+      temp[1] = &((tie_bsp_t *)(node_aligned->data))[1-ab[split]];
 
-      /* Furthest Node - Only */
-      if(dist < near) {
-        node_aligned = (tie_bsp_t *)((TIE_PTR_CAST)(&((tie_bsp_t *)(node_aligned->data))[1-ab[split]]) & ~0x7L);
+      i = near >= dist; // Node B Only?
+      node_aligned = (tie_bsp_t *)((TIE_PTR_CAST)(temp[i]) & ~0x7L);
+
+      if(far < dist || i)
         continue;
-      }
 
       /* Nearest Node and Push Furthest */
       stack_ind++;
-      stack[stack_ind].node = &((tie_bsp_t *)(node_aligned->data))[1-ab[split]];
+      stack[stack_ind].node = temp[1];
       stack[stack_ind].near = dist;
       stack[stack_ind].far = far;
       far = dist;
-      node_aligned = (tie_bsp_t *)((TIE_PTR_CAST)(&((tie_bsp_t *)(node_aligned->data))[ab[split]]) & ~0x7L);
     }
 
     /*
