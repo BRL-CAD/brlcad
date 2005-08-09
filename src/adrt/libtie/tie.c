@@ -887,7 +887,6 @@ void tie_push(tie_t *tie, TIE_3 *tlist, int tnum, void *plist, int pstride) {
   int i, ind, step;
   void *mem;
 
-
   step = 2 * sizeof(tfloat);
   mem = malloc(tnum * step);
   ind = 0;
