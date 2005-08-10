@@ -98,7 +98,7 @@ void rise_master(int port, int obs_port, char *proj, char *list, char *exec, int
 
     /* Wait for frame to finish */
     tienet_sem_wait(&rise_master_frame_sem);
-#if 1
+#if 0
     {
       unsigned char *image24;
 

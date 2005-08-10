@@ -284,14 +284,14 @@ static void tie_tri_prep(tie_t *tie) {
 }
 
 
-static void tie_build_tree(tie_t *tie, tie_kdtree_t *node, int depth, TIE_3 min, TIE_3 max, int inside) {
+static void tie_build_tree(tie_t *tie, tie_kdtree_t *node, int depth, TIE_3 min, TIE_3 max, tfloat cost) {
   tie_geom_t	*child[2], *node_geom_data = (tie_geom_t*)(node->data);
   TIE_3		cmin[2], cmax[2], center, half_size, vec;
   int		i, j, n, split, cnt[2];
+  tfloat	n1cost, n2cost, a, b;
 
 /*  printf("%f %f %f %f %f %f\n", min.v[0], min.v[1], min.v[2], max.v[0], max.v[1], max.v[2]); */
 
-  tie->max_tri++;
   /* Terminating criteria for KDTREE subdivision */
   if(node_geom_data->tri_num <= TIE_KDTREE_NODE_MAX || depth > tie->max_depth) {
 /*    printf("num: %d, depth: %d\n", node_geom_data->tri_num, depth); */
@@ -299,6 +299,21 @@ static void tie_build_tree(tie_t *tie, tie_kdtree_t *node, int depth, TIE_3 min,
 /*      tie->max_tri++; */
     return;
   }
+
+  /* If node area is to small with respect to scene node area then terminate */
+  a = (max.v[0]-min.v[0])*(max.v[1]-min.v[1]) +
+      (max.v[0]-min.v[0])*(max.v[2]-min.v[2]) + 
+      (max.v[1]-min.v[1])*(max.v[2]-min.v[2]);
+
+  b = (tie->max.v[0]-tie->min.v[0])*(tie->max.v[1]-tie->min.v[1]) +
+      (tie->max.v[0]-tie->min.v[0])*(tie->max.v[2]-tie->min.v[2]) +
+      (tie->max.v[1]-tie->min.v[1])*(tie->max.v[2]-tie->min.v[2]);
+
+  /* If ratio of areas is too small then don't bother splitting */
+  if(a / b <= TIE_KDTREE_MIN_AREA)
+    return;
+
+  tie->max_tri++;
 
 #if 1
   /* Left Child */
@@ -333,6 +348,66 @@ static void tie_build_tree(tie_t *tie, tie_kdtree_t *node, int depth, TIE_3 min,
     split = 2;
   }
 #else
+..
+{
+int d, s;
+tfloat sa, cost_test[3][7][2];
+TIE_3 vec1, vec2;
+
+  /*
+  * Test all 3 splitting planes
+  * Test 7 possible cuts for each splitting plane test
+  */
+  for(d = 0; d < 3; d++) {
+    /* Eight Splitting plane tests */
+    for(s = 0; s < 7; s++) {
+      /* Generate box sizes */
+
+      /* Left Child */
+      cmin[0] = min;
+      cmax[0] = max;
+
+      /* Right Child */
+      cmin[1] = min;
+      cmax[1] = max;
+
+      math_vec_add(center, max, min);
+      math_vec_mul_scalar(vec, min, ((tfloat)(s+1)));
+      math_vec_mul_scalar(center, max, ((tfloat)(7-s)));
+      math_vec_add(center, center, vec);
+      math_vec_mul_scalar(center, center, 0.125);
+
+      cmax[0].v[d] = center.v[d];
+      cmin[1].v[d] = center.v[d];
+
+      /* Compute cost by examining surface area of all triangles for both nodes */
+      for(n = 0; n < 2; n++) {
+        cnt[n] = 0;
+
+        math_vec_add(center, cmax[n], cmin[n]);
+        math_vec_mul_scalar(center, center, 0.5);
+        math_vec_sub(half_size, cmax[n], cmin[n]);
+        math_vec_mul_scalar(half_size, half_size, 0.5);
+
+        /*
+        * compute surface area
+        * surface area of 3d triangle:
+        *  1/2 (V1-V0) x (V2 - V0)
+        *  where 'x' is cross product.
+        */
+        sa = 0;
+        for(i = 0; i < node_geom_data->tri_num; i++) {
+
+        }
+        sa /= (tfloat)node->geom_data->tri_num;
+      }
+
+
+
+    }
+  }
+
+}
 #endif
 
   /* Allocate 2 children nodes for the parent node */
@@ -403,8 +478,8 @@ static void tie_build_tree(tie_t *tie, tie_kdtree_t *node, int depth, TIE_3 min,
   free(node_geom_data);
 
   /* Push each child through the same process. */
-  tie_build_tree(tie, &((tie_kdtree_t *)(node->data))[0], depth+1, cmin[0], cmax[0], cnt[0]);
-  tie_build_tree(tie, &((tie_kdtree_t *)(node->data))[1], depth+1, cmin[1], cmax[1], cnt[1]);
+  tie_build_tree(tie, &((tie_kdtree_t *)(node->data))[0], depth+1, cmin[0], cmax[0], n1cost);
+  tie_build_tree(tie, &((tie_kdtree_t *)(node->data))[1], depth+1, cmin[1], cmax[1], n2cost);
  
   /* Assign the splitting dimension to the node */
   /* If we've come this far then YES, this node DOES have child nodes, MARK it as so. */
