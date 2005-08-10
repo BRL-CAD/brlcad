@@ -28,7 +28,7 @@
  *      The calling sequence is as follows:
  *        - tie_init()	initialize the data structure
  *        - tie_push()	add triangles to the universe to be raytraced
- *        - tie_prep()	build the BSP for the triangles
+ *        - tie_prep()	build the KDTREE for the triangles
  *        - tie_work()	shoot some ray
  *        - tie_work()	shoot some ray
  *        - tie_work()	shoot some ray
@@ -49,7 +49,7 @@
  * The calling sequence is as follows:
  *	@li tie_init()	initialize the data structure
  *	@li tie_push()	add triangles to the universe to be raytraced
- *	@li tie_prep()	build the BSP for the triangles
+ *	@li tie_prep()	build the KDTREE for the triangles
  *	@li tie_work()	shoot some ray
  *	@li tie_work()	shoot some ray
  *	@li tie_work()	shoot some ray
@@ -89,13 +89,13 @@ tfloat TIE_PREC;
  *************************************************************/
 
 
-static void tie_free_node(tie_bsp_t *node) {
-  tie_bsp_t	*node_aligned = (tie_bsp_t*)((TIE_PTR_CAST)node & ~0x7L);
+static void tie_free_node(tie_kdtree_t *node) {
+  tie_kdtree_t	*node_aligned = (tie_kdtree_t*)((TIE_PTR_CAST)node & ~0x7L);
 
   if(((TIE_PTR_CAST)(node_aligned->data)) & 0x4) {
-    /* Node Data is BSP Children, Recurse */
-    tie_free_node(&((tie_bsp_t*)(node_aligned->data))[0]);
-    tie_free_node(&((tie_bsp_t*)(node_aligned->data))[1]);
+    /* Node Data is KDTREE Children, Recurse */
+    tie_free_node(&((tie_kdtree_t*)(node_aligned->data))[0]);
+    tie_free_node(&((tie_kdtree_t*)(node_aligned->data))[1]);
     free((void*)((TIE_PTR_CAST)(node_aligned->data) & ~0x7L));
   } else {
     /* This node points to a geometry node, free it */
@@ -115,10 +115,10 @@ static void tie_insert(tie_t *tie, tie_tri_t *tri_list, int tri_num) {
     return;
 
   /* Insert all triangles into the Head Node */
-  if(!tie->bsp) {
-    tie->bsp = (tie_bsp_t *)malloc(sizeof(tie_bsp_t));
-    tie->bsp->data = (void *)malloc(sizeof(tie_geom_t));
-    g = ((tie_geom_t *)(tie->bsp->data));
+  if(!tie->kdtree) {
+    tie->kdtree = (tie_kdtree_t *)malloc(sizeof(tie_kdtree_t));
+    tie->kdtree->data = (void *)malloc(sizeof(tie_geom_t));
+    g = ((tie_geom_t *)(tie->kdtree->data));
     g->tri_num = 0;
 
     math_bbox(tie->min, tie->max, tri_list[0].data[0], tri_list[0].data[1], tri_list[0].data[2]);
@@ -138,7 +138,7 @@ static void tie_insert(tie_t *tie, tie_tri_t *tri_list, int tri_num) {
       /* printf("Box: [%.3f, %.3f, %.3f] [%.3f, %.3f, %.3f]\n", tie->min.v[0], tie->min.v[1], tie->min.v[2], tie->max.v[0], tie->max.v[1], tie->max.v[2]); */
     }
 
-    ((tie_geom_t *)(tie->bsp->data))->tri_num = tri_num;
+    ((tie_geom_t *)(tie->kdtree->data))->tri_num = tri_num;
   }
 }
 
@@ -284,7 +284,7 @@ static void tie_tri_prep(tie_t *tie) {
 }
 
 
-static void tie_build_tree(tie_t *tie, tie_bsp_t *node, int depth, TIE_3 min, TIE_3 max, int inside) {
+static void tie_build_tree(tie_t *tie, tie_kdtree_t *node, int depth, TIE_3 min, TIE_3 max, int inside) {
   tie_geom_t	*child[2], *node_geom_data = (tie_geom_t*)(node->data);
   TIE_3		cmin[2], cmax[2], center, half_size, vec;
   int		i, j, n, split, cnt[2];
@@ -292,14 +292,15 @@ static void tie_build_tree(tie_t *tie, tie_bsp_t *node, int depth, TIE_3 min, TI
 /*  printf("%f %f %f %f %f %f\n", min.v[0], min.v[1], min.v[2], max.v[0], max.v[1], max.v[2]); */
 
   tie->max_tri++;
-  /* Terminating criteria for BSP subdivision */
-  if(node_geom_data->tri_num <= TIE_BSP_NODE_MAX || depth > TIE_BSP_DEPTH_MAX) {
+  /* Terminating criteria for KDTREE subdivision */
+  if(node_geom_data->tri_num <= TIE_KDTREE_NODE_MAX || depth > tie->max_depth) {
 /*    printf("num: %d, depth: %d\n", node_geom_data->tri_num, depth); */
 /*    if(node_geom_data->tri_num > tie->max_tri) */
 /*      tie->max_tri++; */
     return;
   }
 
+#if 1
   /* Left Child */
   cmin[0] = min;
   cmax[0] = max;
@@ -308,11 +309,9 @@ static void tie_build_tree(tie_t *tie, tie_bsp_t *node, int depth, TIE_3 min, TI
   cmin[1] = min;
   cmax[1] = max;
 
-
   math_vec_add(center, max, min);
   math_vec_mul_scalar(center, center, 0.5);
 
-#if 1
   /* Split along largest Axis to keep node sizes relatively cube-like (Naive) */
   math_vec_sub(vec, max, min);
 
@@ -334,175 +333,17 @@ static void tie_build_tree(tie_t *tie, tie_bsp_t *node, int depth, TIE_3 min, TI
     split = 2;
   }
 #else
-  /*
-  * Determine which of the 3 axis has the largest sum of entirely split and contained triangles.
-  * If the sum of the largest split is less than or equal to max triangles per node then terminate.
-  */
-{
-  int x[2], y[2], z[2];
-
-  x[0] = 0;
-  x[1] = 0;
-  y[0] = 0;
-  y[1] = 0;
-  z[0] = 0;
-  z[1] = 0;
-
-  for(i = 0; i < node_geom_data->tri_num; i++) {
-    /* X0 - Test */
-    n = 0;
-    for(j = 0; j < 3; j++) {
-      if(node_geom_data->tri_list[i]->data[j].v[0] > center.v[0] &&
-         node_geom_data->tri_list[i]->data[j].v[0] < max.v[0] &&
-         node_geom_data->tri_list[i]->data[j].v[1] > min.v[1] &&
-         node_geom_data->tri_list[i]->data[j].v[1] < max.v[1] &&
-         node_geom_data->tri_list[i]->data[j].v[2] > min.v[2] &&
-         node_geom_data->tri_list[i]->data[j].v[2] < max.v[2]) {
-         n++;
-      }
-    }
-    if(n)
-      x[0]++;
-
-    /* X1 - Test */
-    n = 0;
-    for(j = 0; j < 3; j++) {
-      if(node_geom_data->tri_list[i]->data[j].v[0] > min.v[0] &&
-         node_geom_data->tri_list[i]->data[j].v[0] < center.v[0] &&
-         node_geom_data->tri_list[i]->data[j].v[1] > min.v[1] &&
-         node_geom_data->tri_list[i]->data[j].v[1] < max.v[1] &&
-         node_geom_data->tri_list[i]->data[j].v[2] > min.v[2] &&
-         node_geom_data->tri_list[i]->data[j].v[2] < max.v[2]) {
-         n++;
-      }
-    }
-    if(n)
-      x[1]++;
-
-    /* Y0 - Test */
-    n = 0;
-    for(j = 0; j < 3; j++) {
-      if(node_geom_data->tri_list[i]->data[j].v[0] > min.v[0] &&
-         node_geom_data->tri_list[i]->data[j].v[0] < max.v[0] &&
-         node_geom_data->tri_list[i]->data[j].v[1] > center.v[1] &&
-         node_geom_data->tri_list[i]->data[j].v[1] < max.v[1] &&
-         node_geom_data->tri_list[i]->data[j].v[2] > min.v[2] &&
-         node_geom_data->tri_list[i]->data[j].v[2] < max.v[2]) {
-         n++;
-      }
-    }
-    if(n)
-      y[0]++;
-
-    /* Y1 - Test */
-    n = 0;
-    for(j = 0; j < 3; j++) {
-      if(node_geom_data->tri_list[i]->data[j].v[0] > min.v[0] &&
-         node_geom_data->tri_list[i]->data[j].v[0] < max.v[0] &&
-         node_geom_data->tri_list[i]->data[j].v[1] > min.v[1] &&
-         node_geom_data->tri_list[i]->data[j].v[1] < center.v[1] &&
-         node_geom_data->tri_list[i]->data[j].v[2] > min.v[2] &&
-         node_geom_data->tri_list[i]->data[j].v[2] < max.v[2]) {
-         n++;
-      }
-    }
-    if(n)
-      y[1]++;
-
-    /* Z0 - Test */
-    n = 0;
-    for(j = 0; j < 3; j++) {
-      if(node_geom_data->tri_list[i]->data[j].v[0] > min.v[0] &&
-         node_geom_data->tri_list[i]->data[j].v[0] < max.v[0] &&
-         node_geom_data->tri_list[i]->data[j].v[1] > min.v[1] &&
-         node_geom_data->tri_list[i]->data[j].v[1] < max.v[1] &&
-         node_geom_data->tri_list[i]->data[j].v[2] > center.v[2] &&
-         node_geom_data->tri_list[i]->data[j].v[2] < max.v[2]) {
-         n++;
-      }
-    }
-    if(n)
-      z[0]++;
-
-    /* Z1 - Test */
-    n = 0;
-    for(j = 0; j < 3; j++) {
-      if(node_geom_data->tri_list[i]->data[j].v[0] > min.v[0] &&
-         node_geom_data->tri_list[i]->data[j].v[0] < max.v[0] &&
-         node_geom_data->tri_list[i]->data[j].v[1] > min.v[1] &&
-         node_geom_data->tri_list[i]->data[j].v[1] < max.v[1] &&
-         node_geom_data->tri_list[i]->data[j].v[2] > min.v[2] &&
-         node_geom_data->tri_list[i]->data[j].v[2] < center.v[2]) {
-         n++;
-      }
-    }
-    if(n)
-      z[1]++;
-      
-  }
-
-//  if(x[0]+x[1] <= TIE_BSP_NODE_MAX && y[0]+y[1] <= TIE_BSP_NODE_MAX && z[0]+z[1] <= TIE_BSP_NODE_MAX) {
-  if(x[0]+x[1] == 0 && y[0]+y[1] == 0 && z[0]+z[1] == 0) {
-    /* DONE! */
-    tie->max_tri++;
-    return;
-  }
-
-#if 0
-  /* Determine the largest sum */
-  if(x[0]+x[1] <= y[0]+y[1] && x[0]+x[1] <= z[0]+z[1]) {
-    cmax[0].v[0] = center.v[0];
-    cmin[1].v[0] = center.v[0];
-    node->axis = center.v[0];
-    split = 0;
-  } else if(y[0]+y[1] <= x[0]+x[1] && y[0]+y[1] <= z[0]+z[1]) {
-    cmax[0].v[1] = center.v[1];
-    cmin[1].v[1] = center.v[1];
-    node->axis = center.v[1];
-    split = 1;
-  } else {
-    cmax[0].v[2] = center.v[2];
-    cmin[1].v[2] = center.v[2];
-    node->axis = center.v[2];
-    split = 2;
-  }
-
-#else
-  /* Split along largest Axis to keep node sizes relatively cube-like (Naive) */
-  math_vec_sub(vec, max, min);
-
-  /* Determine the largest Axis */
-  if(vec.v[0] >= vec.v[1] && vec.v[0] >= vec.v[2]) {
-    cmax[0].v[0] = center.v[0];
-    cmin[1].v[0] = center.v[0];
-    node->axis = center.v[0];
-    split = 0;
-  } else if(vec.v[1] >= vec.v[0] && vec.v[1] >= vec.v[2]) {
-    cmax[0].v[1] = center.v[1];
-    cmin[1].v[1] = center.v[1];
-    node->axis = center.v[1];
-    split = 1;
-  } else {
-    cmax[0].v[2] = center.v[2];
-    cmin[1].v[2] = center.v[2];
-    node->axis = center.v[2];
-    split = 2;
-  }
-
-#endif
-}
-
 #endif
 
   /* Allocate 2 children nodes for the parent node */
-  node->data = (void *)malloc(2 * sizeof(tie_bsp_t));
+  node->data = (void *)malloc(2 * sizeof(tie_kdtree_t));
 
-  ((tie_bsp_t *)(node->data))[0].data = malloc(sizeof(tie_geom_t));
-  ((tie_bsp_t *)(node->data))[1].data = malloc(sizeof(tie_geom_t));
+  ((tie_kdtree_t *)(node->data))[0].data = malloc(sizeof(tie_geom_t));
+  ((tie_kdtree_t *)(node->data))[1].data = malloc(sizeof(tie_geom_t));
 
   /* Initialize Triangle List */
-  child[0] = ((tie_geom_t *)(((tie_bsp_t *)(node->data))[0].data));
-  child[1] = ((tie_geom_t *)(((tie_bsp_t *)(node->data))[1].data));
+  child[0] = ((tie_geom_t *)(((tie_kdtree_t *)(node->data))[0].data));
+  child[1] = ((tie_geom_t *)(((tie_kdtree_t *)(node->data))[1].data));
 
   child[0]->tri_list = (tie_tri_t **)malloc(sizeof(tie_tri_t *) * node_geom_data->tri_num);
   child[0]->tri_num = 0;
@@ -562,8 +403,8 @@ static void tie_build_tree(tie_t *tie, tie_bsp_t *node, int depth, TIE_3 min, TI
   free(node_geom_data);
 
   /* Push each child through the same process. */
-  tie_build_tree(tie, &((tie_bsp_t *)(node->data))[0], depth+1, cmin[0], cmax[0], cnt[0]);
-  tie_build_tree(tie, &((tie_bsp_t *)(node->data))[1], depth+1, cmin[1], cmax[1], cnt[1]);
+  tie_build_tree(tie, &((tie_kdtree_t *)(node->data))[0], depth+1, cmin[0], cmax[0], cnt[0]);
+  tie_build_tree(tie, &((tie_kdtree_t *)(node->data))[1], depth+1, cmin[1], cmax[1], cnt[1]);
  
   /* Assign the splitting dimension to the node */
   /* If we've come this far then YES, this node DOES have child nodes, MARK it as so. */
@@ -584,7 +425,7 @@ static void tie_build_tree(tie_t *tie, tie_bsp_t *node, int depth, TIE_3 min, TI
  * @return void
  */
 void tie_init(tie_t *tie, int tri_num) {
-  tie->bsp = NULL;
+  tie->kdtree = NULL;
   tie->tri_num = 0;
   tie->tri_list = (tie_tri_t *)malloc(sizeof(tie_tri_t) * tri_num);
   tie->max_tri = 0;
@@ -594,7 +435,7 @@ void tie_init(tie_t *tie, int tri_num) {
 /**
  * Free up all the stuff associate with libtie
  *
- * All of the BSP nodes and triangles that we have allocated need to
+ * All of the KDTREE nodes and triangles that we have allocated need to
  * be freed in a controlled manner.  This routine does that.
  *
  * @param tie pointer to a struct tie_t
@@ -608,17 +449,17 @@ void tie_free(tie_t *tie) {
     free( (void*)((TIE_PTR_CAST)(tie->tri_list[i].v12) & ~0x7L) );
   free(tie->tri_list);
 
-  /* Free BSP Nodes */
-  if(tie->bsp) /* prevent tie from crashing when a tie_free() is called right after a tie_init() */
-    tie_free_node(tie->bsp);
-  free(tie->bsp);
+  /* Free KDTREE Nodes */
+  if(tie->kdtree) /* prevent tie from crashing when a tie_free() is called right after a tie_init() */
+    tie_free_node(tie->kdtree);
+  free(tie->kdtree);
 }
 
 
 /**
  * Get ready to shoot rays at triangles
  *
- * Build the BSP tree for the triangles we have
+ * Build the KDTREE tree for the triangles we have
  *
  * @param tie pointer to a struct tie_t which now has all the triangles in it
  * @return void
@@ -628,28 +469,37 @@ void tie_prep(tie_t *tie) {
 
   tie_insert(tie, tie->tri_list, tie->tri_num);
 
-  if(!tie->bsp)
+  if(!tie->kdtree)
     return;
 
-  /* Trim BSP back from power of 2 size (set during insert phase) to number of actual triangles */
-  ((tie_geom_t *)(tie->bsp->data))->tri_list = (tie_tri_t **)realloc(((tie_geom_t *)(tie->bsp->data))->tri_list, sizeof(tie_tri_t *) * ((tie_geom_t *)(tie->bsp->data))->tri_num);
+  /* Trim KDTREE back from power of 2 size (set during insert phase) to number of actual triangles */
+  ((tie_geom_t *)(tie->kdtree->data))->tri_list = (tie_tri_t **)realloc(((tie_geom_t *)(tie->kdtree->data))->tri_list, sizeof(tie_tri_t *) * ((tie_geom_t *)(tie->kdtree->data))->tri_num);
 
+  /*
+  * Compute Floating Fuzz Precision Value
+  * For now, take largest dimension as basis for TIE_PREC
+  */
   math_vec_sub(delta, tie->max, tie->min);
-  /* For now, take largest dimension as basis for TIE_PREC */
   math_max3(TIE_PREC, delta.v[0], delta.v[1], delta.v[2]);
 #if TIE_SINGLE_PREC
   TIE_PREC *= 0.000001;
 #else
   TIE_PREC *= 0.000000000001;
 #endif
+
   /* Grow the head node a little bit to avoid floating point fuzz in the building process */
   math_vec_mul_scalar(delta, delta, 0.01);
   math_vec_sub(tie->min, tie->min, delta);
   math_vec_add(tie->max, tie->max, delta);
 
-  tie_build_tree(tie, tie->bsp, 0, tie->min, tie->max, ((tie_geom_t *)(tie->bsp->data))->tri_num);
+  /* Compute Max Depth to allow the KD-Tree to grow to */
+  tie->max_depth = (int)(TIE_KDTREE_DEPTH_K1 * (log(tie->tri_num) / log(2)) + TIE_KDTREE_DEPTH_K2);
+  printf("max_depth: %d\n", tie->max_depth);
 
-/*  printf("count: %d\n", tie->count); */
+  /* Build the KDTREE */
+  tie_build_tree(tie, tie->kdtree, 0, tie->min, tie->max, ((tie_geom_t *)(tie->kdtree->data))->tri_num);
+
+  /* Prep all the triangles */
   tie_tri_prep(tie);
 
   printf("max_tri: %d\n", tie->max_tri);
@@ -683,16 +533,16 @@ void* tie_work(tie_t *tie, tie_ray_t *ray, tie_id_t *id, void *(*hitfunc)(tie_ra
   tie_id_t t, id_list[1024];
   tie_tri_t *hit_list[1024], *tri;
   tie_geom_t *data;
-  tie_bsp_t *node_aligned, *temp[2];
+  tie_kdtree_t *node_aligned, *temp[2];
   tfloat near, far, dirinv[3], dist;
   int i, n, ab[3], split, stack_ind, hit_count;
   void *result;
 
 
-  if(!tie->bsp)
+  if(!tie->kdtree)
     return(NULL);
 
-  ray->bsp_depth = 0;
+  ray->kdtree_depth = 0;
 
   /*
   * Precompute direction inverse since it's used in a bunch of divides,
@@ -705,8 +555,8 @@ void* tie_work(tie_t *tie, tie_ray_t *ray, tie_id_t *id, void *(*hitfunc)(tie_ra
     ab[i] = dirinv[i] < 0 ? 1 : 0;
   }
 
-  /* Extracting value of splitting plane from tie->bsp pointer */
-  split = ((TIE_PTR_CAST)(((tie_bsp_t *)((TIE_PTR_CAST)tie->bsp & ~0x7L))->data)) & 0x3;
+  /* Extracting value of splitting plane from tie->kdtree pointer */
+  split = ((TIE_PTR_CAST)(((tie_kdtree_t *)((TIE_PTR_CAST)tie->kdtree & ~0x7L))->data)) & 0x3;
 
   /* Initialize ray segment */
   if(ray->dir.v[split] < 0) {
@@ -716,7 +566,7 @@ void* tie_work(tie_t *tie, tie_ray_t *ray, tie_id_t *id, void *(*hitfunc)(tie_ra
   }
 
   stack_ind = 0;
-  stack[0].node = tie->bsp;
+  stack[0].node = tie->kdtree;
   stack[0].near = 0;
   stack[0].far = far;
 
@@ -729,11 +579,11 @@ void* tie_work(tie_t *tie, tie_ray_t *ray, tie_id_t *id, void *(*hitfunc)(tie_ra
     * Take the pointer from stack[stack_ind] and remove lower pts bits used to store data to
     * give a valid ptr address.
     */
-    node_aligned = (tie_bsp_t *)((TIE_PTR_CAST)stack[stack_ind].node & ~0x7L);
+    node_aligned = (tie_kdtree_t *)((TIE_PTR_CAST)stack[stack_ind].node & ~0x7L);
     stack_ind--;
 
     /*
-    * BSP TRAVERSAL
+    * KDTREE TRAVERSAL
     *
     * 3 conditions can happen here:
     *   - Ray only intersects the nearest node
@@ -743,7 +593,7 @@ void* tie_work(tie_t *tie, tie_ray_t *ray, tie_id_t *id, void *(*hitfunc)(tie_ra
     * Gordon Stoll's Mantra - Rays are Measured in Millions :-)
     */
     while(((TIE_PTR_CAST)(node_aligned->data)) & 0x4) {
-      ray->bsp_depth++;
+      ray->kdtree_depth++;
 
       /* Retreive the splitting plane */
       split = ((TIE_PTR_CAST)(node_aligned->data)) & 0x3;
@@ -751,11 +601,11 @@ void* tie_work(tie_t *tie, tie_ray_t *ray, tie_id_t *id, void *(*hitfunc)(tie_ra
       /* Calculate the projected 1d distance to splitting axis */
       dist = (node_aligned->axis - ray->pos.v[split]) * dirinv[split];
 
-      temp[0] = &((tie_bsp_t *)(node_aligned->data))[ab[split]];
-      temp[1] = &((tie_bsp_t *)(node_aligned->data))[1-ab[split]];
+      temp[0] = &((tie_kdtree_t *)(node_aligned->data))[ab[split]];
+      temp[1] = &((tie_kdtree_t *)(node_aligned->data))[1-ab[split]];
 
       i = near >= dist; // Node B Only?
-      node_aligned = (tie_bsp_t *)((TIE_PTR_CAST)(temp[i]) & ~0x7L);
+      node_aligned = (tie_kdtree_t *)((TIE_PTR_CAST)(temp[i]) & ~0x7L);
 
       if(far < dist || i)
         continue;
@@ -770,7 +620,7 @@ void* tie_work(tie_t *tie, tie_ray_t *ray, tie_id_t *id, void *(*hitfunc)(tie_ra
 
     /*
     * RAY/TRIANGLE INTERSECTION - Only gets executed on geometry nodes.
-    * This part of the function is being executed because the BSP Traversal is Complete.
+    * This part of the function is being executed because the KDTREE Traversal is Complete.
     */
     hit_count = 0;
 
@@ -789,7 +639,7 @@ void* tie_work(tie_t *tie, tie_ray_t *ray, tie_id_t *id, void *(*hitfunc)(tie_ra
       t.dist = -(tri->data[2].v[0] + u0) / v0;
 
       /*
-      * Intersection point on triangle must lie within the bsp node or it is rejected
+      * Intersection point on triangle must lie within the kdtree node or it is rejected
       * Apply TIE_PREC to near and far such that triangles that lie on orthogonal planes
       * aren't in a precision fuzz boundary.
       */
