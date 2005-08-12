@@ -18,8 +18,11 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+
+/** \addtogroup nmg */
+
+/*@{*/
 /** @file nmg_rt_isect.c
- *
  *	Support routines for raytracing an NMG.
  *
  *  Author -
@@ -29,6 +32,8 @@
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
+/*@}*/
+
 #ifndef lint
 static const char RCSid[] = "@(#)$Header$ (ARL)";
 #endif
@@ -93,7 +98,7 @@ nmg_rt_state_str(int code)
 	return "RS_UNKNOWN";
 }
 
-/*
+/**
  *				N M G _ C K _ H I T M I S S _ L I S T
  *
  *  Ensure that the ray makes a valid set of state transitions.
@@ -254,7 +259,7 @@ nmg_rt_print_hitlist(struct hitmiss *hl)
 
 
 
-/*
+/**
  *	H I T _ I N S
  *
  *	insert the new hit point in the correct place in the list of hits
@@ -654,7 +659,7 @@ plot_neighborhood(fastf_t *North_Pole, fastf_t *North_pl_pt, fastf_t *North_pca,
 
 
 
-/*	V E R T E X _ N E I G H B O R H O O D
+/**	V E R T E X _ N E I G H B O R H O O D
  *
  *	Examine the vertex neighborhood to classify the ray as IN/ON/OUT of
  *	the NMG both before and after hitting the vertex.
@@ -971,7 +976,7 @@ vertex_neighborhood(struct ray_data *rd, struct vertexuse *vu_p, struct hitmiss 
 
 
 
-/*
+/**
  *  Once it has been decided that the ray hits the vertex, 
  *  this routine takes care of recording that fact.
  */
@@ -1028,7 +1033,7 @@ ray_hit_vertex(struct ray_data *rd, struct vertexuse *vu_p, int status)
 }
 
 
-/*	I S E C T _ R A Y _ V E R T E X U S E
+/**	I S E C T _ R A Y _ V E R T E X U S E
  *
  *	Called in one of the following situations:
  *		1)	Zero length edge
@@ -1099,7 +1104,7 @@ isect_ray_vertexuse(struct ray_data *rd, struct vertexuse *vu_p)
 }
 
 
-/*
+/**
  * As the name implies, this routine is called when the ray and an edge are
  * colinear.  It handles marking the verticies as hit, remembering that this
  * is a seg_in/seg_out pair, and builds the hit on the edge.
@@ -1148,7 +1153,7 @@ colinear_edge_ray(struct ray_data *rd, struct edgeuse *eu_p)
 	return;
 }
 
-/*
+/**
  *  When a vertex at an end of an edge gets hit by the ray, this macro
  *  is used to build the hit structures for the vertex and the edge.
  */
@@ -1185,7 +1190,7 @@ colinear_edge_ray(struct ray_data *rd, struct edgeuse *eu_p)
 #endif
 
 
-/*
+/**
  *	Compute the "ray state" before and after the ray encounters a
  *	hit-point on an edge.
  */
@@ -1411,7 +1416,7 @@ next_edgeuse:	eu_p = eu_p->eumate_p->radial_p;
 #endif
 }
 
-/*
+/**
  *
  * record a hit on an edge.
  *
@@ -1603,7 +1608,7 @@ isect_ray_lseg(struct ray_data *rd, struct edgeuse *eu_p)
 		}
 	}
 }
-/*	I S E C T _ R A Y _ E D G E U S E
+/**	I S E C T _ R A Y _ E D G E U S E
  *
  *	Intersect ray with edgeuse.  If they pass within tolerance, a hit
  *	is generated.
@@ -1681,7 +1686,7 @@ isect_ray_edgeuse(struct ray_data *rd, struct edgeuse *eu_p)
 
 
 
-/*	I S E C T _ R A Y _ L O O P U S E
+/**	I S E C T _ R A Y _ L O O P U S E
  *
  */
 static void
@@ -1892,7 +1897,8 @@ record_face_hit(struct ray_data *rd, struct hitmiss *myhit, fastf_t *plane_pt, d
 
 }
 
-/* this is the UV-space tolerance for the NURB intersector, a larger number will
+/** this is the UV-space tolerance for the NURB intersector, a larger 
+number will
  * improve speed, but too large will produce errors. Perhaps a routine to calculate
  * an appropriate UV_TOL could be constructed.
  */
@@ -2320,7 +2326,7 @@ isect_ray_planar_face(struct ray_data *rd, struct faceuse *fu_p, struct face_g_p
 
 
 
-/*	I S E C T _ R A Y _ F A C E U S E
+/**	I S E C T _ R A Y _ F A C E U S E
  *
  *	check to see if ray hits face.
  */
@@ -2444,7 +2450,7 @@ isect_ray_faceuse(struct ray_data *rd, struct faceuse *fu_p)
 }
 
 
-/*	I S E C T _ R A Y _ S H E L L
+/**	I S E C T _ R A Y _ S H E L L
  *
  *	Implicit return:
  *		adds hit points to the hit-list "hl"
@@ -2493,7 +2499,7 @@ nmg_isect_ray_shell(struct ray_data *rd, const struct shell *s_p)
 }
 
 
-/*	N M G _ I S E C T _ R A Y _ M O D E L
+/**	N M G _ I S E C T _ R A Y _ M O D E L
  *
  */
 void
@@ -2547,7 +2553,7 @@ nmg_isect_ray_model(struct ray_data *rd)
 	}
 }
 
-/*
+/**
  *				N M G _ P L _ H I T M I S S _ L I S T
  */
 void
@@ -2783,7 +2789,7 @@ guess_class_from_hitlist_min(struct ray_data *rd, int *hari_kari, int in_or_out_
 }
 
 
-/*
+/**
  *	N M G _ R A Y _ I S E C T _ S H E L L
  *
  *	Intended as a support routine for nmg_class_pt_s() in nmg_class.c

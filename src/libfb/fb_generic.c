@@ -18,6 +18,10 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+
+/** \defgroup fb Framebuffer 
+ * \ingroup libfb */
+/*@{*/
 /** @file fb_generic.c
  *
  *  Authors -
@@ -31,6 +35,8 @@
  *	Aberdeen Proving Ground, Maryland  21005-5066
  *  
  */
+/*@}*/
+
 #ifndef lint
 static const char RCSid[] = "@(#)$Header$ (BRL)";
 #endif

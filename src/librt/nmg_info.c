@@ -18,8 +18,10 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+/** \addtogroup nmg */
+
+/*@{*/
 /** @file nmg_info.c
- *
  *  A companion module to nmg_mod.c which contains routines to
  *  answer questions about n-Manifold Geometry data structures.
  *  None of these routines will modify the NMG structures in any way.
@@ -32,6 +34,8 @@
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
+/*@}*/
+
 #ifndef lint
 static const char RCSid[] = "@(#)$Header$ (ARL)";
 #endif
@@ -55,7 +59,7 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
  *									*
  ************************************************************************/
 
-/*
+/**
  *			N M G _ F I N D _ M O D E L
  *
  *  Given a pointer to the magic number in any NMG data structure,
@@ -148,7 +152,7 @@ nmg_model_bb(fastf_t *min_pt, fastf_t *max_pt, const struct model *m)
  *									*
  ************************************************************************/
 
-/*
+/**
  *			N M G _ S H E L L _ I S _ E M P T Y
  *
  *  See if this is an invalid shell
@@ -172,7 +176,7 @@ nmg_shell_is_empty(register const struct shell *s)
 	return 1;
 }
 
-/*				N M G _ F I N D _ S _ O F _ L U
+/**				N M G _ F I N D _ S _ O F _ L U
  *
  *	return parent shell for loopuse
  *	formerly nmg_lups().
@@ -187,7 +191,7 @@ nmg_find_s_of_lu(const struct loopuse *lu)
 	return(lu->up.fu_p->s_p);
 }
 
-/*				N M G _ F I N D _ S _ O F _ E U
+/**				N M G _ F I N D _ S _ O F _ E U
  *
  *	return parent shell of edgeuse
  *	formerly nmg_eups().
@@ -202,7 +206,7 @@ nmg_find_s_of_eu(const struct edgeuse *eu)
 	return(nmg_find_s_of_lu(eu->up.lu_p));
 }
 
-/*
+/**
  *			N M G _ F I N D _ S _ O F _ V U
  *
  *  Return parent shell of vertexuse
@@ -223,7 +227,7 @@ nmg_find_s_of_vu(const struct vertexuse *vu)
  *									*
  ************************************************************************/
 
-/*
+/**
  *			N M G _ F I N D _ F U _ O F _ E U
  *
  *	return a pointer to the faceuse that is the super-parent of this
@@ -241,7 +245,7 @@ nmg_find_fu_of_eu(const struct edgeuse *eu)
 	return (struct faceuse *)NULL;			
 }
 
-/*
+/**
  *			N M G _ F I N D _ F U _ O F _ L U
  */
 struct faceuse *
@@ -261,7 +265,7 @@ nmg_find_fu_of_lu(const struct loopuse *lu)
 }
 
 
-/*	N M G _ F I N D _ F U _ O F _ V U
+/**	N M G _ F I N D _ F U _ O F _ V U
  *
  *	return a pointer to the parent faceuse of the vertexuse
  *	or a null pointer if vu is not a child of a faceuse.
@@ -300,7 +304,7 @@ nmg_find_fu_of_vu(const struct vertexuse *vu)
 	rt_bomb("nmg_find_fu_of_vu()\n");
 	return ((struct faceuse *)NULL);
 }
-/*
+/**
  *			N M G _ F I N D _ F U _ W I T H _ F G _ I N _ S
  *
  *  Find a faceuse in shell s1 that shares the face_g_plane structure with
@@ -348,7 +352,7 @@ nmg_find_fu_with_fg_in_s(const struct shell *s1, const struct faceuse *fu2)
 	return (struct faceuse *)NULL;
 }
 
-/*
+/**
  *			N M G _ M E A S U R E _ F U _ A N G L E
  *
  *  Return the angle in radians from the interior portion of the faceuse
@@ -384,7 +388,7 @@ nmg_measure_fu_angle(const struct edgeuse *eu, const fastf_t *xvec, const fastf_
  *									*
  ************************************************************************/
 
-/*
+/**
  *			N M G _ F I N D _ L U _ O F _ V U
  */
 struct loopuse *
@@ -407,7 +411,7 @@ nmg_find_lu_of_vu(const struct vertexuse *vu)
 	return vu->up.eu_p->up.lu_p;
 }
 
-/*
+/**
  *			N M G _ L O O P _ I S _ A _ C R A C K
  *
  *  A "crack" is defined as a loop which has no area.
@@ -505,7 +509,7 @@ out:
 	return ret;
 }
 
-/*
+/**
  *			N M G _ L O O P _ I S _ C C W
  *
  *  Determine if loop proceeds counterclockwise (CCW) around the
@@ -576,7 +580,7 @@ out:
 	return( ret );
 }
 
-/*
+/**
  *			N M G _ L O O P _ T O U C H E S _ S E L F
  *
  *  Search through all the vertices in a loop.
@@ -648,7 +652,7 @@ nmg_loop_touches_self(const struct loopuse *lu)
  *									*
  ************************************************************************/
 
-/*
+/**
  *			N M G _ F I N D _ M A T C H I N G _ E U _ I N _ S
  *
  *  If shell s2 has an edge that connects the same vertices as eu1 connects,
@@ -680,7 +684,7 @@ nmg_find_matching_eu_in_s(const struct edgeuse *eu1, const struct shell *s2)
 	return eu2;		/* May be NULL if no edgeuse found */
 }
 
-/*
+/**
  *			N M G _ F I N D E U
  *
  *  Find an edgeuse in a shell between a given pair of vertex structs.
@@ -789,7 +793,7 @@ out:
 	return (struct edgeuse *)eu;
 }
 
-/*
+/**
  *			N M G _ F I N D _ E U _ I N _ F A C E
  *
  *  An analog to nmg_findeu(), only restricted to searching a faceuse,
@@ -885,7 +889,7 @@ out:
 	return (struct edgeuse *)eu;
 }
 
-/*
+/**
  *			N M G _ F I N D _ E
  *
  *  Find an edge between a given pair of vertices.
@@ -966,7 +970,7 @@ out:
 	return (struct edgeuse *)eu;
 }
 
-/*
+/**
  *			N M G _ F I N D _ E U _ O F _ V U
  *
  *  Return a pointer to the edgeuse which is the parent of this vertexuse.
@@ -984,7 +988,7 @@ nmg_find_eu_of_vu(const struct vertexuse *vu)
 	return vu->up.eu_p;
 }
 
-/*
+/**
  *			N M G _ F I N D _ E U _ W I T H _ V U _ I N _ L U
  *
  *  Find an edgeuse starting at a given vertexuse within a loopuse.
@@ -1007,7 +1011,7 @@ nmg_find_eu_with_vu_in_lu(const struct loopuse *lu, const struct vertexuse *vu)
 	return((struct edgeuse *)NULL);
 }
 
-/*				N M G _ F A C E R A D I A L
+/**				N M G _ F A C E R A D I A L
  *
  *	Looking radially around an edge, find another edge in the same
  *	face as the current edge. (this could be the mate to the current edge)
@@ -1034,7 +1038,7 @@ nmg_faceradial(const struct edgeuse *eu)
 }
 
 
-/*
+/**
  *			N M G _ R A D I A L _ F A C E _ E D G E _ I N _ S H E L L
  *
  *	looking radially around an edge, find another edge which is a part
@@ -1065,7 +1069,7 @@ nmg_radial_face_edge_in_shell(const struct edgeuse *eu)
 	return(eur);
 }
 
-/*
+/**
  *			N M G _ F I N D _ E D G E _ B E T W E E N _ 2 F U
  *
  *  Perform a topology search to determine if two faces (specified by
@@ -1155,7 +1159,7 @@ nmg_find_edge_between_2fu(const struct faceuse *fu1, const struct faceuse *fu2, 
 
 }
 
-/*
+/**
  *  Support for nmg_find_e_nearest_pt2().
  */
 struct fen2d_state {
@@ -1202,7 +1206,7 @@ nmg_find_e_pt2_handler(long int *lp, genptr_t state, int first)
 	}
 }
 
-/*
+/**
  *			N M G _ F I N D _ E _ N E A R E S T _ P T 2
  *
  *  A geometric search routine to find the edge that is neaest to
@@ -1248,7 +1252,7 @@ nmg_find_e_nearest_pt2(long int *magic_p, const fastf_t *pt2, const fastf_t *mat
 	return (struct edge *)NULL;
 }
 
-/*
+/**
  *			N M G _ E U _ 2 V E C S _ P E R P
  *
  *  Given an edgeuse, return two arbitrary unit-length vectors which
@@ -1286,7 +1290,7 @@ nmg_eu_2vecs_perp(fastf_t *xvec, fastf_t *yvec, fastf_t *zvec, const struct edge
 	VCROSS( yvec, zvec, xvec );
 }
 
-/*
+/**
  *			N M G _ F I N D _ E U _ L E F T V E C
  *
  *  Given an edgeuse, if it is part of a faceuse, return the inward pointing
@@ -1436,7 +1440,7 @@ nmg_find_eu_leftvec(fastf_t *left, const struct edgeuse *eu)
 	return 0;
 }
 
-/*
+/**
  *		N M G _ F I N D _ E U _ L E F T _ N O N _ U N I T
  *
  *  Given an edgeuse, if it is part of a faceuse, return the inward pointing
@@ -1477,7 +1481,7 @@ nmg_find_eu_left_non_unit(fastf_t *left, const struct edgeuse *eu)
 	VCROSS( left, Norm, edgevect );
 	return 0;
 }
-/*
+/**
  *			N M G _ F I N D _ O T _ S A M E _ E U _ O F _ E
  *
  *  If there is an edgeuse of an OT_SAME faceuse on this edge, return it.
@@ -1510,7 +1514,7 @@ nmg_find_ot_same_eu_of_e(const struct edge *e)
  *									*
  ************************************************************************/
 
-/*
+/**
  *			N M G _ F I N D _ V _ I N _ F A C E
  *
  *	Perform a topological search to
@@ -1548,7 +1552,7 @@ nmg_find_v_in_face(const struct vertex *v, const struct faceuse *fu)
 	return((struct vertexuse *)NULL);
 }
 
-/*
+/**
  *			N M G _ F I N D _ V _ I N _ S H E L L
  *
  *  Search shell "s" for a vertexuse that refers to vertex "v".
@@ -1588,7 +1592,7 @@ nmg_find_v_in_shell(const struct vertex *v, const struct shell *s, int edges_onl
 	return (struct vertexuse *)NULL;
 }
 
-/*
+/**
  *			N M G _ F I N D _ P T _ I N _ L U
  *
  *  Conduct a geometric search for a vertex in loopuse 'lu' which is
@@ -1639,7 +1643,7 @@ nmg_find_pt_in_lu(const struct loopuse *lu, const fastf_t *pt, const struct bn_t
 
 }
 
-/*
+/**
  *			N M G _ F I N D _ P T _ I N _ F A C E
  *
  *  Conduct a geometric search for a vertex in face 'fu' which is
@@ -1666,7 +1670,7 @@ nmg_find_pt_in_face(const struct faceuse *fu, const fastf_t *pt, const struct bn
 	return ((struct vertexuse *)NULL);
 }
 
-/*
+/**
  *			N M G _ F I N D _ P T _ I N _ S H E L L
  *
  *  Given a point in 3-space and a shell pointer, try to find a vertex
@@ -1752,7 +1756,7 @@ nmg_find_pt_in_shell(const struct shell *s, const fastf_t *pt, const struct bn_t
 	return( (struct vertex *)0 );
 }
 
-/*
+/**
  *			N M G _ F I N D _ P T _ I N _ M O D E L
  *
  *  Brute force search of the entire model to find a vertex that
@@ -1783,7 +1787,7 @@ nmg_find_pt_in_model(const struct model *m, const fastf_t *pt, const struct bn_t
 	return (struct vertex *)NULL;
 }
 
-/*
+/**
  *			N M G _ I S _ V E R T E X _ I N _ E D G E L I S T
  *
  *  Returns -
@@ -1805,7 +1809,7 @@ nmg_is_vertex_in_edgelist(register const struct vertex *v, const struct bu_list 
 	return(0);
 }
 
-/*
+/**
  *			N M G _ I S _ V E R T E X _ I N _ L O O P L I S T
  *
  *  Returns -
@@ -1839,7 +1843,7 @@ nmg_is_vertex_in_looplist(register const struct vertex *v, const struct bu_list 
 	return(0);
 }
 
-/*
+/**
  *			N M G _ I S _ V E R T E X _ I N _ F A C E
  *
  *  Returns -
@@ -1870,7 +1874,7 @@ nmg_is_vertex_in_face(const struct vertex *v, const struct face *f)
 	return (struct vertexuse *)NULL;
 }
 
-/*
+/**
  *	N M G _ I S _ V E R T E X _ A _ S E L F L O O P _ I N _ S H E L L
  *
  *  Check to see if a given vertex is used within a shell
@@ -1904,7 +1908,7 @@ nmg_is_vertex_a_selfloop_in_shell(const struct vertex *v, const struct shell *s)
 	return 0;
 }
 
-/*
+/**
  *			N M G _ I S _ V E R T E X _ I N _ F A C E L I S T
  *
  *  Returns -
@@ -1925,7 +1929,7 @@ nmg_is_vertex_in_facelist(register const struct vertex *v, const struct bu_list 
 	return(0);
 }
 
-/*
+/**
  *			N M G _ I S _ E D G E _ I N _ E D G E L I S T
  *
  *  Returns -
@@ -1946,7 +1950,7 @@ nmg_is_edge_in_edgelist(const struct edge *e, const struct bu_list *hd)
 	return(0);
 }
 
-/*
+/**
  *			N M G _ I S _ E D G E _ I N _ L O O P L I S T
  *
  *  Returns -
@@ -1976,7 +1980,7 @@ nmg_is_edge_in_looplist(const struct edge *e, const struct bu_list *hd)
 	return(0);
 }
 
-/*
+/**
  *			N M G _ I S _ E D G E _ I N _ F A C E L I S T
  *
  *  Returns -
@@ -1997,7 +2001,7 @@ nmg_is_edge_in_facelist(const struct edge *e, const struct bu_list *hd)
 	return(0);
 }
 
-/*
+/**
  *			N M G _ I S _ L O O P _ I N _ F A C E L I S T
  *
  *  Returns -
@@ -2033,7 +2037,7 @@ struct vf_state {
 	struct bu_ptbl	*tabl;
 };
 
-/*
+/**
  *			N M G _ 2 R V F _ H A N D L E R
  *
  *  A private support routine for nmg_vertex_tabulate().
@@ -2053,7 +2057,7 @@ nmg_2rvf_handler(long int *vp, genptr_t state, int first)
 	bu_ptbl_ins( sp->tabl, vp );
 }
 
-/*
+/**
  *			N M G _ V E R T E X _ T A B U L A T E
  *
  *  Given a pointer to any nmg data structure,
@@ -2085,7 +2089,7 @@ nmg_vertex_tabulate(struct bu_ptbl *tab, const long int *magic_p)
 	bu_free( (char *)st.visited, "visited[]");
 }
 
-/*
+/**
  *			N M G _ V E R T _ A _ H A N D L E R
  *
  *  A private support routine for nmg_vertexuse_normal_tabulate().
@@ -2108,7 +2112,7 @@ nmg_vert_a_handler(long int *vp, genptr_t state, int first)
 	bu_ptbl_ins( sp->tabl, vp );
 }
 
-/*
+/**
  *			N M G _ V E R T E X U S E_ N O R M A L _ T A B U L A T E
  *
  *  Given a pointer to any nmg data structure,
@@ -2140,7 +2144,7 @@ nmg_vertexuse_normal_tabulate(struct bu_ptbl *tab, const long int *magic_p)
 	bu_free( (char *)st.visited, "visited[]");
 }
 
-/*
+/**
  *			N M G _ 2 E D G E U S E _ H A N D L E R
  *
  *  A private support routine for nmg_edgeuse_tabulate().
@@ -2160,7 +2164,7 @@ nmg_2edgeuse_handler(long int *eup, genptr_t state, int first)
 	bu_ptbl_ins( sp->tabl, eup );
 }
 
-/*
+/**
  *			N M G _ E D G E U S E _ T A B U L A T E
  *
  *  Given a pointer to any nmg data structure,
@@ -2192,7 +2196,7 @@ nmg_edgeuse_tabulate(struct bu_ptbl *tab, const long int *magic_p)
 	bu_free( (char *)st.visited, "visited[]");
 }
 
-/*
+/**
  *			N M G _ 2 E D G E _ H A N D L E R
  *
  *  A private support routine for nmg_edge_tabulate().
@@ -2212,7 +2216,7 @@ nmg_2edge_handler(long int *ep, genptr_t state, int first)
 	bu_ptbl_ins( sp->tabl, ep );
 }
 
-/*
+/**
  *			N M G _ E D G E _ T A B U L A T E
  *
  *  Given a pointer to any nmg data structure,
@@ -2244,7 +2248,7 @@ nmg_edge_tabulate(struct bu_ptbl *tab, const long int *magic_p)
 	bu_free( (char *)st.visited, "visited[]");
 }
 
-/*
+/**
  *			N M G _ E D G E _ G _ H A N D L E R
  *
  *  A private support routine for nmg_edge_g_tabulate().
@@ -2273,7 +2277,7 @@ nmg_edge_g_handler(long int *ep, genptr_t state, int first)
 	bu_ptbl_ins( sp->tabl, ep );
 }
 
-/*
+/**
  *			N M G _ E D G E _ G _ T A B U L A T E
  *
  *  Given a pointer to any nmg data structure,
@@ -2305,7 +2309,7 @@ nmg_edge_g_tabulate(struct bu_ptbl *tab, const long int *magic_p)
 	bu_free( (char *)st.visited, "visited[]");
 }
 
-/*
+/**
  *			N M G _ 2 F A C E _ H A N D L E R
  *
  *  A private support routine for nmg_face_tabulate().
@@ -2325,7 +2329,7 @@ nmg_2face_handler(long int *fp, genptr_t state, int first)
 	bu_ptbl_ins( sp->tabl, fp );
 }
 
-/*
+/**
  *			N M G _ F A C E _ T A B U L A T E
  *
  *  Given a pointer to any nmg data structure,
@@ -2357,7 +2361,7 @@ nmg_face_tabulate(struct bu_ptbl *tab, const long int *magic_p)
 	bu_free( (char *)st.visited, "visited[]");
 }
 
-/*
+/**
  *			N M G _ E D G E U S E _ W I T H _ E G _ T A B U L A T E
  *
  *  Build an bu_ptbl list which cites every edgeuse
@@ -2391,7 +2395,7 @@ struct edge_line_state {
 	struct bn_tol		tol;
 };
 
-/*
+/**
  *			N M G _ L I N E _ H A N D L E R
  *
  *  A private support routine for nmg_edgeuse_on_line_tabulate.
@@ -2433,7 +2437,7 @@ nmg_line_handler(long int *longp, genptr_t state, int first)
 	bu_ptbl_ins( sp->tabl, longp );
 }
 
-/*
+/**
  *			N M G _ E D G E U S E _ O N _ L I N E _ T A B U L A T E
  *
  *  Given a pointer to any nmg data structure,
@@ -2490,7 +2494,7 @@ struct e_and_v_state  {
 	struct bu_ptbl	*verts;
 };
 
-/*
+/**
  *			N M G _ E _ H A N D L E R
  *
  *  A private support routine for nmg_e_and_v_tabulate().
@@ -2512,7 +2516,7 @@ nmg_e_handler(long int *longp, genptr_t state, int first)
 	bu_ptbl_ins( sp->edges, (long *)e->eu_p );
 }
 
-/*
+/**
  *			N M G _ V _ H A N D L E R
  *
  *  A private support routine for nmg_e_and_v_tabulate().
@@ -2531,7 +2535,7 @@ nmg_v_handler(long int *longp, genptr_t state, int first)
 	bu_ptbl_ins( sp->verts, longp );
 }
 
-/*
+/**
  *			N M G _ E _ A N D _ V _ T A B U L A T E
  *
  *  Build lists of all edges (represented by one edgeuse on that edge)
@@ -2566,7 +2570,7 @@ nmg_e_and_v_tabulate(struct bu_ptbl *eutab, struct bu_ptbl *vtab, const long int
 	bu_free( (char *)st.visited, "visited[]");
 }
 
-/*
+/**
  *			N M G _ 2 E D G E U S E _ G _ C O I N C I D E N T
  *
  *  Given two edgeuses, determine if they share the same edge geometry,

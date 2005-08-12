@@ -18,9 +18,14 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+
+/** \addtogroup libbn */
+/*@{*/
+
 /** @file rand.c
- *
+ * This is our table of random numbers.
  */
+/*@}*/
 
 #include "common.h"
 

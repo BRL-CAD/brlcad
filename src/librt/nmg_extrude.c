@@ -18,6 +18,10 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+
+/** \addtogroup nmg */
+
+/*@{*/
 /** @file nmg_extrude.c
  *	Routines for extruding nmg's.
  *
@@ -29,6 +33,8 @@
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
+/*@}*/
+
 #ifndef lint
 static const char RCSid[] = "@(#)$Header$ (ARL)";
 #endif
@@ -48,7 +54,7 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 #include "./debug.h"
 
 
-/*
+/**
  *	V e r t s _ i n _ N M G _ L o o p
  *
  *	Count number of vertices in an NMG loop.
@@ -80,7 +86,7 @@ verts_in_nmg_loop(struct loopuse *lu)
 	return(cnt);
 }
 
-/*
+/**
  *	V e r t s _ i n _ N M G _ F a c e
  *
  *	Count number of vertices in an NMG face.
@@ -97,7 +103,7 @@ verts_in_nmg_face(struct faceuse *fu)
 	return(cnt);
 }
 
-/*
+/**
  *	T r a n s l a t e _ N M G _ F a c e
  *
  *	Translate a face using a vector's magnitude and direction.
@@ -186,7 +192,7 @@ nmg_translate_face(struct faceuse *fu, const fastf_t *Vec, const struct bn_tol *
 	bu_free((char *)verts, "verts");
 }
 
-/*
+/**
  *	N M G _ E x t r u d e _ F a c e
  *
  *	Duplicate a given NMG face, move it by specified vector,
@@ -276,7 +282,7 @@ nmg_extrude_face(struct faceuse *fu, const fastf_t *Vec, const struct bn_tol *to
 	return( 0 );
 }
 
-/*	N M G _ F I N D _ V E R T E X _ I N _ L U
+/**	N M G _ F I N D _ V E R T E X _ I N _ L U
  *
  * find a use of vertex v in loopuse lu
  */
@@ -318,7 +324,7 @@ nmg_find_vertex_in_lu(const struct vertex *v, const struct loopuse *lu)
 	return( ret_vu );
 }
 
-/*	N M G _ S T A R T _ N E W _ L O O P
+/**	N M G _ S T A R T _ N E W _ L O O P
  *
  * recursive routine to build tables of edgeuse that may be used
  * to create new loopuses. lu1 and lu2 are overlapping edgeuses
@@ -423,7 +429,7 @@ nmg_start_new_loop(struct edgeuse *start_eu, struct loopuse *lu1, struct loopuse
 
 }
 
-/*	N M G _ F I X _ O V E R L A P P I N G _ L O O P S
+/**	N M G _ F I X _ O V E R L A P P I N G _ L O O P S
  *
  * Looks at each faceuse in the shell and checks if loopuses in that
  * faceuse overlap each other. This code can only handle faceuses that
@@ -737,7 +743,7 @@ nmg_fix_overlapping_loops(struct shell *s, const struct bn_tol *tol)
 		bu_log( "nmg_fix_overlapping_loops: done\n" );
 }
 
-/*	N M G _ B R E A K _ C R O S S E D _ L O O P S
+/**	N M G _ B R E A K _ C R O S S E D _ L O O P S
  *
  *	Extrusion may create crossed loops within a face.
  *	This routine intersects each edge within a loop with every other edge
@@ -838,7 +844,7 @@ nmg_break_crossed_loops(struct shell *is, const struct bn_tol *tol)
 	}
 }
 
-/*
+/**
  *	N M G _ E X T R U D E _ C L E A N U P
  *
  *	Clean up after nmg_extrude_shell.
@@ -1021,7 +1027,7 @@ nmg_extrude_cleanup(struct shell *is, const int is_void, const struct bn_tol *to
 	return( is );
 }
 
-/*
+/**
  *	N M G _ H O L L O W _ S H E L L
  *
  *	Hollows out a shell producing a wall thickness of thickness "thick"
@@ -1240,7 +1246,7 @@ nmg_hollow_shell(struct shell *s, const fastf_t thick, const int approximate, co
 	nmg_kr( new_r );
 }
 
-/*	N M G _ E X T R U D E _ S H E L L
+/**	N M G _ E X T R U D E _ S H E L L
  *
  * Extrudes a shell (s) by a distance (dist) in the direction
  * of the face normals if normal_ward, or the opposite direction

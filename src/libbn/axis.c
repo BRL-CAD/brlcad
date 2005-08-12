@@ -18,8 +18,10 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+
+/** \addtogroup libbn */
+/*@{*/
 /** @file axis.c
- *
  *	This routine is used to generate an axis for a graph.
  * It draws an axis with a linear scale, places tic marks every inch,
  * labels the tics, and uses the supplied title for the axis.
@@ -42,6 +44,8 @@
  *	Aberdeen Proving Ground, Maryland  21005-5066
  *  
  */
+/*@}*/
+
 #ifndef lint
 static const char RCSid[] = "@(#)$Header$ (BRL)";
 #endif

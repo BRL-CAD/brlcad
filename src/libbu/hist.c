@@ -18,9 +18,11 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+
+/** \addtogroup libbu */
+/*@{*/
 /** @file hist.c
- *
- *  General purpose histogram handling routines
+ *  General purpose histogram handling routines.
  *
  *  The macro RT_HISTOGRAM_TALLY is used to record items that
  *  live in a single "bin", while the subroutine rt_hist_range()
@@ -35,6 +37,8 @@
  *	Aberdeen Proving Ground, Maryland  21005-5066
  *  
  */
+/*@}*/
+
 #ifndef lint
 static const char RCShist[] = "@(#)$Header$ (BRL)";
 #endif

@@ -18,8 +18,10 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+
+/** \addtogroup librt */
+/*@{*/
 /** @file storage.c
- *
  * Ray Tracing program, storage manager.
  *
  *  Functions -
@@ -33,6 +35,8 @@
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  *  
  */
+/*@}*/
+
 #ifndef lint
 static const char RCSstorage[] = "@(#)$Header$ (ARL)";
 #endif

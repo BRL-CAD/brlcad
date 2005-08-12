@@ -18,10 +18,12 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+
+/** \addtogroup ellipsoids */
+
+/*@{*/
 /** @file g_sph.c
- *
- *  Purpose -
- *	Intersect a ray with a Sphere
+ *	Intersect a ray with a Sphere.
  *	Special case of the Generalized Ellipsoid
  *
  *  Authors -
@@ -34,6 +36,7 @@
  *	Aberdeen Proving Ground, Maryland  21005
  *  
  */
+/*@}*/
 #ifndef lint
 static const char RCSsph[] = "@(#)$Header$ (BRL)";
 #endif
@@ -81,7 +84,7 @@ struct sph_specific {
 	mat_t	sph_SoR;	/* Rotate and scale for UV mapping */
 };
 
-/*
+/**
  *  			R T _ S P H _ P R E P
  *  
  *  Given a pointer to a GED database record, and a transformation matrix,
@@ -197,7 +200,7 @@ rt_sph_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 	return(0);			/* OK */
 }
 
-/*
+/**
  *			R T _ S P H _ P R I N T
  */
 void
@@ -213,7 +216,7 @@ rt_sph_print(register const struct soltab *stp)
 	bn_mat_print("S o R", sph->sph_SoR );
 }
 
-/*
+/**
  *  			R T _ S P H _ S H O T
  *  
  *  Intersect a ray with a sphere.
@@ -275,7 +278,7 @@ rt_sph_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 }
 
 #define SEG_MISS(SEG)		(SEG).seg_stp=(struct soltab *) 0;	
-/*
+/**
  *			R T _ S P H _ V S H O T
  *
  *  This is the Becker vectorized version
@@ -333,7 +336,7 @@ rt_sph_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
 	}
 }
 
-/*
+/**
  *  			R T _ S P H _ N O R M
  *  
  *  Given ONE ray distance, return the normal and entry/exit point.
@@ -349,7 +352,7 @@ rt_sph_norm(register struct hit *hitp, struct soltab *stp, register struct xray 
 	VSCALE( hitp->hit_normal, hitp->hit_normal, sph->sph_invrad );
 }
 
-/*
+/**
  *			R T _ S P H _ C U R V E
  *
  *  Return the curvature of the sphere.
@@ -366,7 +369,7 @@ rt_sph_curve(register struct curvature *cvp, register struct hit *hitp, struct s
 	bn_vec_ortho( cvp->crv_pdir, hitp->hit_normal );
 }
 
-/*
+/**
  *  			R T _ S P H _ U V
  *  
  *  For a hit on the surface of an SPH, return the (u,v) coordinates
@@ -409,7 +412,7 @@ rt_sph_uv(struct application *ap, struct soltab *stp, register struct hit *hitp,
 		bn_inv2pi * r / stp->st_aradius;
 }
 
-/*
+/**
  *		R T _ S P H _ F R E E
  */
 void
@@ -431,7 +434,7 @@ rt_sph_class(void)
 
 
 #if 0
-/*
+/**
  *			R T _ S P H _ I M P O R T 5
  *
  *  Import a sphere from the v5 database format to
@@ -469,7 +472,7 @@ const struct db_i		*dbip;
 	return(0);		/* OK */
 }
 
-/*
+/**
  *			R T _ S P H _ E X P O R T 5
  */
 int

@@ -18,10 +18,12 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+
+/** \addtogroup g */
+
+/*@{*/
 /** @file g_pipe.c
- *
- *  Purpose -
- *	Intersect a ray with a pipe solid
+ *	Intersect a ray with a pipe solid.
  *
  *  Authors -
  *  
@@ -31,6 +33,8 @@
  *	Aberdeen Proving Ground, Maryland  21005-5066
  *  
  */
+/*@}*/
+
 #ifndef lint
 static const char RCSpipe[] = "@(#)$Header$ (BRL)";
 #endif
@@ -290,7 +294,7 @@ rt_linear_pipe_prep(struct soltab *stp, struct bu_list *head, fastf_t *pt1, fast
 
 }
 
-/*
+/**
  *  			R T _ P I P E _ P R E P
  *  
  *  Given a pointer to a GED database record, and a transformation matrix,
@@ -420,7 +424,7 @@ next_pt:
 	return( 0 );
 }
 
-/*
+/**
  *			R T _ P I P E _ P R I N T
  */
 void
@@ -430,7 +434,7 @@ rt_pipe_print(register const struct soltab *stp)
 		(struct bu_list *)stp->st_specific; */
 }
 
-/*
+/**
  *			R T _ P I P E P T _ P R I N T
  */
 void
@@ -450,7 +454,7 @@ rt_pipept_print( const struct wdb_pipept *pipe, double mm2local )
 		bu_log( "\tod=%g\n", pipe->pp_od*mm2local );
 }
 
-/*
+/**
  *			R T _ V L S _ P I P E P T
  */
 void
@@ -1166,7 +1170,7 @@ rt_pipe_hitsort(struct hit_list *h, int *nh, register struct xray *rp, struct so
 	}
 }
 
-/*
+/**
  *  			R T _ P I P E _ N O R M
  *  
  *  Given ONE ray distance, return the normal and entry/exit point.
@@ -1251,7 +1255,7 @@ rt_pipe_norm(register struct hit *hitp, struct soltab *stp, register struct xray
 	}
 }
 
-/*
+/**
  *  			R T _ P I P E _ S H O T
  *  
  *  Intersect a ray with a pipe.
@@ -1375,7 +1379,7 @@ rt_pipe_shot(struct soltab *stp, register struct xray *rp, struct application *a
 
 #define SEG_MISS(SEG)		(SEG).seg_stp=(struct soltab *) 0;	
 
-/*
+/**
  *			R T_ P I P E _ V S H O T
  *
  *  Vectorized version.
@@ -1391,7 +1395,7 @@ rt_pipe_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, st
 	rt_vstub( stp, rp, segp, n, ap );
 }
 
-/*
+/**
  *			R T _ P I P E _ C U R V E
  *
  *  Return the curvature of the pipe.
@@ -1408,7 +1412,7 @@ rt_pipe_curve(register struct curvature *cvp, register struct hit *hitp, struct 
  	bn_vec_ortho( cvp->crv_pdir, hitp->hit_normal );
 }
 
-/*
+/**
  *  			R T _ P I P E _ U V
  *  
  *  For a hit on the surface of an pipe, return the (u,v) coordinates
@@ -1423,7 +1427,7 @@ rt_pipe_uv(struct application *ap, struct soltab *stp, register struct hit *hitp
 		(struct bu_list *)stp->st_specific; */
 }
 
-/*
+/**
  *		R T _ P I P E _ F R E E
  */
 void
@@ -1447,7 +1451,7 @@ rt_pipe_free(register struct soltab *stp)
 #endif
 }
 
-/*
+/**
  *			R T _ P I P E _ C L A S S
  */
 int
@@ -1456,7 +1460,7 @@ rt_pipe_class(void)
 	return(0);
 }
 
-/*	D R A W _ P I P E _ A R C
+/**			D R A W _ P I P E _ A R C
  *
  * v1 and v2 must be unit vectors normal to each other in plane of circle
  * v1 must be in direction from center to start point (unless a full circle is
@@ -1547,7 +1551,8 @@ draw_linear_seg(struct bu_list *vhead, const fastf_t *p1, const fastf_t or1, con
 }
 
 HIDDEN void
-draw_pipe_bend(struct bu_list *vhead, const fastf_t *center, const fastf_t *end, const fastf_t radius, const fastf_t angle, const fastf_t *v1, const fastf_t *v2, const fastf_t *norm, const fastf_t or, const fastf_t ir, fastf_t *f1, fastf_t *f2, const int seg_count)
+draw_pipe_bend(struct bu_list *vhead, const fastf_t *center, const fastf_t *end, const fastf_t radius, const fastf_t angle, const fastf_t *v1, const fastf_t *v2, const fastf_t *norm, const fastf_t or, const fastf_t ir, fastf_t *f1, fastf_t *f2, const int 
+seg_count)
 {
 
 	point_t	tmp_center, tmp_start, tmp_end;
@@ -1630,7 +1635,7 @@ draw_pipe_bend(struct bu_list *vhead, const fastf_t *center, const fastf_t *end,
 	VMOVE( f2, end_f2 );
 }
 
-/*
+/**
  *			R T _ P I P E _ P L O T
  */
 int
@@ -1857,7 +1862,21 @@ tesselate_pipe_start(struct wdb_pipept *pipe, int arc_segs, double sin_del, doub
 }
 
 HIDDEN void
-tesselate_pipe_linear(fastf_t *start_pt, fastf_t or, fastf_t ir, fastf_t *end_pt, fastf_t end_or, fastf_t end_ir, int arc_segs, double sin_del, double cos_del, struct vertex ***outer_loop, struct vertex ***inner_loop, fastf_t *r1, fastf_t *r2, struct shell *s, const struct bn_tol *tol)
+tesselate_pipe_linear(fastf_t *start_pt,
+		      fastf_t or,
+		      fastf_t ir,
+		      fastf_t *end_pt,
+		      fastf_t end_or,
+		      fastf_t end_ir,
+		      int arc_segs,
+		      double sin_del,
+		      double cos_del,
+		      struct vertex ***outer_loop,
+		      struct vertex ***inner_loop,
+		      fastf_t *r1,
+		      fastf_t *r2,
+		      struct shell *s,
+		      const struct bn_tol *tol)
 {
 	struct vertex **new_outer_loop;
 	struct vertex **new_inner_loop;
@@ -2636,7 +2655,8 @@ tesselate_pipe_linear(fastf_t *start_pt, fastf_t or, fastf_t ir, fastf_t *end_pt
 }
 
 HIDDEN void
-tesselate_pipe_bend(fastf_t *bend_start, fastf_t *bend_end, fastf_t *bend_center, fastf_t or, fastf_t ir, int arc_segs, double sin_del, double cos_del, struct vertex ***outer_loop, struct vertex ***inner_loop, fastf_t *start_r1, fastf_t *start_r2, struct shell *s, const struct bn_tol *tol, const struct rt_tess_tol *ttol)
+tesselate_pipe_bend(fastf_t *bend_start, fastf_t *bend_end, fastf_t *bend_center, fastf_t or, fastf_t ir, int arc_segs, double sin_del, double cos_del, struct vertex ***outer_loop, struct vertex ***inner_loop, fastf_t *start_r1, fastf_t *start_r2, struct 
+shell *s, const struct bn_tol *tol, const struct rt_tess_tol *ttol)
 {
 	struct vertex **new_outer_loop;
 	struct vertex **new_inner_loop;
@@ -3138,7 +3158,7 @@ tesselate_pipe_end(struct wdb_pipept *pipe, int arc_segs, double sin_del, double
 	}
 }
 
-/*
+/**
  *			R T _ P I P E _ T E S S
  *
  *	XXXX Still needs vertexuse normals!
@@ -3327,7 +3347,7 @@ next_pt:
 	return( 0 );
 }
 
-/*
+/**
  *			R T _ P I P E _ I M P O R T
  */
 int
@@ -3381,7 +3401,7 @@ rt_pipe_import(struct rt_db_internal *ip, const struct bu_external *ep, register
 	return(0);			/* OK */
 }
 
-/*
+/**
  *			R T _ P I P E _ E X P O R T
  */
 int
@@ -3443,7 +3463,7 @@ rt_pipe_export(struct bu_external *ep, const struct rt_db_internal *ip, double l
 	return(0);
 }
 
-/*
+/**
  *			R T _ P I P E _ I M P O R T 5
  */
 int
@@ -3501,7 +3521,7 @@ rt_pipe_import5(struct rt_db_internal *ip, const struct bu_external *ep, registe
 	return(0);			/* OK */
 }
 
-/*
+/**
  *			R T _ P I P E _ E X P O R T 5
  */
 int
@@ -3559,7 +3579,7 @@ rt_pipe_export5(struct bu_external *ep, const struct rt_db_internal *ip, double 
 	return(0);
 }
 
-/*
+/**
  *			R T _ P I P E _ D E S C R I B E
  *
  *  Make human-readable formatted presentation of this solid.
@@ -3609,7 +3629,7 @@ rt_pipe_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbos
 	return(0);
 }
 
-/*
+/**
  *			R T _ P I P E _ I F R E E
  *
  *  Free the storage associated with the rt_db_internal version of this solid.
@@ -3632,7 +3652,7 @@ rt_pipe_ifree(struct rt_db_internal *ip)
 	ip->idb_ptr = GENPTR_NULL;
 }
 
-/*
+/**
  *			R T _ P I P E _ C K
  *
  *  Check pipe solid
@@ -3733,7 +3753,7 @@ next_pt:
 }
 
 
-/*
+/**
  *			R T _ P I P E _ T C L _ G E T
  *
  *  Examples -

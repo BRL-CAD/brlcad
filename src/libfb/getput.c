@@ -18,11 +18,15 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+
+/** \addtogroup libfb */
+/*@{*/
 /** @file getput.c
- *
  * Routines to insert/extract short/long's. Must account for byte
  * order and non-alignment problems.
  */
+/*@}*/
+
 #ifndef lint
 static const char RCSid[] = "@(#)$Header$ (BRL)";
 #endif

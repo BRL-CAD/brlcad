@@ -18,10 +18,12 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+
+/** \addtogroup ellipsoids */
+
+/*@{*/
 /** @file g_ell.c
- *
- *  Purpose -
- *	Intersect a ray with a Generalized Ellipsoid
+ *	Intersect a ray with a Generalized Ellipsoid.
  *
  *  Authors -
  *	Edwin O. Davisson	(Analysis)
@@ -36,6 +38,8 @@
  *	Aberdeen Proving Ground, Maryland  21005
  *  
  */
+/*@}*/
+
 #ifndef lint
 static const char RCSell[] = "@(#)$Header$ (BRL)";
 #endif
@@ -175,7 +179,7 @@ struct ell_specific {
 };
 #define ELL_NULL	((struct ell_specific *)0)
 
-/*
+/**
  *  			R T _ E L L _ P R E P
  *  
  *  Given a pointer to a GED database record, and a transformation matrix,
@@ -329,7 +333,7 @@ rt_ell_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 	return(0);			/* OK */
 }
 
-/*
+/**
  *			R T _ E L L _ P R I N T
  */
 void
@@ -343,7 +347,7 @@ rt_ell_print(register const struct soltab *stp)
 	bn_mat_print("invRSSR", ell->ell_invRSSR );
 }
 
-/*
+/**
  *  			R T _ E L L _ S H O T
  *  
  *  Intersect a ray with an ellipsoid, where all constant terms have
@@ -396,7 +400,7 @@ rt_ell_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 
 #define RT_ELL_SEG_MISS(SEG)	(SEG).seg_stp=RT_SOLTAB_NULL
 
-/*
+/**
  *			R T _ E L L _ V S H O T
  *
  *  This is the Becker vector version.
@@ -454,7 +458,7 @@ rt_ell_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
 	}
 }
 
-/*
+/**
  *  			R T _ E L L _ N O R M
  *  
  *  Given ONE ray distance, return the normal and entry/exit point.
@@ -477,7 +481,7 @@ rt_ell_norm(register struct hit *hitp, struct soltab *stp, register struct xray 
 	hitp->hit_vpriv[X] = scale;
 }
 
-/*
+/**
  *			R T _ E L L _ C U R V E
  *
  *  Return the curvature of the ellipsoid.
@@ -514,7 +518,7 @@ rt_ell_curve(register struct curvature *cvp, register struct hit *hitp, struct s
 	VUNITIZE( cvp->crv_pdir );
 }
 
-/*
+/**
  *  			R T _ E L L _ U V
  *  
  *  For a hit on the surface of an ELL, return the (u,v) coordinates
@@ -557,7 +561,7 @@ rt_ell_uv(struct application *ap, struct soltab *stp, register struct hit *hitp,
 		bn_inv2pi * r / stp->st_aradius;
 }
 
-/*
+/**
  *			R T _ E L L _ F R E E
  */
 void
@@ -575,7 +579,7 @@ rt_ell_class(void)
 	return(0);
 }
 
-/*
+/**
  *			R T _ E L L _ 1 6 P T S
  *
  * Also used by the TGC code
@@ -619,7 +623,7 @@ rt_ell_16pts(register fastf_t *ov,
 	VJOIN2( ELLOUT(16), V, e, A, -f, B );
 }
 
-/*
+/**
  *			R T _ E L L _ P L O T
  */
 int
@@ -708,7 +712,7 @@ struct ell_vert_strip {
 	struct faceuse	**fu;
 };
 
-/*
+/**
  *			R T _ E L L _ T E S S
  *
  *  Tessellate an ellipsoid.
@@ -1105,7 +1109,7 @@ fail:
 	return(-1);
 }
 
-/*
+/**
  *			R T _ E L L _ I M P O R T
  *
  *  Import an ellipsoid/sphere from the database format to
@@ -1147,7 +1151,7 @@ rt_ell_import(struct rt_db_internal *ip, const struct bu_external *ep, register 
 	return(0);		/* OK */
 }
 
-/*
+/**
  *			R T _ E L L _ E X P O R T
  */
 int
@@ -1178,7 +1182,7 @@ rt_ell_export(struct bu_external *ep, const struct rt_db_internal *ip, double lo
 	return(0);
 }
 
-/*
+/**
  *			R T _ E L L _ I M P O R T 5
  *
  *  Import an ellipsoid/sphere from the database format to
@@ -1216,7 +1220,7 @@ rt_ell_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
 	return 0;		/* OK */
 }
 
-/*
+/**
  *			R T _ E L L _ E X P O R T 5
  *
  *  The external format is:
@@ -1252,7 +1256,7 @@ rt_ell_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
 	return 0;
 }
 
-/*
+/**
  *			R T _ E L L _ D E S C R I B E
  *
  *  Make human-readable formatted presentation of this solid.
@@ -1320,7 +1324,7 @@ rt_ell_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
 	return(0);
 }
 
-/*
+/**
  *			R T _ E L L _ I F R E E
  *
  *  Free the storage associated with the rt_db_internal version of this solid.
@@ -1345,7 +1349,7 @@ static const fastf_t rt_ell_uvw[5*ELEMENTS_PER_VECT] = {
 	0, 1, 0
 };
 
-/*
+/**
  *			R T _ E L L _ T N U R B
  */
 int

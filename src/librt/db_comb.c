@@ -18,8 +18,11 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+
+/** \addtogroup db */
+
+/*@{*/
 /** @file db_comb.c
- *
  *  This module contains the import/export routines for "Combinations",
  *  the non-leaf nodes in the directed acyclic graphs (DAGs) in the
  *  BRL-CAD ".g" database.
@@ -39,6 +42,8 @@
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
+/*@}*/
+
 #ifndef lint
 static const char RCSid[] = "@(#)$Header$ (ARL)";
 #endif
@@ -69,7 +74,7 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 #define STAT_PERSP	4
 #define STAT_SCALE	8
 
-/*
+/**
  *			M A T _ C A T E G O R I Z E
  *
  *  Describe with a bit vector the effects this matrix will have.
@@ -100,7 +105,7 @@ mat_categorize(const fastf_t *matp)
 	return status;
 }
 
-/*
+/**
  *			D B _ T R E E _ N L E A V E S
  *
  *  Return count of number of leaf nodes in this tree.
@@ -143,7 +148,7 @@ db_tree_nleaves( const union tree *tp )
 	return( -1 );	/* for the compiler */
 }
 
-/*
+/**
  *			D B _ F L A T T E N _ T R E E
  *
  *  Take a binary tree in "V4-ready" layout (non-unions pushed below unions,
@@ -198,7 +203,7 @@ db_flatten_tree(
 	return( (struct rt_tree_array *)NULL ); /* for the compiler */
 }
 
-/*
+/**
  *			R T _ C O M B _ I M P O R T 4
  *
  *  Import a combination record from a V4 database into internal form.
@@ -410,7 +415,7 @@ rt_comb_import4(
 	return( 0 );
 }
 
-/*
+/**
  *			R T _ C O M B _ E X P O R T 4
  */
 int
@@ -581,7 +586,7 @@ rt_comb_export4(
 	return 0;		/* OK */
 }
 
-/*
+/**
  *			D B _ T R E E _ F L A T T E N _ D E S C R I B E
  *
  *  Produce a GIFT-compatible listing, one "member" per line,
@@ -700,7 +705,7 @@ db_tree_flatten_describe(
 	db_free_tree( ntp, resp );
 }
 
-/*
+/**
  *			D B _ T R E E _ D E S C R I B E
  */
 void
@@ -806,7 +811,7 @@ unary:
 	}
 }
 
-/*
+/**
  *			D B _ C O M B _ D E S C R I B E
  */
 void
@@ -868,7 +873,7 @@ db_comb_describe(
 	}
 }
 
-/*
+/**
  *			R T _ C O M B _ I F R E E
  *
  *  Free the storage associated with the rt_db_internal version of this combination.
@@ -895,7 +900,7 @@ rt_comb_ifree( struct rt_db_internal *ip, struct resource *resp )
 	ip->idb_ptr = GENPTR_NULL;	/* sanity */
 }
 
-/*
+/**
  *			R T _ C O M B _ D E S C R I B E
  *
  *  rt_functab[ID_COMBINATION].ft_describe() method
@@ -923,7 +928,7 @@ rt_comb_describe(
 
 /*==================== END g_comb.c / table.c interface ========== */
 
-/*
+/**
  *			D B _ W R A P _ V 4 _ E X T E R N A L
  *
  *  As the v4 database does not really have the notion of "wrapping",
@@ -943,7 +948,7 @@ db_wrap_v4_external( struct bu_external *op, const char *name )
 
 /* Some export support routines */
 
-/*
+/**
  *			D B _ C K _ L E F T _ H E A V Y _ T R E E
  *
  *  Support routine for db_ck_v4gift_tree().
@@ -983,7 +988,7 @@ db_ck_left_heavy_tree(
 }
 
 
-/*
+/**
  *			D B _ C K _ V 4 G I F T _ T R E E
  *
  *  Look a gift-tree in the mouth.
@@ -1025,7 +1030,7 @@ db_ck_v4gift_tree( const union tree *tp )
 }
 
 
-/*
+/**
  *			D B _ M K B O O L _ T R E E
  *
  *  Given a rt_tree_array array, build a tree of "union tree" nodes
@@ -1096,7 +1101,7 @@ db_mkbool_tree(
 	return(curtree);
 }
 
-/*
+/**
  *			D B _ M K G I F T _ T R E E
  */
 union tree *

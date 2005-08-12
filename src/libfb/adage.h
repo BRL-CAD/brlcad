@@ -18,7 +18,11 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+
+/** \defgroup libfb libfb */
+/*@{*/
 /** @file adage.h
+
   Authors -
 	Mike J. Muuss
 	Gary S. Moss
@@ -31,6 +35,7 @@
 
 	$Header$ (BRL)
  */
+/*@}*/
 #ifdef vax
 /* GSM : '' needed for Sys V emulation.					*/
 #ifdef BSD

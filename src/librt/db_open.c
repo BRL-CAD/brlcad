@@ -18,6 +18,10 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+
+/** \addtogroup db */
+
+/*@{*/
 /** @file db_open.c
  *
  * Functions -
@@ -36,6 +40,8 @@
  *	Aberdeen Proving Ground, Maryland  21005-5066
  *  
  */
+/*@}*/
+
 #ifndef lint
 static const char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
@@ -69,7 +75,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 # define SEEK_SET	0
 #endif
 
-/*
+/**
  *  			D B _ O P E N
  *
  *  Open the named database.
@@ -193,7 +199,7 @@ fail:
 	return DBI_NULL;
 }
 
-/*
+/**
  *			D B _ C R E A T E
  *
  *  Create a new database containing just a header record,
@@ -259,7 +265,7 @@ db_create(const char *name,
 	return dbip;
 }
 
-/*
+/**
  *			D B _ C L O S E _ C L I E N T
  *
  *  De-register a client of this database instance, and close out the instance.
@@ -272,7 +278,7 @@ db_close_client(struct db_i *dbip, long int *client)
 	db_close(dbip);
 }
 
-/*
+/**
  *			D B _ C L O S E
  *
  *  Close a database, releasing dynamic memory
@@ -371,7 +377,7 @@ db_close(register struct db_i *dbip)
 	bu_free( (char *)dbip, "struct db_i" );
 }
 
-/*
+/**
  *			D B _ D U M P
  *
  *  Dump a full copy of one database into another.
@@ -415,7 +421,7 @@ db_dump(struct rt_wdb *wdbp, struct db_i *dbip)
 	return 0;
 }
 
-/*
+/**
  *			D B _ C L O N E _ D B I
  *
  *  Obtain an additional instance of this same database.
@@ -431,7 +437,7 @@ db_clone_dbi(struct db_i *dbip, long int *client)
 	return dbip;
 }
 
-/*
+/**
  *			D B _ S Y N C
  *
  *  Ensure that the on-disk database has been completely written

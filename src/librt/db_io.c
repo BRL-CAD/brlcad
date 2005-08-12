@@ -18,6 +18,10 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+
+/** \addtogroup db */
+
+/*@{*/
 /** @file db_io.c
  *
  * Functions -
@@ -35,6 +39,8 @@
  *	Aberdeen Proving Ground, Maryland  21005-5066
  *  
  */
+/*@}*/
+
 #ifndef lint
 static const char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
@@ -60,7 +66,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "./debug.h"
 
-/*
+/**
  *			D B _ R E A D
  *
  *  Reads 'count' bytes at file offset 'offset' into buffer at 'addr'.
@@ -124,7 +130,7 @@ db_read(const struct db_i *dbip, genptr_t addr, long int count, long int offset)
 	return(0);			/* OK */
 }
 
-/*
+/**
  *  			D B _ G E T M R E C
  *
  *  Retrieve all records in the database pertaining to an object,
@@ -165,7 +171,7 @@ db_getmrec(const struct db_i *dbip, const struct directory *dp)
 	return( where );
 }
 
-/*
+/**
  *  			D B _ G E T
  *
  *  Retrieve 'len' records from the database,
@@ -210,7 +216,7 @@ db_get(const struct db_i *dbip, const struct directory *dp, union record *where,
 	return(0);			/* OK */
 }
 
-/*
+/**
  *			D B _ W R I T E
  *
  *  Writes 'count' bytes into at file offset 'offset' from buffer at 'addr'.
@@ -266,7 +272,7 @@ db_write(struct db_i *dbip, const genptr_t addr, long int count, long int offset
 	return(0);			/* OK */
 }
 
-/*
+/**
  *  			D B _ P U T
  *
  *  Store 'len' records to the database,
@@ -313,7 +319,7 @@ db_put(struct db_i *dbip, const struct directory *dp, union record *where, int o
 
 
 
-/*
+/**
  *			D B _ G E T _ E X T E R N A L
  *
  *  Obtains a object from the database, leaving it in external (on-disk)
@@ -361,7 +367,7 @@ db_get_external(register struct bu_external *ep, const struct directory *dp, con
 	return(0);
 }
 
-/*
+/**
  *
  *			D B _ P U T _ E X T E R N A L
  *
@@ -437,7 +443,7 @@ db_put_external(struct bu_external *ep, struct directory *dp, struct db_i *dbip)
 }
 
 
-/*
+/**
  *
  *			D B _ F W R I T E _ E X T E R N A L
  *
@@ -473,7 +479,7 @@ db_fwrite_external(FILE *fp, const char *name, struct bu_external *ep)
 	return bu_fwrite_external( fp, ep );
 }
 
-/*
+/**
  *			D B _ F R E E _ E X T E R N A L
  *
  *  XXX This is a leftover.  You should call bu_free_external() instead.

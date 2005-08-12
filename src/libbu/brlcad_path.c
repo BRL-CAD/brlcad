@@ -18,8 +18,10 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+
+/** \addtogroup libbu */
+/*@{*/
 /** @file brlcad_path.c
- *
  *  A support routine to provide the executable code with the path
  *  to where the BRL-CAD programs and libraries are installed.
  *
@@ -32,7 +34,12 @@
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  *  
  */
+
+/*@}*/
+
+
 static const char RCSbrlcad_path[] = "@(#)$Header$ (BRL)";
+
 
 #include "common.h"
 

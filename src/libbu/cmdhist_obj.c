@@ -18,9 +18,10 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+
+/** \addtogroup cmd */
+/*@{*/
 /** @file cmdhist_obj.c
- *				C M D H I S T . C
- *
  * A cmdhist object contains the attributes and
  * methods for maintaining command history.
  *
@@ -33,6 +34,7 @@
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  *  
  */
+/*@}*/
 
 #include "common.h"
 

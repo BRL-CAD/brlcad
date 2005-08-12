@@ -18,10 +18,11 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+
+/** \addtogroup librt */
+/*@{*/
 /** @file roots.c
- *
- *  Functions -
- *	rt_poly_roots		Find the roots of a polynomial
+ * Find the roots of a polynomial
  *
  *  Author -
  *	Jeff Hanes
@@ -32,6 +33,8 @@
  *	Aberdeen Proving Ground, Maryland  21005
  *  
  */
+/*@}*/
+
 #ifndef lint
 static const char RCSroots[] = "@(#)$Header$ (BRL)";
 #endif

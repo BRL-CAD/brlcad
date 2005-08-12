@@ -18,8 +18,11 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+
+/** \addtogroup librt */
+
+/*@{*/
 /** @file htbl.c
- *
  *  Support for variable length arrays of "struct hit".
  *  Patterned after the libbu/ptbl.c idea.
  *
@@ -31,6 +34,8 @@
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  *  
  */
+/*@}*/
+
 #ifndef lint
 static const char librt_htbl_RCSid[] = "@(#)$Header$ (ARL)";
 #endif

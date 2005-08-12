@@ -18,13 +18,10 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file nurb_eval.c
- *
- */
 
-/*	N U R B  _ E V A L . C
- *
- *  Function -
+/** \addtogroup nurb */
+/*@{*/
+/** @file nurb_eval.c
  *	Evaluate a Non Uniform Rational B-spline curve or at the 
  *	given (u,v) values.
  *  Author -
@@ -36,6 +33,7 @@
  * 	Aberdeen Proving Ground, Maryland 21005
  *
  */
+/*@}*/
 
 #include "common.h"
 

@@ -18,8 +18,10 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+
+/** \addtogroup libbu */
+/*@{*/
 /** @file badmagic.c
- *
  *  Routines involved with handling "magic numbers" used to identify
  *  various in-memory data structures.
  *
@@ -32,6 +34,8 @@
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  *  
  */
+/*@}*/
+
 #ifndef lint
 static const char RCSbadmagic[] = "@(#)$Header$ (ARL)";
 #endif

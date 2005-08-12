@@ -18,8 +18,11 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+
+/** \addtogroup db */
+
+/*@{*/
 /** @file db_path.c
- *
  *  Routines to manipulate "db_full_path" structures
  *
  * Functions -
@@ -34,6 +37,8 @@
  *	Aberdeen Proving Ground, Maryland  21005-5066
  *  
  */
+/*@}*/
+
 #ifndef lint
 static const char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
@@ -56,7 +61,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "./debug.h"
 
-/*
+/**
  *			D B _ F U L L _ P A T H _ I N I T
  */
 void
@@ -68,7 +73,7 @@ db_full_path_init( struct db_full_path *pathp )
 	pathp->magic = DB_FULL_PATH_MAGIC;
 }
 
-/*
+/**
  *			D B _ A D D _ N O D E _ T O _ F U L L _ P A T H
  */
 void
@@ -91,7 +96,7 @@ db_add_node_to_full_path( struct db_full_path *pp, struct directory *dp )
 	pp->fp_names[pp->fp_len++] = dp;
 }
 
-/*
+/**
  *			D B _ D U P _ F U L L _ P A T H
  */
 void
@@ -113,7 +118,7 @@ db_dup_full_path(register struct db_full_path *newp, register const struct db_fu
 		newp->fp_len * sizeof(struct directory *) );
 }
 
-/*
+/**
  *			D B _ E X T E N D _ F U L L _ P A T H
  *
  *  Extend "pathp" so that it can grow from current fp_len by incr more names.
@@ -146,7 +151,7 @@ db_extend_full_path( struct db_full_path *pathp, int incr )
 	}
 }
 
-/*
+/**
  *			D B _ A P P E N D _ F U L L _ P A T H
  */
 void
@@ -162,7 +167,7 @@ db_append_full_path( struct db_full_path *dest, const struct db_full_path *src )
 	dest->fp_len += src->fp_len;
 }
 
-/*
+/**
  *			D B _ D U P _ P A T H _ T A I L
  *
  *  Dup old path from starting index to end.
@@ -187,7 +192,7 @@ db_dup_path_tail(register struct db_full_path *newp, register const struct db_fu
 		newp->fp_len * sizeof(struct directory *) );
 }
 
-/*
+/**
  *			D B _ P A T H _ T O _ S T R I N G
  *
  *  Unlike rt_path_str(), this version can be used in parallel.
@@ -226,7 +231,7 @@ db_path_to_string( const struct db_full_path *pp )
 	return buf;
 }
 
-/*
+/**
  *			D B _ P A T H _ T O _ V L S
  *
  *  Append a string representation of the path onto the vls.
@@ -250,7 +255,7 @@ db_path_to_vls( struct bu_vls *str, const struct db_full_path *pp )
 	}
 }
 
-/*
+/**
  *			D B _ P R _ F U L L _ P A T H
  */
 void
@@ -262,7 +267,7 @@ db_pr_full_path( const char *msg, const struct db_full_path *pathp )
 	bu_free(sofar, "path string");
 }
 
-/*
+/**
  *			D B _ S T R I N G _ T O _ P A T H
  *
  *  Reverse the effects of db_path_to_string().
@@ -341,7 +346,7 @@ db_string_to_path(struct db_full_path *pp, const struct db_i *dbip, const char *
 	return ret;
 }
 
-/*
+/**
  *			D B _ A R G V _ T O _ P A T H
  *
  *  Treat elements from argv[0] to argv[argc-1] as a path specification.
@@ -381,7 +386,7 @@ db_argv_to_path(register struct db_full_path *pp, struct db_i *dbip, int argc, c
 	return ret;
 }
 
-/*
+/**
  *			D B _ F R E E _ F U L L _ P A T H
  *
  *  Free the contents of the db_full_path structure, but not the structure
@@ -399,7 +404,7 @@ db_free_full_path(register struct db_full_path *pp)
 	}
 }
 
-/*
+/**
  *			D B _ I D E N T I C A L _ F U L L _ P A T H S
  *
  *  Returns -
@@ -424,7 +429,7 @@ db_identical_full_paths(
 	return 1;
 }
 
-/*
+/**
  *			D B _ F U L L _ P A T H _ S U B S E T
  *
  *  Returns -
@@ -463,7 +468,7 @@ step:		;
 	return 0;
 }
 
-/*
+/**
  *			D B _ F U L L _ P A T H _ S E A R C H
  *
  *  Returns -

@@ -18,8 +18,10 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+
+/** \addtogroup libbn */
+/*@{*/
 /** @file number.c
- *
  *	This routine is used to convert a floating point number into
  * a string of ASCII characters, and then call tp_symbol().
  *
@@ -33,6 +35,8 @@
  *	Aberdeen Proving Ground, Maryland  21005-5066
  *  
  */
+/*@}*/
+
 #ifndef lint
 static const char RCSid[] = "@(#)$Header$ (BRL)";
 #endif

@@ -18,6 +18,10 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+
+/** \addtogroup libbn */
+/*@{*/
+
 /** @file wavelet.c
  *  This is a standard wavelet library that takes a given data buffer of some data
  *  type and then performs a wavelet transform on that data.  The transform
@@ -26,47 +30,47 @@
  *
  *  Wavelet decompose/reconstruct operations
  *
- *	bn_wlt_haar_1d_double_decompose(tbuffer, buffer, dimen, channels, limit)
- *	bn_wlt_haar_1d_float_decompose (tbuffer, buffer, dimen, channels, limit)
- *	bn_wlt_haar_1d_char_decompose  (tbuffer, buffer, dimen, channels, limit)
- *	bn_wlt_haar_1d_short_decompose (tbuffer, buffer, dimen, channels, limit)
- *	bn_wlt_haar_1d_int_decompose   (tbuffer, buffer, dimen, channels, limit)
- *	bn_wlt_haar_1d_long_decompose  (tbuffer, buffer, dimen, channels, limit)
+ *	- bn_wlt_haar_1d_double_decompose(tbuffer, buffer, dimen, channels, limit)
+ *	- bn_wlt_haar_1d_float_decompose (tbuffer, buffer, dimen, channels, limit)
+ *	- bn_wlt_haar_1d_char_decompose  (tbuffer, buffer, dimen, channels, limit)
+ *	- bn_wlt_haar_1d_short_decompose (tbuffer, buffer, dimen, channels, limit)
+ *	- bn_wlt_haar_1d_int_decompose   (tbuffer, buffer, dimen, channels, limit)
+ *	- bn_wlt_haar_1d_long_decompose  (tbuffer, buffer, dimen, channels, limit)
  *
- *	bn_wlt_haar_1d_double_reconstruct(tbuffer, buffer, dimen, channels, sub_sz, limit)
- *	bn_wlt_haar_1d_float_reconstruct (tbuffer, buffer, dimen, channels, sub_sz, limit)
- *	bn_wlt_haar_1d_char_reconstruct  (tbuffer, buffer, dimen, channels, sub_sz, limit)
- *	bn_wlt_haar_1d_short_reconstruct (tbuffer, buffer, dimen, channels, sub_sz, limit)
- *	bn_wlt_haar_1d_int_reconstruct   (tbuffer, buffer, dimen, channels, sub_sz, limit)
- *	bn_wlt_haar_1d_long_reconstruct  (tbuffer, buffer, dimen, channels, sub_sz, limit)
+ *	- bn_wlt_haar_1d_double_reconstruct(tbuffer, buffer, dimen, channels, sub_sz, limit)
+ *	- bn_wlt_haar_1d_float_reconstruct (tbuffer, buffer, dimen, channels, sub_sz, limit)
+ *	- bn_wlt_haar_1d_char_reconstruct  (tbuffer, buffer, dimen, channels, sub_sz, limit)
+ *	- bn_wlt_haar_1d_short_reconstruct (tbuffer, buffer, dimen, channels, sub_sz, limit)
+ *	- bn_wlt_haar_1d_int_reconstruct   (tbuffer, buffer, dimen, channels, sub_sz, limit)
+ *	- bn_wlt_haar_1d_long_reconstruct  (tbuffer, buffer, dimen, channels, sub_sz, limit)
  *
- *	bn_wlt_haar_2d_double_decompose(tbuffer, buffer, dimen, channels, limit)
- *	bn_wlt_haar_2d_float_decompose (tbuffer, buffer, dimen, channels, limit)
- *	bn_wlt_haar_2d_char_decompose  (tbuffer, buffer, dimen, channels, limit)
- *	bn_wlt_haar_2d_short_decompose (tbuffer, buffer, dimen, channels, limit)
- *	bn_wlt_haar_2d_int_decompose   (tbuffer, buffer, dimen, channels, limit)
- *	bn_wlt_haar_2d_long_decompose  (tbuffer, buffer, dimen, channels, limit)
+ *	- bn_wlt_haar_2d_double_decompose(tbuffer, buffer, dimen, channels, limit)
+ *	- bn_wlt_haar_2d_float_decompose (tbuffer, buffer, dimen, channels, limit)
+ *	- bn_wlt_haar_2d_char_decompose  (tbuffer, buffer, dimen, channels, limit)
+ *	- bn_wlt_haar_2d_short_decompose (tbuffer, buffer, dimen, channels, limit)
+ *	- bn_wlt_haar_2d_int_decompose   (tbuffer, buffer, dimen, channels, limit)
+ *	- bn_wlt_haar_2d_long_decompose  (tbuffer, buffer, dimen, channels, limit)
  *
- *	bn_wlt_haar_2d_double_reconstruct(tbuffer, buffer, dimen, channels, sub_sz, limit)
- *	bn_wlt_haar_2d_float_reconstruct (tbuffer, buffer, dimen, channels, sub_sz, limit)
- *	bn_wlt_haar_2d_char_reconstruct  (tbuffer, buffer, dimen, channels, sub_sz, limit)
- *	bn_wlt_haar_2d_short_reconstruct (tbuffer, buffer, dimen, channels, sub_sz, limit)
- *	bn_wlt_haar_2d_int_reconstruct   (tbuffer, buffer, dimen, channels, sub_sz, limit)
- *	bn_wlt_haar_2d_long_reconstruct  (tbuffer, buffer, dimen, channels, sub_sz, limit)
+ *	- bn_wlt_haar_2d_double_reconstruct(tbuffer, buffer, dimen, channels, sub_sz, limit)
+ *	- bn_wlt_haar_2d_float_reconstruct (tbuffer, buffer, dimen, channels, sub_sz, limit)
+ *	- bn_wlt_haar_2d_char_reconstruct  (tbuffer, buffer, dimen, channels, sub_sz, limit)
+ *	- bn_wlt_haar_2d_short_reconstruct (tbuffer, buffer, dimen, channels, sub_sz, limit)
+ *	- bn_wlt_haar_2d_int_reconstruct   (tbuffer, buffer, dimen, channels, sub_sz, limit)
+ *	- bn_wlt_haar_2d_long_reconstruct  (tbuffer, buffer, dimen, channels, sub_sz, limit)
  *
- *	bn_wlt_haar_2d_double_decompose2(tbuffer, buffer, width, height, channels, limit)
- *	bn_wlt_haar_2d_float_decompose2 (tbuffer, buffer, width, height, channels, limit)
- *	bn_wlt_haar_2d_char_decompose2  (tbuffer, buffer, width, height, channels, limit)
- *	bn_wlt_haar_2d_short_decompose2 (tbuffer, buffer, width, height, channels, limit)
- *	bn_wlt_haar_2d_int_decompose2   (tbuffer, buffer, width, height, channels, limit)
- *	bn_wlt_haar_2d_long_decompose2  (tbuffer, buffer, width, height, channels, limit)
+ *	- bn_wlt_haar_2d_double_decompose2(tbuffer, buffer, width, height, channels, limit)
+ *	- bn_wlt_haar_2d_float_decompose2 (tbuffer, buffer, width, height, channels, limit)
+ *	- bn_wlt_haar_2d_char_decompose2  (tbuffer, buffer, width, height, channels, limit)
+ *	- bn_wlt_haar_2d_short_decompose2 (tbuffer, buffer, width, height, channels, limit)
+ *	- bn_wlt_haar_2d_int_decompose2   (tbuffer, buffer, width, height, channels, limit)
+ *	- bn_wlt_haar_2d_long_decompose2  (tbuffer, buffer, width, height, channels, limit)
  *
- *	bn_wlt_haar_2d_double_reconstruct2(tbuffer, buffer, width, height, channels, sub_sz, limit)
- *	bn_wlt_haar_2d_float_reconstruct2 (tbuffer, buffer, width, height, channels, sub_sz, limit)
- *	bn_wlt_haar_2d_char_reconstruct2  (tbuffer, buffer, width, height, channels, sub_sz, limit)
- *	bn_wlt_haar_2d_short_reconstruct2 (tbuffer, buffer, width, height, channels, sub_sz, limit)
- *	bn_wlt_haar_2d_int_reconstruct2   (tbuffer, buffer, width, height, channels, sub_sz, limit)
- *	bn_wlt_haar_2d_long_reconstruct2  (tbuffer, buffer, width, height, channels, sub_sz, limit)
+ *	- bn_wlt_haar_2d_double_reconstruct2(tbuffer, buffer, width, height, channels, sub_sz, limit)
+ *	- bn_wlt_haar_2d_float_reconstruct2 (tbuffer, buffer, width, height, channels, sub_sz, limit)
+ *	- bn_wlt_haar_2d_char_reconstruct2  (tbuffer, buffer, width, height, channels, sub_sz, limit)
+ *	- bn_wlt_haar_2d_short_reconstruct2 (tbuffer, buffer, width, height, channels, sub_sz, limit)
+ *	- bn_wlt_haar_2d_int_reconstruct2   (tbuffer, buffer, width, height, channels, sub_sz, limit)
+ *	- bn_wlt_haar_2d_long_reconstruct2  (tbuffer, buffer, width, height, channels, sub_sz, limit)
  *	
  *  
  *  For greatest accuracy, it is preferable to convert everything to "double"
@@ -86,11 +90,11 @@
  *
  *  bn_wlt_haar_1d_*_decompose(tbuffer, buffer, dimen, channels, limit)
  *  Parameters:
- *	tbuffer     a temporary data buffer 1/2 as large as "buffer". See (1) below.
- *	buffer      pointer to the data to be decomposed
- *	dimen    the number of samples in the data buffer 
- *	channels the number of values per sample
- *	limit    the extent of the decomposition
+ *	- tbuffer     a temporary data buffer 1/2 as large as "buffer". See (1) below.
+ *	- buffer      pointer to the data to be decomposed
+ *	- dimen    the number of samples in the data buffer 
+ *	- channels the number of values per sample
+ *	- limit    the extent of the decomposition
  *
  *  Perform a Haar wavelet decomposition on the data in buffer "buffer".  The
  *  decomposition is done "in place" on the data, hence the values in "buffer"
@@ -142,6 +146,7 @@
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  *  
  */
+/*@}*/
 
 #include "common.h"
 

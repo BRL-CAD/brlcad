@@ -1,7 +1,10 @@
 #define PLOT_BOTH_FACES	1
-/*
- *			N M G _ F C U T . C
- *
+
+
+/** \addtogroup  nmg */
+
+/*@{*/
+/** \file nmg_fcut.c
  *  After two faces have been intersected, cut or join loops crossed
  *  by the line of intersection.  (Formerly nmg_comb.c)
  *
@@ -25,6 +28,8 @@
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
+/*@}*/
+
 #ifndef lint
 static const char RCSid[] = "@(#)$Header$ (ARL)";
 #endif
@@ -192,7 +197,7 @@ nmg_face_state_transition(struct nmg_ray_state	*rs,
 			  int			multi,
 			  int			other_rs_state);
 
-/*
+/**
  *			P T B L _ V S O R T
  *
  *  Sort list of hit points (vertexuse's) in fu1 on plane of fu2,
@@ -319,7 +324,7 @@ static void ptbl_vsort(struct bu_ptbl *b, struct faceuse *fu1, struct faceuse *f
 	}
 }
 
-/*
+/**
  *			N M G _ C K _ V U _ P T B L
  *
  *  As an automatic check for the intersector failing to find
@@ -384,7 +389,7 @@ top:
 	return ret;
 }
 
-/*
+/**
  *			N M G _ V U _ A N G L E _ M E A S U R E
  *
  *  Given a vertexuse from a loop which lies in a plane,
@@ -514,7 +519,7 @@ nmg_vu_angle_measure(struct vertexuse *vu, fastf_t *x_dir, fastf_t *y_dir, int a
 	return ang;
 }
 
-/*
+/**
  *			N M G _ I S _ V _ O N _ R S _ L I S T
  */
 int
@@ -530,7 +535,7 @@ nmg_is_v_on_rs_list(const struct nmg_ray_state *rs, const struct vertex *v)
 	return -1;
 }
 
-/*
+/**
  *			N M G _ A S S E S S _ E U
  *
  *  The current vertex (eu->vu_p) is on the line of intersection.
@@ -721,7 +726,7 @@ out:
 	return ret;
 }
 
-/*
+/**
  *			N M G _ A S S E S S _ V U
  */
 int
@@ -826,7 +831,7 @@ static const char *nmg_wedgeclass_string[] = {
 	"???"
 };
 
-/*
+/**
  *			N M G _ P R _ V U _ S T U F F
  */
 void
@@ -841,7 +846,7 @@ nmg_pr_vu_stuff(const struct nmg_vu_stuff *vs)
 		WEDGECLASS2STR(vs->wedge_class) );
 }
 
-/*
+/**
  *			N M G _ W E D G E _ C L A S S
  *
  *  0 degrees is to the rear (ON_REV), 90 degrees is to the RIGHT,
@@ -951,7 +956,7 @@ static const char *nmg_wedge2_string[] = {
 #define WEDGE2_TOUCH_AT_BC	3
 #define WEDGE2_TOUCH_AT_DA	4
 
-/*
+/**
  *			N M G _ C O M P A R E _ 2 _W E D G E S
  *
  *  Returns -
@@ -1100,7 +1105,7 @@ out:
 	return ret;
 }
 
-/*
+/**
  *			N M G _ F I N D _ V U _ I N _ W E D G E
  *
  *  Find the VU which is inside (or on) the given wedge,
@@ -1234,7 +1239,7 @@ out:
 	return candidate;	/* is -1 if none found */
 }
 
-/*
+/**
  *			N M G _ I S _ W E D G E _ B E F O R E _ C R O S S
  *
  *  Determine if the 'wedge' vu, which is either a LEFT or RIGHT wedge,
@@ -1292,7 +1297,7 @@ nmg_is_wedge_before_cross(const struct nmg_vu_stuff *wedge, const struct nmg_vu_
 	return ret;
 }
 
-/*
+/**
  *			N M G _ F A C E _ V U _ C O M P A R E
  *
  *  Support routine for nmg_face_coincident_vu_sort(), via qsort().
@@ -1443,7 +1448,7 @@ out:
 	return ret;
 }
 
-/*
+/**
  *			N M G _ F A C E _ V U _ D O T
  *
  *  For the purpose of computing the dot product of the edges around
@@ -1511,7 +1516,7 @@ nmg_face_vu_dot(struct nmg_vu_stuff *vsp, struct loopuse *lu, const struct nmg_r
 	}
 }
 
-/*
+/**
  *			N M G _ S P E C I A L _ W E D G E _ P R O C E S S I N G
  *
  *  If one loop gets cut, then unwind the whole call stack, and reassess
@@ -1687,7 +1692,7 @@ rt_g.NMG_debug |= DEBUG_VU_SORT|DEBUG_FCUT;
 	return 1;		/* cutjoin was done */
 }
 
-/*
+/**
  *			N M G _ F A C E _ C O I N C I D E N T _ V U _ S O R T
  *
  *  Given co-incident vertexuses (same distance along the ray),
@@ -1910,7 +1915,7 @@ got_loop:
 	return start+nvu;
 }
 
-/*
+/**
  *			N M G _ S A N I T I Z E _ F U
  *
  *  Eliminate any OT_BOOLPLACE self-loops that remain behind in this face.
@@ -1935,7 +1940,7 @@ nmg_sanitize_fu(struct faceuse *fu)
 	}
 }
 
-/*
+/**
  *			N M G _ F A C E _ R S _ I N I T
  *
  *  Set up nmg_ray_state structure.
@@ -2048,7 +2053,7 @@ nmg_face_rs_init(struct nmg_ray_state *rs, struct bu_ptbl *b, struct faceuse *fu
 	VREVERSE( rs->ang_y_dir, rs->left );
 }
 
-/*
+/**
  *			N M G _ F A C E _ N E X T _ V U _ I N T E R V A L
  *
  *  Handle the extent of coincident vertexuses at this distance.
@@ -2139,7 +2144,7 @@ nmg_face_next_vu_interval(struct nmg_ray_state *rs, int cur, fastf_t *mag, int o
 	(a)[Y] = ((b)[Y] + (c)[Y]) * 0.5;\
 	(a)[Z] = ((b)[Z] + (c)[Z]) * 0.5;\
 	}
-/*
+/**
  *			N M G _ E D G E _ G E O M _ I S E C T _ L I N E
  *
  *  Force the geometry structure for a given edge to be that of
@@ -3195,7 +3200,7 @@ nmg_face_combine_jra(struct nmg_ray_state *rs1, fastf_t *mag1, struct nmg_ray_st
 
 }
 
-/*
+/**
  *			N M G _ F A C E _ C O M B I N E
  *
  *	collapse loops,vertices within face fu1 (relative to fu2)
@@ -3322,7 +3327,7 @@ nmg_face_combineX(struct nmg_ray_state *rs1, fastf_t *mag1, struct nmg_ray_state
 	}
 }
 
-/*
+/**
  *			N M G _ U N L I S T _ V
  */
 void
@@ -3344,7 +3349,7 @@ nmg_unlist_v(struct bu_ptbl *b, fastf_t *mag, struct vertex *v)
 	}
 }
 
-/*
+/**
  *			N M G _ O N O N _ F I X
  *
  *  An attempt to fix the condition:
@@ -3529,7 +3534,7 @@ const struct bn_tol *tol;
 }
 
 #endif
-/*
+/**
  *			N M G _ F A C E _ C U T J O I N
  *
  *  The main face cut handler.
@@ -3849,7 +3854,7 @@ static const struct state_transitions nmg_state_is_in[17] = {
 	{ NMG_LONE,		NMG_STATE_IN,		NMG_ACTION_LONE_V_JAUNT }
 };
 
-/*
+/**
  *			N M G _ I N S E R T _ V U _ I F _ O N _ E D G E
  *
  *	This code checks if the vertex from a loop of a single vertex lies on
@@ -3938,7 +3943,7 @@ nmg_insert_vu_if_on_edge(struct vertexuse *vu1, struct vertexuse *vu2, struct ed
 	return( 0 );
 }
 
-/*
+/**
  *			N M G _ F A C E _ S T A T E _ T R A N S I T I O N
  *
  *  Given current (old) state, assess the current vertexuse, and

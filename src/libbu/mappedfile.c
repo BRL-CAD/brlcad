@@ -18,8 +18,11 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+
+/** \addtogroup libbu */
+/*@{*/
+
 /** @file mappedfile.c
- *
  *  Routines for sharing large read-only data files
  *  like height fields, bit map solids, texture maps, etc.
  *  Uses memory mapped files where available.
@@ -43,6 +46,8 @@
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  *  
  */
+/*@}*/
+
 #ifndef lint
 static const char libbu_mappedfile_RCSid[] = "@(#)$Header$ (ARL)";
 #endif

@@ -18,9 +18,10 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+
+/** \addtogroup fb */
+/*@{*/
 /** @file fbserv_obj_win32.c
- *				F B S E R V _ O B J . C
- *
  * A framebuffer server object contains the attributes and
  * methods for implementing an fbserv. This code was developed
  * in large part by modifying the stand-alone version of fbserv.
@@ -38,6 +39,7 @@
  *	Michael John Muuss
  *
  */
+/*@}*/
 
 #include "common.h"
 

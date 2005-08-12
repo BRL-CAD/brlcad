@@ -18,9 +18,13 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+
+/** \defgroup cc ConesAndCylinders
+ * \ingroup g */
+
+/** \addtogroup cc */
+/*@{*/
 /** @file g_rec.c
- *
- *  Purpose -
  *	Intersect a ray with a Right Eliptical Cylinder.
  *	This is a special (but common) case of the TGC,
  *	which is handled separately.
@@ -138,6 +142,8 @@
  *	Aberdeen Proving Ground, Maryland  21005
  *  
  */
+/*@}*/
+
 #ifndef lint
 static const char RCSrec[] = "@(#)$Header$ (BRL)";
 #endif
@@ -168,7 +174,7 @@ struct rec_specific {
 	fastf_t	rec_iBsq;	/* 1/MAGSQ(B) */
 };
 
-/*
+/**
  *  			R E C _ P R E P
  *  
  *  Given a pointer to a GED database record, and a transformation matrix,
@@ -373,7 +379,7 @@ rt_rec_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 	return(0);			/* OK */
 }
 
-/*
+/**
  *  			R E C _ P R I N T
  */
 void
@@ -393,7 +399,7 @@ rt_rec_print(register const struct soltab *stp)
 #define	REC_NORM_TOP	(2)		/* copy tgc_N */
 #define	REC_NORM_BOT	(3)		/* copy reverse tgc_N */
 
-/*
+/**
  *  			R E C _ S H O T
  *  
  *  Intersect a ray with a right elliptical cylinder,
@@ -568,7 +574,7 @@ hit:
 }
 
 #define SEG_MISS(SEG)		(SEG).seg_stp=(struct soltab *) 0;	
-/*
+/**
  *			R E C _ V S H O T
  *
  *  This is the Becker vector version
@@ -692,7 +698,7 @@ check_plates:
 	}
 }
 
-/*
+/**
  *  			R E C _ N O R M
  *
  *  Given ONE ray distance, return the normal and entry/exit point.
@@ -725,7 +731,7 @@ rt_rec_norm(register struct hit *hitp, struct soltab *stp, register struct xray 
 	}
 }
 
-/*
+/**
  *			R E C _ C U R V E
  *
  *  Return the "curvature" of the cylinder.  If an endplate,
@@ -765,7 +771,7 @@ rt_rec_curve(register struct curvature *cvp, register struct hit *hitp, struct s
 	}
 }
 
-/*
+/**
  *  			R E C _ U V
  *  
  *  For a hit on the surface of an REC, return the (u,v) coordinates
@@ -837,7 +843,7 @@ rt_rec_uv(struct application *ap, struct soltab *stp, register struct hit *hitp,
 	uvp->uv_du = uvp->uv_dv = 0;
 }
 
-/*
+/**
  *			R E C _ F R E E
  */
 void

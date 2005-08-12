@@ -18,8 +18,10 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+
+/** \addtogroup fb */
+/*@{*/
 /** @file fb_util.c
- *
  *  Subroutines to simulate device specific functions for simple
  *  device interfaces to use, and backward compatibility routines.
  *
@@ -32,6 +34,8 @@
  *	Aberdeen Proving Ground, Maryland  21005-5066
  *  
  */
+/*@}*/
+
 #ifndef lint
 static const char RCSid[] = "@(#)$Header$ (BRL)";
 #endif

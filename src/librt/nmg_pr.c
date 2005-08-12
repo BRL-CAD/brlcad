@@ -18,9 +18,10 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+/** \addtogroup nmg */
+
+/*@{*/
 /** @file nmg_pr.c
- *
- *  Purpose -
  *	Contains routines to print or describe NMG data structures.
  *	These routines are always available (not conditionally compiled)
  *	so that NMG programmers can always format and print
@@ -34,6 +35,8 @@
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
+/*@}*/
+
 #ifndef lint
 static const char RCSid[] = "@(#)$Header$ (ARL)";
 #endif
@@ -53,7 +56,7 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 #include "raytrace.h"
 #include "nurb.h"
 
-/*
+/**
  *			N M G _ O R I E N T A T I O N
  *
  *  Convert orientation code to string.
@@ -76,7 +79,7 @@ nmg_orientation(int orientation)
 	return "OT_IS_BOGUS!!";
 }
 
-/*
+/**
  *			N M G _ P R _ O R I E N T
  *
  *	Print the orientation in a nice, english form
@@ -94,7 +97,7 @@ nmg_pr_orient(int orientation, const char *h)
 	}
 }
 
-/*
+/**
  *			N M G _ P R _ M
  */
 void 
@@ -113,8 +116,9 @@ nmg_pr_m(const struct model *m)
 		nmg_pr_r(r, (char *)NULL);
 	}
 }
+static char nmg_pr_padstr[128];
 
-/*
+/**
  *			M K P A D
  *
  *  NOTE:  All the nmg_pr_*() routines take an "h" (header string) pointer.
@@ -122,7 +126,6 @@ nmg_pr_m(const struct model *m)
  *  short.  The string will be copied over into nmg_pr_padstr[], and
  *  "h" will be changed to point there, so spaces can be added to the end.
  */
-static char nmg_pr_padstr[128];
 #define MKPAD(_h) { \
 	if (!_h) { _h = nmg_pr_padstr; nmg_pr_padstr[0] = '\0'; } \
 	else if( (_h) < nmg_pr_padstr || (_h) >= nmg_pr_padstr+sizeof(nmg_pr_padstr) )  { \
@@ -132,7 +135,7 @@ static char nmg_pr_padstr[128];
 
 #define Return	{ h[strlen(h)-3] = '\0'; return; }
 
-/*
+/**
  *			N M G _ P R _ R
  */
 void 
@@ -160,7 +163,7 @@ nmg_pr_r(const struct nmgregion *r, char *h)
 	Return;
 }
 
-/*
+/**
  *			N M G _ P R _ S A
  */
 void 
@@ -182,7 +185,7 @@ nmg_pr_sa(const struct shell_a *sa, char *h)
 	Return;
 }
 
-/*
+/**
  *			N M G _ P R _ L G
  */
 void 
@@ -200,7 +203,7 @@ nmg_pr_lg(const struct loop_g *lg, char *h)
 	Return;
 }
 
-/*
+/**
  *			N M G _ P R _ F G
  */
 void 
@@ -253,7 +256,7 @@ nmg_pr_fg(const long int *magic, char *h)
 	Return;
 }
 
-/*
+/**
  *			N M G _ P R _ S
  */
 void 
@@ -295,7 +298,7 @@ nmg_pr_s(const struct shell *s, char *h)
 	Return;
 }
 
-/*
+/**
  *			N M G _ P R _ S _ B R I E F L Y
  */
 void 
@@ -330,7 +333,7 @@ nmg_pr_s_briefly(const struct shell *s, char *h)
 	Return;
 }
 
-/*
+/**
  *			N M G _ P R _ F
  */
 void 
@@ -356,7 +359,7 @@ nmg_pr_f(const struct face *f, char *h)
 	Return;
 }
 
-/*
+/**
  *			N M G _ P R _ F U
  */
 void 
@@ -390,7 +393,7 @@ nmg_pr_fu(const struct faceuse *fu, char *h)
 	Return;
 }
 
-/*
+/**
  *			N M G _ P R _ F U _ B R I E F L Y
  */
 void 
@@ -418,7 +421,7 @@ nmg_pr_fu_briefly(const struct faceuse *fu, char *h)
 	Return;
 }
 
-/*
+/**
  *			N M G _ P R _ L
  */
 void 
@@ -440,7 +443,7 @@ nmg_pr_l(const struct loop *l, char *h)
 	Return;
 }
 
-/*
+/**
  *			N M G _ P R _ L U
  */
 void 
@@ -494,7 +497,7 @@ nmg_pr_lu(const struct loopuse *lu, char *h)
 	Return;
 }
 
-/*
+/**
  *			N M G _ P R _ L U _ B R I E F L Y
  */
 void 
@@ -527,7 +530,7 @@ nmg_pr_lu_briefly(const struct loopuse *lu, char *h)
 	Return;
 }
 
-/*
+/**
  *			N M G _ P R _ E G
  *
  * Expects a pointer to the magic number of an edge geometry structure
@@ -583,7 +586,7 @@ nmg_pr_eg(const long int *eg_magic_p, char *h)
 	Return;
 }
 
-/*
+/**
  *			N M G _ P R _ E
  */
 void 
@@ -602,7 +605,7 @@ nmg_pr_e(const struct edge *e, char *h)
 	Return;
 }
 
-/*
+/**
  *			N M G _ P R _ E U
  */
 void 
@@ -638,7 +641,7 @@ nmg_pr_eu(const struct edgeuse *eu, char *h)
 	Return;
 }
 
-/*
+/**
  *			N M G _ P R _ E U _ B R I E F L Y
  */
 void 
@@ -653,7 +656,7 @@ nmg_pr_eu_briefly(const struct edgeuse *eu, char *h)
 	Return;
 }
 
-/*
+/**
  *			N M G _ P R _ E U _ E N D P O I N T S
  */
 void 
@@ -676,7 +679,7 @@ nmg_pr_eu_endpoints(const struct edgeuse *eu, char *h)
 	Return;
 }
 
-/*
+/**
  *			N M G _ P R _ V G
  */
 void 
@@ -695,7 +698,7 @@ nmg_pr_vg(const struct vertex_g *vg, char *h)
 	Return;
 }
 
-/*
+/**
  *			N M G _ P R _ V
  */
 void 
@@ -722,7 +725,7 @@ nmg_pr_v(const struct vertex *v, char *h)
 	Return;
 }
 
-/*
+/**
  *			N M G _ P R _ V U
  */
 void 
@@ -762,7 +765,7 @@ nmg_pr_vu(const struct vertexuse *vu, char *h)
 	Return;
 }
 
-/*
+/**
  *			N M G _ P R _ V U _ B R I E F L Y
  */
 void 
@@ -785,7 +788,7 @@ nmg_pr_vu_briefly(const struct vertexuse *vu, char *h)
 	Return;
 }
 
-/*
+/**
  *			N M G _ P R _ V U A
  */
 void
@@ -814,7 +817,7 @@ nmg_pr_vua(const long int *magic_p, char *h)
 }
 
 
-/*
+/**
  *			N M G _ E U P R I N T
  */
 void 
@@ -839,7 +842,7 @@ nmg_euprint(const char *str, const struct edgeuse *eu)
 	bu_log("%s (%g, %g, %g -> %g, %g, %g)\n", str, eup[0], eup[1], eup[2],
 		matep[0], matep[1], matep[2]);
 }
-/*
+/**
  *			N M G _ P R _ P T B L
  *
  *  Print an bu_ptbl array for inspection.
@@ -881,7 +884,7 @@ nmg_pr_ptbl(const char *title, const struct bu_ptbl *tbl, int verbose)
 	}
 }
 
-/*
+/**
  *			N M G _ P R _ P T B L _ V E R T _ L I S T
  *
  *  Print a ptbl array as a vertex list.
@@ -928,7 +931,7 @@ nmg_pr_ptbl_vert_list(const char *str, const struct bu_ptbl *tbl, const fastf_t 
 	}
 }
 
-/* 
+/**
  *			N M G _ P R _ O N E _ E U _ V E C S
  *
  *  Common formatting code for edgeuses and edgeuse mates.
@@ -989,7 +992,7 @@ nmg_pr_one_eu_vecs(const struct edgeuse *eu, const fastf_t *xvec, const fastf_t 
 	}
 }
 
-/*
+/**
  *			N M G _ P R _ F U _ A R O U N D _ E U _ V E C S
  */
 void
@@ -1020,7 +1023,7 @@ nmg_pr_fu_around_eu_vecs(const struct edgeuse *eu, const fastf_t *xvec, const fa
 	} while( eu1 != eu );
 }
 
-/*
+/**
  *			N M G _ P R _ F U _ A R O U N D _ E U
  *
  *  A debugging routine to print all the faceuses around a given edge,
@@ -1052,7 +1055,7 @@ nmg_pr_fu_around_eu(const struct edgeuse *eu, const struct bn_tol *tol)
 	nmg_pr_fu_around_eu_vecs( eu, xvec, yvec, zvec, tol );
 }
 
-/*
+/**
  *			N M G _ P L _ L U _ A R O U N D _ E U
  *
  *  Plot all the loopuses around an edgeuse.
@@ -1104,7 +1107,7 @@ nmg_pl_lu_around_eu(const struct edgeuse *eu)
 	bu_log("Wrote %s\n", buf);
 }
 
-/*
+/**
  *			N M G _ P R _ F U S _ I N _ F G
  *
  *  For either kind of face geometry, print the list of all faces & faceuses

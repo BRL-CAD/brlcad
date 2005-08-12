@@ -18,15 +18,13 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file oslo_calc.c
- *
- */
 
-/* 
- *       C A L C _ O S L O . C
- *
- * Function -
- *     Calculate the Oslo refinement matrix.
+/** \defgroup oslo oslo 
+ * \ingroup librt */
+
+/*@{*/
+/** @file oslo_calc.c
+ * Calculate the Oslo refinement matrix.
  * 
  * Author -
  *     Paul R. Stay
@@ -47,6 +45,7 @@
  * Since we only want the last row of the alpha's as outlined in the
  * paper we can use a one dimensional array for the ah.
  */
+/*@}*/
 
 #include "common.h"
 

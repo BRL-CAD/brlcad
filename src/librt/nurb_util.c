@@ -18,10 +18,11 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+
+/** \addtogroup nurb */
+/*@{*/
 /** @file nurb_util.c
- *
- *  Function -
- *	Utilities for NURB curves and surfaces.
+ * Utilities for NURB curves and surfaces.
  *
  *  Author -
  *	Paul Randal Stay
@@ -30,6 +31,8 @@
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
+/*@}*/
+
 #ifndef lint
 static const char RCSid[] = "@(#)$Header$ (ARL)";
 #endif

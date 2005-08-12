@@ -18,8 +18,10 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+
+/** \addtogroup librt */
+/*@{*/
 /** @file bigE.c
- *
  * This module implements the 'E' command.
  *
  *  Author -
@@ -33,6 +35,8 @@
  *	Aberdeen Proving Ground, Maryland  21005-5066
  *  
  */
+/*@}*/
+
 #ifndef lint
 static const char RCSid[] = "";
 #endif

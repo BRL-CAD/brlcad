@@ -18,14 +18,11 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file nurb_bound.c
- *
- */
 
-/* 
- *       N U R B _ B O U N D . C
- *
- * Function -
+/** \addtogroup nurb */
+
+/*@{*/
+/** @file nurb_bound.c
  *     Find the bounding box for the a NURB surface.
  * 
  * Author -
@@ -37,6 +34,7 @@
  *     Aberdeen Proving Ground, Maryland 21005
  *
  */
+/*@}*/
 
 /* Since a B-Spline surface follows the convex hull property 
  * the bounding box can be found by taking the min and max of

@@ -18,8 +18,11 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+
+/** \addtogroup nmg */
+
+/*@{*/
 /** @file nmg_plot.c
- *
  *  This file contains routines that create VLISTs and UNIX-plot files.
  *  Some routines are essential to the MGED interface, some are
  *  more for diagnostic and visualization purposes.
@@ -44,6 +47,8 @@
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
+/*@}*/
+
 #ifndef lint
 static const char RCSid[] = "@(#)$Header$ (ARL)";
 #endif
@@ -76,7 +81,7 @@ double nmg_eue_dist = 0.05;
  *									*
  ************************************************************************/
 
-/*
+/**
  *			N M G _ V U _ T O _ V L I S T
  *
  *  Plot a single vertexuse
@@ -99,7 +104,7 @@ nmg_vu_to_vlist(struct bu_list *vhead, const struct vertexuse *vu)
 	}
 }
 
-/*
+/**
  *			N M G _ E U _ T O _ V L I S T
  *
  *  Plot a list of edgeuses.  The last edge is joined back to the first.
@@ -142,7 +147,7 @@ nmg_eu_to_vlist(struct bu_list *vhead, const struct bu_list *eu_hd)
 	}
 }
 
-/*
+/**
  *			N M G _ L U _ T O _ V L I S T
  *
  *  Plot a single loopuse into a bn_vlist chain headed by vhead.
@@ -306,7 +311,7 @@ nmg_lu_to_vlist(struct bu_list *vhead, const struct loopuse *lu, int poly_marker
 	}
 }
 
-/*
+/**
  *			N M G _ S N U R B _ F U _ T O _ V L I S T
  */
 void
@@ -351,7 +356,7 @@ nmg_snurb_fu_to_vlist(struct bu_list *vhead, const struct faceuse *fu, int poly_
 	}
 }
 
-/*
+/**
  *			N M G _ S _ T O _ V L I S T
  *
  *  Plot the entire contents of a shell.
@@ -416,7 +421,7 @@ nmg_s_to_vlist(struct bu_list *vhead, const struct shell *s, int poly_markers)
 	}
 }
 
-/*
+/**
  *			N M G _ R _ T O _ V L I S T
  */
 void
@@ -430,7 +435,7 @@ nmg_r_to_vlist(struct bu_list *vhead, const struct nmgregion *r, int poly_marker
 	}
 }
 
-/*
+/**
  *			N M G _ M _ T O _ V L I S T
  *
  */
@@ -454,7 +459,7 @@ nmg_m_to_vlist(struct bu_list *vhead, struct model *m, int poly_markers)
 #define LEE_DIVIDE_TOL	(1.0e-5)	/* sloppy tolerance */
 
 
-/*
+/**
  *			N M G _ O F F S E T _ E U _ V E R T
  *
  *	Given an edgeuse, find an offset for its vertexuse which will place
@@ -533,7 +538,7 @@ nmg_offset_eu_vert(fastf_t *base, const struct edgeuse *eu, const fastf_t *face_
 
 
 
-/*			N M G _ E U _ C O O R D S
+/**			N M G _ E U _ C O O R D S
  *
  *  Get the two (offset and shrunken) endpoints that represent
  *  an edgeuse.
@@ -574,7 +579,7 @@ static void nmg_eu_coords(const struct edgeuse *eu, fastf_t *base, fastf_t *tip6
 	VBLEND2( tip60, 0.4, base, 0.6, tip );
 }
 
-/*
+/**
  *			N M G _ E U _ R A D I A L
  *
  *  Find location for 80% tip on edgeuse's radial edgeuse.
@@ -595,7 +600,7 @@ static void nmg_eu_radial(const struct edgeuse *eu, fastf_t *tip)
 }
 
 #if 0
-/*
+/**
  *			N M G _ E U _ L A S T
  *
  *  Find the tip of the last (previous) edgeuse from 'eu'.
@@ -631,7 +636,7 @@ point_t		tip_out;
 }
 #endif
 
-/*
+/**
  *			N M G _ E U _ N E X T
  *
  *  Return the base of the next edgeuse
@@ -658,7 +663,7 @@ static void nmg_eu_next_base(const struct edgeuse *eu, fastf_t *next_base)
  *									*
  ************************************************************************/
 
-/*
+/**
  *			N M G _ P L _ V
  */
 void
@@ -682,7 +687,7 @@ nmg_pl_v(FILE *fp, const struct vertex *v, long int *b)
 	pdv_3point(fp, p);
 }
 
-/*
+/**
  *			N M G _ P L _ E
  */
 void
@@ -720,7 +725,7 @@ nmg_pl_e(FILE *fp, const struct edge *e, long int *b, int red, int green, int bl
 	nmg_pl_v(fp, e->eu_p->eumate_p->vu_p->v_p, b);
 }
 
-/*
+/**
  *			M N G _ P L _ E U
  */
 void
@@ -774,7 +779,7 @@ nmg_pl_eu(FILE *fp, const struct edgeuse *eu, long int *b, int red, int green, i
 	    }
 }
 
-/*
+/**
  *			N M G _ P L _ L U
  */
 void
@@ -788,7 +793,7 @@ nmg_pl_lu(FILE *fp, const struct loopuse *lu, long int *b, int red, int green, i
 	rt_vlblock_free(vbp);
 }
 
-/*
+/**
  *			M N G _ P L _ F U
  */
 void
@@ -811,7 +816,7 @@ nmg_pl_fu(FILE *fp, const struct faceuse *fu, long int *b, int red, int green, i
 	rt_vlblock_free(vbp);
 }
 
-/*
+/**
  *			N M G _ P L _ S
  *
  *  Note that "b" should probably be defined a level higher,
@@ -839,7 +844,7 @@ nmg_pl_shell(FILE *fp, const struct shell *s, int fancy)
 	rt_vlblock_free(vbp);
 }
 
-/*
+/**
  *			N M G _ P L _ R
  */
 void
@@ -853,7 +858,7 @@ nmg_pl_r(FILE *fp, const struct nmgregion *r)
 	rt_vlblock_free(vbp);
 }
 
-/*
+/**
  *			N M G _ P L _ M
  */
 void
@@ -875,7 +880,7 @@ nmg_pl_m(FILE *fp, const struct model *m)
  *									*
  ************************************************************************/
 
-/*
+/**
  *			N M G _ V L B L O C K _ V
  */
 void
@@ -906,7 +911,7 @@ nmg_vlblock_v(struct bn_vlblock *vbp, const struct vertex *v, long int *tab)
 	RT_ADD_VLIST( vh, p, BN_VLIST_LINE_DRAW );
 }
 
-/*
+/**
  *			N M G _ V L B L O C K _ E
  */
 void
@@ -948,7 +953,7 @@ nmg_vlblock_e(struct bn_vlblock *vbp, const struct edge *e, long int *tab, int r
 	nmg_vlblock_v(vbp, e->eu_p->eumate_p->vu_p->v_p, tab);
 }
 
-/*
+/**
  *			M N G _ V L B L O C K _ E U
  */
 void
@@ -1064,7 +1069,7 @@ nmg_vlblock_eu(struct bn_vlblock *vbp, const struct edgeuse *eu, long int *tab, 
 	}
 }
 
-/*
+/**
  *			N M G _ V L B L O C K _ E U L E F T
  *
  *  Draw the left vector for this edgeuse.
@@ -1102,7 +1107,7 @@ nmg_vlblock_euleft(struct bu_list *vh, const struct edgeuse *eu, const fastf_t *
 	bn_vlist_3string( vh, &rt_g.rtg_vlfree, str, tip, mat, char_scale );
 }
 
-/*
+/**
  *			N M G _ V L B L O C K _ A R O U N D _ E U
  *
  *  Given an edgeuse, plot all the edgeuses around the common edge.
@@ -1176,7 +1181,7 @@ nmg_vlblock_around_eu(struct bn_vlblock *vbp, const struct edgeuse *arg_eu, long
 	} while( eu != orig_eu );
 }
 
-/*
+/**
  *			N M G _ V L B L O C K _ L U
  */
 void
@@ -1204,7 +1209,7 @@ nmg_vlblock_lu(struct bn_vlblock *vbp, const struct loopuse *lu, long int *tab, 
 	}
 }
 
-/*
+/**
  *			M N G _ V L B L O C K _ F U
  */
 void
@@ -1228,7 +1233,7 @@ nmg_vlblock_fu(struct bn_vlblock *vbp, const struct faceuse *fu, long int *tab, 
 	}
 }
 
-/*
+/**
  *			N M G _ V L B L O C K _ S
  */
 void
@@ -1283,7 +1288,7 @@ nmg_vlblock_s(struct bn_vlblock *vbp, const struct shell *s, int fancy)
 	bu_free( (char *)tab, "nmg_vlblock_s tab[]" );
 }
 
-/*
+/**
  *			N M G _ V L B L O C K _ R
  */
 void
@@ -1299,7 +1304,7 @@ nmg_vlblock_r(struct bn_vlblock *vbp, const struct nmgregion *r, int fancy)
 	}
 }
 
-/*
+/**
  *			N M G _ V L B L O C K _ M
  */
 void
@@ -1353,7 +1358,7 @@ nmg_pl_edges_in_2_shells(struct bn_vlblock *vbp, long int *b, const struct edgeu
 	} while (eur != eu);
 }
 
-/*
+/**
  *			N M G _ P L _ I S E C T
  *
  *  Called by nmg_bool.c
@@ -1416,7 +1421,7 @@ nmg_pl_isect(const char *filename, const struct shell *s, const struct bn_tol *t
 	(void)fclose(fp);
 }
 
-/*
+/**
  *			N M G _ P L _ C O M B _ F U
  *
  *  Called from nmg_bool.c/nmg_face_combine()
@@ -1474,7 +1479,7 @@ nmg_pl_comb_fu(int num1, int num2, const struct faceuse *fu1)
 	bu_free( (char *)tab, "nmg_pl_comb_fu tab[]" );
 }
 
-/*
+/**
  *			N M G _ P L _ 2 F U
  *
  *  Note that 'str' is expected to contain a %d to place the frame number.
@@ -1567,7 +1572,7 @@ static unsigned char broken_colors[][3] = {
 	else \
 		broken_color = 4;}
 
-/*
+/**
  *			S H O W _ B R O K E N _ V U
  */
 static void
@@ -1827,7 +1832,7 @@ nmg_plot_sigstepalong(int i)
 	stepalong=1;
 }
 
-/*
+/**
  *			S H O W _ B R O K E N _ S T U F F
  *
  * XXX Needs new name, with nmg_ prefix, and a stronger indication
@@ -1969,7 +1974,7 @@ nmg_show_broken_classifier_stuff(long int *p, long int **classlist, int all_new,
 	}
 }
 
-/*
+/**
  *			N M G _ F A C E _ P L O T
  */
 void
@@ -2027,7 +2032,7 @@ nmg_face_plot(const struct faceuse *fu)
 
 }
 
-/*
+/**
  *			N M G _ 2 F A C E _ P L O T
  *
  *  Just like nmg_face_plot, except it draws two faces each iteration.
@@ -2073,7 +2078,7 @@ nmg_2face_plot(const struct faceuse *fu1, const struct faceuse *fu2)
 
 }
 
-/*
+/**
  *			N M G _ F A C E _ L U _ P L O T
  *
  *  Plot the loop, and a ray from vu1 to vu2.
@@ -2122,7 +2127,7 @@ nmg_face_lu_plot(const struct loopuse *lu, const struct vertexuse *vu1, const st
 	bu_free( (char *)b, "nmg_face_lu_plot flag[]" );
 }
 
-/*
+/**
  *			N M G _ P L O T _ L U _ R A Y
  *
  *  Plot the loop, a ray from vu1 to vu2, and the left vector.
@@ -2177,7 +2182,7 @@ nmg_plot_lu_ray(const struct loopuse *lu, const struct vertexuse *vu1, const str
 	bu_free( (char *)b, "nmg_plot_lu_ray flag[]" );
 }
 
-/*
+/**
  *			N M G _ P L O T _ R A Y _ F A C E
  */
 void
@@ -2212,7 +2217,7 @@ nmg_plot_ray_face(const char *fname, fastf_t *pt, const fastf_t *dir, const stru
 	bu_log("overlay %s\n", name);
 }
 
-/*
+/**
  *			N M G _ P L O T _ L U _ A R O U N D _ E U
  *
  *  Draw and label all the loopuses gathered around this edgeuse.
@@ -2266,7 +2271,7 @@ nmg_plot_lu_around_eu(const char *prefix, const struct edgeuse *eu, const struct
 	bu_free((char *)tab, "bit vec");
 }
 
-/*
+/**
  *			N M G _ S N U R B _ T O _ V L I S T
  *
  *  A routine to draw the entire surface of a face_g_snurb.
@@ -2364,7 +2369,7 @@ nmg_snurb_to_vlist(struct bu_list *vhead, const struct face_g_snurb *fg, int n_i
 	return(0);
 }
 
-/*
+/**
  *			N M G _ C N U R B _ T O _ V L I S T
  *
  *  Draw interior points on a cnurb curve.

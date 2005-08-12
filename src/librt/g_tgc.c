@@ -18,9 +18,11 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+
+/** \addtogroup cc */
+
+/*@{*/
 /** @file g_tgc.c
- *
- * Purpose -
  *	Intersect a ray with a Truncated General Cone.
  *
  * Method -
@@ -42,6 +44,8 @@
  *	Aberdeen Proving Ground, Maryland  21005
  *  
  */
+/*@}*/
+
 #ifndef lint
 static const char RCStgc[] = "@(#)$Header$ (BRL)";
 #endif
@@ -104,7 +108,7 @@ const struct bu_structparse rt_tgc_parse[] = {
     { {'\0','\0','\0','\0'}, 0, (char *)NULL, 0, BU_STRUCTPARSE_FUNC_NULL }
 };
 
-/*
+/**
  *			R T _ T G C _ P R E P
  *
  *  Given the parameters (in vector form) of a truncated general cone,
@@ -341,7 +345,7 @@ rt_tgc_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 }
 
 
-/*
+/**
  *			R T _ T G C _ R O T A T E
  *
  *  To rotate vectors  A  and  B  ( where  A  is perpendicular to  B )
@@ -402,7 +406,7 @@ rt_tgc_rotate(fastf_t *A, fastf_t *B, fastf_t *Hv, fastf_t *Rot, fastf_t *Inv, s
 	Rot[10] = Inv[10] = uC[Z];
 }
 
-/*
+/**
  *			R T _ T G C _ S H E A R
  *
  *  To shear the H vector to the Z axis, every point must be shifted
@@ -437,7 +441,7 @@ rt_tgc_shear(const fastf_t *vect, int axis, fastf_t *Shr, fastf_t *Trn, fastf_t 
 	}
 }
 
-/*
+/**
  *			R T _ T G C _ S C A L E
  */
 static void
@@ -454,7 +458,7 @@ rt_tgc_scale(fastf_t a, fastf_t b, fastf_t h, fastf_t *Scl, fastf_t *Inv)
 	return;
 }
 
-/*
+/**
  *  			R T _ T G C _ P R I N T
  */
 void
@@ -490,7 +494,7 @@ rt_tgc_print(register const struct soltab *stp)
 #define	TGC_NORM_TOP	(2)		/* copy tgc_N */
 #define	TGC_NORM_BOT	(3)		/* copy reverse tgc_N */
 
-/*
+/**
  *			R T _ T G C _ S H O T
  *
  *  Intersect a ray with a truncated general cone, where all constant
@@ -887,7 +891,7 @@ rt_tgc_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 
 #define RT_TGC_SEG_MISS(SEG)	(SEG).seg_stp=RT_SOLTAB_NULL
 
-/*
+/**
  *			R T _ T G C _ V S H O T
  *
  *  The Homer vectorized version.
@@ -1331,7 +1335,7 @@ rt_tgc_vshot(struct soltab **stp, register struct xray **rp, struct seg *segp, i
 	bu_free( (char *)C, "tor bn_poly_t" );
 }
 
-/*
+/**
  *			R T _ P T _ S O R T
  *
  *  Sorts the values in t[] in descending order.
@@ -1354,7 +1358,7 @@ rt_pt_sort(register fastf_t t[], int npts)
 }
 
 
-/*
+/**
  *			R T _ T G C _ N O R M
  *
  *  Compute the normal to the cone, given a point on the STANDARD
@@ -1445,7 +1449,7 @@ rt_tgc_norm(register struct hit *hitp, struct soltab *stp, register struct xray 
 	}
 }
 
-/*
+/**
  *			R T _ T G C _ U V
  */
 void
@@ -1502,7 +1506,7 @@ rt_tgc_uv(struct application *ap, struct soltab *stp, register struct hit *hitp,
 }
 
 
-/*
+/**
  *			R T _ T G C _ F R E E
  */
 void
@@ -1521,7 +1525,7 @@ rt_tgc_class(void)
 }
 
 
-/*
+/**
  *			R T _ T G C _ I M P O R T
  *
  *  Import a TGC from the database format to the internal format.
@@ -1564,7 +1568,7 @@ rt_tgc_import(struct rt_db_internal *ip, const struct bu_external *ep, register 
 	return(0);		/* OK */
 }
 
-/*
+/**
  *			R T _ T G C _ E X P O R T
  */
 int
@@ -1597,7 +1601,7 @@ rt_tgc_export(struct bu_external *ep, const struct rt_db_internal *ip, double lo
 	return(0);
 }
 
-/*
+/**
  *			R T _ T G C _ I M P O R T 5
  *
  *  Import a TGC from the database format to the internal format.
@@ -1636,7 +1640,7 @@ rt_tgc_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
 	return(0);		/* OK */
 }
 
-/*
+/**
  *			R T _ T G C _ E X P O R T 5
  */
 int
@@ -1668,7 +1672,7 @@ rt_tgc_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
 	return(0);
 }
 
-/*
+/**
  *			R T _ T G C _ D E S C R I B E
  *
  *  Make human-readable formatted presentation of this solid.
@@ -1752,7 +1756,7 @@ rt_tgc_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
 	return(0);
 }
 
-/*
+/**
  *			R T _ T G C _ I F R E E
  *
  *  Free the storage associated with the rt_db_internal version of this solid.
@@ -1765,7 +1769,7 @@ rt_tgc_ifree(struct rt_db_internal *ip)
 	ip->idb_ptr = GENPTR_NULL;
 }
 
-/*
+/**
  *			R T _ T G C _ P L O T
  */
 int
@@ -1805,7 +1809,7 @@ rt_tgc_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 	return(0);
 }
 
-/*
+/**
  *			R T _ T G C _ C U R V E
  *
  *  Return the curvature of the TGC.
@@ -1881,7 +1885,7 @@ rt_tgc_curve(register struct curvature *cvp, register struct hit *hitp, struct s
 	VUNITIZE( cvp->crv_pdir );
 }
 
-/*
+/**
  *			R T _ T G C _ T E S S
  *
  *  Tesselation of the TGC.
@@ -2620,7 +2624,7 @@ rt_tgc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	return( 0 );
 }
 
-/*	R T _ T G C _ T N U R B
+/**	R T _ T G C _ T N U R B
  *
  *  "Tessellate an TGC into a trimmed-NURB-NMG data structure.
  *  Computing NRUB surfaces and trimming curves to interpolate

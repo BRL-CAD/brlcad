@@ -18,10 +18,11 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+
+/** \addtogroup nurb */
+/*@{*/
 /** @file nurb_interp.c
- *			N U R B  _  I N T E R P . C
- *
- * nurb_interp.c - Interpolatopn routines for fitting NURB curves and
+ * Interpolatopn routines for fitting NURB curves and
  * and surfaces to existing data.
  *			
  *
@@ -31,6 +32,8 @@
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
+/*@}*/
+
 #ifndef lint
 static const char RCSid[] = "@(#)$Header$ (ARL)";
 #endif

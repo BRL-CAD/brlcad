@@ -18,16 +18,19 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+
+/** \addtogroup libbn */
+/*@{*/
 /** @file noise.c
  *  Signed noise functions
  *
- *	bn_noise_perlin	Robert Skinner's Perlin-style "Noise" function
- *	bn_noise_vec	Vector-valued noise
+ *	- bn_noise_perlin	Robert Skinner's Perlin-style "Noise" function
+ *	- bn_noise_vec	Vector-valued noise
  *
  *  Spectral Noise functions
  *
- *	bn_noise_fbm	fractional Brownian motion.  Based on bn_noise_perlin
- *	bn_noise_turb	turbulence.  Based on bn_noise_perlin
+ *	- bn_noise_fbm	fractional Brownian motion.  Based on bn_noise_perlin
+ *	- bn_noise_turb	turbulence.  Based on bn_noise_perlin
  *
  *  These noise functions provide mostly random noise at the integer lattice
  *  points.  The functions should be evaluated at non-integer locations for
@@ -43,6 +46,8 @@
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  *  
  */
+/*@}*/
+
 #ifndef lint
 static const char RCSid[] = "@(#)$Header$ (ARL)";
 #endif

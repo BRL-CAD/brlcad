@@ -18,9 +18,11 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+
+/** \addtogroup g */
+
+/*@{*/
 /** @file g_torus.c
- *
- * Purpose -
  *	Intersect a ray with a Torus
  *
  * Authors -
@@ -35,6 +37,8 @@
  *	Aberdeen Proving Ground, Maryland  21005
  *  
  */
+/*@}*/
+
 #ifndef lint
 static const char RCStorus[] = "@(#)$Header$ (BRL)";
 #endif
@@ -171,7 +175,7 @@ struct tor_specific {
 	mat_t	tor_invR;	/* invRot(vect') */
 };
 
-/*
+/**
  *  			R T _ T O R _ P R E P
  *  
  *  Given a pointer to a GED database record, and a transformation matrix,
@@ -297,7 +301,7 @@ rt_tor_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 	return(0);			/* OK */
 }
 
-/*
+/**
  *			R T _ T O R _ P R I N T
  */
 void
@@ -315,7 +319,7 @@ rt_tor_print(register const struct soltab *stp)
 	bn_mat_print("invR", tor->tor_invR );
 }
 
-/*
+/**
  *  			R T _ T O R _ S H O T
  *  
  *  Intersect a ray with an torus, where all constant terms have
@@ -538,7 +542,7 @@ rt_tor_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 }
 
 #define SEG_MISS(SEG)		(SEG).seg_stp=(struct soltab *) 0;	
-/*
+/***
  *			R T _ T O R _ V S H O T
  *
  *  This is the Becker vector version
@@ -807,7 +811,7 @@ rt_tor_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
 	bu_free( (char *)cor_proj, "tor cor_proj");
 }
 
-/*
+/**
  *			R T _ T O R _ N O R M
  *
  *  Compute the normal to the torus,
@@ -856,7 +860,7 @@ rt_tor_norm(register struct hit *hitp, struct soltab *stp, register struct xray 
 	MAT3X3VEC( hitp->hit_normal, tor->tor_invR, work );
 }
 
-/*
+/**
  *			R T _ T O R _ C U R V E
  *
  *  Return the curvature of the torus.
@@ -903,7 +907,7 @@ rt_tor_curve(register struct curvature *cvp, register struct hit *hitp, struct s
 	VUNITIZE( cvp->crv_pdir );
 }
 
-/*
+/**
  *			R T _ T O R _ U V
  */
 void
@@ -931,7 +935,7 @@ rt_tor_uv(struct application *ap, struct soltab *stp, register struct hit *hitp,
 	uvp -> uv_v = atan2(pprime2[Z], costheta) * bn_inv2pi + 0.5;
 }
 
-/*
+/**
  *			R T _ T O R _ F R E E
  */
 void
@@ -949,7 +953,7 @@ rt_tor_class(void)
 	return(0);
 }
 
-/* 
+/** 
  *			R T _ N U M _ C I R C U L A R _ S E G M E N T S
  *
  *  Given a circle with a specified radius, determine the minimum number
@@ -1005,7 +1009,7 @@ rt_num_circular_segments(double	maxerr, double	radius)
 	if( n >= 360*10 )  return( 360*10 );
 	return(n);
 }
-/*
+/**
  *			R T _ T O R _ P L O T
  *
  * The TORUS has the following input fields:
@@ -1126,7 +1130,7 @@ rt_tor_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 	return(0);
 }
 
-/*
+/**
  *			R T _ T O R _ T E S S
  */
 int
@@ -1303,7 +1307,7 @@ rt_tor_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 }
 
 
-/*
+/**
  *			R T _ T O R _ I M P O R T
  *
  *  Import a torus from the database format to the internal format.
@@ -1365,7 +1369,7 @@ rt_tor_import(struct rt_db_internal *ip, const struct bu_external *ep, register 
 	return(0);		/* OK */
 }
 
-/*
+/**
  *			R T _ T O R _ E X P O R T 5
  */
 int
@@ -1394,7 +1398,7 @@ rt_tor_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
 
 	return 0;
 }
-/*
+/**
  *			R T _ T O R _ E X P O R T
  *
  *  The name will be added by the caller.
@@ -1479,7 +1483,7 @@ rt_tor_export(struct bu_external *ep, const struct rt_db_internal *ip, double lo
 	return(0);
 }
 
-/*
+/**
  *			R T _ T O R _ I M P O R T 5
  *
  *	Taken from the database record:
@@ -1544,7 +1548,7 @@ rt_tor_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
 	VSCALE(tip->b, tip->b, tip->r_b);
 	return 0;
 }
-/*
+/**
  *			R T _ T O R _ D E S C R I B E
  *
  *  Make human-readable formatted presentation of this solid.
@@ -1599,7 +1603,7 @@ rt_tor_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
 	return(0);
 }
 
-/*
+/**
  *			R T _ T O R _ I F R E E
  *
  *  Free the storage associated with the rt_db_internal version of this solid.

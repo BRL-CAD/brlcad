@@ -18,9 +18,11 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+
+/** \defgroup if Interface 
+ * \ingroup libfb */
+/*@{*/
 /** @file if_4d-old.c
- *			I F _ 4 D . C
- *
  *  Frame Buffer Library interface for SGI Iris-4D.
  *  Support for the 3030/2400 series ("Iris-3D") is in if_sgi.c
  *  However, both are called /dev/sgi
@@ -50,6 +52,8 @@
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5066
  */
+/*@}*/
+
 #ifndef lint
 static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif

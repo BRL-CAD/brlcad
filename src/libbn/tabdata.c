@@ -18,8 +18,10 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+
+/** \addtogroup libbn */
+/*@{*/
 /** @file tabdata.c
- *
  *  Routines for processing tables (curves) of data with one independent
  *  parameter which is common to many sets of dependent data values.
  *
@@ -43,6 +45,8 @@
  *
  *  With thanks to Russ Moulton Jr, EOSoft Inc. for his "rad.c" module.
  */
+/*@}*/
+
 #ifndef lint
 static const char RCStabdata[] = "@(#)$Header$ (ARL)";
 #endif

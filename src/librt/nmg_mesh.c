@@ -18,9 +18,11 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+
+/** \addtogroup nmg */
+/*@{*/
 /** @file nmg_mesh.c
- *
- *	Meshing routines for n-Manifold Geometry
+ *	Meshing routines for n-Manifold Geometry.
  *  This stuff is destined to be absorbed into nmg_fuse.c.
  *  "meshing" here refers to the sorting of faceuses around an edge
  *  as two edges sharing the same end points (vertex structs) are fused.
@@ -35,6 +37,7 @@
  *	Aberdeen Proving Ground, Maryland  21005-5066
  *  
  */
+/*@}*/
 #ifndef lint
 static const char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
@@ -50,7 +53,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "raytrace.h"
 
 
-/*
+/**
  *			N M G _ I S _ A N G L E _ I N _ W E D G E
  *
  *  Determine if T lies within angle AB, such that A < T < B.
@@ -88,7 +91,7 @@ nmg_is_angle_in_wedge(double a, double b, double t)
 	return 1;
 }
 
-/*
+/**
  *			N M G _ P I C K _ B E S T _ E D G E _ G
  *
  *  Given two edgeuses with different edge geometry but
@@ -185,7 +188,7 @@ nmg_pick_best_edge_g(struct edgeuse *eu1, struct edgeuse *eu2, const struct bn_t
 	return eu1->g.lseg_p;	/* both the same */
 }
 
-/*
+/**
  *			N M G _ R A D I A L _ J O I N _ E U
  *
  *	Make all the edgeuses around eu2's edge to refer to eu1's edge,
@@ -487,7 +490,7 @@ insert:
 #endif
 }
 
-/*
+/**
  *			N M G _ M E S H _ T W O _ F A C E S
  *
  *  Actuall do the work of meshing two faces.
@@ -571,7 +574,7 @@ nmg_mesh_two_faces(register struct faceuse *fu1, register struct faceuse *fu2, c
 	return count;
 }
 
-/*
+/**
  *			N M G _ M E S H _ F A C E S
  *
  *  Scan through all the edges of fu1 and fu2, ensuring that all
@@ -612,7 +615,7 @@ nmg_mesh_faces(struct faceuse *fu1, struct faceuse *fu2, const struct bn_tol *to
     	}
 }
 
-/*
+/**
  *			N M G _ M E S H _ F A C E _ S H E L L
  *
  *  The return is the number of edges meshed.
@@ -637,7 +640,7 @@ nmg_mesh_face_shell(struct faceuse *fu1, struct shell *s, const struct bn_tol *t
 	return count;
 }
 
-/*
+/**
  *			N M G _ M E S H _ S H E L L _ S H E L L
  *
  *  Mesh every edge in shell 1 with every edge in shell 2.

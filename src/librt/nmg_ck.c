@@ -18,9 +18,12 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+
+/** \addtogroup nmg */
+
+/*@{*/
 /** @file nmg_ck.c
- *
- *  Validators and consistency checkers for NMG data structures
+ *  Validators and consistency checkers for NMG data structures.
  *
  *  Authors -
  *	Lee A. Butler
@@ -31,6 +34,7 @@
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
+/*@}*/
 #ifndef lint
 static const char RCSid[] = "@(#)$Header$ (ARL)";
 #endif
@@ -56,7 +60,7 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
  *									*
  ************************************************************************/
 
-/*
+/**
  *			N M G _ V V G
  *
  *  Verify vertex geometry
@@ -67,7 +71,7 @@ nmg_vvg(const struct vertex_g *vg)
 	NMG_CK_VERTEX_G(vg);
 }
 
-/*
+/**
  *			N M G _ V V E R T E X
  *
  *  Verify a vertex
@@ -99,7 +103,7 @@ nmg_vvua(const long int *vua)
 	NMG_CK_VERTEXUSE_A_EITHER(vua);
 }
 
-/*
+/**
  *			N M G _ V V U
  *
  *  Verify vertexuse
@@ -168,7 +172,7 @@ nmg_veg(const long int *eg)
 	}
 }
 
-/*
+/**
  *			N M G _ V E D G E
  *
  *  Verify edge
@@ -237,7 +241,7 @@ nmg_vedge(const struct edge *e, const struct edgeuse *eup)
 		rt_bomb("nmg_vedge() Cannot get from edge to parent edgeuse\n");
 }
 
-/*
+/**
  *			N M G _ V E U
  *
  *  Verify edgeuse list.
@@ -367,7 +371,7 @@ nmg_veu(const struct bu_list *hp, const long int *up_magic_p)
 	}
 }
 
-/*
+/**
  *			N M G _ V L G
  *
  *  Verify loop geometry
@@ -384,7 +388,7 @@ nmg_vlg(const struct loop_g *lg)
 			rt_bomb("nmg_vlg() loop geom min_pt greater than max_pt\n");
 }
 
-/*
+/**
  *			N M G _ V L O O P
  *
  *  Verify loop
@@ -413,7 +417,7 @@ nmg_vloop(const struct loop *l, const struct loopuse *lup)
 	if (l->lg_p) nmg_vlg(l->lg_p);
 }
 
-/*
+/**
  *			N M G _ V L U
  *
  *  Verify loopuse
@@ -473,7 +477,7 @@ nmg_vlu(const struct bu_list *hp, const long int *up)
 	}
 }
 
-/*
+/**
  *			N M G _ V F G
  *
  *  Verify face geometry
@@ -498,7 +502,7 @@ nmg_vfg(const struct face_g_plane *fg)
 	}
 }
 
-/*
+/**
  *			N M G _ V F A C E
  *
  *  Verify face
@@ -531,7 +535,7 @@ nmg_vface(const struct face *f, const struct faceuse *fup)
 	if (f->g.plane_p) nmg_vfg(f->g.plane_p);
 }
 
-/*
+/**
  *			N M G _ V F U
  *
  *	Validate a list of faceuses
@@ -586,7 +590,7 @@ nmg_vfu(const struct bu_list *hp, const struct shell *s)
 }
 
 
-/*
+/**
  *			N M G _ V S H E L L
  *
  *	validate a list of shells and all elements under them
@@ -653,7 +657,7 @@ nmg_vshell(const struct bu_list *hp, const struct nmgregion *r)
 
 
 
-/*
+/**
  *			N M G _ V R E G I O N
  *
  *	validate a list of nmgregions and all elements under them
@@ -682,7 +686,7 @@ nmg_vregion(const struct bu_list *hp, const struct model *m)
 	}
 }
 
-/*
+/**
  *			N M G _ V M O D E L
  *
  *	validate an NMG model and all elements in it.
@@ -701,7 +705,7 @@ nmg_vmodel(const struct model *m)
  *									*
  ************************************************************************/
 
-/*
+/**
  *			N M G _ C K _ E
  */
 void
@@ -731,7 +735,7 @@ nmg_ck_e(const struct edgeuse *eu, const struct edge *e, const char *str)
 	bu_free(errstr, "nmg_ck_e error str");
 }
 
-/*
+/**
  *			N M G _ C K _ V U
  */
 void
@@ -748,7 +752,7 @@ nmg_ck_vu(const long int *parent, const struct vertexuse *vu, const char *str)
 	bu_free(errstr, "nmg_ck_vu error str");
 }
 
-/*
+/**
  *			N M G _ C K _ E U
  */
 void
@@ -813,7 +817,7 @@ nmg_ck_eu(const long int *parent, const struct edgeuse *eu, const char *str)
 	bu_free(errstr, "nmg_ck_eu error str");
 }
 
-/*
+/**
  *			N M G _ C K _ L G
  */
 void
@@ -829,7 +833,7 @@ nmg_ck_lg(const struct loop *l, const struct loop_g *lg, const char *str)
 	bu_free(errstr, "nmg_ck_lg error str");
 }
 
-/*
+/**
  *			N M G _ C K _ L
  */
 void
@@ -850,7 +854,7 @@ nmg_ck_l(const struct loopuse *lu, const struct loop *l, const char *str)
 	bu_free(errstr, "");
 }
 
-/*
+/**
  *			N M G _ C K _ L U
  */
 void
@@ -909,7 +913,7 @@ nmg_ck_lu(const long int *parent, const struct loopuse *lu, const char *str)
 	bu_free(errstr, "nmg_ck_lu error str");
 }
 
-/*
+/**
  *			N M G _ C K _ F G
  */
 void
@@ -930,7 +934,7 @@ nmg_ck_fg(const struct face *f, const struct face_g_plane *fg, const char *str)
 	bu_free(errstr, "nmg_ck_fg error str");
 }
 
-/* 
+/** 
  *			N M G _ C K _ F
  */
 void
@@ -951,7 +955,7 @@ nmg_ck_f(const struct faceuse *fu, const struct face *f, const char *str)
 	bu_free(errstr, "nmg_ck_f error str");
 }
 
-/*
+/**
  *			N M G _ C K _ F U
  */
 void
@@ -996,7 +1000,7 @@ nmg_ck_fu(const struct shell *s, const struct faceuse *fu, const char *str)
 	bu_free(errstr, "nmg_ck_fu error str");
 }
 
-/*	N M G _ C K _ E G _ V E R T S
+/**		N M G _ C K _ E G _ V E R T S
  *
  * Check if vertices from edgeuses using this edge geometry
  * actually lie on the edge geomatry.
@@ -1055,7 +1059,7 @@ nmg_ck_eg_verts(const struct edge_g_lseg *eg, const struct bn_tol *tol)
 	return( count );
 }
 
-/*	N M G _ C K _ G E O M E T R Y
+/**	N M G _ C K _ G E O M E T R Y
  *
  * Check that vertices actually lie on geometry for
  * faces and edges
@@ -1114,7 +1118,7 @@ nmg_ck_geometry(const struct model *m, const struct bn_tol *tol)
 	return( count );
 }
 
-/*
+/**
  *			N M G _ C K _ F A C E _ W O R T H L E S S _ E D G E S
  *
  *  Search for null ("worthless") edges in a face.
@@ -1160,7 +1164,7 @@ nmg_ck_face_worthless_edges(const struct faceuse *fu)
 
 
 
-/*
+/**
  *			N M G _ C K _ L U E U
  *
  *	check all the edgeuses of a loopuse to make sure these children
@@ -1218,7 +1222,7 @@ void nmg_ck_lueu(const struct loopuse *cklu, const char *s)
 	}
 }
 
-/*
+/**
  *			N M G _ C H E C K _ R A D I A L
  *
  *	check to see if all radial uses of an edge (within a shell) are
@@ -1351,7 +1355,7 @@ nmg_check_radial(const struct edgeuse *eu, const struct bn_tol *tol)
 #endif
 }
 
-/*
+/**
  *			N M G _ E U _ 2 S _ O R I E N T _ B A D
  *
  *  Given an edgeuse, check that the proper orientation "parity" of
@@ -1470,7 +1474,7 @@ out:
 	return ret;
 }
 
-/*
+/**
  *		 	N M G _ C K _ C L O S E D _ S U R F
  *
  *  Verify that shell is closed.
@@ -1518,7 +1522,7 @@ nmg_ck_closed_surf(const struct shell *s, const struct bn_tol *tol)
 	return(0);
 }
 
-/*
+/**
  *			N M G _ C K _ C L O S E D _ R E G I O N
  *
  *  Check all the shells in a region for being closed.
@@ -1542,7 +1546,7 @@ nmg_ck_closed_region(const struct nmgregion *r, const struct bn_tol *tol)
 	return(0);
 }
 
-/*	N M G _ C K _ V _ I N _ 2 F U S
+/**	N M G _ C K _ V _ I N _ 2 F U S
  *
  *	accepts a vertex pointer, two faceuses, and a tolerance.
  *	Checks if the vertex is in both faceuses (topologically
@@ -1610,7 +1614,7 @@ nmg_ck_v_in_2fus(const struct vertex *vp, const struct faceuse *fu1, const struc
 	}
 
 }
-/*	N M G _ C K _ V S _ I N _ R E G I O N
+/**	N M G _ C K _ V S _ I N _ R E G I O N
  *
  *	Visits every vertex in the region and checks if the
  *	vertex coordinates are within tolerance of every face

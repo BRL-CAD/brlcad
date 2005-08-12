@@ -18,9 +18,11 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+
+/** \addtogroup g */
+
+/*@{*/
 /** @file g_vol.c
- *
- *  Purpose -
  *	Intersect a ray with a 3-D volume.
  *	The volume is described as a concatenation of
  *	bw(5) files.
@@ -35,6 +37,8 @@
  *	Aberdeen Proving Ground, Maryland  21005
  *  
  */
+/*@}*/
+
 #ifndef lint
 static const char RCSvol[] = "@(#)$Header$ (BRL)";
 #endif
@@ -126,7 +130,7 @@ RT_EXTERN(void rt_vol_plate,(point_t a, point_t b, point_t c, point_t d,
 static int rt_vol_normtab[3] = { NORM_XPOS, NORM_YPOS, NORM_ZPOS };
 
 
-/*
+/**
  *			R T _ V O L _ S H O T
  *
  *  Transform the ray into local coordinates of the volume ("ideal space").
@@ -409,7 +413,7 @@ if(RT_G_DEBUG&DEBUG_VOL)bu_log("Exit axis is %s, t[]=(%g, %g, %g)\n",
 	return(2);
 }
 
-/*
+/**
  *			R T _ V O L _ I M P O R T
  *
  *  Read in the information from the string solid record.
@@ -509,7 +513,7 @@ rt_vol_import(struct rt_db_internal *ip, const struct bu_external *ep, const fas
 	return( 0 );
 }
 
-/*
+/**
  *			R T _ V O L _ E X P O R T
  *
  *  The name will be added by the caller.
@@ -547,7 +551,7 @@ rt_vol_export(struct bu_external *ep, const struct rt_db_internal *ip, double lo
 	return(0);
 }
 
-/*
+/**
  *			R T _ V O L _ I M P O R T 5
  *
  *  Read in the information from the string solid record.
@@ -641,7 +645,7 @@ rt_vol_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 	return( 0 );
 }
 
-/*
+/**
  *			R T _ V O L _ E X P O R T 5
  *
  *  The name will be added by the caller.
@@ -675,7 +679,7 @@ rt_vol_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
 	return(0);
 }
 
-/*
+/**
  *			R T _ V O L _ D E S C R I B E
  *
  *  Make human-readable formatted presentation of this solid.
@@ -719,7 +723,7 @@ rt_vol_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
 	return(0);
 }
 
-/*
+/**
  *			R T _ V O L _ I F R E E
  *
  *  Free the storage associated with the rt_db_internal version of this solid.
@@ -741,7 +745,7 @@ rt_vol_ifree(struct rt_db_internal *ip)
 	ip->idb_ptr = GENPTR_NULL;	/* sanity */
 }
 
-/*
+/**
  *			R T _ V O L _ P R E P
  *
  *  Returns -
@@ -802,7 +806,7 @@ rt_vol_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 	return(0);		/* OK */
 }
 
-/*
+/**
  *			R T _ V O L _ P R I N T
  */
 void
@@ -819,7 +823,7 @@ rt_vol_print(register const struct soltab *stp)
 	VPRINT("model grid origin", volp->vol_origin);
 }
 
-/*
+/**
  *			R T _ V O L _ N O R M
  *
  *  Given one ray distance, return the normal and
@@ -865,7 +869,7 @@ rt_vol_norm(register struct hit *hitp, struct soltab *stp, register struct xray 
 	}
 }
 
-/*
+/**
  *			R T _ V O L _ C U R V E
  *
  *  Everything has sharp edges.  This makes things easy.
@@ -880,7 +884,7 @@ rt_vol_curve(register struct curvature *cvp, register struct hit *hitp, struct s
 	cvp->crv_c1 = cvp->crv_c2 = 0;
 }
 
-/*
+/**
  *			R T _ V O L _ U V
  *
  *  Map the hit point in 2-D into the range 0..1
@@ -895,7 +899,7 @@ rt_vol_uv(struct application *ap, struct soltab *stp, register struct hit *hitp,
 	/* XXX uv should be xy in ideal space */
 }
 
-/*
+/**
  * 			R T _ V O L _ F R E E
  */
 void
@@ -914,7 +918,7 @@ rt_vol_class(void)
 	return(0);
 }
 
-/*
+/**
  *			R T _ V O L _ P L O T
  */
 int
@@ -1010,7 +1014,7 @@ rt_vol_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 	return(0);
 }
 
-/*
+/**
  *			R T _ V O L _ P L A T E
  */
 void
@@ -1038,7 +1042,7 @@ rt_vol_plate(fastf_t *a, fastf_t *b, fastf_t *c, fastf_t *d, register fastf_t *m
 	RT_ADD_VLIST( vhead, arot, BN_VLIST_LINE_DRAW );
 }
 
-/*
+/**
  *			R T _ V O L _ T E S S
  */
 int

@@ -18,10 +18,11 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+
+/** \addtogroup librt */
+/*@{*/
 /** @file timer42.c
- *
- * Function -
- *	To provide timing information for RT when running on 4.2 BSD UNIX.
+ * To provide timing information for RT when running on 4.2 BSD UNIX.
  *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
@@ -29,6 +30,8 @@
  *	Aberdeen Proving Ground, Maryland  21005
  *  
  */
+/*@}*/
+
 #ifndef lint
 static const char RCStimer[] = "@(#)$Header$ (BRL)";
 #endif

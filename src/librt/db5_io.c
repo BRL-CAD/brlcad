@@ -18,8 +18,11 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+
+/** \addtogroup db5 */
+
+/*@{*/
 /** @file db5_io.c
- *
  *  Handle import/export and IO of v5 database objects.
  *
  *  Author -
@@ -30,6 +33,8 @@
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  *  
  */
+/*@}*/
+
 #ifndef lint
 static const char RCSid[] = "@(#)$Header$ (ARL)";
 #endif
@@ -62,7 +67,7 @@ const int db5_enc_len[4] = {
 	8
 };
 
-/*
+/**
  *			D B 5 _ H E A D E R _ I S _ V A L I D
  *
  *  Verify that this is a valid header for a BRL-CAD v5 database.
@@ -108,7 +113,7 @@ db5_header_is_valid(const unsigned char *hp)
 	return 1;		/* valid */
 }
 
-/*
+/**
  *			D B 5 _ S E L E C T _ L E N G T H _ E N C O D I N G
  *
  *  Given a number to encode, decide which is the smallest encoding format
@@ -123,7 +128,7 @@ db5_select_length_encoding(long int len)
 	return DB5HDR_WIDTHCODE_64BIT;
 }
 
-/*
+/**
  *			D B 5 _ D E C O D E _ L E N G T H
  *
  *  Given a variable-width length field in network order (XDR),
@@ -160,7 +165,7 @@ db5_decode_length(long int *lenp, const unsigned char *cp, int format)
 	return 0;
 }
 
-/*
+/**
  *			D B 5 _ D E C O D E _ S I G N E D
  *
  *  Given a variable-width length field in network order (XDR),
@@ -198,7 +203,7 @@ db5_decode_signed(long int *lenp, const unsigned char *cp, int format)
 	return 0;
 }
 
-/*
+/**
  *			D B 5 _ E N C O D E _ L E N G T H
  *
  *  Given a value and a variable-width format spec,
@@ -230,7 +235,7 @@ db5_encode_length(
 	return 0;
 }
 
-/*
+/**
  *			D B 5 _ C R A C K _ D I S K _ H E A D E R
  *
  *  Returns -
@@ -294,7 +299,7 @@ db5_crack_disk_header(struct db5_raw_internal *rip, const unsigned char *cp)
 	return 0;
 }
 
-/*
+/**
  *			D B 5 _ G E T _ R A W _ I N T E R N A L _ P T R
  *
  *  Returns -
@@ -358,7 +363,7 @@ db5_get_raw_internal_ptr( struct db5_raw_internal *rip, const unsigned char *ip)
 	return ip + rip->object_length;
 }
 
-/*
+/**
  *			D B 5 _ G E T _ R A W _ I N T E R N A L _ F P
  *
  *  Returns -
@@ -464,7 +469,7 @@ db5_get_raw_internal_fp(struct db5_raw_internal *rip, FILE *fp)
 	return 0;		/* success */
 }
 
-/*
+/**
  *			D B 5 _ E X P O R T _ O B J E C T 3
  *
  *  A routine for merging together the three optional
@@ -624,7 +629,7 @@ BU_ASSERT_PTR( attrib->ext_nbytes, >=, 4 );
 	BU_ASSERT_LONG( out->ext_nbytes, >=, 8 );
 }
 
-/*
+/**
  *			D B 5 _ M A K E _ F R E E _ O B J E C T _ H D R
  *
  *  Make only the front (header) portion of a free object.
@@ -660,7 +665,7 @@ db5_make_free_object_hdr( struct bu_external *ep, long length )
 	cp = db5_encode_length( cp, length>>3, h_width );
 }
 
-/*
+/**
  *			D B 5 _ M A K E _ F R E E _ O B J E C T
  *
  *  Make a complete, zero-filled, free object.
@@ -697,7 +702,7 @@ db5_make_free_object( struct bu_external *ep, long length )
 	*cp = DB5HDR_MAGIC2;
 }
 
-/*
+/**
  *			D B 5 _ I M P O R T _ A T T R I B U T E S
  *
  *  Convert the on-disk encoding into a handy easy-to-use
@@ -800,7 +805,7 @@ db5_import_attributes( struct bu_attribute_value_set *avs, const struct bu_exter
 	return avs->count;
 }
 
-/*
+/**
  *			D B 5 _ E X P O R T _ A T T R I B U T E S
  *
  *  Encode the attribute-value pair information into the external
@@ -856,7 +861,7 @@ if(bu_debug & BU_DEBUG_AVS)  bu_avs_print(avs, "db5_export_attributes");
 
 
 
-/*
+/**
  *			D B 5 _ R E P L A C E _ A T T R I B U T E S
  *
  *  Replace the attributes of a given database object.
@@ -929,7 +934,7 @@ db5_replace_attributes( struct directory *dp, struct bu_attribute_value_set *avs
 	return ret;
 }
 
-/*
+/**
  *			D B 5 _ U P D A T E _ A T T R I B U T E S
  *
  *  Update an arbitrary number of attributes on a given database object.
@@ -1016,7 +1021,7 @@ db5_update_attributes( struct directory *dp, struct bu_attribute_value_set *avsp
 	return ret;
 }
 
-/*
+/**
  *			D B 5 _ U P D A T E _ A T T R I B U T E
  *
  *  A convenience routine to update the value of a single attribute.
@@ -1041,7 +1046,7 @@ db5_update_attribute( const char *obj_name, const char *aname, const char *value
 	return db5_update_attributes( dp, &avs, dbip );
 }
 
-/*
+/**
  *			D B 5 _ U P D A T E _ I D E N T
  *
  *  Update the _GLOBAL object, which in v5 serves the place of the
@@ -1101,7 +1106,7 @@ int db5_update_ident( struct db_i *dbip, const char *title, double local2mm )
 	return ret;
 }
 
-/*
+/**
  *			D B 5 _ F W R I T E _ I D E N T
  *
  *  Create a header for a v5 database.
@@ -1168,7 +1173,7 @@ db5_fwrite_ident(FILE *fp, const char *title, double local2mm)
 	return 0;
 }
 
-/*
+/**
  *			R T _ D B _ C V T _ T O _ E X T E R N A L 5
  *
  *  The attributes are taken from ip->idb_avs
@@ -1286,7 +1291,7 @@ db_wrap_v5_external( struct bu_external *ep, const char *name )
 }
 
 
-/*
+/**
  *
  *			D B _ P U T _ E X T E R N A L 5
  *
@@ -1354,7 +1359,7 @@ db_put_external5(struct bu_external *ep, struct directory *dp, struct db_i *dbip
 	return 0;
 }
 
-/*
+/**
  *			R T _ D B _ P U T _ I N T E R N A L 5
  *
  *  Convert the internal representation of a solid to the external one,
@@ -1421,7 +1426,7 @@ fail:
 	return -2;		/* FAIL */
 }
 
-/*
+/**
  *			R T _ D B _ E X T E R N A L 5 _ T O _ I N T E R N A L 5
  *
  *  Given an object in external form, convert it to internal form.
@@ -1515,7 +1520,7 @@ rt_db_external5_to_internal5(
 	return id;			/* OK */
 }
 
-/*
+/**
  *			R T _ D B _ G E T _ I N T E R N A L 5
  *
  *  Get an object from the database, and convert it into it's internal
@@ -1574,7 +1579,7 @@ db5_export_color_table( struct bu_vls *ostr, struct db_i *dbip )
 	}
 }
 
-/*
+/**
  *			D B 5 _ I M P O R T _ C O L O R _ T A B L E
  */
 void
@@ -1590,7 +1595,7 @@ db5_import_color_table( char *cp )
 	}
 }
 
-/*
+/**
  *			D B 5 _ P U T _ C O L O R _ T A B L E
  *
  *  Put the old region-id-color-table into the global object.
@@ -1619,7 +1624,7 @@ db5_put_color_table( struct db_i *dbip )
 	return ret;
 }
 
-/*			D B _ G E T _ A T T R I B U T E S
+/**			D B _ G E T _ A T T R I B U T E S
  *
  *	Get attributes for an object pointed to by *dp
  *

@@ -18,6 +18,9 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+
+/** \addtogroup rb */
+/*@{*/
 /** @file rb_internals.h
  *	The constants, macro functions, etc. need within LIBBU(3)
  *	to handle the red-black tree utilities.
@@ -33,6 +36,8 @@
  *
  *  $Header$
  */
+/*@}*/
+
 #include "compat4.h"
 
 #ifndef SEEN_BU_H

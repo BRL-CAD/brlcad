@@ -1,5 +1,7 @@
-/* 
- * rt_nurb_solve.c - Decompose a matrix into its LU decomposition using pivoting.
+/** \addtogroup nurb */
+/*@{*/
+/** @file nurb_solve.c 
+ * Decompose a matrix into its LU decomposition using pivoting.
  * 
  * Author:	Paul R. Stay
  * 		Computer Science Dept.
@@ -8,6 +10,7 @@
  * Copyright (c) 1983, University of Utah
  * 
  */
+/*@}*/
 
 #include "common.h"
 

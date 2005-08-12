@@ -18,13 +18,10 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file nurb_tess.c
- *
- */
 
-/*	N U R B  _ T E S S . C
- *
- *  Function -
+/** \addtogroup nurb */
+/*@{*/
+/** @file nurb_tess.c
  *	Given Epsilon, compute the number of internal knots to
  *	add so that every triangle generated in parametric space
  *	is within epsilon of the original surface.
@@ -38,6 +35,7 @@
  * 	Aberdeen Proving Ground, Maryland 21005
  *
  */
+/*@}*/
 
 #include "common.h"
 

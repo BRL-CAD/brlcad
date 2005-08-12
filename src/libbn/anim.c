@@ -18,6 +18,8 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+/** \defgroup libbn libbn */
+/*@{*/
 /** @file anim.c
  *	Routines useful in animation programs.
  *
@@ -34,35 +36,31 @@
  ***********************************************************************
  *
  *	This file includes the following routines:
- *
- *	anim_v_permute()	apply camera animation permutation
- *	anim_v_unpermute()	undo camera animation permutation
- *	anim_tran()		transpose matrix in place
- *		
- *	anim_mat2zyx()		extract angles from rotation matrix
- *	anim_mat2ypr()		extract yaw,pitch,roll from rotation matrix
- *	anim_mat2quat()		extract quaternion from rotation matrix
- *
- *	anim_ypr2mat()		create rotation matrix from ypr, etc.
- *	anim_ypr2vmat()
- *	anim_y_p_r2mat()
- *	anim_dy_p_r2mat()
- *	anim_dy_p_r2vmat()
- *	anim_x_y_z2mat()
- *	anim_dx_y_z2mat()
- *	anim_z_y_x2mat()
- *	anim_dz_y_x2mat()
- *	anim_quat2mat()
- *	anim_dir2mat()		create rotation matrix from direction
- *	anim_dirn2mat()		create rot matrix from dir and normal
- *	
- *	anim_steer_mat()	automatic steering
- *
- *	anim_add_trans()	add pre- and post- translation to matrix
- *	anim_rotatez()		rotate vector about z-axis
- *	anim_mat_print()	print matrix with optional semi-colon
- *	anim_view_rev()		reverse view matrix
+ *  - anim_v_permute()	apply camera animation permutation
+ *  - anim_v_unpermute()	undo camera animation permutation
+ *  - anim_tran()		transpose matrix in place
+ *  - anim_mat2zyx()		extract angles from rotation matrix
+ *  - anim_mat2ypr()		extract yaw,pitch,roll from rotation matrix
+ *  - anim_mat2quat()		extract quaternion from rotation matrix
+ *  - anim_ypr2mat()		create rotation matrix from ypr, etc.
+ *  - anim_ypr2vmat()
+ *  - anim_y_p_r2mat()
+ *  - anim_dy_p_r2mat()
+ *  - anim_dy_p_r2vmat()
+ *  - anim_x_y_z2mat()
+ *  - anim_dx_y_z2mat()
+ *  - anim_z_y_x2mat()
+ *  - anim_dz_y_x2mat()
+ *  - anim_quat2mat()
+ *  - anim_dir2mat()		create rotation matrix from direction
+ *  - anim_dirn2mat()		create rot matrix from dir and normal
+ *  - anim_steer_mat()	automatic steering
+ *  - anim_add_trans()	add pre- and post- translation to matrix
+ *  - anim_rotatez()		rotate vector about z-axis
+ *  - anim_mat_print()	print matrix with optional semi-colon
+ *  - anim_view_rev()		reverse view matrix
  */
+/*@}*/
 
 #include "common.h"
 

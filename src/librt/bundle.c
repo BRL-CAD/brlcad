@@ -18,7 +18,11 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+
+/** \addtogroup librt */
+/*@{*/
 /** @file bundle.c
+ * 
  * NOTE:  This is experimental code right now.
  *
  *  Author -
@@ -30,6 +34,8 @@
  *	Aberdeen Proving Ground, Maryland  21005
  *  
  */
+/*@}*/
+
 #ifndef lint
 static const char RCSbundle[] = "@(#)$Header$ (BRL)";
 #endif

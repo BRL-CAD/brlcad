@@ -18,8 +18,11 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+
+/** \addtogroup libbu */
+/*@{*/
+
 /** @file units.c
- * 
  *  Module of libbu to handle units conversion between strings and mm.
  *
  *  Author -
@@ -31,6 +34,8 @@
  *	Aberdeen Proving Ground, Maryland  21005-5066
  *  
  */
+/*@}*/
+
 #ifndef lint
 static const char libbu_units_RCSid[] = "@(#)$Header$ (BRL)";
 #endif

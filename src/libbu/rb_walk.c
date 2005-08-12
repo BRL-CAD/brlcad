@@ -18,6 +18,9 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+
+/** \addtogroup rb */
+/*@{*/
 /** @file rb_walk.c
  *	    Routines for traversal of red-black trees
  *
@@ -35,12 +38,12 @@
  *	The function bu_rb_walk() is defined in terms of the function
  *	_rb_walk(), which, in turn, calls any of the six functions
  *
- *		static void prewalknodes()
- *		static void inwalknodes()
- *		static void postwalknodes()
- *		static void prewalkdata()
- *		static void inwalkdata()
- *		static void postwalkdata()
+ *		- static void prewalknodes()
+ *		- static void inwalknodes()
+ *		- static void postwalknodes()
+ *		- static void prewalkdata()
+ *		- static void inwalkdata()
+ *		- static void postwalkdata()
  *
  *	depending on the type of traversal desired and the objects
  *	to be visited (nodes themselves, or merely the data stored
@@ -49,6 +52,8 @@
  *	walking, the function to apply at each visit, and the current
  *	depth in the tree.
  */
+/*@}*/
+
 #ifndef lint
 static const char libbu_rb_walk_RCSid[] = "@(#) $Header$";
 #endif

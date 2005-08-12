@@ -18,9 +18,11 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+
+/** \addtogroup db5 */
+
+/*@{*/
 /** @file db5_types.c
- *
- *  Purpose -
  *	Map between Major_Types/Minor_Types and ASCII strings
  *
  *  Author -
@@ -31,6 +33,7 @@
  *	Aberdeen Proving Ground, Maryland  21005-5066
  *  
  */
+/*@}*/
 #ifndef lint
 static const char RCSell[] = "@(#)$Header$ (BRL)";
 #endif

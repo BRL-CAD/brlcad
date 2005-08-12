@@ -18,8 +18,10 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+
+/** \addtogroup libbu */
+/*@{*/
 /** @file fopen_uniq.c
- *
  *  Routine to open a unique filename.
  *
  *  Authors -
@@ -31,6 +33,7 @@
  *	Aberdeen Proving Ground, Maryland  21005
  *  
  */
+/*@}*/
 
 #include "common.h"
 

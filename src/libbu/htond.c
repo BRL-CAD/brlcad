@@ -18,8 +18,10 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+
+/** \addtogroup libbu */
+/*@{*/
 /** @file htond.c
- *
  *  Library routines for conversion between the local host
  *  64-bit ("double precision") representation, and
  *  64-bit IEEE double precision representation, in "network order",
@@ -56,6 +58,8 @@
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5066
  */
+/*@}*/
+
 #ifndef lint
 static const char libbu_htond_RCSid[] = "@(#)$Header$ (BRL)";
 #endif

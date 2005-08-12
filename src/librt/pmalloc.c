@@ -18,8 +18,10 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+
+/** \addtogroup librt */
+/*@{*/
 /** @file pmalloc.c
- *
  *  The Princeton memory allocater.
  *
  *  Functions -
@@ -67,6 +69,8 @@
  *		ov_length field includes sizeof(struct overhead)
  *		adjacency chain includes all memory, allocated plus free.
  */
+/*@}*/
+
 #ifndef lint
 static const char RCSid[] = "@(#)$Header$ (BRL)";
 #endif

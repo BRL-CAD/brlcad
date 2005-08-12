@@ -18,6 +18,10 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+
+/** \addtogroup db */
+
+/*@{*/
 /** @file db_scan.c
  *
  * Functions -
@@ -33,6 +37,8 @@
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
+/*@}*/
+
 #ifndef lint
 static const char RCSid[] = "@(#)$Header$ (ARL)";
 #endif
@@ -59,7 +65,7 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 	if(RT_G_DEBUG&DEBUG_DB) bu_log("db_scan x%x %c (0%o)\n", \
 		aaa,rrr.u_id,rrr.u_id ); }
 
-/*
+/**
  *			D B _ S C A N
  *
  *  This routine sequentially reads through the model database file and
@@ -356,7 +362,7 @@ db_scan(register struct db_i *dbip, int (*handler) (struct db_i *, const char *,
 	return( 0 );			/* OK */
 }
 
-/*
+/**
  *			D B _ U P D A T E _ I D E N T
  *
  *  Update the existing v4 IDENT record with new title and units.
@@ -420,7 +426,7 @@ You may wish to consider upgrading your database using \"dbupgrade\".\n",
 
 }
 
-/*
+/**
  *			D B _ F W R I T E _ I D E N T
  *
  *  Fwrite an IDENT record with given title and editing scale.
@@ -456,7 +462,7 @@ db_fwrite_ident( FILE *fp, const char *title, double local2mm )
 	return 0;
 }
 
-/*
+/**
  *			D B _ C O N V E R S I O N S
  *
  *	Initialize conversion factors given the v4 database unit
@@ -528,7 +534,7 @@ db_conversions(struct db_i *dbip, int local)
 	dbip->dbi_base2local = 1.0 / dbip->dbi_local2base;
 }
 
-/*
+/**
  *			D B _ V 4 _ G E T _ U N I T S _ C O D E
  *
  *  Given a string, return the V4 database code representing

@@ -18,15 +18,11 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file nurb_knot.c
- *
- */
 
-/* 
- *       N U R B _ K N O T . C
- *
- * Function -
- *     Various knot vector routines.
+/** \addtogroup nurb */
+/*@{*/
+/** @file nurb_knot.c
+ * Various knot vector routines.
  * 
  * Author -
  *     Paul R. Stay
@@ -37,6 +33,7 @@
  *     Aberdeen Proving Ground, Maryland 21005
  *
  */
+/*@}*/
 
 #include "common.h"
 

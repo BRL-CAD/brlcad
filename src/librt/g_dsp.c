@@ -1,9 +1,10 @@
 #define FULL_DSP_DEBUGGING 1
-/*
- *			G _ D S P . C
- *
- *  Purpose -
- *	Intersect a ray with a displacement map
+
+/** \addtogroup g */
+
+/*@{*/
+/** \file g_dsp.c
+ *	Intersect a ray with a displacement map.
  *
  *  The bounding box planes (in dsp coordinates) are numbered 0 .. 5
  *
@@ -36,6 +37,8 @@
  *	Aberdeen Proving Ground, Maryland  21005-5066
  *  
  */
+/*@}*/
+
 #ifndef lint
 static const char RCSdsp[] = "@(#)$Header$ (BRL)";
 #endif
@@ -275,7 +278,8 @@ const struct bu_structparse rt_dsp_ptab[] = {
 static int plot_file_num=0;
 
 
-/*	P L O T _ R P P
+/**
+ *	P L O T _ R P P
  *
  * Plot an RPP to a file in the given color
  */
@@ -298,7 +302,7 @@ plot_rpp(FILE *fp, struct bound_rpp *rpp, int r, int g, int b)
 }
 
 
-/*	P L O T _ D S P _ B B
+/**	P L O T _ D S P _ B B
  *
  *  Plot a dsp_bb structure
  */
@@ -354,7 +358,7 @@ draw_dsp_bb(int *plotnum,
 
 #define PLOT_LAYERS
 #ifdef PLOT_LAYERS
-/*	P L O T _ L A Y E R S
+/**	P L O T _ L A Y E R S
  *
  *
  *  Plot the bounding box layers for a dsp
@@ -417,7 +421,7 @@ plot_layers(struct dsp_specific *dsp_sp)
 }
 #endif
 
-/*	P L O T _ C E L L _ T O P 
+/**	P L O T _ C E L L _ T O P 
  *
  *	Plot the results of intersecting a ray with the top of a cell
  *
@@ -509,7 +513,7 @@ plot_cell_top(struct isect_stuff *isect,
     fclose(fp);
 }
 
-/*	D S P _ P R I N T _ V 4
+/**	D S P _ P R I N T _ V 4
  */
 static void
 dsp_print_v4(struct bu_vls *vls, const struct rt_dsp_internal *dsp_ip)
@@ -545,7 +549,7 @@ dsp_print_v4(struct bu_vls *vls, const struct rt_dsp_internal *dsp_ip)
 		   V4ARGS( &dsp_ip->dsp_stom[12]) );
 }
 
-/*	D S P _ P R I N T _ V 5
+/**	D S P _ P R I N T _ V 5
  */
 static void
 dsp_print_v5(struct bu_vls *vls,
@@ -616,7 +620,7 @@ dsp_print_v5(struct bu_vls *vls,
 									 V4ARGS( &dsp_ip->dsp_stom[12]) );
 }
 
-/*
+/**
  *			R T _ D S P _ P R I N T
  */
 void
@@ -654,7 +658,7 @@ rt_dsp_print(register const struct soltab *stp)
 }
 
 
-/*
+/**
  *	compute bounding boxes for each cell, then compute bounding boxes
  *	for collections of bounding boxes
  */
@@ -896,7 +900,7 @@ dsp_layers(struct dsp_specific *dsp, unsigned short *d_min, unsigned short *d_ma
 }
 
 
-/*
+/**
  *  			R T _ D S P _ P R E P
  *  
  *  Given a pointer to a GED database record, and a transformation matrix,
@@ -1066,7 +1070,7 @@ plot_seg(struct isect_stuff *isect,
 	}
 }
 
-/*	A D D _ S E G
+/**	A D D _ S E G
  *
  *  Add a segment to the list of intersections in DSP space
  *
@@ -1263,7 +1267,7 @@ add_seg(struct isect_stuff *isect,
 }
 
 
-/*	I S E C T _ R A Y _ T R I A N G L E
+/**	I S E C T _ R A Y _ T R I A N G L E
  *
  * Side Effects:
  *	dist and P may be set
@@ -1461,7 +1465,7 @@ isect_ray_triangle(struct isect_stuff *isect,
     return 1;
 }
 
-/*	P E R M U T E _ C E L L
+/**	P E R M U T E _ C E L L
  *
  *	For adaptive diagonal selection or for Upper-Left to lower right
  *	cell cut, we must permute the verticies of the cell before handing
@@ -1606,7 +1610,7 @@ permute_cell(point_t A,
     return -1;
 }
 
-/*
+/**
  *	C H E C K _ B B _ E L E V A T I O N
  *
  *	determine if a point P is above/below the slope line on the
@@ -1984,7 +1988,7 @@ isect_ray_cell_top(struct isect_stuff *isect, struct dsp_bb *dsp_bb)
     return 0;
 }
 
-/*
+/**
  *			D S P _ I N _ R P P
  *
  *  Compute the intersections of a ray with a rectangular parallelpiped (RPP)
@@ -2132,7 +2136,7 @@ dsp_in_rpp(struct isect_stuff *isect,
 static int
 isect_ray_dsp_bb(struct isect_stuff *isect, struct dsp_bb *dsp_bb);
 
-/*
+/**
  *	R E C U R S E _ D S P _ B B
  *
  *  Return
@@ -2293,7 +2297,7 @@ recurse_dsp_bb(struct isect_stuff *isect,
 }
 #endif
 
-/*
+/**
  *	I S E C T _ R A Y _ D S P _ B B
  *
  *  Intersect a ray with a DSP bounding box.  This is the primary child of
@@ -2495,7 +2499,7 @@ isect_ray_dsp_bb(struct isect_stuff *isect, struct dsp_bb *dsp_bb)
     return 0;
 }
 
-/*
+/**
  *  			R T _ D S P _ S H O T
  *  
  *  Intersect a ray with a dsp.
@@ -2652,7 +2656,7 @@ rt_dsp_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 
 #define RT_DSP_SEG_MISS(SEG)	(SEG).seg_stp=RT_SOLTAB_NULL
 
-/*
+/**
  *			R T _ D S P _ V S H O T
  *
  *  Vectorized version.
@@ -2772,7 +2776,7 @@ compute_normal_at_gridpoint(vect_t N,
 
 }
 
-/*
+/**
  *  			R T _ D S P _ N O R M
  *  
  *  Given ONE ray distance, return the normal and entry/exit point.
@@ -2952,7 +2956,7 @@ rt_dsp_norm(register struct hit *hitp, struct soltab *stp, register struct xray 
     }
 }
 
-/*
+/**
  *			R T _ D S P _ C U R V E
  *
  *  Return the curvature of the dsp.
@@ -2970,7 +2974,7 @@ rt_dsp_curve(register struct curvature *cvp, register struct hit *hitp, struct s
     bn_vec_ortho( cvp->crv_pdir, hitp->hit_normal );
 }
 
-/*
+/**
  *  			R T _ D S P _ U V
  *  
  *  For a hit on the surface of a dsp, return the (u,v) coordinates
@@ -3067,7 +3071,7 @@ rt_dsp_uv(struct application *ap, struct soltab *stp, register struct hit *hitp,
 	       uvp->uv_du, uvp->uv_dv);
 }
 
-/*
+/**
  *		R T _ D S P _ F R E E
  */
 void
@@ -3096,7 +3100,7 @@ rt_dsp_free(register struct soltab *stp)
     bu_free( (char *)dsp, "dsp_specific" );
 }
 
-/*
+/**
  *			R T _ D S P _ C L A S S
  */
 int
@@ -3108,7 +3112,7 @@ rt_dsp_class(void)
     return(0);
 }
 
-/*
+/**
  *			R T _ D S P _ P L O T
  */
 int
@@ -3359,7 +3363,7 @@ rt_dsp_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
     return(0);
 }
 
-/*
+/**
  *			R T _ D S P _ T E S S
  *
  *  Returns -
@@ -3382,7 +3386,7 @@ rt_dsp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 }
 
 
-/* 	G E T _ F I L E _ D A T A
+/** 	G E T _ F I L E _ D A T A
  *
  *	Retrieve data for DSP from external file.
  *	Returns:
@@ -3440,7 +3444,7 @@ get_file_data(struct rt_dsp_internal	*dsp_ip,
     return 0;
 }
 
-/*	G E T _ O B J _ D A T A
+/**	G E T _ O B J _ D A T A
  *
  *	Retrieve data for DSP from a database object.
  */
@@ -3495,7 +3499,7 @@ get_obj_data(struct rt_dsp_internal	*dsp_ip,
     return 0;
 }
 
-/*
+/**
  *	D S P _ G E T _ D A T A
  *
  *  Handle things common to both the v4 and v5 database.
@@ -3571,7 +3575,7 @@ dsp_get_data(struct rt_dsp_internal	*dsp_ip,
     return 1;
 }
 
-/*
+/**
  *			R T _ D S P _ I M P O R T
  *
  *  Import an DSP from the database format to the internal format.
@@ -3666,7 +3670,7 @@ rt_dsp_import(struct rt_db_internal *ip, const struct bu_external *ep, register 
 }
 
 
-/*
+/**
  *			R T _ D S P _ E X P O R T
  *
  *  The name is added by the caller, in the usual place.
@@ -3718,7 +3722,7 @@ rt_dsp_export(struct bu_external *ep, const struct rt_db_internal *ip, double lo
 
 
 
-/*
+/**
  *			R T _ D S P _ I M P O R T 5
  *
  *  Import an DSP from the database format to the internal format.
@@ -3820,7 +3824,7 @@ rt_dsp_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
 	return 0; /* OK */
 }
 
-/*
+/**
  *			R T _ D S P _ E X P O R T 5
  *
  *  The name is added by the caller, in the usual place.
@@ -3909,7 +3913,7 @@ rt_dsp_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
 
 
 
-/*
+/**
  *			R T _ D S P _ D E S C R I B E
  *
  *  Make human-readable formatted presentation of this solid.
@@ -3953,7 +3957,7 @@ rt_dsp_describe(struct bu_vls		*str,
     return(0);
 }
 
-/*
+/**
  *			R T _ D S P _ I F R E E
  *
  *  Free the storage associated with the rt_db_internal version of this solid.
@@ -4051,7 +4055,7 @@ const struct bu_structparse fake_dsp_printab[] = {
 };
 
 
-/*
+/**
  *			R T _ P A R S E T A B _ T C L G E T
  *
  *  This is the generic routine to be listed in rt_functab[].ft_tclget
@@ -4137,7 +4141,7 @@ rt_dsp_tclget(Tcl_Interp *interp, const struct rt_db_internal *intern, const cha
 	return status;
 }
 
-/*
+/**
  *			R T _ P A R S E T A B _ T C L A D J U S T
  *
  *  For those solids entirely defined by their parsetab.
@@ -4194,7 +4198,7 @@ rt_dsp_make(const struct rt_functab *ftp, struct rt_db_internal *intern, double 
 
 }
 
-/*	S W A P _ C E L L _ P T S
+/**	S W A P _ C E L L _ P T S
  *
  */
 static int
@@ -4370,7 +4374,7 @@ project_pt(point_t out,
 
     return 0;
 }
-/*	D S P _ P O S
+/**	D S P _ P O S
  *
  *
  *	Given an arbitrary point return the projection of that point onto

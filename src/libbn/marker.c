@@ -18,8 +18,10 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+
+/** \addtogroup libbn */
+/*@{*/
 /** @file marker.c
- *
  *	This routine places a specified character (either from
  * the ASCII set, or one of the 5 special marker characters)
  * centered about the current pen position (instead of above & to
@@ -43,6 +45,8 @@
  *	Aberdeen Proving Ground, Maryland  21005-5066
  *  
  */
+/*@}*/
+
 #ifndef lint
 static const char RCSid[] = "@(#)$Header$ (BRL)";
 #endif

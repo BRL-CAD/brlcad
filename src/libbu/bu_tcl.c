@@ -18,8 +18,10 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+
+/** \addtogroup libbu */
+/*@{*/
 /** @file bu_tcl.c
- *
  *	Tcl interfaces to all the LIBBU Basic BRL-CAD Utility routines.
  *
  *	Remember that in MGED you need to say "set glob_compat_mode 0"
@@ -32,6 +34,8 @@
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
+/*@}*/
+
 #ifndef lint
 static const char libbu_bu_tcl_RCSid[] = "@(#)$Header$ (ARL)";
 #endif

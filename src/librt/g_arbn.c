@@ -18,10 +18,12 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+
+/** \addtogroup g */
+
+/*@{*/
 /** @file g_arbn.c
- *  
- *  Function -
- *  	Intersect a ray with an Arbitrary Regular Polyhedron with
+ *  Intersect a ray with an Arbitrary Regular Polyhedron with
  *	an arbitrary number of faces.
  *  
  *  Author -
@@ -33,6 +35,8 @@
  *	Aberdeen Proving Ground, Maryland  21005-5066
  *  
  */
+/*@}*/
+
 #ifndef lint
 static const char RCSarbn[] = "@(#)$Header$ (BRL)";
 #endif
@@ -59,7 +63,7 @@ static const char RCSarbn[] = "@(#)$Header$ (BRL)";
 RT_EXTERN(void rt_arbn_print, (const struct soltab *stp) );
 RT_EXTERN(void rt_arbn_ifree, (struct rt_db_internal *ip) );
 
-/*
+/**
  *  			R T _ A R B N _ P R E P
  *
  *  Returns -
@@ -157,7 +161,7 @@ rt_arbn_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 	return(0);			/* OK */
 }
 
-/*
+/**
  *  			R T _ A R B N _ P R I N T
  */
 void
@@ -165,7 +169,7 @@ rt_arbn_print(register const struct soltab *stp)
 {
 }
 
-/*
+/**
  *			R T _ A R B N _ S H O T
  *
  *  Intersect a ray with an ARBN.
@@ -244,7 +248,7 @@ rt_arbn_shot(struct soltab *stp, register struct xray *rp, struct application *a
 	return(2);			/* HIT */
 }
 
-/*
+/**
  *			R T _ A R B N _ V S H O T
  */
 void
@@ -258,7 +262,7 @@ rt_arbn_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, st
 	rt_vstub( stp, rp, segp, n, ap );
 }
 
-/*
+/**
  *  			R T _ A R B N _ N O R M
  *
  *  Given ONE ray distance, return the normal and entry/exit point.
@@ -280,7 +284,7 @@ rt_arbn_norm(register struct hit *hitp, struct soltab *stp, register struct xray
 	VMOVE( hitp->hit_normal, aip->eqn[h] );
 }
 
-/*
+/**
  *			R T _ A R B N _ C U R V E
  *
  *  Return the "curvature" of the ARB face.
@@ -295,7 +299,7 @@ rt_arbn_curve(register struct curvature *cvp, register struct hit *hitp, struct 
 	cvp->crv_c1 = cvp->crv_c2 = 0;
 }
 
-/*
+/**
  *  			R T _ A R B N _ U V
  *  
  *  For a hit on a face of an ARB, return the (u,v) coordinates
@@ -310,7 +314,7 @@ rt_arbn_uv(struct application *ap, struct soltab *stp, register struct hit *hitp
 	uvp->uv_du = uvp->uv_dv = 0;
 }
 
-/*
+/**
  *			R T _ A R B N _ F R E E
  */
 void
@@ -323,7 +327,7 @@ rt_arbn_free(register struct soltab *stp)
 	bu_free( (char *)aip, "rt_arbn_internal" );
 }
 
-/*
+/**
  *  			R T _ A R B N _ P L O T
  *
  *  Brute force through all possible plane intersections.
@@ -412,7 +416,7 @@ rt_arbn_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_t
 	return(0);
 }
 
-/*
+/**
  *			R T _ A R B N _ C L A S S
  */
 int
@@ -499,7 +503,7 @@ Sort_edges(struct arbn_edges *edges, int *edge_count, const struct rt_arbn_inter
 	}
 }
 
-/*
+/**
  *			R T _ A R B N _ T E S S
  *
  *  "Tessellate" an ARB into an NMG data structure.
@@ -777,7 +781,7 @@ fail:
 	return( -1 );	
 }
 
-/*
+/**
  *			R T _ A R B N _ I M P O R T
  *
  *  Convert from "network" doubles to machine specific.
@@ -833,7 +837,7 @@ rt_arbn_import(struct rt_db_internal *ip, const struct bu_external *ep, register
 	return(0);
 }
 
-/*
+/**
  *			R T _ A R B N _ E X P O R T
  */
 int
@@ -887,7 +891,7 @@ rt_arbn_export(struct bu_external *ep, const struct rt_db_internal *ip, double l
 }
 
 
-/*
+/**
  *			R T _ A R B N _ I M P O R T 5
  *
  *  Convert from "network" doubles to machine specific.
@@ -949,7 +953,7 @@ rt_arbn_import5(struct rt_db_internal *ip, const struct bu_external *ep, registe
 	return(0);
 }
 
-/*
+/**
  *			R T _ A R B N _ E X P O R T 5
  */
 int
@@ -996,7 +1000,7 @@ rt_arbn_export5(struct bu_external *ep, const struct rt_db_internal *ip, double 
 }
 
 
-/*
+/**
  *			R T _ A R B N _ D E S C R I B E
  *
  *  Make human-readable formatted presentation of this solid.
@@ -1030,7 +1034,7 @@ rt_arbn_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbos
 }
 
 
-/*
+/**
  *			R T _ A R B N _ I F R E E
  *
  *  Free the storage associated with the rt_db_internal version of this solid.
@@ -1051,7 +1055,7 @@ rt_arbn_ifree(struct rt_db_internal *ip)
 	ip->idb_ptr = (genptr_t)0;	/* sanity */
 }
 
-/*
+/**
  * 		R T _ A R B N _ T C L G E T
  *
  *	Routine to format the parameters of an ARBN primitive for "db get"
@@ -1124,7 +1128,7 @@ rt_arbn_tclget(Tcl_Interp *interp, const struct rt_db_internal *intern, const ch
 	return( TCL_OK );
 }
 
-/*
+/**
  *		R T _ A R B N _ T C L A D J U S T
  *
  *	Routine to modify an arbn via the "db adjust" command

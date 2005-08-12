@@ -18,9 +18,11 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+
+/** \addtogroup libbu */
+/*@{*/
 /** @file color.c
- *
- *  Routines to convert between various color models
+ *  Routines to convert between various color models.
  *
  *  Author -
  *	Paul Tanenbaum
@@ -29,6 +31,9 @@
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
+/*@}*/
+
+
 static const char libbu_color_RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "common.h"

@@ -1,10 +1,9 @@
 #ifndef SEEN_QRAY_H
 #define SEEN_QRAY_H
 
-/*
- *
- *			Q R A Y . H
- *
+/** \addtogroup librt */
+/*@{*/
+/** /file qray.h
  * Header file for "Query Ray" variables.
  *
  * Source -
@@ -12,6 +11,7 @@
  *      The U. S. Army Research Laboratory
  *      Aberdeen Proving Ground, Maryland  21005
  */
+/*@}*/
 
 #define DG_QRAY_BASENAME "query_ray"
 #define DG_QRAY_TEXT(_dgop) ((_dgop)->dgo_qray_effects == 't' || (_dgop)->dgo_qray_effects == 'b')

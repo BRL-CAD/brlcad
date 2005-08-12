@@ -18,9 +18,11 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+
+/** \addtogroup g */
+
+/*@{*/
 /** @file g_pg.c
- *
- *  Function -
  *	Intersect a ray with a Polygonal Object
  *	that has no explicit topology.
  *	It is assumed that the solid has no holes.
@@ -34,6 +36,8 @@
  *	Aberdeen Proving Ground, Maryland  21005
  *  
  */
+/*@}*/
+
 #ifndef lint
 static const char RCSpg[] = "@(#)$Header$ (BRL)";
 #endif
@@ -60,7 +64,7 @@ HIDDEN int rt_pgface(struct soltab *stp, fastf_t *ap, fastf_t *bp, fastf_t *cp, 
 /* Describe algorithm here */
 
 
-/*
+/**
  *			R T _ P G _ P R E P
  *  
  *  This routine is used to prepare a list of planar faces for
@@ -125,7 +129,7 @@ rt_pg_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 	return(0);		/* OK */
 }
 
-/*
+/**
  *			R T _ P G F A C E
  *
  *  This function is called with pointers to 3 points,
@@ -176,7 +180,7 @@ rt_pgface(struct soltab *stp, fastf_t *ap, fastf_t *bp, fastf_t *cp, const struc
 	return(3);				/* OK */
 }
 
-/*
+/**
  *  			R T _ P G _ P R I N T
  */
 void
@@ -199,7 +203,7 @@ rt_pg_print(register const struct soltab *stp)
 	} while( (trip = trip->tri_forw) );
 }
 
-/*
+/**
  *			R T _ P G _ S H O T
  *  
  * Function -
@@ -433,7 +437,7 @@ rt_pg_shot(struct soltab *stp, register struct xray *rp, struct application *ap,
 	return(nhits);			/* HIT */
 }
 
-/*
+/**
  *			R T _ P G _ F R E E
  */
 void
@@ -450,7 +454,7 @@ rt_pg_free(struct soltab *stp)
 	}
 }
 
-/*
+/**
  *			R T _ P G _ N O R M
  */
 void
@@ -459,7 +463,7 @@ rt_pg_norm(register struct hit *hitp, struct soltab *stp, register struct xray *
 	/* Normals computed in rt_pg_shot, nothing to do here */
 }
 
-/*
+/**
  *			R T _ P G _ U V
  */
 void
@@ -470,7 +474,7 @@ rt_pg_uv(struct application *ap, struct soltab *stp, register struct hit *hitp, 
 	uvp->uv_du = uvp->uv_dv = 0;
 }
 
-/*
+/**
  *			R T _ P G _ C L A S S
  */
 int
@@ -479,7 +483,7 @@ rt_pg_class(void)
 	return(0);
 }
 
-/*
+/**
  *			R T _ P G _ P L O T
  */
 int
@@ -507,7 +511,7 @@ rt_pg_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tes
 	return(0);		/* OK */
 }
 
-/*
+/**
  *			R T _ P G _ P L O T _ P O L Y
  *
  *  Convert to vlist, draw as polygons.
@@ -545,7 +549,7 @@ rt_pg_plot_poly(struct bu_list *vhead, struct rt_db_internal *ip, const struct r
 	return(0);		/* OK */
 }
 
-/*
+/**
  *			R T _ P G _ C U R V E
  */
 void
@@ -555,7 +559,7 @@ rt_pg_curve(register struct curvature *cvp, register struct hit *hitp, struct so
 	cvp->crv_c1 = cvp->crv_c2 = 0;
 }
 
-/*
+/**
  *			R T _ P G _ T E S S
  */
 int
@@ -633,7 +637,7 @@ rt_pg_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, con
 	return(0);		/* OK */
 }
 
-/*
+/**
  *			R T _ P G _ I M P O R T
  *
  *  Read all the polygons in as a complex dynamic structure.
@@ -707,7 +711,7 @@ rt_pg_import(struct rt_db_internal *ip, const struct bu_external *ep, const fast
 	return( 0 );
 }
 
-/*
+/**
  *			R T _ P G _ E X P O R T
  *
  *  The name will be added by the caller.
@@ -776,7 +780,7 @@ rt_pg_export5(struct bu_external *ep, const struct rt_db_internal *ip, double lo
 	return -1;
 }
 
-/*
+/**
  *			R T _ P G _ D E S C R I B E
  *
  *  Make human-readable formatted presentation of this solid.
@@ -839,7 +843,7 @@ rt_pg_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose,
 	return(0);
 }
 
-/*
+/**
  *			R T _ P G _ I F R E E
  *
  *  Free the storage associated with the rt_db_internal version of this solid.
@@ -869,7 +873,7 @@ rt_pg_ifree(struct rt_db_internal *ip)
 	ip->idb_ptr = GENPTR_NULL;	/* sanity */
 }
 
-/*
+/**
  *			R T _ P G _ T O _ B O T
  *
  *  Convert in-memory form of a polysolid (pg) to a bag of triangles (BoT)

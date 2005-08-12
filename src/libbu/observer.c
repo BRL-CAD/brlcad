@@ -18,8 +18,11 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+
+/** \addtogroup libbu */
+/*@{*/
+
 /** @file observer.c
- *
  * Routines for implementing the observer pattern.
  * 
  * Source -
@@ -30,6 +33,7 @@
  * Author -
  *	Robert G. Parker
  */
+/*@}*/
 
 #include "common.h"
 

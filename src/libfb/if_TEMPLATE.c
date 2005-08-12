@@ -18,8 +18,12 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+
+/** \addtogroup if */
+/*@{*/
 /** @file if_TEMPLATE.c
- *  How to add a new device interface:
+ *  
+ * How to add a new device interface:
  *
  *  Copy this file to if_devname.c
  *  Do a global replace of DEVNAME with your devname.
@@ -37,6 +41,7 @@
  *  Add defines to ../Cakefile.defs.
  *  Replace this header.
  */
+/*@}*/
 
 #include "common.h"
 

@@ -18,10 +18,14 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+
+/** \addtogroup libfb */
+/*@{*/
 /** @file nilcursor.h
- *
- * OpenGL framebuffer blank cursor
+ * OpenGL framebuffer blank cursor.
  */
+/*@}*/
+
 16, 16,		/* size */
 8, 8,		/* origin */
 {

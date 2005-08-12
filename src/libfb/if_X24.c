@@ -1,6 +1,8 @@
-/*
- *			I F _ X 2 4 . C
- *
+/** \addtogroup if */
+
+/*@{*/
+
+/** \file if_X24.c
  *  X Window System (X11) libfb interface, supporting 24-, 8-, and 1-bit
  *  displays.
  *
@@ -39,6 +41,7 @@
  *	This software is loosely based on the original if_X.c by
  *	Phillip Dykstra of BRL, which was Copyright 1988, US Army.
  */
+/*@}*/
 
 #define X_DBG	0
 #define UPD_DBG 0

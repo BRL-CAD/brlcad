@@ -18,6 +18,10 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+
+/** \addtogroup db */
+
+/*@{*/
 /** @file db_walk.c
  *
  * Functions -
@@ -35,6 +39,8 @@
  *	Aberdeen Proving Ground, Maryland  21005-5066
  *  
  */
+/*@}*/
+
 #ifndef lint
 static const char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
@@ -90,7 +96,7 @@ db_functree_subtree(struct db_i *dbip, union tree *tp, void (*comb_func) (struct
 	}
 }
 
-/*
+/**
  *			D B _ F U N C T R E E
  *
  *  This subroutine is called for a no-frills tree-walk,

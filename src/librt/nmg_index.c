@@ -18,8 +18,11 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+
+/** \addtogroup nmg */
+
+/*@{*/
 /** @file nmg_index.c
- *
  *  Handle counting and re-indexing of NMG data structures.
  *
  *  Authors -
@@ -32,6 +35,8 @@
  *	Aberdeen Proving Ground, Maryland  21005
  *  
  */
+/*@}*/
+
 #ifndef lint
 static const char RCSnmg_index[] = "@(#)$Header$ (BRL)";
 #endif
@@ -47,7 +52,7 @@ static const char RCSnmg_index[] = "@(#)$Header$ (BRL)";
 #include "nmg.h"
 #include "raytrace.h"
 
-/*
+/**
  *			N M G _ I N D E X _ O F _ S T R U C T
  *
  *  Return the structure index number of an arbitrary NMG structure.
@@ -123,7 +128,7 @@ nmg_index_of_struct(register const long int *p)
 	{ if( ((_p)->index & NMG_HIGH_BIT) != 0 ) \
 		(_p)->index = newindex++; }
 
-/*
+/**
  *			N M G _ M A R K _ E D G E _ G
  *
  *  Helper routine
@@ -149,7 +154,7 @@ nmg_mark_edge_g(long int *magic_p)
 	rt_bomb("nmg_mark_edge_g() unknown magic\n");
 }
 
-/*
+/**
  *			N M G _ M _ S E T _ H I G H _ B I T
  *
  *  First pass:  just set the high bit on all index words
@@ -300,7 +305,7 @@ nmg_m_set_high_bit(struct model *m)
 #undef MARK_VU
 }
 
-/*
+/**
  *			N M G _ M _ R E I N D E X
  *
  *  Reassign index numbers to all the data structures in a model.
@@ -474,7 +479,7 @@ nmg_m_reindex(struct model *m, register long int newindex)
 	m->maxindex = newindex;
 }
 
-/*
+/**
  *			N M G _ V L S _ S T R U C T _ C O U N T S
  *
  */
@@ -517,7 +522,7 @@ nmg_vls_struct_counts(struct bu_vls *str, const struct nmg_struct_counts *ctr)
 	bu_vls_printf(str, "\t%6d shells_of_lone_vert\n", ctr->shells_of_lone_vert);
 }
 
-/*
+/**
  *			N M G _ P R _ S T R U C T _ C O U N T S
  */
 void
@@ -533,7 +538,7 @@ nmg_pr_struct_counts(const struct nmg_struct_counts *ctr, const char *str)
 	bu_vls_free( &vls );
 }
 
-/*
+/**
  *			N M G _ M _ S T R U C T _ C O U N T
  *
  *  Returns -
@@ -731,7 +736,7 @@ nmg_m_struct_count(register struct nmg_struct_counts *ctr, const struct model *m
 #undef UNIQ_VU
 }
 
-/*
+/**
  *
  *  Count 'em up, and print 'em out.
  */
@@ -748,7 +753,7 @@ nmg_struct_counts(const struct model *m, const char *str)
 	nmg_pr_struct_counts( &cnts, str );
 }
 
-/*			N M G _ M E R G _ M O D E L S
+/**			N M G _ M E R G _ M O D E L S
  *
  *	Combine two NMG model trees into one single NMG model.  The 
  *	first model inherits the nmgregions of the second.  The second
@@ -809,7 +814,7 @@ nmg_merge_models(struct model *m1, struct model *m2)
 		if(v->vg_p) CHECK_INDEX(v->vg_p); \
 	}
 
-/*
+/**
  *			N M G _ F I N D _ M A X _ I N D E X
  */
 long

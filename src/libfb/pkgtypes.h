@@ -18,8 +18,11 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+
+/** \addtogroup libfb */
+/*@{*/
+
 /** @file pkgtypes.h
- *
  *  Types of packages used for the remote frame buffer
  *  communication between libfb/if_remote.c and rfbd/rfbd.c.
  *  This file is shared by those two modules.
@@ -35,6 +38,7 @@
  *
  *  $Header$
  */
+/*@}*/
 
 #define	MSG_FBOPEN	1
 #define	MSG_FBCLOSE	2

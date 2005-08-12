@@ -18,9 +18,13 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+
+/** \defgroup ellipsoids Ellipsoids
+ * \ingroup g */
+ 
+/** \addtogroup ellipsoids */
+/*@{*/
 /** @file g_ehy.c
- *
- *  Purpose -
  *	Intersect a ray with a Right Hyperbolic Cylinder.
  *
  *  Algorithm -
@@ -153,6 +157,8 @@
  *	Aberdeen Proving Ground, Maryland  21005-5066
  *  
  */
+/*@}*/
+
 #ifndef lint
 static const char RCSehy[] = "@(#)$Header$ (BRL)";
 #endif
@@ -194,7 +200,7 @@ const struct bu_structparse rt_ehy_parse[] = {
     { {'\0','\0','\0','\0'}, 0, (char *)NULL, 0, BU_STRUCTPARSE_FUNC_NULL }
  };
 
-/*
+/**
  *  			R T _ E H Y _ P R E P
  *  
  *  Given a pointer to a GED database record, and a transformation matrix,
@@ -304,7 +310,7 @@ rt_ehy_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 	return(0);			/* OK */
 }
 
-/*
+/**
  *			R T _ E H Y _ P R I N T
  */
 void
@@ -326,7 +332,7 @@ rt_ehy_print(register const struct soltab *stp)
 #define	EHY_NORM_BODY	(1)		/* compute normal */
 #define	EHY_NORM_TOP	(2)		/* copy ehy_N */
 
-/*
+/**
  *  			R T _ E H Y _ S H O T
  *  
  *  Intersect a ray with a ehy.
@@ -460,7 +466,7 @@ check_plates:
 
 #define RT_EHY_SEG_MISS(SEG)	(SEG).seg_stp=RT_SOLTAB_NULL
 
-/*
+/**
  *			R T _ E H Y _ V S H O T
  *
  *  Vectorized version.
@@ -476,7 +482,7 @@ rt_ehy_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
 	rt_vstub( stp, rp, segp, n, ap );
 }
 
-/*
+/**
  *  			R T _ E H Y _ N O R M
  *  
  *  Given ONE ray distance, return the normal and entry/exit point.
@@ -513,7 +519,7 @@ rt_ehy_norm(register struct hit *hitp, struct soltab *stp, register struct xray 
 	}
 }
 
-/*
+/**
  *			R T _ E H Y _ C U R V E
  *
  *  Return the curvature of the ehy.
@@ -573,7 +579,7 @@ rt_ehy_curve(register struct curvature *cvp, register struct hit *hitp, struct s
  	bn_vec_ortho( cvp->crv_pdir, hitp->hit_normal );
 }
 
-/*
+/**
  *  			R T _ E H Y _ U V
  *  
  *  For a hit on the surface of an ehy, return the (u,v) coordinates
@@ -623,7 +629,7 @@ rt_ehy_uv(struct application *ap, struct soltab *stp, register struct hit *hitp,
 	uvp->uv_du = uvp->uv_dv = 0;
 }
 
-/*
+/**
  *		R T _ E H Y _ F R E E
  */
 void
@@ -636,7 +642,7 @@ rt_ehy_free(register struct soltab *stp)
 	bu_free( (char *)ehy, "ehy_specific" );
 }
 
-/*
+/**
  *			R T _ E H Y _ C L A S S
  */
 int
@@ -645,7 +651,7 @@ rt_ehy_class(void)
 	return(0);
 }
 
-/*
+/**
  *			R T _ E H Y _ P L O T
  */
 int
@@ -920,7 +926,7 @@ rt_ehy_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 	return(0);
 }
 
-/*
+/**
  *			R T _ E H Y _ T E S S
  *
  *  Returns -
@@ -1408,7 +1414,7 @@ fail:
 	return(-1);
 }
 
-/*
+/**
  *			R T _ E H Y _ I M P O R T
  *
  *  Import an EHY from the database format to the internal format.
@@ -1455,7 +1461,7 @@ rt_ehy_import(struct rt_db_internal *ip, const struct bu_external *ep, register 
 	return(0);			/* OK */
 }
 
-/*
+/**
  *			R T _ E H Y _ E X P O R T
  *
  *  The name is added by the caller, in the usual place.
@@ -1514,7 +1520,7 @@ rt_ehy_export(struct bu_external *ep, const struct rt_db_internal *ip, double lo
 	return(0);
 }
 
-/*
+/**
  *			R T _ E H Y _ I M P O R T 5
  *
  *  Import an EHY from the database format to the internal format.
@@ -1561,7 +1567,7 @@ rt_ehy_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
 	return(0);			/* OK */
 }
 
-/*
+/**
  *			R T _ E H Y _ E X P O R T 5
  *
  *  The name is added by the caller, in the usual place.
@@ -1619,7 +1625,7 @@ rt_ehy_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
 	return(0);
 }
 
-/*
+/**
  *			R T _ E H Y _ D E S C R I B E
  *
  *  Make human-readable formatted presentation of this solid.
@@ -1661,7 +1667,7 @@ rt_ehy_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
 	return(0);
 }
 
-/*
+/**
  *			R T _ E H Y _ I F R E E
  *
  *  Free the storage associated with the rt_db_internal version of this solid.

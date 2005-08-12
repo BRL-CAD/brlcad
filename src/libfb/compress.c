@@ -19,6 +19,12 @@
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
+/** \addtogroup libfb */
+/*@{*/
+/** \file compress.c 
+ * Data compression program. */
+/*@}*/
+
 #ifndef lint
 char copyright[] =
 "@(#) Copyright (c) 1985, 1986 The Regents of the University of California.\n\
@@ -171,6 +177,9 @@ char_type magic_header[] = { "\037\235" };	/* 1F 9D */
  *
  * $Header$
  * $Log$
+ * Revision 14.1  2004/11/16 19:42:14  morrison
+ * dawn of a new revision.  it shall be numbered 14 to match release 7.  begin the convergence by adding emacs/vi local variable footer blocks to encourage consistent formatting.
+ *
  * Revision 1.1  2004/05/20 15:19:40  morrison
  * Vast reorganization begins.  Sources moved from top-level directories into src/.
  *

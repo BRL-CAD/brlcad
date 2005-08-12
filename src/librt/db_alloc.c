@@ -18,13 +18,19 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+
+/** \defgroup db Database 
+ * \ingroup librt
+ */
+
+/*@{*/
 /** @file db_alloc.c
  *
  * Functions -
- *	db_alloc	Find a contiguous block of database storage
- *	db_delete	Delete storage associated w/entry, zap records
- *	db_zapper	Zap region of file into ID_FREE records
- *	db_flags_internal	Construct flags word
+ *	- db_alloc	Find a contiguous block of database storage
+ *	- db_delete	Delete storage associated w/entry, zap records
+ *	- db_zapper	Zap region of file into ID_FREE records
+ *	- db_flags_internal	Construct flags word
  *
  *
  *  Authors -
@@ -37,6 +43,8 @@
  *	Aberdeen Proving Ground, Maryland  21005-5066
  *  
  */
+/*@}*/
+
 #ifndef lint
 static const char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
@@ -59,7 +67,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "./debug.h"
 
-/*
+/**
  *  			D B _ A L L O C
  *  
  *  Find a block of database storage of "count" granules.
@@ -125,7 +133,7 @@ db_alloc(register struct db_i *dbip, register struct directory *dp, int count)
 	return( db_zapper( dbip, dp, 0 ) );
 }
 
-/*
+/**
  *			D B _ D E L R E C
  *
  *  Delete a specific record from database entry
@@ -144,7 +152,7 @@ db_delrec(struct db_i *dbip, register struct directory *dp, int recnum)
 	return -1;
 }
 
-/*
+/**
  *  			D B _ D E L E T E
  *  
  *  Delete the indicated database record(s).
@@ -185,7 +193,7 @@ db_delete(struct db_i *dbip, struct directory *dp)
 	return i;
 }
 
-/*
+/**
  *			D B _ Z A P P E R
  *
  *  Using a single call to db_put(), write multiple zeroed records out,
@@ -229,7 +237,7 @@ db_zapper(struct db_i *dbip, struct directory *dp, int start)
 	return i;
 }
 
-/*
+/**
  *			D B _ F L A G S _ I N T E R N A L
  *
  *  Given the internal form of a database object,

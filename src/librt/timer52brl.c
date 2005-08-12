@@ -18,10 +18,13 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+
+/** \addtogroup librt */
+
+/*@{*/
+
 /** @file timer52brl.c
- *
- * Function -
- *	To provide timing information for RT.
+ * To provide timing information for RT.
  *	This version for System V, Release TWO, under 4.2 BSD,
  *	using Doug Gwyn's System-V-under-4.2 emulation.
  *
@@ -31,6 +34,8 @@
  *	Aberdeen Proving Ground, Maryland  21005
  *  
  */
+/*@}*/
+
 #ifndef lint
 static const char RCStimer[] = "@(#)$Header$ (BRL)";
 #endif

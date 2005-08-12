@@ -18,6 +18,11 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+
+/** \defgroup rb RedBlack
+ * \ingroup libbu */
+
+/*@{*/
 /** @file rb_create.c
  *		Routines to create a red-black tree
  *
@@ -29,6 +34,8 @@
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  *  
  */
+/*@}*/
+
 #ifndef lint
 static const char libbu_rb_create_RCSid[] = "@(#) $Header$";
 #endif

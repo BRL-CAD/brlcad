@@ -18,8 +18,11 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+
+/** \addtogroup librt */
+/*@{*/
+
 /** @file regionfix.c
- *
  *  Subroutines for adjusting old GIFT-style region-IDs,
  *  to take into account the presence of instancing.
  *
@@ -32,6 +35,8 @@
  *	Aberdeen Proving Ground, Maryland  21005-5066
  *  
  */
+/*@}*/
+
 #ifndef lint
 static const char RCSregionfix[] = "@(#)$Header$ (BRL)";
 #endif

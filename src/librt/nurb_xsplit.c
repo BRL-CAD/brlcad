@@ -18,10 +18,10 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+
+/** \addtogroup nurb */
+/*@{*/
 /** @file nurb_xsplit.c
- *			N U R B _ S P L I T . C
- *
- * Function -
  * 	Subdivide a nurb surface by inserting a multiple knot of
  * 	of the surface order in a given direction and return the 
  *	resulting surfaces.
@@ -34,6 +34,7 @@
  *	The US Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland 21005
  */
+/*@}*/
 
 #include "common.h"
 

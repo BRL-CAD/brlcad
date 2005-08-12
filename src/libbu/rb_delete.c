@@ -18,6 +18,8 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+/** \addtogroup rb */
+/*@{*/
 /** @file rb_delete.c
  *	    Routines to delete a node from a red-black tree
  *
@@ -28,6 +30,8 @@
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
+/*@}*/
+
 #ifndef lint
 static char const libbu_rb_delete_RCSid[] = "@(#) $Header$";
 #endif

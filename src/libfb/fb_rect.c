@@ -18,8 +18,10 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+
+/** \addtogroup fb */
+/*@{*/
 /** @file fb_rect.c
- *
  *  Subroutines to simulate the fb_readrect() and fb_writerect()
  *  capabilities for displays that do not presently handle it.
  *
@@ -30,6 +32,8 @@
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
+/*@}*/
+
 #ifndef lint
 static const char RCSid[] = "@(#)$Header$ (ARL)";
 #endif

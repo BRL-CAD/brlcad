@@ -18,8 +18,10 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+
+/** \addtogroup nmg */
+/*@{*/
 /** @file nmg_pt_fu.c
- *
  *  Routines for classifying a point with respect to a faceuse.
  *
  *  Author -
@@ -29,6 +31,8 @@
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
+/*@}*/
+
 #include "common.h"
 
 #include <stdio.h>
@@ -100,7 +104,7 @@ static int	nmg_class_pt_lu(struct loopuse *lu, struct fpi *fpi, const int in_or_
 int		nmg_class_pt_fu_except(const point_t pt, const struct faceuse *fu, const struct loopuse *ignore_lu, void (*eu_func)(), void (*vu_func)(), const char *priv, const int call_on_hits, const int in_or_out_only, const struct bn_tol *tol);
 #endif
 
-/*
+/**
  *			B N _ D I S T S Q _ P T 3 _ L S E G 3 _ J R A
  *
  *  Find the square of the distance from a point P to a line segment described
@@ -205,7 +209,7 @@ bn_distsq_pt3_lseg3(fastf_t *dist, const fastf_t *a, const fastf_t *b, const fas
 }
 
 
-/*
+/**
  *	N M G _ C L A S S _ P T _ V U 
  *
  *	Classify a point vs a vertex (touching/missed)
@@ -357,7 +361,7 @@ nmg_eu_is_part_of_crack(const struct edgeuse *eu)
 	return( 0 );
 }
 
-/*		N M G _ C L A S S _ P T _ E U V U
+/**		N M G _ C L A S S _ P T _ E U V U
  *
  *	Classify a point with respect to an EU where the VU is the
  *	closest to the point. The EU and its left vector form an XY
@@ -602,7 +606,7 @@ nmg_class_pt_euvu(const fastf_t *pt, struct edgeuse *eu_in, const struct bn_tol 
 	return( class );
 }
 
-/*	N M G _ C L A S S _ P T _ E U
+/**	N M G _ C L A S S _ P T _ E U
  *
  * If there is no ve_dist structure for this edge, compute one and
  * add it to the list.
@@ -813,7 +817,7 @@ nmg_class_pt_eu(struct fpi *fpi, struct edgeuse *eu, struct edge_info *edge_list
 	return ei;
 }
 
-/*
+/**
  * Make a list of all edgeuses which are at the same distance as the
  * first element on the list.  Toss out opposing pairs of edgeuses of the
  * same edge.
@@ -979,7 +983,7 @@ pl_pt_lu(struct fpi *fpi, const struct loopuse *lu, struct edge_info *ei)
 
 
 
-/*	C O M P U T E _ L O O P _ C L A S S
+/**	C O M P U T E _ L O O P _ C L A S S
  *
  * Given a list of edge_info structures for the edges of a loop,
  *	determine what the classification for the loop should be.
@@ -1092,7 +1096,7 @@ departure:
 
 	return lu_class;
 }
-/*
+/**
  *
  * For each edgeuse, compute an edge_info structure.
  *
@@ -1297,7 +1301,7 @@ plot_parity_error(const struct faceuse *fu, const fastf_t *pt)
 
 }
 
-/*
+/**
  *
  * Classify a point on a face's plane as being inside/outside the area
  * of the face.
@@ -1484,7 +1488,7 @@ nmg_class_pt_fu_except(const fastf_t *pt, const struct faceuse *fu, const struct
 }
 
 
-/*
+/**
  *	N M G _ C L A S S _ P T _ L U _ E X C E P T 
  *
  *	Classify a point as being in/on/out of the area bounded by a loop,

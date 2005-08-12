@@ -18,8 +18,10 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file list.c
- *
+
+/** \addtogroup libbn */
+/*@{*/
+/** @file ./libbn/list.c
  *  NOTE that tp_2list() and tp_3list() are good candidates to become
  *  intrinsic parts of plot3.c, for efficiency reasons.
  *
@@ -33,6 +35,8 @@
  *	Aberdeen Proving Ground, Maryland  21005-5066
  *  
  */
+/*@}*/
+
 #ifndef lint
 static const char RCSid[] = "@(#)$Header$ (BRL)";
 #endif

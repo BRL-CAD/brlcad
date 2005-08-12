@@ -18,7 +18,11 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+
+/** \defgroup libbu libbu */
+/*@{*/
 /** @file association.c
+ * Look up the association for a specified value.
  *
  *  Author -
  *	Paul Tanenbaum
@@ -27,6 +31,8 @@
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
+/*@}*/
+
 #ifndef lint
 static const char libbu_association_RCSid[] = "@(#)$Header$ (ARL)";
 #endif

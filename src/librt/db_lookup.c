@@ -18,6 +18,10 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+
+/** \addtogroup db */
+
+/*@{*/
 /** @file db_lookup.c
  *
  * Functions -
@@ -38,6 +42,8 @@
  *	Aberdeen Proving Ground, Maryland  21005-5066
  *  
  */
+/*@}*/
+
 #ifndef lint
 static const char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
@@ -61,7 +67,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./debug.h"
 
 
-/*
+/**
  *			D B _ I S _ D I R E C T O R Y _ N O N _ E M P T Y
  *
  *  Returns -
@@ -83,7 +89,7 @@ db_is_directory_non_empty(const struct db_i	*dbip)
 	return 0;
 }
 
-/*
+/**
  *			D B _ G E T _ D I R E C T O R Y _ S I Z E
  *
  *  Return the number of "struct directory" nodes in the given database.
@@ -104,7 +110,7 @@ db_get_directory_size(const struct db_i *dbip)
 	return count;
 }
 
-/*
+/**
  *			D B _ C K _ D I R E C T O R Y
  *
  *  For debugging, ensure that all the linked-lists for the directory
@@ -124,7 +130,7 @@ db_ck_directory(const struct db_i *dbip)
 	}
 }
 
-/*
+/**
  *			D B _ D I R H A S H
  *  
  *  Internal function to return pointer to head of hash chain
@@ -145,7 +151,7 @@ db_dirhash(const char *str)
 	return( RT_DBHASH(sum) );
 }
 
-/*
+/**
  *  Name -
  *	D B _ D I R C H E C K
  *
@@ -216,7 +222,7 @@ db_dircheck(struct db_i		*dbip,
 }
 
 
-/*
+/**
  *			D B _ L O O K U P
  *
  * This routine takes a name and looks it up in the
@@ -265,7 +271,7 @@ db_lookup(const struct db_i *dbip, register const char *name, int noisy)
 	return( DIR_NULL );
 }
 
-/*
+/**
  *			D B _ D I R A D D
  *
  * Add an entry to the directory.
@@ -335,7 +341,7 @@ db_diradd(register struct db_i *dbip, register const char *name, long int laddr,
 	return( dp );
 }
 
-/*
+/**
  *			D B _ I N M E M
  *
  *  Transmogrify an existing directory entry to be an in-memory-only
@@ -362,7 +368,7 @@ db_inmem(struct directory *dp, struct bu_external *ext, int flags, struct db_i *
 	ext->ext_nbytes = 0;
 }
 
-/*
+/**
  *  			D B _ D I R D E L E T E
  *
  *  Given a pointer to a directory entry, remove it from the
@@ -415,7 +421,7 @@ db_dirdelete(register struct db_i *dbip, register struct directory *dp)
 	return(-1);
 }
 
-/*
+/**
  *			D B _ R E N A M E
  *
  *  Change the name string of a directory entry.
@@ -462,7 +468,7 @@ out:
 	return(0);
 }
 
-/*
+/**
  *			D B _ P R _ D I R
  *
  *  For debugging, print the entire contents of the database directory.
@@ -513,7 +519,7 @@ db_pr_dir(register const struct db_i *dbip)
 }
 
 
-/*
+/**
  *  			D B _ G E T _ D I R E C T O R Y
  *  
  *  This routine is called by the RT_GET_DIRECTORY macro when the freelist
@@ -547,7 +553,7 @@ db_get_directory(register struct resource *resp)
 	}
 }
 
-/*
+/**
  *			D B _ L O O K U P _ B Y _ A T T R
  *
  *	lookup directory entries based on directory flags (dp->d_flags) and attributes

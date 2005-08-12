@@ -18,8 +18,10 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+/** \addtogroup libbu */
+/*@{*/
 /** @file htonf.c
- *
+ * Host to Network Floats  +  Network to Host Floats.
  *  Author -
  *	Michael John Muuss
  *  
@@ -28,6 +30,8 @@
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5066
  */
+/*@}*/
+
 #ifndef lint
 static const char libbu_htond_RCSid[] = "@(#)$Header$ (BRL)";
 #endif

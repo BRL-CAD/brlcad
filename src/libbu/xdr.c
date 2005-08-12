@@ -18,8 +18,10 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+
+/** \addtogroup libbu */
+/*@{*/
 /** @file xdr.c
- *
  *  Routines to implement an external data representation (XDR)
  *  compatible with the usual InterNet standards, e.g.:
  *  big-endian, twos-compliment fixed point, and IEEE floating point.
@@ -32,6 +34,8 @@
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  *  
  */
+/*@}*/
+
 #ifndef lint
 static const char libbu_xdr_RCSid[] = "@(#)$Header$ (ARL)";
 #endif

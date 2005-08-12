@@ -18,9 +18,11 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+
+/** \addtogroup g */
+
+/*@{*/
 /** @file g_ebm.c
- *
- *  Purpose -
  *	Intersect a ray with an Extruded Bitmap,
  *	where the bitmap is taken from a bw(5) file.
  *
@@ -33,6 +35,8 @@
  *	Aberdeen Proving Ground, Maryland  21005
  *  
  */
+/*@}*/
+
 #ifndef lint
 static const char RCSebm[] = "@(#)$Header$ (BRL)";
 #endif
@@ -133,7 +137,7 @@ RT_EXTERN( void rt_ebm_plate, ( int x1, int y1, int x2, int y2,
 		((_yy)+BIT_YWIDEN)*((_eip)->xdim + \
 		BIT_XWIDEN*2)+(_xx)+BIT_XWIDEN ]
 
-/*
+/**
  *			R T _ S E G _ P L A N E C L I P
  *
  *  Take a segment chain, in sorted order (ascending hit_dist),
@@ -226,7 +230,7 @@ rt_seg_planeclip(struct seg *out_hd, struct seg *in_hd, fastf_t *out_norm, fastf
 static int rt_ebm_normtab[3] = { NORM_XPOS, NORM_YPOS, NORM_ZPOS };
 
 
-/*
+/**
  *			R T _ E B M _ D D A
  *
  *  Step through the 2-D array, in local coordinates ("ideal space").
@@ -531,7 +535,7 @@ if(RT_G_DEBUG&DEBUG_EBM)bu_log("Exit index is %s, t[X]=%g, t[Y]=%g\n",
 	return(2);
 }
 
-/*
+/**
  *			R T _ E B M _ I M P O R T
  *
  *  Read in the information from the string solid record.
@@ -640,7 +644,7 @@ fail:
 	return( 0 );
 }
 
-/*
+/**
  *			R T _ E B M _ E X P O R T
  *
  *  The name will be added by the caller.
@@ -679,7 +683,7 @@ rt_ebm_export(struct bu_external *ep, const struct rt_db_internal *ip, double lo
 }
 
 
-/*
+/**
  *			R T _ E B M _ I M P O R T 5
  *
  *  Read in the information from the string solid record.
@@ -782,7 +786,7 @@ fail:
 	return( 0 );
 }
 
-/*
+/**
  *			R T _ E B M _ E X P O R T 5
  *
  *  The name will be added by the caller.
@@ -817,7 +821,7 @@ rt_ebm_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
 	return(0);
 }
 
-/*
+/**
  *			R T _ E B M _ D E S C R I B E
  *
  *  Make human-readable formatted presentation of this solid.
@@ -858,7 +862,7 @@ rt_ebm_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
 	return(0);
 }
 
-/*
+/**
  *			R T _ E B M _ I F R E E
  *
  *  Free the storage associated with the rt_db_internal version of this solid.
@@ -884,7 +888,7 @@ rt_ebm_ifree(struct rt_db_internal *ip)
 	ip->idb_type = ID_NULL;		/* sanity */
 }
 
-/*
+/**
  *			R T _ E B M _ P R E P
  *
  *  Returns -
@@ -948,7 +952,7 @@ rt_ebm_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 	return(0);		/* OK */
 }
 
-/*
+/**
  *			R T _ E B M _ P R I N T
  */
 void
@@ -965,7 +969,7 @@ rt_ebm_print(register const struct soltab *stp)
 	VPRINT("model grid origin", ebmp->ebm_origin);
 }
 
-/*
+/**
  *			R T _ E B M _ S H O T
  *
  *  Intersect a ray with an extruded bitmap.
@@ -1016,7 +1020,7 @@ ideal_ray.r_dir[X], ideal_ray.r_dir[Y], ideal_ray.r_dir[Z] );
 	return(i);
 }
 
-/*
+/**
  *			R T _ E B M _ N O R M
  *
  *  Given one ray distance, return the normal and
@@ -1062,7 +1066,7 @@ rt_ebm_norm(register struct hit *hitp, struct soltab *stp, register struct xray 
 	}
 }
 
-/*
+/**
  *			R T _ E B M _ C U R V E
  *
  *  Everything has sharp edges.  This makes things easy.
@@ -1077,7 +1081,7 @@ rt_ebm_curve(register struct curvature *cvp, register struct hit *hitp, struct s
 	cvp->crv_c1 = cvp->crv_c2 = 0;
 }
 
-/*
+/**
  *			R T _ E B M _ U V
  *
  *  Map the hit point in 2-D into the range 0..1
@@ -1094,7 +1098,7 @@ rt_ebm_uv(struct application *ap, struct soltab *stp, register struct hit *hitp,
 	uvp->uv_dv = 0.0;
 }
 
-/*
+/**
  * 			R T _ E B M _ F R E E
  */
 void
@@ -1115,7 +1119,7 @@ rt_ebm_class(void)
 	return(0);
 }
 
-/*
+/**
  *			R T _ E B M _ P L O T
  */
 int
@@ -1393,7 +1397,7 @@ rt_ebm_sort_edges(struct ebm_edge *edges)
 	return( max_loop_length );
 }
 
-/*
+/**
  *			R T _ E B M _ T E S S
  */
 int
@@ -1904,7 +1908,7 @@ vect_t	pt, dir;
 }
 #endif /* test driver */
 
-/*
+/**
  *		R T _ E B M _ T C L G E T
  *
  *	Routine to format the parameters of an EBM for "db get"
@@ -1967,7 +1971,7 @@ rt_ebm_tclget(Tcl_Interp *interp, const struct rt_db_internal *intern, const cha
 }
 
 
-/*
+/**
  *		R T _ E B M _ T C L A D J U S T
  *
  *	Routine to adjust the parameters of an EBM
@@ -2050,7 +2054,7 @@ rt_ebm_tclform( const struct rt_functab *ftp, Tcl_Interp *interp )
 }
 
 
-/*
+/**
  *		R T _ E B M _ M A K E
  *
  *	Routine to make a new EBM solid. The only purpose of this routine is

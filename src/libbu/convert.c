@@ -18,13 +18,15 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+
+/** \addtogroup libbu */
+/*@{*/
 /** @file convert.c
- *
  * Routines to translate data formats.  The data formats are:
  *
- *	Host/Network		is the data in host format or local format
- *	signed/unsigned		Is the data signed?
- *	char/short/int/long/double
+ *	- Host/Network		is the data in host format or local format
+ *	- signed/unsigned		Is the data signed?
+ *	- char/short/int/long/double 
  *				Is the data 8bits, 16bits, 32bits, 64bits
  *				or a double?
  *
@@ -39,6 +41,8 @@
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  *  
  */
+/*@}*/
+
 #ifndef lint
 static const char libbu_convert_RCSid[] = "@(#)$Header$ (ARL)";
 #endif

@@ -18,8 +18,11 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+
+/** \addtogroup db5 */
+
+/*@{*/
 /** @file db5_comb.c
- *
  *  Handle import/export of combinations (union tree) in v5 format.
  *
  *  The on-disk record looks like this:
@@ -43,6 +46,8 @@
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  *  
  */
+/*@}*/
+
 #ifndef lint
 static const char RCSid[] = "@(#)$Header$ (ARL)";
 #endif
@@ -79,7 +84,7 @@ struct db_tree_counter_state {
 #define DB_TREE_COUNTER_STATE_MAGIC	0x64546373	/* dTcs */
 #define DB_CK_TREE_COUNTER_STATE(_p)	BU_CKMAG(_p, DB_TREE_COUNTER_STATE_MAGIC, "db_tree_counter_state");
 
-/*
+/**
  *			D B _ T R E E _ C O U N T E R
  *
  *  Count number of non-identity matricies,
@@ -163,7 +168,7 @@ struct rt_comb_v5_serialize_state  {
 #define RT_COMB_V5_SERIALIZE_STATE_MAGIC	0x43357373	/* C5ss */
 #define RT_CK_COMB_V5_SERIALIZE_STATE(_p)	BU_CKMAG(_p, RT_COMB_V5_SERIALIZE_STATE_MAGIC, "rt_comb_v5_serialize_state")
 
-/*
+/**
  *			R T _ C O M B _ V 5 _ S E R I A L I Z E
  *
  *  In one single pass through the tree, serialize out all three
@@ -253,7 +258,7 @@ rt_comb_v5_serialize(
 	}
 }
 
-/*
+/**
  *			R T _ C O M B _ E X P O R T 5
  */
 int
@@ -461,7 +466,7 @@ rt_comb_export5(
 	return 0;	/* OK */
 }
 
-/*
+/**
  *			R T _ C O M B _ I M P O R T 5
  *
  *  Read a combination object in v5 external (on-disk) format,

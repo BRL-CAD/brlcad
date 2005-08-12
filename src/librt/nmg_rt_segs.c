@@ -18,9 +18,9 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+/** \addtogroup nmg */
+/*@{*/
 /** @file nmg_rt_segs.c
- *			N M G _ R T _ S E G S. C
- *
  *	Support routines for raytracing an NMG.
  *
  *  Author -
@@ -31,6 +31,7 @@
  *	Aberdeen Proving Ground, Maryland  21005-5066  USA
  *  
  */
+/*@}*/
 #ifndef lint
 static const char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
@@ -971,7 +972,7 @@ nmg_bsegs(struct ray_data *rd, struct application *ap, struct seg *seghead, stru
 	return seg_count;
 }
 
-/*
+/**
  *	If a_tbl and next_tbl have an element in common, return it.
  *	Otherwise return a NULL pointer.
  */
@@ -995,7 +996,7 @@ visitor(long int *l_p, genptr_t tbl, int after)
 	(void)bu_ptbl_ins_unique( (struct bu_ptbl *)tbl, l_p);
 }
 
-/*
+/**
  *	Add an element provided by nmg_visit to a bu_ptbl struct.
  */
 static void
@@ -1255,7 +1256,7 @@ check_hitstate(struct hitmiss *hd, struct ray_data *rd)
 	return 0;
 }
 
-/*	N M G _ R A Y _ S E G S
+/**	N M G _ R A Y _ S E G S
  *
  *	Obtain the list of ray segments which intersect with the nmg.
  *	This routine does all of the "work" for rt_nmg_shot()

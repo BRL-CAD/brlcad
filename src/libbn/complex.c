@@ -18,12 +18,14 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+
+/** \addtogroup libbn */
+/*@{*/
 /** @file complex.c
- *
- *  Functions -
- *	bn_cx_div	Complex Division
- *	bn_cx_sqrt	Complex Square Root
- *
+ *  Functions:
+ *  - bn_cx_div		Complex Division 
+ *  - bn_cx_sqrt	Complex Square Root
+ *  
  *  Authors -
  *	Douglas A Gwyn		(Original Version)
  *	Michael John Muuss	(Macro Version)
@@ -34,6 +36,8 @@
  *	Aberdeen Proving Ground, Maryland  21005
  *  
  */
+/*@}*/
+
 #ifndef lint
 static const char RCScomplex[] = "@(#)$Header$ (BRL)";
 #endif

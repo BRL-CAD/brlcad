@@ -18,8 +18,10 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+
+/** \addtogroup libbn */
+/*@{*/
 /** @file const.c
- *
  *  Constants used by the ray tracing library.
  *  
  *  Source -
@@ -28,6 +30,8 @@
  *	Aberdeen Proving Ground, Maryland  21005
  *  
  */
+/*@}*/
+
 #ifndef lint
 static const char RCSmat[] = "@(#)$Header$ (BRL)";
 #endif

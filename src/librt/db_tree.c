@@ -18,6 +18,10 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+
+/** \addtogroup db */
+
+/*@{*/
 /** @file db_tree.c
  *
  * Functions -
@@ -34,6 +38,8 @@
  *	Aberdeen Proving Ground, Maryland  21005-5066
  *  
  */
+/*@}*/
+
 #ifndef lint
 static const char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
@@ -60,7 +66,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 BU_EXTERN(void db_ck_tree, (const union tree *tp));
 
-/*
+/**
  *			D B _ D U P _ D B _ T R E E _ S T A T E
  *
  *  Duplicate the contents of a db_tree_state structure,
@@ -97,7 +103,7 @@ db_dup_db_tree_state(struct db_tree_state *otsp, const struct db_tree_state *its
 	}
 }
 
-/*
+/**
  *			D B _ F R E E _ D B _ T R E E _ S T A T E
  *
  *  Release dynamic fields inside the structure, but not the structure itself.
@@ -118,7 +124,7 @@ db_free_db_tree_state( struct db_tree_state *tsp )
 	tsp->ts_dbip = (struct db_i *)NULL;			/* sanity */
 }
 
-/*
+/**
  *			D B _ I N I T _ D B _ T R E E _ S T A T E
  *
  *  In most cases, you don't want to use this routine, you want to
@@ -139,7 +145,7 @@ db_init_db_tree_state( struct db_tree_state *tsp, struct db_i *dbip, struct reso
 	MAT_IDN( tsp->ts_mat );	/* XXX should use null pointer convention! */
 }
 
-/*
+/**
  *			D B _ N E W _ C O M B I N E D _ T R E E _ S T A T E
  */
 struct combined_tree_state *
@@ -159,7 +165,7 @@ db_new_combined_tree_state(register const struct db_tree_state *tsp, register co
 	return new;
 }
 
-/*
+/**
  *			D B _ D U P _ C O M B I N E D _ T R E E _ S T A T E
  */
 struct combined_tree_state *
@@ -176,7 +182,7 @@ db_dup_combined_tree_state(const struct combined_tree_state *old)
 	return new;
 }
 
-/*
+/**
  *			D B _ F R E E _ C O M B I N E D _ T R E E _ S T A T E
  */
 void
@@ -189,7 +195,7 @@ db_free_combined_tree_state(register struct combined_tree_state *ctsp)
 	bu_free( (char *)ctsp, "combined_tree_state");
 }
 
-/*
+/**
  *			D B _ P R _ T R E E _ S T A T E
  */
 void
@@ -220,7 +226,7 @@ db_pr_tree_state(register const struct db_tree_state *tsp)
 	bu_log(" ts_resp=x%x\n", tsp->ts_resp );
 }
 
-/*
+/**
  *			D B _ P R _ C O M B I N E D _ T R E E _ S T A T E
  */
 void
@@ -236,7 +242,7 @@ db_pr_combined_tree_state(register const struct combined_tree_state *ctsp)
 	bu_free( str, "path string" );
 }
 
-/*
+/**
  *			D B _ A P P L Y _ S T A T E _ F R O M _ C O M B
  *
  *  Handle inheritance of material property found in combination record.
@@ -354,7 +360,7 @@ db_apply_state_from_comb(struct db_tree_state *tsp, const struct db_full_path *p
 	return(0);	/* Success */
 }
 
-/*
+/**
  *			D B _ A P P L Y _ S T A T E _ F R O M _ M E M B
  *
  *  Updates state via *tsp, pushes member's directory entry on *pathp.
@@ -406,7 +412,7 @@ db_apply_state_from_memb(struct db_tree_state *tsp, struct db_full_path *pathp, 
 	return(0);		/* Success */
 }
 
-/*
+/**
  *		D B _ A P P L Y _ S T A T E _ F R O M _ O N E _ M E M B E R
  *
  *  Returns -
@@ -460,7 +466,7 @@ db_apply_state_from_one_member(
 	return -1;
 }
 
-/*
+/**
  *			D B _ F I N D _ N A M E D _ L E A F
  *
  *  The search stops on the first match.
@@ -498,7 +504,7 @@ db_find_named_leaf( union tree *tp, const char *cp )
 	return TREE_NULL;
 }
 
-/*
+/**
  *			D B _ F I N D _ N A M E D _ L E A F S _ P A R E N T
  *
  *  The search stops on the first match.
@@ -552,7 +558,7 @@ db_find_named_leafs_parent( int *side, union tree *tp, const char *cp )
 	return TREE_NULL;
 }
 
-/*
+/**
  *			D B _ T R E E _ D E L _ L H S
  */
 void
@@ -596,7 +602,7 @@ db_tree_del_lhs( union tree *tp, struct resource *resp )
 	}
 }
 
-/*
+/**
  *			D B _ T R E E _ D E L _ R H S
  */
 void
@@ -640,7 +646,7 @@ db_tree_del_rhs( union tree *tp, struct resource *resp )
 	}
 }
 
-/*
+/**
  *			D B _ T R E E _ D E L _ D B L E A F
  *
  *  Given a name presumably referenced in a OP_DB_LEAF node,
@@ -699,7 +705,7 @@ db_tree_del_dbleaf(union tree **tp, const char *cp, struct resource *resp)
 	return -3;
 }
 
-/*
+/**
  *			D B _ T R E E _ M U L _ D B L E A F
  *
  *  Multiply on the left every matrix found in a DB_LEAF node in a tree.
@@ -736,7 +742,7 @@ db_tree_mul_dbleaf( union tree *tp, const mat_t mat )
 	}
 }
 
-/*
+/**
  *			D B _ T R E E _ F U N C L E A F
  *
  *	This routine traverses a combination (union tree) in LNR order
@@ -781,7 +787,7 @@ db_tree_funcleaf(
 	}
 }
 
-/*
+/**
  *			D B _ F O L L O W _ P A T H
  *
  *  Starting with possible prior partial path and corresponding accumulated state,
@@ -951,7 +957,7 @@ fail:
 	return -1;		/* FAIL */
 }
 
-/*
+/**
  *			D B _ F O L L O W _ P A T H _ F O R _ S T A T E
  *
  *  Follow the slash-separated path given by "cp", and update
@@ -984,7 +990,7 @@ db_follow_path_for_state(struct db_tree_state *tsp, struct db_full_path *total_p
 	return ret;
 }
 
-/*
+/**
  *   D B _ D E T E C T _ C Y C L E
  *
  *  Helper routine to detect cyclic references
@@ -1006,7 +1012,7 @@ db_detect_cycle( struct db_full_path *pathp, union tree *tp )
     return 0;
 }
 
-/*
+/**
  *			D B _ R E C U R S E _ S U B T R E E
  *
  *  Helper routine for db_recurse()
@@ -1107,7 +1113,7 @@ out:
 	return;
 }
 
-/*
+/**
  *			D B _ R E C U R S E
  *
  *  Recurse down the tree, finding all the leaves
@@ -1328,7 +1334,7 @@ out:
 	return(curtree);
 }
 
-/*
+/**
  *			D B _ D U P _ S U B T R E E
  */
 union tree *
@@ -1382,7 +1388,7 @@ db_dup_subtree( const union tree *tp, struct resource *resp )
 	return( TREE_NULL );
 }
 
-/*
+/**
  *			D B _ C K _ T R E E
  */
 void
@@ -1426,7 +1432,7 @@ db_ck_tree( const union tree *tp )
 	}
 }
 
-/*
+/**
  *			D B _ F R E E _ T R E E
  *
  *  Release all storage associated with node 'tp', including
@@ -1539,7 +1545,7 @@ db_free_tree( register union tree *tp, struct resource *resp )
 	RT_FREE_TREE( tp, resp );
 }
 
-/*			D B _ L E F T _ H V Y _ N O D E
+/**			D B _ L E F T _ H V Y _ N O D E
  *
  *	Re-balance this node to make it left heavy.
  *	Unions operators will be moved to left side.
@@ -1568,7 +1574,7 @@ db_left_hvy_node( union tree *tp )
 	}
 }
 
-/*
+/**
  *			D B _ N O N _ U N I O N _ P U S H
  *
  *  If there are non-union operations in the tree,
@@ -1788,7 +1794,7 @@ db_non_union_push( register union tree *tp, struct resource *resp )
 	db_left_hvy_node( tp );
 }
 
-/*
+/**
  *			D B _ C O U N T _ T R E E _ N O D E S
  *
  *  Return a count of the number of "union tree" nodes below "tp",
@@ -1829,7 +1835,7 @@ db_count_tree_nodes( const union tree *tp, int count )
 	return( 0 );
 }
 
-/*
+/**
  *			D B _ I S _ T R E E _ A L L _ U N I O N S
  *
  *  Returns -
@@ -1870,7 +1876,7 @@ db_is_tree_all_unions( const union tree *tp )
 	return 0;
 }
 
-/*
+/**
  *			D B _ C O U N T _ S U B T R E E _ R E G I O N S
  */
 int
@@ -1908,7 +1914,7 @@ db_count_subtree_regions( const union tree *tp )
 	return( 0 );
 }
 
-/*
+/**
  *			D B _ T A L L Y _ S U B T R E E _ R E G I O N S
  */
 int
@@ -2013,7 +2019,7 @@ struct db_walk_parallel_state {
 #define DB_WALK_PARALLEL_STATE_MAGIC	0x64777073	/* dwps */
 #define DB_CK_WPS(_p)	BU_CKMAG(_p, DB_WALK_PARALLEL_STATE_MAGIC, "db_walk_parallel_state")
 
-/*
+/**
  *			D B _ W A L K _ S U B T R E E
  */
 HIDDEN void
@@ -2110,7 +2116,7 @@ db_walk_subtree(
 	}
 }
 
-/*
+/**
  *			D B _ W A L K _ D I S P A T C H E R
  *
  *  This routine handles the PARALLEL portion of db_walk_tree().
@@ -2193,7 +2199,7 @@ db_walk_dispatcher(int cpu, genptr_t arg)
 	}
 }
 
-/*
+/**
  *			D B _ W A L K _ T R E E
  *
  *  This is the top interface to the "tree walker."
@@ -2448,7 +2454,7 @@ db_walk_tree(struct db_i *dbip, int argc, const char **argv, int ncpu, const str
 	  }
 }
 
-/*
+/**
  *			D B _ P A T H _ T O _ M A T
  *
  *  Returns -
@@ -2487,7 +2493,7 @@ db_path_to_mat(
 	return 1;		/* OK */
 }
 
-/*
+/**
  *			D B _ A P P L Y _ A N I M S
  *
  *  'arc' may be a null pointer, signifying an identity matrix.
@@ -2553,7 +2559,7 @@ db_apply_anims(struct db_full_path *pathp, struct directory *dp, mat_t stack, ma
 	return;
 }
 
-/*
+/**
  *			D B _ R E G I O N _ M A T
  *
  *  Given the name of a region, return the matrix which maps model coordinates
@@ -2595,7 +2601,7 @@ db_region_mat(
 
 
 
-/*		D B _ S H A D E R _ M A T
+/**		D B _ S H A D E R _ M A T
  * XXX given that this routine depends on rtip, it should be called
  * XXX rt_shader_mat().
  *

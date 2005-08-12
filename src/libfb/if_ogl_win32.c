@@ -18,8 +18,10 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+
+/** \addtogroup if */
+/*@{*/
 /** @file if_ogl_win32.c
- *
  *  Frame Buffer Library interface for OpenGL.
  *
  *  There are several different Frame Buffer modes supported.
@@ -40,6 +42,8 @@
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  *  
  */
+/*@}*/
+
 #ifndef lint
 static char RCSid[] = "@(#)$Header$ (ARL)";
 #endif

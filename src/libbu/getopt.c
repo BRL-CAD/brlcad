@@ -18,8 +18,10 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+
+/** \addtogroup libbu */
+/*@{*/
 /** @file getopt.c
- *
  *  Special re-entrant version of getopt.
  *  Everything is prefixed with bu_, to distinguish it from the various
  *  getopt() routines found in libc.
@@ -29,6 +31,8 @@
  *	to reinitialize bu_optind=1 before beginning on the next argument list.
  *  
  */
+/*@}*/
+
 #ifndef lint
 static const char libbu_getopt_RCSid[] = "@(#)$Header$ (BRL)";
 #endif

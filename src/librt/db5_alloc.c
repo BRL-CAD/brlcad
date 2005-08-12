@@ -18,9 +18,13 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+
+/** \defgroup db5 Database5
+ * \ingroup librt
+ */
+
+/*@{*/
 /** @file db5_alloc.c
- *			D B _ A L L O C 5 . C
- *
  *  Handle disk space allocation in the BRL-CAD v5 database.
  *
  *  Author -
@@ -31,6 +35,8 @@
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  *  
  */
+/*@}*/
+
 #ifndef lint
 static const char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
@@ -54,7 +60,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "./debug.h"
 
-/*
+/**
  *			D B 5 _ W R I T E _ F R E E
  *
  *  Create a v5 database "free" object of the specified size,
@@ -124,7 +130,7 @@ db5_write_free( struct db_i *dbip, struct directory *dp, long length )
 	return 0;
 }
 
-/*
+/**
  *			D B 5 _ R E A L L O C
  *
  *  Change the size of a v5 database object.

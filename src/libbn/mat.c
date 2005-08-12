@@ -18,29 +18,32 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+
+/** \addtogroup libbn */
+/*@{*/
+
 /** @file mat.c
+ * 4 x 4 Matrix manipulation functions...
  *
- * 4 x 4 Matrix manipulation functions..............
- *
- *	bn_atan2()			Wrapper for library atan2()
- *(deprecated) bn_mat_zero( &m )		Fill matrix m with zeros
- *(deprecated) bn_mat_idn( &m )		Fill matrix m with identity matrix
- *(deprecated) bn_mat_copy( &o, &i )		Copy matrix i to matrix o
- *	bn_mat_mul( &o, &i1, &i2 )	Multiply i1 by i2 and store in o
- *	bn_mat_mul2( &i, &o )
- *	bn_matXvec( &ov, &m, &iv )	Multiply m by vector iv, store in ov
- *	bn_mat_inv( &om, &im )		Invert matrix im, store result in om
- *	bn_mat_print( &title, &m )	Print matrix (with title) on stderr.
- *	bn_mat_trn( &o, &i )		Transpose matrix i into matrix o
- *	bn_mat_ae( &o, azimuth, elev)	Make rot matrix from azimuth+elevation
- *	bn_ae_vec( &az, &el, v )	Find az/elev from dir vector
- *	bn_aet_vec( &az, &el, &twist, v1, v2 ) Find az,el,twist from two vectors
- *	bn_mat_angles( &o, alpha, beta, gama )	Make rot matrix from angles
- *	bn_eigen2x2()			Eigen values and vectors
- *	bn_mat_lookat			Make rot mat:  xform from D to -Z
- *	bn_mat_fromto			Make rot mat:  xform from A to
- *	bn_mat_arb_rot( &m, pt, dir, ang)	Make rot mat about axis (pt,dir), through ang
- *	bn_mat_is_equal()		Is mat a equal to mat b?
+ *  - bn_atan2()			Wrapper for library atan2()
+ *  - (deprecated) bn_mat_zero( &m )		Fill matrix m with zeros
+ *  - (deprecated) bn_mat_idn( &m )		Fill matrix m with identity matrix
+ *  - (deprecated) bn_mat_copy( &o, &i )		Copy matrix i to matrix o
+ *  - bn_mat_mul( &o, &i1, &i2 )	Multiply i1 by i2 and store in o
+ *	- bn_mat_mul2( &i, &o )
+ *	- bn_matXvec( &ov, &m, &iv )	Multiply m by vector iv, store in ov
+ *	- bn_mat_inv( &om, &im )		Invert matrix im, store result in om
+ *	- bn_mat_print( &title, &m )	Print matrix (with title) on stderr.
+ *	- bn_mat_trn( &o, &i )		Transpose matrix i into matrix o
+ *	- bn_mat_ae( &o, azimuth, elev)	Make rot matrix from azimuth+elevation
+ *	- bn_ae_vec( &az, &el, v )	Find az/elev from dir vector
+ *	- bn_aet_vec( &az, &el, &twist, v1, v2 ) Find az,el,twist from two vectors
+ *	- bn_mat_angles( &o, alpha, beta, gama )	Make rot matrix from angles
+ *	- bn_eigen2x2()			Eigen values and vectors
+ *	- bn_mat_lookat			Make rot mat:  xform from D to -Z
+ *	- bn_mat_fromto			Make rot mat:  xform from A to
+ *	- bn_mat_arb_rot( &m, pt, dir, ang)	Make rot mat about axis (pt,dir), through ang
+ *	- bn_mat_is_equal()		Is mat a equal to mat b?
  *
  *
  * Matrix array elements have the following positions in the matrix:
@@ -62,6 +65,9 @@
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
+
+/*@}*/
+
 #ifndef lint
 static const char bn_RCSmat[] = "@(#)$Header$ (ARL)";
 #endif

@@ -18,8 +18,11 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+
+/** \addtogroup librt */
+
+/*@{*/
 /** @file mater.c
- *  
  *  Code to deal with establishing and maintaining the tables which
  *  map region ID codes into worthwhile material information
  *  (colors and outboard database "handles").
@@ -39,6 +42,8 @@
  *	Aberdeen Proving Ground, Maryland  21005
  *  
  */
+/*@}*/
+
 #ifndef lint
 static const char RCSmater[] = "@(#)$Header$ (BRL)";
 #endif

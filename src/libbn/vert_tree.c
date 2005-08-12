@@ -18,6 +18,9 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+
+/** \addtogroup libbn */
+/*@{*/
 /** @file vert_tree.c
  * Routines to manage a binary search tree of vertices. The actual vertices are stored in an array
  * for convenient use by routines such as "mk_bot". The binary search tree stores indices into
@@ -30,6 +33,8 @@
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
+/*@}*/
+
 #ifndef lint
 static const char bn_RCSvert_tree[] = "@(#)$Header$ (ARL)";
 #endif

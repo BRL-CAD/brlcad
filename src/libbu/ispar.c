@@ -18,8 +18,10 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+
+/** \addtogroup libbu */
+/*@{*/
 /** @file ispar.c
- *
  *  This subroutine is separated off from parallel.c so that
  *  bu_bomb() and others can call it, without causing either
  *  parallel.c or semaphore.c to get referenced and thus causing
@@ -34,6 +36,8 @@
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  *  
  */
+/*@}*/
+
 #ifndef lint
 static const char RCSispar[] = "@(#)$Header$ (ARL)";
 #endif

@@ -18,8 +18,11 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+
+/** \addtogroup libbu */
+/*@{*/
+
 /** @file bitv.c
- *
  *  Routines for managing bit vectors of arbitrary length.
  *
  *  The basic type "bitv_t" is defined in h/machine.h; it is the
@@ -37,6 +40,8 @@
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  *  
  */
+/*@}*/
+
 #ifndef lint
 static const char libbu_bitv_RCSid[] = "@(#)$Header$ (ARL)";
 #endif

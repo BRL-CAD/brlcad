@@ -18,8 +18,10 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+
+/** \addtogroup libbn */
+/*@{*/
 /** @file plot3.c
- *
  *  A public-domain UNIX plot library, for 2-D and 3-D plotting in
  *  16-bit VAX signed integer spaces, or 64-bit IEEE floating point.
  *
@@ -27,11 +29,10 @@
  *  of 3-D commands).  They behave almost exactly like the regular
  *  libplot routines, except:
  *
- *  (1) These all take a stdio file pointer, and can thus be used to
- *      create multiple plot files simultaneously.
- *  (2) There are 3-D versions of most commands.
- *  (3) There are IEEE floating point versions of the commands.
- *  (4) The names have been changed.
+ *  -# These all take a stdio file pointer, and can thus be used to create multiple plot files simultaneously.
+ *  -# There are 3-D versions of most commands.
+ *  -# There are IEEE floating point versions of the commands.
+ *  -# The names have been changed.
  *
  *  The 3-D extensions are those of Doug Gwyn, from his System V extensions.
  *
@@ -45,6 +46,8 @@
  *	Aberdeen Proving Ground, Maryland  21005-5066
  *  
  */
+/*@}*/
+
 #ifndef lint
 static const char RCSid[] = "@(#)$Header$ (BRL)";
 #endif

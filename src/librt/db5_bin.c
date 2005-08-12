@@ -18,9 +18,11 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+
+/** \addtogroup db5 */
+
+/*@{*/
 /** @file db5_bin.c
- *
- *  Purpose -
  *	Handle bulk binary objects
  *
  *  Author -
@@ -31,6 +33,8 @@
  *	Aberdeen Proving Ground, Maryland  21005-5066
  *  
  */
+/*@}*/
+
 #ifndef lint
 static const char RCSell[] = "@(#)$Header$ (BRL)";
 #endif
@@ -149,7 +153,7 @@ rt_bin_mime_import5(struct rt_db_internal * ip,
 	return -1;
 }
 
-/*
+/**
  *			R T _ B I N U N I F _ I M P O R T 5
  *
  *  Import a uniform-array binary object from the database format to
@@ -264,7 +268,7 @@ rt_binunif_import5( struct rt_db_internal	*ip,
 	return 0;		/* OK */
 }
 
-/*
+/**
  *			R T _ B I N U N I F _ D U M P
  *
  *  Diagnostic routine
@@ -280,7 +284,7 @@ rt_binunif_dump( struct rt_binunif_internal *bip) {
 }
 
 
-/*
+/**
  *			R T _ B I N E X P M _ I M P O R T 5
  *
  *  Import an experimental binary object from the database format to
@@ -297,7 +301,7 @@ rt_binexpm_import5( struct rt_db_internal	*ip,
 }
 
 
-/*
+/**
  *			R T _ B I N M I M E _ I M P O R T 5
  *
  *  Import a MIME-typed binary object from the database format to
@@ -314,7 +318,7 @@ rt_binmime_import5( struct rt_db_internal	*ip,
 }
 
 
-/*
+/**
  *			R T _ B I N _ I M P O R T 5
  *
  *  Wrapper for importing binary objects from the database format to
@@ -340,7 +344,7 @@ rt_bin_import5( struct rt_db_internal		*ip,
     return -1;
 }
 
-/*
+/**
  *			R T _ B I N U N I F _ E X P O R T 5
  *
  *	Create the "body" portion of external form
@@ -442,7 +446,7 @@ rt_binunif_export5( struct bu_external		*ep,
 	return 0;
 }
 
-/*
+/**
  *			R T _ B I N U N I F _ D E S C R I B E
  *
  *  Make human-readable formatted presentation of this object.
@@ -503,7 +507,7 @@ rt_binunif_describe( struct bu_vls		*str,
 	return(0);
 }
 
-/*
+/**
  *		R T _ B I N U N I F _ F R E E 
  *
  *	Free the storage associated with a binunif_internal object
@@ -516,7 +520,7 @@ rt_binunif_free( struct rt_binunif_internal *bip) {
 	bip = GENPTR_NULL; /* sanity */
 }
 
-/*
+/**
  *			R T _ B I N U N I F _ I F R E E
  *
  *  Free the storage associated with the rt_db_internal version of this thing.

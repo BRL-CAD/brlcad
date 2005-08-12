@@ -18,8 +18,10 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+
+/** \addtogroup if */
+/*@{*/
 /** @file if_null.c
- *
  *  A Null Frame Buffer.
  *  Useful for benchmarking or debugging.
  *
@@ -32,6 +34,8 @@
  *	Aberdeen Proving Ground, Maryland  21005-5066
  *  
  */
+/*@}*/
+
 #ifndef lint
 static const char RCSid[] = "@(#)$Header$ (BRL)";
 #endif

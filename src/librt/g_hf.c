@@ -18,9 +18,11 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+
+/** \addtogroup g */
+
+/*@{*/
 /** @file g_hf.c
- *
- *  Purpose -
  *	Intersect a ray with a height field,
  *	where the heights are imported from an external data file,
  *	and where some (or all) of the parameters of that data file
@@ -34,6 +36,8 @@
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
+/*@}*/
+
 #ifndef lint
 static char rt_hf_RcSid[] = "@(#)$Header$ (ARL)";
 #endif
@@ -125,7 +129,7 @@ struct hf_specific {
 	struct bu_mapped_file *hf_mp;
 };
 
-/*
+/**
  *			R T _ H F _ T O _ D S P
  *
  *	Convert in-memory form of a height-field (HF) to a displacement-map
@@ -206,7 +210,7 @@ rt_hf_to_dsp(struct rt_db_internal *db_intern, struct resource *resp)
 }
 
 
-/*
+/**
  *  			R T _ H F _ P R E P
  *  
  *  Given a pointer to a GED database record, and a transformation matrix,
@@ -361,7 +365,7 @@ rt_hf_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 	return 0;
 }
 
-/*
+/**
  *			R T _ H F _ P R I N T
  */
 void
@@ -768,7 +772,7 @@ bu_log("inout: loc[Z]=%g, answer=%g, left=%g, right=%g, xright=%g, xx=%g\n",
 
 
 
-/*
+/**
  *  			R T _ H T F _ S H O T
  *  
  *  Intersect a ray with a height field.
@@ -1552,7 +1556,7 @@ rt_bomb("Odd number of hits.");
 	}
 	return nhits;	/* hits or misses */
 }
-/*
+/**
  *  			R T _ H F _ N O R M
  *  
  *  Given ONE ray distance, return the normal and entry/exit point.
@@ -1596,7 +1600,7 @@ rt_hf_norm(register struct hit *hitp, struct soltab *stp, register struct xray *
 
 }
 
-/*
+/**
  *			R T _ H F _ C U R V E
  *
  *  Return the curvature of the hf.
@@ -1610,7 +1614,7 @@ rt_hf_curve(register struct curvature *cvp, register struct hit *hitp, struct so
  	bn_vec_ortho( cvp->crv_pdir, hitp->hit_normal );
 }
 
-/*
+/**
  *  			R T _ H F _ U V
  *  
  *  For a hit on the surface of an hf, return the (u,v) coordinates
@@ -1646,7 +1650,7 @@ rt_hf_uv(struct application *ap, struct soltab *stp, register struct hit *hitp, 
 	uvp->uv_dv = r;
 }
 
-/*
+/**
  *		R T _ H F _ F R E E
  */
 void
@@ -1662,7 +1666,7 @@ rt_hf_free(register struct soltab *stp)
 	bu_free( (char *)hf, "hf_specific" );
 }
 
-/*
+/**
  *			R T _ H F _ C L A S S
  */
 int
@@ -1671,7 +1675,7 @@ rt_hf_class(void)
 	return(0);
 }
 
-/*
+/**
  *			R T _ H F _ P L O T
  */
 int
@@ -1918,7 +1922,7 @@ rt_hf_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tes
 	return 0;
 }
 
-/*
+/**
  *			R T _ H F _ T E S S
  *
  *  Returns -
@@ -1937,7 +1941,7 @@ rt_hf_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, con
 	return(-1);
 }
 
-/*
+/**
  *			R T _ H F _ I M P O R T
  *
  *  Import an HF from the database format to the internal format.
@@ -2098,7 +2102,7 @@ err1:
 	return(0);			/* OK */
 }
 
-/*
+/**
  *			R T _ H F _ E X P O R T
  *
  *  The name is added by the caller, in the usual place.
@@ -2167,7 +2171,7 @@ rt_hf_export5(struct bu_external *ep, const struct rt_db_internal *ip, double lo
 	return -1;
 }
 
-/*
+/**
  *			R T _ H F _ D E S C R I B E
  *
  *  Make human-readable formatted presentation of this solid.
@@ -2191,7 +2195,7 @@ rt_hf_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose,
 	return(0);
 }
 
-/*
+/**
  *			R T _ H F _ I F R E E
  *
  *  Free the storage associated with the rt_db_internal version of this solid.

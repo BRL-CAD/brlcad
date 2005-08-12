@@ -18,8 +18,10 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+
+/** \addtogroup libbu */
+/*@{*/
 /** @file malloc.c
- *
  *  Parallel-protected debugging-enhanced wrapper around system malloc().
  *
  *  The bu_malloc() routines can't use bu_log() because that uses
@@ -27,14 +29,14 @@
  *  to stderr, semaphore protected.
  *
  *  Functions -
- *	bu_malloc	Allocate storage, with visibility & checking
- *	bu_free		Similarly, free storage
- *	bu_realloc	Reallocate storage, with visibility & checking
- *	bu_calloc	Allocate zero'ed storage
- *	bu_prmem	When debugging, print memory map
- *	bu_strdup	Duplicate a string in dynamic memory
- *	bu_malloc_len_roundup	Optimize sizing of malloc() requests
- *      bu_free_array	free elements of an array
+ *	- bu_malloc	Allocate storage, with visibility & checking
+ *	- bu_free		Similarly, free storage
+ *	- bu_realloc	Reallocate storage, with visibility & checking
+ *	- bu_calloc	Allocate zero'ed storage
+ *	- bu_prmem	When debugging, print memory map
+ *	- bu_strdup	Duplicate a string in dynamic memory
+ *	- bu_malloc_len_roundup	Optimize sizing of malloc() requests
+ *      - bu_free_array	free elements of an array
  *
  *  Author -
  *	Michael John Muuss
@@ -44,6 +46,8 @@
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
+/*@}*/
+
 #ifndef lint
 static const char RCSmalloc[] = "@(#)$Header$ (ARL)";
 #endif

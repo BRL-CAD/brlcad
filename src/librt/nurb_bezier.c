@@ -18,9 +18,11 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+
+/** \addtogroup nurb */
+/*@{*/
 /** @file nurb_bezier.c
- *  Function-
- *  	Convert a NURB surface or curve into Bezier form, with no internal knots.
+ * Convert a NURB surface or curve into Bezier form, with no internal knots.
  *
  *  Author -
  *	Paul R. Stay
@@ -31,6 +33,7 @@
  *     Aberdeen Proving Ground, Maryland 21005
  *
  */
+/*@}*/
 
 #include "common.h"
 

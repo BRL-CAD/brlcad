@@ -18,9 +18,14 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+
+/** \addtogroup libfb */
+/*@{*/
 /** @file adageframe.h
  * Adage "Frame" cursor.
  */
+/*@}*/
+
 11, 11,		/* size */
 7, 7,		/* origin */
 {

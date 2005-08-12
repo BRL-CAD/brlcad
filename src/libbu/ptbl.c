@@ -18,8 +18,11 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+
+/** \addtogroup libbu */
+/*@{*/
+
 /** @file ptbl.c
- *
  *  Support for generalized "pointer tables",
  *  kept compactly in a dynamic array.
  *
@@ -37,6 +40,8 @@
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  *  
  */
+/*@}*/
+
 #ifndef lint
 static const char libbu_ptbl_RCSid[] = "@(#)$Header$ (ARL)";
 #endif

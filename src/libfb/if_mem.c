@@ -18,8 +18,10 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+
+/** \addtogroup if */
+/*@{*/
 /** @file if_mem.c
- *
  *  A Memory (virtual) Frame Buffer Interface.
  *
  *  Authors -
@@ -31,6 +33,8 @@
  *	Aberdeen Proving Ground, Maryland  21005-5066
  *  
  */
+/*@}*/
+
 #ifndef lint
 static const char RCSid[] = "@(#)$Header$ (BRL)";
 #endif

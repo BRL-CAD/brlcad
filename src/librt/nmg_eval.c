@@ -18,9 +18,12 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+
+/** \addtogroup nmg */
+
+/*@{*/
 /** @file nmg_eval.c
- *
- *	Evaluate boolean operations on NMG objects
+ *	Evaluate boolean operations on NMG objects.
  *
  *  Authors -
  *	Michael John Muuss
@@ -32,6 +35,8 @@
  *	Aberdeen Proving Ground, Maryland  21005
  *  
  */
+/*@}*/
+
 #ifndef lint
 static const char RCSnmg_eval[] = "@(#)$Header$ (BRL)";
 #endif
@@ -86,7 +91,7 @@ static const char	*nmg_class_names[] = {
 	"*BAD*CLASS*"
 };
 
-/*
+/**
  *			N M G _ C K _ L U _ O R I E N T A T I O N
  *
  *  Make sure that the lu and fu orientation flags are consistent with
@@ -125,7 +130,7 @@ nmg_ck_lu_orientation(struct loopuse *lu, const struct bn_tol *tolp)
 }
 
 
-/*
+/**
  *			N M G _ C L A S S _ N A M E
  *
  *  Convert an NMG_CLASS_xxx token into a string name.
@@ -184,7 +189,7 @@ static const int		intersect_actions[8] = {
 	BACTION_KILL
 };
 
-/*
+/**
  *			N M G _ E V A L U A T E _ B O O L E A N
  *
  *  Evaluate a boolean operation on the two shells "A" and "B",
@@ -274,7 +279,7 @@ nmg_evaluate_boolean(struct shell *sA, struct shell *sB, int op, long int **clas
 
 static int	nmg_eval_count = 0;	/* debug -- plot file numbering */
 
-/*
+/**
  *			N M G _ E V A L _ A C T I O N
  *
  *  Given a pointer to some NMG data structure,
@@ -357,7 +362,7 @@ out:
 	return(ret);
 }
 
-/*
+/**
  *			N M G _ E V A L _ S H E L L
  *
  *  Make a life-and-death decision on every element of a shell.
@@ -606,7 +611,7 @@ nmg_eval_shell(register struct shell *s, struct nmg_bool_state *bs)
 }
 
 
-/*
+/**
  *			N M G _ E V A L _ P L O T
  *
  *  Called from nmg_eval_shell

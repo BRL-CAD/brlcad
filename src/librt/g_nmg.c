@@ -1,9 +1,9 @@
 #define DEBUG	0
-/*
- *			G _ N M G . C
- *
- *  Purpose -
- *	Intersect a ray with an NMG solid
+/** \addtogroup g */
+
+/*@{*/
+/** \file g_nmg.c 
+ *	Intersect a ray with an NMG solid.
  *
  *  Authors -
  *
@@ -13,6 +13,8 @@
  *	Aberdeen Proving Ground, Maryland  21005-5066
  *  
  */
+/*@}*/
+
 #ifndef lint
 static const char RCSnmg[] = "@(#)$Header$ (BRL)";
 #endif
@@ -58,7 +60,7 @@ struct tmp_v {
 };
 
 
-/*
+/**
  *  			R T _ N M G _ P R E P
  *  
  *  Given a pointer to a ged database record, and a transformation matrix,
@@ -122,7 +124,7 @@ rt_nmg_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 	return(0);
 }
 
-/*
+/**
  *			R T _ N M G _ P R I N T
  */
 void
@@ -137,7 +139,7 @@ rt_nmg_print(register const struct soltab *stp)
 
 
 
-/*
+/**
  *  			R T _ N M G _ S H O T
  *  
  *  Intersect a ray with a nmg.
@@ -232,7 +234,7 @@ rt_nmg_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 
 #define RT_NMG_SEG_MISS(SEG)	(SEG).seg_stp=RT_SOLTAB_NULL
 
-/*
+/**
  *			R T _ N M G _ V S H O T
  *
  *  Vectorized version.
@@ -248,7 +250,7 @@ rt_nmg_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
 	rt_vstub( stp, rp, segp, n, ap );
 }
 
-/*
+/**
  *  			R T _ N M G _ N O R M
  *  
  *  Given ONE ray distance, return the normal and entry/exit point.
@@ -259,7 +261,7 @@ rt_nmg_norm(register struct hit *hitp, struct soltab *stp, register struct xray 
 	VJOIN1( hitp->hit_point, rp->r_pt, hitp->hit_dist, rp->r_dir );
 }
 
-/*
+/**
  *			R T _ N M G _ C U R V E
  *
  *  Return the curvature of the nmg.
@@ -276,7 +278,7 @@ rt_nmg_curve(register struct curvature *cvp, register struct hit *hitp, struct s
  	bn_vec_ortho( cvp->crv_pdir, hitp->hit_normal );
 }
 
-/*
+/**
  *  			R T _ N M G _ U V
  *  
  *  For a hit on the surface of an nmg, return the (u,v) coordinates
@@ -291,7 +293,7 @@ rt_nmg_uv(struct application *ap, struct soltab *stp, register struct hit *hitp,
 		(struct nmg_specific *)stp->st_specific; */
 }
 
-/*
+/**
  *		R T _ N M G _ F R E E
  */
 void
@@ -304,7 +306,7 @@ rt_nmg_free(register struct soltab *stp)
 	bu_free( (char *)nmg, "nmg_specific" );
 }
 
-/*
+/**
  *			R T _ N M G _ C L A S S
  */
 int
@@ -314,7 +316,7 @@ rt_nmg_class(void)
 }
 
 
-/*
+/**
  *			R T _ N M G _ P L O T
  */
 int
@@ -331,7 +333,7 @@ rt_nmg_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 	return(0);
 }
 
-/*
+/**
  *			R T _ N M G _ T E S S
  *
  * XXX This routine "destroys" the internal nmg solid.
@@ -703,7 +705,7 @@ const char	rt_nmg_kind_names[NMG_N_KINDS+2][18] = {
 	"k27-OFF_END"
 };
 
-/*
+/**
  *			R T _ N M G _ M A G I C _ T O _ K I N D
  *
  *  Given the magic number for an NMG structure, return the
@@ -776,7 +778,7 @@ struct nmg_exp_counts {
 static unsigned char	*rt_nmg_fastf_p;
 static unsigned int	rt_nmg_cur_fastf_subscript;
 
-/*
+/**
  *			R T _ N M G _ E X P O R T _ F A S T F
  *
  *  Format a variable sized array of fastf_t's into external format
@@ -849,7 +851,7 @@ rt_nmg_export_fastf(const fastf_t *fp, int count, int pt_type, double scale)
 	return rt_nmg_cur_fastf_subscript++;
 }
 
-/*
+/**
  *			R T _ N M G _ I M P O R T _ F A S T F
  */
 fastf_t *
@@ -925,7 +927,7 @@ rt_nmg_import_fastf(const unsigned char *base, struct nmg_exp_counts *ecnt, long
 	return ret;
 }
 
-/*
+/**
  *			R T _ N M G _ R E I N D E X
  *
  *  Depends on ecnt[0].byte_offset having been set to maxindex.
@@ -981,7 +983,7 @@ rt_nmg_reindex(genptr_t p, struct nmg_exp_counts *ecnt)
 	(void)bu_plong( (oo)->elem.back, rt_nmg_reindex((genptr_t)((ii)->elem.back), ecnt) ); }
 #define PUTMAGIC(_magic)	(void)bu_plong( &d->magic[0], _magic )
 
-/*
+/**
  *			R T _ N M G _ E D I S K
  *
  *  Export a given structure from memory to disk format
@@ -1368,7 +1370,7 @@ rt_nmg_edisk(genptr_t op, genptr_t ip, struct nmg_exp_counts *ecnt, int index, d
 	} }
 
 
-/*
+/**
  *			R T _ N M G _ I D I S K
  *
  *  Import a given structure from disk to memory format.
@@ -1762,7 +1764,7 @@ rt_nmg_idisk(genptr_t op, genptr_t ip, struct nmg_exp_counts *ecnt, int index, l
 	return -1;
 }
 
-/*
+/**
  *			R T _ N M G _ I A L L O C
  *
  *  Allocate storage for all the in-memory NMG structures,
@@ -1985,7 +1987,7 @@ ptrs[subscript], nmg_index_of_struct(ptrs[subscript]) );
 	return(m);
 }
 
-/*
+/**
  *			R T _ N M G _ I 2 A L L O C
  *
  *  Find the locations of all the variable-sized fastf_t arrays in
@@ -2035,7 +2037,7 @@ bu_log("rt_nmg_i2alloc() first one at cp=x%x, offset=%d, subscript=%d\n", cp, of
 	}
 }
 
-/*
+/**
  *			R T _ N M G _ I M P O R T _ I N T E R N A L
  *
  *  Import an NMG from the database format to the internal format.
@@ -2147,7 +2149,7 @@ rt_nmg_import_internal(struct rt_db_internal *ip, const struct bu_external *ep, 
 	return(0);			/* OK */
 }
 
-/*
+/**
  *			R T _ N M G _ E X P O R T _ I N T E R N A L
  *
  *  The name is added by the caller, in the usual place.
@@ -2379,7 +2381,7 @@ bu_log("Mapping of old index to new index, and kind\n");
 	return(0);
 }
 
-/*
+/**
  *			R T _ N M G _ I M P O R T
  *
  *  Import an NMG from the database format to the internal format.
@@ -2423,7 +2425,7 @@ rt_nmg_import(struct rt_db_internal *ip, const struct bu_external *ep, register 
 	return(0);			/* OK */
 }
 
-/*
+/**
  *			R T _ N M G _ I M P O R T 5
  */
 int
@@ -2517,7 +2519,7 @@ rt_nmg_import5( struct rt_db_internal	*ip,
 	return 0;		/* OK */
 }
 
-/*
+/**
  *			R T _ N M G _ E X P O R T
  *
  *  The name is added by the caller, in the usual place.
@@ -2540,7 +2542,7 @@ rt_nmg_export(struct bu_external *ep, const struct rt_db_internal *ip, double lo
 	return  rt_nmg_export_internal( ep, ip, local2mm, 1 );
 }
 
-/*
+/**
  *			R T _ N M G _ E X P O R T 5
  */
 int
@@ -2711,7 +2713,7 @@ rt_nmg_export5(
 	return 0;		/* OK */
 }
 
-/*
+/**
  *			R T _ N M G _ D E S C R I B E
  *
  *  Make human-readable formatted presentation of this solid.
@@ -2747,7 +2749,7 @@ rt_nmg_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
 	return(0);
 }
 
-/*
+/**
  *			R T _ N M G _ I F R E E
  *
  *  Free the storage associated with the rt_db_internal version of this solid.

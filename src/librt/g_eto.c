@@ -18,10 +18,11 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+
+/** \addtogroup g */
+/*@{*/
 /** @file g_eto.c
- *
- * Purpose -
- *	Intersect a ray with an Elliptical Torus
+ *	Intersect a ray with an Elliptical Torus.
  *
  * Authors -
  *	Michael Markowski	(Programming)
@@ -33,6 +34,8 @@
  *	Aberdeen Proving Ground, Maryland  21005
  *  
  */
+/*@}*/
+
 #ifndef lint
 static const char RCSeto[] = "@(#)$Header$ (BRL)";
 #endif
@@ -159,7 +162,7 @@ const struct bu_structparse rt_eto_parse[] = {
     { {'\0','\0','\0','\0'}, 0, (char *)NULL, 0, BU_STRUCTPARSE_FUNC_NULL }
  };
 
-/*
+/**
  *  			R T _ E T O _ P R E P
  *  
  *  Given a pointer to a GED database record, and a transformation matrix,
@@ -276,7 +279,7 @@ rt_eto_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 	return(0);			/* OK */
 }
 
-/*
+/**
  *			R T _ E T O _ P R I N T
  */
 void
@@ -298,7 +301,7 @@ rt_eto_print(register const struct soltab *stp)
 		stp->st_max[X], stp->st_max[Y], stp->st_max[Z]);
 }
 
-/*
+/**
  *  			R T _ E T O _ S H O T
  *  
  *  Intersect a ray with an eto, where all constant terms have
@@ -545,7 +548,7 @@ rt_eto_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 }
 
 #define SEG_MISS(SEG)		(SEG).seg_stp=(struct soltab *) 0;	
-/*
+/**
  *			R T _ E T O _ V S H O T
  *
  *  This is the Becker vector version
@@ -560,7 +563,7 @@ rt_eto_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
 {
 }
 
-/*
+/**
  *			R T _ E T O _ N O R M
  *
  *  Compute the normal to the eto,
@@ -612,7 +615,7 @@ rt_eto_norm(register struct hit *hitp, struct soltab *stp, register struct xray 
 	MAT3X3VEC( hitp->hit_normal, eto->eto_invR, normp );
 }
 
-/*
+/**
  *			R T _ E T O _ C U R V E
  *
  *  Return the curvature of the eto.
@@ -679,7 +682,7 @@ rt_eto_curve(register struct curvature *cvp, register struct hit *hitp, struct s
 	VUNITIZE( cvp->crv_pdir );
 }
 
-/*
+/**
  *			R T _ E T O _ U V
  */
 void
@@ -721,7 +724,7 @@ rt_eto_uv(struct application *ap, struct soltab *stp, register struct hit *hitp,
 	uvp->uv_du = uvp->uv_dv = 0;
 }
 
-/*
+/**
  *			R T _ E T O _ F R E E
  */
 void
@@ -739,7 +742,7 @@ rt_eto_class(void)
 	return(0);
 }
 
-/*
+/**
  *			R T _ E T O _ P L O T
  *
  * The ETO has the following input fields:
@@ -883,7 +886,7 @@ rt_eto_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 	return(0);
 }
 
-/*
+/**
  *	R T _ E L L 4
  *
  *	Approximate one fourth (1st quadrant) of an ellipse with line
@@ -941,7 +944,7 @@ rt_ell4(struct rt_pt_node *pts, fastf_t a, fastf_t b, fastf_t dtol, fastf_t ntol
 	return( n );
 }
 
-/*
+/**
  *	R T _ M K _ E L L
  *
  *	Return pointer an array of points approximating an ellipse
@@ -996,7 +999,7 @@ fastf_t	a, b, dtol, ntol;
 	return(ell);
 }
 
-/*
+/**
  *			R T _ E T O _ T E S S
  */
 int
@@ -1202,7 +1205,7 @@ failure:
 	return( fail );
 }
 
-/*
+/**
  *			R T _ E T O _ I M P O R T
  *
  *  Import a eto from the database format to the internal format.
@@ -1245,7 +1248,7 @@ rt_eto_import(struct rt_db_internal *ip, const struct bu_external *ep, register 
 	return(0);		/* OK */
 }
 
-/*
+/**
  *			R T _ E T O _ E X P O R T
  *
  *  The name will be added by the caller.
@@ -1292,7 +1295,7 @@ rt_eto_export(struct bu_external *ep, const struct rt_db_internal *ip, double lo
 	return(0);
 }
 
-/*
+/**
  *			R T _ E T O _ I M P O R T 5
  *
  *  Import a eto from the database format to the internal format.
@@ -1335,7 +1338,7 @@ rt_eto_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
 	return(0);		/* OK */
 }
 
-/*
+/**
  *			R T _ E T O _ E X P O R T 5
  *
  *  The name will be added by the caller.
@@ -1381,7 +1384,7 @@ rt_eto_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
 	return(0);
 }
 
-/*
+/**
  *			R T _ E T O _ D E S C R I B E
  *
  *  Make human-readable formatted presentation of this solid.
@@ -1426,7 +1429,7 @@ rt_eto_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
 	return(0);
 }
 
-/*
+/**
  *			R T _ E T O _ I F R E E
  *
  *  Free the storage associated with the rt_db_internal version of this solid.

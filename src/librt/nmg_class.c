@@ -18,8 +18,11 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+
+/** \addtogroup nmg */
+
+/*@{*/
 /** @file nmg_class.c
- *
  *  Subroutines to classify one object with respect to another.
  *  Possible classifications are AinB, AoutB, AinBshared, AinBanti.
  *
@@ -44,6 +47,8 @@
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
+/*@}*/
+
 #ifndef lint
 static const char RCSid[] = "@(#)$Header$ (ARL)";
 #endif
@@ -98,7 +103,7 @@ static int	class_lu_vs_s RT_ARGS( (struct loopuse *lu, struct shell *s,
 static void	class_fu_vs_s RT_ARGS( (struct faceuse *fu, struct shell *s,
 			long *classlist[4], const struct bn_tol	*tol) );
 
-/*
+/**
  *			N M G _ C L A S S _ S T A T U S
  *
  *  Convert classification status to string.
@@ -117,7 +122,7 @@ nmg_class_status(int status)
 	return "BOGUS_CLASS_STATUS";
 }
 
-/*
+/**
  *			N M G _ P R _ C L A S S _ S T A T U S
  */
 void
@@ -127,7 +132,7 @@ nmg_pr_class_status(char *prefix, int status)
 		prefix, nmg_class_status(status) );
 }
 
-/*
+/**
  *			J O I N T _ H I T M I S S 2
  *
  *	The ray hit an edge.  We have to decide whether it hit the
@@ -196,7 +201,7 @@ joint_hitmiss2(struct neighbor *closest, const struct edgeuse *eu, const fastf_t
 	}
 }
 
-/*
+/**
  *			N M G _ C L A S S _ P T _ E
  *
  *  XXX DANGER:  This routine does not work well.
@@ -399,7 +404,7 @@ out:
 }
 
 
-/*
+/**
  *			N M G _ C L A S S _ P T _ L
  *
  *  XXX DANGER:  This routine does not work well.
@@ -485,7 +490,7 @@ nmg_class_pt_l(struct neighbor *closest, const fastf_t *pt, const struct loopuse
 			closest->dist, nmg_class_name(closest->class) );
 }
 
-/*
+/**
  *			N M G _ C L A S S _ L U _ F U
  *
  *  This is intended as an internal routine to support nmg_lu_reorient().
@@ -602,7 +607,7 @@ static const point_t nmg_good_dirs[10] = {
 	{-1,-1,-1}
 };
 
-/*
+/**
  *			N M G _ C L A S S _ P T _ S
  *
  *  This is intended as a general user interface routine.
@@ -738,7 +743,7 @@ out:
 }
 
 
-/*
+/**
  *			C L A S S _ V U _ V S _ S
  *
  *	Classify a loopuse/vertexuse from shell A WRT shell B.
@@ -859,7 +864,7 @@ out:
 	return(status);
 }
 
-/*
+/**
  *			C L A S S _ E U _ V S _ S
  */
 static int 
@@ -1266,7 +1271,7 @@ out:
 }
 
 /* XXX move to nmg_info.c */
-/*
+/**
  *			N M G _ 2 L U _ I D E N T I C A L
  *
  *  Given two edgeuses in different faces that share a common edge,
@@ -1383,7 +1388,7 @@ out:
 	return ret;
 }
 
-/*
+/**
  *			N M G _ R E C L A S S I F Y _ L U _ E U
  *
  *  Make all the edges and vertices of a loop carry the same classification
@@ -1463,7 +1468,7 @@ nmg_reclassify_lu_eu(struct loopuse *lu, long int **classlist, int newclass)
 	}
 }
 
-/*			C L A S S _ S H A R E D _ L U
+/**			C L A S S _ S H A R E D _ L U
  *
  *	Classify LU w.r.t. LU_REF.
  *
@@ -1646,7 +1651,7 @@ class_shared_lu(const struct loopuse *lu, const struct loopuse *lu_ref, const st
 	return( NMG_CLASS_Unknown );
 }
 
-/*
+/**
  *			C L A S S _ L U _ V S _ S
  *
  *  Called by -
@@ -2109,7 +2114,7 @@ out:
 	return status;
 }
 
-/*
+/**
  *			C L A S S _ F U _ V S _ S
  *
  *  Called by -
@@ -2136,7 +2141,7 @@ class_fu_vs_s(struct faceuse *fu, struct shell *s, long int **classlist, const s
 		bu_log("class_fu_vs_s() END\n");
 }
 
-/*
+/**
  *			N M G _ C L A S S _ S H E L L S
  *
  *	Classify one shell WRT the other shell
@@ -2211,7 +2216,7 @@ nmg_class_shells(struct shell *sA, struct shell *sB, long int **classlist, const
 	}
 }
 
-/*	N M G _ C L A S S I F Y _ P T _ L O O P
+/**	N M G _ C L A S S I F Y _ P T _ L O O P
  *
  *	A generally available interface to nmg_class_pt_l
  *
@@ -2264,7 +2269,7 @@ bu_log("DANGER: nmg_classify_pt_loop() is calling nmg_class_pt_l(), which does n
 	return( closest.class );
 }
 
-/*		N M G _ G E T _ I N T E R I O R _ P T
+/**		N M G _ G E T _ I N T E R I O R _ P T
  *
  *	Find any point that is interior to LU
  *
@@ -2374,7 +2379,7 @@ nmg_get_interior_pt(fastf_t *pt, const struct loopuse *lu, const struct bn_tol *
 	return( 4 );
 }
 
-/*	N M G _ C L A S S I F Y _ L U _ L U
+/**	N M G _ C L A S S I F Y _ L U _ L U
  *
  *	Generally available classifier for
  *	determining if one loop is within another
@@ -2709,7 +2714,7 @@ nmg_classify_lu_lu(const struct loopuse *lu1, const struct loopuse *lu2, const s
 	return( -1); /* to make the compilers happy */
 }
 
-/*		N M G _ C L A S S I F Y _ S _ V S _S
+/**		N M G _ C L A S S I F Y _ S _ V S _S
  *
  *	Classify one shell (s2) with respect to another (s).
  *

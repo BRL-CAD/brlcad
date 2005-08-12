@@ -18,8 +18,10 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+
+/** \addtogroup libbu */
+/*@{*/
 /** @file hook.c
- *
  * BRL-CAD support library's hook utility.
  *
  *  Authors -
@@ -36,6 +38,8 @@
  *	This builds on the work in libbu/log.c.
  *
  */
+/*@}*/
+
 
 #include "common.h"
 

@@ -18,8 +18,9 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+/** \addtogroup nmg */
+/*@{*/
 /** @file nmg_visit.c
- *
  *  A generalized, object-oriented subroutine family to
  *  visit all the data structures "below" a given structure.
  *
@@ -39,6 +40,8 @@
  *	Aberdeen Proving Ground, Maryland  21005-5066
  *  
  */
+/*@}*/
+
 #ifndef lint
 static const char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
@@ -54,7 +57,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "raytrace.h"
 
 
-/*
+/**
  *			N M G _ V I S I T _ V E R T E X
  */
 void
@@ -71,7 +74,7 @@ nmg_visit_vertex(struct vertex *v, const struct nmg_visit_handlers *htab, genptr
 		htab->vis_vertex_g( (long *)v->vg_p, state, 0 );
 }
 
-/*
+/**
  *			N M G _ V I S I T _ V E R T E X U S E
  */
 void
@@ -92,7 +95,7 @@ nmg_visit_vertexuse(struct vertexuse *vu, const struct nmg_visit_handlers *htab,
 	if(htab->aft_vertexuse) htab->aft_vertexuse( (long *)vu, state, 1 );
 }
 
-/*
+/**
  *			N M G _ V I S I T _ E D G E
  */
 void
@@ -106,7 +109,7 @@ nmg_visit_edge(struct edge *e, const struct nmg_visit_handlers *htab, genptr_t *
 	if(htab->vis_edge) htab->vis_edge( (long *)e, state, 0 );
 }
 
-/*
+/**
  *			N M G _ V I S I T _ E D G E U S E
  */
 void
@@ -128,7 +131,7 @@ nmg_visit_edgeuse(struct edgeuse *eu, const struct nmg_visit_handlers *htab, gen
 	if(htab->aft_edgeuse) htab->aft_edgeuse( (long *)eu, state, 1 );
 }
 
-/*
+/**
  *			N M G _ V I S I T _ L O O P
  */
 void
@@ -145,7 +148,7 @@ nmg_visit_loop(struct loop *l, const struct nmg_visit_handlers *htab, genptr_t *
 		htab->vis_loop_g( (long *)l->lg_p, state, 0 );
 }
 
-/*
+/**
  *			N M G _ V I S I T _ L O O P U S E
  */
 void
@@ -173,7 +176,7 @@ nmg_visit_loopuse(struct loopuse *lu, const struct nmg_visit_handlers *htab, gen
 	if(htab->aft_loopuse) htab->aft_loopuse( (long *)lu, state, 1 );
 }
 
-/*
+/**
  *			N M G _ V I S I T _ F A C E
  */
 void
@@ -189,7 +192,7 @@ nmg_visit_face(struct face *f, const struct nmg_visit_handlers *htab, genptr_t *
 		htab->vis_face_g( (long *)f->g.plane_p, state, 0 );
 }
 
-/*
+/**
  *			N M G _ V I S I T _ F A C E U S E
  */
 void
@@ -213,7 +216,7 @@ nmg_visit_faceuse(struct faceuse *fu, const struct nmg_visit_handlers *htab, gen
 	if(htab->aft_faceuse) htab->aft_faceuse( (long *)fu, state, 1 );
 }
 
-/*
+/**
  *			N M G _ V I S I T _ S H E L L
  */
 void
@@ -246,7 +249,7 @@ nmg_visit_shell(struct shell *s, const struct nmg_visit_handlers *htab, genptr_t
 	if(htab->aft_shell) htab->aft_shell( (long *)s, state, 1 );
 }
 
-/*
+/**
  *			N M G _ V I S I T _ R E G I O N
  */
 void
@@ -269,7 +272,7 @@ nmg_visit_region(struct nmgregion *r, const struct nmg_visit_handlers *htab, gen
 
 	if(htab->aft_region) htab->aft_region( (long *)r, state, 1 );
 }
-/*
+/**
  *			N M G _ V I S I T _ M O D E L
  */
 void
@@ -291,7 +294,7 @@ nmg_visit_model(struct model *model, const struct nmg_visit_handlers *htab, genp
 	if(htab->aft_model) htab->aft_model( (long *)model, state, 1 );
 }
 
-/*
+/**
  *			N M G _ V I S I T
  */
 void

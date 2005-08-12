@@ -18,8 +18,10 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file asize.c
- *
+
+/** \addtogroup libfb */
+/*@{*/
+/** @file ./libfb/asize.c
  * Image file AutoSizing code.
  *
  *  Author -
@@ -31,6 +33,7 @@
  *	Aberdeen Proving Ground, Maryland  21005-5066
  *  
  */
+/*@}*/
 
 #ifndef lint
 static char RCSid[] = "@(#)$Header$ (BRL)";

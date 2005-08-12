@@ -18,10 +18,10 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+
+/** \addtogroup libbu */
+/*@{*/
 /** @file vfont.c
- *
- *  Function -
- *
  *	Provide a machine-independent interface to files containing
  *	Berkeley VFONT format fonts, stored with VAX byte ordering
  *	and word alignment.
@@ -35,6 +35,8 @@
  *	Aberdeen Proving Ground, Maryland  21005-5066
  *  
  */
+/*@}*/
+
 #ifndef lint
 static const char libbu_vfont_RCSid[] = "@(#)$Header$ (BRL)";
 #endif

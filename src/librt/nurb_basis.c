@@ -18,14 +18,23 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+
+/** \defgroup nurb nurb_ 
+ * \ingroup librt
+ */
+
+/*@{*/
 /** @file nurb_basis.c
+ * Evaluate the B-Spline Basis Functions.
  *
  */
+/*@}*/
 
 /* 
  *	N U R B _ B A S I S . C
  *
  * nurb_basis.c - Evaluate the B-Spline Basis Functions.
+ *
  * 
  * Author:  Paul R. Stay
  * Source

@@ -18,13 +18,14 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+
+/** \addtogroup librt */
+/*@{*/
 /** @file timercos.c
- *			T I M E R C R A Y . C
- *
- * Function -
  *	To provide timing information for RT.
  *	THIS VERSION FOR Cray COS "C"
  */
+/*@}*/
 #ifndef lint
 static const char RCScos[] = "@(#)$Header$ (BRL)";
 #endif

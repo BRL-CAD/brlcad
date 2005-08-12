@@ -18,8 +18,10 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+
+/** \addtogroup librt */
+/*@{*/
 /** @file plane.h
- *
  *  This header file describes the plane_specific structure, which
  *  is for ARS processing, and the tri_specific structure,
  *  which is for ARB and PG processing.
@@ -35,6 +37,8 @@
  *
  *  $Header$
  */
+/*@}*/
+
 #ifndef PLANE_H
 #define PLANE_H seen
 

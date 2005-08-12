@@ -18,10 +18,12 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+
+/** \addtogroup g */
+
+/*@{*/
 /** @file g_ars.c
- *
- *  Function -
- *	Intersect a ray with an ARS (Arbitrary faceted solid)
+ *	Intersect a ray with an ARS (Arbitrary faceted solid).
  *  
  *  Author -
  *	Michael John Muuss
@@ -32,6 +34,8 @@
  *	Aberdeen Proving Ground, Maryland  21005
  *  
  */
+/*@}*/
+
 #ifndef lint
 static const char RCSars[] = "@(#)$Header$ (BRL)";
 #endif
@@ -85,7 +89,7 @@ rt_ars_class(const struct soltab	*stp,
 }
 
 
-/*
+/**
  *			R T _ A R S _ R D _ C U R V E
  *
  *  rt_ars_rd_curve() reads a set of ARS B records and returns a pointer
@@ -126,7 +130,7 @@ rt_ars_rd_curve(union record *rp, int npts)
 
 
 
-/*
+/**
  *			R T _ A R S _ I M P O R T
  *
  *  Read all the curves in as a two dimensional array.
@@ -201,7 +205,7 @@ rt_ars_import(struct rt_db_internal *ip, const struct bu_external *ep, const fas
 	return( 0 );
 }
 
-/*
+/**
  *			R T _ A R S _ E X P O R T
  *
  *  The name will be added by the caller.
@@ -274,7 +278,7 @@ rt_ars_export(struct bu_external *ep, const struct rt_db_internal *ip, double lo
 }
 
 
-/*
+/**
  *			R T _ A R S _ I M P O R T 5
  *
  *  Read all the curves in as a two dimensional array.
@@ -329,7 +333,7 @@ rt_ars_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 	return( 0 );
 }
 
-/*
+/**
  *			R T _ A R S _ E X P O R T 5
  *
  *  The name will be added by the caller.
@@ -374,7 +378,7 @@ rt_ars_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
 	return(0);
 }
 
-/*
+/**
  *			R T _ A R S _ D E S C R I B E
  *
  *  Make human-readable formatted presentation of this solid.
@@ -426,7 +430,7 @@ rt_ars_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
 	return(0);
 }
 
-/*
+/**
  *			R T _ A R S _ I F R E E
  *
  *  Free the storage associated with the rt_db_internal version of this solid.
@@ -454,7 +458,7 @@ rt_ars_ifree(struct rt_db_internal *ip)
 	ip->idb_ptr = GENPTR_NULL;	/* sanity */
 }
 
-/*
+/**
  *			R T _ A R S _ P R E P
  *  
  *  This routine is used to prepare a list of planar faces for
@@ -629,7 +633,7 @@ rt_ars_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 }
 
 
-/*
+/**
  *  			R T _ A R S _ P R I N T
  */
 void
@@ -652,7 +656,7 @@ rt_ars_print(register const struct soltab *stp)
 	} while( (trip = trip->tri_forw) );
 }
 
-/*
+/**
  *			R T _ A R S _ S H O T
  *  
  * Function -
@@ -853,7 +857,7 @@ rt_ars_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 	return(nhits);			/* HIT */
 }
 
-/*
+/**
  *			R T _ H I T S O R T
  *
  *  Sort an array of hits into ascending order.
@@ -875,7 +879,7 @@ rt_hitsort(register struct hit *h, register int nh)
 	}
 }
 
-/*
+/**
  *  			R T _ A R S _ N O R M
  *
  *  Given ONE ray distance, return the normal and entry/exit point.
@@ -890,7 +894,7 @@ rt_ars_norm(register struct hit *hitp, struct soltab *stp, register struct xray 
 	VMOVE( hitp->hit_normal, trip->tri_N );
 }
 
-/*
+/**
  *			R T _ A R S _ C U R V E
  *
  *  Return the "curvature" of the ARB face.
@@ -907,7 +911,7 @@ rt_ars_curve(register struct curvature *cvp, register struct hit *hitp, struct s
 	cvp->crv_c1 = cvp->crv_c2 = 0;
 }
 
-/*
+/**
  *  			R T _ A R S _ U V
  *  
  *  For a hit on a face of an ARB, return the (u,v) coordinates
@@ -944,7 +948,7 @@ rt_ars_uv(struct application *ap, struct soltab *stp, register struct hit *hitp,
 }
 
 
-/*
+/**
  *			R T _ A R S _ P L O T
  */
 int
@@ -995,7 +999,7 @@ rt_ars_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 	if( !((*corners[corn])->vg_p) )  { \
 		nmg_vertex_gv( *(corners[corn]), ARS_PT(a,b) ); \
 	}
-/*
+/**
  *			R T _ A R S _ T E S S
  */
 int

@@ -18,9 +18,11 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+
+/** \addtogroup g */
+
+/*@{*/
 /** @file g_submodel.c
- *
- *  Purpose -
  *	Intersect a ray with an entire subspace full of geometry,
  *	possibly included from another .g file, with a subordinate
  *	instance of LIBRT.
@@ -36,6 +38,8 @@
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5066
  */
+/*@}*/
+
 #ifndef lint
 static const char RCSsubmodel[] = "@(#)$Header$ (BRL)";
 #endif
@@ -74,7 +78,7 @@ struct submodel_specific {
 #define RT_CK_SUBMODEL_SPECIFIC(_p)	BU_CKMAG(_p,RT_SUBMODEL_SPECIFIC_MAGIC,"submodel_specific")
 
 
-/*
+/**
  *  			R T _ S U B M O D E L _ P R E P
  *  
  *  Given a pointer to a GED database record, and a transformation matrix,
@@ -253,7 +257,7 @@ done:
 	return(0);		/* OK */
 }
 
-/*
+/**
  *			R T _ S U B M O D E L _ P R I N T
  */
 void
@@ -278,7 +282,7 @@ rt_submodel_print(register const struct soltab *stp)
 }
 
 
-/*
+/**
  *			R T _ S U B M O D E L _ A _ M I S S
  */
 int
@@ -294,7 +298,7 @@ struct submodel_gobetween {
 	fastf_t			delta;		/* distance offset */
 };
 
-/*
+/**
  *			R T _ S U B M O D E L _ A _ H I T
  */
 int
@@ -445,7 +449,7 @@ rt_submodel_a_hit(struct application *ap, struct partition *PartHeadp, struct se
 	return count;
 }
 
-/*
+/**
  *  			R T _ S U B M O D E L _ S H O T
  *  
  *  Intersect a ray with a submodel.
@@ -531,7 +535,7 @@ rt_submodel_shot(struct soltab *stp, register struct xray *rp, struct applicatio
 
 #define RT_SUBMODEL_SEG_MISS(SEG)	(SEG).seg_stp=RT_SOLTAB_NULL
 
-/*
+/**
  *			R T _ S U B M O D E L _ V S H O T
  *
  *  Vectorized version.
@@ -547,7 +551,7 @@ rt_submodel_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n
 	rt_vstub( stp, rp, segp, n, ap );
 }
 
-/*
+/**
  *  			R T _ S U B M O D E L _ N O R M
  *  
  *  Given ONE ray distance, return the normal and entry/exit point.
@@ -570,7 +574,7 @@ rt_submodel_norm(register struct hit *hitp, struct soltab *stp, register struct 
 	}
 }
 
-/*
+/**
  *			R T _ S U B M O D E L _ C U R V E
  *
  *  Return the curvature of the submodel.
@@ -587,7 +591,7 @@ rt_submodel_curve(register struct curvature *cvp, register struct hit *hitp, str
 	bu_log("rt_submodel_curve() not implemented, need extra fields in 'struct hit'\n");
 }
 
-/*
+/**
  *  			R T _ S U B M O D E L _ U V
  *  
  *  For a hit on the surface of an submodel, return the (u,v) coordinates
@@ -605,7 +609,7 @@ rt_submodel_uv(struct application *ap, struct soltab *stp, register struct hit *
 	uvp->uv_du = uvp->uv_dv = hitp->hit_vpriv[Z];
 }
 
-/*
+/**
  *		R T _ S U B M O D E L _ F R E E
  */
 void
@@ -639,7 +643,7 @@ rt_submodel_free(register struct soltab *stp)
 	bu_free( (genptr_t)submodel, "submodel_specific" );
 }
 
-/*
+/**
  *			R T _ S U B M O D E L _ C L A S S
  */
 int
@@ -653,7 +657,7 @@ struct goodies {
 	struct bu_list		*vheadp;
 };
 
-/*
+/**
  *			R T _ S U B M O D E L _ W I R E F R A M E _ L E A F
  *
  *  This routine must be prepared to run in parallel.
@@ -700,7 +704,7 @@ HIDDEN union tree *rt_submodel_wireframe_leaf(struct db_tree_state *tsp, struct 
 	return( curtree );
 }
 
-/*
+/**
  *			R T _ S U B M O D E L _ P L O T
  *
  *  Not unlike mged/dodraw.c drawtrees()
@@ -770,7 +774,7 @@ rt_submodel_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct 
 	return ret;
 }
 
-/*
+/**
  *			R T _ S U B M O D E L _ T E S S
  *
  *  Returns -
@@ -789,7 +793,7 @@ rt_submodel_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *i
 	return(-1);
 }
 
-/*
+/**
  *			R T _ S U B M O D E L _ I M P O R T
  *
  *  Import an SUBMODEL from the database format to the internal format.
@@ -851,7 +855,7 @@ bn_mat_print("root2leaf", sip->root2leaf );
 	return(0);			/* OK */
 }
 
-/*
+/**
  *			R T _ S U B M O D E L _ E X P O R T
  *
  *  The name is added by the caller, in the usual place.
@@ -894,7 +898,7 @@ bu_log("rt_submodel_export: '%s'\n", rec->ss.ss_args);
 }
 
 
-/*
+/**
  *			R T _ S U B M O D E L _ I M P O R T 5
  *
  *  Import an SUBMODEL from the database format to the internal format.
@@ -948,7 +952,7 @@ bn_mat_print("root2leaf", sip->root2leaf );
 	return(0);			/* OK */
 }
 
-/*
+/**
  *			R T _ S U B M O D E L _ E X P O R T 5
  *
  *  The name is added by the caller, in the usual place.
@@ -985,7 +989,7 @@ bu_log("rt_submodel_export: '%s'\n", rec->ss.ss_args);
 	return(0);
 }
 
-/*
+/**
  *			R T _ S U B M O D E L _ D E S C R I B E
  *
  *  Make human-readable formatted presentation of this solid.
@@ -1009,7 +1013,7 @@ rt_submodel_describe(struct bu_vls *str, const struct rt_db_internal *ip, int ve
 	return(0);
 }
 
-/*
+/**
  *			R T _ S U B M O D E L _ I F R E E
  *
  *  Free the storage associated with the rt_db_internal version of this solid.

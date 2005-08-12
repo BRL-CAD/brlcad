@@ -18,9 +18,10 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+
+/** \addtogroup libbn */
+/*@{*/
 /** @file scale.c
- *
- *
  *	This routine is intended to take an array of
  * data points as input (either integer, floating, or
  * double), and scale it to fit in a space of LENGTH units.
@@ -39,23 +40,29 @@
  *				of the input array to be scaled.
  *				Actual type of array is determined
  *				by MODE parameter.
+ *
  *	int elements	INPUT	Number of elements in IDATA to be used.
+ *
  *	int mode	INPUT	Specifies type of data that IDATA points
  *				to;  should be one of:
  *					'd' - double precision
  *					'f' - float (single precision)
  *					'i' - integer
+ *
  *	int length	INPUT	Contains the length (in 1/1000ths of an
  *				inch) of the region in which the data is
  *				to be scaled into.  Note that the actual
  *				amount of space needed may be this value
  *				rounded up to the next inch.
+ *
  *	int *odata	OUTPUT	This pointer contains the address of the
  *				output array, which will always be of
  *				integer type.
+ *
  *	double *min	OUTPUT	This pointer contains the address of the
  *				location for minimum point found to be
  *				placed in.
+ *
  *	double *dx	OUTPUT	This pointer addresses the delta value
  *				of the data which corresponds to the width
  *				of EACH tick.
@@ -80,6 +87,8 @@
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  *  
  */
+/*@}*/
+
 #ifndef lint
 static const char RCSid[] = "@(#)$Header$ (ARL)";
 #endif

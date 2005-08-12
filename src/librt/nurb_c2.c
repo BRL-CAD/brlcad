@@ -18,13 +18,10 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file nurb_c2.c
- *
- */
 
-/*	N U R B  _ C 2 . C
- *
- *  Function -
+/** \addtogroup nurb */
+/*@{*/
+/** @file nurb_c2.c
  *	Given parametric u,v values, return the curvature of the
  *	surface.
  *
@@ -37,6 +34,7 @@
  * 	Aberdeen Proving Ground, Maryland 21005
  *
  */
+/*@}*/
 
 #include "common.h"
 

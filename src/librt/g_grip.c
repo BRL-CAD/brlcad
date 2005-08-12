@@ -1,8 +1,7 @@
-/*
- *			G _ G R I P . C
- *  
- *  Function -
- *  	Intersect a ray with a "grip" and return nothing.
+/** \addtogroup g */
+/*@{*/
+/** \file g_grip.c
+ *  Intersect a ray with a "grip" and return nothing.
  *
  *
  *  A GRIP is defiend by a direction normal, a center and a
@@ -21,6 +20,8 @@
  *	This software is Copyright (C) 1993 by Geometric Solutions, Inc.
  *	All rights reserved.
  */
+/*@}*/
+
 #ifndef lint
 static const char RCSgrip[] = "@(#)$Header$ (BRL)";
 #endif
@@ -54,7 +55,7 @@ const struct bu_structparse rt_grp_parse[] = {
 	{ {'\0','\0','\0','\0'}, 0, (char *)NULL, 0, BU_STRUCTPARSE_FUNC_NULL }
 };
 
-/*
+/**
  *  			R T _ G R P _ P R E P
  */
 int
@@ -82,7 +83,7 @@ rt_grp_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 	return 0;		/* OK */
 }
 
-/*
+/**
  *  			R T _ G R P _ P R I N T
  */
 void
@@ -100,7 +101,7 @@ rt_grp_print(register const struct soltab *stp)
 	bu_log( "mag = %f\n", gripp->grip_mag);
 }
 
-/*
+/**
  *			R T _ G R P _ S H O T
  *  
  * Function -
@@ -122,7 +123,7 @@ rt_grp_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 
 #define RT_HALF_SEG_MISS(SEG)	(SEG).seg_stp=RT_SOLTAB_NULL
 
-/*
+/**
  *			R T _ G R P _ V S H O T
  *
  *  Vectorizing version.
@@ -138,7 +139,7 @@ rt_grp_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
 	return;
 }
 
-/*
+/**
  *  			R T _ G R P _ N O R M
  *
  *  Given ONE ray distance, return the normal and entry/exit point.
@@ -149,7 +150,7 @@ rt_grp_norm(register struct hit *hitp, struct soltab *stp, register struct xray 
 {
 	rt_bomb("rt_grp_norm: grips should never be hit.\n");
 }
-/*
+/**
  *			R T _ G R P _ C U R V E
  *
  *  Return the "curvature" of the grip.
@@ -160,7 +161,7 @@ rt_grp_curve(register struct curvature *cvp, register struct hit *hitp, struct s
 	rt_bomb("rt_grp_curve: nobody should be asking for curve of a grip.\n");
 }
 
-/*
+/**
  *  			R T _ G R P _ U V
  *  
  *  For a hit on a face of an HALF, return the (u,v) coordinates
@@ -176,7 +177,7 @@ rt_grp_uv(struct application *ap, struct soltab *stp, register struct hit *hitp,
 	rt_bomb("rt_grp_uv: nobody should be asking for UV of a grip.\n");
 }
 
-/*
+/**
  *			R T _ G R P _ F R E E
  */
 void
@@ -194,7 +195,7 @@ rt_grp_class(void)
 	return(0);
 }
 
-/*
+/**
  *			R T _ G R P _ P L O T
  *
  * We represent a GRIP as a pyramid.  The center describes where
@@ -249,7 +250,7 @@ rt_grp_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 	return(0);
 }
 
-/*
+/**
  *			R T _ G R P _ I M P O R T
  *
  *  Returns -
@@ -305,7 +306,7 @@ rt_grp_import(struct rt_db_internal *ip, const struct bu_external *ep, const fas
 	return 0;			/* OK */
 }
 
-/*
+/**
  *			R T _ G R P _ E X P O R T
  */
 int
@@ -379,7 +380,7 @@ rt_grp_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
 	return 0;		/* OK */
 }
 
-/*
+/**
  *			R T _ G R I P _ E X P O R T 5
  *
  */
@@ -408,7 +409,7 @@ rt_grp_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
 	return 0;
 }
 
-/*
+/**
  *			R T _ G R P _ D E S C R I B E
  *
  *  Make human-readable formatted presentation of this solid.
@@ -438,7 +439,7 @@ rt_grp_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
 	return(0);
 }
 
-/*
+/**
  *			R T _ G R P _ I F R E E
  *
  *  Free the storage associated with the rt_db_internal version of this solid.
@@ -451,7 +452,7 @@ rt_grp_ifree(struct rt_db_internal *ip)
 	ip->idb_ptr = GENPTR_NULL;
 }
 
-/*
+/**
  *			R T _ G R P _ T E S S
  */
 int

@@ -18,8 +18,11 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file parse.c
- *
+
+/** \addtogroup libbu */
+/*@{*/
+
+/** @file ./libbu/parse.c
  *  Routines to assign values to elements of arbitrary structures.
  *  The layout of a structure to be processed is described by
  *  a structure of type "bu_structparse", giving element names, element
@@ -44,6 +47,8 @@
  *	Aberdeen Proving Ground, Maryland  21005
  *  
  */
+/*@}*/
+
 #ifndef lint
 static const char RCSparse[] = "@(#)$Header$ (BRL)";
 #endif

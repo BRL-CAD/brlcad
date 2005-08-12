@@ -18,10 +18,12 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+
+/** \addtogroup ellipsoids */
+
+/*@{*/
 /** @file g_epa.c
- *
- *  Purpose -
- *	Intersect a ray with an Elliptical Paraboloid
+ *	Intersect a ray with an Elliptical Paraboloid.
  *
  *  Algorithm -
  *  
@@ -151,6 +153,8 @@
  *	Aberdeen Proving Ground, Maryland  21005-5066
  *  
  */
+/*@}*/
+
 #ifndef lint
 static const char RCSepa[] = "@(#)$Header$ (BRL)";
 #endif
@@ -193,7 +197,7 @@ const struct bu_structparse rt_epa_parse[] = {
     { {'\0','\0','\0','\0'}, 0, (char *)NULL, 0, BU_STRUCTPARSE_FUNC_NULL }
 };
 
-/*
+/**
  *  			R T _ E P A _ P R E P
  *  
  *  Given a pointer to a GED database record, and a transformation matrix,
@@ -305,7 +309,7 @@ rt_epa_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 	return(0);			/* OK */
 }
 
-/*
+/**
  *			R T _ E P A _ P R I N T
  */
 void
@@ -326,7 +330,7 @@ rt_epa_print(register const struct soltab *stp)
 #define	EPA_NORM_BODY	(1)		/* compute normal */
 #define	EPA_NORM_TOP	(2)		/* copy epa_N */
 
-/*
+/**
  *  			R T _ E P A _ S H O T
  *  
  *  Intersect a ray with a epa.
@@ -453,7 +457,7 @@ check_plates:
 
 #define RT_EPA_SEG_MISS(SEG)	(SEG).seg_stp=RT_SOLTAB_NULL
 
-/*
+/**
  *			R T _ E P A _ V S H O T
  *
  *  Vectorized version.
@@ -469,7 +473,7 @@ rt_epa_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
 	rt_vstub( stp, rp, segp, n, ap );
 }
 
-/*
+/**
  *  			R T _ E P A _ N O R M
  *  
  *  Given ONE ray distance, return the normal and entry/exit point.
@@ -505,7 +509,7 @@ rt_epa_norm(register struct hit *hitp, struct soltab *stp, register struct xray 
 	}
 }
 
-/*
+/**
  *			R T _ E P A _ C U R V E
  *
  *  Return the curvature of the epa.
@@ -558,7 +562,7 @@ rt_epa_curve(register struct curvature *cvp, register struct hit *hitp, struct s
 	}
 }
 
-/*
+/**
  *  			R T _ E P A _ U V
  *  
  *  For a hit on the surface of an epa, return the (u,v) coordinates
@@ -608,7 +612,7 @@ rt_epa_uv(struct application *ap, struct soltab *stp, register struct hit *hitp,
 	uvp->uv_du = uvp->uv_dv = 0;
 }
 
-/*
+/**
  *		R T _ E P A _ F R E E
  */
 void
@@ -621,7 +625,7 @@ rt_epa_free(register struct soltab *stp)
 	bu_free( (char *)epa, "epa_specific" );
 }
 
-/*
+/**
  *			R T _ E P A _ C L A S S
  */
 int
@@ -630,7 +634,7 @@ rt_epa_class(void)
 	return(0);
 }
 
-/*
+/**
  *			R T _ E P A _ P L O T
  */
 int
@@ -924,7 +928,7 @@ rt_ell_norms(register fastf_t *ov, fastf_t *A, fastf_t *B, fastf_t *h_vec, fastf
 }
 
 
-/*
+/**
  *			R T _ E L L
  *
  *  Generate an ellipsoid with the specified number of sides approximating it.
@@ -946,7 +950,7 @@ rt_ell(register fastf_t *ov, register const fastf_t *V, const fastf_t *A, const 
 	VMOVE(ELLOUT(n), ELLOUT(1));
 }
 
-/*
+/**
  *	R T _ E L L _ A N G
  *
  *	Return angle required for smallest side to fall within
@@ -988,7 +992,7 @@ rt_ell_ang(fastf_t *p1, fastf_t a, fastf_t b, fastf_t dtol, fastf_t ntol)
 			/ ( MAGNITUDE(p0) * MAGNITUDE(p1) ) ));
 }
 
-/*
+/**
  *			R T _ E P A _ T E S S
  *
  *  Returns -
@@ -1448,7 +1452,7 @@ fail:
 	return(-1);
 }
 
-/*
+/**
  *			R T _ E P A _ I M P O R T
  *
  *  Import an EPA from the database format to the internal format.
@@ -1494,7 +1498,7 @@ rt_epa_import(struct rt_db_internal *ip, const struct bu_external *ep, register 
 	return(0);			/* OK */
 }
 
-/*
+/**
  *			R T _ E P A _ E X P O R T
  *
  *  The name is added by the caller, in the usual place.
@@ -1553,7 +1557,7 @@ rt_epa_export(struct bu_external *ep, const struct rt_db_internal *ip, double lo
 	return(0);
 }
 
-/*
+/**
  *			R T _ E P A _ I M P O R T 5
  *
  *  Import an EPA from the database format to the internal format.
@@ -1599,7 +1603,7 @@ rt_epa_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
 	return(0);			/* OK */
 }
 
-/*
+/**
  *			R T _ E P A _ E X P O R T 5
  *
  *  The name is added by the caller, in the usual place.
@@ -1657,7 +1661,7 @@ rt_epa_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
 	return(0);
 }
 
-/*
+/**
  *			R T _ E P A _ D E S C R I B E
  *
  *  Make human-readable formatted presentation of this solid.
@@ -1696,7 +1700,7 @@ rt_epa_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
 	return(0);
 }
 
-/*
+/**
  *			R T _ E P A _ I F R E E
  *
  *  Free the storage associated with the rt_db_internal version of this solid.

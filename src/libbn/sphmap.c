@@ -18,8 +18,11 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+
+/** \addtogroup libbn */
+/*@{*/
+
 /** @file sphmap.c
- *
  *  Common Subroutines for Spherical Data Structures/Texture Maps Subroutines
  *
  *  Author -
@@ -31,6 +34,8 @@
  *	Aberdeen Proving Ground, Maryland  21005-5066
  *  
  */
+/*@}*/
+
 #ifndef lint
 static const char RCSid[] = "@(#)$Header$ (BRL)";
 #endif

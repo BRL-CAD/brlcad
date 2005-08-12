@@ -18,8 +18,11 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+
+/** \addtogroup librt */
+/*@{*/
+
 /** @file vshoot.c
- *
  *  EXPERIMENTAL vector version of the
  * Ray Tracing program shot coordinator.
  *
@@ -32,6 +35,8 @@
  *	Aberdeen Proving Ground, Maryland  21005
  *  
  */
+/*@}*/
+
 #ifndef lint
 static const char RCSshoot[] = "@(#)$Header$ (BRL)";
 #endif

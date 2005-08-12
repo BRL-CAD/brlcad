@@ -18,8 +18,10 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+
+/** \addtogroup libbu */
+/*@{*/
 /** @file semaphore.c
- *
  *  Machine-specific routines for parallel processing.
  *  Primarily for handling semaphores for critical sections.
  *
@@ -40,6 +42,8 @@
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  *  
  */
+/*@}*/
+
 #ifndef lint
 static const char RCSsemaphore[] = "@(#)$Header$ (ARL)";
 #endif

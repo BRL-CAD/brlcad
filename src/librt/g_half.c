@@ -18,10 +18,12 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+
+/** \addtogroup g */
+
+/*@{*/
 /** @file g_half.c
- *  
- *  Function -
- *  	Intersect a ray with a Halfspace
+ *  Intersect a ray with a Halfspace.
  *
  *
  *  A HALFSPACE is defined by an outward pointing normal vector,
@@ -49,6 +51,8 @@
  *	Aberdeen Proving Ground, Maryland  21005
  *  
  */
+/*@}*/
+
 #ifndef lint
 static const char RCShalf[] = "@(#)$Header$ (BRL)";
 #endif
@@ -79,7 +83,7 @@ const struct bu_structparse rt_hlf_parse[] = {
     { "%f", 1, "d", offsetof(struct rt_half_internal, eqn[3]), BU_STRUCTPARSE_FUNC_NULL },
     { {'\0','\0','\0','\0'}, 0, (char *)NULL, 0, BU_STRUCTPARSE_FUNC_NULL }
 };
-/*
+/**
  *  			R T _ H L F _ P R E P
  */
 int
@@ -119,7 +123,7 @@ rt_hlf_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 	return(0);		/* OK */
 }
 
-/*
+/**
  *  			R T _ H L F _ P R I N T
  */
 void
@@ -138,7 +142,7 @@ rt_hlf_print(register const struct soltab *stp)
 	VPRINT( "Ybase", halfp->half_Ybase );
 }
 
-/*
+/**
  *			R T _ H L F _ S H O T
  *  
  * Function -
@@ -200,7 +204,7 @@ rt_hlf_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 
 #define RT_HALF_SEG_MISS(SEG)	(SEG).seg_stp=RT_SOLTAB_NULL
 
-/*
+/**
  *			R T _ H L F _ V S H O T
  *
  *  This is the Becker vector version
@@ -254,7 +258,7 @@ rt_hlf_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
 	}
 }
 
-/*
+/**
  *  			R T _ H L F _ N O R M
  *
  *  Given ONE ray distance, return the normal and entry/exit point.
@@ -289,7 +293,7 @@ rt_hlf_norm(register struct hit *hitp, struct soltab *stp, register struct xray 
 	}
 }
 
-/*
+/**
  *			R T _ H L F _ C U R V E
  *
  *  Return the "curvature" of the halfspace.
@@ -306,7 +310,7 @@ rt_hlf_curve(register struct curvature *cvp, register struct hit *hitp, struct s
 	cvp->crv_c1 = cvp->crv_c2 = 0;
 }
 
-/*
+/**
  *  			R T _ H L F _ U V
  *  
  *  For a hit on a face of an HALF, return the (u,v) coordinates
@@ -381,7 +385,7 @@ rt_hlf_uv(struct application *ap, struct soltab *stp, register struct hit *hitp,
 	}
 }
 
-/*
+/**
  *			R T _ H L F _ F R E E
  */
 void
@@ -393,7 +397,7 @@ rt_hlf_free(struct soltab *stp)
 	bu_free( (char *)halfp, "half_specific");
 }
 
-/*
+/**
  *			R T _ H L F _ C L A S S
  *
  *  Classify this halfspace against a bounding RPP.
@@ -419,7 +423,7 @@ rt_hlf_class(register const struct soltab *stp, const fastf_t *min, const fastf_
 	return bn_hlf_class( halfp->half_eqn, min, max, tol );
 }
 
-/*
+/**
  *			R T _ H L F _ P L O T
  *
  *  The representation of a halfspace is an OUTWARD pointing
@@ -477,7 +481,7 @@ rt_hlf_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 	RT_ADD_VLIST( vhead, tip, BN_VLIST_LINE_DRAW );
 	return(0);
 }
-/*
+/**
  *			H A L F _ X F O R M
  *
  *  Returns -
@@ -538,7 +542,7 @@ rt_hlf_xform(
 	}
 	return 0;
 }
-/*
+/**
  *			H A L F _ I M P O R T
  *
  *  Returns -
@@ -601,7 +605,7 @@ rt_hlf_import(struct rt_db_internal *ip, const struct bu_external *ep, const fas
 	return(0);			/* OK */
 }
 
-/*
+/**
  *			R T _ H L F _ E X P O R T
  */
 int
@@ -628,7 +632,7 @@ rt_hlf_export(struct bu_external *ep, const struct rt_db_internal *ip, double lo
 	return(0);
 }
 
-/*
+/**
  *			R T _ H L F _ I M P O R T 5
  */
 int
@@ -683,7 +687,7 @@ rt_hlf_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
 	return(0);			/* OK */
 }
 
-/*
+/**
  *		R T _ H A L F _ E X P O R T 5
  */
 int
@@ -714,7 +718,7 @@ rt_hlf_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
 	return 0;
 }
 
-/*
+/**
  *			R T _ H L F _ D E S C R I B E
  *
  *  Make human-readable formatted presentation of this solid.
@@ -739,7 +743,7 @@ rt_hlf_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
 	return(0);
 }
 
-/*
+/**
  *			R T _ H L F _ I F R E E
  *
  *  Free the storage associated with the rt_db_internal version of this solid.
@@ -752,7 +756,7 @@ rt_hlf_ifree(struct rt_db_internal *ip)
 	ip->idb_ptr = GENPTR_NULL;
 }
 
-/*
+/**
  *			R T _ H L F _ T E S S
  */
 int

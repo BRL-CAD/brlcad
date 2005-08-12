@@ -18,10 +18,12 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+
+/** \addtogroup g */
+
+/*@{*/
 /** @file g_sketch.c
- *
- *  Purpose -
- *	Provide support for 2D sketches
+ *	Provide support for 2D sketches.
  *
  * Adding a new solid type:
  *	Design disk record
@@ -53,6 +55,8 @@
  *	Aberdeen Proving Ground, Maryland  21005-5066
  *  
  */
+/*@}*/
+
 #ifndef lint
 static const char RCSsketch[] = "@(#)$Header$ (BRL)";
 #endif
@@ -146,7 +150,7 @@ rt_check_curve(struct curve *crv, struct rt_sketch_internal *skt, int noisey)
 	return( ret );
 }
 
-/*
+/**
  *  			R T _ S K E T C H _ P R E P
  *  
  *  Given a pointer to a GED database record, and a transformation matrix,
@@ -168,7 +172,7 @@ rt_sketch_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 	return( 0 );
 }
 
-/*
+/**
  *			R T _ S K E T C H _ P R I N T
  */
 void
@@ -176,7 +180,7 @@ rt_sketch_print(register const struct soltab *stp)
 {
 }
 
-/*
+/**
  *  			R T _ S K E T C H _ S H O T
  *  
  *  Intersect a ray with a sketch.
@@ -195,7 +199,7 @@ rt_sketch_shot(struct soltab *stp, register struct xray *rp, struct application 
 
 #define RT_SKETCH_SEG_MISS(SEG)	(SEG).seg_stp=RT_SOLTAB_NULL
 
-/*
+/**
  *			R T _ S K E T C H _ V S H O T
  *
  *  Vectorized version.
@@ -211,7 +215,7 @@ rt_sketch_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, 
 	rt_vstub( stp, rp, segp, n, ap );
 }
 
-/*
+/**
  *  			R T _ S K E T C H _ N O R M
  *  
  *  Given ONE ray distance, return the normal and entry/exit point.
@@ -223,7 +227,7 @@ rt_sketch_norm(register struct hit *hitp, struct soltab *stp, register struct xr
 	VJOIN1( hitp->hit_point, rp->r_pt, hitp->hit_dist, rp->r_dir );
 }
 
-/*
+/**
  *			R T _ S K E T C H _ C U R V E
  *
  *  Return the curvature of the sketch.
@@ -237,7 +241,7 @@ rt_sketch_curve(register struct curvature *cvp, register struct hit *hitp, struc
  	bn_vec_ortho( cvp->crv_pdir, hitp->hit_normal );
 }
 
-/*
+/**
  *  			R T _ S K E T C H _ U V
  *  
  *  For a hit on the surface of an sketch, return the (u,v) coordinates
@@ -250,7 +254,7 @@ rt_sketch_uv(struct application *ap, struct soltab *stp, register struct hit *hi
 {
 }
 
-/*
+/**
  *		R T _ S K E T C H _ F R E E
  */
 void
@@ -258,7 +262,7 @@ rt_sketch_free(register struct soltab *stp)
 {
 }
 
-/*
+/**
  *			R T _ S K E T C H _ C L A S S
  */
 int
@@ -687,7 +691,7 @@ seg_to_vlist(struct bu_list *vhead, const struct rt_tess_tol *ttol, fastf_t *V, 
 	return( ret );
 }
 
-/*
+/**
  *			C U R V E _ T O _ V L I S T
  */
 int
@@ -716,7 +720,7 @@ curve_to_vlist(struct bu_list *vhead, const struct rt_tess_tol *ttol, fastf_t *V
 	return( ret );
 }
 
-/*
+/**
  *			R T _ S K E T C H _ P L O T
  */
 int
@@ -740,7 +744,7 @@ rt_sketch_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt
 	return( myret );
 }
 
-/*
+/**
  *			R T _ S K E T C H _ T E S S
  *
  *  Returns -
@@ -753,7 +757,7 @@ rt_sketch_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip,
 	return(-1);
 }
 
-/*
+/**
  *			R T _ S K E T C H _ I M P O R T
  *
  *  Import an SKETCH from the database format to the internal format.
@@ -915,7 +919,7 @@ rt_sketch_import(struct rt_db_internal *ip, const struct bu_external *ep, regist
 	return(0);			/* OK */
 }
 
-/*
+/**
  *			R T _ S K E T C H _ E X P O R T
  *
  *  The name is added by the caller, in the usual place.
@@ -1106,7 +1110,7 @@ rt_sketch_export(struct bu_external *ep, const struct rt_db_internal *ip, double
 }
 
 
-/*
+/**
  *			R T _ S K E T C H _ I M P O R T 5
  *
  *  Import an SKETCH from the database format to the internal format.
@@ -1268,7 +1272,7 @@ rt_sketch_import5(struct rt_db_internal *ip, const struct bu_external *ep, regis
 	return(0);			/* OK */
 }
 
-/*
+/**
  *			R T _ S K E T C H _ E X P O R T 5
  *
  *  The name is added by the caller, in the usual place.
@@ -1461,7 +1465,7 @@ rt_sketch_export5(struct bu_external *ep, const struct rt_db_internal *ip, doubl
 
 
 
-/*
+/**
  *			R T _ S K E T C H _ D E S C R I B E
  *
  *  Make human-readable formatted presentation of this solid.
@@ -1730,7 +1734,7 @@ rt_curve_free(struct curve *crv)
 	crv->segments = (genptr_t)NULL;
 }
 
-/*
+/**
  *			R T _ S K E T C H _ I F R E E
  *
  *  Free the storage associated with the rt_db_internal version of this solid.

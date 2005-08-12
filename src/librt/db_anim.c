@@ -18,8 +18,11 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+
+/** \addtogroup db */
+
+/*@{*/
 /** @file db_anim.c
- *
  *  Routines to apply animation directives to geometry database.
  *
  *  Author -
@@ -31,6 +34,8 @@
  *	Aberdeen Proving Ground, Maryland  21005-5066
  *  
  */
+/*@}*/
+
 #ifndef lint
 static const char RCSanim[] = "@(#)$Header$ (BRL)";
 #endif
@@ -51,7 +56,7 @@ static const char RCSanim[] = "@(#)$Header$ (BRL)";
 #include "./debug.h"
 
 
-/*
+/**
  *			D B _ A D D _ A N I M
  *
  *  Add a user-supplied animate structure to the end of the chain of such
@@ -104,7 +109,7 @@ static char	*db_anim_matrix_strings[] = {
 	"eh?"
 };
 
-/*
+/**
  *			D B _ D O _ A N I M
  *
  *  Perform the one animation operation.
@@ -233,7 +238,7 @@ db_do_anim(register struct animate *anp, mat_t stack, mat_t arc, struct mater_in
 	return(0);				/* OK */
 }
 
-/*
+/**
  *			D B _ F R E E _ 1 A N I M
  *
  *  Free one animation structure
@@ -253,7 +258,7 @@ db_free_1anim( struct animate *anp )
 	bu_free( (char *)anp, "animate");
 }
 
-/*
+/**
  *			D B _ F R E E _ A N I M
  *
  *  Release chain of animation structures
@@ -295,7 +300,7 @@ db_free_anim(register struct db_i *dbip)
 	}
 }
 
-/*
+/**
  *			D B _ P A R S E _ 1 A N I M
  *
  *  Parse one "anim" type command into an "animate" structure.
@@ -435,7 +440,7 @@ bad:
 	return (struct animate *)NULL;
 }
 
-/*
+/**
  *			D B _ P A R S E _ A N I M
  *
  *  A common parser for mged and rt.

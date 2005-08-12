@@ -18,10 +18,12 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+
+/** \addtogroup g */
+
+/*@{*/
 /** @file g_bot.c
- *
- *  Purpose -
- *	Intersect a ray with a bag o' triangles
+ *	Intersect a ray with a bag o' triangles.
  *
  *  Authors -
  *  	John R. Anderson
@@ -30,6 +32,8 @@
  *	Aberdeen Proving Ground, Maryland  21005-5066
  *  
  */
+/*@}*/
+
 #ifndef lint
 static const char RCSbot[] = "@(#)$Header$ (BRL)";
 #endif
@@ -135,7 +139,7 @@ rt_botface_w_normals(struct soltab	*stp,
 #undef ONE_OVER_SCALE
 					
 
-/*
+/**
  *			R T _ B O T F A C E
  *
  *  This function is called with pointers to 3 points,
@@ -195,7 +199,7 @@ rt_bot_prep_pieces(struct bot_specific	*bot,
 	}
 }
 
-/*
+/**
  *  			R T _ B O T _ P R E P
  *  
  *  Given a pointer to a GED database record, and a transformation matrix,
@@ -227,7 +231,7 @@ rt_bot_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 	}
 }
 
-/*
+/**
  *			R T _ B O T _ P R I N T
  */
 void
@@ -269,7 +273,7 @@ rt_bot_unoriented_segs(struct hit		*hits,
 
 
 
-/*
+/**
  *			R T _ B O T _ M A K E S E G S
  *
  *  Given an array of hits, make segments out of them.
@@ -292,7 +296,7 @@ rt_bot_makesegs(struct hit *hits, int nhits, struct soltab *stp, struct xray *rp
     }
 }
 
-/*
+/**
  *  			R T _ B O T _ S H O T
  *  
  *  Intersect a ray with a bot.
@@ -319,7 +323,7 @@ rt_bot_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 	}
 }
 
-/*
+/**
  *			R T _ B O T _ P I E C E _ S H O T
  *
  *  Intersect a ray with a list of "pieces" of a BoT.
@@ -349,7 +353,7 @@ rt_bot_piece_shot(struct rt_piecestate *psp, struct rt_piecelist *plp, double di
 	}
 }
 
-/*
+/**
  *			R T _ B O T _ P I E C E _ H I T S E G S
  */
 void
@@ -368,7 +372,7 @@ rt_bot_piece_hitsegs(struct rt_piecestate *psp, struct seg *seghead, struct appl
 
 #define RT_BOT_SEG_MISS(SEG)	(SEG).seg_stp=RT_SOLTAB_NULL
 
-/*
+/**
  *			R T _ B O T _ V S H O T
  *
  *  Vectorized version.
@@ -384,7 +388,7 @@ rt_bot_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
 	rt_vstub( stp, rp, segp, n, ap );
 }
 
-/*
+/**
  *  			R T _ B O T _ N O R M
  *  
  *  Given ONE ray distance, return the normal and entry/exit point.
@@ -401,7 +405,7 @@ rt_bot_norm(register struct hit *hitp, struct soltab *stp, register struct xray 
 	}
 }
 
-/*
+/**
  *			R T _ B O T _ C U R V E
  *
  *  Return the curvature of the bot.
@@ -416,7 +420,7 @@ rt_bot_curve(register struct curvature *cvp, register struct hit *hitp, struct s
 	cvp->crv_c1 = cvp->crv_c2 = 0;
 }
 
-/*
+/**
  *  			R T _ B O T _ U V
  *  
  *  For a hit on the surface of an bot, return the (u,v) coordinates
@@ -429,7 +433,7 @@ rt_bot_uv(struct application *ap, struct soltab *stp, register struct hit *hitp,
 {
 }
 
-/*
+/**
  *		R T _ B O T _ F R E E
  */
 void
@@ -445,7 +449,7 @@ rt_bot_free(register struct soltab *stp)
 	}
 }
 
-/*
+/**
  *			R T _ B O T _ C L A S S
  */
 int
@@ -454,7 +458,7 @@ rt_bot_class(const struct soltab *stp, const fastf_t *min, const fastf_t *max, c
 	return RT_CLASSIFY_UNIMPLEMENTED;
 }
 
-/*
+/**
  *			R T _ B O T _ P L O T
  */
 int
@@ -478,7 +482,7 @@ rt_bot_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 	return(0);
 }
 
-/*
+/**
  *			R T _ B O T _ P L O T _ P O L Y
  */
 int
@@ -533,7 +537,7 @@ rt_bot_plot_poly(struct bu_list *vhead, struct rt_db_internal *ip, const struct 
 	return(0);
 }
 
-/*
+/**
  *			R T _ B O T _ T E S S
  *
  *  Returns -
@@ -631,7 +635,7 @@ rt_bot_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	return( 0 );
 }
 
-/*
+/**
  *			R T _ B O T _ I M P O R T
  *
  *  Import an BOT from the database format to the internal format.
@@ -708,7 +712,7 @@ rt_bot_import(struct rt_db_internal *ip, const struct bu_external *ep, register 
 	return(0);			/* OK */
 }
 
-/*
+/**
  *			R T _ B O T _ E X P O R T
  *
  *  The name is added by the caller, in the usual place.
@@ -816,7 +820,7 @@ rt_bot_export(struct bu_external *ep, const struct rt_db_internal *ip, double lo
 	return(0);
 }
 
-/*
+/**
  *			R T _ B O T _ I M P O R T 5
  */
 int
@@ -929,7 +933,7 @@ rt_bot_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
 	return(0);			/* OK */
 }
 
-/*
+/**
  *			R T _ B O T _ E X P O R T 5
  */
 int
@@ -1042,7 +1046,7 @@ rt_bot_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
 	return 0;
 }
 
-/*
+/**
  *			R T _ B O T _ D E S C R I B E
  *
  *  Make human-readable formatted presentation of this solid.
@@ -1169,7 +1173,7 @@ rt_bot_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
 	return(0);
 }
 
-/*
+/**
  *			R T _ B O T _ I F R E E
  *
  *  Free the storage associated with the rt_db_internal version of this solid.
@@ -1335,7 +1339,8 @@ rt_bot_edge_in_list( const int v1, const int v2, const int edge_list[], const in
 	return( 0 );
 }
 
-/* This routine finds the edge closest to the 2D point "pt2", and returns the edge as two
+/** This routine finds the edge closest to the 2D point "pt2", and 
+ * returns the edge as two
  * vertex indices (vert1 and vert2). These vertices are ordered (closest to pt2 is first)
  */
 int
@@ -1486,7 +1491,7 @@ static char *los[]={
 	"append"
 };
 
-/*
+/**
  *			R T _ B O T _ T C L G E T
  *
  *  Examples -
@@ -1848,7 +1853,7 @@ rt_bot_tclget(Tcl_Interp *interp, const struct rt_db_internal *intern, const cha
 	return( status );
 }
 
-/*
+/**
  *			R T _ B O T _ T C L A D J U S T
  *
  * Examples - 
@@ -2467,7 +2472,7 @@ rt_bot_tclform( const struct rt_functab *ftp, Tcl_Interp *interp)
  *
  *************************************************************************/
 
-/*	This routine adjusts the vertex pointers in each face so that 
+/**	This routine adjusts the vertex pointers in each face so that 
  *	pointers to duplicate vertices end up pointing to the same vertex.
  *	The unused vertices are removed.
  *	Returns the number of vertices fused.
@@ -2647,7 +2652,7 @@ rt_bot_face_fuse( struct rt_bot_internal *bot )
 	return( count );
 }
 
-/*
+/**
  *
  *
  *  Get rid of unused verticies
@@ -2791,7 +2796,8 @@ Add_unique_verts( int *piece_verts, int *v )
 }
 
 
-/*	This routine sorts the faces of the BOT such that when they are taken in groups of "tris_per_piece",
+/**	This routine sorts the faces of the BOT such that when they are taken 
+in groups of "tris_per_piece",
  *	each group (piece) will consist of adjacent faces
  */
 int
@@ -3128,7 +3134,7 @@ delete_edge( int v1, int v2, struct bot_edge **edges )
 	}
 }
 
-/*
+/**
  *			D E C I M A T E _ E D G E
  *
  *	Routine to perform the actual edge decimation step
@@ -3296,7 +3302,7 @@ decimate_edge( int v1, int v2, struct bot_edge **edges, int num_edges, int *face
 	return 2;
 }
 
-/*
+/**
  *				E D G E _ C A N _ B E _ D E C I M A T E D
  *
  *	Routine to determine if the specified edge can be eliminated within the given constraints
@@ -3468,7 +3474,7 @@ edge_can_be_decimated( struct rt_bot_internal *bot,
 }
 
 
-/*
+/**
  *				R T _ B O T _ D E C I M A T E
  *
  *	routine to reduce the number of triangles in a BOT by edges decimation

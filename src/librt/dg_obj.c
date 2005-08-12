@@ -18,8 +18,10 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+
+/** \addtogroup librt */
+/*@{*/
 /** @file dg_obj.c
- *
  * A drawable geometry object contains methods and attributes
  * for preparing geometry that is ready (i.e. vlists) for
  * display. Much of this code was extracted from MGED and modified
@@ -37,6 +39,7 @@
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
+/*@}*/
 #include "common.h"
 
 #include <stdio.h>

@@ -18,8 +18,10 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+
+/** \addtogroup libbu */
+/*@{*/
 /** @file log.c
- *
  *  BRL-CAD support library, error logging routine.
  *  Note that the user may provide his own logging routine,
  *  by replacing these functions.  That is why this is in file of it's own.
@@ -44,6 +46,8 @@
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  *  
  */
+/*@}*/
+
 #ifndef lint
 static const char RCSlog[] = "@(#)$Header$ (ARL)";
 #endif

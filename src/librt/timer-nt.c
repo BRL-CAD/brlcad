@@ -18,11 +18,14 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+
+/** \addtogroup librt */
+/*@{*/
 /** @file timer-nt.c
- *
- * Function -
- *	To provide timing information on Microsoft Windows NT.
+ * To provide timing information on Microsoft Windows NT.
  */
+/*@}*/
+
 #ifndef lint
 static const char RCStimer_nt[] = "@(#)$Header$ (BRL)";
 #endif

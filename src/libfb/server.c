@@ -18,8 +18,11 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+
+/** \addtogroup libfb */
+/*@{*/
+
 /** @file server.c
- *
  *  Remote libfb server event handlers (originally rfbd).
  *
  *  Authors -
@@ -30,6 +33,9 @@
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
+/*@}*/
+
+
 #ifndef lint
 static const char RCSid[] = "@(#)$Header$ (ARL)";
 #endif
@@ -70,7 +76,8 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
  * Package Handlers defined in this file.
  */
 void	fb_server_got_unknown(struct pkg_conn *pcp, char *buf);	/* foobar message handler */
-void	fb_server_fb_open(struct pkg_conn *pcp, char *buf), fb_server_fb_close(struct pkg_conn *pcp, char *buf), fb_server_fb_clear(struct pkg_conn *pcp, char *buf), fb_server_fb_read(struct pkg_conn *pcp, char *buf), fb_server_fb_write(struct pkg_conn *pcp, char *buf);
+void	fb_server_fb_open(struct pkg_conn *pcp, char *buf), fb_server_fb_close(struct pkg_conn *pcp, char *buf), fb_server_fb_clear(struct pkg_conn *pcp, char *buf), fb_server_fb_read(struct pkg_conn *pcp, char *buf), fb_server_fb_write(struct pkg_conn *pcp,
+ char *buf);
 void	fb_server_fb_cursor(struct pkg_conn *pcp, char *buf), fb_server_fb_getcursor(struct pkg_conn *pcp, char *buf);
 void	fb_server_fb_rmap(struct pkg_conn *pcp, char *buf), fb_server_fb_wmap(struct pkg_conn *pcp, char *buf);
 void	fb_server_fb_help(struct pkg_conn *pcp, char *buf);
