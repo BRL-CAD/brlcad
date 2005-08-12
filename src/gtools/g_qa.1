@@ -39,14 +39,12 @@ This is the value the to which the \fIGIFTmater\fR attribute will be set to sele
 .B A floating point density value.
 This is the density for the material, and is specified in \fBgrams/cc\fR. 
 .IP
-.B An optional name string
+.B A name string
 This is a name or description the material.
 .in -5
 .P
 An example file might look like the following:
 .IP
-1	7.84		Carbon Steel
-.br
 2	7.82		Carbon Tool Steel
 .br
 3	2.7		Aluminum, 6061-T6
@@ -62,14 +60,31 @@ An example file might look like the following:
 8	7.47		Stainless 27Cr
 .br
 9	7.715		Steel, tool
+.br
+10	7.84		Carbon Steel
 .P
 The table is typically created in an external file using a text editor.  
-Validation of the table is typically performed using the external file (see the 
+
+The geometry editor MGED automatically assigns an index value of 
+.B 1
+to a newly created region.
+While this default can be handy when a vast majority of objects are made from the same
+material, it can lead to surprising errors when objects which are supposed to have a 
+certain weight are computed to have different weight because one or two regions 
+were not set to the correct, non-default index value.  As a result, it is advised that the index value 
+.B 1
+never be used.  If this practice is followed, then an error message will be generated for any 
+regions which have not had their material index set to something other than the default.
+.P
+The user will typically want to run g_qa and verify the results using the 
 .I \-f
-option below).
-The file is imported to the database as the binary object
-.B _DENSITIES
-when complete.  To import the text file into the database, the following comand is used:
+option (see below)
+before importing the table into the database.  
+For example, if a material index is left out of the table, 
+it is easier to rectify the situation using the external file. 
+Once the table has been verified as correct and complete, it is imported to the database as the binary object
+\fB_DENSITIES\fR.
+To import the text file into the database, the following comand is used:
 .IP
 mged>
 .B dbbinary \-i u c _DENSITIES 
@@ -148,9 +163,9 @@ Two objects must overlap by at least
 (see the
 .B \-t
 option below)
-to be considered to overlap.  Overlap testing never causes the grid spacing to
-be refined, so it is important to specify the desired spacing for the initial
-grid.  See the 
+to be considered to overlap.  Overlap testing causes the grid spacing to
+be refined until the limit is reached, or an overlap is detected.
+See the 
 .B \-g 
 option below for details on setting the grid spacing.
 
@@ -200,6 +215,9 @@ If units are not provided, millimeters are presumed to be the units.
 .IP
 The default values are 50.0 mm and 0.5 mm, which is equivalent to specifying: 
 .B \-g 50.0mm,0.5mm
+on the command line.
+Note that this is a hard limit.  If other analysis constraints are not met, the grid spacing will never be refined smaller than the minimum grid size to satisfy another constraint.
+
 .TP
 .B \-G
 .br
@@ -249,9 +267,12 @@ Note that specifying more CPUs than are present on the machine does not increase
 the number of computation threads.  
 .TP
 .B \-r
+.br
+.B Not implemented.
+.br
 Indicates that 
 .I g_qa
-should print per-region statistics (weight, volume) as well as the values for the objects specified on the command line.
+should print per-region statistics for weight and volume as well as the values for the objects specified on the command line.
 .TP
 .B \-S \fR\fIsamples_per_model_axis\fR
 Specifies that the grid spacing will be initially refined so that at least
@@ -271,17 +292,15 @@ which indicates whether regions which are marked as "air" should be retained and
 The 
 .B \-U 0
 option causes air regions to be discarded prior to raytracing.
-Note that you probably don't want to turn off use_air when asking for various air checking analysis such as 
-.B Air First/Last
-or 
-.B Contiguous unlike air
+If you turn off use_air, and request any analysis that requires it (see
+.I \-A
+above) then the program will exit with an error message.
 .TP
-.B \-u \fR\fIdist,vol,wgt\fR
-Specify the units used when reporting values.  Values are provided in the order 
-\fIdistance\fR, \fIvolume\fR, and \fIweight\fR separated by commas.  For example:
+.B \-u \fR\fIdistane,volume,weight\fR
+Specify the units used when reporting values.  Values must be comma delimited and provided in the order 
+\fIdistance\fR,\fIvolume\fR,\fIweight\fR.  For example:
 .B \-u ``cm,cu ft,kg''
-or
-.B \-u ,,kg
+or \fB\-u ,,kg\fR (the latter example sets only the weight units).
 Note that unit values with spaces in their names such as
 .I cu ft
 must be contained in quotes for the shell to keep the values together.
@@ -320,8 +339,104 @@ and reports the weight and volume, and checks for overlaps.
 .IP
 g_qa model.g wheel.r
 .P
-To check objects hull, turret, and suspension for overlaps only,
-and to report overlaps and occurence of exposed air.
+The following will check objects hull, turret, and suspension for overlaps
+and report exposed air.  
+The grid starts at 1 cm and is refined to 1mm unless overlaps or exposed air is detected
+before the grid is refined to 1mm
+
 .IP
-g_qa -A oe model.g hull turret suspension 
+g_qa -g 1cm,1mm -A oe model.g hull turret suspension 
 .P
+The following computes volume and weight of hull, turret, and suspension.  Results are reported in cubic centimeters (cc) and ounces (oz).  The grid spacing starts at 5in and will not be refined below 0.3mm spacing.
+.IP
+g_qa -g5in,0.3mm -Avw -u ft,cc,oz test.g hull turret suspension
+.P
+For an example of each independent analysis type, consider the following:
+.IP
+.nf
+%\fB echo "5 7.68 stuff" > density_table.txt\fR
+%\fB mged -c geometry.g << EOF > /dev/null 2>&1
+units m
+dbbinary -i u c _DENSITIES density_table.txt
+
+in box1.s rpp 0 10 0 10 0 10
+in box2.s rpp 1  9 1  9 1  9
+in box3.s rpp 1 10 1  9 1  9
+in box4.s rpp 0.5  9.5 0.5  5 0.5  9.5
+
+r closed_box.r u box1.s - box2.s
+adjust closed_box.r GIFTmater 5
+mater closed_box.r "plastic tr=0.5 di=0.5 sp=0.5" 128 128 128 0
+
+r open_box.r u box1.s - box3.s
+mater open_box.r "plastic tr=0.5 di=0.5 sp=0.5" 128 128 128 0
+
+
+r exposed_air.r u box3.s
+adjust exposed_air.r air 2
+mater exposed_air.r  "plastic tr=0.8 di=0.1 sp=0.1" 255 255 128 0
+g exposed_air.g exposed_air.r open_box.r
+
+r adj_air1.r u box2.s + box4.s
+r adj_air2.r u box2.s - box4.s
+adjust adj_air1.r air 3
+adjust adj_air2.r air 4
+mater adj_air1.r  "plastic tr=0.5 di=0.1 sp=0.1" 255 128 128  0
+mater adj_air2.r  "plastic tr=0.5 di=0.1 sp=0.1" 128 128 255 0
+g adj_air.g closed_box.r adj_air1.r adj_air2.r
+
+g gap.g closed_box.r adj_air2.r
+
+r overlap_obj.r u box3.s
+g overlaps closed_box.r overlap_obj.r
+
+q
+EOF\fR
+
+% \fBg_qa -u m,m^3,kg -Ao geometry.g overlaps\fR
+Units:
+ length: m volume: m^3 weight: kg
+grid spacing 50mm  199 x 199 x 199
+Summary:
+list Overlaps:
+/overlaps/overlap_obj.r /overlaps/closed_box.r count:32039 dist:8m (9050 1000 1000)
+
+% \fBg_qa -u m,m^3,kg -Ae geometry.g exposed_air.g\fR
+Units:
+ length: m volume: m^3 weight: kg
+grid spacing 50mm  199 x 199 x 199
+Summary:
+list Exposed Air:
+/exposed_air.g/exposed_air.r count:25921 dist:9m (10000 1000 1000)
+
+% \fBg_qa -u m,m^3,kg -Ag geometry.g gap.g\fR
+Units:
+ length: m volume: m^3 weight: kg
+grid spacing 50mm  199 x 199 x 199
+Summary:
+list Gaps:
+/gap.g/closed_box.r /gap.g/closed_box.r count:26082 dist:8m (9000 1000 1000)
+/gap.g/adj_air2.r /gap.g/closed_box.r count:25921 dist:4m (1000 5000 1000)
+
+% \fBg_qa -u m,m^3,kg -Av geometry.g closed_box.r\fR
+Units:
+ length: m volume: m^3 weight: kg
+setting volume tolerance to 1 m^3
+grid spacing 50mm  199 x 199 x 199
+grid spacing 25mm  399 x 399 x 399
+grid spacing 12.5mm  799 x 799 x 799
+Summary:
+        closed_box.r  484.195 m^3
+  Average total volume: 488.327 m^3
+
+% \fBg_qa -u m,m^3,kg -Aw geometry.g closed_box.r\fR
+Units:
+ length: m volume: m^3 weight: kg
+setting weight tolerance to 768000 kg
+grid spacing 50mm  199 x 199 x 199
+Summary:
+Weight:
+        closed_box.r  3.6375e+06 kg
+  Average total weight: 3.67541e+06 kg
+
+.fi
