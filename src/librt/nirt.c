@@ -109,13 +109,13 @@ dgo_nirt_cmd(struct dg_obj	*dgop,
 	HANDLE pipe_in[2],hSaveStdin,pipe_inDup;
 	HANDLE pipe_out[2],hSaveStdout,pipe_outDup;
 	HANDLE pipe_err[2],hSaveStderr,pipe_errDup;
-	STARTUPINFO si = {0};
-   PROCESS_INFORMATION pi = {0};
-   SECURITY_ATTRIBUTES sa          = {0};
-   char name[1024];
-   char line1[2048];
+	STARTUPINFO si;
+	PROCESS_INFORMATION pi;
+	SECURITY_ATTRIBUTES sa;
+	char name[1024];
+	char line1[2048];
 #endif
-   int use_input_orig = 0;
+	int use_input_orig = 0;
 	vect_t	center_model;
 	vect_t dir;
 	vect_t cml;
@@ -231,20 +231,14 @@ dgo_nirt_cmd(struct dg_obj	*dgop,
 				count = cp - val;
 
 done:
-#ifndef _WIN32
-	    if(*val == '\0')
-	      bu_vls_printf(&o_vls, " fmt r \"\\n\" ");
-	    else{
-	      bu_vls_printf(&o_vls, " fmt r \"\\n%*s\" ", count, val);
-#else
-		if(*val == '\0')
-	      bu_vls_printf(&o_vls, " fmt r \\\"\\\\n\\\" ");
-	    else{
-	      bu_vls_printf(&o_vls, " fmt r \\\"\\\\n%*s\\\" ", count, val);
-#endif
-				if (count)
-					val += count + 1;
-				bu_vls_printf(&o_vls, "%s", val);
+			if(*val == '\0')
+			    bu_vls_printf(&o_vls, " fmt r \"\\n\" ");
+			else{
+			    bu_vls_printf(&o_vls, " fmt r \"\\n%*s\" ", count, val);
+
+			    if (count)
+				val += count + 1;
+			    bu_vls_printf(&o_vls, "%s", val);
 			}
 
 			i = 1;
@@ -356,41 +350,33 @@ done:
 	(void)fclose(fp_in);
 
 #else
-		sa.nLength = sizeof(sa);
-    sa.bInheritHandle = TRUE;
-    sa.lpSecurityDescriptor = NULL;
+	memset((void *)&si, 0, sizeof(STARTUPINFO));
+	memset((void *)&pi, 0, sizeof(PROCESS_INFORMATION));
+	memset((void *)&sa, 0, sizeof(SECURITY_ATTRIBUTES));
 
-	// Save the handle to the current STDOUT.  
-	hSaveStdout = GetStdHandle(STD_OUTPUT_HANDLE);  
-	
+	sa.nLength = sizeof(sa);
+	sa.bInheritHandle = TRUE;
+	sa.lpSecurityDescriptor = NULL;
+
 	// Create a pipe for the child process's STDOUT.  
 	CreatePipe( &pipe_out[0], &pipe_out[1], &sa, 0);
 
-	// Set a write handle to the pipe to be STDOUT.  
-	SetStdHandle(STD_OUTPUT_HANDLE, pipe_out[1]);  
-
 	// Create noninheritable read handle and close the inheritable read handle. 
-    DuplicateHandle( GetCurrentProcess(), pipe_out[0],
-        GetCurrentProcess(),  &pipe_outDup , 
-		0,  FALSE,
-        DUPLICATE_SAME_ACCESS );
-	CloseHandle( pipe_out[0] );
+	DuplicateHandle(GetCurrentProcess(), pipe_out[0],
+			GetCurrentProcess(),  &pipe_outDup , 
+			0,  FALSE,
+			DUPLICATE_SAME_ACCESS);
+	CloseHandle(pipe_out[0]);
 
-	// Save the handle to the current STDERR.  
-	hSaveStderr = GetStdHandle(STD_ERROR_HANDLE);  
-	
 	// Create a pipe for the child process's STDERR.  
 	CreatePipe( &pipe_err[0], &pipe_err[1], &sa, 0);
 
-	// Set a write handle to the pipe to be STDERR.  
-	SetStdHandle(STD_ERROR_HANDLE, pipe_err[1]);  
-
 	// Create noninheritable read handle and close the inheritable read handle. 
-    DuplicateHandle( GetCurrentProcess(), pipe_err[0],
-        GetCurrentProcess(),  &pipe_errDup , 
-		0,  FALSE,
-        DUPLICATE_SAME_ACCESS );
-	CloseHandle( pipe_err[0] );
+	DuplicateHandle(GetCurrentProcess(), pipe_err[0],
+			GetCurrentProcess(),  &pipe_errDup , 
+			0,  FALSE,
+			DUPLICATE_SAME_ACCESS);
+	CloseHandle(pipe_err[0]);
 	
 	// The steps for redirecting child process's STDIN: 
 	//     1.  Save current STDIN, to be restored later. 
@@ -400,77 +386,65 @@ done:
 	//     4.  Create a noninheritable duplicate of the write handle, 
 	//         and close the inheritable write handle.  
 
-	// Save the handle to the current STDIN. 
-	hSaveStdin = GetStdHandle(STD_INPUT_HANDLE);  
-
 	// Create a pipe for the child process's STDIN.  
 	CreatePipe(&pipe_in[0], &pipe_in[1], &sa, 0);
-	// Set a read handle to the pipe to be STDIN.  
-	SetStdHandle(STD_INPUT_HANDLE, pipe_in[0]);
+
 	// Duplicate the write handle to the pipe so it is not inherited.  
 	DuplicateHandle(GetCurrentProcess(), pipe_in[1], 
-		GetCurrentProcess(), &pipe_inDup, 
-		0, FALSE,                  // not inherited       
-		DUPLICATE_SAME_ACCESS ); 
+			GetCurrentProcess(), &pipe_inDup, 
+			0, FALSE,                  // not inherited       
+			DUPLICATE_SAME_ACCESS); 
 	CloseHandle(pipe_in[1]); 
 
+	si.cb = sizeof(STARTUPINFO);
+	si.lpReserved = NULL;
+	si.lpReserved2 = NULL;
+	si.cbReserved2 = 0;
+	si.lpDesktop = NULL;
+	si.dwFlags = STARTF_USESTDHANDLES | STARTF_USESHOWWINDOW;
+	si.hStdInput   = pipe_in[0];
+	si.hStdOutput  = pipe_out[1];
+	si.hStdError   = pipe_err[1];
+	si.wShowWindow = SW_HIDE;
 
-   si.cb = sizeof(STARTUPINFO);
-   si.lpReserved = NULL;
-   si.lpReserved2 = NULL;
-   si.cbReserved2 = 0;
-   si.lpDesktop = NULL;
-   si.dwFlags = 0;
-   si.dwFlags = STARTF_USESTDHANDLES;
-   si.hStdInput   = pipe_in[0];
-   si.hStdOutput  = pipe_out[1];
-   si.hStdError   = pipe_err[1];
+	sprintf(line1,"%s ", dgop->dgo_rt_cmd[0]);
+	for (i=1; i<dgop->dgo_rt_cmd_len; i++) {
+	    /* skip commands */
+	    if (strstr(dgop->dgo_rt_cmd[i], "-e") != NULL)
+		++i;
+	    else { /* append other arguments (i.e. options, file and obj(s)) */
+		sprintf(name,"\"%s\" ", dgop->dgo_rt_cmd[i]);
+		strcat(line1, name);
+	    } 
+	}
 
-
-   sprintf(line1,"%s ",dgop->dgo_rt_cmd[0]);
-   for(i=1;i<dgop->dgo_rt_cmd_len;i++) {
-	   sprintf(name,"%s ",dgop->dgo_rt_cmd[i]);
-	   strcat(line1,name); 
-	   if(strstr(name,"-e") != NULL) {
-		   i++;
-		   sprintf(name,"\"%s\" ",dgop->dgo_rt_cmd[i]);
-			strcat(line1,name);} 
-   }
-   
-   if(CreateProcess( NULL,
-                     line1,
-                     NULL,
-                     NULL,
-                     TRUE,
-                     DETACHED_PROCESS,
-                     NULL,
-                     NULL,
-                     &si,
-                     &pi )) {
-
-	SetStdHandle(STD_INPUT_HANDLE, hSaveStdin);
-	SetStdHandle(STD_OUTPUT_HANDLE, hSaveStdout);
-	SetStdHandle(STD_ERROR_HANDLE, hSaveStderr);
-}
+	CreateProcess(NULL, line1, NULL, NULL, TRUE,
+		      DETACHED_PROCESS, NULL, NULL,
+		      &si, &pi);
  
 	/* use fp_in to feed view info to nirt */
-	CloseHandle( pipe_in[0] );
-	fp_in = _fdopen( _open_osfhandle((HFILE)pipe_inDup,_O_TEXT), "w" );
-	//fp_in = fdopen( pipe_in[1], "w" );
+	CloseHandle(pipe_in[0]);
+	fp_in = _fdopen(_open_osfhandle((HFILE)pipe_inDup,_O_TEXT), "wb");
+	_setmode(_fileno(fp_in), _O_BINARY);
+
+	/* send commands down the pipe */
+	for (i=1; i<dgop->dgo_rt_cmd_len-2; i++)
+	    if (strstr(dgop->dgo_rt_cmd[i], "-e") != NULL)
+		fprintf(fp_in, "%s\n", dgop->dgo_rt_cmd[++i]);
 
 	/* use fp_out to read back the result */
-	CloseHandle( pipe_out[1] );
-	//fp_out = fdopen( pipe_out[0], "r" );
-	fp_out = _fdopen( _open_osfhandle((HFILE)pipe_outDup,_O_TEXT), "r" );
+	CloseHandle(pipe_out[1]);
+	fp_out = _fdopen(_open_osfhandle((HFILE)pipe_outDup,_O_TEXT), "rb");
+	_setmode(_fileno(fp_out), _O_BINARY);
 
 	/* use fp_err to read any error messages */
 	CloseHandle(pipe_err[1]);
-	//fp_err = fdopen( pipe_err[0], "r" );
-	fp_err = _fdopen( _open_osfhandle((HFILE)pipe_errDup,_O_TEXT), "r" );
+	fp_err = _fdopen(_open_osfhandle((HFILE)pipe_errDup,_O_TEXT), "rb");
+	_setmode(_fileno(fp_err), _O_BINARY);
 
 	/* send quit command to nirt */
 	fwrite( "q\n", 1, 2, fp_in );
-	(void)fclose( fp_in );
+	(void)fclose(fp_in);
 
 #endif
 
