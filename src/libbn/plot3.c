@@ -62,6 +62,9 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "vmath.h"
 #include "plot3.h"
 
+
+static int pl_outputMode = PL_OUTPUT_MODE_BINARY;
+
 /* For the sake of efficiency, we trust putc() to write only one byte */
 /*#define putsi(a)	putc(a&0377,plotfp); putc((a>>8)&0377,plotfp)*/
 #define putsi(a)	putc(a,plotfp); putc((a>>8),plotfp)
@@ -71,86 +74,132 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
  *  These interfaces provide the standard UNIX-Plot functionality
  */
 
+int
+pl_getOutputMode() {
+    return pl_outputMode;
+}
+
+void
+pl_setOutputMode(int mode) {
+    pl_outputMode = mode;
+}
+
 void
 pl_point(register FILE *plotfp, int x, int y)
 {
+    if (pl_outputMode == PL_OUTPUT_MODE_BINARY) {
 	putc( 'p', plotfp );
 	putsi( x );
 	putsi( y );
+    } else {
+	fprintf(plotfp, "p %d %d\n", x, y);
+    }
 }
 
 void
 pl_line(register FILE *plotfp, int x1, int y1, int x2, int y2)
 {
+    if (pl_outputMode == PL_OUTPUT_MODE_BINARY) {
 	putc( 'l', plotfp );
 	putsi( x1 );
 	putsi( y1 );
 	putsi( x2 );
 	putsi( y2 );
+    } else {
+	fprintf(plotfp, "l %d %d %d %d\n", x1, y1, x2, y2);
+    }
 }
 
 void
 pl_linmod(register FILE *plotfp, register char *s)
 {
+    if (pl_outputMode == PL_OUTPUT_MODE_BINARY) {
 	putc( 'f', plotfp );
 	while( *s )
 		putc( *s++, plotfp );
 	putc( '\n', plotfp );
+    } else {
+	fprintf(plotfp, "f %s\n", s);
+    }
 }
 
 void
 pl_move(register FILE *plotfp, int x, int y)
 {
+    if (pl_outputMode == PL_OUTPUT_MODE_BINARY) {
 	putc( 'm', plotfp );
 	putsi( x );
 	putsi( y );
+    } else {
+	fprintf(plotfp, "m %d %d\n", x, y);
+    }
 }
 
 void
 pl_cont(register FILE *plotfp, int x, int y)
 {
+    if (pl_outputMode == PL_OUTPUT_MODE_BINARY) {
 	putc( 'n', plotfp );
 	putsi( x );
 	putsi( y );
+    } else {
+	fprintf(plotfp, "n %d %d\n", x, y);
+    }
 }
 
 void
 pl_label(register FILE *plotfp, register char *s)
 {
+    if (pl_outputMode == PL_OUTPUT_MODE_BINARY) {
 	putc( 't', plotfp );
 	while( *s )
 		putc( *s++, plotfp );
 	putc( '\n', plotfp );
+    } else {
+	fprintf(plotfp, "t %s\n", s);
+    }
 }
 
 void
 pl_space(register FILE *plotfp, int x1, int y1, int x2, int y2)
 {
+    if (pl_outputMode == PL_OUTPUT_MODE_BINARY) {
 	putc( 's', plotfp );
 	putsi( x1 );
 	putsi( y1 );
 	putsi( x2 );
 	putsi( y2 );
+    } else {
+	fprintf(plotfp, "s %d %d %d %d\n", x1, y1, x2, y2);
+    }
 }
 
 void
 pl_erase(register FILE *plotfp)
 {
+    if (pl_outputMode == PL_OUTPUT_MODE_BINARY)
 	putc( 'e', plotfp );
+    else
+	fprintf(plotfp, "e\n");
 }
 
 void
 pl_circle(register FILE *plotfp, int x, int y, int r)
 {
+    if (pl_outputMode == PL_OUTPUT_MODE_BINARY) {
 	putc( 'c', plotfp );
 	putsi( x );
 	putsi( y );
 	putsi( r );
+    } else {
+	fprintf(plotfp, "c %d %d %d\n", x, y, r);
+    }
 }
 
 void
 pl_arc(register FILE *plotfp, int xc, int yc, int x1, int y1, int x2, int y2)
 {
+    if (pl_outputMode == PL_OUTPUT_MODE_BINARY) {
 	putc( 'a', plotfp );
 	putsi( xc );
 	putsi( yc );
@@ -158,6 +207,9 @@ pl_arc(register FILE *plotfp, int xc, int yc, int x1, int y1, int x2, int y2)
 	putsi( y1 );
 	putsi( x2 );
 	putsi( y2 );
+    } else {
+	fprintf(plotfp, "a %d %d %d %d %d %d\n", xc, yc, x1, y1, x2, y2);
+    }
 }
 
 void
@@ -179,22 +231,32 @@ pl_box(register FILE *plotfp, int x1, int y1, int x2, int y2)
 void
 pl_color(register FILE *plotfp, int r, int g, int b)
 {
+    if (pl_outputMode == PL_OUTPUT_MODE_BINARY) {
 	putc( 'C', plotfp );
 	putc( r, plotfp );
 	putc( g, plotfp );
 	putc( b, plotfp );
+    } else {
+	fprintf(plotfp, "C %d %d %d\n", r, g, b);
+    }
 }
 
 void
 pl_flush(register FILE *plotfp)
 {
+    if (pl_outputMode == PL_OUTPUT_MODE_BINARY) {
 	putc( 'F', plotfp );
-	fflush( plotfp );
+    } else {
+	fprintf(plotfp, "F\n");
+    }
+
+    fflush( plotfp );
 }
 
 void
 pl_3space(register FILE *plotfp, int x1, int y1, int z1, int x2, int y2, int z2)
 {
+    if (pl_outputMode == PL_OUTPUT_MODE_BINARY) {
 	putc( 'S', plotfp );
 	putsi( x1 );
 	putsi( y1 );
@@ -202,38 +264,54 @@ pl_3space(register FILE *plotfp, int x1, int y1, int z1, int x2, int y2, int z2)
 	putsi( x2 );
 	putsi( y2 );
 	putsi( z2 );
+    } else {
+	fprintf(plotfp, "S %d %d %d %d %d %d\n", x1, y1, z1, x2, y2, z2);
+    }
 }
 
 void
 pl_3point(register FILE *plotfp, int x, int y, int z)
 {
+    if (pl_outputMode == PL_OUTPUT_MODE_BINARY) {
 	putc( 'P', plotfp );
 	putsi( x );
 	putsi( y );
 	putsi( z );
+    } else {
+	fprintf(plotfp, "P %d %d %d\n", x, y, z);
+    }
 }
 
 void
 pl_3move(register FILE *plotfp, int x, int y, int z)
 {
+    if (pl_outputMode == PL_OUTPUT_MODE_BINARY) {
 	putc( 'M', plotfp );
 	putsi( x );
 	putsi( y );
 	putsi( z );
+    } else {
+	fprintf(plotfp, "M %d %d %d\n", x, y, z);
+    }
 }
 
 void
 pl_3cont(register FILE *plotfp, int x, int y, int z)
 {
+    if (pl_outputMode == PL_OUTPUT_MODE_BINARY) {
 	putc( 'N', plotfp );
 	putsi( x );
 	putsi( y );
 	putsi( z );
+    } else {
+	fprintf(plotfp, "N %d %d %d\n", x, y, z);
+    }
 }
 
 void
 pl_3line(register FILE *plotfp, int x1, int y1, int z1, int x2, int y2, int z2)
 {
+    if (pl_outputMode == PL_OUTPUT_MODE_BINARY) {
 	putc( 'L', plotfp );
 	putsi( x1 );
 	putsi( y1 );
@@ -241,6 +319,9 @@ pl_3line(register FILE *plotfp, int x1, int y1, int z1, int x2, int y2, int z2)
 	putsi( x2 );
 	putsi( y2 );
 	putsi( z2 );
+    } else {
+	fprintf(plotfp, "L %d %d %d %d %d %d\n", x1, y1, z1, x2, y2, z2);
+    }
 }
 
 void
@@ -277,23 +358,28 @@ pl_3box(register FILE *plotfp, int x1, int y1, int z1, int x2, int y2, int z2)
 void
 pd_point(register FILE *plotfp, double x, double y)
 {
-	double	in[2];
-	unsigned char	out[2*8+1];
+    double	in[2];
+    unsigned char	out[2*8+1];
 
+    if (pl_outputMode == PL_OUTPUT_MODE_BINARY) {
 	in[0] = x;
 	in[1] = y;
 	htond( &out[1], (unsigned char *)in, 2 );
 
 	out[0] = 'x';
 	fwrite( out, 1, 2*8+1, plotfp );
+    } else {
+	fprintf(plotfp, "x %g %g\n", x, y);
+    }
 }
 
 void
 pd_line(register FILE *plotfp, double x1, double y1, double x2, double y2)
 {
-	double	in[4];
-	unsigned char	out[4*8+1];
+    double	in[4];
+    unsigned char	out[4*8+1];
 
+    if (pl_outputMode == PL_OUTPUT_MODE_BINARY) {
 	in[0] = x1;
 	in[1] = y1;
 	in[2] = x2;
@@ -302,6 +388,9 @@ pd_line(register FILE *plotfp, double x1, double y1, double x2, double y2)
 
 	out[0] = 'v';
 	fwrite( out, 1, 4*8+1, plotfp );
+    } else {
+	fprintf(plotfp, "v %g %g %g %g\n", x1, y1, x2, y2);
+    }
 }
 
 /* Note: no pd_linmod(), just use pl_linmod() */
@@ -309,37 +398,46 @@ pd_line(register FILE *plotfp, double x1, double y1, double x2, double y2)
 void
 pd_move(register FILE *plotfp, double x, double y)
 {
-	double	in[2];
-	unsigned char	out[2*8+1];
+    double	in[2];
+    unsigned char	out[2*8+1];
 
+    if (pl_outputMode == PL_OUTPUT_MODE_BINARY) {
 	in[0] = x;
 	in[1] = y;
 	htond( &out[1], (unsigned char *)in, 2 );
 
 	out[0] = 'o';
 	fwrite( out, 1, 2*8+1, plotfp );
+    } else {
+	fprintf(plotfp, "o %g %g\n", x, y);
+    }
 }
 
 void
 pd_cont(register FILE *plotfp, double x, double y)
 {
-	double	in[2];
-	unsigned char	out[2*8+1];
+    double	in[2];
+    unsigned char	out[2*8+1];
 
+    if (pl_outputMode == PL_OUTPUT_MODE_BINARY) {
 	in[0] = x;
 	in[1] = y;
 	htond( &out[1], (unsigned char *)in, 2 );
 
 	out[0] = 'q';
 	fwrite( out, 1, 2*8+1, plotfp );
+    } else {
+	fprintf(plotfp, "q %g %g\n", x, y);
+    }
 }
 
 void
 pd_space(register FILE *plotfp, double x1, double y1, double x2, double y2)
 {
-	double	in[4];
-	unsigned char	out[4*8+1];
+    double	in[4];
+    unsigned char	out[4*8+1];
 
+    if (pl_outputMode == PL_OUTPUT_MODE_BINARY) {
 	in[0] = x1;
 	in[1] = y1;
 	in[2] = x2;
@@ -348,14 +446,18 @@ pd_space(register FILE *plotfp, double x1, double y1, double x2, double y2)
 
 	out[0] = 'w';
 	fwrite( out, 1, 4*8+1, plotfp );
+    } else {
+	fprintf(plotfp, "w %g %g %g %g\n", x1, y1, x2, y2);
+    }
 }
 
 void
 pd_circle(register FILE *plotfp, double x, double y, double r)
 {
-	double	in[3];
-	unsigned char	out[3*8+1];
+    double	in[3];
+    unsigned char	out[3*8+1];
 
+    if (pl_outputMode == PL_OUTPUT_MODE_BINARY) {
 	in[0] = x;
 	in[1] = y;
 	in[2] = r;
@@ -363,14 +465,18 @@ pd_circle(register FILE *plotfp, double x, double y, double r)
 
 	out[0] = 'i';
 	fwrite( out, 1, 3*8+1, plotfp );
+    } else {
+	fprintf(plotfp, "i %g %g %g\n", x, y, r);
+    }
 }
 
 void
 pd_arc(register FILE *plotfp, double xc, double yc, double x1, double y1, double x2, double y2)
 {
-	double	in[6];
-	unsigned char	out[6*8+1];
+    double	in[6];
+    unsigned char	out[6*8+1];
 
+    if (pl_outputMode == PL_OUTPUT_MODE_BINARY) {
 	in[0] = xc;
 	in[1] = yc;
 	in[2] = x1;
@@ -381,6 +487,9 @@ pd_arc(register FILE *plotfp, double xc, double yc, double x1, double y1, double
 
 	out[0] = 'r';
 	fwrite( out, 1, 6*8+1, plotfp );
+    } else {
+	fprintf(plotfp, "r %g %g %g %g %g %g\n", xc, yc, x1, y1, x2, y2);
+    }
 }
 
 void
@@ -398,21 +507,26 @@ pd_box(register FILE *plotfp, double x1, double y1, double x2, double y2)
 void
 pdv_3space(register FILE *plotfp, const fastf_t *min, const fastf_t *max)
 {
-	unsigned char	out[6*8+1];
+    unsigned char	out[6*8+1];
 
+    if (pl_outputMode == PL_OUTPUT_MODE_BINARY) {
 	htond( &out[1], (unsigned char *)min, 3 );
 	htond( &out[3*8+1], (unsigned char *)max, 3 );
 
 	out[0] = 'W';
 	fwrite( out, 1, 6*8+1, plotfp );
+    } else {
+	fprintf(plotfp, "W %g %g %g %g %g %g\n", V3ARGS(min), V3ARGS(max));
+    }
 }
 
 void
 pd_3space(register FILE *plotfp, double x1, double y1, double z1, double x2, double y2, double z2)
 {
-	double	in[6];
-	unsigned char	out[6*8+1];
+    double	in[6];
+    unsigned char	out[6*8+1];
 
+    if (pl_outputMode == PL_OUTPUT_MODE_BINARY) {
 	in[0] = x1;
 	in[1] = y1;
 	in[2] = z1;
@@ -423,25 +537,33 @@ pd_3space(register FILE *plotfp, double x1, double y1, double z1, double x2, dou
 
 	out[0] = 'W';
 	fwrite( out, 1, 6*8+1, plotfp );
+    } else {
+	fprintf(plotfp, "W %g %g %g %g %g %g\n", x1, y1, z1, x2, y2, z2);
+    }
 }
 
 void
 pdv_3point(register FILE *plotfp, const fastf_t *pt)
 {
-	unsigned char	out[3*8+1];
+    unsigned char	out[3*8+1];
 
+    if (pl_outputMode == PL_OUTPUT_MODE_BINARY) {
 	htond( &out[1], (unsigned char *)pt, 3 );
 
 	out[0] = 'X';
 	fwrite( out, 1, 3*8+1, plotfp );
+    } else {
+	fprintf(plotfp, "X %g %g %g\n", V3ARGS(pt));
+    }
 }
 
 void
 pd_3point(register FILE *plotfp, double x, double y, double z)
 {
-	double	in[3];
-	unsigned char	out[3*8+1];
+    double	in[3];
+    unsigned char	out[3*8+1];
 
+    if (pl_outputMode == PL_OUTPUT_MODE_BINARY) {
 	in[0] = x;
 	in[1] = y;
 	in[2] = z;
@@ -449,25 +571,33 @@ pd_3point(register FILE *plotfp, double x, double y, double z)
 
 	out[0] = 'X';
 	fwrite( out, 1, 3*8+1, plotfp );
+    } else {
+	fprintf(plotfp, "X %g %g %g\n", x, y, z);
+    }
 }
 
 void
 pdv_3move(register FILE *plotfp, const fastf_t *pt)
 {
-	unsigned char	out[3*8+1];
+    unsigned char	out[3*8+1];
 
+    if (pl_outputMode == PL_OUTPUT_MODE_BINARY) {
 	htond( &out[1], (unsigned char *)pt, 3 );
 
 	out[0] = 'O';
 	fwrite( out, 1, 3*8+1, plotfp );
+    } else {
+	fprintf(plotfp, "O %g %g %g\n", V3ARGS(pt));
+    }
 }
 
 void
 pd_3move(register FILE *plotfp, double x, double y, double z)
 {
-	double	in[3];
-	unsigned char	out[3*8+1];
+    double	in[3];
+    unsigned char	out[3*8+1];
 
+    if (pl_outputMode == PL_OUTPUT_MODE_BINARY) {
 	in[0] = x;
 	in[1] = y;
 	in[2] = z;
@@ -475,25 +605,33 @@ pd_3move(register FILE *plotfp, double x, double y, double z)
 
 	out[0] = 'O';
 	fwrite( out, 1, 3*8+1, plotfp );
+    } else {
+	fprintf(plotfp, "O %g %g %g\n", x, y, z);
+    }
 }
 
 void
 pdv_3cont(register FILE *plotfp, const fastf_t *pt)
 {
-	unsigned char	out[3*8+1];
+    unsigned char	out[3*8+1];
 
+    if (pl_outputMode == PL_OUTPUT_MODE_BINARY) {
 	htond( &out[1], (unsigned char *)pt, 3 );
 
 	out[0] = 'Q';
 	fwrite( out, 1, 3*8+1, plotfp );
+    } else {
+	fprintf(plotfp, "Q %g %g %g\n", V3ARGS(pt));
+    }
 }
 
 void
 pd_3cont(register FILE *plotfp, double x, double y, double z)
 {
-	double	in[3];
-	unsigned char	out[3*8+1];
+    double	in[3];
+    unsigned char	out[3*8+1];
 
+    if (pl_outputMode == PL_OUTPUT_MODE_BINARY) {
 	in[0] = x;
 	in[1] = y;
 	in[2] = z;
@@ -501,26 +639,34 @@ pd_3cont(register FILE *plotfp, double x, double y, double z)
 
 	out[0] = 'Q';
 	fwrite( out, 1, 3*8+1, plotfp );
+    } else {
+	fprintf(plotfp, "Q %g %g %g\n", x, y, z);
+    }
 }
 
 void
 pdv_3line(register FILE *plotfp, const fastf_t *a, const fastf_t *b)
 {
-	unsigned char	out[6*8+1];
+    unsigned char	out[6*8+1];
 
+    if (pl_outputMode == PL_OUTPUT_MODE_BINARY) {
 	htond( &out[1], (unsigned char *)a, 3 );
 	htond( &out[3*8+1], (unsigned char *)b, 3 );
 
 	out[0] = 'V';
 	fwrite( out, 1, 6*8+1, plotfp );
+    } else {
+	fprintf(plotfp, "V %g %g %g %g %g %g\n", V3ARGS(a), V3ARGS(b));
+    }
 }
 
 void
 pd_3line(register FILE *plotfp, double x1, double y1, double z1, double x2, double y2, double z2)
 {
-	double	in[6];
-	unsigned char	out[6*8+1];
+    double	in[6];
+    unsigned char	out[6*8+1];
 
+    if (pl_outputMode == PL_OUTPUT_MODE_BINARY) {
 	in[0] = x1;
 	in[1] = y1;
 	in[2] = z1;
@@ -531,6 +677,9 @@ pd_3line(register FILE *plotfp, double x1, double y1, double z1, double x2, doub
 
 	out[0] = 'V';
 	fwrite( out, 1, 6*8+1, plotfp );
+    } else {
+	fprintf(plotfp, "V %g %g %g %g %g %g\n", x1, y1, z1, x2, y2, z2);
+    }
 }
 
 void
