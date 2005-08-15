@@ -99,7 +99,7 @@ _LOCAL_ int	multiple_windows = 0;	/* someone wants to be ready
 					 * for multiple windows, at the
 					 * expense of speed.
 					 */
-//_LOCAL_	XColor	color_cell[256];		/* used to set colormap */
+/*_LOCAL_	XColor	color_cell[256];*/		/* used to set colormap */
 
 int ogl_refresh();
 int ogl_open_existing();
@@ -610,45 +610,49 @@ LONG WINAPI MainWndProc (
     WPARAM  wParam, 
     LPARAM  lParam) 
 {
-
-	
     switch (uMsg) { 
     case WM_PAINT:
-      if(!OGL(saveifp)->use_ext_ctrl)
-			expose_callback(saveifp,0);
-      break;
+	if(!OGL(saveifp)->use_ext_ctrl)
+	    expose_callback(saveifp,0);
+	break;
     case WM_LBUTTONDOWN:
-      break;
-	case WM_RBUTTONDOWN:
-      break;
-	case WM_MBUTTONDOWN:
-      break;
-	case WM_LBUTTONUP:
-	  OGL(saveifp)->alive = 0;
-      break;
-	case WM_RBUTTONUP:
-	  OGL(saveifp)->alive = 0;
-      break;
-	case WM_MBUTTONUP:
-	  OGL(saveifp)->alive = 0;
-      break;
+	break;
+    case WM_RBUTTONDOWN:
+	break;
+    case WM_MBUTTONDOWN:
+	break;
+    case WM_CLOSE:
+	OGL(saveifp)->alive = 0;
+	break;
+    case WM_LBUTTONUP:
+	OGL(saveifp)->alive = 0;
+	break;
+    case WM_RBUTTONUP:
+	OGL(saveifp)->alive = 0;
+	break;
+    case WM_MBUTTONUP:
+	OGL(saveifp)->alive = 0;
+	break;
     case WM_KEYDOWN:
-      break;
+	break;
     case WM_KEYUP:
-      OGL(saveifp)->alive = 0;
-      break;
+	OGL(saveifp)->alive = 0;
+	break;
     case WM_SIZE:
-      {
-/*	if(conf->width == OGL(ifp)->win_width &&
-	   conf->height == OGL(ifp)->win_height)
-	  return;
+	{
+#if 0
+	    if(conf->width == OGL(ifp)->win_width &&
+	       conf->height == OGL(ifp)->win_height)
+		return;
 
-	ogl_configureWindow(ifp, conf->width, conf->height);*/
-      }
+	    ogl_configureWindow(ifp, conf->width, conf->height);
+#endif
+	}
     default:
       return DefWindowProc (hWnd, uMsg, wParam, lParam);
     }	
-	return 1;
+
+    return 1;
 }
 _LOCAL_ int
 ogl_open( ifp, file, width, height ) 
@@ -803,14 +807,14 @@ int	width, height;
 	ifp->if_yzoom = 1;	/* for zoom fakeout */
 	ifp->if_xcenter = width/2;
 	ifp->if_ycenter = height/2;
-//	SGI(ifp)->mi_pid = getpid();
+	/* SGI(ifp)->mi_pid = getpid(); */
 
 	/* Attach to shared memory, potentially with a screen repaint */
 	if( ogl_getmem(ifp) < 0 )
 		return(-1);
 
 	/* Register the frame class */ 
-    wndclass.style         = 0; 
+    wndclass.style         = 0;
     wndclass.lpfnWndProc   = (WNDPROC)MainWndProc; 
     wndclass.cbClsExtra    = 0; 
     wndclass.cbWndExtra    = 0; 
@@ -824,17 +828,17 @@ int	width, height;
 	ret = RegisterClass (&wndclass);
 
 	OGL(ifp)->hwnd =  CreateWindow(
-  "Win OpenGL",  // pointer to registered class name
-  title, // pointer to window name
-  WS_OVERLAPPEDWINDOW | WS_CLIPSIBLINGS | WS_CLIPCHILDREN,        // window style
-  CW_USEDEFAULT,                // horizontal position of window
-  CW_USEDEFAULT,                // vertical position of window
-  ifp->if_width,           // window width
-  ifp->if_height,          // window height
-  NULL,      // handle to parent or owner window
-  NULL,          // handle to menu or child-window identifier
-  Tk_GetHINSTANCE(),     // handle to application instance
-  NULL        // pointer to window-creation data
+  "Win OpenGL",  /* pointer to registered class name */
+  title, /* pointer to window name */
+  WS_OVERLAPPEDWINDOW | WS_CLIPSIBLINGS | WS_CLIPCHILDREN,        /* window style */
+  CW_USEDEFAULT,                /* horizontal position of window */
+  CW_USEDEFAULT,                /* vertical position of window */
+  ifp->if_width,           /* window width */
+  ifp->if_height,          /* window height */
+  NULL,      /* handle to parent or owner window */
+  NULL,          /* handle to menu or child-window identifier */
+  Tk_GetHINSTANCE(),     /* handle to application instance */
+  NULL        /* pointer to window-creation data */
 );
 
 	Dword = GetLastError();
@@ -855,20 +859,20 @@ int	width, height;
 	OGL(ifp)->glxc = wglCreateContext(OGL(ifp)->hdc);
 	glxc = OGL(ifp)->glxc;
 
-		/* count windows */
+	/* count windows */
 	ogl_nwindows++;
-//	XMapRaised(OGL(ifp)->dispp, OGL(ifp)->wind);
 
 	OGL(ifp)->alive = 1;
 	OGL(ifp)->firstTime = 1;
 
 	ShowWindow(OGL(ifp)->hwnd,SW_SHOW);
-	UpdateWindow (OGL(ifp)->hwnd); 
+	UpdateWindow(OGL(ifp)->hwnd); 
  
 
 	/* Loop through events until first exposure event is processed */
-//	while (OGL(ifp)->firstTime == 1)
-//		do_event(ifp);
+	/*	while (OGL(ifp)->firstTime == 1)
+		do_event(ifp);
+	*/
 
 	return 0;
 
@@ -974,14 +978,14 @@ int soft_cmap;
   ifp->if_yzoom = 1;	/* for zoom fakeout */
   ifp->if_xcenter = width/2;
   ifp->if_ycenter = height/2;
- // SGI(ifp)->mi_pid = getpid();
+  /* SGI(ifp)->mi_pid = getpid(); */
 
   /* Attach to shared memory, potentially with a screen repaint */
   if(ogl_getmem(ifp) < 0)
     return -1;
 
   OGL(ifp)->dispp = dpy;
-//  ifp->if_selfd = ConnectionNumber(OGL(ifp)->dispp);
+  /* ifp->if_selfd = ConnectionNumber(OGL(ifp)->dispp); */
 
   OGL(ifp)->vip = vip;
   OGL(ifp)->glxc = glxc;
@@ -1010,11 +1014,13 @@ FBIO	*ifp;
     printf("ogl_final_close: All done...goodbye!\n");
   }
 
-//  if(OGL(ifp)->cursor)
-//    XDestroyWindow(OGL(ifp)->dispp, OGL(ifp)->cursor);
+  /* if(OGL(ifp)->cursor)
+     XDestroyWindow(OGL(ifp)->dispp, OGL(ifp)->cursor);
+  */
 
-//  XDestroyWindow(OGL(ifp)->dispp, OGL(ifp)->wind);
-//  XFreeColormap(OGL(ifp)->dispp, OGL(ifp)->xcmap);
+  /* XDestroyWindow(OGL(ifp)->dispp, OGL(ifp)->wind);
+     XFreeColormap(OGL(ifp)->dispp, OGL(ifp)->xcmap);
+  */
 
   if (OGL(ifp)->glxc)
 	  wglDeleteContext(OGL(ifp)->glxc);         
@@ -1086,13 +1092,15 @@ FBIO	*ifp;
 	/* Ignore likely signals, perhaps in the background,
 	 * from other typing at the keyboard
 	 */
-//	(void)signal( SIGHUP, SIG_IGN );
-//	(void)signal( SIGINT, SIG_IGN );
-//	(void)signal( SIGQUIT, SIG_IGN );
-//	(void)signal( SIGALRM, SIG_IGN );
+	/*
+	  (void)signal( SIGHUP, SIG_IGN );
+	  (void)signal( SIGINT, SIG_IGN );
+	  (void)signal( SIGQUIT, SIG_IGN );
+	  (void)signal( SIGALRM, SIG_IGN );
+	*/
 
 	while( OGL(ifp)->alive )
-		do_event(ifp);
+	    do_event(ifp);
 
 	return 0;
 }
@@ -1101,8 +1109,10 @@ int
 ogl_close_existing(ifp)
 FBIO *ifp;
 {
-//  if(OGL(ifp)->cursor)
-//    XDestroyWindow(OGL(ifp)->dispp, OGL(ifp)->cursor);
+    /*
+      if(OGL(ifp)->cursor)
+          XDestroyWindow(OGL(ifp)->dispp, OGL(ifp)->cursor);
+    */
 
   if( SGIL(ifp) != NULL ) {
     /* free up memory associated with image */
@@ -1491,11 +1501,13 @@ int	count;
 		 * The assumption is that there will be a lot of short
 		 * writes, and it's best just to ignore the backbuffer
 		 */
+#if 0
 		if ( SGI(ifp)->mi_doublebuffer ) {
 			/* "turn off" doublebuffering*/
 			SGI(ifp)->mi_doublebuffer = 0;
 			glDrawBuffer(GL_FRONT);
 		}
+#endif
 		ogl_xmit_scanlines( ifp, ybase, 1, xstart, count );
 		if (OGL(ifp)->copy_flag){
 			/* repaint one scanline from backbuffer */
@@ -1900,7 +1912,7 @@ ogl_flush(FBIO *ifp)
 			}
 		}
 	}
-//	XFlush(OGL(ifp)->dispp);
+	/* XFlush(OGL(ifp)->dispp); */
 	glFlush();
 	return(0);
 }
@@ -1997,13 +2009,13 @@ do_event(FBIO *ifp)
 {
 	MSG msg;
 	BOOL bRet;
-    // Check and Dispatch any messages. 
- 
+	/* Check and Dispatch any messages. */
+
     if( (bRet = GetMessage( &msg, NULL, 0, 0 )) != 0)
     { 
         if (bRet == -1)
         {
-            // handle the error and possibly exit
+            /* handle the error and possibly exit */
         }
         else
         {
@@ -2011,15 +2023,15 @@ do_event(FBIO *ifp)
             DispatchMessage(&msg); 
         }
     } 
-	// let's not starve the processor
-	Sleep( 250 );
+    /* let's not starve the processor */
+    Sleep( 250 );
 }
 
 _LOCAL_ void
 expose_callback(FBIO *ifp,
 		int eventPtr)
 {    
-//	XWindowAttributes xwa;
+    /*	XWindowAttributes xwa; */
 	struct ogl_clip *clp;
 
 	if( CJDEBUG ) fb_log("entering expose_callback()\n");
@@ -2060,10 +2072,6 @@ expose_callback(FBIO *ifp,
 		} else {
 			OGL(ifp)->copy_flag = 0;
 		}
-
-//		XGetWindowAttributes(OGL(ifp)->dispp, OGL(ifp)->wind, &xwa);
-//		OGL(ifp)->win_width = xwa.width;
-//		OGL(ifp)->win_height = xwa.height;
 
 		OGL(ifp)->win_width=ifp->if_width;
 		OGL(ifp)->win_height=ifp->if_height;
@@ -2147,6 +2155,7 @@ expose_callback(FBIO *ifp,
 		/* unattach context for other threads to use */
 		wglMakeCurrent(OGL(ifp)->hdc,OGL(ifp)->glxc);
 	}
+
 #if 0
 	XFlush(OGL(ifp)->dispp);
 	glFlush();
@@ -2314,7 +2323,7 @@ ogl_choose_visual(FBIO *ifp)
 
 	ppfd = &pfd; 
 
-//  ppfd = (PIXELFORMATDESCRIPTOR *)malloc(sizeof(PIXELFORMATDESCRIPTOR));
+/*  ppfd = (PIXELFORMATDESCRIPTOR *)malloc(sizeof(PIXELFORMATDESCRIPTOR)); */
   iPixelFormat  = GetPixelFormat(OGL(ifp)->hdc);  
   ppfd->nSize = sizeof(PIXELFORMATDESCRIPTOR);     
   ppfd->nVersion = 1;     

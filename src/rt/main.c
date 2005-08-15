@@ -183,8 +183,9 @@ int main(int argc, char **argv)
 #endif
 #endif
 
-
+#ifndef _WIN32
 	bu_setlinebuf( stderr );
+#endif
 
 #ifdef HAVE_SBRK
 	beginptr = (char *) sbrk(0);
