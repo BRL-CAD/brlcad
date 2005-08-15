@@ -35,6 +35,7 @@ static const char RCS_stat[] = "@(#)$Header$";
 
 #include "common.h"
 
+#include <stdio.h>
 #ifdef HAVE_UNISTD_H
 #  include <unistd.h>
 #endif
