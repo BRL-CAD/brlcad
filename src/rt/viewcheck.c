@@ -66,6 +66,8 @@ static const char RCScheckview[] = "@(#)$Header$ (BRL)";
 
 extern int	rpt_overlap;		/* report overlapping region names */
 int		use_air = 0;		/* Handling of air in librt */
+extern int	rt_text_mode;
+
 
 /* Viewing module specific "set" variables */
 struct bu_structparse view_parse[] = {
@@ -250,6 +252,10 @@ view_init(register struct application *ap, char *file, char *obj, int minus_o)
 	ap->a_onehit = 0;
 	if( !minus_o)			/* Needs to be set to  stdout */
 		outfp = stdout;
+
+	if (rt_text_mode)
+	    pl_setOutputMode(PL_OUTPUT_MODE_TEXT);
+
 	return	0;		/* No framebuffer needed */
 }
 

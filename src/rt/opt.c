@@ -66,6 +66,7 @@ double		azimuth, elevation;
 int		lightmodel = 0;		/* Select lighting model */
 int		rpt_overlap = 1;	/* report overlapping region names */
 int		default_background = 1; /* Default is black */
+int		rt_text_mode = 0;       /* Currently used by rtcheck and nirt */
 /***** end of sharing with viewing model *****/
 
 /***** variables shared with worker() ******/
@@ -165,7 +166,7 @@ int get_args( int argc, register char **argv )
 
 
 #define GETOPT_STR	\
-	".:,:@:a:b:c:d:e:f:g:h:ij:l:n:o:p:q:rs:tv:w:x:A:BC:D:E:F:G:H:IJ:K:MN:O:P:Q:RST:U:V:WX:!:"
+	".:,:@:a:b:c:d:e:f:g:h:ij:l:n:o:p:q:rs:tv:w:x:A:BC:D:E:F:G:H:IJ:K:MN:O:P:Q:RST:U:V:WX:!:+:"
 
 	while( (c=bu_getopt( argc, argv, GETOPT_STR )) != EOF )  {
 		switch( c )  {
@@ -517,6 +518,19 @@ int get_args( int argc, register char **argv )
 		case 'd':
 			rpt_dist = atoi( bu_optarg );
 			break;
+		case '+':
+		    {
+			register char	*cp = bu_optarg;
+			switch (*cp) {
+			case 't':
+			    rt_text_mode = 1;
+			    break;
+			default:
+			    fprintf(stderr,"unknown option %c\n", *cp);
+			    return(0);	/* BAD */
+			}
+		    }
+		    break;
 		default:		/* '?' */
 			fprintf(stderr,"unknown option %c\n", c);
 			return(0);	/* BAD */
