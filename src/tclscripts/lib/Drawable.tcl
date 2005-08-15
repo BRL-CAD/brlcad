@@ -65,6 +65,7 @@
 	method rtarea {args}
 	method rtedge {args}
 	method rtweight {args}
+	method set_outputHandler {args}
 	method set_transparency {args}
 	method shaded_mode {args}
 	method vdraw {args}
@@ -84,8 +85,11 @@
 }
 
 ::itcl::body Drawable::constructor {db} {
+    global tcl_platform
+
     set dg [subst $this]_dg
     dg_open $dg $db
+
     Drawable::help_init
 }
 
@@ -196,6 +200,10 @@
 
 ::itcl::body Drawable::rtweight {args} {
     eval $dg rweight $args
+}
+
+::itcl::body Drawable::set_outputHandler {args} {
+    eval $dg set_outputHandler $args
 }
 
 ::itcl::body Drawable::set_transparency {args} {
