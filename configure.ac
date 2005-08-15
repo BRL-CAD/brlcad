@@ -2492,6 +2492,7 @@ AC_CONFIG_FILES([
 	sh/Makefile
 	src/Makefile
 	src/adrt/Makefile
+	src/adrt/bench/Makefile
 	src/adrt/doc/Makefile
 	src/adrt/libcommon/Makefile
 	src/adrt/librender/Makefile
