@@ -49,7 +49,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #else
 #  include <strings.h>
 #endif
-
+#include "fb.h"
 
 /* This table does not need to include any square sizes */
 struct sizes {
