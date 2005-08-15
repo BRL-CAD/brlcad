@@ -78,6 +78,12 @@ __BEGIN_DECLS
 #  endif
 #endif
 
+#if defined(_WIN32) && !defined(__CYGWIN__)
+#   define SNPRINTF _snprintf
+#else
+#   define SNPRINTF snprintf
+#endif
+
 #include <setjmp.h>
 
 #define BU_H_VERSION	"@(#)$Header$ (BRL)"

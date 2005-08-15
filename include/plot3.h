@@ -45,11 +45,18 @@
 #define pl_mat_zero( _mat )		MAT_ZERO( _mat )
 #define pl_mat_copy( _mat1, _mat2 )	MAT_COPY( _mat1, _mat2 )
 
+#define PL_OUTPUT_MODE_BINARY 0
+#define PL_OUTPUT_MODE_TEXT 1
+
 /*
  *  The basic UNIX-plot routines.
  *  The calling sequence is the same as the original Bell Labs routines,
  *  with the exception of the pl_ prefix on the name.
  */
+BN_EXPORT BU_EXTERN(int pl_getOutputMode,
+		    ());
+BN_EXPORT BU_EXTERN(void pl_setOutputMode,
+		    (int mode));
 BN_EXPORT BU_EXTERN(void pl_point,
 		    (FILE *plotfp,
 		     int x,

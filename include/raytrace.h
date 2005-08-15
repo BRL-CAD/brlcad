@@ -1264,6 +1264,8 @@ struct dg_obj {
 	struct dg_qray_color	dgo_qray_void_color;
 	struct dg_qray_color	dgo_qray_overlap_color;
 	int			dgo_shaded_mode;	/* 1 - draw bots shaded by default */
+	char			*dgo_outputHandler;	/* tcl script for handling output */
+	int			dgo_uplotOutputMode;	/* output mode for unix plots */
 };
 RT_EXPORT extern struct dg_obj HeadDGObj;		/* head of drawable geometry object list */
 #define RT_DGO_NULL		((struct dg_obj *)NULL)
@@ -2630,6 +2632,13 @@ RT_EXPORT BU_EXTERN(void rt_rebuild_overlaps,
 		     int		rebuild_fastgen_plates_only));
 RT_EXPORT BU_EXTERN(int rt_partition_len,
 		    (const struct partition *partheadp));
+RT_EXPORT BU_EXTERN(int	rt_defoverlap,
+		    (struct application *ap,
+		     struct partition *pp,
+		     struct region *reg1,
+		     struct region *reg2,
+		     struct partition *pheadp));
+	
 
 
 /* mater.c */
@@ -3810,11 +3819,13 @@ RT_EXPORT BU_EXTERN(int rt_process_uplot_value,
 		     struct bn_vlblock *vbp,
 		     FILE *fp,
 		     int c,
-		     double char_size));
+		     double char_size,
+		     int mode));
 RT_EXPORT BU_EXTERN(int rt_uplot_to_vlist,
 		    (struct bn_vlblock *vbp,
 		     FILE *fp,
-		     double char_size));
+		     double char_size,
+		     int mode));
 RT_EXPORT BU_EXTERN(void rt_label_vlist_verts,
 		    (struct bn_vlblock *vbp,
 		     struct bu_list *src,
@@ -6392,6 +6403,11 @@ RT_EXPORT BU_EXTERN(int	wdb_importFg4Section_cmd,
 #endif
 
 /* defined in dg_obj.c */
+RT_EXPORT BU_EXTERN(int dgo_set_outputHandler_cmd,
+		    (struct dg_obj	*dgop,
+		     Tcl_Interp		*interp,
+		     int		argc,
+		     char 		**argv));
 RT_EXPORT BU_EXTERN(int dgo_set_transparency_cmd,
 		    (struct dg_obj	*dgop,
 		     Tcl_Interp		*interp,

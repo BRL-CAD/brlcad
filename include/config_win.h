@@ -130,7 +130,9 @@
 #define stat _stat
 #define strcasecmp _stricmp
 #define strdup _strdup
+#if 0
 #define strncmp _strncmp
+#endif
 #define sys_errlist _sys_errlist
 #define umask _umask
 #define unlink _unlink
