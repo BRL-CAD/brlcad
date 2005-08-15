@@ -138,10 +138,14 @@ Reports the dimensions of an axis-aligned box which fully encloses the
 \fIobjects\fR.
 
 .B Exposed air:
-This causes checks to be made to see if the ray encounters air regions before (or after all) solid objects.
-Typically, only the air inside a building or vehicle is modeled if the purpose of the model is to support analysis of
+This causes checks to be made to see if the ray encounters air regions before 
+(or after all) solid objects.
+It also checks to see if the ray moves from a void to an air region.
+Typically, only the air inside a building or vehicle is modeled if the 
+purpose of the model is to support analysis of
 that single structure/vehicle.
-There are exceptions, such as when modeling larger environments for more extended analysis purposes.
+There are exceptions, such as when modeling larger environments for more 
+extended analysis purposes.
 
 .B Gaps/voids:
 This reports when there is more than
@@ -255,6 +259,15 @@ So for example, it is accepted that a thin object might not be hit from one view
 .IP
 The default is 1.  This indicates that each region must be intersected by a ray at least once during the analysis.
 If the grid spacing limit is reached, processing will end even if this criteria has not been met.
+.TP
+.B \-p
+Specifies that 
+.I g_qa
+should produce plot files for each of the analysis it performs.  These can be overlaid on the geometry in 
+.I mged
+with the 
+.I overlay
+command to help visualize the analysis results.  Each of the different analysis types write to a separate plot file, and use different colors for drawing.
 .TP
 .B \-P \fR\fIncpu\fR
 Specifies that
