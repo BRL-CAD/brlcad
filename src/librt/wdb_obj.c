@@ -4503,7 +4503,7 @@ wdb_rmap_cmd(struct rt_wdb	*wdbp,
 	    /* check to see if the region id or air code matches one in our list */
 	    for (BU_LIST_FOR(itnp,wdb_id_to_names,&headIdName.l)) {
 		if ((comb->region_id == itnp->id) ||
-		    (-comb->aircode == itnp->id)) {
+		    (comb->aircode != 0 && -comb->aircode == itnp->id)) {
 		    /* add region name to our name list for this region */
 		    BU_GETSTRUCT(inp,wdb_id_names);
 		    bu_vls_init(&inp->name);
