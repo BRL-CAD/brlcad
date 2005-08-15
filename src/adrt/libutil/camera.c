@@ -369,9 +369,7 @@ void* util_camera_render_thread(void *ptr) {
           math_vec_mul_scalar(v, td->camera->view_list[d].step_y, i);
           math_vec_add(ray.dir, ray.dir, v);
 
-          pixel.v[0] = 0;
-          pixel.v[1] = 0;
-          pixel.v[2] = 0;
+          math_vec_set(pixel, 0, 0, 0);
 
           ray.pos = td->camera->view_list[d].pos;
           ray.depth = 0;

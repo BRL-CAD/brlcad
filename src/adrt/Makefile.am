@@ -7,6 +7,7 @@ SUBDIRS = \
 	librender \
 	libtexture \
 	libutil \
+	bench \
 	rise \
 	isst
 

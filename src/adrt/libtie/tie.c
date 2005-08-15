@@ -294,9 +294,13 @@ static void tie_build_tree(tie_t *tie, tie_kdtree_t *node, int depth, TIE_3 min,
 
   /* Terminating criteria for KDTREE subdivision */
   if(node_geom_data->tri_num <= TIE_KDTREE_NODE_MAX || depth > tie->max_depth) {
+    if(node_geom_data->tri_num > tie->stat) {
+      tie->stat = node_geom_data->tri_num;
+    }
+
 /*    printf("num: %d, depth: %d\n", node_geom_data->tri_num, depth); */
-/*    if(node_geom_data->tri_num > tie->max_tri) */
-/*      tie->max_tri++; */
+/*    if(node_geom_data->tri_num > tie->stat) */
+/*      tie->stat++; */
     return;
   }
 
@@ -310,10 +314,12 @@ static void tie_build_tree(tie_t *tie, tie_kdtree_t *node, int depth, TIE_3 min,
       (tie->max.v[1]-tie->min.v[1])*(tie->max.v[2]-tie->min.v[2]);
 
   /* If ratio of areas is too small then don't bother splitting */
-  if(a / b <= TIE_KDTREE_MIN_AREA)
+  if(a / b <= TIE_KDTREE_MIN_AREA) {
+    if(node_geom_data->tri_num > tie->stat) {
+      tie->stat = node_geom_data->tri_num;
+    }
     return;
-
-  tie->max_tri++;
+  }
 
 #if 1
   /* Left Child */
@@ -503,7 +509,7 @@ void tie_init(tie_t *tie, int tri_num) {
   tie->kdtree = NULL;
   tie->tri_num = 0;
   tie->tri_list = (tie_tri_t *)malloc(sizeof(tie_tri_t) * tri_num);
-  tie->max_tri = 0;
+  tie->stat = 0;
   tie->rays_fired = 0;
 }
 
@@ -577,8 +583,9 @@ void tie_prep(tie_t *tie) {
   /* Prep all the triangles */
   tie_tri_prep(tie);
 
-  printf("max_tri: %d\n", tie->max_tri);
+  printf("stat: %d\n", tie->stat);
 /*  exit(0); */ /* uncomment to profile prep phase only */
+  tie->stat = 0;
 }
 
 
@@ -604,9 +611,9 @@ void tie_prep(tie_t *tie) {
  * @retval !0 the value returned from the last invokation of hitfunc()
  */
 void* tie_work(tie_t *tie, tie_ray_t *ray, tie_id_t *id, void *(*hitfunc)(tie_ray_t*, tie_id_t*, tie_tri_t*, void *ptr), void *ptr) {
-  tie_stack_t stack[1024];
-  tie_id_t t, id_list[1024];
-  tie_tri_t *hit_list[1024], *tri;
+  tie_stack_t stack[40];
+  tie_id_t t, id_list[256];
+  tie_tri_t *hit_list[256], *tri;
   tie_geom_t *data;
   tie_kdtree_t *node_aligned, *temp[2];
   tfloat near, far, dirinv[3], dist;
@@ -635,9 +642,9 @@ void* tie_work(tie_t *tie, tie_ray_t *ray, tie_id_t *id, void *(*hitfunc)(tie_ra
 
   /* Initialize ray segment */
   if(ray->dir.v[split] < 0) {
-    far  = (tie->min.v[split] - ray->pos.v[split]) * dirinv[split];
+    far = (tie->min.v[split] - ray->pos.v[split]) * dirinv[split];
   } else {
-    far  = (tie->max.v[split] - ray->pos.v[split]) * dirinv[split];
+    far = (tie->max.v[split] - ray->pos.v[split]) * dirinv[split];
   }
 
   stack_ind = 0;
@@ -693,6 +700,7 @@ void* tie_work(tie_t *tie, tie_ray_t *ray, tie_id_t *id, void *(*hitfunc)(tie_ra
       far = dist;
     }
 
+
     /*
     * RAY/TRIANGLE INTERSECTION - Only gets executed on geometry nodes.
     * This part of the function is being executed because the KDTREE Traversal is Complete.
@@ -716,7 +724,8 @@ void* tie_work(tie_t *tie, tie_ray_t *ray, tie_id_t *id, void *(*hitfunc)(tie_ra
       /*
       * Intersection point on triangle must lie within the kdtree node or it is rejected
       * Apply TIE_PREC to near and far such that triangles that lie on orthogonal planes
-      * aren't in a precision fuzz boundary.
+      * aren't in a precision fuzz boundary, thus missing something they should actualy
+      * have hit.
       */
       if(t.dist < near-TIE_PREC || t.dist > far+TIE_PREC)
         continue;
