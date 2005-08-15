@@ -85,7 +85,11 @@ void bench(char *proj, int dump) {
   common_work_t work;
   void *res_buf;
   unsigned char *image24;
+  clock_t ticks1, ticks2, ticks3;
+  tfloat t;
 
+
+  ticks1 = clock();
   tienet_sem_init(&bench_net_sem, 0);
 
   printf("loading and prepping ...\n");
@@ -138,9 +142,7 @@ void bench(char *proj, int dump) {
   /* stream and unpack the data */
   tienet_sem_wait(&bench_net_sem);
   common_unpack(&db, &tie, &camera, client_socket);
-  printf("prepping tie\n");
   tie_prep(&tie);
-  printf("done\n");
 
   /* Prep */
   common_env_prep(&db.env);
@@ -159,11 +161,16 @@ void bench(char *proj, int dump) {
 
   printf("rendering ...\n");
   res_buf = NULL;
+  ticks2 = clock();
   util_camera_render(&camera, &db, &tie, &work, sizeof(common_work_t), &res_buf, &res_len);
+  ticks3 = clock();
 
-  image24 = &((unsigned char *)res_buf)[sizeof(common_work_t)];
-
+  printf("prep   time: %.3f sec\n", (tfloat)(ticks2 - ticks1) / (tfloat)CLOCKS_PER_SEC);
+  t = (tfloat)(ticks3 - ticks2) / (tfloat)CLOCKS_PER_SEC;
+  printf("render time: %.3f sec\n", t);
+  printf("rays /  sec: %d\n", (int)((db.env.img_w * db.env.img_h) / t));
   if(dump) {
+    image24 = &((unsigned char *)res_buf)[sizeof(common_work_t)];
     util_image_save_ppm("dump.ppm", image24, db.env.img_w, db.env.img_h);
   }
 
