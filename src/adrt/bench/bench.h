@@ -1,8 +1,8 @@
-#ifndef _RISE_MASTER_H
-#define _RISE_MASTER_H
+#ifndef _BENCH_H
+#define _BENCH_H
 
 
-extern	void	rise_master(int port, int obs_port, char *proj, char *list, char *exec, int interval);
+extern	void bench(char *proj, int dump);
 
 
 #endif

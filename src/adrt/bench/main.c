@@ -36,10 +36,9 @@ static void finish(int sig) {
 
 
 static void help() {
-  printf("%s\n", RISE_VER_DETAIL);
-  printf("%s\n", "usage: rise_master [options] [proj_env_file]\n\
+  printf("%s\n", "usage: adrt_bench [options] [proj_env_file]\n\
   -d\t\tdump output.\n\
-  -h\t\tdisplay help.\n\");
+  -h\t\tdisplay help.\n");
 }
 
 
