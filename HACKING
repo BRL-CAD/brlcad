@@ -662,7 +662,8 @@ successfully performed:
 1) Verify that the NEWS file includes a comment for all relevant and
 significant items added since the previous release.
 
-2) All existing manpages are updated with the latest changes.
+2) All existing manual pages and the TODO file are updated with the
+latest changes.
 
 3) Update or verify the version numbers minimally in configure.ac,
 NEWS, README, and include/config_win.h (see VERSION NUMBERS &
