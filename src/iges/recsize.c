@@ -19,6 +19,20 @@
  * information.
  */
 /** @file recsize.c
+ *
+ * Routine to determine record size of IGES file.
+ *	According to the spec, the file should be
+ *	80 characters per record.  The spec does not
+ *	mention anything about CR or LF at the end of records,
+ *	so this routine looks for LF's and returns the actual
+ *	record length.
+ *	Note: this will work for files with records that are
+ *	80 characters long without any CR or LF at end of records,
+ *	also for files with CR-LF at end of records, and for files
+ *	with just LF at end of records.  It will not work for files
+ *	with just CR at end of records (but I haven't seen such an animal
+ *	yet)
+ *
  *  Authors -
  *	John R. Anderson
  *	Susanne L. Muuss
@@ -31,25 +45,16 @@
  *  
  */
 
-/* Routine to determine record size of IGES file.
-	According to the spec, the file should be
-	80 characters per record.  The spec does not
-	mention anything about CR or LF at the end of records,
-	so this routine looks for LF's and returns the actual
-	record length.
-	Note: this will work for files with records that are
-	80 characters long without any CR or LF at end of records,
-	also for files with CR-LF at end of records, and for files
-	with just LF at end of records.  It will not work for files
-	with just CR at end of records (but I haven't seen such an animal
-	yet) */
+#include "common.h"
+
+#include <errno.h>
 
 #include "./iges_struct.h"
 #include "./iges_extern.h"
+
 #define	NRECS	20	/* Maximum number of records to sample */
 #define	NCHAR	256	/* Maximuim number of characters to read
 				in case there are no LF's */
-extern int errno;
 
 int
 Recsize()

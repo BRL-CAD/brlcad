@@ -7,17 +7,46 @@ see that file and the CVS log for more historic information.  The
 entire history of the project is available through CVS.
 
 ----------------------------------------------------------------------
+--- 2005-08-XX  Release 7.4.1                                      ---
+----------------------------------------------------------------------
+
+Continuing with the impressive ADRT tool suite being provided by
+Justin Shumaker is the addition of the Interactive Shot Selection Tool
+(ISST).  Using ISST, you can spin large facetized models around in
+real-time, slice through them with rays, and examine the geometric
+components along a given path.  The tool will take advantage of
+clusters and SMP hardware similar to RISE, providing a master job
+manager, a slave compute daemon for network distributed processing,
+and a client for interacting with and viewing the models.
+
+This release also includes the addition of a new geometry "quality
+analysis" tool called g_qa.  This tool is a new tool that combines
+some of the features of rtweight and g_lint, providing a robust means
+for computing the weight and volume of objects while also allowing a
+means to report overlaps, air gaps, external air regions, bounding box
+dimensions, and more.
+
+* fixed ray-trace unique hits evaluation bug - John Anderson
+* added manual page for remapid - John Anderson
+* fixed quick memory debugging bug - Jim Hunt
+* improved brlman relocation - Sean Morrison
+* added g_qa geometry quality analysis tool - Lee Butler
+* added adrt interactive shot selection tool - Justin Shumaker
+* simultaneous -o and -F options to rt, rtedge, rtxray - Sean Morrison
+
+----------------------------------------------------------------------
 --- 2005-07-12  Release 7.4.0                                      ---
 ----------------------------------------------------------------------
 
 This update includes several enhancements and new additions including
-the impressive addition of the Realistic Interactive Synthesis Engine
-(RISE) path-tracer.  RISE is part of the ADRT tool and library suite,
-which provides a high-performance triangle ray-trace engine.  This
-engine serves as the basis for several tools, RISE being the first
-toolset to be released.  This toolset includes a master job manager, a
-slave compute daemon for network distributed processing, and a client
-for observing job progress.
+the impressive addition of the Realistic Image Synthesis Engine (RISE)
+path-tracer.  RISE is part of the Advanced Distributed Ray-Trace
+(ADRT) tool and library suite, which provides a high-performance
+triangle ray-trace engine.  This engine serves as the basis for
+several tools, RISE being the first toolset to be released.  This
+toolset includes a master job manager, a slave compute daemon for
+network distributed processing, and a client for observing job
+progress.
 
 Driven by user requests, the 'rtarea' command now reports signifcantly
 more information than before including area details for all assemblies

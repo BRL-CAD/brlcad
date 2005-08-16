@@ -98,7 +98,6 @@ int trans;			/* 0=receive, !0=transmit mode */
 int sinkmode;			/* 0=normal I/O, !0=sink/source mode */
 
 struct hostent *addr;
-extern int errno;
 
 char Usage[] = "\
 Usage: ttcp -t [-options] host <in\n\

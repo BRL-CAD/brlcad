@@ -98,6 +98,7 @@ void rise_master(int port, int obs_port, char *proj, char *list, char *exec, int
 
     /* Wait for frame to finish */
     tienet_sem_wait(&rise_master_frame_sem);
+#if 0
     {
       unsigned char *image24;
 
@@ -108,7 +109,7 @@ void rise_master(int port, int obs_port, char *proj, char *list, char *exec, int
       util_image_save_ppm(image_name, image24, db.env.img_w, db.env.img_h);
       free(image24);
     }
-
+#endif
     free(app_data);
   }
 

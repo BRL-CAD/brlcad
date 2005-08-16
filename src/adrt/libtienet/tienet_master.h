@@ -50,7 +50,8 @@ extern void	tienet_master_shutdown();
 extern void	tienet_master_broadcast(void *mesg, int mesg_len);
 extern uint64_t	tienet_master_get_rays_fired();
 
+extern int	tienet_master_active_slaves;
 extern int	tienet_master_socket_num;
-extern int	tienet_master_transfer;
+extern uint64_t	tienet_master_transfer;
 
 #endif

@@ -1,0 +1,104 @@
+#!/bin/sh
+#                             A W F
+# BRL-CAD
+#
+# Copyright (C) 2004-2005 United States Government as represented by
+# the U.S. Army Research Laboratory.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+#
+# 1. Redistributions of source code must retain the above copyright
+# notice, this list of conditions and the following disclaimer.
+#
+# 2. Redistributions in binary form must reproduce the above 
+# copyright notice, this list of conditions and the following
+# disclaimer in the documentation and/or other materials provided
+# with the distribution.
+#
+# 3. The name of the author may not be used to endorse or promote
+# products derived from this software without specific prior written
+# permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS
+# OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY
+# DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+# GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+# WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+# NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+# SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+###
+path_to_this="`dirname $0`"
+
+PATH=$path_to_this:@BRLCAD_ROOT@/bin:/bin:/usr/bin:/usr/brlcad/bin ; export PATH
+
+# AWFLIB is where the pieces live
+if test -d @BRLCAD_DATA@/awf ; then
+    AWFLIB=${AWFLIB-@BRLCAD_DATA@/awf}
+elif test -d @BRLCAD_ROOT@/share/brlcad/@BRLCAD_VERSION@/awf ; then
+    AWFLIB=${AWFLIB-@BRLCAD_ROOT@/share/brlcad/@BRLCAD_VERSION@/awf}
+elif test -d ${path_to_this}/../share/brlcad/@BRLCAD_VERSION@/awf ; then
+    AWFLIB=${AWFLIB-$path_to_this/../share/brlcad/@BRLCAD_VERSION@/awf}
+fi    
+
+tmp=/tmp/awp$$			# tempfile for building pass 2
+errs=/tmp/awe$$		# error messages (awk can't send to stderr)
+
+case "$1" in
+    -ms)
+	mac=ms	
+	;;
+    -man)
+	mac=man
+	;;
+    *)	
+	echo "$0: must specify -ms or -man" >&2
+	exit 2
+	;;
+esac
+shift
+
+dev="$AWFLIB/dev.$TERM"
+if test ! -r $dev ; then
+	dev="$AWFLIB/dev.dumb"
+fi
+
+trap "rm -f $tmp $errs ; exit 0" 0 1 2
+
+# build the full, macro-set-dependent, pass-2 awk program
+(
+	sed -n '1,/^#include/p' $AWFLIB/pass2.base
+	cat $AWFLIB/pass2.$mac
+	sed -n '/^#include/,$p' $AWFLIB/pass2.base
+) >$tmp
+
+# do it
+(
+	echo ".^x $errs"
+	echo ".^b"
+	echo ".^# 1 <prolog>"
+	cat $dev $AWFLIB/common $AWFLIB/mac.$mac
+	if test " $*" = " " ; then
+		echo ".^# 1 <stdin>"
+		cat
+	else
+		for f ; do
+			echo ".^# 1 $f"
+			cat $f
+		done
+	fi
+	echo ".^e"
+) | awk -f $AWFLIB/pass1 | awk -f $tmp | awk -f $AWFLIB/pass3
+
+# error messages, if any
+if test -s $errs ; then
+	cat $errs >&2
+	exit 1
+else
+	exit 0
+fi

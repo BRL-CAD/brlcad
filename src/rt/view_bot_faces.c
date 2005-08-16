@@ -108,9 +108,7 @@ int	rayhit(), raymiss();
  */
 
 int
-view_init( ap, file, obj, minus_o )
-register struct application *ap;
-char *file, *obj;
+view_init( struct application *ap, char *file, char *obj, int minus_o )
 {
 
 	if( !minus_o )
@@ -139,9 +137,7 @@ char *file, *obj;
  * 
  */
 void
-view_2init( ap, framename )
-struct application	*ap;
-char *framename;
+view_2init( struct application *ap, char *framename )
 {
 #ifdef HAVE_UNIX_IO
 	struct stat sb;
@@ -235,9 +231,7 @@ view_pixel()
  *  Rayhit() is called by rt_shootray() when the ray hits one or more objects.
  */
 int
-rayhit( ap, PartHeadp )
-struct application *ap;
-register struct partition *PartHeadp;
+rayhit( struct application *ap, struct partition *PartHeadp )
 {
 	register struct partition *pp = PartHeadp->pt_forw;
 	Tcl_HashEntry *entry;

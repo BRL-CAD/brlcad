@@ -46,6 +46,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include <time.h>
 #include <string.h>
 #include <signal.h>
+#include <errno.h>
 
 #include "./vecmath.h"
 #include "machine.h"
@@ -137,9 +138,6 @@ struct seg *segp;
 	return	1;
 	}
 
-#include <errno.h>
-/* These aren't defined in BSD errno.h.					*/
-extern int	errno;
 
 void
 locPerror( msg )

@@ -91,7 +91,7 @@ __BEGIN_DECLS
 #endif
 
 
-/** define BU_DIR_SEPARATOR to the directory path separator character
+/** define BU_DIR_SEPARATOR to the directory separator character
  */
 #ifdef DIR_SEPARATOR
 #  define BU_DIR_SEPARATOR DIR_SEPARATOR
@@ -106,6 +106,22 @@ __BEGIN_DECLS
 #    endif  /* _WIN32 */
 #  endif  /* DIR_SEPARATOR_2 */
 #endif  /* DIR_SEPARATOR */
+
+#ifndef MAXPATHLEN
+#  define MAXPATHLEN 1024
+#endif
+
+/** define BU_PATH_SEPARATOR to the path list separator character
+ */
+#if defined(PATH_SEPARATOR)
+#  define BU_PATH_SEPARATOR PATH_SEPARATOR
+#else
+#  if defined(_WIN32)
+#    define BU_PATH_SEPARATOR ';'
+#  else
+#    define BU_PATH_SEPARATOR ':'
+#  endif  /* _WIN32 */
+#endif  /* PATH_SEPARATOR */
 
 
 /*----------------------------------------------------------------------*/
@@ -1667,9 +1683,10 @@ BU_EXPORT BU_EXTERN(int bu_fgetc,
 BU_EXPORT BU_EXTERN(void bu_printfile,
 		    (struct bu_file *bfp));
 
+/* stat.c */
+BU_EXPORT BU_EXTERN(int	bu_file_exists, (const char *path));
+
 /* brlcad_path.c */
-BU_EXPORT BU_EXTERN(int	bu_file_exists,
-		    (const char *path));
 BU_EXPORT BU_EXTERN(char *bu_brlcad_path, /* deprecated call */
 		    (const char *rhs, int fail_quietly));
 BU_EXPORT BU_EXTERN(char *bu_brlcad_root,

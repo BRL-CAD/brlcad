@@ -51,6 +51,8 @@
 #ifdef BWISH
 #  include "dm.h"
 #endif
+#include "tclcad.h"
+
 
 /* XXX -- it's probably a bad idea to import itcl/itk/iwidgets into
  * the global namespace..  allow for easy means to disable the import.
@@ -84,9 +86,6 @@ main(int argc, char **argv)
 static int
 Cad_AppInit(Tcl_Interp *interp)
 {
-    struct bu_vls vls;
-    char *pathname;
-
     /* Initialize Tcl */
     if (Tcl_Init(interp) == TCL_ERROR) {
 	bu_log("Tcl_Init error %s\n", interp->result);
@@ -209,19 +208,8 @@ Cad_AppInit(Tcl_Interp *interp)
     Tk_CreateCanvasBezierType();
 #endif
 
-    /* Locate the BRL-CAD-specific Tcl scripts */
-    pathname = bu_brlcad_data("", 1);
-
-    bu_vls_init(&vls);
-    if (pathname) {
-	bu_vls_printf(&vls, "lappend auto_path %s/tclscripts %s/tclscripts/lib %s/tclscripts/util",
-		      pathname, pathname, pathname);
-	(void)Tcl_Eval(interp, bu_vls_addr(&vls));
-    } else {
-	/* hunt for the tclscripts a little since we're probably just not installed yet */
-	(void)Tcl_Eval(interp, "lappend auto_path tclscripts tclscripts/lib tclscripts/lib/util src/tclscripts src/tclscripts/lib src/tclscripts/util ../tclscripts ../tclscripts/lib ../tclscripts/util ../../tclscripts ../../tclscripts/lib ../../tclscripts/util /usr/brlcad/tclscripts /usr/brlcad/tclscripts/lib /usr/brlcad/tclscripts/util");
-    }
-    bu_vls_free(&vls);
+    /* Locate the BRL-CAD-specific Tcl scripts, set the auto_path */
+    tclcad_auto_path(interp);
 
     /* register bwish/btclsh commands */
     cmdInit(interp);

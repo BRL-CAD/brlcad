@@ -31,7 +31,7 @@
 #define __STDC__ 1
 
 #pragma warning( disable : 4244 4305 4018)
-/*  4244 conversion from type 1 to type 2 
+/*  4244 conversion from type 1 to type 2
     4305 truncation
 	4018 signed/unsigned mismatch
 */
@@ -43,14 +43,18 @@
 #	error "STDC is not properly set on WIN32 build, add /Za to Project Settings / Project Options"
 # endif
 
-#define BRLCAD_ROOT ""
+#define BRLCAD_VERSION    "7.4.1"
+#define BRLCAD_ROOT       ""
+#define BRLCAD_DATA       ""
 #define INSTALL_DIRECTORY "C:/brlcad7_2"
 
 #define HAS_OPENGL	1
+#define HAVE_ACCESS     1
 #define HAVE_CALLOC	1
 #define HAVE_ERRNO_H	1
 #define HAVE_FCNTL_H	1
 #define HAVE_FLOAT_H	1
+#define HAVE_GETENV     1
 #define HAVE_GETHOSTNAME	1
 #define HAVE_GL_GL_H	1
 #define HAVE_IO_H	1
@@ -60,6 +64,7 @@
 #define HAVE_OFF_T	1
 #define HAVE_PWD_H	1
 #define HAVE_REGEX_H	1
+#define HAVE_STAT       1
 #define HAVE_STDARG_H	1
 #define HAVE_STDLIB_H	1
 #define HAVE_STRCHR	1
@@ -67,6 +72,7 @@
 #define HAVE_STRDUP	1
 #define HAVE_STRDUP_DECL	1
 #define HAVE_STRING_H	1
+#define HAVE_SYS_STAT_H 1
 #define HAVE_SYS_TIME	1
 #define HAVE_TIME	1
 #define HAVE_TIME_H	1
@@ -86,6 +92,9 @@
 #define bcopy(from,to,count)	memcpy( to, from, count )
 
 #define	isnan _isnan
+#define F_OK 0
+#define R_OK 4
+#define W_OK 2
 #define MAXPATHLEN _MAX_PATH
 #define O_CREAT _O_CREAT
 #define O_EXCL _O_EXCL
@@ -123,7 +132,6 @@
 #define strdup _strdup
 #define strncmp _strncmp
 #define sys_errlist _sys_errlist
-#define tell _tell
 #define umask _umask
 #define unlink _unlink
 #define write _write

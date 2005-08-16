@@ -48,9 +48,12 @@ SRCS = \
 	rb_search.c \
 	rb_walk.c \
 	semaphore.c \
+	stat.c \
 	units.c \
 	vfont.c \
 	vls.c \
+	whereis.c \
+	which.c \
 	xdr.c
 
 libbu_la_LDFLAGS = -version-info 19:1

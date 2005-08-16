@@ -347,9 +347,16 @@ directives and type declarations that may be used where needed.
 
 Generic platform checks (e.g. #ifdef unix, #ifdef _WIN32) are highly
 discouraged and should not be used.  Replace those checks with tests
-for the actual facility being utilized instead.  The Windows platform
-utilizes its own manually-generated configure results header.
-(include/config_win.h)
+for the actual facility being utilized instead.
+
+The Windows platform utilizes its own manually-generated configure
+results header (include/config_win.h) that has to be manually updated
+if new tests are added to the configure.ac template.
+
+The BRL-CAD sources as well as packages linking to BRL-CAD should
+include the common.h header.  They should not include brlcad_config.h
+or config_win.h directly.  The common.h header should be listed before
+any other headers.
 
 Coding Standards:
 
@@ -657,8 +664,9 @@ significant items added since the previous release.
 
 2) All existing manpages are updated with the latest changes.
 
-3) Version numbers (minimally in configure.ac, NEWS, and README) are
-updated appropriately (see VERSION NUMBERS & COMPATIBILITY section).
+3) Update or verify the version numbers minimally in configure.ac,
+NEWS, README, and include/config_win.h (see VERSION NUMBERS &
+COMPATIBILITY section).
 
 4) Update the ChangeLog with entries since the last release; commit
 the updated ChangeLog.  Use the YYYY-MM-DD of the previous release.
@@ -701,27 +709,49 @@ outlets with the details of the new release:
 
       News on the BRL-CAD website
       http://brlcad.org/
+	with news details
 
       SourceForge Project News
       http://sf.net/projects/brlcad/
+	with news details
 
       BRL-CAD News & Users mailing lists
       brlcad-news@lists.sourceforge.net
       brlcad-users@lists.sourceforge.net
-
-      Freshmeat
-      http://freshmeat.net/projects/brl-cad/
+	with news details
 
       CAD on Linux mailing list
       cad-linux@freelists.org
+	with news details
       cad-linux-dev@freelists.org
+	without news details
+
+      Freshmeat
+      http://freshmeat.net/projects/brl-cad/
+	short without news details
+
+      upFront.ezine (if major)
+      Ralph Grabowski
+      ralphg@upfrontezine.com
+	with news details
+
+      CADinfo.NET (if major)
+      copyboy@cadinfo.net
+	with news details
+
+      TenLinks Daily (if major)
+      http://www.tenlinks.com/NEWS/tl_daily/submit_news.htm
+      news@tenlinks.com
+	with news details
 
       Slashdot (if major)
       http://slashdot.org
+	short without news details
 
       Government Computer News (if major)
       Joab Jackson
       jjackson@gcn.com
+	short without news details
 
 15) Sit back and enjoy a beverage for a job well done.
 

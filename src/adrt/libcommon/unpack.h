@@ -43,15 +43,6 @@
 #include "texture.h"
 
 /*** ONLY TEMPORARY ***/
-#define COMMON_PACK_ALL                   0x0001
-
-#define COMMON_PACK_CAMERA                0x0100
-#define COMMON_PACK_ENV                   0x0101
-#define COMMON_PACK_TEXTURE               0x0102
-#define COMMON_PACK_MESH                  0x0103
-#define COMMON_PACK_PROP                  0x0104
-
-
 #define COMMON_PACK_ENV_RM                0x0300
 #define COMMON_PACK_ENV_IMAGESIZE         0x0301
 
@@ -76,7 +67,7 @@ typedef struct common_unpack_mesh_node_s {
 } common_unpack_mesh_node_t;
 
 
-extern	void	common_unpack(common_db_t *db, tie_t *tie, util_camera_t *camera, int mask, void *app_data, int app_size);
+extern	void	common_unpack(common_db_t *db, tie_t *tie, util_camera_t *camera, int socknum);
 extern	void	common_unpack_free();
 
 #endif

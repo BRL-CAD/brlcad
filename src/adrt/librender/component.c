@@ -40,15 +40,13 @@ void render_component_work(render_t *render, tie_t *tie, tie_ray_t *ray, TIE_3 *
 
     /* shade solid */
     pixel->v[0] = 1.0;
-    pixel->v[1] = 0.3;
-    pixel->v[2] = 0.3;
+    pixel->v[1] = 0.2;
+    pixel->v[2] = 0.2;
     math_vec_sub(vec, ray->pos, id.pos);
     math_vec_unitize(vec);
     math_vec_dot(angle, vec, id.norm);
     math_vec_mul_scalar((*pixel), (*pixel), (angle*0.8));
-  }
-
-  if(ray->depth) {
+  } else if(ray->depth) {
     pixel->v[0] += 0.2;
     pixel->v[1] += 0.2;
     pixel->v[2] += 0.2;

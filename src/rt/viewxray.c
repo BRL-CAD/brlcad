@@ -99,12 +99,15 @@ Options:\n\
  *  Returns 1 if framebuffer should be opened, else 0.
  */
 int
-view_init(register struct application *ap, char *file, char *obj, int minus_o)
+view_init(register struct application *ap, char *file, char *obj, int minus_o, int minus_F)
 {
 	/*
-	 *  We need to work to get the output pixels and scanlines
-	 *  in order before we can run in parallel.  Something like
-	 *  view.c does in its dynamic buffering mode.
+	 * We need to work to get the output pixels and scanlines
+	 * in order before we can run in parallel.  Something like
+	 * view.c does in its dynamic buffering mode.
+	 *
+	 * XXX this hack-around causes a need for more careful
+	 * semaphore acquisition since it may block
 	 */
 	if (rt_g.rtg_parallel) {
 		rt_g.rtg_parallel = 0;
@@ -125,16 +128,17 @@ view_init(register struct application *ap, char *file, char *obj, int minus_o)
 			bu_malloc( width*pixsize, "scanline buffer" );
 	}
 
-	if( minus_o ) {
-		/* output is to a file */
-		return(0);		/* don't open frame buffer */
+	if( minus_F || (!minus_o && !minus_F) ) {
+	    /* open a framebuffer? */
+	    if( lightmodel == LGT_FLOAT ) {
+		bu_log("rtxray: Can't do floating point mode to frame buffer, use -o\n");
+		return 0;
+	    }
+	    return 1;
 	}
 
-	if( lightmodel == LGT_FLOAT ) {
-		bu_log("rtxray: Can't do floating point mode to frame buffer, use -o\n");
-		exit(1);
-	}
-	return(1);		/* we need a framebuffer */
+	/* no framebuffer */
+	return 0; 
 }
 
 /* beginning of a frame */
@@ -166,14 +170,52 @@ view_pixel(register struct application *ap)
 void
 view_eol(register struct application *ap)
 {
-	if( lightmodel == LGT_BW ) {
+    int i;
+    char *buf = (char *)0;
+
+    if( lightmodel == LGT_BW ) {
+	if( outfp != NULL ) {
+	    if (rt_g.rtg_parallel) {
 		bu_semaphore_acquire( BU_SEM_SYSCALL );
-		if( outfp != NULL )
-			fwrite( scanbuf, pixsize, width, outfp );
-		else if( fbp != FBIO_NULL )
-			fb_write( fbp, 0, ap->a_y, scanbuf, width );
+	    }
+	    fwrite( scanbuf, pixsize, width, outfp );
+	    if (rt_g.rtg_parallel) {
 		bu_semaphore_release( BU_SEM_SYSCALL );
+	    }
+	    if( fbp != FBIO_NULL ) {
+		if (!buf) {
+		    buf = (char *)bu_malloc(sizeof(RGBpixel)*width, "allocating temporary buffer in viewxray");
+		}
+
+		/* fb_write only accepts RGBpixel arrays, so convert it */
+		for (i=0; i < width; i++) {
+		    buf[i*3+RED] = scanbuf[i];
+		    buf[i*3+GRN] = scanbuf[i];
+		    buf[i*3+BLU] = scanbuf[i];
+		}
+
+		if (rt_g.rtg_parallel) {
+		    bu_semaphore_acquire( BU_SEM_SYSCALL );
+		}
+		fb_write( fbp, 0, ap->a_y, buf, width );
+		if (rt_g.rtg_parallel) {
+		    bu_semaphore_release( BU_SEM_SYSCALL );
+		}
+
+		if (buf) {
+		    bu_free(buf, "releasing temporary buffer in viewxray");
+		}
+	    }
+	} else {
+	    if (rt_g.rtg_parallel) {
+		bu_semaphore_acquire( BU_SEM_SYSCALL );
+	    }
+	    fb_write( fbp, 0, ap->a_y, scanbuf, width );
+	    if (rt_g.rtg_parallel) {
+		bu_semaphore_release( BU_SEM_SYSCALL );
+	    }
 	}
+    }
 }
 
 void	view_setup(void) {}

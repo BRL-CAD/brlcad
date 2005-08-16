@@ -41,6 +41,7 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <math.h>
+#include <errno.h>
 
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
@@ -51,7 +52,6 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 #include "vmath.h"
 #include "bn.h"
 
-extern int errno;
 
 #define	made_it()	bu_log("%s:%d\n", __FILE__, __LINE__);
 

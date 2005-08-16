@@ -1,0 +1,101 @@
+#!/bin/sh
+#                          B R L M A N
+# BRL-CAD
+#
+# Copyright (C) 1991-2005 United States Government as represented by
+# the U.S. Army Research Laboratory.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+#
+# 1. Redistributions of source code must retain the above copyright
+# notice, this list of conditions and the following disclaimer.
+#
+# 2. Redistributions in binary form must reproduce the above 
+# copyright notice, this list of conditions and the following
+# disclaimer in the documentation and/or other materials provided
+# with the distribution.
+#
+# 3. The name of the author may not be used to endorse or promote
+# products derived from this software without specific prior written
+# permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS
+# OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY
+# DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+# GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+# WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+# NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+# SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#
+###
+#
+#  A substitute for the "man" command for those systems that do not
+#  have NROFF.  Henry Spencer's "nroff -man" replacement called AWF
+#  is used instead.
+#
+#  Michael John Muuss, BRL, 23-June-1991.
+#
+#  @(#) $Header$ (BRL)
+path_to_this="`dirname $0`"
+
+if test $# -lt 1 ; then
+	echo "Usage: $0 command"
+	echo "  To obtain help about that command"
+	exit 1
+fi
+
+PATH=$path_to_this:@BRLCAD_ROOT@/bin:/bin:/usr/bin:/usr/brlcad/bin ; export PATH
+
+# Use MANPAGER, else use PAGER, else use "more" command.
+MORE="more -s -f"
+if test "$PAGER" != "" ; then
+	MORE="${PAGER}"
+fi
+if test "${MANPAGER}" != "" ; then
+	MORE="${MANPAGER}"
+fi
+
+# Ensure that MANPATH is set and has BRL-CAD materials man dirs listed first.
+
+if test -d "@BRLCAD_ROOT@/share/brlcad/@BRLCAD_VERSION@/man" ; then
+    MANPATH="@BRLCAD_ROOT@/share/brlcad/@BRLCAD_VERSION@/man:$MANPATH"
+fi
+if test -d "${path_to_this}/../share/brlcad/@BRLCAD_VERSION@/man" ; then
+    MANPATH="${path_to_this}/../share/brlcad/@BRLCAD_VERSION@/man:$MANPATH"
+fi
+if test -d "${path_to_this}/../man" ; then
+    MANPATH="${path_to_this}/../man:$MANPATH"
+fi
+if test -d "@BRLCAD_DATA@/man" ; then
+    MANPATH="@BRLCAD_DATA@/man:$MANPATH"
+fi
+if test -d "@BRLCAD_ROOT@/man" ; then
+    MANPATH="@BRLCAD_ROOT@/man:$MANPATH"
+fi
+
+PATH_ELEMENTS=`echo ${MANPATH} | sed 's/^://
+				s/:://g
+				s/:$//
+				s/:\\.:/:/g
+				s/:/ /g'`
+
+for PLACE in ${PATH_ELEMENTS} ; do
+	PATTERN="${PLACE}/man?/$1.?"
+	TRY=`eval echo ${PATTERN}`
+	if test "${TRY}" != "${PATTERN}" ; then
+		# Found something(s), format it/them
+		echo ${TRY}
+		awf -man ${TRY} | ${MORE}
+		if test "x$?" = "x0" ; then
+		    break
+		fi
+	fi
+done
+
+exit 0

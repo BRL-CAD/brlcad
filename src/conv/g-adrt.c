@@ -51,12 +51,13 @@
 #ifndef HUGE
 #define HUGE 3.40282347e+38F
 #endif
-#define ADRT_GEOMETRY_REVISION 0
+#define ADRT_GEOMETRY_REVISION 1
 
 
 typedef struct property_s {
   char name[256];
   float color[3];
+  float emission;
 } property_t;
 
 
@@ -180,6 +181,11 @@ static int reg_start_func(struct db_tree_state *tsp,
     prop_list[prop_num].color[0] = color[0] / 255.0;
     prop_list[prop_num].color[1] = color[1] / 255.0;
     prop_list[prop_num].color[2] = color[2] / 255.0;
+    if(strstr(bu_vls_strgrab((struct vu_vls *)&(combp->shader)), "light")) {
+      prop_list[prop_num].emission = 1.0;
+    } else {
+      prop_list[prop_num].emission = 0.0;
+    }
     prop_num++;
   }
 /*    printf("reg_start: -%s- [%d,%d,%d]\n", name, combp->rgb[0], combp->rgb[1], combp->rgb[2]); */
@@ -229,7 +235,8 @@ static union tree *leaf_func(struct db_tree_state *tsp,
     vectp_t vp;
     float vec[3];
     int hash, i, n, size;
-    char c, prop_name[256], reg_name[256];
+    char prop_name[256], reg_name[256];
+    unsigned char c;
 
 
     RT_CK_DBTS(tsp);
@@ -283,7 +290,7 @@ static union tree *leaf_func(struct db_tree_state *tsp,
       regmap_lookup(reg_name, tsp->ts_regionid);
 
     /* Display Status */
-    printf("regions processed: %d\r", region_count++);
+    printf("regions processed: %d\r", ++region_count);
     fflush(stdout);
 
     if(i != strlen(reg_name))
@@ -330,9 +337,26 @@ static union tree *leaf_func(struct db_tree_state *tsp,
       fwrite(vec, sizeof(float), 3, adrt_fh);
     }
 
-    /* Pack number of faces */
-    fwrite(&bot->num_faces, sizeof(int), 1, adrt_fh);
-    fwrite(bot->faces, sizeof(int)*3, bot->num_faces, adrt_fh);
+    if(bot->num_faces < 1<<16) {
+      unsigned short ind;
+
+      c = 0; /* using unsigned shorts */
+      fwrite(&c, 1, 1, adrt_fh);
+
+      /* Pack number of faces */
+      ind = bot->num_faces;
+      fwrite(&ind, sizeof(unsigned short), 1, adrt_fh);
+      for(i = 0; i < 3 * bot->num_faces; i++) {
+        ind = bot->faces[i];
+        fwrite(&ind, sizeof(unsigned short), 1, adrt_fh);
+      }
+    } else {
+      c = 1; /* using ints */
+      fwrite(&c, 1, 1, adrt_fh);
+
+      fwrite(&bot->num_faces, sizeof(int), 1, adrt_fh);
+      fwrite(bot->faces, sizeof(int), 3*bot->num_faces, adrt_fh);
+    }
 
     hash = db_dirhash( dp->d_namep );
 
@@ -559,7 +583,7 @@ int main(int argc, char *argv[]) {
   fprintf(adrt_fh, "textures_file,textures.db\n");
   fprintf(adrt_fh, "frames_file,frames.db\n");
   fprintf(adrt_fh, "image_size,640,480,80,80\n");
-  fprintf(adrt_fh, "rendering_method,phong\n");
+  fprintf(adrt_fh, "rendering_method,path,128\n");
 
   fclose(adrt_fh);
 
@@ -570,6 +594,8 @@ int main(int argc, char *argv[]) {
   for(i = 0; i < prop_num; i++) {
     fprintf(adrt_fh, "properties,%s\n", prop_list[i].name);
     fprintf(adrt_fh, "color,%f,%f,%f\n", prop_list[i].color[0], prop_list[i].color[1], prop_list[i].color[2]);
+    if(prop_list[i].emission > 0.0)
+      fprintf(adrt_fh, "emission,%f\n", prop_list[i].emission);
   }
   fclose(adrt_fh);
 

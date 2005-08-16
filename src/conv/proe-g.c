@@ -41,8 +41,6 @@ static const char RCSid[] = "$Header$";
 
 #include "common.h"
 
-
-
 #include <stdio.h>
 #include <math.h>
 #ifdef HAVE_STRING_H
@@ -51,6 +49,8 @@ static const char RCSid[] = "$Header$";
 #include <strings.h>
 #endif
 #include <ctype.h>
+#include <regex.h>
+#include <errno.h>
 
 #include "machine.h"
 #include "vmath.h"
@@ -58,11 +58,9 @@ static const char RCSid[] = "$Header$";
 #include "rtgeom.h"
 #include "raytrace.h"
 #include "wdb.h"
-#include <regex.h>
 
 extern char *optarg;
 extern int optind,opterr,optopt;
-extern int errno;
 
 static	struct wmember all_head;
 static char *input_file;	/* name of the input file */

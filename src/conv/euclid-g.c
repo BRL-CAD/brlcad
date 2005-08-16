@@ -53,6 +53,7 @@ static const char RCSid[] = "$Header$";
 #    include <sys/unistd.h>
 #  endif
 #endif
+#include <errno.h>
 
 /* interface headers */
 #include "machine.h"
@@ -90,8 +91,6 @@ int find_vert(struct vlist *vert, int nv, fastf_t x, fastf_t y, fastf_t z);
 int store_vert(struct vlist *vert, int *nv, fastf_t x, fastf_t y, fastf_t z);
 int read_euclid_face(int *lst, int *ni, FILE *fp, struct vlist *vert, int *nv);
 int cvt_euclid_region(FILE *fp, struct rt_wdb *fpdb, int reg_id);
-
-extern int errno;
 
 
 struct bu_ptbl groups[11];

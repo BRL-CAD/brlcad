@@ -176,7 +176,7 @@
  *  Source -
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005
- *  
+ *
  *
  *  Include Sequencing -
  *	#include <stdio.h>
@@ -194,7 +194,7 @@
 #define MACHINE_H seen
 
 /*
- * Figure out the maximum number of files that can simultaneously be open 
+ * Figure out the maximum number of files that can simultaneously be open
  * by a process.
  */
 
@@ -225,15 +225,14 @@
  *  Windows Windows		*
  *				*
  ********************************/
-typedef double fastf_t;	
-#define LOCAL auto	
-#define FAST register	
-typedef long bitv_t;	
+typedef double fastf_t;
+#define LOCAL auto
+#define FAST register
+typedef long bitv_t;
 #define BITV_SHIFT	5
 /* assume only one processor for now */
 #define MAX_PSW	4
 #define DEFAULT_PSW	1
-#define PARALLEL	0
 #define MALLOC_NOT_MP_SAFE 1
 
 #endif /* _WIN32 */
@@ -509,7 +508,7 @@ typedef long	bitv_t;		/* largest integer type */
 
 #endif
 
-#if defined(hppa) 
+#if defined(hppa)
 /********************************
  *				*
  *   HP 9000/700                *
@@ -690,7 +689,7 @@ typedef long	bitv_t;		/* largest integer type */
 #define BITV_SHIFT	5	/* log2( bits_wide(bitv_t) ) */
 
 #define MAX_PSW		4	/* allow for a dual core dual */
-#define DEFAULT_PSW	bu_avail_cpus()	/* use as many as are available by default */ 
+#define DEFAULT_PSW	bu_avail_cpus()	/* use as many as are available by default */
 
 #endif
 

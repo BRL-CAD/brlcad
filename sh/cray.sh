@@ -84,13 +84,6 @@
 PATH=/usr/bsd:$PATH
 export PATH
 
-# If user has Bourne shell on remote end, the rshd invoked shell
-# will NOT run .profile, so our remote commands will be stuck with
-# the system default path.  Hence, the uglyness of having to know
-# where CAD programs are installed on the remote machine.  Sigh.
-eval `machinetype.sh -b`;	# sets BASEDIR
-BINDIR=$BASEDIR/bin
-
 PROG_NAME=$0
 
 # Re-build the arguments, for easy parsing.
@@ -165,10 +158,10 @@ echo ""
 REM_DB="/tmp/${USER}db"
 REM_MAT="/tmp/${USER}mat"
 
-g2asc < $DBASE | rsh $COMPUTE_SERVER "rm -f $REM_DB; $BINDIR/asc2g > $REM_DB"
+g2asc < $DBASE | rsh $COMPUTE_SERVER "rm -f $REM_DB; asc2g > $REM_DB"
 
 RCMD="cat > $REM_MAT; \
-	$BINDIR/rt $ARGS $REM_DB $OBJS < $REM_MAT; \
+	rt $ARGS $REM_DB $OBJS < $REM_MAT; \
 	rm -f $REM_DB $REM_MAT"
 
 # Uses stdin from invoker, typ. MGED rrt command

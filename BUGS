@@ -15,8 +15,6 @@ on-going issues.
 Recent Bugs
 -----------
 
-* brlman/awf is hardwired for 7.4.0 (temp fix)
-
 * mged/bwish doesn't work without the required resources being
   installed (i.e. it won't run from a build directory without an
   installed version in place)

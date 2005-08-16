@@ -2,6 +2,7 @@
 
 bin_PROGRAMS = \
 	g_lint \
+	g_qa \
 	g_diff \
 	solshoot \
 	testfree
@@ -12,13 +13,20 @@ g_diff_LDADD = ${LIBRT} ${TCL}
 g_lint_SOURCES = g_lint.c
 g_lint_LDADD = ${LIBRT}  
 
+g_qa_SOURCES = g_qa.c
+g_qa_LDADD = ${LIBRT}  
+
 solshoot_SOURCES = solshoot.c
 solshoot_LDADD = ${LIBRT} 
 
 testfree_SOURCES = testfree.c
 testfree_LDADD = ${LIBRT} 
 
-man_MANS = g_diff.1 g_lint.1
+man_MANS = \
+	g_diff.1 \
+	g_lint.1 \
+	g_qa.1
+
 EXTRA_DIST = $(man_MANS)
 
 include $(top_srcdir)/misc/Makefile.defs

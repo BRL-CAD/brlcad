@@ -26,10 +26,14 @@ LOG = \
 	star.log \
 	world.log
 
+SAVEVIEWS = \
+	cube.rt
+
 EXTRA_DIST = \
 	${BENCHMARK_PIX} \
 	${PIX} \
-	${LOG}
+	${LOG} \
+	${SAVEVIEWS}
 
 pixdir = $(BRLCAD_DATA)/pix
 pix_DATA = \

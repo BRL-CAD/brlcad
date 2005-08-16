@@ -278,6 +278,8 @@ main(int argc, char **argv)
 	_fmode = _O_BINARY;
 #endif
 
+	bu_argv0(argv[0]);
+
 	while ((c = bu_getopt(argc, argv, "d:hficnrx:X:")) != EOF)
 	{
 		switch( c )

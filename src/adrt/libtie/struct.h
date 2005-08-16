@@ -61,6 +61,7 @@ typedef struct tie_ray_s {
   TIE_3		pos;    /* Position */
   TIE_3		dir;    /* Direction */
   short		depth;  /* Depth */
+  short		kdtree_depth;
 } tie_ray_t;
 
 /** 
@@ -90,14 +91,14 @@ typedef struct tie_tri_s {
 } tie_tri_t;
 
 /** 
- * @struct tie_bsp_s struct.h
+ * @struct tie_kdtree_s struct.h
  *
  * The binary space partitioning tree
  */
-typedef struct tie_bsp_s {
+typedef struct tie_kdtree_s {
   tfloat	axis;
   void		*data;
-} tie_bsp_t;
+} tie_kdtree_t;
 
 /** 
  *
@@ -111,7 +112,7 @@ typedef struct tie_geom_s {
  *
  */
 typedef struct tie_stack_s {
-  tie_bsp_t	*node;
+  tie_kdtree_t	*node;
   tfloat	near;
   tfloat	far;
 } tie_stack_t;
@@ -121,12 +122,11 @@ typedef struct tie_stack_s {
  */
 typedef struct tie_s {
   uint64_t	rays_fired;
-  tie_bsp_t	*bsp;
+  tie_kdtree_t	*kdtree;
+  int		max_depth;	/* Maximum depth allowed for given geometry */
   TIE_3		min, max;
   int		tri_num;
   tie_tri_t	*tri_list;
-
-  int		count;
   int		max_tri;
 } tie_t;
 

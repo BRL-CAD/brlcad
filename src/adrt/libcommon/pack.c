@@ -120,11 +120,8 @@ void common_pack_camera(common_db_t *db, void **app_data, int *app_ind) {
   short s;
   int marker, size;
 
-  s = COMMON_PACK_CAMERA;
-  common_pack_write(app_data, app_ind, &s, sizeof(short));
   marker = *app_ind;
   *app_ind += sizeof(int);
-
 
   common_pack_write(app_data, app_ind, &db->anim.frame_list[0].pos, sizeof(TIE_3));
   common_pack_write(app_data, app_ind, &db->anim.frame_list[0].focus, sizeof(TIE_3));
@@ -140,15 +137,11 @@ void common_pack_camera(common_db_t *db, void **app_data, int *app_ind) {
 
 
 void common_pack_env(common_db_t *db, void **app_data, int *app_ind) {
-  short s;
   int marker, size;
+  short s;
 
-
-  s = COMMON_PACK_ENV;
-  common_pack_write(app_data, app_ind, &s, sizeof(short));
   marker = *app_ind;
   *app_ind += sizeof(int);
-
 
   s = COMMON_PACK_ENV_RM;
   common_pack_write(app_data, app_ind, &s, sizeof(short));
@@ -194,17 +187,12 @@ void common_pack_env(common_db_t *db, void **app_data, int *app_ind) {
 void common_pack_prop(void **app_data, int *app_ind, char *filename) {
   FILE *fh;
   common_prop_t def_prop;
-  short s;
   char line[256], name[256], *token;
   unsigned char c;
   int marker, size, prop_num;
 
-
-  s = COMMON_PACK_PROP;
-  common_pack_write(app_data, app_ind, &s, sizeof(short));
   marker = *app_ind;
   *app_ind += sizeof(int);
-
 
   fh = fopen(filename, "r");
   if(!fh) {
@@ -294,15 +282,11 @@ void common_pack_texture(void **app_data, int *app_ind, char *filename) {
   FILE *fh;
   char line[256], *token;
   unsigned char c;
-  short s;
   int marker, size;
+  short s;
 
-
-  s = COMMON_PACK_TEXTURE;
-  common_pack_write(app_data, app_ind, &s, sizeof(short));
   marker = *app_ind;
   *app_ind += sizeof(int);
-
 
   fh = fopen(filename, "r");
   if(!fh) {
@@ -555,7 +539,7 @@ void common_pack_mesh_adrt(common_db_t *db, void **app_data, int *app_ind, char 
   char meshname[256], texturename[256];
   unsigned char c;
   short s, endian;
-  int face[3], marker_size, marker_trinum, size, i, j, k, n, num, matrixind, end;
+  int face[144], marker_size, marker_trinum, size, i, j, k, n, num, matrixind, end;
 
 
   fh = fopen(filename, "rb");
@@ -563,9 +547,6 @@ void common_pack_mesh_adrt(common_db_t *db, void **app_data, int *app_ind, char 
     printf("ADRT geometry file: %s does not exist, exiting...\n", filename);
     exit(1);
   }
-
-  s = COMMON_PACK_MESH;
-  common_pack_write(app_data, app_ind, &s, sizeof(short));
 
   /* Marker for size of all mesh data */
   marker_size = *app_ind;
@@ -614,15 +595,41 @@ void common_pack_mesh_adrt(common_db_t *db, void **app_data, int *app_ind, char 
     }
 
     /* Pack Number of Faces */
-    fread(&num, sizeof(int), 1, fh);
-    if(endian) tienet_flip(&num, &num, sizeof(int));
-    common_pack_write(app_data, app_ind, &num, sizeof(int));
-    common_pack_trinum += num;
 
-    /* Pack Faces */
-    for(i = 0; i < num; i++) {
-      fread(face, sizeof(int), 3, fh);
-      common_pack_write(app_data, app_ind, face, sizeof(int) * 3);
+    /* Short or Int used for face indices */
+    fread(&c, 1, 1, fh);
+    common_pack_write(app_data, app_ind, &c, 1);
+
+    if(c) {
+      fread(&num, sizeof(int), 1, fh);
+      if(endian) tienet_flip(&num, &num, sizeof(int));
+      common_pack_write(app_data, app_ind, &num, sizeof(int));
+      common_pack_trinum += num;
+
+      /* Pack Faces */
+      i = 0;
+      while(i < num) {
+        n = num - i > 48 ? 48 : num - i;
+        fread(face, 3*sizeof(int), n, fh);
+        common_pack_write(app_data, app_ind, face, 3 * n * sizeof(int));
+        i += n;
+      }
+    } else {
+      unsigned short snum, sface[144];
+
+      fread(&snum, sizeof(unsigned short), 1, fh);
+      if(endian) tienet_flip(&snum, &snum, sizeof(unsigned short));
+      common_pack_write(app_data, app_ind, &snum, sizeof(unsigned short));
+      common_pack_trinum += snum;
+
+      /* Pack Faces */
+      i = 0;
+      while(i < snum) {
+        n = snum - i > 48 ? 48 : snum - i;
+        fread(sface, 3*sizeof(unsigned short), n, fh);
+        common_pack_write(app_data, app_ind, sface, 3 * n * sizeof(unsigned short));
+        i += n;
+      }
     }
 
     /* Determine if Mesh has a Transformation Matrix assigned to it */

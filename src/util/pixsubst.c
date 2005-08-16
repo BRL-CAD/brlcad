@@ -24,8 +24,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-
-extern int errno;
+#include <errno.h>
 
 int
 main(int argc, char **argv)

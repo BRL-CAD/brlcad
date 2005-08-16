@@ -44,9 +44,11 @@
 #include "brlcad_config.h"
 
 #define TIE_SINGLE_PREC		1		/* Use Single Precision Math */
-#define	TIE_BSP_NODE_MAX	4		/* Maximum number of triangles that can reside in a given node until it should be split */
-#define	TIE_BSP_DEPTH_MAX	25		/* Maximum depth of BSP */
 #define	TIE_TAB1		"\1\0\0\2\2\1"	/* Triangle Index Table */
+#define	TIE_KDTREE_NODE_MAX	4		/* Maximum number of triangles that can reside in a given node until it should be split */
+#define	TIE_KDTREE_DEPTH_K1	1.2		/* K1 Depth Constant Coefficient */
+#define	TIE_KDTREE_DEPTH_K2	2		/* K2 Contant */
+#define	TIE_KDTREE_MIN_AREA	0.000005	/* Terminating Criteria, Ratio of smallest allowed area to scene area */
 
 /* Type to use for floating precision */
 #if TIE_SINGLE_PREC
