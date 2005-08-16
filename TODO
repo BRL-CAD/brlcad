@@ -9,15 +9,15 @@ scratch pad for the developers to use for tracking development ideas.
 
 THESE SHOULD HAPPEN BEFORE THE NEXT RELEASE
 
-* integrate isst
+* twiddle thumbs
+
+
+THESE ARE LOWER PRIORITY OR FOR FUTURE RELEASES
 
 * ensure successful build on mingw
 
 * provide installation and post configuration support
   scripts
-
-
-THESE ARE LOWER PRIORITY OR FOR FUTURE RELEASES
 
 * make X11 optional at configure-time
 
