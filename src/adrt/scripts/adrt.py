@@ -1,27 +1,19 @@
 ################
 ## REQUIRES PYTHON 2.3 RIGHT NOW
-## CHANGE THESE TO WHERE YOUR PYTHON 2.3 IS LOCATED
+## CHANGE THESE TO WHERE YOUR PYTHON 2.2 IS LOCATED
 import sys
-sys.path.append('/usr/local/lib/python2.3')
-sys.path.append('/usr/local/lib/python2.3/lib-dynload')
+sys.path.append('/usr/local/lib/python2.2')
+sys.path.append('/usr/local/lib/python2.2/lib-dynload')
 ################
 
 import commands
 import Blender
 import math
-import struct
 import os
 from Blender import BGL, Draw, NMesh, Object, Camera, Lamp, Scene, Types
 from math import log
-from struct import *
 #################
-meshVal = 1
-materVal = 1
-frameVal = 1
-sceneVal = 1
-aniVal = 0
-rppVal = 2
-rppBtn = 0
+animation = 0
 layers = []
 layerBase = 40
 i = 0
@@ -46,10 +38,9 @@ def event(evt, val):
 
 
 def NMeshDump(of, obj, mesh):
-  global	propertiesList
+  global propertiesList
 
   myName = obj.getName()
-
   if not mesh.materials:
     ## Write length of Name
     of.write(pack('b', len(myName)))
@@ -117,7 +108,6 @@ def dumpMeshes():
   ## Endian
   of.write(pack('h', 1))
 
-
   objCount = 0
   for obj in objList:
       if (obj.Layer & layerBits) == 0:
@@ -163,13 +153,11 @@ def dumpProperties():
 
 
 def dumpFrames():
-#  global animVal
-#  print "dumpFrames"
   cur = Blender.Get('curframe')
   frameFileName = projectName + "/frame.db"
   frameFile = open(frameFileName, "w")
 
-  if aniVal == 0:
+  if animation == 0:
     dumpOneFrame(frameFile, cur)
   else:
     sta = Blender.Get('staframe')
@@ -223,14 +211,9 @@ def dumpOneFrame(of, n):
       continue
     data = obj.getData()
     if type(data) == Types.CameraType:
-#      exportStatus = "Camera"
-#      Draw.Draw()
       dumpCamera(of, obj, data)
     if type(data) == Types.NMeshType:
       objName = obj.getName()
-#      exportStatus = "Transform Mesh %s" % objName
-#      print exportStatus
-#      Draw.Draw()
       m = obj.matrix
 
       same = 1
@@ -266,7 +249,7 @@ def mat_print(s, m):
 
 
 def doExport():
-  global	layerBits
+  global layerBits
 
   print "Exporting...\n"
 
@@ -278,58 +261,39 @@ def doExport():
       layerBits |= (1 << i)
     i += 1
 
-  if sceneVal == 1:
-    ## Make Project Directory
-    commands.getoutput("mkdir %s" % projectName)
+  ## Make Project Directory
+  commands.getoutput("mkdir %s" % projectName)
 
-    envFileName = projectName + "/env.db"
-    print envFileName
-    envFile = open(envFileName, "w")
+  envFileName = projectName + "/settings.env"
+  print envFileName
+  envFile = open(envFileName, "w")
 
-    envFile.write("image_size,%d,%d\n" % (640,480))
-    envFile.write("rendering_method,normal\n")
+  envFile.write("image_size,%d,%d\n" % (640,480))
+  envFile.write("rendering_method,normal\n")
 
-    envFile.close();
+  envFile.close();
 
-    textureFileName = projectName + "/texture.db"
-    print textureFileName
-    textureFile = open(textureFileName, "w")
-    textureFile.close();
+  textureFileName = projectName + "/texture.db"
+  textureFile = open(textureFileName, "w")
+  textureFile.close();
 
+  dumpMeshes()
+  dumpProperties()
 
-  if meshVal == 1:
-    ## Remove and Create all active layer folders
-    dumpMeshes()
-#      exportStatus = "Meshes"
-#      Draw.Draw()
-
-
-  if materVal == 1:
-#    exportStatus = "Properties"
-#    Draw.Draw()
-    dumpProperties()
-
-  if frameVal == 1:
-    exportStatus = "Frames"
-    Draw.Draw()
+  if animation == 1:
     dumpFrames()
-
+  else
+    dumpOneFrame(, 1)
 
 def buttonEvent(evt):
-  global	aniVal, rppVal, meshVal, materVal, frameVal, sceneVal, rppBtn, layerBtns, layers
-  global	rppBtn, layerBtns, layers, projectName, projectButton
-
+  global animation, sceneVal, layerBtns, layers, projectName, projectButton
 
   if evt == 8:
     projectName = projectButton.val
   if evt == 1:
     doExport()
-  if evt == 2:
-    print "Rendering...\n"
   elif evt == 4:
-    aniVal = 1 - aniVal
-  elif evt == 5:
-    rppVal = rppBtn.val
+    animation = 1 - animation
   elif evt == 6:
     for i in range(20):
       layers[i] = 1
@@ -338,63 +302,26 @@ def buttonEvent(evt):
     for i in range(20):
       layers[i] = 0
       layerBtns[i].val = 0
-  elif evt == 10:
-    sceneVal = 1 - sceneVal
-  elif evt == 11:
-    meshVal = 1 - meshVal
-  elif evt == 12:
-    materVal = 1 - materVal
-  elif evt == 13:
-    frameVal = 1 - frameVal
   elif evt >= layerBase and evt < layerBase + 20:
     layerNumber = evt - layerBase
-#    print "layer %d" % (layerNumber)
     layers[layerNumber] = 1 - layers[layerNumber]
-
   Draw.Redraw(1)
 
 
 def drawGUI():
-  global	rppBtn, layers, layerBtns, projectName, projectButton
+  global layers, layerBtns, projectName, projectButton
 
   ## Set background color
-  BGL.glClearColor(0.7, 0.7, 0.6, 1)
-  BGL.glClear(BGL.GL_COLOR_BUFFER_BIT)
-  ## Set text color
-  BGL.glColor3f(0, 0, 0)
+#  BGL.glClearColor(0.0, 0.0, 0.0, 1)
+#  BGL.glClear(BGL.GL_COLOR_BUFFER_BIT)
 
   xPad = 10
   height = 18
   yLoc = xPad + 10
   yDelta = height
 
-
-  binWidth = Draw.GetStringWidth("Binary Format", 'normal') + 30
-  aniWidth = Draw.GetStringWidth("Save All Frames", 'normal') + 30
   expWidth = Draw.GetStringWidth("Export", 'normal') + 40
-
-  Draw.Button("Export", 1, xPad, yLoc, expWidth, 2*height, "Export Scene to Disk")
-
-  projectButton = Draw.String("Project Name:", 8, expWidth + xPad, yLoc,
-                              binWidth + aniWidth, height, projectName, 32, "Project Name")
-
-  yLoc += yDelta
-
-  Draw.Toggle("Save All Frames", 4, expWidth + binWidth + xPad, yLoc, aniWidth, height, aniVal, "Select Binary Format")
-
-  yLoc += yDelta
-
-  Draw.Button("Render", 2, xPad, yLoc, expWidth, height, "Render exported scene")
-  rppBtn = Draw.Number("RPP:", 5, expWidth + xPad, yLoc, binWidth + aniWidth, height, rppVal, 1, 8, "Number of rays (squared) per pixel")
-
-  yLoc += yDelta + 1
-  xVal = 61
-  Draw.Toggle("Scene", 10, xPad + 0 * xVal, yLoc, xVal, height, sceneVal)
-  Draw.Toggle("Meshes", 11, xPad + 1 * xVal, yLoc, xVal, height, meshVal)
-  Draw.Toggle("Materials", 12, xPad + 2 * xVal, yLoc, xVal, height, materVal)
-  Draw.Toggle("Frames", 13, xPad + 3 * xVal, yLoc, xVal, height, frameVal)
-
-  yLoc += yDelta + 1
+  Draw.Button("Export", 1, xPad, yLoc, expWidth, 2*height, "Export Scene")
 
   # Draw the layer buttons
   layerBtn = 0 # start with the bottom row
@@ -404,16 +331,24 @@ def drawGUI():
     ypos = yLoc + (1-row) * btnSize
     xpos = xPad
     for col in range(10):
-      layerBtns.append(Draw.Toggle(" ",  layerBase + layerBtn, xpos, ypos, btnSize, btnSize, layers[layerBtn]))
-      if (col+1) % 5:
-        xpos += btnSize
-      else:
-        xpos += btnSize * 2
+      layerBtns.append(Draw.Toggle(" ",  layerBase + layerBtn, expWidth + xpos, ypos, btnSize, btnSize, layers[layerBtn]))
+      xpos += btnSize
       layerBtn += 1
 
-  Draw.Button("All", 6, 12*btnSize + xPad, yLoc, btnSize*5, height, "Deselect all Layers")
-  Draw.Button("None", 7, 12*btnSize + xPad, yLoc+btnSize, btnSize*5, height, "Select all Layers")
+  Draw.Button("All", 6, 10*btnSize + xPad + expWidth, yLoc, btnSize*5, height, "Deselect all Layers")
+  Draw.Button("None", 7, 10*btnSize + xPad + expWidth, yLoc+btnSize, btnSize*5, height, "Select all Layers")
 
+
+  yLoc += yDelta
+  yLoc += yDelta
+
+  Draw.Toggle("Export Animation Data", 4, xPad, yLoc, 345, height, animation, "Export Animation Data")
+  yLoc += yDelta
+
+  projectName = os.getcwd()
+  projectName += "/myproj"
+  projectButton = Draw.String("Project:", 8, xPad, yLoc, 345, height, projectName, 64, "Project Name")
+  yLoc += yDelta
 
 ##########################################
 ## Begin Event Handling
