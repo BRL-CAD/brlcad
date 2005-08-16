@@ -146,9 +146,9 @@ static PyObject* isst_python_dump(PyObject *self, PyObject* args) {
       return PyInt_FromLong(0);
 
     fprintf(fh, "label: %s\n", string);
-    fprintf(fh, "========================\n");
     fprintf(fh, "camera_position: %f %f %f\n", isst_master_camera_position.v[0], isst_master_camera_position.v[1], isst_master_camera_position.v[2]);
     fprintf(fh, "camera_ae: %f %f\n", isst_master_camera_azimuth, isst_master_camera_elevation);
+    fprintf(fh, "in_hit: %f %f %f\n", isst_master_in_hit.v[0], isst_master_in_hit.v[1], isst_master_in_hit.v[2]);
     fprintf(fh, "\n");
 
     fclose(fh);
