@@ -611,7 +611,7 @@ void tie_prep(tie_t *tie) {
  * @retval !0 the value returned from the last invokation of hitfunc()
  */
 void* tie_work(tie_t *tie, tie_ray_t *ray, tie_id_t *id, void *(*hitfunc)(tie_ray_t*, tie_id_t*, tie_tri_t*, void *ptr), void *ptr) {
-  tie_stack_t stack[40], *sptr;
+  tie_stack_t stack[40];
   tie_id_t t, id_list[256];
   tie_tri_t *hit_list[256], *tri;
   tie_geom_t *data;
@@ -682,21 +682,21 @@ void* tie_work(tie_t *tie, tie_ray_t *ray, tie_id_t *id, void *(*hitfunc)(tie_ra
 
       /* Calculate the projected 1d distance to splitting axis */
       dist = (node_aligned->axis - ray->pos.v[split]) * dirinv[split];
-      i = near >= dist; // Node B Only?
 
       temp[0] = &((tie_kdtree_t *)(node_aligned->data))[ab[split]];
       temp[1] = &((tie_kdtree_t *)(node_aligned->data))[1-ab[split]];
 
+      i = near >= dist; // Node B Only?
       node_aligned = (tie_kdtree_t *)((TIE_PTR_CAST)(temp[i]) & ~0x7L);
 
       if(far < dist || i)
         continue;
 
       /* Nearest Node and Push Furthest */
-      sptr = &stack[++stack_ind];
-      sptr->node = temp[1];
-      sptr->near = dist;
-      sptr->far = far;
+      stack_ind++;
+      stack[stack_ind].node = temp[1];
+      stack[stack_ind].near = dist;
+      stack[stack_ind].far = far;
       far = dist;
     }
 
@@ -734,14 +734,12 @@ void* tie_work(tie_t *tie, tie_ray_t *ray, tie_id_t *id, void *(*hitfunc)(tie_ra
       math_vec_mul_scalar(t.pos, ray->dir, t.dist);
       math_vec_add(t.pos, ray->pos, t.pos);
 
-      /*
-      * Extract i1 and i2 indices from lower bits of the v12 pointer,
-      * and compute U and V with them.
-      */
-      n = (TIE_PTR_CAST)(tri->v12) & 0x7;
-      i1 = TIE_TAB1[n];
+      /* Extract i1 and i2 indices from lower bits of the v12 pointer */
+      i1 = TIE_TAB1[((TIE_PTR_CAST)(tri->v12) & 0x7)];
+      i2 = TIE_TAB1[3 + ((TIE_PTR_CAST)(tri->v12) & 0x7)];
+
+      /* Compute U and V */
       u0 = t.pos.v[i1] - tri->data[0].v[i1];
-      i2 = TIE_TAB1[3+n];
       v0 = t.pos.v[i2] - tri->data[0].v[i2];
 
       v = (tfloat *)((TIE_PTR_CAST)(tri->v12) & ~0x7L);
