@@ -126,13 +126,11 @@
 #define popen _popen
 #define read _read
 #define setmode _setmode
+#define snprintf _snprintf
 #define sopen _sopen
 #define stat _stat
 #define strcasecmp _stricmp
 #define strdup _strdup
-#if 0
-#define strncmp _strncmp
-#endif
 #define sys_errlist _sys_errlist
 #define umask _umask
 #define unlink _unlink
