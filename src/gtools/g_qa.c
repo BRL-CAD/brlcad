@@ -17,6 +17,78 @@
 #include <strings.h>
 #endif
 
+
+#ifndef HAVE_STRSEP
+/*-
+ * Copyright (c) 1990, 1993
+ *      The Regents of the University of California.  All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 4. Neither the name of the University nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ */
+
+
+/*
+ * Get next token from string *stringp, where tokens are possibly-empty
+ * strings separated by characters from delim.
+ *
+ * Writes NULs into the string at *stringp to end tokens.
+ * delim need not remain constant from call to call.
+ * On return, *stringp points past the last NUL written (if there might
+ * be further tokens), or is NULL (if there are definitely no more tokens).
+ *
+ * If *stringp is NULL, strsep returns NULL.
+ */
+char *
+strsep(char **stringp,
+       const char *delim)
+{
+        char *s;
+        const char *spanp;
+        int c, sc;
+        char *tok;
+
+        if ((s = *stringp) == NULL)
+                return (NULL);
+        for (tok = s;;) {
+                c = *s++;
+                spanp = delim;
+                do {
+                        if ((sc = *spanp++) == c) {
+                                if (c == 0)
+                                        s = NULL;
+                                else
+                                        s[-1] = 0;
+                                *stringp = s;
+                                return (tok);
+                        }
+                } while (sc != 0);
+        }
+        /* NOTREACHED */
+}
+#endif
+
 #include <stdio.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -359,7 +431,7 @@ static const struct cvt_tab *units[3] = {
 int
 read_units_double(double *val, char *buf, const struct cvt_tab *cvt)
 {
-    double a, conv;
+    double a;
     char units_string[256];
     int i;
 
@@ -422,8 +494,8 @@ parse_args(int ac, char *av[])
 {
     int  c;
     char *strrchr();
-    int i, j;
-    double a, b;
+    int i;
+    double a;
     char *p;
 
     if (  ! (progname=strrchr(*av, '/'))  )
@@ -520,7 +592,7 @@ parse_args(int ac, char *av[])
 
 	case 'g'	:
 	    {
-		i = j = 0;
+		i = 0;
 
 		if (p = strchr(optarg, ',')) {
 		    *p++ = '\0';
@@ -630,7 +702,10 @@ parse_args(int ac, char *av[])
 
 	case '?'	:
 	case 'h'	:
-	default		: usage("Bad or help flag '%c' specified\n", c); break;
+	default		: 
+	    fprintf(stderr, "Bad or help flag '%c' specified\n", c);
+	    usage("");
+	    break;
 	}
 
     return(optind);
@@ -647,7 +722,6 @@ parse_densities_buffer(char *buf, unsigned long len)
     char *p, *q, *last;
     long idx;
     double density;
-    char name[128];
 
     buf[len] = '\0';
     last = &buf[len];
@@ -970,12 +1044,7 @@ hit(register struct application *ap, struct partition *PartHeadp, struct seg *se
 {
     /* see raytrace.h for all of these guys */
     register struct partition *pp;
-    register struct hit *hitp;
-    register struct soltab *stp;
-    struct curvature cur;
     point_t		pt, opt, last_out_point;
-    vect_t		inormal;
-    vect_t		onormal;
     int			last_air = 0; /* what was the aircode of the last item */
     int			air_first = 1; /* are we in an air before a solid */
     double	dist;	/* the thickness of the partition */
@@ -1071,7 +1140,7 @@ hit(register struct application *ap, struct partition *PartHeadp, struct seg *se
 		    struct per_region_data *prd;
 
 		    /* factor in the density of this object
-		    /* weight computation, factoring in the LOS 
+		     * weight computation, factoring in the LOS 
 		     * percentage material of the object
 		     */
 		    int los = pp->pt_regionp->reg_los;
@@ -1126,7 +1195,7 @@ hit(register struct application *ap, struct partition *PartHeadp, struct seg *se
 
 	    if (plot_volume) {
 		point_t opt;
-		int v;
+
 		VJOIN1(opt, ap->a_ray.r_pt, pp->pt_outhit->hit_dist, ap->a_ray.r_dir);
 
 		bu_semaphore_acquire(BU_SEM_SYSCALL);
@@ -1239,8 +1308,8 @@ plane_worker (int cpu, genptr_t ptr)
     struct application ap;
     int u, v;
     double v_coord;
-    double z_coord;
     struct cstate *state = (struct cstate *)ptr;
+
 
 
     RT_APPLICATION_INIT(&ap);
@@ -1268,7 +1337,7 @@ plane_worker (int cpu, genptr_t ptr)
 
 	if ( (v&1) || state->first) {
 	    /* shoot all the rays in this row.
-	    /* This is either the first time a view has been computed
+	     * This is either the first time a view has been computed
 	     * or it is an odd numbered row in a grid refinement
 	     */
 	    for (u=1 ; u < state->steps[state->u_axis]; u++) {
@@ -1344,6 +1413,8 @@ find_cmd_line_obj(struct per_obj_data *obj_rpt, const char *name)
     }
     bu_log("%s Didn't find object named \"%s\" in %d entries\n", BU_FLSTR, name, num_objects);
     bu_bomb("");
+    /* NOTREACHED */
+    return -1; /* stupid compiler */
 }
 
 /* 
@@ -1505,7 +1576,6 @@ options_prep(struct rt_i *rtip, vect_t span)
     }
     if (analysis_flags & ANALYSIS_WEIGHT) {
 	if (weight_tolerance == -1.0) {
-	    struct density_entry *de;
 	    double max_den = 0.0;
 	    int i;
 	    for (i=0 ; i < num_densities ; i++) {
@@ -1585,7 +1655,6 @@ options_prep(struct rt_i *rtip, vect_t span)
 void
 view_reports(struct cstate *state)
 {
-    state->curr_view;
     if (analysis_flags & ANALYSIS_VOLUME) {
 	int obj;
 	int view;
@@ -1646,7 +1715,6 @@ int
 terminate_check(struct cstate *state)
 {
     double low, hi, val, delta;
-    int axis;
     struct region *regp;
     unsigned long hits;
     int obj;
@@ -1827,7 +1895,6 @@ void
 summary_reports(struct cstate *state, int start, int ac, char *av[])
 {
     int view;
-    double v;
     int obj;
     double avg;
     struct region *regp;
@@ -1888,7 +1955,6 @@ summary_reports(struct cstate *state, int start, int ac, char *av[])
 
 	/* print grand totals */
 	avg = 0.0;
-	v = 0.0;
 	for (view=0 ; view < num_views ; view++) {
 	    avg += state->m_weight[view] = 
 		state->m_lenDensity[view] * 
@@ -1957,7 +2023,6 @@ summary_reports(struct cstate *state, int start, int ac, char *av[])
 
 	/* print grand totals */
 	avg = 0.0;
-	v = 0.0;
 	for (view=0 ; view < num_views ; view++) {
 	    avg += state->m_volume[view] = 
 		state->m_len[view] * ( state->area[view] / state->shots[view]);
@@ -2001,19 +2066,10 @@ main(ac,av)
      char *av[];
 {
     int arg_count;
-    FILE *inp;
-    int status;
     struct rt_i *rtip;
-    int u_axis, v_axis, i_axis;
-    long u, v;
     char idbuf[132];
-    vect_t origin;
-    vect_t dir;
     int i;
-    struct directory *dp;
     struct cstate state;
-    double lim, val;
-    int crv;
     int start_objs; /* index in command line args where geom object list starts */
 
     max_cpus = ncpu = bu_avail_cpus();
