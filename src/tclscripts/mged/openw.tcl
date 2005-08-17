@@ -856,37 +856,37 @@ foreach ptype $mged_Priv(weak_prims) {
 }
 
 menu .$id.menubar.view -title "View" -tearoff $mged_default(tearoff_menus)
-.$id.menubar.view add command -label "Top" -underline 0\
+.$id.menubar.view add command -label "Top (t)" -underline 5\
 		-command "mged_apply $id \"press top\""
 hoc_register_menu_data "View" "Top" "Top View"\
 		{ { summary "View of the top (i.e. azimuth = 270, elevation = 90)." }
 { accelerator "t" }
 { see_also "press, ae, view" } }
-.$id.menubar.view add command -label "Bottom" -underline 0\
+.$id.menubar.view add command -label "Bottom (b)" -underline 8\
 		-command "mged_apply $id \"press bottom\""
 hoc_register_menu_data "View" "Bottom" "Bottom View"\
 		{ { summary "View of the bottom (i.e. azimuth = 270 , elevation = -90)." }
 { accelerator "b" }
 { see_also "press, ae, view" } }
-.$id.menubar.view add command -label "Right" -underline 0\
+.$id.menubar.view add command -label "Right (r)" -underline 7\
 		-command "mged_apply $id \"press right\""
 hoc_register_menu_data "View" "Right" "Right View"\
 		{ { summary "View of the right side (i.e. azimuth = 270, elevation = 0)." }
 { accelerator "r" }
 { see_also "press, ae, view" } }
-.$id.menubar.view add command -label "Left" -underline 0\
+.$id.menubar.view add command -label "Left (l)" -underline 6\
 		-command "mged_apply $id \"press left\""
 hoc_register_menu_data "View" "Left" "Left View"\
 		{ { summary "View of the left side (i.e. azimuth = 90, elevation = 0)." }
 { accelerator "l" }
 { see_also "press, ae, view" } }
-.$id.menubar.view add command -label "Front" -underline 0\
+.$id.menubar.view add command -label "Front (f)" -underline 7\
 		-command "mged_apply $id \"press front\""
 hoc_register_menu_data "View" "Front" "Front View"\
 		{ { summary "View of the front (i.e. azimuth = 0, elevation = 0)." }
 { accelerator "f" }
 { see_also "press, ae, view" } }
-.$id.menubar.view add command -label "Rear" -underline 1\
+.$id.menubar.view add command -label "Rear (R)" -underline 6\
 		-command "mged_apply $id \"press rear\""
 hoc_register_menu_data "View" "Rear" "Rear View"\
 		{ { summary "View of the rear (i.e. azimuth = 180, elevation = 0)." }
