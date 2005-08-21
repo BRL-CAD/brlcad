@@ -230,9 +230,6 @@ BC_RETRY_DIRECTORY([/usr/X11], [X11])
 BC_RETRY_DIRECTORY([/opt])
 BC_RETRY_DIRECTORY([/sw], [fink])
 
-AC_DEFINE(DM_X,1,[Display for X])
-AC_DEFINE(DM_OGL,1,[yeah, GL])
-
 
 dnl ***********************
 dnl *** Check arguments ***
@@ -316,7 +313,22 @@ dnl *** with options ***
 BC_WITH_FLAG_ARGS
 
 # use the jdk
-BC_ARG_WITH([with_java], [jdk], [Specify path to the Java Development Kit], [no])
+BC_ARG_WITH([with_java], [jdk], [Specify use of or path to the Java Development Kit], [auto])
+
+# use x11
+BC_ARG_WITH([with_x11], [x11], [Specify use of or path to X11], [auto])
+dnl *** X11 ***
+AC_PATH_X
+AC_PATH_XTRA
+
+# use opengl
+BC_ARG_WITH([with_opengl], [opengl], [Specify use of or path to OpenGL], [auto])
+
+# use sdl
+BC_ARG_WITH([with_sdl], [sdl], [Specify use of or path to SDL], [auto])
+
+# use python
+BC_ARG_WITH([with_phyton], [python], [Specify use of or path to python], [auto])
 
 
 ###
@@ -506,6 +518,31 @@ BC_ARG_WITH_ALIAS([with_java], [java])
 AC_MSG_CHECKING(whether to compile with the Java Development Kit)
 AC_MSG_RESULT($bc_with_java)
 
+# with x11 aliases (help uses x11)
+BC_ARG_WITH_ALIAS([with_x11], [x])
+AC_MSG_CHECKING(whether to compile the X11 interfaces)
+AC_MSG_RESULT($bc_with_x11)
+
+# with opengl aliases (help uses opengl)
+BC_ARG_WITH_ALIAS([with_opengl], [ogl])
+BC_ARG_WITH_ALIAS([with_opengl], [gl])
+AC_MSG_CHECKING(whether to compile the OpenGL interfaces)
+AC_MSG_RESULT($bc_with_opengl)
+
+# with sdl aliases (help uses sdl)
+BC_ARG_WITH_ALIAS([with_sdl], [libsdl])
+AC_MSG_CHECKING(whether to compile the SDL interface to ADRT)
+AC_MSG_RESULT($bc_with_sdl)
+
+# with python aliases (help uses python)
+BC_ARG_WITH_ALIAS([with_python], [py])
+AC_MSG_CHECKING(whether to compile the Python interface to ADRT)
+AC_MSG_RESULT($bc_with_python)
+
+# !!! needs to go bye bye
+AC_DEFINE(DM_X,1,[Display for X])
+AC_DEFINE(DM_OGL,1,[yeah, GL])
+
 
 # make sure multiple "only" options were not given
 if test "x$bc_only_benchmark" != "xno" ; then
@@ -517,10 +554,21 @@ if test "x$bc_only_benchmark" != "xno" ; then
 	fi
 fi
 
+# the opengl interface is presently tied to the x11 interface
+if test "x$bc_with_opengl" = "xyes" ; then
+	if test "x$bc_with_x11" = "xno" ; then
+		AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
+		AC_MSG_WARN([OpenGL interface presently requires X11 support])
+		AC_MSG_WARN([Presuming X11 availability for the OpenGL interface])
+		AC_MSG_WARN([The X11 interface will not be built])
+		AC_MSG_NOTICE([{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{])
+	fi
+fi
+
 # override the default autoconf cflags if user has not modified them
 if test "x$CFLAGS" = "x" ; then
 	# an unset CFLAGS var is set to "-O2 -g" during AC_PROG_CC, so
-	# set it to something benign
+	# set it to something benign instead like whitespace
 	CFLAGS=" "
 fi
 
@@ -555,9 +603,9 @@ AM_PROG_LEX
 AC_PROG_YACC
 AM_PROG_MKDIR_P
 
-# XXX libtool has a bug that causes a /lib/cpp sanity check failure if
-# a C++ compiler is not installed.  This makes the sanity test pass
-# regardless of whether there is a c++ compiler
+# libtool's configuration check has a bug that causes a /lib/cpp
+# sanity check failure if a C++ compiler is not installed.  This makes
+# the sanity test pass regardless of whether there is a c++ compiler.
 if test "x$CXXCPP" = "x" ; then
 	if test "x$CPP" = "x" ; then
 		CXXCPP="cpp"
@@ -566,8 +614,8 @@ if test "x$CXXCPP" = "x" ; then
 	fi
 fi
 
-# XXX libtool shouldn't be generated until after LD is set
-# dnl went poof in libtool 1.9 -- AC_PROG_LIBTOOL
+# libtool shouldn't be generated until after LD is set
+# XXX went poof in libtool 1.9 -- AC_PROG_LIBTOOL
 # LT_INIT
 AC_PROG_LIBTOOL
 AC_SUBST(LIBTOOL_DEPS)
@@ -592,7 +640,8 @@ AC_PATH_PROG(RM, rm)
 
 dnl figure out which compiler is seems like we are using
 dnl detected values include: gcc, mipspro, sunpro
-dnl XXX -- none of the tests should be compiler-specific, but it's good to know in the log
+dnl none of the tests should be compiler-specific, but it's good to
+dnl know in the log which it seems we are using
 compiler=unknown
 
 dnl Determine whether we are using GCC
@@ -845,7 +894,6 @@ AC_MSG_CHECKING([... h e a d e r s ])
 AC_MSG_RESULT([(4 of 9)])
 
 AC_HEADER_STDC
-AC_PATH_X
 AC_HEADER_DIRENT
 AC_HEADER_SYS_WAIT
 AC_CHECK_HEADERS( \
@@ -929,8 +977,6 @@ AC_CHECK_HEADER(sys/sched.h,
 #endif
 #include <sys/sched.h>
 ])
-
-# XXX cached opengl header checks cause bad things to happen without a configure ERROR halt
 
 AC_CHECK_HEADER(sys/stat.h, AC_DEFINE(HAVE_UNIX_IO,, Fix this, sys/types.h and sys/stat.h ...))
 AC_CHECK_HEADER(sys/time.h, AC_DEFINE(TIME_WITH_SYS_TIME,1,sys/time.h))
@@ -2143,10 +2189,6 @@ fi
 AC_SUBST(TERMLIB)
 
 
-dnl *** X11 ***
-AC_PATH_X
-AC_PATH_XTRA
-
 # XXX ugly hack that needs to die
 X_PREFIX=/usr/X11R6
 AC_SUBST(X_CFLAGS)
@@ -2234,6 +2276,20 @@ else
 	fi
 fi
 
+dnl *** ADRT compilation ***
+dnl figure out whether we have everything we need to build ADRT
+build_brlcad_adrt="no"
+if test "x$bc_with_python" = "xyes" ; then
+	if test "x$bc_with_sdl" = "xyes" ; then
+		build_brlcad_adrt="yes"
+	else
+		build_brlcad_adrt="no (need sdl)"
+	fi   
+else
+	build_brlcad_adrt="no (need python)"
+fi
+
+
 # XXX nasty temp hack for backwards cake compatibility.
 if test "x$host_os" = "xirix6.5" ; then
 	# XXX the code that relies on this will be going away, but until then..
@@ -2274,9 +2330,14 @@ AM_CONDITIONAL(BUILD_URT, [test "x$build_brlcad_urt" = "xyes"])
 AM_CONDITIONAL(BUILD_TERMLIB, [test "x$build_brlcad_termlib" = "xyes"])
 AM_CONDITIONAL(BUILD_JOVE, [test "x$bc_build_jove" = "xyes"])
 AM_CONDITIONAL(BUILD_PROE, [test "x$bc_build_proe" = "xyes"])
+AM_CONDITIONAL(BUILD_ADRT, [test "x$bc_build_adrt" = "xyes"])
 AM_CONDITIONAL(INSTALL_MODELS, [test "x$bc_install_geometry" = "xyes"])
 
-AM_CONDITIONAL(JAVA, [test "x$bc_with_java" != "xno"])
+AM_CONDITIONAL(WITH_JAVA, [test "x$bc_with_java" != "xno"])
+AM_CONDITIONAL(WITH_X11, [test "x$bc_with_x11" != "xno"])
+AM_CONDITIONAL(WITH_OPENGL, [test "x$bc_with_opengl" != "xno"])
+AM_CONDITIONAL(WITH_SDL, [test "x$bc_with_sdl" != "xno"])
+AM_CONDITIONAL(WITH_PYTHON, [test "x$bc_with_python" != "xno"])
 
 AM_CONDITIONAL(ONLY_BENCHMARK, [test "x$bc_only_benchmark" != "xno"])
 AM_CONDITIONAL(ONLY_RTS, [test "x$bc_only_rts" != "xno"])
@@ -2692,9 +2753,10 @@ echo Build termlib ........................: $build_brlcad_termlib
 echo Build Utah Raster Toolkit.............: $build_brlcad_urt
 echo Build jove ...........................: $bc_build_jove
 echo 
+echo ADRT support .........................: $build_brlcad_adrt
 echo Java Developer Kit support ...........: $bc_with_java
-echo X11 support ..........................: yes
-echo Open GL support ......................: yes
+echo X11 support ..........................: $bc_with_x11
+echo OpenGL support .......................: $bc_with_opengl
 echo Enable run-time debugging ............: $bc_build_runtime_debug
 echo
 echo Build 64-bit release .................: $build_brlcad_64bit
