@@ -42,9 +42,8 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "common.h"
 
 #ifdef HAVE_UNISTD_H
-# include <unistd.h>
+#  include <unistd.h>
 #endif
-                                                                                                                                                                            
 #include <stdio.h>
 
 #include "machine.h"
@@ -53,12 +52,13 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "bn.h"
 #include "fb.h"
 
+
 static int	bytes_per_sample = 3;
 static int	file_length = 0;
 static char	*file_name;
 
-static int	width;
-static int	height;
+static unsigned long int	width;
+static unsigned long int	height;
 
 static char usage[] = "\
 Usage:	pixautosize [-b bytes_per_sample] [-f file_name]\n\
@@ -125,7 +125,7 @@ main(int argc, char **argv)
 	 *  print out the width and height on stdout.
 	 *  They will be zero on error.
 	 */
-	printf("WIDTH=%d; HEIGHT=%d\n", width, height);
+	printf("WIDTH=%lu; HEIGHT=%lu\n", width, height);
 	return ret;
 }
 

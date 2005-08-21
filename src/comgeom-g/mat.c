@@ -47,6 +47,7 @@
 
 #include "common.h"
 
+#include <stdio.h>
 #ifdef HAVE_FABS
 # ifdef HAVE_MATH_H
 #  include <math.h>

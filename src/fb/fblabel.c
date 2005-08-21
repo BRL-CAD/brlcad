@@ -37,20 +37,22 @@
 
 #include "common.h"
 
+#include <stdlib.h>
 #ifdef HAVE_UNISTD_H
-# include <unistd.h>
+#  include <unistd.h>
 #endif
-                                                                                                                                                                            
 #include <stdio.h>
 #ifdef HAVE_STRING_H
-#include <string.h>
+#  include <string.h>
 #else
-#include <strings.h>
+#  include <strings.h>
 #endif
 #include <ctype.h>
+
 #include "machine.h"
 #include "fb.h"
 #include "vfont-if.h"
+
 
 #define FONTBUFSZ 200
 

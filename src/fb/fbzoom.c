@@ -42,14 +42,16 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "common.h"
 
+#include <stdlib.h>
 #ifdef HAVE_UNISTD_H
-# include <unistd.h>
+#  include <unistd.h>
 #endif
-                                                                                                                                                                            
 #include <stdio.h>	
+
 #include "machine.h"
 #include "fb.h"
 #include "libtermio.h"
+
 
 int pars_Argv(int argc, register char **argv);
 int doKeyPad(void);

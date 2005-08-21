@@ -23,6 +23,11 @@
  *
  * convert float to ascii.
  */
+#include "common.h"
+
+#include <stdio.h>
+#include <stdlib.h>
+
 
  /** F 2 A () ====  convert float to ascii  w.df format.	No leading blanks */
 f2a(float f, char *s, int w, int d)

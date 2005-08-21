@@ -63,20 +63,21 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "common.h"
 
+#include <stdlib.h>
 #ifdef HAVE_SYS_TYPES_H
-# include <sys/types.h>
+#  include <sys/types.h>
 #endif
-
 #include <stdio.h>
 #ifdef HAVE_STRING_H
-#include <string.h>
+#  include <string.h>
 #else
-#include <strings.h>
+#  include <strings.h>
 #endif
 
 #include "machine.h"
 #include "fb.h"
 #include "libtermio.h"
+
 
 FBIO *fbp;
 
