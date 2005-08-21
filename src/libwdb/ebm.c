@@ -24,6 +24,10 @@
 
 #include "common.h"
 
+#ifdef HAVE_STRING_H
+#  include <string.h>
+#endif
+
 #include "machine.h"
 #include "bu.h"
 #include "vmath.h"
@@ -32,6 +36,7 @@
 #include "raytrace.h"
 #include "wdb.h"
 #include "db.h"
+
 
 /*
  *			M K _ E B M
