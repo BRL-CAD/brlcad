@@ -32,11 +32,9 @@ static const char RCSid[] = "$Header$";
 
 #include <stdio.h>
 #include <math.h>
-
 #ifdef HAVE_STRING_H
 #  include <string.h>
 #endif
-
 #ifdef HAVE_LIBGEN_H
 #  include <libgen.h>
 #endif
@@ -182,12 +180,14 @@ int if_hit(struct application *ap, struct partition *part_head, struct seg *fini
 	    }
 	    ValTab[VTI_CLAIMANT_LIST].value.sval =
 		bu_vls_addr(&claimant_list);
-	    ValTab[VTI_CLAIMANT_LISTN].value.sval =
-		bu_vls_strdup(&claimant_list);
-	    for (cp = ValTab[VTI_CLAIMANT_LISTN].value.sval;
-		*cp != '\0'; ++cp)
+
+	    for (cp = bu_vls_strdup(&claimant_list);
+		 *cp != '\0'; ++cp)
 		if (*cp == ' ')
 		    *cp = '\n';
+
+	    ValTab[VTI_CLAIMANT_LISTN].value.sval = cp;
+
 	    need_to_free = 1;
 	}
 
