@@ -1,11 +1,11 @@
 # $Id$
 
 EXTRA_DIST = \
+	adrt.py \
 	drawBSP.py \
 	makemovie.pl \
 	ptcloud.c \
 	ptcloud.py \
-	rise.py \
 	shiva.sh
 
 MAINTAINERCLEANFILES = Makefile.in
