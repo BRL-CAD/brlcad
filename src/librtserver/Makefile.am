@@ -1,6 +1,6 @@
 # $Id$
 
-if JAVA
+if WITH_JAVA
 lib_LTLIBRARIES = librtserver.la
 else
 lib_LTLIBRARIES =
