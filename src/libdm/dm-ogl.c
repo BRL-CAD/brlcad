@@ -1166,7 +1166,7 @@ ogl_drawPoint2D(struct dm *dmp, fastf_t x, fastf_t y)
 {
   if (dmp->dm_debugLevel){
     bu_log("ogl_drawPoint2D():\n");
-    bu_log("\tdmp: %ul\tx - %lf\ty - %lf\n", (unsigned long)dmp, x, y);
+    bu_log("\tdmp: %lu\tx - %lf\ty - %lf\n", (unsigned long)dmp, x, y);
   }
 
   glBegin(GL_POINTS);
