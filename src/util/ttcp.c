@@ -40,11 +40,13 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 /* #define BSD42 */
 /* #define BSD41a */
 
+#ifdef HAVE_UNISTD_H
+#  include <unistd.h>
+#endif
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
-#include <unistd.h>
 #include <errno.h>
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -424,12 +426,7 @@ Nread(int fd, char *buf, int count )
 	register int cnt;
 
 	if( udp )  {
-		cnt = recvfrom( fd,
-				(void *)buf,
-				(size_t)count,
-				0, 
-				(struct sockaddr *)&from,
-				&len );
+		cnt = recvfrom( fd, (void *)buf, (size_t)count, 0, (struct sockaddr *)&from, (socklen_t *)&len );
 	} else {
 		if( b_flag )
 			cnt = mread( fd, buf, count );	/* fill buf */
@@ -594,7 +591,7 @@ main(int argc, char **argv)
 		}
 		fromlen = sizeof(frominet);
 		domain = AF_INET;
-		if((fd=accept(fd, (struct sockaddr *)&frominet, &fromlen) ) < 0)
+		if((fd=accept(fd, (struct sockaddr *)&frominet, (socklen_t *)&fromlen) ) < 0)
 			err("accept");
 		mes("accept");
 	    }
