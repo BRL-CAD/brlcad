@@ -44,7 +44,7 @@ typedef struct outval_tag
     int			type;
     union ovv {
 	fastf_t	fval;
-	char	*sval;
+	const char	*sval;
 	int	ival;
 	}		value;
 }					outval;
