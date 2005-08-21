@@ -7,7 +7,19 @@ see that file and the CVS log for more historic information.  The
 entire history of the project is available through CVS.
 
 ----------------------------------------------------------------------
---- 2005-08-XX  Release 7.4.1                                      ---
+--- 2005-09-XX  Release 7.5.0                                      ---
+----------------------------------------------------------------------
+
+This release includes the addition of a new geometry "quality
+analysis" tool called g_qa.  This tool is a new tool that combines
+some of the features of rtweight and g_lint, providing a robust means
+for computing the weight and volume of objects while also allowing a
+means to report overlaps, air gaps, external air regions, bounding box
+dimensions, and more.
+
+
+----------------------------------------------------------------------
+--- 2005-08-10  Release 7.4.2                                      ---
 ----------------------------------------------------------------------
 
 Continuing with the impressive ADRT tool suite being provided by
@@ -19,18 +31,11 @@ clusters and SMP hardware similar to RISE, providing a master job
 manager, a slave compute daemon for network distributed processing,
 and a client for interacting with and viewing the models.
 
-This release also includes the addition of a new geometry "quality
-analysis" tool called g_qa.  This tool is a new tool that combines
-some of the features of rtweight and g_lint, providing a robust means
-for computing the weight and volume of objects while also allowing a
-means to report overlaps, air gaps, external air regions, bounding box
-dimensions, and more.
-
 * fixed ray-trace unique hits evaluation bug - John Anderson
 * added manual page for remapid - John Anderson
 * fixed quick memory debugging bug - Jim Hunt
 * improved brlman relocation - Sean Morrison
-* added g_qa geometry quality analysis tool - Lee Butler
+* added g_qa geometry quality analysis tool (beta) - Lee Butler
 * added adrt interactive shot selection tool - Justin Shumaker
 * simultaneous -o and -F options to rt, rtedge, rtxray - Sean Morrison
 

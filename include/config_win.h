@@ -43,9 +43,10 @@
 #	error "STDC is not properly set on WIN32 build, add /Za to Project Settings / Project Options"
 # endif
 
-#define BRLCAD_VERSION    "7.4.1"
+#define BRLCAD_VERSION    "7.4.2"
 #define BRLCAD_ROOT       ""
 #define BRLCAD_DATA       ""
+
 #define INSTALL_DIRECTORY "C:/brlcad7_2"
 
 #define HAS_OPENGL	1
