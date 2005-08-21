@@ -36,10 +36,8 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 #include "common.h"
 
 #ifdef HAVE_UNISTD_H
-# include <unistd.h>
+#  include <unistd.h>
 #endif
-                                                                                                                                                                            
-
 #include <stdio.h>
 #include <math.h>
 
@@ -48,6 +46,7 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 #include "bu.h"
 #include "bn.h"
 #include "fb.h"
+
 
 #define	SPHERE		0
 #define	TORUS		1
@@ -58,8 +57,8 @@ static FILE		*infp;
 static int		fileinput = 0;	/* Is input a file (not stdin)? */
 static int		autosize = 0;	/* Try to guess input dimensions? */
 
-static int		file_width = 512;
-static int		file_height = 512;
+static long int		file_width = 512L;
+static long int		file_height = 512L;
 
 static int		solid_type = SPHERE;
 static fastf_t		r1, r2;		/* radii */
@@ -95,14 +94,14 @@ static int read_radii (fastf_t *r1p, fastf_t *r2p, char *buf)
 /*
  *		    R E A D _ R O W ( )
  */
-static int read_row (char *rp, int file_width, FILE *infp)
+static int read_row (char *rp, long int width, FILE *infp)
 {
-    if (fread(rp + 3, 3, file_width, infp) != file_width)
+    if (fread(rp + 3, 3, width, infp) != width)
 	return (0);
     *(rp + RED) = *(rp + GRN) = *(rp + BLU) = 0;
-    *(rp + 3 * (file_width + 1) + RED) =
-    *(rp + 3 * (file_width + 1) + GRN) =
-    *(rp + 3 * (file_width + 1) + BLU) = 0;
+    *(rp + 3 * (width + 1) + RED) =
+    *(rp + 3 * (width + 1) + GRN) =
+    *(rp + 3 * (width + 1) + BLU) = 0;
     return (1);
 }
 
@@ -122,19 +121,19 @@ get_args (int argc, register char **argv)
 		autosize = 1;
 		break;
 	    case 'h':
-		file_height = file_width = 1024;
+		file_height = file_width = 1024L;
 		autosize = 0;
 		break;
 	    case 'n':
-		file_height = atoi(optarg);
+		file_height = atol(optarg);
 		autosize = 0;
 		break;
 	    case 's':
-		file_height = file_width = atoi(optarg);
+		file_height = file_width = atol(optarg);
 		autosize = 0;
 		break;
 	    case 'w':
-		file_width = atoi(optarg);
+		file_width = atol(optarg);
 		autosize = 0;
 		break;
 	    case 'S':
@@ -201,8 +200,8 @@ main (int argc, char **argv)
     fastf_t		x;		/* Scale factor for pixel blending */
     int			i;		/* Pixel index in inbuf */
     int			j;		/*   "     "    " outbuf */
-    int			row;
-    int			row_width;
+    long int		row;
+    long int		row_width;
 
     if (!get_args( argc, argv ))
     {
@@ -226,12 +225,12 @@ main (int argc, char **argv)
      */
     if (fileinput && autosize)
     {
-	int	w, h;
+	unsigned long int	w, h;
 
 	if (bn_common_file_size(&w, &h, file_name, 3))
 	{
-	    file_width = w;
-	    file_height = h;
+	    file_width = (long)w;
+	    file_height = (long)h;
 	}
 	else
 	    (void) fprintf(stderr, "texturescale: unable to autosize\n");

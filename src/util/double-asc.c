@@ -37,22 +37,22 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "common.h"
 
 #ifdef HAVE_UNISTD_H
-# include <unistd.h>
+#  include <unistd.h>
 #endif
-                                                                                                                                                                            
 #include <stdio.h>
 #ifdef HAVE_STRING_H
-#include <string.h>
+#  include <string.h>
 #else
-#include <strings.h>
+#  include <strings.h>
 #endif
 #include <fcntl.h>
-#include "machine.h"
 
+#include "machine.h"
 #include "bu.h"
 #include "vmath.h"
 #include "bn.h"
 #include "fb.h"
+
 
 static char	*file_name;
 static char	*format = 0;
@@ -61,8 +61,8 @@ static int	infd;
 static int	fileinput = 0;		/* Input from file (vs. pipe)? */
 static int	autosize = 0;		/* Try to autosize input? */
 
-static int	file_width = 512;	/* default input width */
-static int	file_height = 512;	/* default input height */
+static long int	file_width = 512L;	/* default input width */
+static long int	file_height = 512L;	/* default input height */
 
 static int	make_cells = 0;		/* Insert cell coords in output? */
 static int	d_per_l = 1;		/* doubles per line of output */
@@ -93,20 +93,20 @@ get_args(int argc, register char **argv)
 		break;
 	    case 'h':
 		/* high-res */
-		file_height = file_width = 1024;
+		file_height = file_width = 1024L;
 		autosize = 0;
 		break;
 	    case 's':
 		/* square file size */
-		file_height = file_width = atoi(optarg);
+		file_height = file_width = atol(optarg);
 		autosize = 0;
 		break;
 	    case 'n':
-		file_height = atoi(optarg);
+		file_height = atol(optarg);
 		autosize = 0;
 		break;
 	    case 'w':
-		file_width = atoi(optarg);
+		file_width = atol(optarg);
 		autosize = 0;
 		break;
 	    /*
@@ -189,17 +189,17 @@ main (int argc, char **argv)
     /* autosize input? */
     if (fileinput && autosize)
     {
-	int	w, h;
+	unsigned long int	w, h;
 
 	if (bn_common_file_size(&w, &h, file_name, d_per_l * 8))
 	{
-	    file_width = w;
-	    file_height = h;
+	    file_width = (long)w;
+	    file_height = (long)h;
 	}
 	else
 	    bu_log("double-asc: unable to autosize\n");
     }
-    bu_log("OK, file is %d wide and %d high\n", file_width, file_height);
+    bu_log("OK, file is %ld wide and %ld high\n", file_width, file_height);
 
     /*
      *	Choose an input-buffer size as close as possible to 64 kbytes,

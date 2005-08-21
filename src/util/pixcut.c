@@ -25,15 +25,13 @@ static const char RCSid[] = "@(#)$Header$";
 #include "common.h"
 
 #ifdef HAVE_UNISTD_H
-# include <unistd.h>
+#  include <unistd.h>
 #endif
-                                                                                                                                                                            
-
 #include <stdio.h>
 #ifdef HAVE_STRING_H
-#include <string.h>
+#  include <string.h>
 #else
-#include <strings.h>
+#  include <strings.h>
 #endif
 
 #include "machine.h"
@@ -41,14 +39,15 @@ static const char RCSid[] = "@(#)$Header$";
 #include "vmath.h"
 #include "bn.h"
 
-static int	org_width = 512;	/* Default file sizes 512x512 */
-static int	org_height = 512;
-static int	new_width = 512;
-static int	new_height = 512;
-static int	base_x = 0;		/* Default to lower left corner */
-static int	base_y = 0;
+
+static long int	org_width = 512L;	/* Default file sizes 512x512 */
+static long int	org_height = 512L;
+static long int	new_width = 512L;
+static long int	new_height = 512L;
+static long int	base_x = 0;		/* Default to lower left corner */
+static long int	base_y = 0;
 static int	Verbose = 0;
-static int	num_bytes = 3;
+static long int	num_bytes = 3L;
 
 #define SIZEBACK	256
 static unsigned char background[SIZEBACK];	/* Holds the fill background color */
@@ -97,44 +96,44 @@ get_args(register int argc, register char **argv)
 			autosize = 1;
 			break;
 		case 'h':
-			org_width = org_height = 1024;
+			org_width = org_height = 1024L;
 			autosize = 0;
 			break;
 		case 'H':
-			new_width = new_height = 1024;
+			new_width = new_height = 1024L;
 			break;
 		case 's':
-			org_width = org_height = atoi(optarg);
+			org_width = org_height = atol(optarg);
 			autosize = 0;
 			break;
 		case 'S':
-			new_width = new_height = atoi(optarg);
+			new_width = new_height = atol(optarg);
 			break;
 		case 'w':
-			org_width = atoi(optarg);
+			org_width = atol(optarg);
 			autosize = 0;
 			break;
 		case 'W':
-			new_width = atoi(optarg);
+			new_width = atol(optarg);
 			break;
 		case 'n':
-			org_height = atoi(optarg);
+			org_height = atol(optarg);
 			autosize = 0;
 			break;
 		case 'N':
-			new_height = atoi(optarg);
+			new_height = atol(optarg);
 			break;
 		case 'x':
-			base_x = atoi(optarg);
+			base_x = atol(optarg);
 			break;
 		case 'y':
-			base_y = atoi(optarg);
+			base_y = atol(optarg);
 			break;
 		case 'C':
 			parse_color(background, optarg);
 			break;
 		case '#':
-			num_bytes = atoi(optarg);
+			num_bytes = atol(optarg);
 			break;
 		default:		/* '?' */
 			return(0);
@@ -172,7 +171,7 @@ main(int argc, char **argv)
 {
 	unsigned char *inbuf, *outbuf;
 	unsigned char *buffer;
-	register int i;
+	register long int i;
 	register unsigned char *cp;
 	int finish, row, result;
 
@@ -185,10 +184,10 @@ main(int argc, char **argv)
 	}
 	/* Should we autosize the input? */
 	if (isfile && autosize) {
-		int w,h;
+		unsigned long int w,h;
 		if (bn_common_file_size(&w, &h, in_name, num_bytes)) {
-			org_width = w;
-			org_height = h;
+			org_width = (long)w;
+			org_height = (long)h;
 		} else {
 			(void) fprintf(stderr, "pixcut: unable to autosize\n");
 		}
@@ -217,11 +216,11 @@ main(int argc, char **argv)
 	if (Verbose) {
 		(void)fprintf(stderr,"pixcut: Copyright (C) 1992 Paladin Software\n");
 		(void)fprintf(stderr,"pixcut: All rights reserved.\npixcut:\n");
-		(void)fprintf(stderr,"pixcut: original image %dx%d\n",
+		(void)fprintf(stderr,"pixcut: original image %ldx%ld\n",
 		    org_width, org_height);
-		(void)fprintf(stderr,"pixcut: new image %dx%d\n",
+		(void)fprintf(stderr,"pixcut: new image %ldx%ld\n",
 		    new_width, new_height);
-		(void)fprintf(stderr,"pixcut: offset %dx%d\n", base_x, base_y);
+		(void)fprintf(stderr,"pixcut: offset %ldx%ld\n", base_x, base_y);
 		(void)fprintf(stderr,"pixcut: background color %d/%d/%d\n",
 		    background[0], background[1], background[2]);
 
@@ -295,7 +294,7 @@ main(int argc, char **argv)
  */
 	if (base_x < 0 || base_y < 0 || base_x+new_width > org_width) {
 		for (i=0, cp = outbuf; i<new_width; i++,cp+=num_bytes) {
-			register int jj;
+			register long int jj;
 			for (jj=0; jj<num_bytes && jj<SIZEBACK; jj++) {
 				cp[jj]=background[jj];
 			}
@@ -330,7 +329,7 @@ main(int argc, char **argv)
 		result = fread(inbuf, num_bytes, org_width, input);
 		if (result != org_width) {
 			for (cp=inbuf+result*num_bytes; result < org_width; cp+=num_bytes,++result) {
-				register int jj;
+				register long int jj;
 				for (jj=0; jj<num_bytes && jj<SIZEBACK; jj++) {
 					cp[jj] = background[jj];
 				}
@@ -350,7 +349,7 @@ main(int argc, char **argv)
  */
 	if (row >= org_height) {
 		for (cp=outbuf,i=0;i<new_width;cp+=num_bytes,i++) {
-			register int jj;
+			register long int jj;
 			for (jj=0; jj<num_bytes && jj<SIZEBACK;jj++) {
 				cp[jj] = background[jj];
 			}

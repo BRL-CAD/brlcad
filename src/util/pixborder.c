@@ -36,10 +36,8 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 #include "common.h"
 
 #ifdef HAVE_UNISTD_H
-# include <unistd.h>
+#  include <unistd.h>
 #endif
-                                                                                                                                                                            
-
 #include <stdio.h>
 #include <math.h>
 
@@ -48,6 +46,7 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 #include "bu.h"
 #include "bn.h"
 #include "fb.h"
+
 
 #define	ACHROMATIC	-1.0
 #define	HUE		0
@@ -61,8 +60,8 @@ static int		fileinput = 0;	/* Is input a file (not stdin)? */
 static int		autosize = 0;	/* Try to guess input dimensions? */
 static int		tol_using_rgb = 1; /* Compare via RGB, not HSV? */
 
-static int		file_width = 512;
-static int		file_height = 512;
+static long int		file_width = 512L;
+static long int		file_height = 512L;
 
 static int		left_edge = -1;
 static int		right_edge = -1;
@@ -119,14 +118,14 @@ static int read_hsv (fastf_t *hsvp, char *buf)
 /*
  *		    R E A D _ R O W ( )
  */
-static int read_row (unsigned char *rp, int file_width, FILE *infp)
+static int read_row (unsigned char *rp, long int width, FILE *infp)
 {
-    if (fread(rp + 3, 3, file_width, infp) != file_width)
+    if (fread(rp + 3, 3, width, infp) != width)
 	return (0);
     *(rp + RED) = *(rp + GRN) = *(rp + BLU) = 0;
-    *(rp + 3 * (file_width + 1) + RED) =
-    *(rp + 3 * (file_width + 1) + GRN) =
-    *(rp + 3 * (file_width + 1) + BLU) = 0;
+    *(rp + 3 * (width + 1) + RED) =
+    *(rp + 3 * (width + 1) + GRN) =
+    *(rp + 3 * (width + 1) + BLU) = 0;
     return (1);
 }
 
@@ -401,7 +400,7 @@ get_args (int argc, register char **argv)
 		colors_specified |= COLORS_EXTERIOR;
 		break;
 	    case 'h':
-		file_height = file_width = 1024;
+		file_height = file_width = 1024L;
 		autosize = 0;
 		break;
 	    case 'i':
@@ -418,7 +417,7 @@ get_args (int argc, register char **argv)
 		autosize = 0;
 		break;
 	    case 's':
-		file_height = file_width = atoi(optarg);
+		file_height = file_width = atol(optarg);
 		autosize = 0;
 		break;
 	    case 't':
@@ -430,14 +429,14 @@ get_args (int argc, register char **argv)
 		tol_using_rgb = 1;
 		break;
 	    case 'w':
-		file_width = atoi(optarg);
+		file_width = atol(optarg);
 		autosize = 0;
 		break;
 	    case 'x':
-		left_edge = atoi(optarg);
+		left_edge = atol(optarg);
 		break;
 	    case 'y':
-		bottom_edge = atoi(optarg);
+		bottom_edge = atol(optarg);
 		break;
 	    case 'B':
 		if (! read_hsv(border_hsv, optarg))
@@ -528,12 +527,12 @@ main (int argc, char **argv)
 {
     char		*outbuf;
     unsigned char	*inrow[3];
-    int			col_nm;
-    int			i;
-    int			next_row;
-    int			prev_row;
-    int			row_nm;
-    int			this_row;
+    long int		i;
+    long int		next_row;
+    long int		prev_row;
+    long int		col_nm;
+    long int		row_nm;
+    long int		this_row;
 
     VSETALL(border_rgb,     1);
     rgb_to_hsv(border_rgb, border_hsv);
@@ -566,12 +565,12 @@ main (int argc, char **argv)
      */
     if (fileinput && autosize)
     {
-	int	w, h;
+	unsigned long int	w, h;
 
 	if (bn_common_file_size(&w, &h, file_name, 3))
 	{
-	    file_width = w;
-	    file_height = h;
+	    file_width = (long)w;
+	    file_height = (long)h;
 	}
 	else
 	    (void) fprintf(stderr, "pixborder: unable to autosize\n");
@@ -615,8 +614,7 @@ main (int argc, char **argv)
 	 */
 	if ((row_nm < bottom_edge) || (row_nm > top_edge))
 	{
-	    if (fwrite(inrow[this_row] + 3, 3, file_width, stdout)
-		!= file_width)
+	    if (fwrite(inrow[this_row] + 3, 3, file_width, stdout) != file_width)
 	    {
 		perror("stdout");
 		exit(2);

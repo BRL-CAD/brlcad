@@ -48,9 +48,8 @@ static const char RCSid[] = "$Header$";
 #include "common.h"
 
 #ifdef HAVE_UNISTD_H
-# include <unistd.h>
+#  include <unistd.h>
 #endif
-                                                                                                                                                                            
 #include <stdio.h>
 
 #include "machine.h"
@@ -58,7 +57,8 @@ static const char RCSid[] = "$Header$";
 #include "vmath.h"
 #include "bn.h"
 
-static int	file_width = 512;
+
+static long int	file_width = 512L;
 static int	autosize = 0;
 static char	*file_name;
 static FILE	*infp;
@@ -79,14 +79,14 @@ get_args(int argc, char **argv)
 			autosize = 1;
 			break;
 		case 's':
-			file_width = atoi(optarg);
+			file_width = atol(optarg);
 			autosize = 0;
 			break;
 		case 'n':
 			autosize = 0;
 			break;
 		case 'w':
-			file_width = atoi(optarg);
+			file_width = atol(optarg);
 			autosize = 0;
 			break;
 		default:		/* '?' */
@@ -119,8 +119,8 @@ int
 main(int argc, char **argv)
 {
 	int c;
-	int cur_width = 0;
-	int cur_height = 0;
+	long int cur_width = 0;
+	long int cur_height = 0;
 
 	if ( !get_args(argc, argv)) {
 		(void) fputs(usage, stderr);
@@ -129,9 +129,9 @@ main(int argc, char **argv)
 
 	/* autosize the input? */
 	if (fileinput && autosize) {
-		int	w, h;
+		unsigned long int	w, h;
 		if ( bn_common_file_size(&w, &h, file_name, 1) ) {
-			file_width = w;
+			file_width = (long)w;
 		} else {
 			fprintf(stderr, "bw-a: unable to autosize\n");
 		}
@@ -145,7 +145,7 @@ main(int argc, char **argv)
 		}
 		if (++cur_width >= file_width) {
 			putchar('\n');
-			cur_width=0;
+			cur_width=0L;
 			cur_height++;
 		}
 	}

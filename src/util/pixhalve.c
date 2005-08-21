@@ -41,17 +41,16 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 #include "common.h"
 
 #ifdef HAVE_UNISTD_H
-# include <unistd.h>
+#  include <unistd.h>
 #endif
-                                                                                                                                                                            
-
 #include <stdio.h>
 #include <stdlib.h>
 
 #include "machine.h"
-#include <bu.h>
-#include <vmath.h>
-#include <bn.h>
+#include "bu.h"
+#include "vmath.h"
+#include "bn.h"
+
 
 static char	*file_name;
 static FILE	*infp;
@@ -59,14 +58,14 @@ static FILE	*infp;
 static int	fileinput = 0;		/* file or pipe on input? */
 static int	autosize = 0;		/* !0 to autosize input */
 
-static int	file_width = 512;	/* default input width */
+static long int	file_width = 512L;	/* default input width */
 
 static char usage[] = "\
 Usage: pixhalve [-h] [-a]\n\
 	[-s squaresize] [-w file_width] [-n file_height] [file.pix]\n";
 
-void separate(register int *rop, register int *gop, register int *bop, register unsigned char *cp, int num);
-void combine(register unsigned char *cp, register int *rip, register int *gip, register int *bip, int num);
+void separate(register int *rop, register int *gop, register int *bop, register unsigned char *cp, long int num);
+void combine(register unsigned char *cp, register int *rip, register int *gip, register int *bip, long int num);
 void ripple(int **array, int num);
 void filter3(int *op, int **lines, int num);
 void filter5(int *op, int **lines, int num);
@@ -83,16 +82,16 @@ get_args(int argc, register char **argv)
 			break;
 		case 'h':
 			/* high-res */
-			file_width = 1024;
+			file_width = 1024L;
 			autosize = 0;
 			break;
 		case 's':
 			/* square file size */
-			file_width = atoi(optarg);
+			file_width = atol(optarg);
 			autosize = 0;
 			break;
 		case 'w':
-			file_width = atoi(optarg);
+			file_width = atol(optarg);
 			autosize = 0;
 			break;
 		case 'n':
@@ -137,11 +136,11 @@ int	*blines[5];
 int
 main(int argc, char **argv)
 {
-	char	*inbuf;
-	char	*outbuf;
+	unsigned char	*inbuf;
+	unsigned char	*outbuf;
 	int	*rout, *gout, *bout;
-	int	out_width;
-	int	i;
+	long int	out_width;
+	long int	i;
 	int	eof_seen;
 
 	if ( !get_args( argc, argv ) )  {
@@ -151,9 +150,9 @@ main(int argc, char **argv)
 
 	/* autosize input? */
 	if( fileinput && autosize ) {
-		int	w, h;
+		unsigned long int	w, h;
 		if( bn_common_file_size(&w, &h, file_name, 3) ) {
-			file_width = w;
+			file_width = (long)w;
 		} else {
 			fprintf(stderr, "pixhalve: unable to autosize\n");
 		}
@@ -206,7 +205,7 @@ main(int argc, char **argv)
 		filter5( gout, glines, out_width );
 		filter5( bout, blines, out_width );
 		combine( outbuf, rout, gout, bout, out_width );
-		if( fwrite( outbuf, 3, out_width, stdout ) != out_width )  {
+		if( fwrite( (void*)outbuf, 3, out_width, stdout ) != out_width )  {
 			perror("stdout");
 			exit(2);
 		}
@@ -248,14 +247,14 @@ main(int argc, char **argv)
  *  Updated version:  the outputs are Y U V values, not R G B.
  */
 void
-separate(register int *rop, register int *gop, register int *bop, register unsigned char *cp, int num)
+separate(register int *rop, register int *gop, register int *bop, register unsigned char *cp, long int num)
             	     			/* Y */
             	     			/* U */
             	     			/* V */
                       	    
    		    
 {
-	register int 	i;
+	register long int 	i;
 	register int	r, g, b;
 
 	r = cp[0];
@@ -300,9 +299,9 @@ separate(register int *rop, register int *gop, register int *bop, register unsig
  *  RGB byte tripples
  */
 void
-combine(register unsigned char *cp, register int *rip, register int *gip, register int *bip, int num)
+combine(register unsigned char *cp, register int *rip, register int *gip, register int *bip, long int num)
 {
-	register int 	i;
+	register long int 	i;
 
 #define RCONV(_y, _u, _v)	(_y + 1.4026 * _v)
 #define GCONV(_y, _u, _v)	(_y - 0.3444 * _u - 0.7144 * _v)

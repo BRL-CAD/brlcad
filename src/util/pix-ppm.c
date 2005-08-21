@@ -39,10 +39,8 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 #include "common.h"
 
 #ifdef HAVE_UNISTD_H
-# include <unistd.h>
+#  include <unistd.h>
 #endif
-                                                                                                                                                                            
-
 #include <stdio.h>
 
 #include "machine.h"
@@ -50,8 +48,9 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 #include "vmath.h"
 #include "bn.h"
 
-static int	file_width = 512;	/* default input width */
-static int	file_height = 512;	/* default input height */
+
+static long int	file_width = 512L;	/* default input width */
+static long int	file_height = 512L;	/* default input height */
 
 static int	autosize = 0;		/* !0 to autosize input */
 
@@ -85,15 +84,15 @@ get_args(int argc, register char **argv)
 			break;
 		case 's':
 			/* square file size */
-			file_height = file_width = atoi(optarg);
+			file_height = file_width = atol(optarg);
 			autosize = 0;
 			break;
 		case 'w':
-			file_width = atoi(optarg);
+			file_width = atol(optarg);
 			autosize = 0;
 			break;
 		case 'n':
-			file_height = atoi(optarg);
+			file_height = atol(optarg);
 			autosize = 0;
 			break;
 
@@ -139,10 +138,10 @@ main(int argc, char **argv)
 
 	/* autosize input? */
 	if( fileinput && autosize ) {
-		int	w, h;
+		unsigned long int	w, h;
 		if( bn_common_file_size(&w, &h, file_name, pixbytes) ) {
-			file_width = w;
-			file_height = h;
+			file_width = (long)w;
+			file_height = (long)h;
 		} else {
 			fprintf(stderr,"pix-ppm: unable to autosize\n");
 		}
@@ -171,7 +170,7 @@ main(int argc, char **argv)
 	}
 
 	/* width height */
-	printf("%d %d\n", file_width, file_height);
+	printf("%lu %lu\n", file_width, file_height);
 
 	/* maximum color component value */
 	printf("255\n");

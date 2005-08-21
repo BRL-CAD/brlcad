@@ -25,15 +25,13 @@ static const char RCSid[] = "@(#)$Header$";
 #include "common.h"
 
 #ifdef HAVE_UNISTD_H
-# include <unistd.h>
+#  include <unistd.h>
 #endif
-                                                                                                                                                                            
-
 #include <stdio.h>
 #ifdef HAVE_STRING_H
-#include <string.h>
+#  include <string.h>
 #else
-#include <strings.h>
+#  include <strings.h>
 #endif
 
 #include "machine.h"
@@ -41,12 +39,13 @@ static const char RCSid[] = "@(#)$Header$";
 #include "vmath.h"
 #include "bn.h"
 
-static int	org_width = 512;	/* Default file sizes 512x512 */
-static int	org_height = 512;
-static int	paste_width = 512;
-static int	paste_height = 512;
-static int	base_x = 0;		/* Default to lower left corner */
-static int	base_y = 0;
+
+static long int	org_width = 512L;	/* Default file sizes 512x512 */
+static long int	org_height = 512L;
+static long int	paste_width = 512L;
+static long int	paste_height = 512L;
+static long int	base_x = 0L;		/* Default to lower left corner */
+static long int	base_y = 0L;
 static int	Verbose = 0;
 
 #if defined(SYSV)
@@ -58,7 +57,7 @@ static int	paste_autosize = 0;
 static int	orig_autosize = 0;
 static int	paste_isfile = 0;
 static int	orig_isfile = 0;
-static int	num_bytes = 3;
+static long int	num_bytes = 3L;
 
 static char usage[] = "\
 pixpaste: Copyright (C) 1992 Paladin Software\n\
@@ -86,45 +85,45 @@ get_args(register int argc, register char **argv)
 			paste_autosize = 1;
 			break;
 		case 'h':
-			org_width = org_height = 1024;
+			org_width = org_height = 1024L;
 			orig_autosize = 0;
 			break;
 		case 'H':
-			paste_width = paste_height = 1024;
+			paste_width = paste_height = 1024L;
 			paste_autosize = 0;
 			break;
 		case 's':
-			org_width = org_height = atoi(optarg);
+			org_width = org_height = atol(optarg);
 			orig_autosize = 0;
 			break;
 		case 'S':
-			paste_width = paste_height = atoi(optarg);
+			paste_width = paste_height = atol(optarg);
 			paste_autosize = 0;
 			break;
 		case 'w':
-			org_width = atoi(optarg);
+			org_width = atol(optarg);
 			orig_autosize = 0;
 			break;
 		case 'W':
-			paste_width = atoi(optarg);
+			paste_width = atol(optarg);
 			paste_autosize = 0;
 			break;
 		case 'n':
-			org_height = atoi(optarg);
+			org_height = atol(optarg);
 			orig_autosize = 0;
 			break;
 		case 'N':
-			paste_height = atoi(optarg);
+			paste_height = atol(optarg);
 			paste_autosize = 0;
 			break;
 		case 'x':
-			base_x = atoi(optarg);
+			base_x = atol(optarg);
 			break;
 		case 'y':
-			base_y = atoi(optarg);
+			base_y = atol(optarg);
 			break;
 		case '#':
-			num_bytes = atoi(optarg);
+			num_bytes = atol(optarg);
 			break;
 		default:		/* '?' */
 			return(0);
@@ -180,8 +179,8 @@ main(int argc, char **argv)
 {
 	unsigned char *origbuf, *pastebuf;
 	unsigned char *buffer;
-	register int i;
-	int row, result;
+	register long int i;
+	long int row, result;
 
 	if (!get_args(argc,argv)) {
 		(void)fprintf(stderr,"%s",usage);
@@ -189,25 +188,23 @@ main(int argc, char **argv)
 	}
 	/* Should we autosize the original? */
 	if (orig_isfile && orig_autosize) {
-		int w,h;
+		unsigned long int w,h;
 		if (bn_common_file_size(&w, &h, orig_name, num_bytes)) {
-			org_width = w;
-			org_height = h;
+			org_width = (long)w;
+			org_height = (long)h;
 		} else {
-			(void) fprintf(stderr,
-"pixpaste: unable to autosize \"%s\"\n",orig_name);
+			(void) fprintf(stderr, "pixpaste: unable to autosize \"%s\"\n",orig_name);
 		}
 	}
 
 	/* Should we autosize the paste file? */
 	if (paste_isfile && paste_autosize) {
-		int w,h;
+		unsigned long int w,h;
 		if (bn_common_file_size(&w, &h, paste_name, num_bytes)) {
-			paste_width = w;
-			paste_height = h;
+			paste_width = (long)w;
+			paste_height = (long)h;
 		} else {
-			(void) fprintf(stderr,
-"pixpaste: unable to autosize \"%s\"\n",paste_name);
+			(void) fprintf(stderr, "pixpaste: unable to autosize \"%s\"\n",paste_name);
 		}
 	}
 
@@ -218,13 +215,12 @@ main(int argc, char **argv)
  * Spew some interesting info at the people...
  */
 	if (Verbose) {
-		(void) fprintf(stderr,"\
-pixpaste: Copyright (C) 1992 Paladin Software\npixpaste: All rights reserved\n");
-		(void) fprintf(stderr,"pixpaste: Original image %dx%d\n",
+		(void) fprintf(stderr,"pixpaste: Copyright (C) 1992 Paladin Software\npixpaste: All rights reserved\n");
+		(void) fprintf(stderr,"pixpaste: Original image %ldx%ld\n",
 		    org_width, org_height);
-		(void) fprintf(stderr,"pixpaste: Inserted image %dx%d\n",
+		(void) fprintf(stderr,"pixpaste: Inserted image %ldx%ld\n",
 		    paste_width, paste_height);
-		(void) fprintf(stderr,"pixpaste: Inserted at %dx%d\n",
+		(void) fprintf(stderr,"pixpaste: Inserted at %ldx%ld\n",
 		    base_x, base_y);
 	}
 
@@ -317,7 +313,7 @@ pixpaste: new image == original image.\n");
 	while (row < org_height && row < base_y+paste_height) {
 		result=fread(origbuf, num_bytes, org_width, orig);
 		if (result != org_width) {
-			register int jj;
+			register long int jj;
 			for (jj=result; jj<num_bytes*org_width; jj++) {
 				origbuf[jj]=0;
 			}
@@ -341,7 +337,7 @@ pixpaste: new image == original image.\n");
 	while (row < org_height) {
 		result=fread(origbuf, num_bytes, org_width, orig);
 		if (result != org_width) {
-			register int jj;
+			register long int jj;
 			for (jj=result; jj<num_bytes*org_width; jj++) {
 				origbuf[jj]=0;
 			}

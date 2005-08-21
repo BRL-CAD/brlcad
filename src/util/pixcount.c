@@ -37,17 +37,16 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include <stdio.h>
 #include <math.h>
-
 #ifdef HAVE_UNISTD_H
-# include <unistd.h>
+#  include <unistd.h>
 #endif
 
 #include "machine.h"
 #include "bu.h"
 #include "redblack.h"
 
-struct pixel
-{
+
+struct pixel {
     long		p_magic;
     unsigned char	*p_color;
     int			p_count;
@@ -147,7 +146,7 @@ int compare_pixels (void *v1, void *v2)
 /*
  *			 L O O K U P _ P I X E L ( )
  */
-struct pixel *lookup_pixel(bu_rb_tree *palette, char *color)
+struct pixel *lookup_pixel(bu_rb_tree *palette, unsigned char *color)
 {
     int			rc;	/* Return code from bu_rb_insert() */
     struct pixel	*qpp;	/* The query */

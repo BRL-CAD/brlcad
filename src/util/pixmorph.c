@@ -417,13 +417,13 @@ main(int argc, char **argv)
     long int numlines;
     struct lineseg *lines;
     register long int i;
-    int autosize;
+    long int autosize;
 #if 0
     npsw = bu_avail_cpus();
     if (npsw > DEFAULT_PSW) npsw = DEFAULT_PSW;
 #endif
 
-    autosize = 1;
+    autosize = 1L;
     pa_width = pa_height = 0;
     if (get_args(argc, argv, &picAname, &picBname, &linesfilename,
           &warpfrac, &dissolvefrac, &autosize, &pa_width, &pa_height) == 0
@@ -460,7 +460,7 @@ main(int argc, char **argv)
     }
 
     if (autosize) {
-	if (bn_common_file_size(&pa_width, &pa_height, argv[1], 3) == 0) {
+	if (bn_common_file_size((unsigned long int *)&pa_width, (unsigned long int *)&pa_height, argv[1], 3) == 0) {
 	    fprintf(stderr, "pixmorph: unable to autosize\n");
 	    return 1;
 	}

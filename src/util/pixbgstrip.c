@@ -38,19 +38,19 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "common.h"
 
 #ifdef HAVE_UNISTD_H
-# include <unistd.h>
+#  include <unistd.h>
 #endif
-                                                                                                                                                                            
-
 #include <stdio.h>	
+
 #include "machine.h"
 #include "bu.h"
 #include "vmath.h"
 #include "bn.h"
 #include "fb.h"
 
+
 static unsigned char *scanline;		/* 1 scanline pixel buffer */
-static int	scanbytes;		/* # of bytes of scanline */
+static long int	scanbytes;		/* # of bytes of scanline */
 
 static char	*file_name;
 static FILE	*infp;
@@ -58,7 +58,7 @@ static int	fileinput = 0;		/* file of pipe on input? */
 
 static int	autosize = 0;		/* !0 to autosize input */
 
-static int	file_width = 512;	/* default input width */
+static long int	file_width = 512L;	/* default input width */
 
 static int	thresh = 1;
 static int	bg_x_offset = 0;
@@ -80,16 +80,16 @@ get_args(int argc, register char **argv)
 			break;
 		case 'h':
 			/* high-res */
-			file_width = 1024;
+			file_width = 1024L;
 			autosize = 0;
 			break;
 		case 's':
 			/* square file size */
-			file_width = atoi(optarg);
+			file_width = atol(optarg);
 			autosize = 0;
 			break;
 		case 'w':
-			file_width = atoi(optarg);
+			file_width = atol(optarg);
 			autosize = 0;
 			break;
 		case 'n':
@@ -134,7 +134,7 @@ int
 main(int argc, char **argv)
 {
 	register int	r,g,b;
-	register int	i;
+	register long int	i;
 
 	if ( !get_args( argc, argv ) )  {
 		(void)fputs(usage, stderr);
@@ -149,9 +149,9 @@ main(int argc, char **argv)
 
 	/* autosize input? */
 	if( fileinput && autosize ) {
-		int	w, h;
+		unsigned long int	w, h;
 		if( bn_common_file_size(&w, &h, file_name, 3) ) {
-			file_width = w;
+			file_width = (long)w;
 		} else {
 			fprintf(stderr,"pixbgstrip: unable to autosize\n");
 		}

@@ -41,15 +41,15 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <string.h>
-
 #ifdef HAVE_UNISTD_H
-# include <unistd.h>
+#  include <unistd.h>
 #endif
 
 #include "machine.h"
 #include "bu.h"
 #include "vmath.h"
 #include "bn.h"
+
 
 #define	BELIEVE_NAME	0
 #define	BELIEVE_STAT	1
@@ -114,11 +114,11 @@ main (int argc, char **argv)
     char	*argument;		/* file name or size */
     int		bytes_per_pixel = -1;
     int		ch;
-    int		height;
     int		how = BELIEVE_NAME;
     int		nm_bytes = -1;
     int		nm_pixels;
-    int		width;
+    unsigned long int		width;
+    unsigned long int		height;
     struct stat	stat_buf;
 
     extern int	optind;			/* index from getopt(3C) */
@@ -194,7 +194,7 @@ main (int argc, char **argv)
 	exit (0);
 
 done:
-    printf("%d %d\n", width, height);
+    printf("%lu %lu\n", width, height);
     exit (0);
 }
 
