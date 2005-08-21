@@ -7,6 +7,7 @@ EXTRA_DIST = \
 	$(sample_applications_DATA) \
 	Cakefile.defs \
 	Description.txt \
+	Doxyfile \
 	Makefile.defs \
 	batch-indent-region.el \
 	brlcad.spec.in \
