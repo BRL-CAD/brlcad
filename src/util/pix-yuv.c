@@ -49,19 +49,16 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif
-                                                                                                                                                                            
 #ifdef HAVE_FCNTL_H
 # include <fcntl.h>
 #endif
-                                                                                                                                                                            
-
 #include <stdio.h>
 
 #include "machine.h"
-
 #include "bu.h"
 #include "vmath.h"
 #include "bn.h"
+
 
 static char	*file_name;
 static int	infd;
@@ -69,12 +66,12 @@ static int	infd;
 static int	fileinput = 0;		/* file or pipe on input? */
 static int	autosize = 0;		/* !0 to autosize input */
 
-static int	file_width = 720;	/* default input width */
-static int	file_height = 485;	/* default input height */
+static long int	file_width = 720L;	/* default input width */
+static long int	file_height = 485L;	/* default input height */
 
-static int	mread(int fd, register char *bufp, int n);
-void		ab_rgb_to_yuv(unsigned char *yuv_buf, unsigned char *rgb_buf, int len);
-void		ab_yuv_to_rgb(unsigned char *rgb_buf, unsigned char *yuv_buf, int len);
+static long int	mread(int fd, register unsigned char *bufp, long int n);
+void		ab_rgb_to_yuv(unsigned char *yuv_buf, unsigned char *rgb_buf, long int len);
+void		ab_yuv_to_rgb(unsigned char *rgb_buf, unsigned char *yuv_buf, long int len);
 
 static char usage[] = "\
 Usage: pix-yuv [-h] [-a]\n\
@@ -92,16 +89,16 @@ get_args(int argc, register char **argv)
 			break;
 		case 'h':
 			/* high-res */
-			file_height = file_width = 1024;
+			file_height = file_width = 1024L;
 			autosize = 0;
 			break;
 		case 's':
 			/* square file size */
-			file_height = file_width = atoi(optarg);
+			file_height = file_width = atol(optarg);
 			autosize = 0;
 			break;
 		case 'w':
-			file_width = atoi(optarg);
+			file_width = atol(optarg);
 			autosize = 0;
 			break;
 		case 'n':
@@ -143,9 +140,9 @@ get_args(int argc, register char **argv)
 int
 main(int argc, char **argv)
 {
-	char	*inbuf;
-	char	*outbuf;
-	int	y;
+	unsigned char	*inbuf;
+	unsigned char	*outbuf;
+	long int	y;
 
 	if ( !get_args( argc, argv ) )  {
 		(void)fputs(usage, stderr);
@@ -154,10 +151,10 @@ main(int argc, char **argv)
 
 	/* autosize input? */
 	if( fileinput && autosize ) {
-		int	w, h;
+		unsigned long int	w, h;
 		if( bn_common_file_size(&w, &h, file_name, 3) ) {
-			file_width = w;
-			file_height = h;
+			file_width = (long)w;
+			file_height = (long)h;
 		} else {
 			fprintf(stderr, "pix-yuv: unable to autosize\n");
 		}
@@ -197,25 +194,25 @@ main(int argc, char **argv)
  * and network connections don't deliver data with the same
  * grouping as it is written with.  Written by Robert S. Miles, BRL.
  */
-static int
-mread(int fd, register char *bufp, int n)
+static long int
+mread(int fd, register unsigned char *bufp, long int n)
 {
-	register int	count = 0;
-	register int	nread;
+	register long int	count = 0;
+	register long int	nread;
 
 	do {
-		nread = read(fd, bufp, (unsigned)n-count);
+		nread = read(fd, bufp, (size_t)n-count);
 		if(nread < 0)  {
 			perror("mread");
 			return(-1);
 		}
 		if(nread == 0)
-			return((int)count);
+			return((long int)count);
 		count += (unsigned)nread;
 		bufp += nread;
 	 } while(count < n);
 
-	return((int)count);
+	return((long int)count);
 }
 
 /*************************************************************************
@@ -259,11 +256,11 @@ static double	vbuf[724*4];
 
 /* RGB to YUV */
 void
-ab_rgb_to_yuv(unsigned char *yuv_buf, unsigned char *rgb_buf, int len)
+ab_rgb_to_yuv(unsigned char *yuv_buf, unsigned char *rgb_buf, long int len)
 {
 	register unsigned char *cp;
 	register double	*yp, *up, *vp;
-	register int	i;
+	register long int	i;
 	static int	first=1;
 
 	if(first)  {
@@ -307,14 +304,14 @@ ab_rgb_to_yuv(unsigned char *yuv_buf, unsigned char *rgb_buf, int len)
 
 /* YUV to RGB */
 void
-ab_yuv_to_rgb(unsigned char *rgb_buf, unsigned char *yuv_buf, int len)
+ab_yuv_to_rgb(unsigned char *rgb_buf, unsigned char *yuv_buf, long int len)
 {
 	register unsigned char *rgbp;
 	register unsigned char *yuvp;
 	register double	y;
 	register double	u = 0.0;
 	register double	v;
-	register int	pixel;
+	register long int	pixel;
 	int		last;
 
 	/* Input stream looks like:  uy  vy  uy  vy  */
@@ -346,231 +343,6 @@ ab_yuv_to_rgb(unsigned char *rgb_buf, unsigned char *yuv_buf, int len)
 	}
 }
 
-
-
-
-
-
-
-
-#if 0
-
-/*
- *			S E P A R A T E
- *
- *  Unpack RGB byte tripples into three separate arrays of integers.
- *  The first and last pixels are replicated twice, to handle border effects.
- *
- *  Updated version:  the outputs are Y U V values, not R G B.
- */
-separate( rop, gop, bop, cp, num )
-register int	*rop;			/* Y */
-register int	*gop;			/* U */
-register int	*bop;			/* V */
-register unsigned char	*cp;
-int		num;
-{
-	register int 	i;
-	register int	r, g, b;
-
-	r = cp[0];
-	g = cp[1];
-	b = cp[2];
-
-#define YCONV(_r, _g, _b)	(_r * 0.299 + _g * 0.587 + _b * 0.144 + 0.9)
-#define UCONV(_r, _g, _b)	(_r * -0.1686 + _g * -0.3311 + _b * 0.4997 + 0.9)
-#define VCONV(_r, _g, _b)	(_r * 0.4998 + _g * -0.4185 + _b * -0.0813 + 0.9)
-
-	rop[-1] = rop[-2] = YCONV(r,g,b);
-	gop[-1] = gop[-2] = UCONV(r,g,b);
-	bop[-1] = bop[-2] = VCONV(r,g,b);
-
-	for( i = num-1; i >= 0; i-- )  {
-		r = cp[0];
-		g = cp[1];
-		b = cp[2];
-		cp += 3;
-		*rop++ = YCONV(r,g,b);
-		*gop++ = UCONV(r,g,b);
-		*bop++ = VCONV(r,g,b);
-	}
-
-	r = cp[-3];
-	g = cp[-2];
-	b = cp[-1];
-
-	*rop++ = YCONV(r,g,b);
-	*gop++ = UCONV(r,g,b);
-	*bop++ = VCONV(r,g,b);
-
-	*rop++ = YCONV(r,g,b);
-	*gop++ = UCONV(r,g,b);
-	*bop++ = VCONV(r,g,b);
-}
-
-/*
- *			C O M B I N E
- *
- *  Combine three separate arrays of integers into a buffer of
- *  RGB byte tripples
- */
-combine( cp, rip, gip, bip, num )
-register unsigned char	*cp;
-register int		*rip;
-register int		*gip;
-register int		*bip;
-int			num;
-{
-	register int 	i;
-
-#define RCONV(_y, _u, _v)	(_y + 1.4026 * _v)
-#define GCONV(_y, _u, _v)	(_y - 0.3444 * _u - 0.7144 * _v)
-#define BCONV(_y, _u, _v)	(_y + 1.7730 * _u)
-
-#define CLIP(_v)	( ((_v) <= 0) ? 0 : (((_v) >= 255) ? 255 : (_v)) )
-
-	for( i = num-1; i >= 0; i-- )  {
-		register int	y, u, v;
-		register int	r, g, b;
-
-		y = *rip++;
-		u = *gip++;
-		v = *bip++;
-
-		r = RCONV(y,u,v);
-		g = GCONV(y,u,v);
-		b = BCONV(y,u,v);
-
-		*cp++ = CLIP(r);
-		*cp++ = CLIP(g);
-		*cp++ = CLIP(b);
-	}
-}
-
-/*
- *			R I P P L E
- *
- *  Ripple all the scanlines down by one.
- *
- *  Barrel shift all the pointers down, with [0] going back to the top.
- */
-ripple( array, num )
-int	*array[];
-int	num;
-{
-	register int	i;
-	int		*temp;
-
-	temp = array[0];
-	for( i=0; i < num-1; i++ )
-		array[i] = array[i+1];
-	array[num-1] = temp;
-}
-
-/*
- *			F I L T E R 5
- *
- *  Apply a 5x5 image pyramid to the input scanline, taking every other
- *  input position to make an output.
- *
- *  Code is arranged so as to vectorize, on machines that can.
- */
-filter5( op, lines, num )
-int	*op;
-int	*lines[];
-int	num;
-{
-	register int	i;
-	register int	j;
-	register int	*a, *b, *c, *d, *e;
-
-	a = lines[0];
-	b = lines[1];
-	c = lines[2];
-	d = lines[3];
-	e = lines[4];
-
-#ifdef VECTORIZE
-	/* This version vectorizes */
-#	include "noalias.h"
-	for( i=0; i < num; i++ )  {
-		j = i*2;
-		op[i] = (
-			  a[j+0] + 2*a[j+1] + 4*a[j+2] + 2*a[j+3] +   a[j+4] +
-			2*b[j+0] + 4*b[j+1] + 8*b[j+2] + 4*b[j+3] + 2*b[j+4] +
-			4*c[j+0] + 8*c[j+1] +16*c[j+2] + 8*c[j+3] + 4*c[j+4] +
-			2*d[j+0] + 4*d[j+1] + 8*d[j+2] + 4*d[j+3] + 2*d[j+4] +
-			  e[j+0] + 2*e[j+1] + 4*e[j+2] + 2*e[j+3] +   e[j+4]
-			) / 100;
-	}
-#else
-	/* This version is better for non-vectorizing machines */
-	for( i=0; i < num; i++ )  {
-		op[i] = (
-			  a[0] + 2*a[1] + 4*a[2] + 2*a[3] +   a[4] +
-			2*b[0] + 4*b[1] + 8*b[2] + 4*b[3] + 2*b[4] +
-			4*c[0] + 8*c[1] +16*c[2] + 8*c[3] + 4*c[4] +
-			2*d[0] + 4*d[1] + 8*d[2] + 4*d[3] + 2*d[4] +
-			  e[0] + 2*e[1] + 4*e[2] + 2*e[3] +   e[4]
-			) / 100;
-		a += 2;
-		b += 2;
-		c += 2;
-		d += 2;
-		e += 2;
-	}
-#endif
-}
-
-
-/*
- *			F I L T E R 3
- *
- *  Apply a 3x3 image pyramid to the input scanline, taking every other
- *  input position to make an output.
- *
- *  The filter coefficients are positioned so as to align the center
- *  of the filter with the same center used in filter5().
- */
-filter3( op, lines, num )
-int	*op;
-int	*lines[];
-int	num;
-{
-	register int	i;
-	register int	j;
-	register int	*b, *c, *d;
-
-	b = lines[1];
-	c = lines[2];
-	d = lines[3];
-
-#ifdef VECTORIZE
-	/* This version vectorizes */
-#	include "noalias.h"
-	for( i=0; i < num; i++ )  {
-		j = i*2;
-		op[i] = (
-			  b[j+1] + 2*b[j+2] +   b[j+3] +
-			2*c[j+1] + 4*c[j+2] + 2*c[j+3] +
-			  d[j+1] + 2*d[j+2] +   d[j+3]
-			) / 16;
-	}
-#else
-	/* This version is better for non-vectorizing machines */
-	for( i=0; i < num; i++ )  {
-		op[i] = (
-			  b[1] + 2*b[2] +   b[3] +
-			2*c[1] + 4*c[2] + 2*c[3] +
-			  d[1] + 2*d[2] +   d[3]
-			) / 16;
-		b += 2;
-		c += 2;
-		d += 2;
-	}
-#endif
-}
-#endif	/* 0 */
 
 /*
  * Local Variables:
