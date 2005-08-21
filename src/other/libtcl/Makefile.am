@@ -97,16 +97,17 @@ libtcl@TCL_VERSION@_la_SOURCES = $(libtcl_la_SOURCES)
 libtcl@TCL_VERSION@_la_LDFLAGS = $(libtcl_la_LDFLAGS)
 libtcl@TCL_VERSION@_la_LIBADD = $(libtcl_la_LIBADD)
 
-noinst_PROGRAMS = tclsh tclsh.static
+noinst_PROGRAMS = tclsh
+
+# MIPSpro 7.3 has a linker bug with long rpaths
+if LINK_STATIC_REQUIRED
+tclsh_LDFLAGS = -static
+endif
 
 tclsh_SOURCES = 
 tclsh_LDADD = \
 	unix/tclAppInit.lo \
 	libtcl.la
-
-tclsh_static_SOURCES = $(tclsh_SOURCES)
-tclsh_static_LDADD = $(tclsh_LDADD)
-tclsh_static_LDFLAGS = -static
 
 tcllibdir = ${libdir}
 
@@ -116,10 +117,6 @@ AM_CPPFLAGS = \
 	-DTCL_LIBRARY="\"${TCL_LIBRARY}\"" \
 	-DTCL_PACKAGE_PATH="\"${TCL_PACKAGE_PATH}\"" \
 	-DUSE_TCLALLOC=0
-
-.PHONY : test
-test: tclsh.static
-	echo 'puts "hi"' | ./tclsh.static
 
 EXTRA_DIST = \
 	ChangeLog.1999 \

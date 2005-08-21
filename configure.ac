@@ -2368,15 +2368,10 @@ AC_SUBST(WDB)
 
 dnl tcl
 
-# hack to work around the irix compiler crashing on the libtool btclsh
-# relink attempt when we get to tclscripts.
-BTCLSH_DEPENDENCY=""
-if test "x$build_vendor" = "xsgi" ; then
-    if test "x$compiler" = "xmipspro" ; then
-	BTCLSH_DEPENDENCY=".libs/lt-btclsh"
-    fi
-fi
-AC_SUBST(BTCLSH_DEPENDENCY)
+# if compiling with the MIPSpro 7.3 compiler, there is a bug when
+# trying to link using an rpath longer than 256 that causes the linker
+# to core dump.
+AM_CONDITIONAL(LINK_STATIC_REQUIRED, [test "x$build_vendor" = "xsgi" -a "x$compiler" = "xmipspro" ])
 
 dnl Need to update version number(s) in src/other/libtcl/Makefile.am
 TCL_LIBRARY='${prefix}/lib/tcl${TCL_VERSION}'

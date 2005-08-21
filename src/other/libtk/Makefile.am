@@ -124,7 +124,12 @@ libtk@TK_VERSION@_la_SOURCES = $(libtk_la_SOURCES)
 libtk@TK_VERSION@_la_LDFLAGS = $(libtk_la_LDFLAGS)
 libtk@TK_VERSION@_la_LIBADD = $(libtk_la_LIBADD)
 
-noinst_PROGRAMS = wish wish.static
+noinst_PROGRAMS = wish
+
+# MIPSpro 7.3 has a linker bug with long rpaths
+if LINK_STATIC_REQUIRED
+wish_LDFLAGS = -static
+endif
 
 # moved from unix to this dir
 wish_SOURCES =
@@ -132,10 +137,6 @@ wish_LDADD = \
 	unix/tkAppInit.lo \
 	libtk.la \
 	${TCL}
-
-wish_static_SOURCES = $(wish_SOURCES)
-wish_static_LDADD = $(wish_LDADD)
-wish_static_LDFLAGS = -static
 
 tklibdir = ${libdir}
 
@@ -150,9 +151,6 @@ AM_CPPFLAGS = \
 	-I${top_srcdir}/src/other/libtk/win \
 	@X_CFLAGS@
 
-.PHONY : test
-test: wish.static
-	echo 'puts "hi"' | ./wish.static
 
 MAINTAINERCLEANFILES = Makefile.in
 
