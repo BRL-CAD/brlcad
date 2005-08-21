@@ -1,12 +1,50 @@
+
+.PHONY: fast fast-recursive noprod prodclean prodclean-recursive
+
+#
 # compile all sources first, then link on a second pass.  requires 2x
 # disk space to account for uncertainty on whether the objects are for
 # a library or an executable.
-
-.PHONY: fast fast-recursive
-
+#
 fast: $(FAST_OBJECTS) fast-recursive all-am
 
 fast-recursive:
 	@list='$(SUBDIRS)'; for subdir in $$list; do \
 	  test "$$subdir" = . || (cd $$subdir && $(MAKE) $(AM_MAKEFLAGS) fast); \
+	done
+
+#
+# remove all of the build targets (binaries and libraries)
+#
+noprod: prodclean
+
+prodclean: prodclean-recursive
+	@list='$(bin_PROGRAMS)'; for p in $$list; do \
+	  f=`echo $$p|sed 's/$(EXEEXT)$$//'`; \
+	  echo " rm -f $$p $$f"; \
+	  rm -f $$p $$f ; \
+	done
+	@list='$(noinst_PROGRAMS)'; for p in $$list; do \
+	  f=`echo $$p|sed 's/$(EXEEXT)$$//'`; \
+	  echo " rm -f $$p $$f"; \
+	  rm -f $$p $$f ; \
+	done
+	@test -z "$(lib_LTLIBRARIES)" || echo rm -f $(lib_LTLIBRARIES) && rm -f $(lib_LTLIBRARIES)
+	@list='$(lib_LTLIBRARIES)'; for p in $$list; do \
+	  dir="`echo $$p | sed -e 's|/[^/]*$$||'`"; \
+	  test -z "$dir" && dir=.; \
+	  echo "rm -f \"$${dir}/so_locations\""; \
+	  rm -f "$${dir}/so_locations"; \
+	done
+	@test -z "$(noinst_LTLIBRARIES)" || echo rm -f $(noinst_LTLIBRARIES) && rm -f $(noinst_LTLIBRARIES)
+	@list='$(noinst_LTLIBRARIES)'; for p in $$list; do \
+	  dir="`echo $$p | sed -e 's|/[^/]*$$||'`"; \
+	  test -z "$dir" && dir=.; \
+	  echo "rm -f \"$${dir}/so_locations\""; \
+	  rm -f "$${dir}/so_locations"; \
+	done
+
+prodclean-recursive:
+	@list='$(SUBDIRS)'; for subdir in $$list; do \
+	  test "$$subdir" = . || (cd $$subdir && $(MAKE) $(AM_MAKEFLAGS) prodclean); \
 	done
