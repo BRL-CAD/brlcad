@@ -40,53 +40,31 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "common.h"
 
-
-
+#ifdef HAVE_UNISTD_H
+#  include <unistd.h>
+#endif
+#include <stdlib.h>
 #include <stdio.h>
 #include <ctype.h>
 #include <signal.h>
 #include <errno.h>
 #include <math.h>
-
 #include <netdb.h>
-
 #ifdef HAVE_STRING_H
-# include <string.h>
+#  include <string.h>
 #else
-# include <strings.h>
+#  include <strings.h>
 #endif
-
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <time.h>
+#include <sys/time.h>		/* sometimes includes <time.h> */
 
 #ifndef FD_MOVE
-#define FD_MOVE(a, b) { register int _i; for (_i = 0; _i < FD_SETSIZE; _i++) \
+#  define FD_MOVE(a, b) { register int _i; for (_i = 0; _i < FD_SETSIZE; _i++) \
 	        if (FD_ISSET(_i, b)) FD_SET(_i, a); else FD_CLR(_i, a); }
-#endif
-
-/*
- *  The situation with sys/time.h and time.h is crazy.
- *  We need sys/time.h for struct timeval,
- *  and time.h for struct tm.
- *
- *  on BSD (and SGI 4D), sys/time.h includes time.h,
- *  on the XMP (UNICOS 3 & 4), time.h includes sys/time.h,
- *  on the Cray-2, there is no automatic including.
- *
- *  Note that on many SYSV machines, the Cakefile has to set BSD
- */
-#if BSD && !SYSV
-#  include <time.h>
-#  include <sys/time.h>		/* sometimes includes <time.h> */
-#else
-#  if CRAY1 && !__STDC__
-#	include <time.h>	/* includes <sys/time.h> */
-#  else
-#	include <sys/time.h>
-#	include <time.h>
-#  endif
 #endif
 
 #include "machine.h"
@@ -97,14 +75,16 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "fb.h"
 #include "pkg.h"
 #include "rtprivate.h"
-#include "../librt/debug.h"
 
+#include "../librt/debug.h"
 #include "./protocol.h"
 #include "./ihost.h"
 
+
 #ifndef HAVE_VFORK
-# define vfork	fork
+#  define vfork	fork
 #endif
+
 
 /* Needed to satisfy the reference created by including ../rt/opt.o */
 struct command_tab rt_cmdtab[] = {
@@ -838,13 +818,13 @@ addclient(struct pkg_conn *pc)
 	register struct frame	*fr;
 	struct ihost	*ihp;
 	int		on = 1;
-	auto int	fromlen;
+	auto socklen_t	fromlen;
 	struct sockaddr_in from;
 	int fd;
 
 	fd = pc->pkc_fd;
 
-	fromlen = sizeof (from);
+	fromlen = (socklen_t) sizeof (from);
 
 	if (getpeername(fd, (struct sockaddr *)&from, &fromlen) < 0) {
 		perror("getpeername");
@@ -2401,7 +2381,7 @@ ph_pixels(register struct pkg_conn *pc, char *buf)
 
 	/* If display attached, also draw it */
 	if( fbp != FBIO_NULL )  {
-		write_fb( buf + ext.ext_nbytes, fr,
+		write_fb( (unsigned char *)buf + ext.ext_nbytes, fr,
 			info.li_startpix, info.li_endpix+1 );
 	}
 
