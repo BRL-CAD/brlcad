@@ -72,19 +72,20 @@ static const char RCSid[] = "$Header$";
 #include "common.h"
 
 #ifdef HAVE_UNISTD_H
-# include <unistd.h>
+#  include <unistd.h>
 #endif
-                                                                                                                                                                            
 #include <stdio.h>
 #include <ctype.h>
 #include <math.h>
+
 #include "machine.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "msr.h"
 
-int width=512;		/* width of pixture */
-int height=512;		/* height of pixture */
+
+long int width=512;		/* width of pixture */
+long int height=512;		/* height of pixture */
 double Beta=0.0;	/* Beta for sharpening */
 
 #define	M_FLOYD	0
@@ -150,13 +151,13 @@ setup(int argc, char **argv)
 	while ((c = getopt(argc, argv, "D:hsa:n:w:B:M:RSI:T:")) != EOF) {
 		switch(c) {
 		case 's':
-			width = height = atoi(optarg);
+			width = height = atol(optarg);
 		break;
 		case 'n':
-			height = atoi(optarg);
+			height = atol(optarg);
 		break;
 		case 'w':
-			width = atoi(optarg);
+			width = atol(optarg);
 		break;
 		case 'h':
 			width = height = 1024;
@@ -248,7 +249,7 @@ setup(int argc, char **argv)
 			exit(1);
 		}
 		if (autosize) {
-			if ( !bn_common_file_size(&width, &height, argv[optind], 1)) {
+			if ( !bn_common_file_size((unsigned long int *)&width, (unsigned long int *)&height, argv[optind], 1)) {
 				(void) fprintf(stderr,"halftone: unable to autosize.\n");
 			}
 		}
