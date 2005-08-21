@@ -46,10 +46,14 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 
 #include <stdio.h>
 #include <math.h>
-
-#ifdef HAVE_UNIX_IO
-# include <sys/types.h>
-# include <sys/stat.h>
+#ifdef HAVE_STRING_H
+#  include <string.h>
+#endif
+#ifdef HAVE_SYS_TYPES_H
+#  include <sys/types.h>
+#endif
+#ifdef HAVE_SYS_STAT_H
+#  include <sys/stat.h>
 #endif
 
 #include "machine.h"
@@ -61,10 +65,12 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #include "spectrum.h"
 #include "shadefuncs.h"
 #include "shadework.h"
-#include "../rt/ext.h"
 #include "rtprivate.h"
-#include "../rt/light.h"
 #include "plot3.h"
+
+#include "../rt/ext.h"
+#include "../rt/light.h"
+
 
 extern int viewshade(struct application *ap, 
 		     register const struct partition *pp,
@@ -422,7 +428,7 @@ hit_nothing(register struct application *ap)
 			struct shadework sw;
 		} u;
 
-		memset((char *)&u, 0, sizeof(u) );
+		memset((void *)&u, 0, sizeof(u) );
 
 		/* Make "miss" hit the environment map */
 		/* Build up the fakery */
@@ -595,7 +601,7 @@ colorview(register struct application *ap, struct partition *PartHeadp, struct s
 
 	if( !ap->a_spectrum )  curve_attach(ap);
 /* XXX This is the right way to do this, but isn't quite ready yet. */
-	memset( (char *)&sw, 0, sizeof(sw) );
+	memset( (void *)&sw, 0, sizeof(sw) );
 	sw.sw_transmit = sw.sw_reflect = 0.0;
 	sw.sw_refrac_index = 1.0;
 	sw.sw_extinction = 0;
