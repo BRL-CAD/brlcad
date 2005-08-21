@@ -2,14 +2,26 @@
 
 lib_LTLIBRARIES = libdm.la
 
+if WITH_OPENGL
+OGL_SRCS = dm-ogl.c
+else
+OGL_SRCS =
+endif
+
+if WITH_X11
+X11_SRCS = dm-X.c
+else
+X11_SRCS =
+endif
+
 SRCS = \
 	axes.c \
 	clip.c \
 	color.c \
+	$(OGL_SRCS) \
+	$(X11_SRCS) \
 	dm-Null.c \
-	dm-X.c \
 	dm-generic.c \
-	dm-ogl.c \
 	dm-plot.c \
 	dm-ps.c \
 	dm_obj.c \

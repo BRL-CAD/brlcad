@@ -57,6 +57,11 @@ kitchensink_dirs = \
 	vas4 \
 	vdeck
 
+if BUILD_ADRT
+adrt_dir = adrt
+else
+adrt_dir =
+endif
 
 #######################
 # put it all together #
@@ -68,12 +73,14 @@ if ONLY_RTS
 SUBDIRS = \
 	$(required_dirs) \
 	$(bench_dirs) \
-	$(rts_dirs)
+	$(rts_dirs) \
+	$(adrt_dir)
 
 else !ONLY_RTS
 SUBDIRS = \
 	$(required_dirs) \
-	$(bench_dirs)
+	$(bench_dirs) \
+	$(adrt_dir)
 
 endif
 # end ONLY_RTS
@@ -83,14 +90,16 @@ else !ONLY_BENCHMARK
 if ONLY_RTS
 SUBDIRS = \
 	$(required_dirs) \
-	$(rts_dirs)
+	$(rts_dirs) \
+	$(adrt_dir)
 
 else !ONLY_RTS
 SUBDIRS = \
 	$(required_dirs) \
 	$(bench_dirs) \
 	$(rts_dirs) \
-	$(kitchensink_dirs)
+	$(kitchensink_dirs) \
+	$(adrt_dir)
 
 endif
 # end ONLY_RTS
@@ -100,8 +109,7 @@ endif
 
 DIST_SUBDIRS= \
 	$(SUBDIRS) \
-	canon \
-        adrt
+	canon
 
 MAINTAINERCLEANFILES = \
 	Makefile.in

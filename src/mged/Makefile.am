@@ -2,6 +2,18 @@
 
 SUBDIRS = dm_old
 
+if WITH_OPENGL
+OGL_SRCS = dm-ogl.c
+else
+OGL_SRCS =
+endif
+
+if WITH_X11
+X11_SRCS = dm-X.c
+else
+X11_SRCS =
+endif
+
 bin_PROGRAMS = \
 	cad_boundp \
 	cad_parea \
@@ -54,9 +66,9 @@ mged_SOURCES = \
 	columns.c \
 	concat.c \
 	dir.c \
-	dm-X.c \
+	$(OGL_SRCS) \
+	$(X11_SRCS) \
 	dm-generic.c \
-	dm-ogl.c \
 	dm-plot.c \
 	dm-ps.c \
 	dodraw.c \

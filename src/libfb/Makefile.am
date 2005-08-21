@@ -2,7 +2,23 @@
 
 lib_LTLIBRARIES = libfb.la
 
-AM_CFLAGS = ${X_CFLAGS} -DIF_REMOTE -DIF_AB -DIF_X -DIF_OGL
+if WITH_OPENGL
+OGL_CFLAGS = -DIF_OGL
+OGL_SRCS = if_ogl.c
+else
+OGL_CFLAGS =
+OGL_SRCS =
+endif
+
+if WITH_X11
+X11_CFLAGS = -DIF_X
+X11_SRCS = if_X.c if_X24.c
+else
+X11_CFLAGS =
+X11_SRCS =
+endif
+
+AM_CFLAGS = ${X_CFLAGS} -DIF_REMOTE -DIF_AB $(X11_FLAGS) $(OGL_FLAGS)
 
 SRCS = \
 	fb_generic.c \
@@ -13,14 +29,13 @@ SRCS = \
 	fb_util.c \
 	fbserv_obj.c \
 	getput.c \
-	if_X.c \
-	if_X24.c \
+	$(OGL_SRCS) \
+	$(X11_SRCS) \
 	if_ab.c \
 	if_debug.c \
 	if_disk.c \
 	if_mem.c \
 	if_null.c \
-	if_ogl.c \
 	if_remote.c \
 	if_stack.c \
 	server.c \
