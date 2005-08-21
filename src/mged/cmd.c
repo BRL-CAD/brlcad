@@ -53,6 +53,9 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #  include <sys/time.h>
 #endif
 #include <time.h>
+#ifdef HAVE_UNISTD_H
+#  include <unistd.h>
+#endif
 
 #ifdef DM_X
 #  include "tk.h"

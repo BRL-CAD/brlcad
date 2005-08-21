@@ -41,24 +41,28 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "common.h"
 
-
-
 #include <stdio.h>
 #include <signal.h>
 #ifdef HAVE_STRING_H
-#include <string.h>
+#  include <string.h>
 #else
-#include <strings.h>
+#  include <strings.h>
 #endif
+#ifdef HAVE_UNISTD_H
+#  include <unistd.h>
+#endif
+
 #include "machine.h"
 #include "vmath.h"
 #include "nmg.h"
 #include "raytrace.h"
 #include "nurb.h"
 #include "rtgeom.h"
+
 #include "./ged.h"
 #include "./sedit.h"
 #include "./mged_dm.h"
+
 
 #define LINELEN		256	/* max length of input line */
 #define	DEFEDITOR	"/bin/ed"

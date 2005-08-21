@@ -38,19 +38,23 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "common.h"
 
-
-
 #include <math.h>
 #include <stdio.h>
+#ifdef HAVE_UNISTD_H
+#  include <unistd.h>
+#endif
+
 #include "machine.h"
 #include "bu.h"
 #include "vmath.h"
 #include "mater.h"
 #include "raytrace.h"
-#include "./ged.h"
 #include "plot3.h"
+
+#include "./ged.h"
 #include "./mged_solid.h"
 #include "./mged_dm.h"
+
 
 /*
  *  			F _ P L O T
