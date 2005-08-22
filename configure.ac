@@ -107,6 +107,19 @@ echo "***${separator}***"
 # necessary for proper file creation on nfs volumes
 umask 022
 
+
+# override the default autoconf cflags if user has not modified them
+if test "x$CFLAGS" = "x" ; then
+	# an unset CFLAGS var is set to "-O2 -g" during AC_PROG_CC, so
+	# set it to something benign instead like whitespace
+	CFLAGS=" "
+fi
+
+# cannot override LD directly, so warn about that (configure sets it)
+if test "x$LD" != "x" ; then
+	AC_MSG_WARN([LD cannot be set directly yet it seems to be set ($LD)])
+fi
+
 # classify this machine
 AC_CANONICAL_HOST
 AC_CANONICAL_TARGET
@@ -539,10 +552,11 @@ BC_ARG_WITH_ALIAS([with_python], [py])
 AC_MSG_CHECKING(whether to compile the Python interface to ADRT)
 AC_MSG_RESULT($bc_with_python)
 
-# !!! needs to go bye bye
-AC_DEFINE(DM_X,1,[Display for X])
-AC_DEFINE(DM_OGL,1,[yeah, GL])
 
+###
+# argument sanity checks
+# here go checks to warn or abort when conflicting options specified
+###
 
 # make sure multiple "only" options were not given
 if test "x$bc_only_benchmark" != "xno" ; then
@@ -563,18 +577,6 @@ if test "x$bc_with_opengl" = "xyes" ; then
 		AC_MSG_WARN([The X11 interface will not be built])
 		AC_MSG_NOTICE([{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{])
 	fi
-fi
-
-# override the default autoconf cflags if user has not modified them
-if test "x$CFLAGS" = "x" ; then
-	# an unset CFLAGS var is set to "-O2 -g" during AC_PROG_CC, so
-	# set it to something benign instead like whitespace
-	CFLAGS=" "
-fi
-
-# cannot override LD directly, so warn about that (configure sets it)
-if test "x$LD" != "x" ; then
-	AC_MSG_WARN([LD cannot be set directly yet it seems to be set ($LD)])
 fi
 
 
@@ -684,17 +686,42 @@ fi
 
 AC_DEFINE(EXTERN_STDOUT,,[Stdout is extern])
 
-if test "x$bc_use_doxygen" = "xyes" ; then
+if test "x$bc_use_doxygen" != "xno" ; then
 	AC_PATH_PROG(DOXYGEN, doxygen, , $PATH)
 	if test "x$DOXYGEN" = "x" ; then
-		BC_RETRY_CONFIGURE([$0])
-		AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
-		AC_MSG_ERROR([*** Unable to find doxygen ***])
+		AC_MSG_RESULT([no])
+		if test "x$bc_use_doxygen" = "xyes" ; then
+			BC_RETRY_CONFIGURE([$0])
+			AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
+			AC_MSG_ERROR([*** Unable to find doxygen ***])
+		fi
 	fi
 fi
-AC_MSG_CHECKING(whether to enable doxygen)
-AC_MSG_RESULT($bc_use_doxygen)
 
+SDL_CONFIG=""
+if test "x$bc_use_sdl" != "xno" ; then
+	AC_PATH_PROG(SDL_CONFIG, sdl-config, , $PATH)
+	if test "x$SDL_CONFIG" = "x" ; then
+		if test "x$bc_use_sdl" = "xyes" ; then
+			# BC_RETRY_CONFIGURE([$0])
+			AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
+			AC_MSG_WARN([Unable to find sdl-config])
+		fi
+	fi
+fi
+
+PYTHON=""
+if test "x$bc_use_python" != "xno" ; then
+	AC_PATH_PROG(PYTHON, python, , $PATH)
+	if test "x$PYTHON" = "x" ; then
+		if test "x$bc_use_sdl" = "xyes" ; then
+			# BC_RETRY_CONFIGURE([$0])
+			AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
+			AC_MSG_WARN([Unable to find a python interpreter])
+		fi
+	fi
+fi
+		
 
 dnl ***************************
 dnl *** Check for libraries ***
@@ -2362,6 +2389,12 @@ AM_CONDITIONAL(ONLY_RTS, [test "x$bc_only_rts" != "xno"])
 
 # XXX only irix can build libtkglx right now?
 AM_CONDITIONAL(BUILD_LIBTKGLX, [test "x$host_os" = "xirix6.5"])
+
+
+# !!! needs to go bye bye
+AC_DEFINE(DM_X,1,[Display for X])
+AC_DEFINE(DM_OGL,1,[yeah, GL])
+
 
 dnl Any combination of the different optimizations listed below may individually be 
 dnl optionally turned off by commenting out the unwanted defines in the config file.
