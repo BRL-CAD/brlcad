@@ -108,7 +108,11 @@ endif
 # end ONLY_BENCHMARK
 
 DIST_SUBDIRS= \
-	$(SUBDIRS) \
+	$(required_dirs) \
+	$(bench_dirs) \
+	$(rts_dirs) \
+	$(kitchensink_dirs) \
+	adrt \
 	canon
 
 MAINTAINERCLEANFILES = \
