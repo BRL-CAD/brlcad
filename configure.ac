@@ -301,7 +301,7 @@ BC_ARG_ENABLE([use_optimized], [optimized], [Enable optimized compilation], [no]
 BC_ARG_ENABLE([use_warnings], [warnings], [Enable verbose compilation warnings], [no])
 
 # debug
-BC_ARG_ENABLE([use_debug], [debug], [Enable debug symbols], [yes])
+BC_ARG_ENABLE([use_debug], [debug], [Enable debug symbols], [auto])
 
 # profiling
 BC_ARG_ENABLE([use_profiling], [profiling], [Enable profiling], [no])
@@ -1314,30 +1314,6 @@ if test "x$bc_build_64bit" = "xyes" ; then
 	fi
 fi
 
-dnl debug flags
-if test "x$bc_use_debug" != "xno" ; then
-	g_flag="-g"
-	AC_MSG_CHECKING([if the compiler understands $g_flag])
-	g_flag_works=yes
-	PRECFLAGS="$CFLAGS"
-	PRELDFLAGS="$LDFLAGS"
-	CFLAGS="$CFLAGS $g_flag"
-	LDFLAGS="$LDFLAGS $g_flag"
-	AC_TRY_COMPILE( [], [], [], [g_flag_works=no])
-	AC_MSG_RESULT($g_flag_works)
-	if test "x$g_flag_works" = "xno" ; then
-		if test "x$bc_use_debug" = "xyes" ; then
-			dnl debug was requested, so abort
-			AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
-			AC_MSG_NOTICE([Debug was enabled but -g does not work])
-			AC_MSG_ERROR([*** Don't know how to debug with this compiler ***])
-		fi			
-		AC_MSG_WARN([Do not know how to debug with this compiler])
-		CFLAGS="$PRECFLAGS"
-		LDFLAGS="$PRELDFLAGS"
-	fi
-fi
-
 dnl profile flags
 if test "x$bc_use_profiling" != "xno" ; then
 	pg_flag="-pg"
@@ -1357,6 +1333,30 @@ if test "x$bc_use_profiling" != "xno" ; then
 			AC_MSG_ERROR([*** Don't know how to profile with this compiler ***])
 		fi			
 		AC_MSG_WARN([Don't know how to profile with this compiler])
+		CFLAGS="$PRECFLAGS"
+		LDFLAGS="$PRELDFLAGS"
+	fi
+fi
+
+dnl debug flags
+if test "x$bc_use_debug" != "xno" ; then
+	g_flag="-g"
+	AC_MSG_CHECKING([if the compiler understands $g_flag])
+	g_flag_works=yes
+	PRECFLAGS="$CFLAGS"
+	PRELDFLAGS="$LDFLAGS"
+	CFLAGS="$CFLAGS $g_flag"
+	LDFLAGS="$LDFLAGS $g_flag"
+	AC_TRY_COMPILE( [], [], [], [g_flag_works=no])
+	AC_MSG_RESULT($g_flag_works)
+	if test "x$g_flag_works" = "xno" ; then
+		if test "x$bc_use_debug" = "xyes" ; then
+			dnl debug was requested, so abort
+			AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
+			AC_MSG_NOTICE([Debug was enabled but -g does not work])
+			AC_MSG_ERROR([*** Don't know how to debug with this compiler ***])
+		fi			
+		AC_MSG_WARN([Do not know how to debug with this compiler])
 		CFLAGS="$PRECFLAGS"
 		LDFLAGS="$PRELDFLAGS"
 	fi
