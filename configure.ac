@@ -341,7 +341,7 @@ BC_ARG_WITH([with_opengl], [opengl], [Specify use of or path to OpenGL], [auto])
 BC_ARG_WITH([with_sdl], [sdl], [Specify use of or path to SDL], [auto])
 
 # use python
-BC_ARG_WITH([with_phyton], [python], [Specify use of or path to python], [auto])
+BC_ARG_WITH([with_python], [python], [Specify use of or path to python], [auto])
 
 
 ###
@@ -763,14 +763,14 @@ AC_CHECK_LIB(termlib, tputs, LIBTERMLIB="-ltermlib",
 )
 
 dnl check if X11 library link works
-x11_link_works=no
-AC_CHECK_LIB(X11, XCreateWindow, x11_link_works=yes)
+LIBX11=""
+AC_CHECK_LIB(X11, XCreateWindow, LIBX11="-lX11")
 
-xext_link_works=no
-AC_CHECK_LIB(Xext, XShapeCombineMask, xext_link_works=yes)
+LIBXEXT=""
+AC_CHECK_LIB(Xext, XShapeCombineMask, LIBEXT="-lXext")
 
-xi_link_works=no
-AC_CHECK_LIB(Xi, XGetExtensionVersion, xi_link_works=yes)
+LIBXI=""
+AC_CHECK_LIB(Xi, XGetExtensionVersion, LIBXI="-lXi")
 
 ice_link_works=no
 AC_CHECK_LIB(ICE, IceOpenConnection, ice_link_works=yes)
@@ -1386,6 +1386,9 @@ if test "x$bc_use_debug" != "xno" ; then
 		AC_MSG_WARN([Do not know how to debug with this compiler])
 		CFLAGS="$PRECFLAGS"
 		LDFLAGS="$PRELDFLAGS"
+	else
+		# convert 'auto' to 'yes'
+		bc_use_debug="yes"
 	fi
 fi
 
@@ -1584,31 +1587,6 @@ dnl *********************************
 
 AC_MSG_CHECKING([... s e r v i c e s ])
 AC_MSG_RESULT([(8 of 9)])
-
-dnl *** SDL ***
-AC_PATH_PROG(SDL_CONFIG_PROG, sdl-config)
-if test "x$SDL_CONFIG_PROG" != "x" ; then
-	AM_PATH_SDL(1.2.0,,AC_MSG_ERROR([Cannot find SDL.]))
-fi
-AC_SUBST(SDL_CFLAGS)
-AC_SUBST(SDL_LIBS)
-
-
-dnl *** java ***
-if test "x$bc_only_rts" != "xno" ; then
-	AC_MSG_CHECKING(if java seems to be available)
-	if test "x$bc_with_java" = "xno" ; then
-		AC_MSG_RESULT(no)
-		BC_RETRY_CONFIGURE([$0])
-		AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
-		AC_MSG_NOTICE([Try adding --with-jdk=/path/to/jdk to find jni.h])
-		AC_MSG_ERROR([*** Cannot locate jni.h for building librtserver ***])
-	else 
-		AC_MSG_NOTICE([$bc_with_java ($bc_with_java_val)])
-	fi
-	AC_MSG_RESULT(yes)
-fi
-
 
 dnl *** libpng ***
 png_works=no
@@ -2234,15 +2212,6 @@ fi
 AC_SUBST(TERMLIB)
 
 
-# XXX ugly hack that needs to die
-X_PREFIX=/usr/X11R6
-AC_SUBST(X_CFLAGS)
-X_CFLAGS="-I${X_PREFIX}/include"
-AC_SUBST(X_LIBS)
-X_LIBS="-L${X_PREFIX}/lib -lX11 -lXi"
-AC_SUBST(X_PREFIX)
-
-
 dnl *** libgl ***
 AC_MSG_CHECKING(whether to link with the OpenGL library)
 AC_MSG_RESULT($gl_link_works)
@@ -2321,17 +2290,151 @@ else
 	fi
 fi
 
+
+dnl *** Java interface compilation ***
+build_against_java=no
+AC_MSG_CHECKING(for Java functionality)
+if test "x$bc_only_rts" != "xno" ; then
+	if test "x$bc_with_java" = "xno" ; then
+		AC_MSG_RESULT(no)
+		BC_RETRY_CONFIGURE([$0])
+		AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
+		AC_MSG_NOTICE([Try adding --with-jdk=/path/to/jdk to find jni.h])
+		AC_MSG_ERROR([*** Cannot locate jni.h for building librtserver ***])
+	fi
+	AC_MSG_RESULT(yes)
+	build_against_java=yes
+fi
+AC_MSG_NOTICE([$bc_with_java ($bc_with_java_val)])
+
+
+dnl *** OpenGL interface compilation ***
+opengl_works=no
+AC_MSG_CHECKING(for OpenGL functionality)
+PRELDFLAGS="$LDFLAGS"
+LDFLAGS="$LDFLAGS $LIBGL"
+AC_TRY_RUN([
+#ifdef HAVE_GL_GL_H
+#  include <GL/gl.h>
+#endif
+main() {
+       return GL_FALSE;
+}
+	],
+	[opengl_works=yes]
+)
+LDFLAGS="$PRELDFLAGS"
+AC_MSG_RESULT($opengl_works)
+
+dnl figure out whether we need to build against opengl
+build_against_opengl="no"
+if test "x$bc_with_opengl" != "xno" ; then
+	if test "x$opengl_works" = "xyes" ; then
+		build_against_opengl="yes"
+	else
+		if test "x$bc_with_opengl" = "xyes" ; then
+			BC_RETRY_CONFIGURE([$0])
+			AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
+			AC_MSG_NOTICE([Try adding --without-opengl])
+			AC_MSG_ERROR([*** Using OpenGL was requested, yet no system OpenGL was found ***])
+		else
+			AC_MSG_NOTICE([OpenGL does not appear to be functionally available])
+		fi
+	fi
+fi
+AC_MSG_CHECKING(whether to build against OpenGL)
+AC_MSG_RESULT($build_against_opengl)
+
+
+dnl *** X11 interface compilation ***
+# XXX ugly hack that needs to die
+X_PREFIX=/usr/X11R6
+AC_SUBST(X_PREFIX)
+X_CFLAGS="-I${X_PREFIX}/include"
+AC_SUBST(X_CFLAGS)
+X_LIBS="-L${X_PREFIX}/lib $LIBX11 $LIBXI"
+AC_SUBST(X_LIBS)
+
+x11_works=no
+AC_MSG_CHECKING(for X11 functionality)
+PRELDFLAGS="$LDFLAGS"
+LDFLAGS="$LDFLAGS $LIBX11"
+AC_TRY_RUN([
+#ifdef HAVE_X11_XLIB_H
+#  include <X11/Xlib.h>
+#endif
+main() {
+       XPoint pt;
+       pt.x = pt.y = 0;
+       return pt.x;
+}
+	],
+	[x11_works=yes]
+)
+LDFLAGS="$PRELDFLAGS"
+AC_MSG_RESULT($x11_works)
+
+dnl figure out whether we need to build against X11
+build_against_x11="no"
+if test "x$bc_with_x11" != "xno" ; then
+	if test "x$x11_works" = "xyes" ; then
+		build_against_x11="yes"
+	else
+		if test "x$bc_with_x11" = "xyes" ; then
+			BC_RETRY_CONFIGURE([$0])
+			AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
+			AC_MSG_NOTICE([Try adding --without-x11])
+			AC_MSG_ERROR([*** Using X11 was requested, yet no system X11 was found ***])
+		else
+			AC_MSG_NOTICE([X11 does not appear to be functionally available])
+		fi
+	fi
+fi
+AC_MSG_CHECKING(whether to build against X11)
+AC_MSG_RESULT($build_against_x11)
+
+
+dnl *** SDL availability  ***
+sdl_works="no"
+if test "x$bc_use_sdl" != "xno" ; then
+	if test "x$SDL_CONFIG" != "x" ; then
+		AM_PATH_SDL(1.2.0,,AC_MSG_ERROR([Cannot find SDL.]))
+		AC_SUBST(SDL_CFLAGS)
+		AC_SUBST(SDL_LIBS)
+		sdl_works="yes"
+	fi
+fi
+AC_MSG_CHECKING(for SDL functionality)
+AC_MSG_RESULT($sdl_works)
+
+
+dnl *** Python availability ***
+python_works="no"
+AC_MSG_CHECKING(for Python functionality)
+if test "x$bc_use_python" != "xno" ; then
+	if test "x$PYTHON" != "x" ; then
+		python_works="yes"
+	fi
+fi
+AC_MSG_RESULT($python_works)
+
+
 dnl *** ADRT compilation ***
 dnl figure out whether we have everything we need to build ADRT
+dnl requires sdl and python
 build_brlcad_adrt="no"
-if test "x$bc_with_python" = "xyes" ; then
-	if test "x$bc_with_sdl" = "xyes" ; then
+if test "x$python_works" = "xyes" ; then
+	if test "x$sdl_works" = "xyes" ; then
 		build_brlcad_adrt="yes"
 	else
 		build_brlcad_adrt="no (need sdl)"
 	fi   
 else
-	build_brlcad_adrt="no (need python)"
+	if test "x$sdl_works" = "xyes" ; then
+		build_brlcad_adrt="no (need python)"
+	else
+		build_brlcad_adrt="no (need python and sdl)"
+	fi
 fi
 
 
@@ -2378,11 +2481,9 @@ AM_CONDITIONAL(BUILD_PROE, [test "x$bc_build_proe" = "xyes"])
 AM_CONDITIONAL(BUILD_ADRT, [test "x$bc_build_adrt" = "xyes"])
 AM_CONDITIONAL(INSTALL_MODELS, [test "x$bc_install_geometry" = "xyes"])
 
-AM_CONDITIONAL(WITH_JAVA, [test "x$bc_with_java" != "xno"])
-AM_CONDITIONAL(WITH_X11, [test "x$bc_with_x11" != "xno"])
-AM_CONDITIONAL(WITH_OPENGL, [test "x$bc_with_opengl" != "xno"])
-AM_CONDITIONAL(WITH_SDL, [test "x$bc_with_sdl" != "xno"])
-AM_CONDITIONAL(WITH_PYTHON, [test "x$bc_with_python" != "xno"])
+AM_CONDITIONAL(WITH_JAVA, [test "x$build_against_java" != "xno"])
+AM_CONDITIONAL(WITH_X11, [test "x$build_against_x11" != "xno"])
+AM_CONDITIONAL(WITH_OPENGL, [test "x$build_against_opengl" != "xno"])
 
 AM_CONDITIONAL(ONLY_BENCHMARK, [test "x$bc_only_benchmark" != "xno"])
 AM_CONDITIONAL(ONLY_RTS, [test "x$bc_only_rts" != "xno"])
@@ -2805,9 +2906,9 @@ echo Build Utah Raster Toolkit.............: $build_brlcad_urt
 echo Build jove ...........................: $bc_build_jove
 echo 
 echo ADRT support .........................: $build_brlcad_adrt
-echo Java Developer Kit support ...........: $bc_with_java
-echo X11 support ..........................: $bc_with_x11
-echo OpenGL support .......................: $bc_with_opengl
+echo Java Developer Kit support ...........: $build_against_java
+echo X11 support ..........................: $build_against_x11
+echo OpenGL support .......................: $build_against_opengl
 echo Enable run-time debugging ............: $bc_build_runtime_debug
 echo
 echo Build 64-bit release .................: $build_brlcad_64bit
