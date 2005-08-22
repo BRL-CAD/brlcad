@@ -29,7 +29,11 @@ For weight computation, the density of every region must be specified.
 Densities are specified as an index in a table of density values.
 This index is stored in the 
 .I GIFTmater 
-attribute of each region.
+attribute of each region (typically set with the
+.I edcodes
+or
+.I adjust
+commands in MGED).
 .P
 The density table consists of three columns: 
 .IP
@@ -93,8 +97,9 @@ mged>
 If weight calculation is selected, for each 
 .I object
 specified on the command line, volume and weight is calculated and reported.
+  Note that if there are overlaps in the geometry the values reported will be invalid.
 .SH OVERLAP REPORTING
-For each pair of objects that overlap, the tool reports the two regions that overlap, the maximum line-of-sight thickness of the overlap, and the in-hit location of the ray that caused that maximum overlap thickness.
+For each pair of regions that overlap, the tool reports the two regions that overlap, the maximum line-of-sight thickness of the overlap, and the in-hit location of the ray that caused that maximum overlap thickness.  
 .SH OPTIONS
 .TP
 .B \-A \fR\fIanalysis_flags\fR
@@ -108,36 +113,36 @@ parameter is one or more of the following:
 .br
 A		all
 .br
-a		adjacent different air
+a		Adjacent different air
 .br
-b		bounding box dimensions
+b		Bounding box dimensions
 .br
-e		exposed air
+e		Exposed air
 .br
-g		gaps/voids
+g		Gaps/voids
 .br
-o		overlaps
+o		Overlaps
 .br
-v		volume
+v		Volume
 .br
-w		weight
+w		Weight
 .sp
 .in -5
 Only those reports requested will be provided.  The default is 
-.B -A A
+.B -AA
 to produce all reports.
 
-.B Adjacent different air:
+.B Adjacent different air (a):
 Detects air volumes which are next to each other but have different air_code values applied to the region.  
 This would typically indicate that the regions are different types of air, 
 such as crew_air (which fills the crew compartment of a vehicle) and engine_air (which surrounds the engine).
 When these different types of air adjoin each other, it is generally considered a modeling error.
 
-.B Bounding box dimensions:
+.B Bounding box dimensions (b):
 Reports the dimensions of an axis-aligned box which fully encloses the 
 \fIobjects\fR.
 
-.B Exposed air:
+.B Exposed air (e):
 This causes checks to be made to see if the ray encounters air regions before 
 (or after all) solid objects.
 It also checks to see if the ray moves from a void to an air region.
@@ -147,7 +152,7 @@ that single structure/vehicle.
 There are exceptions, such as when modeling larger environments for more 
 extended analysis purposes.
 
-.B Gaps/voids:
+.B Gaps/voids (g):
 This reports when there is more than
 .I overlap_tol_dist
 (see the
@@ -158,7 +163,7 @@ For example, gaps between a wheel and a fender are expected (unless external air
 Typically, users should perform gap analysis on contained subsets of a model (such as passenger compartments)
 rather than on whole vehicles.
 
-.B Overlaps:
+.B Overlaps (o):
 are two regions which occupy the same space.  
 In the real world, two objects may not occupy the same space.  
 This check is sometimes also known as \fIinterference checking\fR.
@@ -172,13 +177,14 @@ be refined until the limit is reached, or an overlap is detected.
 See the 
 .B \-g 
 option below for details on setting the grid spacing.
+Once overlaps have been detected, grid refinement is not done, and processing stops.
 
-.B Volume:
+.B Volume (v):
 Computes the volume of the 
 .I objects
 specified on the command line.
 
-.B Weight:
+.B Weight (w):
 Computes the weight of the 
 .I objects
 specified on the command line.
@@ -205,11 +211,11 @@ Specifies that density values should be taken from an external file instead of f
 object in the database.
 This option can be useful when developing the density table with a text editor, prior to importing it to the geometric database.
 .TP
-.B \-g \fR\fIgrid_spacing[,lim]\fR
+.B \-g \fR\fIgrid_spacing[-lim]\fR
 Specifies the initial spacing between rays in the grids,
 and optionally a limit on how far the grid can be refined.
 The first value indicates the inital spacing between grid rays.  
-If the optional second argument, "\fI,lim\fR",
+If the optional second argument, "\fIlim\fR",
 is specified, it indicates a lower bound on how fine the gridspacing may get before computation is terminated.
 The grid spacing may be specified with units.  For example:
 .B 5 mm
@@ -267,7 +273,8 @@ should produce plot files for each of the analysis it performs.  These can be ov
 .I mged
 with the 
 .I overlay
-command to help visualize the analysis results.  Each of the different analysis types write to a separate plot file, and use different colors for drawing.
+command to help visualize the analysis results.
+Each of the different analysis types write to a separate plot file and use different colors for drawing.
 .TP
 .B \-P \fR\fIncpu\fR
 Specifies that
@@ -280,9 +287,6 @@ Note that specifying more CPUs than are present on the machine does not increase
 the number of computation threads.  
 .TP
 .B \-r
-.br
-.B Not implemented.
-.br
 Indicates that 
 .I g_qa
 should print per-region statistics for weight and volume as well as the values for the objects specified on the command line.
@@ -298,7 +302,7 @@ The default is to assure 1 rays per model grid axis.
 
 .TP
 .B \-U \fR\fIuse_air\fR
-Specifies the Boolean value 
+Specifies the Boolean value (0 or 1) for
 .I use_air
 which indicates whether regions which are marked as "air" should be retained and included in the raytrace.
 .B Unlike other BRL-CAD raytracing applications the default is to retain air in the raytracing.
@@ -367,44 +371,6 @@ g_qa -g5in,0.3mm -Avw -u ft,cc,oz test.g hull turret suspension
 For an example of each independent analysis type, consider the following:
 .IP
 .nf
-%\fB echo "5 7.68 stuff" > density_table.txt\fR
-%\fB mged -c geometry.g << EOF > /dev/null 2>&1
-units m
-dbbinary -i u c _DENSITIES density_table.txt
-
-in box1.s rpp 0 10 0 10 0 10
-in box2.s rpp 1  9 1  9 1  9
-in box3.s rpp 1 10 1  9 1  9
-in box4.s rpp 0.5  9.5 0.5  5 0.5  9.5
-
-r closed_box.r u box1.s - box2.s
-adjust closed_box.r GIFTmater 5
-mater closed_box.r "plastic tr=0.5 di=0.5 sp=0.5" 128 128 128 0
-
-r open_box.r u box1.s - box3.s
-mater open_box.r "plastic tr=0.5 di=0.5 sp=0.5" 128 128 128 0
-
-
-r exposed_air.r u box3.s
-adjust exposed_air.r air 2
-mater exposed_air.r  "plastic tr=0.8 di=0.1 sp=0.1" 255 255 128 0
-g exposed_air.g exposed_air.r open_box.r
-
-r adj_air1.r u box2.s + box4.s
-r adj_air2.r u box2.s - box4.s
-adjust adj_air1.r air 3
-adjust adj_air2.r air 4
-mater adj_air1.r  "plastic tr=0.5 di=0.1 sp=0.1" 255 128 128  0
-mater adj_air2.r  "plastic tr=0.5 di=0.1 sp=0.1" 128 128 255 0
-g adj_air.g closed_box.r adj_air1.r adj_air2.r
-
-g gap.g closed_box.r adj_air2.r
-
-r overlap_obj.r u box3.s
-g overlaps closed_box.r overlap_obj.r
-
-q
-EOF\fR
 
 % \fBg_qa -u m,m^3,kg -Ao geometry.g overlaps\fR
 Units:
@@ -412,7 +378,7 @@ Units:
 grid spacing 50mm  199 x 199 x 199
 Summary:
 list Overlaps:
-/overlaps/overlap_obj.r /overlaps/closed_box.r count:32039 dist:8m (9050 1000 1000)
+/overlaps/overlap_obj.r /overlaps/closed_box.r count:32039 dist:8m @ (9050 1000 1000)
 
 % \fBg_qa -u m,m^3,kg -Ae geometry.g exposed_air.g\fR
 Units:
@@ -420,7 +386,7 @@ Units:
 grid spacing 50mm  199 x 199 x 199
 Summary:
 list Exposed Air:
-/exposed_air.g/exposed_air.r count:25921 dist:9m (10000 1000 1000)
+/exposed_air.g/exposed_air.r count:25921 dist:9m @ (10000 1000 1000)
 
 % \fBg_qa -u m,m^3,kg -Ag geometry.g gap.g\fR
 Units:
@@ -428,8 +394,8 @@ Units:
 grid spacing 50mm  199 x 199 x 199
 Summary:
 list Gaps:
-/gap.g/closed_box.r /gap.g/closed_box.r count:26082 dist:8m (9000 1000 1000)
-/gap.g/adj_air2.r /gap.g/closed_box.r count:25921 dist:4m (1000 5000 1000)
+/gap.g/closed_box.r /gap.g/closed_box.r count:26082 dist:8m @ (9000 1000 1000)
+/gap.g/adj_air2.r /gap.g/closed_box.r count:25921 dist:4m @ (1000 5000 1000)
 
 % \fBg_qa -u m,m^3,kg -Av geometry.g closed_box.r\fR
 Units:
