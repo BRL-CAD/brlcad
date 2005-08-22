@@ -1332,7 +1332,13 @@ if test "x$bc_use_optimized" != "xno" ; then
 	fi
 
 	dnl check for a slew of gcc optimizations that may or may not be available with -O3
-	extra_optimization_flag="-ffast-math -fstrength-reduce -fexpensive-optimizations -fomit-frame-pointer -finline-functions"
+	extra_optimization_flag="-ffast-math -fstrength-reduce -fexpensive-optimizations -finline-functions"
+	if test "x$bc_use_debug" = "xno" ; then
+	   dnl non-debug can omit the frame pointer, debug cannot
+	   extra_optimization_flag="$extra_optimization_flag -fomit-frame-pointer"
+	else
+	   extra_optimization_flag="$extra_optimization_flag -fno-omit-frame-pointer"
+	fi
 	AC_MSG_CHECKING([if the compiler understands extra optimization flags])
 	extra_optimization_flag_works=yes
 	PRECFLAGS="$CFLAGS"
