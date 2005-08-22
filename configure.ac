@@ -1314,6 +1314,54 @@ if test "x$bc_build_64bit" = "xyes" ; then
 	fi
 fi
 
+dnl debug flags
+if test "x$bc_use_debug" != "xno" ; then
+	g_flag="-g"
+	AC_MSG_CHECKING([if the compiler understands $g_flag])
+	g_flag_works=yes
+	PRECFLAGS="$CFLAGS"
+	PRELDFLAGS="$LDFLAGS"
+	CFLAGS="$CFLAGS $g_flag"
+	LDFLAGS="$LDFLAGS $g_flag"
+	AC_TRY_COMPILE( [], [], [], [g_flag_works=no])
+	AC_MSG_RESULT($g_flag_works)
+	if test "x$g_flag_works" = "xno" ; then
+		if test "x$bc_use_debug" = "xyes" ; then
+			dnl debug was requested, so abort
+			AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
+			AC_MSG_NOTICE([Debug was enabled but -g does not work])
+			AC_MSG_ERROR([*** Don't know how to debug with this compiler ***])
+		fi			
+		AC_MSG_WARN([Do not know how to debug with this compiler])
+		CFLAGS="$PRECFLAGS"
+		LDFLAGS="$PRELDFLAGS"
+	fi
+fi
+
+dnl profile flags
+if test "x$bc_use_profiling" != "xno" ; then
+	pg_flag="-pg"
+	AC_MSG_CHECKING([if the compiler understands $pg_flag])
+	pg_flag_works=yes
+	PRECFLAGS="$CFLAGS"
+	PRELDFLAGS="$LDFLAGS"
+	CFLAGS="$CFLAGS $pg_flag"
+	LDFLAGS="$LDFLAGS $pg_flag"
+	AC_TRY_COMPILE( [], [], [], [pg_flag_works=no])
+	AC_MSG_RESULT($pg_flag_works)
+	if test "x$pg_flag_works" = "xno" ; then
+		if test "x$bc_use_profiling" = "xyes" ; then
+			dnl profiling was requested, so abort
+			AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
+			AC_MSG_NOTICE([Profiling was enabled but -pg does not work])
+			AC_MSG_ERROR([*** Don't know how to profile with this compiler ***])
+		fi			
+		AC_MSG_WARN([Don't know how to profile with this compiler])
+		CFLAGS="$PRECFLAGS"
+		LDFLAGS="$PRELDFLAGS"
+	fi
+fi
+
 dnl optimization flags
 if test "x$bc_use_optimized" != "xno" ; then
 	O3_flag="-O3"
@@ -1348,42 +1396,6 @@ if test "x$bc_use_optimized" != "xno" ; then
 	AC_TRY_COMPILE( [], [], [], [extra_optimization_flag_works=no])
 	AC_MSG_RESULT($extra_optimization_flag_works)
 	if test "x$extra_optimization_flag_works" = "xno" ; then
-		CFLAGS="$PRECFLAGS"
-		LDFLAGS="$PRELDFLAGS"
-	fi
-fi
-
-dnl debug flags
-if test "x$bc_use_debug" != "xno" ; then
-	g_flag="-g"
-	AC_MSG_CHECKING([if the compiler understands $g_flag])
-	g_flag_works=yes
-	PRECFLAGS="$CFLAGS"
-	PRELDFLAGS="$LDFLAGS"
-	CFLAGS="$CFLAGS $g_flag"
-	LDFLAGS="$LDFLAGS $g_flag"
-	AC_TRY_COMPILE( [], [], [], [g_flag_works=no])
-	AC_MSG_RESULT($g_flag_works)
-	if test "x$g_flag_works" = "xno" ; then
-		AC_MSG_WARN([Do not know how to debug with this compiler])
-		CFLAGS="$PRECFLAGS"
-		LDFLAGS="$PRELDFLAGS"
-	fi
-fi
-
-dnl profile flags
-if test "x$bc_use_profiling" != "xno" ; then
-	pg_flag="-pg"
-	AC_MSG_CHECKING([if the compiler understands $pg_flag])
-	pg_flag_works=yes
-	PRECFLAGS="$CFLAGS"
-	PRELDFLAGS="$LDFLAGS"
-	CFLAGS="$CFLAGS $pg_flag"
-	LDFLAGS="$LDFLAGS $pg_flag"
-	AC_TRY_COMPILE( [], [], [], [pg_flag_works=no])
-	AC_MSG_RESULT($pg_flag_works)
-	if test "x$pg_flag_works" = "xno" ; then
-		AC_MSG_WARN([Don't know how to profile with this compiler])
 		CFLAGS="$PRECFLAGS"
 		LDFLAGS="$PRELDFLAGS"
 	fi
