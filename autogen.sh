@@ -120,7 +120,7 @@ else
   fi
 fi
 
-_have_sed="`$ECHO no | sed 's/no/yes/'`"
+_have_sed="`echo no | sed 's/no/yes/' 2>/dev/null`"
 HAVE_SED=no
 if [ $? = 0 ] ; then
   [ "x$_have_sed" = "xyes" ] && HAVE_SED=yes
