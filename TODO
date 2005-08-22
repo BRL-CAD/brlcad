@@ -13,8 +13,6 @@ THESE SHOULD HAPPEN BEFORE THE NEXT RELEASE
 
 * make X11 optional at configure-time
 
-* make opengl optional via configure without editing files
-
 * make sure sgi knobs work
 
 
