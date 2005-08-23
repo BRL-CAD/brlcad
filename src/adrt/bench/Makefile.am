@@ -25,6 +25,9 @@ adrt_bench_LDADD = \
 #noinst_HEADERS = \
 #	dispatcher.h
 
+noinst_HEADERS = \
+	bench.h
+
 MAINTAINERCLEANFILES = Makefile.in
 
 include $(top_srcdir)/misc/Makefile.defs

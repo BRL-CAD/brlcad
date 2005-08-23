@@ -27,6 +27,7 @@ isst_master_LDADD = \
 	${LIBZ}
 
 noinst_HEADERS = \
+	compnet.h \
 	dispatcher.h \
 	isst_python.h \
 	master.h

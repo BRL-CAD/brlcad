@@ -63,7 +63,7 @@ dnl
 
 AC_PREREQ(2.52)
 
-AC_INIT(BRL-CAD, 7.5.0, [http://brlcad.org], brlcad)
+AC_INIT(BRL-CAD, 7.6.0, [http://brlcad.org], brlcad)
 AC_REVISION($Revision$)
 
 AC_CONFIG_AUX_DIR(misc)
@@ -71,7 +71,7 @@ AC_CONFIG_AUX_DIR(misc)
 
 dnl See HACKING for details on how to properly update the version
 MAJOR_VERSION=7
-MINOR_VERSION=5
+MINOR_VERSION=6
 PATCH_VERSION=0
 AC_SUBST(MAJOR_VERSION)
 AC_SUBST(MINOR_VERSION)
@@ -2478,7 +2478,7 @@ AM_CONDITIONAL(BUILD_URT, [test "x$build_brlcad_urt" = "xyes"])
 AM_CONDITIONAL(BUILD_TERMLIB, [test "x$build_brlcad_termlib" = "xyes"])
 AM_CONDITIONAL(BUILD_JOVE, [test "x$bc_build_jove" = "xyes"])
 AM_CONDITIONAL(BUILD_PROE, [test "x$bc_build_proe" = "xyes"])
-AM_CONDITIONAL(BUILD_ADRT, [test "x$build_brlcad_adrt" = "xyes"])
+AM_CONDITIONAL(BUILD_ADRT, [test "x$build_brlcad_adrt" = "xyes-not-now"])
 AM_CONDITIONAL(INSTALL_MODELS, [test "x$bc_install_geometry" = "xyes"])
 
 AM_CONDITIONAL(WITH_JAVA, [test "x$build_against_java" != "xno"])
