@@ -288,7 +288,6 @@ static void tie_build_tree(tie_t *tie, tie_kdtree_t *node, int depth, TIE_3 min,
   tie_geom_t	*child[2], *node_geom_data = (tie_geom_t*)(node->data);
   TIE_3		cmin[2], cmax[2], center, half_size, vec;
   int		i, j, n, split, cnt[2];
-  tfloat	n1cost, n2cost, a, b;
 
 /*  printf("%f %f %f %f %f %f\n", min.v[0], min.v[1], min.v[2], max.v[0], max.v[1], max.v[2]); */
 
@@ -301,23 +300,6 @@ static void tie_build_tree(tie_t *tie, tie_kdtree_t *node, int depth, TIE_3 min,
 /*    printf("num: %d, depth: %d\n", node_geom_data->tri_num, depth); */
 /*    if(node_geom_data->tri_num > tie->stat) */
 /*      tie->stat++; */
-    return;
-  }
-
-  /* If node area is to small with respect to scene node area then terminate */
-  a = (max.v[0]-min.v[0])*(max.v[1]-min.v[1]) +
-      (max.v[0]-min.v[0])*(max.v[2]-min.v[2]) + 
-      (max.v[1]-min.v[1])*(max.v[2]-min.v[2]);
-
-  b = (tie->max.v[0]-tie->min.v[0])*(tie->max.v[1]-tie->min.v[1]) +
-      (tie->max.v[0]-tie->min.v[0])*(tie->max.v[2]-tie->min.v[2]) +
-      (tie->max.v[1]-tie->min.v[1])*(tie->max.v[2]-tie->min.v[2]);
-
-  /* If ratio of areas is too small then don't bother splitting */
-  if(a / b <= TIE_KDTREE_MIN_AREA) {
-    if(node_geom_data->tri_num > tie->stat) {
-      tie->stat = node_geom_data->tri_num;
-    }
     return;
   }
 
@@ -484,8 +466,8 @@ TIE_3 vec1, vec2;
   free(node_geom_data);
 
   /* Push each child through the same process. */
-  tie_build_tree(tie, &((tie_kdtree_t *)(node->data))[0], depth+1, cmin[0], cmax[0], n1cost);
-  tie_build_tree(tie, &((tie_kdtree_t *)(node->data))[1], depth+1, cmin[1], cmax[1], n2cost);
+  tie_build_tree(tie, &((tie_kdtree_t *)(node->data))[0], depth+1, cmin[0], cmax[0], 0);
+  tie_build_tree(tie, &((tie_kdtree_t *)(node->data))[1], depth+1, cmin[1], cmax[1], 0);
  
   /* Assign the splitting dimension to the node */
   /* If we've come this far then YES, this node DOES have child nodes, MARK it as so. */
@@ -735,14 +717,13 @@ void* tie_work(tie_t *tie, tie_ray_t *ray, tie_id_t *id, void *(*hitfunc)(tie_ra
       math_vec_add(t.pos, ray->pos, t.pos);
 
       /* Extract i1 and i2 indices from lower bits of the v12 pointer */
+      v = (tfloat *)((TIE_PTR_CAST)(tri->v12) & ~0x7L);
       i1 = TIE_TAB1[((TIE_PTR_CAST)(tri->v12) & 0x7)];
       i2 = TIE_TAB1[3 + ((TIE_PTR_CAST)(tri->v12) & 0x7)];
 
       /* Compute U and V */
       u0 = t.pos.v[i1] - tri->data[0].v[i1];
       v0 = t.pos.v[i2] - tri->data[0].v[i2];
-
-      v = (tfloat *)((TIE_PTR_CAST)(tri->v12) & ~0x7L);
 
       /*
       * Compute the barycentric coordinates, and make sure the coordinates

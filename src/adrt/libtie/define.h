@@ -48,7 +48,6 @@
 #define	TIE_KDTREE_NODE_MAX	4		/* Maximum number of triangles that can reside in a given node until it should be split */
 #define	TIE_KDTREE_DEPTH_K1	1.2		/* K1 Depth Constant Coefficient */
 #define	TIE_KDTREE_DEPTH_K2	2		/* K2 Contant */
-#define	TIE_KDTREE_MIN_AREA	0.000005	/* Terminating Criteria, Ratio of smallest allowed area to scene area */
 
 /* Type to use for floating precision */
 #if TIE_SINGLE_PREC
