@@ -5,11 +5,7 @@
  * Edit include/makefile.src and the configuration file instead.
  */
 
-#include "common.h"
-
-#ifdef HAVE_STDARG_H
-#  define USE_STDARG 1
-#endif
+#define USE_STDARG 1
 
 #define X11 X11
 #define ABEKASA60 ABEKASA60
