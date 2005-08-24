@@ -42,12 +42,21 @@ static const char libbu_linebuf_RCSid[] = "@(#)$Header$ (ARL)";
 
 #include "common.h"
 
-
-
 #include <stdio.h>
 
 #include "machine.h"
 #include "bu.h"
+
+/** deprecated call for compatibility
+ */
+void
+port_setlinebuf(FILE *fp)
+{
+    bu_log("\
+WARNING: port_setlinebuf is deprecated and will be removed in a\n\
+future release of BRL-CAD.  Use bu_setlinebuf instead.\n");
+    return bu_setlinebuf(fp);
+}
 
 void
 bu_setlinebuf(FILE *fp)
