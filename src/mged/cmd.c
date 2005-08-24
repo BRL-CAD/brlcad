@@ -721,6 +721,8 @@ mged_setup(void)
 	   run with output */
 	bu_vls_init(&tcl_output_hook);
 
+	Tcl_FindExecutable(bu_argv0(NULL));
+
 	/* Create the interpreter */
 	interp = Tcl_CreateInterp();
 
@@ -737,16 +739,6 @@ mged_setup(void)
 		       "::itcl::*", /* allowOverwrite */ 1) != TCL_OK)
 	  bu_log("Tcl_Import error %s\n", interp->result);
 
-
-#ifdef _WIN32
-#  ifdef _DEBUG
-	Tcl_FindExecutable("mged_d");
-#  else
-	Tcl_FindExecutable("mged");
-#  endif
-#else
-	Tcl_FindExecutable("mged");
-#endif
 
 	/* Initialize libbu */
 	Bu_Init(interp);
