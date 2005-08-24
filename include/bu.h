@@ -1762,7 +1762,6 @@ BU_EXPORT BU_EXTERN(void bu_kill_parallel,
 		    ());
 
 /* linebuf.c */
-#define port_setlinebuf		bu_setlinebuf	/* libsysv compat */
 BU_EXPORT BU_EXTERN(void bu_setlinebuf,
 		    (FILE *fp));
 
