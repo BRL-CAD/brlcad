@@ -6,45 +6,24 @@
  *	to reinitialize optind=1 before beginning on the next argument list.
  *  
  */
-#ifndef lint
-static char RCSid[] = "@(#)$Header$ (BRL)";
-#endif
 
 #include "common.h"
 
-
-
-#if defined(HAVE_GETOPT)
-#ifndef lint
-char getopt_dummy;   /* some systems can't handle empty object modules */
-#else
-#endif
-#else
+#ifndef HAVE_GETOPT
 
 #include <stdio.h>
 #ifdef HAVE_STRING_H
-#include <string.h>
+#  include <string.h>
 #else
-#include <strings.h>
+#  include <strings.h>
 #endif
-
-#include "machine.h"
 
 /*
  * get option letter from argument vector
  */
 
-#if defined(__convexc__)
-/* brain dead Convex compiler/loader won't let us redefine a variable declared
- * and initialized in their library, despite the fact that we don't even use
- * that module of their library!
- */
-extern int opterr;            /* set to zero to suppress errors */
-extern int optind;            /* index into parent argv vector */
-#else
 int	opterr = 1;		/* set to zero to suppress errors */
 int	optind = 1;		/* index into parent argv vector */
-#endif
 int	optopt;			/* character checked for validity */
 char	*optarg;		/* argument associated with option */
 
@@ -56,15 +35,7 @@ char	*optarg;		/* argument associated with option */
 	} return(BADCH);
 
 int
-getopt(nargc,nargv,ostr)
-int	nargc;
-#if defined(linux)
-char	* const nargv[];
-const char *ostr;
-#else
-char	*nargv[];
-char	*ostr;
-#endif
+getopt(int nargc, char *nargv[], const char *ostr)
 {
 	static char	*place = EMSG;	/* option letter processing */
 	register char	*oli;		/* option letter list index */

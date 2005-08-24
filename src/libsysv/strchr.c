@@ -11,6 +11,13 @@
 static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
+#include "common.h"
+
+/*
+ * defined for folks that don't have a system strchr()
+ */
+#ifndef HAVE_STRCHR
+
 char *
 strchr(register char *sp, register char c)
 {
@@ -20,6 +27,8 @@ strchr(register char *sp, register char c)
 	}  while( *sp++ );
 	return( (char *)0 );
 }
+
+#endif
 
 /*
  * Local Variables:

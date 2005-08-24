@@ -13,6 +13,12 @@
 static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
+#include "common.h"
+
+/*
+ * defined for the folks that don't seem to have a system memset()
+ */
+#ifndef HAVE_MEMSET
 
 char *
 memset(char *s, register char c, register int n)
@@ -25,6 +31,8 @@ memset(char *s, register char c, register int n)
 
 	return s;
 }
+
+#endif
 
 /*
  * Local Variables:
