@@ -53,6 +53,13 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 #include "rtgeom.h"
 #include "rtserver.h"
 
+#ifdef HAVE_JAVAVM_JNI_H
+#  include <JavaVM/jni.h>
+#elif defined(HAVE_JNI_H)
+#  include <jni.h>
+#else
+#  error ERROR: jni.h could not be found
+#endif
 #include "RtServerImpl.h"
 
 static int working_threads=0;
