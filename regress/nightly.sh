@@ -1,6 +1,6 @@
 #!/bin/sh
 
-HOSTS="wopr liu amdws2 vast"
+HOSTS="wopr liu amdws2 vast cocoa"
 MASTERHOST="wopr"
 
 export MYNAME=`hostname | awk -F '.' '{print $1}'`
@@ -9,9 +9,10 @@ export LOG_FILE=`pwd`/${MYNAME}_${START_TIME}.log
 
 if [ X$MYNAME == X$MASTERHOST ] ; then
 	/bin/echo fetching archive
-    rm -rf $HOSTS brlcad
+    rm -rf $HOSTS
+    rm -rf  brlcad
     export CVS_RSH=ssh
-    cvs  -z3 -d:pserver:anonymous@cvs.sf.net:/cvsroot/brlcad co -P brlcad > $LOG_FILE 2>&1
+    cvs  -z3 -d:ext:lbutler@cvs.sf.net:/cvsroot/brlcad co -P brlcad > $LOG_FILE 2>&1
 
     if [ ! -d brlcad ] ; then
 	/bin/echo "unable to extract source from CVS repository"
@@ -28,7 +29,7 @@ if [ X$MYNAME == X$MASTERHOST ] ; then
     OLD_PATCH=`awk -F\= '/^PATCH_VERSION/ {print $2}' < configure.ac`
 
 
-    # Update configure.ac
+    # Update configure.ac with the release we find in README
     /bin/echo update configure
     if [ ! -f configure.ac.orig ] ; then
 	mv configure.ac configure.ac.orig
@@ -40,13 +41,25 @@ if [ X$MYNAME == X$MASTERHOST ] ; then
 	-e "s/^PATCH_VERSION=$OLD_PATCH/PATCH_VERSION=$PATCH/" \
 	< configure.ac.orig > configure.ac
 
+    # get a build environment
     /bin/echo autogen
     /bin/sh ./autogen.sh >> $LOG_FILE 2>&1
 
+    /bin/echo configure
+    ./configure >> $LOG_FILE 2>&1
+
+    # Prepare a source distribution
+    /bin/echo making dist
+    make dist >> $LOG_FILE 2>&1
+
+    # Let the other regression hosts start doing their work
     /bin/echo semaphores
+    ln brlcad-*.tar.gz ../
     cd ..
+    tar xzf brlcad-$MAJOR.$MINOR.$PATCH.tar.gz
+
     for i in $HOSTS ; do
-	touch $i
+	echo $MAJOR.$MINOR.$PATCH > $i
     done
 fi
 
@@ -68,4 +81,47 @@ while [ ! -f $MYNAME ] ; do
 done
 
 /bin/echo "Starting build"
-/bin/sh brlcad/regress/main.sh
+
+VERSION=`cat $MYNAME`
+rm $MYNAME
+# start the build
+case $MYNAME in 
+wopr)
+    export CONF_FLAGS="" ;
+    export MAKE_CMD="make" ;
+    export MAKE_OPTS="-j11" ;;
+liu)
+    export CONF_FLAGS="" ;
+    export MAKE_CMD="make" ;
+    export MAKE_OPTS="-j2" ;;
+
+amdws2)
+    export CONF_FLAGS="" ;
+    export MAKE_CMD="make" ;
+    export MAKE_OPTS="-j2" ;;
+
+vast)
+    export CONF_FLAGS="CC=cc CFLAGS=-64 LDFLAGS=-64 --enable-64bit-build" ;
+    export MAKE_CMD="/usr/gnu/bin/make" ;
+    export MAKE_OPTS="-j5" ;;
+esac
+
+BUILD_DIR=`pwd`/${MYNAME}_${START_TIME}.dir
+rm -f $BUILD_DIR
+mkdir $BUILD_DIR
+cd $BUILD_DIR
+
+echo ../brlcad-$VERSION/configure \
+    $CONF_FLAGS \
+    --prefix=/usr/brlcad/rel-$MAJOR.$MINOR.$PATCH \
+    >> $LOG_FILE 2>&1
+
+../brlcad-$VERSION/configure \
+    $CONF_FLAGS \
+    --prefix=/usr/brlcad/rel-$MAJOR.$MINOR.$PATCH \
+    >> $LOG_FILE 2>&1
+
+$MAKE_CMD $MAKE_OPTS > build.log 2>&1
+make install >& install.log 2>&1
+cd regress
+make test > test.log 2>&1
