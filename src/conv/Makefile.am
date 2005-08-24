@@ -1,4 +1,4 @@
-asc2g# $Id$
+# $Id$
 
 if ONLY_BENCHMARK
 
