@@ -449,7 +449,7 @@ main(int argc, char **argv)
 	register int	c;
 	double		percent;
 
-	port_setlinebuf( stderr );
+	bu_setlinebuf( stderr );
 
 #if MEMORY_LEAK_CHECKING
 	rt_g.debug |= DEBUG_MEM_FULL;

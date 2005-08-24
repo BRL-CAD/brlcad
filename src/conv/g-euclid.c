@@ -506,7 +506,7 @@ main(int argc, char **argv)
 	register int	c;
 	double		percent;
 
-	port_setlinebuf( stderr );
+	bu_setlinebuf( stderr );
 
 	rt_g.debug = 0;
 #if MEMORY_LEAK_CHECKING

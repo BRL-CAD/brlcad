@@ -384,7 +384,7 @@ main(int argc, char **argv)
 	register int	c;
 	struct plate_mode pm;
 
-	port_setlinebuf( stderr );
+	bu_setlinebuf( stderr );
 
 #if MEMORY_LEAK_CHECKING
 	bu_debug |= BU_DEBUG_MEM_CHECK;

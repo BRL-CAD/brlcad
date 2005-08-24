@@ -142,7 +142,7 @@ char	*argv[];
 	int		dir;
 	fastf_t		cell_width=100.0, cell_height=100.0;
 
-	port_setlinebuf( stderr );
+	bu_setlinebuf( stderr );
 
 #if MEMORY_LEAK_CHECKING
 	rt_g.debug |= DEBUG_MEM_FULL;

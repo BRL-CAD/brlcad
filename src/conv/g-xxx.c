@@ -80,7 +80,7 @@ char	*argv[];
 	int		i;
 	register int	c;
 
-	port_setlinebuf( stderr );
+	bu_setlinebuf( stderr );
 
 	rt_init_resource(&rt_uniresource, 0, NULL);
 	

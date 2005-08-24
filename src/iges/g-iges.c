@@ -207,7 +207,7 @@ char	*argv[];
 	char			copy_buffer[CP_BUF_SIZE];
 	struct directory	*dp;
 
-	port_setlinebuf( stderr );
+	bu_setlinebuf( stderr );
 
 	bu_log( "%s", version+5);
 	bu_log( "Please direct bug reports to <bugs@brlcad.org>\n\n" );
