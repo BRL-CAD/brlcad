@@ -1,4 +1,4 @@
-# $Id$
+asc2g# $Id$
 
 if ONLY_BENCHMARK
 
@@ -70,7 +70,7 @@ EXTRA_DIST = dbclean.sh
 endif
 # end ONLY_BENCHMARK
 
-asc2g_LDADD = ${WDB} ${LIBRT} ${BN} ${BU} ${TCL}
+asc2g_LDADD = ${WDB} ${LIBRT} ${BN} ${BU} ${SYSV} ${TCL}
 asc_nmg_LDADD = ${WDB} ${LIBRT} ${BN} ${BU} 
 bot_bldxf_LDADD = ${LIBRT} ${BN} ${BU}
 bot_raw_LDADD = ${LIBRT} ${BN} ${BU}
