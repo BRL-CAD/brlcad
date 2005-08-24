@@ -6,6 +6,7 @@
  */
 
 #define USE_STDARG 1
+#define USE_PROTOTYPES 1
 
 #define X11 X11
 #define ABEKASA60 ABEKASA60
