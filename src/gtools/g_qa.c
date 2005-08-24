@@ -615,11 +615,7 @@ parse_args(int ac, char *av[])
 		char *units_name[3];
 
 		for (i=0 ; i < 3 && ptr; i++) {
-#ifdef HAVE_STRSEP
 		    units_name[i] = strsep(&ptr, ",");
-#else
-		    units_name[i] = strtok(&ptr, ",");
-#endif
 		
 		    /* make sure the unit value is in the table */
 		    if (*units_name[i] != '\0') {

@@ -347,17 +347,10 @@ strsolbld(void)
 
     bu_vls_init(&str);
 
-#if defined (HAVE_STRSEP)
     (void)strsep( &buf2, " ");		/* skip stringsolid_id */
     type = strsep( &buf2, " ");
     name = strsep( &buf2, " " );
     args = strsep( &buf2, "\n" );
-#else
-    (void)strtok( buf, " ");		/* skip stringsolid_id */
-    type = strtok( NULL, " ");
-    name = strtok( NULL, " " );
-    args = strtok( NULL, "\n" );
-#endif
 
     if( strcmp( type, "dsp" ) == 0 )  {
 	struct rt_dsp_internal *dsp;
