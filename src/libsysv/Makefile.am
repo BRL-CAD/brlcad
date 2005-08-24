@@ -5,18 +5,19 @@ lib_LTLIBRARIES = libsysv.la
 # XXX this library needs to move into src/other at some point
 libsysv_la_LDFLAGS = -version-info 19:1
 libsysv_la_SOURCES = \
+	getopt.c \
+	memset.c \
 	redata.c \
 	regex.c \
+	strchr.c \
+	strsep.c \
 	tcl.c \
 	vers.c
 
 EXTRA_DIST = \
 	bsdselect.c \
-	getopt.c \
 	libsysv.dsp \
-	linebuf.c \
-	memset.c \
-	strchr.c
+	linebuf.c
 
 BUILT_SOURCES = vers.c
 vers.c:
