@@ -14,7 +14,7 @@ g_lint_SOURCES = g_lint.c
 g_lint_LDADD = ${LIBRT}  
 
 g_qa_SOURCES = g_qa.c
-g_qa_LDADD = ${LIBRT}  
+g_qa_LDADD = ${LIBRT} ${SYSV}
 
 solshoot_SOURCES = solshoot.c
 solshoot_LDADD = ${LIBRT} 
