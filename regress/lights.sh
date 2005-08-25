@@ -36,7 +36,7 @@ end;
 
 EOF
 
-../src/conv/asc2pix < $2/regress/lights_ref.asc  > lights_ref.pix
+../src/conv/asc2pix < $1/regress/lights_ref.asc  > lights_ref.pix
 ../src/util/pixdiff lights.pix lights_ref.pix > lights_diff.pix 2>> lights.log
 /bin/echo -n lights.pix
 tr , '\012' < lights.log | grep many
