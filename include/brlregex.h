@@ -42,8 +42,6 @@
 #ifndef _REGEX_H_
 #define	_REGEX_H_
 
-#include "common.h"
-
 #ifndef SYSV_EXPORT
 #  if defined(_WIN32) && !defined(__CYGWIN__) && defined(BRLCAD_DLL)
 #    ifdef SYSV_EXPORT_DLL
