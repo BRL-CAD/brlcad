@@ -52,24 +52,16 @@ Centroid: X = 0.5 cm.
 Total mass = 7.82943 grams
 
 EOF
-ref_values="`grep 0 weight.ref | grep -v 'Time Stamp' | sed 's/ 	//g'`"
-echo x$ref_values > asdf
-if [ "x$ref_values" = "x" ] ; then
-    echo "rtweight benchmark failed"
-    exit -1
+
+tr -d ' \t' < weight.ref | grep -v DensityTableUsed | grep -v TimeStamp > weight.ref_ns
+tr -d ' \t' < wgt.out | grep -v DensityTableUsed | grep -v TimeStamp > wgt.out_ns
+
+cmp weight.ref_ns wgt.out_ns
+STATUS=$?
+if [ X$STATUS != X0 ] ; then
+    echo "rtweight results differ $STATUS"
 fi
 
-out_values="`grep 0 wgt.out | grep -v 'Time Stamp' | sed 's/ 	//g'`"
-echo x$out_values > fdsa
-if [ "x$out_values" = "x" ] ; then
-    echo "rtweight benchmark failed (script error)"
-    exit -1
-fi
+rm -f wgt.out_ns weight.ref_ns
 
-if  [ "x$ref_values" != "x$out_values" ] ; then
-	echo "rtweight benchmark failed unequal"
-     exit -1
-fi
-echo "match"
-
-exit 0
+exit $STATUS

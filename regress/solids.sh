@@ -896,10 +896,12 @@ if [ ! -f $1/regress/solidspix.asc ] ; then
 fi
 ../src/conv/asc2pix < $1/regress/solidspix.asc > solids_ref.pix
 ../src/util/pixdiff solids.pix solids_ref.pix > solids.pix.diff \
-    2>> solids-diff.log
+    2> solids-diff.log
 
+tr , '\012' < solids-diff.log | awk '/many/ {print $0}'
 NUMBER_WRONG=`tr , '\012' < solids-diff.log | awk '/many/ {print $1}'`
 /bin/echo solids.pix $NUMBER_WRONG off by many
+
 exit $NUMBER_WRONG
 
 # Local Variables:
