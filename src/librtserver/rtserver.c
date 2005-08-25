@@ -1571,6 +1571,8 @@ rts_shutdown()
 
 	if( rts_geometry && rts_geometry[0] ) {
 		dbip = rts_geometry[0]->rts_rtis[0]->rtrti_rtip->rti_dbip;
+	} else {
+	    dbip = NULL;
 	}
 
 	/* send a shutdown job to each thread */
