@@ -224406,7 +224406,7 @@ EOF
 
 if [ ! -f shaders ] ; then
 	echo 'mged failed'
-	exit
+	exit -1
 fi
 mv shaders shaders.orig
 sed "s,^rt,../src/rt/rt -P 1 -B -U 1," < shaders.orig > shaders
@@ -224415,8 +224415,10 @@ chmod 775 shaders
 echo 'rendering shaders...'
 # the script 'shaders' creates shaders.log
 ./shaders
+NUMBER_WRONG=1
 if [ ! -f shaders.pix ] ; then
 	echo shaders raytrace failed
+	exit -1
 else
 	if [ ! -f $TOP_SRCDIR/regress/shaderspix.asc ] ; then
 		echo No reference file for $TOP_SRCDIR/regress/ref/shaders.pix
@@ -224426,12 +224428,14 @@ else
 		> shaders.pix.diff \
 		2>> shaders.log
 
-		/bin/echo -n shaders.pix
-		tr , '\012' < shaders.log | grep many
+		NUMBER_WRONG=`tr , '\012' < shaders.log | awk '/many/ {print $1}'`
+		export NUMBER_WRONG
+		/bin/echo shaders.pix $NUMBER_WRONG off by many
 	fi
 fi
 rm -f   ebm.bw ebm.bw shaders.rt shaders.g shaders shaders.log shaders.txt shaders.dat eagleCAD-w512-n438.pix eagle.pix
 
+exit NUMBER_WRONG
 # Local Variables:
 # mode: sh
 # tab-width: 8

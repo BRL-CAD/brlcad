@@ -56,16 +56,20 @@ ref_values="`grep 0 weight.ref | grep -v 'Time Stamp' | sed 's/ 	//g'`"
 echo x$ref_values > asdf
 if [ "x$ref_values" = "x" ] ; then
     echo "rtweight benchmark failed"
+    exit -1
 fi
 
 out_values="`grep 0 wgt.out | grep -v 'Time Stamp' | sed 's/ 	//g'`"
 echo x$out_values > fdsa
 if [ "x$out_values" = "x" ] ; then
     echo "rtweight benchmark failed (script error)"
+    exit -1
 fi
 
 if  [ "x$ref_values" != "x$out_values" ] ; then
 	echo "rtweight benchmark failed unequal"
-else
-	echo "match"
+     exit -1
 fi
+echo "match"
+
+exit 0

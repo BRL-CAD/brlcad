@@ -38,8 +38,10 @@ EOF
 
 ../src/conv/asc2pix < $1/regress/lights_ref.asc  > lights_ref.pix
 ../src/util/pixdiff lights.pix lights_ref.pix > lights_diff.pix 2>> lights.log
-/bin/echo -n lights.pix
-tr , '\012' < lights.log | grep many
+NUMBER_WRONG=`tr , '\012' < lights.log | awk '/many/ {print $1}'`
+/bin/echo -n lights.pix $NUMBER_WRONG off by many
+
+exit $NUMBER_WRONG
 
 # Local Variables:
 # mode: sh

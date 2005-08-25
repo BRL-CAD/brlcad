@@ -4,6 +4,8 @@ set +
 
 rm -f iges.log iges.g iges_file.iges iges_stdout_new.g iges_new.g iges_stdout.iges iges_file.iges
 
+STATUS=0
+
 ../src/mged/mged -c 2> iges.log <<EOF
 opendb iges.g y
 
@@ -22,6 +24,7 @@ EOF
 
 if [ $? != 0 ] ; then
     /bin/echo g-iges/iges-g FAILED
+    STATUS=-1
 else
     /bin/echo g-iges/iges-g completed successfully
 fi
@@ -31,6 +34,9 @@ fi
 
 if [ $? != 0 ] ; then
     /bin/echo g-iges/iges-g FAILED
+    STATUS=-1
 else
     /bin/echo g-iges/iges-g completed successfully
 fi
+
+exit $STATUS

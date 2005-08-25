@@ -54,9 +54,10 @@ end;
 EOF
 ../src/conv/asc2pix < $1/regress/spdipix.asc > spdi_ref.pix 
 ../src/util/pixdiff spdi.pix spdi_ref.pix > spdi_diff.pix 2>> spdi.log
-/bin/echo -n spdi.pix
-tr , '\012' < spdi.log | grep many
+NUMBER_WRONG=`tr , '\012' < spdi.log | awk '/many/ {print $1}'`
+/bin/echo spdi.pix $NUMBER_WRONG off by many
 
+exit $NUMBER_WRONG
 # Local Variables:
 # mode: sh
 # tab-width: 8

@@ -69,10 +69,9 @@ fi
 ../src/util/pix-png -s 512 moss.pix > moss.png
 ../src/util/png-pix moss.png > moss2.pix
 ../src/util/pixdiff moss.pix moss2.pix > moss_png.diff 2> moss-png.log
-/bin/echo -n moss.png
-tr , '\012' < moss-png.log | grep many
-
-
+NUMBER_WRONG=`tr , '\012' < moss-png.log | awk '/many/ {print $1}'`
+echo moss.pix $NUMBER_WRONG off by many
+exit $NUMBER_WRONG
 # Local Variables:
 # mode: sh
 # tab-width: 8
