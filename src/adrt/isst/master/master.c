@@ -174,7 +174,7 @@ void isst_master(int port, int obs_port, char *proj, char *list, char *exec, cha
 
     frame_cur_ind = 1 - frame_cur_ind;
 
-#if 0
+#if 1
     frame_num++;
     if(!(frame_num % 7)) {
       gettimeofday(&cur, NULL);

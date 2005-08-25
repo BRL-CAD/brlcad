@@ -81,7 +81,13 @@
 #  define HUGE 3e23
 # endif
 #endif
-#define MAX_SLICES 50
+
+/* KDTREE VALUES */
+#define MAX_SLICES 80
+#define MIN_DENSITY 0.01
+#define MIN_SPAN    0.15
+#define SCALE_COEF  1.80
+/*****************/
 
 tfloat TIE_PREC;
 
@@ -290,7 +296,7 @@ static void tie_build_tree(tie_t *tie, tie_kdtree_t *node, int depth, TIE_3 min,
   TIE_3		cmin[2], cmax[2], center, half_size, vec;
   int		i, j, n, split, cnt[2];
 
-/*  printf("%f %f %f %f %f %f\n", min.v[0], min.v[1], min.v[2], max.v[0], max.v[1], max.v[2]); */
+  printf("%f %f %f %f %f %f\n", min.v[0], min.v[1], min.v[2], max.v[0], max.v[1], max.v[2]);
 
   /* Terminating criteria for KDTREE subdivision */
   if(node_geom_data->tri_num <= TIE_KDTREE_NODE_MAX || depth > tie->max_depth) {
@@ -301,10 +307,11 @@ static void tie_build_tree(tie_t *tie, tie_kdtree_t *node, int depth, TIE_3 min,
 /*    printf("num: %d, depth: %d\n", node_geom_data->tri_num, depth); */
 /*    if(node_geom_data->tri_num > tie->stat) */
 /*      tie->stat++; */
+    exit(0);
     return;
   }
 
-#if 1
+#if 0
   /* Left Child */
   cmin[0] = min;
   cmax[0] = max;
@@ -338,9 +345,9 @@ static void tie_build_tree(tie_t *tie, tie_kdtree_t *node, int depth, TIE_3 min,
   }
 #else
 {
-  int span[3][MAX_SLICES];
+  int span[3][MAX_SLICES+9], gap[3][2], active;
   int d, s, k, smax[3], smin, slice_num[3];
-  tfloat coef, split_coef, smax_wgt_coef[3];
+  tfloat coef, split_coef, smax_wgt_coef[3], beg, end;
 
   /* Calculate the number of slices that will be used for this node */
 #if 0
@@ -407,6 +414,8 @@ static void tie_build_tree(tie_t *tie, tie_kdtree_t *node, int depth, TIE_3 min,
       }
     }
   }
+
+
   /* Grab the max value from each of the 3 Slice arrays */
   for(d = 0; d < 3; d++) {
     smax[d] = 0;
@@ -419,11 +428,89 @@ static void tie_build_tree(tie_t *tie, tie_kdtree_t *node, int depth, TIE_3 min,
     }
   }
 
+
+/***************************/
+  /*
+  * To eliminate "empty" areas, build a list of spans where geometric complexity is
+  * less than 10% of the overal nodes size and then selecting the splitting plane
+  * the corresponds to the span slice domain nearest the center to bias towards a balanced tree
+  */
+
+  for(d = 0; d < 3; d++) {
+    gap[d][0] = 0;
+    gap[d][1] = 0;
+    beg = 0;
+    end = 0;
+    active = 0;
+
+    for(k = 0; k < slice_num[d]; k++) {
+      printf("span[%d][%d]: %d < %d\n", d, k, span[d][k], (int)(MIN_DENSITY * (tfloat)smax[d]));
+      if(span[d][k] < (int)(MIN_DENSITY * (tfloat)smax[d])) {
+        if(!active) {
+          active = 1;
+          beg = k;
+          end = k;
+        } else {
+          end = k;
+        }
+      } else {
+        if(active) {
+          if(end - beg > gap[d][1] - gap[d][0]) {
+            gap[d][0] = beg;
+            gap[d][1] = end;
+          }
+        }
+        active = 0;
+      }
+    }
+
+    if(active) {
+      if(end - beg > gap[d][1] - gap[d][0]) {
+        gap[d][0] = beg;
+        gap[d][1] = end;
+      }
+    }
+  }
+
+//  printf("gap_x: %d->%d = %d\n", gap[0][0], gap[0][1], gap[0][1]-gap[0][0]);
+//  printf("gap_y: %d->%d = %d\n", gap[1][0], gap[1][1], gap[1][1]-gap[1][0]);
+//  printf("gap_z: %d->%d = %d\n", gap[2][0], gap[2][1], gap[2][1]-gap[2][0]);
+/******************/
+
+  /*
+  * If there is a gap atleast MIN_SPAN in side wrt the nodes dimension size
+  * then use the nearest edge of the gap to 0.5 as the splitting plane,
+  * Use the the gap with the largest span.
+  * If no gaps are found meeting the criteria then weight the span values to
+  * bias towards a balanced kd-tree and choose the minima of that weighted curve.
+  */
+
+  /* Largest gap */
+  d = 0;
+  if(gap[1][1] - gap[1][0] > gap[d][1] - gap[d][0])
+    d = 1;
+  if(gap[2][1] - gap[2][0] > gap[d][1] - gap[d][0])
+    d = 2;
+  
+  /* Largest gap > MIN_SPAN? */
+if((tfloat)(gap[d][1] - gap[d][0]) / (tfloat)slice_num[d] > MIN_SPAN && node_geom_data->tri_num > 500) {
+  printf("choosing span[%d]: %d->%d :: %d tris\n", d, gap[d][0], gap[d][1], node_geom_data->tri_num);
+
+  split = d;
+  if(abs(gap[d][0] - slice_num[d]/2) < abs(gap[d][1] - slice_num[d]/2)) {
+    /* choose gap[d][0] as splitting plane */
+    split_coef = ((tfloat)gap[d][0]/(tfloat)(slice_num[d]-1)) * (tfloat)(slice_num[d]-2)/(tfloat)slice_num[d] + (tfloat)1/(tfloat)slice_num[d];
+  } else {
+    /* choose gap[d][1] as splitting plane */
+    split_coef = ((tfloat)gap[d][1]/(tfloat)(slice_num[d]-1)) * (tfloat)(slice_num[d]-2)/(tfloat)slice_num[d] + (tfloat)1/(tfloat)slice_num[d];
+  }
+} else {
+
   /* Weight the slices based on a heuristic driven linear scaling function from the center */
   for(d = 0; d < 3; d++) {
     for(k = 0; k < slice_num[d]; k++) {
       coef = ((tfloat)k/(tfloat)(slice_num[d]-1)) * (tfloat)(slice_num[d]-2)/(tfloat)slice_num[d] + (tfloat)1/(tfloat)slice_num[d];
-      span[d][k] += fabs(coef-smax_wgt_coef[d]) * (1.5 + depth * 0.05) * smax[d];
+      span[d][k] += fabs(coef-smax_wgt_coef[d]) * SCALE_COEF * smax[d];
 //      printf("%.3f %d\n", coef, span[d][k]);
     }
   }
@@ -440,7 +527,7 @@ static void tie_build_tree(tie_t *tie, tie_kdtree_t *node, int depth, TIE_3 min,
       }
     }
   }
-
+}
 
 #if 0
   if(node_geom_data->tri_num < 15) {
