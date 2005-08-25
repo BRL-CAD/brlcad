@@ -1,11 +1,11 @@
 #!/bin/sh
 
-PREFIX=$1
-TOP_SRCDIR=$2
+
+TOP_SRCDIR=$1
 
 rm -f weight.log .density wgt.out weight.g weight.ref weight.out
 
-$PREFIX/bin/mged -c > weight.log 2>&1 << EOF
+../src/mged/mged -c > weight.log 2>&1 << EOF
 opendb weight.g y
 units cm
 in box rpp 0 1 0 1 0 1
@@ -16,7 +16,7 @@ cat > .density <<EOF
 1 7.8295	steel	
 EOF
 
-$PREFIX/bin/rtweight -a 25 -e 35 -s128 -o wgt.out weight.g box.r > weight.log 2>&1
+../src/rt/rtweight -a 25 -e 35 -s128 -o wgt.out weight.g box.r > weight.log 2>&1
 
 
 cat >> weight.ref <<EOF
@@ -52,18 +52,20 @@ Centroid: X = 0.5 cm.
 Total mass = 7.82943 grams
 
 EOF
-ref_values="`grep 0 weight.ref | grep -v 'Time Stamp' | sed 's/ //g'`"
+ref_values="`grep 0 weight.ref | grep -v 'Time Stamp' | sed 's/ 	//g'`"
+echo x$ref_values > asdf
 if [ "x$ref_values" = "x" ] ; then
     echo "rtweight benchmark failed"
 fi
 
-out_values="`grep 0 wgt.out | grep -v 'Time Stamp' | sed 's/[ \t]//g'`"
+out_values="`grep 0 wgt.out | grep -v 'Time Stamp' | sed 's/ 	//g'`"
+echo x$out_values > fdsa
 if [ "x$out_values" = "x" ] ; then
     echo "rtweight benchmark failed (script error)"
 fi
 
 if  [ "x$ref_values" != "x$out_values" ] ; then
-	echo "rtweight benchmark failed"
+	echo "rtweight benchmark failed unequal"
 else
 	echo "match"
 fi

@@ -1,5 +1,4 @@
-BIN=$1/bin
-export BIN
+#!/bin/sh
 
 rm -f moss.pix moss.log moss.png moss2.pix
 
@@ -34,10 +33,10 @@ M u tor.r 1.000000000000e+00 0.000000000000e+00 0.000000000000e+00 0.00000000000
 M u light.r 1.000000000000e+00 0.000000000000e+00 0.000000000000e+00 0.000000000000e+00 0.000000000000e+00 1.000000000000e+00 0.000000000000e+00 0.000000000000e+00 0.000000000000e+00 0.000000000000e+00 1.000000000000e+00 0.000000000000e+00 0.000000000000e+00 0.000000000000e+00 0.000000000000e+00 1.000000000000e+00 0 
 EOF
 
-$BIN/asc2g moss.asc moss.g
+../src/conv/asc2g moss.asc moss.g
 
 echo "rendering moss..."
-$BIN/rt -P 1 -B -C0/0/50 -M -s 512 -o moss.pix moss.g all.g > moss.log 2>&1 << EOF
+../src/rt/rt -P 1 -B -C0/0/50 -M -s 512 -o moss.pix moss.g all.g > moss.log 2>&1 << EOF
 viewsize 1.572026215e+02;
 eye_pt 6.379990387e+01 3.271768951e+01 3.366661453e+01;
 viewrot -5.735764503e-01 8.191520572e-01 0.000000000e+00 
@@ -53,11 +52,11 @@ EOF
 if [ ! -f moss.pix ] ; then
 	echo raytrace failed
 else
-	if [ ! -f $2/regress/mosspix.asc ] ; then
+	if [ ! -f $1/regress/mosspix.asc ] ; then
 		echo No reference file for moss.pix
 	else
-		$BIN/asc2pix < $2/regress/mosspix.asc > moss_ref.pix
-		$BIN/pixdiff moss.pix \
+		../src/conv/asc2pix < $1/regress/mosspix.asc > moss_ref.pix
+		../src/util/pixdiff/pixdiff moss.pix \
 			moss_ref.pix \
 			> moss.pix.diff \
 			2> moss-diff.log
@@ -67,9 +66,9 @@ else
 	fi
 fi
 
-$BIN/pix-png -s 512 moss.pix > moss.png
-$BIN/png-pix moss.png > moss2.pix
-$BIN/pixdiff moss.pix moss2.pix > moss_png.diff 2> moss-png.log
+../src/util/pix-png -s 512 moss.pix > moss.png
+../src/util/png-pix moss.png > moss2.pix
+../src/util/pixdiff moss.pix moss2.pix > moss_png.diff 2> moss-png.log
 /bin/echo -n moss.png
 tr , '\012' < moss-png.log | grep many
 

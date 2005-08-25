@@ -1,11 +1,9 @@
 #!/bin/sh
 
-BIN=$1/bin
-export BIN
 
 rm -f spdi.g spdi.log spdi spdi.pix
 
-$BIN/mged -c spdi.g << EOF > spdi_mged.log 2>&1
+../src/mged/mged -c spdi.g << EOF > spdi_mged.log 2>&1
 
 
 set glob_compat_mode 0
@@ -46,7 +44,7 @@ EOF
 
 echo "rendering..."
 
-$BIN/rt -M -B -o spdi.pix spdi.g 'all.g' 2>> spdi.log <<EOF
+../src/rt/rt -M -B -o spdi.pix spdi.g 'all.g' 2>> spdi.log <<EOF
 viewsize 3.200000000000000e+03;
 orientation 0.000000000000000e+00 0.000000000000000e+00 0.000000000000000e+00 1.000000000000000e+00;
 eye_pt 0.000000000000000e+00 0.000000000000000e+00 2.413000000000000e+03;
@@ -54,8 +52,8 @@ start 0; clean;
 end;
 
 EOF
-$BIN/asc2pix < $2/regress/spdipix.asc > spdi_ref.pix 
-$BIN/pixdiff spdi.pix spdi_ref.pix > spdi_diff.pix 2>> spdi.log
+../src/conv/asc2pix < $1/regress/spdipix.asc > spdi_ref.pix 
+../src/util/pixdiff spdi.pix spdi_ref.pix > spdi_diff.pix 2>> spdi.log
 /bin/echo -n spdi.pix
 tr , '\012' < spdi.log | grep many
 

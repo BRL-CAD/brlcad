@@ -4,7 +4,7 @@ rm -f gqa.g density_table.txt gqa.log
 echo "5 1 stuff" > density_table.txt
 echo "2 1 gas" >> density_table.txt
 
-mged -c gqa.g <<EOF > /dev/null 2>&1
+../src/mged/mged -c gqa.g <<EOF > /dev/null 2>&1
 
 units m
 dbbinary -i u c _DENSITIES density_table.txt
@@ -67,7 +67,7 @@ EOF
 # open_box.r = 1000-576 = 424 m^3
 
 
-GQA="../src/gtools/.libs/g_qa -u m,m^3,kg -g 0.25m,0.5mm -p"
+GQA="../src/gtools/g_qa -u m,m^3,kg -g 0.25m-0.5mm -p"
 export GQA
 
 

@@ -1,16 +1,15 @@
 #!/bin/sh
 
-PREFIX=$1
-TOP_SRCDIR=$2
+TOP_SRCDIR=$1
 
 if [ ! -f ebm.bw ] ; then
-	$PREFIX/bin/gencolor -r205 0 16 32 64 128 | dd of=ebm.bw bs=1024 count=1
+	../src/util/gencolor -r205 0 16 32 64 128 | dd of=ebm.bw bs=1024 count=1
 fi
 
 rm -f shaders.rt shaders.g shaders.pix shaders shaders.log shaders.txt shaders.dat eagleCAD-w512-n438.pix eagle.pix
 
 
-$PREFIX/bin/asc2pix > eagleCAD-w512-n438.pix << EOF
+../src/conv/asc2pix > eagleCAD-w512-n438.pix << EOF
 FFFFFD
 FEFEFD
 FFFFFD
@@ -224272,7 +224271,7 @@ ln -s eagleCAD-w512-n438.pix eagle.pix
 
 
 
-$PREFIX/bin/mged -c > mged_shaders.log 2>&1 << EOF
+../src/mged/mged -c > mged_shaders.log 2>&1 << EOF
 opendb shaders.g y
 
 
@@ -224410,7 +224409,7 @@ if [ ! -f shaders ] ; then
 	exit
 fi
 mv shaders shaders.orig
-sed "s,^rt,$PREFIX/bin/rt -P 1 -B -U 1," < shaders.orig > shaders
+sed "s,^rt,../src/rt/rt -P 1 -B -U 1," < shaders.orig > shaders
 rm shaders.orig
 chmod 775 shaders
 echo 'rendering shaders...'
@@ -224422,8 +224421,8 @@ else
 	if [ ! -f $TOP_SRCDIR/regress/shaderspix.asc ] ; then
 		echo No reference file for $TOP_SRCDIR/regress/ref/shaders.pix
 	else
-		$PREFIX/bin/asc2pix < $TOP_SRCDIR/regress/shaderspix.asc > shaders_ref.pix
-		$PREFIX/bin/pixdiff shaders.pix shaders_ref.pix \
+		../src/conv/asc2pix < $TOP_SRCDIR/regress/shaderspix.asc > shaders_ref.pix
+		../src/util/pixdiff shaders.pix shaders_ref.pix \
 		> shaders.pix.diff \
 		2>> shaders.log
 

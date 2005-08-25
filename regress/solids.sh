@@ -1,11 +1,8 @@
 #!/bin/sh
 
-BIN=$1/bin
-export BIN
-
 rm -f dsp.dat ebm.bw solids solids.g solids.log solids.pix
 
-$BIN/asc2pix > dsp.dat << EOF
+../src/conv/asc2pix > dsp.dat << EOF
 01BF01
 A101A7
 01C001
@@ -736,9 +733,9 @@ EOF
 
 
 # Trim 1025 byte sequence down to exactly 1024.
-$BIN/gencolor -r205 0 16 32 64 128 | dd of=ebm.bw bs=1024 count=1 >/dev/null 2>&1
+../src/util/gencolor -r205 0 16 32 64 128 | dd of=ebm.bw bs=1024 count=1 >/dev/null 2>&1
 
-$BIN/mged -c > mged_solids.log 2>&1 << EOF
+../src/mged/mged -c > mged_solids.log 2>&1 << EOF
 opendb solids.g y
 
 
@@ -883,7 +880,7 @@ if [ ! -f solids ] ; then
 	exit 1
 fi
 mv solids solids.orig
-sed "s,^rt,$BIN/rt -B -P 1 ," < solids.orig > solids
+sed "s,^rt,../src/rt/rt -B -P 1 ," < solids.orig > solids
 rm solids.orig
 chmod 775 solids
 
@@ -892,11 +889,11 @@ echo 'rendering solids...'
 if [ ! -f solids.pix ] ; then
 	echo raytrace failed
 else
-	if [ ! -f $2/regress/solidspix.asc ] ; then
+	if [ ! -f $1/regress/solidspix.asc ] ; then
 		echo No reference file for solids.pix
 	else
-		$BIN/asc2pix < $2/regress/solidspix.asc > solids_ref.pix
-		$BIN/pixdiff solids.pix solids_ref.pix \
+		../src/conv/asc2pix < $1/regress/solidspix.asc > solids_ref.pix
+		../src/util/pixdiff solids.pix solids_ref.pix \
 		> solids.pix.diff \
 		2>> solids-diff.log
 

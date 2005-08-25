@@ -1,8 +1,5 @@
 #!/bin/sh
 
-BIN=$1/bin
-export BIN
-
 rm -f lights.pix
 
 cat > lights.asc <<EOF
@@ -26,11 +23,11 @@ attr set {local.r} {region} {R} {rgb} {255/255/255} {oshader} {light {s 4  pt {-
 put {all.g} comb region no tree {u {u {l infinite.r} {l local.r}} {u {l plate.r} {l shadow_objs.r}}}
 EOF
 
-$BIN/asc2g lights.asc lights.g
+../src/conv/asc2g lights.asc lights.g
 rm -f lights.asc
 
 /bin/echo rendering lights...
-$BIN/rt -M -B -p30 -o lights.pix lights.g 'all.g' 2> lights.log <<EOF
+../src/rt/rt -M -B -p30 -o lights.pix lights.g 'all.g' 2> lights.log <<EOF
 viewsize 1.600000000000000e+02;
 orientation 0.000000000000000e+00 0.000000000000000e+00 0.000000000000000e+00 1.000000000000000e+00;
 eye_pt 0.000000000000000e+00 0.000000000000000e+00 7.950000000000000e+01;
@@ -39,8 +36,8 @@ end;
 
 EOF
 
-$BIN/asc2pix < $2/regress/lights_ref.asc  > lights_ref.pix
-$BIN/pixdiff lights.pix lights_ref.pix > lights_diff.pix 2>> lights.log
+../src/conv/asc2pix < $2/regress/lights_ref.asc  > lights_ref.pix
+../src/util/pixdiff lights.pix lights_ref.pix > lights_diff.pix 2>> lights.log
 /bin/echo -n lights.pix
 tr , '\012' < lights.log | grep many
 
