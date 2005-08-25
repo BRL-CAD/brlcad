@@ -224435,7 +224435,7 @@ else
 fi
 rm -f   ebm.bw ebm.bw shaders.rt shaders.g shaders shaders.log shaders.txt shaders.dat eagleCAD-w512-n438.pix eagle.pix
 
-exit NUMBER_WRONG
+exit $NUMBER_WRONG
 # Local Variables:
 # mode: sh
 # tab-width: 8
