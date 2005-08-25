@@ -81,6 +81,7 @@
 #  define HUGE 3e23
 # endif
 #endif
+#define MAX_SLICES 50
 
 tfloat TIE_PREC;
 
@@ -336,20 +337,25 @@ static void tie_build_tree(tie_t *tie, tie_kdtree_t *node, int depth, TIE_3 min,
     split = 2;
   }
 #else
-..
 {
-int d, s;
-tfloat sa, cost_test[3][7][2];
-TIE_3 vec1, vec2;
+  int span[3][MAX_SLICES];
+  int d, s, k, smax[3], smin, slice_num[3];
+  tfloat coef, split_coef, smax_wgt_coef[3];
 
-  /*
-  * Test all 3 splitting planes
-  * Test 7 possible cuts for each splitting plane test
-  */
-  for(d = 0; d < 3; d++) {
-    /* Eight Splitting plane tests */
-    for(s = 0; s < 7; s++) {
-      /* Generate box sizes */
+  /* Calculate the number of slices that will be used for this node */
+#if 0
+  slice_num[0] = 7 + MAX_SLICES * ((max.v[0] - min.v[0]) / (tie->max.v[0] - tie->min.v[0]));
+  slice_num[1] = 7 + MAX_SLICES * ((max.v[1] - min.v[1]) / (tie->max.v[1] - tie->min.v[1]));
+  slice_num[2] = 7 + MAX_SLICES * ((max.v[2] - min.v[2]) / (tie->max.v[2] - tie->min.v[2]));
+#else
+  slice_num[0] = 9 + MAX_SLICES * ((tfloat)node_geom_data->tri_num / (tfloat)tie->tri_num);
+  slice_num[1] = 9 + MAX_SLICES * ((tfloat)node_geom_data->tri_num / (tfloat)tie->tri_num);
+  slice_num[2] = 9 + MAX_SLICES * ((tfloat)node_geom_data->tri_num / (tfloat)tie->tri_num);
+#endif
+
+  for(d = 0; d < 3; d++) { // dimension
+    for(k = 0; k < slice_num[d]; k++) { // slice
+      span[d][k] = 0;
 
       /* Left Child */
       cmin[0] = min;
@@ -359,42 +365,115 @@ TIE_3 vec1, vec2;
       cmin[1] = min;
       cmax[1] = max;
 
-      math_vec_add(center, max, min);
-      math_vec_mul_scalar(vec, min, ((tfloat)(s+1)));
-      math_vec_mul_scalar(center, max, ((tfloat)(7-s)));
-      math_vec_add(center, center, vec);
-      math_vec_mul_scalar(center, center, 0.125);
+      /* construct slices so as not to use the boundaries as slices */
+      coef = ((tfloat)k/(tfloat)(slice_num[d]-1)) * (tfloat)(slice_num[d]-2)/(tfloat)slice_num[d] + (tfloat)1/(tfloat)slice_num[d];
+      cmax[0].v[d] = min.v[d]*(1.0-coef) + max.v[d]*coef;
+      cmin[1].v[d] = cmax[0].v[d];
 
-      cmax[0].v[d] = center.v[d];
-      cmin[1].v[d] = center.v[d];
+      for(i = 0; i < node_geom_data->tri_num; i++) { // triangles
+        s = 0;
 
-      /* Compute cost by examining surface area of all triangles for both nodes */
-      for(n = 0; n < 2; n++) {
-        cnt[n] = 0;
+        for(n = 0; n < 2; n++) { // child A and B
+          math_vec_add(center, cmax[n], cmin[n]);
+          math_vec_mul_scalar(center, center, 0.5);
+          math_vec_sub(half_size, cmax[n], cmin[n]);
+          math_vec_mul_scalar(half_size, half_size, 0.5);
 
-        math_vec_add(center, cmax[n], cmin[n]);
-        math_vec_mul_scalar(center, center, 0.5);
-        math_vec_sub(half_size, cmax[n], cmin[n]);
-        math_vec_mul_scalar(half_size, half_size, 0.5);
+          /*
+          * Check to see if any triangle points are inside of the node before
+          * spending alot of cycles on the full blown triangle box overlap
+          */
+          for(j = 0; j < 3; j++)
+            if(node_geom_data->tri_list[i]->data[j].v[0] > cmin[n].v[0] &&
+               node_geom_data->tri_list[i]->data[j].v[0] < cmax[n].v[0] &&
+               node_geom_data->tri_list[i]->data[j].v[1] > cmin[n].v[1] &&
+               node_geom_data->tri_list[i]->data[j].v[1] < cmax[n].v[1] &&
+               node_geom_data->tri_list[i]->data[j].v[2] > cmin[n].v[2] &&
+               node_geom_data->tri_list[i]->data[j].v[2] < cmax[n].v[2]) {
+               j = 4;
+            }
 
-        /*
-        * compute surface area
-        * surface area of 3d triangle:
-        *  1/2 (V1-V0) x (V2 - V0)
-        *  where 'x' is cross product.
-        */
-        sa = 0;
-        for(i = 0; i < node_geom_data->tri_num; i++) {
-
+          if(j == 5) {
+            s++;
+          } else {
+            if(tie_tri_box_overlap(&center, &half_size, node_geom_data->tri_list[i]->data))
+              s++;
+          }
         }
-        sa /= (tfloat)node->geom_data->tri_num;
+
+        if(s == 2)
+          span[d][k]++;
+
       }
-
-
-
+    }
+  }
+  /* Grab the max value from each of the 3 Slice arrays */
+  for(d = 0; d < 3; d++) {
+    smax[d] = 0;
+    for(k = 0; k < slice_num[d]; k++) {
+      if(span[d][k] > smax[d]) {
+        smax[d] = span[d][k];
+        smax_wgt_coef[d] = ((tfloat)k/(tfloat)(slice_num[d]-1)) * (tfloat)(slice_num[d]-2)/(tfloat)slice_num[d] + (tfloat)1/(tfloat)slice_num[d];
+        smax_wgt_coef[d] = 0.5;
+      }
     }
   }
 
+  /* Weight the slices based on a heuristic driven linear scaling function from the center */
+  for(d = 0; d < 3; d++) {
+    for(k = 0; k < slice_num[d]; k++) {
+      coef = ((tfloat)k/(tfloat)(slice_num[d]-1)) * (tfloat)(slice_num[d]-2)/(tfloat)slice_num[d] + (tfloat)1/(tfloat)slice_num[d];
+      span[d][k] += fabs(coef-smax_wgt_coef[d]) * (1.5 + depth * 0.05) * smax[d];
+//      printf("%.3f %d\n", coef, span[d][k]);
+    }
+  }
+
+  /* Choose the slice with the least value as the splitting plane */
+  split = 0;
+  smin = tie->tri_num;
+  for(d = 0; d < 3; d++) {
+    for(k = 0; k < slice_num[d]; k++) {
+      if(span[d][k] < smin) {
+        split_coef = ((tfloat)k/(tfloat)(slice_num[d]-1)) * (tfloat)(slice_num[d]-2)/(tfloat)slice_num[d] + (tfloat)1/(tfloat)slice_num[d];
+        split = d;
+        smin = span[d][k];
+      }
+    }
+  }
+
+
+#if 0
+  if(node_geom_data->tri_num < 15) {
+    for(i = 0; i < node_geom_data->tri_num; i++) {
+      printf("tri[%d]: [%.3f %.3f %.3f] [%.3f %.3f %.3f] [%.3f %.3f %.3f]\n", 
+i,
+node_geom_data->tri_list[i]->data[0].v[0],
+node_geom_data->tri_list[i]->data[0].v[1],
+node_geom_data->tri_list[i]->data[0].v[2],
+node_geom_data->tri_list[i]->data[1].v[0],
+node_geom_data->tri_list[i]->data[1].v[1],
+node_geom_data->tri_list[i]->data[1].v[2],
+node_geom_data->tri_list[i]->data[2].v[0],
+node_geom_data->tri_list[i]->data[2].v[1],
+node_geom_data->tri_list[i]->data[2].v[2]);
+    }
+  }
+  printf("winner: depth: %d, dim = %d, smin = %d, coef: %.3f\n", depth, split, smin, split_coef);
+  printf("winner: min: %.3f %.3f %.3f, max: %.3f %.3f %.3f, tris: %d\n", min.v[0], min.v[1], min.v[2], max.v[0], max.v[1], max.v[2], node_geom_data->tri_num);
+#endif
+
+  /* Based on the winner, construct the two child nodes */
+  /* Left Child */
+  cmin[0] = min;
+  cmax[0] = max;
+
+  /* Right Child */
+  cmin[1] = min;
+  cmax[1] = max;
+
+  cmax[0].v[split] = min.v[split]*(1.0-split_coef) + max.v[split]*split_coef;
+  cmin[1].v[split] = cmax[0].v[split];
+  node->axis = cmax[0].v[split];
 }
 #endif
 
