@@ -286,7 +286,7 @@ static void tie_tri_prep(tie_t *tie) {
 
 static void tie_build_tree(tie_t *tie, tie_kdtree_t *node, int depth, TIE_3 min, TIE_3 max, tfloat cost) {
   tie_geom_t	*child[2], *node_geom_data = (tie_geom_t*)(node->data);
-  TIE_3		cmin[2], cmax[2], center, half_size, vec;
+  TIE_3		cmin[2], cmax[2], center, half_size;
   int		i, j, n, split, cnt[2];
 
 #if 0
@@ -308,6 +308,7 @@ static void tie_build_tree(tie_t *tie, tie_kdtree_t *node, int depth, TIE_3 min,
   }
 
 #if 0
+{
   /**********************
   * MID-SPLIT ALGORITHM *
   ***********************/
@@ -342,30 +343,24 @@ static void tie_build_tree(tie_t *tie, tie_kdtree_t *node, int depth, TIE_3 min,
     node->axis = center.v[2];
     split = 2;
   }
+}
 #else
 {
   /******************************
   * Justin's Home Grown KD-Tree *
   *******************************/
-  int span[3][MAX_SLICES+9], gap[3][2], active;
-  int d, s, k, smax[3], smin, slice_num[3];
-  tfloat coef, split_coef, beg, end;
+  int span[3][MAX_SLICES+MIN_SLICES], gap[3][2], active;
+  int d, s, k, smax[3], smin, slice_num;
+  tfloat coef[3][MAX_SLICES+MIN_SLICES], split_coef, beg, end;
 
-  /* Calculate the number of slices that will be used for this node */
-#if 0
-  /* Function of relative size */
-  slice_num[0] = 7 + MAX_SLICES * ((max.v[0] - min.v[0]) / (tie->max.v[0] - tie->min.v[0]));
-  slice_num[1] = 7 + MAX_SLICES * ((max.v[1] - min.v[1]) / (tie->max.v[1] - tie->min.v[1]));
-  slice_num[2] = 7 + MAX_SLICES * ((max.v[2] - min.v[2]) / (tie->max.v[2] - tie->min.v[2]));
-#else
-  /* Function of triangle density */
-  slice_num[0] = MIN_SLICES + MAX_SLICES * ((tfloat)node_geom_data->tri_num / (tfloat)tie->tri_num);
-  slice_num[1] = MIN_SLICES + MAX_SLICES * ((tfloat)node_geom_data->tri_num / (tfloat)tie->tri_num);
-  slice_num[2] = MIN_SLICES + MAX_SLICES * ((tfloat)node_geom_data->tri_num / (tfloat)tie->tri_num);
-#endif
+  /*
+  * Calculate number of slices to use as a function of triangle density.
+  * Slices as a function of relative node size does not work so well.
+  */
+  slice_num = MIN_SLICES + MAX_SLICES * ((tfloat)node_geom_data->tri_num / (tfloat)tie->tri_num);
 
   for(d = 0; d < 3; d++) {
-    for(k = 0; k < slice_num[d]; k++) {
+    for(k = 0; k < slice_num; k++) {
       span[d][k] = 0;
 
       /* Left Child */
@@ -377,8 +372,8 @@ static void tie_build_tree(tie_t *tie, tie_kdtree_t *node, int depth, TIE_3 min,
       cmax[1] = max;
 
       /* construct slices so as not to use the boundaries as slices */
-      coef = ((tfloat)k/(tfloat)(slice_num[d]-1)) * (tfloat)(slice_num[d]-2)/(tfloat)slice_num[d] + (tfloat)1/(tfloat)slice_num[d];
-      cmax[0].v[d] = min.v[d]*(1.0-coef) + max.v[d]*coef;
+      coef[d][k] = ((tfloat)k / (tfloat)(slice_num-1)) * (tfloat)(slice_num-2) / (tfloat)slice_num + (tfloat)1 / (tfloat)slice_num;
+      cmax[0].v[d] = min.v[d]*(1.0-coef[d][k]) + max.v[d]*coef[d][k];
       cmin[1].v[d] = cmax[0].v[d];
 
       for(i = 0; i < node_geom_data->tri_num; i++) {
@@ -421,7 +416,7 @@ static void tie_build_tree(tie_t *tie, tie_kdtree_t *node, int depth, TIE_3 min,
   /* Store the max value from each of the 3 Slice arrays */
   for(d = 0; d < 3; d++) {
     smax[d] = 0;
-    for(k = 0; k < slice_num[d]; k++) {
+    for(k = 0; k < slice_num; k++) {
       if(span[d][k] > smax[d])
         smax[d] = span[d][k];
     }
@@ -440,7 +435,7 @@ static void tie_build_tree(tie_t *tie, tie_kdtree_t *node, int depth, TIE_3 min,
     end = 0;
     active = 0;
 
-    for(k = 0; k < slice_num[d]; k++) {
+    for(k = 0; k < slice_num; k++) {
 /*      printf("span[%d][%d]: %d < %d\n", d, k, span[d][k], (int)(MIN_DENSITY * (tfloat)smax[d])); */
       if(span[d][k] < (int)(MIN_DENSITY * (tfloat)smax[d])) {
         if(!active) {
@@ -489,16 +484,21 @@ static void tie_build_tree(tie_t *tie, tie_kdtree_t *node, int depth, TIE_3 min,
   if(gap[2][1] - gap[2][0] > gap[d][1] - gap[d][0])
     d = 2;
   
-  /* Largest gap > MIN_SPAN? */
-  if((tfloat)(gap[d][1] - gap[d][0]) / (tfloat)slice_num[d] > MIN_SPAN && node_geom_data->tri_num > 500) {
+  /*
+  * Largest gap found must meet MIN_SPAN requirements
+  * There must be atleast 500 triangles or we don't bother.
+  * Lower triangle numbers means there is a higher probability that
+  * triangles lack any sort of coherent structure.
+  */
+  if((tfloat)(gap[d][1] - gap[d][0]) / (tfloat)slice_num > MIN_SPAN && node_geom_data->tri_num > 500) {
 /*  printf("choosing span[%d]: %d->%d :: %d tris\n", d, gap[d][0], gap[d][1], node_geom_data->tri_num); */
     split = d;
-    if(abs(gap[d][0] - slice_num[d]/2) < abs(gap[d][1] - slice_num[d]/2)) {
+    if(abs(gap[d][0] - slice_num/2) < abs(gap[d][1] - slice_num/2)) {
       /* choose gap[d][0] as splitting plane */
-      split_coef = ((tfloat)gap[d][0]/(tfloat)(slice_num[d]-1)) * (tfloat)(slice_num[d]-2)/(tfloat)slice_num[d] + (tfloat)1/(tfloat)slice_num[d];
+      split_coef = ((tfloat)gap[d][0] / (tfloat)(slice_num-1)) * (tfloat)(slice_num-2) / (tfloat)slice_num + (tfloat)1 / (tfloat)slice_num;
     } else {
       /* choose gap[d][1] as splitting plane */
-      split_coef = ((tfloat)gap[d][1]/(tfloat)(slice_num[d]-1)) * (tfloat)(slice_num[d]-2)/(tfloat)slice_num[d] + (tfloat)1/(tfloat)slice_num[d];
+      split_coef = ((tfloat)gap[d][1] / (tfloat)(slice_num-1)) * (tfloat)(slice_num-2) / (tfloat)slice_num + (tfloat)1 / (tfloat)slice_num;
     }
   } else {
     /*
@@ -510,20 +510,20 @@ static void tie_build_tree(tie_t *tie, tie_kdtree_t *node, int depth, TIE_3 min,
     * created, i.e dividing a fraction of a wing-nut instead of an engine-block.
     */
     for(d = 0; d < 3; d++) {
-      for(k = 0; k < slice_num[d]; k++) {
-        coef = ((tfloat)k/(tfloat)(slice_num[d]-1)) * (tfloat)(slice_num[d]-2)/(tfloat)slice_num[d] + (tfloat)1/(tfloat)slice_num[d];
-        span[d][k] += fabs(coef-0.5) * SCALE_COEF * smax[d];
-/*        printf("%.3f %d\n", coef, span[d][k]); */
+      for(k = 0; k < slice_num; k++) {
+        span[d][k] += fabs(coef[d][k]-0.5) * SCALE_COEF * smax[d];
+/*        printf("%.3f %d\n", coef[d][k], span[d][k]); */
       }
     }
 
     /* Choose the slice with the graphs minima as the splitting plane. */
     split = 0;
     smin = tie->tri_num;
+    split_coef = 0.5;
     for(d = 0; d < 3; d++) {
-      for(k = 0; k < slice_num[d]; k++) {
+      for(k = 0; k < slice_num; k++) {
         if(span[d][k] < smin) {
-          split_coef = ((tfloat)k/(tfloat)(slice_num[d]-1)) * (tfloat)(slice_num[d]-2)/(tfloat)slice_num[d] + (tfloat)1/(tfloat)slice_num[d];
+          split_coef = coef[d][k];
           split = d;
           smin = span[d][k];
         }
