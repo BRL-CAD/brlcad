@@ -284,24 +284,27 @@ static void tie_tri_prep(tie_t *tie) {
 }
 
 
-static void tie_build_tree(tie_t *tie, tie_kdtree_t *node, int depth, TIE_3 min, TIE_3 max, tfloat cost) {
+static void tie_build_tree(tie_t *tie, tie_kdtree_t *node, int depth, TIE_3 min, TIE_3 max, int node_a, int node_b) {
   tie_geom_t	*child[2], *node_geom_data = (tie_geom_t*)(node->data);
   TIE_3		cmin[2], cmax[2], center, half_size;
   int		i, j, n, split, cnt[2];
 
 #if 0
-  if(depth <= 4)
+//  if(depth <= 4)
     printf("%f %f %f %f %f %f\n", min.v[0], min.v[1], min.v[2], max.v[0], max.v[1], max.v[2]);
 #endif
 
   /* Terminating criteria for KDTREE subdivision */
   if(node_geom_data->tri_num <= TIE_KDTREE_NODE_MAX || depth > tie->max_depth) {
+    tie->stat++;
+#if 0
     if(node_geom_data->tri_num > tie->stat)
       tie->stat = node_geom_data->tri_num;
-#if 0
-    printf("num: %d, depth: %d\n", node_geom_data->tri_num, depth);
-    if(node_geom_data->tri_num > tie->stat) */
-      tie->stat++; */
+    if(node_geom_data->tri_num > tie->stat) {
+      tie->stat = node_geom_data->tri_num;
+      printf("depth: %d, tris: %d\n", depth, node_geom_data->tri_num);
+      printf("%f %f %f %f %f %f\n", min.v[0], min.v[1], min.v[2], max.v[0], max.v[1], max.v[2]);
+    }
     exit(0);
 #endif
     return;
@@ -312,6 +315,8 @@ static void tie_build_tree(tie_t *tie, tie_kdtree_t *node, int depth, TIE_3 min,
   /**********************
   * MID-SPLIT ALGORITHM *
   ***********************/
+  TIE_3 vec;
+
   /* Left Child */
   cmin[0] = min;
   cmax[0] = max;
@@ -349,8 +354,8 @@ static void tie_build_tree(tie_t *tie, tie_kdtree_t *node, int depth, TIE_3 min,
   /******************************
   * Justin's Home Grown KD-Tree *
   *******************************/
-  int span[3][MAX_SLICES+MIN_SLICES], gap[3][2], active;
-  int d, s, k, smax[3], smin, slice_num;
+  int slice[3][MAX_SLICES+MIN_SLICES], gap[3][2], active, split_slice;
+  int side[3][MAX_SLICES+MIN_SLICES][2], d, s, k, smax[3], smin, slice_num;
   tfloat coef[3][MAX_SLICES+MIN_SLICES], split_coef, beg, end;
 
   /*
@@ -361,7 +366,9 @@ static void tie_build_tree(tie_t *tie, tie_kdtree_t *node, int depth, TIE_3 min,
 
   for(d = 0; d < 3; d++) {
     for(k = 0; k < slice_num; k++) {
-      span[d][k] = 0;
+      slice[d][k] = 0;
+      side[d][k][0] = 0;
+      side[d][k][1] = 0;
 
       /* Left Child */
       cmin[0] = min;
@@ -401,14 +408,17 @@ static void tie_build_tree(tie_t *tie, tie_kdtree_t *node, int depth, TIE_3 min,
 
           if(j == 5) {
             s++;
+            side[d][k][n]++;
           } else {
-            if(tie_tri_box_overlap(&center, &half_size, node_geom_data->tri_list[i]->data))
+            if(tie_tri_box_overlap(&center, &half_size, node_geom_data->tri_list[i]->data)) {
               s++;
+              side[d][k][n]++;
+            }
           }
         }
 
         if(s == 2)
-          span[d][k]++;
+          slice[d][k]++;
       }
     }
   }
@@ -417,8 +427,8 @@ static void tie_build_tree(tie_t *tie, tie_kdtree_t *node, int depth, TIE_3 min,
   for(d = 0; d < 3; d++) {
     smax[d] = 0;
     for(k = 0; k < slice_num; k++) {
-      if(span[d][k] > smax[d])
-        smax[d] = span[d][k];
+      if(slice[d][k] > smax[d])
+        smax[d] = slice[d][k];
     }
   }
 
@@ -436,8 +446,8 @@ static void tie_build_tree(tie_t *tie, tie_kdtree_t *node, int depth, TIE_3 min,
     active = 0;
 
     for(k = 0; k < slice_num; k++) {
-/*      printf("span[%d][%d]: %d < %d\n", d, k, span[d][k], (int)(MIN_DENSITY * (tfloat)smax[d])); */
-      if(span[d][k] < (int)(MIN_DENSITY * (tfloat)smax[d])) {
+/*      printf("slice[%d][%d]: %d < %d\n", d, k, slice[d][k], (int)(MIN_DENSITY * (tfloat)smax[d])); */
+      if(slice[d][k] < (int)(MIN_DENSITY * (tfloat)smax[d])) {
         if(!active) {
           active = 1;
           beg = k;
@@ -491,14 +501,16 @@ static void tie_build_tree(tie_t *tie, tie_kdtree_t *node, int depth, TIE_3 min,
   * triangles lack any sort of coherent structure.
   */
   if((tfloat)(gap[d][1] - gap[d][0]) / (tfloat)slice_num > MIN_SPAN && node_geom_data->tri_num > 500) {
-/*  printf("choosing span[%d]: %d->%d :: %d tris\n", d, gap[d][0], gap[d][1], node_geom_data->tri_num); */
+/*  printf("choosing slice[%d]: %d->%d :: %d tris\n", d, gap[d][0], gap[d][1], node_geom_data->tri_num); */
     split = d;
     if(abs(gap[d][0] - slice_num/2) < abs(gap[d][1] - slice_num/2)) {
       /* choose gap[d][0] as splitting plane */
       split_coef = ((tfloat)gap[d][0] / (tfloat)(slice_num-1)) * (tfloat)(slice_num-2) / (tfloat)slice_num + (tfloat)1 / (tfloat)slice_num;
+      split_slice = gap[d][0];
     } else {
       /* choose gap[d][1] as splitting plane */
       split_coef = ((tfloat)gap[d][1] / (tfloat)(slice_num-1)) * (tfloat)(slice_num-2) / (tfloat)slice_num + (tfloat)1 / (tfloat)slice_num;
+      split_slice = gap[d][1];
     }
   } else {
     /*
@@ -511,8 +523,8 @@ static void tie_build_tree(tie_t *tie, tie_kdtree_t *node, int depth, TIE_3 min,
     */
     for(d = 0; d < 3; d++) {
       for(k = 0; k < slice_num; k++) {
-        span[d][k] += fabs(coef[d][k]-0.5) * SCALE_COEF * smax[d];
-/*        printf("%.3f %d\n", coef[d][k], span[d][k]); */
+        slice[d][k] += fabs(coef[d][k]-0.5) * SCALE_COEF * smax[d];
+/*        printf("%.3f %d\n", coef[d][k], slice[d][k]); */
       }
     }
 
@@ -522,14 +534,33 @@ static void tie_build_tree(tie_t *tie, tie_kdtree_t *node, int depth, TIE_3 min,
     split_coef = 0.5;
     for(d = 0; d < 3; d++) {
       for(k = 0; k < slice_num; k++) {
-        if(span[d][k] < smin) {
+        if(slice[d][k] < smin) {
           split_coef = coef[d][k];
           split = d;
-          smin = span[d][k];
+          split_slice = k;
+          smin = slice[d][k];
         }
       }
     }
   }
+
+  /*
+  * Lastly, after we have supposedly chosen the most ideal splitting point,
+  * check to see that the subdivision that is about to take place is worth
+  * doing.  In other words, if both children have the same number of triangles
+  * as the parent does then stop.
+  */
+#if 0
+  if(side[split][split_slice][0] == node_geom_data->tri_num && side[split][split_slice][1] == node_geom_data->tri_num)
+    return;
+#else
+  if(side[split][split_slice][0] == node_a && side[split][split_slice][1] == node_b) {
+    if(node_geom_data->tri_num > 32)
+      printf("%f %f %f %f %f %f\n", min.v[0], min.v[1], min.v[2], max.v[0], max.v[1], max.v[2]);
+//      printf("moo: %d - %d\n", depth, node_geom_data->tri_num);
+//    return;
+  }
+#endif
 
 #if 0
   printf("winner: depth: %d, dim = %d, smin = %d, coef: %.3f\n", depth, split, smin, split_coef);
@@ -620,8 +651,8 @@ static void tie_build_tree(tie_t *tie, tie_kdtree_t *node, int depth, TIE_3 min,
   free(node_geom_data);
 
   /* Push each child through the same process. */
-  tie_build_tree(tie, &((tie_kdtree_t *)(node->data))[0], depth+1, cmin[0], cmax[0], 0);
-  tie_build_tree(tie, &((tie_kdtree_t *)(node->data))[1], depth+1, cmin[1], cmax[1], 0);
+  tie_build_tree(tie, &((tie_kdtree_t *)(node->data))[0], depth+1, cmin[0], cmax[0], cnt[0], cnt[1]);
+  tie_build_tree(tie, &((tie_kdtree_t *)(node->data))[1], depth+1, cmin[1], cmax[1], cnt[0], cnt[1]);
  
   /* Assign the splitting dimension to the node */
   /* If we've come this far then YES, this node DOES have child nodes, MARK it as so. */
@@ -714,7 +745,7 @@ void tie_prep(tie_t *tie) {
   printf("max_depth: %d\n", tie->max_depth);
 
   /* Build the KDTREE */
-  tie_build_tree(tie, tie->kdtree, 0, tie->min, tie->max, ((tie_geom_t *)(tie->kdtree->data))->tri_num);
+  tie_build_tree(tie, tie->kdtree, 0, tie->min, tie->max, 0, 0);
 
   /* Prep all the triangles */
   tie_tri_prep(tie);
