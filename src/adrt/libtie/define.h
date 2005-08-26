@@ -49,6 +49,13 @@
 #define	TIE_KDTREE_DEPTH_K1	1.4		/* K1 Depth Constant Coefficient */
 #define	TIE_KDTREE_DEPTH_K2	2		/* K2 Contant */
 
+#define MAX_SLICES 100
+#define MIN_SLICES 11
+#define MIN_DENSITY 0.01
+#define MIN_SPAN    0.15
+#define SCALE_COEF  1.80
+
+
 /* Type to use for floating precision */
 #if TIE_SINGLE_PREC
 #define tfloat float
