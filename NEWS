@@ -17,10 +17,11 @@ robust means for computing the weight and volume of objects while also
 allowing a means to report overlaps, air gaps, external air regions,
 bounding box dimensions, and more.
 
+* enabled SGI knobs and button box support for IRIX - Sean Morrison
 * fixed mged startup resource bug - Enrique Perez-Terron
 * Enhancements to g_qa for stability and performance. - Lee Butler
-* regression tests now run against build tree, not installed - Lee Butler
-* re-wrote the nightly regression test framework - Lee Butler
+* 'make test' now runs against an uninstalled  build tree - Lee Butler
+* new nightly regression test framework - Lee Butler
 * g_qa now has option to report interfaces/connections - Lee Butler
 
 
