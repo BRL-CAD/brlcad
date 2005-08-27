@@ -19,6 +19,7 @@ bounding box dimensions, and more.
 
 * improved ADRT build support - Sean Morrison
 * improved build support detection for OpenGL and X11 - Sean Morrison
+* performance enhancements to ADRT - Justin Shumaker
 * enabled SGI knobs and button box support for IRIX - Sean Morrison
 * fixed mged startup resource bug - Enrique Perez-Terron
 * Enhancements to g_qa for stability and performance. - Lee Butler
