@@ -39,8 +39,6 @@ THESE ARE LOWER PRIORITY OR FOR FUTURE RELEASES
 * fix reference to a "Create Solid" submenu on pdf page 18 (page 6) of
   volume II
 
-* recheck AquaTk usability so we can decouple mac build from X11
-
 * write up the history of brlcad
 
 * handle multiple threading models (irix) via configure
