@@ -58,7 +58,8 @@ THESE BREAK PROTOCOL OR ARE BACKWARDS-INCOMPATIBLE
   primitive types.  this includes modifying the major/minor code or
   combinations/regions and binary objects
 
-* add database support for constraints, expressions, parametric values, 
+* add database support for constraints, expressions, parametric
+  values, construction history, and timestamping.
 
 ---
 
