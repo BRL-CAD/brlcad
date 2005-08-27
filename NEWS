@@ -17,6 +17,7 @@ robust means for computing the weight and volume of objects while also
 allowing a means to report overlaps, air gaps, external air regions,
 bounding box dimensions, and more.
 
+* improved ADRT build support - Sean Morrison
 * improved build support detection for OpenGL and X11 - Sean Morrison
 * enabled SGI knobs and button box support for IRIX - Sean Morrison
 * fixed mged startup resource bug - Enrique Perez-Terron
