@@ -74,15 +74,6 @@
 # include <xmmintrin.h>
 #endif
 
-#ifndef HUGE
-# ifdef HUGE_VAL
-#  define HUGE HUGE_VAL
-# else
-#  define HUGE 3e23
-# endif
-#endif
-
-
 /*************************************************************
  **************** PRIVATE FUNCTIONS **************************
  *************************************************************/

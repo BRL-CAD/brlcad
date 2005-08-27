@@ -23,17 +23,7 @@
  *
  *  @brief support routines for shooting at triangles
  *  Comments -
- *      Triangle Intersection Engine
- *
- *      The calling sequence is as follows:
- *        - tie_init()	initialize the data structure
- *        - tie_push()	add triangles to the universe to be raytraced
- *        - tie_prep()	build the KDTREE for the triangles
- *        - tie_work()	shoot some ray
- *        - tie_work()	shoot some ray
- *        - tie_work()	shoot some ray
- *        - tie_work()	shoot some ray
- *        - tie_free()	Free up all the memory
+ *      KD-Tree Routines
  *
  *  Author -
  *      Justin L. Shumaker
@@ -45,17 +35,6 @@
  * $Id$
  */
 /** @addtogroup libtie
- *
- * The calling sequence is as follows:
- *	@li tie_init()	initialize the data structure
- *	@li tie_push()	add triangles to the universe to be raytraced
- *	@li tie_prep()	build the KDTREE for the triangles
- *	@li tie_work()	shoot some ray
- *	@li tie_work()	shoot some ray
- *	@li tie_work()	shoot some ray
- *	@li tie_work()	shoot some ray
- *	@li tie_work()	shoot some ray
- *	@li tie_free()	Free up all the memory
  * @{
  */
 
@@ -64,14 +43,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
-
-#ifndef HUGE
-# ifdef HUGE_VAL
-#  define HUGE HUGE_VAL
-# else
-#  define HUGE 3e23
-# endif
-#endif
 
 tfloat TIE_PREC;
 
