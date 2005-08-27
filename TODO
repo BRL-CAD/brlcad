@@ -13,8 +13,6 @@ THESE SHOULD HAPPEN BEFORE THE NEXT RELEASE
 
 * make X11 optional at configure-time
 
-* make sure sgi knobs work
-
 
 THESE ARE LOWER PRIORITY OR FOR FUTURE RELEASES
 
