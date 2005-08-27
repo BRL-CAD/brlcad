@@ -11,8 +11,6 @@ THESE SHOULD HAPPEN BEFORE THE NEXT RELEASE
 
 * ensure successful build on mingw
 
-* make X11 optional at configure-time
-
 
 THESE ARE LOWER PRIORITY OR FOR FUTURE RELEASES
 
