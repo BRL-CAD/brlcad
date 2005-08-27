@@ -2439,8 +2439,8 @@ fi
 
 
 dnl *** Knobs availability ***
-knobs_work=no
-AC_MSG_CHECKING(for SGI Knobs support)
+dials_and_buttons=no
+AC_MSG_CHECKING(for SGI dials and buttons support)
 AC_TRY_RUN([
 #ifdef HAVE_GL_DEVICE_H
 #  include <gl/device.h>
@@ -2452,13 +2452,13 @@ main () {
     return 1;
 }
 	],
-	[knobs_work=yes]
+	[dials_and_buttons=yes]
 )
-if test "x$knobs_work" = "xyes" ; then
+if test "x$dials_and_buttons" = "xyes" ; then
 	AC_DEFINE(IR_KNOBS, 8, [Turn on SGI knobs])
 	AC_DEFINE(IR_BUTTONS, 32, [Turn on SGI buttons])
 fi
-AC_MSG_RESULT($knobs_work)
+AC_MSG_RESULT($dials_and_buttons)
 
 
 # XXX nasty temp hack for backwards cake compatibility.
