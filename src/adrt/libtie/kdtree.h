@@ -1,6 +1,6 @@
 /*                     T I E . H
  *
- * @file tie.h
+ * @file kdtree.h
  *
  * BRL-CAD
  *
@@ -22,7 +22,7 @@
  * information.
  *
  *  Comments -
- *      Triangle Intersection Engine Header
+ *      KD-Tree Routines
  *
  *  Author -
  *      Justin L. Shumaker
@@ -35,25 +35,20 @@
  */
 /** addtogroup libtie */ /** @{ */
 
-#ifndef _TIE_H
-#define _TIE_H
+#ifndef _KDTREE_H
+#define _KDTREE_H
 
 #include "define.h"
 #include "struct.h"
-#include "kdtree.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 
-void		tie_init(tie_t *tie, int tri_num);
-void		tie_free(tie_t *tie);
-void		tie_prep(tie_t *tie);
-void*		tie_work(tie_t *tie, tie_ray_t *ray, tie_id_t *id,
-			             void *(*hitfunc)(tie_ray_t*, tie_id_t*, tie_tri_t*, void *ptr),
-				     void *ptr);
-void		tie_push(tie_t *tie, TIE_3 *tlist, int tnum, void *plist, int pstride);
+void tie_kdtree_free(tie_t *tie);
+void tie_kdtree_prep(tie_t *tie);
+extern tfloat TIE_PREC;
 
 
 #ifdef __cplusplus
