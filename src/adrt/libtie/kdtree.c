@@ -51,13 +51,13 @@ tfloat TIE_PREC;
  *************************************************************/
 
 
-static void tie_free_node(tie_kdtree_t *node) {
+static void tie_kdtree_free_node(tie_kdtree_t *node) {
   tie_kdtree_t *node_aligned = (tie_kdtree_t *)((TIE_PTR_CAST)node & ~0x7L);
 
   if(((TIE_PTR_CAST)(node_aligned->data)) & 0x4) {
     /* Node Data is KDTREE Children, Recurse */
-    tie_free_node(&((tie_kdtree_t *)(node_aligned->data))[0]);
-    tie_free_node(&((tie_kdtree_t *)(node_aligned->data))[1]);
+    tie_kdtree_free_node(&((tie_kdtree_t *)(node_aligned->data))[0]);
+    tie_kdtree_free_node(&((tie_kdtree_t *)(node_aligned->data))[1]);
     free((void*)((TIE_PTR_CAST)(node_aligned->data) & ~0x7L));
   } else {
     /* This node points to a geometry node, free it */
@@ -105,7 +105,7 @@ static void tie_kdtree_build_head(tie_t *tie, tie_tri_t *tri_list, int tri_num) 
 }
 
 
-static int tie_tri_box_overlap(TIE_3 *center, TIE_3 *half_size, TIE_3 triverts[3]) {
+static int tie_kdtree_tri_box_overlap(TIE_3 *center, TIE_3 *half_size, TIE_3 triverts[3]) {
   /*
    * use separating axis theorem to test overlap between triangle and box
    * need to test for overlap in these directions:
@@ -320,7 +320,7 @@ static void tie_kdtree_build(tie_t *tie, tie_kdtree_t *node, int depth, TIE_3 mi
             s++;
             side[d][k][n]++;
           } else {
-            if(tie_tri_box_overlap(&center, &half_size, node_geom_data->tri_list[i]->data)) {
+            if(tie_kdtree_tri_box_overlap(&center, &half_size, node_geom_data->tri_list[i]->data)) {
               s++;
               side[d][k][n]++;
             }
@@ -555,7 +555,7 @@ static void tie_kdtree_build(tie_t *tie, tie_kdtree_t *node, int depth, TIE_3 mi
         child[n]->tri_list[child[n]->tri_num++] = node_geom_data->tri_list[i];
         cnt[n]++;
       } else {
-        if(tie_tri_box_overlap(&center, &half_size, node_geom_data->tri_list[i]->data)) {
+        if(tie_kdtree_tri_box_overlap(&center, &half_size, node_geom_data->tri_list[i]->data)) {
           child[n]->tri_list[child[n]->tri_num++] = node_geom_data->tri_list[i];
           cnt[n]++;
         }
@@ -601,7 +601,7 @@ void tie_kdtree_free(tie_t *tie) {
   /* Free KDTREE Nodes */
   /* prevent tie from crashing when a tie_free() is called right after a tie_init() */
   if(tie->kdtree)
-    tie_free_node(tie->kdtree);
+    tie_kdtree_free_node(tie->kdtree);
   free(tie->kdtree);
 }
 
@@ -656,4 +656,3 @@ void tie_kdtree_prep(tie_t *tie) {
 }
 
 /** @} */
-
