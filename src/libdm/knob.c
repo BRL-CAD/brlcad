@@ -30,14 +30,13 @@
 
 #include "common.h"
 
-
 #include "tcl.h"
 #include "machine.h"
 #include "bu.h"
 #include "vmath.h"
 #include "dm.h"
 
-#if IR_KNOBS
+#ifdef IR_KNOBS
 
 int dm_limit();  /* provides knob dead spot */
 int dm_unlimit();  /* */

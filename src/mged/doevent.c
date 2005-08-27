@@ -34,8 +34,6 @@
 
 #include "common.h"
 
-
-
 #include <stdio.h>
 #include <math.h>
 
@@ -52,8 +50,8 @@
 #endif
 
 
-#if IR_KNOBS
-#include <gl/device.h>
+#if HAVE_GL_DEVICE_H
+#  include <gl/device.h>
 #endif
 
 #include "machine.h"
@@ -72,11 +70,11 @@ extern void rect_image2view();
 extern void rb_set_dirty_flag();
 
 static void motion_event_handler();
-#if IR_KNOBS
+#ifdef IR_KNOBS
 static void dials_event_handler();
 #endif
 
-#if IR_BUTTONS
+#ifdef IR_BUTTONS
 static void buttons_event_handler();
 /*
  * Map SGI Button numbers to MGED button functions.
@@ -114,7 +112,7 @@ static char	*kn2_knobs[] = {
 };
 #endif
 
-#if IR_BUTTONS || IR_KNOBS
+#if defined(IR_BUTTONS) || defined(IR_KNOBS)
 static int button0 = 0;
 #endif
 
@@ -183,7 +181,7 @@ XEvent *eventPtr;
     /* no further processing of this event */
     status = TCL_RETURN;
   }
-#if IR_KNOBS
+#ifdef IR_KNOBS
   else if(eventPtr->type == ((struct dm_xvars *)dmp->dm_vars.pub_vars)->devmotionnotify){
     dials_event_handler((XDeviceMotionEvent *)eventPtr);
 
@@ -191,7 +189,7 @@ XEvent *eventPtr;
     status = TCL_RETURN;
   }
 #endif
-#if IR_BUTTONS
+#ifdef IR_BUTTONS
   else if(eventPtr->type == ((struct dm_xvars *)dmp->dm_vars.pub_vars)->devbuttonpress){
     buttons_event_handler((XDeviceButtonEvent *)eventPtr, 1);
 
@@ -209,7 +207,7 @@ XEvent *eventPtr;
   return status;
 }
 
-#if IR_BUTTONS || IR_KNOBS
+#if defined(IR_BUTTONS) || defined(IR_KNOBS)
 static void
 set_knob_offset()
 {
@@ -220,7 +218,7 @@ set_knob_offset()
 }
 #endif
 
-#if IR_BUTTONS || IR_KNOBS
+#if defined(IR_BUTTONS) || defined(IR_KNOBS)
 static void
 common_dbtext(str)
 char *str;
@@ -742,7 +740,7 @@ handled:
   dml_omy = my;
 }
 
-#if IR_KNOBS
+#ifdef IR_KNOBS
 static void
 dials_event_handler(dmep)
 XDeviceMotionEvent *dmep;
@@ -1412,7 +1410,7 @@ XDeviceMotionEvent *dmep;
 }
 #endif
 
-#if IR_BUTTONS
+#ifdef IR_BUTTONS
 static void
 buttons_event_handler(dbep, press)
 XDeviceButtonEvent *dbep;

@@ -62,12 +62,11 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "common.h"
 
-
 #include "tk.h"
 
 #ifdef HAVE_XOSDEFS_H
-#include <X11/Xfuncproto.h>
-#include <X11/Xosdefs.h>
+#  include <X11/Xfuncproto.h>
+#  include <X11/Xosdefs.h>
 #endif
 
 #include <gl/glws.h>
@@ -77,11 +76,12 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include <stdio.h>
 #ifdef HAVE_STRING_H
-#include <string.h>
+#  include <string.h>
 #else
-#include <strings.h>
+#  include <strings.h>
 #endif
 #include <math.h>
+
 #include "machine.h"
 #include "bu.h"
 #include "vmath.h"
@@ -90,6 +90,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "dm.h"
 #include "dm-glx.h"
 #include "solid.h"
+
 
 #define YSTEREO		491	/* subfield height, in scanlines */
 #define YOFFSET_LEFT	532	/* YSTEREO + YBLANK ? */
@@ -521,7 +522,7 @@ char *argv[];
 	for(cip = dev->classes, k = 0; k < dev->num_classes;
 	    ++k, ++cip){
 	  switch(cip->input_class){
-#if IR_BUTTONS
+#ifdef IR_BUTTONS
 	  case ButtonClass:
 	    DeviceButtonPress(dev, ((struct glx_vars *)dmp->dm_vars)->devbuttonpress,
 			      e_class[nclass]);
@@ -531,7 +532,7 @@ char *argv[];
 	    ++nclass;
 #endif
 	    break;
-#if IR_KNOBS
+#ifdef IR_KNOBS
 	  case ValuatorClass:
 	    DeviceMotionNotify(dev, ((struct glx_vars *)dmp->dm_vars)->devmotionnotify,
 			       e_class[nclass]);

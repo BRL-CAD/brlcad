@@ -454,7 +454,7 @@ ogl_open(Tcl_Interp *interp, int argc, char **argv)
 	for(cip = dev->classes, k = 0; k < dev->num_classes;
 	    ++k, ++cip){
 	  switch(cip->input_class){
-#if IR_BUTTONS
+#ifdef IR_BUTTONS
 	  case ButtonClass:
 	    DeviceButtonPress(dev, ((struct dm_xvars *)dmp->dm_vars.pub_vars)->devbuttonpress,
 			      e_class[nclass]);
@@ -464,7 +464,7 @@ ogl_open(Tcl_Interp *interp, int argc, char **argv)
 	    ++nclass;
 	    break;
 #endif
-#if IR_KNOBS
+#ifdef IR_KNOBS
 	  case ValuatorClass:
 	    DeviceMotionNotify(dev, ((struct dm_xvars *)dmp->dm_vars.pub_vars)->devmotionnotify,
 			       e_class[nclass]);

@@ -2438,6 +2438,29 @@ else
 fi
 
 
+dnl *** Knobs availability ***
+knobs_work=no
+AC_MSG_CHECKING(for SGI Knobs support)
+AC_TRY_RUN([
+#ifdef HAVE_GL_DEVICE_H
+#  include <gl/device.h>
+#endif
+main () {
+    if (DIAL0 | DIAL1 | DIAL2 | DIAL3) {
+	return 0;
+    }
+    return 1;
+}
+	],
+	[knobs_work=yes]
+)
+if test "x$knobs_work" = "xyes" ; then
+	AC_DEFINE(IR_KNOBS, 8, [Turn on SGI knobs])
+	AC_DEFINE(IR_BUTTONS, 32, [Turn on SGI buttons])
+fi
+AC_MSG_RESULT($knobs_available)
+
+
 # XXX nasty temp hack for backwards cake compatibility.
 if test "x$host_os" = "xirix6.5" ; then
 	# XXX the code that relies on this will be going away, but until then..
@@ -2490,6 +2513,7 @@ AM_CONDITIONAL(ONLY_RTS, [test "x$bc_only_rts" != "xno"])
 
 # XXX only irix can build libtkglx right now?
 AM_CONDITIONAL(BUILD_LIBTKGLX, [test "x$host_os" = "xirix6.5"])
+
 
 
 # !!! needs to go bye bye
