@@ -290,7 +290,7 @@ static void tie_build_tree(tie_t *tie, tie_kdtree_t *node, int depth, TIE_3 min,
   int		i, j, n, split, cnt[2];
 
 #if 0
-//  if(depth <= 4)
+  if(depth >= 24)
     printf("%f %f %f %f %f %f\n", min.v[0], min.v[1], min.v[2], max.v[0], max.v[1], max.v[2]);
 #endif
 
@@ -542,6 +542,19 @@ static void tie_build_tree(tie_t *tie, tie_kdtree_t *node, int depth, TIE_3 min,
         }
       }
     }
+
+    /*
+    * If the dimension chosen to split along has a value of 0 for the maximum value
+    * then the geometry was aligned such that it fell undetectable between the slices
+    * and therefore was not picked up by the marching slices.  In the event that this
+    * happens, choose to naively split along the middle as this last ditch decision
+    * will give better results than the algorithm naively picking the first of the
+    * the slices forming these irregular, short followed by a long box, splits.
+    */
+    if(smax[split] == 0) {
+      split_coef = coef[split][slice_num / 2];
+      split_slice = slice_num / 2;
+    }
   }
 
   /*
@@ -550,17 +563,18 @@ static void tie_build_tree(tie_t *tie, tie_kdtree_t *node, int depth, TIE_3 min,
   * doing.  In other words, if both children have the same number of triangles
   * as the parent does then stop.
   */
-#if 0
   if(side[split][split_slice][0] == node_geom_data->tri_num && side[split][split_slice][1] == node_geom_data->tri_num)
     return;
-#else
+
+#if 0
   if(side[split][split_slice][0] == node_a && side[split][split_slice][1] == node_b) {
-    if(node_geom_data->tri_num > 32)
-      printf("%f %f %f %f %f %f\n", min.v[0], min.v[1], min.v[2], max.v[0], max.v[1], max.v[2]);
+    if(node_geom_data->tri_num < 10)
+      return;
+//      printf("%f %f %f %f %f %f\n", min.v[0], min.v[1], min.v[2], max.v[0], max.v[1], max.v[2]);
 //      printf("moo: %d - %d\n", depth, node_geom_data->tri_num);
-//    return;
   }
 #endif
+
 
 #if 0
   printf("winner: depth: %d, dim = %d, smin = %d, coef: %.3f\n", depth, split, smin, split_coef);
@@ -736,7 +750,7 @@ void tie_prep(tie_t *tie) {
 #endif
 
   /* Grow the head node a little bit to avoid floating point fuzz in the building process */
-  math_vec_mul_scalar(delta, delta, 0.01);
+  math_vec_mul_scalar(delta, delta, 2.0); // XXX
   math_vec_sub(tie->min, tie->min, delta);
   math_vec_add(tie->max, tie->max, delta);
 
