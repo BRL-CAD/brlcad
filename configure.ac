@@ -2458,7 +2458,7 @@ if test "x$knobs_work" = "xyes" ; then
 	AC_DEFINE(IR_KNOBS, 8, [Turn on SGI knobs])
 	AC_DEFINE(IR_BUTTONS, 32, [Turn on SGI buttons])
 fi
-AC_MSG_RESULT($knobs_available)
+AC_MSG_RESULT($knobs_work)
 
 
 # XXX nasty temp hack for backwards cake compatibility.
