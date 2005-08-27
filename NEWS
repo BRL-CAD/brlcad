@@ -25,6 +25,7 @@ bounding box dimensions, and more.
 * 'make test' now runs against an uninstalled  build tree - Lee Butler
 * new nightly regression test framework - Lee Butler
 * g_qa now has option to report interfaces/connections - Lee Butler
+* mged relocation support - Sean Morrison
 
 
 ----------------------------------------------------------------------
