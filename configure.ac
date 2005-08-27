@@ -100,9 +100,9 @@ while test $length -gt 1 ; do
       separator="${separator}*"
       length="`expr $length - 1`"
 done
-echo "***${separator}***"
-echo "*** ${title} ***"
-echo "***${separator}***"
+AC_MSG_RESULT([***${separator}***])
+AC_MSG_RESULT([*** ${title} ***])
+AC_MSG_RESULT([***${separator}***])
 
 # necessary for proper file creation on nfs volumes
 umask 022
@@ -2903,54 +2903,54 @@ dnl **********************
 dnl *** Report Summary ***
 dnl **********************
 
-echo "Done."
-echo
-echo "BRL-CAD Release $BRLCAD_VERSION, Build $CONFIG_DATE"
-echo
-echo "             Prefix: ${prefix}"
-echo "           Binaries: ${bindir}"
-echo "Configuration files: ${sysconfdir}"
-echo "       Manual pages: ${mandir}"
-echo
-echo "CC       = ${CC}"
-echo "CFLAGS   = ${CFLAGS}"
-echo "CPPFLAGS = ${CPPFLAGS}"
-echo "LDFLAGS  = ${LDFLAGS}"
-echo "LIBS     = ${LIBS}"
-echo
-echo Build Tcl ............................: $build_brlcad_tcl
-echo Build Tk .............................: $build_brlcad_tk
-echo Build Itcl/Itk .......................: $build_brlcad_itcl
-echo Build IWidgets .......................: $build_brlcad_iwidgets
-echo Build libpng .........................: $build_brlcad_png
-echo Build libregex .......................: $build_brlcad_regex
-echo Build zlib ...........................: $build_brlcad_zlib
-echo Build termlib ........................: $build_brlcad_termlib
-echo Build Utah Raster Toolkit.............: $build_brlcad_urt
-echo Build jove ...........................: $bc_build_jove
-echo 
-echo ADRT support .........................: $build_brlcad_adrt
-echo Java Developer Kit support ...........: $build_against_java
-echo X11 support ..........................: $build_against_x11
-echo OpenGL support .......................: $build_against_opengl
-echo Enable run-time debugging ............: $bc_build_runtime_debug
-echo
-echo Build 64-bit release .................: $build_brlcad_64bit
-echo Build optimized release ..............: $bc_use_optimized
-echo Build debug release ..................: $bc_use_debug
-echo Build profile release ................: $bc_use_profiling
-echo Build static libraries ...............: $enable_static
-echo Build shared/dynamic libraries .......: $enable_shared
-echo Print verbose compilation warnings ...: $bc_use_warnings
-echo
-echo Only build benchmark suite ...........: $bc_only_benchmark
-echo Only build librtserver ...............: $bc_only_rts
-echo Generate doxygen documentation .......: $bc_use_doxygen
-echo Install example geometry models ......: $bc_install_geometry
-echo
+AC_MSG_RESULT([Done.])
+AC_MSG_RESULT([])
+AC_MSG_RESULT([BRL-CAD Release $BRLCAD_VERSION, Build $CONFIG_DATE])
+AC_MSG_RESULT([])
+AC_MSG_RESULT([             Prefix: ${prefix}])
+AC_MSG_RESULT([           Binaries: ${bindir}])
+AC_MSG_RESULT([Configuration files: ${sysconfdir}])
+AC_MSG_RESULT([       Manual pages: ${mandir}])
+AC_MSG_RESULT([])
+AC_MSG_RESULT([CC       = ${CC}])
+AC_MSG_RESULT([CFLAGS   = ${CFLAGS}])
+AC_MSG_RESULT([CPPFLAGS = ${CPPFLAGS}])
+AC_MSG_RESULT([LDFLAGS  = ${LDFLAGS}])
+AC_MSG_RESULT([LIBS     = ${LIBS}])
+AC_MSG_RESULT([])
+AC_MSG_RESULT([ Build Tcl ............................: $build_brlcad_tcl])
+AC_MSG_RESULT([ Build Tk .............................: $build_brlcad_tk])
+AC_MSG_RESULT([ Build Itcl/Itk .......................: $build_brlcad_itcl])
+AC_MSG_RESULT([ Build IWidgets .......................: $build_brlcad_iwidgets])
+AC_MSG_RESULT([ Build libpng .........................: $build_brlcad_png])
+AC_MSG_RESULT([ Build libregex .......................: $build_brlcad_regex])
+AC_MSG_RESULT([ Build zlib ...........................: $build_brlcad_zlib])
+AC_MSG_RESULT([ Build termlib ........................: $build_brlcad_termlib])
+AC_MSG_RESULT([ Build Utah Raster Toolkit.............: $build_brlcad_urt])
+AC_MSG_RESULT([ Build jove ...........................: $bc_build_jove])
+AC_MSG_RESULT([ ])
+AC_MSG_RESULT([ ADRT support .........................: $build_brlcad_adrt])
+AC_MSG_RESULT([ Java Developer Kit support ...........: $build_against_java])
+AC_MSG_RESULT([ X11 support ..........................: $build_against_x11])
+AC_MSG_RESULT([ OpenGL support .......................: $build_against_opengl])
+AC_MSG_RESULT([ Enable run-time debugging ............: $bc_build_runtime_debug])
+AC_MSG_RESULT([])
+AC_MSG_RESULT([ Build 64-bit release .................: $build_brlcad_64bit])
+AC_MSG_RESULT([ Build optimized release ..............: $bc_use_optimized])
+AC_MSG_RESULT([ Build debug release ..................: $bc_use_debug])
+AC_MSG_RESULT([ Build profile release ................: $bc_use_profiling])
+AC_MSG_RESULT([ Build static libraries ...............: $enable_static])
+AC_MSG_RESULT([ Build shared/dynamic libraries .......: $enable_shared])
+AC_MSG_RESULT([ Print verbose compilation warnings ...: $bc_use_warnings])
+AC_MSG_RESULT([])
+AC_MSG_RESULT([ Only build benchmark suite ...........: $bc_only_benchmark])
+AC_MSG_RESULT([ Only build librtserver ...............: $bc_only_rts])
+AC_MSG_RESULT([ Generate doxygen documentation .......: $bc_use_doxygen])
+AC_MSG_RESULT([ Install example geometry models ......: $bc_install_geometry])
+AC_MSG_RESULT([])
 if test "x$time_elapsed" != "xunknown" ; then
-echo Elapsed configuration time ...........: $time_elapsed
+AC_MSG_RESULT([ Elapsed configuration time ...........: $time_elapsed])
 fi
-echo ---
-echo "$0 complete, type 'make' to begin building"
-echo
+AC_MSG_RESULT([ ---])
+AC_MSG_RESULT([$0 complete, type 'make' to begin building])
+AC_MSG_RESULT([])
