@@ -40,11 +40,11 @@ bin_PROGRAMS = \
 	g-euclid1 \
 	g-nff \
 	g-nmg \
+	g-obj \
 	g-shell.rect \
 	g-stl \
 	g-tankill \
 	g-vrml \
-	g-wave \
 	g-x3d \
 	g2asc \
 	nastran-g \
@@ -92,11 +92,11 @@ g_euclid1_LDADD = ${LIBRT} ${BN} ${BU}
 g_euclid_LDADD = ${LIBRT} ${BN} ${BU} 
 g_nff_LDADD = ${WDB} ${LIBRT} ${BN} ${BU} 
 g_nmg_LDADD = ${WDB} ${LIBRT} ${BN} ${BU} 
+g_obj_LDADD = ${WDB} ${LIBRT} ${BN} ${BU} 
 g_shell_rect_LDADD = ${WDB} ${LIBRT} ${BN} ${BU} 
 g_stl_LDADD = ${WDB} ${LIBRT} ${BN} ${BU} 
 g_tankill_LDADD = ${LIBRT} ${BN} ${BU} 
 g_vrml_LDADD = ${WDB} ${LIBRT} ${BN} ${BU} 
-g_wave_LDADD = ${WDB} ${LIBRT} ${BN} ${BU} 
 g_x3d_LDADD = ${WDB} ${LIBRT} ${BN} ${BU} 
 g_xxx_LDADD = ${WDB} ${LIBRT} ${BN} ${BU} 
 g_xxx_facets_LDADD = ${WDB} ${LIBRT} ${BN} ${BU} 
@@ -136,11 +136,11 @@ g_euclid1_SOURCES = g-euclid1.c
 g_euclid_SOURCES = g-euclid.c 
 g_nff_SOURCES = g-nff.c 
 g_nmg_SOURCES = g-nmg.c 
+g_obj_SOURCES = g-obj.c 
 g_shell_rect_SOURCES = g-shell.rect.c 
 g_stl_SOURCES = g-stl.c 
 g_tankill_SOURCES = g-tankill.c 
 g_vrml_SOURCES = g-vrml.c 
-g_wave_SOURCES = g-wave.c 
 g_x3d_SOURCES = g-x3d.c 
 g_xxx_SOURCES = g-xxx.c 
 g_xxx_facets_SOURCES = g-xxx_facets.c 
@@ -171,11 +171,11 @@ dist_man_MANS = \
 	g-euclid.1 \
 	g-nff.1 \
 	g-nmg.1 \
+	g-obj.1 \
 	g-shell.rect.1 \
 	g-stl.1 \
 	g-tankill.1 \
 	g-vrml.1 \
-	g-wave.1 \
 	g-x3d.1 \
 	g2asc.1 \
 	nastran-g.1 \
@@ -236,7 +236,7 @@ FAST_OBJECTS = \
 	$(g_stl_OBJECTS) \
 	$(g_tankill_OBJECTS) \
 	$(g_vrml_OBJECTS) \
-	$(g_wave_OBJECTS) \
+	$(g_obj_OBJECTS) \
 	$(g_x3d_OBJECTS) \
 	$(g2asc_OBJECTS) \
 	$(nastran_g_OBJECTS) \

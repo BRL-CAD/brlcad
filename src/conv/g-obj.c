@@ -1,4 +1,4 @@
-/*                        G - W A V E . C
+/*                         G - O B J . C
  * BRL-CAD
  *
  * Copyright (C) 1996-2005 United States Government as represented by
@@ -19,7 +19,7 @@
  * information.
  *
  */
-/** @file g-wave.c
+/** @file g-obj.c
  *
  *  Program to convert a BRL-CAD model (in a .g file) to a Wavefront '.obj' file
  *  by calling on the NMG booleans.
@@ -232,7 +232,7 @@ main(int argc, char **argv)
 		}
 	}
 
-	/* Open g-wave error log file */
+	/* Open g-obj error log file */
 	if( !error_file)
 		fpe = stderr;
 	else
@@ -304,7 +304,7 @@ main(int argc, char **argv)
 }
 
 static void
-nmg_to_wave(struct nmgregion *r, struct db_full_path *pathp, int region_id, int aircode, int los, int material_id)
+nmg_to_obj(struct nmgregion *r, struct db_full_path *pathp, int region_id, int aircode, int los, int material_id)
 {
 	struct model *m;
 	struct shell *s;
@@ -706,7 +706,7 @@ union tree *do_region_end(register struct db_tree_state *tsp, struct db_full_pat
 				goto out;
 			}
 		/* Write the region to the TANKILL file */
-			nmg_to_wave( r, pathp, tsp->ts_regionid, tsp->ts_aircode, tsp->ts_los, tsp->ts_gmater );
+			nmg_to_obj( r, pathp, tsp->ts_regionid, tsp->ts_aircode, tsp->ts_los, tsp->ts_gmater );
 
 			regions_written++;
 

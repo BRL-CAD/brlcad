@@ -1,12 +1,12 @@
 .TH G-WAVE 1 BRL-CAD
 .SH NAME
-g-wave \- Wavefront Translator (BRL-CAD to Wavefront)
+g-obj \- BRL-CAD to Wavefront Object File converter
 .SH SYNOPSIS
-.B g-wave [-mviu] [-xX lvl]
+.B g-obj [-mviu] [-xX lvl]
 [-e error_file] [-D calculation_tolerance ]
-[-a abs_tol] [-r rel_tol] [-n norm_tol] [-o Wavefront_file] database.g object(s)
+[-a abs_tol] [-r rel_tol] [-n norm_tol] [-o output.obj] database.g object(s)
 .SH DESCRIPTION
-.I g-wave\^
+.I g-obj\^
 converts the specified
 .I object(s)
 from a BRL-CAD
@@ -61,7 +61,7 @@ The
 option specifies a file for receiving the error messages.
 .SH EXAMPLE
 .RS
-$ \|\fIg-wave \|-o sample.Wavefront \|sample.g \|sample_object\fP
+$ \|\fIg-obj \|-o sample.obj \|sample.g \|sample_object\fP
 .RE
 .SH DIAGNOSTICS
 Error messages are intended to be self-explanatory.
