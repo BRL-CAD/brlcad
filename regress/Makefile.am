@@ -49,7 +49,10 @@ EXTRA_DIST = \
 	weight.sh
 
 CLEANFILES = \
+	.density \
+	adj_air.pl \
 	dsp.dat \
+	exp_air.pl \
 	iges.g \
 	iges.log \
 	iges_file.iges \
