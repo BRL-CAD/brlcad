@@ -702,7 +702,12 @@ rt_uplot_get_text_args(FILE *fp, const struct uplot *up, char *carg, fastf_t *ar
 }
 
 int
-rt_process_uplot_value(register struct bu_list **vhead, struct bn_vlblock *vbp, FILE *fp, register int c, double char_size, int mode)
+rt_process_uplot_value(register struct bu_list **vhead,
+		       struct bn_vlblock *vbp,
+		       FILE *fp,
+		       register int c,
+		       double char_size,
+		       int mode)
 {
 	mat_t			mat;
 	const struct uplot	*up;
@@ -721,7 +726,7 @@ rt_process_uplot_value(register struct bu_list **vhead, struct bn_vlblock *vbp, 
 	}
 
 	if( up->targ == TBAD ) {
-		fprintf( stderr, "Bad command '%c' (0x%02x)\n", c, c );
+		fprintf( stderr, "Lee : Bad command '%c' (0x%02x)\n", c, c );
 		return(-1);
 	}
 
@@ -854,10 +859,9 @@ rt_uplot_to_vlist(struct bn_vlblock *vbp, register FILE *fp, double char_size, i
 	vhead = rt_vlblock_find( vbp, 0xFF, 0xFF, 0x00 );	/* Yellow */
 
 #if 1
-	while(!feof(fp)) {
+	while(!feof(fp) && (c=getc(fp)) != EOF ) {
 	    int ret;
 
-	    c = getc(fp);
 #else
 	while( (c = getc(fp)) != EOF ) {
 	       int ret;
