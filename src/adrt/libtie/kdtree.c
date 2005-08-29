@@ -1,4 +1,4 @@
-/*                     T I E . C
+/*                     K D T R E E . C
  *
  * @file tie.c
  *
@@ -56,8 +56,8 @@ static void tie_kdtree_free_node(tie_kdtree_t *node) {
 
   if(((TIE_PTR_CAST)(node_aligned->data)) & 0x4) {
     /* Node Data is KDTREE Children, Recurse */
-    tie_kdtree_free_node(&((tie_kdtree_t *)(node_aligned->data))[0]);
-    tie_kdtree_free_node(&((tie_kdtree_t *)(node_aligned->data))[1]);
+    tie_kdtree_free_node(&((tie_kdtree_t *)(((TIE_PTR_CAST)(node_aligned->data)) & ~0x7L))[0]);
+    tie_kdtree_free_node(&((tie_kdtree_t *)(((TIE_PTR_CAST)(node_aligned->data)) & ~0x7L))[1]);
     free((void*)((TIE_PTR_CAST)(node_aligned->data) & ~0x7L));
   } else {
     /* This node points to a geometry node, free it */
@@ -67,7 +67,62 @@ static void tie_kdtree_free_node(tie_kdtree_t *node) {
 }
 
 
-static void tie_kdtree_build_head(tie_t *tie, tie_tri_t *tri_list, int tri_num) {
+static void tie_kdtree_cache_free_node(tie_t *tie, tie_kdtree_t *node, void **cache) {
+  tie_kdtree_t *node_aligned = (tie_kdtree_t *)((TIE_PTR_CAST)node & ~0x7L);
+  unsigned int size, tri_num, i, tri_ind;
+  unsigned char type, split;
+
+  memcpy(&size, *cache, sizeof(unsigned int));
+
+  if(((TIE_PTR_CAST)(node_aligned->data)) & 0x4) {
+    /* Create a KD-Tree Node in the cache */
+    *cache = realloc(*cache, sizeof(unsigned int) + size + 2 + sizeof(tfloat));
+    type = 0;
+    memcpy(&((char *)*cache)[sizeof(unsigned int)+size], &type, 1);
+    size += 1;
+    memcpy(&((char *)*cache)[sizeof(unsigned int)+size], &(node_aligned->axis), sizeof(tfloat));
+    size += sizeof(tfloat);
+    split = ((TIE_PTR_CAST)(node_aligned->data)) & 0x3;
+    memcpy(&((char *)*cache)[sizeof(unsigned int) + size], &split, 1);
+    size += 1;
+
+    /* Update size of cache */
+    memcpy(*cache, &size, sizeof(unsigned int));    
+
+    /* Node Data is KDTREE Children, Recurse */
+    tie_kdtree_cache_free_node(tie, &((tie_kdtree_t *)(((TIE_PTR_CAST)(node_aligned->data)) & ~0x7L))[0], cache);
+    tie_kdtree_cache_free_node(tie, &((tie_kdtree_t *)(((TIE_PTR_CAST)(node_aligned->data)) & ~0x7L))[1], cache);
+    free((void *)((TIE_PTR_CAST)(node_aligned->data) & ~0x7L));
+  } else {
+    tri_num = ((tie_geom_t *)((TIE_PTR_CAST)(node_aligned->data) & ~0x7L))->tri_num;
+    *cache = realloc(*cache, sizeof(unsigned int) + size + 1 + sizeof(unsigned int) + sizeof(unsigned int) * tri_num);
+    type = 1;
+    memcpy(&((char *)*cache)[sizeof(unsigned int) + size], &type, 1);
+    size += 1;
+    memcpy(&((char *)*cache)[sizeof(unsigned int)+size], &tri_num, sizeof(unsigned int));
+    size += sizeof(unsigned int);
+
+    for(i = 0; i < tri_num; i++) {
+      /*
+      * Pointer subtraction gives us the index of the triangle since the block of memory
+      * that the triangle exists in is contiguous memory.
+      */
+      tri_ind = ((tie_geom_t *)((TIE_PTR_CAST)(node_aligned->data) & ~0x7L))->tri_list[i] - &tie->tri_list[0];
+      memcpy(&((char *)*cache)[sizeof(unsigned int)+size], &tri_ind, sizeof(unsigned int));
+      size += sizeof(unsigned int);
+    }
+
+    /* Update size of cache */
+    memcpy(*cache, &size, sizeof(unsigned int));    
+
+    /* This node points to a geometry node, free it */
+    free(((tie_geom_t *)((TIE_PTR_CAST)(node_aligned->data) & ~0x7L))->tri_list);
+    free((void *)((TIE_PTR_CAST)(node_aligned->data) & ~0x7L));
+  }
+}
+
+
+static void tie_kdtree_prep_head(tie_t *tie, tie_tri_t *tri_list, int tri_num) {
   tie_geom_t *g;
   TIE_3 min, max;
   int i;
@@ -261,9 +316,9 @@ static void tie_kdtree_build(tie_t *tie, tie_kdtree_t *node, int depth, TIE_3 mi
 }
 #else
 {
-  /******************************
-  * Justin's Home Grown KD-Tree *
-  *******************************/
+  /****************************************
+  * Justin's Aggressive KD-Tree Algorithm *
+  *****************************************/
   int slice[3][MAX_SLICES+MIN_SLICES], gap[3][2], active, split_slice;
   int side[3][MAX_SLICES+MIN_SLICES][2], d, s, k, smax[3], smin, slice_num;
   tfloat coef[3][MAX_SLICES+MIN_SLICES], split_coef, beg, end;
@@ -589,7 +644,7 @@ static void tie_kdtree_build(tie_t *tie, tie_kdtree_t *node, int depth, TIE_3 mi
  *************************************************************/
 
 /**
- * Free up all the stuff associate with libtie
+ * Free up all the stuff associated with the kdtree
  *
  * All of the KDTREE nodes and triangles that we have allocated need to
  * be freed in a controlled manner.  This routine does that.
@@ -607,6 +662,124 @@ void tie_kdtree_free(tie_t *tie) {
 
 
 /**
+ * Free up all the stuff associated with the kdtree and build a 
+ * cache as the data is freed.  Building the cache while the data
+ * is freed allows the peak memory not to go any higher than it
+ * already is.  If there were seprarate cache and free functions
+ * then the cache would exist in memory while the triangles and
+ * kd-tree were in memory thus severly limiting optimal memory
+ * usage.
+ *
+ * All of the KDTREE nodes and triangles that we have allocated need to
+ * be freed in a controlled manner.  This routine does that.
+ *
+ * @param tie pointer to a struct tie_t and void **cache to store data
+ * @return void
+ */
+void tie_kdtree_cache_free(tie_t *tie, void **cache) {
+  unsigned int size;
+
+  /*
+  * Free KDTREE Node
+  * Prevent tie from crashing when a tie_free() is called right after a tie_init()
+  */
+  if(tie->kdtree) {
+    size = 0;
+    *cache = malloc(sizeof(unsigned int));
+    memcpy(*cache, &size, sizeof(unsigned int));
+    tie_kdtree_cache_free_node(tie, tie->kdtree, cache);
+  }
+  free(tie->kdtree);
+}
+
+
+void tie_kdtree_cache_load(tie_t *tie, void *cache) {
+  tie_kdtree_t *node, *temp_node, *stack[64];
+  tie_geom_t *geom;
+  TIE_3 min, max;
+  unsigned int i, size, index, tri_ind, stack_ind;
+  char type, split;
+
+
+  if(!cache)
+    return;
+
+  memcpy(&size, cache, sizeof(unsigned int));
+  index = sizeof(unsigned int);
+  stack_ind = 0;
+
+  while(index < size) {
+    memcpy(&type, &((char *)cache)[index], 1);
+    index += 1;
+
+    if(type) {
+      /* Geometry Node - Allocate a tie_geom_t and assign to node->data. */
+      node->data = malloc(sizeof(tie_geom_t));
+      geom = (tie_geom_t *)node->data;
+
+      memcpy(&(geom->tri_num), &((char *)cache)[index], sizeof(unsigned int));
+      index += sizeof(unsigned int);
+
+      geom->tri_list = (tie_tri_t **)malloc(geom->tri_num * sizeof(tie_tri_t *));
+
+      for(i = 0; i < geom->tri_num; i++) {
+        memcpy(&tri_ind, &((char *)cache)[index], sizeof(unsigned int));
+        index += sizeof(unsigned int);
+
+        /* Translate the numerical index to a pointer index into tie->tri_list. */
+        geom->tri_list[i] = &tie->tri_list[0] + tri_ind;
+      }
+
+      stack_ind--;
+      node = stack[stack_ind];
+    } else {
+      /* KD-Tree Node */
+      if(!tie->kdtree) {
+        tie->kdtree = (tie_kdtree_t *)malloc(sizeof(tie_kdtree_t));
+        node = tie->kdtree;
+      }
+
+      /* Assign splitting axis value */
+      memcpy(&node->axis, &((char *)cache)[index], sizeof(tfloat));
+      index += sizeof(tfloat);
+
+      /* Get splitting plane */
+      memcpy(&split, &((char *)cache)[index], 1);
+      index += 1;
+
+      /* Allocate memory for 2 child nodes */
+      node->data = malloc(2 * sizeof(tie_kdtree_t));
+
+      /* Push B on the stack and Process A */
+      stack[stack_ind] = &((tie_kdtree_t *)node->data)[1];
+      stack_ind++;
+
+      /* Set the new current node */
+      temp_node = node;
+      node = &((tie_kdtree_t *)node->data)[0];
+
+      /*
+      * Mask the splitting plane and mark it as a kdtree node
+      * using the lower bits of the ptr.
+      */
+      temp_node->data = (void *)((TIE_PTR_CAST)(temp_node->data) + split + 4);
+    }
+  }
+
+  /* form bounding box of scene */
+  math_bbox(tie->min, tie->max, tie->tri_list[0].data[0], tie->tri_list[0].data[1], tie->tri_list[0].data[2]);
+  for(i = 0; i < tie->tri_num; i++) {
+    /* Get Bounding Box of Triangle */
+    math_bbox(min, max, tie->tri_list[i].data[0], tie->tri_list[i].data[1], tie->tri_list[i].data[2]);
+
+    /* Check to see if defines a new Max or Min point */
+    math_vec_min(tie->min, min);
+    math_vec_max(tie->max, max);
+  }
+}
+
+
+/**
  * Get ready to shoot rays at triangles
  *
  * Build the KDTREE tree for the triangles we have
@@ -616,15 +789,21 @@ void tie_kdtree_free(tie_t *tie) {
  */
 void tie_kdtree_prep(tie_t *tie) {
   TIE_3 delta;
+  int already_built;
+
+
+  already_built = tie->kdtree ? 1 : 0;
 
   /* Set bounding volume and make head node a geometry node */
-  tie_kdtree_build_head(tie, tie->tri_list, tie->tri_num);
+  if(!already_built)
+    tie_kdtree_prep_head(tie, tie->tri_list, tie->tri_num);
 
   if(!tie->kdtree)
     return;
 
   /* Trim KDTREE to number of actual triangles if it's not that size already. */
-  ((tie_geom_t *)(tie->kdtree->data))->tri_list = (tie_tri_t **)realloc(((tie_geom_t *)(tie->kdtree->data))->tri_list, sizeof(tie_tri_t *) * ((tie_geom_t *)(tie->kdtree->data))->tri_num);
+  if(!already_built)
+    ((tie_geom_t *)(tie->kdtree->data))->tri_list = (tie_tri_t **)realloc(((tie_geom_t *)(tie->kdtree->data))->tri_list, sizeof(tie_tri_t *) * ((tie_geom_t *)(tie->kdtree->data))->tri_num);
 
   /*
   * Compute Floating Fuzz Precision Value
@@ -648,9 +827,10 @@ void tie_kdtree_prep(tie_t *tie) {
   printf("max_depth: %d\n", tie->max_depth);
 
   /* Build the KDTREE */
-  tie_kdtree_build(tie, tie->kdtree, 0, tie->min, tie->max, 0, 0);
-
-  printf("stat: %d\n", tie->stat);
+  if(!already_built) {
+    tie_kdtree_build(tie, tie->kdtree, 0, tie->min, tie->max, 0, 0);
+    printf("stat: %d\n", tie->stat);
+  }
 /*  exit(0); */ /* uncomment to profile prep phase only */
   tie->stat = 0;
 }

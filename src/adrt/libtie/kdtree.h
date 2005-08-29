@@ -47,6 +47,8 @@ extern "C" {
 
 
 void tie_kdtree_free(tie_t *tie);
+void tie_kdtree_cache_free(tie_t *tie, void **cache);
+void tie_kdtree_cache_load(tie_t *tie, void *cache);
 void tie_kdtree_prep(tie_t *tie);
 extern tfloat TIE_PREC;
 

@@ -21,12 +21,13 @@
 #ifdef HAVE_GETOPT_LONG
 static struct option longopts[] =
 {
+	{ "dump cache", no_argument,	NULL, 'c' },
+	{ "dump image",	no_argument,	NULL, 'i' },
 	{ "help",	no_argument,	NULL, 'h' },
-	{ "dump image",	no_argument,	NULL, 'd' },
 };
 #endif
 
-static char shortopts[] = "dh";
+static char shortopts[] = "cdh";
 
 
 static void finish(int sig) {
@@ -37,13 +38,14 @@ static void finish(int sig) {
 
 static void help() {
   printf("%s\n", "usage: adrt_bench [options] [proj_env_file]\n\
-  -d\t\tdump output.\n\
+  -c\t\tdump cache.\n\
+  -d\t\tdump ppm image.\n\
   -h\t\tdisplay help.\n");
 }
 
 
 int main(int argc, char **argv) {
-  int c = 0, dump;
+  int c = 0, image, cache;
   char proj[64], temp[64];
 
 
@@ -54,8 +56,9 @@ int main(int argc, char **argv) {
     return EXIT_FAILURE;
   }
 
-  /* Initialize strings */
-  dump = 0;
+  /* Initialize */
+  cache = 0;
+  image = 0;
   proj[0] = 0;
 
   /* Parse command line options */
@@ -69,8 +72,11 @@ int main(int argc, char **argv) {
 	)!= -1)
   {
 	  switch(c) {
+		  case 'c':
+			  cache = 1;
+			  break;
 		  case 'd':
-			  dump = 1;
+			  image = 1;
 			  break;
 		  case 'h':
 			  help();
@@ -86,7 +92,7 @@ int main(int argc, char **argv) {
   strcpy(proj, argv[0]);
 
   if(proj[0]) {
-    bench(proj, dump);
+    bench(proj, cache, image);
   } else {
     help();
     return EXIT_FAILURE;

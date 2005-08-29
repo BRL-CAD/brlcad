@@ -56,6 +56,7 @@ void common_env_init(common_env_t *env) {
   env->tile_h = 40;
 
   env->geometry_file[0] = 0;
+  env->kdtree_cache_file[0] = 0;
   env->properties_file[0] = 0;
   env->textures_file[0] = 0;
   env->frames_file[0] = 0;
@@ -88,6 +89,9 @@ void common_env_read(common_env_t *env, char *fpath) {
     if(!strcmp("geometry_file", token)) {
       strcpy(env->geometry_file, strtok(NULL, ","));
       env->geometry_file[strlen(env->geometry_file) - 1] = 0;
+    } else if(!strcmp("kdtree_cache_file", token)) {
+      strcpy(env->kdtree_cache_file, strtok(NULL, ","));
+      env->kdtree_cache_file[strlen(env->kdtree_cache_file) - 1] = 0;
     } else if(!strcmp("properties_file", token)) {
       strcpy(env->properties_file, strtok(NULL, ","));
       env->properties_file[strlen(env->properties_file) - 1] = 0;

@@ -151,7 +151,7 @@ void tie_init(tie_t *tie, int tri_num) {
 }
 
 /**
- * Free up all the stuff associate with libtie
+ * Free up all the stuff associated with libtie
  *
  * All of the KDTREE nodes and triangles that we have allocated need to
  * be freed in a controlled manner.  This routine does that.

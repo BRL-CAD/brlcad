@@ -2,7 +2,7 @@
 #define _BENCH_H
 
 
-extern	void bench(char *proj, int dump);
+extern	void bench(char *proj, int cache, int image);
 
 
 #endif

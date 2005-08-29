@@ -58,7 +58,7 @@ void	common_pack_texture(void **app_data, int *app_ind, char *filename);
 
 void	common_pack_mesh(common_db_t *db, void **app_data, int *app_ind, char *filename);
 void	common_pack_mesh_adrt(common_db_t *db, void **app_data, int *app_ind, char *filename);
-
+void    common_pack_kdtree_cache(common_db_t *db, void **app_data, int *app_ind, char *filename);
 
 int	common_pack_app_size;
 int	common_pack_app_mem;
@@ -110,6 +110,9 @@ int common_pack(common_db_t *db, void **app_data, char *proj) {
 
   /* MESH DATA */
   common_pack_mesh(db, app_data, &app_ind, db->env.geometry_file);
+
+  /* KD-TREE CACHE DATA */
+  common_pack_kdtree_cache(db, app_data, &app_ind, db->env.kdtree_cache_file);
 
   *app_data = realloc(*app_data, common_pack_app_size);
   return(common_pack_app_size);
@@ -658,4 +661,37 @@ void common_pack_mesh_adrt(common_db_t *db, void **app_data, int *app_ind, char 
   common_pack_write(app_data, &marker_size, &size, sizeof(int));
 
   *app_ind = marker_size + size;
+}
+
+
+void common_pack_kdtree_cache(common_db_t *db, void **app_data, int *app_ind, char *filename) {
+  FILE *fh;
+  void *kdcache;
+  int marker, size;
+
+  marker = *app_ind;
+  *app_ind += sizeof(int);
+
+  fh = fopen(filename, "rb");
+  if(!fh) {
+    size = *app_ind - marker - sizeof(int);
+    common_pack_write(app_data, &marker, &size, sizeof(int));
+    *app_ind = marker + size;
+    return;
+  }
+
+  /* Get End Position */
+  fseek(fh, 0, SEEK_END);
+  size = ftell(fh);
+  fseek(fh, 0, SEEK_SET);
+
+  kdcache = malloc(size);
+  fread(kdcache, size, 1, fh);
+  common_pack_write(app_data, app_ind, kdcache, size);
+  fclose(fh);
+  free(kdcache);
+
+  size = *app_ind - marker - sizeof(int);
+  common_pack_write(app_data, &marker, &size, sizeof(int));
+  *app_ind = marker + size;
 }

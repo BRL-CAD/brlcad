@@ -56,6 +56,7 @@ void	common_unpack_env(common_db_t *db, int socknum);
 void	common_unpack_prop(int socknum);
 void	common_unpack_texture(int socknum);
 void	common_unpack_mesh(common_db_t *db, int socknum, tie_t *tie);
+void	common_unpack_kdtree_cache(int socknum, tie_t *tie);
 void	common_unpack_prop_lookup(char *name, common_prop_t **prop);
 void	common_unpack_texture_lookup(char *name, texture_t **texture);
 
@@ -92,6 +93,7 @@ void common_unpack(common_db_t *db, tie_t *tie, util_camera_t *camera, int sockn
   common_unpack_prop(socknum);
   common_unpack_texture(socknum);
   common_unpack_mesh(db, socknum, tie);
+  common_unpack_kdtree_cache(socknum, tie);
 }
 
 
@@ -590,6 +592,26 @@ void common_unpack_mesh(common_db_t *db, int socknum, tie_t *tie) {
 }
 
 
+void common_unpack_kdtree_cache(int socknum, tie_t *tie) {
+  int size;
+  void *kdcache;
+
+  /* size of kdtree cache data */
+  tienet_recv(socknum, &size, sizeof(int), 0);
+
+  /* retreive the data */
+  if(size > 0) {
+    kdcache = malloc(size);
+    tienet_recv(socknum, kdcache, size, 0);
+
+    /* feed the kd-tree into libtie */
+    tie_kdtree_cache_load(tie, kdcache);
+
+    free(kdcache);
+  }
+}
+
+
 void common_unpack_prop_lookup(char *name, common_prop_t **prop) {
   int		i;
 
@@ -616,3 +638,4 @@ void common_unpack_texture_lookup(char *name, texture_t **texture) {
 
   *texture = NULL;
 }
+

@@ -74,10 +74,13 @@ static void* bench_ipc(void *ptr) {
   printf("ipc connection established, sending data: %d bytes\n", app_size);
   tienet_send(client_socket, &app_size, sizeof(int), 0);
   tienet_send(client_socket, app_data, app_size, 0);
+
+  close(client_socket);
+  close(server_socket);
 }
 
 
-void bench(char *proj, int dump) {
+void bench(char *proj, int cache, int image) {
   struct sockaddr_in server;
   struct sockaddr_in client;
   struct hostent h;
@@ -98,6 +101,13 @@ void bench(char *proj, int dump) {
 
   /* Parse Env Data */
   common_db_load(&db, proj);
+
+  /*
+  * Hack the environment settings to make it think there is no cache file
+  * if the user is generating one, otherwise it never generates one
+  */
+  if(cache)
+    db.env.kdtree_cache_file[0] = 0;
 
   /* Read the data off disk and pack it */
   app_size = common_pack(&db, &app_data, proj);
@@ -134,13 +144,13 @@ void bench(char *proj, int dump) {
   memcpy((char *)&server.sin_addr.s_addr, h.h_addr_list[0], h.h_length);
   server.sin_port = htons(LOCAL_PORT);
 
+  tienet_sem_wait(&bench_net_sem);
   if(connect(client_socket, (struct sockaddr *)&server, sizeof(server)) < 0) {
     fprintf(stderr, "cannot establish connection, exiting.\n");
     exit(1);
   }
 
   /* stream and unpack the data */
-  tienet_sem_wait(&bench_net_sem);
   common_unpack(&db, &tie, &camera, client_socket);
   tie_prep(&tie);
 
@@ -169,12 +179,28 @@ void bench(char *proj, int dump) {
   t = (tfloat)(ticks3 - ticks2) / (tfloat)CLOCKS_PER_SEC;
   printf("render time: %.3f sec\n", t);
   printf("rays /  sec: %d\n", (int)((db.env.img_w * db.env.img_h) / t));
-  if(dump) {
+  if(image) {
     image24 = &((unsigned char *)res_buf)[sizeof(common_work_t)];
     util_image_save_ppm("dump.ppm", image24, db.env.img_w, db.env.img_h);
   }
 
+  close(client_socket);
+
   util_camera_free(&camera);
   free(app_data);
   free(bench_frame);
+
+  if(cache) {
+    void *kdcache;
+    unsigned int size;
+    FILE *fh;
+
+    tie_kdtree_cache_free(&tie, &kdcache);
+    memcpy(&size, kdcache, sizeof(unsigned int));
+    printf("saving kd-tree cache: %d bytes\n", size);
+    fh = fopen("kdtree.cache", "w");
+      fwrite(kdcache, size, 1, fh);
+    fclose(fh);
+    free(kdcache);
+  }
 }

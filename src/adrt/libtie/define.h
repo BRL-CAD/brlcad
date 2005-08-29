@@ -47,7 +47,7 @@
 #define	TIE_TAB1		"\1\0\0\2\2\1"	/* Triangle Index Table */
 #define	TIE_KDTREE_NODE_MAX	4		/* Maximum number of triangles that can reside in a given node until it should be split */
 #define	TIE_KDTREE_DEPTH_K1	1.5		/* K1 Depth Constant Coefficient */
-#define	TIE_KDTREE_DEPTH_K2	4		/* K2 Contant */
+#define	TIE_KDTREE_DEPTH_K2	2		/* K2 Contant */
 
 #define MAX_SLICES 100
 #define MIN_SLICES 25
