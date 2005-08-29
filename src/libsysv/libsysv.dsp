@@ -216,7 +216,15 @@ PostBuild_Cmds=del vers.c
 # PROP Default_Filter "cpp;c;cxx;rc;def;r;odl;idl;hpj;bat"
 # Begin Source File
 
+SOURCE=.\getopt.c
+# End Source File
+# Begin Source File
+
 SOURCE=.\redata.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\regcomp.c
 # End Source File
 # Begin Source File
 
@@ -224,11 +232,23 @@ SOURCE=.\regex.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\vers.c
+SOURCE=.\regexec.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\regfree.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\strsep.c
 # End Source File
 # Begin Source File
 
 SOURCE=.\tcl.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\vers.c
 # End Source File
 # End Group
 # Begin Group "Header Files"
