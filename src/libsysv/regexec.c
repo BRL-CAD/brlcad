@@ -57,11 +57,7 @@ static char rcsid[] = "$NetBSD: regexec.c,v 1.6 1995/02/27 13:29:48 cgd Exp $";
 #include <limits.h>
 #include <ctype.h>
 
-#if defined(_WIN32)
-#  include "brlregex.h"
-#else
-#  include "regex.h"
-#endif
+#include "regex.h"
 #include "./utils.h"
 #include "./regex2.h"
 
