@@ -1,7 +1,7 @@
 #!/bin/sh
 
-HOSTS="wopr liu amdws2 vast"
-MASTERHOST="woprr"
+HOSTS="wopr liu amdws2 vast cocoa"
+MASTERHOST="wopr"
 
 export MYNAME=`hostname | awk -F '.' '{print $1}'`
 export START_TIME=`date "+%y%m%d%H%M"`
@@ -116,11 +116,23 @@ vast)
     export CONF_FLAGS="CC=cc CFLAGS=-64 LDFLAGS=-64 --enable-64bit-build" ;
     export MAKE_CMD="/usr/gnu/bin/make" ;
     export MAKE_OPTS="-j5" ;;
+cocoa)
+    export CONF_FLAGS="" ;
+    export MAKE_CMD="make" ;
+    export MAKE_OPTS="-j2" ;;
+*)
+    echo hostname \"$MYNAME\" not recognized
+    exit
 esac
 
 BUILD_DIR=`pwd`/${MYNAME}_${START_TIME}.dir
 rm -f $BUILD_DIR
 mkdir $BUILD_DIR
+if [ ! -d $BUILD_DIR ] ; then
+    echo create $BUILD_DIR failed
+    exit -1
+fi
+
 cd $BUILD_DIR
 
 echo ../brlcad-$VERSION/configure \
@@ -133,8 +145,18 @@ echo ../brlcad-$VERSION/configure \
     --prefix=/usr/brlcad/rel-$VERSION \
     >> $LOG_FILE 2>&1
 
+echo runnig: $MAKE_CMD $MAKE_OPTS >> $LOG_FILE 2>&1
+
 $MAKE_CMD $MAKE_OPTS > build.log 2>&1
-
-cd regress
-make test > test.log 2>&1
-
+STATUS=$?
+if [ $STATUS != 0 ] ; then
+    echo build failed status $STATUS
+    exit -1
+fi
+if [ -s build.log ] ; then
+    cd regress
+    make test > test.log 2>&1
+else
+    echo build failed zero length log
+    exit -1
+fi
