@@ -547,7 +547,6 @@ void common_unpack_mesh(common_db_t *db, int socknum, tie_t *tie) {
         i += n;
       }
 
-
       ind += fnum * 3 * sizeof(unsigned short);
     }
 

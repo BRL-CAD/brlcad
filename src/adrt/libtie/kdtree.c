@@ -69,25 +69,35 @@ static void tie_kdtree_free_node(tie_kdtree_t *node) {
 
 static void tie_kdtree_cache_free_node(tie_t *tie, tie_kdtree_t *node, void **cache) {
   tie_kdtree_t *node_aligned = (tie_kdtree_t *)((TIE_PTR_CAST)node & ~0x7L);
-  unsigned int size, tri_num, i, tri_ind;
+  unsigned int size, mem, tri_num, i, tri_ind;
   unsigned char type, split;
 
   memcpy(&size, *cache, sizeof(unsigned int));
+  memcpy(&mem, &((char *)*cache)[sizeof(unsigned int)], sizeof(unsigned int));
+  /*
+  * If the available size for this cache is under 1MB, then grow it 4MB larger.
+  * This reduces the number of realloc's required.  Makes things much much faster
+  * on systems like FreeBSD that do a full copy for each realloc.
+  */
+  if(mem - size < 1<<20) {
+    mem += 1<<23;
+    memcpy(&((char *)*cache)[sizeof(unsigned int)], &mem, sizeof(unsigned int));
+    *cache = realloc(*cache, mem);
+  }
 
   if(((TIE_PTR_CAST)(node_aligned->data)) & 0x4) {
     /* Create a KD-Tree Node in the cache */
-    *cache = realloc(*cache, sizeof(unsigned int) + size + 2 + sizeof(tfloat));
     type = 0;
-    memcpy(&((char *)*cache)[sizeof(unsigned int)+size], &type, 1);
+    memcpy(&((char *)*cache)[size], &type, 1);
     size += 1;
-    memcpy(&((char *)*cache)[sizeof(unsigned int)+size], &(node_aligned->axis), sizeof(tfloat));
+    memcpy(&((char *)*cache)[size], &(node_aligned->axis), sizeof(tfloat));
     size += sizeof(tfloat);
     split = ((TIE_PTR_CAST)(node_aligned->data)) & 0x3;
-    memcpy(&((char *)*cache)[sizeof(unsigned int) + size], &split, 1);
+    memcpy(&((char *)*cache)[size], &split, 1);
     size += 1;
 
     /* Update size of cache */
-    memcpy(*cache, &size, sizeof(unsigned int));    
+    memcpy(*cache, &size, sizeof(unsigned int));
 
     /* Node Data is KDTREE Children, Recurse */
     tie_kdtree_cache_free_node(tie, &((tie_kdtree_t *)(((TIE_PTR_CAST)(node_aligned->data)) & ~0x7L))[0], cache);
@@ -95,11 +105,11 @@ static void tie_kdtree_cache_free_node(tie_t *tie, tie_kdtree_t *node, void **ca
     free((void *)((TIE_PTR_CAST)(node_aligned->data) & ~0x7L));
   } else {
     tri_num = ((tie_geom_t *)((TIE_PTR_CAST)(node_aligned->data) & ~0x7L))->tri_num;
-    *cache = realloc(*cache, sizeof(unsigned int) + size + 1 + sizeof(unsigned int) + sizeof(unsigned int) * tri_num);
     type = 1;
-    memcpy(&((char *)*cache)[sizeof(unsigned int) + size], &type, 1);
+    memcpy(&((char *)*cache)[size], &type, 1);
     size += 1;
-    memcpy(&((char *)*cache)[sizeof(unsigned int)+size], &tri_num, sizeof(unsigned int));
+    memcpy(&((char *)*cache)[size], &tri_num, sizeof(unsigned int));
+
     size += sizeof(unsigned int);
 
     for(i = 0; i < tri_num; i++) {
@@ -108,12 +118,12 @@ static void tie_kdtree_cache_free_node(tie_t *tie, tie_kdtree_t *node, void **ca
       * that the triangle exists in is contiguous memory.
       */
       tri_ind = ((tie_geom_t *)((TIE_PTR_CAST)(node_aligned->data) & ~0x7L))->tri_list[i] - &tie->tri_list[0];
-      memcpy(&((char *)*cache)[sizeof(unsigned int)+size], &tri_ind, sizeof(unsigned int));
+      memcpy(&((char *)*cache)[size], &tri_ind, sizeof(unsigned int));
       size += sizeof(unsigned int);
     }
 
     /* Update size of cache */
-    memcpy(*cache, &size, sizeof(unsigned int));    
+    memcpy(*cache, &size, sizeof(unsigned int));
 
     /* This node points to a geometry node, free it */
     free(((tie_geom_t *)((TIE_PTR_CAST)(node_aligned->data) & ~0x7L))->tri_list);
@@ -275,7 +285,7 @@ static void tie_kdtree_build(tie_t *tie, tie_kdtree_t *node, int depth, TIE_3 mi
     return;
   }
 
-#if 0
+#if 1
 {
   /**********************
   * MID-SPLIT ALGORITHM *
@@ -684,10 +694,17 @@ void tie_kdtree_cache_free(tie_t *tie, void **cache) {
   * Prevent tie from crashing when a tie_free() is called right after a tie_init()
   */
   if(tie->kdtree) {
-    size = 0;
-    *cache = malloc(sizeof(unsigned int));
+    *cache = malloc(2 * sizeof(unsigned int));
+    size = 2*sizeof(unsigned int);
     memcpy(*cache, &size, sizeof(unsigned int));
+    memcpy(&((char *)*cache)[sizeof(unsigned int)], &size, sizeof(unsigned int));
+
+    /* Build the cache */
     tie_kdtree_cache_free_node(tie, tie->kdtree, cache);
+
+    /* Resize the array back to it's real value */
+    memcpy(&size, *cache, sizeof(unsigned int));
+    *cache = realloc(*cache, size);
   }
   free(tie->kdtree);
 }
@@ -705,7 +722,8 @@ void tie_kdtree_cache_load(tie_t *tie, void *cache) {
     return;
 
   memcpy(&size, cache, sizeof(unsigned int));
-  index = sizeof(unsigned int);
+  /* Advance past the first (2) unsigned ints to the actualy data */
+  index = 2*sizeof(unsigned int);
   stack_ind = 0;
 
   while(index < size) {

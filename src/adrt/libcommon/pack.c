@@ -538,7 +538,7 @@ void common_pack_mesh(common_db_t *db, void **app_data, int *app_ind, char *file
 
 void common_pack_mesh_adrt(common_db_t *db, void **app_data, int *app_ind, char *filename) {
   FILE *fh;
-  TIE_3 v;
+  TIE_3 v[48];
   char meshname[256], texturename[256];
   unsigned char c;
   short s, endian;
@@ -591,10 +591,12 @@ void common_pack_mesh_adrt(common_db_t *db, void **app_data, int *app_ind, char 
     if(endian) tienet_flip(&num, &num, sizeof(int));
     common_pack_write(app_data, app_ind, &num, sizeof(int));
 
-    /* Pack Vertices */
-    for(i = 0; i < num; i++) {
-      fread(&v, sizeof(TIE_3), 1, fh);
-      common_pack_write(app_data, app_ind, &v, sizeof(TIE_3));
+    /* Read and Pack Vertices */
+    n = 0;
+    for(i = 0; i < num; i += n) {
+      n = i+48 < num ? 48 : num - i;
+      fread(v, sizeof(TIE_3), n, fh);
+      common_pack_write(app_data, app_ind, &v, n * sizeof(TIE_3));
     }
 
     /* Pack Number of Faces */
