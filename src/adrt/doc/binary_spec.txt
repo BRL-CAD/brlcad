@@ -12,14 +12,14 @@ loop:
   prop_name	char*	0-255
 
   vert_num	int	4
-    loop:
+  loop:
+    face_pt_0	float*	12
+    face_pt_1	float*	12
+    face_pt_2	float*	12
+
+  face_num	int	4
+  loop:
     vert_id_0	int	4
     vert_id_1	int	4
     vert_id_2	int	4
-
-  face_num	int	4
-   loop:
-   face_pt_0	float*	12
-   face_pt_1	float*	12
-   face_pt_2	float*	12
 =============================
