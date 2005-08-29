@@ -432,6 +432,10 @@ SOURCE=.\g_submodel.c
 # End Source File
 # Begin Source File
 
+SOURCE=.\g_superell.c
+# End Source File
+# Begin Source File
+
 SOURCE=.\g_tgc.c
 # End Source File
 # Begin Source File
