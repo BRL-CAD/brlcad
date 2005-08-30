@@ -14,6 +14,8 @@ THESE SHOULD HAPPEN BEFORE THE NEXT RELEASE
 
 THESE ARE LOWER PRIORITY OR FOR FUTURE RELEASES
 
+* add legal headers on the manpages (as comments), update header.sh
+
 * better configure section output
 
 * ensure successful build on mingw
