@@ -363,9 +363,11 @@ void* tie_work(tie_t *tie, tie_ray_t *ray, tie_id_t *id, void *(*hitfunc)(tie_ra
         continue;
 
       /* Triangle Intersected, append it in the list */
-      hit_list[hit_count] = tri;
-      id_list[hit_count] = t;
-      hit_count++;
+      if(hit_count < 250) {
+        hit_list[hit_count] = tri;
+        id_list[hit_count] = t;
+        hit_count++;
+      }
     }
 
 

@@ -264,8 +264,8 @@ static void tie_kdtree_build(tie_t *tie, tie_kdtree_t *node, int depth, TIE_3 mi
   TIE_3 cmin[2], cmax[2], center, half_size;
   int i, j, n, split, cnt[2];
 
-#if 0
-  if(depth >= 24)
+#if 1
+  if(depth >= 26)
     printf("%f %f %f %f %f %f\n", min.v[0], min.v[1], min.v[2], max.v[0], max.v[1], max.v[2]);
 #endif
 
@@ -285,7 +285,7 @@ static void tie_kdtree_build(tie_t *tie, tie_kdtree_t *node, int depth, TIE_3 mi
     return;
   }
 
-#if 1
+#if 0
 {
   /**********************
   * MID-SPLIT ALGORITHM *
@@ -739,6 +739,8 @@ void tie_kdtree_cache_load(tie_t *tie, void *cache) {
       index += sizeof(unsigned int);
 
       geom->tri_list = (tie_tri_t **)malloc(geom->tri_num * sizeof(tie_tri_t *));
+      if(tie->stat < geom->tri_num)
+        tie->stat = geom->tri_num;
 
       for(i = 0; i < geom->tri_num; i++) {
         memcpy(&tri_ind, &((char *)cache)[index], sizeof(unsigned int));
@@ -845,12 +847,13 @@ void tie_kdtree_prep(tie_t *tie) {
   printf("max_depth: %d\n", tie->max_depth);
 
   /* Build the KDTREE */
-  if(!already_built) {
+  if(!already_built)
     tie_kdtree_build(tie, tie->kdtree, 0, tie->min, tie->max, 0, 0);
-    printf("stat: %d\n", tie->stat);
-  }
-/*  exit(0); */ /* uncomment to profile prep phase only */
+
+  printf("stat: %d\n", tie->stat);
   tie->stat = 0;
+
+/*  exit(0); */ /* uncomment to profile prep phase only */
 }
 
 /** @} */
