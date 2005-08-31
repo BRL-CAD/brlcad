@@ -2509,8 +2509,7 @@ int main(int argc, char **argv)
     }
   }
   
-  
-  
+  wdb_close(fp);
   return errors;
 }
 
