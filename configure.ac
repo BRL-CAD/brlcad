@@ -2067,7 +2067,7 @@ AC_TRY_RUN([
 #endif
 int main() {
     Tcl_Interp *interp;
-    const char *cmd = "package require iwidgets";
+    const char *cmd = "package require Iwidgets";
     interp = Tcl_CreateInterp();
     if (Itcl_Init(interp) == TCL_ERROR) {
 	return 1;
