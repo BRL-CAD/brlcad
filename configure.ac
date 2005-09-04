@@ -1956,7 +1956,6 @@ else
 		fi
 	fi
 fi
-build_brlcad_tk=yes
 AC_MSG_CHECKING(whether to build Tk)
 dnl Need to update version number(s) in src/other/libtk/Makefile.am too
 TK_VERSION="8.4"
