@@ -1895,6 +1895,9 @@ if test "x$tk_link_works" = "xyes" ; then
 	LIBS="$LIBS $LIBTK $LIBTCL"
 fi
 AC_TRY_RUN([
+#ifdef HAVE_TCL_H
+#  include <tcl.h>
+#endif
 #ifdef HAVE_TK_H
 #  include <tk.h>
 #endif
