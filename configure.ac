@@ -164,6 +164,8 @@ AC_SUBST(BRLCAD_ROOT)
 AC_MSG_CHECKING([where BRL-CAD resources are to be installed])
 if test "x$datadir" = "x\${prefix}/share" ; then
 	bc_data_dir="${bc_prefix}/share/brlcad/${BRLCAD_VERSION}"
+elif test "x$datadir" = "x${prefix}/share" ; then
+	bc_data_dir="${bc_prefix}/share/brlcad/${BRLCAD_VERSION}"
 else
 	# allow a complete override
 	bc_data_dir="${datadir}"
