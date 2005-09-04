@@ -2072,7 +2072,7 @@ int main() {
     if (Itcl_Init(interp) == TCL_ERROR) {
 	return 1;
     }
-    if (Tcl_Eval(interp, cmd) != TCL_OK || interp->result[0] != '\0') {
+    if (Tcl_Eval(interp, cmd) != TCL_OK || interp->result[0] == '\0') {
 	return 1;
     }
     return 0;
