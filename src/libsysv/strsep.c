@@ -42,6 +42,8 @@
  */
 #ifndef HAVE_STRSEP
 
+#include <stdlib.h>
+
 /*
  * Get next token from string *stringp, where tokens are nonempty
  * strings separated by characters from delim.
