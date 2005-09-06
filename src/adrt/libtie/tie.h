@@ -47,7 +47,7 @@ extern "C" {
 #endif
 
 
-void		tie_init(tie_t *tie, int tri_num);
+void		tie_init(tie_t *tie, unsigned int tri_num);
 void		tie_free(tie_t *tie);
 void		tie_prep(tie_t *tie);
 void*		tie_work(tie_t *tie, tie_ray_t *ray, tie_id_t *id,

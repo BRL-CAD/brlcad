@@ -125,7 +125,8 @@ typedef struct tie_s {
   tie_kdtree_t	*kdtree;
   int		max_depth;	/* Maximum depth allowed for given geometry */
   TIE_3		min, max;
-  int		tri_num;
+  unsigned int	tri_num;
+  unsigned int	tri_num_alloc;
   tie_tri_t	*tri_list;
   int		stat;		/* used for testing various statistics */
 } tie_t;

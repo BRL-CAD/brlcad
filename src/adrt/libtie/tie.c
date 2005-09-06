@@ -142,9 +142,10 @@ static void tie_tri_prep(tie_t *tie) {
  * @param tie pointer to a struct tie_t
  * @return void
  */
-void tie_init(tie_t *tie, int tri_num) {
+void tie_init(tie_t *tie, unsigned int tri_num) {
   tie->kdtree = NULL;
   tie->tri_num = 0;
+  tie->tri_num_alloc = tri_num;
   tie->tri_list = (tie_tri_t *)malloc(sizeof(tie_tri_t) * tri_num);
   tie->stat = 0;
   tie->rays_fired = 0;
@@ -421,6 +422,11 @@ void* tie_work(tie_t *tie, tie_ray_t *ray, tie_id_t *id, void *(*hitfunc)(tie_ra
 void tie_push(tie_t *tie, TIE_3 *tlist, int tnum, void *plist, int pstride) {
   int i, ind, step;
   void *mem;
+
+  if(tnum + tie->tri_num > tie->tri_num_alloc) {
+    tie->tri_list = (tie_tri_t *)realloc(tie->tri_list, sizeof(tie_tri_t) * (tie->tri_num + tnum));
+    tie->tri_num_alloc += tnum;
+  }
 
   step = 2 * sizeof(tfloat);
   mem = malloc(tnum * step);
