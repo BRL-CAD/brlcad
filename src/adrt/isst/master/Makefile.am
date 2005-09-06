@@ -16,7 +16,6 @@ isst_master_CFLAGS = @SDL_CFLAGS@ -D__STRICT_ANSI__ -I.. -I${top_srcdir}/src/adr
 isst_master_LDADD = \
 	-lpython2.4 \
 	@SDL_LIBS@ \
-	${LIBRT} \
 	${top_builddir}/src/adrt/libcommon/libcommon.la \
 	${top_builddir}/src/adrt/librender/librender.la \
 	${top_builddir}/src/adrt/libutil/libutil.la \

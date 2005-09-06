@@ -114,13 +114,13 @@ static void tie_tri_prep(tie_t *tie) {
     /* compute u1, v2, u2, v2 */
     tri->data[2].v[1] = v1.v[i1] - tri->data[0].v[i1];
     tri->data[2].v[2] = v2.v[i1] - tri->data[0].v[i1];
-    tri->v12[0] = v1.v[i2] - tri->data[0].v[i2];
-    tri->v12[1] = v2.v[i2] - tri->data[0].v[i2];
+    tri->v[0] = v1.v[i2] - tri->data[0].v[i2];
+    tri->v[1] = v2.v[i2] - tri->data[0].v[i2];
 
     if(i1 == 0 && i2 == 1) {
-      tri->v12 = (tfloat *)((TIE_PTR_CAST)(tri->v12) + 2);
+      tri->v = (tfloat *)((TIE_PTR_CAST)(tri->v) + 2);
     } else if (i1 == 0) {
-      tri->v12 = (tfloat *)((TIE_PTR_CAST)(tri->v12) + 1);
+      tri->v = (tfloat *)((TIE_PTR_CAST)(tri->v) + 1);
     }
 
     /* Compute DotVN */
@@ -164,7 +164,7 @@ void tie_free(tie_t *tie) {
 
   /* Free Triangle Data */
   for(i = 0; i < tie->tri_num; i++)
-    free( (void *)((TIE_PTR_CAST)(tie->tri_list[i].v12) & ~0x7L) );
+    free( (void *)((TIE_PTR_CAST)(tie->tri_list[i].v) & ~0x7L) );
   free(tie->tri_list);
 
   /* Free KDTREE Nodes */
@@ -334,10 +334,10 @@ void* tie_work(tie_t *tie, tie_ray_t *ray, tie_id_t *id, void *(*hitfunc)(tie_ra
       math_vec_mul_scalar(t.pos, ray->dir, t.dist);
       math_vec_add(t.pos, ray->pos, t.pos);
 
-      /* Extract i1 and i2 indices from lower bits of the v12 pointer */
-      v = (tfloat *)((TIE_PTR_CAST)(tri->v12) & ~0x7L);
-      i1 = TIE_TAB1[((TIE_PTR_CAST)(tri->v12) & 0x7)];
-      i2 = TIE_TAB1[3 + ((TIE_PTR_CAST)(tri->v12) & 0x7)];
+      /* Extract i1 and i2 indices from lower bits of the v pointer */
+      v = (tfloat *)((TIE_PTR_CAST)(tri->v) & ~0x7L);
+      i1 = TIE_TAB1[((TIE_PTR_CAST)(tri->v) & 0x7)];
+      i2 = TIE_TAB1[3 + ((TIE_PTR_CAST)(tri->v) & 0x7)];
 
       /* Compute U and V */
       u0 = t.pos.v[i1] - tri->data[0].v[i1];
@@ -435,7 +435,7 @@ void tie_push(tie_t *tie, TIE_3 *tlist, int tnum, void *plist, int pstride) {
     } else {
       tie->tri_list[tie->tri_num].ptr = NULL;
     }
-    tie->tri_list[tie->tri_num].v12 = (tfloat *)&((char *)mem)[ind];
+    tie->tri_list[tie->tri_num].v = (tfloat *)&((char *)mem)[ind];
     ind += step;
     tie->tri_num++;
   }

@@ -86,7 +86,7 @@ typedef struct tie_id_s {
  */
 typedef struct tie_tri_s {
   TIE_3		data[3];	/* 36-bytes, Data[0] = Point, Data[1] = Normal, Data[2] = DotProduct, VectorU, VectorV */
-  tfloat	*v12;		/* 8-bytes */
+  tfloat	*v;		/* 8-bytes */
   void		*ptr;		/* 4-bytes */
 } tie_tri_t;
 

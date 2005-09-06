@@ -19,6 +19,7 @@ isst_observer_LDADD = \
 	${top_builddir}/src/adrt/librender/librender.la \
 	${top_builddir}/src/adrt/libutil/libutil.la \
 	${LIBTHREAD} \
+	${LIBZ} \
 	${LIBM}
 
 isst_observer_LDFLAGS = -static

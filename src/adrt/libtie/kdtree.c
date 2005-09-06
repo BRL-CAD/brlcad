@@ -260,24 +260,25 @@ static int tie_kdtree_tri_box_overlap(TIE_3 *center, TIE_3 *half_size, TIE_3 tri
 
 
 static void tie_kdtree_build(tie_t *tie, tie_kdtree_t *node, int depth, TIE_3 min, TIE_3 max, int node_a, int node_b) {
-  tie_geom_t *child[2], *node_geom_data = (tie_geom_t *)(node->data);
-  TIE_3 cmin[2], cmax[2], center, half_size;
+  tie_geom_t *child[2], *node_gd = (tie_geom_t *)(node->data);
+  TIE_3 cmin[2], cmax[2], center[2], half_size[2];
   int i, j, n, split, cnt[2];
 
-#if 1
-  if(depth >= 26)
+#if 0
+//  if(depth >= 26)
     printf("%f %f %f %f %f %f\n", min.v[0], min.v[1], min.v[2], max.v[0], max.v[1], max.v[2]);
 #endif
 
   /* Terminating criteria for KDTREE subdivision */
-  if(node_geom_data->tri_num <= TIE_KDTREE_NODE_MAX || depth > tie->max_depth) {
-    tie->stat++;
+  if(node_gd->tri_num <= TIE_KDTREE_NODE_MAX || depth > tie->max_depth) {
+//    tie->stat++;
+    tie->stat += node_gd->tri_num;
 #if 0
-    if(node_geom_data->tri_num > tie->stat)
-      tie->stat = node_geom_data->tri_num;
-    if(node_geom_data->tri_num > tie->stat) {
-      tie->stat = node_geom_data->tri_num;
-      printf("depth: %d, tris: %d\n", depth, node_geom_data->tri_num);
+    if(node_gd->tri_num > tie->stat)
+      tie->stat = node_gd->tri_num;
+    if(node_gd->tri_num > tie->stat) {
+      tie->stat = node_gd->tri_num;
+      printf("depth: %d, tris: %d\n", depth, node_gd->tri_num);
       printf("%f %f %f %f %f %f\n", min.v[0], min.v[1], min.v[2], max.v[0], max.v[1], max.v[2]);
     }
     exit(0);
@@ -331,15 +332,40 @@ static void tie_kdtree_build(tie_t *tie, tie_kdtree_t *node, int depth, TIE_3 mi
   *****************************************/
   int slice[3][MAX_SLICES+MIN_SLICES], gap[3][2], active, split_slice;
   int side[3][MAX_SLICES+MIN_SLICES][2], d, s, k, smax[3], smin, slice_num;
-  tfloat coef[3][MAX_SLICES+MIN_SLICES], split_coef, beg, end;
+  tfloat coef[3][MAX_SLICES+MIN_SLICES], split_coef, beg, end, d_min, d_max;
+  tie_tri_t *tri;
 
   /*
   * Calculate number of slices to use as a function of triangle density.
   * Slices as a function of relative node size does not work so well.
   */
-  slice_num = MIN_SLICES + MAX_SLICES * ((tfloat)node_geom_data->tri_num / (tfloat)tie->tri_num);
+  slice_num = MIN_SLICES + MAX_SLICES * ((tfloat)node_gd->tri_num / (tfloat)tie->tri_num);
 
   for(d = 0; d < 3; d++) {
+    /*
+    * Optimization: Walk each triangle and find the min and max for the given dimension
+    * of the complete triangle list.  This will tell us what slices we needn't bother
+    * doing any computations for.
+    */
+    for(i = 0; i < node_gd->tri_num; i++) {
+      tri = node_gd->tri_list[i];
+      /* Set min anx max */
+      math_min3(tri->v[0], tri->data[0].v[d], tri->data[1].v[d], tri->data[2].v[d]);
+      math_max3(tri->v[1], tri->data[0].v[d], tri->data[1].v[d], tri->data[2].v[d]);
+
+      /* Clamp to node AABB */
+      if(tri->v[0] < min.v[d])
+        tri->v[0] = min.v[d];
+      if(tri->v[1] > max.v[d])
+        tri->v[1] = max.v[d];
+
+      if(i == 0 || tri->v[0] < d_min)
+        d_min = tri->v[0];
+
+      if(i == 0 || tri->v[1] > d_max)
+        d_max = tri->v[1];
+    }
+
     for(k = 0; k < slice_num; k++) {
       slice[d][k] = 0;
       side[d][k][0] = 0;
@@ -358,26 +384,43 @@ static void tie_kdtree_build(tie_t *tie, tie_kdtree_t *node, int depth, TIE_3 mi
       cmax[0].v[d] = min.v[d]*(1.0-coef[d][k]) + max.v[d]*coef[d][k];
       cmin[1].v[d] = cmax[0].v[d];
 
-      for(i = 0; i < node_geom_data->tri_num; i++) {
+      if(cmax[0].v[d] < d_min || cmax[0].v[d] > d_max)
+        continue;
+
+      for(n = 0; n < 2; n++) {
+        math_vec_add(center[n], cmax[n], cmin[n]);
+        math_vec_mul_scalar(center[n], center[n], 0.5);
+        math_vec_sub(half_size[n], cmax[n], cmin[n]);
+        math_vec_mul_scalar(half_size[n], half_size[n], 0.5);
+      }
+
+      for(i = 0; i < node_gd->tri_num; i++) {
+        /* 
+        * Optimization: If the points for the triangle of the dimension being tested
+        * do not span the cutting plane, then do not bother with the next test.
+        */
+        if((node_gd->tri_list[i]->data[0].v[d] > cmax[0].v[d] &&
+            node_gd->tri_list[i]->data[1].v[d] > cmax[0].v[d] &&
+            node_gd->tri_list[i]->data[2].v[d] > cmax[0].v[d])||
+           (node_gd->tri_list[i]->data[0].v[d] < cmax[0].v[d] &&
+            node_gd->tri_list[i]->data[1].v[d] < cmax[0].v[d] &&
+            node_gd->tri_list[i]->data[2].v[d] < cmax[0].v[d]))
+          continue;
+
+        /* Check that the triangle is in both node A and B for it to span. */
         s = 0;
-
-        for(n = 0; n < 2; n++) { /* child A and B */
-          math_vec_add(center, cmax[n], cmin[n]);
-          math_vec_mul_scalar(center, center, 0.5);
-          math_vec_sub(half_size, cmax[n], cmin[n]);
-          math_vec_mul_scalar(half_size, half_size, 0.5);
-
+        for(n = 0; n < 2; n++) {
           /*
           * Check to see if any triangle points are inside of the node before
           * spending alot of cycles on the full blown triangle box overlap
           */
           for(j = 0; j < 3; j++)
-            if(node_geom_data->tri_list[i]->data[j].v[0] > cmin[n].v[0] &&
-               node_geom_data->tri_list[i]->data[j].v[0] < cmax[n].v[0] &&
-               node_geom_data->tri_list[i]->data[j].v[1] > cmin[n].v[1] &&
-               node_geom_data->tri_list[i]->data[j].v[1] < cmax[n].v[1] &&
-               node_geom_data->tri_list[i]->data[j].v[2] > cmin[n].v[2] &&
-               node_geom_data->tri_list[i]->data[j].v[2] < cmax[n].v[2]) {
+            if(node_gd->tri_list[i]->data[j].v[0] > cmin[n].v[0] &&
+               node_gd->tri_list[i]->data[j].v[0] < cmax[n].v[0] &&
+               node_gd->tri_list[i]->data[j].v[1] > cmin[n].v[1] &&
+               node_gd->tri_list[i]->data[j].v[1] < cmax[n].v[1] &&
+               node_gd->tri_list[i]->data[j].v[2] > cmin[n].v[2] &&
+               node_gd->tri_list[i]->data[j].v[2] < cmax[n].v[2]) {
                j = 4;
             }
 
@@ -385,7 +428,7 @@ static void tie_kdtree_build(tie_t *tie, tie_kdtree_t *node, int depth, TIE_3 mi
             s++;
             side[d][k][n]++;
           } else {
-            if(tie_kdtree_tri_box_overlap(&center, &half_size, node_geom_data->tri_list[i]->data)) {
+            if(tie_kdtree_tri_box_overlap(&center[n], &half_size[n], node_gd->tri_list[i]->data)) {
               s++;
               side[d][k][n]++;
             }
@@ -475,8 +518,8 @@ static void tie_kdtree_build(tie_t *tie, tie_kdtree_t *node, int depth, TIE_3 mi
   * Lower triangle numbers means there is a higher probability that
   * triangles lack any sort of coherent structure.
   */
-  if((tfloat)(gap[d][1] - gap[d][0]) / (tfloat)slice_num > MIN_SPAN && node_geom_data->tri_num > 500) {
-/*  printf("choosing slice[%d]: %d->%d :: %d tris\n", d, gap[d][0], gap[d][1], node_geom_data->tri_num); */
+  if((tfloat)(gap[d][1] - gap[d][0]) / (tfloat)slice_num > MIN_SPAN && node_gd->tri_num > 500) {
+/*  printf("choosing slice[%d]: %d->%d :: %d tris\n", d, gap[d][0], gap[d][1], node_gd->tri_num); */
     split = d;
     if(abs(gap[d][0] - slice_num/2) < abs(gap[d][1] - slice_num/2)) {
       /* choose gap[d][0] as splitting plane */
@@ -538,22 +581,22 @@ static void tie_kdtree_build(tie_t *tie, tie_kdtree_t *node, int depth, TIE_3 mi
   * doing.  In other words, if both children have the same number of triangles
   * as the parent does then stop.
   */
-  if(side[split][split_slice][0] == node_geom_data->tri_num && side[split][split_slice][1] == node_geom_data->tri_num)
+  if(side[split][split_slice][0] == node_gd->tri_num && side[split][split_slice][1] == node_gd->tri_num)
     return;
 
 #if 0
   if(side[split][split_slice][0] == node_a && side[split][split_slice][1] == node_b) {
-    if(node_geom_data->tri_num < 10)
+    if(node_gd->tri_num < 10)
       return;
 //      printf("%f %f %f %f %f %f\n", min.v[0], min.v[1], min.v[2], max.v[0], max.v[1], max.v[2]);
-//      printf("moo: %d - %d\n", depth, node_geom_data->tri_num);
+//      printf("moo: %d - %d\n", depth, node_gd->tri_num);
   }
 #endif
 
 
 #if 0
   printf("winner: depth: %d, dim = %d, smin = %d, coef: %.3f\n", depth, split, smin, split_coef);
-  printf("winner: min: %.3f %.3f %.3f, max: %.3f %.3f %.3f, tris: %d\n", min.v[0], min.v[1], min.v[2], max.v[0], max.v[1], max.v[2], node_geom_data->tri_num);
+  printf("winner: min: %.3f %.3f %.3f, max: %.3f %.3f %.3f, tris: %d\n", min.v[0], min.v[1], min.v[2], max.v[0], max.v[1], max.v[2], node_gd->tri_num);
 #endif
 
   /* Based on the winner, construct the two child nodes */
@@ -582,10 +625,10 @@ static void tie_kdtree_build(tie_t *tie, tie_kdtree_t *node, int depth, TIE_3 mi
   child[0] = ((tie_geom_t *)(((tie_kdtree_t *)(node->data))[0].data));
   child[1] = ((tie_geom_t *)(((tie_kdtree_t *)(node->data))[1].data));
 
-  child[0]->tri_list = (tie_tri_t **)malloc(sizeof(tie_tri_t *) * node_geom_data->tri_num);
+  child[0]->tri_list = (tie_tri_t **)malloc(sizeof(tie_tri_t *) * node_gd->tri_num);
   child[0]->tri_num = 0;
 
-  child[1]->tri_list = (tie_tri_t **)malloc(sizeof(tie_tri_t *) * node_geom_data->tri_num);
+  child[1]->tri_list = (tie_tri_t **)malloc(sizeof(tie_tri_t *) * node_gd->tri_num);
   child[1]->tri_num = 0;
 
 
@@ -596,32 +639,32 @@ static void tie_kdtree_build(tie_t *tie, tie_kdtree_t *node, int depth, TIE_3 mi
   for(n = 0; n < 2; n++) {
     cnt[n] = 0;
 
-    math_vec_add(center, cmax[n], cmin[n]);
-    math_vec_mul_scalar(center, center, 0.5);
-    math_vec_sub(half_size, cmax[n], cmin[n]);
-    math_vec_mul_scalar(half_size, half_size, 0.5);
+    math_vec_add(center[n], cmax[n], cmin[n]);
+    math_vec_mul_scalar(center[n], center[n], 0.5);
+    math_vec_sub(half_size[n], cmax[n], cmin[n]);
+    math_vec_mul_scalar(half_size[n], half_size[n], 0.5);
 
-    for(i = 0; i < node_geom_data->tri_num; i++) {
+    for(i = 0; i < node_gd->tri_num; i++) {
       /*
       * Check to see if any triangle points are inside of the node before
       * spending alot of cycles on the full blown triangle box overlap
       */
       for(j = 0; j < 3; j++)
-        if(node_geom_data->tri_list[i]->data[j].v[0] > cmin[n].v[0] &&
-           node_geom_data->tri_list[i]->data[j].v[0] < cmax[n].v[0] &&
-           node_geom_data->tri_list[i]->data[j].v[1] > cmin[n].v[1] &&
-           node_geom_data->tri_list[i]->data[j].v[1] < cmax[n].v[1] &&
-           node_geom_data->tri_list[i]->data[j].v[2] > cmin[n].v[2] &&
-           node_geom_data->tri_list[i]->data[j].v[2] < cmax[n].v[2]) {
+        if(node_gd->tri_list[i]->data[j].v[0] > cmin[n].v[0] &&
+           node_gd->tri_list[i]->data[j].v[0] < cmax[n].v[0] &&
+           node_gd->tri_list[i]->data[j].v[1] > cmin[n].v[1] &&
+           node_gd->tri_list[i]->data[j].v[1] < cmax[n].v[1] &&
+           node_gd->tri_list[i]->data[j].v[2] > cmin[n].v[2] &&
+           node_gd->tri_list[i]->data[j].v[2] < cmax[n].v[2]) {
            j = 4;
         }
 
       if(j == 5) {
-        child[n]->tri_list[child[n]->tri_num++] = node_geom_data->tri_list[i];
+        child[n]->tri_list[child[n]->tri_num++] = node_gd->tri_list[i];
         cnt[n]++;
       } else {
-        if(tie_kdtree_tri_box_overlap(&center, &half_size, node_geom_data->tri_list[i]->data)) {
-          child[n]->tri_list[child[n]->tri_num++] = node_geom_data->tri_list[i];
+        if(tie_kdtree_tri_box_overlap(&center[n], &half_size[n], node_gd->tri_list[i]->data)) {
+          child[n]->tri_list[child[n]->tri_num++] = node_gd->tri_list[i];
           cnt[n]++;
         }
       }
@@ -635,9 +678,9 @@ static void tie_kdtree_build(tie_t *tie, tie_kdtree_t *node, int depth, TIE_3 mi
   * Now that the triangles have been propogated to the appropriate child nodes,
   * free the triangle list on this node.
   */
-  node_geom_data->tri_num = 0;
-  free(node_geom_data->tri_list);
-  free(node_geom_data);
+  node_gd->tri_num = 0;
+  free(node_gd->tri_list);
+  free(node_gd);
 
   /* Push each child through the same process. */
   tie_kdtree_build(tie, &((tie_kdtree_t *)(node->data))[0], depth+1, cmin[0], cmax[0], cnt[0], cnt[1]);
@@ -838,7 +881,7 @@ void tie_kdtree_prep(tie_t *tie) {
 #endif
 
   /* Grow the head node to avoid floating point fuzz in the building process with edges */
-  math_vec_mul_scalar(delta, delta, 2.0); // XXX
+  math_vec_mul_scalar(delta, delta, 1.0); // XXX
   math_vec_sub(tie->min, tie->min, delta);
   math_vec_add(tie->max, tie->max, delta);
 

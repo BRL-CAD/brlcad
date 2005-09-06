@@ -19,7 +19,6 @@ rise_master_LDADD = \
 	${top_builddir}/src/adrt/libtexture/libtexture.la \
 	${top_builddir}/src/adrt/libtienet/libtienet.la \
 	${top_builddir}/src/adrt/libtie/libtie.la \
-	${LIBRT} \
 	${LIBTHREAD} \
 	${LIBM} \
 	${LIBZ}
