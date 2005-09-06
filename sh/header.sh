@@ -184,6 +184,11 @@ case $FILE in
 	wrap=0
 	commentprefix="#"
 	;;
+    *.[0-9])
+	echo "$FILE is a manual page"
+	wrap=0
+	commentprefix="./\""
+	;;
     *)
 	echo "ERROR: $FILE has an unknown filetype"
 	exit 0
@@ -353,15 +358,21 @@ $c information.
         ;;
     GFDL)
         block="${block}
-$c Permission is granted to copy, distribute and/or modify this
-$c document under the terms of the GNU Free Documentation License,
-$c Version 1.2 or any later version published by the Free Software
-$c Foundation; with no Invariant Sections, no Front-Cover Texts, and
-$c no Back-Cover Texts.
+$c This document is made available under the terms of the GNU Free
+$c Documentation License or, at your option, under the terms of the
+$c GNU General Public License as published by the Free Software
+$c Foundation.  Permission is granted to copy, distribute and/or
+$c modify this document under the terms of the GNU Free Documentation
+$c License, Version 1.2 or any later version published by the Free
+$c Software Foundation; with no Invariant Sections, no Front-Cover
+$c Texts, and no Back-Cover Texts.  Permission is also granted to
+$c redistribute this document under the terms of the GNU General
+$c Public License; either version 2 of the License, or (at your
+$c option) any later version.
 $c
 $c You should have received a copy of the GNU Free Documentation
-$c License along with this file; see the file named COPYING for more
-$c information.
+$c License and/or the GNU General Public License along with this
+$c document; see the file named COPYING for more information.
 "
         ;;
     *)
@@ -466,6 +477,11 @@ case "$lineone" in
 		fi
 		;;
 	esac
+	;;
+    ".TH"*)
+	echo "Found manpage title header line"
+	echo "$lineone" >> $FILE
+	skip=2
 	;;
     "/*"*)
         echo "WARNING: Found C comment start with stuff trailing"
