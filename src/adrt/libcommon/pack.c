@@ -567,12 +567,10 @@ void common_pack_mesh_adrt(common_db_t *db, void **app_data, int *app_ind, char 
 
   /* Check Geometry Revision */
   fread(&s, sizeof(unsigned short), 1, fh);
-printf("rev: %d\n", s);
 
   /* Total number of Triangles */
   fread(&total_tri_num, sizeof(unsigned int), 1, fh);
   common_pack_write(app_data, app_ind, &total_tri_num, sizeof(unsigned int));
-printf("total_tri_num: %d\n", total_tri_num);  
 
   while(ftell(fh) != end) {
     /* Mesh Name */
