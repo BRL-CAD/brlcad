@@ -19,7 +19,8 @@ static PyObject* isst_python_get_camera_ae(PyObject *self, PyObject* args);
 static PyObject* isst_python_set_camera_ae(PyObject *self, PyObject* args);
 static PyObject* isst_python_get_spall_angle(PyObject *self, PyObject* args);
 static PyObject* isst_python_set_spall_angle(PyObject *self, PyObject* args);
-static PyObject* isst_python_dump(PyObject *self, PyObject* args);
+static PyObject* isst_python_save(PyObject *self, PyObject* args);
+static PyObject* isst_python_load(PyObject *self, PyObject* args);
 
 
 static PyMethodDef ISST_Methods[] = {
@@ -31,7 +32,8 @@ static PyMethodDef ISST_Methods[] = {
     {"set_camera_ae", isst_python_set_camera_ae, METH_VARARGS, "set camera azimuth and elevation."},
     {"get_spall_angle", isst_python_get_spall_angle, METH_VARARGS, "get spall angle."},
     {"set_spall_angle", isst_python_set_spall_angle, METH_VARARGS, "set spall angle."},
-    {"dump", isst_python_dump, METH_VARARGS, "dump all."},
+    {"save", isst_python_save, METH_VARARGS, "save shot."},
+    {"load", isst_python_load, METH_VARARGS, "load shot."},
     {NULL, NULL, 0, NULL}
 };
 
@@ -132,15 +134,15 @@ static PyObject* isst_python_set_spall_angle(PyObject *self, PyObject* args) {
   return PyInt_FromLong(0);
 }
 
-/* Dump all data */
-static PyObject* isst_python_dump(PyObject *self, PyObject* args) {
+/* Save shot to shots.txt */
+static PyObject* isst_python_save(PyObject *self, PyObject* args) {
   char *string;
   FILE *fh;
 
   if(PyArg_ParseTuple(args, "s", &string)) {
     strcat(isst_python_response, string);
-    /* Append the data to the file dump.txt */
-    fh = fopen("dump.txt", "a");
+    /* Append the data to the file shots.txt */
+    fh = fopen("shots.txt", "a");
 
     if(!fh)
       return PyInt_FromLong(0);
@@ -152,6 +154,48 @@ static PyObject* isst_python_dump(PyObject *self, PyObject* args) {
     fprintf(fh, "\n");
 
     fclose(fh);
+
+    strcpy(isst_python_response, "shot saved.\n");
+  }
+
+  return PyInt_FromLong(0);
+}
+
+
+/* Load a Shot from shots.txt */
+static PyObject* isst_python_load(PyObject *self, PyObject *args) {
+  char *string, line[256];
+  FILE *fh;
+
+  if(PyArg_ParseTuple(args, "s", &string)) {
+    /*
+    * Given a label, try and locate the corresponding data from
+    * shots.txt and load the values into memory.
+    */
+    fh = fopen("shots.txt", "r");
+
+    if(!fh)
+      return PyInt_FromLong(0);
+
+    /* Search for matching label using value in string */
+    while(!feof(fh)) {
+      fgets(line, 256, fh);
+      if(!strstr(line, "label:"))
+        continue;
+
+      if(!strstr(line, string))
+        continue;
+
+       /* Read in camera_position and camera_ae values */
+       fscanf(fh, "camera_position: %f %f %f\n", &isst_master_camera_position.v[0], &isst_master_camera_position.v[1], &isst_master_camera_position.v[2]);
+       fscanf(fh, "camera_ae: %f %f\n", &isst_master_camera_azimuth, &isst_master_camera_elevation);
+       sprintf(line, "succesfully loaded: %s\n", string);
+       strcpy(isst_python_response, line);
+       return PyInt_FromLong(0);
+    }
+
+    sprintf(line, "cannot find: %s\n", string);
+    strcpy(isst_python_response, line);
   }
 
   return PyInt_FromLong(0);
