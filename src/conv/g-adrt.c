@@ -507,7 +507,7 @@ int main(int argc, char *argv[]) {
   char shortopts[] = "r:", c;
   struct db_tree_state ts;
   struct directory *dp;
-  short s;
+  unsigned short s;
 
 
   if(argc <= 3) {
@@ -539,14 +539,15 @@ int main(int argc, char *argv[]) {
 
   /* write 2-byte endian */
   s = 1;
-  fwrite(&s, sizeof(short), 1, adrt_fh);
+  fwrite(&s, sizeof(unsigned short), 1, adrt_fh);
 
   /* write geometry revision number */
   s = ADRT_GEOMETRY_REVISION;
-  fwrite(&s, sizeof(short), 1, adrt_fh);
+  fwrite(&s, sizeof(unsigned short), 1, adrt_fh);
 
   /* write total number of triangles (place holder) */
-  fwrite(&total_tri_num, sizeof(int), 1, adrt_fh);
+  total_tri_num = 0;
+  fwrite(&total_tri_num, sizeof(unsigned int), 1, adrt_fh);
 
 
   region_count = 0;
@@ -575,6 +576,12 @@ int main(int argc, char *argv[]) {
   * Generage a geometry file
   */
   db_walk_tree(rtip->rti_dbip, argc - 2, (const char **)&argv[2], 1, &ts, &reg_start_func, &reg_end_func, &leaf_func, (void *)0);
+
+  /*
+  * Write actual total number of triangles now.
+  */
+  fseek(adrt_fh, 4, SEEK_SET);
+  fwrite(&total_tri_num, sizeof(unsigned int), 1, adrt_fh);
   fclose(adrt_fh);
 
   /*
@@ -619,14 +626,7 @@ int main(int argc, char *argv[]) {
   adrt_fh = fopen("frames.db", "w");
   fprintf(adrt_fh, "frame,1\n");
   fprintf(adrt_fh, "camera,10.0,10.0,10.0,0.0,0.0,0.0,0.0,20.0,0.0\n");
-
-
-  /*
-  * Write actual total number of triangles now.
-  */
-  fseek(adrt_fh, 4, SEEK_SET);
-  fwrite(&total_tri_num, sizeof(int), 1, adrt_fh);
   fclose(adrt_fh);
 
-  printf("\ncomplete (%d triangles).\n", total_tri_num);
+  printf("\ncomplete: %d triangles.\n", total_tri_num);
 }
