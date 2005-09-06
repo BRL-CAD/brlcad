@@ -674,6 +674,10 @@ void isst_master_process_events(SDL_Event *event_queue, int event_num, isst_mast
             isst_master_alive = 0;
             break;
 
+          case SDLK_d: /* detach */
+            sock->active = 0;
+            break;
+
           case SDLK_e: /* export frame */
 #if 0
             pthread_mutex_lock(&isst_observer_gui_mut);
@@ -701,10 +705,6 @@ void isst_master_process_events(SDL_Event *event_queue, int event_num, isst_mast
 	  case SDLK_g: /* grab mouse */
             isst_master_mouse_grab = isst_master_mouse_grab ^ 1;
 	    break;
-
-          case SDLK_q: /* quit */
-            sock->active = 0;
-            break;
 
           case SDLK_KP1: /* front, back */
             {

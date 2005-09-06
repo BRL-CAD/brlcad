@@ -164,9 +164,14 @@ void tie_free(tie_t *tie) {
   int			i;
 
   /* Free Triangle Data */
-  for(i = 0; i < tie->tri_num; i++)
+printf("CP:A\n");
+  for(i = 0; i < tie->tri_num; i++) {
+    printf("free: %p\n", (void *)((TIE_PTR_CAST)(tie->tri_list[i].v) & ~0x7L));
     free( (void *)((TIE_PTR_CAST)(tie->tri_list[i].v) & ~0x7L) );
+  }
+printf("CP:B\n");
   free(tie->tri_list);
+printf("CP:C\n");
 
   /* Free KDTREE Nodes */
   tie_kdtree_free(tie);
