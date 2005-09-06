@@ -51,7 +51,7 @@
 #ifndef HUGE
 #define HUGE 3.40282347e+38F
 #endif
-#define ADRT_GEOMETRY_REVISION 1
+#define ADRT_GEOMETRY_REVISION 2
 
 
 typedef struct property_s {
@@ -75,6 +75,7 @@ property_t *prop_list;
 int regmap_num;
 regmap_t *regmap_list;
 int use_regmap;
+unsigned int total_tri_num;
 
 struct bu_vls*	region_name_from_path(struct db_full_path *pathp);
 
@@ -337,6 +338,9 @@ static union tree *leaf_func(struct db_tree_state *tsp,
       fwrite(vec, sizeof(float), 3, adrt_fh);
     }
 
+    /* Add to total number of triangles */
+    total_tri_num += bot->num_faces;
+
     if(bot->num_faces < 1<<16) {
       unsigned short ind;
 
@@ -541,6 +545,10 @@ int main(int argc, char *argv[]) {
   s = ADRT_GEOMETRY_REVISION;
   fwrite(&s, sizeof(short), 1, adrt_fh);
 
+  /* write total number of triangles (place holder) */
+  fwrite(&total_tri_num, sizeof(int), 1, adrt_fh);
+
+
   region_count = 0;
   prop_num = 0;
   prop_list = NULL;
@@ -611,7 +619,14 @@ int main(int argc, char *argv[]) {
   adrt_fh = fopen("frames.db", "w");
   fprintf(adrt_fh, "frame,1\n");
   fprintf(adrt_fh, "camera,10.0,10.0,10.0,0.0,0.0,0.0,0.0,20.0,0.0\n");
+
+
+  /*
+  * Write actual total number of triangles now.
+  */
+  fseek(adrt_fh, 4, SEEK_SET);
+  fwrite(&total_tri_num, sizeof(int), 1, adrt_fh);
   fclose(adrt_fh);
 
-  printf("\ncomplete.\n");
+  printf("\ncomplete (%d triangles).\n", total_tri_num);
 }
