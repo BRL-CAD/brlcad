@@ -451,7 +451,8 @@ void common_unpack_mesh(common_db_t *db, int socknum, tie_t *tie) {
   char name[256];
   unsigned char c;
   short block;
-  int ind, size, *flist, i, num, start, vnum, vmax, fnum, fmax;
+  unsigned int num, ind;
+  int size, *flist, i, start, vnum, vmax, fnum, fmax;
 
 
   vlist = NULL;
@@ -465,10 +466,9 @@ void common_unpack_mesh(common_db_t *db, int socknum, tie_t *tie) {
   ind = 0;
 
   /* initialize tie with triangle number */
-  tienet_recv(socknum, &num, sizeof(int), tienet_endian);
+  tienet_recv(socknum, &num, sizeof(unsigned int), tienet_endian);
   tie_init(tie, num);
-  ind += sizeof(int);
-  
+  ind += sizeof(unsigned int);
 
   while(ind < size) {
     /* Create a Mesh */

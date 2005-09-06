@@ -541,8 +541,9 @@ void common_pack_mesh_adrt(common_db_t *db, void **app_data, int *app_ind, char 
   TIE_3 v[48];
   char meshname[256], texturename[256];
   unsigned char c;
-  short s, endian;
-  int face[144], marker_size, marker_trinum, size, i, j, k, n, num, matrixind, end;
+  unsigned short s, endian;
+  int face[144], marker_size, size, i, j, k, n, num, matrixind, end;
+  unsigned int total_tri_num;
 
 
   fh = fopen(filename, "rb");
@@ -555,21 +556,23 @@ void common_pack_mesh_adrt(common_db_t *db, void **app_data, int *app_ind, char 
   marker_size = *app_ind;
   *app_ind += sizeof(int);
 
-  /* Marker for total number of triangles */
-  marker_trinum = *app_ind;
-  *app_ind += sizeof(int);
-
   /* Get End Position */
   fseek(fh, 0, SEEK_END);
   end = ftell(fh);
   fseek(fh, 0, SEEK_SET);
 
   /* Check Endian */
-  fread(&endian, sizeof(short), 1, fh);
+  fread(&endian, sizeof(unsigned short), 1, fh);
   endian = endian == 1 ? 0 : 1;
 
   /* Check Geometry Revision */
-  fread(&s, sizeof(short), 1, fh);
+  fread(&s, sizeof(unsigned short), 1, fh);
+printf("rev: %d\n", s);
+
+  /* Total number of Triangles */
+  fread(&total_tri_num, sizeof(unsigned int), 1, fh);
+  common_pack_write(app_data, app_ind, &total_tri_num, sizeof(unsigned int));
+printf("total_tri_num: %d\n", total_tri_num);  
 
   while(ftell(fh) != end) {
     /* Mesh Name */
@@ -654,9 +657,6 @@ void common_pack_mesh_adrt(common_db_t *db, void **app_data, int *app_ind, char 
   }
 
   fclose(fh);
-
-  /* pack the total number of triangles */
-  common_pack_write(app_data, &marker_trinum, &common_pack_trinum, sizeof(int));
 
   /* pack the size of the mesh data */
   size = *app_ind - marker_size - sizeof(int); /* make sure you're not counting the data size integer */
