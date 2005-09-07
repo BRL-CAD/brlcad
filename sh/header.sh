@@ -240,9 +240,9 @@ titleline="${titleline}${title}"
 ###################################
 copyright=""
 currentyear="`date | awk '{print $6}'`"
-copyrightline="`grep -i copyright $FILE | grep -v -i notice | head -1`"
+copyrightline="`grep -i copyright $FILE | grep -v -i notice | grep -v -i '\.SH' | head -1`"
 if [ "x$copyrightline" = "x" ] ; then
-    copyrightline="`grep -i copyright $FILE | grep -v -i united | head -1`"
+    copyrightline="`grep -i copyright $FILE | grep -v -i united | grep -v -i '\.SH' | head -1`"
 fi
 if [ "x$copyrightline" = "x" ] ; then
     startyear="$currentyear"
