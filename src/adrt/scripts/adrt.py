@@ -1,178 +1,135 @@
 ################
 ## REQUIRES PYTHON 2.3 RIGHT NOW
 ## CHANGE THESE TO WHERE YOUR PYTHON 2.2 IS LOCATED
-import sys
-sys.path.append('/usr/local/lib/python2.2')
-sys.path.append('/usr/local/lib/python2.2/lib-dynload')
+#import sys
+#sys.path.append('/usr/local/lib/python2.2')
+#sys.path.append('/usr/local/lib/python2.2/lib-dynload')
 ################
 
 import commands
 import Blender
 import math
 import os
+import struct
+from struct import pack
 from Blender import BGL, Draw, NMesh, Object, Camera, Lamp, Scene, Types
 from math import log
-#################
-animation = 0
-layers = []
-layerBase = 40
-i = 0
-while i < 20:
-    layers.append(1)
-    i += 1
-layerBits = 0
-layerBtns = []
-propertiesList = []
-projectName = "proj"
-projectButton = 0
-#################
 
 
-def event(evt, val):
-  if evt == Draw.ESCKEY:
-    Draw.Exit()
-    return
-  else:
-    return
-  Draw.Register(drawGUI, event, buttonEvent)
+framework_name = "scene"
+layer_mask = 3
+export_all_frames = 0
+framework_button = 0
 
+def export_meshes():
+  fh = open(framework_name + ".adrt", "wb")
 
-def NMeshDump(of, obj, mesh):
-  global propertiesList
-
-  myName = obj.getName()
-  if not mesh.materials:
-    ## Write length of Name
-    of.write(pack('b', len(myName)))
-    of.write(myName)
-    of.write(pack('b', 0))
-  else:
-    matName = mesh.materials[0].getName()
-    ## Write length of Name
-    of.write(pack('b', len(myName)))
-    of.write(myName)
-    of.write(pack('b', len(matName)))
-    of.write(matName)
-
-    found = -1
-    try:
-      found = propertiesList.index(matName)
-    except ValueError:
-      pass
-
-
-  ## Write Number of Triangles
-  num = 0
-  for f in mesh.faces:
-    if len(f.v) == 4:
-      num = num + 2
-    if len(f.v) == 3:
-      num = num + 1
-  of.write(pack('i', num))
-
-  ## Write Triangles
-  for f in mesh.faces:
-    if len(f.v) >= 3:
-      if f.smooth:
-        smooth = chr(1)
-      else:
-        smooth = chr(0)
-      of.write(pack('c', smooth))
-      of.write(pack('fffffffff', mesh.verts[f.v[0].index].co[0], mesh.verts[f.v[0].index].co[1], mesh.verts[f.v[0].index].co[2],
-                                 mesh.verts[f.v[1].index].co[0], mesh.verts[f.v[1].index].co[1], mesh.verts[f.v[1].index].co[2],
-                                 mesh.verts[f.v[2].index].co[0], mesh.verts[f.v[2].index].co[1], mesh.verts[f.v[2].index].co[2]))
-
-      ## Smooth Normals
-      if f.smooth:
-        of.write(pack('fffffffff', mesh.verts[f.v[0].index].no[0], mesh.verts[f.v[0].index].no[1], mesh.verts[f.v[0].index].no[2],
-                                   mesh.verts[f.v[1].index].no[0], mesh.verts[f.v[1].index].no[1], mesh.verts[f.v[1].index].no[2],
-                                   mesh.verts[f.v[2].index].no[0], mesh.verts[f.v[2].index].no[1], mesh.verts[f.v[2].index].no[2]))
-
-      if len(f.v) == 4:
-        of.write(pack('c', smooth))
-        of.write(pack('fffffffff', mesh.verts[f.v[0].index].co[0], mesh.verts[f.v[0].index].co[1], mesh.verts[f.v[0].index].co[2],
-                                   mesh.verts[f.v[2].index].co[0], mesh.verts[f.v[2].index].co[1], mesh.verts[f.v[2].index].co[2],
-                                   mesh.verts[f.v[3].index].co[0], mesh.verts[f.v[3].index].co[1], mesh.verts[f.v[3].index].co[2]))
-        if f.smooth:
-          of.write(pack('fffffffff', mesh.verts[f.v[0].index].no[0], mesh.verts[f.v[0].index].no[1], mesh.verts[f.v[0].index].no[2],
-                                     mesh.verts[f.v[2].index].no[0], mesh.verts[f.v[2].index].no[1], mesh.verts[f.v[2].index].no[2],
-                                     mesh.verts[f.v[3].index].no[0], mesh.verts[f.v[3].index].no[1], mesh.verts[f.v[3].index].no[2]))
-
-
-
-def dumpMeshes():
-  global exportStatus, layerBits
-  objList = Blender.Object.Get()
-
-  of = open(projectName + "/mesh.db", "w")
   ## Endian
-  of.write(pack('h', 1))
+  fh.write(pack('h', 1))
 
-  objCount = 0
-  for obj in objList:
-      if (obj.Layer & layerBits) == 0:
-          continue
-      if type(obj.getData()) == Types.NMeshType:
-          objCount += 1
+  ## Version
+  fh.write(pack('h', 2))
 
-  i = 0
-  for obj in objList:
-      if (obj.Layer & layerBits) == 0:
-          continue
-      data = obj.getData()
-      if type(data) == Types.NMeshType:
-          exportStatus = "Mesh %d of %d %s" % \
-                         (i, objCount, obj.getName())
-          print exportStatus
-          Draw.Draw()
-          NMeshDump(of, obj, data)
-          i += 1
+  ## Calculate total number of triangles
+  obj_list = Blender.Object.Get()
+
+  num = 0
+  for obj in obj_list:
+    if (obj.Layer & layer_mask) == obj.Layer:
+      if(type(obj.getData()) == Types.NMeshType):
+        for f in obj.getData().faces:
+          if len(f.v) == 4:
+            num = num + 2
+          if len(f.v) == 3:
+            num = num + 1
+
+  fh.write(pack('i', num))
+  print "\nWriting %d triangles..." % num
+
+  ## Pack each mesh
+  for obj in obj_list:
+    if (obj.Layer & layer_mask) == obj.Layer:
+      if(type(obj.getData()) == Types.NMeshType):
+        ## Mesh Name Length
+        fh.write(pack('B', len(obj.getName())))
+        ## Mesh Name
+        fh.write(obj.getName())
+        ## Vertice Total
+        fh.write(pack('I', len(obj.getData().verts)))
+        ## Write Vertices
+        for v in obj.getData().verts:
+          fh.write(pack('fff', v.co[0], v.co[1], v.co[2]))
+        ## Write Faces
+        if(len(obj.getData().faces) < 1<<16):
+          fh.write(pack('B', 0))
+          fh.write(pack('H', len(obj.getData().faces)))
+          for f in obj.getData().faces:
+            if len(f.v) >= 3:
+              fh.write(pack('HHH', f.v[0].index, f.v[1].index, f.v[2].index))
+            if len(f.v) == 4:
+              fh.write(pack('HHH', f.v[0].index, f.v[2].index, f.v[3].index))
+        else:
+          fh.write(pack('B', 1))
+          fh.write(pack('I', len(obj.getData().faces)))
+          for f in obj.getData().faces:
+            if len(f.v) >= 3:
+              fh.write(pack('III', f.v[0].index, f.v[1].index, f.v[2].index))
+            if len(f.v) == 4:
+              fh.write(pack('III', f.v[0].index, f.v[2].index, f.v[3].index))
 
 
-def dumpProperties():
-  propertiesFileName = projectName + "/properties.db"
-  print propertiesFileName
-  propertiesFile = open(propertiesFileName, "w")
 
-  objCount = 0
-  objCount = len(Blender.Material.Get())
+  ## close the file handle
+  fh.close()
 
-  i = 0
+
+def export_properties():
+  fh = open(framework_name + ".properties", "w")
+
+  print "Writing Properties..."
+
+  ## default property
+  fh.write("properties,%s\n" % "default")
+  fh.write("color,%f,%f,%f\n" % (0.8, 0.8, 0.8))
+  fh.write("gloss,%f\n" % (0.2))
+  fh.write("emission,%f\n" % (0.0))
+
   for m in Blender.Material.Get():
-    myName = m.getName()
-    exportStatus = "Properties for %s (%d of %d)" % (myName, i, objCount)
-    print exportStatus
-
-    propertiesFile.write("properties,%s\n" % (myName))
-
-    propertiesFile.write("color,%f,%f,%f\n" % \
-            (m.rgbCol[0], m.rgbCol[1], m.rgbCol[2]))
-
-    i += 1
-  propertiesFile.close()
+    fh.write("properties,%s\n" % m.getName())
+    fh.write("color,%f,%f,%f\n" % (m.rgbCol[0], m.rgbCol[1], m.rgbCol[2]))
+    if(m.getEmit() > 0.0):
+      fh.write("emission,%f\n" % (m.getEmit()))
+  fh.close()
 
 
-def dumpFrames():
-  cur = Blender.Get('curframe')
-  frameFileName = projectName + "/frame.db"
-  frameFile = open(frameFileName, "w")
+def export_textures():
+  fh = open(framework_name + ".textures", "w")
 
-  if animation == 0:
-    dumpOneFrame(frameFile, cur)
-  else:
-    sta = Blender.Get('staframe')
-    end = Blender.Get('endframe')
-    for frame in range (sta, end+1):
-      Blender.Set('curframe', frame)
-      Blender.Window.RedrawAll()
-      dumpOneFrame(frameFile, frame)
-  frameFile.close()
+  print "Writing Textures..."
+  fh.close()
 
 
-def dumpCamera(of, obj, cam):
+def export_mesh_map():
+  fh = open(framework_name + ".map", "w")
+
+  print "Writing Mesh Map..."
+  obj_list = Blender.Object.Get()
+  for obj in obj_list:
+    if (obj.Layer & layer_mask) == obj.Layer:
+      if(type(obj.getData()) == Types.NMeshType):
+        if(len(obj.getData().materials)) > 0:
+          fh.write(obj.getName() + "," + obj.getData().materials[0].getName() + "\n")
+        else:
+          fh.write(obj.getName() + ",default\n")
+
+
+  fh.close()
+
+
+def write_camera(fh, obj):
   focus = [0, 0, 0]
 
-  of.write("camera")
+  fh.write("camera")
 
   loc = obj.matrix[3]
   look = obj.matrix[2]
@@ -183,37 +140,36 @@ def dumpCamera(of, obj, cam):
   focus[1] = loc[1] - look[1]
   focus[2] = loc[2] - look[2]
 
-  of.write(",%f,%f,%f" % (loc[0], loc[1], loc[2])) # position
-  of.write(",%f,%f,%f" % (focus[0], focus[1], focus[2])) # focus
-  of.write(",0.0") # tilt
-
-
+  fh.write(",%f,%f,%f" % (loc[0], loc[1], loc[2])) # position
+  fh.write(",%f,%f,%f" % (focus[0], focus[1], focus[2])) # focus
+  fh.write(",0.0") # tilt
+          
+      
   # Vertical FoV = 2 * atan(height/(2*lens_mm)) * pi / 180
   # Horiz FoV = 2 * atan(width/(2*lens_mm)) * pi / 180
   #
   # simulate a 35mm camera w 24x36mm image plane
   # Blender uses the image width for this calcuation
+      
+  FoV = math.atan(35.0 / (2.0 * obj.getData().getLens())) * 180 / math.pi * 0.75
+  
+  fh.write(",%f,%f\n" % (FoV, 0.0))
 
-  FoV = math.atan(35.0 / (2.0 * cam.getLens())) * 180 / math.pi * 0.75
 
-  of.write(",%f,%f\n" % (FoV, 0.0))
+def write_frame(fh, frame):
+  print "Writing frame: %d" % frame
+  fh.write("frame,%d\n" % frame)
 
-
-def dumpOneFrame(of, n):
-  print "exporting frame: %d" % n
-  of.write("frame,%d\n" % n)
-
-  objList = Blender.Object.Get()
   m_identity = [[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]]
 
-  for obj in objList:
-    if (obj.Layer & layerBits) == 0:
-      continue
-    data = obj.getData()
-    if type(data) == Types.CameraType:
-      dumpCamera(of, obj, data)
-    if type(data) == Types.NMeshType:
-      objName = obj.getName()
+  obj_list = Blender.Object.Get()
+  for obj in obj_list:
+    if(obj.Layer & layer_mask) == obj.Layer:
+      if type(obj.getData()) == Types.CameraType:
+        write_camera(fh, obj)
+
+    if type(obj.getData()) == Types.NMeshType:
+      obj_name = obj.getName()
       m = obj.matrix
 
       same = 1
@@ -222,136 +178,122 @@ def dumpOneFrame(of, n):
           if m[x][y] != m_identity[x][y]:
             same = 0
 
-      if same != 1:
-        of.write("transform_mesh,%s" % objName)
-        of.write(",%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f\n" % (m[0][0], m[0][1], m[0][2], m[0][3], m[1][0], m[1][1], m[1][2], m[1][3], m[2][0], m[2][1], m[2][2], m[2][3], m[3][0], m[3][1], m[3][2], m[3][3]))
+      if same == 0:
+        fh.write("transform_mesh,%s" % obj_name)
+        fh.write(",%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f\n" % \
+                (m[0][0], m[0][1], m[0][2], m[0][3], m[1][0], m[1][1], m[1][2], m[1][3], \
+                 m[2][0], m[2][1], m[2][2], m[2][3], m[3][0], m[3][1], m[3][2], m[3][3]))
 
 
+def export_frames():
+  global export_all_frames
 
-def mat_mul(b, a):
-  m = [[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]]
-  mat_print("    a", a)
-  mat_print("    b", b)
-  for j in range(4):
-    for i in range(4):
-      m[i][j] = a[i][0] * b[0][j] + a[i][1] * b[1][j] + \
-                a[i][2] * b[2][j] + a[i][3] * b[3][j]
-  mat_print("    m", m)
-  return m
+  fh = open(framework_name + ".frames", "w")
 
+  cur = Blender.Get('curframe')
 
-def mat_print(s, m):
-  print s
-  print "\t%f %f %f %f" % (m[0][0], m[0][1], m[0][2], m[0][3])
-  print "\t%f %f %f %f" % (m[1][0], m[1][1], m[1][2], m[1][3])
-  print "\t%f %f %f %f" % (m[2][0], m[2][1], m[2][2], m[2][3])
-  print "\t%f %f %f %f" % (m[3][0], m[3][1], m[3][2], m[3][3])
+  if export_all_frames == 0:
+    write_frame(fh, cur)
+  else:
+    sta = Blender.Get('staframe')
+    end = Blender.Get('endframe')
+    for frame in range (sta, end+1):
+      Blender.Set('curframe', frame)
+      Blender.Window.RedrawAll()
+      write_frame(fh, frame)
 
 
-def doExport():
-  global layerBits
+  fh.close()
 
-  print "Exporting...\n"
 
-  ## Built Layer Bit Mask
-  i = 0
-  layerBits = 0
-  while i < 20:
-    if layers[i] != 0:
-      layerBits |= (1 << i)
-    i += 1
+def export_environment():
+  fh = open(framework_name + ".env", "w")
+  fh.write("geometry_file," + framework_name + ".adrt\n")
+  fh.write("properties_file," + framework_name + ".properties\n")
+  fh.write("textures_file," + framework_name + ".textures\n")
+  fh.write("mesh_map_file," + framework_name + ".map\n")
+  fh.write("frames_file," + framework_name + ".frames\n")
+  fh.write("image_size,1024,768,128,128\n")
+  fh.write("rendering_method,normal\n")
+  fh.close()
 
-  ## Make Project Directory
-  commands.getoutput("mkdir %s" % projectName)
 
-  envFileName = projectName + "/settings.env"
-  print envFileName
-  envFile = open(envFileName, "w")
+def event(evt, val):
+  if evt == Draw.ESCKEY:
+    Draw.Exit()
+    return
+  else:
+    return
+  Draw.Register(draw_gui, event, buttonEvent)
 
-  envFile.write("image_size,%d,%d\n" % (640,480))
-  envFile.write("rendering_method,normal\n")
 
-  envFile.close();
+def button_event(evt):
+  global framework_button, framework_name, layer_mask, export_all_frames
 
-  textureFileName = projectName + "/texture.db"
-  textureFile = open(textureFileName, "w")
-  textureFile.close();
-
-  dumpMeshes()
-  dumpProperties()
-
-  if animation == 1:
-    dumpFrames()
-  else
-    dumpOneFrame(, 1)
-
-def buttonEvent(evt):
-  global animation, sceneVal, layerBtns, layers, projectName, projectButton
-
-  if evt == 8:
-    projectName = projectButton.val
+  ## Export ADRT Framework
   if evt == 1:
-    doExport()
-  elif evt == 4:
-    animation = 1 - animation
-  elif evt == 6:
-    for i in range(20):
-      layers[i] = 1
-      layerBtns[i].val = 1
-  elif evt == 7:
-    for i in range(20):
-      layers[i] = 0
-      layerBtns[i].val = 0
-  elif evt >= layerBase and evt < layerBase + 20:
-    layerNumber = evt - layerBase
-    layers[layerNumber] = 1 - layers[layerNumber]
+    ## export mesh data
+    export_meshes()
+
+    ## export properties data
+    export_properties()
+
+    ## export textures data
+    export_textures()
+
+    ## export mesh map
+    export_mesh_map()
+
+    ## export frame data
+    export_frames()
+
+    ## export an environment file
+    export_environment()
+    print "Complete."
+
+  if evt == 2:
+    framework_name = framework_button.val
+
+  if evt == 3:
+    layer_mask = 0
+
+  if evt == 5:
+    export_all_frames ^= 1
+
+  if evt >= 32:
+    layer_mask ^= 1<<(evt - 32)
+
   Draw.Redraw(1)
 
 
-def drawGUI():
-  global layers, layerBtns, projectName, projectButton
+def draw_gui():
+  global framework_button, framework_name, layer_mask, export_all_frames
 
-  ## Set background color
-#  BGL.glClearColor(0.0, 0.0, 0.0, 1)
-#  BGL.glClear(BGL.GL_COLOR_BUFFER_BIT)
+  ##########
+  Draw.Button("Export ADRT Framework", 1, 0, 0, 160, 20, "Export Scene")
+  framework_button = Draw.String("Framework Name:", 2, 160, 0, 240, 20, framework_name, 64, "Framework Name")
+  ##########
 
-  xPad = 10
-  height = 18
-  yLoc = xPad + 10
-  yDelta = height
 
-  expWidth = Draw.GetStringWidth("Export", 'normal') + 40
-  Draw.Button("Export", 1, xPad, yLoc, expWidth, 2*height, "Export Scene")
+  ##########
+  Draw.Button("Select All", 3, 0, 60, 160, 20, "Deselect all Layers")
+  Draw.Button("Select None", 4, 0, 40, 160, 20, "Select all Layers")
 
-  # Draw the layer buttons
-  layerBtn = 0 # start with the bottom row
-  btnSize = height
 
+  layer_id = 0
   for row in range(2):
-    ypos = yLoc + (1-row) * btnSize
-    xpos = xPad
     for col in range(10):
-      layerBtns.append(Draw.Toggle(" ",  layerBase + layerBtn, expWidth + xpos, ypos, btnSize, btnSize, layers[layerBtn]))
-      xpos += btnSize
-      layerBtn += 1
+      Draw.Toggle(" ", 32+layer_id, 160+col*20, 60-row*20, 20, 20, layer_mask & 1<<layer_id, "")
+      layer_id += 1
+  ##########
 
-  Draw.Button("All", 6, 10*btnSize + xPad + expWidth, yLoc, btnSize*5, height, "Deselect all Layers")
-  Draw.Button("None", 7, 10*btnSize + xPad + expWidth, yLoc+btnSize, btnSize*5, height, "Select all Layers")
+  ##########
+  Draw.Toggle("Export All Frames", 5, 0, 100, 160, 20, export_all_frames, "")
+  ##########
 
 
-  yLoc += yDelta
-  yLoc += yDelta
-
-  Draw.Toggle("Export Animation Data", 4, xPad, yLoc, 345, height, animation, "Export Animation Data")
-  yLoc += yDelta
-
-  projectName = os.getcwd()
-  projectName += "/myproj"
-  projectButton = Draw.String("Project:", 8, xPad, yLoc, 345, height, projectName, 64, "Project Name")
-  yLoc += yDelta
-
-##########################################
+############################################
 ## Begin Event Handling
-##########################################
-Draw.Register(drawGUI, event, buttonEvent)
-##########################################
+############################################
+Draw.Register(draw_gui, event, button_event)
+############################################
