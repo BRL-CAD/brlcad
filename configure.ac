@@ -1581,7 +1581,10 @@ AC_CHECK_FUNC(realpath, , [AC_DEFINE(NO_REALPATH,, From Tcl -- No realpath)])
 AC_CHECK_FUNC(memmove, , [AC_DEFINE(NO_MEMMOVE,, From Tcl -- No memmove) 
 		          AC_DEFINE(NO_STRING_H,, From Tcl -- No string)])
 AC_CHECK_FUNC(opendir, , [AC_DEFINE(USE_DIRENT2_H,, From Tcl -- use dirent2)])
-
+AH_VERBATIM([OUR_STRSEP],
+[#ifndef HAVE_STRSEP
+extern char *strsep(char **stringp, const char *delim);
+#endif])
 
 dnl *********************************
 dnl *** Check for system services ***
