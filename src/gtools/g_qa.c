@@ -1640,6 +1640,121 @@ view_reports(struct cstate *state)
     }
 }
 
+/*	w e i g h t _ v o l u m e _ t e r m i n a t e 
+ *
+ * These checks are unique because they must both be completed.  
+ * Early termination before they are done is not an option.  
+ * The results computed here are used later
+ *
+ * Returns:
+ *	0 terminate
+ *	1 continue processing
+ */
+static int
+weight_volume_terminate(struct cstate *state)
+{
+    int can_terminate = 1;
+    double low, hi, val, delta;
+
+    if (analysis_flags & ANALYSIS_WEIGHT) {
+	/* for each object, compute the weight for all views */
+	int obj;
+
+	for (obj=0 ; obj < num_objects ; obj++) {
+	    int view = 0;
+	    if (verbose)
+		bu_log("object %d\n", obj); 
+	    /* compute weight of object for given view */
+	    val = obj_tbl[obj].o_weight[view] =
+		obj_tbl[obj].o_lenDensity[view] * (state->area[view] / state->shots[view]);
+
+	    low = hi = 0.0;
+
+	    /* compute the per-view weight of this object */
+	    for (view=1 ; view < num_views ; view++) {
+		obj_tbl[obj].o_weight[view] =
+		    obj_tbl[obj].o_lenDensity[view] * 
+		    (state->area[view] / state->shots[view]);
+
+		delta = val - obj_tbl[obj].o_weight[view];
+		if (delta < low) low = delta;
+		if (delta > hi) hi = delta;
+	    }
+	    delta = hi - low;
+
+	    if (verbose)
+		bu_log("\t%s weight %g %s +%g -%g\n",
+		       obj_tbl[obj].o_name,
+		       val / units[WGT]->val,
+		       units[WGT]->name,
+		       fabs(hi / units[WGT]->val),
+		       fabs(low / units[WGT]->val));
+
+	    if (delta > weight_tolerance) {
+		/* this object differs too much in each view, so we need to refine the grid */
+		/* signal that we cannot terminate */
+		can_terminate = 0;
+		if (verbose)
+		    bu_log("\t%s differs too much in weight per view.\n", 
+			   obj_tbl[obj].o_name);
+	    }
+	}
+	if (can_terminate) {
+	    if (verbose)
+		bu_log("all objects within tolerance on weight calculation\n");
+	}
+    }
+
+    if (analysis_flags & ANALYSIS_VOLUME) {
+	/* find the range of values for object volumes */
+	int obj;
+
+	/* for each object, compute the volume for all views */
+	for (obj=0 ; obj < num_objects ; obj++) {
+
+	    /* compute volume of object for given view */
+	    int view = 0;
+	    val = obj_tbl[obj].o_volume[view] = 
+		obj_tbl[obj].o_len[view] * (state->area[view] / state->shots[view]);
+
+	    low = hi = 0.0;
+	    /* compute the per-view volume of this object */
+	    for (view=1 ; view < num_views ; view++) {
+		obj_tbl[obj].o_volume[view] = 
+		    obj_tbl[obj].o_len[view] * (state->area[view] / state->shots[view]);
+
+		delta = val - obj_tbl[obj].o_volume[view];
+		if (delta < low) low = delta;
+		if (delta > hi) hi = delta;
+	    }
+	    delta = hi - low;
+
+	    if (verbose)
+		bu_log("\t%s volume %g %s +(%g) -(%g)\n",
+		       obj_tbl[obj].o_name,
+		       val / units[VOL]->val, units[VOL]->name,
+		       hi / units[VOL]->val,
+		       fabs(low / units[VOL]->val));
+
+	    if (delta > volume_tolerance) {
+		/* this object differs too much in each view, so we need to refine the grid */
+		can_terminate = 0;
+		if (verbose)
+		    bu_log("\tvolume tol not met on %s.  Refine grid\n",
+			   obj_tbl[obj].o_name);
+		break;
+	    }
+	}
+    }
+
+    if (can_terminate) {
+	if (verbose)
+	    bu_log("Volume/Weight tolerance met. Terminate\n", BU_FLSTR);
+	return 0; /* signal we don't want to go onward */
+    }
+    return 1;
+}
+
 
 /*
  *	t e r m i n a t e _ c h e c k
@@ -1657,7 +1772,6 @@ view_reports(struct cstate *state)
 int 
 terminate_check(struct cstate *state)
 {
-    double low, hi, val, delta;
     struct region *regp;
     unsigned long hits;
     int obj;
@@ -1681,128 +1795,38 @@ terminate_check(struct cstate *state)
     if (plot_gaps) fflush(plot_gaps);
     if (plot_expair) fflush(plot_expair);
 
-    /* check to make sure every region was hit at least once */
-    for( BU_LIST_FOR( regp, region, &(state->rtip->HeadRegion) ) )  {
-	RT_CK_REGION(regp);
+    if (require_num_hits > 0) {
+	/* check to make sure every region was hit at least once */
+	for( BU_LIST_FOR( regp, region, &(state->rtip->HeadRegion) ) )  {
+	    RT_CK_REGION(regp);
 
-	hits = ((struct per_region_data *)regp->reg_udata)->hits;
-	if ( hits < require_num_hits) {
-	    if (verbose) {
-		if (hits == 0) {
-		    bu_log("%s was not hit\n", regp->reg_name);
-		} else {
-		    bu_log("%s hit only %u times (< %u)\n",
-			   regp->reg_name, hits, require_num_hits);
+	    hits = ((struct per_region_data *)regp->reg_udata)->hits;
+	    if ( hits < require_num_hits) {
+		if (verbose) {
+		    if (hits == 0) {
+			bu_log("%s was not hit\n", regp->reg_name);
+		    } else {
+			bu_log("%s hit only %u times (< %u)\n",
+			       regp->reg_name, hits, require_num_hits);
+		    }
 		}
-	    }
 
-	    return 1;
+		return 1;
+	    }
 	}
     }
 
     if (analysis_flags & (ANALYSIS_WEIGHT|ANALYSIS_VOLUME))
-	can_terminate = 1;
-    else
-	can_terminate = 0; /* weight/volume limits don't apply */
+	if (weight_volume_terminate(state) == 0)
+	    return 0; /* terminate */
 
-    if (analysis_flags & ANALYSIS_WEIGHT) {
-	/* for each object, compute the weight for all views */
-
-	for (obj=0 ; obj < num_objects ; obj++) {
-	    if (verbose)
-		bu_log("object %d\n", obj); 
-	    /* compute weight of object for given view */
-	    view = 0;
-	    val = obj_tbl[obj].o_weight[view] =
-		obj_tbl[obj].o_lenDensity[view] * (state->area[view] / state->shots[view]);
-
-	    low = hi = 0.0;
-
-	    /* compute the per-view weight of this object */
-	    for (view=1 ; view < num_views ; view++) {
-		obj_tbl[obj].o_weight[view] =
-		    obj_tbl[obj].o_lenDensity[view] * 
-		    (state->area[view] / state->shots[view]);
-
-		delta = val - obj_tbl[obj].o_weight[view];
-		if (delta < low) low = delta;
-		if (delta > hi) hi = delta;
-	    }
-	    delta = hi - low;
-
-	    if (verbose)
-		bu_log("\t%s weight %g %s +%g -%g\n",
-		   obj_tbl[obj].o_name,
-		   val / units[WGT]->val,
-		   units[WGT]->name,
-		   fabs(hi / units[WGT]->val),
-		   fabs(low / units[WGT]->val));
-
-	    if (delta > weight_tolerance) {
-		/* this object differs too much in each view, so we need to refine the grid */
-		can_terminate = 0;
-		if (verbose)
-		    bu_log("\t%s differs too much in weight per view.\n", 
-		       obj_tbl[obj].o_name);
-	    }
-	}
-	if (can_terminate) {
-	    if (verbose)
-		bu_log("all objects within tolerance on weight calculation\n");
-	}
-    }
-    if (analysis_flags & ANALYSIS_VOLUME) {
-	/* find the range of values for object volumes */
-
-	/* for each object, compute the volume for all views */
-	for (obj=0 ; obj < num_objects ; obj++) {
-
-	    /* compute volume of object for given view */
-	    view = 0;
-	    val = obj_tbl[obj].o_volume[view] = 
-		obj_tbl[obj].o_len[view] * (state->area[view] / state->shots[view]);
-
-	    low = hi = 0.0;
-	    /* compute the per-view volume of this object */
-	    for (view=1 ; view < num_views ; view++) {
-		obj_tbl[obj].o_volume[view] = 
-		    obj_tbl[obj].o_len[view] * (state->area[view] / state->shots[view]);
-
-		delta = val - obj_tbl[obj].o_volume[view];
-		if (delta < low) low = delta;
-		if (delta > hi) hi = delta;
-	    }
-	    delta = hi - low;
-
-	    if (verbose)
-		bu_log("\t%s volume %g %s +(%g) -(%g)\n",
-		   obj_tbl[obj].o_name,
-		   val / units[VOL]->val, units[VOL]->name,
-		   hi / units[VOL]->val,
-		   fabs(low / units[VOL]->val));
-
-	    if (delta > volume_tolerance) {
-		/* this object differs too much in each view, so we need to refine the grid */
-		can_terminate = 0;
-		if (verbose)
-		    bu_log("\tvolume tol not met on %s.  Refine grid\n",
-			   obj_tbl[obj].o_name);
-		break;
-	    }
-	}
-
-    }
-
-    if (can_terminate) {
-	if (verbose)
-	    bu_log("%s terminate\n", BU_FLSTR);
-	return 0; /* signal we don't want to go onward */
-    }
 
     if ( (analysis_flags & ANALYSIS_OVERLAPS)) {
-	if (BU_LIST_NON_EMPTY(&overlapList.l) && gridSpacing < gridSpacingLimit*4) {
+	if (BU_LIST_NON_EMPTY(&overlapList.l)) {
 	    /* since we've found an overlap, we can quit */
 	    return 0;
+	} else {
+	    bu_log("overlaps list is empty\n");
 	}
     }
     if ( (analysis_flags & ANALYSIS_GAP)) {
