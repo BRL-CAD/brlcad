@@ -118,8 +118,8 @@ option add *QuadDisplay.height 400 widgetDefault
     public method qray {args}
     public method rt {args}
     public method rtabort {{gi 0}}
-    public method rtcheck {args}
     public method rtarea {args}
+    public method rtcheck {args}
     public method rtedge {args}
     public method rtweight {args}
     public method transparency {args}
@@ -923,12 +923,20 @@ if {$tcl_platform(os) != "Windows NT"} {
     $itk_component($itk_option(-pane)) rtabort $gi
 }
 
+::itcl::body QuadDisplay::rtarea {args} {
+    eval $itk_component($itk_option(-pane)) rtarea $args
+}
+
 ::itcl::body QuadDisplay::rtcheck {args} {
     eval $itk_component($itk_option(-pane)) rtcheck $args
 }
 
 ::itcl::body QuadDisplay::rtedge {args} {
     eval $itk_component($itk_option(-pane)) rtedge $args
+}
+
+::itcl::body QuadDisplay::rtweight {args} {
+    eval $itk_component($itk_option(-pane)) rtweight $args
 }
 
 ::itcl::body QuadDisplay::resetAll {} {
