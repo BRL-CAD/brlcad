@@ -39,10 +39,11 @@
  */
 
 #include "kdtree.h"
+#include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <math.h>
+#include <unistd.h>
 
 tfloat TIE_PREC;
 
@@ -52,23 +53,23 @@ tfloat TIE_PREC;
 
 
 static void tie_kdtree_free_node(tie_kdtree_t *node) {
-  tie_kdtree_t *node_aligned = (tie_kdtree_t *)((TIE_PTR_CAST)node & ~0x7L);
+  tie_kdtree_t *node_aligned = (tie_kdtree_t *)((intptr_t)node & ~0x7L);
 
-  if(((TIE_PTR_CAST)(node_aligned->data)) & 0x4) {
+  if(((intptr_t)(node_aligned->data)) & 0x4) {
     /* Node Data is KDTREE Children, Recurse */
-    tie_kdtree_free_node(&((tie_kdtree_t *)(((TIE_PTR_CAST)(node_aligned->data)) & ~0x7L))[0]);
-    tie_kdtree_free_node(&((tie_kdtree_t *)(((TIE_PTR_CAST)(node_aligned->data)) & ~0x7L))[1]);
-    free((void*)((TIE_PTR_CAST)(node_aligned->data) & ~0x7L));
+    tie_kdtree_free_node(&((tie_kdtree_t *)(((intptr_t)(node_aligned->data)) & ~0x7L))[0]);
+    tie_kdtree_free_node(&((tie_kdtree_t *)(((intptr_t)(node_aligned->data)) & ~0x7L))[1]);
+    free((void*)((intptr_t)(node_aligned->data) & ~0x7L));
   } else {
     /* This node points to a geometry node, free it */
-    free(((tie_geom_t *)((TIE_PTR_CAST)(node_aligned->data) & ~0x7L))->tri_list);
-    free((void *)((TIE_PTR_CAST)(node_aligned->data) & ~0x7L));
+    free(((tie_geom_t *)((intptr_t)(node_aligned->data) & ~0x7L))->tri_list);
+    free((void *)((intptr_t)(node_aligned->data) & ~0x7L));
   }
 }
 
 
 static void tie_kdtree_cache_free_node(tie_t *tie, tie_kdtree_t *node, void **cache) {
-  tie_kdtree_t *node_aligned = (tie_kdtree_t *)((TIE_PTR_CAST)node & ~0x7L);
+  tie_kdtree_t *node_aligned = (tie_kdtree_t *)((intptr_t)node & ~0x7L);
   unsigned int size, mem, tri_num, i, tri_ind;
   unsigned char type, split;
 
@@ -85,14 +86,14 @@ static void tie_kdtree_cache_free_node(tie_t *tie, tie_kdtree_t *node, void **ca
     *cache = realloc(*cache, mem);
   }
 
-  if(((TIE_PTR_CAST)(node_aligned->data)) & 0x4) {
+  if(((intptr_t)(node_aligned->data)) & 0x4) {
     /* Create a KD-Tree Node in the cache */
     type = 0;
     memcpy(&((char *)*cache)[size], &type, 1);
     size += 1;
     memcpy(&((char *)*cache)[size], &(node_aligned->axis), sizeof(tfloat));
     size += sizeof(tfloat);
-    split = ((TIE_PTR_CAST)(node_aligned->data)) & 0x3;
+    split = ((intptr_t)(node_aligned->data)) & 0x3;
     memcpy(&((char *)*cache)[size], &split, 1);
     size += 1;
 
@@ -100,11 +101,11 @@ static void tie_kdtree_cache_free_node(tie_t *tie, tie_kdtree_t *node, void **ca
     memcpy(*cache, &size, sizeof(unsigned int));
 
     /* Node Data is KDTREE Children, Recurse */
-    tie_kdtree_cache_free_node(tie, &((tie_kdtree_t *)(((TIE_PTR_CAST)(node_aligned->data)) & ~0x7L))[0], cache);
-    tie_kdtree_cache_free_node(tie, &((tie_kdtree_t *)(((TIE_PTR_CAST)(node_aligned->data)) & ~0x7L))[1], cache);
-    free((void *)((TIE_PTR_CAST)(node_aligned->data) & ~0x7L));
+    tie_kdtree_cache_free_node(tie, &((tie_kdtree_t *)(((intptr_t)(node_aligned->data)) & ~0x7L))[0], cache);
+    tie_kdtree_cache_free_node(tie, &((tie_kdtree_t *)(((intptr_t)(node_aligned->data)) & ~0x7L))[1], cache);
+    free((void *)((intptr_t)(node_aligned->data) & ~0x7L));
   } else {
-    tri_num = ((tie_geom_t *)((TIE_PTR_CAST)(node_aligned->data) & ~0x7L))->tri_num;
+    tri_num = ((tie_geom_t *)((intptr_t)(node_aligned->data) & ~0x7L))->tri_num;
     type = 1;
     memcpy(&((char *)*cache)[size], &type, 1);
     size += 1;
@@ -117,7 +118,7 @@ static void tie_kdtree_cache_free_node(tie_t *tie, tie_kdtree_t *node, void **ca
       * Pointer subtraction gives us the index of the triangle since the block of memory
       * that the triangle exists in is contiguous memory.
       */
-      tri_ind = ((tie_geom_t *)((TIE_PTR_CAST)(node_aligned->data) & ~0x7L))->tri_list[i] - &tie->tri_list[0];
+      tri_ind = ((tie_geom_t *)((intptr_t)(node_aligned->data) & ~0x7L))->tri_list[i] - &tie->tri_list[0];
       memcpy(&((char *)*cache)[size], &tri_ind, sizeof(unsigned int));
       size += sizeof(unsigned int);
     }
@@ -126,8 +127,8 @@ static void tie_kdtree_cache_free_node(tie_t *tie, tie_kdtree_t *node, void **ca
     memcpy(*cache, &size, sizeof(unsigned int));
 
     /* This node points to a geometry node, free it */
-    free(((tie_geom_t *)((TIE_PTR_CAST)(node_aligned->data) & ~0x7L))->tri_list);
-    free((void *)((TIE_PTR_CAST)(node_aligned->data) & ~0x7L));
+    free(((tie_geom_t *)((intptr_t)(node_aligned->data) & ~0x7L))->tri_list);
+    free((void *)((intptr_t)(node_aligned->data) & ~0x7L));
   }
 }
 
@@ -301,27 +302,27 @@ static void tie_kdtree_build(tie_t *tie, tie_kdtree_t *node, int depth, TIE_3 mi
   cmin[1] = min;
   cmax[1] = max;
 
-  math_vec_add(center, max, min);
-  math_vec_mul_scalar(center, center, 0.5);
+  math_vec_add(center[0], max, min);
+  math_vec_mul_scalar(center[0], center[0], 0.5);
 
   /* Split along largest Axis to keep node sizes relatively cube-like (Naive) */
   math_vec_sub(vec, max, min);
 
   /* Determine the largest Axis */
   if(vec.v[0] >= vec.v[1] && vec.v[0] >= vec.v[2]) {
-    cmax[0].v[0] = center.v[0];
-    cmin[1].v[0] = center.v[0];
-    node->axis = center.v[0];
+    cmax[0].v[0] = center[0].v[0];
+    cmin[1].v[0] = center[0].v[0];
+    node->axis = center[0].v[0];
     split = 0;
   } else if(vec.v[1] >= vec.v[0] && vec.v[1] >= vec.v[2]) {
-    cmax[0].v[1] = center.v[1];
-    cmin[1].v[1] = center.v[1];
-    node->axis = center.v[1];
+    cmax[0].v[1] = center[0].v[1];
+    cmin[1].v[1] = center[0].v[1];
+    node->axis = center[0].v[1];
     split = 1;
   } else {
-    cmax[0].v[2] = center.v[2];
-    cmin[1].v[2] = center.v[2];
-    node->axis = center.v[2];
+    cmax[0].v[2] = center[0].v[2];
+    cmin[1].v[2] = center[0].v[2];
+    node->axis = center[0].v[2];
     split = 2;
   }
 }
@@ -581,8 +582,10 @@ static void tie_kdtree_build(tie_t *tie, tie_kdtree_t *node, int depth, TIE_3 mi
   * doing.  In other words, if both children have the same number of triangles
   * as the parent does then stop.
   */
-  if(side[split][split_slice][0] == node_gd->tri_num && side[split][split_slice][1] == node_gd->tri_num)
+  if(side[split][split_slice][0] == node_gd->tri_num && side[split][split_slice][1] == node_gd->tri_num) {
+    tie->stat += node_gd->tri_num;
     return;
+  }
 
 #if 0
   if(side[split][split_slice][0] == node_a && side[split][split_slice][1] == node_b) {
@@ -688,7 +691,7 @@ static void tie_kdtree_build(tie_t *tie, tie_kdtree_t *node, int depth, TIE_3 mi
  
   /* Assign the splitting dimension to the node */
   /* If we've come this far then YES, this node DOES have child nodes, MARK it as so. */
-  node->data = (void *)((TIE_PTR_CAST)(node->data) + split + 4);
+  node->data = (void *)((intptr_t)(node->data) + split + 4);
 }
 
 
@@ -782,9 +785,6 @@ void tie_kdtree_cache_load(tie_t *tie, void *cache) {
       index += sizeof(unsigned int);
 
       geom->tri_list = (tie_tri_t **)malloc(geom->tri_num * sizeof(tie_tri_t *));
-      if(tie->stat < geom->tri_num)
-        tie->stat = geom->tri_num;
-
       for(i = 0; i < geom->tri_num; i++) {
         memcpy(&tri_ind, &((char *)cache)[index], sizeof(unsigned int));
         index += sizeof(unsigned int);
@@ -793,8 +793,10 @@ void tie_kdtree_cache_load(tie_t *tie, void *cache) {
         geom->tri_list[i] = &tie->tri_list[0] + tri_ind;
       }
 
-      stack_ind--;
-      node = stack[stack_ind];
+      if(stack_ind) {
+        stack_ind--;
+        node = stack[stack_ind];
+      }
     } else {
       /* KD-Tree Node */
       if(!tie->kdtree) {
@@ -825,7 +827,7 @@ void tie_kdtree_cache_load(tie_t *tie, void *cache) {
       * Mask the splitting plane and mark it as a kdtree node
       * using the lower bits of the ptr.
       */
-      temp_node->data = (void *)((TIE_PTR_CAST)(temp_node->data) + split + 4);
+      temp_node->data = (void *)((intptr_t)(temp_node->data) + split + 4);
     }
   }
 

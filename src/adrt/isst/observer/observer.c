@@ -347,7 +347,7 @@ void isst_observer_event_loop() {
             SDL_ShowCursor(!isst_observer_mouse_grab);
             break;
 
-          case SDLK_F2:
+          case SDLK_PRINT:
             {
               void *image24;
 

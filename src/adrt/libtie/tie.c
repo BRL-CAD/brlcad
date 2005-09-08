@@ -64,10 +64,11 @@
 #endif
 
 #include "tie.h"
+#include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <math.h>
+#include <unistd.h>
 #include "struct.h"
 
 #ifdef TIE_SSE
@@ -118,9 +119,9 @@ static void tie_tri_prep(tie_t *tie) {
     tri->v[1] = v2.v[i2] - tri->data[0].v[i2];
 
     if(i1 == 0 && i2 == 1) {
-      tri->v = (tfloat *)((TIE_PTR_CAST)(tri->v) + 2);
+      tri->v = (tfloat *)((intptr_t)(tri->v) + 2);
     } else if (i1 == 0) {
-      tri->v = (tfloat *)((TIE_PTR_CAST)(tri->v) + 1);
+      tri->v = (tfloat *)((intptr_t)(tri->v) + 1);
     }
 
     /* Compute DotVN */
@@ -164,14 +165,11 @@ void tie_free(tie_t *tie) {
   int			i;
 
   /* Free Triangle Data */
-printf("CP:A\n");
   for(i = 0; i < tie->tri_num; i++) {
-    printf("free: %p\n", (void *)((TIE_PTR_CAST)(tie->tri_list[i].v) & ~0x7L));
-    free( (void *)((TIE_PTR_CAST)(tie->tri_list[i].v) & ~0x7L) );
+    printf("free: %p\n", (void *)((intptr_t)(tie->tri_list[i].v) & ~0x7L));
+    free( (void *)((intptr_t)(tie->tri_list[i].v) & ~0x7L) );
   }
-printf("CP:B\n");
   free(tie->tri_list);
-printf("CP:C\n");
 
   /* Free KDTREE Nodes */
   tie_kdtree_free(tie);
@@ -244,7 +242,7 @@ void* tie_work(tie_t *tie, tie_ray_t *ray, tie_id_t *id, void *(*hitfunc)(tie_ra
   }
 
   /* Extracting value of splitting plane from tie->kdtree pointer */
-  split = ((TIE_PTR_CAST)(((tie_kdtree_t *)((TIE_PTR_CAST)tie->kdtree & ~0x7L))->data)) & 0x3;
+  split = ((intptr_t)(((tie_kdtree_t *)((intptr_t)tie->kdtree & ~0x7L))->data)) & 0x3;
 
   /* Initialize ray segment */
   if(ray->dir.v[split] < 0) {
@@ -267,7 +265,7 @@ void* tie_work(tie_t *tie, tie_ray_t *ray, tie_id_t *id, void *(*hitfunc)(tie_ra
     * Take the pointer from stack[stack_ind] and remove lower pts bits used to store data to
     * give a valid ptr address.
     */
-    node_aligned = (tie_kdtree_t *)((TIE_PTR_CAST)stack[stack_ind].node & ~0x7L);
+    node_aligned = (tie_kdtree_t *)((intptr_t)stack[stack_ind].node & ~0x7L);
     stack_ind--;
 
     /*
@@ -280,11 +278,11 @@ void* tie_work(tie_t *tie, tie_ray_t *ray, tie_id_t *id, void *(*hitfunc)(tie_ra
     *
     * Gordon Stoll's Mantra - Rays are Measured in Millions :-)
     */
-    while(((TIE_PTR_CAST)(node_aligned->data)) & 0x4) {
+    while(((intptr_t)(node_aligned->data)) & 0x4) {
       ray->kdtree_depth++;
 
       /* Retreive the splitting plane */
-      split = ((TIE_PTR_CAST)(node_aligned->data)) & 0x3;
+      split = ((intptr_t)(node_aligned->data)) & 0x3;
 
       /* Calculate the projected 1d distance to splitting axis */
       dist = (node_aligned->axis - ray->pos.v[split]) * dirinv[split];
@@ -293,7 +291,7 @@ void* tie_work(tie_t *tie, tie_ray_t *ray, tie_id_t *id, void *(*hitfunc)(tie_ra
       temp[1] = &((tie_kdtree_t *)(node_aligned->data))[1-ab[split]];
 
       i = near >= dist; /* Node B Only? */
-      node_aligned = (tie_kdtree_t *)((TIE_PTR_CAST)(temp[i]) & ~0x7L);
+      node_aligned = (tie_kdtree_t *)((intptr_t)(temp[i]) & ~0x7L);
 
       if(far < dist || i)
         continue;
@@ -311,10 +309,11 @@ void* tie_work(tie_t *tie, tie_ray_t *ray, tie_id_t *id, void *(*hitfunc)(tie_ra
     * RAY/TRIANGLE INTERSECTION - Only gets executed on geometry nodes.
     * This part of the function is being executed because the KDTREE Traversal is Complete.
     */
-    hit_count = 0;
-
     data = (tie_geom_t *)(node_aligned->data);
+    if(data->tri_num == 0)
+      continue;
 
+    hit_count = 0;
     for(i = 0; i < data->tri_num; i++) {
       /*
       * Triangle Intersection Code
@@ -341,9 +340,9 @@ void* tie_work(tie_t *tie, tie_ray_t *ray, tie_id_t *id, void *(*hitfunc)(tie_ra
       math_vec_add(t.pos, ray->pos, t.pos);
 
       /* Extract i1 and i2 indices from lower bits of the v pointer */
-      v = (tfloat *)((TIE_PTR_CAST)(tri->v) & ~0x7L);
-      i1 = TIE_TAB1[((TIE_PTR_CAST)(tri->v) & 0x7)];
-      i2 = TIE_TAB1[3 + ((TIE_PTR_CAST)(tri->v) & 0x7)];
+      v = (tfloat *)((intptr_t)(tri->v) & ~0x7L);
+      i1 = TIE_TAB1[((intptr_t)(tri->v) & 0x7)];
+      i2 = TIE_TAB1[3 + ((intptr_t)(tri->v) & 0x7)];
 
       /* Compute U and V */
       u0 = t.pos.v[i1] - tri->data[0].v[i1];
@@ -425,17 +424,13 @@ void* tie_work(tie_t *tie, tie_ray_t *ray, tie_id_t *id, void *(*hitfunc)(tie_ra
  * @return void
  */
 void tie_push(tie_t *tie, TIE_3 *tlist, int tnum, void *plist, int pstride) {
-  int i, ind, step;
-  void *mem;
+  int i;
 
   if(tnum + tie->tri_num > tie->tri_num_alloc) {
     tie->tri_list = (tie_tri_t *)realloc(tie->tri_list, sizeof(tie_tri_t) * (tie->tri_num + tnum));
     tie->tri_num_alloc += tnum;
   }
 
-  step = 2 * sizeof(tfloat);
-  mem = malloc(tnum * step);
-  ind = 0;
   for(i = 0; i < tnum; i++) {
     tie->tri_list[tie->tri_num].data[0] = tlist[i*3+0];
     tie->tri_list[tie->tri_num].data[1] = tlist[i*3+1];
@@ -446,8 +441,7 @@ void tie_push(tie_t *tie, TIE_3 *tlist, int tnum, void *plist, int pstride) {
     } else {
       tie->tri_list[tie->tri_num].ptr = NULL;
     }
-    tie->tri_list[tie->tri_num].v = (tfloat *)&((char *)mem)[ind];
-    ind += step;
+    tie->tri_list[tie->tri_num].v = (tfloat *)malloc(2*sizeof(tfloat));
     tie->tri_num++;
   }
 }

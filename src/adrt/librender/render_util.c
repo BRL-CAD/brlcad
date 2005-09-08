@@ -118,7 +118,7 @@ void render_util_shotline_list(tie_t *tie, tie_ray_t *ray, void **data, int *dle
   for(i = 0; i < shotline.mesh_num; i++) {
     c = strlen(shotline.mesh_list[i]->name) + 1;
 
-    *data = realloc(*data, ind + c + 2); /* 1 for length, 1 for null char */
+    *data = realloc(*data, ind + 1 + c); /* 1 for length */
 
     /* length */
     memcpy(&((char *)*data)[ind], &c, 1);

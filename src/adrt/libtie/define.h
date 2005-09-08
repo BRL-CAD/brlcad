@@ -63,13 +63,6 @@
 #define tfloat double
 #endif
 
-#ifdef LONG_64_BITS
-#define	TIE_PTR_CAST	long int
-#else
-#define	TIE_PTR_CAST	int
-#endif
-
-
 
 /** 
  *

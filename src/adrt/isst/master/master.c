@@ -793,7 +793,7 @@ void isst_master_process_events(SDL_Event *event_queue, int event_num, isst_mast
               char op;
 
               /* Queue a work unit for a shot needed for the plane render method */
-              mesg = malloc(sizeof(common_work_t) + 2 * sizeof(TIE_3));
+              mesg = malloc(sizeof(common_work_t) + 1 + 2*sizeof(TIE_3));
               dlen = 0;
 
               work.orig_x = 0;
@@ -837,7 +837,7 @@ void isst_master_process_events(SDL_Event *event_queue, int event_num, isst_mast
               char op;
 
               /* Queue a work unit for a shot needed for the plane render method */
-              mesg = malloc(sizeof(common_work_t) + 2 * sizeof(TIE_3) + sizeof(tfloat));
+              mesg = malloc(sizeof(common_work_t) + 1 + 2*sizeof(TIE_3) + sizeof(tfloat));
               dlen = 0;
 
               work.orig_x = 0;
