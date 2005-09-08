@@ -53,7 +53,7 @@ BSC32=bscmake.exe
 # ADD BSC32 /nologo
 LINK32=link.exe
 # ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:console /machine:I386
-# ADD LINK32 ws2_32.lib opengl32.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib uuid.lib libbu.lib libbn.lib libsysv.lib librt.lib tcl84.lib tk84.lib libfb.lib liboptical.lib /nologo /subsystem:console /machine:I386 /libpath:"../../../lib"
+# ADD LINK32 kernel32.lib user32.lib advapi32.lib tcl84.lib libbu.lib libbn.lib libsysv.lib librt.lib libfb.lib liboptical.lib libpkg.lib /nologo /subsystem:console /machine:I386 /libpath:"../../../lib"
 # Begin Special Build Tool
 TargetPath=.\Release\rtedge.exe
 SOURCE="$(InputPath)"
@@ -84,7 +84,7 @@ BSC32=bscmake.exe
 # ADD BSC32 /nologo
 LINK32=link.exe
 # ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:console /debug /machine:I386 /pdbtype:sept
-# ADD LINK32 ws2_32.lib opengl32.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib uuid.lib libbu_d.lib libbn_d.lib libsysv_d.lib libwdb_d.lib librt_d.lib libdm_d.lib tcl84_d.lib tk84_d.lib libfb_d.lib liboptical_d.lib libpkg_d.lib /nologo /subsystem:console /debug /machine:I386 /out:"Debug/rtedge_d.exe" /pdbtype:sept /libpath:"../../../lib"
+# ADD LINK32 kernel32.lib user32.lib advapi32.lib tcl84_d.lib libbu_d.lib libbn_d.lib libsysv_d.lib librt_d.lib libfb_d.lib liboptical_d.lib libpkg_d.lib /nologo /subsystem:console /debug /machine:I386 /out:"Debug/rtedge_d.exe" /pdbtype:sept /libpath:"../../../lib"
 # Begin Special Build Tool
 TargetPath=.\Debug\rtedge_d.exe
 SOURCE="$(InputPath)"
