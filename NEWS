@@ -31,6 +31,7 @@ bounding box dimensions, and more.
 * new nightly regression test framework - Lee Butler
 * g_qa now has option to report interfaces/connections - Lee Butler
 * mged relocation support - Sean Morrison
+* Doxygen changes to source code comments - Lee Butler, Sean Duvall
 
 
 ----------------------------------------------------------------------

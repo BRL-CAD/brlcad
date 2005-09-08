@@ -1,4 +1,566 @@
+2005-09-08  lbutler  <lbutler@users.sourceforge.net>
+
+	* HACKING, NEWS, configure.ac, include/config_win.h:
+	Release 7.6.0 Wahoo!
+
+2005-09-08  twingy  <twingy@users.sourceforge.net>
+
+	* src/adrt/libtie/tie.c, src/adrt/libcommon/adrt_common.h, src/adrt/libcommon/env.c, src/adrt/libcommon/pack.c, src/adrt/libcommon/unpack.c:
+	adrt now uses a mesh map, no properties embedded in adrt file.  Transformation matrices being applied in unpack
+	again.
+
+2005-09-08  lbutler  <lbutler@users.sourceforge.net>
+
+	* src/gtools/g_qa.1, src/gtools/g_qa.c:
+	Stop refining grid if overlaps have been found.
+
+2005-09-08  bob1961  <bob1961@users.sourceforge.net>
+
+	* src/tclscripts/mged/mged.tcl, src/tclscripts/mged/openw.tcl, src/conv/asc2g.c, src/conv/g2asc.c, src/fb/fb-pix.c, src/fb/fb-png.c, src/fb/fbclear.c, src/fb/pix-fb.c, src/fb/png-fb.c, src/libbu/brlcad_path.c, src/libbu/color.c, src/libbu/whereis.c, src/libbu/which.c, src/librt/db5_bin.c, src/librt/dg_obj.c, src/librt/g_arb.c, src/librt/g_bot.c, src/librt/nirt.c, src/libtclcad/tclcadAutoPath.c, src/libtclcad/tclcadTkSetup.c, src/other/libtcl/generic/tcl.h, src/rt/main.c:
+	Mods for windows port
+
+	* src/other/libtk/win/tkWinMenu.c: Add code for double-bar
+
+	* src/tclscripts/lib/Drawable.tcl: Minor mods
+
+	* src/tclscripts/lib/Display.tcl, src/tclscripts/lib/QuadDisplay.tcl:
+	Add methods for rtarea and rtweight
+
+	* src/other/incrTcl/itcl/generic/itcl_cmds.c, src/other/incrTcl/itk/generic/itk_cmds.c:
+	Mods to split large strings into smaller ones for compilation, then concat at runtime
+
+2005-09-08  lbutler  <lbutler@users.sourceforge.net>
+
+	* src/gtools/g_qa.1:
+	Documented -N option but not so much that people will start to use it.
+
+2005-09-08  bob1961  <bob1961@users.sourceforge.net>
+
+	* include/bu.h, include/config_win.h, include/db5.h, include/dm.h, include/fb.h, include/fbserv_obj.h, include/pkg.h, include/raytrace.h, src/mged/ged.h, src/mged/mged_dm.h, src/mged/anal.c, src/mged/attach.c, src/mged/bodyio.c, src/mged/clip.c, src/mged/cmd.c, src/mged/dm-ogl.c, src/mged/dodraw.c, src/mged/fbserv.c, src/mged/ged.c:
+	Mods for windows port
+
+	* src/mged/mater.c:
+	rt_material_head and rt_insert_color are declared in mater.h
+
+	* src/mged/rect.c: fb_refresh declared in fb.h
+
+	* src/mged/edarb.c, src/mged/edsol.c, src/mged/facedef.c, src/mged/inside.c:
+	Mods to use rt_arb_calc_planes from librt
+
+	* src/mged/rtif.c: Mods to use nirt from librt
+
+	* src/mged/utility1.c: bu_opt??? declared in bu.h
+
+	* src/libdm/clip.c, src/libdm/dm-ogl_win.c, src/libdm/dm_obj.c, src/libfb/fb_generic.c, src/libfb/fb_log.c, src/libfb/if_ogl_win32.c, src/libfb/if_remote.c, src/libfb/tcl.c, src/libpkg/pkg.c:
+	Mods for windows port
+
+2005-09-08  lbutler  <lbutler@users.sourceforge.net>
+
+	* src/gtools/g_qa.1, src/gtools/g_qa.c:
+	Fixes for overlap-only calculations.  Improvements to the man page.
+
+2005-09-08  twingy  <twingy@users.sourceforge.net>
+
+	* src/adrt/rise/master/master.c, src/adrt/isst/master/master.c, src/adrt/isst/observer/observer.c, src/adrt/librender/plane.c, src/adrt/librender/render_util.c, src/adrt/libtie/define.h, src/adrt/libtie/kdtree.c, src/adrt/libtie/tie.c:
+	fixed a stack pop bug in the kd-tree cache loader.  engine is 1.1% faster.
+
+2005-09-07  lbutler  <lbutler@users.sourceforge.net>
+
+	* configure.ac:
+	Needed an extern of strsep for Irix where we're using our own strsep
+	(hidden in libsysv)
+
+2005-09-07  twingy  <twingy@users.sourceforge.net>
+
+	* src/adrt/scripts/adrt.py:
+	new and improved blender exporter, 98% fat free.
+
+	* src/conv/Makefile.am: fixed.
+
+2005-09-07  brlcad  <brlcad@users.sourceforge.net>
+
+	* sh/header.sh: ignore manpage .SH COPYRIGHT lines
+
+2005-09-06  brlcad  <brlcad@users.sourceforge.net>
+
+	* sh/header.sh:
+	add support for manual pages.  brl-cad's gfdl documentation is actually dual-licensed so customize the comment block to include that detail.  less and other pagers that recognize and auto-format manpages don't work if comment is first, so make the comment block come after the .TH
+
+2005-09-06  twingy  <twingy@users.sourceforge.net>
+
+	* src/adrt/isst/master/master.c, src/adrt/libtie/tie.c:
+	investigating tie->free()
+
+	* src/adrt/isst/master/isst_python.c:
+	dump is now save.  added a load command.  both have verbose output.
+
+	* src/adrt/libtie/struct.h, src/adrt/libtie/tie.c, src/adrt/libtie/tie.h:
+	support for unknown triangle number at tie_init()
+
+	* src/adrt/libcommon/pack.c: removed prints
+
+	* src/adrt/libcommon/pack.c, src/adrt/libcommon/unpack.c:
+	total tri num stuff.
+
+	* src/conv/g-adrt.c: more total tri_num stuff
+
+	* src/conv/Makefile.am, src/conv/g-adrt.c:
+	total tri num at byte position 4.
+
+	* src/adrt/doc/binary_spec.txt: updated binary spec.
+
+	* src/adrt/isst/master/Makefile.am, src/adrt/isst/observer/Makefile.am, src/adrt/libcommon/Makefile.am, src/adrt/libtie/define.h, src/adrt/libtie/kdtree.c, src/adrt/libtie/struct.h, src/adrt/libtie/tie.c, src/adrt/rise/master/Makefile.am, src/adrt/bench/Makefile.am:
+	Aggressive prep is about 3.3x faster now.  Fixed a few Makefile.am's.
+
+2005-09-05  brlcad  <brlcad@users.sourceforge.net>
+
+	* src/libsysv/strsep.c: need stdlib.h for NULL
+
+	* .cvsignore: ignore ltmain.sh and so_locations
+
+	* src/gtools/.cvsignore: ignore g_qa too
+
+2005-09-04  brlcad  <brlcad@users.sourceforge.net>
+
+	* configure.ac:
+	support systems that provide a prefix and datadir (e.g. /usr and /usr/share respectively)
+
+	* configure.ac:
+	the default is still to build tk even if detected, so no sense in forcing the build on regardless of the configure argument.  it's close to working now if it's not already.
+
+	* NEWS:
+	configuration build fixes for Tk/Iwidgets (sf patch 1281175) provided by Michal Slonina
+
+	* configure.ac:
+	and Slonina conveniently also notices that the Tk test is now using the tcl interpreter, and thus needs the tcl header (sf patch 1281175)
+
+	* configure.ac:
+	Slonina (spell it right this time) provides a fix for the iwidgets test. a null result means failure (sf patch 1281175)
+
+	* configure.ac:
+	slolina points out a bug in the iwidgets test, the package name is capitalized (sf patch 1281175)
+
+2005-08-31  brlcad  <brlcad@users.sourceforge.net>
+
+	* src/conv/.cvsignore: g-wave renamed to g-obj
+
+	* src/librt/wdb_obj.c:
+	prevent crashing if someone attempts to call wdb_delete_cmd directly without an interpreter
+
+	* src/proc-db/fence.c: er, close the file please
+
+2005-08-30  brlcad  <brlcad@users.sourceforge.net>
+
+	* TODO:
+	add legal headers on the manpages (as comments), update header.sh
+
+	* TODO: better configure section output, m4 macro in order
+
+2005-08-30  twingy  <twingy@users.sourceforge.net>
+
+	* src/adrt/libtie/define.h, src/adrt/libtie/kdtree.c, src/adrt/libtie/tie.c:
+	about to try some stuff.
+
+2005-08-29  lbutler  <lbutler@users.sourceforge.net>
+
+	* src/libbu/linebuf.c: Cannot return a void explicitly on Irix
+
+	* regress/nightly.sh:
+	Added checks for host not known, and build failure
+
+2005-08-29  twingy  <twingy@users.sourceforge.net>
+
+	* src/adrt/libcommon/pack.c, src/adrt/libcommon/unpack.c, src/adrt/libtie/define.h, src/adrt/libtie/kdtree.c, src/adrt/libtie/tie.c:
+	kd-tree caching is now tuned to the point where full start-up time takes less than
+	1/4 the time as it did with the fast mid-split algorithm.  This number should approach
+	1/8 as the various parts of the packing/unpacking and caching algorithms are tuned
+	even further.
+
+2005-08-29  lbutler  <lbutler@users.sourceforge.net>
+
+	* NEWS: overlay command in mged fixed
+
+	* src/librt/vlist.c: Fixed bug in overlay code when EOF encountered
+
+2005-08-29  twingy  <twingy@users.sourceforge.net>
+
+	* src/adrt/doc/binary_spec.txt: updated.
+
+2005-08-29  d_rossberg  <d_rossberg@users.sourceforge.net>
+
+	* include/brlregex.h: the header is outdated an not in use any more
+	use regex.h instead
+
+	* src/libsysv/libsysv.dsp: MS Windows needs some more reg* functions
+
+	* src/libsysv/regexec.c, src/libsysv/regfree.c:
+	use regex.h instead of brlregex.h for MS Windows
+
+	* src/libsysv/regcomp.c, src/libsysv/regerror.c:
+	use regex.h instead of brlregex.h for Windows
+	the __P makro appears to be obsolete
+
+	* src/libsysv/engine.c: the __P makro appears to be obsolete
+
+	* src/librt/librt.dsp: added g_superell.c
+
+2005-08-29  twingy  <twingy@users.sourceforge.net>
+
+	* src/adrt/libtie/define.h:
+	defaults at biggest bang for the buck right now.
+
+	* src/adrt/bench/bench.c, src/adrt/bench/bench.h, src/adrt/bench/main.c, src/adrt/libcommon/adrt_common.h, src/adrt/libcommon/env.c, src/adrt/libcommon/pack.c, src/adrt/libcommon/unpack.c, src/adrt/libtie/define.h, src/adrt/libtie/kdtree.c, src/adrt/libtie/kdtree.h, src/adrt/libtie/tie.c:
+	Integrated kd-tree caching.
+	It's generated with adrt_bench by supplying the -c argument.
+	kdtree_cache_file,kdtree.cache goes into project.env file to make it work.
+
+2005-08-28  brlcad  <brlcad@users.sourceforge.net>
+
+	* regress/Makefile.am:
+	ignore exp_air.pl and adj_air.pl and .density too
+
+	* src/conv/bot_shell-vtk.c, src/conv/g-acad.c, src/conv/g-dxf.c, src/conv/g-nff.c, src/conv/g-obj.c, src/conv/g-shell.rect.c, src/conv/g-stl.c, src/conv/g-xxx_facets.c, src/jack/g-jack.c, src/off/g-off.c:
+	use bu_setlinebuf instead of the old block that checked system 'types' and was replicated where needed
+
+	* NEWS: renamed g-wave converter to g-obj
+
+	* src/conv/g-obj.1, src/conv/g-obj.c, src/conv/g-wave.1, src/conv/g-wave.c, src/conv/Makefile.am:
+	renamed g-wave to g-obj to reflect the conventional dominance of .obj's referring to the wavefront format and our converters using conventioned extensions.
+
+2005-08-27  brlcad  <brlcad@users.sourceforge.net>
+
+	* misc/Makefile.defs:
+	fix the recursion traversal order so that subdirectories are fully processed before attempting to link/compile in a directory.
+
+2005-08-27  twingy  <twingy@users.sourceforge.net>
+
+	* src/adrt/libtie/kdtree.c: more cleanup
+
+	* src/adrt/libtie/kdtree.c, src/adrt/libtie/tie.c:
+	removed extraneous stuff
+
+	* src/adrt/libtie/Makefile.am, src/adrt/libtie/kdtree.c, src/adrt/libtie/kdtree.h, src/adrt/libtie/tie.c, src/adrt/libtie/tie.h:
+	kdtree code was put into its own separate file since it's going to consume
+	more than half the actual engine code.
+
+2005-08-27  brlcad  <brlcad@users.sourceforge.net>
+
+	* configure.ac:
+	use AC_MSG_RESULT for the starting message and summary results so that they are inserted into config.log, and so they will obey the --verbose and --quiet flags too.
+
+	* configure.ac: call them dials and buttons
+
+	* configure.ac: knobs work
+
+	* NEWS: NEWS items are formatted to column 70
+
+	* TODO: ws
+
+	* BUGS:
+	the X11 15 bit thing is an old bug, add a footer mentioning the 70 column width formatting.
+
+	* NEWS: mged will now work without being installed
+
+	* BUGS:
+	mged will actually run without being installed now with the new relocation support and BRLCAD_DATA variable overrides
+
+	* TODO: add database support for constraints, expressions, parametric
+	  values, construction history, and timestamping
+
+	* NEWS: performance enhancements to ADRT
+
+	* TODO:
+	multiple threading models not that important in the big picture, it works and works well enough given mips seems to be on it's way out off of sgi's high end line
+
+	* TODO: tim has got aquatk working
+
+	* NEWS: mged relocation support
+
+	* TODO:
+	libbu new has whereis-style support for locating it's resources at run-time
+
+	* NEWS: improved ADRT build support
+
+	* TODO: don't have access to mingw right now, so push it back
+
+	* NEWS: improved build support detection for OpenGL and X11
+
+	* TODO:
+	X11 is technically configurable now, along with OpenGL -- might not work, but then that can be a different todo if it doesn't, k?
+
+	* NEWS:
+	enabled SGI knobs and button box support for IRIX; reword testing changes to what they mean to end user, fitting to column 70
+
+	* TODO: knobs really should now work
+
+	* configure.ac, src/libdm/dm-X.c, src/libdm/dm-glx.c, src/libdm/dm-ogl.c, src/libdm/dm-ogl_win.c, src/libdm/knob.c, src/mged/doevent.c:
+	add a configure test for SGI knobs support, and define the IR_KNOBS and IR_BUTTONS if/when they are available.
+
+2005-08-27  twingy  <twingy@users.sourceforge.net>
+
+	* src/adrt/libtie/tie.c, src/adrt/libtie/define.h:
+	Adding finishing touches to algorithm.  Will be adding some controls to
+	tie_init to allow developer to control both agressiveness of kd-tree building
+	algorithm and memory consumption as a function of # of triangles.
+
+2005-08-26  brlcad  <brlcad@users.sourceforge.net>
+
+	* src/libfb/Makefile.am:
+	damn two character omission that ends up disabling the X and ogl interfaces.. they're CFLAGS dammit
+
+2005-08-26  twingy  <twingy@users.sourceforge.net>
+
+	* src/adrt/libtie/define.h, src/adrt/libtie/tie.c:
+	working on final changes
+
+	* src/adrt/libtie/tie.c: kd-tree code clean-up.
+
+	* src/adrt/libtie/define.h, src/adrt/libtie/tie.c:
+	New kd-tree building algorithm (yet to be named) is now suitable for general purpose
+	use as an improvement (avg 25% - 100% faster) over the old algorithm and uses about
+	half the memory consumption as before.  One more criteria is yet to be added, more
+	improvements to come.  Algorithm is 10x slower than mid-split so kd-tree caching
+	is on the way.
+
+2005-08-25  twingy  <twingy@users.sourceforge.net>
+
+	* src/adrt/isst/master/master.c, src/adrt/libtie/tie.c:
+	experimental kd-tree code finds empty space more agressively.
+	master is printing fps for now.
+
+2005-08-25  lbutler  <lbutler@users.sourceforge.net>
+
+	* regress/shaders.sh:
+	fixed so that mged can run and find prj_add when mged hasn't been installed yet
+
+	* NEWS: Logging changes for g_qa and regression test system
+
+	* regress/solids.sh, regress/weight.sh: Miscelaneous bug fixes.
+
+	* regress/shaders.sh:
+	exit takes a number not a string.  Gotta get it right
+
+	* regress/iges.sh, regress/lights.sh, regress/moss.sh, regress/nightly.sh, regress/shaders.sh, regress/solids.sh, regress/spdi.sh, regress/weight.sh:
+	Getting the nightly tests to work.
+	Making the scripts report an exit code when things go wrong.
+
+2005-08-25  brlcad  <brlcad@users.sourceforge.net>
+
+	* include/brlregex.h: remove the common.h unnecessity
+
+2005-08-25  lbutler  <lbutler@users.sourceforge.net>
+
+	* regress/lights.sh:
+	No longer pass 2 arguments to script.  Had to change $2 to $1
+
+	* regress/Makefile.am, regress/gqa.sh, regress/iges.sh, regress/lights.sh, regress/moss.sh, regress/shaders.sh, regress/solids.sh, regress/spdi.sh, regress/weight.sh:
+	updates so that regression tests run against build tree, not install dir.
+	Can now be run from build dir other than in source tree.
+
+2005-08-25  johnranderson  <johnranderson@users.sourceforge.net>
+
+	* src/librtserver/rtserver.c:
+	corrected a bad null initialized assumption
+
+2005-08-25  twingy  <twingy@users.sourceforge.net>
+
+	* src/adrt/libtie/define.h, src/adrt/libtie/tie.c:
+	experimenting with kd-tree's
+
+2005-08-25  brlcad  <brlcad@users.sourceforge.net>
+
+	* include/bu.h: need bu_argv0 to be exported, mged uses it
+
+2005-08-24  brlcad  <brlcad@users.sourceforge.net>
+
+	* NEWS: fixed mged startup resource bug
+
+	* src/mged/cmd.c:
+	it is important to run Tcl_FindExecutable BEFORE running the init funcs so that they can do a better job and finding their scripts (thx Enrique Perez-Terron).  use the argv[0] we stashed during startup into libbu.
+
+	* include/rle_config.h: define USE_PROTOTYPES
+
+2005-08-24  lbutler  <lbutler@users.sourceforge.net>
+
+	* Makefile.am:
+	Needed to make sure that brlcad_config.h didn't get stuffed into the dist
+
+2005-08-24  brlcad  <brlcad@users.sourceforge.net>
+
+	* include/RtServerImpl.h, src/librtserver/rtserver.c, src/librtserver/rtserverTest.c:
+	remove the common.h dependency in the public header, move the jni.h inclusion block into the source .c files instead.
+
+	* include/rle_config.h: remove the common.h reference
+
+	* configure.ac: ack, we're not 7.6.0 yet
+
+2005-08-24  lbutler  <lbutler@users.sourceforge.net>
+
+	* regress/nightly.sh: Added cocoa to the list of hosts
+
+2005-08-24  brlcad  <brlcad@users.sourceforge.net>
+
+	* src/conv/Makefile.am: typo, remove the stray asc2g
+
+	* src/conv/asc2g.c, src/gtools/g_qa.c:
+	separate sections for strsep and strtok are no longer necessary since strsep is provided via libsysv now
+
+	* src/conv/Makefile.am: asc2g potentially needs SYSV for strsep
+
+	* src/gtools/Makefile.am: g_qa potentially needs SYSV for strsep
+
+	* src/libbu/linebuf.c:
+	keep port_setlinebuf around just a little bit longer even though it's been deprecated for some time.  the reason is because our own examples and several converters still used port_ instead of bu_ even including the example converter..
+
+	* include/bu.h:
+	port_setlinebuf is deprecated, so remove it from here and move it to src/libbu/linebuf.c where we bu_log a deprecation warning message
+
+	* src/conv/g-euclid.c, src/conv/g-euclid1.c, src/conv/g-nmg.c, src/conv/g-tankill.c, src/conv/g-vrml.c, src/conv/g-x3d.c, src/conv/g-xxx.c, src/conv/nmg-sgp.c, src/iges/g-iges.c:
+	replace the deprecated port_setlinebuf() with bu_setlinebuf()
+
+	* src/libsysv/Makefile.am, src/libsysv/linebuf.c:
+	removed the antiquated linebuf.c that contained the long since deprecated port_setlinebuf() in favor of the libbu bu_setlinebuf()
+
+	* src/libsysv/Makefile.am:
+	enable the compilation of getopt, memset, strchr, strsep again
+
+	* src/libsysv/getopt.c, src/libsysv/memset.c, src/libsysv/strchr.c:
+	don't compile these functions being provided for convenience if the system already has them
+
+	* src/libsysv/strsep.c:
+	add the bsd strsep() function for systems like irix that still don't have it
+
+2005-08-23  lbutler  <lbutler@users.sourceforge.net>
+
+	* configure.ac, src/adrt/bench/Makefile.am, src/adrt/isst/master/Makefile.am:
+	Fixes for Release 7.6.0 build from distribution
+
+2005-08-23  twingy  <twingy@users.sourceforge.net>
+
+	* src/adrt/libutil/Makefile.am: fixed dist
+
+	* src/adrt/libtie/define.h, src/adrt/libtie/tie.c:
+	removed min surface area, bad heuristics to use
+
+2005-08-22  brlcad  <brlcad@users.sourceforge.net>
+
+	* autogen.sh:
+	apply Enrique Perez-Terron's suggestions/fixes regarding assumption that sed exists when verbose is enabled, now should properly test sed
+
+2005-08-22  lbutler  <lbutler@users.sourceforge.net>
+
+	* src/gtools/g_qa.1, src/gtools/g_qa.c: updates based upon code review
+
+	* src/Makefile.am: Get adrt into the dist
+
+	* configure.ac: Patch for ADRT to build
+
+	* regress/main.sh, regress/nightly.sh:
+	Trying to get nightly smoke to run again
+
+2005-08-22  brlcad  <brlcad@users.sourceforge.net>
+
+	* configure.ac:
+	Put it all together: add the primary checks for building against X11, OpenGL, SDL, and Python.  Still vast room for improvement, but a step towards fully-uncoupled builds -- especially for the folks without X11 and OpenGL.  Summary no longer reports auto, it reports what it decided.
+
+	* TODO:
+	ogl is somewhat configurable now.  prez thinks there are no hidden messages.
+
+	* configure.ac:
+	begin merging in the rest of the new checks -- check for a python interpreter and sdl-config.  move the display manager defines lower, soon to be killed.  move the CFLAGS override and LD sanity check to the beginning environment section.
+
+	* configure.ac:
+	make debug 'auto' by default instead of forced on to avoid aborting unnecessarily. move the pg test before the g test
+
+	* configure.ac:
+	if the user specifically requests profile or debug builds (i.e. not the 'auto' default), don't just warn -- abort.
+
+	* configure.ac:
+	debug builds cannot omit the frame pointer, so don't add -fomit-frame-pointer when using --enable-optimized and --enable-debug together
+
+2005-08-21  brlcad  <brlcad@users.sourceforge.net>
+
+	* src/librtserver/Makefile.am:
+	java conditional is now WITH_JAVA for consistency
+
+	* src/Makefile.am, src/libdm/Makefile.am, src/libfb/Makefile.am, src/mged/Makefile.am:
+	use the new configureation conditionals for opengl, x11, and adrt
+
+	* configure.ac:
+	add initial configuration options --with-opengl --with-sdl --with-python --with-x11 adding them to the output and minimal checks for the user's selection (though no meat yet)
+
+	* misc/Makefile.defs:
+	add a 'noprod' or 'prodclean' make target to remove all the built binaries/libraries
+
+	* TODO:
+	add x11 and ogl config to this iteration, as well as the knobs yet again
+
+	* src/util/bw-png.c, src/util/double-asc.c, src/util/imgdims.c, src/util/pix-png.c, src/util/pix-ppm.c, src/util/pixbgstrip.c, src/util/pixborder.c, src/util/pixcount.c, src/util/pixcut.c, src/util/pixhalve.c, src/util/pixmorph.c, src/util/pixpaste.c, src/util/texturescale.c, src/util/bw-a.c:
+	convert image dimensions to long ints to support larger image sizes.  quell other various const warnings too.
+
+	* src/util/yuv-pix.c:
+	convert image dimensions to long ints to support larger image sizes; remove large non-compiled code block
+
+	* src/util/ttcp.c: quell warnings
+
+	* src/util/pix-yuv.c:
+	convert image dimensions to long ints to support larger image sizes; remove large non-compiled code block
+
+	* src/rttherm/viewtherm.c:
+	add missing string.h header, quell memset warnings (compliant takes void not char pointers)
+
+	* src/remrt/remrt.c:
+	add missing headers, quell warnings.  fix/remove other dated header comments.
+
+	* src/proc-db/picket_fence.c: quell warnings, add missing string.h
+
+	* src/nirt/usrfmt.h: make sval const
+
+	* src/nirt/if.c: reorder the logic to preserve constness on sval
+
+	* src/mged/cmd.c, src/mged/plot.c, src/mged/tedit.c:
+	quell warnings, add missing headers
+
+	* src/libwdb/ebm.c, src/libwdb/vol.c, src/libwdb/wdb.c:
+	quell warnings, add the missing string.h header
+
+	* src/libdm/dm-ogl.c, src/libdm/dm-ogl_win.c:
+	use %lu not %ul, one works while the other doesn't
+
+	* src/halftone/main.c:
+	use a long for the image dimensions as we start to support larger image dimensions
+
+	* src/fb/fb-bw.c, src/fb/fbanim.c, src/fb/fbcbars.c, src/fb/fbclear.c, src/fb/fblabel.c, src/fb/fbline.c, src/fb/fbzoom.c, src/fb/gif2fb.c, src/fb/pixautosize.c, src/fb/pp-fb.c, src/comgeom-g/f2a.c, src/comgeom-g/mat.c:
+	add missing headers
+
+	* configure.ac, include/config_win.h:
+	bump number post release to 7.5.0 in preparation for 7.6
+
+	* README: next release should be 7.6.0
+
+	* HACKING, NEWS, README, TODO, configure.ac, include/config_win.h, src/adrt/Makefile.am, src/libbu/malloc.c, src/libbu/stat.c, ChangeLog:
+	merge version changes from 7.4.2 (from rel-7-4-branch)
+
+	* src/adrt/scripts/Makefile.am:
+	rise.py script was apparently renamed to adrt.py
+
+	* misc/Doxyfile, misc/Makefile.am, Doxyfile:
+	move the initial Doxyfile from top-level to the misc directory, keep the top-level clean when possible
+
+	* configure.ac, src/bwish/Makefile.am, src/other/libtcl/Makefile.am, src/other/libtk/Makefile.am:
+	add LINK_STATIC_REQUIRED to handle the MIPSpro 7.3 linker bug where rpath lines longer than 255 causes the linker to crash, link [b]tclsh/[b]wish static for that compiler
+
+2005-08-17  brlcad  <brlcad@users.sourceforge.net>
+
+	* src/tclscripts/mged/openw.tcl:
+	change the view keybindings fixing the binding for rear which was not 'e', it was 'R'
+
 2005-08-16  brlcad  <brlcad@users.sourceforge.net>
+
+	* NEWS:
+	technically this 7.4.2 release only includes changes through the 10th, even if posting on 16th
+
+	* ChangeLog: ChangeLog entries for 7.4.2
 
 	* README, configure.ac, include/config_win.h:
 	bump the version up to 7.4.2 for release
@@ -9,6 +571,172 @@
 
 	* NEWS:
 	wrapped up yesterday, so set the date and prepare for release.  remove g_qa write-up until the next release since it's not quite ready yet.
+
+	* src/other/libtk/Makefile.am, src/other/libtk/generic/Makefile.am, src/other/libtk/generic/default.h, src/rt/main.c, src/rt/view.c, src/rt/view_bot_faces.c, src/rt/viewarea.c, src/rt/viewedge.c, src/rt/viewxray.c, src/util/pixdsplit.c, src/util/pixsubst.c, src/util/remapid.1, src/util/ttcp.c, src/libbn/.cvsignore, src/libbn/libbn.dsp, src/libbu/.cvsignore, src/libbu/Makefile.am, src/libbu/brlcad_path.c, src/libbu/libbu.dsp, src/libbu/malloc.c, src/libbu/stat.c, src/libbu/whereis.c, src/libbu/which.c, src/librt/.cvsignore, src/librt/g_bot_include.c, src/librt/g_rec.c, src/libsysv/.cvsignore, src/libsysv/libsysv.dsp, src/libtclcad/Makefile.am, src/libtclcad/tclcadAutoPath.c, src/libtclcad/tclcadTkSetup.c, src/libtclcad/tkCanvBezier.c, src/libwdb/.cvsignore, src/libwdb/libwdb.dsp, src/mged/Makefile.am, src/mged/cmd.c, src/mged/ged.c, src/other/iwidgets/Makefile.am, src/conv/dxf-g.c, src/conv/euclid-g.c, src/conv/g-adrt.c, src/conv/proe-g.c, src/conv/stl-g.c, src/gtools/Makefile.am, src/gtools/g_qa.1, src/gtools/g_qa.c, src/iges/recsize.c, src/adrt/libtienet/tienet_master.c, src/adrt/libtienet/tienet_master.h, src/adrt/libtienet/tienet_slave.c, src/adrt/libtienet/tienet_slave.h, src/adrt/rise/Makefile.am, src/adrt/rise/master/master.c, src/adrt/rise/slave/slave.c, src/brlman/.cvsignore, src/brlman/Makefile.am, src/brlman/awf.in, src/brlman/brlman.in, src/burst/prnt.c, src/bwish/Makefile.am, src/bwish/main.c, src/adrt/isst/observer/Makefile.am, src/adrt/isst/observer/main.c, src/adrt/isst/observer/observer.c, src/adrt/isst/observer/observer.h, src/adrt/isst/observer/splash.h, src/adrt/isst/slave/Makefile.am, src/adrt/isst/slave/main.c, src/adrt/isst/slave/slave.c, src/adrt/isst/slave/slave.h, src/adrt/libcommon/env.c, src/adrt/libcommon/pack.c, src/adrt/libcommon/pack.h, src/adrt/libcommon/unpack.c, src/adrt/libcommon/unpack.h, src/adrt/librender/Makefile.am, src/adrt/librender/component.c, src/adrt/librender/depth.c, src/adrt/librender/depth.h, src/adrt/librender/flat.c, src/adrt/librender/plane.c, src/adrt/librender/render.h, src/adrt/librender/render_internal.h, src/adrt/librender/spall.c, src/adrt/libtie/define.h, src/adrt/libtie/struct.h, src/adrt/libtie/tie.c, pix/Makefile.am, pix/cube.rt, sh/Makefile.am, sh/cray.sh, src/adrt/Makefile.am, src/adrt/README, src/adrt/doc/rise.txt, src/adrt/isst/Makefile.am, src/adrt/isst/isst.h, src/adrt/isst/isst_struct.h, src/adrt/isst/master/Makefile.am, src/adrt/isst/master/SDLMain.h, src/adrt/isst/master/compnet.c, src/adrt/isst/master/compnet.h, src/adrt/isst/master/dispatcher.c, src/adrt/isst/master/dispatcher.h, src/adrt/isst/master/isst_python.c, src/adrt/isst/master/isst_python.h, src/adrt/isst/master/main.c, src/adrt/isst/master/master.c, src/adrt/isst/master/master.h, BUGS, HACKING, Makefile.am, NEWS, README, TODO, bench/Makefile.am, bench/run.sh, bench/try.sh, bench/viewdiff.sh, configure.ac, doc/html/manuals/Install.html, include/Makefile.am, include/bu.h, include/config_win.h, include/machine.h, include/tclcad.h, misc/pro-engineer/proe-brl.c, misc/win32-msvc/.cvsignore, misc/win32-msvc/brlcad.dsw:
+	merge in changes through Aug10 for 7.4.2 release
+
+	* src/adrt/isst/master/isst_python.c:
+	file isst_python.c was added on branch rel-7-4-branch on 2005-08-16 21:03:45 +0000
+
+	* src/adrt/isst/master/master.h:
+	file master.h was added on branch rel-7-4-branch on 2005-08-16 21:03:45 +0000
+
+2005-08-16  twingy  <twingy@users.sourceforge.net>
+
+	* src/adrt/isst/master/isst_python.c, src/adrt/isst/master/master.h:
+	in_hit is now provided in the dump.txt output
+
+2005-08-16  brlcad  <brlcad@users.sourceforge.net>
+
+	* src/libbu/whereis.c:
+	file whereis.c was added on branch rel-7-4-branch on 2005-08-16 21:03:49 +0000
+
+	* src/libbu/which.c:
+	file which.c was added on branch rel-7-4-branch on 2005-08-16 21:03:49 +0000
+
+	* src/libbu/brlcad_path.c, src/libbu/whereis.c, src/libbu/which.c, include/bu.h:
+	remove the SNPRINTF define since it should be safe to use snprintf() now that it's properly accounted for in config_win.h as a compat function
+
+	* include/config_win.h:
+	snprintf is a win32 compat function too apparently
+
+	* src/gtools/g_qa.c:
+	how about just using strtok() instead like we do elsewhere when strsep() isn't available
+
+2005-08-16  lbutler  <lbutler@users.sourceforge.net>
+
+	* src/gtools/g_qa.c: Modifications to suppress warnings on IRIX.
+	included own copy of strsep for those occasions (IRIX) where the system doesn't provide
+
+	* src/conv/example_geom.c:
+	A heavily annotated example program that accesses geometry from BRL-CAD
+
+2005-08-16  twingy  <twingy@users.sourceforge.net>
+
+	* src/adrt/libtie/tie.c: reverting
+
+	* src/adrt/libtie/tie.c, src/adrt/rise/master/master.c, src/adrt/scripts/adrt.py, src/adrt/scripts/rise.py:
+	in the process of fixing adrt.py and tie.c is ~2% faster.
+
+2005-08-15  lbutler  <lbutler@users.sourceforge.net>
+
+	* src/librt/db_walk.c: Cleaned up function declarations
+
+2005-08-15  brlcad  <brlcad@users.sourceforge.net>
+
+	* src/gtools/g_qa.1:
+	file g_qa.1 was added on branch rel-7-4-branch on 2005-08-16 21:03:48 +0000
+
+2005-08-15  lbutler  <lbutler@users.sourceforge.net>
+
+	* src/gtools/g_qa.1, src/gtools/g_qa.c:
+	Refined production of plot output into individual files.
+	Built test cases for each analysis type.
+	Added -p command line option to suppress (default) or produce plot files.
+	Banged head against keyboard until units were reported correctly.
+	Gave up on making floating point values average correctly.
+	Cleaned up output to always (I think) report the user specified units.
+
+	* regress/gqa.sh: Regression test refinements for g_qa
+
+2005-08-15  bob1961  <bob1961@users.sourceforge.net>
+
+	* include/bu.h, include/config_win.h, include/plot3.h, include/raytrace.h:
+	Mods for Windows port
+
+	* src/libfb/asize.c: include fb.h
+
+	* src/libfb/if_ogl_win32.c, src/rt/main.c: Mods for Windows port
+
+	* src/rt/opt.c, src/rt/viewcheck.c:
+	Add support for outputting plot in text mode
+
+	* src/librt/nirt.c, src/librt/qray.h: Mods for Windows port
+
+	* src/librt/wdb_obj.c:
+	Modify rmap command when checking for aircode match
+
+	* src/librt/dg_obj.c:
+	Mods for Windows port; add set_outputHandler and set_uplotOutputMode methods
+
+	* src/librt/vlist.c: Mods to support text mode for uplots
+
+	* src/libwdb/strsol.c:
+	include stdio.h to get rid of FOPEN_MAX redefinition warning on Windows
+
+	* src/libbn/plot3.c:
+	Add code to set/get the plot's output mode (i.e. binary or text)
+
+	* src/libbu/stat.c:
+	include stdio.h to get rid of FOPEN_MAX redefinition warning
+
+2005-08-15  brlcad  <brlcad@users.sourceforge.net>
+
+	* src/libbu/stat.c:
+	file stat.c was added on branch rel-7-4-branch on 2005-08-16 21:03:49 +0000
+
+2005-08-15  bob1961  <bob1961@users.sourceforge.net>
+
+	* src/libbu/brlcad_path.c, src/libbu/whereis.c, src/libbu/which.c:
+	Use SNPRINTF macro defined in bu.h
+
+2005-08-15  twingy  <twingy@users.sourceforge.net>
+
+	* src/adrt/bench/bench.c: here we go.
+
+	* src/adrt/bench/Makefile.am, src/adrt/bench/bench.c: working now
+
+2005-08-15  bob1961  <bob1961@users.sourceforge.net>
+
+	* src/tclscripts/lib/Dm.tcl: Mods for Windows port
+
+	* src/tclscripts/lib/Display.tcl:
+	Mods for rt and rtedge to work on Windows
+
+	* src/tclscripts/lib/Drawable.tcl, src/tclscripts/lib/Mged.tcl:
+	Add set_outputHandler method
+
+	* src/tclscripts/lib/TableView.tcl: Add support for "text" entries
+
+	* src/tclscripts/helplib.tcl:
+	Add help for set_transparency, set_outputHandler and set_plOutputMode
+
+2005-08-15  twingy  <twingy@users.sourceforge.net>
+
+	* src/adrt/bench/bench.c, src/adrt/bench/bench.h, src/adrt/bench/main.c:
+	benchmark utility almost done.
+
+2005-08-15  lbutler  <lbutler@users.sourceforge.net>
+
+	* regress/Makefile.am, regress/gqa.sh:
+	Integrated g_qa testing.  Not that at the moment we run the test but don't check the results.
+
+2005-08-15  brlcad  <brlcad@users.sourceforge.net>
+
+	* configure.ac:
+	don't forget to add new directories to the top-level configure or their Makefile.in will not get generated (src/adrt/bench)
+
+2005-08-15  twingy  <twingy@users.sourceforge.net>
+
+	* src/adrt/bench/Makefile.am, src/adrt/bench/bench.c, src/adrt/bench/bench.h, src/adrt/bench/main.c:
+	some of the benchmarking files
+
+	* src/adrt/Makefile.am, src/adrt/libtie/struct.h, src/adrt/libtie/tie.c, src/adrt/libutil/camera.c, src/adrt/rise/master/master.c:
+	adding local benchmark utility minus networking stuff to do benchmarking with TIE.
+
+2005-08-13  twingy  <twingy@users.sourceforge.net>
+
+	* src/adrt/libtie/sim_brlcad.c, src/adrt/libtie/sim_brlcad.h:
+	un-used source for more than a year.
+
+2005-08-12  lbutler  <lbutler@users.sourceforge.net>
+
+	* src/gtools/g_qa.1, src/gtools/g_qa.c: Fixed paralell bug
+
+	* Doxyfile: Doxygen incorporation
+
+	* src/librt/g_ehy.c, src/librt/g_ell.c, src/librt/g_epa.c, src/librt/g_eto.c, src/librt/g_extrude.c, src/librt/g_grip.c, src/librt/g_half.c, src/librt/g_hf.c, src/librt/g_nmg.c, src/librt/g_nurb.c, src/librt/g_part.c, src/librt/g_pg.c, src/librt/g_pipe.c, src/librt/g_rec.c, src/librt/g_rhc.c, src/librt/g_rpc.c, src/librt/g_sketch.c, src/librt/g_sph.c, src/librt/g_submodel.c, src/librt/g_superell.c, src/librt/g_tgc.c, src/librt/g_torus.c, src/librt/g_vol.c, src/librt/g_xxx.c, src/librt/global.c, src/librt/htbl.c, src/librt/importFg4Section.c, src/librt/many.c, src/librt/mater.c, src/librt/memalloc.c, src/librt/mkbundle.c, src/librt/nirt.c, src/librt/nmg_bool.c, src/librt/nmg_ck.c, src/librt/nmg_class.c, src/librt/nmg_eval.c, src/librt/nmg_extrude.c, src/librt/nmg_fcut.c, src/librt/nmg_fuse.c, src/librt/nmg_index.c, src/librt/nmg_info.c, src/librt/nmg_inter.c, src/librt/nmg_junk.c, src/librt/nmg_manif.c, src/librt/nmg_mesh.c, src/librt/nmg_misc.c, src/librt/nmg_mk.c, src/librt/nmg_mod.c, src/librt/nmg_plot.c, src/librt/nmg_pr.c, src/librt/nmg_pt_fu.c, src/librt/nmg_rt_isect.c, src/librt/nmg_rt_segs.c, src/librt/nmg_tri.c, src/librt/nmg_visit.c, src/librt/nurb_basis.c, src/librt/nurb_bezier.c, src/librt/nurb_bound.c, src/librt/nurb_c2.c, src/librt/nurb_copy.c, src/librt/nurb_diff.c, src/librt/nurb_eval.c, src/librt/nurb_example.c, src/librt/nurb_flat.c, src/librt/nurb_interp.c, src/librt/nurb_knot.c, src/librt/nurb_norm.c, src/librt/nurb_plot.c, src/librt/nurb_poly.c, src/librt/nurb_ray.c, src/librt/nurb_refine.c, src/librt/nurb_reverse.c, src/librt/nurb_solve.c, src/librt/nurb_split.c, src/librt/nurb_tess.c, src/librt/nurb_trim.c, src/librt/nurb_trim_util.c, src/librt/nurb_util.c, src/librt/nurb_xsplit.c, src/librt/oslo_calc.c, src/librt/oslo_map.c, src/librt/parse.c, src/librt/plane.h, src/librt/pmalloc.c, src/librt/pr.c, src/librt/prep.c, src/librt/qray.c, src/librt/qray.h, src/librt/regionfix.c, src/librt/roots.c, src/librt/rt_dspline.c, src/librt/shoot.c, src/librt/spectrum.c, src/librt/storage.c, src/librt/table.c, src/librt/tcl.c, src/librt/timer-nt.c, src/librt/timer42.c, src/librt/timer52brl.c, src/librt/timercos.c, src/librt/timerhep.c, src/librt/timerunix.c, src/librt/track.c, src/librt/tree.c, src/librt/vdraw.c, src/librt/view_obj.c, src/librt/vlist.c, src/librt/vshoot.c, src/librt/wdb.c, src/librt/wdb_comb_std.c, src/librt/wdb_obj.c, src/librt/bezier_2d_isect.c, src/librt/bigE.c, src/librt/binary_obj.c, src/librt/bomb.c, src/librt/bool.c, src/librt/bot.h, src/librt/bundle.c, src/librt/cmd.c, src/librt/comb.c, src/librt/cut.c, src/librt/db5_alloc.c, src/librt/db5_bin.c, src/librt/db5_comb.c, src/librt/db5_io.c, src/librt/db5_scan.c, src/librt/db5_types.c, src/librt/db_alloc.c, src/librt/db_anim.c, src/librt/db_comb.c, src/librt/db_io.c, src/librt/db_lookup.c, src/librt/db_match.c, src/librt/db_open.c, src/librt/db_path.c, src/librt/db_scan.c, src/librt/db_tree.c, src/librt/db_walk.c, src/librt/debug.h, src/librt/dg_obj.c, src/librt/dir.c, src/librt/fixpt.h, src/librt/fortray.c, src/librt/g_arb.c, src/librt/g_arbn.c, src/librt/g_ars.c, src/librt/g_bot.c, src/librt/g_bot_include.c, src/librt/g_cline.c, src/librt/g_dsp.c, src/librt/g_ebm.c, src/libfb/adage.h, src/libfb/adagecursor.h, src/libfb/adageframe.h, src/libfb/asize.c, src/libfb/compress.c, src/libfb/dmdfb.h, src/libfb/fb_generic.c, src/libfb/fb_log.c, src/libfb/fb_obj.c, src/libfb/fb_paged_io.c, src/libfb/fb_rect.c, src/libfb/fb_util.c, src/libfb/fblocal.h, src/libfb/fbserv_obj.c, src/libfb/fbserv_obj_win32.c, src/libfb/getput.c, src/libfb/if_4d-old.c, src/libfb/if_4d.c, src/libfb/if_TEMPLATE.c, src/libfb/if_X.c, src/libfb/if_X24.c, src/libfb/if_ab.c, src/libfb/if_adage.c, src/libfb/if_ap.c, src/libfb/if_debug.c, src/libfb/if_disk.c, src/libfb/if_mem.c, src/libfb/if_null.c, src/libfb/if_ogl.c, src/libfb/if_ogl_win32.c, src/libfb/if_ptty.c, src/libfb/if_rat.c, src/libfb/if_remote.c, src/libfb/if_sgi.c, src/libfb/if_sgiw.c, src/libfb/if_stack.c, src/libfb/if_sun.c, src/libfb/if_ts.c, src/libfb/if_ug.c, src/libfb/nilcursor.h, src/libfb/oglcursor.h, src/libfb/pkgswitch.c, src/libfb/pkgtypes.h, src/libfb/server.c, src/libfb/sgicursor.h, src/libfb/tcl.c, src/libbu/association.c, src/libbu/avs.c, src/libbu/badmagic.c, src/libbu/bitv.c, src/libbu/bomb.c, src/libbu/brlcad_path.c, src/libbu/bu_tcl.c, src/libbu/cmd.c, src/libbu/cmdhist.c, src/libbu/cmdhist_obj.c, src/libbu/color.c, src/libbu/convert.c, src/libbu/fopen_uniq.c, src/libbu/getopt.c, src/libbu/hash.c, src/libbu/hist.c, src/libbu/hook.c, src/libbu/htond.c, src/libbu/htonf.c, src/libbu/ispar.c, src/libbu/lex.c, src/libbu/linebuf.c, src/libbu/list.c, src/libbu/log.c, src/libbu/magic.c, src/libbu/malloc.c, src/libbu/mappedfile.c, src/libbu/memset.c, src/libbu/mro.c, src/libbu/observer.c, src/libbu/parallel.c, src/libbu/parse.c, src/libbu/printb.c, src/libbu/ptbl.c, src/libbu/rb_create.c, src/libbu/rb_delete.c, src/libbu/rb_diag.c, src/libbu/rb_extreme.c, src/libbu/rb_free.c, src/libbu/rb_insert.c, src/libbu/rb_internals.h, src/libbu/rb_order_stats.c, src/libbu/rb_rotate.c, src/libbu/rb_search.c, src/libbu/rb_walk.c, src/libbu/semaphore.c, src/libbu/units.c, src/libbu/vfont.c, src/libbu/vls.c, src/libbu/xdr.c, src/libbn/anim.c, src/libbn/asize.c, src/libbn/axis.c, src/libbn/bn_tcl.c, src/libbn/complex.c, src/libbn/const.c, src/libbn/font.c, src/libbn/fortran.c, src/libbn/htester.c, src/libbn/list.c, src/libbn/marker.c, src/libbn/mat.c, src/libbn/msr.c, src/libbn/noise.c, src/libbn/number.c, src/libbn/plane.c, src/libbn/plot3.c, src/libbn/poly.c, src/libbn/qmath.c, src/libbn/rand.c, src/libbn/scale.c, src/libbn/sphmap.c, src/libbn/symbol.c, src/libbn/tabdata.c, src/libbn/tplot.c, src/libbn/vectfont.c, src/libbn/vector.c, src/libbn/vert_tree.c, src/libbn/wavelet.c:
+	Doxygen changes
 
 2005-08-10  twingy  <twingy@users.sourceforge.net>
 
@@ -26,658 +754,4 @@
 
 	* src/adrt/libtie/define.h, src/adrt/libtie/struct.h, src/adrt/libtie/tie.c:
 	dynamic kd-tree depth calculation
-
-2005-08-09  twingy  <twingy@users.sourceforge.net>
-
-	* src/adrt/libtie/tie.c: removed a conditional
-
-	* src/adrt/libtie/tie.c: another cvs commit test.
-
-2005-08-08  lbutler  <lbutler@users.sourceforge.net>
-
-	* src/gtools/g_qa.1, src/gtools/g_qa.c:
-	Changes from the plane ride back to Baltimore from SIGGraph
-
-2005-08-08  twingy  <twingy@users.sourceforge.net>
-
-	* src/adrt/libtie/tie.c:
-	TIE is now more than 5% faster for incoherent rays.
-	It now properly uses ray segments.
-
-2005-08-06  twingy  <twingy@users.sourceforge.net>
-
-	* configure.ac: added isst back into configure
-
-2005-08-03  lbutler  <lbutler@users.sourceforge.net>
-
-	* src/gtools/g_qa.1, src/gtools/g_qa.c:
-	Since the user community didn't ask for the -s option I've deleted it for now.
-	It can be implemented, but doesn't seem worth the time right now.  Given the
-	existence of the -g and -n options, I suspect the -s option isn't necessary.
-
-2005-08-02  lbutler  <lbutler@users.sourceforge.net>
-
-	* src/gtools/g_qa.1, src/gtools/g_qa.c: Massive changes
-
-	* src/conv/dxf-g.c:
-	Trying to us an un-initialized vls structure was causing a core dump.
-
-2005-07-30  twingy  <twingy@users.sourceforge.net>
-
-	* src/gtools/g_qa.c: region was spelled wrong lee.
-
-2005-07-29  brlcad  <brlcad@users.sourceforge.net>
-
-	* src/adrt/isst/master/master.c:
-	file master.c was added on branch rel-7-4-branch on 2005-08-16 21:03:45 +0000
-
-2005-07-29  twingy  <twingy@users.sourceforge.net>
-
-	* src/adrt/isst/master/master.c, src/adrt/libcommon/env.c, src/adrt/libcommon/unpack.c, src/adrt/rise/master/master.c:
-	added depth to parser so you can render bsp depth from rise.
-
-	* src/conv/g-adrt.c:
-	g-adrt now creates an emission line if it finds a light source in the
-	shader string.
-
-2005-07-29  brlcad  <brlcad@users.sourceforge.net>
-
-	* src/adrt/rise/Makefile.am:
-	the files have to be specified somehow or source distributions will not include the files and it'll only work from cvs
-
-2005-07-29  twingy  <twingy@users.sourceforge.net>
-
-	* src/adrt/rise/Makefile.am: somehow this got broken?
-
-2005-07-29  brlcad  <brlcad@users.sourceforge.net>
-
-	* src/adrt/isst/observer/observer.c:
-	file observer.c was added on branch rel-7-4-branch on 2005-08-16 21:03:46 +0000
-
-2005-07-29  twingy  <twingy@users.sourceforge.net>
-
-	* src/adrt/isst/master/master.c, src/adrt/isst/observer/observer.c, src/adrt/librender/plane.c, src/adrt/librender/spall.c, src/adrt/libtie/tie.c:
-	* Adjusted colors for plane and spall.
-	* Fixed the axis aligned geometry intersections.
-	* Added in_hit to observer overlay
-
-2005-07-29  brlcad  <brlcad@users.sourceforge.net>
-
-	* src/adrt/isst/isst_struct.h:
-	file isst_struct.h was added on branch rel-7-4-branch on 2005-08-16 21:03:45 +0000
-
-2005-07-29  twingy  <twingy@users.sourceforge.net>
-
-	* src/adrt/isst/isst_struct.h: * Adjusted colors for plane and spall.
-	* Fixed the axis aligned geometry intersections.
-	* Added in_hit to observer overlay
-
-2005-07-29  brlcad  <brlcad@users.sourceforge.net>
-
-	* HACKING:
-	have to update the version number in include/config_win.h too for the windows build at release time
-
-2005-07-29  d_rossberg  <d_rossberg@users.sourceforge.net>
-
-	* include/config_win.h: some new configuration defines
-	tell is sth different
-
-	* include/machine.h: if you don't wont PARALLEL do not define it
-
-	* src/libbn/libbn.ncb: unnecessary ncb msdev build file removed
-
-	* misc/win32-msvc/brlcad.dsw: libbn, libbu, libsysv and libwdb
-
-	* src/libsysv/.cvsignore, src/libwdb/.cvsignore, src/libbn/.cvsignore, src/libbu/.cvsignore, src/librt/.cvsignore:
-	ignore msdev generated helpfiles
-
-2005-07-29  brlcad  <brlcad@users.sourceforge.net>
-
-	* misc/win32-msvc/.cvsignore:
-	file .cvsignore was added on branch rel-7-4-branch on 2005-08-16 21:03:44 +0000
-
-2005-07-29  d_rossberg  <d_rossberg@users.sourceforge.net>
-
-	* misc/win32-msvc/.cvsignore: ignore msdev generated helpfiles
-
-	* src/libsysv/libsysv.dsp, src/libwdb/libwdb.dsp, src/libbn/libbn.dsp, src/libbu/libbu.dsp:
-	adapted to version 7 directory structure
-	usage of vers.vbs to create version/vers.c
-	configurations added
-
-2005-07-29  brlcad  <brlcad@users.sourceforge.net>
-
-	* src/bwish/main.c: quell unused variable warnings
-
-	* src/adrt/rise/Makefile.am:
-	install/include the rise headers or folks cannot compile
-
-2005-07-28  lbutler  <lbutler@users.sourceforge.net>
-
-	* src/gtools/g_qa.1, src/gtools/g_qa.c:
-	results formatting for volume/weight
-
-2005-07-28  brlcad  <brlcad@users.sourceforge.net>
-
-	* HACKING: add TenLinks Daily to our notification list
-
-	* HACKING: inform CADinfo.NET site of releases and other news
-
-2005-07-28  twingy  <twingy@users.sourceforge.net>
-
-	* src/conv/g-adrt.c: new and improved! 98% fat free!
-
-	* src/adrt/libtienet/tienet_slave.c, src/adrt/isst/observer/observer.c, src/adrt/libcommon/pack.c, src/adrt/libcommon/unpack.c, src/adrt/librender/plane.c, src/adrt/libtie/tie.c, src/adrt/libtienet/tienet_master.c:
-	* Overall load time for all 8 nodes during startup is 25% faster.
-	* File size of adrt mesh is now 33% smaller.  It uses shortst when trinum
-	  of the mesh is under 64K triangles.
-	* Prep data to slaves is now multi-threaded (all slaves get data from
-	  master at the same time, heavy network load).
-
-2005-07-27  lbutler  <lbutler@users.sourceforge.net>
-
-	* src/gtools/Makefile.am: added g_qa to build
-
-	* src/gtools/g_qa.c, src/gtools/g_qa.1:
-	Many changes, including incorporation of units
-
-2005-07-27  erikgreenwald  <erikgreenwald@users.sourceforge.net>
-
-	* bench/Makefile.am: fix for "out of dir" builds
-
-2005-07-27  brlcad  <brlcad@users.sourceforge.net>
-
-	* src/rt/viewarea.c:
-	irix compiler doesn't like setting the two pointers to NULL at the same time, plus the cast wasn't right anyways.
-
-	* NEWS: john fixed the raytrace unique hits evaluation bug
-
-2005-07-27  johnranderson  <johnranderson@users.sourceforge.net>
-
-	* src/librt/g_rec.c:
-	Fixed a bug where 3 hits were found and checking for duplicates was done, but not all the
-	duplicate possibilities were checked
-
-2005-07-27  brlcad  <brlcad@users.sourceforge.net>
-
-	* NEWS: include a writeup for isst and g_qa
-
-	* NEWS:
-	lee added g_qa geometry quality analysis tool; justin added adrt interactive shot selection tool -- need write-up for both
-
-2005-07-27  twingy  <twingy@users.sourceforge.net>
-
-	* src/adrt/libtienet/tienet_master.c, src/adrt/libtienet/tienet_master.h, src/adrt/libtienet/tienet_slave.c, src/adrt/isst/master/master.c, src/adrt/isst/observer/observer.c, src/adrt/libcommon/unpack.c, src/adrt/isst/isst_struct.h:
-	* Fixed the rendering weirdness on the slave start-up
-	  Slaves were requesting a work unit right after prep begins
-	  so that slaves were holding onto a work unit for a lengthy time
-	  until prep finished and causing the units to not get done until
-	  prep finished.
-	* Added compute nodes status to observer.
-	* Added Scale Factor status to observer.
-	* Changed bytes transfered to mibi bytes instead of kilobytes.
-
-2005-07-27  brlcad  <brlcad@users.sourceforge.net>
-
-	* NEWS: added manual page for remapid
-
-	* src/util/remapid.1:
-	file remapid.1 was added on branch rel-7-4-branch on 2005-08-16 21:03:50 +0000
-
-2005-07-27  johnranderson  <johnranderson@users.sourceforge.net>
-
-	* src/util/remapid.1: Added
-
-2005-07-26  twingy  <twingy@users.sourceforge.net>
-
-	* src/conv/g-adrt.c: off by 1 on regions processed.
-
-	* src/adrt/librender/component.c, src/adrt/librender/plane.c, src/adrt/librender/spall.c:
-	adjusted colors for render methods.
-
-	* src/adrt/isst/isst_struct.h, src/adrt/isst/master/isst_python.c, src/adrt/isst/master/master.c, src/adrt/isst/master/master.h, src/adrt/isst/observer/observer.c, src/adrt/librender/depth.c, src/adrt/libtie/struct.h, src/adrt/libtie/tie.c:
-	Fixed AE for keith and removed origin AE stuff....  Fixed component view and
-	left bsp depth viewing in.
-
-2005-07-26  brlcad  <brlcad@users.sourceforge.net>
-
-	* src/burst/prnt.c, src/conv/euclid-g.c, src/conv/proe-g.c, src/conv/stl-g.c, src/iges/recsize.c, src/util/pixdsplit.c, src/util/pixsubst.c, src/util/ttcp.c, misc/pro-engineer/proe-brl.c:
-	make sure to include the errno.h header before any usage of the errno global just in case so bad things don't happen (like on fedora core)
-
-	* NEWS: fixed quick memory debugging bug, patch from hunts ajem scr 675
-
-	* src/libbu/malloc.c:
-	apply jim hunt's quick memory debugging fixes (ajem scr 675).  the chunk size was not recomputed correctly and insufficient memroy was reallocated potentially resulting in memory corruption and application program crash.
-
-	* src/libbu/malloc.c:
-	comment on requesting an allocation of zero bytes being considered a mistake/error -- libbu's allocation routines will never return null; allocating zero bytes in a cross-platform manner is not achievable.
-
-	* src/libbu/whereis.c, src/libbu/which.c:
-	some systems (e.g. linux) have sysctl but do not have CTL_USER or USER_CS_PATH. bah, humbug.
-
-2005-07-25  lbutler  <lbutler@users.sourceforge.net>
-
-	* src/gtools/g_qa.1, src/gtools/g_qa.c: Checkpoint.
-
-2005-07-25  brlcad  <brlcad@users.sourceforge.net>
-
-	* HACKING:
-	notify upfront.ezine only if major, but include all the release details
-
-2005-07-25  lbutler  <lbutler@users.sourceforge.net>
-
-	* src/gtools/g_qa.1:
-	Incorporated Janine's comments.  Much more readable now.
-	Editors are really wonderful people to have around!
-	Broke with the g_lint tradition of specifying reports as a bit mask.
-	The user community really doesn't know the first thing about binary
-	these days, so we shouldn't mandate they learn about it to work with
-	the user interface (even a command-line user interface).
-
-2005-07-25  brlcad  <brlcad@users.sourceforge.net>
-
-	* src/libbu/brlcad_path.c:
-	add run-time path locating, using the argv[0] value along with bu_which to find where we're running the binary from.  the path given may then be relatively checked for a lib/resource dir.  add debug messages for testing controlled by the bu_debug global
-
-	* src/libtclcad/tclcadAutoPath.c:
-	file tclcadAutoPath.c was added on branch rel-7-4-branch on 2005-08-16 21:03:49 +0000
-
-	* src/libtclcad/tclcadAutoPath.c:
-	set the tcl_library, tk_library, and iwidgets_library variables both to continue the quest of a relocateable mged/bwish.  fix an oversight on tclscripts searching while we're at it.
-
-	* src/mged/ged.c:
-	set bu's argv[0] so we can find our run-time location in brlcad_path routines
-
-	* configure.ac: define IWIDGETS_VERSION
-
-	* src/other/iwidgets/Makefile.am: use the new IWIDGETS_VERSION variable
-
-	* include/bu.h:
-	include the new bu_file_exists prototype; include the BU_PATH_SEPARATOR define
-
-	* NEWS: improved brlman relocation
-
-	* src/brlman/awf.in:
-	file awf.in was added on branch rel-7-4-branch on 2005-08-16 21:03:47 +0000
-
-	* src/brlman/awf.in:
-	search a little better for the awf resource directory
-
-	* src/brlman/brlman.in:
-	file brlman.in was added on branch rel-7-4-branch on 2005-08-16 21:03:47 +0000
-
-	* src/brlman/brlman.in:
-	set the MANPATH a little more intelligently, and halt after the first match
-
-2005-07-24  brlcad  <brlcad@users.sourceforge.net>
-
-	* src/libbu/Makefile.am, src/libbu/whereis.c, src/libbu/which.c:
-	add initial whereis and which functionality to libbu via whereis.c and which.c respectively.  the difference of course being that bu_whereis() searches the system path, while bu_which() searches the user path.  still could use some more work to clean up the paths being returned, but it is functional for an initial implementation.
-
-	* src/libbu/brlcad_path.c:
-	add a bu_argv0 and bu_ipwd for setting/getting the initial argv[0] value and the initial pwd
-
-	* src/libbu/malloc.c:
-	add a simple bu_free_array convenience routine to free the elements of an array without freeing the array itself
-
-	* src/libbu/Makefile.am, src/libbu/brlcad_path.c, src/libbu/stat.c:
-	separate bu_file_exists out of brlcad_path.c into its own file stat.c
-
-2005-07-21  lbutler  <lbutler@users.sourceforge.net>
-
-	* src/gtools/g_qa.1, src/gtools/g_qa.c:
-	Checkpoint:  Refinements on man page, and output reporting from program.
-
-2005-07-21  brlcad  <brlcad@users.sourceforge.net>
-
-	* src/other/libtk/generic/default.h: use the same hack for mingw too
-
-	* src/other/libtk/generic/default.h:
-	temporary cygwin build solution that should get Tk to work on Windows by specifying the X11 interface (patch provided by lode_leroy)
-
-2005-07-20  lbutler  <lbutler@users.sourceforge.net>
-
-	* src/gtools/g_qa.1, src/gtools/g_qa.c:
-	Fixed a few bugs.  Added some reporting when options are not implemented (yet)
-
-	* src/gtools/g_qa.1, src/gtools/g_qa.c: checkpoint
-
-2005-07-20  twingy  <twingy@users.sourceforge.net>
-
-	* src/adrt/libtie/tie.c:
-	committing before I do a whole bunch of horribly nasty optimization testing fu
-
-2005-07-20  brlcad  <brlcad@users.sourceforge.net>
-
-	* src/adrt/librender/depth.h:
-	file depth.h was added on branch rel-7-4-branch on 2005-08-16 21:03:46 +0000
-
-2005-07-20  twingy  <twingy@users.sourceforge.net>
-
-	* src/adrt/librender/depth.c, src/adrt/librender/depth.h:
-	added depth files.
-
-	* src/adrt/libtienet/tienet_slave.c, src/adrt/libtienet/tienet_slave.h, src/adrt/rise/master/master.c, src/adrt/rise/slave/slave.c, src/adrt/libcommon/pack.h, src/adrt/libcommon/unpack.c, src/adrt/libcommon/unpack.h, src/adrt/librender/Makefile.am, src/adrt/librender/flat.c, src/adrt/librender/render.h, src/adrt/librender/render_internal.h, src/adrt/libtie/tie.c:
-	* Data on demand to nodes (~20% mem savings).
-	* tlist memory leak in unpack.c fixed.
-	* BSP Depth Visualization rendering method.
-	* Split Plane Coloring
-	* Testing more efficient BSP methods.
-
-2005-07-20  brlcad  <brlcad@users.sourceforge.net>
-
-	* src/adrt/isst/slave/slave.c:
-	file slave.c was added on branch rel-7-4-branch on 2005-08-16 21:03:46 +0000
-
-2005-07-20  twingy  <twingy@users.sourceforge.net>
-
-	* src/adrt/isst/slave/slave.c, src/adrt/libcommon/pack.c, src/adrt/isst/master/master.c:
-	* Data on demand to nodes (~20% mem savings).
-	* tlist memory leak in unpack.c fixed.
-	* BSP Depth Visualization rendering method.
-	* Split Plane Coloring
-	* Testing more efficient BSP methods.
-
-2005-07-19  brlcad  <brlcad@users.sourceforge.net>
-
-	* src/librt/g_bot_include.c:
-	there's a crash in here somewhere, start out by performing a few more checks on entry
-
-	* HACKING:
-	comment on the fact that brlcad_config.h and config_win.h should not be directly used, common.h should be used instead and it should appear before any system headers.  this applies to both internal and external codes
-
-2005-07-19  lbutler  <lbutler@users.sourceforge.net>
-
-	* src/gtools/g_qa.c, src/gtools/g_qa.1:
-	Modifications following first user community design review.
-
-2005-07-18  lbutler  <lbutler@users.sourceforge.net>
-
-	* src/gtools/g_qa.1, src/gtools/g_qa.c:
-	Just a checkpoint.  added support for minimum rays required per region.
-
-2005-07-18  twingy  <twingy@users.sourceforge.net>
-
-	* src/adrt/librender/plane.c, src/adrt/librender/spall.c:
-	Faded coloring a bit more.
-
-2005-07-18  brlcad  <brlcad@users.sourceforge.net>
-
-	* src/gtools/Makefile.am:
-	don't forget to modify the makefile.am when adding files. add the missing g_qa.1 manpage
-
-2005-07-18  twingy  <twingy@users.sourceforge.net>
-
-	* src/adrt/doc/rise.txt, src/adrt/README: updated README for ISST
-
-	* src/adrt/librender/plane.c, src/adrt/librender/spall.c:
-	plane view and spall view now use partial component color to better visualize internals.
-
-2005-07-18  brlcad  <brlcad@users.sourceforge.net>
-
-	* src/adrt/isst/master/Makefile.am:
-	file Makefile.am was added on branch rel-7-4-branch on 2005-08-16 21:03:45 +0000
-
-	* src/adrt/isst/observer/Makefile.am, src/adrt/isst/slave/Makefile.am:
-	file Makefile.am was added on branch rel-7-4-branch on 2005-08-16 21:03:46 +0000
-
-	* src/adrt/isst/master/SDLMain.h:
-	file SDLMain.h was added on branch rel-7-4-branch on 2005-08-16 21:03:45 +0000
-
-	* src/adrt/isst/master/compnet.c:
-	file compnet.c was added on branch rel-7-4-branch on 2005-08-16 21:03:45 +0000
-
-	* src/adrt/isst/master/compnet.h:
-	file compnet.h was added on branch rel-7-4-branch on 2005-08-16 21:03:45 +0000
-
-	* src/adrt/isst/master/dispatcher.c:
-	file dispatcher.c was added on branch rel-7-4-branch on 2005-08-16 21:03:45 +0000
-
-	* src/adrt/isst/master/dispatcher.h:
-	file dispatcher.h was added on branch rel-7-4-branch on 2005-08-16 21:03:45 +0000
-
-	* src/adrt/isst/master/isst_python.h:
-	file isst_python.h was added on branch rel-7-4-branch on 2005-08-16 21:03:45 +0000
-
-	* src/adrt/isst/master/main.c:
-	file main.c was added on branch rel-7-4-branch on 2005-08-16 21:03:45 +0000
-
-	* src/adrt/isst/observer/main.c, src/adrt/isst/slave/main.c:
-	file main.c was added on branch rel-7-4-branch on 2005-08-16 21:03:46 +0000
-
-	* src/adrt/isst/observer/observer.h:
-	file observer.h was added on branch rel-7-4-branch on 2005-08-16 21:03:46 +0000
-
-	* src/adrt/isst/slave/slave.h:
-	file slave.h was added on branch rel-7-4-branch on 2005-08-16 21:03:46 +0000
-
-	* src/adrt/isst/observer/splash.h:
-	file splash.h was added on branch rel-7-4-branch on 2005-08-16 21:03:46 +0000
-
-2005-07-18  twingy  <twingy@users.sourceforge.net>
-
-	* src/adrt/isst/master/Makefile.am, src/adrt/isst/master/SDLMain.h, src/adrt/isst/master/compnet.c, src/adrt/isst/master/compnet.h, src/adrt/isst/master/dispatcher.c, src/adrt/isst/master/dispatcher.h, src/adrt/isst/master/isst_python.c, src/adrt/isst/master/isst_python.h, src/adrt/isst/master/main.c, src/adrt/isst/master/master.c, src/adrt/isst/master/master.h, src/adrt/isst/observer/Makefile.am, src/adrt/isst/observer/main.c, src/adrt/isst/observer/observer.c, src/adrt/isst/observer/observer.h, src/adrt/isst/observer/splash.h, src/adrt/isst/slave/Makefile.am, src/adrt/isst/slave/main.c, src/adrt/isst/slave/slave.c, src/adrt/isst/slave/slave.h:
-	IVAT is now ISST (Interactive Shot Selection Tool).
-
-2005-07-18  brlcad  <brlcad@users.sourceforge.net>
-
-	* src/adrt/isst/Makefile.am:
-	file Makefile.am was added on branch rel-7-4-branch on 2005-08-16 21:03:45 +0000
-
-	* src/adrt/isst/isst.h:
-	file isst.h was added on branch rel-7-4-branch on 2005-08-16 21:03:45 +0000
-
-2005-07-18  twingy  <twingy@users.sourceforge.net>
-
-	* src/adrt/Makefile.am, src/adrt/isst/Makefile.am, src/adrt/isst/isst.h, src/adrt/isst/isst_struct.h:
-	IVAT is now ISST (Interactive Shot Selection Tool).
-
-2005-07-18  lbutler  <lbutler@users.sourceforge.net>
-
-	* src/gtools/g_qa.1: Man page for g_qa
-
-2005-07-18  brlcad  <brlcad@users.sourceforge.net>
-
-	* src/libbu/brlcad_path.c:
-	MAXPATHLEN is now in bu.h, no need to abort if searched and where arguments to bu_find_path are NULL, make bu_find_path static like it is supposed to be
-
-	* src/bwish/Makefile.am:
-	add libtclcad to the btclsh deps since it's using tclcad_auto_path now
-
-	* src/mged/cmd.c:
-	abstract out the auto_path crappage to libtclcad and make it a tclcad_auto_path call instead.  fix the other bu_brlcad_data call to specify the tclscripts dir instead of leaving it open-ended.
-
-	* src/bwish/main.c:
-	abstract out the auto_path crappage to libtclcad and make it a tclcad_auto_path call instead.
-
-	* src/libtclcad/tkCanvBezier.c:
-	file tkCanvBezier.c was added on branch rel-7-4-branch on 2005-08-16 21:03:49 +0000
-
-	* src/libtclcad/tkCanvBezier.c: fix header, credit john
-
-	* src/libtclcad/Makefile.am:
-	add tclcadAutoPath.c and tclcadTkSetup.c, remove the renamed tclcad.c
-
-	* src/libtclcad/tclcadTkSetup.c:
-	file tclcadTkSetup.c was added on branch rel-7-4-branch on 2005-08-16 21:03:49 +0000
-
-	* src/libtclcad/tclcad.c, src/libtclcad/tclcadTkSetup.c:
-	rename tclcad.c to tclcadTkSetup.c
-
-	* include/bu.h: add a check for MAXPATHLEN just to be sure it gets set
-
-	* include/Makefile.am, include/tclcad.h:
-	add an initial tclcad.h interface file for the tclcad library
-
-	* include/tclcad.h:
-	file tclcad.h was added on branch rel-7-4-branch on 2005-08-16 21:03:44 +0000
-
-	* src/libtclcad/tclcadAutoPath.c:
-	add tclcadAutoPath.c which includes a routine for adding the brl-cad tclscripts to the tcl auto_path.
-
-	* src/libbu/brlcad_path.c: searched results string is optional
-
-	* src/libbu/brlcad_path.c:
-	improve the path failure reporting with customized messages for data vs root searching.  fix the 'bug' of adding a trailing slash when there is no right-hand side.  if the left-hand side is empty, let that imply a current directory.
-
-	* src/bwish/main.c, src/mged/cmd.c:
-	search path enhancements, search for tclscripts explicitly and search even harder still when running from uninstalled
-
-2005-07-17  brlcad  <brlcad@users.sourceforge.net>
-
-	* TODO:
-	add mingw and installation/configureation script(s) to this iteration's to do list
-
-	* TODO:
-	no need to make tkCanvasBezier code a convenience library -- added to libtclcad instead
-
-	* BUGS: brlman/awf is no longer hardwired for 7.4.0
-
-	* src/brlman/.cvsignore:
-	file .cvsignore was added on branch rel-7-4-branch on 2005-08-16 21:03:47 +0000
-
-	* src/brlman/.cvsignore:
-	ignore the newly generating awf and brlman files
-
-	* configure.ac:
-	add full checks for libtk including an enable-tk-build option
-
-	* doc/html/manuals/Install.html: emphasis
-
-	* src/mged/Makefile.am:
-	utilize libtclcad which now includes are tkCanvasBezier goodies
-
-	* src/libtclcad/Makefile.am, src/libtclcad/tkCanvBezier.c, src/other/libtk/Makefile.am, src/other/libtk/generic/Makefile.am, src/other/libtk/generic/tkCanvBezier.c:
-	move tkCanvBezier.c from the depths of other/libtk/generic to brl-cad's libtclcad library, decoupling brl-cad's tkCanvasBezier modification so that a system libtk may be used straight up.
-
-	* src/libbu/brlcad_path.c:
-	report what right-hand path is being searched for correctly
-
-	* TODO: machinetype.sh is retired
-
-	* sh/machinetype.sh, sh/Makefile.am:
-	retire the venerable machinetype.sh script from the former build system after a good 20 years of service.  it's no longer required and should there arise a need, config.guess should be incorporated
-
-	* TODO: awf and brlman no longer user machinetype.sh
-
-	* configure.ac:
-	generate the awf and brlman files from their respective templates
-
-	* src/brlman/Makefile.am:
-	replace brlman and awf with autoconf templates
-
-	* src/brlman/brlman, src/brlman/brlman.in:
-	replace brlman with brlman.in template so that it may be decoupled from machinetype.sh and pathing issues
-
-	* src/brlman/awf, src/brlman/awf.in:
-	replace awf with awf.in template so that it may be decoupled from machinetype.sh and pathing problems
-
-2005-07-16  brlcad  <brlcad@users.sourceforge.net>
-
-	* sh/cray.sh:
-	bye bye machinetype.sh, presume path is set up correctly beforehand for now
-
-	* bench/try.sh:
-	completely rewrite try.sh so that it basically calls the main run.sh script with the X framebuffer option, making sure that only one frame per test is displayed.
-
-	* NEWS: simultaneous -o and -F options to rt, rtedge, rtxray
-
-	* src/rt/viewxray.c:
-	add support for simultaneous -o file and -F framebuffer output to rtxray
-
-	* src/rt/viewedge.c:
-	add support for simultaneous -o file and -F framebuffer output to rtedge
-
-	* src/rt/view_bot_faces.c: knr to ansify funcage
-
-	* src/rt/view.c:
-	allow rt to output simultaneously to a file and to a framebuffer, allowing the -o and -F options to be combined together
-
-	* src/rt/main.c:
-	allow rt to output simultaneously to a file and to a framebuffer
-
-	* bench/run.sh:
-	use the more generic path_to_this instead of path_to_run_sh so the var can be consistent across scripts
-
-	* bench/viewdiff.sh:
-	file viewdiff.sh was added on branch rel-7-4-branch on 2005-08-16 21:03:44 +0000
-
-	* bench/Makefile.am, bench/recheck.sh, bench/viewdiff.sh:
-	rename recheck.sh to viewdiff.sh and rewrite it in the process, decoupling it from machinetype.sh and improving the tool checks in the process
-
-	* bench/Makefile.am, bench/pretty.sh:
-	the pretty.sh script is now moved from 'bench' to 'pix' dir and renamed to cube.rt
-
-	* pix/Makefile.am, pix/cube.rt:
-	add an initial cube.rt saveview raytrace script, formerly known as the bench/pretty.sh script but now moved to pix/cube.rt instead
-
-	* pix/cube.rt:
-	file cube.rt was added on branch rel-7-4-branch on 2005-08-16 21:03:45 +0000
-
-	* TODO:
-	shipped, start off this iterations todo list with a few items.  retire machinetype.sh and integrate isst for starters.
-
-	* Makefile.am: report a summary on make fast too
-
-2005-07-15  brlcad  <brlcad@users.sourceforge.net>
-
-	* HACKING:
-	include the level of notification detail warranted by each, add grabowski of upfront.ezine to notification list
-
-2005-07-14  brlcad  <brlcad@users.sourceforge.net>
-
-	* NEWS:
-	heh, oops, brain fudge somehow swapped igvt 'i' with rise 'i' -- it's an image synthesis engine, not interactive.. go ahead and describe adrt too
-
-2005-07-13  brlcad  <brlcad@users.sourceforge.net>
-
-	* NEWS, README, configure.ac:
-	cvs is tagged with rel-7-4-0 so bump to 7.4.1
-
-	* src/mged/Makefile.am: requires libbu for bu_brlcad_data/root
-
-	* src/fb/Makefile.am: cat-fb requires libbu for bu_brlcad_data
-
-	* src/conv/g-adrt.c:
-	common.h belongs before any system header, don't include brlcad_config.h directly -- not portable; also getopt isn't used, use the compatible bu_getopt routine instead
-
-	* regress/weight.sh:
-	fix the comparison checks so that they are not whitespace dependant or otherwise so sensitive to simple formatting changes
-
-	* ChangeLog: changelog entries from 7.2.6 to 7.4.0
-
-	* README, configure.ac: update version to 7.4.0
-
-2005-07-12  brlcad  <brlcad@users.sourceforge.net>
-
-	* TODO: added rise details.  ready to ship 7.4.0
-
-	* NEWS:
-	include an informative overview of adrt and the rise path-tracer.  today is release day for 7.4.0
-
-	* README:
-	mention the new path tracer, improve distribution details, more information on contacting via irc, mention that we're usually at siggraph and other conferences
-
-	* src/adrt/README: say three
-
-2005-07-12  johnranderson  <johnranderson@users.sourceforge.net>
-
-	* src/librtserver/rtserver.c, include/rtserver.h, include/RtServerImpl.h:
-	Mods to add an interface for shooting an array of rays
-
-2005-07-12  brlcad  <brlcad@users.sourceforge.net>
-
-	* configure.ac:
-	improve the path checking on the root and data directories, allowing for a full override if desired via --prefix and --datadir respectively
-
-	* src/adrt/misc/ivat.png, src/adrt/misc/Makefile.am: remove ivat image
-
-	* NEWS:
-	not going to roll out the adrt ivat tool this release .. maybe next
-
-	* configure.ac:
-	ivat is removed for at least this iteration, probably to be reincarnated in a different for later when some details get worked out
-
-	* src/adrt/Makefile.am, src/adrt/README, src/adrt/configure.ac, src/adrt/doc/Makefile.am, src/adrt/doc/ivat.txt:
-	and with a flick of wrist and wiggle of nose, itink ivat isgone... at least for now, likely to be resurrected before next iteration from the ashes in a slightly different incarnation.
 
