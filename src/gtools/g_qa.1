@@ -15,16 +15,27 @@ program computes and reports a variety of characteristics of the
 specified from the given 
 .I model.g
 geometric description.
-Among these characteristics are weight, volume, overlaps, exposed air,
-gaps/voids, adjacent air, and interfaces.
+The characteristics which can be computed include 
+.B weight, volume, overlaps, exposed air, gaps/voids, adjacent air, 
+and 
+.B interfaces.
 Only the 
 .I objects
 from the database specified on the command line are analyzed.
+.P
 It works by shooting grids of rays from the three axis-aligned directions (sometimes called 
 \fIviews\fR).  
-The resulting volume/weight calculations for each view are compared to each other.
-The grid of rays is progressively refined until the results from all three views
+The resulting calculations for each view are compared to each other.
+For Volume/Weight calculations the grid of rays is progressively refined until the results from all three views
 agree within a user-specifiable tolerance, or a limit on grid refinement is reached.
+For error and interface calculations, the grid is refined until an error is found or the grid refinement
+limit is reached.
+.SH VOLUME AND WEIGHT CALCULATION
+If weight calculation is selected, for each 
+.I object
+specified on the command line, volume and weight is calculated and reported.
+Note that if there are overlaps in the geometry the values reported will be invalid.
+
 .P
 For weight computation, the density of every region must be specified.  
 Densities are specified as an index in a table of density values.
@@ -94,13 +105,10 @@ To import the text file into the database, the following comand is used:
 mged>
 .B dbbinary \-i u c _DENSITIES 
 .I filename
-.SH VOLUME WEIGHT REPORTING
-If weight calculation is selected, for each 
-.I object
-specified on the command line, volume and weight is calculated and reported.
-  Note that if there are overlaps in the geometry the values reported will be invalid.
-.SH OVERLAP REPORTING
+
+.SH OVERLAP DETECTION
 For each pair of regions that overlap, the tool reports the two regions that overlap, the maximum line-of-sight thickness of the overlap, and the in-hit location of the ray that caused that maximum overlap thickness.  
+
 .SH OPTIONS
 .TP
 .B \-A \fR\fIanalysis_flags\fR
@@ -275,6 +283,11 @@ So for example, it is accepted that a thin object might not be hit from one view
 .IP
 The default is 1.  This indicates that each region must be intersected by a ray at least once during the analysis.
 If the grid spacing limit is reached, processing will end even if this criteria has not been met.
+.TP
+.B \-N \fR\fInum_views\fR
+Specifies that only the first
+.I num_views
+should be computed.  This is principly a debugging option.
 .TP
 .B \-p
 Specifies that 
