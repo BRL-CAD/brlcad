@@ -57,6 +57,8 @@ void	common_unpack_prop(int socknum);
 void	common_unpack_texture(int socknum);
 void	common_unpack_mesh(common_db_t *db, int socknum, tie_t *tie);
 void	common_unpack_kdtree_cache(int socknum, tie_t *tie);
+void	common_unpack_mesh_map(common_db_t *db, int socknum);
+void	common_unpack_mesh_link(char *mesh_name, char *prop_name, common_db_t *db);
 void	common_unpack_prop_lookup(char *name, common_prop_t **prop);
 void	common_unpack_texture_lookup(char *name, texture_t **texture);
 
@@ -94,6 +96,7 @@ void common_unpack(common_db_t *db, tie_t *tie, util_camera_t *camera, int sockn
   common_unpack_texture(socknum);
   common_unpack_mesh(db, socknum, tie);
   common_unpack_kdtree_cache(socknum, tie);
+  common_unpack_mesh_map(db, socknum);
 }
 
 
@@ -484,15 +487,6 @@ void common_unpack_mesh(common_db_t *db, int socknum, tie_t *tie) {
     tienet_recv(socknum, db->mesh_list[db->mesh_num-1]->name, c, 0);
     ind += c + 1;
 
-    /* Texture */
-    tienet_recv(socknum, &c, sizeof(char), 0);
-    tienet_recv(socknum, name, c, 0);
-    ind += c + 1;
-    common_unpack_texture_lookup(name, &(db->mesh_list[db->mesh_num-1]->texture));
-
-    /* Properties */
-    common_unpack_prop_lookup(name, &(db->mesh_list[db->mesh_num-1]->prop));
-
     /* Vertices */
     tienet_recv(socknum, &vnum, sizeof(int), tienet_endian);
     ind += sizeof(int);
@@ -550,24 +544,6 @@ void common_unpack_mesh(common_db_t *db, int socknum, tie_t *tie) {
       ind += fnum * 3 * sizeof(unsigned short);
     }
 
-    /* Allocate memory for ADRT triangles */
-    db->mesh_list[db->mesh_num-1]->tri_num = fnum;
-    db->mesh_list[db->mesh_num-1]->tri_list = (common_triangle_t *)malloc(fnum * sizeof(common_triangle_t));
-
-    /* Build the triangle list */
-    for(i = 0; i < fnum; i++) {
-      db->mesh_list[db->mesh_num-1]->tri_list[i].mesh = db->mesh_list[db->mesh_num-1];
-      db->mesh_list[db->mesh_num-1]->tri_list[i].normals = NULL;
-      tlist[i*3+0] = vlist[flist[3*i+0]];
-      tlist[i*3+1] = vlist[flist[3*i+1]];
-      tlist[i*3+2] = vlist[flist[3*i+2]];
-    }
-
-
-    /* ADD TRIANGLES TO TIE */
-    tie_push(tie, tlist, fnum, db->mesh_list[db->mesh_num-1]->tri_list, sizeof(common_triangle_t));
-
-
     /* Min and Max */
 #if 0
     for(j = 0; j < 3; j++)
@@ -583,6 +559,26 @@ void common_unpack_mesh(common_db_t *db, int socknum, tie_t *tie) {
 
     /* Store inverted matrix */
     math_mat_invert(db->mesh_list[db->mesh_num-1]->matinv, db->mesh_list[db->mesh_num-1]->matrix, 4);
+
+    /* Apply Transformation Matrix to Vertices */
+    for(i = 0; i < vnum; i++)
+      math_vec_transform(vlist[i], vlist[i], db->mesh_list[db->mesh_num-1]->matrix);
+
+    /* Allocate memory for ADRT triangles */
+    db->mesh_list[db->mesh_num-1]->tri_num = fnum;
+    db->mesh_list[db->mesh_num-1]->tri_list = (common_triangle_t *)malloc(fnum * sizeof(common_triangle_t));
+
+    /* Build the triangle list */
+    for(i = 0; i < fnum; i++) {
+      db->mesh_list[db->mesh_num-1]->tri_list[i].mesh = db->mesh_list[db->mesh_num-1];
+      db->mesh_list[db->mesh_num-1]->tri_list[i].normals = NULL;
+      tlist[i*3+0] = vlist[flist[3*i+0]];
+      tlist[i*3+1] = vlist[flist[3*i+1]];
+      tlist[i*3+2] = vlist[flist[3*i+2]];
+    }
+
+    /* ADD TRIANGLES TO TIE */
+    tie_push(tie, tlist, fnum, db->mesh_list[db->mesh_num-1]->tri_list, sizeof(common_triangle_t));
   }
 
   free(vlist);
@@ -611,8 +607,46 @@ void common_unpack_kdtree_cache(int socknum, tie_t *tie) {
 }
 
 
+void common_unpack_mesh_map(common_db_t *db, int socknum) {
+  unsigned int size, ind;
+  unsigned char c;
+  char mesh_name[256], prop_name[256];
+
+  /* size of mesh data */
+  tienet_recv(socknum, &size, sizeof(unsigned int), 0);
+  ind = 0;
+
+  while(ind < size) {
+    tienet_recv(socknum, &c, 1, 0);
+    tienet_recv(socknum, mesh_name, c, 0);
+    ind += 1 + c;
+
+    tienet_recv(socknum, &c, 1, 0);
+    tienet_recv(socknum, prop_name, c, 0);
+    ind += 1 + c;
+
+    /* Link a property and texture to a mesh */
+    common_unpack_mesh_link(mesh_name, prop_name, db);
+  }
+}
+
+
+void common_unpack_mesh_link(char *mesh_name, char *prop_name, common_db_t *db) {
+  unsigned int i;
+
+
+  for(i = 0; i < db->mesh_num; i++) {
+    /* Find Mesh */
+    if(!strcmp(mesh_name, db->mesh_list[i]->name)) {
+      common_unpack_prop_lookup(prop_name, &(db->mesh_list[i]->prop));
+      return;
+    }
+  }
+}
+
+
 void common_unpack_prop_lookup(char *name, common_prop_t **prop) {
-  int		i;
+  unsigned int i;
 
   for(i = 0; i < prop_num; i++)
     if(!strcmp(name, prop_list[i].name)) {
@@ -627,7 +661,7 @@ void common_unpack_prop_lookup(char *name, common_prop_t **prop) {
 
 
 void common_unpack_texture_lookup(char *name, texture_t **texture) {
-  int		i;
+  unsigned int i;
 
   for(i = 0; i < texture_num; i++)
     if(!strcmp(name, texture_list[i].name)) {
@@ -637,4 +671,3 @@ void common_unpack_texture_lookup(char *name, texture_t **texture) {
 
   *texture = NULL;
 }
-

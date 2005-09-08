@@ -59,6 +59,7 @@ void common_env_init(common_env_t *env) {
   env->kdtree_cache_file[0] = 0;
   env->properties_file[0] = 0;
   env->textures_file[0] = 0;
+  env->mesh_map_file[0] = 0;
   env->frames_file[0] = 0;
 }
 
@@ -98,6 +99,9 @@ void common_env_read(common_env_t *env, char *fpath) {
     } else if(!strcmp("textures_file", token)) {
       strcpy(env->textures_file, strtok(NULL, ","));
       env->textures_file[strlen(env->textures_file) - 1] = 0;
+    } else if(!strcmp("mesh_map_file", token)) {
+      strcpy(env->mesh_map_file, strtok(NULL, ","));
+      env->mesh_map_file[strlen(env->mesh_map_file) - 1] = 0;
     } else if(!strcmp("frames_file", token)) {
       strcpy(env->frames_file, strtok(NULL, ","));
       env->frames_file[strlen(env->frames_file) - 1] = 0;

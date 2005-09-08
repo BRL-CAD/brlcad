@@ -126,6 +126,7 @@ typedef struct common_env_s {
   char kdtree_cache_file[256];
   char properties_file[256];
   char textures_file[256];
+  char mesh_map_file[256];
   char frames_file[256];
 } common_env_t;
 

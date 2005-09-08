@@ -59,6 +59,7 @@ void	common_pack_texture(void **app_data, int *app_ind, char *filename);
 void	common_pack_mesh(common_db_t *db, void **app_data, int *app_ind, char *filename);
 void	common_pack_mesh_adrt(common_db_t *db, void **app_data, int *app_ind, char *filename);
 void    common_pack_kdtree_cache(common_db_t *db, void **app_data, int *app_ind, char *filename);
+void	common_pack_mesh_map(void **app_data, int *app_ind, char *filename);
 
 int	common_pack_app_size;
 int	common_pack_app_mem;
@@ -114,6 +115,10 @@ int common_pack(common_db_t *db, void **app_data, char *proj) {
   /* KD-TREE CACHE DATA */
   common_pack_kdtree_cache(db, app_data, &app_ind, db->env.kdtree_cache_file);
 
+  /* MESH MAP FILE */
+  common_pack_mesh_map(app_data, &app_ind, db->env.mesh_map_file);
+
+
   *app_data = realloc(*app_data, common_pack_app_size);
   return(common_pack_app_size);
 }
@@ -121,10 +126,10 @@ int common_pack(common_db_t *db, void **app_data, char *proj) {
 
 void common_pack_camera(common_db_t *db, void **app_data, int *app_ind) {
   short s;
-  int marker, size;
+  unsigned int marker, size;
 
   marker = *app_ind;
-  *app_ind += sizeof(int);
+  *app_ind += sizeof(unsigned int);
 
   common_pack_write(app_data, app_ind, &db->anim.frame_list[0].pos, sizeof(TIE_3));
   common_pack_write(app_data, app_ind, &db->anim.frame_list[0].focus, sizeof(TIE_3));
@@ -133,22 +138,22 @@ void common_pack_camera(common_db_t *db, void **app_data, int *app_ind) {
   common_pack_write(app_data, app_ind, &db->anim.frame_list[0].dof, sizeof(tfloat));
 
 
-  size = *app_ind - marker - sizeof(int);
-  common_pack_write(app_data, &marker, &size, sizeof(int));
+  size = *app_ind - marker - sizeof(unsigned int);
+  common_pack_write(app_data, &marker, &size, sizeof(unsigned int));
   *app_ind = marker + size;
 }
 
 
 void common_pack_env(common_db_t *db, void **app_data, int *app_ind) {
-  int marker, size;
+  unsigned int marker, size;
   short s;
 
   marker = *app_ind;
-  *app_ind += sizeof(int);
+  *app_ind += sizeof(unsigned int);
 
   s = COMMON_PACK_ENV_RM;
   common_pack_write(app_data, app_ind, &s, sizeof(short));
-  common_pack_write(app_data, app_ind, &db->env.rm, sizeof(int));
+  common_pack_write(app_data, app_ind, &db->env.rm, sizeof(unsigned int));
 
   switch(db->env.rm) {
     case RENDER_METHOD_NORMAL:
@@ -181,8 +186,8 @@ void common_pack_env(common_db_t *db, void **app_data, int *app_ind) {
   common_pack_write(app_data, app_ind, &db->env.img_hs, sizeof(int));
 
 
-  size = *app_ind - marker - sizeof(int);
-  common_pack_write(app_data, &marker, &size, sizeof(int));
+  size = *app_ind - marker - sizeof(unsigned int);
+  common_pack_write(app_data, &marker, &size, sizeof(unsigned int));
   *app_ind = marker + size;
 }
 
@@ -192,14 +197,14 @@ void common_pack_prop(void **app_data, int *app_ind, char *filename) {
   common_prop_t def_prop;
   char line[256], name[256], *token;
   unsigned char c;
-  int marker, size, prop_num;
+  unsigned int marker, size, prop_num;
 
   marker = *app_ind;
-  *app_ind += sizeof(int);
+  *app_ind += sizeof(unsigned int);
 
   fh = fopen(filename, "r");
   if(!fh) {
-    printf("Properties file: %s does not exist, exiting...\n", filename);
+    fprintf(stderr, "error: Properties file %s doesn't exist, exiting.\n", filename);
     exit(1);
   }
 
@@ -275,8 +280,8 @@ void common_pack_prop(void **app_data, int *app_ind, char *filename) {
   }
 
 
-  size = *app_ind - marker - sizeof(int);
-  common_pack_write(app_data, &marker, &size, sizeof(int));
+  size = *app_ind - marker - sizeof(unsigned int);
+  common_pack_write(app_data, &marker, &size, sizeof(unsigned int));
   *app_ind = marker + size;
 }
 
@@ -285,15 +290,15 @@ void common_pack_texture(void **app_data, int *app_ind, char *filename) {
   FILE *fh;
   char line[256], *token;
   unsigned char c;
-  int marker, size;
+  unsigned int marker, size;
   short s;
 
   marker = *app_ind;
-  *app_ind += sizeof(int);
+  *app_ind += sizeof(unsigned int);
 
   fh = fopen(filename, "r");
   if(!fh) {
-    printf("Textures file: %s does not exist, exiting...\n", filename);
+    fprintf(stderr, "error: Textures file %s doesn't exist, exiting.\n", filename);
     exit(1);
   }
 
@@ -401,7 +406,7 @@ void common_pack_texture(void **app_data, int *app_ind, char *filename) {
       if(token[strlen(token)-1] == '\n') token[strlen(token)-1] = 0;
       tile = atoi(token);
 
-      common_pack_write(app_data, app_ind, &tile, sizeof(int));
+      common_pack_write(app_data, app_ind, &tile, sizeof(unsigned int));
     } else if(!strcmp("camo", token)) {
       tfloat size;
       int octaves, absolute;
@@ -525,8 +530,8 @@ void common_pack_texture(void **app_data, int *app_ind, char *filename) {
   fclose(fh);
 
 
-  size = *app_ind - marker - sizeof(int);
-  common_pack_write(app_data, &marker, &size, sizeof(int));
+  size = *app_ind - marker - sizeof(unsigned int);
+  common_pack_write(app_data, &marker, &size, sizeof(unsigned int));
   *app_ind = marker + size;
 }
 
@@ -548,13 +553,13 @@ void common_pack_mesh_adrt(common_db_t *db, void **app_data, int *app_ind, char 
 
   fh = fopen(filename, "rb");
   if(!fh) {
-    printf("ADRT geometry file: %s does not exist, exiting...\n", filename);
+    fprintf(stderr, "error: ADRT geometry file %s doesn't exist, exiting.\n", filename);
     exit(1);
   }
 
   /* Marker for size of all mesh data */
   marker_size = *app_ind;
-  *app_ind += sizeof(int);
+  *app_ind += sizeof(unsigned int);
 
   /* Get End Position */
   fseek(fh, 0, SEEK_END);
@@ -581,11 +586,13 @@ void common_pack_mesh_adrt(common_db_t *db, void **app_data, int *app_ind, char 
     common_pack_write(app_data, app_ind, meshname, c);
 
     /* Texture/Properties Name */
+#if 0
     fread(&c, sizeof(char), 1, fh);
     fread(texturename, sizeof(char), c, fh);
     texturename[(int)(c++)] = 0;
     common_pack_write(app_data, app_ind, &c, sizeof(char));
     common_pack_write(app_data, app_ind, texturename, c);
+#endif
 
     /* Pack Number of Vertices */
     fread(&num, sizeof(int), 1, fh);
@@ -657,8 +664,8 @@ void common_pack_mesh_adrt(common_db_t *db, void **app_data, int *app_ind, char 
   fclose(fh);
 
   /* pack the size of the mesh data */
-  size = *app_ind - marker_size - sizeof(int); /* make sure you're not counting the data size integer */
-  common_pack_write(app_data, &marker_size, &size, sizeof(int));
+  size = *app_ind - marker_size - sizeof(unsigned int); /* make sure you're not counting the data size integer */
+  common_pack_write(app_data, &marker_size, &size, sizeof(unsigned int));
 
   *app_ind = marker_size + size;
 }
@@ -667,15 +674,18 @@ void common_pack_mesh_adrt(common_db_t *db, void **app_data, int *app_ind, char 
 void common_pack_kdtree_cache(common_db_t *db, void **app_data, int *app_ind, char *filename) {
   FILE *fh;
   void *kdcache;
-  int marker, size;
+  unsigned int marker, size;
 
   marker = *app_ind;
-  *app_ind += sizeof(int);
+  *app_ind += sizeof(unsigned int);
+
+  if(!filename)
+    return;
 
   fh = fopen(filename, "rb");
   if(!fh) {
-    size = *app_ind - marker - sizeof(int);
-    common_pack_write(app_data, &marker, &size, sizeof(int));
+    size = *app_ind - marker - sizeof(unsigned int);
+    common_pack_write(app_data, &marker, &size, sizeof(unsigned int));
     *app_ind = marker + size;
     return;
   }
@@ -691,7 +701,44 @@ void common_pack_kdtree_cache(common_db_t *db, void **app_data, int *app_ind, ch
   fclose(fh);
   free(kdcache);
 
-  size = *app_ind - marker - sizeof(int);
-  common_pack_write(app_data, &marker, &size, sizeof(int));
+  size = *app_ind - marker - sizeof(unsigned int);
+  common_pack_write(app_data, &marker, &size, sizeof(unsigned int));
+  *app_ind = marker + size;
+}
+
+
+void common_pack_mesh_map(void **app_data, int *app_ind, char *filename) {
+  FILE *fh;
+  char line[256], *token;
+  unsigned char c;
+  unsigned int marker, size;
+
+
+  marker = *app_ind;
+  *app_ind += sizeof(unsigned int);
+
+  fh = fopen(filename, "r");
+  if(!fh) {
+    fprintf(stderr, "error: Mesh Map file %s doesn't exist, exiting.\n", filename);
+    exit(1);
+  }
+
+  while(fgets(line, 256, fh)) {
+    token = strtok(line, ",");
+    c = strlen(token) + 1;
+    common_pack_write(app_data, app_ind, &c, 1);
+    common_pack_write(app_data, app_ind, token, c);
+
+    token = strtok(NULL, ",");
+    if(token[strlen(token)-1] == '\n') token[strlen(token)-1] = 0;
+    c = strlen(token) + 1;
+    common_pack_write(app_data, app_ind, &c, 1);
+    common_pack_write(app_data, app_ind, token, c);
+  }
+
+  fclose(fh);
+
+  size = *app_ind - marker - sizeof(unsigned int);
+  common_pack_write(app_data, &marker, &size, sizeof(unsigned int));
   *app_ind = marker + size;
 }

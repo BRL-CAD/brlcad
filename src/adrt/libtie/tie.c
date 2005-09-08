@@ -162,13 +162,11 @@ void tie_init(tie_t *tie, unsigned int tri_num) {
  * @return void
  */
 void tie_free(tie_t *tie) {
-  int			i;
+  int i;
 
   /* Free Triangle Data */
-  for(i = 0; i < tie->tri_num; i++) {
-    printf("free: %p\n", (void *)((intptr_t)(tie->tri_list[i].v) & ~0x7L));
+  for(i = 0; i < tie->tri_num; i++)
     free( (void *)((intptr_t)(tie->tri_list[i].v) & ~0x7L) );
-  }
   free(tie->tri_list);
 
   /* Free KDTREE Nodes */
@@ -341,6 +339,7 @@ void* tie_work(tie_t *tie, tie_ray_t *ray, tie_id_t *id, void *(*hitfunc)(tie_ra
 
       /* Extract i1 and i2 indices from lower bits of the v pointer */
       v = (tfloat *)((intptr_t)(tri->v) & ~0x7L);
+
       i1 = TIE_TAB1[((intptr_t)(tri->v) & 0x7)];
       i2 = TIE_TAB1[3 + ((intptr_t)(tri->v) & 0x7)];
 
@@ -373,6 +372,8 @@ void* tie_work(tie_t *tie, tie_ray_t *ray, tie_id_t *id, void *(*hitfunc)(tie_ra
         id_list[hit_count] = t;
         hit_count++;
       }
+
+
     }
 
 
@@ -415,7 +416,7 @@ void* tie_work(tie_t *tie, tie_ray_t *ray, tie_id_t *id, void *(*hitfunc)(tie_ra
  * @param tnum is the number of triangles (tlist = 3 * tnum of TIE_3's).
  * @param plist is a list of pointer data that gets assigned to the ptr of each triangle.
  * This will typically be 4-byte (32-bit architecture) spaced array of pointers that
- * associate the triantle pointer with your arbitrary structure, i.e a mesh.
+ * associate the triangle pointer with your arbitrary structure, i.e a mesh.
  * @param pstride is the number of bytes to increment the pointer list as it assigns
  * a pointer to each mesh, typically a value of 4 (for 32-bit machines).  If you have
  * a single pointer that groups all triangles to a common structure then you can use
