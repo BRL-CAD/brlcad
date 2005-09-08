@@ -40,6 +40,11 @@
 #  include <bu.h>
 #endif
 
+#ifdef DM_OGL
+#  ifndef IF_OGL
+#    define IF_OGL 1
+#  endif
+#endif
 #include "fbserv_obj.h"
 
 #define DM_NULL (struct dm *)NULL
@@ -270,6 +275,8 @@ struct dm_obj {
 #define DM_DRAWDLIST(_dmp,_list) _dmp->dm_drawDList(_dmp,_list)
 #define DM_FREEDLISTS(_dmp,_list,_range) _dmp->dm_freeDLists(_dmp,_list,_range)
 
+DM_EXPORT extern struct dm dm_Null;
+
 #ifdef BRLCAD_DEBUG
 DM_EXPORT BU_EXTERN(int Dm_d_Init,
 		    ());
@@ -324,13 +331,13 @@ DM_EXPORT extern char dm_version[];
 
 /* clip.c */
 DM_EXPORT BU_EXTERN(int clip,
-		    (vect_t,
-		     vect_t,
-		     vect_t,
-		     vect_t));
+		    (fastf_t *,
+		     fastf_t *,
+		     fastf_t *,
+		     fastf_t *));
 DM_EXPORT BU_EXTERN(int vclip,
-		    (vect_t,
-		     vect_t,
+		    (fastf_t *,
+		     fastf_t *,
 		     register fastf_t *,
 		     register fastf_t *));
 

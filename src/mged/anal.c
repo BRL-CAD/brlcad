@@ -58,10 +58,6 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 extern struct rt_db_internal	es_int;	/* from edsol.c */
 extern struct bn_tol		mged_tol;		/* from ged.c */
 
-/* from librt */
-extern const int rt_arb_faces[5][24];
-
-
 static void	do_anal(struct bu_vls *vp, const struct rt_db_internal *ip);
 static void	arb_anal(struct bu_vls *vp, const struct rt_db_internal *ip);
 static double	anal_face(struct bu_vls *vp, int face, fastf_t *center_pt, const struct rt_arb_internal *arb, int type, const struct bn_tol *tol);

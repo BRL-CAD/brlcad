@@ -718,6 +718,16 @@ mged_setup(void)
 	   run with output */
 	bu_vls_init(&tcl_output_hook);
 
+#ifdef _WIN32
+#  ifdef _DEBUG
+	Tcl_FindExecutable("mged_d");
+#  else
+	Tcl_FindExecutable("mged");
+#  endif
+#else
+	Tcl_FindExecutable("mged");
+#endif
+
 	/* Create the interpreter */
 	interp = Tcl_CreateInterp();
 
@@ -735,16 +745,18 @@ mged_setup(void)
 	  bu_log("Tcl_Import error %s\n", interp->result);
 
 
-#ifdef _WIN32
-#  ifdef _DEBUG
-	Tcl_FindExecutable("mged_d");
-#  else
-	Tcl_FindExecutable("mged");
-#  endif
-#else
-	Tcl_FindExecutable("mged");
-#endif
+#ifdef BRLCAD_DEBUG
+	/* Initialize libbu */
+	Bu_d_Init(interp);
 
+	/* Initialize libbn */
+	Bn_d_Init(interp);
+
+	/* Initialize librt (includes database, drawable geometry and view objects) */
+	if (Rt_d_Init(interp) == TCL_ERROR) {
+		bu_log("Rt_d_Init error %s\n", interp->result);
+	}
+#else
 	/* Initialize libbu */
 	Bu_Init(interp);
 
@@ -755,6 +767,7 @@ mged_setup(void)
 	if (Rt_Init(interp) == TCL_ERROR) {
 		bu_log("Rt_Init error %s\n", interp->result);
 	}
+#endif
 
 	/* initialize MGED's drawable geometry object */
 	dgop = dgo_open_cmd("mged", wdbp);
@@ -829,20 +842,20 @@ cmd_setup(void)
 	pathname = bu_brlcad_data("tclscripts", 1);
 
 #ifdef _WIN32
-	{
+	if (pathname) {
 	    /* XXXXXXXXXXXXXXX UGLY XXXXXXXXXXXXXXXXXX*/
 	    int i;
 	    strcat(pathname,"/");
 	    for (i=0;i<strlen(pathname);i++) {
 		if(pathname[i]=='\\') 
 		    pathname[i]='/'; }
+
+	    bu_vls_init(&vls);
+	    bu_vls_printf(&vls, "source %s/mged/tree.tcl", pathname);
+	    (void)Tcl_Eval(interp, bu_vls_addr(&vls));
+	    bu_vls_free(&vls);
 	}
 #endif
-
-	bu_vls_init(&vls);
-	bu_vls_printf(&vls, "source %s/mged/tree.tcl", pathname);
-	(void)Tcl_Eval(interp, bu_vls_addr(&vls));
-	bu_vls_free(&vls);
 
 	bu_vls_strcpy(&temp, "glob_compat_mode");
 	Tcl_LinkVar(interp, bu_vls_addr(&temp), (char *)&glob_compat_mode,
@@ -852,9 +865,15 @@ cmd_setup(void)
 		    TCL_LINK_BOOLEAN);
 
 	/* Provide Tcl interfaces to the fundamental BRL-CAD libraries */
+#ifdef BRLCAD_DEBUG
+	Bu_d_Init(interp);
+	bn_tcl_setup( interp );
+	Rt_d_Init(interp);
+#else
 	Bu_Init(interp);
 	bn_tcl_setup( interp );
 	Rt_Init(interp);
+#endif
 
 #ifdef DM_X
 	tkwin = NULL;

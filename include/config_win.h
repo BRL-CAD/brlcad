@@ -24,6 +24,7 @@
 #ifndef CONFIG_H
 #define CONFIG_H seen
 
+#ifndef IGNORE_CONFIG_H
 #if defined(_WIN32)
 /* XXX - This is temporary (atleast until a brlcad_config.h is
  * auto-generated on windows)
@@ -47,6 +48,7 @@
 #define BRLCAD_ROOT       ""
 #define BRLCAD_DATA       ""
 #define INSTALL_DIRECTORY "C:/brlcad7_2"
+#define IWIDGETS_VERSION  "4.0.2"
 
 #define HAS_OPENGL	1
 #define HAVE_ACCESS     1
@@ -62,7 +64,9 @@
 #define HAVE_MATHERR	1
 #define HAVE_MEMORY_H	1
 #define HAVE_OFF_T	1
+#if 0
 #define HAVE_PWD_H	1
+#endif
 #define HAVE_REGEX_H	1
 #define HAVE_STAT       1
 #define HAVE_STDARG_H	1
@@ -74,6 +78,7 @@
 #define HAVE_STRING_H	1
 #define HAVE_SYS_STAT_H 1
 #define HAVE_SYS_TIME	1
+#define HAVE_SYS_TYPES_H 1
 #define HAVE_TIME	1
 #define HAVE_TIME_H	1
 #define HAVE_VARARGS_H	1
@@ -134,6 +139,7 @@
 #define strncmp _strncmp
 #endif
 #define sys_errlist _sys_errlist
+#define snprintf _snprintf
 #define umask _umask
 #define unlink _unlink
 #define write _write
@@ -145,6 +151,7 @@
 #undef rad2
 
 #endif /* if defined(_WIN32) */
+#endif /* ifndef IGNORE_CONFIG_H */
 
 #endif /* CONFIG_H */
 

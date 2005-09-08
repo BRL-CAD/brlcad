@@ -54,7 +54,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 static int	code();
 
 int
-clip (vect_t xp1, vect_t yp1, vect_t xp2, vect_t yp2)
+clip (fastf_t *xp1, fastf_t *yp1, fastf_t *xp2, fastf_t *yp2)
 {
 	char code1, code2;
 

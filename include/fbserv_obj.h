@@ -25,11 +25,6 @@
 #include "fb.h"
 #include "pkg.h"
 
-extern FBIO X24_interface;
-#ifdef DM_OGL
-extern FBIO ogl_interface;
-#endif
-
 #define NET_LONG_LEN	4	/* # bytes to network long */
 #define MAX_CLIENTS 32
 #define MAX_PORT_TRIES 100
@@ -56,8 +51,8 @@ struct fbserv_obj {
   genptr_t			fbs_clientData;
 };
 
-extern int fbs_open();
-extern int fbs_close();
+FB_EXPORT extern int fbs_open();
+FB_EXPORT extern int fbs_close();
 
 /*
  * Local Variables:
