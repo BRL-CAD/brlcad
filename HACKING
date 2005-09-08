@@ -667,7 +667,8 @@ latest changes.
 
 3) Update or verify the version numbers minimally in configure.ac,
 NEWS, README, and include/config_win.h (see VERSION NUMBERS &
-COMPATIBILITY section).
+COMPATIBILITY section) and commit the changes to the source
+repository.
 
 4) Update the ChangeLog with entries since the last release; commit
 the updated ChangeLog.  Use the YYYY-MM-DD of the previous release.

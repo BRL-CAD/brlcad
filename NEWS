@@ -7,11 +7,11 @@ see that file and the CVS log for more historic information.  The
 entire history of the project is available through CVS.
 
 ----------------------------------------------------------------------
---- 2005-09-XX  Release 7.5.0                                      ---
+--- 2005-09-08  Release 7.6.0                                      ---
 ----------------------------------------------------------------------
 
-This release includes the addition of a new geometry "quality
-analysis" tool called g_qa.  This tool is a new tool that combines
+This release includes the addition of a new geometry "Quantitative
+Analysis" tool called g_qa.  This tool is a new tool that combines
 some of the features of rtweight, rtcheck and g_lint, providing a
 robust means for computing the weight and volume of objects while also
 allowing a means to report overlaps, air gaps, external air regions,
