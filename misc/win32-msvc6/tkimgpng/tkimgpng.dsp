@@ -56,7 +56,7 @@ BSC32=bscmake.exe
 # ADD BSC32 /nologo
 LINK32=link.exe
 # ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /dll /machine:I386
-# ADD LINK32 kernel32.lib user32.lib advapi32.lib tcl84.lib tk84.lib zlibtcl.lib pngtcl.lib tkimg.lib /nologo /dll /machine:I386 /libpath:"../../../lib"
+# ADD LINK32 kernel32.lib user32.lib advapi32.lib tcl84.lib tk84.lib libz.lib libpng.lib tkimg.lib /nologo /dll /machine:I386 /libpath:"../../../lib"
 # Begin Special Build Tool
 TargetDir=.\Release
 TargetPath=.\Release\tkimgpng.dll
@@ -90,7 +90,7 @@ BSC32=bscmake.exe
 # ADD BSC32 /nologo
 LINK32=link.exe
 # ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /dll /debug /machine:I386 /pdbtype:sept
-# ADD LINK32 kernel32.lib user32.lib advapi32.lib tcl84_d.lib tk84_d.lib zlibtcl_d.lib pngtcl_d.lib tkimg_d.lib /nologo /dll /debug /machine:I386 /out:"Debug/tkimgpng_d.dll" /pdbtype:sept /libpath:"../../../lib"
+# ADD LINK32 kernel32.lib user32.lib advapi32.lib tcl84_d.lib tk84_d.lib libz_d.lib libpng_d.lib tkimg_d.lib /nologo /dll /debug /machine:I386 /out:"Debug/tkimgpng_d.dll" /pdbtype:sept /libpath:"../../../lib"
 # Begin Special Build Tool
 TargetDir=.\Debug
 TargetPath=.\Debug\tkimgpng_d.dll
