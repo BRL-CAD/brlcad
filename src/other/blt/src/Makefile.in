@@ -1,0 +1,246 @@
+
+# ------------------------------------------------------------------------
+# 	Makefile for static version of BLT library
+# ------------------------------------------------------------------------
+
+# ------------------------------------------------------------------------
+# 	C Compiler options 
+# ------------------------------------------------------------------------
+
+BLT_LIBRARY =	@BLT_LIBRARY@
+TCLLIBPATH   =	@TCL_LIB_DIR@/tcl@TCL_VERSION@
+CC =		@CC@
+CFLAGS =	@CFLAGS@ 
+DEFINES =	@DEFINES@
+EXTRA_CFLAGS =	@GCCFLAGS@
+LDFLAGS =	@LDFLAGS@ @LD_RUN_PATH@
+version =	@BLT_MAJOR_VERSION@@BLT_MINOR_VERSION@
+
+# ------------------------------------------------------------------------
+# 	Source and targer installation directories 
+# ------------------------------------------------------------------------
+
+bindir =	$(exec_prefix)/bin
+exec_prefix =	@exec_prefix@
+incdir =	$(prefix)/include
+libdir = 	@libdir@
+scriptdir =	$(exec_prefix)/lib
+
+prefix =	@prefix@
+srcdir =	@srcdir@
+
+instdirs =	$(prefix) $(exec_prefix) $(bindir) $(libdir) $(incdir)
+
+# ------------------------------------------------------------------------
+# 	Directories containing Tcl and Tk include files and libraries
+# ------------------------------------------------------------------------
+
+INCLUDES =	-I. -I$(srcdir) @INCLUDES@
+
+# ------------------------------------------------------------------------
+#       Libraries directives for Tcl, Tk, X11, and BLT
+# ------------------------------------------------------------------------
+
+LIBS =		@LIB_SPECS@ @EXTRA_LIB_SPECS@
+TCL_ONLY_LIBS = @TCL_ONLY_LIB_SPECS@ @EXTRA_LIB_SPECS@
+
+# ------------------------------------------------------------------------
+# 	You don't need to edit anything beyond this point
+# ------------------------------------------------------------------------
+
+N_OBJS =	bltTed.o
+V3_OBJS =	bltTri.o bltGrMt.o 
+
+TK_OBJS =	tkButton.o tkFrame.o bltScrollbar.o 
+
+GRAPH_OBJS =	bltGrAxis.o \
+		bltGrBar.o \
+		bltGrElem.o \
+		bltGrGrid.o \
+		bltGrHairs.o \
+		bltGrLegd.o \
+		bltGrLine.o \
+		bltGrMarker.o \
+		bltGrMisc.o \
+		bltGrPen.o \
+		bltGrPs.o \
+		bltGraph.o 
+
+TCL_ONLY_OBJS =	bltAlloc.o \
+		bltArrayObj.o \
+		bltBgexec.o \
+		bltChain.o \
+		bltDebug.o \
+		bltHash.o \
+		bltList.o \
+		bltNsUtil.o \
+		bltParse.o \
+		bltPool.o \
+		bltSpline.o \
+		bltSwitch.o \
+		bltTree.o \
+		bltTreeCmd.o \
+		bltUnixPipe.o \
+		bltUtil.o \
+		bltVector.o \
+		bltVecMath.o \
+		bltVecCmd.o \
+		bltVecObjCmd.o \
+		bltWatch.o  
+
+OBJS =		$(GRAPH_OBJS) \
+		$(TCL_ONLY_OBJS) \
+		bltBeep.o \
+		bltBind.o \
+		bltBitmap.o \
+		bltBusy.o \
+		bltCanvEps.o \
+		bltColor.o \
+		bltConfig.o \
+		bltContainer.o \
+		bltCutbuffer.o \
+		bltDragdrop.o \
+		bltHierbox.o \
+		bltHtext.o \
+		bltImage.o \
+		bltUnixImage.o \
+		bltPs.o \
+		bltTable.o \
+		bltTabnotebook.o \
+		bltTabset.o \
+		bltText.o \
+		bltTile.o \
+		bltTreeView.o \
+		bltTreeViewCmd.o \
+		bltTreeViewEdit.o \
+		bltTreeViewColumn.o \
+		bltTreeViewStyle.o \
+		bltUnixDnd.o \
+		bltWindow.o \
+		bltObjConfig.o \
+		bltWinop.o \
+		$(TK_OBJS) $(N_OBJS) 
+
+# GNU Make-specific macro
+SRCS =		$(patsubst %.o,$(srcdir)/%.c,$(OBJS)) 
+
+bltwish =	bltwish
+bltsh =		bltsh
+headers =	$(srcdir)/blt.h \
+		$(srcdir)/bltBind.h \
+		$(srcdir)/bltChain.h \
+		bltHash.h \
+		$(srcdir)/bltList.h \
+		$(srcdir)/bltPool.h \
+		$(srcdir)/bltTree.h \
+		$(srcdir)/bltVector.h 
+
+lib_a =		libBLT.a
+libvers_a =	libBLT$(version).a
+tcl_only_lib_a =  libBLTlite.a
+tcl_only_libvers_a = libBLTlite$(version).a
+
+CC_SWITCHES =	$(EXTRA_CFLAGS) $(CFLAGS) $(DEFINES) $(INCLUDES)
+INSTALL =	@INSTALL@
+INSTALL_DATA =	@INSTALL_DATA@
+INSTALL_ROOT =  
+RANLIB =	@RANLIB@
+SHELL =		/bin/sh
+AR =		ar rc
+RM =		rm -f
+LINT =		lint
+LINTFLAGS =	-axhbns
+XREF =		cxref
+XREFFLAGS =	-dltR
+LN_S =		@LN_S@
+VPATH =		$(srcdir)
+
+all: $(bltsh) $(bltwish) @SHLIB_TARGET@
+
+build_shared:
+	(cd shared; $(MAKE) CFLAGS="$(CFLAGS)" all) 
+
+$(bltwish): $(lib_a) $(srcdir)/bltUnixMain.c
+	$(RM) $(bltwish)
+	$(CC) $(CC_SWITCHES) $(LDFLAGS) -o $(bltwish) \
+		-DTCLLIBPATH=\"$(TCLLIBPATH)\" \
+		$(srcdir)/bltUnixMain.c $(lib_a) $(LIBS) 
+
+$(bltsh): $(tcl_only_lib_a) $(srcdir)/bltUnixMain.c
+	$(RM) $(bltsh)
+	$(CC) $(CC_SWITCHES) $(LDFLAGS) -DTCL_ONLY -o $(bltsh) \
+		-DTCLLIBPATH=\"$(TCLLIBPATH)\" \
+		$(srcdir)/bltUnixMain.c $(tcl_only_lib_a) $(TCL_ONLY_LIBS) 
+
+$(lib_a): $(OBJS) $(srcdir)/bltInit.c
+	$(CC) -c $(CC_SWITCHES) -DBLT_LIBRARY=\"$(BLT_LIBRARY)\" \
+		$(srcdir)/bltInit.c
+	$(RM) $@
+	$(AR) $@ $(OBJS) bltInit.o
+	$(RANLIB) $@
+
+$(tcl_only_lib_a):  $(TCL_ONLY_OBJS) $(srcdir)/bltInit.c
+	$(CC) -c $(CC_SWITCHES) -DTCL_ONLY -DBLT_LIBRARY=\"$(BLT_LIBRARY)\" \
+		$(srcdir)/bltInit.c
+	$(RM) $@
+	$(AR) $@ $(TCL_ONLY_OBJS) bltInit.o
+	$(RANLIB) $@
+
+install: mkdirs install-lib install-demo install-headers
+
+install-demo: $(bltwish) $(bltsh)
+	$(INSTALL) -m 0755 $(bltwish) $(INSTALL_ROOT)$(bindir)
+	$(INSTALL) -m 0755 $(bltsh) $(INSTALL_ROOT)$(bindir)
+
+install-lib: $(lib_a) $(tcl_only_lib_a)
+	$(INSTALL_DATA) $(lib_a) $(INSTALL_ROOT)$(libdir)/$(libvers_a)
+	(cd $(INSTALL_ROOT)$(libdir); $(RM) $(lib_a) ; $(LN_S) $(libvers_a) $(lib_a))
+	$(RANLIB) $(INSTALL_ROOT)$(libdir)/$(libvers_a)
+	$(INSTALL_DATA) $(tcl_only_lib_a) $(INSTALL_ROOT)$(libdir)/$(tcl_only_libvers_a)
+	(cd $(INSTALL_ROOT)$(libdir); $(RM) $(tcl_only_lib_a) ; $(LN_S) $(tcl_only_libvers_a) $(tcl_only_lib_a))
+	$(RANLIB) $(INSTALL_ROOT)$(libdir)/$(tcl_only_libvers_a)
+	(cd shared; $(MAKE) install) 
+
+mkdirs:
+	@for i in $(instdirs) ; do \
+          if test -d $(INSTALL_ROOT)$$i ; then \
+            : ; \
+          else \
+            echo " mkdir $(INSTALL_ROOT)$$i" ; \
+            mkdir $(INSTALL_ROOT)$$i ; \
+          fi ; \
+        done
+
+install-headers:
+	@for i in $(headers) ; do \
+	    echo "installing $$i..." ; \
+	    $(INSTALL_DATA) -m 0444 $$i $(INSTALL_ROOT)$(incdir) ; \
+	done
+
+lint:
+	$(LINT) $(LINTFLAGS) $(DEFINES) $(INCLUDES) $(SRCS)
+
+xref:
+	$(XREF) $(XREFFLAGS) $(DEFINES) $(INCLUDES) $(SRCS)
+
+clean:
+	$(RM) $(OBJS) bltInit.o $(lib_a) $(tcl_only_lib_a) \
+		$(bltsh)* $(bltwish)* *pure* .pure*
+	(cd shared; $(MAKE) clean) 
+
+distclean: clean
+	$(RM) $(srcdir)/*.bak $(srcdir)/*\~ $(srcdir)/"#"*  Makefile
+	$(RM) bltConfig.h Makefile TAGS
+
+.c.o:
+	$(CC) -c $(CC_SWITCHES) $<
+
+PUREFLAGS=
+pure: $(lib_a)
+	$(PURIFYHOME)/purify $(PUREFLAGS) $(CC) $(CC_SWITCHES) \
+		$(srcdir)/bltUnixMain.c -o bltwish $(lib_a) $(LIBS)
+
+QUANTIFYFLAGS=
+quant: $(lib_a)
+	$(QUANTIFYHOME)/quantify $(QUANTIFYFLAGS) $(CC) $(CC_SWITCHES) \
+		$(srcdir)/bltUnixMain.c -o bltwish $(lib_a) $(LIBS)

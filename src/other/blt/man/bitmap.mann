@@ -1,0 +1,220 @@
+'\"
+'\" Copyright 1991-2001 by Bell Labs Innovations for Lucent Technologies.
+'\"
+'\" Permission to use, copy, modify, and distribute this software and its
+'\" documentation for any purpose and without fee is hereby granted, provided
+'\" that the above copyright notice appear in all copies and that both that the
+'\" copyright notice and warranty disclaimer appear in supporting documentation,
+'\" and that the names of Lucent Technologies any of their entities not be used
+'\" in advertising or publicity pertaining to distribution of the software
+'\" without specific, written prior permission.
+'\"
+'\" Lucent Technologies disclaims all warranties with regard to this software,
+'\" including all implied warranties of merchantability and fitness.  In no event
+'\" shall Lucent Technologies be liable for any special, indirect or
+'\" consequential damages or any damages whatsoever resulting from loss of use,
+'\" data or profits, whether in an action of contract, negligence or other
+'\" tortuous action, arising out of or in connection with the use or performance
+'\" of this software.  
+'\"
+'\" Bitmap command created by George Howlett.
+'\"
+.so man.macros
+.TH bitmap n BLT_VERSION BLT "BLT Built-In Commands"
+.BS
+'\" Note:  do not modify the .SH NAME line immediately below!
+.SH NAME
+bitmap \- Define a new bitmap from a Tcl script
+.SH SYNOPSIS
+\fBbitmap define \fIbitmapName data\fR ?\fIoption value\fR?...
+.sp
+\fBbitmap compose \fIbitmapName text\fR ?\fIoption value\fR?...
+.sp
+\fBbitmap exists \fIbitmapName\fR
+.sp
+\fBbitmap source \fIbitmapName\fR
+.sp
+\fBbitmap data \fIbitmapName\fR
+.sp
+\fBbitmap height \fIbitmapName\fR
+.sp
+\fBbitmap width \fIbitmapName\fR
+.BE
+.SH DESCRIPTION
+The \fBbitmap\fR command lets you create new bitmaps directly from your
+Tcl script.  The bitmap can be specified as a list of data or a text string
+which is converted into a bitmap.  You can arbitrarily scale
+or rotate the bitmap too.
+.SH INTRODUCTION
+Bitmaps are commonly used within Tk.  In label and button widgets, you
+display bitmaps them instead of text strings and in the canvas and
+text widgets, they're used for stippling.  But Tk let's you can create
+new bitmaps only by reading the bitmap data from a file.  This makes
+bitmaps cumbersome to manage, especially in packaging the program as a
+\fBwish\fR script, since each bitmap must be its own file.  It would
+be nicer if you could create new bitmaps directly from your Tcl script.
+.PP
+The \fBbitmap\fR command lets you do just that.  You can specify the
+bitmap as in various formats (such as the X11 bitmap format).  You can
+also compose a bitmap from a text string.  The \fBbitmap\fR command
+also lets you and arbitrarily rotate or scale the bitmap.  For example, you
+could use this to create button widgets with the text label rotated 90
+degrees.
+.SH EXAMPLE
+<<<<<<< bitmap.mann
+You can define a new bitmap with the \fBdefine\fR operation.  For
+example, let's say you are using the X11 bitmap "gray1".  Normally to
+use it, you would specify the location of the file.
+.CS
+label .l -bitmap @/usr/X11R6/include/X11/bitmaps/gray1
+.CE
+But you can simply cut and paste the contents of "gray1" into the 
+\fBbitmap\fR command.
+.CS
+bitmap define gray1 {
+    #define gray1_width 2
+    #define gray1_height 2
+    static char gray1_bits[] = {
+       0x01, 0x02};
+}
+label .l -bitmap gray1
+.CE
+Tk will recognize "gray1" as a bitmap which can now be used with any
+widget that accepts bitmaps.
+.CS
+.barchart element configure elem1 -stipple gray1
+.CE
+The bitmap data can be specified in a mulitude of forms.
+The following commands are all equivalent.
+.CS
+bitmap define gray1 {
+    #define gray1_width 2
+    #define gray1_height 2
+    static char gray1_bits[] = {
+       0x01, 0x02};
+}
+bitmap define gray1 { { 2 2 } { 0x01, 0x02 } }
+bitmap define gray1 { { 2 2 } { 0x01 0x02 } }
+bitmap define gray1 { { 2 2 } { 1 2 } }
+.CE
+Either the data is in the standard X11 bitmap form, or it's a list of
+two lists. The first list contains the height and width of the bitmap.
+The second list is the bitmap source data.  Each element of that list
+is an hexadecimal number specifying which pixels are foreground (1)
+and which are background (0) of the bitmap.  Note that the format of
+the source data is exactly that of the XBM format. 
+.P
+You can scale or rotate the bitmap as you create it, by using the
+\fB-scale\fR or\fB-rotate\fR options.
+.CS
+bitmap define gray1 {
+    #define gray1_width 2
+    #define gray1_height 2
+    static char gray1_bits[] = {
+       0x01, 0x02};
+} -scale 2.0 -rotate 90.0
+.CE
+In addition, you can compose bitmaps from text strings.  This makes it
+easy to create rotated buttons or labels.  The text string can have
+multi-line.  
+.CS
+bitmap compose rot_text "This is rotated\\ntext" \\
+	-rotate 90.0 -font fixed
+.CE
+There are also a number of ways to query bitmaps.  This isn't limited
+to bitmaps that you create, but any bitmap.
+.CS
+bitmap exists rot_text
+bitmap width rot_text
+bitmap height rot_text
+bitmap data rot_text
+bitmap source rot_text
+.CE
+The \fBexists\fR operation indicates if a bitmap by that name is
+defined.  You can query the dimensions of the bitmap using the
+\fBwidth\fR and \fBheight\fR operations. The \fBdata\fR operation
+returns the list of the data used to create the bitmap.  
+For example, you could query the data of a bitmap and \fBsend\fR 
+it across the network to another Tk application.
+.CS
+set data [bitmap data @/usr/X11R6/include/X11/bitmaps/ghost.xbm]
+send {wish #2} bitmap define ghost $data
+.CE
+.SH OPERATIONS
+The following operations are available for \fBbitmap\fR:
+.TP
+\fBbitmap compose \fIbitmapName text \fR?\fIoption value\fR?...
+Creates a bitmap \fIbitmapName\fR from the text string \fItext\fR.
+A bitmap \fIbitmapName\fR can not already exist.  
+The following options are available.
+.RS
+.TP
+\fB\-font \fIfontName\fR 
+Specifies a font to use when drawing text into the bitmap.
+If this option isn't specified then \fIfontName\fR defaults to 
+\f(CW*-Helvetica-Bold-R-Normal-*-140-*\fR.
+.TP
+\fB\-rotate \fItheta\fR
+Specifies the angle of rotation of the text in the bitmap.
+\fITheta\fR is a real number representing the angle in degrees.
+It defaults to \f(CW0.0\fR degrees.
+.TP
+\fB\-scale \fIvalue\fR
+Specifies the scale of the bitmap.
+\fIValue\fR is a real number representing the scale.  A scale
+of 1.0 indicates no scaling is necessary, while 2.0 would
+double the size of the bitmap.  There is no way to specify
+differents scales for the width and height of the bitmap.
+The default scale is \f(CW1.0\fR.
+.RE
+.TP
+\fBbitmap data \fIbitmapName\fR 
+Returns a list of both the
+dimensions of the bitmap \fIbitmapName\fR and its source data.
+.TP
+\fBbitmap define \fIbitmapName data\fR \fR?\fIoption value\fR?...
+Associates \fIbitmapName\fR with in-memory bitmap data so that
+\fIbitmapName\fR can be used in later calls to \fBTk_GetBitmap\fR.
+The \fIbitmapName\fR argument is the name of the bitmap; it must not
+previously have been defined in either a call to Tk_DefineBitmap or
+\fBbitmap\fR.  The argument \fIdata\fP describes the bitmap to
+be created.  It is either the X11 bitmap format (a C structure) or
+a list of two lists: the dimensions and source data.  The dimensions 
+are a list of two numbers which are the width
+and height of the bitmap.  The source data is a list of hexadecimal
+values in a format similar to the X11 or X10 bitmap format.  The
+values may be optionally separated by commas and do not need to be
+prefixed with "0x".  The following options are available.
+.RS
+.TP
+\fB\-rotate \fItheta\fR
+Specifies how many degrees to rotate the bitmap.
+\fITheta\fR is a real number representing the angle.
+The default is \f(CW0.0\fR degrees.
+.TP
+\fB\-scale \fIvalue\fR
+Specifies how to scale the bitmap.
+\fIValue\fR is a real number representing the scale.  A scale
+of 1.0 indicates no scaling is necessary, while 2.0 would
+double the size of the bitmap.  There is no way to specify
+differents scales for the width and height of the bitmap.
+The default scale is \f(CW1.0\fR.
+.RE
+.TP
+\fBbitmap exists \fIbitmapName\fR 
+Returns \f(CW1\fR if a bitmap \fIbitmapName\fR exists, otherwise \f(CW0\fR. 
+.TP
+\fBbitmap height \fIbitmapName\fR 
+Returns the height in pixels of the bitmap \fIbitmapName\fR.
+.TP
+\fBbitmap source \fIbitmapName\fR 
+Returns the source data of the bitmap \fIbitmapName\fR. The source data is a 
+list of the hexadecimal values.  
+.TP
+\fBbitmap width \fIbitmapName\fR 
+Returns the width in pixels of the bitmap \fIbitmapName\fR.
+.SH LIMITATIONS
+Tk currently offers no way of destroying bitmaps.  Once a bitmap is
+created, it exists until the application terminates.
+.SH KEYWORDS
+bitmap

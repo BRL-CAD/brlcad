@@ -1,0 +1,59 @@
+'\"
+'\" Copyright 1991-1998 by Bell Labs Innovations for Lucent Technologies.
+'\"
+'\" Permission to use, copy, modify, and distribute this software and its
+'\" documentation for any purpose and without fee is hereby granted, provided
+'\" that the above copyright notice appear in all copies and that both that the
+'\" copyright notice and warranty disclaimer appear in supporting documentation,
+'\" and that the names of Lucent Technologies any of their entities not be used
+'\" in advertising or publicity pertaining to distribution of the software
+'\" without specific, written prior permission.
+'\"
+'\" Lucent Technologies disclaims all warranties with regard to this software,
+'\" including all implied warranties of merchantability and fitness.  In no event
+'\" shall Lucent Technologies be liable for any special, indirect or
+'\" consequential damages or any damages whatsoever resulting from loss of use,
+'\" data or profits, whether in an action of contract, negligence or other
+'\" tortuous action, arising out of or in connection with the use or performance
+'\" of this software.  
+'\"
+'\"
+.so man.macros
+.TH Blt_TreeName 3 BLT_VERSION BLT "BLT Library Procedures"
+.BS
+.SH NAME
+Blt_TreeName \- Returns the name of the tree data object.
+.SH SYNOPSIS
+.nf
+\fB#include <bltTree.h>\fR
+.sp
+char *
+\fBBlt_TreeName\fR(\fItree\fR)
+.SH ARGUMENTS
+.AS Blt_Tree tree 
+.AP Blt_Tree tree in
+Token for the tree object. 
+.BE
+.SH DESCRIPTION
+.PP
+This procedure returns the name of the C-based tree data object.
+The arguments are as follows:
+.TP 1i
+\fItree\fR
+Token for the tree object.  The token must have been previously 
+obtained via \fBBlt_TreeGetToken\fR or \fBBlt_TreeCreate\fR.
+.SH RETURNS
+The name of the tree object is returned.  The name will be fully
+qualified with a namespace context.
+.SH EXAMPLE
+The following example prints the name of the new tree. 
+.CS
+Blt_Tree token;
+
+if (Blt_TreeCreate(interp, NULL, &token) != TCL_OK) {
+    return TCL_ERROR;
+}
+printf("tree is %s\\n", Blt_TreeName(token));
+.CE
+.SH KEYWORDS
+Tcl_TreeGetToken, Tcl_TreeExists, Tcl_TreeReleaseToken

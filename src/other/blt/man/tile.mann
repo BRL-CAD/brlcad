@@ -1,0 +1,108 @@
+'\"
+'\" Copyright 1991-1997 by Bell Labs Innovations for Lucent Technologies.
+'\"
+'\" Permission to use, copy, modify, and distribute this software and its
+'\" documentation for any purpose and without fee is hereby granted, provided
+'\" that the above copyright notice appear in all copies and that both that the
+'\" copyright notice and warranty disclaimer appear in supporting documentation,
+'\" and that the names of Lucent Technologies any of their entities not be used
+'\" in advertising or publicity pertaining to distribution of the software
+'\" without specific, written prior permission.
+'\"
+'\" Lucent Technologies disclaims all warranties with regard to this software,
+'\" including all implied warranties of merchantability and fitness.  In no event
+'\" shall Lucent Technologies be liable for any special, indirect or
+'\" consequential damages or any damages whatsoever resulting from loss of use,
+'\" data or profits, whether in an action of contract, negligence or other
+'\" tortuous action, arising out of or in connection with the use or performance
+'\" of this software.  
+'\"
+'\" Tile command created by George Howlett.
+'\"
+.so man.macros
+.TH tile n BLT_VERSION BLT "BLT Built-In Commands"
+.BS
+'\" Note:  do not modify the .SH NAME line immediately below!
+.SH NAME
+tile \-  Tiling versions of Tk widgets
+.SH SYNOPSIS
+.sp
+\fBtile::button \fIpathName\fR \fIoption value\fR...
+.sp
+\fBtile::checkbutton \fIpathName\fR \fIoption value\fR...
+.sp
+\fBtile::frame \fIpathName\fR \fIoption value\fR...
+.sp
+\fBtile::label \fIpathName\fR \fIoption value\fR...
+.sp
+\fBtile::radiobutton \fIpathName\fR \fIoption value\fR...
+.sp
+\fBtile::scrollbar \fIpathName\fR \fIoption value\fR...
+.sp
+\fBtile::toplevel \fIpathName\fR \fIoption value\fR...
+.sp
+.BE
+.SH DESCRIPTION
+The tile widgets let you create textured backgrounds.  The texture is
+a Tk image which is tiled over the entire background of the widget.
+.SH INTRODUCTION
+With the advent of Tk 4.0, images are now easy to create and use in
+applications.  Images add interest to applications and they convey
+more information.  But one area where Tk hasn't taken advantage of
+images is using images as textures for widgets.  Since tiling is a
+standard feature of windowing systems, it's very easy to use images 
+as textures.
+.PP
+The tile widgets take the standard Tk 4.0 widgets and add tiling
+configuration options to them.  Textures are specified by the name 
+of the image you wish to be tiled across the background of the widget.  
+.SH EXAMPLE
+To add tiling to a widget, you simply create an image using 
+Tk's \fBimage\fR command and use the image name as the value for
+the \fB\-tile\fR configuration option of the widget.
+.CS
+image create photo my_texture -file tan_paper.gif
+blt::tile::frame .f -tile my_texture
+.CE
+The image \f(CWmy_texture\fR is added to the frame.  
+If \f(CWmy_texture\fR is updated, so will the widget background.
+.CS
+image create photo my_texture -file rain.gif
+.CE
+The tile widget commands reside in the "blt::tile" namespace, so
+as not to collide with the normal Tk widgets.
+An easy way to add tiling to existing programs is to import
+the tile widget commands into the global namespace.
+.CS
+image create photo my_texture -file tan_paper.gif
+namespace import -force blt::tile::*
+frame .f -tile my_texture
+.CE
+To use one image for all texturing, you can use the "Tile" option
+class name to specify the same image for all tile widgets.
+.CS
+image create photo my_texture -file tan_paper.gif
+option add *Tile my_texture
+.CE
+.SH OPTIONS
+The following configurations options are added to the widgets. If
+a \fB\-tile\fB or \fB\-activetile\fR option is specified, it overrides
+the background color of the widget.
+.TP
+\fB\-activetile \fIimage\fR 
+Specifies a textured background to display when the widget is active.
+This option is available for the \fBtilebutton\fR,
+\fBtilecheckbutton\fR, \fBtileradiobutton\fR, and \fBtilescrollbar\fR
+widgets.  \fIImage\fR is the name an image created using Tk's
+\fBimage\fR command.  The background of the widget is tiled with
+\fIimage\fR.  If \fIimage\fR is \f(CW""\fR, then the active background
+color is displayed.  The default is \f(CW""\fR.
+.TP
+\fB\-tile \fIimage\fR 
+Specifies a textured background to display for the widget.
+\fIImage\fR is the name an image created using Tk's \fBimage\fR
+command.  The background of the widget is tiled with \fIimage\fR.  If
+\fIimage\fR is \f(CW""\fR, then the normal background color is
+displayed.  The default is \f(CW""\fR.
+.SH KEYWORDS
+tile, texture, button, label, radiobutton, checkbutton, scrollbar, frame, toplevel

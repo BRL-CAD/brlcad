@@ -1,0 +1,757 @@
+'\"
+'\" Copyright 1991-1997 by Bell Labs Innovations for Lucent Technologies.
+'\"
+'\" Permission to use, copy, modify, and distribute this software and its
+'\" documentation for any purpose and without fee is hereby granted, provided
+'\" that the above copyright notice appear in all copies and that both that the
+'\" copyright notice and warranty disclaimer appear in supporting documentation,
+'\" and that the names of Lucent Technologies any of their entities not be used
+'\" in advertising or publicity pertaining to distribution of the software
+'\" without specific, written prior permission.
+'\"
+'\" Lucent Technologies disclaims all warranties with regard to this software,
+'\" including all implied warranties of merchantability and fitness.  In no event
+'\" shall Lucent Technologies be liable for any special, indirect or
+'\" consequential damages or any damages whatsoever resulting from loss of use,
+'\" data or profits, whether in an action of contract, negligence or other
+'\" tortuous action, arising out of or in connection with the use or performance
+'\" of this software.  
+'\"
+'\" The table geometry manager created by George Howlett.
+'\"
+.so man.macros
+.TH table n BLT_VERSION BLT "BLT Built-In Commands"
+.BS
+'\" Note:  do not modify the .SH NAME line immediately below!
+.SH NAME
+table \- Arranges widgets in a table
+.SH SYNOPSIS
+\fBtable \fIcontainer\fR ?\fIwidget index option value\fR?...
+.sp
+\fBtable arrange\fR \fIcontainer\fR
+.sp
+\fBtable cget \fIcontainer\fR ?\fIitem\fR? \fIoption\fR
+.sp
+\fBtable configure \fIcontainer\fR ?\fIitem\fR?... ?\fIoption value\fR?...
+.sp
+\fBtable extents \fIcontainer\fR \fIitem\fR
+.sp
+\fBtable forget \fIwidget\fR ?\fIwidget\fR?...
+.sp
+\fBtable info \fIcontainer\fR \fIitem\fR
+.sp
+\fBtable locate \fIcontainer\fR \fIx y\fR
+.sp
+\fBtable containers \fR?\fIswitch\fR? ?\fIarg\fR?
+.sp
+\fBtable save \fIcontainer\fR 
+.sp
+\fBtable search \fIcontainer\fR ?\fIswitch arg\fR?...
+.BE
+.SH DESCRIPTION
+The \fBtable\fR command arranges widgets in a table.  The alignment of
+widgets is detemined by their row and column positions and the number
+of rows or columns that they span.
+.SH INTRODUCTION
+Probably the most painstaking aspect of building a graphical
+application is getting the placement and size of the widgets just right.
+It usually takes many iterations to align widgets and adjust their spacing.
+That's because managing the geometry of widgets is simply not a
+packing problem, but also graphical design problem.  Attributes
+such as alignment, symmetry, and balance are more important than
+minimizing the amount of space used for packing.
+.PP
+The \fBtable\fR geometry manager arranges widgets in a table.  It's
+easy to align widgets (horizontally and vertically) or to create empty
+space to balance the arrangement of the widgets.  Widgets (called
+\fIslaves\fR in the Tk parlance) are arranged inside a containing
+widget (called the \fImaster\fR).  Widgets are positioned at
+row,column locations and may span any number of rows or columns.  More
+than one widget can occupy a single location.
+.PP
+The placement of widget windows determines both the size and
+arrangement of the table.  The table queries the requested size of
+each widget.  The \fIrequested size\fR of a widget is the natural size
+of the widget (before the widget is shrunk or expanded).  The height
+of each row and the width of each column is the largest widget spanning
+that row or column.  The size of the table is in turn the sum of the
+row and column sizes.  This is the table's \fInormal size\fR.
+.PP
+The total number of rows and columns in a table is determined from the
+indices specified.  The table grows dynamically as windows are added
+at larger indices.
+.SH EXAMPLE
+The table geometry manager is created by invoking the \fBtable\fR command.
+.CS
+# Create a table in the root window
+table .
+.CE
+The window \f(CW.\fR is now the \fIcontainer\fR of the table.  Widgets
+are packed into the table and displayed within the confines of the
+container.
+.PP
+You add widgets to the table by row and column location.  Row and
+column indices start from zero.
+.CS
+label .title -text "This is a title"
+
+# Add a label to the table
+table . .title 0,0 
+.CE
+The label \f(CW.title\fR is added to the table.  We can add more widgets
+in the same way.
+.CS
+button .ok -text "Ok"
+button .cancel -text "Cancel"
+
+# Add two buttons
+table . .ok 1,0
+table . .cancel 1,1
+.CE
+Two buttons \f(CW.ok\fR and \f(CW.cancel\fR are now packed into the second
+row of the table.  They each occupy one cell of the table.  By
+default, widgets span only a single row and column.
+.PP
+The first column contains two widgets, \f(CW.title\fR and \f(CW.ok\fR.  By
+default, the widest of the two widgets will define the width of the
+column.  However, we want \f(CW.title\fR to be centered horizontally
+along the top of the table.  We can make \f(CW.title\fR span two columns
+using the \fBconfigure\fR operation.
+.CS
+# Make the label span both columns
+table configure . .title -cspan 2
+.CE
+The label \f(CW.title\fR will now be centered along the top row of the
+table.  
+.PP
+In the above example, we've create and arranged the layout for the
+table invoking the \fBtable\fR command several times.  Alternately, we
+could have used a single \fBtable\fR command.
+.CS
+label .title -text "This is a title"
+button .ok -text "Ok"
+button .cancel -text "Cancel"
+
+# Create and pack the table
+table . \\
+    .title  0,0 -cspan 2 \\
+    .ok     1,0 \\
+    .cancel 1,1
+.CE
+The table will override the requested width and height of the container
+so that the window fits the table exactly.  This also means
+that any change to the size of table will be propagated up through the
+Tk window hierarchy.  This feature can be turned off using the
+\fBconfigure\fR operation again.
+.CS
+table configure . -propagate no
+.CE
+You can also set the width of height of the table to a specific
+value. This supersedes the calculated table size.
+.CS
+# Make the container 4 inches wide, 3 inches high
+table configure . -reqwidth 4i -reqheight 3i
+.CE
+If a widget is smaller than the cell(s) it occupies, the widget will
+float within the extra space.  By default, the widget will be centered
+within the space, but you can anchor the widget to any side of cell
+using the \fB\-anchor\fR configuration option.
+.CS
+table configure . .ok -anchor w
+.CE
+The \fB\-fill\fR option expands the widget to fill the 
+extra space either vertically or horizontally (or both).
+.CS
+# Make the title label fill the entire top row
+table configure . .title -cspan 2 -fill x 
+
+# Each button will be as height of the 2nd row.
+table configure . .ok .cancel -fill y
+.CE
+The width of \f(CW.title\fR will be the combined widths of both columns.
+Both \f(CW.ok\fR and \f(CW.cancel\fR will become as tall as the second row.  
+.PP
+The \fB\-padx\fR and \fB\-pady\fR options control the amount of padding 
+around the widget.  Both options take a list of one or two values.
+.CS
+# Pad the title by two pixels above and below.
+table configure . .title -pady 2
+
+# Pad each button 2 pixels on the left, and 4 on the right.
+table configure . .ok .cancel -padx { 2 4 }
+.CE
+If the list has only one value, then both exterior sides (top and bottom
+or left and right) of the widget are padded by that amount.  If the
+list has two elements, the first specifies padding for the top or left
+side and the second for the bottom or right side.
+.PP
+Like the container, you can also override the requested widths and
+heights of widgets using the \fB\-reqwidth\fR and
+\fB\-reqheight\fR options.  This is especially useful with
+character-based widgets (such as buttons, labels, text, listbox, etc)
+that let you specify their size only in units of characters and lines,
+instead of pixels.
+.CS
+# Make all buttons one inch wide
+table configure . .ok .cancel -reqwidth 1i
+.CE
+.PP
+Each row and column of the table can be configured, again using the
+\fBconfigure\fR operation.  Rows are and columns are designated by
+\f(CWR\fIi\fR and \f(CWC\fIi\fR respectively, where \fIi\fR is the index
+of the row or column.
+.PP
+For example, you can set the size of a row or column.
+.CS
+# Make the 1st column 2 inches wide
+table configure . c0 -width 2.0i
+
+# Make the 2nd row 1/2 inch high.
+table configure . r1 -height 0.5i
+.CE
+The new size for the row or column overrides its calculated size.  If
+no widgets span the row or column, its height or width is zero.
+So you can use the \fB\-width\fR and \fB\-height\fR options to create
+empty spaces in the table.
+.CS
+# Create an empty row and column
+table configure . r2 c2 -width 1i
+.CE
+The \fB\-pady\fR option lets you add padding to the top and bottom
+sides of rows.  The \fB\-padx\fR option adds padding to the left and
+right sides of columns.  Both options take a list of one or two
+values.
+.CS
+# Pad above the title by two pixels 
+table configure . r0 -pady { 2 0 }
+
+# Pad each column 4 pixels on the left, and 2 on the right.
+table configure . c* -padx { 2 4 }
+.CE
+.PP
+Notice that you can configure all the rows and columns using either
+\f(CWR*\fR or \f(CWC*\fR.
+.PP
+When the container is resized, the rows and columns of the table are
+also resized.  Only the rows or columns that contain widgets (a widget
+spans the row or column) grow or shrink.  The \fB\-resize\fR option
+indicates whether the row or column can be shrunk or stretched.  If
+the value is \f(CWshrink\fR, the row or column can only be resized
+smaller.  If \f(CWexpand\fR, it can only be resized larger.  If
+\f(CWnone\fR, the row or column is frozen at its requested size.
+.CS
+# Let the 1st column get smaller, but not bigger
+table configure . c0 -resize shrink
+
+# Let the 2nd column get bigger, not smaller
+table configure . c1 -resize expand
+
+# Don't resize the first row 
+table configure . r0 -resize none
+.CE
+The following example packs a canvas, two scrollbars, and a title.
+The rows and columns containing the scrollbars are frozen at their
+requested size, so that even if the frame is resized, the scrollbars will
+remain the same width.
+.CS
+table . \\
+    .title   0,0 -cspan 3 \\
+    .canvas  1,1 -fill both \\
+    .vscroll 1,2 -fill y \\
+    .hscroll 2,1 -fill x
+
+# Don't let the scrollbars resize
+table configure . c2 r2 -resize none
+
+# Create an empty space to balance the scrollbar
+table configure . c0 -width .vscroll
+.CE
+Note that the value of the \fB\-width\fR option is the name of a widget
+window.  This indicates that the width of the column should be the
+same as the requested width of \f(CW.vscroll\fR.
+.PP
+Finally, the \fBforget\fR operation removes widgets from the table.
+.CS
+# Remove the windows from the table
+table forget .quit .frame
+.CE
+It's not necessary to specify the container.  The \fBtable\fR
+command determines the container from the widget name.
+.SH OPERATIONS
+The following operations are available for the \fBtable\fR:
+.TP
+\fBtable \fIcontainer\fR ?\fIwidget index option value\fR?...  
+Adds the widget \fIwidget\fR to the table at \fIindex\fR.  \fIIndex\fR
+is a row,column position in the table.  It must be in the form
+\fIrow\fR,\fIcolumn\fR where \fIrow\fR and \fIcolumn\fR are the
+respective row and column numbers, starting from zero (0,0 is the
+upper leftmost position).  \fIRow\fR and \fIcolumn\fR may also be
+numeric expressions that are recursively evaluated.  If a table
+doesn't exist for \fIcontainer\fR, one is created.  \fIWidget\fR is the
+path name of the window, that must already exist, to be arranged
+inside of \fIcontainer\fR. \fIOption\fR and \fIvalue\fR are described
+in the 
+.SB WIDGET OPTIONS
+section.
+.TP
+\fBtable arrange\fR \fIcontainer\fR
+Forces the table to compute its layout immediately.  Normally, the
+table geometry manager will wait until the next idle point, before
+calculating the size of its rows and columns.  This is useful for
+collecting the \fInormal\fR sizes of rows and columns, that are
+based upon the requested widget sizes.
+.TP
+\fBtable cget\fR \fIcontainer \fR?\fIitem\fR?\fI option\fR
+Returns the current value of the configuration option specific to
+\fIitem\fR given by \fIoption\fR.  \fIItem\fR is either a row or
+column index, or the path name of a widget.  \fIItem\fR can be
+in any form describe in the \fBconfigure\fR operation below. If no
+\fIitem\fR argument is provided, then the configuration option is
+for the table itself.  \fIOption\fR may be any one of the options
+described in the appropiate section for \fIitem\fR.
+.TP
+\fBtable configure\fR \fIcontainer item\fR... ?\fIoption value\fR?... 
+Queries or modifies the configuration options specific to \fIitem\fR.
+If no \fIoption\fR is specified, this command returns a list
+describing all of the available options for \fIitem\fR 
+If the argument \fIitem\fR is omitted, then the specified 
+configuration options are for the table itself.  Otherwise
+\fIitem\fR must be either a row or column specification, or the path
+name of a widget.  
+The following \fIitem\fR types are available.
+.RS
+.TP 
+\f(CWC\fIi\fR
+Specifies the column of \fIcontainer\fR to be configured.  \fIItem\fR
+must be in the form \f(CWC\fIn\fR, where \fIi\fR is the index of 
+the column.  See the 
+.SB COLUMN OPTIONS
+section.
+.TP
+\f(CWR\fIi\fR
+Specifies the row of \fIcontainer\fR to be configured. \fIItem\fR must be
+in the form \f(CWR\fIi\fR, where \fIi\fR is the index of the row.  See
+the
+.SB ROW OPTIONS
+section.
+.TP 
+\fIwidget\fR 
+Specifies a widget of \fIcontainer\fR to be queried.  \fIWidget\fR
+is the path name of a widget packed in \fIcontainer\fR.  See the
+.SB WIDGET OPTIONS
+section.
+.TP 
+No argument
+Specifies that the table itself is to be queried.  
+See the
+.SB TABLE OPTIONS
+section for a description of the option-value pairs for the table.
+.RE
+.RS
+.sp
+The \fIoption\fI and \fIvalue\fR pairs are specific to \fIitem\fR.  If
+\fIoption\fR is specified with no \fIvalue\fR, then the command
+returns a list describing the one named option (this list will be
+identical to the corresponding sublist of the value returned if no
+\fIoption\fR is specified).  If one or more \fIoption\-value\fR pairs
+are specified, then the command modifies the given option(s) to have
+the given value(s); in this case the command returns the empty string.
+.RE
+.TP
+\fBtable extents \fIcontainer\fR \fIindex\fR 
+Queries the location and dimensions of row and columns in the table.
+\fIIndex\fR can be either a row or column index or a table index.
+Returns a list of the x,y coordinates (upperleft corner) and
+dimensions (width and height) of the cell, row, or column.
+.TP
+\fBtable forget \fIwidget\fR ?\fIwidget\fR?...
+Requests that \fIwidget\fR no longer have its geometry managed.
+\fIWidget\fR is the pathname of the window currently 
+managed by some table. The window will be unmapped so that it no longer 
+appears on the screen.  If \fIwidget\fR is not currently managed by any table, 
+an error message is returned, otherwise the empty string.
+.TP
+\fBtable info \fIcontainer\fR \fIitem\fR 
+Returns a list of the current configuration options for \fIitem\fR.  
+The list returned is exactly in the form that might be specified to the
+\fBtable\fR command.  It can be used to save and reset table 
+configurations. \fIItem\fR must be one of the following.
+.RS
+.TP .75i
+\f(CWC\fIi\fR
+Specifies the column of \fIcontainer\fR to be queried.  \fIItem\fR
+must be in the form \f(CWC\fIn\fR, where \fIn\fR is the index of 
+the column.  
+.TP
+\f(CWR\fIi\fR 
+Specifies the row of \fIcontainer\fR to be queried. \fIItem\fR must be
+in the form \f(CWR\fIi\fR, where \fIi\fR is the index of the row.  
+.TP 
+\fIwidget\fR 
+Specifies a widget of \fIcontainer\fR to be queried.
+\fIWidget\fR is the path name of a widget packed in \fIcontainer\fR.
+.TP 
+No argument
+Specifies that the table itself is to be queried. 
+.RE
+.TP
+\fBtable locate \fIcontainer\fR \fIx y\fR
+Returns the table index (row,column) of the cell containing the given
+screen coordinates.  The \fIx\fR and \fIy\fR arguments represent
+the x and y coordinates of the sample point to be tested.
+.TP
+\fBtable containers \fR?\fIswitch arg\fR?
+Returns a list of all container windows matching a given criteria (using
+\fIswitch\fR and \fIarg\fR).  If no \fIswitch\fR and \fIarg\fR
+arguments are given, the names of all container windows (only those using
+the \fBtable\fR command) are returned.  The following are valid
+switches:
+.RS
+.TP 
+\fB\-pattern\fR \fIpattern\fR
+Returns a list of pathnames of all container windows matching \fIpattern\fR.
+.TP 
+\fB\-slave\fR \fIwindow\fR
+Returns the name of the container window of table managing \fIwindow\fR.
+\fIWindow\fR must be the path name of widget.  If \fIwindow\fR is not
+managed by any table, the empty string is returned.
+.RE
+.TP
+\fBtable search \fIcontainer\fR ?\fIswitch arg\fR?...
+Returns the names of all the widgets in \fIcontainer\fR matching
+the criteria given by \fIswitch\fR and \fIarg\fR.  \fIContainer\fR is
+name of the container window associated with the table to be searched.
+The name of the widget is returned if any one
+\fIswitch\fR-\fIarg\fR criteria matches. If no \fIswitch\fR-\fIarg\fR
+arguments are given, the names of all widgets managed by
+\fIcontainer\fR are returned.  The following are switches are available:
+.RS
+.TP 
+\fB\-pattern\fR \fIpattern\fR
+Returns the names of any names of the widgets matching
+\fIpattern\fR.  
+.TP 
+\fB\-span\fR \fIindex\fR 
+Returns the names of widgets that span \fIindex\fR. A widget
+does not need to start at \fIindex\fR to be included.
+\fIIndex\fR must be in the form \fIrow\fR,\fIcolumn\fR, where
+\fIrow\fR and \fIcolumn\fR are valid row and column numbers.
+.TP 
+\fB\-start\fR \fIindex\fR
+Returns the names of widgets that start at \fIindex\fR.
+\fIIndex\fR must be in the form \fIrow\fR,\fIcolumn\fR, where
+\fIrow\fR and \fIcolumn\fR are valid row and column numbers.
+.RE
+.SH TABLE OPTIONS
+To configure the table itself, you omit the \fIitem\fR argument 
+when invoking the \fBconfigure\fR operation.
+.CS
+\fBtable configure\fR \fIcontainer\fR ?\fIoption value\fR?...
+.CE
+The following options are available for the table:
+.RS
+.TP 
+\fB\-padx \fIpad\fR
+Sets how much padding to add to the left and right exteriors of the table.
+\fIPad\fR can be a list of one or two numbers.  If \fIpad\fR
+has two elements, the left side of the table is padded by the first
+value and the right side by the second value.  If \fIpad\fR has just
+one value, both the left and right sides are padded evenly by the
+value.  The default is \f(CW0\fR.
+.TP
+\fB\-pady \fIpad\fR
+Sets how much padding to add to the top and bottom exteriors of the table.
+\fIPad\fR can be a list of one or two numbers.  If
+\fIpad\fR has two elements, the area above the table is padded by
+the first value and the area below by the second value.  If \fIpad\fR
+is just one number, both the top and bottom areas are padded by the
+value.  The default is \f(CW0\fR.
+.TP
+\fB\-propagate \fIboolean\fR 
+Indicates if the table should override the requested width and height
+of the \fIcontainer\fR window.  If \fIboolean\fR is false, \fIcontainer\fR
+will not be resized.  \fIContainer\fR will be its requested size.  The
+default is \f(CW1\fR.
+.RE
+.SH WIDGET OPTIONS
+widgets are configured by specifying the name of the widget
+when invoking the \fBconfigure\fR operation.  
+.DS
+\fBtable configure\fR \fIcontainer \fIwidget\fR ?\fIoption value\fR?...
+.DE
+\fIWidget\fR must be the path name of a window already packed in
+the table associated with \fIcontainer\fR.  The following options
+are available for widgets:
+.RS
+.TP
+\fB\-anchor \fIanchor\fR 
+Anchors \fIwidget\fR to a particular edge of the cell(s) it resides.
+This option has effect only if the space of the spans surrounding
+\fIwidget\fR is larger than \fIwidget\fR. \fIAnchor\fR specifies
+how \fIwidget\fR will be positioned in the space.  For example, if
+\fIanchor\fR is \f(CWcenter\fR then the window is centered in the rows
+and columns it spans; if \fIanchor\fR is \f(CWw\fR then the window will
+be aligned with the leftmost edge of the span. The default is
+\f(CWcenter\fR.
+.TP
+\fB\-columnspan \fInumber\fR
+Sets the number of columns \fIwidget\fR will span.
+The default is \f(CW1\fR.
+.TP
+\fB\-columncontrol \fIcontrol\fR
+Specifies how the width of \fIwidget\fR should control the
+width of the columns it spans. \fIControl\fR is 
+either \f(CWnormal\fR, \f(CWnone\fR, or \f(CWfull\fR.  
+The default is \f(CWnormal\fR.
+.RS
+.TP 1i 
+\f(CWnone\fR
+The width of \fIwidget\fR is not considered.   
+.TP 1i
+\f(CWfull\fR
+Only the width of \fIwidget\fR will be considered when computing the
+widths of the columns. 
+.TP 1i
+\f(CWnormal\fR
+Indicates that the widest widget spanning the column will determine 
+the width of the span.
+.RE
+.TP
+\fB\-fill \fIfill\fR
+Specifies if \fIwidget\fR should be stretched to fill any free space
+in the span surrounding \fIwidget\fR. \fIFill\fR is either \f(CWnone\fR,
+\f(CWx\fR, \f(CWy\fR, \f(CWboth\fR.  The default is \f(CWnone\fR.
+.RS
+.TP 1i
+\f(CWx\fR
+The widget can grow horizontally.  
+.TP 1i
+\f(CWy\fR
+The widget can grow vertically.  
+.TP 1i
+\f(CWboth\fR
+The widget can grow both vertically and horizontally.  
+.TP 1i
+\f(CWnone\fR
+The widget does not grow along with the span.  
+.RE
+.TP
+\fB\-ipadx \fIpixels\fR 
+Sets how much horizontal padding to add internally on the left and
+right sides of \fIwidget\fR.  \fIPixels\fR must be a valid screen distance
+like \f(CW2\fR or \f(CW0.3i\fR.  The default is \f(CW0\fR.
+.TP
+\fB\-ipady \fIpixels\fR
+Sets how much vertical padding to add internally on the top and bottom
+of \fIwidget\fR.  \fIPixels\fR must be a valid screen distance
+like \f(CW2\fR or \f(CW0.3i\fR.  The default is \f(CW0\fR.
+.TP 
+\fB\-padx \fIpad\fR
+Sets how much padding to add to the left and right exteriors of \fIwidget\fR.
+\fIPad\fR can be a list of one or two numbers.  If \fIpad\fR
+has two elements, the left side of \fIwidget\fR is padded by the first
+value and the right side by the second value.  If \fIpad\fR has just
+one value, both the left and right sides are padded evenly by the
+value.  The default is \f(CW0\fR.
+.TP
+\fB\-pady \fIpad\fR
+Sets how much padding to add to the top and bottom exteriors of
+\fIwidget\fR.  \fIPad\fR can be a list of one or two numbers.  If
+\fIpad\fR has two elements, the area above \fIwidget\fR is padded by
+the first value and the area below by the second value.  If \fIpad\fR
+is just one number, both the top and bottom areas are padded by the
+value.  The default is \f(CW0\fR.
+.TP
+\fB\-reqheight \fIheight\fR
+Specifies the limits of the requested height for \fIwidget\fR.
+\fIHeight\fR is a list of bounding values.  See the 
+.SB BOUNDING SIZES
+section for a description of this list.  By default, the height of
+\fIwidget\fR is its requested height with its internal padding
+(see the \fB\-ipady\fR option).  The bounds specified by \fIheight\fR
+either override the height completely, or bound the height between two sizes.
+The default is \f(CW""\fR.
+.TP
+\fB\-reqwidth \fIwidth\fR
+Specifies the limits of the requested width for \fIwidget\fR.
+\fIWidth\fR is a list of bounding values.  See the 
+.SB BOUNDING SIZES
+section for a description of this list.  By default, the width of
+\fIwidget\fR is its requested width with its internal padding
+(set the \fB\-ipadx\fR option).  The bounds specified by \fIwidth\fR
+either override the width completely, or bound the height between two sizes.
+The default is \f(CW""\fR.
+.TP
+\fB\-rowspan \fInumber\fR
+Sets the number of rows \fIwidget\fR will span. The default is \f(CW1\fR.
+.TP
+\fB\-rowcontrol \fIcontrol\fR
+Specifies how the height of \fIwidget\fR should control the
+height of the rows it spans. \fIControl\fR is 
+either \f(CWnormal\fR, \f(CWnone\fR, or \f(CWfull\fR.  
+The default is \f(CWnormal\fR.
+.RS
+.TP 1i 
+\f(CWnone\fR
+The height of \fIwidget\fR is not considered.   
+.TP 1i
+\f(CWfull\fR
+Only the height of \fIwidget\fR will be considered when computing the
+heights of the rows. 
+.TP 1i
+\f(CWnormal\fR
+Indicates that the tallest widget spanning the row will determine 
+the height of the span.
+.RE
+.RE
+.SH COLUMN OPTIONS
+To configure a column in the table, specify the column index as
+\f(CWC\fIi\fR, where \fIi\fR is the index of the column to be
+configured.
+.DS
+\fBtable configure\fR \fIcontainer \f(CWC\fIi\fR ?\fIoption value\fR?...
+.DE
+If the index is specified as \f(CWC*\fR, then all columns of the table
+will be configured.  The following options are available for table
+columns.
+.RS
+.TP
+\fB\-padx \fIpad\fR
+Sets the padding to the left and right of the column.
+\fIPad\fR can be a list of one or two numbers.  If \fIpad\fR has two
+elements, the left side of the column is padded by the first value and
+the right side by the second value.  If \fIpad\fR has just one value,
+both the left and right sides are padded evenly by the value.  The
+default is \f(CW0\fR.
+.TP
+\fB\-resize \fImode\fR
+Indicates that the column can expand or shrink from its requested width 
+when the table is resized.
+\fIMode\fR must be one of the following:
+\f(CWnone\fR, \f(CWexpand\fR, \f(CWshrink\fR, or \f(CWboth\fR.  If \fImode\fR is 
+\f(CWexpand\fR the width of the column is expanded if there is extra space
+in the container window. If \fImode\fR is \f(CWshrink\fR its width may be
+reduced beyond its requested width if there is not enough space in the container.
+The default is \f(CWnone\fR.
+.TP
+\fB\-width \fIwidth\fR
+Specifies the limits within that the width of the column may expand
+or shrink.  \fIWidth\fR is a list of bounding values.  See the section
+.SB BOUNDING SIZES
+for a description of this list.
+By default there are no constraints.
+.RE
+.SH ROW OPTIONS
+To configure a row in the table, specify the row index as \f(CWR\fIi\fR,
+where \fIi\fR is the index of the row to be configured.
+.DS
+\fBtable configure\fR \fIcontainer \f(CWR\fIi\fR ?\fIoption value\fR?...
+.DE
+If the index is specified as \f(CWR*\fR, then all rows of the table will
+be configured.  The following options are available for table rows.
+.RS
+.TP
+\fB\-height \fIheight\fR
+Specifies the limits of the height that the row may expand or shrink to. 
+\fIHeight\fR is a list of bounding values.  See the section 
+.SB BOUNDING SIZES
+for a description of this list.
+By default there are no constraints.
+.TP
+\fB\-pady \fIpad\fR
+Sets the padding above and below the row.  \fIPad\fR can be a list
+of one or two numbers.  If \fIpad\fR has two elements, the area above
+the row is padded by the first value and the area below by the
+second value.  If \fIpad\fR is just one number, both the top and
+bottom areas are padded by the value.  The default is \f(CW0\fR.
+.TP
+\fB\-resize \fImode\fR
+Indicates that the row can expand or shrink from its requested height 
+when the table is resized.
+\fIMode\fR must be one of the following:
+\f(CWnone\fR, \f(CWexpand\fR, \f(CWshrink\fR, or \f(CWboth\fR.  If \fImode\fR is 
+\f(CWexpand\fR the height of the row is expanded if there is extra space
+in the container. If \fImode\fR is \f(CWshrink\fR its height may be
+reduced beyond its requested height if there is not enough space in 
+the container. The default is \f(CWnone\fR.
+.RE
+.SH BOUNDING SIZES
+Sometimes it's more useful to limit resizes to an acceptable range,
+than to fix the size to a particular value or disallow resizing
+altogether.  Similar to the way the \fBwm\fR command lets you specify
+a \fBminsize\fR and \fBmaxsize\fR for a toplevel window, you can bound
+the sizes the container, a widget, row, or column may take.
+The \fB\-width\fR, \fB\-height\fR, \fB\-reqwidth\fR, and
+\fB\-reqheight\fR options, take a list of one, two, or three values.
+We can take a previous example and instead preventing resizing,
+bound the size of the scrollbars between two values.
+.CS
+table . \\
+    .title   0,0 -cspan 3 \\
+    .canvas  1,1 -fill both \\
+    .vscroll 1,2 -fill y \\
+    .hscroll 2,1 -fill x
+
+# Bound the scrollbars between 1/8 and 1/2 inch
+table configure . c2 -width { 0.125 0.5 }
+table configure . r2 -height { 0.125 0.5 }
+table configure . vscroll .hscroll -fill both
+.CE
+The scrollbars will get no smaller than 1/8 of an inch, or bigger
+than 1/2 inch.  The initial size will be their requested size,
+so long as it is within the specified bounds.
+.PP
+How the elements of the list are interpreted is dependent upon the
+number of elements in the list.  
+.RS
+.TP 1i
+{\fI\fR}
+Empty list. No bounds are set. The default sizing is performed.
+.TP 
+{\fI x \fR} 
+Fixes the size to \fIx\fR.  The window or partition cannot grow or
+shrink.
+.TP 
+{\fI min max \fR}
+Sets up minimum and maximum limits for the size of the window or
+partition.  The window or partition can be reduced less than
+\fImin\fR, nor can it be stretched beyond \fImax\fR.
+.TP 
+{\fI min max nom \fR}
+Specifies minimum and maximum size limits, but also specifies a
+nominal size \fInom\fR.  This overrides the calculated size of the
+window or partition.
+.RE
+.SH MISCELLANEOUS
+Another feature is that you can put two widgets in the
+same cell of the table.  This is useful when you want to add
+decorations around a widget.
+.CS
+frame .frame -bd 1 -relief sunken
+button .quit -text "Quit"
+
+# Put both the frame and the button in the same cell.
+table . \\
+    .quit  1,0 -padx 2 -pady 2 \\
+    .frame 1,0 -fill both
+.CE
+.SH LIMITATIONS
+A long standing bug in Tk (circa 1993), there is no way to detect if a
+window is already a container of a different geometry manager. This
+is usually done by accident, such as the following where all three
+widgets are arranged in the same container ".", but using different
+geometry managers.
+.CS
+    table .f1
+	...
+    pack .f2
+	...
+    grid .f3
+.CE
+This leads to bizarre window resizing, as each geometry manager
+applies its own brand of layout policies.  When the container is a top
+level window (such as "."), your window manager may become locked
+as it responds to the never-ending stream of resize requests.  
+.SH KEYWORDS
+frame, geometry manager, location, table, size
+

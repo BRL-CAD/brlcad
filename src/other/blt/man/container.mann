@@ -1,0 +1,303 @@
+'\"
+'\" Copyright 1998 by Bell Labs Innovations for Lucent Technologies.
+'\"
+'\" Permission to use, copy, modify, and distribute this software and its
+'\" documentation for any purpose and without fee is hereby granted, provided
+'\" that the above copyright notice appear in all copies and that both that the
+'\" copyright notice and warranty disclaimer appear in supporting documentation,
+'\" and that the names of Lucent Technologies any of their entities not be used
+'\" in advertising or publicity pertaining to distribution of the software
+'\" without specific, written prior permission.
+'\"
+'\" Lucent Technologies disclaims all warranties with regard to this software,
+'\" including all implied warranties of merchantability and fitness.  In no event
+'\" shall Lucent Technologies be liable for any special, indirect or
+'\" consequential damages or any damages whatsoever resulting from loss of use,
+'\" data or profits, whether in an action of contract, negligence or other
+'\" tortuous action, arising out of or in connection with the use or performance
+'\" of this software.  
+'\"
+'\" Container widget created by George Howlett.
+'\"
+.so man.macros.in
+.TH container n BLT_VERSION BLT "BLT Built-In Commands"
+.BS
+'\" Note:  do not modify the .SH NAME line immediately below!
+.SH NAME
+container \- Widget to contain a foreign window.
+.BE
+.SH SYNOPSIS
+\fBcontainer\fR \fIpathName \fR?\fIoptions\fR?
+.SH DESCRIPTION
+The \fBcontainer\fR widget lets you embed an X11 window from a foreign
+application into your Tk application.  The foreign window is
+reparented inside of the widget. You can then place and arrange the
+container just as you would any Tk widget.
+.SH INTRODUCTION
+Notebooks are a popular graphical paradigm.  They allow you to organize
+many windows in a single widget.  For example, you might have an
+application the displays several X-Y graphs at the same time.
+Typically, you can't pack the graphs into the same \fBframe\fR because
+they are too large.  The other alternative is to pack the graphs into
+several \fBtoplevel\fR widgets, allowing them to overlap on the
+screen.  The problem is that all the different toplevel windows
+clutter the screen and are difficult to manage.
+.PP
+The \fBcontainer\fR widget lets organize your application by displaying
+each graph as a page in a folder of a notebook.  Only one page is
+visible at a time. When you click on a tab, the folder (graph)
+corresponding to the tab is displayed in the \fBcontainer\fR widget.  The
+container also lets you temporarily tear pages out of the notebook into a
+separate toplevel widget, and put them back in the container later.  For
+example, you could compare two graphs side-by-side by tearing them
+out, and then replace them when you are finished.
+.PP
+A container may contain an unlimited number of folders.  If there are too
+many tabs to view, you can arrange them as multiple tiers or scroll
+the tabs. The container uses the conventional Tk scrollbar syntax, so you
+can attach a scrollbar too. 
+.SH EXAMPLE
+You create a container widget with the \fBcontainer\fR command.
+.CS
+# Create a new container
+container .c
+.CE
+A new Tcl command \f(CW.c\fR is also created.  This command can be
+used to query and modify the container.  For example, to change the
+default borderwidth, you use the new command and
+the container's \fBconfigure\fR operation.
+.CS
+# Change the default font.
+\&.c configure \-borderwidth 2
+.CE
+You can then add folders using the \fBinsert\fR operation.
+.CS
+# Create a new folder "f1"
+\&.c coinsert 0 "f1"
+.CE
+This inserts the new tab named "f1" into the container.  The index
+\f(CW0\fR indicates location to insert the new tab.  You can also use
+the index \f(CWend\fR to append a tab to the end of the container.  By
+default, the text of the tab is the name of the tab.  You can change
+this by configuring the \fB\-text\fR option.
+.CS
+# Change the label of "f1"
+\&.ts tab configure "f1" -label "Tab #1" 
+.CE
+The \fBinsert\fR operation lets you add one or more folders at a time.
+.CS
+\&.ts insert end "f2" -label "Tab #2" "f3" "f4" 
+.CE
+The tab on each folder contains a label.  A label may display both
+an image and a text string.  You can reconfigure the tab's attributes
+(foreground/background colors, font, rotation, etc) using the \fBtab
+configure\fR operation.
+.CS
+# Add an image to the label of "f1"
+set image [image create photo -file stopsign.gif]
+\&.ts tab configure "f1" -image $image
+\&.ts tab configure "f2" -rotate 90
+.CE
+Each folder may contain an embedded widget to represent its contents.
+The widget to be embedded must be a child of the container widget.  Using
+the \fB\-window\fR option, you specify the name of widget to be
+embedded.  But don't pack the widget, the container takes care of placing
+and arranging the widget for you.
+.CS
+graph .ts.graph
+\&.ts tab configure "f1" -window ".ts.graph" \\
+    -fill both -padx 0.25i -pady 0.25i
+.CE
+The size of the folder is determined the sizes of the Tk widgets
+embedded inside each folder.  The folder will be as wide as the widest
+widget in any folder. The tallest determines the height.  You can use
+the tab's \fB\-pagewidth\fR and \fB\-pageheight\fR options override this.
+.PP
+Other options control how the widget appears in the folder.  The
+\fB\-fill\fR option says that you wish to have the widget stretch to
+fill the available space in the folder.
+.CS
+\&.ts tab configure "f1" -fill both -padx 0.25i -pady 0.25i
+.CE
+.PP
+Now when you click the left mouse button on "f1", the
+graph will be displayed in the folder.  It will be automatically
+hidden when another folder is selected.  If you click on the right
+mouse button, the embedded widget will be moved into a toplevel widget 
+of its own.  Clicking again on the right mouse button puts it back into 
+the folder.
+.PP
+If you want to share a page between two different folders, the
+\fB\-command\fR option lets you specify a Tcl command to be invoked
+whenever the folder is selected.  You can reset the \fB\-window\fR
+option for the tab whenever it's clicked.
+.CS
+\&.ts tab configure "f2" -command { 
+    \&.ts tab configure "f2" -window ".ts.graph"
+}
+\&.ts tab configure "f1" -command { 
+    \&.ts tab configure "f1" -window ".ts.graph"
+}
+.CE
+If you have many folders, you may wish to stack tabs in multiple
+tiers.  The container's \fB\-tiers\fR option requests a maximum
+number of tiers.   The default is one tier.  
+.CS
+\&.ts configure -tiers 2
+.CE
+If the tabs can fit in less tiers, the widget will use that many.  
+Whenever there are more tabs than can be displayed in the maximum number
+of tiers, the container will automatically let you scroll the tabs.  You
+can even attach a scrollbar to the container.
+.CS
+\&.ts configure -scrollcommand { .sbar set }  -scrollincrement 20
+\&.sbar configure -orient horizontal -command { .ts view }
+.CE
+By default tabs are along the top of the container from left to right.  
+But tabs can be placed on any side of the container using the \fB\-side\fR
+option.
+.CS
+# Arrange tabs along the right side of the container. 
+\&.ts configure -side right -rotate 270
+.CE
+.SH SYNTAX
+The \fBcontainer\fR command creates a new window using the \fIpathName\fR
+argument and makes it into a container widget.
+.CS
+\fBcontainer \fIpathName \fR?\fIoption value\fR?...
+.CE
+Additional options may be specified on the command line or in the
+option database to configure aspects of the container such as its colors,
+font, text, and relief.  The \fBcontainer\fR command returns its
+\fIpathName\fR argument.  At the time this command is invoked, there
+must not exist a window named \fIpathName\fR, but \fIpathName\fR's
+parent must exist.
+.PP
+When first created, a new container contains no tabs.  Tabs are added or
+deleted using widget operations described below. It is not necessary
+for all the tabs to be displayed in the container window at once;
+commands described below may be used to change the view in the window.
+Containers allow scrolling of tabs using the \fB\-scrollcommand\fR
+option.  They also support scanning (see the \fBscan\fR operation).
+Tabs may be arranged along any side of the container window using the
+\fB\-side\fR option.
+.PP
+The size of the container window is determined the number of tiers of
+tabs and the sizes of the Tk widgets embedded inside each folder.
+The widest widget determines the width of the folder. The tallest
+determines the height.  If no folders contain an embedded widget, the
+size is detemined solely by the size of the tabs.  
+.PP
+You can override either dimension with the container's \fB\-width\fR
+and \fB\-height\fR options.
+.SH "CONTAINER OPERATIONS"
+All \fBcontainer\fR operations are invoked by specifying the widget's
+pathname, the operation, and any arguments that pertain to that
+operation.  The general form is:
+.sp
+.CS
+	\fIpathName operation \fR?\fIarg arg ...\fR?
+.CE
+.sp
+\fIOperation\fR and the \fIarg\fRs determine the exact behavior of the
+command.  The following operations are available for container widgets:
+.TP
+\fIpathName \fBcget\fR \fIoption\fR
+Returns the current value of the configuration option given
+by \fIoption\fR.
+\fIOption\fR may have any of the values accepted by the \fBconfigure\fR
+operation described below.
+.TP
+\fIpathName \fBconfigure\fR ?\fIoption\fR? ?\fIvalue option value ...\fR?
+Query or modify the configuration options of the widget.
+If no \fIoption\fR is specified, returns a list describing all 
+the available options for \fIpathName\fR (see \fBTk_ConfigureInfo\fR for
+information on the format of this list).  If \fIoption\fR is specified
+with no \fIvalue\fR, then the command returns a list describing the
+one named option (this list will be identical to the corresponding
+sublist of the value returned if no \fIoption\fR is specified).  If
+one or more \fIoption\-value\fR pairs are specified, then the command
+modifies the given widget option(s) to have the given value(s);  in
+this case the command returns an empty string.
+\fIOption\fR and \fIvalue\fR are described below:
+.RS
+.TP
+\fB\-background \fIcolor\fR
+Sets the border color of the container.  
+.TP
+\fB\-borderwidth \fIpixels\fR
+Sets the width of the 3\-D border around the outside edge of the widget.  The
+\fB\-relief\fR option determines how the border is to be drawn.  The
+default is \f(CW2\fR.
+.TP
+\fB\-command \fIpattern\fR
+Specifies to search for a window whose \f(CWWM_COMMAND\fR property matches
+the given pattern.  If no windows, or more than one window, matches
+the pattern, an error is generated.  If \fIpattern\fR is the empty
+string, then no command search is performed.
+The default is \f(CW""\fR.
+.TP
+\fB\-cursor \fIcursor\fR
+Specifies the widget's cursor.  The default cursor is \f(CW""\fR.
+.TP
+\fB\-height \fIpixels\fR
+Specifies the requested height of widget.  If \fIpixels\fR is
+0, then the height is height the embedded window plus the specified 
+borderwidth. The default is \f(CW0\fR.
+.TP 
+\fB\-highlightbackground  \fIcolor\fR
+Sets the color to display in the traversal highlight region when
+the container does not have the input focus.  
+.TP 
+\fB\-highlightcolor \fIcolor\fR
+Sets the color to use for the traversal highlight rectangle that is
+drawn around the widget when it has the input focus. 
+The default is \f(CWblack\fR.
+.TP 
+\fB\-highlightthickness \fIpixels\fR
+Sets the width of the highlight rectangle to draw around the outside of 
+the widget when it has the input focus. \fIPixels\fR is a non-negative 
+value and may have any of the forms acceptable to \fBTk_GetPixels\fR.
+If the value is zero, no focus highlight is drawn around the widget.
+The default is \f(CW2\fR.
+.TP
+\fB\-name \fIpattern\fR
+Specifies to search for a window whose \f(CWWM_NAME\fR property matches
+the given pattern.  If no windows, or more than one window, matches
+the pattern, an error is generated.  If \fIpattern\fR is the empty
+string, then no name search is performed.
+The default is \f(CW""\fR.
+.TP
+\fB\-relief \fIrelief\fR
+Specifies the 3-D effect for the container widget.  \fIRelief\fR
+specifies how the container should appear relative to widget that
+it is packed into; for example, \f(CWraised\fR means the container should
+appear to protrude.  The default is \f(CWsunken\fR.
+.TP
+\fB\-takefocus\fR \fIfocus\fR 
+Provides information used when moving the focus from window to window
+via keyboard traversal (e.g., Tab and Shift-Tab).  If \fIfocus\fR is
+\f(CW0\fR, this means that this window should be skipped entirely during
+keyboard traversal.  \f(CW1\fR means that the this window should always
+receive the input focus.  An empty value means that the traversal
+scripts decide whether to focus on the window.
+The default is \f(CW1\fR.
+.TP
+\fB\-width \fIpixels\fR 
+Specifies the requested width of the widget.  If \fIpixels\fR is 0,
+then the width is the width the embedded window and the specified
+borderwidth.  The default is \f(CW0\fR.
+.TP
+\fB\-window \fIid\fR
+Specifies the foreign embedded using its X window id.  
+.RE
+.TP
+\fIpathName \fBfind \fB\-command\fR|\fB\-name\fR \fIpattern\fR
+Searches for all windows that match the given pattern.  If the
+\fB\-command\fR switch is given, all windows whose \fCWWM_COMMAND\fR
+property match \fIpattern\fR are returned in a list.  If the
+\fB\-name\fR switch is given, all windows whose \fCWWM_NAME\fR
+property match \fIpattern\fR are returned in a list.  The list
+returned will contains pairs of the window id and the matching property.
+.SH KEYWORDS
+container, widget

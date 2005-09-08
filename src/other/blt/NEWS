@@ -1,0 +1,706 @@
+
+Changes from 2.4y to 2.4z
+
+FEATURES
+========
+
+graph/stripchart/barchart
+   Under Windows, both the "print1" and "print2" operations will 
+   pop-up a standard printer dialog when you don't pass a printer
+   argument.
+graph/stripchart/barchart
+   New -state option for both elements and markers.  If "disabled",
+   marker or element isn't eligible for binding events.  This is 
+   useful when you have lots (>100,000) of data points.
+graph/stripchart/barchart
+   New axis option -titlealternate lets you place the axis title to
+   the top or right of the axis.  This used to automatically happen when 
+   you had more than one axis in a margin.  This option lets you control 
+   it.
+tree
+   Both "find" and "apply" operations may be given more than one 
+   pattern switch (-exact, -glob, or -regexp).  This performs a
+   logical "or"--if any one of the pattern matches, the node is 
+   a match.
+tree
+   Both "find" and "apply" operations now have addition switches
+   -keyexact, -keyglob, and -keyregexp (the -key switch works like
+   -keyexact).  You may supply more than one switch.   This performs 
+   a logical "or"--if any one of the pattern matches, the node is a 
+   match.
+graph/stripchart/barchart
+   New axis options -scrollmin and -scrollmax allow you to specify
+   the scroll region.   Thanks to both Meaghan Parizeau 
+   <Meaghan_Parizeau@srtelecom.com> and Julian H J
+   Loaring <jhjl@bigj.demon.co.uk> for the solution.
+graph/stripchart/barchart
+   Polygon marker will trigger bindings even if the marker is not
+   filled (-fill "") or has no outline (-linewidth 0).  Interior
+   is always considered part of the polygon.  
+tree
+   Tree adaptively restructures data values from a linked list into a
+   hash table when the number of values exceeds 20.
+configure.in
+   Can build BLT with cygwin (gcc under Windows) distribution.  Type 
+   ./configure and make to build.  Use -disable-cygwin switch to build 
+   "mingw" version. Many thanks to Mumit Khan <khan@pluto.xraylith.wisc.edu> 
+   for all the hard work of porting the configure.in and Makefiles.  
+
+BUG FIXES
+=========
+
+eps
+   Canvas item errors out with "can't get handle to EPS file" message.  
+   Thanks to Shamil Daghestani <shamild@hotmail.com> for the bug report.
+graph/stripchart/barchart
+   Image marker doesn't get scaled correctly when scaling factor is
+   large. Thanks to Paul Kienzle <pkienzle@jazz.ncnr.nist.gov> 
+   for the bug report and example script.  It really helped.
+vector
+   "min" and "max" initially don't report the correct value.  Many
+   thanks to Alexander Eisenhuth <stacom@stacom-software.de> for the 
+   bug report.
+treeview/tree
+   "show -full $key" operation doesn't work.
+graph/stripchart/barchart
+   Doesn't display trailing data points when there are more than
+   65331 points.  Thanks to Val Shkolnikov <nvsoft@pacbell.net>
+   for the bug report.
+vector
+   Vectors leak memory when accessing them through the Tcl array
+   variable.  Thanks to Alexander Eisenhuth <stacom@stacom-software.de>
+   for the bug report and especially the test script to demonstrate 
+   the problem.
+treeview/tree
+   In "apply" operation, -regexp, -exact, or -glob switches don't
+   work.  Always matches every node.
+graph/stripchart/barchart
+   Axis "-hide" option no longer accepts "all" value.  "all" was
+   supposed to hide the axis *and* all the elements mapped to it.
+   I don't think this option ever worked correctly.  It was also
+   unclear whether to hide the legend entry, markers, etc.
+graph/stripchart/barchart
+   Changing a marker's -hide option doesn't take effect until the
+   graph is redrawn.  Thanks to Alex Verstak <averstak@vt.edu> for 
+   the bug report.
+graph/stripchart/barchart
+   Spurious characters in PostScript output generated under Windows. 
+   Thanks to Cary D. Renzema <Cary.Renzema@analog.com> for the bug 
+   report and sample files.
+graph/stripchart/barchart
+   "snap" operation core dumps or returns X protocol error depending 
+   on arguments.  Thanks to Carsten Mortensen <cbm@microlex.dk> for
+   both the bug report and the fix.
+graph/stripchart/barchart
+   Polygon marker not drawn unless no outline is specified (-linewith 0).
+   Thanks to Nestor Patino <npatino@infovia.com.ar> for the bug report.
+treeview/tree
+   Tags are removed when tree or treeview widget is destroyed.  Many 
+   thanks to Todd Copeland <todd.copeland@legerity.com> for the report.
+treeview/tree
+   "index" operation segfaults when tag is empty. Again thanks to Todd
+   Copeland <todd.copeland@legerity.com> for the report.
+pkgIndex.tcl
+   Added checks for package directory and its parent when searching
+   for BLT shared library.  Thanks to Anton Hartl <toni@devsoft.com>
+   for the bug report.
+
+Changes from 2.4x to 2.4y
+
+FEATURES
+========
+
+tree
+   Added -notags switch to "restore" operation.  
+tree
+   Added additional fields to the tree "dump" format.  When trees are
+   restored, will try to reuse old node ids (not always possible).  
+tree
+   Added -label switch to "copy" operation.  This lets you relabel the 
+   destination node.
+   
+BUG FIXES
+=========
+
+graph/stripchart/barchart
+   PostScript output sometimes includes a spurious box around an axis.  
+   Thanks to Harvey.Davies@csiro.au for the bug report and example.
+tabset/tabnotebook
+   On errors tabnotebook grows ad infinitum.  Thanks to Terri Fischer 
+   <terri@ner.com> for the bug report and example.
+<general>
+   Tcl_Init fails with "can't find usable init.tcl" when running
+   bltsh or bltwish compile with ActiveTcl.  Changed Tcl_AppInit to 
+   set global "tclDefaultLibrary" variable.  
+graph
+   "legend get" operation doesn't account for hidden entries 
+   (i.e. -label is configured to "").  Thanks to Karl Voskuil 
+   <voskuil@ll.mit.edu> for the bug report and the fix.
+graph
+   NULL pointer referenced (bindingTable) when destroying axis.
+bgexec
+   File redirection broken under Windows.
+graph
+   Area under curve not stippled correctly when bitmap is greater than
+   8x8 (W95/W98) or device context is a metafile (all?).  Created
+   XFillPolygon replacement for Windows.
+tree
+   Node modifiers are incorrectly ignored when first component is a tag.
+treeview
+   -shadow option no longer accepts empty string (no shadow). Many 
+   thanks to Todd Copeland <todd.copeland@legerity.com> for the report.
+vector
+   Vector "create" operation slows down using #auto as more vectors 
+   are created. Thanks to Todd Copeland <todd.copeland@legerity.com> 
+   for the bug report.
+treeview/hiertable
+   Widget doesn't scroll horizontally correctly when -hideleaves is
+   true.  Ignores last level when computing world width.
+treeview/hiertable
+   Deleting a node doesn't remove tag references to it.  Thanks to 
+   Steven Hafer <steven.hafer@legerity.com> for the bug report.
+treeview/hiertable
+   Giving the -path option to the "index" operation always fails. Thanks 
+   to Paul Robins <paul.robins@st.com> for the bug report.
+<treeview.mann/hiertable.mann>
+   Documentation for the "get" operation isn't clear that it always returns
+   a list of lists when the -separator option is "" (the default), even
+   when there is only one node specified.
+
+Changes from 2.4w to 2.4x
+
+FEATURES
+========
+
+dragdrop
+   Back ported 8.3 "dde" command for use with 8.0.
+
+BUG FIXES
+=========
+
+treeview/hiertable
+   Can't create column that starts with a minus. Thanks to Todd Copeland 
+   <todd.copeland@legerity.com> for the bug report.
+<Makefile.in>
+   pkgIndex.tcl file not getting rebuilt.  Thanks to Terri Fischer 
+   <terri@ner.com> for the bug report and fix.
+<dragdrop1.tcl,dragdrop2.tcl>
+   Send emulation script isn't needed for Tcl8.0 under Windows. Thanks to
+   Linh H Phan <phan@grover.jpl.nasa.gov> for the bug report.
+graph/stripchart/barchart
+   Using pen styles results in a bus error.  Thanks to Julian H J
+   Loaring <jhjl@bigj.demon.co.uk> for the bug report.
+hiertable/treeview/tree
+   List of data values is reversed from 2.4v.  Thanks to Jorge Suit
+   Prez Ronda <jsperez@bayesinf.com> for the bug report.
+<bltObjConfig.c>
+   Missing header file for varargs.  Thanks to Terri Fischer <terri@ner.com>
+   for the bug report and fix.
+<bltAlloc.c>
+   TclpAlloc and TclpFree not found in Tcl 8.0. Again, thanks to Terri
+   Fischer <terri@ner.com> for the bug report and fix.
+<BLT.mann,barchart.mann,eps.mann,graph.mann,tabset.man>
+   Updated manual pages graciously provided by Terri Fischer <terri@ner.com>.
+
+Changes from 2.4v to 2.4w
+
+FEATURES
+========
+
+treeview
+   New treeview widget is updated version of hiertable.  Uses Tcl_Objs.
+   The "hiertable" and "treeview" are the 100% syntax compatible.  The 
+   old hiertable is temporariliy available as "hiertable-old" should 
+   you find errors.  Also use the "treeview" instead of the "hierbox"
+   widget. The "hierbox" isn't as capable and doesn't use tree data
+   objects.
+treeview/hiertable
+   Added tagging operations similar to the "tree" command.  Attaching
+   a tree to the treeview/hiertable (the -tree option) now gives you
+   access to the tree's tags too.  Don't confuse this with "bindtags".
+   For example, you can tag nodes with the "tree" command and operate
+   on them in the treeview/hiertable widget using that tag. If you
+   don't want to share tags, the -newtags option will prevent this.  
+   There's an update "treeview" manual entry to describe this.
+treeview/hiertable
+   The "nearest" operation can report what part of the entry the pointer
+   is over.  If a variable name argument is given, the variable will
+   contain either "button", "label", "icon", or "".
+eps/winop
+   Faster image zooming and rotation (fixed-point arithmetic).
+
+BUG FIXES
+=========
+
+vector
+   Test of real number in a range is broken. Thanks to Paul Robins
+   for the bug report.
+treeview/hiertable
+   "nearest" operation doesn't allow an optional "variable" argument.
+hiertable/hierbox
+   The -selectioncommand command is invoked when closing an entry 
+   with no selected descendants.  Thanks to Jorge Suit Prez Ronda 
+   <jsperez@bayesinf.com> for the bug report.
+hiertable/hierbox    
+   In single "mode", the selection anchor is not updated when the
+   selection is moved via the keyboard. Thanks to Jorge Suit Prez Ronda 
+   <jsperez@bayesinf.com> for the bug report.
+hiertable		
+   Editor overwrites memory (seen best under Windows).   
+hiertable		
+   The "open" and "close" operations don't check for no arguments.
+hiertable
+   Vertical dotted lines start on wrong y-coordinate when clipped.
+hiertable
+   Active button isn't clipped by column titles.
+hiertable
+   Column titles are still displayed and picked despite -showtitles 
+   set to "no". 
+hiertable
+   Editor doesn't automatically select acquired text. 
+hiertable
+   Moving the cursor in the editor doesn't clear the selection.
+hiertable
+   Typing a "space" doesn't replace the selection with a space.
+tree
+   Traces on the same node loop infinitely.  TRACE_ACTIVE flag not 
+   set/unset.
+tree
+   The "restore" and "restorefile" operations don't handle newlines
+   in data key/values, node labels, or tags.
+graph/barchart/stripchart
+   Crosshairs left on screen when the mouse is pulled quicky from the 
+   widget.  
+graph/barchart/stripchart
+   Spurious crosshairs also left on the screen if axes are reconfigured 
+   (active axes).
+graph/barchart/stripchart
+   Image marker not updated if image is changed.
+graph/barchart/stripchart
+   PostScript not generated for -showvalues option. 
+graph/barchart/stripchart
+   PostScript not generated for errorbars.
+bgexec
+   No check for wrong number of arguments if switch is present.
+<bltAlloc.c>
+   Blt_MallocProcPtr and Blt_FreeProcPtr not declared extern in 
+   bltInt.h
+<bltTile.c>
+   Bogus test for mask in Blt_TilePolygon routine.
+<bltImage.c>
+   Counter for transparent pixels wrong in Win32 version of Blt_PolygonMask.  
+<bltInit.c>
+   blt_version not set when dynamically loaded into wish83.exe.  
+ 
+Note: Stub support is still missing although patches have been
+      graciously provided for the 2.4q release.  This will be added as
+      soon as I can get some free time.
+
+Changes from 2.4u to 2.4v
+
+FEATURES
+========
+bgexec
+   New -linebuffered switch.	
+
+        bgexec myVar -linebuffered yes -onoutput ShowLine myProg &
+
+    This option lets you process updated data (-onerror, -onoutput, 
+    -error, or -output) on a line by line basis.  Normally notifications 
+    occur once for entire data block. This switch causes separate 
+    notifications to made for each complete line.
+bgexec
+    New -decodeoutput and -decodeerror switches.
+ 
+     bgexec myVar -decodeoutput unicode -output myOut myProg &
+
+    Translates data from the specified encoding to UTF before passing
+    it to the Tcl interpreter. Normally no translation is made (under
+    Windows CR-LF conversions are made) and the raw, typically ASCII,
+    characters are passed back to the Tcl interpreter.  
+    Binary data can be collected with the "binary" encoding. For 
+    versions using Tcl 8.1 or greater, data is returned as Tcl byte 
+    array object, so you can use the "binary" command to convert it 
+    as needed.
+
+      set out [bgexec myVar -decodeoutput binary myProg]
+      binary scan $myOut f values
+tree
+   New "dumpfile" and "restorefile" operations to "tree" command.
+tree
+   Extended -> syntax in tree command to use node names.  
+
+	set data [$tree get root->"fred"->"pebbles"]
+tree 
+   Improved memory handling of large trees.  Pool allocators added to
+   reduce overall memory consumption. 
+graph/stripchart/barchart
+   New -buffergraph switch.	
+	.graph configure -buffergraph no
+graph
+   New options to fill area under curve of an element.
+	
+	.graph element configure line1 -areapattern solid 
+	.graph element configure line2 -areapattern BLT 
+graph/stripchart/barchart
+   New -reduce option.
+
+	.graph element configure line1 -abstol 0.5
+
+   Designates error tolerance for line simplificiation. Points that 
+   vary less than the given tolerance are merged into a single line 
+   segment.
+miscellaneous
+   Can globally replace memory allocation routines by setting 
+   pointers Blt_MallocProcPtr and Blt_FreeProcPtr.
+winop
+   New "rotate" operation lets you rotate photo images.
+
+BUG FIXES
+=========
+bgexec
+   Fixed a race condition that caused assertion under Windows to fail.
+   When both stdout and stderr are collected, if the stdout handler
+   finishes first, the memory used by read thread handler could be 
+   freed before the stderr pipe was closed.
+graph/stripchart/barchart
+   PostScript coordinates are no longer integers (screen resolution).
+graph/stripchart/barchart
+   Polygon markers now clipped properly.
+vector
+   Vectors can't be mapped to local variables.  This was broken 
+   in the 2.4r release.  Thanks to Johannes Zellner 
+   <johannes@zellner.org> for the bug report.
+vector
+   Tcl command associated with a vector not destroyed when the vector
+   is deleted.  Much thanks to Alexander Eisenhuth <stacom@topmail.de> 
+   for the bug report and the example script.
+drag&drop
+   "drag&drop" command fails when multiple formats are specified.
+    Seen in the dragdrop2.tcl demo.
+spline
+   Incorrectly reports the spline's x-vector to be non-monotonic.  
+   Thanks to Chang Li <changl@neatware.com> for the bug report.
+<pkgIndex.tcl>
+   Fixed pkgIndex.tcl.in to figure out whether to load libBLT24.so
+   or libBLTlite24.so when BLT is loaded, not when the package is 
+   registered.  Thanks to Dr. Dieter Ruppert <ru@swb.siemens.de> for
+   the bug report and fix.
+
+Changes from 2.4t to 2.4u
+
+BUG FIXES
+=========
+<./configure>
+   Fixed my stupid error (missing close brace) in ./configure file.  
+<Makefile.in>
+   Makefile in src/shared doesn't define BLT_LIBRARY.  Thanks
+   to terri@ner.com (Terri L. Fischer) for the bug report and fix. 
+graph/barchart/stripchart
+   graph doesn't find vector in global namespace when inside of another 
+   namespace. Thanks to Julian H J Loaring <bigj@bigj.demon.co.uk> for 
+   the bug report.
+graph/barchart/stripchart
+   Scratch buffer to small for PostScript prolog.  Thanks again to
+   Julian H J Loaring <bigj@bigj.demon.co.uk> for the bug report 
+   and fix. 
+graph
+   "bind" would fail on elements without traces (-linewidth 0).
+   Thanks again to terri@ner.com (Terri L. Fischer) for the bug report.
+
+ o Many changes to "dnd" command.  
+
+      +	-package option is treated as a command prefix (like the 
+        scrollbar), not a script.  Percent sign substitutions are
+        no longer allowed.  Information is passed via key-value 
+	parameters like the -onleave, -ondrop procedures. Procedure 
+        must return 1 if operation was Ok, and 0 if it failed.  
+  
+      +	The command arguments for both the "setdata" and "getdata"
+	operations have changed from an arbitrary Tcl script with
+	percent sign substitutions, to a command prefix with 
+	key-value arguments appended. The general form is
+
+		procName widget args...
+
+	where args is one of more key value pairs.
+
+		x		Relative X-coordinate of drop or pickup.
+		y		Relative Y-coordinate of drop or pickup.
+		timestamp	Timestamp of transaction.
+		format		Format desired.
+		value		Value transfered (setdata only).
+
+	You can use array set to parse "args".  For example:
+
+		proc GetColor { widget args } {
+		    array set info $args
+	
+		    puts "x-coordinate is $info(x)"
+		    puts "selected format is $info(format)"
+
+		    return [$widget cget -bg]	 	    
+		}
+	
+      + If an -onmotion procedure is specified for the target, it is
+	automatically invoked on drops before the -dropcmd is run. 
+	If it returns 0, the drop is canceled.
+	
+      + Added ./demos/dnd2.tcl to show more complicated example.
+	Just like dnd1.tcl, you need to run two of them at the same
+	time to see the drag-and-drop operations.
+
+      + Target property wasn't getting reset when changing -onmotion, 
+	-onleave, etc. procedures. 
+    
+      + Timestamps now displayed as unsigned. 
+	
+   Many thanks to Tom Lane <tgl@sss.pgh.pa.us> for all his help and
+   suggestions.
+
+Changes from 2.4s to 2.4t
+
+ o Tree command syntax changes.  Notify and trace operation now work
+   as advertised and a copy operation added.  Many thanks to Matt 
+   Newman <matt@sensus.org> for meticulously reviewing the command. 
+
+ o graph "snap" operation syntax change.  Added support for generating
+   Aldus metafiles and enhanced metafiles under Windows. 
+
+	# Normal syntax.
+         set image [image create photo]
+	.graph snap $image
+
+	# New additions.
+	.graph snap -format emf myFile.emf ;# Enhanced metafile
+	.graph snap -format wmf myFile.wmf ;# Aldus placable metafile
+	.graph snap -format emf CLIPBOARD  ;# Metafile written into clipboard.
+
+   Old width and height arguments are replaced with -width and -height 
+   switches.
+
+	.graph snap $image 500 500 			;# Old
+	.graph snap -width 500 -height 500 $image	;# New 
+
+   Thanks to Alain Zuur <a.zuur@marlab.ac.uk> for the enhancement.
+  
+ o Tabset/Tabnotebook -selectforeground option for tabs using wrong
+   configuration option type.  Both the bug report and fix are from
+   Mark E. Smith <mark@pearl.grand.gdats.com>.  Thanks.
+
+ o graph "bind" to use closest point instead of line segment when 
+   element contains only 1 point.  Thanks to Uwe Klein 
+   <uwe-klein@foni.net> for the bug report and script.  
+
+ o Hiertable tree view column has been internally renamed to 
+	
+	  "BLT Hiertable widgetName".  
+
+   It was formerly the name of the widget.  Fortunately, you can
+   refer to the column as "treeView" instead.  
+
+	 .ht column configure treeView -text "View Label"
+ 
+ o There's no ".tree" suffix anymore on the default tree created by 
+   the hiertable widget.  It's now just the widget name. 
+
+ o Many hiertable column bug fixes. Thanks to Julian H J Loaring 
+   <bigj@bigj.demon.co.uk> for all the tests and reports. 
+
+ o Rotated text displayed incorrectly under Windows 95/98 using 
+   non-TrueType fonts.  A test for typetype fonts has been restored.
+   Thanks to James Pakko <jpakko@ford.com> for the bug report and
+   script.
+
+   Under Windows, Non-TrueType fonts are drawn into a bitmap and 
+   the bitmap is rotated.  This provides the same quality as using 
+   rotated fonts for on-screen display.  Unfortunately it's much 
+   poorer for higher resolution devices such as printers. The best 
+   bet is to simply choose TrueType fonts if you can.
+
+ o Improved Hiertable folder images.  Many thanks to Tom Lane 
+   <tgl@sss.pgh.pa.us> for the new images. 
+
+ o Bgexec segfaults under Windows (NT/95) if file handler is 
+   deleted inside of callback.  Thanks to Chris Oliver 
+   <coliver@mminternet.com> for the bug report.
+
+ o graph segfaults if pen style range min/max are the same. 
+   Thanks to Thomas Wu <twu@gene.com> for the bug report and script.
+
+ o tabnotebook and tabset widgets would generate X11 errors if
+   embedded window was resize to zero width/height.  Thanks to
+   Ed Ohsone <eosn@rahul.net> for the report and the script to
+   demonstrate the error.
+ 
+Changes from 2.4r to 2.4s
+
+ o Fixed bug in stripchart (introduced in 2.4r) allowing uninitialized
+   data to be displayed.  Thanks to Dick Gooris <gooris@lucent.com> for
+   the bug report.
+
+ o AIX dynamic loading.  Actually made it work on a 4.3 AIX box.
+
+ o Fixed -tree option in hiertable.  Would segfault if tree was not
+   fully initialized first.
+
+ o Tree insert operation syntax changed from 
+
+ 	tree0 insert $node key1 value1 key2 value2
+   to
+	tree0 insert $node -data { key1 value1 key2 value2 }
+
+ o Fixed tree label operation.  Save uid instead of string.
+   
+ o Bug in TreeEventProc, should be node != NULL instead of node >= 0
+   Thanks to Julian H J Loaring <bigj@bigj.demon.co.uk> for the
+   bug report. 
+
+
+What's new in 2.4?
+
+ 1. "eps" canvas item.  
+
+    An encapsulated PostScript canvas item lets you embed an EPS file into 
+    the canvas.  The "eps" item displays either a EPS preview image found 
+    in the file, or a Tk image that you provide.  
+
+ 2. "hierbox" and "hiertable" widget.
+
+    Hierarchical listbox widget. Displays a general ordered tree which 
+    may be built on-the-fly or all at once.
+
+ 3. "tabset" and "tabnotebook" widget.
+
+    Can be used either as a tab notebook or simple tabset.  Tabs can 
+    be arranged in a variety of ways: multi-tiered, scrolled, and 
+    attached to any of the four sides.  Tab labels can contain both 
+    images and text (text can be arbitrarily rotated). Notebook pages 
+    can be torn-off into separate windows and replaced later. 
+    
+ 4. Changes to vectors.
+
+    New features:
+	
+     o	Vector expressions.  The vector now has an "expr" operation
+	that lets you perform math (including math library
+	functions) on vectors.  There are several new functions
+	(such as "max", "min", "mean" "median", "q1", "q3", "prod",
+	"sum", "adev", "sdev", "skew", ...)
+
+		vector expr { sin(x)^2 + cos(x)^2 }
+		y expr { log(x) * $value }
+
+     o	New syntax to create and destroy vectors:
+
+		vector create x 
+		vector destroy x
+ 
+	The old syntax for creating vectors still works.
+
+		vector x
+
+     o	Vectors are *not* automatically deleted when their Tcl
+	variable is unset anymore. This means that you can
+	temporarily map vectors to variables and use them as you
+	would an ordinary Tcl array (kind of like "upvar").
+
+	    proc AddValue { vecName value } {
+		 $vecName variable x
+	
+		 set x(++end) $value
+	    }	
+
+	There's an "-watchunset" flag to restore the old
+	behavior if you need it. 
+
+	    vector create x -watchunset yes
+
+     o  Vectors still automatically create Tcl variables by
+	default.  I'd like to change this, but it silently
+	breaks lots of code, so it will stay.
+
+    Bug fixes:
+
+     o  Vector reallocation failed when shrinking the vector.
+
+     o  Vector "destroy" callback made after vector was already freed.
+
+     o  Fixed vector/scalar operations.
+
+     o  Always store results in temporary, so not to overwrite accidently
+	current vector values.
+	
+ 5. Changes to Graph, Barchart, Stripchart widgets.
+
+    New features:
+
+     o 	Drop shadows for text (titles, markers, etc). Drop
+	shadows improve contrast when displaying text over a
+	background with similar color intensities.
+   
+     o  Postscript "-preview" option to generate a EPS
+	PostScript preview image that can be read and
+	displayed by the EPS canvas item.
+
+     o  New "-topvariable", "-bottomvariable",
+	"-leftvariable", and "-rightvariable" options.  They
+	specify variables to contain the current margin
+	sizes.  These variables are updated whenever the
+	graph is redrawn.
+
+     o  New "-aspect" option. Let's you maintain a particular aspect
+	ratio for the the graph.
+
+     o  Image markers can now be stretched and zoomed like
+        bitmap markers.
+
+     o  Bind operation for legend entries, markers, and elements.
+
+	Much thanks to Julian Loaring <bigj@bigj.demon.co.uk> 
+	for the idea.
+
+     o  New "-xor" option for line markers, lets you draw the line
+	by rubberbanded by XOR-ing without requiring the graph to
+	be redrawn.  This can be used, for example, to select regions
+	for zooming.  
+
+	Thanks to Johannes Zellner (joze@krisal.physik.uni-karlsruhe.de) 
+	for the idea.
+
+     o  Can attach a scrollbar to an axis.  
+
+  	    .sbar configure -command { .graph axis view y } 
+	    .graph axis configure y -scrollcommand { .sbar set } 
+
+    Bug fixes:
+
+     o	Closest line (point) broken when using pens styles.
+
+     o	Marker elastic coordinates were wrong.
+
+     o	PostScript bounding box included the border of the page.
+
+     o	Bad PostScript generated for barchart symbols with stipples.
+
+     o	Wrong dimensions computed with postscript " -maxpect" option.
+
+     o  Text markers fixed.
+
+	Thanks to De Clarke for the bug report and fix.
+
+
+     o  Renamed axis configuration from "-range" to "-autorange" to
+	match the documentation.  
+
+	Thanks to Brian Smith for the correction.
+
+     o  Fixed polygon marker pick routine.
+
+     o  Fixed active tab labels overlapping the selected tab.
+
+     o  PostScript graph footer turned off by default.  Use -footer option
+        to turn on.
+
+	    .graph postscript configure -footer yes
+

@@ -1,0 +1,54 @@
+'\"
+'\" Copyright 1991-1997 by Bell Labs Innovations for Lucent Technologies.
+'\"
+'\" Permission to use, copy, modify, and distribute this software and its
+'\" documentation for any purpose and without fee is hereby granted, provided
+'\" that the above copyright notice appear in all copies and that both that the
+'\" copyright notice and warranty disclaimer appear in supporting documentation,
+'\" and that the names of Lucent Technologies any of their entities not be used
+'\" in advertising or publicity pertaining to distribution of the software
+'\" without specific, written prior permission.
+'\"
+'\" Lucent Technologies disclaims all warranties with regard to this software,
+'\" including all implied warranties of merchantability and fitness.  In no event
+'\" shall Lucent Technologies be liable for any special, indirect or
+'\" consequential damages or any damages whatsoever resulting from loss of use,
+'\" data or profits, whether in an action of contract, negligence or other
+'\" tortuous action, arising out of or in connection with the use or performance
+'\" of this software.  
+'\"
+.so man.macros
+.TH cutbuffer n BLT_VERSION BLT "BLT Built-In Commands"
+.BS
+'\" Note:  do not modify the .SH NAME line immediately below!
+.SH NAME
+cutbuffer \- Manipulate X cut buffer properties
+.SH SYNOPSIS
+\fBcutbuffer\fI get ?number?\fR
+.br
+\fBcutbuffer\fI rotate ?count?\fR
+.br
+\fBcutbuffer\fI set value ?number?\fR
+.BE
+.SH DESCRIPTION
+.PP
+The \fBcutbuffer\fR command allows you to read or modify the eight X cut
+buffer properties. You can also rotate the buffers properties.
+.SH OPERATIONS
+The following operations are available for the \fBcutbuffer\fR command:
+.TP
+\fBcutbuffer get \fI?number?\fR 
+Returns the value of a cutbuffer \fInumber\fR.  \fINumber\fR must be a
+number between 0 and 7.  The default is 0.  The cutbuffer is returned
+exactly, except that NUL bytes are converted to '@' characters.  If a
+cut buffer \fInumber\fR does not exist, then \f(CW""\fR is returned.
+.TP
+\fBcutbuffer rotate \fI?count?\fR 
+Rotates the cut buffers by \fIcount\fR. \fICount\fR must be a number
+between -7 and 7. The default is 1.
+.TP
+\fBcutbuffer set \fIvalue\fR ?\fInumber\fR?  
+Sets the cutbuffer \fInumber\fR to \fIvalue\fR.  \fINumber\fR must be a
+number between 0 and 7.  The default is 0.
+.SH KEYWORDS
+cut buffer, property
