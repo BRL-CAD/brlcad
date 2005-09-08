@@ -542,7 +542,9 @@ parse_args(int ac, char *av[])
 		    }
 		}
 
-		bu_log("grid spacing:%gmm limit:%gmm\n", gridSpacing, gridSpacingLimit);
+		bu_log("set grid spacing:%g %s limit:%g %s\n",
+		       gridSpacing / units[LINE]->val, units[LINE]->name, 
+		       gridSpacingLimit / units[LINE]->val, units[LINE]->name);
 		break;
 	    }
 	case 'G'	:
@@ -1666,7 +1668,7 @@ terminate_check(struct cstate *state)
      * this routine exits.  So we store the status (can we terminate processing?)
      * in this variable and act on it once both volume and weight computations are done
      */
-    int can_terminate = 1; /* assume everyone is within tolerance */
+    int can_terminate; 
 
 
     DLOG("terminate_check\n");
@@ -1697,6 +1699,11 @@ terminate_check(struct cstate *state)
 	    return 1;
 	}
     }
+
+    if (analysis_flags & (ANALYSIS_WEIGHT|ANALYSIS_VOLUME))
+	can_terminate = 1;
+    else
+	can_terminate = 0; /* weight/volume limits don't apply */
 
     if (analysis_flags & ANALYSIS_WEIGHT) {
 	/* for each object, compute the weight for all views */
@@ -1788,7 +1795,7 @@ terminate_check(struct cstate *state)
 
     if (can_terminate) {
 	if (verbose)
-	    bu_log("terminate\n");
+	    bu_log("%s terminate\n", BU_FLSTR);
 	return 0; /* signal we don't want to go onward */
     }
 

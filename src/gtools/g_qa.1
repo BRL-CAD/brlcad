@@ -10,12 +10,13 @@ g_qa \- a BRL-CAD geometry analysis tool
 .SH DESCRIPTION
 The 
 .I g_qa 
-program computes and reports the weight and volume of the 
+program computes and reports a variety of characteristics of the
 .I objects
 specified from the given 
 .I model.g
 geometric description.
-It also reports overlaps.
+Among these characteristics are weight, volume, overlaps, exposed air,
+gaps/voids, adjacent air, and interfaces.
 Only the 
 .I objects
 from the database specified on the command line are analyzed.
@@ -226,7 +227,16 @@ If units are not provided, millimeters are presumed to be the units.
 The default values are 50.0 mm and 0.5 mm, which is equivalent to specifying: 
 .B \-g 50.0mm,0.5mm
 on the command line.
-Note that this is a hard limit.  If other analysis constraints are not met, the grid spacing will never be refined smaller than the minimum grid size to satisfy another constraint.
+This is a hard limit.  If other analysis constraints are not met, the grid
+spacing will never be refined smaller than the minimum grid size to satisfy
+another constraint.
+The initial grid spacing is divided in half at each refinement step.  As a
+result, if you desire a lower limit to actually be tested, then the initial
+grid size must be a power of 2 greater.  For example, specifying -g10mm-1mm
+would result in grid spacings of 10, 5, 2.5, 1.25 being used.  If the goal was
+to exactly end at a 1mm grid, then values such as 8 or 16 should have been
+chosen for the initial values.  This would result in testing 16, 8, 4, 2, 1
+grid spacing values.
 
 .TP
 .B \-G
