@@ -66,7 +66,7 @@ static const char RCSrt[] = "@(#)$Header$ (BRL)";
 #include "./ext.h"
 #include "rtprivate.h"
 #include "../librt/debug.h"
-
+#include "pkg.h"
 
 extern char	usage[];
 
@@ -388,6 +388,8 @@ int main(int argc, char **argv)
 	if( outputfile && strcmp( outputfile, "-") == 0 )
 		outputfile = (char *)0;
 
+	pkg_init();
+
 	/* 
 	 *  Initialize application.
 	 *  Note that width & height may not have been set yet,
@@ -410,6 +412,7 @@ int main(int argc, char **argv)
 		bu_semaphore_release( BU_SEM_SYSCALL );
 		if( fbp == FBIO_NULL )  {
 			fprintf(stderr,"rt:  can't open frame buffer\n");
+			pkg_terminate();
 			exit(12);
 		}
 
@@ -436,6 +439,7 @@ int main(int argc, char **argv)
 		/* output_is_binary is changed by view_init, as appropriate */
 		if( output_is_binary && isatty(fileno(outfp)) )  {
 			fprintf(stderr,"rt:  attempting to send binary output to terminal, aborting\n");
+			pkg_terminate();
 			exit(14);
 		}
 	}
@@ -467,6 +471,7 @@ int main(int argc, char **argv)
 		    if( fbp != FBIO_NULL ) {
 			fb_close(fbp);
 		    }
+		    pkg_terminate();
 		    return 1;
 		}
 	} else if( !isatty(fileno(stdin)) && old_way( stdin ) )  {
@@ -499,6 +504,7 @@ int main(int argc, char **argv)
 	if( fbp != FBIO_NULL )
 		fb_close(fbp);
 
+	pkg_terminate();
 	return(0);
 }
 

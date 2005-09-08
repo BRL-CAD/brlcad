@@ -47,7 +47,13 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include <stdio.h>
 
 #include "machine.h"
+#include "bu.h"
 #include "fb.h"
+#include "pkg.h"
+
+#ifdef _WIN32
+#  include <winsock.h>
+#endif
 
 static char	*framebuffer = NULL;
 static FBIO	*fbp;
@@ -66,7 +72,7 @@ get_args(int argc, register char **argv)
 {
 	register int c;
 
-	while ( (c = getopt( argc, argv, "hcF:s:w:n:S:W:N:" )) != EOF )  {
+	while ( (c = bu_getopt( argc, argv, "hcF:s:w:n:S:W:N:" )) != EOF )  {
 		switch( c )  {
 		case 'h':
 			/* high-res */
@@ -77,19 +83,19 @@ get_args(int argc, register char **argv)
 			clear_and_reset++;
 			break;
 		case 'F':
-			framebuffer = optarg;
+			framebuffer = bu_optarg;
 			break;
 		case 's':
 		case 'S':
-			scr_height = scr_width = atoi(optarg);
+			scr_height = scr_width = atoi(bu_optarg);
 			break;
 		case 'w':
 		case 'W':
-			scr_width = atoi(optarg);
+			scr_width = atoi(bu_optarg);
 			break;
 		case 'n':
 		case 'N':
-			scr_height = atoi(optarg);
+			scr_height = atoi(bu_optarg);
 			break;
 
 		default:		/* '?' */
@@ -107,8 +113,13 @@ main(int argc, char **argv)
 		exit( 1 );
 	}
 
-	if( (fbp = fb_open( framebuffer, scr_width, scr_height )) == NULL )
-		exit(2);
+	if (pkg_init() != 0)
+	    exit(1);
+
+	if ((fbp = fb_open(framebuffer, scr_width, scr_height)) == NULL) {
+	    pkg_terminate();
+	    exit(2);
+	}
 
 	/* Get the screen size we were given */
 	scr_width = fb_getwidth(fbp);
@@ -132,23 +143,24 @@ main(int argc, char **argv)
 		}
 	}
 
-	if( optind+3 == argc ) {
+	if( bu_optind+3 == argc ) {
 		static RGBpixel	pixel;
-		pixel[RED] = (u_char) atoi( argv[optind+0] );
-		pixel[GRN] = (u_char) atoi( argv[optind+1] );
-		pixel[BLU] = (u_char) atoi( argv[optind+2] );
+		pixel[RED] = (u_char) atoi( argv[bu_optind+0] );
+		pixel[GRN] = (u_char) atoi( argv[bu_optind+1] );
+		pixel[BLU] = (u_char) atoi( argv[bu_optind+2] );
 		fb_clear( fbp, pixel );
-	} else if( optind+1 == argc ) {
+	} else if( bu_optind+1 == argc ) {
 		static RGBpixel	pixel;
 		pixel[RED] = pixel[GRN] = pixel[BLU]
-			= (u_char) atoi( argv[optind+0] );
+			= (u_char) atoi( argv[bu_optind+0] );
 		fb_clear( fbp, pixel );
 	} else {
-		if( optind != argc )
+		if( bu_optind != argc )
 			fprintf(stderr, "fbclear: extra arguments ignored\n");
 		fb_clear( fbp, PIXEL_NULL );
 	}
 	(void)fb_close( fbp );
+	pkg_terminate();
 	return(0);
 }
 

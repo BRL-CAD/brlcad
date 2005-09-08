@@ -171,7 +171,11 @@ main(int argc, char **argv)
 
 		/* this is a Tcl script */
 
+#ifdef _WIN32
+		fclose(ifp);
+#else
 		rewind( ifp );
+#endif
 		BU_LIST_INIT(&rt_g.rtg_headwdb.l);
 
 		interp = Tcl_CreateInterp();

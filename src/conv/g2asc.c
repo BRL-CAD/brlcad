@@ -137,6 +137,11 @@ main(int argc, char **argv)
 {
 	int i;
 
+	if (argc != 3) {
+		(void)fprintf(stderr, usage);
+		exit(1);
+	}
+
 #ifdef _WIN32
 	_fmode = _O_BINARY;
 #endif

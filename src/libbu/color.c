@@ -55,7 +55,9 @@ static const char libbu_color_RCSid[] = "@(#)$Header$ (BRL)";
 #include "machine.h"
 #include "bu.h"
 #include "vmath.h"
+#if 0
 #include "fb.h"
+#endif
 
 /*
  *		Convert between RGB and HSV color models
@@ -74,6 +76,10 @@ static const char libbu_color_RCSid[] = "@(#)$Header$ (BRL)";
 #define	HUE		0
 #define	SAT		1
 #define	VAL		2
+
+#define	RED		0
+#define	GRN		1
+#define	BLU		2
 
 /*
  *			B U _ R G B _ T O _ H S V

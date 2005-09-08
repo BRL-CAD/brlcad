@@ -48,7 +48,15 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include <stdlib.h>
 
 #include "machine.h"
+#include "bu.h"
 #include "fb.h"
+
+#include "pkg.h"
+
+#ifdef _WIN32
+#  include <winsock.h>
+#  include <fcntl.h>
+#endif
 
 /* defined in libbn/asize.c */
 extern int bn_common_file_size(int *, int *, const char *, int);
@@ -91,13 +99,13 @@ get_args(int argc, register char **argv)
 {
 	register int c;
 
-	while ( (c = getopt( argc, argv, "1m:ahiczF:s:w:n:x:y:X:Y:S:W:N:" )) != EOF )  {
+	while ( (c = bu_getopt( argc, argv, "1m:ahiczF:s:w:n:x:y:X:Y:S:W:N:" )) != EOF )  {
 		switch( c )  {
 		case '1':
 			one_line_only = 1;
 			break;
 		case 'm':
-			multiple_lines = atoi(optarg);
+			multiple_lines = atoi(bu_optarg);
 			break;
 		case 'a':
 			autosize = 1;
@@ -118,41 +126,41 @@ get_args(int argc, register char **argv)
 			zoom = 1;
 			break;
 		case 'F':
-			framebuffer = optarg;
+			framebuffer = bu_optarg;
 			break;
 		case 's':
 			/* square file size */
-			file_height = file_width = atoi(optarg);
+			file_height = file_width = atoi(bu_optarg);
 			autosize = 0;
 			break;
 		case 'w':
-			file_width = atoi(optarg);
+			file_width = atoi(bu_optarg);
 			autosize = 0;
 			break;
 		case 'n':
-			file_height = atoi(optarg);
+			file_height = atoi(bu_optarg);
 			autosize = 0;
 			break;
 		case 'x':
-			file_xoff = atoi(optarg);
+			file_xoff = atoi(bu_optarg);
 			break;
 		case 'y':
-			file_yoff = atoi(optarg);
+			file_yoff = atoi(bu_optarg);
 			break;
 		case 'X':
-			scr_xoff = atoi(optarg);
+			scr_xoff = atoi(bu_optarg);
 			break;
 		case 'Y':
-			scr_yoff = atoi(optarg);
+			scr_yoff = atoi(bu_optarg);
 			break;
 		case 'S':
-			scr_height = scr_width = atoi(optarg);
+			scr_height = scr_width = atoi(bu_optarg);
 			break;
 		case 'W':
-			scr_width = atoi(optarg);
+			scr_width = atoi(bu_optarg);
 			break;
 		case 'N':
-			scr_height = atoi(optarg);
+			scr_height = atoi(bu_optarg);
 			break;
 
 		default:		/* '?' */
@@ -160,13 +168,13 @@ get_args(int argc, register char **argv)
 		}
 	}
 
-	if( optind >= argc )  {
+	if( bu_optind >= argc )  {
 		if( isatty(fileno(stdin)) )
 			return(0);
 		file_name = "-";
 		infd = 0;
 	} else {
-		file_name = argv[optind];
+		file_name = argv[bu_optind];
 		if( (infd = open(file_name, 0)) < 0 )  {
 			perror(file_name);
 			(void)fprintf( stderr,
@@ -174,10 +182,13 @@ get_args(int argc, register char **argv)
 				file_name );
 			exit(1);
 		}
+#ifdef _WIN32
+		_setmode(infd, _O_BINARY);
+#endif
 		fileinput++;
 	}
 
-	if ( argc > ++optind )
+	if ( argc > ++bu_optind )
 		(void)fprintf( stderr, "pix-fb: excess argument(s) ignored\n" );
 
 	return(1);		/* OK */
@@ -194,6 +205,9 @@ main(int argc, char **argv)
 		(void)fputs(usage, stderr);
 		exit( 1 );
 	}
+
+	if (pkg_init() != 0)
+	    exit(1);
 
 	/* autosize input? */
 	if( fileinput && autosize ) {
@@ -212,8 +226,10 @@ main(int argc, char **argv)
 	if( scr_height == 0 )
 		scr_height = file_height;
 
-	if( (fbp = fb_open( framebuffer, scr_width, scr_height )) == NULL )
-		exit(12);
+	if ((fbp = fb_open( framebuffer, scr_width, scr_height)) == NULL) {
+	    pkg_terminate();
+	    exit(12);
+	}
 
 	/* Get the screen size we were given */
 	scr_width = fb_getwidth(fbp);
@@ -260,6 +276,7 @@ main(int argc, char **argv)
 		fprintf(stderr,
 			"pix-fb:  malloc(%d) failure for scanline buffer\n",
 			scanbytes);
+		pkg_terminate();
 		exit(2);
 	}
 
@@ -359,6 +376,8 @@ main(int argc, char **argv)
 	if( fb_close( fbp ) < 0 )  {
 		fprintf(stderr, "pix-fb: Warning: fb_close() error\n");
 	}
+
+	pkg_terminate();
 	exit(0);
 }
 

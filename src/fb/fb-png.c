@@ -47,6 +47,13 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "bu.h"
 #include "fb.h"
 
+#include "pkg.h"
+
+#ifdef _WIN32
+#  include <winsock.h>
+#  include <fcntl.h>
+#endif
+
 static unsigned char	*scanline;	/* scanline pixel buffers */
 static int	scanbytes;		/* # of bytes of scanline */
 static int	scanpix;		/* # of pixels of scanline */
@@ -75,7 +82,7 @@ get_args(int argc, register char **argv)
 {
 	register int c;
 
-	while ( (c = getopt( argc, argv, "chiF:s:w:n:g:#:" )) != EOF )  {
+	while ( (c = bu_getopt( argc, argv, "chiF:s:w:n:g:#:" )) != EOF )  {
 		switch( c )  {
 		case 'c':
 			crunch = 1;
@@ -88,23 +95,23 @@ get_args(int argc, register char **argv)
 			inverse = 1;
 			break;
 		case 'F':
-			framebuffer = optarg;
+			framebuffer = bu_optarg;
 			break;
 		case 's':
 			/* square size */
-			screen_height = screen_width = atoi(optarg);
+			screen_height = screen_width = atoi(bu_optarg);
 			break;
 		case 'w':
-			screen_width = atoi(optarg);
+			screen_width = atoi(bu_optarg);
 			break;
 		case 'n':
-			screen_height = atoi(optarg);
+			screen_height = atoi(bu_optarg);
 			break;
 		case 'g':
-			out_gamma = atof(optarg);
+			out_gamma = atof(bu_optarg);
 			break;
 		case '#':
-			pixbytes = atoi(optarg);
+			pixbytes = atoi(bu_optarg);
 			if( pixbytes != 1 && pixbytes != 3 )
 				bu_bomb("fb-png: Only able to handle 1 and 3 byte pixels\n");
 			break;
@@ -114,14 +121,18 @@ get_args(int argc, register char **argv)
 		}
 	}
 
-	if( optind >= argc )  {
+	if( bu_optind >= argc )  {
 		if( isatty(fileno(stdout)) )
 			return(0);
 		file_name = "-";
 		outfp = stdout;
 	} else {
-		file_name = argv[optind];
+		file_name = argv[bu_optind];
+#ifdef _WIN32
+		if( (outfp = fopen(file_name, "wb")) == NULL )  {
+#else
 		if( (outfp = fopen(file_name, "w")) == NULL )  {
+#endif
 			(void)fprintf( stderr,
 				"fb-png: cannot open \"%s\" for writing\n",
 				file_name );
@@ -130,7 +141,7 @@ get_args(int argc, register char **argv)
 		(void)chmod(file_name, 0444);
 	}
 
-	if ( argc > ++optind )
+	if ( argc > ++bu_optind )
 		(void)fprintf( stderr, "fb-png: excess argument(s) ignored\n" );
 
 	return(1);		/* OK */
@@ -152,16 +163,25 @@ main(int argc, char **argv)
 		exit( 1 );
 	}
 
+	if (pkg_init() != 0)
+	    exit(1);
+
 	png_p = png_create_write_struct( PNG_LIBPNG_VER_STRING, NULL, NULL, NULL );
-	if( !png_p )
+	if (!png_p) {
+		pkg_terminate();
 		bu_bomb( "Could not create PNG write structure\n" );
+	}
 
 	info_p = png_create_info_struct( png_p );
-	if( !info_p )
+	if (!info_p) {
+		pkg_terminate();
 		bu_bomb( "Could not create PNG info structure\n" );
+	}
 
-	if( (fbp = fb_open( framebuffer, screen_width, screen_height )) == NULL )
+	if ((fbp = fb_open(framebuffer, screen_width, screen_height)) == NULL) {
+		pkg_terminate();
 		exit(12);
+	}
 
 	/* If actual screen is smaller than requested size, trim down */
 	if( screen_height > fb_getheight(fbp) )
@@ -243,6 +263,7 @@ main(int argc, char **argv)
 	}
 	fb_close( fbp );
 	png_write_end( png_p, NULL );
+	pkg_terminate();
 	exit(0);
 }
 

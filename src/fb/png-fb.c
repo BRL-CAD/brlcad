@@ -45,6 +45,13 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "bu.h"
 #include "fb.h"
 
+#include "pkg.h"
+
+#ifdef _WIN32
+#  include <winsock.h>
+#  include <fcntl.h>
+#endif
+
 static png_color_16 def_backgrd={ 0,0,0,0,0 };
 static unsigned char **scanline;	/* 1 scanline pixel buffer */
 static int	scanbytes;		/* # of bytes of scanline */
@@ -86,16 +93,16 @@ get_args(int argc, register char **argv)
 {
 	register int c;
 
-	while ( (c = getopt( argc, argv, "1m:g:HhicvzF:s:x:y:X:Y:S:W:N:" )) != EOF )  {
+	while ( (c = bu_getopt( argc, argv, "1m:g:HhicvzF:s:x:y:X:Y:S:W:N:" )) != EOF )  {
 		switch( c )  {
 		case '1':
 			one_line_only = 1;
 			break;
 		case 'm':
-			multiple_lines = atoi(optarg);
+			multiple_lines = atoi(bu_optarg);
 			break;
 		case 'g':
-			def_screen_gamma = atof(optarg);
+			def_screen_gamma = atof(bu_optarg);
 			break;
 		case 'H':
 			header_only = 1;
@@ -117,28 +124,28 @@ get_args(int argc, register char **argv)
 			zoom = 1;
 			break;
 		case 'F':
-			framebuffer = optarg;
+			framebuffer = bu_optarg;
 			break;
 		case 'x':
-			file_xoff = atoi(optarg);
+			file_xoff = atoi(bu_optarg);
 			break;
 		case 'y':
-			file_yoff = atoi(optarg);
+			file_yoff = atoi(bu_optarg);
 			break;
 		case 'X':
-			scr_xoff = atoi(optarg);
+			scr_xoff = atoi(bu_optarg);
 			break;
 		case 'Y':
-			scr_yoff = atoi(optarg);
+			scr_yoff = atoi(bu_optarg);
 			break;
 		case 'S':
-			scr_height = scr_width = atoi(optarg);
+			scr_height = scr_width = atoi(bu_optarg);
 			break;
 		case 'W':
-			scr_width = atoi(optarg);
+			scr_width = atoi(bu_optarg);
 			break;
 		case 'N':
-			scr_height = atoi(optarg);
+			scr_height = atoi(bu_optarg);
 			break;
 
 		default:		/* '?' */
@@ -146,14 +153,18 @@ get_args(int argc, register char **argv)
 		}
 	}
 
-	if( optind >= argc )  {
+	if( bu_optind >= argc )  {
 		if( isatty(fileno(stdin)) )
 			return(0);
 		file_name = "-";
 		fp_in = stdin;
 	} else {
-		file_name = argv[optind];
+		file_name = argv[bu_optind];
+#ifdef _WIN32
+		if( (fp_in = fopen(file_name, "rb")) == NULL )  {
+#else
 		if( (fp_in = fopen(file_name, "r")) == NULL )  {
+#endif
 			perror(file_name);
 			(void)fprintf( stderr,
 				"png-fb: cannot open \"%s\" for reading\n",
@@ -163,7 +174,7 @@ get_args(int argc, register char **argv)
 		fileinput++;
 	}
 
-	if ( argc > ++optind )
+	if ( argc > ++bu_optind )
 		(void)fprintf( stderr, "png-fb: excess argument(s) ignored\n" );
 
 	return(1);		/* OK */
@@ -191,19 +202,30 @@ main(int argc, char **argv)
 		exit( 1 );
 	}
 
-	if( fread( header, 8, 1, fp_in ) != 1 )
-		bu_bomb( "ERROR: Failed while reading file header!!!\n" );
+	if (pkg_init() != 0)
+	    exit(1);
 
-	if( !png_check_sig( (png_bytep)header, 8 ) )
+	if (fread(header, 8, 1, fp_in) != 1) {
+		pkg_terminate();
+		bu_bomb( "ERROR: Failed while reading file header!!!\n" );
+	}
+
+	if (!png_check_sig((png_bytep)header, 8)) {
+		pkg_terminate();
 		bu_bomb( "This is not a PNG file!!!\n" );
+	}
 
 	png_p = png_create_read_struct( PNG_LIBPNG_VER_STRING, NULL, NULL, NULL );
-	if( !png_p )
+	if (!png_p) {
+		pkg_terminate();
 		bu_bomb( "png_create_read_struct() failed!!\n" );
+	}
 
 	info_p = png_create_info_struct( png_p );
-	if( !info_p )
+	if (!info_p) {
+		pkg_terminate();
 		bu_bomb( "png_create_info_struct() failed!!\n" );
+	}
 
 	png_init_io( png_p, fp_in );
 
@@ -253,6 +275,7 @@ main(int argc, char **argv)
 
 	if( header_only )  {
 		fprintf(stdout, "WIDTH=%d HEIGHT=%d\n", file_width, file_height);
+		pkg_terminate();
 		exit(0);
 	}
 
@@ -426,6 +449,7 @@ main(int argc, char **argv)
 	if( fb_close( fbp ) < 0 )  {
 		fprintf(stderr, "png-fb: Warning: fb_close() error\n");
 	}
+	pkg_terminate();
 	exit(0);
 }
 

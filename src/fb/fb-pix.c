@@ -46,7 +46,15 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include <sys/stat.h>
 
 #include "machine.h"
+#include "bu.h"
 #include "fb.h"
+
+#include "pkg.h"
+
+#ifdef _WIN32
+#  include <winsock.h>
+#  include <fcntl.h>
+#endif
 
 static unsigned char	*scanline;		/* 1 scanline pixel buffer */
 static int	scanbytes;		/* # of bytes of scanline */
@@ -73,7 +81,7 @@ get_args(int argc, register char **argv)
 {
 	register int c;
 
-	while ( (c = getopt( argc, argv, "chiF:s:w:n:" )) != EOF )  {
+	while ( (c = bu_getopt( argc, argv, "chiF:s:w:n:" )) != EOF )  {
 		switch( c )  {
 		case 'c':
 			crunch = 1;
@@ -86,17 +94,17 @@ get_args(int argc, register char **argv)
 			inverse = 1;
 			break;
 		case 'F':
-			framebuffer = optarg;
+			framebuffer = bu_optarg;
 			break;
 		case 's':
 			/* square size */
-			screen_height = screen_width = atoi(optarg);
+			screen_height = screen_width = atoi(bu_optarg);
 			break;
 		case 'w':
-			screen_width = atoi(optarg);
+			screen_width = atoi(bu_optarg);
 			break;
 		case 'n':
-			screen_height = atoi(optarg);
+			screen_height = atoi(bu_optarg);
 			break;
 
 		default:		/* '?' */
@@ -104,23 +112,32 @@ get_args(int argc, register char **argv)
 		}
 	}
 
-	if( optind >= argc )  {
+	if( bu_optind >= argc )  {
 		if( isatty(fileno(stdout)) )
 			return(0);
 		file_name = "-";
 		outfp = stdout;
 	} else {
-		file_name = argv[optind];
+		file_name = argv[bu_optind];
+#ifdef _WIN32
+		if( (outfp = fopen(file_name, "wb")) == NULL )  {
+#else
 		if( (outfp = fopen(file_name, "w")) == NULL )  {
+#endif
 			(void)fprintf( stderr,
 				"fb-pix: cannot open \"%s\" for writing\n",
 				file_name );
 			return(0);
 		}
+#if 0
+#ifdef _WIN32
+		_setmode(_fileno(outfp), _O_BINARY);
+#endif
+#endif
 		(void)chmod(file_name, 0444);
 	}
 
-	if ( argc > ++optind )
+	if ( argc > ++bu_optind )
 		(void)fprintf( stderr, "fb-pix: excess argument(s) ignored\n" );
 
 	return(1);		/* OK */
@@ -139,16 +156,22 @@ main(int argc, char **argv)
 		exit( 1 );
 	}
 
+	if (pkg_init() != 0)
+	    exit(1);
+
 	scanpix = screen_width;
 	scanbytes = scanpix * sizeof(RGBpixel);
 	if( (scanline = (unsigned char *)malloc(scanbytes)) == RGBPIXEL_NULL )  {
 		fprintf(stderr,
 			"fb-pix:  malloc(%d) failure\n", scanbytes );
+		pkg_terminate();
 		exit(2);
 	}
 
-	if( (fbp = fb_open( framebuffer, screen_width, screen_height )) == NULL )
-		exit(12);
+	if ((fbp = fb_open(framebuffer, screen_width, screen_height)) == NULL) {
+	    pkg_terminate();
+	    exit(12);
+	}
 
 	if( screen_height > fb_getheight(fbp) )
 		screen_height = fb_getheight(fbp);
@@ -187,6 +210,7 @@ main(int argc, char **argv)
 		}
 	}
 	fb_close( fbp );
+	pkg_terminate();
 	exit(0);
 }
 

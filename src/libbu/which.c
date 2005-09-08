@@ -163,7 +163,7 @@ int bu_which(char *argv[], int lim, const char *cmd)
       }
     }
 
-    (void)SNPRINTF(fullname, max_length, "%s/%s", directory, cmd);
+    (void)snprintf(fullname, max_length, "%s/%s", directory, cmd);
 
     if (bu_file_exists(fullname)) {
       found_it = 0;
