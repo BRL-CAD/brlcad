@@ -1,0 +1,442 @@
+2004-08-16  Andreas Kupries  <andreask@activestate.com>
+
+	* Updated some hardwired version information in png, zlib, and
+	  tiff.
+
+2004-08-13  Andreas Kupries  <andreask@activestate.com>
+
+	* libz/tcl: Changed version of wrapper to 1.2.1, synchronized to
+	  version of libz.
+
+	* libpng/tcl: Changed version of wrapper to 1.2.6, synchronized to
+	  version of libpng.
+
+	* libtiff/tcl: Changed version of wrapper to 3.6.1, synchronized to
+	  version of libtiff.
+
+2004-08-13  Andreas Kupries  <andreask@activestate.com>
+
+	* libtiff:     Updated libtiff from version 3.5.5 to 3.6.1.
+	* libtiff/tcl: Updated to handle the new version of libtiff.
+
+2004-08-12  Andreas Kupries  <andreask@activestate.com>
+
+	* libpng:     Updated libpng from version 1.0.8 to 1.2.6rc5.
+	* libpng/tcl: Updated to handle the new version of libpng.
+
+2004-08-12  Andreas Kupries  <andreask@activestate.com>
+
+	* libz:     Updated zlib from version 1.1.3 to 1.2.1.
+	* libz/tcl: Updated to handle the new version of zlib.
+
+2004-08-12  Andreas Kupries  <andreask@activestate.com>
+
+	* ico/ico.c: The last change made to these files, not
+	* sun/sun.c: recorded in the ChangeLog [*], caused them to
+	* sgi/sgi.c: be stored back into the CVS in DOS format.
+	* tga/tga.c: This screwed up the compile, more precise,
+	* pcx/pcx.c: the continuation lines in the code were not
+	             recognized anymore.
+
+	[*] cvs annotate claims that the change was made on July 27.
+
+2004-06-03  Andreas Kupries  <andreask@activestate.com>
+
+	* base/tkimgPPB.c:
+	* base/tkimg.h: Added conditional definition for Tk_PhotoExpand
+	* bmp/bmp.c:    (named tkimg_PhotoExpand). Changed all occurences
+	* gif/gif.c:    if Tk_PhotoExpand to the new definition. This
+	* ico/ico.c:    takes care of a change between Tk 8.4 and 8.5
+	* jpeg/jpeg.c:
+	* libjpeg/tcl/jpegtcl.c:
+	* pcx/pcx.c:
+	* png/png.c:
+	* ppm/ppm.c:
+	* ps/ps.c:
+	* sgi/sgi.c:
+	* sun/sun.c:
+	* tga/tga.c:
+	* window/window.c:
+	* xbm/xbm.c:
+	* xpm/xpm.c:
+
+2003-04-04  Andreas Kupries  <andreask@activestate.com>
+
+	* configure:
+	* base/configure:
+	* base/tclconfig/tcl.m4:
+	* bmp/configure:
+	* gif/configure:
+	* ico/configure:
+	* jpeg/configure:
+	* libjpeg/tcl/configure:
+	* libjpeg/tcl/tclconfig/tcl.m4:
+	* libpng/tcl/configure:
+	* libpng/tcl/tclconfig/tcl.m4:
+	* libtiff/tcl/configure:
+	* libtiff/tcl/tclconfig/tcl.m4:
+	* libz/tcl/configure:
+	* libz/tcl/tclconfig/tcl.m4:
+	* pcx/configure:
+	* pixmap/configure:
+	* png/configure:
+	* ppm/configure:
+	* ps/configure:
+	* sgi/configure:
+	* sun/configure:
+	* tclconfig/tcl.m4:
+	* tga/configure:
+	* tiff/configure:
+	* window/configure:
+	* xbm/configure:
+	* xpm/configure: Updated to newest tcl.m4, regenerated
+	  configure's.
+
+2003-03-24  Andreas Kupries  <andreask@activestate.com>
+
+	* doc/img-ps.man: Fix of typo reported by doctools.
+
+2003-03-13  Andreas Kupries  <andreask@activestate.com>
+
+	* doc/img-ps.man: Extended with a section about requirements,
+	  because this format relies on the presence of 'gs'
+	  (ghostscript).
+
+2003-03-09  Paul Obermeier  <obermeier@poSoft.de>
+
+	* pcx/pcx.c: Fixed incorrect usage of Tcl_AppendResult, 
+	* sun/sun.c: which could cause core dumps.
+	* tga/tga.c:
+
+	* pcx/pcx.c: Improved heuristics for better format matching.
+
+	* base/pkgIndex.tcl.in: Rearranged order of required packages
+	                        for better format matching.
+
+	* doc/img-ico.man: Updated documentation.
+	* doc/img-pcx.man:
+	* doc/img-ppm.man:
+	* doc/img-sgi.man:
+	* doc/img-sun.man:
+	* doc/img-tga.man:
+
+2003-03-04  Andreas Kupries  <andreask@activestate.com>
+
+	* doc/format-footer.inc: Better see-also and keywording.
+	* doc/img-ps.man:
+	* doc/img.man: 
+
+	* doc/img-png.man: Small fix in manpage, command was broken over
+	  two lines, which is illegal.
+
+2003-02-26  Andreas Kupries  <andreask@activestate.com>
+
+	* configure:    Fixed hangup on Linux systems where arguments
+	* configure.in: to cc in the variable CC caused the subordinate
+	                configure of tiff to choke (A which command
+			hanged itself).
+
+	* bmp/tests/bmp.test:   Updated the testsuite to use the new 'img::*'
+	* gif/tests/gif.test:   package names instead of the old 'tkimg::*'.
+	* ico/tests/ico.test:   Thanks to Don Porter <dgp@users.sourceforge.net>
+	* jpeg/tests/jpeg.test: for noticing this. Patch also by him.
+	* pcx/tests/pcx.test:
+	* pixmap/tests/pixmap.test:
+	* png/tests/png.test:
+	* ppm/tests/ppm.test:
+	* sgi/tests/sgi.test:
+	* sun/tests/sun.test:
+	* tga/tests/tga.test:
+	* tiff/tests/tiff.test:
+	* xbm/tests/xbm.test:
+	* xpm/tests/xpm.test:
+
+2003-02-12  Andreas Kupries <andreas_kupries@users.sourceforge.net>
+
+	* README: Removed format documentation from the file. Added
+	  reference to manpages, and doctools.
+
+	* Completed documentation work.
+
+2003-02-06  Andreas Kupries <andreas_kupries@users.sourceforge.net>
+
+	* doc/img.man:     Started to work on new user documentation.
+	* doc/img-bmp.man: Using the doctools format for easy writing
+	* doc/img-gif.man: and easy conversion to other formats.
+	* doc/img-ico.man: 
+	* doc/img-jpeg.man:   Given the uniformity of most of the
+	* doc/img-pcx.man:    handlers a template system is used
+	* doc/img-pixmap.man: (doctools extended to handle [include]
+	* doc/img-png.man:    files, and allow parameterization through
+	* doc/img-ppm.man:    variables ([vset] command).
+	* doc/img-ps.man:
+	* doc/img-sgi.man:
+	* doc/img-sun.man:
+	* doc/img-tga.man:
+	* doc/img-tiff.man:
+	* doc/img-window.man:
+	* doc/img-xbm.man:
+	* doc/img-xpm.man:
+	* doc/img.man:
+
+	* doc/format-footer.inc: Template files, included by most of
+	* doc/format-header.inc: the handler manpages.
+	* doc/format-middle.inc:
+
+
+2003-01-23  Andreas Kupries <andreas_kupries@users.sourceforge.net>
+
+	* Touched all sub-modules, added -I/path/to/sources/of/module/base
+	  so that they are able to find the tkimg.h header even if base is
+	  not installed yet. Same principle as for access to the jpegtcl,
+	  etc. headers.
+
+2003-01-21  Andreas Kupries <andreas_kupries@users.sourceforge.net>
+
+	* configure:    Fixed [Tkimg bug 655408] reported by Heinz-Detlev
+	* configure.in: Koch <hdkoch@users.sourceforge.net>. The change in
+	* Makefile.in:  aclocal.m4 fixing the problem with the propagation
+	                of options to the sub-configure files also allows
+	                us to use a simple 'make all' when compiling the
+	                individual modules. Installation is not required
+	                for them to find their requirements. Removed the
+	                macro AC_PREFIX_PROGRAM(tclsh) and subsequent
+	                conditionals from the master configure.in. We have
+	                no need of special code for --prefix /
+	                --exec-prefix in the master. The standard code
+	                supplied by autoconf itself is just
+	                fine. Regenerated the configure file.
+
+2003-01-08  Andreas Kupries  <andreask@activestate.com>
+
+	* aclocal.m4: Added this file, was missing. Fixed bug in
+	  TEA_CONFIG_COLLECT.
+
+2002-12-09  Andreas Kupries <andreas_kupries@users.sourceforge.net>
+
+	* configure.in:
+	* configure:
+	* aclocal.m4:
+	* Makefile.in: New master files for building all packages in
+	  the extension. The installation collects all shared libraries in
+	  one directory, using a big package index file for all packages.
+
+	* base/: configure.in: Added DPACKAGE, is now 'img::base' instead
+	  of 'tkimg'.
+
+	* bmp, gif, ico, jpeg, pcx, pixmap, png, ppm, ps, sgi, sun, tga,
+	  tiff, window, xbm, xpm:
+	  Changed 'tkimg::' to 'img::'
+
+2002-12-06  Andreas Kupries  <andreask@activestate.com>
+
+	* bmp:
+	* gif:
+	* jpeg:
+	* png:
+	* tiff:
+	* xpm:
+	* xbm: Created testsuites for these handlers. Essentially the
+	  existing big testsuite was split into per handler
+	  testsuites. All pass.
+
+	* sun:
+	* sgi:
+	* ico:
+	* pcx:
+	* ppm:
+	* tga: Added testsuites, templated upon the original ones.
+
+	  SGI has trouble. What goes in, does not come out exactly the
+	  same. I am not sure if there is a bug, or if there is some
+	  intentional change made by the handler.
+
+	* ps: (+pdf)
+	* window:
+	* pixmap: Without testsuites.
+
+	* init.c (_Init): Had to be changed to use '1.3' too.
+
+2002-12-04  Andreas Kupries <andreas_kupries@users.sourceforge.net>
+
+	* tkimg/base/tkimg.c:
+	* tkimg/bmp/Makefile.in:
+	* tkimg/gif/Makefile.in:
+	* tkimg/ico/Makefile.in:
+	* tkimg/init.c:
+	* tkimg/jpeg/Makefile.in:
+	* tkimg/libjpeg/tcl/jpegtcl.c:
+	* tkimg/libpng/tcl/pngtcl.c:
+	* tkimg/libtiff/tcl/tifftcl.c:
+	* tkimg/libz/tcl/zlibtcl.c:
+	* tkimg/pcx/Makefile.in:
+	* tkimg/pixmap/Makefile.in:
+	* tkimg/pixmap/configure:
+	* tkimg/pixmap/configure.in:
+	* tkimg/pixmap/pixmap.c:
+	* tkimg/pixmap/pixmapInt.h:
+	* tkimg/png/Makefile.in:
+	* tkimg/ppm/Makefile.in:
+	* tkimg/ps/Makefile.in:
+	* tkimg/sgi/Makefile.in:
+	* tkimg/sun/Makefile.in:
+	* tkimg/tga/Makefile.in:
+	* tkimg/tiff/Makefile.in:
+	* tkimg/window/Makefile.in:
+	* tkimg/xbm/Makefile.in:
+	* tkimg/xpm/Makefile.in:
+
+	  Smoothed out more trouble with DLLIMPORT / DLLEXPORT on
+	  Windows. Fixed problems with building 'pixmap'.
+
+2002-12-03  Andreas Kupries <andreas_kupries@users.sourceforge.net>
+
+	* libjpeg/tcl:
+	* libpng/tcl:
+	* libz/tcl:
+	* libtiff/tcl:
+	* base:
+
+	  Weeded out discrepancies in definition versus usage of BUILD_xxx
+	  macros controlling DLLEXPORT / DLLIMPORT on windows. The
+	  capitalization in configure(.in) and header was different.
+
+2002-11-28  Andreas Kupries <andreas_kupries@users.sourceforge.net>
+
+	* ps/: New directory, PS + PDF handler (photo image types).
+
+	* png/: New directory, PNG handler (photo image types).
+
+	* tiff/: New directory, TIFF handler (photo image types).
+
+	* window/: New directory, WINDOW handler (photo image
+	  type). Conversion of the original Img sources to TEA 2 provided
+	  by Paul Obermeier <obermeier@users.sourceforge.net>.
+
+	* xpm/: New directory, XPM handler (photo image type). Conversion
+	  of the original Img sources to TEA 2 provided by Paul Obermeier
+	  <obermeier@users.sourceforge.net>.
+
+	* xbm/: New directory, XBM handler (photo image type). Conversion
+	  of the original Img sources to TEA 2 provided by Paul Obermeier
+	  <obermeier@users.sourceforge.net>.
+
+	* tga/: New directory, TGA handler (photo image type). Code
+	  provided by Paul Obermeier <obermeier@users.sourceforge.net>.
+
+	* sun/: New directory, SUN handler (photo image type). Code
+	  provided by Paul Obermeier <obermeier@users.sourceforge.net>.
+
+	* sgi/: New directory, SGI handler (photo image type). Code
+	  provided by Paul Obermeier <obermeier@users.sourceforge.net>.
+
+	* ppm/: New directory, PPM handler (photo image type). Code
+	  provided by Paul Obermeier <obermeier@users.sourceforge.net>.
+
+	* pcx/: New directory, PCX handler (photo image type). Code
+	  provided by Paul Obermeier <obermeier@users.sourceforge.net>.
+
+	* ico/: New directory, ICO handler (photo image type). Code
+	  provided by Paul Obermeier <obermeier@users.sourceforge.net>.
+
+2002-11-26  Andreas Kupries <andreas_kupries@users.sourceforge.net>
+
+	* init.c: Extended to allow registration of a second format. This
+	  format is able to share functions with the first one. Current
+	  user for this feature: The ps/pdf combo handler.
+
+2002-11-19  Andreas Kupries <andreas_kupries@users.sourceforge.net>
+
+	* init.c: New file. Contains generic initialization code for a
+	  photo image type. Parameterized by the individual format
+	  handlers with the package name (in various forms). First user is
+	  'tkimg::bmp'.
+
+	* bmp/: New directory, BMP handler (photo image type).
+	* gif/: s.a, GIF handler (photo image type).
+	* jpeg/: s.a, JPEG handler (photo image type).
+
+2002-11-18  Andreas Kupries <andreas_kupries@users.sourceforge.net>
+
+	* base: New directory. Base package for format handlers to draw
+	  upon. Build system based on TEA 2. Exports a stub table. The
+	  source code is a modified copy of the relevant sources in the
+	  main directory, making this package completely independent of
+	  the existing sources.
+
+2002-11-18  Andreas Kupries  <andreask@activestate.com>
+
+	* libz/tcl:
+	* libpng/tcl:
+	* libjpeg/tcl:
+	* libtiff/tcl: New directories, tcl packages wrapping around the
+	  support libraries, exporting their functionality via a stub
+	  table. Based on TEA 2. First step in the reorganization of the
+	  whole code base for easier configuration and building. The code
+	  of the support libraries is linked directly into the wrapper
+	  libraries. This means that the wrappers do not use support
+	  libraries installed on the system. Support for this will come at
+	  a later stage.
+
+	* libpng/png.c: Added casts to prevent compiler error.
+	* imgInt.h: Fixed small typo.
+
+2002-10-15  Andreas Kupries  <andreask@activestate.com>
+
+	* configure.in: Changed to propagate an initial CFLAGS value to
+	  the final definition. A TEA condition (SHARED_BUILD == 1)
+	  squashed it, causing it the build system to loose the
+	  +DAportable we specify for the AS PA-RISC2.2 build host. This is
+	  a problem for _all_ TEA and TEA 2 based configure files.
+
+2002-10-04  Andreas Kupries  <andreask@activestate.com>
+
+	* libjpeg/configure:
+	* libtiff/tiff.h:
+	* configure.in:
+	* Makefile.in:
+	* imgTIFF.c: Folding a number of band-aid patches to make tkImg
+	  compile on the ActiveState hosts back into the sources.
+
+	  When using gcc have to link -lgcc into the main, png, and tiff
+	  libraries. Have to propagate host specification to subordniate
+	  configure scripts. Have to explicitly link in '-lm -lc' on
+	  AIX. Disable a number of typedef's in the TIFF code which are
+	  provided by AIX headers. Avoid unwanted usage of the memcpy
+	  macro on AIX.
+
+2002-09-25  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	* Makefile.in: better use of libdir. Add jpegconfdir to includes.
+	Add srcdir prefix for installation of *.tcl. (steffen)
+
+	* configure: regen'd
+	* configure.in: add support for --with-tcl|tkinclude (steffen)
+
+	* imgUnixPmap.c: #define XPutImage to empty for OSX. (steffen)
+
+	* imgWindow.c: include X libs for OSX. (steffen)
+
+2002-06-19  Andreas Kupries <andreas_kupries@users.sourceforge.net>
+
+	* imgTIFF.c: Ifdef'd code choosing either stdarg.h or
+	  varargs.h. The Tcl header does this selection since 8.1., and in
+	  8.4 it has changed significantly, causing the code here to
+	  select a different file than tcl itself, causing compile
+	  problems. Thanks to Joe English for his help in tracking this
+	  down.
+
+2002-06-17  Andreas Kupries <andreas_kupries@users.sourceforge.net>
+
+	* imgBMP.c (CommonReadBMP): 
+	* imgGIF.c (CommonReadGIF): 
+	* imgJPEG.c (CommonReadJPEG): 
+	* imgPS.c (ChanReadPDF): 
+	* imgWindow.c (ObjReadWin): 
+	* imgXPM.c (CommonReadXPM): 
+	* imgUtil.c (ImgPhotoPutBlock): Updated to handle changes
+	  introduced into Tk by TIP #98.
+
+2002-05-27  Andreas Kupries <andreas_kupries@users.sourceforge.net>
+
+	* tools/install.tcl: Fixed mismatched brackets.

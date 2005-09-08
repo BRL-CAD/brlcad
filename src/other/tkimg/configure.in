@@ -1,0 +1,72 @@
+dnl	This file is an input file used by the GNU "autoconf" program to
+dnl	generate the file "configure", which is run during Tk installation
+dnl	to configure the system for the local environment.
+AC_INIT(init.c)
+
+AC_CONFIG_AUX_DIR(tclconfig)
+CONFIGDIR=${srcdir}/tclconfig
+AC_SUBST(CONFIGDIR)
+
+# @(#) configure.in 1.0 97/2/11 12:50:30
+
+IMG_VERSION=1.3
+IMG_MAJOR_VERSION=1
+IMG_MINOR_VERSION=2
+IMG_PATCH_LEVEL="1.2.4"
+VERSION=${IMG_VERSION}
+
+###  AC_PREFIX_PROGRAM(tclsh)
+###  
+###  if test "x${prefix}" = "xNONE"; then
+###      prefix=/usr/local
+###  fi
+###  if test "x${exec_prefix}" = "xNONE"; then
+###      exec_prefix="${prefix}"
+###  fi
+
+AC_SUBST(IMG_VERSION)
+AC_SUBST(IMG_PATCH_LEVEL)
+AC_SUBST(IMG_MAJOR_VERSION)
+AC_SUBST(IMG_MINOR_VERSION)
+
+TEA_SETUP_COMPILER
+
+## All relevant packages are configuration subdirectories.
+
+# I. Support
+
+# Remove all arguments after the command name. Without doing that we
+# might transmit something like 'gcc -pipe' down to the sub
+# configure's, and they may hang in 'which gcc -pipe' (platform
+# dependent. So far only seen for Linux).
+
+CC=`echo $CC | sed -e 's/ .*$//'`
+
+TEA_CONFIG_COLLECT
+TEA_CONFIG_SUBDIR(libz/tcl,   [])
+TEA_CONFIG_SUBDIR(libpng/tcl, [--with-zlibtcl=`pwd`/libz/tcl])
+TEA_CONFIG_SUBDIR(libtiff/tcl,[])
+TEA_CONFIG_SUBDIR(libjpeg/tcl,[])
+TEA_CONFIG_SUBDIR(base,       [])
+TEA_CONFIG_SUBDIR(bmp,        [--with-tkimg=`pwd`/base])
+TEA_CONFIG_SUBDIR(gif,        [--with-tkimg=`pwd`/base])
+TEA_CONFIG_SUBDIR(ico,        [--with-tkimg=`pwd`/base])
+TEA_CONFIG_SUBDIR(jpeg,       [--with-tkimg=`pwd`/base --with-jpegtcl=`pwd`/libjpeg/tcl])
+TEA_CONFIG_SUBDIR(pcx,        [--with-tkimg=`pwd`/base])
+TEA_CONFIG_SUBDIR(pixmap,     [--with-tkimg=`pwd`/base])
+TEA_CONFIG_SUBDIR(png,        [--with-tkimg=`pwd`/base --with-pngtcl=`pwd`/libpng/tcl --with-zlibtcl=`pwd`/libz/tcl])
+TEA_CONFIG_SUBDIR(ppm,        [--with-tkimg=`pwd`/base])
+TEA_CONFIG_SUBDIR(ps,         [--with-tkimg=`pwd`/base])
+TEA_CONFIG_SUBDIR(sgi,        [--with-tkimg=`pwd`/base])
+TEA_CONFIG_SUBDIR(sun,        [--with-tkimg=`pwd`/base])
+TEA_CONFIG_SUBDIR(tga,        [--with-tkimg=`pwd`/base])
+TEA_CONFIG_SUBDIR(tiff,       [--with-tkimg=`pwd`/base --with-tifftcl=`pwd`/libtiff/tcl --with-zlibtcl=`pwd`/libz/tcl --with-jpegtcl=`pwd`/libjpeg/tcl])
+TEA_CONFIG_SUBDIR(window,     [--with-tkimg=`pwd`/base])
+TEA_CONFIG_SUBDIR(xbm,        [--with-tkimg=`pwd`/base])
+TEA_CONFIG_SUBDIR(xpm,        [--with-tkimg=`pwd`/base])
+
+#--------------------------------------------------------------------
+#	Finally
+#--------------------------------------------------------------------
+
+AC_OUTPUT(Makefile)

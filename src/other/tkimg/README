@@ -1,0 +1,246 @@
+
+		Tcl/Tk Image formats (TkImg)
+		(Version 1.3 / December 2002)
+
+		Jan Nijtmans, Andreas Kupries
+
+This file contains a collection of format handlers for the Tk photo
+image type, and a new image type, pixmaps.  It can be used in
+combination with Tcl/Tk 8.0 or later but 8.3.2 (or 8.4, when
+available) are highly recommended.
+
+Included in this distribution are the most recent versions (as of
+august 2000) of the libz, libpng, libungif, libjpeg, and libtiff
+libraries. These are not required, unless you need support for the
+PNG, JPEG, or TIFF format. Note that you have to build these libraries
+to support the named formats, even if your system already has shared
+libraries for these formats. This is because the libraries here are
+built such that they can be loaded as packages by the Tcl/Tk core,
+making the handling of the various dependencies much easier. The last
+version, 1.2.4, used a modified copy of Tcl's functions for loading of
+shared libraries to load the support libraries at runtime. These have
+been abandoned in favor of the new approach.
+
+BACKGROUND TO BUILDING
+
+The TkImg sources have been heavily refactored. Instead of building
+one big package there are several small packages most of which are
+independent of each other.
+
+All packages employ a TEA 2 based build system (configure/Make) for
+easy configuration and building. This means that 99% of the options to
+configure are the same for all the packages.
+
+All packages save for the supporting ones (see below) have names
+starting with 'img'. For compatibility with older scripts the
+package index file of the utility package 'img::base' declares a
+pseudo-package 'Img' which loads all packages provided by this
+extension.
+
+BUILDING - The convenient way
+
+The toplevel directory of tkImg contains a configure and Makefile for
+convenient configuration and building of all packages in the
+extension.
+
+Run this configure script in a build directory of your choice to
+configure all packages, then run
+
+	make all
+	make install
+
+in the build directory. The most important options for configure are
+--prefix and --exec-prefix which tell the build system where to find
+Tcl and Tk, and also where to install the results of the builds
+(header, shared libraries, ...).
+
+This convenient build installs all shared libraries in a single
+directory 'Img<VERSION>, together with a union package index for all
+packages.
+
+If the builder requires only a subset of the packages he can use
+
+	make all
+
+to build all packages, but must not use 'make install' in the top
+build directory. Instead run
+
+	make install
+
+in the sub directories of the build directory which contain the
+requested packages, and their dependencies !
+
+PACKAGES AND THEIR DEPENDENCIES
+
+This section is for people who want to bypass the master
+configure/Makefile.
+
+At the bottom of the hierarchy of dependencies are the 'support
+packages'. They encapsulate the support libraries for ZIP, TIFF, PNG
+and JPEG in packages directly loadable by Tcl. They provide the
+functionality of their underlying libraries via stub-tables. The names
+of these packages are:
+
+	Name		Directory		Dependency
+	-------------------------------------------------
+	zlibtcl		tkimg/libz/tcl
+	pngtcl		tkimg/libpng/tcl	zlibtcl
+	jpegtcl		tkimg/libjpeg/tcl
+	tifftcl		tkimg/libtiff/tcl
+	-------------------------------------------------
+
+The package 'pngtcl' depends on 'zlibtcl' and has to be built after
+it. Beyond that the order of building is free. Their TEA build systems
+can be found in the directories listed above.
+
+The configure/Makefile's in the directories
+
+	tkimg/libz, tkimg/libpng, tkimg/libjpeg, tkimg/libtiff
+
+must _not_ be used under no circumstances.
+
+
+At the next level is the package 'tkimg'. It provides utility
+functions used by all format handlers, and therefore has to be built
+before any of them. Its TEA build system can be found in the directory
+
+	Name		Directory		Dependency
+	-------------------------------------------------
+	img::base	tkimg/base
+	-------------------------------------------------
+
+Beyond that are the packages providing the various format
+handlers. They can be built in any order. Some of them depend on
+supporting packages, as noted below. Their names and directories are
+
+	Name		Directory	Dependency
+	-------------------------------------------------
+	img::bmp	tkimg/bmp
+	img::gif	tkimg/gif
+	img::ico	tkimg/ico
+	img::jpeg	tkimg/jpeg	jpegtcl
+	img::pcx	tkimg/pcx
+	img::pixmap	tkimg/pixmap
+	img::png	tkimg/png	pngtcl, zlibtcl
+	img::ppm	tkimg/ppm
+	img::ps	tkimg/ps
+	img::sgi	tkimg/sgi
+	img::sun	tkimg/sun
+	img::tga	tkimg/tga
+	img::tiff	tkimg/tiff	tifftcl, zlibtcl, jpegtcl
+	img::window	tkimg/window
+	img::xbm	tkimg/xbm
+	img::xpm	tkimg/xpm
+	-------------------------------------------------
+
+CONFIGURE
+
+The source distributions have "configure", which  has the following
+possibilities:
+	configure ?options?
+
+Some possible options:
+	--prefix=<dir>		Install headers in <dir>/include.
+				Default: "/usr/local"
+	--exec-prefix=<dir>	Install libraries in <dir>/lib.
+				Default: "${prefix}"
+	--with-tcl=<dir>	Find Tcl libraries in <dir> and include files in
+				<dir>/../include or <dir>/../generic.
+				Default: "${exec-prefix}/lib" or a sibling directory
+				of the Img build directory.
+	--with-tk=<dir>		Find Tk libraries in <dir> and include files in
+				<dir>/../include or <dir>/../generic.
+				Default: the same values as given by --with-tcl
+				or a sibling directory of the Img build directory.
+	--disable-shared	Force the creation of static libraries.
+	--disable-stubs		Disable stub support. This is necessary if you
+	                        want to run Img 1.3 with Tcl/Tk 8.0 up to 8.0.5.
+
+	--with-tkimg=<dir>	Find the 'tkimg' libraries in <dir> and include files
+				in <dir>/../include
+
+	Packages dependent on one or more of the support packages have
+	appropriate options to locate their libraries and headers, if
+	they cannot be found via --prefix and --exec-prefix
+
+	Use configure --help to query each configure for the full set
+	of options available to it.
+
+
+MAKE & INSTALL
+
+	'make', or 'make all' will build any package.
+
+	'make install' will install its headers and libraries in the
+	directories specified via --prefix/include and --exec-prefix/lib.
+
+USE
+
+If you want to use one or more of new image formats to be available in
+your own scripts, add a line like the following somewhere in your
+script:
+
+	package require img::FORMAT
+
+where FORMAT stands for the name of the format requested. See the list
+in section 'PACKAGES AND THEIR DEPENDENCIES' for the available
+formats. Each format will automatically load all of the packages it is
+dependent on.
+
+The line
+	package require Img
+
+is still legal and will load all format handlers provided by this
+extension.
+
+As an example, have a look at the file "demo.tcl"
+
+For further options see the manpages.
+
+
+DOCUMENTATION
+
+The documentation coming with the distribution is written in the
+doctools format (see tcllib).
+
+	NOTE:
+		The Img documentation makes use of features (include
+		files and variables) which are not part of an official
+		tcllib release yet. A cvs snapshot of tcllib is
+		required.
+
+
+
+PLATFORMS
+	tested:
+		Linux 2.0.30	(gcc, egcs)
+		IRIX 6.2	(cc, 32 bits only)
+		ULTRIX 4.1	(cc, gcc, egcs)
+		ULTRIX 4.4	(cc 3.0)
+		HP-UX-9		(cc, gcc, egcs)
+		HP-UX-10.2	(gcc, egcs)
+		SunOS-4.1.2     (cc)
+		Solaris 2.5	(gcc, egcs)
+		FreeBSD	2.2	(gcc, egcs)
+		Windows	95/98/NT(gcc-2.95/MS Visual C++ 4.2/5.0/6.0)
+
+	Not done yet:
+		Mac		) someone interested
+		VMS		) to try??????
+
+	Other machines and OS's should work too. 
+
+Feedback about other OS's and compilers is appreciated. Please
+help me in making this package better.
+
+--
+		Jan Nijtmans, CMG Oost-Nederland B.V.
+		email: jan.nijtmans@xs4all.nl (private)
+		       jan.nijtmans@cmg.nl    (work)
+		url:   http://purl.oclc.org/net/nijtmans/
+
+		Andreas Kupries, ActiveState Corp
+		email:	andreas_kupries@users.sourceforg.net	(private)
+			akupries@shaw.ca			(private)
+			andreask@activestate.com		(work)
+		url:	http://www.purl.org/NET/akupries/

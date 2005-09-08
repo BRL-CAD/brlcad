@@ -1,0 +1,283 @@
+TODO
+	Test suites
+	Documentation
+	Last: Removal of old sources and build system.
+
+=====================================================================
+Proposal for a reorganization of the build system used by Img and its
+supporting libraries.
+=====================================================================
+
+Glossary
+--------
+
+Up front a small glossary of terms to avoid confusion later.
+
+[1]	'package library' (can be shortend to 'package').
+
+	A shared library having all the special code (xx_Init,
+	xx_SafeInit) to allow the tcl core to load it as a Tcl
+	package.
+
+	Examples:	[incr Tcl], [Trf], ...
+
+[2]	'support library'
+
+	A shared library which can not be loaded as a Tcl package.
+
+	Examples:	libz, libjpeg, libpng, ...
+
+Intro
+-----
+
+I propose to slash the existing source code into a number of separate
+packages. I do _not_ propose to place each of these new packages into
+a separate source tree. The files stay in the existing tree, and this
+tree is augmented with additional directories containing the files
+relevant to configuring and building the new packages. Essentially
+configure.in and Makefile.in. All build systems will be based upon the
+TEA 2 system introduced in the sampleextension (See Tcl SF project).
+
+Note: I created the new build systems for TclXML/DOM/XSLT and their
+various subpackages (expat, libxml2, ...) in this way, with success
+IMHO :)
+
+There will be one package containing the common utilities and one
+package per image format, and support library [*]. The old name of the
+package, Img, will be used to define a 'super'-package which loads all
+of the existing functionality into the interpreter when required. This
+maintains compatibility with existing scripts.
+
+From the points of view of scripts there will be _no_ change in the
+perceived functionality. It should however be easier to write
+additional image format handlers using the framework provided by Img.
+
+[*] As for why one package per support library see the next section.
+
+
+Handling of the support libraries coming with Img
+(and of support libraries) in general.
+-----------------------------------------------------
+
+Available options, discussion
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+(1)     Create the support libraries as part of the package for the
+        format requiring them. This is essentially a static linkage.
+
+	This one of the easiest ways to build a support library.
+
+        It also implies that the functionality a support library used
+        in multiple format handlers is loaded multiple times. To me
+        this a severe disadvantage.
+
+(2)     Create the support libraries independent of the using
+        packages, as shared libraries
+
+        (a)     Link support at compile time into the packages.
+
+                (1)     Via -library. In other words implicit usage of
+                        the shared library loader provided by the OS.
+
+			Still relatively easy to do, although it
+		        requires more care to portably generate shared
+		        libraries. Libries used multiple times are
+		        loaded only once.
+
+			Also requires a lot of additional support code
+			if the library a supporting library is linked
+			to is stored in and loaded from a non-native
+			filesystem. In other words when used in wrapped
+			application and such. The support code has to
+			copy the support libraries to the same place
+			in the native FS the using library is copied
+			to, _before_ the using library is loaded, so
+			that the support libraries are available to
+			the dyn.loader provided by the OS.
+
+
+                (2)	Via direct usage of the objects. In other
+			words static linkage. This is the same as (1).
+
+
+        (b)     Link support at runtime.
+
+                (1)	Via explicit usage of the shared library
+                        loader provided by the OS.
+
+			Generation of the support library is like for
+			(2a1). Loading however is done by explicitly
+			invoking the shared library loader of the
+			OS. This allows the Tcl library to perform the
+			necessary copying should the support library
+			reside in a non-native filesystem.
+
+		        As the support library does not follow the
+		        convention of a tcl package (per definitionem)
+		        the standard load functionality of Tcl cannot
+		        be used to load the library. This means that
+
+		        (a)	either the load functionality in Tcl
+				is refactored into
+
+		                -       portable low-level loading of
+				        any shared library
+
+		                -	and high-level layer for
+		                        handling loaded shared
+		                        libraries which are tcl
+		                        packages.
+
+		        (b)	or the 'img' package has to carry the
+				source code implementing the portable
+				loading of shared libraries.
+
+		        Option (b) I consider rather unpleasant as it
+			leads to the duplication of functionality in
+			all high-level packages requiring the loading
+			support libraries. Trf and TrfCrypt for
+			example have need of this functionality too.
+
+
+                (2)	Wrap support library into thin package
+                        exporting its functionality via a
+                        stub-table. In other words, turn the support
+                        library into a package library.
+                
+
+			In contrast to (2b1) the support library is
+			not created as simple shared library, but with
+			all the necessary additional code to cause tcl
+			to recognize it as true package.
+
+		        A stub table is used to provide the
+			functionality of the support library to other
+			packages.
+
+		        This option could also be seen as (2b1c). It
+		        makes the library available in a simple manner
+		        with the need to refactor the load
+		        functionality provided by the Tcl core. It
+		        allows us to drive the reoganization of Img
+		        independent of the Tcl core, making do with
+		        the existing functionality. It also
+		        essentially removes the impetus to actually
+		        implement (2b1a). The good (enough) is the
+		        enemy of the best.
+
+Conclusion
+~~~~~~~~~~
+
+I have chosen option (2b2) for the support libraries. My reasons for
+doing so are this:
+
+*       The state of the implementation of (2b1/1) is unclear. It
+        requires a TIP, and no movement is seen on that front.
+
+        The chosen option has no dependency on this vaporous
+        functionality.
+
+*       The chosen option allows us to use TEA 2 based build systems
+        for the support libraries themselves. They are easier to create
+        and later maintain, at least I perceive them so, due to the
+        larger number of existing TEA 2 based package I can draw upon
+        as templates for the new packages.
+
+*       Note that the chosen option does not prevent static linking of
+        the support libraries. Currently Img uses special code to
+        setup the function tables with static information when linking
+        Img statically. These function tables are essentially stub
+        tables. This means that the explicit usage of stub tables for
+        the support libraries makes this mode easier to handle too, as
+        no special code is required anymore.
+
+*       Note that the actually created package is also able use
+        -library to dynamically link to the actual support library. In
+        this mode it can make use of pre-installed libraries. In this
+        way we get a mixture of (2b2) and (2a1).
+
+
+Files, and their organization into packages
+-------------------------------------------
+
+         | Package       | Stubtable     | Files          | Notes
+        -+---------------+---------------+----------------+------------------------
+Ok       | tkimg         | Yes           | img.h          | Base package. Common
+Ok       |               |               | imgInt.h       | utilities helping in
+Ok       |               |               | imgInit.c      | the implementation of
+Ok       |               |               | imgObj.c       | image handlers.
+Ok       |               |               | imgUtil.c      |
+        -+---------------+---------------+----------------+------------------------
+Ok       | tkimg::bmp    |               | imgBMP.c       | BMP format
+Ok       | tkimg::gif    |               | imgGIF.c       | GIF format
+Ok       | tkimg::window |               | imgWindow.c    | windows
+Ok       | tkimg::xbm    |               | imgXBM.c       | XBM format.
+Ok       | tkimg::xpm    |               | imgXPM.c       | XPM format.
+Ok       | tkimg::ps     |               | imgPS.c        | PostScript + PDF format
+Ok       | tkimg::jpeg   |               | imgJPEG.c      | JPEG format
+Ok       | tkimg::png    |               | imgPNG.c       | PNG format
+Ok       | tkimg::pcx    |               |                | PCX format (Paintbrush)
+Ok       | tkimg::sgi    |               |                | SGI format (SGI native)
+Ok       | tkimg::sun    |               |                | SUN format (Sun raster)
+Ok       | tkimg::tga    |               |                | TGA format (Truevision Targa)
+        -+---------------+---------------+----------------+------------------------
+Ok       | tkimg::tiff   |               | imgTIFF.c      | TIFF format
+Ok       |               |               | imgTIFFjpeg.c  | Various additional
+Ok       |               |               | imgTIFFpixar.c | codecs.
+Ok       |               |               | imgTIFFzip.c   |
+        -+---------------+---------------+----------------+------------------------
+Ok       | tkimg::pixmap |               | imgPmap.h      | pixmap format
+Ok       |               |               | imgPmap.c      | pixmap ? (PPM, XPM ?)
+Ok       |               |               | imgUnixPmap.c  |
+Ok       |               |               | imgWinPmap.c   |
+        -+---------------+---------------+----------------+------------------------
+Ok       | Img           |               | --             | Super package loading
+Ok       |               |               |                | all of the above.
+        -+---------------+---------------+----------------+------------------------
+Ok       | jpegtcl       | Yes           | libjpeg/       | jpeg support library
+Ok       | pngtcl        | Yes           | libpng/        | png support library
+Ok       | zlibtcl       | Yes           | libz/          | zip support library
+Ok       | tifftcl       | Yes           | libtiff/       | tiff support library
+        -+---------------+---------------+----------------+------------------------
+
+None of the '*Support' packages provides tcl level commands. They only
+provide their own functionality, through stubtables. Note that the png
+support library depends on libz, and thus has to require this package.
+
+
+
+Misc. notes
+-----------
+
+*       The zip support library (zlib, libz) is also used by
+
+	-	tkHTML,
+	-	JCW's 'zipper' package,
+	-	zipvfs
+	-	mk4vfs
+	-	and Trf.
+
+        Placement of the ZlibSupport package with Img for the time
+        being is no problem and easy for tkHTML, as that package often
+        may want to use Img for the handling of additional image
+        formats in web pages. It is more of an issue when considering
+        zipper and Trf as there is more disconnect between them and
+        Img.
+
+        In the future we should move ZlibSupport into its own project,
+        or module in a project. Maybe directly into the source base of
+        zlib itself ?
+
+        The same can be considered for the PNG support.
+
+        Regarding JPEG the maintainership of the library much more
+        vague. In other words I don't know how to talk to for this.
+
+
+*       Regarding the code of img itself. Are the functions in
+        'imgObj' still necessary ? Especially ByteArray seems to
+        be a duplication of functionality provided by the Tcl core.
+
+
+*	Future: Reflect handler functionality into the Tcl level,
+	allow creation of format handlers in Tcl.

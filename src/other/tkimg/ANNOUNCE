@@ -1,0 +1,81 @@
+I'm happy to announce version 1.3 of the "tkImg" package
+(formerly known as 'Img").
+
+This package enhances Tk, adding support for many other Image formats.
+
+Changes compared to version 1.2.4:
+
+-	New formats: ICO, PCX, PPM, SGI, SUN, TGA.
+-	New build system, based upon TEA 2.
+-	Refactored into several smaler and more independent
+	packages. See file README in the (source) distributions for
+	more information.
+-	Bug fixes and enhancements in some formats.
+
+This version only works with Tcl/Tk 8.0 or higher (tested up to
+8.4a1). If you are using Tk4.2 or lower, please stick with Img1.1.4
+(which is still available).
+
+Currently there are two identical source distributions:
+	tkimg13.zip             (for Windows)	(about 2.9 Mb)
+	tkimg1.3.tar.gz         (for Unix)	(about 2.6 Mb)
+	tkimg1.3.tar.bz2        (for Unix)	(about 1.7 Mb)
+
+All these files can be downloaded from:
+	http://source.net/project/tkimg/
+
+The most recent info is always available at:
+	http://source.net/project/tkimg/
+
+See the README on how to build and use the packages.
+
+If you want to write images to disk which contain transparency
+information (e.g. GIF89 or PNG with alpha channel), you need
+at least Tk 8.3. Without lower Tk versions only GIF87 will be
+written, and the alpha channel will be missing from PNG files. In
+other words: The background color will not be as intended but
+everything else should be O.K.
+
+For PNG, JPEG and TIFF support the supporting packages have to be
+build and installed. See the file README for more in-depth
+explanations.
+
+For postscript you need Ghostscript (version 2.6 or higher) to be
+available on your system.
+
+Many thanks to the following people (alphabetical):
+
+Paul Obermeier <obermeier@users.sourceforge.net>
+  Bugfixes and all new formats.
+Roger E Critchlow Jr <rec@elf.org>
+  BMP improvements.
+Nick Ing-Simmons <nick@ni-s.u-net.com>
+  XBM write function, perl-Tk port and many other useful
+  suggestions.
+Andreas Kupries <a.kupries@westend.com>
+  Testing on Linux, and supplying original "makefile.vc"
+  files for the Windows port.
+Ioi K. Lam <ioi@eng.sun.com>
+  Pixmap image type (imgPmap.c, imgUnixPmap.c, imgWinPmap.c),
+  many functions of which are used in imgXPM.c as well.
+Tom Lane <tgl@sss.pgh.pa.us>
+  Wrote the JPEG handler (but I'm responsible for the
+  dynamical loading part).
+Lolo <lolo@pcsig22.etsimo.uniovi.es>
+  Original GIF87 write function.
+Larry Virden <lvirden@cas.org>
+  Bug reports and other useful remarks.
+Mario Weilguni <mweilguni@sime.com>
+  Many improvements to imgXPM.c.
+
+Enjoy,
+	Jan Nijtmans, CMG Oost-Nederland B.V.
+	email: jan.nijtmans@xs4all.nl (private)
+	       jan.nijtmans@cmg.nl    (work)
+	url:   http://purl.oclc.org/net/nijtmans/
+
+	Andreas Kupries, ActiveState Corp
+	email:	andreas_kupries@users.sourceforg.net	(private)
+		akupries@shaw.ca			(private)
+		andreask@activestate.com		(work)
+	url:	http://www.purl.org/NET/akupries/
