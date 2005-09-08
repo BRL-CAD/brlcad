@@ -61,8 +61,8 @@
 	method qray {args}
 	method rt {args}
 	method rtabort {args}
-	method rtcheck {args}
 	method rtarea {args}
+	method rtcheck {args}
 	method rtedge {args}
 	method rtweight {args}
 	method set_outputHandler {args}
@@ -186,12 +186,12 @@
     $dg rtabort
 }
 
-::itcl::body Drawable::rtcheck {args} {
-    eval $dg rtcheck $args
-}
-
 ::itcl::body Drawable::rtarea {args} {
     eval $dg rtarea $args
+}
+
+::itcl::body Drawable::rtcheck {args} {
+    eval $dg rtcheck $args
 }
 
 ::itcl::body Drawable::rtedge {args} {
