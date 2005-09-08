@@ -1721,8 +1721,10 @@ ogl_choose_visual(struct dm *dmp,
 	LocalFree(buf);
 
 	return (PIXELFORMATDESCRIPTOR *)NULL;
+#if 0
     } else {
 	bu_log("ogl_choose_visual: iPixelFormat - %d\n");
+#endif
     }
 
     ppfd->nSize = sizeof(PIXELFORMATDESCRIPTOR);
@@ -1735,7 +1737,9 @@ ogl_choose_visual(struct dm *dmp,
 
     ((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.zbuf = 1;
     iPixelFormat = ChoosePixelFormat(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, ppfd);
+#if 0
     bu_log("ogl_choose_visual: iPixelFormat (after ChoosePixelFormat) - %d\n");
+#endif
     good = SetPixelFormat(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, iPixelFormat, ppfd);
 
     if (good)

@@ -80,10 +80,6 @@
 #  endif
 #  include <GL/gl.h>
 #  include "dm-ogl.h"
-#  ifdef USE_FBSERV
-extern int _ogl_open_existing();
-extern int ogl_close_existing();
-#  endif /* USE_FBSERV */
 #endif /* DM_OGL */
 
 #ifdef USE_FBSERV
@@ -92,7 +88,6 @@ extern int ogl_close_existing();
 extern int _X24_open_existing();
 extern int X24_close_existing();
 #  endif
-extern int fb_refresh();
 #endif /* USE_FBSERV */
 
 #endif /* DM_X || _WIN32 */

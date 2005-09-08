@@ -48,6 +48,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include <stdio.h>
 #include "machine.h"
 #include "vmath.h"
+#include "dm.h"
 
 static int	code(fastf_t x, fastf_t y);
 
