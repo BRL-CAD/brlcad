@@ -110,7 +110,11 @@ static const char *ogl_device_name = "/dev/ogl";
 
 
 int
+#ifdef BRLCAD_DEBUG
+Fb_d_Init(Tcl_Interp *interp)
+#else
 Fb_Init(Tcl_Interp *interp)
+#endif
 {
 	const char *version_number;
 

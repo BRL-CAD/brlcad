@@ -84,10 +84,6 @@ int fb_null_setcursor(FBIO *ifp, const unsigned char *bits, int xbits, int ybits
 	return	0;
 }
 
-#ifdef IF_REMOTE
-extern FBIO remote_interface;	/* not in list[] */
-#endif
-
 #ifdef IF_ADAGE
 extern FBIO adage_interface;
 #endif
@@ -217,6 +213,7 @@ fb_open(char *file, int width, int height)
 		}
 		i++;
 	}
+
 	/* Not in list, check special interfaces or disk files */
 	/* "/dev/" protection! */
 	if( strncmp(file, "/dev/", 5) == 0 ) {
@@ -224,6 +221,7 @@ fb_open(char *file, int width, int height)
 		free( (void *) ifp );
 		return	FBIO_NULL;
 	}
+
 #ifdef IF_REMOTE
 	if( fb_totally_numeric(file) || strchr( file, ':' ) != NULL ) {
 		/* We have a remote file name of the form <host>:<file>

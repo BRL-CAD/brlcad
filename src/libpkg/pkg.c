@@ -83,6 +83,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #else
 #  include <process.h>
 #  include <winsock.h>
+#  include <fcntl.h>
 #endif
 
 #ifdef HAVE_STRING_H
@@ -160,6 +161,29 @@ int pkg_inget(register struct pkg_conn *, char *, int);
 #define DMSG(s)	/**/
 #endif
 
+int
+pkg_init() {
+#ifdef _WIN32
+    WORD wVersionRequested;
+    WSADATA wsaData;
+
+    wVersionRequested = MAKEWORD(1, 1);
+    if (WSAStartup(wVersionRequested, &wsaData) != 0) {
+	fprintf(stderr, "pkg_startup:  could not find a usable WinSock DLL" );
+	return(-1);
+    }
+#endif
+
+    return 0; /* good */
+}
+
+void
+pkg_terminate() {
+#ifdef _WIN32
+    WSACleanup();
+#endif
+}
+
 /*
  * Routines to insert/extract short/long's into char arrays,
  * independend of machine byte order and word-alignment.
@@ -236,6 +260,11 @@ pkg_plong(unsigned char *msgp, long unsigned int l)
 struct pkg_conn *
 pkg_open(char *host, char *service, char *protocol, char *uname, char *passwd, struct pkg_switch *switchp, void (*errlog) (/* ??? */))
 {
+#ifdef _WIN32
+	LPHOSTENT lpHostEntry;
+	register SOCKET netfd;
+	SOCKADDR_IN saServer;
+#else
 	struct sockaddr_in sinme;		/* Client */
 	struct sockaddr_in sinhim;		/* Server */
 #ifdef HAVE_UNIX_DOMAIN_SOCKETS
@@ -245,6 +274,7 @@ pkg_open(char *host, char *service, char *protocol, char *uname, char *passwd, s
 	register int netfd;
 	struct	sockaddr *addr;			/* UNIX or INET addr */
 	int	addrlen;			/* length of address */
+#endif
 
 	pkg_ck_debug();
 	if( pkg_debug )  {
@@ -260,6 +290,46 @@ pkg_open(char *host, char *service, char *protocol, char *uname, char *passwd, s
 	if( errlog == NULL )
 		errlog = pkg_errlog;
 
+#ifdef _WIN32
+	if ((lpHostEntry = gethostbyname(host)) == NULL) {
+	    pkg_perror(errlog, "pkg_open:  gethostbyname");
+	    return(-1);
+	}
+
+	if ((netfd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) == INVALID_SOCKET) {
+	    pkg_perror(errlog, "pkg_open:  socket");
+	    return(-1);
+	}
+
+#if 0
+	_setmode(netfd, _O_BINARY);
+#endif
+
+	bzero((char *)&saServer, sizeof(saServer));
+
+	if (atoi(service) > 0) {
+	    saServer.sin_port = htons((unsigned short)atoi(service));
+	} else {
+	    register struct servent *sp;
+	    if ((sp = getservbyname(service, "tcp")) == NULL) {
+		sprintf(errbuf,"pkg_open(%s,%s): unknown service\n",
+			host, service );
+		errlog(errbuf);
+		return(PKC_ERROR);
+	    }
+	    saServer.sin_port = sp->s_port;
+	}
+	saServer.sin_family = AF_INET;
+	saServer.sin_addr = *((LPIN_ADDR)*lpHostEntry->h_addr_list);
+
+	if (connect(netfd, (LPSOCKADDR)&saServer, sizeof(struct sockaddr)) == SOCKET_ERROR) {
+	    pkg_perror(errlog, "pkg_open:  client connect");
+	    closesocket(netfd);
+	    return(-1);
+	}
+
+	return(pkg_makeconn(netfd, switchp, errlog));
+#else
 	bzero((char *)&sinhim, sizeof(sinhim));
 	bzero((char *)&sinme, sizeof(sinme));
 
@@ -329,6 +399,7 @@ ready:
 		return(PKC_ERROR);
 	}
 	return( pkg_makeconn(netfd, switchp, errlog) );
+#endif
 }
 
 /*
@@ -373,15 +444,19 @@ pkg_transerver(struct pkg_switch *switchp, void (*errlog) (/* ??? */))
 int
 pkg_permserver(char *service, char *protocol, int backlog, void (*errlog) (/* ??? */))
 {
+	register struct servent *sp;
+	int	pkg_listenfd;
+#ifdef _WIN32
+	SOCKADDR_IN saServer;
+#else
 	struct sockaddr_in sinme;
 #ifdef HAVE_UNIX_DOMAIN_SOCKETS
 	struct sockaddr_un sunme;		/* UNIX Domain */
 #endif
-	register struct servent *sp;
 	struct	sockaddr *addr;			/* UNIX or INET addr */
 	int	addrlen;			/* length of address */
-	int	pkg_listenfd;
 	int	on = 1;
+#endif
 
 	pkg_ck_debug();
 	if( pkg_debug )  {
@@ -396,6 +471,53 @@ pkg_permserver(char *service, char *protocol, int backlog, void (*errlog) (/* ??
 	if( errlog == NULL )
 		errlog = pkg_errlog;
 
+#ifdef _WIN32
+	bzero((char *)&saServer, sizeof(saServer));
+
+	if (atoi(service) > 0) {
+	    saServer.sin_port = htons((unsigned short)atoi(service));
+	} else {
+	    if ((sp = getservbyname(service, "tcp")) == NULL) {
+		sprintf(errbuf,
+			"pkg_permserver(%s,%d): unknown service\n",
+			service, backlog );
+		errlog(errbuf);
+		return(-1);
+	    }
+	    saServer.sin_port = sp->s_port;
+	}
+
+	if ((pkg_listenfd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) == INVALID_SOCKET) {
+	    pkg_perror(errlog, "pkg_permserver:  socket");
+	    return(-1);
+	}
+
+#if 0
+	_setmode(pkg_listenfd, _O_BINARY);
+#endif
+
+	saServer.sin_family = AF_INET;
+	saServer.sin_addr.s_addr = INADDR_ANY;
+
+	if (bind(pkg_listenfd, (LPSOCKADDR)&saServer, sizeof(struct sockaddr)) == SOCKET_ERROR) {
+	    pkg_perror(errlog, "pkg_permserver: bind");
+	    closesocket(pkg_listenfd);
+
+	    return(-1);
+	}
+
+	if (backlog > 5)
+	    backlog = 5;
+
+	if (listen(pkg_listenfd, backlog) == SOCKET_ERROR) {
+	    pkg_perror(errlog, "pkg_permserver:  listen");
+	    closesocket(pkg_listenfd);
+
+	    return(-1);
+	}
+
+	return(pkg_listenfd);
+#else
 	bzero((char *)&sinme, sizeof(sinme));
 
 #ifdef HAVE_UNIX_DOMAIN_SOCKETS
@@ -459,6 +581,7 @@ ready:
 		return(-1);
 	}
 	return(pkg_listenfd);
+#endif
 }
 
 /*
@@ -501,7 +624,11 @@ pkg_getclient(int fd, struct pkg_switch *switchp, void (*errlog) (/* ??? */), in
 	}
 #endif
 	do  {
+#ifdef _WIN32
+		s2 = accept(fd, (struct sockaddr *)NULL, NULL);
+#else
 		s2 = accept(fd, (struct sockaddr *)&from, &fromlen);
+#endif
 		if (s2 < 0) {
 			if(errno == EINTR)
 				continue;
@@ -749,7 +876,11 @@ pkg_send(int type, char *buf, int len, register struct pkg_conn *pc)
 		bcopy( (char *)&hdr, tbuf, sizeof(hdr) );
 		if( len > 0 )
 			bcopy( buf, tbuf+sizeof(hdr), len );
+#ifdef _WIN32
+		if ((i = send(pc->pkc_fd, tbuf, len+sizeof(hdr), 0)) != len+sizeof(hdr)) {
+#else
 		if( (i = write( pc->pkc_fd, tbuf, len+sizeof(hdr) )) != len+sizeof(hdr) )  {
+#endif
 			if( i < 0 )  {
 				if( errno == EBADF )  return(-1);
 				pkg_perror(pc->pkc_errlog, "pkg_send: tbuf write");
@@ -763,7 +894,11 @@ pkg_send(int type, char *buf, int len, register struct pkg_conn *pc)
 		return(len);
 	}
 	/* Send them separately */
+#ifdef _WIN32
+	if ((i = send(pc->pkc_fd, (char *)&hdr, sizeof(hdr), 0)) != sizeof(hdr)) {
+#else
 	if( (i = write( pc->pkc_fd, (char *)&hdr, sizeof(hdr) )) != sizeof(hdr) )  {
+#endif
 		if( i < 0 )  {
 			if( errno == EBADF )  return(-1);
 			pkg_perror(pc->pkc_errlog, "pkg_send: header write");
@@ -775,7 +910,11 @@ pkg_send(int type, char *buf, int len, register struct pkg_conn *pc)
 		return(-1);		/* amount of user data sent */
 	}
 	if( len <= 0 )  return(0);
+#ifdef _WIN32
+	if ((i = send(pc->pkc_fd, buf, len, 0)) != len) {
+#else
 	if( (i = write( pc->pkc_fd, buf, len )) != len )  {
+#endif
 		if( i < 0 )  {
 			if( errno == EBADF )  return(-1);
 			pkg_perror(pc->pkc_errlog, "pkg_send: write");
@@ -874,7 +1013,11 @@ pkg_2send(int type, char *buf1, int len1, char *buf2, int len2, register struct 
 			bcopy( buf1, tbuf+sizeof(hdr), len1 );
 		if( len2 > 0 )
 			bcopy( buf2, tbuf+sizeof(hdr)+len1, len2 );
+#ifdef _WIN32
+		if ((i = send(pc->pkc_fd, tbuf, len1+len2+sizeof(hdr), 0)) != len1+len2+sizeof(hdr)) {
+#else
 		if( (i = write( pc->pkc_fd, tbuf, len1+len2+sizeof(hdr) )) != len1+len2+sizeof(hdr) )  {
+#endif
 			if( i < 0 )  {
 				if( errno == EBADF )  return(-1);
 				pkg_perror(pc->pkc_errlog, "pkg_2send: tbuf write");
@@ -888,7 +1031,11 @@ pkg_2send(int type, char *buf1, int len1, char *buf2, int len2, register struct 
 		return(len1+len2);
 	}
 	/* Send it in three pieces */
+#ifdef _WIN32
+	if ((i = send(pc->pkc_fd, (char *)&hdr, sizeof(hdr), 0)) != sizeof(hdr)) {
+#else
 	if( (i = write( pc->pkc_fd, (char *)&hdr, sizeof(hdr) )) != sizeof(hdr) )  {
+#endif
 		if( i < 0 )  {
 			if( errno == EBADF )  return(-1);
 			pkg_perror(pc->pkc_errlog, "pkg_2send: header write");
@@ -902,7 +1049,11 @@ pkg_2send(int type, char *buf1, int len1, char *buf2, int len2, register struct 
 		(pc->pkc_errlog)(errbuf);
 		return(-1);		/* amount of user data sent */
 	}
+#ifdef _WIN32
+	if ((i = send(pc->pkc_fd, buf1, len1, 0)) != len1) {
+#else
 	if( (i = write( pc->pkc_fd, buf1, len1 )) != len1 )  {
+#endif
 		if( i < 0 )  {
 			if( errno == EBADF )  return(-1);
 			pkg_perror(pc->pkc_errlog, "pkg_2send: write buf1");
@@ -917,7 +1068,11 @@ pkg_2send(int type, char *buf1, int len1, char *buf2, int len2, register struct 
 		return(i);		/* amount of user data sent */
 	}
 	if( len2 <= 0 )  return(i);
+#ifdef _WIN32
+	if ((i = send(pc->pkc_fd, buf2, len2, 0)) != len2) {
+#else
 	if( (i = write( pc->pkc_fd, buf2, len2 )) != len2 )  {
+#endif
 		if( i < 0 )  {
 			if( errno == EBADF )  return(-1);
 			pkg_perror(pc->pkc_errlog, "pkg_2send: write buf2");
@@ -1713,7 +1868,11 @@ pkg_suckin(register struct pkg_conn *pc)
 	}
 
 	/* Take as much as the system will give us, up to buffer size */
+#ifdef _WIN32
+	if ((got = recv(pc->pkc_fd, &pc->pkc_inbuf[pc->pkc_inend], avail, 0)) <= 0) {
+#else
 	if( (got = read( pc->pkc_fd, &pc->pkc_inbuf[pc->pkc_inend], avail )) <= 0 )  {
+#endif
 		if( got == 0 )  {
 			if( pkg_debug )  {
 				pkg_timestamp();
@@ -1725,12 +1884,14 @@ pkg_suckin(register struct pkg_conn *pc)
 			ret = 0;	/* EOF */
 			goto out;
 		}
+#ifndef _WIN32
 		pkg_perror(pc->pkc_errlog, "pkg_suckin: read");
 		sprintf(errbuf, "pkg_suckin: read(%d, x%lx, %d) ret=%d inbuf=x%lx, inend=%d\n",
 			pc->pkc_fd, (long)(&pc->pkc_inbuf[pc->pkc_inend]), avail,
 			got,
 			(long)(pc->pkc_inbuf), pc->pkc_inend );
 		(pc->pkc_errlog)(errbuf);
+#endif
 		ret = -1;
 		goto out;
 	}

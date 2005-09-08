@@ -22,8 +22,8 @@ adrt_bench_LDADD = \
 	${LIBM} \
 	${LIBZ}
 
-#noinst_HEADERS = \
-#	dispatcher.h
+noinst_HEADERS = \
+	dispatcher.h
 
 MAINTAINERCLEANFILES = Makefile.in
 

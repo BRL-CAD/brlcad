@@ -35,7 +35,6 @@ void *app_data;
 int app_size;
 int server_socket;
 pthread_t bench_thread;
-tienet_sem_t bench_net_sem;
 
 
 static void* bench_ipc(void *ptr) {
@@ -67,12 +66,10 @@ static void* bench_ipc(void *ptr) {
 
   /* wait for connection before streaming data */
   addrlen = sizeof(client);
-  tienet_sem_post(&bench_net_sem);
   client_socket = accept(server_socket, (struct sockaddr *)&client, &addrlen);
 
   /* send the application data */
-  printf("ipc connection established, sending data: %d bytes\n", app_size);
-  tienet_send(client_socket, &app_size, sizeof(int), 0);
+printf("ipc connection established, sending data\n");
   tienet_send(client_socket, app_data, app_size, 0);
 }
 
@@ -82,17 +79,12 @@ void bench(char *proj, int dump) {
   struct sockaddr_in client;
   struct hostent h;
   int i, res_len, client_socket;
+  char image_name[16];
   common_work_t work;
-  void *res_buf;
-  unsigned char *image24;
-  clock_t ticks1, ticks2, ticks3;
-  tfloat t;
+  void *mesg, *res_buf;
 
 
-  ticks1 = clock();
-  tienet_sem_init(&bench_net_sem, 0);
-
-  printf("loading and prepping ...\n");
+  printf("Loading and Prepping...\n");
   /* Camera with no threads */
   util_camera_init(&camera, 1);
 
@@ -139,10 +131,8 @@ void bench(char *proj, int dump) {
     exit(1);
   }
 
-  /* stream and unpack the data */
-  tienet_sem_wait(&bench_net_sem);
+
   common_unpack(&db, &tie, &camera, client_socket);
-  tie_prep(&tie);
 
   /* Prep */
   common_env_prep(&db.env);
@@ -152,27 +142,35 @@ void bench(char *proj, int dump) {
   bench_frame = malloc(4 * sizeof(tfloat) * db.env.img_w * db.env.img_h);
   memset(bench_frame, 0, 4 * sizeof(tfloat) * db.env.img_w * db.env.img_h);
 
-  /* Render an image */
+  /* Render a 2000x1500 (3 megapixel) image */
   work.orig_x = 0;
   work.orig_y = 0;
-  work.size_x = db.env.img_w;
-  work.size_y = db.env.img_h;
-  work.format = COMMON_BIT_DEPTH_24;
+  work.size_x = 2000;
+  work.size_y = 1500;
+  mesg = malloc(sizeof(common_work_t));
 
-  printf("rendering ...\n");
-  res_buf = NULL;
-  ticks2 = clock();
+  printf("Rendering...\n");
   util_camera_render(&camera, &db, &tie, &work, sizeof(common_work_t), &res_buf, &res_len);
-  ticks3 = clock();
 
-  printf("prep   time: %.3f sec\n", (tfloat)(ticks2 - ticks1) / (tfloat)CLOCKS_PER_SEC);
-  t = (tfloat)(ticks3 - ticks2) / (tfloat)CLOCKS_PER_SEC;
-  printf("render time: %.3f sec\n", t);
-  printf("rays /  sec: %d\n", (int)((db.env.img_w * db.env.img_h) / t));
-  if(dump) {
-    image24 = &((unsigned char *)res_buf)[sizeof(common_work_t)];
-    util_image_save_ppm("dump.ppm", image24, db.env.img_w, db.env.img_h);
-  }
+  free(mesg);
+
+
+  /* Initialize the work dispatcher */
+//  rise_dispatcher_init();
+//    rise_dispatcher_generate(&db, NULL, 0);
+
+#if 0
+    {
+      unsigned char *image24;
+
+      image24 = (unsigned char *)malloc(3 * db.env.img_w * db.env.img_h);
+      sprintf(image_name, "image_%.4d.ppm", i);
+      rise_post_process(rise_master_frame, db.env.img_w, db.env.img_h);
+      util_image_convert_128to24(image24, rise_master_frame, db.env.img_w, db.env.img_h);
+      util_image_save_ppm(image_name, image24, db.env.img_w, db.env.img_h);
+      free(image24);
+    }
+#endif
 
   util_camera_free(&camera);
   free(app_data);
