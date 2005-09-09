@@ -67,15 +67,19 @@ typedef struct regmap_s {
 } regmap_t;
 
 
+typedef struct mesh_map_s {
+  char mesh[256];
+  char prop[256];
+} mesh_map_t;
+
+
 static struct rt_i *rtip;	/* rt_dirbuild returns this */
 FILE *adrt_fh;
-int region_count = 0;
-int prop_num;
+int region_count = 0, prop_num, regmap_num, use_regmap;
 property_t *prop_list;
-int regmap_num;
 regmap_t *regmap_list;
-int use_regmap;
-unsigned int total_tri_num;
+mesh_map_t *mesh_map;
+unsigned int total_tri_num, mesh_map_ind;
 
 struct bu_vls*	region_name_from_path(struct db_full_path *pathp);
 
@@ -155,7 +159,7 @@ static int reg_start_func(struct db_tree_state *tsp,
   color[1] = combp->rgb[1];
   color[2] = combp->rgb[2];
 
-  if(!color[0] && !color[1] && !color[2]) {
+  if(color[0]+color[1]+color[2] == 0) {
     color[0] = 192;
     color[1] = 192;
     color[2] = 192;
@@ -311,21 +315,16 @@ static union tree *leaf_func(struct db_tree_state *tsp,
     VMINMAX(rtip->mdl_min, rtip->mdl_max, stp->st_min);
     VMINMAX(rtip->mdl_min, rtip->mdl_max, stp->st_max);
 
-    /* Pack bot/mesh name */
-#if 0
-    c = strlen(pathp->fp_names[pathp->fp_len-1]->d_namep) + 1;
-    common_pack_write(common_g_app_data, common_g_app_ind, &c, sizeof(char));
-    common_pack_write(common_g_app_data, common_g_app_ind, pathp->fp_names[pathp->fp_len-1]->d_namep, c);
-#else
+    /* Write bot/mesh name */
     c = strlen(reg_name) + 1;
     fwrite(&c, 1, 1, adrt_fh);
     fwrite(reg_name, 1, c, adrt_fh);
-#endif
 
-    /* Set the properties name */
-    c = strlen(prop_name) + 1;
-    fwrite(&c, 1, 1, adrt_fh);
-    fwrite(prop_name, 1, c, adrt_fh);
+    mesh_map = (mesh_map_t *)realloc(mesh_map, sizeof(mesh_map_t) * (mesh_map_ind + 1));
+    strcpy(mesh_map[mesh_map_ind].mesh, reg_name);
+    strcpy(mesh_map[mesh_map_ind].prop, prop_name);
+    mesh_map_ind++;
+
 
     /* Pack number of vertices */
     fwrite(&bot->num_vertices, sizeof(int), 1, adrt_fh);
@@ -551,8 +550,10 @@ int main(int argc, char *argv[]) {
 
 
   region_count = 0;
+  mesh_map_ind = 0;
   prop_num = 0;
   prop_list = NULL;
+  mesh_map = NULL;
 
   /*
   * Load database.
@@ -591,21 +592,22 @@ int main(int argc, char *argv[]) {
   strcat(filename, ".env");
   adrt_fh = fopen(filename, "w");
 
-  strcpy(filename, argv[1]);
-  strcat(filename, ".adrt");
-  fprintf(adrt_fh, "geometry_file,%s\n", filename);
-  fprintf(adrt_fh, "properties_file,properties.db\n");
-  fprintf(adrt_fh, "textures_file,textures.db\n");
-  fprintf(adrt_fh, "frames_file,frames.db\n");
-  fprintf(adrt_fh, "image_size,640,480,80,80\n");
-  fprintf(adrt_fh, "rendering_method,path,128\n");
+  fprintf(adrt_fh, "geometry_file,%s.adrt\n", argv[1]);
+  fprintf(adrt_fh, "properties_file,%s.properties\n", argv[1]);
+  fprintf(adrt_fh, "textures_file,%s.textures\n", argv[1]);
+  fprintf(adrt_fh, "mesh_map_file,%s.map\n", argv[1]);
+  fprintf(adrt_fh, "frames_file,%s.frames\n", argv[1]);
+  fprintf(adrt_fh, "image_size,512,384,128,128\n");
+  fprintf(adrt_fh, "rendering_method,normal\n");
 
   fclose(adrt_fh);
 
   /*
   * Generate a properties file
   */
-  adrt_fh = fopen("properties.db", "w");
+  strcpy(filename, argv[1]);
+  strcat(filename, ".properties");
+  adrt_fh = fopen(filename, "w");
   for(i = 0; i < prop_num; i++) {
     fprintf(adrt_fh, "properties,%s\n", prop_list[i].name);
     fprintf(adrt_fh, "color,%f,%f,%f\n", prop_list[i].color[0], prop_list[i].color[1], prop_list[i].color[2]);
@@ -617,13 +619,27 @@ int main(int argc, char *argv[]) {
   /*
   * Generate a textures file
   */
-  adrt_fh = fopen("textures.db", "w");
+  strcpy(filename, argv[1]);
+  strcat(filename, ".textures");
+  adrt_fh = fopen(filename, "w");
+  fclose(adrt_fh);
+
+  /*
+  * Generate a mesh map file
+  */
+  strcpy(filename, argv[1]);
+  strcat(filename, ".map");
+  adrt_fh = fopen(filename, "w");
+  for(i = 0; i < mesh_map_ind; i++)
+    fprintf(adrt_fh, "%s,%s\n", mesh_map[i].mesh, mesh_map[i].prop);
   fclose(adrt_fh);
 
   /*
   * Generate a frames file
   */
-  adrt_fh = fopen("frames.db", "w");
+  strcpy(filename, argv[1]);
+  strcat(filename, ".frames");
+  adrt_fh = fopen(filename, "w");
   fprintf(adrt_fh, "frame,1\n");
   fprintf(adrt_fh, "camera,10.0,10.0,10.0,0.0,0.0,0.0,0.0,20.0,0.0\n");
   fclose(adrt_fh);
