@@ -444,6 +444,7 @@ void util_camera_render(util_camera_t *camera, common_db_t *db, tie_t *tie, void
     tienet_flip(&work.format, &work.format, sizeof(short));
   }
 
+
   /* allocate memory for scanmap */
   scan_map = (unsigned char *)malloc(work.size_y);
   memset(scan_map, 1, work.size_y);
@@ -478,4 +479,6 @@ void util_camera_render(util_camera_t *camera, common_db_t *db, tie_t *tie, void
 
   free(scan_map);
   pthread_mutex_destroy(&td.mut);
+
+  printf("res_len: %d\n", *res_len);
 }

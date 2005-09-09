@@ -120,7 +120,8 @@ void tienet_slave_worker(int port, char *host) {
   struct sockaddr_in	master, slave;
   struct hostent	h;
   short			op;
-  int			slave_socket, size, res_len, data_max, ind;
+  unsigned int		size, res_len, data_max, ind;
+  int			slave_socket;
   uint64_t		rays_fired;
   void			*data, *res_buf;
   tie_t			tie;
@@ -233,8 +234,8 @@ void tienet_slave_worker(int port, char *host) {
       tienet_slave_fcb_work(&tie, data, size, &res_buf, &res_len);
 
       /* Send Result Back, length of: result + op_code + rays_fired + result_length + compression_length */
-      if(res_len+sizeof(short)+sizeof(uint64_t)+sizeof(int)+sizeof(long) > data_max) {
-        data_max = res_len+sizeof(short)+sizeof(uint64_t)+sizeof(int)+sizeof(long);
+      if(res_len+sizeof(short)+sizeof(uint64_t)+sizeof(int)+sizeof(unsigned int) > data_max) {
+        data_max = res_len+sizeof(short)+sizeof(uint64_t)+sizeof(int)+sizeof(unsigned int);
         data = realloc(data, data_max);
       }
 
@@ -267,16 +268,17 @@ void tienet_slave_worker(int port, char *host) {
 
       dest_len = comp_max+32;
       compress(comp_buf, &dest_len, res_buf, res_len);
+      size = (unsigned int)dest_len;
     
       /* Pack Compressed Result Length */
-      if(tienet_endian) tienet_flip(&dest_len, &dest_len, sizeof(long));
-      memcpy(&((char*)data)[ind], &dest_len, sizeof(long));
-      if(tienet_endian) tienet_flip(&dest_len, &dest_len, sizeof(long));
-      ind += sizeof(long);
+      if(tienet_endian) tienet_flip(&size, &size, sizeof(unsigned int));
+      memcpy(&((char*)data)[ind], &size, sizeof(unsigned int));
+      if(tienet_endian) tienet_flip(&size, &size, sizeof(unsigned int));
+      ind += sizeof(unsigned int);
 
       /* Pack Compressed Result Data */
-      memcpy(&((char*)data)[ind], comp_buf, dest_len);
-      ind += dest_len;
+      memcpy(&((char*)data)[ind], comp_buf, size);
+      ind += size;
 #else
       /* Pack Result Data */
       memcpy(&((char*)data)[ind], res_buf, res_len);
@@ -299,7 +301,8 @@ void tienet_slave_daemon(int port) {
   socklen_t		addrlen;
   fd_set		readfds;
   short			op;
-  int			master_socket, slave_socket, size, res_len, data_max, disconnect, ind;
+  unsigned int		size, res_len, data_max, disconnect, ind;
+  int			master_socket, slave_socket;
   uint64_t		rays_fired;
   void			*data, *res_buf;
   tie_t			tie;
@@ -418,8 +421,8 @@ void tienet_slave_daemon(int port) {
             tienet_slave_fcb_work(&tie, data, size, &res_buf, &res_len);
 
           /* Send Result Back, length of: result + op_code + rays_fired + result_length + compression_length */
-          if(res_len+sizeof(short)+sizeof(uint64_t)+sizeof(int)+sizeof(long) > data_max) {
-            data_max = res_len+sizeof(short)+sizeof(uint64_t)+sizeof(int)+sizeof(long);
+          if(res_len+sizeof(short)+sizeof(uint64_t)+sizeof(int)+sizeof(unsigned int) > data_max) {
+            data_max = res_len+sizeof(short)+sizeof(uint64_t)+sizeof(int)+sizeof(unsigned int);
             data = realloc(data, data_max);
           }
 
@@ -452,16 +455,17 @@ void tienet_slave_daemon(int port) {
 
           dest_len = comp_max+32;
           compress(comp_buf, &dest_len, res_buf, res_len);
-    
+          size = (unsigned int)dest_len;    
+
           /* Pack Compressed Result Length */
-          if(tienet_endian) tienet_flip(&dest_len, &dest_len, sizeof(long));
-          memcpy(&((char*)data)[ind], &dest_len, sizeof(long));
-          if(tienet_endian) tienet_flip(&dest_len, &dest_len, sizeof(long));
-          ind += sizeof(long);
+          if(tienet_endian) tienet_flip(&size, &size, sizeof(unsigned int));
+          memcpy(&((char*)data)[ind], &size, sizeof(unsigned int));
+          if(tienet_endian) tienet_flip(&size, &size, sizeof(unsigned int));
+          ind += sizeof(unsigned int);
 
           /* Pack Compressed Result Data */
-          memcpy(&((char*)data)[ind], comp_buf, dest_len);
-          ind += dest_len;
+          memcpy(&((char*)data)[ind], comp_buf, size);
+          ind += size;
 #else
           /* Pack Result Data */
           memcpy(&((char*)data)[ind], res_buf, res_len);
