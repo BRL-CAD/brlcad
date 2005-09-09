@@ -1,7 +1,7 @@
 DRAFT   DRAFT   DRAFT   DRAFT   DRAFT   DRAFT   DRAFT   DRAFT   DRAFT
 
 Specific details about producing an animation of a gun tube,
-using the BRL CAD Package and various IBD simulation codes.
+using the BRL-CAD Package and various IBD simulation codes.
 
 As things presently stand, the central part of this linkage is a program
 called TUBE.C that takes two input files describing the motion of the

@@ -37,7 +37,7 @@
  *  deletions.  Then add the following line to the other "options" lines
  *  near the top of "PICKLE".
  *
- *  options	SHMPOOL=1024	# Increase for BRL CAD libfb
+ *  options	SHMPOOL=1024	# Increase for BRL-CAD libfb
  *
  *  Once you have modified "PICKLE" finish the procedure by typing:
  *

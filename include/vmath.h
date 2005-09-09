@@ -25,7 +25,7 @@
  *
  *  Note that while many people in the computer graphics field use
  *  post-multiplication with row vectors (ie, vector * matrix * matrix ...)
- *  the BRL CAD system uses the more traditional representation of 
+ *  the BRL-CAD system uses the more traditional representation of 
  *  column vectors (ie, ... matrix * matrix * vector).  (The matrices
  *  in these two representations are the transposes of each other). Therefore,
  *  when transforming a vector by a matrix, pre-multiplication is used, ie:

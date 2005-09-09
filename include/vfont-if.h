@@ -21,7 +21,7 @@
 /** @file vfont-if.h
  *
  *  This header file describes the in-memory format used by
- *  the BRL CAD Package routines for manipulating fonts stored
+ *  the BRL-CAD Package routines for manipulating fonts stored
  *  in the Berkeley VFONT format.
  *  Note that the VFONT files are in the format found on a VAX --
  *  no conversion has been applied.

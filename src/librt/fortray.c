@@ -24,7 +24,7 @@
 /** @file fortray.c
  *  A general-purpose set of FORTRAN-callable interface routines to
  *  permit any FORTRAN program to use LIBRT, the ray-tracing library
- *  of the BRL CAD Package.
+ *  of the BRL-CAD Package.
  *
  *  
  *  Author -
