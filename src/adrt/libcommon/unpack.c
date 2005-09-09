@@ -561,8 +561,10 @@ void common_unpack_mesh(common_db_t *db, int socknum, tie_t *tie) {
     math_mat_invert(db->mesh_list[db->mesh_num-1]->matinv, db->mesh_list[db->mesh_num-1]->matrix, 4);
 
     /* Apply Transformation Matrix to Vertices */
-    for(i = 0; i < vnum; i++)
-      math_vec_transform(vlist[i], vlist[i], db->mesh_list[db->mesh_num-1]->matrix);
+    for(i = 0; i < vnum; i++) {
+      v[0] = vlist[i];
+      math_vec_transform(vlist[i], v[0], db->mesh_list[db->mesh_num-1]->matrix);
+    }
 
     /* Allocate memory for ADRT triangles */
     db->mesh_list[db->mesh_num-1]->tri_num = fnum;
@@ -639,6 +641,7 @@ void common_unpack_mesh_link(char *mesh_name, char *prop_name, common_db_t *db) 
     /* Find Mesh */
     if(!strcmp(mesh_name, db->mesh_list[i]->name)) {
       common_unpack_prop_lookup(prop_name, &(db->mesh_list[i]->prop));
+      db->mesh_list[i]->texture = NULL;
       return;
     }
   }

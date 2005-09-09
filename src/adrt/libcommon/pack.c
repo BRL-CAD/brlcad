@@ -585,15 +585,6 @@ void common_pack_mesh_adrt(common_db_t *db, void **app_data, int *app_ind, char 
     common_pack_write(app_data, app_ind, &c, sizeof(char));
     common_pack_write(app_data, app_ind, meshname, c);
 
-    /* Texture/Properties Name */
-#if 0
-    fread(&c, sizeof(char), 1, fh);
-    fread(texturename, sizeof(char), c, fh);
-    texturename[(int)(c++)] = 0;
-    common_pack_write(app_data, app_ind, &c, sizeof(char));
-    common_pack_write(app_data, app_ind, texturename, c);
-#endif
-
     /* Pack Number of Vertices */
     fread(&num, sizeof(int), 1, fh);
     if(endian) tienet_flip(&num, &num, sizeof(int));
