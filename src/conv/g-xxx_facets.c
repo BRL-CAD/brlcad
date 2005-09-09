@@ -177,7 +177,7 @@ char	*argv[];
 	/* Open output file */
 
 
-	/* Open brl-cad database */
+	/* Open BRL-CAD database */
 	argc -= optind;
 	argv += optind;
 	if ((dbip = db_open(argv[0], "r")) == DBI_NULL) {

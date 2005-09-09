@@ -328,7 +328,7 @@ psurf_to_nmg(struct model *m, FILE *fp, char *jfile)
 /*
  *	C R E A T E _ B R L C A D _ D B
  *
- *	Write the nmg to a brl-cad style data base.
+ *	Write the nmg to a BRL-CAD style data base.
  */
 int
 create_brlcad_db(struct rt_wdb *fpout, struct model *m, char *reg_name, char *grp_name)

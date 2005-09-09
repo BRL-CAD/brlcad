@@ -250,7 +250,7 @@ main(int argc, char **argv)
 /*
  *	A d d _ N M G _ t o _ D b
  *
- *	Write the nmg to a brl-cad style data base.
+ *	Write the nmg to a BRL-CAD style data base.
  */
 static void
 add_nmg_to_db(struct rt_wdb *fpout, struct model *m, int reg_id)

@@ -297,7 +297,7 @@ char	*argv[];
 		exit(1);
 	}
 
-	/* Open brl-cad database */
+	/* Open BRL-CAD database */
 	argc -= optind;
 	argv += optind;
 	db_name = argv[0];

@@ -461,7 +461,7 @@ char *argv[];
 	else
 		bu_bomb( "Output file must be specified!!!\n" );
 
-	/* Open brl-cad database */
+	/* Open BRL-CAD database */
 	database_index = optind;
 	if ((rtip=rt_dirbuild(argv[optind], idbuf, sizeof(idbuf))) == RTI_NULL )
 	{

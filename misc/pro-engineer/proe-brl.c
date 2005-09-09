@@ -565,7 +565,7 @@ create_unique_name( char *name )
 		if( logger ) {
 			fprintf( logger, "\tCreating rb tree for brlcad names\n" );
 		}
-		brlcad_names = bu_rb_create1( "brl-cad names", strcmp );
+		brlcad_names = bu_rb_create1( "BRL-CAD names", strcmp );
 		bu_rb_uniq_all_on( brlcad_names );
 	}
 

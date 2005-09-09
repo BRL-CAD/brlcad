@@ -164,7 +164,7 @@ static int reg_start_func(struct db_tree_state *tsp,
   /* Do a lookup conversion on the name with the region map if used */
   strcpy(name, pathp->fp_names[pathp->fp_len-1]->d_namep);
 
-  /* replace the brl-cad name with the regmap name */
+  /* replace the BRL-CAD name with the regmap name */
   if(use_regmap)
     regmap_lookup(name, tsp->ts_regionid);
 

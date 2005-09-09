@@ -1940,7 +1940,7 @@ main(int argc, char **argv)
 		}
 	}
 
-	/* Open brl-cad database */
+	/* Open BRL-CAD database */
 	if ((rtip=rt_dirbuild(argv[optind], idbuf, sizeof(idbuf))) == RTI_NULL )
 	{
 		bu_log( "rt_durbuild FAILED on %s\n", argv[optind] );

@@ -84,7 +84,7 @@
 2005-09-06  brlcad  <brlcad@users.sourceforge.net>
 
 	* sh/header.sh:
-	add support for manual pages.  brl-cad's gfdl documentation is actually dual-licensed so customize the comment block to include that detail.  less and other pagers that recognize and auto-format manpages don't work if comment is first, so make the comment block come after the .TH
+	add support for manual pages.  BRL-CAD's gfdl documentation is actually dual-licensed so customize the comment block to include that detail.  less and other pagers that recognize and auto-format manpages don't work if comment is first, so make the comment block come after the .TH
 
 2005-09-06  twingy  <twingy@users.sourceforge.net>
 

@@ -103,7 +103,7 @@ main(int argc, char **argv)
 /*
  *	C r e a t e _ B r l c a d _ D b
  *
- *	Write the nmg to a brl-cad style data base.
+ *	Write the nmg to a BRL-CAD style data base.
  */
 void
 create_brlcad_db(struct rt_wdb *fpout, struct model *m, char *reg_name, char *grp_name)

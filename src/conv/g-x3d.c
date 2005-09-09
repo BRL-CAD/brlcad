@@ -480,7 +480,7 @@ main(int argc, char **argv)
 	if( !units )
 		units = "mm";
 
-	/* Open brl-cad database */
+	/* Open BRL-CAD database */
 	if ((dbip = db_open( argv[optind] , "r")) == DBI_NULL)
 	{
 		bu_log( "Cannot open %s\n" , argv[optind] );
