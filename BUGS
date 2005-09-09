@@ -15,6 +15,10 @@ on-going issues.
 Recent Bugs
 -----------
 
+* make extrude crashes
+
+* tra in console mode outputs a warning about mged_players
+
 * mged primitive editor doesn't accept/apply values to disk for
   certain primitives (e.g. sph)
 
