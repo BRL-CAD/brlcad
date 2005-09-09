@@ -72,7 +72,7 @@ Makegroup()
 			{
 				if( !(dir[i]->referenced) )
 				{
-					/* Make the BRLCAD member record */
+					/* Make the BRL-CAD member record */
 					wmem = mk_addmember( dir[i]->name , &head.l, NULL, operator[Union] );
 					flt = (fastf_t *)dir[i]->rot;
 					for( j=0 ; j<16 ; j++ )

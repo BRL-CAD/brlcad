@@ -32,7 +32,7 @@
  */
 
 /*	This routine finds union operators in the boolean tree
-	that cannot be handled by BRLCAD (due to BRLCAD's odd
+	that cannot be handled by BRL-CAD (due to BRLCAD's odd
 	way of handling the union operator), and moves them
 	toward the root of the tree.  To get the tree into
 	a BRLCAD-acceptable format, no intersection or

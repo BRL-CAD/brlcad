@@ -45,10 +45,10 @@
 # include <unistd.h>
 #endif
 
-#include "machine.h"		/* BRLCAD specific machine data types */
+#include "machine.h"		/* BRL-CAD specific machine data types */
 #include "bu.h"
-#include "vmath.h"		/* BRLCAD Vector macros */
-#include "nurb.h"		/* BRLCAD Spline data structures */
+#include "vmath.h"		/* BRL-CAD Vector macros */
+#include "nurb.h"		/* BRL-CAD Spline data structures */
 #include "raytrace.h"
 #include "wdb.h"
 

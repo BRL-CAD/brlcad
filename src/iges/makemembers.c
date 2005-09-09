@@ -32,7 +32,7 @@
  */
 
 /*	This routine traverses a boolean tree that has been converted
-	to a BRLCAD acceptable format, and creates the member records
+	to a BRL-CAD acceptable format, and creates the member records
 	for the region.  The tree is traversed in LNR order.	*/
 
 #include "./iges_struct.h"

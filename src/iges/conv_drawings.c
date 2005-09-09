@@ -20,7 +20,7 @@
  */
 /** @file conv_drawings.c
  *
- *	Routine to convert IGES drawings to wire edges in BRLCAD NMG
+ *	Routine to convert IGES drawings to wire edges in BRL-CAD NMG
  *	structures.
  *
  *  Author -
@@ -538,7 +538,7 @@ mat_t *xform;
 			}
 		}
 
-		/* Convert to BRLCAD wire edges */
+		/* Convert to BRL-CAD wire edges */
 		nmg_vlist_to_wire_edges( s , &vhead );
 		RT_FREE_VLIST( &vhead );
 	}
@@ -751,7 +751,7 @@ struct bu_ptbl *view_vis_list;
 
 		Do_view( m , view_vis_list , view_entno[i] , (fastf_t)x[i] , (fastf_t)y[i] , (fastf_t)ang[i] );
 
-		/* write the view to the BRLCAD file if the model is not empty */
+		/* write the view to the BRL-CAD file if the model is not empty */
 		NMG_CK_MODEL( m );
 		r = BU_LIST_FIRST( nmgregion , &m->r_hd );
 		if( BU_LIST_NOT_HEAD( &r->l , &m->r_hd ) )
@@ -860,7 +860,7 @@ Conv_drawings()
 
 				Do_view( m , &view_vis_list , i , 0.0 , 0.0 , 0.0 );
 
-				/* write the drawing to the BRLCAD file if the model is not empty */
+				/* write the drawing to the BRL-CAD file if the model is not empty */
 				r = BU_LIST_FIRST( nmgregion , &m->r_hd );
 				if( BU_LIST_NOT_HEAD( &r->l , &m->r_hd ) )
 				{
@@ -898,7 +898,7 @@ Conv_drawings()
 
 	Draw_entities( m , 0 , (int *)NULL , 0 , 0.0 , 0.0 , 0.0 , 1.0 , (plane_t *)NULL , (mat_t *)NULL );
 
-	/* write the drawing to the BRLCAD file if the model is not empty */
+	/* write the drawing to the BRL-CAD file if the model is not empty */
 	r = BU_LIST_FIRST( nmgregion , &m->r_hd );
 	if( BU_LIST_NOT_HEAD( &r->l , &m->r_hd ) )
 	{

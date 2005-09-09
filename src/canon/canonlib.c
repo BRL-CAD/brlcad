@@ -434,7 +434,7 @@ ipu_put_image_frag(struct dsreq *dsp,
 
 /*	I P U _ P U T _ I M A G E
  *
- *	load a BRLCAD PIX(5) image into an IPU file.
+ *	load a BRL-CAD PIX(5) image into an IPU file.
  *	The entire image must be memory resident.
  *	Format conversion is performed.
  *

@@ -22,7 +22,7 @@
  *
  * a minimal raytracing application in BRLCAD.
  *
- * The primary BRLCAD ray-tracing API consists of calls to the function 
+ * The primary BRL-CAD ray-tracing API consists of calls to the function 
  * rt_shootray().  This function takes a single argument, the address of a
  * data structure called the "application" structure.  This data structure
  * contains crucial information, such as the origin and direction of the ray

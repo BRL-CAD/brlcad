@@ -174,14 +174,14 @@ AC_CHECK_FUNCS([drand48 getopt_long])
 AC_CHECK_LIB(z, compress, , AC_ERROR(libz is required.))
 
 
-# Compile in BRLCAD support if specified by user
+# Compile in BRL-CAD support if specified by user
 with_brlcadpfx=no
 AC_ARG_WITH(brlcad, AC_HELP_STRING(--with-brlcad=path,
-                [Specify location of BRLCAD Installation]),
+                [Specify location of BRL-CAD Installation]),
         [
                 BRLCAD_CFLAGS="-I$withval/include/brlcad"
 		BRLCAD_LDFLAGS="-L$withval/lib -lbu -ltcl8.4 -lrt"
-                AC_DEFINE(HAVE_BRLCAD,1,Checking for BRLCAD Installation)
+                AC_DEFINE(HAVE_BRLCAD,1,Checking for BRL-CAD Installation)
                 with_brlcadpfx=yes
         ]
 )

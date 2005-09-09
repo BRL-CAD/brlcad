@@ -4,7 +4,7 @@
 /* Define to 1 if you have the <arpa/inet.h> header file. */
 #define HAVE_ARPA_INET_H 1
 
-/* Checking for BRLCAD Installation */
+/* Checking for BRL-CAD Installation */
 #define HAVE_BRLCAD 1
 
 /* Define to 1 if you have the <dlfcn.h> header file. */

@@ -300,7 +300,7 @@ char *argv[];
 
 		Docolor();	/* Get color info from color definition entities */
 
-		Get_att();	/* Look for a BRLCAD attribute definition */
+		Get_att();	/* Look for a BRL-CAD attribute definition */
 
 		Evalxform();	/* Accumulate the transformation matrices */
 

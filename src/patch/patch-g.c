@@ -1265,7 +1265,7 @@ Build_solid(int l, char *name, char *mirror_name, int plate_mode, fastf_t *centr
 		/* Calculate bounding boxes */
 		nmg_region_a( r , tol );
 
-		/* Write solid to BRLCAD DB */
+		/* Write solid to BRL-CAD DB */
 		s = RT_LIST_FIRST( shell , &r->s_hd );
 
 		if( polysolid )
@@ -1650,9 +1650,9 @@ nmg_face_g( fu , pl1 );
 	nmg_region_a( r , tol );
 
 	if( debug )
-		rt_log( "writing %s to BRLCAD DB\n" , name );
+		rt_log( "writing %s to BRL-CAD DB\n" , name );
 
-	/* Write solid to BRLCAD DB */
+	/* Write solid to BRL-CAD DB */
 	s = RT_LIST_FIRST( shell , &r->s_hd );
 
 	if( polysolid )
@@ -1672,7 +1672,7 @@ nmg_face_g( fu , pl1 );
 		nmg_mirror_model( m );
 
 		if( debug )
-			rt_log( "writing  %s (mirrored) to BRLCAD DB\n" , mirror_name );
+			rt_log( "writing  %s (mirrored) to BRL-CAD DB\n" , mirror_name );
 		
 		if( polysolid )
 			write_shell_as_polysolid( outfp , mirror_name , s );

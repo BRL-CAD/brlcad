@@ -1,6 +1,6 @@
 This is an IGES CSG model (version 4.0)                                 S0000001
 This file was created by 'brl-iges'                                     S0000002
-It is a conversion from a BRLCAD model                                  S0000003
+It is a conversion from a BRL-CAD model                                  S0000003
 ,,5Hman.g,10Hwoodsman.g,30H'brl-iges' by John R. Anderson,3H1.0,32,,,,, G0000001
 5Hman.g,1.0,2,2HMM,,,13H910514.212219,1e-39,1e+73,                      G0000002
 16HJohn R. Anderson,                                      G0000003

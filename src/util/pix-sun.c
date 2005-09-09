@@ -19,7 +19,7 @@
  * information.
  */
 /** @file pix-sun.c
- *	Program to take a BRLCAD PIX format image file and convert the
+ *	Program to take a BRL-CAD PIX format image file and convert the
  *	image to a Sun Microsystems 8-bit deep color "rasterfile" format
  *	image.
  *

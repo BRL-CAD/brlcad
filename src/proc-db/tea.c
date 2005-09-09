@@ -30,9 +30,9 @@
 
 #include <stdio.h>		/* Direct the output to stdout */
 #include <unistd.h>
-#include "machine.h"		/* BRLCAD specific machine data types */
-#include "vmath.h"		/* BRLCAD Vector macros */
-#include "nurb.h"		/* BRLCAD Spline data structures */
+#include "machine.h"		/* BRL-CAD specific machine data types */
+#include "vmath.h"		/* BRL-CAD Vector macros */
+#include "nurb.h"		/* BRL-CAD Spline data structures */
 #include "raytrace.h"
 #include "wdb.h"
 
@@ -105,7 +105,7 @@ main(int argc, char **argv) 			/* really has no arguments */
 
 /* IEEE patch number of the Bi-Cubic Bezier patch and convert it
  * to a B-Spline surface (Bezier surfaces are a subset of B-spline surfaces
- * and output it to a BRLCAD binary format.
+ * and output it to a BRL-CAD binary format.
  */
 void
 dump_patch( struct face_g_snurb **surfp, pt patch )

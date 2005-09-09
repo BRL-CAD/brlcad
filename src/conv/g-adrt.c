@@ -21,7 +21,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  *
- *  BRLCAD -> ADRT Converter
+ *  BRL-CAD -> ADRT Converter
  *
  *  Author -
  *      Justin L. Shumaker

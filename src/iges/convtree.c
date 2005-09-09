@@ -32,7 +32,7 @@
  */
 
 /*	This routine controls the conversion of IGES boolean trees
-	to BRLCAD objects	*/
+	to BRL-CAD objects	*/
 
 #include "./iges_struct.h"
 #include "./iges_extern.h"

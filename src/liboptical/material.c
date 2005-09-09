@@ -204,7 +204,7 @@ load_dynamic_shader(const char *material,
 	if ( (shader_mfuncs = try_load(libname, material, sh_name)) )
 		goto done;
 
-	/* Look in BRLCAD install dir under lib dir for lib{sh_name}.so */
+	/* Look in BRL-CAD install dir under lib dir for lib{sh_name}.so */
 	sprintf(libpath, "/lib/lib%s.so", sh_name);
 	strcpy(libname, bu_brlcad_root(libpath, 0));
 	if ( (shader_mfuncs = try_load(libname, material, sh_name)) ) 

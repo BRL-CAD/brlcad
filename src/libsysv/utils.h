@@ -53,7 +53,7 @@ typedef unsigned char uch;
 /* switch off assertions (if not already off) if no REDEBUG */
 #ifndef REDEBUG
 #ifndef NDEBUG
-#if 0 /* XXX We leave assertions on for BRLCAD */
+#if 0 /* XXX We leave assertions on for BRL-CAD */
 	#define	NDEBUG	/* no assertions please */
 #endif
 #endif

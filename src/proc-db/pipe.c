@@ -43,7 +43,7 @@
  * Version 3.1
  * Changes by:	John R. Anderson
  * Date:	Wednesday May 18,1994
- *	included in BRLCAD distribution
+ *	included in BRL-CAD distribution
  */
 
 #ifndef lint

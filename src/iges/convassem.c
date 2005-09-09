@@ -33,7 +33,7 @@
 
 
 /*	This routine controls the conversion of IGES solid assemblies
-	to BRLCAD groups	*/
+	to BRL-CAD groups	*/
 
 #include "./iges_struct.h"
 #include "./iges_extern.h"
@@ -43,8 +43,8 @@ struct solid_list
 {
 	int item;	/* Index into "dir" structure for this group member */
 	int matrix;	/* Pointer to transformation entity for this member */
-	char *name;	/* BRLCAD name for this member */
-	mat_t rot;	/* Pointer to BRLCAD matrix */
+	char *name;	/* BRL-CAD name for this member */
+	mat_t rot;	/* Pointer to BRL-CAD matrix */
 	struct solid_list *next;
 };
 

@@ -42,10 +42,10 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 
 
 #include <stdio.h>		/* Direct the output to stdout */
-#include "machine.h"		/* BRLCAD specific machine data types */
-#include "vmath.h"		/* BRLCAD Vector macros */
+#include "machine.h"		/* BRL-CAD specific machine data types */
+#include "vmath.h"		/* BRL-CAD Vector macros */
 #include "nmg.h"
-#include "nurb.h"		/* BRLCAD Spline data structures */
+#include "nurb.h"		/* BRL-CAD Spline data structures */
 #include "raytrace.h"
 #include "wdb.h"
 #include "../librt/debug.h"	/* RT_G_DEBUG flag settings */
@@ -145,7 +145,7 @@ main(int argc, char **argv) 			/* really has no arguments */
 
 /* IEEE patch number of the Bi-Cubic Bezier patch and convert it
  * to a B-Spline surface (Bezier surfaces are a subset of B-spline surfaces
- * and output it to a BRLCAD binary format.
+ * and output it to a BRL-CAD binary format.
  */
 void
 dump_patch(int (*patch)[4])

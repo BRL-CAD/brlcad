@@ -408,7 +408,7 @@ int entityno;
 			}
 		}
 
-		/* Make the BRLCAD solid */
+		/* Make the BRL-CAD solid */
 		if( mk_arb8( fdout , cutname , &pts[0][X] ) < 0 )  {
 			bu_log( "Unable to write ARB8 for entity D%07d (%s)\n" ,
 				dir[entityno]->direct , dir[entityno]->name );

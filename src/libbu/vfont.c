@@ -64,7 +64,7 @@ static int vax_gshort(unsigned char *);
  *
  *  Fetch the named font, and return a struct vfont pointer.
  *
- *  First the filename provided is used, then the BRLCAD font
+ *  First the filename provided is used, then the BRL-CAD font
  *  directory is searched (for places where "system" directories
  *  are considered sacred), and then finally the ordinary
  *  font directory is searched.

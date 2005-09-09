@@ -22,7 +22,7 @@
 /** @file main.c
  *
  *  This file provides the main() function for both BWISH and BTCLSH.
- *  While initializing Tcl, Itcl and various BRLCAD libraries it sets
+ *  While initializing Tcl, Itcl and various BRL-CAD libraries it sets
  *  things up to provide command history and command line editing.
  *
  *  Author -

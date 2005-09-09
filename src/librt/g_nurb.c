@@ -226,7 +226,7 @@ rt_nurb_shot(struct soltab *stp, register struct xray *rp, struct application *a
 	VADD2(p3, rp->r_pt, dir1);
 	VADD2(p4, rp->r_pt, dir2);
 
-	/* Note: the equation of the plane in BRLCAD is
+	/* Note: the equation of the plane in BRL-CAD is
 	 * Ax + By + Cz = D represented by [A B C D]
 	 */
 	bn_mk_plane_3pts( plane1, p1, p3, p2, tol );

@@ -53,7 +53,7 @@ struct node *root;
 		ptr = Pop();
 
 		if( ptr->op == Intersect || ptr->op == Subtract )
-			if( ptr->right->op == Union )	/* Not a legal BRLCAD tree */
+			if( ptr->right->op == Union )	/* Not a legal BRL-CAD tree */
 				return( 0 );
 		if( ptr->parent == NULL )
 			return( 1 );

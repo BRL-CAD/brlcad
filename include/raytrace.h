@@ -1182,7 +1182,7 @@ struct rt_wdb  {
 #define RT_WDB_TYPE_DB_INMEM			4
 #define RT_WDB_TYPE_DB_INMEM_APPEND_ONLY	5
 
-RT_EXPORT extern struct rt_wdb HeadWDB;		/* head of BRLCAD database object list */
+RT_EXPORT extern struct rt_wdb HeadWDB;		/* head of BRL-CAD database object list */
 
 /*
  * Carl's vdraw stuff.
