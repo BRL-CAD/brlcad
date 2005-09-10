@@ -197,9 +197,9 @@ void* isst_observer_networking(void *ptr) {
 #if ISST_USE_COMPRESSION
     {
       unsigned long dest_len;
-      int comp_size;
+      unsigned int comp_size;
 
-      tienet_recv(isst_observer_master_socket, &comp_size, sizeof(int), 0);
+      tienet_recv(isst_observer_master_socket, &comp_size, sizeof(unsigned int), 0);
       tienet_recv(isst_observer_master_socket, comp_buf, comp_size, 0);
 
       dest_len = screen_w*screen_h*3;

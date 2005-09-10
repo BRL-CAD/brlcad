@@ -441,15 +441,15 @@ void* isst_master_networking(void *ptr) {
 #if ISST_USE_COMPRESSION
                 {
                   unsigned long dest_len;
-                  int comp_size;
+                  unsigned int comp_size;
                   dest_len = 3 * db.env.img_w * db.env.img_h + 1024;
 
                   /* frame data */
-                  compress(&((char *)comp_buf)[sizeof(int)], &dest_len, rgb_frame[frame_ind_done], 3 * db.env.img_w * db.env.img_h);
+                  compress(&((char *)comp_buf)[sizeof(unsigned int)], &dest_len, rgb_frame[frame_ind_done], 3 * db.env.img_w * db.env.img_h);
                   comp_size = dest_len;
-                  memcpy(comp_buf, &comp_size, sizeof(int));
+                  memcpy(comp_buf, &comp_size, sizeof(unsigned int));
                   /* int for frame size in bytes followed by actual rgb frame data */
-                  tienet_send(sock->num, comp_buf, comp_size + sizeof(int), 0);
+                  tienet_send(sock->num, comp_buf, comp_size + sizeof(unsigned int), 0);
                 }
 #else
                 /* frame data */
