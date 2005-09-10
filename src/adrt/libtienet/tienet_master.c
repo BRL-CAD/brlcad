@@ -699,7 +699,7 @@ void tienet_master_send_work(tienet_master_socket_t *sock) {
 
 
 void tienet_master_result(tienet_master_socket_t *sock) {
-  unsigned int size, res_len, comp_len;
+  unsigned int res_len, comp_len;
 #if TN_COMPRESSION
   unsigned long	dest_len;
 #endif
@@ -741,9 +741,8 @@ void tienet_master_result(tienet_master_socket_t *sock) {
   tienet_recv(sock->num, tienet_master_comp_buf, comp_len, 0);
 
   /* uncompress the data */
-  dest_len = comp_len+32;	/* some extra padding for zlib to work with */
+  dest_len = res_len+32;	/* some extra padding for zlib to work with */
   uncompress(tienet_master_res_buf, &dest_len, tienet_master_comp_buf, comp_len);
-  size = dest_len;
 
   tienet_master_transfer += comp_len + sizeof(unsigned int);
 #else

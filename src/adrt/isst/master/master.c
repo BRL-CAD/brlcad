@@ -222,6 +222,7 @@ void isst_master_result(void *res_buf, int res_len) {
 
   /* Work unit data */
   memcpy(&work, res_buf, sizeof(common_work_t));
+printf("%d %d %d %d %d :: %d\n", work.orig_x, work.orig_y, work.size_x, work.size_y, work.format, res_len);
 
   if(work.size_x == 0) {  /* ugly hack until I get a better identifier in place */
     char *mesg;
@@ -279,7 +280,7 @@ printf("component[%d]: %s\n", i, name);
 
     /* Frame index */
     memcpy(&frame, &((char *)res_buf)[sizeof(common_work_t) + 3 * work.size_x * work.size_y], sizeof(short));
-
+printf("frame: %d\n", frame);
     frame_ind[frame]++;
 
     /* Copy the tile into the image */

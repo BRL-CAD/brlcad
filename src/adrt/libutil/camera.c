@@ -79,11 +79,7 @@ int get_nprocs() {
 #endif
 
 
-void	util_camera_init(util_camera_t *camera, int threads);
-void	util_camera_free(util_camera_t *camera);
-void	util_camera_prep(util_camera_t *camera, common_db_t *db);
-void*	util_camera_render_thread(void *ptr);
-void	util_camera_render(util_camera_t *camera, common_db_t *db, tie_t *tie, void *data, int size, void **res_buf, int *res_len);
+void* util_camera_render_thread(void *ptr);
 
 
 void util_camera_init(util_camera_t *camera, int threads) {
@@ -424,7 +420,7 @@ void* util_camera_render_thread(void *ptr) {
 }
 
 
-void util_camera_render(util_camera_t *camera, common_db_t *db, tie_t *tie, void *data, int size, void **res_buf, int *res_len) {
+void util_camera_render(util_camera_t *camera, common_db_t *db, tie_t *tie, void *data, unsigned int size, void **res_buf, unsigned int *res_len) {
   common_work_t work;
   util_camera_thread_data_t td;
   unsigned char *scan_map;
@@ -479,6 +475,4 @@ void util_camera_render(util_camera_t *camera, common_db_t *db, tie_t *tie, void
 
   free(scan_map);
   pthread_mutex_destroy(&td.mut);
-
-  printf("res_len: %d\n", *res_len);
 }
