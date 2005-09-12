@@ -53,7 +53,7 @@ sed -e "s/$OLD_MAJOR\.$OLD_MINOR\.$OLD_PATCH/$MAJOR\.$MINOR\.$PATCH/" \
 make dist >> $LOG_FILE 2>&1
 cd ..
 
-if [ ! -d hosts] ; then
+if [ ! -d hosts ] ; then
     mkdir hosts
 fi
 
