@@ -22,7 +22,12 @@ rm -rf $HOSTS brlcad
 /bin/echo fetching archive > $LOG_FILE 2>&1
 CVS_RSH=ssh
 export CVS_RSH
-cvs  -z3 -d:ext:lbutler@cvs.sf.net:/cvsroot/brlcad co -P brlcad >> $LOG_FILE 2>&1
+
+
+# cvs -z3 -d:pserver:anonymous@cvs.sourceforge.net:/cvsroot/brlcad co -P brlcad >> $LOG_FILE 2>&1
+
+cvs -z3 -d:ext:lbutler@cvs.sourceforge.net:/cvsroot/brlcad co -P brlcad 
+
 
 if [ ! -d brlcad ] ; then
     /bin/echo "unable to extract source from CVS repository"
@@ -34,7 +39,3 @@ fi
 #
 /bin/sh brlcad/regress/master_prep.sh
 
-#
-# This overwrites this script.
-#
-cp brlcad/regress/master_fetch.sh ./
