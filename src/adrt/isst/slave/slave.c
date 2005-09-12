@@ -14,8 +14,8 @@
 void isst_slave(int port, char *host, int threads);
 void isst_slave_init(tie_t *tie, int socknum);
 void isst_slave_free(void);
-void isst_slave_work(tie_t *tie, void *data, int size, void **res_buf, int *res_len);
-void isst_slave_mesg(void *mesg, int mesg_len);
+void isst_slave_work(tie_t *tie, void *data, unsigned int size, void **res_buf, unsigned int *res_len);
+void isst_slave_mesg(void *mesg, unsigned int mesg_len);
 
 
 int isst_slave_threads;
@@ -52,7 +52,7 @@ void isst_slave_free() {
 }
 
 
-void isst_slave_work(tie_t *tie, void *data, int size, void **res_buf, int *res_len) {
+void isst_slave_work(tie_t *tie, void *data, unsigned int size, void **res_buf, unsigned int *res_len) {
   common_work_t work;
   int ind;
   short frame_ind;
@@ -256,7 +256,7 @@ void isst_slave_work(tie_t *tie, void *data, int size, void **res_buf, int *res_
 }
 
 
-void isst_slave_mesg(void *mesg, int mesg_len) {
+void isst_slave_mesg(void *mesg, unsigned int mesg_len) {
   short		op;
   TIE_3		foo;
 

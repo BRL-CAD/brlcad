@@ -336,11 +336,11 @@ void util_camera_prep(util_camera_t *camera, common_db_t *db) {
 
 
 void* util_camera_render_thread(void *ptr) {
-  util_camera_thread_data_t	*td;
-  int				d, i, n, res_ind, compute;
-  TIE_3				pixel, accum, v;
-  tie_ray_t			ray;
-  tfloat			view_inv;
+  util_camera_thread_data_t *td;
+  int d, n, res_ind, scanline, v_scanline;
+  TIE_3 pixel, accum, v;
+  tie_ray_t ray;
+  tfloat view_inv;
 
 
   td = (util_camera_thread_data_t *)ptr;
@@ -348,21 +348,36 @@ void* util_camera_render_thread(void *ptr) {
 
 
   res_ind = 0;
-  for(i = td->work.orig_y; i < td->work.orig_y + td->work.size_y; i++) {	/* row, vertical */
+//  for(i = td->work.orig_y; i < td->work.orig_y + td->work.size_y; i++) {	/* row, vertical */
+  while(1) {
     /* Determine if this scanline should be computed by this thread */
     pthread_mutex_lock(&td->mut);
-    compute = td->scan_map[i-td->work.orig_y];
-    td->scan_map[i-td->work.orig_y] = 0;
+    if(*td->scanline == td->work.size_y) {
+      pthread_mutex_unlock(&td->mut);
+      return(0);
+    } else {
+      scanline = *td->scanline;
+      (*td->scanline)++;
+    }
     pthread_mutex_unlock(&td->mut);
 
-    if(compute) {
-      for(n = td->work.orig_x; n < td->work.orig_x + td->work.size_x; n++) {	/* scanline, horizontal, each pixel */
+    v_scanline = scanline + td->work.orig_y;
+    if(td->work.format == COMMON_BIT_DEPTH_24) {
+      res_ind = 3*scanline*td->work.size_x;
+    } else if(td->work.format == COMMON_BIT_DEPTH_128) {
+      res_ind = 4*sizeof(tfloat)*scanline*td->work.size_x;
+    }
 
-        accum.v[0] = accum.v[1] = accum.v[2] = 0;
-        for(d = 0; d < td->camera->view_num; d++) {	/* depth of view samples */
+
+      /* scanline, horizontal, each pixel */
+      for(n = td->work.orig_x; n < td->work.orig_x + td->work.size_x; n++) {
+        math_vec_set(accum, 0, 0, 0);
+
+        /* depth of view samples */
+        for(d = 0; d < td->camera->view_num; d++) {
           math_vec_mul_scalar(v, td->camera->view_list[d].step_x, n);
           math_vec_add(ray.dir, td->camera->view_list[d].top_l, v);
-          math_vec_mul_scalar(v, td->camera->view_list[d].step_y, i);
+          math_vec_mul_scalar(v, td->camera->view_list[d].step_y, v_scanline);
           math_vec_add(ray.dir, ray.dir, v);
 
           math_vec_set(pixel, 0, 0, 0);
@@ -407,13 +422,6 @@ void* util_camera_render_thread(void *ptr) {
 /*          printf("Pixel: [%d, %d, %d]\n", rgb[0], rgb[1], rgb[2]); */
 
       }
-    } else {
-      if(td->work.format == COMMON_BIT_DEPTH_24) {
-        res_ind += 3*td->work.size_x;
-      } else if(td->work.format == COMMON_BIT_DEPTH_128) {
-        res_ind += 4*sizeof(tfloat)*td->work.size_x;
-      }
-    }
   }
 
   return(0);
@@ -425,7 +433,7 @@ void util_camera_render(util_camera_t *camera, common_db_t *db, tie_t *tie, void
   util_camera_thread_data_t td;
   unsigned char *scan_map;
   TIE_3 vec;
-  int i;
+  unsigned int i, scanline;
 
 
   /* Format incoming data into a work structure */
@@ -439,11 +447,6 @@ void util_camera_render(util_camera_t *camera, common_db_t *db, tie_t *tie, void
     tienet_flip(&work.size_y, &work.size_y, sizeof(short));
     tienet_flip(&work.format, &work.format, sizeof(short));
   }
-
-
-  /* allocate memory for scanmap */
-  scan_map = (unsigned char *)malloc(work.size_y);
-  memset(scan_map, 1, work.size_y);
 
 
   if(work.format == COMMON_BIT_DEPTH_24) {
@@ -460,7 +463,8 @@ void util_camera_render(util_camera_t *camera, common_db_t *db, tie_t *tie, void
   td.db = db;
   td.work = work;
   td.res_buf = &((char *)*res_buf)[sizeof(common_work_t)];
-  td.scan_map = scan_map;
+  scanline = 0;
+  td.scanline = &scanline;
   pthread_mutex_init(&td.mut, 0);
 
   /* Launch Render threads */
@@ -473,6 +477,5 @@ void util_camera_render(util_camera_t *camera, common_db_t *db, tie_t *tie, void
     util_camera_render_thread(&td);
   }
 
-  free(scan_map);
   pthread_mutex_destroy(&td.mut);
 }

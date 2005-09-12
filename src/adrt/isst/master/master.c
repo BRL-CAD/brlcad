@@ -60,18 +60,20 @@ tfloat isst_master_spall_angle;
 tfloat isst_master_camera_azimuth;
 tfloat isst_master_camera_elevation;
 
+common_db_t db;
+isst_master_socket_t *isst_master_socklist;
+tienet_sem_t isst_master_double_buffer_sem;
+void *isst_master_observer_frame;
+pthread_mutex_t isst_master_observer_frame_mut;
 void *rgb_frame[2];
 int frame_ind[2];
 short frame_cur_ind;
-short frame_ind_done;
 char isst_master_slave_data[64];
 int isst_master_slave_data_len;
 pthread_t isst_master_networking_thread;
 tfloat isst_master_scale;
 int isst_master_active_connections;
 int isst_master_alive;
-isst_master_socket_t *isst_master_socklist;
-common_db_t db;
 unsigned char isst_master_rm;
 pthread_mutex_t isst_master_update_mut;
 int isst_master_mouse_grab;
@@ -109,16 +111,14 @@ static void isst_master_setup() {
   frame_ind[0] = 0;
   frame_ind[1] = 0;
   frame_cur_ind = 0;
-  frame_ind_done = 0;
-
-  rgb_frame[0] = NULL;
-  rgb_frame[1] = NULL;
 
   rgb_frame[0] = malloc(3 * db.env.img_w * db.env.img_h);
   rgb_frame[1] = malloc(3 * db.env.img_w * db.env.img_h);
 
   memset(rgb_frame[0], 0, 3 * db.env.img_w * db.env.img_h);
   memset(rgb_frame[1], 0, 3 * db.env.img_w * db.env.img_h);
+
+  isst_master_observer_frame = malloc(3 * db.env.img_w * db.env.img_h);
 }
 
 
@@ -139,6 +139,13 @@ void isst_master(int port, int obs_port, char *proj, char *list, char *exec, cha
 
   /* Mutex for everytime the master builds update data to send to nodes */
   pthread_mutex_init(&isst_master_update_mut, 0);
+
+  /*
+  * This mutex exists to prevent the observer from reading a frame while
+  * the result function is writing to it, which would otherwise result in
+  * the appearance of single buffering behavior for moderately high frame rates.
+  *
+  pthread_mutex_init(&isst_master_observer_frame_mut, 0);
 
   /* Initialize tienet master */
   isst_master_tile_num = (db.env.img_w * db.env.img_h) / (db.env.tile_w * db.env.tile_h);
@@ -165,7 +172,21 @@ void isst_master(int port, int obs_port, char *proj, char *list, char *exec, cha
   frame_num = 0;
   gettimeofday(&start, NULL);
 
+  /*
+  * Double buffer semaphore, never let more than 1 frame into the future
+  * to be computed at any given time.  Without this, for 3 given frames
+  * there is a possibility that while frame_0 and frame_1 are being computed
+  * by the compute nodes, that frame_2 might be worked on by a compute node.
+  * because frame indices are 0 or 1, hence double buffered, frame_0 and frame_2
+  * have the same frame id and can therefore have resulting tiles over-write
+  * one another resulting in a jittery image.
+  */
+  tienet_sem_init(&isst_master_double_buffer_sem, 2);
+
   while(isst_master_alive) {
+    /* Double buffer semaphore, do not get too far ahead */
+    tienet_sem_wait(&isst_master_double_buffer_sem);
+
     /* Update Camera Position */
     isst_master_update();
 
@@ -292,13 +313,20 @@ printf("component[%d]: %s\n", i, name);
     /* Image is complete, draw the frame. */
     if(frame_ind[frame] == isst_master_tile_num) {
       frame_ind[frame] = 0;
-      frame_ind_done = frame;
 
+      /* Copy this frame to the observer frame buffer */
+      pthread_mutex_lock(&isst_master_observer_frame_mut);
+      memcpy(isst_master_observer_frame, rgb_frame[frame], 3 * db.env.img_w * db.env.img_h);
+      pthread_mutex_unlock(&isst_master_observer_frame_mut);
+
+      /* Allow the next frame to be computed */
+      tienet_sem_post(&isst_master_double_buffer_sem);
+
+      /* Alert the observers that a new frame is available for viewing */
       for(sock = isst_master_socklist; sock; sock = sock->next) {
-        if(sock->next) {
+        if(sock->next)
           if(!sock->frame_sem.val)
             tienet_sem_post(&(sock->frame_sem));
-        }
       }
     }
   }
@@ -445,7 +473,9 @@ void* isst_master_networking(void *ptr) {
                   dest_len = 3 * db.env.img_w * db.env.img_h + 1024;
 
                   /* frame data */
-                  compress(&((char *)comp_buf)[sizeof(unsigned int)], &dest_len, rgb_frame[frame_ind_done], 3 * db.env.img_w * db.env.img_h);
+                  pthread_mutex_lock(&isst_master_observer_frame_mut);
+                  compress(&((char *)comp_buf)[sizeof(unsigned int)], &dest_len, isst_master_observer_frame, 3 * db.env.img_w * db.env.img_h);
+                  pthread_mutex_unlock(&isst_master_observer_frame_mut);
                   comp_size = dest_len;
                   memcpy(comp_buf, &comp_size, sizeof(unsigned int));
                   /* int for frame size in bytes followed by actual rgb frame data */
@@ -453,7 +483,9 @@ void* isst_master_networking(void *ptr) {
                 }
 #else
                 /* frame data */
-                tienet_send(sock->num, rgb_frame[frame_ind_done], db.env.img_w * db.env.img_h * 3, 0);
+                pthread_mutex_lock(&isst_master_observer_frame_mut);
+                tienet_send(sock->num, isst_master_observer_frame, db.env.img_w * db.env.img_h * 3, 0);
+                pthread_mutex_unlock(&isst_master_observer_frame_mut);
 #endif
 
                 /* Send overlay data */

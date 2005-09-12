@@ -72,7 +72,7 @@ typedef struct util_camera_thread_data_s {
   tie_t *tie;
   common_work_t work;
   void *res_buf;
-  unsigned char *scan_map;
+  unsigned int *scanline;
   pthread_mutex_t mut;
 } util_camera_thread_data_t;
 
