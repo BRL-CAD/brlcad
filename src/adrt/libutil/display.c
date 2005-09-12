@@ -63,6 +63,7 @@ void util_display_init(int w, int h) {
       exit(1);
     }
 
+//  util_display_screen = SDL_SetVideoMode(util_display_screen_w, util_display_screen_h, 32, SDL_SWSURFACE | SDL_DOUBLEBUF);
   util_display_screen = SDL_SetVideoMode(util_display_screen_w, util_display_screen_h, 32, SDL_SWSURFACE);
 
   util_display_buffer = SDL_CreateRGBSurface(SDL_SWSURFACE, util_display_screen_w, util_display_screen_h, 24,

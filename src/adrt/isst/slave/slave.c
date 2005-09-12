@@ -55,7 +55,6 @@ void isst_slave_free() {
 void isst_slave_work(tie_t *tie, void *data, unsigned int size, void **res_buf, unsigned int *res_len) {
   common_work_t work;
   int ind;
-  short frame_ind;
   TIE_3 pos, foc;
   unsigned char rm;
   char op;
@@ -147,10 +146,6 @@ void isst_slave_work(tie_t *tie, void *data, unsigned int size, void **res_buf, 
       break;
 
     case ISST_OP_RENDER:
-      /* Extract updated camera data */
-      memcpy(&frame_ind, &((char *)data)[ind], sizeof(short));
-      ind += sizeof(short);
-
       /* Camera position */
       memcpy(&pos.v, &((char *)data)[ind], sizeof(TIE_3));
       ind += sizeof(TIE_3);
@@ -238,10 +233,6 @@ void isst_slave_work(tie_t *tie, void *data, unsigned int size, void **res_buf, 
 
       util_camera_render(&camera, &db, tie, data, size, res_buf, res_len);
       *res_buf = (void *)realloc(*res_buf, *res_len + sizeof(short));
-
-      /* Tack on the frame index data */
-      memcpy(&((char *)*res_buf)[*res_len], &frame_ind, sizeof(short));
-      *res_len += sizeof(short);
       break;
 
     default:

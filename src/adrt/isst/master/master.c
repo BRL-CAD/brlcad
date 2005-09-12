@@ -62,12 +62,11 @@ tfloat isst_master_camera_elevation;
 
 common_db_t db;
 isst_master_socket_t *isst_master_socklist;
-tienet_sem_t isst_master_double_buffer_sem;
+tienet_sem_t isst_master_frame_wait_sem;
 void *isst_master_observer_frame;
 pthread_mutex_t isst_master_observer_frame_mut;
-void *rgb_frame[2];
-int frame_ind[2];
-short frame_cur_ind;
+void *rgb_frame;
+int frame_ind;
 char isst_master_slave_data[64];
 int isst_master_slave_data_len;
 pthread_t isst_master_networking_thread;
@@ -108,15 +107,10 @@ static void isst_master_setup() {
 
   isst_master_rm = RENDER_METHOD_PHONG;
 
-  frame_ind[0] = 0;
-  frame_ind[1] = 0;
-  frame_cur_ind = 0;
+  frame_ind = 0;
 
-  rgb_frame[0] = malloc(3 * db.env.img_w * db.env.img_h);
-  rgb_frame[1] = malloc(3 * db.env.img_w * db.env.img_h);
-
-  memset(rgb_frame[0], 0, 3 * db.env.img_w * db.env.img_h);
-  memset(rgb_frame[1], 0, 3 * db.env.img_w * db.env.img_h);
+  rgb_frame = malloc(3 * db.env.img_w * db.env.img_h);
+  memset(rgb_frame, 0, 3 * db.env.img_w * db.env.img_h);
 
   isst_master_observer_frame = malloc(3 * db.env.img_w * db.env.img_h);
 }
@@ -144,7 +138,7 @@ void isst_master(int port, int obs_port, char *proj, char *list, char *exec, cha
   * This mutex exists to prevent the observer from reading a frame while
   * the result function is writing to it, which would otherwise result in
   * the appearance of single buffering behavior for moderately high frame rates.
-  *
+  */
   pthread_mutex_init(&isst_master_observer_frame_mut, 0);
 
   /* Initialize tienet master */
@@ -181,19 +175,17 @@ void isst_master(int port, int obs_port, char *proj, char *list, char *exec, cha
   * have the same frame id and can therefore have resulting tiles over-write
   * one another resulting in a jittery image.
   */
-  tienet_sem_init(&isst_master_double_buffer_sem, 2);
+  tienet_sem_init(&isst_master_frame_wait_sem, 1);
 
   while(isst_master_alive) {
     /* Double buffer semaphore, do not get too far ahead */
-    tienet_sem_wait(&isst_master_double_buffer_sem);
+    tienet_sem_wait(&isst_master_frame_wait_sem);
 
     /* Update Camera Position */
     isst_master_update();
 
     /* Fill the work buffer */
     isst_dispatcher_generate(&db, isst_master_slave_data, isst_master_slave_data_len);
-
-    frame_cur_ind = 1 - frame_cur_ind;
 
 #if 1
     frame_num++;
@@ -221,8 +213,7 @@ void isst_master(int port, int obs_port, char *proj, char *list, char *exec, cha
   /* Free the dispatcher data */
   isst_dispatcher_free();
 
-  free(rgb_frame[0]);
-  free(rgb_frame[1]);
+  free(rgb_frame);
 
   /* End the networking thread */
   pthread_join(isst_master_networking_thread, NULL);
@@ -298,29 +289,27 @@ printf("component[%d]: %s\n", i, name);
     /* Pointer to RGB Data */
     rgb_data = &((unsigned char *)res_buf)[sizeof(common_work_t)];
 
-    /* Frame index */
-    memcpy(&frame, &((char *)res_buf)[sizeof(common_work_t) + 3 * work.size_x * work.size_y], sizeof(short));
-    frame_ind[frame]++;
+    frame_ind++;
 
     /* Copy the tile into the image */
     ind = 0;
     for(i = work.orig_y; i < work.orig_y + work.size_y; i++) {
-      memcpy(&((char *)rgb_frame[frame])[3 * (work.orig_x + i * db.env.img_w)], &rgb_data[ind], 3*work.size_y);
+      memcpy(&((char *)rgb_frame)[3 * (work.orig_x + i * db.env.img_w)], &rgb_data[ind], 3*work.size_y);
       ind += 3*work.size_y;
     }
 
 
     /* Image is complete, draw the frame. */
-    if(frame_ind[frame] == isst_master_tile_num) {
-      frame_ind[frame] = 0;
+    if(frame_ind == isst_master_tile_num) {
+      frame_ind = 0;
 
       /* Copy this frame to the observer frame buffer */
       pthread_mutex_lock(&isst_master_observer_frame_mut);
-      memcpy(isst_master_observer_frame, rgb_frame[frame], 3 * db.env.img_w * db.env.img_h);
+      memcpy(isst_master_observer_frame, rgb_frame, 3 * db.env.img_w * db.env.img_h);
       pthread_mutex_unlock(&isst_master_observer_frame_mut);
 
       /* Allow the next frame to be computed */
-      tienet_sem_post(&isst_master_double_buffer_sem);
+      tienet_sem_post(&isst_master_frame_wait_sem);
 
       /* Alert the observers that a new frame is available for viewing */
       for(sock = isst_master_socklist; sock; sock = sock->next) {
@@ -579,10 +568,6 @@ void isst_master_update() {
   op = ISST_OP_RENDER;
   memcpy(&((char *)isst_master_slave_data)[isst_master_slave_data_len], &op, 1);
   isst_master_slave_data_len += 1;
-
-  /* Frame Index */
-  memcpy(&((char *)isst_master_slave_data)[isst_master_slave_data_len], &frame_cur_ind, sizeof(short));
-  isst_master_slave_data_len += sizeof(short);
 
   /* Camera Position */
   memcpy(&((char *)isst_master_slave_data)[isst_master_slave_data_len], isst_master_camera_position.v, sizeof(TIE_3));
