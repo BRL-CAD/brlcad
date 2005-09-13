@@ -581,7 +581,6 @@ void common_pack_mesh_adrt(common_db_t *db, void **app_data, int *app_ind, char 
     /* Mesh Name */
     fread(&c, sizeof(char), 1, fh);
     fread(meshname, sizeof(char), c, fh);
-//    meshname[(int)(c++)] = 0;
     common_pack_write(app_data, app_ind, &c, sizeof(char));
     common_pack_write(app_data, app_ind, meshname, c);
 
@@ -700,32 +699,27 @@ void common_pack_kdtree_cache(common_db_t *db, void **app_data, int *app_ind, ch
 
 void common_pack_mesh_map(void **app_data, int *app_ind, char *filename) {
   FILE *fh;
-  char line[256], *token;
-  unsigned char c;
   unsigned int marker, size;
+  void *map;
 
 
   marker = *app_ind;
   *app_ind += sizeof(unsigned int);
 
-  fh = fopen(filename, "r");
+  fh = fopen(filename, "rb");
   if(!fh) {
     fprintf(stderr, "error: Mesh Map file %s doesn't exist, exiting.\n", filename);
     exit(1);
   }
 
-  while(fgets(line, 256, fh)) {
-    token = strtok(line, ",");
-    c = strlen(token) + 1;
-    common_pack_write(app_data, app_ind, &c, 1);
-    common_pack_write(app_data, app_ind, token, c);
+  fseek(fh, 0, SEEK_END);
+  size = ftell(fh);
+  fseek(fh, 0, SEEK_SET);
 
-    token = strtok(NULL, ",");
-    if(token[strlen(token)-1] == '\n') token[strlen(token)-1] = 0;
-    c = strlen(token) + 1;
-    common_pack_write(app_data, app_ind, &c, 1);
-    common_pack_write(app_data, app_ind, token, c);
-  }
+  map = malloc(size);
+  fread(map, size, 1, fh);
+  common_pack_write(app_data, app_ind, map, size);
+  free(map);
 
   fclose(fh);
 

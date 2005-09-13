@@ -75,7 +75,7 @@ typedef struct mesh_map_s {
 
 static struct rt_i *rtip;	/* rt_dirbuild returns this */
 FILE *adrt_fh;
-int region_count = 0, prop_num, regmap_num, use_regmap;
+int bot_count = 0, prop_num, regmap_num, use_regmap;
 property_t *prop_list;
 regmap_t *regmap_list;
 mesh_map_t *mesh_map;
@@ -240,7 +240,7 @@ static union tree *leaf_func(struct db_tree_state *tsp,
     vectp_t vp;
     float vec[3];
     int hash, i, n, size;
-    char prop_name[256], reg_name[256];
+    char prop_name[256], mesh_name[256];
     unsigned char c;
 
 
@@ -283,27 +283,28 @@ static union tree *leaf_func(struct db_tree_state *tsp,
     prop_name[0] = 0;
 
 
-    vlsp = region_name_from_path(pathp);
-    strcpy(reg_name, bu_vls_strgrab(vlsp));
+    if(use_regmap) {
+      vlsp = region_name_from_path(pathp);
+      strcpy(mesh_name, bu_vls_strgrab(vlsp));
+      regmap_lookup(mesh_name, tsp->ts_regionid);
+      bu_free(vlsp, "vls");
+    } else {
+      strcpy(mesh_name, db_path_to_string(pathp));
+    }
+
 
     /* Grab the chars from the end till the '/' */
-    i = strlen(reg_name)-1;
+    i = strlen(mesh_name)-1;
     if(i >= 0)
-      while(reg_name[i] != '/' && i > 0)
+      while(mesh_name[i] != '/' && i > 0)
         i--;
 
-    if(use_regmap)
-      regmap_lookup(reg_name, tsp->ts_regionid);
+    if(i != strlen(mesh_name))
+      strcpy(prop_name, &mesh_name[i+1]);
 
     /* Display Status */
-    printf("regions processed: %d\r", ++region_count);
+    printf("bots processed: %d\r", ++bot_count);
     fflush(stdout);
-
-    if(i != strlen(reg_name))
-      strcpy(prop_name, &reg_name[i+1]);
-/*    printf("prop name: -%s-\n", prop_name); */
-    bu_free(vlsp, "vls");
-
 
     /* this is for librt's benefit */
     BU_GETSTRUCT(stp, soltab);
@@ -317,17 +318,16 @@ static union tree *leaf_func(struct db_tree_state *tsp,
     VMINMAX(rtip->mdl_min, rtip->mdl_max, stp->st_max);
 
     /* Write bot/mesh name */
-    c = strlen(reg_name) + 1;
+    c = strlen(mesh_name) + 1;
+if(strlen(mesh_name) + strlen(prop_name) > 255)
+printf("mesh_name: %s\n", mesh_name);
+
     fwrite(&c, 1, 1, adrt_fh);
-    fwrite(reg_name, 1, c, adrt_fh);
+    fwrite(mesh_name, 1, c, adrt_fh);
 
     mesh_map = (mesh_map_t *)realloc(mesh_map, sizeof(mesh_map_t) * (mesh_map_ind + 1));
-    if(!reg_name[0])
-      strcpy(reg_name, "unknown");
-    if(!prop_name[0])
-      strcpy(prop_name, "unknown");
 
-    strcpy(mesh_map[mesh_map_ind].mesh, reg_name);
+    strcpy(mesh_map[mesh_map_ind].mesh, mesh_name);
     strcpy(mesh_map[mesh_map_ind].prop, prop_name);
     mesh_map_ind++;
 
@@ -510,6 +510,7 @@ int main(int argc, char *argv[]) {
   int i;
   char idbuf[132], filename[256];
   char shortopts[] = "r:", c;
+  unsigned char len;
   struct db_tree_state ts;
   struct directory *dp;
   unsigned short s;
@@ -555,7 +556,7 @@ int main(int argc, char *argv[]) {
   fwrite(&total_tri_num, sizeof(unsigned int), 1, adrt_fh);
 
 
-  region_count = 0;
+  bot_count = 0;
   mesh_map_ind = 0;
   prop_num = 0;
   prop_list = NULL;
@@ -614,6 +615,9 @@ int main(int argc, char *argv[]) {
   strcpy(filename, argv[1]);
   strcat(filename, ".properties");
   adrt_fh = fopen(filename, "w");
+  fprintf(adrt_fh, "properties,default\n");
+  fprintf(adrt_fh, "color,0.8,0.8,0.8\n");
+  fprintf(adrt_fh, "gloss,0.2\n");
   for(i = 0; i < prop_num; i++) {
     fprintf(adrt_fh, "properties,%s\n", prop_list[i].name);
     fprintf(adrt_fh, "color,%f,%f,%f\n", prop_list[i].color[0], prop_list[i].color[1], prop_list[i].color[2]);
@@ -635,9 +639,16 @@ int main(int argc, char *argv[]) {
   */
   strcpy(filename, argv[1]);
   strcat(filename, ".map");
-  adrt_fh = fopen(filename, "w");
-  for(i = 0; i < mesh_map_ind; i++)
-    fprintf(adrt_fh, "%s,%s\n", mesh_map[i].mesh, mesh_map[i].prop);
+  adrt_fh = fopen(filename, "wb");
+  for(i = 0; i < mesh_map_ind; i++) {
+    len = strlen(mesh_map[i].mesh) + 1;
+    fwrite(&len, 1, 1, adrt_fh);
+    fwrite(mesh_map[i].mesh, 1, len, adrt_fh);
+
+    len = strlen(mesh_map[i].prop) + 1;
+    fwrite(&len, 1, 1, adrt_fh);
+    fwrite(mesh_map[i].prop, 1, len, adrt_fh);
+  }
   fclose(adrt_fh);
 
   /*
