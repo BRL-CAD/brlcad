@@ -1,0 +1,25 @@
+2004-08-16  Andreas Kupries  <andreask@activestate.com>
+
+	* pngtcl.h: Updated the hardwired version information in this
+	  header file.
+
+2004-08-13  Andreas Kupries  <andreask@activestate.com>
+
+	* libpng/tcl: Changed version of wrapper to 1.2.6, synchronized to
+	  version of libpng.
+
+2004-08-12  Andreas Kupries  <andreask@activestate.com>
+
+	* libpng:     Updated libpng from version 1.0.8 to 1.2.6rc5.
+	* libpng/tcl: Updated to handle the new version of libpng.
+
+2002-11-18  Andreas Kupries  <andreask@activestate.com>
+
+	* Configure and build ok for all platforms available to me at AS.
+
+2002-11-13  Andreas Kupries  <andreask@activestate.com>
+
+	* Start of logging.
+
+	* libpng/tcl/: New directory, packaging of support library for
+	  tcl. Splices the zlib packaging into the code here.

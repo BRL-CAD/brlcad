@@ -1,0 +1,142 @@
+2002-07-20  Zoran Vasiljevic  <zoran@archiware.com>
+
+	* tcl.m4: Added MINGW32 to list of systems checked for Windows build.
+	Also, fixes some indentation issues with "--with-XXX" options.
+
+2002-04-23  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	* tcl.m4 (TEA_ENABLE_THREADS): added USE_THREAD_ALLOC define to
+	use new threaded allocatory by default on Unix for Tcl 8.4.
+	(TEA_CONFIG_CFLAGS): corrected LD_SEARCH_FLAGS for FreeBSD-3+.
+
+2002-04-22  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	* tcl.m4 (TEA_SETUP_COMPILER): removed call to AC_CYGWIN so that
+	we can use autoconf 2.5x as well as 2.13.  This prevents us from
+	being able to warn against the use of cygwin gcc at configure
+	time, but allows autoconf 2.5x, which is what is shipped with most
+	newer systems.
+
+2002-04-11  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	* tcl.m4: Enabled COFF as well as CV style debug info with
+	--enable-symbols to allow Dr. Watson users to see function info.
+	More info on debugging levels can be obtained at:
+	http://msdn.microsoft.com/library/en-us/dnvc60/html/gendepdebug.asp
+
+2002-04-03  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	* tcl.m4: change all SC_* macros to TEA_*.  The SC_ was for
+	Scriptics, which is no more.  TEA represents a better, independent
+	prefix that won't need changing.
+	Added preliminary mingw gcc support. [Patch #538772]
+	Added TEA_PREFIX macro that handles defaulting the prefix and
+	exec_prefix vars to those used by Tcl if none were specified.
+	Added TEA_SETUP_COMPILER macro that encompasses the AC_PROG_CC
+	check and several other basic AC_PROG checks needed for making
+	executables.  This greatly simplifies user's configure.in files.
+	Collapsed AIX-5 defines into AIX-* with extra checks for doing the
+	ELF stuff on AIX-5-ia64.
+	Updated TEA_ENABLE_THREADS to take an optional arg to allow
+	switching it on by default (for Thread) and add sanity checking to
+	warn the user if configuring threads incompatibly.
+
+2002-03-29  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	* tcl.m4: made sure that SHLIB_LDFLAGS was set to LDFLAGS_DEFAULT.
+	Removed --enable-64bit support for AIX-4 because it wasn't correct.
+	Added -MT or -MD Windows linker switches to properly support
+	symbols-enabled builds.
+
+2002-03-28  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	* tcl.m4: called AC_MSG_ERROR when SC_TEA_INIT wasn't called first
+	instead of calling it as that inlines it each time in shell code.
+	Changed Windows CFLAGS_OPTIMIZE to use -O2 instead of -Oti.
+	Noted TCL_LIB_VERSIONS_OK=nodots for Windows builds.
+	A few changes to support itcl (and perhaps others):
+	Added support for making your own stub libraries to SC_MAKE_LIB.
+	New SC_PATH_CONFIG and SC_LOAD_CONFIG that take a package name arg
+	and find that ${pkg}Config.sh file.  itk uses this for itcl.
+
+2002-03-27  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	* tcl.m4: made SC_LOAD_TKCONFIG recognize when working with a Tk
+	build dir setup.
+	Added EXTRA_CFLAGS and SHLIB_LD_LIBS substs to SC_CONFIG_CFLAGS.
+	Added XLIBSW onto LIBS when it is defined.
+	Remove TCL_LIBS from MAKE_LIB and correctly use SHLIB_LD_LIBS
+	instead to not rely as much on tclConfig.sh cached info.
+	Add TK_BIN_DIR to paths to find wish in SC_PROG_WISH.
+	These move towards making TEA much more independent of *Config.sh.
+
+2002-03-19  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	* tcl.m4: corrected forgotten (UN)SHARED_LIB_SUFFIX and
+	SHLIB_SUFFIX defines for Win.
+	(SC_PATH_X): made this only do the check on unix platforms. 
+
+2002-03-12  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	* README.txt: updated to reflect fewer files
+
+2002-03-06  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	* config.guess (removed):
+	* config.sub (removed): removed unnecessary files
+
+	* installFile.tcl (removed):
+	* mkinstalldirs (removed): these aren't really necessary for
+	making TEA work
+
+	* tcl.m4 (SC_PUBLIC_TCL_HEADERS, SC_PUBLIC_TK_HEADERS): don't
+	check /usr(/local)/include for includes on Windows when not using
+	gcc
+
+2002-03-05  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	* tcl.m4: added warnings on Windows, removed RELPATH define and
+	added TCL_LIBS to MAKE_LIB macro.
+
+	This import represents 2.0.0, or a new start at attempting to
+	make TEA much easier for C extension developers.
+
+	**** moved from tclpro project to core tcl project, ****
+	**** renamed to 'tclconfig'                         ****
+
+2001-03-15    Karl Lehenbauer <karl@procplace.com>
+
+	* installFile.tcl: Added updating of the modification time of
+	  the target file whether we overwrote it or decided that it
+	  hadn't changed.  This was necessary for us to be able to
+	  determine whether or not a module install touched the file.
+
+2001-03-08    Karl Lehenbauer <karl@procplace.com>
+
+	* installFile.tcl: Added support for converting new-style (1.1+) 
+	  Cygnus drive paths to Tcl-style.
+
+2001-01-15    <brent.welch@interwoven.com>
+
+	* tcl.m4: Added FreeBSD clause.
+
+2001-01-03    <brent.welch@interwoven.com>
+
+	* tcl.m4: Fixed typo in SC_LIB_SPEC where it is checking
+	for exec-prefix.
+
+2000-12-01    <brent.welch@interwoven.com>
+
+	* tcl.m4: Concatenated most of the Ajuba acsite.m4 file
+	so we don't need to modify the autoconf installation.
+	* config.guess:
+	* config.sub:
+	* installFile.tcl:
+	Added files from the itcl config subdirectory,
+	which should go away.
+
+2000-7-29    <welch@ajubasolutions.com>
+
+	* Fixed the use of TCL_SRC_DIR and TK_SRC_DIR within
+	TCL_PRIVATE_INCLUDES and TK_PRIVATE_INCLUDES to match their recent
+	change from $(srcdir) to $(srcdir)/..
