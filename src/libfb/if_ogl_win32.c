@@ -1124,7 +1124,7 @@ FBIO	*ifp;
 	  (void)signal( SIGALRM, SIG_IGN );
 	*/
 
-	while (OGL(ifp)->alive) {
+	while (0 < OGL(ifp)->alive) {
 	    do_event(ifp);
 
 	    /* let's not starve the processor */
