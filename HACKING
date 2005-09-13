@@ -543,10 +543,11 @@ worked with.
 Any source code that is provided must not modify or conflict with the
 existing COPYING file distribution requirements.  This means that
 library modifications must be LGPL-compatible and changes to
-applications must be GPL-compatible.  Contributors are asked in good
-faith to only provide patches that may legally be incorporated into
-BRL-CAD under the existing distribution provisions described in the
-COPYING file.
+applications must be GPL-compatible.  Similarly, GPL libraries may not
+be used or otherwised linked to BRL-CAD.  Contributors are asked to
+only provide patches that may legally be incorporated into BRL-CAD
+under the existing distribution provisions described in the COPYING
+file.
 
 Patches that are difficult to apply are difficult to accept.
 
