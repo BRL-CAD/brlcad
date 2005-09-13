@@ -15,8 +15,8 @@ proc LoadArcherLibs {dir} {
 	load [file join $env(ARCHER_HOME) bin libsysv_d]
 	load [file join $env(ARCHER_HOME) bin librt_d]
 	load [file join $env(ARCHER_HOME) bin libdm_d]
+	load [file join $env(ARCHER_HOME) bin libpng_d]
 	load [file join $env(ARCHER_HOME) bin tkimg_d]
-	load [file join $env(ARCHER_HOME) bin pngtcl_d]
 	load [file join $env(ARCHER_HOME) bin tkimgpng_d]
     } else {
 	load [file join $env(ARCHER_HOME) bin itcl33.dll]
@@ -29,8 +29,8 @@ proc LoadArcherLibs {dir} {
 	load [file join $env(ARCHER_HOME) bin libsysv]
 	load [file join $env(ARCHER_HOME) bin librt]
 	load [file join $env(ARCHER_HOME) bin libdm]
+	load [file join $env(ARCHER_HOME) bin libpng]
 	load [file join $env(ARCHER_HOME) bin tkimg]
-	load [file join $env(ARCHER_HOME) bin pngtcl]
 	load [file join $env(ARCHER_HOME) bin tkimgpng]
     }
 
