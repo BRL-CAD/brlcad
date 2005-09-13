@@ -288,8 +288,9 @@ static union tree *leaf_func(struct db_tree_state *tsp,
 
     /* Grab the chars from the end till the '/' */
     i = strlen(reg_name)-1;
-    while(reg_name[i] != '/' && i > 0)
-      i--;
+    if(i >= 0)
+      while(reg_name[i] != '/' && i > 0)
+        i--;
 
     if(use_regmap)
       regmap_lookup(reg_name, tsp->ts_regionid);
@@ -321,6 +322,11 @@ static union tree *leaf_func(struct db_tree_state *tsp,
     fwrite(reg_name, 1, c, adrt_fh);
 
     mesh_map = (mesh_map_t *)realloc(mesh_map, sizeof(mesh_map_t) * (mesh_map_ind + 1));
+    if(!reg_name[0])
+      strcpy(reg_name, "unknown");
+    if(!prop_name[0])
+      strcpy(prop_name, "unknown");
+
     strcpy(mesh_map[mesh_map_ind].mesh, reg_name);
     strcpy(mesh_map[mesh_map_ind].prop, prop_name);
     mesh_map_ind++;
