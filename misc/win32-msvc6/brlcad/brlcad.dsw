@@ -128,6 +128,21 @@ Package=<4>
     Begin Project Dependency
     Project_Dep_Name png2fb
     End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name fast42g
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name g2iges
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name g2stl
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name iges2g
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name stl2g
+    End Project Dependency
 }}}
 
 ###############################################################################
@@ -143,6 +158,18 @@ Package=<4>
     Begin Project Dependency
     Project_Dep_Name libwdb
     End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "fast42g"="..\fast42g\fast42g.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
 }}}
 
 ###############################################################################
@@ -242,6 +269,42 @@ Package=<4>
     Begin Project Dependency
     Project_Dep_Name libwdb
     End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "g2iges"="..\g2iges\g2iges.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "g2stl"="..\g2stl\g2stl.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "iges2g"="..\iges2g\iges2g.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
 }}}
 
 ###############################################################################
@@ -659,6 +722,18 @@ Package=<4>
     Begin Project Dependency
     Project_Dep_Name libfb
     End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "stl2g"="..\stl2g\stl2g.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
 }}}
 
 ###############################################################################
