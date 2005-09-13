@@ -547,8 +547,8 @@ void common_pack_mesh_adrt(common_db_t *db, void **app_data, int *app_ind, char 
   char meshname[256], texturename[256];
   unsigned char c;
   unsigned short s, endian;
-  int face[144], marker_size, size, i, j, k, n, num, matrixind, end;
-  unsigned int total_tri_num;
+  int matrixind;
+  unsigned int face[144], marker_size, size, i, j, k, n, num, end, total_tri_num;
 
 
   fh = fopen(filename, "rb");
@@ -581,14 +581,14 @@ void common_pack_mesh_adrt(common_db_t *db, void **app_data, int *app_ind, char 
     /* Mesh Name */
     fread(&c, sizeof(char), 1, fh);
     fread(meshname, sizeof(char), c, fh);
-    meshname[(int)(c++)] = 0;
+//    meshname[(int)(c++)] = 0;
     common_pack_write(app_data, app_ind, &c, sizeof(char));
     common_pack_write(app_data, app_ind, meshname, c);
 
     /* Pack Number of Vertices */
-    fread(&num, sizeof(int), 1, fh);
-    if(endian) tienet_flip(&num, &num, sizeof(int));
-    common_pack_write(app_data, app_ind, &num, sizeof(int));
+    fread(&num, sizeof(unsigned int), 1, fh);
+    if(endian) tienet_flip(&num, &num, sizeof(unsigned int));
+    common_pack_write(app_data, app_ind, &num, sizeof(unsigned int));
 
     /* Read and Pack Vertices */
     n = 0;
@@ -605,17 +605,17 @@ void common_pack_mesh_adrt(common_db_t *db, void **app_data, int *app_ind, char 
     common_pack_write(app_data, app_ind, &c, 1);
 
     if(c) {
-      fread(&num, sizeof(int), 1, fh);
-      if(endian) tienet_flip(&num, &num, sizeof(int));
-      common_pack_write(app_data, app_ind, &num, sizeof(int));
+      fread(&num, sizeof(unsigned int), 1, fh);
+      if(endian) tienet_flip(&num, &num, sizeof(unsigned int));
+      common_pack_write(app_data, app_ind, &num, sizeof(unsigned int));
       common_pack_trinum += num;
 
       /* Pack Faces */
       i = 0;
       while(i < num) {
         n = num - i > 48 ? 48 : num - i;
-        fread(face, 3*sizeof(int), n, fh);
-        common_pack_write(app_data, app_ind, face, 3 * n * sizeof(int));
+        fread(face, 3*sizeof(unsigned int), n, fh);
+        common_pack_write(app_data, app_ind, face, 3 * n * sizeof(unsigned int));
         i += n;
       }
     } else {
