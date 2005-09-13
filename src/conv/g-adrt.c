@@ -319,8 +319,6 @@ static union tree *leaf_func(struct db_tree_state *tsp,
 
     /* Write bot/mesh name */
     c = strlen(mesh_name) + 1;
-if(strlen(mesh_name) + strlen(prop_name) > 255)
-printf("mesh_name: %s\n", mesh_name);
 
     fwrite(&c, 1, 1, adrt_fh);
     fwrite(mesh_name, 1, c, adrt_fh);
