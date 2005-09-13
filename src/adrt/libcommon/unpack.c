@@ -621,11 +621,11 @@ void common_unpack_mesh_map(common_db_t *db, int socknum) {
   while(ind < size) {
     tienet_recv(socknum, &c, 1, 0);
     tienet_recv(socknum, mesh_name, c, 0);
-    ind += c;
+    ind += 1 + c;
 
     tienet_recv(socknum, &c, 1, 0);
     tienet_recv(socknum, prop_name, c, 0);
-    ind += c;
+    ind += 1 + c;
 
     /* Link a property and texture to a mesh */
     common_unpack_mesh_link(mesh_name, prop_name, db);
