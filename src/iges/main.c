@@ -39,11 +39,11 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./iges_types.h"
 #include "../librt/debug.h"
 
-extern char *optarg;
-extern int optind, opterr, optopt;
-
 int do_projection=1;
-char eor,eof,card[256];
+#if 0
+char eof;
+#endif
+char eor,card[256];
 fastf_t scale,inv_scale,conv_factor;
 int units,counter,pstart,dstart,totentities,dirarraylen;
 FILE *fd;
@@ -155,7 +155,7 @@ char *argv[];
 	char *output_file=(char *)NULL;
 
 
-	while( (c=getopt( argc , argv , "3dntpo:x:X:N:" )) != EOF )
+	while( (c=bu_getopt( argc , argv , "3dntpo:x:X:N:" )) != EOF )
 	{
 		switch( c )
 		{
@@ -170,7 +170,7 @@ char *argv[];
 				do_splines = 1;
 				break;
 			case 'o':
-				output_file = optarg;
+				output_file = bu_optarg;
 				break;
 			case 't':
 				trimmed_surf = 1;
@@ -179,17 +179,17 @@ char *argv[];
 				do_bots = 0;
 				break;
 			case 'N':
-				solid_name = optarg;
+				solid_name = bu_optarg;
 				break;
 			case 'x':
-				sscanf( optarg, "%x", (unsigned int *)&rt_g.debug );
+				sscanf( bu_optarg, "%x", (unsigned int *)&rt_g.debug );
 				if( RT_G_DEBUG & DEBUG_MEM )
 					bu_debug |= BU_DEBUG_MEM_LOG;
 				if( RT_G_DEBUG & DEBUG_MEM_FULL )
 					bu_debug |= BU_DEBUG_MEM_CHECK;
 				break;
 			case 'X':
-				sscanf( optarg, "%x", (unsigned int *)&rt_g.NMG_debug );
+				sscanf( bu_optarg, "%x", (unsigned int *)&rt_g.NMG_debug );
 				break;
 			default:
 				usage();
@@ -198,7 +198,7 @@ char *argv[];
 		}
 	}
 
-	if (optind >= argc || output_file == (char *)NULL || do_drawings+do_splines+trimmed_surf > 1) {
+	if (bu_optind >= argc || output_file == (char *)NULL || do_drawings+do_splines+trimmed_surf > 1) {
 		usage();
 		exit(1);
 	}
@@ -244,8 +244,8 @@ char *argv[];
 	}
 	strcpy( brlcad_file ,  output_file );
 
-	argc -= optind;
-	argv += optind;
+	argc -= bu_optind;
+	argv += bu_optind;
 
 	BU_LIST_INIT( &iges_list.l );
 	curr_file = (struct file_list *)bu_malloc( sizeof( struct file_list ), "iges-g: curr_file" );
