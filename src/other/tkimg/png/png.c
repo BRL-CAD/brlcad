@@ -108,7 +108,7 @@ static int
 SetupPngLibrary (interp)
     Tcl_Interp *interp;
 {
-    if (Pngtcl_InitStubs(interp, PNGTCL_VERSION, 0) == NULL) {
+    if (Png_InitStubs(interp, PNGTCL_VERSION, 0) == NULL) {
         return TCL_ERROR;
     }
     return TCL_OK;
