@@ -1,0 +1,25 @@
+2004-08-16  Andreas Kupries  <andreask@activestate.com>
+
+	* zlibtcl.h: Updated the hardwired version information in this
+	  header file.
+
+2004-08-13  Andreas Kupries  <andreask@activestate.com>
+
+	* libz/tcl: Changed version of wrapper to 1.2.1, synchronized to
+	  version of libz.
+
+2004-08-12  Andreas Kupries  <andreask@activestate.com>
+
+	* libz:     Updated zlib from version 1.1.3 to 1.2.1.
+	* libz/tcl: Updated to handle the new version of zlib.
+
+2002-11-18  Andreas Kupries  <andreask@activestate.com>
+
+	* Configure and build ok for all platforms available to me at AS.
+
+2002-11-13  Andreas Kupries  <andreask@activestate.com>
+
+	* Start of logging.
+
+	* libz/tcl/: New directory, packaging of support library for
+	  tcl.
