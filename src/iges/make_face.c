@@ -35,8 +35,6 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./iges_struct.h"
 #include "./iges_extern.h"
 
-fastf_t nmg_loop_plane_area();
-
 struct faceuse *
 Make_planar_face( s , entityno , face_orient )
 struct shell *s;
