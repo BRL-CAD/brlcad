@@ -139,7 +139,7 @@ void render_util_spall_list(tie_t *tie, tie_ray_t *ray, tfloat angle, void **dat
   tie_ray_t sray;
   tie_id_t id;
   int i, ind;
-  char c;
+  unsigned char c;
   TIE_3 *vec_list, in, out;
  
 
