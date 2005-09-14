@@ -57,14 +57,44 @@ void util_display_init(int w, int h) {
   util_display_screen_h = h;
 
 
-
-
   /* Initialize the SDL library */
   if(!SDL_WasInit(SDL_INIT_VIDEO))
     if(SDL_Init(SDL_INIT_VIDEO | SDL_INIT_NOPARACHUTE) < 0) {
       fprintf(stderr, "Couldn't initialize SDL: %s\n", SDL_GetError());
       exit(1);
     }
+
+
+#if 0
+{
+SDL_Rect **modes;
+int i;
+
+/* Get available fullscreen/hardware modes */
+modes=SDL_ListModes(NULL, SDL_HWSURFACE | SDL_DOUBLEBUF);
+
+/* Check is there are any modes available */
+if(modes == (SDL_Rect **)0){
+  printf("No modes available!\n");
+  exit(-1);
+}
+
+
+/* Check if our resolution is restricted */
+if(modes == (SDL_Rect **)-1){
+  printf("All resolutions available.\n");
+} else{
+  /* Print valid modes */
+  printf("Available Modes\n");
+  for(i=0;modes[i];++i)
+    printf("  %d x %d\n", modes[i]->w, modes[i]->h);
+}
+}
+#endif
+
+
+//  util_display_screen = SDL_SetVideoMode(util_display_screen_w, util_display_screen_h, 32, SDL_HWSURFACE | SDL_DOUBLEBUF);
+  util_display_screen = SDL_SetVideoMode(util_display_screen_w, util_display_screen_h, 32, SDL_SWSURFACE);
 
 
 {
@@ -102,12 +132,16 @@ if(modes == (SDL_Rect **)-1){
                                              0x00ff0000, 0x0000ff00, 0x000000ff, 0x00000000);
 #endif
 
+
+#if 0
 {
   const SDL_VideoInfo *foo;
 
   foo = SDL_GetVideoInfo();
   printf("hw: %d %d %d %d\n", foo->hw_available, foo->blit_hw, foo->blit_hw_CC, foo->blit_hw_A);
 }
+#endif
+
 
   util_display_rect.x = 0;
   util_display_rect.y = 0;

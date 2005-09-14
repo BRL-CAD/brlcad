@@ -353,7 +353,8 @@ void isst_observer_event_loop() {
   util_display_init(isst_logo.width, isst_logo.height);
 
   SDL_WM_SetCaption("ADRT_ISST_Observer Loading...", NULL);
-  util_display_draw((void *)isst_logo.pixel_data);
+  memcpy(util_display_buffer->pixels, isst_logo.pixel_data, 3 * isst_logo.width * isst_logo.height);
+  util_display_draw(NULL);
   util_display_flip();
 
   tienet_sem_wait(&isst_observer_splash_sem);

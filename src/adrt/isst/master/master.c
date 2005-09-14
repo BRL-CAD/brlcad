@@ -187,7 +187,7 @@ void isst_master(int port, int obs_port, char *proj, char *list, char *exec, cha
     /* Fill the work buffer */
     isst_dispatcher_generate(&db, isst_master_slave_data, isst_master_slave_data_len);
 
-#if 1
+#if 0
     frame_num++;
     if(!(frame_num % 7)) {
       gettimeofday(&cur, NULL);

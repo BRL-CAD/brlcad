@@ -225,6 +225,7 @@ static PyObject* isst_python_select(PyObject *self, PyObject *args) {
     tienet_master_broadcast(mesg, c + 4);
   }
 
+  strcpy(isst_python_response, "done.\n");
   return PyInt_FromLong(0);
 }
 
@@ -246,6 +247,7 @@ static PyObject* isst_python_deselect(PyObject *self, PyObject *args) {
     tienet_master_broadcast(mesg, c + 4);
   }
 
+  strcpy(isst_python_response, "done.\n");
   return PyInt_FromLong(0);
 }
 
