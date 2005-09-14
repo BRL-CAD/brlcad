@@ -5697,7 +5697,7 @@ Popup Menu    Right or Ctrl-Left
     }
 
     # BRL-CAD License Info
-    set fd [open [file join $env(ARCHER_HOME) brlcadLicense.txt] r]
+    set fd [open [file join $env(ARCHER_HOME) COPYING] r]
     set mBrlcadLicenseInfo [read $fd]
     close $fd
     itk_component add brlcadLicenseInfo {
@@ -5719,7 +5719,7 @@ Popup Menu    Right or Ctrl-Left
 
 
     # Acknowledgement Info
-    set fd [open [file join $env(ARCHER_HOME) acknowledgement.txt] r]
+    set fd [open [file join $env(ARCHER_HOME) doc archer_ack.txt] r]
     set mAckInfo [read $fd]
     close $fd
     itk_component add ackInfo {
