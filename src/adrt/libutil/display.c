@@ -56,6 +56,9 @@ void util_display_init(int w, int h) {
   util_display_screen_w = w;
   util_display_screen_h = h;
 
+
+
+
   /* Initialize the SDL library */
   if(!SDL_WasInit(SDL_INIT_VIDEO))
     if(SDL_Init(SDL_INIT_VIDEO | SDL_INIT_NOPARACHUTE) < 0) {
@@ -63,15 +66,48 @@ void util_display_init(int w, int h) {
       exit(1);
     }
 
-//  util_display_screen = SDL_SetVideoMode(util_display_screen_w, util_display_screen_h, 32, SDL_SWSURFACE | SDL_DOUBLEBUF);
-  util_display_screen = SDL_SetVideoMode(util_display_screen_w, util_display_screen_h, 32, SDL_SWSURFACE);
 
-  util_display_buffer = SDL_CreateRGBSurface(SDL_SWSURFACE, util_display_screen_w, util_display_screen_h, 24,
+{
+SDL_Rect **modes;
+int i;
+
+/* Get available fullscreen/hardware modes */
+modes=SDL_ListModes(NULL, SDL_HWSURFACE | SDL_DOUBLEBUF);
+
+/* Check is there are any modes available */
+if(modes == (SDL_Rect **)0){
+  printf("No modes available!\n");
+  exit(-1);
+}
+
+/* Check if our resolution is restricted */
+if(modes == (SDL_Rect **)-1){
+  printf("All resolutions available.\n");
+} else{
+  /* Print valid modes */
+  printf("Available Modes\n");
+  for(i=0;modes[i];++i)
+    printf("  %d x %d\n", modes[i]->w, modes[i]->h);
+}
+}
+
+
+  util_display_screen = SDL_SetVideoMode(util_display_screen_w, util_display_screen_h, 32, SDL_HWSURFACE | SDL_DOUBLEBUF);
+//  util_display_screen = SDL_SetVideoMode(util_display_screen_w, util_display_screen_h, 32, SDL_SWSURFACE);
+
+  util_display_buffer = SDL_CreateRGBSurface(SDL_HWSURFACE, util_display_screen_w, util_display_screen_h, 24,
 #if SDL_BYTEORDER == SDL_LIL_ENDIAN
                                              0x000000ff, 0x0000ff00, 0x00ff0000, 0x00000000);
 #else
                                              0x00ff0000, 0x0000ff00, 0x000000ff, 0x00000000);
 #endif
+
+{
+  const SDL_VideoInfo *foo;
+
+  foo = SDL_GetVideoInfo();
+  printf("hw: %d %d %d %d\n", foo->hw_available, foo->blit_hw, foo->blit_hw_CC, foo->blit_hw_A);
+}
 
   util_display_rect.x = 0;
   util_display_rect.y = 0;
@@ -94,7 +130,7 @@ void util_display_init(int w, int h) {
   memcpy(util_display_font->pixels, util_font.pixel_data, util_font.width * util_font.height * 4);
 
   SDL_EnableUNICODE(1);
-  SDL_EnableKeyRepeat(100, 150);
+  SDL_EnableKeyRepeat(200, 33);
 
   /* Clean up on exit */
   atexit(SDL_Quit);
@@ -109,7 +145,7 @@ void util_display_free() {
 
 
 void util_display_draw(void *frame) {
-  memcpy(util_display_buffer->pixels, frame, util_display_screen_w * util_display_screen_h * 3);
+//  memcpy(util_display_buffer->pixels, frame, util_display_screen_w * util_display_screen_h * 3);
   SDL_BlitSurface(util_display_buffer, &util_display_rect, util_display_screen, &util_display_rect);
 }
 

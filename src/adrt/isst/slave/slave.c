@@ -260,9 +260,9 @@ void isst_slave_mesg(void *mesg, unsigned int mesg_len) {
       char name[256];
       unsigned char c;
 
-      /* Reset all meshes */
+      /* Reset all meshes hit flag */
       for(i = 0; i < db.mesh_num; i++)
-        db.mesh_list[i]->flags = 0;
+        db.mesh_list[i]->flags &= 0x2;
 
       /* Read the data */
       ind = sizeof(short);
@@ -276,11 +276,10 @@ void isst_slave_mesg(void *mesg, unsigned int mesg_len) {
         memcpy(name, &((unsigned char *)mesg)[ind], c);
         ind += c;
 
-/*        printf("trying to assign: -%s-\n", name); */
+        /* set hit flag */
         for(n = 0; n < db.mesh_num; n++) {
           if(!strcmp(db.mesh_list[n]->name, name)) {
-/*            printf("  assigned[%d]: %s\n", i, name); */
-            db.mesh_list[n]->flags = 1;
+            db.mesh_list[n]->flags |= 1;
             continue;
           }
         }
@@ -300,10 +299,10 @@ void isst_slave_mesg(void *mesg, unsigned int mesg_len) {
       memcpy(&c, &((uint8_t *)mesg)[3], 1);
       memcpy(string, &((uint8_t *)mesg)[4], c);
 
-      for(n = 0; n < db.mesh_num; n++) {
+      /* set select flag */
+      for(n = 0; n < db.mesh_num; n++)
         if(strstr(db.mesh_list[n]->name, string) || c == 1)
-          db.mesh_list[n]->flags = t;
-      }
+          db.mesh_list[n]->flags = (db.mesh_list[n]->flags & 0x1) | t<<1;
     }
     break;
 
