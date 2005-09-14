@@ -11,6 +11,7 @@
 #define ISST_OP_RENDER		0
 #define ISST_OP_SHOT		1
 #define ISST_OP_SPALL		2
+#define ISST_OP_SELECT		3
 
 #define	ISST_PIXEL_FMT		0	/* 0 == unsigned char, 1 ==  tfloat */
 

@@ -288,6 +288,24 @@ void isst_slave_mesg(void *mesg, unsigned int mesg_len) {
     }
     break;
 
+    case ISST_OP_SELECT:
+    {
+      uint8_t c, t;
+      char string[256];
+      uint32_t n;
+
+      /* select or deslect */
+      memcpy(&t, &((uint8_t *)mesg)[2], 1);
+      /* string */
+      memcpy(&c, &((uint8_t *)mesg)[3], 1);
+      memcpy(string, &((uint8_t *)mesg)[4], c);
+
+      for(n = 0; n < db.mesh_num; n++) {
+        if(strstr(db.mesh_list[n]->name, string) || c == 1)
+          db.mesh_list[n]->flags = t;
+      }
+    }
+    break;
 
     default:
       break;
