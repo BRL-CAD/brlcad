@@ -516,24 +516,7 @@ copy &quot;$(TargetDir)&quot;libfb.lib ..\..\..\lib
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\src\libfb\vers.c">
-				<FileConfiguration
-					Name="Debug|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="0"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_MBCS;_USRDLL;FB_EXPORT_DLL;TCL_THREADS=1;__win32;BRLCAD_DEBUG;BRLCAD_DLL;IF_X;IF_OGL;HAVE_CONFIG_H;$(NoInherit)"
-						BasicRuntimeChecks="3"/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="2"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_MBCS;_USRDLL;FB_EXPORT_DLL;TCL_THREADS=1;__win32;IF_X;IF_OGL;IF_REMOTE;BRLCAD_DLL;HAVE_CONFIG_H;$(NoInherit)"/>
-				</FileConfiguration>
+				RelativePath="..\..\..\src\libfb\vers_win.c">
 			</File>
 		</Filter>
 		<Filter
