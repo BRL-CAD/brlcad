@@ -44,7 +44,7 @@ void isst_master(int port, int obs_port, char *proj, char *list, char *exec, cha
 void* isst_master_networking(void *ptr);
 void isst_master_result(void *res_buf, int res_len);
 void isst_master_update(void);
-void isst_master_process_events(SDL_Event *event_queue, int event_num, isst_master_socket_t *sock);
+void isst_master_process_events(isst_event_t *event_queue, uint8_t event_num, isst_master_socket_t *sock);
 
 
 /***** GLOBALS *****/
@@ -445,13 +445,13 @@ void* isst_master_networking(void *ptr) {
                 tienet_send(sock->num, &op, 1, 0);
 
                 {
-                  SDL_Event event_queue[64];
-                  short event_num;
+                  isst_event_t event_queue[64];
+                  uint8_t event_num;
 
                   /* Get the event Queue and process it */
-                  tienet_recv(sock->num, &event_num, sizeof(short), 0);
+                  tienet_recv(sock->num, &event_num, sizeof(uint8_t), 0);
                   if(event_num)
-                    tienet_recv(sock->num, event_queue, event_num * sizeof(SDL_Event), 0);
+                    tienet_recv(sock->num, event_queue, event_num * sizeof(isst_event_t), 0);
                   isst_master_process_events(event_queue, event_num, sock);
                 }
 
@@ -609,7 +609,7 @@ void isst_master_update() {
 }
 
 
-void isst_master_process_events(SDL_Event *event_queue, int event_num, isst_master_socket_t *sock) {
+void isst_master_process_events(isst_event_t *event_queue, uint8_t event_num, isst_master_socket_t *sock) {
   int i, update;
   TIE_3 vec, vec2, vec3;
   tfloat celev;
@@ -621,7 +621,7 @@ void isst_master_process_events(SDL_Event *event_queue, int event_num, isst_mast
       printf("event_type: %d\n", event_queue[i].type);
       case SDL_KEYDOWN:
         update = 1;
-        switch(event_queue[i].key.keysym.sym) {
+        switch(event_queue[i].keysym) {
           case SDLK_LSHIFT:
           case SDLK_RSHIFT:
             isst_master_shift_enabled = 1;
@@ -903,7 +903,7 @@ void isst_master_process_events(SDL_Event *event_queue, int event_num, isst_mast
         break;
 
       case SDL_KEYUP:
-        switch(event_queue[i].key.keysym.sym) {
+        switch(event_queue[i].keysym) {
           case SDLK_LSHIFT:
           case SDLK_RSHIFT:
             isst_master_shift_enabled = 0;
@@ -915,22 +915,22 @@ void isst_master_process_events(SDL_Event *event_queue, int event_num, isst_mast
 
       case SDL_MOUSEBUTTONDOWN:
         update = 1;
-        if(event_queue[i].button.button == SDL_BUTTON_WHEELUP)
+        if(event_queue[i].button == SDL_BUTTON_WHEELUP)
           isst_master_scale *= 1.25;
 
-        if(event_queue[i].button.button == SDL_BUTTON_WHEELDOWN)
+        if(event_queue[i].button == SDL_BUTTON_WHEELDOWN)
           isst_master_scale *= 0.8;
         break;
 
       case SDL_MOUSEMOTION:
-        if(event_queue[i].motion.state && isst_master_mouse_grab) {
+        if(event_queue[i].motion_state && isst_master_mouse_grab) {
 	  int dx, dy;
 
-	  dx = -event_queue[i].motion.xrel;
-	  dy = -event_queue[i].motion.yrel;
+	  dx = -event_queue[i].motion_xrel;
+	  dy = -event_queue[i].motion_yrel;
 
           update = 1;
-          if(event_queue[i].button.button & 1<<(SDL_BUTTON_LEFT-1)) {
+          if(event_queue[i].button & 1<<(SDL_BUTTON_LEFT-1)) {
             /* backward and forward */
             math_vec_sub(vec, isst_master_camera_focus, isst_master_camera_position);
             math_vec_mul_scalar(vec, vec, (isst_master_scale*dy));
@@ -946,7 +946,7 @@ void isst_master_process_events(SDL_Event *event_queue, int event_num, isst_mast
             math_vec_mul_scalar(vec3, vec3, (isst_master_scale*dx));
             math_vec_add(isst_master_camera_position, isst_master_camera_position, vec3);
 #endif
-          } else if(event_queue[i].button.button & 1<<(SDL_BUTTON_RIGHT-1)) {
+          } else if(event_queue[i].button & 1<<(SDL_BUTTON_RIGHT-1)) {
             /* if the shift key is held down then rotate about Center of Rotation */
             if(isst_master_shift_enabled) {
               TIE_3 vec;
@@ -978,7 +978,7 @@ void isst_master_process_events(SDL_Event *event_queue, int event_num, isst_mast
               isst_master_camera_azimuth += 0.035*dx;
               isst_master_camera_elevation -= 0.035*dy;
             }
-          } else if(event_queue[i].button.button & 1<<(SDL_BUTTON_MIDDLE-1)) {
+          } else if(event_queue[i].button & 1<<(SDL_BUTTON_MIDDLE-1)) {
             isst_master_camera_position.v[2] += isst_master_scale*dy;
 
             /* strafe */

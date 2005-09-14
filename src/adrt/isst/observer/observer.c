@@ -50,8 +50,8 @@ int screen_w;
 int screen_h;
 
 short isst_observer_endian;
-short isst_observer_event_queue_size;
-SDL_Event isst_observer_event_queue[64];
+uint8_t isst_observer_event_queue_size;
+isst_event_t isst_observer_event_queue[64];
 int isst_observer_event_loop_alive;
 int isst_observer_display_init;
 int isst_observer_master_socket;
@@ -173,6 +173,7 @@ void* isst_observer_networking(void *ptr) {
 
     /* Check whether to quit here or not */
     tienet_recv(isst_observer_master_socket, &op, 1, isst_observer_endian);
+
     if(op == ISST_NET_OP_QUIT) {
       free(frame);
 #if isst_USE_COMPRESSION
@@ -189,15 +190,16 @@ void* isst_observer_networking(void *ptr) {
     /* Send Event Queue to Master */
     pthread_mutex_lock(&event_mut);
 
-    tienet_send(isst_observer_master_socket, &isst_observer_event_queue_size, sizeof(short), isst_observer_endian);
+    tienet_send(isst_observer_master_socket, &isst_observer_event_queue_size, sizeof(uint8_t), 0);
     if(isst_observer_event_queue_size)
-      tienet_send(isst_observer_master_socket, isst_observer_event_queue, isst_observer_event_queue_size * sizeof(SDL_Event), isst_observer_endian);
+      tienet_send(isst_observer_master_socket, isst_observer_event_queue, isst_observer_event_queue_size * sizeof(isst_event_t), 0);
     isst_observer_event_queue_size = 0;
 
     pthread_mutex_unlock(&event_mut);
 
     /* get frame data */
     pthread_mutex_lock(&isst_observer_magnify_mut);
+
 #if ISST_USE_COMPRESSION
     {
       unsigned long dest_len;
@@ -213,13 +215,20 @@ void* isst_observer_networking(void *ptr) {
     tienet_recv(isst_observer_master_socket, frame, 3*screen_w*screen_h, 0);
 #endif
 
+    if(isst_observer_display_init) {
+      isst_observer_display_init = 0;
+      tienet_sem_post(&isst_observer_splash_sem);
+      tienet_sem_wait(&isst_observer_sdlready_sem);
+    }
+
+
     /* Magnify the image if magnify > 1 */
     {
       unsigned int x, y;
       unsigned char pixel[6];
 
       if(isst_observer_magnify == 1) {
-        memcpy(magnify_buffer, frame, 3*screen_w*screen_h);
+        memcpy(util_display_buffer->pixels, frame, 3*screen_w*screen_h);
       } else if(isst_observer_magnify == 2) {
         for(y = 0; y < screen_h; y++) {
           for(x = 0; x < screen_w; x++) {
@@ -227,18 +236,13 @@ void* isst_observer_networking(void *ptr) {
             pixel[3] = pixel[0];
             pixel[4] = pixel[1];
             pixel[5] = pixel[2];
-            memcpy(&((char *)magnify_buffer)[3*(4*y*screen_w+2*x)], pixel, 6);
-            memcpy(&((char *)magnify_buffer)[3*(2*screen_w*(2*y+1)+2*x)], pixel, 6);
+            memcpy(&((char *)util_display_buffer->pixels)[3*(4*y*screen_w+2*x)], pixel, 6);
+            memcpy(&((char *)util_display_buffer->pixels)[3*(2*screen_w*(2*y+1)+2*x)], pixel, 6);
           }
         }
       }
     }
 
-    if(isst_observer_display_init) {
-      isst_observer_display_init = 0;
-      tienet_sem_post(&isst_observer_splash_sem);
-      tienet_sem_wait(&isst_observer_sdlready_sem);
-    }
 
     /* compute frames per second (fps) */
     frame_num++;
@@ -261,7 +265,7 @@ void* isst_observer_networking(void *ptr) {
       pthread_mutex_lock(&isst_observer_console_mut);
 
       /* Draw Frame */
-      util_display_draw(magnify_buffer);
+      util_display_draw(NULL);
 
       /* Overlay some useful text */
       sprintf(string, "position: %.3f %.3f %.3f", overlay.camera_position.v[0], overlay.camera_position.v[1], overlay. camera_position.v[2]);
@@ -435,8 +439,15 @@ void isst_observer_event_loop() {
 
     pthread_mutex_lock(&event_mut);
     /* Build up an event queue to send prior to receiving each frame */
-    if(isst_observer_event_queue_size < 64)
-      isst_observer_event_queue[isst_observer_event_queue_size++] = event;
+    if(isst_observer_event_queue_size < 64) {
+      isst_observer_event_queue[isst_observer_event_queue_size].type = event.type;
+      isst_observer_event_queue[isst_observer_event_queue_size].keysym = event.key.keysym.sym;
+      isst_observer_event_queue[isst_observer_event_queue_size].button = event.button.button;
+      isst_observer_event_queue[isst_observer_event_queue_size].motion_state = event.motion.state;
+      isst_observer_event_queue[isst_observer_event_queue_size].motion_xrel = event.motion.xrel;
+      isst_observer_event_queue[isst_observer_event_queue_size].motion_yrel = event.motion.yrel;
+      isst_observer_event_queue_size++;
+    }
     pthread_mutex_unlock(&event_mut);
   }
 
