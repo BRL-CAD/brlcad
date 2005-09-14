@@ -168,6 +168,10 @@ static int reg_start_func(struct db_tree_state *tsp,
   /* Do a lookup conversion on the name with the region map if used */
   strcpy(name, pathp->fp_names[pathp->fp_len-1]->d_namep);
 
+  /* If name is null, skip it */
+  if(!strlen(name))
+    return(0);
+
   /* replace the BRL-CAD name with the regmap name */
   if(use_regmap)
     regmap_lookup(name, tsp->ts_regionid);
@@ -292,15 +296,23 @@ static union tree *leaf_func(struct db_tree_state *tsp,
       strcpy(mesh_name, db_path_to_string(pathp));
     }
 
+    vlsp = region_name_from_path(pathp);
+    strcpy(prop_name, bu_vls_strgrab(vlsp));
+    regmap_lookup(prop_name, tsp->ts_regionid);
+    bu_free(vlsp, "vls");
+
+    /* if name is null, assign default property */
+    if(!strlen(prop_name))
+      strcpy(prop_name, "default");
 
     /* Grab the chars from the end till the '/' */
-    i = strlen(mesh_name)-1;
+    i = strlen(prop_name)-1;
     if(i >= 0)
-      while(mesh_name[i] != '/' && i > 0)
+      while(prop_name[i] != '/' && i > 0)
         i--;
 
-    if(i != strlen(mesh_name))
-      strcpy(prop_name, &mesh_name[i+1]);
+    if(i != strlen(prop_name))
+      strcpy(prop_name, &prop_name[i+1]);
 
     /* Display Status */
     printf("bots processed: %d\r", ++bot_count);
