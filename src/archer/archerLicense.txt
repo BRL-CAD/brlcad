@@ -1,0 +1,72 @@
+The following license applies ONLY to the IVAVIEW geometry database dll's (i.e. sdb.dll and sdbbrl.dll).
+
+SURVICE SOFTWARE EXECUTABLE LICENSE
+Version 1.0 - March 8, 2000
+
+Please read this License carefully before installing/downloading this software. By installing/downloading and/or using this software, you are agreeing to be bound by the terms of this License. If you do not or cannot agree to the terms of this License, please do not install/download or use the software.
+
+PREAMBLE
+
+The SURVICE Software Executable License is a binding legal document, so it necessarily contains legal terms and language. However, it's goal is simple - to provide freely available executable versions of software while protecting the rights of the SURVICE Engineering Company.
+
+In summary, you can freely use the executable(s) distributed under this license, but you cannot redistribute the software without permission from SURVICE.
+
+SURVICE SOFTWARE EXECUTABLE LICENSE - TERMS AND CONDITIONS
+
+1. Definitions. This License applies to any work that is identified in the Executable and/or in an accompanied "readme.txt" file, placed by the SURVICE Engineering Company ("SURVICE"), as being subject to the terms of this License (or subsequent versions thereof as this License may be revised from time to time by SURVICE).
+
+1.1 "Source Code" means the human readable form of a program.
+
+1.2 "Software" means computer programs, Source Code, Source Code listings, object code listings, design details, algorithms, processes, flowcharts, formulae and related material that would enable the Software to be reproduced, recreated or recompiled.
+
+1.3 "Executable" means the computer program, or compiled binary version of the Software compiled from the Source Code into a machine-dependent program or application.
+
+1.4 "Distribute" means to distribute Executable versions of the software for purposes other than Your own use.
+
+1.5 "You" or "Your" means an individual or a legal entity exercising rights under this License.
+
+2. Permitted Uses; Conditions & Restrictions. SURVICE hereby grants You, effective on the date You accept this License, a royalty-free, non-exclusive license, to do the following:
+
+2.1 You may use the Executable(s) distributed under this License solely for Your internal research and development, provided that You must in each instance:
+
+(a) retain the notice(s) identifying the Executable(s) as being covered by this License;
+
+(b) include a copy of this License with every copy of the Executable(s) that you make.
+
+2.2 You may Distribute Executable(s) covered under this License, provided that You must in each instance:
+
+(a) satisfy all the conditions of Section 2.1;
+
+(b) obtain written and signed approval from The SURVICE Engineering Company.
+
+3. Version. SURVICE may publish revised and/or new versions of this License. Each version will be given a distinguishing version number. Once Executable(s) have been published under a particular version of this License, You may continue to use it under the terms of that version. You may also choose to use such Executable(s) under the terms of any subsequent version of this License published by SURVICE.
+
+4. Warranty.
+
+4.1 UNLESS OTHERWISE STATED IN WRITING, THE EXECUTABLE(S) PROVIDED UNDER THIS LICENSE ARE PROVIDED "AS IS" AND WITHOUT WARRANTY, UPGRADES OR SUPPORT OF ANY KIND. THERE IS NO WARRANTY THAT THE FUNCTIONS CONTAINED IN THE SOFTWARE WILL MEET YOUR REQUIREMENTS, OR THAT THE OPERATION OF THE SOFTWARE WILL BE ERROR-FREE, OR THAT DEFECTS IN THE SOFTWARE WILL BE CORRECTED.
+
+4.2 The Software may contain in whole or in part pre-release, untested, or not fully tested works. The Software may contain errors that could cause failures or loss of data, and may be incomplete or contain inaccuracies. You expressly acknowledge and agree that use of the Software is at Your sole and entire risk.
+
+4.3 You acknowledge that the Software is not intended for use in the operation of nuclear facilities, aircraft navigation, or any other use in which failure of the Software could lead to personal injury or death.
+
+5. Liability.
+
+5.1 LIMITATION OF LIABILITY. UNDER NO CIRCUMSTANCES SHALL SURVICE BE LIABLE FOR ANY DAMAGES RELATING TO YOUR USE OR INABILITY TO USE THE SOFTWARE.
+
+6. Ownership. SURVICE retains all rights to the Software. Any Modifications made by SURVICE are not automatically subject to this License. SURVICE's use of the Software is not subject to this License.
+
+7. Termination.
+
+7.1 This License and the rights granted hereunder will terminate:
+
+(a) automatically without notice from SURVICE if You fail to comply with any term(s) of this License;
+
+(b) automatically without notice from SURVICE if You, at any time during the term of this License, commence an action for patent infringement against SURVICE.
+
+7.2 Effect of Termination. Upon termination, You agree to immediately stop any further use, modification, or distribution of the Software that are in your possession or control. Neither party will be liable to the other for any damages resulting from termination of this License.
+
+8. Miscellaneous.
+
+8.1 Relationship of Parties. This License will not be construed as creating a partnership or any other form of legal association between You and SURVICE.
+
+8.2 Dispute Resolution. Any litigation or other dispute resolution between You and SURVICE relating to this License shall take place in the State of Maryland, and You and SURVICE hereby consent to the personal jurisdiction of, and venue in, the state and federal courts within that State with respect to this License. 
