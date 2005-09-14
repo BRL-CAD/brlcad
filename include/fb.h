@@ -41,6 +41,25 @@
 #ifndef FB_H
 #define FB_H seen
 
+/* Needed for fd_set */
+#if defined (HAVE_SYS_SELECT_H)
+#  include <sys/select.h>
+#else
+#  if defined(HAVE_SYS_TYPES_H)
+#    include <sys/types.h>
+#  endif
+#  if defined(HAVE_SYS_TIME_H)
+#    include <sys/time.h>
+#  endif
+#  if defined(HAVE_UNISTD_H)
+#    include <unistd.h>
+#  else
+#    if defined(HAVE_SYS_UNISTD_H)
+#      include <sys/unistd.h>
+#    endif
+#  endif
+#endif
+
 #ifndef FB_EXPORT
 #   if defined(_WIN32) && !defined(__CYGWIN__) && defined(BRLCAD_DLL)
 #      ifdef FB_EXPORT_DLL
