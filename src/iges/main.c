@@ -40,10 +40,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "../librt/debug.h"
 
 int do_projection=1;
-#if 0
-char eof;
-#endif
-char eor,card[256];
+char eof,eor,card[256];
 fastf_t scale,inv_scale,conv_factor;
 int units,counter,pstart,dstart,totentities,dirarraylen;
 FILE *fd;
