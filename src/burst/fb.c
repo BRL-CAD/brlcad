@@ -28,6 +28,9 @@
 #ifndef lint
 static const char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
+
+#include "common.h"
+
 #include <stdio.h>
 #include <string.h>
 #include <memory.h>
