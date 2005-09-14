@@ -1,0 +1,224 @@
+# TYPE: tcltk
+##############################################################
+#
+# tooltip.itk
+#
+##############################################################
+#
+# Description:
+#    This is a tool tip displayer.
+#
+##############################################################
+ 
+namespace eval swidgets::tooltiprandom {
+    # Create a variable inside the namespace
+    variable seed [clock seconds]
+}
+
+proc swidgets::tooltiprandom::init {seed} {
+    set ::swidgets::tooltiprandom::seed $seed
+}
+
+proc swidgets::tooltiprandom::random {} {
+    variable seed
+    set seed [expr ($seed*9301 + 49297) % 233280]
+    return [expr $seed/double(233280)]
+}
+
+proc swidgets::tooltiprandom::range {range} {
+    expr int([random]*$range)
+}
+
+itcl::class swidgets::Tooltip {
+    inherit itk::Toplevel
+
+    itk_option define -geometry geometry Geometry ""
+    itk_option define -title title Title ""
+    itk_option define -tips tips Tips ""
+    itk_option define -parent parent Parent "."
+    itk_option define -showtip showTip Boolean 1
+    itk_option define -introcommand introCommand Command {}
+    itk_option define -closecommand closeCommand Command {}
+
+    constructor {args} {}
+    destructor {}
+
+    public {
+        method Activate     {}
+        method Hide         {}
+        method Close        {}
+    }
+
+    private {
+	variable index 0
+	common c_tipimg [image create photo -file [file join $::swidgets::library "images" tip.gif]]
+
+	method next {}
+	method intro {}
+    }
+}
+
+#
+# Provide a lowercased access method for the Tooltip class.
+#
+proc ::swidgets::tooltip {args} {
+    uplevel ::swidgets::Tooltip $args
+}
+
+# ------------------------------------------------------------
+#                      CONSTRUCTOR
+# ------------------------------------------------------------
+::itcl::body swidgets::Tooltip::constructor {args} {
+
+    # image
+    itk_component add image {
+	::label $itk_interior.image
+    } {
+	keep -image
+    }
+
+    set frm [::frame $itk_interior.frm -relief groove\
+	    -borderwidth 1]
+
+    # textm & scrollbar
+    itk_component add text {
+	::text $frm.text -wrap word \
+		-state disabled \
+		-height 15 -width 60
+    } {
+	keep -font
+	rename -background -textbackground textBackground Background
+    }
+
+    itk_component add scroll {
+	::scrollbar $frm.scroll -orient vertical
+    } {
+    }
+
+    $itk_component(text) configure -yscrollcommand "$itk_component(scroll) set"
+    $itk_component(scroll) configure -command "$itk_component(text) yview"
+
+    # checkbutton
+    itk_component add check {
+	::checkbutton $itk_interior.check -text "Show tips at startup" \
+		-onvalue 1 -offvalue 0 -variable [::itcl::scope itk_option(-showtip)]
+    } {
+	keep -selectcolor
+    }
+
+    # buttons
+    ::frame $itk_interior.sep -borderwidth 2 -height 2 -relief sunken
+    itk_component add bbox {
+	::frame $itk_interior.bbox
+    } {
+    }
+
+    itk_component add next {
+	::button $itk_component(bbox).next -text "Next" \
+		-width 15 -command [::itcl::code $this next]
+    } {
+    }
+
+    itk_component add intro {
+	::button $itk_component(bbox).intro -text "Introduction" \
+		-width 15 -command [::itcl::code $this intro]
+    } {
+    }	
+
+    itk_component add close {
+	::button $itk_component(bbox).close -text "Close" \
+		-width 15 -command [::itcl::code $this Close]
+    } {
+    }
+
+    #
+    # pack widgets
+    #
+    pack $itk_component(text)   -side left -expand yes -fill both -pady 3
+    pack $itk_component(scroll) -side right -fill y
+    grid $itk_component(check)  -column 1 -row 1 -sticky w
+    grid $frm                   -column 1 -row 0  -sticky news
+    grid $itk_component(image)  -column 0 -row 0 -sticky n -rowspan 2 -pady 3
+
+    grid $itk_interior.sep      -column 0 -row 2 -padx 3 -pady 3 -sticky ew -columnspan 2
+    grid $itk_component(next)   -column 0 -row 0 -sticky ew
+    grid $itk_component(intro)  -column 1 -row 0 -sticky ew -padx 3
+    grid $itk_component(close)  -column 2 -row 0 -sticky ew
+    grid $itk_component(bbox)   -column 0 -row 3 -sticky new -columnspan 2
+
+    eval itk_initialize $args
+
+    if {[$itk_component(image) cget -image] == {}} {
+	$itk_component(image) configure -image $c_tipimg
+    }
+
+    # set starting tip
+    if {[llength $itk_option(-tips)]} {
+	set index [swidgets::tooltiprandom::range [llength $itk_option(-tips)]]
+	if {$index > 0} {incr index -1}
+	$itk_component(text) configure -state normal
+	$itk_component(text) delete 1.0 end
+	$itk_component(text) insert 1.0 "[lindex $itk_option(-tips) $index]" 
+	$itk_component(text) configure -state disabled
+     }
+}
+
+::itcl::body swidgets::Tooltip::destructor {} {
+}
+
+# -----------------------------------------------------------------------------
+#                                  OPTIONS
+# -----------------------------------------------------------------------------
+::itcl::configbody swidgets::Tooltip::geometry {
+    wm geometry $itk_interior $itk_option(-geometry)
+}
+::itcl::configbody swidgets::Tooltip::title {
+    wm title $itk_interior $itk_option(-title)
+}
+::itcl::configbody swidgets::Tooltip::tips {}
+::itcl::configbody swidgets::Tooltip::parent {
+    wm transient $itk_interior $itk_option(-parent)
+}
+::itcl::configbody swidgets::Tooltip::showtip {}
+::itcl::configbody swidgets::Tooltip::introcommand {}
+::itcl::configbody swidgets::Tooltip::closecommand {}
+
+# -----------------------------------------------------------------------------
+#                                  METHODS
+# -----------------------------------------------------------------------------
+::itcl::body swidgets::Tooltip::Activate {} {
+    update
+    wm deiconify $itk_interior
+    raise $itk_interior
+    focus $itk_interior    
+}
+
+::itcl::body swidgets::Tooltip::Hide {} {
+    wm withdraw $itk_interior
+    update
+}
+
+::itcl::body swidgets::Tooltip::Close {} {
+    Hide
+
+    if {$itk_option(-closecommand) != {}} {
+	eval $itk_option(-closecommand)
+    }
+
+    destroy object [namespace tail $this]
+}
+
+::itcl::body swidgets::Tooltip::next {} {
+    incr index
+    if {$index >= [llength $itk_option(-tips)]} {set index 0}
+    $itk_component(text) configure -state normal
+    $itk_component(text) delete 1.0 end
+    $itk_component(text) insert 1.0 "[lindex $itk_option(-tips) $index]" 
+    $itk_component(text) configure -state disabled
+}
+
+::itcl::body swidgets::Tooltip::intro {} {
+    if {$itk_option(-introcommand) != {}} {
+	eval $itk_option(-introcommand)
+    }
+}
