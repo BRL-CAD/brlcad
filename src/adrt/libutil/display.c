@@ -97,31 +97,6 @@ if(modes == (SDL_Rect **)-1){
   util_display_screen = SDL_SetVideoMode(util_display_screen_w, util_display_screen_h, 32, SDL_SWSURFACE);
 
 
-{
-SDL_Rect **modes;
-int i;
-
-/* Get available fullscreen/hardware modes */
-modes=SDL_ListModes(NULL, SDL_HWSURFACE | SDL_DOUBLEBUF);
-
-/* Check is there are any modes available */
-if(modes == (SDL_Rect **)0){
-  printf("No modes available!\n");
-  exit(-1);
-}
-
-/* Check if our resolution is restricted */
-if(modes == (SDL_Rect **)-1){
-  printf("All resolutions available.\n");
-} else{
-  /* Print valid modes */
-  printf("Available Modes\n");
-  for(i=0;modes[i];++i)
-    printf("  %d x %d\n", modes[i]->w, modes[i]->h);
-}
-}
-
-
   util_display_screen = SDL_SetVideoMode(util_display_screen_w, util_display_screen_h, 32, SDL_HWSURFACE | SDL_DOUBLEBUF);
 //  util_display_screen = SDL_SetVideoMode(util_display_screen_w, util_display_screen_h, 32, SDL_SWSURFACE);
 
