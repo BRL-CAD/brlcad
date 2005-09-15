@@ -83,6 +83,37 @@ Package=<4>
 
 ###############################################################################
 
+Project: "brlcad"=".\Dll\brlcad.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+    begin source code control
+    brlcad
+    .\Dll
+    end source code control
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name libbn
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name libbu
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name librt
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name libsysv
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name libwdb
+    End Project Dependency
+}}}
+
+###############################################################################
+
 Global:
 
 Package=<5>
