@@ -21,14 +21,11 @@
 /** @file fbserv_obj.h
  *
  */
+#ifndef __FBSERV_OBJ_H__
+#define __FBSERV_OBJ_H__
 
 #include "fb.h"
 #include "pkg.h"
-
-extern FBIO X24_interface;
-#ifdef DM_OGL
-extern FBIO ogl_interface;
-#endif
 
 #define NET_LONG_LEN	4	/* # bytes to network long */
 #define MAX_CLIENTS 32
@@ -58,6 +55,8 @@ struct fbserv_obj {
 
 extern int fbs_open();
 extern int fbs_close();
+
+#endif  /* __FBSERV_OBJ_H__ */
 
 /*
  * Local Variables:
