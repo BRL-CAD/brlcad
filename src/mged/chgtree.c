@@ -87,7 +87,7 @@ extern int			classic_mged;
 #ifdef DM_X
 extern Tk_Window	tkwin;
 #else
-int tkwin=0;
+int *tkwin=0;
 #endif
 
 static char *really_delete="tk_messageBox -icon question -title {Are you sure?}\
