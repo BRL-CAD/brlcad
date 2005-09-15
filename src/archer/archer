@@ -43,12 +43,12 @@ lappend auto_path [file join $dir lib itcl3.3]
 lappend auto_path [file join $dir lib itk3.3]
 lappend auto_path [file join $dir lib iwidgets4.0.2]
 lappend auto_path [file join $dir lib iwidgets4.0.2 scripts]
-lappend auto_path [file join $dir lib sdialogs]
-lappend auto_path [file join $dir lib sdialogs scripts]
-lappend auto_path [file join $dir lib swidgets]
-lappend auto_path [file join $dir lib swidgets scripts]
 lappend auto_path [file join $dir lib sdb]
 lappend auto_path [file join $dir tclscripts]
+lappend auto_path [file join $dir tclscripts sdialogs]
+lappend auto_path [file join $dir tclscripts sdialogs scripts]
+lappend auto_path [file join $dir tclscripts swidgets]
+lappend auto_path [file join $dir tclscripts swidgets scripts]
 lappend auto_path [file join $dir tclscripts lib]
 lappend auto_path [file join $dir tclscripts archer]
 
@@ -237,7 +237,8 @@ proc main {} {
     if {$::Archer::inheritFromToplevel} {
 	set ::Archer::archer [Archer .\#auto]
 	wm title $::Archer::archer "Archer"
-	wm iconbitmap $::Archer::archer -default [file join $env(ARCHER_HOME) archer.ico]
+	wm iconbitmap $::Archer::archer -default \
+	    [file join $env(ARCHER_HOME) doc html manuals archer archer.ico]
 	set size [wm maxsize $::Archer::archer]
         set width [expr {[lindex $size 0] - 8}]
         set height [expr {[lindex $size 1] - 40}]
@@ -245,7 +246,8 @@ proc main {} {
 	wm protocol $::Archer::archer WM_DELETE_WINDOW {exitArcher $::Archer::archer}
     } else {
 	wm title . "Archer"
-	wm iconbitmap . -default [file join $env(ARCHER_HOME) archer.ico]
+	wm iconbitmap . -default \
+	    [file join $env(ARCHER_HOME) doc html manuals archer archer.ico]
 	set ::Archer::archer [Archer .\#auto]
 	set size [wm maxsize .]
         set width [expr {[lindex $size 0] - 8}]
