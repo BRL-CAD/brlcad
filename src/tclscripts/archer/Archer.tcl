@@ -6765,8 +6765,11 @@ Popup Menu    Right or Ctrl-Left
 
 ::itcl::body Archer::doArcherHelp {} {
     global env
+    global tcl_platform
 
-    exec hh [file join $env(ARCHER_HOME) doc Archer_Documentation.chm] &
+    if {$tcl_platform(os) == "Windows NT"} {
+	exec hh [file join $env(ARCHER_HOME) doc html manuals archer Archer_Documentation.chm] &
+    }
 }
 
 ::itcl::body Archer::_background_color {r g b} {
@@ -10561,7 +10564,7 @@ Popup Menu    Right or Ctrl-Left
     set pwd [::pwd]
 
     # developer & user plugins
-    foreach plugindir [list [file join $env(ARCHER_HOME) plugins]] {
+    foreach plugindir [list [file join $env(ARCHER_HOME) plugins archer]] {
 	::cd $plugindir
 	pluginLoadCWDFiles
     }
