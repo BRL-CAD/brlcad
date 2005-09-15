@@ -49,10 +49,10 @@
 #  include "tcl.h"
 #endif
 
-
 #if HAVE_GL_DEVICE_H
 #  include <gl/device.h>
 #endif
+
 
 #include "machine.h"
 #include "bu.h"
