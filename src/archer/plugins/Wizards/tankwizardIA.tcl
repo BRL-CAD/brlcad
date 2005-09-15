@@ -11,7 +11,7 @@
 #	 This is a script for loading/registering the tank wizard.
 #
 
-source [file join $env(ARCHER_HOME) plugins Wizards tankwizardIA TankWizardIA.tcl]
+source [file join $env(ARCHER_HOME) plugins archer Wizards tankwizardIA TankWizardIA.tcl]
 
 # Load only once
 set pluginMajorType $TankWizardIA::wizardMajorType
