@@ -270,7 +270,6 @@ RT_CK_TESS_TOL(jack_tree_state.ts_ttol);
 */
 union tree *do_region_end(register struct db_tree_state *tsp, struct db_full_path *pathp, union tree *curtree, genptr_t client_data)
 {
-	extern FILE		*fp_fig;
 	union tree		*ret_tree;
 	struct rt_list		vhead;
 	struct nmgregion	*r;
