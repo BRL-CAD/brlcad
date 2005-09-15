@@ -40,10 +40,6 @@
  *
  *  General Symbols and Types Defined -
  *
- *	CONST  - deprecated - (use const)
- *		A portable way of indicating that the ANSI C "const"
- *		keyword is desired, when compiling on an ANSI compiler.
- *
  *	genptr_t -
  *		A portable way of declaring a "generic" pointer that is
  *		wide enough to point to anything, which can be used on
@@ -51,11 +47,6 @@
  *		On some machines, pointers to functions can be wider than
  *		pointers to data bytes, so a declaration of "char *"
  *		isn't generic enough.
- *
- *	SIGNED - deprecated - (use signed)
- *		A portable way of declaring a signed variable, since
- *		the "signed" keyword is not known in K&R compilers.  e.g.:
- *			register SIGNED int twoway;
  *
  *	fastf_t -
  *		Intended to be the fastest floating point data type on
@@ -748,28 +739,17 @@ typedef long	bitv_t;		/* largest integer type */
 #  define GENPTR_NULL	((genptr_t)0)
 #endif
 
-/* A portable way of handling pre-ANSI C: remove const keyword */
+/* A portable way of handling pre-ANSI C: remove const and signed keyword */
 #if !defined(__STDC__)
 #  define	const	/**/
+#  define	signed	/**/
 #endif
-#if defined(CONST)
-#  undef  CONST
-#endif
-#define CONST deprecated
 
 /* Even in C++ not all compilers know the "bool" keyword yet */
 #if !defined(BOOL_T)
 # define BOOL_T	int
 #endif
 
-/* A portable way of handling pre-ANSI C: remove signed keyword */
-#if !defined(__STDC__)
-#  define	signed	/**/
-#endif
-#if defined(SIGNED)
-#  undef SIGNED
-#endif
-#define SIGNED deprecated
 
 /*
  *  Some very common BSD --> SYSV conversion aids
