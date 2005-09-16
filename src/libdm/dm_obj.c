@@ -70,32 +70,28 @@
 #include "zlib.h"
 
 #if defined(DM_X) || defined(_WIN32)
-
-#include "dm-X.h"
-#include "dm_xvars.h"
+#  include "dm-X.h"
+#  include "dm_xvars.h"
+#endif /* DM_X || _WIN32 */
 
 #ifdef DM_OGL
 #  ifdef HAVE_GL_GLX_H
 #    include <GL/glx.h>
 #  endif
-#  include <GL/gl.h>
+#  ifdef HAVE_GL_GL_H
+#    include <GL/gl.h>
+#  endif
 #  include "dm-ogl.h"
-#  ifdef USE_FBSERV
-extern int _ogl_open_existing();
-extern int ogl_close_existing();
-#  endif /* USE_FBSERV */
 #endif /* DM_OGL */
 
 #ifdef USE_FBSERV
-#  ifndef _WIN32
-/* These functions live in libfb. */
-extern int _X24_open_existing();
-extern int X24_close_existing();
-#  endif
-extern int fb_refresh();
+/* XXX - shouldn't be coupled to libfb, but necessary for calling the
+ * _open_existing interface calls.
+ */
+#  define IF_X 1
+#  define IF_OGL 1
+#  include "fb.h"
 #endif /* USE_FBSERV */
-
-#endif /* DM_X || _WIN32 */
 
 
 static int dmo_open_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
