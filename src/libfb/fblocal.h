@@ -39,8 +39,6 @@
 #ifndef INCL_FBLOCAL
 #define INCL_FBLOCAL
 
-#include "machine.h"
-
 #define Malloc_Bomb( _bytes_ ) \
 		fb_log( "\"%s\"(%d) : allocation of %d bytes failed.\n", \
 				__FILE__, __LINE__, _bytes_ )
