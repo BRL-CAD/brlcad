@@ -3,22 +3,16 @@
 lib_LTLIBRARIES = libfb.la
 
 if WITH_OPENGL
-OGL_CFLAGS = -DIF_OGL
-OGL_SRCS = if_ogl.c
+IF_OGL_CFLAGS = -DIF_OGL
 else
-OGL_CFLAGS =
-OGL_SRCS =
+IF_OGL_CFLAGS =
 endif
 
 if WITH_X11
-X11_CFLAGS = -DIF_X
-X11_SRCS = if_X.c if_X24.c
+IF_X_CFLAGS = -DIF_X
 else
-X11_CFLAGS =
-X11_SRCS =
+IF_X_CFLAGS =
 endif
-
-AM_CFLAGS = ${X_CFLAGS} -DIF_REMOTE -DIF_AB $(X11_CFLAGS) $(OGL_CFLAGS)
 
 SRCS = \
 	fb_generic.c \
@@ -29,13 +23,14 @@ SRCS = \
 	fb_util.c \
 	fbserv_obj.c \
 	getput.c \
-	$(OGL_SRCS) \
-	$(X11_SRCS) \
+	if_X.c \
+	if_X24.c \
 	if_ab.c \
 	if_debug.c \
 	if_disk.c \
 	if_mem.c \
 	if_null.c \
+	if_ogl.c \
 	if_remote.c \
 	if_stack.c \
 	server.c \
@@ -46,6 +41,7 @@ libfb_la_SOURCES = \
 	vers.c
 
 libfb_la_LDFLAGS = -version-info 19:1
+libfb_la_CFLAGS = ${X_CFLAGS} -DIF_REMOTE -DIF_AB $(IF_X_CFLAGS) $(IF_OGL_CFLAGS)
 libfb_la_LIBADD = \
 	${BU} \
 	${PKG} \
