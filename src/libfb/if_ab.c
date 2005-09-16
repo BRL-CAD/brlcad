@@ -43,8 +43,6 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "common.h"
 
-
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -994,7 +992,6 @@ ab_mread(int fd, register char *bufp, int n)
 
 #define	VDOT(a,b)	(a[0]*b[0]+a[1]*b[1]+a[2]*b[2])
 #define	V5DOT(a,b)	(a[0]*b[0]+a[1]*b[1]+a[2]*b[2]+a[3]*b[3]+a[4]*b[4])
-#define	floor(d)	(d>=0?(int)d:((int)d==d?d:(int)(d-1.0)))
 #define	CLIP(out,in)		{ register int t; \
 		if( (t = (in)) < 0 )  (out) = 0; \
 		else if( t >= 255 )  (out) = 255; \
