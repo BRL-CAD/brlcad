@@ -350,11 +350,6 @@ install-data-local:
 	   	$(ECHO) "    find $(DESTDIR)$(prefix)/. -type d -exec chmod go+x {} \;" ; \
 	      fi ; \
 	    fi ; \
-	    if test -d "$(DESTDIR)$(sysconfdir)" ; then \
-	      if test "x$(DESTDIR)$(prefix)/etc" != "x$(DESTDIR)$(sysconfdir)" ; then \
-	   	$(ECHO) "    find $(DESTDIR)$(sysconfdir)/. -type d -exec chmod go+x {} \;" ; \
-	      fi ; \
-	    fi ; \
 	    if test -d "$(DESTDIR)$(libdir)" ; then \
 	      if test "x$(DESTDIR)$(exec_prefix)/lib" != "x$(DESTDIR)$(libdir)" ; then \
 	   	$(ECHO) "    find $(DESTDIR)$(libdir)/. -type d -exec chmod go+x {} \;" ; \
