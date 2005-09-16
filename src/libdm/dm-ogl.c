@@ -34,6 +34,7 @@
 
 #include "common.h"
 
+#ifdef DM_OGL
 
 #include "tk.h"
 
@@ -1782,6 +1783,8 @@ ogl_freeDLists(struct dm *dmp, unsigned int list, int range)
   glDeleteLists(dmp->dm_displaylist + list, (GLsizei)range);
   return TCL_OK;
 }
+
+#endif /* DM_OGL */
 
 /*
  * Local Variables:

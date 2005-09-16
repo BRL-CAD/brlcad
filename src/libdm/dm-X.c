@@ -38,6 +38,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "common.h"
 
+#ifdef DM_X
 
 #include <stdio.h>
 #include <limits.h>
@@ -1320,6 +1321,8 @@ X_choose_visual(struct dm *dmp)
       return (XVisualInfo *)NULL; /* failure */
   }
 }
+
+#endif /* DM_X */
 
 /*
  * Local Variables:
