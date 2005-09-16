@@ -1,6 +1,6 @@
 # $Id$
 
-SUBDIRS = Anim_Tutorial ReleaseNotes cadwidgets libbu libdm librt mged shaders
+SUBDIRS = Anim_Tutorial cadwidgets libbu libdm librt mged shaders
 
 htmldocsdir = $(BRLCAD_DATA)/html/manuals
 
