@@ -4,14 +4,18 @@ SUBDIRS = dm_old
 
 if WITH_OPENGL
 OGL_SRCS = dm-ogl.c
+OGL_CFLAGS = -DDM_OGL
 else
 OGL_SRCS =
+OGL_CFLAGS =
 endif
 
 if WITH_X11
 X11_SRCS = dm-X.c
+X11_CFLAGS = -DDM_X
 else
 X11_SRCS =
+X11_CFLAGS =
 endif
 
 bin_PROGRAMS = \
@@ -113,6 +117,7 @@ mged_SOURCES = \
 	vparse.c \
 	vrlink.c
 
+mged_CFLAGS = $(OGL_CFLAGS) $(X11_CFLAGS)
 mged_LINK = $(LIBTOOL) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) -o $@
 mged_LDADD = \
 	${TERMIO} \

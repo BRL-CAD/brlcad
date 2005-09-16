@@ -1,8 +1,24 @@
-#ifndef SEEN_MGED_DM_H
-#define SEEN_MGED_DM_H
-
-/*
- *			M G E D _ D M . H
+/*			M G E D _ D M . H
+ * BRL-CAD
+ *
+ * Copyright (C) 1985-2005 United States Government as represented by
+ * the U.S. Army Research Laboratory.
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of the
+ * License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this file; see the file named COPYING for more
+ * information.
+ */
+/** @file mged_dm.h
  *
  * Header file for communication with the display manager.
  *  
@@ -14,11 +30,19 @@
  *  $Header$
  */
 
+#ifndef SEEN_MGED_DM_H
+#define SEEN_MGED_DM_H
+
 #include "dm.h"	/* struct dm */
 #include "./menu.h" /* struct menu_item */
 #include "./scroll.h" /* struct scroll_item */
 #include "fb.h" /* FBIO */
 #include "pkg.h" /* struct pkg_conn */
+
+/* mgedtcl.h must come before the #define statements below (pathName
+ * in particular as it's in the tk.h header) 
+ */
+#include "./mgedtcl.h"
 
 #define DO_NEW_EDIT_MATS
 

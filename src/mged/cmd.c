@@ -79,7 +79,6 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./mged_solid.h"
 #include "./mged_dm.h"
 #include "./sedit.h"
-#include "./mgedtcl.h"
 
 
 int bv_zoomin(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
@@ -145,7 +144,7 @@ extern int db_warn;	/* defined in ged.c */
 extern int db_upgrade;	/* defined in ged.c */
 extern int db_version;	/* defined in ged.c */
 
-extern struct rt_tess_tol     mged_ttol; /* do_draw.c */
+extern struct rt_tess_tol     mged_ttol; /* ged.c */
 extern struct bn_tol	      mged_tol; /* ged.c */
 
 int glob_compat_mode = 1;
@@ -155,14 +154,14 @@ int mged_cmd(int argc, char **argv, struct funtab *in_functions);
 struct bu_vls tcl_output_hook;
 
 Tcl_Interp *interp = NULL;
+#if DM_X
+Tk_Window tkwin = NULL;
+#endif
 
 #ifdef _WIN32
 void gettimeofday(struct timeval *tp, struct timezone *tzp);
 #endif
 
-#ifdef DM_X
-Tk_Window tkwin;
-#endif
 
 struct cmdtab {
 	char *ct_name;
@@ -851,9 +850,7 @@ cmd_setup(void)
 	bn_tcl_setup( interp );
 	Rt_Init(interp);
 
-#ifdef DM_X
 	tkwin = NULL;
-#endif
 
 	bu_vls_free(&temp);
 }
@@ -1318,8 +1315,6 @@ cmdline( struct bu_vls *vp, int record )
 				(void)signal( SIGINT, SIG_IGN );
 			}
 
-
-#ifdef DM_X
 			/* A user typed this command so let everybody see, then record
 			   it in the history. */
 			if (record && tkwin != NULL) {
@@ -1328,7 +1323,6 @@ cmdline( struct bu_vls *vp, int record )
 				Tcl_Eval(interp, bu_vls_addr(&tmp_vls));
 				Tcl_SetResult(interp, "", TCL_STATIC);
 			}
-#endif
 
 			if(record)
 				history_record(&save_vp, &start, &finish, CMD_OK);

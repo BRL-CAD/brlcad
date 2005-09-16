@@ -107,9 +107,6 @@ extern void view_ring_init(struct _view_state *vsp1, struct _view_state *vsp2); 
 extern void Tk_CreateCanvasBezierType();
 #endif
 
-#ifdef DM_X
-extern Tk_Window tkwin;
-#endif
 extern struct _color_scheme default_color_scheme;
 
 int gui_setup(char *dstr);

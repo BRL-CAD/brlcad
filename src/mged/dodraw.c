@@ -42,13 +42,11 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "common.h"
 
-
-
 #include <stdio.h>
 #ifdef HAVE_STRING_H
-#include <string.h>
+#  include <string.h>
 #else
-#include <strings.h>
+#  include <strings.h>
 #endif
 #include "machine.h"
 #include "bu.h"
@@ -139,9 +137,9 @@ static int		mged_shade_per_vertex_normals=0;
 int			mged_wireframe_color_override;
 int			mged_wireframe_color[3];
 static struct model	*mged_nmg_model;
-struct rt_tess_tol	mged_ttol;	/* XXX needs to replace mged_abs_tol, et.al. */
 
 extern struct bn_tol		mged_tol;	/* from ged.c */
+extern struct rt_tess_tol	mged_ttol;	/* from ged.c */
 
 /*
  *		M G E D _ P L O T _ A N I M _ U P C A L L _ H A N D L E R

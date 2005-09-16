@@ -47,16 +47,15 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "common.h"
 
-
-
 #include <fcntl.h>
 #include <stdio.h>
 #include <signal.h>
 #ifdef HAVE_STRING_H
-#include <string.h>
+#  include <string.h>
 #else
-#include <strings.h>
+#  include <strings.h>
 #endif
+
 
 #include "tcl.h"
 
@@ -65,14 +64,16 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "vmath.h"
 #include "raytrace.h"
 #include "wdb.h"
+
 #include "./ged.h"
 #include "./mged_solid.h"
 #include "./mged_dm.h"
-#include "./mgedtcl.h"
+
 
 #define BAD_EOF	(-1L)			/* eof_addr not set yet */
 
 void	killtree(struct db_i *dbip, struct directory *dp, genptr_t ptr);
+
 
 /*
  *			F _ M E M P R I N T

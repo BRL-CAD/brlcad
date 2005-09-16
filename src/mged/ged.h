@@ -60,6 +60,9 @@
  *  $Header$
  */
 
+#ifndef __GED_H__
+#define __GED_H__
+
 #include "common.h"
 
 #ifdef HAVE_SYS_TIME_H
@@ -76,6 +79,7 @@
 /* Needed to define struct w_dm - RFH */
 #include "./mged_dm.h"
 
+#include "./mgedtcl.h"
 /* Needed to define struct solid - RFH */
 #include "solid.h"
 
@@ -94,8 +98,9 @@ struct rt_nurb_internal {
 
 /*	Stuff needed from db.h */
 #ifndef NAMESIZE
+#  define NAMESIZE 16
+#endif
 
-#define NAMESIZE 16
 #define NAMEMOVE(from,to)       (void)strncpy(to, from, NAMESIZE)
 
 #define MGED_DB_NAME "db"
@@ -119,7 +124,6 @@ struct rt_nurb_internal {
 #define ARB7	7	/* weird 7-vertex shape */
 #define ARB8	8	/* hexahedron */
 
-#endif
 
 #if USE_PROTOTYPES
 #	define	MGED_EXTERN(type_and_name,args)	extern type_and_name args
@@ -146,19 +150,19 @@ extern struct dg_obj	*dgop;			/* defined in ged.c */
 /* Some useful constants, if they haven't been defined elsewhere. */
 
 #ifndef FALSE
-# define FALSE 0
+#  define FALSE 0
 #endif
 
 #ifndef TRUE
-# define TRUE 1
+#  define TRUE 1
 #endif
 
 #ifndef False
-# define False (0)
+#  define False (0)
 #endif
 
 #ifndef True
-# define True (1)
+#  define True (1)
 #endif
 
 /* Tolerances */
@@ -284,9 +288,6 @@ void history_setup(void);
 
 extern void start_catching_output(struct bu_vls *vp), stop_catching_output(struct bu_vls *vp);
 
-#ifndef	NULL
-#define	NULL		0
-#endif
 
 /*
  * Pointer to solid in solid table to be illuminated. - defined in usepen.c
@@ -326,23 +327,6 @@ extern char *state_str[];		/* identifying strings */
 #define ST_O_EDIT	6		/* Object Editing */
 #define ST_S_VPICK	7		/* Vertex Pick */
 #define ST_S_NO_EDIT	8		/* Solid edit without Rotate, translate, or scale */
-
-#if 0 /* Using the one provided by bu.h */
-#ifndef GETSTRUCT
-/* Acquire storage for a given struct, eg, GETSTRUCT(ptr,structname); */
-#if __STDC__ && !alliant && !apollo
-# define GETSTRUCT(p,str) \
-	p = (struct str *)rt_calloc(1,sizeof(struct str), "getstruct " #str)
-# define GETUNION(p,unn) \
-	p = (union unn *)rt_calloc(1,sizeof(union unn), "getstruct " #unn)
-#else
-# define GETSTRUCT(p,str) \
-	p = (struct str *)rt_calloc(1,sizeof(struct str), "getstruct str")
-# define GETUNION(p,unn) \
-	p = (union unn *)rt_calloc(1,sizeof(union unn), "getstruct unn")
-#endif
-#endif
-#endif
 
 #define	MAXLINE		RT_MAXLINE	/* Maximum number of chars per line */
 
@@ -505,6 +489,7 @@ extern struct run_rt head_run_rt;
 #define CMD_BAD		920
 #define CMD_MORE	921
 #define MORE_ARGS_STR    "more arguments needed::"
+
 
 /* adc.c */
 int f_adc (
@@ -940,6 +925,7 @@ int build_tops(char **start, char **end);
 /* mater.c */
 void color_soltab(void);
 
+#endif  /* __GED_H__ */
 
 /*
  * Local Variables:

@@ -40,8 +40,6 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "common.h"
 
-
-
 #include <stdio.h>
 #include <math.h>
 #ifdef HAVE_STRING_H
@@ -59,7 +57,6 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./titles.h"
 #include "./mged_solid.h"
 #include "./sedit.h"
-#include "./mgedtcl.h"
 #include "./mged_dm.h"
 
 int	state;

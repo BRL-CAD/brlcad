@@ -74,7 +74,6 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./ged.h"
 #include "./mged_solid.h"
 #include "./mged_dm.h"
-#include "./mgedtcl.h"
 #include "./qray.h"
 #include "./cmd.h"
 

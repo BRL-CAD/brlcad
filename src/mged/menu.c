@@ -41,8 +41,6 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "common.h"
 
-
-
 #include "tcl.h"
 
 #include <stdio.h>
@@ -54,7 +52,6 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./titles.h"
 #include "./mged_dm.h"
 
-#include "./mgedtcl.h"
 
 extern struct menu_item second_menu[], sed_menu[];
 
