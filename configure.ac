@@ -100,9 +100,12 @@ while test $length -gt 1 ; do
       separator="${separator}*"
       length="`expr $length - 1`"
 done
+
+BC_BOLD
 AC_MSG_RESULT([***${separator}***])
 AC_MSG_RESULT([*** ${title} ***])
 AC_MSG_RESULT([***${separator}***])
+BC_UNBOLD
 
 # necessary for proper file creation on nfs volumes
 umask 022
@@ -114,6 +117,12 @@ if test "x$CFLAGS" = "x" ; then
 	# set it to something benign instead like whitespace
 	CFLAGS=" "
 fi
+
+# override the default (empty) yflags (yacc) if user has not modified them
+if test "x$YFLAGS" = "x" ; then
+	YFLAGS="-d"
+fi
+AC_SUBST(YFLAGS)
 
 # cannot override LD directly, so warn about that (configure sets it)
 if test "x$LD" != "x" ; then
@@ -250,8 +259,7 @@ dnl ***********************
 dnl *** Check arguments ***
 dnl ***********************
 
-AC_MSG_CHECKING([... a r g u m e n t s ])
-AC_MSG_RESULT([(1 of 9)])
+BC_CONFIGURE_STAGE([arguments], [1 of 9])
 
 dnl *** enable options ***
 
@@ -301,7 +309,7 @@ bc_use_doxygen=no
 #AC_MSG_RESULT($bc_use_doxygen)
 
 # jove
-BC_ARG_ENABLE([build_jove], [jove], [Enable compilation of jove], [no])
+BC_ARG_ENABLE([build_jove], [jove], [Enable compilation of jove], [auto])
 
 # pro/e plugin
 BC_ARG_ENABLE([build_proe], [pro-engineer-plugin], [Enable compilation of Pro/Engineer plugin], [no])
@@ -586,8 +594,7 @@ dnl **************************
 dnl *** Check for programs ***
 dnl **************************
 
-AC_MSG_CHECKING([... p r o g r a m s ])
-AC_MSG_RESULT([(2 of 9)])
+BC_CONFIGURE_STAGE([programs], [2 of 9])
 
 AC_LANG(C)
 
@@ -723,14 +730,28 @@ if test "x$bc_use_python" != "xno" ; then
 		fi
 	fi
 fi
-		
+
+dnl if building jove wasn't specifically requested and wasn't 
+dnl disabled, see if there is either emacs or jove available.
+BCEDITOR=""
+if test "x$bc_build_jove" = "xauto" ; then
+	AC_PATH_PROG(BCEDITOR, emacs, , $PATH)
+	if test "x$BCEDITOR" = "x" ; then
+		AC_PATH_PROG(BCEDITOR, jove, , $PATH)
+	fi
+	if test "x$BCEDITOR" = "x" ; then
+		bc_build_jove=yes
+	else
+		bc_build_jove=no
+	fi
+fi
+
 
 dnl ***************************
 dnl *** Check for libraries ***
 dnl ***************************
 
-AC_MSG_CHECKING([... l i b r a r i e s ])
-AC_MSG_RESULT([(3 of 9)])
+BC_CONFIGURE_STAGE([libraries], [3 of 9])
 
 dnl check if there is a threading library that links
 thread_link_works=no
@@ -908,7 +929,6 @@ case "$target" in
 	*-*-darwin*)
 		JAVA_CFLAGS="-framework JavaVM"
 		JAVA_LDFLAGS="-shrext .jnilib -framework JavaVM"
-		bc_with_java=yes
 		;;
 esac
 AC_SUBST(JAVA_CFLAGS)
@@ -919,8 +939,7 @@ dnl *************************
 dnl *** Check for headers ***
 dnl *************************
 
-AC_MSG_CHECKING([... h e a d e r s ])
-AC_MSG_RESULT([(4 of 9)])
+BC_CONFIGURE_STAGE([headers], [4 of 9])
 
 AC_HEADER_STDC
 AC_HEADER_DIRENT
@@ -1059,10 +1078,10 @@ AC_CHECK_HEADER(JavaVM/jni.h,
 AC_CHECK_HEADER(jni.h,
 		AC_DEFINE(HAVE_JNI_H,1,[Define to 1 if you have the '<jni.h>' header file])
 		found_jni_h=yes )
+
 search_for_jni_h_more=no
 if test "x$found_jni_h" = "xno" ; then
 	if test "x$bc_with_java" != "xno" ; then
-		bc_with_java=no
 		search_for_jni_h_more=yes
 		if test "x$bc_only_benchmark" != "xno" ; then
 			if test "x$bc_only_rts" = "xno" ; then
@@ -1070,20 +1089,16 @@ if test "x$found_jni_h" = "xno" ; then
 			fi
 		fi
 	fi
-else
-	# even though --with-jdk was not given, header was found and is needed
-	if test "x$bc_only_rts" != "xno" ; then
-		bc_with_java=yes
-	fi
 fi
-if test "x$search_for_jni_h_more" != "xno" ; then
+
+if test "x$search_for_jni_h_more" = "xyes" ; then
 	# darwin systems may have a prior jni.h stashed away elsewhere
-	pre_cppflags="$CPPFLAGS"
 	macjvmdir=/System/Library/Frameworks/JavaVM.framework/Versions
 	if test -d "$macjvmdir"  ; then
 		for dir in `ls $macjvmdir` ; do
 			if test -d "$macjvmdir/$dir" ; then
-				CPPFLAGS="-I$macjvmdir/$dir/Headers $CPPFLAGS"
+				JAVA_CFLAGS="$JAVA_CFLAGS -I$macjvmdir/$dir/Headers"
+				CPPFLAGS="$CPPFLAGS -I$macjvmdir/$dir/Headers"
 			fi
 		done
 	fi
@@ -1097,21 +1112,17 @@ if test "x$search_for_jni_h_more" != "xno" ; then
 			found_jni_h=yes )
 
 	if test "x$found_jni_h" != "xno" ; then
-		bc_with_java=yes
 		AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
 		AC_MSG_WARN([jni.h was found by hunting through the JavaVM framework])
 		AC_MSG_WARN([This means you probably need to install the latest Java SDK])
 		AC_MSG_WARN([Build will try to use what it found, but you should update])
 		AC_MSG_NOTICE([See http://developer.apple.com/java/ for updates])
 		AC_MSG_NOTICE([{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{])
-	else
-		CPPFLAGS="$pre_cppflags"
-		AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
-		AC_MSG_WARN([Code dependant upon java and jni.h will not be built])
-		AC_MSG_NOTICE([{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{])
 	fi
 fi
 CPPFLAGS="$OLD_CPPFLAGS"
+
+
 ###################### End java check ##############################
 
 
@@ -1119,8 +1130,7 @@ dnl **********************************
 dnl *** Check for types/structures ***
 dnl **********************************
 
-AC_MSG_CHECKING([... t y p e s ])
-AC_MSG_RESULT([(5 of 9)])
+BC_CONFIGURE_STAGE([types], [5 of 9])
 
 AC_C_CHAR_UNSIGNED
 AC_HEADER_STAT
@@ -1168,83 +1178,27 @@ dnl ******************************************
 dnl *** Check for compiler characteristics ***
 dnl ******************************************
 
-AC_MSG_CHECKING([... c o m p i l e r ])
-AC_MSG_RESULT([(6 of 9)])
+BC_CONFIGURE_STAGE([compiler], [6 of 9])
 
 dnl include the BRL-CAD include directory
 CPPFLAGS="$CPPFLAGS -I\$(top_srcdir)/include"
 
 dnl try to use -pipe to speed up the compiles
-pipe_flag="-pipe"
-AC_MSG_CHECKING([if the compiler understands $pipe_flag])
-pipe_flag_works=yes
-PRECFLAGS="$CFLAGS"
-PRELDFLAGS="$LDFLAGS"
-CFLAGS="$CFLAGS $pipe_flag"
-LDFLAGS="$LDFLAGS $pipe_flag"
-AC_TRY_COMPILE( [], [], [], [pipe_flag_works=no])
-AC_MSG_RESULT($pipe_flag_works)
-if test "x$pipe_flag_works" = "xno" ; then
-	CFLAGS="$PRECFLAGS"
-	LDFLAGS="$PRELDFLAGS"
-fi
+BC_COMPILER_AND_LINKER_RECOGNIZES([-pipe])
 
 dnl check for -fno-strict-aliasing
-fno_strict_aliasing_flag="-fno-strict-aliasing"
-AC_MSG_CHECKING([if the compiler understands $fno_strict_aliasing_flag])
-fno_strict_aliasing_flag_works=yes
-PRECFLAGS="$CFLAGS"
-PRELDFLAGS="$LDFLAGS"
-CFLAGS="$CFLAGS $fno_strict_aliasing_flag"
-LDFLAGS="$LDFLAGS $fno_strict_aliasing_flag"
-AC_TRY_COMPILE( [], [], [], [fno_strict_aliasing_flag_works=no])
-AC_MSG_RESULT($fno_strict_aliasing_flag_works)
-if test "x$fno_strict_aliasing_flag_works" = "xno" ; then
-	CFLAGS="$PRECFLAGS"
-	LDFLAGS="$PRELDFLAGS"
-fi
+BC_COMPILER_AND_LINKER_RECOGNIZES([-fno-strict-aliasing])
 
 dnl check for -fno-common (libtcl needs it on darwin)
-fno_common_flag="-fno-common"
-AC_MSG_CHECKING([if the compiler understands $fno_common_flag])
-fno_common_flag_works=yes
-PRECFLAGS="$CFLAGS"
-PRELDFLAGS="$LDFLAGS"
-CFLAGS="$CFLAGS $fno_common_flag"
-LDFLAGS="$LDFLAGS $fno_common_flag"
-AC_TRY_COMPILE( [], [], [], [fno_common_flag_works=no])
-AC_MSG_RESULT($fno_common_flag_works)
-if test "x$fno_common_flag_works" = "xno" ; then
-	CFLAGS="$PRECFLAGS"
-	LDFLAGS="$PRELDFLAGS"
-fi
+BC_COMPILER_AND_LINKER_RECOGNIZES([-fno-common])
 
 dnl check for -fPIC (libtcl needs it on altix)
-fPIC_flag="-fPIC"
-AC_MSG_CHECKING([if the compiler understands $fPIC_flag])
-fPIC_flag_works=yes
-PRECFLAGS="$CFLAGS"
-PRELDFLAGS="$LDFLAGS"
-CFLAGS="$CFLAGS $fPIC_flag"
-LDFLAGS="$LDFLAGS $fPIC_flag"
-AC_TRY_COMPILE( [], [], [], [fPIC_flag_works=no])
-AC_MSG_RESULT($fPIC_flag_works)
-if test "x$fPIC_flag_works" = "xno" ; then
-	CFLAGS="$PRECFLAGS"
-	LDFLAGS="$PRELDFLAGS"
-fi
+dnl !!! libtool should be taking care of this one
+BC_COMPILER_AND_LINKER_RECOGNIZES([-fPIC])
 
 dnl check for -search_paths_first linker flag when making dylibs
-search_paths_first_flag="-Wl,-search_paths_first -mdynamic-no-pic"
-AC_MSG_CHECKING([if the compiler understands $search_paths_first_flag])
-search_paths_first_flag_works=yes
-PRELDFLAGS="$LDFLAGS"
-LDFLAGS="$LDFLAGS $search_paths_first_flag"
-AC_TRY_LINK( [], [], [], [search_paths_first_flag_works=no])
-AC_MSG_RESULT($search_paths_first_flag_works)
-if test "x$search_paths_first_flag_works" = "xno" ; then
-	LDFLAGS="$PRELDFLAGS"
-fi
+search_paths_first_flags="-Wl,-search_paths_first -mdynamic-no-pic"
+BC_LINKER_RECOGNIZES([$search_paths_first_flags])
 
 dnl 64bit compilation flags
 if test "x$bc_build_64bit" = "xyes" ; then
@@ -1260,84 +1214,29 @@ if test "x$bc_build_64bit" = "xyes" ; then
 	fi
 
 	if test "x$found_64bit_flag" = "xno" ; then
-		flag_64="-64"
-		AC_MSG_CHECKING([if the compiler understands $flag_64])
-		flag_64_works=yes
-		PRECFLAGS="$CFLAGS"
-		PRELDFLAGS="$LDFLAGS"
-		CFLAGS="$CFLAGS $flag_64"
-		LDFLAGS="$LDFLAGS $flag_64"
-		m4_pushdef([AC_TRY_EVAL], [_AC_EVAL_STDERR]($$[1]))
-		AC_TRY_COMPILE( [], [], [if AC_TRY_COMMAND([grep "nrecognize" conftest.err >/dev/null 2>&1]) ; then flag_64_works=no ; fi], [flag_64_works=no])
-		m4_popdef([AC_TRY_EVAL]) 
-		rm -f conftest.err
-		AC_MSG_RESULT($flag_64_works)
-		if test "x$flag_64_works" = "xno" ; then
-			CFLAGS="$PRECFLAGS"
-			LDFLAGS="$PRELDFLAGS"
-		else
+		BC_COMPILER_AND_LINKER_RECOGNIZES([-64], [64_flag])
+		if test "x$bc_64_flag_works" = "xyes" ; then
 			found_64bit_flag=yes
 		fi
 	fi
 	
 	if test "x$found_64bit_flag" = "xno" ; then
-		mabi_64_flag="-mabi=64"
-		AC_MSG_CHECKING([if the compiler understands $mabi_64_flag])
-		mabi_64_flag_works=yes
-		PRECFLAGS="$CFLAGS"
-		PRELDFLAGS="$LDFLAGS"
-		CFLAGS="$CFLAGS $mabi_64_flag"
-		LDFLAGS="$LDFLAGS $mabi_64_flag"
-		m4_pushdef([AC_TRY_EVAL], [_AC_EVAL_STDERR]($$[1]))
-		AC_TRY_COMPILE( [], [], [if AC_TRY_COMMAND([grep "nrecognize" conftest.err >/dev/null 2>&1]) ; then mabit_64_flag_works=no ; fi], [mabit_64_flag_works=no])
-		m4_popdef([AC_TRY_EVAL]) 
-		AC_TRY_COMPILE( [], [], [], [mabi_64_flag_works=no])
-		AC_MSG_RESULT($mabi_64_flag_works)
-		if test "x$mabi_64_flag_works" = "xno" ; then
-			CFLAGS="$PRECFLAGS"
-			LDFLAGS="$PRELDFLAGS"
-		else
+		BC_COMPILER_AND_LINKER_RECOGNIZES([-mabi=64], [64_flag])
+		if test "x$bc_64_flag_works" = "xyes" ; then
 			found_64bit_flag=yes
 		fi
 	fi
 
 	if test "x$found_64bit_flag" = "xno" ; then
-		m64_flag="-m64"
-		AC_MSG_CHECKING([if the compiler understands $m64_flag])
-		m64_flag_works=yes
-		PRECFLAGS="$CFLAGS"
-		PRELDFLAGS="$LDFLAGS"
-		CFLAGS="$CFLAGS $m64_flag"
-		LDFLAGS="$LDFLAGS $m64_flag"
-		m4_pushdef([AC_TRY_EVAL], [_AC_EVAL_STDERR]($$[1]))
-		AC_TRY_COMPILE( [], [], [if AC_TRY_COMMAND([grep "nrecognize" conftest.err >/dev/null 2>&1]) ; then m64_flag_works=no ; fi], [m64_flag_works=no])
-		m4_popdef([AC_TRY_EVAL]) 
-		AC_TRY_COMPILE( [], [], [], [m64_flag_works=no])
-		AC_MSG_RESULT($m64_flag_works)
-		if test "x$m64_flag_works" = "xno" ; then
-			CFLAGS="$PRECFLAGS"
-			LDFLAGS="$PRELDFLAGS"
-		else
+		BC_COMPILER_AND_LINKER_RECOGNIZES([-m64], [64_flag])
+		if test "x$bc_64_flag_works" = "xyes" ; then
 			found_64bit_flag=yes
 		fi
 	fi
 
 	if test "x$found_64bit_flag" = "xno" ; then
-		q64_flag="-q64"
-		AC_MSG_CHECKING([if the compiler understands $q64_flag])
-		q64_flag_works=yes
-		PRECFLAGS="$CFLAGS"
-		PRELDFLAGS="$LDFLAGS"
-		CFLAGS="$CFLAGS $q64_flag"
-		LDFLAGS="$LDFLAGS $q64_flag"
-		m4_pushdef([AC_TRY_EVAL], [_AC_EVAL_STDERR]($$[1]))
-		AC_TRY_COMPILE( [], [], [if AC_TRY_COMMAND([grep "nrecognize" conftest.err >/dev/null 2>&1]) ; then q64_flag_works=no ; fi], [q64_flag_works=no])
-		m4_popdef([AC_TRY_EVAL]) 
-		AC_MSG_RESULT($q64_flag_works)
-		if test "x$q64_flag_works" = "xno" ; then
-			CFLAGS="$PRECFLAGS"
-			LDFLAGS="$PRELDFLAGS"
-		else
+		BC_COMPILER_AND_LINKER_RECOGNIZES([-q64], [64_flag])
+		if test "x$bc_64_flag_works" = "xyes" ; then
 			found_64bit_flag=yes
 		fi
 	fi
@@ -1345,16 +1244,8 @@ fi
 
 dnl profile flags
 if test "x$bc_use_profiling" != "xno" ; then
-	pg_flag="-pg"
-	AC_MSG_CHECKING([if the compiler understands $pg_flag])
-	pg_flag_works=yes
-	PRECFLAGS="$CFLAGS"
-	PRELDFLAGS="$LDFLAGS"
-	CFLAGS="$CFLAGS $pg_flag"
-	LDFLAGS="$LDFLAGS $pg_flag"
-	AC_TRY_COMPILE( [], [], [], [pg_flag_works=no])
-	AC_MSG_RESULT($pg_flag_works)
-	if test "x$pg_flag_works" = "xno" ; then
+	BC_COMPILER_AND_LINKER_RECOGNIZES([-pg], [profile_flag])
+	if test "x$bc_debug_flag_works" = "xno" ; then
 		if test "x$bc_use_profiling" = "xyes" ; then
 			dnl profiling was requested, so abort
 			AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
@@ -1362,23 +1253,16 @@ if test "x$bc_use_profiling" != "xno" ; then
 			AC_MSG_ERROR([*** Don't know how to profile with this compiler ***])
 		fi			
 		AC_MSG_WARN([Don't know how to profile with this compiler])
-		CFLAGS="$PRECFLAGS"
-		LDFLAGS="$PRELDFLAGS"
+	else
+		# convert 'auto' to 'no' even though it works
+		bc_use_profiling=no
 	fi
 fi
 
 dnl debug flags
 if test "x$bc_use_debug" != "xno" ; then
-	g_flag="-g"
-	AC_MSG_CHECKING([if the compiler understands $g_flag])
-	g_flag_works=yes
-	PRECFLAGS="$CFLAGS"
-	PRELDFLAGS="$LDFLAGS"
-	CFLAGS="$CFLAGS $g_flag"
-	LDFLAGS="$LDFLAGS $g_flag"
-	AC_TRY_COMPILE( [], [], [], [g_flag_works=no])
-	AC_MSG_RESULT($g_flag_works)
-	if test "x$g_flag_works" = "xno" ; then
+	BC_COMPILER_AND_LINKER_RECOGNIZES([-g], [debug_flag])
+	if test "x$bc_debug_flag_works" = "xno" ; then
 		if test "x$bc_use_debug" = "xyes" ; then
 			dnl debug was requested, so abort
 			AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
@@ -1386,8 +1270,6 @@ if test "x$bc_use_debug" != "xno" ; then
 			AC_MSG_ERROR([*** Don't know how to debug with this compiler ***])
 		fi			
 		AC_MSG_WARN([Do not know how to debug with this compiler])
-		CFLAGS="$PRECFLAGS"
-		LDFLAGS="$PRELDFLAGS"
 	else
 		# convert 'auto' to 'yes'
 		bc_use_debug="yes"
@@ -1396,60 +1278,36 @@ fi
 
 dnl optimization flags
 if test "x$bc_use_optimized" != "xno" ; then
-	O3_flag="-O3"
-	AC_MSG_CHECKING([if the compiler understands $O3_flag])
-	O3_flag_works=yes
-	PRECFLAGS="$CFLAGS"
-	PRELDFLAGS="$LDFLAGS"
-	CFLAGS="$CFLAGS $O3_flag"
-	LDFLAGS="$LDFLAGS $O3_flag"
-	AC_TRY_COMPILE( [], [], [], [O3_flag_works=no])
-	AC_MSG_RESULT($O3_flag_works)
-	if test "x$O3_flag_works" = "xno" ; then
+	BC_COMPILER_AND_LINKER_RECOGNIZES([-O3], [o3_flag])
+	if test "x$bc_o3_flag_works" = "xno" ; then
 		AC_MSG_WARN([Don't know how to compile optimized with this compiler])
-		CFLAGS="$PRECFLAGS"
-		LDFLAGS="$PRELDFLAGS"
 	fi
 
-	dnl check for a slew of gcc optimizations that may or may not be available with -O3
-	extra_optimization_flag="-ffast-math -fstrength-reduce -fexpensive-optimizations -finline-functions"
-	if test "x$bc_use_debug" = "xno" ; then
-	   dnl non-debug can omit the frame pointer, debug cannot
-	   extra_optimization_flag="$extra_optimization_flag -fomit-frame-pointer"
-	else
-	   extra_optimization_flag="$extra_optimization_flag -fno-omit-frame-pointer"
+
+	BC_COMPILER_AND_LINKER_RECOGNIZES([-fast], [mac_opt_flag])
+	if test "x$bc_mac_opt_flag_works" = "xno" ; then
+		BC_COMPILER_AND_LINKER_RECOGNIZES([-fast -mcpu=7450], [mac_opt_flag])
 	fi
-	AC_MSG_CHECKING([if the compiler understands extra optimization flags])
-	extra_optimization_flag_works=yes
-	PRECFLAGS="$CFLAGS"
-	PRELDFLAGS="$LDFLAGS"
-	CFLAGS="$CFLAGS $extra_optimization_flag"
-	LDFLAGS="$LDFLAGS $extra_optimization_flag"
-	AC_TRY_COMPILE( [], [], [], [extra_optimization_flag_works=no])
-	AC_MSG_RESULT($extra_optimization_flag_works)
-	if test "x$extra_optimization_flag_works" = "xno" ; then
-		CFLAGS="$PRECFLAGS"
-		LDFLAGS="$PRELDFLAGS"
+	if test "x$bc_mac_opt_flag_works" = "xno" ; then
+		extra_optimization_flag="-ffast-math -fstrength-reduce -fexpensive-optimizations -finline-functions"
+		if test "x$bc_use_debug" = "xno" ; then
+			dnl non-debug can omit the frame pointer, debug cannot
+			extra_optimization_flag="$extra_optimization_flag -fomit-frame-pointer"
+		else
+			extra_optimization_flag="$extra_optimization_flag -fno-omit-frame-pointer"
+		fi
+		BC_COMPILER_AND_LINKER_RECOGNIZES([$extra_optimization_flag])
 	fi
 fi
 
 dnl verbose warning flags
 if test "x$bc_use_warnings" != "xno" ; then
-	warning_flag="-W -Wall -Wundef -Wfloat-equal -Wshadow -Wunreachable-code -Winline -Wconversion"
-		# XXX also of interest
-		# -Wmissing-declarations -Wmissing-prototypes -Wstrict-prototypes -pedantic -ansi -Werror
-	AC_MSG_CHECKING([if the compiler understands warning flags])
-	warning_flag_works=yes
-	PRECFLAGS="$CFLAGS"
-	PRELDFLAGS="$LDFLAGS"
-	CFLAGS="$CFLAGS $warning_flag"
-	LDFLAGS="$LDFLAGS $warning_flag"
-	AC_TRY_COMPILE( [], [], [], [warning_flag_works=no])
-	AC_MSG_RESULT($warning_flag_works)
-	if test "x$warning_flag_works" = "xno" ; then
+	BC_COMPILER_AND_LINKER_RECOGNIZES([-W -Wall -Wundef -Wfloat-equal -Wshadow -Wunreachable-code -Winline -Wconversion], [warning])
+	# XXX also of interest
+	# -Wmissing-declarations -Wmissing-prototypes -Wstrict-prototypes -pedantic -ansi -Werror
+
+	if test "x$bc_warning_flag_works" = "xno" ; then
 		AC_MSG_WARN([Don't know how to output verbose warnings with this compiler])
-		CFLAGS="$PRECFLAGS"
-		LDFLAGS="$PRELDFLAGS"
 	fi
 fi
 
@@ -1489,8 +1347,7 @@ dnl ***************************
 dnl *** Check for functions ***
 dnl ***************************
 
-AC_MSG_CHECKING([... f u n c t i o n s ])
-AC_MSG_RESULT([(7 of 9)])
+BC_CONFIGURE_STAGE([functions], [7 of 9])
 
 AC_TYPE_SIGNAL
 AC_CHECK_FUNCS(\
@@ -1590,8 +1447,7 @@ dnl *********************************
 dnl *** Check for system services ***
 dnl *********************************
 
-AC_MSG_CHECKING([... s e r v i c e s ])
-AC_MSG_RESULT([(8 of 9)])
+BC_CONFIGURE_STAGE([services], [8 of 9])
 
 dnl *** libpng ***
 png_works=no
@@ -2301,18 +2157,40 @@ fi
 dnl *** Java interface compilation ***
 build_against_java=no
 AC_MSG_CHECKING(for Java functionality)
-if test "x$bc_only_rts" != "xno" ; then
-	if test "x$bc_with_java" = "xno" ; then
+if test "x$have_java_h" = "xno" ; then
+	if test "x$bc_only_rts" != "xno" ; then
 		AC_MSG_RESULT(no)
 		BC_RETRY_CONFIGURE([$0])
 		AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
 		AC_MSG_NOTICE([Try adding --with-jdk=/path/to/jdk to find jni.h])
 		AC_MSG_ERROR([*** Cannot locate jni.h for building librtserver ***])
 	fi
-	AC_MSG_RESULT(yes)
-	build_against_java=yes
+	if test "x$bc_with_java" = "xyes" ; then
+		AC_MSG_RESULT(no)
+		BC_RETRY_CONFIGURE([$0])
+		AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
+		AC_MSG_ERROR([Failed to locate a functioning jni.h for Java])
+	fi
+
+	if test "x$bc_with_java" != "xauto" ; then
+		AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
+		AC_MSG_WARN([Unable to locate a functioning Java])
+		AC_MSG_WARN([Compilation of librtserver will be disabled])
+		AC_MSG_NOTICE([{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{])
+	fi
+	AC_MSG_RESULT(no)
+else
+	if test "x$bc_with_java" != "xno" ; then
+		if test "x$bc_with_java" = "xauto" ; then
+			build_against_java=yes
+		else
+			build_against_java="yes ($bc_with_java_val)"
+		fi
+		AC_MSG_RESULT(yes)
+	else
+		AC_MSG_RESULT(no)
+	fi
 fi
-AC_MSG_NOTICE([$bc_with_java ($bc_with_java_val)])
 
 
 dnl *** OpenGL interface compilation ***
@@ -2494,8 +2372,7 @@ dnl **************************************
 dnl *** Configure Makefiles and output ***
 dnl **************************************
 
-AC_MSG_CHECKING([... o u t p u t ])
-AC_MSG_RESULT([(9 of 9)])
+BC_CONFIGURE_STAGE([output], [9 of 9])
 
 AM_CONDITIONAL(BUILD_TCL, [test "x$build_brlcad_tcl" = "xyes"])
 AM_CONDITIONAL(BUILD_TK, [test "x$build_brlcad_tk" = "xyes"])
@@ -2520,12 +2397,6 @@ AM_CONDITIONAL(ONLY_RTS, [test "x$bc_only_rts" != "xno"])
 
 # XXX only irix can build libtkglx right now?
 AM_CONDITIONAL(BUILD_LIBTKGLX, [test "x$host_os" = "xirix6.5"])
-
-
-
-# !!! needs to go bye bye
-AC_DEFINE(DM_X,1,[Display for X])
-AC_DEFINE(DM_OGL,1,[yeah, GL])
 
 
 dnl Any combination of the different optimizations listed below may individually be 
@@ -2705,7 +2576,6 @@ AC_CONFIG_FILES([
 	doc/html/ReleaseNotes/Rel6.0/Makefile
 	doc/html/manuals/Anim_Tutorial/Makefile
 	doc/html/manuals/Makefile
-	doc/html/manuals/ReleaseNotes/Makefile
 	doc/html/manuals/cadwidgets/Makefile
 	doc/html/manuals/libbu/Makefile
 	doc/html/manuals/libdm/Makefile
@@ -2912,7 +2782,9 @@ dnl **********************
 
 AC_MSG_RESULT([Done.])
 AC_MSG_RESULT([])
+BC_BOLD
 AC_MSG_RESULT([BRL-CAD Release $BRLCAD_VERSION, Build $CONFIG_DATE])
+BC_UNBOLD
 AC_MSG_RESULT([])
 AC_MSG_RESULT([             Prefix: ${prefix}])
 AC_MSG_RESULT([           Binaries: ${bindir}])
@@ -2925,39 +2797,39 @@ AC_MSG_RESULT([CPPFLAGS = ${CPPFLAGS}])
 AC_MSG_RESULT([LDFLAGS  = ${LDFLAGS}])
 AC_MSG_RESULT([LIBS     = ${LIBS}])
 AC_MSG_RESULT([])
-AC_MSG_RESULT([ Build Tcl ............................: $build_brlcad_tcl])
-AC_MSG_RESULT([ Build Tk .............................: $build_brlcad_tk])
-AC_MSG_RESULT([ Build Itcl/Itk .......................: $build_brlcad_itcl])
-AC_MSG_RESULT([ Build IWidgets .......................: $build_brlcad_iwidgets])
-AC_MSG_RESULT([ Build libpng .........................: $build_brlcad_png])
-AC_MSG_RESULT([ Build libregex .......................: $build_brlcad_regex])
-AC_MSG_RESULT([ Build zlib ...........................: $build_brlcad_zlib])
-AC_MSG_RESULT([ Build termlib ........................: $build_brlcad_termlib])
-AC_MSG_RESULT([ Build Utah Raster Toolkit.............: $build_brlcad_urt])
-AC_MSG_RESULT([ Build jove ...........................: $bc_build_jove])
-AC_MSG_RESULT([ ])
-AC_MSG_RESULT([ ADRT support .........................: $build_brlcad_adrt])
-AC_MSG_RESULT([ Java Developer Kit support ...........: $build_against_java])
-AC_MSG_RESULT([ X11 support ..........................: $build_against_x11])
-AC_MSG_RESULT([ OpenGL support .......................: $build_against_opengl])
-AC_MSG_RESULT([ Enable run-time debugging ............: $bc_build_runtime_debug])
+AC_MSG_RESULT([Build Tcl ............................: $build_brlcad_tcl])
+AC_MSG_RESULT([Build Tk .............................: $build_brlcad_tk])
+AC_MSG_RESULT([Build Itcl/Itk .......................: $build_brlcad_itcl])
+AC_MSG_RESULT([Build IWidgets .......................: $build_brlcad_iwidgets])
+AC_MSG_RESULT([Build libpng .........................: $build_brlcad_png])
+AC_MSG_RESULT([Build libregex .......................: $build_brlcad_regex])
+AC_MSG_RESULT([Build zlib ...........................: $build_brlcad_zlib])
+AC_MSG_RESULT([Build termlib ........................: $build_brlcad_termlib])
+AC_MSG_RESULT([Build Utah Raster Toolkit.............: $build_brlcad_urt])
+AC_MSG_RESULT([Build jove ...........................: $bc_build_jove])
 AC_MSG_RESULT([])
-AC_MSG_RESULT([ Build 64-bit release .................: $build_brlcad_64bit])
-AC_MSG_RESULT([ Build optimized release ..............: $bc_use_optimized])
-AC_MSG_RESULT([ Build debug release ..................: $bc_use_debug])
-AC_MSG_RESULT([ Build profile release ................: $bc_use_profiling])
-AC_MSG_RESULT([ Build static libraries ...............: $enable_static])
-AC_MSG_RESULT([ Build shared/dynamic libraries .......: $enable_shared])
-AC_MSG_RESULT([ Print verbose compilation warnings ...: $bc_use_warnings])
+AC_MSG_RESULT([ADRT support .........................: $build_brlcad_adrt])
+AC_MSG_RESULT([Java Developer Kit support ...........: $build_against_java])
+AC_MSG_RESULT([X11 support ..........................: $build_against_x11])
+AC_MSG_RESULT([OpenGL support .......................: $build_against_opengl])
+AC_MSG_RESULT([Enable run-time debugging ............: $bc_build_runtime_debug])
 AC_MSG_RESULT([])
-AC_MSG_RESULT([ Only build benchmark suite ...........: $bc_only_benchmark])
-AC_MSG_RESULT([ Only build librtserver ...............: $bc_only_rts])
-AC_MSG_RESULT([ Generate doxygen documentation .......: $bc_use_doxygen])
-AC_MSG_RESULT([ Install example geometry models ......: $bc_install_geometry])
+AC_MSG_RESULT([Build 64-bit release .................: $build_brlcad_64bit])
+AC_MSG_RESULT([Build optimized release ..............: $bc_use_optimized])
+AC_MSG_RESULT([Build debug release ..................: $bc_use_debug])
+AC_MSG_RESULT([Build profile release ................: $bc_use_profiling])
+AC_MSG_RESULT([Build static libraries ...............: $enable_static])
+AC_MSG_RESULT([Build shared/dynamic libraries .......: $enable_shared])
+AC_MSG_RESULT([Print verbose compilation warnings ...: $bc_use_warnings])
+AC_MSG_RESULT([])
+AC_MSG_RESULT([Only build benchmark suite ...........: $bc_only_benchmark])
+AC_MSG_RESULT([Only build librtserver ...............: $bc_only_rts])
+AC_MSG_RESULT([Generate doxygen documentation .......: $bc_use_doxygen])
+AC_MSG_RESULT([Install example geometry models ......: $bc_install_geometry])
 AC_MSG_RESULT([])
 if test "x$time_elapsed" != "xunknown" ; then
-AC_MSG_RESULT([ Elapsed configuration time ...........: $time_elapsed])
+AC_MSG_RESULT([Elapsed configuration time ...........: $time_elapsed])
 fi
-AC_MSG_RESULT([ ---])
+AC_MSG_RESULT([---])
 AC_MSG_RESULT([$0 complete, type 'make' to begin building])
 AC_MSG_RESULT([])
