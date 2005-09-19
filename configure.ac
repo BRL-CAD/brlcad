@@ -1284,10 +1284,14 @@ if test "x$bc_use_optimized" != "xno" ; then
 	fi
 
 
-	BC_COMPILER_AND_LINKER_RECOGNIZES([-fast], [mac_opt_flag])
-	if test "x$bc_mac_opt_flag_works" = "xno" ; then
-		BC_COMPILER_AND_LINKER_RECOGNIZES([-fast -mcpu=7450], [mac_opt_flag])
-	fi
+# XXX -fast seems to provoke stack corruption in the shadow
+# computations, possible that the corruption is indeed valid and
+# there's something that needs to be checked/changed.
+#
+#	BC_COMPILER_AND_LINKER_RECOGNIZES([-fast], [mac_opt_flag])
+#	if test "x$bc_mac_opt_flag_works" = "xno" ; then
+#		BC_COMPILER_AND_LINKER_RECOGNIZES([-fast -mcpu=7450], [mac_opt_flag])
+#	fi
 	if test "x$bc_mac_opt_flag_works" = "xno" ; then
 		extra_optimization_flag="-ffast-math -fstrength-reduce -fexpensive-optimizations -finline-functions"
 		if test "x$bc_use_debug" = "xno" ; then
@@ -2629,6 +2633,7 @@ AC_CONFIG_FILES([
 	src/canon/Makefile
 	src/comgeom-g/Makefile
 	src/conv/Makefile
+	src/conv/bzw/Makefile
 	src/fb/Makefile
 	src/fbed/Makefile
 	src/fbserv/Makefile
