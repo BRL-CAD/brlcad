@@ -2597,6 +2597,7 @@ AC_CONFIG_FILES([
 	misc/pro-engineer/protk.dat
 	misc/vfont/Makefile
 	misc/win32-msvc/Makefile
+	misc/win32-msvc/Dll/Makefile
 	pix/Makefile
 	sh/Makefile
 	src/Makefile
