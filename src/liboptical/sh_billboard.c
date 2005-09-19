@@ -27,12 +27,11 @@
  */
 #include "common.h"
 
-
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
+
 #include "machine.h"
 #include "vmath.h"
 #include "raytrace.h"
@@ -55,8 +54,8 @@ struct bbd_img {
     double	img_xlen;	/* length of image in u direction */
     vect_t	img_y;		/* v direction in image plane */
     double	img_ylen;	/* length of image in v direction */
-    int		img_width;	/* dimension of image */
-    int 	img_height;
+    long int	img_width;	/* dimension of image */
+    long int 	img_height;
     struct bu_mapped_file *img_mf; /* image data */
 };
 
@@ -88,8 +87,8 @@ const static
 struct bbd_specific bbd_defaults = {
     bbd_MAGIC,
     10,		/* img_threshold */
-    512,	/* img_width */
-    512,	/* img_height */
+    512L,	/* img_width */
+    512L,	/* img_height */
     100.0	/* img_scale */
 };
 
@@ -108,8 +107,8 @@ void new_image(register const struct bu_structparse	*sdp,
  * structure above
  */
 struct bu_structparse bbd_print_tab[] = {
-    {"%d",  1, "w",	SHDR_O(img_width),	BU_STRUCTPARSE_FUNC_NULL },
-    {"%d",  1, "n",	SHDR_O(img_height),	BU_STRUCTPARSE_FUNC_NULL },
+    {"%ld",  1, "w",	SHDR_O(img_width),	BU_STRUCTPARSE_FUNC_NULL },
+    {"%ld",  1, "n",	SHDR_O(img_height),	BU_STRUCTPARSE_FUNC_NULL },
     {"%d",  1, "t",	SHDR_O(img_threshold),	BU_STRUCTPARSE_FUNC_NULL },
     {"%f",  1, "h",	SHDR_O(img_scale),	BU_STRUCTPARSE_FUNC_NULL },
     {"%S",  1, "f",	SHDR_O(img_filename),	new_image },
@@ -166,7 +165,7 @@ void new_image(register const struct bu_structparse	*sdp,	/*struct desc*/
 
     if (!bn_common_name_size(&(bbdi->img_width), &(bbdi->img_height),
 			     bu_vls_addr(&bbd_sp->img_filename))) {
-	bu_log("---- Warning:  Assuming %dx%d dimension for \"%s\" ----\n",
+	bu_log("---- Warning:  Assuming %ldx%ld dimension for \"%s\" ----\n",
 	       bbdi->img_width,
 	       bbdi->img_height,
 	       bu_vls_addr(&bbd_sp->img_filename));
