@@ -1734,7 +1734,7 @@ rt_reprep( struct rt_i *rtip, struct rt_reprep_obj_list *objs, struct resource *
 		rtip->rti_Solids = (struct soltab **)bu_realloc( rtip->rti_Solids,
 								 rtip->nsolids * sizeof( struct soltab *),
 								 "rtip->rti_Solids" );
-		memset( rtip->rti_Solids, 0, rtip->nsolids );
+		memset( rtip->rti_Solids, 0, rtip->nsolids * sizeof(struct soltab *));
 	}
 
 	bitno = 0;
