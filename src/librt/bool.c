@@ -65,7 +65,7 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 #define TRUE	1
 
 
-RT_EXTERN(void rt_grow_boolstack, (struct resource *resp) );
+BU_EXTERN(void rt_grow_boolstack, (struct resource *resp) );
 int rt_tree_max_raynum(register const union tree *,
 		       register const struct partition *);
 int rt_bool_partition_eligible(register const struct bu_ptbl *,

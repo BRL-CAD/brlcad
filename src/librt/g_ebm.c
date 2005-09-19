@@ -103,12 +103,12 @@ struct ebm_hit_private {
 };
 
 
-RT_EXTERN(int rt_ebm_dda,(struct xray *rp, struct soltab *stp,
+BU_EXTERN(int rt_ebm_dda,(struct xray *rp, struct soltab *stp,
 	struct application *ap, struct seg *seghead));
-RT_EXTERN(int rt_seg_planeclip,(struct seg *out_hd, struct seg *in_hd,
+BU_EXTERN(int rt_seg_planeclip,(struct seg *out_hd, struct seg *in_hd,
 	vect_t out_norm, fastf_t in, fastf_t out,
 	struct xray *rp, struct application *ap));
-RT_EXTERN( void rt_ebm_plate, ( int x1, int y1, int x2, int y2,
+BU_EXTERN( void rt_ebm_plate, ( int x1, int y1, int x2, int y2,
 	double t, mat_t mat, struct bu_list *vhead ) );
 
 /*

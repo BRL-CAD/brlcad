@@ -231,7 +231,7 @@ const struct bu_structparse rt_part_parse[] = {
     { {'\0','\0','\0','\0'}, 0, (char *)NULL, 0, BU_STRUCTPARSE_FUNC_NULL }
  };
 	    
-RT_EXTERN( void rt_part_ifree, (struct rt_db_internal *ip) );
+BU_EXTERN( void rt_part_ifree, (struct rt_db_internal *ip) );
 
 /**
  *  			R T _ P A R T _ P R E P

@@ -52,11 +52,9 @@ static const char RCStgc[] = "@(#)$Header$ (BRL)";
 
 #include "common.h"
 
-
-
 #include <stdio.h>
 #ifdef HAVE_STRING_H
-#include <string.h>
+#  include <string.h>
 #endif
 #include <math.h>
 #include "machine.h"
@@ -67,7 +65,9 @@ static const char RCStgc[] = "@(#)$Header$ (BRL)";
 #include "rtgeom.h"
 #include "./debug.h"
 #include "nurb.h" 
-RT_EXTERN(int rt_rec_prep, (struct soltab *stp, struct rt_db_internal *ip,
+
+
+BU_EXTERN(int rt_rec_prep, (struct soltab *stp, struct rt_db_internal *ip,
 struct rt_i *rtip));
 
 struct  tgc_specific {

@@ -60,8 +60,8 @@ static const char RCSarbn[] = "@(#)$Header$ (BRL)";
 #include "rtgeom.h"
 #include "./debug.h"
 
-RT_EXTERN(void rt_arbn_print, (const struct soltab *stp) );
-RT_EXTERN(void rt_arbn_ifree, (struct rt_db_internal *ip) );
+BU_EXTERN(void rt_arbn_print, (const struct soltab *stp) );
+BU_EXTERN(void rt_arbn_ifree, (struct rt_db_internal *ip) );
 
 /**
  *  			R T _ A R B N _ P R E P

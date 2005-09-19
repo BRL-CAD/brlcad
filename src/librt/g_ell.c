@@ -62,7 +62,7 @@ static const char RCSell[] = "@(#)$Header$ (BRL)";
 #include "rtgeom.h"
 #include "./debug.h"
 
-RT_EXTERN(int rt_sph_prep, (struct soltab *stp, struct rt_db_internal *ip,
+BU_EXTERN(int rt_sph_prep, (struct soltab *stp, struct rt_db_internal *ip,
 	struct rt_i *rtip));
 
 const struct bu_structparse rt_ell_parse[] = {

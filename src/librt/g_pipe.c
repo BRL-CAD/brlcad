@@ -133,7 +133,7 @@ struct hit_list
 #define	PIPE_BEND_BASE		7
 #define PIPE_BEND_TOP		8
 
-RT_EXTERN( void rt_pipe_ifree, (struct rt_db_internal *ip) );
+BU_EXTERN( void rt_pipe_ifree, (struct rt_db_internal *ip) );
 
 
 HIDDEN int

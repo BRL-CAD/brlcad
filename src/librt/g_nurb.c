@@ -81,11 +81,11 @@ struct nurb_hit {
 
 #define NULL_HIT  (struct nurb_hit *)0
 
-RT_EXTERN(int rt_nurb_grans, (struct face_g_snurb * srf));
-RT_EXTERN(struct nurb_hit *rt_conv_uv, (struct nurb_specific *n,
+BU_EXTERN(int rt_nurb_grans, (struct face_g_snurb * srf));
+BU_EXTERN(struct nurb_hit *rt_conv_uv, (struct nurb_specific *n,
 	struct xray *r, struct rt_nurb_uv_hit *h));
-RT_EXTERN(struct nurb_hit *rt_return_nurb_hit, (struct nurb_hit * head));
-RT_EXTERN(void		rt_nurb_add_hit, (struct nurb_hit *head,
+BU_EXTERN(struct nurb_hit *rt_return_nurb_hit, (struct nurb_hit * head));
+BU_EXTERN(void		rt_nurb_add_hit, (struct nurb_hit *head,
 			struct nurb_hit * hit, const struct bn_tol *tol));
 
 
