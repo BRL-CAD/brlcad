@@ -8,7 +8,7 @@ libtie_la_LDFLAGS = -static
 include_HEADERS = tie.h
 noinst_HEADERS = define.h struct.h kdtree.h
 
-AM_CFLAGS="-Wall -pedantic -std=c99 -pipe"
+AM_CFLAGS=-Wall -pedantic -std=c99 -pipe
 
 LINT=splint $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES)
 lint:
