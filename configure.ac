@@ -2161,7 +2161,7 @@ fi
 dnl *** Java interface compilation ***
 build_against_java=no
 AC_MSG_CHECKING(for Java functionality)
-if test "x$have_java_h" = "xno" ; then
+if test "x$found_jni_h" = "xno" ; then
 	if test "x$bc_only_rts" != "xno" ; then
 		AC_MSG_RESULT(no)
 		BC_RETRY_CONFIGURE([$0])
