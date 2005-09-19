@@ -199,8 +199,8 @@ extern int		shell();
 extern int		cgarbs();
 extern int		redoarb();
 
-RT_EXTERN(void ewrite, (FILE *fp, const char *buf, unsigned bytes) );
-RT_EXTERN(void blank_fill, (FILE *fp, int count) );
+BU_EXTERN(void ewrite, (FILE *fp, const char *buf, unsigned bytes) );
+BU_EXTERN(void blank_fill, (FILE *fp, int count) );
 
 /* Head of linked list of solids */
 struct soltab	sol_hd;
