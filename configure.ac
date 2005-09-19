@@ -2633,7 +2633,6 @@ AC_CONFIG_FILES([
 	src/canon/Makefile
 	src/comgeom-g/Makefile
 	src/conv/Makefile
-	src/conv/bzw/Makefile
 	src/fb/Makefile
 	src/fbed/Makefile
 	src/fbserv/Makefile
