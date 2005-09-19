@@ -39,6 +39,8 @@
 #ifndef NURB_H
 #define NURB_H seen
 
+#include "common.h"
+
 /* make sure all the prerequisite include files have been included
  */
 #ifndef MACHINE_H
@@ -49,9 +51,7 @@
 # include "vmath.h"
 #endif
 
-#ifndef NMG_H
-# include "nmg.h"
-#endif
+#include "nmg.h"
 
 #ifndef RAYTRACE_H
 # include "raytrace.h"
