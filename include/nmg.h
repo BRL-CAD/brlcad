@@ -51,6 +51,8 @@
 #ifndef NMG_H
 #define NMG_H seen
 
+#include "common.h"
+
 /* make sure all the prerequisite include files have been included
  */
 #ifndef MACHINE_H
