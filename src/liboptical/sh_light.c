@@ -64,7 +64,7 @@ extern const struct bn_table	*spectrum;
 #define LIGHT_O(m)	offsetof(struct light_specific, m)
 #define LIGHT_OA(m)	bu_offsetofarray(struct light_specific, m)
 
-RT_EXTERN(void	aim_set, (const struct bu_structparse *sdp, const char *name,
+BU_EXTERN(void	aim_set, (const struct bu_structparse *sdp, const char *name,
 			  const char *base, char *value));
 
 /***********************************************************************
