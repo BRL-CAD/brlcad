@@ -40,11 +40,9 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 
 #include "common.h"
 
-
-
 #include <stdio.h>
 #ifdef HAVE_STRING_H
-#include <string.h>
+#  include <string.h>
 #endif
 #include <math.h>
 #include "machine.h"
@@ -54,7 +52,7 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 #include "nurb.h"
 #include "plot3.h"
 
-static void 	vertex_neighborhood RT_ARGS((struct ray_data *rd, struct vertexuse *vu_p, struct hitmiss *myhit));
+static void 	vertex_neighborhood BU_ARGS((struct ray_data *rd, struct vertexuse *vu_p, struct hitmiss *myhit));
 
 const char *
 nmg_rt_inout_str(int code)

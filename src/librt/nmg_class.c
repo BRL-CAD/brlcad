@@ -85,22 +85,22 @@ struct neighbor {
 	int	class;	/* Classification of this neighbor */
 };
 
-static void	joint_hitmiss2 RT_ARGS( (struct neighbor *closest,
+static void	joint_hitmiss2 BU_ARGS( (struct neighbor *closest,
 			const struct edgeuse *eu, const point_t pt,
 			int code) );
-static void	nmg_class_pt_e RT_ARGS( (struct neighbor *closest,
+static void	nmg_class_pt_e BU_ARGS( (struct neighbor *closest,
 			const point_t pt, const struct edgeuse *eu,
 			const struct bn_tol *tol) );
-static void	nmg_class_pt_l RT_ARGS( (struct neighbor *closest, 
+static void	nmg_class_pt_l BU_ARGS( (struct neighbor *closest, 
 			const point_t pt, const struct loopuse *lu,
 			const struct bn_tol *tol) );
-static int	class_vu_vs_s RT_ARGS( (struct vertexuse *vu, struct shell *sB,
+static int	class_vu_vs_s BU_ARGS( (struct vertexuse *vu, struct shell *sB,
 			long *classlist[4], const struct bn_tol	*tol) );
-static int	class_eu_vs_s RT_ARGS( (struct edgeuse *eu, struct shell *s,
+static int	class_eu_vs_s BU_ARGS( (struct edgeuse *eu, struct shell *s,
 			long *classlist[4], const struct bn_tol	*tol) );
-static int	class_lu_vs_s RT_ARGS( (struct loopuse *lu, struct shell *s,
+static int	class_lu_vs_s BU_ARGS( (struct loopuse *lu, struct shell *s,
 			long *classlist[4], const struct bn_tol	*tol) );
-static void	class_fu_vs_s RT_ARGS( (struct faceuse *fu, struct shell *s,
+static void	class_fu_vs_s BU_ARGS( (struct faceuse *fu, struct shell *s,
 			long *classlist[4], const struct bn_tol	*tol) );
 
 /**

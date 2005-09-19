@@ -71,8 +71,6 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 
 #include "common.h"
 
-
-
 #include <stdio.h>
 #include <math.h>
 #include <string.h>
@@ -82,9 +80,9 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 #include "raytrace.h"
 #include "nurb.h"
 
-static struct vertexuse *nmg_mvu RT_ARGS( (struct vertex *v, long *upptr,
+static struct vertexuse *nmg_mvu BU_ARGS( (struct vertex *v, long *upptr,
 					 struct model *m) );
-static struct vertexuse *nmg_mvvu RT_ARGS( (long *upptr, struct model *m) );
+static struct vertexuse *nmg_mvvu BU_ARGS( (long *upptr, struct model *m) );
 
 
 /************************************************************************

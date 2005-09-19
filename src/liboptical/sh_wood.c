@@ -68,8 +68,6 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 
 #include "common.h"
 
-
-
 #include <stdio.h>
 #include <ctype.h>
 #include <math.h>
@@ -77,7 +75,7 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 #include "vmath.h"
 #include "raytrace.h"
 #include "rtprivate.h"
-/*#include "../rt/mathtab.h"*/
+
 
 /*
  *	Sundry external references
@@ -90,10 +88,10 @@ extern	fastf_t	turb_table[20][20][20];
 
 HIDDEN int	wood_init(void), wood_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip), wood_render(struct application *ap, struct partition *partp, struct shadework *swp, char *dp);
 HIDDEN void	wood_print(register struct region *rp);
-HIDDEN void	wood_free RT_ARGS(( char * ));
+HIDDEN void	wood_free BU_ARGS(( char * ));
 
-HIDDEN void	wood_V_set RT_ARGS((const struct bu_structparse *, const char *, const char *, char *));
-HIDDEN void	wood_D_set RT_ARGS((const struct bu_structparse *, const char *, const char *, char *));
+HIDDEN void	wood_V_set BU_ARGS((const struct bu_structparse *, const char *, const char *, char *));
+HIDDEN void	wood_D_set BU_ARGS((const struct bu_structparse *, const char *, const char *, char *));
 
 /*
  *	functions block for the shader
@@ -157,7 +155,7 @@ struct wood_specific {
 	vect_t			V;
 };
 
-HIDDEN void	wood_setup_2 RT_ARGS((struct wood_specific *));
+HIDDEN void	wood_setup_2 BU_ARGS((struct wood_specific *));
 
 /*
  *	Flags and useful offset declarations

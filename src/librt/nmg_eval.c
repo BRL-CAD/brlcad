@@ -43,13 +43,13 @@ static const char RCSnmg_eval[] = "@(#)$Header$ (BRL)";
 
 #include "common.h"
 
-
 #include <stdio.h>
 #include <math.h>
 #include "machine.h"
 #include "vmath.h"
 #include "nmg.h"
 #include "raytrace.h"
+
 
 struct nmg_bool_state  {
 	struct shell	*bs_dest;
@@ -60,9 +60,9 @@ struct nmg_bool_state  {
 	const struct bn_tol	*bs_tol;
 };
 
-static void nmg_eval_shell RT_ARGS( (struct shell *s,
+static void nmg_eval_shell BU_ARGS( (struct shell *s,
 		struct nmg_bool_state *bs));
-static void nmg_eval_plot RT_ARGS( (struct nmg_bool_state *bs,
+static void nmg_eval_plot BU_ARGS( (struct nmg_bool_state *bs,
 		int num, int delay));
 
 
