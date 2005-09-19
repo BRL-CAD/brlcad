@@ -14,8 +14,6 @@ total_trinum	uint		4
 loop:
   mesh_name_len	uchar		1
   mesh_name	char*		0-255
-  prop_name_len	uchar		1
-  prop_name	char*		0-255
 
   vert_num	uint		4
   loop:
