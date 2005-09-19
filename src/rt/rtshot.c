@@ -118,7 +118,7 @@ main(int argc, char **argv)
 {
 	static struct rt_i *rtip;
 	char *title_file;
-	char idbuf[132];		/* First ID record info */
+	char idbuf[RT_BUFSIZE] = {0};		/* First ID record info */
 	char *ptr;
 	int attr_count=0, i;
 	char **attrs = (char **)NULL;

@@ -144,7 +144,7 @@ main(int argc, char **argv)
 {
 	static struct rt_i *rtip;
 	char	*title_file;
-	char	idbuf[132];		/* First ID record info */
+	char	idbuf[RT_BUFSIZE] = {0};		/* First ID record info */
 	int	curstep;
 	vect_t	first_dir;		/* First dir chosen on a step */
 	int	i;
