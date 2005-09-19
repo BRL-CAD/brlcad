@@ -71,9 +71,7 @@
 #include "db5.h"
 #include "tcl.h"
 
-#ifndef NMG_H
 #include "nmg.h"
-#endif
 
 __BEGIN_DECLS
 
@@ -218,21 +216,6 @@ struct rt_tess_tol  {
 #define RT_TESS_TOL_MAGIC	0xb9090dab
 #define RT_CK_TESS_TOL(_p)	BU_CKMAG(_p, RT_TESS_TOL_MAGIC, "rt_tess_tol")
 
-/*
- *  Macros for providing function prototypes, regardless of whether
- *  the compiler understands them or not.
- *  It is vital that the argument list given for "args" be enclosed
- *  in parens.
- *  The setting of USE_PROTOTYPES is done in machine.h
- *  XXX These have been replaced by BU_EXTERN() and BU_ARGS()
- */
-#if USE_PROTOTYPES
-#	define	RT_EXTERN(type_and_name,args)	extern type_and_name args
-#	define	RT_ARGS(args)			args
-#else
-#	define	RT_EXTERN(type_and_name,args)	extern type_and_name()
-#	define	RT_ARGS(args)			()
-#endif
 
 /*
  *			R T _ D B _ I N T E R N A L
@@ -670,7 +653,7 @@ struct partition {
 		BU_LIST_DEQUEUE((struct bu_list *)(p)); \
 		bu_ptbl_reset( &(p)->pt_seglist ); \
 	} else { \
-		(p) = (struct partition *)bu_malloc(sizeof(struct partition), "struct partition"); \
+		(p) = (struct partition *)bu_calloc(1, sizeof(struct partition), "struct partition"); \
 		(p)->pt_magic = PT_MAGIC; \
 		bu_ptbl_init( &(p)->pt_seglist, 42, "pt_seglist ptbl" ); \
 		(res)->re_partlen++; \
@@ -1025,11 +1008,7 @@ struct db_tree_state {
 			));
 	const struct rt_tess_tol *ts_ttol;	/* Tessellation tolerance */
 	const struct bn_tol	*ts_tol;	/* Math tolerance */
-#if defined(NMG_H)
 	struct model		**ts_m;		/* ptr to ptr to NMG "model" */
-#else
-	genptr_t		*ts_m;		/* ptr to genptr */
-#endif
 	struct rt_i		*ts_rtip;	/* Helper for rt_gettrees() */
 	struct resource		*ts_resp;	/* Per-CPU data */
 };
@@ -1100,11 +1079,7 @@ union tree {
 		long		magic;
 		int		td_op;		/* leaf, OP_NMG_TESS */
 		const char	*td_name;	/* If non-null, dynamic string describing heritage of this region */
-#if defined(NMG_H)
 		struct nmgregion *td_r;		/* ptr to NMG region */
-#else
-		genptr_t	td_r;
-#endif
 	} tr_d;
 	struct tree_db_leaf  {
 		long		magic;
@@ -2022,7 +1997,6 @@ struct rt_functab {
 			struct xray *[] /*rp*/,
 			struct seg [] /*segp*/, int /*n*/,
 			struct application * /*ap*/ ));
-#if defined(NMG_H)
 	int	(*ft_tessellate) BU_ARGS((
 			struct nmgregion ** /*r*/,
 			struct model * /*m*/,
@@ -2034,19 +2008,6 @@ struct rt_functab {
 			struct model * /*m*/,
 			struct rt_db_internal * /*ip*/,
 			const struct bn_tol * /*tol*/));
-#else
-	int	(*ft_tessellate) BU_ARGS((
-			genptr_t * /*r*/,
-			genptr_t /*m*/,
-			struct rt_db_internal * /*ip*/,
-			const struct rt_tess_tol * /*ttol*/,
-			const struct bn_tol * /*tol*/));
-	int	(*ft_tnurb) BU_ARGS((
-			genptr_t * /*r*/,
-			genptr_t /*m*/,
-			struct rt_db_internal * /*ip*/,
-			const struct bn_tol * /*tol*/));
-#endif
 	int	(*ft_import5) BU_ARGS((struct rt_db_internal * /*ip*/,
 			const struct bu_external * /*ep*/,
 			const mat_t /*mat*/,
