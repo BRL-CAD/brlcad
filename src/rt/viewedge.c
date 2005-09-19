@@ -277,7 +277,6 @@ view_init( struct application *ap, char *file, char *obj, int minus_o, int minus
    * If so, load and prep.
    */
   if (bu_vls_strlen(&occlusion_objects) != 0) {
-    /*    char idbuf[512]; */
     struct db_i *dbip;
     int nObjs;
     const char **objs;
