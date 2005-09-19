@@ -40,7 +40,7 @@
  */
 
 static const char RCSid[] = "$Header$";
-stqtic const char RCSrev[] = "$Revision$";
+static const char RCSrev[] = "$Revision$";
 
 #include "common.h"
 
