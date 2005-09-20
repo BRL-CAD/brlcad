@@ -438,7 +438,7 @@ void tie_push(tie_t *tie, TIE_3 *tlist, int tnum, void *plist, int pstride) {
     tie->tri_list[tie->tri_num].data[2] = tlist[i*3+2];
     if(plist) {
       tie->tri_list[tie->tri_num].ptr = plist;
-      plist += pstride;
+      *((intptr_t **)plist) += pstride;
     } else {
       tie->tri_list[tie->tri_num].ptr = NULL;
     }
