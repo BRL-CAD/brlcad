@@ -51,9 +51,10 @@ def export_meshes():
     if (obj.Layer & layer_mask) == obj.Layer:
       if(type(obj.getData()) == Types.NMeshType):
         ## Mesh Name Length
-        fh.write(pack('B', len(obj.getName())))
+        fh.write(pack('B', len(obj.getName())+1))
         ## Mesh Name
         fh.write(obj.getName())
+        fh.write(pack('B', 0))
         ## Vertice Total
         fh.write(pack('I', len(obj.getData().verts)))
         ## Write Vertices
