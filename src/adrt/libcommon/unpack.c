@@ -103,22 +103,18 @@ void common_unpack(common_db_t *db, tie_t *tie, util_camera_t *camera, int sockn
 void common_unpack_free(common_db_t *db) {
   int i;
 
-#if 0
   /* Free texture data */
   for(i = 0; i < texture_num; i++)
     texture_list[i].texture->free(texture_list[i].texture);
   free(texture_list);
 
   /* Free mesh data */
-  for(i = 0; i < mesh_num; i++)
-    free(mesh_list[i]);
-  free(mesh_list);
-
-  /* Free triangle data */
-  for(i = 0; i < tri_num; i++)
-    free(tri_list[i]);
-  free(tri_list);
-#endif
+  for(i = 0; i < db->mesh_num; i++) {
+    /* Free triangle data */
+    free(db->mesh_list[i]->tri_list);
+    free(db->mesh_list[i]);
+  }
+  free(db->mesh_list);
 }
 
 
