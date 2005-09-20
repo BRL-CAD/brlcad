@@ -117,7 +117,7 @@ def export_textures():
 
 
 def export_mesh_map():
-  fh = open(framework_name + ".map", "w")
+  fh = open(framework_name + ".map", "wb")
 
   print "Writing Mesh Map..."
   obj_list = Blender.Object.Get()
@@ -125,9 +125,22 @@ def export_mesh_map():
     if (obj.Layer & layer_mask) == obj.Layer:
       if(type(obj.getData()) == Types.NMeshType):
         if(len(obj.getData().materials)) > 0:
-          fh.write(obj.getName() + "," + obj.getData().materials[0].getName() + "\n")
+          fh.write(pack('B', len(obj.getName())+1))
+          fh.write(obj.getName());
+          fh.write(pack('B', 0))
+
+          fh.write(pack('B', len(obj.getData().materials[0].getName())))
+          fh.write(obj.getData().materials[0].getName());
+          fh.write(pack('B', 0))
         else:
-          fh.write(obj.getName() + ",default\n")
+          fh.write(pack('B', len(obj.getName())+1))
+          fh.write(obj.getName());
+          fh.write(pack('B', 0))
+
+          fh.write(pack('B', len("default")+1))
+          fh.write("default");
+          fh.write(pack('B', 0))
+
 
 
   fh.close()
