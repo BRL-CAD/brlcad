@@ -57,8 +57,10 @@
 #
 # Default resources.
 #
-option add *Toolbar*padX 5 widgetDefault
-option add *Toolbar*padY 5 widgetDefault
+option add *Toolbar*padX 2 widgetDefault
+option add *Toolbar*padY 0 widgetDefault
+#option add *Toolbar*padX 5 widgetDefault
+#option add *Toolbar*padY 5 widgetDefault
 option add *Toolbar*orient horizontal widgetDefault
 option add *Toolbar*highlightThickness 0 widgetDefault
 option add *Toolbar*indicatorOn false widgetDefault
@@ -200,15 +202,18 @@ itcl::body iwidgets::Toolbar::constructor {args} {
     eval itk_initialize $args
 
     # build balloon help window
-    set _hintWindow [toplevel $itk_component(hull).balloonHintWindow]
+    set _hintWindow [toplevel $itk_component(hull).balloonHintWindow \
+			 -padx 0 \
+			 -pady 0 \
+			 -bg black]
     wm withdraw $_hintWindow
     label $_hintWindow.label \
 	-foreground $itk_option(-balloonforeground) \
 	-background $itk_option(-balloonbackground) \
 	-font $itk_option(-balloonfont) \
-	-relief raised \
-	-borderwidth 1
-    pack $_hintWindow.label
+	-relief flat \
+	-borderwidth 0
+    pack $_hintWindow.label -expand yes -fill both -padx 1 -pady 1
     
     # ... Attach help handler to this widget
     bind toolbar-help-$itk_component(hull) \
@@ -837,14 +842,38 @@ itcl::body iwidgets::Toolbar::showBalloon {window} {
 	if {[_getAttachedOption _opts \
 		$window args hintStr]} {
 	    # configure the balloon help
-	    $_hintWindow.label configure -text $hintStr		
-	    
+	    $_hintWindow.label configure -text $hintStr
+
 	    # Coordinates of the balloon
 	    set balloonLeft \
 		    [expr {[winfo rootx $window] + round(([winfo width $window]/2.0))}]
 	    set balloonTop \
 		    [expr {[winfo rooty $window] + [winfo height $window]}]
 	    
+	    #Bob Modifications Begin
+	    set _stringwidth [font measure $itk_option(-balloonfont) $hintStr]
+	    set _padx 8
+	    set _screenwidth [winfo screenwidth $_hintWindow.label]
+	    set balloonRight [expr {$balloonLeft + $_stringwidth + $_padx}]
+
+	    # Adjust balloonLeft so that the balloon
+	    # help window's right side is visible
+	    if {$_screenwidth < $balloonRight} {
+		set balloonLeft [expr {$balloonLeft - $_stringwidth - $_padx}]
+	    }
+
+	    set _stringheight [winfo height $_hintWindow]
+	    set _pady 24
+	    set _screenheight [winfo screenheight $_hintWindow.label]
+	    set balloonBottom [expr {$balloonTop + $_stringheight + $_pady}]
+
+	    # Adjust balloonTop so that the balloon
+	    # help window's bottom side is visible
+	    if {$_screenheight < $balloonBottom} {
+		set balloonTop [expr {[winfo rooty $window] - $_stringheight}]
+	    }
+	    #Bob Modifications End
+
 	    # put up balloon window
 	    wm overrideredirect $_hintWindow 0
 	    wm geometry $_hintWindow "+$balloonLeft+$balloonTop"
