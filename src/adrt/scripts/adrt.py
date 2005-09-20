@@ -25,10 +25,10 @@ def export_meshes():
   fh = open(framework_name + ".adrt", "wb")
 
   ## Endian
-  fh.write(pack('H', 1))
+  fh.write(pack('h', 1))
 
   ## Version
-  fh.write(pack('H', 2))
+  fh.write(pack('h', 2))
 
   ## Calculate total number of triangles
   obj_list = Blender.Object.Get()
@@ -43,7 +43,7 @@ def export_meshes():
           if len(f.v) == 3:
             num = num + 1
 
-  fh.write(pack('I', num))
+  fh.write(pack('i', num))
   print "\nWriting %d triangles..." % num
 
   ## Pack each mesh
@@ -130,7 +130,7 @@ def export_mesh_map():
           fh.write(obj.getName());
           fh.write(pack('B', 0))
 
-          fh.write(pack('B', len(obj.getData().materials[0].getName())))
+          fh.write(pack('B', len(obj.getData().materials[0].getName())+1))
           fh.write(obj.getData().materials[0].getName());
           fh.write(pack('B', 0))
         else:
