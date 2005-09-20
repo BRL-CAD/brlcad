@@ -338,7 +338,7 @@ void util_camera_prep(util_camera_t *camera, common_db_t *db) {
 void* util_camera_render_thread(void *ptr) {
   util_camera_thread_data_t *td;
   int d, n, res_ind, scanline, v_scanline;
-  TIE_3 pixel, accum, v;
+  TIE_3 pixel, accum, v1, v2;
   tie_ray_t ray;
   tfloat view_inv;
 
@@ -369,16 +369,25 @@ void* util_camera_render_thread(void *ptr) {
     }
 
 
-      /* scanline, horizontal, each pixel */
-      for(n = td->work.orig_x; n < td->work.orig_x + td->work.size_x; n++) {
+    /* optimization if there is no depth of field being applied */
+    if(td->camera->view_num == 1) {
+      math_vec_mul_scalar(v1, td->camera->view_list[0].step_y, v_scanline);
+      math_vec_add(v1, v1, td->camera->view_list[0].top_l);
+    }
+
+
+    /* scanline, horizontal, each pixel */
+    for(n = td->work.orig_x; n < td->work.orig_x + td->work.size_x; n++) {
+
+      /* depth of view samples */
+      if(td->camera->view_num > 1) {
         math_vec_set(accum, 0, 0, 0);
 
-        /* depth of view samples */
         for(d = 0; d < td->camera->view_num; d++) {
-          math_vec_mul_scalar(v, td->camera->view_list[d].step_x, n);
-          math_vec_add(ray.dir, td->camera->view_list[d].top_l, v);
-          math_vec_mul_scalar(v, td->camera->view_list[d].step_y, v_scanline);
-          math_vec_add(ray.dir, ray.dir, v);
+          math_vec_mul_scalar(ray.dir, td->camera->view_list[d].step_y, v_scanline);
+          math_vec_add(ray.dir, ray.dir, td->camera->view_list[d].top_l);
+          math_vec_mul_scalar(v1, td->camera->view_list[d].step_x, n);
+          math_vec_add(ray.dir, ray.dir, v1);
 
           math_vec_set(pixel, 0, 0, 0);
 
@@ -394,34 +403,48 @@ void* util_camera_render_thread(void *ptr) {
 
         /* Find Mean value of all views */
         math_vec_mul_scalar(pixel, accum, view_inv);
+      } else {
+        math_vec_mul_scalar(v2, td->camera->view_list[0].step_x, n);
+        math_vec_add(ray.dir, v1, v2);
 
-        if(td->work.format == COMMON_BIT_DEPTH_24) {
-          unsigned char rgb_24[3];
+        math_vec_set(pixel, 0, 0, 0);
 
-          if(pixel.v[0] > 1) pixel.v[0] = 1;
-          if(pixel.v[1] > 1) pixel.v[1] = 1;
-          if(pixel.v[2] > 1) pixel.v[2] = 1;
-          rgb_24[0] = (unsigned char)(255 * pixel.v[0]);
-          rgb_24[1] = (unsigned char)(255 * pixel.v[1]);
-          rgb_24[2] = (unsigned char)(255 * pixel.v[2]);
+        ray.pos = td->camera->view_list[0].pos;
+        ray.depth = 0;
+        math_vec_unitize(ray.dir);
 
-          /* Pack pixel into result buffer */
-          memcpy(&((char *)(td->res_buf))[res_ind], rgb_24, 3);
-          res_ind += 3;
-        } else if(td->work.format == COMMON_BIT_DEPTH_128) {
-          tfloat rgb_128[4];
+        /* Compute pixel value using this ray */
+        td->db->env.render.work(&td->db->env.render, td->tie, &ray, &pixel);
+      }
 
-          rgb_128[0] = pixel.v[0];
-          rgb_128[1] = pixel.v[1];
-          rgb_128[2] = pixel.v[2];
-          rgb_128[3] = 1.0;
 
-          memcpy(&((char *)(td->res_buf))[res_ind], rgb_128, 4*sizeof(tfloat));
-          res_ind += 4*sizeof(tfloat);
-        }
+      if(td->work.format == COMMON_BIT_DEPTH_24) {
+        unsigned char rgb_24[3];
+
+        if(pixel.v[0] > 1) pixel.v[0] = 1;
+        if(pixel.v[1] > 1) pixel.v[1] = 1;
+        if(pixel.v[2] > 1) pixel.v[2] = 1;
+        rgb_24[0] = (unsigned char)(255 * pixel.v[0]);
+        rgb_24[1] = (unsigned char)(255 * pixel.v[1]);
+        rgb_24[2] = (unsigned char)(255 * pixel.v[2]);
+
+        /* Pack pixel into result buffer */
+        memcpy(&((char *)(td->res_buf))[res_ind], rgb_24, 3);
+        res_ind += 3;
+      } else if(td->work.format == COMMON_BIT_DEPTH_128) {
+        tfloat rgb_128[4];
+
+        rgb_128[0] = pixel.v[0];
+        rgb_128[1] = pixel.v[1];
+        rgb_128[2] = pixel.v[2];
+        rgb_128[3] = 1.0;
+
+        memcpy(&((char *)(td->res_buf))[res_ind], rgb_128, 4*sizeof(tfloat));
+        res_ind += 4*sizeof(tfloat);
+      }
 /*          printf("Pixel: [%d, %d, %d]\n", rgb[0], rgb[1], rgb[2]); */
 
-      }
+    }
   }
 
   return(0);
