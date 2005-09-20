@@ -5,6 +5,7 @@
 #include "depth.h"
 #include "flat.h"
 #include "grid.h"
+#include "kedeflect.h"
 #include "kelos.h"
 #include "normal.h"
 #include "path.h"

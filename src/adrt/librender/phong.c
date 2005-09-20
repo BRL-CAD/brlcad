@@ -31,9 +31,5 @@ void render_phong_work(render_t *render, tie_t *tie, tie_ray_t *ray, TIE_3 *pixe
   math_vec_sub(vec, ray->pos, id.pos);
   math_vec_unitize(vec);
   math_vec_dot(angle, vec, id.norm);
-  math_vec_mul_scalar((*pixel), (*pixel), (angle*0.9));
-
-  pixel->v[0] += 0.1;
-  pixel->v[1] += 0.1;
-  pixel->v[2] += 0.1;
+  math_vec_mul_scalar((*pixel), (*pixel), angle);
 }
