@@ -365,7 +365,7 @@ void* util_camera_render_thread(void *ptr) {
     if(td->work.format == COMMON_BIT_DEPTH_24) {
       res_ind = 3*scanline*td->work.size_x;
     } else if(td->work.format == COMMON_BIT_DEPTH_128) {
-      res_ind = 4*sizeof(tfloat)*scanline*td->work.size_x;
+      res_ind = 4*scanline*td->work.size_x;
     }
 
 
@@ -419,28 +419,24 @@ void* util_camera_render_thread(void *ptr) {
 
 
       if(td->work.format == COMMON_BIT_DEPTH_24) {
-        unsigned char rgb_24[3];
-
         if(pixel.v[0] > 1) pixel.v[0] = 1;
         if(pixel.v[1] > 1) pixel.v[1] = 1;
         if(pixel.v[2] > 1) pixel.v[2] = 1;
-        rgb_24[0] = (unsigned char)(255 * pixel.v[0]);
-        rgb_24[1] = (unsigned char)(255 * pixel.v[1]);
-        rgb_24[2] = (unsigned char)(255 * pixel.v[2]);
-
-        /* Pack pixel into result buffer */
-        memcpy(&((char *)(td->res_buf))[res_ind], rgb_24, 3);
+        ((char *)(td->res_buf))[res_ind+0] = (unsigned char)(255 * pixel.v[0]);
+        ((char *)(td->res_buf))[res_ind+1] = (unsigned char)(255 * pixel.v[1]);
+        ((char *)(td->res_buf))[res_ind+2] = (unsigned char)(255 * pixel.v[2]);
         res_ind += 3;
       } else if(td->work.format == COMMON_BIT_DEPTH_128) {
-        tfloat rgb_128[4];
+        tfloat alpha;
 
-        rgb_128[0] = pixel.v[0];
-        rgb_128[1] = pixel.v[1];
-        rgb_128[2] = pixel.v[2];
-        rgb_128[3] = 1.0;
+        alpha = 1.0;
 
-        memcpy(&((char *)(td->res_buf))[res_ind], rgb_128, 4*sizeof(tfloat));
-        res_ind += 4*sizeof(tfloat);
+        ((tfloat *)(td->res_buf))[res_ind + 0] = pixel.v[0];
+        ((tfloat *)(td->res_buf))[res_ind + 1] = pixel.v[1];
+        ((tfloat *)(td->res_buf))[res_ind + 2] = pixel.v[2];
+        ((tfloat *)(td->res_buf))[res_ind + 3] = alpha;
+
+        res_ind += 4;
       }
 /*          printf("Pixel: [%d, %d, %d]\n", rgb[0], rgb[1], rgb[2]); */
 
