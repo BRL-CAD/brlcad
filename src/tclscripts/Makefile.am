@@ -1,12 +1,15 @@
 # $Id$
 
 SUBDIRS = \
+	archer \
 	geometree \
 	lib \
 	mged \
 	nirt \
 	pl-dm \
 	rtwizard \
+	sdialogs \
+	swidgets \
 	util
 
 this_dir = tclscripts
