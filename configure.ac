@@ -2609,11 +2609,11 @@ AC_CONFIG_FILES([
 	src/adrt/bench/Makefile
 	src/adrt/doc/Makefile
 	src/adrt/libcommon/Makefile
-	src/adrt/librender/Makefile
 	src/adrt/libtexture/Makefile
 	src/adrt/libtie/Makefile
 	src/adrt/libtienet/Makefile
 	src/adrt/libutil/Makefile
+	src/adrt/libvis/Makefile
 	src/adrt/rise/Makefile
 	src/adrt/rise/master/Makefile
 	src/adrt/rise/observer/Makefile
