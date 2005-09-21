@@ -276,11 +276,17 @@ BC_ARG_ENABLE([build_tcl], [tcl-build], [Build the included Tcl], [yes])
 # force enable/disable building of Tk
 BC_ARG_ENABLE([build_tk], [tk-build], [Build the included Tk], [yes])
 
+# tkimg
+BC_ARG_ENABLE([build_tkimg], [tkimg-build], [Build the included tkimg], [yes])
+
 # force enable/disable building of incrTcl
 BC_ARG_ENABLE([build_itcl], [itcl-build], [Build the included incrTcl], [yes])
 
 # force enable/disable building of iwidgets
 BC_ARG_ENABLE([build_iwidgets], [iwidgets-build], [Install the included iwidgets], [yes])
+
+# force enable/disable building of blt
+BC_ARG_ENABLE([build_blt], [blt-build], [Build the included blt], [yes])
 
 # doxygen - XXX unimplemented
 bc_use_doxygen=no
@@ -417,6 +423,12 @@ BC_ARG_ALIAS([build_tk], [libtk-build])
 AC_MSG_CHECKING(whether to build the Tk library)
 AC_MSG_RESULT($bc_build_tk)
 
+# aliases to force building tkimg (help uses tkimg-build)
+BC_ARG_ALIAS([build_tkimg], [tkimg])
+BC_ARG_ALIAS([build_tkimg], [tkimg-build])
+AC_MSG_CHECKING(whether to build the Tkimg library)
+AC_MSG_RESULT($bc_build_tkimg)
+
 # aliases to force building itcl (help uses itcl-build)
 BC_ARG_ALIAS([build_itcl], [itcl])
 BC_ARG_ALIAS([build_itcl], [itk])
@@ -435,6 +447,14 @@ BC_ARG_ALIAS([build_iwidgets], [iwidgets])
 BC_ARG_ALIAS([build_iwidgets], [install-iwidgets])
 AC_MSG_CHECKING(whether to install the iwidgets library)
 AC_MSG_RESULT($bc_build_iwidgets)
+
+# aliases to force building blt (help uses blt-build)
+BC_ARG_ALIAS([build_blt], [blt])
+BC_ARG_ALIAS([build_blt], [libblt])
+BC_ARG_ALIAS([build_blt], [blt-build])
+BC_ARG_ALIAS([build_blt], [libblt-build])
+AC_MSG_CHECKING(whether to build the Blt library)
+AC_MSG_RESULT($bc_build_blt)
 
 # aliases to force building termlib (help uses termlib-build)
 BC_ARG_ALIAS([build_termlib], [termlib])
@@ -1901,6 +1921,18 @@ else
 fi
 AC_SUBST(TK)
 
+dnl figure out whether we need to build Tkimg
+TKIMG_VERSION="1.3"
+AC_SUBST(TKIMG_VERSION)
+if test "x$bc_build_tkimg" = "xyes" ; then
+   build_brlcad_tkimg=yes
+   TKIMG='${top_builddir}/src/other/tkimg/tkimg${TKIMG_VERSION}.la'
+   AC_MSG_RESULT(yes)
+else
+   build_brlcad_tkimg=no
+   TKIMG=""
+   AC_MSG_RESULT(no)
+fi
 
 dnl *** incrTcl ***
 dnl See if libitcl and libitk seem to work, make sure it's not dependant upon libtcl
@@ -2041,6 +2073,20 @@ IWIDGETS_VERSION="4.0.1"
 AC_DEFINE_UNQUOTED([IWIDGETS_VERSION], "$IWIDGETS_VERSION", "Version of iWidgets")
 AC_SUBST(IWIDGETS_VERSION)
 
+dnl figure out whether we need to build Blt
+BLT_VERSION="2.4"
+AC_SUBST(BLT_VERSION)
+BLT_LIBRARY='${prefix}/lib/blt${BLT_VERSION}'
+AC_SUBST(BLT_LIBRARY)
+if test "x$bc_build_blt" = "xyes" ; then
+   build_brlcad_blt=yes
+   BLT='${top_builddir}/src/other/blt/libblt${BLT_VERSION}.la'
+   AC_MSG_RESULT(yes)
+else
+   build_brlcad_blt=no
+   BLT=""
+   AC_MSG_RESULT(no)
+fi
 
 dnl *** libthread ***
 AC_MSG_CHECKING(for threading library availability)
@@ -2265,8 +2311,10 @@ AC_MSG_RESULT([(9 of 9)])
 
 AM_CONDITIONAL(BUILD_TCL, [test "x$build_brlcad_tcl" = "xyes"])
 AM_CONDITIONAL(BUILD_TK, [test "x$build_brlcad_tk" = "xyes"])
+AM_CONDITIONAL(BUILD_TKIMG, [test "x$build_brlcad_tkimg" = "xyes"])
 AM_CONDITIONAL(BUILD_ITCL, [test "x$build_brlcad_itcl" = "xyes"])
 AM_CONDITIONAL(BUILD_IWIDGETS, [test "x$build_brlcad_iwidgets" = "xyes"])
+AM_CONDITIONAL(BUILD_BLT, [test "x$build_brlcad_blt" = "xyes"])
 AM_CONDITIONAL(BUILD_PNG, [test "x$build_brlcad_png" = "xyes"])
 AM_CONDITIONAL(BUILD_REGEX, [test "x$build_brlcad_regex" = "xyes"])
 AM_CONDITIONAL(BUILD_ZLIB, [test "x$build_brlcad_zlib" = "xyes"])
@@ -2467,6 +2515,7 @@ AC_CONFIG_FILES([
 	doc/html/manuals/Anim_Tutorial/Makefile
 	doc/html/manuals/Makefile
 	doc/html/manuals/ReleaseNotes/Makefile
+	doc/html/manuals/archer/Makefile
 	doc/html/manuals/cadwidgets/Makefile
 	doc/html/manuals/libbu/Makefile
 	doc/html/manuals/libdm/Makefile
@@ -2511,6 +2560,11 @@ AC_CONFIG_FILES([
 	src/adrt/scripts/Makefile
 	src/adrt/misc/Makefile
 	src/anim/Makefile
+	src/archer/Makefile
+	src/archer/plugins/Makefile
+	src/archer/plugins/Wizards/Makefile
+	src/archer/plugins/Wizards/tankwizardIA/Makefile
+	src/archer/plugins/Wizards/tankwizardIA/images/Makefile
 	src/brlman/Makefile
 	src/brlman/awf
 	src/brlman/brlman
@@ -2613,6 +2667,15 @@ AC_CONFIG_FILES([
 	src/other/libtkGLX/Makefile
 	src/other/libutahrle/Makefile
 	src/other/libz/Makefile
+	src/other/tkimg/Makefile
+	src/other/tkimg/base/Makefile
+	src/other/tkimg/png/Makefile
+	src/other/tkimg/pngtcl/Makefile
+	src/other/tkimg/zlibtcl/Makefile
+	src/other/blt/Makefile
+	src/other/blt/src/Makefile
+	src/other/blt/library/Makefile
+	src/other/blt/library/dd_protocols/Makefile
 	src/patch/Makefile
 	src/proc-db/Makefile
 	src/remrt/Makefile
@@ -2621,6 +2684,12 @@ AC_CONFIG_FILES([
 	src/sig/Makefile
 	src/tab/Makefile
 	src/tclscripts/Makefile
+	src/tclscripts/archer/Makefile
+	src/tclscripts/archer/images/Makefile
+	src/tclscripts/archer/images/Themes/Makefile
+	src/tclscripts/archer/images/Themes/Crystal/Makefile
+	src/tclscripts/archer/images/Themes/Crystal_Large/Makefile
+	src/tclscripts/archer/images/Themes/Windows/Makefile
 	src/tclscripts/geometree/Makefile
 	src/tclscripts/lib/Makefile
 	src/tclscripts/mged/Makefile
@@ -2635,6 +2704,11 @@ AC_CONFIG_FILES([
 	src/tclscripts/rtwizard/examples/PictureTypeE/Makefile
 	src/tclscripts/rtwizard/examples/PictureTypeF/Makefile
 	src/tclscripts/rtwizard/lib/Makefile
+	src/tclscripts/sdialogs/Makefile
+	src/tclscripts/sdialogs/scripts/Makefile
+	src/tclscripts/swidgets/Makefile
+	src/tclscripts/swidgets/images/Makefile
+	src/tclscripts/swidgets/scripts/Makefile
 	src/tclscripts/util/Makefile
 	src/unigraphics/Makefile
 	src/util/Makefile
@@ -2688,8 +2762,10 @@ echo "LIBS     = ${LIBS}"
 echo
 echo Build Tcl ............................: $build_brlcad_tcl
 echo Build Tk .............................: $build_brlcad_tk
+echo Build Tkimg ..........................: $build_brlcad_tkimg
 echo Build Itcl/Itk .......................: $build_brlcad_itcl
 echo Build IWidgets .......................: $build_brlcad_iwidgets
+echo Build Blt ..........................: $build_brlcad_blt
 echo Build libpng .........................: $build_brlcad_png
 echo Build libregex .......................: $build_brlcad_regex
 echo Build zlib ...........................: $build_brlcad_zlib
