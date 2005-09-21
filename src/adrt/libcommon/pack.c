@@ -153,23 +153,23 @@ void common_pack_env(common_db_t *db, void **app_data, int *app_ind) {
 
   s = COMMON_PACK_ENV_RM;
   common_pack_write(app_data, app_ind, &s, sizeof(short));
-  common_pack_write(app_data, app_ind, &db->env.rm, sizeof(unsigned int));
+  common_pack_write(app_data, app_ind, &db->env.vm, sizeof(unsigned int));
 
-  switch(db->env.rm) {
-    case RENDER_METHOD_NORMAL:
+  switch(db->env.vm) {
+    case VM_NORMAL:
       break;
 
-    case RENDER_METHOD_PHONG:
+    case VM_PHONG:
       break;
 
-    case RENDER_METHOD_PATH:
-      common_pack_write(app_data, app_ind, &((render_path_t *)db->env.render.data)->samples, sizeof(render_path_t));
+    case VM_PATH:
+      common_pack_write(app_data, app_ind, &((vis_path_t *)db->env.vis.data)->samples, sizeof(vis_path_t));
       break;
 
-    case RENDER_METHOD_PLANE:
+    case VM_PLANE:
       break;
 
-    case RENDER_METHOD_FLAT:
+    case VM_FLAT:
       break;
 
     default:

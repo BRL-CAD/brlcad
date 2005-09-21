@@ -132,36 +132,36 @@ void common_unpack_env(common_db_t *db, int socknum) {
     switch(block) {
       case COMMON_PACK_ENV_RM:
         {
-          tienet_recv(socknum, &db->env.rm, sizeof(int), tienet_endian);
+          tienet_recv(socknum, &db->env.vm, sizeof(int), tienet_endian);
           ind += sizeof(int);
-          switch(db->env.rm) {
-            case RENDER_METHOD_FLAT:
-              render_flat_init(&db->env.render);
+          switch(db->env.vm) {
+            case VM_FLAT:
+              vis_flat_init(&db->env.vis);
               break;
 
-            case RENDER_METHOD_NORMAL:
-              render_normal_init(&db->env.render);
+            case VM_NORMAL:
+              vis_normal_init(&db->env.vis);
               break;
 
-            case RENDER_METHOD_PHONG:
-              render_phong_init(&db->env.render);
+            case VM_PHONG:
+              vis_phong_init(&db->env.vis);
               break;
 
-            case RENDER_METHOD_DEPTH:
-              render_depth_init(&db->env.render);
+            case VM_DEPTH:
+              vis_depth_init(&db->env.vis);
               break;
 
-            case RENDER_METHOD_PATH:
+            case VM_PATH:
               {
                 int samples;
 
                 tienet_recv(socknum, &samples, sizeof(int), tienet_endian);
                 ind += sizeof(int);
-                render_path_init(&db->env.render, samples);
+                vis_path_init(&db->env.vis, samples);
               }
               break;
 
-            case RENDER_METHOD_PLANE:
+            case VM_PLANE:
               {
                 TIE_3 ray_pos, ray_dir;
 
@@ -174,7 +174,7 @@ void common_unpack_env(common_db_t *db, int socknum) {
                 tienet_recv(socknum, &ray_dir.v[2], sizeof(tfloat), tienet_endian);
 
                 ind += 6 * sizeof(tfloat);
-                render_plane_init(&db->env.render, ray_pos, ray_dir);
+                vis_plane_init(&db->env.vis, ray_pos, ray_dir);
               }
               break;
 

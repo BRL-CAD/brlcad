@@ -105,7 +105,7 @@ static void isst_master_setup() {
   isst_master_camera_azimuth = 45;
   isst_master_camera_elevation = 35;
 
-  isst_master_rm = RENDER_METHOD_PHONG;
+  isst_master_rm = VM_PHONG;
 
   frame_ind = 0;
 
@@ -582,7 +582,7 @@ void isst_master_update() {
   isst_master_slave_data_len += 1;
 
   switch(isst_master_rm) {
-    case RENDER_METHOD_PLANE:
+    case VM_PLANE:
       memcpy(&((char *)isst_master_slave_data)[isst_master_slave_data_len], &isst_master_shot_position, sizeof(TIE_3));
       isst_master_slave_data_len += sizeof(TIE_3);
 
@@ -590,7 +590,7 @@ void isst_master_update() {
       isst_master_slave_data_len += sizeof(TIE_3);
       break;
 
-    case RENDER_METHOD_SPALL:
+    case VM_SPALL:
       memcpy(&((char *)isst_master_slave_data)[isst_master_slave_data_len], &isst_master_in_hit, sizeof(TIE_3));
       isst_master_slave_data_len += sizeof(TIE_3);
 
@@ -627,32 +627,32 @@ void isst_master_process_events(isst_event_t *event_queue, uint8_t event_num, is
             isst_master_shift_enabled = 1;
             break;
 
-          case SDLK_1: /* RENDER_METHOD_PHONG */
-            isst_master_rm = RENDER_METHOD_PHONG;
+          case SDLK_1: /* VM_PHONG */
+            isst_master_rm = VM_PHONG;
             break;
 
-          case SDLK_2: /* RENDER_METHOD_PLANE */
-            isst_master_rm = RENDER_METHOD_PLANE;
+          case SDLK_2: /* VM_PLANE */
+            isst_master_rm = VM_PLANE;
             break;
 
-          case SDLK_3: /* RENDER_METHOD_SPALL */
-            isst_master_rm = RENDER_METHOD_SPALL;
+          case SDLK_3: /* VM_SPALL */
+            isst_master_rm = VM_SPALL;
             break;
 
-          case SDLK_4: /* RENDER_METHOD_COMPONENT */
-            isst_master_rm = RENDER_METHOD_COMPONENT;
+          case SDLK_4: /* VM_COMPONENT */
+            isst_master_rm = VM_COMPONENT;
             break;
 
-          case SDLK_8: /* RENDER_METHOD_DEPTH */
-            isst_master_rm = RENDER_METHOD_DEPTH;
+          case SDLK_8: /* VM_DEPTH */
+            isst_master_rm = VM_DEPTH;
             break;
 
-          case SDLK_9: /* RENDER_METHOD_GRID */
-            isst_master_rm = RENDER_METHOD_GRID;
+          case SDLK_9: /* VM_GRID */
+            isst_master_rm = VM_GRID;
             break;
 
-          case SDLK_0: /* RENDER_METHOD_NORMAL */
-            isst_master_rm = RENDER_METHOD_NORMAL;
+          case SDLK_0: /* VM_NORMAL */
+            isst_master_rm = VM_NORMAL;
             break;
 
 

@@ -40,7 +40,7 @@
 
 #include "tie.h"
 #include "texture_internal.h"
-#include "render.h"
+#include "vis.h"
 
 #define COMMON_BIT_DEPTH_24	0
 #define	COMMON_BIT_DEPTH_128	1
@@ -111,8 +111,8 @@ typedef struct common_anim_s {
 
 
 typedef struct common_env_s {
-  render_t render;
-  int rm; /* render method */
+  vis_t vis;
+  int vm; /* vis method */
 
   int img_vw;	/* virtual width */
   int img_vh;	/* virtual height */
