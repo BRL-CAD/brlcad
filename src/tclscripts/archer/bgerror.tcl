@@ -467,7 +467,9 @@ proc bgerror {error} {
     case $answer {
 	OK {
 	    # Make sure the wait cursor is unlocked
-	    $App::gui SetStatusString
+	    if [info exists App::gui] {    
+		$App::gui SetStatusString
+	    }
 	    SetNormalCursor
       }
       SAVE {
