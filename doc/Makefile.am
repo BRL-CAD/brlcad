@@ -10,6 +10,7 @@ documentation_DATA = \
 	README.IRIX \
 	README.MacOSX \
 	anim.txt \
+	archer_ack.txt \
 	benchmark.tr \
 	cvs.txt \
 	description.txt \
