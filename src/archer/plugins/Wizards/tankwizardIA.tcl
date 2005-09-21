@@ -11,7 +11,8 @@
 #	 This is a script for loading/registering the tank wizard.
 #
 
-source [file join $env(ARCHER_HOME) plugins archer Wizards tankwizardIA TankWizardIA.tcl]
+set brlcadDataPath [bu_brlcad_data ""]
+source [file join $brlcadDataPath plugins archer Wizards tankwizardIA TankWizardIA.tcl]
 
 # Load only once
 set pluginMajorType $TankWizardIA::wizardMajorType
@@ -28,7 +29,7 @@ if {$plugin != ""} {
     }
 }
 
-#set iconPath [file join $env(ARCHER_HOME) plugins Wizards tankwizardIA images tank.png]
+#set iconPath [file join $brlcadDataPath plugins archer Wizards tankwizardIA images tank.png]
 set iconPath ""
 
 # register plugin with Archer's interface
