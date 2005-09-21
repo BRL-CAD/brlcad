@@ -404,10 +404,10 @@ get_args(int argc, register char **argv)
 {
 	register int c;
 
-	while( (c = getopt( argc, argv, "hdoOit:F:s:S:w:W:n:N:" )) != EOF ) {
+	while( (c = bu_getopt( argc, argv, "hdoOit:F:s:S:w:W:n:N:" )) != EOF ) {
 		switch( c ) {
 		case 't':
-			line_thickness = atoi(optarg);
+			line_thickness = atoi(bu_optarg);
 			if( line_thickness <= 0 )
 				line_thickness = 1;
 			break;
@@ -423,29 +423,29 @@ get_args(int argc, register char **argv)
 			over = 1;
 			break;
 		case 'F':
-			framebuffer = optarg;
+			framebuffer = bu_optarg;
 			break;
 		case 'h':
 			Nscanlines = Npixels = 1024;
 			break;
 		case 'S':
 		case 's':
-			Nscanlines = Npixels = atoi(optarg);
+			Nscanlines = Npixels = atoi(bu_optarg);
 			break;
 		case 'W':
 		case 'w':
-			Npixels = atoi(optarg);
+			Npixels = atoi(bu_optarg);
 			break;
 		case 'N':
 		case 'n':
-			Nscanlines = atoi(optarg);
+			Nscanlines = atoi(bu_optarg);
 			break;
 		default:		/* '?' */
 			return(0);
 		}
 	}
 
-	if( optind >= argc ) {
+	if( bu_optind >= argc ) {
 		/* no file name given, use stdin */
 		if( isatty(fileno(stdin)) )
 			return(0);
@@ -453,7 +453,7 @@ get_args(int argc, register char **argv)
 		pfin = stdin;
 	} else {
 		/* open file */
-		filename = argv[optind];
+		filename = argv[bu_optind];
 		if( (pfin = fopen(filename, "r")) == NULL ) {
 			fprintf( stderr,
 			   "pl-fb: Can't open file \"%s\"\n", filename );
@@ -461,7 +461,7 @@ get_args(int argc, register char **argv)
 		}
 	}
 
-	if( argc > ++optind )
+	if( argc > ++bu_optind )
 		(void)fprintf( stderr, "pl-fb: excess argument(s) ignored\n" );
 
 	return(1);		/* OK */

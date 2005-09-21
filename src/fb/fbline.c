@@ -104,7 +104,7 @@ get_args(int argc, register char **argv)
 
 	register int c;
 
-	while ( (c = getopt( argc, argv, "hW:w:N:n:cF:r:g:b:" )) != EOF )  {
+	while ( (c = bu_getopt( argc, argv, "hW:w:N:n:cF:r:g:b:" )) != EOF )  {
 		switch( c )  {
 		case 'h':
 			/* high-res */
@@ -112,40 +112,40 @@ get_args(int argc, register char **argv)
 			break;
 		case 'W':
 		case 'w':
-			screen_width = atoi(optarg);
+			screen_width = atoi(bu_optarg);
 			break;
 		case 'N':
 		case 'n':
-			screen_height = atoi(optarg);
+			screen_height = atoi(bu_optarg);
 			break;
 		case 'c':
 			clear = 1;
 			break;
 		case 'F':
-			framebuffer = optarg;
+			framebuffer = bu_optarg;
 			break;
 		case 'r':
-			pixcolor[RED] = atoi( optarg );
+			pixcolor[RED] = atoi( bu_optarg );
 			break;
 		case 'g':
-			pixcolor[GRN] = atoi( optarg );
+			pixcolor[GRN] = atoi( bu_optarg );
 			break;
 		case 'b':
-			pixcolor[BLU] = atoi( optarg );
+			pixcolor[BLU] = atoi( bu_optarg );
 			break;
 		default:		/* '?' */
 			return(0);
 		}
 	}
 
-	if( optind+4 > argc )
+	if( bu_optind+4 > argc )
 		return(0);		/* BAD */
-	x1 = atoi( argv[optind++]);
-	y1 = atoi( argv[optind++]);
-	x2 = atoi( argv[optind++]);
-	y2 = atoi( argv[optind++]);
+	x1 = atoi( argv[bu_optind++]);
+	y1 = atoi( argv[bu_optind++]);
+	x2 = atoi( argv[bu_optind++]);
+	y2 = atoi( argv[bu_optind++]);
 
-	if ( argc > optind )
+	if ( argc > bu_optind )
 		(void)fprintf( stderr, "fbline: excess argument(s) ignored\n" );
 
 	return(1);		/* OK */

@@ -283,25 +283,25 @@ int
 pars_Argv(int argc, register char **argv)
 {
 	register int	c;
-	while( (c = getopt( argc, argv, "F:s:S:w:W:n:N:h" )) != EOF )  {
+	while( (c = bu_getopt( argc, argv, "F:s:S:w:W:n:N:h" )) != EOF )  {
 		switch( c )  {
 		case 'F':
-			framebuffer = optarg;
+			framebuffer = bu_optarg;
 			break;
 		case 'h' : /* High resolution frame buffer.	*/
 			scr_height = scr_width = 1024;
 			break;
 		case 's':
 		case 'S':
-			scr_height = scr_width = atoi(optarg);
+			scr_height = scr_width = atoi(bu_optarg);
 			break;
 		case 'w':
 		case 'W':
-			scr_width = atoi(optarg);
+			scr_width = atoi(bu_optarg);
 			break;
 		case 'n':
 		case 'N':
-			scr_height = atoi(optarg);
+			scr_height = atoi(bu_optarg);
 			break;
 		case '?' :
 			return	0;

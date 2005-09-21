@@ -253,35 +253,35 @@ int
 pars_Argv(int argc, register char **argv)
 {
 	register int	c;
-	extern int	optind;
+	extern int	bu_optind;
 
-	while( (c = getopt( argc, argv, "hF:s:S:w:W:n:N:" )) != EOF ) {
+	while( (c = bu_getopt( argc, argv, "hF:s:S:w:W:n:N:" )) != EOF ) {
 		switch( c ) {
 		case 'h' :
 			scr_width = scr_height = 1024;
 			break;
 		case 'F':
-			framebuffer = optarg;
+			framebuffer = bu_optarg;
 			break;
 		case 'S':
 		case 's':
 			/* square file size */
-			scr_height = scr_width = atoi(optarg);
+			scr_height = scr_width = atoi(bu_optarg);
 			break;
 		case 'w':
 		case 'W':
-			scr_width = atoi(optarg);
+			scr_width = atoi(bu_optarg);
 			break;
 		case 'n':
 		case 'N':
-			scr_height = atoi(optarg);
+			scr_height = atoi(bu_optarg);
 			break;
 		case '?' :
 			return	0;
 		}
 	}
-	if( argv[optind] != NULL )
-		flavor = atoi( argv[optind] );
+	if( argv[bu_optind] != NULL )
+		flavor = atoi( argv[bu_optind] );
 	return	1;
 }
 

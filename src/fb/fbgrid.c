@@ -72,7 +72,7 @@ get_args(int argc, register char **argv)
 {
 	register int c;
 
-	while ( (c = getopt( argc, argv, "hcbdoF:s:w:n:S:W:N:" )) != EOF )  {
+	while ( (c = bu_getopt( argc, argv, "hcbdoF:s:w:n:S:W:N:" )) != EOF )  {
 		switch( c )  {
 		case 'h':
 			/* high-res */
@@ -91,20 +91,20 @@ get_args(int argc, register char **argv)
 			flavor = OLD;
 			break;
 		case 'F':
-			framebuffer = optarg;
+			framebuffer = bu_optarg;
 			break;
 		case 'S':
 		case 's':
 			/* square size */
-			fbheight = fbwidth = atoi(optarg);
+			fbheight = fbwidth = atoi(bu_optarg);
 			break;
 		case 'W':
 		case 'w':
-			fbwidth = atoi(optarg);
+			fbwidth = atoi(bu_optarg);
 			break;
 		case 'N':
 		case 'n':
-			fbheight = atoi(optarg);
+			fbheight = atoi(bu_optarg);
 			break;
 
 		default:		/* '?' */
@@ -112,7 +112,7 @@ get_args(int argc, register char **argv)
 		}
 	}
 
-	if ( argc > ++optind )
+	if ( argc > ++bu_optind )
 		(void)fprintf( stderr, "fbgrid: excess argument(s) ignored\n" );
 
 	return(1);		/* OK */

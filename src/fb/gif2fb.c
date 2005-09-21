@@ -136,7 +136,7 @@ main(int argc, char **argv)
 	FBIO *fbp;
 	FILE *fp;
 
-	while ((code = getopt(argc,argv,"vFh")) != EOF){
+	while ((code = bu_getopt(argc,argv,"vFh")) != EOF){
 		switch (code) {
 		case 'h':
 			headers=1;
@@ -145,7 +145,7 @@ main(int argc, char **argv)
 			verbose=1;
 			break;
 		case 'F':
-			framebuffer = optarg;
+			framebuffer = bu_optarg;
 			break;
 		default:	/* '?' */
 			usage(argv);
@@ -153,7 +153,7 @@ main(int argc, char **argv)
 		}
 	}
 
-	if( optind >= argc )  {
+	if( bu_optind >= argc )  {
 		if( isatty(fileno(stdin)) ) {
 			(void) fprintf(stderr, "%s: No input file.\n",argv[0]);
 			usage(argv);
@@ -162,7 +162,7 @@ main(int argc, char **argv)
 		file_name = "-";
 		fp = stdin;
 	} else {
-		file_name = argv[optind];
+		file_name = argv[bu_optind];
 		if( (fp = fopen(file_name, "r")) == NULL )  {
 			(void)fprintf( stderr,
 			    "%s: cannot open \"%s\" for reading\n",argv[0],

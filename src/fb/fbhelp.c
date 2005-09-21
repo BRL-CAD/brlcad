@@ -59,17 +59,17 @@ main(int argc, char **argv)
 	register int c;
 	FBIO	*fbp;
 
-	while ( (c = getopt( argc, argv, "F:" )) != EOF ) {
+	while ( (c = bu_getopt( argc, argv, "F:" )) != EOF ) {
 		switch( c ) {
 		case 'F':
-			framebuffer = optarg;
+			framebuffer = bu_optarg;
 			break;
 		default:		/* '?' */
 			(void)fputs(usage, stderr);
 			exit( 1 );
 		}
 	}
-	if ( argc > ++optind ) {
+	if ( argc > ++bu_optind ) {
 		(void)fprintf( stderr, "fbhelp: excess argument(s) ignored\n" );
 	}
 

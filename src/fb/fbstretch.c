@@ -274,7 +274,7 @@ main(int argc, char **argv)
 		register int	c;
 		register bool	errors = false;
 
-		while ( (c = getopt( argc, argv, OPTSTR )) != EOF )
+		while ( (c = bu_getopt( argc, argv, OPTSTR )) != EOF )
 			switch( c )
 				{
 			default:	/* '?': invalid option */
@@ -286,11 +286,11 @@ main(int argc, char **argv)
 				break;
 
 			case 'f':	/* -f in_fb */
-				src_file = optarg;
+				src_file = bu_optarg;
 				break;
 
 			case 'F':	/* -F out_fb */
-				dst_file = optarg;
+				dst_file = bu_optarg;
 				break;
 
 			case 'h':	/* -h */
@@ -298,19 +298,19 @@ main(int argc, char **argv)
 				break;
 
 			case 'n':	/* -n height */
-				if ( (src_height = atoi( optarg )) <= 0 )
+				if ( (src_height = atoi( bu_optarg )) <= 0 )
 					errors = true;
 
 				break;
 
 			case 'N':	/* -N height */
-				if ( (dst_height = atoi( optarg )) <= 0 )
+				if ( (dst_height = atoi( bu_optarg )) <= 0 )
 					errors = true;
 
 				break;
 
 			case 's':	/* -s size */
-				if ( (src_height = src_width = atoi( optarg ))
+				if ( (src_height = src_width = atoi( bu_optarg ))
 				  <= 0
 				   )
 					errors = true;
@@ -318,7 +318,7 @@ main(int argc, char **argv)
 				break;
 
 			case 'S':	/* -S size */
-				if ( (dst_height = dst_width = atoi( optarg ))
+				if ( (dst_height = dst_width = atoi( bu_optarg ))
 				  <= 0
 				   )
 					errors = true;
@@ -330,19 +330,19 @@ main(int argc, char **argv)
 				break;
 
 			case 'w':	/* -w width */
-				if ( (src_width = atoi( optarg )) <= 0 )
+				if ( (src_width = atoi( bu_optarg )) <= 0 )
 					errors = true;
 
 				break;
 
 			case 'W':	/* -W width */
-				if ( (dst_width = atoi( optarg )) <= 0 )
+				if ( (dst_width = atoi( bu_optarg )) <= 0 )
 					errors = true;
 
 				break;
 
 			case 'x':	/* -x x_scale */
-				if ( (x_scale = atof( optarg )) <= 0 )
+				if ( (x_scale = atof( bu_optarg )) <= 0 )
 					{
 					Message( "Nonpositive x scale factor" );
 					errors = true;
@@ -351,7 +351,7 @@ main(int argc, char **argv)
 				break;
 
 			case 'y':	/* -y y_scale */
-				if ( (y_scale = atof( optarg )) <= 0 )
+				if ( (y_scale = atof( bu_optarg )) <= 0 )
 					{
 					Message( "Nonpositive y scale factor" );
 					errors = true;
@@ -364,15 +364,15 @@ main(int argc, char **argv)
 			Fatal( "Usage: %s\n%s\n%s", USAGE1, USAGE2, USAGE3 );
 	}
 
-	if ( optind < argc )		/* dst_file */
+	if ( bu_optind < argc )		/* dst_file */
 		{
-		if ( optind < argc - 1 || dst_file != NULL )
+		if ( bu_optind < argc - 1 || dst_file != NULL )
 			{
 			Message( "Usage: %s\n%s\n%s", USAGE1, USAGE2, USAGE3 );
 			Fatal( "Can't handle multiple output frame buffers!" );
 			}
 
-		dst_file = argv[optind];
+		dst_file = argv[bu_optind];
 		}
 
 	if ( dst_file == NULL )

@@ -71,7 +71,7 @@ get_args(int argc, register char **argv)
 {
 	register int c;
 
-	while ( (c = getopt( argc, argv, "cvhorW:F:" )) != EOF ) {
+	while ( (c = bu_getopt( argc, argv, "cvhorW:F:" )) != EOF ) {
 		switch( c )  {
 		case 'c':
 			cmap_crunch++;
@@ -89,22 +89,22 @@ get_args(int argc, register char **argv)
 			reverse++;
 			break;
 		case 'W':
-			scr_width = atoi(optarg);
+			scr_width = atoi(bu_optarg);
 			break;
 		case 'F':
-			outframebuffer = optarg;
+			outframebuffer = bu_optarg;
 			break;
 		default:		/* '?' */
 			return(0);
 		}
 	}
 
-	if( optind >= argc )
+	if( bu_optind >= argc )
 		return(0);
 	else
-		yline = atoi( argv[optind] );
+		yline = atoi( argv[bu_optind] );
 
-	if ( argc > ++optind )
+	if ( argc > ++bu_optind )
 		return(0);	/* too many args */
 
 	return(1);		/* OK */

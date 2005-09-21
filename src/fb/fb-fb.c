@@ -69,10 +69,10 @@ get_args(int argc, register char **argv)
 {
 	register int c;
 
-	while ( (c = getopt( argc, argv, "vF:" )) != EOF )  {
+	while ( (c = bu_getopt( argc, argv, "vF:" )) != EOF )  {
 		switch( c )  {
 		case 'F':
-			out_fb_name = optarg;
+			out_fb_name = bu_optarg;
 			break;
 		case 'v':
 			verbose++;
@@ -83,17 +83,17 @@ get_args(int argc, register char **argv)
 		}
 	}
 
-	if( optind >= argc )  {
+	if( bu_optind >= argc )  {
 		return(0);		/* missing input framebuffer */
 	}
-	in_fb_name = argv[optind++];
+	in_fb_name = argv[bu_optind++];
 
-	if( optind >= argc )  {
+	if( bu_optind >= argc )  {
 		return(1);	/* OK */
 	}
-	out_fb_name = argv[optind++];
+	out_fb_name = argv[bu_optind++];
 
-	if ( argc > optind )
+	if ( argc > bu_optind )
 		(void)fprintf( stderr, "fb-fb: excess argument(s) ignored\n" );
 
 	return(1);		/* OK */

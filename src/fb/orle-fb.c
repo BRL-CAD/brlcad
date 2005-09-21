@@ -283,7 +283,7 @@ static int
 pars_Argv(int argc, register char **argv)
 {	register int	c;
 	/* Parse options.						*/
-	while( (c = getopt( argc, argv, "tOF:b:dp:v" )) != EOF )
+	while( (c = bu_getopt( argc, argv, "tOF:b:dp:v" )) != EOF )
 		{
 		switch( c )
 			{
@@ -295,7 +295,7 @@ pars_Argv(int argc, register char **argv)
 			olflag = 1;
 			break;
 		case 'b' : /* User-specified background.		*/
-			bgflag = optarg[0];
+			bgflag = bu_optarg[0];
 			switch( bgflag )
 				{
 			case 'r':
@@ -332,36 +332,36 @@ pars_Argv(int argc, register char **argv)
 			rle_debug = 1;
 			break;
 		case 'p' :
-			if( argc - optind < 2 )
+			if( argc - bu_optind < 2 )
 				{
 				(void) fprintf( stderr,
 				"-p option requires an X and Y argument!\n"
 						);
 				return	0;
 				}
-			xpos = atoi( optarg );
-			ypos = atoi( argv[optind++] );
+			xpos = atoi( bu_optarg );
+			ypos = atoi( argv[bu_optind++] );
 			break;
 		case 'v' :
 			rle_verbose = 1;
 			break;
-		case 'F' : fb_file = optarg;
+		case 'F' : fb_file = bu_optarg;
 			break;
 		case '?' :
 			return	0;
 			} /* end switch */
 		} /* end while */
 
-	if( argv[optind] != NULL )
-		if( (fp = fopen( argv[optind], "r" )) == NULL )
+	if( argv[bu_optind] != NULL )
+		if( (fp = fopen( argv[bu_optind], "r" )) == NULL )
 			{
 			(void) fprintf( stderr,
 					"Can't open %s for reading!\n",
-					argv[optind]
+					argv[bu_optind]
 					);
 			return	0;
 			}
-	if( argc > ++optind )
+	if( argc > ++bu_optind )
 		{
 		(void) fprintf( stderr, "Too many arguments!\n" );
 		return	0;

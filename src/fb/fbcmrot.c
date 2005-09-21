@@ -72,7 +72,7 @@ get_args(int argc, register char **argv)
 {
 	register int c;
 
-	while ( (c = getopt( argc, argv, "hi:" )) != EOF )  {
+	while ( (c = bu_getopt( argc, argv, "hi:" )) != EOF )  {
 		switch( c )  {
 		case 'h':
 			/* high-res */
@@ -80,7 +80,7 @@ get_args(int argc, register char **argv)
 			break;
 		case 'i':
 			/* increment */
-			increment = atoi(optarg);
+			increment = atoi(bu_optarg);
 			break;
 
 		default:		/* '?' */
@@ -88,16 +88,16 @@ get_args(int argc, register char **argv)
 		}
 	}
 
-	if( optind >= argc )  {
+	if( bu_optind >= argc )  {
 		/* no fps specified */
 		fps = 0;
 	} else {
-		fps = atof(argv[optind]);
+		fps = atof(argv[bu_optind]);
 		if( fps == 0 )
 			onestep++;
 	}
 
-	if ( argc > ++optind )
+	if ( argc > ++bu_optind )
 		(void)fprintf( stderr, "fbcmrot: excess argument(s) ignored\n" );
 
 	return(1);		/* OK */

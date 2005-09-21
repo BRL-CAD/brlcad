@@ -161,11 +161,11 @@ static int
 parsArgv(int argc, register char **argv)
 {
 	register int	c;
-	extern int	optind;
-	extern char	*optarg;
+	extern int	bu_optind;
+	extern char	*bu_optarg;
 
 	/* Parse options.						*/
-	while( (c = getopt( argc, argv, "CF:Scdhl:p:vw" )) != EOF )
+	while( (c = bu_getopt( argc, argv, "CF:Scdhl:p:vw" )) != EOF )
 	{
 		switch( c )
 		{
@@ -186,26 +186,26 @@ parsArgv(int argc, register char **argv)
 			width = 1024;
 			break;
 		case 'l' : /* Length in x and y.			*/
-			if( argc - optind < 1 )
+			if( argc - bu_optind < 1 )
 			{
 				(void) fprintf( stderr,
 				"-l option requires an X and Y argument!\n"
 				    );
 				return	0;
 			}
-			xlen = atoi( optarg );
-			ylen = atoi( argv[optind++] );
+			xlen = atoi( bu_optarg );
+			ylen = atoi( argv[bu_optind++] );
 			break;
 		case 'p' : /* Position of bottom-left corner.		*/
-			if( argc - optind < 1 )
+			if( argc - bu_optind < 1 )
 			{
 				(void) fprintf( stderr,
 				"-p option requires an X and Y argument!\n"
 				    );
 				return	0;
 			}
-			xpos = atoi( optarg );
-			ypos = atoi( argv[optind++] );
+			xpos = atoi( bu_optarg );
+			ypos = atoi( argv[bu_optind++] );
 			break;
 		case 'v' : /* Verbose on.				*/
 			rle_verbose = 1;
@@ -213,29 +213,29 @@ parsArgv(int argc, register char **argv)
 		case 'w' : /* Monochrome (black & white) mode.		*/
 			ncolors = 1;
 			break;
-		case 'F' : fb_file = optarg;
+		case 'F' : fb_file = bu_optarg;
 			break;
 		case '?' :
 			return	0;
 		}
 	}
-	if( argv[optind] != NULL )
+	if( argv[bu_optind] != NULL )
 	{
-		if( access( argv[optind], 0 ) == 0 )
+		if( access( argv[bu_optind], 0 ) == 0 )
 		{
 			(void) fprintf( stderr,
 			"\"%s\" already exists.\n",
-			argv[optind]
+			argv[bu_optind]
 			    );
 			exit( 1 );
 		}
-		if( (fp = fopen( argv[optind], "w" )) == NULL )
+		if( (fp = fopen( argv[bu_optind], "w" )) == NULL )
 		{
-			perror(argv[optind]);
+			perror(argv[bu_optind]);
 			return	0;
 		}
 	}
-	if( argc > ++optind )
+	if( argc > ++bu_optind )
 	{
 		(void) fprintf( stderr, "Too many arguments!\n" );
 		return	0;

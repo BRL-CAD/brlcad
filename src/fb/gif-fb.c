@@ -573,7 +573,7 @@ main(int argc, char **argv)
 		register int	c;
 		register bool	errors = false;
 
-		while ( (c = getopt( argc, argv, OPTSTR )) != EOF )
+		while ( (c = bu_getopt( argc, argv, OPTSTR )) != EOF )
 			switch( c )
 				{
 			default:	/* '?': invalid option */
@@ -581,7 +581,7 @@ main(int argc, char **argv)
 				break;
 
 			case 'F':	/* -F fb_file */
-				fb_file = optarg;
+				fb_file = bu_optarg;
 				break;
 
 			case 'c':	/* -c */
@@ -589,7 +589,7 @@ main(int argc, char **argv)
 				break;
 
 			case 'i':	/* -i image# */
-				image = atoi( optarg );
+				image = atoi( bu_optarg );
 				break;
 
 			case 'o':	/* -o */
@@ -608,15 +608,15 @@ main(int argc, char **argv)
 			Fatal( "Usage: %s", USAGE );
 	}
 
-	if ( optind < argc )		/* gif_file */
+	if ( bu_optind < argc )		/* gif_file */
 		{
-		if ( optind < argc - 1 )
+		if ( bu_optind < argc - 1 )
 			{
 			Message( "Usage: %s", USAGE );
 			Fatal( "Can't handle multiple GIF files" );
 			}
 
-		if ( (gfp = fopen( gif_file = argv[optind], RBMODE )) == NULL )
+		if ( (gfp = fopen( gif_file = argv[bu_optind], RBMODE )) == NULL )
 			Fatal( "Couldn't open GIF file \"%s\"", gif_file );
 		}
 	else

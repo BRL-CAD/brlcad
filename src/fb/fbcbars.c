@@ -181,7 +181,7 @@ get_args(int argc, register char **argv)
 {
 	register int c;
 
-	while ( (c = getopt( argc, argv, "efshF:S:W:N:" )) != EOF )  {
+	while ( (c = bu_getopt( argc, argv, "efshF:S:W:N:" )) != EOF )  {
 		switch( c )  {
 		case 'e':
 			mode = M_EIA;
@@ -197,16 +197,16 @@ get_args(int argc, register char **argv)
 			scr_height = scr_width = 1024;
 			break;
 		case 'F':
-			framebuffer = optarg;
+			framebuffer = bu_optarg;
 			break;
 		case 'S':
-			scr_height = scr_width = atoi(optarg);
+			scr_height = scr_width = atoi(bu_optarg);
 			break;
 		case 'W':
-			scr_width = atoi(optarg);
+			scr_width = atoi(bu_optarg);
 			break;
 		case 'N':
-			scr_height = atoi(optarg);
+			scr_height = atoi(bu_optarg);
 			break;
 
 		default:		/* '?' */
@@ -214,7 +214,7 @@ get_args(int argc, register char **argv)
 		}
 	}
 
-	if ( argc > ++optind )
+	if ( argc > ++bu_optind )
 		(void)fprintf( stderr, "fbcbars: excess argument(s) ignored\n" );
 
 	return(1);		/* OK */

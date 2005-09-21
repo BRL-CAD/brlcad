@@ -73,7 +73,7 @@ get_args(int argc, register char **argv)
 {
 	register int c;
 
-	while ( (c = getopt( argc, argv, "chiF:s:w:n:" )) != EOF )  {
+	while ( (c = bu_getopt( argc, argv, "chiF:s:w:n:" )) != EOF )  {
 		switch( c )  {
 		case 'c':
 			crunch = 1;
@@ -86,17 +86,17 @@ get_args(int argc, register char **argv)
 			inverse = 1;
 			break;
 		case 'F':
-			framebuffer = optarg;
+			framebuffer = bu_optarg;
 			break;
 		case 's':
 			/* square size */
-			screen_height = screen_width = atoi(optarg);
+			screen_height = screen_width = atoi(bu_optarg);
 			break;
 		case 'w':
-			screen_width = atoi(optarg);
+			screen_width = atoi(bu_optarg);
 			break;
 		case 'n':
-			screen_height = atoi(optarg);
+			screen_height = atoi(bu_optarg);
 			break;
 
 		default:		/* '?' */
@@ -104,13 +104,13 @@ get_args(int argc, register char **argv)
 		}
 	}
 
-	if( optind >= argc )  {
+	if( bu_optind >= argc )  {
 		if( isatty(fileno(stdout)) )
 			return(0);
 		file_name = "-";
 		outfp = stdout;
 	} else {
-		file_name = argv[optind];
+		file_name = argv[bu_optind];
 		if( (outfp = fopen(file_name, "w")) == NULL )  {
 			(void)fprintf( stderr,
 				"fb-pix: cannot open \"%s\" for writing\n",
@@ -120,7 +120,7 @@ get_args(int argc, register char **argv)
 		(void)chmod(file_name, 0444);
 	}
 
-	if ( argc > ++optind )
+	if ( argc > ++bu_optind )
 		(void)fprintf( stderr, "fb-pix: excess argument(s) ignored\n" );
 
 	return(1);		/* OK */

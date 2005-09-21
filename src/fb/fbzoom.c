@@ -90,11 +90,11 @@ main(int argc, char **argv)
 	if( (fbp = fb_open( framebuffer, scr_width, scr_height )) == NULL )
 		exit(1);
 
-	if( optind+4 == argc ) {
-		xPan = atoi( argv[optind+0] );
-		yPan = atoi( argv[optind+1] );
-		xZoom = atoi( argv[optind+2] );
-		yZoom = atoi( argv[optind+3] );
+	if( bu_optind+4 == argc ) {
+		xPan = atoi( argv[bu_optind+0] );
+		yPan = atoi( argv[bu_optind+1] );
+		xZoom = atoi( argv[bu_optind+2] );
+		yZoom = atoi( argv[bu_optind+3] );
 		fb_view(fbp, xPan, yPan, xZoom, yZoom);
 	}
 
@@ -320,7 +320,7 @@ pars_Argv(int argc, register char **argv)
 {
 	register int	c;
 
-	while( (c = getopt( argc, argv, "hTF:s:S:w:W:n:N:" )) != EOF )  {
+	while( (c = bu_getopt( argc, argv, "hTF:s:S:w:W:n:N:" )) != EOF )  {
 		switch( c )  {
 		case 'h':
 			/* high-res */
@@ -331,19 +331,19 @@ pars_Argv(int argc, register char **argv)
 			toggle_pan = 1;
 			break;
 		case 'F':
-			framebuffer = optarg;
+			framebuffer = bu_optarg;
 			break;
 		case 's':
 		case 'S':
-			scr_height = scr_width = atoi(optarg);
+			scr_height = scr_width = atoi(bu_optarg);
 			break;
 		case 'w':
 		case 'W':
-			scr_width = atoi(optarg);
+			scr_width = atoi(bu_optarg);
 			break;
 		case 'n':
 		case 'N':
-			scr_height = atoi(optarg);
+			scr_height = atoi(bu_optarg);
 			break;
 
 		default:		/* '?' */
