@@ -48,6 +48,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include <stdlib.h>
 
 #include "machine.h"
+#include "bu.h"
 #include "fb.h"
 
 /* defined in libbn/asize.c */

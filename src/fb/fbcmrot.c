@@ -52,6 +52,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include <sys/time.h>		/* For struct timeval */
 
 #include "machine.h"
+#include "bu.h"
 #include "fb.h"
 
 ColorMap cm1, cm2;

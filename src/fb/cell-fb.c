@@ -51,6 +51,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "machine.h"
 #include "vmath.h"
 #include "raytrace.h"
+#include "bu.h"
 #include "fb.h"
 
 /* Macros without arguments */

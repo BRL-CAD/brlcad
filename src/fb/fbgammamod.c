@@ -51,6 +51,7 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 #include <math.h>
 
 #include "machine.h"
+#include "bu.h"
 #include "fb.h"
 
 char *options = "vf:F:";

@@ -79,6 +79,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include <stdio.h>
 
 #include "machine.h"
+#include "bu.h"
 #include "fb.h"
 
 #define MAX_LINE	(8*1024)	/* Max pixels/line */
