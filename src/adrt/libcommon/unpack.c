@@ -161,10 +161,6 @@ void common_unpack_env(common_db_t *db, int socknum) {
               }
               break;
 
-            case RENDER_METHOD_KELOS:
-              render_kelos_init(&db->env.render);
-              break;
-
             case RENDER_METHOD_PLANE:
               {
                 TIE_3 ray_pos, ray_dir;

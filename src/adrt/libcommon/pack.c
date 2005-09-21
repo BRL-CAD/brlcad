@@ -166,9 +166,6 @@ void common_pack_env(common_db_t *db, void **app_data, int *app_ind) {
       common_pack_write(app_data, app_ind, &((render_path_t *)db->env.render.data)->samples, sizeof(render_path_t));
       break;
 
-    case RENDER_METHOD_KELOS:
-      break;
-
     case RENDER_METHOD_PLANE:
       break;
 

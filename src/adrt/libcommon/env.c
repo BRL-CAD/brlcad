@@ -135,9 +135,6 @@ void common_env_read(common_env_t *env, char *fpath) {
         env->rm = RENDER_METHOD_PATH;
         token = strtok(NULL, ",");
         render_path_init(&env->render, atoi(token));
-      } else if(!strcmp(token, "kelos")) {
-        env->rm = RENDER_METHOD_KELOS;
-        render_kelos_init(&env->render);
       } else if(!strcmp(token, "plane")) {
         TIE_3 pos, dir;
         int i;
