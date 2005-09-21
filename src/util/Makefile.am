@@ -370,7 +370,7 @@ xyz_pl_SOURCES = xyz-pl.c
 xyz_pl_LDADD = ${BN}
 
 azel_SOURCES = azel.c
-azel_LDADD = ${LIBM}
+azel_LDADD = ${BU} ${LIBM}
 
 bary_SOURCES = bary.c
 bary_LDADD = ${BU}
