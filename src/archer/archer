@@ -3,9 +3,9 @@
 ARCHER_HOME=`dirname $0`/..
 #\
 export ARCHER_HOME
-# restart using wish \
-exec ${ARCHER_HOME}/bin/wish $0 $@
-#exec ${ARCHER_HOME}/bin/wish_d $0 $@
+# restart using bwish \
+exec ${ARCHER_HOME}/bin/bwish $0 $@
+#exec ${ARCHER_HOME}/bin/bwish_d $0 $@
 
 ##
 # Portions Copyright (c) 2002 SURVICE Engineering Company. All Rights Reserved.
@@ -35,6 +35,14 @@ if {[info exists env(ARCHER_HOME)]} {
 
 set env(ARCHER_HOME) $dir
 
+if {$tcl_platform(os) == "Windows NT"} {
+    set sdir ""
+} else {
+    set sdir [file join share brlcad 7.4.1]
+}
+
+set brlDataPath [bu_brlcad_data ""]
+
 set auto_path $dir
 lappend auto_path [file join $dir lib]
 lappend auto_path [file join $dir lib tcl8.4]
@@ -43,26 +51,19 @@ lappend auto_path [file join $dir lib itcl3.3]
 lappend auto_path [file join $dir lib itk3.3]
 lappend auto_path [file join $dir lib iwidgets4.0.2]
 lappend auto_path [file join $dir lib iwidgets4.0.2 scripts]
+lappend auto_path [file join $dir lib blt2.4]
+lappend auto_path [file join $dir lib blt2.4 dd_protocols]
 lappend auto_path [file join $dir lib sdb]
-lappend auto_path [file join $dir tclscripts]
-lappend auto_path [file join $dir tclscripts sdialogs]
-lappend auto_path [file join $dir tclscripts sdialogs scripts]
-lappend auto_path [file join $dir tclscripts swidgets]
-lappend auto_path [file join $dir tclscripts swidgets scripts]
-lappend auto_path [file join $dir tclscripts lib]
-lappend auto_path [file join $dir tclscripts archer]
+lappend auto_path [file join $brlDataPath tclscripts]
+lappend auto_path [file join $brlDataPath tclscripts sdialogs]
+lappend auto_path [file join $brlDataPath tclscripts sdialogs scripts]
+lappend auto_path [file join $brlDataPath tclscripts swidgets]
+lappend auto_path [file join $brlDataPath tclscripts swidgets scripts]
+lappend auto_path [file join $brlDataPath tclscripts lib]
+lappend auto_path [file join $brlDataPath tclscripts archer]
 
 # Initialize bgerror
 initBgerror
-
-set archerDebug 0
-package require Archer 1.0
-package require Iwidgets
-package require Swidgets
-
-# This must be done after loading BLT (that potentially gets it wrong)
-set blt_library [file join $dir lib blt2.4z]
-lappend auto_path $blt_library
 
 # Decide on a parent class for Archer
 namespace eval Archer {
@@ -74,6 +75,15 @@ namespace eval Archer {
 	set inheritFromToplevel 0
     }
 }
+
+set archerDebug 0
+package require Archer 1.0
+package require Iwidgets
+package require Swidgets
+
+# This must be done after loading BLT (that potentially gets it wrong)
+set blt_library [file join $dir lib blt2.4]
+lappend auto_path $blt_library
 
 # PROCEDURE: SetWaitCursor
 #
@@ -157,18 +167,20 @@ proc showMainWindow {} {
 #
 proc createSplashScreen {} {
     global env
+    global brlDataPath
 
     set useImage 1
 
     if {$useImage} {
-	set image [image create photo -file [file join $env(ARCHER_HOME) tclscripts archer images aboutArcher.png]]
+#	set image [image create photo -file [file join $env(ARCHER_HOME) tclscripts archer images aboutArcher.png]]
+	set image [image create photo -file [file join $brlDataPath tclscripts archer images aboutArcher.png]]
 	set ::Archer::splash [Splash .splash -image $image]
     } else {
 	set ::Archer::splash [Splash .splash -message "Loading Archer..."]
     }
 
     update idletasks
-    $::Archer::splash configure -background SystemWindow
+    $::Archer::splash configure -background $::Archer::SystemWindow
     $::Archer::splash center
     update idletasks
     $::Archer::splash activate
@@ -233,12 +245,18 @@ proc exitArcher {archer} {
 #
 proc main {} {
     global env
+    global brlDataPath
+    global tcl_platform
 
     if {$::Archer::inheritFromToplevel} {
 	set ::Archer::archer [Archer .\#auto]
 	wm title $::Archer::archer "Archer"
-	wm iconbitmap $::Archer::archer -default \
-	    [file join $env(ARCHER_HOME) doc html manuals archer archer.ico]
+	if {$tcl_platform(os) == "Windows NT"} {
+	    #wm iconbitmap $::Archer::archer -default \
+	    #[file join $env(ARCHER_HOME) doc html manuals archer archer.ico]
+	    wm iconbitmap $::Archer::archer -default \
+		[file join $brlDataPath html manuals archer archer.ico]
+	}
 	set size [wm maxsize $::Archer::archer]
         set width [expr {[lindex $size 0] - 8}]
         set height [expr {[lindex $size 1] - 40}]
@@ -246,8 +264,12 @@ proc main {} {
 	wm protocol $::Archer::archer WM_DELETE_WINDOW {exitArcher $::Archer::archer}
     } else {
 	wm title . "Archer"
-	wm iconbitmap . -default \
-	    [file join $env(ARCHER_HOME) doc html manuals archer archer.ico]
+	if {$tcl_platform(os) == "Windows NT"} {
+	    #wm iconbitmap . -default \
+	    #[file join $env(ARCHER_HOME) doc html manuals archer archer.ico]
+	    wm iconbitmap . -default \
+		[file join $brlDataPath html manuals archer archer.ico]
+	}
 	set ::Archer::archer [Archer .\#auto]
 	set size [wm maxsize .]
         set width [expr {[lindex $size 0] - 8}]
