@@ -396,7 +396,7 @@ void* util_camera_render_thread(void *ptr) {
           math_vec_unitize(ray.dir);
 
           /* Compute pixel value using this ray */
-          td->db->env.vis.work(&td->db->env.vis, td->tie, &ray, &pixel);
+          td->db->env.render.work(&td->db->env.render, td->tie, &ray, &pixel);
 
           math_vec_add(accum, accum, pixel);
         }
@@ -414,7 +414,7 @@ void* util_camera_render_thread(void *ptr) {
         math_vec_unitize(ray.dir);
 
         /* Compute pixel value using this ray */
-        td->db->env.vis.work(&td->db->env.vis, td->tie, &ray, &pixel);
+        td->db->env.render.work(&td->db->env.render, td->tie, &ray, &pixel);
       }
 
 

@@ -4,9 +4,9 @@ SUBDIRS = \
 	libtie \
 	libtienet \
 	libcommon \
+	librender \
 	libtexture \
 	libutil \
-	libvis \
 	bench \
 	rise \
 	isst

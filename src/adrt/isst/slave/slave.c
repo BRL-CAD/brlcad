@@ -8,7 +8,7 @@
 #include "cdb.h"
 #include "tienet.h"
 #include "unpack.h"
-#include "vis_util.h"
+#include "render_util.h"
 
 
 void isst_slave(int port, char *host, int threads);
@@ -56,7 +56,7 @@ void isst_slave_work(tie_t *tie, void *data, unsigned int size, void **res_buf, 
   common_work_t work;
   int ind;
   TIE_3 pos, foc;
-  unsigned char vm;
+  unsigned char rm;
   char op;
 
 
@@ -86,7 +86,7 @@ void isst_slave_work(tie_t *tie, void *data, unsigned int size, void **res_buf, 
 
         /* Fire the shot */
         ray.depth = 0;
-        vis_util_shotline_list(tie, &ray, &mesg, &dlen);
+        render_util_shotline_list(tie, &ray, &mesg, &dlen);
 
         /* Make room for shot data */
         *res_len = sizeof(common_work_t) + dlen;
@@ -127,7 +127,7 @@ void isst_slave_work(tie_t *tie, void *data, unsigned int size, void **res_buf, 
 
         /* Fire the shot */
         ray.depth = 0;
-        vis_util_spall_list(tie, &ray, angle, &mesg, &dlen);
+        render_util_spall_list(tie, &ray, angle, &mesg, &dlen);
 
         /* Make room for shot data */
         *res_len = sizeof(common_work_t) + dlen;
@@ -155,38 +155,38 @@ void isst_slave_work(tie_t *tie, void *data, unsigned int size, void **res_buf, 
       ind += sizeof(TIE_3);
 
       /* Update Rendering Method if it has Changed */
-      memcpy(&vm, &((char *)data)[ind], 1);
+      memcpy(&rm, &((char *)data)[ind], 1);
       ind += 1;
 
-      if(vm != db.env.vm) {
-        db.env.vis.free(&db.env.vis);
+      if(rm != db.env.rm) {
+        db.env.render.free(&db.env.render);
 
-        switch(vm) {
-          case VM_DEPTH:
-            vis_depth_init(&db.env.vis);
+        switch(rm) {
+          case RENDER_METHOD_DEPTH:
+            render_depth_init(&db.env.render);
             break;
 
-          case VM_COMPONENT:
-            vis_component_init(&db.env.vis);
+          case RENDER_METHOD_COMPONENT:
+            render_component_init(&db.env.render);
             break;
 
-          case VM_GRID:
-            vis_grid_init(&db.env.vis);
+          case RENDER_METHOD_GRID:
+            render_grid_init(&db.env.render);
             break;
 
-          case VM_NORMAL:
-            vis_normal_init(&db.env.vis);
+          case RENDER_METHOD_NORMAL:
+            render_normal_init(&db.env.render);
             break;
 
-          case VM_PATH:
-            vis_path_init(&db.env.vis, 12);
+          case RENDER_METHOD_PATH:
+            render_path_init(&db.env.render, 12);
             break;
 
-          case VM_PHONG:
-            vis_phong_init(&db.env.vis);
+          case RENDER_METHOD_PHONG:
+            render_phong_init(&db.env.render);
             break;
 
-          case VM_PLANE:
+          case RENDER_METHOD_PLANE:
             {
               TIE_3 shot_pos, shot_dir;
 
@@ -197,11 +197,11 @@ void isst_slave_work(tie_t *tie, void *data, unsigned int size, void **res_buf, 
               memcpy(&shot_dir, &((char *)data)[ind], sizeof(TIE_3));
               ind += sizeof(TIE_3);
 
-              vis_plane_init(&db.env.vis, shot_pos, shot_dir);
+              render_plane_init(&db.env.render, shot_pos, shot_dir);
             }
             break;
 
-          case VM_SPALL:
+          case RENDER_METHOD_SPALL:
             {
               TIE_3 shot_pos, shot_dir;
               tfloat angle;
@@ -216,14 +216,14 @@ void isst_slave_work(tie_t *tie, void *data, unsigned int size, void **res_buf, 
               memcpy(&angle, &((char *)data)[ind], sizeof(tfloat));
               ind += sizeof(tfloat);
 
-              vis_spall_init(&db.env.vis, shot_pos, shot_dir, angle); /* 10 degrees for now */
+              render_spall_init(&db.env.render, shot_pos, shot_dir, angle); /* 10 degrees for now */
             }
             break;
 
           default:
             break;
         }
-        db.env.vm = vm;
+        db.env.rm = rm;
       }
 
       /* Update camera */

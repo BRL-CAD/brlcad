@@ -38,7 +38,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include "vis.h"
+#include "render.h"
 
 #if 0
 void common_env_init(common_env_t *env);
@@ -48,7 +48,7 @@ void common_env_read(common_env_t *env);
 #endif
 
 void common_env_init(common_env_t *env) {
-  vis_flat_init(&env->vis);
+  render_flat_init(&env->render);
   env->img_w = 640;
   env->img_h = 480;
   env->img_hs = 1;
@@ -117,29 +117,29 @@ void common_env_read(common_env_t *env, char *fpath) {
     } else if(!strcmp("hypersamples", token)) {
       token = strtok(NULL, ",");
       env->img_hs = atoi(token);
-    } else if(!strcmp("vis_method", token)) {
+    } else if(!strcmp("rendering_method", token)) {
       token = strtok(NULL, ",");
       /* strip off newline */
       if(token[strlen(token)-1] == '\n') token[strlen(token)-1] = 0;
 
       if(!strcmp(token, "normal")) {
-        env->vm = VM_NORMAL;
-        vis_normal_init(&env->vis);
+        env->rm = RENDER_METHOD_NORMAL;
+        render_normal_init(&env->render);
       } else if(!strcmp(token, "phong")) {
-        env->vm = VM_PHONG;
-        vis_phong_init(&env->vis);
+        env->rm = RENDER_METHOD_PHONG;
+        render_phong_init(&env->render);
       } else if(!strcmp(token, "depth")) {
-        env->vm = VM_DEPTH;
-        vis_depth_init(&env->vis);
+        env->rm = RENDER_METHOD_DEPTH;
+        render_depth_init(&env->render);
       } else if(!strcmp(token, "path")) {
-        env->vm = VM_PATH;
+        env->rm = RENDER_METHOD_PATH;
         token = strtok(NULL, ",");
-        vis_path_init(&env->vis, atoi(token));
+        render_path_init(&env->render, atoi(token));
       } else if(!strcmp(token, "plane")) {
         TIE_3 pos, dir;
         int i;
 
-        env->vm = VM_PLANE;
+        env->rm = RENDER_METHOD_PLANE;
 
         /* ray position */
         for(i = 0; i < 3; i++) {
@@ -153,10 +153,10 @@ void common_env_read(common_env_t *env, char *fpath) {
           dir.v[i] = atof(token);
         }
 
-        vis_plane_init(&env->vis, pos, dir);
+        render_plane_init(&env->render, pos, dir);
       } else {
-        env->vm = VM_FLAT;
-        vis_flat_init(&env->vis);
+        env->rm = RENDER_METHOD_FLAT;
+        render_flat_init(&env->render);
       }
       
     }
