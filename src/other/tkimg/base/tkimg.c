@@ -105,23 +105,48 @@ Tkimg_Init (interp)
         return TCL_ERROR;
     }
 #endif
+
     if (!initialized) {
 	if (!(initialized = TkimgInitUtilities (interp))) {
 	    return TCL_ERROR;
 	}
     }
+
+
+#ifdef _DEBUG
+    if (Z_d_Init(interp) != TCL_OK) {
+        return TCL_ERROR;
+    }
+    if (Png_d_Init(interp) != TCL_OK) {
+        return TCL_ERROR;
+    }
+    if (Tkimgpng_d_Init(interp) != TCL_OK) {
+        return TCL_ERROR;
+    }
+#else
+    if (Png_Init(interp) != TCL_OK) {
+        return TCL_ERROR;
+    }
+    if (Z_Init(interp) != TCL_OK) {
+        return TCL_ERROR;
+    }
+    if (Tkimgpng_Init(interp) != TCL_OK) {
+        return TCL_ERROR;
+    }
+#endif
+
 #ifdef ALLOW_B64 /* Undocumented feature */
     Tcl_CreateObjCommand(interp,"img_to_base64",   tob64,   (ClientData) NULL, NULL);
     Tcl_CreateObjCommand(interp,"img_from_base64", fromb64, (ClientData) NULL, NULL);
 #endif
 
 #if TCL_DOES_STUBS
-    if (Tcl_PkgProvideEx(interp, PACKAGE_NAME, TKIMG_VERSION,
+    if (Tcl_PkgProvideEx(interp, TKIMG_PACKAGE_NAME, TKIMG_VERSION,
 			 (ClientData) &tkimgStubs) != TCL_OK) {
         return TCL_ERROR;
     }
 #else
-    if (Tcl_PkgProvide(interp, PACKAGE_NAME, TKIMG_VERSION) != TCL_OK) {
+    if (Tcl_PkgProvide(interp, TKIMG_PACKAGE_NAME, TKIMG_VERSION) != TCL_OK) {
         return TCL_ERROR;
     }
 #endif
