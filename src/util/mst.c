@@ -591,7 +591,7 @@ main (int argc, char **argv)
     struct neighbor	*np;		/* A neighbor of vup */
     int			(*po[2])();	/* Priority queue order functions */
 
-    while ((ch = getopt(argc, argv, OPT_STRING)) != EOF)
+    while ((ch = bu_getopt(argc, argv, OPT_STRING)) != EOF)
 	switch (ch)
 	{
 	    case 'n':

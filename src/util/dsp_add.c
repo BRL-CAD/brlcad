@@ -39,12 +39,12 @@
 #include "bn.h"
 
 
-/* declarations to support use of getopt() system call */
+/* declarations to support use of bu_getopt() system call */
 char *options = "h";
-extern char *optarg;
-extern int optind, opterr; 
+extern char *bu_optarg;
+extern int bu_optind, opterr; 
 
-/* , getopt(int, char *const *, const char *);*/ 
+/* , bu_getopt(int, char *const *, const char *);*/ 
 
 char *progname = "(noname)";
 
@@ -77,18 +77,18 @@ int parse_args(int ac, char *av[])
 	else
 		++progname;
 
-	/* Turn off getopt's error messages */
+	/* Turn off bu_getopt's error messages */
 	opterr = 0;
 
 	/* get all the option flags from the command line */
-	while ((c=getopt(ac,av,options)) != EOF)
+	while ((c=bu_getopt(ac,av,options)) != EOF)
 		switch (c) {
 		case '?'	:
 		case 'h'	:
 		default		: usage("Bad or help flag specified\n"); break;
 		}
 
-	return(optind);
+	return(bu_optind);
 }
 
 

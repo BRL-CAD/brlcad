@@ -944,11 +944,11 @@ main (int argc, char **argv)
     int			ch;		/* Command-line character */
     int			tankill = 0;	/* TANKILL format (vs. BRL-CAD)? */
 
-    extern int	optind;			/* index from getopt(3C) */
+    extern int	bu_optind;			/* index from bu_getopt(3C) */
 
     bu_stdin->file_ptr = stdin;		/* LINUX-required init */
 
-    while ((ch = getopt(argc, argv, OPT_STRING)) != EOF)
+    while ((ch = bu_getopt(argc, argv, OPT_STRING)) != EOF)
 	switch (ch)
 	{
 	    case 'g':
@@ -964,7 +964,7 @@ main (int argc, char **argv)
 		return(0);
 	}
 
-    switch (argc - optind)
+    switch (argc - bu_optind)
     {
 	case 1:
 	    sf_name = "stdin";
@@ -982,9 +982,9 @@ main (int argc, char **argv)
     /*
      *	Open database and specification file, as necessary
      */
-    db_name = argv[optind++];
+    db_name = argv[bu_optind++];
     if (sfp == NULL)
-	sf_name = argv[optind];
+	sf_name = argv[bu_optind];
 
     /*
      *	Initialize the assignment

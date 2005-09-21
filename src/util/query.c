@@ -81,13 +81,13 @@ get_args(int argc, register char **argv)
 {
 	register int c;
 
-	while ( (c = getopt( argc, argv, "t:r:vl" )) != EOF )  {
+	while ( (c = bu_getopt( argc, argv, "t:r:vl" )) != EOF )  {
 		switch( c )  {
 		case 't':
-			Timeout = atoi(optarg);
+			Timeout = atoi(bu_optarg);
 			break;
 		case 'r':
-			Response = optarg;
+			Response = bu_optarg;
 			break;
 		case 'v':
 			Verbose = 1 - Verbose;

@@ -55,7 +55,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "machine.h"
 
-/* declarations to support use of getopt() system call */
+/* declarations to support use of bu_getopt() system call */
 static char	*options = "o:";
 static char	*progname = "(noname)";
 
@@ -149,37 +149,37 @@ main(int ac, char **av)
 
 	for (c=0 ; c < optlen ; c++)  /* NIL */;
 
-	/* Turn off getopt's error messages */
+	/* Turn off bu_getopt's error messages */
 	opterr = 0;
 
 	/* get all the option flags from the command line */
-	while ((c=getopt(ac,av,options)) != EOF)
+	while ((c=bu_getopt(ac,av,options)) != EOF)
 		if (c == 'o'){
-			newoffset = strtol(optarg, &eos, 0);
+			newoffset = strtol(bu_optarg, &eos, 0);
 
-			if (eos != optarg) 
+			if (eos != bu_optarg) 
 				offset = newoffset;
 			else
 				fprintf(stderr,"%s: error parsing offset \"%s\"\n",
-					progname, optarg);
+					progname, bu_optarg);
 		}
 		else usage();
 
 	if (offset%DUMPLEN != 0) offset -= offset % DUMPLEN;
 
-	if (optind >= ac ) {
+	if (bu_optind >= ac ) {
 		/* no file left, try processing stdin */
 		if (isatty(fileno(stdin))) usage();
 		else dump(stdin);
 	}
 	else {
 		/* process each remaining arguments */
-		for (files = ac-optind; optind < ac; optind++) {
-			if ((fd=fopen(av[optind], "r")) == (FILE *)NULL) {
-				perror(av[optind]);
+		for (files = ac-bu_optind; bu_optind < ac; bu_optind++) {
+			if ((fd=fopen(av[bu_optind], "r")) == (FILE *)NULL) {
+				perror(av[bu_optind]);
 				exit (-1);
 			}
-			if (files > 1) printf("/**** %s ****/\n", av[optind]);
+			if (files > 1) printf("/**** %s ****/\n", av[bu_optind]);
 			dump(fd);
 			(void)fclose(fd);
 		}

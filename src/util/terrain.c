@@ -46,10 +46,10 @@
 #include "vmath.h"
 #include "bn.h"
 
-/* declarations to support use of getopt() system call */
+/* declarations to support use of bu_getopt() system call */
 char *options = "w:n:s:L:H:O:S:V:D:f:co:v";
-extern char *optarg;
-extern int optind, opterr, getopt(int, char *const *, const char *);
+extern char *bu_optarg;
+extern int bu_optind, opterr, bu_getopt(int, char *const *, const char *);
 
 int do_convert = 1;
 char *progname = "(noname)";
@@ -578,41 +578,41 @@ parse_args(int ac, char **av)
 	else
 		++progname;
 
-	/* Turn off getopt's error messages */
+	/* Turn off bu_getopt's error messages */
 	opterr = 0;
 
 	/* get all the option flags from the command line */
-	while ((c=getopt(ac,av,options)) != EOF)
+	while ((c=bu_getopt(ac,av,options)) != EOF)
 		switch (c) {
 		case 'v': debug = !debug; break;
 		case 'c': do_convert = !do_convert; break;
-		case 'w': if ((c=atoi(optarg)) > 0) xdim = c;
+		case 'w': if ((c=atoi(bu_optarg)) > 0) xdim = c;
 			break;
-		case 'n': if ((c=atoi(optarg)) > 0) ydim = c;
+		case 'n': if ((c=atoi(bu_optarg)) > 0) ydim = c;
 			break;
 		case 'q' : quiet = !quiet; break;
-		case 's': if ((c=atoi(optarg)) > 0) xdim = ydim = c;
+		case 's': if ((c=atoi(bu_optarg)) > 0) xdim = ydim = c;
 			break;
-		case 'L': if ((v=atof(optarg)) >  0.0) fbm_lacunarity = v;
+		case 'L': if ((v=atof(bu_optarg)) >  0.0) fbm_lacunarity = v;
 			break;
-		case 'H': if ((v=atof(optarg)) >  0.0) fbm_h = v;
+		case 'H': if ((v=atof(bu_optarg)) >  0.0) fbm_h = v;
 			break;
-		case 'O': if ((v=atof(optarg)) >  0.0) fbm_octaves = v;
-			break;
-
-		case 'S': if ((v=atof(optarg)) >  0.0) { VSETALL(fbm_vscale, v); }
+		case 'O': if ((v=atof(bu_optarg)) >  0.0) fbm_octaves = v;
 			break;
 
-		case 'V': sscanf(optarg, "%lg,%lg,%lg",
+		case 'S': if ((v=atof(bu_optarg)) >  0.0) { VSETALL(fbm_vscale, v); }
+			break;
+
+		case 'V': sscanf(bu_optarg, "%lg,%lg,%lg",
 			       &fbm_vscale[0], &fbm_vscale[1], &fbm_vscale[2]);
 			break;
-		case 'D': sscanf(optarg, "%lg,%lg,%lg",
+		case 'D': sscanf(bu_optarg, "%lg,%lg,%lg",
 			       &fbm_delta[0], &fbm_delta[1], &fbm_delta[2]);
 			break;
-		case 'o': fbm_offset = atof(optarg);
+		case 'o': fbm_offset = atof(bu_optarg);
 			break;
 		case 'f':
-			switch (*optarg) {
+			switch (*bu_optarg) {
 			case 'L': terrain_func = func_lunar;
 				break;
 			case 'l': terrain_func = func_lee;
@@ -630,7 +630,7 @@ parse_args(int ac, char **av)
 			default:
 				fprintf(stderr, 
 					"Unknown noise terrain_function: \"%s\"\n",
-					optarg);
+					bu_optarg);
 				exit(-1);
 				break;
 			}
@@ -640,7 +640,7 @@ parse_args(int ac, char **av)
 		default		: usage("Bad or help flag specified\n"); break;
 		}
 
-	return(optind);
+	return(bu_optind);
 }
 
 /*

@@ -64,7 +64,7 @@
 #include "machine.h"
 
 
-/* declarations to support use of getopt() system call */
+/* declarations to support use of bu_getopt() system call */
 char *options = "hs:w:n:";
 char optflags[sizeof(options)];
 char *progname = "(noname)";
@@ -163,20 +163,20 @@ main(int ac, char **av)
 
 	for (c=0 ; c < optlen ; optflags[c++] = '\0');
 	
-	/* Turn off getopt's error messages */
+	/* Turn off bu_getopt's error messages */
 	opterr = 0;
 
 	/* get all the option flags from the command line
 	 */
-	while ((c=getopt(ac,av,options)) != EOF)
+	while ((c=bu_getopt(ac,av,options)) != EOF)
 		switch (c) {
-		case 'w' : x = atoi(optarg); break;
-		case 'n' : y = atoi(optarg); break;
-		case 's' : x = atoi(optarg); y = atoi(optarg); break;
+		case 'w' : x = atoi(bu_optarg); break;
+		case 'n' : y = atoi(bu_optarg); break;
+		case 's' : x = atoi(bu_optarg); y = atoi(bu_optarg); break;
 		default	: usage(); break;
 		}
 
-	if (optind >= ac) doit();
+	if (bu_optind >= ac) doit();
 	else usage();
 
 	return 0;

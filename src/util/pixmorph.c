@@ -365,14 +365,14 @@ get_args(int argc, char **argv, char **picAnamep, char **picBnamep, char **lines
     *autosizep = 1;
     *widthp = *heightp = 0;
 
-    while ((c = getopt(argc, argv, "w:n:")) != EOF) {
+    while ((c = bu_getopt(argc, argv, "w:n:")) != EOF) {
 	switch (c) {
 	case 'w':
-	    *widthp = atol(optarg);
+	    *widthp = atol(bu_optarg);
 	    *autosizep = 0;
 	    break;
 	case 'n':
-	    *heightp = atol(optarg);
+	    *heightp = atol(bu_optarg);
 	    *autosizep = 0;
 	    break;
 	default:
@@ -380,14 +380,14 @@ get_args(int argc, char **argv, char **picAnamep, char **picBnamep, char **lines
 	}
     }
 
-    if (argc != optind+5)
+    if (argc != bu_optind+5)
 	return 0;
 
-    *picAnamep = argv[optind];
-    *picBnamep = argv[optind+1];
-    *linesfilenamep = argv[optind+2];
-    *warpfracp = atof(argv[optind+3]);
-    *dissolvefracp = (int)(255.0*atof(argv[optind+4])+0.5);
+    *picAnamep = argv[bu_optind];
+    *picBnamep = argv[bu_optind+1];
+    *linesfilenamep = argv[bu_optind+2];
+    *warpfracp = atof(argv[bu_optind+3]);
+    *dissolvefracp = (int)(255.0*atof(argv[bu_optind+4])+0.5);
 
     return 1;
 }

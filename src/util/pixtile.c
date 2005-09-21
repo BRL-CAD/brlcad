@@ -108,7 +108,7 @@ get_args(int argc, register char **argv)
 {
 	register int c;
 
-	while ( (c = getopt( argc, argv, "hs:w:n:S:W:N:o:" )) != EOF )  {
+	while ( (c = bu_getopt( argc, argv, "hs:w:n:S:W:N:o:" )) != EOF )  {
 		switch( c )  {
 		case 'h':
 			/* high-res */
@@ -116,25 +116,25 @@ get_args(int argc, register char **argv)
 			break;
 		case 's':
 			/* square input file size */
-			file_height = file_width = atoi(optarg);
+			file_height = file_width = atoi(bu_optarg);
 			break;
 		case 'w':
-			file_width = atoi(optarg);
+			file_width = atoi(bu_optarg);
 			break;
 		case 'n':
-			file_height = atoi(optarg);
+			file_height = atoi(bu_optarg);
 			break;
 		case 'S':
-			scr_height = scr_width = atoi(optarg);
+			scr_height = scr_width = atoi(bu_optarg);
 			break;
 		case 'W':
-			scr_width = atoi(optarg);
+			scr_width = atoi(bu_optarg);
 			break;
 		case 'N':
-			scr_height = atoi(optarg);
+			scr_height = atoi(bu_optarg);
 			break;
 		case 'o':
-			framenumber = atoi(optarg);
+			framenumber = atoi(bu_optarg);
 			break;
 		default:		/* '?' */
 			return(0);	/* Bad */
@@ -145,7 +145,7 @@ get_args(int argc, register char **argv)
 		return(0);	/* Bad */
 	}
 
-	if( optind >= argc )  {
+	if( bu_optind >= argc )  {
 		fprintf(stderr, "pixtile: basename or filename(s) missing\n");
 		return(0);	/* Bad */
 	}
@@ -174,8 +174,8 @@ main(int argc, char **argv)
 		exit( 1);
 	}
 
-	if( optind+1 == argc )  {
-		base_name = argv[optind];
+	if( bu_optind+1 == argc )  {
+		base_name = argv[bu_optind];
 		islist = 0;
 		if( base_name[0] == '-' && base_name[1] == '\0' )
 			is_stream = 1;
@@ -226,9 +226,9 @@ main(int argc, char **argv)
 			} else {
 				if( islist )  {
 					/* See if we read all the files */
-					if( optind >= argc )
+					if( bu_optind >= argc )
 						goto done;
-					strcpy(name, argv[optind++]);
+					strcpy(name, argv[bu_optind++]);
 				} else {
 					sprintf(name,"%s.%d", base_name, framenumber);
 				}

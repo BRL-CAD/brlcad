@@ -87,24 +87,24 @@ get_args(int argc, register char **argv)
 	register int c = 0;
 	double	d = 0.0;
 
-	while ( (c = getopt( argc, argv, "a:s:m:d:Ae:r:cS:O:M:X:t:" )) != EOF )
+	while ( (c = bu_getopt( argc, argv, "a:s:m:d:Ae:r:cS:O:M:X:t:" )) != EOF )
 	{
 		switch( c )  {
 		case 'a':
 			op[ numop ] = ADD;
-			val[ numop++ ] = atof(optarg);
+			val[ numop++ ] = atof(bu_optarg);
 			break;
 		case 's':
 			op[ numop ] = ADD;
-			val[ numop++ ] = - atof(optarg);
+			val[ numop++ ] = - atof(bu_optarg);
 			break;
 		case 'm':
 			op[ numop ] = MULT;
-			val[ numop++ ] = atof(optarg);
+			val[ numop++ ] = atof(bu_optarg);
 			break;
 		case 'd':
 			op[ numop ] = MULT;
-			d = atof(optarg);
+			d = atof(bu_optarg);
 
 			if( d == 0.0 ) {
 				(void)fprintf( stderr, "bwmod: divide by zero!\n" );
@@ -118,11 +118,11 @@ get_args(int argc, register char **argv)
 			break;
 		case 'e':
 			op[ numop ] = POW;
-			val[ numop++ ] = atof(optarg);
+			val[ numop++ ] = atof(bu_optarg);
 			break;
 		case 'r':
 			op[ numop ] = POW;
-			d = atof(optarg);
+			d = atof(bu_optarg);
 			if( d == 0.0 ) {
 				(void)fprintf( stderr, "bwmod: zero root!\n" );
 				exit( 2 );
@@ -133,35 +133,35 @@ get_args(int argc, register char **argv)
 			char_arith = !char_arith; break;
 		case 'S':
 			op[ numop ] = SHIFT;
-			val[ numop++] = atof(optarg);
+			val[ numop++] = atof(bu_optarg);
 			break;
 		case 'M':
 			op[ numop ] = AND;
-			val[ numop++] = atof(optarg);
+			val[ numop++] = atof(bu_optarg);
 			break;
 		case 'O':
 			op[ numop ] = OR;
-			val[ numop++ ] = atof(optarg);
+			val[ numop++ ] = atof(bu_optarg);
 			break;
 		case 'X':
 			op[ numop ] = XOR;
-			val[ numop++ ] = atof(optarg);
+			val[ numop++ ] = atof(bu_optarg);
 			break;
 		case 't':
 			op[ numop ] = TRUNC;
-			val[ numop++ ] = atof(optarg);
+			val[ numop++ ] = atof(bu_optarg);
 			break;
 		default:		/* '?' */
 			return(0);
 		}
 	}
 
-	if( optind >= argc )  {
+	if( bu_optind >= argc )  {
 		if( isatty((int)fileno(stdin)) )
 			return(0);
 		file_name = "-";
 	} else {
-		file_name = argv[optind];
+		file_name = argv[bu_optind];
 		if( freopen(file_name, "r", stdin) == NULL )  {
 			(void)fprintf( stderr,
 				"bwmod: cannot open \"%s\" for reading\n",
@@ -170,7 +170,7 @@ get_args(int argc, register char **argv)
 		}
 	}
 
-	if ( argc > ++optind )
+	if ( argc > ++bu_optind )
 		(void)fprintf( stderr, "bwmod: excess argument(s) ignored\n" );
 
 	return(1);		/* OK */

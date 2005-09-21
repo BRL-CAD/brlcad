@@ -100,43 +100,43 @@ get_args(int argc, register char **argv)
 {
 	register int c;
 
-	while ( (c = getopt( argc, argv, "vf:d:o:w:n:s:" )) != EOF )  {
+	while ( (c = bu_getopt( argc, argv, "vf:d:o:w:n:s:" )) != EOF )  {
 		switch( c )  {
 		case 'v':
 			verbose++;
 			break;
 		case 'f':
-			select_filter(optarg);
+			select_filter(bu_optarg);
 			break;
 		case 'd':
 			dflag++;
-			kerndiv = atoi(optarg);
+			kerndiv = atoi(bu_optarg);
 			break;
 		case 'o':
 			oflag++;
-			kernoffset = atoi(optarg);
+			kernoffset = atoi(bu_optarg);
 			break;
 		case 'w':
-			width = atoi(optarg);
+			width = atoi(bu_optarg);
 			break;
 		case 'n':
-			height = atoi(optarg);
+			height = atoi(bu_optarg);
 			break;
 		case 's':
-			width = height = atoi(optarg);
+			width = height = atoi(bu_optarg);
 			break;
 		default:		/* '?' */
 			return(0);
 		}
 	}
 
-	if( optind >= argc )  {
+	if( bu_optind >= argc )  {
 		if( isatty(fileno(stdin)) )
 			return(0);
 		file_name = "-";
 		infp = stdin;
 	} else {
-		file_name = argv[optind];
+		file_name = argv[bu_optind];
 		if( (infp = fopen(file_name, "r")) == NULL )  {
 			(void)fprintf( stderr,
 				"pixfilter: cannot open \"%s\" for reading\n",
@@ -148,7 +148,7 @@ get_args(int argc, register char **argv)
 	if( isatty(fileno(stdout)) )
 		return(0);
 
-	if ( argc > ++optind )
+	if ( argc > ++bu_optind )
 		(void)fprintf( stderr, "pixfilter: excess argument(s) ignored\n" );
 
 	return(1);		/* OK */

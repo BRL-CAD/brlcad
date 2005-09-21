@@ -82,7 +82,7 @@ get_args(int argc, register char **argv)
 {
 	register int c;
 
-	while ( (c = getopt( argc, argv, "ehclLs:w:n:S:W:N:" )) != EOF )  {
+	while ( (c = bu_getopt( argc, argv, "ehclLs:w:n:S:W:N:" )) != EOF )  {
 		switch( c )  {
 		case 'e':
 			/* Encapsulated PostScript */
@@ -103,23 +103,23 @@ get_args(int argc, register char **argv)
 			break;
 		case 's':
 			/* square file size */
-			height = width = atoi(optarg);
+			height = width = atoi(bu_optarg);
 			break;
 		case 'w':
-			width = atoi(optarg);
+			width = atoi(bu_optarg);
 			break;
 		case 'n':
-			height = atoi(optarg);
+			height = atoi(bu_optarg);
 			break;
 		case 'S':
 			/* square file size */
-			outheight = outwidth = atof(optarg);
+			outheight = outwidth = atof(bu_optarg);
 			break;
 		case 'W':
-			outwidth = atof(optarg);
+			outwidth = atof(bu_optarg);
 			break;
 		case 'N':
-			outheight = atof(optarg);
+			outheight = atof(bu_optarg);
 			break;
 
 		default:		/* '?' */
@@ -127,13 +127,13 @@ get_args(int argc, register char **argv)
 		}
 	}
 
-	if( optind >= argc )  {
+	if( bu_optind >= argc )  {
 		if( isatty(fileno(stdin)) )
 			return(0);
 		file_name = "[stdin]";
 		infp = stdin;
 	} else {
-		file_name = argv[optind];
+		file_name = argv[bu_optind];
 		if( (infp = fopen(file_name, "r")) == NULL )  {
 			(void)fprintf( stderr,
 				"pix-ps: cannot open \"%s\" for reading\n",
@@ -143,7 +143,7 @@ get_args(int argc, register char **argv)
 		/*fileinput++;*/
 	}
 
-	if ( argc > ++optind )
+	if ( argc > ++bu_optind )
 		(void)fprintf( stderr, "pix-ps: excess argument(s) ignored\n" );
 
 	return(1);		/* OK */

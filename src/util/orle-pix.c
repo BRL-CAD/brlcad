@@ -167,15 +167,15 @@ main(int argc, char **argv)
 static int
 pars_Argv(int argc, register char **argv)
 {	register int	c;
-		extern int	optind;
-		extern char	*optarg;
+		extern int	bu_optind;
+		extern char	*bu_optarg;
 	/* Parse options.						*/
-	while( (c = getopt( argc, argv, "b:dv" )) != EOF )
+	while( (c = bu_getopt( argc, argv, "b:dv" )) != EOF )
 		{
 		switch( c )
 			{
 		case 'b' : /* User-specified background.		*/
-			bgflag = optarg[0];
+			bgflag = bu_optarg[0];
 			switch( bgflag )
 				{
 			case 'r':
@@ -219,16 +219,16 @@ pars_Argv(int argc, register char **argv)
 			} /* end switch */
 		} /* end while */
 
-	if( argv[optind] != NULL )
-		if( (fp = fopen( argv[optind], "r" )) == NULL )
+	if( argv[bu_optind] != NULL )
+		if( (fp = fopen( argv[bu_optind], "r" )) == NULL )
 			{
 			(void) fprintf( stderr,
 					"Can't open %s for reading!\n",
-					argv[optind]
+					argv[bu_optind]
 					);
 			return	0;
 			}
-	if( argc > ++optind )
+	if( argc > ++bu_optind )
 		{
 		(void) fprintf( stderr, "Too many arguments!\n" );
 		return	0;

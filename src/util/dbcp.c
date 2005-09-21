@@ -93,7 +93,7 @@ char	**argv;
 	pipefds par2chld, chld2par;
 	int	c;
 
-	while ( (c = getopt( argc, argv, "v" )) != EOF )  {
+	while ( (c = bu_getopt( argc, argv, "v" )) != EOF )  {
 		switch( c )  {
 		case 'v':
 			verbose++;
@@ -104,11 +104,11 @@ char	**argv;
 		}
 	}
 
-	if( optind >= argc )  {
+	if( bu_optind >= argc )  {
 		(void)fputs(usage, stderr);
 		exit(2);
 	}
-	size = 512 * atoi(argv[optind]);
+	size = 512 * atoi(argv[bu_optind]);
 
 	setbuf (stderr, errbuf);
 	if ((buffer = (char *)malloc(size)) == NULL) {

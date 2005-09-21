@@ -77,25 +77,25 @@ get_args(register int argc, register char **argv)
 	register int inputmode = INTERACTIVE;
 
 	/* Get info from command line arguments */
-	while ((c = getopt(argc, argv, "s:w:n:x:y:X:Y:S:W:N:#:")) != EOF) {
+	while ((c = bu_getopt(argc, argv, "s:w:n:x:y:X:Y:S:W:N:#:")) != EOF) {
 		switch(c) {
 		case 's':
-			linelen   = atoi(optarg);
+			linelen   = atoi(bu_optarg);
 			inputmode = COMMAND_LINE;
 			break;
 		case 'w':
-			linelen   = atoi(optarg);
+			linelen   = atoi(bu_optarg);
 			inputmode = COMMAND_LINE;
 			break;
 		case 'n':
 			inputmode = COMMAND_LINE;
 			break;
 		case 'x':
-			xorig     = atoi(optarg);
+			xorig     = atoi(bu_optarg);
 			inputmode = COMMAND_LINE;
 			break;
 		case 'y':
-			yorig     = atoi(optarg);
+			yorig     = atoi(bu_optarg);
 			inputmode = COMMAND_LINE;
 			break;
 		case 'X':
@@ -105,19 +105,19 @@ get_args(register int argc, register char **argv)
 			inputmode = COMMAND_LINE;
 			break;
 		case 'S':
-			xnum = ynum = atoi(optarg);
+			xnum = ynum = atoi(bu_optarg);
 			inputmode = COMMAND_LINE;
 			break;
 		case 'W':
-			xnum      = atoi(optarg);
+			xnum      = atoi(bu_optarg);
 			inputmode = COMMAND_LINE;
 			break;
 		case 'N':
-			ynum      = atoi(optarg);
+			ynum      = atoi(bu_optarg);
 			inputmode = COMMAND_LINE;
 			break;
 		case '#':
-			bytes_per_pixel = atoi(optarg);
+			bytes_per_pixel = atoi(bu_optarg);
 			break;
 		default:		/* '?' */
 			return(0);
@@ -163,7 +163,7 @@ get_args(register int argc, register char **argv)
 	if (inputmode == COMMAND_LINE) {
 		/* Obtain file pointers */
 		ofp = stdout;
-		if (optind >= argc) {
+		if (bu_optind >= argc) {
 			if (isatty(fileno(stdin))) {
 				fprintf(stderr,
 					"pixrect: input from sdtin\n");
@@ -171,7 +171,7 @@ get_args(register int argc, register char **argv)
 			}
 			ifp = stdin;
 		} else {
-			file_name = argv[optind];
+			file_name = argv[bu_optind];
 			if ((ifp = fopen(file_name, "r")) == NULL) {
 				fprintf(stderr,
 					"pixrect: cannot open \"%s\" for reading\n",
@@ -187,7 +187,7 @@ get_args(register int argc, register char **argv)
 	}
 
 #if 0
-	if (argc > ++optind)
+	if (argc > ++bu_optind)
 		fprintf(stderr,"pixrect: excess argument(s) ignored\n");
 #endif
 

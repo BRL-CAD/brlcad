@@ -41,7 +41,7 @@
 
 #include "machine.h"
 
-/* declarations to support use of getopt() system call */
+/* declarations to support use of bu_getopt() system call */
 char *options = "v";
 char verbose = 0;
 char *progname = "(noname)";
@@ -112,26 +112,26 @@ int main(int ac, char **av)
 	/* Get # of options & turn all the option flags off
 	 */
 
-	/* Turn off getopt's error messages */
+	/* Turn off bu_getopt's error messages */
 	opterr = 0;
 
 	/* get all the option flags from the command line
 	 */
-	while ((c=getopt(ac,av,options)) != EOF) {
+	while ((c=bu_getopt(ac,av,options)) != EOF) {
 		if ( c == 'v' ) verbose = ! verbose;
 		else usage();
 	}
 
 
-	if (optind < ac-1) {
+	if (bu_optind < ac-1) {
 		usage();
-	} else if (optind == ac-1 ) {
+	} else if (bu_optind == ac-1 ) {
 		FILE *fd;
-		if ((fd=fopen(av[optind], "r")) == (FILE *)NULL) {
-			perror(av[optind]);
+		if ((fd=fopen(av[bu_optind], "r")) == (FILE *)NULL) {
+			perror(av[bu_optind]);
 			exit(-1);
 		} else doit(fd);
-	} else if (optind >= ac) {
+	} else if (bu_optind >= ac) {
 		if (isatty(fileno(stdin))) usage();
 		doit(stdin);
 	}
