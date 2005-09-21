@@ -131,8 +131,10 @@
     public method refresh {}
     public method rt {args}
     public method rtabort {{gi 0}}
+    public method rtarea {args}
     public method rtcheck {args}
     public method rtedge {args}
+    public method rtweight {args}
     public method autoview {{g_index 0}}
     public method attach_view {}
     public method attach_drawable {dg}
