@@ -23,7 +23,7 @@ lib_LTLIBRARIES = \
 	libtk@TK_VERSION@.la 
 
 libtk_la_SOURCES =
-libtk_la_LDFLAGS = -version-info 19:1 -static
+libtk_la_LDFLAGS = -version-info 19:1
 libtk_la_LIBADD = \
 	generic/tk3d.lo \
 	generic/tkArgv.lo \
