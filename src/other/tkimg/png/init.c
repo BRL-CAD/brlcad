@@ -157,6 +157,7 @@ Tkimgpng_Init (interp)
 #endif
       Tcl_Interp *interp; /* Interpreter to initialise. */
 {
+#if 0
 #ifdef USE_TCL_STUBS
     if (Tcl_InitStubs(interp, "8.1", 0) == NULL) {
         return TCL_ERROR;
@@ -167,6 +168,8 @@ Tkimgpng_Init (interp)
         return TCL_ERROR;
     }
 #endif
+#endif
+
 #ifdef USE_TKIMG_STUBS
     if (Tkimg_InitStubs(interp, "1.3", 0) == NULL) {
         return TCL_ERROR;
@@ -188,9 +191,10 @@ Tkimgpng_Init (interp)
      * At last provide the package ...
      */
 
-    if (Tcl_PkgProvide(interp, PACKAGE_NAME, VERSION) != TCL_OK) {
+    if (Tcl_PkgProvide(interp, TKIMG_PNG_PACKAGE_NAME, TKIMG_VERSION) != TCL_OK) {
         return TCL_ERROR;
     }
+
     return TCL_OK;
 }
 
