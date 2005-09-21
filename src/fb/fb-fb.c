@@ -46,6 +46,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include "machine.h"
+#include "bu.h"
 #include "fb.h"
 
 static unsigned char *scanline;		/* 1 scanline pixel buffer */
