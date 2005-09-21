@@ -14,6 +14,12 @@
 #    Archer megawidget.
 #
 
+if {![info exists env(ARCHER_HOME)]} {
+    set env(ARCHER_HOME) [file normalize [file join [file dir $argv0] ..]]
+}
+
+LoadArcherLibs $env(ARCHER_HOME)
+
 package provide Archer 1.0
 
 namespace eval Archer {
@@ -158,6 +164,31 @@ namespace eval Archer {
 	common pluginMinorTypeMged "Mged"
 	common pluginMinorTypeSdb "Sdb"
 	common pluginMinorTypeBoth "Both"
+
+#	common brlcadDataPath [file join share brlcad 7.4.1]
+	common brlcadDataPath [bu_brlcad_data ""]
+	common SystemWindowFont
+	common SystemWindowText
+	common SystemWindow
+	common SystemHighlight
+	common SystemHighlightText
+	common SystemButtonFace
+
+	if {$tcl_platform(os) != "Windows NT"} {
+	    set SystemWindowFont Helvetica
+	    set SystemWindowText black
+	    set SystemWindow \#d9d9d9
+	    set SystemHighlight black
+	    set SystemHighlightText \#ececec
+	    set SystemButtonFace \#d9d9d9
+	} else {
+	    set SystemWindowFont SystemWindowText
+	    set SystemWindowText SystemWindowText
+	    set SystemWindow SystemWindow
+	    set SystemHighlight SystemHighlight
+	    set SystemHighlightText SystemHighlightText
+	    set SystemButtonFace SystemButtonFace
+	}
     }
 
     protected {
@@ -167,8 +198,8 @@ namespace eval Archer {
 	variable mFontArrows {Wingdings 3}
 	variable mLeftArrow "t"
 	variable mRightArrow "u"
-	variable mFontText {SystemWindowText 8}
-	variable mFontTextBold {SystemWindowText 8 bold}
+	variable mFontText
+	variable mFontTextBold
 
 	variable mViewOnly 0
 	variable mTarget ""
@@ -222,7 +253,7 @@ namespace eval Archer {
 	variable mBackgroundBluePref 
 	variable mPrimitiveLabelColor Yellow
 	variable mPrimitiveLabelColorPref
-	variable mTheme "Crystal (Large)"
+	variable mTheme "Crystal_Large"
 	variable mThemePref ""
 	variable mSdbTopGroup all
 
@@ -642,6 +673,9 @@ Popup Menu    Right or Ctrl-Left
     global env
     global tcl_platform
 
+    set mFontText [list $SystemWindowFont 8]
+    set mFontTextBold [list $SystemWindowFont 8 bold]
+
     set mProgressBarHeight [expr {[font metrics $mFontText -linespace] + 1}]
     set mViewOnly $viewOnly
 
@@ -649,15 +683,12 @@ Popup Menu    Right or Ctrl-Left
 	wm withdraw [namespace tail $this]
     }
 
-    if {![info exists env(ARCHER_HOME)]} {
-	set env(ARCHER_HOME) [file normalize [file join [file dir $argv0] ..]]
-    }
-
     if {![info exists env(DISPLAY)]} {
 	set env(DISPLAY) ":0"
     }
 
-    set _imgdir [file join $env(ARCHER_HOME) tclscripts archer images]
+#    set _imgdir [file join $env(ARCHER_HOME) $brlcadDataPath tclscripts archer images]
+    set _imgdir [file join $brlcadDataPath tclscripts archer images]
 
     if {[llength $args] == 1} {
 	set args [lindex $args 0]
@@ -721,7 +752,7 @@ Popup Menu    Right or Ctrl-Left
 		-relief sunken -borderwidth 2 \
 		-hscrollmode none -vscrollmode dynamic \
 		-scrollmargin 2 -visibleitems 80x15 \
-		-textbackground SystemWindow -prompt "Archer> " \
+		-textbackground $SystemWindow -prompt "Archer> " \
 		-prompt2 "% " -result_color black -cmd_color red
     } {
     }
@@ -736,7 +767,7 @@ Popup Menu    Right or Ctrl-Left
 		-relief sunken -borderwidth 2 \
 		-hscrollmode none -vscrollmode dynamic \
 		-scrollmargin 2 -visibleitems 80x15 \
-		-textbackground SystemWindow
+		-textbackground $SystemWindow
     } {
     }
     $itk_component(advancedTabs) tab configure $i \
@@ -801,8 +832,8 @@ Popup Menu    Right or Ctrl-Left
 	    -font $font \
 	    -activeborderwidth 2 \
 	    -borderwidth 0 \
-	    -activebackground SystemHighlight \
-	    -activeforeground SystemHighlightText
+	    -activebackground $SystemHighlight \
+	    -activeforeground $SystemHighlightText
     } {
 #	rename -font -menuFont menuFont MenuFont
 #	keep -font
@@ -815,8 +846,8 @@ Popup Menu    Right or Ctrl-Left
 		-font $mFontText \
 		-activeborderwidth 2 \
 		-borderwidth 0 \
-		-activebackground SystemHighlight \
-		-activeforeground SystemHighlightText
+		-activebackground $SystemHighlight \
+		-activeforeground $SystemHighlightText
 	} {
 	    keep -background
 	}
@@ -1729,7 +1760,7 @@ Popup Menu    Right or Ctrl-Left
     ::iwidgets::dialog $dialog \
 	    -modality none \
 	    -title "$wname Dialog" \
-	    -background SystemButtonFace
+	    -background $SystemButtonFace
 
     $dialog hide 0
     $dialog hide 1
@@ -1848,7 +1879,7 @@ Popup Menu    Right or Ctrl-Left
     ::iwidgets::dialog $dialog \
 	    -modality application \
 	    -title "$wname Dialog" \
-	    -background SystemButtonFace
+	    -background $SystemButtonFace
 
     $dialog hide 1
     $dialog hide 3
@@ -4356,8 +4387,8 @@ Popup Menu    Right or Ctrl-Left
 	::iwidgets::menubar $itk_interior.menubar \
 	    -helpvariable [::itcl::scope mStatusStr] \
 	    -font $mFontText \
-	    -activebackground SystemHighlight \
-	    -activeforeground SystemHighlightText
+	    -activebackground $SystemHighlight \
+	    -activeforeground $SystemHighlightText
     } {
 #	rename -font -menuFont menuFont MenuFont
 #	keep -font
@@ -4616,7 +4647,7 @@ Popup Menu    Right or Ctrl-Left
 		-background white \
 		-selectfill 1 \
 		-selectbackground black \
-		-selectforeground SystemWindow \
+		-selectforeground $SystemWindow \
 		-querycmd [::itcl::code $this _fill_tree %n] \
 		-selectcmd [::itcl::code $this _select_node %n] \
 		-dblselectcmd [::itcl::code $this _dbl_click %n] \
@@ -4625,9 +4656,9 @@ Popup Menu    Right or Ctrl-Left
     }
 
     [$itk_component(tree) component popupmenu] configure \
-	-background SystemButtonFace \
-	-activebackground SystemHighlight \
-	-activeforeground SystemHighlightText
+	-background $SystemButtonFace \
+	-activebackground $SystemHighlight \
+	-activeforeground $SystemHighlightText
 
     grid $itk_component(tree_title) -row 0 -column 0 -sticky w
     if {!$mViewOnly} {
@@ -5156,7 +5187,7 @@ Popup Menu    Right or Ctrl-Left
     set y [expr [winfo rooty $itk_interior] + 100]
     wm geometry $top +$x+$y
 
-    set entry [::iwidgets::entryfield $top.entry -textbackground SystemWindow -width 20]
+    set entry [::iwidgets::entryfield $top.entry -textbackground $SystemWindow -width 20]
     pack $entry -fill x -padx 3 -pady 2
 
     set cmd ""
@@ -5589,7 +5620,7 @@ Popup Menu    Right or Ctrl-Left
 	::iwidgets::dialog $itk_interior.aboutDialog \
 	    -modality application \
 	    -title "About Archer" \
-	    -background SystemButtonFace
+	    -background $SystemButtonFace
     } {}
     $itk_component(aboutDialog) hide 1
     $itk_component(aboutDialog) hide 2
@@ -5631,7 +5662,8 @@ Popup Menu    Right or Ctrl-Left
 
 
     # About Info
-    set aboutImg [image create photo -file [file join $env(ARCHER_HOME) tclscripts archer images aboutArcher.png]]
+#    set aboutImg [image create photo -file [file join $env(ARCHER_HOME) $brlcadDataPath tclscripts archer images aboutArcher.png]]
+    set aboutImg [image create photo -file [file join $brlcadDataPath tclscripts archer images aboutArcher.png]]
     itk_component add aboutInfo {
 	::label $itk_component(aboutDialogTabs).aboutInfo \
 	    -image $aboutImg
@@ -5675,7 +5707,8 @@ Popup Menu    Right or Ctrl-Left
 
     if {$::Archer::haveSdb} {
     # IVAVIEW License Info
-    set fd [open [file join $env(ARCHER_HOME) ivaviewLicense.txt] r]
+#    set fd [open [file join $env(ARCHER_HOME) $brlcadDataPath ivaviewLicense.txt] r]
+    set fd [open [file join $brlcadDataPath ivaviewLicense.txt] r]
     set mIvaviewLicenseInfo [read $fd]
     close $fd
     itk_component add ivaviewLicenseInfo {
@@ -5684,8 +5717,8 @@ Popup Menu    Right or Ctrl-Left
 	    -hscrollmode dynamic \
 	    -vscrollmode dynamic \
 	    -textfont $mFontText \
-	    -background SystemButtonFace \
-	    -textbackground SystemButtonFace
+	    -background $SystemButtonFace \
+	    -textbackground $SystemButtonFace
     } {}
     $itk_component(ivaviewLicenseInfo) insert 0.0 $mIvaviewLicenseInfo
     $itk_component(ivaviewLicenseInfo) configure -state disabled
@@ -5697,7 +5730,8 @@ Popup Menu    Right or Ctrl-Left
     }
 
     # BRL-CAD License Info
-    set fd [open [file join $env(ARCHER_HOME) COPYING] r]
+#    set fd [open [file join $env(ARCHER_HOME) $brlcadDataPath COPYING] r]
+    set fd [open [file join $brlcadDataPath COPYING] r]
     set mBrlcadLicenseInfo [read $fd]
     close $fd
     itk_component add brlcadLicenseInfo {
@@ -5706,8 +5740,8 @@ Popup Menu    Right or Ctrl-Left
 	    -hscrollmode dynamic \
 	    -vscrollmode dynamic \
 	    -textfont $mFontText \
-	    -background SystemButtonFace \
-	    -textbackground SystemButtonFace
+	    -background $SystemButtonFace \
+	    -textbackground $SystemButtonFace
     } {}
     $itk_component(brlcadLicenseInfo) insert 0.0 $mBrlcadLicenseInfo
     $itk_component(brlcadLicenseInfo) configure -state disabled
@@ -5719,7 +5753,8 @@ Popup Menu    Right or Ctrl-Left
 
 
     # Acknowledgement Info
-    set fd [open [file join $env(ARCHER_HOME) doc archer_ack.txt] r]
+#    set fd [open [file join $env(ARCHER_HOME) $brlcadDataPath doc archer_ack.txt] r]
+    set fd [open [file join $brlcadDataPath doc archer_ack.txt] r]
     set mAckInfo [read $fd]
     close $fd
     itk_component add ackInfo {
@@ -5728,8 +5763,8 @@ Popup Menu    Right or Ctrl-Left
 	    -hscrollmode dynamic \
 	    -vscrollmode dynamic \
 	    -textfont $mFontText \
-	    -background SystemButtonFace \
-	    -textbackground SystemButtonFace
+	    -background $SystemButtonFace \
+	    -textbackground $SystemButtonFace
     } {}
     $itk_component(ackInfo) insert 0.0 $mAckInfo
     $itk_component(ackInfo) configure -state disabled
@@ -5749,7 +5784,7 @@ Popup Menu    Right or Ctrl-Left
 	::iwidgets::dialog $itk_interior.mouseOverridesDialog \
 	    -modality application \
 	    -title "Mouse Overrides" \
-	    -background SystemButtonFace
+	    -background $SystemButtonFace
     } {}
     $itk_component(mouseOverridesDialog) hide 1
     $itk_component(mouseOverridesDialog) hide 2
@@ -5863,7 +5898,7 @@ Popup Menu    Right or Ctrl-Left
 	::iwidgets::dialog $itk_interior.$name \
 	    -modality $modality \
 	    -title $title \
-	    -background SystemButtonFace
+	    -background $SystemButtonFace
     } {}
     $itk_component($name) hide 1
     $itk_component($name) hide 2
@@ -5888,8 +5923,8 @@ Popup Menu    Right or Ctrl-Left
 	    -hscrollmode dynamic \
 	    -vscrollmode dynamic \
 	    -textfont $mFontText \
-	    -background SystemButtonFace \
-	    -textbackground SystemButtonFace
+	    -background $SystemButtonFace \
+	    -textbackground $SystemButtonFace
     } {}
     $itk_component($name\Info) insert 0.0 $info
     wm geometry $itk_component($name) $size
@@ -5979,7 +6014,7 @@ Popup Menu    Right or Ctrl-Left
     itk_component add centerDialogXE {
 	::entry $parent.xe \
 	    -width 12 \
-	    -background SystemWindow \
+	    -background $SystemWindow \
 	    -highlightbackground $hbc \
 	    -textvariable [::itcl::scope _centerX] \
 	    -validate key \
@@ -5996,7 +6031,7 @@ Popup Menu    Right or Ctrl-Left
     itk_component add centerDialogYE {
 	::entry $parent.ye \
 	    -width 12 \
-	    -background SystemWindow \
+	    -background $SystemWindow \
 	    -highlightbackground $hbc \
 	    -textvariable [::itcl::scope _centerY] \
 	    -validate key \
@@ -6013,7 +6048,7 @@ Popup Menu    Right or Ctrl-Left
     itk_component add centerDialogZE {
 	::entry $parent.ze \
 	    -width 12 \
-	    -background SystemWindow \
+	    -background $SystemWindow \
 	    -highlightbackground $hbc \
 	    -textvariable [::itcl::scope _centerZ] \
 	    -validate key \
@@ -6228,7 +6263,7 @@ Popup Menu    Right or Ctrl-Left
     itk_component add backgroundRedE {
 	::entry $parent.rede \
 	    -width 3 \
-	    -background SystemWindow \
+	    -background $SystemWindow \
 	    -highlightbackground $hbc \
 	    -textvariable [::itcl::scope mBackgroundRedPref] \
 	    -validate key \
@@ -6242,7 +6277,7 @@ Popup Menu    Right or Ctrl-Left
     itk_component add backgroundGreenE {
 	::entry $parent.greene \
 	    -width 3 \
-	    -background SystemWindow \
+	    -background $SystemWindow \
 	    -highlightbackground $hbc \
 	    -textvariable [::itcl::scope mBackgroundGreenPref] \
 	    -validate key \
@@ -6256,7 +6291,7 @@ Popup Menu    Right or Ctrl-Left
     itk_component add backgroundBlueE {
 	::entry $parent.bluee \
 	    -width 3 \
-	    -background SystemWindow \
+	    -background $SystemWindow \
 	    -highlightbackground $hbc \
 	    -textvariable [::itcl::scope mBackgroundBluePref] \
 	    -validate key \
@@ -6339,7 +6374,7 @@ Popup Menu    Right or Ctrl-Left
 	    -textvariable [::itcl::scope mModelAxesTickIntervalPref] \
 	    -validate key \
 	    -validatecommand [::itcl::code $this _validateTickInterval %P] \
-	    -background SystemWindow \
+	    -background $SystemWindow \
 	    -highlightbackground $hbc
     } {}
 
@@ -6449,7 +6484,7 @@ Popup Menu    Right or Ctrl-Left
     itk_component add modelAxesPositionXE {
 	::entry $parent.xe \
 	    -width 12 \
-	    -background SystemWindow \
+	    -background $SystemWindow \
 	    -highlightbackground $hbc \
 	    -textvariable [::itcl::scope mModelAxesPositionXPref] \
 	    -validate key \
@@ -6463,7 +6498,7 @@ Popup Menu    Right or Ctrl-Left
     itk_component add modelAxesPositionYE {
 	::entry $parent.ye \
 	    -width 12 \
-	    -background SystemWindow \
+	    -background $SystemWindow \
 	    -highlightbackground $hbc \
 	    -textvariable [::itcl::scope mModelAxesPositionYPref] \
 	    -validate key \
@@ -6477,7 +6512,7 @@ Popup Menu    Right or Ctrl-Left
     itk_component add modelAxesPositionZE {
 	::entry $parent.ze \
 	    -width 12 \
-	    -background SystemWindow \
+	    -background $SystemWindow \
 	    -highlightbackground $hbc \
 	    -textvariable [::itcl::scope mModelAxesPositionZPref] \
 	    -validate key \
@@ -6592,7 +6627,7 @@ Popup Menu    Right or Ctrl-Left
     itk_component add groundPlaneSizeE {
 	::entry $itk_component(groundPlaneF2).sizeE \
 	    -width 12 \
-	    -background SystemWindow \
+	    -background $SystemWindow \
 	    -highlightbackground $hbc \
 	    -textvariable [::itcl::scope mGroundPlaneSizePref] \
 	    -validate key \
@@ -6613,7 +6648,7 @@ Popup Menu    Right or Ctrl-Left
     itk_component add groundPlaneIntervalE {
 	::entry $itk_component(groundPlaneF2).intervalE \
 	    -width 12 \
-	    -background SystemWindow \
+	    -background $SystemWindow \
 	    -highlightbackground $hbc \
 	    -textvariable [::itcl::scope mGroundPlaneIntervalPref] \
 	    -validate key \
@@ -6681,16 +6716,16 @@ Popup Menu    Right or Ctrl-Left
 	    -editable false \
 	    -textvariable [::itcl::scope $varName] \
 	    -listheight $listHeight \
-	    -background SystemWindow \
-	    -textbackground SystemWindow \
+	    -background $SystemWindow \
+	    -textbackground $SystemWindow \
 	    -relief flat
     } {}
     #XXX I wouldn't have to break encapsulation if they'd make better widgets!
     #    Yeah, I could tweak the combobox. But, then I'd have to manage the mods
     #    of their code. It's easier to do it this way.
     $itk_component($name1\CB) component entry configure \
-	-disabledbackground SystemWindow \
-	-disabledforeground SystemWindowText
+	-disabledbackground $SystemWindow \
+	-disabledforeground $SystemWindowText
     eval $itk_component($name1\CB) insert list end $listOfChoices
 
     $itk_component($name1\CB) component arrowBtn configure \
@@ -6768,7 +6803,8 @@ Popup Menu    Right or Ctrl-Left
     global tcl_platform
 
     if {$tcl_platform(os) == "Windows NT"} {
-	exec hh [file join $env(ARCHER_HOME) doc html manuals archer Archer_Documentation.chm] &
+#	exec hh [file join $env(ARCHER_HOME) $brlcadDataPath doc html manuals archer Archer_Documentation.chm] &
+	exec hh [file join $brlcadDataPath doc html manuals archer Archer_Documentation.chm] &
     }
 }
 
@@ -8372,7 +8408,7 @@ Popup Menu    Right or Ctrl-Left
     set color [menu $menu.color -tearoff 0]
 
     $color configure \
-	-background SystemButtonFace
+	-background $SystemButtonFace
 
     $color add command -label "Red" \
 	-command [::itcl::code $this setDisplayColor $node {255 0 0}]
@@ -8401,7 +8437,7 @@ Popup Menu    Right or Ctrl-Left
 	set trans [menu $menu.trans -tearoff 0]
 
 	$trans configure \
-	    -background SystemButtonFace
+	    -background $SystemButtonFace
 
 	$trans add command -label "0%" \
 		-command [::itcl::code $this setTransparency $node 1.0]
@@ -10564,7 +10600,8 @@ Popup Menu    Right or Ctrl-Left
     set pwd [::pwd]
 
     # developer & user plugins
-    foreach plugindir [list [file join $env(ARCHER_HOME) plugins archer]] {
+#    foreach plugindir [list [file join $env(ARCHER_HOME) $brlcadDataPath plugins archer]]
+    foreach plugindir [list [file join $brlcadDataPath plugins archer]] {
 	::cd $plugindir
 	pluginLoadCWDFiles
     }
@@ -10634,7 +10671,7 @@ Popup Menu    Right or Ctrl-Left
 		-hscrollmode dynamic \
 		-vscrollmode dynamic \
 		-labeltext "Installed Plug-ins" \
-		-labelfont {SystemWindowText 10 bold} \
+		-labelfont [list $SystemWindowFont 10 bold] \
 		-labelpos n]
 
     set i 0
