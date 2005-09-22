@@ -165,8 +165,7 @@ namespace eval Archer {
 	common pluginMinorTypeSdb "Sdb"
 	common pluginMinorTypeBoth "Both"
 
-#	common brlcadDataPath [file join share brlcad 7.4.1]
-	common brlcadDataPath [bu_brlcad_data ""]
+	common brlcadDataPath
 	common SystemWindowFont
 	common SystemWindowText
 	common SystemWindow
@@ -175,6 +174,7 @@ namespace eval Archer {
 	common SystemButtonFace
 
 	if {$tcl_platform(os) != "Windows NT"} {
+	    set brlcadDataPath [bu_brlcad_data ""]
 	    set SystemWindowFont Helvetica
 	    set SystemWindowText black
 	    set SystemWindow \#d9d9d9
@@ -182,6 +182,7 @@ namespace eval Archer {
 	    set SystemHighlightText \#ececec
 	    set SystemButtonFace \#d9d9d9
 	} else {
+	    set brlcadDataPath $env(ARCHER_HOME)
 	    set SystemWindowFont SystemWindowText
 	    set SystemWindowText SystemWindowText
 	    set SystemWindow SystemWindow
