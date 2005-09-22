@@ -239,9 +239,10 @@ bwmod_LDADD = ${LIBM} ${BU}
 bwrect_SOURCES = bwrect.c
 
 bwrot_SOURCES = bwrot.c
-bwrot_LDADD = ${LIBM}
+bwrot_LDADD = ${LIBM} ${BU}
 
 bwscale_SOURCES = bwscale.c
+bwscale_LDADD = ${BU}
 
 bwstat_SOURCES = bwstat.c
 bwstat_LDADD = ${LIBM}
