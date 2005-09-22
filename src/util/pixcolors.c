@@ -32,14 +32,14 @@
 #include "common.h"
 
 #ifdef HAVE_UNISTD_H
-# include <unistd.h>
+#  include <unistd.h>
 #endif
-                                                                                                                                                                            
-
 #include <stdio.h>
 #include <stdlib.h>
 
 #include "machine.h"
+#include "bu.h"
+
 
 /* declarations to support use of bu_getopt() system call */
 char *options = "v";

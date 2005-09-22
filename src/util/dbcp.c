@@ -48,6 +48,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include <errno.h>
 
 #include "machine.h"
+#include "bu.h"
 
 
 int mread(int fd, char *bufp, int n );

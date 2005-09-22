@@ -44,20 +44,20 @@
 #include "common.h"
 
 #ifdef HAVE_UNISTD_H
-# include <unistd.h>
+#  include <unistd.h>
 #endif
-                                                                                                                                                                            
-
 #include <sys/time.h>
 #include <stdio.h>
 #ifdef HAVE_STRING_H
-#include <string.h>
+#  include <string.h>
 #else
-#include <strings.h>
+#  include <strings.h>
 #endif
 #include <stdlib.h>
 
 #include "machine.h"
+#include "bu.h"
+
 
 static char	*f1_name;
 static char	*f2_name;

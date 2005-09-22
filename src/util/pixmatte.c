@@ -66,6 +66,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include "machine.h"
+#include "bu.h"
 
 
 #define NFILES		4		/* Two in, two out */

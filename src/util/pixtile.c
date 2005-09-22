@@ -56,6 +56,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include "machine.h"			/* For bzero */
+#include "bu.h"
 
 
 int file_width = 64;	/* width of input sub-images in pixels (64) */

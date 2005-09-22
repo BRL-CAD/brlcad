@@ -65,6 +65,8 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include <errno.h>
 
 #include "machine.h"
+#include "bu.h"
+
 
 char	Yes_Response[] = "y";
 int	Verbose=0;

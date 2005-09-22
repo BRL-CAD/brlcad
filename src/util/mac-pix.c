@@ -58,12 +58,13 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif
-                                                                                                                                                                            
 
 #include <stdio.h>
 #include <stdlib.h>
 
 #include "machine.h"
+#include "bu.h"
+
 
 #define	MAC_HEIGHT	576	/* input height (y), in bits */
 #define	MAC_WIDTH	720	/* input width (x), in bits */

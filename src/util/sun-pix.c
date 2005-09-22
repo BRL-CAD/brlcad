@@ -46,6 +46,8 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include <stdlib.h>
 
 #include "machine.h"
+#include "bu.h"
+
 
 /*
  * Description of Sun header for files containing raster images

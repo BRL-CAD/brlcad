@@ -42,7 +42,6 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif
-                                                                                                                                                                            
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -54,6 +53,8 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include <ctype.h>
 
 #include "machine.h"
+#include "bu.h"
+
 
 /* declarations to support use of bu_getopt() system call */
 static char	*options = "o:";

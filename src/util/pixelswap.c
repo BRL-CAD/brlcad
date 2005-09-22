@@ -44,7 +44,9 @@
 #endif
 
 #include "machine.h"
+#include "bu.h"
 #include "fb.h"
+
 
 char *options = "hd:";
 char *progname = "(noname)";

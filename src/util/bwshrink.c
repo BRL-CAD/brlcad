@@ -54,6 +54,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include "machine.h"
+#include "bu.h"
 
 
 /* declarations to support use of bu_getopt() system call */

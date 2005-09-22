@@ -50,6 +50,7 @@ static const char RCSid[] = "@(#)$Id$ (BRL)";
 #endif
 
 #include "machine.h"
+#include "bu.h"
 #include "fb.h"
 #include "rle.h"
 

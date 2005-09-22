@@ -39,7 +39,6 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif
-                                                                                                                                                                            
 
 #include <stdio.h>
 #ifdef HAVE_STDLIB_H
@@ -50,6 +49,8 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include <time.h>	/* for ctime() */
 
 #include "machine.h"
+#include "bu.h"
+
 
 #define	DEFAULT_SIZE	6.75		/* default output size in inches */
 #define	MAX_BYTES	(3*64*128)	/* max bytes per image chunk */

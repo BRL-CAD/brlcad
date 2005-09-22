@@ -55,6 +55,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include <stdlib.h>
 #include <string.h>
 #include "machine.h"
+#include "bu.h"
 
 typedef int bool;
 #define true 1

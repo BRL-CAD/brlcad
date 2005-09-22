@@ -61,6 +61,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include <math.h>
 
 #include "machine.h"
+#include "bu.h"
 
 
 #define	MAXBUFBYTES	(1280*1024)

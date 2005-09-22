@@ -41,14 +41,15 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "common.h"
 
 #ifdef HAVE_UNISTD_H
-# include <unistd.h>
+#  include <unistd.h>
 #endif
-                                                                                                                                                                            
+
 #include <stdlib.h>	
 #include <stdio.h>	
 #include <math.h>
 
 #include "machine.h"
+#include "bu.h"
 
 
 double col[3] = {128,128,128};		/* r,g,b */

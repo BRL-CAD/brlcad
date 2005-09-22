@@ -54,6 +54,8 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include "machine.h"
+#include "bu.h"
+
 
 #define MAXLINE		(8*1024)
 #define DEFAULT_WIDTH	512

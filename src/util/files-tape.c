@@ -80,6 +80,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include "machine.h"
+#include "bu.h"
 
 
 #define	TSIZE	(6144*24*1024)	/* # of bytes on 2400' 6250bpi reel */
