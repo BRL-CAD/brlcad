@@ -972,6 +972,7 @@ AC_CHECK_HEADERS( \
 	pwd.h \
 	rle.h \
 	sgtty.h \
+	signal.h \
 	socket.h \
 	stdarg.h \
 	stddef.h \
@@ -1395,6 +1396,7 @@ AC_CHECK_FUNCS(\
 	pow \
 	prtcl \
 	putenv \
+	raise \
 	re_comp \
 	realpath \
 	regcomp \
