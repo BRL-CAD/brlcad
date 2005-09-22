@@ -43,16 +43,16 @@ if {$tcl_platform(os) == "Windows NT"} {
 
 
 set auto_path $dir
-lappend auto_path [file join $dir lib]
-lappend auto_path [file join $dir lib tcl8.4]
-lappend auto_path [file join $dir lib tk8.4]
-lappend auto_path [file join $dir lib itcl3.3]
-lappend auto_path [file join $dir lib itk3.3]
-lappend auto_path [file join $dir lib iwidgets4.0.2]
-lappend auto_path [file join $dir lib iwidgets4.0.2 scripts]
-lappend auto_path [file join $dir lib blt2.4]
-lappend auto_path [file join $dir lib blt2.4 dd_protocols]
-lappend auto_path [file join $dir lib sdb]
+lappend auto_path [file join $env(ARCHER_HOME) lib]
+lappend auto_path [file join $env(ARCHER_HOME) lib tcl8.4]
+lappend auto_path [file join $env(ARCHER_HOME) lib tk8.4]
+lappend auto_path [file join $env(ARCHER_HOME) lib itcl3.3]
+lappend auto_path [file join $env(ARCHER_HOME) lib itk3.3]
+lappend auto_path [file join $env(ARCHER_HOME) lib iwidgets4.0.2]
+lappend auto_path [file join $env(ARCHER_HOME) lib iwidgets4.0.2 scripts]
+lappend auto_path [file join $env(ARCHER_HOME) lib blt2.4]
+lappend auto_path [file join $env(ARCHER_HOME) lib blt2.4 dd_protocols]
+lappend auto_path [file join $env(ARCHER_HOME) lib sdb]
 lappend auto_path [file join $brlcadDataPath tclscripts]
 lappend auto_path [file join $brlcadDataPath tclscripts sdialogs]
 lappend auto_path [file join $brlcadDataPath tclscripts sdialogs scripts]
@@ -81,7 +81,7 @@ package require Iwidgets
 package require Swidgets
 
 # This must be done after loading BLT (that potentially gets it wrong)
-set blt_library [file join $dir lib blt2.4]
+set blt_library [file join $env(ARCHER_HOME) lib blt2.4]
 lappend auto_path $blt_library
 
 # PROCEDURE: SetWaitCursor
