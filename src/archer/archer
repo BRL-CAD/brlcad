@@ -36,12 +36,11 @@ if {[info exists env(ARCHER_HOME)]} {
 set env(ARCHER_HOME) $dir
 
 if {$tcl_platform(os) == "Windows NT"} {
-    set sdir ""
+    set brlDataPath $env(ARCHER_HOME)
 } else {
-    set sdir [file join share brlcad 7.4.1]
+    set brlDataPath [bu_brlcad_data ""]
 }
 
-set brlDataPath [bu_brlcad_data ""]
 
 set auto_path $dir
 lappend auto_path [file join $dir lib]
