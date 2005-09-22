@@ -36,9 +36,9 @@ if {[info exists env(ARCHER_HOME)]} {
 set env(ARCHER_HOME) $dir
 
 if {$tcl_platform(os) == "Windows NT"} {
-    set brlDataPath $env(ARCHER_HOME)
+    set brlcadDataPath $env(ARCHER_HOME)
 } else {
-    set brlDataPath [bu_brlcad_data ""]
+    set brlcadDataPath [bu_brlcad_data ""]
 }
 
 
@@ -53,13 +53,13 @@ lappend auto_path [file join $dir lib iwidgets4.0.2 scripts]
 lappend auto_path [file join $dir lib blt2.4]
 lappend auto_path [file join $dir lib blt2.4 dd_protocols]
 lappend auto_path [file join $dir lib sdb]
-lappend auto_path [file join $brlDataPath tclscripts]
-lappend auto_path [file join $brlDataPath tclscripts sdialogs]
-lappend auto_path [file join $brlDataPath tclscripts sdialogs scripts]
-lappend auto_path [file join $brlDataPath tclscripts swidgets]
-lappend auto_path [file join $brlDataPath tclscripts swidgets scripts]
-lappend auto_path [file join $brlDataPath tclscripts lib]
-lappend auto_path [file join $brlDataPath tclscripts archer]
+lappend auto_path [file join $brlcadDataPath tclscripts]
+lappend auto_path [file join $brlcadDataPath tclscripts sdialogs]
+lappend auto_path [file join $brlcadDataPath tclscripts sdialogs scripts]
+lappend auto_path [file join $brlcadDataPath tclscripts swidgets]
+lappend auto_path [file join $brlcadDataPath tclscripts swidgets scripts]
+lappend auto_path [file join $brlcadDataPath tclscripts lib]
+lappend auto_path [file join $brlcadDataPath tclscripts archer]
 
 # Initialize bgerror
 initBgerror
@@ -166,13 +166,13 @@ proc showMainWindow {} {
 #
 proc createSplashScreen {} {
     global env
-    global brlDataPath
+    global brlcadDataPath
 
     set useImage 1
 
     if {$useImage} {
 #	set image [image create photo -file [file join $env(ARCHER_HOME) tclscripts archer images aboutArcher.png]]
-	set image [image create photo -file [file join $brlDataPath tclscripts archer images aboutArcher.png]]
+	set image [image create photo -file [file join $brlcadDataPath tclscripts archer images aboutArcher.png]]
 	set ::Archer::splash [Splash .splash -image $image]
     } else {
 	set ::Archer::splash [Splash .splash -message "Loading Archer..."]
@@ -244,7 +244,7 @@ proc exitArcher {archer} {
 #
 proc main {} {
     global env
-    global brlDataPath
+    global brlcadDataPath
     global tcl_platform
 
     if {$::Archer::inheritFromToplevel} {
@@ -254,7 +254,7 @@ proc main {} {
 	    #wm iconbitmap $::Archer::archer -default \
 	    #[file join $env(ARCHER_HOME) doc html manuals archer archer.ico]
 	    wm iconbitmap $::Archer::archer -default \
-		[file join $brlDataPath html manuals archer archer.ico]
+		[file join $brlcadDataPath html manuals archer archer.ico]
 	}
 	set size [wm maxsize $::Archer::archer]
         set width [expr {[lindex $size 0] - 8}]
@@ -267,7 +267,7 @@ proc main {} {
 	    #wm iconbitmap . -default \
 	    #[file join $env(ARCHER_HOME) doc html manuals archer archer.ico]
 	    wm iconbitmap . -default \
-		[file join $brlDataPath html manuals archer archer.ico]
+		[file join $brlcadDataPath html manuals archer archer.ico]
 	}
 	set ::Archer::archer [Archer .\#auto]
 	set size [wm maxsize .]
