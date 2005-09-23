@@ -845,7 +845,9 @@ LIBTCL=""
 AC_CHECK_LIB(tcl8.6, Tcl_Main, tcl_link_works=yes ; LIBTCL="-ltcl8.6",
     [AC_CHECK_LIB(tcl8.5, Tcl_Main, tcl_link_works=yes ; LIBTCL="-ltcl8.5",
 	[AC_CHECK_LIB(tcl8.4, Tcl_Main, tcl_link_works=yes ; LIBTCL="-ltcl8.4",
-	    [AC_CHECK_LIB(tcl, Tcl_Main, tcl_link_works=yes ; LIBTCL="-ltcl")]
+	    [AC_CHECK_LIB(tcl84, Tcl_Main, tcl_link_works=yes ; LIBTCL="-ltcl84",
+		[AC_CHECK_LIB(tcl, Tcl_Main, tcl_link_works=yes ; LIBTCL="-ltcl")]
+	    )]
 	)]
     )]
 )
