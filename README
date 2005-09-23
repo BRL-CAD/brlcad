@@ -6,8 +6,8 @@ BRL-CAD is a powerful Combinatorial/Constructive Solid Geometry (CSG)
 solid modeling system that includes an interactive geometry editor,
 ray-tracing support for rendering and geometric analysis,
 network-distributed framebuffer support, image and signal-processing
-tools, realistic image synthesis path-tracing, and an embedded
-scripting language.
+tools, realistic image synthesis path-tracing, a benchmark performance
+analysis suite, and an embedded scripting language.
 
 The package is a collection of over 400 tools and utilities across
 over 750,000 lines of source code.  Included is support for various
