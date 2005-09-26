@@ -25,34 +25,6 @@
     (TCL_MAJOR_VERSION > 8 || TCL_MAJOR_VERSION == 8 && (TCL_MINOR_VERSION > 1 || \
     (TCL_MINOR_VERSION == 1 && TCL_RELEASE_LEVEL == TCL_FINAL_RELEASE)))
 
-#if 1
-/*
- * Declarations for externally visible functions.
- */
-
-#undef TCL_STORAGE_CLASS
-#ifdef BUILD_pngtcl
-# define TCL_STORAGE_CLASS DLLEXPORT
-#else
-# ifdef USE_PNGTCL_STUBS
-#  define TCL_STORAGE_CLASS
-# else
-#  define TCL_STORAGE_CLASS DLLIMPORT
-# endif
-#endif
-
-#ifdef _DEBUG
-EXTERN int Png_d_Init     _ANSI_ARGS_((Tcl_Interp *interp));
-EXTERN int Png_d_SafeInit _ANSI_ARGS_((Tcl_Interp *interp));
-#else
-EXTERN int Png_Init     _ANSI_ARGS_((Tcl_Interp *interp));
-EXTERN int Png_SafeInit _ANSI_ARGS_((Tcl_Interp *interp));
-#endif
-
-#undef  TCL_STORAGE_CLASS
-#define TCL_STORAGE_CLASS DLLIMPORT
-#endif
-
 /*
  * Prototypes for procedures defined later in this file:
  */
