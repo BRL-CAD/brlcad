@@ -63,7 +63,7 @@ Tkimg_InitStubs(interp, version, exact)
 #define UNCONST 
 #endif
 
-    result = Tcl_PkgRequireEx(interp, PACKAGE_NAME, UNCONST version, exact,
+    result = Tcl_PkgRequireEx(interp, TKIMG_PACKAGE_NAME, UNCONST version, exact,
 		(ClientData *) &tkimgStubsPtr);
     if (!result || !tkimgStubsPtr) {
         return (char *) NULL;
