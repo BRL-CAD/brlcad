@@ -372,7 +372,7 @@ CommonReadPNG(png_ptr, interp, format, imageHandle, destX, destY,
 
     if (png_get_sRGB && png_get_sRGB(png_ptr, info_ptr, &intent)) {
 	png_set_sRGB(png_ptr, info_ptr, intent);
-    } else if (png_get_gAMA) {
+    } else if (png_get_gAMA != NULL) {
 	double gamma;
 	if (!png_get_gAMA(png_ptr, info_ptr, &gamma)) {
 	    gamma = 0.45455;
@@ -554,7 +554,7 @@ CommonWritePNG(interp, png_ptr, info_ptr, format, blockPtr)
 	    color_type, PNG_INTERLACE_ADAM7, PNG_COMPRESSION_TYPE_BASE,
 	    PNG_FILTER_TYPE_BASE);
 
-    if (png_set_gAMA) {
+    if (png_set_gAMA != NULL) {
 	png_set_gAMA(png_ptr, info_ptr, 1.0);
     }
 
