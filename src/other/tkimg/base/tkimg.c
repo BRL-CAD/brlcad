@@ -46,6 +46,18 @@ EXTERN int Tkimg_SafeInit _ANSI_ARGS_((Tcl_Interp *interp));
 #undef  TCL_STORAGE_CLASS
 #define TCL_STORAGE_CLASS DLLIMPORT
 
+
+#ifdef _DEBUG
+extern int Png_d_Init     _ANSI_ARGS_((Tcl_Interp *interp));
+extern int Z_d_Init     _ANSI_ARGS_((Tcl_Interp *interp));
+extern int Tkimgpng_d_Init     _ANSI_ARGS_((Tcl_Interp *interp));
+#else
+extern int Png_Init     _ANSI_ARGS_((Tcl_Interp *interp));
+extern int Z_Init     _ANSI_ARGS_((Tcl_Interp *interp));
+extern int Tkimgpng_Init     _ANSI_ARGS_((Tcl_Interp *interp));
+#endif
+
+
 #ifdef ALLOW_B64
 static int tob64 _ANSI_ARGS_((ClientData clientData, Tcl_Interp *interp,
 		int argc, Tcl_Obj *CONST objv[]));
@@ -86,10 +98,14 @@ static int initialized = 0;
  */
 
 int
+#ifdef _DEBUG
+Tkimg_d_Init (interp)
+#else
 Tkimg_Init (interp)
+#endif
       Tcl_Interp *interp; /* Interpreter to initialise. */
 {
-    EXTERN int TkimgInitUtilities _ANSI_ARGS_ ((Tcl_Interp* interp));
+    extern int TkimgInitUtilities _ANSI_ARGS_ ((Tcl_Interp* interp));
 
 #if TCL_DOES_STUBS
     extern TkimgStubs tkimgStubs;
@@ -172,7 +188,11 @@ Tkimg_Init (interp)
  */
 
 int
+#ifdef _DEBUG
+Tkimg_d_SafeInit (interp)
+#else
 Tkimg_SafeInit (interp)
+#endif
       Tcl_Interp *interp; /* Interpreter to initialise. */
 {
     return Tkimg_Init(interp);
