@@ -1,10 +1,9 @@
 
 proc LoadArcherLibs {dir} {
-    global archerDebug
     global tcl_platform
 
     if {$tcl_platform(os) == "Windows NT"} {
-	if {[info exists $archerDebug] && $archerDebug} {
+	if {[info exists $Archer::debug] && $Archer::debug} {
 	    load [file join $dir bin itcl33_d.dll]
 	    load [file join $dir bin itk33_d.dll]
 	    load [file join $dir bin BLT24_d.dll]
@@ -15,9 +14,7 @@ proc LoadArcherLibs {dir} {
 	    load [file join $dir bin libsysv_d]
 	    load [file join $dir bin librt_d]
 	    load [file join $dir bin libdm_d]
-	    load [file join $dir bin libpng_d]
 	    load [file join $dir bin tkimg_d]
-	    load [file join $dir bin tkimgpng_d]
 	} else {
 	    load [file join $dir bin itcl33.dll]
 	    load [file join $dir bin itk33.dll]
@@ -29,12 +26,10 @@ proc LoadArcherLibs {dir} {
 	    load [file join $dir bin libsysv]
 	    load [file join $dir bin librt]
 	    load [file join $dir bin libdm]
-	    load [file join $dir bin libpng]
 	    load [file join $dir bin tkimg]
-	    load [file join $dir bin tkimgpng]
 	}
     } else {
-	if {[info exists $archerDebug] && $archerDebug} {
+	if {[info exists $Archer::debug] && $Archer::debug} {
 	} else {
 	    load [file join $dir lib libblt2.4.so]
 
@@ -42,5 +37,12 @@ proc LoadArcherLibs {dir} {
 	    #load [file join $dir lib libpng.so]
 	    load [file join $dir lib tkimg.so]
 	}
+    }
+
+    # Try to load Sdb
+    if {[catch {package require Sdb 1.1}]} {
+	set Archer::haveSdb 0
+    } else {
+	set Archer::haveSdb 1
     }
 }
