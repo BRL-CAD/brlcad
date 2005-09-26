@@ -146,15 +146,17 @@ Z_InitStubs _ANSI_ARGS_((Tcl_Interp *interp, CONST char *version, int exact));
  */
 
 #define Z_InitStubs(interp, version, exact) \
-    Tcl_PkgRequire(interp, "libz", version, exact)
+    Tcl_PkgRequire(interp, ZLIBTCL_PACKAGE_NAME, version, exact)
 #endif
 
+#if 0
 #ifdef _DEBUG
 EXTERN int Z_d_Init     _ANSI_ARGS_((Tcl_Interp *interp));
 EXTERN int Z_d_SafeInit _ANSI_ARGS_((Tcl_Interp *interp));
 #else
 EXTERN int Z_Init     _ANSI_ARGS_((Tcl_Interp *interp));
 EXTERN int Z_SafeInit _ANSI_ARGS_((Tcl_Interp *interp));
+#endif
 #endif
 
 #undef TCL_STORAGE_CLASS

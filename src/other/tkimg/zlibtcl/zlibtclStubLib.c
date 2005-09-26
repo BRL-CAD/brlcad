@@ -63,7 +63,7 @@ Z_InitStubs(interp, version, exact)
 #define UNCONST 
 #endif
 
-    result = Tcl_PkgRequireEx(interp, PACKAGE_NAME, UNCONST version, exact,
+    result = Tcl_PkgRequireEx(interp, ZLIBTCL_PACKAGE_NAME, UNCONST version, exact,
 		(ClientData *) &zlibtclStubsPtr);
     if (!result || !zlibtclStubsPtr) {
         return (char *) NULL;
