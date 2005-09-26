@@ -1678,15 +1678,24 @@ extern PNG_EXPORT(void,png_destroy_read_struct) PNGARG((png_structpp
    png_ptr_ptr, png_infopp info_ptr_ptr, png_infopp end_info_ptr_ptr));
 
 /* free all memory used by the read (old method - NOT DLL EXPORTED) */
+#if 1
+extern PNG_EXPORT(void,png_read_destroy) PNGARG((png_structp png_ptr, png_infop info_ptr,
+   png_infop end_info_ptr));
+#else
 extern void png_read_destroy PNGARG((png_structp png_ptr, png_infop info_ptr,
    png_infop end_info_ptr));
+#endif
 
 /* free any memory associated with the png_struct and the png_info_structs */
 extern PNG_EXPORT(void,png_destroy_write_struct)
    PNGARG((png_structpp png_ptr_ptr, png_infopp info_ptr_ptr));
 
 /* free any memory used in png_ptr struct (old method - NOT DLL EXPORTED) */
+#if 1
+extern PNG_EXPORT(void,png_write_destroy) PNGARG((png_structp png_ptr));
+#else
 extern void png_write_destroy PNGARG((png_structp png_ptr));
+#endif
 
 /* set the libpng method of handling chunk CRC errors */
 extern PNG_EXPORT(void,png_set_crc_action) PNGARG((png_structp png_ptr,
