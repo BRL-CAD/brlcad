@@ -63,7 +63,7 @@ Png_InitStubs(interp, version, exact)
 #define UNCONST 
 #endif
 
-    result = Tcl_PkgRequireEx(interp, PACKAGE_NAME, UNCONST version, exact,
+    result = Tcl_PkgRequireEx(interp, PNGTCL_PACKAGE_NAME, UNCONST version, exact,
 		(ClientData *) &pngtclStubsPtr);
     if (!result || !pngtclStubsPtr) {
         return (char *) NULL;

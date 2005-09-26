@@ -25,6 +25,7 @@
     (TCL_MAJOR_VERSION > 8 || TCL_MAJOR_VERSION == 8 && (TCL_MINOR_VERSION > 1 || \
     (TCL_MINOR_VERSION == 1 && TCL_RELEASE_LEVEL == TCL_FINAL_RELEASE)))
 
+#if 1
 /*
  * Declarations for externally visible functions.
  */
@@ -50,6 +51,7 @@ EXTERN int Png_SafeInit _ANSI_ARGS_((Tcl_Interp *interp));
 
 #undef  TCL_STORAGE_CLASS
 #define TCL_STORAGE_CLASS DLLIMPORT
+#endif
 
 /*
  * Prototypes for procedures defined later in this file:
@@ -98,12 +100,12 @@ Png_Init (interp)
 #endif
 
 #if TCL_DOES_STUBS
-  if (Tcl_PkgProvideEx(interp, PNG_PACKAGE_NAME, PNGTCL_VERSION,
+  if (Tcl_PkgProvideEx(interp, PNGTCL_PACKAGE_NAME, PNGTCL_VERSION,
 		       (ClientData) &pngtclStubs) != TCL_OK) {
     return TCL_ERROR;
   }
 #else
-  if (Tcl_PkgProvide(interp, PNG_PACKAGE_NAME, PNGTCL_VERSION) != TCL_OK) {
+  if (Tcl_PkgProvide(interp, PNGTCL_PACKAGE_NAME, PNGTCL_VERSION) != TCL_OK) {
     return TCL_ERROR;
   }
 #endif

@@ -145,7 +145,17 @@ Png_InitStubs _ANSI_ARGS_((Tcl_Interp *interp, CONST char *version, int exact));
  */
 
 #define Png_InitStubs(interp, version, exact) \
-    Tcl_PkgRequire(interp, "libpng", version, exact)
+    Tcl_PkgRequire(interp, PNGTCL_PACKAGE_NAME, version, exact)
+#endif
+
+#if 0
+#ifdef _DEBUG
+EXTERN int Png_d_Init     _ANSI_ARGS_((Tcl_Interp *interp));
+EXTERN int Png_d_SafeInit _ANSI_ARGS_((Tcl_Interp *interp));
+#else
+EXTERN int Png_Init     _ANSI_ARGS_((Tcl_Interp *interp));
+EXTERN int Png_SafeInit _ANSI_ARGS_((Tcl_Interp *interp));
+#endif
 #endif
 
 #undef TCL_STORAGE_CLASS
