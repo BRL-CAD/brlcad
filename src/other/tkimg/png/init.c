@@ -16,32 +16,6 @@
 #define MORE_INITIALIZATION /* Nothing */
 #endif
 
-#undef TCL_STORAGE_CLASS
-#ifdef BUILD_tkimgpng
-# define TCL_STORAGE_CLASS DLLEXPORT
-#else
-# ifdef USE_TKIMGPNG_STUBS
-#  define TCL_STORAGE_CLASS
-# else
-#  define TCL_STORAGE_CLASS DLLIMPORT
-# endif
-#endif
-
-/*
- * Functions exported for package management.
- */
-
-
-#ifdef _DEBUG
-EXTERN int Tkimgpng_d_Init     _ANSI_ARGS_((Tcl_Interp *interp));
-#else
-EXTERN int Tkimgpng_Init     _ANSI_ARGS_((Tcl_Interp *interp));
-#endif
-EXTERN int Tkimgpng_SafeInit _ANSI_ARGS_((Tcl_Interp *interp));
-
-#undef  TCL_STORAGE_CLASS
-#define TCL_STORAGE_CLASS DLLIMPORT
-
 /*
  * Declarations of internal functions.
  */
@@ -216,7 +190,11 @@ Tkimgpng_Init (interp)
  */
 
 int
+#ifdef _DEBUG
+Tkimgpng_d_SafeInit (interp)
+#else
 Tkimgpng_SafeInit (interp)
+#endif
       Tcl_Interp *interp; /* Interpreter to initialise. */
 {
 #ifdef _DEBUG
