@@ -47,7 +47,7 @@
 #define BRLCAD_VERSION    "7.4.1"
 #define BRLCAD_ROOT       ""
 #define BRLCAD_DATA       ""
-#define INSTALL_DIRECTORY "C:/brlcad7_2"
+#define INSTALL_DIRECTORY "C:/brlcad"
 #define IWIDGETS_VERSION  "4.0.2"
 
 #define HAS_OPENGL	1
