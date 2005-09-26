@@ -32,6 +32,14 @@ namespace eval Archer {
 	    set inheritFromToplevel 0
 	}
     }
+
+    if {![info exists debug]} {
+	set debug 0
+    }
+
+    if {![info exists haveSdb]} {
+	set haveSdb 0
+    }
 }
 
 ::itcl::class Archer {
@@ -156,7 +164,6 @@ namespace eval Archer {
 	common splash ""
 	common showWindow 0
 	common plugins ""
-	common haveSdb 0
 
 	common pluginMajorTypeCore "Core"
 	common pluginMajorTypeWizard "Wizard"
@@ -5706,28 +5713,27 @@ Popup Menu    Right or Ctrl-Left
 
     set licenseTabIndex -1
 
-    if {$::Archer::haveSdb} {
     # IVAVIEW License Info
-#    set fd [open [file join $env(ARCHER_HOME) $brlcadDataPath ivaviewLicense.txt] r]
-    set fd [open [file join $brlcadDataPath ivaviewLicense.txt] r]
-    set mIvaviewLicenseInfo [read $fd]
-    close $fd
-    itk_component add ivaviewLicenseInfo {
-	::iwidgets::scrolledtext $itk_component(licenseDialogTabs).ivaviewLicenseInfo \
-	    -wrap word \
-	    -hscrollmode dynamic \
-	    -vscrollmode dynamic \
-	    -textfont $mFontText \
-	    -background $SystemButtonFace \
-	    -textbackground $SystemButtonFace
-    } {}
-    $itk_component(ivaviewLicenseInfo) insert 0.0 $mIvaviewLicenseInfo
-    $itk_component(ivaviewLicenseInfo) configure -state disabled
+    if {$::Archer::haveSdb} {
+	set fd [open [file join $brlcadDataPath doc ivaviewLicense.txt] r]
+	set mIvaviewLicenseInfo [read $fd]
+	close $fd
+	itk_component add ivaviewLicenseInfo {
+	    ::iwidgets::scrolledtext $itk_component(licenseDialogTabs).ivaviewLicenseInfo \
+		-wrap word \
+		-hscrollmode dynamic \
+		-vscrollmode dynamic \
+		-textfont $mFontText \
+		-background $SystemButtonFace \
+		-textbackground $SystemButtonFace
+	} {}
+	$itk_component(ivaviewLicenseInfo) insert 0.0 $mIvaviewLicenseInfo
+	$itk_component(ivaviewLicenseInfo) configure -state disabled
 
-    incr licenseTabIndex
-    $itk_component(licenseDialogTabs) tab configure $licenseTabIndex \
-	-window $itk_component(ivaviewLicenseInfo) \
-	-fill both
+	incr licenseTabIndex
+	$itk_component(licenseDialogTabs) tab configure $licenseTabIndex \
+	    -window $itk_component(ivaviewLicenseInfo) \
+	    -fill both
     }
 
     # BRL-CAD License Info
@@ -10758,13 +10764,6 @@ Popup Menu    Right or Ctrl-Left
     } else {
 	return $sdb
     }
-}
-
-# Try to load Sdb
-if {[catch {package require Sdb 1.0}]} {
-    set ::Archer::haveSdb 0
-} else {
-    set ::Archer::haveSdb 1
 }
 
 Archer::initArcher
