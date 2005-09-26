@@ -21,7 +21,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="../../../src/other/libz,../../../include"
+				AdditionalIncludeDirectories="../../../include"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;ZLIB_DLL;ZLIB_INTERNAL;TCL_THREADS=1;__win32;BRLCAD_DLL;HAVE_CONFIG_H"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
@@ -90,7 +90,7 @@ copy &quot;$(TargetDir)&quot;libz_d.lib ..\..\..\lib
 				Name="VCCLCompilerTool"
 				Optimization="2"
 				InlineFunctionExpansion="1"
-				AdditionalIncludeDirectories="../../../src/other/libz/tcl;../../../include"
+				AdditionalIncludeDirectories="../../../include"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;ZLIB_DLL;BUILD_zlibtcl;TCL_THREADS=1;__win32;BRLCAD_DLL;HAVE_CONFIG_H;PACKAGE_NAME=\&quot;libz\&quot;;VERSION=\&quot;1.2.1\&quot;"
 				StringPooling="TRUE"
 				RuntimeLibrary="2"
@@ -373,15 +373,6 @@ copy &quot;$(TargetDir)&quot;libz.lib ..\..\..\lib
 						AdditionalIncludeDirectories=""
 						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_MBCS;_USRDLL;ZLIB_DLL;TCL_THREADS=1;__win32;BRLCAD_DLL;HAVE_CONFIG_H;$(NoInherit)"/>
 				</FileConfiguration>
-			</File>
-			<File
-				RelativePath="..\..\..\src\other\libz\tcl\zlibtcl.c">
-			</File>
-			<File
-				RelativePath="..\..\..\src\other\libz\tcl\zlibtclStubInit.c">
-			</File>
-			<File
-				RelativePath="..\..\..\src\other\libz\tcl\zlibtclStubLib.c">
 			</File>
 			<File
 				RelativePath="..\..\..\src\other\libz\zutil.c">

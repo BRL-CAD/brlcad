@@ -22,8 +22,8 @@
 				Name="VCCLCompilerTool"
 				Optimization="2"
 				InlineFunctionExpansion="1"
-				AdditionalIncludeDirectories="../../../src/other/libpng/tcl;../../../src/other/libz/tcl;../../../include"
-				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;PNG_DLL;PNG_BUILD_DLL;PNG_NO_MODULEDEF;BUILD_pngtcl;ZLIB_DLL;TCL_THREADS=1;__win32;BRLCAD_DLL;HAVE_CONFIG_H;PACKAGE_NAME=\&quot;libpng\&quot;"
+				AdditionalIncludeDirectories="../../../include"
+				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;PNG_DLL;PNG_BUILD_DLL;PNG_NO_MODULEDEF;ZLIB_DLL;TCL_THREADS=1;__win32;BRLCAD_DLL;HAVE_CONFIG_H;PACKAGE_NAME=\&quot;libpng\&quot;"
 				StringPooling="TRUE"
 				RuntimeLibrary="2"
 				EnableFunctionLevelLinking="TRUE"
@@ -90,7 +90,7 @@ copy &quot;$(TargetDir)&quot;libpng.lib ..\..\..\lib
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="../../../src/other/libz,../../../include"
+				AdditionalIncludeDirectories="../../../include"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;PNG_BUILD_DLL;ZLIB_DLL;TCL_THREADS=1;__win32;BRLCAD_DLL;HAVE_CONFIG_H"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
@@ -374,15 +374,6 @@ copy &quot;$(TargetDir)&quot;libpng_d.lib ..\..\..\lib
 						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_MBCS;_USRDLL;PNG_BUILD_DLL;ZLIB_DLL;TCL_THREADS=1;__win32;BRLCAD_DLL;HAVE_CONFIG_H;$(NoInherit)"
 						BasicRuntimeChecks="3"/>
 				</FileConfiguration>
-			</File>
-			<File
-				RelativePath="..\..\..\src\other\libpng\tcl\pngtcl.c">
-			</File>
-			<File
-				RelativePath="..\..\..\src\other\libpng\tcl\pngtclStubInit.c">
-			</File>
-			<File
-				RelativePath="..\..\..\src\other\libpng\tcl\pngtclStubLib.c">
 			</File>
 			<File
 				RelativePath="..\..\..\src\other\libpng\pngtrans.c">
