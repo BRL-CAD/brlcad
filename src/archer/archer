@@ -75,7 +75,7 @@ namespace eval Archer {
     }
 }
 
-set archerDebug 0
+set Archer::debug 0
 package require Archer 1.0
 package require Iwidgets
 package require Swidgets
@@ -83,54 +83,6 @@ package require Swidgets
 # This must be done after loading BLT (that potentially gets it wrong)
 set blt_library [file join $env(ARCHER_HOME) lib blt2.4]
 lappend auto_path $blt_library
-
-# PROCEDURE: SetWaitCursor
-#
-# Changes the cursor for all of the GUI's widgets to the wait cursor.
-#
-# Arguments:
-#       None
-#
-# Results:
-#       None
-#
-proc SetWaitCursor {} {
-    update
-    set children [winfo children .]
-    foreach kid $children {
-        if {![catch {$kid isa "::itk::Toplevel"} result]} {
-            switch -- $result {
-                "1" {catch {blt::busy $kid}}
-            }
-        }
-    }
-    blt::busy .
-    update
-}
-
-# PROCEDURE: SetNormalCursor
-#
-# Changes the cursor for all of the GUI's widgets to the normal cursor.
-#
-# Arguments:
-#       None
-#
-# Results:
-#       None
-#
-proc SetNormalCursor {} {
-    update
-    set children [winfo children .]
-    foreach kid $children {
-        if {![catch {$kid isa "::itk::Toplevel"} result]} {
-            switch -- $result {
-                "1" {catch {blt::busy release $kid}}
-            }
-        }
-    }
-    blt::busy release .
-    update
-}
 
 # PROCEDURE: showMainWindow
 #
