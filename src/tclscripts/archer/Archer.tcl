@@ -63,6 +63,7 @@ namespace eval Archer {
 	method primary_toolbar_remove_itm  {index}
 	method closeHierarchy {}
 	method openHierarchy {{fraction 30}}
+	method refreshTree       {{restore 1}}
 
 	# public database commands
 	method dbCmd               {args}
@@ -107,8 +108,10 @@ namespace eval Archer {
 	method exit                {args}
 	method exportFg4	   {}
 	method exportStl	   {}
+	method find                {args}
 	method hide                {args}
 	method g                   {args}
+	method get                 {args}
 	method group               {args}
 	method importFg4	   {}
 	method importStl	   {}
@@ -126,6 +129,7 @@ namespace eval Archer {
 	method put                 {args}
 	method pwd                 {}
 	method r                   {args}
+	method report              {args}
 	method reverseNormals      {args}
 	method rm                  {args}
 	method track               {args}
@@ -332,10 +336,11 @@ namespace eval Archer {
 	variable archerCommands { \
 	    adjust adjustNormals blast c cd clear comb compact concat \
             copy copyeval cp dbExpand delete draw E erase \
-	    erase_all ev exit exportFg4 exportStl hide g group \
+	    erase_all ev exit exportFg4 exportStl find hide g group \
             importFg4 importStl i importFg4Sections kill killall \
             killtree ls make_bb move mv mvall push put pwd \
-            r reverseNormals rm track unhide units vdraw whichid who Z zap \
+            r report reverseNormals rm track unhide units vdraw whichid \
+            who Z zap \
 	}
 	variable dbCommands {}
 	variable bannedDbCommands { \
@@ -8042,6 +8047,10 @@ Popup Menu    Right or Ctrl-Left
     }
 }
 
+::itcl::body Archer::refreshTree {{restore 1}} {
+    _refresh_tree $restore
+}
+
 ::itcl::body Archer::_refresh_tree {{restore 1}} {
     if {$restore == 1} {
 	# get current open state
@@ -10064,8 +10073,28 @@ Popup Menu    Right or Ctrl-Left
     SetNormalCursor
 }
 
+::itcl::body Archer::find {args} {
+    if {![info exists itk_component(mged)]} {
+	return
+    }
+
+    eval $itk_component(mged) find $args
+}
+
 ::itcl::body Archer::g {args} {
     eval group $args
+}
+
+::itcl::body Archer::get {args} {
+    if {[info exists itk_component(mged)]} {
+	return [eval $itk_component(mged) get $args]
+    }
+
+    if {[info exists itk_component(sdb)]} {
+	return [eval $itk_component(sdb) get $args]
+    }
+
+    return ""
 }
 
 ::itcl::body Archer::group {args} {
@@ -10443,6 +10472,10 @@ Popup Menu    Right or Ctrl-Left
 
 ::itcl::body Archer::r {args} {
     eval mgedWrapper r 0 1 1 1 $args
+}
+
+::itcl::body Archer::report {args} {
+    eval mgedWrapper report 0 0 0 0 $args
 }
 
 ::itcl::body Archer::reverseNormals {args} {
