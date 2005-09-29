@@ -164,6 +164,8 @@ itcl::class swidgets::Tree {
 	variable treeheight 0
 	variable root
 	variable selnode {}
+	variable selectBox ""
+	variable saveFill ""
 	variable idle ""
 
 	method _cleanup_node {node}
@@ -198,7 +200,7 @@ proc ::swidgets::tree {args} {
 # ------------------------------------------------------------
 ::itcl::body swidgets::Tree::constructor {args} {
     # create root node
-    set root [swidgets::Treenode #auto ""]
+    set root [swidgets::Treenode \#auto ""]
     $root open "true"
 
     # bounding frame
@@ -252,6 +254,12 @@ proc ::swidgets::tree {args} {
 
     _bind_text  <Button-3> [list eval [::itcl::code $this _item_popup]]
     _bind_image <Button-3> [list eval [::itcl::code $this _item_popup]]
+
+    # Create the selection box
+    #$itk_component(canvas) create rectangle 0 0 0 0 \
+	-tags selectBox \
+	-fill black \
+	-outline black
 }
 
 ::itcl::body swidgets::Tree::destructor {} {
@@ -508,6 +516,11 @@ proc ::swidgets::tree {args} {
 }
 
 ::itcl::body swidgets::Tree::_draw_tree {} {
+    # First, save selectBox's coords
+    if {$selectBox != ""} {
+	set coords [$itk_component(canvas) coords selectBox]
+    }
+
     $itk_component(canvas) delete all
     set cursor [$itk_component(canvas) cget -cursor]
     $itk_component(canvas) configure -cursor watch
@@ -522,6 +535,16 @@ proc ::swidgets::tree {args} {
 
     $itk_component(canvas) configure -height $treeheight -cursor $cursor
 
+    if {$selectBox != ""} {
+	set saveFill [$itk_component(canvas) itemcget $selnode -fill]
+
+	# Recreate the selection box
+	set selectBox [eval $itk_component(canvas) create rectangle $coords \
+			   -tags selectBox \
+			   -fill $itk_option(-foreground) \
+			   -outline $itk_option(-foreground)]
+    }
+
     set idle ""
     update idletasks
 }
@@ -531,6 +554,7 @@ proc ::swidgets::tree {args} {
     if {$selnode != {}} {
 	if [catch {selection set $selnode} err] {
 	    set selnode {}
+	    set saveFill ""
 	}
     }
 }
@@ -673,38 +697,89 @@ proc ::swidgets::tree {args} {
 }
 
 ::itcl::body swidgets::Tree::selection {cmd {node ""}} {
+    if {$selectBox == ""} {
+	# Create the selection box
+	set selectBox [$itk_component(canvas) create rectangle -10 -10 -10 -10 \
+			   -tags selectBox \
+			   -fill $itk_option(-foreground) \
+			   -outline $itk_option(-foreground)]
+    }
+
     switch -- $cmd {
-	toggle {
-	    if {$node == ""} {return}
-	    if {[selection includes $node]} {
-		selection remove $node
-	    } else {
-		selection add $node
-	    }
-	}
 	set {
-	    if {$node == ""} {return}
+	    if {$node == ""} {
+		return
+	    }
+
+	    set oldSelNode $selnode
+
 	    if {[string first "n:" $node] == -1} {
 		set selnode "n:$node"
 	    } else {
 		set selnode $node
 	    }
 
-	    # try to highlight here
-	    $itk_component(canvas) select from $selnode 0
-	    $itk_component(canvas) select to $selnode end
+	    if {$oldSelNode != $selnode} {
+		# Unhighlight oldSelNode
+		if {$oldSelNode != {}} {
+		    if {$saveFill == ""} {
+			set fill $itk_option(-foreground)
+		    } else {
+			set fill $saveFill
+		    }
+		    $itk_component(canvas) itemconfigure $oldSelNode\
+			-fill $fill
+		}
+
+		# Save the fill color
+		set saveFill [$itk_component(canvas) itemcget $selnode -fill]
+	    }
+
+	    # Save the fill color
+	    if {$saveFill == ""} {
+		set saveFill [$itk_component(canvas) itemcget $selnode -fill]
+	    }
+
+	    # Highlight selnode
+	    set coords [$itk_component(canvas) bbox $selnode]
+	    eval $itk_component(canvas) coords selectBox $coords
+	    $itk_component(canvas) itemconfigure $selnode \
+		-fill $itk_option(-background)
+	    $itk_component(canvas) itemconfigure selectBox \
+		-fill $itk_option(-foreground) \
+		-outline $itk_option(-foreground)
+	    $itk_component(canvas) lower selectBox
 	}
 	clear {
-	    $itk_component(canvas) select clear
+	    # Unhighlight selnode
+	    if {$selnode != {}} {
+		if {$saveFill == ""} {
+		    set fill $itk_option(-foreground)
+		} else {
+		    set fill $saveFill
+		}
+		$itk_component(canvas) itemconfigure $selnode\
+		    -fill $fill
+	    }
+
+	    $itk_component(canvas) itemconfigure selectBox \
+		-fill $itk_option(-background) \
+		-outline $itk_option(-background)
+	    $itk_component(canvas) lower selectBox
+
 	    set selnode {}
+	    set saveFill ""
 	}
 	get {
-	    return $selnode
+	    return [lindex $selnode 0]
 	}
 	includes {
-	    if {$node == ""} {return}
+	    if {$node == ""} {
+		return
+	    }
 	    return [expr {[lsearch -exact $selnode $node] != -1}]
 	}
+	toggle -
 	default {return}
     }
 }
@@ -715,6 +790,7 @@ proc ::swidgets::tree {args} {
     } else {
 	set selnode $node
     }
+    selection set $selnode
     set node [lindex [split $selnode ":"] 1]
 
     switch -- [$node open] {
