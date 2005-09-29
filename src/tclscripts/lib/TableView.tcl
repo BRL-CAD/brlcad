@@ -57,8 +57,8 @@
     destructor {}
 
 	variable font 
-    itk_option define -colfont colfont Font {SystemWindowText 8}
-    itk_option define -rowfont rowfont Font {SystemWindowText 8}
+    itk_option define -colfont colfont Font {Helvetica 12}
+    itk_option define -rowfont rowfont Font {Helvetica 12}
     itk_option define -useTextEntry useTextEntry UseTextEntry 0
     itk_option define -textEntryWidth textEntryWidth TextEntryWidth 20
     itk_option define -textEntryHeight textEntryHeight TextEntryHeight 3
@@ -1895,18 +1895,14 @@
 		-width 4 \
 		-height $textEntryHeight \
 		-state disabled \
-		-relief flat \
-		-background SystemButtonFace \
-		-foreground SystemButtonText
+		-relief flat
 	} else {
 	    ::entry $itk_component(rowLabels).rl$i \
 		-textvariable [::itcl::scope rlvar($i)] \
 		-width 4 \
 		-justify right \
 		-state disabled \
-		-relief flat \
-		-disabledbackground SystemButtonFace \
-		-disabledforeground SystemButtonText
+		-relief flat
 	}
     } {
 	rename -borderwidth -rlborderwidth rlborderwidth Rlborderwidth
