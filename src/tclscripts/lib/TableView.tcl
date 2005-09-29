@@ -56,9 +56,6 @@
     constructor {_labels args} {}
     destructor {}
 
-	variable font 
-    itk_option define -colfont colfont Font {SystemWindowText 8}
-    itk_option define -rowfont rowfont Font {SystemWindowText 8}
     itk_option define -useTextEntry useTextEntry UseTextEntry 0
     itk_option define -textEntryWidth textEntryWidth TextEntryWidth 20
     itk_option define -textEntryHeight textEntryHeight TextEntryHeight 3
@@ -67,6 +64,32 @@
     itk_option define -lostFocusCallback lostFocusCallback LostFocusCallback ""
 
     public {
+	common SystemWindowFont
+	common SystemWindowText
+	common SystemWindow
+	common SystemHighlight
+	common SystemHighlightText
+	common SystemButtonFace
+	common SystemButtonText
+
+	if {$tcl_platform(os) != "Windows NT"} {
+	    set SystemWindowFont Helvetica
+	    set SystemWindowText black
+	    set SystemWindow \#d9d9d9
+	    set SystemHighlight black
+	    set SystemHighlightText \#ececec
+	    set SystemButtonFace \#d9d9d9
+	    set SystemButtonText black
+	} else {
+	    set SystemWindowFont SystemWindowText
+	    set SystemWindowText SystemWindowText
+	    set SystemWindow SystemWindow
+	    set SystemHighlight SystemHighlight
+	    set SystemHighlightText SystemHighlightText
+	    set SystemButtonFace SystemButtonFace
+	    set SystemButtonText SystemButtonText
+	}
+
 	# methods that change/query table values
 	method getEntry {i j}
 	method setEntry {i j val {allowScroll 1}}
@@ -289,6 +312,9 @@
 	method enableColState {}
 	method resetColState {}
     }
+
+    itk_option define -colfont colfont Font [list $SystemWindowFont 8]
+    itk_option define -rowfont rowfont Font [list $SystemWindowFont 8]
 }
 
 ::itcl::configbody TableView::colfont {
@@ -1896,8 +1922,8 @@
 		-height $textEntryHeight \
 		-state disabled \
 		-relief flat \
-		-background SystemButtonFace \
-		-foreground SystemButtonText
+		-background $SystemButtonFace \
+		-foreground $SystemButtonText
 	} else {
 	    ::entry $itk_component(rowLabels).rl$i \
 		-textvariable [::itcl::scope rlvar($i)] \
@@ -1905,8 +1931,8 @@
 		-justify right \
 		-state disabled \
 		-relief flat \
-		-disabledbackground SystemButtonFace \
-		-disabledforeground SystemButtonText
+		-disabledbackground $SystemButtonFace \
+		-disabledforeground $SystemButtonText
 	}
     } {
 	rename -borderwidth -rlborderwidth rlborderwidth Rlborderwidth
