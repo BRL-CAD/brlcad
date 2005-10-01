@@ -540,31 +540,37 @@ if [ "x$reconfigure_manually" = "xyes" ] ; then
   $VERBOSE_ECHO "$AUTOCONF -f"
   autoconf_output=`$AUTOCONF -f 2>&1`
   if [ ! $? = 0 ] ; then
-    if test -f "$LIBTOOL_M4" ; then
-      found_libtool="`$ECHO $autoconf_output | grep AC_PROG_LIBTOOL`"
-      if ! test "x$found_libtool" = "x" ; then
-	if test -f acinclude.m4 ; then
-	  if ! test -f acinclude.m4.backup ; then
-	    $VERBOSE_ECHO cp acinclude.m4 acinclude.m4.backup
-	    cp acinclude.m4 acinclude.m4.backup
+      # retry without the -f
+      $VERBOSE_ECHO
+      $VERBOSE_ECHO "$AUTOCONF"
+      autoconf_output=`$AUTOCONF 2>&1`
+      if [ ! $? = 0 ] ; then
+	  if test -f "$LIBTOOL_M4" ; then
+	      found_libtool="`$ECHO $autoconf_output | grep AC_PROG_LIBTOOL`"
+	      if ! test "x$found_libtool" = "x" ; then
+		  if test -f acinclude.m4 ; then
+		      if ! test -f acinclude.m4.backup ; then
+			  $VERBOSE_ECHO cp acinclude.m4 acinclude.m4.backup
+			  cp acinclude.m4 acinclude.m4.backup
+		      fi
+		  fi
+		  $VERBOSE_ECHO cat "$LIBTOOL_M4" >> acinclude.m4
+		  cat "$LIBTOOL_M4" >> acinclude.m4
+		  
+		  $ECHO
+		  $ECHO "Restarting the configuration steps with a local libtool.m4"
+
+		  $VERBOSE_ECHO sh $0 "$1" "$2" "$3" "$4" "$5" "$6" "$7" "$8" "$9"
+		  sh "$0" "$1" "$2" "$3" "$4" "$5" "$6" "$7" "$8" "$9"
+		  exit $?
+	      fi
 	  fi
-	fi
-	$VERBOSE_ECHO cat "$LIBTOOL_M4" >> acinclude.m4
-	cat "$LIBTOOL_M4" >> acinclude.m4
-
-	$ECHO
-	$ECHO "Restarting the configuration steps with a local libtool.m4"
-
-	$VERBOSE_ECHO sh $0 "$1" "$2" "$3" "$4" "$5" "$6" "$7" "$8" "$9"
-	sh "$0" "$1" "$2" "$3" "$4" "$5" "$6" "$7" "$8" "$9"
-	exit $?
-      fi
-    fi
-    cat <<EOF
+	  cat <<EOF
 $autoconf_output
 EOF
-    $ECHO "ERROR: $AUTOCONF failed"
-    exit 2
+	  $ECHO "ERROR: $AUTOCONF failed"
+	  exit 2
+      fi
   fi
 
   $VERBOSE_ECHO "$AUTOHEADER"
