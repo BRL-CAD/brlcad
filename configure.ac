@@ -599,8 +599,10 @@ BC_CONFIGURE_STAGE([programs], [2 of 9])
 AC_LANG(C)
 
 AC_AIX
-AC_GNU_SOURCE
 AC_MINIX
+
+dnl added in autoconf 2.54 to define _GNU_SOURCE
+AC_GNU_SOURCE
 
 AC_PROG_CC
 AM_PROG_CC_STDC
@@ -1135,9 +1137,11 @@ dnl **********************************
 
 BC_CONFIGURE_STAGE([types], [5 of 9])
 
+dnl added in autoconf 2.55
+AC_HEADER_STDBOOL
+
 AC_C_CHAR_UNSIGNED
 AC_HEADER_STAT
-AC_HEADER_STDBOOL
 AC_HEADER_TIME
 AC_STRUCT_ST_BLOCKS
 dnl Tcl still uses HAVE_ST_BLKSIZE
