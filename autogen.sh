@@ -540,11 +540,62 @@ if [ "x$reconfigure_manually" = "xyes" ] ; then
     $VERBOSE_ECHO "$AUTOCONF -f"
     autoconf_output=`$AUTOCONF -f 2>&1`
     if [ ! $? = 0 ] ; then
-	# retry without the -f
+	# retry without the -f and with backwards support for missing macros
+	configure_ac_changed="no"
+	if test "x$HAVE_SED" = "xyes" ; then
+	    if ! test -f configure.ac.backup ; then
+		$VERBOSE_ECHO cp $_configure_file configure.ac.backup
+		cp $_configure_file configure.ac.backup
+	    fi
+
+	    ac2_59_macros="AC_C_RESTRICT AC_INCLUDES_DEFAULT AC_LANG_ASSERT AC_LANG_WERROR AS_SET_CATFILE"
+	    ac2_55_macros="AC_COMPILER_IFELSE AC_FUNC_MBRTOWC AC_HEADER_STDBOOL AC_LANG_CONFTEST AC_LANG_SOURCE AC_LANG_PROGRAM AC_LANG_CALL AC_LANG_FUNC_TRY_LINK AC_MSG_FAILURE AC_PREPROC_IFELSE"
+	    ac2_54_macros="AC_C_BACKSLASH_A AC_CONFIG_LIBOBJ_DIR AC_GNU_SOURCE AC_PROG_EGREP AC_PROG_FGREP AC_REPLACE_FNMATCH AC_FUNC_FNMATCH_GNU AC_FUNC_REALLOC AC_TYPE_MBSTATE_T"
+
+	    macros_to_search=""
+	    if [ $AUTOCONF_MAJOR_VERSION -lt 2 ] ; then
+		macros_to_search="$ac2_59_macros $ac2_55_macros $ac2_54_macros"
+	    else
+		if [ $AUTOCONF_MINOR_VERSION -lt 54 ] ; then
+		    macros_to_search="$ac2_59_macros $ac2_55_macros $ac2_54_macros"
+		elif [ $AUTOCONF_MINOR_VERSION -lt 55 ] ; then
+		    macros_to_search="$ac2_59_macros $ac2_55_macros"
+		elif [ $AUTOCONF_MINOR_VERSION -lt 59 ] ; then
+		    macros_to_search="$ac2_59_macros"
+		fi
+	    fi
+
+	    if [ -w $_configure_file ] ; then
+		for feature in $macros_to_search ; do
+		    $VERBOSE_ECHO "Searching for $feature in $_configure_file with sed"
+		    sed "s/^\($feature.*\)$/dnl \1/g" < $_configure_file > configure.ac.sed
+		    if [ ! "x`cat $_configure_file`" = "x`cat configure.ac.sed`" ] ; then
+			$VERBOSE_ECHO cp configure.ac.sed $_configure_file
+			cp configure.ac.sed $_configure_file
+			if [ "x$configure_ac_changed" = "xno" ] ; then
+			    configure_ac_changed="$feature"
+			else
+			    configure_ac_changed="$feature $configure_ac_changed"
+			fi
+		    fi
+		    rm -f configure.ac.sed
+		done
+	    else
+		$VERBOSE_ECHO "$_configure_file is not writable so not attempting to edit"
+	    fi
+	fi
 	$VERBOSE_ECHO
 	$VERBOSE_ECHO "$AUTOCONF"
 	autoconf_output=`$AUTOCONF 2>&1`
 	if [ ! $? = 0 ] ; then
+
+	    # failed so restore the backup
+	    if test -f configure.ac.backup ; then
+		$VERBOSE_ECHO cp configure.ac.bacukp $_configure_file
+		cp configure.ac.backup $_configure_file
+	    fi
+
+	    # test if libtool is busted
 	    if test -f "$LIBTOOL_M4" ; then
 		found_libtool="`$ECHO $autoconf_output | grep AC_PROG_LIBTOOL`"
 		if ! test "x$found_libtool" = "x" ; then
@@ -570,6 +621,25 @@ $autoconf_output
 EOF
 	    $ECHO "ERROR: $AUTOCONF failed"
 	    exit 2
+
+	else
+	    # autoconf sans -f and possibly sans unsupported options succeeded so warn verbosely
+
+	    if [ ! "x$configure_ac_changed" = "xno" ] ; then
+		$ECHO
+		$ECHO "Warning:  Unsupported macros were found and removed from $_configure_file"
+		$ECHO
+		$ECHO "The $_configure_file file was edited in an attempt to successfully run"
+		$ECHO "autoconf by commenting out the unsupported macros.  Since you are"
+		$ECHO "reading this, autoconf succeeded after the edits were made.  The"
+		$ECHO "original $_configure_file is saved as configure.ac.backup but you should"
+		$ECHO "consider either increasing the minimum version of autoconf required"
+		$ECHO "by this script or removing the following macros from $_configure_file:"
+		$ECHO
+		$ECHO "$configure_ac_changed"
+		$ECHO
+		$ECHO $ECHO_N "Continuing build preparation ... $ECHO_C"
+	    fi
 	fi
     fi
 
