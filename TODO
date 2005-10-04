@@ -16,8 +16,6 @@ THESE ARE LOWER PRIORITY OR FOR FUTURE RELEASES
 
 * M-x indent-region scripts
 
-* better configure section output
-
 * ensure successful build on mingw
 
 * provide installation and post configuration support scripts
