@@ -123,7 +123,6 @@ proc createSplashScreen {} {
     set useImage 1
 
     if {$useImage} {
-#	set image [image create photo -file [file join $env(ARCHER_HOME) tclscripts archer images aboutArcher.png]]
 	set image [image create photo -file [file join $brlcadDataPath tclscripts archer images aboutArcher.png]]
 	set ::Archer::splash [Splash .splash -image $image]
     } else {
@@ -203,10 +202,8 @@ proc main {} {
 	set ::Archer::archer [Archer .\#auto]
 	wm title $::Archer::archer "Archer"
 	if {$tcl_platform(os) == "Windows NT"} {
-	    #wm iconbitmap $::Archer::archer -default \
-	    #[file join $env(ARCHER_HOME) doc html manuals archer archer.ico]
 	    wm iconbitmap $::Archer::archer -default \
-		[file join $brlcadDataPath html manuals archer archer.ico]
+		[file join $brlcadDataPath doc html manuals archer archer.ico]
 	}
 	set size [wm maxsize $::Archer::archer]
         set width [expr {[lindex $size 0] - 8}]
@@ -216,10 +213,8 @@ proc main {} {
     } else {
 	wm title . "Archer"
 	if {$tcl_platform(os) == "Windows NT"} {
-	    #wm iconbitmap . -default \
-	    #[file join $env(ARCHER_HOME) doc html manuals archer archer.ico]
 	    wm iconbitmap . -default \
-		[file join $brlcadDataPath html manuals archer archer.ico]
+		[file join $brlcadDataPath doc html manuals archer archer.ico]
 	}
 	set ::Archer::archer [Archer .\#auto]
 	set size [wm maxsize .]
