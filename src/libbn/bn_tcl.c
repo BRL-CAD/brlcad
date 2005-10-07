@@ -721,6 +721,7 @@ bn_cmd_noise_slice(ClientData clientData,
 	xdim = atoi(argv[0]);
 	ydim = atoi(argv[1]);
 	VSETALL(delta, 0.0);
+	VSETALL(scale, 1.);
 	pt[Z] = delta[Z] = atof(argv[2]);
 	h_val = atof(argv[3]);
 	lacunarity = atof(argv[4]);
