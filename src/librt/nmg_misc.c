@@ -12133,6 +12133,62 @@ nmg_bot(struct shell *s, const struct bn_tol *tol)
 	return( bot );
 }
 
+/**	N M G _ V L I S T _ T O _ E U
+ *
+ * create wire edges corresponding to the lines in the vlist. The wire edges are 
+ * created in the specified shell
+ *
+ */
+void
+nmg_vlist_to_eu( struct bu_list *vlist, struct shell *s )
+{
+    point_t pt1, pt2;
+    struct bn_vlist *vp;
+    struct edgeuse *eu;
+    struct vertex *v=NULL;
+    struct vertex *polyStartV=NULL;
+
+    for( BU_LIST_FOR( vp, bn_vlist, vlist ) )  {
+	register int	i;
+	register int	nused = vp->nused;
+	register int	*cmd = vp->cmd;
+	register point_t *pt = vp->pt;
+	for( i = 0; i < nused; i++,cmd++,pt++ )  {
+	    switch( *cmd ) {
+	    case BN_VLIST_LINE_MOVE:
+	    case BN_VLIST_POLY_MOVE:
+		VMOVE( pt2, *pt );
+		v = NULL;
+		polyStartV = NULL;
+		break;
+	    case BN_VLIST_LINE_DRAW:
+	    case BN_VLIST_POLY_DRAW:
+		VMOVE( pt1, pt2 );
+		VMOVE( pt2, *pt );
+		eu = nmg_me( v, NULL, s );
+		if( v == NULL ) {
+		    nmg_vertex_gv( eu->vu_p->v_p, pt1 );
+		}
+		nmg_vertex_gv( eu->eumate_p->vu_p->v_p, pt2 );
+		v = eu->eumate_p->vu_p->v_p;
+		if( polyStartV == NULL ) polyStartV = eu->vu_p->v_p;
+		break;
+	    case BN_VLIST_POLY_END:
+		if( v != NULL &&  polyStartV != NULL ) {
+		    eu = nmg_me( v, polyStartV, s );
+		}
+		break;
+	    case BN_VLIST_POLY_START:
+		polyStartV = NULL;
+		v = NULL;
+		break;
+	    default:
+		break;
+	    }
+	}
+    }
+}
+
 /*
  * Local Variables:
  * mode: C
