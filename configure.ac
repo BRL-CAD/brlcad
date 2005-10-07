@@ -2397,7 +2397,7 @@ AM_CONDITIONAL(BUILD_URT, [test "x$build_brlcad_urt" = "xyes"])
 AM_CONDITIONAL(BUILD_TERMLIB, [test "x$build_brlcad_termlib" = "xyes"])
 AM_CONDITIONAL(BUILD_JOVE, [test "x$bc_build_jove" = "xyes"])
 AM_CONDITIONAL(BUILD_PROE, [test "x$bc_build_proe" = "xyes"])
-AM_CONDITIONAL(BUILD_ADRT, [test "x$build_brlcad_adrt" = "xyes-not-now"])
+AM_CONDITIONAL(BUILD_ADRT, [test "x$build_brlcad_adrt" = "xyes"])
 AM_CONDITIONAL(INSTALL_MODELS, [test "x$bc_install_geometry" = "xyes"])
 
 AM_CONDITIONAL(WITH_JAVA, [test "x$build_against_java" != "xno"])
