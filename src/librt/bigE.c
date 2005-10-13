@@ -1226,9 +1226,7 @@ inverse_dir( vect_t dir, vect_t inv_dir )
 HIDDEN struct soltab *
 classify_seg( struct seg *seg, struct soltab *shoot, struct xray *rp, struct dg_client_data *dgcdp )
 {
-	point_t mid_pt;
 	fastf_t mid_dist;
-	vect_t dir, inv_dir;
 	struct xray new_rp;
 	struct ray_data rd;
 	struct soltab *ret = IN_SOL;
