@@ -198,6 +198,9 @@
 #if !defined(FOPEN_MAX) && defined(OPEN_MAX)
 #	define FOPEN_MAX	OPEN_MAX
 #endif
+#if !defined(FOPEN_MAX) && defined(_SYS_OPEN)
+#	define FOPEN_MAX	_SYS_OPEN
+#endif
 #if !defined(FOPEN_MAX)
 #	define FOPEN_MAX	32
 #endif
