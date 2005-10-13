@@ -400,7 +400,7 @@ out:
 int
 nmg_snurb_is_planar(const struct face_g_snurb *srf, const struct bn_tol *tol)
 {
-	plane_t pl = {0.};
+	plane_t pl = {(fastf_t)0.0};
 	int i;
 	int coords;
 	mat_t matrix;
