@@ -72,7 +72,7 @@ rt_nurb_curvature(struct curvature *cvp, const struct face_g_snurb *srf, fastf_t
 	rt_nurb_s_eval(us, u,v, ue);
 	rt_nurb_s_eval(vs, u,v, ve);
 	rt_nurb_s_eval(uus, u,v, uue);
-	rt_nurb_s_eval(vvs, u,v, uve);
+	rt_nurb_s_eval(vvs, u,v, vve);
 	rt_nurb_s_eval(uvs, u,v, uve);
 
 	rt_nurb_free_snurb( us, (struct resource *)NULL);
