@@ -15,6 +15,10 @@ on-going issues.
 Recent Bugs
 -----------
 
+* mged's matrix selection does not modify the correct matrix if there
+  are multiply referenced non-unique paths (e.g. referencing the same
+  object N times in a combination).
+
 * facetize -t doesn't work (tnurb support)
 
 * on os x, the -fast option results in an odd optimization/aliasing
