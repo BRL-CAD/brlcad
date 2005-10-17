@@ -277,13 +277,16 @@ static int wdb_version_tcl(ClientData clientData, Tcl_Interp *interp, int argc, 
 static int wdb_binary_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 static int wdb_bot_face_sort_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 static int wdb_bot_decimate_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-static int wdb_move_arb_edge_tcl();
-static int wdb_move_arb_face_tcl();
-static int wdb_rotate_arb_face_tcl();
+static int wdb_move_arb_edge_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
+static int wdb_move_arb_face_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
+static int wdb_rotate_arb_face_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 static int wdb_rmap_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 #ifdef IMPORT_FASTGEN4_SECTION
 static int wdb_importFg4Section_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 #endif
+static int wdb_erotate_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
+static int wdb_etranslate_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
+static int wdb_escale_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 
 void wdb_deleteProc(ClientData clientData);
 static void wdb_deleteProc_rt(ClientData clientData);
@@ -327,6 +330,9 @@ static struct bu_cmdtab wdb_cmds[] = {
 	{"dbip",	wdb_dbip_tcl},
 	{"dump",	wdb_dump_tcl},
 	{"dup",		wdb_dup_tcl},
+	{"erotate",	wdb_erotate_tcl},
+	{"escale",	wdb_escale_tcl},
+	{"etranslate",	wdb_etranslate_tcl},
 	{"expand",	wdb_expand_tcl},
 	{"facetize",	wdb_facetize_tcl},
 	{"find",	wdb_find_tcl},
@@ -10265,6 +10271,408 @@ wdb_rotate_arb_face_tcl(ClientData	clientData,
     struct rt_wdb *wdbp = (struct rt_wdb *)clientData;
 
     return wdb_rotate_arb_face_cmd(wdbp, interp, argc-1, argv+1);
+}
+
+int
+wdb_erotate_cmd(struct rt_wdb	*wdbp,
+		Tcl_Interp	*interp,
+		int		argc,
+		char 		**argv)
+{
+    Tcl_DString ds;
+    register struct directory *dp;
+    struct rt_db_internal intern;
+    fastf_t xrot, yrot, zrot;
+    point_t keypoint;
+    mat_t rmat;
+    mat_t mat;
+
+    if (argc != 8) {
+	struct bu_vls vls;
+
+	bu_vls_init(&vls);
+	bu_vls_printf(&vls, "helplib wdb_erotate");
+	Tcl_Eval(interp, bu_vls_addr(&vls));
+	bu_vls_free(&vls);
+
+	return TCL_ERROR;
+    }
+
+    if ((dp = db_lookup(wdbp->dbip,  argv[1],  LOOKUP_QUIET)) == DIR_NULL) {
+	Tcl_DStringInit(&ds);
+	Tcl_DStringAppend(&ds, argv[0], -1);
+	Tcl_DStringAppend(&ds, ": ", -1);
+	Tcl_DStringAppend(&ds, argv[1], -1);
+	Tcl_DStringAppend(&ds, " not found", -1);
+	Tcl_DStringResult(interp, &ds);
+
+	return TCL_ERROR;
+    }
+
+    if (sscanf(argv[2], "%lf", &xrot) != 1) {
+	Tcl_DStringInit(&ds);
+	Tcl_DStringAppend(&ds, argv[0], -1);
+	Tcl_DStringAppend(&ds, ": bad xrot value - ", -1);
+	Tcl_DStringAppend(&ds, argv[2], -1);
+	Tcl_DStringResult(interp, &ds);
+
+	return TCL_ERROR;
+    }
+
+    if (sscanf(argv[3], "%lf", &yrot) != 1) {
+	Tcl_DStringInit(&ds);
+	Tcl_DStringAppend(&ds, argv[0], -1);
+	Tcl_DStringAppend(&ds, ": bad yrot value - ", -1);
+	Tcl_DStringAppend(&ds, argv[3], -1);
+	Tcl_DStringResult(interp, &ds);
+
+	return TCL_ERROR;
+    }
+
+    if (sscanf(argv[4], "%lf", &zrot) != 1) {
+	Tcl_DStringInit(&ds);
+	Tcl_DStringAppend(&ds, argv[0], -1);
+	Tcl_DStringAppend(&ds, ": bad zrot value - ", -1);
+	Tcl_DStringAppend(&ds, argv[4], -1);
+	Tcl_DStringResult(interp, &ds);
+
+	return TCL_ERROR;
+    }
+
+    if (sscanf(argv[5], "%lf", &keypoint[X]) != 1) {
+	Tcl_DStringInit(&ds);
+	Tcl_DStringAppend(&ds, argv[0], -1);
+	Tcl_DStringAppend(&ds, ": bad kx value - ", -1);
+	Tcl_DStringAppend(&ds, argv[5], -1);
+	Tcl_DStringResult(interp, &ds);
+
+	return TCL_ERROR;
+    }
+
+    if (sscanf(argv[6], "%lf", &keypoint[Y]) != 1) {
+	Tcl_DStringInit(&ds);
+	Tcl_DStringAppend(&ds, argv[0], -1);
+	Tcl_DStringAppend(&ds, ": bad ky value - ", -1);
+	Tcl_DStringAppend(&ds, argv[6], -1);
+	Tcl_DStringResult(interp, &ds);
+
+	return TCL_ERROR;
+    }
+
+    if (sscanf(argv[7], "%lf", &keypoint[Z]) != 1) {
+	Tcl_DStringInit(&ds);
+	Tcl_DStringAppend(&ds, argv[0], -1);
+	Tcl_DStringAppend(&ds, ": bad kz value - ", -1);
+	Tcl_DStringAppend(&ds, argv[7], -1);
+	Tcl_DStringResult(interp, &ds);
+
+	return TCL_ERROR;
+    }
+
+    MAT_IDN(rmat);
+    MAT_IDN(mat);
+    VSCALE(keypoint, keypoint, wdbp->dbip->dbi_local2base);
+    bn_mat_angles(rmat, xrot, yrot, zrot);
+    bn_mat_xform_about_pt(mat, rmat, keypoint);
+
+    if (rt_db_get_internal(&intern, dp, wdbp->dbip, mat, &rt_uniresource) < 0) {
+	Tcl_DStringInit(&ds);
+	Tcl_DStringAppend(&ds, argv[0], -1);
+	Tcl_DStringAppend(&ds, ": ", -1);
+	Tcl_DStringAppend(&ds, " rt_db_get_internal(", -1);
+	Tcl_DStringAppend(&ds, argv[1], -1);
+	Tcl_DStringAppend(&ds, ") failure", -1);
+	Tcl_DStringResult(interp, &ds);
+
+	return TCL_ERROR;
+    }
+    RT_CK_DB_INTERNAL(&intern);
+
+    if (rt_db_put_internal(dp,
+			   wdbp->dbip,
+			   &intern,
+			   &rt_uniresource) < 0) {
+	rt_db_free_internal(&intern, &rt_uniresource);
+
+	Tcl_DStringInit(&ds);
+	Tcl_DStringAppend(&ds, argv[0], -1);
+	Tcl_DStringAppend(&ds, ": Database write error, aborting", -1);
+	Tcl_DStringResult(interp, &ds);
+
+	return TCL_ERROR;
+    }
+    rt_db_free_internal(&intern, &rt_uniresource);
+
+    /* notify observers */
+    bu_observer_notify(interp, &wdbp->wdb_observers, bu_vls_addr(&wdbp->wdb_name));
+
+    return TCL_OK;
+}
+
+/*
+ * Rotate obj about the keypoint by xrot yrot zrot.
+ *
+ * Usage:
+ *        procname erotate obj xrot yrot zrot kx ky kz
+ */
+static int
+wdb_erotate_tcl(ClientData	clientData,
+		Tcl_Interp	*interp,
+		int		argc,
+		char		**argv)
+{
+    struct rt_wdb *wdbp = (struct rt_wdb *)clientData;
+
+    return wdb_erotate_cmd(wdbp, interp, argc-1, argv+1);
+}
+
+int
+wdb_escale_cmd(struct rt_wdb	*wdbp,
+	       Tcl_Interp	*interp,
+	       int		argc,
+	       char 		**argv)
+{
+    Tcl_DString ds;
+    register struct directory *dp;
+    struct rt_db_internal intern;
+    fastf_t sf;
+    point_t keypoint;
+    mat_t mat;
+
+    if (argc != 6) {
+	struct bu_vls vls;
+
+	bu_vls_init(&vls);
+	bu_vls_printf(&vls, "helplib wdb_escale");
+	Tcl_Eval(interp, bu_vls_addr(&vls));
+	bu_vls_free(&vls);
+
+	return TCL_ERROR;
+    }
+
+    if ((dp = db_lookup(wdbp->dbip,  argv[1],  LOOKUP_QUIET)) == DIR_NULL) {
+	Tcl_DStringInit(&ds);
+	Tcl_DStringAppend(&ds, argv[0], -1);
+	Tcl_DStringAppend(&ds, ": ", -1);
+	Tcl_DStringAppend(&ds, argv[1], -1);
+	Tcl_DStringAppend(&ds, " not found", -1);
+	Tcl_DStringResult(interp, &ds);
+
+	return TCL_ERROR;
+    }
+
+    if (sscanf(argv[2], "%lf", &sf) != 1) {
+	Tcl_DStringInit(&ds);
+	Tcl_DStringAppend(&ds, argv[0], -1);
+	Tcl_DStringAppend(&ds, ": bad sf value - ", -1);
+	Tcl_DStringAppend(&ds, argv[2], -1);
+	Tcl_DStringResult(interp, &ds);
+
+	return TCL_ERROR;
+    }
+
+    if (sscanf(argv[3], "%lf", &keypoint[X]) != 1) {
+	Tcl_DStringInit(&ds);
+	Tcl_DStringAppend(&ds, argv[0], -1);
+	Tcl_DStringAppend(&ds, ": bad kx value - ", -1);
+	Tcl_DStringAppend(&ds, argv[3], -1);
+	Tcl_DStringResult(interp, &ds);
+
+	return TCL_ERROR;
+    }
+
+    if (sscanf(argv[4], "%lf", &keypoint[Y]) != 1) {
+	Tcl_DStringInit(&ds);
+	Tcl_DStringAppend(&ds, argv[0], -1);
+	Tcl_DStringAppend(&ds, ": bad ky value - ", -1);
+	Tcl_DStringAppend(&ds, argv[4], -1);
+	Tcl_DStringResult(interp, &ds);
+
+	return TCL_ERROR;
+    }
+
+    if (sscanf(argv[5], "%lf", &keypoint[Z]) != 1) {
+	Tcl_DStringInit(&ds);
+	Tcl_DStringAppend(&ds, argv[0], -1);
+	Tcl_DStringAppend(&ds, ": bad kz value - ", -1);
+	Tcl_DStringAppend(&ds, argv[5], -1);
+	Tcl_DStringResult(interp, &ds);
+
+	return TCL_ERROR;
+    }
+
+    MAT_IDN(mat);
+    VSCALE(keypoint, keypoint, wdbp->dbip->dbi_local2base);
+    bn_mat_scale_about_pt(mat, keypoint, sf);
+
+    if (rt_db_get_internal(&intern, dp, wdbp->dbip, mat, &rt_uniresource) < 0) {
+	Tcl_DStringInit(&ds);
+	Tcl_DStringAppend(&ds, argv[0], -1);
+	Tcl_DStringAppend(&ds, ": ", -1);
+	Tcl_DStringAppend(&ds, " rt_db_get_internal(", -1);
+	Tcl_DStringAppend(&ds, argv[1], -1);
+	Tcl_DStringAppend(&ds, ") failure", -1);
+	Tcl_DStringResult(interp, &ds);
+
+	return TCL_ERROR;
+    }
+    RT_CK_DB_INTERNAL(&intern);
+
+    if (rt_db_put_internal(dp,
+			   wdbp->dbip,
+			   &intern,
+			   &rt_uniresource) < 0) {
+	rt_db_free_internal(&intern, &rt_uniresource);
+
+	Tcl_DStringInit(&ds);
+	Tcl_DStringAppend(&ds, argv[0], -1);
+	Tcl_DStringAppend(&ds, ": Database write error, aborting", -1);
+	Tcl_DStringResult(interp, &ds);
+
+	return TCL_ERROR;
+    }
+    rt_db_free_internal(&intern, &rt_uniresource);
+
+    /* notify observers */
+    bu_observer_notify(interp, &wdbp->wdb_observers, bu_vls_addr(&wdbp->wdb_name));
+
+    return TCL_OK;
+}
+
+/*
+ * Scale obj about the keypoint by sf.
+ *
+ * Usage:
+ *        procname escale obj sf kx ky kz
+ */
+static int
+wdb_escale_tcl(ClientData	clientData,
+	       Tcl_Interp	*interp,
+	       int		argc,
+	       char		**argv)
+{
+    struct rt_wdb *wdbp = (struct rt_wdb *)clientData;
+
+    return wdb_escale_cmd(wdbp, interp, argc-1, argv+1);
+}
+
+int
+wdb_etranslate_cmd(struct rt_wdb	*wdbp,
+		   Tcl_Interp		*interp,
+		   int			argc,
+		   char 		**argv)
+{
+    Tcl_DString ds;
+    register struct directory *dp;
+    struct rt_db_internal intern;
+    vect_t delta;
+    mat_t mat;
+
+    if (argc != 5) {
+	struct bu_vls vls;
+
+	bu_vls_init(&vls);
+	bu_vls_printf(&vls, "helplib wdb_etranslate");
+	Tcl_Eval(interp, bu_vls_addr(&vls));
+	bu_vls_free(&vls);
+
+	return TCL_ERROR;
+    }
+
+    if ((dp = db_lookup(wdbp->dbip,  argv[1],  LOOKUP_QUIET)) == DIR_NULL) {
+	Tcl_DStringInit(&ds);
+	Tcl_DStringAppend(&ds, argv[0], -1);
+	Tcl_DStringAppend(&ds, ": ", -1);
+	Tcl_DStringAppend(&ds, argv[1], -1);
+	Tcl_DStringAppend(&ds, " not found", -1);
+	Tcl_DStringResult(interp, &ds);
+
+	return TCL_ERROR;
+    }
+
+    if (sscanf(argv[2], "%lf", &delta[X]) != 1) {
+	Tcl_DStringInit(&ds);
+	Tcl_DStringAppend(&ds, argv[0], -1);
+	Tcl_DStringAppend(&ds, ": bad x value - ", -1);
+	Tcl_DStringAppend(&ds, argv[2], -1);
+	Tcl_DStringResult(interp, &ds);
+
+	return TCL_ERROR;
+    }
+
+    if (sscanf(argv[3], "%lf", &delta[Y]) != 1) {
+	Tcl_DStringInit(&ds);
+	Tcl_DStringAppend(&ds, argv[0], -1);
+	Tcl_DStringAppend(&ds, ": bad y value - ", -1);
+	Tcl_DStringAppend(&ds, argv[3], -1);
+	Tcl_DStringResult(interp, &ds);
+
+	return TCL_ERROR;
+    }
+
+    if (sscanf(argv[4], "%lf", &delta[Z]) != 1) {
+	Tcl_DStringInit(&ds);
+	Tcl_DStringAppend(&ds, argv[0], -1);
+	Tcl_DStringAppend(&ds, ": bad z value - ", -1);
+	Tcl_DStringAppend(&ds, argv[4], -1);
+	Tcl_DStringResult(interp, &ds);
+
+	return TCL_ERROR;
+    }
+
+    MAT_IDN(mat);
+    VSCALE(delta, delta, wdbp->dbip->dbi_local2base);
+    MAT_DELTAS_VEC(mat, delta);
+
+    if (rt_db_get_internal(&intern, dp, wdbp->dbip, mat, &rt_uniresource) < 0) {
+	Tcl_DStringInit(&ds);
+	Tcl_DStringAppend(&ds, argv[0], -1);
+	Tcl_DStringAppend(&ds, ": ", -1);
+	Tcl_DStringAppend(&ds, " rt_db_get_internal(", -1);
+	Tcl_DStringAppend(&ds, argv[1], -1);
+	Tcl_DStringAppend(&ds, ") failure", -1);
+	Tcl_DStringResult(interp, &ds);
+
+	return TCL_ERROR;
+    }
+    RT_CK_DB_INTERNAL(&intern);
+
+    if (rt_db_put_internal(dp,
+			   wdbp->dbip,
+			   &intern,
+			   &rt_uniresource) < 0) {
+	rt_db_free_internal(&intern, &rt_uniresource);
+
+	Tcl_DStringInit(&ds);
+	Tcl_DStringAppend(&ds, argv[0], -1);
+	Tcl_DStringAppend(&ds, ": Database write error, aborting", -1);
+	Tcl_DStringResult(interp, &ds);
+
+	return TCL_ERROR;
+    }
+    rt_db_free_internal(&intern, &rt_uniresource);
+
+    /* notify observers */
+    bu_observer_notify(interp, &wdbp->wdb_observers, bu_vls_addr(&wdbp->wdb_name));
+
+    return TCL_OK;
+}
+
+/*
+ * Translate obj by dx dy dz.
+ *
+ * Usage:
+ *        procname etranslate obj dx dy dz
+ */
+static int
+wdb_etranslate_tcl(ClientData	clientData,
+		Tcl_Interp	*interp,
+		int		argc,
+		char		**argv)
+{
+    struct rt_wdb *wdbp = (struct rt_wdb *)clientData;
+
+    return wdb_etranslate_cmd(wdbp, interp, argc-1, argv+1);
 }
 
 /*
