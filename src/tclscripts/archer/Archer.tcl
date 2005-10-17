@@ -104,6 +104,9 @@ namespace eval Archer {
 	method E                   {args}
 	method erase               {args}
 	method erase_all           {args}
+	method erotate		   {args}
+	method escale		   {args}
+	method etranslate	   {args}
 	method ev                  {args}
 	method exit                {args}
 	method exportFg4	   {}
@@ -116,7 +119,7 @@ namespace eval Archer {
 	method importFg4	   {}
 	method importStl	   {}
 	method i                   {args}
-	method importFg4Sections   {slist wlist}
+	method importFg4Sections   {slist wlist delta}
 	method kill                {args}
 	method killall             {args}
 	method killtree            {args}
@@ -238,6 +241,7 @@ namespace eval Archer {
 	variable mSelectedObjType ""
 	variable mPasteActive 0
 	variable mPendingEdits 0
+	variable mMultiPane 0
 
 	variable mHPaneFraction1 80
 	variable mHPaneFraction2 20
@@ -382,6 +386,8 @@ Popup Menu    Right or Ctrl-Left
 	variable mDbName ""
 	variable mDbUnits ""
 	variable mDbTitle ""
+
+	variable currentDisplay ""
 
 	# plugin list
 	variable mWizardClass ""
@@ -540,6 +546,9 @@ Popup Menu    Right or Ctrl-Left
 
 	method adjustCompNormals {comp}
 	method reverseCompNormals {comp}
+
+	method launchDisplayMenuBegin {w m x y}
+	method launchDisplayMenuEnd {}
     }
 
     private {
@@ -607,9 +616,9 @@ Popup Menu    Right or Ctrl-Left
 	method _toggle_view_axes   {pane}
 	method _toggle_ground_plane   {}
 
-	method _rotate_mode {}
-	method _translate_mode {}
-	method _scale_mode {}
+	method _rotate_mode {dm}
+	method _translate_mode {dm}
+	method _scale_mode {dm}
 
 	# private mged commands
 	method _alter_obj          {operation obj}
@@ -1975,7 +1984,9 @@ Popup Menu    Right or Ctrl-Left
     dbCmd erase $oname
     dbCmd killtree $oname
     dbCmd configure -autoViewEnable 0
+    #tk_messageBox -message "Invoke wizard: action - $action"
     set obj [$wizard $action]
+    #tk_messageBox -message "Invoke wizard: action complete"
     dbCmd configure -autoViewEnable 1
 
     _refresh_tree
@@ -2387,16 +2398,10 @@ Popup Menu    Right or Ctrl-Left
 #
 # Note - Before we get here, any previous wizard instances are destroyed
 #        and mWizardClass has been initialized to the name of the wizard class.
-#        Also, mWizardTop and mWizardState are initialized to "".
+#        Also, mWizardState is initialized to "".
 #
 ::itcl::body Archer::_init_obj_wizard {obj wizardLoaded} {
     set parent [$itk_component(vpane) childsite attrView]
-
-#    if {[catch {$itk_component(mged) attr get $mSelectedObj WizardTop} mWizardTop]} {
-#	set wizardTopFound 0
-#    } else {
-#	set wizardTopFound 1
-#    }
 
     if {[catch {$itk_component(mged) attr get $mWizardTop WizardState} mWizardState]} {
 	set wizardStateFound 0
@@ -4214,7 +4219,7 @@ Popup Menu    Right or Ctrl-Left
 		-label "Quad View" \
 		-offvalue 0 \
 		-onvalue 1 \
-		-variable [::itcl::scope itk_option(-multi_pane)] \
+		-variable [::itcl::scope mMultiPane] \
 		-command [::itcl::code $this _do_multi_pane]
 	}
 
@@ -4356,7 +4361,7 @@ Popup Menu    Right or Ctrl-Left
 	    $itk_component(menubar) menuconfigure .modes.quadview \
 		-offvalue 0 \
 		-onvalue 1 \
-		-variable [::itcl::scope itk_option(-multi_pane)] \
+		-variable [::itcl::scope mMultiPane] \
 		-command [::itcl::code $this _do_multi_pane]
 	}
 
@@ -4696,7 +4701,6 @@ Popup Menu    Right or Ctrl-Left
 	    -sashcursor sb_v_double_arrow \
 	    -hsashcursor sb_h_double_arrow
     } {
-	keep -multi_pane
 	keep -sashwidth -sashheight -sashborderwidth
 	keep -sashindent -thickness
     }
@@ -4854,7 +4858,6 @@ Popup Menu    Right or Ctrl-Left
 		-sashcursor sb_v_double_arrow \
 		-hsashcursor sb_h_double_arrow
     } {
-	keep -multi_pane
 	keep -sashwidth -sashheight -sashborderwidth
 	keep -sashindent -thickness
     }
@@ -5393,7 +5396,7 @@ Popup Menu    Right or Ctrl-Left
 	set dm [$_comp component $dname]
 	set win [$dm component dm]
 	bind $win <1> "$dm rotate_mode %x %y; break"
-	bind $win <ButtonRelease-1> "[::itcl::code $this _rotate_mode]; break"
+	bind $win <ButtonRelease-1> "[::itcl::code $this _rotate_mode $dm]; break"
     }
 }
 
@@ -5410,7 +5413,7 @@ Popup Menu    Right or Ctrl-Left
 	set dm [$_comp component $dname]
 	set win [$dm component dm]
 	bind $win <1> "$dm translate_mode %x %y; break"
-	bind $win <ButtonRelease-1> "[::itcl::code $this _translate_mode]; break"
+	bind $win <ButtonRelease-1> "[::itcl::code $this _translate_mode $dm]; break"
     }
 }
 
@@ -5427,7 +5430,7 @@ Popup Menu    Right or Ctrl-Left
 	set dm [$_comp component $dname]
 	set win [$dm component dm]
 	bind $win <1> "$dm scale_mode %x %y; break"
-	bind $win <ButtonRelease-1> "[::itcl::code $this _scale_mode]; break"
+	bind $win <ButtonRelease-1> "[::itcl::code $this _scale_mode $dm]; break"
     }
 }
 
@@ -5524,8 +5527,9 @@ Popup Menu    Right or Ctrl-Left
 	return
     }
 
-    foreach dm {ul ur ll lr} {
-	set win [$_comp component $dm component dm]
+    foreach dname {ul ur ll lr} {
+	set dm [$_comp component $dname]
+	set win [$dm component dm]
 
 	# Turn off mouse bindings
 	bind $win <1> {}
@@ -5587,21 +5591,21 @@ Popup Menu    Right or Ctrl-Left
 	bind $win <Shift-ButtonPress-3> "$_comp translate_mode %x %y; break"
 	bind $win <Control-Shift-ButtonPress-3> "$_comp slew %x %y; break"
 
-	bind $win <Shift-ButtonRelease-1> "[::itcl::code $this _rotate_mode]; break"
-	bind $win <Shift-ButtonRelease-2> "[::itcl::code $this _scale_mode]; break"
-	bind $win <Shift-ButtonRelease-3> "[::itcl::code $this _translate_mode]; break"
+	bind $win <Shift-ButtonRelease-1> "[::itcl::code $this _rotate_mode $dm]; break"
+	bind $win <Shift-ButtonRelease-2> "[::itcl::code $this _scale_mode $dm]; break"
+	bind $win <Shift-ButtonRelease-3> "[::itcl::code $this _translate_mode $dm]; break"
 
 	if {!$mViewOnly} {
 	    if {$Archer::inheritFromToplevel} {
 		bind $win <Control-ButtonPress-1> \
-		    "tk_popup $itk_component(displaymenu) %X %Y; break"
+		    "[::itcl::code $this launchDisplayMenuBegin $dm $itk_component(displaymenu) %X %Y]; break"
 		bind $win <3> \
-		    "tk_popup $itk_component(displaymenu) %X %Y; break"
+		    "[::itcl::code $this launchDisplayMenuBegin $dm $itk_component(displaymenu) %X %Y]; break"
 	    } else {
 		bind $win <Control-ButtonPress-1> \
-		    "tk_popup [$itk_component(menubar) component display-menu] %X %Y; break"
+		    "[::itcl::code $this launchDisplayMenuBegin $dm [$itk_component(menubar) component display-menu] %X %Y]; break"
 		bind $win <3> \
-		    "tk_popup [$itk_component(menubar) component display-menu] %X %Y; break"
+		    "[::itcl::code $this launchDisplayMenuBegin $dm [$itk_component(menubar) component display-menu] %X %Y]; break"
 	    }
 	}
     }
@@ -7871,7 +7875,7 @@ Popup Menu    Right or Ctrl-Left
 }
 
 ::itcl::body Archer::_do_multi_pane {} {
-    configure -multi_pane $itk_option(-multi_pane)
+    dbCmd configure -multi_pane $mMultiPane
 }
 
 ::itcl::body Archer::_do_lighting {} {
@@ -7894,14 +7898,14 @@ Popup Menu    Right or Ctrl-Left
 	set mShowGroundPlane 0
 	_show_ground_plane
 	dbCmd autoviewAll
-	dbCmd ae 35 25
+	dbCmd default_views
 
 	# Turn ground plane back on
 	set mShowGroundPlane 1
 	_show_ground_plane
     } else {
 	dbCmd autoviewAll
-	dbCmd ae 35 25
+	dbCmd default_views
     }
 }
 
@@ -7932,7 +7936,13 @@ Popup Menu    Right or Ctrl-Left
 	return
     }
 
-    set center [dbCmd center]
+    if {$currentDisplay == ""} {
+	set dm dbCmd
+    } else {
+	set dm $currentDisplay
+    }
+
+    set center [$dm center]
     set _centerX [lindex $center 0]
     set _centerY [lindex $center 1]
     set _centerZ [lindex $center 2]
@@ -7940,12 +7950,17 @@ Popup Menu    Right or Ctrl-Left
     set mDbUnits [dbCmd units]
     $itk_component(centerDialog) center [namespace tail $this]
     if {[$itk_component(centerDialog) activate]} {
-	dbCmd center $_centerX $_centerY $_centerZ
+	$dm center $_centerX $_centerY $_centerZ
     }
 }
 
 ::itcl::body Archer::_do_ae {az el} {
-    dbCmd ae $az $el
+    if {$currentDisplay == ""} {
+	dbCmd ae $az $el
+    } else {
+	$currentDisplay ae $az $el
+    }
+
     _add_history "ae $az $el"
 }
 
@@ -7991,7 +8006,7 @@ Popup Menu    Right or Ctrl-Left
     dbCmd toggle_viewAxesEnable $pane
 }
 
-::itcl::body Archer::_rotate_mode {} {
+::itcl::body Archer::_rotate_mode {dsp} {
     if {[info exists itk_component(mged)]} {
 	set _comp $itk_component(mged)
     } elseif {[info exists itk_component(sdb)]} {
@@ -8000,13 +8015,13 @@ Popup Menu    Right or Ctrl-Left
 	return
     }
 
-    $_comp idle_mode
+    $dsp idle_mode
 
     set ae [$_comp ae]
     _add_history "ae $ae"
 }
 
-::itcl::body Archer::_scale_mode {} {
+::itcl::body Archer::_scale_mode {dsp} {
     if {[info exists itk_component(mged)]} {
 	set _comp $itk_component(mged)
     } elseif {[info exists itk_component(sdb)]} {
@@ -8015,13 +8030,13 @@ Popup Menu    Right or Ctrl-Left
 	return
     }
 
-    $_comp idle_mode
+    $dsp idle_mode
 
     set size [$_comp size]
     _add_history "size $size"
 }
 
-::itcl::body Archer::_translate_mode {} {
+::itcl::body Archer::_translate_mode {dsp} {
     if {[info exists itk_component(mged)]} {
 	set _comp $itk_component(mged)
     } elseif {[info exists itk_component(sdb)]} {
@@ -8030,7 +8045,7 @@ Popup Menu    Right or Ctrl-Left
 	return
     }
 
-    $_comp idle_mode
+    $dsp idle_mode
 
     set center [$_comp center]
     _add_history "center $center"
@@ -8215,7 +8230,10 @@ Popup Menu    Right or Ctrl-Left
     } else {
 	set element $tags
     }
-    if {$element == ""} {return}
+    if {$element == ""} {
+	return
+    }
+
     set node [$itk_component(tree) query -path $element]
     set type [$itk_component(tree) query -nodetype $element]
 
@@ -8811,8 +8829,8 @@ Popup Menu    Right or Ctrl-Left
     _do_primary_toolbar
 
     catch {
-	if {$itk_option(-multi_pane)} {
-	    set itk_option(-multi_pane) 0
+	if {$mMultiPane} {
+	    set mMultiPane 0
 	    _do_multi_pane
 	}
     }
@@ -9638,7 +9656,11 @@ Popup Menu    Right or Ctrl-Left
 }
 
 ::itcl::body Archer::refreshDisplay {} {
-    dbCmd refresh
+    if {$currentDisplay == ""} {
+	dbCmd refresh
+    } else {
+	$currentDisplay refresh
+    }
 }
 
 ::itcl::body Archer::adjustCompNormals {comp} {
@@ -9669,6 +9691,16 @@ Popup Menu    Right or Ctrl-Left
     if {[llength $renderMode] == 2} {
 	eval _render $comp $renderMode 1
     }
+}
+
+::itcl::body Archer::launchDisplayMenuBegin {dm m x y} {
+    set currentDisplay $dm
+    tk_popup $m $x $y
+    after idle [::itcl::code $this launchDisplayMenuEnd]
+}
+
+::itcl::body Archer::launchDisplayMenuEnd {} {
+    set currentDisplay ""
 }
 
 ::itcl::body Archer::getTkColor {r g b} {
@@ -10004,6 +10036,18 @@ Popup Menu    Right or Ctrl-Left
     eval mgedWrapper erase_all 1 0 0 1 $args
 }
 
+::itcl::body Archer::erotate {args} {
+    eval archerWrapper erotate $args
+}
+
+::itcl::body Archer::escale {args} {
+    eval archerWrapper escale $args
+}
+
+::itcl::body Archer::etranslate {args} {
+    eval archerWrapper etranslate $args
+}
+
 ::itcl::body Archer::ev {args} {
     eval mgedWrapper ev 1 0 0 1 $args
 }
@@ -10211,7 +10255,7 @@ Popup Menu    Right or Ctrl-Left
 #        up to the caller to remove like-named members from any
 #        relevant groups/regions.
 #
-::itcl::body Archer::importFg4Sections {slist wlist} {
+::itcl::body Archer::importFg4Sections {slist wlist delta} {
     if {[expr {[llength $wlist] % 2}] != 0} {
 	error "importFg4Sections: wlist must have an even number of elements"
     }
@@ -10228,8 +10272,10 @@ Popup Menu    Right or Ctrl-Left
 
     if {[info exists itk_component(mged)]} {
 	SetWaitCursor
-	dbCmd configure -autoViewEnable 0
-	dbCmd detachObservers
+	set savedUnits [$itk_component(mged) units]
+	$itk_component(mged) units in
+	$itk_component(mged) configure -autoViewEnable 0
+	$itk_component(mged) detachObservers
 
 	set pname ""
 	set firstName ""
@@ -10253,14 +10299,17 @@ Popup Menu    Right or Ctrl-Left
 	    }
 
 	    if {![catch {$itk_component(mged) get $solidName} ret]} {
-		#dbCmd attachObservers
+		#$itk_component(mged) attachObservers
+		$itk_component(mged) units $savedUnits
 		error "importFg4Sections: $solidName already exists!"
 	    }
 
 	    if {[catch {$itk_component(mged) importFg4Section $solidName $sdata} ret]} {
-		#dbCmd attachObservers
+		#$itk_component(mged) attachObservers
+		$itk_component(mged) units $savedUnits
 		error "importFg4Sections: $ret"
 	    }
+	    eval $itk_component(mged) etranslate $solidName $delta
 
 	    # Add to the region
 	    $itk_component(mged) r $regionName u $solidName
@@ -10281,7 +10330,8 @@ Popup Menu    Right or Ctrl-Left
 		    $itk_component(mged) g $gname $gmember
 		} else {
 		    if {[catch {$itk_component(mged) get $gname tree} tree]} {
-			#dbCmd attachObservers
+			#$itk_component(mged) attachObservers
+			$itk_component(mged) units $savedUnits
 			error "importFg4Sections: $gname is not a group!"
 		    }
 
@@ -10352,9 +10402,10 @@ Popup Menu    Right or Ctrl-Left
 
 	set mNeedSave 1
 	_update_save_mode
-	dbCmd attachObservers
-	dbCmd refreshAll
-	dbCmd configure -autoViewEnable 1
+	$itk_component(mged) units $savedUnits
+	$itk_component(mged) attachObservers
+	$itk_component(mged) refreshAll
+	$itk_component(mged) configure -autoViewEnable 1
 	SetNormalCursor
     }
 }
