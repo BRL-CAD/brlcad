@@ -55,6 +55,18 @@ char *usage_msg = "Usage: %s [options] model object [object...]\n\
 #define ANALYSIS_EXP_AIR 32 /* exposed air */
 #define ANALYSIS_BOX 64
 
+#ifndef HUGE
+#  ifdef MAXFLT
+#    define HUGE MAXFLOAT
+#  else
+#    ifdef DBL_MAX
+#      define HUGE DBL_MAX
+#    else
+#      define HUGE ((float)3.40282346638528860e+38)
+#    endif
+#  endif
+#endif
+
 int analysis_flags = ANALYSIS_VOLUME | ANALYSIS_OVERLAPS | ANALYSIS_WEIGHT | \
 	ANALYSIS_EXP_AIR | ANALYSIS_ADJ_AIR | ANALYSIS_GAP ;
 int multiple_analyses = 1;
