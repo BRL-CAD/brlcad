@@ -137,7 +137,7 @@ itcl::class swidgets::Tree {
 	method component {name}
 	method insert {index parent text {type ""} {color ""} {clientData ""}}
 	method find {text {parent "root"} {firstOnly 1}}
-	method remove {node}
+	method remove {node {redraw 1}}
 	method removeall {}
 	method redraw {} {_redraw_tree}
 	method expand {node} {$node setvar -open 1}
@@ -167,6 +167,7 @@ itcl::class swidgets::Tree {
 	variable selectBox ""
 	variable saveFill ""
 	variable idle ""
+	variable inSelectCmd 0
 
 	method _cleanup_node {node}
 	method _get_node_name {{item current} {tagindex end-1}}
@@ -254,12 +255,6 @@ proc ::swidgets::tree {args} {
 
     _bind_text  <Button-3> [list eval [::itcl::code $this _item_popup]]
     _bind_image <Button-3> [list eval [::itcl::code $this _item_popup]]
-
-    # Create the selection box
-    #$itk_component(canvas) create rectangle 0 0 0 0 \
-	-tags selectBox \
-	-fill black \
-	-outline black
 }
 
 ::itcl::body swidgets::Tree::destructor {} {
@@ -347,6 +342,11 @@ proc ::swidgets::tree {args} {
 }
 
 ::itcl::body swidgets::Tree::_call_selectcmd {tag} {
+    if {$inSelectCmd} {
+	return
+    }
+    set inSelectCmd 1
+
     selection set $tag
 
     # execute user defined select command
@@ -359,6 +359,8 @@ proc ::swidgets::tree {args} {
 
 	#eval $itk_option(-selectcmd)
     }
+
+    set inSelectCmd 0
 }
 
 ::itcl::body swidgets::Tree::_call_dblselectcmd {tag} {
@@ -516,11 +518,6 @@ proc ::swidgets::tree {args} {
 }
 
 ::itcl::body swidgets::Tree::_draw_tree {} {
-    # First, save selectBox's coords
-    if {$selectBox != ""} {
-	set coords [$itk_component(canvas) coords selectBox]
-    }
-
     $itk_component(canvas) delete all
     set cursor [$itk_component(canvas) cget -cursor]
     $itk_component(canvas) configure -cursor watch
@@ -535,26 +532,19 @@ proc ::swidgets::tree {args} {
 
     $itk_component(canvas) configure -height $treeheight -cursor $cursor
 
-    if {$selectBox != ""} {
-	set saveFill [$itk_component(canvas) itemcget $selnode -fill]
-
-	# Recreate the selection box
-	set selectBox [eval $itk_component(canvas) create rectangle $coords \
-			   -tags selectBox \
-			   -fill $itk_option(-foreground) \
-			   -outline $itk_option(-foreground)]
-    }
-
     set idle ""
     update idletasks
 }
 
 ::itcl::body swidgets::Tree::_redraw_tree {} {
     _draw_tree
+    set selectBox ""
+
     if {$selnode != {}} {
 	if [catch {selection set $selnode} err] {
 	    set selnode {}
 	    set saveFill ""
+	    set selectBox ""
 	}
     }
 }
@@ -567,14 +557,8 @@ proc ::swidgets::tree {args} {
 
 ::itcl::body swidgets::Tree::_item_popup {node x y} {
     selection set $node
-
-    if {0} {
-	set rx [expr [winfo rootx $itk_component(frame)]+$x]
-	set ry [expr [winfo rooty $itk_component(frame)]+$y]
-    } else {
-	set rx [expr [winfo rootx $itk_component(canvas)]+$x]
-	set ry [expr [winfo rooty $itk_component(canvas)]+$y]
-    }
+    set rx [expr [winfo rootx $itk_component(canvas)]+$x]
+    set ry [expr [winfo rooty $itk_component(canvas)]+$y]
     
     if {$itk_option(-textmenuloadcommand) != {}} {
 	eval $itk_option(-textmenuloadcommand) $itk_component(popupmenu) $node
@@ -677,23 +661,27 @@ proc ::swidgets::tree {args} {
     }
 }
 
-::itcl::body swidgets::Tree::remove {node} {
+::itcl::body swidgets::Tree::remove {node {redraw 1}} {
     set parent [$node get -parent]
     if {[$parent removechild $node] != -1} {
 	set children [$node get -children]
 	foreach child $children {
-	    remove $child
+	    remove $child 0
 	}
 	_cleanup_node $node
     }
 
-    _redraw_idle
+    if {$redraw} {
+	_redraw_idle
+    }
 }
 
 ::itcl::body swidgets::Tree::removeall {} {
     foreach child [$root get -children] {
-	remove $child
+	remove $child 0
     }
+
+    _redraw_idle
 }
 
 ::itcl::body swidgets::Tree::selection {cmd {node ""}} {
