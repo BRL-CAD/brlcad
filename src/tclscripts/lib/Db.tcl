@@ -52,6 +52,9 @@
 	method dbip {args}
 	method dump {args}
 	method dup {args}
+	method erotate {args}
+	method escale {args}
+	method etranslate {args}
 	method expand {args}
 	method facetize {args}
 	method find {args}
@@ -285,6 +288,17 @@
     eval $db dup $args
 }
 
+::itcl::body Db::erotate {args} {
+    eval $db erotate $args
+}
+::itcl::body Db::escale {args} {
+    eval $db escale $args
+}
+
+::itcl::body Db::etranslate {args} {
+    eval $db etranslate $args
+}
+
 ::itcl::body Db::g {args} {
     eval $db g $args
 }
@@ -468,6 +482,9 @@
     $help add dbip	{{} {get dbip}}
     $help add dump	{{file} {write current state of database object to file}}
     $help add dup	{{file [prefix]} {check for dup names in 'file'}}
+    $help add erotate	{{x y z} {rotate object}}
+    $help add escale	{{sf} {scale object}}
+    $help add etranslate {{x y z} {translate object}}
     $help add expand	{{expression} {globs expression against database objects}}
     $help add find	{{[-s] <objects>} {find all references to objects}}
     $help add form	{{objType} {returns form of objType}}

@@ -72,6 +72,9 @@ option add *Mged.height 400 widgetDefault
 	method E {args}
 	method erase {args}
 	method erase_all {args}
+	method erotate {args}
+	method escale {args}
+	method etranslate {args}
 	method ev {args}
 	method expand {args}
 	method facetize {args}
@@ -331,6 +334,17 @@ option add *Mged.height 400 widgetDefault
 
 ::itcl::body Mged::dup {args} {
     eval $db dup $args
+}
+
+::itcl::body Mged::erotate {args} {
+    eval $db erotate $args
+}
+::itcl::body Mged::escale {args} {
+    eval $db escale $args
+}
+
+::itcl::body Mged::etranslate {args} {
+    eval $db etranslate $args
 }
 
 ::itcl::body Mged::g {args} {
