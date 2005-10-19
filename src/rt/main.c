@@ -165,9 +165,8 @@ memory_summary(void)
  */
 int main(int argc, char **argv)
 {
-	struct rt_i *rtip;
-	char *title_file, *title_obj;	/* name of file and first object */
-	register int	x;
+	struct rt_i *rtip = NULL;
+	char *title_file = NULL, *title_obj = NULL;	/* name of file and first object */
 	char idbuf[RT_BUFSIZE] = {0};		/* First ID record info */
 	void	application_init();
 	struct bu_vls	times;
@@ -267,7 +266,7 @@ int main(int argc, char **argv)
 	}
 
 	if( incr_mode )  {
-		x = height;
+		int x = height;
 		if( x < width )  x = width;
 		incr_nlevel = 1;
 		while( (1<<incr_nlevel) < x )
