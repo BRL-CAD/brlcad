@@ -22,6 +22,8 @@
  *
  */
 
+#include <stdio.h>
+
 #include "common.h"
 
 #include "machine.h"

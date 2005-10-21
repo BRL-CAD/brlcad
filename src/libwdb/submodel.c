@@ -29,6 +29,8 @@
  *	Aberdeen Proving Ground, Maryland  21005-5066
  */
 
+#include <stdio.h>
+
 #include "common.h"
 
 #include "machine.h"
