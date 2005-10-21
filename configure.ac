@@ -598,11 +598,11 @@ BC_CONFIGURE_STAGE([programs], [2 of 9])
 
 AC_LANG(C)
 
-AC_AIX
-AC_MINIX
-
 dnl added in autoconf 2.54 to define _GNU_SOURCE
 AC_GNU_SOURCE
+
+AC_AIX
+AC_MINIX
 
 AC_PROG_CC
 AM_PROG_CC_STDC
@@ -1199,13 +1199,9 @@ BC_COMPILER_AND_LINKER_RECOGNIZES([-fno-strict-aliasing])
 dnl check for -fno-common (libtcl needs it on darwin)
 BC_COMPILER_AND_LINKER_RECOGNIZES([-fno-common])
 
-dnl check for -fPIC (libtcl needs it on altix)
-dnl !!! libtool should be taking care of this one
-BC_COMPILER_AND_LINKER_RECOGNIZES([-fPIC])
-
 dnl check for -search_paths_first linker flag when making dylibs
-search_paths_first_flags="-Wl,-search_paths_first -mdynamic-no-pic"
-BC_COMPILER_AND_LINKER_RECOGNIZES([$search_paths_first_flags])
+search_paths_first_flags="-Wl,-search_paths_first"
+BC_LINKER_RECOGNIZES([$search_paths_first_flags])
 
 dnl 64bit compilation flags
 if test "x$bc_build_64bit" = "xyes" ; then
