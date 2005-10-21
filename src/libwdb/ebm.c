@@ -22,8 +22,6 @@
  *
  */
 
-#include <stdio.h>
-
 #include "common.h"
 
 #ifdef HAVE_STRING_H
