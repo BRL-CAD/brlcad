@@ -170,8 +170,6 @@
  *
  *
  *  Include Sequencing -
- *	#include <stdio.h>
- *	#include <math.h>
  *	#include "machine.h"
  *	#include "bu.h"
  *
@@ -186,7 +184,7 @@
 
 #include "common.h"
 
-/* reportedly needed, but not clear why */
+/* needed for FOPEN_MAX */
 #include <stdio.h>
 
 
