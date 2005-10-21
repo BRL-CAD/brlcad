@@ -184,6 +184,12 @@
 #ifndef MACHINE_H
 #define MACHINE_H seen
 
+#include "common.h"
+
+/* reportedly needed, but not clear why */
+#include <stdio.h>
+
+
 /*
  * Figure out the maximum number of files that can simultaneously be open
  * by a process.
@@ -758,8 +764,9 @@ typedef long	bitv_t;		/* largest integer type */
  *  Some very common BSD --> SYSV conversion aids
  */
 #if defined(SYSV) && !defined(bzero) && !defined(HAVE_BZERO)
-#	define bzero(str,n)		memset( str, 0, n )
-#	define bcopy(from,to,count)	memcpy( to, from, count )
+#  include <string.h>
+#  define bzero(str,n)		memset( str, 0, n )
+#  define bcopy(from,to,count)	memcpy( to, from, count )
 #endif
 
 /* Functions local to one file should be declared HIDDEN:  (nil)|static */
@@ -781,11 +788,13 @@ typedef long	bitv_t;		/* largest integer type */
 #if defined(__sgi) || defined(__convexc__)
         extern double hypot(double, double);
 #else
-#	define hypot(x,y)      sqrt( (x)*(x)+(y)*(y) )
+#  include <math.h>
+#  define hypot(x,y)      sqrt( (x)*(x)+(y)*(y) )
 #endif
 #endif
 
 #if defined(SUNOS) && SUNOS >= 52
+#  include <math.h>
         extern double hypot(double, double);
 #endif
 
