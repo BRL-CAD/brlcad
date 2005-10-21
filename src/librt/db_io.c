@@ -86,7 +86,9 @@ db_read(const struct db_i *dbip, genptr_t addr, long int count, long int offset)
     		       		/* byte offset from start of file */
 {
 	register int	got;
+#ifdef HAVE_UNIX_IO
 	register long	s;
+#endif
 
 	RT_CK_DBI(dbip);
 	if(RT_G_DEBUG&DEBUG_DB)  {
