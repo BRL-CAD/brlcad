@@ -78,12 +78,15 @@ BC_COMPILER_AND_LINKER_RECOGNIZES([$1], [$2])
 AC_DEFUN([BC_COMPILER_RECOGNIZES], [
 __flag="$1"
 AC_MSG_CHECKING([if compiler recognizes $__flag])
-__flag_works=yes
+bc_[$2]_works=yes
 PRECFLAGS="$CFLAGS"
 CFLAGS="$CFLAGS $__flag"
-AC_TRY_COMPILE( [], [], [], [__flag_works=no])
-AC_MSG_RESULT($__flag_works)
-if test "x$__flag_works" = "xno" ; then
+m4_pushdef([AC_TRY_EVAL], [_AC_EVAL_STDERR]($$[1]))
+AC_TRY_COMPILE( [], [], [if AC_TRY_COMMAND([grep "nrecognize" conftest.err >/dev/null 2>&1]) ; then bc_[$2]_works=no ; fi], [bc_[$2]_works=no])
+m4_popdef([AC_TRY_EVAL]) 
+rm -f conftest.err
+AC_MSG_RESULT($bc_[$2]_works)
+if test "x$bc_[$2]_works" = "xno" ; then
 	CFLAGS="$PRECFLAGS"
 fi
 ])
@@ -96,12 +99,15 @@ BC_COMPILER_RECOGNIZES([$1], [$2])
 AC_DEFUN([BC_LINKER_RECOGNIZES], [
 __flag="$1"
 AC_MSG_CHECKING([if linker recognizes $__flag])
-__flag_works=yes
+bc_[$2]_works=yes
 PRELDFLAGS="$LDFLAGS"
 LDFLAGS="$LDFLAGS $__flag"
-AC_TRY_COMPILE( [], [], [], [__flag_works=no])
-AC_MSG_RESULT($__flag_works)
-if test "x$__flag_works" = "xno" ; then
+m4_pushdef([AC_TRY_EVAL], [_AC_EVAL_STDERR]($$[1]))
+AC_TRY_LINK( [], [], [if AC_TRY_COMMAND([grep "nrecognize" conftest.err >/dev/null 2>&1]) ; then bc_[$2]_works=no ; fi], [bc_[$2]_works=no])
+m4_popdef([AC_TRY_EVAL]) 
+rm -f conftest.err
+AC_MSG_RESULT($bc_[$2]_works)
+if test "x$bc_[$2]_works" = "xno" ; then
 	LDFLAGS="$PRELDFLAGS"
 fi
 ])
@@ -114,12 +120,15 @@ BC_LINKER_RECOGNIZES([$1], [$2])
 AC_DEFUN([BC_PREPROCESSOR_RECOGNIZES], [
 __flag="$1"
 AC_MSG_CHECKING([if preprocesser recognizes $__flag])
-__flag_works=yes
+bc_[$2]_works=yes
 PRECPPFLAGS="$CPPFLAGS"
 CPPFLAGS="$CPPFLAGS $__flag"
-AC_TRY_COMPILE( [], [], [], [__flag_works=no])
-AC_MSG_RESULT($__flag_works)
-if test "x$__flag_works" = "xno" ; then
+m4_pushdef([AC_TRY_EVAL], [_AC_EVAL_STDERR]($$[1]))
+AC_TRY_COMPILE( [], [], [if AC_TRY_COMMAND([grep "nrecognize" conftest.err >/dev/null 2>&1]) ; then bc_[$2]_works=no ; fi], [bc_[$2]_works=no])
+m4_popdef([AC_TRY_EVAL]) 
+rm -f conftest.err
+AC_MSG_RESULT($bc_[$2]_works)
+if test "x$bc_[$2]_works" = "xno" ; then
 	CPPFLAGS="$PRECPPFLAGS"
 fi
 ])
