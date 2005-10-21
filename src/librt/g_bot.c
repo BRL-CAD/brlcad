@@ -2517,7 +2517,7 @@ rt_bot_vertex_fuse( struct rt_bot_internal *bot )
 int
 rt_bot_same_orientation( const int *a, const int *b )
 {
-	int i,j;
+	int i;
 
 	for( i=0 ; i<3 ; i++ )
 	{
