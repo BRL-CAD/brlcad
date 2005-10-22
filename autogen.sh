@@ -259,7 +259,7 @@ done
 # check for libtoolize #
 ########################
 HAVE_LIBTOOLIZE=yes
-HAVE_ALTLIBTOOLIZE=no
+HAVE_ALT_LIBTOOLIZE=no
 LIBTOOLIZE=libtoolize
 _ltfound=no
 $VERBOSE_ECHO "Checking libtoolize version: $LIBTOOLIZE --version"
@@ -274,11 +274,30 @@ if [ ! $? = 0 ] ; then
     fi
     
     # look for some alternates
-    for tool in glibtoolize libtoolize15 libtoolize13 ; do
+    for tool in glibtoolize libtoolize15 libtoolize14 libtoolize13 ; do
 	$VERBOSE_ECHO "Checking libtoolize alternate: $tool --version"
 	_glibtoolize="`$tool --version > /dev/null 2>&1`"
 	if [ $? = 0 ] ; then
-	    HAVE_ALTLIBTOOLIZE=yes
+	    $VERBOSE_ECHO "Found $tool --version"
+	    _glti="`which $tool`"
+	    if [ "x$_glti" = "x" ] ; then
+		$VERBOSE_ECHO "Cannot find $tool with which"
+		continue;
+	    fi
+	    if test ! -f "$_glti" ; then
+		$VERBOSE_ECHO "Cannot use $tool, $_glti is not a file"
+		continue;
+	    fi
+	    _gltidir="`dirname $_glti`"
+	    if [ "x$_gltidir" = "x" ] ; then
+		$VERBOSE_ECHO "Cannot find $tool path with dirname of $_glti"
+		continue;
+	    fi
+	    if test ! -d "$_gltidir" ; then
+		$VERBOSE_ECHO "Cannot use $tool, $_gltidir is not a directory"
+		continue;
+	    fi
+	    HAVE_ALT_LIBTOOLIZE=yes
 	    LIBTOOLIZE="$tool"
 	    $ECHO 
 	    $ECHO "Fortunately, $tool was found which means that your system may simply"
@@ -288,12 +307,10 @@ if [ ! $? = 0 ] ; then
 	    $ECHO
 	    sudo -V > /dev/null 2>&1
 	    if [ $? = 0 ] ; then
-		_glti="`which $tool`"
-		_gltidir="`dirname $_glti`"
 		$ECHO "   sudo ln -s $_glti $_gltidir/libtoolize"
 		$ECHO
 	    else
-		$ECHO "   ln -s $glti $_gltidir/libtoolize"
+		$ECHO "   ln -s $_glti $_gltidir/libtoolize"
 		$ECHO 
 		$ECHO "Run that as root or with proper permissions to the $_gltidir directory"
 		$ECHO
@@ -510,7 +527,7 @@ if [ "x$reconfigure_manually" = "xyes" ] ; then
 	$LIBTOOLIZE --automake -c -f
 	if [ ! $? = 0 ] ; then $ECHO "ERROR: $LIBTOOLIZE failed" && exit 2 ; fi
     else
-	if [ "x$HAVE_ALTLIBTOOLIZE" = "xyes" ] ; then
+	if [ "x$HAVE_ALT_LIBTOOLIZE" = "xyes" ] ; then
 	    $VERBOSE_ECHO "$LIBTOOLIZE --automake --copy --force"
 	    $LIBTOOLIZE --automake --copy --force
 	    if [ ! $? = 0 ] ; then $ECHO "ERROR: $LIBTOOLIZE failed" && exit 2 ; fi
