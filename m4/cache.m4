@@ -11,7 +11,7 @@
 # 1. Redistributions of source code must retain the above copyright
 # notice, this list of conditions and the following disclaimer.
 #
-# 2. Redistributions in binary form must reproduce the above 
+# 2. Redistributions in binary form must reproduce the above
 # copyright notice, this list of conditions and the following
 # disclaimer in the documentation and/or other materials provided
 # with the distribution.
@@ -39,11 +39,11 @@
 # automatically enable and load the configure cache file if available
 #
 ###
-	
+
 AC_DEFUN([BC_CONFIG_CACHE], [
 AC_MSG_CHECKING([whether a configure cache exists])
 if test "x$cache_file" = "x/dev/null" ; then
-	configure_cache=ifelse([$1], , [config.cache.${host_os}], [$1]) 
+	configure_cache=ifelse([$1], , [config.cache.${host_os}], [$1])
 	CONFIG_CACHE=""
 	if test -f "$configure_cache"; then
 		# if the configure script has been modified since

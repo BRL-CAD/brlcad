@@ -11,7 +11,7 @@
 # 1. Redistributions of source code must retain the above copyright
 # notice, this list of conditions and the following disclaimer.
 #
-# 2. Redistributions in binary form must reproduce the above 
+# 2. Redistributions in binary form must reproduce the above
 # copyright notice, this list of conditions and the following
 # disclaimer in the documentation and/or other materials provided
 # with the distribution.
@@ -54,7 +54,7 @@ dnl necessary additionally, a compiler might complain if /usr/local or
 dnl /sw are already in the system search path -- so need to try a
 dnl compile test..
 
-###	
+###
 AC_DEFUN([BC_RETRY_DIRECTORY], [
 retry_dir="$1"
 retry_label="$2"
@@ -103,7 +103,7 @@ fi
 ])
 
 
-###	
+###
 AC_DEFUN([BC_RETRY_CONFIGURE], [
 bc_configure="$1"
 if test "x$BC_RETRY" = "x" ; then

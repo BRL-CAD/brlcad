@@ -11,7 +11,7 @@
 # 1. Redistributions of source code must retain the above copyright
 # notice, this list of conditions and the following disclaimer.
 #
-# 2. Redistributions in binary form must reproduce the above 
+# 2. Redistributions in binary form must reproduce the above
 # copyright notice, this list of conditions and the following
 # disclaimer in the documentation and/or other materials provided
 # with the distribution.
@@ -45,7 +45,7 @@
 #
 # BC_PREPROCESSOR_RECOGNIZES
 # checks if the preprocessor will work with the specified cppflags
-###	
+###
 
 AC_DEFUN([BC_COMPILER_AND_LINKER_RECOGNIZES], [
 __flag="$1"
@@ -57,7 +57,7 @@ CFLAGS="$CFLAGS $__flag"
 LDFLAGS="$LDFLAGS $__flag"
 m4_pushdef([AC_TRY_EVAL], [_AC_EVAL_STDERR]($$[1]))
 AC_TRY_COMPILE( [], [], [if AC_TRY_COMMAND([grep "nrecognize" conftest.err >/dev/null 2>&1]) ; then bc_[$2]_works=no ; fi], [bc_[$2]_works=no])
-m4_popdef([AC_TRY_EVAL]) 
+m4_popdef([AC_TRY_EVAL])
 rm -f conftest.err
 AC_TRY_RUN( [
 #include <stdio.h>
@@ -83,7 +83,7 @@ PRECFLAGS="$CFLAGS"
 CFLAGS="$CFLAGS $__flag"
 m4_pushdef([AC_TRY_EVAL], [_AC_EVAL_STDERR]($$[1]))
 AC_TRY_COMPILE( [], [], [if AC_TRY_COMMAND([grep "nrecognize" conftest.err >/dev/null 2>&1]) ; then bc_[$2]_works=no ; fi], [bc_[$2]_works=no])
-m4_popdef([AC_TRY_EVAL]) 
+m4_popdef([AC_TRY_EVAL])
 rm -f conftest.err
 AC_MSG_RESULT($bc_[$2]_works)
 if test "x$bc_[$2]_works" = "xno" ; then
@@ -104,7 +104,7 @@ PRELDFLAGS="$LDFLAGS"
 LDFLAGS="$LDFLAGS $__flag"
 m4_pushdef([AC_TRY_EVAL], [_AC_EVAL_STDERR]($$[1]))
 AC_TRY_LINK( [], [], [if AC_TRY_COMMAND([grep "nrecognize" conftest.err >/dev/null 2>&1]) ; then bc_[$2]_works=no ; fi], [bc_[$2]_works=no])
-m4_popdef([AC_TRY_EVAL]) 
+m4_popdef([AC_TRY_EVAL])
 rm -f conftest.err
 AC_MSG_RESULT($bc_[$2]_works)
 if test "x$bc_[$2]_works" = "xno" ; then
@@ -125,7 +125,7 @@ PRECPPFLAGS="$CPPFLAGS"
 CPPFLAGS="$CPPFLAGS $__flag"
 m4_pushdef([AC_TRY_EVAL], [_AC_EVAL_STDERR]($$[1]))
 AC_TRY_COMPILE( [], [], [if AC_TRY_COMMAND([grep "nrecognize" conftest.err >/dev/null 2>&1]) ; then bc_[$2]_works=no ; fi], [bc_[$2]_works=no])
-m4_popdef([AC_TRY_EVAL]) 
+m4_popdef([AC_TRY_EVAL])
 rm -f conftest.err
 AC_MSG_RESULT($bc_[$2]_works)
 if test "x$bc_[$2]_works" = "xno" ; then

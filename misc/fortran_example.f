@@ -75,7 +75,7 @@ c     A partition consists of both an inhit and an outhit
       nloc = 3;
 
 c     shoot the ray
-      call frshot(nloc, indist, outdist, region_ids, context, 
+      call frshot(nloc, indist, outdist, region_ids, context,
      1 rtip, pt, dir)
 
 c     look to see how many things we hit and print them
@@ -94,7 +94,7 @@ c     change directions and shoot a different ray from the same origin
       nloc = 3;
 
 c     shoot the ray
-      call frshot(nloc, indist, outdist, region_ids, context, 
+      call frshot(nloc, indist, outdist, region_ids, context,
      1 rtip, pt, dir)
 
 c     look to see how many things we hit and print them

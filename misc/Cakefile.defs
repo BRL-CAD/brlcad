@@ -229,7 +229,7 @@ set -S2 "/bin/sh"
 /*	Silicon Graphics 4D, running IRIX 5.0 */
 #	undef	sgi
 #	define	MTYPE	6d
-#	if BUILD_OPTIMIZED	
+#	if BUILD_OPTIMIZED
 /*		This version for production: optimization & shared libraries */
 /*		SGI's netinet/tcp.h flunks ANSI conformance.  Silence the warnings */
 #		define	OPTIMIZER	-O2 -Olimit 1500 -woff 658 -Wl,-w1
@@ -237,7 +237,7 @@ set -S2 "/bin/sh"
 /*		This version for debugging with DBX */
 #		define	OPTIMIZER	-g
 #	endif
-#	if BUILD_SHARED	
+#	if BUILD_SHARED
 /*		Shared library version support */
 #		define	GFLAG		-KPIC
 #		define	ARCH_SUF	so
@@ -253,7 +253,7 @@ set -S2 "/bin/sh"
 #		define	LIBDM_SAMPLE_LIBES \$"(LIBDM)" \$"(LIBTK)" \$"(LIBTCL)" \$"(LIBTK_LIBES)" \$"(LIBTCL_LIBES)" \$"(XLIBDIR)" -lXi -lXext -lX11 -lGL
 #	else
 /*		Static linked executables */
-#		define	GFLAG		
+#		define	GFLAG
 #		define	RANLIB	ranlib5.sh
 #		define	STANDARD_LIBES	-L/usr/lib -lm -lmalloc -lc_s
 #		define	LD_OPTS		GFLAG
@@ -267,7 +267,7 @@ set -S2 "/bin/sh"
 
 #		define	LIBDM_LIBES	LIBTK LIBTCL LIBTK_LIBES LIBTCL_LIBES
 #		define	LIBFB_LIBES	LIBPKG -L''XLIBDIR -lX11 -lgl_s -lGL
-#		define	MGED_LIBES	LIBDM LIBDM_LIBES LIBFB LIBFB_LIBES -lXi -lXext 
+#		define	MGED_LIBES	LIBDM LIBDM_LIBES LIBFB LIBFB_LIBES -lXi -lXext
 #	define	LIBDM_SAMPLE_LIBES \$"(LIBDM)" \$"(LIBTK)" \$"(LIBTCL)" \$"(LIBTK_LIBES)" \$"(LIBTCL_LIBES)" \$"(XLIBDIR)" -lXi -lXext -lX11 -lGL
 #	endif
 
@@ -295,7 +295,7 @@ set -S2 "/bin/sh"
 /*	Silicon Graphics 4D, running IRIX 6.0 (on a MIPS-3 32-bit machine) */
 #	undef	sgi
 #	define	MTYPE	7d
-#	if BUILD_OPTIMIZED	
+#	if BUILD_OPTIMIZED
 /*		This version for production: optimization & shared libraries */
 /*		Warning 1174 is "variable declared but never referenced". */
 /*		Warning 1032 is "expression must have arithmetic type". */
@@ -315,7 +315,7 @@ set -S2 "/bin/sh"
 #	define	GFLAG	-n32 -KPIC -G 0
 #	define  XINCDIR /usr/include/X11
 #	define	XLIBDIR /usr/lib32
-#	if BUILD_SHARED	
+#	if BUILD_SHARED
 /*		Shared library version support */
 #		define	ARCH_SUF	so
 #		define	LIBVERS ../sh/sharedlibvers.sh
@@ -330,7 +330,7 @@ set -S2 "/bin/sh"
 #	else
 /*		Static linked executables */
 #		define	RANLIB	ranlib5.sh
-#		define	STANDARD_LIBES	-n32 -lm -lmalloc -lc 
+#		define	STANDARD_LIBES	-n32 -lm -lmalloc -lc
 #	endif
 #	define	LD_OPTS		GFLAG -Wl,-woff,84 -Wl,-woff,85 -Wl,-woff,134
 /* -ansiposix	ANSI+POSIX mode is used over ANSI, to get fdopen(), etc, defined. */
@@ -377,7 +377,7 @@ set -S2 "/bin/sh"
 /*	Silicon Graphics 4D, running IRIX64 6.2 (on a MIPS3 machine) */
 #	undef	sgi
 #	define	MTYPE	m3i62
-#	if BUILD_OPTIMIZED	
+#	if BUILD_OPTIMIZED
 /*		This version for production: optimization & shared libraries */
 /*		Warning 1174 is "variable declared but never referenced". */
 /*		Warning 1032 is "expression must have arithmetic type". */
@@ -397,7 +397,7 @@ set -S2 "/bin/sh"
 /*		-fullwarn is pretty verbose */
 #		define	OPTIMIZER	-g -use_readonly_const
 #	endif
-#	if BUILD_OPTIMIZED	
+#	if BUILD_OPTIMIZED
 /*		32-bit version, compatible with HLA, etc. etc. */
 #		define	GFLAG		-n32 -mips3 -KPIC -G 7
 #		define	XLIBDIR /usr/lib32
@@ -407,7 +407,7 @@ set -S2 "/bin/sh"
 #		define	XLIBDIR /usr/lib64
 #endif
 #	define  XINCDIR /usr/include/X11
-#	if BUILD_SHARED	
+#	if BUILD_SHARED
 /*		Shared library version support */
 #		define	ARCH_SUF	so
 #		define	LIBVERS ../sh/sharedlibvers.sh
@@ -448,7 +448,7 @@ set -S2 "/bin/sh"
 /*	Silicon Graphics 4D, running IRIX64 6.2 (on a MIPS4 machine) */
 #	undef	sgi
 #	define	MTYPE	m4i62
-#	if BUILD_OPTIMIZED	
+#	if BUILD_OPTIMIZED
 /*		This version for production: optimization & shared libraries */
 /*		Warning 1174 is "variable declared but never referenced". */
 /*		Warning 1032 is "expression must have arithmetic type". */
@@ -475,7 +475,7 @@ set -S2 "/bin/sh"
 #endif
 #	define  XINCDIR /usr/include/X11
 #	define	XLIBDIR /usr/lib64
-#	if BUILD_SHARED	
+#	if BUILD_SHARED
 /*		Shared library version support */
 #		define	ARCH_SUF	so
 #		define	LIBVERS ../sh/sharedlibvers.sh
@@ -772,7 +772,7 @@ set -S2 "/bin/sh"
 #	define	MTYPE	sun4
 #	define	BSD	43
 #	define	HAS_TCP	1
-#	if BUILD_OPTIMIZED	
+#	if BUILD_OPTIMIZED
 #		define	OPTIMIZER	-O2
 #	else
 #		define	OPTIMIZER	-g
@@ -866,7 +866,7 @@ set -S2 "/bin/sh"
 
 #	if defined( __GNUC__ )
 #		define	CC		gcc
-#		if BUILD_OPTIMIZED	
+#		if BUILD_OPTIMIZED
 #			define	OPTIMIZER	-O3 -fno-strict-aliasing
 #		else
 #			define	OPTIMIZER	-O -g
@@ -877,7 +877,7 @@ set -S2 "/bin/sh"
 #	else
 /*		For now, we expect /opt/SUNWspro/bin ANSI compiler to be used */
 #		define	CC		/opt/SUNWspro/bin/cc
-#		if BUILD_OPTIMIZED	
+#		if BUILD_OPTIMIZED
 #			define	OPTIMIZER	-dalign -xcg92 -xO4 -Xt
 #		else
 #			define	OPTIMIZER	-g -Xt
@@ -892,7 +892,7 @@ set -S2 "/bin/sh"
 #	endif
 
 /*	Shared library support */
-#	if BUILD_SHARED 
+#	if BUILD_SHARED
 #		define	ARCH_SUF	so
 #		define	LIBVERS		../sh/sharedlibvers.sh
 #		define	LDSHARED	ld -Bdynamic -G
@@ -917,7 +917,7 @@ set -S2 "/bin/sh"
 #	define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB -I''XINCDIR -DIF_X
 #	define	LIBFB_LIBES	LIBPKG -L''XLIBDIR -R''XLIBDIR -lX11 -lnsl -lsocket
 
-#	if BUILD_OPENGL	
+#	if BUILD_OPENGL
 #		define	LIBMESA_CONFIG	-DFBIND=2
 #		define	LIBDM_OBJS	color query dm-X
 #		define	LIBDM_CONFIG	-DDM_X -I''XINCDIR
@@ -1050,12 +1050,12 @@ set -S2 "/bin/sh"
 #	define	CC_DEFS -pipe -fPIC GCC_WARNINGS
 /*			-std=iso9899:199409 */
 #	define	JNI_INC	-I/usr/java/j2sdk1.4.2_02/include "-I/usr/java/j2sdk1.4.2_02/include/linux"
-#	if BUILD_OPTIMIZED	
+#	if BUILD_OPTIMIZED
 #		define	OPTIMIZER	-O3 -fomit-frame-pointer -fno-strict-aliasing
 #	else
 #		define	OPTIMIZER	-g
 #	endif
-#	if BUILD_SHARED	
+#	if BUILD_SHARED
 /*		Shared library version support.  Requires ELF for Linux. */
 #		define	ARCH_SUF	so
 #		define	LIBVERS ../sh/sharedlibvers.sh
@@ -1100,10 +1100,10 @@ set -S2 "/bin/sh"
 #			define	LIBFB_LIBES	LIBPKG
 #			define	LIBFB_OBJS	if_remote if_ab
 #			define	LIBDM_OBJS
-#			define	LIBDM_CONFIG	
+#			define	LIBDM_CONFIG
 #			define 	LIBDM_LIBES	LIBTCL LIBTCL_LIBES
-#			define	MGED_OBJS	
-#			define	MGED_CONFIG	
+#			define	MGED_OBJS
+#			define	MGED_CONFIG
 #			define	MGED_LIBES	LIBDM LIBDM_LIBES LIBFB LIBFB_LIBES
 #			define	LIBTK		/**/
 #			define	LIBTK_DEP	/**/
@@ -1115,7 +1115,7 @@ set -S2 "/bin/sh"
 #	define	LIBDM_SAMPLE_LIBES \$"(LIBDM)" \$"(LIBTK)" \$"(LIBTCL)" \$"(LIBTK_LIBES)" \$"(LIBTCL_LIBES)" -ldl \$"(XLIBDIR)" -lXi -lXext -lX11
 #	if 0	/*	Use the system-provided TCL and Tk libraries */
 #		define	LIBTCL_DIR	_use_system_tcl_
-#		define	LIBTCL_USE_SYSTEM 
+#		define	LIBTCL_USE_SYSTEM
 #		define	LIBTCL		-ltcl8.0
 #		define	LIBTCL_DEP	/**/
 #		define	LIBTK_DIR	_use_system_tk_
@@ -1136,13 +1136,13 @@ set -S2 "/bin/sh"
 #	define	CC	gcc
 #	define	CC_DEFS -pipe -fPIC GCC_WARNINGS
 #	define	LEX_OPTS	-l
-#	if BUILD_OPTIMIZED	
+#	if BUILD_OPTIMIZED
 #		define	OPTIMIZER	-O3 -fomit-frame-pointer -fno-strict-aliasing
 #	else
 #		define	OPTIMIZER	-O -g
 #		define	PROFILER	-pg  /* gprof profiling -- build staticly to include libraries */
 #	endif
-#	if BUILD_SHARED	
+#	if BUILD_SHARED
 /*		Shared library version support.  */
 #		define	ARCH_SUF	so
 #		define	LIBVERS ../sh/sharedlibvers.sh
@@ -1179,10 +1179,10 @@ set -S2 "/bin/sh"
 #			define	LIBFB_LIBES	LIBPKG
 #			define	LIBFB_OBJS	if_remote if_ab
 #			define	LIBDM_OBJS
-#			define	LIBDM_CONFIG	
+#			define	LIBDM_CONFIG
 #			define 	LIBDM_LIBES	LIBTCL LIBTCL_LIBES
-#			define	MGED_OBJS	
-#			define	MGED_CONFIG	
+#			define	MGED_OBJS
+#			define	MGED_CONFIG
 #			define	MGED_LIBES	LIBDM LIBDM_LIBES LIBFB LIBFB_LIBES
 #			define	LIBTK		/**/
 #			define	LIBTK_DEP	/**/
@@ -1209,13 +1209,13 @@ set -S2 "/bin/sh"
 #	define XLIBDIR	/usr/X11R6/lib
 #	define XINCDIR	/usr/X11R6/include
 /*#	define	LEX_OPTS	-l*/
-#	if BUILD_OPTIMIZED	
+#	if BUILD_OPTIMIZED
 #		define	OPTIMIZER	-O3  -fno-common -ffast-math -fstrength-reduce -fexpensive-optimizations /* -faltivec */
 #	else
 #		define	OPTIMIZER	-g -fno-common
 #	endif
 #	define	CC_DEFS -pipe GCC_WARNINGS -Dlint
-#	if BUILD_SHARED	
+#	if BUILD_SHARED
 /*#		error "ERROR: Building with shared libraries is not supported via cake"*/
 /*		Shared library version support.  */
 /*		PowerPC code is position-independant by default (and by design) (i.e. no nee d for -fPIC) */
@@ -1266,14 +1266,14 @@ set -S2 "/bin/sh"
 #			define	MGED_CONFIG	-DDM_X -I''XINCDIR
 #			define	MGED_LIBES	LIBDM LIBDM_LIBES LIBFB LIBFB_LIBES -lXi -lXext
 #		else	/* no X  -- USE AQUA INTERFACE */
-#			define	LIBFB_CONFIG	/* -DIF_AQUA */ -DIF_REMOTE -DIF_AB 
+#			define	LIBFB_CONFIG	/* -DIF_AQUA */ -DIF_REMOTE -DIF_AB
 #			define	LIBFB_LIBES	LIBPKG
 #			define	LIBFB_OBJS	/* if_aqua */ if_remote if_ab
 #			define	LIBDM_OBJS
-#			define	LIBDM_CONFIG	
+#			define	LIBDM_CONFIG
 #			define 	LIBDM_LIBES	LIBTCL LIBTCL_LIBES
-#			define	MGED_OBJS	
-#			define	MGED_CONFIG	
+#			define	MGED_OBJS
+#			define	MGED_CONFIG
 #			define	MGED_LIBES	LIBDM LIBDM_LIBES LIBFB LIBFB_LIBES
 #			define	LIBTK		/**/
 #			define	LIBTK_DEP	/**/
@@ -1371,7 +1371,7 @@ set -S2 "/bin/sh"
 #		define	ARCH_SUF	a
 #		define	LIBVERS	../sh/newvers.sh
 #		define	RANLIB	ranlib5.sh
-#		define	STANDARD_LIBES	-lc -lm -lpthreads 
+#		define	STANDARD_LIBES	-lc -lm -lpthreads
 /* #		define	STANDARD_LIBES	-lm -lmalloc	*/
 /* #		define	LD_OPTS		GFLAG	*/
 #	endif
@@ -1404,11 +1404,11 @@ set -S2 "/bin/sh"
 #		define	LIBFB_OBJS	if_remote if_ab
 #		define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB
 #		define	LIBFB_LIBES	LIBPKG
-#		define	LIBDM_OBJS	
-#		define	LIBDM_CONFIG	
+#		define	LIBDM_OBJS
+#		define	LIBDM_CONFIG
 #		define	LIBDM_LIBES	LIBTCL LIBTCL_LIBES
-#		define	MGED_OBJS	
-#		define	MGED_CONFIG	
+#		define	MGED_OBJS
+#		define	MGED_CONFIG
 #		define	MGED_LIBES	LIBDM LIBDM_LIBES
 #		define	LIBTK		/**/
 #		define	LIBTK_DEP	/**/
@@ -1474,7 +1474,7 @@ set -S2 "/bin/sh"
 /*	Silicon Graphics 4D, running IRIX 4.0 "Cypress" and X-windows */
 #	undef	sgi
 #	define	MTYPE	5d
-#	if BUILD_OPTIMIZED	
+#	if BUILD_OPTIMIZED
 /*		This version for production: optimization & shared libraries */
 #		define	OPTIMIZER	-O2
 /*		Use shared libraries */
@@ -1502,7 +1502,7 @@ set -S2 "/bin/sh"
 #	define	LIBFB_OBJS	if_remote if_ab if_4d if_X if_X24
 #	define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB -DIF_4D -DBSD=43 -I''XINCDIR -DIF_X
 #	define	LIBFB_LIBES	LIBPKG -L''XLIBDIR -lX11''SHARED LIBPKG -lgl''SHARED
-#	if BUILD_OPENGL	
+#	if BUILD_OPENGL
 /*		X11 for MGED */
 #		define	MGED_OBJS	doevent update dm-4d dm-X dm-ogl dm-generic
 #		define	MGED_CONFIG	GFLAG -DIR_KNOBS=8 -DIR_BUTTONS=32 -DDM_4D -DDM_X -I''XINCDIR -DDM_OGL
@@ -1550,7 +1550,7 @@ set -S2 "/bin/sh"
 #	define	BSD	42
 #	define	HAS_TCP	1
 /*	Select correct floating point flag, -fswitch if unsure */
-#	if 1	
+#	if 1
 /*		Using the Sun Compiler (the default) */
 #		if 0
 /*			Generic unoptimized Sun configuration */
@@ -1583,7 +1583,7 @@ set -S2 "/bin/sh"
 #	endif
 #	define	LIBRT_TIMER	timer42
 
-#	define	sun_openwin 1	
+#	define	sun_openwin 1
 #	undef	sun_x11
 #	undef	sun_no_opts
 #	undef	sun_x11_gds
@@ -1617,7 +1617,7 @@ set -S2 "/bin/sh"
 #		define	LIBFB_OBJS	if_remote if_ab if_sun
 #		define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB -DIF_SUN
 #		define	LIBFB_LIBES	LIBPKG -lsuntool -lsunwindow -lpixrect
-#		define	MGED_OBJS	dm-sun 
+#		define	MGED_OBJS	dm-sun
 #		define	MGED_CONFIG	-DDM_SUNPW
 #		define	MGED_LIBES	-lsuntool -lsunwindow -lpixrect
 #	endif
@@ -1647,7 +1647,7 @@ set -S2 "/bin/sh"
 #	undef	alpha
 #	define	CC_OPTS	-std1 -readonly_strings
 #	define	OPTIMIZER	-O2 -Olimit 1400 -fp_reorder
-#	if BUILD_SHARED	
+#	if BUILD_SHARED
 /*		Shared library version support */
 #		define	ARCH_SUF	so
 #		define	LIBVERS ../sh/sharedlibvers.sh
@@ -1702,7 +1702,7 @@ set -S2 "/bin/sh"
 /*	Apple MAC II running A/UX 1.0 */
 #	undef	aux
 #	define	MTYPE	aux
-#	if 1	
+#	if 1
 #		define  CC      /bin/cc
 #		define	OPTIMIZER	-O
 #	else
@@ -2044,7 +2044,7 @@ set -S2 "/bin/sh"
 #	define  LIBRT_TIMER     timerunix
 #	define  LIBTERMLIB      -lcurses
 #	define	LIBBU_LIBES	LIBTCL LIBTCL_LIBES -ldl
-#	define  LIBPKG_CONFIG   -I/usr/include/netinet -DBSD=42 
+#	define  LIBPKG_CONFIG   -I/usr/include/netinet -DBSD=42
 #	define	XINCDIR	/usr/include/X11R6
 #	define	XLIBDIR	/usr/lib/X11R6
 #	if BUILD_XWINDOWS

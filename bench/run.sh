@@ -12,7 +12,7 @@
 # 1. Redistributions of source code must retain the above copyright
 # notice, this list of conditions and the following disclaimer.
 #
-# 2. Redistributions in binary form must reproduce the above 
+# 2. Redistributions in binary form must reproduce the above
 # copyright notice, this list of conditions and the following
 # disclaimer in the documentation and/or other materials provided
 # with the distribution.
@@ -172,7 +172,7 @@ if test "x${DB}" = "x" ; then
 			break
 		    fi
 		done
-		
+
 		if test -f "asc2g" ; then
 		    echo ...compiled asc2g with $COMPILE -o asc2g src/conv/asc2g.c
 		    ASC2G="./asc2g"
@@ -246,7 +246,7 @@ if test "x${CMP}" = "x" ; then
 		    break;
 		fi
 	    done
-	    
+
 	    if test -f "pixcmp" ; then
 		echo ...built pixcmp with $COMPILE -o pixcmp pixcmp.c
 		CMP="./pixcmp"
@@ -364,7 +364,7 @@ if test "x${DEBUG}" = "x" ; then
 #    DEBUG=1
     :
 fi
-echo 
+echo
 
 
 #
@@ -461,7 +461,7 @@ getvals ( ) {
 	getvals_got="$getvals_got $getvals_int"
 	getvals_counted="`expr $getvals_counted + 1`"
     done
-    
+
     echo "$getvals_got"
     return $getvals_counted
 }
@@ -486,7 +486,7 @@ variance ( ) {
 	echo "ERROR: cannot compute variance of nothing" 1>&2
 	exit 1
     fi
-    
+
     # get up to count values from the nums provided
     variance_got="`getvals $variance_count $variance_nums`"
     variance_counted="$?"
@@ -597,7 +597,7 @@ benchmark ( ) {
 
 	    if test -f ${benchmark_testname}.pix; then mv -f ${benchmark_testname}.pix ${benchmark_testname}.pix.$$; fi
 	    if test -f ${benchmark_testname}.log; then mv -f ${benchmark_testname}.log ${benchmark_testname}.log.$$; fi
-	    
+
 	    benchmark_frame_start_time="`date '+%H %M %S'`"
 
 	    run $benchmark_testname $benchmark_geometry $benchmark_hypersample $benchmark_args 2> ${benchmark_testname}.log << EOF
@@ -608,7 +608,7 @@ EOF
 	    retval=$?
 
 	    if test -f ${benchmark_testname}.pix.$benchmark_frame ; then mv -f ${benchmark_testname}.pix.$benchmark_frame ${benchmark_testname}.pix ; fi
-	
+
 	    # compute how long we took, rounding up to at least one
 	    # second to prevent division by zero.
 	    benchmark_elapsed="`$ELP --seconds $benchmark_frame_start_time`"
@@ -728,7 +728,7 @@ EOF
     else
 	echo ${benchmark_testname}.pix:  WRONG WRONG WRONG WRONG WRONG WRONG
     fi
-    
+
     if test "x$DEBUG" != "x" ; then
 	echo "DEBUG: Done benchmark testing on $benchmark_testname"
     fi
@@ -763,9 +763,9 @@ EOF
 benchmark star all $ARGS << EOF
 viewsize 2.500000000e+05;
 eye_pt 2.102677960e+05 8.455500000e+04 2.934714650e+04;
-viewrot -6.733560560e-01 6.130643360e-01 4.132114880e-01 0.000000000e+00 
-	5.539599410e-01 4.823888300e-02 8.311441420e-01 0.000000000e+00 
-	4.896120540e-01 7.885590550e-01 -3.720948210e-01 0.000000000e+00 
+viewrot -6.733560560e-01 6.130643360e-01 4.132114880e-01 0.000000000e+00
+	5.539599410e-01 4.823888300e-02 8.311441420e-01 0.000000000e+00
+	4.896120540e-01 7.885590550e-01 -3.720948210e-01 0.000000000e+00
 	0.000000000e+00 0.000000000e+00 0.000000000e+00 1.000000000e+00 ;
 EOF
 
@@ -781,9 +781,9 @@ EOF
 benchmark m35 all.g $ARGS <<EOF
 viewsize 6.787387985e+03;
 eye_pt 3.974533127e+03 1.503320754e+03 2.874633221e+03;
-viewrot -5.527838919e-01 8.332423558e-01 1.171090926e-02 0.000000000e+00 
-	-4.815587087e-01 -3.308784486e-01 8.115544728e-01 0.000000000e+00 
-	6.800964482e-01 4.429747496e-01 5.841593895e-01 0.000000000e+00 
+viewrot -5.527838919e-01 8.332423558e-01 1.171090926e-02 0.000000000e+00
+	-4.815587087e-01 -3.308784486e-01 8.115544728e-01 0.000000000e+00
+	6.800964482e-01 4.429747496e-01 5.841593895e-01 0.000000000e+00
 	0.000000000e+00 0.000000000e+00 0.000000000e+00 1.000000000e+00 ;
 EOF
 

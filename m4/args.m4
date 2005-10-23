@@ -11,7 +11,7 @@
 # 1. Redistributions of source code must retain the above copyright
 # notice, this list of conditions and the following disclaimer.
 #
-# 2. Redistributions in binary form must reproduce the above 
+# 2. Redistributions in binary form must reproduce the above
 # copyright notice, this list of conditions and the following
 # disclaimer in the documentation and/or other materials provided
 # with the distribution.
@@ -47,7 +47,7 @@
 # creates an --enable alias.  argument aliases do not show up in help,
 # so the only expected arguments to the macro is the variable name,
 # and the FEATURE alias name.
-# 
+#
 #
 # BC_ARG_WITH
 #
@@ -83,7 +83,7 @@ dnl)
 
 # BC_ARG_ENABLE 1:[$1] 2:[$2] 3:[$3] 4:[$4]
 bc_[$1]=[$4]
-AC_ARG_ENABLE([$2], AC_HELP_STRING([--enable-$2], [$3 (default=$4)]), 
+AC_ARG_ENABLE([$2], AC_HELP_STRING([--enable-$2], [$3 (default=$4)]),
 	[
 	case "x$enableval" in
 		x[[yY]][[eE]][[sS]])
@@ -134,7 +134,7 @@ AC_DEFUN([BC_ARG_WITH], [
 # BC_ARG_WITH 1:[$1] 2:[$2] 3:[$3] 4:[$4] 5:[$5]
 bc_[$1]=[$4]
 bc_[$1]_val=[$5]
-AC_ARG_WITH([$2], AC_HELP_STRING([--with-$2], [$3]), 
+AC_ARG_WITH([$2], AC_HELP_STRING([--with-$2], [$3]),
 	[
 	case "x$withval" in
 		x[[yY]][[eE]][[sS]])
@@ -193,7 +193,7 @@ AC_ARG_WITH(cflags, AC_HELP_STRING(--with-cflags,
 		if test "x$withval" != "xno" ; then
 			CFLAGS="$CFLAGS $withval"
 		fi
-	]	
+	]
 )
 AC_ARG_WITH(cppflags, AC_HELP_STRING(--with-cppflags,
 		[Specify additional flags to pass to C preprocessor]),
@@ -209,7 +209,7 @@ AC_ARG_WITH(ldflags, AC_HELP_STRING(--with-ldflags,
 		if test "x$withval" != "xno" ; then
 			LDFLAGS="$LDFLAGS $withval"
 		fi
-	]	
+	]
 )
 AC_ARG_WITH(libs, AC_HELP_STRING(--with-libs,
 		[Specify additional libraries to link against]),
@@ -217,7 +217,7 @@ AC_ARG_WITH(libs, AC_HELP_STRING(--with-libs,
 		if test "x$withval" != "xno" ; then
 			LIBS="$LIBS $withval"
 		fi
-	]	
+	]
 )
 ])
 

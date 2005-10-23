@@ -11,7 +11,7 @@
 # 1. Redistributions of source code must retain the above copyright
 # notice, this list of conditions and the following disclaimer.
 #
-# 2. Redistributions in binary form must reproduce the above 
+# 2. Redistributions in binary form must reproduce the above
 # copyright notice, this list of conditions and the following
 # disclaimer in the documentation and/or other materials provided
 # with the distribution.
@@ -44,7 +44,7 @@
 # INSTALL files, so those are common files that need to be restored.
 #
 ###
-	
+
 AC_DEFUN([BC_RESTORE_CLOBBERED], [
 
 files_to_check="ifelse([$1], , [], [$1])"
@@ -75,7 +75,7 @@ for file in $files_to_check ; do
 				backup_rev=`grep '$Revision' "$back" | awk '{print $[2]}' | sed 's/\.//g'`
 				if test "x$backup_rev" = "x" ; then
 					backup_rev=0
-				fi		
+				fi
 
 				if test "$current_rev" -gt "$backup_rev" ; then
 					AC_MSG_RESULT([no, saving backup])
