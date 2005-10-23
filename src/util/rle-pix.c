@@ -24,7 +24,7 @@
  *
  *  Author -
  *	Michael John Muuss
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
@@ -63,7 +63,7 @@ static int	background[3];
 static int	override_background;
 
 unsigned char	*rows[4];		/* Character pointers for rle_getrow */
-	
+
 static RGBpixel	*scan_buf;		/* single scanline buffer */
 static RGBpixel	*bg_buf;		/* single scanline of background */
 static ColorMap	cmap;

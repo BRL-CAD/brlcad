@@ -112,7 +112,7 @@ static struct funtab joint_tab[] = {
 
 #define db_init_full_path(_fp) {\
 	(_fp)->fp_len = (_fp)->fp_maxlen = 0; \
-	(_fp)->magic = DB_FULL_PATH_MAGIC; }	
+	(_fp)->magic = DB_FULL_PATH_MAGIC; }
 int
 f_jdebug(int	argc,
 	 char	**argv)
@@ -292,7 +292,7 @@ FILE *fip;
 		int t = pp->type;
 		if (t < 0 || t > 3) t = 3;
 		Tcl_AppendResult(interp, "joint load point: Type is ", names[t],
-				 "\n", (char *)NULL); 
+				 "\n", (char *)NULL);
 	}
 	switch (pp->type) {
 	case HOLD_PT_FIXED:
@@ -310,7 +310,7 @@ FILE *fip;
 		}
 		if (joint_debug & DEBUG_J_LOAD) {
 		  struct bu_vls tmp_vls;
-		  
+
 		  bu_vls_init(&tmp_vls);
 		  bu_vls_printf(&tmp_vls, "joint load point: (%g %g %g)\n", pp->point[X],
 				pp->point[Y], pp->point[Z]);
@@ -469,7 +469,7 @@ f_junload(int argc, char **argv)
 		joints++;
 		BU_LIST_DEQUEUE(&(jp->l));
 		if (joint_debug & DEBUG_J_LOAD) {
-		  Tcl_AppendResult(interp, "joint unload: unloading '", 
+		  Tcl_AppendResult(interp, "joint unload: unloading '",
 				   jp->name, "'.\n", (char *)NULL);
 		}
 		free_joint(jp);
@@ -1062,7 +1062,7 @@ parse_trans(struct joint *jp, int index, FILE *fip, struct bu_vls *str)
 		if (token.type == BU_LEX_IDENT) {
 			bu_free(token.t_id.value, "unit token");
 		}
-		if (token.type == BU_LEX_SYMBOL && 
+		if (token.type == BU_LEX_SYMBOL &&
 		    token.t_key.value == SYM_CL_GROUP ) {
 		    	if (joint_debug & DEBUG_J_PARSE) {
 			  Tcl_AppendResult(interp, "parse_trans: closing.\n", (char *)NULL);
@@ -1220,7 +1220,7 @@ parse_rots(struct joint *jp, int index, FILE *fip, struct bu_vls *str)
 		if (token.type == BU_LEX_IDENT) {
 			bu_free(token.t_id.value, "unit token");
 		}
-		if (token.type == BU_LEX_SYMBOL && 
+		if (token.type == BU_LEX_SYMBOL &&
 		    token.t_key.value == SYM_CL_GROUP ) {
 		    	if (joint_debug & DEBUG_J_PARSE) {
 			  Tcl_AppendResult(interp, "parse_rots: closing.\n", (char *)NULL);
@@ -1446,7 +1446,7 @@ parse_joint(FILE *fip, struct bu_vls *str)
 			return 0;
 		}
 		switch (token.t_key.value) {
-		case KEY_ARC: 
+		case KEY_ARC:
 			if (arcfound) {
 				parse_error(str,"parse_joint: more than one arc or path given");
 			}
@@ -1468,7 +1468,7 @@ parse_joint(FILE *fip, struct bu_vls *str)
 			}
 			arcfound = 1;
 			break;
-		case KEY_LOC: 
+		case KEY_LOC:
 			if (locfound) {
 				parse_error(str,"parse_joint: more than one location given.");
 			}
@@ -1755,7 +1755,7 @@ parse_hold(FILE *fip, struct bu_vls *str)
 		free_hold(hp);
 		return 0;
 	}
-	
+
 	for (;;) {
 		if (get_token(&token, fip, str, keys, syms) == EOF) {
 			parse_error(str, "parse_hold: Unexpected EOF getting constraint contents.");
@@ -1990,8 +1990,8 @@ f_jload(int argc, char **argv)
 			    bu_malloc(sizeof(struct directory **) * hp->effector.path.fp_maxlen,
 			    "full path");
 			for (i=0; i<= hp->effector.arc.arc_last; i++) {
-				dp = hp->effector.path.fp_names[i] = 
-				    db_lookup(dbip, hp->effector.arc.arc[i], 
+				dp = hp->effector.path.fp_names[i] =
+				    db_lookup(dbip, hp->effector.arc.arc[i],
 				    LOOKUP_NOISY);
 				if (!dp) {
 					hp->effector.path.fp_len = i;
@@ -2008,8 +2008,8 @@ f_jload(int argc, char **argv)
 			    bu_malloc(sizeof(struct directory **) * hp->objective.path.fp_maxlen,
 			    "full path");
 			for (i=0; i<= hp->objective.arc.arc_last; i++) {
-				dp = hp->objective.path.fp_names[i] = 
-				    db_lookup(dbip, hp->objective.arc.arc[i], 
+				dp = hp->objective.path.fp_names[i] =
+				    db_lookup(dbip, hp->objective.arc.arc[i],
 				    LOOKUP_NOISY);
 				if (!dp) {
 					hp->objective.path.fp_len = i;
@@ -2080,7 +2080,7 @@ f_jsave(int argc, char **argv)
 			}
 			fprintf(fop,"/%s;\n", jp->path.arc[i]);
 		}
-		fprintf(fop,"\tlocation = (%.15e, %.15e, %.15e);\n", 
+		fprintf(fop,"\tlocation = (%.15e, %.15e, %.15e);\n",
 		    jp->location[X]*mm2base, jp->location[Y]*mm2base,
 		    jp->location[Z]*mm2base);
 
@@ -2089,7 +2089,7 @@ f_jsave(int argc, char **argv)
 			fprintf(fop,
 "\trotate {\n\t\tdirection = (%.15e, %.15e, %.15e);\n\t\tlimits = %.15e, %.15e, %.15e;\n\t}\n",
 			    jp->rots[i].quat[X], jp->rots[i].quat[Y],
-			    jp->rots[i].quat[Z], 
+			    jp->rots[i].quat[Z],
 			    jp->rots[i].lower, jp->rots[i].upper,
 			    jp->rots[i].current);
 		}
@@ -2242,7 +2242,7 @@ hold_eval(struct hold *hp)
 	vect_t	e_loc, o_loc;
 	double	value;
 
-	/* 
+	/*
 	 * get the current location of the effector.
 	 */
 	if (!hold_point_location(e_loc, &hp->effector)) {
@@ -2630,7 +2630,7 @@ reject_move(void)
 	  Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
 	  bu_vls_free(&tmp_vls);
 	}
-	if (ssp->freedom<3) { 
+	if (ssp->freedom<3) {
 		ssp->jp->rots[ssp->freedom].current = ssp->old;
 	} else {
 		ssp->jp->dirs[ssp->freedom-3].current = ssp->old;
@@ -2937,12 +2937,12 @@ f_jsolve(int argc, char **argv)
 		}
 		joint_clear();
 	      }
-	      
+
 	      {
 		struct bu_vls tmp_vls;
-		
+
 		bu_vls_init(&tmp_vls);
-		bu_vls_printf(&tmp_vls, "joint solve: finished %d loops of %s.\n", 
+		bu_vls_printf(&tmp_vls, "joint solve: finished %d loops of %s.\n",
 			      count, hp->name);
 		Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
 		bu_vls_free(&tmp_vls);
@@ -3581,7 +3581,7 @@ f_jmesh(int argc, char **argv)
 	    (genptr_t)NULL);
 
 	/*
-	 * Now we draw the the overlays.  We do this by building a 
+	 * Now we draw the the overlays.  We do this by building a
 	 * mesh from each grip to every other grip in that list.
 	 */
 	vbp = rt_vlblock_init();

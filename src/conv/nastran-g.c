@@ -25,7 +25,7 @@
  *
  *  Author -
  *      John R. Anderson
- *  
+ *
  *  Source -
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
@@ -1369,7 +1369,7 @@ main(int argc, char **argv)
 		VMOVE( g_pts[grid_used].pt, tmp );
 		grid_used++;
 	}
-	
+
 
 	/* find coordinate systems */
 	fseek( fdtmp, 0, SEEK_SET );

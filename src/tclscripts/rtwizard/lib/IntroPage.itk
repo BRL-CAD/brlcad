@@ -36,7 +36,7 @@ namespace eval RtWizard {
     package provide IntroPage 1.0
 
     #
-    # intropage - Provides a lowercased access method for the 
+    # intropage - Provides a lowercased access method for the
     #             IntroPage class
     #
     proc intropage {pathName args} {
@@ -45,7 +45,7 @@ namespace eval RtWizard {
 
     #
     # Add options
-    # 
+    #
     option add *IntroPage.borderWidth 2 widgetDefault
     option add *IntroPage.labelPos wn widgetDefault
     option add *IntroPage.listHeight 150 widgetDefault
@@ -86,9 +86,9 @@ namespace eval RtWizard {
     #
 
     #
-    # Use the singleton pattern to allow the picture types to 
+    # Use the singleton pattern to allow the picture types to
     # easily change the greeting text.
-    # 
+    #
     set ::introInstance ""
 
     ::itcl::class IntroPage {
@@ -106,18 +106,18 @@ namespace eval RtWizard {
 	    # methods
 	    #
 	    constructor {args} {};
-	    
+
 	    method onSelect {}
 	    method onDeselect {}
 	    method getStepInfo {}
 	}
 
- 
+
 	private {
 	    #
 	    # methods
 	    #
-	    
+
 	    #
 	    # variables
 	    #
@@ -126,7 +126,7 @@ namespace eval RtWizard {
 
     #--------------------#
     #   Public Methods   #
-    #--------------------#    
+    #--------------------#
     #
     # constructor - builds the Intro Page
     #
@@ -155,18 +155,18 @@ namespace eval RtWizard {
 		    -visibleitems 75x30 \
 		    -textfont {helvetica 10 bold} \
 		    -relief sunken
-	    
+
 	} {
 	    usual
 	    ignore -textfont
 	}
-	
+
 	# Next
 	itk_component add next {
 	    button $cs.next \
 		    -text Next \
 		    -width 8 \
-		    -command "[itcl::code $this goNext]" 
+		    -command "[itcl::code $this goNext]"
 	} {
 	    usual
 	}
@@ -175,7 +175,7 @@ namespace eval RtWizard {
 	# Pack it!
 	#
 	pack $itk_component(greetPanel) -anchor w -fill both -expand 1
-	
+
 	#
 	# Evaluate any additional args.
 	#
@@ -183,7 +183,7 @@ namespace eval RtWizard {
 
 	set introInstance $this
     }
-    
+
     #
     # greeting
     #
@@ -211,7 +211,7 @@ namespace eval RtWizard {
     #
     # Cleans up when the page is deselected
     #
-    ::itcl::body IntroPage::onDeselect {} {	
+    ::itcl::body IntroPage::onDeselect {} {
 	#
 	# Nothing yet!
 	#
@@ -221,7 +221,7 @@ namespace eval RtWizard {
     # getStepInfo
     #
     # In principal, returns a name for the step, and a variable that
-    # can be queried for state. The Intro page is not a 'step', 
+    # can be queried for state. The Intro page is not a 'step',
     # so it returns "No Step"
     #
     ::itcl::body IntroPage::getStepInfo {} {
@@ -232,7 +232,7 @@ namespace eval RtWizard {
 
     #--------------------#
     #  Private Methods   #
-    #--------------------#    
+    #--------------------#
 
 }
 #end namespace

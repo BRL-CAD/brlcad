@@ -198,7 +198,7 @@ void tienet_master_init(int port, void fcb_result(void *res_buf, int res_len), c
   pthread_mutex_init(&tienet_master_send_mut, 0);
   pthread_mutex_init(&tienet_master_push_mut, 0);
   pthread_mutex_init(&tienet_master_broadcast_mut, 0);
-  
+
   /* Start the Listener as a Thread */
   pthread_create(&thread, NULL, tienet_master_listener, NULL);
 }
@@ -298,7 +298,7 @@ void tienet_master_push(void *data, int size) {
     tienet_sem_post(&tienet_master_sem_read);
   }
 
-  
+
   /*
   * Tell any idle slaves to get back to work.
   * This is the case where slaves have exhausted the work buffer,
@@ -625,7 +625,7 @@ void tienet_master_send_work(tienet_master_socket_t *sock) {
   int size;
   short op;
 
-  /* 
+  /*
   * This exists to prevent a collision from tienet_master_push calling this function
   * as a result of a socket being idle and then given work.  If this function were called
   * and 2 threads entered the if(tienet_master_sem_read.val) block and waited on tienet_master_sem_read

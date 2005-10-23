@@ -55,7 +55,7 @@ canonize \- queue a pix file to a printer using MDQS
 [file.pix ...]
 .SH DESCRIPTION
 .I Canonize
-is a user agent for printing 
+is a user agent for printing
 .IR pix (5)
 format files using a Canon(tm) CLC500 and the MDQS queuing system.
 It can read the image from the standard input, or can send one or
@@ -68,7 +68,7 @@ scaled to fill the print area on the page.
 .SH OPTIONS
 .TP
 \-a
-Causes 
+Causes
 .IR canonize
 to attempt to determine the size of the image by using stat(2) to
 find out the number of bytes in the file.  This option cannot be
@@ -81,7 +81,7 @@ indicates that the input image is 1024 pixels square.
 sets the image width and height to the size given.
 .TP
 \-w filewidth
-sets the image width to be 
+sets the image width to be
 .IR filewidth
 pixels.  By default the image is assumed to be 512 pixels wide.
 .TP
@@ -122,9 +122,9 @@ X dimension and "ymag" in the y dimension.
 \-X page_xoff
 Specifies the offset of left side of the image from the left side of the
 output page.
-This option is available only when 
+This option is available only when
 .IR \-R
-or 
+or
 .IR \-M
 have been specified, and are especially useful in conjunction with the
 .IR \-m
@@ -132,9 +132,9 @@ option.
 .TP
 \-Y page_xoff
 Specifies the distance from the top of the page to the top of the image.
-This option is available only when 
+This option is available only when
 .IR \-R
-or 
+or
 .IR \-M
 have been specified, and are especially useful in conjunction with the
 .IR \-m
@@ -142,13 +142,13 @@ option.
 .TP
 \-N
 Specifies the height of the image on the output page.
-This option is available only when 
+This option is available only when
 .IR \-A
 AutoScaling (on by default).
 The image is scaled equally in the X and Y dimensions to make it fit the
 available print area as closely as possible.
 .IR \-R
-or 
+or
 .IR \-M
 have been specified, and are especially useful in conjunction with the
 .IR \-m
@@ -156,9 +156,9 @@ option.
 .TP
 \-W
 Specifies the width of the image on the output page.
-This option is available only when 
+This option is available only when
 .IR \-R
-or 
+or
 .IR \-M
 have been specified, and are especially useful in conjunction with the
 .IR \-m

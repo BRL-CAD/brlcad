@@ -144,7 +144,7 @@ int bu_which(char *argv[], int lim, const char *cmd)
   /* something big enough to hold any path */
   max_length = strlen(PATH) + strlen(cmd) + 1;
   fullname = (char *)bu_calloc(max_length+1, sizeof(char), "bu_which fullname");
- 
+
   /* search the PATH for the executable */
   for (curr_path = PATH; ; *curr_path++ = BU_PATH_SEPARATOR) {
     directory = curr_path;

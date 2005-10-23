@@ -5,20 +5,20 @@
 <DT><a NAME="air"><B>air</B></DT>
 <DD> The ``air'' shader mimics the behaviour of atmosphere.
 Volumes of modeled air can be given a realistic appearance by using this shader.
-The shader performs basic Beer's Law extinction and contrast reduction.  
+The shader performs basic Beer's Law extinction and contrast reduction.
 It should be applied only on regions where the air code has been set to
-a non-zero value.  
+a non-zero value.
 See <a href="mged_cmds.html#edcodes">edcodes</a> for imformation
 about setting the air flag on the region).
 <p>
-The ``air'' shader assumes that the volume is a homogenous volume of 
+The ``air'' shader assumes that the volume is a homogenous volume of
 non-turbulent air.  The shader provides crude modeling of absorbtion
 and scattering effects in the atmosphere.  Absorbtion and/or extinction
 effects are modeled by reducing the transmission of the air volume by
 an amount proportional to the distance traveled through the air.
 <pre>
 Transmission = exp( - Tau )
-Tau	= optical path depth 
+Tau	= optical path depth
 	= density_per_unit_distance * distance
 </pre>
 <p>
@@ -50,8 +50,8 @@ the color of the air.
 <DT><a NAME="emist"><B>emist</B></DT>
 <DD> The ``emist'' shader is much like the <a href="#air">air</a> shader except
 that the density of the atmosphere varies exponentially as a function
-of altitude.  Above a certain delta from the Z=0 plane, emist should 
-be identical to ``air''.  
+of altitude.  Above a certain delta from the Z=0 plane, emist should
+be identical to ``air''.
 Below this level, density increases exponentially.
 
 <H3>Parameters</h3>
@@ -91,7 +91,7 @@ of the region.  This noise value is used to determine the ratio of two colors
 present as the final color of the object.
 The object color and a shader-specific color are combined.
 
-The color produced is a combination of 
+The color produced is a combination of
 
 
 <p>
@@ -121,12 +121,12 @@ final result.
 <dt><b>H</b>
 <dd>
 <dt><B>Octaves</b>
-<dd>The number of times the noise grid will be scaled and recombined to 
+<dd>The number of times the noise grid will be scaled and recombined to
 produce the final noise function
 <dt><b>Size, Vscale</b>
 <dd>If <b>size</b> is set it is used as a scalar which defines the size of the
 noise grid on the object.  So if t2=0.5 and size=5mm then splotches of color3
-would tend to be no larger than 5-10mm.  If non-uniform scaling is required, 
+would tend to be no larger than 5-10mm.  If non-uniform scaling is required,
 Vscale can specify the grid size in X, Y and Z.
 <dt><b>Delta</b>
 <dd>This specifies a translation in noise space for the origin of region space.
@@ -147,7 +147,7 @@ upon a fractal noise function known as fractional brownian motion or fBm.
 The fractal noise function produces
 a pseudo- random number in the range [-1.0 ... 1.0] from the 3-space
 coordinates of a point in the bounding volume of the region.  This noise value
-is used to determine the color of the object at the given location.  
+is used to determine the color of the object at the given location.
 <p>
 <center><table border=1>
 <tr><th>Noise value</th><th>Object Color</th></tr>
@@ -190,12 +190,12 @@ final result.
 <dt><b>H</b>
 <dd>
 <dt><B>Octaves</b>
-<dd>The number of times the noise grid will be scaled and recombined to 
+<dd>The number of times the noise grid will be scaled and recombined to
 produce the final noise function
 <dt><b>Size, Vscale</b>
 <dd>If <b>size</b> is set it is used as a scalar which defines the size of the
 noise grid on the object.  So if t2=0.5 and size=5mm then splotches of color3
-would tend to be no larger than 5-10mm.  If non-uniform scaling is required, 
+would tend to be no larger than 5-10mm.  If non-uniform scaling is required,
 Vscale can specify the grid size in X, Y and Z.
 <dt><b>Delta</b>
 <dd>This specifies a translation in noise space for the origin of region space.
@@ -551,7 +551,7 @@ noise to the intensity of the surface color.
 The "extern" shader takes a filename as its only argument.  The file is
 opened and shaders and their parameters are read from the file.  The
 "extern" shader is really an extension of the "stack" shader.  The contents
-of the file can have the same structure as the content of the stack shader 
+of the file can have the same structure as the content of the stack shader
 parameters.
 
 <p>

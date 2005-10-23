@@ -40,7 +40,7 @@ proc mike_dedication {id} {
 		grid $top.mike_im -row $row -column 0 -columnspan 2 -pady 3
 		incr row
 	}
-	
+
 	label $top.dates -text "Michael John Muuss\nOctober 16, 1958 - November 20, 2000"
 	grid $top.dates -row $row -column 0 -columnspan 2
 #	grid rowconfigure $top $row -weight 1

@@ -114,7 +114,7 @@ Usage: ttcp -r [-options] >out\n\
 	-p##	port number to listen at (default 2000)\n\
 	-B	Only output full blocks, as specified in -l## (for TAR)\n\
 	-u	use UDP instead of TCP\n\
-";	
+";
 
 char stats[128];
 double t;			/* transmission time */
@@ -215,7 +215,7 @@ prep_timer(void)
 
 /*
  *			R E A D _ T I M E R
- * 
+ *
  */
 double
 read_timer(char *str, int len)
@@ -266,7 +266,7 @@ read_timer(char *str, int len)
 
 #ifndef SYSV
 static void
-prusage(register struct rusage *r0, 
+prusage(register struct rusage *r0,
 	register struct rusage *r1,
 	struct timeval *e,
 	struct timeval *b,
@@ -458,8 +458,8 @@ Nwrite(int fd, char *buf, int count )
 	register int cnt;
 	if( udp )  {
 again:
-		cnt = sendto( fd, (const void *)buf, (size_t) count, 0, 
-			      (const struct sockaddr *)&sinhim, 
+		cnt = sendto( fd, (const void *)buf, (size_t) count, 0,
+			      (const struct sockaddr *)&sinhim,
 			      sizeof(sinhim) );
 		if( cnt<0 && errno == ENOBUFS )  {
 			delay(18000);
@@ -577,7 +577,7 @@ main(int argc, char **argv)
 			err("connect");
 		mes("connect");
 	    } else {
-		/* otherwise, we are the server and 
+		/* otherwise, we are the server and
 	         * should listen for the connections
 	         */
 		listen(fd,0);   /* allow a queue of 0 */
@@ -598,7 +598,7 @@ main(int argc, char **argv)
 	}
 	prep_timer();
 	errno = 0;
-	if (sinkmode) {      
+	if (sinkmode) {
 		register int cnt;
 		if (trans)  {
 			pattern( buf, buflen );

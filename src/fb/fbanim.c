@@ -28,12 +28,12 @@
  *
  *  Author -
  *	Michael John Muuss
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005
- *  
+ *
  */
 #ifndef lint
 static const char RCSid[] = "@(#)$Header$ (BRL)";
@@ -210,7 +210,7 @@ newframe(register int i)
 	fb_window( fbp, xPan, yPan );
 
 	FD_ZERO(&fds);
-	FD_SET(fileno(stdin), &fds);	
+	FD_SET(fileno(stdin), &fds);
 
 	tv.tv_sec = sec;
 	tv.tv_usec = usec;

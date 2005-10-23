@@ -44,7 +44,7 @@
  *  if 'file.g' with objects 'all' and 'air' were use with firpass
  *  and secpass.  The air objects had to be removed in order for
  *  PRISM to run.  Then when running showtherm use only the object
- *  'all.'  Make sure the air was at the end so that the numbering 
+ *  'all.'  Make sure the air was at the end so that the numbering
  *  sceme is not altered.
  *
  *	CHANGES
@@ -252,7 +252,7 @@ int main(int argc, char **argv)
 	  /*
 	   *	while ( eltim_read != eltim)
 	   */
-	  while ( (eltim_read < (eltim - TOL)) || ((eltim + TOL) < eltim_read) ) 
+	  while ( (eltim_read < (eltim - TOL)) || ((eltim + TOL) < eltim_read) )
 	    /*  Page through to end of data.  */
 	    {
 	      for(i=0; i<(full_line + 1); i++)
@@ -461,8 +461,8 @@ int main(int argc, char **argv)
       center[Z] = rppmin[Z] + (rppmax[Z] - rppmin[Z]) / 2.;
 
       /*  Find the length of the radius of the bounding sphere.  */
-      radius = (rppmax[X] - rppmin[X]) * (rppmax[X] - rppmin[X]) + 
-	(rppmax[Y] - rppmin[Y]) * (rppmax[Y] - rppmin[Y]) + 
+      radius = (rppmax[X] - rppmin[X]) * (rppmax[X] - rppmin[X]) +
+	(rppmax[Y] - rppmin[Y]) * (rppmax[Y] - rppmin[Y]) +
 	(rppmax[Z] - rppmin[Z]) * (rppmax[Z] - rppmin[Z]);
       radius = sqrt(radius) / 2. + 1.;	/*  Make radius a bit longer.  */
 

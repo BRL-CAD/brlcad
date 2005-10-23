@@ -24,7 +24,7 @@
  *
  *  Author -
  *	Keith A. Applin
- *  
+ *
  *  Source -
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
@@ -200,7 +200,7 @@ f_amtrack(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	  edit_result = TCL_ERROR;
 	  goto end;
 	}
-	
+
 	/* get the idler wheel info */
 	if( argc < arg+1 ) {
 	  Tcl_AppendResult(interp, MORE_ARGS_STR, "Enter X of the idler (FRONT) wheel: ",
@@ -346,7 +346,7 @@ tryagain:	/* sent here to try next set of names */
 	crname(solname, 1);
 	(void)strcpy(sol.s_name, solname);
 	sol.s_type = ID_ARB8;
-	if( wrobj(solname, DIR_SOLID) ) 
+	if( wrobj(solname, DIR_SOLID) )
 	  return TCL_ERROR;
 
 	solname[8] = '\0';
@@ -426,7 +426,7 @@ tryagain:	/* sent here to try next set of names */
 	if( wrobj(solname,DIR_SOLID) )
 		return TCL_ERROR;
 	solname[8] = '\0';
-	
+
 	/* track bottom */
 	temp1[1] = temp2[1] = tr[0];
 	bottom(temp1, temp2, tr);

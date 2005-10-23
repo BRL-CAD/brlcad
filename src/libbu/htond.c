@@ -52,7 +52,7 @@
  *
  *  Author -
  *	Michael John Muuss
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
@@ -277,7 +277,7 @@ ibm_normalized:
 			left = (left<<2) |
 				( (right>>(32-2)) & (0x7FFFFFFF>>(31-2)) );
 			right <<= 2;
-		} else if( left & 0x00100000 ){ 
+		} else if( left & 0x00100000 ){
 			/* fix = 3; */
 			exp += 1023-129+1+ 3-3;
 			left = (left<<3) |

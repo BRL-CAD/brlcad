@@ -110,7 +110,7 @@ fastf_t	conehfangle = DFL_CONEANGLE;
 fastf_t	fire[3];	/* explicit firing coordinates (2-D or 3-D) */
 fastf_t griddn;		/* distance in model coordinates from origin to
 				bottom border of grid */
-fastf_t gridlf;		/* distance to left border */	
+fastf_t gridlf;		/* distance to left border */
 fastf_t	gridrt;		/* distance to right border */
 fastf_t gridup;		/* distance to top border */
 fastf_t	gridhor[3];	/* horizontal grid direction cosines */
@@ -133,7 +133,7 @@ fastf_t	unitconv = 1.0;	/* units conversion factor (mm to "units") */
 fastf_t	viewazim = DFL_AZIMUTH;
 			/* degrees from X-axis to firing position */
 fastf_t	viewelev = DFL_ELEVATION;
-			/* degrees from XY-plane to firing position */ 
+			/* degrees from XY-plane to firing position */
 
 /* These are the angles and fusing distance used to specify the path of
 	the canted warhead in Bob Wilson's simulation.

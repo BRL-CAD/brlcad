@@ -22,7 +22,7 @@
  *
  *  Author -
  *	Michael John Muuss
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium
  *	The U. S. Army Ballistic Research Laboratory
@@ -171,7 +171,7 @@ vr_viewpoint_hook(void)
 	/* Need to send current viewpoint to VR mgr */
 	/* XXX more will be needed */
 	/* Eye point, quaturnion for orientation */
-	bu_vls_printf(&str, "pov {%e %e %e}   {%e %e %e %e}   %e   {%e %e %e}  %e\n", 
+	bu_vls_printf(&str, "pov {%e %e %e}   {%e %e %e %e}   %e   {%e %e %e}  %e\n",
 		      -view_state->vs_vop->vo_center[MDX],
 		      -view_state->vs_vop->vo_center[MDY],
 		      -view_state->vs_vop->vo_center[MDZ],

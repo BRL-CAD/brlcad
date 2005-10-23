@@ -70,7 +70,7 @@ struct names{
 } nm[9999];
 
 struct subtract_list{
-	
+
 	int			outsolid,
 				insolid,
 				inmirror;

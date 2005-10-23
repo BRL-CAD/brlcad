@@ -28,11 +28,11 @@
  *	Robert G. Parker
  *	Michael John Muuss
  *	Glenn Durfee
- *  
+ *
  *  Source -
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
- *  
+ *
  *
  * Acknowledgements -
  *	This builds on the work in libbu/log.c.
@@ -82,7 +82,7 @@ bu_delete_hook(struct bu_hook_list *hlp, bu_hook_t func, genptr_t clientdata)
 			bu_free((genptr_t)cur, "bu_delete_hook");
 			cur = old;
 		}
-	}    
+	}
 }
 
 void

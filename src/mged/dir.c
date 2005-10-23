@@ -35,7 +35,7 @@
  *	Keith A. Applin
  *	Richard Romanelli
  *	Robert Jon Reschly Jr.
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
@@ -77,7 +77,7 @@ void	killtree(struct db_i *dbip, struct directory *dp, genptr_t ptr);
 
 /*
  *			F _ M E M P R I N T
- *  
+ *
  *  Debugging aid:  dump memory maps
  */
 int
@@ -108,7 +108,7 @@ f_memprint(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
 /*
  *			C M D _ G L O B
- *  
+ *
  *  Assist routine for command processor.  If the current word in
  *  the argv[] array contains '*', '?', '[', or '\' then this word
  *  is potentially a regular expression, and we will tromp through the
@@ -242,7 +242,7 @@ Do_prefix(struct db_i *dbip, struct rt_comb_internal *comb, union tree *comb_lea
 int
 f_prefix(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
-	register int	i,k;	
+	register int	i,k;
 	register struct directory *dp;
 	struct rt_db_internal	intern;
 	struct rt_comb_internal *comb;

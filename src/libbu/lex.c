@@ -24,10 +24,10 @@
 /** @file lex.c
  *  Author -
  *	Christopher T. Johnson
- *  
+ *
  *  Source -
  *	Geometric Solutions, Inc.
- *  
+ *
  */
 /*@}*/
 
@@ -78,7 +78,7 @@ top:
 		}
 		bu_lex_reading_comment = 0;
 	}
-		
+
 	/*
 	 * skip leading blanks
 	 */

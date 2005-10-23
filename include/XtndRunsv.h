@@ -1,14 +1,14 @@
 /*
  * This software is copyrighted as noted below.  It may be freely copied,
- * modified, and redistributed, provided that the copyright notice is 
+ * modified, and redistributed, provided that the copyright notice is
  * preserved on all copies.
- * 
+ *
  * There is no warranty or other guarantee of fitness for this software,
  * it is provided solely "as is".  Bug reports or fixes may be sent
  * to the author, who may or may not act on them as he desires.
  *
  * You may not include this software in a program or other software product
- * without supplying the source, or without informing the end-user that the 
+ * without supplying the source, or without informing the end-user that the
  * source is available for no extra charge.
  *
  * If you modify this software, you should include a notice giving the
@@ -19,22 +19,22 @@
  *  such as the Cray where sizeof(short) != 2.
  *  All use of the symbol LITTLE_ENDIAN has been removed.
  */
-/* 
+/*
  * Runsv.h - Definitions for Run Length Encoding.
- * 
+ *
  * Author:	Spencer W. Thomas
  * 		Computer Science Dept.
  * 		University of Utah
  * Date:	Mon Aug  9 1982
  * Copyright (c) 1982 Spencer W. Thomas
- * 
+ *
  * $Header$
  */
 
 #ifndef XTNDRUNSV
 #define XTNDRUNSV
 
-/* 
+/*
  * Opcode definitions
  */
 

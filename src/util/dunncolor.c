@@ -19,7 +19,7 @@
  * information.
  */
 /** @file dunncolor.c
- *			D U N N C O L O R . C				
+ *			D U N N C O L O R . C
  *
  *	Sets the exposure values in the Dunn camera to the
  *	specified arguments.
@@ -29,7 +29,7 @@
  *  Author -
  *	Don Merritt
  *	August 1985
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
@@ -85,7 +85,7 @@ main(int argc, char **argv)
 
 	/* check argument */
 	if ( argc != 5 && argc != 6 ) {
-		printf("usage: dunncolor [-p] baseval redval greenval blueval\n"); 
+		printf("usage: dunncolor [-p] baseval redval greenval blueval\n");
 		exit(25);
 	}
 

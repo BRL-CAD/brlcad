@@ -37,7 +37,7 @@
  *  Authors -
  *	Michael John Muuss
  *	John R. Anderson
- *  
+ *
  *  Source -
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
@@ -677,7 +677,7 @@ db_tree_flatten_describe(
 			fastf_t	az, el;
 			bn_ae_vec( &az, &el, itp->tr_l.tl_mat ?
 				itp->tr_l.tl_mat : bn_mat_identity );
-			bu_vls_printf( vls, 
+			bu_vls_printf( vls,
 				" az=%g, el=%g, ",
 				az, el );
 		}
@@ -692,7 +692,7 @@ db_tree_flatten_describe(
 				1.0/itp->tr_l.tl_mat[15] );
 		}
 		if( status & STAT_PERSP ) {
-			bu_vls_printf( vls, 
+			bu_vls_printf( vls,
 				" Perspective=[%g,%g,%g]??",
 				itp->tr_l.tl_mat[12],
 				itp->tr_l.tl_mat[13],
@@ -709,7 +709,7 @@ db_tree_flatten_describe(
  *			D B _ T R E E _ D E S C R I B E
  */
 void
-db_tree_describe( 
+db_tree_describe(
 	struct bu_vls		*vls,
 	const union tree	*tp,
 	int			indented,
@@ -739,7 +739,7 @@ db_tree_describe(
 			fastf_t	az, el;
 			bn_ae_vec( &az, &el, tp->tr_l.tl_mat ?
 				tp->tr_l.tl_mat : bn_mat_identity );
-			bu_vls_printf( vls, 
+			bu_vls_printf( vls,
 				" az=%g, el=%g, ",
 				az, el );
 		}
@@ -754,7 +754,7 @@ db_tree_describe(
 				1.0/tp->tr_l.tl_mat[15] );
 		}
 		if( status & STAT_PERSP ) {
-			bu_vls_printf( vls, 
+			bu_vls_printf( vls,
 				" Perspective=[%g,%g,%g]??",
 				tp->tr_l.tl_mat[12],
 				tp->tr_l.tl_mat[13],
@@ -857,7 +857,7 @@ db_comb_describe(
 
 	if( bu_vls_strlen(&comb->shader) > 0 || comb->rgb_valid )  {
 		if( comb->inherit ) {
-			bu_vls_strcat( str, 
+			bu_vls_strcat( str,
 	"(These material properties override all lower ones in the tree)\n");
 		}
 	}
@@ -1040,7 +1040,7 @@ db_ck_v4gift_tree( const union tree *tp )
  *  Returns a pointer to the top of the tree.
  */
 union tree *
-db_mkbool_tree( 
+db_mkbool_tree(
 	struct rt_tree_array *rt_tree_array,
 	int		howfar,
 	struct resource	*resp)

@@ -24,7 +24,7 @@
  *
  *  Author -
  *	Michael John Muuss
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
@@ -101,7 +101,7 @@ view_init(register struct application *ap, char *file, char *obj, int minus_o)
 
 	if( !minus_o )
 		outfp = stdout;
-	
+
 	/*
 	 *  Cause grid_setup() to align the grid on one inch boundaries,
 	 *  or cell_width boundaries, if it is given.
@@ -125,7 +125,7 @@ view_init(register struct application *ap, char *file, char *obj, int minus_o)
  *
  *  View_2init is called by do_frame(), which in turn is called by
  *  main() in rt.c.
- * 
+ *
  */
 void
 view_2init(struct application *ap)

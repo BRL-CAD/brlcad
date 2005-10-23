@@ -26,15 +26,15 @@
  *	Intersect a ray with a Polygonal Object
  *	that has no explicit topology.
  *	It is assumed that the solid has no holes.
- *  
+ *
  *  Author -
  *	Michael John Muuss
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005
- *  
+ *
  */
 /*@}*/
 
@@ -66,14 +66,14 @@ HIDDEN int rt_pgface(struct soltab *stp, fastf_t *ap, fastf_t *bp, fastf_t *cp, 
 
 /**
  *			R T _ P G _ P R E P
- *  
+ *
  *  This routine is used to prepare a list of planar faces for
  *  being shot at by the triangle routines.
  *
  * Process a PG, which is represented as a vector
  * from the origin to the first point, and many vectors
  * from the first point to the remaining points.
- *  
+ *
  */
 int
 rt_pg_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
@@ -165,7 +165,7 @@ rt_pgface(struct soltab *stp, fastf_t *ap, fastf_t *bp, fastf_t *cp, const struc
 		if( RT_G_DEBUG & DEBUG_ARB8 )
 			bu_log("pg(%s): degenerate facet\n", stp->st_name);
 		return(0);			/* BAD */
-	}		
+	}
 
 	/*  wn is a normal of not necessarily unit length.
 	 *  N is an outward pointing unit normal.
@@ -205,10 +205,10 @@ rt_pg_print(register const struct soltab *stp)
 
 /**
  *			R T _ P G _ S H O T
- *  
+ *
  * Function -
  *	Shoot a ray at a polygonal object.
- *  
+ *
  * Returns -
  *	0	MISS
  *	>0	HIT
@@ -300,7 +300,7 @@ rt_pg_shot(struct soltab *stp, register struct xray *rp, struct application *ap,
 	   one.  An "entry" followed by an "exit" (or vice versa) suggests
 	   that we grazed an edge, and thus we should leave both
 	   in the hit list. */
-	
+
 	{
 		register int i, j;
 
@@ -977,7 +977,7 @@ rt_pg_to_bot( struct rt_db_internal *ip, const struct bn_tol *tol, struct resour
 			    	ip_bot->num_vertices++;
 
 			    	ip_bot->num_faces++;
-			}		
+			}
 
 			/* Chop off a triangle, and continue */
 			VMOVE( work[1], work[2] );

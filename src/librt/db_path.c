@@ -30,12 +30,12 @@
  *
  *  Authors -
  *	Michael John Muuss
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5066
- *  
+ *
  */
 /*@}*/
 
@@ -245,7 +245,7 @@ db_path_to_vls( struct bu_vls *str, const struct db_full_path *pp )
 
 	BU_CK_VLS(str);
 	RT_CK_FULL_PATH( pp );
-	
+
 	for( i=0; i < pp->fp_len; i++ )  {
 		bu_vls_putc( str, '/' );
 		if( pp->fp_names[i] )

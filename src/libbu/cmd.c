@@ -27,7 +27,7 @@
  *
  * Author -
  *	Robert G. Parker
- * 
+ *
  * Source -
  *	SLAD CAD Team
  *	The U. S. Army Research Laboratory

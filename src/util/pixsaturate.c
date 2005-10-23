@@ -27,7 +27,7 @@
  *  Author -
  *	Michael John Muuss
  *	(based on a subroutine by Paul Haeberli)
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
@@ -39,7 +39,7 @@
  *	set to 0.0 the result will be monochromatic, if sat is made
  *	1.0, the color will not change, if sat is made greater than 1.0,
  *	the amount of color is increased.
- *	
+ *
  *	The input and output pixel values are in the range 0..255.
  *
  *	This technique requires 6 multiplies, 5 adds and 3 bound

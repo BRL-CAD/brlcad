@@ -1,6 +1,6 @@
 	This release and all future releases of the BRL-CAD package are dedicated to the memory of Michael Muuss, who served as a Senior Computer Scientist at the U.S. Army Research Laboratory's (ARL) Survivability/Lethality Analysis Directorate (SLAD) at Aberdeen Proving Ground, MD, from 1979 until his death in November 2000.
 
-	Mike embodied a unique blend of unparalleled intellect, unquenchable curiosity, and unending enthusiasm to advance the capabilities and performance of everything and everyone he touched.  He was the original architect of BRL-CAD and for 20 years guided its development and emergence as one of the most advanced physically based computer-aided design packages in the world. 
+	Mike embodied a unique blend of unparalleled intellect, unquenchable curiosity, and unending enthusiasm to advance the capabilities and performance of everything and everyone he touched.  He was the original architect of BRL-CAD and for 20 years guided its development and emergence as one of the most advanced physically based computer-aided design packages in the world.
 
 	Ahead of his time in many respects, Mike was also a pioneer in the early stages of the Internet, playing a fundamental role in the creation of the TTCP program and the TCP/IP protocols that drive the worldwide web today.  He also designed the Army SuperComputer Network and BRLNET and contributed to the design of the NASA Science InterNet.
 

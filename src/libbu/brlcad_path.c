@@ -32,7 +32,7 @@
  *  Source -
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
- *  
+ *
  */
 
 /*@}*/
@@ -104,7 +104,7 @@ bu_argv0(const char *path)
 	argv0 = path;
 	(void)bu_ipwd();
     }
-    
+
     return argv0;
 }
 
@@ -200,7 +200,7 @@ bu_find_path(char result[MAXPATHLEN], const char *lhs, const char *rhs, struct b
     if (rhs) {
 	rlen = strlen(rhs);
     }
-    
+
     /* be safe */
     if (rlen + 2 > MAXPATHLEN) {
 	bu_log("Warning: path is way too long (%d characters > %d)\n", rlen+2, MAXPATHLEN);
@@ -222,16 +222,16 @@ bu_find_path(char result[MAXPATHLEN], const char *lhs, const char *rhs, struct b
 	}
 	return 0;
     }
-    
+
     /* start fresh */
     memset(result, 0, MAXPATHLEN);
     strncpy(result, lhs, MAXPATHLEN);
-    
+
     /* nothing to add, so just return what we have */
     if (!rhs || (rlen == 0)) {
 	return 1;
     }
-    
+
     /* be safe again */
     llen = strlen(result);
     if (llen + rlen + 3 > MAXPATHLEN) {
@@ -257,7 +257,7 @@ bu_find_path(char result[MAXPATHLEN], const char *lhs, const char *rhs, struct b
     if (bu_file_exists(result)) {
 	return 1;
     }
-    
+
     /* close, but no match */
     if (searched && where) {
 	bu_vls_strcat(searched, where);
@@ -470,7 +470,7 @@ bu_brlcad_data(const char *rhs, int fail_quietly)
 
     /* bu_brlcad_root/share/brlcad path */
     lhs = bu_brlcad_root("share/brlcad", 1);
-    if (lhs) {	
+    if (lhs) {
 	snprintf(where, MAXPATHLEN + 64, "\tBRLCAD_ROOT common data path  [%s]\n", lhs);
 	if (bu_find_path(result, lhs, rhs, &searched, where)) {
 	    if (bu_debug) {
@@ -482,7 +482,7 @@ bu_brlcad_data(const char *rhs, int fail_quietly)
 
     /* bu_brlcad_root/share path */
     lhs = bu_brlcad_root("share", 1);
-    if (lhs) {	
+    if (lhs) {
 	snprintf(where, MAXPATHLEN + 64, "\tBRLCAD_ROOT common data path  [%s]\n", lhs);
 	if (bu_find_path(result, lhs, rhs, &searched, where)) {
 	    if (bu_debug) {
@@ -494,7 +494,7 @@ bu_brlcad_data(const char *rhs, int fail_quietly)
 
     /* bu_brlcad_root path */
     lhs = bu_brlcad_root("", 1);
-    if (lhs) {	
+    if (lhs) {
 	snprintf(where, MAXPATHLEN + 64, "\tBRLCAD_ROOT common data path  [%s]\n", lhs);
 	if (bu_find_path(result, lhs, rhs, &searched, where)) {
 	    if (bu_debug) {

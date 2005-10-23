@@ -73,7 +73,7 @@ proc mmenu_init { id } {
 
     label $w.state -textvariable mged_display(state)
     grid $w.state -row 0
-    
+
     set mmenu($id,num) 3
 
     for { set i 0 } { $i < $mmenu($id,num) } { incr i } {

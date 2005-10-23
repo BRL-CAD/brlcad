@@ -23,12 +23,12 @@
  * Description -
  *	Convert a unix-plot file to STARBASE output
  *
- * Author -  
- *	Mark Huston Bowden  
- *  
+ * Author -
+ *	Mark Huston Bowden
+ *
  *  Source -
- *	Research Institute, E-47 
- *	University of Alabama in Huntsville  
+ *	Research Institute, E-47
+ *	University of Alabama in Huntsville
  *	Huntsville, AL  35899
  *	(205) 895-6467 UAH
  *	(205) 876-1089 Redstone Arsenal

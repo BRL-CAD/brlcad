@@ -26,7 +26,7 @@
  *
  *  Author -
  *	Paul Randal Stay
- *  
+ *
  *  Source -
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
@@ -55,7 +55,7 @@ rt_nurb_new_snurb(int u_order, int v_order, int n_u, int n_v, int n_rows, int n_
 {
 	register struct face_g_snurb * srf;
 	int pnum;
-	
+
 	GET_SNURB(srf);
 	srf->order[0] = u_order;
 	srf->order[1] = v_order;
@@ -69,11 +69,11 @@ rt_nurb_new_snurb(int u_order, int v_order, int n_u, int n_v, int n_rows, int n_
 
 	pnum = sizeof (fastf_t) * n_rows * n_cols * RT_NURB_EXTRACT_COORDS(pt_type);
 
-	srf->u.knots = (fastf_t *) bu_malloc ( 
+	srf->u.knots = (fastf_t *) bu_malloc (
 			n_u * sizeof (fastf_t ), "rt_nurb_new_snurb: u kv knot values");
-	srf->v.knots = (fastf_t *) bu_malloc ( 
+	srf->v.knots = (fastf_t *) bu_malloc (
 			n_v * sizeof (fastf_t ), "rt_nurb_new_snurb: v kv knot values");
-	srf->ctl_points = ( fastf_t *) bu_malloc( 
+	srf->ctl_points = ( fastf_t *) bu_malloc(
 			pnum, "rt_nurb_new_snurb: control mesh points");
 
 	return srf;
@@ -98,7 +98,7 @@ rt_nurb_new_cnurb(int order, int n_knots, int n_pts, int pt_type)
 
 	crv->ctl_points = (fastf_t *)
 		bu_malloc( sizeof(fastf_t) * RT_NURB_EXTRACT_COORDS(pt_type) *
-			n_pts, 
+			n_pts,
 			"rt_nurb_new_cnurb: mesh point values");
 
 	return crv;
@@ -211,7 +211,7 @@ rt_nurb_c_print(const struct edge_g_cnurb *crv)
 
 	}
 	bu_log("\t}\n}\n");
-	
+
 
 }
 
@@ -284,13 +284,13 @@ rt_nurb_print_pt_type(int c)
 	int rat;
 
 	rat = RT_NURB_IS_PT_RATIONAL(c);
-	
+
 	if( RT_NURB_EXTRACT_PT_TYPE(c) == RT_NURB_PT_XY)
 		bu_log("Point Type = RT_NURB_PT_XY");
-	else 
+	else
 	if( RT_NURB_EXTRACT_PT_TYPE(c) == RT_NURB_PT_XYZ)
 		bu_log("Point Type = RT_NURB_PT_XYX");
-	else 
+	else
 	if( RT_NURB_EXTRACT_PT_TYPE(c) == RT_NURB_PT_UV)
 		bu_log("Point Type = RT_NURB_PT_UV");
 

@@ -28,7 +28,7 @@
  *
  *  Author -
  *	Michael John Muuss
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
@@ -44,8 +44,8 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #  include <unistd.h>
 #endif
 
-#include <stdlib.h>	
-#include <stdio.h>	
+#include <stdlib.h>
+#include <stdio.h>
 #include <math.h>
 
 #include "machine.h"
@@ -237,7 +237,7 @@ main(int argc, char **argv)
 }
 
 /* rgbhsv
- * 
+ *
  * convert red green blue to hue saturation value
  */
 void
@@ -286,7 +286,7 @@ rgbhsv(register double *rgb, register double *hsv)
 }
 
 /* hsvrgb
- * 
+ *
  * convert hue saturation and value to red, green, blue
  */
 
@@ -297,7 +297,7 @@ hsvrgb(register double *hsv, register double *rgb)
         double h, s, v;
         double f;
 
-	if(hsv[1] != 0) 
+	if(hsv[1] != 0)
         {
             s = (double)hsv[1] / 255.;
             h = (double)hsv[0] / 42.666;

@@ -342,7 +342,7 @@ extern char *state_str[];		/* identifying strings */
 
 #define TCL_WRITE_ERR { \
 	  Tcl_AppendResult(interp, "Database write error, aborting.\n", (char *)NULL);\
-	  TCL_ERROR_RECOVERY_SUGGESTION; }	
+	  TCL_ERROR_RECOVERY_SUGGESTION; }
 
 #define TCL_WRITE_ERR_return { \
 	  TCL_WRITE_ERR; \
@@ -394,7 +394,7 @@ you should exit MGED now, and resolve the I/O problem, before continuing.\n", (c
 /* For errors from db_put() */
 #define WRITE_ERR { \
 	(void)printf("Database write error, aborting.\n"); \
-	ERROR_RECOVERY_SUGGESTION; }	
+	ERROR_RECOVERY_SUGGESTION; }
 
 #define WRITE_ERR_return	{ \
 	WRITE_ERR; \
@@ -433,7 +433,7 @@ you should exit MGED now, and resolve the I/O problem, before continuing.\n")
 	{ \
 		Tcl_AppendResult(interp, "A database is not open!\n", (char *)NULL); \
 		return TCL_ERROR; \
-	}	
+	}
 
 /* Check if the database is read only, and if so return TCL_ERROR */
 #define	CHECK_READ_ONLY	\

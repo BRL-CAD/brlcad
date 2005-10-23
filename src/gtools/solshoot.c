@@ -22,7 +22,7 @@
  *
  *  Author -
  *	Paul J. Tanenbaum
- *  
+ *
  *  Source -
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
@@ -192,7 +192,7 @@ static int rpt_hit (struct application *ap, struct partition *ph, struct seg *se
 	bu_log("I saw solid %s at distance %g\n",
 	    sp -> seg_stp -> st_name,
 	    sp -> seg_in.hit_dist);
-	
+
 	sol = mk_solid(sp -> seg_stp -> st_name, sp -> seg_in.hit_dist);
 	if (bu_rb_insert(solids, (void *) sol) < 0)
 	{

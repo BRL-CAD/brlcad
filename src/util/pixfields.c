@@ -134,7 +134,7 @@ main(int argc, char **argv)
 		fputs( usage, stderr );
 		exit( 1 );
 	}
-	
+
 	line1 = (char *) malloc(width*3+1);
 	line2 = (char *) malloc(width*3+1);
 

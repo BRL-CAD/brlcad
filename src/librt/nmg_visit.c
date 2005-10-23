@@ -34,11 +34,11 @@
  *
  *  Author -
  *	Michael John Muuss
- *  
+ *
  *  Source -
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5066
- *  
+ *
  */
 /*@}*/
 
@@ -62,8 +62,8 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
  */
 void
 nmg_visit_vertex(struct vertex *v, const struct nmg_visit_handlers *htab, genptr_t *state)
-             			   
-                               	      
+
+
         			       		/* Handler's private state */
 {
 	NMG_CK_VERTEX(v);
@@ -79,8 +79,8 @@ nmg_visit_vertex(struct vertex *v, const struct nmg_visit_handlers *htab, genptr
  */
 void
 nmg_visit_vertexuse(struct vertexuse *vu, const struct nmg_visit_handlers *htab, genptr_t *state)
-                		    
-                               	      
+
+
         			       		/* Handler's private state */
 {
 	NMG_CK_VERTEXUSE(vu);
@@ -100,8 +100,8 @@ nmg_visit_vertexuse(struct vertexuse *vu, const struct nmg_visit_handlers *htab,
  */
 void
 nmg_visit_edge(struct edge *e, const struct nmg_visit_handlers *htab, genptr_t *state)
-           			   
-                               	      
+
+
         			       		/* Handler's private state */
 {
 	NMG_CK_EDGE( e );
@@ -114,8 +114,8 @@ nmg_visit_edge(struct edge *e, const struct nmg_visit_handlers *htab, genptr_t *
  */
 void
 nmg_visit_edgeuse(struct edgeuse *eu, const struct nmg_visit_handlers *htab, genptr_t *state)
-              			    
-                               	      
+
+
         			       		/* Handler's private state */
 {
 	NMG_CK_EDGEUSE(eu);
@@ -136,8 +136,8 @@ nmg_visit_edgeuse(struct edgeuse *eu, const struct nmg_visit_handlers *htab, gen
  */
 void
 nmg_visit_loop(struct loop *l, const struct nmg_visit_handlers *htab, genptr_t *state)
-           			   
-                               	      
+
+
         			       		/* Handler's private state */
 {
 	NMG_CK_LOOP(l);
@@ -153,8 +153,8 @@ nmg_visit_loop(struct loop *l, const struct nmg_visit_handlers *htab, genptr_t *
  */
 void
 nmg_visit_loopuse(struct loopuse *lu, const struct nmg_visit_handlers *htab, genptr_t *state)
-              			    
-                               	      
+
+
         			       		/* Handler's private state */
 {
 	NMG_CK_LOOPUSE( lu );
@@ -181,8 +181,8 @@ nmg_visit_loopuse(struct loopuse *lu, const struct nmg_visit_handlers *htab, gen
  */
 void
 nmg_visit_face(struct face *f, const struct nmg_visit_handlers *htab, genptr_t *state)
-           			   
-                               	      
+
+
         			       		/* Handler's private state */
 {
 
@@ -197,8 +197,8 @@ nmg_visit_face(struct face *f, const struct nmg_visit_handlers *htab, genptr_t *
  */
 void
 nmg_visit_faceuse(struct faceuse *fu, const struct nmg_visit_handlers *htab, genptr_t *state)
-              			    
-                               	      
+
+
         			       		/* Handler's private state */
 {
 	struct loopuse	*lu;
@@ -221,8 +221,8 @@ nmg_visit_faceuse(struct faceuse *fu, const struct nmg_visit_handlers *htab, gen
  */
 void
 nmg_visit_shell(struct shell *s, const struct nmg_visit_handlers *htab, genptr_t *state)
-            			   
-                               	      
+
+
         			       		/* Handler's private state */
 {
 	struct faceuse	*fu;
@@ -254,8 +254,8 @@ nmg_visit_shell(struct shell *s, const struct nmg_visit_handlers *htab, genptr_t
  */
 void
 nmg_visit_region(struct nmgregion *r, const struct nmg_visit_handlers *htab, genptr_t *state)
-                		   
-                               	      
+
+
         			       		/* Handler's private state */
 {
 	struct shell		*s;
@@ -277,8 +277,8 @@ nmg_visit_region(struct nmgregion *r, const struct nmg_visit_handlers *htab, gen
  */
 void
 nmg_visit_model(struct model *model, const struct nmg_visit_handlers *htab, genptr_t *state)
-            			       
-                               	      
+
+
         			       		/* Handler's private state */
 {
 	struct nmgregion *r;

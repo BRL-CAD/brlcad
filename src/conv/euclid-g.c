@@ -26,11 +26,11 @@
  *  Authors -
  *	Michael Markowski
  *	John R. Anderson
- *  
+ *
  *  Source -
  *	The US Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5066
- *  
+ *
  */
 #ifndef lint
 static const char RCSid[] = "$Header$";
@@ -1092,7 +1092,7 @@ read_euclid_face(int *lst, int *ni, FILE *fp, struct vlist *vert, int *nv)
 
 	if( debug )
 		bu_log( "facet type %d has %d points:\n", facet_type,  *ni );
-	
+
 	/* Read in data points. */
 	for (i = 0; i < *ni; i++)
 	{
@@ -1124,7 +1124,7 @@ read_euclid_face(int *lst, int *ni, FILE *fp, struct vlist *vert, int *nv)
 
 				if( debug )
 					bu_log( "\tComparing vertices at indices lst[%d]=%d and lst[%d]=%d\n", i, lst[i], j, lst[j] );
-				
+
 				if( j == i+1 || (i == 0 && j == (*ni-1))  )
 					increment = 1;
 				else if( j == i+2 )

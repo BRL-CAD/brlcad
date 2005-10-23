@@ -32,12 +32,12 @@
  *  Authors -
  *	Michael John Muuss
  *	John R. Anderson
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5066
- *  
+ *
  */
 /*@}*/
 
@@ -65,7 +65,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 /*	D B _ F U N C T R E E _ S U B T R E E
  *
- *	The only reason for this to be broken out is that 
+ *	The only reason for this to be broken out is that
  *	2 separate locations in db_functree() call it.
  */
 void
@@ -114,7 +114,7 @@ db_functree_subtree(struct db_i *dbip,
  *  and leaf (solid) node, respectively.
  *
  *  This routine is recursive, so no variables may be declared static.
- *  
+ *
  */
 void
 db_functree(struct db_i *dbip,

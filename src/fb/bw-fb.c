@@ -30,12 +30,12 @@
  *  Author -
  *	Phillip Dykstra
  *	15 Aug 1985
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5066
- *  
+ *
  */
 #ifndef lint
 static const char RCSid[] = "@(#)$Header$ (BRL)";
@@ -365,7 +365,7 @@ skipbytes(int fd, off_t num)
 		(void)lseek( fd, num, 1 );
 		return 0;
 	}
-	
+
 	while( num > 0 ) {
 		try = num > MAX_LINE ? MAX_LINE : num;
 		n = read( fd, ibuf, try );

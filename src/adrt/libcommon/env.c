@@ -158,7 +158,7 @@ void common_env_read(common_env_t *env, char *fpath) {
         env->rm = RENDER_METHOD_FLAT;
         render_flat_init(&env->render);
       }
-      
+
     }
   }
 

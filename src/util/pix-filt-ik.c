@@ -19,12 +19,12 @@
  * information.
  */
 /** @file pix-filt-ik.c
- *  
+ *
  *  Dumb little program to take bottom-up pixel files and
  *  send them to the Ikonas.
- *  
+ *
  *  Easier than hacking around with RT.
- *  
+ *
  *  Mike Muuss, BRL, 05/05/84.
  *
  *  $Revision$

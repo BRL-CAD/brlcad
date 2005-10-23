@@ -28,7 +28,7 @@
  *
  *  Author -
  *	Lee A. Butler
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
@@ -141,7 +141,7 @@ void parse_args(int ac, char **av)
 
 	if (!(progname = strrchr(*av, '/')))
 		progname = *av;
-	
+
 	/* Turn off bu_getopt's error messages */
 	opterr = 0;
 
@@ -161,7 +161,7 @@ void parse_args(int ac, char **av)
 		case 's'	: if ((c=atoi(bu_optarg)) > 0)
 					height = width = c;
 				  break;
-		case 'u'	: method = METH_UNDERSAMPLE; break; 
+		case 'u'	: method = METH_UNDERSAMPLE; break;
 		case '?'	:
 		default		: usage(); break;
 		}
@@ -206,13 +206,13 @@ int main(int ac, char **av)
 	/* get buffer for image */
 	size = width * height;
 	if ((buffer = (unsigned char *)malloc(width*height)) == (unsigned char *)NULL) {
-		(void)fprintf(stderr, "%s: cannot allocate input buffer\n", 
+		(void)fprintf(stderr, "%s: cannot allocate input buffer\n",
 			progname);
 		exit(-1);
 	}
 
 	/* read in entire image */
-	for (t=0 ; t < size && (c=read(0, (char *)&buffer[t], size-t)) >= 0 ; 
+	for (t=0 ; t < size && (c=read(0, (char *)&buffer[t], size-t)) >= 0 ;
 		t += c);
 
 	if (c < 0) {

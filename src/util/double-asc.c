@@ -19,12 +19,12 @@
  * information.
  */
 /** @file double-asc.c
- *  
+ *
  *  		Take a stream of IEEE doubles and make them ASCII
- *  
+ *
  *  Author -
  *	Paul Tanenbaum
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory

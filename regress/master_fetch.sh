@@ -26,7 +26,7 @@ export CVS_RSH
 
 # cvs -z3 -d:pserver:anonymous@cvs.sourceforge.net:/cvsroot/brlcad co -P brlcad >> $LOG_FILE 2>&1
 
-cvs -z3 -d:ext:lbutler@cvs.sourceforge.net:/cvsroot/brlcad co -P brlcad 
+cvs -z3 -d:ext:lbutler@cvs.sourceforge.net:/cvsroot/brlcad co -P brlcad
 
 
 if [ ! -d brlcad ] ; then

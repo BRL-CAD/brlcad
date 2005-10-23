@@ -25,11 +25,11 @@
  *
  *  Author -
  *	Michael John Muuss
- *  
+ *
  *  Source -
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
- *  
+ *
  */
 #ifndef lint
 static const char RCSid[] = "@(#)$Header$ (ARL)";
@@ -41,7 +41,7 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif
-#include <stdlib.h>                                                                                                                                                                            
+#include <stdlib.h>
 #include <stdio.h>
 #ifdef HAVE_STRING_H
 #include <string.h>

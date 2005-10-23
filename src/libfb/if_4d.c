@@ -28,7 +28,7 @@
  *  However, both are called /dev/sgi
  *  Support for OpenGL is found in if_ogl.c
  *
- *  In order to use a large chunck of memory with the shared memory 
+ *  In order to use a large chunck of memory with the shared memory
  *  system it is necessary to increase the shmmax and shmall paramaters
  *  of the system. You can do this by changing the defaults in the
  *  /usr/sysgen/master.d/shm to
@@ -357,7 +357,7 @@ struct sgi_clip {
  *  also means that in MEX mode, the previous contents of the frame
  *  buffer still exist, and can be again accessed, even though the
  *  MEX windows are transient, per-process.
- * 
+ *
  *  There are a few oddities, however.  The worst is that System V will
  *  not allow the break (see sbrk(2)) to be set above a shared memory
  *  segment, and shmat(2) does not seem to allow the selection of any
@@ -600,7 +600,7 @@ int		npix;
 					SGI(ifp)->mi_xoff+xbase,
 					SGI(ifp)->mi_yoff+y,
 					SGI(ifp)->mi_xoff+xbase+npix-1,
-					SGI(ifp)->mi_yoff+y, 
+					SGI(ifp)->mi_yoff+y,
 					(unsigned long *) &ifp->if_mem[
 					    (y*SGI(ifp)->mi_memwidth+xbase)*
 					    sizeof(struct sgi_pixel)] );
@@ -701,7 +701,7 @@ int		npix;
 				op[x].green = CMG(ifp)[sgip[x].green];
 				op[x].blue  = CMB(ifp)[sgip[x].blue];
 			}
-			if( SGI(ifp)->mi_is_gt )		
+			if( SGI(ifp)->mi_is_gt )
 				lrectwrite(
 					SGI(ifp)->mi_xoff+0,
 					SGI(ifp)->mi_yoff+y,
@@ -802,7 +802,7 @@ int		npix;
 					lrectwrite(
 						xscrmin, yscr,
 						xscrmax, yscr,
-						(unsigned long *) 
+						(unsigned long *)
 							SGI(ifp)->mi_scanline );
 				else
 					fake_rectwrite(
@@ -921,7 +921,7 @@ int	width, height;
 	 * One hack to get around this is to immediately fork
 	 * and create a child process and sleep until the child
 	 * sends a kill signal to the parent process. (in FBCLOSE)
-	 * This allows us to use the traditional fb utility programs 
+	 * This allows us to use the traditional fb utility programs
 	 * as well as allow the frame buffer window to remain around
 	 * until killed by the menu subsystem.
     	 */
@@ -1062,7 +1062,7 @@ int	width, height;
 
 		SGI(ifp)->mi_der1 = getvideo(DE_R1);
 		if( (SGI(ifp)->mi_der1 & DER1_VMASK) == DER1_170 )  {
-			/* 
+			/*
 			 *  Current mode is DE3 board internal NTSC sync.
 			 *  Doing a setmonitor(NTSC) again will cause the
 			 *  sync generator to drop out for a moment.
@@ -1132,7 +1132,7 @@ int	width, height;
 			"Private Mem" :
 			"Shared Mem" );
 	wintitle( title );
-	
+
 	/*
 	 *  Set the operating mode for the newly created window.
 	 */
@@ -1412,7 +1412,7 @@ FBIO	*ifp;
 	menu = defpup("close");
 	qdevice(RIGHTMOUSE);
 	qdevice(REDRAW);
-	
+
 	while(1)  {
 		val = 0;
 		dev = qread( &val );
@@ -1909,7 +1909,7 @@ register const ColorMap	*cmp;
 	} else {
 		for(i = 0; i < 256; i++)  {
 			CMR(ifp)[i] = cmp-> cm_red[i]>>8;
-			CMG(ifp)[i] = cmp-> cm_green[i]>>8; 
+			CMG(ifp)[i] = cmp-> cm_green[i]>>8;
 			CMB(ifp)[i] = cmp-> cm_blue[i]>>8;
 		}
 	}
@@ -2291,7 +2291,7 @@ register struct sgi_pixel * pixels;
 			Blue_pixels[i] =  p->blue;
 			p++;
 		}
-	
+
 		cmov2i( x1, scan);
 		writeRGB( n, Red_pixels, Green_pixels, Blue_pixels);
 	}

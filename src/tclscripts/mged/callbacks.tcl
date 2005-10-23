@@ -32,7 +32,7 @@
 #
 # Description -
 #	This file contains the standard mged callback proc's.
-#	
+#
 #
 
 ## - opendb_callback

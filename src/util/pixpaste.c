@@ -8,12 +8,12 @@
  *  Author -
  *	Christopher T. Johnson
  *	September 12, 1992
- *  
+ *
  *  Source -
  *	Paladin Software
  *	P.O. Box 187
  *	Aberdeen, MD	21001-0187
- *  
+ *
  *  Copyright Notice -
  *	This software is Copyright (C) 1992 by Paladin Software
  *	All rights reserved.
@@ -173,7 +173,7 @@ get_args(register int argc, register char **argv)
 	return(1);	/* OK */
 }
 
-			
+
 int
 main(int argc, char **argv)
 {
@@ -330,7 +330,7 @@ pixpaste: new image == original image.\n");
 		}
 		row++;
 	}
-		
+
 /*
  * Output the rest of the original file.
  */

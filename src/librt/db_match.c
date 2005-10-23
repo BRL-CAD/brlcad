@@ -34,7 +34,7 @@
  *  Author -
  *	Michael John Muuss
  *	Glenn Durfee
- *  
+ *
  *  Source -
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
@@ -136,7 +136,7 @@ db_regexp_match(register const char *pattern, register const char *string)
  * itself if no matches are found.
  * Returns the number of matches.
  */
- 
+
 int
 db_regexp_match_all(struct bu_vls *dest, struct db_i *dbip, const char *pattern)
 {

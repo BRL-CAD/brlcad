@@ -19,13 +19,13 @@
  * information.
  */
 /** @file pixinterp2x.c
- *  
+ *
  *  Read a .pix file of a given resolution, and produce one with
  *  twice as many pixels by interpolating between the pixels.
  *
  *  Author -
  *	Michael John Muuss
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory

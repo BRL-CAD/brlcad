@@ -45,7 +45,7 @@
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005
- *  
+ *
  */
 /*@}*/
 
@@ -138,7 +138,7 @@ static const char RCSparse[] = "@(#)$Header$ (BRL)";
 		bu_bomb("Bad getput buffer"); \
 	} \
 }
-	
+
 /*
  *			B U _ S T R U C T _ E X P O R T
  */
@@ -194,7 +194,7 @@ bu_struct_export(struct bu_external *ext, const genptr_t base, const struct bu_s
 			continue;
 		case 'd':
 			/* 32-bit network integer, from "int" */
-			CKMEM( ip->sp_count * 4 ); 
+			CKMEM( ip->sp_count * 4 );
 			{
 				register unsigned long	l;
 				for( i = ip->sp_count-1; i >= 0; i-- )  {
@@ -305,7 +305,7 @@ bu_struct_import(genptr_t base, const struct bu_structparse *imp, const struct b
 	register int	i;
 
 	BU_CK_GETPUT(ext);
-	
+
 	cp = (unsigned char *)ext->ext_buf+6;
 	bytes_used = 0;
 	for( ip = imp; ip->sp_fmt[0] != '\0'; ip++ )  {
@@ -363,7 +363,7 @@ bu_struct_import(genptr_t base, const struct bu_structparse *imp, const struct b
 			}
 			bytes_used += ip->sp_count * 2;
 			break;
-		case 's': 
+		case 's':
 			{	/* char array transmitted as a
 				 * 4 byte character count, followed by a
 				 * null terminated, word padded char array
@@ -484,7 +484,7 @@ bu_struct_get(struct bu_external *ext, FILE *fp)
 		    i, __FILE__, __LINE__);
 		bu_bomb("Bad fread");
 	}
-	i = (((unsigned char *)(ext->ext_buf))[len-2] <<8) | 
+	i = (((unsigned char *)(ext->ext_buf))[len-2] <<8) |
 	     ((unsigned char *)(ext->ext_buf))[len-1];
 	if ( i != BU_GETPUT_MAGIC_2) {
 		bu_log("ERROR: bad getput buffer x%x, s/b x%x, was %s(x%x), file %s, line %d\n",
@@ -524,7 +524,7 @@ bu_struct_wrap_buf(struct bu_external *ext, genptr_t buf)
 		bu_bomb("bad getput buffer");
 	}
 	ext->ext_nbytes = len;
-	i = (((unsigned char *)(ext->ext_buf))[len-2] <<8) | 
+	i = (((unsigned char *)(ext->ext_buf))[len-2] <<8) |
 	     ((unsigned char *)(ext->ext_buf))[len-1];
 	if ( i != BU_GETPUT_MAGIC_2) {
 		bu_log("ERROR: bad getput buffer x%x, s/b x%x, was %s(x%x), file %s, line %s\n",
@@ -557,7 +557,7 @@ bu_parse_double(const char *str, long int count, double *loc)
 	int	dot_seen;
 	const char	*numstart;
 	double	tmp_double;
-	char	buf[128];	
+	char	buf[128];
 	int	len;
 
 	for (i=0 ; i < count && *str ; ++i){
@@ -575,7 +575,7 @@ bu_parse_double(const char *str, long int count, double *loc)
 			}
 			if (!isdigit(*str))
 				break;
-			
+
 		}
 
 		/* If no mantissa seen, then there is no float here */
@@ -704,7 +704,7 @@ bu_struct_lookup(register const struct bu_structparse *sdp, register const char 
 						cp++;
 
 					while (*cp && isdigit(*cp) )
-						cp++; 
+						cp++;
 
 					/* make sure we actually had an
 					 * integer out there
@@ -744,7 +744,7 @@ bu_struct_lookup(register const struct bu_structparse *sdp, register const char 
 						cp++;
 
 					while (*cp && isdigit(*cp) )
-						cp++; 
+						cp++;
 
 					/* make sure we actually had an
 					 * integer out there
@@ -897,7 +897,7 @@ bu_matprint(const char *name, register const double *mat)
 
 	bu_log(" %s=%12E %12E %12E %12E\n",
 		name, mat[0], mat[1], mat[2], mat[3]);
-					
+
 	bu_log("%12E %12E %12E %12E\n",
 		mat[4], mat[5], mat[6], mat[7]);
 
@@ -939,13 +939,13 @@ bu_vls_matprint(struct bu_vls		*vls,
 }
 
 /*
- *	
+ *
  *	Convert a structure element (indicated by sdp) to its ASCII
  *	representation in a VLS
  */
 void
 bu_vls_struct_item(struct bu_vls *vp, const struct bu_structparse *sdp, const char *base, int sep_char)
-                  
+
                                      /* item description */
                                   /* base address of users structure */
                                  /* value separator */
@@ -1050,7 +1050,7 @@ bu_vls_struct_item_named(struct bu_vls *vp, const struct bu_structparse *parseta
  */
 void
 bu_struct_print(const char *title, const struct bu_structparse *parsetab, const char *base)
-          			       
+
                            	          /* structure description */
           			      	  /* base address of users structure */
 {
@@ -1283,10 +1283,10 @@ bu_vls_struct_print(struct bu_vls *vls, register const struct bu_structparse *sd
 				else
 					sprintf(cp, "%s%s=\"%c\"",
 						(vls->vls_len?" ":""),
-						sdp->sp_name, 
+						sdp->sp_name,
 						*loc);
 			} else {
-				register char *p; 
+				register char *p;
 				register int count=0;
 
 				/* count the quote characters */
@@ -1338,7 +1338,7 @@ bu_vls_struct_print(struct bu_vls *vls, register const struct bu_structparse *sd
 				register short *sp = (short *)loc;
 				register int tmpi;
 
-				bu_vls_extend(vls, 
+				bu_vls_extend(vls,
 					64 * i + strlen(sdp->sp_name) + 3 );
 
 				cp = vls->vls_str + vls->vls_offset + vls->vls_len;
@@ -1361,11 +1361,11 @@ bu_vls_struct_print(struct bu_vls *vls, register const struct bu_structparse *sd
 				register int *dp = (int *)loc;
 				register int tmpi;
 
-				bu_vls_extend(vls, 
+				bu_vls_extend(vls,
 					64 * i + strlen(sdp->sp_name) + 3 );
 
 				cp = vls->vls_str + vls->vls_offset + vls->vls_len;
-				sprintf(cp, "%s%s=%d", 
+				sprintf(cp, "%s%s=%d",
 					(vls->vls_len?" ":""),
 					sdp->sp_name, *dp++);
 				tmpi = strlen(cp);
@@ -1398,7 +1398,7 @@ bu_vls_struct_print(struct bu_vls *vls, register const struct bu_structparse *sd
  *	This differs from bu_struct_print in that it prints to a vls.
  */
 void
-bu_vls_struct_print2(struct bu_vls			*vls_out,     
+bu_vls_struct_print2(struct bu_vls			*vls_out,
 		     const char				*title,
 		     const struct bu_structparse	*parsetab,	/* structure description */
 		     const char				*base)	  	/* base address of users structure */
@@ -2086,7 +2086,7 @@ bu_shader_to_key_eq(char *in, struct bu_vls *vls)
 			/* each parameter must be a shader specification in itself */
 			shader1 = bu_list_elem( params, i );
 
-			if( i > 0 ) 
+			if( i > 0 )
 				bu_vls_putc( vls, ';' );
 			bu_shader_to_key_eq( shader1, vls );
 			bu_free( shader1, "shader1" );

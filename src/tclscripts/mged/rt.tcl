@@ -19,7 +19,7 @@
 # information.
 #
 ###
-# 
+#
 #                        R T . T C L
 #
 #	Widget for raytracing MGED's current view.
@@ -420,7 +420,7 @@ proc do_Raytrace { id } {
     }
 
     winset $rt_control($id,cooked_src)
-    set rt_cmd "_mged_rt" 
+    set rt_cmd "_mged_rt"
 
     if {$rt_control($id,cooked_dest) != ""} {
 	append rt_cmd " -F$rt_control($id,cooked_dest)"
@@ -650,7 +650,7 @@ be applied uniformly to each cell." } }
     hoc_register_menu_data "Jitter" "Both" "Jitter - Both"\
 	    { { summary "Randomly jitter the frame as well
 as each cell." } }
-    
+
     label $top.lmodelL -text "Light Model" -anchor e
     hoc_register_data $top.lmodelL "Light Model"\
 	    { { summary "The light model determines how the
@@ -1251,27 +1251,27 @@ proc rt_half_bake { id raw } {
     global mged_gui
 
     switch $raw {
-	"active" 
+	"active"
 	    -
 	"Active" {
 	    return $mged_gui($id,active_dm)
 	}
-	"ul" 
+	"ul"
 	    -
 	"upper left" {
 	    return $mged_gui($id,top).ul
 	}
-	"ur" 
+	"ur"
 	    -
 	"upper right" {
 	    return $mged_gui($id,top).ur
 	}
-	"ll" 
+	"ll"
 	    -
 	"lower left" {
 	    return $mged_gui($id,top).ll
 	}
-	"lr" 
+	"lr"
 	    -
 	"lower right" {
 	    return $mged_gui($id,top).lr
@@ -1305,7 +1305,7 @@ proc rt_init_vars { id win } {
     if ![winfo exists $win] {
 	return
     }
-    
+
     # initialize once
     if ![info exists rt_control($id,top)] {
 	set rt_control($id,top) .$id.rt

@@ -260,7 +260,7 @@ int	flag;
 	if( ir_mapping )
 		bu_log( "Multiple bounces disallowed during IR mapping.\n" );
 	else
-		max_bounce = flag;	
+		max_bounce = flag;
 	return	'#'; /* For backward compatibility with SGI menu interface. */
 	}
 
@@ -313,7 +313,7 @@ mips_Size_Grid( size )
 int	size;
 	{
 	grid_sz = size;
-	setGridSize( grid_sz );	
+	setGridSize( grid_sz );
 	return	'#'; /* For backward compatibility with SGI menu interface. */
 	}
 
@@ -1089,7 +1089,7 @@ int	fps;
 					    ||	qread( &val ) != MENUBUTTON;
 						)
 						;
-					break;	
+					break;
 				case MIDDLEMOUSE :
 					/* Wait for user to let go.	*/
 					for(	;

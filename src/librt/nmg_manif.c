@@ -27,7 +27,7 @@
  *
  *  Author -
  *	Lee A. Butler
- *  
+ *
  *  Source -
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
@@ -66,7 +66,7 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 	    		(p), (p)->back, (p)->back->forw); \
 	    	rt_bomb("Goodbye\n"); \
 	}
-	    
+
 
 /**	N M G _ D A N G L I N G _ F A C E
  *
@@ -76,7 +76,7 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
  *	1	face has dangling edge
  *	0	face does not have a dangling edge
  */
-int 
+int
 nmg_dangling_face(const struct faceuse *fu, register const char *manifolds)
 {
 	struct loopuse *lu;
@@ -108,7 +108,7 @@ nmg_dangling_face(const struct faceuse *fu, register const char *manifolds)
 		    eur = nmg_radial_face_edge_in_shell(eu);
 		    newfu = eur->up.lu_p->up.fu_p;
 
-	    	    /* skip any known dangling-edge faces or 
+	    	    /* skip any known dangling-edge faces or
 		     * faces known to be 2manifolds.
 		     */
 		    while (manifolds &&
@@ -220,7 +220,7 @@ static void paint_face(struct faceuse *fu, char *paint_table, int paint_color, c
 
 static void set_edge_sub_manifold(char *tbl, struct edgeuse *eu_p, char manifold)
 {
-	
+
 	NMG_CK_EDGEUSE(eu_p);
 	NMG_CK_EDGE(eu_p->e_p);
 	NMG_CK_VERTEXUSE(eu_p->vu_p);
@@ -261,7 +261,7 @@ static void set_loop_sub_manifold(char *tbl, struct loopuse *lu_p, char manifold
 static void set_face_sub_manifold(char *tbl, struct faceuse *fu_p, char manifold)
 {
 	struct loopuse *lu_p;
-	
+
 	NMG_CK_FACEUSE(fu_p);
 	NMG_CK_FACE(fu_p->f_p);
 
@@ -386,11 +386,11 @@ nmg_shell_manifolds(struct shell *sp, char *tbl)
 		paint_color++;
 	}
 
-		
+
 	if (rt_g.NMG_debug & DEBUG_MANIF)
 		bu_log("painting done, looking at colors\n");
 
-		
+
 	/* all the faces painted with "interior" paint are 2manifolds
 	 * those faces still painted with "exterior" paint are
 	 * 3manifolds, ie. part of the enclosing surface

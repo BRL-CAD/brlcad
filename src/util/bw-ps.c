@@ -24,7 +24,7 @@
  *
  *  Author -
  *	Phillip Dykstra
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
@@ -39,7 +39,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif
-                                                                                                                                                                            
+
 #include <stdio.h>
 #include <math.h>	/* for atof() */
 #ifdef HAVE_STDLIB_H
@@ -203,8 +203,8 @@ main(int argc, char **argv)
 
 void
 prolog(FILE *fp, char *name, int width, int height)
-    	    
-    	      
+
+
    	              		/* in points */
 {
 	time_t	ltime;

@@ -56,7 +56,7 @@ rt_prep_timer()
 
 /*
  *			R E A D _ T I M E R
- * 
+ *
  */
 double
 rt_read_timer(str,len)

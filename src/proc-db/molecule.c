@@ -21,7 +21,7 @@
 /** @file molecule.c
  *
  * Create a molecule from G. Adams format
- * 
+ *
  * Author:	Paul R. Stay
  * 		Ballistic Research Labratory
  * 		Aberdeen Proving Ground, Md.
@@ -124,7 +124,7 @@ read_data(void)
 	int             b_1, b_2;
 	int red, green, blue;
 	int i = 0;
-	
+
 
 	while (scanf(" %d", &data_type) != 0) {
 
@@ -219,7 +219,7 @@ make_bond( int sp1, int sp2 )
 	{
 		if ( s_ptr->s_id == sp1 )
 			s1 = s_ptr;
-			
+
 		if ( s_ptr->s_id == sp2 )
 			s2 = s_ptr;
 	}

@@ -28,12 +28,12 @@
  *  Author -
  *	Michael John Muuss
  *	August 04, 1978
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5066
- *  
+ *
  */
 /*@}*/
 
@@ -56,7 +56,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 /*
  *			T P _ I 2 L I S T
- * 
+ *
  *  Take a set of x,y coordinates, and plot them as a
  *  polyline, ie, connect them with line segments.
  *  For markers, use tp_mlist(), below.
@@ -64,10 +64,10 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
  */
 void
 tp_i2list(register FILE *fp, register int *x, register int *y, register int npoints)
-             	    
+
             	   			/* array of points */
             	   			/* array of points */
-            	        
+
 {
 	if( npoints <= 0 )
 		return;
@@ -79,7 +79,7 @@ tp_i2list(register FILE *fp, register int *x, register int *y, register int npoi
 
 /*
  *			T P _ 2 L I S T
- * 
+ *
  *  Take a set of x,y coordinates, and plot them as a
  *  polyline, ie, connect them with line segments.
  *  For markers, use tp_mlist(), below.
@@ -87,10 +87,10 @@ tp_i2list(register FILE *fp, register int *x, register int *y, register int npoi
  */
 void
 tp_2list(register FILE *fp, register double *x, register double *y, register int npoints)
-             	    
+
                	   			/* array of points */
                	   			/* array of points */
-            	        
+
 {
 	if( npoints <= 0 )
 		return;
@@ -175,10 +175,10 @@ int		*n;
  */
 void
 tp_2mlist(FILE *fp, register double *x, register double *y, int npoints, int flag, int mark, int interval, double size)
-    		    
-               	   
+
+
                	   			/* arrays of points */
-   		        
+
    		     			/* TP_MARK|TP_LINE */
    		     			/* marker character to use */
    		         		/* marker drawn every N points */

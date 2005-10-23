@@ -28,7 +28,7 @@
  *	VLD/ASB Building 1065
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005
- *  
+ *
  */
 
 #include "common.h"
@@ -56,7 +56,7 @@ is to convert only IGES solid model entities (CSG and planar face BREP)\n\
 The N option provides a name for the single solid created with the n or t\n\
 options, it is ignored for all other options\n";
 
-	
+
 void
 usage()
 {

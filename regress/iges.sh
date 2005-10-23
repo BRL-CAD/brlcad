@@ -1,6 +1,6 @@
 #!/bin/sh
 
-set + 
+set +
 
 rm -f iges.log iges.g iges_file.iges iges_stdout_new.g iges_new.g iges_stdout.iges iges_file.iges
 
@@ -18,7 +18,7 @@ q
 EOF
 
 ../src/iges/g-iges -o iges_file.iges iges.g box.nmg 2>> iges.log> /dev/null
-../src/iges/g-iges iges.g box.nmg > iges_stdout.iges 2>> iges.log 
+../src/iges/g-iges iges.g box.nmg > iges_stdout.iges 2>> iges.log
 
 ../src/iges/iges-g -o iges_new.g -p iges_file.iges 2>> iges.log
 

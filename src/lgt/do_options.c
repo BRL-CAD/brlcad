@@ -51,7 +51,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./screen.h"
 #include "./cursors.h"
 
-#define SGI_USEKEYBD	(tty && sgi_usemouse && sgi_console)	
+#define SGI_USEKEYBD	(tty && sgi_usemouse && sgi_console)
 
 #define MAX_ARGS	81
 #define MAX_COLS	128
@@ -670,7 +670,7 @@ f_Anti_Aliasing(HMitem *itemp, char **args)
 			    &&	sscanf( input_ln, "%d", &aperture_sz ) != 1
 				)
 				return	-1;
-			}	
+			}
 		else
 			return	-1;
 		}
@@ -765,7 +765,7 @@ void
 pt_Select(register int x, register int y, register int *xp, register int *yp, register int *originp)
 {	char		*args[3];
 		char		buf1[5], buf2[5];
-	
+
 	args[1] = buf1;
 	args[2] = buf2;
 	if( *originp )
@@ -1214,7 +1214,7 @@ f_Display_Origin(HMitem *itemp, char **args)
 			   &&	sscanf( input_ln, "%d %d", &x_fb_origin, &y_fb_origin ) != 2
 				)
 				return	-1;
-			}			
+			}
 		else
 			return	-1;
 		}
@@ -1308,14 +1308,14 @@ f_Animate(HMitem *itemp, char **args)
 	if(	get_Input( input_ln, MAX_LN, prompt ) != NULL
 	    &&	sscanf( input_ln, "%d", &movie.m_frame_sz ) != 1 )
 		{
-		bu_log( "Illegal input (%s)\n", input_ln );	
+		bu_log( "Illegal input (%s)\n", input_ln );
 		return	-1;
 		}
 	(void) sprintf( prompt, "Number of frames ? (%d) ", noframes );
 	if(	get_Input( input_ln, MAX_LN, prompt ) != NULL
 	    &&	sscanf( input_ln, "%d", &noframes ) != 1 )
 		{
-		bu_log( "Illegal input (%s)\n", input_ln );	
+		bu_log( "Illegal input (%s)\n", input_ln );
 		return	-1;
 		}
 	(void) sprintf( prompt, "Frames per second ? (%d) ", fps );
@@ -1323,7 +1323,7 @@ f_Animate(HMitem *itemp, char **args)
 	    &&	sscanf( input_ln, "%d", &fps ) != 1
 		)
 		{
-		bu_log( "Illegal input (%s)\n", input_ln );	
+		bu_log( "Illegal input (%s)\n", input_ln );
 		return	-1;
 		}
 	x_fb_origin = 0;
@@ -1486,7 +1486,7 @@ f_Wrt_Fb(HMitem *itemp, char **args)
 		}
 	if( ! ready_Output_Device( 0 ) )
 		return	-1;
-	prnt_Event( "Saving image..." ); 
+	prnt_Event( "Saving image..." );
 	if( (save_fbiop =
 		fb_open( save_fb_file, grid_sz, grid_sz ))== FBIO_NULL )
 		{
@@ -1665,7 +1665,7 @@ f_Prnt_Mat_Db(HMitem *itemp, char **args)
 			if( input_ln[0] == '*' )
 				material_id = -1;
 			}
-				
+
 		}
 	else
 	if(	args != NULL && args[1] != NULL
@@ -1781,7 +1781,7 @@ f_Movie(HMitem *itemp, char **args)
 	(void) sprintf( prompt,
 			"Full-screen frames ? [y|n](%c) ",
 			movie.m_fullscreen ? 'y' : 'n'
-			); 
+			);
 	if( get_Input( input_ln, MAX_LN, prompt ) != NULL )
 		movie.m_fullscreen = input_ln[0] != 'n';
 	if( movie.m_fullscreen )
@@ -2201,7 +2201,7 @@ f_Parallel(HMitem *itemp, char **args)
 	if( npsw > 1 )
 		rt_g.rtg_parallel = 1;
 	else
-		rt_g.rtg_parallel = 0;		
+		rt_g.rtg_parallel = 0;
 
 	bu_semaphore_init( RT_SEM_LAST );
 #endif
@@ -2684,7 +2684,7 @@ f_Dist_Grid(HMitem *itemp, char **args)
 			return	-1;
 		}
 	grid_position = TRUE;
-	return	1;		
+	return	1;
 	}
 
 /*	f _ S c a l e _ G r i d ( ) */
@@ -2912,7 +2912,7 @@ f_Entr_Mat_Db(HMitem *itemp, char **args)
 			bu_log( "Illegal input (%s)\n", input_ln );
 			return	-1;
 			}
-				
+
 		}
 	else
 	if(	args != NULL && args[1] != NULL
@@ -2950,7 +2950,7 @@ f_Set_IR_Paint(HMitem *itemp, char **args)
 			}
 		else
 			return	-1;
-			
+
 		}
 	else
 #endif
@@ -3196,11 +3196,11 @@ exec_start :
 		if( exit_status )
 			(void) printf( "failed (exit status %d).", exit_status );
 		else
-			(void) fputs( "completed successfully.", stdout ); 
+			(void) fputs( "completed successfully.", stdout );
 		(void) get_Input( input_ln, BUFSIZ, "Continue ? [y|n](y) " );
 		if( input_ln[0] == 'n' )
 			{
-			args[0] = "!"; 
+			args[0] = "!";
 			args[1] = NULL;
 			goto	exec_start;
 			}
@@ -3473,7 +3473,7 @@ setup_Lgts(int frame)
 			not supported. */
 		for( i = 1; i < lgt_db_size; i++ )
 			{	fastf_t	azim, elev;
-			if(   ! lgts[i].over	
+			if(   ! lgts[i].over
 				/* Fill in ptr to solid table for quick checking. */
 			    &&	(lgts[i].stp = rt_find_solid( rt_ip, lgts[i].name )) != SOLTAB_NULL
 				)
@@ -3495,7 +3495,7 @@ setup_Lgts(int frame)
 	else
 	for( i = 1; i < lgt_db_size; i++ )
 		{
-		if(   ! lgts[i].over	
+		if(   ! lgts[i].over
 			/* Fill in ptr to solid table for quick checking.*/
 		    &&	(lgts[i].stp = rt_find_solid( rt_ip, lgts[i].name )) != SOLTAB_NULL
 			)
@@ -3641,7 +3641,7 @@ make_Script(char *file)
 		(void) fprintf( run_fp,	" -a%g", grid_roll*DEGRAD );
 	if( background[0] || background[1] || background[2] )
 		(void) fprintf( run_fp,
-				" -b\"%d %d %d\"", 
+				" -b\"%d %d %d\"",
 				background[0],
 				background[1],
 				background[2]
@@ -3826,7 +3826,7 @@ stop_sig(int sig)
  */
 int
 key_Frame(void)
-{	static char	*local_argv[2];	
+{	static char	*local_argv[2];
 	local_argv[0] = local_argv[1] = NULL;
 	return	f_Key_Frame( (HMitem *) 0, local_argv );
 	}
@@ -3860,7 +3860,7 @@ get_Input(char *inbuf, int bufsz, char *msg)
 int
 hm_getchar(void)
 {
-#if HAS_SGIGL		
+#if HAS_SGIGL
 	if( SGI_USEKEYBD )
 		return	sgi_Getchar();
 #endif

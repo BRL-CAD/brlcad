@@ -29,7 +29,7 @@
  *
  * Author -
  *	Michael John Muuss
- *  
+ *
  * Source -
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
@@ -116,18 +116,18 @@ bu_badmagic_tcl(Tcl_Interp	*interp,
 {
 	char	buf[256];
 
-	if (!(ptr)) { 
-		sprintf(buf, "ERROR: NULL %s pointer in TCL interface, file %s, line %d\n", 
-			str, file, line); 
+	if (!(ptr)) {
+		sprintf(buf, "ERROR: NULL %s pointer in TCL interface, file %s, line %d\n",
+			str, file, line);
 		Tcl_AppendResult(interp, buf, NULL);
 		return;
 	}
-	if (*((long *)(ptr)) != (magic)) { 
-		sprintf(buf, "ERROR: bad pointer in TCL interface x%lx: s/b %s(x%lx), was %s(x%lx), file %s, line %d\n", 
+	if (*((long *)(ptr)) != (magic)) {
+		sprintf(buf, "ERROR: bad pointer in TCL interface x%lx: s/b %s(x%lx), was %s(x%lx), file %s, line %d\n",
 			(long)ptr,
 			str, magic,
 			bu_identify_magic( *(ptr) ), *(ptr),
-			file, line); 
+			file, line);
 		Tcl_AppendResult(interp, buf, NULL);
 		return;
 	}
@@ -384,7 +384,7 @@ bu_structparse_argv(Tcl_Interp			*interp,
 					if( *cp && (*cp == '+' || *cp == '-') )
 						cp++;
 					while( *cp && isdigit(*cp) )
-						cp++; 
+						cp++;
 					/* make sure we actually had an
 					 * integer out there
 					 */
@@ -394,7 +394,7 @@ bu_structparse_argv(Tcl_Interp			*interp,
 					     (argv[0][0] == '+' ||
 					      argv[0][0] == '-')) ) {
 						bu_vls_trunc( &str, 0 );
-						bu_vls_printf( &str, 
+						bu_vls_printf( &str,
 			       "value \"%s\" to argument %s isn't an integer",
 							       argv,
 							       sdp->sp_name );
@@ -468,7 +468,7 @@ bu_structparse_argv(Tcl_Interp			*interp,
 					if( *cp && (*cp == '+' || *cp == '-') )
 						cp++;
 					while( *cp && isdigit(*cp) )
-						cp++; 
+						cp++;
 					/* make sure we actually had an
 					 * integer out there
 					 */
@@ -478,7 +478,7 @@ bu_structparse_argv(Tcl_Interp			*interp,
 					     (argv[0][0] == '+' ||
 					      argv[0][0] == '-')) ) {
 						bu_vls_trunc( &str, 0 );
-						bu_vls_printf( &str, 
+						bu_vls_printf( &str,
 			       "value \"%s\" to argument %s isn't an integer",
 							       argv,
 							       sdp->sp_name );
@@ -537,7 +537,7 @@ bu_structparse_argv(Tcl_Interp			*interp,
 						bu_vls_free( &str );
 						return TCL_ERROR;
 					}
-					
+
 					BU_SP_SKIP_SEP(cp);
 					numstart = cp;
 					if( *cp == '-' || *cp == '+' ) cp++;
@@ -557,7 +557,7 @@ bu_structparse_argv(Tcl_Interp			*interp,
 					   then there is no float here */
 					if( cp == (numstart + dot_seen) ) {
 						bu_vls_trunc( &str, 0 );
-						bu_vls_printf( &str, 
+						bu_vls_printf( &str,
 	                           "value \"%s\" to argument %s isn't a float",
 							       argv[0],
 							       sdp->sp_name );
@@ -586,7 +586,7 @@ bu_structparse_argv(Tcl_Interp			*interp,
 					if( sscanf(bu_vls_addr(&str),
 						   "%lf", &tmp_double) != 1 ) {
 						bu_vls_trunc( &str, 0 );
-						bu_vls_printf( &str, 
+						bu_vls_printf( &str,
 				  "value \"%s\" to argument %s isn't a float",
 							       numstart,
 							       sdp->sp_name );
@@ -596,7 +596,7 @@ bu_structparse_argv(Tcl_Interp			*interp,
 						bu_vls_free( &str );
 						return TCL_ERROR;
 					}
-					
+
 					*dp++ = tmp_double;
 
 					BU_SP_SKIP_SEP(cp);
@@ -634,7 +634,7 @@ bu_structparse_argv(Tcl_Interp			*interp,
 
 			break;
 		}
-		
+
 
 		if( sdp->sp_name == NULL ) {
 			bu_vls_trunc( &str, 0 );
@@ -915,7 +915,7 @@ bu_get_value_by_keyword(ClientData	clientData,
 			return TCL_OK;
 		}
 	}
-	
+
 	/* Not found */
 	Tcl_AppendResult( interp, "bu_get_value_by_keyword: keyword '",
 		iwant, "' not found in list\n", (char *)NULL );
@@ -1043,7 +1043,7 @@ bu_get_all_keyword_values(ClientData	clientData,
 			" ", (char *)NULL );
 		bu_vls_trunc( &variable, 0 );
 	}
-	
+
 	/* All done */
 	bu_vls_free( &variable );
 	if(tofree) free( (char *)tofree );	/* not bu_free() */
@@ -1108,7 +1108,7 @@ bu_tcl_rgb_to_hsv(ClientData	clientData,
 	Tcl_AppendResult(interp, bu_vls_addr(&result), (char *)NULL);
 	bu_vls_free(&result);
 	return TCL_OK;
-	
+
 }
 
 /*****f* libbu/bu_tcl.c
@@ -1159,7 +1159,7 @@ bu_tcl_hsv_to_rgb(ClientData	clientData,
 	Tcl_AppendResult(interp, bu_vls_addr(&result), (char *)NULL);
 	bu_vls_free(&result);
 	return TCL_OK;
-	
+
 }
 
 /*****f* libbu/bu_tcl.c

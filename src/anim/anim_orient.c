@@ -21,20 +21,20 @@
  */
 /** @file anim_orient.c
  *	Convert between different orientation formats. The formats are:
- *  quaternion, yaw-pitch-roll, azimuth-elevation-twist, xyz angles, 
+ *  quaternion, yaw-pitch-roll, azimuth-elevation-twist, xyz angles,
  *  pre-multiplication rotation matrices, and transposed matrices (inverses).
  * 	By default, the information is assumed to represent a transformation
  *  which should be an object which initially faces the x-axis, with the
- *  z-axis going up. Alternatively, the information can be interpreted as 
+ *  z-axis going up. Alternatively, the information can be interpreted as
  *  transformations which should be applied to an object initially facing the
  *  negative z-axis, with the y-axis going up.
- *  	The conversion is done by converting each input form to a matrix, 
+ *  	The conversion is done by converting each input form to a matrix,
  *  and then converting that matrix to the desired output form.
  *	Angles may be specified in radians or degrees.
  *
  *  Author -
  *	Carl J. Nuzman
- *  
+ *
  *  Source -
  *      The U. S. Army Research Laboratory
  *      Aberdeen Proving Ground, Maryland  21005-5068  USA

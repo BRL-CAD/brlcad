@@ -230,7 +230,7 @@ int size;
 	RGBpixel mcolor;
 
 	if( size > 1024 ) size = 1024;
-	
+
 	/* Put magnitudes in linear buffer */
 /*	lin[0] = buf[0]/256.0;  NO DC ON LOG SCALE! */
 	for (i = 1; i < size/2; i++) {

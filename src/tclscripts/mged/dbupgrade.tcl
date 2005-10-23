@@ -61,11 +61,11 @@ The primary benefits of the new file format to the user include:
     Double precision floating point values for all parameters:
 	The new format stores all floating point values in IEEE 754 double
 	precision form.  This increases the range and precision of numbers
-	which can be represented.  The result is that more accurate geometry 
+	which can be represented.  The result is that more accurate geometry
 	can be created, and larger objects can be modeled.
 
 	In previous releases, many parameters were stored in single precision
-	floating point values.  While this reduced storage requirements, it 
+	floating point values.  While this reduced storage requirements, it
 	has become a severe limitation on modeling.
 
     Unlimited length object names:
@@ -74,7 +74,7 @@ The primary benefits of the new file format to the user include:
 	used by modelers.
 
 	In previous releases, object names were limited to 15
-	characters in length.  
+	characters in length.
 
     Object attributes:
 	The new file format allows arbitrary text information to be stored

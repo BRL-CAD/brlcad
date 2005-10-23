@@ -22,7 +22,7 @@
  *
  */
 
-/* 
+/*
  *			B W - I M P . C
  *
  *  Authors -

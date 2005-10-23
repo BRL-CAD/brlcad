@@ -25,7 +25,7 @@
  *  Source -
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005
- *  
+ *
  */
 
 /*	This routine loops through all the directory entries and looks

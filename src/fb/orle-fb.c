@@ -25,12 +25,12 @@
  *
  *  Author -
  *	Gary S. Moss
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5066
- *  
+ *
  */
 #ifndef lint
 static const char RCSid[] = "@(#)$Id$ (BRL)";
@@ -41,7 +41,7 @@ static const char RCSid[] = "@(#)$Id$ (BRL)";
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif
-                                                                                                                                                                            
+
 #include <stdio.h>
 #include <stdlib.h>
 #ifdef HAVE_STRING_H
@@ -413,7 +413,7 @@ prnt_Cmap(ColorMap *cmap)
 	(void) fprintf( stderr, "Green segment :\n" );
 	for( i = 0, cp = cmap->cm_green; i < 16; ++i, cp += 16 )
 		{
-		(void) fprintf( stderr, 
+		(void) fprintf( stderr,
 	"%3d %3d %3d %3d %3d %3d %3d %3d %3d %3d %3d %3d %3d %3d %3d %3d\n",
 	/* 1   2   3   4   5   6   7   8   9  10  11  12  13  14  15  16 */
 				cp[0],

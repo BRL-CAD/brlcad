@@ -26,12 +26,12 @@
  *
  *  Author -
  *	Michael John Muuss
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005
- *  
+ *
  */
 /*@}*/
 
@@ -563,11 +563,11 @@ bn_isect_2planes(fastf_t *pt, fastf_t *dir, const fastf_t *a, const fastf_t *b, 
 int
 bn_isect_line2_line2(fastf_t *dist, const fastf_t *p, const fastf_t *d, const fastf_t *a, const fastf_t *c, const struct bn_tol *tol)
        			      			/* dist[2] */
-             		  
-            		  
-             		  
-            		  
-                   	     
+
+
+
+
+
 {
 	fastf_t			hx, hy;		/* A - P */
 	register fastf_t	det;
@@ -780,11 +780,11 @@ bu_log("\thx=%g, hy=%g, det=%g, det1=%g, det2=%g\n", hx, hy, det, det1, (d[X] * 
 int
 bn_isect_line2_lseg2(fastf_t *dist, const fastf_t *p, const fastf_t *d, const fastf_t *a, const fastf_t *c, const struct bn_tol *tol)
        			      		/* dist[2] */
-             		  
-            		  
-             		  
-            		  
-                   	     
+
+
+
+
+
 {
 	register fastf_t f;
 	fastf_t		ctol;
@@ -1671,7 +1671,7 @@ bn_area_of_triangle(register const fastf_t *a, register const fastf_t *b, regist
  *
  * Intersect a point P with the line segment defined by two distinct
  * points A and B.
- *	
+ *
  * Explicit Return
  *	-2	P on line AB but outside range of AB,
  *			dist = distance from A to P on line.
@@ -1679,24 +1679,24 @@ bn_area_of_triangle(register const fastf_t *a, register const fastf_t *b, regist
  *	1	P is at A
  *	2	P is at B
  *	3	P is on AB, dist = distance from A to P on line.
- *	
+ *
  *    B *
- *	|  
- *    P'*-tol-*P 
+ *	|
+ *    P'*-tol-*P
  *	|    /  _
  *    dist  /   /|
  *	|  /   /
  *	| /   / AtoP
  *	|/   /
  *    A *   /
- *	
+ *
  *	tol = distance limit from line to pt P;
  *	dist = parametric distance from A to P' (in terms of A to B)
  */
 int bn_isect_pt_lseg(fastf_t *dist, const fastf_t *a, const fastf_t *b, const fastf_t *p, const struct bn_tol *tol)
        			      		/* distance along line from A to P */
              		        	/* points for line and intersect */
-                   	     
+
 {
 	vect_t	AtoP,
 		BtoP,
@@ -1751,7 +1751,7 @@ int bn_isect_pt_lseg(fastf_t *dist, const fastf_t *a, const fastf_t *b, const fa
  *
  * Intersect a point P with the line segment defined by two distinct
  * points A and B.
- *	
+ *
  * Explicit Return
  *	-2	P on line AB but outside range of AB,
  *			dist = distance from A to P on line.
@@ -1759,17 +1759,17 @@ int bn_isect_pt_lseg(fastf_t *dist, const fastf_t *a, const fastf_t *b, const fa
  *	1	P is at A
  *	2	P is at B
  *	3	P is on AB, dist = distance from A to P on line.
- *	
+ *
  *    B *
- *	|  
- *    P'*-tol-*P 
+ *	|
+ *    P'*-tol-*P
  *	|    /  _
  *    dist  /   /|
  *	|  /   /
  *	| /   / AtoP
  *	|/   /
  *    A *   /
- *	
+ *
  *	tol = distance limit from line to pt P;
  *	dist = distance from A to P'
  */
@@ -1777,7 +1777,7 @@ int
 bn_isect_pt2_lseg2(fastf_t *dist, const fastf_t *a, const fastf_t *b, const fastf_t *p, const struct bn_tol *tol)
        			      		/* distance along line from A to P */
              		        	/* points for line and intersect */
-                   	     
+
 {
 	vect_t	AtoP,
 		BtoP,
@@ -2381,7 +2381,7 @@ bn_does_ray_isect_tri(
  *	  |   |      \
  *	  |_  o-------o
  *	       V       B
- *	
+ *
  *	      |__|
  *		beta
  *
@@ -2458,7 +2458,7 @@ const point_t B;
 	if (beta < 0.0 || beta > fabs(NdotDir)) return 0;
 
 	k = VDOT(VPP, N) / NdotDir;
-	
+
 	if (dist_p) *dist_p = k;
 	if (N_p) {
 		VUNITIZE(N);
@@ -2487,7 +2487,7 @@ bn_hlf_class(const fastf_t *half_eqn, const fastf_t *min, const fastf_t *max, co
 {
 	int	class;	/* current classification */
 	fastf_t d;
-	
+
 #define CHECK_PT( x, y, z ) \
 	d = (x)*half_eqn[0] + (y)*half_eqn[1] + (z)*half_eqn[2] - half_eqn[3];\
 	if( d < -tol->dist ) { \
@@ -2606,7 +2606,7 @@ bn_distsq_line3_line3(fastf_t *dist, fastf_t *P, fastf_t *d_in, fastf_t *Q, fast
  *	An expression for the distance from a point to a plane is VDOT(pt,plane)-plane[H].
  *	Square that distance and sum for all planes to get the "total" distance.
  *	For minimum total distance, the partial derivatives of this expression (with
- *	respect to x, y, and z) must all be zero. 
+ *	respect to x, y, and z) must all be zero.
  *	This produces a set of three equations in three unknowns (x, y, and z).
  *	This routine sets up the three equations as [matrix][pt] = [hpq]
  *	and solves by inverting "matrix" into "inverse" and

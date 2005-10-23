@@ -1,5 +1,5 @@
 # $Id$
-                                                                                                                                            
+
 bin_SCRIPTS = awf brlman
 
 man_MANS = brlman.1

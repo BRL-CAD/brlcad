@@ -47,7 +47,7 @@
  *			x  y  z  field_1  field_2  ...  field_n.
  *  Author -
  *	Paul J. Tanenbaum
- *  
+ *
  *  Source -
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5066  USA
@@ -115,7 +115,7 @@ main (int argc, char **argv)
     int             Ch;                 /* Input character */
     int             i;                  /* Dummy variable for loop indexing */
     extern int      bu_optind;             /* index from bu_getopt(3C) */
-    
+
     /* Handle command-line options */
     while ((Ch = bu_getopt(argc, argv, OPT_STRING)) != EOF)
 	switch (Ch)
@@ -301,7 +301,7 @@ GetCoord (FILE *Whence, double *Coord, char Label, int LineNm, char *FileName)
                 LineNm, FileName);
         exit(1);
     }
-    
+
     if (fscanf(Whence, "%lf", Coord) != 1)
     {
         fprintf(stderr, "azel:  Bad %c-coordinate at line %d, file %s\n",

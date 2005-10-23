@@ -28,7 +28,7 @@ SRCS = \
 	knob.c \
 	options.c \
 	query.c \
-	tcl.c 
+	tcl.c
 
 libdm_la_SOURCES = \
 	$(SRCS) \

@@ -167,7 +167,7 @@ including
 .I libbu
 is designed to run in parallel on multiprocessor machines.
 On some such machines
-system calls must be semaphore protected.  For this reason, 
+system calls must be semaphore protected.  For this reason,
 .I libbu
 provides:
 .sp
@@ -205,7 +205,7 @@ usually indicates the purpose of the memory being allocated.
 The function
 .I bu_strdup()
 calls bu_malloc() instead of malloc() to acquire memory.
-Thus it should be used in place of strdup() in programs linking with 
+Thus it should be used in place of strdup() in programs linking with
 .I libbu.
 .SH "EXIT CODE"
 All truly fatal errors detected by the library use

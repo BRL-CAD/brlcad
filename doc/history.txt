@@ -43,7 +43,7 @@ In terms of geometrical representation of data, BRL-CAD supports:
 	base which has been used to model > 150 target descriptions,
 	domestic and foreign
 
-	extensions to include both a Naval Academy spline 
+	extensions to include both a Naval Academy spline
 	(Uniform B-Spline Surface) as well as a U. of
 	Utah spline (Non-Uniform Rational B-Spline [NURB] Surface)
 	developed under NSF and DARPA sponsorship

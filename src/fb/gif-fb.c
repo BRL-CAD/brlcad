@@ -75,7 +75,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif
-                                                                                                                                                                            
+
 #ifndef DEBUG
 #define	NDEBUG
 #endif
@@ -410,7 +410,7 @@ Expand(register int c)
 
 	while ( c >= compress_code )	/* "molecular"; follow chain */
 		{
-		assert(bp < &exp_buffer[2046]);	
+		assert(bp < &exp_buffer[2046]);
 		*bp++ = table[c].ext;
 		c = table[c].pfx;
 		}

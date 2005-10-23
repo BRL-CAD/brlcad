@@ -26,7 +26,7 @@
  *
  *  Author -
  *	Michael John Muuss
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
@@ -163,7 +163,7 @@ Tek_open()
 	Tcl_AppendResult(interp, "Tek_open: failed to open ", dname,
 			 ", ", line, " and /dev/tty", (char *)NULL);
 	return TCL_ERROR;
-      }else 
+      }else
 	second_fd = 0;          /* no second filedes */
     }else
       second_fd = fileno(outfp);
@@ -183,7 +183,7 @@ Tek_open()
 
 /*
  *  			T E K _ C L O S E
- *  
+ *
  *  Gracefully release the display.
  */
 void
@@ -193,7 +193,7 @@ Tek_close()
     --tek_count;
     return;
   }
-  
+
   (void)putc(US,outfp);
     (void)fflush(outfp);
     fclose(outfp);
@@ -254,7 +254,7 @@ mat_t mat;
 
 /*
  *  			T E K _ O B J E C T
- *  
+ *
  *  Set up for an object, transformed as indicated, and with an
  *  object center as specified.  The ratio of object to screen size
  *  is passed in as a convienience.
@@ -380,7 +380,7 @@ int dashed;
 
 /*
  *			G E T _ C U R S O R
- *  
+ *
  *  Read the Tektronix cursor.  The Tektronix sends
  *  6 bytes:  The key the user struck, 4 bytes of
  *  encoded position, and a return (newline).
@@ -455,7 +455,7 @@ int mask;
 		  Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
 		  bu_vls_free(&tmp_vls);
 		  return;		/* Fails if he hits RETURN */
-			
+
 		}
 		cp = &ibuf[i-6];
 		if( cp[5] != '\n' )  {
@@ -484,7 +484,7 @@ int mask;
 			xpen = 0;
 		if( ypen < -2048 || ypen > 2048 )
 			ypen = 0;
-		
+
 		switch(cp[0])  {
 		case 'Z':
 		  {
@@ -571,7 +571,7 @@ int		noblock;
 #endif
 }
 
-/* 
+/*
  *			T E K _ L I G H T
  */
 /* ARGSUSED */
@@ -726,10 +726,10 @@ register char *s;
 
 	(void)putc(ESC,outfp);
 	switch(s[0]){
-	case 'l':	
+	case 'l':
 		c = 'd';
 		break;
-	case 'd':	
+	case 'd':
 		if(s[3] != 'd')c='a';
 		else c='b';
 		break;

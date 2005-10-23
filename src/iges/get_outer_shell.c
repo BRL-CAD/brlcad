@@ -26,7 +26,7 @@
  *	SLAD/BVLD/VMB
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005
- *  
+ *
  */
 #include "./iges_struct.h"
 #include "./iges_extern.h"
@@ -36,7 +36,7 @@ Get_outer_shell( r , entityno , shell_orient )
 struct nmgregion *r;
 int entityno;
 int shell_orient;
-{ 
+{
 
 	int		sol_num;		/* IGES solid type number */
 	int		no_of_faces;		/* Number of faces in shell */

@@ -64,7 +64,7 @@ rr_render(register struct application *ap,
 
 /* defined in shade.c */
 OPTICAL_EXPORT extern void
-shade_inputs(struct application		*ap, 
+shade_inputs(struct application		*ap,
 	     const struct partition	*pp,
 	     struct shadework		*swp,
 	     int			want);
@@ -87,7 +87,7 @@ wraypts(vect_t	in,
 OPTICAL_EXPORT extern
 void wraypaint(vect_t start,
 	       vect_t norm,
-	       int paint, 
+	       int paint,
 	       struct application *ap,
 	       FILE *fp);
 
@@ -100,7 +100,7 @@ viewshade(struct application *ap,
 
 OPTICAL_EXPORT extern int	rdebug;
 
-/* When in production mode, no debug checking is performed, hence the 
+/* When in production mode, no debug checking is performed, hence the
  * R_DEBUG define causes sections of debug code to go "poof"
  */
 #ifdef NO_DEBUG_CHECKING
@@ -111,20 +111,20 @@ OPTICAL_EXPORT extern int	rdebug;
 
 /*
  *
- *  
+ *
  *  Debugging flags for thr RT program itself.
  *  These flags follow the "-X" (cap X) option to the RT program.
  *  librt debugging is separately controlled.
- *  
+ *
  *  Author -
  *	Michael John Muuss
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005
- *  
- *  
+ *
+ *
  *  $Revision$
  */
 
@@ -185,8 +185,8 @@ OPTICAL_EXPORT extern vect_t background;
 #endif
 
 #if 0
-OPTICAL_EXPORT 
-OPTICAL_EXPORT extern 
+OPTICAL_EXPORT
+OPTICAL_EXPORT extern
 #endif
 /* defined in sh_text.c */
 OPTICAL_EXPORT extern struct region env_region; /* environment map region */

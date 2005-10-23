@@ -32,7 +32,7 @@
  *  Author -
  *	Phillip Dykstra
  *	31 July 1986
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
@@ -244,7 +244,7 @@ int main(int argc, char **argv)
 	register int		tmp;
 	int	 		n;
 	unsigned long		clip_high, clip_low;
-	
+
 	progname = *argv;
 
 	if( !get_args( argc, argv ) || isatty((int)fileno(stdin))

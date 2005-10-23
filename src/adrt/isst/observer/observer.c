@@ -66,7 +66,7 @@ void *magnify_buffer;
 void isst_observer(char *host, int port) {
   isst_observer_net_info_t ni;
 
-  /* server address */ 
+  /* server address */
   if(gethostbyname(host)) {
     ni.master = gethostbyname(host)[0];
   } else {

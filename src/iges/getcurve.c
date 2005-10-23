@@ -28,7 +28,7 @@
  *	VLD/ASB Building 1065
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005
- *  
+ *
  */
 
 #include "./iges_struct.h"
@@ -714,7 +714,7 @@ struct ptlist **curv_pts;
 	   				alpha = myarcsinh( v1[1]/b );
 	   				beta = myarcsinh( v2[1]/b );
 	   				if( fabs( a*cosh(beta) - v2[0] ) > 0.01 )
-						a = (-a); 
+						a = (-a);
 	   				beta = beta - alpha;
 		   		}
 	   			num_points = ARCSEGS;

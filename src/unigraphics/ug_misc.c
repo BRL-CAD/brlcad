@@ -55,7 +55,7 @@ tag_t ask_cset_of_unloaded_children(tag_t part, tag_t part_occ)
     tag_t *children;
     int   n_children = UF_ASSEM_ask_part_occ_children(part_occ, &children);
     int   i;
-    tag_t instance; 
+    tag_t instance;
     char  part_fspec[MAX_FSPEC_SIZE+1];
     logical no_children = false;
 
@@ -104,7 +104,7 @@ const char *feature_sign(tag_t feat)
 {
     UF_FEATURE_SIGN sign;
     char *p;
-	
+
     /* XXX For certain classes of feature, this might be handy.
      * This is just here as a memory-jogger.  If the feature is
      * a hole, we might be able to suppress it, and do a boolean subtraction
@@ -164,7 +164,7 @@ int report(char *call, char *file, int line, int code)
 static Tcl_HashTable parts_tbl;
 static int tbl_uninitialized = 1;
 
-tag_t 
+tag_t
 open_part(char *p_name, int level)
 {
     UF_PART_load_status_t error_status;
@@ -180,7 +180,7 @@ open_part(char *p_name, int level)
 		error_status.user_abort,
 		error_status.n_parts);
 	for (e_part = 0 ; e_part < error_status.n_parts ; e_part++) {
-	    dprintf("%*sPart %s status %d\n", 
+	    dprintf("%*sPart %s status %d\n",
 		    level, "",
 		    error_status.file_names[e_part],
 		    error_status.statuses[e_part]);
@@ -204,14 +204,14 @@ load_sub_parts(tag_t displayed_part)
     UF_PART_load_status_t load_status;
     int                   i;
     tag_t root_part_occ = NULL_TAG;
-    
+
 
     /* We have a displayed part, find the root part occurrence. */
     root_part_occ = UF_ASSEM_ask_root_part_occ(displayed_part);
 
     if (root_part_occ == NULL_TAG) {
 	/* It is an assembly, get a cset of unloaded children. */
-	unloaded_child_cset = 
+	unloaded_child_cset =
 	    ask_cset_of_unloaded_children(displayed_part, root_part_occ);
 
 	if (unloaded_child_cset != NULL_TAG) {
@@ -276,7 +276,7 @@ Lee_open_part(char *p_name, int level)
     } else {
 	UF_func(UF_PART_open(p_name, &ugpart, &error_status));
     }
-	
+
     if (error_status.n_parts > 0) {
 
 	dprintf("%*sPART_open status: failed:%d user_abort:%d n_parts:%d\n",
@@ -285,7 +285,7 @@ Lee_open_part(char *p_name, int level)
 		error_status.user_abort,
 		error_status.n_parts);
 	for (e_part = 0 ; e_part < error_status.n_parts ; e_part++) {
-	    dprintf("%*sPart %s status %d\n", 
+	    dprintf("%*sPart %s status %d\n",
 		    level, "",
 		    error_status.file_names[e_part],
 		    error_status.statuses[e_part]);
@@ -312,7 +312,7 @@ struct ug_type_data ug_typelist[] = {
 {                 "UF_point_type",	         2, ""},
 {                  "UF_line_type",	         3, ""},
 {      "UF_solid_collection_type",	         4,  "To hold deleted solids for undo" },
-{                "UF_circle_type",	         5,  "Also called arc"},       
+{                "UF_circle_type",	         5,  "Also called arc"},
 {                 "UF_conic_type",	         6, ""},
 {               "UF_spcurve_type",	         7,  "Obsolete in V10" },
 {                "UF_spline_type",	         8,  "Obsolete in V10" },

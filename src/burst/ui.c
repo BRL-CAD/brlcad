@@ -601,7 +601,7 @@ HmItem *itemp;
 				itemp != NULL ? itemp->text : cmdname,
 				shotburst ? "yes" : "no" );
 	logCmd( scrbuf );
-	
+
 	if( shotburst )
 		firemode &= ~FM_BURST; /* disable discrete burst points */
 	return;
@@ -937,11 +937,11 @@ HmItem *itemp;
 		(void) strncpy( errfile, "/dev/tty", LNBUFSZ );
         /* insure that error log is truncated */
         if(     (errfd =
-#ifdef BSD      
+#ifdef BSD
                 creat( errfile, 0644 )) == -1
-#else    
+#else
                 open( errfile, O_TRUNC|O_CREAT|O_WRONLY, 0644 )) == -1
-#endif 
+#endif
                 )
                 {
                 locPerror( errfile );
@@ -1536,20 +1536,20 @@ HmItem *itemp;
 		{
 	case U_INCHES :
 		unitconv = 3.937008e-02;
-		break;   
-	case U_FEET : 
+		break;
+	case U_FEET :
 		unitconv = 3.280840e-03;
-		break;   
+		break;
 	case U_MILLIMETERS :
 		unitconv = 1.0;
-		break;   
+		break;
 	case U_CENTIMETERS :
 		unitconv = 1.0e-01;
 		break;
 	case U_METERS :
 		unitconv = 1.0e-03;
 		break;
-		}     
+		}
 	(void) sprintf( scrbuf, "%s\t\t\t%s",
 			itemp != NULL ? itemp->text : cmdname,
 			unitstr );

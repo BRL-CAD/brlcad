@@ -32,12 +32,12 @@
  *
  *  Original Version -
  *	March, 1980
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5066
- *  
+ *
  */
 #ifndef lint
 static const char RCSid[] = "@(#)$Header$ (BRL)";
@@ -110,7 +110,7 @@ getsoldata(double *dp, int num, int solid_num)
 				return(-1);
 			}
 			/* continuation card
-			 * solid type should be blank 
+			 * solid type should be blank
 			 */
 			if( (version==5 && scard[5] != ' ' ) ||
 			    (version==4 && scard[3] != ' ' ) )  {
@@ -160,7 +160,7 @@ getxsoldata(double *dp, int num, int solid_num)
 		}
 		if( cd != 1 )  {
 			/* continuation card
-			 * solid type should be blank 
+			 * solid type should be blank
 			 */
 			if( (version==5 && scard[5] != ' ' ) ||
 			    (version==4 && scard[3] != ' ' ) )  {
@@ -405,7 +405,7 @@ getsolid(void)
 		VSET( a, a2theta*cos(angle1), a2theta*sin(angle1), 0 );
 		VSET( b, -a2*cos(angle2), -a2*sin(angle2), 0 );
 		VSET( c, 0, 0, h2 );
-		
+
 		VSUB2( T(0), D(0), b );
 		VMOVE( T(1), D(0) );
 		VMOVE( T(2), D(0) );
@@ -563,7 +563,7 @@ getsolid(void)
 		/* This might be getint( solid_type, 3, 2 ); for non-V5 */
 		numpts = getint( scard, 8, 2 );
 		num = numpts * 3 + 1;			/* 3 entries per pt */
-		
+
 		/* allocate space for the points array */
 		if( (pts = ( double *)malloc(num * sizeof( double)) ) == NULL )  {
 			printf("malloc failure for WIR %d\n", sol_work);
@@ -581,7 +581,7 @@ getsolid(void)
 		RT_LIST_INIT( &head );
 		for( i = 0; i < numpts; i++ )  {
 			/* malloc a new structure */
-			if( (ps = (struct wdb_pipept *)malloc( 
+			if( (ps = (struct wdb_pipept *)malloc(
 			 sizeof( struct wdb_pipept)) ) == (struct wdb_pipept *)NULL )  {
 			   	printf("malloc failure for WIR %d\n", sol_work);
 			   	return(-1);
@@ -651,7 +651,7 @@ getsolid(void)
 		return(ret);
 	}
 
-			
+
 	if( version <= 4 && strcmp( solid_type, "ell" ) == 0 )  {
 		/* Foci F1, F2, major axis length L */
 		vect_t	v;
@@ -950,7 +950,7 @@ bad:
 			printf("arbn centroid lies on face\n");
 			return(-1);
 		}
-		
+
 	}
 
 	/* Release storage for input points */

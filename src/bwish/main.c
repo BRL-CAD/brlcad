@@ -31,7 +31,7 @@
  *  Source -
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
- *  
+ *
  */
 
 #include "common.h"
@@ -97,7 +97,7 @@ Cad_AppInit(Tcl_Interp *interp)
     if (Tk_Init(interp) == TCL_ERROR) {
 	bu_log("Tk_Init error %s\n", interp->result);
 	return TCL_ERROR;
-    } 
+    }
     Tcl_StaticPackage(interp, "Tk", Tk_Init, Tk_SafeInit);
 #endif
 

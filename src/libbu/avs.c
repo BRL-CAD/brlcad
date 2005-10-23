@@ -26,11 +26,11 @@
  *
  *  Author -
  *	Michael John Muuss
- *  
+ *
  *  Source -
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
- *  
+ *
  */
 /*@}*/
 
@@ -230,7 +230,7 @@ bu_avs_remove(struct bu_attribute_value_set *avsp, const char *attribute)
 			if( app->value && AVS_IS_FREEABLE( avsp, app->value ) )
 				bu_free( (genptr_t)app->value, "app->value" );
 			app->value = NULL;	/* sanity */
-			
+
 			/* Move last one down to replace it */
 			epp = &avsp->avp[--avsp->count];
 			if( app != epp )  {
@@ -251,12 +251,12 @@ void
 bu_avs_free( struct bu_attribute_value_set *avsp )
 {
     struct bu_attribute_value_pair *app;
-    
+
     BU_CK_AVS(avsp);
-    
+
     if( avsp->max < 1 )
 	return;
-    
+
     if( avsp->count ) {
 	for( BU_AVS_FOR(app, avsp) )  {
 	    if( app->name && AVS_IS_FREEABLE( avsp, app->name ) ) {

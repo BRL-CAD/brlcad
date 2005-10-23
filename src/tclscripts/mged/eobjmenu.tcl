@@ -66,7 +66,7 @@ proc eobjmenu {} {
 	}
     }
 
-    toplevel .om 
+    toplevel .om
     wm title .om "Object-edit selection menu"
 
     frame .om.meat
@@ -95,7 +95,7 @@ proc eobjmenu {} {
     }
     .om.meat.objects configure -width 0
     scrollbar .om.meat.slider -command ".om.meat.objects yview"
-    
+
     pack .om.meat.objects -in .om.meat -side left
     pack .om.meat.slider -in .om.meat -side right -fill y
     pack .om.meat -in .om -side top

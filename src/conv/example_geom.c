@@ -22,11 +22,11 @@
 /** \file example_geom.c
  *	\brief An example of how to traverse a BRL-CAD database heirarchy.
  *
- *	This program uses the BRL-CAD librt function db_walk_tree() to traverse a 
- *	user-specified portion of the Directed acyclic graph of the database.  This 
+ *	This program uses the BRL-CAD librt function db_walk_tree() to traverse a
+ *	user-specified portion of the Directed acyclic graph of the database.  This
  *	function allows for fast and easy database parsers to be developed
  *
- *	\param -h print help	
+ *	\param -h print help
  *	\param database_file The name of the geometry file to be processed
  *	\param objects_within_database A list of object names to be processed (tree tops)
  */
@@ -77,7 +77,7 @@ void usage(char *s)
 }
 
 /** \if no
- *	P A R S E _ A R G S 
+ *	P A R S E _ A R G S
  * \endif
  *	\brief Parse command line flags.
  *
@@ -113,10 +113,10 @@ int parse_args(int ac, char *av[])
 }
 
 
-/** 
+/**
  *	R E G I O N _ S T A R T
- * 
- * \brief This routine is called when a region is first encountered in the 
+ *
+ * \brief This routine is called when a region is first encountered in the
  * heirarchy when processing a tree
  *
  *	\param tsp tree state (for parsing the tree)
@@ -125,7 +125,7 @@ int parse_args(int ac, char *av[])
  *	\param client_data pointer that was passed as last argument to db_walk_tree()
  *
  */
-int 
+int
 region_start (struct db_tree_state * tsp,
 	      struct db_full_path * pathp,
 	      const struct rt_comb_internal * combp,
@@ -156,7 +156,7 @@ region_start (struct db_tree_state * tsp,
  *
  * If it wants to retain the data in curtree it can by returning TREE_NULL.  Otherwise
  * db_walk_tree will clean up the data in the union tree * that is returned.
- * 
+ *
  */
 union tree *
 region_end (struct db_tree_state * tsp,
@@ -208,7 +208,7 @@ leaf_func (struct db_tree_state * tsp,
 	    RT_BOT_CK_MAGIC(bot); /* check for data corruption */
 
 	    /* code to process bot goes here */
-	    
+
 	    break;
 	}
     case ID_ARB8:
@@ -220,7 +220,7 @@ leaf_func (struct db_tree_state * tsp,
 
 	    break;
 	}
-    /* 
+    /*
      * Note:  A complete program would process each possible type of object here,
      * not just a couple of primitive types
      */
@@ -244,29 +244,29 @@ int main(int ac, char *av[])
     struct rt_i *rtip;
 
     /** \struct rt_db_internal
-     * this structure is used to manage the payload of an 
+     * this structure is used to manage the payload of an
      * "internal" or "in memory" representation of geometry
      * (as opposed to the "on-disk" version, which can be different)
      */
-    struct rt_db_internal intern; 
+    struct rt_db_internal intern;
 
     /* This is the data payload for a "Bag of Triangles" or "BOT" primitive.
      * see rtgeom.h for more information about primitive solid specific data
      * structures.
      */
-    struct rt_bot_internal *bot; 
+    struct rt_bot_internal *bot;
 
     /* This structure contains information about an object in the on-disk
      * database file.  Content is things such as the name, what type of object, etc.
      * see "raytrace.h" for more information
      */
-    struct directory *dp;	
+    struct directory *dp;
 
     struct db_tree_state init_state; /* state table for the heirarchy walker */
     char idbuf[132];		/* Database title */
     int arg_count;
     /** \struct user_data
-     * This is an example structure.  
+     * This is an example structure.
      * It contains anything you want to have available in the region/leaf processing routines
      */
     struct user_data {
@@ -275,7 +275,7 @@ int main(int ac, char *av[])
 
 
     arg_count = parse_args(ac, av);
-	
+
     if ( (ac - arg_count) < 1) {
 	fprintf(stderr, "usage: %s geom.g [file.dxf] [bot1 bot2 bot3...]\n", progname);
 	exit(-1);

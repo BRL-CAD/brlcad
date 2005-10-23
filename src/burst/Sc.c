@@ -186,7 +186,7 @@ ScInit( FILE *fp ) {
       return	false;
     }
   (void) strncpy( ScTermname, term, ScTERMSIZ-1 );
-  
+
   /* Get terminal entry.						*/
   switch( tgetent( ScTermcap, term ) )
     {
@@ -199,11 +199,11 @@ ScInit( FILE *fp ) {
 			);
 	return	false;
     }
-  
+
   /* Get individual terminal parameters and control strings.	*/
   ScLoadTP();
   ScLoadTCS();
-  
+
   tputs( ScTI, 1, (int (*)(int))PutChr );	/* Initialize terminal.			*/
   return	true;		/* All is well.				*/
 }
@@ -304,7 +304,7 @@ bool
 ScMvCursor( int x, int y ) {
   if( ScCM == NULL )
     return	false;
-  
+
   --x; --y; /* Tgoto() adds 1 to each coordinate!? */
   tputs( tgoto( ScCM, x, y ), 1, (int (*)(int))PutChr );
   return	true;

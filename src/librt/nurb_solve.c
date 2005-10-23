@@ -1,14 +1,14 @@
 /** \addtogroup nurb */
 /*@{*/
-/** @file nurb_solve.c 
+/** @file nurb_solve.c
  * Decompose a matrix into its LU decomposition using pivoting.
- * 
+ *
  * Author:	Paul R. Stay
  * 		Computer Science Dept.
  * 		University of Utah
  * Date:	Wed Mar 23 1983
  * Copyright (c) 1983, University of Utah
- * 
+ *
  */
 /*@}*/
 
@@ -21,7 +21,7 @@
 #include "machine.h"
 #include "vmath.h"
 #include "raytrace.h"
-#include "nurb.h"	
+#include "nurb.h"
 
 /* These Procedures take a set of matrices of the form Ax = b and
  * alows one to solve the system by various means. The rt_nurb_doolittle
@@ -44,8 +44,8 @@
 void
 rt_nurb_solve(fastf_t *mat_1, fastf_t *mat_2, fastf_t *solution, int dim, int coords)
        	       		/* A and b array of the system Ax= b*/
-       	       
-       	          
+
+
    	    		/* dimension of the matrix */
    	       		/* Number of coordsinates for mat_2 and solution */
 {
@@ -82,7 +82,7 @@ rt_nurb_solve(fastf_t *mat_1, fastf_t *mat_2, fastf_t *solution, int dim, int co
 
 		/* Solve the system Ux = y */
 		rt_nurb_back_solve (mat_1, y, s, dim);
-		
+
 
 		ptr = solution + k;
 		for( i=0; i < dim; i++)
@@ -196,10 +196,10 @@ rt_nurb_doolittle(fastf_t *mat_1, fastf_t *mat_2, int row, int coords)
 
 void
 rt_nurb_forw_solve(const fastf_t *lu, const fastf_t *b, fastf_t *y, int n)		/* spl_solve lower trianglular matrix */
-                  
-                 
-           
-      
+
+
+
+
 {
 	register int i,j;
 	fastf_t tmp;
@@ -215,10 +215,10 @@ rt_nurb_forw_solve(const fastf_t *lu, const fastf_t *b, fastf_t *y, int n)		/* s
 
 void
 rt_nurb_back_solve(const fastf_t *lu, const fastf_t *y, fastf_t *x, int n)		/* spl_solve upper triangular matrix */
-                  
-                 
-           
-      
+
+
+
+
 {
 	register int i,j;
 	fastf_t tmp;
@@ -237,7 +237,7 @@ void
 rt_nurb_p_mat(const fastf_t *mat, int dim)
 {
 	int i;
-	
+
 	for( i = 0; i < dim; i++)
 		fprintf(stderr,"%f\n", mat[i]);
 	fprintf(stderr,"\n");

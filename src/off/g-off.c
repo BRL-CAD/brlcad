@@ -26,11 +26,11 @@
  *
  *  Author
  *	Glenn Durfee
- *  
+ *
  *  Source -
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5066
- *  
+ *
  */
 
 #ifndef lint
@@ -442,7 +442,7 @@ static void
 jack_faces(struct nmgregion *r, FILE *fp_psurf, int *map)
                     		/* NMG region to be converted. */
     		          	/* Jack format file to write face vertices to. */
-   		     
+
 {
 	struct edgeuse		*eu;
 	struct faceuse		*fu;

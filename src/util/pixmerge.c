@@ -19,7 +19,7 @@
  * information.
  */
 /** @file pixmerge.c
- *  
+ *
  *  Given two streams of data, typically pix(5) or bw(5) images,
  *  generate an output stream of the same size, where the value of
  *  the output is determined by a formula involving the first
@@ -28,10 +28,10 @@
  *
  *  This routine operates on a pixel-by-pixel basis, and thus
  *  is independent of the resolution of the image.
- *  
+ *
  *  Author -
  *	Michael John Muuss
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory

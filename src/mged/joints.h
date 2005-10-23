@@ -32,7 +32,7 @@
  * can be completely rooted or a partial description.
  *
  * In the simplest case, a joint moves in only one direction (1 degree of
- * freedom)  For rotations, this can be described completely as a 
+ * freedom)  For rotations, this can be described completely as a
  * quaternion.  For a slider, this can be described completely as a unit
  * vector.
  *

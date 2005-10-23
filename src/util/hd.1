@@ -26,16 +26,16 @@
 hd \- Hexadecimal and ASCII dump
 .SH SYNOPSIS
 .B hd
-.I 
+.I
 [
-.I \-o offset 
+.I \-o offset
 ]
 [
 .I file .\|.\|.
 ]
 .SH DESCRIPTION
 .I Hd
-reads each 
+reads each
 .I file
 in sequence and
 produces a dump on the standard output
@@ -45,10 +45,10 @@ line,
 checks to to be sure the standard input is not comming from a terminal
 before dumping from the standard input.
 .LP
-Input is 
-dumped 16 bytes at a time.  The program displays the offset 
-from the begining of the file/input 
-in hexadecimal, followed by 
+Input is
+dumped 16 bytes at a time.  The program displays the offset
+from the begining of the file/input
+in hexadecimal, followed by
 the hexadecimal representations for the
 next 16
 bytes of data, and their ASCII character representations.  Non-printing
@@ -63,7 +63,7 @@ printed before its dump.
 .B \-o offset
 start printing at byte position
 .I offset
-instead of at the begining of the data.  
+instead of at the begining of the data.
 .I Offset
 is rounded down to a multiple of 16.
 .SH SEE ALSO

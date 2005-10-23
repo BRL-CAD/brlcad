@@ -135,7 +135,7 @@ typedef char *pointer;			/* generic pointer */
 #define ASNBIT(w,b)	(w = (b))
 #define SETBIT(w,b)	(w |= (b))
 #define CLRBIT(w,b)	(w &= ~(b))
-#define TSTBIT(w,b)	((w)&(b))	
+#define TSTBIT(w,b)	((w)&(b))
 #define FM_GRID  0	/* generate grid of shotlines */
 #define FM_DFLT	 FM_GRID
 #define FM_PART  (1)	/* bit 0: ON = partial envelope, OFF = full */

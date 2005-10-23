@@ -189,7 +189,7 @@ get_endianness()
 }
 
 /* Byte swaps a 4-byte val */
-void lswap4(unsigned int *in, unsigned int *out) 
+void lswap4(unsigned int *in, unsigned int *out)
 {
 	unsigned int r;
 
@@ -201,7 +201,7 @@ void lswap4(unsigned int *in, unsigned int *out)
 }
 
 /* Byte swaps an 8-byte val */
-void lswap8(unsigned long long *in, unsigned long long *out ) 
+void lswap8(unsigned long long *in, unsigned long long *out )
 {
 	long long r;
 
@@ -378,7 +378,7 @@ get_int( int type )
 	double val_double;
 	int val;
 
-	
+
 	if( ply_file_type == PLY_ASCII ) {
 		switch( type ) {
 		case TYPE_CHAR:
@@ -629,7 +629,7 @@ get_property( struct element *ptr )
 			exit( 1 );
 		}
 	}
-	
+
 	c = strtok( (char *)NULL, " \t" );
 	if( !c ) {
 		bu_log( "Unexpected EOL while parsing property, line = %s\n", line );

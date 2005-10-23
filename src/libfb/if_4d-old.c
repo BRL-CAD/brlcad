@@ -19,7 +19,7 @@
  * information.
  */
 
-/** \defgroup if Interface 
+/** \defgroup if Interface
  * \ingroup libfb */
 /*@{*/
 /** @file if_4d-old.c
@@ -27,7 +27,7 @@
  *  Support for the 3030/2400 series ("Iris-3D") is in if_sgi.c
  *  However, both are called /dev/sgi
  *
- *  In order to use a large chunck of memory with the shared memory 
+ *  In order to use a large chunck of memory with the shared memory
  *  system it is necessary to increase the shmmax and shmall paramaters
  *  of the system. You can do this by changing the defaults in the
  *  /usr/sysgen/master.d/shm to
@@ -265,7 +265,7 @@ static int fb_parent;
  *  also means that in MEX mode, the previous contents of the frame
  *  buffer still exist, and can be again accessed, even though the
  *  MEX windows are transient, per-process.
- * 
+ *
  *  There are a few oddities, however.  The worst is that System V will
  *  not allow the break (see sbrk(2)) to be set above a shared memory
  *  segment, and shmat(2) does not seem to allow the selection of any
@@ -488,7 +488,7 @@ register FBIO	*ifp;
 			b = yscroff + (y-ymin)*MIPS(ifp)->mi_yzoom;
 			t = b + MIPS(ifp)->mi_yzoom - 1;
 			if ( MIPS(ifp)->mi_cmap_flag == FALSE )  {
-				for( i=xwidth; i > 0; i--)  
+				for( i=xwidth; i > 0; i--)
 				{
 					/* XXX could this be im_RGBcolor? */
  					RGBcolor( ip[RED], ip[GRN], ip[BLU]);
@@ -498,10 +498,10 @@ register FBIO	*ifp;
 					ip += sizeof(RGBpixel);
 				}
 			} else {
-				for( i=xwidth; i > 0; i--)  
+				for( i=xwidth; i > 0; i--)
 				{
-				    	RGBcolor( CMR(ifp)[ip[RED]], 
-						CMG(ifp)[ip[GRN]], 
+				    	RGBcolor( CMR(ifp)[ip[RED]],
+						CMG(ifp)[ip[GRN]],
 						CMB(ifp)[ip[BLU]] );
 
 					r = l + MIPS(ifp)->mi_xzoom - 1;
@@ -535,7 +535,7 @@ register FBIO	*ifp;
 				im_passthru( amount + amount + amount + 2);
 				im_outshort( FBCRGBdrawpixels);
 				im_outshort( amount );
-				
+
 				n -= amount;
 				while( --amount != -1 )  {
 					im_outshort( *ip++ );
@@ -554,7 +554,7 @@ register FBIO	*ifp;
 				im_passthru( amount + amount + amount + 2);
 				im_outshort( FBCRGBdrawpixels);
 				im_outshort( amount );
-				
+
 				n -= amount;
 				while( --amount != -1 )  {
 					im_outshort( CMR(ifp)[*ip++] );
@@ -658,7 +658,7 @@ int	width, height;
 		}
 
 		/* Pick off just the mode bits of interest here */
-		mode &= (MODE_1MASK | MODE_2MASK | MODE_3MASK | MODE_4MASK | 
+		mode &= (MODE_1MASK | MODE_2MASK | MODE_3MASK | MODE_4MASK |
 			MODE_5MASK | MODE_6MASK);
 	}
 	ifp->if_mode = mode;
@@ -698,7 +698,7 @@ int	width, height;
 	 * One hack to get around this is to immediately fork
 	 * and create a child process and sleep until the child
 	 * sends a kill signal to the parent process. (in FBCLOSE)
-	 * This allows us to use the traditional fb utility programs 
+	 * This allows us to use the traditional fb utility programs
 	 * as well as allow the frame buffer window to remain around
 	 * until killed by the menu subsystem.
     	 */
@@ -781,7 +781,7 @@ int	width, height;
 	} else if( (ifp->if_mode & MODE_5MASK) == MODE_5GENLOCK )  {
 		MIPS(ifp)->mi_der1 = getvideo(DE_R1);
 		if( (MIPS(ifp)->mi_der1 & DER1_VMASK) == DER1_170 )  {
-			/* 
+			/*
 			 *  Current mode is DE3 board internal NTSC sync.
 			 *  Doing a setmonitor(NTSC) again will cause the
 			 *  sync generator to drop out for a moment.
@@ -858,7 +858,7 @@ int	width, height;
 			"Private Mem" :
 			"Shared Mem" );
 	wintitle( title );
-	
+
 	/* Free window of position constraint.		*/
 	prefsize( (long)ifp->if_width, (long)ifp->if_height );
 	winconstraints();
@@ -980,7 +980,7 @@ FBIO	*ifp;
 	menu = defpup("close");
 	qdevice(RIGHTMOUSE);
 	qdevice(REDRAW);
-	
+
 	while(1)  {
 		val = 0;
 		dev = qread( &val );
@@ -1247,7 +1247,7 @@ int	count;
 					im_last_outshort(cp[BLU]);
 
 					r = l + MIPS(ifp)->mi_xzoom - 1;
-					im_rectfs( l, b, r, t ); 
+					im_rectfs( l, b, r, t );
 					l = r + 1;
 					cp += 3;
 				}
@@ -1259,7 +1259,7 @@ int	count;
 					im_outshort(CMG(ifp)[cp[GRN]]);
 					im_last_outshort(CMB(ifp)[cp[BLU]]);
 					r = l + MIPS(ifp)->mi_xzoom - 1;
-					im_rectfs( l, b, r, t ); 
+					im_rectfs( l, b, r, t );
 					l = r + 1;
 					cp += 3;
 				}
@@ -1288,7 +1288,7 @@ int	count;
 				im_passthru( amount + amount + amount + 2);
 				im_outshort( FBCRGBdrawpixels);
 				im_outshort( amount );
-				
+
 				n -= amount;
 				while( --amount != -1 )  {
 					im_outshort( cp[RED] );
@@ -1309,7 +1309,7 @@ int	count;
 				im_passthru( amount + amount + amount + 2);
 				im_outshort( FBCRGBdrawpixels);
 				im_outshort( amount );
-				
+
 				n -= amount;
 				while( --amount != -1 )  {
 					im_outshort(CMR(ifp)[cp[RED]] );
@@ -1423,10 +1423,10 @@ register ColorMap	*cmp;
 		MIPS(ifp)->mi_cmap_flag = FALSE;
 		return(0);
 	}
-	
+
 	for(i = 0; i < 256; i++)  {
 		CMR(ifp)[i] = cmp-> cm_red[i]>>8;
-		CMG(ifp)[i] = cmp-> cm_green[i]>>8; 
+		CMG(ifp)[i] = cmp-> cm_green[i]>>8;
 		CMB(ifp)[i] = cmp-> cm_blue[i]>>8;
 
 	}
@@ -1574,7 +1574,7 @@ RGBpixel	*pixelp;
 
 	RGBcolor( (*pixelp)[RED], (*pixelp)[GRN], (*pixelp)[BLU] );
 
-	im_rectfs( l, b, r, t ); 
+	im_rectfs( l, b, r, t );
 
 	return;
 }

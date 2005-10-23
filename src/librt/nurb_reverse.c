@@ -64,7 +64,7 @@ rt_nurb_reverse_srf(struct face_g_snurb *srf)
 	row = srf->s_size[0];
 	col = srf->s_size[1];
 
-	tmp = (fastf_t *) bu_malloc(sizeof(fastf_t) * coords * 
+	tmp = (fastf_t *) bu_malloc(sizeof(fastf_t) * coords *
 		row * col, "nurb_reverse:temp");
 
 	ptr2 = tmp;

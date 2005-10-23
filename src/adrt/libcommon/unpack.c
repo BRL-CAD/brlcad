@@ -265,7 +265,7 @@ void common_unpack_texture(int socknum) {
 
   /* size of texture data */
   tienet_recv(socknum, &size, sizeof(int), 0);
-  
+
 
   ind = 0;
   while(ind < size) {

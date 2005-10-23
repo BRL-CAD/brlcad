@@ -29,12 +29,12 @@
  *  Authors -
  *	Michael John Muuss
  *	Phil Dykstra
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005
- *  
+ *
  */
 #ifndef lint
 static const char RCSview[] = "@(#)$Header";
@@ -73,12 +73,12 @@ register const struct shadework *swp;
 	bu_printb( " sw_inputs", swp->sw_inputs, MFI_FORMAT );
 	if (swp->sw_inputs && MFI_HIT)
 		bu_log( " sw_hit.dist:%g  sw_hit.point(%g %g %g)\n",
-			swp->sw_hit.hit_dist, 
+			swp->sw_hit.hit_dist,
 			V3ARGS(swp->sw_hit.hit_point));
 	else
 		bu_log( " sw_hit.dist:%g\n", swp->sw_hit.hit_dist);
 
-	if (swp->sw_inputs && MFI_NORMAL) 
+	if (swp->sw_inputs && MFI_NORMAL)
 		bu_log(" sw_hit.normal(%g %g %g)\n",
 			V3ARGS(swp->sw_hit.hit_normal));
 

@@ -43,7 +43,7 @@
  *
  *  Modifications & Additions -
  *      Christopher Sean Morrison
- *  
+ *
  *  Source -
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
@@ -433,10 +433,10 @@ BN_EXPORT BU_EXTERN(void bn_mat_inv,
 		    (register mat_t output,
 		     const mat_t input));
 BN_EXPORT BU_EXTERN(void bn_vtoh_move,
-		    (register vect_t h, 
+		    (register vect_t h,
 		     register const vect_t v));
 BN_EXPORT BU_EXTERN(void bn_htov_move,
-		    (register vect_t v, 
+		    (register vect_t v,
 		     register const vect_t h));
 BN_EXPORT BU_EXTERN(void bn_mat_trn,
 		    (mat_t om,
@@ -447,11 +447,11 @@ BN_EXPORT BU_EXTERN(void bn_mat_ae,
 		     double elev));
 BN_EXPORT BU_EXTERN(void bn_ae_vec,
 		    (fastf_t *azp,
-		     fastf_t *elp, 
+		     fastf_t *elp,
 		     const vect_t v));
 BN_EXPORT BU_EXTERN(void  bn_aet_vec,
 		    (fastf_t *az,
-		     fastf_t *el, 
+		     fastf_t *el,
 		     fastf_t *twist,
 		     vect_t vec_ae,
 		     vect_t vec_twist,
@@ -500,19 +500,19 @@ BN_EXPORT BU_EXTERN(void bn_mat_lookat,
 		     const vect_t dir,
 		     int yflip));
 BN_EXPORT BU_EXTERN(void bn_vec_ortho,
-		    (register vect_t out, 
+		    (register vect_t out,
 		     register const vect_t in));
 BN_EXPORT BU_EXTERN(int bn_mat_scale_about_pt,
 		    (mat_t mat,
 		     const point_t pt,
 		     const double scale));
 BN_EXPORT BU_EXTERN(void bn_mat_xform_about_pt,
-		    (mat_t mat, 
+		    (mat_t mat,
 		     const mat_t xform,
 		     const point_t pt));
 BN_EXPORT BU_EXTERN(int bn_mat_is_equal,
 		    (const mat_t a,
-		     const mat_t b, 
+		     const mat_t b,
 		     const struct bn_tol *tol));
 BN_EXPORT BU_EXTERN(int bn_mat_is_identity,
 		    (const mat_t m));
@@ -687,7 +687,7 @@ BN_EXPORT BU_EXTERN(int bn_pt3_pt3_equal,
 		      const point_t b,
 		      const struct bn_tol *tol));
 BN_EXPORT BU_EXTERN(int bn_dist_pt2_lseg2,
-		    (fastf_t *dist_sq, 
+		    (fastf_t *dist_sq,
 		     fastf_t pca[2],
 		     const point_t a,
 		     const point_t b,
@@ -699,7 +699,7 @@ BN_EXPORT BU_EXTERN(int bn_isect_lseg3_lseg3,
 		     const point_t q, const vect_t qdir,
 		     const struct bn_tol *tol));
 BN_EXPORT BU_EXTERN(int bn_isect_line3_line3,
-		    (fastf_t *t, fastf_t *u, 	
+		    (fastf_t *t, fastf_t *u,
 		     const point_t p,
 		     const vect_t d,
 		     const point_t a,
@@ -775,7 +775,7 @@ BN_EXPORT BU_EXTERN(int bn_isect_2lines,
 		    (fastf_t *t,
 		     fastf_t *u,
 		     const point_t p,
-		     const vect_t d, 
+		     const vect_t d,
 		     const point_t a,
 		     const vect_t c,
 		     const struct bn_tol *tol));
@@ -930,7 +930,7 @@ BN_EXPORT BU_EXTERN(void bn_pr_roots,
 /*----------------------------------------------------------------------*/
 /* qmath.c */
 /*
- * Quaternion support 
+ * Quaternion support
  */
 
 BN_EXPORT BU_EXTERN(void quat_mat2quat,
@@ -991,7 +991,7 @@ BN_EXPORT BU_EXTERN(void quat_log,
  *	}
  *
  * Note that the values from bn_rand_half() become all 0.0 when the benchmark
- * flag is set (bn_rand_halftab is set to all 0's).  The numbers from 
+ * flag is set (bn_rand_halftab is set to all 0's).  The numbers from
  * bn_rand_table do not change, because the procedural noise would cease to
  * exist.
  */
@@ -1012,7 +1012,7 @@ BN_EXPORT extern const float bn_rand_table[BN_RAND_TABSIZE];
 /* #define rand_init bn_rand_init */
 /* #define rand0to1  bn_rand0to1 */
 
-/* random numbers between -0.5 and 0.5, except when benchmark flag is set, 
+/* random numbers between -0.5 and 0.5, except when benchmark flag is set,
  * when this becomes a constant 0.0
  */
 #define BN_RANDHALFTABSIZE	16535	/* Powers of two give streaking */
@@ -1068,71 +1068,71 @@ BN_EXPORT BU_EXTERN(void bn_wlt_haar_1d_double_reconstruct,
 		    (double *tbuf,
 		     double *buf,
 		     unsigned long dimen,
-		     unsigned long depth, 
+		     unsigned long depth,
 		     unsigned long subimage_size,
 		     unsigned long limit));
 
 BN_EXPORT BU_EXTERN(void bn_wlt_haar_1d_float_decompose,
 		    (float *tbuf,
-		     float *buf, 
+		     float *buf,
 		     unsigned long dimen,
-		     unsigned long depth, 
+		     unsigned long depth,
 		     unsigned long limit));
 BN_EXPORT BU_EXTERN(void bn_wlt_haar_1d_float_reconstruct,
 		    (float *tbuf,
-		     float *buf, 
+		     float *buf,
 		     unsigned long dimen,
-		     unsigned long depth, 
+		     unsigned long depth,
 		     unsigned long subimage_size,
 		     unsigned long limit));
 
 BN_EXPORT BU_EXTERN(void bn_wlt_haar_1d_char_decompose,
 		    (char *tbuf,
-		     char *buf, 
+		     char *buf,
 		     unsigned long dimen,
-		     unsigned long depth, 
+		     unsigned long depth,
 		     unsigned long limit));
 BN_EXPORT BU_EXTERN(void bn_wlt_haar_1d_char_reconstruct,
-		    (char *tbuf, char *buf, 
+		    (char *tbuf, char *buf,
 		     unsigned long dimen,
-		     unsigned long depth, 
+		     unsigned long depth,
 		     unsigned long subimage_size,
 		     unsigned long limit));
 
 BN_EXPORT BU_EXTERN(void bn_wlt_haar_1d_short_decompose,
-		    (short *tbuf, short *buf, 
+		    (short *tbuf, short *buf,
 		     unsigned long dimen,
-		     unsigned long depth, 
+		     unsigned long depth,
 		     unsigned long limit));
 BN_EXPORT BU_EXTERN(void bn_wlt_haar_1d_short_reconstruct,
-		    (short *tbuf, short *buf, 
+		    (short *tbuf, short *buf,
 		     unsigned long dimen,
-		     unsigned long depth, 
+		     unsigned long depth,
 		     unsigned long subimage_size,
 		     unsigned long limit));
 
 BN_EXPORT BU_EXTERN(void bn_wlt_haar_1d_int_decompose,
-		    (int *tbuf, int *buf, 
+		    (int *tbuf, int *buf,
 		     unsigned long dimen,
-		     unsigned long depth, 
+		     unsigned long depth,
 		     unsigned long limit));
 BN_EXPORT BU_EXTERN(void bn_wlt_haar_1d_int_reconstruct,
 		    (int *tbuf,
-		     int *buf, 
+		     int *buf,
 		     unsigned long dimen,
-		     unsigned long depth, 
+		     unsigned long depth,
 		     unsigned long subimage_size,
 		     unsigned long limit));
 
 BN_EXPORT BU_EXTERN(void bn_wlt_haar_1d_long_decompose,
-		    (long *tbuf, long *buf, 
+		    (long *tbuf, long *buf,
 		     unsigned long dimen,
-		     unsigned long depth, 
+		     unsigned long depth,
 		     unsigned long limit));
 BN_EXPORT BU_EXTERN(void bn_wlt_haar_1d_long_reconstruct,
-		    (long *tbuf, long *buf, 
+		    (long *tbuf, long *buf,
 		     unsigned long dimen,
-		     unsigned long depth, 
+		     unsigned long depth,
 		     unsigned long subimage_size,
 		     unsigned long limit));
 
@@ -1140,85 +1140,85 @@ BN_EXPORT BU_EXTERN(void bn_wlt_haar_1d_long_reconstruct,
 
 BN_EXPORT BU_EXTERN(void bn_wlt_haar_2d_double_decompose,
 		    (double *tbuf,
-		     double *buf, 
+		     double *buf,
 		     unsigned long dimen,
-		     unsigned long depth, 
+		     unsigned long depth,
 		     unsigned long limit));
 BN_EXPORT BU_EXTERN(void bn_wlt_haar_2d_double_reconstruct,
 		    (double *tbuf,
-		     double *buf, 
+		     double *buf,
 		     unsigned long dimen,
-		     unsigned long depth, 
+		     unsigned long depth,
 		     unsigned long subimage_size,
 		     unsigned long limit));
 
 BN_EXPORT BU_EXTERN(void bn_wlt_haar_2d_float_decompose,
 		    (float *tbuf,
-		     float *buf, 
+		     float *buf,
 		     unsigned long dimen,
-		     unsigned long depth, 
+		     unsigned long depth,
 		     unsigned long limit));
 BN_EXPORT BU_EXTERN(void bn_wlt_haar_2d_float_reconstruct,
 		    (float *tbuf,
-		     float *buf, 
+		     float *buf,
 		     unsigned long dimen,
-		     unsigned long depth, 
+		     unsigned long depth,
 		     unsigned long subimage_size,
 		     unsigned long limit));
 
 BN_EXPORT BU_EXTERN(void bn_wlt_haar_2d_char_decompose,
 		    (char *tbuf,
-		     char *buf, 
+		     char *buf,
 		     unsigned long dimen,
-		     unsigned long depth, 
+		     unsigned long depth,
 		     unsigned long limit));
 BN_EXPORT BU_EXTERN(void bn_wlt_haar_2d_char_reconstruct,
 		    (char *tbuf,
-		     char *buf, 
+		     char *buf,
 		     unsigned long dimen,
-		     unsigned long depth, 
+		     unsigned long depth,
 		     unsigned long subimage_size,
 		     unsigned long limit));
 
 BN_EXPORT BU_EXTERN(void bn_wlt_haar_2d_short_decompose,
 		    (short *tbuf,
-		     short *buf, 
+		     short *buf,
 		     unsigned long dimen,
-		     unsigned long depth, 
+		     unsigned long depth,
 		     unsigned long limit));
 BN_EXPORT BU_EXTERN(void bn_wlt_haar_2d_short_reconstruct,
 		    (short *tbuf,
-		     short *buf, 
+		     short *buf,
 		     unsigned long dimen,
-		     unsigned long depth, 
+		     unsigned long depth,
 		     unsigned long subimage_size,
 		     unsigned long limit));
 
 BN_EXPORT BU_EXTERN(void bn_wlt_haar_2d_int_decompose,
 		    (int *tbuf,
-		     int *buf, 
+		     int *buf,
 		     unsigned long dimen,
-		     unsigned long depth, 
+		     unsigned long depth,
 		     unsigned long limit));
 BN_EXPORT BU_EXTERN(void bn_wlt_haar_2d_int_reconstruct,
 		    (int *tbuf,
-		     int *buf, 
+		     int *buf,
 		     unsigned long dimen,
-		     unsigned long depth, 
+		     unsigned long depth,
 		     unsigned long subimage_size,
 		     unsigned long limit));
 
 BN_EXPORT BU_EXTERN(void bn_wlt_haar_2d_long_decompose,
 		    (long *tbuf,
-		     long *buf, 
+		     long *buf,
 		     unsigned long dimen,
-		     unsigned long depth, 
+		     unsigned long depth,
 		     unsigned long limit));
 BN_EXPORT BU_EXTERN(void bn_wlt_haar_2d_long_reconstruct,
 		    (long *tbuf,
-		     long *buf, 
+		     long *buf,
 		     unsigned long dimen,
-		     unsigned long depth, 
+		     unsigned long depth,
 		     unsigned long subimage_size,
 		     unsigned long limit));
 
@@ -1226,98 +1226,98 @@ BN_EXPORT BU_EXTERN(void bn_wlt_haar_2d_long_reconstruct,
 
 BN_EXPORT BU_EXTERN(void bn_wlt_haar_2d_double_decompose2,
 		    (double *tbuf,
-		     double *buf, 
+		     double *buf,
 		     unsigned long dimen,
-		     unsigned long width, 
+		     unsigned long width,
 		     unsigned long height,
 		     unsigned long limit));
 BN_EXPORT BU_EXTERN(void bn_wlt_haar_2d_double_reconstruct2,
 		    (double *tbuf,
-		     double *buf, 
+		     double *buf,
 		     unsigned long dimen,
-		     unsigned long width, 
+		     unsigned long width,
 		     unsigned long height,
-		     unsigned long subimage_size, 
+		     unsigned long subimage_size,
 		     unsigned long limit));
 
 BN_EXPORT BU_EXTERN(void bn_wlt_haar_2d_float_decompose2,
 		    (float *tbuf,
-		     float *buf, 
+		     float *buf,
 		     unsigned long dimen,
-		     unsigned long width, 
+		     unsigned long width,
 		     unsigned long height,
 		     unsigned long limit));
 BN_EXPORT BU_EXTERN(void bn_wlt_haar_2d_float_reconstruct2,
 		    (float *tbuf,
-		     float *buf, 
+		     float *buf,
 		     unsigned long dimen,
-		     unsigned long width, 
+		     unsigned long width,
 		     unsigned long height,
-		     unsigned long subimage_size, 
+		     unsigned long subimage_size,
 		     unsigned long limit));
 
 BN_EXPORT BU_EXTERN(void bn_wlt_haar_2d_char_decompose2,
 		    (char *tbuf,
-		     char *buf, 
+		     char *buf,
 		     unsigned long dimen,
-		     unsigned long width, 
+		     unsigned long width,
 		     unsigned long height,
 		     unsigned long limit));
 BN_EXPORT BU_EXTERN(void bn_wlt_haar_2d_char_reconstruct2,
 		    (char *tbuf,
-		     char *buf, 
+		     char *buf,
 		     unsigned long dimen,
-		     unsigned long width, 
+		     unsigned long width,
 		     unsigned long height,
-		     unsigned long subimage_size, 
+		     unsigned long subimage_size,
 		     unsigned long limit));
 
 BN_EXPORT BU_EXTERN(void bn_wlt_haar_2d_short_decompose2,
 		    (short *tbuf,
-		     short *buf, 
+		     short *buf,
 		     unsigned long dimen,
-		     unsigned long width, 
+		     unsigned long width,
 		     unsigned long height,
 		     unsigned long limit));
 BN_EXPORT BU_EXTERN(void bn_wlt_haar_2d_short_reconstruct2,
 		    (short *tbuf,
-		     short *buf, 
+		     short *buf,
 		     unsigned long dimen,
-		     unsigned long width, 
+		     unsigned long width,
 		     unsigned long height,
-		     unsigned long subimage_size, 
+		     unsigned long subimage_size,
 		     unsigned long limit));
 
 BN_EXPORT BU_EXTERN(void bn_wlt_haar_2d_int_decompose2,
 		    (int *tbuf,
-		     int *buf, 
+		     int *buf,
 		     unsigned long dimen,
-		     unsigned long width, 
+		     unsigned long width,
 		     unsigned long height,
 		     unsigned long limit));
 BN_EXPORT BU_EXTERN(void bn_wlt_haar_2d_int_reconstruct2,
 		    (int *tbuf,
-		     int *buf, 
+		     int *buf,
 		     unsigned long dimen,
-		     unsigned long width, 
+		     unsigned long width,
 		     unsigned long height,
-		     unsigned long subimage_size, 
+		     unsigned long subimage_size,
 		     unsigned long limit));
 
 BN_EXPORT BU_EXTERN(void bn_wlt_haar_2d_long_decompose2,
 		    (long *tbuf,
-		     long *buf, 
+		     long *buf,
 		     unsigned long dimen,
-		     unsigned long width, 
+		     unsigned long width,
 		     unsigned long height,
 		     unsigned long limit));
 BN_EXPORT BU_EXTERN(void bn_wlt_haar_2d_long_reconstruct2,
 		    (long *tbuf,
-		     long *buf, 
+		     long *buf,
 		     unsigned long dimen,
-		     unsigned long width, 
+		     unsigned long width,
 		     unsigned long height,
-		     unsigned long subimage_size, 
+		     unsigned long subimage_size,
 		     unsigned long limit));
 
 

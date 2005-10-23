@@ -27,7 +27,7 @@
  *
  *  Author -
  *	John R. Anderson
- *  
+ *
  *  Source -
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5066
@@ -48,7 +48,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #else
 #include <strings.h>
 #endif
-	
+
 #include "machine.h"
 #include "vmath.h"
 #include "nmg.h"

@@ -76,10 +76,10 @@ dfft_LDADD = ${FFT}
 dconv_SOURCES = dconv.c
 dconv_LDADD = ${FFT}
 
-ddisp_SOURCES = ddisp.c 
+ddisp_SOURCES = ddisp.c
 ddisp_LDADD = ${FB}
 
-fhor_SOURCES = fhor.c 
+fhor_SOURCES = fhor.c
 fhor_LDADD = ${FB}
 
 imod_SOURCES = imod.c

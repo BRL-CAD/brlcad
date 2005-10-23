@@ -31,7 +31,7 @@ light_hit:  ERROR, nothing hit, sxy=460,369, dtol=5.000000e-03
 003c78b8: PT s960 (ARB8#65) s852 (ARB8#2) (-0.005,0.00231937)
   InHIT dist=-0.005 (surf 2)
  OutHIT dist=0.00231937 (surf 3)
-  Solids: (2, 65) 
+  Solids: (2, 65)
 ------
 SHOT: 9264.9user 383.3sys 4:41:16real 57% 593i+1653d 3353maxrss 4+48pf 207+137762csw
 Additional dynamic memory used=41752. bytes
@@ -40,4 +40,4 @@ pruned 32.4%:  0 model RPP, 0 dups skipped, 625549 solid RPP
 Frame     0:   262144 pixels in    9264.91 sec =      28.29 pixels/sec
 Frame     0:   654979 rays   in    9264.91 sec =      70.69 rays/sec (RTFM)
 
-    17058.7 real      9343.0 user       414.1 sys  
+    17058.7 real      9343.0 user       414.1 sys

@@ -22,7 +22,7 @@
  *
  */
 
-/*				H D 
+/*				H D
  *
  *    Give a good ole' CPM style Hex dump of a file or standard input.
  *
@@ -76,7 +76,7 @@ void dump(FILE *fd)
 	static char	buf[DUMPLEN];    /* input buffer */
 
 	if (offset != 0)  {	/* skip over "offset" bytes first */
-	    if (fseek(fd, offset, 0)) {	
+	    if (fseek(fd, offset, 0)) {
 
 	    	/* If fseek fails, try reading our way to the desired offset.
 	    	 * The fseek will fail if we're reading from a pipe.
@@ -158,7 +158,7 @@ main(int ac, char **av)
 		if (c == 'o'){
 			newoffset = strtol(bu_optarg, &eos, 0);
 
-			if (eos != bu_optarg) 
+			if (eos != bu_optarg)
 				offset = newoffset;
 			else
 				fprintf(stderr,"%s: error parsing offset \"%s\"\n",

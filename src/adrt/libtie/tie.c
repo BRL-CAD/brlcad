@@ -195,7 +195,7 @@ void tie_prep(tie_t *tie) {
  * Shoot a ray at some triangles
  *
  * The user-provided hitfunc is called at each ray/triangle intersection.
- * Calls are guaranteed to be made in the ray-intersection order.  
+ * Calls are guaranteed to be made in the ray-intersection order.
  * The last argument (void *ptr) is passed to the hitfunc as-is, to allow
  * application specific data to be passed to the hitfunc.
  *
@@ -204,7 +204,7 @@ void tie_prep(tie_t *tie) {
  * @param id the intersection data for each intersection
  * @param hitfunc the application routine to be called upon ray/triangle intersection.
  * This function should return 0 if the ray is to continue propagating through the geometry,
- * or non-zero if ray intersection should cease.  
+ * or non-zero if ray intersection should cease.
  * @param ptr a pointer to be passed to the hitfunc when it is called.
  *
  * @return the return value from the user hitfunc() is used.

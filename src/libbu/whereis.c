@@ -49,7 +49,7 @@
 
 
 /** b u _ w h e r e i s
- * 
+ *
  * Sets argv array of path matches to the given executable cmd name
  * returning up to lim number of occurances found.  the system
  * environment path is obtained via a sysctl call for the
@@ -139,7 +139,7 @@ int bu_whereis(char *argv[], int lim, const char *cmd)
   /* something big enough to hold any path */
   max_length = strlen(PATH) + strlen(cmd) + 1;
   fullname = (char *)bu_calloc(max_length+1, sizeof(char), "bu_whereis fullname");
- 
+
   /* search the PATH for the executable */
   for (curr_path = PATH; ; *curr_path++ = BU_PATH_SEPARATOR) {
     directory = curr_path;

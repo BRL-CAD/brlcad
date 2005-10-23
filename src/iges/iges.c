@@ -24,11 +24,11 @@
  *
  *  Author -
  *	John R. Anderson
- *  
+ *
  *  Source -
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5066
- *  
+ *
  */
 
 /*	Yet to do:
@@ -40,7 +40,7 @@
  *			3. modify arb_to_iges to use above
  *
  *		How to handle half-space solids????
- * 
+ *
  *		How to handle xforms with scale factors?????
  */
 
@@ -504,7 +504,7 @@ FILE *fp_dir,*fp_param;
 	bu_vls_free( &str );
 
 	return( write_dir_entry( fp_dir , dir_entry ) );
-	
+
 }
 
 void
@@ -1599,7 +1599,7 @@ FILE *fp_dir,*fp_param;
 	bu_vls_free( &str );
 
 	return( write_dir_entry( fp_dir , dir_entry ) );
-	
+
 }
 
 int

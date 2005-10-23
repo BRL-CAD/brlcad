@@ -28,7 +28,7 @@
  *  Authors -
  *	Phillip Dykstra
  *	Michael John Muuss
- *  
+ *
  *  Source -
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
@@ -217,7 +217,7 @@ void
 fb_server_fb_close(struct pkg_conn *pcp, char *buf)
 {
 	char	rbuf[NET_LONG_LEN+1];
-	
+
 	if( fb_server_retain_on_close ) {
 		/*
 		 * We are playing FB server so we don't really close the
@@ -257,7 +257,7 @@ void
 fb_server_fb_free(struct pkg_conn *pcp, char *buf)
 {
 	char	rbuf[NET_LONG_LEN+1];
-	
+
 	if( fb_server_refuse_fb_free )  {
 		(void)pkg_plong( &rbuf[0], -1 );
 	} else {

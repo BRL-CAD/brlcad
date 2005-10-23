@@ -15,7 +15,7 @@ anim_fly - make animation table to simulate flying motion
 <h1>DESCRIPTION</h1>
 This filter is designed to  simulate the motion of an airplane.
 Given a four-column table specifying the desired 3D position of the
-airplane at each time step, 
+airplane at each time step,
 <i>anim_fly</i>
 produces a seven-column file
 which also includes the orientation of the plane in terms of yaw,
@@ -29,7 +29,7 @@ the vehicle.
 <dd>
 This option specifies a factor to control the severity of the banking.
 Choosing the best banking factor for a given animation is a subjective
-decision, although a good starting point can 
+decision, although a good starting point can
 be obtained with the -b option. Animations representing aircraft
 on different scales will need different factors.
 If the
@@ -66,18 +66,18 @@ flag.
 <dd>
 Specify the ratio of input rows to output rows, which must be
 an integer. The default, of course, is one. The accuracy and
-smoothness of the banking algorithm 
+smoothness of the banking algorithm
 are best when the frame rate of the input table is high.
 This can lead to a degradation of performance when creating a preview
 animation with a small frame rate. In this case, the user should still
 use a high frame rate table as input to <i>anim_fly</i>, and decrease the
 frame rate of the output with the <b>-p</b> option.
-For example, if 
+For example, if
 <b>in.table </b>
 contains 30 rows for each
 second of the animation, then the command:
 <p>
-anim_fly -f0.001 -p10 &lt; in.table &gt; out.table 
+anim_fly -f0.001 -p10 &lt; in.table &gt; out.table
 <p>
 would produce an animation table containing only 3 rows for each
 second of the animation.
@@ -85,11 +85,11 @@ second of the animation.
 <b>-s</b>
 
 <dd>
-Specify the minimum step size for the discrete-time differentiation. At any 
+Specify the minimum step size for the discrete-time differentiation. At any
 given point on the flight path, the yaw, pitch, and roll are calculated based
 on a past point, the current point, and a future point. Normally,
 these are consecutive points from the input table. If the time
-difference between the points falls below a certain threshold, 
+difference between the points falls below a certain threshold,
 then non-consecutive points are used to avoid
 numerical instability. The default time threshhold is 0.1 seconds - this
 can be raised or lowered using the -s option. If a vehicle's orientation

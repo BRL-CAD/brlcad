@@ -2,7 +2,7 @@ BRL-CAD Release 3.26   Ray-Tracer
     Mon Aug 26 22:39:04 EDT 1991, Compilation 1
     butler@vgr.brl.mil:/usr/src/tmpcad/rt
 
-db title:  The Enterprise and Shuttlecraft 
+db title:  The Enterprise and Shuttlecraft
 initial dynamic memory use=94208.
 GETTREE: 3.7user 1.0sys 0:09real 51% 153i+594d 453maxrss 7+57pf 7+69csw
 Additional dynamic memory used=134208. bytes
@@ -31,4 +31,4 @@ pruned 38.2%:  0 model RPP, 0 dups skipped, 3009798 solid RPP
 Frame     0:   262144 pixels in    5565.04 sec =      47.11 pixels/sec
 Frame     0:   312052 rays   in    5565.04 sec =      56.07 rays/sec (RTFM)
 
-    10906.5 real      5570.4 user       240.5 sys  
+    10906.5 real      5570.4 user       240.5 sys

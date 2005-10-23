@@ -31,12 +31,12 @@
  *
  *  Author -
  *	Michael John Muuss
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005
- *  
+ *
  */
 #ifndef lint
 static const char RCSppview[] = "@(#)$Header$ (BRL)";
@@ -164,7 +164,7 @@ view_end(void)
 
 /*
  *  			P K N U M
- *  
+ *
  *  Oddball 5-bits in a char ('@', 'A', ... on up) number packing.
  *  Number is written 5 bits at a time, right to left (low to high)
  *  until there are no more non-zero bits remaining.

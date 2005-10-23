@@ -504,8 +504,8 @@ NV\n\
 
 void
 prolog(FILE *fp, char *name, int width, int height)
-    	    
-    	      
+
+
    	              		/* in points */
 {
 	time_t	ltime;
@@ -535,7 +535,7 @@ prolog(FILE *fp, char *name, int width, int height)
 
 void
 scaleinfo(FILE *fp, int width, int height)
-    	    
+
    	              		/* in points */
 {
 	/*

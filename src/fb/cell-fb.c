@@ -244,7 +244,7 @@ static RGBpixel	colortbl[12] =		/* The map: value --> R, G, B */
     { 255, 100, 100 },		/* pink */
     { 255,   0,   0 },		/* red */
     {   0,   0,   0 }		/* black */
-};			
+};
 
 #if 0
 static const char   *mon_nam[] =
@@ -266,7 +266,7 @@ STATIC void	fill_colortbl(unsigned char *lo_rgb, unsigned char *hi_rgb);
 
 int
 main (int argc, char **argv)
-{	
+{
     static long	ncells;
 
     bu_debug = BU_DEBUG_MEM_CHECK | BU_DEBUG_MEM_LOG;
@@ -322,7 +322,7 @@ main (int argc, char **argv)
 #define	STATE_BEYOND_DATA	3
 
 STATIC long read_Cell_Data(void)
-{	
+{
     static char		linebuf[MAX_LINE];
     static char		*lbp = NULL;
     static char		format[MAX_LINE];
@@ -333,7 +333,7 @@ STATIC long read_Cell_Data(void)
 
     /*
      * First time through...
-     *  1) initailize line-buffer pointer and try to fill the line buffer 
+     *  1) initailize line-buffer pointer and try to fill the line buffer
      *  2) build the format for sscanf()
      */
     if (lbp == NULL)
@@ -357,7 +357,7 @@ STATIC long read_Cell_Data(void)
 
     /* Read the data */
     do
-    {	
+    {
 	double		x, y;
 	int		r, g, b;
 	cell_val	value;
@@ -370,7 +370,7 @@ STATIC long read_Cell_Data(void)
 
 	/* Have we run out of room for the cells?  If so reallocate memory */
 	if (gp - grid >= maxcells)
-	{	
+	{
 	    long	ncells = gp - grid;
 
 	    maxcells *= 2;
@@ -434,7 +434,7 @@ STATIC long read_Cell_Data(void)
 }
 
 STATIC bool get_OK(void)
-{	
+{
     int		c;
     FILE	*infp;
 
@@ -468,7 +468,7 @@ STATIC void init_Globs(void)
 }
 
 STATIC bool display_Cells (long int ncells)
-{	
+{
     register Cell	*gp, *ep = &grid[ncells];
     static int		zoom;
     unsigned char	*buf;
@@ -522,7 +522,7 @@ STATIC bool display_Cells (long int ncells)
 	    buf, fb_width, sizeof(RGBpixel));
 
     for (gp = grid; gp < ep; gp++)
-    {	
+    {
 	register int	x0, x1;
 
 	/* Whenever Y changes, write out row of cells. */
@@ -590,7 +590,7 @@ STATIC bool display_Cells (long int ncells)
 	bu_log("Width of key (%d) would exceed frame-buffer width (%d)\n",
 		(10 + 1) * wid, fb_width);
     else if (key_flag)
-    {	
+    {
 	register int	i, j;
 	double		base;
     	int		scr_min, scr_max;
@@ -620,7 +620,7 @@ STATIC bool display_Cells (long int ncells)
     	/* Draw 10 cells for the color key */
 	dom_cvt = 10.0;
 	for (i = 0; i <= 10; i++)
-	{	
+	{
 	    cell_val	cv;
 
 	    /*
@@ -633,7 +633,7 @@ STATIC bool display_Cells (long int ncells)
 
 	    val_To_RGB(cv, pixel);
 	    for (j = 0; j < wid; j++)
-	    {	
+	    {
 		register int index = base + j;
 		COPYRGB(&buf[3*index], pixel);
 	    }
@@ -676,7 +676,7 @@ STATIC void val_To_RGB (cell_val cv, unsigned char *rgb)
 	COPYRGB(rgb, WHITE);
     }
     else
-    {	
+    {
 	int		index;
 	double		rem;
 	double		res;
@@ -722,7 +722,7 @@ STATIC struct locrec *mk_locrec (fastf_t h, fastf_t v)
 }
 
 STATIC bool pars_Argv (register int argc, register char **argv)
-{	
+{
     register int	c;
     extern int		bu_optind;
     extern char		*bu_optarg;
@@ -736,7 +736,7 @@ STATIC bool pars_Argv (register int argc, register char **argv)
 		color_flag = true;
 		break;
 	    case 'M':
-		{	
+		{
 		    RGBpixel	lo_rgb, hi_rgb;
 		    int		lo_red, lo_grn, lo_blu;
 		    int		hi_red, hi_grn, hi_blu;
@@ -890,7 +890,7 @@ STATIC bool pars_Argv (register int argc, register char **argv)
 		    view_flag = 1;
 		break;
 	    case 'm':
-		{	
+		{
 		    double	value;
 		    RGBpixel	rgb;
 		    int		red, grn, blu;
@@ -985,7 +985,7 @@ STATIC bool pars_Argv (register int argc, register char **argv)
 }
 /*	prnt_Usage() --	Print usage message. */
 STATIC void prnt_Usage(void)
-{	
+{
     register char	**p = usage;
 
     while (*p)

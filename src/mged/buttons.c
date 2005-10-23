@@ -27,7 +27,7 @@
  *
  *  Author -
  *	Michael John Muuss
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
@@ -286,7 +286,7 @@ f_press(ClientData clientData,
 			     mptr++, item++ )  {
 			    if ( strcmp( str, mptr->menu_string ) != 0 )
 				continue;
-			
+
 			    menu_state->ms_cur_item = item;
 			    menu_state->ms_cur_menu = menu;
 			    menu_state->ms_flag = 1;
@@ -309,7 +309,7 @@ next:		;
 
 /*
  *  			L A B E L _ B U T T O N
- *  
+ *
  *  For a given GED button number, return the "press" ID string.
  *  Useful for displays with programable button lables, etc.
  */
@@ -327,7 +327,7 @@ label_button(int bnum)
 
 	{
 	  struct bu_vls tmp_vls;
-	  
+
 	  bu_vls_init(&tmp_vls);
 	  bu_vls_printf(&tmp_vls, "label_button(%d):  Not a defined operation\n", bnum);
 	  Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
@@ -817,7 +817,7 @@ be_s_scale(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)  {
 
 /*
  *			N O T _ S T A T E
- *  
+ *
  *  Returns 0 if current state is as desired,
  *  Returns !0 and prints error message if state mismatch.
  */
@@ -913,7 +913,7 @@ state_err(char *str)
 void
  btn_item_hit(int arg, int menu, int item) {
 	button(arg);
-	if( menu == MENU_GEN && 
+	if( menu == MENU_GEN &&
 	    ( arg != BE_O_ILLUMINATE && arg != BE_S_ILLUMINATE) )
 		menu_state->ms_flag = 0;
 }

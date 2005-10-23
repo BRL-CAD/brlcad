@@ -20,7 +20,7 @@
  *
  */
 /** @file fbcbars.c
- *  
+ *
  *  Program to make vertical color scales arranged horizontally on screen.
  *  The wonderful thing about standards is that there are so many to
  *  choose from:
@@ -50,7 +50,7 @@
  *	    to be a rare event.
  *  Thus, this bundled version is more efficient, easier to use,
  *  and more likely to have the desired effect.
- *  
+ *
  *  Author -
  *	Michael John Muuss
  *
@@ -64,7 +64,7 @@
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5066
- *  
+ *
  */
 #ifndef lint
 static const char RCSid[] = "@(#)$Header$ (BRL)";

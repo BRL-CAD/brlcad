@@ -11,7 +11,7 @@
 # 1. Redistributions of source code must retain the above copyright
 # notice, this list of conditions and the following disclaimer.
 #
-# 2. Redistributions in binary form must reproduce the above 
+# 2. Redistributions in binary form must reproduce the above
 # copyright notice, this list of conditions and the following
 # disclaimer in the documentation and/or other materials provided
 # with the distribution.
@@ -283,10 +283,10 @@ tar: $(PACKAGE)-$(VERSION).bin.tar
 	@$(ECHO) "Done."
 
 package:
-	@$(ECHO) 
+	@$(ECHO)
 	@$(ECHO) "To build a BRL-CAD package for distribution, there are various make"
 	@$(ECHO) "targets available for various platforms:"
-	@$(ECHO) 
+	@$(ECHO)
 	@$(ECHO) "  make pkg	-	Builds an Installer package for Mac OS X"
 	@$(ECHO) "  make dmg	-	Builds a Disk Image for Mac OS X"
 	@$(ECHO) "  make rpm	-	Builds source and binary RPM for RedHat Linux"
@@ -295,7 +295,7 @@ package:
 	@$(ECHO) "  make tgz	-	Builds a gzip-compressed tape archive"
 	@$(ECHO) "  make bz2	-	Builds a bzip2-compressed tape archive"
 	@$(ECHO) "  make tar	-	Builds a uncompressed tape archive"
-	@$(ECHO) 
+	@$(ECHO)
 
 
 ##########################

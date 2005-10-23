@@ -13,7 +13,7 @@ r box.r u box
 EOF
 
 cat > .density <<EOF
-1 7.8295	steel	
+1 7.8295	steel
 EOF
 
 ../src/rt/rtweight -a 25 -e 35 -s128 -o wgt.out weight.g box.r > weight.log 2>&1
@@ -32,12 +32,12 @@ Material  Density(g/cm^3)  Name
 
   Weight Matl LOS  Material Name  Density Name
  ------- ---- --- --------------- ------- -------------
-   7.829    1 100 steel            7.8295 /box.r                               
+   7.829    1 100 steel            7.8295 /box.r
 Weight by item number (in grams):
 
 Item  Weight  Region Names
 ---- -------- --------------------
-1000    7.829 /box.r                                                           
+1000    7.829 /box.r
 RT Weight Program Output:
 
 Database Title: "Untitled BRL-CAD Database"

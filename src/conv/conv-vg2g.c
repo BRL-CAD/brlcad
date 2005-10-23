@@ -20,18 +20,18 @@
  *
  */
 /** @file conv-vg2g.c
- *  
+ *
  *  Converts .vg files to .g (latest style, with idents).
- *  
+ *
  *  Authors -
  *	Mike Muuss, BRL, 5/25/84.
  *	Keith A. Applin
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005
- *  
+ *
  */
 #ifndef lint
 static const char RCSid[] = "@(#)$Header$ (BRL)";

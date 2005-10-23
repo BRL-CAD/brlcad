@@ -43,7 +43,7 @@ The
 .I wavelet
 command
 will perform Haar wavelet decomposition or reconstruction
-transforms 
+transforms
 on the input dataset.
 The command line options are:
 
@@ -62,16 +62,16 @@ perform a 1-dimensional (interleaved horizontal and vertical) transform.
 
 .BI \-#\ channels
 Indicates the number of values in each sample point.  For example, to perform
-a transform on a 
+a transform on a
 .IR pix (5)
 file properly, specify ``-# 3''.  This causes the red, green and blue channels
 to be transformed individually.
 
 .BI \-t\ {cdfils}
 specifies the data type of the input, and hence the data type in which the
-wavelet calculations will be performed.  
+wavelet calculations will be performed.
 The letters each stand for the first
-character of the C programming language data type: 
+character of the C programming language data type:
 \fBc\fRharacter,
 \fBd\fRouble,
 \fBf\fRloat,
@@ -105,7 +105,7 @@ Resumes a transform that left off with an average image of avg_size.
 
 
 .BI \-S\ square_out_size
-This is the same as the 
+This is the same as the
 .B \-W
 option.  It implies the square size for a 2D decomposition limit.
 
@@ -116,13 +116,13 @@ option.  It implies the square size for a 2D decomposition limit.
 
 The command
 .br
-.I decompose -# 3 < img.pix | pix-fb 
+.I decompose -# 3 < img.pix | pix-fb
 .br
 will display the horizontal decomposition of the file img.pix.
 
 The command
 .br
-.I decompose -# 3 -s 1024 -l 64 < img.pix > 
+.I decompose -# 3 -s 1024 -l 64 < img.pix >
 .br
 will decompose a 1024x1024 image.  The decomposition will stop when the
 image has been decomposed to 64x64.  The output image will thus have a 64x64

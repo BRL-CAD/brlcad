@@ -29,7 +29,7 @@
  *
  *  Author -
  *	Keith A. Applin
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
@@ -847,7 +847,7 @@ sol_number(matp_t matrix, char *name, int *old)
 HIDDEN void
 new_tables(struct directory *dp, struct bu_ptbl *cur_path, fastf_t *old_mat, int flag)
 {
-	struct rt_db_internal intern;	
+	struct rt_db_internal intern;
 	struct rt_comb_internal *comb;
 	struct rt_tree_array *tree_list;
 	int node_count;
@@ -1128,15 +1128,15 @@ f_tables(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	timep = ctime( &now );
 	timep[24] = '\0';
 	(void)fprintf(tabptr,"1 -8    Summary Table {%s}  (written: %s)\n",argv[0],timep);
-	(void)fprintf(tabptr,"2 -7         file name    : %s\n",dbip->dbi_filename);    
+	(void)fprintf(tabptr,"2 -7         file name    : %s\n",dbip->dbi_filename);
 	(void)fprintf(tabptr,"3 -6         \n");
 	(void)fprintf(tabptr,"4 -5         \n");
 #ifndef _WIN32
 	(void)fprintf(tabptr,"5 -4         user         : %s\n", getpwuid(getuid())->pw_gecos);
 #else
 	{
-	char uname[256]; 
-	DWORD dwNumBytes = 256; 
+	char uname[256];
+	DWORD dwNumBytes = 256;
 	if(GetUserName(uname, &dwNumBytes))
 		(void)fprintf(tabptr,"5 -4         user         : %s\n",uname);
 	else

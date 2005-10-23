@@ -27,11 +27,11 @@
  *
  *  Author -
  *	John R. Anderson
- *  
+ *
  *  Source -
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5066
- *  
+ *
  */
 
 #ifndef lint
@@ -264,7 +264,7 @@ Write_euclid_region(struct nmgregion *r, struct db_tree_state *tsp, FILE *fp_out
 				i++;
 			}
 
-			/* determine type of face 
+			/* determine type of face
 			 * 0 -> simple facet (no holes )
 			 * 1 -> a hole
 			 * 2 -> a facet that will have holes
@@ -385,7 +385,7 @@ Write_euclid_region(struct nmgregion *r, struct db_tree_state *tsp, FILE *fp_out
 				{
 					if( faces[i].facet_type < 0 )
 					{
-						/* all holes have been placed 
+						/* all holes have been placed
 						 * so these must be simple faces
 						 */
 						faces[i].facet_type = 0;
@@ -658,7 +658,7 @@ union tree *do_region_end(register struct db_tree_state *tsp, struct db_full_pat
 
 
 		bu_log( "FAILED: %s\n" , dir->d_namep );
-	
+
 		goto out;
 	}
 	if( verbose )

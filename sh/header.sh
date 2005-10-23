@@ -49,8 +49,8 @@
 #
 #   find src -type f \( -name \*.c -or -name \*.h \) -not -regex '.*src/lib.*' -exec sh/header.sh GPL {} \;
 #
-# Author - 
-#   Christopher Sean Morrison 
+# Author -
+#   Christopher Sean Morrison
 #
 # Source -
 #   The U.S. Army Research Laboratory
@@ -82,7 +82,7 @@ case $LICE in
     gpl|GPL)
         LICE=GPL
 	;;
-    gfdl|fdl|GFDL|FDL) 
+    gfdl|fdl|GFDL|FDL)
         LICE=GFDL
     	;;
     *)
@@ -123,7 +123,7 @@ fi
 # wrap is whether or not in needs to be incased in /* */
 # commentprefix is the comment character to prefex each line
 ###
-case $FILE in 
+case $FILE in
     *.sh)
 	echo "$FILE is a shell script"
 	wrap=0
@@ -427,7 +427,7 @@ skip=1
 lineone="`cat ${FILE}.backup | head -1`"
 linetwo="`cat ${FILE}.backup | head -2 | tail -1`"
 linethree="`cat ${FILE}.backup | head -3 | tail -1`"
-case "$lineone" in 
+case "$lineone" in
     "/*"*${title})
         echo "Found C comment start with file header"
 	skip=2
@@ -550,7 +550,7 @@ case "$lineone" in
 				    skip=5
 				    ;;
 			    esac
-			    
+
 			fi
 			;;
 		esac

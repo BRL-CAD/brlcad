@@ -68,7 +68,7 @@ static fastf_t comphi;		/* angle between ring and cone axis */
 static fastf_t phiinc;		/* angle between concentric rings */
 
 static fastf_t cantdelta[3];	/* delta ray specified by yaw and pitch */
-	
+
 static struct application ag;	/* global application structure (zeroed out) */
 
 /* functions local to this module */
@@ -243,12 +243,12 @@ struct seg *segp;
 		spp != pt_headp
 	    &&	spp->pt_outhit->hit_dist < 0.1;
 		spp = spp->pt_forw
-		) 
+		)
 		;
 	for(	cpp = spp, nbar = 0;
 		cpp != pt_headp && nbar <= nbarriers;
 		cpp = cpp->pt_forw
-		) 
+		)
 		{	register struct region *regp = cpp->pt_regionp;
 			struct xray *rayp = &ap->a_ray;
 		if( Air( regp ) )
@@ -563,13 +563,13 @@ struct seg *segp;
 						cp->pt_outhit->hit_dist;
 				else
 					break;
-				
+
 				}
 
 			slos = pp->pt_outhit->hit_dist - pp->pt_inhit->hit_dist;
 			prntPhantom( pp->pt_inhit, (int) regp->reg_aircode,
 					slos );
-			}				
+			}
 		else
 		if( ! Air( regp ) ) /* If we have a component, output it. */
 			{	fastf_t entrynorm[3];	/* normal at entry */
@@ -885,7 +885,7 @@ char *purpose;
 	Shot missed the model; if ground bursting is enabled, intersect with
 	ground plane, else just arrange for appropriate background color for
 	debugging.
- */	
+ */
 STATIC int
 f_ShotMiss( ap )
 register struct application *ap;
@@ -917,7 +917,7 @@ register struct application *ap;
 				paintCellFb( ap, pixghit,
 					zoom == 1 ? pixblack : pixbkgr );
 			if( bdist > 0.0 )
-				{ /* simulate standoff fuzing */	
+				{ /* simulate standoff fuzing */
 				VJOIN1( hitpoint, hitpoint, -bdist,
 					ap->a_ray.r_dir );
 				}
@@ -953,7 +953,7 @@ missed_ground :
 	int f_BurstMiss( register struct application *ap )
 
 	Burst ray missed the model, so do nothing.
- */	
+ */
 STATIC int
 f_BurstMiss( ap )
 register struct application *ap;
@@ -971,7 +971,7 @@ register struct application *ap;
 	2-digit random numbers (when opted) which are stored in ap->a_user,
 	and grid indices are stored in ap->a_x and ap->a_y.  Return
 	codes are: false for failure to read new firing coordinates, or
-	true for success. 
+	true for success.
  */
 STATIC int
 getRayOrigin( ap )
@@ -1064,7 +1064,7 @@ gridInit()
 		brst_log( "gridInit: reading %s coordinates from %s.\n",
 			TSTBIT(firemode,FM_3DIM) ? "3-d" : "2-d",
 			TSTBIT(firemode,FM_FILE) ? "file" : "command stream" );
-		
+
 		}
 	else
 	if( TSTBIT(firemode,FM_FILE) || TSTBIT(firemode,FM_3DIM) )
@@ -1264,7 +1264,7 @@ gridInit()
 /*
 	void gridModel( void )
 
-	This routine dispatches the top-level ray tracing task.	
+	This routine dispatches the top-level ray tracing task.
  */
 void
 gridModel()
@@ -1643,7 +1643,7 @@ register fastf_t *bpt; /* burst point coordinates */
 	a_burst.a_user = 0; /* ray number */
 	a_burst.a_purpose = "spall ray";
 	assert( a_burst.a_overlap == ap->a_overlap );
-	
+
 	/* If pitch or yaw is specified, cant the main penetrator
 		axis. */
 	if( cantwarhead )
@@ -1663,7 +1663,7 @@ register fastf_t *bpt; /* burst point coordinates */
 	CopyVec( a_burst.a_ray.r_pt, bpt );
 
 	comphi = 0.0; /* Initialize global for concurrent access. */
-		
+
 	/* SERIAL case -- one CPU does all the work. */
 	return	burstRay();
 	}

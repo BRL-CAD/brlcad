@@ -30,43 +30,43 @@
  *	which is handled separately.
  *
  *  Algorithm -
- *  
+ *
  *  Given V, H, A, and B, there is a set of points on this cylinder
- *  
+ *
  *  { (x,y,z) | (x,y,z) is on cylinder }
- *  
+ *
  *  Through a series of Affine Transformations, this set of points will be
  *  transformed into a set of points on a unit cylinder located at the origin
  *  with a radius of 1, and a height of +1 along the +Z axis.
- *  
+ *
  *  { (x',y',z') | (x',y',z') is on cylinder at origin }
- *  
+ *
  *  The transformation from X to X' is accomplished by:
- *  
+ *
  *  X' = S(R( X - V ))
- *  
+ *
  *  where R(X) =  ( A/(|A|) )
  *  		 (  B/(|B|)  ) . X
  *  		  ( H/(|H|) )
- *  
+ *
  *  and S(X) =	 (  1/|A|   0     0   )
  *  		(    0    1/|B|   0    ) . X
  *  		 (   0      0   1/|H| )
- *  
+ *
  *  To find the intersection of a line with the surface of the cylinder,
  *  consider the parametric line L:
- *  
+ *
  *  	L : { P(n) | P + t(n) . D }
- *  
+ *
  *  Call W the actual point of intersection between L and the cylinder.
  *  Let W' be the point of intersection between L' and the unit cylinder.
- *  
+ *
  *  	L' : { P'(n) | P' + t(n) . D' }
- *  
+ *
  *  W = invR( invS( W' ) ) + V
- *  
+ *
  *  Where W' = k D' + P'.
- *  
+ *
  *  If Dx' and Dy' are both 0, then there is no hit on the cylinder;
  *  but the end plates need checking.
  *
@@ -79,38 +79,38 @@
  *  b = 2 * ( Dx' * Px' + Dy' * Py' ) / ( Dx'**2 + Dy'**2 )
  *  c = ( ( Px'**2 + Py'**2 ) - r**2 ) / ( Dx'**2 + Dy'**2 )
  *  r = 1.0
- *  
+ *
  *  The qudratic formula yields k (which is constant):
  *
  *  k = [ -b +/- sqrt( b**2 - 4 * c ] / 2.0
- *  
+ *
  *  Now, D' = S( R( D ) )
  *  and  P' = S( R( P - V ) )
- *  
+ *
  *  Substituting,
- *  
+ *
  *  W = V + invR( invS[ k *( S( R( D ) ) ) + S( R( P - V ) ) ] )
  *    = V + invR( ( k * R( D ) ) + R( P - V ) )
  *    = V + k * D + P - V
  *    = k * D + P
- *  
+ *
  *  Note that ``k'' is constant, and is the same in the formulations
  *  for both W and W'.
  *
  *  The hit at ``k'' is a hit on the height=1 unit cylinder IFF
  *  0 <= Wz' <= 1.
- *  
+ *
  *  NORMALS.  Given the point W on the surface of the cylinder,
  *  what is the vector normal to the tangent plane at that point?
- *  
+ *
  *  Map W onto the unit cylinder, ie:  W' = S( R( W - V ) ).
- *  
+ *
  *  Plane on unit cylinder at W' has a normal vector N' of the same value
  *  as W' in x and y, with z set to zero, ie, (Wx', Wy', 0)
- *  
+ *
  *  The plane transforms back to the tangent plane at W, and this
  *  new plane (on the original cylinder) has a normal vector of N, viz:
- *  
+ *
  *  N = inverse[ transpose(invR o invS) ] ( N' )
  *    = inverse[ transpose(invS) o transpose(invR) ] ( N' )
  *    = inverse[ inverse(S) o R ] ( N' )
@@ -140,7 +140,7 @@
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005
- *  
+ *
  */
 /*@}*/
 
@@ -176,15 +176,15 @@ struct rec_specific {
 
 /**
  *  			R E C _ P R E P
- *  
+ *
  *  Given a pointer to a GED database record, and a transformation matrix,
  *  determine if this is a valid REC,
  *  and if so, precompute various terms of the formulas.
- *  
+ *
  *  Returns -
  *  	0	REC is OK
  *  	!0	Error in description
- *  
+ *
  *  Implicit return -
  *  	A struct rec_specific is created,
  *	and it's address is stored in
@@ -401,12 +401,12 @@ rt_rec_print(register const struct soltab *stp)
 
 /**
  *  			R E C _ S H O T
- *  
+ *
  *  Intersect a ray with a right elliptical cylinder,
  *  where all constant terms have
  *  been precomputed by rt_rec_prep().  If an intersection occurs,
  *  a struct seg will be acquired and filled in.
- *  
+ *
  *  Returns -
  *  	0	MISS
  *	>0	HIT
@@ -440,7 +440,7 @@ rt_rec_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 		FAST fastf_t	root;		/* root of radical */
 		FAST fastf_t	dx2dy2;
 
-		b = 2 * ( dprime[X]*pprime[X] + dprime[Y]*pprime[Y] ) * 
+		b = 2 * ( dprime[X]*pprime[X] + dprime[Y]*pprime[Y] ) *
 		   (dx2dy2 = 1 / (dprime[X]*dprime[X] + dprime[Y]*dprime[Y]));
 		if( (root = b*b - 4 * dx2dy2 *
 		    (pprime[X]*pprime[X] + pprime[Y]*pprime[Y] - 1)) <= 0 )
@@ -573,7 +573,7 @@ hit:
 	goto hit;
 }
 
-#define SEG_MISS(SEG)		(SEG).seg_stp=(struct soltab *) 0;	
+#define SEG_MISS(SEG)		(SEG).seg_stp=(struct soltab *) 0;
 /**
  *			R E C _ V S H O T
  *
@@ -585,7 +585,7 @@ rt_rec_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
            		       /* An array of ray pointers */
                                /* array of segs (results returned) */
    		  	       /* Number of ray/object pairs */
-                  	    
+
 {
 	register int    i;
 	register struct rec_specific *rec;
@@ -618,7 +618,7 @@ rt_rec_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
 			goto check_plates;
 
 		/* Find roots of eqn, using forumla for quadratic w/ a=1 */
-		b = 2 * ( dprime[X]*pprime[X] + dprime[Y]*pprime[Y] ) * 
+		b = 2 * ( dprime[X]*pprime[X] + dprime[Y]*pprime[Y] ) *
 		   (dx2dy2 = 1 / (dprime[X]*dprime[X] + dprime[Y]*dprime[Y]));
 		if( (root = b*b - 4 * dx2dy2 *
 		    (pprime[X]*pprime[X] + pprime[Y]*pprime[Y] - 1)) <= 0 )
@@ -735,7 +735,7 @@ rt_rec_norm(register struct hit *hitp, struct soltab *stp, register struct xray 
  *			R E C _ C U R V E
  *
  *  Return the "curvature" of the cylinder.  If an endplate,
- *  pick a principle direction orthogonal to the normal, and 
+ *  pick a principle direction orthogonal to the normal, and
  *  indicate no curvature.  Otherwise, compute curvature.
  *  Normal must have been computed before calling this routine.
  */
@@ -773,7 +773,7 @@ rt_rec_curve(register struct curvature *cvp, register struct hit *hitp, struct s
 
 /**
  *  			R E C _ U V
- *  
+ *
  *  For a hit on the surface of an REC, return the (u,v) coordinates
  *  of the hit point, 0 <= u,v <= 1.
  *

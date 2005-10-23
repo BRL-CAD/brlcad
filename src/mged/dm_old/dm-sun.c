@@ -231,7 +231,7 @@ SunPw_open()
 
 /*
  *  			S U N P W _ C L O S E
- *  
+ *
  *  Gracefully release the display.
  *  Called on either a quit or release.
  */
@@ -354,7 +354,7 @@ static Pr_brush sun_whitebrush = { 4 };
 
 /*
  *  			S U N P W _ O B J E C T
- *  
+ *
  *  Set up for an object, transformed as indicated, and with an
  *  object center as specified.  The ratio of object to screen size
  *  is passed in as a convienience.
@@ -576,12 +576,12 @@ int		noblock;	/* !0 => poll */
 	FD_SET( sun_win_fd, &files );
 
 	/*
-	 * Check for input on the keyboard or on the polled registers. 
+	 * Check for input on the keyboard or on the polled registers.
 	 *
 	 * Suspend execution until either
 	 *  1)  User types a full line
 	 *  2)	A change in peripheral status occurs
-	 *  3)  The timelimit on SELECT has expired 
+	 *  3)  The timelimit on SELECT has expired
 	 *
 	 * If a RATE operation is in progress (zoom, rotate, slew)
 	 * in which the peripherals (rate setting) may not have changed,
@@ -808,7 +808,7 @@ int	button;
 	}
 }
 
-/* 
+/*
  *			S U N P W _ L I G H T
  */
 /* ARGSUSED */
@@ -889,7 +889,7 @@ static struct cmap {
 
 /*
  *  			S U N P W _ C O L O R C H A N G E
- *  
+ *
  *  Go through the mater table, and allocate color map slots.
  */
 void

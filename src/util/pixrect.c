@@ -25,7 +25,7 @@
  *  Authors -
  *	Phillip Dykstra
  *	2 Oct 1985
- *  
+ *
  *      Further additions by John Grosh, 1 April 1990
  *
  *  Source -
@@ -58,7 +58,7 @@ FILE		*ifp, *ofp;		/* input and output file pointers */
 
 static char	*file_name;
 
-static int 	linelen;		/* input width input file */ 
+static int 	linelen;		/* input width input file */
 static int 	xorig = 0;     		/* Bottom left corner to extract from */
 static int 	yorig = 0;		/* Default at (0,0) pixels     */
 static int 	xnum  = 0;
@@ -128,9 +128,9 @@ get_args(register int argc, register char **argv)
 	/* If parameters (i.e. xnum, etc.) are not entered on */
         /*    command line, obtain input in the same style as */
         /*    the original version of pixrect.c               */
-	
+
 	if (inputmode == INTERACTIVE) {
-		if (argc != 4 && argc != 3) 
+		if (argc != 4 && argc != 3)
 			return(0);
 
 		/* Obtain file pointers */

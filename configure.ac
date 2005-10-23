@@ -42,7 +42,7 @@ dnl     8) check system services
 dnl     9) output a summary
 dnl
 dnl Any useful build settings should be added to the output summary
-dnl at the end.  Although it may be possible to check for certain 
+dnl at the end.  Although it may be possible to check for certain
 dnl features near the top in the command-line arguments section, any
 dnl related tests should be delayed and placed into the appropriate
 dnl check section.
@@ -201,7 +201,7 @@ AC_SUBST(BRLCAD_DATA)
 # faster build. it's not likely that the user is doing development
 # from a source release. at least they really should not given the
 # extra steps that are necessary for making a proper useful diff.
-AC_MSG_CHECKING([whether dependency tracking should be enabled]) 
+AC_MSG_CHECKING([whether dependency tracking should be enabled])
 if test -d $srcdir/CVS ; then
 	if test "x$enable_maintainer_mode" = "x" ; then
 		enable_maintainer_mode="yes"
@@ -269,7 +269,7 @@ BC_ARG_ENABLE([only_benchmark], [only-benchmark], [Only build the components nec
 # only build librtserver
 BC_ARG_ENABLE([only_rts], [only-rtserver], [Only build the components necessary for the raytrace server], [no])
 
-# run-time debugging 
+# run-time debugging
 BC_ARG_ENABLE([build_runtime_debug], [runtime-debug], [Enable run-time debug checking], [yes])
 
 # enable 64-bit builds
@@ -733,7 +733,7 @@ if test "x$bc_use_python" != "xno" ; then
 	fi
 fi
 
-dnl if building jove wasn't specifically requested and wasn't 
+dnl if building jove wasn't specifically requested and wasn't
 dnl disabled, see if there is either emacs or jove available.
 BCEDITOR=""
 if test "x$bc_build_jove" = "xauto" ; then
@@ -1069,7 +1069,7 @@ AC_CHECK_HEADER(term.h,
 ])
 
 found_regex_h=no
-AC_CHECK_HEADER(regex.h, 
+AC_CHECK_HEADER(regex.h,
 		AC_DEFINE(HAVE_REGEX_H,1,[Define to 1 if you have the '<regex.h>' header file])
 		found_regex_h=yes )
 
@@ -1077,7 +1077,7 @@ AC_CHECK_HEADER(regex.h,
 OLD_CPPFLAGS="$CPPFLAGS"
 CPPFLAGS="$CPPFLAGS $JAVA_CFLAGS"
 found_jni_h=no
-AC_CHECK_HEADER(JavaVM/jni.h, 
+AC_CHECK_HEADER(JavaVM/jni.h,
 		AC_DEFINE(HAVE_JAVAVM_JNI_H,1,[Define to 1 if you have the '<JavaVM/jni.h>' header file])
 		found_jni_h=yes	)
 AC_CHECK_HEADER(jni.h,
@@ -1222,7 +1222,7 @@ if test "x$bc_build_64bit" = "xyes" ; then
 			found_64bit_flag=yes
 		fi
 	fi
-	
+
 	if test "x$found_64bit_flag" = "xno" ; then
 		BC_COMPILER_AND_LINKER_RECOGNIZES([-mabi=64], [64_flag])
 		if test "x$bc_64_flag_works" = "xyes" ; then
@@ -1254,7 +1254,7 @@ if test "x$bc_use_profiling" != "xno" ; then
 			AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
 			AC_MSG_NOTICE([Profiling was enabled but -pg does not work])
 			AC_MSG_ERROR([*** Don't know how to profile with this compiler ***])
-		fi			
+		fi
 		AC_MSG_WARN([Don't know how to profile with this compiler])
 	else
 		# convert 'auto' to 'no' even though it works
@@ -1271,7 +1271,7 @@ if test "x$bc_use_debug" != "xno" ; then
 			AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
 			AC_MSG_NOTICE([Debug was enabled but -g does not work])
 			AC_MSG_ERROR([*** Don't know how to debug with this compiler ***])
-		fi			
+		fi
 		AC_MSG_WARN([Do not know how to debug with this compiler])
 	else
 		# convert 'auto' to 'yes'
@@ -1321,7 +1321,7 @@ fi
 AC_C_CONST
 AC_C_VOLATILE
 AC_C_INLINE
-AC_C_BIGENDIAN(AC_DEFINE(NATURAL_IEEE,,64b floating point storage technique), 
+AC_C_BIGENDIAN(AC_DEFINE(NATURAL_IEEE,,64b floating point storage technique),
 	       AC_DEFINE(REVERSE_IEEE,,64b floating point storage technique),
 	       AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
 	       AC_MSG_ERROR([*** Don't know the endian of this machine! ***]) )
@@ -1443,7 +1443,7 @@ AC_CHECK_FUNC(getwd, , [AC_DEFINE(NO_GETWD,, From Tcl -- No getwd)])
 AC_CHECK_FUNC(wait3, , [AC_DEFINE(NO_WAIT3,, From Tcl -- No wait3)])
 AC_CHECK_FUNC(uname, , [AC_DEFINE(NO_UNAME,, From Tcl -- No uname)])
 AC_CHECK_FUNC(realpath, , [AC_DEFINE(NO_REALPATH,, From Tcl -- No realpath)])
-AC_CHECK_FUNC(memmove, , [AC_DEFINE(NO_MEMMOVE,, From Tcl -- No memmove) 
+AC_CHECK_FUNC(memmove, , [AC_DEFINE(NO_MEMMOVE,, From Tcl -- No memmove)
 		          AC_DEFINE(NO_STRING_H,, From Tcl -- No string)])
 AC_CHECK_FUNC(opendir, , [AC_DEFINE(USE_DIRENT2_H,, From Tcl -- use dirent2)])
 AH_VERBATIM([OUR_STRSEP],
@@ -1702,7 +1702,7 @@ int main() {
 #elif TCl_MAJOR_VERSION == 8 && TCL_MINOR_VERSION < 4
     fprintf(stderr, "minor version < 4\n");
     return 1;
-#endif 
+#endif
     return 0;
 }
 	],
@@ -1795,7 +1795,7 @@ int main() {
 #elif TK_MAJOR_VERSION == 8 && TK_MINOR_VERSION < 4
     fprintf(stderr, "minor version < 4\n");
     return 1;
-#endif 
+#endif
     return 0;
 }
 	],
@@ -1870,7 +1870,7 @@ int main() {
 #elif ITCl_MAJOR_VERSION == 3 && ITCL_MINOR_VERSION < 2
     fprintf(stderr, "minorversion < 2\n");
     return 1;
-#endif 
+#endif
     return 0;
 }
 	],
@@ -2321,7 +2321,7 @@ if test "x$python_works" = "xyes" ; then
 		build_brlcad_adrt="yes"
 	else
 		build_brlcad_adrt="no (need sdl)"
-	fi   
+	fi
 else
 	if test "x$sdl_works" = "xyes" ; then
 		build_brlcad_adrt="no (need python)"
@@ -2407,7 +2407,7 @@ AM_CONDITIONAL(ONLY_RTS, [test "x$bc_only_rts" != "xno"])
 AM_CONDITIONAL(BUILD_LIBTKGLX, [test "x$host_os" = "xirix6.5"])
 
 
-dnl Any combination of the different optimizations listed below may individually be 
+dnl Any combination of the different optimizations listed below may individually be
 dnl optionally turned off by commenting out the unwanted defines in the config file.
 dnl
 dnl NO_BOMBING_MACROS
@@ -2419,10 +2419,10 @@ dnl NO_MAGIC_CHECKING
 dnl      turns off allocation of (some) variables and calls to check magic numbers.
 dnl      note that this will hinder memory corrupting bug detection.
 dnl NO_BADRAY_CHECKING
-dnl      is a risky optimization to turn off checking in librt/shoot.c for bad rays 
+dnl      is a risky optimization to turn off checking in librt/shoot.c for bad rays
 dnl      passed in to the expensive shootray() routine.
 dnl NO_DEBUG_CHECKING
-dnl      is an optimization that replaces instances of rt_g.debug in if statements 
+dnl      is an optimization that replaces instances of rt_g.debug in if statements
 dnl      where checking for a debug level occurs (in order to output a debug message)
 dnl      with the integer constant 0.  note that turning this flag on will remove the
 dnl      capability to output debug messages and commands that take a debug-level args

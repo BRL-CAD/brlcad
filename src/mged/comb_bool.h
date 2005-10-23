@@ -86,7 +86,7 @@ extern struct bool_tree_node	*comb_bool_tree;
         }
 
 /*
- *	
+ *
  */
 
 #ifdef USE_PROTOTYPES

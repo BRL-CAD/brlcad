@@ -163,7 +163,7 @@ CHECKING OUT SOURCES
     The process for checking out a given revision number is pretty
     much a matter of knowing which revision tag name is desired, and
     then checking out with that symbolic tag name:
-    
+
     As anonymous:
 	cvs -z9 -d :pserver:anonymous@cvs.sf.net:/cvsroot/brlcad checkout -P -r <tagname> brlcad
 
@@ -234,8 +234,8 @@ CHECKING IN SOURCES
     message, e.g. "moved from librt/bool.c to src/librt/bool.c".
 
 
-    TO HEAD: 
-    
+    TO HEAD:
+
     It's very important that the main CVS HEAD revision be a "mostly"
     stable code base so that at any given time users may download the
     latest source, get it to compile with minimal effort, and have the
@@ -339,14 +339,14 @@ TAG NAMING CONVENTIONS
                 compatible.
 
     <date> := YYYYMMDD (e.g., 20021231)
-        
+
         When creating tags, the date a tag is made is sometimes noted
         and useful or even recommended.  The format of the date is
         YYYYMMDD and should correspond to tag creation dates.  Branch
         and release tags should not include a date in the tag name.
 
     <comment>
-        
+
         For branches the comment is "branch".  For releases, it is
         left blank.  For other miscellaneous tags, the comment is up
         to the person tagging.
@@ -412,7 +412,7 @@ TAG NAMING CONVENTIONS
 
             postmerge[-<revision>][-<date>]-<comment>
 
-	    Example: postmerge-20040315-windows 
+	    Example: postmerge-20040315-windows
 
 	The <comment> should be a simple identifying keyword.  The
 	branch keyword being merged suffices quite well.  A date is
@@ -431,7 +431,7 @@ TAG NAMING CONVENTIONS
 
 	    <keyword>[-<revision>][-<date>]-pre
 	    <keyword>[-<revision>][-<date>]-post
-	    
+
 	    Examples: hartley-6-0-pre ctj-4-5-post offsite-5-3-pre
 
 
@@ -442,7 +442,7 @@ TAG NAMING CONVENTIONS
 	informative tag names should be used.  Dates are highly
 	recommended as CVS tags are not associated by date, but rather
 	to the individual revision of a file.
-    
+
         <keyword>[-<revision>][-<date>][-<comment>]
 
     When in doubt, tag.  It's easy to remove or rename tags, but it
@@ -583,7 +583,7 @@ MERGING A BRANCH
     cause CVS to not expand the CVS variables such as \$Revision\$ and
     \$Id\$.  If those keyword variables are expanded, you're likely to
     have many conflicts depending on time-stamps.
-    
+
     If the branch being checked in an extensive set of changes,
     testing is essential.  It is also a good idea to warn other
     developers of what you are planning to do.  You should indicate
@@ -781,7 +781,7 @@ XFree86 Direct Rendering Infrastructure CvsPolicy
 http://dri.sourceforge.net/cgi-bin/moin.cgi/CvsPolicy
 http://dri.sourceforge.net/doc/cvspolicy.txt
 
-Zope 
+Zope
 http://dev.zope.org/CVS/ZopeReleasePolicy
 
 FreeBSD
@@ -791,6 +791,6 @@ AT&T SML/NJ
 http://www.smlnj.org/DEV/policy.html
 http://cm.bell-labs.com/cm/cs/what/smlnj/DEV/policy.html
 
---- 
+---
 This document was initially written in 2002 and later almost
 completely rewritten in 2004 by Christopher Sean Morrison.

@@ -265,7 +265,7 @@ HmLList	*listp;
 	void	HmFreeItems( Hmitem *itemp )
 
 	Free storage (allocated with malloc) for an array of HmItem's.
- */ 
+ */
 STATIC void
 #if __STDC__
 HmFreeItems( HmItem *itemp )
@@ -439,7 +439,7 @@ char			mark;
 		register char	*p = buf;
 	if( bitmap == 0 )
 		return; /* No dirty bits. */
-	*p++ = mark; 
+	*p++ = mark;
 	for( i = 0; i < win->width; i++ )
 		*p++ = '-';
 	*p++ = mark;
@@ -629,7 +629,7 @@ int	entry;
 	void	HmError( char *str )
 
 	Display str on line HmYCOMMO.
- */ 
+ */
 void
 #if __STDC__
 HmError( char *str )
@@ -840,7 +840,7 @@ HmTtyReset()
 #endif
 	{
 	if( HmMyxflag )
-		{ 
+		{
 		/* Send escape codes to pop old toggle settings. */
 		(void) fputs( "\033[?1;3Z", stdout );
 		(void) fflush( stdout );
@@ -857,7 +857,7 @@ HmTtyReset()
 	in global variables.  Determine as best we can whether MYX
 	is available and place boolean result in HmMyxflag.  Return
 	true for success and false for failure to open "/dev/tty".
- */	
+ */
 bool
 #if __STDC__
 HmInit( int x, int y, int maxvis )
@@ -914,7 +914,7 @@ register HmWindow	*win;
 
 	If nwin->menup will fit below cwin->menup on screen, store
 	position in nwin, and return true.  Otherwise, return false.
- */ 
+ */
 STATIC bool
 #if __STDC__
 HmFitMenu( register HmWindow *nwin, register HmWindow *cwin  )

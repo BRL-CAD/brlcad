@@ -71,7 +71,7 @@ void texture_checker_work(texture_t *texture, common_mesh_t *mesh, tie_ray_t *ra
 
   /* Transform the Point */
   math_vec_transform(pt, id->pos, mesh->matinv);
-  
+
   if(pt.v[0]+TIE_PREC > mesh->max.v[0]) pt.v[0] = mesh->max.v[0];
   if(pt.v[1]+TIE_PREC > mesh->max.v[1]) pt.v[1] = mesh->max.v[1];
   u = mesh->max.v[0] - mesh->min.v[0] > 0 ? (int)((pt.v[0] - mesh->min.v[0]) / ((mesh->max.v[0] - mesh->min.v[0])/td->tile))%2 : 0;

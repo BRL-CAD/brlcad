@@ -8,12 +8,12 @@
  *  Author -
  *	Christopher T. Johnson
  *	September 12, 1992
- *  
+ *
  *  Source -
  *	Paladin Software
  *	P.O. Box 187
  *	Aberdeen, MD	21001-0187
- *  
+ *
  *  Copyright Notice -
  *	This software is Copyright (C) 1992 by Paladin Software
  *	All rights reserved.
@@ -165,7 +165,7 @@ get_args(register int argc, register char **argv)
 	return(1);	/* OK */
 }
 
-			
+
 int
 main(int argc, char **argv)
 {
@@ -224,7 +224,7 @@ main(int argc, char **argv)
 		(void)fprintf(stderr,"pixcut: background color %d/%d/%d\n",
 		    background[0], background[1], background[2]);
 
-		if (base_x < 0 || base_y < 0 || 
+		if (base_x < 0 || base_y < 0 ||
 		    base_x+new_width >org_width ||
 		    base_y+new_height > org_height) {
 		    	int comma=0;

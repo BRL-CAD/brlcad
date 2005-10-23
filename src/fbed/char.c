@@ -52,7 +52,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #define DEBUG_STRINGS	false
 
-/* 
+/*
 	char.c - routines for displaying a string on a frame buffer.
  */
 extern void fudge_Pixel();
@@ -64,8 +64,8 @@ void menu_char(int x_adjust, int menu_wid, int odd, register unsigned char *menu
 
 void
 do_line(int xpos, int ypos, register char *line, RGBpixel (*menu_border))
-               
-                    
+
+
                        /* Menu outline color, if NULL, do filtering. */
 	{	register int    currx;
 		register int    char_count, char_id;
@@ -213,7 +213,7 @@ menu_char(int x_adjust, int menu_wid, int odd, register unsigned char *menu_bord
 		for (i=2; i<height+2; i++)
 			for (j=totwid+1; j>=2; j--)
 		  		filterbuf[i][j+1] |= filterbuf[i][j];
- 
+
 	/* Initial base line for filtering depends on odd flag. */
 	base = (odd ? 1 : 2);
 

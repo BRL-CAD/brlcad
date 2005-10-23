@@ -350,7 +350,7 @@ prnt_Octree(Octree *parentp, int level)
 int
 write_Octree(Octree *parentp, FILE *fp)
 {	register PtList	*ptp;
-		F_Hdr_Ptlist	hdr_ptlist;	
+		F_Hdr_Ptlist	hdr_ptlist;
 		long		addr = ftell( fp );
 	/* Write temperature and bogus number of points for this leaf.	*/
 	hdr_ptlist.f_temp = parentp->o_temp;
@@ -450,7 +450,7 @@ ir_shootray_octree(struct application *ap)
 		/* a_hit is f_IR_Model(), uses 2nd arg as (Octree *) */
 		return	ap->a_hit( ap, (struct partition *)leafp, RT_SEG_NULL );
 	else	/* Missed it.						*/
-		return	ap->a_miss( ap );		
+		return	ap->a_miss( ap );
 	}
 
 /*

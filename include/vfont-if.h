@@ -32,14 +32,14 @@
  *  font data is on the right hand side (lsb).
  *
  *  The VAX declaration of the file is:
- *	
+ *
  *	struct header {
  *		short		magic;
  *		unsigned short	size;
  *		short		maxx;
  *		short		maxy;
  *		short		xtend;
- *	}; 
+ *	};
  *	struct dispatch {
  *		unsigned short	addr;
  *		short		nbytes;
@@ -58,7 +58,7 @@
  *
  *  Author -
  *	Michael John Muuss
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory

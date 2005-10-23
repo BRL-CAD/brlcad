@@ -37,7 +37,7 @@
 
     constructor {db} {}
     destructor {}
-    
+
     public {
 	method assoc {args}
 	method autoview {args}

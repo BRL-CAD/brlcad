@@ -33,7 +33,7 @@
  *
  *  Author -
  *	Michael John Muuss
- *  
+ *
  *  Source -
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
@@ -72,7 +72,7 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #include "../rt/light.h"
 
 
-extern int viewshade(struct application *ap, 
+extern int viewshade(struct application *ap,
 		     register const struct partition *pp,
 		     register struct shadework *swp);
 
@@ -207,7 +207,7 @@ background_radiation(struct application *ap)
 
 /*
  *  			V I E W _ P I X E L
- *  
+ *
  *  Arrange to have the pixel "output".
  *  For RTTHERM this is a misnomer, as the pixel's spectral samples have
  *  been living in the scanline buffer the whole time.
@@ -308,7 +308,7 @@ double lo = INFINITY, hi = -INFINITY;
 
 /*
  *  			V I E W _ E O L
- *  
+ *
  *  This routine is not used;  view_pixel() determines when the last
  *  pixel of a scanline is really done, for parallel considerations.
  */
@@ -408,7 +408,7 @@ view_cleanup(struct rt_i *rtip)
  *  Background texture mapping could be done here.
  *  For now, return a pleasant dark blue.
  */
-static int 
+static int
 hit_nothing(register struct application *ap)
 {
 	if( rdebug&RDEBUG_MISSPLOT )  {
@@ -779,7 +779,7 @@ void application_init (void)
 /*
  *
  *  hitp->hit_point and normal must be computed by caller.
- * 
+ *
  *  Return -
  *	area of ray footprint, in mm**2 (square milimeters).
  */

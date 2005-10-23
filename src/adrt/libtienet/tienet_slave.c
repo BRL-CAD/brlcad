@@ -262,7 +262,7 @@ void tienet_slave_worker(int port, char *host) {
       dest_len = comp_max+32;
       compress(comp_buf, &dest_len, res_buf, res_len);
       size = (unsigned int)dest_len;
-    
+
       /* Pack Compressed Result Length */
       if(tienet_endian) tienet_flip(&size, &size, sizeof(unsigned int));
       memcpy(&((char*)data)[ind], &size, sizeof(unsigned int));
@@ -448,7 +448,7 @@ void tienet_slave_daemon(int port) {
 
           dest_len = comp_max+32;
           compress(comp_buf, &dest_len, res_buf, res_len);
-          size = (unsigned int)dest_len;    
+          size = (unsigned int)dest_len;
 
           /* Pack Compressed Result Length */
           if(tienet_endian) tienet_flip(&size, &size, sizeof(unsigned int));
@@ -488,7 +488,7 @@ void tienet_slave_daemon(int port) {
 
 
 int tienet_slave_prep(int slave_socket, tie_t *tie) {
-  /* 
+  /*
   * Process and prep application data.
   * Passing the slave socket allows slave to process the data
   * on demand instead of requiring memory to spike by having it

@@ -28,12 +28,12 @@
  *  Authors -
  *	Michael John Muuss
  *	Lee A. Butler
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005
- *  
+ *
  */
 /*@}*/
 
@@ -150,7 +150,7 @@ nmg_mark_edge_g(long int *magic_p)
 			NMG_MARK_INDEX(cnurb);
 			return;
 		}
-	}	
+	}
 	rt_bomb("nmg_mark_edge_g() unknown magic\n");
 }
 
@@ -755,7 +755,7 @@ nmg_struct_counts(const struct model *m, const char *str)
 
 /**			N M G _ M E R G _ M O D E L S
  *
- *	Combine two NMG model trees into one single NMG model.  The 
+ *	Combine two NMG model trees into one single NMG model.  The
  *	first model inherits the nmgregions of the second.  The second
  *	model pointer is freed before return.
  */

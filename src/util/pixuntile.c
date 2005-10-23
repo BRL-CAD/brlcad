@@ -19,14 +19,14 @@
  * information.
  */
 /** @file pixuntile.c
- *  
+ *
  *  Given a single .pix file with multiple images, each
  *  side-by-side, right to left, bottom to top, break them
  *  up into separate .pix files.
  *
  *  Author -
  *	Phillip Dykstra
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
@@ -41,7 +41,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif
-                                                                                                                                                                            
+
 
 #include <stdio.h>
 #include <stdlib.h>

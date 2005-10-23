@@ -27,11 +27,11 @@
  *
  *  Author -
  *	Keith A. Applin
- *  
+ *
  *  Source -
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
- *  
+ *
  *
  *
  * Acknowledgements:
@@ -202,7 +202,7 @@ wdb_track_cmd(struct rt_wdb	*wdbp,
     edit_result = TCL_ERROR;
     goto end;
   }
-	
+
   /* idler wheel X */
   ++arg;
   iw[0] = atof( argv[arg] ) * wdbp->dbip->dbi_local2base;
@@ -316,7 +316,7 @@ wdb_track_cmd(struct rt_wdb	*wdbp,
   crname(interp, solname, 0);
   (void)strcpy(sol.s_name, solname);
   sol.s_type = ID_ARB8;
-  if (wrobj(wdbp, interp, solname, DIR_SOLID)) 
+  if (wrobj(wdbp, interp, solname, DIR_SOLID))
     return TCL_ERROR;
 
   solname[grpname_len + extraTypeChars] = '\0';
@@ -403,7 +403,7 @@ wdb_track_cmd(struct rt_wdb	*wdbp,
   if (wrobj(wdbp, interp,solname,DIR_SOLID) )
     return TCL_ERROR;
   solname[grpname_len + extraTypeChars] = '\0';
-	
+
   /* solid 8 */
   /* track bottom */
   temp1[1] = temp2[1] = tr[0];

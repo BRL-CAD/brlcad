@@ -29,12 +29,12 @@
  *
  *  Author -
  *	Michael John Muuss
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005
- *  
+ *
  */
 /*@}*/
 
@@ -196,8 +196,8 @@ rt_split_cmd(char **argv, int lim, register char *lp)
 int
 rt_do_cmd(struct rt_i *rtip, const char *ilp, register const struct command_tab *tp)
            		      			/* FUTURE:  for globbing */
-             		    
-                                 	    
+
+
 {
 	register int	nwords;			/* number of words seen */
 	char		*cmd_args[MAXWORDS+1];	/* array of ptrs to args */

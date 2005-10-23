@@ -36,7 +36,7 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 int
 brep( entityno )
 int entityno;
-{ 
+{
 
 	int		sol_num;		/* IGES solid type number */
 	int		shell_de;		/* Directory sequence number for a shell */

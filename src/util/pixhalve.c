@@ -29,7 +29,7 @@
  *
  *  Author -
  *	Michael John Muuss
- *  
+ *
  *  Source -
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
@@ -251,8 +251,8 @@ separate(register int *rop, register int *gop, register int *bop, register unsig
             	     			/* Y */
             	     			/* U */
             	     			/* V */
-                      	    
-   		    
+
+
 {
 	register long int 	i;
 	register int	r, g, b;

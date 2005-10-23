@@ -37,12 +37,12 @@
  *  Author -
  *	Michael John Muuss
  *	August 01, 1978
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5066
- *  
+ *
  */
 /*@}*/
 
@@ -72,10 +72,10 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 void
 tp_3axis(FILE *fp, char *string, fastf_t *origin, fastf_t *rot, double length, int ccw, int ndigits, double label_start, double label_incr, double tick_separation, double char_width)
-    	    
+
     	        		/* label for axis */
-       	       
-     	    
+
+
       	       			/* length of axis */
    	    			/* 0=clockwise, !0=counter clockwise (ccw) */
    	        		/* # digits wide */

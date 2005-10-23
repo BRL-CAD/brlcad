@@ -32,12 +32,12 @@
  *
  *  Author -
  *	Phillip Dykstra
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5066
- *  
+ *
  */
 #ifndef lint
 static const char RCSid[] = "@(#)$Header$ (BRL)";
@@ -103,10 +103,10 @@ struct points {
  */
 HIDDEN int
 points_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip)
-                           
-             	         
-    	      
-                             
+
+
+
+
                                 /* New since 4.4 release */
 {
 	register struct points_specific *ptp;
@@ -168,7 +168,7 @@ fail:
 
 /*
  *  			P O I N T S _ R E N D E R
- *  
+ *
  *  Given a u,v coordinate within the texture ( 0 <= u,v <= 1.0 ),
  *  and a "size" of the pixel being rendered (du, dv), fill in the
  *  color of the "brightest" point (if any) within that region.

@@ -24,7 +24,7 @@
  *
  *  Author -
  *	Bob Parker
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
@@ -446,7 +446,7 @@ vect_t vdiff;
   MAT_DELTAS_GET_NEG(old_model_pos, toViewcenter);
   MAT4X3PNT(old_view_pos, model2view, old_model_pos);
   VSUB2(view_pos, old_view_pos, vdiff);
-  
+
   return slewview(view_pos);
 }
 
@@ -548,7 +548,7 @@ size_reset()
 
 /*
  *                      N E W _ M A T S
- *  
+ *
  *  Derive the inverse and editing matrices, as required.
  *  Centralized here to simplify things.
  */
@@ -1164,7 +1164,7 @@ X_dmInit()
   return TCL_OK;
 }
 
-/* 
+/*
  * Event handler for the X display manager.
  */
 static int

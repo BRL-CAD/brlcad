@@ -838,7 +838,7 @@ adage_zoom_set(FBIO *ifp, register int x, register int y)
 			fb_log( "adage_zoom_set : FBCVPS write failed.\n" );
 			return	-1;
 		}
-		
+
 	} else {
 		IKI(ifp)->ikfbcmem.fbc_xzoom = x-1;
 	}

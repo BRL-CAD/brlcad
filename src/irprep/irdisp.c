@@ -24,7 +24,7 @@
  *  model and/or diplay it using the PRISM temperature output file.
  *
  *  File:  pictx.c
- *  S.Coates - 30 September 1994 
+ *  S.Coates - 30 September 1994
  *  Compile:  cc pictx.c -L/usr/X11/lib -lX11 -o pictx
  */
 

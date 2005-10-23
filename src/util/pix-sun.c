@@ -84,7 +84,7 @@ struct rasterfile {
  * This colormap has a 6x6x6 color cube, plus 10 extra values for each of
  * the primary colors and the grey levels
  */
-unsigned char redmap[MAPSIZE] = 
+unsigned char redmap[MAPSIZE] =
 { 0, 51,102,153,204,255,  0, 51,102,153,204,255,  0, 51,102,153,
 204,255,  0, 51,102,153,204,255,  0, 51,102,153,204,255,  0, 51,
 102,153,204,255,  0, 51,102,153,204,255,  0, 51,102,153,204,255,
@@ -102,7 +102,7 @@ unsigned char redmap[MAPSIZE] =
 221,238,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
   0,  0,  0,  0,  0,  0, 17, 34, 68, 85,119,136,170,187,221,238 };
 
-unsigned char grnmap[MAPSIZE] = 
+unsigned char grnmap[MAPSIZE] =
 { 0,  0,  0,  0,  0,  0, 51, 51, 51, 51, 51, 51,102,102,102,102,
 102,102,153,153,153,153,153,153,204,204,204,204,204,204,255,255,
 255,255,255,255,  0,  0,  0,  0,  0,  0, 51, 51, 51, 51, 51, 51,
@@ -146,7 +146,7 @@ static unsigned char gvec[16] = {  0, 226, 227,  6, 228, 229, 12, 230,
 				231,  18, 232, 233, 24, 234, 235, 30};
 static unsigned char bvec[16] = {  0, 236, 237,  36, 238, 239,  72, 240,
 				241, 108, 242, 243, 144, 244, 245, 180 };
-static unsigned char nvec[16] = {  0, 246, 247,  43, 248, 249,  86, 250, 
+static unsigned char nvec[16] = {  0, 246, 247,  43, 248, 249,  86, 250,
 				251, 129, 252, 253, 172, 254, 255, 215};
 
 #define MAG1	51.0	/* magnitude of dither noise in color cube */
@@ -245,8 +245,8 @@ void doit(void)
 	 exit(1);
 	}
 
-    /* convert 24 bit pixels to 8 bits, 
-     * switching top to bottom to compensate for the different origin 
+    /* convert 24 bit pixels to 8 bits,
+     * switching top to bottom to compensate for the different origin
      * representations of PIX files and Sun pixrects
      */
     if (dither) {
@@ -326,13 +326,13 @@ int main(int ac, char **av)
 
     progname = *av;
     if (isatty(fileno(stdin))) usage();
-    
+
     /* Get # of options & turn all the option flags off
     */
     optlen = strlen(options);
 
     for (c=0 ; c < optlen ; optflags[c++] = '\0');
-    
+
     /* Turn off bu_getopt's error messages */
     opterr = 0;
 

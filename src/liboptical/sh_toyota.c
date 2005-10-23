@@ -156,10 +156,10 @@ struct mfuncs toyota_mfuncs[] = {
  */
 HIDDEN int
 toyota_setup(register struct region *rp, struct bu_vls *matparm, char **dtp, struct mfuncs *mfp, struct rt_i *rtip)
-                           
-             	         
-    	      
-                             
+
+
+
+
                                 /* New since 4.4 release */
 {
 	char	mfile[200];
@@ -181,7 +181,7 @@ toyota_setup(register struct region *rp, struct bu_vls *matparm, char **dtp, str
 	/*            / 2*PI  / arctan(rs/d)
 	 * sun_sang = |       |
 	 *	      |       |     sin(theta) d-theta d-phi
-	 *	     /       / 
+	 *	     /       /
 	 *
 	 *	    = 2*PI*(1 - cos(arctan(rs/d)))
 	 *
@@ -255,10 +255,10 @@ toyota_setup(register struct region *rp, struct bu_vls *matparm, char **dtp, str
  */
 HIDDEN int
 tmirror_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip)
-                           
-             	         
-    	      
-                             
+
+
+
+
                                 /* New since 4.4 release */
 {
 	register struct toyota_specific *pp;
@@ -278,10 +278,10 @@ tmirror_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, st
  */
 HIDDEN int
 tglass_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip)
-                           
-             	         
-    	      
-                             
+
+
+
+
                                 /* New since 4.4 release */
 {
 	register struct toyota_specific *pp;
@@ -439,7 +439,7 @@ bu_log("clear_sky_lum(lz=%g, ...) = %g\n", lz, lum );
 /*
  *	A T M O S _ I R R A D I A N C E
  *
- *	Table of solar irradiance values taken from WMO - No. 590, 
+ *	Table of solar irradiance values taken from WMO - No. 590,
  *	"Commission for Instruments and Methods of Observation", Abridged
  *	Final Report of the Eigth Session, Mexico City, 19-30 October 1981,
  *	pp. 71-5.
@@ -1659,7 +1659,7 @@ spectral_dist_table(fastf_t lambda, fastf_t *e_mean, fastf_t *v1, fastf_t *v2)
  *
  *	Units: W/m^2/nm/sr
  */
-fastf_t	
+fastf_t
 skylight_spectral_dist(fastf_t lambda, fastf_t *Zenith, fastf_t *Sky_elmt, fastf_t *Sun, int weather, fastf_t t_vl)
        	       		/* Wavelength of light (nm). */
       	       		/* Vector to sky zenith. */
@@ -1851,7 +1851,7 @@ fresnel_refl(fastf_t cos_eps, fastf_t n1, fastf_t n2)
 fastf_t
 absorp_coeff(fastf_t lambda, char *material)
        	       		/* wavelength (nm) */
-    	          
+
 {
 	char	mfile[80];
 	fastf_t	a, l,
@@ -1989,7 +1989,7 @@ reflectance(fastf_t lambda, fastf_t alpha, fastf_t *refl, int lines)
 	/* Interpolate beta between low and high lambdas. */
 	beta = (beta_h - beta_l)/(lambda_h - lambda_l)*(lambda - lambda_l)
 	       + beta_l;
-	
+
 out:
 #if 0
 bu_log("reflectance(lambda=%g, alpha=%g)=%g\n", lambda, alpha, beta );
@@ -2179,7 +2179,7 @@ bu_log("rgb = (%g %g %g), irrad = %g\n",r,g,b,irrad);
 fastf_t
 background_light(fastf_t lambda, struct toyota_specific *ts, fastf_t *Refl, fastf_t *Sun, fastf_t t_vl, struct shadework *swp)
        			       	/* Wavelength of light (nm). */
-                      	    
+
       			     	/* Regularly reflected ray. */
       			    	/* Vector pointing to sun. */
        			     	/* Atmospheric turbidity. */

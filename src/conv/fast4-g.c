@@ -26,7 +26,7 @@
  *
  *  Author -
  *      John R. Anderson
- *  
+ *
  *  Source -
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
@@ -1978,7 +1978,7 @@ do_ccone3(void)
 			}
 			else
 				ro[i] = ri[i];
-			
+
 		}
 		else if( ri[i] == -1.0 )
 			ri[i] = ro[i];
@@ -2263,7 +2263,7 @@ do_hole_wall(int type)
 					list_ptr = (struct hole_list *)bu_malloc( sizeof( struct hole_list ) , "do_hole_wall: list_ptr" );
 					list_start = list_ptr;
 				}
-			
+
 				list_ptr->group = igrp;
 				list_ptr->component = icmp;
 				list_ptr->next = (struct hole_list *)NULL;

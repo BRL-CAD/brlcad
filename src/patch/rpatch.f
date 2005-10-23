@@ -1,5 +1,5 @@
 c	Front end to patch.
-c	Bill Mermagen Jr. 
+c	Bill Mermagen Jr.
 c     This pre-processor program alters the data file format
 c     for use by the main conversion program.  An End-of-File
 c     flag is used in the read statement to prevent loss of data

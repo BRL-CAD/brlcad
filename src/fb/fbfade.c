@@ -73,7 +73,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif
-                                                                                                                                                                            
+
 #include	<signal.h>
 #include	<stdlib.h>
 #include	<stdio.h>

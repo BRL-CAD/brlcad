@@ -27,7 +27,7 @@
  * Authors -
  *	Bill Mermagen Jr.
  *	Michael John Muuss
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
@@ -128,8 +128,8 @@ set_scroll(void)
       scroll_array[1] = SCROLL_NULL;
 
   }else{
-    scroll_array[0] = SCROLL_NULL;	
-    scroll_array[1] = SCROLL_NULL;	
+    scroll_array[0] = SCROLL_NULL;
+    scroll_array[1] = SCROLL_NULL;
   }
 }
 
@@ -306,7 +306,7 @@ sl_itol(register struct scroll_item *mptr, double val)
  */
 int
 scroll_display( int y_top )
-{ 
+{
   register int		y;
   struct scroll_item	*mptr;
   struct scroll_item	**m;
@@ -724,7 +724,7 @@ scroll_display( int y_top )
  */
 int
 scroll_select( int pen_x, int pen_y, int do_func )
-{ 
+{
 	register int		yy;
 	struct scroll_item	**m;
 	register struct scroll_item     *mptr;

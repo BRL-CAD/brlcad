@@ -40,11 +40,11 @@
  *  Authors -
  *	Michael John Muuss
  *	Glenn Durfee
- *  
+ *
  *  Source -
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
- *  
+ *
  */
 /*@}*/
 
@@ -103,10 +103,10 @@ bu_log_indent_vls(struct bu_vls *v)
 
 #if 1
 struct bu_hook_list bu_log_hook_list = {
-	{	BU_LIST_HEAD_MAGIC, 
-		&bu_log_hook_list.l, 
+	{	BU_LIST_HEAD_MAGIC,
+		&bu_log_hook_list.l,
 		&bu_log_hook_list.l
-	}, 
+	},
 	BUHOOK_NULL,
 	GENPTR_NULL
 };
@@ -168,7 +168,7 @@ bu_log_delete_hook(bu_hook_t func, genptr_t clientdata)
 	    bu_free((genptr_t)cur, "bu_log hook");
 	    cur = old;
 	}
-    }    
+    }
 #else
     bu_delete_hook(&bu_log_hook_list, func, clientdata);
 #endif
@@ -258,7 +258,7 @@ bu_putchar(int c)
 
 /*
  *  			B U _ L O G
- *  
+ *
  *  Log a library event in the Standard way.
  */
 void
@@ -337,7 +337,7 @@ char *fmt;
     }
 #  endif
 #endif
-    
+
     if ( BU_LIST_IS_EMPTY( &(bu_log_hook_list.l) )  || bu_log_hooks_called) {
     	int ret;
 	size_t len;
@@ -373,7 +373,7 @@ char *fmt;
 
 /*
  *  			B U _ F L O G
- *  
+ *
  *  Log a library event in the Standard way, to a specified file.
  */
 void
@@ -441,7 +441,7 @@ char *fmt;
     }
 #  endif
 #endif
-    
+
     if ( BU_LIST_IS_EMPTY( &(bu_log_hook_list.l) ) || bu_log_hooks_called) {
     	int ret;
 	size_t len;

@@ -37,7 +37,7 @@
 ## color_entry_build --
 #
 # Build a color entry widget. The color entry widget consists of
-# an entry and a menubutton widget. The menu associated with the 
+# an entry and a menubutton widget. The menu associated with the
 # menubutton contains some canned color entries as well as an
 # entry that invokes a user specified command for setting the color.
 #

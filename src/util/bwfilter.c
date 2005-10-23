@@ -27,7 +27,7 @@
  *  Author -
  *	Phillip Dykstra
  *	15 Aug 1985
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
@@ -42,7 +42,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif
-                                                                                                                                                                            
+
 #include <stdio.h>
 #include <stdlib.h>
 #ifdef HAVE_STRING_H

@@ -28,7 +28,7 @@
  *	VLD/ASB Building 1065
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005
- *  
+ *
  */
 #include "./iges_struct.h"
 #include "./iges_extern.h"
@@ -76,7 +76,7 @@ vect_t evect;	/* extrusion vector */
 
 	radius = sqrt( (x1 - base[X])*(x1 - base[X]) + (y1 - base[Y])*(y1 - base[Y]) );
 
-	
+
 	/* Make an rcc */
 
 	mk_rcc( fdout , dir[entityno]->name , base , evect , radius );

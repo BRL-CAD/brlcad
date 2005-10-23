@@ -33,7 +33,7 @@
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5066
- *  
+ *
  */
 #ifndef lint
 static const char RCSid[] = "@(#)$Header$ (BRL)";
@@ -248,7 +248,7 @@ BuildStr(struct coords *pt1, struct coords *pt2)
 /*
  *			R A S T E R
  *
- *	Raster - rasterize stroke. 
+ *	Raster - rasterize stroke.
  *
  * Method:
  *	Modified Bresenham algorithm.  Guaranteed to mark a dot for

@@ -20,7 +20,7 @@
  */
 /** @file pixcolors.c
  *	Count the number of different pixel values in a PIX format image.
- *	If the "-v" option is selected, list each unique pixel value 
+ *	If the "-v" option is selected, list each unique pixel value
  *	to the standard output.
  *
  *	Author(s)
@@ -71,7 +71,7 @@ void doit(FILE *fd)
 	count = 0;
 	while ((bytes=fread(pixbuf, 3, PIXELS, fd)) > 0) {
 		for (i=(bytes-1)*3 ; i >= 0 ; i -= 3) {
-			pixel = pixbuf[i] + 
+			pixel = pixbuf[i] +
 				(pixbuf[i+1] << 8) +
 				(pixbuf[i+2] << 16);
 
@@ -108,7 +108,7 @@ int main(int ac, char **av)
 {
 	int  c, isatty(int);
 	progname = *av;
-	
+
 	/* Get # of options & turn all the option flags off
 	 */
 
@@ -135,7 +135,7 @@ int main(int ac, char **av)
 		if (isatty(fileno(stdin))) usage();
 		doit(stdin);
 	}
-	
+
 	return(0);
 }
 

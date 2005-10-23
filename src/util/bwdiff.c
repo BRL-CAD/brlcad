@@ -27,7 +27,7 @@
  *  Author -
  *	Phillip Dykstra
  *	26 June 1986
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
@@ -73,7 +73,7 @@ main(int argc, char **argv)
 {
 	register unsigned char *p1, *p2, *op;
 	int	i, n, m;
-	
+
 	while( argc > 3 ) {
 		if( strcmp(argv[1],"-m") == 0 ) {
 			mode = MAG;

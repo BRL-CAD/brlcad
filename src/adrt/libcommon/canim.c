@@ -68,7 +68,7 @@ int common_anim_read(common_anim_t *anim, char *frames_file) {
       anim->frame_list[anim->frame_num].tlist = NULL;
 
     } else if(!strcmp("camera", token)) {
-      
+
       /* Position */
       token = strtok(NULL, ",");
       anim->frame_list[anim->frame_num].pos.v[0] = atof(token);

@@ -20,12 +20,12 @@
  */
 /** @file wdb_example.c
  *  Create a BRL-CAD geometry database from C code.
- * 
- *  Note that this is for writing (creating/appending) a database.  
+ *
+ *  Note that this is for writing (creating/appending) a database.
  *  There is currently no API for modifying a database.
  *
  *  Note that since the values in the database are stored in millimeters.
- *  This constrains the arguments to the mk_* routines to also be in 
+ *  This constrains the arguments to the mk_* routines to also be in
  *  millimeters.
  */
 #include "common.h"
@@ -98,7 +98,7 @@ main(int ac, char *av[])
 
 	/* Create a wmember structure for each of the items that we want
 	 * in the combination.  The return from mk_addmember is a pointer
-	 * to the wmember structure 
+	 * to the wmember structure
 	 */
 	(void)mk_addmember( "box.s", &wm_hd.l, NULL, WMOP_UNION );
 

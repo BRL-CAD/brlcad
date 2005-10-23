@@ -29,7 +29,7 @@
  *  Source -
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
- *  
+ *
  */
 /*@}*/
 
@@ -79,7 +79,7 @@ rt_raybundle_maker(struct xray *rp, double radius, const fastf_t *avec, const fa
 	int	count = 0;
 
 	rp[0].index = count++;
-	rp[0].magic =RT_RAY_MAGIC; 
+	rp[0].magic =RT_RAY_MAGIC;
 
 	for( ring=0; ring < nring; ring++ )  {
 		register int i;

@@ -96,7 +96,7 @@ int	u, v;
 		static RGBpixel	black_pixel = { 0, 0, 0 };
 		static RGBpixel	white_pixel = { 255, 255, 255 };
 		int	offset = (iconp->hgt-1-v)*iconp->wid/word_sz + u/word_sz;
-		int	bit = (word_sz-1) - (u % word_sz);	
+		int	bit = (word_sz-1) - (u % word_sz);
 		icon_t	word = iconp->map[offset];
 	if( BIT_TEST( word, bit ) )
 		return	(RGBpixel *) black_pixel;
@@ -311,9 +311,9 @@ fb_Entry(struct uvcoord *uvp, Mat_Db_Entry *entry)
 		uvp->uv_u, uvp->uv_v );
 	bu_log( "fbp->map[%d]=<%d,%d,%d>\n",
 		vi*fbp->wid + ui,
-		(*(fbp->map+vi*fbp->wid+ui))[0],	
-		(*(fbp->map+vi*fbp->wid+ui))[1],	
-		(*(fbp->map+vi*fbp->wid+ui))[2] );	
+		(*(fbp->map+vi*fbp->wid+ui))[0],
+		(*(fbp->map+vi*fbp->wid+ui))[1],
+		(*(fbp->map+vi*fbp->wid+ui))[2] );
 	prnt_Pixel( pixel, ui, vi );
 #endif
 	return	1;

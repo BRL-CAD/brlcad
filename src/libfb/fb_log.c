@@ -30,7 +30,7 @@
     SECAD/VLD Computing Consortium, Bldg 394
     The U. S. Army Ballistic Research Laboratory
     Aberdeen Proving Ground, Maryland  21005-5066
-  
+
 
     $Header$ (BRL)
 */
@@ -57,7 +57,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 /*
  *  			F B _ L O G
- *  
+ *
  *  Log a framebuffer library event in the Standard way.
  */
 void

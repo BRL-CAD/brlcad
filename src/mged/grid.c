@@ -166,7 +166,7 @@ draw_grid(void)
 
 	sf = view_state->vs_vop->vo_scale*base2local;
 	inv_sf = 1.0 / sf;
-	inv_aspect = 1.0 / dmp->dm_aspect; 
+	inv_aspect = 1.0 / dmp->dm_aspect;
 
 	nv_dots = 2.0 * inv_aspect * sf * inv_grid_res_v + (2 * grid_state->gr_res_major_v);
 	nh_dots = 2.0 * sf * inv_grid_res_h + (2 * grid_state->gr_res_major_h);
@@ -186,7 +186,7 @@ draw_grid(void)
 		if (ngridpoints > npixels)
 			return;
 	}
-	
+
 
 	VSCALE(model_grid_anchor, grid_state->gr_anchor, local2base);
 	MAT4X3PNT(view_grid_anchor, view_state->vs_vop->vo_model2view, model_grid_anchor);
@@ -209,7 +209,7 @@ draw_grid(void)
 	}
 
 	DM_SET_FGCOLOR(dmp,
-		       color_scheme->cs_grid[0], 
+		       color_scheme->cs_grid[0],
 		       color_scheme->cs_grid[1],
 		       color_scheme->cs_grid[2], 1, 1.0);
 	DM_SET_LINE_ATTR(dmp, 1, 0);		/* solid lines */

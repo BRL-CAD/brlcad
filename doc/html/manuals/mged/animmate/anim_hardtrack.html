@@ -14,11 +14,11 @@ animation of a track and/or the wheels defining a track, where the wheels
 are rigidly fixed in place with respect to the vehicle. The main
 difference between
 <i>anim_hardtrack</i>
-and 
+and
 <i>anim_track</i>
-is that 
+is that
 <i>anim_track</i>
-handles vehicles with dynamic axles. Both are designed to be use in 
+handles vehicles with dynamic axles. Both are designed to be use in
 conjunction with
 <i>anim_script, </i>
 to achieve the final result.
@@ -33,13 +33,13 @@ automatically, then the table should contain only time and position, and the
 option should be used.
 <p>
 The track's
-geometry is defined by 
+geometry is defined by
 <b>wheelfile</b>,<b></b>
 a table which contains one row for each wheel defining the track. The
 first three columns of the table specify the x, y, and z coordinates of
 the wheel centers. The fourth column specifies the radius of each wheel.
 <p>
-The order in which the wheels are listed should be the order in which a 
+The order in which the wheels are listed should be the order in which a
 link of the track would move around the wheels when the vehicle is moving
 forward. (clockwise, when looking from the right of the vehicle).
 The wheel centers should all lie in a plane perpendicular to the vehicle's
@@ -53,20 +53,20 @@ other orientation, this must be specified with the
 option.
 <p>
 By default, it is
-assumed that 
+assumed that
 all of the link objects are modeled at the model origin,
 with the wheel-contacting surface centered on the origin and the
 ground-contacting surface facing up. The sides of each link which
 connect to other links should face the positive and negative x-axes.
 <i>Anim_hardtrack </i>
 prints the appropriate
-commands to move the links from 
+commands to move the links from
 the origin to the correct place around the wheels.
 <p>
 If the links are modeled in place around the wheels to begin with, the
-the 
+the
 <b>-p </b>
-and 
+and
 <b>-i </b>
 options are needed.
 
@@ -81,24 +81,24 @@ One or both of the first two options should always be specified.
 Print animation scripts to animate the links of the track. Animation
 commands will be printed for
 <i>num </i>
-different links 
-named 
+different links
+named
 <i>linkname</i>.0,<i>linkname</i>.1,<i></i>
-up through 
+up through
 <i>linkname</i>.(<i>num</i>-1).<i></i>
 A typical example of a linkname might
 be "tank/righttrack/links/link". The full pathname must be specified,
 because anim_hardtrack's method is to roll the links around within
 the vehicle's tree structure so that when the whole vehicle "tank" is
 animated, the complete combination of rolling around and translating is
-achieved. 
+achieved.
 <dt>
 <b>\-w wheelname</b>
 
 <dd>
 Print animation
-scripts to rotate each wheel. The wheels are named wheelname.0, wheelname.1, 
-and so on, where wheelname.0 is the first wheel listed in 
+scripts to rotate each wheel. The wheels are named wheelname.0, wheelname.1,
+and so on, where wheelname.0 is the first wheel listed in
 <b>wheelfile</b>.<b></b>
 As with the links, the full pathname for the wheels should be specified.
 <dt>
@@ -117,15 +117,15 @@ of which the track is a part. By default, the vehicle is assumed
 centered at the origin.
 </dl>
 <p>
-When calling 
+When calling
 <i>anim_script </i>
 to handle the animation of the vehicle
-itself, the parameters following the 
+itself, the parameters following the
 <b>-b </b>
-and 
+and
 <b>-d </b>
 options should be identical
-to those used for 
+to those used for
 <i>anim_hardtrack</i>.
 <dl><dt>
 <b>\-r #</b>
@@ -138,14 +138,14 @@ should be omitted from the
 <b>\-s</b>
 
 <dd>
-Automatic steering. In this case, 
+Automatic steering. In this case,
 <b>in.table </b>
-specifies only the time and position 
+specifies only the time and position
 of the vehicle. The orientation is calculated to always face the vehicle
 in the direction of motion.
-This should be used when the 
+This should be used when the
 <b>\-s </b>
-option is used by 
+option is used by
 <i>anim_script</i>
 to animate the vehicle.
 </dl>
@@ -183,7 +183,7 @@ track from the default position to the actual desired offset. If the
 links are modeled at the origin, the user can choose any offset. This
 can be useful for lining up the links with gears of a drive wheel, for
 example.
-If the 
+If the
 <b>-p </b>
 option is being used to animated pre-placed links, then it is essential
 that the actual offset of the first pre-placed link be specified.
@@ -191,14 +191,14 @@ that the actual offset of the first pre-placed link be specified.
 <h2>Output:</h2>
 <p>
 The output is a script containing as many frames as there
-are positions in 
+are positions in
 <b>in.table</b>.<b></b>
-If there are 
+If there are
 <i>n </i>
-links and 
+links and
 <i>k </i>
 wheels, each
-frame contains up to 
+frame contains up to
 <i></i>n<i>+</i>k<i></i>
 anim commands, either:
 <pre>
@@ -208,8 +208,8 @@ anim linkname.i matrix lmul
 				or
 anim wheelname.j matrix lmul
 [... matrix ...] ;
- 
-for 0&lt;=i&lt;n and 0&lt;=j&lt;k. 
+
+for 0&lt;=i&lt;n and 0&lt;=j&lt;k.
 
 </pre>
 <h1>EXAMPLES</h1>
@@ -225,8 +225,8 @@ anim_script -s -d 0 0 1000 -b 90 0 0 /tank &lt; in.table &gt; tank.script
 <p>
 Suppose that there are two
 roadwheels and a drivewheel (tank/rwheel/wheel.i, 0&lt;=i&lt;3) which define
-the shape of the right track. 
-A file called 
+the shape of the right track.
+A file called
 <b>rwheelfile </b>
 is created:
 <pre>
@@ -236,29 +236,29 @@ is created:
 1500   2000     30      30
 
 </pre>
-This 
+This
 <b>rwheelfile </b>
 lists the position and
 radius of each of the three wheels.
 <p>
-There are eighty links which make up the right track 
+There are eighty links which make up the right track
 (tank/rtrack/link.i, 0&lt;=i&lt;80).
 The links of the right track are all modeled
 at the origin with the outer, ground-contacting surface
 facing up and the inner, wheel-contacting surface centered at the
 origin.
 <p>
-The appropriate call to 
+The appropriate call to
 <i>anim_hardtrack </i>
 is now:
 <p>
-anim_hardtrack -d 0 0 1000 -b 90 0 0 -w tank/rwheel -l 80 tank/rtrack/link 
+anim_hardtrack -d 0 0 1000 -b 90 0 0 -w tank/rwheel -l 80 tank/rtrack/link
 	rwheelfile &lt; in.table &gt; rtrack.script
 <p>
 Suppose that the left track is similar to the right track,
 except that all the wheels are of radius 30 units, and the links, rather
 than being stored at the origin, are actually placed in position around
-the left wheels to begin with. The 
+the left wheels to begin with. The
 <b>lwheelfile </b>
 would be:
 <pre>
@@ -270,19 +270,19 @@ would be:
 </pre>
 and the call would be:
 <p>
-anim_hardtrack -p -r 30 -d 0 0 1000 -b 90 0 0 -w tank/lwheel 
+anim_hardtrack -p -r 30 -d 0 0 1000 -b 90 0 0 -w tank/lwheel
 	-l 80 tank/ltrack/link lwheelfile &lt;in.table &gt; ltrack.script
 <p>
 Here, it is assumed that tank/ltrack/link.0 is initially at the
 beginning of the straight track segment between lwheel.2 and lwheel.0,
 that is, at the point (2000,1500,-1000) in the vehicle's coordinates.
 If, instead, the first link is initially centered halfway between the
-two roadwheels, this must be specified with the 
+two roadwheels, this must be specified with the
 <b>-i# </b>
 option. If the link's
 actual position is 2000 units farther around the track than expected:
 <p>
-anim_hardtrack -i 2000 -p -r 30 -d 0 0 1000 -b 90 0 0 -w tank/lwheel 
+anim_hardtrack -i 2000 -p -r 30 -d 0 0 1000 -b 90 0 0 -w tank/lwheel
 	-l 80 tank/ltrack/link lwheelfile &lt;in.table &gt; ltrack.script
 <p>
 One final step may remain. The above procedure produces a script with rigid
@@ -294,10 +294,10 @@ be necessary to replace "rwheel.1" with "r_drivewheel".
 <p>
 <b>Tank.script</b>,<b></b>
 <b>rtrack.script</b>,<b></b>
-and 
+and
 <b>ltrack.script </b>
 can be combined
-with 
+with
 <i>anim_sort </i>
 to make the complete script.
 <p>

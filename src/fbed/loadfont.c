@@ -28,9 +28,9 @@
 static
 char sccsTag[] = "@(#) loadfont.c 1.14, modified 5/6/86 at 15:33:42, archive /vld/moss/src/fbed/s.loadfont.c";
 #endif
-/* 
+/*
  * loadfont.c - Load a new font by reading in the header and directory.
- * 
+ *
  * Original Author:	Paul R. Stay
  * 			Ballistics Research Labratory
  * 			APG, Md.

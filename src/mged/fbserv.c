@@ -29,7 +29,7 @@
  *  Authors of the stand-alone fbserv -
  *	Phillip Dykstra
  *	Michael John Muuss
- *  
+ *
  *  Source -
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
@@ -372,7 +372,7 @@ void
 rfbclose(struct pkg_conn *pcp, char *buf)
 {
   char	rbuf[NET_LONG_LEN+1];
-	
+
   /*
    * We are playing FB server so we don't really close the
    * frame buffer.  We should flush output however.
@@ -394,7 +394,7 @@ void
 rfbfree(struct pkg_conn *pcp, char *buf)
 {
   char	rbuf[NET_LONG_LEN+1];
-	
+
   /* Don't really free framebuffer */
   if(pkg_send(MSG_RETURN, rbuf, NET_LONG_LEN, pcp) != NET_LONG_LEN)
     comm_error("pkg_send fb_free reply\n");

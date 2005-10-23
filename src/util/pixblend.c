@@ -19,22 +19,22 @@
  * information.
  */
 /** @file pixblend.c
- *  
+ *
  *  Given two streams of data, typically pix(5) or bw(5) images,
  *  generate an output stream of the same size, where the value of
  *  each pixel in the output is determined by either:
  *    1) a linear interpolation between the two corresponding pixels in the
  *       input streams; or,
  *    2) the pixel of either the first stream or the second stream, chosen
- *       randomly.  
+ *       randomly.
  *
  *  This routine operates on a pixel-by-pixel basis, and thus
  *  is independent of the resolution of the image.
- *  
+ *
  *  Authors -
  *	Paul Randal Stay
  *      Glenn Durfee
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
@@ -173,7 +173,7 @@ main(int argc, char **argv)
 	int gthreshold = 0;
 #endif
         int c = 0;
-	
+
 	if ( !get_args( argc, argv ) || isatty(fileno(stdout)) )  {
 		(void)fputs(usage, stderr);
 		exit( 1 );
@@ -263,7 +263,7 @@ main(int argc, char **argv)
 				if (d >= gvalue) {
 #else
 				if (r >= gthreshold) {
-#endif				    
+#endif
 				    cb3[0] = cb2[0];
 				    cb3[1] = cb2[1];
 				    cb3[2] = cb2[2];

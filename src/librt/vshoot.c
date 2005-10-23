@@ -33,7 +33,7 @@
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005
- *  
+ *
  */
 /*@}*/
 
@@ -54,7 +54,7 @@ struct resource rt_uniresource;		/* Resources for uniprocessor */
 
 /*
  *			R T _ S H O O T R A Y
- *  
+ *
  *  Given a ray, shoot it at all the relevant parts of the model,
  *  (building the HeadSeg chain), and then call rt_boolregions()
  *  to build and evaluate the partition chain.
@@ -152,7 +152,7 @@ register struct application *ap;
 	FinalPart.pt_forw = FinalPart.pt_back = &FinalPart;
 
 	HeadSeg = SEG_NULL;
-	
+
 	GET_BITV( rtip, solidbits, ap->a_resource );	/* see rt_get_bitv() for details */
 	bzero( (char *)solidbits, rtip->rti_bv_bytes );
 	regionbits = &solidbits->be_v[
@@ -256,7 +256,7 @@ register struct application *ap;
 				regionbits[words] |= in[words];
 		}
 	}
- 
+
 	/*
 	 *  Ray has finally left known space.
 	 */
@@ -354,7 +354,7 @@ out:
 	return( ret );
 }
 
-#define SEG_MISS(SEG)		(SEG).seg_stp=(struct soltab *) 0;	
+#define SEG_MISS(SEG)		(SEG).seg_stp=(struct soltab *) 0;
 
 /* Stub function which will "similate" a call to a vector shot routine */
 /*void*/
@@ -525,7 +525,7 @@ int nbits;
 
 /*
  *  			R T _ G E T _ B I T V
- *  
+ *
  *  This routine is called by the GET_BITV macro when the freelist
  *  is exhausted.  Rather than simply getting one additional structure,
  *  we get a whole batch, saving overhead.  When this routine is called,

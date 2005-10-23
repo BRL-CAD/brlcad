@@ -161,7 +161,7 @@ make_3manifold_bits(struct bn_tol *tol)
 	nmg_vertex_g(vertl[7],   50.0,   0.0,   0.0);
 	(void)nmg_fu_planeeqn(fu, tol);
 
-	/* bottom right */	
+	/* bottom right */
 	f_vertl[0] = &vertl[7];
 	f_vertl[1] = &vertl[6];
 	f_vertl[2] = &vertl[3];
@@ -235,13 +235,13 @@ make_3manifold_bits(struct bn_tol *tol)
 	f_vertl[5] = &vertl[11];
 	f_vertl[6] = &vertl[8];
 	bl_fu = fu = nmg_cmface(s, f_vertl, 7);
-	nmg_vertex_g(vertl[11],  25.0,  75.0,   0.0);	
+	nmg_vertex_g(vertl[11],  25.0,  75.0,   0.0);
 	nmg_vertex_g(vertl[17],   0.0,   0.0,   0.0);
 
 	/* this face isn't strictly convex, so we have to make the plane
 	 * equation the old-fashioned way.
 	 */
-	bn_mk_plane_3pts(plane, 
+	bn_mk_plane_3pts(plane,
 			vertl[7]->vg_p->coord,
 			vertl[17]->vg_p->coord,
 			vertl[12]->vg_p->coord,
@@ -366,7 +366,7 @@ make_3manifold_bits(struct bn_tol *tol)
 	f_vertl[3] = &vertl[25];
 	fu = nmg_cmface(s, f_vertl, 4);
 	(void)nmg_fu_planeeqn(fu, tol);
-	
+
 	/* make last side of hole */
 	f_vertl[0] = &vertl[23];
 	f_vertl[1] = &vertl[24];
@@ -412,7 +412,7 @@ make_3manifold_bits(struct bn_tol *tol)
 	f_vertl[3] = &vertl[39];
 	fu = nmg_cmface(s, f_vertl, 4);
 	(void)nmg_fu_planeeqn(fu, tol);
-	
+
 	/* void back */
 	f_vertl[0] = &vertl[42];
 	f_vertl[1] = &vertl[45];
@@ -446,7 +446,7 @@ make_2manifold_bits(struct bn_tol *tol)
 {
 	struct vertex *f2_vertl[8];
 
-	
+
 	/* make a non-dangling internal face */
 	f2_vertl[0] = vertl[1];
 	f2_vertl[1] = vertl[2];
@@ -455,7 +455,7 @@ make_2manifold_bits(struct bn_tol *tol)
 	fu = nmg_cface(s, f2_vertl, 4);
 	(void)nmg_fu_planeeqn(fu, tol);
 
-	/* 
+	/*
 	 * we need to make the 2-manifolds share edge topology
 	 */
 	nmg_mesh_faces(tc_fu, fu, tol);
@@ -489,8 +489,8 @@ make_2manifold_bits(struct bn_tol *tol)
 	nmg_vertex_g(vertl[31],  150.0,   0.0, 150.0);
 	(void)nmg_fu_planeeqn(fu, tol);
 	nmg_mesh_faces(fr_fu, fu, tol);
-	
-	
+
+
 
 }
 
@@ -552,7 +552,7 @@ int main(int ac, char **av)
 	if (!manifold[0] && !manifold[1] && !manifold[2] && !manifold[3])
 		usage("No manifolds selected\n");
 
-	
+
 	m = nmg_mm();
 	r = nmg_mrsv(m);
 	s = BU_LIST_FIRST(shell, &r->s_hd);
@@ -570,7 +570,7 @@ int main(int ac, char **av)
 
 	NMG_CK_MODEL(m);
 
-	
+
 	/* write the database */
 	if ((fdmodel = wdb_fopen(mfilename)) == NULL)
 		perror(mfilename);
@@ -592,7 +592,7 @@ int main(int ac, char **av)
 		nmg_pl_m(fdplot, m);
 		fclose(fdplot);
 	}
-	
+
 
 	nmg_km(m);	/* destroy the NMG model */
 

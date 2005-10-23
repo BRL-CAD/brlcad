@@ -28,7 +28,7 @@
  *	VLD/ASB Building 1065
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005
- *  
+ *
  */
 
 /* Routine to read the directory section of an IGES file.
@@ -45,10 +45,10 @@
 void
 Makedir()
 {
-	
+
 	int found,i,saverec,entcount=(-1),paramptr=0,paramguess=0;
 	char str[9];
-	
+
 	str[8] = '\0';
 	bu_log( "Reading Directory Section...\n" );
 	bu_log( "Number of entities checked:\n" );
@@ -57,12 +57,12 @@ Makedir()
 		goto out;
 
 	Readrec( dstart+1 );	/* read first record in directory section */
-	
+
 	while( 1 )
 	{
 		if( card[72] != 'D' )	/* We are not in the directory section */
 			break;
-		
+
 		entcount++;	/* increment count of entities */
 
 		if( entcount%100 == 0 )
@@ -141,9 +141,9 @@ Makedir()
 			dir[entcount]->paramlines = 1;
 		Readcols( str , 8 );	/* read form number */
 		dir[entcount]->form = atoi( str );
-		
+
 		/* Look for entity type in list and incrememt that count */
-		
+
 		found = 0;
 		for( i=0 ; i<ntypes ; i++ )
 		{

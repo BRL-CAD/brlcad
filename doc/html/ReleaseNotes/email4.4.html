@@ -286,11 +286,11 @@ Date:     Mon, 3 Feb 92 16:25:45 EST
 From:     dome@BRL.MIL
 Subject:  What solid am i hitting?
 To:       mike@BRL.MIL
-To:        
+To:
 Message-ID:  &lt;9202031625.aa16268@VMB.BRL.MIL&gt;
 
 <p>
-Mike, how have you been? I've gotten a survey and some info from the Surviac people and returned the questionaire. I talked to Keith Bowman about rt'ing a .g file and he wasn't able to answer my question. I am trying to find the exact solid that i hit when I rt a file, I'd also like to be able to find some of the data for the solid. 
+Mike, how have you been? I've gotten a survey and some info from the Surviac people and returned the questionaire. I talked to Keith Bowman about rt'ing a .g file and he wasn't able to answer my question. I am trying to find the exact solid that i hit when I rt a file, I'd also like to be able to find some of the data for the solid.
 thanks - John.
 
 <p>
@@ -382,7 +382,7 @@ some kind of idea what info you need.
 Received: from vmb.brl.mil by WOLF.BRL.MIL id aa15429; 10 Feb 92 10:34 EST
 Date:     Mon, 10 Feb 92 10:30:48 EST
 From:     Mike Markowski &lt;mmark@BRL.MIL&gt;
-To:       phd@BRL.MIL, jill@BRL.MIL, acst@BRL.MIL, davisson@BRL.MIL, 
+To:       phd@BRL.MIL, jill@BRL.MIL, acst@BRL.MIL, davisson@BRL.MIL,
           wm@BRL.MIL
 Subject:  brl-cad erim solids
 Message-ID:  &lt;9202101030.aa16973@VMB.BRL.MIL&gt;
@@ -472,7 +472,7 @@ rectangular parallel piped for a model.  But it seems that the values stored
 in the above points are not reflective of any combinatorial regions.
 
 <p>
-For example when a cube of 10x10x10 is cut in half by 5x10x10 object, 
+For example when a cube of 10x10x10 is cut in half by 5x10x10 object,
 rtip-&gt;mdl_min and rtip-&gt;mdl_max still give me 10x10x10.
 
 <p>
@@ -540,7 +540,7 @@ Mike,
 
 <p>
 	Suppose I have n solids, { S1, S2, .., Sn } with bounding
-RPP's for each Si, RPP(Si),  characterized by the two vectors, 
+RPP's for each Si, RPP(Si),  characterized by the two vectors,
 
 <p>
 	[ minXSi, minYSi, minZSi ]   &   [ maxXSi, maxYSi, maxZSi ],
@@ -567,9 +567,9 @@ Starting with the first solid and operation ( I assume it is not "-"),
 define
 
 <p>
-	RPP(1) = RPP(S1) 
+	RPP(1) = RPP(S1)
 i.e.
-	[ minXR1, minYR1, minZR1 ] = [ minXS1, minYS1, minZS1 ] 
+	[ minXR1, minYR1, minZR1 ] = [ minXS1, minYS1, minZS1 ]
 and
 	[ maxXR1, maxYR1, maxZR1 ] = [ maxXS1, maxYS1, maxZS1 ]
 
@@ -831,7 +831,7 @@ perpetually nitpicky but,
 Example:
 
 <p>
-	u S1 u S2 
+	u S1 u S2
 
 <p>
 	with S1 and S2 as RPP's and so they are their own bounding
@@ -846,12 +846,12 @@ Example:
 <p>
 
 <p>
-		|---------------| 
-                |               |  
-                |               |   
-                |               |    
-                |               |     
-                |               |      
+		|---------------|
+                |               |
+                |               |
+                |               |
+                |               |
+                |               |
                 |     |---------|-----|
                 |     |         |     |
                 |     |         |     |
@@ -879,7 +879,7 @@ look like this:
                 |                     |
                 |                     |
                 \                     |
-                 \                    | 
+                 \                    |
                   \                   |
                    \                  |
                     \                 |
@@ -906,7 +906,7 @@ whereas the resulting RPP would be this:
                 |                     |
                 |                     |
                 |                     |
-                |---------------------|     
+                |---------------------|
 
 <p>
 which is less restrictive than the convex hull would be.
@@ -929,11 +929,11 @@ be the little box:
 <p>
 
 <p>
-		|---------------| 
-                |               |  
-                |               |   
-                |               |    
-                |               |     
+		|---------------|
+                |               |
+                |               |
+                |               |
+                |               |
 
 <p>
 
@@ -1138,46 +1138,46 @@ CC:    JOHN A. COLLINS                      ( COLLINS )
 Subject: errata4.0-irix4 install report
 
 <p>
-Received and installed errata4.0-irix4 today on an SGI-4D/35.  (Used to be a 
+Received and installed errata4.0-irix4 today on an SGI-4D/35.  (Used to be a
 4D20 but was upgraded) running IRIX 4.0.1.  Everything went pretty smooth and "-
 most" stuff seems to be ok.  However, a few difficulties were encountered:
 
 <p>
-1)  'edpix' utility was not compiled or installed.  I think this is because of 
-the code in gen.sh that skips the edpix code if the machine is NOT defined as a 
-4D.  Strangely enough, this machine now responds to machinetype.sh as a 5D which 
+1)  'edpix' utility was not compiled or installed.  I think this is because of
+the code in gen.sh that skips the edpix code if the machine is NOT defined as a
+4D.  Strangely enough, this machine now responds to machinetype.sh as a 5D which
 apparently causes the edpix code to be skipped.
 
 <p>
-2)  rpatch and patch-g executables not compiled or installed.  This seems to be 
-because the 'patch' directory is listed in the CDIRS list in gen.sh which, 
-according to the comments, is for codes without cakefiles which really isn't the 
+2)  rpatch and patch-g executables not compiled or installed.  This seems to be
+because the 'patch' directory is listed in the CDIRS list in gen.sh which,
+according to the comments, is for codes without cakefiles which really isn't the
 case for the rpatch and patch-g programs.
 
 <p>
-3)  This machine has a 360MB internal hard drive holding the / and /usr file 
-systems and an external 1.2GB drive holding the /usr2 file system.  With the 
-advent of IRIX4.0.1, there was not enough room on the /usr file system for the 
-brlcad executables.  Therefore, I elected the option indicated in the 
-install.tr file and redefined by BINDIR, LIBDIR, and ETCDIR definitions in the 
-appropriate files.  This seemed to work fine EXCEPT for the man pages.  The 
-'brlman' command was found - would respond with a usage prompt if no args were 
-given - but would respond with nothing if any arg was provided.  Turned out, 
-definitions in the brlman and awf scripts in the ./bin directory ALSO had to be 
+3)  This machine has a 360MB internal hard drive holding the / and /usr file
+systems and an external 1.2GB drive holding the /usr2 file system.  With the
+advent of IRIX4.0.1, there was not enough room on the /usr file system for the
+brlcad executables.  Therefore, I elected the option indicated in the
+install.tr file and redefined by BINDIR, LIBDIR, and ETCDIR definitions in the
+appropriate files.  This seemed to work fine EXCEPT for the man pages.  The
+'brlman' command was found - would respond with a usage prompt if no args were
+given - but would respond with nothing if any arg was provided.  Turned out,
+definitions in the brlman and awf scripts in the ./bin directory ALSO had to be
 changed to reflect my non-standard installation.
 
 <p>
-4)  I have executed most of the utilities I normally used and all seem OK EXCEPT  
-rle-fb.  This sits there apparently awaiting additional input.  It seems that a 
-file pointer (*infp at line 33 in rle-fb.c) had to be changed so it would 
-compile but the change to 'stdin' seems to cause some problems here.  I would 
+4)  I have executed most of the utilities I normally used and all seem OK EXCEPT
+rle-fb.  This sits there apparently awaiting additional input.  It seems that a
+file pointer (*infp at line 33 in rle-fb.c) had to be changed so it would
+compile but the change to 'stdin' seems to cause some problems here.  I would
 appreciate some assistance in this area.
 
 <p>
 Hope this report is useful.
 
 <p>
-Bud Bruenning, Sverdrup/TEAS Group, (904) 729-6226 
+Bud Bruenning, Sverdrup/TEAS Group, (904) 729-6226
 
 <p>
 
@@ -1244,7 +1244,7 @@ brlman/brlman.
 
 <p>
 &gt; Hope this report is useful.
-&gt; Bud Bruenning, Sverdrup/TEAS Group, (904) 729-6226 
+&gt; Bud Bruenning, Sverdrup/TEAS Group, (904) 729-6226
 
 <p>
 The report was very useful.  In response to it, I have created a new
@@ -1327,24 +1327,24 @@ Message-ID:  &lt;9203201205.aa08118@WOLF.BRL.MIL&gt;
 &gt; To: fsbrn@BRL.MIL, gwyn@BRL.MIL, mike@BRL.MIL, stay@BRL.MIL
 &gt; Subject: free(2) Question
 &gt; From: Paul Tanenbaum &lt;pjt@server.cs.jhu.edu&gt;
-&gt; 
+&gt;
 &gt;      Sorry for the unsophisticated approach to the selection of addressees:
 &gt; I just thought up a bunch of people, some set of whom would probably know the
 &gt; answer to this question  (I've RTFM already, and not found the answer)...
 &gt; Is the following hunk of code kosher:
-&gt; 
+&gt;
 &gt; 	foo ()
 &gt; 	{
 &gt; 	    widget	*wp;	/* data type defined elsewhere */
-&gt; 
+&gt;
 &gt; 	    if ((wp = (widget *) malloc(10 * sizeof(widget))) == NULL)
 &gt; 	    {
 &gt; 		fputs("foo():  Can't fit 10 widgets\n", stderr);
 &gt; 		exit (1);
 &gt; 	    }
-&gt; 
+&gt;
 &gt; 	    do_something(wp);
-&gt; 
+&gt;
 &gt; 	    /* Hereafter need only the first 2 widgets */
 &gt; 	    free(wp + 2);
 &gt; 	}
@@ -1408,26 +1408,26 @@ Message-ID:  &lt;9203201137.aa07010@WOLF.BRL.MIL&gt;
 <p>
 &gt; ... I have some questions regarding BRL-CAD's ability
 &gt; to create production drawings.  The documentation mentioned some work
-&gt; being done with automatic dimension, is anything available for 
+&gt; being done with automatic dimension, is anything available for
 &gt; incorporating into BRL-CAD?  Even a primitive (Beta) version would be
 &gt; useful.  Also, is there a command to make BRL-CAD produce the drafting
-&gt; drawings, or does one have to use seperate commands?  
+&gt; drawings, or does one have to use seperate commands?
 
 <p>
 What we have, so far, is RTHIDE, RTSCALE, and RTREGIS.
 
 <p>
-&gt;   Also, the documentation mentions a numerical milling program, is 
-&gt; there a version of this avaliabe?  I would be very interested in one.  
+&gt;   Also, the documentation mentions a numerical milling program, is
+&gt; there a version of this avaliabe?  I would be very interested in one.
 
 <p>
 Nope, sorry.
 
 <p>
 &gt;   I also was wondering what the vector font directory (vfont) was for,
-&gt; is there some way to annotate the images, and what is libnurb for, 
+&gt; is there some way to annotate the images, and what is libnurb for,
 &gt; does BRL-CAD have a method for produceing nurb solids, or does one
-&gt; have to create those outside of BRL-CAD?  
+&gt; have to create those outside of BRL-CAD?
 
 <p>
 vfont directory is used by CAT-FB, which puts troff output onto framebuffers
@@ -1441,10 +1441,10 @@ to create a NURB, it's easy!  Look at proc-db/teapot.c for one example.
 
 <p>
 &gt;   These questions where some things I came up with while reading the
-&gt; documintation and which I would like more information before I go to 
+&gt; documintation and which I would like more information before I go to
 &gt; the effort of porting the package to my MAC.  Being in the NMR software
-&gt; busness myself I can understand how easy it is to let the documentation 
-&gt; fall behind.  
+&gt; busness myself I can understand how easy it is to let the documentation
+&gt; fall behind.
 
 <p>
 Actually, the documentation is in pretty fair shape.  Problem is, our
@@ -1461,7 +1461,7 @@ Received: from vgr.brl.mil by WOLF.BRL.MIL id aa08552; 20 Mar 92 13:36 EST
 Date:     Fri, 20 Mar 92 13:12:40 EST
 From:     Doug Gwyn (VLD/VMB) &lt;gwyn@BRL.MIL&gt;
 To:       Mike Muuss &lt;mike@BRL.MIL&gt;
-cc:       Paul Tanenbaum &lt;pjt@server.cs.jhu.edu&gt;, ACST@BRL.MIL, Gwyn@BRL.MIL, 
+cc:       Paul Tanenbaum &lt;pjt@server.cs.jhu.edu&gt;, ACST@BRL.MIL, Gwyn@BRL.MIL,
           fsbrn@BRL.MIL
 Subject:  Re:  free(2) Question
 Message-ID:  &lt;9203201312.aa00830@VGR.BRL.MIL&gt;
@@ -1689,10 +1689,10 @@ Example:
  	[1] 10671
 	% setenv FB_FILE 0
  	% fb-rle image.rle
- 	% jobs 	
+ 	% jobs
 	[1]  + Running  rt -s 512 -a 35 -e 25 moss.g all.g &gt;& moss.log
- 	% 
-	[1]    Done      rt -s512 -a 35 -e 25 moss.g all.g &gt;& moss.log 
+ 	%
+	[1]    Done      rt -s512 -a 35 -e 25 moss.g all.g &gt;& moss.log
 
 <p>
 
@@ -1831,7 +1831,7 @@ with a '#'.  The following is an example:
 #
 # The order that commands are given is significant, if
 # several regular expressions select the same region.
-# 
+#
 # These lines demonstrate all currently supported features.
 
 <p>
@@ -1970,7 +1970,7 @@ script that will "compact" mged databases.  It takes two arguments: the
 database to be compacted and the new database.  These two arguments must
 be different.  The objective is to remove allocated space that remains
 when a component is killed.  The program relies on g2asc and asc2g to do
-the actual compacting.  
+the actual compacting.
 
 <p>
 Beware: at this time there is no provision made to cover the following
@@ -2030,7 +2030,7 @@ Subject:  BRL TAP Report
 Message-ID:  &lt;9109301008.aa07517@AMIGO.BRL.MIL&gt;
 
 <p>
-   
+
                           BRL TAP Report
                           30 September 91
 
@@ -2220,7 +2220,7 @@ When using mged and attaching sgi (either at the start of editing or
 attaching later) mged is (randomly) killed sending me back to my prompt
 
 <p>
-I am using the latest (?) version of mged 
+I am using the latest (?) version of mged
 BRL-CAD Release 4.1   Graphics Editor (MGED)
     Thu Sep  3 13:10:56 EDT 1992, Compilation 4
     stay@wildcat:/n/wolf/m/dist4.1/mged
@@ -2379,7 +2379,7 @@ besides, people outside the former BRL can't get at this sample.
 <p>
 On WUMPUS, look up the directory /vld/cmoore/CELLFBTEST , and run the
 executable (user-readable) file "runstream".  For starters: Why do I
-get white space instead of red space (the latter indicating a value of 1) 
+get white space instead of red space (the latter indicating a value of 1)
 at (y = -40) x=+16,+12,-32,-40?
 x is the first field, y is the 2nd field, and I am plotting the 3rd field.
 <hr>
@@ -2417,7 +2417,7 @@ besides, people outside the former BRL can't get at this sample.
 <p>
 On WUMPUS, look up the directory /vld/cmoore/CELLFBTEST , and run the
 executable (user-readable) file "runstream".  For starters: Why do I
-get white space instead of red space (the latter indicating a value of 1) 
+get white space instead of red space (the latter indicating a value of 1)
 at (y = -40) x=+16,+12,-32,-40?
 x is the first field, y is the 2nd field, and I am plotting the 3rd field.
 
@@ -2443,17 +2443,17 @@ picking up:
 
 <p>
 &gt; From: "Kenneth H. Fielding" &lt;kfieldin@afit.af.mil&gt;
-&gt; 
+&gt;
 &gt; I would like to generate say a 10 frame sequence where I can define
-&gt; scale, orientation, and position for the object in each frame.  The  
+&gt; scale, orientation, and position for the object in each frame.  The
 &gt; frames can then be ganged together to make a "movie".
-&gt; 
-&gt; what is the easiest and most straight forward way to do this in  
+&gt;
+&gt; what is the easiest and most straight forward way to do this in
 &gt; either "rt" or "lgt"?
 
 <p>
 &gt; From:     "Gary S. Moss" (VLD/VMB) &lt;moss@BRL.MIL&gt;
-&gt; 
+&gt;
 &gt; I don't know the easiest way.  Hopefully, if tools exist to do in-betweening
 &gt; or other useful steps in generating smooth animation sequences, someone else
 &gt; will speak up.  I recall some buggy frame-interpolation software that used
@@ -2519,9 +2519,9 @@ Received: from vmb.brl.mil by WOLF.BRL.MIL id aa15738; 11 Nov 92 15:15 EST
 Received: from VMB.BRL.MIL by VMB.BRL.MIL id aa08475; 11 Nov 92 14:25 EST
 Received: from wharf.brl.mil by VMB.BRL.MIL id aa08473; 11 Nov 92 14:21 EST
 Received: from ti.com by WHARF.BRL.MIL id aa20376; 11 Nov 92 14:36 EST
-Received: from mk1501.dseg.ti.com ([128.247.206.175]) by ti.com with SMTP 
+Received: from mk1501.dseg.ti.com ([128.247.206.175]) by ti.com with SMTP
 	(5.59/LAI-3.2) id AA07893; Wed, 11 Nov 92 13:38:48 CST
-Received: from medusa.dseg.ti.com by mk1501.dseg.ti.com with SMTP 
+Received: from medusa.dseg.ti.com by mk1501.dseg.ti.com with SMTP
 	(5.59/LAI-3.2) id AA10620; Wed, 11 Nov 92 13:37:46 CST
 Received: from ares.dseg.ti.com by medusa.dseg.ti.com (4.1/SMI-4.1)
 	id AA14172; Wed, 11 Nov 92 13:37:26 CST
@@ -2580,7 +2580,7 @@ Message-ID:  &lt;9211161536.aa21053@WOLF.BRL.MIL&gt;
 <p>
 &gt; The perspective viewing mode is not available under X.  The reason is that
 &gt; the perspective is generated in the view module of mged.  Under the sgi
-&gt; view module each vector is passed through a (hardware) matrix multiply. 
+&gt; view module each vector is passed through a (hardware) matrix multiply.
 &gt; There is no such manipulation in the X window support.
 
 <p>
@@ -2653,7 +2653,7 @@ Subject: X term with BRLCAD
 
 <p>
 Jill,
-I'm Jim Leonard and I talked with you at the conference last week.  I am 
+I'm Jim Leonard and I talked with you at the conference last week.  I am
 running the CAD on a Sun 4 using X11R4 on a Mac running AUX.  Running mged
 everything is fine until I do a ray trace.  The frame buffer opens and stays
 but the window stays black.  I have:
@@ -2709,7 +2709,7 @@ Received: from vmb.brl.mil by WOLF.BRL.MIL id aa29993; 13 Nov 92 14:56 EST
 Received: from VMB.BRL.MIL by VMB.BRL.MIL id aa28268; 13 Nov 92 14:16 EST
 Received: from wharf.brl.mil by VMB.BRL.MIL id aa28178; 13 Nov 92 14:08 EST
 Received: from relay2.UU.NET by WHARF.BRL.MIL id aa10614; 13 Nov 92 14:16 EST
-Received: from uunet.uu.net (via LOCALHOST.UU.NET) by relay2.UU.NET with SMTP 
+Received: from uunet.uu.net (via LOCALHOST.UU.NET) by relay2.UU.NET with SMTP
 	(5.61/UUNET-internet-primary) id AA11419; Fri, 13 Nov 92 14:16:18 -0500
 Received: from results.UUCP by uunet.uu.net with UUCP/RMAIL
 	(queueing-rmail) id 141114.2695; Fri, 13 Nov 1992 14:11:14 EST
@@ -2727,7 +2727,7 @@ Cc: jleonard@mbv.mbvlab.wpafb.af.mil
 &gt;Subject: X term with BRLCAD
 &gt;
 &gt;Jill,
-&gt;I'm Jim Leonard and I talked with you at the conference last week.  I am 
+&gt;I'm Jim Leonard and I talked with you at the conference last week.  I am
 &gt;running the CAD on a Sun 4 using X11R4 on a Mac running AUX.  Running mged
 &gt;everything is fine until I do a ray trace.  The frame buffer opens and stays
 &gt;but the window stays black.  I have:
@@ -2744,7 +2744,7 @@ Jim,
 
 <p>
 The most likely problem you are having with your X display under A/UX
-(assuming that you are using MacX) is that you are using the wrong screen. 
+(assuming that you are using MacX) is that you are using the wrong screen.
 The method that I use is:
         Make a version of libfb under A/UX that has X support compiled in.
                 (There is a #if 0/1 in /m/cad/Cakefile.defs to do this)
@@ -2982,24 +2982,24 @@ Message-ID:  &lt;9301200957.aa04781@WAFFLE.BRL.MIL&gt;
 <p>
 
 <p>
-At a recent meeting it was asked how to produce HPGL or Postscript 
+At a recent meeting it was asked how to produce HPGL or Postscript
 files for line plots (hidden line drawings). Since it seems to of general
 interest in the community I thought that I would give a brief description
 on how to do this.
 
 <p>
-The first phase is to get a plot file made. I will use the m35 truck 
-found in the database to illustrate on how this is done. 
+The first phase is to get a plot file made. I will use the m35 truck
+found in the database to illustrate on how this is done.
 
 <p>
 To get a top view of the m35 truck made into a plot file
-you can use the rthide command. 
-	rthide -o top.pl -s 1024 -a 90 -e 90 m35.g component 
+you can use the rthide command.
+	rthide -o top.pl -s 1024 -a 90 -e 90 m35.g component
 
 <p>
 This creates an Extended Unix Plot file, the extended Plot format allows
 for 3D data, color, space bounding boxes, etc. You can look in the libplot
-directory for more info. 
+directory for more info.
 
 <p>
 We now need to Rotate the plotfile, Scale it, convert it to the standard
@@ -3010,24 +3010,24 @@ Unix Plot format.
 
 <p>
 The plot file is now ready to convert to a number of different formats
-and there are several converters, 
+and there are several converters,
 	pl-tek		Plot to Tektronix
 	pl-ps		Plot to Postscript
 	pl-hpgl		Plot to HP GL format
 	pl-fb		Plot to BRLCAD Frame buffer
 
 <p>
-If you want hpgl then do 
+If you want hpgl then do
 
 <p>
 	pl-hpgl &lt; top2.pl &gt; top.hpgl
 
 <p>
 I tested the above including sending the top.hpgl to our
-Tektronix Phaser III in hpgl mode. 
+Tektronix Phaser III in hpgl mode.
 
 <p>
-You will want to look at the man pages for details on each of the 
+You will want to look at the man pages for details on each of the
 above programs.
 
 <p>
@@ -3116,7 +3116,7 @@ Message-ID:  &lt;9302190119.aa27182@WOLF.BRL.MIL&gt;
 
 <p>
 &gt;    I just got my 4.0 documentation, and after just scanning through
-&gt; it looks pretty impressive.  I think everyone did a good job.  
+&gt; it looks pretty impressive.  I think everyone did a good job.
 
 <p>
 Thanks!  It's also good to know that the boxes are making it through
@@ -3126,7 +3126,7 @@ the mail, too.
 &gt; On to the actual topic.  I was very impressed by the complexity of
 &gt; some of the models displayed (created in mged), and I thought it would
 &gt; be a big help in learning how to design complex models if I had one
-&gt; or two of these to play with and see how they were built. 
+&gt; or two of these to play with and see how they were built.
 
 <p>
 Probably the best way to gear up a staff for a large model building
@@ -3142,8 +3142,8 @@ at least another year.
 
 <p>
 &gt; So, is
-&gt; it possible to get via ftp some of these models, like the M1A1 
-&gt; and/or the Bradley.  
+&gt; it possible to get via ftp some of these models, like the M1A1
+&gt; and/or the Bradley.
 
 <p>
 There are some restrictions on what geometric models can be distributed,
@@ -3181,9 +3181,9 @@ Message-ID:  &lt;9302190156.aa27299@WOLF.BRL.MIL&gt;
 
 <p>
 &gt; From: joe edward meier &lt;jem@bruker.com&gt;
-&gt; 
+&gt;
 &gt;   Does the "ev" command work in the 4.0 version of meged.  When I
-&gt; use the command the whole program quits.  
+&gt; use the command the whole program quits.
 
 <p>
 In the 4.0 Release, the "ev" command does occasionally work, but only on
@@ -3389,19 +3389,19 @@ Stu-
 <p>
 The algorithm which is used by the BRL-CAD software is based on
 algorithms found in the SigGraph 1990 paper "Ray Tracing Trimmed rational
-Surface Patches" by Nishita, Sederburg, Kamimoto, The routines are 
+Surface Patches" by Nishita, Sederburg, Kamimoto, The routines are
 a combination of librt and libnurb. The libnurb routines are included in
-the librt library. 
+the librt library.
 
 <p>
 A sample data base can be generated by using the teapot program found in the
-proc-db directory. 
+proc-db directory.
 
 <p>
-Currently the Nurb raytracing routines do not handle trimmed nurbs. 
-Eventually there will be support for trimmed nurbs as part of the 
+Currently the Nurb raytracing routines do not handle trimmed nurbs.
+Eventually there will be support for trimmed nurbs as part of the
 NMG routines.  At the time of the last BRL-CAD meeting the libnurb
-library routines were still in a state of change. I hope to have some 
+library routines were still in a state of change. I hope to have some
 documentation on the libnurb library before the next release.
 
 <p>
@@ -4311,24 +4311,24 @@ Subject: BRL-CAD 4.1 MGED screen is BLACK ...
 <p>
 	I have just installed BRL-CAD 4.1 on an SGI SKYWRITER
 (two graphics heads) running 4.0.5(A). The software was built to run
-in /data3/brlcad..... 
- When I run MGED, useing one of the sample databases, the MGED 
+in /data3/brlcad.....
+ When I run MGED, useing one of the sample databases, the MGED
 window comes up, but no buttons show up on the left had side of the
 screen. When I issue the B command to draw the database, the figure
 flashes on the screen for about 1 scan then the contents of the window
 goes black. The same for left/center/right button -  the figure
 appears for about 1 scan and then the window contents goes to black
-again. 
+again.
 	Any suggestions as to the cause/cure???
 
 <p>
 Michael N. LeVine  Naval Air Weapons Station, China Lake, Ca 93555, USA
 Internet: levine@fidler.chinalake.navy.mil
-(619) 939-2614  avn  437-2614 
+(619) 939-2614  avn  437-2614
 
 <p>
- "Waiter, there's a bug in my soup!"        
- "No, Sir, it's not a bug, it's a feature!" 
+ "Waiter, there's a bug in my soup!"
+ "No, Sir, it's not a bug, it's a feature!"
 
 <p>
 <hr>
@@ -4350,7 +4350,7 @@ Message-ID:  &lt;9304061412.aa07139@WOLF.BRL.MIL&gt;
 &gt;flashes on the screen for about 1 scan then the contents of the window
 &gt;goes black. The same for left/center/right button -  the figure
 &gt;appears for about 1 scan and then the window contents goes to black
-&gt;again. 
+&gt;again.
 &gt;	Any suggestions as to the cause/cure???
 
 <p>
@@ -4731,7 +4731,7 @@ Received: from spark.brl.mil by WALRUS.BRL.MIL id aa21021; 16 Apr 93 3:56 EDT
 Date:     Fri, 16 Apr 93 3:57:26 EDT
 From:     Phil Dykstra &lt;phil@BRL.MIL&gt;
 To:       Kevin Farrar &lt;kfarrar@nextclient3.mbvlab.wpafb.af.mil&gt;
-cc:       CAD@BRL.MIL, pjoslin@mbvlab.wpafb.af.mil, 
+cc:       CAD@BRL.MIL, pjoslin@mbvlab.wpafb.af.mil,
           kfarrar@mbvlab.wpafb.af.mil
 Subject:  Re:  Problem with mouse & mged
 Message-ID:  &lt;9304160357.aa23871@SPARK.BRL.MIL&gt;
@@ -4802,33 +4802,33 @@ Date: Thu, 22 Apr 1993 09:03:53 -0500 (CDT)
 X-Mailer: ELM [version 2.4 PL3]
 Mime-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
-Content-Length: 720       
+Content-Length: 720
 
 <p>
 Forwarded message:
 We have run into the following error situation with MGED, attempts to
 use torus in combination with other primitives gives the folowing error
-with 'Big E' (and RT as well) 
+with 'Big E' (and RT as well)
 &gt; mged&gt; E test04
-&gt; 
+&gt;
 &gt; proc_reg:  Cannot draw solid type 16 (TOR)
 &gt; Error in converting solid test04 to ARBN
 &gt; E: 0 vectors in 0 sec
-&gt; 
-&gt; 
+&gt;
+&gt;
 &gt; mged&gt; tree test04
-&gt; 
-&gt; 
+&gt;
+&gt;
 &gt; test04/R
 &gt;         u torus2
 &gt;         + cyl3
-&gt; 
+&gt;
 &gt; The problem is the inability to edit the "tor" solid or
 &gt; a solid to be edited by a "tor" and disply the results
 &gt; with "E"
-&gt; 
+&gt;
 &gt; -tony
-&gt; 
+&gt;
 Is there a patch for MGED, or are we missing something fundamental about
 MGED's operation?
 
@@ -4976,7 +4976,7 @@ Ali writes:
 &gt; 	Also, I am trying to get BRL-CAD to work on a Sun
 &gt; Sparcstation with SunOS 4.1.2 (and 4.1.3), under OpenWindows (not
 &gt; SunView).  I was wondering if anybody else had done this...
-&gt; 
+&gt;
 
 <p>
 
@@ -5106,10 +5106,10 @@ Received: from [127.0.0.1] by whitton.arch.su.EDU.AU (5.61+/SMI-4.1)
 	id AA22252; Tue, 29 Jun 1993 16:59:48 +1000
 Message-Id: &lt;9306290659.AA22252@whitton.arch.su.EDU.AU&gt;
 To: Phil Dykstra &lt;phil@BRL.MIL&gt;
-Subject: Re: multi-user MGED 
+Subject: Re: multi-user MGED
 Cc: cad@BRL.MIL
 In-Reply-To: Your message of Tue, 29 Jun 93 02:33:58 -0400.
-             &lt;9306290233.aa08483@SPARK.BRL.MIL&gt; 
+             &lt;9306290233.aa08483@SPARK.BRL.MIL&gt;
 Date: Tue, 29 Jun 93 16:59:46 +1000
 From: ali@archsci.arch.su.edu.au
 
@@ -5141,8 +5141,8 @@ want...
 well, that question has many long answers.  The basic idea is
 collaborative design.  That's my current area of research.  There is
 alot of work being done in collaborative/multi-user programs, and
-there are several ways in which you can handle control.  One solution 
-is to do it the way it would be done in a meeting with a whiteboard. 
+there are several ways in which you can handle control.  One solution
+is to do it the way it would be done in a meeting with a whiteboard.
 have one "pen" and allow only one person to edit at a time.  Another
 way, (which, in my opinion is the way it should be done) is to allow
 people to have their own views of the 3D database, and allow them all
@@ -5153,7 +5153,7 @@ would allow users to work on a small part of the design outside of
 the main database, and then add it in when they want to show it to
 people.  Of course, it would be very important for the designers to
 also be speaking to eachother to prevent problems.  A masters student
-at MIT named Li Shu did a good piece of work on collaborative cad and 
+at MIT named Li Shu did a good piece of work on collaborative cad and
 had a paper in CSCW'92...
 
 <p>
@@ -5278,7 +5278,7 @@ Received: from whitton.arch.su.EDU.AU by archsci.arch.su.EDU.AU (5.61+/5.17)
 Received: from [127.0.0.1] by whitton.arch.su.EDU.AU (5.61+/SMI-4.1)
 	id AA14552; Thu, 1 Jul 1993 16:35:18 +1000
 Message-Id: &lt;9307010635.AA14552@whitton.arch.su.EDU.AU&gt;
-To: "John R. Anderson" &lt;jra@BRL.MIL&gt;, Mike Muuss &lt;mike@BRL.MIL&gt;, 
+To: "John R. Anderson" &lt;jra@BRL.MIL&gt;, Mike Muuss &lt;mike@BRL.MIL&gt;,
     Patrick Haggard &lt;ph@physiol.ox.ac.uk&gt;
 Cc: cad@BRL.MIL
 Subject: brl-cad on Sun Sparcstations
@@ -5293,11 +5293,11 @@ under openwindows.  I modified the Cakefile.defs a slight bit to
 compile under the "Sun with X11 only" option, but I still have
 problems.  mged works fine, except that it flickers horribly when
 rotating, zooming, etc.  Is it true that it does not do double
-buffering because it's running under X? 
-     The main problem, however, is that rt doesn't work in mged. It 
-just messes up the screen alot and leaves the screen in black and 
-white mode when it stops.  Then if I re-attach X (or type fix), 
-everything goes back to normal, except that I have lots of debree 
+buffering because it's running under X?
+     The main problem, however, is that rt doesn't work in mged. It
+just messes up the screen alot and leaves the screen in black and
+white mode when it stops.  Then if I re-attach X (or type fix),
+everything goes back to normal, except that I have lots of debree
 left on the screen where rt popped up a "window".
 
 <p>
@@ -5374,10 +5374,10 @@ Message-ID:  &lt;9307010339.aa23335@WOLF.BRL.MIL&gt;
 <p>
 
 <p>
-&gt;     The main problem, however, is that rt doesn't work in mged. It 
-&gt; just messes up the screen alot and leaves the screen in black and 
-&gt; white mode when it stops.  Then if I re-attach X (or type fix), 
-&gt; everything goes back to normal, except that I have lots of debree 
+&gt;     The main problem, however, is that rt doesn't work in mged. It
+&gt; just messes up the screen alot and leaves the screen in black and
+&gt; white mode when it stops.  Then if I re-attach X (or type fix),
+&gt; everything goes back to normal, except that I have lots of debree
 &gt; left on the screen where rt popped up a "window".
 
 <p>
@@ -5453,7 +5453,7 @@ Ali,
 &gt; compile under the "Sun with X11 only" option, but I still have
 &gt; problems.  mged works fine, except that it flickers horribly when
 &gt; rotating, zooming, etc.  Is it true that it does not do double
-&gt; buffering because it's running under X? 
+&gt; buffering because it's running under X?
 
 <p>
 	I believe that is just a characteristic of graphics under X.
@@ -5461,10 +5461,10 @@ Ali,
 <p>
 
 <p>
-&gt;      The main problem, however, is that rt doesn't work in mged. It 
-&gt; just messes up the screen alot and leaves the screen in black and 
-&gt; white mode when it stops.  Then if I re-attach X (or type fix), 
-&gt; everything goes back to normal, except that I have lots of debree 
+&gt;      The main problem, however, is that rt doesn't work in mged. It
+&gt; just messes up the screen alot and leaves the screen in black and
+&gt; white mode when it stops.  Then if I re-attach X (or type fix),
+&gt; everything goes back to normal, except that I have lots of debree
 &gt; left on the screen where rt popped up a "window".
 
 <p>
@@ -5546,7 +5546,7 @@ concise suggestions.
 
 <p>
 &gt; I also understand (I think) how the dbase works and when it is
-&gt; accessed. 
+&gt; accessed.
 
 <p>
 This is one of the main benefits that you obtain from having the source
@@ -5609,11 +5609,11 @@ p.s.  I don't really need it anymore, so I didn't reply to him...
 ------- Forwarded Message
 
 <p>
-Return-Path: olasov@cs.columbia.edu 
+Return-Path: olasov@cs.columbia.edu
 Received: from cs.columbia.edu by archsci.arch.su.EDU.AU (5.61+/5.17)
 	id AA21686; Mon, 19 Jul 1993 08:58:26 +1000
 Received: from ground.cs.columbia.edu by cs.columbia.edu
-(5.65c/0.6/jba+ad+jtt) with SMTP 
+(5.65c/0.6/jba+ad+jtt) with SMTP
 	id AA21871; Sun, 18 Jul 1993 18:58:19 -0400
 Received: by ground.cs.columbia.edu id AA03805
   (5.65c/IDA-1.4.4.5/jba/jtt/ad for ali@archsci.arch.su.edu.au); Sun,
@@ -5663,7 +5663,7 @@ below.
 <p>
 &gt; An even shorter short-ish mged hacking question:
 &gt; 	from within db_put(), how can I find the complete pathname
-&gt; of the solid being "put"?  
+&gt; of the solid being "put"?
 
 <p>
 You can't do it, that far down in the library.  Best you can do is to
@@ -5758,7 +5758,7 @@ Received: from vmb.brl.mil by WOLF.BRL.MIL id aa16792; 4 Oct 92 21:53 EDT
 Received: from VMB.BRL.MIL by VMB.BRL.MIL id aa20069; 4 Oct 92 21:32 EDT
 Received: from wharf.brl.mil by VMB.BRL.MIL id aa20048; 4 Oct 92 21:24 EDT
 Received: from relay1.UU.NET by WHARF.BRL.MIL id aa08733; 4 Oct 92 20:10 EDT
-Received: from uunet.uu.net (via LOCALHOST.UU.NET) by relay1.UU.NET with SMTP 
+Received: from uunet.uu.net (via LOCALHOST.UU.NET) by relay1.UU.NET with SMTP
 	(5.61/UUNET-internet-primary) id AA00151; Sun, 4 Oct 92 20:11:26 -0400
 Received: from results.UUCP by uunet.uu.net with UUCP/RMAIL
 	(queueing-rmail) id 201007.22878; Sun, 4 Oct 1992 20:10:07 EDT
@@ -5875,7 +5875,7 @@ November 5, 1992
 1105-1200 Three Short Presentations
 	"Proliferation Concerns in Geometric Modeling", Victor Cericole, Jr.
 	Geometric Solutions, INC.
-"I/EMS to BRL-CAD Translation: Converting from a B-REP Modeler to a 
+"I/EMS to BRL-CAD Translation: Converting from a B-REP Modeler to a
 	CSG Modeler", Andrew J. Foglia, Intergraph Corporation, Federal
 	Systems Division
 "Revision Control System (RCS) Configuration Management for BRL-CAD Target
@@ -5919,7 +5919,7 @@ Ed,
 &gt;face, Mike claims you look at the nearest edge.  How do you find that
 &gt;nearest edge?  Do you assume the polygonal boundary is convex?  If
 &gt;you use a similar approach to what was being described on the sphere
-&gt;yesterday, you may have a problem.  
+&gt;yesterday, you may have a problem.
 
 <p>
 The current version of the algorithm is something like this:
@@ -5951,7 +5951,7 @@ iff the "closest" edge has its PCA along the length of the edge, or the "plane
 			the plane point is inside the surface area of the
 			face, otherwise it is outside the surface area of
 			the face.
-			
+
 
 <p>
 iff the "closest" edge has its PCA at a vertex (end point) and the vertex is
@@ -5968,7 +5968,7 @@ iff the "closest" edge has its PCA at a vertex (end point) and the vertex is
 			the plane point is inside the surface area of the
 			face, otherwise it is outside the surface area of
 			the face.
-	
+
 <hr>
 <hr>
 Date:     Fri, 20 Aug 93 5:39:06 EDT
@@ -6064,7 +6064,7 @@ writes:
 &gt; i've just installed brl-cad on a sun4 system.
 &gt; After compiling and installing everything right (?!),
 &gt; i've got som problems :
-&gt;                         1. how can i rotate a single 
+&gt;                         1. how can i rotate a single
 &gt;                            solid, when i chose the rotate-
 &gt;                            function in the edit-solid menu.
 
@@ -6103,7 +6103,7 @@ writes:
 <p>
 I hope this answer helps.  I don't know anything about the second
 problem you are experiencing.
- 
+
                                         Susan Coates
 
 <p>
@@ -6122,9 +6122,9 @@ Received: by w20-575-7.MIT.EDU (5.0/4.7) id AA05685; Thu, 9 Sep 93 14:12:39 EDT
 Message-Id: &lt;9309091812.AA05685@w20-575-7.MIT.EDU&gt;
 To: Adm diverser tools &lt;tools@frenet.informatik.uni-dortmund.de&gt;
 Cc: CAD@BRL.MIL
-Subject: Re: brl-cad on sun4 
+Subject: Re: brl-cad on sun4
 In-Reply-To: Your message of Thu, 09 Sep 93 18:37:34 +0200.
-             &lt;9309091637.AA09999@frenet.informatik.uni-dortmund.de&gt; 
+             &lt;9309091637.AA09999@frenet.informatik.uni-dortmund.de&gt;
 Date: Thu, 09 Sep 93 14:12:37 EDT
 From: Ali Alavi &lt;alialavi@athena.mit.edu&gt;
 Content-Length: 724
@@ -6237,9 +6237,9 @@ Received: from wharf.brl.mil by WALRUS.BRL.MIL id aa01514; 10 Sep 93 7:24 EDT
 Received: from sun2.nsfnet-relay.ac.uk by WHARF.BRL.MIL id aa03656;
           10 Sep 93 7:13 EDT
 Via: uk.ac.oxford.prg; Fri, 10 Sep 1993 12:12:37 +0100
-Received: from oxphys.physiol (oxphys-gate.physiol) by prg.oxford.ac.uk 
+Received: from oxphys.physiol (oxphys-gate.physiol) by prg.oxford.ac.uk
           id AA06515; Fri, 10 Sep 93 12:12:23 +0100
-Received: from galen.physiol.physiol 
+Received: from galen.physiol.physiol
           by uk.ac.oxford.physiology (4.1/physiol 1.2m (20-Jun-90)) id AA22393;
           Fri, 10 Sep 93 12:01:40 BST
 Date: Fri, 10 Sep 93 12:01:40 BST
@@ -6498,15 +6498,15 @@ Message-Id: &lt;QCA9CD30@bturner-pc&gt;
 <p>
 Thomas Browder writes:
 &gt;
-&gt;A great aid in MGED would be a constant XYZ coord. system 
-&gt;orientation aid, say a small set of labeled unit vectors 
+&gt;A great aid in MGED would be a constant XYZ coord. system
+&gt;orientation aid, say a small set of labeled unit vectors
 &gt;in the lower right corner of the screen.
 &gt;
 
 <p>
-Axes are not automatically available in MGED but can easily be built 
-as an added element to a .g database.  "The MGED User's Manual", 
-Volume IV of the BRL-CAD Release 4.0 Documentation describes building 
+Axes are not automatically available in MGED but can easily be built
+as an added element to a .g database.  "The MGED User's Manual",
+Volume IV of the BRL-CAD Release 4.0 Documentation describes building
 coordinate axes in Chapter 13.  Once built, the axes may be included
 in any output to aid in orientation and to provide scale.
 
@@ -6525,7 +6525,7 @@ ex:  #mged test.g &lt;build_test.cmd
 <p>
 The creator of the file or the program anticipates the needed MGED command
 sequence.  MGED opens the database with null display, echoes the prompts the
-user would otherwise see and terminates on EOF.   
+user would otherwise see and terminates on EOF.
 
 <p>
 The following shell and awk files provide a quick kludge to automate
@@ -6578,7 +6578,7 @@ awk -f gen_axes.awk x0=$1 y0=$2 z0=$3 len=$4 diam=$5
 #  awk -f gen_axes.awk x0=$1 y0=$2 z0=$3 len=$4 diam=$5
 #  where:  x0 y0 z0 define the offset from the origin to place axes
 #          length of the cylinders making up the axes and
-#          diameter of the cylinders 
+#          diameter of the cylinders
 #
 #  ex:  sh gen_axes.sh 0 -3000 0 1000 10|mged test.g
 #  would generate axes in test.g 1 meter long, 1 cm diameter
@@ -6604,7 +6604,7 @@ printf("in __axes_x.s rcc %f %f %f", x0, y0, z0)        #name, rcc, origin
 printf("  %f %f %f", len, 0, 0)                         #length along x
 printf("  %f\n", radius)                                #radius of rcc
 printf("r __axes_x.r u __axes_x.s\n")                   #region def
-printf("mater __axes_x.r\nplastic\n\n250 150 150\n\n")  #color 
+printf("mater __axes_x.r\nplastic\n\n250 150 150\n\n")  #color
 
 <p>
 #  Y axis
@@ -6685,7 +6685,7 @@ Received: from walrus.brl.mil by WOLF.BRL.MIL id aa25758; 17 Nov 93 12:04 EST
 Received: from WALRUS.BRL.MIL by WALRUS.BRL.MIL id aa20898; 17 Nov 93 11:01 EST
 Received: from wharf.brl.mil by WALRUS.BRL.MIL id aa20700; 17 Nov 93 10:49 EST
 Received: from relay1.UU.NET by WHARF.BRL.MIL id aa08850; 17 Nov 93 10:31 EST
-Received: from bruker.com (via bii.BRUKER.COM) by relay1.UU.NET with SMTP 
+Received: from bruker.com (via bii.BRUKER.COM) by relay1.UU.NET with SMTP
 	(5.61/UUNET-internet-primary) id AA14781; Wed, 17 Nov 93 10:32:48 -0500
 Received: by bruker.com (4.1/SMI-4.1)
 	id AA00425; Wed, 17 Nov 93 10:28:45 EST
@@ -6697,10 +6697,10 @@ Date: Wed, 17 Nov 93 10:28:45 EST
 X-Mailer: ELM [version 2.3 PL0]
 
 <p>
-I was trying to duplicate the things in the "Animation Techniques in 
+I was trying to duplicate the things in the "Animation Techniques in
 BRL-CAD" WWEB file.  Most everything went fine except when I tried
 to preview the animation script in "mged", in which case "mged" just
-quit on me when I typed the command "preview moss.rtanim".  This 
+quit on me when I typed the command "preview moss.rtanim".  This
 happend in both the 4.1 and 4.2 version of BRL-CAD.  Below is the
 output from meged:
 
@@ -6735,7 +6735,7 @@ mat_inv: singular matrix
 <p>
 The "moss.rtanim" script seems fine to me, because it works fine
 when I create the Postage stamp animations.  Does any one know why
-this is not working? I am running on a 4D/35 with Irix 4.0.5.  
+this is not working? I am running on a 4D/35 with Irix 4.0.5.
 
 <p>
   I also have a few more questions.  The first is how the mpeg movie
@@ -6743,15 +6743,15 @@ for the animations in this paper were created? Is there some public
 domain software which can convert the BRL-CAD pix files into a MPEG
 file?  Finally, whay are the main new features of the 4.2 version.  Is
 it just a improved X11 version of "mged"?  I could sure use the NURB
-editting capability that is being worked on.  Any plans on a beta 
-relase of this stuff?  
+editting capability that is being worked on.  Any plans on a beta
+relase of this stuff?
 
 <p>
 Thanks,
 
 <p>
 Joe
--- 
+--
 <hr>
     Joseph Meier, Ph.D.
     Senior NMR Software Scientist
@@ -6805,20 +6805,20 @@ Attendees:
 
 <p>
 The SURVIAC BRL-CAD User's Group Meeting was held at the Booz-
-Allen Hamilton facilities in McLean, Virginia.  Mr. Jeff Foulk, 
-SURVIAC Aberdeen Satellite Office (ASO) project manager, welcomed 
-the attendees, presented the purpose of the meeting, and provided 
-an overview of the SURVIAC organization.  The thrust of the 
-meeting was presentation of uses for BRL-CAD, program updates, and 
+Allen Hamilton facilities in McLean, Virginia.  Mr. Jeff Foulk,
+SURVIAC Aberdeen Satellite Office (ASO) project manager, welcomed
+the attendees, presented the purpose of the meeting, and provided
+an overview of the SURVIAC organization.  The thrust of the
+meeting was presentation of uses for BRL-CAD, program updates, and
 discussion of user problems and ideas.
 
 <p>
-Ms. Carla Moyer, SURVIAC ASO administrative manager, presented the 
-function of the SURVIAC ASO regarding BRL-CAD.  SURVIAC full 
-support includes distributing the BRL-CAD source code and 
-documentation, providing telephone support for installation and 
-operation technical inquiries, distributing maintenance release 
-updates, and maintaining a mailing list database of users.  Points 
+Ms. Carla Moyer, SURVIAC ASO administrative manager, presented the
+function of the SURVIAC ASO regarding BRL-CAD.  SURVIAC full
+support includes distributing the BRL-CAD source code and
+documentation, providing telephone support for installation and
+operation technical inquiries, distributing maintenance release
+updates, and maintaining a mailing list database of users.  Points
 of contact for BRL-CAD 4.0 are:
 
 <p>
@@ -6841,92 +6841,92 @@ of contact for BRL-CAD 4.0 are:
           Technical Inquires:        cad@arl.army.mil
 
 <p>
-Mr. Bob Strausser, SURVIAC ASO BRL-CAD technical POC, presented an 
-overview of technical inquiries over the last 9 months.  Inquiries 
-were primarily administrative (67%) with the balance divided 
+Mr. Bob Strausser, SURVIAC ASO BRL-CAD technical POC, presented an
+overview of technical inquiries over the last 9 months.  Inquiries
+were primarily administrative (67%) with the balance divided
 between installation and operation questions.
 
 <p>
-During the Technical Inquiry overview, Dr. Dietz stressed that the 
-vdeck conversion program and gift shotlining program are obsolete.  
-The principal problem with using vdeck lies with the expansion of 
-BRL-CAD primitives beyond the supported primitives of the old 
-comgeom format (generated by vdeck).  This can result in the loss 
-of data by the conversion back into the comgeom era.  Joseph 
-Silverstein is using vdeck and gift to interface between BRL-CAD 
-geometries and the schrim radar signature program.  Dr. Deitz and 
-Bill Mermagen, Jr. recommended using rtrayhist and xpatch as 
-better tools than the gift / schrim pair.  The vdeck and gift 
-programs are also used to feed hevart because the sequence of 
-shotlines provided by rtg3 is not compatible with hevart's input 
-requirements.  Carole Keyser recommended using shotb2g, it 
-converts rtg3 output into a format compatible with hevart.  
-Contact John Anderson at ARL (278-7267) for copies of the shotb2g 
+During the Technical Inquiry overview, Dr. Dietz stressed that the
+vdeck conversion program and gift shotlining program are obsolete.
+The principal problem with using vdeck lies with the expansion of
+BRL-CAD primitives beyond the supported primitives of the old
+comgeom format (generated by vdeck).  This can result in the loss
+of data by the conversion back into the comgeom era.  Joseph
+Silverstein is using vdeck and gift to interface between BRL-CAD
+geometries and the schrim radar signature program.  Dr. Deitz and
+Bill Mermagen, Jr. recommended using rtrayhist and xpatch as
+better tools than the gift / schrim pair.  The vdeck and gift
+programs are also used to feed hevart because the sequence of
+shotlines provided by rtg3 is not compatible with hevart's input
+requirements.  Carole Keyser recommended using shotb2g, it
+converts rtg3 output into a format compatible with hevart.
+Contact John Anderson at ARL (278-7267) for copies of the shotb2g
 program.
 
 <p>
-Mr. Bob Strausser also presented a status update on the patch-g 
-conversion program.  This program provides initial conversion of 
-FASTGEN faceted geometry descriptions into BRL-CAD format.  The 
-updated program has been sent to Bill Mermagen, Jr. for review and 
+Mr. Bob Strausser also presented a status update on the patch-g
+conversion program.  This program provides initial conversion of
+FASTGEN faceted geometry descriptions into BRL-CAD format.  The
+updated program has been sent to Bill Mermagen, Jr. for review and
 release.
 
 <p>
-Bill Mermagen, Jr. presented an overview of BRL-CAD status and 
-plans.  The next release of BRL-CAD anticipated Summer 1994, will 
-have a production version of the N-manifold Geometry (NMG) 
-capability.  This will permit use of polygonal representations for 
-import, export, and visualization and will provide better support 
-for faceted-geometry dependent analysis codes.  Along with the 
-NMGs, new primitives (i.e.. elliptical tori, paraboloids, and 
-hyperboloids) will be available.  A second task area has been 
-revising the MGED graphical user interface (GUI) to make the 
-system more user friendly.  Two GUIs are in development as 
-replacements for the current interface.  One GUI (being developed 
-by Phil Dykstra) is based on MOTIFF and X-windows.  The other GUI 
-(being developed by Mike Muuss) is 
-vendor independent (depart from X-window dependency).  The BRL-CAD 
-team (primarily Mike Muuss) is also examining the possibility of 
-using virtual reality.  The third task area has provided more 
+Bill Mermagen, Jr. presented an overview of BRL-CAD status and
+plans.  The next release of BRL-CAD anticipated Summer 1994, will
+have a production version of the N-manifold Geometry (NMG)
+capability.  This will permit use of polygonal representations for
+import, export, and visualization and will provide better support
+for faceted-geometry dependent analysis codes.  Along with the
+NMGs, new primitives (i.e.. elliptical tori, paraboloids, and
+hyperboloids) will be available.  A second task area has been
+revising the MGED graphical user interface (GUI) to make the
+system more user friendly.  Two GUIs are in development as
+replacements for the current interface.  One GUI (being developed
+by Phil Dykstra) is based on MOTIFF and X-windows.  The other GUI
+(being developed by Mike Muuss) is
+vendor independent (depart from X-window dependency).  The BRL-CAD
+team (primarily Mike Muuss) is also examining the possibility of
+using virtual reality.  The third task area has provided more
 conversion routines for importing foreign CAD geometries into BRL-
 CAD.
 
 <p>
-The importance of BRL-CAD's need to support faceted geometries 
-(the NMG / tessellation upgrade)  was reinforced by Kellye Frew , 
-Applied Research Associates (ARA).  She indicated that ARA is 
-involved with an effort to generate a 3-D mesh to interface with 
+The importance of BRL-CAD's need to support faceted geometries
+(the NMG / tessellation upgrade)  was reinforced by Kellye Frew ,
+Applied Research Associates (ARA).  She indicated that ARA is
+involved with an effort to generate a 3-D mesh to interface with
 epic.  BRL-CAD was used for Phase I of this program.
 
 <p>
-Mr. Bud Bruenning, Sverdrup Technology, presented an overview of 
-how he is using BRL-CAD and enhancements he would like to see.  
-The highest priority was a simple tutorial document.  He would 
-also like some new image generation capabilities (cross sectional 
-cuts, automated component id number labeling, easier overlays).  
-Lesser issues concerned improvements to patch-g and better support 
-from the developers.  Dr. Dietz suggested that Bud visit with ARL 
-for a "working group" session on generating images and plots.  Any 
-one interested in participating in an imaging working group, 
+Mr. Bud Bruenning, Sverdrup Technology, presented an overview of
+how he is using BRL-CAD and enhancements he would like to see.
+The highest priority was a simple tutorial document.  He would
+also like some new image generation capabilities (cross sectional
+cuts, automated component id number labeling, easier overlays).
+Lesser issues concerned improvements to patch-g and better support
+from the developers.  Dr. Dietz suggested that Bud visit with ARL
+for a "working group" session on generating images and plots.  Any
+one interested in participating in an imaging working group,
 please contact the SURVIAC ASO (Resalee Bilka).
 
 <p>
-Geometric Solutions, Inc. (GSI) presented a report on the addition 
-of joint information to BRL-CAD models.  This new ability, as 
-outlined by Chris Johnson, GSI, will allow users to change the 
+Geometric Solutions, Inc. (GSI) presented a report on the addition
+of joint information to BRL-CAD models.  This new ability, as
+outlined by Chris Johnson, GSI, will allow users to change the
 configuration of targets with a simple click and drag interface.
 
 <p>
-This new capability is being integrated with BRL-CAD and will be 
-available to all in the next BRL-CAD release.  More information is 
+This new capability is being integrated with BRL-CAD and will be
+available to all in the next BRL-CAD release.  More information is
 available from Victor Cericole, Jr., GSI Software Director, 1-800-
 598-BRLCAD (2752).
 
 <p>
-Mr. Steve McKay, Pacific-Sierra Research Corp., expressed an 
-interest in accessing a model description database.  He is aware 
-of several and was wondering if any coordination existed between 
-these databases.  Information concerning geometry model databases 
+Mr. Steve McKay, Pacific-Sierra Research Corp., expressed an
+interest in accessing a model description database.  He is aware
+of several and was wondering if any coordination existed between
+these databases.  Information concerning geometry model databases
 would be appreciated as the SURVIAC ASO researches this issue.
 
 <p>
@@ -6936,8 +6936,8 @@ would be appreciated as the SURVIAC ASO researches this issue.
 Prepared by Bob Strausser, SURVIAC Aberdeen Satellite Office, (410) 273-7794.
 
 <p>
-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-= 
- 
+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+
 
 <p>
 <hr>
@@ -7062,9 +7062,9 @@ In response to:
 &gt;
 &gt;Hi,
 &gt;
-&gt;   I understand there is an e-mail newsletter for BRL-CAD 
-&gt;users.  I would be very interested in joining if such a 
-&gt;newsletter exists.  
+&gt;   I understand there is an e-mail newsletter for BRL-CAD
+&gt;users.  I would be very interested in joining if such a
+&gt;newsletter exists.
 &gt;
 &gt;Thanks in Advance!
 &gt;
@@ -7075,18 +7075,18 @@ In response to:
 Alex,
 
 <p>
-The SURVIAC ASO is currently providing a BRL-CAD newsletter 
-for both SURVIAC and FTP registered users of BRL-CAD.  It is 
-published quarterly and mailed to the users.  The December 
-issue was mailed last week.  If you do not receive it 
-shortly, forward your name and address to me for addition to 
+The SURVIAC ASO is currently providing a BRL-CAD newsletter
+for both SURVIAC and FTP registered users of BRL-CAD.  It is
+published quarterly and mailed to the users.  The December
+issue was mailed last week.  If you do not receive it
+shortly, forward your name and address to me for addition to
 the mailing list(or I can e-mail it to you).
 
 <p>
-The newsletter was originally intended as an extension to 
-this e-mail forum, providing announcements of events and 
-extracts from the e-mail for non-E-mail users.  All 
-contributions and / or suggestions for topics of discussion 
+The newsletter was originally intended as an extension to
+this e-mail forum, providing announcements of events and
+extracts from the e-mail for non-E-mail users.  All
+contributions and / or suggestions for topics of discussion
 are welcome.
 
 <p>
@@ -7178,7 +7178,7 @@ these modelers and perform various analyses, most do not allow you to export
 the geometry and associated information such as material properties.
 Additionally, the underlying mathematical representations of the data, if
 available, may not be compatible. That is, a format for exchange does not
-handle translation of data from one mathematical form to another.  
+handle translation of data from one mathematical form to another.
 
 <p>
 
@@ -7216,13 +7216,13 @@ represented in the GIFT format is tessellated and transferred as a
 polysolid.  The Intergraph =&gt; BRL-CAD translator works reasonably well,
 when Intergraph models have been constructed following certain stylistic
 rules peculiar to the translator, however the BRL-CAD=&gt; Intergraph
-translator has a much greater loss of information.  
+translator has a much greater loss of information.
 
 <p>
 PATCH-G.  The patch-g translator was developed by BRL (now ARL) under
 sponsorship by the Air Force.  Patch-g translates FASTGEN2/FASTGEN3 target
 descriptions into BRL-CAD .g format.  Plate-mode facets are difficult to
-convert. 
+convert.
 
 <p>
 Jack-G.  Jack is an articulated human figure package developed by the
@@ -7284,11 +7284,11 @@ geometry both as input to various signature codes (e.g. Xpatch, TSAR) and
 also as an intermediate file format for exchange.  We are currently
 investigating extending our geometry representations to include a "height
 field" data type to facilitate terrain modeling in support of a DMSO
-proposal for signature generation and automatic target recognition.  
+proposal for signature generation and automatic target recognition.
 
 <p>
 I have included below a note from one of our users who uses BRL-CAD
-specifically as an interface between other CAD tools.  
+specifically as an interface between other CAD tools.
 
 <p>
 <hr> <hr>
@@ -7304,16 +7304,16 @@ To: "Jill H. Smith, Ch., Vuln. Meth. Br." &lt;jill@BRL.MIL&gt;
 Subject: RE:  Dual Use
 
 <p>
-At Mcdonnell Douglas, we are using BRL-CAD as an interface between other CAD 
-tools (such as Unigraphics, PATRAN, and SMART) and radiation transport codes to 
-calculate the radiation dose in space (e.g., from solar flare protons or cosmic 
-ray heavy ions).  The ray tracing capabilities of BRL-CAD are what led us to 
-this configuration.  As we gain experience with the package, we may use it as 
-more of a total integrated product development tool (e.g., for determining mass 
+At Mcdonnell Douglas, we are using BRL-CAD as an interface between other CAD
+tools (such as Unigraphics, PATRAN, and SMART) and radiation transport codes to
+calculate the radiation dose in space (e.g., from solar flare protons or cosmic
+ray heavy ions).  The ray tracing capabilities of BRL-CAD are what led us to
+this configuration.  As we gain experience with the package, we may use it as
+more of a total integrated product development tool (e.g., for determining mass
 properties, etc.).  So far, we are very pleased with tho package.
 
 <p>
-Future uses for the radiation transport work include medical imaging and 
+Future uses for the radiation transport work include medical imaging and
 therapy, and risk calculations for the High-Speed Civil Transport.
 
 <p>
@@ -7346,7 +7346,7 @@ Received: from walrus.brl.mil by WOLF.BRL.MIL id aa07794; 24 Jan 94 11:03 EST
 Received: from WALRUS.BRL.MIL by WALRUS.BRL.MIL id aa20254; 24 Jan 94 10:14 EST
 Received: from wharf.brl.mil by WALRUS.BRL.MIL id aa20083; 24 Jan 94 10:09 EST
 Received: from relay1.UU.NET by WHARF.BRL.MIL id aa20886; 24 Jan 94 10:04 EST
-Received: from bruker.com (via bii.BRUKER.COM) by relay1.UU.NET with SMTP 
+Received: from bruker.com (via bii.BRUKER.COM) by relay1.UU.NET with SMTP
 	(5.61/UUNET-internet-primary) id AAwaga08346; Mon, 24 Jan 94 10:01:01 -0500
 Received: by bruker.com (4.1/SMI-4.1)
 	id AA21660; Mon, 24 Jan 94 09:55:31 EST
@@ -7371,7 +7371,7 @@ I tried using the following for:
                 500.10, 900.5, WDB_PIPESEG_TYPE_LINEAR
         },
 From my understanding this should give an id=500.10 mm and an od=900.5,
-but I still cannot zoom in on the resulting pipe.  
+but I still cannot zoom in on the resulting pipe.
 
 <p>
 Also, how does one specify bends greater than 90 degrees (like say
@@ -7380,7 +7380,7 @@ Also, how does one specify bends greater than 90 degrees (like say
 <p>
 
 <p>
--- 
+--
 <hr>
     Joseph Meier, Ph.D.
     Senior NMR Software Scientist
@@ -7747,7 +7747,7 @@ Received: from wharf.brl.mil by WALRUS.ARL.ARMY.MIL id aa20346;
 Received: from godot.lysator.liu.se by WHARF.BRL.MIL id aa29613;
           14 Mar 94 5:06 EST
 Received: from maxwell (gorry@maxwell.lysator.liu.se [130.236.254.170]) by godot.lysator.liu.se (8.6.6.Beta2/8.6.6.Beta2) with SMTP id LAA02977 for &lt;cad@brl.mil&gt;; Mon, 14 Mar 1994 11:05:39 +0100
-Received: by maxwell 
+Received: by maxwell
           (4.12/1.34/Lysator-3.1) id AA13778; Mon, 14 Mar 94 11:04:38 -0100
           (unknown)
 Date: Mon, 14 Mar 94 11:04:38 -0100
@@ -7757,23 +7757,23 @@ To: cad@brl.mil
 Subject: Missing makekey on non-US Sun Solaris
 
 <p>
- 
+
 Previously I asked for assistance to unpack the BRL distribution using
 Solaris 2.3, as makekey is missing.
- 
+
 I have checked things with Sun Sweden. Makekey is only included in the Solaris
 Encryption kit which is not exported from the USA.
- 
+
 I solved the problem as follows:
- 
+
 Insert SunOS 4.1.1 CD
 ln -s /cdrom/cdrom0/s0/export/exec/sun4_sunos_4_1_1/usr ~/brl-dir
 cd ~/brl-dir
 tar xvf usr ./lib/makekey
- 
+
 Further enigma.c need to be modified to use a local makekey by changing one of
 the paths to ./makekey.
- 
+
         if (fork()==0) {
                 close(0);
                 close(1);
@@ -7781,9 +7781,9 @@ the paths to ./makekey.
                 dup(pf[1]);
                 execl("./makekey", "-", 0);
                 execl("/usr/lib/exec/makekey", "-", 0); /* BSDI */
- 
+
 Thanks for all the help I received.
- 
+
 - Goran Rydqvist
 CadCal Design
 <hr>
@@ -7804,12 +7804,12 @@ Message-ID:  &lt;9405051154.aa20174@WOLF.ARL.MIL&gt;
 Yoav Oreg writes:
 
 <p>
-&gt; what I tried to do is to build a simple object in auto-cad out of 
+&gt; what I tried to do is to build a simple object in auto-cad out of
 &gt; primitive solids for instance a box and a cone, translate them to
-&gt; IGES format (my autocad supports IGES 4.0) and then by using the 
+&gt; IGES format (my autocad supports IGES 4.0) and then by using the
 &gt; iges-g module translate the IGES file to brl-cad format.
 &gt; everything seemed to be going fine until I applied iges-g.
-&gt; The routine started working by counting the number of lines in the 
+&gt; The routine started working by counting the number of lines in the
 &gt; objects but when it reached the part where it counts the number of
 &gt;  solids/regions it counted 0 (zero).
 
@@ -8002,8 +8002,8 @@ Message-ID:  &lt;9405311354.aa18963@WALRUS.ARL.MIL&gt;
 AJ,
 
 <p>
-The following message should allow you to fix the malloc error in the iges-g 
-converter.  You still need "valid" geometry formats (IGES type 128, I think) 
+The following message should allow you to fix the malloc error in the iges-g
+converter.  You still need "valid" geometry formats (IGES type 128, I think)
 for a valid imported spline.
 
 <p>
@@ -8022,7 +8022,7 @@ cc:       cad@BRL
 Subject:  [John R. Anderson:  BUG in iges-g]
 
 <p>
-There is a small bug is the "iges-g" code that causes it to die on an 
+There is a small bug is the "iges-g" code that causes it to die on an
 rt_malloc error in "rt_nurb_new_snurb".Here is a context diff for the fix:
 
 <p>
@@ -8034,7 +8034,7 @@ rt_malloc error in "rt_nurb_new_snurb".Here is a context diff for the fix:
                 m1+1, m2+1,
                 n1+2*m1+1, n2+2*m2+1,
 !               k2+1, k1+1, 4);
-  
+
         /* U knot vector */
         for (i = 0; i &lt;= n1+2*m1; i++) {
 --- 89,95 ----
@@ -8042,7 +8042,7 @@ rt_malloc error in "rt_nurb_new_snurb".Here is a context diff for the fix:
                 m1+1, m2+1,
                 n1+2*m1+1, n2+2*m2+1,
 !               k2+1, k1+1, MAKE_PT_TYPE( 4 , 2 , 0 ) );
-  
+
         /* U knot vector */
         for (i = 0; i &lt;= n1+2*m1; i++) {
 
@@ -8132,7 +8132,7 @@ via IGES without rebuilding the model from wireframe or just a collection
 of surfaces in space.
 
 <p>
-&gt; also if ,as I understand importation of solids via IGES is possible,does 
+&gt; also if ,as I understand importation of solids via IGES is possible,does
 &gt; any one Know if it is possible to do it from UCLID,UNIGRAPHICS or CATIA?
 &gt; and if it's possible than how?
 
@@ -8392,7 +8392,7 @@ Harry Campell writes:
 &gt; Here at TI we do a lot of modelling with Pro/Engineer.  I would be very
 &gt; interested in hearing how you convert those models into BRL-CAD, and the
 &gt; code that allows you to do that.
-&gt; 
+&gt;
 &gt; Thanks.
 
 <p>
@@ -8536,7 +8536,7 @@ Harry Campbell writes:
 &gt; You sent me some information about software that will convert
 &gt; Pro/Engineer databases into BRLCAD databases.  Let me make sure that I
 &gt; understood you correctly.
-&gt; 
+&gt;
 &gt; I need to have the Pro/Develop library.  This I assume is a purchased
 &gt; add-on to the Pro/Engineer package.
 
@@ -8655,7 +8655,7 @@ upper right joint, the results are nice and smooth.
 <p>
 From a modelling perspective, this approach wins hands down over changing
 LIBRT, because it allows the modeller to explicitly tell the shader which
-*combinations*, taken together, are "cut from the same stone." 
+*combinations*, taken together, are "cut from the same stone."
 
 <p>
 Finally, I can see where this approach would be useful in rendering
@@ -8737,12 +8737,12 @@ Message-ID:  &lt;9408161342.aa28929@WALRUS.ARL.MIL&gt;
 Robert,
 
 <p>
-You are running into problems with changes in the IRIX operating system.  The 
+You are running into problems with changes in the IRIX operating system.  The
 errata are for the IRIX 4.0.5 operating system but you are using IRIX 5.2.
 
 <p>
-The Cakefile.defs need to be edited for the current BRL-CAD release to 
-compile on IRIX 5.2.  The following comments were extracted / edited from 
+The Cakefile.defs need to be edited for the current BRL-CAD release to
+compile on IRIX 5.2.  The following comments were extracted / edited from
 email traffic concerning the install:
 
 <p>
@@ -8752,8 +8752,8 @@ If you set the SGI_CC environment to -cckr This should fix your problems.
 setenv SGI_CC -cckr
 
 <p>
-Also take a look at the Cakefile.defs and see the new CFLAGS definitions 
-(Irix 5.2 uses the R4000; in the Cakefile.defs the following under 
+Also take a look at the Cakefile.defs and see the new CFLAGS definitions
+(Irix 5.2 uses the R4000; in the Cakefile.defs the following under
 machinetype 5d is found)
 
 <p>
@@ -8937,7 +8937,7 @@ merge with our version.
 
 <p>
 | I only have True Color 24 bits framebuffers so I don't have to worry
-| about 24 bit color maps.  How common are Direct Color framebuffers? 
+| about 24 bit color maps.  How common are Direct Color framebuffers?
 
 <p>
 Libfb implements a Direct Color model (since back when real frame buffers
@@ -8989,7 +8989,7 @@ it.
 
 <p>
 I only have True Color 24 bits framebuffers so I don't have to worry
-about 24 bit color maps.  How common are Direct Color framebuffers? 
+about 24 bit color maps.  How common are Direct Color framebuffers?
 
 <p>
 thanks,
@@ -9010,7 +9010,7 @@ Message-ID:  &lt;9409211926.aa25396@wolf.arl.mil&gt;
 
 <p>
 &gt; I run now in some problems running mged and xmged:
-&gt; - mged attached to sgi displays a black window, program output flashes on 
+&gt; - mged attached to sgi displays a black window, program output flashes on
 &gt;   refresh so I think it could be a color map problem (?)
 
 <p>
@@ -9029,7 +9029,7 @@ statements, so that the code looks something like this:
                         break;
 
 <p>
-&gt; - mged attached to X seems to work, on moss.g "ev all.g" works but the command 
+&gt; - mged attached to X seems to work, on moss.g "ev all.g" works but the command
 &gt;   "facetize new.g all.g" causes a segmentation fault.
 
 <p>
@@ -9085,7 +9085,7 @@ X-Mailer: ELM [version 2.4 PL23]
 Mime-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
-Content-Length: 4471      
+Content-Length: 4471
 
 <p>
 This was first sent to the bugs list for the alpha test.  I'm forwarding
@@ -9187,7 +9187,7 @@ to be able to determine where this is happening.
 Many thanks and Ataboys to Mike and his team.
 
 <p>
-&gt; 
+&gt;
 &gt; By the way, this work was pretty easy, thanks to the new "multiple
 &gt; rt_list per structure" support I added to rtlist.h a few weeks ago.
 &gt; Without that support, this new algorithm would have been a pain to
@@ -9240,7 +9240,7 @@ for more info.
 &gt;   I also was wondering how one does object selection via the keyborad?
 &gt; If you have alot of objects displayed, then it can be imbossible to select
 &gt; the object you want via the "object illum" command?
-&gt; 
+&gt;
 	"press oill" will put you in object illuminate mode.
 	"ill object" will illuminate the specified object and allow you
 to select which matrix along the path should be modified. One problem with
@@ -9522,11 +9522,11 @@ Subject:  BRL-CAD (4.3 / 4.4) acquisition - SURVIAC users
 Message-ID:  &lt;9411230848.aa03981@WALRUS.ARL.MIL&gt;
 
 <p>
-SURVIAC full support users have two choices for acquiring the version 4.4 
+SURVIAC full support users have two choices for acquiring the version 4.4
 release (beta and final).  Either:
 
 <p>
-	1.  Download the source files from the ftp site in the encrypted form 
+	1.  Download the source files from the ftp site in the encrypted form
 	    and contact the SURVIAC ASO for the decryption key
 
 <p>
@@ -9537,7 +9537,7 @@ release (beta and final).  Either:
 or
 
 <p>
-	2.  Forward a 1/4" cartridge tape or a 4mm DAT tape to the SURVIAC 
+	2.  Forward a 1/4" cartridge tape or a 4mm DAT tape to the SURVIAC
 	    ASO to have the files written to the tape and mailed back.  The
 	    mailing address is:
 
@@ -9661,7 +9661,7 @@ Cc: CAD@arl.mil
 In-Reply-To:  &lt;9412020134.aa26885@wolf.arl.mil&gt; from "Mike Muuss" at Dec 2, 94 06:34:05 am
 X-Mailer: ELM [version 2.4 PL23]
 Content-Type: text
-Content-Length: 1197      
+Content-Length: 1197
 
 <p>
 If I'm not mistaken,  Mike Muuss said:
@@ -9669,7 +9669,7 @@ If I'm not mistaken,  Mike Muuss said:
 &lt; From: Mike Muuss &lt;mike@ARL.MIL&gt;
 &lt; To: CAD@ARL.MIL
 &lt; Subject:  4.3 Beta2
-&lt; 
+&lt;
 &lt; Sun is working hard to make their systems run BRL-CAD "as well as an SGI
 &lt; does".  While they still have some work to do in the area of graphics
 &lt; performance, their RT performance is astonishingly good.  In my very
@@ -9717,7 +9717,7 @@ release.
 	PATCH-G has been updated to take advantage of the new NMG
 capabilities in BRL-CAD. Plate mode components in FASTGEN are described
 as triangular faces with a specified thickness.  These triangles are
-converted to NMG triangular faces and then extruded by the thickness of the 
+converted to NMG triangular faces and then extruded by the thickness of the
 plate to create a true solid in BRL-CAD. Previously, these components were
 converted by building an ARB6 (an extruded triangle) for each triangle in
 the plate mode object. This resulted in cracks or overlaps where two adjacent
@@ -9778,7 +9778,7 @@ Message-ID:  &lt;9411101337.aa27289@wolf.arl.mil&gt;
 
 <p>
 &gt; John,
-&gt; 
+&gt;
 &gt; Great work.  As someone who is constantly representing BRL-CAD to
 &gt; the outside world (JTCG, TILV, etc., etc.), I really appreciate
 &gt; the importance - political as well as technical - of your
@@ -9786,7 +9786,7 @@ Message-ID:  &lt;9411101337.aa27289@wolf.arl.mil&gt;
 
 <p>
 	My pleasure, Thanks!
- 
+
 &gt; I had a thought (unaccustomed as I am ....):  In the process of
 &gt; bisecting the "cracks" or "overlaps" between plates, you had to
 &gt; determine the intersection line between the plates on the top and
@@ -10211,7 +10211,7 @@ Hello, here is the exhostive 0-15 on -w options.
 only the valuses 1-3 are acceptable.
 1 = surpress all warnings plus all errors (default)
 2 = error off on any warning or error
-3 = surpress all warnign s plus all errors AND error off on any warning or   
+3 = surpress all warnign s plus all errors AND error off on any warning or
 error.
 
 <p>
@@ -10219,7 +10219,7 @@ Looks like -w1 is the best we can do, then.
 
 <p>
 	-Mike
- 
+
 
 <p>
 <hr>
@@ -10267,11 +10267,11 @@ AJ wrote -
 &gt; England.  I also understand it would not be proper to just ftp a new
 &gt; copy (without some prior formal arrangement for permission acquire new
 &gt; versions by anonymous ftp and decrypt the package in another country).
-&gt; 
+&gt;
 &gt; Approaching the British Foreign Office to obtain a copy of BRLCAD for
 &gt; a United States national seems a bit awkward.  Nevertheless, it may be
 &gt; the proper approach to obtaining permission to use BRLCAD in England.
-&gt; 
+&gt;
 &gt; So, I would appreciate advice about the appropriate procedure to follow
 &gt; to obtain BRLCAD for use in England.
 

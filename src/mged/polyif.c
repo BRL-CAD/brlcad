@@ -23,7 +23,7 @@
  *  Author -
  *	Michael John Muuss
  *	Christopher T. Johnson
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory

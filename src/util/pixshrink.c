@@ -27,7 +27,7 @@
  *
  *  Author -
  *	Lee A. Butler
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
@@ -76,14 +76,14 @@ UCHAR *read_image(int scanlen, int Width, int Height, unsigned char *buffer)
 
 	if (!buffer &&
 	    (buffer=(UCHAR *)malloc(scanlen * Height)) == (UCHAR *)NULL) {
-		(void)fprintf(stderr, "%s: cannot allocate input buffer\n", 
+		(void)fprintf(stderr, "%s: cannot allocate input buffer\n",
 			progname);
 		exit(-1);
 	}
 
 	total_bytes = Width * Height * 3;
 	in_bytes = 0;
-	while (in_bytes < total_bytes && 
+	while (in_bytes < total_bytes &&
 	    (count=read(0, (char *)&buffer[in_bytes], (unsigned)(total_bytes-in_bytes))) >= 0)
 		in_bytes += count;
 
@@ -101,7 +101,7 @@ void write_image(int Width, int Height, unsigned char *buffer)
 {
 	int	count = 0;
 	int	out_bytes, total_bytes;
-	
+
 	total_bytes = Width * Height * 3;
 	out_bytes = 0;
 
@@ -147,7 +147,7 @@ shrink_image(int scanlen, int Width, int Height, unsigned char *buffer, int Fact
 					p[2] += *pixelp++;
 				}
 			}
-			
+
 			/* store resultant pixel back in buffer */
 			for (py = 0 ; py < 3 ; ++py)
 				*finalpixel++ = p[py] / facsq;
@@ -206,7 +206,7 @@ void parse_args(int ac, char **av)
 
 	if (!(progname = strrchr(*av, '/')))
 		progname = *av;
-	
+
 	/* Turn off bu_getopt's error messages */
 	opterr = 0;
 
@@ -226,7 +226,7 @@ void parse_args(int ac, char **av)
 		case 's'	: if ((c=atoi(bu_optarg)) > 0)
 					height = width = c;
 				  break;
-		case 'u'	: method = METH_UNDERSAMPLE; break; 
+		case 'u'	: method = METH_UNDERSAMPLE; break;
 		case '?'	:
 		default		: usage(); break;
 		}

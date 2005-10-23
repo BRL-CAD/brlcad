@@ -2,13 +2,13 @@
 
 # This is an awk program to go through a fastgen file and pull out all the
 # solid subtraction cases for the fastgen entities wedge,sphere,box, and
-# cylinder. The component number and the relevant part of that component 
+# cylinder. The component number and the relevant part of that component
 # description are printed.
 
 
 nawk '
 
-# inside_cyl: find out whether the second of the two cylinders from 
+# inside_cyl: find out whether the second of the two cylinders from
 # comp[m] to comp[n] is inside the first.
 # We check to see that the origin of the second cylinder is inside the
 # first, that it is defined in the same direction as the first, and
@@ -30,7 +30,7 @@ function inside_cyl(m,n)
 		a_del[0] = ax2 - ax
 		a_del[1] = ay2 - ay
 		a_del[2] = az2 - az
-		
+
 		bx = substr(comp[m],1,8)
 		by = substr(comp[m],9,8)
 		bz = substr(comp[m],18,8)
@@ -43,9 +43,9 @@ function inside_cyl(m,n)
 		b_del[2] = bz2 - bz
 
 		if( shorter( b_del, a_del ) &&
-			between(bx,ax,ax2) && 
+			between(bx,ax,ax2) &&
 			between(by,ay,ay2) && between(bz,az,az2) )
-			
+
 			return 1
 		else
 			return 0
@@ -67,7 +67,7 @@ function shorter(a,b)
 		return 1
 	else
 		return 0
-} 
+}
 
 # mag: returns the magnitude of vector a
 function mag(a)
@@ -100,14 +100,14 @@ function abs(x)
 	else
 		return -x
 }
-	
+
 
 # main loop
 {
 	if( NR == 1 ) {
 		comp[nl=1] = $0
 		prev_cc = substr($0,32,4)
-	}  
+	}
 	else {
 		comp[nl=1] = prev_line
 		comp[++nl] = $0
@@ -158,7 +158,7 @@ function abs(x)
 	}
 
 } ' $*
-	
+
 
 # Local Variables:
 # mode: sh

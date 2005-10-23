@@ -56,7 +56,7 @@
  *
  *  Author -
  *	Lee A. Butler
- *  
+ *
  *  Source -
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
@@ -228,10 +228,10 @@ const double flame_colors[18][3] = {
  */
 HIDDEN int
 fire_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip)
-                      	    
-             		         
+
+
     			      	/* pointer to reg_udata in *rp */
-             		     
+
            		      	/* New since 4.4 release */
 {
 	register struct fire_specific	*fire_sp;
@@ -271,7 +271,7 @@ fire_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struc
 
 	/* Build matrix to map shader space to noise space.
 	 * XXX If only we could get the frametime at this point
-	 * we could factor the flicker of flames into this matrix 
+	 * we could factor the flicker of flames into this matrix
 	 * rather than having to recompute it on a pixel-by-pixel basis.
 	 */
 	MAT_IDN(fire_sp->fire_sh_to_noise);
@@ -320,8 +320,8 @@ fire_free(char *cp)
  */
 int
 fire_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp)
-                  	    
-                	    
+
+
                 	     	/* defined in material.h */
     			    	/* ptr to the shader-specific struct */
 {
@@ -376,7 +376,7 @@ fire_render(struct application *ap, struct partition *pp, struct shadework *swp,
 /*		bu_struct_print( "fire_render Parameters:", fire_print_tab, (char *)fire_sp ); */
 		bu_log("fire_render()\n");
 	}
-	/* If we are performing the shading in "region" space, we must 
+	/* If we are performing the shading in "region" space, we must
 	 * transform the hit point from "model" space to "region" space.
 	 * See the call to db_region_mat in fire_setup().
 	 */
@@ -434,7 +434,7 @@ fire_render(struct application *ap, struct partition *pp, struct shadework *swp,
 		bu_log("noise_dist_per_sample %g\n", noise_dist_per_sample);
 	}
 
-	/* To do the exponential stretch and decay properly we need to 
+	/* To do the exponential stretch and decay properly we need to
 	 * do the computations in shader space, and convert the points
 	 * to noise space.  Performance pig.
 	 */
@@ -485,7 +485,7 @@ fire_render(struct application *ap, struct partition *pp, struct shadework *swp,
 		}
 
 	}
-	
+
 	if (rdebug&RDEBUG_SHADE || fire_sp->fire_debug )
 		bu_log("lumens = %g\n", lumens);
 

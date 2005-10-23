@@ -127,7 +127,7 @@ create_vert_tree_w_norms()
 
 /*		C L E A N _ V E R T_ T R E E _ R E C U R S E
  *
- *	static recursion routine used by "clean_vert_tree" 
+ *	static recursion routine used by "clean_vert_tree"
  */
 static void
 clean_vert_tree_recurse( union vert_tree *ptr )
@@ -240,9 +240,9 @@ Add_vert( double x, double y, double z, struct vert_root *vert_root, fastf_t loc
 			int ij;
 
 			ij = ptr->vleaf.index*3;
-			diff[0] = fabs( vertex[0] - vert_root->the_array[ij] ); 
-			diff[1] = fabs( vertex[1] - vert_root->the_array[ij+1] ); 
-			diff[2] = fabs( vertex[2] - vert_root->the_array[ij+2] ); 
+			diff[0] = fabs( vertex[0] - vert_root->the_array[ij] );
+			diff[1] = fabs( vertex[1] - vert_root->the_array[ij+1] );
+			diff[2] = fabs( vertex[2] - vert_root->the_array[ij+2] );
 			if( (diff[0]*diff[0] + diff[1]*diff[1] + diff[2]*diff[2]) <= local_tol_sq ) {
 				/* close enough, use this vertex again */
 				return( ptr->vleaf.index );
@@ -288,7 +288,7 @@ Add_vert( double x, double y, double z, struct vert_root *vert_root, fastf_t loc
 					   vert_root->the_array[ptr->vleaf.index * 3 + new_node->vnode.coord]) * 0.5;
 
 		/* set the node "lower" nad "higher" pointers */
-		if( vertex[new_node->vnode.coord] >= 
+		if( vertex[new_node->vnode.coord] >=
 		    vert_root->the_array[ptr->vleaf.index * 3 + new_node->vnode.coord] ) {
 			new_node->vnode.higher = new_leaf;
 			new_node->vnode.lower = ptr;
@@ -370,7 +370,7 @@ Add_vert_and_norm( double x, double y, double z, double nx, double ny, double nz
 
 			ij = ptr->vleaf.index*6;
 			for( i=0 ; i<6 ; i++ ) {
-				diff[i] = fabs( vertex[i] - vert_root->the_array[ij+i] ); 
+				diff[i] = fabs( vertex[i] - vert_root->the_array[ij+i] );
 			}
 			d1_sq = VDOT( diff, diff );
 			d2_sq = VDOT( &diff[3], &diff[3] );
@@ -430,7 +430,7 @@ Add_vert_and_norm( double x, double y, double z, double nx, double ny, double nz
 					   vert_root->the_array[ptr->vleaf.index * 3 + new_node->vnode.coord]) * 0.5;
 
 		/* set the node "lower" nad "higher" pointers */
-		if( vertex[new_node->vnode.coord] >= 
+		if( vertex[new_node->vnode.coord] >=
 		    vert_root->the_array[ptr->vleaf.index * 3 + new_node->vnode.coord] ) {
 			new_node->vnode.higher = new_leaf;
 			new_node->vnode.lower = ptr;

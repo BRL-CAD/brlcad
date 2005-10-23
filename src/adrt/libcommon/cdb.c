@@ -61,7 +61,7 @@ int common_db_load(common_db_t *db, char *path) {
   common_env_init(&db->env);
   common_env_read(&db->env, path);
   common_env_prep(&db->env);
-  
+
   /* Load Animation Data */
   common_anim_read(&db->anim, db->env.frames_file);
 

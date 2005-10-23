@@ -124,7 +124,7 @@ add_Trie(const char *name, register Trie **triepp)
 			{ /* Name is subset of another name.		*/
 			return	add_Trie( name, &(*triepp)->n.t_altr );
 			}
-		else	
+		else
 			; /* Name already inserted, so do nothing.	*/
 		return	*triepp;
 		}
@@ -302,7 +302,7 @@ write_Trie(Trie *triep, int level, FILE *fp)
 			{
 			bu_log( "\"%s\"(%d) Write failed!\n", __FILE__, __LINE__ );
 			return	0;
-			}			
+			}
 		namep = name_buf;
 		}
 	*namep = tp->n.t_char;
@@ -330,7 +330,7 @@ int
 read_Trie(FILE *fp)
 {	static char	name_buf[MAX_TRIE_LEVEL+1];
 		register Trie	*triep;
-		F_Hdr_Ptlist	hdr_ptlist;	
+		F_Hdr_Ptlist	hdr_ptlist;
 		int		min, max;
 		extern Trie	*reg_triep;
 	/* Read temperature range information.				*/
@@ -351,7 +351,7 @@ read_Trie(FILE *fp)
 			ir_min = min;
 			ir_max = max;
 			}
-		else 
+		else
 			{ /* Merge with existing range.			*/
 			ir_min = Min( ir_min, min );
 			ir_max = Max( ir_max, max );

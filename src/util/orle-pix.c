@@ -23,7 +23,7 @@
  *
  *  Author -
  *	Gary S. Moss
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
@@ -70,7 +70,7 @@ static int	non_linear_cmap = 0;
 /*	m a i n ( )							*/
 int
 main(int argc, char **argv)
-{	
+{
 	register int	scan_ln;
 	register int	fb_size = 512;
 	static RGBpixel	scanbuf[1025];
@@ -139,8 +139,8 @@ main(int argc, char **argv)
 		}
 	}
 
-	{	
-		for( scan_ln = fb_size-1; scan_ln >= 0; scan_ln-- )  {	
+	{
+		for( scan_ln = fb_size-1; scan_ln >= 0; scan_ln-- )  {
 			static int	touched = 1;
 			register int	pix;
 			if( touched && (get_flags & NO_BOX_SAVE) )  {
@@ -279,7 +279,7 @@ prnt_Cmap(ColorMap *cmap)
 	(void) fprintf( stderr, "Green segment :\n" );
 	for( i = 0, cp = cmap->cm_green; i < 16; ++i, cp += 16 )
 		{
-		(void) fprintf( stderr, 
+		(void) fprintf( stderr,
 	"%4x %4x %4x %4x %4x %4x %4x %4x %4x %4x %4x %4x %4x %4x %4x %4x\n",
 	/* 1   2   3   4   5   6   7   8   9  10  11  12  13  14  15  16 */
 				cp[0],

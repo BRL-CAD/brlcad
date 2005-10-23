@@ -29,7 +29,7 @@
  *	This routine is used to plot a string of ASCII symbols
  *  on the plot being generated, using a built-in set of fonts
  *  drawn as vector lists.
- * 
+ *
  *	Internally, the basic font resides in a 10x10 unit square.
  *  Externally, each character can be thought to occupy one square
  *  plotting unit;  the 'scale'
@@ -46,11 +46,11 @@
  *	Bruce Henriksen
  *	Stephen Wolff
  *	Michael John Muuss
- *  
+ *
  *  Source -
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
- *  
+ *
  */
 /*@}*/
 

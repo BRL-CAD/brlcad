@@ -26,11 +26,11 @@
  *  Authors -
  *	John R. Anderson
  *	Michael J. Markowski
- *  
+ *
  *  Source -
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5066
- *  
+ *
  *
  *  Some stupid secret codes:
  *	dp->d_uses - contains the negative of the DE number for the object
@@ -67,7 +67,7 @@ static const char RCSrev[] = "$Revision$";
 #include "../iges/iges.h"
 #include "../librt/debug.h"
 
-                                                                                                                                                                            
+
 extern char	version[];
 
 #define	CP_BUF_SIZE	1024	/* size of buffer for file copy */
@@ -535,7 +535,7 @@ genptr_t		client_data;
 		/* Get rid of (m)any other intermediate structures */
 		if( (*tsp->ts_m)->magic != -1L )
 			nmg_km(*tsp->ts_m);
-	
+
 		/* Now, make a new, clean model structure for next pass. */
 		*tsp->ts_m = nmg_mm();
 		goto out;

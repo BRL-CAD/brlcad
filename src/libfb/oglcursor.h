@@ -25,8 +25,8 @@
  * OpenGL framebuffer arrow cursor.
  *
  * The origin is in first quadrant coordinates.
- * The bytes are read in starting at the bottom left corner of the 
- * cursor and proceeding to the right and then up. 
+ * The bytes are read in starting at the bottom left corner of the
+ * cursor and proceeding to the right and then up.
  */
 /*@}*/
 

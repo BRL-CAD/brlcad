@@ -43,12 +43,12 @@
  *
  *	John R. Anderson (Jan '94)
  *		Converted proc_tri and proc_plate to produce NMG's
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5066
- *  
+ *
  */
 #ifndef lint
 static const char RCSid[] = "@(#)$Header$ (BRL)";
@@ -59,7 +59,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif
-                                                                                                                                                                            
+
 #include <stdio.h>
 #ifdef HAVE_STRING_H
 #include <string.h>
@@ -235,7 +235,7 @@ main(int argc, char **argv)
 				break;
 
 			case 'u':  /* specify number of union operations
-				    * to put in a region 
+				    * to put in a region
 							    */
 
 				if( (num_unions = atoi( optarg )) <= 0 ) {
@@ -262,7 +262,7 @@ main(int argc, char **argv)
 			case 'c':  /* center of object (used for some plate mode
 				    * triangle surface normal calculations
 							    */
-				sscanf( optarg,"%lf %lf %lf", 
+				sscanf( optarg,"%lf %lf %lf",
 				    &Centroid[0],&Centroid[1],&Centroid[2]);
 
 				rt_log( "Centroid = ( %f %f %f )\n" , V3ARGS( Centroid ) );
@@ -372,7 +372,7 @@ main(int argc, char **argv)
 
 	/* Read the material codes file, which is a component code list
 	   with equivalent los % and material code at the end of the line.
-	   Non-conforming and blank lines should already have been stripped, 
+	   Non-conforming and blank lines should already have been stripped,
 	   since minimal error checking is done.
 	   Line format is "%6d%66c%3d%5d".
 	   Example:
@@ -1281,7 +1281,7 @@ Build_solid(int l, char *name, char *mirror_name, int plate_mode, fastf_t *centr
 		if( mirror_name[0] )
 		{
 			nmg_mirror_model( m );
-		
+
 			if( polysolid )
 				write_shell_as_polysolid( outfp , mirror_name , s );
 			else
@@ -1483,7 +1483,7 @@ Build_solid(int l, char *name, char *mirror_name, int plate_mode, fastf_t *centr
 	nmg_shell_a( is , tol );
 
 	/* make yet another version of the flags array */
-	rt_free( (char *)flags , "build_solid: flags" );		
+	rt_free( (char *)flags , "build_solid: flags" );
 	flags = (long *)rt_calloc( m->maxindex , sizeof( long ) , "patch-g: flags" );
 
 	/* make a list of the vertices to be moved */
@@ -1673,7 +1673,7 @@ nmg_face_g( fu , pl1 );
 
 		if( debug )
 			rt_log( "writing  %s (mirrored) to BRL-CAD DB\n" , mirror_name );
-		
+
 		if( polysolid )
 			write_shell_as_polysolid( outfp , mirror_name , s );
 		else
@@ -1691,8 +1691,8 @@ nmg_face_g( fu , pl1 );
  *	into a common region identity.  Format of the make_region command call
  *	requires in order: output file name, input region name, link file of solids,
  *	region/group flag, material name, material parameters, RGB color assignment, region id #,
- *	aircode, material code, LOS, and inheritance flag.  The region is then 
- *	added to a hold file for combination into groups in another process.        
+ *	aircode, material code, LOS, and inheritance flag.  The region is then
+ *	added to a hold file for combination into groups in another process.
  */
 void
 proc_region(char *name1)
@@ -1756,7 +1756,7 @@ proc_region(char *name1)
 }
 
 /*
- *	 Process Volume Mode triangular facetted solids  
+ *	 Process Volume Mode triangular facetted solids
  */
 void
 proc_triangle(int cnt)
@@ -1833,7 +1833,7 @@ proc_triangle(int cnt)
 	VSCALE( centroid, centroid, 1.0/cpts );
 	if( debug > 2 ) {
 		rt_log( "%d: cpts=%d centroid %f %f %f\n",
-		    in[0].cc, cpts, 
+		    in[0].cc, cpts,
 		    centroid[0], centroid[1], centroid[2] );
 	}
 
@@ -2028,7 +2028,7 @@ Get_ave_plane(fastf_t *pl, int num_pts, fastf_t *x, fastf_t *y, fastf_t *z)
 }
 
 /*
- *	 Process Plate Mode triangular surfaces 
+ *	 Process Plate Mode triangular surfaces
  */
 void
 proc_plate(int cnt)
@@ -2164,7 +2164,7 @@ proc_plate(int cnt)
 		VSCALE( centroid, centroid, 1.0/cpts );
 		if( debug > 2 ) {
 			rt_log( "%d: cpts=%d centroid %f %f %f\n",
-			    in[0].cc, cpts, 
+			    in[0].cc, cpts,
 			    centroid[0], centroid[1], centroid[2] );
 		}
 
@@ -2222,7 +2222,7 @@ proc_plate(int cnt)
 	last_cc = in[cnt-1].cc;
 }
 
-/* 
+/*
  *	Process fastgen wedge shape - also process hollow wedges.
  */
 void
@@ -2287,7 +2287,7 @@ proc_wedge(int cnt)
 
 			ctflg = 'y';
 			strcpy( name , proc_sname (shflg,mrflg,count,ctflg) );
-			
+
 		/* Create planes for arb6. Planes will be formed with
 		   normal pointing inward for creation of inner arb6 */
 
@@ -2323,7 +2323,7 @@ proc_wedge(int cnt)
 
 				VSCALE( tmp_pt, planes[i], planes[i][3] )
 				VJOIN1( new_pt, tmp_pt, in[k].rsurf_thick, planes[i] )
-				
+
 				planes[i][3] = VDOT( planes[i], new_pt );
 			}
 
@@ -2341,7 +2341,7 @@ proc_wedge(int cnt)
 			VMOVE(inpt8[5],inpt8[4]);
 
 			if( ret == 0 ) { /* valid record */
-				
+
 				mk_arb8( outfp, name, &inpt8[0][X] );
 				(void)mk_addmember(name,&head.l,NULL, WMOP_SUBTRACT);
 			}
@@ -2434,7 +2434,7 @@ proc_wedge(int cnt)
 
 				VSCALE( tmp_pt, planes[i], planes[i][3] )
 				VJOIN1( new_pt, tmp_pt, in[k].rsurf_thick, planes[i] )
-				
+
 				planes[i][3] = VDOT( planes[i], new_pt );
 			}
 
@@ -2473,7 +2473,7 @@ proc_wedge(int cnt)
 
 /*
  *
- *	 Process fastgen spheres - can handle hollowness 
+ *	 Process fastgen spheres - can handle hollowness
  */
 void
 proc_sphere(int cnt)
@@ -3182,10 +3182,10 @@ proc_donut(int cnt)
 		proc_region( name );
 }
 
-/* 
+/*
  *	Cylinder Fastgen Support:
  *	Cylinders have the added complexity of being plate or volume mode,
- *	and closed vs. open ends. This makes things a bit ugly. 
+ *	and closed vs. open ends. This makes things a bit ugly.
  *
  *	NOTE:	This handles plate mode subtractions. It also handles a
  *		subset of the allowable volume mode subtractions, in that
@@ -3225,7 +3225,7 @@ proc_cylin(int cnt)
 		struct subtract_list *sp;
 
 		for( sp=slist; sp; sp=sp->next )
-			rt_log( "%d %d %d\n", 
+			rt_log( "%d %d %d\n",
 			    sp->outsolid,sp->insolid,sp->inmirror );
 	}
 
@@ -3250,11 +3250,11 @@ proc_cylin(int cnt)
 			/* change valid 0 radius cone pts to very small radii,
 			 * also treat negative value radii as positive.
 			 */
-			if(in[k+2].x == 0) 
+			if(in[k+2].x == 0)
 			  in[k+2].x = .00001;
 			if(in[k+2].x < 0)
 			  in[k+2].x = -in[k+2].x;
-			if(in[k+2].y == 0) 
+			if(in[k+2].y == 0)
 			  in[k+2].y = .00001;
 			if(in[k+2].y < 0)
 			  in[k+2].y = -in[k+2].y;
@@ -3344,7 +3344,7 @@ proc_cylin(int cnt)
 					VSUB2(ab,top,sbase);
 					sht = MAGNITUDE( ab );
 					srad1 = rad2 - sht / ht * (rad2 - rad1);
-					thick = in[k+2].rsurf_thick / ht * 
+					thick = in[k+2].rsurf_thick / ht *
 					    hypot( ht, rad2-rad1 );
 					srad1 = srad1 - thick;
 					srad2 = rad2 - thick;
@@ -3401,7 +3401,7 @@ proc_cylin(int cnt)
 					VSUB2(ab,stop,base);
 					sht = MAGNITUDE( ab );
 					srad2 = rad1 - sht / ht * (rad1 - rad2);
-					thick = in[k+2].rsurf_thick / ht * 
+					thick = in[k+2].rsurf_thick / ht *
 					    hypot( ht, rad2-rad1 );
 					srad1 = rad1 - thick;
 					srad2 = srad2 - thick;
@@ -3464,7 +3464,7 @@ proc_cylin(int cnt)
 					sht = MAGNITUDE( ab );
 					rad1_tmp = rad2 - sht / ht * (rad2 - rad1);
 					rad2_tmp = rad1 - sht / ht * (rad1 - rad2);
-					thick = in[k+2].rsurf_thick / ht * 
+					thick = in[k+2].rsurf_thick / ht *
 					    hypot( ht, rad2-rad1 );
 					srad1 = rad1_tmp - thick;
 					srad2 = rad2_tmp - thick;
@@ -3552,11 +3552,11 @@ proc_cylin(int cnt)
 			VSET(base,in[k].x,-in[k].y,in[k].z);
 			VSET(top,in[k+1].x,-in[k+1].y,in[k+1].z);
 
-			if(in[k+2].x == 0) 
+			if(in[k+2].x == 0)
 				in[k+2].x = .00001;
 			if(in[k+2].x < 0)
 				in[k+2].x = -in[k+2].x;
-			if(in[k+2].y == 0) 
+			if(in[k+2].y == 0)
 				in[k+2].y = .00001;
 			if(in[k+2].y < 0)
 				in[k+2].y = -in[k+2].y;
@@ -3645,7 +3645,7 @@ proc_cylin(int cnt)
 					VSUB2(ab,top,sbase);
 					sht = MAGNITUDE( ab );
 					srad1 = rad2 - sht / ht * (rad2 - rad1);
-					thick = in[k+2].rsurf_thick / ht * 
+					thick = in[k+2].rsurf_thick / ht *
 					    hypot( ht, rad2-rad1 );
 					srad1 = srad1 - thick;
 					srad2 = rad2 - thick;
@@ -3702,7 +3702,7 @@ proc_cylin(int cnt)
 					VSUB2(ab,stop,base);
 					sht = MAGNITUDE( ab );
 					srad2 = rad1 - sht / ht * (rad1 - rad2);
-					thick = in[k+2].rsurf_thick / ht * 
+					thick = in[k+2].rsurf_thick / ht *
 					    hypot( ht, rad2-rad1 );
 					srad1 = rad1 - thick;
 					srad2 = srad2 - thick;
@@ -3765,7 +3765,7 @@ proc_cylin(int cnt)
 					sht = MAGNITUDE( ab );
 					rad1_tmp = rad2 - sht / ht * (rad2 - rad1);
 					rad2_tmp = rad1 - sht / ht * (rad1 - rad2);
-					thick = in[k+2].rsurf_thick / ht * 
+					thick = in[k+2].rsurf_thick / ht *
 					    hypot( ht, rad2-rad1 );
 					srad1 = rad1_tmp - thick;
 					srad2 = rad2_tmp - thick;
@@ -4197,7 +4197,7 @@ set_color(int color)
  *
  * This is not a foolproof determination. We only check to see whether the
  * endpoints of the supposed inside cylinder lie within the first cylinder
- * and that the radii of the second cylinder are <= those of the first 
+ * and that the radii of the second cylinder are <= those of the first
  * cylinder. We don't actually see whether the entire second cylinder lies
  * within the first.
  */
@@ -4241,7 +4241,7 @@ pt_inside( point_t a, point_t base, point_t top, double rad1, double rad2 )
 				 * and the point
 				 */
 	radius,		/* radius of cylinder at above distance */
-	pt_radsq;	/* sqare of radial distance from the axis 
+	pt_radsq;	/* sqare of radial distance from the axis
 				 * to point
 					 */
 
@@ -4301,7 +4301,7 @@ mk_cyladdmember(char *name1, struct wmember *head, struct subtract_list *slist, 
 
 	sscanf( name1,"%*[^0-9]%d%*[^0-9]%d", &cc, &solnum );
 
-	/* check to see whether this solid shows up in the subtract 
+	/* check to see whether this solid shows up in the subtract
 	 * list as a volume mode solid being subtracted
 	 */
 	hold = slist;
@@ -4326,7 +4326,7 @@ mk_cyladdmember(char *name1, struct wmember *head, struct subtract_list *slist, 
 /*			G E T _ S U B T R A C T
  *
  * Make up the list of subtracted volume mode solids for this group of
- * cylinders. Go through the cylinder list and, for each solid, see whether 
+ * cylinders. Go through the cylinder list and, for each solid, see whether
  * any of the other solid records following qualify as volume mode subtracted
  * solids. Record the number of the outside cylinder and the number of
  * the inside cylinder in the subtraction list, along with the mirror

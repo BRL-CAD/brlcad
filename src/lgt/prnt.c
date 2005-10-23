@@ -360,7 +360,7 @@ prnt_Event(char *s)
 		register int	i;
 	if( ! tty )
 		return;
-	EVENT_MOVE();	
+	EVENT_MOVE();
 	if( s != NULL )
 		{	register int len = strlen( s );
 		(void) fputs( s, stdout );

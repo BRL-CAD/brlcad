@@ -46,7 +46,7 @@ namespace eval RtWizard {
     #
     # Add options
     #
-    
+
     # None!
 
     #
@@ -54,7 +54,7 @@ namespace eval RtWizard {
     #
     ::itcl::class GhostPage {
 	inherit ::RtWizard::MGEDpage
-	
+
 	public {
 	    constructor {filename args}  {
 		MGEDpage::constructor $filename
@@ -63,7 +63,7 @@ namespace eval RtWizard {
 		$itk_component(helpPanel) insert insert \
 			"Use this page to select the items that you wish to render as a ghost image." \
 			HelpTag
-		
+
 		$itk_component(helpPanel) tag configure HelpTag \
 			-font {helvetica 10 bold}
 
@@ -75,25 +75,25 @@ namespace eval RtWizard {
 		configure -stepName "Configure Ghost Elements"
 
 		eval itk_initialize $args
-		
-		$itk_component(helpPanel) configure -state disabled 
+
+		$itk_component(helpPanel) configure -state disabled
 	    }
-	}        
-    
+	}
+
 	private {
 	    method onSelect2 {optionsMenu}
 	    method onDeselect2 {}
 	    method statusCallback {}
-	}		
+	}
     }
 
     #--------------------#
     #   Public Methods   #
-    #--------------------#    
-    
+    #--------------------#
+
     #--------------------#
     #  Private Methods   #
-    #--------------------#    
+    #--------------------#
     #
     # onSelect2
     #
@@ -102,13 +102,13 @@ namespace eval RtWizard {
     itcl::body GhostPage::onSelect2 {optionsMenu} {
 	#
 	# Do the options menu
-	#	
+	#
 	$::wizardInstance menubar add command .$optionsMenu.intense \
 		-label "Ghost Intensity..." \
 		-helpstr "Set the intensity of the ghost image." \
 		-command "[itcl::code $this intensityDialogReveal]"
     }
-    
+
     #
     # onDeselect2
     #

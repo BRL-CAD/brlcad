@@ -43,7 +43,7 @@ typedef void Func();
 /* Trie tree node.  */
 typedef union trie Trie;
 union trie
-        { 
+        {
         struct  /* Internal nodes: datum is current letter. */
                 {
                 int t_char;   /* Current letter.  */

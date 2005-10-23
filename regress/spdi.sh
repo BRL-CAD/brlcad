@@ -14,7 +14,7 @@ mater half.r plastic 76 158 113 0
 g all.g half.r
 
 set radius 256
-foreach p {1 2 3 4 5} { 
+foreach p {1 2 3 4 5} {
 
   set sh [expr \$p \* 4]
   set y  [expr [expr \$p - 3] \* 640]
@@ -52,7 +52,7 @@ start 0; clean;
 end;
 
 EOF
-../src/conv/asc2pix < $1/regress/spdipix.asc > spdi_ref.pix 
+../src/conv/asc2pix < $1/regress/spdipix.asc > spdi_ref.pix
 ../src/util/pixdiff spdi.pix spdi_ref.pix > spdi_diff.pix 2>> spdi.log
 NUMBER_WRONG=`tr , '\012' < spdi.log | awk '/many/ {print $1}'`
 /bin/echo spdi.pix $NUMBER_WRONG off by many

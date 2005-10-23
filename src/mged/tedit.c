@@ -29,7 +29,7 @@
  *  Author -
  *	Michael John Muuss
  *	(Inspired by 4.2 BSD program "vipw")
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
@@ -270,7 +270,7 @@ writesolid(void)
 			(void)fprintf( fp , "<n,e>: <%.9f, %.9f>\n", superell->n, superell->e);
 			break;
 	}
-	
+
 	(void)fclose(fp);
 	return( 0 );
 }
@@ -818,13 +818,13 @@ readsolid(void)
 			(void)sscanf( str , "%lf %lf %lf" , &a , &b , &c );
 			VSET( superell->c , a , b , c );
 			VSCALE( superell->c , superell->c , local2base );
-			
+
 			if ( (str=Get_next_line( fp )) == NULL ) {
 			  ret_val = 1;
 			  break;
 			}
 			(void) sscanf( str, "%lf %lf", &superell->n, &superell->e);
-			break;	
+			break;
 	}
 
 	(void)fclose(fp);
@@ -844,7 +844,7 @@ const char *file;
 
    sprintf(line,"notepad %s",file);
 
-   
+
       si.cb = sizeof(STARTUPINFO);
       si.lpReserved = NULL;
       si.lpReserved2 = NULL;
@@ -863,15 +863,15 @@ const char *file;
                      &si,
                      &pi );
       WaitForSingleObject( pi.hProcess, INFINITE );
-   
+
 	return 1;
 }
 
 #else
 /* else win32 is not defined */
 
-/* Run $EDITOR on temp file 
- * 
+/* Run $EDITOR on temp file
+ *
  * BUGS -- right now we only check at compile time whether or not to pop up an
  *         X window to display into (for editors that do not open their own
  *         window like vi or jove).  If we have X support, we automatically use

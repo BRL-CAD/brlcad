@@ -19,13 +19,13 @@
  * information.
  */
 /** @file mater.h
- *  
+ *
  *  Information about mapping between region IDs and material
  *  information (colors and outboard database "handles").
- *  
+ *
  *  Author -
  *	Michael John Muuss
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory

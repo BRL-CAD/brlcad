@@ -29,7 +29,7 @@
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005
- *  
+ *
  */
 static const char RCSid[] = "@(#)$Header$ (BRL)";
 
@@ -690,7 +690,7 @@ prepare(void)
 
 }
 
-/* 
+/*
  *			P H _ L I N E S
  *
  *
@@ -841,7 +841,7 @@ out:
 #if (defined(BSD) && !defined(_sgi3d)) || defined(mips) || defined(CRAY2)
 /*
  *  			R T _ L O G
- *  
+ *
  *  Log an RT library event using the Berkeley _doprnt() routine.
  */
 /* VARARGS */
@@ -923,7 +923,7 @@ out:
 
 /*
  *			B U _ B O M B
- *  
+ *
  *  Replacement for the LIBBU routine of the same name.
  */
 int		bu_setjmp_valid = 0;	/* !0 = bu_jmpbuf is valid */

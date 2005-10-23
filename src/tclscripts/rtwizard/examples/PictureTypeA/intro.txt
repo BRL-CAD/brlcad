@@ -1,8 +1,8 @@
 Hi!
 
-You have elected to produce a simple full-color image. In order to produce this image you will need to specify the items that you wish to render. You will also need to specify the view parameters, that is, the view orientation and size.  
+You have elected to produce a simple full-color image. In order to produce this image you will need to specify the items that you wish to render. You will also need to specify the view parameters, that is, the view orientation and size.
 
-To change the azimuth, use the View:Azimuth control. The default is 35 degrees. To change the elevation, use the View:Elevation control. The default is 25 degrees. To change the size, use the View:Size control. 
+To change the azimuth, use the View:Azimuth control. The default is 35 degrees. To change the elevation, use the View:Elevation control. The default is 25 degrees. To change the size, use the View:Size control.
 
 You may also use MGED shift-grips to change the view parameters.
 

@@ -28,12 +28,12 @@
  *
  *  Author -
  *	Michael John Muuss
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5066
- *  
+ *
  */
 /*@}*/
 
@@ -129,7 +129,7 @@ rt_regionfix(struct rt_i *rtip)
 			bu_log("%s: line %d, regcomp error '%d'\n", file, line, ret );
 			continue;		/* just ignore it */
 		}
-		
+
 		for( BU_LIST_FOR( rp, region, &(rtip->HeadRegion) ) )  {
 			ret = regexec(&re_space, (char *)rp->reg_name, 0, 0,0);
 			if(RT_G_DEBUG&DEBUG_INSTANCE)  {

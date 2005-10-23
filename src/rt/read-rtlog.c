@@ -22,7 +22,7 @@
  *
  *  This is a program will read an RT log file.  It is meant to be
  *  used by any other program that needs to read an RT log file to
- *  extract the model size, orientation, eye position, azimuth, and 
+ *  extract the model size, orientation, eye position, azimuth, and
  *  elevation from the log file.
  *
  *  Authors -
@@ -116,7 +116,7 @@ read_rt_file(FILE *infp, char *name, fastf_t *model2view)
 
 	while( feof(infp) == 0 )  {
 
-		/* clear the buffer */	
+		/* clear the buffer */
 		for( i = 0; i < BUFF_LEN; i++ )  {
 			string[i] = '\0';
 		}
@@ -130,7 +130,7 @@ read_rt_file(FILE *infp, char *name, fastf_t *model2view)
 
 			if( feof(infp) )
 				break;
-			
+
 			/* This needs to be seen only if there is an
 			 * unexpected end.
 			 */
@@ -196,7 +196,7 @@ read_rt_file(FILE *infp, char *name, fastf_t *model2view)
 		 * instead.
 		 * Also, if loading a whole array of characters
 		 * with %s, then the name of the array can be used for the
-		 * destination.  However, if the characters are loaded 
+		 * destination.  However, if the characters are loaded
 		 * individually into the subsripted spots with %c (or equiv),
 		 * the address of the location must be provided: &eye_pos[0].
 		 */
@@ -272,7 +272,7 @@ read_rt_file(FILE *infp, char *name, fastf_t *model2view)
 		fprintf(stderr, "eye_pos: %.6f, %.6f, %.6f\n", V3ARGS(eye_pos) );
 		fprintf(stderr, "size: %.6fmm\n", m_size);
 	}
-		
+
 	/* Build the view2model matrix. */
 
 	quat_quat2mat( rotate, orientation );

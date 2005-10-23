@@ -28,11 +28,11 @@
 #
 # This is the widget hierarchy from the top level down to the shader frames or Boolean
 # expression frames
-# 
+#
 # widget names include $id to make them unique. Typically, $id == "id_0"
-# 
+#
 # Top level combination editor widget: $id.comb
-# 
+#
 # slaves:
 # 	.id_0.comb.control_buttons_frame
 # 		frame for control buttons (OK, Apply, Reset, Dismiss)
@@ -43,43 +43,43 @@
 # 		switch between Boolean and shader displays
 # 	.id_0.comb.name_stuff
 # 		frame for combination label, name and menubutton
-# 
+#
 # -------------------------------------------------
 # .id_0.comb.my_tabbed
-# 
+#
 # 	This frame is just a holder for either the Boolean stuff or the shader stuff
-# 
+#
 # slaves:
 # 	.id_0.comb.my_tabbed.bool_labeled
 # 			or
 # 	.id_0.comb.my_tabbed.shader_labeled
-# 
+#
 # -------------------------------------------------
 # .id_0.comb.my_tabbed.bool_labeled.childsite
-# 
+#
 # 	This frame is a childsite of the ".id_0.comb.my_tabbed.bool_labeled" mentioned above
 # 	This frame is only mapped when the Boolean expression is displayed.
-# 
+#
 # slaves:
 # 	.id_0.comb.id_los_air_mater
 # 		frame containing the region id, air code, material id, and LOS
 # 		This frame is toggled on and off using the "Is Region" checkbutton
-# 
+#
 # 	.id_0.comb.bool_expr_frame
 # 		Frame for the Boolean expression. Contains a label, scrollbar,
 # 		and text widget.
-# 
+#
 # -------------------------------------------------
 # .id_0.comb.my_tabbed.shader_labeled.childsite
 # 	This frame is the childsite of the ".id_0.comb.my_tabbed.shader_labeled"
 # 	mentioned above. This frame is only mapped when the shader is displayed.
 # slaves:
-# 
+#
 # 	.id_0.comb.color_frame
 # 		frame for the color label, entry, and menubutton
 # 	.id_0.comb.shader_top_frame
 # 		frame for the shader stuff
-# 
+#
 # -------------------------------------------------
 # .id_0.comb.shader_top_frame
 # slaves:
@@ -88,13 +88,13 @@
 # 	.id_0.comb.shader_frame
 # 		frame for the individual shaders to fill
 # 		this frame is passed by "do_shade" to the shaders
-# 
+#
 # -------------------------------------------------
 # .id_0.comb.shader_frame
 # slaves:
 # 	.id_0.comb.shader_frame.fr
 # 		frame created by an individual shader to hold all its stuff
-# 
+#
 # -------------------------------------------------
 # .id_0.comb.shader_frame.fr
 # slaves:
@@ -103,20 +103,20 @@
 # 	that particular shader. This is the end of the hierarchy for simple
 # 	shaders. From here down, the discussion only relates to the "stack"
 # 	shader
-# 
+#
 # 	For the "stack" shader, the slaves of this frame are:
-# 
+#
 # 	.id_0.comb.shader_frame.fr.add
 # 		frame for the "Add shader" button
 # 	.id_0.comb.shader_frame.fr.leesf
 # 		scrolledframe to hold all the stacked shaders
-# 
+#
 # -------------------------------------------------
 # .id_0.comb.shader_frame.fr.leesf
 # slaves:
 # 	.id_0.comb.shader_frame.fr.leesf.lwchildsite
 # 		frame internal to the scrolledframe
-# 
+#
 # -------------------------------------------------
 # .id_0.comb.shader_frame.fr.leesf.lwchildsite
 # slaves:
@@ -126,19 +126,19 @@
 # 		horizontal scrollbar (dynamic)
 # 	.id_0.comb.shader_frame.fr.leesf.lwchildsite.clipper
 # 		frame internal to scrolledframe
-# 
+#
 # -------------------------------------------------
 # .id_0.comb.shader_frame.fr.leesf.lwchildsite.clipper
 # slaves:
 # 	.id_0.comb.shader_frame.fr.leesf.lwchildsite.clipper.canvas
 # 		another object internal to the scrolledframe widget
-# 
+#
 # -------------------------------------------------
 # .id_0.comb.shader_frame.fr.leesf.lwchildsite.clipper.canvas.sfchildsite
 # 	This frame is the actual childsite provided by the scrolledframe widget "leesf"
 # 	It will contain a "stack" of frames, one for each shader currently
 # 	in the stack
-# 
+#
 # slaves:
 # 	.id_0.comb.shader_frame.fr.leesf.lwchildsite.clipper.canvas.sfchildsite.stk_1
 # 		frame for first stacked shader
@@ -147,11 +147,11 @@
 # 	.
 # 	.
 # 	.
-# 
+#
 # -------------------------------------------------
 # .id_0.comb.shader_frame.fr.leesf.lwchildsite.clipper.canvas.sfchildsite.stk_1
 # 	This is a frame for an individual shader in the stack
-# 
+#
 # slaves:
 # 	.id_0.comb.shader_frame.fr.leesf.lwchildsite.clipper.canvas.sfchildsite.stk_1.del
 # 		The delete button for this shader
@@ -160,7 +160,7 @@
 # 	.id_0.comb.shader_frame.fr.leesf.lwchildsite.clipper.canvas.sfchildsite.stk_1.fr
 # 		The frame where the actual buttons, label, entries, etc for this
 # 		particular shader located.
-# 
+#
 
 
 # We use the Labeledframe from Iwidgets
@@ -259,7 +259,7 @@ proc init_comb { id } {
     set bool_frame [$my_tabbed_frame.bool_labeled childsite]
     set comb_control($id,bool_frame) $bool_frame
     set shade_frame [$my_tabbed_frame.shader_labeled childsite]
-    
+
     # row 0 is just the color
     # row 1 is the actual frame containing the shader stuff
     grid rowconfigure $shade_frame 0 -weight 0
@@ -274,29 +274,29 @@ proc init_comb { id } {
     frame $top.name_stuff
 
     # frame to hold the region id, los, air code, and GIFT material code
-    frame $top.id_los_air_mater 
+    frame $top.id_los_air_mater
 
     # frame to hold the color label and the "colorF" frame (created by
     # "color_entry_build")
     frame $top.color_frame
 
     # frame to contain all the shader stuff
-    frame $top.shader_top_frame -relief groove -bd 2 
+    frame $top.shader_top_frame -relief groove -bd 2
 
     # frame to hold the display selection menubutton, the "IsRegion",
     # checkbutton, and the "Inherit" checkbutton
-    frame $top.region_inherit_frame 
+    frame $top.region_inherit_frame
 
     # frame to hold the label, text and scrollbar widgets for the
     # Boolean expression
-    frame $top.bool_expr_frame 
+    frame $top.bool_expr_frame
 
     # frame to hold the control buttons (Apply, dismiss, ...)
-    frame $top.control_buttons_frame 
+    frame $top.control_buttons_frame
 
     # frame to hold the region name entry and menubutton widgets
     # this frame sits in the "name_stuff" frame above
-    frame $top.name_entry_and_menu_frame -relief sunken -bd 2 
+    frame $top.name_entry_and_menu_frame -relief sunken -bd 2
 
     # frame to hold the shader label, entry, and menubutton widgets
     frame $top.shader_label_entry_frame
@@ -306,7 +306,7 @@ proc init_comb { id } {
 
     # frame to hold the shader entry and menubutton widgets
     # this frame sits in the "shader_label_entry_frame" above
-    frame $top.shader_entry_and_menu_frame -relief sunken -bd 2 
+    frame $top.shader_entry_and_menu_frame -relief sunken -bd 2
 
     # arrange for global access
     set comb_control($id,shader_frame) $top.shader_frame
@@ -948,7 +948,7 @@ proc comb_apply { id } {
 	    cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen) \
 		    "comb_apply: Error"\
 		    $comb_error\
-		    "" 0 OK 
+		    "" 0 OK
 	}
 
 	# set any attributes that we have saved
@@ -958,7 +958,7 @@ proc comb_apply { id } {
 	    cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen) \
 		    "comb_apply: Error"\
 		    $comb_error\
-		    "" 0 OK 
+		    "" 0 OK
 	}
 
 	return $ret
@@ -983,7 +983,7 @@ proc comb_apply { id } {
 	cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen) \
 		"comb_apply: Error"\
 		$comb_error\
-		"" 0 OK 
+		"" 0 OK
     }
 
     # set any attributes that we have saved
@@ -993,7 +993,7 @@ proc comb_apply { id } {
 	cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen) \
 	    "comb_apply: Error"\
 	    $comb_error\
-	    "" 0 OK 
+	    "" 0 OK
     }
 
     return $ret

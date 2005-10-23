@@ -190,7 +190,7 @@ read_IR(FILE *fp)
 			ir_min = min;
 			ir_max = max;
 			}
-		else 
+		else
 			{ /* Merge with existing range.			*/
 			ir_min = Min( ir_min, min );
 			ir_max = Max( ir_max, max );
@@ -453,7 +453,7 @@ pixel_To_Temp(register RGBpixel (*pixelp))
 #else
 		register RGBpixel *p;
 		register RGBpixel *q = (RGBpixel *) ir_table[ir_max-ir_min];
-#endif	
+#endif
 		register int	temp = ir_min;
 	for( p = (RGBpixel *) ir_table[0]; p <= q; p++, temp++ )
 		{

@@ -26,7 +26,7 @@
  *	Paul R. Stay
  *	Gary S. Moss
  *	Phillip Dykstra
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
@@ -279,7 +279,7 @@ main(int argc, char **argv)
 }
 
 #if HAS_SGIGL
-/* 
+/*
  *	V I E W _ L O O P
  */
 
@@ -1075,13 +1075,13 @@ int	rx, ry, rz;
 	rotate( (Angle) rz*10, 'z' );
 #ifdef never
 	calpha = cos( alpha );
-	cbeta = cos( beta );    
-	cgamma = cos( ggamma ); 
+	cbeta = cos( beta );
+	cgamma = cos( ggamma );
 
 	salpha = sin( alpha );
-	sbeta = sin( beta ); 
+	sbeta = sin( beta );
 	sgamma = sin( ggamma );
-            
+
 	mat[0] = cbeta * cgamma;
 	mat[1] = -cbeta * sgamma;
 	mat[2] = sbeta;

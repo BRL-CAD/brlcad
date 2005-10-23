@@ -26,7 +26,7 @@
  *	Ray Tracing program shot coordinator.
  *
  *  This is the heart of LIBRT's ray-tracing capability.
- *  
+ *
  *  Given a ray, shoot it at all the relevant parts of the model,
  *  (building the finished_segs chain), and then call rt_boolregions()
  *  to build and evaluate the partition chain.
@@ -74,7 +74,7 @@ static const char RCSshoot[] = "@(#)$Header$ (BRL)";
 struct resource rt_uniresource;		/* Resources for uniprocessor */
 
 extern void	rt_plot_cell(const union cutter *cutp, const struct rt_shootray_status *ssp, struct bu_list *waiting_segs_hd, struct rt_i *rtip);		/* at end of file */
-		
+
 #define V3PT_DEPARTING_RPP(_step, _lo, _hi, _pt ) \
 		PT_DEPARTING_RPP(_step, _lo, _hi, (_pt)[X], (_pt)[Y], (_pt)[Z] )
 #define PT_DEPARTING_RPP(_step, _lo, _hi, _px, _py, _pz ) \
@@ -212,13 +212,13 @@ rt_advance_to_next_cell(register struct rt_shootray_status *ssp)
 		return CUTTER_NULL;
 	}
 
-#if EXTRA_SAFETY	
+#if EXTRA_SAFETY
 	if( curcut == CUTTER_NULL ) {
 		bu_log(
 		   "rt_advance_to_next_cell: warning: ssp->curcut not set\n" );
 		ssp->curcut = curcut = &ap->a_rt_i->rti_CutHead;
 	}
-#endif	
+#endif
 
 	for( ;; ) {
 		/* Set cutp to CUTTER_NULL.  If it fails to become set in the
@@ -251,7 +251,7 @@ rt_advance_to_next_cell(register struct rt_shootray_status *ssp)
 		t0 = ssp->box_start;
 		/* NB: can't compute px,py,pz here since t0 may advance
 		   in the following statement! */
-		
+
 top:		switch( curcut->cut_type ) {
 		case CUT_NUGRIDNODE: {
 			/*
@@ -276,7 +276,7 @@ top:		switch( curcut->cut_type ) {
 				   must find our location and set up the
 				   NUgrid traversal state variables. */
 				register int x, y, z;
-				
+
 				px = ap->a_ray.r_pt[X] + t0*ap->a_ray.r_dir[X];
 				py = ap->a_ray.r_pt[Y] + t0*ap->a_ray.r_dir[Y];
 				pz = ap->a_ray.r_pt[Z] + t0*ap->a_ray.r_dir[Z];
@@ -300,7 +300,7 @@ top:		switch( curcut->cut_type ) {
 				ssp->igrid[X] = x;
 				ssp->igrid[Y] = y;
 				ssp->igrid[Z] = z;
-			
+
 				NUGRID_T_SETUP( X, px, x );
 				NUGRID_T_SETUP( Y, py, y );
 				NUGRID_T_SETUP( Z, pz, z );
@@ -329,7 +329,7 @@ top:		switch( curcut->cut_type ) {
 				   bailing out with cutp=CUTTER_NULL
 				   if we run past the end of the NUgrid
 				   array. */
-					
+
 again:				t0 = ssp->tv[out_axis];
 				if( ssp->rstep[out_axis] > 0 ) {
 					if( ++(ssp->igrid[out_axis]) >=
@@ -349,7 +349,7 @@ again:				t0 = ssp->tv[out_axis];
 				/* Update t advancement value for this axis */
 				NUGRID_T_ADV( out_axis, ssp->igrid[out_axis] );
 			}
-			
+
 			/* find minimum exit t value */
 			if( ssp->tv[X] < ssp->tv[Y] )  {
 				if( ssp->tv[Z] < ssp->tv[X] )  {
@@ -375,7 +375,7 @@ again:				t0 = ssp->tv[out_axis];
 
 			ssp->out_axis = out_axis;
 			ssp->lastcell = cutp;
-			
+
 			if( RT_G_DEBUG&DEBUG_ADVANCE )
 				bu_log( "t0=%g found in cell (%d,%d,%d), out_axis=%c at %g; cell is %s\n",
 					t0,
@@ -446,7 +446,7 @@ pop_space_stack:
 		 */
 		if( PT_DEPARTING_RPP( ssp->rstep, ssp->curmin, ssp->curmax, px, py, pz ) )
 			goto pop_space_stack;
-		
+
 		if( RT_G_DEBUG&DEBUG_ADVANCE ) {
 			bu_log(
 	           "rt_advance_to_next_cell() dist_corr=%g, pt=(%g, %g, %g)\n",
@@ -484,7 +484,7 @@ pop_space_stack:
 
 		switch( cutp->cut_type ) {
 		case CUT_BOXNODE:
-			if( RT_G_DEBUG&DEBUG_ADVANCE && 
+			if( RT_G_DEBUG&DEBUG_ADVANCE &&
 			    PT_DEPARTING_RPP( ssp->rstep, ssp->curmin, ssp->curmax, px, py, pz )
 			) {
 				/* This cell is old news. */
@@ -508,7 +508,7 @@ pop_space_stack:
 			/* Don't get stuck within the same box for long */
 			if( cutp==ssp->lastcut ) {
 				fastf_t	delta;
-push_to_next_box:				;	
+push_to_next_box:				;
 				if( RT_G_DEBUG & DEBUG_ADVANCE ) {
 					bu_log(
 						"%d,%d box push odist_corr=%.20e n=%.20e model_end=%.20e\n",
@@ -557,7 +557,7 @@ push_to_next_box:				;
 				if( delta < 1 ) delta = 1.0;
 				ssp->box_start = ssp->box_end + delta;
 				ssp->box_end = ssp->box_start + delta;
-				
+
 				if( RT_G_DEBUG & DEBUG_ADVANCE ) {
 					bu_log(
 						"push%d: was=%.20e, now=%.20e\n\n",
@@ -614,7 +614,7 @@ done_return_cutp:	ssp->lastcut = cutp;
 			ssp->odist_corr = ssp->dist_corr;
 			ssp->obox_start = ssp->box_start;
 			ssp->obox_end = ssp->box_end;
-#endif			
+#endif
 			ssp->dist_corr = t0;
 			ssp->box_start = t0 + ssp->newray.r_min;
 			ssp->box_end = t0 + ssp->newray.r_max;
@@ -640,14 +640,14 @@ done_return_cutp:	ssp->lastcut = cutp;
 			VSET( ssp->curmax, ssp->curcut->nugn.nu_axis[X][ssp->curcut->nugn.nu_cells_per_axis[X]-1].nu_epos,
 				 ssp->curcut->nugn.nu_axis[Y][ssp->curcut->nugn.nu_cells_per_axis[Y]-1].nu_epos,
 				 ssp->curcut->nugn.nu_axis[Z][ssp->curcut->nugn.nu_cells_per_axis[Z]-1].nu_epos );
-			break; }	
+			break; }
 		case CUT_CUTNODE:
 			rt_bomb( "rt_advance_to_next_cell: impossible: cutnote as leaf!" );
 			break;
 		default:
 			rt_bomb( "rt_advance_to_next_cell: unknown spt node" );
 			break;
-		}			
+		}
 
 		/* Continue with the current space partitioning algorithm. */
 	}
@@ -1236,11 +1236,11 @@ start_cell:
 						continue;	/* MISS */
 					}
 				}
-				
+
 				if(debug_shoot)bu_log("shooting %s\n", stp->st_name);
 				resp->re_shots++;
 				BU_LIST_INIT( &(new_segs.l) );
-				if( stp->st_meth->ft_shot( 
+				if( stp->st_meth->ft_shot(
 				    stp, &ss.newray, ap, &new_segs ) <= 0 )  {
 					resp->re_shot_miss++;
 					continue;	/* MISS */
@@ -1300,7 +1300,7 @@ start_cell:
 					struct rt_piecestate **psp;
 					for( BU_PTBL_FOR( psp, (struct rt_piecestate **), &resp->re_pieces_pending ) )  {
 						FAST fastf_t dist;
-						
+
 						dist = (*psp)->mindist;
 						BU_ASSERT_DOUBLE( dist, <, INFINITY );
 						if( dist < pending_hit )  {
@@ -1352,7 +1352,7 @@ weave:
 		}
 		bu_ptbl_reset( &resp->re_pieces_pending );
 	}
-	
+
 	if( BU_LIST_NON_EMPTY( &(waiting_segs.l) ) )  {
 		rt_boolweave( &finished_segs, &waiting_segs, &InitialPart, ap );
 	}
@@ -1460,7 +1460,7 @@ out:
  */
 const union cutter *
 rt_cell_n_on_ray(register struct application *ap, int n)
-                                
+
    	  		/* First cell is #0 */
 {
 	struct rt_shootray_status	ss;
@@ -1783,10 +1783,10 @@ rt_in_rpp(struct xray		*rp,
 /* For debugging */
 int
 rt_DB_rpp(register struct xray *rp, register const fastf_t *invdir, register const fastf_t *min, register const fastf_t *max)
-                         
+
                                	/* inverses of rp->r_dir[] */
-                            
-                            
+
+
 {
 	register const fastf_t *pt = &rp->r_pt[0];
 	FAST fastf_t sv;
@@ -1909,7 +1909,7 @@ miss:
 #undef st
 
 
-#define SEG_MISS(SEG)		(SEG).seg_stp=(struct soltab *) 0;	
+#define SEG_MISS(SEG)		(SEG).seg_stp=(struct soltab *) 0;
 
 /* Stub function which will "similate" a call to a vector shot routine */
 void

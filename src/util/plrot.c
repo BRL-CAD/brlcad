@@ -19,13 +19,13 @@
  * information.
  */
 /** @file plrot.c
- *  
+ *
  *  Rotate, Translate, and Scale a Unixplot file.
  *
  *  Authors -
  *	Phillip Dykstra
  *	Michael John Muuss
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
@@ -40,7 +40,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif
-                                                                                                                                                                            
+
 
 #include <stdio.h>
 #ifdef HAVE_STDLIB_H
@@ -260,7 +260,7 @@ get_args(int argc, register char **argv)
 			bn_mat_mul( rmat, tmp, m );
 			break;
 		case 'm':
-			num = sscanf(&bu_optarg[0], "%lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf", 
+			num = sscanf(&bu_optarg[0], "%lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf",
 				&mtmp[0], &mtmp[1], &mtmp[2], &mtmp[3],
 				&mtmp[4], &mtmp[5], &mtmp[6], &mtmp[7],
 				&mtmp[8], &mtmp[9], &mtmp[10], &mtmp[11],

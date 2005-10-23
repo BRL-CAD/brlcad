@@ -29,12 +29,12 @@
  *  Authors -
  *	Phillip Dykstra
  *	Dave Becker		(Vectorization)
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005
- *  
+ *
  */
 /*@}*/
 #ifndef lint
@@ -58,21 +58,21 @@ static const char RCSsph[] = "@(#)$Header$ (BRL)";
 
 /*
  *  Algorithm:
- *  
+ *
  *  Given V, A, where |A| = Radius, there is a set of points on this sphere
- *  
+ *
  *  { (x,y,z) | (x,y,z) is on sphere defined by V, A }
- *  
+ *
  *  To find the intersection of a line with the sphere, consider
  *  the parametric line L:
- *  
+ *
  *  	L : { P(n) | P + t(n) . D }
- *  
+ *
  *  Call W the actual point of intersection between L and the sphere.
  *
  *  NORMALS.  Given the point W on the sphere, what is the vector
  *  normal to the tangent plane at that point?
- *  
+ *
  *  N = (W - V) / |A|
  */
 
@@ -86,15 +86,15 @@ struct sph_specific {
 
 /**
  *  			R T _ S P H _ P R E P
- *  
+ *
  *  Given a pointer to a GED database record, and a transformation matrix,
  *  determine if this is a valid sphere, and if so, precompute various
  *  terms of the formula.
- *  
+ *
  *  Returns -
  *  	0	SPH is OK
  *  	!0	Error in description
- *  
+ *
  *  Implicit return -
  *  	A struct sph_specific is created, and it's address is stored in
  *  	stp->st_specific for use by rt_sph_shot().
@@ -125,7 +125,7 @@ rt_sph_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 	/* Validate that |A|, |B|, and |C| are nearly equal */
 	if( fabs(magsq_a - magsq_b) > 0.0001
 	    || fabs(magsq_a - magsq_c) > 0.0001 ) {
-#if 0	    	
+#if 0
 	    	/* Ordinarily, don't say anything here, will handle as ELL */
 		bu_log("sph(%s):  non-equal length A, B, C vectors\n",
 			stp->st_name );
@@ -218,7 +218,7 @@ rt_sph_print(register const struct soltab *stp)
 
 /**
  *  			R T _ S P H _ S H O T
- *  
+ *
  *  Intersect a ray with a sphere.
  *  If an intersection occurs, a struct seg will be acquired
  *  and filled in.
@@ -231,7 +231,7 @@ rt_sph_print(register const struct soltab *stp)
  *   radial distance of the ray origin from the sphere surface.  Thus
  *   if we are shooting from near the surface we may have problems.
  *   XXX - investigate this.
- *  
+ *
  *  Returns -
  *  	0	MISS
  *	>0	HIT
@@ -277,7 +277,7 @@ rt_sph_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 	return(2);			/* HIT */
 }
 
-#define SEG_MISS(SEG)		(SEG).seg_stp=(struct soltab *) 0;	
+#define SEG_MISS(SEG)		(SEG).seg_stp=(struct soltab *) 0;
 /**
  *			R T _ S P H _ V S H O T
  *
@@ -289,7 +289,7 @@ rt_sph_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
            		       /* An array of ray pointers */
                                /* array of segs (results returned) */
    		  	       /* Number of ray/object pairs */
-                  	    
+
 {
 	register struct sph_specific *sph;
 	LOCAL vect_t	ov;		/* ray orgin to center (V - P) */
@@ -338,7 +338,7 @@ rt_sph_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
 
 /**
  *  			R T _ S P H _ N O R M
- *  
+ *
  *  Given ONE ray distance, return the normal and entry/exit point.
  */
 void
@@ -371,7 +371,7 @@ rt_sph_curve(register struct curvature *cvp, register struct hit *hitp, struct s
 
 /**
  *  			R T _ S P H _ U V
- *  
+ *
  *  For a hit on the surface of an SPH, return the (u,v) coordinates
  *  of the hit point, 0 <= u,v <= 1.
  *  u = azimuth

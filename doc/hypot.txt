@@ -4,16 +4,16 @@ Date: 18 Nov 84 20:41:29 GMT
 > >> 	It would also be nice if sin( x ) and cos( x ) could be
 > >> 	computed simultaneously with reduced cost.  I doubt if this is
 > >> 	possible but would like to know if it is.
-> 
+>
 > > 	sine = sin(x);
 > > 	cosine = sqrt(1.0 - sine*sine);
-> 
+>
 > I wish people would check things out before posting them.  On our
 > 4.2BSD system, the sqrt() approach is actually SLOWER than using
 > cos().  (Under UNIX System V it is very slightly faster.)  Now,
 > if I wanted cos(x)^2, I would certainly use 1 - sin(x)^2, which
 > I already knew about (I too went to high school).
-> 
+>
 > What I had in mind was more along the lines of a CORDIC algorithm
 > or some other obscure but useful approach.
 
@@ -69,7 +69,7 @@ Computation of Pythagorean Sums", IBM Journal of Research and
 Development, vol. 27, no. 6, pp. 582-589, Nov. 1983] gives a geometric
 justification of the algorithm and presents a set of generalizations
 that have arbitrarily large order of convergence.
--- 
+--
 Ken Turkowski @ CADLINC, Palo Alto (soon Menlo Park), CA
 UUCP: {amd,decwrl,flairvax,nsc}!turtlevax!ken
 ARPA: turtlevax!ken@DECWRL.ARPA

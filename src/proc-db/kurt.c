@@ -19,12 +19,12 @@
  * information.
  */
 /** @file kurt.c
- * 
+ *
  *  Program to generate polygons from a multi-valued function.
  *
  *  Author -
  *	Michael John Muuss
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
@@ -94,8 +94,8 @@ main(int argc, char **argv)
 	for( ix=quant-2; ix>=0; ix-- )  {
 		for( iy=quant-2; iy>=0; iy-- )  {
 			draw_rect( &val[ix][iy],
-				   &val[ix+1][iy], 
-				   &val[ix][iy+1], 
+				   &val[ix+1][iy],
+				   &val[ix][iy+1],
 				   &val[ix+1][iy+1] );
 		}
 	}
@@ -134,7 +134,7 @@ main(int argc, char **argv)
 
 void
 do_cell(struct val *vp, double xc, double yc)
-          	    
+
       	       		/* center coordinates, z=0+ */
 {
 	LOCAL poly	polynom;
@@ -199,7 +199,7 @@ draw_rect(struct val *a, struct val *b, struct val *c, struct val *d)
 	if( c->v_n > min )  vp[ndiff++] = c;
 	if( d->v_n > min )  vp[ndiff++] = d;
 
-	
+
 	VSET( work, a->v_x, a->v_y, a->v_z[0] );
 	VMOVE( centroid, work );
 	VSET( work, b->v_x, b->v_y, b->v_z[0] );
@@ -292,10 +292,10 @@ draw_rect(struct val *a, struct val *b, struct val *c, struct val *d)
  */
 void
 pnorms(fastf_t (*norms)[3], fastf_t (*verts)[3], fastf_t *out, int npts)
-       	            
-       	            
+
+
       	    		/* hopefully points outwards */
-   	     
+
 {
 	register int i;
 	vect_t	ab, ac;
@@ -319,12 +319,12 @@ pnorms(fastf_t (*norms)[3], fastf_t (*verts)[3], fastf_t *out, int npts)
 
 void
 do_light(char *name, fastf_t *pos, fastf_t *dir_at, int da_flag, double r, unsigned char *rgb)
-    	      
-       	    
+
+
       	       		/* direction or aim point */
    	        	/* 0 = direction, !0 = aim point */
       	  		/* radius of light */
-             	     
+
 {
 	char	nbuf[64];
 	vect_t	center;

@@ -46,7 +46,7 @@
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5066
- *  
+ *
  */
 
 #ifndef lint
@@ -200,7 +200,7 @@ main(int argc, char **argv)
 		    Header.GH_Magic, ScreenWidth, ScreenHeight, GlobalMap,
 		    CR, GlobalPixels, Header.GH_Background);
 	}
-	
+
 	if (Header.GH_EOB) {
 		fprintf(stderr,"%s: missing EOB in header.\n",argv[0]);
 		exit(1);
@@ -310,7 +310,7 @@ main(int argc, char **argv)
 }
 /* getcode - Get a LWZ "code"
  *
- * getcode returns an LWZ code.  The code size is always less than 
+ * getcode returns an LWZ code.  The code size is always less than
  * 12 bits but could be as small as 2 bits.  This implies that reading
  * one code may not "read" anything from a file.
  *

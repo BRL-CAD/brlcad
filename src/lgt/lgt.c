@@ -133,7 +133,7 @@ main(int argc, char **argv)
 		limit( C_PROC, 0, L_MEM, -1 ) );
 	}
 #endif
-	
+
 	init_Lgts();
 
 	if( ! pars_Argv( argc, argv ) )
@@ -154,7 +154,7 @@ main(int argc, char **argv)
 				);
 		if( get_Input( input_ln, MAX_LN, prompt ) != NULL )
 			sgi_usemouse = input_ln[0] != 'n';
-		if( sgi_usemouse )			
+		if( sgi_usemouse )
 			sgi_Init_Popup_Menu();
 		}
 #endif

@@ -33,7 +33,7 @@
  *
  *  Author -
  *	Michael John Muuss
- *  
+ *
  *  Source -
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5066
@@ -80,15 +80,15 @@ struct submodel_specific {
 
 /**
  *  			R T _ S U B M O D E L _ P R E P
- *  
+ *
  *  Given a pointer to a GED database record, and a transformation matrix,
  *  determine if this is a valid SUBMODEL, and if so, precompute various
  *  terms of the formula.
- *  
+ *
  *  Returns -
  *  	0	SUBMODEL is OK
  *  	!0	Error in description
- *  
+ *
  *  Implicit return -
  *  	A struct submodel_specific is created, and it's address is stored in
  *  	stp->st_specific for use by submodel_shot().
@@ -230,7 +230,7 @@ rt_submodel_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rti
 
 if(RT_G_DEBUG) rt_pr_cut_info( sub_rtip, stp->st_name );
 
-done:	
+done:
 	BU_GETSTRUCT( submodel, submodel_specific );
 	submodel->magic = RT_SUBMODEL_SPECIFIC_MAGIC;
 	stp->st_specific = (genptr_t)submodel;
@@ -369,7 +369,7 @@ rt_submodel_a_hit(struct application *ap, struct partition *PartHeadp, struct se
 		/* Link to ray in upper model, not submodel */
 		up_segp->seg_in.hit_rayp = &up_ap->a_ray;
 		up_segp->seg_out.hit_rayp = &up_ap->a_ray;
-		
+
 		/* Pre-calculate what would have been "lazy evaluation" */
 		VJOIN1( up_segp->seg_in.hit_point,  up_ap->a_ray.r_pt,
 			up_segp->seg_in.hit_dist, up_ap->a_ray.r_dir );
@@ -451,11 +451,11 @@ rt_submodel_a_hit(struct application *ap, struct partition *PartHeadp, struct se
 
 /**
  *  			R T _ S U B M O D E L _ S H O T
- *  
+ *
  *  Intersect a ray with a submodel.
  *  If an intersection occurs, a struct seg will be acquired
  *  and filled in.
- *  
+ *
  *  Returns -
  *  	0	MISS
  *	>0	HIT
@@ -546,14 +546,14 @@ rt_submodel_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n
            		       /* An array of ray pointers */
                                /* array of segs (results returned) */
    		  	       /* Number of ray/object pairs */
-                  	    
+
 {
 	rt_vstub( stp, rp, segp, n, ap );
 }
 
 /**
  *  			R T _ S U B M O D E L _ N O R M
- *  
+ *
  *  Given ONE ray distance, return the normal and entry/exit point.
  */
 void
@@ -593,7 +593,7 @@ rt_submodel_curve(register struct curvature *cvp, register struct hit *hitp, str
 
 /**
  *  			R T _ S U B M O D E L _ U V
- *  
+ *
  *  For a hit on the surface of an submodel, return the (u,v) coordinates
  *  of the hit point, 0 <= u,v <= 1.
  *  u = azimuth

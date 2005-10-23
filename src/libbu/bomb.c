@@ -30,11 +30,11 @@
  *
  *  Author -
  *	Michael John Muuss
- *  
+ *
  *  Source -
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
- *  
+ *
  */
 /*@}*/
 
@@ -63,10 +63,10 @@ static const char RCSbomb[] = "@(#)$Header$ (ARL)";
 
 #if 1
 struct bu_hook_list bu_bomb_hook_list = {
-	{	BU_LIST_HEAD_MAGIC, 
-		&bu_bomb_hook_list.l, 
+	{	BU_LIST_HEAD_MAGIC,
+		&bu_bomb_hook_list.l,
 		&bu_bomb_hook_list.l
-	}, 
+	},
 	BUHOOK_NULL,
 	GENPTR_NULL
 };
@@ -84,7 +84,7 @@ jmp_buf		bu_jmpbuf;		/* for BU_SETJMP() */
 
 /*
  *			B U _ B O M B
- *  
+ *
  *  Abort the program with a message.
  *  Only produce a core-dump when that debugging bit is set.
  */

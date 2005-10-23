@@ -26,11 +26,11 @@
  *
  *  Author -
  *	Michael John Muuss
- *  
+ *
  *  Source -
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
- *  
+ *
  */
 /*@}*/
 
@@ -308,7 +308,7 @@ db5_diradd_handler(
 		rt_memfree( &(dbip->dbi_freep), rip->object_length, laddr );
 		return;
 	}
-	
+
 	/* If somehow it doesn't have a name, ignore it */
 	if( rip->name.ext_buf == NULL )  return;
 
@@ -464,7 +464,7 @@ db_get_version(struct db_i *dbip)
 		return( 4 );
 	else
 		return( -1 );
-	
+
 }
 
 /*

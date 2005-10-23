@@ -22,11 +22,11 @@
 /** \addtogroup nurb */
 /*@{*/
 /** @file nurb_eval.c
- *	Evaluate a Non Uniform Rational B-spline curve or at the 
+ *	Evaluate a Non Uniform Rational B-spline curve or at the
  *	given (u,v) values.
  *  Author -
  *	Paul Randal Stay
- * 
+ *
  *  Source -
  * 	SECAD/VLD Computing Consortium, Bldg 394
  *	The U.S. Army Ballistic Research Laboratory
@@ -49,8 +49,8 @@
 
 /* Algorithm -
  *
- * The algorithm uses the traditional COX-deBoor approach 
- * found in the book "Pratical Guide to Splines" Carl de Boor, pg 147 
+ * The algorithm uses the traditional COX-deBoor approach
+ * found in the book "Pratical Guide to Splines" Carl de Boor, pg 147
  * to evaluate a parametric value on a curve. This is expanded to the surface.
  */
 
@@ -103,7 +103,7 @@ rt_nurb_s_eval(const struct face_g_snurb *srf, fastf_t u, fastf_t v, fastf_t *fi
 			*crv_ptr++ = *mesh_ptr++;
 		}
 
-		rtr_pt =  (fastf_t * ) rt_nurb_eval_crv( curves, srf->order[RT_NURB_SPLIT_ROW], u, 
+		rtr_pt =  (fastf_t * ) rt_nurb_eval_crv( curves, srf->order[RT_NURB_SPLIT_ROW], u,
 		    &srf->u, k_index, coords );
 
 		for (k = 0; k < coords; k++)
@@ -115,7 +115,7 @@ rt_nurb_s_eval(const struct face_g_snurb *srf, fastf_t u, fastf_t v, fastf_t *fi
 
 	k_index = rt_nurb_knot_index( &srf->v, v, srf->order[RT_NURB_SPLIT_COL] );
 
-	ev_pt = (fastf_t * ) rt_nurb_eval_crv( diff_curve, srf->order[RT_NURB_SPLIT_COL], 
+	ev_pt = (fastf_t * ) rt_nurb_eval_crv( diff_curve, srf->order[RT_NURB_SPLIT_COL],
 		v, &srf->v, k_index, coords);
 
 	for ( k = 0; k < coords; k++)
@@ -139,7 +139,7 @@ rt_nurb_c_eval(const struct edge_g_cnurb *crv, fastf_t param, fastf_t *final_val
 
 	k_index = rt_nurb_knot_index( &crv->k, param, crv->order);
 
-	pnts = (fastf_t * ) bu_malloc( coords * sizeof( fastf_t) * 
+	pnts = (fastf_t * ) bu_malloc( coords * sizeof( fastf_t) *
 	    crv->c_size, "diff: rt_nurb_c_eval");
 
 	for ( i = 0; i < coords * crv->c_size; i++)
@@ -160,7 +160,7 @@ rt_nurb_eval_crv(register fastf_t *crv, int order, fastf_t param, const struct k
 {
 	int	i, j;
 
-	if ( order <= 1 ) 
+	if ( order <= 1 )
 		return
 		    (crv + ((k_index) * coords));
 
@@ -173,20 +173,20 @@ rt_nurb_eval_crv(register fastf_t *crv, int order, fastf_t param, const struct k
 
 		k2 =  k_vec->knots[ ( j ) ];
 
-		if ((k1 - k2) != 0.0 ) { 		
-			for ( i= 0; i < coords; i++) 
+		if ((k1 - k2) != 0.0 ) {
+			for ( i= 0; i < coords; i++)
 			{
  				*((crv + ((j) * coords)) + i) =
 					((k1 - param) *
-					*((crv + ((j - 1) * coords)) + i) 
-					+ (param - k2 ) * *((crv + ((j) * 
+					*((crv + ((j - 1) * coords)) + i)
+					+ (param - k2 ) * *((crv + ((j) *
 					coords)) + i)) / (k1 - k2);
- 			} 		
-		} 		
+ 			}
+		}
 		j--;
-	} 	
-	return rt_nurb_eval_crv( crv, order - 1, param, k_vec, 
-		k_index, coords ); 
+	}
+	return rt_nurb_eval_crv( crv, order - 1, param, k_vec,
+		k_index, coords );
 }
 
 

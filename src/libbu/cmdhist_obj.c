@@ -32,7 +32,7 @@
  *  Source -
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
- *  
+ *
  */
 /*@}*/
 
@@ -57,7 +57,7 @@ int cho_open_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **arg
 
 static struct bu_cmdhist_obj HeadCmdHistObj;		/* head of command history object list */
 
-static struct bu_cmdtab ch_cmds[] = 
+static struct bu_cmdtab ch_cmds[] =
 {
 	{"add",		bu_cmdhist_add},
 	{"curr",	bu_cmdhist_curr},
@@ -72,7 +72,7 @@ cho_hist(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	return bu_cmd(clientData, interp, argc, argv, ch_cmds, 1);
 }
 
-static struct bu_cmdtab cho_cmds[] = 
+static struct bu_cmdtab cho_cmds[] =
 {
 	{"add",		bu_cmdhist_add},
 	{"curr",	bu_cmdhist_curr},

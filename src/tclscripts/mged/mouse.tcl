@@ -26,7 +26,7 @@
 # Source -
 #	The U. S. Army Ballistic Research Laboratory
 #	Aberdeen Proving Ground, Maryland  21005
-#  
+#
 #
 #
 # Description -
@@ -394,7 +394,7 @@ proc mouse_comb_edit_select { x y } {
 
 ##
 #
-# Hack to use new mouse utilities with an arbitrary 
+# Hack to use new mouse utilities with an arbitrary
 # display manager window.
 #
 proc mouse_init_mged_gui {} {

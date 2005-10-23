@@ -40,11 +40,11 @@
  *
  *  Author -
  *	Michael John Muuss
- *  
+ *
  *  Source -
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
- *  
+ *
  */
 /*@}*/
 
@@ -432,7 +432,7 @@ bu_free_mapped_files(int verbose)
  */
 struct bu_mapped_file *
 bu_open_mapped_file_with_path(char *const *path, const char *name, const char *appl)
-                   
+
           	      		/* file name */
           	      		/* non-null only when app. will use 'apbuf' */
 {

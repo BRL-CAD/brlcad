@@ -29,11 +29,11 @@
  *
  *  Author -
  *	Phil Dykstra
- *  
+ *
  *  Source -
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
- *  
+ *
  */
 #ifndef lint
 static const char RCSid[] = "@(#)$Header$ (ARL)";
@@ -54,7 +54,7 @@ int	irfft_adds, irfft_mults;
 
 void
 ditsplit(double *x, int n, int m)
-           
+
    	  	/* length */
    	  	/* n = 2^m */
 {

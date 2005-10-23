@@ -26,7 +26,7 @@
  *	SLAD/BVLD/VMB
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005
- *  
+ *
  */
 
 #ifndef lint
@@ -136,7 +136,7 @@ Do_subfigs()
 		{
 			bu_log( "Illegal transformation matrix in %s for member %s\n",
 				curr_file->obj_name, wmem->wm_name );
-			bu_log( " row vector magnitudes are %g, %g, and %g\n", 
+			bu_log( " row vector magnitudes are %g, %g, and %g\n",
 				1.0/mat_scale[0], 1.0/mat_scale[1], 1.0/mat_scale[2] );
 			bn_mat_print( "", *dir[i]->rot );
 			for( j=0 ; j<11 ; j++ )
@@ -146,7 +146,7 @@ Do_subfigs()
 				(*dir[i]->rot)[j] *= mat_scale[0];
 			}
 			bn_mat_print( "After scaling:", *dir[i]->rot );
-			
+
 		}
 		bcopy( *dir[i]->rot, wmem->wm_mat, sizeof( mat_t ) );
 
@@ -250,7 +250,7 @@ Do_subfigs()
 		}
 
 		if( no_of_members > 1 )
-			(void)mk_lcomb( fdout, dir[subfigdef_index]->name, &head2, 0, 
+			(void)mk_lcomb( fdout, dir[subfigdef_index]->name, &head2, 0,
 					(char *)NULL, (char *)NULL, (unsigned char *)NULL, 0 );
 	}
 

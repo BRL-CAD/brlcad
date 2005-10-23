@@ -36,7 +36,7 @@ namespace eval RtWizard {
     package provide FbPage 1.0
 
     #
-    # fbpage - Provides a lowercased access method for the 
+    # fbpage - Provides a lowercased access method for the
     #          FbPage class
     #
     proc fbpage {pathName args} {
@@ -81,7 +81,7 @@ namespace eval RtWizard {
     }
 
     #
-    # FbPage 
+    # FbPage
     #
     # The FbPage contains some entryfields.
     #
@@ -91,18 +91,18 @@ namespace eval RtWizard {
 	#
 	# Configuration variables
 	#
-	
+
 	# None!
 
 	public {
 	    #
 	    # methods
-	    # 
+	    #
 	    constructor {args} {};
-	
+
 	    method onSelect {}
 	    method onDeselect {}
-	    method getStepInfo {}	    
+	    method getStepInfo {}
 	    method getWidth {}
 	    method getHeight {}
 	    method getFrameBuffer {width height {screenOnly false}}
@@ -134,7 +134,7 @@ namespace eval RtWizard {
 	    common topSpot 8
 	    variable rbvar
 	    variable fbFile
-	    
+
 	    variable width
 	    variable heigh
 
@@ -142,18 +142,18 @@ namespace eval RtWizard {
 	    variable heightIndex
 
 	    variable lastPort 0
-	    
+
 	}
     }
-    
+
     #--------------------#
     #   Public Methods   #
-    #--------------------#    
+    #--------------------#
     #
     # constructor - builds the Framebuffer Page
     #
     ::itcl::body FbPage::constructor {args} {
-	
+
 	#
 	# Set up the childsite
 	#
@@ -176,17 +176,17 @@ namespace eval RtWizard {
 	    ignore -textbackground
 	}
 	loadHelpText $itk_component(helpPanel);
-    
+
 	pack $itk_component(helpPanel) \
 		-side top
 
 	#
-	# Add a frame to facilitate packing the remainder of the 
+	# Add a frame to facilitate packing the remainder of the
 	# contents.
-	# 
+	#
 	itk_component add sfm {
 	    frame $cs.fm \
-		    -relief flat 
+		    -relief flat
 	} {
 	    usual
 	}
@@ -225,12 +225,12 @@ namespace eval RtWizard {
 		    -width 6 \
 		    -labelmargin 2 \
 		    -increment "[::itcl::code $this incrWidth]" \
-		    -decrement "[::itcl::code $this decrWidth]" 
+		    -decrement "[::itcl::code $this decrWidth]"
 	} {
 	    ignore -textfont
 	    keep -textbackground
 	}
-	    
+
 	set widthIndex 5
 	updateWidth
 
@@ -239,7 +239,7 @@ namespace eval RtWizard {
 		    -labeltext "Height:" \
 		    -width 6 \
 		    -increment "[::itcl::code $this incrHeight]" \
-		    -decrement "[::itcl::code $this decrHeight]" 
+		    -decrement "[::itcl::code $this decrHeight]"
 	} {
 	    ignore -textfont
 	    keep -textbackground
@@ -264,7 +264,7 @@ namespace eval RtWizard {
 
 	itk_component add radBox {
 	    iwidgets::radiobox $devCs.radBox \
-		    -relief flat 
+		    -relief flat
 	} {
 	    usual
 	}
@@ -289,7 +289,7 @@ namespace eval RtWizard {
 
 	itk_component add fsd {
 	    iwidgets::fileselectiondialog .fsd \
-		    -modality application 
+		    -modality application
 	} {
 	    usual
 	}
@@ -318,7 +318,7 @@ namespace eval RtWizard {
 	#
 	# Pack the items
 	#
-	
+
 	#
 	# Pack the contents of the szFrame
 	#
@@ -331,9 +331,9 @@ namespace eval RtWizard {
 
 	#
 	# Pack the contents of the devFrame
-	# 
+	#
 	pack $itk_component(radBox) -anchor w
-	pack $itk_component(fileName) -anchor w 
+	pack $itk_component(fileName) -anchor w
 	pack $itk_component(browse)  -anchor e
 
 	#
@@ -350,12 +350,12 @@ namespace eval RtWizard {
 
 	#
 	# Now pack the top-level widgets.
-	# 
+	#
 	pack $itk_component(helpPanel) -side top
 	pack $itk_component(sfm)
 	pack $itk_component(bbox) -side right
 
-	
+
 	#
 	# Configure the labeledframe
 	#
@@ -372,7 +372,7 @@ namespace eval RtWizard {
 	#
 	eval itk_initialize $args
     }
-    
+
     #
     # onSelect
     #
@@ -390,7 +390,7 @@ namespace eval RtWizard {
     #
     # Cleans up when the page is deselected
     #
-    ::itcl::body FbPage::onDeselect {} {	
+    ::itcl::body FbPage::onDeselect {} {
 	#
 	# Nothing yet!
 	#
@@ -400,7 +400,7 @@ namespace eval RtWizard {
     # getStepInfo
     #
     # In principal, returns a name for the step, and a variable that
-    # can be queried for state. The framebuffer page is not a 'step', 
+    # can be queried for state. The framebuffer page is not a 'step',
     # so it returns "No Step"
     #
     ::itcl::body FbPage::getStepInfo {} {
@@ -457,12 +457,12 @@ namespace eval RtWizard {
 	exec $binpath/fbclear -F $port 0 0 0
 	set lastPort $port
 
-	return $port	
+	return $port
     }
 
     #--------------------#
     #  Private Methods   #
-    #--------------------#    
+    #--------------------#
     #
     # onOK - called when the OK button is called
     #
@@ -471,11 +471,11 @@ namespace eval RtWizard {
     }
 
     #
-    # loadHelpText - loads a bit of helpful information into a 
+    # loadHelpText - loads a bit of helpful information into a
     #                text widget
     #
     ::itcl::body FbPage::loadHelpText { widget } {
-	set help "Copious help on frame buffer stuff"    
+	set help "Copious help on frame buffer stuff"
 	$widget insert end $help
     }
 
@@ -488,7 +488,7 @@ namespace eval RtWizard {
     }
 
     #
-    # onToScreen - called when the toScreen radiobutton is 
+    # onToScreen - called when the toScreen radiobutton is
     #             selected. Deactivates the "fileName" and
     #             "browse" components.
     #
@@ -498,7 +498,7 @@ namespace eval RtWizard {
     }
 
     #
-    # onToFile - called when the toFile radiobutton is 
+    # onToFile - called when the toFile radiobutton is
     #            selected. Activates the "fileName" and
     #            "browse" components.
     #
@@ -514,7 +514,7 @@ namespace eval RtWizard {
     ::itcl::body FbPage::updateWidth { } {
 	$itk_component(width) clear
 	$itk_component(width) insert 0 [ lindex $sizes $widthIndex ]
-    } 
+    }
 
     #
     # incrWidth - called when the width spinner's up button
@@ -545,7 +545,7 @@ namespace eval RtWizard {
     ::itcl::body FbPage::updateHeight { } {
 	$itk_component(height) clear
 	$itk_component(height) insert 0 [ lindex $sizes $heightIndex ]
-    } 
+    }
 
     #
     # incrHeight - called when the height spinner's up button

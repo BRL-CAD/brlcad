@@ -30,7 +30,7 @@
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005
- *  
+ *
  */
 #ifndef lint
 static const char RCSworker[] = "@(#)$Header$ (BRL)";
@@ -287,7 +287,7 @@ void do_run( int a, int b )
 		 * XXX this should somehow only apply to a build on a 2.4
 		 * linux kernel.
 		 */
-#  if defined(USE_FORKED_THREADS) 
+#  if defined(USE_FORKED_THREADS)
 		pid = fork();
 		if (pid < 0) {
 			perror("fork failed");
@@ -308,7 +308,7 @@ void do_run( int a, int b )
 			  	perror("Unable to close the communication pipe");
 			  	sleep(1); /* give the parent time to read */
 			}
-			exit(0); 
+			exit(0);
 		} else {
 			if (read(p[0], buffer, sizeof(resource[0]) * npsw) == -1) {
 				perror("Unable to read from the communication pipe");
@@ -403,23 +403,23 @@ static struct jitter_pattern pt_pats[] = {
  *
  *  compute_point
  *
- * Compute the origin for this ray, based upon the number of samples 
- * per pixel and the number of the current sample.  For certain 
- * ray-counts, it is highly advantageous to subdivide the pixel and 
+ * Compute the origin for this ray, based upon the number of samples
+ * per pixel and the number of the current sample.  For certain
+ * ray-counts, it is highly advantageous to subdivide the pixel and
  * fire each ray in a specific sub-section of the pixel.
  */
-static void 
+static void
 jitter_start_pt(vect_t point, struct application *a, int samplenum, int pat_num)
 {
 	FAST fastf_t dx, dy;
 
 	if (pat_num >= 0) {
 		dx = a->a_x + pt_pats[pat_num].coords[samplenum*2] +
-			(bn_rand_half(a->a_resource->re_randptr) * 
+			(bn_rand_half(a->a_resource->re_randptr) *
 			 pt_pats[pat_num].rand_scale[X] );
-	
+
 		dy = a->a_y + pt_pats[pat_num].coords[samplenum*2 + 1] +
-			(bn_rand_half(a->a_resource->re_randptr) * 
+			(bn_rand_half(a->a_resource->re_randptr) *
 			 pt_pats[pat_num].rand_scale[Y] );
 	} else {
 		dx = a->a_x + bn_rand_half(a->a_resource->re_randptr);
@@ -626,7 +626,7 @@ void do_pixel(int cpu,
 
 /*
  *  			W O R K E R
- *  
+ *
  *  Compute some pixels, and store them.
  *  A "self-dispatching" parallel algorithm.
  *  Executes until there is no more work to be done, or is told to stop.

@@ -24,7 +24,7 @@
 
 /** @file observer.c
  * Routines for implementing the observer pattern.
- * 
+ *
  * Source -
  *	SLAD CAD Team
  *	The U. S. Army Research Laboratory

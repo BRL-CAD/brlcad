@@ -21,7 +21,7 @@
 /** @file fbio.h
  *
  *  BRL-CAD Framebuffer Library I/O Interfaces
- *  
+ *
  *  Source -
  *	BRL-CAD Open Source
  *

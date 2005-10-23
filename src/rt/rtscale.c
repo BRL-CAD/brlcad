@@ -26,20 +26,20 @@
  *  space coordinates and then translated into model coordinates, where it is
  *  plotted.  This plot can be overlayed onto any other UNIX-Plot file of onto
  *  a pix file.
- *  
+ *
  *  The scale will be a simple line with a certain number of tick marks along
- *  it.  It will always end with a "nice" number: that is, rounded to the 
+ *  it.  It will always end with a "nice" number: that is, rounded to the
  *  nearest 10 as appropriate.
  *
  *  The program consists of three parts:
- *	1) take view, orientation, eye_position, and size from the rt log 
+ *	1) take view, orientation, eye_position, and size from the rt log
  *          file, and use this information to build up the view2model matrix;
  *	2) lay out the scale in view-coordinates and convert all points to
  *	   model coordinates for plotting in model coordinates;
  *			and
  *	3) concatenate the scales and a copy of the original image into a
  *	   a composite that it printed on standard out.  For the moment this
- *	   is achieved by saying " cat scale.pl file.pl >> out.file ".  
+ *	   is achieved by saying " cat scale.pl file.pl >> out.file ".
  *	   The order of the files is very important: if not cat'ed in the
  *	   right order, the scales will be lost when plrot is applied though
  *	   they will still be seen with pl-sgi and mged. Later
@@ -141,7 +141,7 @@ main(int argc, char **argv)
 		exit(-1);
 	}
 
-	/* Now process the arguments from main */	
+	/* Now process the arguments from main */
 
 	strcpy(label, argv[1]);
 	strcpy(units, argv[2]);
@@ -164,7 +164,7 @@ main(int argc, char **argv)
 		exit(-1);
 	}
 
-	/* Send pointer read_rt_file() a pointer to local model2view matrix 
+	/* Send pointer read_rt_file() a pointer to local model2view matrix
 	 * and to stdin. Send lay_out_n_plot() a pointer to stdout and to
 	 * the inverted private matrix, which is now view2model.  In inverting
 	 * the matrix in main(), greater modularity and reusability is gained
@@ -207,7 +207,7 @@ main(int argc, char **argv)
  *
  *  This routine lays out the scale in view coordinates.  These are then
  *  converted to model space.
- *  It receives pointers to stdout, a label, and a view2model matrix, as 
+ *  It receives pointers to stdout, a label, and a view2model matrix, as
  *  well as a number of intervals and the length of the scale on model units.
  *  An optional, descriptive string is also taken.
  *  This makes it very general.  Lastly, it returns 0 okay, <0 failure.
@@ -299,7 +299,7 @@ layout_n_plot(FILE *outfp, char *label, fastf_t *v2mod, fastf_t *m2view, int int
 	m_tick_hgt = v_tick_hgt / v2mod[15];		/* scale tick_hgt */
 
 	if(verbose)  {
-		fprintf(stderr, "layout: m_tick_hgt=%.6f, v_tick_hgt=%.6f\n", 
+		fprintf(stderr, "layout: m_tick_hgt=%.6f, v_tick_hgt=%.6f\n",
 			m_tick_hgt, v_tick_hgt);
 	}
 
@@ -379,7 +379,7 @@ layout_n_plot(FILE *outfp, char *label, fastf_t *v2mod, fastf_t *m2view, int int
 		}
 
 	}
-	
+
 	if(verbose)  {
 		fprintf(stderr, "Now calling tp_3symbol( outfp, %s, m_lable_st= %.6f, %.6f, %.6f, m_char_width=%.6f\n",
 		        label, V3ARGS(m_label_st), m_char_width);
@@ -388,20 +388,20 @@ layout_n_plot(FILE *outfp, char *label, fastf_t *v2mod, fastf_t *m2view, int int
 
 	/* Now put the label on the plot.  The first is the lable for
 	 * numbers under the scale; the second is for an optional string.
-	 */	
+	 */
 
 	tp_3symbol(outfp, label, m_label_st, v2symbol, m_char_width);
 	tp_3symbol(outfp, descript, m_descript_st, v2symbol, m_char_width);
 	return( 0 );		/* OK */
 }
 
-	
+
 
 /*		D R A W S C A L E
  *
  * This routine draws the basic scale: it draws a line confined by two
  * end tick marks.  It return either 0 okay < 0 failure.
- * The parameters are a pointer to stdout, a start 
+ * The parameters are a pointer to stdout, a start
  * point, a height, a length vector, a height vector, and an inverse height
  * vector.
  */
@@ -415,7 +415,7 @@ drawscale(FILE *outfp, fastf_t *startpt, fastf_t len, fastf_t hgt, fastf_t *lenv
 	/* Make an end point.  Call drawtick to make the two ticks. */
 
 	VJOIN1(endpt, startpt, len, lenv);
-	
+
 	pdv_3move(outfp, startpt);
 	pdv_3cont(outfp, endpt);
 

@@ -19,7 +19,7 @@
  * information.
  */
 /** @file sh_temp.c
- *  
+ *
  *  Temperature map lookup.
  *  Based upon liboptical/sh_text.c
  *
@@ -82,7 +82,7 @@ struct bu_structparse temp_parse[] = {
 
 /*
  *  			T X T _ R E N D E R
- *  
+ *
  *  Given a u,v coordinate within the texture ( 0 <= u,v <= 1.0 ),
  *  return a pointer to the relevant pixel.
  *
@@ -137,7 +137,7 @@ temp_render(struct application *ap, struct partition *pp, struct shadework *swp,
 		bu_log( "footprint in texture space is (%g %g) <-> (%g %g)\n",
 			xmin * (tp->t_w-1), ymin * (tp->t_n-1),
 			xmax * (tp->t_w-1), ymax * (tp->t_n-1) );
-			
+
 	dx = (int)(xmax * (tp->t_w-1)) - (int)(xmin * (tp->t_w-1));
 	dy = (int)(ymax * (tp->t_n-1)) - (int)(ymin * (tp->t_n-1));
 
@@ -225,7 +225,7 @@ temp_render(struct application *ap, struct partition *pp, struct shadework *swp,
 		}
 		temp /= tot_area;
 	}
-	
+
 	if( rdebug & RDEBUG_SHADE )
 		bu_log( " average temp: %g\n", temp );
 
@@ -241,10 +241,10 @@ temp_render(struct application *ap, struct partition *pp, struct shadework *swp,
  */
 HIDDEN int
 temp_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, const struct mfuncs *mfp, struct rt_i *rtip)
-                      	    
-             		         
-    			      
-                   	     
+
+
+
+
                                 /* New since 4.4 release */
 {
 	register struct temp_specific *tp;

@@ -22,12 +22,12 @@
 /** @file region.c
  *  Author -
  *	Michael John Muuss
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5066
- *  
+ *
  */
 #ifndef lint
 static const char RCSid[] = "@(#)$Header$ (BRL)";
@@ -117,7 +117,7 @@ top:
 			reg_num = getint( rcard, 0, 5 );
 
 			/* -1 region number terminates table */
-			if( reg_num < 0 ) 
+			if( reg_num < 0 )
 				return( 0 );		/* Done */
 
 			if( reg_num > reg_total )  {

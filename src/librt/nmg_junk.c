@@ -167,7 +167,7 @@ struct edgeuse *eu;
  *	(vertices) in the file, followed by the number of polygons in the file.
  *	This line is followed by lines for each of the
  *	verticies.  Each vertex is listed on its own line, as the 3tuple
- *	"X Y Z".  After the list of verticies comes the list of polygons.  
+ *	"X Y Z".  After the list of verticies comes the list of polygons.
  *	each polygon is represented by a line containing 1) the number of
  *	verticies in the polygon, followed by 2) the indicies of the verticies
  *	that make up the polygon.
@@ -215,7 +215,7 @@ const struct bn_tol	*tol;
 	v = (struct vertex **) bu_calloc(num_pts, sizeof (struct vertex *),
 			"vertices");
 
-	/* build the vertices */ 
+	/* build the vertices */
 	for (i = 0 ; i < num_pts ; ++i) {
 		GET_VERTEX(v[i], m);
 		v[i]->magic = NMG_VERTEX_MAGIC;

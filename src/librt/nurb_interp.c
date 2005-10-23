@@ -24,10 +24,10 @@
 /** @file nurb_interp.c
  * Interpolatopn routines for fitting NURB curves and
  * and surfaces to existing data.
- *			
+ *
  *
  * Author:  Paul R. Stay
- *  
+ *
  *  Source -
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
@@ -61,7 +61,7 @@ rt_nurb_nodes(fastf_t *nodes, const struct knot_vector *knots, int order)
 	{
 
 		sum = 0.0;
-		
+
 		for( j = 1; j <= order -1; j++)
 		{
 			sum += knots->knots[i+j];
@@ -75,7 +75,7 @@ rt_nurb_interp_mat(fastf_t *imat, struct knot_vector *knots, fastf_t *nodes, int
 {
 	int i,j;
 	int ptr;
-	
+
 	ptr = 0;
 
 	for( i = 0; i < dim; i++)
@@ -85,7 +85,7 @@ rt_nurb_interp_mat(fastf_t *imat, struct knot_vector *knots, fastf_t *nodes, int
 		ptr++;
 	}
 
-	imat[ptr-1] = 1.0;	
+	imat[ptr-1] = 1.0;
 }
 
 
@@ -120,7 +120,7 @@ rt_nurb_cinterp(struct edge_g_cnurb *crv, int order, const fastf_t *data, int n)
 	/* For now we will assume that all paramerizations are uniform */
 
 	rt_nurb_kvknot( &crv->k, order, 0.0, 1.0, (n - order), (struct resource *)NULL);
-	
+
 	/* Calculate Nodes at which the data points will be
 	 * evaluated in the curve
 	 */
@@ -130,7 +130,7 @@ rt_nurb_cinterp(struct edge_g_cnurb *crv, int order, const fastf_t *data, int n)
 	/* use the node values to create the interpolation matrix
     	 * which is a diagonal matrix
 	 */
-	
+
 	rt_nurb_interp_mat( interp_mat, &crv->k, nodes, order, n);
 
 	/* Solve the system of equations to get the control points
@@ -142,7 +142,7 @@ rt_nurb_cinterp(struct edge_g_cnurb *crv, int order, const fastf_t *data, int n)
 	bcopy( (char *)data, (char *)local_data, n * 3 * sizeof(fastf_t) );
 	rt_nurb_solve( interp_mat, local_data, crv->ctl_points, n, 3);
 
-	/* Free up node and interp_mat storage */	
+	/* Free up node and interp_mat storage */
 
 	bu_free( (char *) interp_mat, "rt_nurb_cinterp: interp_mat");
 	bu_free( (char *) nodes, "rt_nurb_cinterp: nodes");
@@ -166,8 +166,8 @@ rt_nurb_cinterp(struct edge_g_cnurb *crv, int order, const fastf_t *data, int n)
  */
 void
 rt_nurb_sinterp(struct face_g_snurb *srf, int order, const fastf_t *data, int ymax, int xmax)
-                   	     
-   		      
+
+
              	      		/* data[x,y] */
    		     		/* nrow = max Y */
    		     		/* ncol = max X */

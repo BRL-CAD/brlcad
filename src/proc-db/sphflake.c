@@ -19,12 +19,12 @@
  * information.
  */
 /** @file sphflake.c
-  TITLE: sphflake1.c 
-  
+  TITLE: sphflake1.c
+
   AUTHOR: Jason Owens
-  
+
   DESCRIPTION: Program to create a sphere-flake utilizing libwdb
-  
+
   */
 
 #include "common.h"
@@ -39,7 +39,7 @@
 #include "vmath.h"
 #include "bn.h"
 #include "raytrace.h"
-#include "wdb.h" 
+#include "wdb.h"
 
 #define D2R(x) (((x)/180)*3.14159265358979)
 #define MATXPNT(d, m, v) { \
@@ -71,7 +71,7 @@
 #define LIGHT1_ID 2
 #define LIGHT1_MAT "light"
 #define LIGHT1_MATPARAM "inten=5000 shadows=1 fract=.5"
-#define LIGHT1_MATCOLOR "255 255 255" 
+#define LIGHT1_MATCOLOR "255 255 255"
 #define PLANE_ID 3
 #define PLANE_MAT "stack"
 #define PLANE_MATPARAM "checker; plastic sh=20 sp=.1 di=.9"
@@ -85,7 +85,7 @@
 extern char *optarg;
 extern int optind, opterr, getopt(int, char *const *, const char *);
 
-struct depthMat { 
+struct depthMat {
   char name[MAX_INPUT_LENGTH];
   char params[MAX_INPUT_LENGTH];
   unsigned char color[3];
@@ -106,7 +106,7 @@ int count = 0; /* global sphere count */
 struct rt_wdb *fp;
 mat_t IDENT;
 
-/* make the wmember structs, in order to produce individual     
+/* make the wmember structs, in order to produce individual
    combinations so we can have separate materials among differing
    depths */
 struct wmember *wmemberArray;
@@ -132,7 +132,7 @@ BU_EXTERN(void createScene, (params_t *p));
 BU_EXTERN(void createEnvironMap, (params_t *p));
 BU_EXTERN(void getYRotMat, (mat_t *mat, fastf_t theta));
 BU_EXTERN(void getZRotMat, (mat_t *mat, fastf_t phi));
-BU_EXTERN(void getTrans, (mat_t *trans, int i, int j, fastf_t v)); 
+BU_EXTERN(void getTrans, (mat_t *trans, int i, int j, fastf_t v));
 BU_EXTERN(void makeFlake, (int depth, mat_t *trans, point_t center, fastf_t radius, double delta, int maxDepth));
 BU_EXTERN(void usage, (char *n));
 
@@ -189,49 +189,49 @@ int main(int argc, char **argv)
     printf("Using all default parameters. Try %s -h for assistance\n", argv[0]);
     inter = 0;
   }
-  
+
   initializeInfo(&params, inter, fileName, depth);
-  
+
   /* now open a file for outputting the database */
   fp = wdb_fopen(params.fileName);
-  
+
   /* create the initial id */
   i = mk_id_units(fp, "SphereFlake", "mm");
-  
-  /* initialize the wmember structs... 
+
+  /* initialize the wmember structs...
      this is for creating the regions */
   wmemberArray = (struct wmember *)malloc(sizeof(struct wmember)
 					  *(params.maxDepth+1+ADDITIONAL_OBJECTS));
   for (i = 0; i <= params.maxDepth+ADDITIONAL_OBJECTS; i++) {
     BU_LIST_INIT(&(wmemberArray[i].l));
   }
-  
+
   /****** Create the SphereFlake ******/
-  
+
   createSphereflake(&params);
-  
-  /* 
-     now that the entire sphereflake has been created, we can create the 
+
+  /*
+     now that the entire sphereflake has been created, we can create the
      additional objects needed to complete the scene.
      */
   /****** Create the Lights ******/
-  
+
   createLights(&params);
-  
+
   /****** Create the Plane ******/
-  
+
   createPlane(&params);
-  
+
   /****** Create the Environment map ******/
-  
+
   createEnvironMap(&params);
-  
+
   /****** Create the entire Scene combination ******/
-  
+
   createScene(&params);
-  
+
   wdb_close(fp);
-  
+
   return 0;
 }
 
@@ -287,12 +287,12 @@ void initializeInfo(params_t *p, int inter, char *name, int depth)
     else {
       len = strlen(input);
       if ((len > 0) && (input[len-1] == '\n')) input[len-1] = 0;
-      if (strncmp(input, "", MAX_INPUT_LENGTH) != 0) { 
+      if (strncmp(input, "", MAX_INPUT_LENGTH) != 0) {
 	sscanf(input, "%s", p->fileName);
       }
     }
     fflush(stdin);
-    
+
     printf("Initial position X Y Z: [%.2f %.2f %.2f] ", p->pos[X], p->pos[Y], p->pos[Z]);
     if (! fgets(input, MAX_INPUT_LENGTH, stdin) ) {
       fprintf(stderr, "sphereflake: initializeInfo: fgets position read error.\n");
@@ -306,7 +306,7 @@ void initializeInfo(params_t *p, int inter, char *name, int depth)
       }
     }
     fflush(stdin);
-    
+
     printf("maxRadius: [%d] ", p->maxRadius);
     if (! fgets(input, MAX_INPUT_LENGTH, stdin) ) {
       fprintf(stderr, "sphereflake: initializeInfo: fgets maxradius read error.\n");
@@ -339,7 +339,7 @@ void initializeInfo(params_t *p, int inter, char *name, int depth)
     if (! fgets(input, MAX_INPUT_LENGTH, stdin) ) {
       fprintf(stderr, "sphereflake: initializeInfo: fgets maxdepth read error.\n");
       fprintf(stderr, "Continuing with default value.\n");
-    } 
+    }
     else {
       len = strlen(input);
       if ((len > 0) && (input[len-1] == '\n')) input[len-1] = 0;
@@ -349,7 +349,7 @@ void initializeInfo(params_t *p, int inter, char *name, int depth)
     }
     fflush(stdin);
 
-    
+
     for (i = 0; i <= p->maxDepth; i++) {
       printf("Material for depth %d: [%s] ", i, p->matArray[i].name);
       if ( ! fgets(input, MAX_INPUT_LENGTH, stdin) ) {
@@ -405,11 +405,11 @@ void createSphereflake(params_t *p)
   mat_t trans;
   char name[MAX_INPUT_LENGTH];
   int i = 0;
-  
+
   /* now begin the creation of the sphereflake... */
   MAT_IDN(trans); /* get the identity matrix */
   makeFlake(0, &trans, p->pos, (fastf_t)p->maxRadius * DEFAULT_SCALE, p->deltaRadius, p->maxDepth);
-  /* 
+  /*
      Now create the depth combinations/regions
      This is done to facilitate application of different
      materials to the different depths */
@@ -420,7 +420,7 @@ void createSphereflake(params_t *p)
     mk_lcomb(fp, name, &(wmemberArray[i+ADDITIONAL_OBJECTS]), 1, p->matArray[i].name, p->matArray[i].params, p->matArray[i].color, 0);
   }
   printf("\nSphereFlake created");
-  
+
 }
 
 void createLights(params_t *p)
@@ -429,14 +429,14 @@ void createLights(params_t *p)
   point_t lPos;
   int r, g, b;
   unsigned char c[3];
-  
-  
+
+
   /* first create the light spheres */
   VSET(lPos, p->pos[X]+(5 * p->maxRadius), p->pos[Y]+(-5 * p->maxRadius), p->pos[Z]+(150 * p->maxRadius));
   memset(name, 0, MAX_INPUT_LENGTH);
   sprintf(name, "light0");
   mk_sph(fp, name, lPos, p->maxRadius*5);
-  
+
   /* now make the light region... */
   mk_addmember(name, &(wmemberArray[LIGHT0_ID].l), NULL, WMOP_UNION);
   strcat(name, ".r");
@@ -446,11 +446,11 @@ void createLights(params_t *p)
   c[2] = (char)b;
   mk_lcomb(fp, name, &(wmemberArray[LIGHT0_ID]), 1, LIGHT0_MAT, LIGHT0_MATPARAM,
 	   (const unsigned char *) c, 0);
-  
+
   VSET(lPos, p->pos[X]+(13 * p->maxRadius), p->pos[Y]+(-13 * p->maxRadius), p->pos[Z]+(152 * p->maxRadius));
   sprintf(name, "light1");
   mk_sph(fp, name, lPos, p->maxRadius*5);
-  
+
   /* now make the light region... */
   mk_addmember(name, &(wmemberArray[LIGHT1_ID].l), NULL, WMOP_UNION);
   strcat(name, ".r");
@@ -460,7 +460,7 @@ void createLights(params_t *p)
   c[2] = (char)b;
   mk_lcomb(fp, name, &(wmemberArray[LIGHT1_ID]), 1, LIGHT1_MAT, LIGHT1_MATPARAM,
 	   (const unsigned char *) c, 0);
-  
+
   printf("\nLights created");
 }
 
@@ -468,40 +468,40 @@ void createPlane(params_t *p)
 {
   char name[MAX_INPUT_LENGTH];
   point_t lPos;
-  
+
   VSET(lPos, 0, 0, 1); /* set the normal */
   memset(name, 0, MAX_INPUT_LENGTH);
   sprintf(name, "plane");
   mk_half(fp, name, lPos, -p->maxRadius * 2 * DEFAULT_SCALE);
-  
+
   /* now make the plane region... */
   mk_addmember(name, &(wmemberArray[PLANE_ID].l), NULL, WMOP_UNION);
   strcat(name, ".r");
   mk_lcomb(fp, name, &(wmemberArray[PLANE_ID]), 1, PLANE_MAT, PLANE_MATPARAM, (unsigned char *)PLANE_MATCOLOR, 0);
-  
+
   printf("\nPlane created");
 }
 
 void createEnvironMap(params_t *p)
 {
   char name[MAX_INPUT_LENGTH];
-  
+
   memset(name, 0, MAX_INPUT_LENGTH);
   sprintf(name, "light0");
   mk_addmember(name, &(wmemberArray[ENVIRON_ID].l), NULL, WMOP_UNION);
   memset(name, 0, MAX_INPUT_LENGTH);
   sprintf(name, "environ.r");
   mk_lcomb(fp, name, &(wmemberArray[ENVIRON_ID]), 1, ENVIRON_MAT, ENVIRON_MATPARAM, (unsigned char *)"0 0 0", 0);
-  
+
   printf("\nEnvironment map created");
-  
+
 }
 
 void createScene(params_t *p)
 {
   int i;
   char name[MAX_INPUT_LENGTH];
-  
+
   for (i = 0; i < p->maxDepth+1; i++) {
     memset(name, 0, MAX_INPUT_LENGTH);
     sprintf(name, "depth%d.r", i);
@@ -514,7 +514,7 @@ void createScene(params_t *p)
   memset(name, 0, MAX_INPUT_LENGTH);
   sprintf(name, "scene.r");
   mk_lfcomb(fp, name, &(wmemberArray[SCENE_ID]), 0);
-  
+
   printf("\nScene created (FILE: %s)\n", p->fileName);
 }
 
@@ -539,18 +539,18 @@ void getTrans(mat_t (*t), int theta, int phi, fastf_t radius)
   MAT_IDN(y);
   MAT_IDN(newPos);
   MAT_IDN(toRelative);
-  
+
   MAT_DELTAS(toRelative, 0, 0, radius);
-  
+
   getZRotMat(&z, theta);
   getYRotMat(&y, phi);
-  
+
   bn_mat_mul2(toRelative, newPos); /* translate to new position */
   bn_mat_mul2(y, newPos);          /* rotate z */
   bn_mat_mul2(z, newPos);          /* rotate y */
   MAT_DELTAS(*t, 0,0,0);
   bn_mat_mul2(*t, newPos);
-  
+
   memcpy(*t, newPos, sizeof(newPos));
 }
 
@@ -598,22 +598,22 @@ void makeFlake(int depth, mat_t (*trans), fastf_t *center, fastf_t radius, doubl
   mat_t temp;
   point_t origin;
   point_t pcentTemp;
-  
+
   VSET(origin, 0, 0, 0);
-  
+
   /* just return if depth == maxDepth */
   if (depth > maxDepth) return;
-  
-  
+
+
   /* create self, then recurse for each different angle */
   count++;
   sprintf(name, "sph%d", count);
   mk_sph(fp, name, center, radius);
   newRadius = radius*delta;
-  
+
   /* add the sphere to the correct combination */
   mk_addmember(name, &(wmemberArray[depth+ADDITIONAL_OBJECTS].l), NULL, WMOP_UNION);
-  
+
   for (i = 0; i < 9; i++) {
     memcpy(temp, trans, sizeof(temp));
     getTrans(&temp, dir[i][0], dir[i][1], radius+newRadius);

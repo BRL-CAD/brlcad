@@ -30,10 +30,10 @@ the input table with three extra columns specifying the yaw,
 pitch, and roll of the truck at each time. The pitch and roll
 are always zero, since the motion is assumed be in an x-y plane.
 <p>
-The 
+The
 <b>-l#</b>
 option is not optional, and is used to specify the length
-of the wheelbase (from the front axle to the rear axle). 
+of the wheelbase (from the front axle to the rear axle).
 <p>
 <h1>OPTIONS</h1>
 <dl><dt>
@@ -63,24 +63,24 @@ is selected, the output table will contain four columns: time, swivel,
 and two zero columns. This table can be used directly by
 <a href="anim_script.html">anim_script</a>
 to make an animation script for a steering wheel. The argument to the
-option should be the factor by which to exagerate the swiveling of 
+option should be the factor by which to exagerate the swiveling of
 the wheels. For
 example, on a typical truck, you may need to turn the steering wheel 360=18x20
 degrees in order for the wheels to swivel 20 degrees. To model this
-effect, a factor of 18 would be used. 
+effect, a factor of 18 would be used.
 <dt>
 <b>-p#</b>
 
 <dd>
 Specify the ratio of input rows to output rows, which must be
 an integer. The default, of course, is one. The accuracy and
-smoothness of the steering algorithm 
+smoothness of the steering algorithm
 are best when the frame rate of the input table is high.
 This can lead to a degradation of performance when creating a preview
 animation with a small frame rate. In this case, the user should still
 use a high frame rate table as input to <i>anim_turn</i>, and decrease the
 frame rate of the output with the <b>-p</b> option.
-For example, if 
+For example, if
 <b>in.table </b>
 contains 30 rows for each
 second of the animation, then the command:

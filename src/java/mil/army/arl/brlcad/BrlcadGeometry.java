@@ -39,7 +39,7 @@ public interface BrlcadGeometry extends Remote {
      * @return         a boolean indicating success or failure
      * @see            SomethingElse
      */
-    public boolean loadGeometry(String geomInfo) 
+    public boolean loadGeometry(String geomInfo)
 	throws RemoteException;
 
     /**
@@ -72,29 +72,29 @@ public interface BrlcadGeometry extends Remote {
      */
     public BoundingBox getBoundingBox(String item)
 	throws RemoteException;
-       
+
     /**
      * Returns the Title field in the database.
      *
      * @return      Database title if it is set, null otherwise.
      */
-    public String getTitle() 
+    public String getTitle()
 	throws RemoteException;
 
     /**
-     * Creates a tgc hole in the geometry. 
+     * Creates a tgc hole in the geometry.
      * <p>
-     * Note that there is no indication of the objects through 
-     * which the hole goes. Will need to determine which regions 
+     * Note that there is no indication of the objects through
+     * which the hole goes. Will need to determine which regions
      * from which to subtract the hole.
      *
      * @param  origin   The origin of the hole.
      *         dir      The direction of the hole
      *         baseDiam The diameter of the hole at the origin.
-     *         topDiam  The diameter of the hole at the 
+     *         topDiam  The diameter of the hole at the
      * @return          Boolean true if successful.
      */
-    public boolean makeHole(Point origin, Vect dir, 
+    public boolean makeHole(Point origin, Vect dir,
 			    float baseDiam, float topDiam)
 	throws RemoteException;
 

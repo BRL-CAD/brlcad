@@ -2,79 +2,79 @@
 <title>AnimMate: Curve Editor documentation</title>
 <body>
 <h1><a name="top">Curve Editor</a></h1>
-The 
+The
 <a href="./ceditor.gif">curve editor</a>
  permits the user to create and edit an animation curve in
 the MGED display window.
 In AnimMate, a <em>curve</em> is an ordered list of nodes.
-Each node consists of 
+Each node consists of
 a time value and an associated point in three-dimensional space.
-A curve is displayed as a series of line segments between the points, and 
-is intended to represent paths that animated objects will follow 
-through time and space. 
+A curve is displayed as a series of line segments between the points, and
+is intended to represent paths that animated objects will follow
+through time and space.
 <p>
-For a given AnimMate curve named, for example, <i>cname</i>, the time 
-values associated with each node are stored in a tcl variable,  
-"mged_sketch_time_<i>cname</i>".  MGED's vdraw command stores the 
-corresponding points in a vlist of the same name, and displays the 
+For a given AnimMate curve named, for example, <i>cname</i>, the time
+values associated with each node are stored in a tcl variable,
+"mged_sketch_time_<i>cname</i>".  MGED's vdraw command stores the
+corresponding points in a vlist of the same name, and displays the
 curve as a pseudo-solid named "_VDRW<i>cname</i>".
-(See the 
-<a href="vdraw.html">vdraw help page</a> 
+(See the
+<a href="vdraw.html">vdraw help page</a>
 for more
 information.) When using AnimMate, these details should be
 invisible to the user, who can consider a curve to be a single entity.
-However, it is important to note that curves are not part of the model 
+However, it is important to note that curves are not part of the model
 geometry.
-Exiting an MGED session destroys a curve unless its parameters have been 
+Exiting an MGED session destroys a curve unless its parameters have been
 saved in a file.
 <p> The purpose and function of the components of the curve editor are
 explained below.
 <h2><a name="CCurve">Current Curve</a></h2>
 <p>
-The curve editor only operates on one curve at a time. This curve is  
-referred to as the <em>current curve</em> and is marked in the display 
-with a cyan 
+The curve editor only operates on one curve at a time. This curve is
+referred to as the <em>current curve</em> and is marked in the display
+with a cyan
 cursor. The top frame of the curve editor shows the name of the current
-curve. 
+curve.
 If no curves exist when the editor is created, an
-empty curve named <var>vdraw</var> is automatically created. 
+empty curve named <var>vdraw</var> is automatically created.
 <p>
 Clicking on
-the 
+the
 <b>Current curve:</b> label posts a menu with the following entries:
 <dl>
 <dt><b>New Curve</b>
-<dd>Creates a new curve and makes it the current curve. The user is 
+<dd>Creates a new curve and makes it the current curve. The user is
 asked to supply the name of the new curve.
 <p>
 <dt><b>Open Curve</b>
-<dd>Makes an existing curve current. The user selects from a list of 
+<dd>Makes an existing curve current. The user selects from a list of
 existing curves.
 <p>
 <dt><b>Rename Curve</b>
 <dd>Changes the name of the current curve as specified by the user.
 <p>
 <dt><b>Copy Curve</b>
-<dd>Creates a copy of the current curve and makes the copy current. The 
+<dd>Creates a copy of the current curve and makes the copy current. The
 user supplies the name of the new curve.
 <p>
 <dt><b>Delete Curve</b>
 <dd>Deletes a curve selected by the user from a list of existing curves.
 </dl>
-Note: Long curve names are truncated by 
-<a href="vdraw.html">vdraw</a> 
+Note: Long curve names are truncated by
+<a href="vdraw.html">vdraw</a>
 to a maximum of 31 characters.
 
 <h2><a name="CNode">Current Node</a></h2>
-The next section of the curve editor displays and controls the 
+The next section of the curve editor displays and controls the
 <em>current node</em> of the current curve.
-Whenever the current curve is non-empty, one of the nodes of the curve is 
-designated the current node and is marked on the display with 
+Whenever the current curve is non-empty, one of the nodes of the curve is
+designated the current node and is marked on the display with
 three-dimensional cyan asterisk. This is the node which will be
-affected by operations such as <b>MOVE</b> and <b>DELETE</b> and which controls 
+affected by operations such as <b>MOVE</b> and <b>DELETE</b> and which controls
 where
 new nodes are added and inserted, as explained in
-the next section. 
+the next section.
 <p>
 The curve editor contains a label of the form "Node
 <var>i</var> of <var>n</var>", where <var>n</var> is the number of nodes
@@ -94,20 +94,20 @@ the <kbd>Return</kbd> key is pressed.
 <p>
 <h2><a name="CEditing">Curve Editing</a></h2>
 The next four buttons in the curve editor perform the principal
-editing operations: 
+editing operations:
 <dl>
 <dt><b>ADD</b>
 <dd>This command adds a new node to the current curve, inserting it
 after the current node. The new node then becomes current.
 The spatial coordinates for the new node are taken from the
 current center point of the MGED display window. Before
-activating the button, the user should center the display (in all three 
+activating the button, the user should center the display (in all three
 dimensions) on the
 desired new point. If the new node is being
 added to the end of the current curve, the new time parameter will be
-the time parameter of the previous end node incremented by the global 
+the time parameter of the previous end node incremented by the global
 variable
-<var>mged_sketch_tinc</var>. (The value of this variable is typically 1.0, 
+<var>mged_sketch_tinc</var>. (The value of this variable is typically 1.0,
 but it may be set arbitrarily by the user.)
 If the new node is added between two existing nodes, its time
 parameter will be the average of the adjacent time parameters.
@@ -128,7 +128,7 @@ be the average of the time parameters before and after the new node.
 the current center point of the MGED display window.
 <p>
 <dt><b>DELETE</b>
-<dd>This command deletes the current node from the current curve. 
+<dd>This command deletes the current node from the current curve.
 </dl>
 <h2><a name="CColor">Curve Color</a></h2>
 The color of the current curve is displayed in the box next to
@@ -148,27 +148,27 @@ to specify the new color.
 <p>
 <dt><b>Current spline</b>
 <dd>Post a menu of pre-defined colors to apply to the spline curve
-associated with the current curve (see Spline 
+associated with the current curve (see Spline
 Interpolation, below). The name of this curve comes
 from the entry labeled <b>into curve:</b>. If the color
-<strong>other</strong> is selected, the user is asked to specify the new 
+<strong>other</strong> is selected, the user is asked to specify the new
 color.
 <p>
 <dt><b>Other</b>
-<dd>Post a menu of pre-defined colors to apply to any other curve. The 
+<dd>Post a menu of pre-defined colors to apply to any other curve. The
 user is asked to specify the name of the curve to color.
 </dl>
 <h2><a name="SInterpolation">Spline Interpolation</a></h2>
 
 The next section of the curve editor allows the user to fit a cubic spline
 curve to the current curve. If a given curve represents key points
-in an animation path, then the spline curve can be used to 
+in an animation path, then the spline curve can be used to
 determine the
 animation path for the intermediate frames of the
-animation. 
+animation.
 <p>
 Clicking on the <b>Spline
-Interpolate</b> button creates a spline curve with open end conditions 
+Interpolate</b> button creates a spline curve with open end conditions
 which smoothly interpolates the current curve in space and time.
 
 The name of the spline curve is specified in the box next to the
@@ -179,27 +179,27 @@ of the current curve. However, the spline name can be keyboard-edited by
 clicking on the box with the left mouse button.
 <p>
 The nodes of the spline curve are distributed evenly through time. The
-number of spline nodes created for each second of time is determined by 
+number of spline nodes created for each second of time is determined by
 the value labeled <b>Frames per second:</b>.
 If the spline curve is to be used as the basis of an
-animation sequence, the user should set this number to the 
+animation sequence, the user should set this number to the
 desired frame rate of the animation.
 <p>
-Clicking on the <b>Cspline Interpolate</b> button creates a circular 
-spline curve. The circular spline smoothly interpolates the current 
-curve, but instead of ending at the point specified by the last node, it 
-ignores this point and ends at the point specified by the first node. The 
-derivatives at the beginning and end of the circular spline are matched 
+Clicking on the <b>Cspline Interpolate</b> button creates a circular
+spline curve. The circular spline smoothly interpolates the current
+curve, but instead of ending at the point specified by the last node, it
+ignores this point and ends at the point specified by the first node. The
+derivatives at the beginning and end of the circular spline are matched
 so that a periodic repetition of the curve yields a smooth animation.
 
 <h2><a name="RAWCurves">Reading and Writing Curves</a></h2>
 The <b>Read/Write</b> menu has the following options:
 <dl>
 <dt><b>Read Curve From File</b>
-<dd>The nodes of a new or existing curve are specified by reading an 
-ASCII file. The file should be a four-column table with columns 
+<dd>The nodes of a new or existing curve are specified by reading an
+ASCII file. The file should be a four-column table with columns
 <var>time x y z</var>. Any extra columns are
-ignored, and missing columns are zero-filled. The user is asked which 
+ignored, and missing columns are zero-filled. The user is asked which
 file to read and which curve to read into. By default, the file is
 read into the current curve.
 <p>
@@ -207,7 +207,7 @@ read into the current curve.
 <dd>The nodes of a curve are written to a file, which is a
 4-column table of ASCII text, with columns <var>time x y z</var>. Each
 row of the table represents one node of the original curve. The user
-specifies the name of the curve to write and the file to write to. By 
+specifies the name of the curve to write and the file to write to. By
 default, the current curve is written.
 <p>
 <dt><b>Write Spline to File</b>

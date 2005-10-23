@@ -27,12 +27,12 @@
  *
  *  Author -
  *	Michael John Muuss
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5066
- *  
+ *
  */
 #ifndef lint
 static const char RCSid[] = "@(#)$Header$ (BRL)";
@@ -43,8 +43,8 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif
-                                                                                                                                                                            
-#include <stdio.h>	
+
+#include <stdio.h>
 #ifdef HAVE_STRING_H
 #include <string.h>
 #else
@@ -195,8 +195,8 @@ q	quit\r\n\
 
 int
 doKeyPad(void)
-{ 
-	register int ch;	
+{
+	register int ch;
 
 	if( (ch = getchar()) == EOF )
 		return	0;		/* done */
@@ -211,7 +211,7 @@ doKeyPad(void)
 	case '?' :
 		(void) fprintf( stdout, "\r\n%s", help );
 		break;
-	case '\r' :    
+	case '\r' :
 	case '\n' :				/* Done, return to normal */
 	case 'q' :
 		return	0;
@@ -312,7 +312,7 @@ pars_Argv(int argc, register char **argv)
 }
 
 /* rgbhsv
- * 
+ *
  * convert red green blue to hue saturation value
  */
 void
@@ -364,7 +364,7 @@ rgbhsv(register int *rgb, register int *hsv)
 }
 
 /* hsvrgb
- * 
+ *
  * convert hue saturation and value to red, green, blue
  */
 
@@ -377,7 +377,7 @@ hsvrgb(register int *hsv, register int *rgb)
         double h, s, v, foo;
         double f;
 
-	if(hsv[1] != 0) 
+	if(hsv[1] != 0)
         {
             s = (double)hsv[1] / 255.;
             h = (double)hsv[0] / 42.666;

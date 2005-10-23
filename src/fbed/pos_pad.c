@@ -24,7 +24,7 @@
 	Retrieved: 	12/26/86 at 21:54:35
 	SCCS archive:	/vld/moss/src/fbed/s.pos_pad.c
 
-	Author:		Douglas P. Kingston III	
+	Author:		Douglas P. Kingston III
 			Gary S. Moss
 			U. S. Army Ballistic Research Laboratory
 			Aberdeen Proving Ground

@@ -25,7 +25,7 @@
  *
  *  Author -
  *      John R. Anderson
- *  
+ *
  *  Source -
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
@@ -35,7 +35,7 @@
 #ifndef lint
 static const char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
- 
+
 #include "common.h"
 
 
@@ -122,14 +122,14 @@ main(int argc, char **argv)
 	if( dbip == DBI_NULL )
 	{
 		bu_log( "Cannot open file (%s)\n", argv[argc-2] );
-		perror( argv[0] );	
+		perror( argv[0] );
 		bu_bomb( "Cannot open database file\n" );
 	}
 
 	if( (fdout=wdb_fopen( argv[argc-1] )) == NULL )
 	{
 		bu_log( "Cannot open file (%s)\n", argv[argc-1] );
-		perror( argv[0] );	
+		perror( argv[0] );
 		bu_bomb( "Cannot open output file\n" );
 	}
 	db_dirbuild( dbip );

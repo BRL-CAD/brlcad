@@ -26,7 +26,7 @@
 # Source -
 #	The U. S. Army Ballistic Research Laboratory
 #	Aberdeen Proving Ground, Maryland  21005
-#  
+#
 #
 #
 # Description -
@@ -180,7 +180,7 @@ proc ::tk::TextInsert {w s} {
 
 proc get_player_id_t { w } {
     global mged_players
-    
+
     foreach id $mged_players {
 	set _w .$id.t
 	if { $w == $_w } {
@@ -255,7 +255,7 @@ proc do_Open { id } {
 
 ## - getFile
 #
-# Call Tk's filebrowser to get a file. Initialize the browser to 
+# Call Tk's filebrowser to get a file. Initialize the browser to
 # look in $dir at files of type $ftype. The dir parameter is
 # updated before returning. This routine returns the absolute
 # pathname of the file. Note - the filename length is currently
@@ -331,10 +331,10 @@ the database being inserted."} { see_also dbconcat } } OK Cancel]
 proc do_LoadScript { id } {
 	global mged_gui
 	global ::tk::Priv
-	
+
 	set ftypes {{{All Readable Scripts} {.tcl .sh .rt}} {{Raytrace Scripts} {.rt .sh}} {{Tcl Scripts} {.tcl}} {{All Files} {*}}}
 	set ia_filename [tk_getOpenFile -parent .$id -filetypes $ftypes -initialdir $mged_gui(loadScriptDir) -title "Load Script"]
-	
+
 	if {$ia_filename != ""} {
 		# save the directory
 		set mged_gui(loadScriptDir) [file dirname $ia_filename]
@@ -352,7 +352,7 @@ proc do_LoadScript { id } {
 		set ret [ catch { close $scriptfd } msg ]
 		if {$ret} {
 			cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen) "Error" $msg info 0 OK
-		}			
+		}
 
 		# the script should now be stored in scriptsource. attempt to determine some basic types
 		if [ regexp {^#!/bin/sh.*?\nrt} $scriptsource ] {
@@ -481,7 +481,7 @@ proc ia_invoke { w } {
 	    distribute_text $w $hcmd $ia_msg
 	    stuff_str "\nmged:$id> $hcmd\n$ia_msg"
 	    hist add $hcmd
-	    return 
+	    return
 	}
 
 	if {$result != 0} {
@@ -490,7 +490,7 @@ proc ia_invoke { w } {
 		if { $i != 0 } {
 		    mged_print $w [string range $ia_msg 0 [expr $i - 1]]
 		}
-		
+
 		set ia_prompt [string range $ia_msg [expr $i + 23] end]
 		mged_print_prompt $w $ia_prompt
 		set mged_gui($id,cmd_prefix) $hcmd
@@ -614,7 +614,7 @@ proc ia_man_back { w } {
     if {[llength $ia_url(backtrack)]<1} {
 	return
     }
-    
+
     set new_url [lindex $ia_url(backtrack) end]
     set ia_url(backtrack) [lrange $ia_url(backtrack) 0 \
 	    [expr [llength $ia_url(backtrack)]-2]]
@@ -630,7 +630,7 @@ proc HMset_image { handle src } {
     if {[string match http://* $src]} {
 	return
     }
-    
+
     if {[string match /* $src]} {
 	set image $src
     } else {
@@ -656,7 +656,7 @@ proc ia_get_html {file} {
     if {[string match *.gif $file]} {
 	return "<img src=\"[file tail $file]\">"
     }
-    
+
     if {[catch {set fd [open $file]} msg]} {
 	return "
 	<title>Bad file $file</title>

@@ -35,14 +35,14 @@
 #		Aberdeen Proving Ground, Maryland  21005
 #
 # Bugs -
-# 
+#
 # Besides a whole slew of them that have been run into with the hierarchy
-# megawidget, there are a bunch of little nitpicks that would be nice to 
+# megawidget, there are a bunch of little nitpicks that would be nice to
 # see eventually get fixed.  Off the top of my head, they are as follows:
 #   1) mged has no publish/subscribe model in place so we poll.  that sucks.
-#   2) nice fancy icons.  need a good way to describe the difference 
+#   2) nice fancy icons.  need a good way to describe the difference
 #      between a combination and a region, and to distinguish different prims
-#   3) better context menu bindings.  tcl or the widget has akward key 
+#   3) better context menu bindings.  tcl or the widget has akward key
 #      bindings that require holding a mouse while clicking a second to select.
 #   4) implement the right info panel.  the code for the panel is in place,
 #      just absolutely no logic is implemented to describe them.  I'm thinking
@@ -61,30 +61,30 @@ package require Itk
 package require Iwidgets
 
 # go ahead and blow away the class if we are reloading
-#if [ catch {delete class GeometryBrowser} error ] { 
+#if [ catch {delete class GeometryBrowser} error ] {
 #	puts $error
 #}
 
 package provide GeometryBrowser 1.0
 
 class GeometryBrowser {
-	inherit itk::Toplevel	
+	inherit itk::Toplevel
 
 	constructor {} {}
-	destructor {} 
-	
+	destructor {}
+
 	public {
-		method getNodeChildren { { node "" } { updateLists "no" } } {} 
-		method toggleNode { { string "" } } {} 
+		method getNodeChildren { { node "" } { updateLists "no" } } {}
+		method toggleNode { { string "" } } {}
 		method updateGeometryLists { { node "" } } {}
 
-		method displayNode { { node "" } { display "appended" } } {} 
-		method undisplayNode { { node "" } } {} 
+		method displayNode { { node "" } { display "appended" } } {}
+		method undisplayNode { { node "" } } {}
 
-		method setNodeColor { { node "" } { color "" } } {}		
-		method setDisplayedToColor { { color "" } } {}		
+		method setNodeColor { { node "" } { color "" } } {}
+		method setDisplayedToColor { { color "" } } {}
 
-		method clearDisplay {} {} 
+		method clearDisplay {} {}
 		method autosizeDisplay {} {}
 		method zoomDisplay { { zoom "in" } } {}
 
@@ -114,7 +114,7 @@ class GeometryBrowser {
 		variable _goodGeometry
 		variable _badGeometry
 
-		method prepNodeMenu {} {} 
+		method prepNodeMenu {} {}
 		method getObjectType { node } {}
 		method validateGeometry {} {}
 	}
@@ -185,7 +185,7 @@ body GeometryBrowser::constructor {} {
 	$this configure -title "Geometry Browser"
 
 	itk_component add menubar {
-		menu $itk_interior.menubar 
+		menu $itk_interior.menubar
 	}
 
 	menu $itk_interior.menubar.close -title "Close"
@@ -220,8 +220,8 @@ body GeometryBrowser::constructor {} {
 				-alwaysquery 1
 	}
 #				-imagemenuloadcommand [ code $this prepNodeMenu ]
-#				-selectcommand [ code $this toggleNode %n ] 
-#				-imagedblcommand [ code $this displayNode %n ] 
+#				-selectcommand [ code $this toggleNode %n ]
+#				-imagedblcommand [ code $this displayNode %n ]
 
 	# save hooks to the cadtree pop-up menus for efficiency and convenience
 	set _itemMenu [ $itk_interior.cadtree component itemMenu ]
@@ -444,7 +444,7 @@ body GeometryBrowser::constructor {} {
 #	itk_component add t_info {
 #		text $pane(1).t_info -relief sunken -bd 1 -yscrollcommand "$pane(1).s_info set"
 #	}
-	
+
 #	itk_component add s_info {
 #		scrollbar $pane(1).s_info -command "$itk_component(t_info) yview"
 #	}
@@ -453,7 +453,7 @@ body GeometryBrowser::constructor {} {
 #	grid $itk_component(t_info) -sticky nsew -in $pane(1) -row 0 -column 0
 #	grid $itk_component(s_info) -sticky ns -in $pane(1) -row 0 -column 1
 	grid $itk_component(pw_pane) -sticky nsew
-	
+
 	grid rowconfigure $itk_interior 0 -weight 1
 	grid columnconfigure $itk_interior 0 -weight 1
 	grid rowconfigure $pane(0) 0 -weight 1
@@ -475,7 +475,7 @@ body GeometryBrowser::destructor {} {
 #	itk_component delete [ $itk_interior component menubar ]
 #	itk_component delete [ $itk_interior component cadtree ]
 #	itk_component delete [ $itk_interior component pw_pane ]
-	
+
 	# destroy the framebuffer, if we opened it
 	if { $_weStartedFbserv } {
 		puts "cleaning up fbserv"
@@ -510,7 +510,7 @@ body GeometryBrowser::destructor {} {
 #
 # the second parameter controls whether the displayed geometry lists will be
 # maintained or whether we are merely getting a list of children at a point
-# 
+#
 body GeometryBrowser::getNodeChildren { { node "" } { updateLists "no" }} {
 	if { $_debug } {
 		puts "getNodeChildren $node $updateLists"
@@ -537,7 +537,7 @@ body GeometryBrowser::getNodeChildren { { node "" } { updateLists "no" }} {
 		$itk_interior.cadtree configure -labeltext $titleLabel
 
 		# process top geometry
-		
+
 		if { $_showAllGeometry } {
 			set topsCommand "tops -n"
 		} else {
@@ -624,7 +624,7 @@ body GeometryBrowser::getNodeChildren { { node "" } { updateLists "no" }} {
 		if { [ string compare $updateLists "yes" ] == 0 } {
 			# if we did not just add it as bad geometry, it must be good..
 			if { [ string compare [ lindex $_badGeometry end ] $childName ] != 0 } {
-				
+
 				# make sure it is not a repeat
 				if { [ lsearch -exact $_goodGeometry $childName ] == -1 } {
 					lappend _goodGeometry "$childName"
@@ -644,7 +644,7 @@ body GeometryBrowser::getNodeChildren { { node "" } { updateLists "no" }} {
 #
 # simply expands the hierarchy just as if the icon had been selected. later it
 # will be able to display the appropriate details to the info panel.
-# 
+#
 body GeometryBrowser::toggleNode { { node "" } } {
 	if { $_debug } {
 		puts "toggleNode [ lindex $node 0 ]"
@@ -661,7 +661,7 @@ body GeometryBrowser::toggleNode { { node "" } } {
 # updates the lists of valid and invalid geometry based on the user expanding
 # and collapsing nodes.  getNodeChildren adds new nodes as they are expanded.
 # this routine removes them as they are collapsed.
-# 
+#
 body GeometryBrowser::updateGeometryLists { { node "" } } {
 	if { $_debug } {
 		puts "updateGeometryLists $node"
@@ -673,7 +673,7 @@ body GeometryBrowser::updateGeometryLists { { node "" } } {
 		# XXX the -u option only works on v6.0.1+
 		set topsCommand "tops -n -u"
 	}
-	
+
 	if [ catch $topsCommand objs ] {
 		puts $objs
 		return
@@ -687,7 +687,7 @@ body GeometryBrowser::updateGeometryLists { { node "" } } {
 		}
 		lappend objects $obj
 	}
-	
+
 	# iterate over nodes displayed and generate list of geometry
 	foreach currentNode [ $itk_interior.cadtree expState ] {
 		set children [ $this getNodeChildren $currentNode no ]
@@ -736,7 +736,7 @@ body GeometryBrowser::updateGeometryLists { { node "" } } {
 # there are two special keywords for how to display the node.  it may either be
 # displayed by itself with the "alone" keyword, or it may be simply added to
 # the display (default) with the "appended" keyword.
-# 
+#
 # XXX for some reason "node" ends up getting passed the branch/leaf identifier
 # in the wrong place (non root nodes are in the wrong order)
 #
@@ -770,7 +770,7 @@ body GeometryBrowser::displayNode { { node "" } { display "appended" } } {
 		$this checkAutoRender
 		return $retval
 	}
-	
+
 	puts "e $nodeName"
 	if { [ catch { e $nodeName } retval ] } {
 		puts $retval
@@ -781,7 +781,7 @@ body GeometryBrowser::displayNode { { node "" } { display "appended" } } {
 }
 
 
-# undisplayNode 
+# undisplayNode
 #
 # does the opposite of displayNode.  It removed a node from the display if it
 # is displayed.
@@ -809,7 +809,7 @@ body GeometryBrowser::undisplayNode { { node "" } } {
 	return $retval
 }
 
-# setNodeColor -- used by pop-up menu 
+# setNodeColor -- used by pop-up menu
 #
 # sets the color of a particular node in the heirarchy, regardless of the node
 # type.  node is the path to a piece of geometry like /all.g/compartment/reg.r
@@ -826,7 +826,7 @@ body GeometryBrowser::setNodeColor { { node "" } { color "" } } {
 		set node [ $itk_interior.cadtree current ]
 	}
 
-	set nodeName [ $this extractNodeName $node ] 
+	set nodeName [ $this extractNodeName $node ]
 
 	# if no color was given, we unset the color
 	if { [ string compare $color "" ] == 0 } {
@@ -929,7 +929,7 @@ body GeometryBrowser::zoomDisplay { { zoom "in"} } {
 
 	if { [ string compare $zoom "" ] == 0 } {
 		set zoom "in"
-	} 
+	}
 
 	if { [ string compare $zoom "in" ] == 0 } {
 		puts "zoomin"
@@ -939,7 +939,7 @@ body GeometryBrowser::zoomDisplay { { zoom "in"} } {
 		set retval [ zoomout ]
 		$this checkAutoRender
 		return $retval
-	} 
+	}
 
 
 	# XXX we do not check if the value is a valid number, we should
@@ -983,7 +983,7 @@ body GeometryBrowser::renderPreview { { rtoptions "-P4 -R -B" } } {
 	}
 
 	if { $useMgedWindow } {
-		
+
 		# if we previously started up a framebuffer, shut it down
 		if { $_weStartedFbserv } {
 			puts "cleaning up fbserv"
@@ -993,7 +993,7 @@ body GeometryBrowser::renderPreview { { rtoptions "-P4 -R -B" } } {
 			}
 			set _weStartedFbserv 0
 		}
-		
+
 		# if we got here, then we should be able to attach to a running framebuffer.
 		scan $rgb {%d %d %d} r g b
 
@@ -1009,10 +1009,10 @@ body GeometryBrowser::renderPreview { { rtoptions "-P4 -R -B" } } {
 		# "matches" the proportion size of the window.
 		if { $windowWidth > $windowHeight } {
 			set scaledHeight [ expr round(double($size) / double($windowWidth) * double($windowHeight)) ]
-			set rtrun "rt [ split $rtoptions ] -F $_fbservPort -w$size -n$scaledHeight -C$r/$g/$b" 
+			set rtrun "rt [ split $rtoptions ] -F $_fbservPort -w$size -n$scaledHeight -C$r/$g/$b"
 		} else {
 			set scaledWidth [ expr round(double($size) / double($windowHeight) * double($windowWidth)) ]
-			set rtrun "rt [ split $rtoptions ] -F $_fbservPort -w$scaledWidth -n$size -C$r/$g/$b" 
+			set rtrun "rt [ split $rtoptions ] -F $_fbservPort -w$scaledWidth -n$size -C$r/$g/$b"
 		}
 
 	} else {
@@ -1036,42 +1036,42 @@ body GeometryBrowser::renderPreview { { rtoptions "-P4 -R -B" } } {
 
 			# try again
 			if { [ catch { exec fbclear -c -F $_fbservPort $rgb } error ] } {
-			
+
 				if { $_debug } {
 				puts "$error"
 				}
-				
+
 				# try the next port
 				incr _fbservPort
-				
+
 				# still failing, try to start one again
 				puts "exec fbserv -S $size -p $_fbservPort -F $device > /dev/null &"
 				exec fbserv -S $size -p $_fbservPort -F $device > /dev/null &
 				exec sleep 1
-				
+
 				# try again
 				if { [ catch { exec fbclear -c -F $_fbservPort $rgb } error ] } {
-					
+
 					if { $_debug } {
 						puts "$error"
 					}
-					
+
 					incr _fbservPort
-					
+
 					# still failing, try to start one again
 					puts "exec fbserv -S $size -p $_fbservPort -F $device > /dev/null &"
 					exec fbserv -S $size $_fbservPort $device > /dev/null &
 					exec sleep 1
-					
+
 					# last try
 					if { [ catch { exec fbclear -c -F $_fbservPort $rgb } error ] } {
 						# strike three, give up!
 						puts $error
 						puts "Unable to attach to a framebuffer"
-						
+
 						# guess we did not really get to start it
 						set _weStartedFbserv 0
-						
+
 						return
 					}
 				}
@@ -1090,11 +1090,11 @@ body GeometryBrowser::renderPreview { { rtoptions "-P4 -R -B" } } {
 
 		# if we got here, then we were able to attach to a running framebuffer..
 		scan $rgb {%d %d %d} r g b
-		set rtrun "rt [ split $rtoptions ] -F $_fbservPort -s$size -C$r/$g/$b" 
+		set rtrun "rt [ split $rtoptions ] -F $_fbservPort -s$size -C$r/$g/$b"
 	}
 	# end check for using mged graphics window or using fbserv
 
-	puts "$rtrun"	
+	puts "$rtrun"
 	return [ eval $rtrun ]
 }
 
@@ -1113,7 +1113,7 @@ body GeometryBrowser::raytracePanel {} {
 
 # raytraceWizard
 #
-# simply fires off rtwizard 
+# simply fires off rtwizard
 #
 body GeometryBrowser::raytraceWizard {} {
 	puts "exec rtwizard &"
@@ -1124,7 +1124,7 @@ body GeometryBrowser::raytraceWizard {} {
 
 # toggleAutosizing
 #
-# makes it so that the view is either auto-sizing or not. 
+# makes it so that the view is either auto-sizing or not.
 # XXX if the menu entries get more complex than what is already below (8 references),
 # it should really be reorganized.
 #
@@ -1141,7 +1141,7 @@ body GeometryBrowser::toggleAutosizing { { state "" } } {
 		# we return the current state as the label
 		if { [ set autosize ] == 0 } {
 			return "Turn Autosizing On"
-		} 
+		}
 		return "Turn Autosizing Off"
 
 	} elseif { [ string compare $state "off" ] == 0 } {
@@ -1174,7 +1174,7 @@ body GeometryBrowser::toggleAutosizing { { state "" } } {
 
 # toggleAutorender
 #
-# makes it so that the view is either auto-sizing or not. 
+# makes it so that the view is either auto-sizing or not.
 # XXX if the menu entries get more complex than what is already below (8 references),
 # it should really be reorganized.
 #
@@ -1189,7 +1189,7 @@ body GeometryBrowser::toggleAutorender { { state "" } } {
 		# we return the current state as the label
 		if { [ set _autoRender ] == 0 } {
 			return "Turn Auto-Render On"
-		} 
+		}
 		return "Turn Auto-Render Off"
 
 	} elseif { [ string compare $state "off" ] == 0 } {
@@ -1243,12 +1243,12 @@ body GeometryBrowser::toggleAutorender { { state "" } } {
 #
 # does something with the right-click menu, before it actually gets displayed
 # based on what was selected.  e.g. it handles the dynamic menu items.
-# 
+#
 body GeometryBrowser::prepNodeMenu { } {
 	if { $_debug } {
 		puts "prepNodeMenu"
 	}
-	
+
 	set node "[ $itk_interior.cadtree current ]"
 
 	set nodeName [ $this extractNodeName $node ]
@@ -1258,7 +1258,7 @@ body GeometryBrowser::prepNodeMenu { } {
 		puts "$type"
 		return
 	}
-	
+
 	# we are a primitive, don't allow user to set color
 	if { [ string compare $type "p" ] == 0 } {
 		$_itemMenu entryconfigure $_setcolorItemMenuIndex -state disabled
@@ -1283,7 +1283,7 @@ body GeometryBrowser::prepNodeMenu { } {
 			return
 		}
 	}
-	
+
 	# did not find it, so make sure the menu is proper
 	$_itemMenu entryconfigure $_displayItemMenuIndex -label "Display"
 	$_itemMenu entryconfigure $_displayItemMenuIndex -command [ code $this displayNode $node ]
@@ -1292,12 +1292,12 @@ body GeometryBrowser::prepNodeMenu { } {
 }
 
 
-# getObjectType 
+# getObjectType
 #
 # returns a "p", "c", or "r" depending on whether a node is a primitive,
 # returns a "E" if the node cannot be stat'd via ls.
 # combination, or region.
-# 
+#
 body GeometryBrowser::getObjectType { node } {
 	if { $_debug } {
 		puts "getObjectType $node"
@@ -1321,7 +1321,7 @@ body GeometryBrowser::getObjectType { node } {
 		if { [ string compare "/" [ string index $lsName end-2 ] ] == 0 } {
 			return "r"
 		}
-	}	 
+	}
 	return "p"
 }
 
@@ -1332,7 +1332,7 @@ body GeometryBrowser::getObjectType { node } {
 #
 # XXX since there is no publish/subscribe model set up in mged to get
 # interrupt notifications to update our model/view, we manually poll (eck..)
-# periodically.  
+# periodically.
 #
 body GeometryBrowser::validateGeometry { } {
 	if { $_debug } {
@@ -1355,7 +1355,7 @@ body GeometryBrowser::validateGeometry { } {
 
 		# if there is no good or bad geometry listed, try to redraw regardless
 		if { $_goodGeometry == "" } {
-			incr redraw 
+			incr redraw
 		} else {
 			# make sure our lists match up, the lists are maintained by getNodeChildren
 			# and updateGeometryLists.
@@ -1420,12 +1420,12 @@ body GeometryBrowser::validateGeometry { } {
 # begin private methods
 ##########
 
-# rgbToHex 
+# rgbToHex
 #
 # takes an rgb triplet string as input and returns an html-style
 # color entity that tcl understands.
-# 
-body GeometryBrowser::rgbToHex { { rgb "0 0 0" } } { 
+#
+body GeometryBrowser::rgbToHex { { rgb "0 0 0" } } {
 	if { $_debug } {
 		puts "rgbToHex $rgb"
 	}
@@ -1482,7 +1482,7 @@ body GeometryBrowser::checkAutoRender {} {
 #
 # handles the oddball node name that gets passed in from the hierarchy widget
 # during callback.  The nodes are expected to be named in a directory-style
-# slashed format and are optionally preceeded or followed by a "branch" or 
+# slashed format and are optionally preceeded or followed by a "branch" or
 # "leaf" identifier. (XXX roots are preceeded, children are followed.. ! )
 #
 body GeometryBrowser::extractNodeName { { node "" } } {
@@ -1515,7 +1515,7 @@ body GeometryBrowser::extractNodeName { { node "" } } {
 ##########
 
 
-#GeometryBrowser .gm 
+#GeometryBrowser .gm
 
 # !!! remove glob hack once included into menu properly
 # restore previous globbing mode

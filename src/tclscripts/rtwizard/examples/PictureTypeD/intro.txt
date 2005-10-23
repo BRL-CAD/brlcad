@@ -1,8 +1,8 @@
 Hi!
 
 You have elected to produce a combined full-color image and line drawing. This is a slightly complicated image type. In order to produce this image you will need to do the following:
-    1. Specify the items that you wish to render in full color. 
-    2. Specify the items to be rendered as line drawings. 
+    1. Specify the items that you wish to render in full color.
+    2. Specify the items to be rendered as line drawings.
     3. Specify the rule for combining the full-color and line elements.
     4. Specify the view parameters.
 

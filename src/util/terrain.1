@@ -40,14 +40,14 @@ terrain \- Generate terrain field from mathematical noise
 .I [ -c host/net format conversion off]
 > file.dsp
 .SH DESCRIPTION
-The 
+The
 .I terrain
 program produces pseudo-terrain from procedural noise suitable for use with a
 BRL-CAD dsp primitive.  Noise values are computed for the grid points of the
 lattice and the resultant values are output on the standard output as unsigned
 shorts in network byte order.  The size of the grid is specified with the
 .I -w
-and 
+and
 .I -n
 options.
 
@@ -111,7 +111,7 @@ Specifies the value of H in the noise equation.  Usually 1.0
 
 .TP
 .BI \-S "\| noise_scale"
-Scales the noise uniformly in X, Y and Z dimensions by the value 
+Scales the noise uniformly in X, Y and Z dimensions by the value
 .I noise_scale.
 Values below 1.0 cause the noise pattern to become smaller. Values above 1.0 cause it to get bigger
 

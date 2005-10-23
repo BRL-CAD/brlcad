@@ -26,7 +26,7 @@
  *
  *  Author -
  *	Lee A. Butler
- *  
+ *
  *  Source -
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
@@ -59,7 +59,7 @@ queue(fd)
     char img_buffer[8 * 1024];
     int img_bytes, i, args, bytes_read;
     FILE *pfd;
-	
+
     img_bytes = width * height * 3;
 
     /* open a pipe to the queuing program */

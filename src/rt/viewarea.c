@@ -99,7 +99,7 @@ struct area {
     int seen;			/* book-keeping for exposure */
     int depth;			/* assembly depth */
     const char *name;		/* assembly name */
-};    
+};
 
 struct area_list {
     struct area *cell;
@@ -146,7 +146,7 @@ view_init( register struct application *ap, char *file, char *obj )
  *
  *  View_2init is called by do_frame(), which in turn is called by
  *  main().  It writes the view-specific COVART header.
- * 
+ *
  */
 void
 view_2init( ap )
@@ -161,7 +161,7 @@ struct application	*ap;
     cell_area = cell_width * cell_height;
 
     assembly = (struct area *)bu_calloc(1, sizeof(struct area), "view_2init assembly allocation");
-	
+
     /* allocate the initial areas and point them all to the same (empty) starting assembly list */
     bu_semaphore_acquire( BU_SEM_SYSCALL );
     for( BU_LIST_FOR( rp, region, &(rtip->HeadRegion) ) )  {
@@ -203,7 +203,7 @@ view_pixel()
 
 /* keeps track of how many times we encounter an assembly by
  * maintaining a simple linked list of them using the same structure
- * used for regions. 
+ * used for regions.
  */
 static void
 increment_assembly_counter(register struct area *cell, const char *path, area_type_t type)
@@ -211,7 +211,7 @@ increment_assembly_counter(register struct area *cell, const char *path, area_ty
     int l;
     char *buffer;
     int depth;
-    
+
     if (!cell || !path) {
 	return;
     }
@@ -312,7 +312,7 @@ rayhit(struct application *ap, struct partition *PartHeadp, struct seg *segHeadp
     register struct partition *pp = PartHeadp->pt_forw;
     register struct area *cell;
     register int l;
-    
+
 
     if( pp == PartHeadp )
 	return(0);		/* nothing was actually hit?? */
@@ -366,7 +366,7 @@ rayhit(struct application *ap, struct partition *PartHeadp, struct seg *segHeadp
 	/* halt after first non-air */
 	break;
     }
-    
+
     /* get the presented areas */
     for (pp = PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw) {
 	struct region  *reg = pp->pt_regionp;
@@ -459,7 +459,7 @@ print_region_area_list(long int *count, struct rt_i *rtip, area_type_t type)
 		    newNode->next = prev->next;
 		    prev->next = newNode;
 		}
-		
+
 		cumulative += cell->hits;
 		if (count) {
 		    (*count)++;
@@ -512,14 +512,14 @@ print_assembly_area_list(struct rt_i *rtip, long int max_depth, area_type_t type
     struct area_list *listp;
     listHead->cell = (struct area *)NULL;
     listHead->next = (struct area_list *)NULL;
-	
+
     /* insertion sort based on depth and case */
     rp = BU_LIST_FIRST(region, &(rtip->HeadRegion));
     cell = (struct area *)rp->reg_udata;
     for (cellp = cell->assembly; cellp; cellp = cellp->assembly) {
 	int counted_items;
 	listp = listHead;
-	
+
 	if (type == PRESENTED_AREA) {
 	    counted_items = cellp->hits;
 	}
@@ -529,7 +529,7 @@ print_assembly_area_list(struct rt_i *rtip, long int max_depth, area_type_t type
 	if (counted_items) {
 	    struct area_list *prev = (struct area_list *)NULL;
 	    struct area_list *newNode;
-	    
+
 	    while (listp->next) {
 		if ((!listp->cell) || (cellp->depth > listp->cell->depth)) {
 		    break;
@@ -541,11 +541,11 @@ print_assembly_area_list(struct rt_i *rtip, long int max_depth, area_type_t type
 		prev = listp;
 		listp = listp->next;
 	    }
-	    
+
 	    newNode = (struct area_list *)bu_malloc(sizeof(struct area_list), "print_area_list area list node allocation");
 	    newNode->cell = cellp;
 	    newNode->next = (struct area_list *)NULL;
-	    
+
 	    if (!prev) {
 		listHead = newNode;
 		newNode->next = listp;
@@ -553,11 +553,11 @@ print_assembly_area_list(struct rt_i *rtip, long int max_depth, area_type_t type
 		newNode->next = prev->next;
 		prev->next = newNode;
 	    }
-	    
+
 	    count++;
 	}
     }
-    
+
 
     if (type == PRESENTED_AREA) {
 	bu_log("\nPresented Assembly Areas\n========================\n");

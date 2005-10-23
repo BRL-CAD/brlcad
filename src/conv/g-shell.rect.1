@@ -45,12 +45,12 @@ The initial shell is constructed using only the first and last
 intersections with the
 .I object(s).
 This will typically result in some rather large faces with normals at right angles
-to the ray direction. Unless the 
+to the ray direction. Unless the
 .I \-n
 option is spcified, these faces are then subdivided (according to the
 .I cell_size
 ) and additional rays fired from the other two directions are used to refine their
-shape. 
+shape.
 The resulting NMG solid
 will be named
 .I shell
@@ -66,9 +66,9 @@ Specify the dimensions (in millimeters) of the grid spacing.  The default is 50m
 .B \-i \fIinitial_ray_dir\fR
 Specify the initial ray direction.  Valid values are X, Y, or Z.
 The best results are usually obtained by raytracing in the direction that produces the
-most hits first. 
+most hits first.
 
-.TP 
+.TP
 .B \-d \fIdebug_level\fR
 Set the debugging level.  Higher values produce more debugging information.
 .TP

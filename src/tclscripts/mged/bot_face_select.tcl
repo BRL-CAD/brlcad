@@ -38,7 +38,7 @@ proc bot_face_select { face_list } {
     global bot_v1 bot_v2 bot_v3 mged_gui
     global ::tk::Priv
 
-    
+
     set win [winset]
     set id [get_player_id_dm $win]
     if {$id == "mged"} {

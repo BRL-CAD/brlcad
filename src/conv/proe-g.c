@@ -29,7 +29,7 @@
  *
  *  Author -
  *	John R. Anderson
- *  
+ *
  *  Source -
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5066
@@ -632,7 +632,7 @@ do_modifiers(char *line1, int *start, struct wmember *head, char *name, fastf_t 
 			else
 			{
 				/* Add this cut to the region */
-				wmem = mk_addmember( ptr->solid_name, &(head->l), NULL, 
+				wmem = mk_addmember( ptr->solid_name, &(head->l), NULL,
 						WMOP_SUBTRACT );
 
 				if( top_level && do_reorient )
@@ -645,7 +645,7 @@ do_modifiers(char *line1, int *start, struct wmember *head, char *name, fastf_t 
 					}
 					bn_mat_mul2( re_orient, wmem->wm_mat );
 				}
-				
+
 			}
 		}
 		fgets( line1, MAX_LINE_LEN, fd_in );
@@ -843,7 +843,7 @@ Convert_part(char *line)
 			{
 				if( fgets( line1, MAX_LINE_LEN, fd_in ) == NULL )
 					bu_bomb( "Unexpected EOF while reading a loop in a part!!!\n" );
-				
+
 				start = (-1);
 				while( isspace( line1[++start] ) );
 
@@ -1045,7 +1045,7 @@ static void
 Rm_nulls(void)
 {
 	struct db_i *dbip;
-	int i;	
+	int i;
 
 	dbip = fd_out->dbip;
 

@@ -19,12 +19,12 @@
  * information.
  */
 /** @file room.c
- * 
+ *
  *  Program to generate procedural rooms.
  *
  *  Author -
  *	Michael John Muuss
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
@@ -165,11 +165,11 @@ main(int argc, char **argv)
 
 void
 make_room(char *rname, fastf_t *imin, fastf_t *imax, fastf_t *thickness, struct wmember *headp)
-    	       
+
       	     		/* Interior RPP min point */
-      	     
-      	          
-                      
+
+
+
 {
 	struct wmember head;
 	char	name[32];
@@ -195,12 +195,12 @@ make_room(char *rname, fastf_t *imin, fastf_t *imax, fastf_t *thickness, struct 
 
 void
 make_walls(char *rname, fastf_t *imin, fastf_t *imax, fastf_t *thickness, int bits, struct wmember *headp)
-    	       
+
       	     		/* Interior RPP min point */
-      	     
-      	          
-   	     
-                      
+
+
+
+
 {
 	struct wmember head;
 	char	name[32];
@@ -267,12 +267,12 @@ make_walls(char *rname, fastf_t *imin, fastf_t *imax, fastf_t *thickness, int bi
 
 void
 make_pillar(char *prefix, int ix, int iy, fastf_t *center, fastf_t *lwh, struct wmember *headp)
-    	        
-   	   
-   	   
+
+
+
       	       			/* center of base */
-      	    
-                      
+
+
 {
 	vect_t	min, max;
 	unsigned char	rgb[4];		/* needs all 4 */

@@ -68,7 +68,7 @@
 	are some that don't have individual functions to output them,
 	the ones that DO are below):
 
-	char	*ScBC	(backspace character)	
+	char	*ScBC	(backspace character)
 	char	*ScPC	(padding character)
 	char	*ScUP	(move the cursor up one line)
 	char	*ScTI	(initialize the terminal)

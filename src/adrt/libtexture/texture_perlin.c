@@ -157,7 +157,7 @@ tfloat texture_perlin_omega(texture_perlin_t *P, TIE_3 V) {
   q = P->RV[b11 + b1[2]];
   v = at3(r1[0], r1[1], r1[2]);
   b = lerp(t, u, v);
-  
+
   d = lerp(sy, a, b);
 
   return( lerp(sz, c, d) );

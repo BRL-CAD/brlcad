@@ -252,7 +252,7 @@ static RGBpixel	rgb_table[4096];
  *  also means that in MEX mode, the previous contents of the frame
  *  buffer still exist, and can be again accessed, even though the
  *  MEX windows are transient, per-process.
- * 
+ *
  *  There are a few oddities, however.  The worst is that System V will
  *  not allow the break (see sbrk(2)) to be set above a shared memory
  *  segment, and shmat(2) does not seem to allow the selection of any
@@ -662,7 +662,7 @@ int	width, height;
 {
 	int x_pos, y_pos;	/* Lower corner of viewport */
 	register int i;
-	
+
 	FB_CK_FBIO(ifp);
 
 	if( file != NULL )  {
@@ -703,10 +703,10 @@ int	width, height;
 		width = ifp->if_width;
 	if( height <= 0 )
 		height = ifp->if_height;
-	if ( width > ifp->if_max_width) 
+	if ( width > ifp->if_max_width)
 		width = ifp->if_max_width;
 
-	if ( height > ifp->if_max_height) 
+	if ( height > ifp->if_max_height)
 		height = ifp->if_max_height;
 
 	ifp->if_width = width;
@@ -1061,7 +1061,7 @@ int	count;
 				*op++ = *cp++;
 				*op++ = *cp++;
 				*op++ = *cp++;
-			}				
+			}
 			count -= scan_count;
 			ret += scan_count;
 			xmem = 0;
@@ -1274,10 +1274,10 @@ register ColorMap	*cmp;
 		SGI(ifp)->si_cmap_flag = FALSE;
 		return(0);
 	}
-	
+
 	for(i = 0; i < 256; i++)  {
 		CMR(ifp)[i] = cmp-> cm_red[i]>>8;
-		CMG(ifp)[i] = cmp-> cm_green[i]>>8; 
+		CMG(ifp)[i] = cmp-> cm_green[i]>>8;
 		CMB(ifp)[i] = cmp-> cm_blue[i]>>8;
 
 	}
@@ -1419,7 +1419,7 @@ register RGBpixel	*pixelp;
 	}
 
 	/* Match found to within tolerance? */
-	if( min_diff < MAP_TOL ) 
+	if( min_diff < MAP_TOL )
 		return	(Colorindex)best;
 
 	/* Allocate new entry in color table if there's room.		*/

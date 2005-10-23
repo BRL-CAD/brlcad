@@ -22,12 +22,12 @@
 /** @file anim_time.c
  *  Given an animation path consiting of time stamps and 3-d points,
  *  estimate new time stamps based on the distances between points, the
- *  given starting and ending times, and optionally specified starting 
+ *  given starting and ending times, and optionally specified starting
  *  and ending velocities.
- *	
+ *
  *  Author -
  *	Carl J. Nuzman
- *  
+ *
  *  Source -
  *      The U. S. Army Research Laboratory
  *      Aberdeen Proving Ground, Maryland  21005-5068  USA
@@ -103,7 +103,7 @@ main(int argc, char **argv)
     fastf_t *l, *x, *y, *z;
     fastf_t temp0,temp1,temp2,start=0.0,end,v0,v1;
     int i,j , num,plen;
-	
+
 
     fastf_t time,dist,slope,a,b,c;
 
@@ -144,7 +144,7 @@ main(int argc, char **argv)
 	} else {
 	    start = end;
 	}
-		
+
 	plen++;
     }
 

@@ -29,11 +29,11 @@
  *
  *  Modifications -
  *	Bob Parker - modified to live in librt's drawable geometry object.
- *  
+ *
  *  Source -
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5066
- *  
+ *
  */
 /*@}*/
 
@@ -705,7 +705,7 @@ promote_ints(struct bu_list		*head,
 					BU_LIST_APPEND( &a->l, &tmp->l )
 				}
 			}
-			
+
 			if( (a->seg_stp != ON_INT) || (b->seg_stp != ON_INT) )
 			{
 				b = BU_LIST_PNEXT( seg, &b->l );
@@ -780,7 +780,7 @@ promote_ints(struct bu_list		*head,
 					a->seg_out.hit_dist = b->seg_out.hit_dist;
 					a->seg_stp = ON_SURF;
 					b->seg_in.hit_dist = a->seg_out.hit_dist;
-					b->seg_out.hit_dist = tmp_dist;					
+					b->seg_out.hit_dist = tmp_dist;
 				}
 				else
 				{
@@ -1153,14 +1153,14 @@ eval_op(struct bu_list		*A,
 	#endif
 
 	return( A );
-	
+
 }
 
 /* evaluate an E-tree */
 HIDDEN struct bu_list *
 eval_etree(union E_tree			*eptr,
 	   struct dg_client_data	*dgcdp)
-	   
+
 {
 	struct bu_list *A, *B;
 
@@ -1536,7 +1536,7 @@ shoot_and_plot(point_t			start_pt,
 
 			RT_ADD_VLIST( vhead, pt, RT_VLIST_LINE_DRAW );
 		}
-		
+
 	}
 
 	if( final_segs )

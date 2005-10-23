@@ -109,7 +109,7 @@ proc dsp_create { id } {
 	hoc_register_data $top.heightE "File width" $tmp_hoc
 	set mged_gui($id,dsp_smooth) 0
 	label $top.smoothL -text "Use smoothing"
-	checkbutton $top.smoothC -bd 2 -variable mged_gui($id,dsp_smooth)	
+	checkbutton $top.smoothC -bd 2 -variable mged_gui($id,dsp_smooth)
 	set tmp_hoc [list [list summary $dsp_dscr] [list description "If this is checked, the displacememt surface will be smoothed" ]]
 	hoc_register_data $top.smoothL "Smoothing" $tmp_hoc
 	hoc_register_data $top.smoothC "Smoothing" $tmp_hoc
@@ -180,7 +180,7 @@ proc init_solid_create { id type } {
 
     toplevel $top -screen $mged_gui($id,screen)
 
-    frame $top.nameF 
+    frame $top.nameF
     label $top.nameL -text "Enter name for $type:" -anchor w
     entry $top.nameE -relief sunken -bd 2 -textvar mged_gui($id,solid_name)
     button $top.applyB -relief raised -text "Apply"\

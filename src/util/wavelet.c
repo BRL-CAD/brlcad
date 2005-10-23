@@ -43,7 +43,7 @@
  *  Author -
  *      Lee Butler
  *      Christopher Sean Morrison
- *  
+ *
  *  Source -
  *      The U. S. Army Research Laboratory
  *      Aberdeen Proving Ground, Maryland  21005-5068  USA
@@ -95,7 +95,7 @@ usage(char *s)
 {
 	if (s) (void)fputs(s, stderr);
 
-	(void) fprintf(stderr, 
+	(void) fprintf(stderr,
 "Usage:\n\
 	%s {-d | -r} [-2] [-t datatype] [-# channels]\n\
 	[-w width] [-n scanlines] [-s number_of_samples]\n\
@@ -118,7 +118,7 @@ parse_args(int ac, char **av)
 	else
 		progname = *av;
 
-	
+
 	/* Turn off bu_getopt's error messages */
 	opterr = 0;
 
@@ -183,7 +183,7 @@ wlt_decompose_1d(void)
 	unsigned long int i, n;
 	unsigned long int sample_size;	/* size of data type x #values/sample */
 	unsigned long int scanline_size;	/* # bytes in a scanline */
-	
+
 	sample_size = value_size * channels;
 	scanline_size = sample_size * width;
 
@@ -194,12 +194,12 @@ wlt_decompose_1d(void)
 		fprintf(stderr, "1D decompose:\n\tdatatype_size:%d channels:%lu width:%lu height:%lu limit:%lu\n",
 			value_size, channels, width, height, limit);
 
-	
+
 	for (i=0 ; i < height ; i++) {
 
 		n = fread(buf, sample_size, width, stdin);
 		if (n  != width ) {
-			fprintf(stderr, 
+			fprintf(stderr,
 				"read failed line %lu got %lu not %lu\n",
 				 i, n, width);
 			exit(-1);
@@ -308,7 +308,7 @@ wlt_reconstruct_1d(void)
 	unsigned long int i, n;
 	unsigned long int sample_size;	/* size of data type x #values/sample */
 	unsigned long int scanline_size;	/* # bytes in a scanline */
-	
+
 	sample_size = value_size * channels;
 	scanline_size = sample_size * width;
 
@@ -325,7 +325,7 @@ wlt_reconstruct_1d(void)
 
 		n = fread(buf, sample_size, width, stdin);
 		if (n  != width ) {
-			fprintf(stderr, 
+			fprintf(stderr,
 				"read failed line %lu got %lu not %lu\n",
 				 i, n, width);
 			exit(-1);

@@ -326,7 +326,7 @@ get_unique_jobid()
 
 	return aJobId;
 }
-                
+
 
 struct rtserver_job *
 rts_get_rtserver_job()
@@ -697,7 +697,7 @@ rts_close_session( int sessionid )
  * Uses "rtserver_data" object in the BRL-CAD model to find object names (see rtserver.h)
  * eliminates any old data
  * creates a new session (sessionid = 0)
- * 
+ *
  * Returns:
  *	sessionid - all is well
  *	negative number - we have a problem
@@ -1344,7 +1344,7 @@ rts_get_any_waiting_result( int sessionid )
 		pthread_mutex_lock( &output_queue_mutex[queue] );
 
 		/* check for a result */
-		
+
 		if( BU_LIST_NON_EMPTY( &output_queue[queue].l ) ) {
 			for( BU_LIST_FOR( aresult, rtserver_result, &output_queue[queue].l ) ) {
 				aresult = BU_LIST_FIRST( rtserver_result, &output_queue[queue].l );
@@ -2157,7 +2157,7 @@ Java_mil_army_arl_services_RtService_getItemTree(JNIEnv *env, jobject obj, jint 
 		(*env)->ExceptionDescribe(env);
 		return( (jobject)NULL );
 	}
-	
+
 	/* get the JAVA method id for the ItemTree addSubcomponent method */
 	if( (itemTree_addcomponent_id=(*env)->GetMethodID( env, itemTree_class, "addSubComponent",
 	    "(Lmil/army/arl/muves/rtserver/ItemTree;)V" )) == NULL ) {
@@ -2173,7 +2173,7 @@ Java_mil_army_arl_services_RtService_getItemTree(JNIEnv *env, jobject obj, jint 
 		(*env)->ExceptionDescribe(env);
 		return( (jobject)NULL );
 	}
-	
+
 	/* get the JAVA method id for the ItemTree setIdentNumber method */
 	if( (itemTree_setIdentNumber_id=(*env)->GetMethodID( env, itemTree_class, "setIdentNumber",
 	     "(I)V" )) == NULL ) {
@@ -2181,7 +2181,7 @@ Java_mil_army_arl_services_RtService_getItemTree(JNIEnv *env, jobject obj, jint 
 		(*env)->ExceptionDescribe(env);
 		return( (jobject)NULL );
 	}
-	
+
 	/* get the JAVA method id for the ItemTree setLos method */
 	if( (itemTree_setLos_id=(*env)->GetMethodID( env, itemTree_class, "setLos",
 	     "(I)V" )) == NULL ) {
@@ -2189,7 +2189,7 @@ Java_mil_army_arl_services_RtService_getItemTree(JNIEnv *env, jobject obj, jint 
 		(*env)->ExceptionDescribe(env);
 		return( (jobject)NULL );
 	}
-	
+
 	/* get the JAVA method id for the ItemTree setMaterialName method */
 	if( (itemTree_setMaterialName_id=(*env)->GetMethodID( env, itemTree_class, "setMaterialName",
 	     "(Ljava/lang/String;)V" )) == NULL ) {
@@ -2233,7 +2233,7 @@ Java_mil_army_arl_services_RtService_getItemTree(JNIEnv *env, jobject obj, jint 
 	}
 
 
-	return( rootNode );			      
+	return( rootNode );
 }
 
 /*				R t S e r v e r I m p l _ r t s I n i t
@@ -2250,7 +2250,7 @@ Java_mil_army_arl_services_RtService_getItemTree(JNIEnv *env, jobject obj, jint 
  *	JNI_TRUE - something went wrong
  */
 JNIEXPORT jint JNICALL
-Java_mil_army_arl_services_RtService_rtsInit(JNIEnv *env, jobject obj, jobjectArray args) 
+Java_mil_army_arl_services_RtService_rtsInit(JNIEnv *env, jobject obj, jobjectArray args)
 {
 	jsize len=(*env)->GetArrayLength(env, args);
 	jstring jfile_name, *jobj_name;
@@ -2378,7 +2378,7 @@ Java_mil_army_arl_services_RtService_shootArray( JNIEnv *env, jobject jobj,
 {
    	jclass point_class, vect_class, rayResult_class, arrayClass;
 	jmethodID point_constructorID, arraySetID;
-	jobjectArray resultsArray; 
+	jobjectArray resultsArray;
 	jfieldID fidvx, fidvy, fidvz;
 	jfieldID fidpx, fidpy, fidpz;
 	jobject jrayResult, jray_start_pt;
@@ -2876,7 +2876,7 @@ Java_mil_army_arl_muves_rtserver_RtServerImpl_getItemTree(JNIEnv *env, jobject o
 }
 
 JNIEXPORT jint JNICALL
-Java_mil_army_arl_muves_rtserver_RtServerImpl_rtsInit(JNIEnv *env, jobject obj, jobjectArray args) 
+Java_mil_army_arl_muves_rtserver_RtServerImpl_rtsInit(JNIEnv *env, jobject obj, jobjectArray args)
 {
 	return Java_mil_army_arl_services_RtService_rtsInit(env, obj, args);
 }
@@ -2990,7 +2990,7 @@ main( int argc, char *argv[] )
 			exit( 1 );
 		}
 	}
-	
+
 	/* load geometry */
 	if( BU_PTBL_LEN( &objs ) > 0 ) {
 		char **objects;
@@ -3034,7 +3034,7 @@ main( int argc, char *argv[] )
 		while( names[i] ) {
 			fprintf( stderr, "\t%d - %s\n", i, names[i] );
 			i++;
-		}	
+		}
 	}
 #endif
 	/* start the server threads */

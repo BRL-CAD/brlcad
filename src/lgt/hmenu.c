@@ -256,7 +256,7 @@ hm_Put_Border(register HWindow *win, register int row, char mark)
 		register int	bitmap = win->dirty[row - win->menuy];
 		static char	buf[MAXLINE];
 		register char	*p = buf;
-	*p++ = mark; 
+	*p++ = mark;
 	for( i = 0; i < win->width; i++ )
 		*p++ = '-';
 	*p++ = mark;
@@ -408,7 +408,7 @@ hmredraw(void)
 HMitem *
 hmenuhit(HMenu *menup, int menux, int menuy)
      	       			/* -> first HMitem in array.		*/
-   	             
+
 	{	register HMitem	*itemp;
 		HMitem		*retitemp = 0;
 		HWindow		*win;

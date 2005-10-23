@@ -71,7 +71,7 @@ struct bbd_specific {
     int img_height;
     double img_scale;
     struct bu_vls img_filename;
-    
+
     /* these are not initialized by the user */
     unsigned	img_count;
     struct bu_list imgs;
@@ -183,7 +183,7 @@ void new_image(register const struct bu_structparse	*sdp,	/*struct desc*/
  *	This routine is called (at prep time)
  *	once for each region which uses this shader.
  *	Any shader-specific initialization should be done here.
- * 
+ *
  * 	Returns:
  *	1	success
  *	0	success, but delete region
@@ -487,11 +487,11 @@ do_ray_image(struct application	*ap,
 	    }
 	}
     }
-    if (rdebug&RDEBUG_SHADE) 
+    if (rdebug&RDEBUG_SHADE)
 	bu_log("tot:%d color_count: %d\n", tot, color_count);
 
     if (color_count == 0)  {
-	if (rdebug&RDEBUG_SHADE) 
+	if (rdebug&RDEBUG_SHADE)
 	    bu_log("no color contribution, leaving color as %g %g %g\n",
 		   V3ARGS(swp->sw_color));
 	return;
@@ -557,7 +557,7 @@ bbd_render( ap, pp, swp, dp )
     CK_bbd_SP(bbd_sp);
 
     if (rdebug&RDEBUG_SHADE) {
-	bu_struct_print( "bbd_render Parameters:", 
+	bu_struct_print( "bbd_render Parameters:",
 			 bbd_print_tab, (char *)bbd_sp );
 	bu_log("pixel %d %d\n", ap->a_x, ap->a_y);
 	bu_log("bbd region: %s\n", pp->pt_regionp->reg_name);
@@ -568,7 +568,7 @@ bbd_render( ap, pp, swp, dp )
 	       __FILE__, __LINE__, pp->pt_regionp->reg_name, tp->tr_a.tu_op);
 	bu_bomb("\n");
     }
-    
+
 
     swp->sw_transmit = 1.0;
     VSETALL(swp->sw_color, 0.0);
@@ -584,7 +584,7 @@ bbd_render( ap, pp, swp, dp )
 					 bi->img_plane, &ap->a_rt_i->rti_tol);
 	i++;
     }
-    
+
     qsort(id, bbd_sp->img_count, sizeof(id[0]), &imgdist_compare);
 
     for (i=0 ; i < bbd_sp->img_count && swp->sw_transmit > 0.0 ; i++) {

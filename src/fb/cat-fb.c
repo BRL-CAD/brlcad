@@ -40,7 +40,7 @@
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5066
- *  
+ *
  */
 #ifndef lint
 static const char RCSid[] = "@(#)$Header$ (BRL)";
@@ -817,7 +817,7 @@ relfont(void)
 	lastloaded = newfont;
 	if( fontdes[newfont].vfp != VFONT_NULL )
 		vfont_free(fontdes[newfont].vfp);
-		
+
 	fontdes[newfont].vfp = VFONT_NULL;
 	fontdes[newfont].fnum = -1;
 	fontdes[newfont].psize = -1;
@@ -908,7 +908,7 @@ void
 slop_lines(int nlines)
 {
 	register int rlines;
-	
+
 	rlines = (&buffer[BUFFER_SIZE] - buf0p) / bytes_per_line;
 	if (rlines < nlines) {
 		if (writelines(rlines, (char *)buf0p) < 0)

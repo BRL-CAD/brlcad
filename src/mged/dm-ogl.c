@@ -24,7 +24,7 @@
  *
  *  Author -
  *	Robert G. Parker
- *  
+ *
  *  Source -
  *	SLAD CAD Team
  *	The U. S. Army Research Laboratory
@@ -203,7 +203,7 @@ Ogl_doevent(ClientData	clientData,
 
 /*
  *			O G L _ D M
- * 
+ *
  *  Implement display-manager specific commands, from MGED "dm" command.
  */
 static int

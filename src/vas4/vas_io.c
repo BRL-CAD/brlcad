@@ -27,12 +27,12 @@
  *	Steve Satterfield, USNA
  *	Joe Johnson, USNA
  *	Michael John Muuss, BRL
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5066
- *  
+ *
  */
 #ifndef lint
 static const char RCSid[] = "@(#)$Header$ (BRL)";
@@ -116,10 +116,10 @@ vas_open(void)
 	vtty.c_cflag &= ~PARENB;         /* Parity disable */
 	vtty.c_cflag &= ~HUPCL;          /* No hangup on close */
 	vtty.c_cflag |= CLOCAL;          /* Line has no modem control */
- 
+
 	vtty.c_iflag &= ~(BRKINT|ICRNL|INLCR|IXON|IXANY|IXOFF);
 	vtty.c_iflag |= IGNBRK|IGNPAR;
- 
+
 	vtty.c_oflag &= ~(OPOST|ONLCR|OCRNL);    /* Turn off all post-processing */
 	vtty.c_oflag |= TAB3;		/* output tab expansion ON */
 	vtty.c_cc[VMIN] = 1;
@@ -129,7 +129,7 @@ vas_open(void)
 	vtty.c_lflag &= ~ISIG;           /* Signals OFF */
 	vtty.c_lflag &= ~(ECHO|ECHOE|ECHOK);     /* Echo mode OFF */
 
-	if( ioctl(vas_fd, TCSETA, &vtty) < 0 ) { 
+	if( ioctl(vas_fd, TCSETA, &vtty) < 0 ) {
 		perror(VAS_PORT);
 		exit(1);
 	}
@@ -147,10 +147,10 @@ vas_open(void)
 	vtty.c_cflag &= ~PARENB;         /* Parity disable */
 	vtty.c_cflag &= ~HUPCL;          /* No hangup on close */
 	vtty.c_cflag |= CLOCAL;          /* Line has no modem control */
- 
+
 	vtty.c_iflag &= ~(BRKINT|ICRNL|INLCR|IXON|IXANY|IXOFF);
 	vtty.c_iflag |= IGNBRK|IGNPAR;
- 
+
 	vtty.c_oflag &= ~(OPOST|ONLCR|OCRNL);    /* Turn off all post-processing */
 	vtty.c_oflag |= TAB3;		/* output tab expansion ON */
 	vtty.c_cc[VMIN] = 1;
@@ -199,7 +199,7 @@ vas_rawputc(char c)
  *			V A S _ P U T C
  *
  *  Output the specified character to the VAS.
- *  Wait for a 006 (^F) ACK of this character, 
+ *  Wait for a 006 (^F) ACK of this character,
  *  or for an "activity state" character,
  *  else retransmit.
  */

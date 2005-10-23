@@ -3,20 +3,20 @@
 <body>
 
 <h1><a name="top">View Curve Editor</a></h1>
-The 
-<a href="vceditor.gif">view curve editor</a> 
+The
+<a href="vceditor.gif">view curve editor</a>
 permits the user to create, display, and edit a view
-curve. Like the animation curves described 
-<a href="curve_doc.html#top">above</a>, a view curve consists of an 
-ordered 
-list of nodes. While a curve represents a path through 
+curve. Like the animation curves described
+<a href="curve_doc.html#top">above</a>, a view curve consists of an
+ordered
+list of nodes. While a curve represents a path through
 space, a view curve represents a path through a viewing state space
 which includes parameters such as view size, eye position, and eye
-orientation. 
+orientation.
 <p>
 With the view editor, the user can save views in a variety of formats,
 associate time values to them, and restore them in the MGED display.
-Although intended primarily for animation work, 
+Although intended primarily for animation work,
 the view
 editor can be a useful view-manipulation tool for anyone who uses MGED.
 <h2><a name="CVCurve">Current V-Curve</a></h2>
@@ -25,9 +25,9 @@ is called the current view curve, and the name of the current view curve is
 displayed at the top of the view curve editor.
 If there is no current view curve when the editor is
 created, then an empty view curve named <var>view</var> is
-automatically created. 
+automatically created.
 <p>
-Clicking on the <b>Current V-Curve:</b> label 
+Clicking on the <b>Current V-Curve:</b> label
 posts a menu with the
 following entries:
 <dl>
@@ -51,9 +51,9 @@ current. The user is asked to supply a name for the new view curve.
 view curves.
 </dl>
 Clicking on the name of the current view curve at the top of the view
-curve editor brings up the 
+curve editor brings up the
 corresponding view
-curve display window (see  
+curve display window (see
 <a href="#VCDWidget">below</a>).
 <h2><a name="VCParameters">View Curve Parameters</a></h2>
 The view curve editor can represent the viewing state in one of several
@@ -70,7 +70,7 @@ The five viewing state formats are:
 <li>eye center
 </ul>
 Each of these formats consists of two or three view parameters which
-together uniquely define the viewing state. These underlying 
+together uniquely define the viewing state. These underlying
 view parameters are:
 <ul>
 <li>size - a single value representing the viewsize.
@@ -81,7 +81,7 @@ view parameters are:
 </ul>
 
 In the MGED display editor, the viewing state is represented
-by 
+by
 a viewing cube centered at <var>center</var> with sides of
 length <var>size</var> and an orientation given by <var>quat</var> or
 <var>ypr</var>. The eye point is centered in the "top" face of the viewing
@@ -90,8 +90,8 @@ The distance between these points is thus one half the
 <var>size</var>.
 For a more complete description of these parameters and the relationships
 between them, see the
-<a href="viewget.html">viewget</a> 
-manual  page. 
+<a href="viewget.html">viewget</a>
+manual  page.
 <p>
 Each node of a view curve contains a time parameter and the view
 parameters specified by the current format. When the user changes the
@@ -99,7 +99,7 @@ current format, all of the nodes of the current curve are converted to
 the new format.
 <p>
 Most of the parameter combinations contain a size, a position,
-and an orientation, completely specifying the view state. 
+and an orientation, completely specifying the view state.
 The only exception is the <code>eye center</code> format.
 Fixing the eye point and center point leaves one degree of
 freedom in the view state, which AnimMate removes by
@@ -107,13 +107,13 @@ selecting a "right-side up" orientation (i.e. an orientation with no twist
 or roll). If the user tries to add a view state which is not "right-side
 up" to a view curve in in <code>eye center</code> form, then a
 "right-side up" viewing state with the same eye and center points is
-stored instead. 
+stored instead.
 <p>
 Note that converting a view curve to one of the "size position
 orientation" formats and back
 always leaves the view curve unchanged. Converting a view curve
 to <code>eye center</code> format and back always creates a view curve
-consisting only of "right-side up" view states. 
+consisting only of "right-side up" view states.
 <p>
 The different view curve formats are useful because they produce
 different results when the view curves are interpolated.
@@ -127,11 +127,11 @@ intuitive and simpler to interpolate.
 <h2><a name="CNode">Current Node</a></h2>
 The next section of the view curve editor displays and controls the
 current view curve node. Whenever the current view curve is non-empty,
-one of the nodes is highlighted in the 
+one of the nodes is highlighted in the
 <a href="#VCDWidget">view curve display window</a> as the current
 node. This is the node which will be affected by move and delete
 operations and which controls where new nodes are added and inserted, as
-explained <a href="#VCEditing">below</a>. 
+explained <a href="#VCEditing">below</a>.
 <p>
 The view curve editor contains a label of the form "Node <var>i</var> of
 <var>n</var>", where <var>n</var> is the number of nodes in the current
@@ -235,7 +235,7 @@ editor.
 <h2><a name="VCDWidget">View Curve Display Window</a></h2>
 The user can view the parameters of a view curve in text format using a
 <a href="./vcdwidget.gif">view curve display window</a>
-that looks much like a 
+that looks much like a
 <a href="./table_doc.html">table editor</a>. The major difference between
 the two is that the text in the view curve display window
 cannot be
@@ -254,7 +254,7 @@ curve appear in the text display area, with one row for each node of the
 view curve. The row corresponding to the current node is always highlighted.
 <p>
 The menu bar at the bottom of the view curve display window contains
-the following buttons: 
+the following buttons:
 <dl>
 <dt><b><a name="Write">Write</a></b>
 <dd>
@@ -278,7 +278,7 @@ Comma-separated integers are used to identify individual columns: 0 is the
 first column and <var>n</var>-1 is the last of <var>n</var> columns.
 Dashes represent ranges. For example, <kbd>2-4</kbd>
 is identical in meaning to <kbd>2,3,4</kbd>; <kbd>4-2</kbd> is the same
-as <kbd>4,3,2</kbd>; and <kbd>4-</kbd> represents columns 4 through 
+as <kbd>4,3,2</kbd>; and <kbd>4-</kbd> represents columns 4 through
 <var>n-1</var>.
 <p>
 <dt><b><a name="Clone">Clone</a></b>

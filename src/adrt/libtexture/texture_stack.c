@@ -83,5 +83,5 @@ void texture_stack_push(texture_t *texture, texture_t *texture_new) {
   td = (texture_stack_t *)texture->data;
 
   td->list = (texture_t **)realloc(td->list, sizeof(texture_t *)*(td->num+1));
-  td->list[td->num++] = texture_new;  
+  td->list[td->num++] = texture_new;
 }

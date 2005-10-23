@@ -24,7 +24,7 @@
 /** @file nurb_poly.c
  *     Returns two polygons from a NURB surface.
  *     Asumes that the surface is flat.
- * 
+ *
  * Author -
  *     Paul R. Stay
  *
@@ -50,7 +50,7 @@
 /* Algorithm -
  * From the four corners of the surface, return the two parts split by the
  * diagonal from the first and third corner point making sure Homogeneous
- * points are divided. 
+ * points are divided.
  */
 
 struct rt_nurb_poly *
@@ -65,10 +65,10 @@ rt_nurb_to_poly(struct face_g_snurb *srf)
 
 	p1 = srf->ctl_points;
 	p2 = srf->ctl_points + coords * srf->s_size[1];
-	p3 = srf->ctl_points + (coords * srf->s_size[1] * 
-	    (srf->s_size[0] - 1)) + 
+	p3 = srf->ctl_points + (coords * srf->s_size[1] *
+	    (srf->s_size[0] - 1)) +
 	    ((srf->s_size[1] - 1) * coords);
-	p4 = srf->ctl_points + (coords * srf->s_size[1] * 
+	p4 = srf->ctl_points + (coords * srf->s_size[1] *
 	    (srf->s_size[0] - 1));
 
 	/* If the point is rational then divide out the w component */
@@ -102,10 +102,10 @@ rt_nurb_to_poly(struct face_g_snurb *srf)
 	uv4[0] = srf->u.knots[0];
 	uv4[1] = srf->v.knots[srf->v.k_size -1];
 
-	p = rt_nurb_mk_poly(p1, p2, p3, uv1, uv2, uv3 ); 
+	p = rt_nurb_mk_poly(p1, p2, p3, uv1, uv2, uv3 );
 	p_head = p;
-	p = rt_nurb_mk_poly(p3, p4, p1, uv3, uv4, uv1 ); 
-	p->next = p_head; 
+	p = rt_nurb_mk_poly(p3, p4, p1, uv3, uv4, uv1 );
+	p->next = p_head;
 	p_head = p;
 
 	return p_head;

@@ -17,33 +17,33 @@ It introduces a large number of new capabilities in BRL-CAD, including:
 
     <dl>
 	<dt><b>Machine-Independent Data</b></dt>
-	<dd>The geometry in the new file format is stored in an 
+	<dd>The geometry in the new file format is stored in an
 	architecture-independent fashion.  This removes the need to convert
-	the geometry file to ASCII representation and back to binary when 
-	moving between machines of different architectures (e.g., between 
+	the geometry file to ASCII representation and back to binary when
+	moving between machines of different architectures (e.g., between
 	Big-Endian and Little-Endian machines).</dd>
 
 	<dt><b>Unlimited-Length Object Names</b></dt>
 	<dd>Names of objects in the geometry database were previously limited
 	to 16 characters.  This restriction was burdensome when constructing
 	complex systems.  The new database format (and MGED/rt) allows for
-	unlimited-length names for objects.  The only limits remaining are 
-	usability/human factors (i.e., the user may wish to think twice before using 
+	unlimited-length names for objects.  The only limits remaining are
+	usability/human factors (i.e., the user may wish to think twice before using
 	1024-character names for all objects).</dd>
 
 	<dt><b>Object Attributes</b></dt>
 	<dd>All geometry file objects can now carry arbitrary text data.
 	This information is stored as a series of name-value pairs.  For example, it is
 	possible to store an attribute called "modeler", which could indicate
-	the name and organization of the person who created that portion of 
+	the name and organization of the person who created that portion of
 	the geometry.  Another attribute might be "density", whose value would
 	be the density of the material from which the object was constructed.
 	Analysis codes can store application-specific data in these attributes
-	and retrieve them at run time.  MGED has a GUI control panel for 
+	and retrieve them at run time.  MGED has a GUI control panel for
 	creating and editing object attributes.</dd>
 
 	<dt><b>Opaque Binary Objects</b></dt>
-	<dd>It is now possible to store arbitrary data in a BRL-CAD geometry 
+	<dd>It is now possible to store arbitrary data in a BRL-CAD geometry
 	database object.  For example, the entire description from an
 	external CAD system could be stored for reference.  Several features
 	of BRL-CAD geometry that require ancillary data can now use these
@@ -53,9 +53,9 @@ It introduces a large number of new capabilities in BRL-CAD, including:
 	<dt><b>Reduced Disk Space Requirements</b></dt>
 	<dd>The new file format is more aggressive about space utilization.
 	Many primitives now occupy significantly less disk space.</dd>
-	
+
 	<dt><b>New <b>dbupgrade</b> Utility for Easy Migration</b></dt>
-	<dd>The <b>dbupgrade</b> command has been created to bring old 
+	<dd>The <b>dbupgrade</b> command has been created to bring old
 	databases up to the most current version of the file format.</dd>
 
 	<dt><b>Hidden Objects</b></dt>
@@ -66,19 +66,19 @@ It introduces a large number of new capabilities in BRL-CAD, including:
 
 	<dt><b>Deprecation of Obsolete <i>hf</i> and <i>poly</i> primitives</b></dt>
 	<dd>The <i>dsp</i>(Displacement Map) primitive is functionally equivalent to the <i>hf</i>
-	and offers substantial performance advantages.  The <i>bot</i> (bag of triangles) primitive 
-	is likewise a substantial improvement over the 
-	existing <i>poly</i> primitive.  The <b>dbupgrade</b> utility converts existing 
-	<i>hf</i> and <i>poly</i> primitives into <i>dsp</i> and <i>bot</i> primitives, respectively.  
+	and offers substantial performance advantages.  The <i>bot</i> (bag of triangles) primitive
+	is likewise a substantial improvement over the
+	existing <i>poly</i> primitive.  The <b>dbupgrade</b> utility converts existing
+	<i>hf</i> and <i>poly</i> primitives into <i>dsp</i> and <i>bot</i> primitives, respectively.
 	Both <i>hf</i> and <i>poly</i> primitives are deprecated.</dd>
 
 	<dt><b>Introduction of 2D <i>sketch</i> primitive</b></dt>
-	<dd>The <i>sketch</i> primitive consists of straight lines, circular arcs, 
+	<dd>The <i>sketch</i> primitive consists of straight lines, circular arcs,
 	and Bezier curves.  There is a drawing utility in MGED for creating
 	them.</dd>
 
 	<dt><b>Introduction of <i>extrude</i> primitive</b></dt>
-	<dd>The <i>extrude</i> primitive supports linear extrusion of 
+	<dd>The <i>extrude</i> primitive supports linear extrusion of
 	closed-boundary <i>sketch</i> primitive drawings to create 3D objects.
 	</dd>
 
@@ -98,7 +98,7 @@ have been numerous improvements.  These include:
     <dl>
 	<dt><b>New User's Manual</b></dt>
 	<dd>This is a completely updated tutorial introduction to MGED and modeling
-	with BRL-CAD.  Delivered in PDF format and suitable for both online 
+	with BRL-CAD.  Delivered in PDF format and suitable for both online
 	browsing and printing.  It includes a complete command reference.  Look
 	for it in the MGED menus at:<br>"Help->Manual->PDF MGED Tutorial"   &nbsp;&nbsp; or<br>
 	"/usr/brlcad/html/manuals/mged/VolumeII-Introduction_to_MGED.pdf"
@@ -106,17 +106,17 @@ have been numerous improvements.  These include:
 
 	<dt><b>Dual-Format Capability</b></dt>
 	<dd>MGED and other BRL-CAD utilities retain the ability to work
-	with geometry files constructed 
+	with geometry files constructed
 	in previous versions of BRL-CAD as well as the new one.
 	Users can upgrade geometry to the new format
 	when they choose.  New features implemented in the geometry
 	file may not be available under the old format.</dd>
 
 	<dt><b>Accelerators for Complex Shape Construction</b></dt>
-	<dd>These allows user to automatically generate more complex 
-	primitives from existing ones.  For example, <b>rcc-cap</b> 
+	<dd>These allows user to automatically generate more complex
+	primitives from existing ones.  For example, <b>rcc-cap</b>
 	creates an ellipsoidal top for a right circular cylinder.
-	The list of accellerators includes: <b>rcc-blend, rcc-cap, rcc-tgc, 
+	The list of accellerators includes: <b>rcc-blend, rcc-cap, rcc-tgc,
 	rpp-arch, rpp-cap, rpp-arch, tor-rcc,</b> and <b>sph-part.</b></dd>
 
 	<dt><b>Improved Menu and Interface Layout</b></dt>
@@ -135,7 +135,7 @@ have been numerous improvements.  These include:
 		</dd>
 
 	<dt><b>Extended Primitive Auto Generation</b></dt>
-	<dd>Several primitive types can now be auto generated using the 
+	<dd>Several primitive types can now be auto generated using the
 	<b>make</b> command from within MGED.  These include:<ul>
 		<li>rectangular parallelepipeds (rpp)</li>
 		<li>arbitrary faceted (ars)</li>
@@ -170,7 +170,7 @@ have been numerous improvements.  These include:
 
 	<dt><b>Build Pattern Tool</b></dt>
 	<dd>This tool facilitates the construction of replicated objects
-	in various rectangular grid and circular patterns.  For example: 
+	in various rectangular grid and circular patterns.  For example:
 	lines of rivet heads, bolt holes, railroad ties, tire tread patterns.
 	</dd>
 
@@ -182,7 +182,7 @@ have been numerous improvements.  These include:
 <dd>
 <dl>
 <dt><b>Opaque Binary Object Support for <i>dsp</i> Primitive and <i>Texture</i> Shaders</b></dt>
-<dd>The <i>dsp</i> primitive can accept an opaque binary object as the source for its elevation data.  Likewise, <i>texture</i> shaders 
+<dd>The <i>dsp</i> primitive can accept an opaque binary object as the source for its elevation data.  Likewise, <i>texture</i> shaders
 can now accept opaque binary objects as the source for their image data.
 </dd>
 
@@ -197,7 +197,7 @@ can now accept opaque binary objects as the source for their image data.
 <dd>These two primitives did not have an ASCII representation in previous releases.  This omission has been corrected.</dd>
 
 <dt><b>Support for MacOS X</b></dt>
-<dd>BRL-CAD again supports the MacOS platform.  It requires that the 
+<dd>BRL-CAD again supports the MacOS platform.  It requires that the
 XDarwin or other X11 server be installed for correct operation.
 </dd>
 
@@ -218,7 +218,7 @@ XDarwin or other X11 server be installed for correct operation.
 <dd>A C implementation of the Tcl/Tk dual-ported object type is included.</dd>
 
 <dt><b>New Shaders</b></dt>
-<dd>Two new shaders <i>flat</i> and <i>invisible</i> are included.  
+<dd>Two new shaders <i>flat</i> and <i>invisible</i> are included.
 The <i>flat</i> shader support per-channel alpha blending.</dd>
 </dl>
 </dl>
@@ -229,18 +229,18 @@ The <i>flat</i> shader support per-channel alpha blending.</dd>
 <dd>The following are new to release 6.0:
     <dl>
 	<dt><b>pixcmp</b></dt>
-	<dd>This program Compares two <b>pix</b> format images.  
-	Although not technically new 
-	(it was formerly included in source distributions), <b>pixcmp</b> is now 
+	<dd>This program Compares two <b>pix</b> format images.
+	Although not technically new
+	(it was formerly included in source distributions), <b>pixcmp</b> is now
 	installed.</dd>
 
 	<dt><b>rtedge</b></dt>
-	<dd>This program raytraces models, detects edges, 
+	<dd>This program raytraces models, detects edges,
 	and writes BRL-CAD color image (.pix) files.</dd>
 
 
 	<dt><b>g_diff</b></dt>
-	<dd>This program compares two geometry database files and reports differences 
+	<dd>This program compares two geometry database files and reports differences
 	between the two.
 	This allows databases that contain the same objects in different orders to
 	be recognized as being the same.</dd>
@@ -248,7 +248,7 @@ The <i>flat</i> shader support per-channel alpha blending.</dd>
 	<dt><b>dbupgrade</b></dt>
 	<dd>This program upgrades an old BRL-CAD database to the current BRL-CAD release
 	file format.
-	This allows older geometry to take advantage of space savings and new functionality 
+	This allows older geometry to take advantage of space savings and new functionality
 	only available with the newer database formats
 	(e.g., convert a database created with BRL-CAD rel4.5 to one that is fully functional
 	in BRL-CAD rel6.0).</dd>
@@ -293,7 +293,7 @@ unquenchable cur iosity, and unending enthusiasm to advance the
 capabilities and performance of everything and everyone he touched.
 He was the original architect of BRL-CAD and for 20 years guided its
 development and emergence as one of the most advanced physically based
-computer-aided design packages in the world.  His presence and his 
+computer-aided design packages in the world.  His presence and his
 abilities will be missed.
 
 </dd>

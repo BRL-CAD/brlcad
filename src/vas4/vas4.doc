@@ -4,7 +4,7 @@ This directory contains the vas4 command which we use for all of our
 Lyon-Lamb recording. Refer to the man page. Following is a typical shell
 script I have used. Essentially it records a bunch of rle files.
 
-This command will open /dev/vas which is a link to the serial port 
+This command will open /dev/vas which is a link to the serial port
 connected to the vas.
 
 Steve

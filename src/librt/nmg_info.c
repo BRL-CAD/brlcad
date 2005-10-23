@@ -29,7 +29,7 @@
  *  Authors -
  *	Michael John Muuss
  *	Lee A. Butler
- *  
+ *
  *  Source -
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
@@ -185,7 +185,7 @@ struct shell *
 nmg_find_s_of_lu(const struct loopuse *lu)
 {
 	if (*lu->up.magic_p == NMG_SHELL_MAGIC) return(lu->up.s_p);
-	else if (*lu->up.magic_p != NMG_FACEUSE_MAGIC) 
+	else if (*lu->up.magic_p != NMG_FACEUSE_MAGIC)
 		rt_bomb("nmg_find_s_of_lu() bad parent for loopuse\n");
 
 	return(lu->up.fu_p->s_p);
@@ -242,7 +242,7 @@ nmg_find_fu_of_eu(const struct edgeuse *eu)
 		*eu->up.lu_p->up.magic_p == NMG_FACEUSE_MAGIC)
 			return eu->up.lu_p->up.fu_p;
 
-	return (struct faceuse *)NULL;			
+	return (struct faceuse *)NULL;
 }
 
 /**
@@ -425,7 +425,7 @@ nmg_find_lu_of_vu(const struct vertexuse *vu)
  *	           eu5 # eu2
  *	             | # |
  *	  <--- eu6 --V # |
- *	A ############ B 
+ *	A ############ B
  *	  --- eu1 ---->
  *
  *
@@ -497,7 +497,7 @@ nmg_loop_is_a_crack(const struct loopuse *lu)
 		/* No path back, this can't be a crack, abort */
 		ret = 0;
 		goto out;
-		
+
 		/* One edgeuse matched, all the others have to as well */
 match:		;
 	}
@@ -1216,17 +1216,17 @@ nmg_find_e_pt2_handler(long int *lp, genptr_t state, int first)
  */
 struct edge *
 nmg_find_e_nearest_pt2(long int *magic_p, const fastf_t *pt2, const fastf_t *mat, const struct bn_tol *tol)
-    		         
+
              	    		/* 2d point */
            	    		/* 3d to 3d xform */
-                   	     
+
 {
 	struct model			*m;
 	struct fen2d_state		st;
-	static const struct nmg_visit_handlers htab = {NULL, NULL, NULL, NULL, NULL, 
-						       NULL, NULL, NULL, NULL, NULL, 
-						       NULL, NULL, NULL, NULL, NULL, 
-						       NULL, NULL, NULL, nmg_find_e_pt2_handler, NULL, 
+	static const struct nmg_visit_handlers htab = {NULL, NULL, NULL, NULL, NULL,
+						       NULL, NULL, NULL, NULL, NULL,
+						       NULL, NULL, NULL, NULL, NULL,
+						       NULL, NULL, NULL, nmg_find_e_pt2_handler, NULL,
 						       NULL, NULL, NULL, NULL, NULL};
 	/* htab.vis_edge = nmg_find_e_pt2_handler; */
 
@@ -2069,10 +2069,10 @@ nmg_vertex_tabulate(struct bu_ptbl *tab, const long int *magic_p)
 {
 	struct model		*m;
 	struct vf_state		st;
-	static const struct nmg_visit_handlers	handlers = {NULL, NULL, NULL, NULL, NULL, 
-							    NULL, NULL, NULL, NULL, NULL, 
-							    NULL, NULL, NULL, NULL, NULL, 
-							    NULL, NULL, NULL, NULL, NULL, 
+	static const struct nmg_visit_handlers	handlers = {NULL, NULL, NULL, NULL, NULL,
+							    NULL, NULL, NULL, NULL, NULL,
+							    NULL, NULL, NULL, NULL, NULL,
+							    NULL, NULL, NULL, NULL, NULL,
 							    NULL, NULL, NULL, nmg_2rvf_handler, NULL};
 	/* handlers.vertex = nmg_2rvf_handler; */
 
@@ -2124,10 +2124,10 @@ nmg_vertexuse_normal_tabulate(struct bu_ptbl *tab, const long int *magic_p)
 {
 	struct model		*m;
 	struct vf_state		st;
-	static const struct nmg_visit_handlers	handlers = {NULL, NULL, NULL, NULL, NULL, 
-							    NULL, NULL, NULL, NULL, NULL, 
-							    NULL, NULL, NULL, NULL, NULL, 
-							    NULL, NULL, NULL, NULL, NULL, 
+	static const struct nmg_visit_handlers	handlers = {NULL, NULL, NULL, NULL, NULL,
+							    NULL, NULL, NULL, NULL, NULL,
+							    NULL, NULL, NULL, NULL, NULL,
+							    NULL, NULL, NULL, NULL, NULL,
 							    NULL, NULL, nmg_vert_a_handler, NULL, NULL};
 	/* handlers.vis_vertexuse_a = nmg_vert_a_handler; */
 
@@ -2176,10 +2176,10 @@ nmg_edgeuse_tabulate(struct bu_ptbl *tab, const long int *magic_p)
 {
 	struct model		*m;
 	struct vf_state		st;
-	static const struct nmg_visit_handlers	handlers = {NULL, NULL, NULL, NULL, NULL, 
-							    NULL, NULL, NULL, NULL, NULL, 
-							    NULL, NULL, NULL, NULL, NULL, 
-							    NULL, nmg_2edgeuse_handler, NULL, NULL, NULL, 
+	static const struct nmg_visit_handlers	handlers = {NULL, NULL, NULL, NULL, NULL,
+							    NULL, NULL, NULL, NULL, NULL,
+							    NULL, NULL, NULL, NULL, NULL,
+							    NULL, nmg_2edgeuse_handler, NULL, NULL, NULL,
 							    NULL, NULL, NULL, NULL, NULL};
 	/* handlers.bef_edgeuse = nmg_2edgeuse_handler; */
 
@@ -2228,10 +2228,10 @@ nmg_edge_tabulate(struct bu_ptbl *tab, const long int *magic_p)
 {
 	struct model		*m;
 	struct vf_state		st;
-	static const struct nmg_visit_handlers	handlers = {NULL, NULL, NULL, NULL, NULL, 
-							    NULL, NULL, NULL, NULL, NULL, 
-							    NULL, NULL, NULL, NULL, NULL, 
-							    NULL, NULL, NULL, nmg_2edge_handler, NULL, 
+	static const struct nmg_visit_handlers	handlers = {NULL, NULL, NULL, NULL, NULL,
+							    NULL, NULL, NULL, NULL, NULL,
+							    NULL, NULL, NULL, NULL, NULL,
+							    NULL, NULL, NULL, nmg_2edge_handler, NULL,
 							    NULL, NULL, NULL, NULL, NULL};
 	/* handlers.vis_edge = nmg_2edge_handler; */
 
@@ -2289,10 +2289,10 @@ nmg_edge_g_tabulate(struct bu_ptbl *tab, const long int *magic_p)
 {
 	struct model		*m;
 	struct vf_state		st;
-	static const struct nmg_visit_handlers	handlers = {NULL, NULL, NULL, NULL, NULL, 
-							    NULL, NULL, NULL, NULL, NULL, 
-							    NULL, NULL, NULL, NULL, NULL, 
-							    NULL, NULL, NULL, NULL, nmg_edge_g_handler, 
+	static const struct nmg_visit_handlers	handlers = {NULL, NULL, NULL, NULL, NULL,
+							    NULL, NULL, NULL, NULL, NULL,
+							    NULL, NULL, NULL, NULL, NULL,
+							    NULL, NULL, NULL, NULL, nmg_edge_g_handler,
 							    NULL, NULL, NULL, NULL, NULL};
 	/* handlers.vis_edge_g = nmg_edge_g_handler; */
 
@@ -2341,10 +2341,10 @@ nmg_face_tabulate(struct bu_ptbl *tab, const long int *magic_p)
 {
 	struct model		*m;
 	struct vf_state		st;
-	static const struct nmg_visit_handlers	handlers = {NULL, NULL, NULL, NULL, NULL, 
-							    NULL, NULL, NULL, NULL, NULL, 
-							    nmg_2face_handler, NULL, NULL, NULL, NULL, 
-							    NULL, NULL, NULL, NULL, NULL, 
+	static const struct nmg_visit_handlers	handlers = {NULL, NULL, NULL, NULL, NULL,
+							    NULL, NULL, NULL, NULL, NULL,
+							    nmg_2face_handler, NULL, NULL, NULL, NULL,
+							    NULL, NULL, NULL, NULL, NULL,
 							    NULL, NULL, NULL, NULL, NULL};
 	/* handlers.vis_face = nmg_2face_handler; */
 
@@ -2369,7 +2369,7 @@ nmg_face_tabulate(struct bu_ptbl *tab, const long int *magic_p)
  */
 void
 nmg_edgeuse_with_eg_tabulate(struct bu_ptbl *tab, const struct edge_g_lseg *eg)
-              			     
+
                         	    	/* can also be edge_g_cnurb */
 {
 	struct bu_list	*midway;	/* &eu->l2, midway into edgeuse */
@@ -2458,10 +2458,10 @@ nmg_edgeuse_on_line_tabulate(struct bu_ptbl *tab, const long int *magic_p, const
 {
 	struct model		*m;
 	struct edge_line_state		st;
-	static const struct nmg_visit_handlers	handlers = {NULL, NULL, NULL, NULL, NULL, 
-							    NULL, NULL, NULL, NULL, NULL, 
-							    NULL, NULL, NULL, NULL, NULL, 
-							    NULL, nmg_line_handler, NULL, NULL, NULL, 
+	static const struct nmg_visit_handlers	handlers = {NULL, NULL, NULL, NULL, NULL,
+							    NULL, NULL, NULL, NULL, NULL,
+							    NULL, NULL, NULL, NULL, NULL,
+							    NULL, nmg_line_handler, NULL, NULL, NULL,
 							    NULL, NULL, NULL, NULL, NULL};
 	/* handlers.bef_edgeuse = nmg_line_handler; */
 
@@ -2547,10 +2547,10 @@ nmg_e_and_v_tabulate(struct bu_ptbl *eutab, struct bu_ptbl *vtab, const long int
 {
 	struct model			*m;
 	struct e_and_v_state		st;
-	static const struct nmg_visit_handlers	handlers = {NULL, NULL, NULL, NULL, NULL, 
-							    NULL, NULL, NULL, NULL, NULL, 
-							    NULL, NULL, NULL, NULL, NULL, 
-							    NULL, NULL, NULL, nmg_e_handler, NULL, 
+	static const struct nmg_visit_handlers	handlers = {NULL, NULL, NULL, NULL, NULL,
+							    NULL, NULL, NULL, NULL, NULL,
+							    NULL, NULL, NULL, NULL, NULL,
+							    NULL, NULL, NULL, nmg_e_handler, NULL,
 							    NULL, NULL, NULL, nmg_v_handler, NULL};
 	/* handlers.vis_edge = nmg_e_handler; */
 	/* handlers.vis_vertex = nmg_v_handler; */

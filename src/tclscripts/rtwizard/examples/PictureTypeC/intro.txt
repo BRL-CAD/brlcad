@@ -1,11 +1,11 @@
 Hi!
 
-You have elected to produce a highlighted full-color image. A highlighted image is a full-color image with a line drawing overlaid to emphasize features. In order to produce this image you will need to specify the items that you wish to render. You will also need to specify the view parameters, that is, the view orientation and size. 
+You have elected to produce a highlighted full-color image. A highlighted image is a full-color image with a line drawing overlaid to emphasize features. In order to produce this image you will need to specify the items that you wish to render. You will also need to specify the view parameters, that is, the view orientation and size.
 
-To change the azimuth, use the View:Azimuth control. The default is 35 degrees. To change the elevation, use the View:Elevation control. The default is 25 degrees. To change the size, use the View:Size control. 
+To change the azimuth, use the View:Azimuth control. The default is 35 degrees. To change the elevation, use the View:Elevation control. The default is 25 degrees. To change the size, use the View:Size control.
 
 You may also use MGED shift-grips to change the view parameters.
 
-You may change the backaground color using the Options:Background Color tool. The default background color is white. You may also change the highlight line color by using the Options:Line Color tool. The default line color is black. 
+You may change the backaground color using the Options:Background Color tool. The default background color is white. You may also change the highlight line color by using the Options:Line Color tool. The default line color is black.
 
 Use the Steps menu to move between steps. They may be done in any order.

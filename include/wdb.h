@@ -29,7 +29,7 @@
  *
  *  Author -
  *	Michael John Muuss
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
@@ -141,7 +141,7 @@ WDB_EXPORT int mk_id_editunits(
  */
 /* libwdb/wdb.c */
 WDB_EXPORT WDB_EXTERN(int mk_half, (struct rt_wdb *fp, const char *name, const vect_t norm, double d) );
-WDB_EXPORT int mk_grip( 
+WDB_EXPORT int mk_grip(
 	struct rt_wdb *wdbp,
 	const char *name,
 	const point_t center,
@@ -463,7 +463,7 @@ WDB_EXPORT extern double	mk_conv2mm;		/* Conversion factor to mm */
 
 /*
  *  Set this variable to either 4 or 5, depending on which version of
- *  the database you wish to write. 
+ *  the database you wish to write.
  */
 WDB_EXPORT extern int	mk_version;		/* Which version database to write */
 

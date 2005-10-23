@@ -32,7 +32,7 @@
 #		appropriate for being in a stack or environment map
 #	2. add the new shader to the menus in 'do_stack' and 'do_envmap'
 #		(again, if appropriate)
-#	3. add a menu item for the new shader in 'init_comb' (comb.tcl) 
+#	3. add a menu item for the new shader in 'init_comb' (comb.tcl)
 #		(required)
 #	4. add the following routines: (all are required, replace 'newshader'
 #		 with your shader name
@@ -483,7 +483,7 @@ proc set_camo_values { shader_str id } {
 	set shader_params($id,c3) $shader_params($id,def_c3)
 	set shader_params($id,lacun) $shader_params($id,def_lacun)
 	set shader_params($id,hval) $shader_params($id,def_hval)
-	set shader_params($id,octaves) $shader_params($id,def_octaves) 
+	set shader_params($id,octaves) $shader_params($id,def_octaves)
 	set shader_params($id,size) $shader_params($id,def_size)
 	set shader_params($id,scale) $shader_params($id,def_scale)
 	set shader_params($id,t1) $shader_params($id,def_t1)
@@ -1235,7 +1235,7 @@ proc do_phong { shade_var id } {
 	grid $shader_params($id,window).fr.ext_e -row 2 -column 3 -sticky w
 	grid $shader_params($id,window).fr.emiss -row 3 -column 2 -sticky e
 	grid $shader_params($id,window).fr.emiss_e -row 3 -column 3 -sticky w
-	
+
 	grid $shader_params($id,window).fr -sticky new -ipadx 3 -ipady 3
 	return $shader_params($id,window).fr
 }
@@ -1596,7 +1596,7 @@ proc do_light { shade_var id } {
 
 	# Destroy our frame in case it already exists
 	catch { destroy $shader_params($id,window).fr }
- 
+
 	# Create a frame for the widgets for this shader
 	frame $shader_params($id,window).fr
 
@@ -1706,7 +1706,7 @@ proc set_light_values { shader_str id } {
 	if { $err } {set  list_len 0}
 	if { $list_len > 1 } then {
 
-	    # For each of my parameters, set 
+	    # For each of my parameters, set
 	    foreach { key value } $params {
 
 		switch -- $key {
@@ -1767,19 +1767,19 @@ proc do_light_apply { shade_var id } {
 
 proc do_light_icon { id } {
     global shader_params
-    
+
     set name ""
-    
-    append name "light_i" $shader_params($id,light_i) 
+
+    append name "light_i" $shader_params($id,light_i)
     append name "_v"  $shader_params($id,light_v)
-    
+
     # only have shadow images for up to 9 shadow rays
     if { $shader_params($id,light_s) > 9 } {
 	append name "_s" 9
     } else {
 	append name "_s"  $shader_params($id,light_s)
     }
-    
+
     $shader_params($id,icon) configure -image $shader_params($name)
 }
 
@@ -1985,7 +1985,7 @@ proc do_texture { shade_var id } {
 		produce maximum perturbation in one direction and 255 produces maximum\n\
 		perturbation in the opposite"}
     }
-    
+
     hoc_register_data $shader_params($id,window).fr.width Width {
 	{ summary "Enter the width of the texture in pixels\n(default is 512)"}
     }
@@ -2042,7 +2042,7 @@ proc do_texture { shade_var id } {
     grid $shader_params($id,window).fr.transp_fr.trans -row 0 -column 1 -sticky e
     grid $shader_params($id,window).fr.transp_fr.trans_e -row 0 -column 2 -sticky w
     grid $shader_params($id,window).fr.transp_fr -row 2 -column 0
-    
+
     grid $shader_params($id,window).fr -sticky new -ipadx 3 -ipady 3
     grid columnconfigure $shader_params($id,window).fr 0 -weight 1
 

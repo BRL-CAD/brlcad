@@ -478,7 +478,7 @@ edit_com(int	argc,
 		bu_free( (char *)tbl, "edit_com ptbl" );
 		new_argv = (char **)bu_calloc( max_count, sizeof( char *), "edit_com new_argv" );
 		new_argc = bu_argv_from_string( new_argv, max_count, bu_vls_addr( &vls ) );
-		
+
 		if ((ret = dgo_draw_cmd(dgop, interp, new_argc, new_argv, kind)) != TCL_OK) {
 			bu_vls_free( &vls );
 			bu_free( (char *)new_argv, "edit_com new_argv" );
@@ -491,7 +491,7 @@ edit_com(int	argc,
 		if ((ret = dgo_draw_cmd(dgop, interp, argc, argv, kind)) != TCL_OK)
 			return ret;
 	}
-		
+
 	update_views = 1;
 
 	save_dmlp = curr_dm_list;
@@ -1593,7 +1593,7 @@ eraseobj(register struct directory **dpp)
  */
 void
 pr_schain(struct solid *startp, int lvl)
-                     
+
    		    			/* debug level */
 {
   register struct solid	*sp;
@@ -1634,7 +1634,7 @@ pr_schain(struct solid *startp, int lvl)
     /* convert to the local unit for printing */
     bu_vls_printf(&vls, "  cent=(%.3f,%.3f,%.3f) sz=%g ",
 		  sp->s_center[X]*base2local,
-		  sp->s_center[Y]*base2local, 
+		  sp->s_center[Y]*base2local,
 		  sp->s_center[Z]*base2local,
 		  sp->s_size*base2local );
     bu_vls_printf(&vls, "reg=%d\n",sp->s_regionid );
@@ -2132,7 +2132,7 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	break;
       }
     }
-   
+
     argv += bu_optind - 1;
     argc -= bu_optind - 1;
   }
@@ -2149,7 +2149,7 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
   for(--argc, ++argv; argc; --argc, ++argv){
     cmd = *argv;
-    
+
     if( strcmp( cmd, "zap" ) == 0 || strcmp( cmd, "zero" ) == 0 )  {
       char *av[3];
 
@@ -2488,7 +2488,7 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	}
       }else{
 	if(EDIT_TRAN && ((mged_variables->mv_transform == 'e' &&
-			  !view_flag && !model_flag) || edit_flag)){	
+			  !view_flag && !model_flag) || edit_flag)){
 	  switch(mged_variables->mv_coords){
 	  case 'm':
 	  case 'o':
@@ -3009,7 +3009,7 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	  view_state->vs_last_absolute_tran[Y] = view_state->vs_absolute_tran[Y];
 	}
       }
-      
+
       do_tran = 1;
       break;
     case 'Z':
@@ -3220,7 +3220,7 @@ usage:
 
   if(do_rot)
     (void)knob_rot(rvec, origin, model_flag, view_flag, edit_flag);
- 
+
   check_nonzero_rates();
   return TCL_OK;
 }
@@ -3394,7 +3394,7 @@ f_qvrot(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     }
     else
 	az = atan2(dy, dx);
-    
+
     el = atan2(dz, sqrt(dx * dx + dy * dy));
 
     setview(270.0 + el * radtodeg, 0.0, 270.0 - az * radtodeg);
@@ -3434,10 +3434,10 @@ path_parse (char *path)
 	    if (*pp != '\0')
 		++nm_constituents;
 	}
-    
+
     result = (char **) bu_malloc((nm_constituents + 1) * sizeof(char *),
 			"array of strings");
-    
+
     for (i = 0, pp = path; i < nm_constituents; ++i)
     {
 	while (*pp == '/')
@@ -3506,7 +3506,7 @@ f_slewview(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 /* set view reference base */
 int
 mged_svbase(void)
-{ 
+{
 	MAT_DELTAS_GET_NEG(view_state->vs_orig_pos, view_state->vs_vop->vo_center);
 	view_state->vs_i_Viewscale = view_state->vs_vop->vo_scale;
 
@@ -3827,7 +3827,7 @@ f_model2view_lu(ClientData clientData, Tcl_Interp *interp, int argc, char **argv
 }
 
 /*
- *			F _ V I E W 2 M O D E L _ L U 
+ *			F _ V I E W 2 M O D E L _ L U
  *
  *  Given a point in view coordinates (local units),
  *  convert it to model coordinates (local units).
@@ -3983,7 +3983,7 @@ f_grid2model_lu(ClientData clientData, Tcl_Interp *interp, int argc, char **argv
 }
 
 /*
- *			F _ V I E W 2 G R I D _ L U 
+ *			F _ V I E W 2 G R I D _ L U
  *
  *  Given a point in view coordinates (local units),
  *  convert it to grid coordinates (local units).
@@ -4195,7 +4195,7 @@ view_ring_destroy(struct dm_list *dlp)
 
 /*
  * SYNOPSIS
- *	view_ring add|next|prev|toggle		
+ *	view_ring add|next|prev|toggle
  *	view_ring delete #			delete view #
  *	view_ring goto #			goto view #
  *	view_ring get [-a]			get the current view
@@ -4570,7 +4570,7 @@ mged_erot(struct view_obj	*vop,
 			MAT4X3PNT(point, modelchanges, es_keypoint);
 		}
 
-		/* 
+		/*
 		 * Apply newrot to the modelchanges matrix wrt "point"
 		 */
 		wrt_point(modelchanges, newrot, modelchanges, point);
@@ -4817,7 +4817,7 @@ mged_mtran(const vect_t tvec)
 
 	/* calculate absolute_tran */
 	set_absolute_view_tran();
-  
+
 	return TCL_OK;
 }
 
@@ -4840,7 +4840,7 @@ mged_vtran(const vect_t tvec)
 
   /* calculate absolute_model_tran */
   set_absolute_model_tran();
-  
+
   return TCL_OK;
 }
 

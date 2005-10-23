@@ -30,7 +30,7 @@
  *
  *  Author -
  *	Michael John Muuss
- *  
+ *
  *  Source -
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
@@ -83,7 +83,7 @@ main(int argc, char **argv)
 
     FILE	*table;
     char	table_file[256] = {0};
-    
+
     if( argc < 2 || argc > 3 )  {
 	fprintf(stderr,"Usage:  tabsub prototype_file [table_file]\n");
 	exit(12);
@@ -92,7 +92,7 @@ main(int argc, char **argv)
 
     /* Acquire in-core copy of prototype file */
     get_proto( &prototype, proto_file );
-    
+
     if( argc < 3 )  {
 	table = stdin;
     } else {
@@ -294,7 +294,7 @@ multi_words( char *words[], int	nwords )
 		/* Expects rotations rx, ry, rz, in degrees */
 		if( nwords < 4 )  return(-1);
 		MAT_IDN( mat );
-		bn_mat_angles( mat, 
+		bn_mat_angles( mat,
 		    atof( words[1] ),
 		    atof( words[2] ),
 		    atof( words[3] ) );
@@ -307,7 +307,7 @@ multi_words( char *words[], int	nwords )
 		if( nwords < 4 )  return(-1);
 		/* Expects translations tx, ty, tz */
 		MAT_IDN( mat );
-		MAT_DELTAS( mat, 
+		MAT_DELTAS( mat,
 		    atof( words[1] ),
 		    atof( words[2] ),
 		    atof( words[3] ) );
@@ -331,17 +331,17 @@ multi_words( char *words[], int	nwords )
 		MAT_IDN( mat2 );
 		MAT_IDN( mat3 );
 
-		MAT_DELTAS( mat1, 
+		MAT_DELTAS( mat1,
 		    -atof( words[1] ),
 		    -atof( words[2] ),
 		    -atof( words[3] ) );
 
-		bn_mat_angles( mat2, 
+		bn_mat_angles( mat2,
 		    atof( words[4] ),
 		    atof( words[5] ),
 		    atof( words[6] ) );
 
-		MAT_DELTAS( mat3, 
+		MAT_DELTAS( mat3,
 		    atof( words[1] ),
 		    atof( words[2] ),
 		    atof( words[3] ) );

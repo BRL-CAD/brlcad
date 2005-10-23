@@ -28,11 +28,11 @@
  *
  *  Author -
  *	Michael John Muuss
- *  
+ *
  *  Source -
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
- *  
+ *
  *
  *  Inspired by -
  *	Roy Hall and his book "Illumination and Color in Computer
@@ -279,7 +279,7 @@ rt_clr__cspace_to_xyz (const point_t	cspace[4],
 /*
  *			R T _ M A K E _ N T S C _ X Y Z 2 R G B
  *
- *  Create the map from 
+ *  Create the map from
  *  CIE XYZ perceptual space into
  *  an idealized RGB space assuming NTSC primaries with D6500 white.
  *  Only high-quality television-studio monitors are like this, but...
@@ -451,7 +451,7 @@ main()
 	tabp = bn_table_make_uniform( 200, 360.0, 800.0 );
 
 	rt_spect_make_CIE_XYZ( &x, &y, &z, tabp );
-	
+
 	bn_print_table_and_tabdata( "/tmp/x", x );
 	bn_print_table_and_tabdata( "/tmp/y", y );
 	bn_print_table_and_tabdata( "/tmp/z", z );

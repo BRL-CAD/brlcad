@@ -1,4 +1,4 @@
-The Hacker's Guide to BRL-CAD 
+The Hacker's Guide to BRL-CAD
 =============================
 
 Please read this document if you are contributing to BRL-CAD.
@@ -7,7 +7,7 @@ BRL-CAD is a relatively large package with a long history and
 heritage.  Many people have contributed over the years, and there
 continues to be room for involvement and improvement in just about
 every aspect of the package.  As such, contributions to BRL-CAD are
-very welcome and appreciated.  
+very welcome and appreciated.
 
 For the sake of code consistency and long-term evolution of BRL-CAD,
 there are guidelines for getting involved.  Developers are strongly
@@ -109,7 +109,7 @@ basic existing facilities before adding a completely new feature.
 There is documentation available at in the source distribution's doc/
 directory, throughout the source hierarchy in manpages, and at
 http://sourceforge.net/docman/?group_id=105292 covering a variety of
-topics.  
+topics.
 
 It is not uncommon that some particular piece of code that you are
 either working on or thinking about writing is in fact already
@@ -423,7 +423,7 @@ braces should line up with that same statement.
       j -= 1;
     }
   }
-      
+
 3) Names
 
 Prefer mixed-case names over underscore-separated ones. (this one is

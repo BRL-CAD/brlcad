@@ -33,7 +33,7 @@
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5066
- *  
+ *
  */
 /*@}*/
 
@@ -193,7 +193,7 @@ register RGBpixel	*pixelp;
 	}
 
 	/* Match found to within tolerance? */
-	if( min_diff < MAP_TOL ) 
+	if( min_diff < MAP_TOL )
 		return	(Colorindex)best;
 
 	/* Allocate new entry in color table if there's room.		*/
@@ -235,7 +235,7 @@ int	width, height;
 		for( cp = file; *cp != NULL && !isdigit(*cp); cp++ ) ;
 		sscanf( cp, "%d", &ifp->if_mode );
 	}
-	if ( width > ifp->if_max_width - 2 * MARGIN) 
+	if ( width > ifp->if_max_width - 2 * MARGIN)
 		width = ifp->if_max_width - 2 * MARGIN;
 
 	if ( height > ifp->if_max_height - 2 * MARGIN - BANNER)
@@ -243,7 +243,7 @@ int	width, height;
 
 	ifp->if_width = width;
 	ifp->if_height = height;
-	
+
 	if( ismex() )
 		{
 #if 0
@@ -305,7 +305,7 @@ FBIO	*ifp;
 		gexit();
 		}
 /** 	fb_log( "%d color table entries used.\n", rgb_ct );  **/
-	return	0;	
+	return	0;
 }
 
 _LOCAL_ int
@@ -318,7 +318,7 @@ FBIO	*ifp;
 
 	color(BLACK);
 	clear();
-	return	0;	
+	return	0;
 }
 
 _LOCAL_ int
@@ -332,7 +332,7 @@ RGBpixel	*pp;
 		color( BLACK );
 	writemask( 0x3FF );
 	clear();
-	return	0;	
+	return	0;
 }
 
 _LOCAL_ int
@@ -368,7 +368,7 @@ int	count;
 				readpixels( 1, &colors[i] );
 				}
 			}
-		for( i = 0; i < scan_count; i++, pixelp++) 
+		for( i = 0; i < scan_count; i++, pixelp++)
 			{
 			if( ifp->if_mode )
 				{
@@ -394,7 +394,7 @@ int	count;
 		x = 0;
 		y++;
 	}
-	return	0;	
+	return	0;
 }
 
 _LOCAL_ int
@@ -518,10 +518,10 @@ register ColorMap	*cmp;
 		_sgw_cmap_flag = FALSE;
 		return	0;
 	}
-	
+
 	for(i = 0; i < 255; i++)  {
 		_sgw_cmap.cm_red[i] = cmp -> cm_red[i]>>8;
-		_sgw_cmap.cm_green[i] = cmp-> cm_green[i]>>8; 
+		_sgw_cmap.cm_green[i] = cmp-> cm_green[i]>>8;
 		_sgw_cmap.cm_blue[i] = cmp-> cm_blue[i]>>8;
 
 	}

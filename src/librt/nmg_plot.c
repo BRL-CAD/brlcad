@@ -42,7 +42,7 @@
  *  Authors -
  *	Lee A. Butler
  *	Michael John Muuss
- *  
+ *
  *  Source -
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
@@ -156,10 +156,10 @@ nmg_eu_to_vlist(struct bu_list *vhead, const struct bu_list *eu_hd)
  */
 void
 nmg_lu_to_vlist(struct bu_list *vhead, const struct loopuse *lu, int poly_markers, const vectp_t normal)
-              		       
-                    	    
+
+
    			             		/* bit vector! */
-             		       
+
 {
 	const struct edgeuse		*eu;
 	const struct vertexuse		*vu;
@@ -469,7 +469,7 @@ nmg_m_to_vlist(struct bu_list *vhead, struct model *m, int poly_markers)
  *  slightly, to avoid obscuring the vertex, and will be offset off the
  *  face (in the direction of the face normal) slightly, to avoid
  *  obscuring the edge itself.
- *	
+ *
  */
 void
 nmg_offset_eu_vert(fastf_t *base, const struct edgeuse *eu, const fastf_t *face_normal, int tip)
@@ -484,7 +484,7 @@ nmg_offset_eu_vert(fastf_t *base, const struct edgeuse *eu, const fastf_t *face_
 	struct vertex_g	*this_vg, *mate_vg, *prev_vg;
 
 	bzero( (char *)delta_vec, sizeof(vect_t)),
-	prev_eu = BU_LIST_PPREV_CIRC( edgeuse, eu ); 
+	prev_eu = BU_LIST_PPREV_CIRC( edgeuse, eu );
 	this_eu = eu;
 
 	NMG_CK_EDGEUSE(this_eu);
@@ -506,7 +506,7 @@ nmg_offset_eu_vert(fastf_t *base, const struct edgeuse *eu, const fastf_t *face_
 	NMG_CK_VERTEX_G(prev_vg);
 
 	/* get "left" vector for edgeuse */
-	VSUB2(eu_vec, mate_vg->coord, this_vg->coord); 
+	VSUB2(eu_vec, mate_vg->coord, this_vg->coord);
 	VUNITIZE(eu_vec);
 	VCROSS(eu_left, face_normal, eu_vec);
 
@@ -524,7 +524,7 @@ nmg_offset_eu_vert(fastf_t *base, const struct edgeuse *eu, const fastf_t *face_
 		VJOIN2(base, this_vg->coord,
 			(nmg_eue_dist*1.3),delta_vec,
 			(nmg_eue_dist*0.8),face_normal);
-		
+
 	} else if (tip) {
 		VJOIN2(base, this_vg->coord,
 			(nmg_eue_dist*1.3),prev_left,
@@ -698,7 +698,7 @@ nmg_pl_e(FILE *fp, const struct edge *e, long int *b, int red, int green, int bl
 	vect_t		v;
 
 	NMG_INDEX_RETURN_IF_SET_ELSE_SET(b, e->index);
-	
+
 	NMG_CK_EDGEUSE(e->eu_p);
 	NMG_CK_VERTEXUSE(e->eu_p->vu_p);
 	NMG_CK_VERTEX(e->eu_p->vu_p->v_p);
@@ -925,7 +925,7 @@ nmg_vlblock_e(struct bn_vlblock *vbp, const struct edge *e, long int *tab, int r
 	BN_CK_VLBLOCK(vbp);
 	NMG_CK_EDGE(e);
 	NMG_INDEX_RETURN_IF_SET_ELSE_SET( tab, e->index );
-	
+
 	NMG_CK_EDGEUSE(e->eu_p);
 	NMG_CK_VERTEXUSE(e->eu_p->vu_p);
 	NMG_CK_VERTEX(e->eu_p->vu_p->v_p);
@@ -1278,7 +1278,7 @@ nmg_vlblock_s(struct bn_vlblock *vbp, const struct shell *s, int fancy)
 			nmg_vlblock_eu(vbp, eu, tab, 200, 200, 0, fancy, 0 );
 		} else {
 			/* non-fancy, wire edges in yellow */
-			nmg_vlblock_eu(vbp, eu, tab, 200, 200, 0, 0, 0); 
+			nmg_vlblock_eu(vbp, eu, tab, 200, 200, 0, 0, 0);
 		}
 	}
 	if (s->vu_p) {
@@ -1599,7 +1599,7 @@ show_broken_vu(struct bn_vlblock *vbp, const struct vertexuse *vu, int fancy)
 		PICK_BROKEN_COLOR(vu);
 /*		fprintf(stderr, "vertexuse broken_color %d\n", broken_color); */
 	}
-	vh = rt_vlblock_find( vbp, 
+	vh = rt_vlblock_find( vbp,
 		broken_colors[broken_color][0], broken_colors[broken_color][1], broken_colors[broken_color][2]);
 
 	RT_ADD_VLIST( vh, p, BN_VLIST_LINE_MOVE );
@@ -1666,7 +1666,7 @@ show_broken_e(struct bn_vlblock *vbp, const struct edgeuse *eu, int fancy)
 /*		fprintf(stderr, "edgeuse broken_color %d\n", broken_color); */
 	}
 
-	vh = rt_vlblock_find( vbp, 
+	vh = rt_vlblock_find( vbp,
 		broken_colors[broken_color][0], broken_colors[broken_color][1], broken_colors[broken_color][2]);
 
 	RT_ADD_VLIST( vh, end0, BN_VLIST_LINE_MOVE );
@@ -1752,7 +1752,7 @@ show_broken_lu(struct bn_vlblock *vbp, const struct loopuse *lu, int fancy)
 	/* Faces are not classified, only loops */
 	/* This can obscure the edge/vertex info */
 	PICK_BROKEN_COLOR(lu->l_p);
-	vh = rt_vlblock_find( vbp, 
+	vh = rt_vlblock_find( vbp,
 		broken_colors[broken_color][0], broken_colors[broken_color][1], broken_colors[broken_color][2]);
 
 	if( *lu->up.magic_p == NMG_FACEUSE_MAGIC )  {
@@ -2279,8 +2279,8 @@ nmg_plot_lu_around_eu(const char *prefix, const struct edgeuse *eu, const struct
  */
 int
 nmg_snurb_to_vlist(struct bu_list *vhead, const struct face_g_snurb *fg, int n_interior)
-              			       
-                         	    
+
+
    				           	/* typ. 10 */
 {
 	register int		i;
@@ -2303,7 +2303,7 @@ nmg_snurb_to_vlist(struct bu_list *vhead, const struct face_g_snurb *fg, int n_i
 	rt_nurb_kvgen( &tkv2,
 		fg->v.knots[0],
 		fg->v.knots[fg->v.k_size-1], n_interior, (struct resource *)NULL);
-		
+
 	rt_nurb_kvmerge(&tau1, &tkv1, &fg->u, (struct resource *)NULL);
 	rt_nurb_kvmerge(&tau2, &tkv2, &fg->v, (struct resource *)NULL);
 
@@ -2315,12 +2315,12 @@ nmg_snurb_to_vlist(struct bu_list *vhead, const struct face_g_snurb *fg, int n_i
 	NMG_CK_SNURB(c);
 
 	coords = RT_NURB_EXTRACT_COORDS(c->pt_type);
-	
+
 	if( RT_NURB_IS_PT_RATIONAL(c->pt_type))
 	{
 		vp = c->ctl_points;
-		for(i= 0; 
-			i < c->s_size[0] * c->s_size[1]; 
+		for(i= 0;
+			i < c->s_size[0] * c->s_size[1];
 			i++)
 		{
 			FAST fastf_t	div;
@@ -2347,7 +2347,7 @@ nmg_snurb_to_vlist(struct bu_list *vhead, const struct face_g_snurb *fg, int n_i
 	for( j = 0; j < c->s_size[1]; j++)
 	{
 		int stride;
-			
+
 		stride = c->s_size[1] * coords;
 		vp = &c->ctl_points[j * coords];
 		RT_ADD_VLIST( vhead, vp, BN_VLIST_LINE_MOVE );
@@ -2383,8 +2383,8 @@ nmg_snurb_to_vlist(struct bu_list *vhead, const struct face_g_snurb *fg, int n_i
  */
 void
 nmg_cnurb_to_vlist(struct bu_list *vhead, const struct edgeuse *eu, int n_interior, int cmd)
-              			       
-                    		    
+
+
    				           	/* typ. 10 */
    				    		/* BN_VLIST_LINE_DRAW, etc */
 {
@@ -2437,7 +2437,7 @@ nmg_cnurb_to_vlist(struct bu_list *vhead, const struct edgeuse *eu, int n_interi
 	NMG_CK_CNURB( c );
 
 	coords = RT_NURB_EXTRACT_COORDS( c->pt_type );
-	
+
 	if( *fu->f_p->g.magic_p == NMG_FACE_G_PLANE_MAGIC )  {
 		/* cnurb on planar face -- ctl points are XYZ */
 
@@ -2468,7 +2468,7 @@ nmg_cnurb_to_vlist(struct bu_list *vhead, const struct edgeuse *eu, int n_interi
 			point_t uvw;
 
 			/* evaluate curve at parameter values */
-			crv_param += param_delta; 
+			crv_param += param_delta;
 
 			VSETALL(uvw,0);
 

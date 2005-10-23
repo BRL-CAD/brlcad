@@ -26,11 +26,11 @@
  *  Author -
  *	Michael John Muuss
  *	John Anderson
- *  
+ *
  *  Source -
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
- *  
+ *
  */
 /*@}*/
 
@@ -63,7 +63,7 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
  */
 void
 bn_vlist_3string(struct bu_list *vhead, struct bu_list *free_hd, const char *string, const vect_t origin, const mat_t rot, double scale)
-              	       
+
               	         	/* source of free vlists */
           	        	/* string of chars to be plotted */
              	       		/* lower left corner of 1st char */
@@ -146,11 +146,11 @@ bn_vlist_3string(struct bu_list *vhead, struct bu_list *free_hd, const char *str
  */
 void
 bn_vlist_2string(struct bu_list *vhead, struct bu_list *free_hd, const char *string, double x, double y, double scale, double theta)
-              	       
+
               	         	/* source of free vlists */
           	        	/* string of chars to be plotted */
       	  			/* x,y of lower left corner of 1st char */
-      	  
+
       	      			/* scale factor to change 1x1 char sz */
       	      			/* degrees ccw from X-axis */
 {

@@ -66,7 +66,7 @@ lgt_Print_Db(int id)
 		}
 	else
 		stop = id;
-	for( ; id <= stop; id++, lines-- ) 
+	for( ; id <= stop; id++, lines-- )
 		{
 		entry = &lgts[id];
 		if( lines <= 0 && ! do_More( &lines ) )

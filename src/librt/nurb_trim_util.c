@@ -23,13 +23,13 @@
 /*@{*/
 /** @file nurb_trim_util.c
  * Trimming curve Utilities.
- * 
+ *
  * Author:  Paul R. Stay
  * Source
  * 	SECAD/VLD Computing Consortium, Bldg 394
  * 	The US Army Ballistic Research Laboratory
  * 	Aberdeen Proving Ground, Maryland 21005
- * 
+ *
  * Date: Mon July 3, 1995
  */
 /*@}*/
@@ -50,12 +50,12 @@ static const char rcs_ident[] = "$Header$";
 #include "raytrace.h"
 #include "nurb.h"
 
-/* Check to see if the curve conmtrol polygon 
+/* Check to see if the curve conmtrol polygon
  * wonders outside the parametric range given.
  * This is usefull if a trimming curve control polygon is outside
- * but the evaluated curve is not. We will want to refine the 
+ * but the evaluated curve is not. We will want to refine the
  * curve so that is lies within the range;
- * otherwise it breaks the surface evaluation 
+ * otherwise it breaks the surface evaluation
  */
 
 int
@@ -68,7 +68,7 @@ rt_nurb_crv_in_range(struct edge_g_cnurb *crv, fastf_t u_min, fastf_t u_max, fas
 	int	i;
 
 	pts = &crv->ctl_points[0];
-	
+
 	for( i = 0; i < crv->c_size; i++)
 	{
 		if (rat)
@@ -90,7 +90,7 @@ rt_nurb_crv_in_range(struct edge_g_cnurb *crv, fastf_t u_min, fastf_t u_max, fas
 
 		pts += coords;
 	}
-	return 1;	
+	return 1;
 }
 
 /*

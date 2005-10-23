@@ -48,7 +48,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 /*
  *  		R T _ B O M B
- *  
+ *
  *  Abort the RT library
  */
 void
@@ -63,7 +63,7 @@ char *str;
 
 /*
  *  		B R S T _  L O G
- *  
+ *
  *  Log an RT library event
  */
 /* VARARGS */
@@ -92,7 +92,7 @@ va_dcl
 			(void) ScMvCursor( 1, SCROLL_BTM );
 			(void) ScClrEOL();
 			(void) vprintf( fmt, ap );
-			}			
+			}
 		else
 		if( ScSetScrlReg( SCROLL_TOP, SCROLL_BTM+1 ) )
 			{	char buf[LNBUFSZ];
@@ -133,7 +133,7 @@ va_dcl
 
 /*
  *		F B _ L O G
- *  
+ *
  *  Log an FB library event
  */
 /*VARARGS*/

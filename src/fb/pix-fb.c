@@ -20,17 +20,17 @@
  *
  */
 /** @file pix-fb.c
- *  
+ *
  *  Program to take bottom-up pixel files and send them to a framebuffer.
- *  
+ *
  *  Author -
  *	Michael John Muuss
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5066
- *  
+ *
  */
 #ifndef lint
 static const char RCSid[] = "@(#)$Header$ (BRL)";
@@ -375,7 +375,7 @@ skipbytes(int fd, off_t num)
 		(void)lseek( fd, (off_t)num, 1 );
 		return 0;
 	}
-	
+
 	while( num > 0 ) {
 		try = num > scanbytes ? scanbytes : num;
 		n = read( fd, scanline, try );

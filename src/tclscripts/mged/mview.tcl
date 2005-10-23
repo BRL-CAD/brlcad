@@ -285,7 +285,7 @@ proc setmv { id } {
 	unpackmv $id
 	packmv $id
     } else {
-	# exaggerate the weight so that the single display manager window 
+	# exaggerate the weight so that the single display manager window
 	# will grow to completely fill the container window
 	grid columnconfigure $mged_gui($id,dmc) 0 -weight 1000
 

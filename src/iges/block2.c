@@ -28,7 +28,7 @@
  *	VLD/ASB Building 1065
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005
- *  
+ *
  */
 
 #include "./iges_struct.h"
@@ -37,7 +37,7 @@
 int
 block( entityno )
 int entityno;
-{ 
+{
 
 	fastf_t		xscale=0.0;
 	fastf_t		yscale=0.0;
@@ -52,7 +52,7 @@ int entityno;
 	vect_t		yvec;			/* vector along y-axis */
 	vect_t		zdir;			/* a unit vector */
 	vect_t		zvec;			/* vector along z-axis */
-	point_t		pts[9];			/* array of points */	
+	point_t		pts[9];			/* array of points */
 	int		sol_num;		/* IGES solid type number */
 
 	/* Default values */
@@ -105,7 +105,7 @@ int entityno;
 	 * counted in the counter-clockwise direction, around the bottom face.
 	 * Next these vertices are extruded to form the top face.  The points
 	 * thus made are loaded into an array of points and handed off to mk_arb8().
-	 * Make and unitize necessary vectors. 
+	 * Make and unitize necessary vectors.
 	 */
 
 	VSET(xdir, x2, y2, z2);			/* Makes x-dir vector */
@@ -127,7 +127,7 @@ int entityno;
 	VADD2(pts[1], v, xvec);			/* Finds second vertex */
 	VADD3(pts[2], v, xvec, yvec);		/* Finds third vertex  */
 	VADD2(pts[3], v, yvec);			/* Finds fourth vertex */
-	
+
 	/* Now extrude the bottom face to make the top.
 	 */
 
@@ -142,7 +142,7 @@ int entityno;
 	mk_arb8(fdout, dir[entityno]->name, &pts[0][X]);
 
 	return( 1 );
-		
+
 
 }
 

@@ -73,12 +73,12 @@ while [ 1 ] ; do
 		F*|f*)	rm -f $BUG_REPORT ; exit ;;
 		E*|e*)	$REPT_EDITOR $BUG_REPORT ;;
 	esac
-	
+
 	ACTION=S
 	echo "S)end F)orget E)dit : "
 	read ACTION
 done
-	
+
 
 if [ -z "$USER" ] ; then
 	USER=`whoami`

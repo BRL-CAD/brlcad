@@ -239,7 +239,7 @@ printed on the standard error output.
 .I Librt
 is designed to run in parallel on some multiprocessor machines.
 On some such machines
-system calls must be semaphore protected.  For this reason, 
+system calls must be semaphore protected.  For this reason,
 .I librt
 provides:
 .sp
@@ -265,7 +265,7 @@ instead of the usual system runtime library
 routines.  The
 .I librt
 versions do not return to the caller unless they succeed.  If they fail,
-they call 
+they call
 .I rt_bomb
 with their last argument (str) as the parameter.  The string parameter
 usually indicates the purpose of the memory being allocated.
@@ -273,7 +273,7 @@ usually indicates the purpose of the memory being allocated.
 The fuction
 .I rt_strdup()
 calls rt_malloc() instead of malloc() to acquire memory.
-Thus it should be used in place of strdup() in programs linking with 
+Thus it should be used in place of strdup() in programs linking with
 .I librt.
 .SH "EXIT CODE"
 All truly fatal errors detected by the library use
@@ -302,7 +302,7 @@ may be called recursively from your
 routine (good for doing bounced rays).
 If you only care about the first
 object hit along the path of the ray, set the
-.I a_onehit 
+.I a_onehit
 flag in the application structure before calling
 .IR rt_shootray .
 .I rt_shootray
@@ -402,7 +402,7 @@ architecture.
      Cray(X/Y)                -L/lib/multi -lu -lio
      Cray2                    -lmt
      Encore Multi-Max         -lpp
-.sp 
+.sp
 Here is a portion of a hypothetical program which uses the library:
 .RS
 .sp

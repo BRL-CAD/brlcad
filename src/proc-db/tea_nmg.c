@@ -26,7 +26,7 @@
  *  Authors -
  *	John R. Anderson
  *	Paul R. Stay
- *  
+ *
  *  Source -
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
@@ -70,7 +70,7 @@ struct rt_wdb *outfp;
 
 int
 main(int argc, char **argv) 			/* really has no arguments */
-                       
+
 {
 	struct nmgregion *r;
 	char * id_name = "BRL-CAD t-NURBS NMG Example";
@@ -160,7 +160,7 @@ dump_patch(int (*patch)[4])
 	fastf_t *vkv=NULL;
 
 	/* U and V parametric Direction Spline parameters
-	 * Cubic = order 4, 
+	 * Cubic = order 4,
 	 * knot size is Control point + order = 8
 	 * control point size is 4
 	 * point size is 3

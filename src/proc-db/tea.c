@@ -55,7 +55,7 @@ struct rt_wdb *outfp;
 
 int
 main(int argc, char **argv) 			/* really has no arguments */
-                       
+
 {
 	char * id_name = "Spline Example";
 	char * tea_name = "UtahTeapot";
@@ -75,7 +75,7 @@ main(int argc, char **argv) 			/* really has no arguments */
 		}
 	}
 
-	/* Setup information 
+	/* Setup information
    	 * Database header record
 	 *	File name
 	 * B-Spline Solid record
@@ -115,7 +115,7 @@ dump_patch( struct face_g_snurb **surfp, pt patch )
 	fastf_t * mesh_pointer;
 
 	/* U and V parametric Direction Spline parameters
-	 * Cubic = order 4, 
+	 * Cubic = order 4,
 	 * knot size is Control point + order = 4
 	 * control point size is 4
 	 * point size is 3
@@ -126,14 +126,14 @@ dump_patch( struct face_g_snurb **surfp, pt patch )
 	b_patch = (struct face_g_snurb *) rt_nurb_new_snurb( 4, 4, 8, 8, 4, 4,
 		pt_type, &rt_uniresource);
 	*surfp = b_patch;
-	
+
 	/* Now fill in the pieces */
 
-	/* Both u and v knot vectors are [ 0 0 0 0 1 1 1 1] 
+	/* Both u and v knot vectors are [ 0 0 0 0 1 1 1 1]
 	 * spl_kvknot( order, lower parametric value, upper parametric value,
 	 * 		Number of interior knots )
  	 */
-	
+
 
 	bu_free((char *)b_patch->u.knots, "dumping u knots I'm about to realloc");
 	rt_nurb_kvknot( &b_patch->u, 4, 0.0, 1.0, 0, &rt_uniresource);

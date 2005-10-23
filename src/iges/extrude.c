@@ -28,7 +28,7 @@
  *	VLD/ASB Building 1065
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005
- *  
+ *
  */
 #include "./iges_struct.h"
 #include "./iges_extern.h"
@@ -36,7 +36,7 @@
 int
 extrude( entityno )
 int entityno;
-{ 
+{
 
 	fastf_t		length;			/* extrusion length */
 	vect_t		edir;			/* a unit vector (direction of extrusion */
@@ -163,7 +163,7 @@ int entityno;
 			break;
 	}
 	return( 0 );
-		
+
 
 }
 

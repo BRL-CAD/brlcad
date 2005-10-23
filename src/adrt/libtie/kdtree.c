@@ -396,7 +396,7 @@ static void tie_kdtree_build(tie_t *tie, tie_kdtree_t *node, int depth, TIE_3 mi
       }
 
       for(i = 0; i < node_gd->tri_num; i++) {
-        /* 
+        /*
         * Optimization: If the points for the triangle of the dimension being tested
         * do not span the cutting plane, then do not bother with the next test.
         */
@@ -512,7 +512,7 @@ static void tie_kdtree_build(tie_t *tie, tie_kdtree_t *node, int depth, TIE_3 mi
     d = 1;
   if(gap[2][1] - gap[2][0] > gap[d][1] - gap[d][0])
     d = 2;
-  
+
   /*
   * Largest gap found must meet MIN_SPAN requirements
   * There must be atleast 500 triangles or we don't bother.
@@ -635,7 +635,7 @@ static void tie_kdtree_build(tie_t *tie, tie_kdtree_t *node, int depth, TIE_3 mi
   child[1]->tri_num = 0;
 
 
-  /* 
+  /*
   * Determine if the triangles touch either of the two children nodes,
   * if it does insert it into them respectively.
   */
@@ -688,7 +688,7 @@ static void tie_kdtree_build(tie_t *tie, tie_kdtree_t *node, int depth, TIE_3 mi
   /* Push each child through the same process. */
   tie_kdtree_build(tie, &((tie_kdtree_t *)(node->data))[0], depth+1, cmin[0], cmax[0], cnt[0], cnt[1]);
   tie_kdtree_build(tie, &((tie_kdtree_t *)(node->data))[1], depth+1, cmin[1], cmax[1], cnt[0], cnt[1]);
- 
+
   /* Assign the splitting dimension to the node */
   /* If we've come this far then YES, this node DOES have child nodes, MARK it as so. */
   node->data = (void *)((intptr_t)(node->data) + split + 4);
@@ -718,7 +718,7 @@ void tie_kdtree_free(tie_t *tie) {
 
 
 /**
- * Free up all the stuff associated with the kdtree and build a 
+ * Free up all the stuff associated with the kdtree and build a
  * cache as the data is freed.  Building the cache while the data
  * is freed allows the peak memory not to go any higher than it
  * already is.  If there were seprarate cache and free functions

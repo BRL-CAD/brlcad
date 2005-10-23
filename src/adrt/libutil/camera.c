@@ -61,7 +61,7 @@ int get_nprocs(void);
 
 #ifndef HAVE_SYS_SYSINFO_H
 #ifdef HAVE_SYS_SYSCTL_H
-int get_nprocs() {   
+int get_nprocs() {
   int mib[2], maxproc;
   size_t len;
 
@@ -70,7 +70,7 @@ int get_nprocs() {
   len = sizeof(maxproc);
   sysctl(mib, 2, &maxproc, &len, NULL, 0);
   return maxproc;
-}  
+}
 #else
 int get_nprocs() {
   return 1;

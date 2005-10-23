@@ -171,7 +171,7 @@ int	width, height;
 		width = ifp->if_width;
 	if( height <= 0 )
 		height = ifp->if_height;
-	if ( width > ifp->if_max_width) 
+	if ( width > ifp->if_max_width)
 		width = ifp->if_max_width;
 
  	ifp->if_width = width;
@@ -206,7 +206,7 @@ int	width, height;
 		fclose( fp );
 		unlink(FBSAVE);
 	}
-	
+
 	return(1);			/* OK */
 }
 
@@ -322,7 +322,7 @@ int	count;
 	register char	*cp;
 	register int	todo;
 	int	start_y;
-	
+
 	y = ifp->if_height-1 - y;
 	start_y = y;
 	cp = &ugbuf[ ((y * ifp->if_width) + x)*4 ];
@@ -438,8 +438,8 @@ int	x, y;
 	write_ug("cursor");
 
 	/* build a cursor */
-	cp = &ugcurs[0];	
-	
+	cp = &ugcurs[0];
+
 	for(i = 0; i <= 16 * 16; i++) {
 		cp++;
 		*cp++ = 255;
@@ -458,7 +458,7 @@ int	x, y;
 	ug_tblk.ty = y;
 	ug_tblk.npixel = 16;
 	ug_tblk.nline = 16;
-	ug_tblk.addr = (int *)ugcurs;	
+	ug_tblk.addr = (int *)ugcurs;
 
 	write_ug();
 }

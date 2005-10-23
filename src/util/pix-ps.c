@@ -24,7 +24,7 @@
  *
  *  Author -
  *	Phillip Dykstra
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
@@ -45,7 +45,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include <stdlib.h> /* for atof() */
 #endif
 
-#include <math.h>	
+#include <math.h>
 #include <time.h>	/* for ctime() */
 
 #include "machine.h"
@@ -213,8 +213,8 @@ main(int argc, char **argv)
 
 void
 prolog(FILE *fp, char *name, int width, int height)
-    	    
-    	      
+
+
    	              		/* in points */
 {
 	time_t	ltime;
@@ -268,7 +268,7 @@ postlog(FILE *fp)
  */
 void
 hexout(FILE *fp, int byte)
-         
+
          		/* 0 <= byte <= 255 */
 {
 	int high, low;

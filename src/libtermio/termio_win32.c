@@ -216,7 +216,7 @@ struct termio	*tio_ptr;
 #ifdef HAVE_TERMIOS_H
 struct termios	*tio_ptr;
 #endif
-	{	
+	{
 	return;
 	}
 

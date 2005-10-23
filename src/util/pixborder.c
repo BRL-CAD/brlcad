@@ -24,7 +24,7 @@
  *
  *  Author -
  *	Paul J. Tanenbaum
- *  
+ *
  *  Source -
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
@@ -181,7 +181,7 @@ static void rgb_to_hsv (unsigned char *rgb, fastf_t *hsv)
 	*sat = delta / max;
     else
 	*sat = 0.0;
-    
+
     /*
      *	Compute hue
      */
@@ -361,7 +361,7 @@ static int is_border (unsigned char *prp, unsigned char *trp, unsigned char *nrp
     VMOVE(pix_rgb, prp + (col_nm + 1) * 3);
     if (is_exterior(pix_rgb))
 	return (1);
-    
+
     /*
      *	All four of its neighbors are also in the region
      */

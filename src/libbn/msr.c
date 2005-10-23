@@ -32,7 +32,7 @@
  *
  *  Author -
  *	Christopher T. Johnson - 90/04/20
- *  
+ *
  *  Source -
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
@@ -126,7 +126,7 @@ bn_unif_init(long int setseed, int method)
  *
  * Method:
  *	if (!p) return(1);
- *	if p->msr_longs != NULL 
+ *	if p->msr_longs != NULL
  *		msr_longs is reloaded with random numbers;
  *		msr_long_ptr is set to BN_MSR_MAXTBL
  *	endif
@@ -141,9 +141,9 @@ bn_unif_long_fill(struct bn_unif *p)
 	/*
 	 * Gauss and uniform structures have the same format for the
 	 * first part (gauss is an extention of uniform) so that a gauss
-	 * structure can be passed to a uniform routine.  This means 
+	 * structure can be passed to a uniform routine.  This means
 	 * that we only maintain one structure for gaussian distributions
-	 * rather than two.  It also means that the user can pull 
+	 * rather than two.  It also means that the user can pull
 	 * uniform numbers from a guass structure when the user wants.
 	 */
 	if (!p || (p->magic != BN_UNIF_MAGIC &&
@@ -187,7 +187,7 @@ bn_unif_long_fill(struct bn_unif *p)
  *
  * Method:
  *	if (!p) return (0.0)
- *	if p->msr_longs != NULL 
+ *	if p->msr_longs != NULL
  *		msr_longs is reloaded with random numbers;
  *		msr_long_ptr is set to BN_MSR_MAXTBL
  *	endif
@@ -202,9 +202,9 @@ bn_unif_double_fill(struct bn_unif *p)
 	/*
 	 * Gauss and uniform structures have the same format for the
 	 * first part (gauss is an extention of uniform) so that a gauss
-	 * structure can be passed to a uniform routine.  This means 
+	 * structure can be passed to a uniform routine.  This means
 	 * that we only maintain one structure for gaussian distributions
-	 * rather than two.  It also means that the user can pull 
+	 * rather than two.  It also means that the user can pull
 	 * uniform numbers from a guass structure when the user wants.
 	 */
 	if (!p || (p->magic != BN_UNIF_MAGIC &&
@@ -241,7 +241,7 @@ bn_unif_free(struct bn_unif *p)
 }
 
 
-/*	bn_gauss_init	Initialize a random number struct for gaussian 
+/*	bn_gauss_init	Initialize a random number struct for gaussian
  *	numbers.
  *
  * Entry:
@@ -304,7 +304,7 @@ bn_gauss_init(long int setseed, int method)
  *
  * Method:
  *	if (!p) return (0.0)
- *	if p->msr_longs != NULL 
+ *	if p->msr_longs != NULL
  *		msr_longs is reloaded with random numbers;
  *		msr_long_ptr is set to BN_MSR_MAXTBL
  *	endif

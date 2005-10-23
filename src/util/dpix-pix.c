@@ -30,7 +30,7 @@
  *
  *  Author -
  *	S. Muuss, J.D., Feb 04, 1990.
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
@@ -113,7 +113,7 @@ main(int argc, char **argv)
 		}
 
 		lseek( fd, 0L, 0 );		/* rewind(fp); */
-	
+
 
 		/* This section uses the maximum and the minimum values found to
 		 * compute the m and the b of the line as specified by the

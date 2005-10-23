@@ -17,40 +17,40 @@ bin_PROGRAMS = \
 	chan_mult \
 	chan_permute
 
-anim_cascade_SOURCES = anim_cascade.c 
+anim_cascade_SOURCES = anim_cascade.c
 anim_cascade_LDADD = ${BN}
 
-anim_fly_SOURCES = anim_fly.c 
+anim_fly_SOURCES = anim_fly.c
 anim_fly_LDADD = ${BU}
 
-anim_hardtrack_SOURCES = anim_hardtrack.c 
+anim_hardtrack_SOURCES = anim_hardtrack.c
 anim_hardtrack_LDADD = ${BN}
 
-anim_keyread_SOURCES = anim_keyread.c 
+anim_keyread_SOURCES = anim_keyread.c
 anim_keyread_LDADD = ${BN}
 
-anim_lookat_SOURCES = anim_lookat.c 
+anim_lookat_SOURCES = anim_lookat.c
 anim_lookat_LDADD = ${BN}
 
-anim_offset_SOURCES = anim_offset.c 
+anim_offset_SOURCES = anim_offset.c
 anim_offset_LDADD = ${BN}
 
-anim_orient_SOURCES = anim_orient.c 
+anim_orient_SOURCES = anim_orient.c
 anim_orient_LDADD = ${BN}
 
-anim_script_SOURCES = anim_script.c 
+anim_script_SOURCES = anim_script.c
 anim_script_LDADD = ${BN}
 
-anim_sort_SOURCES = anim_sort.c 
+anim_sort_SOURCES = anim_sort.c
 anim_sort_LDADD = ${BU}
 
-anim_time_SOURCES = anim_time.c 
+anim_time_SOURCES = anim_time.c
 anim_time_LDADD = ${BU}
 
-anim_track_SOURCES = anim_track.c cattrack.c 
+anim_track_SOURCES = anim_track.c cattrack.c
 anim_track_LDADD = ${BN}
 
-anim_turn_SOURCES = anim_turn.c 
+anim_turn_SOURCES = anim_turn.c
 anim_turn_LDADD = ${BN}
 
 chan_add_SOURCES = chan_add.c

@@ -57,7 +57,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 	RETURN:	true for success
 
-		false for end of file 
+		false for end of file
  */
 STATIC bool
 #if STD_C

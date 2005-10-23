@@ -63,7 +63,7 @@ record_seq(int number_of_images, int number_of_frames, int start_seq_number)
 		"number of images is %d, number of frames per image is %d\n",
 		number_of_images,number_of_frames);
 
-	
+
 	SYSTEM("fbcbars");	/* Start out with color bars */
 
 	/* Make initial scene title matte recording */

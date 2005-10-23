@@ -90,7 +90,7 @@ proc calipers {} {
     global landmarkmode
     global show_cal_legs
 
-    toplevel .cal 
+    toplevel .cal
     wm title .cal "MGED Calipers"
 
 

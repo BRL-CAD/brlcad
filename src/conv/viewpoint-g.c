@@ -195,7 +195,7 @@ main(int argc, char **argv)
 	base_name = (char *)bu_malloc( name_len + 1 , "base_name" );
 	strncpy( base_name , ptr1 , name_len );
 
-	/* make title record */	
+	/* make title record */
 	mk_id( out_fp , base_name );
 
 	/* count vertices */
@@ -347,7 +347,7 @@ main(int argc, char **argv)
 				line[strlen(line)-1] = '\0';
 				name = strtok( line ,  tok_sep );
 			}
-			
+
 		}
 
 		/* assign geometry */

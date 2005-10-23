@@ -26,11 +26,11 @@
  *
  *  Author -
  *	Jeff Hanes
- *  
+ *
  *  Source -
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
- *  
+ *
  */
 /*@}*/
 
@@ -317,7 +317,7 @@ bn_poly_cubic_roots(register struct bn_complex *roots, register const struct bn_
 	LOCAL fastf_t	a, b, c1, c1_3rd, delta;
 	register int	i;
 	static int	first_time = 1;
-	
+
 	if( !bu_is_parallel() ) {
 		/* bn_abort_buf is NOT parallel! */
 		if( first_time )  {
@@ -468,7 +468,7 @@ bn_poly_quartic_roots(register struct bn_complex *roots, register const struct b
 	quad1.cf[1] = eqn->cf[1]*0.5;
 	quad2.cf[1] = quad1.cf[1] + p;
 	quad1.cf[1] -= p;
-	
+
 	q1 = U - q;
 	q2 = U + q;
 

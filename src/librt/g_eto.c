@@ -32,7 +32,7 @@
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005
- *  
+ *
  */
 /*@}*/
 
@@ -69,39 +69,39 @@ static const char RCSeto[] = "@(#)$Header$ (BRL)";
 
 /*
  *  Algorithm:
- *  
+ *
  *  Given V, N, C, r, and rd, there is a set of points on this eto
- *  
+ *
  *  { (x,y,z) | (x,y,z) is on eto defined by V, N, C, r, rd }
- *  
+ *
  *  Through a series of  Transformations, this set will be
  *  transformed into a set of points on an eto centered at the origin
  *  which lies on the X-Y plane (ie, N is on the Z axis).
- *  
+ *
  *  { (x',y',z') | (x',y',z') is an eto at origin }
- *  
+ *
  *  The transformation from X to X' is accomplished by:
- *  
+ *
  *  X' = R( X - V )
- *  
+ *
  *  where R(X) =  ( B/(|B|) )
  *  		 (  A/(|A|)  ) . X
  *  		  ( N/(|N|) )
  *
  *  To find the intersection of a line with the eto, consider
  *  the parametric line L:
- *  
+ *
  *  	L : { P(n) | P + t(n) . D }
- *  
+ *
  *  Call W the actual point of intersection between L and the eto.
  *  Let W' be the point of intersection between L' and the unit eto.
- *  
+ *
  *  	L' : { P'(n) | P' + t(n) . D' }
- *  
+ *
  *  W = invR( W' ) + V
- *  
+ *
  *  Where W' = k D' + P'.
- *  
+ *
  *
  *  Given a line and a ratio, alpha, finds the equation of the
  *  unit eto in terms of the variable 't'.
@@ -124,13 +124,13 @@ static const char RCSeto[] = "@(#)$Header$ (BRL)";
  *
  *  The real roots of the equation in 't' are the intersect points
  *  along the parameteric line.
- *  
+ *
  *  NORMALS.  Given the point W on the eto, what is the vector
  *  normal to the tangent plane at that point?
- *  
+ *
  *  Map W onto the eto, ie:  W' = R( W - V ).
  *  In this case, we find W' by solving the parameteric line given k.
- *  
+ *
  *  The gradient of the eto at W' is in fact the
  *  normal vector.
  *
@@ -164,15 +164,15 @@ const struct bu_structparse rt_eto_parse[] = {
 
 /**
  *  			R T _ E T O _ P R E P
- *  
+ *
  *  Given a pointer to a GED database record, and a transformation matrix,
  *  determine if this is a valid eto, and if so, precompute various
  *  terms of the formula.
- *  
+ *
  *  Returns -
  *  	0	ETO is OK
  *  	!0	Error in description
- *  
+ *
  *  Implicit return -
  *  	A struct eto_specific is created, and it's address is stored in
  *  	stp->st_specific for use by rt_eto_shot().
@@ -225,7 +225,7 @@ rt_eto_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 			stp->st_name);
 		return(1);
 	}
-	
+
 	eto->ev = fabs( VDOT( Cu, Nu ) );	/* vertical component of Cu */
 	eto->eu = sqrt( 1.0 - eto->ev * eto->ev );	/* horiz component */
 	eto->fu = -eto->ev;
@@ -297,13 +297,13 @@ rt_eto_print(register const struct soltab *stp)
 	bn_mat_print("R", eto->eto_R );
 	bn_mat_print("invR", eto->eto_invR );
 	bu_log( "rpp: (%g, %g, %g) to (%g, %g, %g)\n",
-		stp->st_min[X], stp->st_min[Y], stp->st_min[Z], 
+		stp->st_min[X], stp->st_min[Y], stp->st_min[Z],
 		stp->st_max[X], stp->st_max[Y], stp->st_max[Z]);
 }
 
 /**
  *  			R T _ E T O _ S H O T
- *  
+ *
  *  Intersect a ray with an eto, where all constant terms have
  *  been precomputed by rt_eto_prep().  If an intersection occurs,
  *  one or two struct seg(s) will be acquired and filled in.
@@ -326,7 +326,7 @@ rt_eto_print(register const struct soltab *stp)
  *  equation using a general polynomial root finder.  Use those
  *  values of 't' to compute the points of intersection in the
  *  original coordinate system.
- *  
+ *
  *  Returns -
  *  	0	MISS
  *	>0	HIT
@@ -534,7 +534,7 @@ rt_eto_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 
 	if( i == 2 )
 		return(2);			/* HIT */
-				
+
 	/* 4 points */
 	/* k[3] is entry point, and k[2] is exit point */
 	RT_GET_SEG(segp, ap->a_resource);
@@ -547,7 +547,7 @@ rt_eto_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 	return(4);			/* HIT */
 }
 
-#define SEG_MISS(SEG)		(SEG).seg_stp=(struct soltab *) 0;	
+#define SEG_MISS(SEG)		(SEG).seg_stp=(struct soltab *) 0;
 /**
  *			R T _ E T O _ V S H O T
  *
@@ -559,7 +559,7 @@ rt_eto_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
            		       /* An array of ray pointers */
                                /* array of segs (results returned) */
    		  	       /* Number of ray/object pairs */
-                  	    
+
 {
 }
 
@@ -603,13 +603,13 @@ rt_eto_norm(register struct hit *hitp, struct soltab *stp, register struct xray 
 
 	ffact = 2 * eto->eto_rc * eto->eto_rc * (eto->fu *
 		(sqrt_x2y2 - eto->eto_r) + eto->fv * hitp->hit_vpriv[Z]);
-	
+
 	xcomp = (efact * eto->eu + ffact * eto->fu) / sqrt_x2y2;
-	
+
 	ycomp = hitp->hit_vpriv[Y] * xcomp;
 	xcomp = hitp->hit_vpriv[X] * xcomp;
 	zcomp = efact * eto->ev + ffact * eto->fv;
-	
+
 	VSET( normp, xcomp, ycomp, zcomp );
 	VUNITIZE( normp );
 	MAT3X3VEC( hitp->hit_normal, eto->eto_invR, normp );
@@ -665,7 +665,7 @@ rt_eto_curve(register struct curvature *cvp, register struct hit *hitp, struct s
 	yp2 = -b/(a*a)*rad*(xp*xp*rad*rad + 1.);
 	work = 1 + yp1*yp1;
 	k_ell = yp2 / (work*sqrt(work));
-	
+
 	/* calculate curvature along radial circle */
 	k_circ = -1. / MAGNITUDE(Radius);
 
@@ -839,7 +839,7 @@ rt_eto_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 		bu_log("eto_plot: revolved ellipse overlaps itself\n");
 		return(1);
 	}
-	
+
 	/* get memory for nells ellipses */
 	eto_ells = (fastf_t *)bu_malloc(nells * npts * sizeof(point_t), "ells[]");
 
@@ -867,14 +867,14 @@ rt_eto_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 				Ell_V, ell[j][X], Dp, ell[j][Y], Cp );
 		}
 	}
-	
+
 	/* draw ellipses */
 	for (i = 0; i < nells; i++) {
 		RT_ADD_VLIST( vhead, ETO_PTA(i,npts-1), BN_VLIST_LINE_MOVE );
 		for( j = 0; j < npts; j++ )
 			RT_ADD_VLIST( vhead, ETO_PTA(i,j), BN_VLIST_LINE_DRAW );
 	}
-	
+
 	/* draw connecting circles */
 	for (i = 0; i < npts; i++) {
 		RT_ADD_VLIST( vhead, ETO_PTA(nells-1,i), BN_VLIST_LINE_MOVE );
@@ -1096,7 +1096,7 @@ rt_eto_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 		fail = (-3);
 		goto failure;
 	}
-	
+
 	/* get memory for nells ellipses */
 	eto_ells = (fastf_t *)bu_malloc(nells * npts * sizeof(point_t), "ells[]");
 	norms = (vect_t *)bu_calloc( nells*npts , sizeof( vect_t ) , "rt_eto_tess: norms" );
@@ -1195,7 +1195,7 @@ rt_eto_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	/* Compute "geometry" for region and shell */
 	nmg_region_a( *r, tol );
 
-failure:	
+failure:
 	bu_free( (char *)ell, "rt_mk_ell pts" );
 	bu_free( (char *)eto_ells, "ells[]" );
 	bu_free( (char *)verts, "rt_eto_tess *verts[]" );
@@ -1279,7 +1279,7 @@ rt_eto_export(struct bu_external *ep, const struct rt_db_internal *ip, double lo
 		bu_log("rt_eto_export: not all dimensions positive!\n");
 		return(-1);
 	}
-	
+
 	if (tip->eto_rd > MAGNITUDE(tip->eto_C) ) {
 		bu_log("rt_eto_export: semi-minor axis cannot be longer than semi-major axis!\n");
 		return(-1);
@@ -1365,7 +1365,7 @@ rt_eto_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
 		bu_log("rt_eto_export: not all dimensions positive!\n");
 		return(-1);
 	}
-	
+
 	if (tip->eto_rd > MAGNITUDE(tip->eto_C) ) {
 		bu_log("rt_eto_export: semi-minor axis cannot be longer than semi-major axis!\n");
 		return(-1);
@@ -1419,10 +1419,10 @@ rt_eto_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
 		tip->eto_C[Z] * mm2local,
 		MAGNITUDE(tip->eto_C) * mm2local);
 	bu_vls_strcat( str, buf );
-	
+
 	sprintf(buf, "\tr=%g\n", tip->eto_r * mm2local);
 	bu_vls_strcat( str, buf );
-	
+
 	sprintf(buf, "\td=%g\n", tip->eto_rd * mm2local);
 	bu_vls_strcat( str, buf );
 

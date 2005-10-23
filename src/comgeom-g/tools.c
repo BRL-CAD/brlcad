@@ -35,7 +35,7 @@ endstr(char *str)
 
 #ifndef HAVE_STRCPY
 strcpy(char *s, char *t)	/* === */
-    	       
+
 {
 	while( (*s++ = *t++) != '\0' );
 	*s = '\0';
@@ -43,14 +43,14 @@ strcpy(char *s, char *t)	/* === */
 #endif
 
 strappend(char *s, char *t)	/* === */
-    	       
+
 {	s = endstr( s );
 	while( (*s++ = *t++) != '\0' );
 	*s = '\0';
 }
 
 maxmin(int *l, int n, int *max, int *min)	/*  === */
-                       
+
 {
 	*max = -PADCHR;
 	*min =  PADCHR;
@@ -61,7 +61,7 @@ maxmin(int *l, int n, int *max, int *min)	/*  === */
 		if( *l < *min )	*min = *l;
 		++l;
 	}
-/*BUGoff/printf( "max=%d min=%d\n", *max, *min );/* BUG */	
+/*BUGoff/printf( "max=%d min=%d\n", *max, *min );/* BUG */
 }
 
 /*

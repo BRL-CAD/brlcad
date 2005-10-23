@@ -223,7 +223,7 @@ if {![info exists mged_browser]} {
 				}
 			}
 		}
-		
+
 		if {![info exists mged_browser]} {
 			set mged_browser "Browser not found, check your PATH"
 		}
@@ -391,7 +391,7 @@ proc gui { args } {
 			}
 
 			set id [lindex $args $i]
-		} elseif {$arg == "-j" || $arg == "-join"} { 
+		} elseif {$arg == "-j" || $arg == "-join"} {
 			set join_c 1
 		} elseif {$arg == "-h" || $arg == "-help"} {
 			return [help gui]
@@ -452,7 +452,7 @@ proc gui { args } {
 	if {[ winfo exists .$id ]} {
 		return "A session with the id \"$id\" already exists!"
 	}
-	
+
 	toplevel .$id -screen $screen -menu .$id.menubar
 
 	lappend mged_players $id
@@ -1673,7 +1673,7 @@ hoc_register_menu_data "ViewRing" "Add View" "Add View"\
 				-command "set_dm_win $id"
 		hoc_register_menu_data "Modes" "Graphics Window" "Graphics Window"\
 				{ { summary "Toggle display of the graphics window." } }
-	} 
+	}
 	.$id.menubar.modes add separator
 	.$id.menubar.modes add checkbutton -offvalue 0 -onvalue 1 -variable mged_gui($id,collaborate)\
 			-label "Collaborate" -underline 0\
@@ -1794,7 +1794,7 @@ hoc_register_menu_data "ViewRing" "Add View" "Add View"\
 				-command "mged_apply $id \"dm set depthcue \$mged_gui($id,depthcue)\""
 		hoc_register_menu_data "Misc" "Depth Cueing" "Depth Cueing"\
 				{ { summary "Toggle depth cueing. When depth cueing is active,
-		lines that are farther away appear more faint." } 
+		lines that are farther away appear more faint." }
 		{ see_also "dm" } }
 		.$id.menubar.misc add checkbutton -offvalue 0 -onvalue 1\
 				-variable mged_gui($id,zbuffer) -label "Z Buffer" -underline 2\
@@ -2649,7 +2649,7 @@ proc set_dm_win { id } {
 		setmv $id
 	} else {
 		grid forget $mged_gui($id,dmc)
-		
+
 		set mged_gui($id,show_cmd) 1
 		set_cmd_win $id
 		set fh [get_font_height .$id.t]
@@ -2893,7 +2893,7 @@ proc view_ring_toggle {id} {
 		return
 	}
 
-	# validate view_ring(id,prev) and find its corresponding menu view index 
+	# validate view_ring(id,prev) and find its corresponding menu view index
 	if {![find_view_index $view_ring($id,prev) vi_prev .$id.menubar.viewring.select]} {
 		return
 	}
@@ -3032,20 +3032,20 @@ proc set_transform { id } {
 proc do_rebind_keys { id } {
 	global mged_gui
 
-	bind $mged_gui($id,top).ul <Control-n> "winset $mged_gui($id,top).ul; view_ring_next $id; break" 
-	bind $mged_gui($id,top).ur <Control-n> "winset $mged_gui($id,top).ur; view_ring_next $id; break" 
-	bind $mged_gui($id,top).ll <Control-n> "winset $mged_gui($id,top).ll; view_ring_next $id; break" 
-	bind $mged_gui($id,top).lr <Control-n> "winset $mged_gui($id,top).lr; view_ring_next $id; break" 
+	bind $mged_gui($id,top).ul <Control-n> "winset $mged_gui($id,top).ul; view_ring_next $id; break"
+	bind $mged_gui($id,top).ur <Control-n> "winset $mged_gui($id,top).ur; view_ring_next $id; break"
+	bind $mged_gui($id,top).ll <Control-n> "winset $mged_gui($id,top).ll; view_ring_next $id; break"
+	bind $mged_gui($id,top).lr <Control-n> "winset $mged_gui($id,top).lr; view_ring_next $id; break"
 
-	bind $mged_gui($id,top).ul <Control-p> "winset $mged_gui($id,top).ul; view_ring_prev $id; break" 
-	bind $mged_gui($id,top).ur <Control-p> "winset $mged_gui($id,top).ur; view_ring_prev $id; break" 
-	bind $mged_gui($id,top).ll <Control-p> "winset $mged_gui($id,top).ll; view_ring_prev $id; break" 
-	bind $mged_gui($id,top).lr <Control-p> "winset $mged_gui($id,top).lr; view_ring_prev $id; break" 
+	bind $mged_gui($id,top).ul <Control-p> "winset $mged_gui($id,top).ul; view_ring_prev $id; break"
+	bind $mged_gui($id,top).ur <Control-p> "winset $mged_gui($id,top).ur; view_ring_prev $id; break"
+	bind $mged_gui($id,top).ll <Control-p> "winset $mged_gui($id,top).ll; view_ring_prev $id; break"
+	bind $mged_gui($id,top).lr <Control-p> "winset $mged_gui($id,top).lr; view_ring_prev $id; break"
 
-	bind $mged_gui($id,top).ul <Control-t> "winset $mged_gui($id,top).ul; view_ring_toggle $id; break" 
-	bind $mged_gui($id,top).ur <Control-t> "winset $mged_gui($id,top).ur; view_ring_toggle $id; break" 
-	bind $mged_gui($id,top).ll <Control-t> "winset $mged_gui($id,top).ll; view_ring_toggle $id; break" 
-	bind $mged_gui($id,top).lr <Control-t> "winset $mged_gui($id,top).lr; view_ring_toggle $id; break" 
+	bind $mged_gui($id,top).ul <Control-t> "winset $mged_gui($id,top).ul; view_ring_toggle $id; break"
+	bind $mged_gui($id,top).ur <Control-t> "winset $mged_gui($id,top).ur; view_ring_toggle $id; break"
+	bind $mged_gui($id,top).ll <Control-t> "winset $mged_gui($id,top).ll; view_ring_toggle $id; break"
+	bind $mged_gui($id,top).lr <Control-t> "winset $mged_gui($id,top).lr; view_ring_toggle $id; break"
 }
 
 proc adc { args } {

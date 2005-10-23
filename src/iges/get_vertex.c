@@ -26,7 +26,7 @@
  *	SLAD/BVLD/VMB
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005
- *  
+ *
  */
 
 #include "./iges_struct.h"
@@ -77,7 +77,7 @@ struct iges_edge_use *edge;
 	if( (e_list = Get_edge_list( edge )) == NULL )
 		return( 0 );
 
-	
+
 	el = e_list;
 	while( el && el->edge_de != edge->edge_de )
 		el = el->next;
@@ -98,8 +98,8 @@ struct iges_edge_use *edge;
 		vert_de = el->i_edge[edge->index-1].end_vert_de;
 		vert_index = el->i_edge[edge->index-1].end_vert_index-1;
 	}
-	
-	
+
+
 	if( (v_list = Get_vertex_list( vert_de )) == NULL )
 		return( 0 );
 
@@ -118,7 +118,7 @@ Get_edge( e_use )
 struct iges_edge_use *e_use;
 {
 	struct iges_edge_list	*e_list;
-	
+
 	if( (e_list = Get_edge_list( e_use )) == NULL )
 		return( (struct iges_edge *)NULL );
 

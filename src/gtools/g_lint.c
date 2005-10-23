@@ -25,7 +25,7 @@
  *
  *  Author -
  *	Paul Tanenbaum
- *  
+ *
  *  Source -
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
@@ -450,7 +450,7 @@ unsigned char *get_color (unsigned char *ucp, unsigned long x)
 
     for (index = 0; x > 1; ++index)
 	x >>= 1;
-    
+
     return (ucp + (index * 3));
 }
 
@@ -700,7 +700,7 @@ static int rpt_hit (struct application *ap, struct partition *ph, struct seg *du
 	    else
 		last_air = 0;
 	}
-	
+
 	/* Look for vacuum */
 	if ((what_to_report & G_LINT_VAC) && (pp -> pt_back != ph))
 	{
@@ -838,7 +838,7 @@ void init_plot3 (struct application *ap)
     RT_CHECK_RTI(rtip);
     cp = (struct g_lint_ctrl *) ap -> a_uptr;
     BU_CKMAG(cp, G_LINT_CTRL_MAGIC, "g_lint control structure");
-    
+
     pdv_3space(cp -> glc_fp, rtip->rti_pmin, rtip->rti_pmax);
 }
 

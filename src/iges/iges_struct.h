@@ -217,7 +217,7 @@ struct iges_edge_list
 				__FILE__, __LINE__ );\
 		}\
 	}
-	
+
 
 BU_EXTERN( char *iges_type, (int type_no ) );
 BU_EXTERN( char *Make_unique_brl_name, (char *name ) );

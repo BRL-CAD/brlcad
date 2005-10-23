@@ -29,12 +29,12 @@
  *
  *  Author -
  *	Gary S. Moss
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5066
- *  
+ *
  */
 #ifndef lint
 static const char RCSid[] = "@(#)$Header$ (BRL)";
@@ -470,7 +470,7 @@ rle_wmap(FILE *fp, ColorMap *cmap)
 	if( cmap == (ColorMap *) NULL )
 		{
 		return _put_Std_Map( fp );
-		}		
+		}
 	if(	_put_Color_Map_Seg( fp, cmap->cm_red ) == -1
 	     ||	_put_Color_Map_Seg( fp, cmap->cm_green ) == -1
 	     ||	_put_Color_Map_Seg( fp, cmap->cm_blue ) == -1
@@ -970,7 +970,7 @@ _get_Old_Inst(register FILE *fp, register int *op, register int *dat)
 #endif
 	return	1;
 	}
-	
+
 void
 prnt_XSetup(char *msg, register Xtnd_Rle_Header *setup)
 {

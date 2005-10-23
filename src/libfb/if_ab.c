@@ -33,7 +33,7 @@
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5066
- *  
+ *
  */
 /*@}*/
 
@@ -698,11 +698,11 @@ ab_help(FBIO *ifp)
 int
 ab_yuvio(int output, char *host, char *buf, int len, int frame, int to_network)
    	       		/* 0=read(input), 1=write(output) */
-    	      
-    	     
-   	    
+
+
+
    	      		/* frame number */
-   	           
+
 {
 	struct sockaddr_in	sinme;		/* Client */
 	struct sockaddr_in	sinhim;		/* Server */

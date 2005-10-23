@@ -30,9 +30,9 @@
 #ifndef lint
 static const char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
-/* 
+/*
 	getfont.c - Load a new font by reading in the header and directory.
- */ 
+ */
 
 #include "common.h"
 

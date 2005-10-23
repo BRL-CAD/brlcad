@@ -122,7 +122,7 @@ f_facedef(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	   Tcl_AppendResult(interp, "Facedef: solid type must be ARB\n");
 	   status = TCL_ERROR;
 	   goto end;
-	}	
+	}
 
 	/* apply es_mat editing to parameters.  "new way" */
 	transform_editing_solid( &intern, es_mat, &es_int, 0 );
@@ -139,7 +139,7 @@ f_facedef(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
 	/* get face, initialize args and argcnt */
 	face = atoi( argv[1] );
-	
+
 	/* use product of vertices to distinguish faces */
 	for(i=0,prod=1;i<4;i++)  {
 		if( face > 0 ){
@@ -212,7 +212,7 @@ f_facedef(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	}
 
 	switch( argv[2][0] ){
-	case 'a': 
+	case 'a':
 	  /* special case for arb7, because of 2 4-pt planes meeting */
 	  if( es_type == 7 )
 	    if( plane!=0 && plane!=3 ){
@@ -227,7 +227,7 @@ f_facedef(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	  }
 	  get_pleqn( planes[plane], &argv[3] );
 	  break;
-	case 'b': 
+	case 'b':
 	  /* special case for arb7, because of 2 4-pt planes meeting */
 	  if( es_type == 7 )
 	    if( plane!=0 && plane!=3 ){
@@ -250,7 +250,7 @@ f_facedef(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	    goto end;
 	  }
 	  break;
-	case 'c': 
+	case 'c':
 	  /* special case for arb7, because of 2 4-pt planes meeting */
 	  if( es_type == 7 && (plane != 0 && plane != 3) ) {
 	    if( argc < 5 ){ 	/* total # of args under this option */
@@ -263,14 +263,14 @@ f_facedef(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	    Tcl_AppendResult(interp, "Fixed point is vertex five.\n");
 	  }
 	  /* total # of as under this option */
-	  else if( argc < 8 && (argc > 5 ? argv[5][0] != 'R' : 1)) { 
+	  else if( argc < 8 && (argc > 5 ? argv[5][0] != 'R' : 1)) {
 	    Tcl_AppendResult(interp, MORE_ARGS_STR, p_rotfb[argc-3], (char *)NULL);
 	    status = TCL_ERROR;
 	    goto end;
 	  }
 	  get_rotfb(planes[plane], &argv[3], arb);
 	  break;
-	case 'd': 
+	case 'd':
 	  /* special case for arb7, because of 2 4-pt planes meeting */
 	  if( es_type == 7 )
 	    if( plane!=0 && plane!=3 ){
@@ -285,7 +285,7 @@ f_facedef(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	  }
 	  get_nupnt(planes[plane], &argv[3]);
 	  break;
-	case 'q': 
+	case 'q':
 	  return TCL_OK;
 	default:
 	  Tcl_AppendResult(interp, "Facedef: '", argv[2], "' is not an option\n", (char *)NULL);
@@ -338,7 +338,7 @@ get_pleqn(fastf_t *plane, char **argv)
 		plane[i]= atof(argv[i]);
 	VUNITIZE( &plane[0] );
 	plane[3] *= local2base;
-	return;	
+	return;
 }
 
 
@@ -374,7 +374,7 @@ get_3pts(fastf_t *plane, char **argv, const struct bn_tol *tol)
 	}
 	return(0);			/* success */
 }
-	
+
 /*
  * 			G E T _ R O T F B
  *
@@ -395,7 +395,7 @@ get_rotfb(fastf_t *plane, char **argv, const struct rt_arb_internal *arb)
 
 	rota= atof(argv[0]) * degtorad;
 	fb  = atof(argv[1]) * degtorad;
-	
+
 	/* calculate normal vector (length=1) from rot,fb */
 	plane[0] = cos(fb) * cos(rota);
 	plane[1] = cos(fb) * sin(rota);

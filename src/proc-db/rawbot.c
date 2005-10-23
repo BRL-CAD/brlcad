@@ -22,13 +22,13 @@
  *
  *    Program to generate a BoT from raw triangle data in a file
  *
- *    File input is assumed to be interleaved XYZ vertex data 
+ *    File input is assumed to be interleaved XYZ vertex data
  *    where three vertices comprise a single unoriented triangle.
  *
  *    e.g. The following describes three triangles:
  *
  *      X1 Y1 Z1 X2 Y2 Z2 X3 Y3 Z3 X4 Y4 Z4 X5 Y5 Z5
- *      X6 Y6 Z6 X7 Y7 Z7 X8 Y8 Z8 X9 Y9 Z9 
+ *      X6 Y6 Z6 X7 Y7 Z7 X8 Y8 Z8 X9 Y9 Z9
  *
  *    Shared edges or points are not accounted for, implying data
  *    duplication for triangulated surface data where shared
@@ -181,7 +181,7 @@ int main( int argc, char *argv[] )
 		faces[(j*3)] = (j*3);
 		faces[(j*3)+1] = (j*3) + 1;
 		faces[(j*3)+2] = (j*3) + 2;
-		printf("%ld %ld %ld == (%f %f %f)\n", (j*3), (j*3)+1, (j*3)+2, vertices[(j*3)], vertices[(j*3)+1], vertices[(j*3)+2]); 
+		printf("%ld %ld %ld == (%f %f %f)\n", (j*3), (j*3)+1, (j*3)+2, vertices[(j*3)], vertices[(j*3)+1], vertices[(j*3)+2]);
 		thickness[(j*3)] = thickness[(j*3)+1] = thickness[(j*3)+2] = 1.0;
 	}
 

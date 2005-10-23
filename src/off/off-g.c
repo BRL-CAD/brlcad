@@ -50,7 +50,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 static struct bn_tol tol;
 
 /*
- *         R E A D _ F A C E S 
+ *         R E A D _ F A C E S
  *
  * Reads the geometry from the the geometry file and creates the appropriate
  *  vertices and faces.
@@ -60,7 +60,7 @@ int read_faces(struct model *m, FILE *fgeom)
 {
 	int 		   nverts, nfaces, nedges;
 	register int 	   i, j, fail=0;
-	fastf_t 	  *pts;		
+	fastf_t 	  *pts;
 	struct vertex 	 **verts;
 	struct faceuse 	 **outfaceuses;
 	struct nmgregion  *r;
@@ -74,7 +74,7 @@ int read_faces(struct model *m, FILE *fgeom)
 	verts = (struct vertex **) rt_malloc(sizeof(struct vertex *) * nverts, "vertices");
 	outfaceuses = (struct faceuse **) rt_malloc(sizeof(struct faceuse *) * nfaces, "faceuses");
 
-		/* Read in vertex geometry, store in geometry list */		
+		/* Read in vertex geometry, store in geometry list */
 	for (i = 0; i < nverts; i++) {
 		if (fscanf(fgeom, "%lf %lf %lf", &pts[3*i], &pts[3*i+1], &pts[3*i+2]) != 3)
 			rt_bomb("Not enough data points in geometry file.\n");
@@ -95,7 +95,7 @@ int read_faces(struct model *m, FILE *fgeom)
 			fprintf(stderr, "Not enough faces in geometry file.\n");
 			exit(1);
 		}
-					/* Grab memory for list for this face. */		
+					/* Grab memory for list for this face. */
 		vlist = (struct vertex **) rt_malloc(sizeof(struct vertex *) * nedges, "vertex list");
 		pinds = (int *) rt_malloc(sizeof(int) * nedges, "point indicies");
 
@@ -112,7 +112,7 @@ int read_faces(struct model *m, FILE *fgeom)
 
 		for (j = 0; j < nedges; j++)		/* Save (possibly) newly created vertex structs. */
 			verts[pinds[j]-1] = vlist[j];
-		
+
 		fscanf(fgeom, "%*[^\n]");
 
 		rt_free((char *)vlist, "vertext list");
@@ -144,7 +144,7 @@ int read_faces(struct model *m, FILE *fgeom)
 	rt_free((char *)pts, "points list");
 	return (0);
 }
-		
+
 
 
 
@@ -175,7 +175,7 @@ int off2nmg(FILE *fpin, struct rt_wdb *fpout)
 		fgets(buf, sizeof(buf), fpin);
 	}
 
-	if (strlen(title) < (unsigned)1) 
+	if (strlen(title) < (unsigned)1)
 		fprintf(stderr, "Warning: no title\n");
 
 	if (strlen(geom_fname) < (unsigned)1)
@@ -189,8 +189,8 @@ int off2nmg(FILE *fpin, struct rt_wdb *fpout)
 
 	m = nmg_mm();
 	read_faces(m, fgeom);
-	fclose(fgeom);	
-	
+	fclose(fgeom);
+
 	strcpy(sname, "s.");	strcat(sname, title);
 	strcpy(rname, "r.");	strcat(rname, title);
 
@@ -201,7 +201,7 @@ int off2nmg(FILE *fpin, struct rt_wdb *fpout)
 	nmg_km(m);
 	return (0);
 }
-		
+
 
 int main(int argc, char **argv)
 {
@@ -230,7 +230,7 @@ int main(int argc, char **argv)
 		return (1);
 	}
 
-				
+
 	off2nmg(fpin, fpout);
 
 	fclose(fpin);

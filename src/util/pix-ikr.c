@@ -19,10 +19,10 @@
  * information.
  */
 /** @file pix-ikr.c
- *  
+ *
  *  Dumb little program to take bottom-up pixel files and
  *  send them to the Ikonas, UPSIDE DOWN, for the Dunn camera.
- *  
+ *
  *  Mike Muuss, BRL.
  *
  *  $Revision$

@@ -28,7 +28,7 @@
  *	VLD/ASB Building 1065
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005
- *  
+ *
  */
 
 /* Routine to read a transformation matrix from the IGES file.
@@ -46,7 +46,7 @@ int xform;
 mat_t rot;
 {
 	int i,j;
-	
+
 	/* read the actual transformation matrix and store */
 
 	Readrec( xform );

@@ -22,12 +22,12 @@
  *
  *  Authors -
  *	Michael John Muuss
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005
- *  
+ *
  */
 #ifndef lint
 static const char RCSrefract[] = "@(#)$Header$ (BRL)";
@@ -152,7 +152,7 @@ rr_render(register struct application *ap,
 				pp->pt_regionp->reg_name );
 		}
 
-		/* 
+		/*
 		 * Return the basic color of the object, ignoring the
 		 * the fact that it is supposed to be
 		 * filtering or reflecting light here.
@@ -296,7 +296,7 @@ rr_render(register struct application *ap,
 		}
 
 		/*
-		 *  Find new exit point from the inside. 
+		 *  Find new exit point from the inside.
 		 *  We will iterate, but not recurse, due to the special
 		 *  (non-recursing) hit and miss routines used here for
 		 *  internal reflection.
@@ -873,7 +873,7 @@ out:
  *		ri_1 * sin( theta_1 ) = ri_2 * sin( theta_2 )
  *
  *		sin( theta_2 ) = ri_1/ri_2 * sin( theta_1 )
- *		
+ *
  *	The above condition is undefined for ri_1/ri_2 * sin( theta_1 )
  *	being greater than 1, and this represents the condition for total
  *	reflection, the 'critical angle' is the angle theta_1 for which
@@ -905,7 +905,7 @@ register vect_t	v_2;
 	}
 	VSCALE( w, v_1, beta );
 	VCROSS( u, w, norml );
-	    	
+
 	/*
 	 *	|w X norml| = |w||norml| * sin( theta_1 )
 	 *	        |u| = ri_1/ri_2 * sin( theta_1 ) = sin( theta_2 )
@@ -931,7 +931,7 @@ register vect_t	v_2;
 			ri_1, ri_2, beta);
 		beta = -sqrt( 1.0 - beta) - VDOT( w, norml );
 		VSCALE( u, norml, beta );
-		VADD2( v_2, w, u );		
+		VADD2( v_2, w, u );
 		return(1);		/* refracted */
 	}
 	/* NOTREACHED */

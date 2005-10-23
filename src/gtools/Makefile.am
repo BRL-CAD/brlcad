@@ -11,16 +11,16 @@ g_diff_SOURCES = g_diff.c
 g_diff_LDADD = ${LIBRT} ${TCL}
 
 g_lint_SOURCES = g_lint.c
-g_lint_LDADD = ${LIBRT}  
+g_lint_LDADD = ${LIBRT}
 
 g_qa_SOURCES = g_qa.c
 g_qa_LDADD = ${LIBRT} ${SYSV}
 
 solshoot_SOURCES = solshoot.c
-solshoot_LDADD = ${LIBRT} 
+solshoot_LDADD = ${LIBRT}
 
 testfree_SOURCES = testfree.c
-testfree_LDADD = ${LIBRT} 
+testfree_LDADD = ${LIBRT}
 
 man_MANS = \
 	g_diff.1 \

@@ -22,7 +22,7 @@
  *
  * A display manager object contains the attributes and
  * methods for controlling display managers.
- * 
+ *
  * Source -
  *	SLAD CAD Team
  *	The U. S. Army Research Laboratory
@@ -1346,12 +1346,12 @@ dmo_labelPrimitive(struct dg_obj		*dgop,
     RT_CK_DB_INTERNAL(ip);
 
     if (ip->idb_major_type != DB5_MAJORTYPE_BRLCAD)
-	/* silently ignore */ 
+	/* silently ignore */
 	return;
 
     switch (ip->idb_minor_type) {
     case DB5_MINORTYPE_BRLCAD_TOR: {
-	struct rt_tor_internal	*tor = 
+	struct rt_tor_internal	*tor =
 	    (struct rt_tor_internal *)ip->idb_ptr;
 	fastf_t	r3, r4;
 	vect_t	adir;
@@ -1381,7 +1381,7 @@ dmo_labelPrimitive(struct dg_obj		*dgop,
 
 	break;
     case DB5_MINORTYPE_BRLCAD_TGC: {
-	struct rt_tgc_internal	*tgc = 
+	struct rt_tgc_internal	*tgc =
 	    (struct rt_tgc_internal *)ip->idb_ptr;
 
 	RT_TGC_CK_MAGIC(tgc);
@@ -1410,7 +1410,7 @@ dmo_labelPrimitive(struct dg_obj		*dgop,
     case DB5_MINORTYPE_BRLCAD_ELL: {
 	point_t	work;
 	point_t	pos_view;
-	struct rt_ell_internal	*ell = 
+	struct rt_ell_internal	*ell =
 	    (struct rt_ell_internal *)ip->idb_ptr;
 
 	RT_ELL_CK_MAGIC(ell);
@@ -1627,7 +1627,7 @@ dmo_labelPrimitive(struct dg_obj		*dgop,
 
 	break;
     case DB5_MINORTYPE_BRLCAD_RPC: {
-	struct rt_rpc_internal	*rpc = 
+	struct rt_rpc_internal	*rpc =
 	    (struct rt_rpc_internal *)ip->idb_ptr;
 	vect_t	Ru;
 
@@ -1654,7 +1654,7 @@ dmo_labelPrimitive(struct dg_obj		*dgop,
 
 	break;
     case DB5_MINORTYPE_BRLCAD_RHC: {
-	struct rt_rhc_internal	*rhc = 
+	struct rt_rhc_internal	*rhc =
 	    (struct rt_rhc_internal *)ip->idb_ptr;
 	vect_t	Ru;
 
@@ -1689,7 +1689,7 @@ dmo_labelPrimitive(struct dg_obj		*dgop,
 
 	break;
     case DB5_MINORTYPE_BRLCAD_EPA: {
-	struct rt_epa_internal	*epa = 
+	struct rt_epa_internal	*epa =
 	    (struct rt_epa_internal *)ip->idb_ptr;
 	vect_t	A, B;
 
@@ -1717,7 +1717,7 @@ dmo_labelPrimitive(struct dg_obj		*dgop,
 
 	break;
     case DB5_MINORTYPE_BRLCAD_EHY: {
-	struct rt_ehy_internal	*ehy = 
+	struct rt_ehy_internal	*ehy =
 	    (struct rt_ehy_internal *)ip->idb_ptr;
 	vect_t	A, B;
 
@@ -1753,7 +1753,7 @@ dmo_labelPrimitive(struct dg_obj		*dgop,
 
 	break;
     case DB5_MINORTYPE_BRLCAD_ETO: {
-	struct rt_eto_internal	*eto = 
+	struct rt_eto_internal	*eto =
 	    (struct rt_eto_internal *)ip->idb_ptr;
 	fastf_t	ch, cv, dh, dv, cmag, phi;
 	vect_t	Au, Nu;
@@ -1806,7 +1806,7 @@ dmo_labelPrimitive(struct dg_obj		*dgop,
     case DB5_MINORTYPE_BRLCAD_SUBMODEL:
 	break;
     case DB5_MINORTYPE_BRLCAD_CLINE: {
-	register struct rt_cline_internal *cli = 
+	register struct rt_cline_internal *cli =
 	    (struct rt_cline_internal *)ip->idb_ptr;
 	point_t work1;
 
@@ -1844,7 +1844,7 @@ dmo_labelPrimitive(struct dg_obj		*dgop,
 	    VADD3(mid_pt, p1, p2, p3);
 
 	    VSCALE(mid_pt, mid_pt, one_third);
-				
+
 	    *num_lines = 3;
 	    VMOVE(lines[0], mid_pt);
 	    VMOVE(lines[1], p1);
@@ -2603,7 +2603,7 @@ dmo_bounds_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 		VMOVE(dmop->dmo_dmp->dm_clipmin, clipmin);
 		VMOVE(dmop->dmo_dmp->dm_clipmax, clipmax);
 
-		/* 
+		/*
 		 * Since dm_bound doesn't appear to be used anywhere,
 		 * I'm going to use it for controlling the location
 		 * of the zclipping plane in dm-ogl.c. dm-X.c uses
@@ -2760,7 +2760,7 @@ dmo_png_cmd(struct dm_obj	*dmop,
 			 0, 0,
 			 dmop->dmo_dmp->dm_width,
 			 dmop->dmo_dmp->dm_height,
-			 ~0, ZPixmap); 
+			 ~0, ZPixmap);
     if (!ximage_p) {
 	Tcl_AppendResult(interp, "png: could not get XImage\n", (char *)NULL);
 	fclose(fp);
@@ -3396,7 +3396,7 @@ dmo_refreshFb_tcl(clientData, interp, argc, argv)
 
 	fb_refresh(dmop->dmo_fbs.fbs_fbp, 0, 0,
 		   dmop->dmo_dmp->dm_width, dmop->dmo_dmp->dm_height);
-  
+
 	return TCL_OK;
 }
 #endif
@@ -3416,7 +3416,7 @@ dmo_flush_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
 	XFlush(((struct dm_xvars *)dmop->dmo_dmp->dm_vars.pub_vars)->dpy);
 #endif
-  
+
 	return TCL_OK;
 }
 
@@ -3435,7 +3435,7 @@ dmo_sync_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
 	XSync(((struct dm_xvars *)dmop->dmo_dmp->dm_vars.pub_vars)->dpy, 0);
 #endif
-  
+
 	return TCL_OK;
 }
 

@@ -23,7 +23,7 @@
  *  Authors -
  *	Michael John Muuss
  *	Lee A. Butler
- *  
+ *
  *  Source -
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
@@ -192,7 +192,7 @@ struct loop_cuts {
 	struct vertexuse *vu2;
 };
 int
-nmg_face_state_transition(struct nmg_ray_state	*rs, 
+nmg_face_state_transition(struct nmg_ray_state	*rs,
 			  int			pos,
 			  int			multi,
 			  int			other_rs_state);
@@ -213,10 +213,10 @@ static void ptbl_vsort(struct bu_ptbl *b, struct faceuse *fu1, struct faceuse *f
                   		/* table of vertexuses on intercept line */
               	     		/* unused? */
               	     		/* unused? */
-       		   
-      		    
-       		     
-       		         
+
+
+
+
 {
 	register struct vertexuse	**vu;
 	register int i, j;
@@ -410,12 +410,12 @@ top:
  */
 double
 nmg_vu_angle_measure(struct vertexuse *vu, fastf_t *x_dir, fastf_t *y_dir, int assessment, int in)
-                	    
-      			      
-      			      
-   			           
+
+
+
+
    			   	/* 1 = inbound edge, 0 = outbound edge */
-{	
+{
 	struct loopuse	*lu;
 	struct edgeuse	*this_eu;
 	struct edgeuse	*prev_eu;
@@ -868,8 +868,8 @@ nmg_pr_vu_stuff(const struct nmg_vu_stuff *vs)
 int
 nmg_wedge_class(int ass, double a, double b)
    	    			/* assessment of two edges forming wedge */
-      	  
-      	  
+
+
 {
 	double	ha, hb;
 	register int	ret;
@@ -1124,13 +1124,13 @@ out:
  */
 static int
 nmg_find_vu_in_wedge(struct nmg_vu_stuff *vs, int start, int end, double lo_ang, double hi_ang, int wclass, int *skip_array)
-                   	    
+
    	      		/* vu index of coincident range */
-   	    
-      	       
-      	       
-   	       
-   	             
+
+
+
+
+
 {
 	register int	i;
 	double	cand_lo;
@@ -1318,11 +1318,11 @@ nmg_is_wedge_before_cross(const struct nmg_vu_stuff *wedge, const struct nmg_vu_
 static int
 nmg_face_vu_compare(const void *aa, const void *bb)
 #if __STDC__
-           	    
-           	    
+
+
 #else
-               	   
-               	   
+
+
 #endif
 {
 	register const struct nmg_vu_stuff *a = (const struct nmg_vu_stuff *)aa;
@@ -1532,14 +1532,14 @@ nmg_face_vu_dot(struct nmg_vu_stuff *vsp, struct loopuse *lu, const struct nmg_r
  */
 static int
 nmg_special_wedge_processing(struct nmg_vu_stuff *vs, int start, int end, double lo_ang, double hi_ang, int wclass, int *exclude, const struct bn_tol *tol)
-                   	    
+
    	      		/* vu index of coincident range */
-   	    
-      	       
-      	       
-   	       
-   	         
-                   	     
+
+
+
+
+
+
 {
 	register int	i;
 	int		outer_wedge;
@@ -1700,7 +1700,7 @@ rt_g.NMG_debug |= DEBUG_VU_SORT|DEBUG_FCUT;
  */
 int
 nmg_face_coincident_vu_sort(struct nmg_ray_state *rs, int start, int end)
-                    	    
+
    			      		/* first index */
    			    		/* last index + 1 */
 {
@@ -1955,14 +1955,14 @@ nmg_sanitize_fu(struct faceuse *fu)
  */
 void
 nmg_face_rs_init(struct nmg_ray_state *rs, struct bu_ptbl *b, struct faceuse *fu1, struct faceuse *fu2, fastf_t *pt, fastf_t *dir, struct edge_g_lseg *eg, const struct bn_tol *tol)
-                    	    
+
               	   		/* table of vertexuses in fu1 on intercept line */
               	     		/* face being worked */
               	     		/* for plane equation */
-       		   
-      		    
+
+
                   		    	/* may be null.  Geom of isect line. */
-                   	     
+
 {
 	plane_t	n1;
 
@@ -2874,7 +2874,7 @@ nmg_fcut_face(struct nmg_ray_state *rs)
 		{
 			bu_log( "rs->fu1 = x%x\n", rs->fu1 );
 			bu_log( "rs->fu2 = x%x\n", rs->fu2 );
-			bu_log( "prior_start=%d. prior_end=%d, next_start=%d, next_end=%d\n", 
+			bu_log( "prior_start=%d. prior_end=%d, next_start=%d, next_end=%d\n",
 				prior_start, prior_end, next_start, next_end );
 			bu_log( "%d vertices on intersect line\n", rs->nvu );
 			for( cur=0 ; cur<rs->nvu ; cur++ )
@@ -2932,7 +2932,7 @@ nmg_fcut_face(struct nmg_ray_state *rs)
 		old_eu = nmg_findeu( vu1->v_p, vu2->v_p, (struct shell *)NULL,
 			(struct edgeuse *)NULL, 0);
 
-		
+
 		cuts = find_loop_to_cut( &index1, &index2, prior_start, prior_end,
 				       next_start, next_end, mid_pt, rs );
 		if( cuts == (struct bu_ptbl *)NULL )
@@ -3041,7 +3041,7 @@ nmg_fcut_face(struct nmg_ray_state *rs)
 				bu_log( "\tjoin 2 singvu loops\n" );
 				nmg_pr_fu_briefly( rs->fu1, "" );
 			}
-#if 0			
+#if 0
 			/* Fuse new edge to intersect line, old edge */
 			nmg_edge_geom_isect_line( new_eu1, rs, "CUTJOIN, new edge after loop cut" );
 #endif
@@ -3082,7 +3082,7 @@ nmg_fcut_face(struct nmg_ray_state *rs)
 				bu_log( "\tjoin loops vu1 (x%x) is sing vu loop\n", vu1 );
 				nmg_pr_fu_briefly( rs->fu1, "" );
 			}
-#if 0			
+#if 0
 			/* Fuse new edge to intersect line, old edge */
 			nmg_edge_geom_isect_line( new_eu1, rs, "CUTJOIN, new edge after loop cut" );
 
@@ -3126,7 +3126,7 @@ nmg_fcut_face(struct nmg_ray_state *rs)
 				bu_log( "\tjoin loops vu2 (x%x) is sing vu loop\n", vu2 );
 				nmg_pr_fu_briefly( rs->fu1, "" );
 			}
-#if 0			
+#if 0
 			/* Fuse new edge to intersect line, old edge */
 			nmg_edge_geom_isect_line( new_eu1, rs, "CUTJOIN, new edge after loop cut" );
 #endif
@@ -3361,8 +3361,8 @@ nmg_unlist_v(struct bu_ptbl *b, fastf_t *mag, struct vertex *v)
  */
 int
 nmg_onon_fix(struct nmg_ray_state *rs, struct bu_ptbl *b, struct bu_ptbl *ob, fastf_t *mag, fastf_t *omag)
-                    	    
-              		   
+
+
               		    	/* other rs's vu list */
        			     	/* list of distances from intersect ray start point */
        			      	/* list of distances from intersect ray start point */
@@ -3472,7 +3472,7 @@ const struct bn_tol *tol;
 	if( BU_PTBL_END( tbl ) < 3 )
 		return;
 
-	matching_lus = (struct loopuse **)bu_calloc( BU_PTBL_END( tbl ), 
+	matching_lus = (struct loopuse **)bu_calloc( BU_PTBL_END( tbl ),
 		sizeof( struct loopuse *), "nmg_sort_coincident_vus: matching_lus" );
 
 	/* look for coincident vu's */
@@ -3554,10 +3554,10 @@ nmg_face_cutjoin(struct bu_ptbl *b1, struct bu_ptbl *b2, fastf_t *mag1, fastf_t 
        		      		/* table of distances to vertexuses from is->pt */
               	     		/* face being worked */
               	     		/* for plane equation */
-       		   
-      		    
+
+
                   		    	/* may be null.  geometry of isect line */
-                   	     
+
 {
 	struct vertexuse **vu1, **vu2;
 	int		i;

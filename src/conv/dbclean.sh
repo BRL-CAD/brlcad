@@ -61,7 +61,7 @@ fi
 TMP=/usr/tmp/tmp.$$
 echo $TMP
 rm -f $2
-trap "rm -f $TMP; exit 1"  1 2 3 15 
+trap "rm -f $TMP; exit 1"  1 2 3 15
 
 # Check to see that the output file is writeable.  If not, complain and
 # abort

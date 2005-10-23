@@ -29,7 +29,7 @@
  *  Author -
  *	Phillip Dykstra
  *	19 June 1986
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
@@ -66,7 +66,7 @@ main(int argc, char **argv)
 	int	n, x;
 	struct pix_element scan[512];
 	unsigned char bmask;
-	
+
 	if( argc > 1 ) {
 		if( (fp = fopen(argv[1], "r")) == NULL ) {
 			fprintf( stderr, "pixhist3d-pl: can't open \"%s\"\n", argv[1] );

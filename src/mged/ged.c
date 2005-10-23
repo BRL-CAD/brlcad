@@ -60,7 +60,7 @@ as represented by the U.S. Army Research Laboratory.  All rights reserved.";
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif
-                                                                                                                                                                            
+
 #include <stdio.h>
 #ifdef HAVE_STRING_H
 #  include <string.h>
@@ -252,7 +252,7 @@ notify_parent_done(int parent) {
 }
 
 
-/* 
+/*
  *			M A I N
  */
 int
@@ -325,7 +325,7 @@ main(int argc, char **argv)
 	  if(interactive && classic_mged){
 	    fprintf(stdout, "%s\n", version+5);	/* skip @(#) */
 	    fflush(stdout);
-		
+
 	    if (isatty(fileno(stdin)) && isatty(fileno(stdout))) {
 #ifndef COMMAND_LINE_EDITING
 #define COMMAND_LINE_EDITING 1
@@ -374,7 +374,7 @@ main(int argc, char **argv)
 		     * window is displayed).
 		     */
 		    if (use_pipe) {
-		    
+
 			FD_ZERO(&set);
 			FD_SET(parent_pipe[0], &set);
 			timeout.tv_sec = 90;
@@ -578,10 +578,10 @@ main(int argc, char **argv)
 	    struct bu_vls vls;
 	    int status;
 
-	    
+
 	    /* make this a process group leader */
 	    setpgid(0, 0);
-	    
+
 	    bu_vls_init(&vls);
 	    bu_vls_strcpy(&vls, "gui");
 	    status = Tcl_Eval(interp, bu_vls_addr(&vls));
@@ -603,12 +603,12 @@ main(int argc, char **argv)
 #ifndef _WIN32
 	    (void)pipe(pipe_out);
 	    (void)pipe(pipe_err);
-	    
+
 	    /* Redirect stdout */
 	    (void)close(1);
 	    (void)dup(pipe_out[1]);
 	    (void)close(pipe_out[1]);
-	    
+
 	    /* Redirect stderr */
 	    (void)close(2);
 	    (void)dup(pipe_err[1]);
@@ -753,8 +753,8 @@ stdin_input(ClientData clientData, int mask)
 
 #ifndef _WIN32
     fd = (long)clientData;
-#else	
-    fd = (HANDLE)clientData;      
+#else
+    fd = (HANDLE)clientData;
 #endif
 
     /* When not in cbreak mode, just process an entire line of input, and
@@ -784,7 +784,7 @@ stdin_input(ClientData clientData, int mask)
 	bu_vls_trunc(&curr_cmd_list->cl_more_default, 0);
 
 	/* If a complete line was entered, attempt to execute command. */
-	
+
 	if (Tcl_CommandComplete(bu_vls_addr(&input_str_prefix))) {
 	    curr_cmd_list = &head_cmd_list;
 	    if(curr_cmd_list->cl_tie)
@@ -855,7 +855,7 @@ stdin_input(ClientData clientData, int mask)
 #ifdef TRY_STDIN_INPUT_HACK
     }
     }
-#endif	
+#endif
 }
 
 /* Process character */
@@ -886,7 +886,7 @@ mged_process_char(char ch)
 
 #define SPACES "                                                                                                                                                                                                                                                                                                           "
   /* ANSI arrow keys */
-    
+
   if (escaped && bracketed) {
     if (ch == 'A') ch = CTRL_P;
     if (ch == 'B') ch = CTRL_N;
@@ -927,7 +927,7 @@ mged_process_char(char ch)
 
     /* If this forms a complete command (as far as the Tcl parser is
        concerned) then execute it. */
-	
+
     if (Tcl_CommandComplete(bu_vls_addr(&input_str_prefix))) {
       curr_cmd_list = &head_cmd_list;
       if(curr_cmd_list->cl_tie)
@@ -1064,7 +1064,7 @@ mged_process_char(char ch)
       pr_beep();
       break;
     }
-    
+
     bu_log("%c", bu_vls_addr(&input_str)[input_str_index]);
     ++input_str_index;
     escaped = bracketed = 0;
@@ -1135,26 +1135,26 @@ mged_process_char(char ch)
       char *start;
       char *curr;
       int len;
-      
+
       start = bu_vls_addr(&input_str);
       curr = start + input_str_index - 1;
-      
+
       /* skip spaces */
       while(curr > start && *curr == ' ')
 	--curr;
-      
+
       /* find next space */
       while(curr > start && *curr != ' ')
 	--curr;
-      
+
       bu_vls_init(&temp);
       bu_vls_strcat(&temp, start+input_str_index);
-      
+
       if(curr == start)
 	input_str_index = 0;
       else
 	input_str_index = curr - start + 1;
-      
+
       len = bu_vls_strlen(&input_str);
       bu_vls_trunc(&input_str, input_str_index);
       pr_prompt();
@@ -1164,7 +1164,7 @@ mged_process_char(char ch)
       bu_vls_vlscat(&input_str, &temp);
       bu_vls_free(&temp);
     }
-  
+
   escaped = bracketed = 0;
   break;
   case 'd':
@@ -1336,7 +1336,7 @@ std_out_or_err(ClientData clientData, int mask)
   int fd = (int)((long)clientData & 0xFFFF);	/* fd's will be small */
 #else
   HANDLE fd = clientData;
-#endif  
+#endif
   int count;
   struct bu_vls vls;
   char line[MAXLINE];
@@ -1388,7 +1388,7 @@ event_check( int non_blocking )
 	/* When in non_blocking-mode, we want to deal with as many events
 	   as possible before the next redraw (multiple keypresses, redraw
 	   events, etc... */
-	
+
 	while (Tcl_DoOneEvent(TCL_ALL_EVENTS|TCL_DONT_WAIT));
     } else {
       /* Wait for an event, then handle it */
@@ -1397,7 +1397,7 @@ event_check( int non_blocking )
       /* Handle any other events in the queue */
       while (Tcl_DoOneEvent(TCL_ALL_EVENTS|TCL_DONT_WAIT));
     }
-    
+
     non_blocking = 0;
 
     if (dbip == DBI_NULL)
@@ -1431,7 +1431,7 @@ event_check( int non_blocking )
 		    edit_rate_model_rotate[X],
 		    edit_rate_model_rotate[Y],
 		    edit_rate_model_rotate[Z]);
-	
+
       Tcl_Eval(interp, bu_vls_addr(&vls));
       bu_vls_free(&vls);
 
@@ -1466,7 +1466,7 @@ event_check( int non_blocking )
 		    edit_rate_object_rotate[X],
 		    edit_rate_object_rotate[Y],
 		    edit_rate_object_rotate[Z]);
-	
+
       Tcl_Eval(interp, bu_vls_addr(&vls));
       bu_vls_free(&vls);
 
@@ -1501,7 +1501,7 @@ event_check( int non_blocking )
 		    edit_rate_view_rotate[X],
 		    edit_rate_view_rotate[Y],
 		    edit_rate_view_rotate[Z]);
-	
+
       Tcl_Eval(interp, bu_vls_addr(&vls));
       bu_vls_free(&vls);
 
@@ -1535,7 +1535,7 @@ event_check( int non_blocking )
 		    edit_rate_model_tran[X] * 0.05 * view_state->vs_vop->vo_scale * base2local,
 		    edit_rate_model_tran[Y] * 0.05 * view_state->vs_vop->vo_scale * base2local,
 		    edit_rate_model_tran[Z] * 0.05 * view_state->vs_vop->vo_scale * base2local);
-	
+
       Tcl_Eval(interp, bu_vls_addr(&vls));
       bu_vls_free(&vls);
 
@@ -1569,7 +1569,7 @@ event_check( int non_blocking )
 		    edit_rate_view_tran[X] * 0.05 * view_state->vs_vop->vo_scale * base2local,
 		    edit_rate_view_tran[Y] * 0.05 * view_state->vs_vop->vo_scale * base2local,
 		    edit_rate_view_tran[Z] * 0.05 * view_state->vs_vop->vo_scale * base2local);
-	
+
       Tcl_Eval(interp, bu_vls_addr(&vls));
       bu_vls_free(&vls);
 
@@ -1596,7 +1596,7 @@ event_check( int non_blocking )
       non_blocking++;
       bu_vls_init(&vls);
       bu_vls_printf(&vls, "knob -i -e aS %f\n", edit_rate_scale * 0.01);
-	
+
       Tcl_Eval(interp, bu_vls_addr(&vls));
       bu_vls_free(&vls);
 
@@ -1622,7 +1622,7 @@ event_check( int non_blocking )
 		      view_state->vs_rate_model_rotate[X],
 		      view_state->vs_rate_model_rotate[Y],
 		      view_state->vs_rate_model_rotate[Z]);
-	
+
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
       }
@@ -1676,7 +1676,7 @@ event_check( int non_blocking )
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
       }
-      
+
       curr_dm_list = save_dm_list;
     }
 
@@ -1885,8 +1885,8 @@ log_event(char *event, char *arg)
 	);
 #else
 	{
-		char uname[256]; 
-		DWORD dwNumBytes = 256; 
+		char uname[256];
+		DWORD dwNumBytes = 256;
 		GetUserName(uname, &dwNumBytes);
 		bu_vls_printf(&line, "%s [%s] time=%ld uid=%d (%s) %s\n",
 		      event,
@@ -1953,8 +1953,8 @@ mged_finish(int exitcode)
 #endif
 
 	if (cbreak_mode > 0)
-	    reset_Tty(fileno(stdin)); 
-	    
+	    reset_Tty(fileno(stdin));
+
 	exit( exitcode );
 }
 
@@ -2036,7 +2036,7 @@ reset_input_strings()
 
 /*
  *  			N E W _ M A T S
- *  
+ *
  *  Derive the inverse and editing matrices, as required.
  *  Centralized here to simplify things.
  */
@@ -2147,7 +2147,7 @@ do_rc(void)
 		    break;
 	      }
 	}
-	
+
 	fclose( fp );
 	if( bogus ) {
 	    bu_log("\nWARNING: The new format of the \"set\" command is:\n");
@@ -2506,20 +2506,20 @@ f_closedb(
 #else
 	Tcl_Eval(interp, "rename db \"\"; rename .inmem \"\"");
 #endif
-	
+
 	log_event( "CEASE", "(close)" );
 
 	/* update any and all other displays */
 	{
 		register struct dm_list *dmlp;
-		
+
 		/* update local2base and base2local variables for all view objects */
 		FOR_ALL_DISPLAYS(dmlp, &head_dm_list.l) {
 			dmlp->dml_view_state->vs_vop->vo_local2base = dbip->dbi_local2base;
 			dmlp->dml_view_state->vs_vop->vo_base2local = dbip->dbi_base2local;
 		}
 	}
-	
+
 	/* wipe out the global pointers */
 	dbip = DBI_NULL;
 	rt_material_head = MATER_NULL;
@@ -2541,7 +2541,7 @@ mged_bomb_hook(genptr_t clientData, genptr_t str)
 	bu_vls_printf(&vls, "update; $mbh_dialog activate");
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
-	
+
 	return TCL_OK;
 }
 

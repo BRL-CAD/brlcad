@@ -26,7 +26,7 @@
  *
  *  Author -
  *	Paul J. Tanenbaum
- *  
+ *
  *  Source -
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5066
@@ -305,7 +305,7 @@ cmd_export_body(ClientData clientData, Tcl_Interp *interp, int argc, char **argv
 	return TCL_ERROR;
     }
     RT_INIT_DB_INTERNAL(&intern);
-    if ( rt_db_get_internal5( &intern, dp, dbip, NULL, &rt_uniresource) 
+    if ( rt_db_get_internal5( &intern, dp, dbip, NULL, &rt_uniresource)
 	!= ID_BINUNIF
      || db_get_external( &ext, dp, dbip ) < 0 ) {
 	(void)signal( SIGINT, SIG_IGN );
@@ -324,7 +324,7 @@ cmd_export_body(ClientData clientData, Tcl_Interp *interp, int argc, char **argv
 #ifndef _WIN32
     if( (fd = creat( argv[1], S_IRWXU | S_IRGRP | S_IROTH  )) == -1 ) {
 #else
-		if( (fd = creat( argv[1], _S_IREAD | _S_IWRITE  )) == -1 ) { 
+		if( (fd = creat( argv[1], _S_IREAD | _S_IWRITE  )) == -1 ) {
 #endif
 	bu_free_external( &ext );
 	bu_vls_init( &vls );

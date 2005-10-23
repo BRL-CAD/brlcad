@@ -26,7 +26,7 @@
  *	SLAD/BVLD/VMB
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005
- *  
+ *
  */
 
 #include "./iges_struct.h"
@@ -64,7 +64,7 @@ int vert_de;
 		return( (struct iges_vertex_list *)NULL );
 	else
 		return( v_list->next );
-	
+
 }
 
 /*

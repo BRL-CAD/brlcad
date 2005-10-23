@@ -33,7 +33,7 @@
  *  Authors -
  *	Michael John Muuss
  *      Glenn Durfee
- *  
+ *
  *  Source -
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
@@ -191,7 +191,7 @@ rt_tcl_pr_cutter( Tcl_Interp *interp, const union cutter *cutp )
 				cutp->nugn.nu_axis[i]->nu_epos,
 				cutp->nugn.nu_axis[i]->nu_width );
 			bu_vls_printf( &str, " cells_per_axis %d",
-				cutp->nugn.nu_cells_per_axis );	
+				cutp->nugn.nu_cells_per_axis );
 			bu_vls_printf( &str, " stepsize %d}",
 				cutp->nugn.nu_stepsize );
 		}
@@ -353,7 +353,7 @@ rt_tcl_a_miss( struct application *ap )
  *
  *	set tgt [bu_get_value_by_keyword V [concat type [.inmem get LIGHT]]]
  *	.rt shootray {20 -13.5 20} at $tgt
- *		
+ *
  *
  *  Returns -
  *	This "shootray" operation returns a nested set of lists. It returns
@@ -585,7 +585,7 @@ static struct dbcmdstruct rt_tcl_rt_cmds[] = {
  *        procname dbCmdName ?args?
  * Returns: result of cmdName LIBRT operation.
  *
- * Objects of type 'procname' must have been previously created by 
+ * Objects of type 'procname' must have been previously created by
  * the 'rt_gettrees' operation performed on a database object.
  *
  * Example -
@@ -713,7 +713,7 @@ db_tcl_tree_describe(Tcl_DString *dsp, const union tree *tp)
 		db_tcl_tree_describe( dsp, tp->tr_b.tb_left );
 		Tcl_DStringEndSublist( dsp );
 		break;
-			
+
 	case OP_NOP:
 		Tcl_DStringAppendElement( dsp, "N" );
 		break;
@@ -939,7 +939,7 @@ rt_comb_tclget(Tcl_Interp *interp, const struct rt_db_internal *intern, const ch
 		} else {
 			Tcl_DStringAppendElement( &ds, "no" );
 		}
-		
+
 		if( comb->rgb_valid ) {
 			Tcl_DStringAppendElement( &ds, "rgb" );
 			sprintf( buf, "%d %d %d", V3ARGS(comb->rgb) );
@@ -1526,8 +1526,8 @@ rt_tcl_setup(Tcl_Interp *interp)
 
 	Tcl_SetVar(interp, "rt_version", (char *)rt_version+5, TCL_GLOBAL_ONLY);
 	Tcl_LinkVar(interp, "rt_bot_minpieces", (char *)&rt_bot_minpieces, TCL_LINK_INT);
-	
-	Tcl_LinkVar(interp, "rt_bot_tri_per_piece", 
+
+	Tcl_LinkVar(interp, "rt_bot_tri_per_piece",
 		    (char *)&rt_bot_tri_per_piece, TCL_LINK_INT);
 }
 

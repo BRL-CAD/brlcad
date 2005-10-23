@@ -21,7 +21,7 @@
 /** @file pkg.h
  *
  *  Data structures and manifest constants for use with the PKG library.
- *  
+ *
  *  Authors -
  *	Michael John Muuss
  *	Charles M. Kennedy

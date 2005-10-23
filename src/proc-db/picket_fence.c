@@ -46,7 +46,7 @@ int main(int argc, char *argv[])
   char w2name[256];
   char firstname[256];
   char prefix[256];
-  
+
   struct wmember wm;
   struct wmember wm2;
   struct wmember fwm;
@@ -97,7 +97,7 @@ int main(int argc, char *argv[])
   fastf_t zstep;
 
   int round = 0;
-  
+
   if (argc < 10)
     {
       fprintf(stderr, "Usage: pf <filename> <prefix> <height in mm> <spacing> <x0> <y0> <z0> ... <xn> <yn> <zn> [-r]\n");
@@ -112,7 +112,7 @@ int main(int argc, char *argv[])
     exit(2);
   }
   mk_id(fp_db, "Picket Fence");
-  
+
   BU_LIST_INIT(&wm.l);
   BU_LIST_INIT(&wm2.l);
   BU_LIST_INIT(&fwm.l);
@@ -130,7 +130,7 @@ int main(int argc, char *argv[])
       z1 = (fastf_t)atof(argv[10 + (3 * j)]);
       height = (fastf_t)atof(argv[3]);
       width = sqrt(((x1 - x0) * (x1 - x0)) + ((y1 - y0) * (y1 - y0)));;
-      pwidth = ((fastf_t)width / 
+      pwidth = ((fastf_t)width /
 		(fastf_t)(((int)(width / (51+ps))) * (51+ps))) * (51+ps);
       numposts = (width / pwidth);
       zstep = (z1 - z0) / numposts;
@@ -151,16 +151,16 @@ int main(int argc, char *argv[])
 
       sprintf(w1name, "%swedge1-%ld.s", prefix, j);
       mk_wedge(fp_db, w1name, w0, w0x, w0z, xlen, ylen, zlen, x_top_len);
-      
+
       sprintf(w2name, "%swedge2-%ld.s", prefix, j);
       mk_wedge(fp_db, w2name, w1, w1x, w1z, xlen, ylen, zlen, x_top_len);
-      
+
       sprintf(name, "%spost-%ld.s", prefix, j);
       mk_arb8(fp_db, name, s0);
       mk_addmember(name, &wm.l, NULL, WMOP_UNION);
       mk_addmember(w1name, &wm.l, NULL, WMOP_SUBTRACT);
       mk_addmember(w2name, &wm.l, NULL, WMOP_SUBTRACT);
-      
+
       if (round)
 	{
 	  sprintf(name, "%spost_c.s", prefix);
@@ -172,17 +172,17 @@ int main(int argc, char *argv[])
       sprintf(name, "%sls%ld.s", prefix, j);
       mk_arb8(fp_db, name, s1);
       mk_addmember(name, &swm.l, NULL, WMOP_UNION);
-      
+
       for (k = 0; k < 8; k++)
 	s1[(3 * k) + 2] += (height / 3);
-      
+
       sprintf(name, "%shs%ld.s", prefix, j);
       mk_arb8(fp_db, name, s1);
       mk_addmember(name, &swm.l, NULL, WMOP_UNION);
-      
+
       sprintf(pname, "%sp-%ld.c", prefix, j);
       mk_lcomb(fp_db, pname, &wm, 0, "plastic", "", "50 30 10", 0);
-      
+
       for (i = 0; i < numposts; i++)
 	{
 	  sprintf(name, "%sp%ld-%ld.r", prefix, j, i);
@@ -198,7 +198,7 @@ int main(int argc, char *argv[])
 	  nwm->wm_mat[11] = i * zstep;
 	  nwm->wm_mat[15] = 1;
 	}
-      
+
       sprintf(name, "%ssec%ld.c", prefix, j);
       mk_lcomb(fp_db, name, &swm, 0, "plastic", "", "50 50 20", 0);
       nwm = mk_addmember(name, &fwm.l, NULL, WMOP_SUBTRACT);

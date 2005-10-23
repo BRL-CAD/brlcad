@@ -53,7 +53,7 @@ void isst_python_init() {
   PyImport_AddModule("adrt");
   Py_InitModule("adrt", ISST_Methods);
   PyRun_SimpleString("import adrt");
-  
+
 
   /* Redirect the output */
   PyRun_SimpleString("\

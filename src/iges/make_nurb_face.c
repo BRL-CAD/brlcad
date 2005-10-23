@@ -26,7 +26,7 @@
  *	SLAD/BVLD/VMB
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005
- *  
+ *
  */
 #ifndef lint
 static const char RCSid[] = "@(#)$Header$ (BRL)";
@@ -41,7 +41,7 @@ struct shell *s;
 struct faceuse *fu;
 int loop_entityno;
 int face_orient;
-{ 
+{
 	int i,j,k;
 	int entity_type;
 	int no_of_edges;

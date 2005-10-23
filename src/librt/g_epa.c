@@ -26,46 +26,46 @@
  *	Intersect a ray with an Elliptical Paraboloid.
  *
  *  Algorithm -
- *  
+ *
  *  Given V, H, R, and B, there is a set of points on this epa
- *  
+ *
  *  { (x,y,z) | (x,y,z) is on epa }
- *  
+ *
  *  Through a series of Affine Transformations, this set of points will be
  *  transformed into a set of points on an epa located at the origin
  *  with a semi-major axis R1 along the +Y axis, a semi-minor axis R2
  *  along the -X axis, a height H along the -Z axis, and a vertex V at
  *  the origin.
- *  
- *  
+ *
+ *
  *  { (x',y',z') | (x',y',z') is on epa at origin }
  *
  *  The transformation from X to X' is accomplished by:
- *  
+ *
  *  X' = S(R( X - V ))
- *  
+ *
  *  where R(X) =  ( R1/(-|R1|) )
  *  		 (  R2/( |R2|)  ) . X
  *  		  ( H /(-|H |) )
- *  
+ *
  *  and S(X) =	 (  1/|R1|   0     0   )
  *  		(    0    1/|R2|   0    ) . X
  *  		 (   0      0   1/|H | )
- *  
+ *
  *  To find the intersection of a line with the surface of the epa,
  *  consider the parametric line L:
- *  
+ *
  *  	L : { P(n) | P + t(n) . D }
- *  
+ *
  *  Call W the actual point of intersection between L and the epa.
  *  Let W' be the point of intersection between L' and the unit epa.
- *  
+ *
  *  	L' : { P'(n) | P' + t(n) . D' }
- *  
+ *
  *  W = invR( invS( W' ) ) + V
- *  
+ *
  *  Where W' = k D' + P'.
- *  
+ *
  *  If Dy' and Dz' are both 0, then there is no hit on the epa;
  *  but the end plates need checking.  If there is now only 1 hit
  *  point, the top plate needs to be checked as well.
@@ -82,21 +82,21 @@
  *  b = |Breadth| = 1.0
  *  h = |Height| = 1.0
  *  r = 1.0
- *  
+ *
  *  The quadratic formula yields k (which is constant):
  *
  *  k = [ -B +/- sqrt( B**2 - 4 * A * C )] / (2.0 * A)
- *  
+ *
  *  Now, D' = S( R( D ) )
  *  and  P' = S( R( P - V ) )
- *  
+ *
  *  Substituting,
- *  
+ *
  *  W = V + invR( invS[ k *( S( R( D ) ) ) + S( R( P - V ) ) ] )
  *    = V + invR( ( k * R( D ) ) + R( P - V ) )
  *    = V + k * D + P - V
  *    = k * D + P
- *  
+ *
  *  Note that ``k'' is constant, and is the same in the formulations
  *  for both W and W'.
  *
@@ -105,16 +105,16 @@
  *
  *  NORMALS.  Given the point W on the surface of the epa,
  *  what is the vector normal to the tangent plane at that point?
- *  
+ *
  *  Map W onto the unit epa, ie:  W' = S( R( W - V ) ).
- *  
+ *
  *  Plane on unit epa at W' has a normal vector N' where
  *
  *  N' = <Wx', Wy', -.5>.
- *  
+ *
  *  The plane transforms back to the tangent plane at W, and this
  *  new plane (on the original epa) has a normal vector of N, viz:
- *  
+ *
  *  N = inverse[ transpose( inverse[ S o R ] ) ] ( N' )
  *
  *  because if H is perpendicular to plane Q, and matrix M maps from
@@ -146,12 +146,12 @@
  *
  *  Authors -
  *	Michael J. Markowski
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5066
- *  
+ *
  */
 /*@}*/
 
@@ -199,15 +199,15 @@ const struct bu_structparse rt_epa_parse[] = {
 
 /**
  *  			R T _ E P A _ P R E P
- *  
+ *
  *  Given a pointer to a GED database record, and a transformation matrix,
  *  determine if this is a valid EPA, and if so, precompute various
  *  terms of the formula.
- *  
+ *
  *  Returns -
  *  	0	EPA is OK
  *  	!0	Error in description
- *  
+ *
  *  Implicit return -
  *  	A struct epa_specific is created, and it's address is stored in
  *  	stp->st_specific for use by epa_shot().
@@ -297,7 +297,7 @@ rt_epa_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 	stp->st_bradius = sqrt(0.25*magsq_h + r2*r2 + r1*r1);
 	/* approximate bounding radius */
 	stp->st_aradius = stp->st_bradius;
-	
+
 	/* cheat, make bounding RPP by enclosing bounding sphere */
 	stp->st_min[X] = stp->st_center[X] - stp->st_bradius;
 	stp->st_max[X] = stp->st_center[X] + stp->st_bradius;
@@ -332,11 +332,11 @@ rt_epa_print(register const struct soltab *stp)
 
 /**
  *  			R T _ E P A _ S H O T
- *  
+ *
  *  Intersect a ray with a epa.
  *  If an intersection occurs, a struct seg will be acquired
  *  and filled in.
- *  
+ *
  *  Returns -
  *  	0	MISS
  *	>0	HIT
@@ -364,7 +364,7 @@ rt_epa_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 	{
 		FAST fastf_t	a, b, c;	/* coeffs of polynomial */
 		FAST fastf_t	disc;		/* disc of radical */
-		
+
 		a = dprime[X] * dprime[X] + dprime[Y] * dprime[Y];
 		b = 2*(dprime[X] * pprime[X] + dprime[Y] * pprime[Y])
 			- dprime[Z];
@@ -429,7 +429,7 @@ check_plates:
 			hitp++;
 		}
 	}
-	
+
 	if( hitp != &hits[2] )
 		return(0);	/* MISS */
 
@@ -468,14 +468,14 @@ rt_epa_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
            		       /* An array of ray pointers */
                                /* array of segs (results returned) */
    		  	       /* Number of ray/object pairs */
-                  	    
+
 {
 	rt_vstub( stp, rp, segp, n, ap );
 }
 
 /**
  *  			R T _ E P A _ N O R M
- *  
+ *
  *  Given ONE ray distance, return the normal and entry/exit point.
  */
 void
@@ -533,7 +533,7 @@ rt_epa_curve(register struct curvature *cvp, register struct hit *hitp, struct s
 		 */
 		bn_vec_ortho( u, hitp->hit_normal );
 		VCROSS( v, hitp->hit_normal, u );
-		
+
 		/* get the saved away scale factor */
 		scale = - hitp->hit_vpriv[X];
 
@@ -564,7 +564,7 @@ rt_epa_curve(register struct curvature *cvp, register struct hit *hitp, struct s
 
 /**
  *  			R T _ E P A _ U V
- *  
+ *
  *  For a hit on the surface of an epa, return the (u,v) coordinates
  *  of the hit point, 0 <= u,v <= 1.
  *  u = azimuth
@@ -650,7 +650,7 @@ rt_epa_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 	point_t		p1;
 	struct rt_pt_node	*pos_a, *pos_b, *pts_a, *pts_b, *rt_ptalloc(void);
 	vect_t		A, Au, B, Bu, Hu, V, Work;
-	
+
 #ifndef NO_MAGIC_CHECKING
 	RT_CK_DB_INTERNAL(ip);
 #endif
@@ -661,7 +661,7 @@ rt_epa_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 	/*
 	 *	make sure epa description is valid
 	 */
-	 
+
 	/* compute |A| |H| */
 	mag_a = MAGSQ( xip->epa_Au );	/* should already be unit vector */
 	mag_h = MAGNITUDE( xip->epa_H );
@@ -724,7 +724,7 @@ rt_epa_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 	/*
 	 *	build epa from 2 parabolas
 	 */
-	 
+
 	/* approximate positive half of parabola along semi-minor axis */
 	pts_b = rt_ptalloc();
 	pts_b->next = rt_ptalloc();
@@ -756,7 +756,7 @@ rt_epa_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 		pos_b = pos_b->next;
 	}
 	pos_a->next = NULL;
-	
+
 	/* see if any segments need further breaking up */
 	recalc_b = 0;
 	na = 0;
@@ -801,7 +801,7 @@ rt_epa_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 		}
 		pos_b->next = NULL;
 	}
-	
+
 	/* make array of ptrs to epa ellipses */
 	ellipses = (fastf_t **)bu_malloc( nell * sizeof(fastf_t *), "fastf_t ell[]");
 	/* keep track of whether pts in each ellipse are doubled or not */
@@ -833,7 +833,7 @@ rt_epa_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 		ellipses[i] = (fastf_t *)bu_malloc(3*(nseg+1)*sizeof(fastf_t),
 			"pts ell");
 		rt_ell( ellipses[i], V, A, B, nseg );
-		
+
 		i++;
 		pos_a = pos_a->next;
 		pos_b = pos_b->next;
@@ -938,7 +938,7 @@ rt_ell(register fastf_t *ov, register const fastf_t *V, const fastf_t *A, const 
 {
 	fastf_t	ang, theta, x, y;
 	int	n;
-	
+
 	theta = 2 * bn_pi / sides;
 	ang = 0.;
 	/* make ellipse regardless of whether it meets req's */
@@ -963,7 +963,7 @@ rt_ell_ang(fastf_t *p1, fastf_t a, fastf_t b, fastf_t dtol, fastf_t ntol)
 	fastf_t	dist, intr, m, theta0, theta1;
 	point_t	mpt, p0;
 	vect_t	norm_line, norm_ell;
-	
+
 	VSET( p0, a, 0., 0. );
 	/* slope and intercept of segment */
 	m = ( p1[Y] - p0[Y] ) / ( p1[X] - p0[X] );
@@ -1022,7 +1022,7 @@ rt_epa_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	struct vertex	*apex_v;
 	struct vertexuse *vu;
 	struct faceuse *fu;
-	
+
 	RT_CK_DB_INTERNAL(ip);
 	xip = (struct rt_epa_internal *)ip->idb_ptr;
 	RT_EPA_CK_MAGIC(xip);
@@ -1030,7 +1030,7 @@ rt_epa_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	/*
 	 *	make sure epa description is valid
 	 */
-	 
+
 	/* compute |A| |H| */
 	mag_a = MAGSQ( xip->epa_Au );	/* should already be unit vector */
 	mag_h = MAGNITUDE( xip->epa_H );
@@ -1096,7 +1096,7 @@ rt_epa_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	/*
 	 *	build epa from 2 parabolas
 	 */
-	 
+
 	/* approximate positive half of parabola along semi-minor axis */
 	pts_b = rt_ptalloc();
 	pts_b->next = rt_ptalloc();
@@ -1128,7 +1128,7 @@ rt_epa_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 		pos_b = pos_b->next;
 	}
 	pos_a->next = NULL;
-	
+
 	/* see if any segments need further breaking up */
 	recalc_b = 0;
 	na = 0;
@@ -1172,7 +1172,7 @@ rt_epa_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 		}
 		pos_b->next = NULL;
 	}
-	
+
 	/* make array of ptrs to epa ellipses */
 	ellipses = (fastf_t **)bu_malloc( nell * sizeof(fastf_t *), "fastf_t ell[]");
 	/* keep track of whether pts in each ellipse are doubled or not */
@@ -1232,10 +1232,10 @@ rt_epa_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	/*
 	 *	put epa geometry into nmg data structures
 	 */
-	 
+
 	*r = nmg_mrsv( m );	/* Make region, empty shell, vertex */
 	s = BU_LIST_FIRST(shell, &(*r)->s_hd);
-	
+
 	/* vertices of ellipses of epa */
 	vells = (struct vertex ***)
 		bu_malloc(nell*sizeof(struct vertex **), "vertex [][]");
@@ -1262,7 +1262,7 @@ rt_epa_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 
 	/* Mark the edges of this face as real, this is the only real edge */
 	(void)nmg_mark_edges_real( &outfaceuses[0]->l.magic );
-	
+
 	/* connect ellipses with triangles */
 	for (i = nell-2; i >= 0; i--) {	/* skip top ellipse */
 		int bottom, top;
@@ -1276,7 +1276,7 @@ rt_epa_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 		/* make triangular faces */
 		for (j = 0; j < nseg; j++) {
 			jj = j + j;	/* top ellipse index */
-		
+
 			if (pts_dbl[top]) {
 				/* first triangle */
 			        vertp[1] = vells[top][jj+1];
@@ -1373,7 +1373,7 @@ rt_epa_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 			goto fail;
 		}
 	}
-	
+
 	/* Associate the face geometry */
 	for (i=0 ; i < face ; i++) {
 		if( nmg_fu_planeeqn( outfaceuses[i], tol ) < 0 )
@@ -1425,7 +1425,7 @@ rt_epa_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 
 	/* XXX just for testing, to make up for loads of triangles ... */
 	nmg_shell_coplanar_face_merge( s, tol, 1 );
-	
+
 	/* free mem */
 	bu_free( (char *)outfaceuses, "faceuse []");
 	for (i = 0; i < nell; i++) {
@@ -1529,19 +1529,19 @@ rt_epa_export(struct bu_external *ep, const struct rt_db_internal *ip, double lo
 	}
 
 	mag_h = MAGNITUDE(xip->epa_H);
-	
+
 	if ( mag_h < RT_LEN_TOL
 		|| xip->epa_r1 < RT_LEN_TOL
 		|| xip->epa_r2 < RT_LEN_TOL) {
 		bu_log("rt_epa_export: not all dimensions positive!\n");
 		return(-1);
 	}
-	
+
 	if ( !NEAR_ZERO( VDOT(xip->epa_Au, xip->epa_H)/mag_h, RT_DOT_TOL) ) {
 		bu_log("rt_epa_export: Au and H are not perpendicular!\n");
 		return(-1);
 	}
-	
+
 	if (xip->epa_r2 > xip->epa_r1) {
 		bu_log("rt_epa_export: semi-minor axis cannot be longer than semi-major axis!\n");
 		return(-1);
@@ -1630,19 +1630,19 @@ rt_epa_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
 	}
 
 	mag_h = MAGNITUDE(xip->epa_H);
-	
+
 	if ( mag_h < RT_LEN_TOL
 		|| xip->epa_r1 < RT_LEN_TOL
 		|| xip->epa_r2 < RT_LEN_TOL) {
 		bu_log("rt_epa_export: not all dimensions positive!\n");
 		return(-1);
 	}
-	
+
 	if ( !NEAR_ZERO( VDOT(xip->epa_Au, xip->epa_H)/mag_h, RT_DOT_TOL) ) {
 		bu_log("rt_epa_export: Au and H are not perpendicular!\n");
 		return(-1);
 	}
-	
+
 	if (xip->epa_r2 > xip->epa_r1) {
 		bu_log("rt_epa_export: semi-minor axis cannot be longer than semi-major axis!\n");
 		return(-1);
@@ -1690,10 +1690,10 @@ rt_epa_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
 		xip->epa_H[Z] * mm2local,
 		MAGNITUDE(xip->epa_H) * mm2local);
 	bu_vls_strcat( str, buf );
-	
+
 	sprintf(buf, "\tA=%g\n", xip->epa_r1 * mm2local);
 	bu_vls_strcat( str, buf );
-	
+
 	sprintf(buf, "\tB=%g\n", xip->epa_r2 * mm2local);
 	bu_vls_strcat( str, buf );
 

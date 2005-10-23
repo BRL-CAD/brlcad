@@ -36,11 +36,11 @@
  *
  *  Author -
  *	Michael John Muuss
- *  
+ *
  *  Source -
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
- *  
+ *
  */
 /*@}*/
 
@@ -286,7 +286,7 @@ bu_semaphore_init(unsigned int nsemaphores)
 	 *  Begin vendor-specific initialization sections.
 	 */
 
-#	if defined(alliant)	
+#	if defined(alliant)
 	for( i=0; i < nsemaphores; i++ )  {
 		bu_semaphores[i].magic = BU_SEMAPHORE_MAGIC;
 		(void) initialize_lock( &bu_semaphores[i].c );
@@ -347,7 +347,7 @@ bu_semaphore_init(unsigned int nsemaphores)
 			fprintf(stderr, "bu_semaphore_init(): mutex_init() failed on %d\n", i);
 			abort();
 		}
-		
+
 	}
 #	endif
 #	if defined(HAVE_PTHREAD_H) && !defined(sgi)
@@ -397,7 +397,7 @@ bu_semaphore_acquire(unsigned int i)
 	 *  Begin vendor-specific initialization sections.
 	 */
 
-#	if defined(alliant)	
+#	if defined(alliant)
 	(void) lock( &bu_semaphores[i].c );
 #	endif
 
@@ -468,7 +468,7 @@ bu_semaphore_release(unsigned int i)
 	 *  Begin vendor-specific initialization sections.
 	 */
 
-#	if defined(alliant)	
+#	if defined(alliant)
 	(void) unlock( &bu_semaphores[i].c );
 #	endif
 

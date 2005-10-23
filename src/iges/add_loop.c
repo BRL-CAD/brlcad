@@ -26,7 +26,7 @@
  *	SLAD/BVLD/VMB
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005
- *  
+ *
  */
 #include "./iges_struct.h"
 #include "./iges_extern.h"
@@ -51,7 +51,7 @@ int face_orient;
 			fu , nmg_orientation( fu->orientation ) ,
 			fu->fumate_p , nmg_orientation( fu->fumate_p->orientation ) );
 		rt_bomb( "Faceuse and mate have no OT_SAME use\n" );
-			
+
 	}
 
 	/* first make a new face from the loop */
@@ -68,9 +68,9 @@ int face_orient;
 			fu_tmp , nmg_orientation( fu_tmp->orientation ) ,
 			fu_tmp->fumate_p , nmg_orientation( fu_tmp->fumate_p->orientation ) );
 		rt_bomb( "Faceuse and mate have no OT_SAME use\n" );
-			
+
 	}
-	
+
 
 	/* make sure OT_SAME use of this face is same direction as fu */
 	NMG_GET_FU_PLANE( pl_fu , fu );

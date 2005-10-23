@@ -19,7 +19,7 @@
  * information.
  */
 
-/** \defgroup nmg NonManifoldGeometry 
+/** \defgroup nmg NonManifoldGeometry
  * \ingroup librt
  */
 
@@ -34,7 +34,7 @@
  *  Authors -
  *	Lee A. Butler
  *	Michael John Muuss
- *  
+ *
  *  Source -
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
@@ -99,10 +99,10 @@ nmg_has_dangling_faces(long int *magic_p, const char *manifolds)
 {
 	struct model			*m;
 	struct dangling_faceuse_state	st;
-	static const struct nmg_visit_handlers	handlers = {NULL, NULL, NULL, NULL, NULL, 
-							    NULL, NULL, NULL, nmg_dangling_handler, NULL, 
-							    NULL, NULL, NULL, NULL, NULL, 
-							    NULL, NULL, NULL, NULL, NULL, 
+	static const struct nmg_visit_handlers	handlers = {NULL, NULL, NULL, NULL, NULL,
+							    NULL, NULL, NULL, nmg_dangling_handler, NULL,
+							    NULL, NULL, NULL, NULL, NULL,
+							    NULL, NULL, NULL, NULL, NULL,
 							    NULL, NULL, NULL, NULL, NULL};
 	/* handlers.bef_faceuse = nmg_dangling_handler; */
 
@@ -128,8 +128,8 @@ nmg_has_dangling_faces(long int *magic_p, const char *manifolds)
  */
 void
 nmg_show_each_loop(struct shell *s, long int **classlist, int new, int fancy, const char *str)
-            	   
-    		              
+
+
    		    		/* non-zero means flush previous vlist */
           	     		/* non-zero means pause after the display */
 {
@@ -243,7 +243,7 @@ crack_topA:
 				if( eu->vu_p->v_p != eu_next->eumate_p->vu_p->v_p )
 					continue;
 
-				/* check if vertex at apex is in other shell 
+				/* check if vertex at apex is in other shell
 				 * if so, we need this vertex, can't kill crack
 				 */
 				if( nmg_find_v_in_shell( eu_next->vu_p->v_p, sB, 0 ) )
@@ -731,7 +731,7 @@ nmg_s_radial_check( sB, tol );
 	/*
 	 *  Allocate storage for classlist[].
 	 *  Get all 8 lists at once, and just build pointers for the rest.
-	 *  XXX In some cases, number of items may grow 
+	 *  XXX In some cases, number of items may grow
 	 *  XXX (e.g. added vu's, loops) as things are demoted, etc.
 	 *  XXX Try to accomodate here by reserving some extra table space.
 	 *
@@ -917,7 +917,7 @@ nmg_s_radial_check( sB, tol );
 	/*
 	 *  Allocate storage for classlist[].
 	 *  Get all 8 lists at once, and just build pointers for the rest.
-	 *  XXX In some cases, number of items may grow 
+	 *  XXX In some cases, number of items may grow
 	 *  XXX (e.g. added vu's, loops) as things are demoted, etc.
 	 *  XXX Try to accomodate here by reserving some extra table space.
 	 *

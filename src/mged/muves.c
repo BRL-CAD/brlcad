@@ -145,7 +145,7 @@ Free_muves_comp(struct bu_list *hp)
 	}
 }
 
-/*	
+/*
  *	F _ R E A D _ M U V E S
  *
  *  routine to read MUVES input files and create structures to hold the data

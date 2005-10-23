@@ -118,7 +118,7 @@ void bu_rgb_to_hsv (unsigned char *rgb, fastf_t *hsv)
 	*sat = delta / max;
     else
 	*sat = 0.0;
-    
+
     /*
      *	Compute hue
      */
@@ -213,7 +213,7 @@ int bu_str_to_rgb (char *str, unsigned char *rgb)
     r = g = b = -1;
     while (isspace(*str))
 	++str;
-    
+
     if (*str == '#')
     {
 	if (strlen(++str) != 6)

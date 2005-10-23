@@ -26,10 +26,10 @@
  *	attach		attach to a given display processor
  *	f_release	release display device
  *	release		guts for f_release
- *  
+ *
  *  Author -
  *	Michael John Muuss
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
@@ -404,7 +404,7 @@ mged_attach(
   share_dlist(curr_dm_list);
 
   if(displaylist && mged_variables->mv_dlist && !dlist_state->dl_active){
-    createDLists(&dgop->dgo_headSolid); 
+    createDLists(&dgop->dgo_headSolid);
     dlist_state->dl_active = 1;
   }
 #endif
@@ -727,7 +727,7 @@ mged_fb_open(void)
 #endif
 #ifdef DM_OGL
 #ifndef _WIN32
-  else 
+  else
 #endif
 if(dmp->dm_type == DM_TYPE_OGL)
     Ogl_fb_open();

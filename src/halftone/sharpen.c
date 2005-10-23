@@ -176,17 +176,17 @@ sharpen(unsigned char *buf, int size, int num, FILE *file, unsigned char *Map)
 		i=0;
 		value=next[i] + cur[i+1] - cur[i]*2;
 		newvalue = cur[i] - Beta*value*((int)cur[i])/(255*2);
-		buf[i] = (newvalue < 0) ? 0 : (newvalue > 255) ? 
+		buf[i] = (newvalue < 0) ? 0 : (newvalue > 255) ?
 		    255: newvalue;
 		for (; i < linelen-1; i++) {
 			value = next[i] + cur[i-1] + cur[i+1] - cur[i]*3;
 			newvalue = cur[i] - Beta*value*((int)cur[i])/(255*3);
-			buf[i] = (newvalue < 0) ? 0 : (newvalue > 255) ? 
+			buf[i] = (newvalue < 0) ? 0 : (newvalue > 255) ?
 			    255: newvalue;
 		}
 		value=next[i] + cur[i-1] - cur[i]*2;
 		newvalue = cur[i] - Beta*value*((int)cur[i])/(255*2);
-		buf[i] = (newvalue < 0) ? 0 : (newvalue > 255) ? 
+		buf[i] = (newvalue < 0) ? 0 : (newvalue > 255) ?
 		    255: newvalue;
 
 /*
@@ -201,17 +201,17 @@ sharpen(unsigned char *buf, int size, int num, FILE *file, unsigned char *Map)
 		i=0;
 		value=last[i] + cur[i+1] - cur[i]*2;
 		newvalue = cur[i] - Beta*value*((int)cur[i])/(255*2);
-		buf[i] = (newvalue < 0) ? 0 : (newvalue > 255) ? 
+		buf[i] = (newvalue < 0) ? 0 : (newvalue > 255) ?
 		    255: newvalue;
 		for (; i < linelen-1; i++) {
 			value = last[i] + cur[i-1] + cur[i+1] - cur[i]*3;
 			newvalue = cur[i] - Beta*value*((int)cur[i])/(255*3);
-			buf[i] = (newvalue < 0) ? 0 : (newvalue > 255) ? 
+			buf[i] = (newvalue < 0) ? 0 : (newvalue > 255) ?
 			    255: newvalue;
 		}
 		value=last[i] + cur[i-1] - cur[i]*2;
 		newvalue = cur[i] - Beta*value*((int)cur[i])/(255*2);
-		buf[i] = (newvalue < 0) ? 0 : (newvalue > 255) ? 
+		buf[i] = (newvalue < 0) ? 0 : (newvalue > 255) ?
 		    255: newvalue;
 /*
  *	all other lines.
@@ -220,18 +220,18 @@ sharpen(unsigned char *buf, int size, int num, FILE *file, unsigned char *Map)
 		i=0;
 		value=last[i] + next[i] + cur[i+1] - cur[i]*3;
 		newvalue = cur[i] - Beta*value*((int)cur[i])/(255*3);
-		buf[i] = (newvalue < 0) ? 0 : (newvalue > 255) ? 
+		buf[i] = (newvalue < 0) ? 0 : (newvalue > 255) ?
 		    255: newvalue;
 		for (; i < linelen-1; i++) {
 			value = last[i] + next[i] + cur[i-1] + cur[i+1]
 			     - cur[i]*4;
 			newvalue = cur[i] - Beta*value*((int)cur[i])/(255*4);
-			buf[i] = (newvalue < 0) ? 0 : (newvalue > 255) ? 
+			buf[i] = (newvalue < 0) ? 0 : (newvalue > 255) ?
 			    255: newvalue;
 		}
 		value=last[i] + next[i] + cur[i-1] - cur[i]*3;
 		newvalue = cur[i] - Beta*value*((int)cur[i])/(255*3);
-		buf[i] = (newvalue < 0) ? 0 : (newvalue > 255) ? 
+		buf[i] = (newvalue < 0) ? 0 : (newvalue > 255) ?
 		    255: newvalue;
 	}
 	return(linelen);

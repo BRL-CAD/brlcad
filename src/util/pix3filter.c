@@ -31,7 +31,7 @@
  *  Modified -
  *	Christopher T. Johnson - 01 March 1989
  *	    Added the 3rd dimension.
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
@@ -177,7 +177,7 @@ get_args(int argc, register char **argv)
 	} else {
 		int frameNumber;
 		char *idx, *working_name;
-		
+
 		file_name = argv[bu_optind];
 		working_name = (char *)malloc(strlen(file_name)+5);
 

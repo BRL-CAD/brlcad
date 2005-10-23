@@ -35,9 +35,9 @@
 #include "vmath.h"
 #include "bn.h"
 
-/* 
+/*
  * This is our table of random numbers.  Rather than calling drand48() or
- * random() or rand() we just pick numbers out of this table.  This table 
+ * random() or rand() we just pick numbers out of this table.  This table
  * has 4096 unique entries.  Macros for accessing are in "bn.h"
  */
 const float bn_rand_table[BN_RAND_TABSIZE] = {

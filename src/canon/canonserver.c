@@ -157,7 +157,7 @@ int main(ac,av)
     }
     while ( fgets( linebuf, (int)sizeof linebuf, stdin ) != NULL ) {
 	register char *cp;
-		
+
 	if ( *(cp = &linebuf[strlen( linebuf ) - 1]) == '\n' )
 	    *cp = '\0';
 
@@ -189,7 +189,7 @@ int main(ac,av)
 		&& lpoptions & NOKEEP
 		&& unlink( cp ) ) {
 		fprintf(stderr,
-			"couldn't unlink data file \"%s\"\n", 
+			"couldn't unlink data file \"%s\"\n",
 			cp);
 	    }
 	    break;

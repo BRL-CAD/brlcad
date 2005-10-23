@@ -27,7 +27,7 @@
  *
  *  Author -
  *	John R. Anderson
- *  
+ *
  *  Source -
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5066
@@ -296,7 +296,7 @@ char line[MAX_LINE_LEN];
 			{
 				if( fgets( line1, MAX_LINE_LEN, fd_in ) == NULL )
 					bu_bomb( "Unexpected EOF while reading a loop in a part!!!\n" );
-				
+
 				start = (-1);
 				while( isspace( line1[++start] ) );
 
@@ -423,7 +423,7 @@ char line[MAX_LINE_LEN];
 }
 
 /* Byte swaps a 4-byte val */
-void lswap(unsigned int *v) 
+void lswap(unsigned int *v)
 {
 	unsigned int r;
 

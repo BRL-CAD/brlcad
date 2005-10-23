@@ -25,7 +25,7 @@
  *
  *  Author -
  *	Michael John Muuss
- *  
+ *
  *  Source -
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
@@ -71,7 +71,7 @@ BU_EXTERN(void	aim_set, (const struct bu_structparse *sdp, const char *name,
  *
  *  light_cvt_visible()
  *
- *  Convert "visible" flag to "invisible" variable 
+ *  Convert "visible" flag to "invisible" variable
  */
 void
 light_cvt_visible(register const struct bu_structparse *sdp, register const char *name, char *base, const char *value)
@@ -84,7 +84,7 @@ light_cvt_visible(register const struct bu_structparse *sdp, register const char
 
     if (rdebug & RDEBUG_LIGHT) {
 	bu_log("light_cvt_visible(%s, %d)\n", name, sdp->sp_offset);
-	bu_log("visible: %d invisible: %d\n", 
+	bu_log("visible: %d invisible: %d\n",
 	       LIGHT_O(lt_visible),
 	       LIGHT_O(lt_invisible));
     }
@@ -306,7 +306,7 @@ gen_hit(register struct application *ap,
 	 */
 	if (prev != PartHeadp) {
 	    double delta;
-	    delta = prev->pt_outhit->hit_dist - 
+	    delta = prev->pt_outhit->hit_dist -
 		pp->pt_inhit->hit_dist;
 
 	    /* XXX This really should compare to see if adj
@@ -317,17 +317,17 @@ gen_hit(register struct application *ap,
 	    }
 	}
 
-	/* The inbound point is not against another object, so 
+	/* The inbound point is not against another object, so
 	 * light will be emitted in this direction
 	 */
 	lpt = &lsp->lt_sample_pts[lsp->lt_pt_count++];
 
 	stp = pp->pt_inseg->seg_stp;
 
-	VJOIN1( lpt->lp_pt, ap->a_ray.r_pt, 
+	VJOIN1( lpt->lp_pt, ap->a_ray.r_pt,
 		pp->pt_inhit->hit_dist, ap->a_ray.r_dir );
 
-	RT_HIT_NORMAL( lpt->lp_norm, pp->pt_inhit, stp, 
+	RT_HIT_NORMAL( lpt->lp_norm, pp->pt_inhit, stp,
 		       &(ap->a_ray), pp->pt_inflip );
 
 	if (lsp->lt_pt_count >= MAX_LIGHT_SAMPLES) return 1;
@@ -338,7 +338,7 @@ gen_hit(register struct application *ap,
 	next = pp->pt_forw;
 	if (next != PartHeadp) {
 	    double delta;
-	    delta = next->pt_inhit->hit_dist - 
+	    delta = next->pt_inhit->hit_dist -
 		pp->pt_outhit->hit_dist;
 
 	    /* XXX This really should compare to see if adj
@@ -355,14 +355,14 @@ gen_hit(register struct application *ap,
 
 	stp = pp->pt_outseg->seg_stp;
 
-	VJOIN1( lpt->lp_pt, ap->a_ray.r_pt, 
+	VJOIN1( lpt->lp_pt, ap->a_ray.r_pt,
 		pp->pt_outhit->hit_dist, ap->a_ray.r_dir );
 
-	RT_HIT_NORMAL( lpt->lp_norm, pp->pt_outhit, stp, 
+	RT_HIT_NORMAL( lpt->lp_norm, pp->pt_outhit, stp,
 		       &(ap->a_ray), pp->pt_outflip );
 
 	if (lsp->lt_pt_count >= MAX_LIGHT_SAMPLES) return 1;
- 
+
     }
     return 1;
 }
@@ -459,7 +459,7 @@ shoot_grids(struct application *ap,
 
 }
 #endif
-static void 
+static void
 ray_setup(struct application *ap,
 	  point_t tree_min,
 	  point_t tree_max,
@@ -475,11 +475,11 @@ ray_setup(struct application *ap,
     switch (face) {
     case 0: /* XMIN */
 	VSET(ap->a_ray.r_pt,
-	     tree_min[X] - 10.0, 
+	     tree_min[X] - 10.0,
 	     tree_min[Y] + BN_RANDOM(idx) * span[Y],
 	     tree_min[Z] + BN_RANDOM(idx) * span[Z]);
 	VSET(pt,
-	     tree_max[X], 
+	     tree_max[X],
 	     tree_min[Y] + BN_RANDOM(idx) * span[Y],
 	     tree_min[Z] + BN_RANDOM(idx) * span[Z]);
 	break;
@@ -497,18 +497,18 @@ ray_setup(struct application *ap,
 
     case 2: /* ZMIN */
 	VSET(ap->a_ray.r_pt,
-	     tree_min[X] + 
+	     tree_min[X] +
 	     BN_RANDOM(idx) * span[X],
 
-	     tree_min[Y] + 
+	     tree_min[Y] +
 	     BN_RANDOM(idx) * span[Y],
 
 	     tree_min[Z] - 10.0);
 	VSET(pt,
-	     tree_min[X] + 
+	     tree_min[X] +
 	     BN_RANDOM(idx) * span[X],
 
-	     tree_min[Y] + 
+	     tree_min[Y] +
 	     BN_RANDOM(idx) * span[Y],
 
 	     tree_max[Z]);
@@ -552,7 +552,7 @@ light_gen_sample_pts(struct application    *upap,
 
 
     if (rdebug & RDEBUG_LIGHT ) {
-	bu_log("\tlight bb (%g %g %g), (%g %g %g)\n", 
+	bu_log("\tlight bb (%g %g %g), (%g %g %g)\n",
 	       V3ARGS(tree_min), V3ARGS(tree_max) );
     }
 
@@ -698,7 +698,7 @@ light_setup(register struct region *rp,
     } else if (rp->reg_mater.ma_color_valid )  {
 	rt_spect_reflectance_rgb( lsp->lt_spectrum,
 				  rp->reg_mater.ma_color );
-	/* XXX Need to convert units of lumens (candela-sr) to ?? 
+	/* XXX Need to convert units of lumens (candela-sr) to ??
 	 * mw/sr?  Use any old numbers to get started.
 	 */
 	bn_tabdata_scale( lsp->lt_spectrum, lsp->lt_spectrum,
@@ -905,7 +905,7 @@ light_init(struct application *ap)
 #endif
     }
 
-    /* 
+    /*
      * Make sure we have sample points for all light sources in the scene
      */
     for( BU_LIST_FOR( lsp, light_specific, &(LightHead.l) ) )  {
@@ -983,7 +983,7 @@ light_cleanup(void)
     }
 }
 /**********************************************************************/
-/* 
+/*
  *			L I G H T _ H I T
  *
  *  A light visibility test ray hit something.  Determine what this means.
@@ -1000,7 +1000,7 @@ light_cleanup(void)
  *  a_spectrum is used in place of a_color for multispectral renderings.
  *
  *  These shadow functions return a boolean "light_visible".
- * 
+ *
  *  This is a simplified algorithm, and could be improved.
  *  Reflected light can't be dealt with at all.
  *
@@ -1028,7 +1028,7 @@ light_hit(struct application *ap, struct partition *PartHeadp, struct seg *finis
     char	*reason = "???";
 
     RT_CK_PT_HD(PartHeadp);
-    
+
     memset(&sw, 0, sizeof(sw));		/* make sure nothing nasty on the stack */
     if (rdebug&RDEBUG_LIGHT)
 	bu_log("light_hit level %d %d\n", ap->a_level, __LINE__);
@@ -1059,7 +1059,7 @@ light_hit(struct application *ap, struct partition *PartHeadp, struct seg *finis
 	goto out;
     }
 
-    /*XXX Bogus with Air.  We should check to see if it is the same 
+    /*XXX Bogus with Air.  We should check to see if it is the same
      * surface.
      *
      *  Since the light visibility ray started at the surface of a solid,
@@ -1137,7 +1137,7 @@ light_hit(struct application *ap, struct partition *PartHeadp, struct seg *finis
 #else
 	    VMOVE( ap->a_color, filter_color );
 #endif
-	    /* XXXXXXX This seems to happen with *every* 
+	    /* XXXXXXX This seems to happen with *every*
 	     * light vis ray through air
 	     */
 	    reason = "Off end of partition list, air was seen";
@@ -1327,11 +1327,11 @@ light_hit(struct application *ap, struct partition *PartHeadp, struct seg *finis
 	VJOIN1(sub_ap.a_ray.r_pt, ap->a_ray.r_pt, f, ap->a_ray.r_dir);
     }
     sub_ap.a_purpose = "light transmission after filtering";
-    if (rdebug&RDEBUG_LIGHT) 
+    if (rdebug&RDEBUG_LIGHT)
 	bu_log("shooting level %d from %d\n",
 	       sub_ap.a_level, __LINE__);
     light_visible = rt_shootray( &sub_ap );
-    if (rdebug&RDEBUG_LIGHT) 
+    if (rdebug&RDEBUG_LIGHT)
 	if (light_visible < 0)
 	    bu_log("%s:%d\n", __FILE__, __LINE__);
 
@@ -1368,7 +1368,7 @@ light_hit(struct application *ap, struct partition *PartHeadp, struct seg *finis
 
 /*
  *  			L I G H T _ M I S S
- *  
+ *
  *  If there is no explicit light solid in the model, we will always "miss"
  *  the light, so return light_visible = TRUE.
  */
@@ -1407,13 +1407,13 @@ light_miss(register struct application *ap)
  *	Compute 1 light visibility ray from a hit point to the light.
  *
  */
-static int 
+static int
 light_vis(struct light_obs_stuff *los, char *flags)
 {
     struct application sub_ap;
     double radius = 0.0;
     double angle = 0.0;
-    double cos_angle, x, y; 
+    double cos_angle, x, y;
     point_t shoot_pt;
     vect_t shoot_dir;
     int shot_status;
@@ -1439,17 +1439,17 @@ light_vis(struct light_obs_stuff *los, char *flags)
 
 	/* pick a point at random from the list of points on
 	 * the surface of the light.  If the normals indicate
-	 * inter-visibility, then shoot at that point 
+	 * inter-visibility, then shoot at that point
 	 */
 
-	idx = los->lsp->lt_pt_count * 
+	idx = los->lsp->lt_pt_count *
 	    fabs(bn_rand_half(los->ap->a_resource->re_randptr)) *
 	    2.0;
 	if (idx == los->lsp->lt_pt_count) idx--;
 
     reusept:
 
-	for (k=idx ; ((k+1) % los->lsp->lt_pt_count) != idx ; 
+	for (k=idx ; ((k+1) % los->lsp->lt_pt_count) != idx ;
 	     k = (k+1) % los->lsp->lt_pt_count) {
 	    if (rdebug & RDEBUG_LIGHT )
 		bu_log("checking sample pt %d\n", k);
@@ -1502,7 +1502,7 @@ light_vis(struct light_obs_stuff *los, char *flags)
 		   VisRayvsSurfN > COSINE89_99DEG ) {
 
 		/* ok, we can shoot at this sample point */
-		if (rdebug & RDEBUG_LIGHT ) 
+		if (rdebug & RDEBUG_LIGHT )
 		    bu_log("\tPt %d selected... OK normal %g %g %g\n",
 			   k, V3ARGS(lpt->lp_norm));
 
@@ -1534,7 +1534,7 @@ light_vis(struct light_obs_stuff *los, char *flags)
 	for (k=0 ; k < los->lsp->lt_pt_count ; k++) {
 	    if (flags[k] & VF_SEEN ) {
 		/* this one was used, we can re-use it */
-		tryagain = 1; 
+		tryagain = 1;
 		flags[k] &= VF_BACKFACE;
 	    }
 	}
@@ -1544,7 +1544,7 @@ light_vis(struct light_obs_stuff *los, char *flags)
 	    }
 	    goto reusept;
 	}
-	/* at this point, we have no candidate points available to 
+	/* at this point, we have no candidate points available to
 	 * shoot at
 	 */
 	if (rdebug & RDEBUG_LIGHT ) {
@@ -1555,22 +1555,22 @@ light_vis(struct light_obs_stuff *los, char *flags)
 	/* we've got a point on the surface of the light to shoot at */
 	VMOVE(shoot_pt, lpt->lp_pt);
 	VSUB2(shoot_dir, shoot_pt, los->swp->sw_hit.hit_point);
-		
+
     } else {
 
-	if (rdebug & RDEBUG_LIGHT ) 
+	if (rdebug & RDEBUG_LIGHT )
 	    bu_log("shooting at approximating sphere\n");
 	/* We're going to shoot at a point on the apporximating
-	 * sphere for the light source.  We pick a point on the 
+	 * sphere for the light source.  We pick a point on the
 	 * circle (presented area) for the light source from this
-	 * angle.  This is done by picking random radius and angle 
+	 * angle.  This is done by picking random radius and angle
 	 * values on the disc.
 	 */
-	radius = los->lsp->lt_radius * 
+	radius = los->lsp->lt_radius *
 	    /*			drand48(); */
-	    fabs(bn_rand_half(los->ap->a_resource->re_randptr) 
+	    fabs(bn_rand_half(los->ap->a_resource->re_randptr)
 		 * 2.0);
-	angle =  M_PI * 2.0 * 
+	angle =  M_PI * 2.0 *
 	    /*			drand48(); */
 	    (bn_rand_half(los->ap->a_resource->re_randptr) + 0.5);
 
@@ -1587,13 +1587,13 @@ light_vis(struct light_obs_stuff *los, char *flags)
 	if (cos_angle > (2.0*M_PI)) cos_angle -= (2.0*M_PI);
 	x = radius * bn_tab_sin(cos_angle);
 
-	VJOIN2(shoot_pt, los->lsp->lt_pos, 
+	VJOIN2(shoot_pt, los->lsp->lt_pos,
 	       x, los->light_x,
 	       y, los->light_y);
 
 	if (rdebug & RDEBUG_LIGHT) {
-	    bu_log("light at (%g %g %g) radius %g\n", 
-		   V3ARGS(los->lsp->lt_pos), 
+	    bu_log("light at (%g %g %g) radius %g\n",
+		   V3ARGS(los->lsp->lt_pos),
 		   los->lsp->lt_radius);
 
 	    bu_log("\tshooting at radius %g\n", radius);
@@ -1666,11 +1666,11 @@ light_vis(struct light_obs_stuff *los, char *flags)
     {
 	register fastf_t f;
 	f = los->ap->a_rt_i->rti_tol.dist;
-	VJOIN1( sub_ap.a_ray.r_pt, los->swp->sw_hit.hit_point, f, 
+	VJOIN1( sub_ap.a_ray.r_pt, los->swp->sw_hit.hit_point, f,
 		shoot_dir);
     }
-    sub_ap.a_rbeam = los->ap->a_rbeam + 
-	los->swp->sw_hit.hit_dist * 
+    sub_ap.a_rbeam = los->ap->a_rbeam +
+	los->swp->sw_hit.hit_dist *
 	los->ap->a_diverge;
     sub_ap.a_diverge = los->ap->a_diverge;
 
@@ -1752,7 +1752,7 @@ light_vis(struct light_obs_stuff *los, char *flags)
  *	particular location.
  *	It is up to the caller to apply sw_lightfract[] to lp_color, etc.
  *
- *	Sets 
+ *	Sets
  *	swp:	sw_tolight[]
  *		sw_intensity[]  or msw_intensity[]
  *		sw_visible[]

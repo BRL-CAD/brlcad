@@ -32,7 +32,7 @@
  *
  *  Author -
  *	Michael John Muuss
- *  
+ *
  *  Source -
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
@@ -94,9 +94,9 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
  */
 int
 db_scan(register struct db_i *dbip, int (*handler) (struct db_i *, const char *, long int, int, int, genptr_t), int do_old_matter, genptr_t client_data)
-                    	      
-   			                                                                                                           
-   			              
+
+
+
         		            	/* argument for handler */
 {
 	union record	record;		/* Initial record, holds name */
@@ -469,7 +469,7 @@ db_fwrite_ident( FILE *fp, const char *title, double local2mm )
  */
 void
 db_conversions(struct db_i *dbip, int local)
-           	      
+
           					/* one of ID_??_UNIT */
 {
 	RT_CK_DBI(dbip);
@@ -550,23 +550,23 @@ db_v4_get_units_code( const char *str )
 {
 	if( !str )  return ID_NO_UNIT;	/* no units specified */
 
-	if( strcmp(str, "mm") == 0 || strcmp(str, "millimeters") == 0 ) 
+	if( strcmp(str, "mm") == 0 || strcmp(str, "millimeters") == 0 )
 		return ID_MM_UNIT;
-	if( strcmp(str, "um") == 0 || strcmp(str, "micrometers") == 0) 
+	if( strcmp(str, "um") == 0 || strcmp(str, "micrometers") == 0)
 		return ID_UM_UNIT;
-	if( strcmp(str, "cm") == 0 || strcmp(str, "centimeters") == 0) 
+	if( strcmp(str, "cm") == 0 || strcmp(str, "centimeters") == 0)
 		return ID_CM_UNIT;
-	if( strcmp(str,"m")==0 || strcmp(str,"meters")==0 ) 
+	if( strcmp(str,"m")==0 || strcmp(str,"meters")==0 )
 		return ID_M_UNIT;
-	if( strcmp(str, "km") == 0 || strcmp(str, "kilometers") == 0) 
+	if( strcmp(str, "km") == 0 || strcmp(str, "kilometers") == 0)
 		return ID_KM_UNIT;
-	if( strcmp(str,"in")==0 || strcmp(str,"inches")==0 || strcmp(str,"inch")==0 ) 
+	if( strcmp(str,"in")==0 || strcmp(str,"inches")==0 || strcmp(str,"inch")==0 )
 		return ID_IN_UNIT;
-	if( strcmp(str,"ft")==0 || strcmp(str,"feet")==0 || strcmp(str,"foot")==0 ) 
+	if( strcmp(str,"ft")==0 || strcmp(str,"feet")==0 || strcmp(str,"foot")==0 )
 		return ID_FT_UNIT;
-	if( strcmp(str,"yd")==0 || strcmp(str,"yards")==0 || strcmp(str,"yard")==0 ) 
+	if( strcmp(str,"yd")==0 || strcmp(str,"yards")==0 || strcmp(str,"yard")==0 )
 		return ID_YD_UNIT;
-	if( strcmp(str,"mi")==0 || strcmp(str,"miles")==0 || strcmp(str,"mile")==0 ) 
+	if( strcmp(str,"mi")==0 || strcmp(str,"miles")==0 || strcmp(str,"mile")==0 )
 		return ID_MI_UNIT;
 
 	return -1;		/* error */

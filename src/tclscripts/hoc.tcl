@@ -19,7 +19,7 @@
 # information.
 #
 ###
-# 
+#
 #                        H O C . T C L
 #
 #	Procs for implementing "Help On Context".

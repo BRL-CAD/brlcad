@@ -92,18 +92,18 @@ main(int ac, char **av)
 
 	hdr.bitplanes = (getchar() & 0x0ff) << 8;
 	hdr.bitplanes += (getchar() & 0x0ff);
-	
+
 	if (hdr.bitplanes != 24) {
 		(void) fprintf(stderr, "Weird image file:\n");
 		(void) fprintf(stderr,
-			"X: %d Y: %d xoff: %d yoff: %d bits/pixel: %d\n", 
+			"X: %d Y: %d xoff: %d yoff: %d bits/pixel: %d\n",
 			hdr.x, hdr.y, hdr.xoff, hdr.yoff, hdr.bitplanes);
 		exit(-1);
 	}
 
 	if (verbose) {
 		(void) fprintf(stderr,
-			"X: %d Y: %d xoff: %d yoff: %d bits/pixel: %d\n", 
+			"X: %d Y: %d xoff: %d yoff: %d bits/pixel: %d\n",
 			hdr.x, hdr.y, hdr.xoff, hdr.yoff, hdr.bitplanes);
 	}
 
@@ -126,7 +126,7 @@ main(int ac, char **av)
 	}
 
 	/* write out the image scanlines, correcting for different origin */
-	
+
 	for(i=hdr.y-1 ; i >= 0 ; --i)
 		if (fwrite(&image[i*hdr.x*3], hdr.x*3, 1, stdout) != 1) {
 			(void) fprintf(stderr, "%s: Error writing image\n", *av);

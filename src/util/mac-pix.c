@@ -28,7 +28,7 @@
  *
  *  The image is stored as a sequence of bits, proceeding from the
  *  upper right corner down to the lower right corner, and then
- *  advancing left one column.  This unusual format 
+ *  advancing left one column.  This unusual format
  *  somewhat complicates matters here.
  *
  *  Within each byte, bits are extracted MSB to LSB;  these bits go down
@@ -36,14 +36,14 @@
  *
  *  Because two files are being processed, the "file_*" things refer
  *  to the input file, and the "scr_*" things refer to the output file.
- *  
+ *
  *  Author -
  *	Michael John Muuss
  *
  *  Acknowledgement -
  *	getbits() drawn from paintimp.c by
  *	Dave Johnson, Brown University Computer Science
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory

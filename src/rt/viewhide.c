@@ -33,18 +33,18 @@
  *  to produce a bas-relief line drawing of an MGED object: i.e.
  *  flat when viewed head-on, but with relief detail when seen at
  *  an angle.
- *  
+ *
  *  This is based on previous work done by Michael John Muuss.
  *
  *  Author -
  *	Susanne L. Muuss, J.D.
  *	Michael J. Muuss
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005
- *  
+ *
  */
 #ifndef lint
 static const char RCSrayhide[] = "@(#)$Header$ (BRL)";
@@ -188,7 +188,7 @@ view_2init(struct application *ap)
 	topp = (struct cell *)bu_malloc(sizeof(struct cell) * (width + 2),
 		"top cell buffer" );
 
-	/* Clear both in-buffers to ensure abscence of garbage.  Note 
+	/* Clear both in-buffers to ensure abscence of garbage.  Note
 	 * that the zero-filled "bottom" buffer now provides the first
 	 * in-memory buffer for comparisons.
 	 */
@@ -297,7 +297,7 @@ void view_cleanup(void) {}
  *  Rayhit() is called by rt_shootray() when a hit is detected.  It
  *  computes the hit distance, the region_id, the distance traveled by the
  *  ray, and the surface normal at the hit point.
- *  
+ *
  */
 
 int
@@ -380,7 +380,7 @@ void	view_eol(struct application *ap)
 
 
 	/* Now add 2 pixels to file_width to convert it to memory_width
-	 * for doing the comparisons and determining the boundaries around 
+	 * for doing the comparisons and determining the boundaries around
 	 * the picture.  Note that the file_height is simply expressed as
 	 * ap->a_y.  It is not necessary to add 2 pixels to it for the
 	 * boundary because that is taken care of by originally allocating
@@ -460,7 +460,7 @@ horiz_cmp(struct cell *botp, int mem_width, int y)
 		 * between the increases, the cosine of said angle decreases.
 		 * Also of interest is that one needs to say: plot if id's
 		 * are not the same OR if either id is not 0 AND the cosine
-		 * of the angle between the normals is less than maxangle. 
+		 * of the angle between the normals is less than maxangle.
 		 * This test prevents the background from being shaded in.
 		 * Furthermore, it is necessary to select the hit_point.
 		 * Check for pits and pendula.  The below if statement can
@@ -469,12 +469,12 @@ horiz_cmp(struct cell *botp, int mem_width, int y)
 		 */
 
 		if (botp->c_id != (botp+1)->c_id ||
-		   ( botp->c_id != ID_BACKGROUND && 
+		   ( botp->c_id != ID_BACKGROUND &&
 		   ( (botp->c_dist + pit_depth < (botp+1)->c_dist) ||
 		     ((botp+1)->c_dist + pit_depth < botp->c_dist)  ||
  		     (VDOT(botp->c_normal, (botp + 1)->c_normal) < maxangle))))  {
-							     
-		   	cellp = find_cell(botp, (botp+1)); 
+
+		   	cellp = find_cell(botp, (botp+1));
 
 			/* Note that the coordinates must be expressed
 		   	 * as MODEL coordinates.  This can be done by
@@ -502,7 +502,7 @@ horiz_cmp(struct cell *botp, int mem_width, int y)
 		   	}
 
 			pdv_3line(outfp, start, stop);
-				
+
 		}
 	}
 }
@@ -531,7 +531,7 @@ vert_cmp(struct cell *botp, struct cell *topp, int mem_width, int y)
 	int		state;
 	vect_t		start;
 	vect_t		stop;
-	
+
 	VSET(start, 0, 0, 0);	/* cleans out start point... a safety */
 
 	state = SEEKING_START_PT;
@@ -550,7 +550,7 @@ vert_cmp(struct cell *botp, struct cell *topp, int mem_width, int y)
 		 */
 
 		if (botp->c_id != topp->c_id ||
-		   ( botp->c_id != ID_BACKGROUND && 
+		   ( botp->c_id != ID_BACKGROUND &&
 		     ((botp->c_dist + pit_depth < topp->c_dist) ||
 		      (topp->c_dist + pit_depth < botp->c_dist) ||
 		      (VDOT(botp->c_normal, topp->c_normal) < maxangle))))  {
@@ -558,7 +558,7 @@ vert_cmp(struct cell *botp, struct cell *topp, int mem_width, int y)
 				continue;
 			} else {
 				/* find the correct cell. */
-				start_cellp = find_cell(botp, topp);		
+				start_cellp = find_cell(botp, topp);
 
 				/* Move to and remember left point.  If start_cellp
 				 * is botp, then move left and up half a cell.
@@ -577,7 +577,7 @@ vert_cmp(struct cell *botp, struct cell *topp, int mem_width, int y)
 
 			if (state == FOUND_START_PT) {
 
-				/* Draw to current left edge 
+				/* Draw to current left edge
 				 * Note that x and y must be converted back
 				 * to file coordinates so that the file
 				 * picture gets plotted.  The 0.5 factors
@@ -608,7 +608,7 @@ vert_cmp(struct cell *botp, struct cell *topp, int mem_width, int y)
 			}
 		}
 	}
-		
+
 	/* Now check for end of scan-line. */
 	if (state == FOUND_START_PT) {
 
@@ -691,7 +691,7 @@ find_cell (struct cell *cur_cellp, struct cell *next_cellp)
 void
 swapbuff(struct cell **onepp, struct cell **twopp)
            	        		/* caveat: variables must start w/ letters */
-            	        
+
 
 {
 

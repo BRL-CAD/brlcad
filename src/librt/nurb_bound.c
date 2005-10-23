@@ -24,7 +24,7 @@
 /*@{*/
 /** @file nurb_bound.c
  *     Find the bounding box for the a NURB surface.
- * 
+ *
  * Author -
  *     Paul R. Stay
  *
@@ -36,7 +36,7 @@
  */
 /*@}*/
 
-/* Since a B-Spline surface follows the convex hull property 
+/* Since a B-Spline surface follows the convex hull property
  * the bounding box can be found by taking the min and max of
  * all points in the control  If the surface mesh contains
  * homogeneous points (i.e. [XYZW]) then divide out the W first.
@@ -86,7 +86,7 @@ rt_nurb_s_bound(struct face_g_snurb *srf, fastf_t *bmin, fastf_t *bmax)
 	coords = RT_NURB_EXTRACT_COORDS(srf->pt_type);
 	rat =    RT_NURB_IS_PT_RATIONAL(srf->pt_type);
 
-	for ( i = ( srf->s_size[RT_NURB_SPLIT_ROW] * 
+	for ( i = ( srf->s_size[RT_NURB_SPLIT_ROW] *
 	    srf->s_size[RT_NURB_SPLIT_COL] ); i > 0; i--) {
 		if ( !rat ) {
 			VMINMAX( bmin, bmax, p_ptr );
@@ -146,7 +146,7 @@ rt_nurb_c_bound(struct edge_g_cnurb *crv, fastf_t *bmin, fastf_t *bmax)
 }
 
 
-/* rt_nurb_s_check( srf ) 
+/* rt_nurb_s_check( srf )
  * 	Checks the NURB surface control points to make
  *	sure no one point is near INIFITY, which probably means
  * 	that the surface mesh is bad.
@@ -159,8 +159,8 @@ rt_nurb_s_check(register struct face_g_snurb *srf)
 	register int	i;
 
 	mp = srf->ctl_points;
-	i = srf->s_size[RT_NURB_SPLIT_ROW] * 
-	    srf->s_size[RT_NURB_SPLIT_COL] * 
+	i = srf->s_size[RT_NURB_SPLIT_ROW] *
+	    srf->s_size[RT_NURB_SPLIT_COL] *
 	    srf->pt_type;
 	for ( ; i > 0; i--, mp++)  {
 		/* Sanity checking */
@@ -174,7 +174,7 @@ rt_nurb_s_check(register struct face_g_snurb *srf)
 
 
 
-/* rt_nurb_c_check( srf ) 
+/* rt_nurb_c_check( srf )
  * 	Checks the NURB curve control points to make
  *	sure no one point is near INIFITY, which probably means
  * 	that the surface mesh is bad.
@@ -187,7 +187,7 @@ rt_nurb_c_check(register struct edge_g_cnurb *crv)
 	register int	i;
 
 	mp = crv->ctl_points;
-	i = crv->c_size * 
+	i = crv->c_size *
 	    crv->pt_type;
 	for ( ; i > 0; i--, mp++)  {
 		/* Sanity checking */

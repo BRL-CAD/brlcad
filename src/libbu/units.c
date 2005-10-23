@@ -27,12 +27,12 @@
  *
  *  Author -
  *	Michael John Muuss
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5066
- *  
+ *
  */
 /*@}*/
 
@@ -189,7 +189,7 @@ bu_units_string(register const double mm)
 /*
  *			B U _ M M _ V A L U E
  *
- * Given a string of the form "25cm" or "5.2ft" returns the 
+ * Given a string of the form "25cm" or "5.2ft" returns the
  * corresponding distance in mm.
  *
  *  Returns -
@@ -200,7 +200,7 @@ double
 bu_mm_value(const char *s)
 {
 	double v;
-	char *ptr;	
+	char *ptr;
 	register const struct cvt_tab	*tp;
 
 	v = strtod(s, &ptr);

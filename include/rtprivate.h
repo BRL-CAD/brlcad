@@ -63,7 +63,7 @@ extern void view_pixel(register struct application *ap);
 extern void view_cleanup(struct rt_i	*rtip);
 extern int view_end(struct application *ap);
 extern int view_init(register struct application *ap,
-		     char *file, 
+		     char *file,
 		     char *obj,
 		     int minus_o);
 #else

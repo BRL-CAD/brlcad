@@ -674,7 +674,7 @@ cmd_output_hook(ClientData clientData, Tcl_Interp *interp, int argc, char **argv
 
 	bu_vls_strcpy(&tcl_output_hook, argv[1]);
 	bu_log_add_hook(gui_output, (genptr_t)interp);
-    
+
 	Tcl_ResetResult(interp);
 	return TCL_OK;
 }
@@ -710,12 +710,12 @@ cmd_get_ptr(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 /*
  *
  * Sets up the Tcl interpreter
- */ 
+ */
 void
 mged_setup(void)
 {
 	struct bu_vls str;
-	
+
 	/* The following is for GUI output hooks: contains name of function to
 	   run with output */
 	bu_vls_init(&tcl_output_hook);
@@ -810,7 +810,7 @@ cmd_setup(void)
 #endif
 		bu_vls_strcpy(&temp, "_mged_");
 		bu_vls_strcat(&temp, ctp->ct_name);
-	
+
 		(void)Tcl_CreateCommand(interp, ctp->ct_name, ctp->ct_func,
 					(ClientData)ctp, (Tcl_CmdDeleteProc *)NULL);
 		(void)Tcl_CreateCommand(interp, bu_vls_addr(&temp), ctp->ct_func,
@@ -828,7 +828,7 @@ cmd_setup(void)
 	    int i;
 	    strcat(pathname,"/");
 	    for (i=0;i<strlen(pathname);i++) {
-		if(pathname[i]=='\\') 
+		if(pathname[i]=='\\')
 		    pathname[i]='/'; }
 	}
 #endif
@@ -1179,7 +1179,7 @@ mged_compat(struct bu_vls *dest, struct bu_vls *src, int use_first)
 
 	bu_vls_init( &word );
 	bu_vls_init( &temp );
-    
+
 	start = end = bu_vls_addr( src );
 	firstword = 1;
 	while( *end != '\0' ) {            /* Run through entire string */
@@ -1244,7 +1244,7 @@ mged_compat(struct bu_vls *dest, struct bu_vls *src, int use_first)
 	bu_vls_free( &temp );
 	bu_vls_free( &word );
 }
-    
+
 /*
  *			C M D L I N E
  *
@@ -1273,7 +1273,7 @@ cmdline( struct bu_vls *vp, int record )
 
 	if (bu_vls_strlen(vp) <= 0)
 		return CMD_OK;
-		
+
 	bu_vls_init(&globbed);
 	bu_vls_init(&tmp_vls);
 	bu_vls_init(&save_vp);
@@ -1281,7 +1281,7 @@ cmdline( struct bu_vls *vp, int record )
 
 	/* MUST MAKE A BACKUP OF THE INPUT STRING AND USE THAT IN THE CALL TO
 	   Tcl_Eval!!!
-       
+
 	   You never know who might change the string (append to it...)
 	   (f_mouse is notorious for adding things to the input string)
 	   If it were to change while it was still being evaluated, Horrible Things
@@ -1305,7 +1305,7 @@ cmdline( struct bu_vls *vp, int record )
 		if( setjmp( jmp_env ) == 0 ){
 			len = strlen(interp->result);
 
-			/* If the command had something to say, print it out. */	     
+			/* If the command had something to say, print it out. */
 			if (len > 0){
 				(void)signal( SIGINT, sig3);  /* allow interupts */
 
@@ -1332,7 +1332,7 @@ cmdline( struct bu_vls *vp, int record )
 			bu_semaphore_release(BU_SEM_SYSCALL);
 			bu_log("\n");
 		}
-      
+
 		bu_vls_strcpy(&mged_prompt, MGED_PROMPT);
 		status = CMD_OK;
 		goto end;
@@ -1359,7 +1359,7 @@ cmdline( struct bu_vls *vp, int record )
 			goto end;
 		}
 
-		/* Otherwise, it's just a regular old error. */    
+		/* Otherwise, it's just a regular old error. */
 
 		len = strlen(interp->result);
 		if (len > 0) bu_log("%s%s", interp->result,
@@ -1394,7 +1394,7 @@ mged_print_result(int status)
 	case TCL_OK:
 		len = strlen(interp->result);
 
-		/* If the command had something to say, print it out. */	     
+		/* If the command had something to say, print it out. */
 		if (len > 0){
 			bu_log("%s%s", interp->result,
 			       interp->result[len-1] == '\n' ? "" : "\n");
@@ -1580,7 +1580,7 @@ f_sync(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 #ifndef _WIN32
 	sync();
 #endif
-    
+
 	return TCL_OK;
 }
 
@@ -1597,7 +1597,7 @@ helpcomm(int argc, char **argv, struct funtab *functions)
 	register int	i, bad;
 
 	bad = 0;
-	
+
 	/* Help command(s) */
 	for( i=1; i<argc; i++ )  {
 		for( ftp = functions+1; ftp->ft_name; ftp++ )  {
@@ -2055,7 +2055,7 @@ f_bot_split(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	int i, idx, retval, edge, faces, e, f ;
 	int * edges;
 	int avail_vert, avail_face, face;
-	
+
 
 	CHECK_DBI_NULL;
 	CHECK_READ_ONLY;
@@ -2065,7 +2065,7 @@ f_bot_split(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	  return TCL_ERROR;
 	}
 
-	
+
 	bots = bu_calloc(sizeof(struct rt_bot_internal), bot_count, "bot internal");
 
 	if ((dp = db_lookup(dbip, argv[1], LOOKUP_NOISY)) == DIR_NULL) {
@@ -2075,7 +2075,7 @@ f_bot_split(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	if( rt_db_get_internal( &intern, dp, dbip, bn_mat_identity, &rt_uniresource ) < 0 ) {
 	    Tcl_AppendResult(interp, "rt_db_get_internal(", argv[i], ") error\n", (char *)NULL);
 	    return TCL_ERROR;
-	    
+
 	}
 
 	if( intern.idb_type != ID_BOT ) 	{
@@ -2122,7 +2122,7 @@ f_bot_merge(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	struct rt_bot_internal **bots;
 	int i, idx, retval;
 	int avail_vert, avail_face, face;
-	
+
 
 	CHECK_DBI_NULL;
 	CHECK_READ_ONLY;
@@ -2265,7 +2265,7 @@ f_bot_merge(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	intern.idb_type = ID_BOT;
 	intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	intern.idb_minor_type = DB5_MINORTYPE_BRLCAD_BOT;
-	intern.idb_meth = &rt_functab[ID_BOT]; 
+	intern.idb_meth = &rt_functab[ID_BOT];
 	intern.idb_ptr = (genptr_t)bots[0];
 
 	if( (new_dp=db_diradd( dbip, argv[1], -1L, 0, DIR_SOLID, (genptr_t)&intern.idb_type)) == DIR_NULL )
@@ -2686,7 +2686,7 @@ cmd_copyeval(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
 /*			F _ P U S H
  *
- * The push command is used to move matrices from combinations 
+ * The push command is used to move matrices from combinations
  * down to the solids. At some point, it is worth while thinking
  * about adding a limit to have the push go only N levels down.
  *
@@ -2791,7 +2791,7 @@ cmd_which(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
 /*
  *  			C M D _ T O P S
- *  
+ *
  *  Find all top level objects.
  *  TODO:  Perhaps print all objects, sorted by use count, as an option?
  */
@@ -2838,7 +2838,7 @@ cmd_tree(ClientData	clientData,
 	/*
 	 * The tree command is wrapped by tclscripts/tree.tcl and calls this
 	 * routine with the name _mged_tree. So, we put back the original name.
-	 */ 
+	 */
 	argv[0] = "tree";
 	ret = wdb_tree_cmd(wdbp, interp, argc, argv);
 
@@ -3054,7 +3054,7 @@ cmd_cat(ClientData	clientData,
 
 /*
  *  			C M D _ C O L O R
- *  
+ *
  *  Add a color table entry.
  */
 int
@@ -3146,7 +3146,7 @@ cmd_ls(ClientData	clientData,
 
 /*
  *  			C M D _ F I N D
- *  
+ *
  *  Find all references to the named objects.
  */
 int

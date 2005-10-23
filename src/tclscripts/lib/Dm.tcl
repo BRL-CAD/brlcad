@@ -617,7 +617,7 @@ if {$tcl_platform(os) != "Windows NT"} {
 
     pack $itk_component(dm) -fill both -expand yes
     set tkwin $itk_component(dm)
-} 
+}
 
 ::itcl::body Dm::initDm {} {
     global tcl_platform

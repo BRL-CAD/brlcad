@@ -62,10 +62,10 @@ sub phase_2 {
 mpeg2encode
 image_%d  /* name of source files */
 -         /* name of reconstructed images ("-": don't store) */
--         /* name of intra quant matrix file     ("-": default matrix) */ 
+-         /* name of intra quant matrix file     ("-": default matrix) */
 -         /* name of non intra quant matrix file ("-": default matrix) */
 stat.out  /* name of statistics file ("-": stdout ) */
-2         /* input picture file format: 0=*.Y,*.U,*.V, 1=*.yuv, 2=*.ppm */ 
+2         /* input picture file format: 0=*.Y,*.U,*.V, 1=*.yuv, 2=*.ppm */
 $num_frames /* number of frames */
 0         /* number of first frame */
 00:00:00:00 /* timecode of first frame */

@@ -29,7 +29,7 @@
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005
- *  
+ *
  */
 #ifndef lint
 static const char RCSrt[] = "@(#)$Header$ (BRL)";
@@ -184,7 +184,7 @@ int get_args( int argc, register char **argv )
 			bn_randhalftabsize = i;
 			break;
 		case 'h':
-		    i = sscanf(bu_optarg, "%lg,%lg,%lg,%lg", 
+		    i = sscanf(bu_optarg, "%lg,%lg,%lg,%lg",
 			       &airdensity, &haze[X], &haze[Y], &haze[Z]);
 		    break;
 		case 't':

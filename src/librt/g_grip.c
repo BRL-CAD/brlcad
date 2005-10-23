@@ -11,11 +11,11 @@
  *  All Ray intersections return "missed"
  *
  *  The bounding box for a grip is emtpy.
- *  
+ *
  *  Authors -
  *	Christopher T. Johnson
- *  
- *  
+ *
+ *
  *  Copyright Notice -
  *	This software is Copyright (C) 1993 by Geometric Solutions, Inc.
  *	All rights reserved.
@@ -103,13 +103,13 @@ rt_grp_print(register const struct soltab *stp)
 
 /**
  *			R T _ G R P _ S H O T
- *  
+ *
  * Function -
  *	Shoot a ray at a GRIP
  *
  * Algorithm -
  * 	The intersection distance is computed.
- *  
+ *
  * Returns -
  *	0	MISS
  *	>0	HIT
@@ -134,7 +134,7 @@ rt_grp_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
            		       /* An array of ray pointers */
                                /* array of segs (results returned) */
    		  	       /* Number of ray/object pairs */
-                  	    
+
 {
 	return;
 }
@@ -163,7 +163,7 @@ rt_grp_curve(register struct curvature *cvp, register struct hit *hitp, struct s
 
 /**
  *  			R T _ G R P _ U V
- *  
+ *
  *  For a hit on a face of an HALF, return the (u,v) coordinates
  *  of the hit point.  0 <= u,v <= 1.
  *  u extends along the Xbase direction

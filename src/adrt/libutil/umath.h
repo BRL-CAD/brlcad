@@ -115,7 +115,7 @@
 	math_vec_mul_scalar(_a, _c, 2.0*_d); \
 	math_vec_sub(_a, _b, _a); \
 	math_vec_unitize(_a); }
-	
+
 
 extern	void	math_mat_ident(tfloat *M, int S);						/* Identity Matrix */
 extern	void	math_mat_mult(tfloat *A, int Ar, int Ac, tfloat *B, int Br, int Bc, tfloat *C);	/* Multiply 2 Matrices */

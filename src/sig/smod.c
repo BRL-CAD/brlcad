@@ -34,7 +34,7 @@
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5066
- *  
+ *
  */
 #ifndef lint
 static char RCSid[] = "@(#)$Header$ (BRL)";
@@ -183,7 +183,7 @@ char **argv;
 	register unsigned int	i, j, n;
 	unsigned long clip_high, clip_low;
 	char *strrchr();
-	
+
 	if (!(progname=strrchr(*argv, '/')))
 		progname = *argv;
 

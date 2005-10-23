@@ -222,7 +222,7 @@ mat_hscale(register matp_t m, float hscale)
  */
 #define EPSILON	0.000001
 
-/* 
+/*
  * Invert a 4-by-4 matrix using Algorithm 120 from ACM.
  * This is a modified Gauss-Jordan alogorithm
  * Note:  Inversion is done in place, with 3 work vectors

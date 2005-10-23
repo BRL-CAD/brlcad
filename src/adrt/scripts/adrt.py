@@ -164,16 +164,16 @@ def write_camera(fh, obj):
   fh.write(",%f,%f,%f" % (loc[0], loc[1], loc[2])) # position
   fh.write(",%f,%f,%f" % (focus[0], focus[1], focus[2])) # focus
   fh.write(",0.0") # tilt
-          
-      
+
+
   # Vertical FoV = 2 * atan(height/(2*lens_mm)) * pi / 180
   # Horiz FoV = 2 * atan(width/(2*lens_mm)) * pi / 180
   #
   # simulate a 35mm camera w 24x36mm image plane
   # Blender uses the image width for this calcuation
-      
+
   FoV = math.atan(35.0 / (2.0 * obj.getData().getLens())) * 180 / math.pi * 0.75
-  
+
   fh.write(",%f,%f\n" % (FoV, 0.0))
 
 

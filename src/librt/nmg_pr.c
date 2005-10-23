@@ -30,7 +30,7 @@
  *  Authors -
  *	Lee A. Butler
  *	Michael John Muuss
- *  
+ *
  *  Source -
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
@@ -84,7 +84,7 @@ nmg_orientation(int orientation)
  *
  *	Print the orientation in a nice, english form
  */
-void 
+void
 nmg_pr_orient(int orientation, const char *h)
 {
 	switch (orientation) {
@@ -100,7 +100,7 @@ nmg_pr_orient(int orientation, const char *h)
 /**
  *			N M G _ P R _ M
  */
-void 
+void
 nmg_pr_m(const struct model *m)
 {
 	const struct nmgregion *r;
@@ -138,7 +138,7 @@ static char nmg_pr_padstr[128];
 /**
  *			N M G _ P R _ R
  */
-void 
+void
 nmg_pr_r(const struct nmgregion *r, char *h)
 {
 	struct shell *s;
@@ -166,7 +166,7 @@ nmg_pr_r(const struct nmgregion *r, char *h)
 /**
  *			N M G _ P R _ S A
  */
-void 
+void
 nmg_pr_sa(const struct shell_a *sa, char *h)
 {
 	MKPAD(h);
@@ -176,7 +176,7 @@ nmg_pr_sa(const struct shell_a *sa, char *h)
 		bu_log("bad shell_a magic\n");
 		Return;
 	}
-	
+
 	bu_log("%s%f %f %f Min\n", h, sa->min_pt[X], sa->min_pt[Y],
 		sa->min_pt[Z]);
 	bu_log("%s%f %f %f Max\n", h, sa->max_pt[X], sa->max_pt[Y],
@@ -188,12 +188,12 @@ nmg_pr_sa(const struct shell_a *sa, char *h)
 /**
  *			N M G _ P R _ L G
  */
-void 
+void
 nmg_pr_lg(const struct loop_g *lg, char *h)
 {
 	MKPAD(h);
 	NMG_CK_LOOP_G(lg);
-	
+
 	bu_log("%sLOOP_G %8x\n", h, lg);
 	bu_log("%s%f %f %f Min\n", h, lg->min_pt[X], lg->min_pt[Y],
 		lg->min_pt[Z]);
@@ -206,7 +206,7 @@ nmg_pr_lg(const struct loop_g *lg, char *h)
 /**
  *			N M G _ P R _ F G
  */
-void 
+void
 nmg_pr_fg(const long int *magic, char *h)
 {
 	const struct face_g_snurb *fgs;
@@ -259,7 +259,7 @@ nmg_pr_fg(const long int *magic, char *h)
 /**
  *			N M G _ P R _ S
  */
-void 
+void
 nmg_pr_s(const struct shell *s, char *h)
 {
 	const struct faceuse	*fu;
@@ -267,7 +267,7 @@ nmg_pr_s(const struct shell *s, char *h)
 	const struct edgeuse	*eu;
 
 	MKPAD(h);
-	
+
 	bu_log("%sSHELL %8x\n", h, s);
 	if (!s || s->l.magic != NMG_SHELL_MAGIC) {
 		bu_log("bad shell magic\n");
@@ -280,7 +280,7 @@ nmg_pr_s(const struct shell *s, char *h)
 	bu_log("%s%8x sa_p\n", h, s->sa_p );
 	if (s->sa_p)
 		nmg_pr_sa(s->sa_p, h);
-	
+
 	for( BU_LIST_FOR( fu, faceuse, &s->fu_hd ) )  {
 		nmg_pr_fu(fu, h);
 	}
@@ -301,7 +301,7 @@ nmg_pr_s(const struct shell *s, char *h)
 /**
  *			N M G _ P R _ S _ B R I E F L Y
  */
-void 
+void
 nmg_pr_s_briefly(const struct shell *s, char *h)
 {
 	const struct faceuse	*fu;
@@ -309,7 +309,7 @@ nmg_pr_s_briefly(const struct shell *s, char *h)
 	const struct edgeuse	*eu;
 
 	MKPAD(h);
-	
+
 	bu_log("%sSHELL %8x\n", h, s);
 	if (!s || s->l.magic != NMG_SHELL_MAGIC) {
 		bu_log("bad shell magic\n");
@@ -336,7 +336,7 @@ nmg_pr_s_briefly(const struct shell *s, char *h)
 /**
  *			N M G _ P R _ F
  */
-void 
+void
 nmg_pr_f(const struct face *f, char *h)
 {
 	MKPAD(h);
@@ -345,7 +345,7 @@ nmg_pr_f(const struct face *f, char *h)
 	bu_log("%sFACE %8x\n", h, f);
 	bu_log("%s%8x fu_p\n", h, f->fu_p);
 	bu_log("%s%8x g.magic_p\n", h, f->g.magic_p);
-	
+
 	bu_log("%s%f %f %f Min\n", h, f->min_pt[X], f->min_pt[Y],
 		f->min_pt[Z]);
 	bu_log("%s%f %f %f Max\n", h, f->max_pt[X], f->max_pt[Y],
@@ -362,7 +362,7 @@ nmg_pr_f(const struct face *f, char *h)
 /**
  *			N M G _ P R _ F U
  */
-void 
+void
 nmg_pr_fu(const struct faceuse *fu, char *h)
 {
 	const struct loopuse *lu;
@@ -376,7 +376,7 @@ nmg_pr_fu(const struct faceuse *fu, char *h)
 		bu_log("bad faceuse magic\n");
 		Return;
 	}
-	
+
 	bu_log("%s%8x s_p\n", h, fu->s_p);
 	bu_log("%s%8x l.forw\n", h, fu->l.forw);
 	bu_log("%s%8x l.back\n", h, fu->l.back);
@@ -396,7 +396,7 @@ nmg_pr_fu(const struct faceuse *fu, char *h)
 /**
  *			N M G _ P R _ F U _ B R I E F L Y
  */
-void 
+void
 nmg_pr_fu_briefly(const struct faceuse *fu, char *h)
 {
 	const struct loopuse *lu;
@@ -424,7 +424,7 @@ nmg_pr_fu_briefly(const struct faceuse *fu, char *h)
 /**
  *			N M G _ P R _ L
  */
-void 
+void
 nmg_pr_l(const struct loop *l, char *h)
 {
 	MKPAD(h);
@@ -446,13 +446,13 @@ nmg_pr_l(const struct loop *l, char *h)
 /**
  *			N M G _ P R _ L U
  */
-void 
+void
 nmg_pr_lu(const struct loopuse *lu, char *h)
 {
 	const struct edgeuse	*eu;
 	const struct vertexuse *vu;
 	long		magic1;
-	
+
 	MKPAD(h);
 	NMG_CK_LOOPUSE(lu);
 
@@ -500,7 +500,7 @@ nmg_pr_lu(const struct loopuse *lu, char *h)
 /**
  *			N M G _ P R _ L U _ B R I E F L Y
  */
-void 
+void
 nmg_pr_lu_briefly(const struct loopuse *lu, char *h)
 {
 	const struct edgeuse	*eu;
@@ -589,7 +589,7 @@ nmg_pr_eg(const long int *eg_magic_p, char *h)
 /**
  *			N M G _ P R _ E
  */
-void 
+void
 nmg_pr_e(const struct edge *e, char *h)
 {
 	MKPAD(h);
@@ -608,7 +608,7 @@ nmg_pr_e(const struct edge *e, char *h)
 /**
  *			N M G _ P R _ E U
  */
-void 
+void
 nmg_pr_eu(const struct edgeuse *eu, char *h)
 {
 	MKPAD(h);
@@ -644,7 +644,7 @@ nmg_pr_eu(const struct edgeuse *eu, char *h)
 /**
  *			N M G _ P R _ E U _ B R I E F L Y
  */
-void 
+void
 nmg_pr_eu_briefly(const struct edgeuse *eu, char *h)
 {
 	MKPAD(h);
@@ -659,7 +659,7 @@ nmg_pr_eu_briefly(const struct edgeuse *eu, char *h)
 /**
  *			N M G _ P R _ E U _ E N D P O I N T S
  */
-void 
+void
 nmg_pr_eu_endpoints(const struct edgeuse *eu, char *h)
 {
 	struct vertex_g	*vg1, *vg2;
@@ -682,7 +682,7 @@ nmg_pr_eu_endpoints(const struct edgeuse *eu, char *h)
 /**
  *			N M G _ P R _ V G
  */
-void 
+void
 nmg_pr_vg(const struct vertex_g *vg, char *h)
 {
 	MKPAD(h);
@@ -701,7 +701,7 @@ nmg_pr_vg(const struct vertex_g *vg, char *h)
 /**
  *			N M G _ P R _ V
  */
-void 
+void
 nmg_pr_v(const struct vertex *v, char *h)
 {
 	MKPAD(h);
@@ -728,7 +728,7 @@ nmg_pr_v(const struct vertex *v, char *h)
 /**
  *			N M G _ P R _ V U
  */
-void 
+void
 nmg_pr_vu(const struct vertexuse *vu, char *h)
 {
 	MKPAD(h);
@@ -744,7 +744,7 @@ nmg_pr_vu(const struct vertexuse *vu, char *h)
 	case NMG_SHELL_MAGIC	: bu_log("%s%8x up.s_p\n", h, vu->up.s_p); break;
 	case NMG_LOOPUSE_MAGIC	: bu_log("%s%8x up.lu_p\n", h, vu->up.lu_p); break;
 	case NMG_EDGEUSE_MAGIC	: bu_log("%s%8x up.eu_p\n", h, vu->up.eu_p); break;
-	default			: bu_log("bad vertexuse parent magic\n"); 
+	default			: bu_log("bad vertexuse parent magic\n");
 				Return;
 	}
 	bu_log("%s%8x l.forw\n", h, vu->l.forw);
@@ -768,7 +768,7 @@ nmg_pr_vu(const struct vertexuse *vu, char *h)
 /**
  *			N M G _ P R _ V U _ B R I E F L Y
  */
-void 
+void
 nmg_pr_vu_briefly(const struct vertexuse *vu, char *h)
 {
 	const struct vertex_g	*vg;
@@ -820,12 +820,12 @@ nmg_pr_vua(const long int *magic_p, char *h)
 /**
  *			N M G _ E U P R I N T
  */
-void 
+void
 nmg_euprint(const char *str, const struct edgeuse *eu)
 {
 	const fastf_t	*eup;
 	const fastf_t	*matep;
-	
+
 	NMG_CK_EDGEUSE(eu);
 	NMG_CK_VERTEXUSE(eu->vu_p);
 	NMG_CK_VERTEX(eu->vu_p->v_p);

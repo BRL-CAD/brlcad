@@ -35,7 +35,7 @@
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5066
- *  
+ *
  */
 #ifndef lint
 static const char RCSid[] = "@(#)$Header$ (BRL)";
@@ -46,7 +46,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif
-                                                                                                                                                                            
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
@@ -181,7 +181,7 @@ int main(int argc, char **argv)
 	register unsigned short *p, *q;
 	register unsigned int	n;
 	unsigned long clip_high, clip_low;
-	
+
 	if (!(progname=strrchr(*argv, '/')))
 		progname = *argv;
 

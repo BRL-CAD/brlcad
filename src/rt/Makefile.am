@@ -139,7 +139,7 @@ rtg3_vers.c: $(COMMON) viewg3.c
 rtg3_SOURCES = \
 	$(COMMON) \
 	rtg3_vers.c \
-	viewg3.c 
+	viewg3.c
 
 rthide_vers.c: $(COMMON) viewhide.c
 	@SH@ $(top_srcdir)/sh/vers.sh version "RT Hidden-Line Plot" > $@

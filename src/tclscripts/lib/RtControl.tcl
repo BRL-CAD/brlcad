@@ -1114,7 +1114,7 @@ option add *RtControl*tearoff 0 widgetDefault
 }
 
 ::itcl::body RtControl::enterSizeCB {} {
-    set msg "Specify an image size" 
+    set msg "Specify an image size"
 }
 
 ::itcl::body RtControl::enterColorCB {} {

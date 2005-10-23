@@ -21,7 +21,7 @@
  */
 /** @file Tc.c
 	XXX Outdated : should not be used
-  
+
 	SCCS id:	%Z% %M%	%I%
 	Modified: 	%G% at %U%
 	Retrieved: 	%H% at %T%
@@ -85,7 +85,7 @@ void			TcClrCRNL();
 void			prnt_Tio();
 static void		copy_Tio();
 
-/*	
+/*
 	void	TcClrCbreak( int fd )
 
 	Clear CBREAK mode, for file descriptor "fd".

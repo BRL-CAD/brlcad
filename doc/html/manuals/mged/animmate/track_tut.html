@@ -20,8 +20,8 @@ and open it with MGED:
 %> asc2g < /cadsrc/db/ktank.asc > anim_tank.g
 %> mged anim_tank.g
 </pre>
-Bring up AnimMate's 
-<a href="./mmenu.gif">main menu</a> 
+Bring up AnimMate's
+<a href="./mmenu.gif">main menu</a>
 with the command:
 <pre>
 mged> animmate
@@ -100,14 +100,14 @@ prototype, named "pad_proto". Display the entire tank with the command:
 <pre>
 mged> <b>B anim_tank</b>
 </pre>
-Look at the tank from an 
+Look at the tank from an
 <a href="tut6.png">ae 35,25 view</a>.
 <p>
 Use the "l" command to look at the contents of anim_tank and its
 children. Notice that although anim_tank/pads contains 120 pad objects,
 the display seems to show only one, at the origin.
 This is because all 120
-pads are identical copies of the pad prototype. 
+pads are identical copies of the pad prototype.
 The next step is to use
 AnimMate to put the pads around the wheels of the model.
 <p>
@@ -118,7 +118,7 @@ specification table and place this
 information into a table editor. The first three columns of the wheel
 spec table specify the positions of the wheel centers, and the fourth
 column specifies the wheel radii. The wheels
-must be listed in clockwise order as  seen from the right, 
+must be listed in clockwise order as  seen from the right,
 starting at the top front of the
 vehicle and ending at the top back wheel.
 <p>
@@ -151,32 +151,32 @@ here.
 -2844.80004883 -1231.90005493 -685.799987793 330.2
 </pre>
 From the AnimMate main menu, open two
-<a href="teditor.gif">table editors</a> 
+<a href="teditor.gif">table editors</a>
 with the <b>New Editor</b>
 option in the <b>TABLE EDITOR</b> menu. Read <em>left_wheels.txt</em> into
 text editor 0 by
 pressing the <b>Read</b> button, selecting <b>from File</b>, and entering
-the file name in the input-request window that pops up. Then read 
+the file name in the input-request window that pops up. Then read
 <em>right_wheels.txt</em> into text editor 1 in the same way.
 <p>
 Go back to AnimMate's main menu and choose <b>Articulated Track</b>
 from the <b>CREATE SCRIPT</b> menu. This creates the
 <a href="tscript.gif">track animation window</a>.  Before using this window
 to produce animation scripts for the track, you will use it to put the
-pads around the wheels in the  
-model. 
+pads around the wheels in the
+model.
 <p>
 At the bottom of the window, enable the <b>Create geometry file from
-frame</b> button. 
+frame</b> button.
 In the <b>Output file</b> entry box, type <code>left.tcl</code>. Leave
-the <b>Vehicle path from table</b> entry box blank for the time being, 
-and in the <b>Wheel specs from table</b> entry box, 
+the <b>Vehicle path from table</b> entry box blank for the time being,
+and in the <b>Wheel specs from table</b> entry box,
 type <code>0</code> for table editor 0.
 Leave the wheel base name blank,
 since you don't need to change the positions of the wheels in the model.
 Enter <code>pads/lpad.</code> (including the ".") for the <b>Pad base name</b>. AnimMate
 will obtain the names of all the left pads by adding integer indexes to
-this string. For the <b>Number of pads</b>, enter <code>60</code>. 
+this string. For the <b>Number of pads</b>, enter <code>60</code>.
 <p>
 The next line of the track animation window allows you to specify the
 track length. When <b>Minimize track length</b> is specified, the
@@ -190,7 +190,7 @@ Press the <b>Get track length from wheel specs</b> button. The value
 <code>13908.27</code> should appear. This is the minimum track length
 needed to fit around the wheels listed in the wheel spec table. In order
 to give the track a slight droop, modify the track length entry box to
-read <code>13925</code>. 
+read <code>13925</code>.
 <p>
 The vehicle is centered more or less at the
 origin, and has no yaw, pitch, or roll, so you may leave the next two
@@ -200,11 +200,11 @@ box reads <code>0</code>, and then press <b>OK</b> to create
 <em>left.tcl</em>. The newly created file consists of a series of
 "arced" commands like the following:
 <pre>
-arced pads/lpad.0 matrix rarc 0.9908975556 0 -0.1346181052 2959.587653 0 1 0 1231.900024 0.1346181052 0 0.9908975556 -332.7431985 0 0 0 1 
-arced pads/lpad.1 matrix rarc 0.7676558998 0 0.6408622469 3176.256863 0 1 0 1231.900024 -0.6408622469 0 0.7676558998 -395.1169172 0 0 0 1 
-arced pads/lpad.2 matrix rarc 0.0445116452 0 0.9990088655 3276.323028 0 1 0 1231.900024 -0.9990088655 0 0.0445116452 -597.1634219 0 0 0 1 
-arced pads/lpad.3 matrix rarc -0.7076188871 0 0.7065943041 3194.6224 0 1 0 1231.900024 -0.7065943041 0 -0.7076188871 -807.3086927 0 0 0 1 
-arced pads/lpad.4 matrix rarc -0.8604415104 0 0.5095492196 2999.9788 0 1 0 1231.900024 -0.5095492196 0 -0.8604415104 -932.6713713 0 0 0 1 
+arced pads/lpad.0 matrix rarc 0.9908975556 0 -0.1346181052 2959.587653 0 1 0 1231.900024 0.1346181052 0 0.9908975556 -332.7431985 0 0 0 1
+arced pads/lpad.1 matrix rarc 0.7676558998 0 0.6408622469 3176.256863 0 1 0 1231.900024 -0.6408622469 0 0.7676558998 -395.1169172 0 0 0 1
+arced pads/lpad.2 matrix rarc 0.0445116452 0 0.9990088655 3276.323028 0 1 0 1231.900024 -0.9990088655 0 0.0445116452 -597.1634219 0 0 0 1
+arced pads/lpad.3 matrix rarc -0.7076188871 0 0.7065943041 3194.6224 0 1 0 1231.900024 -0.7065943041 0 -0.7076188871 -807.3086927 0 0 0 1
+arced pads/lpad.4 matrix rarc -0.8604415104 0 0.5095492196 2999.9788 0 1 0 1231.900024 -0.5095492196 0 -0.8604415104 -932.6713713 0 0 0 1
 </pre>
 Source this file in MGED and view the results by re-displaying the tank:
 <pre>
@@ -226,8 +226,8 @@ again, then execute the commands:
 mged> <b>source right.tcl</b>
 mged> <b>e anim_tank</b>
 </pre>
-The 
-<a href="tut7.png">right track also</a> appears. 
+The
+<a href="tut7.png">right track also</a> appears.
 
 <h2><a name="ATTrack">Animating the Track</a></h2>
 
@@ -259,16 +259,16 @@ To do this, go to AnimMate's main menu and click on <b>Curve Editor</b>.
 Click on the <b>Current curve</b> button and select <b>Rename curve</b>
 from the posted menu. In the input-request window that appears, type
 <code>path</code> as the new name for the curve. Go to a top view,
-and use the ADD button, as explained in a 
+and use the ADD button, as explained in a
  <a href="./object_tut.html#EACurves">previous section</a>
 of the
-tutorial, to create a three-node animation curve 
+tutorial, to create a three-node animation curve
 which is less than half the length of the tank. (A short path is best
 for demonstrating the motion of the pads).
 <a name="spline interp">Press</a> <b>Spline
-Interpolate</b> to create an 
+Interpolate</b> to create an
 <a href="./tut8.png">interpolation curve</a> called "spl_path".
-(Note: all of the curves drawn by AnimMate appear white in this model, 
+(Note: all of the curves drawn by AnimMate appear white in this model,
 because the coloring is done by region ident codes, rather than material
 properties of the objects. See the MGED edcolor command for
 more information.)
@@ -278,9 +278,9 @@ Before creating the track scripts, you should make sure that you are
 happy with the path that the vehicle will take.
 Open a new table editor, and read the contents of the "spl_path" curve
 into the editor by clicking on <b>from curve spl_path</b> from the
-<b>Read</b> menu. 
+<b>Read</b> menu.
 Go back to the main menu, click on <b>CREATE SCRIPT</b> and then
-select <b>Object</b> from the posted menu to pop up the 
+select <b>Object</b> from the posted menu to pop up the
 <a href="./oscript.gif">object animation window</a>.
 <p>
 Fill in <code>tank.script</code> next to the <b>Output file</b>
@@ -290,24 +290,24 @@ of "spl_path". For the <b>Object name</b>, put <code>/anim_tank</code>.
 Make sure that the <b>Object center</b> and <b>Object
 yaw,pitch,roll</b> entries are set to <code>0 0 0</code>, and select
 <b>Automatic steering</b> from the <b>Orientation control</b> section.
-Now press <b>OK</b> to create <em>tank.script</em>. 
+Now press <b>OK</b> to create <em>tank.script</em>.
 Show the script by clicking on <b>Show Script</b> and pressing <b>OK</b>
-on the 
+on the
 <a href="sscripts.gif">show script window</a>.
 The center of the tank should slide along the path specified by
 "spl_path".
 <p>
-If the preview is too agonizing slow on your display, you might want to 
+If the preview is too agonizing slow on your display, you might want to
 go back to the curve editor, reduce the number of frames per second, and
-then redo everything from the 
+then redo everything from the
 <a href="#spline interp">spline interpolation step</a>. When developing
 animations, it is sometimes a good idea to work at a lower frame rate
 during the early stages, and then go back and redo the interpolations at
 a higher rate when you're sure you've got it right.
 <h3>Creating the track scripts</h3>
-The next step is to animate the track so that the 
+The next step is to animate the track so that the
 tank rolls instead of sliding.
-Go back to the track animation window, and 
+Go back to the track animation window, and
 type <code>left.script</code> as the output file.
 Next to the <b>Vehicle path from table</b> label,
 fill
@@ -321,7 +321,7 @@ Next to the <b>Wheel specs from table</b> entry box, enter
 lists the left wheel positions).
 <p>
 For the wheel <b>Wheel base name</b>, type
-<code>anim_wheels/lw.</code> (don't forget the ".") in the entry box. 
+<code>anim_wheels/lw.</code> (don't forget the ".") in the entry box.
 The output script will rotate the wheels
 as the pads move around them, although the rotation won't be visible
 since the wheels are simply cylinders. If the wheel base name is
@@ -341,7 +341,7 @@ the tank back in its modeled position. Orient the display to a nice
 35,25 view of the left track, and then press <b>Show</b> to show
 left.script.
 You should see
-the left track moving around the left wheels, although the tank 
+the left track moving around the left wheels, although the tank
 itself doesn't
 move. To get the full animation, you will need to combine the track
 animation scripts with the vehicle animation script
@@ -351,7 +351,7 @@ It may appear to you that the left track stops and moves backwards
 during the animation. There are two possible explanations for this
 behavior. One is that the left track may need to turn backwards while
 the right track is turning forward, if the tank's movement contains a a
-very sharp left turn. The other possibility is that although the track 
+very sharp left turn. The other possibility is that although the track
 is actually moving forward, it appears to be rolling backward due to a
 strobing effect. This is the same effect which causes wagon wheels to
 appear to turn backwards in movies. When the track is moving slowly,
@@ -361,19 +361,19 @@ behind the position that pad it follows was in during the previous
 frame. Since the pads are identical, your eye thinks that the other pad
 moved backward. Strobing problems can be avoided by selecting the
 <b>Enable Anti-Strobing</b> checkbutton. When the track is moving
-fast enough to cause strobing effects, this option adds random jitter 
+fast enough to cause strobing effects, this option adds random jitter
 to the track movement, creating motion blur instead of strobing.
 <p>
 Before combining scripts, create an animation script for the right
-track. Change the <b>Output file</b> to <code>right.script</code>, 
+track. Change the <b>Output file</b> to <code>right.script</code>,
 and change the <b>Wheel specs from table</b> to <code>1</code>.
 Change the wheel base name to <code>anim_wheels/rw.</code>,
 change the pad base name to
 <code>pads/rpad.</code>, and press <b>OK</b> to create
-<em>right.script</em>. 
+<em>right.script</em>.
 <p>
-From the main menu, select <b>COMBINE SCRIPTS</b> to pop up the 
-<a href="cscripts.gif">script-combining window</a>. 
+From the main menu, select <b>COMBINE SCRIPTS</b> to pop up the
+<a href="cscripts.gif">script-combining window</a>.
 From the list of files on the right side of the window, select
 <em>tank.script</em>, <em>left.script</em>, and <em>right.script</em>.
 This should make those three names appear in the list on the left side.
@@ -384,7 +384,7 @@ such a way that the track appears to be driving the tank. In particular,
 the pads which touch the ground should remain still as the tank rolls
 over them.
 <p>
-The track animation window is built on top of the 
+The track animation window is built on top of the
 <a href="./anim_track.html">anim_track</a> routine. This routine has
 some additional features not accessible through AnimMate, such as the
 ability to animate vehicles with dynamic suspensions.

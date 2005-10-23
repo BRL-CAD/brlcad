@@ -30,7 +30,7 @@
 			Maryland 21005-5066
 			(301)278-6640 or DSN 298-6640
 */
-/* 
+/*
  * fill_buf.c - Two routines for filling the buffers used in the filtering.
  */
 #if ! defined( lint )

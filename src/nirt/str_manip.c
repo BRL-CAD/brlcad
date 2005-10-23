@@ -54,7 +54,7 @@ int str_dbl(char *buf, double *Result)
 	double  Value = 0.0;		/* current value of the double	   */
 	int	i = 0;			/* current position of *buf        */
 
-	if (*buf == '-')      /* check for a minus sign */  
+	if (*buf == '-')      /* check for a minus sign */
 	{
 		sign = NEG;
 		++i;

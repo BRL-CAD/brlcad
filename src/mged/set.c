@@ -23,7 +23,7 @@
  *	Lee A. Butler
  *      Glenn Durfee
  *	Robert G. Parker
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
@@ -181,9 +181,9 @@ nmg_eu_dist_set(void)
 static char *
 read_var(ClientData clientData, Tcl_Interp *interp, char *name1, char *name2, int flags)
                              /* Contains pointer to bu_struct_parse entry */
-                   
-                    
-          
+
+
+
 {
     struct bu_structparse *sp = (struct bu_structparse *)clientData;
     struct bu_vls str;

@@ -23,7 +23,7 @@
 /*@{*/
 /** @file oslo_map.c
  * Map the olso matrix with the old curve resulting in a new one.
- * 
+ *
  * Author -
  *     Paul R. Stay
  *
@@ -61,7 +61,7 @@ rt_nurb_map_oslo(struct oslo_mat *oslo, fastf_t *old_pts, fastf_t *new_pts, int 
    	         			/* inc to next point of old mesh*/
    	         			/* inc to next point of new mesh*/
    	              	/* Upper and lower bounds for curve generation */
-   	        
+
 {
 	register fastf_t *c_ptr;		/* new curve pointer */
 	register fastf_t *o_pts;
@@ -76,7 +76,7 @@ rt_nurb_map_oslo(struct oslo_mat *oslo, fastf_t *old_pts, fastf_t *new_pts, int 
 	c_ptr = new_pts;
 
 	if ( lower != 0)
-		for ( i = 0,  o_ptr = oslo; i < lower; i++,  o_ptr = 
+		for ( i = 0,  o_ptr = oslo; i < lower; i++,  o_ptr =
 		    o_ptr->next)
 			;
 	else

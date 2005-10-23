@@ -346,7 +346,7 @@ wdb_do_paren(struct bu_list *hp)
 		return -1;	/* empty tree!!!! */
 	else
 		return 0;	/* more to do */
-		
+
 }
 
 HIDDEN union tree *
@@ -536,7 +536,7 @@ wdb_comb_std_cmd(struct rt_wdb	*wdbp,
 		}
 
 		if (rt_db_get_internal(&intern, dp, wdbp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
-			Tcl_AppendResult(interp, "Database read error, aborting\n", (char *)NULL);	
+			Tcl_AppendResult(interp, "Database read error, aborting\n", (char *)NULL);
 			return TCL_ERROR;
 		}
 		comb = (struct rt_comb_internal *)intern.idb_ptr;

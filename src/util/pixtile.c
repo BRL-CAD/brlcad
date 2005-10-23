@@ -19,14 +19,14 @@
  * information.
  */
 /** @file pixtile.c
- *  
+ *
  *  Given multiple .pix files with ordinary lines of pixels,
  *  produce a single image with each image side-by-side,
  *  right to left, bottom to top on STDOUT.
  *
  *  Author -
  *	Michael John Muuss
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory

@@ -25,7 +25,7 @@
  *
  *  Author -
  *	John R. Anderson
- *  
+ *
  *  Source -
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
@@ -309,7 +309,7 @@ struct bu_list *vhead;
 	switch( dir[entno]->form )
 	{
 	  default:
-	  case 1:	
+	  case 1:
 	  case 2:
 	  case 3:
 	  case 11:
@@ -809,7 +809,7 @@ Conv_drawings()
 		vv = Get_views_visible( i );
 		if( vv )
 			bu_ptbl_ins( &view_vis_list , (long *)vv );
-			
+
 	}
 
 	for( i=0 ; i<totentities ; i++ )

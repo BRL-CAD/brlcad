@@ -20,24 +20,24 @@
  *
  */
 /** @file anim_keyread.c
- *	Convert an list of mged-style 'savekey' keyframes into an 
+ *	Convert an list of mged-style 'savekey' keyframes into an
  *  animation table
  *
  *  The output table specifies the orientation in one of three ways:
  *
  *	default	 - quaternions in the order x, y, z, w.
  *
- *	-z option - Eulers angles, in the order xyz. The model axes are 
- *		considered to be rotated about the camera's z, y, and 
+ *	-z option - Eulers angles, in the order xyz. The model axes are
+ *		considered to be rotated about the camera's z, y, and
  *		x axes (in that order).
- *	
+ *
  *	-y option - Eulers angles in the form yaw, pitch, roll.
  *
  *  This is more or less a special case of anim_orient.c
  *
  *  Author -
  *	Carl J. Nuzman
- *  
+ *
  *  Source -
  *      The U. S. Army Research Laboratory
  *      Aberdeen Proving Ground, Maryland  21005-5068  USA
@@ -59,7 +59,7 @@
 #define YPR		0
 #define XYZ		1
 #define QUATERNION	2
- 
+
 #define DEGREES		0
 #define RADIANS		1
 
@@ -70,7 +70,7 @@
 #define DTOR    M_PI/180.0
 #define RTOD    180.0/M_PI
 
-int mode; 
+int mode;
 int units;
 
 extern int bu_optind;

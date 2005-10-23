@@ -26,7 +26,7 @@
  *	SLAD/BVLD/VMB
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005
- *  
+ *
  */
 
 #include "./iges_struct.h"
@@ -37,7 +37,7 @@ Add_face_to_shell( s , entityno , face_orient )
 struct shell *s;
 int entityno;
 int face_orient;
-{ 
+{
 
 	int		sol_num;		/* IGES solid type number */
 	int		surf_de;		/* Directory sequence number for underlying surface */
@@ -109,7 +109,7 @@ int face_orient;
 		}
 
 NMG_CK_FACE_G_SNURB( fu->f_p->g.snurb_p );
-		
+
 		for( loop=0 ; loop<no_of_loops ; loop++ )
 		{
 			if( !Add_nurb_loop_to_face( s, fu, ((loop_de[loop]-1)/2) , face_orient ))

@@ -27,12 +27,12 @@
  *
  *  Author -
  *	Tom DiGiacinto
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5066
- *  
+ *
  */
 #ifndef lint
 static const char RCSid[] = "@(#)$Header$ (BRL)";
@@ -183,10 +183,10 @@ stxt_read(register struct stxt_specific *stp)
  */
 HIDDEN int
 stxt_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip)
-                      	    
-             		         
-    			      
-                             
+
+
+
+
                                 /* New since 4.4 release */
 {
 	register struct stxt_specific *stp;

@@ -307,7 +307,7 @@ render_Model(int frame)
 		ag.a_hit = f_Region;
 		ag.a_miss = f_R_Miss;
 		ag.a_overlap = report_overlaps ? f_Overlap : f_NulOverlap;
-		ag.a_logoverlap =rt_silent_logoverlap; 
+		ag.a_logoverlap =rt_silent_logoverlap;
 		ag.a_onehit = false;
 		}
 	else
@@ -338,7 +338,7 @@ render_Model(int frame)
 			bu_log( "Warning, no memory for distance map.\n" );
 		ag.a_hit = f_HL_Hit;
 		ag.a_miss = f_HL_Miss;
-		ag.a_logoverlap =rt_silent_logoverlap; 
+		ag.a_logoverlap =rt_silent_logoverlap;
 		ag.a_overlap = report_overlaps ? f_Overlap : f_NulOverlap;
 		ag.a_onehit = true;
 		}
@@ -346,7 +346,7 @@ render_Model(int frame)
 		{
 		ag.a_hit = f_Model;
 		ag.a_miss = f_Backgr;
-		ag.a_logoverlap =rt_silent_logoverlap; 
+		ag.a_logoverlap =rt_silent_logoverlap;
 		ag.a_overlap = report_overlaps ? f_Overlap : f_NulOverlap;
 		ag.a_onehit = ! (max_bounce > 0);
 		}
@@ -380,7 +380,7 @@ render_Model(int frame)
 	Scale2Vec( grid_hor, a_cellsz, grid_dh );
 	Scale2Vec( grid_ver, a_cellsz, grid_dv );
 
-	/* Statistics for refraction tuning. */ 
+	/* Statistics for refraction tuning. */
 	refrac_missed = 0;
 	refrac_inside = 0;
 	refrac_total = 0;
@@ -432,7 +432,7 @@ render_Scan(int cpu, genptr_t arg)
 		RGBpixel scanbuf[MAX_SCANSIZE];	/* private to CPU */
 		vect_t aliasbuf[MAX_SCANSIZE];	/* private to CPU */
 		register int com;
-		
+
 	/* Must have local copy of application structure for parallel
 		threads of execution, so make copy. */
 		struct application a;
@@ -493,7 +493,7 @@ render_Scan(int cpu, genptr_t arg)
 					Add2Vec( aim_pt, grid_x_inc, a.a_ray.r_pt );
 					VREVERSE( a.a_ray.r_dir, lgts[0].dir );
 					}
-				else	
+				else
 					/* Fire a ray at model from the zeroth
 					point light source position lgts[0].loc
 					through each grid cell. The closer the
@@ -735,7 +735,7 @@ getMaMID(struct mater_info *map, int *id)
 		}
 	}
 	bu_free( (genptr_t)copy, "getMaMID" );
-	return	false;		
+	return	false;
 
 	}
 
@@ -1003,7 +1003,7 @@ correct_Lgt(register struct application *ap, register struct partition *pp, regi
 		ap_hit.a_hit = f_Shadow; /* Handle shadowed pixels. */
 		ap_hit.a_miss = f_Lit;   /* Handle illuminated pixels. */
 		ap_hit.a_level++;	 /* Increment recursion level. */
-	
+
 		if( RT_G_DEBUG & DEBUG_SHADOW )
 			{
 			bu_log( "\tcorrect_Lgt()\n" );
@@ -1015,7 +1015,7 @@ correct_Lgt(register struct application *ap, register struct partition *pp, regi
 
 		/* Set up ray origin at surface contact point. */
 		VMOVE( ap_hit.a_ray.r_pt, pp->pt_inhit->hit_point );
-	
+
 		/* Pass distance to light source to hit routine. */
 		ap_hit.a_cumlen =
 			Dist3d( pp->pt_inhit->hit_point, lgt_entry->loc );
@@ -1074,7 +1074,7 @@ correct_Lgt(register struct application *ap, register struct partition *pp, regi
 /*
 	void mirror_Reflect( register struct application *ap,
 			     register struct partition *pp,
-			     register fastf_t *mirror_coefs )	
+			     register fastf_t *mirror_coefs )
  */
 STATIC void
 mirror_Reflect(register struct application *ap, register struct partition *pp, register fastf_t *mirror_coefs, fastf_t *normal)
@@ -1172,7 +1172,7 @@ glass_Refract(register struct application *ap, register struct partition *pp, re
 				V_Print( "\t\tf_Model returned coeffs",
 					ap->a_color, bu_log );
 				}
-			return;	
+			return;
 			}
 		else
 			{
@@ -1365,7 +1365,7 @@ f_Error(register struct application *ap)
  */
 STATIC int
 f_Lit(register struct application *ap)
-{	
+{
 	if( RT_G_DEBUG & DEBUG_SHADOW )
 		bu_log( "\t\tSurface is illuminated.\n" );
 	ap->a_diverge = 1.0;
@@ -1407,7 +1407,7 @@ f_Probe(register struct application *ap, struct partition *pt_headp, struct seg 
 		ri_1 * sin( theta_1 ) = ri_2 * sin( theta_2 )
 
 		sin( theta_2 ) = ri_1/ri_2 * sin( theta_1 )
-		
+
 	The above condition is undefined for ri_1/ri_2 * sin( theta_1 )
 	being greater than 1, and this represents the condition for total
 	reflection, the 'critical angle' is the angle theta_1 for which
@@ -1431,7 +1431,7 @@ refract(register fastf_t *v_1, register fastf_t *norml, fastf_t ri_1, fastf_t ri
 		return	1;
 		}
 	beta = ri_1 / ri_2;
-	Scale2Vec( v_1, beta, w );	
+	Scale2Vec( v_1, beta, w );
 	CrossProd( w, norml, u );
 	/*	|w X norml| = |w||norml| * sin( theta_1 )
 		        |u| = ri_1/ri_2 * sin( theta_1 ) = sin( theta_2 )
@@ -1553,10 +1553,10 @@ f_Shadow(register struct application *ap, struct partition *pt_headp, struct seg
 	This is the heart of the lighting model which is based on a model
 	developed by Bui-Tuong Phong, [see Wm M. Newman and R. F. Sproull,
 	"Principles of Interactive Computer Graphics", 	McGraw-Hill, 1979]
-	
+
 	Er = Ra(m)*cos(Ia) + Rd(m)*cos(Il) + W(Il,m)*cos(s)^^n
 	where,
- 
+
 	Er	is the energy reflected in the observer's direction.
 	Ra	is the diffuse reflectance coefficient at the point
 		of intersection due to ambient lighting.
@@ -1596,7 +1596,7 @@ model_Reflectance(register struct application *ap, struct partition *pp, Mat_Db_
 		VMOVE( lgt_dir, view_dir );
 		}
 	else
-		{	
+		{
 		/* Compute attenuated light intensity due to shadowing. */
 		if( (lgt_energy = correct_Lgt( ap, pp, lgt_entry )) == 0.0 )
 			{

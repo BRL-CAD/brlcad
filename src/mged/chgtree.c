@@ -381,7 +381,7 @@ f_arced(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	}
 	db_free_1anim( anp );
 	return TCL_OK;
-		
+
 fail:
 	rt_db_free_internal( &intern, &rt_uniresource );
 	db_free_1anim( anp );

@@ -219,10 +219,10 @@ color_fix(register const struct bu_structparse *sdp, register const char *name, 
  */
 HIDDEN int
 camo_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip)
-                      	    
-             		         
+
+
     			      	/* pointer to reg_udata in *rp */
-             		     
+
            		      	/* New since 4.4 release */
 {
 	register struct camo_specific	*camo_sp;
@@ -363,10 +363,10 @@ camo_render(struct application *ap, struct partition *pp, struct shadework *swp,
  */
 HIDDEN int
 marble_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip)
-                      	    
-             		         
+
+
     			      	/* pointer to reg_udata in *rp */
-             		     
+
            		      	/* New since 4.4 release */
 {
 	register struct camo_specific	*camo_sp;
@@ -464,7 +464,7 @@ marble_render(struct application *ap, struct partition *pp, struct shadework *sw
 	CLAMP(val, 0.0, 1.0);
 #else
 	val = sin(val*M_PI);
-	
+
 #endif
 	inv_val = 1.0 - val;
 

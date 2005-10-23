@@ -31,7 +31,7 @@
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5066
- *  
+ *
  */
 #ifndef lint
 static const char RCSid[] = "@(#)$Header$ (BRL)";
@@ -81,12 +81,12 @@ struct bu_structparse stk_parse[] = {
  */
 HIDDEN int
 ext_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mf_p, struct rt_i *rtip, struct mfuncs **headp)
-                           
+
              	         	/* parameter string */
     		      		/* pointer to user data pointer */
-             	      
-           	      
-             	        
+
+
+
 {
 	struct bu_mapped_file	*parameter_file;
 	struct bu_vls		parameter_data;
@@ -96,7 +96,7 @@ ext_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct
 	RT_CHECK_RTI(rtip);
 	BU_CK_VLS( matparm );
 	RT_CK_REGION(rp);
-	
+
 	filename = bu_vls_addr(matparm);
 	parameter_file = bu_open_mapped_file( filename, (char *)NULL );
 	if (!parameter_file) {
@@ -126,12 +126,12 @@ ext_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct
  *			S T K _ D O S E T U P
  */
 static int stk_dosetup(char *cp, struct region *rp, char **dpp, char **mpp, struct rt_i *rtip, struct mfuncs **headp)
-    	    
-             	    
+
+
     	      		/* udata pointer address */
     	      		/* mfuncs pointer address */
-           	      
-             	        
+
+
 {
 	register struct mfuncs *mfp;
 #ifdef HAVE_DLOPEN
@@ -170,7 +170,7 @@ retry:
 		goto found;
 	}
 #ifdef HAVE_DLOPEN
-	/* If we get here, then the shader wasn't found in the list of 
+	/* If we get here, then the shader wasn't found in the list of
 	 * compiled-in (or previously loaded) shaders.  See if we can
 	 * dynamically load it.
 	 */
@@ -221,12 +221,12 @@ out:
  */
 HIDDEN int
 stk_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mf_p, struct rt_i *rtip, struct mfuncs **headp)
-                           
+
              	         	/* parameter string */
     		      		/* pointer to user data pointer */
-             	      
-           	      
-             	        
+
+
+
 {
 	register struct stk_specific *sp;
 	char	*cp, *start;
@@ -293,7 +293,7 @@ stk_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct
 
 /*
  *  			S T K _ R E N D E R
- *  
+ *
  *  Evaluate all of the rendering functions in the stack.
  *
  *  Returns:

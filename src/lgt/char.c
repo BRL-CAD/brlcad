@@ -19,7 +19,7 @@
  * information.
  */
 /** @file char.c
- * 
+ *
  * routines for displaying a string on a frame buffer.
 
 	Authors:	Paul R. Stay

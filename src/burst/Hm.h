@@ -80,7 +80,7 @@
 	item field is filled in by the generator function, and the
 	prevtop and prevhit fields should be private to the current
 	invocation of HmHit.
- 
+
 **/
 
 struct HmMenu;
@@ -127,7 +127,7 @@ HmItem;
 	0, "hfn()" is called (if non-zero), also with the current menu
 	item.  The "data" field is reserved for the user to pass
 	information between these functions and the calling routine.
- 
+
 **/
 typedef struct HmMenu
 	{
@@ -197,7 +197,7 @@ extern int	HmMaxVis;
 extern int	HmLastMaxVis;
 extern int	HmTtyFd;
 /**
-	
+
 	HmItem	*HmHit( HmMenu	*menup )
 
 	HmHit() presents the user with a menu specified by HmMenu
@@ -265,7 +265,7 @@ extern HmItem	*HmHit();
 #endif
 
 /**
-	
+
 	void	HmRedraw( void )
 
 	HmRedraw() will force the entire set of active menus to
@@ -338,7 +338,7 @@ extern int	HmUngetchar();
 **/
 extern void	HmTtySet();
 extern void	HmTtyReset();
-		
+
 
 #define HmMAXLINE 	132
 #define HmHGTBORDER	2

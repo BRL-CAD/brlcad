@@ -28,11 +28,11 @@
  *
  *  Author -
  *	Michael John Muuss
- *  
+ *
  *  Source -
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
- *  
+ *
  */
 /*@}*/
 
@@ -55,9 +55,9 @@ static const char librt_htbl_RCSid[] = "@(#)$Header$ (ARL)";
  */
 void
 rt_htbl_init(struct rt_htbl *b, int len, const char *str)
-              	   
+
    		    		/* initial len. */
-          	     
+
 {
 	if (bu_debug & BU_DEBUG_PTBL)
 		bu_log("rt_htbl_init(%8x, len=%d, %s)\n", b, len, str);

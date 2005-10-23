@@ -140,7 +140,7 @@ option add *Mged.height 400 widgetDefault
 
 	method attachObservers {}
 	method detachObservers {}
-	
+
 	method ? {}
 	method apropos {key}
 	method help {args}

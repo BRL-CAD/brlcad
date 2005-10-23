@@ -175,7 +175,7 @@ extern FILE	*fopenrc(void);
 #endif
 #define		H		4
 #define		V		5
- 
+
 #endif /* SEEN_USRFMT_H */
 
 /*

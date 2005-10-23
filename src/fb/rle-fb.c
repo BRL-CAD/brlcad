@@ -27,12 +27,12 @@
  *  Authors -
  *	Michael John Muuss
  *	Paul R. Stay
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5066
- *  
+ *
  */
 #ifndef lint
 static const char RCSid[] = "@(#)$Id$ (BRL)";
@@ -43,7 +43,7 @@ static const char RCSid[] = "@(#)$Id$ (BRL)";
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif
-                                                                                                                                                                            
+
 #include <stdlib.h>
 #include <stdio.h>
 
@@ -59,7 +59,7 @@ static int	background[3];
 static int	override_background;
 
 unsigned char	*rows[4];		/* Character pointers for rle_getrow */
-	
+
 static unsigned char	*scan_buf;		/* single scanline buffer */
 static ColorMap	cmap;
 

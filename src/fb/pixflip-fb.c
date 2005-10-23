@@ -20,7 +20,7 @@
  *
  */
 /** @file pixflip-fb.c
- *  
+ *
  *  Given multiple .pix files with ordinary lines of pixels,
  *  sequence through them on the current framebuffer.
  *  A window-system version of "pixtile and fbanim".
@@ -29,12 +29,12 @@
  *
  *  Author -
  *	Michael John Muuss
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5066
- *  
+ *
  */
 #ifndef lint
 static const char RCSid[] = "@(#)$Header$ (BRL)";
@@ -45,7 +45,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif
-#include <stdlib.h>                                                                                                                                                                            
+#include <stdlib.h>
 #include <stdio.h>
 #ifdef HAVE_STRING_H
 #include <string.h>
@@ -249,19 +249,19 @@ done:
 			/* Play from start to finish, over and over */
 			for( i=0; i<maxframe; i++ )  {
 				showframe(i);
-				select( fileno(stdin)+1, &readfds, 
+				select( fileno(stdin)+1, &readfds,
 					(fd_set *)0, (fd_set *)0, &tv );
 			}
 		} else {
 			/* Play from start to finish and back */
 			for( i=0; i<maxframe; i++ )  {
 				showframe(i);
-				select( fileno(stdin)+1, &readfds, 
+				select( fileno(stdin)+1, &readfds,
 					(fd_set *)0, (fd_set *)0, &tv );
 			}
 			while(i-->0)  {
 				showframe(i);
-				select( fileno(stdin)+1, &readfds, 
+				select( fileno(stdin)+1, &readfds,
 					(fd_set *)0, (fd_set *)0, &tv );
 			}
 		}

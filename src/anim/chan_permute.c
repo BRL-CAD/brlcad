@@ -29,11 +29,11 @@
  *		[-o outfile2 ...]
  *where infiles are files to be read from, outfiles are files to be written
  *to, and each id is a small positive integer identifying a channel. All of the
- *input id's should be distinct integers, or the results are not guaranteed. 
- * 
+ *input id's should be distinct integers, or the results are not guaranteed.
+ *
  *  Author -
  *	Carl J. Nuzman
- *  
+ *
  *  Source -
  *      The U. S. Army Research Laboratory
  *      Aberdeen Proving Ground, Maryland  21005-5068  USA
@@ -72,8 +72,8 @@ main(int argc, char **argv)
     int icount, ocount;
     struct unit *x, *y;
     Word *arrayd;
-	
-    i=j=icount = ocount = maxlength = 0;	
+
+    i=j=icount = ocount = maxlength = 0;
     for(i=1;i<argc;i++){
 	if( !strncmp(argv[i],ihead,2) ){
 	    j=0;
@@ -86,7 +86,7 @@ main(int argc, char **argv)
 	else
 	    maxlength = (++j>maxlength) ? j : maxlength;
     }
-	
+
     y = (struct unit *) calloc(icount+ocount,sizeof(struct unit));
     x = y - 1;
     for(i=1;i<argc;i++){
@@ -130,7 +130,7 @@ main(int argc, char **argv)
 	    else if (x->i_o == 1){
 		if(feof(x->file))
 		    num_done += 1;
-		else 
+		else
 		    for(j=0;j<x->channels;j++)
 			fscanf(x->file,"%s ",arrayd[x->list[j]]);
 	    }
@@ -150,7 +150,7 @@ main(int argc, char **argv)
 }
 
 int max(int *m, int n) /*return greatest of n integers, unless one is greater than n*/
-          
+
 {
     int i,j;
     j = 0;

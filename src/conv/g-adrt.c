@@ -101,8 +101,8 @@ void regmap_lookup(char *name, int id) {
 *
 *  Walk backwards up the tree to the first region, then
 *  make a vls string of everything at or above that level.
-*  Basically, it produces the name of the region to which 
-*  the leaf of the path contributes. 
+*  Basically, it produces the name of the region to which
+*  the leaf of the path contributes.
 */
 struct bu_vls* region_name_from_path(struct db_full_path *pathp) {
     int i, j;
@@ -224,7 +224,7 @@ static union tree* reg_end_func(struct db_tree_state *tsp,
 *  process a leaf of the region tree.  called by db_walk_tree()
 *
 *  Makes sure that this is a BoT primitive, creates the ADRT triangles
-*  and some wrapper data structures so that we can ray-trace the BoT in 
+*  and some wrapper data structures so that we can ray-trace the BoT in
 *  ADRT
 */
 static union tree *leaf_func(struct db_tree_state *tsp,

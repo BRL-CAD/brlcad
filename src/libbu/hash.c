@@ -374,7 +374,7 @@ bu_hash_tbl_first( struct bu_hash_tbl *hsh_tbl, struct bu_hash_record *rec )
 
 	if( hsh_tbl->num_entries == 0 ) {
 		/* this table is empty */
-		return( (struct bu_hash_entry *)NULL );	
+		return( (struct bu_hash_entry *)NULL );
 	}
 
 	/* loop through all the bins in this hash table, looking for a non-null entry */

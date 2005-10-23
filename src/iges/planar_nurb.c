@@ -26,7 +26,7 @@
  *	SLAD/BVLD/VMB
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005
- *  
+ *
  *
  *  Checks if nurb surface is planar, returns 1 if so, 0 otherwise
  */

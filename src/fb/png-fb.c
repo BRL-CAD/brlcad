@@ -20,12 +20,12 @@
  *
  */
 /** @file png-fb.c
- *  
+ *
  *  Program to take PNG (Portable Network Graphics) files and send them to a framebuffer.
- *  
+ *
  *  Author -
  *	John R. Anderson
- *  
+ *
  *  Source -
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA

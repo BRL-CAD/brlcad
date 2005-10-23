@@ -19,17 +19,17 @@
  * information.
  */
 /** @file common.c
- * 
+ *
  *  Subroutines common to several procedural database generators.
  *
  *  Author -
  *	Michael John Muuss
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5066
- *  
+ *
  */
 #ifndef lint
 static const char RCSid[] = "@(#)$Header$ (BRL)";
@@ -90,13 +90,13 @@ get_rgb( unsigned char *rgb )
 
 void
 do_light(char *name, fastf_t *pos, fastf_t *dir_at, int da_flag, double r, unsigned char *rgb, struct wmember *headp)
-    	      
-       	    
+
+
       	       		/* direction or aim point */
    	        	/* 0 = direction, !0 = aim point */
       	  		/* radius of light */
-             	     
-              	       
+
+
 {
 	char	nbuf[64];
 	vect_t	center;

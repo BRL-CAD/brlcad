@@ -30,7 +30,7 @@
  *
  *  Author -
  *	Paul J. Tanenbaum
- *  
+ *
  *  Source -
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
@@ -57,7 +57,7 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 #include "redblack.h"
 
 /*
- * ******************** Hack 
+ * ******************** Hack
  */
 
 BU_EXTERN(struct bu_file	*bu_fopen, (char *fname, char *type) );
@@ -248,7 +248,7 @@ int bu_fgetc (register BU_FILE *bfp)
 	    return ('\n');
 	bfp -> file_needline = 0;
     }
-    
+
     return (*(bfp -> file_bp)++);
 }
 
@@ -332,7 +332,7 @@ void bu_file_err (register BU_FILE *bfp, register char *text1, register char *te
 }
 
 /*
- * ******************** Hack 
+ * ******************** Hack
  */
 
 
@@ -410,7 +410,7 @@ struct db_i	*dbip;		/* Instance of BRL-CAD database */
 
 struct curr_id
 {
-    struct bu_list	l;		
+    struct bu_list	l;
     int			ci_id;		/* The region ID */
     struct bu_list	ci_regions;	/* Regions now holding this ID */
     int			ci_newid;	/* Replacement ID for the regions */
@@ -616,8 +616,8 @@ int compare_curr_ids (void *v1, void *v2)
  */
 int read_int (BU_FILE *sfp, int *ch, int *n)
 
-       	     
-   	    
+
+
    	   		/* The result */
 
 {
@@ -628,7 +628,7 @@ int read_int (BU_FILE *sfp, int *ch, int *n)
 
     while (isspace(*ch))
 	*ch = bu_fgetc(sfp);
-    
+
     for (result = 0; isdigit(*ch); *ch = bu_fgetc(sfp))
     {
 	got_digit = 1;

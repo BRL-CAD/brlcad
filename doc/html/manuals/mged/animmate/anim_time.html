@@ -16,10 +16,10 @@ anim_time - estimate appropriate time parameters for path
 <h1>DESCRIPTION</h1>
 This filter is designed to estimate appropriate time parameters for
 an animation curve in 3D space. Given a four-column table specifying
-time and 3D position for an object, 
+time and 3D position for an object,
 <i>anim_time </i>
 ignores all but the first and last time specifications and
-calculates reasonable time values for each intermediate point in the table. 
+calculates reasonable time values for each intermediate point in the table.
 The
 output time values are based on the distances between points and the
 calculated speed of the object. Various options allow the user to
@@ -28,7 +28,7 @@ form of the output.
 
 <i>Anim_time</i>
 is intended to be used in situations where the user knows what key points
-an object should pass through and how long the entire motion should take, 
+an object should pass through and how long the entire motion should take,
 but doesn't care exactly when the object
 reaches each point. It is also useful for getting objects to accelerate
 smoothly to and from rest.
@@ -72,7 +72,7 @@ constant rate. The argument must lie between 0.0 and 3.0.
 
 <dd>
 Specify the final speed of the object, relative to the speed that would
-negotiate the given path at a constant rate. The argument must lie 
+negotiate the given path at a constant rate. The argument must lie
 between 0.0 and 3.0.
 <dt>
 <b>-v</b>
@@ -91,9 +91,9 @@ will be a number representing the total length of the input path.
 <h1>BUGS</h1>
 The algorithm fits a cubic polynomial to the distance vs time graph, and then
 uses Newton's method to find the times corresponding to each given distance.
-If for some reason convergence is not reached, 
+If for some reason convergence is not reached,
 <i>anim_time </i>
-will print a warning on standard error. If the 
+will print a warning on standard error. If the
 <b>-d </b>
 option is specified, the results of each iteration will be printed.
 <h1>AUTHOR</h1>

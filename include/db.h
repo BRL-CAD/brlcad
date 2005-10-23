@@ -60,7 +60,7 @@
  *
  *  Author -
  *	Michael John Muuss
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
@@ -287,7 +287,7 @@ union record  {
 		short	d_nknots;	/* # granules of knots */
 		short	d_nctls;	/* # granules of ctls */
 	} d;
-	/* 
+	/*
 	 * The b_surf record is followed by
 	 * d_nknots granules of knot vectors (first u, then v),
 	 * and then by d_nctls granules of control mesh information.

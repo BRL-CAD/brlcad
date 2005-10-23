@@ -42,7 +42,7 @@
  *	16bit-depth-count (a 16 bit int containing the number of bits per pixel)
  *	run-length encoded pixel data.  Each entry of the form:
  *	1byte run length, B, G, R
- *	
+ *
  *	Run length of 0 seems to be meaningless.
  */
 
@@ -113,7 +113,7 @@ void doit(void)
 	/* the weird output style is to circumvent differences in
 	 * machine architectures
 	 */
-	
+
 	(void) putchar( (x & 0x0ff00) >> 8);
 	(void) putchar( (x & 0x0ff));
 	(void) putchar( (y & 0x0ff00) >> 8);
@@ -157,13 +157,13 @@ main(int ac, char **av)
 
 	progname = *av;
 	if (isatty(fileno(stdin))) usage();
-	
+
 	/* Get # of options & turn all the option flags off
 	 */
 	optlen = strlen(options);
 
 	for (c=0 ; c < optlen ; optflags[c++] = '\0');
-	
+
 	/* Turn off bu_getopt's error messages */
 	opterr = 0;
 

@@ -29,12 +29,12 @@
  *
  *  Original Version -
  *	March 17, 1980
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5066
- *  
+ *
  */
 #ifndef lint
 static const char RCSid[] = "@(#)$Header$ (BRL)";
@@ -82,7 +82,7 @@ get_line(register char *cp, int buflen, char *title)
 	}
 	if( c == EOF )
 		return	EOF;
-	while( count-- > 0 ) 
+	while( count-- > 0 )
 		*cp++ = 0;
 	return	c;
 }
@@ -99,7 +99,7 @@ getint(char *cp, int start, int len)
 
 	strncpy( buf, cp+start, len );
 	buf[len] = '\0';
-	return atoi(buf);	
+	return atoi(buf);
 }
 
 /*
@@ -114,7 +114,7 @@ getdouble(char *cp, int start, int len)
 
 	strncpy( buf, cp+start, len );
 	buf[len] = '\0';
-	return atof(buf);	
+	return atof(buf);
 }
 
 /*		N A M E C V T	 */

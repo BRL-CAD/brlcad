@@ -26,7 +26,7 @@
  *  Authors -
  *	Phillip Dykstra
  *	Michael John Muuss
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
@@ -41,7 +41,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif
-                                                                                                                                                                            
+
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -192,18 +192,18 @@ get_args(int argc, register char **argv)
  * sequences are encoded as <ESC><count><byte>.  <ESC> is the character
  * code 128.  Each single <ESC> in the input data stream is encoded as
  * <ESC><0>, because the <count> in this scheme can never be 0 (actual
- * count can never be 1).  <ESC><ESC> is encoded as <ESC><1><ESC>. 
+ * count can never be 1).  <ESC><ESC> is encoded as <ESC><1><ESC>.
  *
  * This algorithm will fail (make the "compressed" data bigger than the
  * original data) only if the input stream contains an excessive number of
- * one- and two-character sequences of the <ESC> character.  
+ * one- and two-character sequences of the <ESC> character.
  */
 
 #define ESCAPE		128
 
 int
 decoderead(unsigned char *buf, int size, int length, FILE *fp)
-             	     
+
    		     		/* should be one! */
    		       		/* number of items to read */
     		    		/* input file pointer */
@@ -303,7 +303,7 @@ main(int argc, char **argv)
 		header.ras_width = nbits / header.ras_depth;
 
 		if(verbose)  {
-			fprintf( stderr, 
+			fprintf( stderr,
 				"ras_width = %d, ras_height = %d\nras_depth = %d, ras_length = %d\n",
 				header.ras_width, header.ras_height,
 				header.ras_depth, header.ras_length );

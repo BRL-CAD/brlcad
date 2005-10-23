@@ -76,11 +76,11 @@ proc cadColorWidget { mode parent child args } {
     set data(COLORBARS_WIDTH) 128
 
     # PLGN_WIDTH is the number of pixels wide of the triangular selection
-    # polygon. This also results in the definition of the padding on the 
+    # polygon. This also results in the definition of the padding on the
     # left and right sides which is half of PLGN_WIDTH. Make this number even.
     set data(PLGN_WIDTH) 10
 
-    # PLGN_HEIGHT is the height of the selection polygon and the height of the 
+    # PLGN_HEIGHT is the height of the selection polygon and the height of the
     # selection rectangle at the bottom of the color bar. No restrictions.
     set data(PLGN_HEIGHT) 10
 
@@ -318,7 +318,7 @@ to select colors from the color ramp." } }
 	    "cadColorWidget_EnterColorBar $w $colorBar"
 	bind $data($colorBar,sel) <Leave> \
 	    "cadColorWidget_LeaveColorBar $w $colorBar"
-	
+
 	bind $box.entry <Return> "cadColorWidget_HandleColorEntry $w $colorBar"
 
 	incr row 1
@@ -416,7 +416,7 @@ window that implements the X selection protocol." } }
 
     set data(applyBtn)      $botFrame.apply
     set data(dismissBtn)  $botFrame.dismiss
- 
+
     grid x $botFrame.apply x $botFrame.dismiss x -sticky ew -in $botFrame
     grid columnconfigure $botFrame 0 -weight 1
     grid columnconfigure $botFrame 2 -weight 1
@@ -463,7 +463,7 @@ apply the color." } }
 #	Sets the current selection of the dialog box
 #
 proc cadColorWidget_SetRGBValue { w rgb } {
-    upvar #0 $w data 
+    upvar #0 $w data
 
     set data(red) [lindex $rgb 0]
     set data(green) [lindex $rgb 1]
@@ -540,7 +540,7 @@ proc cadColorWidget_ColorToX { w color cf } {
 
 
 # cadColorWidget_DrawColorScale --
-# 
+#
 proc cadColorWidget_DrawColorScale {w colorBar {create 0}} {
     global lines
     upvar #0 $w data
@@ -565,7 +565,7 @@ proc cadColorWidget_DrawColorScale {w colorBar {create 0}} {
 	if [info exists data($colorBar,index)] {
 	    $sel delete $data($colorBar,index)
 	}
-	
+
 	# Draw the selection polygons
 	cadColorWidget_CreateSelector $w $sel $colorBar
 
@@ -620,10 +620,10 @@ proc cadColorWidget_DrawColorScale {w colorBar {create 0}} {
 	# l is the canvas index of the first colorBar.
 	set l $data(lines,$colorBar,start)
     }
-    
+
     # Draw the color bars.
     switch $data(colorModel) {
-	RGB {	
+	RGB {
 	    cadColorWidget_DrawRGBColorBars $w $colorBar $create $l
 	}
 	HSV {
@@ -696,7 +696,7 @@ proc cadColorWidget_DrawRGBColorBars { w colorBar create l } {
     # sel: selector canvas
     set col $data($colorBar,col)
     set sel $data($colorBar,sel)
-    
+
     set highlightW [expr [$col cget -highlightthickness] + [$col cget -bd]]
     for {set i 0} { $i < $data(NUM_COLOR_SEGMENTS)} { incr i} {
 	set startx [expr round($i * $data(colorSegmentWidth) + $highlightW)]
@@ -784,7 +784,7 @@ proc cadColorWidget_RedrawFinalColor {w} {
     upvar #0 $w data
 
     set color [format "#%02x%02x%02x" $data(red) $data(green) $data(blue)]
-    
+
     $data(finalCanvas) configure -bg $color
     set data(finalColor) $color
     set data(selection) $color
@@ -802,7 +802,7 @@ proc cadColorWidget_RedrawColorBars {w colorBar} {
     upvar #0 $w data
 
     switch $colorBar {
-	colorBar1 { 
+	colorBar1 {
 	    cadColorWidget_DrawColorScale $w colorBar2
 	    cadColorWidget_DrawColorScale $w colorBar3
 	}
@@ -832,7 +832,7 @@ proc cadColorWidget_RedrawColorBars {w colorBar} {
 #	Handles a mousedown button event over the selector polygon.
 #	Adds the bindings for moving the mouse while the button is
 #	pressed.  Sets the binding for the button-release event.
-# 
+#
 # Params: sel is the selector canvas window, color is the color of the strip.
 #
 proc cadColorWidget_StartMove {w sel color x delta {dontMove 0}} {
@@ -844,7 +844,7 @@ proc cadColorWidget_StartMove {w sel color x delta {dontMove 0}} {
 }
 
 # cadColorWidget_MoveSelector --
-# 
+#
 # Moves the polygon selector so that its middle point has the same
 # x value as the specified x. If x is outside the bounds [0,255],
 # the selector is set to the closest endpoint.
@@ -866,7 +866,7 @@ proc cadColorWidget_MoveSelector {w sel color x delta} {
     set diff [expr  $x - $data($color,x)]
     $sel move $data($color,index) $diff 0
     set data($color,x) [expr $data($color,x) + $diff]
-    
+
     # Return the x value that it was actually set at
     return $x
 }
@@ -879,10 +879,10 @@ proc cadColorWidget_MoveSelector {w sel color x delta} {
 #         x is the x-coord of the mouse.
 #
 proc cadColorWidget_ReleaseMouse {w sel colorBar x delta} {
-    upvar #0 $w data 
+    upvar #0 $w data
 
     set x [cadColorWidget_MoveSelector $w $sel $colorBar $x $delta]
-    
+
     # Calculate the color value.
     switch $data(colorModel) {
 	RGB {
@@ -1034,7 +1034,7 @@ proc cadColorWidget_HandleColorEntry { w colorBar } {
 	set x [expr int($x)]
 	cadColorWidget_MoveSelector $w $data($colorBar,sel) $colorBar $x 0
     }
-}    
+}
 
 # mouse cursor enters a color bar
 #

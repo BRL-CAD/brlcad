@@ -111,7 +111,7 @@ prnt_Status(void)
 	(void) fflush( stdout );
 	return;
 	}
-	
+
 static char *screen_template[] = {
 /*        1         2         3         4         5         6         7         8
 012345678901234567890123456789012345678901234567890123456789012345678901234567890
@@ -119,7 +119,7 @@ static char *screen_template[] = {
 "Pixel[           ] Paint[           ] Stride[    ] Brush Size[    ]",
 "-- FBED 2.1 -------------------------------------------------------------------",
 0
-};		
+};
 
 /*	i n i t _ S t a t u s ( ) */
 void
@@ -260,7 +260,7 @@ Va_Decl( prnt_Scroll )
 		}
 	else
 		{
-		Va_Print( stdout );	
+		Va_Print( stdout );
 		(void) printf( "\n" );
 		}
 	Va_End();

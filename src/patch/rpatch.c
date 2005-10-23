@@ -22,7 +22,7 @@
  *
  *	Front end to patch.
  *	John R. Anderson
- *		Based on rpatch.f by Bill Mermagen Jr. 
+ *		Based on rpatch.f by Bill Mermagen Jr.
  *     This pre-processor program alters the data file format
  *     for use by the main conversion program.
  */

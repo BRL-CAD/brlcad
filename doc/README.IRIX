@@ -22,4 +22,4 @@ For IRIX 64bit build:
 
 For IRIX 32bit build:
 	export SGI_ABI=-n32
-	./configure CC=cc 
+	./configure CC=cc

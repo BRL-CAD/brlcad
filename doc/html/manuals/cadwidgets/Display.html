@@ -16,7 +16,7 @@ Display - create and manipulate a display widget.
 <P>
 
 <H2><A NAME="sect3" HREF="#toc3"><B>INHERITANCE</B></A></H2>
-itk::Archetype &lt;- itk::Widget &lt;- 
+itk::Archetype &lt;- itk::Widget &lt;-
 <A HREF="Dm.html">Dm</A> &lt;- Display<BR>
 <A HREF="View.html">View</A> &lt;- Display
 <P>
@@ -81,7 +81,7 @@ Specifies how sensitive the mouse is when scaling the view.
 The <B>Display</B> command creates a new window
 (given by the <I>pathName</I> argument) and makes it into
 a display widget for displaying geometry.
-The display widget also inherits from 
+The display widget also inherits from
 <A HREF="View.html">View</A>, so it can
 manipulate the view parameters.
 This widget also maintains a list of
@@ -99,7 +99,7 @@ window named <I>pathName</I>, but pathName's parent must exist.
 The <B>Display</B> command creates a new Tcl command whose name
 is <I>pathName</I>. This command may be used to invoke various
 operations on the display widget. It has the following general
-form: 
+form:
 <P>
 <I>pathName</I> <I>option</I> ?<I>arg</I> <I>arg</I> ...?
 <P>
@@ -177,7 +177,7 @@ object is notified).
 <DT><I>pathName</I> <A NAME="autoview"><B>autoview</B></A> ?<I>gindex</I>?</DT>
 <DD>
 The first order of business is to decide which drawable geometry
-object in the list will be used to invoke it's 
+object in the list will be used to invoke it's
 <A HREF="../librt/dg_obj.html#get_autoview">get_autoview</A> method.
 If <I>-geo gindex</I> is specified, then use that as an index into the
 list of drawable geometry objects in order to determine the drawable
@@ -212,7 +212,7 @@ from this object's list of drawable geometry objects.
 <DT><I>pathName</I> <A NAME="rt"><B>rt</B></A> ?<I>-geo gindex</I>? ?<I>args</I>?</DT>
 <DD>
 The first order of business is to decide which drawable geometry
-object in the list will be used to invoke it's 
+object in the list will be used to invoke it's
 <A HREF="../librt/dg_obj.html#rt">rt</A> method.
 If <I>-geo gindex</I> is specified, then use that as an index into the
 list of drawable geometry objects in order to determine the drawable
@@ -225,7 +225,7 @@ first argument.
 <DT><I>pathName</I> <A NAME="rtcheck"><B>rtcheck</B></A> ?<I>-geo gindex</I>? ?<I>args</I>?</DT>
 <DD>
 The first order of business is to decide which drawable geometry
-object in the list will be used to invoke it's 
+object in the list will be used to invoke it's
 <A HREF="../librt/dg_obj.html#rtcheck">rtcheck</A> method.
 If <I>-geo gindex</I> is specified, then use that as an index into the
 list of drawable geometry objects in order to determine the drawable

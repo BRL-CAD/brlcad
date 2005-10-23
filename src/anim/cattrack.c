@@ -50,8 +50,8 @@
 #define G_TOL		1.0e-12
 #define F_TOL		1.0e-12
 
-/* HYPER_GET_X - get x value of a point which is a given distance along 
- * caternary curve. 
+/* HYPER_GET_X - get x value of a point which is a given distance along
+ * caternary curve.
  * x(s) = arcsinh(a*s-sinh(a*c))/a + c
  * Left to calling routine to avoid dividing by zero.
  */
@@ -69,7 +69,7 @@ fastf_t hyper_get_x(fastf_t a, fastf_t c, fastf_t s, int d, int x, int cos_ang)
 
 /* HYPER_GET_S - calculate the arclength parameter of a caternary
  * curve corresponding to the given value of x.
- * s(x) = (sinh(a(x-c))+sinh(ac))/a 
+ * s(x) = (sinh(a(x-c))+sinh(ac))/a
  * Left to calling routime to avoid dividing by zero.
  */
 fastf_t hyper_get_s(fastf_t a, fastf_t c, fastf_t x)
@@ -93,7 +93,7 @@ fastf_t hyper_get_z(fastf_t a, fastf_t b, fastf_t c, fastf_t x)
     return(z);
 }
 
-/* HYPER_GET_ANG - calculate angle corresponding to the slope of 
+/* HYPER_GET_ANG - calculate angle corresponding to the slope of
  * caternary curve.
  * z'(x) = sinh(a*(x-c))
  */
@@ -108,7 +108,7 @@ fastf_t hyper_get_ang(fastf_t a, fastf_t c, fastf_t x)
 /* GET_CURVE - Find the constants a, b, and c such that the curve
  *  z = cosh(a*(x-c))/a + b
  * is tangent to circles of radii r0 and r1 located at
- * (x0,z0) and (x1,z1) and such that the curve has 
+ * (x0,z0) and (x1,z1) and such that the curve has
  * arclength delta_s between circles. Also find the angle where
  * the curve touches each circle. When called successively,
  * It uses the values of a,b, and c from the last call as a start.
@@ -127,7 +127,7 @@ int getcurve(fastf_t *pa, fastf_t *pb, fastf_t *pc, fastf_t *pth0, fastf_t *pth1
     fastf_t avg_theta_zero, avg_theta_one, arc_dist;
     fastf_t tang_ang, costheta;
     double stmp;
-    vect_t q_zero, q_one, diff; 
+    vect_t q_zero, q_one, diff;
     static fastf_t last_a, last_c, last_theta_one, last_theta_zero;
     static int called_before = 0;
 
@@ -187,7 +187,7 @@ int getcurve(fastf_t *pa, fastf_t *pb, fastf_t *pc, fastf_t *pth0, fastf_t *pth1
 	    status = SOLVED;
 	    break;
 	}
-		
+
     }
     last_theta_zero = theta_zero;
     last_theta_one = theta_one;
@@ -196,7 +196,7 @@ int getcurve(fastf_t *pa, fastf_t *pb, fastf_t *pc, fastf_t *pth0, fastf_t *pth1
     *pth0 = theta_zero;
     *pth1 = theta_one;
     return(status);
-			
+
 }
 
 /* INGETCURVE - find constants a, b, and c, such that the curve
@@ -225,7 +225,7 @@ int ingetcurve(fastf_t *pa, fastf_t *pb, fastf_t *pc, fastf_t delta_s, fastf_t *
 		break;
 	    }
 	}
-		
+
 	for (k=0;k<MAX_ITS;k++){
 	    adjust = gee(*pa,*pc,p_zero[X],p_one[X],(p_one[Z]-p_zero[Z]));
 	    *pc -= adjust;
@@ -240,7 +240,7 @@ int ingetcurve(fastf_t *pa, fastf_t *pb, fastf_t *pc, fastf_t delta_s, fastf_t *
 	}
     }
     *pb = p_zero[Z] - cosh( (*pa)*(p_zero[X]-(*pc)) )/(*pa);
-	
+
     return(status);
 
 }

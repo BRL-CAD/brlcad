@@ -22,7 +22,7 @@
 /** \addtogroup librt */
 /*@{*/
 /** @file bundle.c
- * 
+ *
  * NOTE:  This is experimental code right now.
  *
  *  Author -
@@ -32,7 +32,7 @@
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005
- *  
+ *
  */
 /*@}*/
 
@@ -380,7 +380,7 @@ rt_shootray_bundle(register struct application *ap, struct xray *rays, int nrays
 				if(debug_shoot)bu_log("shooting %s with ray %d\n", stp->st_name, ray);
 				resp->re_shots++;
 				BU_LIST_INIT( &(new_segs.l) );
-				if( rt_functab[stp->st_id].ft_shot( 
+				if( rt_functab[stp->st_id].ft_shot(
 				    stp, &ss2_newray, ap, &new_segs ) <= 0 )  {
 					resp->re_shot_miss++;
 					continue;	/* MISS */
@@ -451,7 +451,7 @@ rt_shootray_bundle(register struct application *ap, struct xray *rays, int nrays
 weave:
 	if( RT_G_DEBUG&DEBUG_ADVANCE )
 		bu_log( "rt_shootray_bundle: ray has left known space\n" );
-	
+
 	if( BU_LIST_NON_EMPTY( &(waiting_segs.l) ) )  {
 		rt_boolweave( &finished_segs, &waiting_segs, &InitialPart, ap );
 	}

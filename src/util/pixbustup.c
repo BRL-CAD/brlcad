@@ -26,7 +26,7 @@
  *
  *  Author -
  *	Michael John Muuss
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
@@ -59,7 +59,7 @@ unsigned char *in1;
 static int nlines;		/* Number of input lines */
 static int pix_line;		/* Number of pixels/line */
 
-char usage[] = 
+char usage[] =
 "Usage: pixbustup basename width [image_offset] [first_number] <input.pix\n";
 
 int infd;

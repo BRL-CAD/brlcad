@@ -26,10 +26,10 @@
  *  animation table for the position of the front axle, anim_turn produces
  *  an animation table for position and orientation. Options provide for
  *  animating the wheels and/or steering wheel.
- * 
+ *
  *  Author -
  *	Carl J. Nuzman
- *  
+ *
  *  Source -
  *      The U. S. Army Research Laboratory
  *      Aberdeen Proving Ground, Maryland  21005-5068  USA
@@ -112,7 +112,7 @@ main(int argc, char **argv)
 	    anim_y_p_r2mat(m_from_world,-angle,0.0,0.0);
 	    VREVERSE(temp1,front);
 	    anim_add_trans(m_from_world,zero,temp1);
-		
+
 	    /* calculate new position for front and back axles */
 	    /* front goes to the point, back slides along objects*/
 	    /* current front to back axis */
@@ -136,8 +136,8 @@ main(int argc, char **argv)
 	}
 
 	/*calculate turn angles and print table*/
-		
-	if (turn_wheels){ 
+
+	if (turn_wheels){
 	    if (v[0] >= 0)
 		sign = 1.0;
 	    else

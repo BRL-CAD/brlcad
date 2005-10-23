@@ -15,32 +15,32 @@ is a filter which translates a table of orientation
 information from one format to another. The method used is to convert
 the input format to a matrix, then convert the matrix to the desired
 output format. The input format is specified in the first argument, and
-the output format is specified in the second. 
+the output format is specified in the second.
 The orientation formats
-must be one of the following: 
+must be one of the following:
 <b>q </b>
-(quaternion), 
+(quaternion),
 <b>y</b>
-(yaw,pitch, and roll), 
+(yaw,pitch, and roll),
 <b>a</b>
-(azimuth, elevation, and twist), 
+(azimuth, elevation, and twist),
 <b>z </b>
 (x-y-z angles), or
 <b>m </b>
 (rotation matrix).
 In addition, the output format may be modified by the
 <b>u </b>
-option, and the input and output formats may be modified by the 
+option, and the input and output formats may be modified by the
 <b>r</b>,
 <b>i</b>,
 and
 <b>v</b>
-options. The 
+options. The
 <b>r </b>
 option specifies that angles are read or written in radians, rather
 than degrees. The
 <b>i</b>,<b>v</b>,
-and 
+and
 <b>u</b>
 options are explained below.
 <p>
@@ -51,28 +51,28 @@ used by anim_orient specify rotations. These are transformations
 which, when applied to an object, preserve its shape but change its
 orientation with respect to a fixed set of axes. Given the initial
 orientation of an object, a rotation defines the final orientation, but
-different initial orientations will yield different final orientations. 
+different initial orientations will yield different final orientations.
 In order
 to represent orientations with rotations, we
 must define a default initial orientation for the object.
-Then a given matrix, quaternion, or set of angles represents the orientation 
+Then a given matrix, quaternion, or set of angles represents the orientation
 resulting from applying the rotation to the initial object orientation.
 <p>
 If no modifying codes are specified, anim_orient assumes that the
 default orientation of the object in question faces the positive
 x-direction, with the world y-axis pointing to the object's left and the
-z-axis pointing up. This is the orientation in which many 
+z-axis pointing up. This is the orientation in which many
 BRL-CAD
 objects
 are modeled, and the default assumed by other animation routines such as
-anim_script. If the 
+anim_script. If the
 <b>v </b>
-code is specified, then the default orientation  
+code is specified, then the default orientation
 is taken to be facing the negative z-direction, with the world x-axis
 pointing to the object's right and the y-axis pointing up. This is the
-default orientation of the eye in 
+default orientation of the eye in
 MGED
-and 
+and
 <i>rt</i>.
 Some common uses of the v
 option are demonstrated in the examples section.
@@ -85,7 +85,7 @@ The input and output format codes are:
 Quaternions, in the order x,y,z,w. This is the default input and
 output format. The output will
 always be unit quaternions. For a unit quaternion, the
-xyz-vector represents an axis of rotation and and w represents 
+xyz-vector represents an axis of rotation and and w represents
 cos(omega/2), where
 omega is the angle to be rotated about the given axis.
 <dt>
@@ -94,7 +94,7 @@ omega is the angle to be rotated about the given axis.
 <dd>
 x-y-z angles, in the order x, y, z. They represent a rotation
 of z degrees around the z-axis, followed by y degrees around the y-axis,
-followed by x degrees around the x-axis. If the code 
+followed by x degrees around the x-axis. If the code
 <b>zr </b>
 is used
 then the angles will be read or written in radians
@@ -107,7 +107,7 @@ yaw-pitch-roll format, in that order. They represent
 a rotation of +roll degrees about the x-axis, -pitch degrees about
 the y-axis, followed by +yaw degrees about the z-axis. If the code
 <b>yr </b>
-is used, angles are in radians rather than degrees. 
+is used, angles are in radians rather than degrees.
 <dt>
 <b>a</b>:
 
@@ -125,7 +125,7 @@ the y-axis, and +azimuth degrees about the z-axis.
 pre-multiplication rotation matrix. Sixteen
 numbers form a 4x4 matrix, although only the nine elements in the upper
 left corner are actually used. This is the format used at the interior of
-the conversion routine. It is a transformation from initial orientation to 
+the conversion routine. It is a transformation from initial orientation to
 a new orientation.
 </dl>
 <p>
@@ -135,26 +135,26 @@ The input and ouput modification codes are:
 
 <dd>
 This code is used in conjunction with any of the format codes to represent
-the inverse transformation. Under the 
+the inverse transformation. Under the
 <b>i </b>
 code, a matrix, quaternion, or
 set of angles represents the inverse of the rotation that it normally
 represents.
 For example, normally, the orientation
 corresponding to a given matrix is the orientation that the default
-object ends up in after the matrix is applied to it. With the 
+object ends up in after the matrix is applied to it. With the
 <b>i </b>
 code,
 a given matrix represents the orientation an object should be placed
 in so that the applying the matrix puts it back in the default
-orientation. 
+orientation.
 
-One common use of the 
+One common use of the
 <b>i </b>
 option is for handling "Viewrot" matrices used
-by 
+by
 <i>mged </i>
-and 
+and
 <i>rt</i>.<i></i>
 The viewrot matrix is a model-to-view matrix, which is
 the transpose (inverse) of the matrix which would conceptually be
@@ -173,7 +173,7 @@ orientation, as explained above.
 This option forces the output orientation to be upright, or "right-side
 up", where the z-axis is the up direction. In terms of yaw, pitch, and
 roll, this means that the roll is forced to zero. Because this is not
-an invertible 
+an invertible
 operation, it can only be applied to the output orientation, not
 the input.
 
@@ -184,13 +184,13 @@ the input.
 <li>Normalize a table of quaternions to unit magnitude. (quaternions are the
 default format).
 <p>
-	anim_orient &lt; in.table &gt; out.table 
+	anim_orient &lt; in.table &gt; out.table
 <p>
 <li>change xyz angles to a rotation matrix
 <p>
 	anim_orient z m &lt; in.table &gt; out.table
 <p>
-<li>change azimuth,elevation, and twist to a matrix suitable for the 
+<li>change azimuth,elevation, and twist to a matrix suitable for the
 <i>rt</i>
 viewrot command
 <p>
@@ -204,9 +204,9 @@ viewrot command
 <p>
 	anim_orient zr y &lt; in.table &gt; out.table
 <p>
-<li>given a quaternion being applied to an object facing the x-axis, 
+<li>given a quaternion being applied to an object facing the x-axis,
 find the quaternion needed
-to turn the virtual camera in the same direction using 
+to turn the virtual camera in the same direction using
 <i>rt</i>'s<i></i>
 orientation command
 <p>

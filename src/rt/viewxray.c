@@ -33,12 +33,12 @@
  *
  *  Author -
  *	Phillip Dykstra
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005
- *  
+ *
  */
 #ifndef lint
 static const char RCSviewxray[] = "@(#)$Header$ (BRL)";
@@ -138,7 +138,7 @@ view_init(register struct application *ap, char *file, char *obj, int minus_o, i
 	}
 
 	/* no framebuffer */
-	return 0; 
+	return 0;
 }
 
 /* beginning of a frame */

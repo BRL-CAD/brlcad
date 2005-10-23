@@ -28,7 +28,7 @@
  *	VLD/ASB Building 1065
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005
- *  
+ *
  */
 
 #include "./iges_struct.h"
@@ -113,7 +113,7 @@ Convinst()
 			else
 				rgb = (unsigned char *)0;
 
-			mk_lrcomb( fdout , 
+			mk_lrcomb( fdout ,
 				dir[i]->name,		/* name */
 				&head,			/* members */
 				brl_att.region_flag,	/* region flag */

@@ -553,7 +553,7 @@ get_layer()
 			bu_log( "New layer: %s, color number: %d", line, curr_color );
 		}
 		layers[curr_layer]->name = bu_strdup( curr_layer_name );
-		if( curr_state->state == ENTITIES_SECTION && 
+		if( curr_state->state == ENTITIES_SECTION &&
 		    (curr_state->sub_state == POLYLINE_ENTITY_STATE ||
 		     curr_state->sub_state == POLYLINE_VERTEX_ENTITY_STATE) ) {
 			layers[curr_layer]->vert_tree_root = layers[old_layer]->vert_tree_root;
@@ -662,7 +662,7 @@ process_unknown_code( int code )
 			break;
 		} else if( !strncmp( line, "ENTITIES", 8 ) ) {
 			curr_state->state = ENTITIES_SECTION;
-			curr_state->sub_state =UNKNOWN_ENTITY_STATE; 
+			curr_state->sub_state =UNKNOWN_ENTITY_STATE;
 			if( verbose ) {
 				bu_log( "Change state to %d\n", curr_state->state );
 			}
@@ -719,7 +719,7 @@ process_header_code( int code )
 		int_ptr = NULL;
 		break;
 	}
-		
+
 	return( 0 );
 }
 
@@ -740,7 +740,7 @@ process_classes_code( int code )
 		}
 		break;
 	}
-		
+
 	return( 0 );
 }
 
@@ -778,7 +778,7 @@ process_tables_unknown_code( int code )
 		}
 		break;
 	}
-		
+
 	return( 0 );
 }
 
@@ -817,7 +817,7 @@ process_tables_layer_code( int code )
 		curr_state->sub_state = UNKNOWN_TABLE_STATE;
 		return( process_tables_unknown_code( code ) );
 	}
-		
+
 	return( 0 );
 }
 
@@ -884,7 +884,7 @@ process_blocks_code( int code )
 		}
 		break;
 	}
-		
+
 	return( 0 );
 }
 
@@ -1033,7 +1033,7 @@ process_entities_polyline_vertex_code( int code )
 		curr_color = atoi( line );
 		break;
 	}
-		
+
 	return( 0 );
 }
 
@@ -1143,7 +1143,7 @@ process_entities_polyline_code( int code )
 						}
 					}
 				}
-				polyline_vert_indices_count=0;	
+				polyline_vert_indices_count=0;
 				polyline_vertex_count = 0;
 			}
 
@@ -1187,7 +1187,7 @@ process_entities_polyline_code( int code )
 		curr_layer_name = make_brlcad_name( line );
 		break;
 	}
-		
+
 	return( 0 );
 }
 
@@ -1288,7 +1288,7 @@ process_entities_unknown_code( int code )
 			break;
 		}
 	}
-		
+
 	return( 0 );
 }
 
@@ -1454,7 +1454,7 @@ process_line_entities_code( int code )
 		process_entities_code[curr_state->sub_state]( code );
 		break;
 	}
-	
+
 	return( 0 );
 }
 
@@ -1636,13 +1636,13 @@ drawString( char *theText, point_t firstAlignmentPoint, point_t secondAlignmentP
 			  scale, textRotation );
 	nmg_vlist_to_eu( &vhead,layers[curr_layer]->s );
 	BN_FREE_VLIST( &free_hd, &vhead );
-    } else if( horizAlignment == LEFT && vertAlignment == BASELINE ) { 
+    } else if( horizAlignment == LEFT && vertAlignment == BASELINE ) {
 	bn_vlist_2string( &vhead, &free_hd, copyOfText,
 			  firstAlignmentPoint[X], firstAlignmentPoint[Y],
 			  textHeight, textRotation );
 	nmg_vlist_to_eu( &vhead,layers[curr_layer]->s );
 	BN_FREE_VLIST( &free_hd, &vhead );
-    } else if( (horizAlignment == CENTER || horizAlignment == HMIDDLE) && vertAlignment == BASELINE ) { 
+    } else if( (horizAlignment == CENTER || horizAlignment == HMIDDLE) && vertAlignment == BASELINE ) {
 	double len = stringLength * textHeight;
 	firstAlignmentPoint[X] = secondAlignmentPoint[X] - cos(textRotation) * len / 2.0;
 	firstAlignmentPoint[Y] = secondAlignmentPoint[Y] - sin(textRotation) * len / 2.0;
@@ -1651,7 +1651,7 @@ drawString( char *theText, point_t firstAlignmentPoint, point_t secondAlignmentP
 			  textHeight, textRotation );
 	nmg_vlist_to_eu( &vhead,layers[curr_layer]->s );
 	BN_FREE_VLIST( &free_hd, &vhead );
-    } else if( horizAlignment == RIGHT && vertAlignment == BASELINE ) { 
+    } else if( horizAlignment == RIGHT && vertAlignment == BASELINE ) {
 	double len = stringLength * textHeight;
 	firstAlignmentPoint[X] = secondAlignmentPoint[X] - cos(textRotation) * len;
 	firstAlignmentPoint[Y] = secondAlignmentPoint[Y] - sin(textRotation) * len;
@@ -2048,7 +2048,7 @@ process_3dface_entities_code( int code )
 		process_entities_code[curr_state->sub_state]( code );
 		break;
 	}
-	
+
 	return( 0 );
 }
 
@@ -2075,7 +2075,7 @@ process_objects_code( int code )
 		}
 		break;
 	}
-		
+
 	return( 0 );
 }
 
@@ -2096,7 +2096,7 @@ process_thumbnail_code( int code )
 		}
 		break;
 	}
-		
+
 	return( 0 );
 }
 

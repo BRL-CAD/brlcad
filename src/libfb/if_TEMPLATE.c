@@ -22,7 +22,7 @@
 /** \addtogroup if */
 /*@{*/
 /** @file if_TEMPLATE.c
- *  
+ *
  * How to add a new device interface:
  *
  *  Copy this file to if_devname.c

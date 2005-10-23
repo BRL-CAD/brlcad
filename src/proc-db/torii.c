@@ -66,7 +66,7 @@ void usage(char *progname)
 
 int create_torii(int level, int currentLevel, torusLevels_t *torii, point_t position, const int dirArray[6][6], int dir){
   point_t newPosition;
-  
+
   VMOVE(newPosition, position);
 
   /* recursive case */
@@ -108,7 +108,7 @@ int create_torii(int level, int currentLevel, torusLevels_t *torii, point_t posi
     torusArray_t *ta = &torii->level[currentLevel];
     /* base case */
     printf("base case (%d levels deep)\n", currentLevel);
-    
+
     /* see if we need to allocate more memory */
     if (ta->count >= ta->max) {
       if ((ta->torus = realloc(ta->torus, (ta->count+6)*sizeof(torus_t))) == NULL) {
@@ -116,7 +116,7 @@ int create_torii(int level, int currentLevel, torusLevels_t *torii, point_t posi
 	perror("torus_t allocation during runtime failed");
 	exit(3);
       }
-      ta->max+=6;      
+      ta->max+=6;
     }
 
     VMOVE(ta->torus[ta->count].position, newPosition);
@@ -130,7 +130,7 @@ int create_torii(int level, int currentLevel, torusLevels_t *torii, point_t posi
 
   return 0;
 }
-  
+
 int output_torii(const char *fileName, int levels, const torusLevels_t torii, const char *name) {
   char scratch[256];
 
@@ -139,7 +139,7 @@ int output_torii(const char *fileName, int levels, const torusLevels_t torii, co
   strncat(scratch, "_0", 2);
 
   bu_log("output_torii to file \"%s\" for %d levels using \"%s.c\" as the combination name", fileName, levels, name);
-  
+
   /*
   BU_LIST_INIT(&torii.l);
 
@@ -155,8 +155,8 @@ int
 main(int ac, char *av[])
 {
   char *progname ="torii";
-  
-  torusLevels_t torii; 
+
+  torusLevels_t torii;
   const char *prototypeName="torus";
 
   char fileName[512];
@@ -178,21 +178,21 @@ main(int ac, char *av[])
   };
 
   progname = *av;
-  
+
   if (ac < 2) usage(progname);
-  
+
   if (ac > 1) sprintf(fileName, "%s", av[1]);
-  
+
   bu_log("Output file name is \"%s\"\n", fileName);
-  
+
   if ((db_fp = wdb_fopen(fileName)) == NULL) {
     perror(fileName);
     exit(-1);
   }
-  
+
   /* create the database header record */
   sprintf(scratch, "%s Torii", fileName);
-  mk_id(db_fp, scratch); 
+  mk_id(db_fp, scratch);
 
   /* init the levels array */
   torii.levels = levels;
@@ -219,9 +219,9 @@ main(int ac, char *av[])
   output_torii(fileName, levels, torii, prototypeName);
 
   bu_log("\n...done! (see %s)\n", av[1]);
-  
+
   wdb_close(db_fp);
-  
+
   return 0;
 }
 

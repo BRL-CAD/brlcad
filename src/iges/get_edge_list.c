@@ -26,7 +26,7 @@
  *	SLAD/BVLD/VMB
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005
- *  
+ *
  */
 #include "./iges_struct.h"
 #include "./iges_extern.h"
@@ -63,7 +63,7 @@ struct iges_edge_use *edge;
 		return( (struct iges_edge_list *)NULL );
 	else
 		return( e_list->next );
-	
+
 }
 
 /*

@@ -28,7 +28,7 @@
  *
  *  Author -
  *	Keith A. Applin
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
@@ -155,7 +155,7 @@ f_3ptarb(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 		}
 		solve = X;
 
-		if( argc < 13 ) {			
+		if( argc < 13 ) {
 		  Tcl_AppendResult(interp, MORE_ARGS_STR,
 				   "Enter the Y, Z coordinate values: ", (char *)NULL);
 		  return TCL_ERROR;

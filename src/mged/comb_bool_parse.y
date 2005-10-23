@@ -10,7 +10,7 @@
  *
  *  Author -
  *	Paul Tanenbaum
- *  
+ *
  *  Source -
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
@@ -29,7 +29,7 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #include "../mged/comb_bool.h"
 
 /* The following is needed to get "gettxt()" correctly on IRIX platforms */
-#undef _POSIX_SOURCE 
+#undef _POSIX_SOURCE
 
 %}
 
@@ -44,7 +44,7 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 %token <val_string>	TKN_INTERSECTION
 
 /*
- *	Nonterminals	
+ *	Nonterminals
  */
 %start			start
 %type <val_tree>	tree intersectree uniontree

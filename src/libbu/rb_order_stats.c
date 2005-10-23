@@ -26,7 +26,7 @@
  *
  *  Author -
  *	Paul J. Tanenbaum
- *  
+ *
  *  Source -
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
@@ -68,7 +68,7 @@ static struct bu_rb_node *_rb_select (struct bu_rb_node *root, int order, int k)
     if (root -> rbn_tree -> rbt_debug & BU_RB_DEBUG_OS)
 	bu_log("_rb_select(<%x>, %d, %d): rank=%d\n",
 	    root, order, k, rank);
-    
+
     if (rank == k)
 	return (root);
     else if (rank > k)
@@ -138,7 +138,7 @@ int bu_rb_rank (bu_rb_tree *tree, int order)
     while (node != root)
     {
 	parent = bu_rb_parent(node, order);
-	if (node == bu_rb_right_child(parent, order)) 
+	if (node == bu_rb_right_child(parent, order))
 	    rank += bu_rb_size(bu_rb_left_child(parent, order), order) + 1;
 	node = parent;
     }

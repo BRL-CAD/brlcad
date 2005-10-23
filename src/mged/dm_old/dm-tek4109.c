@@ -73,7 +73,7 @@ is different from the factory default.
 #include "./solid.h"
 
 /* Display Manager package interface */
- 
+
 #define TEKBOUND	1000.0	/* Max magnification in Rot matrix */
 int	T49_init();
 int	T49_open();
@@ -142,7 +142,7 @@ static void	t49label(), t49point(), t49linemod();
  *  Tektronix is using 0..4096
  *  GED is using -2048..+2048
  */
- 
+
 
 #define	GED_TO_TEK4109(x)	(((x)+2048) * 780 / 1024)
 #define TEK4109_TO_GED(x)	(((x) * 1024 / 780) - 2048)
@@ -165,7 +165,7 @@ T49_open()
 	bu_log("Output tty [stdout]? ");
 	(void)fgets( line, sizeof(line), stdin ); /* \n, null terminated */
 	line[strlen(line)-1] = '\0';		/* remove newline */
-	if( feof(stdin) )  
+	if( feof(stdin) )
 		quit();
 	if( line[0] != '\0' )  {
 #if VMS
@@ -185,8 +185,8 @@ T49_open()
 		}
 #endif
 		second_fd = fileno(outfp);
-	} 
-	else 
+	}
+	else
 	{
 #if VMS
 		if( (outfp = fopen("SYS$OUTPUT","r+")) == NULL )
@@ -202,17 +202,17 @@ T49_open()
 	fprintf(outfp,"%cMCA>B8:",ESC);	/* Set Graphics Font Size */
 	fprintf(outfp,"%cLLA>",ESC);	/* Set Dialog to 30 Lines */
 	fprintf(outfp,"%cKI0",ESC);	/* Process Delete Characters */
-	fprintf(outfp,"%cIJ5:",ESC);	/* Change GIN cursor speed to 5,10 */ 
+	fprintf(outfp,"%cIJ5:",ESC);	/* Change GIN cursor speed to 5,10 */
 	fprintf(outfp,"%cTCK4C2F4",ESC);/* Change GIN cursor to yellow */
-	fprintf(outfp,"%cML2",ESC);	/* set graphics line index -> 2 (red) 
-					   helps reduce alpha/graphics clutter 
+	fprintf(outfp,"%cML2",ESC);	/* set graphics line index -> 2 (red)
+					   helps reduce alpha/graphics clutter
 					*/
 	return(0);			/* OK */
 }
 
 /*
  *  			T E K _ C L O S E
- *  
+ *
  *  Gracefully release the display.
  */
 void
@@ -291,7 +291,7 @@ mat_t mat;
 
 /*
  *  			T E K _ O B J E C T
- *  
+ *
  *  Set up for an object, transformed as indicated, and with an
  *  object center as specified.  The ratio of object to screen size
  *  is passed in as a convienience.
@@ -311,7 +311,7 @@ double ratio;
 
 	if(  sp->s_soldash )
 		fprintf(outfp,"%cMV2",ESC);		/* Dot Dash    NRTC */
-	else	
+	else
 		fprintf(outfp,"%cMV0",ESC);		/* Solid Line  NRTC */
 
 	for( BU_LIST_FOR( vp, rt_vlist, &(sp->s_vlist) ) )  {
@@ -418,7 +418,7 @@ int dashed;
 
 /*
  *			G E T _ C U R S O R
- *  
+ *
  *  Read the Tektronix cursor.  The Tektronix sends
  *  6 bytes:  The key the user struck, 4 bytes of
  *  encoded position, and a return (newline).
@@ -542,7 +542,7 @@ int		noblock;
 		t49get_cursor();
 }
 
-/* 
+/*
  *			T E K _ L I G H T
  */
 /* ARGSUSED */
@@ -692,10 +692,10 @@ register char *s;
 	char  c;
 
 	switch(s[0]){
-	case 'l':	
+	case 'l':
 		c = '7';                         /* Long Dashed Line   NRTC */
 		break;
-	case 'd':	
+	case 'd':
 		if(s[3] != 'd')c='1';		/* Dot Line   NRTC */
 		else c='2';			/* Dot-Dashed Line  NRTC  */
 		break;
@@ -708,7 +708,7 @@ register char *s;
 		break;
 	}
 	fprintf(outfp,"%cMV%c",ESC,c);		/* Set Line Mode  NRTC */
- 
+
 }
 
 static void

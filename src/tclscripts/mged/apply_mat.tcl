@@ -33,7 +33,7 @@
 # procedure to apply the provided matrix to the provided tree
 # recurses until a region is encountered, where the matrix is applied at each leaf arc of the region.
 # The matrix is not applied to any primitive encountered above the region level.
-# 
+#
 # Returns a new tree with the matrix applied
 
 proc apply_mat_to_regions { tree mat } {

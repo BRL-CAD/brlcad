@@ -116,7 +116,7 @@ proc cad_MenuFirstEntry { menu } {
 	    }
             return
 	}
-    }   
+    }
 }
 
 proc ::tk::TraverseWithinMenu { w char } {
@@ -191,9 +191,9 @@ proc ::tk::MenuNextMenu {menu direction} {
 		$menu activate none
 		::tk::GenerateMenuSelect $menu
 		tk_menuSetFocus $m2
-		
+
 		# This code unposts any posted submenu in the parent.
-		
+
 		set tmp [$m2 index active]
 		$m2 activate none
 		$m2 activate $tmp

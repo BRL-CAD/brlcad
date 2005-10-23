@@ -23,7 +23,7 @@
 /*@{*/
 /** @file nurb_split.c
  * 	Subdivide a nurb surface by inserting a multiple knot of
- * 	of the surface order in a given direction and return the 
+ * 	of the surface order in a given direction and return the
  *	resulting surfaces.
  *
  * Author-
@@ -49,7 +49,7 @@
 
 /* Algorithm
  *
- * 	Given a parametric direction (u or v) look at the direction 
+ * 	Given a parametric direction (u or v) look at the direction
  * knot vector and insert a multiple knot of parametric direction surface
  * order.  If internal knot values exist than pick the one closest to the
  * middle and add additional knots to split at that value, otherwise
@@ -74,7 +74,7 @@ rt_nurb_s_split(struct bu_list *split_hd, const struct face_g_snurb *srf, int di
 	if ( dir == RT_NURB_SPLIT_ROW )
 	{
 		value = srf->u.knots[(srf->u.k_size -1)/2];
-		
+
 		for( i = 0; i < srf->u.k_size; i++)
 			if( value == srf->u.knots[i] )
 			{
@@ -83,7 +83,7 @@ rt_nurb_s_split(struct bu_list *split_hd, const struct face_g_snurb *srf, int di
 			}
 		if ( k_index == 0)
 		{
-			value = ( value + 
+			value = ( value +
 				srf->u.knots[ srf->u.k_size -1])
 				/2.0;
 			k_index = srf->order[0];
@@ -91,7 +91,7 @@ rt_nurb_s_split(struct bu_list *split_hd, const struct face_g_snurb *srf, int di
 
 		rt_nurb_kvmult( &new_kv, &srf->u, srf->order[0], value, res);
 
-		oslo = ( struct oslo_mat *) 
+		oslo = ( struct oslo_mat *)
 			rt_nurb_calc_oslo( srf->order[RT_NURB_SPLIT_ROW], &srf->u, &new_kv, res);
 
 		GET_SNURB( srf1 );
@@ -100,16 +100,16 @@ rt_nurb_s_split(struct bu_list *split_hd, const struct face_g_snurb *srf, int di
 		srf1->dir = RT_NURB_SPLIT_ROW;
 		rt_nurb_kvextract(&srf1->u, &new_kv, 0, k_index + srf1->order[0], res);
 		rt_nurb_kvcopy(&srf1->v, &srf->v, res);
-		
+
 		srf1->pt_type = srf->pt_type;
-		srf1->s_size[0] = srf1->v.k_size - 
+		srf1->s_size[0] = srf1->v.k_size -
 			srf1->order[1];
-		srf1->s_size[1] = srf1->u.k_size - 
+		srf1->s_size[1] = srf1->u.k_size -
 			srf1->order[0];
 
 		srf1->ctl_points = (fastf_t *)
 			bu_malloc( sizeof(fastf_t) * srf1->s_size[0] *
-				srf1->s_size[1] * 
+				srf1->s_size[1] *
 				RT_NURB_EXTRACT_COORDS( srf1->pt_type),
 				"rt_nurb_s_split: srf1 row mesh control points");
 
@@ -119,16 +119,16 @@ rt_nurb_s_split(struct bu_list *split_hd, const struct face_g_snurb *srf, int di
 		srf2->dir = RT_NURB_SPLIT_ROW;
 		rt_nurb_kvextract(&srf2->u, &new_kv, k_index, new_kv.k_size, res);
 		rt_nurb_kvcopy(&srf2->v, &srf->v, res);
-		
+
 		srf2->pt_type = srf->pt_type;
-		srf2->s_size[0] = srf2->v.k_size - 
+		srf2->s_size[0] = srf2->v.k_size -
 			srf2->order[1];
-		srf2->s_size[1] = srf2->u.k_size - 
+		srf2->s_size[1] = srf2->u.k_size -
 			srf2->order[0];
 
 		srf2->ctl_points = (fastf_t *)
 			bu_malloc( sizeof(fastf_t) * srf2->s_size[0] *
-				srf2->s_size[1] * 
+				srf2->s_size[1] *
 				RT_NURB_EXTRACT_COORDS( srf2->pt_type),
 				"rt_nurb_s_split: srf2 row mesh control points");
 
@@ -138,29 +138,29 @@ rt_nurb_s_split(struct bu_list *split_hd, const struct face_g_snurb *srf, int di
 			fastf_t * new_mesh_ptr;
 
 			old_mesh_ptr = &srf->ctl_points[
-				i * srf->s_size[1] * 
+				i * srf->s_size[1] *
 				RT_NURB_EXTRACT_COORDS( srf->pt_type)];
 			new_mesh_ptr = &srf1->ctl_points[
-				i * srf1->s_size[1] * 
+				i * srf1->s_size[1] *
 				RT_NURB_EXTRACT_COORDS( srf1->pt_type)];
 			rt_nurb_map_oslo( oslo, old_mesh_ptr, new_mesh_ptr,
 				RT_NURB_EXTRACT_COORDS( srf->pt_type ),
 				RT_NURB_EXTRACT_COORDS( srf1->pt_type ),
 				0, k_index, srf1->pt_type);
 			new_mesh_ptr = &srf2->ctl_points[
-				i * srf2->s_size[1] * 
+				i * srf2->s_size[1] *
 				RT_NURB_EXTRACT_COORDS( srf2->pt_type)];
 			rt_nurb_map_oslo( oslo, old_mesh_ptr, new_mesh_ptr,
 				RT_NURB_EXTRACT_COORDS( srf->pt_type ),
 				RT_NURB_EXTRACT_COORDS( srf2->pt_type ),
-				k_index, new_kv.k_size - srf2->order[0], 
+				k_index, new_kv.k_size - srf2->order[0],
 				srf2->pt_type);
 		}
 	}
-	else 
+	else
 	{
 		value = srf->v.knots[(srf->v.k_size -1)/2];
-		
+
 		for( i = 0; i < srf->v.k_size; i++)
 			if( value == srf->v.knots[i] )
 			{
@@ -169,7 +169,7 @@ rt_nurb_s_split(struct bu_list *split_hd, const struct face_g_snurb *srf, int di
 			}
 		if ( k_index == 0)
 		{
-			value = ( value + 
+			value = ( value +
 				srf->v.knots[ srf->v.k_size -1])
 				/2.0;
 			k_index = srf->order[1];
@@ -177,7 +177,7 @@ rt_nurb_s_split(struct bu_list *split_hd, const struct face_g_snurb *srf, int di
 
 		rt_nurb_kvmult(&new_kv, &srf->v, srf->order[RT_NURB_SPLIT_COL], value, res);
 
-		oslo = ( struct oslo_mat *) 
+		oslo = ( struct oslo_mat *)
 			rt_nurb_calc_oslo( srf->order[RT_NURB_SPLIT_COL], &srf->v, &new_kv, res);
 
 		GET_SNURB( srf1 );
@@ -186,16 +186,16 @@ rt_nurb_s_split(struct bu_list *split_hd, const struct face_g_snurb *srf, int di
 		srf1->dir = RT_NURB_SPLIT_COL;
 		rt_nurb_kvextract(&srf1->v, &new_kv, 0, k_index + srf1->order[RT_NURB_SPLIT_COL], res);
 		rt_nurb_kvcopy(&srf1->u, &srf->u, res);
-		
+
 		srf1->pt_type = srf->pt_type;
-		srf1->s_size[0] = srf1->v.k_size - 
+		srf1->s_size[0] = srf1->v.k_size -
 			srf1->order[1];
-		srf1->s_size[1] = srf1->u.k_size - 
+		srf1->s_size[1] = srf1->u.k_size -
 			srf1->order[0];
 
 		srf1->ctl_points = (fastf_t *)
 			bu_malloc( sizeof(fastf_t) * srf1->s_size[0] *
-				srf1->s_size[1] * 
+				srf1->s_size[1] *
 				RT_NURB_EXTRACT_COORDS( srf1->pt_type),
 				"rt_nurb_s_split: srf1 col mesh control points");
 
@@ -207,14 +207,14 @@ rt_nurb_s_split(struct bu_list *split_hd, const struct face_g_snurb *srf, int di
 		rt_nurb_kvcopy(&srf2->u, &srf->u, res);
 
 		srf2->pt_type = srf->pt_type;
-		srf2->s_size[0] = srf2->v.k_size - 
+		srf2->s_size[0] = srf2->v.k_size -
 			srf2->order[1];
-		srf2->s_size[1] = srf2->u.k_size - 
+		srf2->s_size[1] = srf2->u.k_size -
 			srf2->order[0];
 
 		srf2->ctl_points = (fastf_t *)
 			bu_malloc( sizeof(fastf_t) * srf2->s_size[0] *
-				srf2->s_size[1] * 
+				srf2->s_size[1] *
 				RT_NURB_EXTRACT_COORDS( srf2->pt_type),
 				"rt_nurb_s_split: srf2 col mesh control points");
 
@@ -230,7 +230,7 @@ rt_nurb_s_split(struct bu_list *split_hd, const struct face_g_snurb *srf, int di
 			rt_nurb_map_oslo( oslo, old_mesh_ptr, new_mesh_ptr,
 				srf->s_size[1] *
 				RT_NURB_EXTRACT_COORDS( srf->pt_type ),
-				srf1->s_size[1] * 
+				srf1->s_size[1] *
 				RT_NURB_EXTRACT_COORDS( srf1->pt_type ),
 				0, k_index, srf1->pt_type);
 			new_mesh_ptr = &srf2->ctl_points[
@@ -240,11 +240,11 @@ rt_nurb_s_split(struct bu_list *split_hd, const struct face_g_snurb *srf, int di
 				RT_NURB_EXTRACT_COORDS( srf->pt_type ),
 				srf2->s_size[1] *
 				RT_NURB_EXTRACT_COORDS( srf2->pt_type ),
-				k_index, new_kv.k_size - srf2->order[1], 
+				k_index, new_kv.k_size - srf2->order[1],
 				srf2->pt_type);
 		}
 	}
-	
+
 	/* Arrangement will be:  head, srf1, srf2 */
 	BU_LIST_APPEND( split_hd, &srf2->l );
 	BU_LIST_APPEND( split_hd, &srf1->l );
@@ -262,7 +262,7 @@ rt_nurb_s_split(struct bu_list *split_hd, const struct face_g_snurb *srf, int di
  *
  * Algorithm
  *
- * Insert a multiple knot of the curve 
+ * Insert a multiple knot of the curve
  * order.  If internal knot values exist than pick the one closest to the
  * middle and add additional knots to split at that value, otherwise
  * add multiple knots at the mid point of the knot vector. Use the new
@@ -287,7 +287,7 @@ rt_nurb_c_split(struct bu_list *split_hd, const struct edge_g_cnurb *crv)
 	coords = RT_NURB_EXTRACT_COORDS( crv->pt_type ),
 
 	value = crv->k.knots[(crv->k.k_size -1)/2];
-		
+
 	for( i = 0; i < crv->k.k_size; i++)
 		if( value == crv->k.knots[i] )
 		{
@@ -296,7 +296,7 @@ rt_nurb_c_split(struct bu_list *split_hd, const struct edge_g_cnurb *crv)
 		}
 	if ( k_index == 0)
 	{
-		value = ( value + 
+		value = ( value +
 			crv->k.knots[ crv->k.k_size -1])
 			/2.0;
 		k_index = crv->order;
@@ -304,7 +304,7 @@ rt_nurb_c_split(struct bu_list *split_hd, const struct edge_g_cnurb *crv)
 
 	rt_nurb_kvmult(&new_kv, &crv->k, crv->order, value, (struct resource *)NULL);
 
-	oslo = ( struct oslo_mat *) 
+	oslo = ( struct oslo_mat *)
 		rt_nurb_calc_oslo( crv->order, &crv->k, &new_kv, (struct resource *)NULL);
 
 	GET_CNURB( crv1 );
@@ -331,7 +331,7 @@ rt_nurb_c_split(struct bu_list *split_hd, const struct edge_g_cnurb *crv)
 		coords, coords, 0, k_index, crv->pt_type );
 
 	rt_nurb_map_oslo( oslo, crv->ctl_points, crv2->ctl_points,
-		coords, coords, k_index, new_kv.k_size - crv2->order, 
+		coords, coords, k_index, new_kv.k_size - crv2->order,
 		crv2->pt_type );
 
 	rt_nurb_free_oslo( oslo, (struct resource *)NULL );

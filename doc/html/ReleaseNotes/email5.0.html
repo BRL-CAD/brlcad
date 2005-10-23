@@ -40,32 +40,32 @@ contact Lisa Garriques at the SURVIAC Aberdeen Satellite Office via the
 routes provided below.
 
 <p>
-*************************************************************************** 
-*           __        __      ___  __   __     __   __   __               * 
-*          |__  |  | |_/ \  /  |  |__| |      |__| |__  |  |              * 
-*           __| |__| | \  \/  _|_ |  | |__    |  |  __| |__|              * 
-*                                                                         * 
-*************************************************************************** 
-* The DoD-sponsored Survivability/Vulnerability Information Analysis      * 
-* Center (SURVIAC) Aberdeen Satellite Office (ASO), located adjacent to   * 
-* the Aberdeen Proving Ground in Maryland, provides full service          * 
-* distribution and support for the BRL-CAD model for a $500 fee.  This    * 
-* includes the initial distribution of the model and documentation,       * 
-* installation support, maintenance release updates, technical support,   * 
-* and future activities information.  Additionally, we sponsor an annual  * 
+***************************************************************************
+*           __        __      ___  __   __     __   __   __               *
+*          |__  |  | |_/ \  /  |  |__| |      |__| |__  |  |              *
+*           __| |__| | \  \/  _|_ |  | |__    |  |  __| |__|              *
+*                                                                         *
+***************************************************************************
+* The DoD-sponsored Survivability/Vulnerability Information Analysis      *
+* Center (SURVIAC) Aberdeen Satellite Office (ASO), located adjacent to   *
+* the Aberdeen Proving Ground in Maryland, provides full service          *
+* distribution and support for the BRL-CAD model for a $500 fee.  This    *
+* includes the initial distribution of the model and documentation,       *
+* installation support, maintenance release updates, technical support,   *
+* and future activities information.  Additionally, we sponsor an annual  *
 * BRL-CAD User's Group Meeting each fall.  Training courses are also      *
-* offered periodically each year.                                         * 
-*                                                                         * 
-* SURVIAC provides the DoD community with a one-stop resource for all     * 
-* aspects of nonnuclear survivability, lethality, and mission             * 
-* effectiveness, which includes dissemination of information and models   * 
-* to support this community.                                              * 
-*************************************************************************** 
-* SURVIAC Aberdeen Satellite Office      Phone:  (410) 273-7794           * 
-* 1003 Old Philadelphia Road             FAX:    (410) 272-6763           * 
-* Suite 103                              E-mail:  cad-dist@arl.mil        * 
-* Aberdeen, MD  21001-4011                        lisag@arl.mil           * 
-*************************************************************************** 
+* offered periodically each year.                                         *
+*                                                                         *
+* SURVIAC provides the DoD community with a one-stop resource for all     *
+* aspects of nonnuclear survivability, lethality, and mission             *
+* effectiveness, which includes dissemination of information and models   *
+* to support this community.                                              *
+***************************************************************************
+* SURVIAC Aberdeen Satellite Office      Phone:  (410) 273-7794           *
+* 1003 Old Philadelphia Road             FAX:    (410) 272-6763           *
+* Suite 103                              E-mail:  cad-dist@arl.mil        *
+* Aberdeen, MD  21001-4011                        lisag@arl.mil           *
+***************************************************************************
 <hr>
 <hr>
 Received: from walrus.arl.mil by wolf.arl.mil id aa20031; 1 Feb 95 3:27 GMT
@@ -112,14 +112,14 @@ Subject: Burst Release Authority
 Dr Deitz and Mr Anderson,
 
 <p>
-	Recently, the CHICKEN LITTLE program office has received 
+	Recently, the CHICKEN LITTLE program office has received
 another request for the "burst" code.  We have reassessed our
 previous need to maintain control over this code and have
-determined that it would be in the best interests of the 
+determined that it would be in the best interests of the
 DOD Vulnerability/Lethality community to release control of
 this code to you for inclusion and distribution with the
 BRL-CAD package if you see fit.  If you have any questions,
-please contact me at DSN 872-9243 [(904) 882-9243) or my technical 
+please contact me at DSN 872-9243 [(904) 882-9243) or my technical
 representative, Mr. Bud Bruenning, (904) 729-6497.
 
 <p>
@@ -177,7 +177,7 @@ a human to read than the compressed Fortran format previously used.
 <p>
 
 <p>
--- 
+--
 
 <p>
 "Sometimes nothing fails like success."
@@ -198,20 +198,20 @@ Message-ID:  &lt;9502151910.aa20663@wolf.arl.mil&gt;
 <p>
 &gt; When attempting to select a region in "Object Illum", we get an error
 &gt; message in mged that says:
-&gt; 
+&gt;
 &gt; rt_id_solid: u_id=x43
 &gt; rt_nul_import unimplemented
 &gt; init_objedit(&lt;region name&gt;)
-&gt; 
+&gt;
 &gt; The sequence ALWAYS occurs when we do the following in mged:
-&gt; 
+&gt;
 &gt; E &lt;region name&gt;
 &gt; E: &lt;n&gt; vectors in &lt;m&gt; sec
-&gt; 
-&gt; 
+&gt;
+&gt;
 &gt; Then select "Object Illum"
 &gt; highlight the region, select with the middle mouse button.
-&gt; 
+&gt;
 &gt; Are we doing something wrong, though. Perhaps we shouldn't be editing
 &gt; using E instead of e, or...?
 
@@ -245,7 +245,7 @@ Glenn,
 which resolves dynamic shared objects. Under Irix5* the default
 build uses shared libraries, which will really save you a lot of
 disk space. The BRLCAD4.4 should be adding the '-rpath' option on
-the link command followed by a path specifying where to find the 
+the link command followed by a path specifying where to find the
 DSO's. Check to make sure that this this option is being used and
 if so, check to make sure the path looks correct. If this option
 is not being used run the the 'sh machinetype.sh -v' script and make
@@ -255,7 +255,7 @@ If you are not installing in the default '/usr/brlcad' directory
 make sure to run the 'newbindir.sh' script which will replace
 '/usr/brlcad' with new correct install location in several places
 including 'Cakefile.defs'.
-  Using the '-rpath' option on the load command puts the DSO 
+  Using the '-rpath' option on the load command puts the DSO
 resolve path in the executable so be sure not to move your libraries
 after the build. There are other ways to tell 'rld' where to
 look but I think fixing the install is the best approach.
@@ -279,10 +279,10 @@ Mime-Version: 1.0
 Content-Type: TEXT/PLAIN; charset=US-ASCII
 
 <p>
-I am trying to get BRL-CAD running on a SUN SPARC 10 running SunOS 4.3.1. 
-The program compiles without any errors and mged works without any 
-trouble. I can create models with mged. I can ray-trace the models 
-without errors but when I try to display the pix file in the frame buffer 
+I am trying to get BRL-CAD running on a SUN SPARC 10 running SunOS 4.3.1.
+The program compiles without any errors and mged works without any
+trouble. I can create models with mged. I can ray-trace the models
+without errors but when I try to display the pix file in the frame buffer
 I get the following error:
 
 <p>
@@ -324,7 +324,7 @@ future.
 &gt; features.  We'd like to ship those internal features back to ProE,
 &gt; without having to re-create them in ProE.  Has anyone written anything
 &gt; to allow this to be done?
-&gt; 
+&gt;
 	You might try "g-iges" and then try importing the IGES file into
 Pro-Engineer. That won't work on the version of Pro/E that I am running
 (I still have version 13!!!), it expects only surface files, not solid models.
@@ -334,7 +334,7 @@ version 13, there might be a chance.
 <p>
 
 <p>
-		
+
 John R. Anderson
 Attn: AMSRL-SL-BV                               Internet: jra@arl.mil
 U.S. Army Research Laboratory                   Phone: (410) 278-7267
@@ -479,7 +479,7 @@ Message-ID:  &lt;9504251516.aa22155@wolf.arl.mil&gt;
 Kathryn M. Cook writes:
 
 <p>
-&gt; 
+&gt;
 &gt; I am familiar with creating BRLCAD models using the standard primitives.  I have
 &gt; seen references in the mail traffic about NMG solids.  I have not been able to
 &gt; locate any documentation on how to create and work with these solids.  Can they
@@ -523,7 +523,7 @@ routines:
 	mk_id() to create an ID record for the new model.
 	mk_polysolid() to make a header record for the polysolid
 	mk_poly() or mk_fpoly() to make each face.
-See libwdb/poly.c for these routines. 
+See libwdb/poly.c for these routines.
 
 <p>
 	The BRL-CAD polysolid is similar to the FASTGEN triangles in that
@@ -569,15 +569,15 @@ Message-ID:  &lt;9505022020.aa02843@wolf.arl.mil&gt;
 &gt; &gt; This is possible even in release 4.0, using the '-X80000000' option
 &gt; &gt; to RT and sending the output to "pl-sgi" or to a file, and then
 &gt; &gt; viewing with "pl-sgi" or with the "overlay" command in "mged".
-&gt; &gt; 
-&gt; 
+&gt; &gt;
+&gt;
 &gt; The platform that we are working on is Sun Sparc server 10, solaris 2.3.  I created a mged file trial.g containing a box and I tried to raytrace it using the following command:
-&gt; 
-&gt;     rt -a90 -e0 -s32 trial.g box &gt; output.pix 
-&gt; 
+&gt;
+&gt;     rt -a90 -e0 -s32 trial.g box &gt; output.pix
+&gt;
 &gt; Next, I tried to see the interception animation by typing
 &gt;     pix-fb output.pix
-&gt; 
+&gt;
 &gt; I do not get an image file.  Instead, I got only lines of fb_open, fb_write and fb_close commands.  I had also tried viewing the pix file in mged using overlay command, but I still do not get any image.  Would appreciate very much if you could assist.
 
 <p>
@@ -625,7 +625,7 @@ Message-ID:  &lt;9505030948.aa19404@WALRUS.ARL.MIL&gt;
 Rick,
 
 <p>
-The problem isn't with the geometries having different codes, its the 
+The problem isn't with the geometries having different codes, its the
 assessment models which use different codes.  For example ...
 
 <p>
@@ -641,19 +641,19 @@ assessment models which use different codes.  For example ...
 	etc.
 
 <p>
-So the material assigned in the target description is correct for a given 
-assessment model but if another analyst wants to use that geometry with a 
-different assessment model, all of the material code assignments must be 
-checked against the alternate model's understanding of what a material code 
-number of xx is.  This is also true for updated versions of assessment codes 
-(COVART 4 brought HEVART and HEIVAM internally so the material definitions 
+So the material assigned in the target description is correct for a given
+assessment model but if another analyst wants to use that geometry with a
+different assessment model, all of the material code assignments must be
+checked against the alternate model's understanding of what a material code
+number of xx is.  This is also true for updated versions of assessment codes
+(COVART 4 brought HEVART and HEIVAM internally so the material definitions
 had to be made common).
 
 <p>
-This being the case, even with the ability to read the material ids from 
-the geometry database, the codes must still be verified to match whatever 
-assessment model is being used (and a conversion utility must still know 
-what id table was used in the geometry so it knows what id numbers to swap 
+This being the case, even with the ability to read the material ids from
+the geometry database, the codes must still be verified to match whatever
+assessment model is being used (and a conversion utility must still know
+what id table was used in the geometry so it knows what id numbers to swap
 to get to the desired id table).
 
 <p>
@@ -734,13 +734,13 @@ Content-Type: multipart/mixed;
 Content-Description: Text
 Content-Type: text/plain ; charset=iso-8859-1
 Content-Transfer-Encoding: quoted-printable
-X-Zm-Decoding-Hint: mimencode -q -u 
+X-Zm-Decoding-Hint: mimencode -q -u
 
 <p>
 On Jun 9,  9:46am, David S. Pesetsky wrote:
 &gt; Subject: HTML to PS?
 &gt; I'm looking for a way to convert the HTML pages that come with the
-&gt; distribution to postscript so I can print them all at once. 
+&gt; distribution to postscript so I can print them all at once.
 &gt;-- End of excerpt from David S. Pesetsky
 
 <p>
@@ -752,7 +752,7 @@ This script does not handle in-line images (substitutes [IMAGE]).
 Exerpt from the html2ps info page &lt;http://www.tdb.uu.se/~jan/html2ps.html&gt;:
 | The Perl script html2ps is an HTML-to-PostScript converter. Perl is
 | available from any comp.sources.misc archive.
-| 
+|
 | The latest version of html2ps is available via anonymous ftp from
 | ftp.tdb.uu.se in /pub/sources/html2ps as a tar file:
 | html2ps_0.1beta.tar. You can also fetch the files individually from
@@ -790,15 +790,15 @@ Phil Cogan (ZEROMOLD@aol.com) writes:
 &gt; I've been using mged for a couple of months and recently tired compiling
 &gt; tmged. The compile went smoothly, however when I went to run tmged, all I
 &gt; got was was a blank window itled Tkmged and the standard mged window.
-&gt; 
+&gt;
 &gt; All the tcl/Tk demos work flawlessly.
-&gt; 
+&gt;
 &gt; What did I do wrong?
 
 <p>
 To try out the sample user interface, you need to do the following:
 Find "tmged.tcl" (it should be in the tmged directory.  For this
-example, we will assume it is in the subdirectory "../tmged").  
+example, we will assume it is in the subdirectory "../tmged").
 Then, at the mged&gt; prompt, type "source ../tmged/tmged.tcl" (or whatever
 path is appropriate).  You should then get the sample interface (a
 button menu and an interaction window).
@@ -984,7 +984,7 @@ the patch for the Cakefile if you want to try to compile it:
 ! 			rtregis rtscale
   #define	SRCSUFF	.c
   #define MANSECTION	1
-  
+
 --- 8,14 ----
   #define SRCDIR	rt
   #define PRODUCTS	rt rtrad rtpp rtray rtshot rtwalk rtcheck \
@@ -992,23 +992,23 @@ the patch for the Cakefile if you want to try to compile it:
 ! 			rtregis rtscale rtweight
   #define	SRCSUFF	.c
   #define MANSECTION	1
-  
+
 ***************
 *** 40,45 ****
 --- 40,52 ----
   	CC CFLAGS -c vers.c
   	CC LDFLAGS RT_OBJ vers.o LIBRT LIBFB LIBFB_LIBES LIBRT_LIBES LIBES -o rt
-  
-+ 
+
++
 + #define RTWEIGHT_OBJ	RTUIF viewweight.o
-+ 
++
 + rtweight:	RTWEIGHT_OBJ LIBRT_DEP LIBFB_DEP
 + 	sh ../newvers.sh version "RT Weight"
 + 	CC CFLAGS -c vers.c
 + 	CC LDFLAGS RTWEIGHT_OBJ vers.o LIBRT LIBFB LIBFB_LIBES LIBRT_LIBES LIBES -o rtweight
-  
+
   #define RTRAY_OBJ	RTUIF viewray.o wray.o
-  
+
 ********************************************************************
 
 <p>
@@ -1204,13 +1204,13 @@ Subject:  BRL-CAD from IGES5.1
 Message-ID:  &lt;9512270849.aa23266@WALRUS.ARL.MIL&gt;
 
 <p>
-The IGES5.1 support is designed for basic solid entities and for spline 
-surfaces.  It will also import an IGES5.1 drawing entity (option -d) which 
-you can position to use as a view template.  A minimum of two templates 
-(front and side, top and side, back and bottom, etc.) are required to provide 
-the l-w-h data for each of the solids you will build from the templates.  The 
-templates if viewed from its "side" will be a single line (like the edge of 
-a piece of paper) but from its "face" will provide a transparent line drawing 
+The IGES5.1 support is designed for basic solid entities and for spline
+surfaces.  It will also import an IGES5.1 drawing entity (option -d) which
+you can position to use as a view template.  A minimum of two templates
+(front and side, top and side, back and bottom, etc.) are required to provide
+the l-w-h data for each of the solids you will build from the templates.  The
+templates if viewed from its "side" will be a single line (like the edge of
+a piece of paper) but from its "face" will provide a transparent line drawing
 guide (with dimensions if in the original IGES5.1 drawing).
 
 <p>
@@ -1246,7 +1246,7 @@ last resort is to build a polysolid. If an optional arguement is
 provided, then only that particular type of solid is attempted.
 
 <p>
-	This command was inspired by a request from Bill Hruz and 
+	This command was inspired by a request from Bill Hruz and
 uses routines developed for the Pro/E to BRL-CAD translater.
 
 <p>
@@ -1294,7 +1294,7 @@ mged&gt; in hff.s hf dfile="01.hf" fmt="us" w=257 n=257 shorts=1 file2mm=31.25
 v=0,0,0 x=1,0,0 y=0,1,0 xlen=256000 ylen=256000 zscale=1
 
 <p>
-That should all be typed in on one line, but I've broken the line for 
+That should all be typed in on one line, but I've broken the line for
 readability.  As far as I can tell this means:
 
 <p>
@@ -1407,7 +1407,7 @@ Hope this helps,
 <p>
 
 <p>
--- 
+--
 
 <p>
    _/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
@@ -1441,27 +1441,27 @@ On Wed, 5 Jun 1996, COOK-KM-KATHY (156791) wrote:
 &gt; open inventor routines (which come with SGIs) would provide a convienent way to
 &gt; display/present a solid read-only representation of a BRLCAD model without
 &gt; ray-tracing multiple views.
-&gt; 
+&gt;
 &gt; SGIs Showcase software will allow open inventor files to be embedded into a
 &gt; presentation.  The geometric model can then be positioned to any convienent
 &gt; view at will using the mouse.  Future versions of other presentation software
 &gt; will probably allow insertion of VRML objects.
-&gt; 
+&gt;
 &gt; Are there any plans to develop such a tool in a future release of BRLCAD?  I
 &gt; assume this would require exporting a representation of the evaluated objects
 &gt; in a form similar to nmg.
 
 <p>
-	There is a primitive "g-vrml" converter that will be in the next 
-release of BRL-CAD. It is primitive in that it does not take advantage of 
-all the capabilities of VRML. It does handle the geometry, and colors, 
-but all light sources are reduced to point sources. Also relfection, 
-transparency and textures are not handled yet (I don't recall how 
-much of that VRML will actually do). You are correct in your expectation 
-that this would require exporting a representation of the evaluated 
-objects in a form similar to nmg. In fact, the converter produces NMG 
-objects, then outputs them in VRML format. This means that "g-vrml" will 
-only convert what our NMG codes can successfully handle, and while this 
+	There is a primitive "g-vrml" converter that will be in the next
+release of BRL-CAD. It is primitive in that it does not take advantage of
+all the capabilities of VRML. It does handle the geometry, and colors,
+but all light sources are reduced to point sources. Also relfection,
+transparency and textures are not handled yet (I don't recall how
+much of that VRML will actually do). You are correct in your expectation
+that this would require exporting a representation of the evaluated
+objects in a form similar to nmg. In fact, the converter produces NMG
+objects, then outputs them in VRML format. This means that "g-vrml" will
+only convert what our NMG codes can successfully handle, and while this
 is not 100%, recently we have seen about 95% success.
 
 <p>
@@ -1520,19 +1520,19 @@ Sender: jra@arl
 <p>
 
 <p>
-	I have added an "a_ray_length" field to librt's application 
-structure. This is intended to work similar to "a_onehit", and has been 
-implemented in much the same way. If this field is set to a non-zero 
-value, then ray tracing is stopped as soon as we get beyond the 
-"a_ray_length". The raytracing is done in increments of the space 
-partitions, so this will not stop at exactly "a_ray_length", but it will 
-stop before raytracing any space partition beyond "a_ray_length". I 
-tested this out on the bradley and found that it works as I expected and 
-does in fact reduce the time. Of course, if this is used on a very 
+	I have added an "a_ray_length" field to librt's application
+structure. This is intended to work similar to "a_onehit", and has been
+implemented in much the same way. If this field is set to a non-zero
+value, then ray tracing is stopped as soon as we get beyond the
+"a_ray_length". The raytracing is done in increments of the space
+partitions, so this will not stop at exactly "a_ray_length", but it will
+stop before raytracing any space partition beyond "a_ray_length". I
+tested this out on the bradley and found that it works as I expected and
+does in fact reduce the time. Of course, if this is used on a very
 simple model, you will actually increase the raytrace time.
 
 <p>
-	Both "a_ray_length" and "a_onehit" can be specified and raytracing 
+	Both "a_ray_length" and "a_onehit" can be specified and raytracing
 will stop as soon as either one is satisfied.
 
 <p>
@@ -1725,7 +1725,7 @@ Message-Id: &lt;9608201551.ZM12622@arl.mil&gt;
 Date: Tue, 20 Aug 1996 15:51:46 -0400
 In-Reply-To: wm@arl.mil (Bill Mermagen Jr.)
         "Re: Patch-g bug report" (Aug 14,  4:18pm)
-References: &lt;199608082134.QAA20549@use1.eglin.af.mil&gt; 
+References: &lt;199608082134.QAA20549@use1.eglin.af.mil&gt;
 	&lt;9608141618.ZM3553@arl.mil&gt;
 X-Mailer: Z-Mail (3.2.0 26oct94 MediaMail)
 To: kelsey@eglin.af.mil
@@ -1755,7 +1755,7 @@ arrangements to get the updated source or executable to you.
 				-Bill
 
 <p>
--- 
+--
 Bill Mermagen Jr.
 <hr>
 <hr>
@@ -1981,20 +1981,20 @@ X-mailer: Pegasus Mail for Windows (v2.01)
 Message-ID:  &lt;9609041133.aa27814@wharf.arl.mil&gt;
 
 <p>
-This is probably so obvious to most it doesn't need to be said, but I 
-may not be as swift as some others and maybe there are some others 
-like me.  
+This is probably so obvious to most it doesn't need to be said, but I
+may not be as swift as some others and maybe there are some others
+like me.
 
 <p>
-While waiting for the new release that will work on IRIX 6.2, I 
-simply copied the binaries and other files in  my /usr/brlcad 
-directory (and sub directories) from my SGI Personal IRIS 4D35 
-running IRIX 5.3 to a tar tape and moved them  to my new Indigo 2, Impact 
-10000 running IRIX 6.2 and all that I've used so far (except patch-g) 
-work quite nicely.  As a matter of fact, some utilities like fb-pix 
-that complained of a "sgi_getmem" error on my PI don't pesent such 
-errors on the new Indy.  (Perhaps the old PI is starting to wear 
-out.)  Anyway, for those who need a SIMPLE SOLUTION and DO NOT NEED 
+While waiting for the new release that will work on IRIX 6.2, I
+simply copied the binaries and other files in  my /usr/brlcad
+directory (and sub directories) from my SGI Personal IRIS 4D35
+running IRIX 5.3 to a tar tape and moved them  to my new Indigo 2, Impact
+10000 running IRIX 6.2 and all that I've used so far (except patch-g)
+work quite nicely.  As a matter of fact, some utilities like fb-pix
+that complained of a "sgi_getmem" error on my PI don't pesent such
+errors on the new Indy.  (Perhaps the old PI is starting to wear
+out.)  Anyway, for those who need a SIMPLE SOLUTION and DO NOT NEED
 TO COMPILE new code, this seems to work.
 
 <p>
@@ -2025,20 +2025,20 @@ X-Mailer: Windows Eudora Pro Version 2.2 (32)
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Date: Thu, 05 Sep 1996 18:30:59 -0700
-To: MHGETMAN@concentric.net, okie@nwidt.com, 
-    kcheng@jupiter.risc.rockwell.com, Randys9932@aol.com, CBoth@earthlink.net, 
-    cindy.liebeck@vlsi.com, bobt@vnet.ibm.com, kmorimo@ebina.hitachi.co.jp, 
-    VincentHuang@acer.com.tw, shkoh@jupiter.info.samsung.co.kr, 
-    shaw@scf-fs.usc.edu, mukherje@cup.hp.com, soosoo@hitel.kol.co.kr, 
-    hhwu@alpha.ee.ufl.edu, 100015.1632@compuserve.com, 
-    rurban@sbox.tu-graz.ac.at, dennis.shinn@saug.wa.com, josgood@frame.com, 
-    wammack@aps.anl.gov, joel_orr@mcimail.com, 169932@hdo.com, 
-    cecilia@hndol.com, 171403@hdo.com, marks@hndol.com, 
-    webmaster@ic.eecs.berkeley.edu, Rudy@finelinemicro.com, 
-    Mik.Ferran@cern.ch, pmfdj@crnvma.cern.ch, Nils.Hoimyr@cern.ch, 
-    f.vanslooten@wb.utwente.nl, rodmur@ecst.csuchico.edu, cad@ARL.MIL, 
-    jules@cs.man.ac.uk, webmaster@igsrsparc2.er.usgs.gov, 
-    bob@soest.hawaii.edu, kroenke@soest.hawaii.edu, 
+To: MHGETMAN@concentric.net, okie@nwidt.com,
+    kcheng@jupiter.risc.rockwell.com, Randys9932@aol.com, CBoth@earthlink.net,
+    cindy.liebeck@vlsi.com, bobt@vnet.ibm.com, kmorimo@ebina.hitachi.co.jp,
+    VincentHuang@acer.com.tw, shkoh@jupiter.info.samsung.co.kr,
+    shaw@scf-fs.usc.edu, mukherje@cup.hp.com, soosoo@hitel.kol.co.kr,
+    hhwu@alpha.ee.ufl.edu, 100015.1632@compuserve.com,
+    rurban@sbox.tu-graz.ac.at, dennis.shinn@saug.wa.com, josgood@frame.com,
+    wammack@aps.anl.gov, joel_orr@mcimail.com, 169932@hdo.com,
+    cecilia@hndol.com, 171403@hdo.com, marks@hndol.com,
+    webmaster@ic.eecs.berkeley.edu, Rudy@finelinemicro.com,
+    Mik.Ferran@cern.ch, pmfdj@crnvma.cern.ch, Nils.Hoimyr@cern.ch,
+    f.vanslooten@wb.utwente.nl, rodmur@ecst.csuchico.edu, cad@ARL.MIL,
+    jules@cs.man.ac.uk, webmaster@igsrsparc2.er.usgs.gov,
+    bob@soest.hawaii.edu, kroenke@soest.hawaii.edu,
     brown@diego.cecer.army.mil, plewe@acsu.buffalo.edu
 From: "Gary B. Rohrabaugh" &lt;gary@softsource.com&gt;
 Subject: Supporting AutoCAD and DXF drawings on your WEB site
@@ -2059,7 +2059,7 @@ In order for browsers to recognize AutoCAD drawing and DXF files so
 the appropriate action can take place (e.g. for the proper plug-in to
 be run in Netscape), the server needs to have a MIME type associated
 with the proper files. Contact your system administrator for more
-information on how to do this. 
+information on how to do this.
 
 <p>
                     extensions    Official MIME types
@@ -2081,7 +2081,7 @@ pairs to SoftSource: image/vnd.dwg, and image/vnd.dxf.
 After adding MIME types, your server may need to be restarted.
 Additionally, Netscape may have cached any images and associated MIME
 types you have previously viewed, so you may need to clean out the local
-cache before retrying images. 
+cache before retrying images.
 
 <p>
 See the FAQ in the SoftSource Files plugin page for Optional Tags
@@ -2126,7 +2126,7 @@ will be in the next release.
 &gt; 2. I wish to have an emissive target, i.e., no shiny reflections from ambient
 &gt; lighting. Is this possible? I have tried setting material properties to
 &gt; plastic, diffuse -&gt; 1.0, reflect -&gt; 0.0, and the rt ambient light option
-&gt; A -&gt; 0, but I still seem to get a strong reflective light back from 
+&gt; A -&gt; 0, but I still seem to get a strong reflective light back from
 &gt; perpendicular facets to the eye. I even tried using "rt -l 1". Any thoughts?
 
 <p>
@@ -2160,7 +2160,7 @@ Daniel,
 
 <p>
 Concerning, the raytracing problem.  The only way I know of getting rid
-of the eyepoint bright spot is to put your own light into the model. 
+of the eyepoint bright spot is to put your own light into the model.
 This of course creates a bright spot relative to the position of your
 light and its color.
 
@@ -2234,7 +2234,7 @@ The "RT Benchmark" is a raytracing application and does a relatively large
 amount of floating point operations in addition to some complex coding
 structures.  While the Cyrix chip does well at optimizing the branching and
 looping conditions, the floating point unit just isn't a match for the Intel
-part.  Floating point performance on the 133Mhz Cyrix is roughly equal to 
+part.  Floating point performance on the 133Mhz Cyrix is roughly equal to
 a Pentium90.
 
 <p>
@@ -2252,7 +2252,7 @@ like scientific computing, I'd go with the Intel chip.
 The second is if you want to run multiple CPU's on one motherboard.
 While Cyrix cpu's can support multi-processor motherboards, they use a
 different standard than the (proprietary) one that Intel uses.  I've heard
-that dual CPU motherboards will soon be available for the Cyrix chips, but 
+that dual CPU motherboards will soon be available for the Cyrix chips, but
 they don't seem to be out there today.
 
 <p>
@@ -2282,9 +2282,9 @@ On Mon, 23 Sep 1996, Fredrick V. Heitkamp wrote:
 
 <p>
 &gt; Mike,
-&gt; 
+&gt;
 &gt; Thanks for the reply.  I have yet another question.  Is there a way presently,
-&gt; to 
+&gt; to
 &gt; convert IGES 114 to BRL-CAD?
 
 <p>
@@ -2304,7 +2304,7 @@ have some free tools available there.
 &gt; WL/AAJS (formerly WL/AARI-1)
 &gt; WPAFB OH
 &gt; 513 255 5922 x271
-&gt; 
+&gt;
 &gt; &gt;
 &gt; &gt;The BRL-CAD ray-tracer is rather nice.
 &gt; &gt;
@@ -2328,7 +2328,7 @@ have some free tools available there.
 &gt; &gt;	  410-278-6678 Voice
 &gt; &gt;	  410-278-6656 Secretary
 &gt; &gt;	  410-278-5058 FAX
-&gt; 
+&gt;
 
 <p>
 John R. Anderson
@@ -2346,7 +2346,7 @@ Received: from vapor.arl.mil by wolf.arl.mil id aa28218; 27 Sep 96 4:34 EDT
 Date:     Fri, 27 Sep 96 4:34:53 EDT
 From:     Mike Muuss &lt;mike@ARL.MIL&gt;
 To:       ACST@ARL.MIL
-cc:       wbowman@ARL.MIL, gillis@ARL.MIL, reed@ARL.MIL, 
+cc:       wbowman@ARL.MIL, gillis@ARL.MIL, reed@ARL.MIL,
           CJohnson@camelot.com
 Subject:  h/sed4
 Message-ID:  &lt;9609270434.aa24265@VAPOR.ARL.MIL&gt;
@@ -2410,11 +2410,11 @@ On Mon, 14 Oct 1996 eorddyo@techunix.technion.ac.il wrote:
 
 <p>
 &gt; Hello all,
-&gt; I have some problems doing some things in Xmged I hope you will help me with,I am stuck in the 
+&gt; I have some problems doing some things in Xmged I hope you will help me with,I am stuck in the
 &gt; middle of a big project so fast replies will be greatly appreciated.
-&gt; 
-&gt; 1)"rotobj" rotates an object a specified angle around the objects key point.I need to rotate an 
-&gt; objectaround a point of my choice, I thought "qorot" will do it but it doesn't  seems to rotate 
+&gt;
+&gt; 1)"rotobj" rotates an object a specified angle around the objects key point.I need to rotate an
+&gt; objectaround a point of my choice, I thought "qorot" will do it but it doesn't  seems to rotate
 &gt; the object the way I wish. I may be doing something wrong???
 
 <p>
@@ -2511,31 +2511,31 @@ Content-Type: TEXT/PLAIN; charset=US-ASCII
 On Mon, 4 Nov 1996, ndaglis@acs.itd.uts.edu.au wrote:
 
 <p>
-&gt; Hi, 
+&gt; Hi,
 &gt; 	I've gotten brlcad to compile on my Linux box, and subsequently
 &gt; hit a solid wall at every turn. My configuration is:
-&gt; 
+&gt;
 &gt; 	Linux kernel 2.(something)
 &gt; 	Motif 2.0
 &gt; 	X11 R6 - xfree3.1.2
-&gt; 
+&gt;
 &gt; The biggest problem I think I have is that when I do
 &gt; 	xmged world.g all
-&gt; 
-&gt; I get an error about the world.g file not being in the right form - 
+&gt;
+&gt; I get an error about the world.g file not being in the right form -
 &gt; it says its lacking the header or something.
-&gt; 
+&gt;
 &gt; Also xmged dumps core straight after it gives this error.
-&gt; 
-&gt; 
+&gt;
+&gt;
 &gt; I'm that new to this that I don't now what it is I don't know about
 &gt; getting this to work.
-&gt; 
-&gt; Perhaps someone could direct me to a modern compiled version of 
+&gt;
+&gt; Perhaps someone could direct me to a modern compiled version of
 &gt; brlcad for linux. ie ELF, recent C libs, X11R6 etc.
-&gt; 
-&gt; thanks ndaglis@acs.itd.uts.edu.au    
-&gt; 
+&gt;
+&gt; thanks ndaglis@acs.itd.uts.edu.au
+&gt;
 
 <p>
 
@@ -2556,18 +2556,18 @@ Subject: Re: [Q] Who has installed BRL on a linux box???
 On 4 Jun 1996, Dwight M Evers wrote:
 
 <p>
-&gt; Could someone give some helpful hints on installing brl-cad R4.4 on a 
+&gt; Could someone give some helpful hints on installing brl-cad R4.4 on a
 &gt; linux box???
-&gt; 
+&gt;
 &gt; -TIA
-&gt; 
+&gt;
 &gt; ============================================================================
 &gt; 			|	"...peace is a thing which a person
 &gt; Dwight M. Evers		|	    must be willing to fight for..."
 &gt; evers@plains.NoDak.edu	|
 &gt; 	NDSU		|			-Abe Lincoln
 &gt; ============================================================================
-&gt; 
+&gt;
 ---------- Forwarded message ----------
 Date: Thu, 28 Dec 1995 12:10:13 -0500 (EST)
 From: John R. Anderson (USARL/SLAD/BVLD/VMB) &lt;jra@arl.mil&gt;
@@ -2595,7 +2595,7 @@ in the cake "Makefile" with "flex".
 <p>
 2. In libplot3, version 2.6.3 of gcc cannot compile plot3.c with the
 default O2 optimization. This has been reported to MIT as a compiler
-bug. The fix is to compile plot3.c with no optimization or use GCC 
+bug. The fix is to compile plot3.c with no optimization or use GCC
 version 2.7.2.
 
 <p>
@@ -2646,7 +2646,7 @@ With this last change, "rt" now works. I ran the benchmark and got the following
 
 <p>
 Abs	4021.12	1963.12	1752.41	1630.53	1995.19	2272.47	Thu Dec 28 01:41:28 EST 1995
-*vgr	29.34	29.27	31.25	30.55	28.22	29.72	
+*vgr	29.34	29.27	31.25	30.55	28.22	29.72
 
 <p>
 
@@ -2668,23 +2668,23 @@ On Tue, 13 Feb 1996, Thomas M. Browder Jr. wrote:
 <p>
 &gt; we have a working installation of Linux BRL-CAD, and everything seems
 &gt; to be working (or at least usable) except one thing:
-&gt; 
+&gt;
 &gt;   in mged, the concat command finds an error with the model data base
 &gt;   one is trying to concatenate
-&gt; 
+&gt;
 &gt;   the model data base checks out ok independently, and it can be opened
 &gt;   with dbopen, it just cannot be merged inside the primary model
-&gt; 
+&gt;
 &gt; the actual lines from a session are as follows:
-&gt; 
+&gt;
 &gt;   mged&gt; concat model.g
 &gt;   concat: Enter prefix string or / for no prefix: /
 &gt;   db_read(model.g) ERROR offset=128, count=128, dbi_eof=-1
 &gt;   Database read error, aborting
 &gt;   mged&gt;
-&gt; 
+&gt;
 &gt; Any help would be appreciated.
-&gt; 
+&gt;
 &gt; Tom Browder
 &gt; ASI Systems International
 
@@ -2797,8 +2797,8 @@ On Mon, 20 Jan 1997 eorddyo@techunix.technion.ac.il wrote:
 &gt; Hi all,
 &gt; I"ve encounterd some problems using xmged:
 &gt; after building an object which is a group composed of two regions
-&gt; I tried to make a mirror image of it using yjr "mirror" comand. The copy was created, I then 
-&gt; tried placing it in the right place but when I placed "accept edit" the object I moved jumped to 
+&gt; I tried to make a mirror image of it using yjr "mirror" comand. The copy was created, I then
+&gt; tried placing it in the right place but when I placed "accept edit" the object I moved jumped to
 &gt; it's original location and I got a message sayin the objects could not be reploted.
 &gt; I encountered this phenomenon using the "copy" comand as well.
 &gt; any sugestions?
@@ -2824,8 +2824,8 @@ new object that you created with the mirror command.
 
 <p>
 &gt; P.S.
-&gt; there may be something wrong with my subscription since I have recieved no mail from cad@ARL.MIL 
-&gt; since the begining of November, please resubscribe me if nesesary and e-mail me answers directly 
+&gt; there may be something wrong with my subscription since I have recieved no mail from cad@ARL.MIL
+&gt; since the begining of November, please resubscribe me if nesesary and e-mail me answers directly
 &gt; untill I can be sure I"m back on the general mailing list
 &gt; thanks Yoav
 
@@ -2869,27 +2869,27 @@ Content-Type: TEXT/PLAIN; charset=US-ASCII
 On Tue, 21 Jan 1997, C. D. Turner wrote:
 
 <p>
-&gt; The included file (created with brlcad 4.4) contains one region, box.r. When I 
-&gt; attempt to convert to gift using vdeck rev 11.1 (from brlcad 4.4) I get the 
+&gt; The included file (created with brlcad 4.4) contains one region, box.r. When I
+&gt; attempt to convert to gift using vdeck rev 11.1 (from brlcad 4.4) I get the
 &gt; following:
-&gt; 
+&gt;
 &gt; ---------------------------------
 &gt; zia% ~/cad/bin/vdeck test.g
-&gt; 
+&gt;
 &gt; command( ? for menu )&gt;&gt; insert box.r
-&gt; 
+&gt;
 &gt; command( ? for menu )&gt;&gt; list
-&gt; box.r           
-&gt; 
+&gt; box.r
+&gt;
 &gt; command( ? for menu )&gt;&gt; deck
-&gt; 
-&gt; ERROR: bad pointer x39070: s/b union tree(x91191191), was NULL(x0), file 
+&gt;
+&gt; ERROR: bad pointer x39070: s/b union tree(x91191191), was NULL(x0), file
 &gt; ../librt/db_tree.c, line 908
 &gt; ----------------------------------
-&gt; 
+&gt;
 &gt; When I use the old rev of vdeck, 10.2 (from brlcad 4.0) it works fine.
 &gt; Any suggestions?
-&gt; 
+&gt;
 &gt; Thanks,
 &gt; David Turner
 &gt; SNL/A
@@ -2948,7 +2948,7 @@ Received: from walrus.arl.mil by wolf.arl.mil id aa01008; 26 Jan 97 9:44 EST
 Received: from walrus.arl.mil by WALRUS.ARL.MIL id aa10422; 26 Jan 97 9:41 EST
 Received: from admii.arl.mil by WALRUS.ARL.MIL id aa10395; 26 Jan 97 9:31 EST
 Received: from relay4.UU.NET by ADMII.ARL.MIL id aa12017; 26 Jan 97 9:09 EST
-Received: from news.ziplink.net by relay4.UU.NET with ESMTP 
+Received: from news.ziplink.net by relay4.UU.NET with ESMTP
 	(peer crosschecked as: news.ziplink.net [199.232.240.5])
 	id QQcaea24621; Sun, 26 Jan 1997 09:09:23 -0500 (EST)
 Received: (from news@localhost) by news.ziplink.net (8.7.6/8.6.12) id JAA01194; Sun, 26 Jan 1997 09:08:46 -0500 (EST)
@@ -3051,7 +3051,7 @@ in the cake "Makefile" with "flex".
 <p>
 2. In libplot3, version 2.6.3 of gcc cannot compile plot3.c with the
 default O2 optimization. This has been reported to MIT as a compiler
-bug. The fix is to compile plot3.c with no optimization or use GCC 
+bug. The fix is to compile plot3.c with no optimization or use GCC
 version 2.7.2.
 
 <p>
@@ -3102,7 +3102,7 @@ With this last change, "rt" now works. I ran the benchmark and got the following
 
 <p>
 Abs	4021.12	1963.12	1752.41	1630.53	1995.19	2272.47	Thu Dec 28 01:41:28 EST 1995
-*vgr	29.34	29.27	31.25	30.55	28.22	29.72	
+*vgr	29.34	29.27	31.25	30.55	28.22	29.72
 
 <p>
 
@@ -3197,8 +3197,8 @@ Received: from localhost by wolf.arl.mil id aa12237; 11 Mar 97 11:36 EST
 Date: Tue, 11 Mar 1997 11:36:30 -0500 (EST)
 From: "John R. Anderson (USARL/SLAD/BVLD/VMB)" &lt;jra@arl.mil&gt;
 To: lynch@whim.arl.mil
-cc: ayoung@ww2.arl.mil, scoates@wumpus.arl.mil, ~pjt@wolf.arl.mil, 
-    ~pjt@worm.arl.mil, mike@wolf.arl.mil, bparker@smokey.arl.mil, 
+cc: ayoung@ww2.arl.mil, scoates@wumpus.arl.mil, ~pjt@wolf.arl.mil,
+    ~pjt@worm.arl.mil, mike@wolf.arl.mil, bparker@smokey.arl.mil,
     ~richsand@whale.arl.mil, ~richsand@wharf.arl.mil
 Subject: Useful commands in developmental version of MGED
 Message-ID: &lt;Pine.SGI.3.95.970311111642.11405A-100000@wolf.arl.mil&gt;
@@ -3293,7 +3293,7 @@ edges to plot the solids and intersecting the face planes to get the
 solid intersection lines, but shooting rays at the original solids. This
 is about as fast as the old 'E' command (I believe), but since the NMG
 edge/faces don't exactly match the real solid (in curved surfaces),
-edges often don't quite match up. In most cases, this is not a problem. 
+edges often don't quite match up. In most cases, this is not a problem.
 
 <p>
 	When an option is supplied (actually ANY option, but the command
@@ -3342,7 +3342,7 @@ On Tue, 15 Apr 1997, Bob Strausser wrote:
 
 <p>
 &gt; Good morning John,
-&gt; 
+&gt;
 &gt; I spoke with Ron Dexter today (apparently my email didn't get to him
 &gt; about the PSHELL record).  Based on the "real" -60B NASTRAN file, Ron
 &gt; guesses that the PSHELL record could be considered as a plate mode
@@ -3359,7 +3359,7 @@ mesh as opposed to a "solid" mesh.
 <p>
 &gt; He will be sending copies of the latest sample files hes been working
 &gt; with and some excerpts from the -60B NASTRAN file.  I'll pass them along
-&gt; when they come in. 
+&gt; when they come in.
 
 <p>
 	Great, I'll be looking forward to seeing them.
@@ -3369,7 +3369,7 @@ mesh as opposed to a "solid" mesh.
 &gt; but I've asked for some other element types from the -60B file.  Based
 &gt; on our initial conversion samples, Ron has several questions concerning
 &gt; the NASTRAN conversion you're working:
-&gt; 
+&gt;
 &gt; 1.	What is ARL planning / doing concerning the file sizes (NMG and
 &gt; polysolid) which are unacceptably large (not practical for working
 &gt; with)?  He converted a control rod and had a BRL-CAD file (polysolids)
@@ -3467,15 +3467,15 @@ On 30 May 1997, Federico Carminati wrote:
 
 <p>
 &gt;         Reply to:   X-Window interface
-&gt; 
+&gt;
 &gt; Good Morning,
 &gt;     one remark on the X-window interface. As you know is very slow, but it can
 &gt; be made several times faster changing the line width from 1 to 0. Width 0
 &gt; means the hardware default, which is 1 pixel, but much faster (for some
 &gt; reason!). All you have to do is to change the third argument of
 &gt; XsetLineAttributes in dm-X.c in mged anx xmged. Regards, Carminati
-&gt; 
-&gt; 
+&gt;
+&gt;
 
 <p>
 	Thanks!!! We tried your suggestion an it does make a significant
@@ -3518,13 +3518,13 @@ On 28 May 1997, Federico Carminati wrote:
 
 <p>
 &gt;         Reply to:   RE&gt;&gt;BUG in BRL?
-&gt; 
-&gt; Good morning, 
+&gt;
+&gt; Good morning,
 &gt;    thank you for your quick answer. In fact I was not sure, so I continued
 &gt; investigating in the problem. Now I do have the right answers, but I still do
 &gt; not understand why. I have a box with a hole, and in the hole a cylinder which
 &gt; fills it completely. I have constructed it with the following input:
-&gt; 
+&gt;
 &gt; killall *
 &gt; press reset
 &gt; title TARC Lead Block
@@ -3538,7 +3538,7 @@ On 28 May 1997, Federico Carminati wrote:
 &gt; g block.g block.r hole.r
 &gt; size 0.5
 &gt; B block.g
-&gt; 
+&gt;
 &gt; Then I wrote a very simple application which, given a ray (inside the model!)
 &gt; returns the distance to the first (i.e. closest) hit. And I set onehit=1. What
 &gt; happens then is that all rays starting in the quadrant x&gt;-0.032 y&gt;-0.032
@@ -3615,18 +3615,18 @@ Content-Type: TEXT/PLAIN; charset=US-ASCII
 On Fri, 13 Jun 1997 gdpayne@dra.hmg.gb wrote:
 
 <p>
-&gt; Now that it looks like BRLCAD release 5 is coming over the horizon, 
-&gt; is it possible to get a copy of the expected feature list for the new 
+&gt; Now that it looks like BRLCAD release 5 is coming over the horizon,
+&gt; is it possible to get a copy of the expected feature list for the new
 &gt; version ?
 
 <p>
 The most significant changes that you will notice are:
-	
+
 	completeley new mged (better than xmged) based upon Tcl/Tk
 	no xmged
 	OpenGL support for both framebuffer and mged.
 	greatly improved booleans of NMG's
-	new converters 
+	new converters
 		VRML - can convert from BRL-CAD to VRML only
 			This conforms to VRML 1.0.
 
@@ -3638,7 +3638,7 @@ The most significant changes that you will notice are:
 <p>
 		Laser scan - can convert from laser scan data to BRL-CAD only
 			This code is currently limited to Cyberware Digitizer
-			Data in cylindrical scan format and is limited to 
+			Data in cylindrical scan format and is limited to
 			simple shapes only.
 
 <p>
@@ -3657,16 +3657,16 @@ The most significant changes that you will notice are:
 	new utility and numerical handling libraries (broken out from librt)
 
 <p>
-&gt; We are particularly interested in the BRLCAD to polygon convertor 
-&gt; which was expected to form part of the new release. How well does 
+&gt; We are particularly interested in the BRLCAD to polygon convertor
+&gt; which was expected to form part of the new release. How well does
 &gt; this work ?
 
 <p>
 It's still not foolproof.  But it does a better job now.
 
 <p>
-&gt; Are we likely to see online / downloadable manuals for the new 
-&gt; version? Online manuals for the old version seemed to wither away 
+&gt; Are we likely to see online / downloadable manuals for the new
+&gt; version? Online manuals for the old version seemed to wither away
 &gt; after the first few elements were completed.
 
 <p>
@@ -3705,7 +3705,7 @@ Received: (from cmeiteng@localhost)
 	for cad@arl.mil; Tue, 24 Jun 1997 08:49:22 +0800 (SGT)
 From: Cheong Mei Teng &lt;cmeiteng@dso.org.sg&gt;
 Message-Id: &lt;199706240049.IAA21160@demerzel.dso.org.sg&gt;
-Subject: BRL-CAD questions 
+Subject: BRL-CAD questions
 To: cad@ARL.MIL
 Date: Tue, 24 Jun 1997 08:49:22 +0800 (SGT)
 X-Mailer: ELM [version 2.4 PL24]
@@ -3717,7 +3717,7 @@ Content-Transfer-Encoding: 7bit
  I am currently using BRL-CAD Ver 4.0 and AutoCad Release 12.
  My intention is to use AutoCad to generate either an IGES-file or DXF-file,
  and ask BRL-CAD to read it as a G-file. I have problems in both cases.
- 
+
  1. I exported a 3-D drawing into an IGES-file from AutoCad 12.The drawing
  does not contain any solids, everything is in terms of lines and mesh. Then
  i used
@@ -3725,10 +3725,10 @@ Content-Transfer-Encoding: 7bit
  the program ran, but it gave me a flattened 2-D drawing in mged. it appears
  that the 3rd dimension is not being taken care of. i tried it with other
  flags, but to no avail. the help file for iges-g indicates that the program
- recognises only the IGES 5.1. i think AutoCad 12's IGES is not 5.1. 
+ recognises only the IGES 5.1. i think AutoCad 12's IGES is not 5.1.
  what do you think is the problem here? is it the IGES version which is the
  culprit? do you know of any CAD drawers whose IGES is compatible with BRL-CAD?
- 
+
  2. I repeated the same procedure with a DXF-file from AutoCad 12. the help
  did indicate that the dxf-g works for Autodesk greater than 10 (i think). i
  tried
@@ -3739,11 +3739,11 @@ Content-Transfer-Encoding: 7bit
  the program ran, but an empty G-file was created, in a sense, no drawing was
  shown in mged.
  what do you think is the problem here? is it a version thing again? if it
- is, do you know of any CAD drawers which will work with their dxf files?  
+ is, do you know of any CAD drawers which will work with their dxf files?
 
 <p>
-Thank You ! 
-&gt; 
+Thank You !
+&gt;
 
 <p>
 <hr>
@@ -3756,7 +3756,7 @@ Date: Tue, 24 Jun 1997 08:09:15 -0400 (EDT)
 From: "John R. Anderson (USARL/SLAD/BVLD/VMB)" &lt;jra@ARL.MIL&gt;
 To: Cheong Mei Teng &lt;cmeiteng@dso.org.sg&gt;
 cc: cad@ARL.MIL
-Subject: Re: BRL-CAD questions 
+Subject: Re: BRL-CAD questions
 In-Reply-To: &lt;199706240049.IAA21160@demerzel.dso.org.sg&gt;
 Message-ID: &lt;Pine.SGI.3.95.970624080201.14561A-100000@wolf.arl.mil&gt;
 MIME-Version: 1.0
@@ -3769,7 +3769,7 @@ On Tue, 24 Jun 1997, Cheong Mei Teng wrote:
 &gt;  I am currently using BRL-CAD Ver 4.0 and AutoCad Release 12.
 &gt;  My intention is to use AutoCad to generate either an IGES-file or DXF-file,
 &gt;  and ask BRL-CAD to read it as a G-file. I have problems in both cases.
-&gt;  
+&gt;
 &gt;  1. I exported a 3-D drawing into an IGES-file from AutoCad 12.The drawing
 &gt;  does not contain any solids, everything is in terms of lines and mesh. Then
 &gt;  i used
@@ -3777,7 +3777,7 @@ On Tue, 24 Jun 1997, Cheong Mei Teng wrote:
 &gt;  the program ran, but it gave me a flattened 2-D drawing in mged. it appears
 &gt;  that the 3rd dimension is not being taken care of. i tried it with other
 &gt;  flags, but to no avail. the help file for iges-g indicates that the program
-&gt;  recognises only the IGES 5.1. i think AutoCad 12's IGES is not 5.1. 
+&gt;  recognises only the IGES 5.1. i think AutoCad 12's IGES is not 5.1.
 &gt;  what do you think is the problem here? is it the IGES version which is the
 &gt;  culprit? do you know of any CAD drawers whose IGES is compatible with BRL-CAD?
 
@@ -3796,7 +3796,7 @@ flattens it.
 &gt;  the program ran, but an empty G-file was created, in a sense, no drawing was
 &gt;  shown in mged.
 &gt;  what do you think is the problem here? is it a version thing again? if it
-&gt;  is, do you know of any CAD drawers which will work with their dxf files?  
+&gt;  is, do you know of any CAD drawers which will work with their dxf files?
 
 <p>
 	Our DXF to BRL-CAD converter only considers 3DFACES and 3DMESH objects
@@ -3859,7 +3859,7 @@ on 22 Jul 1997, frost wrote:
 &gt; "enter"              # I hit enter in responce
 
 <p>
-&gt; At this point the editor pulls up, but all that can be seen is a dot &gt; in the center of the screen.  I've tried zooming in using the slide &gt; bar, but this seems to do nothing.  Is this normal, is there 
+&gt; At this point the editor pulls up, but all that can be seen is a dot &gt; in the center of the screen.  I've tried zooming in using the slide &gt; bar, but this seems to do nothing.  Is this normal, is there
 &gt; something I not doing, Is there something I need to check.
 
 <p>
@@ -3904,7 +3904,7 @@ Typing "e all.g"&lt;return&gt; will display the object all.g on the graphic
 display window as a wireframe representation of all the solids at the
 root of the all.g heirarchical tree.  This is identified as 'viewing'
 mode.  You can use the mouse in the graphic window or commands typed in
-the text window to change the viewing angle, size, and location.  
+the text window to change the viewing angle, size, and location.
 
 <p>
 Solid edit mode will permit you to change the individual coordinate
@@ -3949,17 +3949,17 @@ On 23 Jul 1997 RDexter@zoomit.sikorsky.com wrote:
 &gt; Is there a quick way to remove all of the edcode assigned
 &gt; colors, materials, etc. from within a model database to
 &gt; "clean-up" a description?
-&gt; 
+&gt;
 &gt; Thanks in advance.
-&gt; 
+&gt;
 &gt; &gt;&gt;  Ron Dexter
-&gt;       Survivability & Low Observables      
+&gt;       Survivability & Low Observables
 &gt;       Sikorsky Aircraft Corporation
 &gt;       PH:  (203) 386-7922     FX:  (203) 386-5925
 &gt;       EM:  rdexter@sikorsky.com
-&gt;      
-&gt; 
-&gt; 
+&gt;
+&gt;
+&gt;
 
 <p>
 Ron,
@@ -4013,14 +4013,14 @@ On Thu, 11 Sep 1997, Tom Browder wrote:
 &gt; Is there any easy way to get the BIG
 &gt; compilation process to HALT at the first
 &gt; compile error?
-&gt; 
+&gt;
 &gt; Thanks.
-&gt; 
+&gt;
 &gt; Tom Browder
-&gt; 
-&gt; 
-&gt; 
-&gt; 
+&gt;
+&gt;
+&gt;
+&gt;
 
 <p>
 	In the file "gen.sh" at about line #297, you will find the
@@ -4032,7 +4032,7 @@ sees an action return with a nonzero status".
 <p>
 
 <p>
-			-John 
+			-John
 
 <p>
 John R. Anderson
@@ -4136,7 +4136,7 @@ Received: from vapor.arl.mil by wolf.arl.mil id aa13640; 23 Dec 97 5:12 EST
 Date:     Tue, 23 Dec 97 5:05:42 EST
 From:     Mike Muuss &lt;mike@ARL.MIL&gt;
 To:       ACST@ARL.MIL
-cc:       lorenzo@nvl.army.mil, russ@nvl.army.mil, mbaldwin@nvl.army.mil, 
+cc:       lorenzo@nvl.army.mil, russ@nvl.army.mil, mbaldwin@nvl.army.mil,
           dflorek@nvl.army.mil, dtidrow@nvl.army.mil, CJohnson@netgsi.com
 Subject:  mged displaylist updating
 Message-ID:  &lt;9712230505.aa15453@VJ.ARL.MIL&gt;
@@ -4169,7 +4169,7 @@ mged&gt; e light.r
 51 vectors in 0.001403 sec
 mged&gt; .inmem adjust light.r rgb {0 255 0}
 mged&gt; redraw_vlist light.r
-light.r/LIGHT 
+light.r/LIGHT
 
 <p>
 The light sphere turns green.  Yay!
@@ -4322,7 +4322,7 @@ the other order.
 <p>
 &gt; Do you have the TeX (or LaTeX) source for mged.ps available on-line?
 &gt; I'd like to generate the .ps file for double-sided printing and
-&gt; correct ordering. 
+&gt; correct ordering.
 
 <p>
 Sure, the TeX version is a standard part of the distribution, as a SHAR
@@ -4374,10 +4374,10 @@ On Fri, 6 Mar 1998, Carl Moore wrote:
 &gt; screen (1280 x 1024) size file is to bring the 1024 x 1024 .pix file into
 &gt; my frame buffer, then run fb-pix with the 1280 x 1024 size selected in its
 &gt; parameters.
-&gt; 
+&gt;
 &gt; Did I miss something or did I see that lgt could only create square (i.e.
 &gt; same number of pixels horizontal & vertical) .pix files?
-&gt; 
+&gt;
 
 <p>
 
@@ -4528,12 +4528,12 @@ On Thu, 21 May 1998, Mark Becker wrote:
 &gt; For the past couple of weeks I've been trying to find a combination of
 &gt; AutoCAD and BRL-CAD tools to permit the exchange of images between the
 &gt; two systems.
-&gt; 
+&gt;
 &gt; My test drawing (in the AutoCAD world) is of a cube with a small
 &gt; rectangular cavity in one side.  My most recent success has been in
 &gt; setting AutoCAD to output the drawing in "B-REP solid with analytical
 &gt; surfaces" and using iges-g to translate to BRL-CAD g-format.
-&gt; 
+&gt;
 &gt; This works.. partway.  In an attempt to raytrace the object, 'rt' runs
 &gt; for a while, emits a message "This better be a 2-manifold surface" and
 &gt; dumps core (Platform: UltraSparc 2 with Solaris 2.5.1, running BRLCAD
@@ -4542,7 +4542,7 @@ On Thu, 21 May 1998, Mark Becker wrote:
 <p>
 This implies that you are creating a B-REP NMG solid in BRL-CAD for your
 object.  The NMG code in release 4.x is what I would call "experimental"
-in quality.  However, for some database formats, it is the only way to 
+in quality.  However, for some database formats, it is the only way to
 achieve a conversion.
 
 <p>
@@ -4555,7 +4555,7 @@ In some cases, there are large performance improvements which can be achieved
 by re-modeling the object (or parts of it) in BRL-CAD.  For example,
 ray-tracing a BRL-CAD object consisting of an arb8 with a subtracted arb8 will
 be much faster than ray-tracing the equivalent NMG planar suface
-representation.  
+representation.
 
 <p>
 For large models the effort to re-model may not be practical.  In these cases
@@ -4686,18 +4686,18 @@ On Mon, 6 Jul 1998, Marcel RICARD wrote:
 
 <p>
 &gt; Dear BRL-CAD users,
-&gt; 
+&gt;
 &gt; We are just trying to use the BRL-CAD package in the field of Medical
 &gt; Physics concerning internal dosimetry. We use a SUN SPARCKstation 20 under
 &gt; Solaris 2.4 and the software seems to be well installed on our computer. We
 &gt; are able to build and edit objets but the rt command (do raytrace of view)
 &gt; doesn't work. As we didn't find any information to view the result of rt
 &gt; command, we want to know if anybody knows how to fix this problem.
-&gt; 
+&gt;
 &gt; Thank you very much in advance for your help.
-&gt; 
+&gt;
 &gt; Best regards,
-&gt; 
+&gt;
 &gt; Marcel.
 
 <p>
@@ -4740,7 +4740,7 @@ Content-Type: TEXT/PLAIN; charset=US-ASCII
 
 <p>
 &gt; On Mon, 6 Jul 1998, Marcel RICARD wrote:
-&gt; 
+&gt;
 &gt; &gt; Solaris 2.4 and the software seems to be well installed on our computer. We
 &gt; &gt; are able to build and edit objets but the rt command (do raytrace of view)
 &gt; &gt; doesn't work. As we didn't find any information to view the result of rt
@@ -4834,49 +4834,49 @@ On Fri, 28 Aug 1998, klaatu wrote:
 
 <p>
 &gt; On Fri, 28 Aug 1998, Karen A. Swartz wrote:
-&gt; 
+&gt;
 &gt; &gt; I installed BRL-CAD and I worked through the tutorials for Mged.  However,
 &gt; &gt; when I got to the ray tracing it didn't work like the tutorials said.  In
 &gt; &gt; fact nothing really happened at all with the display.  Is there any major
 &gt; &gt; differences when running in linux or Xwindows?  Is there some way of
-&gt; &gt; checking if everything was installed correctly?  
-&gt; 
+&gt; &gt; checking if everything was installed correctly?
+&gt;
 &gt; Um, lessee - if I recall correctly, this is probably because you haven't
 &gt; got your FB-FILE environment variable set right. There's more to it than
 &gt; this, but I know that it must be set.
-&gt; 
+&gt;
 &gt; In my /etc/profile (possibly you'd rather have this in your own 'bash'
 &gt; ~/.profile file) add a line
-&gt; 
+&gt;
 &gt; export FB_FILE="/dev/XsTl"
-&gt; 
+&gt;
 &gt; Definitely read your 'man libfb' and related files, probably you've got a
 &gt; different device from the XsTl device. But this works for me in 8-bit
 &gt; SVGA under X.
-&gt; 
-&gt; 
-&gt; 
-&gt; &gt; 
+&gt;
+&gt;
+&gt;
+&gt; &gt;
 &gt; &gt; Any input would be great.
 &gt; &gt; I appreciate all your help.
-&gt; &gt; 
-&gt; &gt; 
+&gt; &gt;
+&gt; &gt;
 &gt; &gt; Karen Swartz
-&gt; &gt; Teledyne Brown Engineering 
+&gt; &gt; Teledyne Brown Engineering
 &gt; &gt; swartzk@email.uah.edu
-&gt; &gt; 
-&gt; &gt; 
-&gt; &gt; 
-&gt; 
-&gt; 
-&gt; 
+&gt; &gt;
+&gt; &gt;
+&gt; &gt;
+&gt;
+&gt;
+&gt;
 &gt; Be kind to your neighbors, | "When the going gets weird the weird turn pro."
-&gt; even though they be        | http://www.clark.net/pub/klaatu/home.html 
-&gt; transgenic chimerae.       | Now. Chock full of uninteresting links. 
+&gt; even though they be        | http://www.clark.net/pub/klaatu/home.html
+&gt; transgenic chimerae.       | Now. Chock full of uninteresting links.
 &gt; --------- Whom thou'st vex'd waxeth wroth ----------------
-&gt; Re-transmission of this e-mail is a violation of Federal Copyright Law and 
+&gt; Re-transmission of this e-mail is a violation of Federal Copyright Law and
 &gt;   subject to a per-instance violation damages charge of $250,000.00
-&gt; 
+&gt;
 
 <p>
 
@@ -4884,10 +4884,10 @@ On Fri, 28 Aug 1998, klaatu wrote:
 
 <p>
 Be kind to your neighbors, | "When the going gets weird the weird turn pro."
-even though they be        | http://www.clark.net/pub/klaatu/home.html 
-transgenic chimerae.       | Now. Chock full of uninteresting links. 
+even though they be        | http://www.clark.net/pub/klaatu/home.html
+transgenic chimerae.       | Now. Chock full of uninteresting links.
 --------- Whom thou'st vex'd waxeth wroth ----------------
-Re-transmission of this e-mail is a violation of Federal Copyright Law and 
+Re-transmission of this e-mail is a violation of Federal Copyright Law and
   subject to a per-instance violation damages charge of $250,000.00
 
 <p>
@@ -5124,13 +5124,13 @@ On Fri, 12 Mar 1999, Tom Browder wrote:
 &gt; The stock mged has a useful tree depth of twelve levels.  Is there a simple
 &gt; constant change in the source code to increase that or is it more than a
 &gt; trivial change?
-&gt; 
+&gt;
 &gt; Thanks.
-&gt; 
+&gt;
 &gt; Tom Browder
-&gt; 
-&gt; 
-&gt; 
+&gt;
+&gt;
+&gt;
 
 <p>
 	Yes, in "h/solid.h", there is a line that defines MAX_PATH. You

@@ -54,12 +54,12 @@
  *
  *  Additions inspired by "Quaternion Calculus For Animation" by Ken Shoemake,
  *  SIGGRAPH '89 course notes for "Math for SIGGRAPH", May 1989.
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5066
- *  
+ *
  */
 /*@}*/
 

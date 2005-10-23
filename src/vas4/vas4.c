@@ -28,12 +28,12 @@
  *	Steve Satterfield, USNA
  *	Joe Johnson, USNA
  *	Michael John Muuss, BRL
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5066
- *  
+ *
  */
 #ifndef lint
 static const char RCSid[] = "@(#)$Header$ (BRL)";
@@ -44,7 +44,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif
-                                                                                                                                                                            
+
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -382,7 +382,7 @@ program_recording(int new, int scene_number, int start_frame)
 {
 	int number_of_frames = 1;
 
-	/* Enter VAS IV program mode */	
+	/* Enter VAS IV program mode */
 	vas_putc(C_PROGRAM);
 	vas_await(R_PROGRAM, 0);
 
@@ -522,7 +522,7 @@ search_frame(int frame)
 
 /*
  *			R E S E T _ T A P E _ T I M E
- * 
+ *
  *  Reset tape time to 00:00:00:00
  *
  *  This is only safe when the tape is playing or not moving.
@@ -536,7 +536,7 @@ reset_tape_time(void)
 
 /*
  *			T I M E 0
- * 
+ *
  *  Seek to time timer value 00:00:00:00, as set by ?INIT? or
  *  reset_tape_time(), above.
  *
@@ -619,7 +619,7 @@ get_vtr_status(int chatter)
 		fprintf(stderr,"VTR is online and has unknown ready status\n");
 		return(-1);
 	}
-	/* [3] is S for stop, P for play, 
+	/* [3] is S for stop, P for play,
 	 *   L for shuttle var speed, W for slow speed */
 }
 

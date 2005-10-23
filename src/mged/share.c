@@ -274,7 +274,7 @@ f_share(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     return TCL_ERROR;
   }
 
-  if (!uflag) 
+  if (!uflag)
     dlp2->dml_dirty = 1;	/* need to redraw this guy */
 
   bu_vls_free(&vls);
@@ -458,7 +458,7 @@ share_dlist(struct dm_list *dlp2)
     return;
 
   FOR_ALL_DISPLAYS(dlp1, &head_dm_list.l){
-    if(dlp1 != dlp2 && 
+    if(dlp1 != dlp2 &&
        dlp1->dml_dmp->dm_type == dlp2->dml_dmp->dm_type &&
        !strcmp(bu_vls_addr(&dlp1->dml_dmp->dm_dName), bu_vls_addr(&dlp2->dml_dmp->dm_dName))){
       if (dm_share_dlist(dlp1->dml_dmp, dlp2->dml_dmp) == TCL_OK) {
@@ -469,7 +469,7 @@ share_dlist(struct dm_list *dlp2)
 	dlp1->dml_dirty = dlp2->dml_dirty = 1;
 	bu_vls_free(&vls);
       }
-      
+
       break;
     }
   }

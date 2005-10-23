@@ -26,12 +26,12 @@
  *
  *  Author -
  *	Jeff Hanes
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005
- *  
+ *
  */
 /*@}*/
 
@@ -59,7 +59,7 @@ int	rt_poly_checkroots(register bn_poly_t *eqn, bn_complex_t *roots, register in
 
 /*
  *			R T _ P O L Y _ R O O T S
- *	
+ *
  *	WARNING:  The polynomial given as input is destroyed by this
  *		routine.  The caller must save it if it is important!
  *
@@ -172,7 +172,7 @@ rt_poly_roots(register bn_poly_t	*eqn,	/* equation to be solved */
  *	where
  *		H(Z) = (n-1) [ (n-1)(p'(Z))^2 - n p(Z)p''(Z) ],
  *
- *	where n is the degree of the polynomial.  The sign in the 
+ *	where n is the degree of the polynomial.  The sign in the
  *	denominator is chosen so that  |newZ - Z|  is as small as
  *	possible.
  *
@@ -238,7 +238,7 @@ rt_poly_findroot(register bn_poly_t *eqn, /* polynomial */
 			continue;
 		if( (b-diff) == b )
 			return(i);		/* OK -- can't do better */
-		if( diff > (b - diff)*1.0e-5 ) 
+		if( diff > (b - diff)*1.0e-5 )
 			continue;
 		return(i);			/* OK */
 	}

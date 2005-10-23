@@ -26,7 +26,7 @@
  *
  *  Author -
  *	Paul Randal Stay
- * 
+ *
  *  Source -
  * 	SECAD/VLD Computing Consortium, Bldg 394
  *	The U.S. Army Ballistic Research Laboratory
@@ -257,7 +257,7 @@ do_line(register struct vfont *vfp, register char *line)
 
 void
 do_char(struct vfont *vfp, struct vfont_dispatch *vdp, int x, int y)
-{	
+{
 	register int    i, j;
 	int		base;
 	int     	totwid = width;
@@ -339,11 +339,11 @@ bitx(register char *bitstring, register int posn)
 		return (int) (*bitstring) & (1 << posn);
 }
 
-/* 
+/*
  * squash - Filter super-sampled image for one scan line
  */
 
-/* Cone filtering weights. 
+/* Cone filtering weights.
  * #define CNTR_WT 0.23971778
  * #define MID_WT  0.11985889
  * #define CRNR_WT 0.07021166
@@ -400,7 +400,7 @@ fill_buf(register int wid, register int *buf, register char *bitrow)
 	/*
 	 * For each bit in the row, set the array value to 1 if it's on. The
 	 * bitx routine extracts the bit value.  Can't just use the j-th bit
-	 * because the bytes are backwards. 
+	 * because the bytes are backwards.
 	 */
 	for (j = 0; j < wid; j++)
 		if (bitx(bitrow, (j & ~7) + (7 - (j & 7))))
@@ -410,7 +410,7 @@ fill_buf(register int wid, register int *buf, register char *bitrow)
 
 	/*
 	 * Need two samples worth of background on either end to make the
-	 * filtering come out right without special casing the filtering. 
+	 * filtering come out right without special casing the filtering.
 	 */
 	buf[0] = buf[1] = buf[wid + 2] = buf[wid + 3] = 0;
 }

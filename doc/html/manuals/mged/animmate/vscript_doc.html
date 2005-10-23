@@ -3,14 +3,14 @@
 <body>
 
 <h1><a name="top">Create View Script</a></h1>
-The purpose of the 
-<a href="./vscript.gif">view animation window</a> is to convert an animation 
+The purpose of the
+<a href="./vscript.gif">view animation window</a> is to convert an animation
 table
 into an animation script controlling the view size, view position and
 view orientation.  See also the
 <a href="./oscript_doc.html">object animation window</a>, which creates
-scripts to control modelled objects, and the 
-specialized 
+scripts to control modelled objects, and the
+specialized
 <a href="./tscript_doc.html">track animation window</a>, which
 assists in modeling and animating
 articulated tracks.
@@ -37,9 +37,9 @@ parameters that columns of the source table should provide
 This
 description changes depending which of the window's checkbuttons are
 selected. For example, when the <b>No Rotation</b> checkbutton is
-active, and the <b>Read viewsize from source</b> button is inactive, 
+active, and the <b>Read viewsize from source</b> button is inactive,
 AnimMate only needs to know the time of each frame and the position of
-the eye. In this case, 
+the eye. In this case,
 the source description reads:
 <p>
 <b>4 input columns needed: t x y z</b>
@@ -49,13 +49,13 @@ The following codes are used to describe the column contents:
 t               - time column
 v		- viewsize column
 x y z           - three columns: path through space
-y p r           - three columns: yaw, pitch, and roll 
+y p r           - three columns: yaw, pitch, and roll
 qx qy qz qw     - four columns: quaternion coordinates
 lx ly lz        - three columns: path for eye to look toward
 </pre>
 If the number of columns in the source doesn't match the number of
 columns needed, an error message is
-displayed when the <b>OK</b> button is invoked. 
+displayed when the <b>OK</b> button is invoked.
 A curve always contains four columns, while the number of
 columns in a view curve, table editor, or file may vary.
 
@@ -73,12 +73,12 @@ The four entry boxes labeled <b>Object center</b>, <b>Object
 yaw,pitch,roll</b>, <b>Eye point</b>, and <b>Eye yaw,pitch,roll</b>
 are used when the source animation table refers to an
 object, and the user wishes to rigidly attach the eye to the object in
-some way. For example, 
+some way. For example,
 the user might want to attach
 the eye to a point behind the windshield of a car to to show the
 view from the driver's seat as the car drives around.
 <p>
-As explained in the section on 
+As explained in the section on
 <a href="oscript_doc.html#OCAOrientation">Object Center and Orientation</a>,
 when animating objects the user must provide a center point and an
 initial orientation. The center point is the point on or near the object
@@ -88,7 +88,7 @@ object considers to be forward, left, up, and so on. The same center
 point and orientation used in creating the object animation script
 should be used in creating a rigidly attached view script.
 <p>
-The object center and object yaw, pitch, and roll can be keyboard-edited 
+The object center and object yaw, pitch, and roll can be keyboard-edited
 after clicking on the corresponding
 entry box with the mouse. As an alternative to keyboard entry, the user
 can press the <b>Object center</b> button to enter the current center point
@@ -100,17 +100,17 @@ Next, the user must specify the position and orientation in which the
 eye should be attached to the object. For example, suppose that the
 object being animated is centered at the origin. If the user specifies
 <code>(0,0,100)</code> as the eye point, and <code>(0,-90,0)</code> as
-the eye 
+the eye
 yaw, pitch, and roll, then the eye will look down on the top of the
 object from a distance of 100mm during the entire animation.
 <p>
-The eye position and eye yaw, pitch, and roll can be keyboard-edited 
+The eye position and eye yaw, pitch, and roll can be keyboard-edited
 after clicking on the corresponding
 entry box with the mouse. As an alternative to keyboard entry, the user
 may press the <b>Eye Point</b> button to enter the current eye point
 of the MGED display window, or press the <b>Eye
 yaw,pitch,roll</b> button to enter the current orientation of the
-display window. 
+display window.
 <h2><a name="FFrame">First Frame</a></h2>
 An animation script is made of of a series of numbered frames. Each
 frame gives animation commands needed for one image in the final
@@ -125,13 +125,13 @@ from the source animation table rather than from the <b>View size</b>
 entry box. In most cases, the viewsize must be provided explicitly in
 the second column of the animation table. The exception is when the
 <b>Orientation control</b> is set to <b>Eye path and look-at path</b>.
-In this case, viewsize is calculated in each frame from the distance 
+In this case, viewsize is calculated in each frame from the distance
 between the eye path and look-at path.
 <h2><a name="NTranslation">No Translation</a></h2>
 If this checkbutton is enabled, then AnimMate will only expect to read
 time and orientation information from the source animation table, and
 the animation script will only rotate the view. The <b>No
-Translation</b> button can only be enabled if either 
+Translation</b> button can only be enabled if either
 <b>Rotation specified as ypr</b> or <b>Rotation specified as
 quat</b> are specified in the <b>Orientation controls</b> section.
 <h2><a name="OControl">Orientation Control</b></h2>
@@ -140,7 +140,7 @@ view orientation:
 <dl>
 <dt><b><a name="NRotation">No Rotation</a></b>
 <dd>The view orientation will not change during the animation. The
-source animation table contains no orientation information, and 
+source animation table contains no orientation information, and
 the yaw, pitch, and roll are assumed to be zero in every frame.
 <p>
 <dt><b><a name="ASteering">Automatic Steering</a></b>
@@ -163,19 +163,19 @@ corner. A maximum bank angle of zero causes no banking to occur.
 <p>
 <dt><b><a name="RSAYpr">Rotation specified as ypr</a></b>
 <dd>The last three columns in the animation table give the view's yaw,
-pitch, and roll in each frame. 
+pitch, and roll in each frame.
 <p>
 <dt><b><a name=RSAQuat">Rotation specified as quat</a></b>
 <dd>The last four columns of the animation table give the view
 orientation as a quaternion, in the order x, y, z, w. The convention is
-the same as the quaternions returned by MGED's 
+the same as the quaternions returned by MGED's
 <a href="viewget.html#quat">viewget quat</a>
 command: the identity
 quaternion (0,0,0,1) represents the default view, facing
 the negative z-direction with the x-axis to the right. This is
 equivalent to a yaw, pitch, and roll of (90,-90,0). The quaternion
 (0.5, -0.5, -0.5, 0.5) leaves the view in the default object position,
-corresponding to a yaw, pitch, and roll of (0,0,0). 
+corresponding to a yaw, pitch, and roll of (0,0,0).
 <p>
 <dt><b><a name="EPALAPath">Eye path and look-at path</a></b>
 <dd>This option requires that the animation table contain a path for the
@@ -193,9 +193,9 @@ the viewsize comes from the entry box labeled <b>View size</b>.
 place for further work.
 <p>
 <dt><b>Show Script</b>
-<dd>Display a 
+<dd>Display a
 <a href="./show_doc.html">window</a> which can be used to run the animation script in
-the MGED display window. 
+the MGED display window.
 <p><dt><b>Up</b>
 <dd> Raise the view animation window's parent to the top of the
 stacking order.

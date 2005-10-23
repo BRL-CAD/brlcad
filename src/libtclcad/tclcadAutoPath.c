@@ -1,5 +1,5 @@
 /*                T C L C A D A U T O P A T H . C
- * BRL-CAD            
+ * BRL-CAD
  *
  * Copyright (C) 2004-2005 United States Government as represented by
  * the U.S. Army Research Laboratory.
@@ -41,21 +41,21 @@ tclcad_auto_path(Tcl_Interp *interp)
 
     /* Locate the BRL-CAD-specific Tcl scripts quietly. */
     pathname = bu_brlcad_data( "tclscripts", 1 );
-    
+
 #ifdef _WIN32
     {
 	/* XXX - nasty little hack to convert paths */
 	int i;
 	strcat(pathname,"/");
 	for (i=0;i<strlen(pathname);i++) {
-	    if(pathname[i]=='\\') 
+	    if(pathname[i]=='\\')
 		pathname[i]='/'; }
     }
 #endif
 
     bu_vls_init(&str);
     if (pathname) {
-	bu_vls_printf(&str, "lappend auto_path \"%s\" \"%s/lib\" \"%s/util\" \"%s/mged\" \"%s/geometree\"", 
+	bu_vls_printf(&str, "lappend auto_path \"%s\" \"%s/lib\" \"%s/util\" \"%s/mged\" \"%s/geometree\"",
 		      pathname, pathname, pathname, pathname, pathname);
 	(void)Tcl_Eval(interp, bu_vls_addr(&str));
     } else {
@@ -116,7 +116,7 @@ tclcad_auto_path(Tcl_Interp *interp)
     }
     bu_vls_printf(&str, "set tcl_version %s", TCL_VERSION);
     (void)Tcl_Eval(interp, bu_vls_addr(&str));
-    
+
 
     /* make sure tk's scripts are in the path */
     bu_vls_trunc(&str, 0);

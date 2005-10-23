@@ -88,7 +88,7 @@ union trie
 typedef struct
 	{
 	int	f_temp;
-	int	f_length;	
+	int	f_length;
 	}
 F_Hdr_Ptlist;
 

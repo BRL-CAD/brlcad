@@ -120,7 +120,7 @@ tcl_SCRIPTS = \
 	$(BUILT_SOURCES) \
 	$(scripties)
 
-#	pkgIndex.tcl 
+#	pkgIndex.tcl
 BUILT_SOURCES = \
 	tclIndex
 

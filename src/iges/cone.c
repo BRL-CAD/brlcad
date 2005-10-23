@@ -28,7 +28,7 @@
  *	VLD/ASB Building 1065
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005
- *  
+ *
  */
 
 #include "./iges_struct.h"
@@ -37,7 +37,7 @@
 int
 cone( entityno )
 int entityno;
-{ 
+{
 	fastf_t		rad1=0.0;
 	fastf_t		rad2;
 	point_t		base;		/* center point of base */
@@ -147,7 +147,7 @@ int entityno;
 		return(0);
 	}
 	return( 1 );
-} 
+}
 
 /*
  * Local Variables:

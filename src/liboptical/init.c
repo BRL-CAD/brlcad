@@ -29,7 +29,7 @@
  *
  *  Author -
  *	Michael John Muuss
- *  
+ *
  *  Source -
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
@@ -84,7 +84,7 @@ optical_shader_init(struct mfuncs	**headp)
 	MFUNCS( points_mfuncs );
 	MFUNCS( toyota_mfuncs );
 	MFUNCS( wood_mfuncs );
-	MFUNCS( camo_mfuncs ); 
+	MFUNCS( camo_mfuncs );
 	MFUNCS( scloud_mfuncs );
 	MFUNCS( air_mfuncs );
 	MFUNCS( rtrans_mfuncs );

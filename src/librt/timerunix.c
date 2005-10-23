@@ -30,12 +30,12 @@
  *
  *  Author -
  *	Michael John Muuss
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005
- *  
+ *
  */
 /*@}*/
 
@@ -107,10 +107,10 @@ rt_get_timer(struct bu_vls *vp, double *elapsed)
 
 	/* CPU time */
 	(void)times(&tmsnow);
-	user_cpu_secs = (tmsnow.tms_utime + tmsnow.tms_cutime) - 
+	user_cpu_secs = (tmsnow.tms_utime + tmsnow.tms_cutime) -
 		(tms0.tms_utime + tms0.tms_cutime );
 	user_cpu_secs /= HZ;
-	sys_cpu_secs = (tmsnow.tms_stime + tmsnow.tms_cstime) - 
+	sys_cpu_secs = (tmsnow.tms_stime + tmsnow.tms_cstime) -
 		(tms0.tms_stime + tms0.tms_cstime );
 	sys_cpu_secs /= HZ;
 	if( user_cpu_secs < 0.00001 )  user_cpu_secs = 0.00001;
@@ -136,7 +136,7 @@ rt_get_timer(struct bu_vls *vp, double *elapsed)
 
 /*
  *			R T _ R E A D _ T I M E R
- * 
+ *
  *  Compatability routine
  */
 double

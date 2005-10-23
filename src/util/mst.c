@@ -30,7 +30,7 @@
  *
  *  Author -
  *	Paul J. Tanenbaum
- *  
+ *
  *  Source -
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
@@ -476,7 +476,7 @@ struct bridge *extract_min (void)
  */
 int get_edge (FILE *fp, long int *index, char **label, double *w, int numeric)
 
-    	    
+
     	       		/* Indices of edge endpoints */
     	        	/* Labels of edge endpoints */
       	   		/* Weight */
@@ -640,7 +640,7 @@ main (int argc, char **argv)
 	print_prioq();
 	bu_rb_walk1(dictionary, print_vertex, INORDER);
     }
-    
+
     /*
      *	Grow a minimum spanning tree, using Prim's algorithm...
      *

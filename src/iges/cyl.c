@@ -28,7 +28,7 @@
  *	VLD/ASB Building 1065
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005
- *  
+ *
  */
 
 #include "./iges_struct.h"
@@ -37,7 +37,7 @@
 int
 cyl( entityno )
 int entityno;
-{ 
+{
 	fastf_t		radius=0.0;
 	point_t		base;		/* center point of base */
 	vect_t		height;
@@ -106,7 +106,7 @@ int entityno;
 			y2 = (-y2);
 			z2 = (-z2);
 		}
-		
+
 	}
 
 

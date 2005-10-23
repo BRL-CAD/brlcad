@@ -49,15 +49,15 @@ namespace eval RtWizard {
     option add *MGEDpage.listHeight 150 widgetDefault
     option add *MGEDpage.hscrollMode dynamic widgetDefault
     option add *MGEDpage.vscrollMode dynamic widgetDefault
-    option add *MGEDpage.textBackground seashell 
+    option add *MGEDpage.textBackground seashell
     option add *MGEDpage.stepName "No Step" widgetDefault
     option add *MGEDpage.helpText "You're on your own!" widgetDefault
     option add *MGEDpage.relief groove widgetDefault
     option add *MGEDpage.onSelectCallback {} widgetDefault
     option add *MGEDpage.onDeselectCallback {} widgetDefault
     option add *MGEDpage.statusCallback {} widgetDefault
-    
-    
+
+
     ::itk::usual MGEDpage {
 	keep    -background \
 		-borderwidth \
@@ -83,7 +83,7 @@ namespace eval RtWizard {
 
     ::itcl::class MGEDpage {
 	inherit ::iwidgets::Labeledwidget
-	
+
 	constructor {database args} { }
 
 	#
@@ -106,11 +106,11 @@ namespace eval RtWizard {
 		{}
 
 	#
-	# All pages must support these methods 
+	# All pages must support these methods
 	#
 	public {
 	    method onSelect {}
-	    method onDeselect {} 
+	    method onDeselect {}
 	    method getStepInfo {}
 	    method setHelpText {text}
 	    method getObjects {}
@@ -128,14 +128,14 @@ namespace eval RtWizard {
 	    method getRegionColorFlag {} {return $useRegionColors}
 	    method getOcclusionMode {}
 	}
-    
+
 	protected {
 	    method getChildren {parent}
 	    method selectNode {tags isOn}
 	    method clearDisplay {}
 	    method refreshDisplay {}
 	    method setAzEl {ignored}
-	    
+
 	    method updateStatus {}
 
 	    method captureView {}
@@ -173,13 +173,13 @@ namespace eval RtWizard {
 	    method occModeDialogReveal {}
 	    method occModeDialogOK {}
 	    method occModeDialogApply {}
-	    method occModeDialogCancel {}	
+	    method occModeDialogCancel {}
 
 	    method createIntensityDialog {parent}
 	    method intensityDialogReveal {}
 	    method intensityDialogOK {}
 	    method intensityDialogApply {}
-	    method intensityDialogCancel {}	    
+	    method intensityDialogCancel {}
 	}
 
 	private {
@@ -187,9 +187,9 @@ namespace eval RtWizard {
 	    # Am I currently selected
 	    #
 	    variable isSelected false
-	    
+
 	    # View storage and restoration
-	    
+
 	    variable selected ""
 	    variable currentEye {742.404 519.837 422.618}
 	    variable currentSize 2000
@@ -203,34 +203,34 @@ namespace eval RtWizard {
 	    variable currentElevation 25
 	    variable currentPerspective 0
 	    variable currentEyemodel ""
-	    
+
 	    # Azimuth Stuff
 	    variable oldAzimuth
-	    
+
 	    # Elevation Stuff
 	    variable oldElevation
-	    
+
 	    # Size Stuff
 	    variable oldSize
-	    
+
 	    # Perspective Stuff
 	    variable oldPerspective
-	    
+
 	    # Line-color stuff
 	    variable lineColor "#000000"
 	    variable useRegionColors false
-	    
+
 	    #
 	    # nonlinecolor stuff
 	    #
 	    variable nonLineColor "#ffffff"
-	    
+
 	    # Background Color stuff
 	    variable backgroundColor "#ffffff"
-	    
+
 	    # Occlusion Mode stuff
 	    variable occMode 1
-	    
+
 	    # Intensity Stuff
 	    variable oldIntensity 25
 
@@ -242,17 +242,17 @@ namespace eval RtWizard {
 	    common optionsCount 0
 
 	    variable status
-	}	
+	}
     }
 
     #--------------------#
     #   Public Methods   #
-    #--------------------#    
+    #--------------------#
     #
     # constructor
     #
     itcl::body MGEDpage::constructor {database args} {
-	
+
 	#
 	# The database must exist for the MGED object to be created.
 	# Test it.
@@ -260,13 +260,13 @@ namespace eval RtWizard {
 	if { ! [file exists $database] } {
 	    error "$database does not exist."
 	}
-	
+
 	#
 	# Set up the childsite
 	#
 	set cs [ $this childsite ]
 	$cs configure -relief groove -bd 2
-	
+
 	#
 	# Create the help panel
 	#
@@ -282,9 +282,9 @@ namespace eval RtWizard {
 	    usual
 	    ignore -textbackground
 	}
-	
+
 	#
-	# Create a frame for the center of the panel. On the left 
+	# Create a frame for the center of the panel. On the left
 	# will be the hierachy window, on the right will be the
 	# mged window over its controls
 	#
@@ -294,10 +294,10 @@ namespace eval RtWizard {
 	} {
 	    usual
 	}
-	
+
 	#
 	# Create a frame for the mged object and its controls
-	# 
+	#
 	itk_component add mgedFrame {
 	    frame $itk_component(midFrame).mgedFrame \
 		    -relief flat
@@ -311,17 +311,17 @@ namespace eval RtWizard {
 	# it as necessary.
 	#
 
-	
+
 	#
 	# Create a frame for the hierarchy widgets and controls
-	# 
+	#
 	itk_component add hierFrame {
 	    frame $itk_component(midFrame).hierFrame \
 		    -relief flat
 	} {
 	    usual
 	}
-		
+
 	#
 	# Create a frame to manage the contols
 	#
@@ -331,9 +331,9 @@ namespace eval RtWizard {
 		    -relief groove \
 		    -labeltext {} \
 		    -labelpos se
-	} 
+	}
 	set conFrameCS [ $itk_component(conFrame) childsite ]
-	
+
 	# Refresh
 	itk_component add refresh {
 	    button $conFrameCS.refresh \
@@ -343,17 +343,17 @@ namespace eval RtWizard {
 	} {
 	    usual
 	}
-	
+
 	# Clear
 	itk_component add clear {
 	    button $conFrameCS.clear \
 		    -text Clear \
 		    -width 8 \
-		    -command "[itcl::code $this clearDisplay]" 
+		    -command "[itcl::code $this clearDisplay]"
 	} {
 	    usual
 	}
-	
+
 	#
 	# Create the selection radiobox
 	#
@@ -365,13 +365,13 @@ namespace eval RtWizard {
 	} {
 	    usual
 	}
-		
+
 #	# Previous
 #	itk_component add prev {
 #	    button $conFrameCS.prev \
 #		    -text "Previous" \
 #		    -width 8 \
-#		    -command "[itcl::code $this goPrev]" 
+#		    -command "[itcl::code $this goPrev]"
 #	} {
 #	    usual
 #	}
@@ -381,11 +381,11 @@ namespace eval RtWizard {
 #	    button $conFrameCS.next \
 #		    -text Next \
 #		    -width 8 \
-#		    -command "[itcl::code $this goNext]" 
+#		    -command "[itcl::code $this goNext]"
 #	} {
 #	    usual
 #	}
-	
+
         #
         # Create the hierarchy browser
         #
@@ -400,11 +400,11 @@ namespace eval RtWizard {
 		    -hscrollmode dynamic \
 		    -labeltext $database \
 		    -labelpos nw
-	    
+
 	} {
 	    usual
 	}
-	
+
 	#
 	# Create the dialogs
 	#
@@ -417,7 +417,7 @@ namespace eval RtWizard {
 
 	#
 	# Grid/Pack the items
-	#    
+	#
 	grid $itk_component(clear) \
 		-row 0 \
 		-column 0 \
@@ -439,30 +439,30 @@ namespace eval RtWizard {
 
 	pack $itk_component(hier) -expand 1 -fill both -anchor w
 	pack $itk_component(conFrame) -anchor s
-	
+
 	pack $itk_component(hierFrame) -side left -anchor w -fill both -expand 1
 	pack $itk_component(mgedFrame) -padx 10 -pady 23 \
 	    -expand 1 -fill both -anchor e -side right
-	
+
 	pack $itk_component(helpPanel) -anchor s
 	pack $itk_component(midFrame) -expand 1 -fill both
 
 	eval itk_initialize $args
-	
+
     }
-    
+
     #
     # getStepInfo
     #
-    # Returns the name of the this step, and the variable that monitors 
+    # Returns the name of the this step, and the variable that monitors
     # the state of the step.
     #
     itcl::body MGEDpage::getStepInfo {} {
 	set a [cget -stepName]
 	set b [itcl::scope status]
-	return [ list $a $b ]	
+	return [ list $a $b ]
     }
-    
+
     #
     # onSelect
     #
@@ -473,7 +473,7 @@ namespace eval RtWizard {
 	# update isSelected flag
 	#
 	set isSelected true
-	
+
 	updateStatus
 
 	#
@@ -487,40 +487,40 @@ namespace eval RtWizard {
 	pack $::mgedObj \
 		-in $itk_component(mgedFrame) \
 		 -anchor e \
-		 -expand 1 -fill both 
+		 -expand 1 -fill both
 
 	#
 	# Create menus - use the singleton
 	#
-	global wizardInstance	
+	global wizardInstance
 	set w $wizardInstance
-	
+
 	#
 	# Generate a unique name
 	#
 	set viewMenu ""
 	append viewMenu "view" $viewCount
-	
+
 	incr viewCount
-	
+
 	$w menubar add menubutton $viewMenu \
 		-text "View" \
 		-menu {
 	    options -tearoff true -selectcolor green
         }
-	
+
 	$w menubar add command .$viewMenu.azimuth -label "Azimuth..." \
 		-helpstr "Set azimuth value" \
 		-command "[::itcl::code $this azimuthDialogReveal]"
-	
+
 	$w menubar add command .$viewMenu.elevation -label "Elevation..." \
 		-helpstr "Set elevation value" \
 		-command "[::itcl::code $this elevationDialogReveal]"
-	
+
 	$w menubar add command .$viewMenu.size -label "Size..." \
 		-helpstr "Set view size" \
 		-command "[::itcl::code $this sizeDialogReveal]"
-	
+
 	$w menubar add command .$viewMenu.perspective -label "Perspective..." \
 	       -helpstr "Set view perspective" \
 	       -command "[::itcl::code $this perspectiveDialogReveal]"
@@ -530,9 +530,9 @@ namespace eval RtWizard {
 	#
 	set optionsMenu ""
 	append optionsMenu "rtOptMenu" $optionsCount
-	
+
 	incr optionsCount
-	
+
 	$w menubar add menubutton $optionsMenu \
 		-text "Options" \
 		-menu {
@@ -543,7 +543,7 @@ namespace eval RtWizard {
 	    eval [cget -onSelectCallback] $optionsMenu
 	}
     }
-    
+
     #
     # onDeselect
     #
@@ -567,7 +567,7 @@ namespace eval RtWizard {
 	#
 	global wizardInstance
 	set w $wizardInstance
-	
+
 	if { [string length $viewMenu] > 0 } {
 	    $w menubar delete $viewMenu
 	}
@@ -575,17 +575,17 @@ namespace eval RtWizard {
 	if { [string length $optionsMenu] > 0 } {
 	    $w menubar delete $optionsMenu
 	}
-	
+
 	if {[cget -onDeselectCallback] != ""} {
 	    eval [cget -onDeselectCallback]
 	}
-	
+
 	#
 	# update isSelectedFlag
 	#
 	set isSelected false
     }
-    
+
     #
     # getObjects - returns the list of currently selected objects
     #
@@ -633,7 +633,7 @@ namespace eval RtWizard {
 	if {$isSelected == "true"} {
 	    set currentRmat [ $::mgedObj rmat ]
 	}
-	return [ quat_mat2quat $currentRmat]	
+	return [ quat_mat2quat $currentRmat]
     }
 
     #
@@ -673,15 +673,15 @@ namespace eval RtWizard {
 
     #--------------------#
     #  Private Methods   #
-    #--------------------#    
+    #--------------------#
     #
     # getChildren - returns the children of the given parent.
     #
     #
     ::itcl::body MGEDpage::getChildren {parent} {
-	
+
 	set objs {}
-	
+
 	if { [string length $parent] == 0 } {
 	    #
 	    # When the widget is initially opened, the parent is null.
@@ -703,18 +703,18 @@ namespace eval RtWizard {
 	    set raw [ $::mgedObj lt $t ]
 	    foreach i $raw {
 		set obj [lindex $i 1]
-		lappend objs [list [file join $parent $obj] $obj] 
+		lappend objs [list [file join $parent $obj] $obj]
 	    }
 	}
-	
+
 	return $objs
     }
-    
+
     #
     # selectNode - toggles a node selection state.
-    # 
+    #
     itcl::body MGEDpage::selectNode {tag isOn} {
-	
+
 	if {$isOn} {
 	    $::mgedObj erase $tag
 	    $itk_component(hier) selection remove $tag
@@ -724,44 +724,44 @@ namespace eval RtWizard {
 	}
 	updateStatus
     }
-    
+
     #
     # setHelpText - sets the contents of the help widget
     #
     ::itcl::body MGEDpage::setHelpText { text } {
-	
+
 	$itk_component(helpPanel) clear
-	$itk_component(helpPanel) insert end $text	
+	$itk_component(helpPanel) insert end $text
     }
-    
+
     #
     # clearDisplay - clears the mged display and the selections in the
     #                hierarchy widget.
     #
     ::itcl::body MGEDpage::clearDisplay { } {
-	
+
 	$itk_component(hier) selection clear
 	$::mgedObj zap
 	updateStatus
     }
-    
+
     #
     # refreshDisplay - clears the mged display, and redraws the selected items.
     #
     ::itcl::body MGEDpage::refreshDisplay { } {
-	
+
 	# get the list of currently selected items
 	set selected [$itk_component(hier) selection get]
-	
+
 	# clear the display
 	$::mgedObj zap
-	
+
 	# redraw the selection list
 	eval $::mgedObj draw $selected
 
 	updateStatus
     }
-    
+
     #
     # captureView - executed by onDeselect, this method records the
     #               currently selected objects and the view info so
@@ -773,7 +773,7 @@ namespace eval RtWizard {
 	# use them.
 	#
 	set selected  [$itk_component(hier) selection get]
-	
+
 	getAzimuth
 	getElevation
 	getSize
@@ -820,7 +820,7 @@ namespace eval RtWizard {
 	updateStatus
 
     }
-    
+
     #
     # updateStatus
     #
@@ -830,7 +830,7 @@ namespace eval RtWizard {
 	# Something must be selected for the page to be ready.
 	# If nothing is selected, then the wrong picture type
 	# has been picked.
-	# 
+	#
 	set selected [$itk_component(hier) selection get]
 
 	if {[llength $selected] == 0 } {
@@ -850,8 +850,8 @@ namespace eval RtWizard {
 	$::wizardInstance updateRenderMenu
 	return
     }
-    
-    
+
+
     #--------------------#
     #  Azimuth Control   #
     #--------------------#
@@ -860,15 +860,15 @@ namespace eval RtWizard {
     #                       to set the view azimuth
     #
     ::itcl::body MGEDpage::createAzimuthDialog {parent} {
-	
+
 	itk_component add azimuthDialog {
 	    iwidgets::dialog $parent.#auto -title Azimuth
 	} {
 	    usual
 	}
-	
+
 	set cs [ eval $itk_component(azimuthDialog) childsite ]
-	
+
 	itk_component add azimuth {
 	    scale $cs.az \
 		    -orient horizontal \
@@ -885,7 +885,7 @@ namespace eval RtWizard {
 	} {
 	    usual
 	}
-	
+
 	$itk_component(azimuth) set [ getAzimuth ]
 	$itk_component(azimuthDialog) hide Help
 	$itk_component(azimuthDialog) buttonconfigure OK \
@@ -895,19 +895,19 @@ namespace eval RtWizard {
 	$itk_component(azimuthDialog) buttonconfigure Cancel \
 		-command "[::itcl::code $this azimuthDialogCancel]"
 	pack $itk_component(azimuth)
-	$itk_component(azimuthDialog) deactivate 
+	$itk_component(azimuthDialog) deactivate
     }
-    
+
     #
     # azimuthDialogReveal - executed when the azimuth dialog window
-    #                       is requested from the menu bar 
+    #                       is requested from the menu bar
     #
     ::itcl::body MGEDpage::azimuthDialogReveal {} {
 	set oldAzimuth [ getAzimuth ]
 	$itk_component(azimuth) set $oldAzimuth
 	$itk_component(azimuthDialog) activate
     }
-    
+
     #
     # azimuthDialogOK - executed when the OK button is pressed.
     #
@@ -916,7 +916,7 @@ namespace eval RtWizard {
 	$itk_component(azimuthDialog) deactivate
 	updateStatus
     }
-    
+
     #
     # azimuthDialogApply - executed when the apply button is pressed.
     #
@@ -924,7 +924,7 @@ namespace eval RtWizard {
 	setAzEl " "
 	updateStatus
     }
-    
+
     #
     # azimuthDialogCancel - executed when the close button is pressed.
     #
@@ -934,7 +934,7 @@ namespace eval RtWizard {
 	$itk_component(azimuthDialog) deactivate
 	updateStatus
     }
- 
+
     #--------------------#
     #  Elevation Control #
     #--------------------#
@@ -943,15 +943,15 @@ namespace eval RtWizard {
     #                         to set the view elevation
     #
     ::itcl::body MGEDpage::createElevationDialog {parent} {
-	
+
 	itk_component add elevationDialog {
 	    iwidgets::dialog $parent.#auto -title Elevation
 	} {
 	    usual
 	}
-	
+
 	set cs [ eval $itk_component(elevationDialog) childsite ]
-	
+
 	itk_component add elevation {
 	    scale $cs.el \
 		    -orient vertical \
@@ -968,7 +968,7 @@ namespace eval RtWizard {
 	} {
 	    usual
 	}
-	
+
 	$itk_component(elevation) set [ getElevation ]
 	$itk_component(elevationDialog) hide Help
 	$itk_component(elevationDialog) buttonconfigure OK \
@@ -978,19 +978,19 @@ namespace eval RtWizard {
 	$itk_component(elevationDialog) buttonconfigure Cancel \
 		-command "[::itcl::code $this elevationDialogCancel]"
 	pack $itk_component(elevation)
-	$itk_component(elevationDialog) deactivate 
+	$itk_component(elevationDialog) deactivate
     }
-    
+
     #
     # elevationDialogReveal - executed when the elevation dialog window
-    #                       is requested from the menu bar 
+    #                       is requested from the menu bar
     #
     ::itcl::body MGEDpage::elevationDialogReveal {} {
 	set oldElevation [ getElevation ]
 	$itk_component(elevation) set $oldElevation
 	$itk_component(elevationDialog) activate
     }
-    
+
     #
     # elevationDialogOK - executed when the OK button is pressed.
     #
@@ -999,7 +999,7 @@ namespace eval RtWizard {
 	$itk_component(elevationDialog) deactivate
 	updateStatus
     }
-    
+
     #
     # elevationDialogApply - executed when the apply button is pressed.
     #
@@ -1007,7 +1007,7 @@ namespace eval RtWizard {
 	setAzEl " "
 	updateStatus
     }
-    
+
     #
     # elevationDialogCancel - executed when the close button is pressed.
     #
@@ -1017,7 +1017,7 @@ namespace eval RtWizard {
 	$itk_component(elevationDialog) deactivate
 	updateStatus
     }
-       
+
     #--------------------#
     #    Size Control    #
     #--------------------#
@@ -1026,18 +1026,18 @@ namespace eval RtWizard {
     #                         to set the view size
     #
     ::itcl::body MGEDpage::createSizeDialog {parent} {
-	
+
 	#
 	# Get the units
 	#
 	set rawUnits [ $::mgedObj units ]
 	set units [ string trim [ lindex $rawUnits 4 ] {'.} ]
-	
+
 	#
 	# Get the current size
 	#
 	set currSize  [ $::mgedObj size ]
-	
+
 	#
 	# Build the dialog
 	#
@@ -1046,9 +1046,9 @@ namespace eval RtWizard {
 	} {
 	    usual
 	}
-	
+
 	set cs [ eval $itk_component(sizeDialog) childsite ]
-	
+
 	#
 	# Build the current size indicator
 	#
@@ -1059,9 +1059,9 @@ namespace eval RtWizard {
 	} {
 	    usual
 	}
-	
+
 	set cs2 [$itk_component(sizeLabel) childsite]
-	
+
 	itk_component add sizeCurrent {
 	    label $cs2.l1 \
 		    -text $currSize \
@@ -1069,14 +1069,14 @@ namespace eval RtWizard {
 	} {
 	    usual
 	}
-	
+
 	itk_component add sizeUnits1 {
 	    label $cs2.l2 \
 		    -text $units
 	} {
 	    usual
 	}
-	
+
 	#
 	# Build the entry field for the size.
 	#
@@ -1089,9 +1089,9 @@ namespace eval RtWizard {
 	} {
 	    usual
 	}
-	
+
 	set cs3 [ $itk_component(sizeEntry) childsite ]
-    
+
 	# units
 	itk_component add sizeUnits2 {
 	    label $cs3.l1 \
@@ -1124,12 +1124,12 @@ namespace eval RtWizard {
 		$itk_component(sizeLabel) \
 		$itk_component(sizeEntry)
 
-	$itk_component(sizeDialog) deactivate 
+	$itk_component(sizeDialog) deactivate
     }
 
     #
     # sizeDialogReveal - executed when the size dialog window
-    #                       is requested from the menu bar 
+    #                       is requested from the menu bar
     #
     ::itcl::body MGEDpage::sizeDialogReveal {} {
 	set oldSize [ $::mgedObj size ]
@@ -1175,15 +1175,15 @@ namespace eval RtWizard {
     #                         to set the view perspective
     #
     ::itcl::body MGEDpage::createPerspectiveDialog {parent} {
-	
+
 	itk_component add perspectiveDialog {
 	    iwidgets::dialog $parent.#auto -title Perspective
 	} {
 	    usual
 	}
-	
+
 	set cs [ eval $itk_component(perspectiveDialog) childsite ]
-	
+
 	itk_component add perspective {
 	    scale $cs.el \
 		    -orient horizontal \
@@ -1199,7 +1199,7 @@ namespace eval RtWizard {
 	} {
 	    usual
 	}
-	
+
 	$itk_component(perspective) set [ getPerspective ]
 	$itk_component(perspectiveDialog) hide Help
 	$itk_component(perspectiveDialog) buttonconfigure OK \
@@ -1209,19 +1209,19 @@ namespace eval RtWizard {
 	$itk_component(perspectiveDialog) buttonconfigure Cancel \
 		-command "[::itcl::code $this perspectiveDialogCancel]"
 	pack $itk_component(perspective)
-	$itk_component(perspectiveDialog) deactivate 
+	$itk_component(perspectiveDialog) deactivate
     }
-    
+
     #
     # perspectiveDialogReveal - executed when the perspective dialog window
-    #                       is requested from the menu bar 
+    #                       is requested from the menu bar
     #
     ::itcl::body MGEDpage::perspectiveDialogReveal {} {
 	set oldPerspective [ getPerspective ]
 	$itk_component(perspective) set $oldPerspective
 	$itk_component(perspectiveDialog) activate
     }
-    
+
     #
     # perspectiveDialogOK - executed when the OK button is pressed.
     #
@@ -1231,7 +1231,7 @@ namespace eval RtWizard {
 	$itk_component(perspectiveDialog) deactivate
 	updateStatus
     }
-    
+
     #
     # perspectiveDialogApply - executed when the apply button is pressed.
     #
@@ -1240,7 +1240,7 @@ namespace eval RtWizard {
 	$::mgedObj perspective_angle $oldPerspective
 	updateStatus
     }
-    
+
     #
     # perspectiveDialogCancel - executed when the close button is pressed.
     #
@@ -1250,18 +1250,18 @@ namespace eval RtWizard {
 	$itk_component(perspectiveDialog) deactivate
 	updateStatus
     }
-    
+
     #--------------------#
     # Line Color Control #
     #--------------------#
     #
     # The LineColor dialog uses the existing tk_chooseColor widget.
     # This widget is created on demand rather than created beforehand
-    # and activated. 
+    # and activated.
     #
     #
     # lineColorChooser - executed when the line color dialog window
-    #                    is requested from the menu bar 
+    #                    is requested from the menu bar
     #
     ::itcl::body MGEDpage::lineColorChooser {} {
 	set inColor $lineColor
@@ -1272,9 +1272,9 @@ namespace eval RtWizard {
 
 	if {[string length $outColor] == 7 } {
 	    set lineColor $outColor
-	    
+
 	    #
-	    # Since the user has chosen a color, unselect the 
+	    # Since the user has chosen a color, unselect the
 	    # useRegionColors field
 	    #
 	    set useRegionColors false
@@ -1290,7 +1290,7 @@ namespace eval RtWizard {
     #
     #
     # nonLineColorChooser - executed when the line color dialog window
-    #                    is requested from the menu bar 
+    #                    is requested from the menu bar
     #
     ::itcl::body MGEDpage::nonLineColorChooser {} {
 	set inColor $nonLineColor
@@ -1311,11 +1311,11 @@ namespace eval RtWizard {
     #
     # The Background Color dialog uses the existing tk_chooseColor widget.
     # This widget is created on demand rather than created beforehand
-    # and activated. 
+    # and activated.
     #
     #
     # BackgroundColorChooser - executed when the line color dialog window
-    #                          is requested from the menu bar 
+    #                          is requested from the menu bar
     #
     ::itcl::body MGEDpage::backgroundColorChooser {} {
 	set inColor $backgroundColor
@@ -1338,7 +1338,7 @@ namespace eval RtWizard {
     #                       to set the occlusion mode
     #
     ::itcl::body MGEDpage::createOccModeDialog {parent} {
-	
+
 	#
 	# Build the dialog
 	#
@@ -1347,9 +1347,9 @@ namespace eval RtWizard {
 	} {
 	    usual
 	}
-	
+
 	set cs [ eval $itk_component(occModeDialog) childsite ]
-	
+
 	#
 	# Build the radiobox
 	#
@@ -1380,12 +1380,12 @@ namespace eval RtWizard {
 
 	pack $itk_component(occModeRB)
 
-	$itk_component(sizeDialog) deactivate 
+	$itk_component(sizeDialog) deactivate
     }
 
     #
-    # occModeDialogReveal - executed when the occlusion mode dialog 
-    #                       window is requested from the menu bar 
+    # occModeDialogReveal - executed when the occlusion mode dialog
+    #                       window is requested from the menu bar
     #
     ::itcl::body MGEDpage::occModeDialogReveal {} {
 	set occMode [$itk_component(occModeRB) get]
@@ -1438,15 +1438,15 @@ namespace eval RtWizard {
     #                         to set the intensity of the ghost image
     #
     ::itcl::body MGEDpage::createIntensityDialog {parent} {
-	
+
 	itk_component add intensityDialog {
 	    iwidgets::dialog $parent.#auto -title Intensity
 	} {
 	    usual
 	}
-	
+
 	set cs [ eval $itk_component(intensityDialog) childsite ]
-	
+
 	itk_component add intensity {
 	    scale $cs.#auto \
 		    -orient horizontal \
@@ -1459,7 +1459,7 @@ namespace eval RtWizard {
 	} {
 	    usual
 	}
-	
+
 	$itk_component(intensity) set $oldIntensity
 	$itk_component(intensityDialog) hide Help
 	$itk_component(intensityDialog) buttonconfigure OK \
@@ -1469,17 +1469,17 @@ namespace eval RtWizard {
 	$itk_component(intensityDialog) buttonconfigure Cancel \
 		-command "[::itcl::code $this intensityDialogCancel]"
 	pack $itk_component(intensity)
-	$itk_component(intensityDialog) deactivate 
+	$itk_component(intensityDialog) deactivate
     }
-    
+
     #
     # intensityDialogReveal - executed when the intensity dialog window
-    #                       is requested from the menu bar 
+    #                       is requested from the menu bar
     #
     ::itcl::body MGEDpage::intensityDialogReveal {} {
 	$itk_component(intensityDialog) activate
     }
-    
+
     #
     # intensityDialogOK - executed when the OK button is pressed.
     #
@@ -1488,7 +1488,7 @@ namespace eval RtWizard {
 	$itk_component(intensityDialog) deactivate
 	updateStatus
     }
-    
+
     #
     # intensityDialogApply - executed when the apply button is pressed.
     #
@@ -1496,7 +1496,7 @@ namespace eval RtWizard {
 	set oldIntensity [ getIntensity ]
 	updateStatus
     }
-    
+
     #
     # intensityDialogCancel - executed when the close button is pressed.
     #

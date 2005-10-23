@@ -20,13 +20,13 @@
  *
  */
 /** @file fb-png.c
- *  
+ *
  *  Program to take a frame buffer image and write a PNG (Portable Network Graphics) format file.
- *  
+ *
  *  Authors -
  *	John R. Anderson
  *	Michael John Muuss
- *  
+ *
  *  Source -
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA

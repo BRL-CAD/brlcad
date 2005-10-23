@@ -20,15 +20,15 @@
  *
  */
 /** @file anim_lookat.c
- *	Given animation tables for the position of the virtual camera 
+ *	Given animation tables for the position of the virtual camera
  * and a point to look at at each time, this program produces an animation
- * script to control the camera. The view is kept rightside up, whenever 
- * possible. When looking vertically up or down, the exact orientation 
+ * script to control the camera. The view is kept rightside up, whenever
+ * possible. When looking vertically up or down, the exact orientation
  * depends on the previous orientation.
  *
  *  Author -
  *	Carl J. Nuzman
- *  
+ *
  *  Source -
  *      The U. S. Army Research Laboratory
  *      Aberdeen Proving Ground, Maryland  21005-5068  USA
@@ -99,7 +99,7 @@ main(int argc, char **argv)
 
 	VSUBUNIT(dir,look,eye);
 	anim_dirn2mat(mat,dir,norm);
-	VSET(norm, mat[1],mat[5], 0.0); 
+	VSET(norm, mat[1],mat[5], 0.0);
 	switch (print_mode) {
 	case LOOKAT_SCRIPT:
 	    printf("start %d;\n",frame++);

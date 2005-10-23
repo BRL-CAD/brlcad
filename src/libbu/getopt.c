@@ -29,7 +29,7 @@
  *  Important note -
  *	If bu_getopt() it going to be used more than once, it is necessary
  *	to reinitialize bu_optind=1 before beginning on the next argument list.
- *  
+ *
  */
 /*@}*/
 

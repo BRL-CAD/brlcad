@@ -19,7 +19,7 @@
  * information.
  */
 /** @file pixmatte.c
- *  
+ *
  *  Given four streams of data elements,
  *  where element is of arbitrary width,
  *  typically pix(5) or bw(5) images,
@@ -38,10 +38,10 @@
  *
  *  This routine operates on an element-by-element basis, and thus
  *  is independent of the resolution of the image.
- *  
+ *
  *  Author -
  *	Michael John Muuss
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
@@ -105,7 +105,7 @@ void
 usage(char *s, int n)
 {
 	if (s && *s) (void)fputs(s, stderr);
-	
+
 	(void)fputs(usage_msg, stderr);
 	exit(n);
 }
@@ -202,7 +202,7 @@ get_args(int argc, register char **argv)
 		}
 	}
 
-	if( !seen_formula )  
+	if( !seen_formula )
 		usage("No formula specified\n", 1);
 
 
@@ -302,7 +302,7 @@ main(int argc, char **argv)
 				bp = cb1;
 			else
 				bp = &f_const[1][0];
-						
+
 			if( wanted == NE )  {
 				for( ep = ap+width; ap < ep; )  {
 					if( *ap++ != *bp++ )

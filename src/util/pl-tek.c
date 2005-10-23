@@ -26,9 +26,9 @@
  *  Authors -
  *	Michael John Muss
  *	Phillip Dykstra
- * 
+ *
  *  Based heavily on pl-pl.c
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
@@ -536,10 +536,10 @@ teklinemod(register char *s)
 
 	(void)putc(ESC,stdout);
 	switch(s[0]){
-	case 'l':	
+	case 'l':
 		c = 'd';
 		break;
-	case 'd':	
+	case 'd':
 		if(s[3] != 'd')c='a';
 		else c='b';
 		break;

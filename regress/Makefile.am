@@ -30,7 +30,7 @@ weight: $(top_srcdir)/regress/weight.sh
 	${SH} $(top_srcdir)/regress/weight.sh $(top_srcdir)
 
 gqa.log: $(top_srcdir)/regress/gqa.sh
-	${SH} $(top_srcdir)/regress/gqa.sh 
+	${SH} $(top_srcdir)/regress/gqa.sh
 
 # these are here because they go in the distribution but are not installed
 EXTRA_DIST = \

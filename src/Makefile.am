@@ -17,7 +17,7 @@ bench_dirs = \
 	liborle \
 	conv \
 	fbserv \
-	rt	
+	rt
 
 # anything not included from above
 kitchensink_dirs = \

@@ -25,7 +25,7 @@
  * A framebuffer server object contains the attributes and
  * methods for implementing an fbserv. This code was developed
  * in large part by modifying the stand-alone version of fbserv.
- * 
+ *
  * Source -
  *	SLAD CAD Team
  *	The U. S. Army Research Laboratory
@@ -369,7 +369,7 @@ void
 fbs_rfbclose(struct pkg_conn *pcp, char *buf)
 {
   char	rbuf[NET_LONG_LEN+1];
-	
+
   /*
    * We are playing FB server so we don't really close the
    * frame buffer.  We should flush output however.
@@ -391,7 +391,7 @@ void
 fbs_rfbfree(struct pkg_conn *pcp, char *buf)
 {
   char	rbuf[NET_LONG_LEN+1];
-	
+
   /* Don't really free framebuffer */
   if(pkg_send(MSG_RETURN, rbuf, NET_LONG_LEN, pcp) != NET_LONG_LEN)
     comm_error("pkg_send fb_free reply\n");

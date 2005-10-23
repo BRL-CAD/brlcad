@@ -52,7 +52,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif
-                                                                                                                                                                            
+
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -130,7 +130,7 @@ main(int argc, char **argv)
 		(void) signal(SIGALRM, handler);
 		if (Verbose) {
 			if (Timeout) {
-				(void) fprintf(stderr, 
+				(void) fprintf(stderr,
 				    "(Default: %s in %d sec)", Response,
 				    Timeout);
 			} else {
@@ -138,7 +138,7 @@ main(int argc, char **argv)
 				    "(Default: %s)", Response);
 			}
 		}
-		
+
 		if (Loop) {
 			(void) fprintf(stderr,
 			    "(Default: %s, loop in %d sec)", Response, Timeout);

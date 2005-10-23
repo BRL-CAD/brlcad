@@ -25,12 +25,12 @@
  *
  *  Author -
  *	Phil Dykstra
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5066
- *  
+ *
  */
 /*@}*/
 
@@ -144,9 +144,9 @@ bn_common_file_size(unsigned long int *widthp, unsigned long int *heightp, const
 
 
 /*                      B N _ C O M M O N _ N A M E _ S I Z E
- *		
+ *
  *  Given the number of pixels in an image file, along with a name for the
- *  image (possibly the filename), attempt to determine the 
+ *  image (possibly the filename), attempt to determine the
  *  the width and height of the image.
  *
  *  Returns -
@@ -161,7 +161,7 @@ bn_common_name_size(unsigned long int *widthp, unsigned long int *heightp, const
           	      		        /* name to parse */
 {
     register const char *cp = name;
-    
+
     /* File name may have several minus signs in it.  Try repeatedly */
     while( *cp )  {
 	cp = strchr( cp, '-' );		/* Find a minus sign */

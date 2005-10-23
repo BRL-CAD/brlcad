@@ -379,7 +379,7 @@ proc default_mouse_bindings { w } {
 		scale_shift_grip_hints $w Y; break"
 	bind $w <Alt-Shift-Control-ButtonPress-3> "winset $w; dm con s z %x %y; \
 		scale_shift_grip_hints $w Z; break"
-    }   
+    }
 }
 
 proc shift_grip_hints { w hint } {

@@ -28,12 +28,12 @@
  *
  *  Author -
  *	Michael John Muuss
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005
- *  
+ *
  */
 #ifndef lint
 static const char RCSid[] = "@(#)$Header$ (BRL)";
@@ -315,7 +315,7 @@ ps_open(Tcl_Interp *interp, int argc, char **argv)
 		Tcl_SetObjResult(interp, obj);
 		return DM_NULL;
 	}
-  
+
 	setbuf(((struct ps_vars *)dmp->dm_vars.priv_vars)->ps_fp,
 	       ((struct ps_vars *)dmp->dm_vars.priv_vars)->ttybuf );
 	fprintf(((struct ps_vars *)dmp->dm_vars.priv_vars)->ps_fp,"%%!PS-Adobe-1.0\n\
@@ -372,7 +372,7 @@ NEWPG\n\
 
 /*
  *  			P S _ C L O S E
- *  
+ *
  *  Gracefully release the display.
  */
 static int
@@ -463,7 +463,7 @@ ps_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye)
 
 /*
  *  			P S _ O B J E C T
- *  
+ *
  *  Set up for an object, transformed as indicated, and with an
  *  object center as specified.  The ratio of object to screen size
  *  is passed in as a convienience.

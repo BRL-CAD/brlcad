@@ -26,7 +26,7 @@
  *	SLAD/BVLD/VMB
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005
- *  
+ *
  */
 
 /*	This routine loops through all the directory entries and calls
@@ -127,9 +127,9 @@ struct model *m;
 		srf->v.magic = NMG_KNOT_VECTOR_MAGIC;
 		srf->u.k_size = n_u;
 		srf->v.k_size = n_v;
-		srf->u.knots = (fastf_t *) bu_malloc ( 
+		srf->u.knots = (fastf_t *) bu_malloc (
 			n_u * sizeof (fastf_t ), "Get_nurb_surf: u kv knot values");
-		srf->v.knots = (fastf_t *) bu_malloc ( 
+		srf->v.knots = (fastf_t *) bu_malloc (
 			n_v * sizeof (fastf_t ), "Get_nurb_surf: v kv knot values");
 
 		srf->s_size[0] = n_rows;
@@ -137,7 +137,7 @@ struct model *m;
 		srf->pt_type = pt_type;
 
 		pnum = sizeof (fastf_t) * n_rows * n_cols * RT_NURB_EXTRACT_COORDS(pt_type);
-		srf->ctl_points = ( fastf_t *) bu_malloc( 
+		srf->ctl_points = ( fastf_t *) bu_malloc(
 			pnum, "Get_nurb_surf: control mesh points");
 
 	}
@@ -973,7 +973,7 @@ struct face_g_snurb *srf;
 
 	fu->orientation = OT_SAME;
 	fu->fumate_p->orientation = OT_OPPOSITE;
-		
+
 	f->g.snurb_p = srf;
 	f->flip = 0;
 	BU_LIST_APPEND( &srf->f_hd, &f->l );
@@ -1130,7 +1130,7 @@ struct shell *s;
 		lu->up.fu_p = fu->fumate_p;
 	}
 
-	if( inner_loop_count )	
+	if( inner_loop_count )
 		bu_free( (char *)inner_loop , "trim_surf: inner_loop" );
 
 	NMG_CK_FACE_G_SNURB( fu->f_p->g.snurb_p );

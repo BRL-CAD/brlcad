@@ -26,7 +26,7 @@
  *
  *  Author -
  *	Glenn Durfee
- *  
+ *
  *  Source -
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
@@ -590,7 +590,7 @@ bn_cmd_common_file_size(ClientData clientData, Tcl_Interp *interp, int argc, cha
 {
     int width, height;
     int pixel_size = 3;
-    
+
     if (argc != 2 && argc != 3) {
 	Tcl_AppendResult(interp, "wrong # args: should be \"", argv[0],
 			 " fileName [#bytes/pixel]\"", NULL);
@@ -728,7 +728,7 @@ bn_cmd_noise_slice(ClientData clientData,
 	octaves = atof(argv[5]);
 
 	switch (noise_type) {
-	case NOISE_FBM: 
+	case NOISE_FBM:
 		for (yval = 0 ; yval < ydim ; yval++) {
 
 		    pt[Y] = yval * scale[Y] + delta[Y];
@@ -755,7 +755,7 @@ bn_cmd_noise_slice(ClientData clientData,
 		}
 		break;
 	}
-	 
+
 
 	pt[0] = atof(argv[1]);
 	pt[1] = atof(argv[2]);
@@ -800,7 +800,7 @@ bn_cmd_random(ClientData clientData,
 	}
 
 	if (! (str=Tcl_GetVar(interp, argv[1], 0))) {
-		Tcl_AppendResult(interp, "Error getting variable ", 
+		Tcl_AppendResult(interp, "Error getting variable ",
 				 argv[1], NULL);
 		return TCL_ERROR;
 	}

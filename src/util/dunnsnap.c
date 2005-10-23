@@ -28,7 +28,7 @@
  *  Author -
  *	Don Merritt
  *	August 1985
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
@@ -142,7 +142,7 @@ main(int argc, char **argv)
 		fprintf(stderr,"dunnsnap:  camera not ready at startup\n");
 		goto bad;
 	}
-		
+
 	/* loop until number of frames specified have been exposed */
 
 	while (nframes>0) {
@@ -156,7 +156,7 @@ main(int argc, char **argv)
 			fprintf(stderr,"dunnsnap: badstatus\n");
 			goto bad;
 		}
-		
+
 		/* send expose command to camera */
 		cmd = 'I';	/* expose command */
 		write(fd, &cmd, 1);

@@ -25,7 +25,7 @@
  *
  *  Author -
  *	Carl J. Nuzman
- *  
+ *
  *  Source -
  *      The U. S. Army Research Laboratory
  *      Aberdeen Proving Ground, Maryland  21005-5068  USA
@@ -220,7 +220,7 @@ main(int argc, char **argv)
     if(!steer)
 	frame = first_frame;
     else
-	frame = first_frame-1; 
+	frame = first_frame-1;
     for (val = 3; val > 2; frame++) {
 	go = 1;
 	/*p2 is current position. p3 is next;p1 is previous*/
@@ -231,7 +231,7 @@ main(int argc, char **argv)
 	if(!steer){
 	    scanf("%lf %lf %lf",&yaw,&pitch,&roll);
 	    anim_dy_p_r2mat(mat_v,yaw,pitch,roll);
-	    anim_add_trans(mat_v,p3,rcentroid);			
+	    anim_add_trans(mat_v,p3,rcentroid);
 	}
 	else { /* analyze positions for steering */
 	    /*get useful direction unit vectors*/
@@ -248,10 +248,10 @@ main(int argc, char **argv)
 		VSUBUNIT(dir2,p2,p1);/*needed for vertical case*/
 	    }
 	    else go = 0;/*first time through loop;no p2*/
-			
+
 			/*create matrix which would move vehicle*/
-	    anim_dir2mat(mat_v,dir,dir2); 
-	    anim_add_trans(mat_v,p2,rcentroid); 
+	    anim_dir2mat(mat_v,dir,dir2);
+	    anim_add_trans(mat_v,p2,rcentroid);
 	}
 
 	/*determine distance traveled*/
@@ -385,7 +385,7 @@ int track_prep(void)/*run once at the beginning to establish important track inf
     return(0);
 }
 
-	
+
 int get_link(fastf_t *pos, fastf_t *angle_p, fastf_t dist)
 {
     int i;
@@ -503,7 +503,7 @@ int get_args(int argc, char **argv)
 }
 
 void show_info(int which)/* for debugging - -1:track 0:both 1:link*/
-          
+
 {
     int i;
     if (which <=0){

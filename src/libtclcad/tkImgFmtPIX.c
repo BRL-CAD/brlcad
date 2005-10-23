@@ -5,13 +5,13 @@
  *
  *  Author -
  *	Glenn Durfee
- *  
+ *
  *  Source -
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
- *  
- * 
- * 
+ *
+ *
+ *
  * Based on:
  *	tkImgFmtPPM.c --
  *
@@ -101,13 +101,13 @@ Tk_PhotoImageFormat tkImgFmtPIX = {
 
 static int
 FileMatchPIX(Tcl_Channel chan, const char *fileName, Tcl_Obj *format, int *widthPtr, int *heightPtr, Tcl_Interp *interp)
-                     
+
                          	/* The name of the image file. */
                     	/* User-specified format string, or NULL. */
                               	/* The dimensions of the image are
 				 * returned here if the file is a valid
 				 * raw PIX file. */
-                       
+
 {
     /* The format string must be nonnull and it must contain the word "pix". */
     /* If the user also specified the dimensions in the format string,
@@ -155,7 +155,7 @@ FileMatchPIX(Tcl_Channel chan, const char *fileName, Tcl_Obj *format, int *width
 static int
 FileReadPIX(Tcl_Interp *interp, Tcl_Channel chan, const char *fileName, Tcl_Obj *format, Tk_PhotoHandle imageHandle, int destX, int destY, int width, int height, int srcX, int srcY)
                        		/* Interpreter to use for reporting errors. */
-                     
+
                          	/* The name of the image file. */
                     		/* User-specified format string, or NULL. */
                                	/* The photo image to write into. */
@@ -214,7 +214,7 @@ FileReadPIX(Tcl_Interp *interp, Tcl_Channel chan, const char *fileName, Tcl_Obj 
     if ((srcY + height) < fileHeight) {
     	Tcl_Seek( chan, (long) ((fileHeight - srcY - height) * block.pitch),
     		SEEK_CUR );
-    		
+
     }
 
     nBytes = block.pitch;

@@ -20,14 +20,14 @@
  */
 /** @file binfo.c
  *		G 2 A S C . C
- *  
+ *
  *
  *  Usage:  binfo
- *  
+ *
  *  Author -
  *  	Charles M Kennedy
  *	Christopher Sean Morrison
- *  
+ *
  *  Source -
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005
@@ -35,7 +35,7 @@
 #ifndef lint
 static const char RCSid[] = "@(#)$Header";
 #endif
- 
+
 #include "common.h"
 
 #include <stdio.h>
@@ -76,7 +76,7 @@ main(int argc, char *argv[])
   printf("binfo: rt_version=[%s]\n", rt_version);
 #endif
   printf("binfo: fb_version=[%s]\n", fb_version);
-  
+
   exit(0);
 }
 

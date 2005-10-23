@@ -22,7 +22,7 @@
 #
 # FeedbackDialog.itk
 #
-# 
+#
 
 #
 # Required packages
@@ -40,7 +40,7 @@ namespace eval RtWizard {
 
 	public {
 	    constructor {args} {}
-	    method inform {comment steps} 	    
+	    method inform {comment steps}
 	}
     }
 
@@ -58,7 +58,7 @@ namespace eval RtWizard {
 	eval itk_initialize $args
 	$this center
     }
-    
+
     itcl::body FeedbackDialog::inform { comment steps } {
 	$itk_component(fb) configure \
 		-labeltext $comment

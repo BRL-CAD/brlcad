@@ -26,7 +26,7 @@
  *
  *  Author -
  *	Doug Kingston
- *  
+ *
  *  Source -
  *	Davis, Polk, and Wardwell
  *	Chase Manhattan Building

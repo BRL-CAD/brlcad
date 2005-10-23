@@ -39,7 +39,7 @@
  *  Author -
  *	Phillip Dykstra
  *	24 Sep 1986
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
@@ -54,7 +54,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif
-                                                                                                                                                                            
+
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -257,7 +257,7 @@ main(int argc, char **argv)
 		} else if( invert ) {
 			for( y = lasty; y >= firsty; y-- ) {
 				yout = (nyin - 1) - y;
-				outbyte = yout * scanbytes; 
+				outbyte = yout * scanbytes;
 				if( outplace != outbyte ) {
 					if( fseek( ofp, outbyte, 0 ) < 0 ) {
 						fprintf( stderr, "bwrot: Can't seek on output, yet I need to!\n" );

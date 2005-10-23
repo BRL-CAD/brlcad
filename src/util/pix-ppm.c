@@ -27,7 +27,7 @@
  *  Authors -
  *	Steve Hayman <sahayman@iuvax.cs.indiana.edu>
  *	Michael John Muuss
- *  
+ *
  *  Source -
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
@@ -180,7 +180,7 @@ main(int argc, char **argv)
 	 * now write them out in the right order, 'cause the
 	 * input is upside down.
 	 */
-	
+
 	for ( i = 0; i < file_height; i++ ) {
 		row = scanbuf + (file_height-1 - i) * ROWSIZE;
 		fwrite(row, 1, ROWSIZE, stdout);

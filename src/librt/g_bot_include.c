@@ -29,14 +29,14 @@
  *	"tri_specific" structure:
  *
  *		TRI_TYPE == float   -> use the "tri_float_specific" struct
- *		TRI_TYPE == double     -> use the original "tri_specific" struct 
+ *		TRI_TYPE == double     -> use the original "tri_specific" struct
  *
  *  Authors -
  *  	John R. Anderson
  *  Source -
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5066
- *  
+ *
  */
 /*@}*/
 
@@ -94,7 +94,7 @@ XGLUE(rt_botface_w_normals_,TRI_TYPE)(struct soltab	*stp,
 			    V3ARGS( ap ), V3ARGS( bp ), V3ARGS( cp ) );
 	    	}
 		return(0);			/* BAD */
-	}		
+	}
 
 	if( (bot->bot_flags & RT_BOT_HAS_SURFACE_NORMALS) && (bot->bot_flags & RT_BOT_USE_NORMALS) && vertex_normals ) {
 		trip->tri_normals = (NORM_TYPE *)bu_malloc( 9 * sizeof( NORM_TYPE ), "trip->tri_normals" );
@@ -230,15 +230,15 @@ XGLUE(rt_bot_prep_pieces_,TRI_TYPE)(struct bot_specific	*bot,
 
 /**
  *  			R T _ B O T _ P R E P
- *  
+ *
  *  Given a pointer to a GED database record, and a transformation matrix,
  *  determine if this is a valid BOT, and if so, precompute various
  *  terms of the formula.
- *  
+ *
  *  Returns -
  *  	0	BOT is OK
  *  	!0	Error in description
- *  
+ *
  *  Implicit return -
  *  	A struct bot_specific is created, and it's address is stored in
  *  	stp->st_specific for use by bot_shot().
@@ -733,7 +733,7 @@ struct rt_piecestate	*psp;
 						hits[j].hit_dist = hits[i].hit_dist;
 					}
 				}
-			} 
+			}
 			if( !reorder || reorder_failed ) {
 
 				exits = 0;
@@ -942,7 +942,7 @@ struct rt_piecestate	*psp;
 
 /**
  *  			R T _ B O T _ S H O T
- *  
+ *
  *  Intersect a ray with a bot.
  *  If an intersection occurs, a struct seg will be acquired
  *  and filled in.
@@ -950,7 +950,7 @@ struct rt_piecestate	*psp;
  *	Notes for rt_bot_norm():
  *		hit_private contains pointer to the tri_specific structure
  *		hit_vpriv[X] contains dot product of ray direction and unit normal from tri_specific
- *  
+ *
  *  Returns -
  *  	0	MISS
  *	>0	HIT
@@ -1114,12 +1114,12 @@ struct seg		*seghead;
 		LOCAL int	face_array_index;
 		LOCAL int	tris_in_piece;
 		register XGLUE(tri_specific_,TRI_TYPE) *trip;
-		
+
 		piecenum = *sol_piece_subscr_p;
 
 		if( BU_BITTEST( psp->shot, piecenum ) )  {
-			if(debug_shoot) 
-			    bu_log("%s piece %d already shot\n", 
+			if(debug_shoot)
+			    bu_log("%s piece %d already shot\n",
 				   stp->st_name, piecenum);
 
 			resp->re_piece_ndup++;
@@ -1132,7 +1132,7 @@ struct seg		*seghead;
 		    bu_log("%s piece %d ...\n", stp->st_name, piecenum);
 
 		/* Now intersect with each piece, which means
-		 * intesecting with each triangle that makes up 
+		 * intesecting with each triangle that makes up
 		 * the piece.
 		 */
 		face_array_index = piecenum*bot->bot_tri_per_piece;
@@ -1201,7 +1201,7 @@ struct seg		*seghead;
 	} /* for (;sol_piece_subscr_p...) */
 
 	if( psp->htab.end > 0 &&
-	    (bot->bot_mode == RT_BOT_PLATE || 
+	    (bot->bot_mode == RT_BOT_PLATE ||
 	     bot->bot_mode == RT_BOT_PLATE_NOCOS) ) {
 		/*
 		 * Each of these hits is really two, resulting in an instant
@@ -1217,7 +1217,7 @@ struct seg		*seghead;
 
 /**
  *  			R T _ B O T _ N O R M
- *  
+ *
  *  Given ONE ray distance, return the normal and entry/exit point.
  */
 void

@@ -19,7 +19,7 @@
  * information.
  */
 
-/** \defgroup db Database 
+/** \defgroup db Database
  * \ingroup librt
  */
 
@@ -36,12 +36,12 @@
  *  Authors -
  *	Michael John Muuss
  *	Robert Jon Reschly Jr.
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5066
- *  
+ *
  */
 /*@}*/
 
@@ -69,7 +69,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 /**
  *  			D B _ A L L O C
- *  
+ *
  *  Find a block of database storage of "count" granules.
  *
  *  Returns -
@@ -154,7 +154,7 @@ db_delrec(struct db_i *dbip, register struct directory *dp, int recnum)
 
 /**
  *  			D B _ D E L E T E
- *  
+ *
  *  Delete the indicated database record(s).
  *  Arrange to write "free storage" database markers in it's place,
  *  positively erasing what had been there before.

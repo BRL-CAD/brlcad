@@ -29,7 +29,7 @@ PRODUCTS	= fbanim loop pix-fb fb-pix \
 SRCDIR		= util
 VPATH		= ../util
 MANSECTION	= 1
- 
+
 CFILES		= dunncolor.c dunnsnap.c fbanim.c loop.c pix-fb.c fb-pix.c \
 		pixbustup.c pixdiff.c pixinterp2x.c pixtile.c pixuntile.c \
 		pp-fb.c fbclear.c fbgrid.c \
@@ -137,19 +137,19 @@ fbscanplot:	fbscanplot.o ${LIBFB}
 	$(CC) ${LDFLAGS} -o $@ $@.o ${LIBSYSV} ${LIBFB} ${LIBES}
 
 fbzoom:		fbzoom.o ${LIBFB}
-	$(CC) ${LDFLAGS} -o $@ $@.o ${LIBSYSV} ${LIBFB} ${LIBTERMIO} ${LIBES} 
+	$(CC) ${LDFLAGS} -o $@ $@.o ${LIBSYSV} ${LIBFB} ${LIBTERMIO} ${LIBES}
 
 fbpoint:	fbpoint.o ${LIBFB}
-	$(CC) ${LDFLAGS} -o $@ $@.o ${LIBSYSV} ${LIBFB} ${LIBTERMIO} ${LIBES} 
+	$(CC) ${LDFLAGS} -o $@ $@.o ${LIBSYSV} ${LIBFB} ${LIBTERMIO} ${LIBES}
 
 fblabel:	fblabel.o ${LIBFB}
-	$(CC) ${LDFLAGS} -o $@ $@.o ${LIBSYSV} ${LIBFB} ${LIBES} 
+	$(CC) ${LDFLAGS} -o $@ $@.o ${LIBSYSV} ${LIBFB} ${LIBES}
 
 fbline:		fbline.o ${LIBFB}
-	$(CC) ${LDFLAGS} -o $@ $@.o ${LIBSYSV} ${LIBFB} ${LIBES} 
+	$(CC) ${LDFLAGS} -o $@ $@.o ${LIBSYSV} ${LIBFB} ${LIBES}
 
 fbcolor:	fbcolor.o ${LIBFB}
-	$(CC) ${LDFLAGS} -o $@ $@.o ${LIBSYSV} ${LIBFB} ${LIBTERMIO} ${LIBES} 
+	$(CC) ${LDFLAGS} -o $@ $@.o ${LIBSYSV} ${LIBFB} ${LIBTERMIO} ${LIBES}
 
 ap-pix:		ap-pix.o
 	$(CC) ${LDFLAGS} -o $@ $@.o ${LIBES}

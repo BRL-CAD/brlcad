@@ -20,7 +20,7 @@
  */
 /** @file sh_null.c
  *
- * Notes - 
+ * Notes -
  * This is the null, aka invisible, shader.  It is potentially useful as a performance
  * metric as well as to hide objects from a scene rendering.  It simply does nothing.
  *
@@ -50,7 +50,7 @@ HIDDEN int	null_setup(register struct region *rp, struct bu_vls *matparm, char *
 HIDDEN void	null_print(register struct region *rp, char *dp), null_free(char *cp);
 
 /* The "mfuncs" table describes what the user interface may call this shader.
- * The null shader may be referred to as null or invisible.  Note that the 
+ * The null shader may be referred to as null or invisible.  Note that the
  * four shader functions *must* be defined, even if they do nothing.
  */
 struct mfuncs null_mfuncs[] = {
@@ -73,9 +73,9 @@ struct mfuncs null_mfuncs[] = {
  *  return 0 to delete this region's shader information after setup (i.e. it's
  *  not needed for whatever reason to it won't be rendered).
  *
- *  The null shader has nothing to do during setup since it doesn't actually 
- *  have anything to do during render0.  It's setup returns 0 since there's no 
- *  need to keep any region info.  This means that null_render will not even 
+ *  The null shader has nothing to do during setup since it doesn't actually
+ *  have anything to do during render0.  It's setup returns 0 since there's no
+ *  need to keep any region info.  This means that null_render will not even
  *  get called.
  */
 HIDDEN int
@@ -97,8 +97,8 @@ null_setup( register struct region *rp, struct bu_vls *matparm, char **dpp, stru
  *	to be shaded.  The purpose here is to fill in values in the shadework
  *	structure.  This is, of course, not necessary when setup returns 0.
  *
- *  The null shader actually does "something", though it is not called.  
- *  It has to at least pass the ray through so that it can actually 
+ *  The null shader actually does "something", though it is not called.
+ *  It has to at least pass the ray through so that it can actually
  *  raytrace what is visible behind the invisible object.  Otherwise,
  *  an empty black void would be rendered.  this is not really important
  *  though, since it shouldn't normally be called.
@@ -126,7 +126,7 @@ null_render( struct application *ap, struct partition *pp, struct shadework *swp
 
 /*
  *	N U L L _ P R I N T
- * 
+ *
  * This routine is called if setup fails (which it never should).
  */
 HIDDEN void
@@ -137,7 +137,7 @@ null_print( register struct region *rp, char *dp ) {
 
 /*
  *	N U L L _ F R E E
- *  
+ *
  *  This routine is called after all rendering has completed.  The intent is
  *  normally to release any specific structures that were allocated during
  *  setup or rendering.

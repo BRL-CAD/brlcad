@@ -30,7 +30,7 @@
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif
-                                                                                                                                                                            
+
 #include <stdlib.h>
 #include <stdio.h>
 #ifdef HAVE_STRING_H
@@ -64,7 +64,7 @@ int parse_args(int ac, char **av)
 
 	if (!(progname=strrchr(*av, '/')))
 		progname = *av;
-	
+
 	/* Turn off getopt's error messages */
 	opterr = 0;
 
