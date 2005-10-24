@@ -16,7 +16,6 @@ libtclcad_la_LDFLAGS = -version-info 19:1
 libtclcad_la_LIBADD = \
 	${BN} \
 	${BU} \
-	${TK} \
 	${TCL}
 
 libtclcad_la_SOURCES = \
