@@ -2329,7 +2329,7 @@ else
 		build_brlcad_adrt="no (need python and sdl)"
 	fi
 fi
-/* force adrt off until the makefiles are fixed in src/adrt */
+# force adrt off until the makefiles are fixed in src/adrt
 build_brlcad_adrt="no"
 
 
