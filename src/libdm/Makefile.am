@@ -38,7 +38,6 @@ libdm_la_LDFLAGS = -version-info 19:1
 libdm_la_CFLAGS = ${X_CFLAGS} ${DM_X_CFLAGS} ${DM_OGL_CFLAGS}
 libdm_la_LIBADD = \
 	${TCL} \
-	${TK} \
 	${LIBRT} \
 	${PNG} \
 	${X_LIBS}
