@@ -25,7 +25,6 @@ lib_LTLIBRARIES = \
 libtk_la_SOURCES =
 libtk_la_LDFLAGS = -version-info 19:1 -static
 libtk_la_LIBADD = \
-	generic/libtkstub.la \
 	generic/tk3d.lo \
 	generic/tkArgv.lo \
 	generic/tkAtom.lo \
@@ -80,9 +79,9 @@ libtk_la_LIBADD = \
 	generic/tkScale.lo \
 	generic/tkScrollbar.lo \
 	generic/tkSelect.lo \
-	generic/tkStubLib.lo \
 	generic/tkStubImg.lo \
 	generic/tkStubInit.lo \
+	generic/tkStubLib.lo \
 	generic/tkStyle.lo \
 	generic/tkText.lo \
 	generic/tkTextBTree.lo \
