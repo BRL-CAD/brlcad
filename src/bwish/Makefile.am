@@ -47,6 +47,7 @@ btclsh_LDADD = \
 	${TERMIO} \
 	${TCL} \
 	${TCLCAD} \
+	${TK} \
 	${BN} \
 	${BU}
 
