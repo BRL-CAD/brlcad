@@ -9,7 +9,6 @@ libtkstub@TK_VERSION@_la_SOURCES = $(libtkstub_la_SOURCES)
 
 noinst_LTLIBRARIES = libtkg.la
 
-libtkg_la_LDFLAGS = -static
 libtkg_la_SOURCES = \
 	tk3d.c \
 	tkArgv.c \
@@ -67,7 +66,6 @@ libtkg_la_SOURCES = \
 	tkSelect.c \
 	tkStubImg.c \
 	tkStubInit.c \
-	tkStubLib.c \
 	tkStyle.c \
 	tkText.c \
 	tkTextBTree.c \
