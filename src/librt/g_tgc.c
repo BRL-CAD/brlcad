@@ -57,6 +57,7 @@ static const char RCStgc[] = "@(#)$Header$ (BRL)";
 #  include <string.h>
 #endif
 #include <math.h>
+
 #include "machine.h"
 #include "vmath.h"
 #include "db.h"
@@ -67,8 +68,7 @@ static const char RCStgc[] = "@(#)$Header$ (BRL)";
 #include "nurb.h"
 
 
-BU_EXTERN(int rt_rec_prep, (struct soltab *stp, struct rt_db_internal *ip,
-struct rt_i *rtip));
+BU_EXTERN(int rt_rec_prep, (struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip));
 
 struct  tgc_specific {
 	vect_t	tgc_V;		/*  Vector to center of base of TGC	*/
@@ -107,6 +107,7 @@ const struct bu_structparse rt_tgc_parse[] = {
     { "%f", 3, "D", offsetof(struct rt_tgc_internal, d[X]), BU_STRUCTPARSE_FUNC_NULL },
     { {'\0','\0','\0','\0'}, 0, (char *)NULL, 0, BU_STRUCTPARSE_FUNC_NULL }
 };
+
 
 /**
  *			R T _ T G C _ P R E P
@@ -1919,6 +1920,7 @@ rt_tgc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	vect_t			unit_a,unit_b,unit_c,unit_d; /* units vectors in a,b,c,d directions */
 	fastf_t			rel,abs,norm;	/* interpreted tolerances */
 	fastf_t			alpha_tol;	/* final tolerance for ellipse parameter */
+	fastf_t			abs_tol;	/* handle invalid ttol->abs */
 	int			nells;		/* total number of ellipses */
 	int			nsegs;		/* number of vertices/ellipse */
 	vect_t			*A;		/* array of A vectors for ellipses */
@@ -1931,6 +1933,7 @@ rt_tgc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	struct bu_ptbl		verts;		/* table of vertices used for top and bottom faces */
 	struct bu_ptbl		faces;		/* table of faceuses for nmg_gluefaces */
 	struct vertex		**v[3];		/* array for making triangular faces */
+
 	int			i;
 
 	RT_CK_DB_INTERNAL(ip);
@@ -1939,10 +1942,12 @@ rt_tgc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 
 	if( ttol->abs > 0.0 && ttol->abs < tol->dist )
 	{
-		bu_log( "tesselation tolerance is %fmm while calculational tolerance is %fmm\n",
-			ttol->abs , tol->dist );
-		bu_log( "Cannot tesselate a TGC to finer tolerance than the calculational tolerance\n" );
-		return( -1 );
+	    bu_log( "WARNING: tesselation tolerance is %fmm while calculational tolerance is %fmm\n",
+		    ttol->abs , tol->dist );
+	    bu_log( "Cannot tesselate a TGC to finer tolerance than the calculational tolerance\n" );
+	    abs_tol = tol->dist;
+	} else {
+	    abs_tol = ttol->abs;
 	}
 
 	h = MAGNITUDE( tip->h );
@@ -2016,7 +2021,7 @@ rt_tgc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	if( d < min_radius && d > 0.0 )
 		min_radius = d;
 
-	if( ttol->abs <= 0.0 && ttol->rel <= 0.0 && ttol->norm <= 0.0 )
+	if( abs_tol <= 0.0 && ttol->rel <= 0.0 && ttol->norm <= 0.0 )
 	{
 		/* no tolerances specified, use 10% relative tolerance */
 		if( (radius * 0.2) < max_radius )
@@ -2026,8 +2031,8 @@ rt_tgc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	}
 	else
 	{
-		if( ttol->abs > 0.0 )
-			abs = 2.0 * acos( 1.0 - ttol->abs/max_radius );
+		if( abs_tol > 0.0 )
+			abs = 2.0 * acos( 1.0 - abs_tol/max_radius );
 		else
 			abs = bn_halfpi;
 
