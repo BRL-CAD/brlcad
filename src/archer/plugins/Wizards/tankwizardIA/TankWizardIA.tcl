@@ -33,16 +33,6 @@
 	method drawTank {}
 	method buildTank {}
 	method buildTankXML {}
-	method beginTagXML {tag}
-	method endTagXML {tag}
-	method buildTagValXML {tag value}
-	method beginSystemXML {name {id ""}}
-	method endSystemXML {}
-	method beginZoneXML {name id}
-	method endZoneXML {}
-	method buildComponentXML {name id}
-	method buildVirtualComponentXML {name material density p1 p2 p3}
-	method buildWheelXML {type begin end}
 	proc vectorAdd {u v}
 	proc vectorScale {u s}
     }
@@ -1459,75 +1449,6 @@
     append tankXML [endSystemXML]
     append tankXML [endSystemXML]
     append tankXML [endSystemXML]
-}
-
-::itcl::body TankWizardIA::beginTagXML {tag} {
-    return "<$tag>"
-}
-
-::itcl::body TankWizardIA::endTagXML {tag} {
-    return "</$tag>"
-}
-
-::itcl::body TankWizardIA::buildTagValXML {tag value} {
-    append systemXML [beginTagXML $tag]
-    append systemXML $value
-    append systemXML [endTagXML $tag]
-}
-
-::itcl::body TankWizardIA::beginSystemXML {name {id ""}} {
-    append systemXML [beginTagXML "System"]
-    append systemXML [buildTagValXML "Name" $name]
-
-    if {$id != ""} {
-	append systemXML [buildTagValXML "Geometry_Reference" [buildTagValXML "ID" $id]]
-    }
-
-    return $systemXML
-}
-
-::itcl::body TankWizardIA::endSystemXML {} {
-    endTagXML "System"
-}
-
-::itcl::body TankWizardIA::beginZoneXML {name id} {
-    append zoneXML [beginSystemXML $name $id]
-}
-
-::itcl::body TankWizardIA::endZoneXML {} {
-    append zoneXML [beginTagXML "Properties"]
-    append zoneXML [beginTagXML "Boolean"]
-    append zoneXML [buildTagValXML "Name" "Zone"]
-    append zoneXML [buildTagValXML "Value" "true"]
-    append zoneXML [beginTagXML "Properties"]
-    append zoneXML [beginTagXML "String"]
-    append zoneXML [buildTagValXML "Name" "Material"]
-    append zoneXML [buildTagValXML "Value" "Steel"]
-    append zoneXML [endTagXML "String"]
-    append zoneXML [beginTagXML "Percent"]
-    append zoneXML [buildTagValXML "Name" "Density"]
-    append zoneXML [buildTagValXML "Value" "0.35"]
-    append zoneXML [endTagXML "Percent"]
-    append zoneXML [endTagXML "Properties"]
-    append zoneXML [endTagXML "Boolean"]
-    append zoneXML [endTagXML "Properties"]
-    append zoneXML [endSystemXML]
-}
-
-::itcl::body TankWizardIA::buildComponentXML {name id} {
-    return "<Component><Name>$name</Name><Geometry_Reference><ID>$id</ID></Geometry_Reference><Material_Reference>Cold Rolled Steel</Material_Reference><Properties><Percent><Name>Density</Name><Value>100</Value></Percent></Properties></Component>"
-}
-
-::itcl::body TankWizardIA::buildVirtualComponentXML {name material density p1 p2 p3} {
-    return "<Component><Name>$name</Name><Material_Reference>$material</Material_Reference><Properties><Percent><Name>Density</Name><Value>$density</Value></Percent><String><Name>Zone Weighting</Name><Value>Average</Value><Properties><Percent><Name>Front</Name><Value>$p1</Value></Percent><Percent><Name>Left</Name><Value>$p2</Value></Percent><Percent><Name>Top</Name><Value>$p3</Value></Percent></Properties></String></Properties></Component>"
-}
-
-::itcl::body TankWizardIA::buildWheelXML {type begin end} {
-    append wheelXML [beginSystemXML "$type Wheels"]
-    for {set id $begin; set n 1} {$id < $end} {incr id; incr n} {
-	append wheelXML [buildComponentXML "$type Wheel $n" $id]
-    }
-    append wheelXML [endSystemXML]
 }
 
 ::itcl::body TankWizardIA::buildHull {} {
