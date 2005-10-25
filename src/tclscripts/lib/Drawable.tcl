@@ -33,8 +33,6 @@
 #	The Drawable class wraps LIBRT's drawable geometry object.
 #
 ::itcl::class Drawable {
-    protected variable dg ""
-
     constructor {db} {}
     destructor {}
     
@@ -76,6 +74,10 @@
 	method apropos {key}
 	method help {args}
 	method getUserCmds {}
+    }
+
+    protected {
+	variable dg ""
     }
 
     private {
