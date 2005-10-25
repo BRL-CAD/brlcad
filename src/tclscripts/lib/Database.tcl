@@ -35,8 +35,8 @@
 ::itcl::class Database {
     inherit Db Drawable
 
-    constructor {file} {
-	Db::constructor $file
+    constructor {dbOrFile} {
+	Db::constructor $dbOrFile
 	Drawable::constructor [Db::get_dbname]
     } {}
 
@@ -47,6 +47,7 @@
 	method apropos {key}
 	method help {args}
 	method getUserCmds {}
+	method shareDb {_db}
     }
 }
 
@@ -73,6 +74,11 @@
 
 ::itcl::body Database::getUserCmds {} {
     return "[Db::getUserCmds] [Drawable::getUserCmds]"
+}
+
+::itcl::body Database::shareDb {_db} {
+    Db::shareDb $_db
+    Drawable::assoc $_db
 }
 
 # Local Variables:

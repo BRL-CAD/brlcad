@@ -43,7 +43,7 @@ option add *Mged.height 400 widgetDefault
     itk_option define -unitsCallback unitsCallback UnitsCallback ""
     itk_option define -autoViewEnable autoViewEnable AutoViewEnable 1
 
-    constructor {file args} {
+    constructor {dbOrFile args} {
 	eval QuadDisplay::constructor
     } {}
     destructor {}
@@ -123,6 +123,7 @@ option add *Mged.height 400 widgetDefault
 	method set_outputHandler {args}
 	method set_transparency {args}
 	method shaded_mode {args}
+	method shareDb {_db}
 	method shells {args}
 	method showmats {args}
 	method summary {args}
@@ -156,8 +157,8 @@ option add *Mged.height 400 widgetDefault
     }
 }
 
-::itcl::body Mged::constructor {file args} {
-    set db [Database #auto $file]
+::itcl::body Mged::constructor {dbOrFile args} {
+    set db [Database \#auto $dbOrFile]
     set dg [$db Drawable::get_dgname]
     addAll $dg
 
@@ -242,6 +243,10 @@ option add *Mged.height 400 widgetDefault
 
 ::itcl::body Mged::shaded_mode {args} {
     eval $db shaded_mode $args
+}
+
+::itcl::body Mged::shareDb {_db} {
+    $db shareDb $_db
 }
 
 ::itcl::body Mged::dump {args} {

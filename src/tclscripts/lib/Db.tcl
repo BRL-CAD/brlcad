@@ -33,7 +33,7 @@
 #	The Db class wraps LIBRT's database object.
 #
 ::itcl::class Db {
-    constructor {filename} {}
+    constructor {dbOrFile} {}
     destructor {}
 
     public {
@@ -95,6 +95,7 @@
 	method rmap {args}
 	method rotate_arb_face {args}
 	method rt_gettrees {args}
+	method shareDb {_db}
 	method shells {args}
 	method showmats {args}
 	method summary {args}
@@ -119,6 +120,7 @@
 
     protected {
 	variable db ""
+	variable sharedDb 0
     }
 
     private {
@@ -132,15 +134,25 @@
     Db::open $dbfile
 }
 
-::itcl::body Db::constructor {filename} {
-    set dbfile $filename
-    set db [subst $this]_db
-    wdb_open $db $dbfile
+::itcl::body Db::constructor {dbOrFile} {
+    if {[catch {$dbOrFile ls}]} {
+	set dbfile $dbOrFile
+	set db [subst $this]_db
+	wdb_open $db $dbfile
+    } else {
+	set dbfile ""
+	set db $dbOrFile
+	set sharedDb 1
+    }
+
     Db::help_init
 }
 
 ::itcl::body Db::destructor {} {
-    rename $db ""
+    if {!$sharedDb} {
+	rename $db ""
+    }
+
     catch {delete object $help}
 }
 
@@ -178,6 +190,14 @@
 
 ::itcl::body Db::rt_gettrees {args} {
     eval $db rt_gettrees $args
+}
+
+::itcl::body Db::shareDb {_db} {
+    if {!$sharedDb} {
+	rename $db ""
+    }
+
+    set db $_db
 }
 
 ::itcl::body Db::shells {args} {
