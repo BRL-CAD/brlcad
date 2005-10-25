@@ -2415,7 +2415,7 @@
 
 	set i [expr {$ri - $firstrow + 1}]
 	set j [getColIndex $w]
-	$itk_option(-lostFocusCallback) $i $j $evar($i,$j)
+	$itk_option(-lostFocusCallback) $ri $j $evar($i,$j)
     }
 }
 
