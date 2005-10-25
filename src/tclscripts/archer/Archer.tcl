@@ -52,7 +52,7 @@ namespace eval Archer {
     itk_option define -statusbar statusbar Statusbar 1
 #    itk_option define -menuFont menuFont MenuFont application
 
-    constructor {{viewOnly 0} args} {}
+    constructor {{viewOnly 0} {noCopy 0} args} {}
     destructor {}
 
     public {
@@ -227,6 +227,8 @@ namespace eval Archer {
 	variable mStatusStr ""
 	variable mDbType ""
 	variable mDbReadOnly 0
+	variable mDbNoCopy 0
+	variable mDbShared 0
 	variable mProgress 0
 	variable mProgressBarWidth 200
 	variable mProgressBarHeight ""
@@ -691,7 +693,7 @@ Popup Menu    Right or Ctrl-Left
 # ------------------------------------------------------------
 #                      CONSTRUCTOR
 # ------------------------------------------------------------
-::itcl::body Archer::constructor {{viewOnly 0} args} {
+::itcl::body Archer::constructor {{viewOnly 0} {noCopy 0} args} {
     global env
     global tcl_platform
 
@@ -700,6 +702,7 @@ Popup Menu    Right or Ctrl-Left
 
     set mProgressBarHeight [expr {[font metrics $mFontText -linespace] + 1}]
     set mViewOnly $viewOnly
+    set mDbNoCopy $noCopy
 
     if {$Archer::inheritFromToplevel} {
 	wm withdraw [namespace tail $this]
@@ -4689,7 +4692,7 @@ Popup Menu    Right or Ctrl-Left
 
 ::itcl::body Archer::_init_mged {} {
     itk_component add mged {
-	if {$mDbReadOnly} {
+	if {$mDbNoCopy || $mDbReadOnly} {
 	    set _target $mTarget
 	} else {
 	    set _target $mTargetCopy
@@ -4846,7 +4849,7 @@ Popup Menu    Right or Ctrl-Left
 
 ::itcl::body Archer::_init_sdb {} {
     itk_component add sdb {
-	if {$mDbReadOnly} {
+	if {$mDbNoCopy || $mDbReadOnly} {
 	    set _target $mTarget
 	} else {
 	    set _target $mTargetCopy
@@ -5097,7 +5100,8 @@ Popup Menu    Right or Ctrl-Left
     # Sanity
     if {$mTarget == "" ||
 	$mTargetCopy == "" ||
-        $mDbReadOnly} {
+        $mDbReadOnly ||
+	$mDbNoCopy} {
 	return
     }
 
@@ -8525,7 +8529,10 @@ Popup Menu    Right or Ctrl-Left
     set mTarget $target
     set mDbType $type
 
-    if {[file exists $mTarget]} {
+    if {![catch {$mTarget ls}]} {
+	set mDbShared 1
+	set mDbReadOnly 1
+    } elseif {[file exists $mTarget]} {
 	if {[file writable $mTarget]} {
 	    set mDbReadOnly 0
 	} else {
@@ -8535,7 +8542,7 @@ Popup Menu    Right or Ctrl-Left
 	set mDbReadOnly 0
     }
 
-    if {$mDbReadOnly} {
+    if {$mDbNoCopy || $mDbReadOnly} {
 	set mTargetOldCopy $mTargetCopy
 	set mTargetCopy ""
     } else {
@@ -8552,7 +8559,9 @@ Popup Menu    Right or Ctrl-Left
 
 	    # load MGED database
 	    if {[info exists itk_component(mged)]} {
-		if {$mDbReadOnly} {
+		if {$mDbShared} {
+		    $itk_component(mged) sharedDb $mTarget
+		} elseif {$mDbNoCopy || $mDbReadOnly} {
 		    $itk_component(mged) opendb $mTarget
 		} else {
 		    $itk_component(mged) opendb $mTargetCopy
@@ -8589,7 +8598,9 @@ Popup Menu    Right or Ctrl-Left
 
 	    # load SDB database
 	    if {[info exists itk_component(sdb)]} {
-		if {$mDbReadOnly} {
+		if {$mDbShared} {
+		    $itk_component(sdb) sharedDb $mTarget
+		} elseif {$mDbNoCopy || $mDbReadOnly} {
 		    $itk_component(sdb) openDb $mTarget
 		} else {
 		    $itk_component(sdb) openDb $mTargetCopy
@@ -9139,7 +9150,7 @@ Popup Menu    Right or Ctrl-Left
 	return
     }
 
-    if {!$mDbReadOnly && $mNeedSave} {
+    if {!$mDbNoCopy && !$mDbReadOnly && $mNeedSave} {
 	if {$Archer::inheritFromToplevel} {
 	    $itk_component(filemenu) entryconfigure "Save..." \
 		-state normal
@@ -9171,7 +9182,7 @@ Popup Menu    Right or Ctrl-Left
 	$itk_component(primaryToolbar) itemconfigure cut \
 	    -state disabled
     } else {
-	if {!$mDbReadOnly && $mSelectedObj != ""} {
+	if {!$mDbNoCopy && !$mDbReadOnly && $mSelectedObj != ""} {
 	    $itk_component(primaryToolbar) itemconfigure cut \
 		    -state normal
 	} else {
@@ -9187,7 +9198,7 @@ Popup Menu    Right or Ctrl-Left
 	$itk_component(primaryToolbar) itemconfigure copy \
 	    -state disabled
     } else {
-	if {!$mDbReadOnly && $mSelectedObj != ""} {
+	if {!$mDbNoCopy && !$mDbReadOnly && $mSelectedObj != ""} {
 	    $itk_component(primaryToolbar) itemconfigure copy \
 		    -state normal
 	} else {
@@ -9203,7 +9214,7 @@ Popup Menu    Right or Ctrl-Left
 	$itk_component(primaryToolbar) itemconfigure paste \
 	    -state disabled
     } else {
-	if {!$mDbReadOnly && $mSelectedObj != "" && $mPasteActive} {
+	if {!$mDbNoCopy && !$mDbReadOnly && $mSelectedObj != "" && $mPasteActive} {
 	    $itk_component(primaryToolbar) itemconfigure paste \
 		    -state normal
 	} else {
@@ -9238,7 +9249,7 @@ Popup Menu    Right or Ctrl-Left
 }
 
 ::itcl::body Archer::_cut_obj {} {
-    if {$mDbReadOnly} {
+    if {$mDbNoCopy || $mDbReadOnly} {
 	return
     }
 
@@ -9247,7 +9258,7 @@ Popup Menu    Right or Ctrl-Left
 }
 
 ::itcl::body Archer::_copy_obj {} {
-    if {$mDbReadOnly} {
+    if {$mDbNoCopy || $mDbReadOnly} {
 	return
     }
 
@@ -9256,7 +9267,7 @@ Popup Menu    Right or Ctrl-Left
 }
 
 ::itcl::body Archer::_paste_obj {} {
-    if {$mDbReadOnly} {
+    if {$mDbNoCopy || $mDbReadOnly} {
 	return
     }
 
@@ -9716,7 +9727,7 @@ Popup Menu    Right or Ctrl-Left
 }
 
 ::itcl::body Archer::setSave {} {
-    if {$mDbReadOnly} {
+    if {$mDbNoCopy || $mDbReadOnly} {
 	return
     }
 
