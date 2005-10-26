@@ -11,8 +11,6 @@ THESE SHOULD HAPPEN BEFORE THE NEXT RELEASE
 
 * AIX build fixes
 
-* configure option to leave the flags alone
-
 * fix benchmark path issue
 
 
