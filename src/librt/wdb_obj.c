@@ -5530,64 +5530,66 @@ wdb_tol_cmd(struct rt_wdb	*wdbp,
 		return TCL_ERROR;
 	}
 
+	/* clamp negative to zero */
+	if (f < 0.0) {
+	    Tcl_AppendResult(interp, "negative tolerance clamped to 0.0\n", (char *)NULL);
+	    f = 0.0;
+	}
+
 	switch (argv[1][0]) {
 	case 'a':
 		/* Absolute tol */
-		if (f <= 0.0)
-			wdbp->wdb_ttol.abs = 0.0;
-		else
-			wdbp->wdb_ttol.abs = f;
-		break;
-	case 'r':
-		if (f < 0.0 || f >= 1.0) {
-			   Tcl_AppendResult(interp,
-					    "relative tolerance must be between 0 and 1, not changed\n",
-					    (char *)NULL);
-			   return TCL_ERROR;
-		}
-		/* Note that a value of 0.0 will disable relative tolerance */
-		wdbp->wdb_ttol.rel = f;
-		break;
-	case 'n':
-		/* Normal tolerance, in degrees */
-		if (f < 0.0 || f > 90.0) {
-			Tcl_AppendResult(interp,
-					 "Normal tolerance must be in positive degrees, < 90.0\n",
-					 (char *)NULL);
-			return TCL_ERROR;
-		}
-		/* Note that a value of 0.0 or 360.0 will disable this tol */
-		wdbp->wdb_ttol.norm = f * bn_degtorad;
-		break;
-	case 'd':
-		/* Calculational distance tolerance */
-		if (f < 0.0) {
-			Tcl_AppendResult(interp,
-					 "Calculational distance tolerance must be positive\n",
-					 (char *)NULL);
-			return TCL_ERROR;
-		}
-		wdbp->wdb_tol.dist = f;
-		wdbp->wdb_tol.dist_sq = wdbp->wdb_tol.dist * wdbp->wdb_tol.dist;
-		break;
-	case 'p':
-		/* Calculational perpendicularity tolerance */
-		if (f < 0.0 || f > 1.0) {
-			Tcl_AppendResult(interp,
-					 "Calculational perpendicular tolerance must be from 0 to 1\n",
-					 (char *)NULL);
-			return TCL_ERROR;
-		}
-		wdbp->wdb_tol.perp = f;
-		wdbp->wdb_tol.para = 1.0 - f;
-		break;
-	default:
+	    if (f < wdbp->wdb_tol.dist) {
 		bu_vls_init(&vls);
-		bu_vls_printf(&vls, "unrecognized tolerance type - %s", argv[1]);
+		bu_vls_printf(&vls, "absolute tolerance cannot be less than distance tolerance, clamped to %f\n", wdbp->wdb_tol.dist);
 		Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
-		bu_vls_free(&vls);
-
+	    }
+	    wdbp->wdb_ttol.abs = f;
+	    break;
+	case 'r':
+	    if (f >= 1.0) {
+		Tcl_AppendResult(interp,
+				 "relative tolerance must be between 0 and 1, not changed\n",
+				 (char *)NULL);
 		return TCL_ERROR;
+	    }
+	    /* Note that a value of 0.0 will disable relative tolerance */
+	    wdbp->wdb_ttol.rel = f;
+	    break;
+	case 'n':
+	    /* Normal tolerance, in degrees */
+	    if (f > 90.0) {
+		Tcl_AppendResult(interp,
+				 "Normal tolerance must be less than 90.0 degrees\n",
+				 (char *)NULL);
+		return TCL_ERROR;
+	    }
+	    /* Note that a value of 0.0 or 360.0 will disable this tol */
+	    wdbp->wdb_ttol.norm = f * bn_degtorad;
+	    break;
+	case 'd':
+	    /* Calculational distance tolerance */
+	    wdbp->wdb_tol.dist = f;
+	    wdbp->wdb_tol.dist_sq = wdbp->wdb_tol.dist * wdbp->wdb_tol.dist;
+	    break;
+	case 'p':
+	    /* Calculational perpendicularity tolerance */
+	    if (f > 1.0) {
+		Tcl_AppendResult(interp,
+				 "Calculational perpendicular tolerance must be from 0 to 1\n",
+				 (char *)NULL);
+		return TCL_ERROR;
+	    }
+	    wdbp->wdb_tol.perp = f;
+	    wdbp->wdb_tol.para = 1.0 - f;
+	    break;
+	default:
+	    bu_vls_init(&vls);
+	    bu_vls_printf(&vls, "unrecognized tolerance type - %s", argv[1]);
+	    Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+	    bu_vls_free(&vls);
+	    
+	    return TCL_ERROR;
 	}
 
 	return TCL_OK;
