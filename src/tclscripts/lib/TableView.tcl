@@ -56,9 +56,9 @@
     constructor {_labels args} {}
     destructor {}
 
-	variable font
-    itk_option define -colfont colfont Font {SystemWindowText 8}
-    itk_option define -rowfont rowfont Font {SystemWindowText 8}
+    variable font 
+    itk_option define -colfont colfont Font {Helvetica 12}
+    itk_option define -rowfont rowfont Font {Helvetica 12}
     itk_option define -useTextEntry useTextEntry UseTextEntry 0
     itk_option define -textEntryWidth textEntryWidth TextEntryWidth 20
     itk_option define -textEntryHeight textEntryHeight TextEntryHeight 3
