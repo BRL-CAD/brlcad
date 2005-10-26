@@ -10,6 +10,7 @@ entire history of the project is available through CVS.
 --- 2005-10-XX  Release 7.6.1                                      ---
 ----------------------------------------------------------------------
 
+* improved mged 'tol' command tolerance value checks - Sean Morrison
 * fixed tgc absolute tesselation tolerance issue - Sean Morrison
 * optional build support checks for X11 and OpenGL - Sean Morrison
 * improved Windows build support - Bob Parker, Daniel Ro§berg
