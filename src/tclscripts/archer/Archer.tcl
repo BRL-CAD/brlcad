@@ -83,6 +83,7 @@ namespace eval Archer {
 
 	# wizard plugin related commands
 	method registerWizardXmlCallback {callback}
+	method unRegisterWizardXmlCallback {callback}
 
 	# Commands exposed to the user via the command line.
 	# More to be added later...
@@ -9739,6 +9740,13 @@ Popup Menu    Right or Ctrl-Left
     # Append if not already there
     if {[lsearch $wizardXmlCallbacks $callback] == -1} {
 	lappend wizardXmlCallbacks $callback
+    }
+}
+
+::itcl::body Archer::unRegisterWizardXmlCallback {callback} {
+    set i [lsearch $wizardXmlCallbacks $callback]
+    if {$i != -1} {
+	set wizardXmlCallbacks [lreplace $wizardXmlCallbacks $i $i]
     }
 }
 
