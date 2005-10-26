@@ -263,6 +263,9 @@ BC_CONFIGURE_STAGE([arguments], [1 of 9])
 
 dnl *** enable options ***
 
+# automatic flag updates
+BC_ARG_ENABLE([auto_flags], [automatic-flags], [Automatically configure build flags], [yes])
+
 # only build benchmark
 BC_ARG_ENABLE([only_benchmark], [only-benchmark], [Only build the components necessary for the benchmark], [no])
 
@@ -359,6 +362,13 @@ BC_ARG_WITH([with_python], [python], [Specify use of or path to python], [auto])
 # they need to go below here in order for --help to consolidate the
 # blank line that it inserts to exactly one line in the right place
 ###
+
+# aliases for allowing configure to modify the flags automatically (help uses automatic-flags)
+BC_ARG_ALIAS([auto_flags], [auto-flags])
+BC_ARG_ALIAS([auto_flags], [auto-flag])
+BC_ARG_ALIAS([auto_flags], [automatic-flag])
+AC_MSG_CHECKING(whether to automatically set build flags)
+AC_MSG_RESULT($bc_auto_flags)
 
 # aliases for building only the benchmark (help uses only-benchmark)
 BC_ARG_ALIAS([only_benchmark], [only-bench])
@@ -929,12 +939,14 @@ if test "x$bc_with_java" = "xyes" ; then
 	JAVA_CFLAGS="-I$bc_with_java_val/include -I$bc_with_java_val/include/`uname | tr [A-Z] [a-z]`"
 fi
 # XXX this should go away and become proper library or compiler option checks
-case "$target" in
+if test ! "x$bc_auto_flags" = "xno" ; then
+    case "$target" in
 	*-*-darwin*)
 		JAVA_CFLAGS="-framework JavaVM"
 		JAVA_LDFLAGS="-shrext .jnilib -framework JavaVM"
 		;;
-esac
+    esac
+fi
 AC_SUBST(JAVA_CFLAGS)
 AC_SUBST(JAVA_LDFLAGS)
 
@@ -1187,24 +1199,26 @@ dnl ******************************************
 
 BC_CONFIGURE_STAGE([compiler], [6 of 9])
 
-dnl include the BRL-CAD include directory
+dnl include the BRL-CAD include directory (required)
 CPPFLAGS="$CPPFLAGS -I\$(top_srcdir)/include"
 
-dnl try to use -pipe to speed up the compiles
-BC_COMPILER_AND_LINKER_RECOGNIZES([-pipe])
+if test ! "x$bc_auto_flags" = "xno" ; then
 
-dnl check for -fno-strict-aliasing
-BC_COMPILER_AND_LINKER_RECOGNIZES([-fno-strict-aliasing])
+    dnl try to use -pipe to speed up the compiles
+    BC_COMPILER_AND_LINKER_RECOGNIZES([-pipe])
 
-dnl check for -fno-common (libtcl needs it on darwin)
-BC_COMPILER_AND_LINKER_RECOGNIZES([-fno-common])
+    dnl check for -fno-strict-aliasing
+    BC_COMPILER_AND_LINKER_RECOGNIZES([-fno-strict-aliasing])
 
-dnl check for -search_paths_first linker flag when making dylibs
-search_paths_first_flags="-Wl,-search_paths_first"
-BC_LINKER_RECOGNIZES([$search_paths_first_flags])
+    dnl check for -fno-common (libtcl needs it on darwin)
+    BC_COMPILER_AND_LINKER_RECOGNIZES([-fno-common])
 
-dnl 64bit compilation flags
-if test "x$bc_build_64bit" = "xyes" ; then
+    dnl check for -search_paths_first linker flag when making dylibs
+    search_paths_first_flags="-Wl,-search_paths_first"
+    BC_LINKER_RECOGNIZES([$search_paths_first_flags])
+
+    dnl 64bit compilation flags
+    if test "x$bc_build_64bit" = "xyes" ; then
 	found_64bit_flag=no
 
 	AC_MSG_CHECKING([if configure snuck on a 32bit flag to ld])
@@ -1243,6 +1257,9 @@ if test "x$bc_build_64bit" = "xyes" ; then
 			found_64bit_flag=yes
 		fi
 	fi
+    fi
+
+# end check for automatic flags
 fi
 
 dnl profile flags
@@ -1295,15 +1312,18 @@ if test "x$bc_use_optimized" != "xno" ; then
 #	if test "x$bc_mac_opt_flag_works" = "xno" ; then
 #		BC_COMPILER_AND_LINKER_RECOGNIZES([-fast -mcpu=7450], [mac_opt_flag])
 #	fi
-	if test "x$bc_mac_opt_flag_works" = "xno" ; then
-		extra_optimization_flag="-ffast-math -fstrength-reduce -fexpensive-optimizations -finline-functions"
-		if test "x$bc_use_debug" = "xno" ; then
-			dnl non-debug can omit the frame pointer, debug cannot
-			extra_optimization_flag="$extra_optimization_flag -fomit-frame-pointer"
-		else
-			extra_optimization_flag="$extra_optimization_flag -fno-omit-frame-pointer"
+	# don't set extra optimization flags if auto-flags was turned off
+	if test ! "x$bc_auto_flags" = "xno" ; then
+		if test "x$bc_mac_opt_flag_works" = "xno" ; then
+			extra_optimization_flag="-ffast-math -fstrength-reduce -fexpensive-optimizations -finline-functions"
+			if test "x$bc_use_debug" = "xno" ; then
+				dnl non-debug can omit the frame pointer, debug cannot
+				extra_optimization_flag="$extra_optimization_flag -fomit-frame-pointer"
+			else
+				extra_optimization_flag="$extra_optimization_flag -fno-omit-frame-pointer"
+			fi
+			BC_COMPILER_AND_LINKER_RECOGNIZES([$extra_optimization_flag])
 		fi
-		BC_COMPILER_AND_LINKER_RECOGNIZES([$extra_optimization_flag])
 	fi
 fi
 
