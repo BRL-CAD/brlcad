@@ -35,11 +35,15 @@ noinst_PROGRAMS = \
 endif
 # end of ONLY_BENCHMARK
 
-ALLSRCS = \
+COMMON = \
 	do.c \
-	libfb-dummy.c \
 	main.c \
 	opt.c \
+	worker.c
+
+ALLSRCS = \
+	$(COMMON) \
+	libfb-dummy.c \
 	read-rtlog.c \
 	rt_simple.c \
 	rtexample.c \
@@ -65,30 +69,19 @@ ALLSRCS = \
 	viewscat.c \
 	viewsil.c \
 	viewweight.c \
-	viewxray.c \
-	worker.c
-
-COMMON = \
-	do.c \
-	main.c \
-	opt.c \
-	worker.c
+	viewxray.c
 
 rt_SOURCES = \
 	$(COMMON) \
 	vers.c \
 	view.c
 
-BOTFACESSRC= \
-	do.c \
-	main.c \
-	opt.c \
-	view_bot_faces.c \
-	worker.c
-
-rt_bot_faces_vers.c: $(BOTFACESRC)
+rt_bot_faces_vers.c: view_bot_faces.c
 	@SH@ $(top_srcdir)/sh/vers.sh version "RT BoT Faces" > $@
-rt_bot_faces_SOURCES = 	$(BOTFACESSRC) rt_bot_faces_vers.c
+rt_bot_faces_SOURCES = 	\
+	$(COMMON) \
+	view_bot_faces.c \
+	rt_bot_faces_vers.c
 
 rt_simple_vers.c: rt_simple.c
 	@SH@ $(top_srcdir)/sh/vers.sh version "RT Simple" > $@
