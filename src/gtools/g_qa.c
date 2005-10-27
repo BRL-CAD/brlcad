@@ -550,7 +550,7 @@ parse_args(int ac, char *av[])
 	    {
 		i = 0;
 
-		if ((p = strchr(optarg, '-'))) {
+		if ((p = strchr(optarg, ','))) {
 		    *p++ = '\0';
 		}
 
