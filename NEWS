@@ -10,6 +10,7 @@ entire history of the project is available through CVS.
 --- 2005-11-XX  Release 7.6.3                                      ---
 ----------------------------------------------------------------------
 
+* fixed g_qa tolerance option parsing inconsistency - Sean Morrison
 * improved mged 'tol' command tolerance value checks - Sean Morrison
 * fixed tgc absolute tesselation tolerance issue - Sean Morrison
 * optional build support checks for X11 and OpenGL - Sean Morrison

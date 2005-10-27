@@ -15,8 +15,6 @@ on-going issues.
 Recent Bugs
 -----------
 
-* g_qa's -g option doesn't seem to work for anything except -g #
-
 * g2asc exports attr lines but will not grok them on asc2g
 
 * mged's matrix selection does not modify the correct matrix if there
