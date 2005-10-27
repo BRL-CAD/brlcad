@@ -7,7 +7,6 @@
 
  *	Designed to be a framework for 3d sampling of the geometry volume.
  */
-#include <stdlib.h>
 
 #include "common.h"
 
@@ -17,6 +16,7 @@
 #include <strings.h>
 #endif
 
+#include <stdlib.h>
 #include <errno.h>
 #include <stdio.h>
 #include <sys/types.h>
@@ -24,11 +24,14 @@
 #include <stdio.h>
 #include <math.h>
 #include <limits.h>			/* home of INT_MAX aka MAXINT */
+#include <ctype.h>			/* for isblank */
+
 #include "machine.h"
 #include "bu.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "plot3.h"
+
 
 #define SEM_WORK RT_SEM_LAST
 #define SEM_SHOTS RT_SEM_LAST+1
@@ -195,40 +198,48 @@ struct region_pair {
  */
 
 static struct region_pair gapList = { /* list of gaps */
-    { BU_LIST_HEAD_MAGIC,
-      (struct bu_list *)&gapList,
-      (struct bu_list *)&gapList },
-    "Gaps",
+    {
+	BU_LIST_HEAD_MAGIC,
+	(struct bu_list *)&gapList,
+	(struct bu_list *)&gapList 
+    },
+    { "Gaps" },
     (struct region *)NULL,
     (unsigned long)0,
     (double)0.0,
     {0.0, 0.0, 0.0,}
 };
 static struct region_pair adjAirList = { /* list of adjacent air */
-    { BU_LIST_HEAD_MAGIC,
-      (struct bu_list *)&adjAirList,
-      (struct bu_list *)&adjAirList },
-    (char *)"Adjacent Air",
+    {
+	BU_LIST_HEAD_MAGIC,
+	(struct bu_list *)&adjAirList,
+	(struct bu_list *)&adjAirList
+    },
+    { (char *)"Adjacent Air" },
     (struct region *)NULL,
     (unsigned long)0,
     (double)0.0,
     {0.0, 0.0, 0.0,}
 };
 static struct region_pair exposedAirList = { /* list of exposed air */
-    { BU_LIST_HEAD_MAGIC,
-      (struct bu_list *)&exposedAirList,
-      (struct bu_list *)&exposedAirList },
-    "Exposed Air",
+    {
+	BU_LIST_HEAD_MAGIC,
+	(struct bu_list *)&exposedAirList,
+	(struct bu_list *)&exposedAirList
+    },
+    { "Exposed Air" },
     (struct region *)NULL,
     (unsigned long)0,
     (double)0.0,
     {0.0, 0.0, 0.0,}
 };
 static struct region_pair overlapList = { /* list of overlaps */
-    { BU_LIST_HEAD_MAGIC,
-      (struct bu_list *)&overlapList,
-      (struct bu_list *)&overlapList },
-    "Overlaps",
+    {
+	BU_LIST_HEAD_MAGIC,
+	(struct bu_list *)&overlapList,
+	(struct bu_list *)&overlapList
+    },
+    { "Overlaps" },
     (struct region *)NULL,
     (unsigned long)0,
     (double)0.0,
@@ -376,7 +387,7 @@ int
 read_units_double(double *val, char *buf, const struct cvt_tab *cvt)
 {
     double a;
-    char units_string[256];
+    char units_string[256] = {0};
     int i;
 
 
@@ -392,13 +403,13 @@ read_units_double(double *val, char *buf, const struct cvt_tab *cvt)
     if (i == 2) {
 	*val = a;
 	for ( ; cvt->name[0] != '\0' ; ) {
-	    if (!strcmp(cvt->name, units_string)) {
+	    if (!strncmp(cvt->name, units_string, 256)) {
 		goto found_units;
 	    } else {
 		cvt++;
 	    }
 	}
-	bu_log("Bad units specifier \"%s\" on value \"%s\"\n", units, buf);
+	bu_log("Bad units specifier \"%s\" on value \"%s\"\n", units_string, buf);
 	return 1;
 
     found_units:
@@ -539,11 +550,11 @@ parse_args(int ac, char *av[])
 	    {
 		i = 0;
 
-		if (p = strchr(optarg, '-')) {
+		if ((p = strchr(optarg, '-'))) {
 		    *p++ = '\0';
 		}
 
-		if (read_units_double(&gridSpacing, optarg, &units_tab[0][0])) {
+		if (read_units_double(&gridSpacing, optarg, units_tab[0])) {
 		    bu_log("error parsing grid spacing value \"%s\"\n", optarg);
 		    bu_bomb("");
 		}
@@ -707,7 +718,7 @@ parse_densities_buffer(char *buf, unsigned long len)
 
 	while (isblank(*p)) p++;
 
-	if (q = strchr(p, '\n')) {
+	if ((q = strchr(p, '\n'))) {
 	    *q++ = '\0';
 	} else {
 	    q = last;
@@ -797,7 +808,7 @@ get_densities_from_database(struct rt_i *rtip)
 	return 1;
     }
 
-    if (intern.idb_major_type&DB5_MAJORTYPE_BINARY_MASK == 0) {
+    if ((intern.idb_major_type & DB5_MAJORTYPE_BINARY_MASK) == 0) {
 	return 1;
     }
 
@@ -922,7 +933,9 @@ overlap(struct application *ap,
     }
 
     if (analysis_flags & ANALYSIS_OVERLAPS) {
+#if 0
 	struct region_pair *rp =
+#endif
 	    add_unique_pair(&overlapList, reg1, reg2, depth, ihit);
 
 	if (plot_overlaps) {
@@ -1285,7 +1298,7 @@ plane_worker (int cpu, genptr_t ptr)
 
     u = -1;
 
-    while (v = get_next_row(state)) {
+    while ((v = get_next_row(state))) {
 
 	v_coord = v * gridSpacing;
 	DLOG("  v = %d v_coord=%g\n", v, v_coord);
@@ -1358,7 +1371,9 @@ find_cmd_line_obj(struct per_obj_data *obj_rpt, const char *name)
     char *str = strdup(name);
     char *p;
 
-    if (p=strchr(str, '/')) *p = '\0';
+    if ((p=strchr(str, '/'))) {
+	*p = '\0';
+    }
 
     for (i=0 ; i < num_objects ; i++) {
 	if (!strcmp(obj_rpt[i].o_name, str)) {
@@ -1665,7 +1680,13 @@ view_reports(struct cstate *state)
 static int
 weight_volume_terminate(struct cstate *state)
 {
+    /* Both weight and volume computations rely on this routine to compute values
+     * that are printed in summaries.  Hence, both checks must always be done before
+     * this routine exits.  So we store the status (can we terminate processing?)
+     * in this variable and act on it once both volume and weight computations are done
+     */
     int can_terminate = 1;
+
     double low, hi, val, delta;
 
     if (analysis_flags & ANALYSIS_WEIGHT) {
@@ -1777,25 +1798,12 @@ weight_volume_terminate(struct cstate *state)
  *	Returns:
  *	0	Terminate
  *	1	Continue processing
- *
- *	These return values are potentially confusing when reading the "can_terminate"
- *	variable name
  */
 int
 terminate_check(struct cstate *state)
 {
     struct region *regp;
     unsigned long hits;
-    int obj;
-    int view;
-
-    /* Both weight and volume computations rely on this routine to compute values
-     * that are printed in summaries.  Hence, both checks must always be done before
-     * this routine exits.  So we store the status (can we terminate processing?)
-     * in this variable and act on it once both volume and weight computations are done
-     */
-    int can_terminate;
-
 
     DLOG("terminate_check\n");
     RT_CK_RTI(state->rtip);
