@@ -277,12 +277,12 @@ src/anim/
 	Animation utilities
 src/conv/
 	Geometry converters (most, but not all)
+src/conv/iges/
+	IGES converter
 src/fb/
 	Framebuffer services
 src/fbserv/
 	Framebuffer server
-src/iges/
-	IGES converter
 src/java/
 	Java raytrace interface to librt
 src/lib*
