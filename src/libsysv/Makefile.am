@@ -10,6 +10,7 @@ libsysv_la_SOURCES = \
 	redata.c \
 	regex.c \
 	strchr.c \
+	strdup.c \
 	strsep.c \
 	tcl.c \
 	vers.c
