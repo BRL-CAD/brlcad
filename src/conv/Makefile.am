@@ -1,6 +1,9 @@
 # $Id$
 
+
 if ONLY_BENCHMARK
+
+SUBDIRS =
 
 bin_PROGRAMS = \
 	asc2g \
@@ -16,6 +19,14 @@ EXTRA_DIST =
 	g5-g4.c
 
 else !ONLY_BENCHMARK
+
+SUBDIRS = \
+	comgeom \
+	iges \
+	jack \
+	off \
+	patch \
+	unigraphics
 
 bin_PROGRAMS = \
 	asc-nmg \

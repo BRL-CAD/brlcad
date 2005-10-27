@@ -31,28 +31,22 @@ kitchensink_dirs = \
 	brlman \
 	burst \
 	bwish \
-	comgeom-g \
 	fb \
 	fbed \
 	gtools \
 	halftone \
-	iges \
 	irprep \
-	jack \
 	java \
 	lgt \
 	mged \
 	mk \
 	nirt \
-	off \
-	patch \
 	proc-db \
 	remrt \
 	rttherm \
 	sig \
 	tab \
 	tclscripts \
-	unigraphics \
 	util \
 	vas4 \
 	vdeck

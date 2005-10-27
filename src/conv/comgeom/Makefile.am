@@ -21,6 +21,8 @@ EXTRA_DIST = \
 	$(man_MANS) \
 	try.sh
 
+MAINTAINERCLEANFILES = Makefile.in
+
 include $(top_srcdir)/misc/Makefile.defs
 
 FAST_OBJECTS = \

@@ -2657,16 +2657,19 @@ AC_CONFIG_FILES([
 	src/burst/Makefile
 	src/bwish/Makefile
 	src/canon/Makefile
-	src/comgeom-g/Makefile
 	src/conv/Makefile
+	src/conv/comgeom/Makefile
+	src/conv/iges/Makefile
+	src/conv/jack/Makefile
+	src/conv/off/Makefile
+	src/conv/patch/Makefile
+	src/conv/unigraphics/Makefile
 	src/fb/Makefile
 	src/fbed/Makefile
 	src/fbserv/Makefile
 	src/gtools/Makefile
 	src/halftone/Makefile
-	src/iges/Makefile
 	src/irprep/Makefile
-	src/jack/Makefile
 	src/java/Makefile
 	src/java/mil/Makefile
 	src/java/mil/army/Makefile
@@ -2693,7 +2696,6 @@ AC_CONFIG_FILES([
 	src/mged/dm_old/Makefile
 	src/mk/Makefile
 	src/nirt/Makefile
-	src/off/Makefile
 	src/other/Makefile
 	src/other/URToolkit/Makefile
 	src/other/URToolkit/cnv/Makefile
@@ -2753,7 +2755,6 @@ AC_CONFIG_FILES([
 	src/other/libtkGLX/Makefile
 	src/other/libutahrle/Makefile
 	src/other/libz/Makefile
-	src/patch/Makefile
 	src/proc-db/Makefile
 	src/remrt/Makefile
 	src/rt/Makefile
@@ -2776,7 +2777,6 @@ AC_CONFIG_FILES([
 	src/tclscripts/rtwizard/examples/PictureTypeF/Makefile
 	src/tclscripts/rtwizard/lib/Makefile
 	src/tclscripts/util/Makefile
-	src/unigraphics/Makefile
 	src/util/Makefile
 	src/vas4/Makefile
 	src/vdeck/Makefile

@@ -8,6 +8,8 @@ g_off_LDADD = ${LIBRT}
 off_g_SOURCES = off-g.c
 off_g_LDADD = ${LIBRT} ${WDB}
 
+MAINTAINERCLEANFILES = Makefile.in
+
 include $(top_srcdir)/misc/Makefile.defs
 
 FAST_OBJECTS = \
