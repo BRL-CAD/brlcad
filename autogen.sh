@@ -413,7 +413,6 @@ cd "$PATH_TO_AUTOGEN"
 #####################
 # detect an aux dir #
 #####################
-_aux_dir=.
 _configure_file=/dev/null
 if test -f configure.ac ; then
     _configure_file=configure.ac
@@ -440,18 +439,16 @@ for file in AUTHORS COPYING ChangeLog INSTALL NEWS README ; do
 done
 
 
-############################################
-# protect COPYING & INSTALL from overwrite #
-############################################
-if test -d "${_aux_dir}" ; then
-    for file in COPYING INSTALL ; do
-	if test ! -f $file ; then
-	    continue
-	fi
-	$VERBOSE_ECHO "cp -pf ${file} \"${_aux_dir}/${file}.backup\""
-	cp -pf ${file} "${_aux_dir}/${file}.backup"
-    done
-fi
+########################################################
+# protect COPYING & INSTALL from overwrite by automake #
+########################################################
+for file in COPYING INSTALL ; do
+    if test ! -f $file ; then
+	continue
+    fi
+    $VERBOSE_ECHO "cp -pf ${file} \"${_aux_dir}/${file}.backup\""
+    cp -pf ${file} "${_aux_dir}/${file}.backup"
+done
 
 
 ##################################################
@@ -706,43 +703,30 @@ fi
 # restore COPYING & INSTALL from backup #
 #########################################
 spacer=no
-if test "x$HAVE_SED" = "xyes" ; then
-    for file in COPYING INSTALL ; do
-	curr="$file"
-	if test ! -f "$curr" ; then
-	    continue
-	fi
-	back="${_aux_dir}/${file}.backup"
-	if test ! -f "$back" ; then
-	    continue
-	fi
+for file in COPYING INSTALL ; do
+    curr="$file"
+    if test ! -f "$curr" ; then
+	continue
+    fi
+    back="${_aux_dir}/${file}.backup"
+    if test ! -f "$back" ; then
+	continue
+    fi
 
-	current="`cat $curr`"
-	backup="`cat $back`"
-	if test "x$current" != "x$backup" ; then
-	    current_rev=`grep '$Revision' "$curr" | sed 's/.*[^0-9]\([0-9][0-9]*\.[0-9][0-9]*\)[^0-9].*/\1/' | sed 's/\.//g'`
-	    $VERBOSE_ECHO "Revision of $curr is \"${current_rev}\""
-	    if test "x$current_rev" = "x" ; then
-		current_rev=0
-	    fi
-	    backup_rev=`grep '$Revision' "$back" | sed 's/.*[^0-9]\([0-9][0-9]*\.[0-9][0-9]*\)[^0-9].*/\1/' | sed 's/\.//g'`
-	    $VERBOSE_ECHO "Revision of $back is \"${backup_rev}\""
-	    if test "x$backup_rev" = "x" ; then
-		backup_rev=0
-	    fi
-	    if test "$current_rev" -lt "$backup_rev" ; then
-		if test "x$spacer" = "xno" ; then
-		    $VERBOSE_ECHO
-		    spacer=yes
-		fi
-		# restore the backup
-		$VERBOSE_ECHO "Need to restore $file from backup (automake -f clobbered it)"
-		$VERBOSE_ECHO "cp -pf \"$back\" \"${curr}\""
-		cp -pf "$back" "$curr"
-	    fi
+    # full contents for comparison
+    current="`cat $curr`"
+    backup="`cat $back`"
+    if test "x$current" != "x$backup" ; then
+	if test "x$spacer" = "xno" ; then
+	    $VERBOSE_ECHO
+	    spacer=yes
 	fi
-    done
-fi
+	# restore the backup
+	$VERBOSE_ECHO "Restoring $file from backup (automake -f likely clobbered it)"
+	$VERBOSE_ECHO "cp -pf \"$back\" \"${curr}\""
+	cp -pf "$back" "$curr"
+    fi
+done
 
 
 ################
