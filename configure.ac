@@ -2694,6 +2694,7 @@ AC_CONFIG_FILES([
 	src/libwdb/Makefile
 	src/mged/Makefile
 	src/mged/dm_old/Makefile
+	src/mged/points/Makefile
 	src/mk/Makefile
 	src/nirt/Makefile
 	src/other/Makefile
