@@ -505,6 +505,7 @@ static struct cmdtab cmdtab[] = {
 	{"zoom", cmd_zoom},
 	{"zoomin",	bv_zoomin},
 	{"zoomout",	bv_zoomout},
+	{"parse_points", cmd_parse_points},
 	{0, 0}
 };
 
@@ -3574,6 +3575,21 @@ cmd_shaded_mode(ClientData	clientData,
 	}
 
 	return dgo_shaded_mode_cmd(dgop, interp, argc, argv);
+}
+
+int
+cmd_parse_points(ClientData	clientData,
+		Tcl_Interp	*interp,
+		int     	argc,
+		char    	**argv)
+{
+    if (argc != 2) {
+	bu_log("parse_points only supports a single file name right now\n");
+	bu_log("doing nothing\n");
+	return TCL_ERROR;
+    }
+
+    return parse_point_file(clientData, interp, argc-1, &(argv[1]));
 }
 
 /*
