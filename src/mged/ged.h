@@ -588,11 +588,6 @@ void eraseobjpath(
      char	**argv,
      int	noisy,
      int	all);
-int f_edit(
-	ClientData clientData,
-	Tcl_Interp *interpreter,
-	int	argc,
-	char	**argv);
 int f_erase(
 	ClientData clientData,
 	Tcl_Interp *interpreter,
