@@ -1,7 +1,7 @@
 #include <stdio.h>
 
 #include "./count.h"
-#include "./points.h"
+#include "./points_parse.h"
 
 extern FILE *yyin;
 extern int yyparse (void);

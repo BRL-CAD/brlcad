@@ -41,7 +41,7 @@
 
 typedef struct point_line {
     const char *type;	/* type name */
-    int code;		/* points.h numeric code */
+    int code;		/* points_parse.h numeric code */
     int index;		/* count index */
     int count;		/* how many values are set */
     point_t val;	/* xyz values */
@@ -51,7 +51,7 @@ typedef struct point_line {
 #define YYSTYPE point_line_t
 
 /* must come after point_line_t typedef and YYSTYPE define */
-#include "./points.h"
+#include "./points_parse.h"
 
 
 #ifndef X
