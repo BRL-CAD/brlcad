@@ -14,6 +14,7 @@ libtclcad_la_CFLAGS = -I${top_srcdir}/src/other/libtk/generic
 libtclcad_la_LDFLAGS = -version-info 19:1
 
 libtclcad_la_LIBADD = \
+	${TK} \
 	${BN} \
 	${BU} \
 	${TCL}
