@@ -1199,9 +1199,6 @@ dnl ******************************************
 
 BC_CONFIGURE_STAGE([compiler], [6 of 9])
 
-dnl include the BRL-CAD include directory (required)
-CPPFLAGS="$CPPFLAGS -I\$(top_srcdir)/include"
-
 if test ! "x$bc_auto_flags" = "xno" ; then
 
     dnl try to use -pipe to speed up the compiles
@@ -1867,10 +1864,8 @@ dnl See if libitcl and libitk seem to work, make sure it's not dependant upon li
 itcl_works=no
 AC_MSG_CHECKING(for incrTcl library functionality)
 PRELIBS="$LIBS"
-PRECPPFLAGS="$CPPFLAGS"
 if test "x$itcl_link_works" = "xyes" ; then
 	LIBS="$LIBS $LIBITCL $LIBTCL"
-	CPPFLAGS="$CPPFLAGS -Iinclude"
 fi
 AC_TRY_RUN([
 #include <itcl.h>
@@ -1898,7 +1893,6 @@ int main() {
 )
 if test "x$itcl_link_works" = "xyes" ; then
 	LIBS="$PRELIBS"
-	CPPFLAGS="$PRECPPFLAGS"
 fi
 AC_MSG_RESULT($itcl_works)
 
