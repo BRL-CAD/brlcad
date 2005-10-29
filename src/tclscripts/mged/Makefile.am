@@ -55,6 +55,7 @@ scripties = \
 	pattern.tcl \
 	pattern_gui.tcl \
 	plot.tcl \
+	points.tcl \
 	prj_add.tcl \
 	ps.tcl \
 	qray.tcl \
