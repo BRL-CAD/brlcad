@@ -9,6 +9,12 @@ libpoints_la_SOURCES = \
 	points_scan.l \
 	process.c
 
+BUILT_SOURCES = \
+	points_parse.c \
+	points_parse.h \
+	points_scan.c
+
+DISTCLEANFILES = $(BUILT_SOURCES)
 MAINTAINERCLEANFILES = Makefile.in
 
 include $(top_srcdir)/misc/Makefile.defs
