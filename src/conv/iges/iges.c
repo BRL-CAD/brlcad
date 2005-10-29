@@ -70,8 +70,8 @@ static const char RCSid[] = "$Header$";
 #include "nmg.h"
 #include "rtgeom.h"
 #include "raytrace.h"
-#include "../iges/iges.h"
-#include "../librt/debug.h"
+#include "./iges.h"
+#include "../../librt/debug.h"
 
 /* define defaulted entry for directory entry array */
 #define	DEFAULT	(-99999)

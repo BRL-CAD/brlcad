@@ -35,7 +35,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "./iges_struct.h"
 #include "./iges_extern.h"
-#include "../librt/debug.h"
+#include "../../librt/debug.h"
 
 void
 Do_subfigs()

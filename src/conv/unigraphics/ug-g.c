@@ -64,8 +64,8 @@
 #include <uf_error.h>
 #include <malloc.h>
 
-#include "../unigraphics/conv.h"
-#include "../unigraphics/ug_misc.h"
+#include "./conv.h"
+#include "./ug_misc.h"
 
 #define MAX_LINE_LEN		256
 #define REFSET_NAME_LEN		37

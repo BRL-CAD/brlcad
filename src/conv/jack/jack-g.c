@@ -57,7 +57,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "rtgeom.h"
 #include "wdb.h"
 
-#include "../librt/debug.h"
+#include "../../librt/debug.h"
 
 
 #define		MAX_NUM_PTS	15360

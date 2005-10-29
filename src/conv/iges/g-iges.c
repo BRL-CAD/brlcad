@@ -64,8 +64,8 @@ static const char RCSrev[] = "$Revision$";
 #include "nmg.h"
 #include "raytrace.h"
 #include "rtgeom.h"
-#include "../iges/iges.h"
-#include "../librt/debug.h"
+#include "../../iges/iges.h"
+#include "../../librt/debug.h"
 
 
 extern char	version[];

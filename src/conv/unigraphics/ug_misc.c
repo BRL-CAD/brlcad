@@ -38,9 +38,9 @@
 #include <tcl.h>
 
 
-#include "../unigraphics/log.h"
-#include "../unigraphics/ug_misc.h"
-#include "../unigraphics/conv.h"
+#include "./log.h"
+#include "./ug_misc.h"
+#include "./conv.h"
 
 /* 10501462 10651848-1 */
 
