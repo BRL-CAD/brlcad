@@ -21,19 +21,12 @@
 /** @file chgview.c
  *
  * Functions -
- *	f_center	(DEBUG) force view center
- *	f_vrot		(DEBUG) force view rotation
  *	f_view		(DEBUG) force view size
- *	f_blast		zap the display, then edit anew
- *	f_edit		edit something (add to visible display)
  *	f_evedit	Evaluated edit something (add to visible display)
- *	f_delobj	delete an object or several from the display
  *	f_debug		(DEBUG) print solid info?
  *	f_regdebug	toggle debugging state
  *	cmd_list	list object information
- *	f_zap		zap the display -- everything dropped
  *	f_status	print view info
- *	f_fix		fix display processor after hardware error
  *	eraseobj	Drop an object from the visible list
  *	pr_schain	Print info about visible list
  *	f_ill		illuminate the named object
@@ -51,8 +44,8 @@
  *      mged_svbase     Guts for f_svbase
  *      mged_tran       Guts for f_tran
  *      f_qvrot         Set view from direction vector and twist angle
- *      f_orientation   Set current view direction from a quaternion
- *      f_zoom          zoom view
+ *      cmd_orientation   Set current view direction from a quaternion
+ *      cmd_zoom          zoom view
  *      mged_zoom       guts for f_zoom
  *      abs_zoom        absolute zoom
  *      f_tol           set or display tolerance
