@@ -1,6 +1,8 @@
 # $Id$
 
-SUBDIRS = dm_old
+SUBDIRS = \
+	dm_old \
+	points
 
 if WITH_OPENGL
 OGL_SRCS = dm-ogl.c
@@ -120,6 +122,7 @@ mged_SOURCES = \
 mged_CFLAGS = $(OGL_CFLAGS) $(X11_CFLAGS)
 mged_LINK = $(LIBTOOL) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) -o $@
 mged_LDADD = \
+	$(top_builddir)/src/mged/points/libpoints.la \
 	${TERMIO} \
 	${WDB} \
 	${DM} \
