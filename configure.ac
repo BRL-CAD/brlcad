@@ -987,6 +987,7 @@ AC_CHECK_HEADERS( \
 	pthread.h \
 	pwd.h \
 	rle.h \
+	sched.h \
 	sgtty.h \
 	signal.h \
 	socket.h \
