@@ -11,6 +11,7 @@ entire history of the project is available through CVS.
 ----------------------------------------------------------------------
 
 * fixed conversion bug in the dxf-g converter - John Anderson
+* point parsing/import interface to mged - Sean Morrison, Lee Butler
 * fixed bug in export of NMG primitives - John Anderson
 * fixed itcl configuration issue - Stefan Fiedler, Sean Morrison
 * fixed g_qa tolerance option parsing inconsistency - Sean Morrison
