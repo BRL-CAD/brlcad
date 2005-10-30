@@ -20,7 +20,7 @@ int main(int argc, char *args[]) {
     list[i].b = 3*i;
   }
 
-//printf("rand: %d\n", rand());
+  /* printf("rand: %d\n", rand()); */
   for (i= 0; i < 1024*1024*8; i++) {
 
   ind[0]= rand()%LIST_MAX;

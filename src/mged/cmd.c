@@ -1577,7 +1577,7 @@ f_sync(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 		bu_vls_free(&vls);
 		return TCL_ERROR;
 	}
-// XXXXXXXXXXXXXXX FIX LATER XXXXXXXXXXXXXXXXXx
+/* XXXXXXXXXXXXXXX FIX LATER XXXXXXXXXXXXXXXXX */
 #ifndef _WIN32
 	sync();
 #endif

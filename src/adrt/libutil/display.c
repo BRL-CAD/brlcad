@@ -93,12 +93,12 @@ if(modes == (SDL_Rect **)-1){
 #endif
 
 
-//  util_display_screen = SDL_SetVideoMode(util_display_screen_w, util_display_screen_h, 32, SDL_HWSURFACE | SDL_DOUBLEBUF);
+  /*  util_display_screen = SDL_SetVideoMode(util_display_screen_w, util_display_screen_h, 32, SDL_HWSURFACE | SDL_DOUBLEBUF); */
   util_display_screen = SDL_SetVideoMode(util_display_screen_w, util_display_screen_h, 32, SDL_SWSURFACE);
 
 
   util_display_screen = SDL_SetVideoMode(util_display_screen_w, util_display_screen_h, 32, SDL_HWSURFACE | SDL_DOUBLEBUF);
-//  util_display_screen = SDL_SetVideoMode(util_display_screen_w, util_display_screen_h, 32, SDL_SWSURFACE);
+  /*  util_display_screen = SDL_SetVideoMode(util_display_screen_w, util_display_screen_h, 32, SDL_SWSURFACE); */
 
   util_display_buffer = SDL_CreateRGBSurface(SDL_HWSURFACE, util_display_screen_w, util_display_screen_h, 24,
 #if SDL_BYTEORDER == SDL_LIL_ENDIAN
@@ -154,7 +154,7 @@ void util_display_free() {
 
 
 void util_display_draw(void *frame) {
-//  memcpy(util_display_buffer->pixels, frame, util_display_screen_w * util_display_screen_h * 3);
+/*  memcpy(util_display_buffer->pixels, frame, util_display_screen_w * util_display_screen_h * 3); */
   SDL_BlitSurface(util_display_buffer, &util_display_rect, util_display_screen, &util_display_rect);
 }
 

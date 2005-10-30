@@ -50,7 +50,6 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #include "bu.h"
 #include "bn.h"
 #include "vmath.h"
-//#include "tabdata.h"
 #include "spectrum.h"
 
 

@@ -358,41 +358,42 @@ done:
 	sa.bInheritHandle = TRUE;
 	sa.lpSecurityDescriptor = NULL;
 
-	// Create a pipe for the child process's STDOUT.
+	/* Create a pipe for the child process's STDOUT. */
 	CreatePipe( &pipe_out[0], &pipe_out[1], &sa, 0);
 
-	// Create noninheritable read handle and close the inheritable read handle.
+	/* Create noninheritable read handle and close the inheritable read handle. */
 	DuplicateHandle(GetCurrentProcess(), pipe_out[0],
 			GetCurrentProcess(),  &pipe_outDup ,
 			0,  FALSE,
 			DUPLICATE_SAME_ACCESS);
 	CloseHandle(pipe_out[0]);
 
-	// Create a pipe for the child process's STDERR.
+	/* Create a pipe for the child process's STDERR. */
 	CreatePipe( &pipe_err[0], &pipe_err[1], &sa, 0);
 
-	// Create noninheritable read handle and close the inheritable read handle.
+	/* Create noninheritable read handle and close the inheritable read handle. */
 	DuplicateHandle(GetCurrentProcess(), pipe_err[0],
 			GetCurrentProcess(),  &pipe_errDup ,
 			0,  FALSE,
 			DUPLICATE_SAME_ACCESS);
 	CloseHandle(pipe_err[0]);
 
-	// The steps for redirecting child process's STDIN:
-	//     1.  Save current STDIN, to be restored later.
-	//     2.  Create anonymous pipe to be STDIN for child process.
-	//     3.  Set STDIN of the parent to be the read handle to the
-	//         pipe, so it is inherited by the child process.
-	//     4.  Create a noninheritable duplicate of the write handle,
-	//         and close the inheritable write handle.
+	/* The steps for redirecting child process's STDIN:
+	 *     1.  Save current STDIN, to be restored later.
+	 *     2.  Create anonymous pipe to be STDIN for child process.
+	 *     3.  Set STDIN of the parent to be the read handle to the
+	 *         pipe, so it is inherited by the child process.
+	 *     4.  Create a noninheritable duplicate of the write handle,
+	 *         and close the inheritable write handle.
+	 */
 
-	// Create a pipe for the child process's STDIN.
+	/* Create a pipe for the child process's STDIN. */
 	CreatePipe(&pipe_in[0], &pipe_in[1], &sa, 0);
 
-	// Duplicate the write handle to the pipe so it is not inherited.
+	/* Duplicate the write handle to the pipe so it is not inherited. */
 	DuplicateHandle(GetCurrentProcess(), pipe_in[1],
 			GetCurrentProcess(), &pipe_inDup,
-			0, FALSE,                  // not inherited
+			0, FALSE,                  /* not inherited */
 			DUPLICATE_SAME_ACCESS);
 	CloseHandle(pipe_in[1]);
 

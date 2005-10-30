@@ -266,13 +266,13 @@ static void tie_kdtree_build(tie_t *tie, tie_kdtree_t *node, int depth, TIE_3 mi
   int i, j, n, split, cnt[2];
 
 #if 0
-//  if(depth >= 26)
+  /*  if(depth >= 26) */
     printf("%f %f %f %f %f %f\n", min.v[0], min.v[1], min.v[2], max.v[0], max.v[1], max.v[2]);
 #endif
 
   /* Terminating criteria for KDTREE subdivision */
   if(node_gd->tri_num <= TIE_KDTREE_NODE_MAX || depth > tie->max_depth) {
-//    tie->stat++;
+    /*    tie->stat++; */
     tie->stat += node_gd->tri_num;
 #if 0
     if(node_gd->tri_num > tie->stat)
@@ -591,8 +591,8 @@ static void tie_kdtree_build(tie_t *tie, tie_kdtree_t *node, int depth, TIE_3 mi
   if(side[split][split_slice][0] == node_a && side[split][split_slice][1] == node_b) {
     if(node_gd->tri_num < 10)
       return;
-//      printf("%f %f %f %f %f %f\n", min.v[0], min.v[1], min.v[2], max.v[0], max.v[1], max.v[2]);
-//      printf("moo: %d - %d\n", depth, node_gd->tri_num);
+    /*      printf("%f %f %f %f %f %f\n", min.v[0], min.v[1], min.v[2], max.v[0], max.v[1], max.v[2]); */
+    /*      printf("moo: %d - %d\n", depth, node_gd->tri_num); */
   }
 #endif
 
@@ -883,7 +883,7 @@ void tie_kdtree_prep(tie_t *tie) {
 #endif
 
   /* Grow the head node to avoid floating point fuzz in the building process with edges */
-  math_vec_mul_scalar(delta, delta, 1.0); // XXX
+  math_vec_mul_scalar(delta, delta, 1.0); /* XXX */
   math_vec_sub(tie->min, tie->min, delta);
   math_vec_add(tie->max, tie->max, delta);
 

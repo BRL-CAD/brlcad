@@ -458,8 +458,9 @@ rt_superell_shot(struct soltab *stp, register struct xray *rp, struct applicatio
   }
 
   /* reverse above translation by adding distance to all 'k' values. */
-  //  for( j = 0; j < i; ++j )
-  //    realRoot[j] -= VDOT(newShotPoint, newShotDir);
+  /*  for( j = 0; j < i; ++j )
+      realRoot[j] -= VDOT(newShotPoint, newShotDir);
+  */
 
   /* Here, 'i' is number of points found */
   switch( i )  {
@@ -514,10 +515,10 @@ rt_superell_shot(struct soltab *stp, register struct xray *rp, struct applicatio
   segp->seg_stp = stp;
   segp->seg_in.hit_dist = realRoot[1];
   segp->seg_out.hit_dist = realRoot[0];
-  //  segp->seg_in.hit_surfno = segp->seg_out.hit_surfno = 0;
+  /*  segp->seg_in.hit_surfno = segp->seg_out.hit_surfno = 0; */
   /* Set aside vector for rt_superell_norm() later */
-  //  VJOIN1( segp->seg_in.hit_vpriv, newShotPoint, realRoot[1], newShotDir );
-  //  VJOIN1( segp->seg_out.hit_vpriv, newShotPoint, realRoot[0], newShotDir );
+  /*  VJOIN1( segp->seg_in.hit_vpriv, newShotPoint, realRoot[1], newShotDir ); */
+  /*  VJOIN1( segp->seg_out.hit_vpriv, newShotPoint, realRoot[0], newShotDir ); */
   BU_LIST_INSERT( &(seghead->l), &(segp->l) );
 
   if( i == 2 ) {

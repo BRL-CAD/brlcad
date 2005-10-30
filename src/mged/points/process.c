@@ -274,8 +274,6 @@ int plate(point_line_t **plta, int count) {
     struct bu_vls vls2;
     bu_vls_init(&vls2);
 
-    //    print_array(plta, count);
-
     for (i = 0; i < count; i++) {
 	plt = &(*plta)[i];
 	if (plt && plt->type) {
@@ -306,8 +304,6 @@ int arb(point_line_t **plta, int count) {
     struct bu_vls vls2;
     bu_vls_init(&vls2);
 
-    //    print_array(plta, count);
-
     for (i = 0; i < count; i++) {
 	plt = &(*plta)[i];
 	if (plt && plt->type) {
@@ -336,8 +332,6 @@ int cylinder(point_line_t **plta, int count) {
     bu_vls_init(&vls);
     struct bu_vls vls2;
     bu_vls_init(&vls2);
-
-    //    print_array(plta, count);
 
     for (i = 0; i < count; i++) {
 	plt = &(*plta)[i];
@@ -368,8 +362,6 @@ int ppipe(point_line_t **plta, int count) {
     struct bu_vls vls2;
     bu_vls_init(&vls2);
 
-    //    print_array(plta, count);
-
     for (i = 0; i < count; i++) {
 	plt = &(*plta)[i];
 	if (plt && plt->type) {
@@ -398,8 +390,6 @@ int points(point_line_t **plta, int count) {
     bu_vls_init(&vls);
     struct bu_vls vls2;
     bu_vls_init(&vls2);
-
-    //    print_array(plta, count);
 
     for (i = 0; i < count; i++) {
 	plt = &(*plta)[i];

@@ -52,7 +52,8 @@ static const char RCSpipe[] = "@(#)$Header$ (BRL)";
 #include <math.h>
 
 #ifdef HAVE_FLOAT_H
-#  include <float.h> //isnan function
+   /* for isnan() function */
+#  include <float.h>
 #endif
 
 #include "tcl.h"

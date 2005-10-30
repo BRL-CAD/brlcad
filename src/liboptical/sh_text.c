@@ -702,7 +702,7 @@ txt_setup( register struct region *rp, struct bu_vls *matparm, char **dpp, const
 	if (tp->tx_trans_valid ) rp->reg_transmit = 1;
 	BU_CK_VLS(&tp->tx_name);
 	if (bu_vls_strlen(&tp->tx_name)<=0) return -1;
-	/*	!?! if (tp->tx_name[0] == '\0' )  return -1;	*//* FAIL, no file */
+	/*	!?! if (tp->tx_name[0] == '\0' )  return -1;	*/ /* FAIL, no file */
 
 	if (strcmp( mfp->mf_name, "bwtexture" ) == 0 ) pixelbytes = 1;
 

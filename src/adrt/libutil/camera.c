@@ -348,7 +348,7 @@ void* util_camera_render_thread(void *ptr) {
 
 
   res_ind = 0;
-//  for(i = td->work.orig_y; i < td->work.orig_y + td->work.size_y; i++) {	/* row, vertical */
+  /*  for(i = td->work.orig_y; i < td->work.orig_y + td->work.size_y; i++) { */	/* row, vertical */
   while(1) {
     /* Determine if this scanline should be computed by this thread */
     pthread_mutex_lock(&td->mut);
