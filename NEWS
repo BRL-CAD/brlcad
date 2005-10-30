@@ -19,8 +19,10 @@ entire history of the project is available through CVS.
 * optional build support checks for X11 and OpenGL - Sean Morrison
 * improved Windows build support - Bob Parker, Daniel Ro§berg
 * isst observer 2x screen magnification - Justin Shumaker
+* added los and material name support to librtserver - John Anderson
 * improved 64bit support for ADRT - Justin Shumaker
 * updated manual page documentation - Sean Morrison
+* added support for text handling to dxf-g - John Anderson
 
 
 ----------------------------------------------------------------------
