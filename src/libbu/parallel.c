@@ -152,9 +152,13 @@ static const char RCSparallel[] = "@(#)$Header$ (ARL)";
 #  include <sys/wait.h>
 #endif
 
-#ifdef HAVE_SYS_SCHED_H
-#  include <sys/sched.h>
+#ifdef HAVE_SCHED_H
+#  include <sched.h>
+#else
+#  ifdef HAVE_SYS_SCHED_H
+#    include <sys/sched.h>
 static struct sched_param bu_param;
+#  endif
 #endif
 
 #ifdef ardent
