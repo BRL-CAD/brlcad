@@ -2614,13 +2614,14 @@ rt_nmg_export5(
 			eg = (struct edge_g_cnurb *)ptrs[i];
 			ecnt[i].first_fastf_relpos =
 			    kind_counts[NMG_KIND_DOUBLE_ARRAY];
-			if (eg->order == 0) break;
-			kind_counts[NMG_KIND_DOUBLE_ARRAY] += 2;
-			ndouble = eg->k.k_size +eg->c_size *
-			    RT_NURB_EXTRACT_COORDS(eg->pt_type);
-			double_count += ndouble;
-			ecnt[i].byte_offset = fastf_byte_count;
-			fastf_byte_count += 2*(4+4) +  8*ndouble;
+			if (eg->order != 0) {
+			    kind_counts[NMG_KIND_DOUBLE_ARRAY] += 2;
+			    ndouble = eg->k.k_size +eg->c_size *
+				RT_NURB_EXTRACT_COORDS(eg->pt_type);
+			    double_count += ndouble;
+			    ecnt[i].byte_offset = fastf_byte_count;
+			    fastf_byte_count += 2*(4+4) +  8*ndouble;
+			}
 		}
 	}
 #if 1	/* Compacting wanted */
