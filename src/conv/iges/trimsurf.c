@@ -1595,8 +1595,9 @@ Convtrimsurfs()
 	if( RT_G_DEBUG & DEBUG_MEM_FULL )
 		bu_mem_barriercheck();
 
-
-	nmg_km( m );
+	if( !convsurf ) {
+	    nmg_km( m );
+	}
 
 	if( RT_G_DEBUG & DEBUG_MEM_FULL )
 		bu_mem_barriercheck();
