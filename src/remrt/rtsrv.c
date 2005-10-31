@@ -841,9 +841,12 @@ out:
 
 #if (defined(BSD) && !defined(_sgi3d)) || defined(mips) || defined(CRAY2)
 /*
- *  			R T _ L O G
+ *  			B U _ L O G
  *
- *  Log an RT library event using the Berkeley _doprnt() routine.
+ *  Log a library event using the Berkeley _doprnt() routine.
+ *
+ *  Replacement for the LIBBU routine of the same name for
+ *  across-network logging.
  */
 /* VARARGS */
 void
