@@ -131,33 +131,6 @@ va_dcl
 	va_end( ap );
 	}
 
-/*
- *		F B _ L O G
- *
- *  Log an FB library event
- */
-/*VARARGS*/
-void
-#if __STDC__
-fb_log(char *fmt, ...)
-#else
-fb_log( va_alist )
-va_dcl
-#endif
-	{
-#if ! __STDC__
-	register char *fmt;
-#endif
-	va_list ap;
-#if __STDC__
-	va_start( ap, fmt );
-#else
-	va_start( ap );
-	fmt = va_arg( ap, char * );
-#endif
-	(void) brst_log( fmt, ap );
-	va_end( ap );
-	}
 
 /*
  * Local Variables:
