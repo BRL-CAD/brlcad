@@ -247,13 +247,14 @@ main(int argc, char **argv)
 		/* Go into our own process group */
 		n = getpid();
 
-		/* SysV uses setpgrp with no args and it can't fail */
-#if (defined(__STDC__) || defined(SYSV)) && !defined(_BSD_COMPAT)
+#ifdef HAVE_SETPGID
 		if( setpgid( n, n ) < 0 )
 			perror("setpgid");
 #else
-		if( setpgrp( n, n ) < 0 )
-			perror("setpgrp");
+		/* SysV uses setpgrp with no args and it can't fail,
+		 * obsoleted by setpgid.
+		 */
+		setpgrp();
 #endif
 
 		/* Deal with CPU limits on "those kinds" of systems */
