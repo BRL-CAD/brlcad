@@ -75,20 +75,34 @@ const struct db_tree_state	rt_initial_tree_state = {
 	{
 #endif
 		/* struct mater_info ts_mater */
-		{1.0, 1.0, 1.0},	/* color, RGB */
+#if __STDC__
+		{
+#endif
+		    1.0, 1.0, 1.0
+#if __STDC__
+		}
+#endif
+		,	/* color, RGB */
 		-1.0,			/* Temperature */
 		0,			/* ma_color_valid=0 --> use default */
 		DB_INH_LOWER,		/* color inherit */
 		DB_INH_LOWER,		/* mater inherit */
-		(char *)0		/* shader */
+		NULL			/* shader */
 #if __STDC__
 	}
 #endif
 	,
-	{1.0, 0.0, 0.0, 0.0,
-	0.0, 1.0, 0.0, 0.0,
-	0.0, 0.0, 1.0, 0.0,
-	0.0, 0.0, 0.0, 1.0},
+#if __STDC__
+	{
+#endif
+	    1.0, 0.0, 0.0, 0.0,
+	    0.0, 1.0, 0.0, 0.0,
+	    0.0, 0.0, 1.0, 0.0,
+	    0.0, 0.0, 0.0, 1.0
+#if __STDC__
+	}
+#endif
+	,
 	REGION_NON_FASTGEN,		/* ts_is_fastgen */
 #if __STDC__
 	{
