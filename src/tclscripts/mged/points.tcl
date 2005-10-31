@@ -2,6 +2,7 @@
 set sketch_number 0
 set pipe_number 0
 set arb_number 0
+set sphere_number 0
 
 proc mat_print {str m} {
     puts "\n$str"
@@ -12,6 +13,24 @@ proc mat_print {str m} {
 	puts ""
     }
 }
+
+proc sphere {pts} {
+  global sphere_number
+  puts "sphere"
+
+  while {[catch {db get point$sphere_number} v] == 0} {
+    incr sphere_number
+  }
+
+
+  set last [expr [llength $pts] - 1]
+  for {set i 0} {$i < $last} {incr i 3} {
+    eval "put point$sphere_number sph V { [lindex $pts $i] [lindex $pts [expr $i + 1]] [lindex $pts [expr $i + 2]] } A {.10 0.0 0.0} B {0.0 .10 0.0} C {0.0 0.0 .10}"
+    incr sphere_number
+  }
+
+  return
+}  
 
 
 #
