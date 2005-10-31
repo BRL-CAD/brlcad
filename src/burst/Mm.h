@@ -27,20 +27,24 @@
 
 	$Header$ (BRL)
  */
+#ifndef __MM_H__
+#define __MM_H__
+
 /* Emulate MUVES Mm package using malloc. */
-#if __STDC__
+#include "common.h"
+
 #include <stdlib.h>
 #include <string.h>
-#else
-extern char	*malloc();
-extern char	*strcpy();
-#endif
+
+
 #define MmAllo( typ )		(typ *) malloc( sizeof(typ) )
 #define MmFree( typ, ptr )	free( (char *) ptr )
 #define MmVAllo( ct, typ )	(typ *) malloc( (ct)*sizeof(typ) )
 #define MmVFree( ct, typ, ptr )	free( (char *) ptr )
 #define MmStrDup( str )		strcpy( malloc( strlen(str)+1 ), str )
 #define MmStrFree( str )	free( str )
+
+#endif  /* __MM_H__ */
 
 /*
  * Local Variables:
