@@ -34,9 +34,7 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 
 #include "common.h"
 
-
 #include <stdio.h>
-
 #ifdef HAVE_STRING_H
 #include <string.h>
 #else
@@ -114,6 +112,7 @@ FileMatchPIX(Tcl_Channel chan, const char *fileName, Tcl_Obj *format, int *width
        use those.  Otherwise, guess from the file size. */
     char *formatString;
     int len;
+    unsigned long int width, height;
 
     if (format == NULL)
 	return 0;
@@ -125,9 +124,14 @@ FileMatchPIX(Tcl_Channel chan, const char *fileName, Tcl_Obj *format, int *width
 	strstr(formatString, "PIX") == NULL)
 	return 0;
 
-    if (bn_common_name_size(widthPtr, heightPtr, formatString) <= 0)
-	if (bn_common_file_size(widthPtr, heightPtr, fileName, 3) <= 0)
+    if (bn_common_name_size(&width, &height, formatString) <= 0) {
+	if (bn_common_file_size(&width, &height, fileName, 3) <= 0) {
 	    return 0;
+	}
+    }
+
+    *widthPtr = (int)width;
+    *heightPtr = (int)height;
 
     return 1;
 }
@@ -166,7 +170,7 @@ FileReadPIX(Tcl_Interp *interp, Tcl_Channel chan, const char *fileName, Tcl_Obj 
                    		/* Coordinates of top-left pixel to be used
 				 * in image being read. */
 {
-    int fileWidth, fileHeight;
+    unsigned long int fileWidth, fileHeight;
     int nBytes, h, count;
     unsigned char *pixelPtr;
     Tk_PhotoImageBlock block;
