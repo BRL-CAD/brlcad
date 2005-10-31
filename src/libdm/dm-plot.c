@@ -163,7 +163,7 @@ plot_open(Tcl_Interp *interp, int argc, char **argv)
 	dmp->dm_vars.priv_vars = (genptr_t)bu_calloc(1, sizeof(struct plot_vars), "plot_open: plot_vars");
 	BU_GETSTRUCT(dmp->dm_vars.priv_vars, plot_vars);
 	if (dmp->dm_vars.priv_vars == (genptr_t)NULL) {
-		bu_free(dmp, "plot_open: dmp");
+		bu_free((genptr_t)dmp, "plot_open: dmp");
 		return DM_NULL;
 	}
 
@@ -292,8 +292,8 @@ plot_close(struct dm *dmp)
 		fclose(((struct plot_vars *)dmp->dm_vars.priv_vars)->up_fp);
 
 	bu_vls_free(&dmp->dm_pathName);
-	bu_free(dmp->dm_vars.priv_vars, "plot_close: plot_vars");
-	bu_free(dmp, "plot_close: dmp");
+	bu_free((genptr_t)dmp->dm_vars.priv_vars, "plot_close: plot_vars");
+	bu_free((genptr_t)dmp, "plot_close: dmp");
 	return TCL_OK;
 }
 

@@ -245,14 +245,14 @@ X_open(Tcl_Interp *interp, int argc, char **argv)
 
   dmp->dm_vars.pub_vars = (genptr_t)bu_calloc(1, sizeof(struct dm_xvars), "X_open: dm_xvars");
   if(dmp->dm_vars.pub_vars == (genptr_t)NULL){
-    bu_free(dmp, "X_open: dmp");
+    bu_free((genptr_t)dmp, "X_open: dmp");
     return DM_NULL;
   }
 
   dmp->dm_vars.priv_vars = (genptr_t)bu_calloc(1, sizeof(struct x_vars), "X_open: x_vars");
   if(dmp->dm_vars.priv_vars == (genptr_t)NULL){
-    bu_free(dmp->dm_vars.pub_vars, "X_open: dmp->dm_vars.pub_vars");
-    bu_free(dmp, "X_open: dmp");
+    bu_free((genptr_t)dmp->dm_vars.pub_vars, "X_open: dmp->dm_vars.pub_vars");
+    bu_free((genptr_t)dmp, "X_open: dmp");
     return DM_NULL;
   }
 
@@ -547,9 +547,9 @@ X_close(struct dm *dmp)
   bu_vls_free(&dmp->dm_pathName);
   bu_vls_free(&dmp->dm_tkName);
   bu_vls_free(&dmp->dm_dName);
-  bu_free(dmp->dm_vars.priv_vars, "X_close: x_vars");
-  bu_free(dmp->dm_vars.pub_vars, "X_close: dm_xvars");
-  bu_free(dmp, "X_close: dmp");
+  bu_free((genptr_t)dmp->dm_vars.priv_vars, "X_close: x_vars");
+  bu_free((genptr_t)dmp->dm_vars.pub_vars, "X_close: dm_xvars");
+  bu_free((genptr_t)dmp, "X_close: dmp");
 
   return TCL_OK;
 }
