@@ -43,6 +43,9 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include <signal.h>
 #include <fcntl.h>
 #include <errno.h>
+#ifdef HAVE_UNISTD_H
+#  include <unistd.h>
+#endif
 
 #include "machine.h"
 #include "fb.h"
