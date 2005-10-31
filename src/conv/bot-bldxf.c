@@ -23,8 +23,11 @@
  *	Options
  *	h	help
  */
+#include "common.h"
+
 #include <stdio.h>
 #include <string.h>
+
 #include "machine.h"
 #include "vmath.h"
 #include "nmg.h"
@@ -32,7 +35,9 @@
 #include "bu.h"
 #include "raytrace.h"
 #include "wdb.h"
+
 #include "../librt/debug.h"
+
 
 /* declarations to support use of getopt() system call */
 char *options = "hd:";
@@ -66,7 +71,6 @@ void usage(char *s)
 int parse_args(int ac, char *av[])
 {
     int  c;
-    char *strrchr();
 
     if (  ! (progname=strrchr(*av, '/'))  )
 	progname = *av;
