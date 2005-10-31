@@ -87,7 +87,14 @@ struct db_tree_state	mged_initial_tree_state = {
 	{
 #endif
 		/* struct mater_info ts_mater */
-		{1.0, 0.0, 0.0},		/* color, RGB */
+#if __STDC__
+		{
+#endif
+		    1.0, 0.0, 0.0
+#if __STDC__
+		}
+#endif
+		,		/* color, RGB */
 		-1.0,			/* Temperature */
 		0,			/* ma_color_valid=0 --> use default */
 		0,			/* color inherit */
@@ -97,10 +104,17 @@ struct db_tree_state	mged_initial_tree_state = {
 	}
 #endif
 	,
-	{1.0, 0.0, 0.0, 0.0,
-	0.0, 1.0, 0.0, 0.0,
-	0.0, 0.0, 1.0, 0.0,
-	0.0, 0.0, 0.0, 1.0},
+#if __STDC__
+	{
+#endif
+	    1.0, 0.0, 0.0, 0.0,
+	    0.0, 1.0, 0.0, 0.0,
+	    0.0, 0.0, 1.0, 0.0,
+	    0.0, 0.0, 0.0, 1.0
+#if __STDC__
+	}
+#endif
+	,
 	REGION_NON_FASTGEN,		/* ts_is_fastgen */
 #if __STDC__
 	{
