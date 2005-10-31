@@ -2,6 +2,7 @@
 
 #include "common.h"
 
+IDI_ICON1 ICON DISCARDABLE "../../../doc/html/manuals/small-eagleCAD.ico"
 
 LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 
