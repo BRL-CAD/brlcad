@@ -48,6 +48,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #else
 #  include <strings.h>
 #endif
+
 #include "machine.h"
 #include "bu.h"
 #include "vmath.h"
@@ -55,6 +56,8 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "nmg.h"
 #include "raytrace.h"
 #include "rtgeom.h"		/* for ID_POLY special support */
+#include "db.h"
+
 #include "./ged.h"
 #include "./mged_solid.h"
 #include "./mged_dm.h"

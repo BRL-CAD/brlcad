@@ -64,6 +64,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "raytrace.h"
 #include "nurb.h"
 #include "wdb.h"
+#include "db.h"
 
 #include "./ged.h"
 #include "./mged_solid.h"

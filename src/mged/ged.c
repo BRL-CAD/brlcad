@@ -93,6 +93,8 @@ as represented by the U.S. Army Research Laboratory.  All rights reserved.";
 #include "raytrace.h"
 #include "mater.h"
 #include "libtermio.h"
+#include "db.h"
+
 #include "./ged.h"
 #include "./titles.h"
 #include "./mged_solid.h"
@@ -351,8 +353,6 @@ main(int argc, char **argv)
 	(void)signal( SIGINT, cur_sigint );		/* restore */
 
 	if( !classic_mged && !run_in_foreground ) {
-		int buffer[2] = {0};
-
 		fprintf( stdout, "Initializing and backgrounding, please wait..." );
 		fflush( stdout );
 

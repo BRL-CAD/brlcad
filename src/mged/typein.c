@@ -83,6 +83,8 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "rtgeom.h"
 #include "nurb.h"
 #include "wdb.h"
+#include "db.h"
+
 #include "./ged.h"
 #include "./mged_dm.h"
 #include "./cmd.h"

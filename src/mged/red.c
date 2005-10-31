@@ -45,14 +45,19 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #  include <strings.h>
 #endif
 #include <errno.h>
+#include <ctype.h>
+#ifdef HAVE_UNISTD_H
+#  include <unistd.h>
+#endif
 
 #include "machine.h"
 #include "bu.h"
 #include "vmath.h"
 #include "raytrace.h"
+#include "db.h"
+
 #include "./ged.h"
 #include "./sedit.h"
-#include <ctype.h>
 
 extern int cmd_name(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 

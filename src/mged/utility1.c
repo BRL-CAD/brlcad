@@ -59,6 +59,9 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #ifdef HAVE_UNISTD_H
 #  include <unistd.h>
 #endif
+#ifdef HAVE_FCNTL_H
+#  include <fcntl.h>
+#endif
 
 #include "machine.h"
 #include "bu.h"
@@ -66,6 +69,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "bn.h"
 #include "nmg.h"
 #include "raytrace.h"
+#include "db.h"
 
 #include "./ged.h"
 #include "./sedit.h"

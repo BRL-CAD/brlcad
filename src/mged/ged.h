@@ -96,34 +96,9 @@ struct rt_nurb_internal {
 };
 #endif
 
-/*	Stuff needed from db.h */
-#ifndef NAMESIZE
-#  define NAMESIZE 16
-#endif
-
-#define NAMEMOVE(from,to)       (void)strncpy(to, from, NAMESIZE)
-
 #define MGED_DB_NAME "db"
 #define MGED_INMEM_NAME ".inmem"
 #define MGED_DG_NAME "dg"
-
-#define ID_NO_UNIT	0		/* unspecified */
-#define ID_MM_UNIT	1		/* millimeters (preferred) */
-#define ID_UM_UNIT	2		/* micrometers */
-#define ID_CM_UNIT	3		/* centimeters */
-#define ID_M_UNIT	4		/* meters */
-#define ID_KM_UNIT	5		/* kilometers */
-#define ID_IN_UNIT	6		/* inches */
-#define ID_FT_UNIT	7		/* feet */
-#define ID_YD_UNIT	8		/* yards */
-#define ID_MI_UNIT	9		/* miles */
-
-#define ARB4	4	/* tetrahedron */
-#define ARB5	5	/* pyramid */
-#define ARB6	6	/* extruded triangle */
-#define ARB7	7	/* weird 7-vertex shape */
-#define ARB8	8	/* hexahedron */
-
 
 #if USE_PROTOTYPES
 #	define	MGED_EXTERN(type_and_name,args)	extern type_and_name args

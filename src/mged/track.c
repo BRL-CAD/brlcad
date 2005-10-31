@@ -35,15 +35,13 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 
 #include "common.h"
 
-
-
 #include <signal.h>
 #include <stdio.h>
 #include <math.h>
 #ifdef HAVE_STRING_H
-#include <string.h>
+#  include <string.h>
 #else
-#include <strings.h>
+#  include <strings.h>
 #endif
 
 #include "machine.h"
@@ -51,6 +49,8 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 #include "raytrace.h"
 #include "rtgeom.h"
 #include "wdb.h"
+#include "db.h"
+
 #include "./ged.h"
 #include "./mged_dm.h"
 #include "./cmd.h"

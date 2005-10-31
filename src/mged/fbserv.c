@@ -45,6 +45,9 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 
 #include <sys/socket.h>
 #include <netinet/in.h>		/* For htonl(), etc */
+#ifdef HAVE_UNISTD_H
+#  include <unistd.h>
+#endif
 
 #include "tcl.h"
 #include "machine.h"
