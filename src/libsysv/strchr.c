@@ -40,6 +40,9 @@
 
 #include "common.h"
 
+/* quell empty-compilation unit warnings */
+static const int unused = 0;
+
 /*
  * defined for folks that don't have a system strchr()
  */

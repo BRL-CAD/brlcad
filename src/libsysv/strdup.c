@@ -33,6 +33,10 @@
 
 #include "common.h"
 
+
+/* quell empty-compilation unit warnings */
+static const int unused = 0;
+
 #ifndef HAVE_STRDUP
 
 /* for malloc */

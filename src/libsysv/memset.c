@@ -15,6 +15,9 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "common.h"
 
+/* quell empty-compilation unit warnings */
+static const int unused = 0;
+
 /*
  * defined for the folks that don't seem to have a system memset()
  */

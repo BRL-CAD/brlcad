@@ -36,6 +36,9 @@
 #include "common.h"
 
 
+/* quell empty-compilation unit warnings */
+static const int unused = 0;
+
 /*
  *  This BSD version of strsep() is made available to systems that
  *  don't have their own.
