@@ -41,8 +41,6 @@ static const char RCStree[] = "@(#)$Header$ (BRL)";
 
 #include "common.h"
 
-
-
 #include <stdio.h>
 #ifdef HAVE_STRING_H
 #include <string.h>
@@ -76,7 +74,7 @@ const struct bu_structparse rt_nul_parse[] = {
 			struct rt_piecestate *psp, \
 			struct rt_piecelist *plp, \
 			double dist_corr, \
-			register struct xray *rp, \
+			struct xray *rp, \
 			struct application *ap, \
 			struct seg *seghead )); \
 	BU_EXTERN(void rt_##name##_piece_hitsegs, (\
@@ -144,7 +142,8 @@ const struct bu_structparse rt_nul_parse[] = {
 	BU_EXTERN(int rt_/**/name/**/_piece_shot, (\
 			struct rt_piecestate *psp, \
 			struct rt_piecelist *plp, \
-			struct soltab *stp, struct xray *rp, \
+			double dist_corr, \
+			struct xray *rp, \
 			struct application *ap, \
 			struct seg *seghead )); \
 	BU_EXTERN(void rt_/**/name/**/_piece_hitsegs, (\
@@ -176,15 +175,18 @@ const struct bu_structparse rt_nul_parse[] = {
 			struct model *m, struct rt_db_internal *ip, \
 			const struct bn_tol *tol)); \
 	BU_EXTERN(int rt_/**/name/**/_import5, (struct rt_db_internal *ip, \
-			const struct bu_external *ep, const mat_t mat, const struct db_i *dbip, const int minor_type )); \
+			const struct bu_external *ep, const mat_t mat, \
+			const struct db_i *dbip, struct resource *resp, const int minor_type )); \
 	BU_EXTERN(int rt_/**/name/**/_export5, (struct bu_external *ep, \
 			const struct rt_db_internal *ip, \
-			double local2mm, const struct db_i *dbip, const int minor_type )); \
+			double local2mm, const struct db_i *dbip, struct resource *resp, \
+			const int minor_type )); \
 	BU_EXTERN(int rt_/**/name/**/_import, (struct rt_db_internal *ip, \
-			const struct bu_external *ep, const mat_t mat, const struct db_i *dbip )); \
+			const struct bu_external *ep, const mat_t mat, \
+			const struct db_i *dbip, struct resource *resp )); \
 	BU_EXTERN(int rt_/**/name/**/_export, (struct bu_external *ep, \
 			const struct rt_db_internal *ip, \
-			double local2mm, const struct db_i *dbip )); \
+			double local2mm, const struct db_i *dbip, struct resource *resp )); \
 	BU_EXTERN(void rt_/**/name/**/_ifree, (struct rt_db_internal *ip, \
 			struct resource *resp)); \
 	BU_EXTERN(int rt_/**/name/**/_describe, (struct bu_vls *str, \
