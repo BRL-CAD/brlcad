@@ -121,7 +121,7 @@ int		InitTermCap(FILE *fp);
 /* This function must be accessible to the termcap library, but will
 	not necessarily be needed by the application.
  */
-int		PutChr(char c);
+int		PutChr(int c);
 
 /* These functions output terminal control strings to the file stream
 	specified by the InitTermCap() call which must precede them.
@@ -182,7 +182,7 @@ InitTermCap(FILE *fp)
 	LoadTP();
 	LoadTCS();
 
-	tputs( TI, 1, (void *)PutChr );	/* Initialize terminal.			*/
+	tputs( TI, 1, PutChr );	/* Initialize terminal.			*/
 	return	1;		/* All is well.				*/
 	}
 
@@ -242,7 +242,7 @@ HmCursor(void)
 {
 	if( HO != NULL )
 		{
-		tputs( HO, 1, (void *)PutChr );
+		tputs( HO, 1, PutChr );
 		return	1;
 		}
 	else
@@ -257,7 +257,7 @@ ScrollUp(void)
 {
 	if( SF != NULL )
 		{
-		tputs( SF, 1, (void *)PutChr );
+		tputs( SF, 1, PutChr );
 		return	1;
 		}
 	else
@@ -272,7 +272,7 @@ ScrollDn(void)
 {
 	if( SR != NULL )
 		{
-		tputs( SR, 1, (void *)PutChr );
+		tputs( SR, 1, PutChr );
 		return	1;
 		}
 	else
@@ -287,7 +287,7 @@ DeleteLn(void)
 {
 	if( DL != NULL )
 		{
-		tputs( DL, 1, (void *)PutChr );
+		tputs( DL, 1, PutChr );
 		return	1;
 		}
 	else
@@ -303,7 +303,7 @@ MvCursor(int x, int y)
 	--x; --y; /* Tgoto() adds 1 to each coordinate!?		*/
 	if( CM != NULL )
 		{
-		tputs( tgoto( CM, x, y ), 1, (void *)PutChr );
+		tputs( tgoto( CM, x, y ), 1, PutChr );
 		return	1;
 		}
 	else
@@ -318,7 +318,7 @@ ClrEOL(void)
 {
 	if( CE != NULL )
 		{
-		tputs( CE, 1, (void *)PutChr );
+		tputs( CE, 1, PutChr );
 		return	1;
 		}
 	else
@@ -333,7 +333,7 @@ ClrText(void)
 {
 	if( CL != NULL )
 		{
-		tputs( CL, LI, (void *)PutChr );
+		tputs( CL, LI, PutChr );
 		return	1;
 		}
 	else
@@ -348,7 +348,7 @@ SetScrlReg(int top, int btm)
 {
 	if( CS != NULL )
 		{
-		tputs( tgoto( CS, btm-1, top-1 ), 1, (void *)PutChr );
+		tputs( tgoto( CS, btm-1, top-1 ), 1, PutChr );
 		return	1;
 		}
 	else
@@ -363,7 +363,7 @@ ResetScrlReg(void)
 {
 	if( CS != NULL )
 		{
-		tputs( tgoto( CS, LI-1, 0 ), 1, (void *)PutChr );
+		tputs( tgoto( CS, LI-1, 0 ), 1, PutChr );
 		return	1;
 		}
 	else
@@ -378,7 +378,7 @@ ClrStandout(void)
 {
 	if( SE != NULL )
 		{
-		tputs( SE, 1, (void *)PutChr );
+		tputs( SE, 1, PutChr );
 		return	1;
 		}
 	else
@@ -393,7 +393,7 @@ SetStandout(void)
 {
 	if( SO != NULL )
 		{
-		tputs( SO, 1, (void *)PutChr );
+		tputs( SO, 1, PutChr );
 		return	1;
 		}
 	else
@@ -402,7 +402,7 @@ SetStandout(void)
 
 /*	P u t C h r ( )							*/
 int
-PutChr(char c)
+PutChr(int c)
 {
 	return	putc( c, out_fp );
 	}
