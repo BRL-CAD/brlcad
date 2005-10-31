@@ -4468,7 +4468,7 @@ nmg_split_loops_into_faces(long int *magic_p, const struct bn_tol *tol)
 	sl_state.flags = (long *)bu_calloc( m->maxindex*2 , sizeof( long ) , "nmg_split_loops_into_faces: flags" );
 	sl_state.tol = tol;
 
-	nmg_visit( magic_p , &htab , (genptr_t *)&sl_state );
+	nmg_visit( magic_p , &htab , (genptr_t)&sl_state );
 
 	count = sl_state.split;
 
@@ -5125,7 +5125,7 @@ nmg_unbreak_region_edges(long int *magic_p)
 	ub_state.unbroken = 0;
 	ub_state.flags = (long *)bu_calloc( m->maxindex*2 , sizeof( long ) , "nmg_unbreak_region_edges: flags" );
 
-	nmg_visit( magic_p , &htab , (genptr_t *)&ub_state );
+	nmg_visit( magic_p , &htab , (genptr_t)&ub_state );
 
 	count = ub_state.unbroken;
 

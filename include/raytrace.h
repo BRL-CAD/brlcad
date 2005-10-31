@@ -5940,51 +5940,51 @@ RT_EXPORT BU_EXTERN(struct edge_g_lseg	*nmg_pick_best_edge_g,
 RT_EXPORT BU_EXTERN(void nmg_visit_vertex,
 		    (struct vertex			*v,
 		     const struct nmg_visit_handlers	*htab,
-		     genptr_t			*state));
+		     genptr_t			state));
 RT_EXPORT BU_EXTERN(void nmg_visit_vertexuse,
 		    (struct vertexuse		*vu,
 		     const struct nmg_visit_handlers	*htab,
-		     genptr_t			*state));
+		     genptr_t			state));
 RT_EXPORT BU_EXTERN(void nmg_visit_edge,
 		    (struct edge			*e,
 		     const struct nmg_visit_handlers	*htab,
-		     genptr_t			*state));
+		     genptr_t			state));
 RT_EXPORT BU_EXTERN(void nmg_visit_edgeuse,
 		    (struct edgeuse			*eu,
 		     const struct nmg_visit_handlers	*htab,
-		     genptr_t			*state));
+		     genptr_t			state));
 RT_EXPORT BU_EXTERN(void nmg_visit_loop,
 		    (struct loop			*l,
 		     const struct nmg_visit_handlers	*htab,
-		     genptr_t			*state));
+		     genptr_t			state));
 RT_EXPORT BU_EXTERN(void nmg_visit_loopuse,
 		    (struct loopuse			*lu,
 		     const struct nmg_visit_handlers	*htab,
-		     genptr_t			*state));
+		     genptr_t			state));
 RT_EXPORT BU_EXTERN(void nmg_visit_face,
 		    (struct face			*f,
 		     const struct nmg_visit_handlers	*htab,
-		     genptr_t			*state));
+		     genptr_t			state));
 RT_EXPORT BU_EXTERN(void nmg_visit_faceuse,
 		    (struct faceuse			*fu,
 		     const struct nmg_visit_handlers	*htab,
-		     genptr_t			*state));
+		     genptr_t			state));
 RT_EXPORT BU_EXTERN(void nmg_visit_shell,
 		    (struct shell			*s,
 		     const struct nmg_visit_handlers	*htab,
-		     genptr_t			*state));
+		     genptr_t			state));
 RT_EXPORT BU_EXTERN(void nmg_visit_region,
 		    (struct nmgregion		*r,
 		     const struct nmg_visit_handlers	*htab,
-		     genptr_t			*state));
+		     genptr_t			state));
 RT_EXPORT BU_EXTERN(void nmg_visit_model,
 		    (struct model			*model,
 		     const struct nmg_visit_handlers	*htab,
-		     genptr_t			*state));
+		     genptr_t			state));
 RT_EXPORT BU_EXTERN(void nmg_visit,
 		    (const long			*magicp,
 		     const struct nmg_visit_handlers	*htab,
-		     genptr_t			*state));
+		     genptr_t			state));
 
 /* db5_types.c */
 RT_EXPORT BU_EXTERN(int db5_type_tag_from_major,

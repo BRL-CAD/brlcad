@@ -1022,7 +1022,7 @@ build_topo_list(long int *l_p, struct bu_ptbl *tbl)
 
 	switch (*l_p) {
 	case NMG_FACEUSE_MAGIC:
-		nmg_visit(l_p, &htab, (genptr_t *)tbl);
+		nmg_visit(l_p, &htab, (genptr_t)tbl);
 		break;
 	case NMG_EDGEUSE_MAGIC:
 		eu = eu_p = (struct edgeuse *)l_p;
