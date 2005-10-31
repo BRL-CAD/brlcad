@@ -813,9 +813,9 @@ HmTtySet( void )
 HmTtySet()
 #endif
 	{
-	TcSetCbreak( HmTtyFd );
-	TcClrEcho( HmTtyFd );
-	TcClrTabs( HmTtyFd );
+	set_Cbreak( HmTtyFd );
+	clr_Echo( HmTtyFd );
+	clr_Tabs( HmTtyFd );
 	if( HmMyxflag )
 		{
 		/* Send escape codes to push current toggle settings,
@@ -845,7 +845,7 @@ HmTtyReset()
 		(void) fputs( "\033[?1;3Z", stdout );
 		(void) fflush( stdout );
 		}
-	TcResetTty( HmTtyFd );
+	reset_Tty( HmTtyFd );
 	return;
 	}
 
@@ -874,7 +874,7 @@ int	maxvis;
 		HmError( "Can't open /dev/tty for reading." );
 		return	false;
 		}
-	TcSaveTty( HmTtyFd );
+	save_Tty( HmTtyFd );
 	HmPkgInit = true;
 	HmLftMenu = x;
 	HmTopMenu = y;

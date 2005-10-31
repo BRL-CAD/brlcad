@@ -84,7 +84,7 @@ va_dcl
 #endif
 	if( tty && (errfile[0] == '\0' || ! strcmp( errfile, "/dev/tty" )) )
 		{
-		TcClrTabs( HmTtyFd );
+		clr_Tabs( HmTtyFd );
 		if( ScDL != NULL )
 			{
 			(void) ScMvCursor( 1, SCROLL_TOP );

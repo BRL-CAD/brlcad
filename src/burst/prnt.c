@@ -73,9 +73,9 @@ int	*linesp;
 	{	register int	ret = true;
 	if( ! tty )
 		return	true;
-	TcSaveTty( HmTtyFd );
-	TcSetRaw( HmTtyFd );
-	TcClrEcho( HmTtyFd );
+	save_Tty( HmTtyFd );
+	set_Raw( HmTtyFd );
+	clr_Echo( HmTtyFd );
 	ScSetStandout();
 	prompt( "-- More -- " );
 	ScClrStandout();
@@ -94,7 +94,7 @@ int	*linesp;
 		*linesp = (PROMPT_Y-SCROLL_TOP);
 		break;
 		}
-	TcResetTty( HmTtyFd );
+	reset_Tty( HmTtyFd );
 	return	ret;
 	}
 
@@ -901,7 +901,7 @@ va_dcl
 	format  = va_arg( ap, char * );
 	if( tty )
 		{
-		TcClrTabs( HmTtyFd );
+		clr_Tabs( HmTtyFd );
 		if( ScDL != NULL )
 			{
 			(void) ScMvCursor( 1, SCROLL_TOP );
