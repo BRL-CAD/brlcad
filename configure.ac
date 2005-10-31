@@ -1424,6 +1424,7 @@ AC_CHECK_FUNCS(\
 	sbrk \
 	select \
 	setlocale \
+	setpgid \
 	socket \
 	sqrt \
 	srand48 \
