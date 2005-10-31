@@ -19,9 +19,13 @@
  * information.
  */
 /** @file dm-Null.h
+ */
 #ifndef SEEN_DM_NULL
 #define SEEN_DM_NULL
-#endif /* SEEN_DM_NULL */
+
+/* yep, nothing to declare */
+
+#endif  /* SEEN_DM_NULL */
 
 /*
  * Local Variables:
