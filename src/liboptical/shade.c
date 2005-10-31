@@ -175,17 +175,25 @@ shade_inputs( struct application *ap, const struct partition *pp, struct shadewo
 			f = VDOT(ap->a_ray.r_dir,swp->sw_hit.hit_normal);
 			if (f > 0.0 &&
 			    !BN_VECT_ARE_PERP(f, &(ap->a_rt_i->rti_tol))) {
+			    static int counter = 0;
+			    if (counter++ < 100 || (R_DEBUG&RDEBUG_SHADE)) {
 				bu_log("shade_inputs(%s) flip N xy=%d,%d %s surf=%d dot=%g\n",
 				       pp->pt_inseg->seg_stp->st_name,
 				       ap->a_x, ap->a_y,
-				       rt_functab[
-                                         pp->pt_inseg->seg_stp->st_id
-				       ].ft_name,
+				       rt_functab[pp->pt_inseg->seg_stp->st_id].ft_name,
 				       swp->sw_hit.hit_surfno, f);
-				if( R_DEBUG&RDEBUG_SHADE ) {
-					VPRINT("Dir ", ap->a_ray.r_dir);
-					VPRINT("Norm", swp->sw_hit.hit_normal);
+			    } else {
+				if (counter++ == 101) {
+				    bu_log("shade_inputs(%s) flipped normals detected, additional reporting suppressed\n",
+					   pp->pt_inseg->seg_stp->st_name);
 				}
+			    }
+			    if( R_DEBUG&RDEBUG_SHADE ) {
+				VPRINT("Dir ", ap->a_ray.r_dir);
+				VPRINT("Norm", swp->sw_hit.hit_normal);
+			    }
+			    /* reverse the normal so it's lit */
+			    VREVERSE(swp->sw_hit.hit_normal, swp->sw_hit.hit_normal);
 			}
 		}
 		if( R_DEBUG&(RDEBUG_RAYPLOT|RDEBUG_SHADE) )  {
