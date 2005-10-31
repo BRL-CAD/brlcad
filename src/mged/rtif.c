@@ -112,11 +112,6 @@ struct rtcheck {
        struct bu_list		*vhead;
        double			csize;
 };
-#ifdef TCL_OK
-	Tcl_Channel chan1;
-#else
-	genptr_t chan1;
-#endif
 
 static vect_t	rtif_eye_model;
 static mat_t	rtif_viewrot;
