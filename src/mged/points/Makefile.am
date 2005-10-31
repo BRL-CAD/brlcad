@@ -4,10 +4,13 @@ libpoints_la_LDFLAGS =
 libpoints_la_LIBADD = ${BU}
 libpoints_la_SOURCES = \
 	count.c \
-	main.c \
 	points_parse.y \
 	points_scan.l \
-	process.c
+	process.c \
+	main.c
+
+main.lo: points_parse.h
+process.lo: points_parse.h
 
 BUILT_SOURCES = \
 	points_parse.c \
