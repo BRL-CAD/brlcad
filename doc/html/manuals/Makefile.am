@@ -12,6 +12,7 @@ htmldocs_DATA = \
 	index.html \
 	small-eagleCAD.gif
 
-EXTRA_DIST = $(htmldocs_DATA)
+EXTRA_DIST = $(htmldocs_DATA) \
+	small-eagleCAD.ico
 
 include $(top_srcdir)/misc/Makefile.defs
