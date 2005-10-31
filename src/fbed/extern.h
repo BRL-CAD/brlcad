@@ -90,12 +90,20 @@ extern void init_Status(void);
 extern void init_Tty(void), restore_Tty(void);
 extern void prnt_Status(void);
 extern void prnt_Usage(void);
-#if __STDC__
+#if defined(HAVE_STDARG_H)
 extern void prnt_Scroll( char * fmt, ... );
+extern void prnt_Debug( char *fmt, ... );
 extern void prnt_Event( char *fmt, ... );
 #else
-extern void prnt_Event();
-extern void prnt_Scroll();
+#  if defined(HAVE_VARARGS_H)
+extern void prnt_Scroll( char * fmt, va_dcl va_alist );
+extern void prnt_Debug( char *fmt, va_dcl va_alist );
+extern void prnt_Event( char *fmt, va_dcl va_alist );
+#  else
+extern void prnt_Scroll(char *a, char *b, char *c, char *d, char *e, char *f, char *g, char *h, char *i);
+extern void prnt_Debug(char *a, char *b, char *c, char *d, char *e, char *f, char *g, char *h, char *i);
+extern void prnt_Event(char *a, char *b, char *c, char *d, char *e, char *f, char *g, char *h, char *i);
+#  endif
 #endif
 extern void prnt_Rectangle(char *str, register Rectangle *rectp);
 extern void do_Key_Cmd(register int key, register int n);
