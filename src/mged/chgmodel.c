@@ -61,6 +61,9 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #else
 #  include <strings.h>
 #endif
+#ifdef HAVE_UNISTD_H
+#  include <unistd.h>
+#endif
 
 #include "machine.h"
 #include "bu.h"
@@ -1916,8 +1919,11 @@ f_make(ClientData	clientData,
 		av[2] = "sketch";
 		f_make( clientData, interp, 3, av );
 	} else if( strcmp( argv[2], "sketch" ) == 0 ) {
+#if 0
+	    /* used by the now defunct default sketch object */
 		struct carc_seg *csg;
 		struct line_seg *lsg;
+#endif
 
 		internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 		internal.idb_type = ID_SKETCH;

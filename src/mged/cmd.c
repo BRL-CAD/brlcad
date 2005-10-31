@@ -2047,15 +2047,14 @@ mged_global_variable_setup(Tcl_Interp *interp)
 int
 f_bot_split(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
-	struct directory *dp, *new_dp;
+	struct directory *dp;
 	struct rt_db_internal intern;
 	struct rt_bot_internal **bots;
 	struct rt_bot_internal *bot;
 	int bot_count = 256;
-	int bot_used = 0;
-	int i, idx, retval, edge, faces, e, f ;
+	int i, edge, e, f ;
 	int * edges;
-	int avail_vert, avail_face, face;
+	int face;
 
 
 	CHECK_DBI_NULL;
@@ -2111,7 +2110,7 @@ f_bot_split(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 		}
 	    }
 	}
-
+	return TCL_OK;
 }
 
 
@@ -3576,6 +3575,9 @@ cmd_shaded_mode(ClientData	clientData,
 
 	return dgo_shaded_mode_cmd(dgop, interp, argc, argv);
 }
+
+/* XXX needs to be provided from points header */
+extern int parse_point_file(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 
 int
 cmd_parse_points(ClientData	clientData,
