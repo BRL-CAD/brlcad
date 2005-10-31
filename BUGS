@@ -15,6 +15,8 @@ on-going issues.
 Recent Bugs
 -----------
 
+* raytrace of -s64 and remote -F/dev/Xl crashes inside an empty memcpy
+
 * g2asc exports attr lines but will not grok them on asc2g
 
 * mged's matrix selection does not modify the correct matrix if there
