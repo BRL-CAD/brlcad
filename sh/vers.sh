@@ -65,10 +65,20 @@ else
 	TITLE="Graphics Editor (MGED)"
 fi
 
+# check for posix compliant tail/head -n option
+TAIL="tail -"
+if test "x`echo 'tail' | tail -n 1 2>&1`" = "xtail" ; then
+    TAIL="tail -n "
+fi
+HEAD="head -"
+if test "x`echo 'head' | head -n 1 2>&1`" = "xhead" ; then
+    HEAD="head -n "
+fi
+
 # Obtain RELEASE number
 if test -r $path_to_vers_sh/../configure.ac ; then
 	for i in 1 2 3 4 ; do
-		version_script="`grep VERSION $path_to_vers_sh/../configure.ac | grep -v SUBST | head -$i | tail -1`"
+		version_script="`grep VERSION $path_to_vers_sh/../configure.ac | grep -v SUBST | ${HEAD}$i | ${TAIL}1`"
 		eval "$version_script"
 	done
 	if test ! "x$BRLCAD_VERSION" = "x" ; then
