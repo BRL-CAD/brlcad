@@ -153,7 +153,7 @@ if [ ! -f "${DMG}.sparseimage" ] ; then
     exit 1
 fi
 
-hdidDisk=`hdid -nomount "${DMG}.sparseimage" | head -1 | grep '/dev/disk[0-9]*' | awk '{print $1}'`
+hdidDisk=`hdid -nomount "${DMG}.sparseimage" | head -n 1 | grep '/dev/disk[0-9]*' | awk '{print $1}'`
 if [ ! "x$?" = "x0" ] ; then
     echo "ERROR: unable to successfully get the hdid device name"
     exit 1
@@ -181,7 +181,7 @@ if [ -d "$VOL_DIR" ] ; then
     exit 1
 fi
 
-hdidMountedDisk=`hdid ${DMG}.sparseimage | head -1 | grep '/dev/disk[0-9]*' | awk '{print $1}'`
+hdidMountedDisk=`hdid ${DMG}.sparseimage | head -n 1 | grep '/dev/disk[0-9]*' | awk '{print $1}'`
 if [ ! "x$?" = "x0" ] ; then
     echo "ERROR: unable to successfully get the mounted hdid device name"
     exit 1
