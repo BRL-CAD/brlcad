@@ -971,6 +971,7 @@ AC_CHECK_HEADERS( \
 	float.h \
 	getopt.h \
 	gl/device.h \
+	inttypes.h \
 	io.h \
 	itcl.h \
 	itk.h \
@@ -993,6 +994,7 @@ AC_CHECK_HEADERS( \
 	socket.h \
 	stdarg.h \
 	stddef.h \
+	stdint.h \
 	stdlib.h \
 	string.h \
 	strings.h \
