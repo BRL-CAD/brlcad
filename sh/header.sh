@@ -624,7 +624,7 @@ else
     echo "${block}" >> $FILE
 fi
 
-tail +n ${skip} ${FILE}.backup >> $FILE
+tail -n +${skip} ${FILE}.backup >> $FILE
 
 
 exit 0
