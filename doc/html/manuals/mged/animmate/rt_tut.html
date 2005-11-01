@@ -65,7 +65,7 @@ produces a sorted animation script as output. With the -f option,
 scriptsort also inserts a call to the shell script
 <var>end_of_frame.sh</var> after each frame of the animation.
 <pre>
-%> <b>head -10 anim.script</b>
+%> <b>head -n 10 anim.script</b>
 start 0;clean ;
 anim all.g/cone.r matrix lmul -0.268148 -0.841061 -0.469801 17.995962 0.889157 -0.403767 0.215341 -112.596747 -0.370805 -0.359984 0.856105 -3.321956 0.000000 0.000000 0.000000 1.000000 ;
 end;
@@ -77,7 +77,7 @@ anim all.g/cone.r matrix lmul -0.264301 -0.842990 -0.468521 13.970193 0.887275 -
 end;
 start 3;clean ;
 %> <b>scriptsort -f < anim.script > anim_and_shell.script</b>
-%> <b>head -10 anim_and_shell.script</b>
+%> <b>head -n 10 anim_and_shell.script</b>
 start 0;clean ;
 anim all.g/cone.r matrix lmul -0.268148 -0.841061 -0.469801 17.995962 0.889157 -0.403767 0.215341 -112.596747 -0.370805 -0.359984 0.856105 -3.321956 0.000000 0.000000 0.000000 1.000000 ;
 end;
