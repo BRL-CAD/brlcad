@@ -809,6 +809,11 @@ if test $? != 0 ; then
     fi
 fi
 
+TAIL="tail -"
+if test "x`echo 'tail' | tail -n 1 2>&1`" = "xtail" ; then
+    TAIL="tail -n "
+fi
+
 if test -f "$path_to_this/perf.sh" ; then
     PERF="$path_to_this/perf.sh"
 elif test -f "$path_to_this/../bench/perf.sh" ; then
@@ -833,13 +838,14 @@ echo "  *.pix.* ... pix image files for previous frames and raytrace tests"
 echo "  summary ... performance results summary, 2 lines per run"
 
 if test $perf_ret != 0 ; then
-    tail -1 summary
+    ${TAIL}1 summary
     exit $perf_ret
 else
     echo
-    tail -2 summary
+    ${TAIL}2 summary
 fi
-vgr="`tail -1 summary | awk '{print int($9+0.5)}'`"
+
+vgr="`${TAIL}1 summary | awk '{print int($9+0.5)}'`"
 if test ! "x$vgr" = "x" ; then
     echo
     echo "#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#"
