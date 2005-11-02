@@ -503,8 +503,7 @@ EXTRA_DIST = \
 	pix-lowp-ik.c \
 	pixt-ik.c \
 	pl-X10.c \
-	pl-starbase.c \
-	strchr.c
+	pl-starbase.c
 
 MAINTAINERCLEANFILES = Makefile.in
 
