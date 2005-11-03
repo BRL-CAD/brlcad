@@ -35,8 +35,6 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "common.h"
 
-
-
 #include <stdio.h>
 #include <stdlib.h>
 #ifdef HAVE_STRING_H
@@ -45,6 +43,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include <strings.h>
 #endif
 #include "machine.h"
+#include "bu.h"
 
 #if HAS_SGIGL
 # ifdef mips
@@ -53,6 +52,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #	include <gl.h>
 # endif
 #endif
+
 
 #define	MIN(a,b)	((a)<(b)?(a):(b))
 #define	ABS(a)		((a)<0? -(a):(a))
