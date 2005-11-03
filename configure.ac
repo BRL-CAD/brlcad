@@ -2374,7 +2374,7 @@ fi
 AC_MSG_RESULT($dials_and_buttons)
 
 
-# XXX nasty temp hack for backwards cake compatibility.
+# XXX nasty temp hack for backwards cake compatibility. code needs to be fixed.
 if test "x$host_os" = "xirix6.5" ; then
 	# XXX the code that relies on this will be going away, but until then..
 	if test "x$build_brlcad_64bit" = "xyes" ; then
@@ -2383,6 +2383,11 @@ if test "x$host_os" = "xirix6.5" ; then
 		CFLAGS="$CFLAGS -DIRIX=6"
 	fi
 fi
+
+dnl search the BRL-CAD include directory (required for non-srcdir builds).
+dnl should come after the system services checks otherwise or our headers
+dnl may conflict.
+CPPFLAGS="$CPPFLAGS -I\$(top_srcdir)/include"
 
 # make sure ECHO and ECHO_N got defined and substituted
 if test "x$ECHO" = "x" ; then
