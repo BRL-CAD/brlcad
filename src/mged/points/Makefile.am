@@ -9,6 +9,11 @@ libpoints_la_SOURCES = \
 	process.c \
 	main.c
 
+noinst_HEADERS = \
+	count.h \
+	points_parse.h \
+	process.h
+
 points_parse.h: points_parse.lo
 main.lo: points_parse.h
 process.lo: points_parse.h
