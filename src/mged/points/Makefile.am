@@ -14,7 +14,7 @@ noinst_HEADERS = \
 	points_parse.h \
 	process.h
 
-points_parse.h: points_parse.lo
+points_parse.h: points_parse.y
 main.lo: points_parse.h
 process.lo: points_parse.h
 
