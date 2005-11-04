@@ -65,10 +65,10 @@ static char *pgmverp = "2.2";
 	if( getInput( ptr ) ) \
 		{ \
 		if( ptr->buffer[0] == 'y' ) \
-			var = true; \
+			var = 1; \
 		else \
 		if( ptr->buffer[0] == 'n' ) \
-			var = false; \
+			var = 0; \
 		else \
 			{ \
 			(void) sprintf( scrbuf, \
@@ -118,51 +118,51 @@ typedef struct
 Input;
 
 /* local menu functions, names all start with M */
-STATIC void MattackDir();
-STATIC void MautoBurst();
-STATIC void MburstArmor();
-STATIC void MburstAir();
-STATIC void MburstDist();
-STATIC void MburstFile();
-STATIC void McellSize();
-STATIC void McolorFile();
-STATIC void Mcomment();
-STATIC void MconeHalfAngle();
-STATIC void McritComp();
-STATIC void MdeflectSpallCone();
-STATIC void Mdither();
-STATIC void MenclosePortion();
-STATIC void MencloseTarget();
-STATIC void MerrorFile();
-STATIC void Mexecute();
-STATIC void MfbFile();
-STATIC void MgedFile();
-STATIC void MgridFile();
-STATIC void MgroundPlane();
-STATIC void MhistFile();
-STATIC void Minput2dShot();
-STATIC void Minput3dShot();
-STATIC void MinputBurst();
-STATIC void MmaxBarriers();
-STATIC void MmaxSpallRays();
-STATIC void Mnop();
-STATIC void Mobjects();
-STATIC void Moverlaps();
-STATIC void MplotFile();
-STATIC void Mread2dShotFile();
-STATIC void Mread3dShotFile();
-STATIC void MreadBurstFile();
-STATIC void MreadCmdFile();
-STATIC void MshotlineFile();
-STATIC void Munits();
-STATIC void MwriteCmdFile();
+static void MattackDir();
+static void MautoBurst();
+static void MburstArmor();
+static void MburstAir();
+static void MburstDist();
+static void MburstFile();
+static void McellSize();
+static void McolorFile();
+static void Mcomment();
+static void MconeHalfAngle();
+static void McritComp();
+static void MdeflectSpallCone();
+static void Mdither();
+static void MenclosePortion();
+static void MencloseTarget();
+static void MerrorFile();
+static void Mexecute();
+static void MfbFile();
+static void MgedFile();
+static void MgridFile();
+static void MgroundPlane();
+static void MhistFile();
+static void Minput2dShot();
+static void Minput3dShot();
+static void MinputBurst();
+static void MmaxBarriers();
+static void MmaxSpallRays();
+static void Mnop();
+static void Mobjects();
+static void Moverlaps();
+static void MplotFile();
+static void Mread2dShotFile();
+static void Mread3dShotFile();
+static void MreadBurstFile();
+static void MreadCmdFile();
+static void MshotlineFile();
+static void Munits();
+static void MwriteCmdFile();
 
 /* local utility functions */
-STATIC HmMenu *addMenu();
-STATIC int getInput();
-STATIC int unitStrToInt();
-STATIC void addItem();
-STATIC void banner();
+static HmMenu *addMenu();
+static int getInput();
+static int unitStrToInt();
+static void addItem();
+static void banner();
 
 typedef struct ftable Ftable;
 struct ftable
@@ -374,7 +374,7 @@ Ftable	mainmenu[] =
 	{ 0 }
 	};
 
-STATIC void
+static void
 addItem( tp, itemp )
 Ftable *tp;
 HmItem *itemp;
@@ -388,14 +388,14 @@ HmItem *itemp;
 	return;
 	}
 
-STATIC HmMenu *
+static HmMenu *
 addMenu( tp )
 Ftable *tp;
 	{	register HmMenu	*menup;
 		register HmItem *itemp;
 		register Ftable	*ftp = tp;
 		register int cnt;
-		register bool done = false;
+		register boolean done = 0;
 	if( ftp == NULL )
 		return	NULL;
 	for( cnt = 0; ftp->name != NULL; ftp++ )
@@ -406,7 +406,7 @@ Ftable *tp;
 	menup->generator = 0;
 	menup->prevtop = 0;
 	menup->prevhit = 0;
-	menup->sticky = true;
+	menup->sticky = 1;
 	/* menup->item should now be as long as tp. */
 	for(	ftp = tp, itemp = menup->item;
 		! done;
@@ -415,7 +415,7 @@ Ftable *tp;
 		{
 		addItem( ftp, itemp );
 		if( ftp->name == NULL ) /* Must include NULL entry. */
-			done = true;
+			done = 1;
 		}
 	return	menup;
 	}
@@ -426,7 +426,7 @@ Ftable *tp;
         Display program name and version on one line with BORDER_CHRs
 	to border the top of the scrolling region.
  */
-STATIC void
+static void
 banner()
         {
         (void) sprintf(	scrbuf,	bannerp, pgmverp );
@@ -441,7 +441,7 @@ closeUi()
 	return;
 	}
 
-STATIC int
+static int
 getInput( ip )
 Input *ip;
 	{
@@ -469,11 +469,11 @@ Input *ip;
 	else
 		{	char *str = strtok( cmdptr, WHITESPACE );
 		if( str == NULL )
-			return	false;
+			return	0;
 		(void) strcpy( ip->buffer, str );
 		cmdptr = NULL;
 		}
-	return  true;
+	return  1;
 	}
 
 /*
@@ -481,7 +481,7 @@ Input *ip;
 
 	Initialize the keyword commands.
  */
-STATIC void
+static void
 initCmds( tp )
 register Ftable *tp;
 	{
@@ -500,7 +500,7 @@ register Ftable *tp;
 
 	Initialize the hierarchical menus.
  */
-STATIC void
+static void
 initMenus( tp )
 register Ftable	*tp;
 	{
@@ -508,13 +508,13 @@ register Ftable	*tp;
 	return;
 	}
 
-bool
+boolean
 initUi()
 	{
 	if( tty )
 		{
 		if( ! ScInit( stdout ) )
-			return	false;
+			return	0;
  		if( ScSetScrlReg( SCROLL_TOP, SCROLL_BTM ) )
 			(void) ScClrScrlReg();
 		else
@@ -523,7 +523,7 @@ initUi()
 			prntScr(
 		 "This terminal has no scroll region or delete line capability."
 				);
-			return  false;
+			return  0;
 			}
 		(void) ScClrText();	/* wipe screen */
 		HmInit( MENU_LFT, MENU_TOP, MENU_MAXVISITEMS );
@@ -531,10 +531,10 @@ initUi()
 		}
 	initMenus( mainmenu );
 	initCmds( mainmenu );
-	return	true;
+	return	1;
 	}
 
-STATIC int
+static int
 unitStrToInt( str )
 char *str;
 	{
@@ -552,7 +552,7 @@ char *str;
 	}
 
 /*ARGSUSED*/
-STATIC void
+static void
 MattackDir( itemp )
 HmItem *itemp;
 	{	static Input input[] =
@@ -573,7 +573,7 @@ HmItem *itemp;
 	}
 
 /*ARGSUSED*/
-STATIC void
+static void
 MautoBurst( itemp )
 HmItem *itemp;
 	{	static Input input[] =
@@ -603,7 +603,7 @@ HmItem *itemp;
 	}
 
 /*ARGSUSED*/
-STATIC void
+static void
 MburstAir( itemp )
 HmItem *itemp;
 	{	static Input input[] =
@@ -636,7 +636,7 @@ HmItem *itemp;
 	}
 
 /*ARGSUSED*/
-STATIC void
+static void
 MburstArmor( itemp )
 HmItem *itemp;
 	{	static Input input[] =
@@ -669,7 +669,7 @@ HmItem *itemp;
 	}
 
 /*ARGSUSED*/
-STATIC void
+static void
 MburstDist( itemp )
 HmItem *itemp;
 	{	static Input input[] =
@@ -687,7 +687,7 @@ HmItem *itemp;
 	}
 
 /*ARGSUSED*/
-STATIC void
+static void
 MburstFile( itemp )
 HmItem *itemp;
 	{	static Input input[] =
@@ -715,7 +715,7 @@ HmItem *itemp;
 	}
 
 /*ARGSUSED*/
-STATIC void
+static void
 McellSize( itemp )
 HmItem *itemp;
 	{	static Input input[] =
@@ -733,7 +733,7 @@ HmItem *itemp;
 	}
 
 /*ARGSUSED*/
-STATIC void
+static void
 McolorFile( itemp )
 HmItem *itemp;
 	{	static Input input[] =
@@ -766,7 +766,7 @@ HmItem *itemp;
 	}
 
 /*ARGSUSED*/
-STATIC void
+static void
 Mcomment( itemp )
 HmItem *itemp;
 	{	static Input input[] =
@@ -790,7 +790,7 @@ HmItem *itemp;
 	}
 
 /*ARGSUSED*/
-STATIC void
+static void
 MconeHalfAngle( itemp )
 HmItem *itemp;
 	{	static Input input[] =
@@ -808,7 +808,7 @@ HmItem *itemp;
 	}
 
 /*ARGSUSED*/
-STATIC void
+static void
 McritComp( itemp )
 HmItem *itemp;
 	{	static Input input[] =
@@ -842,7 +842,7 @@ HmItem *itemp;
 
 
 /*ARGSUSED*/
-STATIC void
+static void
 MdeflectSpallCone( itemp )
 HmItem *itemp;
 	{	static Input input[] =
@@ -859,7 +859,7 @@ HmItem *itemp;
 	}
 
 /*ARGSUSED*/
-STATIC void
+static void
 Mdither( itemp )
 HmItem *itemp;
 	{	static Input input[] =
@@ -876,7 +876,7 @@ HmItem *itemp;
 	}
 
 /*ARGSUSED*/
-STATIC void
+static void
 MenclosePortion( itemp )
 HmItem *itemp;
 	{	static Input input[] =
@@ -905,7 +905,7 @@ HmItem *itemp;
 	}
 
 /*ARGSUSED*/
-STATIC void
+static void
 MencloseTarget( itemp )
 HmItem *itemp;
 	{
@@ -917,7 +917,7 @@ HmItem *itemp;
 	return;
 	}
 
-STATIC void
+static void
 MerrorFile( itemp )
 HmItem *itemp;
 	{	static Input input[] =
@@ -956,11 +956,11 @@ HmItem *itemp;
 	}
 
 /*ARGSUSED*/
-STATIC void
+static void
 Mexecute( itemp )
 HmItem *itemp;
-	{	static bool	gottree = false;
-		bool		loaderror = false;
+	{	static boolean	gottree = 0;
+		boolean		loaderror = 0;
 	(void) sprintf( scrbuf,
 			"%s",
 			itemp != NULL ? itemp->text : cmdname );
@@ -984,7 +984,7 @@ HmItem *itemp;
 	/* Add air into boolean trees, must be set after rt_dirbuild() and
                 before rt_gettree().
 	 */
-	rtip->useair = true;
+	rtip->useair = 1;
 	if( ! gottree )
 		{	char *ptr, *obj;
 		rt_prep_timer();
@@ -1001,11 +1001,11 @@ HmItem *itemp;
 						"Bad object \"%s\".",
 						obj );
 				warning( scrbuf );
-				loaderror = true;
+				loaderror = 1;
 				}
 			notify( NULL, NOTIFY_DELETE );
 			}
-		gottree = true;
+		gottree = 1;
 		prntTimer( "load" );
 		}
 	if( loaderror )
@@ -1028,7 +1028,7 @@ HmItem *itemp;
 	}
 
 /*ARGSUSED*/
-STATIC void
+static void
 MfbFile( itemp )
 HmItem *itemp;
 	{	static Input input[] =
@@ -1048,7 +1048,7 @@ HmItem *itemp;
 	}
 
 /*ARGSUSED*/
-STATIC void
+static void
 MgedFile( itemp )
 HmItem *itemp;
 	{	static Input input[] =
@@ -1074,7 +1074,7 @@ HmItem *itemp;
 	}
 
 /*ARGSUSED*/
-STATIC void
+static void
 MgridFile( itemp )
 HmItem *itemp;
 	{	static Input input[] =
@@ -1102,7 +1102,7 @@ HmItem *itemp;
 	}
 
 /*ARGSUSED*/
-STATIC void
+static void
 MgroundPlane( itemp )
 HmItem *itemp;
 	{	static Input input[] =
@@ -1147,7 +1147,7 @@ HmItem *itemp;
 	}
 
 /*ARGSUSED*/
-STATIC void
+static void
 MhistFile( itemp )
 HmItem *itemp;
 	{	static Input input[] =
@@ -1174,7 +1174,7 @@ HmItem *itemp;
 	return;
 	}
 
-STATIC void
+static void
 MinputBurst( itemp )
 HmItem *itemp;
 	{	static Input input[] =
@@ -1199,7 +1199,7 @@ HmItem *itemp;
 	}
 
 /*ARGSUSED*/
-STATIC void
+static void
 Minput2dShot( itemp )
 HmItem *itemp;
 	{	static Input input[] =
@@ -1221,7 +1221,7 @@ HmItem *itemp;
 	}
 
 /*ARGSUSED*/
-STATIC void
+static void
 Minput3dShot( itemp )
 HmItem *itemp;
 	{	static Input input[] =
@@ -1246,7 +1246,7 @@ HmItem *itemp;
 	}
 
 /*ARGSUSED*/
-STATIC void
+static void
 Mnop( itemp )
 HmItem *itemp;
 	{
@@ -1254,7 +1254,7 @@ HmItem *itemp;
 	}
 
 /*ARGSUSED*/
-STATIC void
+static void
 Mobjects( itemp )
 HmItem *itemp;
 	{	static Input input[] =
@@ -1272,7 +1272,7 @@ HmItem *itemp;
 	}
 
 /*ARGSUSED*/
-STATIC void
+static void
 Moverlaps( itemp )
 HmItem *itemp;
 	{	static Input input[] =
@@ -1289,7 +1289,7 @@ HmItem *itemp;
 	}
 
 /*ARGSUSED*/
-STATIC void
+static void
 MmaxBarriers( itemp )
 HmItem *itemp;
 	{	static Input input[] =
@@ -1306,7 +1306,7 @@ HmItem *itemp;
 	}
 
 /*ARGSUSED*/
-STATIC void
+static void
 MmaxSpallRays( itemp )
 HmItem *itemp;
 	{	static Input input[] =
@@ -1323,7 +1323,7 @@ HmItem *itemp;
 	}
 
 /*ARGSUSED*/
-STATIC void
+static void
 MplotFile( itemp )
 HmItem *itemp;
 	{	static Input input[] =
@@ -1351,7 +1351,7 @@ HmItem *itemp;
 	}
 
 /*ARGSUSED*/
-STATIC void
+static void
 Mread2dShotFile( itemp )
 HmItem *itemp;
 	{	static Input input[] =
@@ -1378,7 +1378,7 @@ HmItem *itemp;
 	}
 
 /*ARGSUSED*/
-STATIC void
+static void
 Mread3dShotFile( itemp )
 HmItem *itemp;
 	{	static Input input[] =
@@ -1405,7 +1405,7 @@ HmItem *itemp;
 	}
 
 /*ARGSUSED*/
-STATIC void
+static void
 MreadBurstFile( itemp )
 HmItem *itemp;
 	{	static Input input[] =
@@ -1432,7 +1432,7 @@ HmItem *itemp;
 	}
 
 /*ARGSUSED*/
-STATIC void
+static void
 MreadCmdFile( itemp )
 HmItem *itemp;
 	{	static Input input[] =
@@ -1458,7 +1458,7 @@ HmItem *itemp;
 	}
 
 /*ARGSUSED*/
-STATIC void
+static void
 MshotlineFile( itemp )
 HmItem *itemp;
 	{	static Input input[] =
@@ -1504,10 +1504,10 @@ HmItem units_items[] =
 		0, 0, 0, Mnop },
 	{ 0 }
 	};
-HmMenu	units_hmenu = { units_items, 0, 0, 0, false };
+HmMenu	units_hmenu = { units_items, 0, 0, 0, 0 };
 
 /*ARGSUSED*/
-STATIC void
+static void
 Munits( itemp )
 HmItem *itemp;
 	{	char *unitstr;
@@ -1553,7 +1553,7 @@ HmItem *itemp;
 	}
 
 /*ARGSUSED*/
-STATIC void
+static void
 MwriteCmdFile( itemp )
 HmItem *itemp;
 	{	static Input input[] =

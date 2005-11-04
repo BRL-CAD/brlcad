@@ -27,62 +27,45 @@
 
 	$Header$ (BRL)
  */
-#ifndef INCL_BURST
-#define INCL_BURST
+#ifndef __BURST_H__
+#define __BURST_H__
+
+#include "common.h"
+
+/* for genptr_t */
+#include "machine.h"
+
 
 /* NSIG not always defined in <signal.h> */
 #ifndef NSIG
 #define NSIG 64
 #endif
 
-/* Some useful stuff from Doug Gwyn's std.h. */
-/* Extended data types */
-/* _CURSES_H is SGI header define in curses.h (they define bool as char) */
-#if !defined(NCURSES_BOOL) && !defined(bool) && !defined(_CURSES_H)
-typedef int bool;			/* Boolean data */
-#endif
-
-#define false	0
-#define true	1
 /* ANSI C definitions */
-/* Defense against some silly systems defining __STDC__ to random things. */
-#ifdef STD_C
-#undef STD_C
-#endif
-#ifdef __STDC__
-#if __STDC__ > 0
-#define STD_C   __STDC__                /* use this instead of __STDC__ */
-#endif
-#endif
-#if STD_C
-typedef void *pointer;			/* generic pointer */
-#else
-typedef char *pointer;			/* generic pointer */
-#define const		/* nothing */	/* ANSI C type qualifier */
-/* There really is no substitute for the following, but these might work: */
-#define signed          /* nothing */   /* ANSI C type specifier */
-#define volatile        /* nothing */   /* ANSI C type qualifier */
-#endif
+typedef int boolean;
+typedef genptr_t pointer;			/* generic pointer */
+
 #ifndef BURST_EXIT_SUCCESS
-#define BURST_EXIT_SUCCESS	0
+#  define BURST_EXIT_SUCCESS	0
 #endif
 #ifndef BURST_EXIT_FAILURE
-#define BURST_EXIT_FAILURE	1
+#  define BURST_EXIT_FAILURE	1
 #endif
+
 #define DEGRAD	57.2957795130823208767981548141051703324054724665642
 
 /* allow for SGI screw-up, the single-precision math libraries */
 #if defined( sgi ) && ! defined( mips )
-#define SINGLE_PRECISION 1
+#  define SINGLE_PRECISION 1
 #else
-#define SINGLE_PRECISION 0
+#  define SINGLE_PRECISION 0
 #endif
 
 /* allow for SGI screw-up, winclose() dumps core on some systems */
 #if defined(SGI4D_Rel2)
-#define SGI_WINCLOSE_BUG 1
+#  define SGI_WINCLOSE_BUG 1
 #else
-#define SGI_WINCLOSE_BUG 0
+#  define SGI_WINCLOSE_BUG 0
 #endif
 
 /* menu configuration */
@@ -123,11 +106,11 @@ typedef char *pointer;			/* generic pointer */
 #define DFL_BDIST	0.0
 #define DFL_CELLSIZE	101.6
 #define DFL_CONEANGLE	(45.0/DEGRAD)
-#define DFL_DEFLECT	false
-#define DFL_DITHER	false
+#define DFL_DEFLECT	0
+#define DFL_DITHER	0
 #define DFL_ELEVATION	0.0
 #define DFL_NRAYS	200
-#define DFL_OVERLAPS	true
+#define DFL_OVERLAPS	1
 #define DFL_RIPLEVELS	1
 #define DFL_UNITS	U_MILLIMETERS
 
@@ -262,7 +245,8 @@ struct pt_queue
 	};
 
 #define PT_Q_NULL	(Pt_Queue *) 0
-#endif /* INCL_BURST */
+
+#endif  /* __BURST_H__ */
 
 /*
  * Local Variables:

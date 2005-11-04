@@ -171,11 +171,11 @@ PutChr( char c ) {
   Initializes the terminal.  Fills terminal name and capabilities
   into external buffers.  Gets terminal control strings into external
   variables.  Gets individual terminal parameters into external
-  variables.  Returns "true" for success, "false" for failure and
+  variables.  Returns "1" for success, "0" for failure and
   prints appropriate diagnostics on STDERR if $TERM is not set or
   there is a problem in retrieving the corresponding termcap entry.
 */
-bool
+boolean
 ScInit( FILE *fp ) {
   char	*term; /* Name of terminal from environment. */
   out_fp = fp;
@@ -183,7 +183,7 @@ ScInit( FILE *fp ) {
   if( (term = getenv( "TERM" )) == NULL )
     {
       (void) fprintf( stderr, "TERM not set or exported!\n" );
-      return	false;
+      return	0;
     }
   (void) strncpy( ScTermname, term, ScTERMSIZ-1 );
 
@@ -192,12 +192,12 @@ ScInit( FILE *fp ) {
     {
       case -1 :
 	(void) fprintf( stderr, "Can't open termcap file!\n" );
-	return	false;
+	return	0;
       case  0 :
 	(void) fprintf( stderr,
 			"Terminal type not in termcap file!\n"
 			);
-	return	false;
+	return	0;
     }
 
   /* Get individual terminal parameters and control strings.	*/
@@ -205,143 +205,143 @@ ScInit( FILE *fp ) {
   ScLoadTCS();
 
   tputs( ScTI, 1, (int (*)(int))PutChr );	/* Initialize terminal.			*/
-  return	true;		/* All is well.				*/
+  return	1;		/* All is well.				*/
 }
 
 /*
   Clear from the cursor to the end of that line.
 */
-bool
+boolean
 ScClrEOL( void ) {
   if( ScCE == NULL )
-    return	false;
+    return	0;
   tputs( ScCE, 1, (int (*)(int))PutChr );
-  return	true;
+  return	1;
 }
 
 /*
   Reset the scrolling region to the entire screen.
 */
-bool
+boolean
 ScClrScrlReg( void ) {
   if( ScCS == NULL )
-    return	false;
+    return	0;
   tputs( tgoto( ScCS, ScLI-1, 0 ), 1, (int (*)(int))PutChr );
-  return	true;
+  return	1;
 }
 
 /*
   End standout mode.
 */
-bool
+boolean
 ScClrStandout( void ) {
   if( ScSE == NULL )
-    return	false;
+    return	0;
   tputs( ScSE, 1, (int (*)(int))PutChr );
-  return	true;
+  return	1;
 }
 
 /*
 Clear the screen and "home" the cursor.
 */
-bool
+boolean
 ScClrText( void ) {
   if( ScCL == NULL )
-    return	false;
+    return	0;
   tputs( ScCL, ScLI, (int (*)(int))PutChr );
-  return	true;
+  return	1;
 }
 
 /*
   Insert a the line under the cursor.
 */
-bool
+boolean
 ScInsertLn( void ) {
   if( ScAL == NULL )
-    return	false;
+    return	0;
   tputs( ScAL, 1, (int (*)(int))PutChr );
-  return	true;
+  return	1;
 }
 
 /*
   Delete the line under the cursor.
 */
-bool
+boolean
 ScDeleteLn( void ) {
   if( ScDL == NULL )
-    return	false;
+    return	0;
   tputs( ScDL, 1, (int (*)(int))PutChr );
-  return	true;
+  return	1;
 }
 
 /*
   Scroll backward 1 line.
 */
-bool
+boolean
 ScDnScroll( void ) {
   if( ScSR == NULL )
-    return	false;
+    return	0;
   tputs( ScSR, 1, (int (*)(int))PutChr );
-  return	true;
+  return	1;
 }
 
 /*
   Move the cursor to the top-left corner of the screen.
 */
-bool
+boolean
 ScHmCursor( void ) {
   if( ScHO == NULL )
-    return	false;
+    return	0;
   tputs( ScHO, 1, (int (*)(int))PutChr );
-  return	true;
+  return	1;
 }
 
 /*
   Move the cursor to screen coordinates x, y (for column and row,
   respectively).
 */
-bool
+boolean
 ScMvCursor( int x, int y ) {
   if( ScCM == NULL )
-    return	false;
+    return	0;
 
   --x; --y; /* Tgoto() adds 1 to each coordinate!? */
   tputs( tgoto( ScCM, x, y ), 1, (int (*)(int))PutChr );
-  return	true;
+  return	1;
 }
 
 /*
   Set the scrolling region to be from "top" line to "btm" line,
   inclusive.
 */
-bool
+boolean
 ScSetScrlReg( int top, int btm ) {
   if( ScCS == NULL )
-    return	false;
+    return	0;
   tputs( tgoto( ScCS, btm-1, top-1 ), 1, (int (*)(int))PutChr );
-  return	true;
+  return	1;
 }
 
 /*
   Begin standout mode.
 */
-bool
+boolean
 ScSetStandout( void ) {
   if( ScSO == NULL )
-    return	false;
+    return	0;
   tputs( ScSO, 1, (int (*)(int))PutChr );
-  return	true;
+  return	1;
 }
 
 /*
   Scroll text forward 1 line.
 */
-bool
+boolean
 ScUpScroll( void ) {
   if( ScSF == NULL )
-    return	false;
+    return	0;
   tputs( ScSF, 1, (int (*)(int))PutChr );
-  return	true;
+  return	1;
 }
 
 /*

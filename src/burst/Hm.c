@@ -65,7 +65,7 @@ extern FILE    *fdopen();
 #endif
 #endif
 
-#define HmDEBUG		false
+#define HmDEBUG		0
 
 #ifndef Max
 #define Max(_a,_b)	((_a)<(_b)?(_b):(_a))
@@ -109,9 +109,9 @@ extern FILE    *fdopen();
 		(_co)++;\
 		}\
 
-static bool	HmDirty = false;
-static bool	HmMyxflag = false;
-static bool	HmPkgInit = false;
+static boolean	HmDirty = 0;
+static boolean	HmMyxflag = 0;
+static boolean	HmPkgInit = 0;
 
 static HmWindow	*windows = NULL;
 
@@ -163,7 +163,7 @@ int borderchr;
 
 	Print contents of itemp.
  */
-STATIC void
+static void
 #if __STDC__
 HmPrntItem( HmItem *itemp )
 #else
@@ -192,7 +192,7 @@ register HmItem	*itemp;
 
 	Print "windows" stack.
  */
-STATIC void
+static void
 #if __STDC__
 HmPrntMenu( HmMenu *menup )
 #else
@@ -214,7 +214,7 @@ HmMenu	*menup;
 
 	Print "windows" stack.
  */
-STATIC void
+static void
 #if __STDC__
 HmPrntWindows( void )
 #else
@@ -242,7 +242,7 @@ HmPrntWindows()
 
 	Print all HmItem's in listp.
  */
-STATIC void
+static void
 #if __STDC__
 HmPrntLList( HmLList *listp )
 #else
@@ -262,7 +262,7 @@ HmLList	*listp;
 
 	Free storage (allocated with malloc) for an array of HmItem's.
  */
-STATIC void
+static void
 #if __STDC__
 HmFreeItems( HmItem *itemp )
 #else
@@ -290,7 +290,7 @@ HmItem	*itemp;
 	Free storage (allocated with malloc) for a linked-list of
 	HmItem's.
  */
-STATIC void
+static void
 #if __STDC__
 HmFreeLList( HmLList *listp )
 #else
@@ -320,7 +320,7 @@ register HmLList	*listp;
 			value of the dirty bitmap.
 		P_ON	means this entry is current so highlight it.
  */
-STATIC void
+static void
 #if __STDC__
 HmPutItem( register HmWindow *win, register HmItem *itemp, int flag )
 #else
@@ -418,7 +418,7 @@ int			flag;
 	Draw the horizontal border for row of win->menup using mark
 	for the corner characters.
  */
-STATIC void
+static void
 #if __STDC__
 HmPutBorder( register HmWindow *win, register int row, char mark )
 #else
@@ -459,7 +459,7 @@ char			mark;
 	Mark as dirty, the bit in win->dirty that corresponds to
 	col and row of the screen.
 */
-STATIC void
+static void
 #if __STDC__
 HmSetbit( register HmWindow *win, int col, int row )
 #else
@@ -468,7 +468,7 @@ register HmWindow	*win;
 int			col, row;
 #endif
 	{	register int	bit = col - win->menux;
-#if HmDEBUG && false
+#if HmDEBUG && 0
 	(void) ErLog(	"HmSetbit:menu{<%d,%d>,<%d,%d>}col=%d,row=%d\n",
 			win->menux, win->menux+win->width+1,
 			win->menuy, win->menuy+HmHEIGHT+1,
@@ -476,7 +476,7 @@ int			col, row;
 			);
 #endif
 	win->dirty[row-win->menuy] |= bit == 0 ? 1 : 1 << bit;
-#if HmDEBUG && false
+#if HmDEBUG && 0
 	(void) ErLog( 	"\tdirty[%d]=0x%x\r\n",
 			row-win->menuy, win->dirty[row-win->menuy]
 			);
@@ -489,7 +489,7 @@ int			col, row;
 
 	Mark as clean, the entire dirty bitmap for win.
  */
-STATIC void
+static void
 #if __STDC__
 HmClrmap( HmWindow *win )
 #else
@@ -508,7 +508,7 @@ HmWindow	*win;
 
 	Mark as dirty the entire dirty bitmap for win.
  */
-STATIC void
+static void
 #if __STDC__
 HmSetmap( HmWindow *win )
 #else
@@ -529,7 +529,7 @@ HmWindow	*win;
 	boundaries contain the screen coordinate <x,y>.  If the point
 	is outside of all these windows, return 0.
  */
-STATIC HmWindow	*
+static HmWindow	*
 #if __STDC__
 HmInWin( register int x, register int y, register HmWindow *win )
 #else
@@ -538,7 +538,7 @@ register int		x, y;
 register HmWindow	*win;
 #endif
 	{
-#if HmDEBUG && false
+#if HmDEBUG && 0
 	if( win != (HmWindow *) NULL )
 		(void) ErLog(	"HmInWin:x=%d y=%d win{<%d,%d>,<%d,%d>}\r\n",
 				x, y,
@@ -562,7 +562,7 @@ register HmWindow	*win;
 	Draw win->menup on screen.  Actually, only characters flagged as
 	dirty are drawn.
  */
-STATIC void
+static void
 #if __STDC__
 HmDrawWin( register HmWindow *win )
 #else
@@ -571,7 +571,7 @@ register HmWindow	*win;
 #endif
 	{	register HmItem	*itemp;
 		int	height;
-#if HmDEBUG && true
+#if HmDEBUG && 1
 	(void) ErLog(	"HmDrawWin:win{<%d,%d>,<%d,%d>}\r\n",
 			win->menux, win->menux+win->width+1,
 			win->menuy, win->menuy+HmHEIGHT+1
@@ -603,7 +603,7 @@ register HmWindow	*win;
 	on line HmYCOMMO.  This message will be erased when the user
 	strikes a key (or uses the mouse).
  */
-STATIC void
+static void
 #if __STDC__
 HmHelp( register HmWindow *win, int entry )
 #else
@@ -649,7 +649,7 @@ char	*str;
 	Remove win->menup from screen, marking any occluded portions
 	of other menus as dirty so that they will be redrawn by HmHit().
  */
-STATIC void
+static void
 #if __STDC__
 HmLiftWin( register HmWindow *win )
 #else
@@ -661,7 +661,7 @@ register HmWindow	*win;
 		register int	endcol = win->menux + win->width + 2;
 		register int	endrow = win->menuy +
 				  HmHEIGHT + HmHGTBORDER;
-#if HmDEBUG && true
+#if HmDEBUG && 1
 	(void) ErLog( "HmLiftWin:win{<%d,%d>,<%d,%d>}\r\n",
 			win->menux, win->menux+win->width+1,
 			win->menuy, win->menuy+HmHEIGHT+1
@@ -676,7 +676,7 @@ register HmWindow	*win;
 				)
 				{
 				HmSetbit( olwin, col, row );
-				HmDirty = true;
+				HmDirty = 1;
 				}
 			else
 				{
@@ -696,7 +696,7 @@ register HmWindow	*win;
 
 	Add window to top of "windows" stack.
 */
-STATIC void
+static void
 #if __STDC__
 HmPushWin( HmWindow *win )
 #else
@@ -714,7 +714,7 @@ HmWindow	*win;
 
 	Delete window from top of "windows" stack.
 */
-STATIC void
+static void
 #if __STDC__
 HmPopWin( HmWindow *win )
 #else
@@ -731,7 +731,7 @@ HmWindow	*win;
 
 	Draw any dirty portions of all windows in stack starting at win.
 */
-STATIC void
+static void
 #if __STDC__
 HmRefreshWin( HmWindow *win )
 #else
@@ -741,7 +741,7 @@ HmWindow	*win;
 	{
 	if( win == (HmWindow *) NULL )
 		{
-		HmDirty = false;
+		HmDirty = 0;
 		return;
 		}
 	HmRefreshWin( win->next );
@@ -760,15 +760,15 @@ HmRedraw( void )
 HmRedraw()
 #endif
 	{	register HmWindow	*win;
-		register int		reset = false;
-#if HmDEBUG && true
+		register int		reset = 0;
+#if HmDEBUG && 1
 	HmPrntWindows();
 #endif
 	(void) ScClrText();	/* clear entire screen */
 
 	/* See if we changed the maximum items displayed parameter. */
 	if( HmMaxVis != HmLastMaxVis )
-		reset = true;
+		reset = 1;
 	for( win = windows; win != (HmWindow *) NULL; win = win->next )
 		{
 		if( reset ) /* Correct window to reflect new maximum. */
@@ -854,7 +854,7 @@ HmTtyReset()
 	is available and place boolean result in HmMyxflag.  Return
 	true for success and false for failure to open "/dev/tty".
  */
-bool
+boolean
 #if __STDC__
 HmInit( int x, int y, int maxvis )
 #else
@@ -868,15 +868,15 @@ int	maxvis;
 		)
 		{
 		HmError( "Can't open /dev/tty for reading." );
-		return	false;
+		return	0;
 		}
 	save_Tty( HmTtyFd );
-	HmPkgInit = true;
+	HmPkgInit = 1;
 	HmLftMenu = x;
 	HmTopMenu = y;
 	HmMaxVis = maxvis;
 
-	return	true;
+	return	1;
 	}
 
 /*
@@ -884,7 +884,7 @@ int	maxvis;
 
 	Determine width and height of win->menup, and store in win.
  */
-STATIC void
+static void
 #if __STDC__
 HmWidHgtMenu( register HmWindow *win )
 #else
@@ -906,12 +906,12 @@ register HmWindow	*win;
 	}
 
 /*
-	bool HmFitMenu( register HmWindow *nwin, register HmWindow *cwin )
+	boolean HmFitMenu( register HmWindow *nwin, register HmWindow *cwin )
 
 	If nwin->menup will fit below cwin->menup on screen, store
-	position in nwin, and return true.  Otherwise, return false.
+	position in nwin, and return 1.  Otherwise, return 0.
  */
-STATIC bool
+static boolean
 #if __STDC__
 HmFitMenu( register HmWindow *nwin, register HmWindow *cwin  )
 #else
@@ -946,7 +946,7 @@ register HmWindow	*nwin, *cwin;
 
 	Find best screen position for win->menup.
  */
-STATIC void
+static void
 #if __STDC__
 HmPosMenu( register HmWindow *win )
 #else
@@ -983,7 +983,7 @@ register HmWindow	*win;
 	Read and decode screen coordinates from MYX "editor ptr".
 	Implicit return in x and y.
  */
-STATIC void
+static void
 #if __STDC__
 HmMyxMouse( register int *x, register int *y )
 #else
@@ -1039,16 +1039,16 @@ HmMenu	*menup;			/* -> first HmItem in array.		*/
 	{	register HmItem	*itemp;
 		HmItem		*retitemp = NULL;
 		HmWindow	*win;
-		register int	done = false;
-		int		dynamic = false;
+		register int	done = 0;
+		int		dynamic = 0;
 		static int	HmLevel = 0;
 #if HmDEBUG
 	ErLog( "HmHit(0x%x)\n", menup );
 #endif
-	if( HmPkgInit == false )
+	if( HmPkgInit == 0 )
 		{
 		HmInit( HmLftMenu, HmTopMenu, HmMaxVis );
-		HmPkgInit = true;
+		HmPkgInit = 1;
 		}
 	if( ++HmLevel == 1 )
 		HmTtySet();
@@ -1105,11 +1105,11 @@ HmMenu	*menup;			/* -> first HmItem in array.		*/
 			itemp->bfn = gitemp->bfn;
 			itemp->hfn = gitemp->hfn;
 			itemp->data = gitemp->data;
-#if HmDEBUG && false
+#if HmDEBUG && 0
 			HmPrntItem( itemp );
 #endif
 			}
-#if HmDEBUG && false
+#if HmDEBUG && 0
 		HmPrntLList( llhead.next );
 #endif
 		/* Steal the field that the user isn't using temporarily to

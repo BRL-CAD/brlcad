@@ -55,7 +55,7 @@
 		HmItem	*(*generator)();
 		short	prevtop;
 		short	prevhit;
-		bool	sticky;
+		boolean	sticky;
 		}
 	HmMenu;
 
@@ -135,7 +135,7 @@ typedef struct HmMenu
 	HmItem	*(*generator)();/* If item == 0, generates items.	*/
 	short	prevtop;	/* Top entry currently visable		*/
 	short	prevhit;	/* Offset from top of last select	*/
-	bool	sticky;		/* If true, menu stays around after SELECT,
+	boolean	sticky;		/* If true, menu stays around after SELECT,
 					and until QUIT. */
 	}
 HmMenu;
@@ -160,7 +160,7 @@ HmWindow;
 
 /**
 
-	bool	HmInit( int x, int y, int maxvis )
+	boolean	HmInit( int x, int y, int maxvis )
 
 	HmInit() must be called before any other routines in the
 	Hm package to initialize the screen position of the top-left
@@ -186,9 +186,9 @@ HmWindow;
 	"/dev/tty".
 **/
 #if __STDC__
-extern bool	HmInit( int x, int y, int maxvis );
+extern boolean	HmInit( int x, int y, int maxvis );
 #else
-extern bool	HmInit();
+extern boolean	HmInit();
 #endif
 extern FILE	*HmTtyFp;
 extern int	HmLftMenu;
