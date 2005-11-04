@@ -219,8 +219,11 @@ int main(int argc, char **argv)
 			bu_version+5
 		      );	/* +5 to skip @(#) */
 	}
+#if defined(DEBUG)
+	(void)fprintf(stderr, "WARNING: Compile-time debugging is enabled and may limit performance\n");
+#endif
 #if defined(NO_BOMBING_MACROS) || defined(NO_MAGIC_CHECKING) || defined(NO_BADRAY_CECHKING) || defined(NO_DEBUG_CHECKING)
-	(void)fprintf(stderr, "WARNING: Run-time debugging is disabled for extra performance\n");
+	(void)fprintf(stderr, "WARNING: Run-time debugging is disabled and may enhance performance\n");
 #endif
 
 	/* Identify what host we're running on */
