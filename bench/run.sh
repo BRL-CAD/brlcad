@@ -123,11 +123,14 @@ fi
 
 # utility function to search for a certain filesystem object in a list of paths
 look_for ( ) {
+    look_for_type="$1" ; shift
     look_for_label="$1" ; shift
     look_for_var="$1" ; shift
     look_for_dirs="$*"
 
-    echo  "Looking for $look_for_label"
+    if test "x$look_for_label" != "x" ; then
+	echo  "Looking for $look_for_label"
+    fi
     
     # get the value of the variable
     look_for_var_var="echo \"\$$look_for_var\""
@@ -140,8 +143,33 @@ look_for ( ) {
 		echo "searching ${look_for_dir}"
 		ls -lad ${look_for_dir}
 	    fi
-	    if test -x "${look_for_dir}" ; then
-		echo "...found ${look_for_dir}"
+	    opts="-r"
+	    case "x$look_for_type" in
+		xfile)
+		    opts="$opts -f"
+		    ;;
+		xdir*)
+		    # should work without read bit
+		    opts="-d -x"
+		    ;;
+		xexe*)
+		    opts="$opts -x"
+		    ;;
+		xscr*)
+		    opts="$opts -x"
+		    ;;
+	    esac
+	    look_for_failed=no
+	    for opt in $opts ; do
+		if test ! $opt "${look_for_dir}" ; then
+		    look_for_failed=yes
+		    break
+		fi
+	    done
+	    if test "x$look_for_failed" = "xno" ; then
+		if test "x$look_for_label" != "x" ; then
+		    echo "...found $look_for_type ${look_for_dir}"
+		fi
 		look_for_var_var="${look_for_var}=\"${look_for_dir}\""
 		eval $look_for_var_var
 		export $look_for_var
@@ -149,18 +177,20 @@ look_for ( ) {
 	    fi
 	done
     else
-	echo "...using $look_for_var_val from $look_for_var variable setting"
+	if test "x$look_for_label" != "x" ; then
+	    echo "...using $look_for_var_val from $look_for_var variable setting"
+	fi
     fi
 }
 
-look_for "the BRL-CAD raytracer" RT \
+look_for executable "the BRL-CAD raytracer" RT \
     ${path_to_this}/rt \
     ${path_to_this}/../bin/rt \
     ${path_to_this}/../src/rt/rt \
     ${path_to_this}/src/rt/rt \
     ./rt
 
-look_for "a benchmark geometry directory" DB \
+look_for directory "a benchmark geometry directory" DB \
     ${path_to_this}/../share/brlcad/*.*.*/db \
     ${path_to_this}/share/brlcad/*.*.*/db \
     ${path_to_this}/share/brlcad/db \
@@ -169,7 +199,7 @@ look_for "a benchmark geometry directory" DB \
     ${path_to_this}/db \
     ./db
 
-look_for "a benchmark reference image directory" PIX \
+look_for directory "a benchmark reference image directory" PIX \
     ${path_to_this}/../share/brlcad/*.*.*/pix \
     ${path_to_this}/share/brlcad/*.*.*/pix \
     ${path_to_this}/share/brlcad/pix \
@@ -178,13 +208,13 @@ look_for "a benchmark reference image directory" PIX \
     ${path_to_this}/pix \
     ./pix
 
-look_for "a pixel comparison utility" CMP \
+look_for executable "a pixel comparison utility" CMP \
     ${path_to_this}/pixcmp \
     ${path_to_this}/../bin/pixcmp \
     ${path_to_this}/../bench/pixcmp \
     ./pixcmp
 
-look_for "a time elapsed utility" ELP \
+look_for script "a time elapsed utility" ELP \
     ${path_to_this}/elapsed.sh \
     ${path_to_this}/../bin/elapsed.sh \
     ${path_to_this}/sh/elapsed.sh \
@@ -646,7 +676,7 @@ EOF
 	    if test $bench_avg -eq 0 ; then
 		bench_avgpercent=0
 	    else
-		bench_avgpercent=`echo $bench_deviation $bench_avg | awk '{print $1 / $2 * 100}"`
+		bench_avgpercent=`echo $bench_deviation $bench_avg | awk '{print $1 / $2 * 100}'`
 	    fi
 	    echo "DEBUG: average=$bench_avg ; variance=$bench_variance ; deviation=$bench_deviation ($bench_avgpercent%) ; last run was ${bench_percent}%"
 	fi
@@ -742,7 +772,9 @@ echo
 echo "Total testing time elapsed: `$ELP $start`"
 
 
-# Compute and output the results
+##############################
+# compute and output results #
+##############################
 
 HOST="`hostname`"
 if test $? != 0 ; then
@@ -815,40 +847,93 @@ if test ! "x$vgr" = "x" ; then
     echo
 fi
 
-# See if this looks like a run-time disabled build
-if test -f moss.g ; then
-    runtime=`grep "debugging is disabled" moss.g | wc | awk '{print $1}'`
-    if test $runtime -gt 0 ; then
-	echo "WARNING: This appears to be a compilation of BRL-CAD that has run-time"
-	echo "debugging disabled.  While this will generally give the best"
-	echo "performance results and is useful for long render tasks, but it is"
-	echo "generally not considered when comparing benchmark performance metrics."
-	echo "Official benchmark results are optimized builds with all run-time"
-	echo "features enabled."
-	echo
-	echo "For proper results, run 'make clean' and recompile using the"
-	echo "following configure options:"
-	echo "    --enable-runtime-debug  --enable-optimized"
-	echo
-    fi
-fi
 
-# See if this looks like an optimized build
-if test -f "$path_to_this/Makefile" ; then
-    optimized=`grep O3 "$path_to_this/Makefile" | wc | awk '{print $1}'`
+options=""
+if test -f "${path_to_this}/Makefile" ; then
+    # See if this looks like an optimized build from a source distribution
+    optimized=`grep O3 "${path_to_this}/Makefile" | wc | awk '{print $1}'`
     if test $optimized -eq 0 ; then
-	echo "WARNING: This may not be an optimized compilation of BRL-CAD."
-	echo "Performance results may not be optimal."
-	echo
-	echo "For proper results, run 'make clean' and recompile using the"
-	echo "following configure options:"
-	echo "    --enable-optimized"
-	echo
+	options="$options --enable-optimized"
     fi
 fi
 
-echo "Testing complete."
-echo "Read the benchmark.tr document for more details on the BRL-CAD Benchmark."
+if test -f moss.log ; then
+    # See if this looks like a run-time disabled compilation
+    runtime=`grep "debugging is disabled" moss.log | wc | awk '{print $1}'`
+    if test $runtime -gt 0 ; then
+	options="$options --enable-runtime-debug"
+    fi
+
+    # See if this looks like a compile-time debug compilation
+    runtime=`grep "debugging is enabled" moss.log | wc | awk '{print $1}'`
+    if test $runtime -gt 0 ; then
+	options="$options --disable-debug"
+    fi
+fi
+
+for opt in $options ; do
+    case "x$opt" in 
+	x--enable-optimized)
+	    echo "WARNING: This may not be an optimized compilation of BRL-CAD."
+	    echo "Performance results may not be optimal."
+	    echo
+	    ;;
+	x--enable-runtime-debug)
+	    echo "WARNING: This appears to be a compilation of BRL-CAD that has run-time"
+	    echo "debugging disabled.  While this will generally give the best"
+	    echo "performance results and is useful for long render tasks, it is"
+	    echo "generally not utilized when comparing benchmark performance metrics."
+	    echo
+	    ;;
+	x--disable-debug)
+	    echo "WARNING: This appears to be a debug compilation of BRL-CAD."
+	    echo "Performance results may not be optimal."
+	    echo
+	    ;;
+    esac
+done
+if test "x$options" != "x" ; then
+    echo "Official benchmark results are optimized builds with all run-time"
+    echo "features enabled and compile-time debugging disabled."
+    echo
+    if test -f "${path_to_this}/Makefile" ; then
+	echo "For proper results, run 'make clean' and recompile with the"
+	echo "following configure options added:"
+    else
+	echo "For proper results, you will need to install a version of the"
+	echo "benchmark that has been compiled with the following configure"
+	echo "options added:"
+    fi
+    echo " $options"
+    echo
+fi
+
+# if this was a valid benchmark run, tell about the benchmark document
+# and encourage submission of results.
+if test "x$options" = "x" ; then
+    look_for file "" BENCHMARK_TR \
+	${path_to_this}/../share/brlcad/*.*.*/doc/benchmark.tr \
+	${path_to_this}/share/brlcad/*.*.*/doc/benchmark.tr \
+	${path_to_this}/share/brlcad/doc/benchmark.tr \
+	${path_to_this}/share/doc/benchmark.tr \
+	${path_to_this}/doc/benchmark.tr \
+	${path_to_this}/../doc/benchmark.tr \
+	./benchmark.tr
+
+    echo "Read the benchmark.tr document for more details on the BRL-CAD Benchmark."
+    if test "x$BENCHMARK_TR" = "x" ; then
+	echo "The document should be available in the 'doc' directory of any source"
+	echo "or complete binary distribution of BRL-CAD."
+    else
+	echo "The document is available at $BENCHMARK_TR"
+    fi
+    echo
+    echo "You are encouraged to submit your benchmark results along with"
+    echo "system configuration information to benchmark@brlcad.org"
+    echo
+fi
+
+echo "Benchmark testing complete."
 
 # Local Variables:
 # mode: sh
