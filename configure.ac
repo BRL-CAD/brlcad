@@ -1472,6 +1472,7 @@ AH_VERBATIM([OUR_STRSEP],
 extern char *strsep(char **stringp, const char *delim);
 #endif])
 
+
 dnl *********************************
 dnl *** Check for system services ***
 dnl *********************************
@@ -2468,6 +2469,12 @@ if test "x$bc_build_runtime_debug" = "xno" ; then
 	AC_DEFINE(NO_DEBUG_CHECKING, 1, [Define to not provide run-time debug facilities via rt_g.debug])
 fi
 
+dnl compile-time debug
+if test "x$bc_use_debug" != "xno" ; then
+	AC_DEFINE(DEBUG, 1, [Define to enable compile-time debug code])
+else
+	AC_DEFINE(NDEBUG, 1, [Define to indicate non-debug code (assert utilizes)])
+fi
 
 BN='${top_builddir}/src/libbn/libbn.la'
 AC_SUBST(BN)
