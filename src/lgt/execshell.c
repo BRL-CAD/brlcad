@@ -67,13 +67,8 @@ loc_Perror(char *msg)
 	if( errno >= 0 )
 		bu_log( "%s: %s\n", msg, strerror(errno) );
 #else
-#  ifdef _WIN32
-	if( errno >= 0 && errno < _sys_nerr )
-		bu_log( "%s: %s\n", msg, _sys_errlist[errno] );
-#  else
 	if( errno >= 0 && errno < sys_nerr )
 		bu_log( "%s: %s\n", msg, sys_errlist[errno] );
-#  endif
 #endif
 	else
 		bu_log( "\"%s\" (%d), errno not set, shouldn't call perror.\n",
