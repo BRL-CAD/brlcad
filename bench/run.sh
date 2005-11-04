@@ -848,12 +848,17 @@ if test ! "x$vgr" = "x" ; then
 fi
 
 
+encourage_submission=yes
 options=""
 if test -f "${path_to_this}/Makefile" ; then
     # See if this looks like an optimized build from a source distribution
     optimized=`grep O3 "${path_to_this}/Makefile" | wc | awk '{print $1}'`
     if test $optimized -eq 0 ; then
+	echo "WARNING: This may not be an optimized compilation of BRL-CAD."
+	echo "Performance results may not be optimal."
+	echo
 	options="$options --enable-optimized"
+	encourage_submission=no
     fi
 fi
 
@@ -861,40 +866,27 @@ if test -f moss.log ; then
     # See if this looks like a run-time disabled compilation
     runtime=`grep "debugging is disabled" moss.log | wc | awk '{print $1}'`
     if test $runtime -gt 0 ; then
+	echo "WARNING: This appears to be a compilation of BRL-CAD that has run-time"
+	echo "debugging disabled.  While this will generally give the best"
+	echo "performance results and is useful for long render tasks, it is"
+	echo "generally not utilized when comparing benchmark performance metrics."
+	echo
 	options="$options --enable-runtime-debug"
+	encourage_submission=no
     fi
 
     # See if this looks like a compile-time debug compilation
     runtime=`grep "debugging is enabled" moss.log | wc | awk '{print $1}'`
     if test $runtime -gt 0 ; then
+	echo "This appears to be a debug compilation of BRL-CAD."
+	echo
 	options="$options --disable-debug"
     fi
 fi
 
-for opt in $options ; do
-    case "x$opt" in 
-	x--enable-optimized)
-	    echo "WARNING: This may not be an optimized compilation of BRL-CAD."
-	    echo "Performance results may not be optimal."
-	    echo
-	    ;;
-	x--enable-runtime-debug)
-	    echo "WARNING: This appears to be a compilation of BRL-CAD that has run-time"
-	    echo "debugging disabled.  While this will generally give the best"
-	    echo "performance results and is useful for long render tasks, it is"
-	    echo "generally not utilized when comparing benchmark performance metrics."
-	    echo
-	    ;;
-	x--disable-debug)
-	    echo "WARNING: This appears to be a debug compilation of BRL-CAD."
-	    echo "Performance results may not be optimal."
-	    echo
-	    ;;
-    esac
-done
-if test "x$options" != "x" ; then
+if test "x$encourage_submission" = "xno" ; then
     echo "Official benchmark results are optimized builds with all run-time"
-    echo "features enabled and compile-time debugging disabled."
+    echo "features enabled and optionally without compile-time debug symbols."
     echo
     if test -f "${path_to_this}/Makefile" ; then
 	echo "For proper results, run 'make clean' and recompile with the"
@@ -908,28 +900,29 @@ if test "x$options" != "x" ; then
     echo
 fi
 
-# if this was a valid benchmark run, tell about the benchmark document
-# and encourage submission of results.
-if test "x$options" = "x" ; then
-    look_for file "" BENCHMARK_TR \
-	${path_to_this}/../share/brlcad/*.*.*/doc/benchmark.tr \
-	${path_to_this}/share/brlcad/*.*.*/doc/benchmark.tr \
-	${path_to_this}/share/brlcad/doc/benchmark.tr \
-	${path_to_this}/share/doc/benchmark.tr \
-	${path_to_this}/doc/benchmark.tr \
-	${path_to_this}/../doc/benchmark.tr \
-	./benchmark.tr
+# tell about the benchmark document
+look_for file "" BENCHMARK_TR \
+    ${path_to_this}/../share/brlcad/*.*.*/doc/benchmark.tr \
+    ${path_to_this}/share/brlcad/*.*.*/doc/benchmark.tr \
+    ${path_to_this}/share/brlcad/doc/benchmark.tr \
+    ${path_to_this}/share/doc/benchmark.tr \
+    ${path_to_this}/doc/benchmark.tr \
+    ${path_to_this}/../doc/benchmark.tr \
+    ./benchmark.tr
 
-    echo "Read the benchmark.tr document for more details on the BRL-CAD Benchmark."
-    if test "x$BENCHMARK_TR" = "x" ; then
-	echo "The document should be available in the 'doc' directory of any source"
-	echo "or complete binary distribution of BRL-CAD."
-    else
-	echo "The document is available at $BENCHMARK_TR"
-    fi
-    echo
-    echo "You are encouraged to submit your benchmark results along with"
-    echo "system configuration information to benchmark@brlcad.org"
+echo "Read the benchmark.tr document for more details on the BRL-CAD Benchmark."
+if test "x$BENCHMARK_TR" = "x" ; then
+    echo "The document should be available in the 'doc' directory of any source"
+    echo "or complete binary distribution of BRL-CAD."
+else
+    echo "The document is available at $BENCHMARK_TR"
+fi
+echo
+
+# if this was a valid benchmark run, encourage submission of results.
+if test "x$encourage_submission" = "xyes" ; then
+    echo "You are encouraged to submit your benchmark results and system"
+    echo "configuration information to benchmark@brlcad.org"
     echo
 fi
 
