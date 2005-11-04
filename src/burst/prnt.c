@@ -25,22 +25,13 @@
 			Aberdeen Proving Ground
 			Maryland 21005-5066
 */
-
 #ifndef lint
 static const char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include "common.h"
 
-#ifndef DEBUG
-#  define NDEBUG
-#  define STATIC static
-#else
-#  define STATIC
-#endif
-
 #include <assert.h>
-
 #include <stdlib.h>
 #include <stdio.h>
 #include <time.h>

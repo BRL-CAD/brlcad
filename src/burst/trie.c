@@ -29,12 +29,7 @@
 static const char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
-#ifndef DEBUG
-#define NDEBUG
-#define STATIC static
-#else
-#define STATIC
-#endif
+#include "common.h"
 
 #include <assert.h>
 #include <stdio.h>
@@ -44,6 +39,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./trie.h"
 #include "./ascii.h"
 #include "./extern.h"
+
 
 STATIC Func *matchTrie();
 

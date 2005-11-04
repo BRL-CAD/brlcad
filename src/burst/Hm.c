@@ -31,17 +31,11 @@
 		Version 1 Programmer's Manual.
 
 */
-/*LINTLIBRARY*/
 #ifndef lint
 static const char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
-#ifndef DEBUG
-#define NDEBUG
-#define STATIC static
-#else
-#define STATIC
-#endif
+#include "common.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -52,6 +46,8 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./Hm.h"
 #include "./Mm.h"
 #include "./extern.h"
+
+
 #define ErLog	brst_log
 #if __STDC__
 extern void	exit( int s );
