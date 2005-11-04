@@ -4380,41 +4380,70 @@ wdb_find_cmd(struct rt_wdb	*wdbp,
 	     int		argc,
 	     char 		**argv)
 {
-	register int				i,k;
-	register struct directory		*dp;
-	struct rt_db_internal			intern;
-	register struct rt_comb_internal	*comb=(struct rt_comb_internal *)NULL;
+    register int				i,k;
+    register struct directory		*dp;
+    struct rt_db_internal			intern;
+    register struct rt_comb_internal	*comb=(struct rt_comb_internal *)NULL;
+    struct bu_vls vls;
+    int c;
+    int aflag = 0;		/* look at all objects */
 
-	if (argc < 2 || MAXARGS < argc) {
-		struct bu_vls vls;
+    if (argc < 2 || MAXARGS < argc) {
+	bu_vls_init(&vls);
+	bu_vls_printf(&vls, "helplib_alias wdb_find %s", argv[0]);
+	Tcl_Eval(interp, bu_vls_addr(&vls));
+	bu_vls_free(&vls);
+	return TCL_ERROR;
+    }
 
-		bu_vls_init(&vls);
-		bu_vls_printf(&vls, "helplib_alias wdb_find %s", argv[0]);
-		Tcl_Eval(interp, bu_vls_addr(&vls));
-		bu_vls_free(&vls);
+    bu_optind = 1;	/* re-init bu_getopt() */
+    while ((c = bu_getopt(argc, argv, "a")) != EOF) {
+	switch (c) {
+	case 'a':
+	    aflag = 1;
+	    break;
+	default:
+	    bu_vls_init(&vls);
+	    bu_vls_printf(&vls, "Unrecognized option - %c", c);
+	    Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+	    bu_vls_free(&vls);
+	    return TCL_ERROR;
+	}
+    }
+    argc -= (bu_optind - 1);
+    argv += (bu_optind - 1);
+
+    /* Examine all COMB nodes */
+    for (i = 0; i < RT_DBNHASH; i++) {
+	for (dp = wdbp->dbip->dbi_Head[i]; dp != DIR_NULL; dp = dp->d_forw) {
+	    if (!(dp->d_flags & DIR_COMB) ||
+		(!aflag && (dp->d_flags & DIR_HIDDEN)))
+		continue;
+
+	    if (rt_db_get_internal(&intern,
+				   dp,
+				   wdbp->dbip,
+				   (fastf_t *)NULL,
+				   &rt_uniresource) < 0) {
+		Tcl_AppendResult(interp, "Database read error, aborting", (char *)NULL);
 		return TCL_ERROR;
+	    }
+
+	    comb = (struct rt_comb_internal *)intern.idb_ptr;
+	    for (k=1; k<argc; k++)
+		db_tree_funcleaf(wdbp->dbip,
+				 comb,
+				 comb->tree,
+				 wdb_find_ref,
+				 (genptr_t)argv[k],
+				 (genptr_t)dp->d_namep,
+				 (genptr_t)interp);
+
+	    rt_db_free_internal(&intern, &rt_uniresource);
 	}
+    }
 
-	/* Examine all COMB nodes */
-	for (i = 0; i < RT_DBNHASH; i++) {
-		for (dp = wdbp->dbip->dbi_Head[i]; dp != DIR_NULL; dp = dp->d_forw) {
-			if (!(dp->d_flags & DIR_COMB))
-				continue;
-
-			if (rt_db_get_internal(&intern, dp, wdbp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
-				Tcl_AppendResult(interp, "Database read error, aborting", (char *)NULL);
-				return TCL_ERROR;
-			}
-
-			comb = (struct rt_comb_internal *)intern.idb_ptr;
-			for (k=1; k<argc; k++)
-				db_tree_funcleaf(wdbp->dbip, comb, comb->tree, wdb_find_ref, (genptr_t)argv[k], (genptr_t)dp->d_namep, (genptr_t)interp);
-
-			rt_db_free_internal(&intern, &rt_uniresource);
-		}
-	}
-
-	return TCL_OK;
+    return TCL_OK;
 }
 
 static int
