@@ -33,12 +33,16 @@
 	method buildComponentXML {name id}
 	method buildVirtualComponentXML {name material density p1 p2 p3}
 	method buildWheelXML {type begin end}
+	method buildGridZonesXML {name initialId xmax ymax zmax ignoreList}
 
 	common wizardMajorType ""
 	common wizardMinorType ""
 	common wizardName ""
 	common wizardVersion ""
 	common wizardClass "Wizard"
+
+	proc vectorAdd {u v}
+	proc vectorScale {u s}
     }
 
     protected {
@@ -154,4 +158,39 @@
 	append wheelXML [buildComponentXML "$type Wheel $n" $id]
     }
     append wheelXML [endSystemXML]
+}
+
+::itcl::body Wizard::buildGridZonesXML {name initialId xmax ymax zmax ignoreList} {
+    set zonesXML ""
+    set zoneID 0
+    for {set z 1} {$z <= $zmax} {incr z} {
+	for {set y 1} {$y <= $ymax} {incr y} {
+	    for {set x 1} {$x <= $xmax} {incr x} {
+		incr zoneID
+
+		if {[lsearch $ignoreList $zoneID] == -1} {
+		    set rid [expr {$initialId + $zoneID}]
+		    append zonesXML [beginZoneXML "$name $zoneID" $rid]
+		    append zonesXML [endZoneXML]
+		}
+	    }
+	}
+    }
+
+    return $zonesXML
+}
+
+
+######################## Class Methods ########################
+#
+::itcl::body Wizard::vectorAdd {u v} {
+    return [list [expr {[lindex $u 0]+[lindex $v 0]}] \
+		 [expr {[lindex $u 1]+[lindex $v 1]}] \
+		 [expr {[lindex $u 2]+[lindex $v 2]}]]
+}
+
+::itcl::body Wizard::vectorScale {u s} {
+    return [list [expr {[lindex $u 0] * $s}] \
+		 [expr {[lindex $u 1] * $s}] \
+		 [expr {[lindex $u 2] * $s}]]
 }
