@@ -144,6 +144,7 @@
 #define strcasecmp _stricmp
 #define strdup _strdup
 #define sys_errlist _sys_errlist
+#define sys_nerr _sys_nerr
 #define umask _umask
 #define unlink _unlink
 #define write _write
