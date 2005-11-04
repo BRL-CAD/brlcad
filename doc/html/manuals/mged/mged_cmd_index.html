@@ -2106,8 +2106,8 @@ l r230 r231 r232 r233 r234 r235 r236 r237 r238 r239 <BR>
 
 <P><HR ALIGN="RIGHT"></P>
 </FONT><B><DL>
-<DT><A NAME="make_bb"></A>make_bb</B> <I>new_shape_name</I> &lt;<I>objects|paths</I>&gt;</DT>
-<DD>The &quot;make_bb&quot; (make bounding box) command builds a single axis-aligned rectangular parallelepiped (RPP) that will contain the <I>objects</I> and <I>paths</I> specified.  The <I>paths</I> will include any transformation matrices that accumulate from <A HREF="#COMBINATION">combinations</A> along the path.  The <A HREF="#listeval">listeval</A> command may be used to see the effect of transformation matrices along a path.</DD>
+<DT><A NAME="make_bb"></A>make_bb</B> [-u] <I>new_shape_name</I> &lt;<I>objects|paths</I>&gt;</DT>
+<DD>The &quot;make_bb&quot; (make bounding box) command builds a single axis-aligned rectangular parallelepiped (RPP) that will contain the <I>objects</I> and <I>paths</I> specified.  The <I>paths</I> will include any transformation matrices that accumulate from <A HREF="#COMBINATION">combinations</A> along the path.  The <A HREF="#listeval">listeval</A> command may be used to see the effect of transformation matrices along a path.  The optional -u argument indicates that regions which have the <i>air</i> flag set should be retained, not discarded as is the default.</DD>
 <FONT SIZE=4><DT>Examples:</DT>
 </FONT><TT><DD>mged&gt;</TT> <B>make_bb new_bb shapea group1/region3</DD>
 </DL><DIR>

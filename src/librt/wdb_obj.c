@@ -6837,6 +6837,7 @@ wdb_make_bb_cmd(struct rt_wdb	*wdbp,
 	struct rt_db_internal	new_intern;
 	struct region		*regp;
 	char			*new_name;
+	int		use_air = 0;
 
 	WDB_TCL_CHECK_READ_ONLY;
 
@@ -6850,13 +6851,21 @@ wdb_make_bb_cmd(struct rt_wdb	*wdbp,
 		return TCL_ERROR;
 	}
 
+	i = 1;
+
+	/* look for a USEAIR option */
+	if ( ! strcmp(argv[i], "-u") ) {
+	    use_air = 1;
+	    i++;
+	}
+
 	/* Since arguments may be paths, make sure first argument isn't */
-	if (strchr(argv[1], '/')) {
-		Tcl_AppendResult(interp, "Do not use '/' in solid names: ", argv[1], "\n", (char *)NULL);
+	if (strchr(argv[i], '/')) {
+		Tcl_AppendResult(interp, "Do not use '/' in solid names: ", argv[i], "\n", (char *)NULL);
 		return TCL_ERROR;
 	}
 
-	new_name = argv[1];
+	new_name = argv[i++];
 	if (db_lookup(wdbp->dbip, new_name, LOOKUP_QUIET) != DIR_NULL) {
 		Tcl_AppendResult(interp, new_name, " already exists\n", (char *)NULL);
 		return TCL_ERROR;
@@ -6869,8 +6878,10 @@ wdb_make_bb_cmd(struct rt_wdb	*wdbp,
 		return TCL_ERROR;
 	}
 
+	rtip->useair = use_air;
+
 	/* Get trees for list of objects/paths */
-	for (i = 2 ; i < argc ; i++) {
+	for ( ; i < argc ; i++) {
 		int gottree;
 
 		/* Get full_path structure for argument */
