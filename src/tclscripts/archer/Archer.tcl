@@ -224,6 +224,8 @@ namespace eval Archer {
 	variable mDisplayType
 	variable mLighting 1
 	variable mRenderMode -1
+	variable mShowNormals 0
+	variable mShowNormalsTag "ShowNormals"
 	variable mActivePane
 	variable mStatusStr ""
 	variable mDbType ""
@@ -549,6 +551,7 @@ Popup Menu    Right or Ctrl-Left
 
 	method adjustCompNormals {comp}
 	method reverseCompNormals {comp}
+	method toggleCompNormals {comp}
 
 	method launchDisplayMenuBegin {w m x y}
 	method launchDisplayMenuEnd {}
@@ -713,7 +716,6 @@ Popup Menu    Right or Ctrl-Left
 	set env(DISPLAY) ":0"
     }
 
-#    set _imgdir [file join $env(ARCHER_HOME) $brlcadDataPath tclscripts archer images]
     set _imgdir [file join $brlcadDataPath tclscripts archer images]
 
     if {[llength $args] == 1} {
@@ -1312,8 +1314,8 @@ Popup Menu    Right or Ctrl-Left
 
     pack $itk_component(dbtype) -side right -padx 1 -pady 1
     pack $itk_component(editLabel) -side right -padx 1 -pady 1
-    pack $itk_component(progress) -side right -padx 1 -pady 1
-    pack $itk_component(status) -fill x -padx 1 -pady 1
+    pack $itk_component(progress) -fill y -side right -padx 1 -pady 1
+    pack $itk_component(status) -expand yes -fill x -padx 1 -pady 1
 
     # tree control
     _init_tree
@@ -7246,6 +7248,11 @@ Popup Menu    Right or Ctrl-Left
 	foreach line $lines {
 	    catch {eval $line}
 	}
+
+	# Make sure we're backwards compatible
+	if {$mTheme == "Crystal (Large)"} {
+	    set mTheme "Crystal_Large"
+	}
     }
 
     _background_color [lindex $mBackground 0] \
@@ -7677,46 +7684,97 @@ Popup Menu    Right or Ctrl-Left
 	}
     }
 
-    if {[catch {dbCmd attr get \
-		    $tnode displayColor} displayColor]} {
-	switch -exact -- $state {
-	    "0" {
-		dbCmd configure -primitiveLabels $node
-		dbCmd draw -m0 -x $trans $node
+
+    if {[catch {$itk_component(sdb) attr get $node $mShowNormalsTag} mShowNormals]} {
+	set mShowNormals 0
+    }
+
+    if {$mShowNormals} {
+	if {[catch {dbCmd attr get \
+			$tnode displayColor} displayColor]} {
+	    switch -exact -- $state {
+		"0" {
+		    dbCmd configure -primitiveLabels $node
+		    dbCmd draw -m0 -n -x $trans $node
+		}
+		"1" {
+		    dbCmd configure -primitiveLabels $node
+		    dbCmd draw -m1 -n -x $trans $node
+		}
+		"2" {
+		    dbCmd configure -primitiveLabels $node
+		    dbCmd draw -m2 -n -x $trans $node
+		}
+		"-1" {
+		    dbCmd configure -primitiveLabels {}
+		    dbCmd erase $node
+		}
 	    }
-	    "1" {
-		dbCmd configure -primitiveLabels $node
-		dbCmd draw -m1 -x $trans $node
-	    }
-	    "2" {
-		dbCmd configure -primitiveLabels $node
-		dbCmd draw -m2 -x $trans $node
-	    }
-	    "-1" {
-		dbCmd configure -primitiveLabels {}
-		dbCmd erase $node
+	} else {
+	    switch -exact -- $state {
+		"0" {
+		    dbCmd configure -primitiveLabels $node
+		    dbCmd draw -m0 -n -x $trans \
+			-C $displayColor $node
+		}
+		"1" {
+		    dbCmd configure -primitiveLabels $node
+		    dbCmd draw -m1 -n -x $trans \
+			-C $displayColor $node
+		}
+		"2" {
+		    dbCmd configure -primitiveLabels $node
+		    dbCmd draw -m2 -n -x $trans \
+			-C $displayColor $node
+		}
+		"-1" {
+		    dbCmd configure -primitiveLabels {}
+		    dbCmd erase $node
+		}
 	    }
 	}
     } else {
-	switch -exact -- $state {
-	    "0" {
-		dbCmd configure -primitiveLabels $node
-		dbCmd draw -m0 -x $trans \
-		    -C $displayColor $node
+	if {[catch {dbCmd attr get \
+			$tnode displayColor} displayColor]} {
+	    switch -exact -- $state {
+		"0" {
+		    dbCmd configure -primitiveLabels $node
+		    dbCmd draw -m0 -x $trans $node
+		}
+		"1" {
+		    dbCmd configure -primitiveLabels $node
+		    dbCmd draw -m1 -x $trans $node
+		}
+		"2" {
+		    dbCmd configure -primitiveLabels $node
+		    dbCmd draw -m2 -x $trans $node
+		}
+		"-1" {
+		    dbCmd configure -primitiveLabels {}
+		    dbCmd erase $node
+		}
 	    }
-	    "1" {
-		dbCmd configure -primitiveLabels $node
-		dbCmd draw -m1 -x $trans \
-		    -C $displayColor $node
-	    }
-	    "2" {
-		dbCmd configure -primitiveLabels $node
-		dbCmd draw -m2 -x $trans \
-		    -C $displayColor $node
-	    }
-	    "-1" {
-		dbCmd configure -primitiveLabels {}
-		dbCmd erase $node
+	} else {
+	    switch -exact -- $state {
+		"0" {
+		    dbCmd configure -primitiveLabels $node
+		    dbCmd draw -m0 -x $trans \
+			-C $displayColor $node
+		}
+		"1" {
+		    dbCmd configure -primitiveLabels $node
+		    dbCmd draw -m1 -x $trans \
+			-C $displayColor $node
+		}
+		"2" {
+		    dbCmd configure -primitiveLabels $node
+		    dbCmd draw -m2 -x $trans \
+			-C $displayColor $node
+		}
+		"-1" {
+		    dbCmd configure -primitiveLabels {}
+		    dbCmd erase $node
+		}
 	    }
 	}
     }
@@ -8364,7 +8422,9 @@ Popup Menu    Right or Ctrl-Left
 
     set mRenderMode [dbCmd how $node]
     # do this in case "ev" was used from the command line
-    if {2 < $mRenderMode} {set mRenderMode 2}
+    if {2 < $mRenderMode} {
+	set mRenderMode 2
+    }
 
     set mPrevSelectedObjPath $mSelectedObjPath
     set mPrevSelectedObj $mSelectedObj
@@ -8496,6 +8556,14 @@ Popup Menu    Right or Ctrl-Left
 
     if {[info exists itk_component(sdb)]} {
 	$menu add separator
+	if {$nodeType == "leaf"} {
+	    if {[catch {$itk_component(sdb) attr get $node $mShowNormalsTag} mShowNormals]} {
+		set mShowNormals 0
+	    }
+	    $menu add checkbutton -label "Show Normals" \
+		-indicatoron 1 -variable [::itcl::scope mShowNormals] \
+		-command [::itcl::code $this toggleCompNormals $node]
+	}
 	$menu add command -label "Sync Normals" \
 	    -command [::itcl::code $this adjustCompNormals $node]
 	$menu add command -label "Reverse Normals" \
@@ -9705,6 +9773,20 @@ Popup Menu    Right or Ctrl-Left
     }
 }
 
+::itcl::body Archer::toggleCompNormals {comp} {
+    if {[catch {$itk_component(sdb) attr get $comp $mShowNormalsTag} mShowNormals]} {
+	$itk_component(sdb) attr set $comp $mShowNormalsTag 1
+    } else {
+	if {$mShowNormals == 1} {
+	    $itk_component(sdb) attr set $comp $mShowNormalsTag 0
+	} else {
+	    $itk_component(sdb) attr set $comp $mShowNormalsTag 1
+	}
+    }
+
+    _redraw_obj $comp
+}
+
 ::itcl::body Archer::launchDisplayMenuBegin {dm m x y} {
     set currentDisplay $dm
     tk_popup $m $x $y
@@ -9936,6 +10018,7 @@ Popup Menu    Right or Ctrl-Left
     set optionsAndArgs [eval dbExpand $args]
     set options [lindex $optionsAndArgs 0]
     set objects [lindex $optionsAndArgs 1]
+    set tobjects ""
 
     # remove leading /'s to make the hierarchy widget happy
     foreach obj $objects {
