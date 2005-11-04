@@ -110,172 +110,96 @@ LC_ALL=C
 # save the precious args
 ARGS="$*"
 
-echo Looking for RT...
-# find the raytracer
-# RT environment variable overrides
-if test "x${RT}" = "x" ; then
-    # see if we find the rt binary
-    if test -x "$path_to_this/../src/rt/rt" ; then
-	echo ...found $path_to_this/../src/rt/rt
-	RT="$path_to_this/../src/rt/rt"
-    elif test -x "$path_to_this/rt" ; then
-	echo ...found $path_to_this/rt
-	RT="$path_to_this/rt"
-    elif test -x "$path_to_this/../bin/rt" ; then
-	echo ...found $path_to_this/../bin/rt
-	RT="$path_to_this/../bin/rt"
-    fi
-else
-    echo ...using $RT from RT environment variable setting
+# allow a debug hook, but don't announce it
+if test "x${DEBUG}" = "x" ; then
+#    DEBUG=1
+    :
 fi
 
-echo Looking for benchmark geometry ...
-# find geometry database directory if we do not already know where it
-# is. DB environment variable overrides
-if test "x${DB}" = "x" ; then
-    if test -f "$path_to_this/../db/sphflake.g" ; then
-	echo ...found .g geometry files in $path_to_this/../db
-	DB="$path_to_this/../db"
-    elif test -f "$path_to_this/sphflake.g" ; then
-	echo ...found .g geometry files in $path_to_this
-	DB="$path_to_this"
-    elif test -f "$path_to_this/../share/brlcad/db/sphflake.g" ; then
-	echo ...found .g geometry files in $path_to_this/../share/brlcad/db
-	DB="$path_to_this/../share/brlcad/db"
-    elif test -f "sphflake.g" ; then
-	echo ...found .g geometry files in .
-	DB="."
-    elif test -f "$path_to_this/../db/sphflake.asc" ; then
-	echo ...found ascii geometry files in $path_to_this/../db
 
-	echo Looking for asc2g converter ...
-	if test "x${ASC2G}" = "x" ; then
-	    ASC2G="asc2g"
-	    if test -x "$path_to_this/../src/conv/asc2g" ; then
-		echo ...found $path_to_this/../src/conv/asc2g
-		ASC2G="$path_to_this/../src/conv/asc2g"
-	    elif test -f "$path_to_this/../src/conv/asc2g.c" ; then
-		echo ...need to compile asc2g
+########################
+# search for resources #
+########################
 
-		for compiler in $CC gcc cc ; do
-		    COMPILE="$compiler"
+# utility function to search for a certain filesystem object in a list of paths
+look_for ( ) {
+    look_for_label="$1" ; shift
+    look_for_var="$1" ; shift
+    look_for_dirs="$*"
 
-		    if test "x$COMPILE" = "x" ; then
-			continue
-		    fi
+    echo  "Looking for $look_for_label"
+    
+    # get the value of the variable
+    look_for_var_var="echo \"\$$look_for_var\""
+    look_for_var_val="`eval ${look_for_var_var}`"
 
-		    $COMPILE -o asc2g "$path_to_this/../src/conv/asc2g" -I"$path_to_this/../include" -DHAVE_CONFIG_H -L/usr/brlcad/lib -L"$path_to_this/../src/libwdb/.libs" -L"$path_to_this/../src/librt/.libs" -L"$path_to_this/../src/libbu/.libs" -L"$path_to_this/../src/libbn/.libs" -L"$path_to_this/../src/other/libtcl/.libs" -lwdb -lrt -lbu -lbn -ltcl
-		    if test "x$?" = "x0" ; then
-			break
-		    fi
-		    if test -f "asc2g" ; then
-			break
-		    fi
-		done
+    if test "x${look_for_var_val}" = "x" ; then
+	for look_for_dir in $look_for_dirs ; do
 
-		if test -f "asc2g" ; then
-		    echo ...compiled asc2g with $COMPILE -o asc2g src/conv/asc2g.c
-		    ASC2G="./asc2g"
-		fi
+	    if test "x$DEBUG" != "x" ; then
+		echo "searching ${look_for_dir}"
+		ls -lad ${look_for_dir}
 	    fi
-	else
-	    echo ...using $ASC2G from ASC2G environment variable setting
-	fi
-
-	failed=no
-	for geometry in moss world star bldg391 m35 sphflake ; do
-	    echo ... creating ${geometry}.g
-	    $ASC2G "$path_to_this/../db/${geometry}.asc" ${geometry}.g
-	    if test "x$?" != "x0" ; then
-		if test ! -f ${geometry}.g ; then
-		    failed=yes
-		    break;
-		fi
+	    if test -x "${look_for_dir}" ; then
+		echo "...found ${look_for_dir}"
+		look_for_var_var="${look_for_var}=\"${look_for_dir}\""
+		eval $look_for_var_var
+		export $look_for_var
+		break
 	    fi
 	done
-	if test "x$failed" = "xno" ; then
-	    DB="."
-	    echo ...using $DB for geometry database directory
-	fi
-    fi
-else
-    echo ...using $DB from DB environment variable setting
-fi
-
-echo Looking for benchmark images ...
-# find pix reference image directory if we do not already know where
-# it is.  PIX environment variable overrides
-if test "x${PIX}" = "x" ; then
-    if test -f "$path_to_this/../pix/sphflake.pix" ; then
-	echo ...found .pix image files in $path_to_this/../pix
-	PIX="$path_to_this/../pix"
-    elif test -f "$path_to_this/sphflake.pix" ; then
-	echo ...found .pix image files in $path_to_this
-	PIX="$path_to_this"
-    elif test -f "$path_to_this/../share/brlcad/pix/sphflake.pix" ; then
-	echo ...found .pix image files in $path_to_this/../share/brlcad/pix
-	PIX="$path_to_this/../share/brlcad/pix"
-    fi
-else
-    echo ...using $PIX from PIX environment variable setting
-fi
-
-echo Checking for pixel comparison utility...
-# find pixel comparison utility
-# CMP environment variable overrides
-if test "x${CMP}" = "x" ; then
-    if test -x $path_to_this/pixcmp ; then
-	echo ...found $path_to_this/pixcmp
-	CMP="$path_to_this/pixcmp"
     else
-	if test -f "$path_to_this/pixcmp.c" ; then
-	    echo ...need to build pixcmp
-
-	    for compiler in $CC gcc cc ; do
-		COMPILE="$compiler"
-
-		if test "x$COMPILE" = "x" ; then
-		    continue
-		fi
-
-		$COMPILE -o pixcmp "$path_to_this/pixcmp.c"
-		if test "x$?" = "x0" ; then
-		    break
-		fi
-		if test -f "pixcmp" ; then
-		    break;
-		fi
-	    done
-
-	    if test -f "pixcmp" ; then
-		echo ...built pixcmp with $COMPILE -o pixcmp pixcmp.c
-		CMP="./pixcmp"
-	    fi
-	fi
+	echo "...using $look_for_var_val from $look_for_var variable setting"
     fi
-else
-    echo ...using $CMP from CMP environment variable setting
-fi
+}
 
-echo Checking for time elapsed utility...
-# find time elapsed script
-# ELP environment variable overrides
-if test "x${ELP}" = "x" ; then
-    if test -x $path_to_this/../sh/elapsed.sh ; then
-	echo ...found $path_to_this/../sh/elapsed.sh
-	ELP="$path_to_this/../sh/elapsed.sh"
-    elif test -x $path_to_this/elapsed.sh ; then
-	echo ...found $path_to_this/elapsed.sh
-	ELP="$path_to_this/elapsed.sh"
-    elif test -x $path_to_this/../bin/elapsed.sh ; then
-	echo ...found $path_to_this/../bin/elapsed.sh
-	ELP="$path_to_this/../bin/elapsed.sh"
-    fi
-else
-    echo ...using $ELP from ELP environment variable setting
-fi
+look_for "the BRL-CAD raytracer" RT \
+    ${path_to_this}/rt \
+    ${path_to_this}/../bin/rt \
+    ${path_to_this}/../src/rt/rt \
+    ${path_to_this}/src/rt/rt \
+    ./rt
 
-# print results or choke
+look_for "a benchmark geometry directory" DB \
+    ${path_to_this}/../share/brlcad/*.*.*/db \
+    ${path_to_this}/share/brlcad/*.*.*/db \
+    ${path_to_this}/share/brlcad/db \
+    ${path_to_this}/share/db \
+    ${path_to_this}/../db \
+    ${path_to_this}/db \
+    ./db
+
+look_for "a benchmark reference image directory" PIX \
+    ${path_to_this}/../share/brlcad/*.*.*/pix \
+    ${path_to_this}/share/brlcad/*.*.*/pix \
+    ${path_to_this}/share/brlcad/pix \
+    ${path_to_this}/share/pix \
+    ${path_to_this}/../pix \
+    ${path_to_this}/pix \
+    ./pix
+
+look_for "a pixel comparison utility" CMP \
+    ${path_to_this}/pixcmp \
+    ${path_to_this}/../bin/pixcmp \
+    ${path_to_this}/../bench/pixcmp \
+    ./pixcmp
+
+look_for "a time elapsed utility" ELP \
+    ${path_to_this}/elapsed.sh \
+    ${path_to_this}/../bin/elapsed.sh \
+    ${path_to_this}/sh/elapsed.sh \
+    ${path_to_this}/../sh/elapsed.sh \
+    ./elapsed.sh
+
+# end of searching, separate the output
+echo
+
+
+#####################
+# output parameters #
+#####################
+
+# sanity check, output all the final settings together
 if test "x${RT}" = "x" ; then
     echo "ERROR:  Could not find the BRL-CAD raytracer"
     exit 1
@@ -307,34 +231,50 @@ else
     echo "Using [$ELP] for ELP"
 fi
 
+# utility function to set a variable if it's not already set to something
+set_if_unset ( ) {
+    set_if_unset_name="$1" ; shift
+    set_if_unset_val="$1" ; shift
+
+    set_if_unset_var="echo \"\$$set_if_unset_name\""
+    set_if_unset_var_val="`eval ${set_if_unset_var}`"
+    if test "x${set_if_unset_var_val}" = "x" ; then
+	set_if_unset_var="${set_if_unset_name}=\"${set_if_unset_val}\""
+	if test "x$DEBUG" != "x" ; then
+	    echo $set_if_unset_var
+	fi
+	eval $set_if_unset_var
+	export $set_if_unset_name
+    fi
+
+    set_if_unset_var="echo \"\$$set_if_unset_name\""
+    set_if_unset_val="`eval ${set_if_unset_var}`"
+    echo "Using [${set_if_unset_val}] for $set_if_unset_name"
+}
+
 # determine the minimum time requirement in seconds for a single test run
-if test "x${TIMEFRAME}" = "x" ; then
-    TIMEFRAME=32
-fi
-echo "Using [$TIMEFRAME] for TIMEFRAME"
+set_if_unset TIMEFRAME 32
 
 # approximate maximum time in seconds that a given test is allowed to take
-if test "x${MAXTIME}" = "x" ; then
-    MAXTIME=300
-fi
+set_if_unset MAXTIME 300
 if test $MAXTIME -lt $TIMEFRAME ; then
     echo "ERROR: MAXTIME must be greater or equal to TIMEFRAME"
     exit 1
 fi
-echo "Using [$MAXTIME] for MAXTIME"
 
 # maximum deviation percentage
-if test "x${DEVIATION}" = "x" ; then
-    DEVIATION=3
-fi
-echo "Using [$DEVIATION] for DEVIATION"
+set_if_unset DEVIATION 3
 
 # maximum number of iterations to average
-if test "x${AVERAGE}" = "x" ; then
-    AVERAGE=3
-fi
-echo "Using [$AVERAGE] for AVERAGE"
+set_if_unset AVERAGE 3
+
+# end of settings, separate the output
 echo
+
+
+##########################
+# output run-time status #
+##########################
 
 # determine raytracer version
 echo "RT reports the following version information:"
@@ -348,31 +288,34 @@ EOF
 fi
 echo
 
-# let the user know about how long this might take
-mintime="`expr $TIMEFRAME \* 6`"
-echo "Minimum run time is `$ELP $mintime`"
-maxtime="`expr $MAXTIME \* 6`"
-echo "Maximum run time is `$ELP $maxtime`"
-estimate="`expr $mintime \* 3`"
-if test $estimate -gt $maxtime ; then
-    estimate="$maxtime"
+# if expr works, let the user know about how long this might take
+if test "x`expr 1 - 1 2>/dev/null`" = "x0" ; then
+    mintime="`expr $TIMEFRAME \* 6`"
+    echo "Minimum run time is `$ELP $mintime`"
+    maxtime="`expr $MAXTIME \* 6`"
+    echo "Maximum run time is `$ELP $maxtime`"
+    estimate="`expr $mintime \* 3`"
+    if test $estimate -gt $maxtime ; then
+	estimate="$maxtime"
+    fi
+    echo "Estimated   time is `$ELP $estimate`"
+    echo
+else
+    echo "WARNING: expr is unavailable, unable to compute statistics"
+    echo
 fi
-echo "Estimated   time is `$ELP $estimate`"
 
-# allow a debug hook, but don't announce it
-if test "x${DEBUG}" = "x" ; then
-#    DEBUG=1
-    :
-fi
-echo
 
+#########################
+# run and compute stats #
+#########################
 
 #
 # run file_prefix geometry hypersample [..rt args..]
 #   runs a single benchmark test assuming the following are preset:
 #
 #   RT := path/name of the raytracer to use
-#   DB :+ path to the geometry file
+#   DB := path to the geometry file
 #
 # it is assumed that stdin will be the view/frame input
 #
@@ -556,116 +499,116 @@ sqrt ( ) {
 
 
 #
-# benchmark test_name geometry [..rt args..]
+# bench test_name geometry [..rt args..]
 #   runs a series of benchmark tests assuming the following are preset:
 #
 #   TIMEFRAME := maximum amount of wallclock time to spend per test
 #
 # is is assumed that stdin will be the view/frame input
 #
-benchmark ( ) {
-    benchmark_testname="$1" ; shift
-    benchmark_geometry="$1" ; shift
-    benchmark_args="$*"
+bench ( ) {
+    bench_testname="$1" ; shift
+    bench_geometry="$1" ; shift
+    bench_args="$*"
 
-    if test "x$benchmark_testname" = "x" ; then
-	echo "ERROR: argument mismatch, benchmark is missing the test name"
+    if test "x$bench_testname" = "x" ; then
+	echo "ERROR: argument mismatch, bench is missing the test name"
 	return 1
     fi
-    if test "x$benchmark_geometry" = "x" ; then
-	echo "ERROR: argument mismatch, benchmark is missing the test geometry"
+    if test "x$bench_geometry" = "x" ; then
+	echo "ERROR: argument mismatch, bench is missing the test geometry"
 	return 1
     fi
     if test "x$DEBUG" != "x" ; then
-	echo "DEBUG: Beginning benchmark testing on $benchmark_testname using $benchmark_geometry"
+	echo "DEBUG: Beginning bench testing on $bench_testname using $bench_geometry"
     fi
 
-    benchmark_view="`cat`"
+    bench_view="`cat`"
 
-    echo +++++ ${benchmark_testname}
-    benchmark_hypersample=0
-    benchmark_frame=0
-    benchmark_rtfms=""
-    benchmark_percent=100
-    benchmark_start_time="`date '+%H %M %S'`"
-    benchmark_overall_elapsed=0
+    echo +++++ ${bench_testname}
+    bench_hypersample=0
+    bench_frame=0
+    bench_rtfms=""
+    bench_percent=100
+    bench_start_time="`date '+%H %M %S'`"
+    bench_overall_elapsed=0
 
-    while test $benchmark_overall_elapsed -lt $MAXTIME ; do
+    while test $bench_overall_elapsed -lt $MAXTIME ; do
 
-	benchmark_elapsed=0
-	while test $benchmark_elapsed -lt $TIMEFRAME ; do
+	bench_elapsed=0
+	while test $bench_elapsed -lt $TIMEFRAME ; do
 
-	    if test -f ${benchmark_testname}.pix; then mv -f ${benchmark_testname}.pix ${benchmark_testname}.pix.$$; fi
-	    if test -f ${benchmark_testname}.log; then mv -f ${benchmark_testname}.log ${benchmark_testname}.log.$$; fi
+	    if test -f ${bench_testname}.pix; then mv -f ${bench_testname}.pix ${bench_testname}.pix.$$; fi
+	    if test -f ${bench_testname}.log; then mv -f ${bench_testname}.log ${bench_testname}.log.$$; fi
 
-	    benchmark_frame_start_time="`date '+%H %M %S'`"
+	    bench_frame_start_time="`date '+%H %M %S'`"
 
-	    run $benchmark_testname $benchmark_geometry $benchmark_hypersample $benchmark_args 2> ${benchmark_testname}.log << EOF
-$benchmark_view
-start $benchmark_frame;
+	    run $bench_testname $bench_geometry $bench_hypersample $bench_args 2> ${bench_testname}.log << EOF
+$bench_view
+start $bench_frame;
 end;
 EOF
 	    retval=$?
 
-	    if test -f ${benchmark_testname}.pix.$benchmark_frame ; then mv -f ${benchmark_testname}.pix.$benchmark_frame ${benchmark_testname}.pix ; fi
+	    if test -f ${bench_testname}.pix.$bench_frame ; then mv -f ${bench_testname}.pix.$bench_frame ${bench_testname}.pix ; fi
 
 	    # compute how long we took, rounding up to at least one
 	    # second to prevent division by zero.
-	    benchmark_elapsed="`$ELP --seconds $benchmark_frame_start_time`"
-	    if test "x$benchmark_elapsed" = "x" ; then
-		benchmark_elapsed=1
+	    bench_elapsed="`$ELP --seconds $bench_frame_start_time`"
+	    if test "x$bench_elapsed" = "x" ; then
+		bench_elapsed=1
 	    fi
-	    if test $benchmark_elapsed -eq 0 ; then
-		benchmark_elapsed=1
+	    if test $bench_elapsed -eq 0 ; then
+		bench_elapsed=1
 	    fi
-	    if test "x$benchmark_hypersample" = "x0" ; then
+	    if test "x$bench_hypersample" = "x0" ; then
 
 	        # just finished the first frame
 		if test "x$DEBUG" != "x" ; then
-		    echo "DEBUG: ${benchmark_elapsed}s real elapsed,	1 ray/pixel,	`expr 262144 / $benchmark_elapsed` pixels/s (inexact wallclock)"
+		    echo "DEBUG: ${bench_elapsed}s real elapsed,	1 ray/pixel,	`expr 262144 / $bench_elapsed` pixels/s (inexact wallclock)"
 		fi
-		benchmark_hypersample=1
-		benchmark_frame="`expr $benchmark_frame + 1`"
+		bench_hypersample=1
+		bench_frame="`expr $bench_frame + 1`"
 	    else
 		if test "x$DEBUG" != "x" ; then
-		    echo "DEBUG: ${benchmark_elapsed}s real elapsed,	`expr $benchmark_hypersample + 1` rays/pixel,	`expr \( 262144 \* \( $benchmark_hypersample + 1 \) / $benchmark_elapsed \)` pixels/s (inexact wallclock)"
+		    echo "DEBUG: ${bench_elapsed}s real elapsed,	`expr $bench_hypersample + 1` rays/pixel,	`expr \( 262144 \* \( $bench_hypersample + 1 \) / $bench_elapsed \)` pixels/s (inexact wallclock)"
 		fi
 
 
 	        # increase the number of rays exponentially if we are
 	        # considerably faster than the TIMEFRAME required.
-		if test `expr $benchmark_elapsed \* 32` -le ${TIMEFRAME} ; then
+		if test `expr $bench_elapsed \* 32` -le ${TIMEFRAME} ; then
 		    # 32x increase, skip four frames
-		    benchmark_hypersample="`expr $benchmark_hypersample \* 32 + 31`"
-		    benchmark_frame="`expr $benchmark_frame + 5`"
-		elif test `expr $benchmark_elapsed \* 16` -le ${TIMEFRAME} ; then
+		    bench_hypersample="`expr $bench_hypersample \* 32 + 31`"
+		    bench_frame="`expr $bench_frame + 5`"
+		elif test `expr $bench_elapsed \* 16` -le ${TIMEFRAME} ; then
 		    # 16x increase, skip three frames
-		    benchmark_hypersample="`expr $benchmark_hypersample \* 16 + 15`"
-		    benchmark_frame="`expr $benchmark_frame + 4`"
-		elif test `expr $benchmark_elapsed \* 8` -le ${TIMEFRAME} ; then
+		    bench_hypersample="`expr $bench_hypersample \* 16 + 15`"
+		    bench_frame="`expr $bench_frame + 4`"
+		elif test `expr $bench_elapsed \* 8` -le ${TIMEFRAME} ; then
 		    # 8x increase, skip two frames
-		    benchmark_hypersample="`expr $benchmark_hypersample \* 8 + 7`"
-		    benchmark_frame="`expr $benchmark_frame + 3`"
-		elif test `expr $benchmark_elapsed \* 4` -le ${TIMEFRAME} ; then
+		    bench_hypersample="`expr $bench_hypersample \* 8 + 7`"
+		    bench_frame="`expr $bench_frame + 3`"
+		elif test `expr $bench_elapsed \* 4` -le ${TIMEFRAME} ; then
 		    # 4x increase, skip a frame
-		    benchmark_hypersample="`expr $benchmark_hypersample \* 4 + 3`"
-		    benchmark_frame="`expr $benchmark_frame + 2`"
+		    bench_hypersample="`expr $bench_hypersample \* 4 + 3`"
+		    bench_frame="`expr $bench_frame + 2`"
 		else
 		    # 2x increase
-		    benchmark_hypersample="`expr $benchmark_hypersample + $benchmark_hypersample + 1`"
-		    benchmark_frame="`expr $benchmark_frame + 1`"
+		    bench_hypersample="`expr $bench_hypersample + $bench_hypersample + 1`"
+		    bench_frame="`expr $bench_frame + 1`"
 		fi
 	    fi
 
 	    # save the rtfm for variance computations then print it
-	    benchmark_rtfm_line="`grep RTFM ${benchmark_testname}.log`"
-	    benchmark_rtfm="`echo $benchmark_rtfm_line | awk '{print int($9+0.5)}'`"
-	    if test "x$benchmark_rtfm" = "x" ; then
-		benchmark_rtfm="0"
+	    bench_rtfm_line="`grep RTFM ${bench_testname}.log`"
+	    bench_rtfm="`echo $bench_rtfm_line | awk '{print int($9+0.5)}'`"
+	    if test "x$bench_rtfm" = "x" ; then
+		bench_rtfm="0"
 	    fi
-	    benchmark_rtfms="$benchmark_rtfm $benchmark_rtfms"
-	    if test ! "x$benchmark_rtfm_line" = "x" ; then
-		echo "$benchmark_rtfm_line"
+	    bench_rtfms="$bench_rtfm $bench_rtfms"
+	    if test ! "x$bench_rtfm_line" = "x" ; then
+		echo "$bench_rtfm_line"
 	    fi
 
 	    # did we fail?
@@ -675,74 +618,74 @@ EOF
 	    fi
 
 	    # see if we need to break out early
-	    benchmark_overall_elapsed="`$ELP --seconds $benchmark_start_time`"
-	    if test $benchmark_overall_elapsed -ge $MAXTIME ; then
+	    bench_overall_elapsed="`$ELP --seconds $bench_start_time`"
+	    if test $bench_overall_elapsed -ge $MAXTIME ; then
 		break;
 	    fi
 	done
 
-	if test "x$benchmark_rtfm" = "x" ; then
-	    benchmark_rtfm="0"
+	if test "x$bench_rtfm" = "x" ; then
+	    bench_rtfm="0"
 	fi
-	if test "x$benchmark_rtfms" = "x" ; then
-	    benchmark_rtfms="0"
+	if test "x$bench_rtfms" = "x" ; then
+	    bench_rtfms="0"
 	fi
 
 	# outer loop for variance/deviation testing of last AVERAGE frames
-	benchmark_variance="`variance $AVERAGE $benchmark_rtfms`"
-	benchmark_deviation="`sqrt $benchmark_variance`"
-	if test $benchmark_rtfm -eq 0 ; then
-	    benchmark_percent=0
+	bench_variance="`variance $AVERAGE $bench_rtfms`"
+	bench_deviation="`sqrt $bench_variance`"
+	if test $bench_rtfm -eq 0 ; then
+	    bench_percent=0
 	else
-	    benchmark_percent=`echo $benchmark_deviation $benchmark_rtfm | awk '{print int(($1 / $2 * 100)+0.5)}'`
+	    bench_percent=`echo $bench_deviation $bench_rtfm | awk '{print int(($1 / $2 * 100)+0.5)}'`
 	fi
 
 	if test "x$DEBUG" != "x" ; then
-	    benchmark_vals="`getvals $AVERAGE $benchmark_rtfms`"
-	    benchmark_avg="`average $benchmark_vals`"
-	    if test $benchmark_avg -eq 0 ; then
-		benchmark_avgpercent=0
+	    bench_vals="`getvals $AVERAGE $bench_rtfms`"
+	    bench_avg="`average $bench_vals`"
+	    if test $bench_avg -eq 0 ; then
+		bench_avgpercent=0
 	    else
-		benchmark_avgpercent=`echo $benchmark_deviation $benchmark_avg | awk '{print $1 / $2 * 100}"`
+		bench_avgpercent=`echo $bench_deviation $bench_avg | awk '{print $1 / $2 * 100}"`
 	    fi
-	    echo "DEBUG: average=$benchmark_avg ; variance=$benchmark_variance ; deviation=$benchmark_deviation ($benchmark_avgpercent%) ; last run was ${benchmark_percent}%"
+	    echo "DEBUG: average=$bench_avg ; variance=$bench_variance ; deviation=$bench_deviation ($bench_avgpercent%) ; last run was ${bench_percent}%"
 	fi
 
 	# early exit if we have a stable number
-	if test $benchmark_percent -le $DEVIATION ; then
+	if test $bench_percent -le $DEVIATION ; then
 	    break
 	fi
 
-	benchmark_overall_elapsed="`$ELP --seconds $benchmark_start_time`"
+	bench_overall_elapsed="`$ELP --seconds $bench_start_time`"
 
 	# undo the hypersample increase back one step
-	benchmark_hypersample="`expr \( \( $benchmark_hypersample + 1 \) / 2 \) - 1`"
+	bench_hypersample="`expr \( \( $bench_hypersample + 1 \) / 2 \) - 1`"
     done
 
     # hopefully the last run is a stable representative of the performance
 
-    if test -f gmon.out; then mv -f gmon.out gmon.${benchmark_testname}.out; fi
-    ${CMP} ${PIX}/${benchmark_testname}.pix ${benchmark_testname}.pix
+    if test -f gmon.out; then mv -f gmon.out gmon.${bench_testname}.out; fi
+    ${CMP} ${PIX}/${bench_testname}.pix ${bench_testname}.pix
     if test $? = 0 ; then
-	echo ${benchmark_testname}.pix:  answers are RIGHT
+	echo ${bench_testname}.pix:  answers are RIGHT
     else
-	echo ${benchmark_testname}.pix:  WRONG WRONG WRONG WRONG WRONG WRONG
+	echo ${bench_testname}.pix:  WRONG WRONG WRONG WRONG WRONG WRONG
     fi
 
     if test "x$DEBUG" != "x" ; then
-	echo "DEBUG: Done benchmark testing on $benchmark_testname"
+	echo "DEBUG: Done benchmark testing on $bench_testname"
     fi
     return $retval
 }
 
 
-# Run the tests
+# Run the actual tests
 
 start="`date '+%H %M %S'`"
 echo "Running the BRL-CAD Benchmark tests... please wait ..."
 echo
 
-benchmark moss all.g $ARGS << EOF
+bench moss all.g $ARGS << EOF
 viewsize 1.572026215e+02;
 eye_pt 6.379990387e+01 3.271768951e+01 3.366661453e+01;
 viewrot -5.735764503e-01 8.191520572e-01 0.000000000e+00 0.000000000e+00
@@ -751,7 +694,7 @@ viewrot -5.735764503e-01 8.191520572e-01 0.000000000e+00 0.000000000e+00
 	0.000000000e+00 0.000000000e+00 0.000000000e+00 1.000000000e+00 ;
 EOF
 
-benchmark world all.g $ARGS << EOF
+bench world all.g $ARGS << EOF
 viewsize 1.572026215e+02;
 eye_pt 6.379990387e+01 3.271768951e+01 3.366661453e+01;
 viewrot -5.735764503e-01 8.191520572e-01 0.000000000e+00 0.000000000e+00
@@ -760,7 +703,7 @@ viewrot -5.735764503e-01 8.191520572e-01 0.000000000e+00 0.000000000e+00
 	0.000000000e+00 0.000000000e+00 0.000000000e+00 1.000000000e+00 ;
 EOF
 
-benchmark star all $ARGS << EOF
+bench star all $ARGS << EOF
 viewsize 2.500000000e+05;
 eye_pt 2.102677960e+05 8.455500000e+04 2.934714650e+04;
 viewrot -6.733560560e-01 6.130643360e-01 4.132114880e-01 0.000000000e+00
@@ -769,7 +712,7 @@ viewrot -6.733560560e-01 6.130643360e-01 4.132114880e-01 0.000000000e+00
 	0.000000000e+00 0.000000000e+00 0.000000000e+00 1.000000000e+00 ;
 EOF
 
-benchmark bldg391 all.g $ARGS << EOF
+bench bldg391 all.g $ARGS << EOF
 viewsize 1.800000000e+03;
 eye_pt 6.345012207e+02 8.633251343e+02 8.310771484e+02;
 viewrot -5.735764503e-01 8.191520572e-01 0.000000000e+00 0.000000000e+00
@@ -778,7 +721,7 @@ viewrot -5.735764503e-01 8.191520572e-01 0.000000000e+00 0.000000000e+00
 	0.000000000e+00 0.000000000e+00 0.000000000e+00 1.000000000e+00;
 EOF
 
-benchmark m35 all.g $ARGS <<EOF
+bench m35 all.g $ARGS <<EOF
 viewsize 6.787387985e+03;
 eye_pt 3.974533127e+03 1.503320754e+03 2.874633221e+03;
 viewrot -5.527838919e-01 8.332423558e-01 1.171090926e-02 0.000000000e+00
@@ -787,7 +730,7 @@ viewrot -5.527838919e-01 8.332423558e-01 1.171090926e-02 0.000000000e+00
 	0.000000000e+00 0.000000000e+00 0.000000000e+00 1.000000000e+00 ;
 EOF
 
-benchmark sphflake scene.r $ARGS <<EOF
+bench sphflake scene.r $ARGS <<EOF
 viewsize 2.556283261452611e+04;
 orientation 4.406810841785839e-01 4.005093234738861e-01 5.226451688385938e-01 6.101102288499644e-01;
 eye_pt 2.418500583758302e+04 -3.328563644344796e+03 8.489926952850350e+03;
