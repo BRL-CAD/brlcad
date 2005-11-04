@@ -1548,8 +1548,8 @@ pkg_perror(void (*errlog) (/* ??? */), char *s)
 	}
 #else
 #  if HAVE_STRERROR
-#  else
 	sprintf( errbuf, "%s: %s\n", s, strerror(errno) );
+#  else
 	sprintf( errbuf, "%s: %s\n", s, sys_errlist[errno] );
 #  endif
 #endif
