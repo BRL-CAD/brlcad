@@ -1,0 +1,10 @@
+If while compiling you encounter an error "Text relocation remains
+against symbol" along with some number of lines following, it usually
+means that the build has attempted to link a static system library
+into a shared library being compiled (e.g. attempting to link a system
+libz.a into the png library distributed in src/other/libpng being
+compiled as libpng.so).
+
+The fix/workaround is pretty simple.  Either install a shared verison
+of the system library (e.g. libz.so) or run configure with the
+-mimpure-text linker option: ./configure LDFLAGS=-mimpure-text
