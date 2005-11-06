@@ -41,8 +41,6 @@ THESE ARE LOWER PRIORITY OR FOR FUTURE RELEASES
 * investigate why g-iges followed by iges-g on a single box results in
   permuted vertex lists
 
-* have x11/tk mged output a helpful message when DISPLAY is unset
-
 * fix reference to a "Create Solid" submenu on pdf page 18 (page 6) of
   volume II
 
