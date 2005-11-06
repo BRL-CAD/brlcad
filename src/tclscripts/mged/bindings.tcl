@@ -170,6 +170,8 @@ proc default_key_bindings { w } {
     bind $w <Control-p> "winset $w; _mged_view_ring prev; break"
     bind $w <Control-t> "winset $w; _mged_view_ring toggle; break"
 
+    bind $w <Escape> "winset $w; press reject ; break"
+
     # Throw away other key events
     bind $w <KeyPress> {
 	break

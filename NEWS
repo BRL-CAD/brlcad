@@ -10,6 +10,7 @@ entire history of the project is available through CVS.
 --- 2005-11-XX  Release 7.6.3                                      ---
 ----------------------------------------------------------------------
 
+* set default mged Escape key binding to reject - Sean Morrison
 * fixed 'benchmark' tool resource searching - Sean Morrison
 * added -u option to mged "make_bb" to allow air - Lee Butler
 * fixed IBM AIX compiler support issues - Sean Morrison
