@@ -41,6 +41,7 @@
  *	Earl P Weaver
  *	Phil Dykstra
  *	Bob Parker
+ *      Christopher Sean Morrison
  *
  *  Source -
  *	The U. S. Army Research Laboratory
@@ -265,7 +266,7 @@ main(int argc, char **argv)
 	int	read_only_flag=0;
 
 	pid_t	pid;
-	int	parent_pipe[2];
+	int	parent_pipe[2] = {0};
 	int	use_pipe = 0;
 
 #ifdef _WIN32
@@ -393,6 +394,9 @@ main(int argc, char **argv)
 			/* no pipe, so just wait a little while */
 			sleep(3);
 		    }
+		    /* exit instead of mged_finish as this is the
+		     * parent process.
+		     */
 		    exit( 0 );
 		}
 	}
@@ -539,19 +543,28 @@ main(int argc, char **argv)
 	  bu_vls_free(&vls);
 
 	  if (status != TCL_OK) {
+	      /* failed to load tk, try localhost X11 */
+	      status = Tcl_Eval(interp, "loadtk :0");
+	  }
+
+	  if (status != TCL_OK) {
 	      if( !run_in_foreground && use_pipe ) {
 		  notify_parent_done(parent_pipe[1]);
 	      }
 	      bu_log("%s\nMGED Aborted.\n", interp->result);
-	      exit(1);
+	      mged_finish(1);
 	  }
 	}
 
 	if(argc >= 2){
 	  /* Open the database, attach a display manager */
 	  /* Command line may have more than 2 args, opendb only wants 2 */
-	  if(f_opendb( (ClientData)NULL, interp, 2, argv ) == TCL_ERROR)
-	    mged_finish(1);
+	    if(f_opendb( (ClientData)NULL, interp, 2, argv ) == TCL_ERROR) {
+		if( !run_in_foreground && use_pipe ) {
+		    notify_parent_done(parent_pipe[1]);
+		}
+		mged_finish(1);
+	    }
 	}
 
 	if( dbip != DBI_NULL && (read_only_flag || dbip->dbi_read_only) )
@@ -597,7 +610,7 @@ main(int argc, char **argv)
 
 	    if (status != TCL_OK) {
 	      bu_log("%s\nMGED Aborted.\n", interp->result);
-	      exit(1);
+	      mged_finish(1);
 	    }
 
 #ifndef _WIN32
@@ -2175,6 +2188,10 @@ do_rc(void)
  *  There are two invocations:
  *	main()
  *	cmdline()		Only one arg is permitted.
+ *
+ *  Returns TCL_OK if the database opened
+ *  Returns TCL_ERROR if the database was not opened (and the user did
+ *    not interactively abort)
  */
 int
 f_opendb(
@@ -2270,7 +2287,9 @@ f_opendb(
 					status = Tcl_Eval(interp, bu_vls_addr(&vls));
 
 					if(status != TCL_OK || interp->result[0] == '2') {
-						mged_finish(0);
+						bu_vls_free(&vls);
+						bu_vls_free(&msg);
+						return TCL_ERROR;
 					}
 
 					if(interp->result[0] == '1') {
