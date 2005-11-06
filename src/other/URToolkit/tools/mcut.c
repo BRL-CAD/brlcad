@@ -23,6 +23,7 @@
  *   shifting and masking on the fly would way slow down critical loops.
  */
 
+#include <stdlib.h>
 #include <stdio.h>
 #include "rle.h"
 

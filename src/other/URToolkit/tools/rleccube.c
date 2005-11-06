@@ -31,6 +31,8 @@ char rcsid[] = "$Header$";
 rleccube()			Tag the file.
 */
 
+#include <stdlib.h>
+#include <stdio.h>
 #include <math.h>
 #include "rle.h"
 

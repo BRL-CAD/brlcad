@@ -9,6 +9,7 @@
  *		Based on code by Spencer Thomas
  */
 
+#include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
 #include "rle.h"

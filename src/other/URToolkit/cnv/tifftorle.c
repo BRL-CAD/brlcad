@@ -18,6 +18,7 @@
 #define USE_PROTOTYPES 1
 #endif
 
+#include <stdlib.h>
 #include <math.h>
 #include <stdio.h>
 #include "tiffio.h"

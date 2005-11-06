@@ -34,6 +34,7 @@ static char rcs_id[] = "$Header$";
 rletocgm()			/* TAG */
 #endif
 
+#include <stdlib.h>
 #include <stdio.h>
 #include <rle.h>
 

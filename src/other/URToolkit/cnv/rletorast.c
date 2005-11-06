@@ -34,6 +34,8 @@
  * If an input file isn't specified, it reads from stdin.  An output file
  * can be specified with -o (otherwise it writes to stdout).
  */
+
+#include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
 #include <rasterfile.h>

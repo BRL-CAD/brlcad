@@ -41,6 +41,7 @@ static char rcsid[] = "$Header$";
 rletoabA62()				Tag the file.
 */
 
+#include <stdlib.h>
 #include <stdio.h>
 
 #ifndef TRUE

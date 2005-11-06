@@ -35,7 +35,7 @@
  *      -o : Specify an output file
  */
 
-
+#include <stdlib.h>
 #include <stdio.h>
 #include "rle.h"
 

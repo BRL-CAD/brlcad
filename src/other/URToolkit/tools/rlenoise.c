@@ -19,6 +19,7 @@
  * Default is 4 (because that's what I needed.)
  */
 
+#include <stdlib.h>
 #include <stdio.h>
 #include "rle.h"
 

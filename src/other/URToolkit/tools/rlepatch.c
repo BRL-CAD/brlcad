@@ -28,6 +28,7 @@
  * routines someday - this would run MUCH faster for sparse patches.
  */
 
+#include <stdlib.h>
 #include <stdio.h>
 #include "rle.h"
 

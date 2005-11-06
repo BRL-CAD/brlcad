@@ -13,6 +13,7 @@
 static char rcs_ident[] = "$Header$";
 #endif
 
+#include <stdlib.h>
 #include <stdio.h>
 #include "rle.h"
 

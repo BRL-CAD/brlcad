@@ -46,6 +46,7 @@ Based on.
         BitsPerSample is greater than 8, the samples are truncated.   
  */
 
+#include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
 #include "rle.h"

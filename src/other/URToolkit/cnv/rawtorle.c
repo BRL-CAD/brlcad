@@ -46,6 +46,7 @@
  * pic.[000-100].[rgb]    :  cat pic.* | rawtorle -w ... -h ... -n 3 -s -r 
  */
 
+#include <stdlib.h>
 #include <stdio.h>
 #include "rle.h"
 

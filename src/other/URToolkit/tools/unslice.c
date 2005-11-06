@@ -25,6 +25,7 @@ unslice()			Tag the file.
  * are thrown away.  The maximum y of the image must be specified this way.
  */
 
+#include <stdlib.h>
 #include <stdio.h>
 #include "rle.h"
 #include "rle_raw.h"

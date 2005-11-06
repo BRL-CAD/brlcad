@@ -45,7 +45,7 @@ static char rcsid[] = "$Header$";
 rletopaint()				Tag the file.
 */
 
-
+#include <stdlib.h>
 #include <stdio.h>
 #include "rle.h"
 #include <math.h>

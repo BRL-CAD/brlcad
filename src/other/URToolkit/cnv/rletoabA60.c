@@ -29,6 +29,7 @@
 rletoabA60()			/* For tags. */
 #endif
 
+#include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
 #include "rle.h"

@@ -8,6 +8,7 @@
  * Copyright (c) 1987, University of Utah
  */
 
+#include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
 #include "rle.h"

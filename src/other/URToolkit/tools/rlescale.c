@@ -17,6 +17,7 @@
  * specified, does separate white, red, green, and blue scales. 
  */
 
+#include <stdlib.h>
 #include <stdio.h>
 #include "rle.h"
 #include "rle_raw.h"

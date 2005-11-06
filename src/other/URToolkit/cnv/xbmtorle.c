@@ -29,6 +29,8 @@ static char rcsid[] = "$Header$";
 xbmtorle()				Tag the file.
 */
 
+#include <stdlib.h>
+#include <stdio.h>
 #include "rle.h"
 
 #define MAX_LINE 500

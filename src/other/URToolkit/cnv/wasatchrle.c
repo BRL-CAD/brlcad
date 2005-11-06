@@ -27,6 +27,7 @@
  * Thanks to Mike Ware of Wasatch for providing the format information.
  */
 
+#include <stdlib.h>
 #include <stdio.h>
 #include <ctype.h>
 #include <errno.h>

@@ -32,6 +32,7 @@ static char rcsid[] = "$Header$";
 rleClock()			Tag the file.
 */
 
+#include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
 #include <ctype.h>
