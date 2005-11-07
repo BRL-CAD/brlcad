@@ -188,6 +188,8 @@
 	method sortByCol_win {w type order}
 	method searchCol {j i str}
 	method flashRow {i n interval}
+
+	method errorMessage {title msg}
     }
 
     protected {
@@ -286,6 +288,7 @@
 	variable doingConfigure 0
 	variable doBreak 0
 	variable savedColState {}
+	variable ignoreLostFocus 0
 
 	method packRow {i}
 	method packAll {}
@@ -1424,6 +1427,12 @@
     unhighlightRow
 }
 
+::itcl::body TableView::errorMessage {title msg} {
+    incr ignoreLostFocus
+
+    ::sdialogs::Stddlgs::errordlg $title $msg
+}
+
 ################################ Protected Methods ################################
 
 ## - updateTable
@@ -2092,10 +2101,12 @@
 ::itcl::body TableView::handleTextEntryKeyPress {W K} {
     switch -- $K {
 	"Return" {
+	    incr ignoreLostFocus
 	    handleTextEntryReturn $W
 	    set doBreak 1
 	}
 	"Tab" {
+	    incr ignoreLostFocus
 	    handleTextEntryTab $W
 	    set doBreak 1
 	}
@@ -2113,10 +2124,12 @@
 ::itcl::body TableView::handleTextEntryShiftKeyPress {W K} {
     switch -- $K {
 	"Return" {
+	    incr ignoreLostFocus
 	    handleTextEntryShiftReturn $W
 	    set doBreak 1
 	}
 	"Tab" {
+	    incr ignoreLostFocus
 	    handleTextEntryShiftTab $W
 	    set doBreak 1
 	}
@@ -2408,6 +2421,11 @@
 }
 
 ::itcl::body TableView::handleLostFocus {w} {
+    if {$ignoreLostFocus} {
+	incr ignoreLostFocus -1
+	return
+    }
+
     if {$itk_option(-lostFocusCallback) != ""} {
 	if {[catch {getDataRowIndex $w} ri]} {
 	    return
