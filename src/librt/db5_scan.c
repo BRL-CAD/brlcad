@@ -363,9 +363,6 @@ db_dirbuild( struct db_i *dbip )
 		bu_avs_init_empty(&avs);
 
 		/* File is v5 format */
-#if 0
-		bu_log("NOTICE:  %s is BRL-CAD v5 format.\n", dbip->dbi_filename);
-#endif
 		dbip->dbi_version = 5;
 		if( db5_scan( dbip, db5_diradd_handler, NULL ) < 0 )  {
 			bu_log("db_dirbuild(%s): db5_scan() failed\n",
