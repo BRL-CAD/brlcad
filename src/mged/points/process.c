@@ -48,7 +48,7 @@ extern Tcl_Interp *twerp;
 
 #define TOL 2.0
 
-#define PRINT_SCRIPT 1
+#define PRINT_SCRIPT 0
 
 
 void process_value(point_line_t *plt, double value)
