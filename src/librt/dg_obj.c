@@ -1397,11 +1397,7 @@ dgo_rt_cmd(struct dg_obj	*dgop,
 	}
 
 	vp = &dgop->dgo_rt_cmd[0];
-#if 1
 	*vp++ = argv[0];
-#else
-	*vp++ = "rt";
-#endif
 	*vp++ = "-M";
 
 	if (vop->vo_perspective > 0) {
