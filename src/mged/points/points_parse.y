@@ -100,81 +100,67 @@ extern char linebuffer[];
 /* labels */
 
 number:
-      INT
-    | FLT
+    INT
+  | FLT
+    ;
 
 eol:
     NL
-    | comment_line
+  | comment_line
+    ;
 
-point:
-    number COMMA number COMMA number
+point: number COMMA number COMMA number
+    ;
 
 /* lines */
 
-comment_line : COMMENT NL {
-    printf("COMMENT IGNORED\n");
-}
+comment_line : COMMENT NL
+    {
+	printf("COMMENT IGNORED\n");
+    };
 
-plate_line: INT COMMA point COMMA PLATE eol {
-    point_line_t *plt = &yylval;
-    process_point(plt);
-    INITIALIZE_POINT_LINE_T(yylval);
-}
-arb_line: INT COMMA point COMMA ARB eol {
-    point_line_t *plt = &yylval;
-    process_point(plt);
-    INITIALIZE_POINT_LINE_T(yylval);
-}
-symmetry_line: INT COMMA point COMMA SYMMETRY eol {
-    point_line_t *plt = &yylval;
-    process_point(plt);
-    INITIALIZE_POINT_LINE_T(yylval);
-}
-points_line: INT COMMA point COMMA POINTS eol {
-    point_line_t *plt = &yylval;
-    process_point(plt);
-    INITIALIZE_POINT_LINE_T(yylval);
-}
-cylinder_line: INT COMMA point COMMA CYLINDER eol {
-    point_line_t *plt = &yylval;
-    process_point(plt);
-    INITIALIZE_POINT_LINE_T(yylval);
-}
-pipe_line: INT COMMA point COMMA PIPE eol {
-    point_line_t *plt = &yylval;
-    process_point(plt);
-    INITIALIZE_POINT_LINE_T(yylval);
-}
+plate_line: INT COMMA point COMMA PLATE eol
+    {
+	point_line_t *plt = &yylval;
+	process_point(plt);
+	INITIALIZE_POINT_LINE_T(yylval);
+    };
 
+arb_line: INT COMMA point COMMA ARB eol
+    {
+	point_line_t *plt = &yylval;
+	process_point(plt);
+	INITIALIZE_POINT_LINE_T(yylval);
+    };
 
-/* blocks */
+symmetry_line: INT COMMA point COMMA SYMMETRY eol
+    {
+	point_line_t *plt = &yylval;
+	process_point(plt);
+	INITIALIZE_POINT_LINE_T(yylval);
+    };
 
-/*
-plate_block: 
-      plate_line
-    | plate_block plate_line
+points_line: INT COMMA point COMMA POINTS eol
+    {
+	point_line_t *plt = &yylval;
+	process_point(plt);
+	INITIALIZE_POINT_LINE_T(yylval);
+    };
 
-arb_block: 
-      arb_line
-    | arb_block arb_line
+cylinder_line: INT COMMA point COMMA CYLINDER eol
+    {
+	point_line_t *plt = &yylval;
+	process_point(plt);
+	INITIALIZE_POINT_LINE_T(yylval);
+    };
 
-symmetry_block: 
-      symmetry_line
-    | symmetry_block symmetry_line
+pipe_line: INT COMMA point COMMA PIPE eol
+    {
+	point_line_t *plt = &yylval;
+	process_point(plt);
+	INITIALIZE_POINT_LINE_T(yylval);
+    };
 
-points_block: 
-      points_line
-    | points_block points_line
-
-cylinder_block: 
-      cylinder_line
-    | cylinder_block cylinder_line
-
-pipe_block: 
-      pipe_line
-    | pipe_block pipe_line
-*/
 
 /* top-level document blocks */
 
@@ -182,21 +168,22 @@ file_top_level_element: NL
     {
 	/* printf("Skipped empty line\n"); */
     }
-    | plate_line
-    | arb_line
-    | symmetry_line
-    | points_line
-    | cylinder_line
-    | pipe_line
+  | plate_line
+  | arb_line
+  | symmetry_line
+  | points_line
+  | cylinder_line
+  | pipe_line
+  ;
    
 file: 
-    | file file_top_level_element
-
-    /*
+  | file file_top_level_element
+  ;
+  /*
     {
-	printf("WARNING: No input given.  There's nothing to do.\n\n");
+    printf("WARNING: No input given.  There's nothing to do.\n\n");
     }
-    */
+  */
 
 %%
 int yyerror(char *msg)
