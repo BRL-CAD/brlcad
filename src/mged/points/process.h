@@ -99,6 +99,7 @@ void process_multi_group(point_line_t **plta, int count, double tolerance);
 int process_group(point_line_t **plta, int count);
 
 /* primitive point set types */
+
 int plate(point_line_t **plta, int count);
 int arb(point_line_t **plta, int count);
 int points(point_line_t **plta, int count);
