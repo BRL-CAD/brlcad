@@ -48,6 +48,9 @@ extern Tcl_Interp *twerp;
 
 #define TOL 2.0
 
+#define PRINT_SCRIPT 1
+
+
 void process_value(point_line_t *plt, double value)
 {
     if (!plt) {
@@ -288,15 +291,15 @@ int plate(point_line_t **plta, int count) {
 	}
     }
     bu_vls_printf(&vls2, "plate { %S }", &vls);
-#if 0
+#if PRINT_SCRIPT
+    fprintf(stderr, "%s\n", bu_vls_addr(&vls2));
+#else
     Tcl_Eval(twerp, bu_vls_addr(&vls2));
     if (twerp->result[0] != '\0') {
 	bu_log("plate failure: %s\n", twerp->result);
     } else {
 	bu_log("plate created\n");
     }
-#else
-    fprintf(stderr, "%s\n", bu_vls_addr(&vls2));
 #endif
 
     return 1;
@@ -319,15 +322,15 @@ int arb(point_line_t **plta, int count) {
 	}
     }
     bu_vls_printf(&vls2, "arb { %S }", &vls);
-#if 0
+#if PRINT_SCRIPT
+    fprintf(stderr, "%s\n", bu_vls_addr(&vls2));
+#else
     Tcl_Eval(twerp, bu_vls_addr(&vls2));
     if (twerp->result[0] != '\0') {
 	bu_log("arb failure: %s\n", twerp->result);
     } else {
 	bu_log("arb created\n");
     }
-#else
-    fprintf(stderr, "%s\n", bu_vls_addr(&vls2));
 #endif
 
     return 1;
@@ -349,15 +352,15 @@ int cylinder(point_line_t **plta, int count) {
 	}
     }
     bu_vls_printf(&vls2, "cylinder { %S }", &vls);
-#if 0
+#if PRINT_SCRIPT
+    fprintf(stderr, "%s\n", bu_vls_addr(&vls2));
+#else
     Tcl_Eval(twerp, bu_vls_addr(&vls2));
     if (twerp->result[0] != '\0') {
 	bu_log("cylinder failure: %s\n", twerp->result);
     } else {
 	bu_log("cylinder created\n");
     }
-#else
-    fprintf(stderr, "%s\n", bu_vls_addr(&vls2));
 #endif
 
     return 1;
@@ -379,15 +382,15 @@ int ppipe(point_line_t **plta, int count) {
 	}
     }
     bu_vls_printf(&vls2, "pipe { %S }", &vls);
-#if 0
+#if PRINT_SCRIPT
+    fprintf(stderr, "%s\n", bu_vls_addr(&vls2));
+#else
     Tcl_Eval(twerp, bu_vls_addr(&vls2));
     if (twerp->result[0] != '\0') {
 	bu_log("pipe failure: %s\n", twerp->result);
     } else {
 	bu_log("pipe created\n");
     }
-#else
-    fprintf(stderr, "%s\n", bu_vls_addr(&vls2));
 #endif
 
     return 1;
@@ -409,15 +412,15 @@ int points(point_line_t **plta, int count) {
 	}
     }
     bu_vls_printf(&vls2, "points { %S }", &vls);
-#if 0
+#if PRINT_SCRIPT
+    fprintf(stderr, "%s\n", bu_vls_addr(&vls2));
+#else
     Tcl_Eval(twerp, bu_vls_addr(&vls2));
     if (twerp->result[0] != '\0') {
 	bu_log("points failure: %s\n", twerp->result);
     } else {
 	bu_log("points created\n");
     }
-#else
-    fprintf(stderr, "%s\n", bu_vls_addr(&vls2));
 #endif
 
     return 1;
