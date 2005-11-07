@@ -579,6 +579,10 @@ run_rt(void)
 	int		pid;
 	struct run_rt	*run_rtp;
 
+	if (strlen(rt_cmd_vec) <= 0) {
+	    return -1;
+	}
+
 	(void)pipe( pipe_in );
 	(void)pipe( pipe_err );
 	(void)signal( SIGINT, SIG_IGN );
