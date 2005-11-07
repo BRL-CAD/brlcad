@@ -2205,6 +2205,7 @@ f_opendb(
 	struct bu_vls		vls;
 	struct bu_vls		msg;	/* use this to hold returned message */
 	int			create_new_db = 0;
+	
 
 	if( argc <= 1 )  {
 
@@ -2218,13 +2219,15 @@ f_opendb(
 		return TCL_OK;
 	}
 
+	bu_vls_init(&vls);
+
 	if(3 < argc || (strlen(argv[1]) == 0)){
 		bu_vls_printf(&vls, "help opendb");
 		Tcl_Eval(interp, bu_vls_addr(&vls));
+		bu_vls_free(&vls);
 		return TCL_ERROR;
 	}
 
-	bu_vls_init(&vls);
 	bu_vls_init(&msg);
 
 	if(argc == 3 &&
