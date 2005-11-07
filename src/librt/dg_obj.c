@@ -2075,11 +2075,7 @@ dgo_rtcheck_cmd(struct dg_obj	*dgop,
 
 #ifndef _WIN32
 	vp = &dgop->dgo_rt_cmd[0];
-# if 1
 	*vp++ = argv[0];
-# else
-	*vp++ = "rtcheck";
-# endif
 	*vp++ = "-M";
 	for (i=1; i < argc; i++)
 		*vp++ = argv[i];
