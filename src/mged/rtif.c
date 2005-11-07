@@ -579,7 +579,7 @@ run_rt(void)
 	int		pid;
 	struct run_rt	*run_rtp;
 
-	if (strlen(rt_cmd_vec) <= 0) {
+	if (strlen(rt_cmd_vec[0]) <= 0) {
 	    return -1;
 	}
 
@@ -1832,6 +1832,7 @@ f_nirt(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	struct bn_vlblock *vbp;
 	struct qray_dataList *ndlp;
 	struct qray_dataList HeadQRayData;
+	char *ptr, buf[256] = {0};
 
 	CHECK_DBI_NULL;
 
@@ -1844,8 +1845,21 @@ f_nirt(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	  return TCL_ERROR;
 	}
 
+	ptr = bu_brlcad_root("bin", 1);
+	if (ptr) {
+	    /* argv[0] might be nirt or query_ray, so specify nirt
+	     * specifically.
+	     */
+#ifdef _WIN32
+	    sprintf(buf, "\"%s/%s\"", ptr, "nirt");
+#else
+	    sprintf(buf, "%s/%s", ptr, "nirt");
+#endif
+	    argv[0] = buf;
+	}
+
 	vp = &rt_cmd_vec[0];
-	*vp++ = "nirt";
+	*vp++ = argv[0];
 
 	/* swipe x, y, z off the end if present */
 	if(argc > 3){
