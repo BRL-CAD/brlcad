@@ -2944,6 +2944,9 @@ wdb_move_tcl(ClientData	clientData,
 	return wdb_move_cmd(wdbp, interp, argc-1, argv+1);
 }
 
+/*
+ *
+ */
 int
 wdb_move_all_cmd(struct rt_wdb	*wdbp,
 		 Tcl_Interp	*interp,
@@ -2978,6 +2981,8 @@ wdb_move_all_cmd(struct rt_wdb	*wdbp,
 		return TCL_ERROR;
 	}
 
+
+
 	/* rename the record itself */
 	if ((dp = db_lookup(wdbp->dbip, argv[1], LOOKUP_NOISY )) == DIR_NULL)
 		return TCL_ERROR;
@@ -2985,6 +2990,45 @@ wdb_move_all_cmd(struct rt_wdb	*wdbp,
 	if (db_lookup(wdbp->dbip, argv[2], LOOKUP_QUIET) != DIR_NULL) {
 		Tcl_AppendResult(interp, argv[2], ":  already exists", (char *)NULL);
 		return TCL_ERROR;
+	}
+
+	/* if this was a sketch, we need to look for all the extrude 
+	 * objects that might use it.
+	 *
+	 * This has to be done here, before we rename the (possible) sketch object
+	 * because the extrude will do a rt_db_get on the sketch when we call
+	 * rt_db_get_internal on it.
+	 */
+	if (dp->d_major_type == DB5_MAJORTYPE_BRLCAD && \
+	    dp->d_minor_type == DB5_MINORTYPE_BRLCAD_SKETCH) {
+
+	    struct directory *dirp;
+
+	    for (i = 0; i < RT_DBNHASH; i++) {
+		for (dirp = wdbp->dbip->dbi_Head[i]; dirp != DIR_NULL; dirp = dirp->d_forw) {
+
+		    if (dirp->d_major_type == DB5_MAJORTYPE_BRLCAD && \
+			dirp->d_minor_type == DB5_MINORTYPE_BRLCAD_EXTRUDE) {
+			struct rt_extrude_internal *extrude;
+
+			if (rt_db_get_internal(&intern, dirp, wdbp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
+			    bu_log("Can't get extrude %s?\n", dirp->d_namep);
+			    continue;
+			}
+			extrude = (struct rt_extrude_internal *)intern.idb_ptr;
+			RT_EXTRUDE_CK_MAGIC(extrude);
+
+			if (! strcmp(extrude->sketch_name, argv[1]) ) {
+			    bu_free(extrude->sketch_name, "sketch name");
+			    extrude->sketch_name = bu_strdup(argv[2]);
+
+			    if (rt_db_put_internal(dirp, wdbp->dbip, &intern, &rt_uniresource) < 0) {
+				bu_log("oops\n");
+			    }
+			}
+		    }
+		}
+	    }
 	}
 
 	/*  Change object name in the directory. */
@@ -3007,12 +3051,15 @@ wdb_move_all_cmd(struct rt_wdb	*wdbp,
 
 	bu_ptbl_init(&stack, 64, "combination stack for wdb_mvall_cmd");
 
+
 	/* Examine all COMB nodes */
 	for (i = 0; i < RT_DBNHASH; i++) {
 		for (dp = wdbp->dbip->dbi_Head[i]; dp != DIR_NULL; dp = dp->d_forw) {
 			union tree	*comb_leaf;
 			int		done=0;
 			int		changed=0;
+
+			
 
 			if (!(dp->d_flags & DIR_COMB))
 				continue;
