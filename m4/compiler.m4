@@ -56,7 +56,7 @@ PRELDFLAGS="$LDFLAGS"
 CFLAGS="$CFLAGS $__flag"
 LDFLAGS="$LDFLAGS $__flag"
 m4_pushdef([AC_TRY_EVAL], [_AC_EVAL_STDERR]($$[1]))
-AC_TRY_COMPILE( [], [], [if AC_TRY_COMMAND([grep "nrecognize" conftest.err >/dev/null 2>&1]) ; then bc_[$2]_works=no ; fi], [bc_[$2]_works=no])
+AC_TRY_COMPILE( [], [int i;], [if AC_TRY_COMMAND([grep "nrecognize" conftest.err >/dev/null 2>&1]) ; then bc_[$2]_works=no ; fi], [bc_[$2]_works=no])
 m4_popdef([AC_TRY_EVAL])
 rm -f conftest.err
 AC_TRY_RUN( [
@@ -82,7 +82,7 @@ bc_[$2]_works=yes
 PRECFLAGS="$CFLAGS"
 CFLAGS="$CFLAGS $__flag"
 m4_pushdef([AC_TRY_EVAL], [_AC_EVAL_STDERR]($$[1]))
-AC_TRY_COMPILE( [], [], [if AC_TRY_COMMAND([grep "nrecognize" conftest.err >/dev/null 2>&1]) ; then bc_[$2]_works=no ; fi], [bc_[$2]_works=no])
+AC_TRY_COMPILE( [], [int i;], [if AC_TRY_COMMAND([grep "nrecognize" conftest.err >/dev/null 2>&1]) ; then bc_[$2]_works=no ; fi], [bc_[$2]_works=no])
 m4_popdef([AC_TRY_EVAL])
 rm -f conftest.err
 AC_MSG_RESULT($bc_[$2]_works)
@@ -103,7 +103,7 @@ bc_[$2]_works=yes
 PRELDFLAGS="$LDFLAGS"
 LDFLAGS="$LDFLAGS $__flag"
 m4_pushdef([AC_TRY_EVAL], [_AC_EVAL_STDERR]($$[1]))
-AC_TRY_LINK( [], [], [if AC_TRY_COMMAND([grep "nrecognize" conftest.err >/dev/null 2>&1]) ; then bc_[$2]_works=no ; fi], [bc_[$2]_works=no])
+AC_TRY_LINK( [], [int i;], [if AC_TRY_COMMAND([grep "nrecognize" conftest.err >/dev/null 2>&1]) ; then bc_[$2]_works=no ; fi], [bc_[$2]_works=no])
 m4_popdef([AC_TRY_EVAL])
 rm -f conftest.err
 AC_MSG_RESULT($bc_[$2]_works)
@@ -124,7 +124,7 @@ bc_[$2]_works=yes
 PRECPPFLAGS="$CPPFLAGS"
 CPPFLAGS="$CPPFLAGS $__flag"
 m4_pushdef([AC_TRY_EVAL], [_AC_EVAL_STDERR]($$[1]))
-AC_TRY_COMPILE( [], [], [if AC_TRY_COMMAND([grep "nrecognize" conftest.err >/dev/null 2>&1]) ; then bc_[$2]_works=no ; fi], [bc_[$2]_works=no])
+AC_TRY_COMPILE( [], [int i;], [if AC_TRY_COMMAND([grep "nrecognize" conftest.err >/dev/null 2>&1]) ; then bc_[$2]_works=no ; fi], [bc_[$2]_works=no])
 m4_popdef([AC_TRY_EVAL])
 rm -f conftest.err
 AC_MSG_RESULT($bc_[$2]_works)
