@@ -40,10 +40,10 @@
 #include "./count.h"
 
 typedef struct point_line {
-    const char *type;	/* type name */
+    const char *type;	/* type name (e.g. "POINTS") */
     int code;		/* points_parse.h numeric code */
-    int index;		/* count index */
-    int count;		/* how many values are set */
+    int index;		/* acquisition index */
+    int count;		/* how many values are set (private use)*/
     point_t val;	/* xyz values */
 } point_line_t;
 
@@ -92,6 +92,21 @@ void process_type(point_line_t *plt, const char *type, int code);
 /** process a single point, passing it along to process_multi_group when collection types change */
 void process_point(point_line_t *plt);
 
+/**
+ * remove nullified points, condensing the point array by collaping
+ * the invalid points.
+ */
+int condense_points(point_line_t **plta, int count, double tolerance);
+
+/**
+ * remove points marked as "bogus".  this is conventionally done by
+ * specifying 5 or more identical points (within a given tolerance) in
+ * a given set of points.  if 5 or more points are followed by 5 or
+ * more different points, then two previous points are removed and so
+ * on.
+ */
+int delete_points(point_line_t **plta, int count, double tolerance);
+
 /** process a group a points with possible multiples within some tolerance distance */
 void process_multi_group(point_line_t **plta, int count, double tolerance);
 
@@ -100,11 +115,11 @@ int process_group(point_line_t **plta, int count);
 
 /* primitive point set types */
 
-int plate(point_line_t **plta, int count);
-int arb(point_line_t **plta, int count);
-int points(point_line_t **plta, int count);
-int cylinder(point_line_t **plta, int count);
-int ppipe(point_line_t **plta, int count);
+int create_plate(point_line_t **plta, int count);
+int create_arb(point_line_t **plta, int count);
+int create_points(point_line_t **plta, int count);
+int create_cylinder(point_line_t **plta, int count);
+int create_pipe(point_line_t **plta, int count);
 
 
 #endif  /* __PROCESS_H__ */

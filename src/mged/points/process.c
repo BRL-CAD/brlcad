@@ -121,6 +121,114 @@ void process_point(point_line_t *plt) {
     points++;
 }
 
+
+int condense_points(point_line_t **plta, int count, double tolerance) {
+    int i;
+    point_line_t *plt = NULL;
+    int valid_count = 0;
+
+    if (!plta) {
+	printf("WARNING: Unexpected call to delete_points with a NULL point array\n");
+	return 0;
+    }
+
+    for (i=0; i < count; i++) {
+	plt = &(*plta)[i];
+
+	if (plt && plt->type) {
+	    if (valid_count != i) {
+		COPY_POINT_LINE_T((*plta)[valid_count], *plt);
+		/* zap */
+		INITIALIZE_POINT_LINE_T(*plt);
+	    }
+	    valid_count++;
+	}
+	
+    }
+
+    return valid_count;
+}
+
+
+int delete_points(point_line_t **plta, int count, double tolerance) {
+    int i;
+    point_line_t *plt = NULL;
+    point_line_t *previous_plt = NULL;
+    point_line_t average_plt;
+    int repeats = 0;
+    int repeat_counter = 0;
+    int removed = 0;
+    int removed_counter = 0;
+
+    if (!plta) {
+	printf("WARNING: Unexpected call to delete_points with a NULL point array\n");
+	return 0;
+    }
+    
+    if (count < 6) {
+	printf("WARNING: Unexpected call to delete_points with insufficient points\n");
+	return 0;
+    }
+
+    INITIALIZE_POINT_LINE_T(average_plt);
+    INITIALIZE_POINT_LINE_T(*previous_plt);
+
+    previous_plt = &(*plta)[0];
+
+    for (i=1; i < count; i++) {
+	plt = &(*plta)[i];
+	
+	if (DIST_PT_PT(previous_plt->val, plt->val) < tolerance) {
+	    repeats++;
+	} else {
+	    /* not a repeat, so check if we need to remove the repeats
+             * and the previous as convention.
+             */
+	    if (repeats >= 4) {
+		/* 5+ repeated values in a row */
+		repeat_counter = 1;
+		while (repeats > 0 && repeat_counter <= count) {
+		    plt = &(*plta)[i-repeat_counter];
+		    if (plt && plt->type) {
+			/* zap */
+			bu_log("removed point: %d\n", plt->index);
+			INITIALIZE_POINT_LINE_T(*plt);
+			repeats--;
+		    }
+		    repeat_counter++;
+		}
+
+		/* we're not necessarily condensed, so search for the
+		 * first non-null point and delete it aas well.
+		 */
+		plt = &(*plta)[i-repeat_counter];
+		while (!plt || !plt->type) {
+		    repeat_counter--;
+		    plt = &(*plta)[i-repeat_counter];
+		}
+		/* zap */
+		bu_log("removed REAL point: %d\n", plt->index);
+		INITIALIZE_POINT_LINE_T(*plt);
+
+		removed++;
+	    }
+	    repeats = 0;
+	}
+
+	previous_plt = plt;
+    }
+
+    /* resort the list, put nulls at the end */
+    condense_points(plta, count, tolerance);
+
+    return removed;
+}
+
+
+/**
+ * handle a group of points of a particular type, with potentially
+ * multiple sets delimited by triplicate points.
+ */
 void process_multi_group(point_line_t **plta, int count, double tolerance) {
     int i;
     point_line_t *plt = NULL;
@@ -136,6 +244,10 @@ void process_multi_group(point_line_t **plta, int count, double tolerance) {
 	return;
     }
 
+    /* remove points marked as bogus, 5-identical points in succession */
+    count = delete_points(plta, count, tolerance);
+
+    /* condense triplicates and pass on to the group processing routine */
     for (i = 0; i < count; i++) {
 	plt = &(*plta)[i];
 	if (!plt || !plt->type) {
@@ -143,6 +255,7 @@ void process_multi_group(point_line_t **plta, int count, double tolerance) {
 	    continue;
 	}
 
+	/* if this is the first point of a set, allocate and initialize */
 	if (!prev_plt) {
 	    prev_plt = &(*plta)[i];
 	    pltg = (point_line_t *) bu_malloc(sizeof(point_line_t), "begin point_line_t subgroup");
@@ -152,6 +265,7 @@ void process_multi_group(point_line_t **plta, int count, double tolerance) {
 	    continue;
 	}
 
+	/* should only hit the else, but allocate room for the current point regardless */
 	if (!pltg) {
 	    pltg = (point_line_t *) bu_malloc(sizeof(point_line_t), "begin point_line_t subgroup");
 	} else {
@@ -171,7 +285,7 @@ void process_multi_group(point_line_t **plta, int count, double tolerance) {
 	    }
 
 	    if (process_group(&pltg, points - 1)) {
-		bu_free((genptr_t)pltg, "end point_lint_t subgroup");
+		bu_free((genptr_t)pltg, "end point_line_t subgroup");
 		pltg = NULL;
 		prev_plt = NULL;
 		points = 0;
@@ -198,6 +312,10 @@ void process_multi_group(point_line_t **plta, int count, double tolerance) {
     }
 }
 
+
+/** wrapper func to validate the block of points being processed and to
+ * call the appropriate handler.
+ */
 int process_group(point_line_t **plta, int count) {
     int i;
     point_line_t *plt = NULL;
@@ -239,22 +357,23 @@ int process_group(point_line_t **plta, int count) {
 
     switch((*plta)[0].code) {
 	case(PLATE):
-	    return plate(plta, valid_count);
+	    return create_plate(plta, valid_count);
 	case(ARB):
-	    return arb(plta, valid_count);
+	    return create_arb(plta, valid_count);
 	case(CYLINDER):
-	    return cylinder(plta, valid_count);
+	    return create_cylinder(plta, valid_count);
 	case(POINTS):
-	    return points(plta, valid_count);
+	    return create_points(plta, valid_count);
 	case(SYMMETRY):
-	    return points(plta, valid_count);
+	    return create_points(plta, valid_count);
 	case(PIPE):
-	    return ppipe(plta, valid_count);
+	    return create_pipe(plta, valid_count);
     }
 
     printf("WARNING, unsupported point code encountered (%d)\n", (*plta)[0].code);
     return 0;
 }
+
 
 static int print_array(point_line_t **plta, int count) {
     int i;
@@ -274,7 +393,12 @@ static int print_array(point_line_t **plta, int count) {
     return 1;
 }
 
-int plate(point_line_t **plta, int count) {
+
+/***
+ * process each of the individual creation types
+ ***/
+
+int create_plate(point_line_t **plta, int count) {
     int i;
     point_line_t *plt = NULL;
 
@@ -296,16 +420,16 @@ int plate(point_line_t **plta, int count) {
 #else
     Tcl_Eval(twerp, bu_vls_addr(&vls2));
     if (twerp->result[0] != '\0') {
-	bu_log("plate failure: %s\n", twerp->result);
+	bu_log("create_plate failure: %s\n", twerp->result);
     } else {
-	bu_log("plate created\n");
+	bu_log("create_plate created\n");
     }
 #endif
 
     return 1;
 }
 
-int arb(point_line_t **plta, int count) {
+int create_arb(point_line_t **plta, int count) {
     int i;
     point_line_t *plt = NULL;
 
@@ -327,15 +451,15 @@ int arb(point_line_t **plta, int count) {
 #else
     Tcl_Eval(twerp, bu_vls_addr(&vls2));
     if (twerp->result[0] != '\0') {
-	bu_log("arb failure: %s\n", twerp->result);
+	bu_log("create_arb failure: %s\n", twerp->result);
     } else {
-	bu_log("arb created\n");
+	bu_log("create_arb created\n");
     }
 #endif
 
     return 1;
 }
-int cylinder(point_line_t **plta, int count) {
+int create_cylinder(point_line_t **plta, int count) {
     int i;
     point_line_t *plt = NULL;
 
@@ -357,15 +481,15 @@ int cylinder(point_line_t **plta, int count) {
 #else
     Tcl_Eval(twerp, bu_vls_addr(&vls2));
     if (twerp->result[0] != '\0') {
-	bu_log("cylinder failure: %s\n", twerp->result);
+	bu_log("create_cylinder failure: %s\n", twerp->result);
     } else {
-	bu_log("cylinder created\n");
+	bu_log("create_cylinder created\n");
     }
 #endif
 
     return 1;
 }
-int ppipe(point_line_t **plta, int count) {
+int create_pipe(point_line_t **plta, int count) {
     int i;
     point_line_t *plt = NULL;
 
@@ -387,15 +511,15 @@ int ppipe(point_line_t **plta, int count) {
 #else
     Tcl_Eval(twerp, bu_vls_addr(&vls2));
     if (twerp->result[0] != '\0') {
-	bu_log("pipe failure: %s\n", twerp->result);
+	bu_log("create_pipe failure: %s\n", twerp->result);
     } else {
-	bu_log("pipe created\n");
+	bu_log("create_pipe created\n");
     }
 #endif
 
     return 1;
 }
-int points(point_line_t **plta, int count) {
+int create_points(point_line_t **plta, int count) {
     int i;
     point_line_t *plt = NULL;
 
@@ -417,9 +541,9 @@ int points(point_line_t **plta, int count) {
 #else
     Tcl_Eval(twerp, bu_vls_addr(&vls2));
     if (twerp->result[0] != '\0') {
-	bu_log("points failure: %s\n", twerp->result);
+	bu_log("create_points failure: %s\n", twerp->result);
     } else {
-	bu_log("points created\n");
+	bu_log("create_points created\n");
     }
 #endif
 
