@@ -482,13 +482,12 @@ if [ "x$HAVE_AUTORECONF" = "xyes" ] && [ "x$HAVE_LIBTOOLIZE" = "xyes" ] ; then
     $ECHO
     $ECHO $ECHO_N "Automatically preparing build ... $ECHO_C"
 
-    if [ "x$VERBOSE" = "xyes" ] ; then
-	$VERBOSE_ECHO "$AUTORECONF $SEARCH_DIRS -i -f"
-	$AUTORECONF $SEARCH_DIRS -i -f
-    else
-	$AUTORECONF $SEARCH_DIRS -i -f > /dev/null 2>&1
-    fi
-    if [ ! $? = 0 ] ; then
+    $VERBOSE_ECHO "$AUTORECONF $SEARCH_DIRS -i -f"
+    autoreconf_output="`$AUTORECONF $SEARCH_DIRS -i -f 2>&1`"
+    ret=$?
+    $VERBOSE_ECHO "$autoreconf_output"
+
+    if [ ! $ret = 0 ] ; then
 	$ECHO "Warning: $AUTORECONF failed"
 
 	if test -f ltmain.sh ; then
@@ -516,24 +515,69 @@ if [ "x$reconfigure_manually" = "xyes" ] ; then
     $ECHO $ECHO_N "Preparing build ... $ECHO_C"
 
     $VERBOSE_ECHO "$ACLOCAL $SEARCH_DIRS"
-    $ACLOCAL $SEARCH_DIRS
+    aclocal_output="`$ACLOCAL $SEARCH_DIRS 2>&1`"
+    ret=$?
+    $VERBOSE_ECHO "$aclocal_output"
 
-    if [ ! $? = 0 ] ; then $ECHO "ERROR: $ACLOCAL failed" && exit 2 ; fi
+    if [ ! $ret = 0 ] ; then
+	if [ ! "x`echo $aclocal_output | grep cache`" = "x" ] ; then
+	    # retry without an autom4te.cache directory if it exists
+
+	    if test -d autom4te.cache ; then
+		if test -d autom4te.cache.backup ; then
+		    $ECHO "ERROR: $ACLOCAL failed"
+		    $VERBOSE_ECHO
+		    $VERBOSE_ECHO "Unable to retry aclocal without autom4te.cache"
+		    $VERBOSE_ECHO "There is an autom4te.cache.backup directory in the way"
+		    $VERBOSE_ECHO "Suggest running: rm -rf *cache*"
+		    exit 2
+		else
+		    $VERBOSE_ECHO "mv autom4te.cache autom4te.cache.backup"
+		    mv autom4te.cache autom4te.cache.backup
+		fi
+		$VERBOSE_ECHO "Retrying aclocal without the autom4te.cache directory"
+		$VERBOSE_ECHO "$ACLOCAL $SEARCH_DIRS"
+		aclocal_output="`$ACLOCAL $SEARCH_DIRS 2>&1`"
+		ret=$?
+		$VERBOSE_ECHO "$aclocal_output"
+
+		if [ ! $ret = 0 ] ; then
+		    # still did not work after we removed the backup, so restore it
+		    $VERBOSE_ECHO "mv autom4te.cache.backup autom4te.cache"
+		    mv autom4te.cache.backup autom4te.cache
+		else
+		    # worked after we removed the backup, so remove the backup
+		    $VERBOSE_ECHO "rm -rf autom4te.cache.backup"
+		    rm -rf autom4te.cache.backup
+		fi
+	    fi
+	fi
+    fi
+
+    if [ ! $ret = 0 ] ; then $ECHO "ERROR: $ACLOCAL failed" && exit 2 ; fi
     if [ "x$HAVE_LIBTOOLIZE" = "xyes" ] ; then
 	$VERBOSE_ECHO "$LIBTOOLIZE --automake -c -f"
-	$LIBTOOLIZE --automake -c -f
-	if [ ! $? = 0 ] ; then $ECHO "ERROR: $LIBTOOLIZE failed" && exit 2 ; fi
+	libtoolize_output="`$LIBTOOLIZE --automake -c -f 2>&1`"
+	ret=$?
+	$VERBOSE_ECHO "$libtoolize_output"
+
+	if [ ! $ret = 0 ] ; then $ECHO "ERROR: $LIBTOOLIZE failed" && exit 2 ; fi
     else
 	if [ "x$HAVE_ALT_LIBTOOLIZE" = "xyes" ] ; then
 	    $VERBOSE_ECHO "$LIBTOOLIZE --automake --copy --force"
-	    $LIBTOOLIZE --automake --copy --force
-	    if [ ! $? = 0 ] ; then $ECHO "ERROR: $LIBTOOLIZE failed" && exit 2 ; fi
+	    libtoolize_output="`$LIBTOOLIZE --automake --copy --force 2>&1`"
+	    ret=$?
+	    $VERBOSE_ECHO "$libtoolize_output"
+
+	    if [ ! $ret = 0 ] ; then $ECHO "ERROR: $LIBTOOLIZE failed" && exit 2 ; fi
 	fi
     fi
 
     # re-run again as instructed by libtoolize
     $VERBOSE_ECHO "$ACLOCAL $SEARCH_DIRS"
-    $ACLOCAL $SEARCH_DIRS
+    aclocal_output="`$ACLOCAL $SEARCH_DIRS 2>&1`"
+    ret=$?
+    $VERBOSE_ECHO "$aclocal_output"
 
     # libtoolize might put ltmain.sh in the wrong place
     if test -f ltmain.sh ; then
@@ -552,8 +596,45 @@ if [ "x$reconfigure_manually" = "xyes" ] ; then
 
     $VERBOSE_ECHO
     $VERBOSE_ECHO "$AUTOCONF -f"
-    autoconf_output=`$AUTOCONF -f 2>&1`
-    if [ ! $? = 0 ] ; then
+    autoconf_output="`$AUTOCONF -f 2>&1`"
+    ret=$?
+    $VERBOSE_ECHO "$autoconf_output"
+
+    if [ ! $ret = 0 ] ; then
+ 	# retry without an autom4te.cache directory if it exists
+	if [ ! "x`echo $autoconf_output | grep autom4te`" = "x" ] ; then
+	    if test -d autom4te.cache ; then
+		if test -d autom4te.cache.backup ; then
+		    $ECHO "ERROR: $AUTOCONF failed"
+		    $VERBOSE_ECHO
+		    $VERBOSE_ECHO "Unable to retry autoconf without autom4te.cache"
+		    $VERBOSE_ECHO "There is an autom4te.cache.backup directory in the way"
+		    $VERBOSE_ECHO "Suggest running: rm -rf *cache*"
+		    exit 2
+		else
+		    $VERBOSE_ECHO "mv autom4te.cache autom4te.cache.backup"
+		    mv autom4te.cache autom4te.cache.backup
+		fi
+		$VERBOSE_ECHO "Retrying autoconf without the autom4te.cache directory"
+		$VERBOSE_ECHO "$AUTOCONF -f"
+		autoconf_output="`$AUTOCONF -f 2>&1`"
+		ret=$?
+		$VERBOSE_ECHO "$autoconf_output"
+
+		if [ ! $ret = 0 ] ; then
+		    # still did not work after we removed the backup, so restore it
+		    $VERBOSE_ECHO "mv autom4te.cache.backup autom4te.cache"
+		    mv autom4te.cache.backup autom4te.cache
+		else
+		    # worked after we removed the backup, so remove the backup
+		    $VERBOSE_ECHO "rm -rf autom4te.cache.backup"
+		    rm -rf autom4te.cache.backup
+		fi
+	    fi
+	fi
+    fi
+
+    if [ ! $ret = 0 ] ; then
 	# retry without the -f and with backwards support for missing macros
 	configure_ac_changed="no"
 	if test "x$HAVE_SED" = "xyes" ; then
@@ -600,8 +681,11 @@ if [ "x$reconfigure_manually" = "xyes" ] ; then
 	fi
 	$VERBOSE_ECHO
 	$VERBOSE_ECHO "$AUTOCONF"
-	autoconf_output=`$AUTOCONF 2>&1`
-	if [ ! $? = 0 ] ; then
+	autoconf_output="`$AUTOCONF 2>&1`"
+	ret=$?
+	$VERBOSE_ECHO "$autoconf_output"
+
+	if [ ! $ret = 0 ] ; then
 
 	    # failed so restore the backup
 	    if test -f configure.ac.backup ; then
@@ -658,17 +742,26 @@ EOF
     fi
 
     $VERBOSE_ECHO "$AUTOHEADER"
-    $AUTOHEADER
-    if [ ! $? = 0 ] ; then $ECHO "ERROR: $AUTOHEADER failed" && exit 2 ; fi
+    autoheader_output="`$AUTOHEADER 2>&1`"
+    ret=$?
+    $VERBOSE_ECHO "$autoheader_output"
+
+    if [ ! $ret = 0 ] ; then $ECHO "ERROR: $AUTOHEADER failed" && exit 2 ; fi
 
     $VERBOSE_ECHO "$AUTOMAKE -a -c -f"
-    automake_output=`$AUTOMAKE -a -c -f 2>&1`
-    if [ ! $? = 0 ] ; then
+    automake_output="`$AUTOMAKE -a -c -f 2>&1`"
+    ret=$?
+    $VERBOSE_ECHO "$automake_output"
+
+    if [ ! $ret = 0 ] ; then
 	# retry without the -f
 	$VERBOSE_ECHO
 	$VERBOSE_ECHO "$AUTOMAKE -a -c"
-	automake_output=`$AUTOMAKE -a -c 2>&1`
-	if [ ! $? = 0 ] ; then
+	automake_output="`$AUTOMAKE -a -c 2>&1`"
+	ret=$?
+	$VERBOSE_ECHO "$automake_output"
+
+	if [ ! $ret = 0 ] ; then
 	    if test -f "$LIBTOOL_M4" ; then
 		found_libtool="`$ECHO $automake_output | grep AC_PROG_LIBTOOL`"
 		if test ! "x$found_libtool" = "x" ; then
