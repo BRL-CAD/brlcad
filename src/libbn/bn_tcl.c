@@ -526,6 +526,94 @@ bn_math_cmd(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
 		(*math_func)(qout, qin);
 		bn_encode_quat(&result, qout);
+	} else if (math_func == (void (*)())bn_isect_line3_line3) {
+	    double t, u;
+	    point_t pt, a;
+	    vect_t dir, c;
+	    int i;
+	    const static struct bn_tol tol = {
+		BN_TOL_MAGIC, 0.005, 0.005*0.005, 1e-6, 1-1e-6
+	    };
+	    if (argc != 5) {
+		bu_vls_printf(&result, 
+		      "Usage: bn_isect_line3_line3 pt dir pt dir (%d args specified)",
+			      argc-1);
+		goto error;
+	    }
+
+	    if (bn_decode_vect(pt, argv[1]) < 3) {
+		bu_vls_printf(&result, "bn_isect_line3_line3 no pt", argv[0]);
+		goto error;
+	    }
+	    if (bn_decode_vect(dir, argv[2]) < 3) {
+		bu_vls_printf(&result, "bn_isect_line3_line3 no dir", argv[0]);
+		goto error;
+	    }
+	    if (bn_decode_vect(a, argv[3]) < 3) {
+		bu_vls_printf(&result, "bn_isect_line3_line3 no a pt", argv[0]);
+		goto error;
+	    }
+	    if (bn_decode_vect(c, argv[4]) < 3) {
+		bu_vls_printf(&result, "bn_isect_line3_line3 no c dir", argv[0]);
+		goto error;
+	    }
+	    i = bn_isect_line3_line3(&t, &u, pt, dir, a, c, &tol);
+	    if (i != 1) {
+		bu_vls_printf(&result, "bn_isect_line3_line3 no intersection", argv[0]);
+		goto error;
+	    }
+
+	    VJOIN1(a, pt, t, dir);
+	    bn_encode_vect(&result, a);
+
+	} else if (math_func == (void (*)())bn_isect_line2_line2) {
+	    double dist[2];
+	    point_t pt, a;
+	    vect_t dir, c;
+	    int i;
+	    const static struct bn_tol tol = {
+		BN_TOL_MAGIC, 0.005, 0.005*0.005, 1e-6, 1-1e-6
+	    };
+
+	    if (argc != 5) {
+		bu_vls_printf(&result, 
+		      "Usage: bn_isect_line2_line2 pt dir pt dir (%d args specified)",
+			      argc-1);
+		goto error;
+	    }
+
+	    /* i = bn_isect_line2_line2 {0 0} {1 0} {1 1} {0 -1} */
+
+	    VSETALL(pt, 0.0);
+	    VSETALL(dir, 0.0);
+	    VSETALL(a, 0.0);
+	    VSETALL(c, 0.0);
+
+	    if (bn_decode_vect(pt, argv[1]) < 2) {
+		bu_vls_printf(&result, "bn_isect_line2_line2 no pt", argv[0]);
+		goto error;
+	    }
+	    if (bn_decode_vect(dir, argv[2]) < 2) {
+		bu_vls_printf(&result, "bn_isect_line2_line2 no dir", argv[0]);
+		goto error;
+	    }
+	    if (bn_decode_vect(a, argv[3]) < 2) {
+		bu_vls_printf(&result, "bn_isect_line2_line2 no a pt", argv[0]);
+		goto error;
+	    }
+	    if (bn_decode_vect(c, argv[4]) < 2) {
+		bu_vls_printf(&result, "bn_isect_line2_line2 no c dir", argv[0]);
+		goto error;
+	    }
+	    i = bn_isect_line2_line2(dist, pt, dir, a, c, &tol);
+	    if (i != 1) {
+		bu_vls_printf(&result, "bn_isect_line2_line2 no intersection", argv[0]);
+		goto error;
+	    }
+
+	    VJOIN1(a, pt, dist[0], dir);
+	    bu_vls_printf(&result, "%g %g", a[0], a[1]);
+
 	} else {
 		bu_vls_printf(&result, "libbn/bn_tcl.c: math function %s not supported yet", argv[0]);
 		goto error;
@@ -545,6 +633,8 @@ static struct math_func_link {
 	char *name;
 	void (*func)();
 } math_funcs[] = {
+    {"bn_isect_line2_line2",	(void (*)())bn_isect_line2_line2},
+    {"bn_isect_line3_line3",	(void (*)())bn_isect_line3_line3},
 	{"mat_mul",            bn_mat_mul},
 	{"mat_inv",            bn_mat_inv},
 	{"mat_trn",            bn_mat_trn},
