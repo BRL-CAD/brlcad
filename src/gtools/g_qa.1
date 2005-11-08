@@ -255,7 +255,10 @@ or
 .B 10 in.
 If units are not provided, millimeters are presumed to be the units.
 .IP
-The default values are 50.0 mm and 0.5 mm, which is equivalent to specifying:
+
+The default values are 50.0 mm and 0.5 mm, which is equivalent to specifying: 
+.B \-g 50.0mm-0.5mm
+or
 .B \-g 50.0mm,0.5mm
 on the command line.
 This is a hard limit.  If other analysis constraints are not met, the grid
@@ -408,11 +411,12 @@ The grid starts at 1 cm and is refined to 1mm unless overlaps or exposed air is 
 before the grid is refined to 1mm
 
 .IP
-g_qa -g 1cm,1mm -A oe model.g hull turret suspension
+g_qa -g 1cm-1mm -A oe model.g hull turret suspension 
+
 .P
 The following computes volume and weight of hull, turret, and suspension.  Results are reported in cubic centimeters (cc) and ounces (oz).  The grid spacing starts at 5in and will not be refined below 0.3mm spacing.
 .IP
-g_qa -g5in,0.3mm -Avw -u ft,cc,oz test.g hull turret suspension
+g_qa -g5in-0.3mm -Avw -u ft,cc,oz test.g hull turret suspension
 .P
 For an example of each independent analysis type, consider the following:
 .IP

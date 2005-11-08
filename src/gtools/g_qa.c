@@ -550,9 +550,12 @@ parse_args(int ac, char *av[])
 	    {
 		i = 0;
 
-		if ((p = strchr(optarg, ','))) {
-		    *p++ = '\0';
-		}
+		/* find out if we have two or one args 
+		 * user can separate them with , or - delimiter
+		 */
+		if (p = strchr(optarg, ','))  	 *p++ = '\0';
+		else if (p = strchr(optarg, '-')) *p++ = '\0';
+
 
 		if (read_units_double(&gridSpacing, optarg, units_tab[0])) {
 		    bu_log("error parsing grid spacing value \"%s\"\n", optarg);
