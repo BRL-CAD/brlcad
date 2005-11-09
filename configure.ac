@@ -1218,7 +1218,7 @@ if test ! "x$bc_auto_flags" = "xno" ; then
     dnl linker option by adding a benign flag that should succeed.
     dnl this flag allows dylibs and archives to be found based on a
     dnl library path search order, not biasing a preference for dylibs.
-    BC_LINKER_RECOGNIZES([-Wl,-search_paths_first -fconstant-cfstrings])
+    BC_LINKER_RECOGNIZES([-Wl,-search_paths_first -Wnewline-eof])
 
     dnl 64bit compilation flags
     if test "x$bc_build_64bit" = "xyes" ; then
