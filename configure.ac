@@ -1213,9 +1213,12 @@ if test ! "x$bc_auto_flags" = "xno" ; then
     dnl check for -fno-common (libtcl needs it on darwin)
     BC_COMPILER_AND_LINKER_RECOGNIZES([-fno-common])
 
-    dnl check for -search_paths_first linker flag when making dylibs
-    search_paths_first_flags="-Wl,-search_paths_first"
-    BC_LINKER_RECOGNIZES([$search_paths_first_flags])
+    dnl check for -search_paths_first linker flag.
+    dnl prevent a false-positive where it can be treated as a -s and-e
+    dnl linker option by adding a benign flag that should succeed.
+    dnl this flag allows dylibs and archives to be found based on a
+    dnl library path search order, not biasing a preference for dylibs.
+    BC_LINKER_RECOGNIZES([-Wl,-search_paths_first -fconstant-cfstrings])
 
     dnl 64bit compilation flags
     if test "x$bc_build_64bit" = "xyes" ; then
