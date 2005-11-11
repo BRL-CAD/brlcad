@@ -12,6 +12,7 @@ libsysv_la_SOURCES = \
 	strchr.c \
 	strdup.c \
 	strsep.c \
+	strtok.c \
 	tcl.c \
 	vers.c
 
