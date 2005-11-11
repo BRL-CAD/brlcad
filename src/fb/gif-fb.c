@@ -67,38 +67,35 @@
 static const char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
-#define	USAGE	"gif-fb [-F fb_file] [-c] [-i image#] [-o] [-v] [-z] [gif_file]"
-#define	OPTSTR	"F:ci:ovz"
-
 #include "common.h"
 
 #ifdef HAVE_UNISTD_H
-# include <unistd.h>
-#endif
-
-#ifndef DEBUG
-#define	NDEBUG
+#  include <unistd.h>
 #endif
 #include	<assert.h>
 #include	<signal.h>
 #include	<stdio.h>
 #include	<stdlib.h>
 #ifdef HAVE_STRING_H
-#include	<string.h>
+#  include	<string.h>
 #else
-#include	<strings.h>
+#  include	<strings.h>
 #endif
 #if defined(HAVE_STDARG_H)
-# define	RBMODE	"rb"			/* "b" not really necessary for POSIX */
-# include	<stdarg.h>
+#  define	RBMODE	"rb"	/* "b" not really necessary for POSIX */
+#  include	<stdarg.h>
 #else
-# define	RBMODE	"r"
-# include	<varargs.h>
+#  define	RBMODE	"r"
+#  include	<varargs.h>
 #endif
 
 #include "machine.h"
 #include "bu.h"
-#include "fb.h"			/* BRL-CAD package libfb.a interface */
+#include "fb.h"
+
+
+#define	USAGE	"gif-fb [-F fb_file] [-c] [-i image#] [-o] [-v] [-z] [gif_file]"
+#define	OPTSTR	"F:ci:ovz"
 
 #ifndef EXIT_SUCCESS
 #define	EXIT_SUCCESS	0

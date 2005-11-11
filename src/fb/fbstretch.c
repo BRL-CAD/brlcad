@@ -80,38 +80,36 @@
 static const char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
-#define	USAGE1	"fbstretch [ -h ] [ -s size ] [ -w width ] [ -n height ]"
-#define	USAGE2	"\t[ -f in_fb_file ] [ -a ] [ -v ] [ -x x_sc ] [ -y y_sc ]"
-#define	USAGE3 "\t[ -S size ] [ -W width ] [ -N height ] [ [ -F ] out_fb_file ]"
-#define	OPTSTR	"af:F:hn:N:s:S:vw:W:x:y:"
-
 #include "common.h"
 
 #ifdef HAVE_UNISTD_H
-# include <unistd.h>
+#  include <unistd.h>
 #endif
 
-#ifndef DEBUG
-#define	NDEBUG
-#endif
 #include	<assert.h>
 #include	<signal.h>
 #include	<stdio.h>
 #include	<stdlib.h>
 #ifdef HAVE_STRING_H
-#include	<string.h>
+#  include	<string.h>
 #else
-#include	<strings.h>
+#  include	<strings.h>
 #endif
 #if HAVE_STDARG_H
-#include	<stdarg.h>
+#  include	<stdarg.h>
 #else
-#include	<varargs.h>
+#  include	<varargs.h>
 #endif
 
 #include "machine.h"
 #include "bu.h"
 #include "fb.h"			/* BRL-CAD package libfb.a interface */
+
+
+#define	USAGE1	"fbstretch [ -h ] [ -s size ] [ -w width ] [ -n height ]"
+#define	USAGE2	"\t[ -f in_fb_file ] [ -a ] [ -v ] [ -x x_sc ] [ -y y_sc ]"
+#define	USAGE3 "\t[ -S size ] [ -W width ] [ -N height ] [ [ -F ] out_fb_file ]"
+#define	OPTSTR	"af:F:hn:N:s:S:vw:W:x:y:"
 
 #ifndef EXIT_SUCCESS
 #define	EXIT_SUCCESS	0
