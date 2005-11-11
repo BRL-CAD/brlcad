@@ -46,7 +46,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./extern.h"
 #include "./vecmath.h"
 #include "./screen.h"
-STATIC int	get_Lgt_Entry(register Lgt_Source *entry, FILE *fp), put_Lgt_Entry(register Lgt_Source *entry, FILE *fp);
+static int	get_Lgt_Entry(register Lgt_Source *entry, FILE *fp), put_Lgt_Entry(register Lgt_Source *entry, FILE *fp);
 
 /*	l g t _ P r i n t _ D b ( )
 	Print light source database entry.
@@ -234,7 +234,7 @@ lgt_Edit_Db_Entry(int id)
 	return	1;
 	}
 
-STATIC int
+static int
 get_Lgt_Entry(register Lgt_Source *entry, FILE *fp)
 {	register char	*ptr;
 		int		red, grn, blu;
@@ -269,7 +269,7 @@ get_Lgt_Entry(register Lgt_Source *entry, FILE *fp)
 	return	1;
 	}
 
-STATIC int
+static int
 put_Lgt_Entry(register Lgt_Source *entry, FILE *fp)
 {
 	(void) fprintf( fp, "%s\n", entry->name );

@@ -61,8 +61,8 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 			fatal_error = TRUE; \
 			return; \
 			}
-STATIC OcList	*copy_OcList(register OcList *orp);
-STATIC OcList	*match_Trie(register Trie *triep);
+static OcList	*copy_OcList(register OcList *orp);
+static OcList	*match_Trie(register Trie *triep);
 
 void
 append_Octp(Trie *triep, Octree *octp)
@@ -197,7 +197,7 @@ get_Trie(register char *name, register Trie *triep)
 	return copy_OcList( curp->l.t_octp );
 	}
 
-STATIC OcList	*
+static OcList	*
 match_Trie(register Trie *triep)
 {	OcList	*oclist = OCLIST_NULL;
 		register OcList	**oclistp = &oclist;
@@ -222,7 +222,7 @@ match_Trie(register Trie *triep)
 	}
 
 
-STATIC OcList	*
+static OcList	*
 copy_OcList(register OcList *orp)
                	     			/* Input list read pointer.	*/
 	{	OcList *oclistp = OCLIST_NULL;	/* Output list pointer.	*/

@@ -77,7 +77,7 @@ struct fb_texture
 	}
 *fbs = NULL;
 
-STATIC char	*
+static char	*
 suffix(register char *str)
 {	register char	*p = str + strlen( str ) - 1;
 	while( *p != '.' && p != str )
@@ -88,7 +88,7 @@ suffix(register char *str)
 		return	p;
 	}
 
-STATIC RGBpixel	*
+static RGBpixel	*
 icon_Lookup( iconp, u, v )
 struct icon_texture	*iconp;
 int	u, v;
@@ -104,7 +104,7 @@ int	u, v;
 		return	(RGBpixel *) white_pixel;
 	}
 
-STATIC struct icon_texture	*
+static struct icon_texture	*
 init_Icon_Texture(char *file, Mat_Db_Entry *entry)
 {	FILE	*iconfp;
 		register struct icon_texture	*iconp;
@@ -169,7 +169,7 @@ init_Icon_Texture(char *file, Mat_Db_Entry *entry)
 	return	iconp;
 	}
 
-STATIC struct fb_texture	*
+static struct fb_texture	*
 init_Fb_Texture(char *file, Mat_Db_Entry *entry)
 {	FBIO		*txfbiop;
 		register struct fb_texture	*fbp;

@@ -154,7 +154,7 @@ char	screen[TOP_SCROLL_WIN+1][TEMPLATE_COLS+1];
 /*	pad_Strcpy -- WARNING: this routine does NOT nul-terminate the
 	destination buffer, but pads it with blanks.
  */
-STATIC void
+static void
 pad_Strcpy(register char *des, register char *src, register int len)
 {
 	while( len > 0 && *src != '\0' )

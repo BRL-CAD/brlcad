@@ -76,7 +76,7 @@ Mat_Db_Entry		mat_nul_entry =
 				MF_NULL,	/* Mode flag.		*/
 				"(null)"	/* Material name.	*/
 				};
-STATIC int	get_Mat_Entry(register Mat_Db_Entry *entry, FILE *fp), put_Mat_Entry(register Mat_Db_Entry *entry, register FILE *fp);
+static int	get_Mat_Entry(register Mat_Db_Entry *entry, FILE *fp), put_Mat_Entry(register Mat_Db_Entry *entry, register FILE *fp);
 
 /*	m a t _ R d _ D b ( )
 	Open material database and read entries into table,
@@ -298,7 +298,7 @@ mat_Get_Db_Entry(int id)
 		return	MAT_DB_NULL;
 	}
 
-STATIC int
+static int
 get_Mat_Entry(register Mat_Db_Entry *entry, FILE *fp)
 {	register char	*ptr;
 		int		items;
@@ -351,7 +351,7 @@ get_Mat_Entry(register Mat_Db_Entry *entry, FILE *fp)
 	return	1;
 	}
 
-STATIC int
+static int
 put_Mat_Entry(register Mat_Db_Entry *entry, register FILE *fp)
 {
 	if( entry->mode_flag == MF_NULL )

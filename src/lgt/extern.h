@@ -40,13 +40,7 @@
 	#include "./lgt.h"
 */
 
-#ifndef DEBUG
-#define NDEBUG
-#endif
-
-#ifndef STATIC
-#define STATIC static
-#endif
+#include "common.h"
 
 /* Set pre-processor switch to make up for SGI 4d Release 2 winclose() bug. */
 #ifdef SGI4D_Rel2

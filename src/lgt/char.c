@@ -56,8 +56,8 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./font.h"
 
 #define BUFFSIZ 200
-STATIC int	bitx(register char *bitstring, register int posn);
-STATIC void	do_char(int c, register int xpos, register int ypos);
+static int	bitx(register char *bitstring, register int posn);
+static void	do_char(int c, register int xpos, register int ypos);
 
 void
 do_line(int xpos, int ypos, register char *line)
@@ -113,7 +113,7 @@ do_line(int xpos, int ypos, register char *line)
 	bitmap from the character font file.  The file pointer is assumed
 	to be in the correct position.
  */
-STATIC void
+static void
 do_char(int c, register int xpos, register int ypos)
 {	int     	up = dir[c].up / ir_aperture;
 		int		left = dir[c].left / ir_aperture;
@@ -179,7 +179,7 @@ do_char(int c, register int xpos, register int ypos)
 	Extract a bit field from a bit string.
  */
 /*ARGSUSED*/
-STATIC int
+static int
 bitx(register char *bitstring, register int posn)
 {
 #if defined( vax )

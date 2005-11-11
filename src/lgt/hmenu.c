@@ -60,9 +60,6 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 
 extern int	LI, CO;
-#ifndef STATIC
-#define STATIC static
-#endif
 #define MAX_PROMPT	10
 #define Alloc(p_,t_,s_)\
 		if( ((p_) = (t_ *) malloc((unsigned)(s_))) == (t_ *) 0 )\
@@ -114,7 +111,7 @@ struct nmllist
 	HMllist	*next;
 	};
 
-STATIC void
+static void
 prnt_HMitem(HMitem *itemp)
 {
 	if( itemp->text == NULL )
@@ -131,7 +128,7 @@ prnt_HMitem(HMitem *itemp)
 	return;
 	}
 
-STATIC void
+static void
 prnt_HMllist(HMllist *listp)
 {
 	if( listp == (HMllist *) 0 )
@@ -141,7 +138,7 @@ prnt_HMllist(HMllist *listp)
 	return;
 	}
 
-STATIC void
+static void
 free_HMitems(HMitem *itemp)
 {	register HMitem	*citemp;
 	for( citemp = itemp; citemp->text != NULL; citemp++ )
@@ -154,7 +151,7 @@ free_HMitems(HMitem *itemp)
 	return;
 	}
 
-STATIC void
+static void
 free_HMllist(HMllist *listp)
 {
 	if( listp == (HMllist *) 0 )
@@ -165,7 +162,7 @@ free_HMllist(HMllist *listp)
 	return;
 	}
 
-STATIC void
+static void
 hm_Put_Item(register HWindow *win, register HMitem *itemp, int flag)
 {	register int	label_len = strlen( itemp->text );
 			static char	buf[MAXLINE];
@@ -248,7 +245,7 @@ hm_Put_Item(register HWindow *win, register HMitem *itemp, int flag)
 		return;
 		}
 
-STATIC void
+static void
 hm_Put_Border(register HWindow *win, register int row, char mark)
 {	register int	i;
 		register int	bit = 1;
@@ -272,14 +269,14 @@ hm_Put_Border(register HWindow *win, register int row, char mark)
 	return;
 	}
 
-STATIC void
+static void
 hm_Setbit(register HWindow *win, int col, int row)
 {	register int	bit = col - win->menux;
 	win->dirty[row-(win->menuy-win->menup->prevtop)] |= bit == 0 ? 1 : 1 << bit;
 	return;
 	}
 
-STATIC void
+static void
 hm_Clrmap(HWindow *win)
 {	register int	row;
 	for( row = 0; row <= win->height+1; row++ )
@@ -287,7 +284,7 @@ hm_Clrmap(HWindow *win)
 	return;
 	}
 
-STATIC void
+static void
 hm_Setmap(HWindow *win)
 {	register int	row;
 	for( row = 0; row <= win->height+1; row++ )
@@ -295,7 +292,7 @@ hm_Setmap(HWindow *win)
 	return;
 	}
 
-STATIC HWindow	*
+static HWindow	*
 hm_In_Win(register int x, register int y, register HWindow *win)
 {
 	for( ; win != (HWindow *) 0; win = win->next )
@@ -308,7 +305,7 @@ hm_In_Win(register int x, register int y, register HWindow *win)
 	return	(HWindow *) 0;
 	}
 
-STATIC void
+static void
 hm_Draw_Win(register HWindow *win)
 {	register HMitem	*itemp;
 		int	height;
@@ -327,7 +324,7 @@ hm_Draw_Win(register HWindow *win)
 	return;
 	}
 
-STATIC void
+static void
 hm_Redraw_Win(HWindow *win)
 {
 	if( win == (HWindow *) 0 )
@@ -340,7 +337,7 @@ hm_Redraw_Win(HWindow *win)
 	return;
 	}
 
-STATIC void
+static void
 hm_Help(register HWindow *win, int entry)
 {	int	bottomline = 1;
 		register HWindow	*curwin;
@@ -365,7 +362,7 @@ hm_Help(register HWindow *win, int entry)
 	return;
 	}
 
-STATIC void
+static void
 hm_Lift_Win(register HWindow *win)
 {	register int	row, col;
 		register int	lastcol = -1, lastrow = -1;
