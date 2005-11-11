@@ -14,9 +14,6 @@ THESE SHOULD HAPPEN BEFORE THE NEXT RELEASE
 
 THESE ARE LOWER PRIORITY OR FOR FUTURE RELEASES
 
-* mged should add bin dir to search path so that subcommands like rt
-  and company work as expected without path problems
-
 * support variable overrides for autogen.sh
 
 * M-x indent-region scripts
