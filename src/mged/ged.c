@@ -80,6 +80,9 @@ as represented by the U.S. Army Research Laboratory.  All rights reserved.";
 #ifdef HAVE_ERRNO_H
 #  include <errno.h>
 #endif
+#ifdef HAVE_STDLIB_H
+#  include <stdlib.h>
+#endif
 
 #ifdef DM_X
 #  include "tk.h"
@@ -532,14 +535,17 @@ main(int argc, char **argv)
 	if(interactive && !classic_mged){
 	  int status;
 	  struct bu_vls vls;
+	  struct bu_vls error;
 
 	  bu_vls_init(&vls);
+	  bu_vls_init(&error);
 	  if(dpy_string != (char *)NULL)
 	    bu_vls_printf(&vls, "loadtk %s", dpy_string);
 	  else
 	    bu_vls_strcpy(&vls, "loadtk");
 
 	  status = Tcl_Eval(interp, bu_vls_addr(&vls));
+	  bu_vls_strcpy(&error, interp->result);
 	  bu_vls_free(&vls);
 
 	  if (status != TCL_OK) {
@@ -551,9 +557,10 @@ main(int argc, char **argv)
 	      if( !run_in_foreground && use_pipe ) {
 		  notify_parent_done(parent_pipe[1]);
 	      }
-	      bu_log("%s\nMGED Aborted.\n", interp->result);
+	      bu_log("%s\nMGED Aborted.\n", bu_vls_addr(&error));
 	      mged_finish(1);
 	  }
+	  bu_vls_free(&error);
 	}
 
 	if(argc >= 2){
@@ -572,6 +579,37 @@ main(int argc, char **argv)
 		dbip->dbi_read_only = 1;
 		bu_log( "Opened in READ ONLY mode\n" );
 	}
+
+#if defined(HAVE_GETENV) && defined (HAVE_PUTENV)
+	/* append our own bin dir to (the end of) our search path */
+	{
+	    struct bu_vls newpath;
+	    const char *path = getenv("PATH");
+	    const char *binpath = bu_brlcad_root("bin", 1);
+
+	    if (binpath) {
+		
+		bu_vls_init(&newpath);
+		
+		if (path) {
+		    if (path[strlen(path)-1] == ':') {
+		    bu_vls_printf(&newpath, "PATH=%s%s", path, binpath);
+		    } else {
+			bu_vls_printf(&newpath, "PATH=%s:%s", path, binpath);
+		    }
+		} else {
+		    bu_vls_printf(&newpath, "PATH=%s", binpath);
+		}
+		
+		if (putenv(bu_vls_addr(&newpath)) != 0) {
+		    perror("putenv:");
+		}
+		
+		bu_vls_free(&newpath);
+	    }
+	}
+#endif
+		mged_finish(1);
 
 	/* --- Now safe to process commands. --- */
 	if(interactive){
