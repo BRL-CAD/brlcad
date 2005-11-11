@@ -1447,6 +1447,7 @@ AC_CHECK_FUNCS(\
 	strsep \
 	strspn \
 	strstr \
+	strtok \
 	strtol \
 	strtoul \
 	strtoull \
