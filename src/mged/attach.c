@@ -26,6 +26,7 @@
  *	attach		attach to a given display processor
  *	f_release	release display device
  *	release		guts for f_release
+ *      gui_setup	called by loadtk to initialize the gui
  *
  *  Author -
  *	Michael John Muuss
@@ -476,6 +477,7 @@ gui_setup(char *dstr)
     return TCL_OK;
 
   bu_vls_init(&vls);
+  Tcl_ResetResult(interp);
 
   if(dstr != (char *)NULL){
     bu_vls_strcpy(&vls, "env(DISPLAY)");
@@ -484,14 +486,19 @@ gui_setup(char *dstr)
 
   /* This runs the tk.tcl script */
   if(Tk_Init(interp) == TCL_ERROR){
-    bu_vls_free(&vls);
-    return TCL_ERROR;
+      /* hack to avoid a stupid Tk error */
+      if (strncmp(interp->result, "this isn't a Tk applicationcouldn't", 35) == 0) {
+	  interp->result = (interp->result + 27);
+      }
+      bu_vls_free(&vls);
+      return TCL_ERROR;
   }
 
   /* Add Bezier Curves to the canvas widget */
 #ifndef _WIN32
   Tk_CreateCanvasBezierType();
 #endif
+
 
   /* Initialize [incr Tk] */
   if (Itk_Init(interp) == TCL_ERROR) {
