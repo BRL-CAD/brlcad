@@ -20,13 +20,13 @@ DIST_SUBDIRS = \
 if HAVE_DOXYGEN
 doxygen:
 	mkdir doxygen
-	doxygen Doxyfile
+	doxygen Doxyfile4
 endif
 
 EXTRA_DIST = \
 	acinclude.m4 \
 	AUTHORS \
-	ChangeLog
+	ChangeLog \
 	config.h \
 	configure.ac \
 	COPYING \
