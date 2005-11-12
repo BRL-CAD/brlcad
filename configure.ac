@@ -63,7 +63,7 @@ dnl
 
 AC_PREREQ(2.52)
 
-AC_INIT(BRL-CAD, 7.6.3, [http://brlcad.org], brlcad)
+AC_INIT(BRL-CAD, 7.6.4, [http://brlcad.org], brlcad)
 AC_REVISION($Revision$)
 
 AC_CONFIG_AUX_DIR(misc)
