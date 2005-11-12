@@ -20,7 +20,7 @@ DIST_SUBDIRS = \
 if HAVE_DOXYGEN
 doxygen:
 	mkdir doxygen
-	doxygen Doxyfile4
+	doxygen Doxyfile
 endif
 
 EXTRA_DIST = \
