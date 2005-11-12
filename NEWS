@@ -7,8 +7,18 @@ see that file and the CVS log for more historic information.  The
 entire history of the project is available through CVS.
 
 ----------------------------------------------------------------------
---- 2005-11-XX  Release 7.6.3                                      ---
+--- 2005-11-12  Release 7.6.4                                      ---
 ----------------------------------------------------------------------
+
+This release adds a new geometry creation interface to mged that
+supports reverse modeling geometry of existing objects.  New geometry
+creation commands read point data sets in a simple text file format,
+recognizing categories and collections of points.  Using
+point-acquisition devices such as X-Station Vulcan advanced surveying
+systems from Arc Second Inc., points may be collected and used in mged
+to factilitate the generation of geometry models.  Collection
+techniques are recognized for polygonal plates, cylinders, spheres,
+point clouds, and more.
 
 * auto-locate mged external apps regardless of PATH - Sean Morrion
 * mged utilizes a local display if unspecified/unset - Sean Morrison
