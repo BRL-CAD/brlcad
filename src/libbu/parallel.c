@@ -157,8 +157,10 @@ static const char RCSparallel[] = "@(#)$Header$ (ARL)";
 #else
 #  ifdef HAVE_SYS_SCHED_H
 #    include <sys/sched.h>
-static struct sched_param bu_param;
 #  endif
+#endif
+#if defined(IRIX64) && IRIX64 >= 64
+static struct sched_param bu_param;
 #endif
 
 #ifdef ardent
@@ -435,7 +437,7 @@ bu_avail_cpus(void)
 	  mib[0] = CTL_HW;
 	  mib[1] = HW_NCPU;
 	  len = sizeof(maxproc);
-	  if (sysctl(mib, 2, &maxproc, &len, NULL, NULL == -1)) {
+	  if (sysctl(mib, 2, &maxproc, &len, NULL, 0) == -1) {
 	    ncpu = 1;
 	    perror("sysctl");
 	  } else {
