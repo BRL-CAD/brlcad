@@ -1,0 +1,135 @@
+.TH G-IGES 1 BRL-CAD
+./"                       G - I G E S . 1
+./" BRL-CAD
+./"
+./" Copyright (c) 2005 United States Government as represented by
+./" the U.S. Army Research Laboratory.
+./"
+./" This document is made available under the terms of the GNU Free
+./" Documentation License or, at your option, under the terms of the
+./" GNU General Public License as published by the Free Software
+./" Foundation.  Permission is granted to copy, distribute and/or
+./" modify this document under the terms of the GNU Free Documentation
+./" License, Version 1.2 or any later version published by the Free
+./" Software Foundation; with no Invariant Sections, no Front-Cover
+./" Texts, and no Back-Cover Texts.  Permission is also granted to
+./" redistribute this document under the terms of the GNU General
+./" Public License; either version 2 of the License, or (at your
+./" option) any later version.
+./"
+./" You should have received a copy of the GNU Free Documentation
+./" License and/or the GNU General Public License along with this
+./" document; see the file named COPYING for more information.
+./"
+./"./"./"
+.SH NAME
+g-iges \- IGES Translator (BRL-CAD to IGES)
+.SH SYNOPSIS
+.B g-iges
+[-f|t|m] [-v] [-s] [-x flag1] [-X flag2] [-a abs_tol] [-r rel_tol] [-n norm_tol] [-o output_file_or_directory] database.g object(s)
+.SH DESCRIPTION
+.I g-iges\^
+converts the specified objects of the BRL-CAD database,
+.I database.g,
+to an IGES version 5.1 file,
+.I file.iges.
+
+
+The following options are recognized
+.TP
+.B \-f
+selects  a  BREP  IGES  file  consisting  of  only  Manifold Solid BREP
+Objects.  All CSG solids in the specified objects  are  tessellated  to
+produce  facetted  BREP  objects, then the indicated Boolean operations
+are performed for each region. Individual regions are  written  to  the
+IGES  file  as individual BREP objects.  This procedure results in some
+approximations since curved surface solids, such as TGCs or ellipsoids,
+are  approximated  by flat facets.  The accuracy of the
+tessellation may be controlled through the use of the
+.B \-a, \-r, \-n
+options.
+
+.TP
+.B \-a \fIabs_tol\fR
+Sets the absolute tolerance (floating point value) for tesselation.
+.TP
+.B \-r \fIrel_tol\fR
+Sets the relative (to the size of the object) tolerance (floating point value) for tesselation.
+.TP
+.B \-n \fInorm_tol\fR
+Sets the normal tolerance (floating point value 0..1) for tesselation.
+This value is compared to the dot product of the normals to determine if the surfaces are within tolerance
+
+.TP
+.B \-t
+indicates that an IGES file consisting of
+only trimmed NURBs should be created. The trimmed  NURBs  will  all  be
+planar NURBs, and they are the facets derived from the tessellation and
+Boolean evaluation as in the -f option. The file produced in  this  way
+is  acceptable  to the Pro/Engineer IGES import routine.
+.TP
+.B \-m
+implies the -t option, and is used to produce multiple IGES files  (one
+for  each region converted). In this case the argument to the -o option
+should be a directory where the IGES files  will  accumulate.
+.TP
+.B \-v
+requests debugging information
+.TP
+.B \-s
+all facets in  BREP  objects  should  be
+output  in  the form of planar NURBs (Intergraph likes their IGES files
+this way).
+.TP
+.B \-x \fIflag1\fR
+set the librt debug flag (see librt/debug.h for values)
+.TP
+.B \-X \fIflag2\fR
+set the librt debug flag (see nmg.h for values)
+.TP
+.B \-o \fIoutput_file_or_directory\fR
+Specifies the output file (or in the case of the -m) the output directory for the iges file(s).
+
+.PP
+If neither the -f , -t , nor the -m options  are  selected,
+the  default is a CSG IGES file. In this situation, all regions will be
+written to the IGES file as Boolean trees with all possible solids rep-
+resented  by their IGES CSG equivalent. In cases where there is no IGES
+CSG equivalent, the BRL-CAD solid is  tesellated  (using  the  provided
+tolerances),  and  a  BREP  object  is  written for that solid.
+
+
+
+
+.SH EXAMPLE
+.nf
+.IP
+\fIg-iges -f -o sample.iges sample.g object1\fR
+.fi
+.PP
+This command will produce an IGES BREP output file,
+.I sample.iges,
+from
+.I object1
+of the BRL-CAD database file
+.I sample.g.
+.SH "SEE ALSO"
+iges-g(1).
+.br
+.I
+The Initial Graphics Exchange Specification (IGES) Version 5.1,
+IGES/PDES Organization, September 1991.
+.SH DIAGNOSTICS
+Error messages are intended to be self-explanatory.
+.SH AUTHOR
+John Anderson
+.br
+.SH SOURCE
+SECAD/VLD Computing Consortium, Bldg 394
+.br
+The U. S. Army Research Laboratory
+.br
+Aberdeen Proving Ground, MD  21005
+.SH "BUG REPORTS"
+Reports of bugs or problems should be submitted via electronic
+mail to <devs@brlcad.org>.

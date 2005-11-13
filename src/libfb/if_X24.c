@@ -43,14 +43,10 @@
  */
 /*@}*/
 
-#ifndef lint
-static const char sccsid[] = "@(#)if_X24.c version 1.40 (22 Nov 1994)";
-static const char RCSid[] = "@(#)$Header$ (ARL)";
-#endif
-
 #include "common.h"
 
 #ifdef IF_X
+
 
 #define X_DBG	0
 #define UPD_DBG 0

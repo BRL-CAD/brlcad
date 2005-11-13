@@ -27,7 +27,6 @@
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5066
  *
- *
  *  @(#)$Header$ (BRL)
  */
 struct light_pt {

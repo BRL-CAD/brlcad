@@ -1,0 +1,42 @@
+#include <afxres.h>
+
+#include "common.h"
+
+IDI_ICON1 ICON DISCARDABLE "../../../doc/html/manuals/small-eagleCAD.ico"
+
+LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
+
+VS_VERSION_INFO VERSIONINFO
+ FILEVERSION MAJOR_VERSION,MINOR_VERSION,PATCH_VERSION,0
+ PRODUCTVERSION MAJOR_VERSION,MINOR_VERSION,PATCH_VERSION,0
+ FILEFLAGSMASK 0x3fL
+#ifdef _DEBUG
+ FILEFLAGS 0x1L
+#else
+ FILEFLAGS 0x0L
+#endif
+ FILEOS 0x40004L
+ FILETYPE 0x2L
+ FILESUBTYPE 0x0L
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "040904b0"
+        BEGIN
+            VALUE "Comments", "BRL-CAD DLL\0"
+            VALUE "CompanyName", "\0"
+            VALUE "FileDescription", "BRL-CAD for Windows Dynamic-Link Library\0"
+            VALUE "FileVersion", BRLCAD_VERSION
+            VALUE "InternalName", "brlcad\0"
+            VALUE "LegalCopyright", "Copyright © 2005 United States Government as represented by the U.S. Army Research Laboratory. All Rights Reserved.\0"
+            VALUE "LegalTrademarks", "The word mark ""BRL-CAD"" and the ""BRL-CAD Eagle"" image are registered trademarks of the Department of the Army, United States Government. All rights are reserved.\0"
+            VALUE "OriginalFilename", "brlcad.dll\0"
+            VALUE "ProductName", "BRL-CAD\0"
+            VALUE "ProductVersion", BRLCAD_VERSION
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x409, 1200
+    END
+END

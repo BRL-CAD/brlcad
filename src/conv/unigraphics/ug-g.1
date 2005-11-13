@@ -1,0 +1,98 @@
+.TH UG-G 1 BRL-CAD
+./"                         U G - G . 1
+./" BRL-CAD
+./"
+./" Copyright (c) 2005 United States Government as represented by
+./" the U.S. Army Research Laboratory.
+./"
+./" This document is made available under the terms of the GNU Free
+./" Documentation License or, at your option, under the terms of the
+./" GNU General Public License as published by the Free Software
+./" Foundation.  Permission is granted to copy, distribute and/or
+./" modify this document under the terms of the GNU Free Documentation
+./" License, Version 1.2 or any later version published by the Free
+./" Software Foundation; with no Invariant Sections, no Front-Cover
+./" Texts, and no Back-Cover Texts.  Permission is also granted to
+./" redistribute this document under the terms of the GNU General
+./" Public License; either version 2 of the License, or (at your
+./" option) any later version.
+./"
+./" You should have received a copy of the GNU Free Documentation
+./" License and/or the GNU General Public License along with this
+./" document; see the file named COPYING for more information.
+./"
+./"./"./"
+.SH NAME
+ug-g \- Unigraphics Translator (Unigraphics to BRL-CAD)
+.SH SYNOPSIS
+.B ug-g
+[-d level] [-i starting_ident_number] [-n part_no_to_part_name_mapping_file] [-t surface_tolerance] [-a surface_normal_tolerance] [-R use_refset_name] [-c min_chamfer] [-r min_round] [-f] [-s] [-u] -o database.g part_filename [subpart1 subpart2 ...]
+.SH DESCRIPTION
+.I ug-g\^
+converts the specified
+.I part_filename
+model to a BRL-CAD
+.I database.g
+file. The
+.I part_filename
+is expected to be a Unigraphics part file.
+The
+.I -d
+specifies a debug
+.I level.
+Currently this is either on or off for levels 0 or 1.
+The
+.I -i
+option specifies a starting ident number for the conversion. Each part converted will be assigned an ident
+number, starting with the one specified. The
+.I -n
+option provides a part number to name mapping file. This can be provided if the Unigraphics model
+uses part numbers instead of part names. If provided, the mapping file will be consulted for
+part names during the conversion, and the BRL-CAD model will use the names rather than the part numbers.
+The
+.I -t
+option specifies the surface error tolerance for tesellation (in mm). The
+.I -a
+option specifies an surface normal tolerance for tesellation (in degrees). The
+.I -R
+option specifies a Unigraphics reference set name. If supplied, only the specified reference set will be converted. The
+.I -c
+option specifies a minimum chamfer dimension. Any chamfers with dimensions of this minimum or less will be ignored. The
+.I -r
+option specifies a minimum round radius. Any rounds or blends with radii of curvature of this minimum or
+less will be ignored. The
+.I -f
+option requests that no CSG conversion be attempted, so that all BRL-CAD geometry will be Bot primitives. The
+.I -s
+option requests that all features get listed rather than only those successfully converted to CSG. This option has no effect if the
+.I -f
+option is specified. The
+.I -u
+option requests surface normals to be extracted from the Unigraphics model and assigned to Bot primitives.
+The
+.I -o
+option specifies a BRL-CAD output file for the conversion. If a list of optional
+.I subparts
+is specified on the command line, only those subparts of the Unigraphics
+.I part_filename
+are converted.
+.PP
+Note that this converter requires the Unigraphics
+.I ugopen
+module. This may be obtained from Unigraphics.
+.SH EXAMPLE
+.RS
+$ \|\fuug-g \|-o sample.g \|sample.prt\fP
+.RE
+.SH AUTHORS
+John Anderson
+.br
+Lee Butler
+.SH SOURCE
+.br
+The U. S. Army Ballistic Research Laboratory
+.br
+Aberdeen Proving Ground, MD  21005
+.SH "BUG REPORTS"
+Reports of bugs or problems should be submitted via electronic
+mail to <bugs@brlcad.org>.
