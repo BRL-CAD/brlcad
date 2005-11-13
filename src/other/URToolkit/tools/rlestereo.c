@@ -32,6 +32,7 @@ char rcsid[] = "$Header$";
 rlestereo()			Tag the file.
 */
 
+#include <stdlib.h>
 #include <stdio.h>
 #include "rle.h"
 

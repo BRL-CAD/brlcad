@@ -27,7 +27,7 @@
  *
  *  Author -
  *	Paul Randal Stay
- * 
+ *
  *  Source -
  * 	SECAD/VLD Computing Consortium, Bldg 394
  *	The U.S. Army Ballistic Research Laboratory
@@ -67,12 +67,12 @@ rt_nurb_curvature(struct curvature *cvp, const struct face_g_snurb *srf, fastf_t
 	uus = rt_nurb_s_diff(us, RT_NURB_SPLIT_ROW);
 	vvs = rt_nurb_s_diff(vs, RT_NURB_SPLIT_COL);
 	uvs = rt_nurb_s_diff(vs, RT_NURB_SPLIT_ROW);
-	
+
 	rt_nurb_s_eval(srf, u, v, se);
 	rt_nurb_s_eval(us, u,v, ue);
 	rt_nurb_s_eval(vs, u,v, ve);
 	rt_nurb_s_eval(uus, u,v, uue);
-	rt_nurb_s_eval(vvs, u,v, uve);
+	rt_nurb_s_eval(vvs, u,v, vve);
 	rt_nurb_s_eval(uvs, u,v, uve);
 
 	rt_nurb_free_snurb( us, (struct resource *)NULL);
@@ -95,7 +95,7 @@ rt_nurb_curvature(struct curvature *cvp, const struct face_g_snurb *srf, fastf_t
 		E = VDOT( ue, ue);
 		F = VDOT( ue, ve);
 		G = VDOT( ve, ve);
-		
+
 		for( i = 0; i < 3; i++)
 		{
 			uue[i] = (1.0 / se[3] * uue[i]) -
@@ -109,7 +109,7 @@ rt_nurb_curvature(struct curvature *cvp, const struct face_g_snurb *srf, fastf_t
 			 uve[i] = 1.0 / se[3] * uve[i] +
 	                        (-1.0 / (se[3] * se[3])) *
         	                (ve[3] * ue[i] + ue[3] * ve[i] +
-                	         uve[3] * se[i]) + 
+                	         uve[3] * se[i]) +
 				(-2.0 / (se[3] * se[3] * se[3])) *
 	                        (ve[3] * ue[3] * se[i]);
 		}
@@ -117,7 +117,7 @@ rt_nurb_curvature(struct curvature *cvp, const struct face_g_snurb *srf, fastf_t
 		L = VDOT( norm, uue);
 		M = VDOT( norm, uve);
 		N = VDOT( norm, vve);
-		
+
 	} else
 	{
 		VCROSS( norm, ue, ve);
@@ -125,7 +125,7 @@ rt_nurb_curvature(struct curvature *cvp, const struct face_g_snurb *srf, fastf_t
 		E = VDOT( ue, ue);
 		F = VDOT( ue, ve);
 		G = VDOT( ve, ve);
-		
+
 		L = VDOT( norm, uue);
 		M = VDOT( norm, uve);
 		N = VDOT( norm, vve);
@@ -142,7 +142,7 @@ rt_nurb_curvature(struct curvature *cvp, const struct face_g_snurb *srf, fastf_t
 	gauss = (L * N - M *M)/denom;
 	mean = (G * L + E * N - 2 * F * M) / (2 * denom);
 	discrim = sqrt( mean * mean - gauss);
-	
+
 	cvp->crv_c1 = mean - discrim;
 	cvp->crv_c2 = mean + discrim;
 

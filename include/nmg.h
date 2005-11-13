@@ -23,13 +23,13 @@
  *  Authors -
  *	Lee A. Butler
  *	Michael John Muuss
- *  
+ *
  *  Source -
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5066
  *
  *  Definition of data structures for "Non-Manifold Geometry Modelling."
- *  Developed from "Non-Manifold Geometric Boundary Modeling" by 
+ *  Developed from "Non-Manifold Geometric Boundary Modeling" by
  *  Kevin Weiler, 5/7/87 (SIGGraph 1989 Course #20 Notes)
  *
  *  Include Sequencing -
@@ -50,6 +50,8 @@
  */
 #ifndef NMG_H
 #define NMG_H seen
+
+#include "common.h"
 
 /* make sure all the prerequisite include files have been included
  */
@@ -331,7 +333,7 @@ struct face {
 	struct bu_list		l;	/* faces in face_g's f_hd list */
 	struct faceuse		*fu_p;	/* Ptr up to one use of this face */
 	union {
-		long		    *magic_p;	
+		long		    *magic_p;
 		struct face_g_plane *plane_p;
 		struct face_g_snurb *snurb_p;
 	} g;				/* geometry */

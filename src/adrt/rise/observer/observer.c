@@ -44,7 +44,7 @@ tienet_sem_t rise_observer_sdlready_sem;
 void rise_observer(char *host, int port) {
   rise_observer_net_info_t ni;
 
-  /* server address */ 
+  /* server address */
   if(gethostbyname(host)) {
     ni.master = gethostbyname(host)[0];
   } else {

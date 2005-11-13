@@ -24,7 +24,7 @@
  *
  *  Author -
  *	Michael John Muuss
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
@@ -59,7 +59,7 @@ struct solid  {
   int s_dmode;         	/* draw mode: 0 - wireframe
 			 *	      1 - shaded bots and polysolids only (booleans NOT evaluated)
 			 *	      2 - shaded (booleans NOT evaluated)
-			 *	      3 - shaded (booleans evaluated) 
+			 *	      3 - shaded (booleans evaluated)
 			 */
 };
 

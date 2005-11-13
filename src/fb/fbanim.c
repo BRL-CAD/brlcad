@@ -28,12 +28,12 @@
  *
  *  Author -
  *	Michael John Muuss
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005
- *  
+ *
  */
 #ifndef lint
 static const char RCSid[] = "@(#)$Header$ (BRL)";
@@ -50,6 +50,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include <sys/time.h>		/* For struct timeval */
 
 #include "machine.h"
+#include "bu.h"
 #include "fb.h"
 
 
@@ -83,22 +84,22 @@ get_args(int argc, register char **argv)
 {
 	register int c;
 
-	while ( (c = getopt( argc, argv, "s:w:n:hirvp:S:W:N:" )) != EOF )  {
+	while ( (c = bu_getopt( argc, argv, "s:w:n:hirvp:S:W:N:" )) != EOF )  {
 		switch( c )  {
 		case 's':
-			subimage_width = subimage_height = atoi(optarg);
+			subimage_width = subimage_height = atoi(bu_optarg);
 			break;
 		case 'w':
-			subimage_width = atoi(optarg);
+			subimage_width = atoi(bu_optarg);
 			break;
 		case 'n':
-			subimage_height = atoi(optarg);
+			subimage_height = atoi(bu_optarg);
 			break;
 		case 'i':
 			inverse = 1;
 			break;
 		case 'p':
-			passes = atoi(optarg);
+			passes = atoi(bu_optarg);
 			if(passes<1)  passes=1;
 			break;
 		case 'r':
@@ -112,13 +113,13 @@ get_args(int argc, register char **argv)
 			screen_width = screen_height = 1024;
 			break;
 		case 'S':
-			screen_height = screen_width = atoi(optarg);
+			screen_height = screen_width = atoi(bu_optarg);
 			break;
 		case 'W':
-			screen_width = atoi(optarg);
+			screen_width = atoi(bu_optarg);
 			break;
 		case 'N':
-			screen_height = atoi(optarg);
+			screen_height = atoi(bu_optarg);
 			break;
 
 		default:		/* '?' */
@@ -126,7 +127,7 @@ get_args(int argc, register char **argv)
 		}
 	}
 
-	if( optind+1 >= argc )	/* two mandatory positional args */
+	if( bu_optind+1 >= argc )	/* two mandatory positional args */
 		return(0);
 	return(1);		/* OK */
 }
@@ -143,17 +144,17 @@ main(int argc, char **argv)
 
 	/* If not given with -s & -n, use (old) positional param (compat) */
 	if( subimage_width <= 0 || subimage_height <= 0 )  {
-		subimage_width = subimage_height = atoi(argv[optind]);
+		subimage_width = subimage_height = atoi(argv[bu_optind]);
 		if( subimage_width == 0 ) {
 			fprintf(stderr,"fbanim: must specify image size\n");
 			exit( 2 );
 		}
 	}
-	nframes = atoi(argv[optind+1]);
-	if( optind+2 >= argc )
+	nframes = atoi(argv[bu_optind+1]);
+	if( bu_optind+2 >= argc )
 		fps = 8;
 	else
-		fps = atoi(argv[optind+2]);
+		fps = atoi(argv[bu_optind+2]);
 
 	if( fps <= 1 )  {
 		sec = fps ? 1 : 4;
@@ -209,7 +210,7 @@ newframe(register int i)
 	fb_window( fbp, xPan, yPan );
 
 	FD_ZERO(&fds);
-	FD_SET(fileno(stdin), &fds);	
+	FD_SET(fileno(stdin), &fds);
 
 	tv.tv_sec = sec;
 	tv.tv_usec = usec;

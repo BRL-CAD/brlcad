@@ -50,7 +50,7 @@ static void help() {
   -o\t\tset observer port number.\n\
   -i\t\tinterval in minutes between each autosave.\n\
   -l\t\tfile containing list of slaves to use as compute nodes.\n\
-  -e\t\tscript to execute that starts slaves.\n\  
+  -e\t\tscript to execute that starts slaves.\n\
   -v\t\tdisplay version info.\n");
 }
 
@@ -76,7 +76,7 @@ int main(int argc, char **argv) {
 
   /* Parse command line options */
 
-  while((c = 
+  while((c =
 #ifdef HAVE_GETOPT_LONG
 	getopt_long(argc, argv, shortopts, longopts, NULL)
 #else

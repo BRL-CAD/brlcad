@@ -26,18 +26,18 @@
 #  geometry tree from the object
 #
 #  example:
-#	
+#
 #	mged> in leaf sph 0 0 0 1
 #	mged> g father leaf
 #	mged> g mother leaf
 #	mged> g gma father
-#	mged> g gpa father 
+#	mged> g gpa father
 #	mged> g grandma mother
 #	mged> g grandpa mother
 #	mged> g maleAncestors gpa grandpa
 #	mged> g femaleAncestors gma grandma
 #	mged> g all.g femaleAncestors maleAncestors
-#	
+#
 #	mged> dbfindtree leaf
 #	all.g/femaleAncestors/gma/father/leaf
 #	all.g/maleAncestors/gpa/father/leaf
@@ -52,7 +52,7 @@ proc dbfindtree {args} {
 
     set find_paths $args
 
-    
+
     set do_more 1
     while {$do_more} {
 
@@ -66,7 +66,7 @@ proc dbfindtree {args} {
 	    # find where it's used
 	    set search_result [dbfind $token]
 
-	    # if it is used, create path(s) 
+	    # if it is used, create path(s)
 	    if { [llength $search_result] } {
 		set do_more 1
 		foreach n $search_result {
@@ -84,7 +84,7 @@ proc dbfindtree {args} {
     foreach i $new_paths { puts [string map {\  /} $i] }
     set glob_compat_mode $save
     # prevent printing of value of $save
-    set i {} 
+    set i {}
 }
 # Local Variables:
 # mode: Tcl

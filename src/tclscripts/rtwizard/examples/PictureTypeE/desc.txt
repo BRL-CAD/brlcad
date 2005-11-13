@@ -1,5 +1,5 @@
 This image type consists of full-color elements superimposed over a
-light black-and-white (ghost) image. 
+light black-and-white (ghost) image.
 
 To produce this image, you will need to specify the objects you want to render in full color, the objects you want to render in the ghost image, and the view information.
 

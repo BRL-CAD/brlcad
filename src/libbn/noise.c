@@ -36,7 +36,7 @@
  *  points.  The functions should be evaluated at non-integer locations for
  *  their nature to be realized.
  *
- *  Author - 
+ *  Author -
  *	Lee A. Butler
  *	F. Kenton Musgrave
  *	Robert Skinner
@@ -44,7 +44,7 @@
  *  Source -
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
- *  
+ *
  */
 /*@}*/
 
@@ -154,7 +154,7 @@ filter_args(fastf_t *src, fastf_t *p, fastf_t *f, int *ip)
 }
 
 
-/* 
+/*
  * The RTable maps numbers into the range [-1..1]
  */
 #define MAXSIZE 267	/* 255 + 3 * (4 values) */
@@ -175,12 +175,12 @@ static double	RTable[MAXSIZE];
  */
 
 struct str_ht {
-	long	magic;	
+	long	magic;
 	char	hashTableValid;
 	long	*hashTableMagic1;
 	short	*hashTable;
 	long	*hashTableMagic2;
-	long	magic_end;	
+	long	magic_end;
 };
 
 static struct str_ht ht;
@@ -200,8 +200,8 @@ static struct str_ht ht;
 		bu_bomb("ht.hashTable changed rel ht.hashTableMagic2"); \
 }
 
-/* 
- * Map integer point into repeatable random number [0..4095] 
+/*
+ * Map integer point into repeatable random number [0..4095]
  * We actually only use the first 8 bits of the final value extracted from
  * this table.  It's not quite clear that we really need this big a table.
  * The extra size does provide some extra randomness for intermediate results.
@@ -219,7 +219,7 @@ bn_noise_init(void)
 {
 	int i, j, k, temp;
 	int rndtabi = BN_RAND_TABSIZE - 1;
-	
+
 	bu_semaphore_acquire( BU_SEM_BN_NOISE );
 
 	if (ht.hashTableValid) {
@@ -272,11 +272,11 @@ bn_noise_init(void)
  * Robert Skinner's Perlin-style "Noise" function
  *
  * Results are in the range [-0.5 .. 0.5].  Unlike many implementations,
- * this function provides random noise at the integer lattice values.  
- * However this produces much poorer quality and should be avoided if 
+ * this function provides random noise at the integer lattice values.
+ * However this produces much poorer quality and should be avoided if
  * possible.
  *
- * The power distribution of the result has no particular shape, though it 
+ * The power distribution of the result has no particular shape, though it
  * isn't as flat as the literature would have one believe.
  */
 double
@@ -313,16 +313,16 @@ bn_noise_perlin(fastf_t *point)
 	z = p[Z];
 
 	jx = ix + 1; /* (jx,jy,jz) = integer lattice point above (ix,iy,iz) */
-	jy = iy + 1; 
+	jy = iy + 1;
 	jz = iz + 1;
 
-	sx = SMOOTHSTEP(fx); 
-	sy = SMOOTHSTEP(fy); 
+	sx = SMOOTHSTEP(fx);
+	sy = SMOOTHSTEP(fy);
 	sz = SMOOTHSTEP(fz);
 
 	/* the complement values of sx,sy,sz */
-	tx = 1.0 - sx; 
-	ty = 1.0 - sy; 
+	tx = 1.0 - sx;
+	ty = 1.0 - sy;
 	tz = 1.0 - sz;
 
 	/*
@@ -392,21 +392,21 @@ bn_noise_vec(fastf_t *point, fastf_t *result)
 
 	jx = ix+1;   jy = iy + 1;   jz = iz + 1;
 
-	sx = SMOOTHSTEP(x - ix); 
-	sy = SMOOTHSTEP(y - iy); 
+	sx = SMOOTHSTEP(x - ix);
+	sy = SMOOTHSTEP(y - iy);
 	sz = SMOOTHSTEP(z - iz);
 
 	/* the complement values of sx,sy,sz */
-	tx = 1.0 - sx; 
-	ty = 1.0 - sy; 
+	tx = 1.0 - sx;
+	ty = 1.0 - sy;
 	tz = 1.0 - sz;
 
 	/*
 	 *  interpolate!
 	 */
 	m = Hash3d( ix, iy, iz ) & 0xFF;
-	px = x-ix;  
-	py = y-iy;  
+	px = x-ix;
+	py = y-iy;
 	pz = z-iz;
 	s = tx*ty*tz;
 	result[0] = INCRSUM(m,s,px,py,pz);
@@ -527,7 +527,7 @@ build_spec_tbl(double h_val, double lacunarity, double octaves)
 	ep = &etbl[etbl_next];
 	ep->magic = MAGIC_fbm_spec_wgt;	ep->octaves = octaves;
 	ep->h_val = h_val;		ep->lacunarity = lacunarity;
-	spec_wgts = ep->spec_wgts = 
+	spec_wgts = ep->spec_wgts =
 		(double *)bu_malloc( ((int)(octaves+1)) * sizeof(double),
 		"spectral weights" );
 
@@ -557,7 +557,7 @@ find_spec_wgt(double h, double l, double o)
 
 	for (ep = etbl, i=0 ; i < etbl_next ; i++, ep++) {
 		if (ep->magic != MAGIC_fbm_spec_wgt) bu_bomb("find_spec_wgt");
-		if (ep->lacunarity == l && ep->h_val == h && 
+		if (ep->lacunarity == l && ep->h_val == h &&
 			ep->octaves >= o )
 				return ep;
 	}
@@ -573,7 +573,7 @@ find_spec_wgt(double h, double l, double o)
 	 */
 	for (ep = etbl, i=0 ; i < etbl_next ; i++, ep++) {
 		if (ep->magic != MAGIC_fbm_spec_wgt) bu_bomb("find_spec_wgt");
-		if (ep->lacunarity == l && ep->h_val == h && 
+		if (ep->lacunarity == l && ep->h_val == h &&
 			ep->octaves >= o )
 		    		break;
 	}
@@ -586,7 +586,7 @@ find_spec_wgt(double h, double l, double o)
 }
 /*
  * Procedural fBm evaluated at "point"; returns value stored in "value".
- * 
+ *
  * Parameters:
  *    ``h_val''		fractal increment parameter
  *    ``lacunarity''	gap between successive frequencies
@@ -595,7 +595,7 @@ find_spec_wgt(double h, double l, double o)
  * The spectral properties of the result are in the APPROXIMATE range [-1..1]
  * Depending upon the number of octaves computed, this range may be exceeded.
  * Applications should clamp or scale the result to their needs.
- * The results have a more-or-less gaussian distribution.  Typical 
+ * The results have a more-or-less gaussian distribution.  Typical
  * results for 1M samples include:
  *
  * Min           -1.15246
@@ -603,11 +603,11 @@ find_spec_wgt(double h, double l, double o)
  * Mean        -0.0138744
  * s.d.          0.306642
  * Var          0.0940295
- * 
- * 
- * 
+ *
+ *
+ *
  * The function call pow() is relatively expensive.  Therfore, this function
- * pre-computes and saves the spectral weights in a table for re-use in 
+ * pre-computes and saves the spectral weights in a table for re-use in
  * successive invocations.
  */
 double
@@ -655,8 +655,8 @@ bn_noise_fbm(fastf_t *point, double h_val, double lacunarity, double octaves)
 
 
 /*
- * Procedural turbulence evaluated at "point"; 
- * 
+ * Procedural turbulence evaluated at "point";
+ *
  * returns value stored in "value".
  *
  * Parameters:
@@ -676,7 +676,7 @@ bn_noise_fbm(fastf_t *point, double h_val, double lacunarity, double octaves)
  * Var          0.0305536
  *
  * The function call pow() is relatively expensive.  Therfore, this function
- * pre-computes and saves the spectral weights in a table for re-use in 
+ * pre-computes and saves the spectral weights in a table for re-use in
  * successive invocations.
  */
 double
@@ -703,10 +703,10 @@ bn_noise_turb(fastf_t *point, double h_val, double lacunarity, double octaves)
 
 	value = 0.0;            /* initialize vars to proper values */
 
-	/* copy the point so we don't corrupt 
+	/* copy the point so we don't corrupt
 	 * the caller's copy of the variable
 	 */
-	PCOPY(pt, point);	
+	PCOPY(pt, point);
 	spec_wgts = ep->spec_wgts;
 
 	/* inner loop of spectral construction */
@@ -724,7 +724,7 @@ bn_noise_turb(fastf_t *point, double h_val, double lacunarity, double octaves)
             value += remainder * bn_noise_perlin( pt ) * spec_wgts[i];
 	}
 #else
-	PCOPY(pt, point);	
+	PCOPY(pt, point);
 
 	value = 0.0;            /* initialize vars to proper values */
 	frequency = 1.0;
@@ -735,7 +735,7 @@ bn_noise_turb(fastf_t *point, double h_val, double lacunarity, double octaves)
 		frequency *= lacunarity;
 		PSCALE(pt, lacunarity);
 	}
-	
+
 	remainder = octaves - (int)octaves;
 	if ( remainder ) {
 		/* add in ``octaves''  remainder
@@ -759,7 +759,7 @@ bn_noise_ridged(fastf_t *point, double h_val, double lacunarity, double octaves,
 	double			result, weight, signal, *spec_wgts;
 	point_t			pt;
 	int			i;
-	
+
 	/* The first order of business is to see if we have pre-computed
 	 * the spectral weights table for these parameters in a previous
 	 * invocation.  If not, the we compute them and save them for
@@ -768,13 +768,13 @@ bn_noise_ridged(fastf_t *point, double h_val, double lacunarity, double octaves,
 
 	ep = find_spec_wgt(h_val, lacunarity, octaves);
 
-	/* copy the point so we don't corrupt 
+	/* copy the point so we don't corrupt
 	 * the caller's copy of the variable
 	 */
-	PCOPY(pt, point);	
+	PCOPY(pt, point);
 	spec_wgts = ep->spec_wgts;
 
-	
+
 	/* get first octave */
 	signal = bn_noise_perlin(pt);
 
@@ -820,7 +820,7 @@ bn_noise_mf(fastf_t *point, double h_val, double lacunarity, double octaves, dou
 	double			result, weight, signal, *spec_wgts;
 	point_t			pt;
 	int			i;
-	
+
 	/* The first order of business is to see if we have pre-computed
 	 * the spectral weights table for these parameters in a previous
 	 * invocation.  If not, the we compute them and save them for
@@ -829,7 +829,7 @@ bn_noise_mf(fastf_t *point, double h_val, double lacunarity, double octaves, dou
 
 	ep = find_spec_wgt( h_val, lacunarity, octaves );
 
-	/* copy the point so we don't corrupt 
+	/* copy the point so we don't corrupt
 	 * the caller's copy of the variable
 	 */
 	PCOPY( pt, point );

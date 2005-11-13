@@ -71,7 +71,7 @@
  *					raw data by to scale it to this scale
  *					(ex:  2 graphs with one scale factor)
  *				  2)	When this value is fed to the AXIS
- *					routine, it must be multiplied 
+ *					routine, it must be multiplied
  *					by 1000.0 first (to specify increment
  *					between one INCH ticks).
  *
@@ -81,11 +81,11 @@
  *
  *  Author -
  *	Michael John Muuss
- *  
+ *
  *  Source -
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
- *  
+ *
  */
 /*@}*/
 

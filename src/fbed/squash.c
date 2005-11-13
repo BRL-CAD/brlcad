@@ -28,13 +28,13 @@
 #ifndef lint
 static const char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
-/* 
+/*
  * squash.c - Filter super-sampled image for one scan line
  */
 #include <stdio.h>
 #include "./std.h"
 #define DEBUG_SQUASH	false
-/* Cone filtering weights. 
+/* Cone filtering weights.
  * #define CNTR_WT 0.23971778
  * #define MID_WT  0.11985889
  * #define CRNR_WT 0.07021166

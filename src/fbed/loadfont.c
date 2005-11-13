@@ -1,3 +1,4 @@
+
 /*                      L O A D F O N T . C
  * BRL-CAD
  *
@@ -19,18 +20,9 @@
  * information.
  */
 /** @file loadfont.c
-	SCCS id:	@(#) loadfont.c	1.14
-	Modified: 	5/6/86 at 15:33:42 Gary S. Moss
-	Retrieved: 	12/26/86 at 21:54:27
-	SCCS archive:	/vld/moss/src/fbed/s.loadfont.c
-*/
-#if ! defined( lint )
-static
-char sccsTag[] = "@(#) loadfont.c 1.14, modified 5/6/86 at 15:33:42, archive /vld/moss/src/fbed/s.loadfont.c";
-#endif
-/* 
+ *
  * loadfont.c - Load a new font by reading in the header and directory.
- * 
+ *
  * Original Author:	Paul R. Stay
  * 			Ballistics Research Labratory
  * 			APG, Md.
@@ -38,8 +30,6 @@ char sccsTag[] = "@(#) loadfont.c 1.14, modified 5/6/86 at 15:33:42, archive /vl
  */
 
 #include "common.h"
-
-
 
 #include <stdio.h>
 
@@ -52,7 +42,8 @@ char sccsTag[] = "@(#) loadfont.c 1.14, modified 5/6/86 at 15:33:42, archive /vl
 #include "./try.h"
 #include "./extern.h"
 
-loadfont(char *ff)
+
+int loadfont(char *ff)
 {
 	FILE		*newff;
 	struct header	lochdr;

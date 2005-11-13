@@ -192,7 +192,7 @@ setup(int argc, char **argv)
  */
 		case 'T':
 			--optind;
-			for(i=optind; i < argc && (isdigit(*argv[i]) || 
+			for(i=optind; i < argc && (isdigit(*argv[i]) ||
 			    (*argv[i] == '-' && isdigit(*(argv[i]+1)))) ; i++);
 			if ((c=i-optind) % 2) {
 				fprintf(stderr,"Missing Y coordent for tone map.\n");
@@ -214,7 +214,7 @@ setup(int argc, char **argv)
 			free(Ylist);
 		break;
 /*
- * Debug is not well used at this point a value of 9 will get all 
+ * Debug is not well used at this point a value of 9 will get all
  * debug statements.  Debug is a level indicator NOT a bit flag.
  */
 		case 'D':
@@ -227,7 +227,7 @@ setup(int argc, char **argv)
 		}
 	}
 /*
- *	if there are no extra arguments and stdin is a tty then 
+ *	if there are no extra arguments and stdin is a tty then
  *	the user has given us no input file.  Spit a usage message
  * 	at them and exit.
  */

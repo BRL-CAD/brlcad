@@ -22,7 +22,7 @@
  /*
   *
   *
-  *  
+  *
   *  Source -
   *	SECAD/VLD Computing Consortium, Bldg 394
   *	The U. S. Army Ballistic Research Laboratory
@@ -90,7 +90,7 @@ static int	Ogldoevent();
 static void	Ogl_gen_color();
 
 /* Flags indicating whether the gl and sgi display managers have been
- * attached. 
+ * attached.
  * These are necessary to decide whether or not to use direct rendering
  * with gl.
  */
@@ -364,7 +364,7 @@ Ogl_open()
 
 /*
  *  			O G L _ C L O S E
- *  
+ *
  *  Gracefully release the display.
  */
 void
@@ -392,7 +392,7 @@ Ogl_close()
 void
 Ogl_prolog()
 {
-	GLint mm; 
+	GLint mm;
 	char i;
 	char *str = "a";
 	GLfloat fogdepth;
@@ -425,7 +425,7 @@ Ogl_prolog()
 				glEnable(GL_LIGHTING);
 			}
 		}
-	
+
 		glLineWidth((GLfloat) ogl_linewidth);
 
 	}
@@ -512,13 +512,13 @@ int which_eye;
 		break;
 	case 1:
 		/* R eye */
-		glViewport(0,  0, (XMAXSCREEN)+1, ( YSTEREO)+1); 
+		glViewport(0,  0, (XMAXSCREEN)+1, ( YSTEREO)+1);
 		glScissor(0,  0, (XMAXSCREEN)+1, (YSTEREO)+1);
 		Ogl_puts( "R", 2020, 0, 0, DM_RED );
 		break;
 	case 2:
 		/* L eye */
-		glViewport(0,  0+YOFFSET_LEFT, ( XMAXSCREEN)+1, ( YSTEREO+YOFFSET_LEFT)-( YOFFSET_LEFT)+1); 
+		glViewport(0,  0+YOFFSET_LEFT, ( XMAXSCREEN)+1, ( YSTEREO+YOFFSET_LEFT)-( YOFFSET_LEFT)+1);
 		glScissor(0,  0+YOFFSET_LEFT, ( XMAXSCREEN)+1, ( YSTEREO+YOFFSET_LEFT)-( YOFFSET_LEFT)+1);
 		break;
 	}
@@ -560,7 +560,7 @@ int which_eye;
 #endif
 
 	/*CJXX experimental */
-	/* If all the display managers end up doing this maybe it's 
+	/* If all the display managers end up doing this maybe it's
 	 * dozoom that has a bug */
 	gtmat[2]  = -gtmat[2];
 	gtmat[6]  = -gtmat[6];
@@ -574,8 +574,8 @@ int which_eye;
 	 *		M = model2view matrix
 	 *
 	 * Therefore P = mat*M'*T'
-	 * 
-	 * In order for depthcueing and lighting to work correctly, 
+	 *
+	 * In order for depthcueing and lighting to work correctly,
 	 * P must be stored in the GL_PROJECTION matrix and T*M must
 	 * be stored the the GL_MODELVIEW matrix.
 	 */
@@ -674,7 +674,7 @@ int which_eye;
 
 /*
  *  			O G L _ O B J E C T
- *  
+ *
  *  Set up for an object, transformed as indicated, and with an
  *  object center as specified.  The ratio of object to screen size
  *  is passed in as a convienience.
@@ -713,7 +713,7 @@ int white_flag;
 
 	if (sp->s_soldash)
 		glEnable(GL_LINE_STIPPLE);		/* set dot-dash */
-	
+
 
 	if( ogl_has_rgb )  {
 		register short	r, g, b;
@@ -855,7 +855,7 @@ int white_flag;
 void
 Ogl_normal()
 {
-	GLint mm; 
+	GLint mm;
 
 	if (ogl_debug)
 		bu_log( "Ogl_normal\n");
@@ -913,7 +913,7 @@ int x,y,size, colour;
 	if (ogl_debug)
 		bu_log( "Ogl_puts()\n");
 
-	
+
 /*	glRasterPos2f( GED2IRIS(x),  GED2IRIS(y));*/
 	if( ogl_has_rgb )  {
 		glColor3ub( (short)ogl_rgbtab[colour].r,  (short)ogl_rgbtab[colour].g,  (short)ogl_rgbtab[colour].b );
@@ -962,7 +962,7 @@ int dashed;
 		}
 #endif
 	}
-	
+
 /*	glColor3ub( (short)255,  (short)255,  (short) 0 );*/
 
 	if(CJDEBUG){
@@ -983,14 +983,14 @@ int dashed;
 	}
 	if( dashed )
 		glEnable(GL_LINE_STIPPLE);
-		
-	glBegin(GL_LINES); 
+
+	glBegin(GL_LINES);
 	 glVertex2f( GED2IRIS(x1),  GED2IRIS(y1));
 	 glVertex2f( GED2IRIS(x2),  GED2IRIS(y2));
 	glEnd();
 
 	if( dashed )		/* restore solid */
-		glDisable(GL_LINE_STIPPLE); 
+		glDisable(GL_LINE_STIPPLE);
 
 
 }
@@ -1080,14 +1080,14 @@ XEvent *eventPtr;
     } else if( eventPtr->type == KeyPress ) {
 	register int i;
 	/* Turn these into MGED "buttonpress" or knob functions */
-	
+
 	cnt = XLookupString(&eventPtr->xkey, keybuf, sizeof(keybuf),
 			    &key, &compose_stat);
 
     	/* CJXX I think the following line is bad in X.c*/
 /*	for(i=0 ; i < cnt ; i++){*/
 
-	inc = 0.1;		
+	inc = 0.1;
 	switch( key ) {
 	case '?':
 		bu_log( "\n\t\tKey Help Menu:\n\
@@ -1125,17 +1125,17 @@ R		Rear view\n\
 		break;
 #if 0
 	case 'w':
-	/* for temporary experimentation only */	
+	/* for temporary experimentation only */
 		bu_log("Attempting invent_solid\n");
 		RT_LIST_INIT( &(head.l) );
 		tail.cmd[0] = RT_VLIST_LINE_MOVE;
-		(tail.pt)[0][0] = 0.0; 
-		(tail.pt)[0][1] = 0.0; 
-		(tail.pt)[0][2] = 0.0; 
+		(tail.pt)[0][0] = 0.0;
+		(tail.pt)[0][1] = 0.0;
+		(tail.pt)[0][2] = 0.0;
 		tail.cmd[1] = RT_VLIST_LINE_DRAW;
-		(tail.pt)[1][0] = 300.0; 
-		(tail.pt)[1][1] = 30.0; 
-		(tail.pt)[1][2] = 3.0; 
+		(tail.pt)[1][0] = 300.0;
+		(tail.pt)[1][1] = 30.0;
+		(tail.pt)[1][2] = 3.0;
 		tail.nused = 2;
 		RT_LIST_APPEND( &(head.l), &(tail.l) );
 		invent_solid("Carl_solid", &(head.l), 0xfff, 1);
@@ -1264,31 +1264,31 @@ R		Rear view\n\
 	    	/* keep value of inc set at top of switch */
 	    	switch(ogl_which_slid){
 	    	case OGL_XSLEW:
-	    		bu_vls_printf( &dm_values.dv_string, 
+	    		bu_vls_printf( &dm_values.dv_string,
 				"knob X %f\n", rate_slew[X] + inc);
 	    		break;
 	    	case OGL_YSLEW:
-	    		bu_vls_printf( &dm_values.dv_string, 
+	    		bu_vls_printf( &dm_values.dv_string,
 				"knob Y %f\n", rate_slew[Y] + inc);
 	    		break;
 	    	case OGL_ZSLEW:
-	    		bu_vls_printf( &dm_values.dv_string, 
+	    		bu_vls_printf( &dm_values.dv_string,
 				"knob Z %f\n", rate_slew[Z] + inc);
 	    		break;
 	    	case OGL_ZOOM:
-	    		bu_vls_printf( &dm_values.dv_string, 
+	    		bu_vls_printf( &dm_values.dv_string,
 				"knob S %f\n", rate_zoom + inc);
 	    		break;
 	    	case OGL_XROT:
-	    		bu_vls_printf( &dm_values.dv_string, 
+	    		bu_vls_printf( &dm_values.dv_string,
 				"knob x %f\n", rate_rotate[X] + inc);
 	    		break;
 	    	case OGL_YROT:
-	    		bu_vls_printf( &dm_values.dv_string, 
+	    		bu_vls_printf( &dm_values.dv_string,
 				"knob y %f\n", rate_rotate[Y] + inc);
 	    		break;
 	    	case OGL_ZROT:
-	    		bu_vls_printf( &dm_values.dv_string, 
+	    		bu_vls_printf( &dm_values.dv_string,
 				"knob z %f\n", rate_rotate[Z] + inc);
 	    		break;
 	    	default:
@@ -1310,7 +1310,7 @@ R		Rear view\n\
 
     return 1;
 }
-	    
+
 /*
  *			O G L _ I N P U T
  *
@@ -1323,7 +1323,7 @@ R		Rear view\n\
  *	If any files are ready for input, their bits will be set in 'input'.
  *	Otherwise, 'input' will be all zeros.
  *
- * DEPRECATED 
+ * DEPRECATED
  *
  */
 /* ARGSUSED */
@@ -1335,7 +1335,7 @@ int		noblock;
     return;
 }
 
-/* 
+/*
  *			O G L _ L I G H T
  */
 /* ARGSUSED */
@@ -1416,16 +1416,16 @@ Ogl_colorchange()
 	if( ogl_debug )  bu_log("colorchange\n");
 
 	/* Program the builtin colors */
-	ogl_rgbtab[0].r=0; 
-	ogl_rgbtab[0].g=0; 
+	ogl_rgbtab[0].r=0;
+	ogl_rgbtab[0].g=0;
 	ogl_rgbtab[0].b=0;/* Black */
-	ogl_rgbtab[1].r=255; 
-	ogl_rgbtab[1].g=0; 
+	ogl_rgbtab[1].r=255;
+	ogl_rgbtab[1].g=0;
 	ogl_rgbtab[1].b=0;/* Red */
-	ogl_rgbtab[2].r=0; 
-	ogl_rgbtab[2].g=0; 
+	ogl_rgbtab[2].r=0;
+	ogl_rgbtab[2].g=0;
 	ogl_rgbtab[2].b=255;/* Blue */
-	ogl_rgbtab[3].r=255; 
+	ogl_rgbtab[3].r=255;
 	ogl_rgbtab[3].g=255;
 	ogl_rgbtab[3].b=0;/*Yellow */
 	ogl_rgbtab[4].r = ogl_rgbtab[4].g = ogl_rgbtab[4].b = 255; /* White */
@@ -1574,7 +1574,7 @@ char	*name;
 		printf("Allocated %d colorcells.\n",npixels);
 	}
 #endif
-		
+
 	Tk_GeometryRequest(xtkwin, width+10, height+10);
 	Tk_MoveToplevelWindow(xtkwin, 376, 0);
 	Tk_MakeWindowExist(xtkwin);
@@ -1602,7 +1602,7 @@ char	*name;
 
 	/* CJXX We may not want color map indices **/
 	/* In fact, lets rewrite code assuming rgba, and add index support
-	 * later if we feel it's worthwhile 
+	 * later if we feel it's worthwhile
 	 */
 #if 0
 	if (!ogl_has_rgb){
@@ -1632,7 +1632,7 @@ char	*name;
 		}
 		yellow = a_color.pixel;
 		if (yellow == white) yellow = black;
-    
+
 		a_color.red = 0;
 		a_color.green=0;
 		a_color.blue=255<<8;
@@ -1738,7 +1738,7 @@ char	*name;
 	if (ogl_has_rgb)
 		glFogfv(GL_FOG_COLOR, backgnd);
 	glFogf(GL_FOG_DENSITY, VIEWFACTOR);
-	
+
 
 	/* Initialize matrices */
 	/* Leave it in model_view mode normally */
@@ -1753,7 +1753,7 @@ char	*name;
 	glPushMatrix();
 	glLoadIdentity();
 	ogl_face_flag = 1;	/* faceplate matrix is on top of stack */
-		
+
 	return 0;
 }
 
@@ -1771,7 +1771,7 @@ Tk_Window tkwin;
 	int m_stereo, m_double, m_rgba;
 	int tries, baddepth;
 
-	/* m_stereo - try to get stereo 
+	/* m_stereo - try to get stereo
 	 * m_double - try to get double buffered
 	 * m_rgba  - try to get rgb
 	 */
@@ -1784,7 +1784,7 @@ Tk_Window tkwin;
 
 	m_double = 1;
 	m_rgba = 1;
-	
+
 	/* Try to satisfy the above desires with a color visual of the
 	 * greatest depth */
 
@@ -1815,7 +1815,7 @@ Tk_Window tkwin;
 				if (!dbfr)
 					continue;
 			}
-			
+
 			/* this visual meets criteria */
 			good[j++] = i;
 		}
@@ -1855,16 +1855,16 @@ Tk_Window tkwin;
 					}
 					ogl_has_stereo = m_stereo;
 					return (maxvip); /* sucess */
-				} else { 
+				} else {
 					/* retry with lesser depth */
 					baddepth = maxvip->depth;
 					tries ++;
 					XFreeColormap(dpy,cmap);
 				}
 			}
-					
+
 		}
-				
+
 
 		/* if no success at this point, relax a desire and try again */
 		if ( m_stereo ){
@@ -1882,7 +1882,7 @@ Tk_Window tkwin;
 	}
 }
 
-/* 
+/*
  *			O G L _ C O N F I G U R E _ W I N D O W _ S H A P E
  *
  *  Either initially, or on resize/reshape of the window,
@@ -1895,7 +1895,7 @@ void
 Ogl_configure_window_shape()
 {
 	int		npix;
-	GLint mm; 
+	GLint mm;
 	XWindowAttributes xwa;
 	XFontStruct	*newfontstruct;
 
@@ -1911,7 +1911,7 @@ Ogl_configure_window_shape()
 	width = Tk_Width(xtkwin);
 	height = Tk_Height(xtkwin);
 #endif
-	
+
 	glViewport(0,  0, (width), (height));
 	glScissor(0,  0, ( width)+1, ( height)+1);
 
@@ -1966,7 +1966,7 @@ Ogl_configure_window_shape()
 		}
 		glXUseXFont( fontstruct->fid, 0, 127, fontOffset);
 	}
-		
+
 
 	/* Always try to choose a the font that best fits the window size.
 	 */
@@ -2013,12 +2013,12 @@ Ogl_configure_window_shape()
 		}
 	}
 
-	
+
 }
 
 /*
  *			O G L _ D M
- * 
+ *
  *  Implement display-manager specific commands, from MGED "dm" command.
  */
 int
@@ -2054,7 +2054,7 @@ char	**argv;
 	return CMD_OK;
 }
 
-void	
+void
 establish_lighting()
 {
 	if (!lighting_on) {
@@ -2067,7 +2067,7 @@ establish_lighting()
 		glLightModeli(GL_LIGHT_MODEL_LOCAL_VIEWER, GL_FALSE);
 
 /* CJXX positions specified in Ogl_newrot */
-#if 0		
+#if 0
 		glMatrixMode(GL_MODELVIEW);
 		glPushMatrix();
 		glLoadIdentity();
@@ -2094,7 +2094,7 @@ establish_lighting()
 		glEnable(GL_LIGHT2);
 	}
 	dmaflag = 1;
-}	
+}
 
 #if 0
 /*
@@ -2121,7 +2121,7 @@ static float material_default[] = {
 
 /* Something like the RT default phong material */
 static float material_rtdefault[] = {
-	ALPHA,		1.0,	
+	ALPHA,		1.0,
 	AMBIENT,	0.2, 0.2, 0.2,	/* 0.4 in rt */
 	DIFFUSE,	0.6, 0.6, 0.6,
 	SPECULAR,	0.2, 0.2, 0.2,
@@ -2277,42 +2277,42 @@ static float mat_beigeshiny[] = {
  *	POSITION	position of light.  w=0 for infinite lights
  */
 static float default_light[] = {
-	AMBIENT,	0.0, 0.0, 0.0, 
-	LCOLOR,		1.0, 1.0, 1.0, 
+	AMBIENT,	0.0, 0.0, 0.0,
+	LCOLOR,		1.0, 1.0, 1.0,
 	POSITION,	0.0, 0.0, 1.0, 0.0,
 	LMNULL};
 
 
 static float white_inf_light[] = {
-	AMBIENT, 0.0, 0.0, 0.0, 
-	LCOLOR,   0.70, 0.70, 0.70, 
-	POSITION, 100.0, 200.0, 100.0, 0.0, 
+	AMBIENT, 0.0, 0.0, 0.0,
+	LCOLOR,   0.70, 0.70, 0.70,
+	POSITION, 100.0, 200.0, 100.0, 0.0,
 	LMNULL};
 
 
 static float red_inf_light[] = {
-	AMBIENT, 0.0, 0.0, 0.0, 
-	LCOLOR,   0.6, 0.1, 0.1, 
-	POSITION, 100.0, 30.0, 100.0, 0.0, 
+	AMBIENT, 0.0, 0.0, 0.0,
+	LCOLOR,   0.6, 0.1, 0.1,
+	POSITION, 100.0, 30.0, 100.0, 0.0,
 	LMNULL};
 
 static float green_inf_light[] = {
-	AMBIENT, 0.0, 0.0, 0.0, 
-	LCOLOR,   0.1, 0.3, 0.1, 
-	POSITION, -100.0, 20.0, 20.0, 0.0, 
+	AMBIENT, 0.0, 0.0, 0.0,
+	LCOLOR,   0.1, 0.3, 0.1,
+	POSITION, -100.0, 20.0, 20.0, 0.0,
 	LMNULL};
 
 
 static float blue_inf_light[] = {
-	AMBIENT, 0.0, 0.0, 0.0, 
-	LCOLOR,   0.1, 0.1, 0.3, 
-	POSITION, 0.0, -100.0, -100.0, 0.0, 
+	AMBIENT, 0.0, 0.0, 0.0,
+	LCOLOR,   0.1, 0.1, 0.3,
+	POSITION, 0.0, -100.0, -100.0, 0.0,
 	LMNULL};
 
 static float white_local_light[] = {
-	AMBIENT, 0.0, 1.0, 0.0, 
-	LCOLOR,   0.75, 0.75, 0.75, 
-	POSITION, 0.0, 10.0, 10.0, 5.0, 
+	AMBIENT, 0.0, 1.0, 0.0,
+	LCOLOR,   0.75, 0.75, 0.75,
+	POSITION, 0.0, 10.0, 10.0, 5.0,
 	LMNULL};
 
 
@@ -2327,26 +2327,26 @@ static float white_local_light[] = {
  */
 static float	default_lmodel[] = {
 	AMBIENT,	0.2,  0.2,  0.2,
-	ATTENUATION,	1.0, 0.0, 
-	LOCALVIEWER,	0.0, 
+	ATTENUATION,	1.0, 0.0,
+	LOCALVIEWER,	0.0,
 	LMNULL};
 
 static float infinite[] = {
-	AMBIENT, 0.3,  0.3, 0.3, 
-	LOCALVIEWER, 0.0, 
+	AMBIENT, 0.3,  0.3, 0.3,
+	LOCALVIEWER, 0.0,
 	LMNULL};
 
 static float local[] = {
-	AMBIENT, 0.3,  0.3, 0.3, 
-	LOCALVIEWER, 1.0, 
-	ATTENUATION, 1.0, 0.0, 
+	AMBIENT, 0.3,  0.3, 0.3,
+	LOCALVIEWER, 1.0,
+	ATTENUATION, 1.0, 0.0,
 	LMNULL};
 
 
 
 #endif
 
-void	
+void
 establish_zbuffer()
 {
 	if( ogl_has_zbuf == 0 ) {
@@ -2360,7 +2360,7 @@ establish_zbuffer()
 		glDisable(GL_DEPTH_TEST);
 	}
 	dmaflag = 1;
-	
+
 	return;
 }
 
@@ -2404,7 +2404,7 @@ ogl_colorit()
 			continue;
 		}
 		sp->s_dmindex = DM_YELLOW;	/* Default color */
-next:		
+next:
 		;
 	}
 }

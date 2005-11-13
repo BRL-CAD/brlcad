@@ -42,7 +42,7 @@
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005
- *  
+ *
  */
 /*@}*/
 
@@ -52,13 +52,12 @@ static const char RCStgc[] = "@(#)$Header$ (BRL)";
 
 #include "common.h"
 
-
-
 #include <stdio.h>
 #ifdef HAVE_STRING_H
-#include <string.h>
+#  include <string.h>
 #endif
 #include <math.h>
+
 #include "machine.h"
 #include "vmath.h"
 #include "db.h"
@@ -66,9 +65,10 @@ static const char RCStgc[] = "@(#)$Header$ (BRL)";
 #include "raytrace.h"
 #include "rtgeom.h"
 #include "./debug.h"
-#include "nurb.h" 
-RT_EXTERN(int rt_rec_prep, (struct soltab *stp, struct rt_db_internal *ip,
-struct rt_i *rtip));
+#include "nurb.h"
+
+
+BU_EXTERN(int rt_rec_prep, (struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip));
 
 struct  tgc_specific {
 	vect_t	tgc_V;		/*  Vector to center of base of TGC	*/
@@ -107,6 +107,7 @@ const struct bu_structparse rt_tgc_parse[] = {
     { "%f", 3, "D", offsetof(struct rt_tgc_internal, d[X]), BU_STRUCTPARSE_FUNC_NULL },
     { {'\0','\0','\0','\0'}, 0, (char *)NULL, 0, BU_STRUCTPARSE_FUNC_NULL }
 };
+
 
 /**
  *			R T _ T G C _ P R E P
@@ -511,7 +512,7 @@ rt_tgc_print(register const struct soltab *stp)
  *
  *  First, convert the line to the coordinate system of a "stan-
  *  dard" cone.  This is a cone whose base lies in the X-Y plane,
- *  and whose H (now H') vector is lined up with the Z axis.  
+ *  and whose H (now H') vector is lined up with the Z axis.
  *
  *  Then find the equation of that line and the standard cone
  *  as an equation in 't'.  Solve the equation using a general
@@ -592,7 +593,7 @@ rt_tgc_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 	 *  Given a line and the parameters for a standard cone, finds
 	 *  the roots of the equation for that cone and line.
 	 *  Returns the number of real roots found.
-	 * 
+	 *
 	 *  Given a line and the cone parameters, finds the equation
 	 *  of the cone in terms of the variable 't'.
 	 *
@@ -600,7 +601,7 @@ rt_tgc_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 	 *
 	 *      X**2 * Q**2  +  Y**2 * R**2  -  R**2 * Q**2 = 0
 	 *
-	 *  where	R = a + ((c - a)/|H'|)*Z 
+	 *  where	R = a + ((c - a)/|H'|)*Z
 	 *		Q = b + ((d - b)/|H'|)*Z
 	 *
 	 *  First, find X, Y, and Z in terms of 't' for this line, then
@@ -898,11 +899,11 @@ rt_tgc_shot(struct soltab *stp, register struct xray *rp, struct application *ap
  */
 void
 rt_tgc_vshot(struct soltab **stp, register struct xray **rp, struct seg *segp, int n, struct application *ap)
-             		       
-                    	      
+
+
                                /* array of segs (results returned) */
                                /* Number of ray/object pairs */
-                  	    
+
 {
 	register struct tgc_specific	*tgc;
 	register int		ix;
@@ -974,7 +975,7 @@ rt_tgc_vshot(struct soltab **stp, register struct xray **rp, struct seg *segp, i
 	 *  Given a line and the parameters for a standard cone, finds
 	 *  the roots of the equation for that cone and line.
 	 *  Returns the number of real roots found.
-	 * 
+	 *
 	 *  Given a line and the cone parameters, finds the equation
 	 *  of the cone in terms of the variable 't'.
 	 *
@@ -982,7 +983,7 @@ rt_tgc_vshot(struct soltab **stp, register struct xray **rp, struct seg *segp, i
 	 *
 	 *      X**2 * Q**2  +  Y**2 * R**2  -  R**2 * Q**2 = 0
 	 *
-	 *  where	R = a + ((c - a)/|H'|)*Z 
+	 *  where	R = a + ((c - a)/|H'|)*Z
 	 *		Q = b + ((d - b)/|H'|)*Z
 	 *
 	 *  First, find X, Y, and Z in terms of 't' for this line, then
@@ -1212,7 +1213,7 @@ rt_tgc_vshot(struct soltab **stp, register struct xray **rp, struct seg *segp, i
 		 *  then the other intersection must be on
 		 *  one of the planar surfaces (pt[IN]).
 		 *
-		 *  Find which surface it lies on by calculating the 
+		 *  Find which surface it lies on by calculating the
 		 *  X and Y values of the line as it intersects each
 		 *  plane (in the standard coordinate system), and test
 		 *  whether this lies within the governing ellipse.
@@ -1382,7 +1383,7 @@ rt_pt_sort(register fastf_t t[], int npts)
  *	f(X,Y,Z) =  X**2 * Q**2  +  Y**2 * R**2  -  R**2 * Q**2 = 0
  *
  *  where,
- *		R = a + ((c - a)/|H'|)*Z 
+ *		R = a + ((c - a)/|H'|)*Z
  *		Q = b + ((d - b)/|H'|)*Z
  *
  *  When the equation is scaled so the A, B, and the sheared H are
@@ -1919,6 +1920,7 @@ rt_tgc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	vect_t			unit_a,unit_b,unit_c,unit_d; /* units vectors in a,b,c,d directions */
 	fastf_t			rel,abs,norm;	/* interpreted tolerances */
 	fastf_t			alpha_tol;	/* final tolerance for ellipse parameter */
+	fastf_t			abs_tol;	/* handle invalid ttol->abs */
 	int			nells;		/* total number of ellipses */
 	int			nsegs;		/* number of vertices/ellipse */
 	vect_t			*A;		/* array of A vectors for ellipses */
@@ -1931,6 +1933,7 @@ rt_tgc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	struct bu_ptbl		verts;		/* table of vertices used for top and bottom faces */
 	struct bu_ptbl		faces;		/* table of faceuses for nmg_gluefaces */
 	struct vertex		**v[3];		/* array for making triangular faces */
+
 	int			i;
 
 	RT_CK_DB_INTERNAL(ip);
@@ -1939,10 +1942,12 @@ rt_tgc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 
 	if( ttol->abs > 0.0 && ttol->abs < tol->dist )
 	{
-		bu_log( "tesselation tolerance is %fmm while calculational tolerance is %fmm\n",
-			ttol->abs , tol->dist );
-		bu_log( "Cannot tesselate a TGC to finer tolerance than the calculational tolerance\n" );
-		return( -1 );
+	    bu_log( "WARNING: tesselation tolerance is %fmm while calculational tolerance is %fmm\n",
+		    ttol->abs , tol->dist );
+	    bu_log( "Cannot tesselate a TGC to finer tolerance than the calculational tolerance\n" );
+	    abs_tol = tol->dist;
+	} else {
+	    abs_tol = ttol->abs;
 	}
 
 	h = MAGNITUDE( tip->h );
@@ -2016,7 +2021,7 @@ rt_tgc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	if( d < min_radius && d > 0.0 )
 		min_radius = d;
 
-	if( ttol->abs <= 0.0 && ttol->rel <= 0.0 && ttol->norm <= 0.0 )
+	if( abs_tol <= 0.0 && ttol->rel <= 0.0 && ttol->norm <= 0.0 )
 	{
 		/* no tolerances specified, use 10% relative tolerance */
 		if( (radius * 0.2) < max_radius )
@@ -2026,8 +2031,8 @@ rt_tgc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	}
 	else
 	{
-		if( ttol->abs > 0.0 )
-			abs = 2.0 * acos( 1.0 - ttol->abs/max_radius );
+		if( abs_tol > 0.0 )
+			abs = 2.0 * acos( 1.0 - abs_tol/max_radius );
 		else
 			abs = bn_halfpi;
 
@@ -2369,7 +2374,7 @@ rt_tgc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	}
 	else
 		fu_base = (struct faceuse *)NULL;
-	
+
 
 	/* Make top face */
 	if( c > 0.0 && d > 0.0 )
@@ -2632,11 +2637,11 @@ rt_tgc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
  *
  *  The process is to create the nmg  topology of the TGC fill it
  *  in with a unit cylinder geometry (i.e. unitcircle at the top (0,0,1)
- *  unit cylinder of radius 1, and unitcirlce at the bottom), and then 
+ *  unit cylinder of radius 1, and unitcirlce at the bottom), and then
  *  scale it with a perspective matrix derived from the parameters of the
- *  tgc. The result is three trimmed nub surfaces which interpolate the 
+ *  tgc. The result is three trimmed nub surfaces which interpolate the
  *  parameters of  the original TGC.
- * 
+ *
  *  Returns -
  *	-1 	failure
  *	0	OK. *r points to nmgregion that holds this tesselation
@@ -2682,7 +2687,7 @@ rt_tgc_tnurb(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
 
 	MAT_IDN( omat );
 	MAT_IDN( mat);
-	
+
 	omat[0] = MAGNITUDE(tip->c);
 	omat[5] = MAGNITUDE(tip->d);
 	omat[3] = tip->v[0] + tip->h[0];
@@ -2732,7 +2737,7 @@ rt_tgc_tnurb(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
 
 	MAT_IDN( omat );
 	MAT_IDN( mat);
-	
+
 	omat[0] = MAGNITUDE(tip->a);
 	omat[5] = MAGNITUDE(tip->b);
         omat[3] = tip->v[0];
@@ -2819,11 +2824,11 @@ fastf_t nmg_tgc_unitcircle[36] = {
 fastf_t nmg_uv_unitcircle[27] = {
 	1.0,   .5,  1.0,
 	RAT,  RAT,  RAT,
-	.5,   1.0,  1.0, 
+	.5,   1.0,  1.0,
 	0.0,  RAT,  RAT,
 	0.0,   .5,  1.0,
 	0.0,  0.0,  RAT,
-	.5,   0.0,  1.0, 
+	.5,   0.0,  1.0,
 	RAT,  0.0,  RAT,
 	1.0,   .5,  1.0
 };
@@ -2917,15 +2922,15 @@ nmg_tgc_disk(struct faceuse *fu, fastf_t *rmat, fastf_t height, int flip)
 	eu= BU_LIST_FIRST( edgeuse, &lu->down_hd);
 	NMG_CK_EDGEUSE(eu);
 
-	
+
 	if(!flip)
 	{
-		rt_nurb_s_eval( fu->f_p->g.snurb_p, 
+		rt_nurb_s_eval( fu->f_p->g.snurb_p,
 			nmg_uv_unitcircle[0], nmg_uv_unitcircle[1], point );
 		nmg_vertex_gv( eu->vu_p->v_p, point );
 	} else
 	{
-		rt_nurb_s_eval( fu->f_p->g.snurb_p, 
+		rt_nurb_s_eval( fu->f_p->g.snurb_p,
 			nmg_uv_unitcircle[12], nmg_uv_unitcircle[13], point );
 		nmg_vertex_gv( eu->vu_p->v_p, point );
 	}
@@ -2949,12 +2954,12 @@ nmg_tgc_disk(struct faceuse *fu, fastf_t *rmat, fastf_t height, int flip)
 	eg->k.knots[10] = 1.0;
 	eg->k.knots[11] = 1.0;
 
-	if( !flip ) 
+	if( !flip )
 	{
 		for( i = 0; i < 27; i++)
 			eg->ctl_points[i] = nmg_uv_unitcircle[i];
 	}
-	else 
+	else
 	{
 
 		VSET(&eg->ctl_points[0], 0.0, .5, 1.0);
@@ -2968,8 +2973,8 @@ nmg_tgc_disk(struct faceuse *fu, fastf_t *rmat, fastf_t height, int flip)
 		VSET(&eg->ctl_points[24], 0.0, .5, 1.0);
 	}
 }
-	
-/* Create a cylinder with a top surface and a bottom surfce 
+
+/* Create a cylinder with a top surface and a bottom surfce
  * defined by the ellipsods at the top and bottom of the
  * cylinder, the top_mat, and bot_mat are applied to a unit circle
  * for the top row of the surface and the bot row of the surface
@@ -2988,7 +2993,7 @@ nmg_tgc_nurb_cyl(struct faceuse *fu, fastf_t *top_mat, fastf_t *bot_mat)
 	point_t		point;
 	hvect_t		hvect;
 
-	nmg_face_g_snurb( fu, 
+	nmg_face_g_snurb( fu,
 		3, 2,
 		12, 4,
 		NULL, NULL,
@@ -3044,7 +3049,7 @@ nmg_tgc_nurb_cyl(struct faceuse *fu, fastf_t *top_mat, fastf_t *bot_mat)
 	NMG_CK_LOOPUSE(lu);
 	eu = BU_LIST_FIRST( edgeuse, &lu->down_hd);
 	NMG_CK_EDGEUSE(eu);
-	
+
 	/* March around the fu's loop assigning uv parameter values */
 
 	rt_nurb_s_eval( fg, 0.0, 0.0, hvect);

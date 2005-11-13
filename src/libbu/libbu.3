@@ -1,4 +1,27 @@
 .TH LIBBU 3 BRL-CAD
+./"                        L I B B U . 3
+./" BRL-CAD
+./"
+./" Copyright (c) 2004-2005 United States Government as represented by
+./" the U.S. Army Research Laboratory.
+./"
+./" This document is made available under the terms of the GNU Free
+./" Documentation License or, at your option, under the terms of the
+./" GNU General Public License as published by the Free Software
+./" Foundation.  Permission is granted to copy, distribute and/or
+./" modify this document under the terms of the GNU Free Documentation
+./" License, Version 1.2 or any later version published by the Free
+./" Software Foundation; with no Invariant Sections, no Front-Cover
+./" Texts, and no Back-Cover Texts.  Permission is also granted to
+./" redistribute this document under the terms of the GNU General
+./" Public License; either version 2 of the License, or (at your
+./" option) any later version.
+./"
+./" You should have received a copy of the GNU Free Documentation
+./" License and/or the GNU General Public License along with this
+./" document; see the file named COPYING for more information.
+./"
+./"./"./"
 .SH NAME
 libbu \- The BRL-CAD Utility Library
 .SH SYNOPSIS
@@ -144,7 +167,7 @@ including
 .I libbu
 is designed to run in parallel on multiprocessor machines.
 On some such machines
-system calls must be semaphore protected.  For this reason, 
+system calls must be semaphore protected.  For this reason,
 .I libbu
 provides:
 .sp
@@ -182,7 +205,7 @@ usually indicates the purpose of the memory being allocated.
 The function
 .I bu_strdup()
 calls bu_malloc() instead of malloc() to acquire memory.
-Thus it should be used in place of strdup() in programs linking with 
+Thus it should be used in place of strdup() in programs linking with
 .I libbu.
 .SH "EXIT CODE"
 All truly fatal errors detected by the library use
@@ -202,7 +225,7 @@ a compatibility header file is provided:
 In addition, you can painlessly upgrade your source code to using
 the new libraries by using the provided editor script:
 .sp
-ed yourprog.c < ../h/sed4
+ed yourprog.c < ../include/sed4
 .sp
 This will change all the subroutine, macro, and data structure names
 from their old

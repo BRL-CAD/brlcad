@@ -22,13 +22,13 @@
  *
  * a minimal raytracing application in BRLCAD.
  *
- * The primary BRLCAD ray-tracing API consists of calls to the function 
+ * The primary BRL-CAD ray-tracing API consists of calls to the function
  * rt_shootray().  This function takes a single argument, the address of a
  * data structure called the "application" structure.  This data structure
  * contains crucial information, such as the origin and direction of the ray
  * to be traced, what to do if the ray hits geometry, or misses everything.
  * While the application struct is a large and somewhat complex looking one,
- * (it is defined in h/raytrace.h) there are really very few items in it 
+ * (it is defined in h/raytrace.h) there are really very few items in it
  * which the application programmer must know about. These are:
  *
  *	a_rt_i		The "rt instance" from a call to rt_dirbuild()
@@ -37,7 +37,7 @@
  *	a_miss		A routine that is called when the ray misses everything
  *
  * Most of the work an application performs will be done in the "hit" routine.
- * This user-supplied routine gets called deep inside the raytracing library 
+ * This user-supplied routine gets called deep inside the raytracing library
  * under rt_shootray().  It is provided with 3 parameters:
  *
  *	ap		A pointer to the application structure passed to
@@ -47,7 +47,7 @@
  *				partitions
  *
  * Most applications can ignore the last parameter.  The PartHeadp parameter
- * is a linked-list of "partition" structures (defined in "raytrace.h").  
+ * is a linked-list of "partition" structures (defined in "raytrace.h").
  * It is the job of the "hit" routine to process these ray/object intersections
  * to do the work of the application.
  */
@@ -183,7 +183,7 @@ int hit(struct application *ap,		/* application struct from main() */
  *
  *	Routine that is called if a ray does not intersect ANY geometry
  */
-int miss(register struct application *ap) 
+int miss(register struct application *ap)
 {
     fprintf(stderr, "%s missed\n", ap->a_purpose);
     return 0;

@@ -743,7 +743,7 @@ proc font_scheme_set_all { id top font fconfig } {
     foreach datum $font_scheme_data {
 	set font [lindex $datum 0]($id)
 	set fname [lindex $datum 1]
-	
+
 	if {$fname != {}} {
 	    font_scheme_set $id $top $font $fconfig
 	}

@@ -131,7 +131,7 @@ kept getting prioritized ahead of that project, and it still languishes.
 
 	Best,
 	 -Mike
-  
+
 From:     Keith Applin (VLD/VMB) <keith@BRL.ARPA>
 Subject:  Good Modeling Practices
 
@@ -141,7 +141,7 @@ practices.  To model a particular object, I would recommend something
 like this:
 
 First decide how to represent the object, including the amount
-of detail and the solid[s] and region[s] necessary.  Then the solids 
+of detail and the solid[s] and region[s] necessary.  Then the solids
 are created and edited to have the size, shape, and orientation desired.
 Solids can be created via "make", "cp", "mirror", or "in" commands.
 Depending on complexity the solids are created in the desired location
@@ -156,7 +156,7 @@ for functionality definition.  A group really has no operation as such,
 and is really just a collection of objects.
 
 Now a little bit about regions.  Regions are the objects that the
-application ray-tracing interrogates.  If solids are not part of 
+application ray-tracing interrogates.  If solids are not part of
 regions they will not be "seen" at all.  Some ray-trace applications
 will create a default region out of such an orphan solid.  Thus one
 in general does not have solids in a "functional" group.  There are
@@ -164,7 +164,7 @@ times when temporary groups are made, say for editing purposes, where
 it is desirable to include solids.
 
 There are three operations allowed in regions; intersection (+),
-union (u) and difference (-).  Intersection gives the common volume, 
+union (u) and difference (-).  Intersection gives the common volume,
 union gives the volume in all members, and difference subtracts from one
 member the common volume with a second.  The union operator needs
 clarification as to precedence:
@@ -181,12 +181,12 @@ In fact, it is probably better practice to make the two distinct regions.
 Of course, by using the two regions instead of the "union" region, one
 must be aware of possible interference between the two regions.
 
-Note,  r region1 u solid1 - solid2   and   r region1 + solid1 - solid2    
+Note,  r region1 u solid1 - solid2   and   r region1 + solid1 - solid2
 produce the exact same results; however, for good practice one should use the
 union only when the region is really intended for unions (ie more than
 one union operation).
 
-Members of regions are generally solids, however other regions are 
+Members of regions are generally solids, however other regions are
 acceptable.  Again it is probably good practice to use regions as
 members of other regions only when really necessary.
 
@@ -211,7 +211,7 @@ command, with precedence following a couple of rules;
 	2] there are implied parenthesis that lie in-between union operators.
 
 so
-	
+
 	+ s1 - s2 + s3 u s4 - s5 u s6
 
 is equivalent to:

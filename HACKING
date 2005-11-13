@@ -1,4 +1,4 @@
-The Hacker's Guide to BRL-CAD 
+The Hacker's Guide to BRL-CAD
 =============================
 
 Please read this document if you are contributing to BRL-CAD.
@@ -7,7 +7,7 @@ BRL-CAD is a relatively large package with a long history and
 heritage.  Many people have contributed over the years, and there
 continues to be room for involvement and improvement in just about
 every aspect of the package.  As such, contributions to BRL-CAD are
-very welcome and appreciated.  
+very welcome and appreciated.
 
 For the sake of code consistency and long-term evolution of BRL-CAD,
 there are guidelines for getting involved.  Developers are strongly
@@ -109,7 +109,7 @@ basic existing facilities before adding a completely new feature.
 There is documentation available at in the source distribution's doc/
 directory, throughout the source hierarchy in manpages, and at
 http://sourceforge.net/docman/?group_id=105292 covering a variety of
-topics.  
+topics.
 
 It is not uncommon that some particular piece of code that you are
 either working on or thinking about writing is in fact already
@@ -277,12 +277,12 @@ src/anim/
 	Animation utilities
 src/conv/
 	Geometry converters (most, but not all)
+src/conv/iges/
+	IGES converter
 src/fb/
 	Framebuffer services
 src/fbserv/
 	Framebuffer server
-src/iges/
-	IGES converter
 src/java/
 	Java raytrace interface to librt
 src/lib*
@@ -423,7 +423,7 @@ braces should line up with that same statement.
       j -= 1;
     }
   }
-      
+
 3) Names
 
 Prefer mixed-case names over underscore-separated ones. (this one is
@@ -543,10 +543,11 @@ worked with.
 Any source code that is provided must not modify or conflict with the
 existing COPYING file distribution requirements.  This means that
 library modifications must be LGPL-compatible and changes to
-applications must be GPL-compatible.  Contributors are asked in good
-faith to only provide patches that may legally be incorporated into
-BRL-CAD under the existing distribution provisions described in the
-COPYING file.
+applications must be GPL-compatible.  Similarly, GPL libraries may not
+be used or otherwised linked to BRL-CAD.  Contributors are asked to
+only provide patches that may legally be incorporated into BRL-CAD
+under the existing distribution provisions described in the COPYING
+file.
 
 Patches that are difficult to apply are difficult to accept.
 
@@ -726,11 +727,9 @@ outlets with the details of the new release:
       CAD on Linux mailing list
       cad-linux@freelists.org
 	with news details
-      cad-linux-dev@freelists.org
-	without news details
 
       Freshmeat
-      http://freshmeat.net/projects/brl-cad/
+      http://freshmeat.net/projects/BRL-CAD/
 	short without news details
 
       upFront.ezine (if major)

@@ -22,7 +22,7 @@
 #
 # Wizard.itk
 #
-# This is the 'revised' Wizard class. It uses a notebook like the 
+# This is the 'revised' Wizard class. It uses a notebook like the
 # original version, but it ditches the Prev/Next/Cancel buttons.
 # Rather it incoporates a menubar and help frame. Switching between
 # steps is accomplished using a menu with checkboxes. The check-
@@ -41,7 +41,7 @@ namespace eval RtWizard {
     package provide Wizard 1.0
 
     #
-    # wizard - Provides a lowercased access method for the 
+    # wizard - Provides a lowercased access method for the
     #          Wizard class.
     #
     proc wizard {pathName args} {
@@ -87,14 +87,14 @@ namespace eval RtWizard {
     #
     # Wizard
     #
-    # The wizard class provides the framework in which the RtWizard 
+    # The wizard class provides the framework in which the RtWizard
     # operates. The wizard holds a series of pages (e.g. Color-
-    # ObjSelector). Individual picture types (e.g. TypeF) use a subset 
+    # ObjSelector). Individual picture types (e.g. TypeF) use a subset
     # of the available pages to gather the information the need to
-    # create an image. 
+    # create an image.
     #
     # Use the singleton pattern to allow the pages to invoke wizard methods
-    # 
+    #
     set ::wizardInstance ""
 
     ::itcl::class Wizard {
@@ -120,7 +120,7 @@ namespace eval RtWizard {
 	    method getTypeInfo {token}
 
 	    method getIntroPage {}
-	    
+
 	    method openSteps {}
 	    method closeSteps {}
 
@@ -135,7 +135,7 @@ namespace eval RtWizard {
 	    # methods
 	    #
 	    method setupDefaultMenus {}
-	    
+
 	    #
 	    # variables
 	    #
@@ -162,7 +162,7 @@ namespace eval RtWizard {
     }
 
     #
-    # The Wizard class follows the singleton design pattern. If 
+    # The Wizard class follows the singleton design pattern. If
     # a Wizard has already been created, the constructor throws.
     #
     itcl::body Wizard::constructor {args} {
@@ -182,7 +182,7 @@ namespace eval RtWizard {
 	} {
 	    usual
 	}
-	
+
 	#
 	# Configure the File, Image, and Help menus.
 	#
@@ -198,7 +198,7 @@ namespace eval RtWizard {
 	} {
 	    usual
 	}
-	
+
 	#
 	# Create the help label at the bottom of the screen
 	#
@@ -216,20 +216,20 @@ namespace eval RtWizard {
 	# Pack em!
 	#
 	pack $itk_component(menubar) -fill x
-	pack $itk_component(notebook) -fill both -expand 1 
+	pack $itk_component(notebook) -fill both -expand 1
 	pack $itk_component(helpThing) -fill x
-	
+
 	set wizardInstance $this
     }
-    
+
     #
     # setupDefaultMenus
     #
-    # Adds the initial set of menus to the menubar. These menus should 
+    # Adds the initial set of menus to the menubar. These menus should
     # not be changed by the content objects.
     #
     itcl::body Wizard::setupDefaultMenus { } {
-	
+
 	#
 	# File menu
 	#
@@ -242,7 +242,7 @@ namespace eval RtWizard {
 	$itk_component(menubar) add command .file.goNew \
 		-label "New" \
 		-helpstr "Create a new images." \
-		-command {puts "New Selected"} 
+		-command {puts "New Selected"}
 
 	$itk_component(menubar) menuconfigure .file.goNew \
 		-state disabled
@@ -296,7 +296,7 @@ namespace eval RtWizard {
 		-label "Preview" \
 		-helpstr "Generate a quarter-size preview image" \
 		-command "[itcl::code $this preview]"
-	
+
 	$itk_component(menubar) add command .render.render \
 		-label "Full-Size" \
 		-helpstr "Generate a full-size picture with the current." \
@@ -309,25 +309,25 @@ namespace eval RtWizard {
 		-text Help \
 		-menu {
 	    options -tearoff true -selectcolor green
-	}	    
-	
+	}
+
 	$itk_component(menubar) add command .help.goHelp \
 		-label "Help..." \
 		-helpstr "Detailed help" \
 		-command "[::itcl::code $this select] help"
-	    
+
 	$itk_component(menubar) add command .help.goAbout \
 		-label "About..." \
 		-helpstr "About the RtWizard" \
 		-command {puts "selected: About..."}
     }
-    
+
     #
     # add
     #
     # Adds a content page to the Wizard. The page should be implemented
     # as an iwidget that inherits from labeledframe. This is primarily
-    # for consistancy. 
+    # for consistancy.
     #
     # The content page must support these puplic methods.
     #
@@ -337,44 +337,44 @@ namespace eval RtWizard {
     #                  status variable.
     #
     itcl::body Wizard::add { type token args } {
-	
+
 	#
-	# Create the page. First, we need to get the parent from the 
+	# Create the page. First, we need to get the parent from the
 	# notebook
 	#
 	set path [ $itk_component(notebook) add -label $token ]
-	
+
 	#
 	# Instantiate the page, pass the arguments.
 	#
 	set pageName [ eval $type ${path}.#auto $args ]
-	
+
 	#
 	# Add to the pages array
 	#
 	set pages($token) $pageName
-	
+
 	#
 	# Pack it!
 	#
 	pack $pageName \
 		-fill both -expand 1
 	pack propagate $pageName
-	
-	set currentPageToken $token	
+
+	set currentPageToken $token
 
 	return $pageName
     }
-        
+
     #
     # select
     #
     # Calls the onDeselect method for the current page.
-    # Changes the notebook to the requested page. 
+    # Changes the notebook to the requested page.
     # Calls the onShow method for the new page.
     #
     itcl::body Wizard::select { token } {
-	
+
 	# onHide
 	eval $pages($currentPageToken) onDeselect
 	set prevPageToken $currentPageToken
@@ -382,20 +382,20 @@ namespace eval RtWizard {
 	# switch pages
 	set index [ $itk_component(notebook) index $token ]
 	$itk_component(notebook) select $index
-	
+
 	set currentPageToken $token
-	
+
 	# onShow
-	eval $pages($currentPageToken) onSelect	
+	eval $pages($currentPageToken) onSelect
     }
-    
+
     #
     # selectPrev
     #
     # Selects the previous viewed page. All pop-ups should
     # call this from their onOK and onCancel methods
     #
-    itcl::body Wizard::selectPrev { } {	
+    itcl::body Wizard::selectPrev { } {
 	select $prevPageToken
     }
 
@@ -417,7 +417,7 @@ namespace eval RtWizard {
     itcl::body Wizard::enable {token} {
 
 	#
-	# Get the pageName, this is the object path. 
+	# Get the pageName, this is the object path.
 	#
 	set pageName $pages($token)
 
@@ -426,8 +426,8 @@ namespace eval RtWizard {
 	#
 	set si [ $pageName getStepInfo ]
 	set stepName [ lindex $si 0 ]
-	set stepVar [ lindex $si 1 ]    
-	
+	set stepVar [ lindex $si 1 ]
+
 	#
 	# Add the step to the step menu. If the page does not correspond
 	# to a required step, skip.
@@ -445,7 +445,7 @@ namespace eval RtWizard {
 	    # Add status variable to the list
 	    #
 	    lappend statusVariables $stepVar
-	    
+
 	} else {
 	#    puts "Page does not require user interaction"
 	}
@@ -468,13 +468,13 @@ namespace eval RtWizard {
 	#
 	select intro
 
-	if { $token == "intro" } { 
-	    return 
-	} 
+	if { $token == "intro" } {
+	    return
+	}
 
 	set index [lsearch $enabledPages $token]
 
-	if { $index >= 0 } {	
+	if { $index >= 0 } {
 	    #
 	    # delete menu entry
 	    #
@@ -482,13 +482,13 @@ namespace eval RtWizard {
 
 	    #
 	    # delete from list of enabled pages.
-	    #	    
-	    set enabledPages [ lreplace $enabledPages $index $index ]	
+	    #
+	    set enabledPages [ lreplace $enabledPages $index $index ]
 	}
     }
 
     #
-    # openSteps - opens the step menu. 
+    # openSteps - opens the step menu.
     #
     itcl::body Wizard::openSteps {} {
 	#
@@ -498,7 +498,7 @@ namespace eval RtWizard {
 	#
 	set stepMenu ""
 	append stepMenu "step" $stepCount
-	
+
 	incr stepCount
 
 	set currentStepMenu $stepMenu
@@ -513,9 +513,9 @@ namespace eval RtWizard {
 	$itk_component(menubar) add command .$stepMenu.goGreet \
 		-label "Greeting" \
 		-helpstr "Return to the greeting page." \
-		-command "[itcl::code $this select intro]" 
-	
-	$itk_component(menubar) add separator .$stepMenu.sep1	    
+		-command "[itcl::code $this select intro]"
+
+	$itk_component(menubar) add separator .$stepMenu.sep1
 
 	$itk_component(menubar) add separator .$stepMenu.sep2
 
@@ -526,15 +526,15 @@ namespace eval RtWizard {
     }
 
     #
-    # closeSteps - closes the step menu. The step menu should be 
-    #              active only when there is an active picture 
+    # closeSteps - closes the step menu. The step menu should be
+    #              active only when there is an active picture
     #              process.
     #
-    itcl::body Wizard::closeSteps { } {	
+    itcl::body Wizard::closeSteps { } {
 	if { [string length $currentStepMenu] > 0 } {
 	    $itk_component(menubar) delete $currentStepMenu
 	    set currentStepMenu ""
-	}	
+	}
 	set statusVariables ""
     }
 
@@ -565,16 +565,16 @@ namespace eval RtWizard {
     #
     # updateRenderMenu - activates or deactivates render menu
     #                    based on the status variables
-    # 
+    #
     itcl::body Wizard::updateRenderMenu {} {
-	
+
 	if {[llength $statusVariables] == 0} {
-	    return 
-	}	
+	    return
+	}
 
 	set state 1
 	foreach var $statusVariables {
-	    
+
 	    #
 	    # Retrieve the value of the variable whose name is
 	    # stored in $var.
@@ -587,7 +587,7 @@ namespace eval RtWizard {
 		set state 0
 	    }
 	}
-	
+
 	if {$state == 1} {
 	    $itk_component(menubar) menuconfigure render \
 		    -state normal

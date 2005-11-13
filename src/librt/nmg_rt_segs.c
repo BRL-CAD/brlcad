@@ -25,11 +25,11 @@
  *
  *  Author -
  *	Lee A. Butler
- *  
+ *
  *  Source -
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5066  USA
- *  
+ *
  */
 /*@}*/
 #ifndef lint
@@ -60,7 +60,7 @@ struct ef_data {
 };
 
 #if 0
-static const 
+static const
 struct bu_structparse rt_ef_parsetab[] = {
 	{"%f", 1, "fdotr", offsetof(struct ef_data, fdotr), BU_STRUCTPARSE_FUNC_NULL},
 	{"%f", 1, "fdotl", offsetof(struct ef_data, fdotl), BU_STRUCTPARSE_FUNC_NULL},
@@ -213,14 +213,14 @@ pl_ray(struct ray_data *rd)
  *	O_N  =	| i1   1   Ci1    5    1    5    5
  *	O_N !=	| i1  1|E  Ci1   C1  Ci1  Ci1  Ci1
  *	N_N  =	|  E   1     E    3    E    1    1
- *	N_N !=	|  E   1     E    E    E    1    1   
+ *	N_N !=	|  E   1     E    E    E    1    1
  *	N_O  =	|  E  o2    o2  ?o2    E   o2   o2
  *	N_O !=	|  E  o2    o2    E    E   o2   o2
  *	O_O  =	|io3  o2    o2    3    3    6    6
  *	O_O !=	|io3 o2|E Cio3 Cio3 Cio3 Cio3 Cio3
  *	A_A  =	|io4   1     2    3    4    5    6
  *	A_A !=	|io4   1  Cio4 Cio4 Cio4 Cio4 Cio4
- *	EOI     |  N   E    CN   CN   CN   CN   CN   
+ *	EOI     |  N   E    CN   CN   CN   CN   CN
  *
  *	=	-> ray dist to point within tol (along ray) of last hit point
  *	!=	-> ray dist to point outside tol (along ray) of last hit point
@@ -229,7 +229,7 @@ pl_ray(struct ray_data *rd)
  *	C	segment now completed, add to list & alloc new segment
  *	i	set inpoint for current segment
  *	o	set outpoint for current segment
- *	
+ *
  *	State
  *	E	Error termination
  *	N	Normal termination
@@ -246,15 +246,15 @@ static void
 set_inpoint(struct seg **seg_p, struct hitmiss *a_hit, struct soltab *stp, struct application *ap)
           	        	/* The segment we're building */
               	       		/* The input hit point */
-             	     
-                  	    
+
+
 {
 	if ( !seg_p ) {
 		bu_log("%s[line:%d]: Null pointer to segment pointer\n",
 			__FILE__, __LINE__);
 		nmg_rt_segs_exit("Goodbye");
 	}
-		
+
 	/* if we don't have a seg struct yet, get one */
 	if ( *seg_p == (struct seg *)NULL ) {
 		RT_GET_SEG(*seg_p, ap->a_resource);
@@ -289,7 +289,7 @@ set_outpoint(struct seg **seg_p, struct hitmiss *a_hit)
 			__FILE__, __LINE__);
 		nmg_rt_segs_exit("Goodbye");
 	}
-		
+
 	/* if we don't have a seg struct yet, get one */
 	if ( *seg_p == (struct seg *)NULL )
 		nmg_rt_segs_exit("bad seg pointer\n");
@@ -328,9 +328,9 @@ state0(struct seg *seghead, struct seg **seg_p, int *seg_count, struct hitmiss *
           	        	/* The segment we're building */
    		           	/* The number of valid segments built */
               	       		/* The input hit point */
-             	     
-                       
-             	     
+
+
+
 {
 	int ret_val = -1;
 
@@ -380,9 +380,9 @@ state1(struct seg *seghead, struct seg **seg_p, int *seg_count, struct hitmiss *
           	        	/* The segment we're building */
    		           	/* The number of valid segments built */
               	       		/* The input hit point */
-             	     
-                       
-             	     
+
+
+
 {
 	int ret_val = -1;
 
@@ -424,9 +424,9 @@ state2(struct seg *seghead, struct seg **seg_p, int *seg_count, struct hitmiss *
           	        	/* The segment we're building */
    		           	/* The number of valid segments built */
               	       		/* The input hit point */
-             	     
-                       
-             	     
+
+
+
 {
 	int ret_val = -1;
 	double delta;
@@ -518,9 +518,9 @@ state3(struct seg *seghead, struct seg **seg_p, int *seg_count, struct hitmiss *
           	        	/* The segment we're building */
    		           	/* The number of valid segments built */
               	       		/* The input hit point */
-             	     
-                       
-             	     
+
+
+
 {
 	int ret_val = -1;
 	double delta;
@@ -564,7 +564,7 @@ state3(struct seg *seghead, struct seg **seg_p, int *seg_count, struct hitmiss *
 	case HMG_HIT_IN_OUT:
 		/*
 		 * This can happen when the ray hits an edge/vertex and
-		 * (due to floating point fuzz) also appears to have a 
+		 * (due to floating point fuzz) also appears to have a
 		 * hit point in the area of a face:
 		 *
 		 * ------->o
@@ -620,9 +620,9 @@ state4(struct seg *seghead, struct seg **seg_p, int *seg_count, struct hitmiss *
           	        	/* The segment we're building */
    		           	/* The number of valid segments built */
               	       		/* The input hit point */
-             	     
-                       
-             	     
+
+
+
 {
 	int ret_val = -1;
 	double delta;
@@ -706,9 +706,9 @@ state5(struct seg *seghead, struct seg **seg_p, int *seg_count, struct hitmiss *
           	        	/* The segment we're building */
    		           	/* The number of valid segments built */
               	       		/* The input hit point */
-             	     
-                       
-             	     
+
+
+
 {
 	int ret_val = -1;
 	double delta;
@@ -798,9 +798,9 @@ state6(struct seg *seghead, struct seg **seg_p, int *seg_count, struct hitmiss *
           	        	/* The segment we're building */
    		           	/* The number of valid segments built */
               	       		/* The input hit point */
-             	     
-                       
-             	     
+
+
+
 {
 	int ret_val = -1;
 	double delta;
@@ -893,10 +893,10 @@ static int (*state_table[7])() = {
 
 static int
 nmg_bsegs(struct ray_data *rd, struct application *ap, struct seg *seghead, struct soltab *stp)
-               		    
-                  	    
+
+
           		         	/* intersection w/ ray */
-             		     
+
 {
 	int ray_state = 0;
 	int new_state;
@@ -927,7 +927,7 @@ nmg_bsegs(struct ray_data *rd, struct application *ap, struct seg *seghead, stru
 						ray_state);
 					nmg_rt_print_hitmiss(hm);
 					bu_log("================\n");
-				} else 
+				} else
 					nmg_rt_print_hitmiss(hm);
 			}
 
@@ -944,7 +944,7 @@ nmg_bsegs(struct ray_data *rd, struct application *ap, struct seg *seghead, stru
 		ray_state = new_state;
 	}
 
-	/* Check to make sure the input ran out in the right place 
+	/* Check to make sure the input ran out in the right place
 	 * in the state table.
 	 */
 	if (ray_state == 1) {
@@ -953,7 +953,7 @@ nmg_bsegs(struct ray_data *rd, struct application *ap, struct seg *seghead, stru
 
 	    	bu_log("Ray: pt:(%g %g %g) dir:(%g %g %g)\n",
 	    		V3ARGS(rd->rp->r_pt), V3ARGS(rd->rp->r_dir) );
-		
+
 		bu_log("Primitive: %s, pixel=%d %d, lvl=%d %s\n",
 			stp->st_dp->d_namep,
 			ap->a_x, ap->a_y, ap->a_level,
@@ -1008,13 +1008,13 @@ build_topo_list(long int *l_p, struct bu_ptbl *tbl)
 	struct vertexuse *vu;
 	struct vertexuse *vu_p;
 	int radial_not_mate=0;
-	static const struct nmg_visit_handlers htab = {NULL, NULL, NULL, NULL, NULL, 
-						       NULL, NULL, NULL, NULL, NULL, 
-						       visitor, NULL, NULL, NULL, NULL, 
-						       NULL, NULL, NULL, visitor, NULL, 
+	static const struct nmg_visit_handlers htab = {NULL, NULL, NULL, NULL, NULL,
+						       NULL, NULL, NULL, NULL, NULL,
+						       visitor, NULL, NULL, NULL, NULL,
+						       NULL, NULL, NULL, visitor, NULL,
 						       NULL, NULL, NULL, visitor, NULL};
 	/* htab.vis_face = htab.vis_edge = htab.vis_vertex = visitor; */
-	
+
 	if (!l_p) {
 		bu_log("%s:%d NULL l_p\n", __FILE__, __LINE__);
 		nmg_rt_segs_exit("");
@@ -1022,7 +1022,7 @@ build_topo_list(long int *l_p, struct bu_ptbl *tbl)
 
 	switch (*l_p) {
 	case NMG_FACEUSE_MAGIC:
-		nmg_visit(l_p, &htab, (genptr_t *)tbl);
+		nmg_visit(l_p, &htab, (genptr_t)tbl);
 		break;
 	case NMG_EDGEUSE_MAGIC:
 		eu = eu_p = (struct edgeuse *)l_p;
@@ -1159,7 +1159,7 @@ check_hitstate(struct hitmiss *hd, struct ray_data *rd)
 
 	while( a_hit != hd &&
 		((a_hit->in_out & 0x0f0) >> 4) != NMG_RAY_STATE_OUTSIDE) {
-		
+
 
 #ifndef FAST_NMG
 		NMG_CK_HITMISS(a_hit);
@@ -1226,7 +1226,7 @@ check_hitstate(struct hitmiss *hd, struct ray_data *rd)
 			 */
 			if ( (long_ptr = common_topo(a_tbl, next_tbl)) ) {
 				/* morf the two hit points */
-				a_hit->in_out = (a_hit->in_out & 0x0f0) + 
+				a_hit->in_out = (a_hit->in_out & 0x0f0) +
 					NMG_RAY_STATE_ON;
 				a_hit->outbound_use = long_ptr;
 
@@ -1234,7 +1234,7 @@ check_hitstate(struct hitmiss *hd, struct ray_data *rd)
 					(NMG_RAY_STATE_ON << 4);
 				a_hit->inbound_use = long_ptr;
 
-			} else 
+			} else
 				unresolved(a_hit, next_hit,
 						a_tbl, next_tbl, hd, rd);
 

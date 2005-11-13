@@ -26,7 +26,7 @@
 # Source -
 #	The U. S. Army Ballistic Research Laboratory
 #	Aberdeen Proving Ground, Maryland  21005
-#  
+#
 #
 #
 # Description -
@@ -34,7 +34,7 @@
 
 ## - place_near_mouse
 #
-# Places window near the mouse while keeping the 
+# Places window near the mouse while keeping the
 # window under the mouse and completely (mostly)
 # on the screen.
 #

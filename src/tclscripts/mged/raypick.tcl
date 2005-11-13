@@ -49,7 +49,7 @@ proc raypick { } {
 	echo \"solids_on_ray $x $y\" sees $len solid(s)
 	if { $len<=0 } then return
 	echo Primitive list: $solids
-	
+
 	toplevel .raypick
 	wm title .raypick "Primitive edit"
 	set i 0

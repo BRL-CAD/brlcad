@@ -19,7 +19,7 @@
  * information.
  */
 /** @file remrt.c
- *  
+ *
  *  Controller for network ray-tracing
  *  Operating as both a network client and server,
  *  starts remote invocations of "rtsrv" via "rsh", then
@@ -34,7 +34,7 @@
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005
- *  
+ *
  */
 static const char RCSid[] = "@(#)$Header$ (BRL)";
 
@@ -1181,7 +1181,7 @@ bad:
 		buf = nsbuf;
 		nsbuf = (char *)0;
 	}
-out:	
+out:
 	bu_vls_free( &prelude );
 	bu_vls_free( &body );
 	bu_vls_free( &finish );
@@ -1192,7 +1192,7 @@ out:
 
 /*
  *  			S T R I N G 2 I N T
- *  
+ *
  *  Convert a string to an integer.
  *  A leading "0x" implies HEX.
  *  If needed, octal might be done, but it seems unwise...
@@ -1644,7 +1644,7 @@ all_servers_idle(void)
 
 	for( sp = &servers[0]; sp < &servers[MAXSERVERS]; sp++ )  {
 		if( sp->sr_pc == PKC_NULL )  continue;
-		if( sp->sr_state != SRST_READY && 
+		if( sp->sr_state != SRST_READY &&
 		    sp->sr_state != SRST_NEED_TREE )  continue;
 		if( BU_LIST_IS_EMPTY( &sp->sr_work ) )  continue;
 		return(0);		/* nope, still more work */
@@ -1915,7 +1915,7 @@ task_server( struct servers *sp, struct frame *fr, struct timeval *nowp )
 	 *  go into "black hole" mode while REMRT is running unattended.
 	 */
 	if( server_q_len(sp) > 0 &&
-	    sp->sr_sendtime.tv_sec > 0 && 
+	    sp->sr_sendtime.tv_sec > 0 &&
 	    tvdiff( nowp, &sp->sr_sendtime ) > TARDY_SERVER_INTERVAL )  {
 		bu_log("%s %s: *TARDY*\n", stamp(), sp->sr_host->ht_name);
 		drop_server( sp, "tardy" );
@@ -1992,12 +1992,12 @@ task_server( struct servers *sp, struct frame *fr, struct timeval *nowp )
 	else if( lump > REMRT_MAX_PIXELS ) lump = REMRT_MAX_PIXELS;
 
 	/*
-	 * Besides the hard limit for lump size, try and keep the 
+	 * Besides the hard limit for lump size, try and keep the
 	 * lump size to 1/32 of the total image.
 	 * With the old way, 640x480 = 307200 / (32*1024) = 9.375 or a little
 	 * less than 1/9th of the total image.  And it was not uncommon
 	 * for the server to be given three lumps that size or 1/3 of the
-	 * image. 
+	 * image.
 	 */
 	maxlump = fr->fr_height / 32;
 	if (maxlump < 1) maxlump = 1;
@@ -2947,7 +2947,7 @@ host_helper(FILE *fp)
 
 				if( vfork() == 0 )  {
 					/* worker Child */
-					execl("/bin/sh", "remrt_sh", 
+					execl("/bin/sh", "remrt_sh",
 						"-c", cmd, 0);
 					perror("/bin/sh");
 					_exit(0);
@@ -3374,7 +3374,7 @@ cd_allocate(int argc, char **argv)
 
 	return( 0 );
 }
-		
+
 int
 cd_restart(int argc, char **argv)
 {

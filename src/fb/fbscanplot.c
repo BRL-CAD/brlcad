@@ -25,12 +25,12 @@
  *
  *  Author -
  *	Phillip Dykstra
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5066
- *  
+ *
  */
 #ifndef lint
 static const char RCSid[] = "@(#)$Header$ (BRL)";
@@ -41,10 +41,11 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif
-#include <stdlib.h>                                                                                                                                                                            
+#include <stdlib.h>
 #include <stdio.h>
 
 #include "machine.h"
+#include "bu.h"
 #include "fb.h"
 
 unsigned char	*scan;		/* Scanline to be examined */
@@ -71,7 +72,7 @@ get_args(int argc, register char **argv)
 {
 	register int c;
 
-	while ( (c = getopt( argc, argv, "cvhorW:F:" )) != EOF ) {
+	while ( (c = bu_getopt( argc, argv, "cvhorW:F:" )) != EOF ) {
 		switch( c )  {
 		case 'c':
 			cmap_crunch++;
@@ -89,22 +90,22 @@ get_args(int argc, register char **argv)
 			reverse++;
 			break;
 		case 'W':
-			scr_width = atoi(optarg);
+			scr_width = atoi(bu_optarg);
 			break;
 		case 'F':
-			outframebuffer = optarg;
+			outframebuffer = bu_optarg;
 			break;
 		default:		/* '?' */
 			return(0);
 		}
 	}
 
-	if( optind >= argc )
+	if( bu_optind >= argc )
 		return(0);
 	else
-		yline = atoi( argv[optind] );
+		yline = atoi( argv[bu_optind] );
 
-	if ( argc > ++optind )
+	if ( argc > ++bu_optind )
 		return(0);	/* too many args */
 
 	return(1);		/* OK */

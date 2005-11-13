@@ -48,7 +48,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 /*
  *  		R T _ B O M B
- *  
+ *
  *  Abort the RT library
  */
 void
@@ -63,7 +63,7 @@ char *str;
 
 /*
  *  		B R S T _  L O G
- *  
+ *
  *  Log an RT library event
  */
 /* VARARGS */
@@ -84,7 +84,7 @@ va_dcl
 #endif
 	if( tty && (errfile[0] == '\0' || ! strcmp( errfile, "/dev/tty" )) )
 		{
-		TcClrTabs( HmTtyFd );
+		clr_Tabs( HmTtyFd );
 		if( ScDL != NULL )
 			{
 			(void) ScMvCursor( 1, SCROLL_TOP );
@@ -92,7 +92,7 @@ va_dcl
 			(void) ScMvCursor( 1, SCROLL_BTM );
 			(void) ScClrEOL();
 			(void) vprintf( fmt, ap );
-			}			
+			}
 		else
 		if( ScSetScrlReg( SCROLL_TOP, SCROLL_BTM+1 ) )
 			{	char buf[LNBUFSZ];
@@ -131,33 +131,6 @@ va_dcl
 	va_end( ap );
 	}
 
-/*
- *		F B _ L O G
- *  
- *  Log an FB library event
- */
-/*VARARGS*/
-void
-#if __STDC__
-fb_log(char *fmt, ...)
-#else
-fb_log( va_alist )
-va_dcl
-#endif
-	{
-#if ! __STDC__
-	register char *fmt;
-#endif
-	va_list ap;
-#if __STDC__
-	va_start( ap, fmt );
-#else
-	va_start( ap );
-	fmt = va_arg( ap, char * );
-#endif
-	(void) brst_log( fmt, ap );
-	va_end( ap );
-	}
 
 /*
  * Local Variables:

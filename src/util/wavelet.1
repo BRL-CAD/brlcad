@@ -1,4 +1,27 @@
 .TH WAVELET 1 BRL-CAD
+./"                      W A V E L E T . 1
+./" BRL-CAD
+./"
+./" Copyright (c) 2005 United States Government as represented by
+./" the U.S. Army Research Laboratory.
+./"
+./" This document is made available under the terms of the GNU Free
+./" Documentation License or, at your option, under the terms of the
+./" GNU General Public License as published by the Free Software
+./" Foundation.  Permission is granted to copy, distribute and/or
+./" modify this document under the terms of the GNU Free Documentation
+./" License, Version 1.2 or any later version published by the Free
+./" Software Foundation; with no Invariant Sections, no Front-Cover
+./" Texts, and no Back-Cover Texts.  Permission is also granted to
+./" redistribute this document under the terms of the GNU General
+./" Public License; either version 2 of the License, or (at your
+./" option) any later version.
+./"
+./" You should have received a copy of the GNU Free Documentation
+./" License and/or the GNU General Public License along with this
+./" document; see the file named COPYING for more information.
+./"
+./"./"./"
 .SH NAME
 wavelet \- perform a haar wavelet decomposition/reconstruction
 .SH SYNOPSIS
@@ -20,7 +43,7 @@ The
 .I wavelet
 command
 will perform Haar wavelet decomposition or reconstruction
-transforms 
+transforms
 on the input dataset.
 The command line options are:
 
@@ -39,16 +62,16 @@ perform a 1-dimensional (interleaved horizontal and vertical) transform.
 
 .BI \-#\ channels
 Indicates the number of values in each sample point.  For example, to perform
-a transform on a 
+a transform on a
 .IR pix (5)
 file properly, specify ``-# 3''.  This causes the red, green and blue channels
 to be transformed individually.
 
 .BI \-t\ {cdfils}
 specifies the data type of the input, and hence the data type in which the
-wavelet calculations will be performed.  
+wavelet calculations will be performed.
 The letters each stand for the first
-character of the C programming language data type: 
+character of the C programming language data type:
 \fBc\fRharacter,
 \fBd\fRouble,
 \fBf\fRloat,
@@ -82,7 +105,7 @@ Resumes a transform that left off with an average image of avg_size.
 
 
 .BI \-S\ square_out_size
-This is the same as the 
+This is the same as the
 .B \-W
 option.  It implies the square size for a 2D decomposition limit.
 
@@ -93,13 +116,13 @@ option.  It implies the square size for a 2D decomposition limit.
 
 The command
 .br
-.I decompose -# 3 < img.pix | pix-fb 
+.I decompose -# 3 < img.pix | pix-fb
 .br
 will display the horizontal decomposition of the file img.pix.
 
 The command
 .br
-.I decompose -# 3 -s 1024 -l 64 < img.pix > 
+.I decompose -# 3 -s 1024 -l 64 < img.pix >
 .br
 will decompose a 1024x1024 image.  The decomposition will stop when the
 image has been decomposed to 64x64.  The output image will thus have a 64x64

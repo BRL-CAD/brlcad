@@ -413,7 +413,7 @@ do_compare(int type, struct bu_vls *vls, Tcl_Obj *obj1, Tcl_Obj *obj2, char *obj
 				if( type == PARAMS ) {
 					printf( "\tparameter %s has been eliminated\n",
 						Tcl_GetStringFromObj( key1, &junk ) );
-				} else {	
+				} else {
 					printf( "\tattribute \"%s\" has been eliminated from %s\n",
 						Tcl_GetStringFromObj( key1, &junk ), obj_name );
 				}
@@ -814,7 +814,7 @@ diff_objs(struct rt_wdb *wdb1, struct rt_wdb *wdb2)
 			str1 = bu_vls_addr( &s1_tcl );
 			Tcl_ResetResult( interp );
 
-			/* try to get TCL version of object from the other database */				
+			/* try to get TCL version of object from the other database */
 			bu_vls_trunc( &vls, 0 );
 			bu_vls_printf( &vls, "db2 get %s", dp1->d_namep );
 			if( Tcl_Eval( interp, bu_vls_addr( &vls ) ) != TCL_OK )
@@ -907,7 +907,7 @@ diff_objs(struct rt_wdb *wdb1, struct rt_wdb *wdb2)
 							dp2->d_namep, Tcl_GetStringResult( interp ) );
 				}
 				Tcl_ResetResult( interp );
-				
+
 			}
 		}
 	}

@@ -20,7 +20,7 @@
  *
  */
 /** @file pixflip-fb.c
- *  
+ *
  *  Given multiple .pix files with ordinary lines of pixels,
  *  sequence through them on the current framebuffer.
  *  A window-system version of "pixtile and fbanim".
@@ -29,12 +29,12 @@
  *
  *  Author -
  *	Michael John Muuss
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5066
- *  
+ *
  */
 #ifndef lint
 static const char RCSid[] = "@(#)$Header$ (BRL)";
@@ -45,7 +45,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif
-#include <stdlib.h>                                                                                                                                                                            
+#include <stdlib.h>
 #include <stdio.h>
 #ifdef HAVE_STRING_H
 #include <string.h>
@@ -55,6 +55,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include <sys/time.h>		/* For struct timeval */
 
 #include "machine.h"
+#include "bu.h"
 #include "fb.h"
 
 int	file_width = 512;	/* width of input sub-images in pixels */
@@ -89,7 +90,7 @@ get_args(int argc, register char **argv)
 {
 	register int c;
 
-	while ( (c = getopt( argc, argv, "hs:w:n:S:W:N:o:f:p:rzv" )) != EOF )  {
+	while ( (c = bu_getopt( argc, argv, "hs:w:n:S:W:N:o:f:p:rzv" )) != EOF )  {
 		switch( c )  {
 		case 'h':
 			/* high-res */
@@ -97,31 +98,31 @@ get_args(int argc, register char **argv)
 			break;
 		case 's':
 			/* square input file size */
-			file_height = file_width = atoi(optarg);
+			file_height = file_width = atoi(bu_optarg);
 			break;
 		case 'w':
-			file_width = atoi(optarg);
+			file_width = atoi(bu_optarg);
 			break;
 		case 'n':
-			file_height = atoi(optarg);
+			file_height = atoi(bu_optarg);
 			break;
 		case 'S':
-			screen_height = screen_width = atoi(optarg);
+			screen_height = screen_width = atoi(bu_optarg);
 			break;
 		case 'W':
-			screen_width = atoi(optarg);
+			screen_width = atoi(bu_optarg);
 			break;
 		case 'N':
-			screen_height = atoi(optarg);
+			screen_height = atoi(bu_optarg);
 			break;
 		case 'o':
-			framenumber = atoi(optarg);
+			framenumber = atoi(bu_optarg);
 			break;
 		case 'f':
-			fps = atoi(optarg);
+			fps = atoi(bu_optarg);
 			break;
 		case 'p':
-			passes = atoi(optarg);
+			passes = atoi(bu_optarg);
 			if(passes<1)  passes=1;
 			break;
 		case 'r':
@@ -138,7 +139,7 @@ get_args(int argc, register char **argv)
 		}
 	}
 
-	if( optind >= argc )  {
+	if( bu_optind >= argc )  {
 		fprintf(stderr, "pixflip-fb: basename or filename(s) missing\n");
 		return(0);	/* Bad */
 	}
@@ -166,8 +167,8 @@ main(int argc, char **argv)
 		exit( 1);
 	}
 
-	if( optind+1 == argc )  {
-		input_basename = argv[optind];
+	if( bu_optind+1 == argc )  {
+		input_basename = argv[bu_optind];
 		islist = 0;
 	} else {
 		islist = 1;
@@ -217,9 +218,9 @@ main(int argc, char **argv)
 		fprintf(stderr,"%d ", framenumber);  fflush(stdout);
 		if( islist )  {
 			/* See if we read all the files */
-			if( optind >= argc )
+			if( bu_optind >= argc )
 				goto done;
-			strcpy(name, argv[optind++]);
+			strcpy(name, argv[bu_optind++]);
 		} else {
 			sprintf(name,"%s.%d", input_basename, framenumber);
 		}
@@ -248,19 +249,19 @@ done:
 			/* Play from start to finish, over and over */
 			for( i=0; i<maxframe; i++ )  {
 				showframe(i);
-				select( fileno(stdin)+1, &readfds, 
+				select( fileno(stdin)+1, &readfds,
 					(fd_set *)0, (fd_set *)0, &tv );
 			}
 		} else {
 			/* Play from start to finish and back */
 			for( i=0; i<maxframe; i++ )  {
 				showframe(i);
-				select( fileno(stdin)+1, &readfds, 
+				select( fileno(stdin)+1, &readfds,
 					(fd_set *)0, (fd_set *)0, &tv );
 			}
 			while(i-->0)  {
 				showframe(i);
-				select( fileno(stdin)+1, &readfds, 
+				select( fileno(stdin)+1, &readfds,
 					(fd_set *)0, (fd_set *)0, &tv );
 			}
 		}

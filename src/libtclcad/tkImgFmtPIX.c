@@ -5,13 +5,13 @@
  *
  *  Author -
  *	Glenn Durfee
- *  
+ *
  *  Source -
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
- *  
- * 
- * 
+ *
+ *
+ *
  * Based on:
  *	tkImgFmtPPM.c --
  *
@@ -34,9 +34,7 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 
 #include "common.h"
 
-
 #include <stdio.h>
-
 #ifdef HAVE_STRING_H
 #include <string.h>
 #else
@@ -101,19 +99,20 @@ Tk_PhotoImageFormat tkImgFmtPIX = {
 
 static int
 FileMatchPIX(Tcl_Channel chan, const char *fileName, Tcl_Obj *format, int *widthPtr, int *heightPtr, Tcl_Interp *interp)
-                     
+
                          	/* The name of the image file. */
                     	/* User-specified format string, or NULL. */
                               	/* The dimensions of the image are
 				 * returned here if the file is a valid
 				 * raw PIX file. */
-                       
+
 {
     /* The format string must be nonnull and it must contain the word "pix". */
     /* If the user also specified the dimensions in the format string,
        use those.  Otherwise, guess from the file size. */
     char *formatString;
     int len;
+    unsigned long int width, height;
 
     if (format == NULL)
 	return 0;
@@ -125,9 +124,14 @@ FileMatchPIX(Tcl_Channel chan, const char *fileName, Tcl_Obj *format, int *width
 	strstr(formatString, "PIX") == NULL)
 	return 0;
 
-    if (bn_common_name_size(widthPtr, heightPtr, formatString) <= 0)
-	if (bn_common_file_size(widthPtr, heightPtr, fileName, 3) <= 0)
+    if (bn_common_name_size(&width, &height, formatString) <= 0) {
+	if (bn_common_file_size(&width, &height, fileName, 3) <= 0) {
 	    return 0;
+	}
+    }
+
+    *widthPtr = (int)width;
+    *heightPtr = (int)height;
 
     return 1;
 }
@@ -155,7 +159,7 @@ FileMatchPIX(Tcl_Channel chan, const char *fileName, Tcl_Obj *format, int *width
 static int
 FileReadPIX(Tcl_Interp *interp, Tcl_Channel chan, const char *fileName, Tcl_Obj *format, Tk_PhotoHandle imageHandle, int destX, int destY, int width, int height, int srcX, int srcY)
                        		/* Interpreter to use for reporting errors. */
-                     
+
                          	/* The name of the image file. */
                     		/* User-specified format string, or NULL. */
                                	/* The photo image to write into. */
@@ -166,7 +170,7 @@ FileReadPIX(Tcl_Interp *interp, Tcl_Channel chan, const char *fileName, Tcl_Obj 
                    		/* Coordinates of top-left pixel to be used
 				 * in image being read. */
 {
-    int fileWidth, fileHeight;
+    unsigned long int fileWidth, fileHeight;
     int nBytes, h, count;
     unsigned char *pixelPtr;
     Tk_PhotoImageBlock block;
@@ -214,7 +218,7 @@ FileReadPIX(Tcl_Interp *interp, Tcl_Channel chan, const char *fileName, Tcl_Obj 
     if ((srcY + height) < fileHeight) {
     	Tcl_Seek( chan, (long) ((fileHeight - srcY - height) * block.pitch),
     		SEEK_CUR );
-    		
+
     }
 
     nBytes = block.pitch;

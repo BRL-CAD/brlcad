@@ -30,12 +30,12 @@
  *
  *  Author -
  *	Michael John Muuss
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005
- *  
+ *
  */
 #ifndef lint
 static const char RCSid[] = "@(#)$Header$ (BRL)";
@@ -163,7 +163,7 @@ plot_open(Tcl_Interp *interp, int argc, char **argv)
 	dmp->dm_vars.priv_vars = (genptr_t)bu_calloc(1, sizeof(struct plot_vars), "plot_open: plot_vars");
 	BU_GETSTRUCT(dmp->dm_vars.priv_vars, plot_vars);
 	if (dmp->dm_vars.priv_vars == (genptr_t)NULL) {
-		bu_free(dmp, "plot_open: dmp");
+		bu_free((genptr_t)dmp, "plot_open: dmp");
 		return DM_NULL;
 	}
 
@@ -242,7 +242,7 @@ plot_open(Tcl_Interp *interp, int argc, char **argv)
 			Tcl_SetObjResult(interp, obj);
 			return DM_NULL;
 		}
-    
+
 		Tcl_AppendStringsToObj(obj, "piped to ",
 				 bu_vls_addr(&((struct plot_vars *)dmp->dm_vars.priv_vars)->vls),
 				 "\n", (char *)NULL);
@@ -278,7 +278,7 @@ plot_open(Tcl_Interp *interp, int argc, char **argv)
 
 /*
  *  			P L O T _ C L O S E
- *  
+ *
  *  Gracefully release the display.
  */
 static int
@@ -292,8 +292,8 @@ plot_close(struct dm *dmp)
 		fclose(((struct plot_vars *)dmp->dm_vars.priv_vars)->up_fp);
 
 	bu_vls_free(&dmp->dm_pathName);
-	bu_free(dmp->dm_vars.priv_vars, "plot_close: plot_vars");
-	bu_free(dmp, "plot_close: dmp");
+	bu_free((genptr_t)dmp->dm_vars.priv_vars, "plot_close: plot_vars");
+	bu_free((genptr_t)dmp, "plot_close: dmp");
 	return TCL_OK;
 }
 
@@ -362,7 +362,7 @@ plot_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye)
 
 /*
  *  			P L O T _ O B J E C T
- *  
+ *
  *  Set up for an object, transformed as indicated, and with an
  *  object center as specified.  The ratio of object to screen size
  *  is passed in as a convienience.
@@ -382,7 +382,7 @@ plot_drawVList(struct dm *dmp, register struct bn_vlist *vp)
 
 	if (((struct plot_vars *)dmp->dm_vars.priv_vars)->floating) {
 		rt_vlist_to_uplot(((struct plot_vars *)dmp->dm_vars.priv_vars)->up_fp, &vp->l);
-		      
+
 		return TCL_OK;
 	}
 
@@ -479,7 +479,7 @@ plot_drawVList(struct dm *dmp, register struct bn_vlist *vp)
 				continue;
 
 			if (((struct plot_vars *)dmp->dm_vars.priv_vars)->is_3D)
-				pl_3line(((struct plot_vars *)dmp->dm_vars.priv_vars)->up_fp, 
+				pl_3line(((struct plot_vars *)dmp->dm_vars.priv_vars)->up_fp,
 					 (int)(start[X] * 2047),
 					 (int)(start[Y] * 2047),
 					 (int)(start[Z] * 2047),
@@ -487,7 +487,7 @@ plot_drawVList(struct dm *dmp, register struct bn_vlist *vp)
 					 (int)(fin[Y] * 2047),
 					 (int)(fin[Z] * 2047));
 			else
-				pl_line(((struct plot_vars *)dmp->dm_vars.priv_vars)->up_fp, 
+				pl_line(((struct plot_vars *)dmp->dm_vars.priv_vars)->up_fp,
 					(int)(start[X] * 2047),
 					(int)(start[Y] * 2047),
 					(int)(fin[X] * 2047),

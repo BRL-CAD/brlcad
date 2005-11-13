@@ -26,7 +26,7 @@
  *
  *  Author -
  *	Michael John Muuss
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
@@ -337,7 +337,7 @@ build_spline(char *name, int npts, double radius)
 		surfp[1] = NULL;
 		mk_bspline( outfp, name, surfp );
 	}
-		
+
 	rt_nurb_free_snurb( bp, &rt_uniresource );
 }
 

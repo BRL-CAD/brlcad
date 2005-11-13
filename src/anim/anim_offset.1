@@ -1,40 +1,63 @@
-.TH ANIM_OFFSET 1 BRL/CAD
+.TH ANIM_OFFSET 1 BRL-CAD
+./"                  A N I M _ O F F S E T . 1
+./" BRL-CAD
+./"
+./" Copyright (c) 1993-2005 United States Government as represented by
+./" the U.S. Army Research Laboratory.
+./"
+./" This document is made available under the terms of the GNU Free
+./" Documentation License or, at your option, under the terms of the
+./" GNU General Public License as published by the Free Software
+./" Foundation.  Permission is granted to copy, distribute and/or
+./" modify this document under the terms of the GNU Free Documentation
+./" License, Version 1.2 or any later version published by the Free
+./" Software Foundation; with no Invariant Sections, no Front-Cover
+./" Texts, and no Back-Cover Texts.  Permission is also granted to
+./" redistribute this document under the terms of the GNU General
+./" Public License; either version 2 of the License, or (at your
+./" option) any later version.
+./"
+./" You should have received a copy of the GNU Free Documentation
+./" License and/or the GNU General Public License along with this
+./" document; see the file named COPYING for more information.
+./"
+./"./"./"
 .SH NAME
 anim_offset - create an animation table for an object rigidly attached to
 another object.
 .SH SYNOPSIS
-.B anim_offset 
-.B -o # # # 
-.B [-r] 
-.B < in.table 
+.B anim_offset
+.B -o # # #
+.B [-r]
+.B < in.table
 .B > out.table
 .SH DESCRIPTION
 This filter operates on animation tables of the type used by
 .I tabsub
-and 
+and
 .I anim_script.
 Given a table specifying the position and
-orientation of one object at every applicable time, 
+orientation of one object at every applicable time,
 .I anim_offset
 calculates
-the position of another object which is rigidly attached to it. 
+the position of another object which is rigidly attached to it.
 .PP
 The columns of the input table should be time, three columns of
 position, followed by yaw, pitch, and roll. The output will be
-normally be a four-column file specifying time and position. If the 
+normally be a four-column file specifying time and position. If the
 .B -r
 option is used, the output is a seven-column file in which the last
 three columns are copies of the orientation information from the input
 file.
 .PP
 The position of the object relative to the rigid body should be
-given on the command line in the order x, y, z, with the 
+given on the command line in the order x, y, z, with the
 .B -o # # #
 option. These offset values
 should be as measured from the centroid of the rigid  body.
 .SH EXAMPLES
 This filter could be used, for example, to do an animation where
-the camera is placed inside a moving vehicle. 
+the camera is placed inside a moving vehicle.
 .PP
 Suppose that truck.table contains the desired position of the
 center of the front axle of the truck as well as its orientation at each
@@ -68,29 +91,29 @@ above would be:
 35.2	11550	-740	1800
 
 .fi
-With the 
-.B -r 
+With the
+.B -r
 option, the output would have been:
 .nf
 
 35.2	11550	-740	1800	90.0 	0.0	0.0
 
 .fi
-Now 
-.I tabsub 
-and/or 
-.I anim_script 
+Now
+.I tabsub
+and/or
+.I anim_script
 can be used to process these two animation
 tables into an animation script.
 .SH BUGS
 	The program will only use orientations specified as yaw,
-pitch, and roll. You can get around this using 
+pitch, and roll. You can get around this using
 .IR anim_orient ,
 which converts between different orientation representations.
 .SH AUTHOR
 Carl J. Nuzman
 .SH COPYRIGHT
-	This software is Copyright (C) 1993-2005 by the United States 
+	This software is Copyright (C) 1993-2005 by the United States
 Government as represented by U.S. Army Research Laboratory.
 .SH "BUG REPORTS"
 Reports of bugs or problems should be submitted via electronic

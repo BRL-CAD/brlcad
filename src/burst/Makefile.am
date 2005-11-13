@@ -17,7 +17,6 @@ burst_SOURCES = \
 	plot.c \
 	prnt.c \
 	Sc.c \
-	Tc.c \
 	trie.c \
 	ui.c
 
@@ -30,7 +29,6 @@ noinst_HEADERS = \
 	Hm.h \
 	Mm.h \
 	Sc.h \
-	Tc.h \
 	trie.h \
 	vecmath.h
 

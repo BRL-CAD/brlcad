@@ -65,7 +65,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 		(((p) = (PtList *) malloc(sizeof(PtList))) != PTLIST_NULL)
 #define NewOctree( p ) \
 		(((p) = (Octree *) malloc(sizeof(Octree))) != OCTREE_NULL)
-STATIC int	subdivide_Octree(register Octree *parentp, int level);
+static int	subdivide_Octree(register Octree *parentp, int level);
 
 Octree	*
 new_Octant(Octree *parentp, Octree **childpp, int bitv, int level)
@@ -254,7 +254,7 @@ delete_PtList(PtList **ptlistp)
 
 #define L_MAX_POWER_TWO		31
 
-STATIC int
+static int
 subdivide_Octree(register Octree *parentp, int level)
 {	PtList		*points = parentp->o_points->c_next;
 		Trie		*triep = parentp->o_triep;
@@ -350,7 +350,7 @@ prnt_Octree(Octree *parentp, int level)
 int
 write_Octree(Octree *parentp, FILE *fp)
 {	register PtList	*ptp;
-		F_Hdr_Ptlist	hdr_ptlist;	
+		F_Hdr_Ptlist	hdr_ptlist;
 		long		addr = ftell( fp );
 	/* Write temperature and bogus number of points for this leaf.	*/
 	hdr_ptlist.f_temp = parentp->o_temp;
@@ -397,7 +397,7 @@ write_Octree(Octree *parentp, FILE *fp)
 	return	1;
 	}
 
-STATIC void
+static void
 hit_octant(struct application *ap, register Octree *op, register Octree **lpp, fastf_t *inv_dir, int level)
 {
 	for( ; op != OCTREE_NULL; op = op->o_sibling )
@@ -450,7 +450,7 @@ ir_shootray_octree(struct application *ap)
 		/* a_hit is f_IR_Model(), uses 2nd arg as (Octree *) */
 		return	ap->a_hit( ap, (struct partition *)leafp, RT_SEG_NULL );
 	else	/* Missed it.						*/
-		return	ap->a_miss( ap );		
+		return	ap->a_miss( ap );
 	}
 
 /*

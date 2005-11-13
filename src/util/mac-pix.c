@@ -28,7 +28,7 @@
  *
  *  The image is stored as a sequence of bits, proceeding from the
  *  upper right corner down to the lower right corner, and then
- *  advancing left one column.  This unusual format 
+ *  advancing left one column.  This unusual format
  *  somewhat complicates matters here.
  *
  *  Within each byte, bits are extracted MSB to LSB;  these bits go down
@@ -36,14 +36,14 @@
  *
  *  Because two files are being processed, the "file_*" things refer
  *  to the input file, and the "scr_*" things refer to the output file.
- *  
+ *
  *  Author -
  *	Michael John Muuss
  *
  *  Acknowledgement -
  *	getbits() drawn from paintimp.c by
  *	Dave Johnson, Brown University Computer Science
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
@@ -58,12 +58,13 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif
-                                                                                                                                                                            
 
 #include <stdio.h>
 #include <stdlib.h>
 
 #include "machine.h"
+#include "bu.h"
+
 
 #define	MAC_HEIGHT	576	/* input height (y), in bits */
 #define	MAC_WIDTH	720	/* input width (x), in bits */
@@ -104,7 +105,7 @@ get_args(int argc, register char **argv)
 {
 	register int c;
 
-	while ( (c = getopt( argc, argv, "clbs:w:n:x:y:X:Y:S:W:N:C:" )) != EOF )  {
+	while ( (c = bu_getopt( argc, argv, "clbs:w:n:x:y:X:Y:S:W:N:C:" )) != EOF )  {
 		switch( c )  {
 		case 'c':
 			/* Center in output */
@@ -120,38 +121,38 @@ get_args(int argc, register char **argv)
 			break;
 		case 's':
 			/* square file size */
-			file_height = file_width = atoi(optarg);
+			file_height = file_width = atoi(bu_optarg);
 			break;
 		case 'w':
-			file_width = atoi(optarg);
+			file_width = atoi(bu_optarg);
 			break;
 		case 'n':
-			file_height = atoi(optarg);
+			file_height = atoi(bu_optarg);
 			break;
 		case 'x':
-			file_xoff = atoi(optarg);
+			file_xoff = atoi(bu_optarg);
 			break;
 		case 'X':
-			scr_xoff += atoi(optarg);
+			scr_xoff += atoi(bu_optarg);
 			break;
 		case 'Y':
-			scr_yoff += atoi(optarg);
+			scr_yoff += atoi(bu_optarg);
 			break;
 		case 'S':
-			scr_height = scr_width = atoi(optarg);
+			scr_height = scr_width = atoi(bu_optarg);
 			break;
 		case 'W':
-			scr_width = atoi(optarg);
+			scr_width = atoi(bu_optarg);
 			break;
 		case 'N':
-			scr_height = atoi(optarg);
+			scr_height = atoi(bu_optarg);
 			break;
 		case 'y':
-			file_yoff = atoi(optarg);
+			file_yoff = atoi(bu_optarg);
 			break;
 		case 'C':
 			{
-				register char *cp = optarg;
+				register char *cp = bu_optarg;
 				register unsigned char *conp
 					= (unsigned char *)color;
 
@@ -178,13 +179,13 @@ get_args(int argc, register char **argv)
 			file_yoff = 0;
 	}
 
-	if( optind >= argc )  {
+	if( bu_optind >= argc )  {
 		if( isatty(fileno(stdin)) )
 			return(0);
 		file_name = "-";
 		infp = stdin;
 	} else {
-		file_name = argv[optind];
+		file_name = argv[bu_optind];
 		if( (infp = fopen(file_name, "r")) == NULL )  {
 			(void)fprintf( stderr,
 				"mac-pix: cannot open \"%s\" for reading\n",
@@ -193,7 +194,7 @@ get_args(int argc, register char **argv)
 		}
 	}
 
-	if ( argc > ++optind )
+	if ( argc > ++bu_optind )
 		(void)fprintf( stderr, "mac-pix: excess argument(s) ignored\n" );
 
 	return(1);		/* OK */

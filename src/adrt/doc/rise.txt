@@ -8,7 +8,7 @@ RISE uses objects as the light source in the scene.  There are no point
 light sources in real life and therefore there are none in RISE.  To
 generate a framework that RISE can grok you have (2) options.  Either
 use the rise.py script in the scripts directory with Blender
-(blender3d.org) or use the g-adrt converter in brl-cad that converts a
+(blender3d.org) or use the g-adrt converter in BRL-CAD that converts a
 .g file made of BOTS into an ADRT framework.
 
 More documentation will be added in the future.

@@ -25,7 +25,7 @@
  *
  *  Authors -
  *      Robert G. Parker
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
@@ -128,7 +128,7 @@ static unsigned long lights;
  *  Labels for knobs in help mode.
  */
 static char	*kn1_knobs[] = {
-	/* 0 */ "adc <1",	/* 1 */ "zoom", 
+	/* 0 */ "adc <1",	/* 1 */ "zoom",
 	/* 2 */ "adc <2",	/* 3 */ "adc dist",
 	/* 4 */ "adc y",	/* 5 */ "y slew",
 	/* 6 */ "adc x",	/* 7 */	"x slew"
@@ -323,7 +323,7 @@ XEvent *eventPtr;
     case AMM_TRAN:
       fx = dx / (fastf_t)dmp->dm_width / dmp->dm_aspect * 2.0;
       fy = -dy / (fastf_t)dmp->dm_height * 2.0;
-      
+
       if((state == ST_S_EDIT || state == ST_O_EDIT) &&
 	 mged_variables->transform == 'e'){
 	char save_ecoords;
@@ -1490,7 +1490,7 @@ Glx_statechange( a, b )
 
 /*
  *			G L X _ D M
- * 
+ *
  *  Implement display-manager specific commands, from MGED "dm" command.
  */
 static int
@@ -1625,7 +1625,7 @@ end:
   status = TCL_OK;
   if( !strcmp( argv[0], "am" )){
     scroll_active = 0;
-    
+
     if( argc < 4){
       Tcl_AppendResult(interp, "dm am: need more parameters\n",
 		       "am <r|t|s> xpos ypos\n", (char *)NULL);

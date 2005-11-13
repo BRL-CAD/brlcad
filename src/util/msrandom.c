@@ -50,8 +50,8 @@ struct bn_unif *up;
 int
 main(int argc, char **argv)
 {
-	extern int optind;
-	extern char *optarg;
+	extern int bu_optind;
+	extern char *bu_optarg;
 
 	int seed = getpid();
 	int high, low;
@@ -62,13 +62,13 @@ main(int argc, char **argv)
 	int cdone = 0;
 	int c;
 
-	while ((c = getopt(argc,argv,"vugs:c:")) != EOF ) {
+	while ((c = bu_getopt(argc,argv,"vugs:c:")) != EOF ) {
 		switch(c) {
 		case 's':
-			seed = atoi(optarg);
+			seed = atoi(bu_optarg);
 			break;
 		case 'c':
-			center = atoi(optarg);
+			center = atoi(bu_optarg);
 			cdone = 1;
 			break;
 		case 'g':
@@ -93,13 +93,13 @@ main(int argc, char **argv)
 		fprintf(stderr, "\tOnly one of gaussian or uniform may be used.\n");
 		exit(1);
 	}
-	if (argc - optind != 2) {
+	if (argc - bu_optind != 2) {
 		fprintf(stderr,"msrandom [-ugv] [ -s seed] [-c center ] low high \n");
 		fprintf(stderr,"\tLow High must be given.\n");
 		exit(1);
 	}
-	low = atoi(argv[optind]);
-	high = atoi(argv[optind+1]);
+	low = atoi(argv[bu_optind]);
+	high = atoi(argv[bu_optind+1]);
 	if (!cdone) {
 		center = ((double)(high + low)) / 2.0;
 	}
@@ -131,7 +131,7 @@ main(int argc, char **argv)
 	}
 	return 0;
 }
- 
+
 
 /*
  * Local Variables:

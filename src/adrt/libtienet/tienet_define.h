@@ -38,7 +38,7 @@
 #define _TIENET_DEFINE_H
 
 
-#define	TN_COMPRESSION		1		/* 0 = off, 1 = on.  Compress the result buffer */
+#define	TN_COMPRESSION		0		/* 0 = off, 1 = on.  Compress the result buffer */
 
 #define	TN_MASTER_PORT		1980
 #define	TN_SLAVE_PORT		1981

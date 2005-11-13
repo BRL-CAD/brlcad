@@ -19,13 +19,13 @@
  * information.
  */
 
-/** \defgroup oslo oslo 
+/** \defgroup oslo oslo
  * \ingroup librt */
 
 /*@{*/
 /** @file oslo_calc.c
  * Calculate the Oslo refinement matrix.
- * 
+ *
  * Author -
  *     Paul R. Stay
  *
@@ -35,8 +35,8 @@
  *     Aberdeen Proving Ground, Maryland 21005
  *
  *
- * This algorithm was taken from the paper 
- * "Making the Oslo Algorithm More Efficient" by T. Lyche and K. Morken 
+ * This algorithm was taken from the paper
+ * "Making the Oslo Algorithm More Efficient" by T. Lyche and K. Morken
  * The algorithm referenced in the paper is algorithm 1 since we will be
  * dealing mostly with surfaces. This routine computes the refinement
  * matrix and returns a oslo structure which will allow a new curve or
@@ -62,10 +62,10 @@
 
 struct oslo_mat *
 rt_nurb_calc_oslo(register int order, register const struct knot_vector *tau_kv, register struct knot_vector *t_kv, struct resource *res)
-                   
+
                                            	/* old knot vector */
                                    		/* new knot vector */
-                     
+
 {
 	register fastf_t	*t_p;
 	register const fastf_t	*tau_p;
@@ -103,8 +103,8 @@ rt_nurb_calc_oslo(register int order, register const struct knot_vector *tau_kv,
 
 		if ( j != 0 )
 		{
-			new_o = (struct oslo_mat *) bu_malloc ( 
-				    sizeof( struct oslo_mat), 
+			new_o = (struct oslo_mat *) bu_malloc (
+				    sizeof( struct oslo_mat),
 				    "rt_nurb_calc_oslo: oslo mat struct" );
 
 			o_ptr->next = new_o;

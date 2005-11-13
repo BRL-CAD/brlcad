@@ -40,7 +40,7 @@
  *  Source -
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
- *  
+ *
  */
 
 #include "common.h"
@@ -309,7 +309,7 @@ processChar(char ch)
 	    insert_beep();
 	    break;
 	}
-    
+
 	bu_log("%c", bu_vls_addr(&input_str)[input_str_index]);
 	++input_str_index;
 	escaped = bracketed = 0;
@@ -381,26 +381,26 @@ processChar(char ch)
 	    char *start;
 	    char *curr;
 	    int len;
-      
+
 	    start = bu_vls_addr(&input_str);
 	    curr = start + input_str_index - 1;
-      
+
 	    /* skip spaces */
 	    while(curr > start && *curr == ' ')
 		--curr;
-      
+
 	    /* find next space */
 	    while(curr > start && *curr != ' ')
 		--curr;
-      
+
 	    bu_vls_init(&temp);
 	    bu_vls_strcat(&temp, start+input_str_index);
-      
+
 	    if(curr == start)
 		input_str_index = 0;
 	    else
 		input_str_index = curr - start + 1;
-      
+
 	    len = bu_vls_strlen(&input_str);
 	    bu_vls_trunc(&input_str, input_str_index);
 	    insert_prompt();
@@ -410,7 +410,7 @@ processChar(char ch)
 	    bu_vls_vlscat(&input_str, &temp);
 	    bu_vls_free(&temp);
 	}
-  
+
 	escaped = bracketed = 0;
 	break;
     case 'd':

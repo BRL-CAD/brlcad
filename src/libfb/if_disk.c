@@ -30,7 +30,7 @@
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5066
- *  
+ *
  */
 /*@}*/
 
@@ -52,7 +52,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #ifdef HAVE_UNISTD_H
 #  include <unistd.h>
 #endif
-       
+
 #ifdef HAVE_SYS_FILE_H
 #  include <sys/file.h>
 #endif
@@ -294,7 +294,7 @@ dsk_rmap(FBIO *ifp, ColorMap *cmap)
 	if( read( fd, (char *) cmap, sizeof(ColorMap) )
 		!= sizeof(ColorMap) ) {
 		/* Not necessarily an error.  It is not required
-		 * that a color map be saved and the standard 
+		 * that a color map be saved and the standard
 		 * map is not generally saved.
 		 */
 		return	-1;

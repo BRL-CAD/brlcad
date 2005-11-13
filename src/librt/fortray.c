@@ -24,17 +24,17 @@
 /** @file fortray.c
  *  A general-purpose set of FORTRAN-callable interface routines to
  *  permit any FORTRAN program to use LIBRT, the ray-tracing library
- *  of the BRL CAD Package.
+ *  of the BRL-CAD Package.
  *
- *  
+ *
  *  Author -
  *	Michael John Muuss
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5066
- *  
+ *
  */
 /*@}*/
 #ifndef lint
@@ -67,7 +67,7 @@ void
 fr_string_c2f(register char *fstr, register char *cstr, register int flen)
 {
 	register int	i;
-	
+
 	for( i=0; i < flen; i++ )  {
 		if( (fstr[i] = cstr[i]) == '\0' )  break;
 	}
@@ -163,7 +163,7 @@ struct context {
 /*
  *			F R S H O T
  *
- * NOTE that the [0] element here corresponds with the caller's (1) element. 
+ * NOTE that the [0] element here corresponds with the caller's (1) element.
  */
 void
 BU_FORTRAN(frshot,FRSHOT)(int			*nloc,		/* input & output */
@@ -303,7 +303,7 @@ BU_FORTRAN(frnorm,FRNORM)(double		*normal,	/* output only */
 #endif
 	struct soltab	*stp;
 	register int	i;
-	
+
 	i = *index-1;		/* Selects which inhit is used */
 
 #if 0
@@ -323,7 +323,7 @@ BU_FORTRAN(frnorm,FRNORM)(double		*normal,	/* output only */
 	stp = ctp->co_stp;
 	VMOVE( hit.hit_vpriv, ctp->co_vpriv );
 	hit.hit_private = ctp->co_priv;
-	
+
 #if 0
 	RT_HIT_NORMAL( normal, &hit, stp, &ray, ctp->co_inflip );
 #else

@@ -24,7 +24,7 @@
  *
  *  Author -
  *	Mark H. Bowden
- *  
+ *
  *  Source -
  *	Research Institute, RI E47
  *	University of Alabama in Huntsville
@@ -51,7 +51,7 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 typedef unsigned char u_char;
 
 /* Display Manager package interface */
- 
+
 #define HPBOUND	1000.0	/* Max magnification in Rot matrix */
 
 int	HP_open();
@@ -109,7 +109,7 @@ static void HPmove(), HPcont();
 /*
  * Display coordinate conversion
  */
- 
+
 #define XGED_TO_HP(x)   (((x)+2048) * 492 / 4096)
 #define XHP_TO_GED(x)   (((x) * 4096 / 492) - 2048)
 #define YGED_TO_HP(y)   (((y)+2048) * 25 / 256)
@@ -187,7 +187,7 @@ HP_epilog()
 
 /*
  * HP_object
- *  
+ *
  *  Set up for an object, transformed as indicated, and with an
  *  object center as specified.  The ratio of object to screen size
  *  is passed in as a convienience.
@@ -209,12 +209,12 @@ double ratio;
 
 	if(  sp->s_soldash )
 		printf("%c*m4b",ESC);	/* Dot Dash */
-	else	
+	else
 		printf("%c*m1b",ESC);	/* Solid Line */
 
 	color = sp->s_dmindex;
 	printf("%c*m%1dx",ESC,color);
-	
+
 	for( vp = sp->s_vlist; vp != VL_NULL; vp = vp->vl_forw )  {
 		/* Viewing region is from -1.0 to +1.0 */
 		if( vp->vl_draw == 0 )  {
@@ -350,7 +350,7 @@ int		noblock;
 
 /*
  *  			H P _ C O L O R C H A N G E
- *  
+ *
  *  Go through the mater table and assign colors.
  *
  */
@@ -403,10 +403,10 @@ register char *s;
 	char  c;
 
 	switch(s[0]){
-	case 'l':	
+	case 'l':
 		c = '5';                         /* Long Dashed Line */
 		break;
-	case 'd':	
+	case 'd':
 		if(s[3] != 'd')c='7';		/* Dot Line   NRTC */
 		else c='4';			/* Dot-Dashed Line */
 		break;

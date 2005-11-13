@@ -165,10 +165,9 @@ memory_summary(void)
  */
 int main(int argc, char **argv)
 {
-	static struct rt_i *rtip;
-	char *title_file, *title_obj;	/* name of file and first object */
-	register int	x;
-	char idbuf[132];		/* First ID record info */
+	struct rt_i *rtip = NULL;
+	char *title_file = NULL, *title_obj = NULL;	/* name of file and first object */
+	char idbuf[RT_BUFSIZE] = {0};		/* First ID record info */
 	void	application_init();
 	struct bu_vls	times;
 	int i;
@@ -220,8 +219,11 @@ int main(int argc, char **argv)
 			bu_version+5
 		      );	/* +5 to skip @(#) */
 	}
+#if defined(DEBUG)
+	(void)fprintf(stderr, "WARNING: Compile-time debugging is enabled and may limit performance\n");
+#endif
 #if defined(NO_BOMBING_MACROS) || defined(NO_MAGIC_CHECKING) || defined(NO_BADRAY_CECHKING) || defined(NO_DEBUG_CHECKING)
-	(void)fprintf(stderr, "WARNING: Run-time debugging is disabled for extra performance\n");
+	(void)fprintf(stderr, "WARNING: Run-time debugging is disabled and may enhance performance\n");
 #endif
 
 	/* Identify what host we're running on */
@@ -258,7 +260,7 @@ int main(int argc, char **argv)
 	if( sub_grid_mode ) {
 		/* check that we have a legal subgrid */
 		if( sub_xmax >= width || sub_ymax >= height ) {
-			fprintf( stderr, "rt: illegal values for subgrid %d,%d,%d,%d\n", 
+			fprintf( stderr, "rt: illegal values for subgrid %d,%d,%d,%d\n",
 				 sub_xmin, sub_ymin, sub_xmax, sub_ymax );
 			fprintf( stderr, "\tFor a %d X %d image, the subgrid must be within 0,0,%d,%d\n",
 				 width, height, width-1, height-1 );
@@ -267,14 +269,14 @@ int main(int argc, char **argv)
 	}
 
 	if( incr_mode )  {
-		x = height;
+		int x = height;
 		if( x < width )  x = width;
 		incr_nlevel = 1;
 		while( (1<<incr_nlevel) < x )
 			incr_nlevel++;
 		height = width = 1<<incr_nlevel;
 		if (rt_verbosity & VERBOSE_INCREMENTAL)
-			fprintf(stderr, 
+			fprintf(stderr,
 			    "incremental resolution, nlevels = %d, width=%d\n",
 			    incr_nlevel, width);
 	}
@@ -388,7 +390,7 @@ int main(int argc, char **argv)
 	if( outputfile && strcmp( outputfile, "-") == 0 )
 		outputfile = (char *)0;
 
-	/* 
+	/*
 	 *  Initialize application.
 	 *  Note that width & height may not have been set yet,
 	 *  since they may change from frame to frame.

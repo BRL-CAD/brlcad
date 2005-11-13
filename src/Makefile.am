@@ -17,7 +17,7 @@ bench_dirs = \
 	liborle \
 	conv \
 	fbserv \
-	rt	
+	rt
 
 # anything not included from above
 kitchensink_dirs = \
@@ -31,28 +31,22 @@ kitchensink_dirs = \
 	brlman \
 	burst \
 	bwish \
-	comgeom-g \
 	fb \
 	fbed \
 	gtools \
 	halftone \
-	iges \
 	irprep \
-	jack \
 	java \
 	lgt \
 	mged \
 	mk \
 	nirt \
-	off \
-	patch \
 	proc-db \
 	remrt \
 	rttherm \
 	sig \
 	tab \
 	tclscripts \
-	unigraphics \
 	util \
 	vas4 \
 	vdeck

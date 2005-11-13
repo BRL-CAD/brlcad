@@ -40,16 +40,16 @@
  *
  *  where N[3] stores the value d.
  *  See the remarks in h/vmath.h for more details.
- *  
+ *
  *  Authors -
  *	Michael John Muuss
  *	Dave Becker		(Vectorization)
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005
- *  
+ *
  */
 /*@}*/
 
@@ -96,7 +96,7 @@ rt_hlf_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 	RT_HALF_CK_MAGIC(hip);
 
 	/*
-	 * Process a HALFSPACE, which is represented as a 
+	 * Process a HALFSPACE, which is represented as a
 	 * normal vector, and a distance.
 	 */
 	BU_GETSTRUCT( halfp, half_specific );
@@ -144,13 +144,13 @@ rt_hlf_print(register const struct soltab *stp)
 
 /**
  *			R T _ H L F _ S H O T
- *  
+ *
  * Function -
  *	Shoot a ray at a HALFSPACE
  *
  * Algorithm -
  * 	The intersection distance is computed.
- *  
+ *
  * Returns -
  *	0	MISS
  *	>0	HIT
@@ -215,7 +215,7 @@ rt_hlf_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
            		       /* An array of ray pointers */
                                /* array of segs (results returned) */
    		  	       /* Number of ray/object pairs */
-                  	    
+
 {
 	register int    i;
 	register struct half_specific *halfp;
@@ -297,7 +297,7 @@ rt_hlf_norm(register struct hit *hitp, struct soltab *stp, register struct xray 
  *			R T _ H L F _ C U R V E
  *
  *  Return the "curvature" of the halfspace.
- *  Pick a principle direction orthogonal to normal, and 
+ *  Pick a principle direction orthogonal to normal, and
  *  indicate no curvature.
  */
 void
@@ -312,7 +312,7 @@ rt_hlf_curve(register struct curvature *cvp, register struct hit *hitp, struct s
 
 /**
  *  			R T _ H L F _ U V
- *  
+ *
  *  For a hit on a face of an HALF, return the (u,v) coordinates
  *  of the hit point.  0 <= u,v <= 1.
  *  u extends along the Xbase direction
@@ -376,7 +376,7 @@ rt_hlf_uv(struct application *ap, struct soltab *stp, register struct hit *hitp,
 		if( uvp->uv_u < 0 )  uvp->uv_u = (-uvp->uv_u);
 		if( uvp->uv_v < 0 )  uvp->uv_v = (-uvp->uv_v);
 	}
-	
+
 	uvp->uv_du = uvp->uv_dv =
 		(ap->a_rbeam + ap->a_diverge * hitp->hit_dist) / (10000/2);
 	if( uvp->uv_du < 0 || uvp->uv_dv < 0 )  {

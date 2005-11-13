@@ -27,7 +27,7 @@
  *
  *  Author -
  *	Lee A. Butler
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
@@ -52,11 +52,12 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include "machine.h"
+#include "bu.h"
 
 
 #define UCHAR unsigned char
 
-/* declarations to support use of getopt() system call */
+/* declarations to support use of bu_getopt() system call */
 char *options = "uhs:w:n:f:";
 
 char *progname = "(noname)";
@@ -75,14 +76,14 @@ UCHAR *read_image(int scanlen, int Width, int Height, unsigned char *buffer)
 
 	if (!buffer &&
 	    (buffer=(UCHAR *)malloc(scanlen * Height)) == (UCHAR *)NULL) {
-		(void)fprintf(stderr, "%s: cannot allocate input buffer\n", 
+		(void)fprintf(stderr, "%s: cannot allocate input buffer\n",
 			progname);
 		exit(-1);
 	}
 
 	total_bytes = Width * Height * 3;
 	in_bytes = 0;
-	while (in_bytes < total_bytes && 
+	while (in_bytes < total_bytes &&
 	    (count=read(0, (char *)&buffer[in_bytes], (unsigned)(total_bytes-in_bytes))) >= 0)
 		in_bytes += count;
 
@@ -100,7 +101,7 @@ void write_image(int Width, int Height, unsigned char *buffer)
 {
 	int	count = 0;
 	int	out_bytes, total_bytes;
-	
+
 	total_bytes = Width * Height * 3;
 	out_bytes = 0;
 
@@ -146,7 +147,7 @@ shrink_image(int scanlen, int Width, int Height, unsigned char *buffer, int Fact
 					p[2] += *pixelp++;
 				}
 			}
-			
+
 			/* store resultant pixel back in buffer */
 			for (py = 0 ; py < 3 ; ++py)
 				*finalpixel++ = p[py] / facsq;
@@ -205,43 +206,43 @@ void parse_args(int ac, char **av)
 
 	if (!(progname = strrchr(*av, '/')))
 		progname = *av;
-	
-	/* Turn off getopt's error messages */
+
+	/* Turn off bu_getopt's error messages */
 	opterr = 0;
 
 	/* get all the option flags from the command line */
-	while ((c=getopt(ac,av,options)) != EOF)
+	while ((c=bu_getopt(ac,av,options)) != EOF)
 		switch (c) {
-		case 'f'	: if ((c = atoi(optarg)) > 1)
+		case 'f'	: if ((c = atoi(bu_optarg)) > 1)
 					factor = c;
 				  break;
 		case 'h'	: width = height = 1024; break;
-		case 'n'	: if ((c=atoi(optarg)) > 0)
+		case 'n'	: if ((c=atoi(bu_optarg)) > 0)
 					height = c;
 				  break;
-		case 'w'	: if ((c=atoi(optarg)) > 0)
+		case 'w'	: if ((c=atoi(bu_optarg)) > 0)
 					width = c;
 				  break;
-		case 's'	: if ((c=atoi(optarg)) > 0)
+		case 's'	: if ((c=atoi(bu_optarg)) > 0)
 					height = width = c;
 				  break;
-		case 'u'	: method = METH_UNDERSAMPLE; break; 
+		case 'u'	: method = METH_UNDERSAMPLE; break;
 		case '?'	:
 		default		: usage(); break;
 		}
 
-	if (optind >= ac) {
+	if (bu_optind >= ac) {
 		if (isatty(fileno(stdout)) )
 			usage();
 	}
-	if (optind < ac) {
-		if (freopen(av[optind], "r", stdin) == (FILE *)NULL) {
-			perror(av[optind]);
+	if (bu_optind < ac) {
+		if (freopen(av[bu_optind], "r", stdin) == (FILE *)NULL) {
+			perror(av[bu_optind]);
 			exit(-1);
 		} else
-			filename = av[optind];
+			filename = av[bu_optind];
 	}
-	if (optind+1 < ac)
+	if (bu_optind+1 < ac)
 		(void)fprintf(stderr, "%s: Excess arguments ignored\n", progname);
 
 }

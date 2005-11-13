@@ -66,7 +66,7 @@ int c;
 	if( c >= '[' && c <= '`' )  return ((c - '[' ) + 'U' );
  	if( c >= ':' && c <= '@' )  return ((c - ':' ) + '3' );
 
-	fprintf(stderr, "ERROR: Character '%c' is illegal in password, aborting.\n", c);	
+	fprintf(stderr, "ERROR: Character '%c' is illegal in password, aborting.\n", c);
 	exit(1);
 	/* NOTREACHED */
 }

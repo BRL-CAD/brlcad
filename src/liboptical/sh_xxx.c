@@ -47,7 +47,7 @@
  *  If you are adding the shader to "rt" as a permanent shader, then the
  *  following steps are necessary:
  *
- *	3) Edit init.c to add extern for xxx_mfuncs and 
+ *	3) Edit init.c to add extern for xxx_mfuncs and
  *		a call to mlib_add_shader().
  *	4) Edit Cakefile to add shader file to "FILES" macro (without the .o)
  *	5) replace this list with a description of the shader, its parameters
@@ -154,7 +154,7 @@ struct mfuncs xxx_mfuncs[] = {
  *	This routine is called (at prep time)
  *	once for each region which uses this shader.
  *	Any shader-specific initialization should be done here.
- * 
+ *
  * 	Returns:
  *	1	success
  *	0	success, but delete region
@@ -162,10 +162,10 @@ struct mfuncs xxx_mfuncs[] = {
  */
 HIDDEN int
 xxx_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip)
-                      	    
-             		         
+
+
     			      	/* pointer to reg_udata in *rp */
-             		     
+
            		      	/* New since 4.4 release */
 {
 	register struct xxx_specific	*xxx_sp;
@@ -201,7 +201,7 @@ xxx_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct
 	 * db_shader_mat returns a matrix which maps points on/in the region
 	 * into the unit cube.  This unit cube is formed by first mapping from
 	 * world coordinates into "region coordinates" (the coordinate system
-	 * in which the region is defined).  Then the bounding box of the 
+	 * in which the region is defined).  Then the bounding box of the
 	 * region is used to establish a mapping to the unit cube
 	 *
 *	db_shader_mat(xxx_sp->xxx_m_to_sh, rtip, rp, xxx_sp->xxx_min,
@@ -249,8 +249,8 @@ xxx_free(char *cp)
  */
 int
 xxx_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp)
-                  	    
-                	    
+
+
                 	     	/* defined in ../h/shadework.h */
     			    	/* ptr to the shader-specific struct */
 {
@@ -266,14 +266,14 @@ xxx_render(struct application *ap, struct partition *pp, struct shadework *swp, 
 	if (rdebug&RDEBUG_SHADE)
 		bu_struct_print( "xxx_render Parameters:", xxx_print_tab, (char *)xxx_sp );
 
-	/* If we are performing the shading in "region" space, we must 
+	/* If we are performing the shading in "region" space, we must
 	 * transform the hit point from "model" space to "region" space.
 	 * See the call to db_region_mat in xxx_setup().
 	MAT4X3PNT(pt, xxx_sp->xxx_m_to_sh, swp->sw_hit.hit_point);
 	MAT4X3PNT(pt, xxx_sp->xxx_m_to_r, swp->sw_hit.hit_point);
 
 	if (rdebug&RDEBUG_SHADE) {
-		bu_log("xxx_render()  model:(%g %g %g) shader:(%g %g %g)\n", 
+		bu_log("xxx_render()  model:(%g %g %g) shader:(%g %g %g)\n",
 			V3ARGS(swp->sw_hit.hit_point),
 			V3ARGS(pt) );
 	}

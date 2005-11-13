@@ -50,7 +50,7 @@
  *
  *  Author -
  *	Michael John Muuss
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
@@ -80,6 +80,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include "machine.h"
+#include "bu.h"
 
 
 #define	TSIZE	(6144*24*1024)	/* # of bytes on 2400' 6250bpi reel */
@@ -100,13 +101,13 @@ get_args(int argc, register char **argv)
 {
 	register int c;
 
-	while ( (c = getopt( argc, argv, "b:k:" )) != EOF )  {
+	while ( (c = bu_getopt( argc, argv, "b:k:" )) != EOF )  {
 		switch( c )  {
 		case 'b':
-			bufsize = atoi( optarg );	/* bytes */
+			bufsize = atoi( bu_optarg );	/* bytes */
 			break;
 		case 'k':
-			bufsize = atoi( optarg ) * 1024; /* Kbytes */
+			bufsize = atoi( bu_optarg ) * 1024; /* Kbytes */
 			break;
 
 		default:		/* '?' */
@@ -139,16 +140,16 @@ main(int argc, char **argv)
 		exit(1);
 	}
 
-	if( optind >= argc )  {
+	if( bu_optind >= argc )  {
 		/* Perform operation once, from stdin */
 		fileout( 0, "-" );
 		exit(0);
 	}
 
 	/* Perform operation on each argument */
-	for( ; optind < argc; optind++ )  {
-		if( (fd = open( argv[optind], 0 )) < 0 )  {
-			perror( argv[optind] );
+	for( ; bu_optind < argc; bu_optind++ )  {
+		if( (fd = open( argv[bu_optind], 0 )) < 0 )  {
+			perror( argv[bu_optind] );
 			/*
 			 *  It is unclear whether an exit(1),
 			 *  or continuing with the next file
@@ -160,7 +161,7 @@ main(int argc, char **argv)
 			 */
 			exit(1);
 		}
-		fileout( fd, argv[optind] );
+		fileout( fd, argv[bu_optind] );
 		(void)close(fd);
 	}
 	exit(0);

@@ -89,19 +89,19 @@ rt_nurb_project_srf(const struct face_g_snurb *srf, fastf_t *plane1, fastf_t *pl
 	for ( i = 0; i < srf->s_size[0] * srf->s_size[1]; i++) {
 
 		if ( rational ) {
-			mp2[0] = (mp1[0] / mp1[3] * plane1[0] + 
-			    mp1[1] / mp1[3] * plane1[1] + 
-			    mp1[2] / mp1[3] * plane1[2] - plane1[3]) * 
+			mp2[0] = (mp1[0] / mp1[3] * plane1[0] +
+			    mp1[1] / mp1[3] * plane1[1] +
+			    mp1[2] / mp1[3] * plane1[2] - plane1[3]) *
 			    mp1[3];
-			mp2[1] = (mp1[0] / mp1[3] * plane2[0] + 
-			    mp1[1] / mp1[3] * plane2[1] + 
-			    mp1[2] / mp1[3] * plane2[2] - plane2[3]) * 
+			mp2[1] = (mp1[0] / mp1[3] * plane2[0] +
+			    mp1[1] / mp1[3] * plane2[1] +
+			    mp1[2] / mp1[3] * plane2[2] - plane2[3]) *
 			    mp1[3];
 		} else
 		 {
-			mp2[0] = mp1[0] * plane1[0] + mp1[1] * plane1[1] + 
+			mp2[0] = mp1[0] * plane1[0] + mp1[1] * plane1[1] +
 			    mp1[2] * plane1[2] - plane1[3];
-			mp2[1] = mp1[0] * plane2[0] + mp1[1] * plane2[1] + 
+			mp2[1] = mp1[0] * plane2[0] + mp1[1] * plane2[1] +
 			    mp1[2] * plane2[2] - plane2[3];
 		}
 
@@ -162,10 +162,10 @@ rt_nurb_clip_srf(const struct face_g_snurb *srf, int dir, fastf_t *min, fastf_t 
 
 	p1 = srf->ctl_points;
 	p2 = srf->ctl_points + coords * (col_size - 1);
-	p3 = srf->ctl_points + (coords * col_size * 
+	p3 = srf->ctl_points + (coords * col_size *
 	    (row_size - 1));
-	p4 = srf->ctl_points + (coords * col_size * 
-	    (row_size - 1)) + 
+	p4 = srf->ctl_points + (coords * col_size *
+	    (row_size - 1)) +
 	    ((col_size - 1) * coords);
 
 	if ( dir == RT_NURB_SPLIT_ROW) {
@@ -209,9 +209,9 @@ rt_nurb_clip_srf(const struct face_g_snurb *srf, int dir, fastf_t *min, fastf_t 
 			for( j = 0; j < col_size; j++)
 			{
 				value = - (mp1[0] * l1.a + mp1[1] * l1.b);
-				if( value <= ch[j].min) 
+				if( value <= ch[j].min)
 					ch[j].min = value;
-				if( value >= ch[j].max) 
+				if( value >= ch[j].max)
 					ch[j].max = value;
 				mp1 += coords;
 			}
@@ -225,7 +225,7 @@ rt_nurb_clip_srf(const struct face_g_snurb *srf, int dir, fastf_t *min, fastf_t 
 
 			param1 = ch[k].param;
 			param2 = ch[j].param;
-				
+
 			d = FINDZERO( param1, param2, ch[k].max, ch[j].max);
 			if( d <= *min ) *min = d * .99;
 			if( d >= *max ) *max = d * .99 + .01;
@@ -235,9 +235,9 @@ rt_nurb_clip_srf(const struct face_g_snurb *srf, int dir, fastf_t *min, fastf_t 
 			if( d >= *max ) *max = d * .99 + .01;
 		}
 
-		if (*min <= 0.0) 
+		if (*min <= 0.0)
 			*min = 0.0;
-		if (*max >= 1.0) 
+		if (*max >= 1.0)
 			*max = 1.0;
 		if ( SIGN(ch[0].min) != SIGN(ch[0].max))
 			*min = 0.0;
@@ -265,9 +265,9 @@ rt_nurb_clip_srf(const struct face_g_snurb *srf, int dir, fastf_t *min, fastf_t 
 			for( j = 0; j < row_size; j++)
 			{
 				value = - (mp1[0] * l1.a + mp1[1] * l1.b);
-				if( value <= ch[j].min) 
+				if( value <= ch[j].min)
 					ch[j].min = value;
-				if( value >= ch[j].max) 
+				if( value >= ch[j].max)
 					ch[j].max = value;
 				mp1 += stride;
 			}
@@ -281,7 +281,7 @@ rt_nurb_clip_srf(const struct face_g_snurb *srf, int dir, fastf_t *min, fastf_t 
 
 			param1 = ch[k].param;
 			param2 = ch[j].param;
-				
+
 			d = FINDZERO( param1, param2, ch[k].max, ch[j].max);
 			if( d <= *min ) *min = d * .99;
 			if( d >= *max ) *max = d * .99 + .01;
@@ -290,9 +290,9 @@ rt_nurb_clip_srf(const struct face_g_snurb *srf, int dir, fastf_t *min, fastf_t 
 			if( d <= *min ) *min = d * .99;
 			if( d >= *max ) *max = d * .99 + .01;
 		}
-		if (*min <= 0.0) 
+		if (*min <= 0.0)
 			*min = 0.0;
-		if (*max >= 1.0) 
+		if (*max >= 1.0)
 			*max = 1.0;
 		if ( SIGN(ch[0].min) != SIGN(ch[0].max))
 			*min = 0.0;
@@ -372,27 +372,27 @@ rt_nurb_intersect(const struct face_g_snurb *srf, fastf_t *plane1, fastf_t *plan
 
 	if( RT_G_DEBUG & DEBUG_SPLINE )
 		rt_nurb_s_print("srf", psrf);
-	
+
 	/* This list starts out with only a single snurb,
 	 * but more may be added on as work progresses.
 	 */
 top:
 	while( BU_LIST_WHILE( psrf, face_g_snurb, &plist ) )  {
 		int flat;
-		
+
 		BU_LIST_DEQUEUE( &psrf->l );
 		NMG_CK_SNURB(psrf);
 		sub = 0;
 		flat = 0;
 		dir = psrf->dir;
-		
+
 		while(!flat)
 		{
 			fastf_t smin, smax;
 
 			sub++;
 			dir = (dir == 0)?1:0;	/* change direction */
-			
+
 			if( RT_G_DEBUG & DEBUG_SPLINE )
 				rt_nurb_s_print("psrf", psrf);
 
@@ -464,7 +464,7 @@ top:
 
 			v[0] = psrf->v.knots[0];
 			v[1] = psrf->v.knots[psrf->v.k_size -1];
-			
+
                         if( (u[1] - u[0]) < uv_tol && (v[1] - v[0]) < uv_tol)
                         {
 				struct rt_nurb_uv_hit * hit;
@@ -502,7 +502,7 @@ top:
                         	hit->sub = sub;
                         	hit->u = (u[0] + u[1])/2.0;
                         	hit->v = (v[0] + v[1])/2.0;
-                        	
+
                         	if( h == (struct rt_nurb_uv_hit *)0)
                         		h = hit;
                         	else
@@ -528,7 +528,7 @@ rt_nurb_pbound(struct face_g_snurb *srf, fastf_t *vmin, fastf_t *vmax)
 	register fastf_t * ptr;
 	register int coords;
 	int i;
-	
+
  	vmin[0] = vmin[1] = vmin[2] = INFINITY;
 	vmax[0] = vmax[1] = vmax[2] = -INFINITY;
 
@@ -536,7 +536,7 @@ rt_nurb_pbound(struct face_g_snurb *srf, fastf_t *vmin, fastf_t *vmax)
 
 	coords = RT_NURB_EXTRACT_COORDS(srf->pt_type);
 
-	for( i = (srf->s_size[RT_NURB_SPLIT_ROW] * 
+	for( i = (srf->s_size[RT_NURB_SPLIT_ROW] *
 	    srf->s_size[RT_NURB_SPLIT_COL] ); i > 0; i--)
 	{
 		V_MIN( (vmin[0]), (ptr[0]));
@@ -544,7 +544,7 @@ rt_nurb_pbound(struct face_g_snurb *srf, fastf_t *vmin, fastf_t *vmax)
 
 		V_MIN( (vmin[1]), (ptr[1]));
 		V_MAX( (vmax[1]), (ptr[1]));
-		
+
 		ptr += coords;
 	}
 }

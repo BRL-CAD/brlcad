@@ -126,14 +126,14 @@ GetCardinal(fastf_t *m, const double tension)
 	m[ 9] = m[11] = m[12] = m[14] = m[15] = 0.0;
 }
 
-/*	R T _ D S P L I N E _ M A T R I X 
+/*	R T _ D S P L I N E _ M A T R I X
  *
  *	Initialize a spline matrix for a particular spline type.
  *
  */
 void
 rt_dspline_matrix(fastf_t *m, const char *type, const double tension, const double bias)
-           	  
+
           	      		/* "Cardinal", "Catmull", "Beta" */
             	        	/* Cardinal tension of .5 is Catmull spline */
             	     		/* only for B spline */
@@ -142,7 +142,7 @@ rt_dspline_matrix(fastf_t *m, const char *type, const double tension, const doub
 	else if (!strncmp(type, "Catmull", 7))	GetCardinal(m, 0.5);
 	else if (!strncmp(type, "Beta", 4)) 	GetBeta(m, bias, tension);
 	else {
-		bu_log( "Error: %s:%d spline type \"%s\" Unknown\n", 
+		bu_log( "Error: %s:%d spline type \"%s\" Unknown\n",
 			__FILE__, __LINE__, type);
 		abort();
 	}
@@ -189,9 +189,9 @@ rt_dspline4v(double *pt, const fastf_t *m, const double *a, const double *b, con
            	/* result */
            	  	/* spline matrix obtained with spline_matrix() */
                 	/* knots */
-                
-                
-                
+
+
+
                 	/* number of values per knot */
                    	/* 0 <= alpha <= 1 */
 {

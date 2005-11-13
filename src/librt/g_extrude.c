@@ -53,7 +53,7 @@
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5066
- *  
+ *
  */
 /*@}*/
 
@@ -127,15 +127,15 @@ static struct bn_tol extr_tol={			/* a fake tolerance structure for the intersec
 
 /**
  *  			R T _ E X T R U D E _ P R E P
- *  
+ *
  *  Given a pointer to a GED database record, and a transformation matrix,
  *  determine if this is a valid EXTRUDE, and if so, precompute various
  *  terms of the formula.
- *  
+ *
  *  Returns -
  *  	0	EXTRUDE is OK
  *  	!0	Error in description
- *  
+ *
  *  Implicit return -
  *  	A struct extrude_specific is created, and it's address is stored in
  *  	stp->st_specific for use by extrude_shot().
@@ -333,7 +333,7 @@ rt_extrude_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip
 					csg_extr->radius = max_radius;
 				else
 				{
-					bu_log( "Impossible radius for circular arc in extrusion (%s), is %g, cannot be more than %g!!!\n", 
+					bu_log( "Impossible radius for circular arc in extrusion (%s), is %g, cannot be more than %g!!!\n",
 							stp->st_dp->d_namep, csg_extr->radius, sqrt(magsq_s2m)  );
 					bu_log( "Difference is %g\n", max_radius - csg->radius );
 					return( -1 );
@@ -454,11 +454,11 @@ isect_line2_ellipse(fastf_t *dist, fastf_t *ray_start, fastf_t *ray_dir, fastf_t
 
 int
 isect_line_earc(fastf_t *dist, fastf_t *ray_start, fastf_t *ray_dir, fastf_t *center, fastf_t *ra, fastf_t *rb, fastf_t *norm, fastf_t *start, fastf_t *end, int orientation)
-                
-                  
-               
-                           
-                    
+
+
+
+
+
                 	/* 0 -> ccw, !0 -> cw */
 {
 	int dist_count;
@@ -613,11 +613,11 @@ isect_line_earc(fastf_t *dist, fastf_t *ray_start, fastf_t *ray_dir, fastf_t *ce
 
 /**
  *  			R T _ E X T R U D E _ S H O T
- *  
+ *
  *  Intersect a ray with a extrude.
  *  If an intersection occurs, a struct seg will be acquired
  *  and filled in.
- *  
+ *
  *  Returns -
  *  	0	MISS
  *	>0	HIT
@@ -925,7 +925,7 @@ rt_extrude_shot(struct soltab *stp, register struct xray *rp, struct application
 			switch( *lng )
 			{
 				case CURVE_CARC_MAGIC:
-					hits[hit_count].hit_private = (genptr_t)csg; 
+					hits[hit_count].hit_private = (genptr_t)csg;
 					VMOVE( hits[hit_count].hit_vpriv, tmp );
 					break;
 				case CURVE_LSEG_MAGIC:
@@ -1059,14 +1059,14 @@ rt_extrude_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n,
            		       /* An array of ray pointers */
                                /* array of segs (results returned) */
    		  	       /* Number of ray/object pairs */
-                  	    
+
 {
 	rt_vstub( stp, rp, segp, n, ap );
 }
 
 /**
  *  			R T _ E X T R U D E _ N O R M
- *  
+ *
  *  Given ONE ray distance, return the normal and entry/exit point.
  */
 void
@@ -1165,7 +1165,7 @@ rt_extrude_curve(register struct curvature *cvp, register struct hit *hitp, stru
 				radius = csg->radius;
 			VSCALE( ra, extr->rot_axis, radius );
 			VSCALE( rb, extr->perp, radius );
-			
+
 			a_sq = MAG2SQ( ra );
 			b_sq = MAG2SQ( rb );
 			a = sqrt( a_sq );
@@ -1186,7 +1186,7 @@ rt_extrude_curve(register struct curvature *cvp, register struct hit *hitp, stru
 
 /**
  *  			R T _ E X T R U D E _ U V
- *  
+ *
  *  For a hit on the surface of an extrude, return the (u,v) coordinates
  *  of the hit point, 0 <= u,v <= 1.
  *  u = azimuth
@@ -1267,7 +1267,7 @@ rt_extrude_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct r
 	vp2 = BU_LIST_LAST( bn_vlist, vhead );
 	nused2 = vp2->nused;
 	curve_to_vlist( vhead, ttol, end_of_h, extrude_ip->u_vec, extrude_ip->v_vec, sketch_ip, crv );
-	
+
 	/* plot connecting lines */
 	vp2_start = vp2;
 	i1 = nused1;
@@ -1408,7 +1408,7 @@ get_seg_midpoint( genptr_t seg, struct rt_sketch_internal *skt, point2d_t pt )
 				if( csg->orientation ) { /* clock-wise */
 					while( end_ang > start_ang )
 						end_ang -= 2.0 * M_PI;
-				}	
+				}
 				else { /* counter-clock-wise */
 					while( end_ang < start_ang )
 						end_ang += 2.0 * M_PI;
@@ -1489,7 +1489,7 @@ isect_2D_loop_ray( point2d_t pta, point2d_t dir, struct bu_ptbl *loop, struct lo
 
 	norm[0] = -dir[1];
 	norm[1] = dir[0];
- 
+
 	for( i=0 ; i<BU_PTBL_END( loop ) ; i++ ) {
 		long *lng;
 		struct loop_inter *inter;
@@ -1609,7 +1609,7 @@ isect_2D_loop_ray( point2d_t pta, point2d_t dir, struct bu_ptbl *loop, struct lo
 							(*root) = inter;
 						}
 					}
-					
+
 				} else {
 					point2d_t ra, rb;
 					vect_t s2m, tmp_dir;
@@ -1798,7 +1798,7 @@ classify_sketch_loops( struct bu_ptbl *loopa, struct bu_ptbl *loopb, struct rt_s
 	V2SUB2( dir, ptb, pta );
 	inv_len = 1.0 / sqrt( MAGSQ_2D( dir ) );
 	V2SCALE( dir, dir, inv_len );
-	
+
 	/* intersect pta<->ptb line with both loops */
         isect_2D_loop_ray( pta, dir, loopa, &inter_root, LOOPA, ip, &tol );
 	isect_2D_loop_ray( pta, dir, loopb, &inter_root, LOOPB, ip, &tol );
@@ -1986,7 +1986,7 @@ rt_extrude_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip
 	if( !outer_loop ) {
 		bu_log( "No outer loop in sketch %s\n", extrude_ip->sketch_name );
 		bu_log( "\ttessellation failed\n" );
-		for( i=0 ; i<BU_PTBL_END( &loops ) ; i++ ) { 
+		for( i=0 ; i<BU_PTBL_END( &loops ) ; i++ ) {
 		}
 		for( i=0 ; i<BU_PTBL_END( &loops ) ; i++ ) {
 			aloop = (struct bu_ptbl *)BU_PTBL_GET( &loops, i );
@@ -2406,7 +2406,7 @@ rt_extrude_describe(struct bu_vls *str, const struct rt_db_internal *ip, int ver
 	sprintf( buf, "\tsketch name: %s\n",
 		extrude_ip->sketch_name );
 	bu_vls_strcat( str, buf );
-	
+
 
 	return(0);
 }
@@ -2509,7 +2509,7 @@ rt_extrude_xform(
 		bu_mem_barriercheck();
 	}
 
-	return( 0 );		
+	return( 0 );
 }
 
 int

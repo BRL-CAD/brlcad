@@ -1,4 +1,27 @@
-.TH ANIM_CASCADE 1 BRL/CAD
+.TH ANIM_CASCADE 1 BRL-CAD
+./"                 A N I M _ C A S C A D E . 1
+./" BRL-CAD
+./"
+./" Copyright (c) 1993-2005 United States Government as represented by
+./" the U.S. Army Research Laboratory.
+./"
+./" This document is made available under the terms of the GNU Free
+./" Documentation License or, at your option, under the terms of the
+./" GNU General Public License as published by the Free Software
+./" Foundation.  Permission is granted to copy, distribute and/or
+./" modify this document under the terms of the GNU Free Documentation
+./" License, Version 1.2 or any later version published by the Free
+./" Software Foundation; with no Invariant Sections, no Front-Cover
+./" Texts, and no Back-Cover Texts.  Permission is also granted to
+./" redistribute this document under the terms of the GNU General
+./" Public License; either version 2 of the License, or (at your
+./" option) any later version.
+./"
+./" You should have received a copy of the GNU Free Documentation
+./" License and/or the GNU General Public License along with this
+./" document; see the file named COPYING for more information.
+./"
+./"./"./"
 .SH NAME
 anim_cascade - evaluate movement of an object relative to a moving frame of
 reference
@@ -10,10 +33,10 @@ reference
 .I Anim_cascade
 is designed to enable the user to control the movement of objects relative to
 other objects. In the normal mode of operation, the user supplies
-the position and orientation of a (possibly moving) frame of reference and 
-the position 
+the position and orientation of a (possibly moving) frame of reference and
+the position
 and orientation of an object relative to the frame of reference,
-and 
+and
 .I anim_cascade
 produces the absolute position and orientation of the object at each
 point in time.
@@ -31,13 +54,13 @@ and orientation of the object relative to the frame, and "a"
 refers to the absolute position and orientation of the object.
 
 .SH OPTIONS
-.TP 
-.B \-or 
-Output the relative position and orientation. 
-If this option is specified, 
+.TP
+.B \-or
+Output the relative position and orientation.
+If this option is specified,
 .I anim_cascade
 will expect the absolute position and orientation of the frame of
-reference and the object as input, 
+reference and the object as input,
 and will produce the position and orientation or the object relative to
 the frame as output. The
 input columns should be:
@@ -48,13 +71,13 @@ and the output columns will be:
 .sp
 time rx ry rz ryaw rpitch rroll
 .sp
-.TP 
+.TP
 .B \-of
 Output the frame of reference.
-If this option is specified, 
+If this option is specified,
 .I anim_cascade
 will expect the absolute and relative positions and orientations of the
-object as input, 
+object as input,
 and will produce the corresponding frame of reference as output.
 The input columns should be:
 .sp
@@ -64,64 +87,64 @@ and the output columns will be:
 .sp
 time fx fy fz fyaw fpitch froll
 .sp
-.TP 
+.TP
 .B \-fc # # #
 Specify a constant position for the frame of reference. The
 columns fx, fy, and fz should be omitted from the input table, and the
-command-line arguments will be used instead. 
+command-line arguments will be used instead.
 This has no effect if used
-in conjunction with 
+in conjunction with
 .B -of
-.TP 
+.TP
 .B \-fy # # #
 Specify a constant orientation for the frame of reference. The
-columns fyaw, fpitch, and froll should be omitted from the input table, 
+columns fyaw, fpitch, and froll should be omitted from the input table,
 and the command-line arguments will be used instead.
 This has no effect if used
-in conjunction with 
+in conjunction with
 .BR -of .
-.TP 
+.TP
 .B \-rc # # #
 Specify a constant position of the object relative to the frame
-of reference. The 
+of reference. The
 columns rx, ry, and rz should be omitted from the input table, and the
 command-line arguments will be used instead.
 This has no effect if used
-in conjunction with 
+in conjunction with
 .BR -or .
-.TP 
+.TP
 .B \-ry # # #
-Specify a constant orientation of the object relative to the 
+Specify a constant orientation of the object relative to the
 frame of reference. The
-columns ryaw,  rpitch, and rroll should be omitted from the input table, 
+columns ryaw,  rpitch, and rroll should be omitted from the input table,
 and the command-line arguments will be used instead.
 This has no effect if used
-in conjunction with 
+in conjunction with
 .BR -or .
-.TP 
+.TP
 .B \-ac # # #
-Specify a constant absolute position for the object. The 
+Specify a constant absolute position for the object. The
 columns ax, ay, and az should be omitted from the input table, and the
 command-line arguments will be used instead.
-This has no effect unless used 
-in conjunction with 
+This has no effect unless used
+in conjunction with
 .B -or
 or
 .BR -of .
-.TP 
+.TP
 .B \-ay # # #
 Specify a constant absolute orientation for the object. The
-columns ayaw, apitch, and aroll should be omitted from the input table, 
+columns ayaw, apitch, and aroll should be omitted from the input table,
 and the
 command-line arguments will be used instead.
-This has no effect unless used 
-in conjunction with 
+This has no effect unless used
+in conjunction with
 .B -or
-or 
+or
 .BR -of .
 .TP
 .B \-s
-Suppress time column. No time column is read or written. 
+Suppress time column. No time column is read or written.
 .sp
 Note: When all of the input columns are specified with command-line arguments,
 then standard input is not read and
@@ -129,7 +152,7 @@ only one line of output is produced. The time value will be set to zero,
 unless it is suppressed.
 
 .SH EXAMPLES
-1. Suppose that you want the virtual camera to pan in a circle around a 
+1. Suppose that you want the virtual camera to pan in a circle around a
 moving vehicle, always staying a fixed distance from the vehicle.
 There should already exist an animation table with the time, position,
 and orientation of the vehicle in each frame. This will be the moving
@@ -137,20 +160,20 @@ frame of reference. Next, you should create an animation table which
 describes how the camera would need to move if the vehicle stood still
 at the origin. The columns of the second animation table should be
 appended to the columns of the first table
-(using 
-.IR paste , 
+(using
+.IR paste ,
 for example), to create the
-input table. 
-.I Anim_cascade 
+input table.
+.I Anim_cascade
 will produce an absolute animation table for
-the camera, suitable to use as input to 
+the camera, suitable to use as input to
 .IR anim_script :
 .sp
 anim_cascade < input.table | anim_script -v500 > view.script
 .sp
 2. Suppose that you have an animation path for an object and you want to
-know when it crosses a given oblique plane. You can use the 
-.B -or 
+know when it crosses a given oblique plane. You can use the
+.B -or
 option to
 find out what the position of the object is relative to the frame of
 reference of the plane. Suppose that the plane is defined by the

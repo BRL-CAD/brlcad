@@ -32,7 +32,7 @@
  *	eqptr	Null or the pointer to a equation for generating a curve
  *
  * Exit:
- *	map	is filled using eqptr 
+ *	map	is filled using eqptr
  *
  * Uses:
  *	EqCubics	x,A,B,C,D of a set of cubics for a curve
@@ -154,7 +154,7 @@ eq_cubic(int x)
 		return(x);
 	}
 	while (x >= (p+1)->x) p++;
-	
+
 	y = ((p->D * (x - p->x) + p->C) * (x - p->x) + p->B)
 	    * (x - p->x) + p->A;
 
@@ -187,7 +187,7 @@ eq_cubic(int x)
  *		    Albert C. Reynalds.
  *
  * I.e.  I don't have a clue to what is going on...... :-(
- *	
+ *
  */
 void
 cubic_init(int n, int *x, int *y)

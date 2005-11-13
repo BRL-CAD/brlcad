@@ -45,7 +45,7 @@ proc solid_illum {spath {ri 1}} {
 	    _mged_press sill
 	}
     }
-    
+
     _mged_ill -n -i $ri $spath
 }
 

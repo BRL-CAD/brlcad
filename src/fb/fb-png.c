@@ -20,13 +20,13 @@
  *
  */
 /** @file fb-png.c
- *  
+ *
  *  Program to take a frame buffer image and write a PNG (Portable Network Graphics) format file.
- *  
+ *
  *  Authors -
  *	John R. Anderson
  *	Michael John Muuss
- *  
+ *
  *  Source -
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
@@ -38,14 +38,14 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "common.h"
 
-
-
 #include <stdio.h>
 #include <sys/stat.h>
+
 #include "png.h"
 #include "machine.h"
 #include "bu.h"
 #include "fb.h"
+
 
 static unsigned char	*scanline;	/* scanline pixel buffers */
 static int	scanbytes;		/* # of bytes of scanline */
@@ -75,7 +75,7 @@ get_args(int argc, register char **argv)
 {
 	register int c;
 
-	while ( (c = getopt( argc, argv, "chiF:s:w:n:g:#:" )) != EOF )  {
+	while ( (c = bu_getopt( argc, argv, "chiF:s:w:n:g:#:" )) != EOF )  {
 		switch( c )  {
 		case 'c':
 			crunch = 1;
@@ -88,23 +88,23 @@ get_args(int argc, register char **argv)
 			inverse = 1;
 			break;
 		case 'F':
-			framebuffer = optarg;
+			framebuffer = bu_optarg;
 			break;
 		case 's':
 			/* square size */
-			screen_height = screen_width = atoi(optarg);
+			screen_height = screen_width = atoi(bu_optarg);
 			break;
 		case 'w':
-			screen_width = atoi(optarg);
+			screen_width = atoi(bu_optarg);
 			break;
 		case 'n':
-			screen_height = atoi(optarg);
+			screen_height = atoi(bu_optarg);
 			break;
 		case 'g':
-			out_gamma = atof(optarg);
+			out_gamma = atof(bu_optarg);
 			break;
 		case '#':
-			pixbytes = atoi(optarg);
+			pixbytes = atoi(bu_optarg);
 			if( pixbytes != 1 && pixbytes != 3 )
 				bu_bomb("fb-png: Only able to handle 1 and 3 byte pixels\n");
 			break;
@@ -114,13 +114,13 @@ get_args(int argc, register char **argv)
 		}
 	}
 
-	if( optind >= argc )  {
+	if( bu_optind >= argc )  {
 		if( isatty(fileno(stdout)) )
 			return(0);
 		file_name = "-";
 		outfp = stdout;
 	} else {
-		file_name = argv[optind];
+		file_name = argv[bu_optind];
 		if( (outfp = fopen(file_name, "w")) == NULL )  {
 			(void)fprintf( stderr,
 				"fb-png: cannot open \"%s\" for writing\n",
@@ -130,7 +130,7 @@ get_args(int argc, register char **argv)
 		(void)chmod(file_name, 0444);
 	}
 
-	if ( argc > ++optind )
+	if ( argc > ++bu_optind )
 		(void)fprintf( stderr, "fb-png: excess argument(s) ignored\n" );
 
 	return(1);		/* OK */

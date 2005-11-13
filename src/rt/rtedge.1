@@ -1,5 +1,28 @@
-.\" @(#) $Header$ (BRL)
 .TH RTEDGE 1 BRL-CAD
+./"                       R T E D G E . 1
+./" BRL-CAD
+./"
+./" Copyright (c) 2001-2005 United States Government as represented by
+./" the U.S. Army Research Laboratory.
+./"
+./" This document is made available under the terms of the GNU Free
+./" Documentation License or, at your option, under the terms of the
+./" GNU General Public License as published by the Free Software
+./" Foundation.  Permission is granted to copy, distribute and/or
+./" modify this document under the terms of the GNU Free Documentation
+./" License, Version 1.2 or any later version published by the Free
+./" Software Foundation; with no Invariant Sections, no Front-Cover
+./" Texts, and no Back-Cover Texts.  Permission is also granted to
+./" redistribute this document under the terms of the GNU General
+./" Public License; either version 2 of the License, or (at your
+./" option) any later version.
+./"
+./" You should have received a copy of the GNU Free Documentation
+./" License and/or the GNU General Public License along with this
+./" document; see the file named COPYING for more information.
+./"
+./"./"./"
+.\" @(#) $Header$ (BRL)
 .UC 4
 .SH NAME
 rtedge \(em ray-traces a model, detects edges, and writes a BRL-CAD
@@ -17,8 +40,8 @@ operates on the indicated
 in the input
 .I model.g
 and produces a BRL-CAD .pix file that indicates the 'edges' in the model
-file.  
-.I Rtedge 
+file.
+.I Rtedge
 produces images by drawing a
 boundary whenever a change in region_id is detected.  It also recognizes
 and portrays abrupt changes in surface curvature and changes in surface
@@ -53,12 +76,12 @@ The following options are recognized.
 .B \-s#
 Number of rays to fire in X and Y directions (square grid).
 Default is 512 (512x512).
-.TP 
+.TP
 .B \-F framebuffer
 Indicates that the output should be sent to the
-indicated framebuffer. See  
+indicated framebuffer. See
 .IR
-libfb (3)  
+libfb (3)
 for more details on the specification of a framebuffer.
 .TP
 .B \-a#
@@ -91,9 +114,9 @@ Select grid cell width.
 Select grid cell height.  If \fInot\fR specified, cell height equals
 cell width.
 .TP
-.B \-P# 
-Specify the maximum  number  of  processors  (in  a multi\-processor  
-system) to be used for this execution.  
+.B \-P#
+Specify the maximum  number  of  processors  (in  a multi\-processor
+system) to be used for this execution.
 .TP
 .B \-U#
 sets the Boolean variable
@@ -113,8 +136,8 @@ background.
 Set librt debug flags to (hexadecimal) number.
 .TP
 .B \-c
-Set special 
-.I rtedge 
+Set special
+.I rtedge
 configuration variables.
 .LP
 The
@@ -122,24 +145,24 @@ The
 program is a simple front-end to
 .IR librt (3).
 .SH ADDITIONAL OPTIONS
-.I Rtedge 
+.I Rtedge
 replaces
-.IR lgt (1). 
-In addition to the simple white edges on a black background 
+.IR lgt (1).
+In addition to the simple white edges on a black background
 (or black on white) provided by
-.I lgt, 
+.I lgt,
 .
 .I rtedge
-allows arbitrary color combinations. It also allows 
-rendering into an existing framebuffer and occlusion 
+allows arbitrary color combinations. It also allows
+rendering into an existing framebuffer and occlusion
 detection between two pieces of geometry.
 To configure its behavior,
 .I rtedge
-makes copious use of the \-c option. 
+makes copious use of the \-c option.
 
 Note that this approach is necessitated by the fact that
 .I librt (3)
-has used up nearly the entire alphabet. A transition to 
+has used up nearly the entire alphabet. A transition to
 GNU\-style long option names is planned.
 .TP
 .B \-c"set foreground=#,#,#"
@@ -148,15 +171,15 @@ and
 .TP
 .B \-c"set fg=#,#,#"
 set the color of the foreground (edges) to the
-given  r,g,b triple. The default is white 
-(255,255,255). 
+given  r,g,b triple. The default is white
+(255,255,255).
 .TP
 .B \-c"set background=#,#,#"
 
 and
 .TP
 .B \-c"set bg=#,#,#"
-set the color of the background to the r,g,b 
+set the color of the background to the r,g,b
 triple. The default is near-black (0,0,1).
 .TP
 .B \-c"set region_colors=#
@@ -167,7 +190,7 @@ and
 determine whether to use the material color
 assigned to an object as the edge color. Valid
 values are 1 (on) and 0 (off). The default is
-off. Using region colors overides any 
+off. Using region colors overides any
 foreground color setting.
 .TP
 .B \-c"set detect_regions=#"
@@ -185,25 +208,25 @@ and
 .TP
 .B \-c"set dd=#"
 determine whether a difference in hit distance between
-adjacent pixels defines an edge. Valid values are 1 (on) 
+adjacent pixels defines an edge. Valid values are 1 (on)
 and 0 (off). The default is on.
 .TP
 .B \-c"set detect_normals"
 
 and
 .TP
-.B \-c"set dn=#" 
-determine whether a difference in surface normals 
-between adjacent pixels defines an edge. Valid values 
+.B \-c"set dn=#"
+determine whether a difference in surface normals
+between adjacent pixels defines an edge. Valid values
 are 1 (on) and 0 (off). The default is on.
 .TP
 .B \-c"set detect_ids"
 
 and
 .TP
-.B \-c"set di=#" 
-determine whether a difference in component id numbers 
-between adjacent pixels defines an edge. Valid values 
+.B \-c"set di=#"
+determine whether a difference in component id numbers
+between adjacent pixels defines an edge. Valid values
 are 1 (on) and 0 (off). The default is on.
 .TP
 .B \-c"set overlaymode=#"
@@ -211,8 +234,8 @@ are 1 (on) and 0 (off). The default is on.
 and
 .TP
 .B \-c"set ov=#"
-configure the overlay mode to be either on (1) or off (0). 
-Overlay mode allows 
+configure the overlay mode to be either on (1) or off (0).
+Overlay mode allows
 .I rtedge
 to write into an existing framebuffer. The framebuffer is
 specified with the \-F option.
@@ -220,26 +243,26 @@ specified with the \-F option.
 .SH OCCLUSION CHECKING
 .I Rtedge
 has ability to perform occlusion checking between
-two sets of BRL-CAD objects from the same database. 
+two sets of BRL-CAD objects from the same database.
 Occlusion checking determines which set of geometry is closer
-to the eyepoint and thus should be rendered. The first 
+to the eyepoint and thus should be rendered. The first
 set is that specified in the basic object list (after the
 database). This set will be rendered using edge detection.
 The second is specified using a \-c option.
 
-Occlusion checking is most handy when combining 
+Occlusion checking is most handy when combining
 .I rtedge
 renderings with
-.I rt 
+.I rt
 renderings. The syntax for such compositions
-is daunting, but the results are cool. 
+is daunting, but the results are cool.
 .TP
 .B \-c"set occlusion_objects=\"obj1 obj2 ... objN\" "
 
 and
 .TP
 .B \-c"set oo=\"obj1 obj2 ... objN\" "
-specify the second set of geometry. 
+specify the second set of geometry.
 .TP
 .B \-c"set occlusion_mode=#"
 
@@ -252,7 +275,7 @@ behaves when performing occlusion checking. There are three
 valid modes. Mode 2 is the default.
 
 .B mode 1 \-
-An edge detected in the first set of geometry is written to 
+An edge detected in the first set of geometry is written to
 the framebuffer if and only if it occludes the second set of
 geometry. The edge is colored according to the foreground or
 region colors options.
@@ -260,36 +283,36 @@ region colors options.
 .B mode 2 \-
 All pixels that hit the first set of geometry that are not
 occluded by the second set are written to the framebuffer.
-Edges are rendered in the foreground or region color, non-edges 
-are rendered in the background color. 
+Edges are rendered in the foreground or region color, non-edges
+are rendered in the background color.
 
 .B mode 3 \-
-Like mode 2 except non-edge pixels are dithered to make the 
+Like mode 2 except non-edge pixels are dithered to make the
 geometry semi-transparent.
 
 .SH EXAMPLES
 .I Rtedge
-can be somewhat complicated to configure. These examples 
-illustrate both simple and complex examples. Hopefully 
+can be somewhat complicated to configure. These examples
+illustrate both simple and complex examples. Hopefully
 they will be enough to get you started. These examples use
 the havoc.g target description that may be found in the
 source distribution.
 
 Note that in practice it will usually be easiest to use the
-.I saveview 
+.I saveview
 command in
 .I mged
-to produce a script and then modify that script to run 
+to produce a script and then modify that script to run
 .I rtedge.
 
 .nf
 	\fBrtedge -s 1024 -Fnew.pix havoc.g havoc\fR
 .fi
 
-results in a 1024 by 1024 BRL-CAD image file showing the 
+results in a 1024 by 1024 BRL-CAD image file showing the
 edges on a Havoc helicopter. The default settings are used,
 so the image has white edges on a black background. Edges
-exist where there are differences in component id, hit 
+exist where there are differences in component id, hit
 distance, surface normal, or between hits and misses.
 
 The command
@@ -299,7 +322,7 @@ The command
 .fi
 
 changes the edge color to be green and the background color to
-be red. 
+be red.
 
 The command
 
@@ -316,18 +339,18 @@ The remaining examples will illustrate how to use
 in concert with
 .I rt
 to produce interesting images. When merging
-.I rtedge 
-and 
+.I rtedge
+and
 .I rt
-images, it is best to use 
+images, it is best to use
 .I saveview
 scripts. In
 .I mged
 configure your view, save it, and then open the file in a editor.
-Dupilcate the 
+Dupilcate the
 .I rt
 command block. After duplicating the block, change the second
-to 
+to
 .I rtedge.
 
 This script will overlay bright orange edges on the Havoc.
@@ -339,7 +362,7 @@ rt -M -s1280 -Fnew.pix -C255/255/255\\
  havoc.g\\
  havoc\\
  2>> example1.log\\
- <<EOF 
+ <<EOF
 viewsize 8.000e+03;
 orientation 2.4809e-01 4.7650e-01 7.4809e-01 3.8943e-01;
 eye_pt 2.2146e+04 7.1103e+03 7.1913e+03;
@@ -406,11 +429,11 @@ end;
 EOF
 .fi
 
-In general, if you are mixing 
-.I rt 
+In general, if you are mixing
+.I rt
 and
 .I rtedge
-renderings, and the objects being rendered are different, 
+renderings, and the objects being rendered are different,
 occlusion checking should be used.
 .SH "SEE ALSO"
 mged(1), rt(1), fbserv(1), librt(3)

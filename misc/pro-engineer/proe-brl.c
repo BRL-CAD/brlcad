@@ -565,7 +565,7 @@ create_unique_name( char *name )
 		if( logger ) {
 			fprintf( logger, "\tCreating rb tree for brlcad names\n" );
 		}
-		brlcad_names = bu_rb_create1( "brl-cad names", strcmp );
+		brlcad_names = bu_rb_create1( "BRL-CAD names", strcmp );
 		bu_rb_uniq_all_on( brlcad_names );
 	}
 
@@ -1392,7 +1392,7 @@ Subtract_hole()
 			}
 			bu_vls_init( &csg->name );
 			bu_vls_init( &csg->dbput );
-			
+
 			csg->operator = '-';
 			hole_no++;
 			bu_vls_printf( &csg->name, "hole.%d ", hole_no );
@@ -1430,7 +1430,7 @@ Subtract_hole()
 			}
 			bu_vls_init( &csg->name );
 			bu_vls_init( &csg->dbput );
-			
+
 			csg->operator = '-';
 			hole_no++;
 			bu_vls_printf( &csg->name, "hole.%d ", hole_no );
@@ -1469,7 +1469,7 @@ Subtract_hole()
 		}
 		bu_vls_init( &csg->name );
 		bu_vls_init( &csg->dbput );
-			
+
 		csg->operator = '-';
 		hole_no++;
 		bu_vls_printf( &csg->name, "hole.%d ", hole_no );
@@ -1507,7 +1507,7 @@ Subtract_hole()
 			}
 			bu_vls_init( &csg->name );
 			bu_vls_init( &csg->dbput );
-			
+
 			csg->operator = '-';
 			hole_no++;
 			bu_vls_printf( &csg->name, "hole.%d ", hole_no );
@@ -1702,7 +1702,7 @@ feature_filter( ProFeature *feat, ProAppData data )
 	ProMdl model = (ProMdl)data;
 
 	if( (ret=ProFeatureTypeGet( feat, &curr_feat_type )) != PRO_TK_NO_ERROR ) {
-		
+
 		fprintf( stderr, "ProFeatureTypeGet Failed for %s!!\n", curr_part_name );
 		return ret;
 	}
@@ -1772,7 +1772,7 @@ output_csg_prims()
 	while( ptr ) {
 		if( logger ) {
 			fprintf( logger, "Creating primitive: %s %s\n",
-				 bu_vls_addr( &ptr->name ), bu_vls_addr( &ptr->dbput ) );	 
+				 bu_vls_addr( &ptr->name ), bu_vls_addr( &ptr->dbput ) );
 		}
 
 		fprintf( outfp, "put {%s} %s", bu_vls_addr( &ptr->name ), bu_vls_addr( &ptr->dbput ) );
@@ -1933,7 +1933,7 @@ output_part( ProMdl model )
 										fprintf( logger,
 											 "\tsuppressed parents for feature %d not found\n",
 											 feat_ids_to_delete[i] );
-										
+
 									} else {
 										fprintf( logger,
 											 "\tfeature id %d unsuppression failed\n",
@@ -2089,7 +2089,7 @@ output_part( ProMdl model )
 			fprintf( outfp, " } F {" );
 			for( i=0 ; i<curr_tri ; i++ ) {
 				fprintf( outfp, " {%d %d %d}", part_tris[i][0],
-					 part_tris[i][1], part_tris[i][2] ); 
+					 part_tris[i][1], part_tris[i][2] );
 			}
 			if( get_normals ) {
 				if( logger ) {
@@ -2106,7 +2106,7 @@ output_part( ProMdl model )
 				fprintf( outfp, " } fn {" );
 				for( i=0 ; i<curr_tri ; i++ ) {
 					fprintf( outfp, " {%d %d %d}", part_norms[i*3],
-						 part_norms[i*3+1], part_norms[i*3+2] ); 
+						 part_norms[i*3+1], part_norms[i*3+2] );
 				}
 			}
 			fprintf( outfp, " }\n" );
@@ -2166,7 +2166,7 @@ output_part( ProMdl model )
 			if( status == PRO_TK_NO_ERROR ) {
 				fprintf( outfp, "attr set {%s} material_name {%s}\n",
 					 get_brlcad_name( curr_part_name ),
-					 ProWstringToString( str, material ) ); 
+					 ProWstringToString( str, material ) );
 
 				/* get the density for this material */
 				status = ProPartMaterialdataGet( ProMdlToPart(model), material, &material_props );
@@ -2764,14 +2764,14 @@ create_temp_directory()
 
 	status = ProUIPushbuttonActivateActionSet( "proe_brl", "doit", doit, NULL );
 	if( status != PRO_TK_NO_ERROR ) {
-		fprintf( stderr, "Failed to set action for 'Go' button\n" );	
+		fprintf( stderr, "Failed to set action for 'Go' button\n" );
 		ProUIDialogDestroy( "proe_brl" );
 		return( 0 );
 	}
 
 	status = ProUIPushbuttonActivateActionSet( "proe_brl", "quit", do_quit, NULL );
 	if( status != PRO_TK_NO_ERROR ) {
-		fprintf( stderr, "Failed to set action for 'Go' button\n" );	
+		fprintf( stderr, "Failed to set action for 'Go' button\n" );
 		ProUIDialogDestroy( "proe_brl" );
 		return( 0 );
 	}
@@ -2839,7 +2839,7 @@ create_name_hash( FILE *name_fd )
 
 		ptr = strtok( line, " \t\n" );
 		if( !ptr ) {
-			bu_log( "Warning: unrecognizable line in part name file:\n\t%s\n", line );	
+			bu_log( "Warning: unrecognizable line in part name file:\n\t%s\n", line );
 			bu_log( "\tIgnoring\n" );
 			continue;
 		}
@@ -2847,7 +2847,7 @@ create_name_hash( FILE *name_fd )
 		lower_case( part_no );
 		ptr = strtok( (char *)NULL, " \t\n" );
 		if( !ptr ) {
-			bu_log( "Warning: unrecognizable line in part name file:\n\t%s\n", line );	
+			bu_log( "Warning: unrecognizable line in part name file:\n\t%s\n", line );
 			bu_log( "\tIgnoring\n" );
 			continue;
 		}
@@ -3143,7 +3143,7 @@ doit( char *dialog, char *compnent, ProAppData appdata )
 
 		name_hash = create_name_hash( name_fd );
 		fclose( name_fd );
-		
+
 	} else {
 		if( logger ) {
 			fprintf( logger, "No name hash used\n" );
@@ -3386,14 +3386,14 @@ proe_brl( uiCmdCmdId command, uiCmdValue *p_value, void *p_push_cmd_data )
 
 	status = ProUIPushbuttonActivateActionSet( "proe_brl", "doit", doit, NULL );
 	if( status != PRO_TK_NO_ERROR ) {
-		fprintf( stderr, "Failed to set action for 'Go' button\n" );	
+		fprintf( stderr, "Failed to set action for 'Go' button\n" );
 		ProUIDialogDestroy( "proe_brl" );
 		return( 0 );
 	}
 
 	status = ProUIPushbuttonActivateActionSet( "proe_brl", "quit", do_quit, NULL );
 	if( status != PRO_TK_NO_ERROR ) {
-		fprintf( stderr, "Failed to set action for 'Go' button\n" );	
+		fprintf( stderr, "Failed to set action for 'Go' button\n" );
 		ProUIDialogDestroy( "proe_brl" );
 		return( 0 );
 	}

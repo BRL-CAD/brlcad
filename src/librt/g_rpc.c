@@ -26,46 +26,46 @@
  *	Intersect a ray with a Right Parabolic Cylinder.
  *
  *  Algorithm -
- *  
+ *
  *  Given V, H, R, and B, there is a set of points on this rpc
- *  
+ *
  *  { (x,y,z) | (x,y,z) is on rpc }
- *  
+ *
  *  Through a series of Affine Transformations, this set of points will be
  *  transformed into a set of points on an rpc located at the origin
  *  with a rectangular halfwidth R of 1 along the Y axis, a height H of +1
  *  along the -X axis, a distance B of 1 along the -Z axis between the
  *  vertex V and the tip of the parabola.
- *  
- *  
+ *
+ *
  *  { (x',y',z') | (x',y',z') is on rpc at origin }
  *
  *  The transformation from X to X' is accomplished by:
- *  
+ *
  *  X' = S(R( X - V ))
- *  
+ *
  *  where R(X) =  ( H/(-|H|) )
  *  		 (  R/( |R|)  ) . X
  *  		  ( B/(-|B|) )
- *  
+ *
  *  and S(X) =	 (  1/|H|   0     0   )
  *  		(    0    1/|R|   0    ) . X
  *  		 (   0      0   1/|B| )
- *  
+ *
  *  To find the intersection of a line with the surface of the rpc,
  *  consider the parametric line L:
- *  
+ *
  *  	L : { P(n) | P + t(n) . D }
- *  
+ *
  *  Call W the actual point of intersection between L and the rpc.
  *  Let W' be the point of intersection between L' and the unit rpc.
- *  
+ *
  *  	L' : { P'(n) | P' + t(n) . D' }
- *  
+ *
  *  W = invR( invS( W' ) ) + V
- *  
+ *
  *  Where W' = k D' + P'.
- *  
+ *
  *  If Dy' and Dz' are both 0, then there is no hit on the rpc;
  *  but the end plates need checking.  If there is now only 1 hit
  *  point, the top plate needs to be checked as well.
@@ -82,21 +82,21 @@
  *  b = |Breadth| = 1.0
  *  h = |Height| = 1.0
  *  r = 1.0
- *  
+ *
  *  The quadratic formula yields k (which is constant):
  *
  *  k = [ -B +/- sqrt( B**2 - 4*A*C )] / (2*A)
- *  
+ *
  *  Now, D' = S( R( D ) )
  *  and  P' = S( R( P - V ) )
- *  
+ *
  *  Substituting,
- *  
+ *
  *  W = V + invR( invS[ k *( S( R( D ) ) ) + S( R( P - V ) ) ] )
  *    = V + invR( ( k * R( D ) ) + R( P - V ) )
  *    = V + k * D + P - V
  *    = k * D + P
- *  
+ *
  *  Note that ``k'' is constant, and is the same in the formulations
  *  for both W and W'.
  *
@@ -105,16 +105,16 @@
  *
  *  NORMALS.  Given the point W on the surface of the rpc,
  *  what is the vector normal to the tangent plane at that point?
- *  
+ *
  *  Map W onto the unit rpc, ie:  W' = S( R( W - V ) ).
- *  
+ *
  *  Plane on unit rpc at W' has a normal vector N' where
  *
  *  N' = <0, Wy', -.5>.
- *  
+ *
  *  The plane transforms back to the tangent plane at W, and this
  *  new plane (on the original rpc) has a normal vector of N, viz:
- *  
+ *
  *  N = inverse[ transpose( inverse[ S o R ] ) ] ( N' )
  *
  *  because if H is perpendicular to plane Q, and matrix M maps from
@@ -156,12 +156,12 @@
  *
  *  Authors -
  *	Michael J. Markowski
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5066
- *  
+ *
  */
 /*@}*/
 
@@ -204,18 +204,18 @@ const struct bu_structparse rt_rpc_parse[] = {
     { "%f", 1, "r", offsetof(struct rt_rpc_internal, rpc_r),    BU_STRUCTPARSE_FUNC_NULL },
     { {'\0','\0','\0','\0'}, 0, (char *)NULL, 0, BU_STRUCTPARSE_FUNC_NULL }
  };
-	    
+
 /**
  *  			R T _ R P C _ P R E P
- *  
+ *
  *  Given a pointer to a GED database record, and a transformation matrix,
  *  determine if this is a valid RPC, and if so, precompute various
  *  terms of the formula.
- *  
+ *
  *  Returns -
  *  	0	RPC is OK
  *  	!0	Error in description
- *  
+ *
  *  Implicit return -
  *  	A struct rpc_specific is created, and it's address is stored in
  *  	stp->st_specific for use by rpc_shot().
@@ -306,7 +306,7 @@ rt_rpc_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 	stp->st_bradius = 0.5 * sqrt(magsq_h + 4.0*magsq_r + magsq_b);
 	/* approximate bounding radius */
 	stp->st_aradius = stp->st_bradius;
-	
+
 	/* cheat, make bounding RPP by enclosing bounding sphere */
 	stp->st_min[X] = stp->st_center[X] - stp->st_bradius;
 	stp->st_max[X] = stp->st_center[X] + stp->st_bradius;
@@ -343,11 +343,11 @@ rt_rpc_print(register const struct soltab *stp)
 
 /**
  *  			R T _ R P C _ S H O T
- *  
+ *
  *  Intersect a ray with a rpc.
  *  If an intersection occurs, a struct seg will be acquired
  *  and filled in.
- *  
+ *
  *  Returns -
  *  	0	MISS
  *	>0	HIT
@@ -452,7 +452,7 @@ check_plates:
 			hitp++;
 		}
 	}
-	
+
 	/* check top plate */
 	if( hitp == &hits[1]  &&  !NEAR_ZERO(dprime[Z], RT_PCOEF_TOL) )  {
 		/* 1 hit so far, this is worthwhile */
@@ -468,7 +468,7 @@ check_plates:
 			hitp++;
 		}
 	}
-	
+
 	if( hitp != &hits[2] )
 		return(0);	/* MISS */
 
@@ -507,14 +507,14 @@ rt_rpc_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
            		       /* An array of ray pointers */
                                /* array of segs (results returned) */
    		  	       /* Number of ray/object pairs */
-                  	    
+
 {
 	rt_vstub( stp, rp, segp, n, ap );
 }
 
 /**
- *  			R T _ R P C _ N O R M	
- *  
+ *  			R T _ R P C _ N O R M
+ *
  *  Given ONE ray distance, return the normal and entry/exit point.
  */
 void
@@ -580,7 +580,7 @@ rt_rpc_curve(register struct curvature *cvp, register struct hit *hitp, struct s
 
 /**
  *  			R T _ R P C _ U V
- *  
+ *
  *  For a hit on the surface of an rpc, return the (u,v) coordinates
  *  of the hit point, 0 <= u,v <= 1.
  *  u = azimuth
@@ -824,10 +824,10 @@ rt_rpc_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 		RT_ADD_VLIST( vhead, &front[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_MOVE );
 		RT_ADD_VLIST( vhead, &back[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_DRAW );
 	}
-	
+
 	bu_free( (char *)front, "fastf_t" );
 	bu_free( (char *)back,  "fastf_t" );
-                                                                                                        
+
 	return(0);
 }
 
@@ -848,7 +848,7 @@ rt_mk_parabola(struct rt_pt_node *pts, fastf_t r, fastf_t b, fastf_t dtol, fastf
 	point_t	mpt, p0, p1;
 	vect_t	norm_line, norm_parab;
 	struct rt_pt_node *new, *rt_ptalloc(void);
-	
+
 #define RPC_TOL .0001
 	/* endpoints of segment approximating parabola */
 	VMOVE( p0, pts->p );
@@ -900,7 +900,7 @@ struct rt_pt_node *
 rt_ptalloc(void)
 {
 	struct rt_pt_node *mem;
-	
+
 	mem = (struct rt_pt_node *)bu_malloc(sizeof(struct rt_pt_node), "rt_pt_node");
 	if (!mem) {
 		fprintf(stderr, "rt_ptalloc: no more memory!\n");
@@ -1033,7 +1033,7 @@ rt_rpc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 		fprintf(stderr, "rt_rpc_tess: no memory!\n");
 		exit(-1);
 	}
-	
+
 	/* generate front & back plates in world coordinates */
 	r_sq_over_b = rh * rh / b;
 	pos = pts;
@@ -1175,7 +1175,7 @@ rt_rpc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 
 	/* Compute "geometry" for region and shell */
 	nmg_region_a( *r, tol );
-	
+
 	/* free mem */
 	bu_free( (char *)front, "fastf_t");
 	bu_free( (char *)back, "fastf_t");
@@ -1258,7 +1258,7 @@ rt_rpc_export(struct bu_external *ep, const struct rt_db_internal *ip, double lo
 
 	mag_b = MAGNITUDE( xip->rpc_B );
 	mag_h = MAGNITUDE( xip->rpc_H );
-	
+
 	if( mag_b < RT_LEN_TOL || mag_h < RT_LEN_TOL || xip->rpc_r < RT_LEN_TOL) {
 		bu_log("rt_rpc_export: not all dimensions positive!\n");
 		return(-1);
@@ -1346,7 +1346,7 @@ rt_rpc_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
 
 	mag_b = MAGNITUDE( xip->rpc_B );
 	mag_h = MAGNITUDE( xip->rpc_H );
-	
+
 	if( mag_b < RT_LEN_TOL || mag_h < RT_LEN_TOL || xip->rpc_r < RT_LEN_TOL) {
 		bu_log("rt_rpc_export: not all dimensions positive!\n");
 		return(-1);
@@ -1406,7 +1406,7 @@ rt_rpc_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
 		xip->rpc_H[Z] * mm2local,
 		MAGNITUDE(xip->rpc_H) * mm2local);
 	bu_vls_strcat( str, buf );
-	
+
 	sprintf(buf, "\tr=%g\n", xip->rpc_r * mm2local);
 	bu_vls_strcat( str, buf );
 

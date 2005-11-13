@@ -33,7 +33,7 @@
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif
-                                                                                                                                                                            
+
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -44,7 +44,9 @@
 #endif
 
 #include "machine.h"
+#include "bu.h"
 #include "fb.h"
+
 
 char *options = "hd:";
 char *progname = "(noname)";
@@ -80,13 +82,13 @@ int parse_args(int ac, char **av)
 	else
 		++progname;
 
-	/* Turn off getopt's error messages */
+	/* Turn off bu_getopt's error messages */
 	opterr = 0;
 
 	/* get all the option flags from the command line */
-	while ((c=getopt(ac,av,options)) != EOF)
+	while ((c=bu_getopt(ac,av,options)) != EOF)
 		switch (c) {
-		case 'd'	: if ((c=atoi(optarg)) > 0 )
+		case 'd'	: if ((c=atoi(bu_optarg)) > 0 )
 					depth = c;
 				   else
 				   	fprintf(stderr, "bad # of bytes per pixel (%d)\n", c);
@@ -96,7 +98,7 @@ int parse_args(int ac, char **av)
 		default		: usage("Bad or help flag specified\n"); break;
 		}
 
-	return(optind);
+	return(bu_optind);
 }
 /*
  *	M A I N

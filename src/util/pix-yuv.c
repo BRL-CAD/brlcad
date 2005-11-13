@@ -35,7 +35,7 @@
  *  Authors -
  *	Michael John Muuss
  *	Phil Dykstra
- *  
+ *
  *  Source -
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
@@ -82,7 +82,7 @@ get_args(int argc, register char **argv)
 {
 	register int c;
 
-	while ( (c = getopt( argc, argv, "ahs:w:n:" )) != EOF )  {
+	while ( (c = bu_getopt( argc, argv, "ahs:w:n:" )) != EOF )  {
 		switch( c )  {
 		case 'a':
 			autosize = 1;
@@ -94,15 +94,15 @@ get_args(int argc, register char **argv)
 			break;
 		case 's':
 			/* square file size */
-			file_height = file_width = atol(optarg);
+			file_height = file_width = atol(bu_optarg);
 			autosize = 0;
 			break;
 		case 'w':
-			file_width = atol(optarg);
+			file_width = atol(bu_optarg);
 			autosize = 0;
 			break;
 		case 'n':
-			file_height = atoi(optarg);
+			file_height = atoi(bu_optarg);
 			autosize = 0;
 			break;
 
@@ -111,13 +111,13 @@ get_args(int argc, register char **argv)
 		}
 	}
 
-	if( optind >= argc )  {
+	if( bu_optind >= argc )  {
 		if( isatty(fileno(stdin)) )
 			return(0);
 		file_name = "-";
 		infd = fileno(stdin);
 	} else {
-		file_name = argv[optind];
+		file_name = argv[bu_optind];
 		if( (infd = open(file_name, 0)) < 0 )  {
 			perror(file_name);
 			(void)fprintf( stderr,
@@ -128,7 +128,7 @@ get_args(int argc, register char **argv)
 		fileinput++;
 	}
 
-	if ( argc > ++optind )
+	if ( argc > ++bu_optind )
 		(void)fprintf( stderr, "pix-yuv: excess argument(s) ignored\n" );
 
 	return(1);		/* OK */

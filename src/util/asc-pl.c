@@ -25,7 +25,7 @@
  *
  *  Author -
  *	Paul Tanenbaum
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
@@ -112,11 +112,11 @@ main (int argc, char **argv)
 	    continue;
 	if (strchr("aclmnpsCLMNPS", *bp))
 	    nm_args = sscanf(bp + 1, "%d%d%d%d%d%d",
-				&iarg[0], &iarg[1], &iarg[2], 
+				&iarg[0], &iarg[1], &iarg[2],
 				&iarg[3], &iarg[4], &iarg[5]);
 	else if (strchr("ioqrvwxOQVWX", *bp))
 	    nm_args = sscanf(bp + 1, "%lf%lf%lf%lf%lf%lf",
-				&darg[0], &darg[1], &darg[2], 
+				&darg[0], &darg[1], &darg[2],
 				&darg[3], &darg[4], &darg[5]);
 	else if (strchr("ft", *bp))
 	    nm_args = sscanf(bp, "%*[^\"]\"%[^\"]\"", sarg);

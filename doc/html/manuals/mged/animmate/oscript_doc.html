@@ -2,7 +2,7 @@
 <title>AnimMate: Object Animation documentation</title>
 <body>
 <h1><a name="scripts">Animation Scripts</a></h1>
-An <em>animation table</em> is a table of numbers 
+An <em>animation table</em> is a table of numbers
 in which every row corresponds to a
 moment in time, and each column corresponds to an animation parameter
 such as a position or angle. The curve editor, table editor, and view
@@ -20,10 +20,10 @@ This section describes the
 <a href="./oscript.gif">object animation window</a>
 which converts an animation
 table into an animation script controlling the position and orientation
-of an modeled object. See also the  
+of an modeled object. See also the
 <a href="./vscript_doc.html">view animation window</a>, which creates
-scripts to control the view, and the 
-specialized 
+scripts to control the view, and the
+specialized
 <a href="./tscript_doc.html">track animation window</a>, which
 assists in modeling and animating
 articulated tracks.
@@ -39,11 +39,11 @@ The animation tables driving the output script may come from curves,
 view curves, table editors, or files. The type of source is selected
 using the option menu next to the <b>Source</b> label. An appropriate
 source name should then be entered into the associated entry box. The
-source name is simply the name of 
-the curve, view curve, or file, or it is the integer 
+source name is simply the name of
+the curve, view curve, or file, or it is the integer
 identifier of the table editor.
 <p>
-Below the <b>Source</b> label, AnimMate provides a short description 
+Below the <b>Source</b> label, AnimMate provides a short description
 of the parameters that the columns of the source table should provide.
 This
 description changes depending which of the window's options are
@@ -57,7 +57,7 @@ The following codes are used to describe the column contents:
 <pre>
 t               - time column
 x y z           - three columns: object's path through space
-y p r           - three columns: yaw, pitch, and roll 
+y p r           - three columns: yaw, pitch, and roll
 qx qy qz qw     - four columns: quaternion coordinates
 lx ly lz        - three columns: path for object to look toward
 </pre>
@@ -98,7 +98,7 @@ In a similar vein, most objects being animated have a side which is
 considered their front, and similarly sides labeled left, right, top,
 bottom, and back.
 In this case, AnimMate needs to know how the object's
-orientation relates to the model axes. 
+orientation relates to the model axes.
 By default, a yaw, pitch, and roll of
 <code>0 0 0</code> is assumed; that is, AnimMate assumes that
 the front of the object faces the model x-axis,
@@ -108,9 +108,9 @@ pitch, and roll may be entered in the <b>Object yaw,pitch,roll</b> entry box.
 For example, if the object is a car which faces the y-axis, with the
 left side facing the negative x-axis and the top facing the z-axis,
 the user would
-enter a ypr of <code>90 0 0</code>. 
+enter a ypr of <code>90 0 0</code>.
 <p>
-The object yaw, pitch, and roll can be keyboard-edited after 
+The object yaw, pitch, and roll can be keyboard-edited after
 clicking on the
 entry box with the mouse. As an alternative to keyboard entry, the user
 may align the MGED viewing display in the same orientation as
@@ -134,7 +134,7 @@ model origin. For example, if an animation table contains the position
 moves the center of the object (as specified in the <b>Object center</b>
 entry box) to the model origin. If relative displacement were enabled, then
 AnimMate would create a script which left the object in its initial
-position. 
+position.
 <p>
 When relative displacement is enabled, it is still important to fill in
 the <b>Object center</b> entry box, because the center point also
@@ -164,7 +164,7 @@ direction which the front of the object faces.
 If this checkbutton is enabled, then AnimMate will only expect to read
 time and orientation information from the source animation table, and
 the animation script will only rotate the object. The <b>No
-Translation</b> button can only be enabled if either 
+Translation</b> button can only be enabled if either
 <b>Rotation specified as ypr</b> or <b>Rotation specified as
 quat</b> are enabled in the <b>Orientation controls</b> section.
 <b>No Translation</b> is commonly used with <b>Relative Displacement</b>
@@ -177,8 +177,8 @@ orientation of an object:
 <dd>The object will not change orientation during the animation. The
 source animation table only contains time and position columns, while
 the yaw, pitch, and roll are assumed to be zero in every frame.
-If relative orientation is active, then the object will always be 
-in the same orientation it was modeled in. If relative orientation is inactive, 
+If relative orientation is active, then the object will always be
+in the same orientation it was modeled in. If relative orientation is inactive,
 then the object will be turned from its initial orientation (as
 specified with <b>Object yaw,pitch,roll</b>) to a zero yaw, pitch, and
 roll.
@@ -212,8 +212,8 @@ are with respect to the model axes.
 <dt><b><a name="RSAQuat">Rotation specified as quat</a></b>
 <dd>The last four columns of the animation table give the object's
 orientation as a quaternion, in the order x, y, z, w. The convention is
-the same as the quaternions returned by MGED's 
-<a href="viewget.html#quat">viewget quat</a> 
+the same as the quaternions returned by MGED's
+<a href="viewget.html#quat">viewget quat</a>
 command: the identity
 quaternion (0,0,0,1) puts an object in the default eye position, facing
 the negative z-direction with the x-axis to the right. This is
@@ -238,10 +238,10 @@ are with respect to the model axes.
 place for further work.
 <p>
 <dt><b>Show Script</b>
-<dd>Display a 
-<a href="./show_doc.html">window</a> 
+<dd>Display a
+<a href="./show_doc.html">window</a>
 which can be used to run the animation script in
-the MGED display window. 
+the MGED display window.
 <p><dt><b>Up</b>
 <dd> Raise the object animation window's parent to the top of the
 stacking order.

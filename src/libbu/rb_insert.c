@@ -26,7 +26,7 @@
  *
  *  Author -
  *	Paul J. Tanenbaum
- *  
+ *
  *  Source -
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
@@ -393,7 +393,7 @@ void bu_rb_set_uniqv (bu_rb_tree *tree, bitv_t flag_rep)
     nm_orders = tree -> rbt_nm_orders;
     for (order = 0; order < nm_orders; ++order)
 	bu_rb_set_uniqueness(tree, order, 0);
-    
+
     for (order = 0; (flag_rep != 0) && (order < nm_orders); flag_rep >>= 1,
 							    ++order)
 	if (flag_rep & 0x1)

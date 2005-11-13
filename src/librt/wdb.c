@@ -27,7 +27,7 @@
  *
  *  Author -
  *	Michael John Muuss
- *  
+ *
  *  Source -
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
@@ -142,7 +142,7 @@ wdb_dbopen( struct db_i *dbip, int mode )
 
 }
 
-/* 
+/*
  *			W D B _ I M P O R T
  *
  *  Returns -

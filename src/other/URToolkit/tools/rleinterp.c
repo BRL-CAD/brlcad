@@ -29,6 +29,7 @@
  * Date: Mon Jul  1 09:18:26 1991
  */
 
+#include <stdlib.h>
 #include <stdio.h>
 #include <rle.h>
 #include <fcntl.h>

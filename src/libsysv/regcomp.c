@@ -280,7 +280,7 @@ regcomp(regex_t *preg, const char *pattern, int cflags)
  */
 static void
 p_ere(register struct parse *p, int stop)
-                         
+
          			/* character this ERE should end at */
 {
 	register char c;
@@ -494,7 +494,7 @@ p_str(register struct parse *p)
  */
 static void
 p_bre(register struct parse *p, register int end1, register int end2)
-                         
+
                   		/* first terminating character */
                   		/* second terminating character */
 {
@@ -527,7 +527,7 @@ p_bre(register struct parse *p, register int end1, register int end2)
  */
 static int			/* was the simple RE an unbackslashed $? */
 p_simp_re(register struct parse *p, int starordinary)
-                         
+
                  		/* is a leading * an ordinary character? */
 {
 	register int c;
@@ -869,7 +869,7 @@ p_b_symbol(register struct parse *p)
  */
 static char			/* value of collating element */
 p_b_coll_elem(register struct parse *p, int endc)
-                         
+
          			/* name ended by endc,']' */
 {
 	register char *sp = p->next;
@@ -982,7 +982,7 @@ nonnewline(register struct parse *p)
  */
 static void
 repeat(register struct parse *p, sopno start, int from, int to)
-                         
+
             			/* operand from here to end of strip */
          			/* repeated from this number */
        				/* to this number of times (maybe INFINITY) */
@@ -1376,7 +1376,7 @@ categorize(struct parse *p, register struct re_guts *g)
  */
 static sopno			/* start of duplicate */
 dupl(register struct parse *p, sopno start, sopno finish)
-                         
+
             			/* from here */
              			/* to this less one */
 {

@@ -46,7 +46,7 @@ void render_path_work(render_t *render, tie_t *tie, tie_ray_t *ray, TIE_3 *pixel
     while(propogate) {
       if((new_mesh = (common_mesh_t *)tie_work(tie, &new_ray, &new_id, render_hit, NULL)) && new_ray.depth < RENDER_MAX_DEPTH) {
         if(new_mesh->prop->ior != 1.0) {	/* Refractive Caustic */
-          // Deal with refractive-fu
+          /* Deal with refractive-fu */
         } else if(new_mesh->prop->emission > 0.0) {	/* Emitting Light Source */
           T = new_mesh->prop->color;
           math_vec_mul_scalar(T, T, new_mesh->prop->emission);

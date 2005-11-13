@@ -35,7 +35,7 @@ package require Itk
 package require Iwidgets
 
 namespace eval RtWizard {
-  
+
     package provide PictureTypeE 1.0
 
     #
@@ -57,7 +57,7 @@ namespace eval RtWizard {
 
 	    #
 	    # Methods that impliment abstract base class methods.
-	    # Unfortunately, I have to redeclare them here. 
+	    # Unfortunately, I have to redeclare them here.
 	    #
 	    method activate {}
 	    method deactivate {}
@@ -76,7 +76,7 @@ namespace eval RtWizard {
 
     #--------------------#
     #   Public Methods   #
-    #--------------------#    
+    #--------------------#
     #
     # activate - called when this picture type is selected.
     #
@@ -129,7 +129,7 @@ namespace eval RtWizard {
 	set h [$::fbp getHeight]
 	set h2 [ expr $h / 2 ]
 
-	#	
+	#
 	# get a framebuffer
 	#
 	set fb [$::fbp getFrameBuffer $w2 $h2 true]
@@ -138,8 +138,8 @@ namespace eval RtWizard {
 	# Run rt to generate the ghost image objects
 	#
 	makeImage $fb $w2 $h2
-    }    
-    
+    }
+
     #
     # fullSize - generates a fullSize picture.
     #
@@ -150,7 +150,7 @@ namespace eval RtWizard {
 	set w [$::fbp getWidth]
 	set h [$::fbp getHeight]
 
-	#	
+	#
 	# get a framebuffer
 	#
 	set fb [$::fbp getFrameBuffer $w $h false]
@@ -172,7 +172,7 @@ namespace eval RtWizard {
 	set tbw [ file join / tmp [pid]_bw.bw ]
 	set tmod [ file join / tmp [pid]_bwmod.bw ]
 	set tbwpix [ file join / tmp [pid]_bwpix.pix]
-	
+
 	#
 	# Get the background color
 	#
@@ -192,7 +192,7 @@ namespace eval RtWizard {
 	rtCmd $gp $fb $w $h
 
 	catch "exec $binpath/fb-pix -F $fb -w $w -n $h > $tgi" junk
-	
+
 	#
 	# Run rt to generate the insert
 	#

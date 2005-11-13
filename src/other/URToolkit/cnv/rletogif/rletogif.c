@@ -28,6 +28,7 @@
  *************************************************************************
  */
 
+#include <stdlib.h>
 #include <stdio.h>
 #include "rle.h"
 #include "rletogif.h"

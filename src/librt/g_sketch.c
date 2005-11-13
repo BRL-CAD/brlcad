@@ -48,12 +48,12 @@
  *	go to /cad/mged and create the edit support
  *
  *  Authors -
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5066
- *  
+ *
  */
 /*@}*/
 
@@ -152,15 +152,15 @@ rt_check_curve(struct curve *crv, struct rt_sketch_internal *skt, int noisey)
 
 /**
  *  			R T _ S K E T C H _ P R E P
- *  
+ *
  *  Given a pointer to a GED database record, and a transformation matrix,
  *  determine if this is a valid SKETCH, and if so, precompute various
  *  terms of the formula.
- *  
+ *
  *  Returns -
  *  	0	SKETCH is OK
  *  	!0	Error in description
- *  
+ *
  *  Implicit return -
  *  	A struct sketch_specific is created, and it's address is stored in
  *  	stp->st_specific for use by sketch_shot().
@@ -182,11 +182,11 @@ rt_sketch_print(register const struct soltab *stp)
 
 /**
  *  			R T _ S K E T C H _ S H O T
- *  
+ *
  *  Intersect a ray with a sketch.
  *  If an intersection occurs, a struct seg will be acquired
  *  and filled in.
- *  
+ *
  *  Returns -
  *  	0	MISS
  *	>0	HIT
@@ -210,14 +210,14 @@ rt_sketch_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, 
            		       /* An array of ray pointers */
                                /* array of segs (results returned) */
    		  	       /* Number of ray/object pairs */
-                  	    
+
 {
 	rt_vstub( stp, rp, segp, n, ap );
 }
 
 /**
  *  			R T _ S K E T C H _ N O R M
- *  
+ *
  *  Given ONE ray distance, return the normal and entry/exit point.
  */
 void
@@ -243,7 +243,7 @@ rt_sketch_curve(register struct curvature *cvp, register struct hit *hitp, struc
 
 /**
  *  			R T _ S K E T C H _ U V
- *  
+ *
  *  For a hit on the surface of an sketch, return the (u,v) coordinates
  *  of the hit point, 0 <= u,v <= 1.
  *  u = azimuth
@@ -551,7 +551,7 @@ seg_to_vlist(struct bu_list *vhead, const struct rt_tess_tol *ttol, fastf_t *V, 
 				tmp_epsilon = ttol->rel * sqrt( MAG2SQ( diff ) );
 				if( tmp_epsilon < epsilon )
 					epsilon = tmp_epsilon;
-				
+
 			}
 			param_delta = rt_cnurb_par_edge( &eg, epsilon );
 			num_intervals = ceil( (nsg->k.knots[nsg->k.k_size-1] - nsg->k.knots[0])/param_delta );
@@ -648,9 +648,9 @@ seg_to_vlist(struct bu_list *vhead, const struct rt_tess_tol *ttol, fastf_t *V, 
 				tmp_epsilon = ttol->rel * sqrt( MAG2SQ( diff ) );
 				if( tmp_epsilon < epsilon )
 					epsilon = tmp_epsilon;
-				
+
 			}
-			
+
 
 			/* Create an initial bezier_2d_list */
 			bezier_hd = (struct bezier_2d_list *)bu_malloc( sizeof( struct bezier_2d_list ),
@@ -981,7 +981,7 @@ rt_sketch_export(struct bu_external *ep, const struct rt_db_internal *ip, double
 	}
 
 	ngran = ceil((double)(nbytes + sizeof(union record)) / sizeof(union record));
-	ep->ext_nbytes = ngran * sizeof(union record);	
+	ep->ext_nbytes = ngran * sizeof(union record);
 	ep->ext_buf = (genptr_t)bu_calloc( 1, ep->ext_nbytes, "sketch external");
 
 	rec = (union record *)ep->ext_buf;
@@ -1091,7 +1091,7 @@ rt_sketch_export(struct bu_external *ep, const struct rt_db_internal *ip, double
 			default:
 				bu_bomb( "rt_sketch_export: ERROR: unrecognized curve type!!!!\n" );
 				break;
-				
+
 		}
 	}
 
@@ -1444,7 +1444,7 @@ rt_sketch_export5(struct bu_external *ep, const struct rt_db_internal *ip, doubl
 			default:
 				bu_bomb( "rt_sketch_export: ERROR: unrecognized curve type!!!!\n" );
 				break;
-				
+
 		}
 	}
 
@@ -1537,7 +1537,7 @@ rt_sketch_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verb
 						sprintf( buf, "\t\tLine segment from vertex #%d to #%d\n",
 							lsg->start, lsg->end );
 				}
-				else	
+				else
 				{
 					if( sketch_ip->skt_curve.reverse[seg_no] )
 						sprintf( buf, "\t\tLine segment (%g %g) <-> (%g %g)\n",
@@ -1841,7 +1841,7 @@ rt_copy_curve(struct curve *crv_out, const struct curve *crv_in)
 				bu_bomb( "rt_copy_sketch: ERROR: unrecognized segment type!!!!\n" );
 		}
 	}
-	
+
 }
 
 struct rt_sketch_internal *
@@ -2234,7 +2234,7 @@ rt_sketch_tcladjust(Tcl_Interp *interp, struct rt_db_internal *intern, int argc,
 		{
 			new = skt->V;
 			array_len = 3;
-			if( tcl_list_to_fastf_array( interp, argv[1], &new, &array_len) != 
+			if( tcl_list_to_fastf_array( interp, argv[1], &new, &array_len) !=
 			    array_len ) {
 				Tcl_SetResult( interp,
 				      "ERROR: Incorrect number of coordinates for vertex\n",
@@ -2246,7 +2246,7 @@ rt_sketch_tcladjust(Tcl_Interp *interp, struct rt_db_internal *intern, int argc,
 		{
 			new = skt->u_vec;
 			array_len = 3;
-			if( tcl_list_to_fastf_array( interp, argv[1], &new, &array_len) != 
+			if( tcl_list_to_fastf_array( interp, argv[1], &new, &array_len) !=
 			    array_len ) {
 				Tcl_SetResult( interp,
 				      "ERROR: Incorrect number of coordinates for vertex\n",
@@ -2258,7 +2258,7 @@ rt_sketch_tcladjust(Tcl_Interp *interp, struct rt_db_internal *intern, int argc,
 		{
 			new = skt->v_vec;
 			array_len = 3;
-			if( tcl_list_to_fastf_array( interp, argv[1], &new, &array_len) != 
+			if( tcl_list_to_fastf_array( interp, argv[1], &new, &array_len) !=
 			    array_len ) {
 				Tcl_SetResult( interp,
 				      "ERROR: Incorrect number of coordinates for vertex\n",
@@ -2329,7 +2329,7 @@ rt_sketch_tcladjust(Tcl_Interp *interp, struct rt_db_internal *intern, int argc,
 			}
 			array_len = 2;
                         if(tcl_list_to_fastf_array( interp, argv[1], &new_vert, &array_len)
-				!= array_len ) 
+				!= array_len )
 			{
 				Tcl_SetResult( interp,
 				    "ERROR: Incorrect number of coordinates for vertex\n",
@@ -2430,7 +2430,7 @@ rt_curve_order_segments( struct curve *crv )
 				for( k=j ; k<seg_count ; k++ ) {
 					get_indices( crv->segments[k], &start3, &end3 );
 					if( end3 == end1 ) {
-						int tmp_reverse;	
+						int tmp_reverse;
 						genptr_t tmp_seg;
 
 						rt_curve_reverse_segment( crv->segments[k] );

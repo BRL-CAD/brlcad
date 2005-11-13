@@ -45,16 +45,16 @@
 ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defun batch-indent-region () 
+(defun batch-indent-region ()
     "Run `batch-indent-region' on the files specified.  Use this from the
 command line, with `-batch' only; it won't work in an interactive
 Emacs. For example, invoke:
   emacs -batch -l batch-indent-region.el -f batch-indent-region *.c"
 
-    (if (not noninteractive) 
-	(error "`batch-indent-region' is to be used only with -batch")) 
+    (if (not noninteractive)
+	(error "`batch-indent-region' is to be used only with -batch"))
 
-    (while command-line-args-left 
+    (while command-line-args-left
 	(setq file (car command-line-args-left))
 	(print file)
 	(find-file file)

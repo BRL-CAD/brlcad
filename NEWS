@@ -7,8 +7,41 @@ see that file and the CVS log for more historic information.  The
 entire history of the project is available through CVS.
 
 ----------------------------------------------------------------------
---- 2005-10-XX  Release 7.6.3                                      ---
+--- 2005-11-12  Release 7.6.4                                      ---
 ----------------------------------------------------------------------
+
+This release adds a new geometry creation interface to mged that
+supports reverse modeling geometry of existing objects.  New geometry
+creation commands read point data sets in a simple text file format,
+recognizing categories and collections of points.  Using
+point-acquisition devices such as X-Station Vulcan advanced surveying
+systems from Arc Second Inc., points may be collected and used in mged
+to factilitate the generation of geometry models.  Collection
+techniques are recognized for polygonal plates, cylinders, spheres,
+point clouds, and more.
+
+* auto-locate mged external apps regardless of PATH - Sean Morrion
+* mged utilizes a local display if unspecified/unset - Sean Morrison
+* set default mged Escape key binding to reject - Sean Morrison
+* fixed 'benchmark' tool resource searching - Sean Morrison
+* added -u option to mged "make_bb" to allow air - Lee Butler
+* fixed IBM AIX compiler support issues - Sean Morrison
+* head/tail -n usage posix compliance - Stefan Fiedler, Sean Morrison
+* fixed jove compilation issues - Sean Morrison, Daniel Remenak
+* fixed conversion bug in the dxf-g converter - John Anderson
+* point parsing/import interface to mged - Sean Morrison, Lee Butler
+* fixed bug in export of NMG primitives - John Anderson
+* fixed itcl configuration issue - Stefan Fiedler, Sean Morrison
+* fixed g_qa tolerance option parsing inconsistency - Sean Morrison
+* improved mged 'tol' command tolerance value checks - Sean Morrison
+* fixed tgc absolute tesselation tolerance issue - Sean Morrison
+* optional build support checks for X11 and OpenGL - Sean Morrison
+* improved Windows build support - Bob Parker, Daniel Ro§berg
+* isst observer 2x screen magnification - Justin Shumaker
+* added los and material name support to librtserver - John Anderson
+* improved 64bit support for ADRT - Justin Shumaker
+* updated manual page documentation - Sean Morrison
+* added support for text handling to dxf-g - John Anderson
 
 
 ----------------------------------------------------------------------
@@ -109,6 +142,7 @@ The rtarea command was added to mged as well, along with rtweight.
 * improve detection and handling of cyclic geometry - Sean Morrison
 * added a -noleaf option to the mged pathlist command - Bob Parker
 * fixed potential infinite loop bug in BoT primitive - Bob Parker
+* no longer install tclsh/wish, use btclsh/bwish - Sean Morrison
 * added bot_merge mged cmd (combine 2 bots into 1) - Lee Butler
 
 ----------------------------------------------------------------------

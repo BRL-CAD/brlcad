@@ -37,7 +37,7 @@ For our first example, we will create a simple animation with the ``moss.g''
 model.
 The objective is to begin the animation sequence with a view of the
 geometry from the front corner of the platform.
-As time goes by, the viewer's location (the ``eye point'' or ``eye_pt'') 
+As time goes by, the viewer's location (the ``eye point'' or ``eye_pt'')
 moves upward in an arc over the geometry until the viewer is looking
 directly down on the center of the platform.
 To give a natural feeling of flight, the eye point
@@ -109,7 +109,7 @@ which describe the key-frames.
 <P>
 <H2><A NAME="Key Frame Interpolation">Key Frame Interpolation</A></H2>
 <P>
-BRL-CAD has a utility for performing interpolation called 
+BRL-CAD has a utility for performing interpolation called
 <A HREF="chapt9.html#tabinterp">tabinterp.</A>  It
 operates on files containing columns of numbers.  The left-most column is
 always used to hold the time in the animation at which the data in the other
@@ -153,10 +153,10 @@ the ``key-chans'' shown below be employed to do the work.
     fi
     awk '/^viewsize/ { print FILENAME " " $2}'  $1* | \
         sed -e 's/;//' -e "s/^$1//" | sort -n > chans.vsize
-    
+
     awk '/^eye_pt/ { print FILENAME " "  $2  " " $3 " " $4}' $1* | \
         sed -e 's/;//' -e "s/^$1//" | sort -n > chans.eyept
-    
+
     awk '/^orient/ { print FILENAME " " $2 " " $3 " " $4 " " $5}' $1* | \
         sed -e 's/;//' -e "s/^$1//" | sort -n > chans.orient
 </LISTING>
@@ -190,8 +190,8 @@ argument to the ``orientation'' directive.
 <P>
 Now the key-frame data can be interpolated.  The
 <A HREF="chapt9.html#tabinterp">tabinterp</A>
-program reads commands from 
-standard input until end-of-file is found.  
+program reads commands from
+standard input until end-of-file is found.
 Commands specify files from which
 interpolation tables should be read, which channels in the tables should
 be used, what type of interpolation should be applied, and the range of time
@@ -232,9 +232,9 @@ channels 4, 5, 6, and 7.
 The user command ``times 0 8 3'' indicates that
 interpolation is to be performed for the time sequence starting at time 0,
 through time 8 with 3 frames per time step.
-If each time step represents a second, 
+If each time step represents a second,
 this is not enough frames per second for a finished product
-such as a videotape, but 
+such as a videotape, but
 it will be sufficient to create a preview of the sequence.
 It would not be wise to expend the CPU time required to compute all of the
 frames before we are certain that we have the sequence correct.
@@ -246,7 +246,7 @@ The file
 <A HREF="chans.html#chans.all">``chans.all''</A>
 contains the result of the interpolation.
 <P>
-Each column in 
+Each column in
 <A HREF="chans.html#chans.all">chans.all</A> represents one channel
 from the <A HREF="chapt9.html#tabinterp">tabinterp</A> session.
 The leftmost column is always the time channel.
@@ -279,7 +279,7 @@ interpolation.
 It does <B>not</B> refer to the time channel.
 The macro ``@(line)'' is replaced with the line number of the file
 from which the data was read.
-The @(line) macro serves primarily to indicate the animation frame number.  
+The @(line) macro serves primarily to indicate the animation frame number.
 A template file (``moss.proto'' for this example)
 should be created:
 <PRE>
@@ -300,7 +300,7 @@ The resultant file ``moss.rtanim'' is rather long, so for
 illustration purposes
 only the commands for the first two frames are shown here.
 <PRE>
-% <B>head -12 moss.rtanim</B>
+% <B>head -n 12 moss.rtanim</B>
 viewsize 200;
 eye_pt 90.7107 70.7107 0;
 orientation 0.270598 0.653281 0.653281 0.270598;
@@ -331,7 +331,7 @@ attach (nu|tek|tek4109|ps|plot|sgi)[nu]? <B>sgi</B>
 ATTACHING nu (Null Display)
 Gary Moss's ``World on a Platter'' (units=mm)
 mged> <B> preview moss.rtanim</B>
-tree 
+tree
 eyepoint at (0,0,1) viewspace
 db_lookup:  could not find 'EYE_PATH*'
 mged> <B> e all.g</B>
@@ -379,7 +379,7 @@ rt -M $* -o moss.pix moss.g 'all.g' 2>> moss.log < moss.rtanim
 Once the frames have been computed, they can be turned into a
 ``postage stamp animation''.
 The ``pixtile'' program takes many small images
-and creates a bigger image from a mosaic of the small images.  
+and creates a bigger image from a mosaic of the small images.
 <A HREF="moss_sm.gif">This image</A> can
 then be displayed on a framebuffer, and the animation sequence played using
 the ``fbanim'' command.

@@ -1,6 +1,6 @@
 # Id: #
 
-EXTRA_DIST = 
+EXTRA_DIST = \
 	coherency.c \
 	rename.pl
 

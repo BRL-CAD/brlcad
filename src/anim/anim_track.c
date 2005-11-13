@@ -25,7 +25,7 @@
  *
  *  Author -
  *	Carl J. Nuzman
- *  
+ *
  *  Source -
  *      The U. S. Army Research Laboratory
  *      Aberdeen Proving Ground, Maryland  21005-5068  USA
@@ -167,7 +167,7 @@ main(int argc, char **argv)
     }
 
     /* get track information from specified file */
-	
+
     if (!(stream = fopen(*(argv+bu_optind),"r"))){
 	fprintf(stderr,"Track: Could not open file %s.\n",*(argv+bu_optind));
 	return(0);
@@ -223,7 +223,7 @@ main(int argc, char **argv)
 	printf("%.10g\n",tracklen);
 	return(0);
     }
-		
+
 
     if (dist_mode==STEERED) {
 	/* prime the pumps */
@@ -285,7 +285,7 @@ main(int argc, char **argv)
 	    go = anim_steer_mat(mat_x, cent_pos, last_steer);
 	    anim_add_trans(mat_x,cent_pos,rcentroid);
 	}
-		
+
 	/* call track_prep to calculate geometry of track */
 	if ((frame==first_frame)||read_wheels) {
 	    if ((track_prep())==-1){
@@ -299,7 +299,7 @@ main(int argc, char **argv)
 
 
 
-	if ((dist_mode==CALCULATED)||(dist_mode==STEERED)){ 
+	if ((dist_mode==CALCULATED)||(dist_mode==STEERED)){
 	    /*determine distance traveled*/
 	    VMOVE(wheel_prev,wheel_now);
 	    MAT4X3PNT(wheel_now,mat_x,to_track);
@@ -550,7 +550,7 @@ int track_prep(void)
 	    x[i].w.arc = arc_angle;
 	}
     }
-	
+
     /* third loop - calculate geometry of straight track segments */
     for (i=0;i<NW;i++){
 	/*calculate endpoints of track segment*/
@@ -582,7 +582,7 @@ int track_prep(void)
     if (len_mode==TRACK_ELASTIC) {
 	tracklen = first_tracklen;
     }
-		
+
     /* calculate geometry of hyperbolic segment */
     hyperlen = tracklen - linearlen;
     if(hyperlen < x[0].t.len){ /* desired length of hyperbola less than straight line*/
@@ -605,10 +605,10 @@ int track_prep(void)
     VSUB2(difference,x[0].t.pos1,x[0].t.pos0);
     x[0].t.len = MAGNITUDE(difference);
     VSCALE(x[0].t.dir,difference,(1.0/x[0].t.len));
-		
+
     if (curve_a > VDIVIDE_TOL)
 	s_start = hyper_get_s(curve_a, 0.0, x[0].t.pos0[X] - curve_c);
-	
+
     x[0].w.arc = x[0].w.ang0 - x[0].w.ang1;
     if (x[0].w.arc<0.0)
 	x[0].w.arc += 2.0*M_PI;
@@ -635,7 +635,7 @@ int get_link(fastf_t *pos, fastf_t *angle_p, fastf_t dist)
 	dist += tracklen;
 
     /* we want it to ignore the distance between wheel(n-1) and wheel(0)*/
-    dist += x[0].t.len; 
+    dist += x[0].t.len;
     for (i=0;i<NW;i++){
 	if ( (dist  -= x[i].t.len) < 0 ){
 	    VSCALE(temp,(x[i].t.dir),dist);
@@ -669,12 +669,12 @@ int get_link(fastf_t *pos, fastf_t *angle_p, fastf_t dist)
     }
 
 
-	
+
     return -1;
 }
 
 void show_info(int which)/* for debugging - -1:track 0:both 1:link*/
-          
+
 {
     int i;
     if (which <=0){

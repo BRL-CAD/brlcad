@@ -37,7 +37,7 @@
  *  deletions.  Then add the following line to the other "options" lines
  *  near the top of "PICKLE".
  *
- *  options	SHMPOOL=1024	# Increase for BRL CAD libfb
+ *  options	SHMPOOL=1024	# Increase for BRL-CAD libfb
  *
  *  Once you have modified "PICKLE" finish the procedure by typing:
  *
@@ -67,7 +67,7 @@
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5066
- *  
+ *
  */
 /*@}*/
 
@@ -263,7 +263,7 @@ static short	dither[MAXDITHERSZ][MAXDITHERSZ] = {
 /*
  *	Sun Hardware colormap support
  *
- *	The color map is organized as a 6x6x6 colorcube, with 10 extra  
+ *	The color map is organized as a 6x6x6 colorcube, with 10 extra
  *	entries each for the primary colors and grey values.
  *
  *	entries 0 -> 215 are the color cube
@@ -300,7 +300,7 @@ static unsigned char greyvec[16] = {
 0, 246, 247, 43, 248, 249, 86, 250, 251, 129, 252, 253, 172, 254, 255, 215
 };
 
-static 
+static
 double table[10] = {0.0, 0.1, -0.4, 0.2, -0.3, 0.3, -0.2, 0.4, -0.1, 0.5};
 static double *noise_ptr = table, *end_table = &table[10];
 #define NOISE() (noise_ptr < end_table ? *noise_ptr++ : *(noise_ptr=table) )
@@ -414,14 +414,14 @@ unsigned char rmap[], gmap[], bmap[];
 		gmap[g] = primary[g-226];	/* green */
 		rmap[g] = bmap[g] = 0;
 	}
-	
+
 	for (b=236 ; b < 246 ; ++b) {
 		bmap[b] = primary[b-236];	/* blue */
 		rmap[b] = gmap[b] = 0;
 	}
 
 	for (r=246 ; r < 256 ; ++r) {		/* grey */
-		rmap[r] = gmap[r] = 
+		rmap[r] = gmap[r] =
 		bmap[r] = primary[r-246];
 	}
 }
@@ -551,7 +551,7 @@ register int		count;
 
 /* These lock routines are unused.  They do not seem to provide any
 speedup when bracketing raster op routines.  This may pan out
-differently when other processes are actively competing for raster ops. 
+differently when other processes are actively competing for raster ops.
 */
 _LOCAL_ void sun_lock( ifp ) FBIO *ifp;
 {
@@ -708,7 +708,7 @@ RGBpixel	*pp;
 			convf = convDITHERGB;
 		else
 			convf = convRGB;
-		
+
 		for( x = xlft; x <= xrgt; x++, pp++, sx += xzoom ) {
 			register int	dx, value, r, g, b;
 			RGBpixel	v;
@@ -720,7 +720,7 @@ RGBpixel	*pp;
 			value = (*convf)(v);
 
 			for( dx = 0; dx < xzoom; dx++ )
-				scan_mpr_buf[sx+dx] = value; 
+				scan_mpr_buf[sx+dx] = value;
 		}
 		sunreplrop( xl, sy,
 			(xrgt-xlft+1)*xzoom, ifp->if_yzoom,
@@ -876,7 +876,7 @@ localmem:
 common:
 	ifp->if_mem = sp;
 	ifp->if_cmap = sp + pixsize;	/* Color map at end of area */
-	
+
 	/* Initialize the colormap and clear memory frame buffer to black */
 	if( new ) {
 		sun_wmap( ifp, COLORMAP_NULL );
@@ -908,7 +908,7 @@ sun_zapmem()
 }
 
 /*
- *			S U N _ O P E N 
+ *			S U N _ O P E N
  */
 _LOCAL_ int
 sun_open(ifp, file, width, height)
@@ -974,9 +974,9 @@ int	width, height;
 		width = ifp->if_width;
 	if( height <= 0 )
 		height = ifp->if_height;
-	if ( width > ifp->if_max_width) 
+	if ( width > ifp->if_max_width)
 		width = ifp->if_max_width;
-	if ( height > ifp->if_max_height) 
+	if ( height > ifp->if_max_height)
 		height = ifp->if_max_height;
 
 	if( SUN(ifp) != (struct suninfo *) NULL ) {
@@ -1003,7 +1003,7 @@ int	width, height;
 	 */
 
 	genmap(redmap, grnmap, blumap);
-	
+
 	/* Create window. */
         if( sun_pixwin = (we_getgfxwindow(sun_parentwinname) == 0) ) {
         	/************** SunView Open **************/
@@ -1052,7 +1052,7 @@ int	width, height;
 		if( SUN(ifp)->su_depth == 8 ) {
 			/* set a new cms name; initialize it */
 			x = pw_setcmsname(imagepw, "libfb");
-			x = pw_putcolormap(imagepw, 0, 256, 
+			x = pw_putcolormap(imagepw, 0, 256,
 					redmap, grnmap, blumap);
 		}
 	}
@@ -1138,7 +1138,7 @@ int	width, height;
 }
 
 /*
- *			S U N _ C L O S E 
+ *			S U N _ C L O S E
  */
 _LOCAL_ int
 sun_close(ifp)
@@ -1163,7 +1163,7 @@ FBIO	*ifp;
 		imagepw = NULL;
 	}
 	else {
-		/* if the user hasn't requested a lingering buffer, clear the 
+		/* if the user hasn't requested a lingering buffer, clear the
 		 * colormap so that we can see to log in on the console again
 		 */
 		if( (SUN(ifp)->su_mode & MODE_2MASK) != MODE_2LINGERING) {
@@ -1226,7 +1226,7 @@ FBIO	*ifp;
 		imagepw = NULL;
 	}
 	else {
-		/* if the user hasn't requested a lingering buffer, clear the 
+		/* if the user hasn't requested a lingering buffer, clear the
 		 * colormap so that we can see to log in on the console again
 		 */
 		if( (SUN(ifp)->su_mode & MODE_2MASK) != MODE_2LINGERING) {
@@ -1252,7 +1252,7 @@ FBIO	*ifp;
 }
 
 /*
- *			S U N _ C L E A R 
+ *			S U N _ C L E A R
  */
 _LOCAL_ int
 sun_clear(ifp, pp)
@@ -1365,7 +1365,7 @@ int	x, y;
 	x *= ifp->if_xzoom;
 	y *= ifp->if_yzoom;
 	y = ifp->if_height - y;
-	/* Move cursor/mouse to <x,y>. */	
+	/* Move cursor/mouse to <x,y>. */
 	if(	x < 1 || x > ifp->if_width
 	    ||	y < 1 || y > ifp->if_height
 		)
@@ -1393,7 +1393,7 @@ int	*x, *y;
 }
 
 /*
- *			S U N _ R E A D 
+ *			S U N _ R E A D
  */
 _LOCAL_ int
 sun_read(ifp, x, y, p, count)
@@ -1505,10 +1505,10 @@ register ColorMap	*cmp;
 		SUN(ifp)->su_cmap_flag = FALSE;
 		return	0;
 	}
-	
+
 	for( i = 0; i < 256; i++ ) {
 		CMR(ifp)[i] = cmp-> cm_red[i]>>8;
-		CMG(ifp)[i] = cmp-> cm_green[i]>>8; 
+		CMG(ifp)[i] = cmp-> cm_green[i]>>8;
 		CMB(ifp)[i] = cmp-> cm_blue[i]>>8;
 	}
 	SUN(ifp)->su_cmap_flag = !is_linear_cmap(ifp);

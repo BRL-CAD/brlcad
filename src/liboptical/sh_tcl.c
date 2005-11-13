@@ -117,10 +117,10 @@ struct mfuncs tcl_mfuncs[] = {
  */
 HIDDEN int
 tcl_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip)
-                      	    
-             		         
+
+
     			      	/* pointer to reg_udata in *rp */
-             		     
+
            		      	/* New since 4.4 release */
 {
 	register struct tcl_specific	*tcl_sp;
@@ -150,7 +150,7 @@ tcl_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct
 	tcl_sp->tcl_mp = bu_open_mapped_file(bu_vls_addr(tcl_sp->tcl_file),
 					     "tclShader");
 	if (!tcl_sp->tcl_mp) {
-		bu_log("Error opening Tcl shader file \"%s\"\n", 
+		bu_log("Error opening Tcl shader file \"%s\"\n",
 		       bu_vls_addr(tcl_sp->tcl_file));
 		bu_bomb("");
 	}
@@ -206,8 +206,8 @@ tcl_free(char *cp)
  */
 int
 tcl_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp)
-                  	    
-                	    
+
+
                 	     	/* defined in material.h */
     			    	/* ptr to the shader-specific struct */
 {
@@ -226,19 +226,19 @@ tcl_render(struct application *ap, struct partition *pp, struct shadework *swp, 
 		bu_struct_print( "tcl_render Parameters:",
 				 tcl_print_tab, (char *)tcl_sp );
 
-	/* we are performing the shading in "region" space, so we must 
+	/* we are performing the shading in "region" space, so we must
 	 * transform the hit point from "model" space to "region" space.
 	 */
 	MAT4X3PNT(pt, tcl_sp->tcl_m_to_r, swp->sw_hit.hit_point);
 
 	if (rdebug&RDEBUG_SHADE) {
-		bu_log("tcl_render()  model:(%g %g %g) shader:(%g %g %g)\n", 
+		bu_log("tcl_render()  model:(%g %g %g) shader:(%g %g %g)\n",
 		V3ARGS(swp->sw_hit.hit_point),
 		V3ARGS(pt) );
 	}
 
 	/* set some Tcl variables to the shadework structure values */
-	
+
 #define rt_Tcl_LV(_s, _v) Tcl_LinkVar(tcl_sp->tcl_interp[cpu], _s, (char *)_v, \
 				TCL_LINK_DOUBLE)
 

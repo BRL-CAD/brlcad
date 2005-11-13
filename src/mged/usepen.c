@@ -27,7 +27,7 @@
  *
  *  Author -
  *	Michael John Muuss
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
@@ -82,14 +82,14 @@ static void	illuminate(int y);
  *  The editor operates in one of seven basic editing states, recorded
  *  in the variable called "state".  When no editing is taking place,
  *  the editor is in state ST_VIEW.  There are two paths out of ST_VIEW:
- *  
+ *
  *  BE_S_ILLUMINATE, when pressed, takes the editor into ST_S_PICK,
  *  where the mouse is used to pick a solid to edit, using our
  *  unusual "illuminate" technique.  Moving the mouse varies the solid
  *  being illuminated.  When the mouse is pressed, the editor moves into
  *  state ST_S_EDIT, and solid editing may begin.  Solid editing is
  *  terminated via BE_ACCEPT and BE_REJECT.
- *  
+ *
  *  BE_O_ILLUMINATE, when pressed, takes the editor into ST_O_PICK,
  *  again performing the illuminate procedure.  When the mouse is pressed,
  *  the editor moves into state ST_O_PATH.  Now, moving the mouse allows
@@ -97,7 +97,7 @@ static void	illuminate(int y);
  *  When the mouse is pressed, the editor moves into state ST_O_EDIT,
  *  and object editing may begin.  Object editing is terminated via
  *  BE_ACCEPT and BE_REJECT.
- *  
+ *
  *  The only way to exit the intermediate states (non-VIEW, non-EDIT)
  *  is by completing the sequence, or pressing BE_REJECT.
  */
@@ -149,7 +149,7 @@ f_mouse(
 			       "mouse press outside valid scroll area\n",
 			       (char *)NULL);
 	      return TCL_ERROR;
-	    } 
+	    }
 
 	    if( i > 0 )  {
 	      scroll_active = 1;
@@ -392,7 +392,7 @@ f_aip(
 
 /*
  *  			W R T _ V I E W
- *  
+ *
  *  Given a model-space transformation matrix "change",
  *  return a matrix which applies the change with-respect-to
  *  the view center.
@@ -413,7 +413,7 @@ wrt_view( mat_t out, const mat_t change, const mat_t in )
 
 /*
  *  			W R T _ P O I N T
- *  
+ *
  *  Given a model-space transformation matrix "change",
  *  return a matrix which applies the change with-respect-to
  *  "point".
@@ -433,7 +433,7 @@ wrt_point( mat_t out, const mat_t change, const mat_t in, const point_t point )
 
 /*
  *  			W R T _ P O I N T _ D I R E C
- *  
+ *
  *  Given a model-space transformation matrix "change",
  *  return a matrix which applies the change with-respect-to
  *  given "point" and "direc".

@@ -19,28 +19,28 @@ The -M option tells the ray-tracer to read instructions from the script
 file on standard input. The argument to the -o option gives the
 basename for the image files that will be created. For example, if
 <var>foo.script</var> contains instructions for ray-tracing frames
-zero through two, the image files are named 
+zero through two, the image files are named
 <var>foo.pix</var>, <var>foo.pix.1</var>, and <var>foo.pix.2</var>.
 The size of each image, specified by the -s option, is 200x200
-pixels. 
+pixels.
 After the options, rt expects the name of the geometry
 database to be ray-traced (in this case "moss.g") and a list of
 objects to be ray-traced (in this case only the group "all.g"). It is
-important to include in this 
-list all of the objects you wish to see in the final images. 
+important to include in this
+list all of the objects you wish to see in the final images.
 The ray-tracer produces a lot of diagnostic information on standard
 error, which in this case is redirected to the file <var>foo.log</var>.
 Ray-tracing
 animations can take a long time, so it is a good idea to run rt as a
 background process.
-You can refer to the 
+You can refer to the
 <a href="./rt.html">rt manual page</a>
  for complete information on ray-tracer options.
 <p>
 Small images such as the ones you created in the above example can be
-previewed on a fast framebuffer with the 
+previewed on a fast framebuffer with the
 <a href="./pixtile.html">pixtile</a> and
-<a href="./fbanim.html">fbanim</a> commands, as outlined in 
+<a href="./fbanim.html">fbanim</a> commands, as outlined in
 <a href="http://brlcad.org/reports/tr-313/chapt2.html#Creating Postage Stamp Animations">
 Animation Techniques in BRL-CAD</a>.
 <p>
@@ -53,7 +53,7 @@ because at three bytes per pixel, each 720x486 frame of an animation
 takes up a megabyte of disk space.
 <p>
 A common
-technique for doing the filtering and compression is 
+technique for doing the filtering and compression is
 to have rt call a shell script
 after
 each frame is computed.
@@ -65,7 +65,7 @@ produces a sorted animation script as output. With the -f option,
 scriptsort also inserts a call to the shell script
 <var>end_of_frame.sh</var> after each frame of the animation.
 <pre>
-%> <b>head -10 anim.script</b>
+%> <b>head -n 10 anim.script</b>
 start 0;clean ;
 anim all.g/cone.r matrix lmul -0.268148 -0.841061 -0.469801 17.995962 0.889157 -0.403767 0.215341 -112.596747 -0.370805 -0.359984 0.856105 -3.321956 0.000000 0.000000 0.000000 1.000000 ;
 end;
@@ -77,7 +77,7 @@ anim all.g/cone.r matrix lmul -0.264301 -0.842990 -0.468521 13.970193 0.887275 -
 end;
 start 3;clean ;
 %> <b>scriptsort -f < anim.script > anim_and_shell.script</b>
-%> <b>head -10 anim_and_shell.script</b>
+%> <b>head -n 10 anim_and_shell.script</b>
 start 0;clean ;
 anim all.g/cone.r matrix lmul -0.268148 -0.841061 -0.469801 17.995962 0.889157 -0.403767 0.215341 -112.596747 -0.370805 -0.359984 0.856105 -3.321956 0.000000 0.000000 0.000000 1.000000 ;
 end;
@@ -153,7 +153,7 @@ Finally, do the high resolution ray-tracing.
 %> <b>rt -M -w 1440 -n972 -V1440:972 -o foo.pix moss.g all.g 2>>foo.log < anim_and_shell.script &</b>
 </pre>
 For a more general discussion of animation ray-tracing considerations,
-see the appropriate section of 
+see the appropriate section of
 <a href="http://brlcad.org/reports/tr-313/chapt4.html">
 Animation Techniques in BRL-CAD</a>.
 

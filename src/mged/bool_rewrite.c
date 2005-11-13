@@ -25,7 +25,7 @@
  *
  *  Author -
  *	Paul Tanenbaum
- *  
+ *
  *  Source -
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
@@ -89,7 +89,7 @@ static int find_bool_tree_rewrite (struct bool_tree_node *rp)
     int		rule_nm;	/* An applicable rule */
     int		lop;		/* Left child's operation */
     int		rop;		/* Right   "        "     */
-    
+
     BU_CKMAG(rp, BOOL_TREE_NODE_MAGIC, "Boolean tree node");
 
     BU_CKMAG(bt_opd(rp, BT_LEFT), BOOL_TREE_NODE_MAGIC, "Boolean tree node");
@@ -248,7 +248,7 @@ static int convert_one_node (struct bool_tree_node *rp)
 
     for (nm_rewrites = 0; rule_nm = find_bool_tree_rewrite(rp); ++nm_rewrites)
 	do_bool_tree_rewrite(rp, rule_nm);
-    
+
     return (nm_rewrites);
 }
 
@@ -302,7 +302,7 @@ int cvt_to_gift_bool (struct bool_tree_node *rp)
 	show_tree (rp, 1);
 #endif
     }
-    
+
     return (cnr);
 }
 

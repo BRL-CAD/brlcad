@@ -33,7 +33,7 @@
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005
- *  
+ *
  */
 #ifndef lint
 static char RCSid[] = "@(#)$Header$ (BRL)";
@@ -238,7 +238,7 @@ struct dm *dmp;
     ((struct pex_vars *)dmp->dmr_vars)->height = ((struct pex_vars *)dmp->dmr_vars)->width;
 
   Tk_GeometryRequest(((struct pex_vars *)dmp->dmr_vars)->xtkwin,
-		     ((struct pex_vars *)dmp->dmr_vars)->width, 
+		     ((struct pex_vars *)dmp->dmr_vars)->width,
 		     ((struct pex_vars *)dmp->dmr_vars)->height);
 #if 0
   /*XXX*/
@@ -291,7 +291,7 @@ struct dm *dmp;
     ((struct pex_vars *)dmp->dmr_vars)->yellow = a_color.pixel;
     if ( ((struct pex_vars *)dmp->dmr_vars)->yellow == ((struct pex_vars *)dmp->dmr_vars)->white )
       ((struct pex_vars *)dmp->dmr_vars)->yellow = ((struct pex_vars *)dmp->dmr_vars)->black;
-    
+
     a_color.red = 0;
     a_color.green=0;
     a_color.blue=255<<8;
@@ -400,7 +400,7 @@ struct dm *dmp;
 
 /*
  *  			P E X _ C L O S E
- *  
+ *
  *  Gracefully release the display.
  */
 static void
@@ -500,7 +500,7 @@ mat_t mat;
   static PEXVector vpn = { 0.5, 0.5, 1.0 };
   static PEXVector vuv = { 0.0, 1.0, 0.0 };
   static PEXCoord vrp = { 0.0, 0.0, 0.0 };
-  
+
   if((err = PEXViewOrientationMatrix(&vrp, &vpn, &vuv, view.orientation)) != 0){
     bu_log("Pex_newrot: bad PEXViewOrientationMatrix return - %d\n", err);
     return;
@@ -543,7 +543,7 @@ mat_t mat;
 
 /*
  *  			P E X _ O B J E C T
- *  
+ *
  *  Set up for an object, transformed as indicated, and with an
  *  object center as specified.  The ratio of object to screen size
  *  is passed in as a convienience.
@@ -779,11 +779,11 @@ register short r, g, b;
     coord_buf_2D[0].y = y1;
     coord_buf_2D[1].x = x2;
     coord_buf_2D[1].y = y2;
-    
+
     PEXSetLineWidth(((struct pex_vars *)dmp->dmr_vars)->dpy,
 		    ((struct pex_vars *)dmp->dmr_vars)->renderer,
 		    PEXOCRender, 1.0);
-		                        
+
     if( dashed ){
       PEXSetLineType(((struct pex_vars *)dmp->dmr_vars)->dpy,
 		     ((struct pex_vars *)dmp->dmr_vars)->renderer,
@@ -794,7 +794,7 @@ register short r, g, b;
 		                          PEXOCRender, PEXLineTypeSolid);
     }
 
-    
+
     PEXPolyline2D(((struct pex_vars *)dmp->dmr_vars)->dpy,
 		((struct pex_vars *)dmp->dmr_vars)->renderer,
 		PEXOCRender, 2, coord_buf_2D);
@@ -828,7 +828,7 @@ register short r, g, b;
  *	If any files are ready for input, their bits will be set in 'input'.
  *	Otherwise, 'input' will be all zeros.
  *
- * DEPRECATED 
+ * DEPRECATED
  *
  */
 /* ARGSUSED */
@@ -841,7 +841,7 @@ int		noblock;
     return;
 }
 
-/* 
+/*
  *			P E X _ L I G H T
  */
 /* ARGSUSED */

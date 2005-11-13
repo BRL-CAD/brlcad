@@ -21,10 +21,10 @@
 /** @file pixmorph.c
  *
  *  Utility for morphing two BRL-CAD pix files.
- *  
+ *
  *  Author -
  *      Glenn Durfee
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
@@ -38,7 +38,7 @@
  *      is performed on the two resulting warped images to produce an
  *      output.  Typically, the user sets warpfrac = dissolvefrac.
  *      See the man page for more details.
- *      
+ *
  *  For details of the morph algorithm, see
  *        T. Beier and S. Neely.  Feature-Based Image Metamorphosis.  In
  *        "SIGGRAPH 1992 Computer Graphics Proceedings (volume 26 number 2)"
@@ -97,7 +97,7 @@ double weightlookup[MAXLEN];
 /* Basically, we throw *everything* that doesn't need to be recalculated
  * into this structure.  Makes things go faster later.
  * "oo" means "one over" -- floating point divides are much more expensive
- *                          than multiplies 
+ *                          than multiplies
  */
 
 struct ldata {
@@ -111,7 +111,7 @@ struct lineseg {
     struct ldata s[3];
 };
 
-/* 
+/*
  * cross_dissolve
  *
  * Takes the two given images "wa" and "wb", and cross-dissolves them by
@@ -140,10 +140,10 @@ cross_dissolve(unsigned char *morph, unsigned char *wa, unsigned char *wb, int d
  */
 
 void
-warp_image(unsigned char *dest, unsigned char *src, 
-	   struct lineseg *lines, int which, 
-	   long int width, long int height, 
-	   long int numlines, 
+warp_image(unsigned char *dest, unsigned char *src,
+	   struct lineseg *lines, int which,
+	   long int width, long int height,
+	   long int numlines,
 	   double a, double b, double p)
 {
     register long int i, j, k, width3;
@@ -157,7 +157,7 @@ warp_image(unsigned char *dest, unsigned char *src,
 	    double dsum_x, dsum_y, weightsum, x_x, x_y, new_x, new_y,
 	           frac_x, frac_y, newcolor;
 	    int fin_x, fin_y, findex;
-	    
+
 	    x_x = (double)j;
 	    x_y = (double)i;
 
@@ -171,7 +171,7 @@ warp_image(unsigned char *dest, unsigned char *src,
 		   algorithm in Beier and Neely's paper.
 		   We work only with vector components here... note that
 		   Perpindicular((a,b)) = (b, -a). */
-		
+
 		x_minus_p_x = x_x - tlines->s[MIDDLE].x1;
 		x_minus_p_y = x_y - tlines->s[MIDDLE].y1;
 
@@ -249,19 +249,19 @@ warp_image(unsigned char *dest, unsigned char *src,
 	    /* Bilinear interpolation.
 	       It's the somewhat more expensive than it needs to be.
 	       I'm going for clarity, here. */
-	    
+
 	    newcolor = ((1-frac_x)*(1-frac_y)*(double)src[findex+RED] +
 			(1-frac_y)*frac_x*(double)src[findex+3+RED] +
 			frac_y*frac_x*(double)src[findex+width3+3+RED] +
 			frac_y*(1-frac_x)*(double)src[findex+width3+RED]);
 	    dest[RED] = ICLAMP(newcolor, 0, 255);
-	    
+
 	    newcolor = ((1-frac_x)*(1-frac_y)*(double)src[findex+GRN] +
 			     (1-frac_y)*frac_x*(double)src[findex+3+GRN] +
 			     frac_y*frac_x*(double)src[findex+width3+3+GRN] +
 			     frac_y*(1-frac_x)*(double)src[findex+width3+GRN]);
 	    dest[GRN] = ICLAMP(newcolor, 0, 255);
-	    
+
 	    newcolor = ((1-frac_x)*(1-frac_y)*(double)src[findex+BLU] +
 			     (1-frac_y)*frac_x*(double)src[findex+3+BLU] +
 			     frac_y*frac_x*(double)src[findex+width3+3+BLU] +
@@ -281,12 +281,12 @@ warp_image(unsigned char *dest, unsigned char *src,
  * Furthermore, we calculate all of the useful information, including
  * interpolation, length, etc...
  */
- 
+
 
 int
-lines_read(FILE *fp, long int numlines, 
-	   struct lineseg *lines, 
-	   long int width, long int height, 
+lines_read(FILE *fp, long int numlines,
+	   struct lineseg *lines,
+	   long int width, long int height,
 	   double warpfrac, double pb)
 {
     register long int i, j;
@@ -310,7 +310,7 @@ lines_read(FILE *fp, long int numlines,
 	lines->s[FIRST].y1 = (double)height*y1;
 	lines->s[FIRST].x2 = (double)width*x2;
 	lines->s[FIRST].y2 = (double)height*y2;
-	lines->s[LAST].x1 = (double)width*x3;	
+	lines->s[LAST].x1 = (double)width*x3;
 	lines->s[LAST].y1 = (double)height*y3;
 	lines->s[LAST].x2 = (double)width*x4;
 	lines->s[LAST].y2 = (double)height*y4;
@@ -356,8 +356,8 @@ lines_headerinfo(FILE *fp, double *ap, double *bp, double *pp, long int *np)
 }
 
 int
-get_args(int argc, char **argv, char **picAnamep, char **picBnamep, char **linesfilenamep, 
-	 double *warpfracp, int *dissolvefracp, long int *autosizep, 
+get_args(int argc, char **argv, char **picAnamep, char **picBnamep, char **linesfilenamep,
+	 double *warpfracp, int *dissolvefracp, long int *autosizep,
 	 long int *widthp, long int *heightp)
 {
     register long int c;
@@ -365,14 +365,14 @@ get_args(int argc, char **argv, char **picAnamep, char **picBnamep, char **lines
     *autosizep = 1;
     *widthp = *heightp = 0;
 
-    while ((c = getopt(argc, argv, "w:n:")) != EOF) {
+    while ((c = bu_getopt(argc, argv, "w:n:")) != EOF) {
 	switch (c) {
 	case 'w':
-	    *widthp = atol(optarg);
+	    *widthp = atol(bu_optarg);
 	    *autosizep = 0;
 	    break;
 	case 'n':
-	    *heightp = atol(optarg);
+	    *heightp = atol(bu_optarg);
 	    *autosizep = 0;
 	    break;
 	default:
@@ -380,14 +380,14 @@ get_args(int argc, char **argv, char **picAnamep, char **picBnamep, char **lines
 	}
     }
 
-    if (argc != optind+5)
+    if (argc != bu_optind+5)
 	return 0;
 
-    *picAnamep = argv[optind];
-    *picBnamep = argv[optind+1];
-    *linesfilenamep = argv[optind+2];
-    *warpfracp = atof(argv[optind+3]);
-    *dissolvefracp = (int)(255.0*atof(argv[optind+4])+0.5);
+    *picAnamep = argv[bu_optind];
+    *picBnamep = argv[bu_optind+1];
+    *linesfilenamep = argv[bu_optind+2];
+    *warpfracp = atof(argv[bu_optind+3]);
+    *dissolvefracp = (int)(255.0*atof(argv[bu_optind+4])+0.5);
 
     return 1;
 }
@@ -403,7 +403,7 @@ pix_writepixels(long int numpix, unsigned char *pixarray)
 {
     return fwrite(pixarray, 3, (size_t)numpix, stdout);
 }
-    
+
 int
 main(int argc, char **argv)
 {
@@ -471,7 +471,7 @@ main(int argc, char **argv)
 	    perror("pixmorph: unable to stat file:");
 	    return 1;
 	}
-	
+
 	if (pa_width > 0) {
 	    pa_height = sb.st_size/(3*pa_width);
 	    fprintf(stderr, "width = %ld, size = %ld, so height = %ld\n",
@@ -486,13 +486,13 @@ main(int argc, char **argv)
     }
 
     /* Allocate memory for our bag o' pixels. */
-    
+
     pa = (unsigned char *)malloc(pa_width*pa_height*3);
     pb = (unsigned char *)malloc(pa_width*pa_height*3);
     wa = (unsigned char *)malloc(pa_width*pa_height*3);
     wb = (unsigned char *)malloc(pa_width*pa_height*3);
     morph = (unsigned char *)malloc(pa_width*pa_height*3);
-    
+
     if (pa == NULL || pb == NULL || wa == NULL ||  wb == NULL ||
 	morph == NULL) {
 	fprintf(stderr, "pixmorph: memory allocation failure\n");
@@ -500,12 +500,12 @@ main(int argc, char **argv)
     }
 
     /* The following is our memoizing table for weight calculation. */
-       
+
     for (i = 0; i < MAXLEN; i++)
 	weightlookup[i] = -1.0;
 
     fprintf(stderr, "pixmorph: Reading images and lines file.\n");
-    
+
     if (pix_readpixels(picA, pa_width*pa_height, pa) < pa_width*pa_height) {
 	fprintf(stderr, "Error reading %ld pixels from %s\n",
 		pa_width*pa_height, picAname);
@@ -520,7 +520,7 @@ main(int argc, char **argv)
     fclose(picB);
 
     /* Process the lines file. */
-    
+
     lines_headerinfo(linesfile, &a, &b, &p, &numlines);
     lines = (struct lineseg *)malloc(numlines * sizeof(struct lineseg));
     numlines = lines_read(linesfile, numlines, lines,
@@ -528,7 +528,7 @@ main(int argc, char **argv)
     fprintf(stderr, "pixmorph: %ld line segments read\n", numlines);
 
     /* Warp the images */
-    
+
     fprintf(stderr,
 	    "pixmorph: Warping first image into first intermediate image.\n");
     warp_image(wa, pa, lines, FIRST, pa_width, pa_height, numlines, a, b, p);
@@ -537,7 +537,7 @@ main(int argc, char **argv)
     warp_image(wb, pb, lines, LAST, pa_width, pa_height, numlines, a, b, p);
 
     /* Do the dissolve */
-    
+
     fprintf(stderr,
 	    "pixmorph: Performing cross-dissolve between first and second\n");
     fprintf(stderr, "pixmorph: intermediate images.\n");

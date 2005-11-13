@@ -20,7 +20,7 @@
  *
  */
 /** @file ipuscan.c
- *	
+ *
  *  Obtain a BRL-CAD .pix file from the Canon CLC-500 scanner glass.
  *
  *	Options
@@ -29,7 +29,7 @@
  *  Authors -
  *	Lee A. Butler
  *	Michael John Muuss
- *  
+ *
  *  Source -
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA

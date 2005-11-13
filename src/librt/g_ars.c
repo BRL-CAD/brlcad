@@ -24,15 +24,15 @@
 /*@{*/
 /** @file g_ars.c
  *	Intersect a ray with an ARS (Arbitrary faceted solid).
- *  
+ *
  *  Author -
  *	Michael John Muuss
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005
- *  
+ *
  */
 /*@}*/
 
@@ -172,7 +172,7 @@ rt_ars_import(struct rt_db_internal *ip, const struct bu_external *ep, const fas
 		(ari->ncurves+1) * sizeof(fastf_t **), "ars curve ptrs" );
 	currec = 1;
 	for( i=0; i < ari->ncurves; i++ )  {
-		ari->curves[i] = 
+		ari->curves[i] =
 			rt_ars_rd_curve( &rp[currec], ari->pts_per_curve );
 		currec += (ari->pts_per_curve+7)/8;
 	}
@@ -460,14 +460,14 @@ rt_ars_ifree(struct rt_db_internal *ip)
 
 /**
  *			R T _ A R S _ P R E P
- *  
+ *
  *  This routine is used to prepare a list of planar faces for
  *  being shot at by the ars routines.
  *
  * Process an ARS, which is represented as a vector
  * from the origin to the first point, and many vectors
  * from the first point to the remaining points.
- *  
+ *
  *  This routine is unusual in that it has to read additional
  *  database records to obtain all the necessary information.
  */
@@ -587,7 +587,7 @@ rt_ars_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 
 	    /* carefully make faces, w/inward pointing normals */
 	    /* [0][0] [1][1], [0][1] */
-	    if (i != 0 && 
+	    if (i != 0 &&
 		rt_botface(stp, bot, &v1[0], &v2[ELEMENTS_PER_VECT],
 			   &v1[ELEMENTS_PER_VECT], ntri, tol) > 0)   ntri++;
 
@@ -658,10 +658,10 @@ rt_ars_print(register const struct soltab *stp)
 
 /**
  *			R T _ A R S _ S H O T
- *  
+ *
  * Function -
  *	Shoot a ray at an ARS.
- *  
+ *
  * Returns -
  *	0	MISS
  *  	!0	HIT
@@ -759,7 +759,7 @@ rt_ars_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 	   one.  An "entry" followed by an "exit" (or vice versa) suggests
 	   that we grazed an edge, and thus we should leave both
 	   in the hit list. */
-	
+
 	{
 		register int i, j;
 
@@ -898,7 +898,7 @@ rt_ars_norm(register struct hit *hitp, struct soltab *stp, register struct xray 
  *			R T _ A R S _ C U R V E
  *
  *  Return the "curvature" of the ARB face.
- *  Pick a principle direction orthogonal to normal, and 
+ *  Pick a principle direction orthogonal to normal, and
  *  indicate no curvature.
  */
 void
@@ -913,7 +913,7 @@ rt_ars_curve(register struct curvature *cvp, register struct hit *hitp, struct s
 
 /**
  *  			R T _ A R S _ U V
- *  
+ *
  *  For a hit on a face of an ARB, return the (u,v) coordinates
  *  of the hit point.  0 <= u,v <= 1.
  *  u extends along the Xbasis direction defined by B-A,
@@ -1243,7 +1243,7 @@ rt_ars_tclget(Tcl_Interp *interp, const struct rt_db_internal *intern, const cha
 			*ptr = '\0';
 			i = atoi( &attr[1] );
 			bu_vls_printf( &vls, "%.25g %.25g %.25g",
-				 V3ARGS( &ars->curves[i][j*3] ) );      
+				 V3ARGS( &ars->curves[i][j*3] ) );
 		}
 		else {
 			/* the entire curve */

@@ -27,11 +27,11 @@
  *
  *  Author -
  *	Michael John Muuss
- *  
+ *
  *  Source -
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
- *  
+ *
  */
 /*@}*/
 
@@ -251,7 +251,7 @@ db5_crack_disk_header(struct db5_raw_internal *rip, const unsigned char *cp)
 		if( cp[0] == 'I' )
 		  bu_log ("Concatenation of different database versions detected.\n");
 		  bu_log ("Run 'dbupgrade' on all databases before concatenation (cat command).\n");
-		
+
 		return 0;
 	}
 
@@ -560,7 +560,7 @@ db5_export_object3(
 	if( name )  {
 		odp->db5h_hflags |= DB5HDR_HFLAGS_NAME_PRESENT |
 			(n_width << DB5HDR_HFLAGS_NAME_WIDTH_SHIFT);
-		
+
 	}
 	if( hidden ) {
 		odp->db5h_hflags |= DB5HDR_HFLAGS_HIDDEN_OBJECT;

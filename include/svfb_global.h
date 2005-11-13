@@ -1,29 +1,29 @@
 /*
  * This software is copyrighted as noted below.  It may be freely copied,
- * modified, and redistributed, provided that the copyright notice is 
+ * modified, and redistributed, provided that the copyright notice is
  * preserved on all copies.
- * 
+ *
  * There is no warranty or other guarantee of fitness for this software,
  * it is provided solely "as is".  Bug reports or fixes may be sent
  * to the author, who may or may not act on them as he desires.
  *
  * You may not include this software in a program or other software product
- * without supplying the source, or without informing the end-user that the 
+ * without supplying the source, or without informing the end-user that the
  * source is available for no extra charge.
  *
  * If you modify this software, you should include a notice giving the
  * name of the person performing the modification, the date of modification,
  * and the reason for such modification.
  */
-/* 
+/*
  * svfb_global.h - externally visible variables for svfb.
- * 
+ *
  * Author:	Todd W. Fuqua
  * 		Computer Science Dept.
  * 		University of Utah
  * Date:	Sun Jul 29 1984
  * Copyright (c) 1984 Todd W. Fuqua
- * 
+ *
  * $Header$
  */
 
@@ -91,10 +91,10 @@ extern struct sv_globals {
     rle_map * sv_cmap;	/* pointer to color map array */
     char    ** sv_comments;	/* pointer to array of pointers to comments */
     FILE  * svfb_fd;		/* output file */
-    /* 
+    /*
      * Bit map of channels to read/save.  Indexed by (channel mod 256).
      * Alpha channel sets bit 255.
-     * 
+     *
      * Indexing (0 <= c <= 255):
      *	    sv_bits[c/8] & (1 << (c%8))
      */
@@ -105,7 +105,7 @@ extern struct sv_globals {
 #define SV_BIT(glob,bit) \
 	((glob).sv_bits[((bit)&0xff)/8] & (1<<((bit)&0x7)))
     char    sv_bits[256/8];
-    /* 
+    /*
      * Local storage for rle_getrow & sv_putrow.
      * rle_getrow has
      *	    scan_y	int	    current Y scanline
@@ -131,7 +131,7 @@ extern struct sv_globals {
 } sv_globals;
 
 
-/* 
+/*
  * buildmap - build a more usable colormap from data in globals struct.
  */
 extern rle_pixel **

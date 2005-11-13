@@ -83,6 +83,8 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "rtgeom.h"
 #include "nurb.h"
 #include "wdb.h"
+#include "db.h"
+
 #include "./ged.h"
 #include "./mged_dm.h"
 #include "./cmd.h"
@@ -761,7 +763,7 @@ f_in(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 		nvals = 3*2 + 1;
 		menu = p_rcc;
 		fn_in = rcc_in;
-	} else if( strcmp( argv[2], "box" ) == 0 
+	} else if( strcmp( argv[2], "box" ) == 0
 		|| strcmp( argv[2], "raw" ) == 0 )  {
 		nvals = 3*4;
 		menu = p_box;
@@ -834,7 +836,7 @@ f_in(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 			   (char *)NULL);
 	  return TCL_ERROR;
 	}
-	
+
 	/* Read arguments */
 	if( argc < 3+nvals )  {
 	  Tcl_AppendResult(interp, MORE_ARGS_STR, menu[argc-3], (char *)NULL);
@@ -898,7 +900,7 @@ binunif_in(char **cmd_argvs, struct rt_db_internal *intern, const char *name)
 		bu_log( "Unrecognized minor type (%s)\n", cmd_argvs[3] );
 		return 1;
 	}
-	
+
 	switch( *cmd_argvs[3] ) {
 		case 'f':
 			minor_type = DB5_MINORTYPE_BINU_FLOAT;
@@ -1022,8 +1024,8 @@ dsp_in_v4 (char **cmd_argvs, struct rt_db_internal *intern)
 	dsp->dsp_ycnt = atoi( cmd_argvs[5] );
 	dsp->dsp_smooth = atoi( cmd_argvs[6] );
 	MAT_IDN( dsp->dsp_stom );
-	
-	dsp->dsp_stom[0] = dsp->dsp_stom[5] = 
+
+	dsp->dsp_stom[0] = dsp->dsp_stom[5] =
 		atof( cmd_argvs[7] ) * local2base;
 
 	dsp->dsp_stom[10] = atof( cmd_argvs[8] ) * local2base;
@@ -1066,7 +1068,7 @@ dsp_in_v5 (char **cmd_argvs, struct rt_db_internal *intern)
 	dsp->dsp_smooth = atoi( cmd_argvs[7] );
 	switch ( *cmd_argvs[8] ) {
 	case 'a':	/* adaptive */
-	case 'A': 
+	case 'A':
 	    dsp->dsp_cuttype = DSP_CUT_DIR_ADAPT;
 	    break;
 	case 'l':	/* lower left to upper right */
@@ -1082,8 +1084,8 @@ dsp_in_v5 (char **cmd_argvs, struct rt_db_internal *intern)
 	}
 
 	MAT_IDN( dsp->dsp_stom );
-	
-	dsp->dsp_stom[0] = dsp->dsp_stom[5] = 
+
+	dsp->dsp_stom[0] = dsp->dsp_stom[5] =
 		atof( cmd_argvs[9] ) * local2base;
 
 	dsp->dsp_stom[10] = atof( cmd_argvs[10] ) * local2base;
@@ -1506,7 +1508,7 @@ ars_in(int argc, char **argv, struct rt_db_internal *intern, char **promp)
 	}
 
 	if (vals_present < 5) {
-	    /* for #rows, #pts/row & first point, 
+	    /* for #rows, #pts/row & first point,
 	     * pre-formatted prompts exist
 	     */
 	  Tcl_AppendResult(interp, MORE_ARGS_STR,
@@ -1519,7 +1521,7 @@ ars_in(int argc, char **argv, struct rt_db_internal *intern, char **promp)
 	    (num_pts * ELEMENTS_PER_PT * (num_curves-2)); /* the curves */
 
 	if (vals_present < (total_vals_needed - ELEMENTS_PER_PT)) {
-	    /* if we're looking for points on the curves, and not 
+	    /* if we're looking for points on the curves, and not
 	     * the last point which makes up the last curve, we
 	     * have to format up a prompt string
 	     */
@@ -1534,13 +1536,13 @@ ars_in(int argc, char **argv, struct rt_db_internal *intern, char **promp)
 		break;
 	    case 1:
 		bu_vls_printf(&tmp_vls, "%s for Waterline %d, Point %d : ",
-			      promp[6], 
+			      promp[6],
 			      1+(argc-8)/3/num_pts,
 			      ((argc-8)/3)%num_pts );
 		break;
 	    case 2:
 		bu_vls_printf(&tmp_vls, "%s for Waterline %d, Point %d : ",
-			      promp[7], 
+			      promp[7],
 			      1+(argc-8)/3/num_pts,
 			      ((argc-8)/3)%num_pts );
 		break;
@@ -1567,13 +1569,13 @@ ars_in(int argc, char **argv, struct rt_db_internal *intern, char **promp)
 		break;
 	    case 1:
 		bu_vls_printf(&tmp_vls, "%s for pt of last Waterline : ",
-			      promp[6], 
+			      promp[6],
 			      1+(argc-8)/3/num_pts,
 			      ((argc-8)/3)%num_pts );
 		break;
 	    case 2:
 		bu_vls_printf(&tmp_vls, "%s for pt of last Waterline : ",
-			      promp[7], 
+			      promp[7],
 			      1+(argc-8)/3/num_pts,
 			      ((argc-8)/3)%num_pts );
 		break;
@@ -1732,7 +1734,7 @@ sph_in(char **cmd_argvs, struct rt_db_internal *intern, const char *name)
 		center[i] = atof(cmd_argvs[3+i]) * local2base;
 	}
 	r = atof(cmd_argvs[6]) * local2base;
-	
+
 	if (r < RT_LEN_TOL) {
 	  Tcl_AppendResult(interp, "ERROR, radius must be greater than zero!\n", (char *)NULL);
 	  return(1);	/* failure */
@@ -1781,7 +1783,7 @@ ell_in(char **cmd_argvs, struct rt_db_internal *intern)
 		VMOVE( eip->c, &vals[9] );
 		return(0);
 	}
-	
+
 	if (!strcmp("ellg", cmd_argvs[2])) {
 		/* V, f1, f2, len */
 		/* convert ELLG format into ELL1 format */
@@ -1807,7 +1809,7 @@ ell_in(char **cmd_argvs, struct rt_db_internal *intern)
 	} else {
 		r_rev = 0;
 	}
-	
+
 	/* convert ELL1 format into ELLG format */
 	/* calculate B vector */
 	bn_vec_ortho( eip->b, eip->a );
@@ -1852,12 +1854,12 @@ tor_in(char **cmd_argvs, struct rt_db_internal *intern)
 	  Tcl_AppendResult(interp, "ERROR, radius 2 >= radius 1 ....\n", (char *)NULL);
 	  return(1);	/* failure */
 	}
-	
+
 	if (MAGNITUDE( tip->h ) < RT_LEN_TOL) {
 	  Tcl_AppendResult(interp, "ERROR, normal must be greater than zero!\n", (char *)NULL);
 	  return(1);	/* failure */
 	}
-	
+
 	return(0);	/* success */
 }
 
@@ -1890,7 +1892,7 @@ tgc_in(char **cmd_argvs, struct rt_db_internal *intern)
 	}
 	r1 = atof(cmd_argvs[15]) * local2base;
 	r2 = atof(cmd_argvs[16]) * local2base;
-	
+
 	if (MAGNITUDE(tip->h) < RT_LEN_TOL
 		|| MAGNITUDE(tip->a) < RT_LEN_TOL
 		|| MAGNITUDE(tip->b) < RT_LEN_TOL
@@ -1909,7 +1911,7 @@ tgc_in(char **cmd_argvs, struct rt_db_internal *intern)
 	VMOVE( tip->d, tip->b );
 	VUNITIZE( tip->d );
 	VSCALE( tip->d, tip->d, r2);
-	
+
 	return(0);	/* success */
 }
 
@@ -1939,7 +1941,7 @@ rcc_in(char **cmd_argvs, struct rt_db_internal *intern)
 		tip->h[i] = atof(cmd_argvs[6+i]) * local2base;
 	}
 	r = atof(cmd_argvs[9]) * local2base;
-	
+
 	if (MAGNITUDE(tip->h) < RT_LEN_TOL || r < RT_LEN_TOL) {
 	  Tcl_AppendResult(interp, "ERROR, all dimensions must be greater than zero!\n",
 			   (char *)NULL);
@@ -1955,7 +1957,7 @@ rcc_in(char **cmd_argvs, struct rt_db_internal *intern)
 	VSCALE( tip->b, tip->b, r );
 	VMOVE( tip->c, tip->a );
 	VMOVE( tip->d, tip->b );
-	
+
 	return(0);	/* success */
 }
 
@@ -1998,7 +2000,7 @@ tec_in(char **cmd_argvs, struct rt_db_internal *intern)
 
 	VSCALE( tip->c, tip->a, 1./ratio );	/* C vector */
 	VSCALE( tip->d, tip->b, 1./ratio );	/* D vector */
-	
+
 	return(0);	/* success */
 }
 
@@ -2028,7 +2030,7 @@ rec_in(char **cmd_argvs, struct rt_db_internal *intern)
 		tip->a[i] = atof(cmd_argvs[9+i]) * local2base;
 		tip->b[i] = atof(cmd_argvs[12+i]) * local2base;
 	}
-	
+
 	if (MAGNITUDE(tip->h) < RT_LEN_TOL
 		|| MAGNITUDE(tip->a) < RT_LEN_TOL
 		|| MAGNITUDE(tip->b) < RT_LEN_TOL ) {
@@ -2039,7 +2041,7 @@ rec_in(char **cmd_argvs, struct rt_db_internal *intern)
 
 	VMOVE( tip->c, tip->a );		/* C vector */
 	VMOVE( tip->d, tip->b );		/* D vector */
-	
+
 	return(0);	/* success */
 }
 
@@ -2070,7 +2072,7 @@ trc_in(char **cmd_argvs, struct rt_db_internal *intern)
 	}
 	r1 = atof(cmd_argvs[9]) * local2base;
 	r2 = atof(cmd_argvs[10]) * local2base;
-	
+
 	if (MAGNITUDE(tip->h) < RT_LEN_TOL
 		|| r1 < RT_LEN_TOL || r2 < RT_LEN_TOL) {
 	  Tcl_AppendResult(interp, "ERROR, all dimensions must be greater than zero!\n",
@@ -2089,7 +2091,7 @@ trc_in(char **cmd_argvs, struct rt_db_internal *intern)
 	VSCALE( tip->b, tip->b, r1 );
 	VSCALE( tip->c, tip->c, r2 );
 	VSCALE( tip->d, tip->d, r2 );
-	
+
 	return(0);	/* success */
 }
 
@@ -2120,7 +2122,7 @@ box_in(char **cmd_argvs, struct rt_db_internal *intern)
 		Wdth[i] = atof(cmd_argvs[9+i]) * local2base;
 		Dpth[i] = atof(cmd_argvs[12+i]) * local2base;
 	}
-	
+
 	if (MAGNITUDE(Dpth) < RT_LEN_TOL || MAGNITUDE(Hgt) < RT_LEN_TOL
 		|| MAGNITUDE(Wdth) < RT_LEN_TOL) {
 	  Tcl_AppendResult(interp, "ERROR, all dimensions must be greater than zero!\n",
@@ -2293,7 +2295,7 @@ rpc_in(char **cmd_argvs, struct rt_db_internal *intern)
 		rip->rpc_B[i] = atof(cmd_argvs[9+i]) * local2base;
 	}
 	rip->rpc_r = atof(cmd_argvs[12]) * local2base;
-	
+
 	if (MAGNITUDE(rip->rpc_H) < RT_LEN_TOL
 		|| MAGNITUDE(rip->rpc_B) < RT_LEN_TOL
 		|| rip->rpc_r <= RT_LEN_TOL) {
@@ -2302,7 +2304,7 @@ rpc_in(char **cmd_argvs, struct rt_db_internal *intern)
 			   (char *)NULL);
 	  return(1);	/* failure */
 	}
-	
+
 	return(0);	/* success */
 }
 
@@ -2333,7 +2335,7 @@ rhc_in(char **cmd_argvs, struct rt_db_internal *intern)
 	}
 	rip->rhc_r = atof(cmd_argvs[12]) * local2base;
 	rip->rhc_c = atof(cmd_argvs[13]) * local2base;
-	
+
 	if (MAGNITUDE(rip->rhc_H) < RT_LEN_TOL
 		|| MAGNITUDE(rip->rhc_B) < RT_LEN_TOL
 		|| rip->rhc_r <= RT_LEN_TOL || rip->rhc_c <= RT_LEN_TOL) {
@@ -2342,7 +2344,7 @@ rhc_in(char **cmd_argvs, struct rt_db_internal *intern)
 			   (char *)NULL);
 	  return(1);	/* failure */
 	}
-	
+
 	return(0);	/* success */
 }
 
@@ -2374,7 +2376,7 @@ epa_in(char **cmd_argvs, struct rt_db_internal *intern)
 	rip->epa_r1 = MAGNITUDE(rip->epa_Au);
 	rip->epa_r2 = atof(cmd_argvs[12]) * local2base;
 	VUNITIZE(rip->epa_Au);
-	
+
 	if (MAGNITUDE(rip->epa_H) < RT_LEN_TOL
 		|| rip->epa_r1 <= RT_LEN_TOL || rip->epa_r2 <= RT_LEN_TOL) {
 	  Tcl_AppendResult(interp, "ERROR, height and axes must be greater than zero!\n",
@@ -2386,7 +2388,7 @@ epa_in(char **cmd_argvs, struct rt_db_internal *intern)
 	  Tcl_AppendResult(interp, "ERROR, |A| must be greater than |B|!\n", (char *)NULL);
 	  return(1);	/* failure */
 	}
-	
+
 	return(0);	/* success */
 }
 
@@ -2419,7 +2421,7 @@ ehy_in(char **cmd_argvs, struct rt_db_internal *intern)
 	rip->ehy_r2 = atof(cmd_argvs[12]) * local2base;
 	rip->ehy_c = atof(cmd_argvs[13]) * local2base;
 	VUNITIZE(rip->ehy_Au);
-	
+
 	if (MAGNITUDE(rip->ehy_H) < RT_LEN_TOL
 		|| rip->ehy_r1 <= RT_LEN_TOL || rip->ehy_r2 <= RT_LEN_TOL
 		|| rip->ehy_c <= RT_LEN_TOL) {
@@ -2431,7 +2433,7 @@ ehy_in(char **cmd_argvs, struct rt_db_internal *intern)
 	  Tcl_AppendResult(interp, "ERROR, |A| must be greater than |B|!\n", (char *)NULL);
 	  return(1);	/* failure */
 	}
-	
+
 	return(0);	/* success */
 }
 
@@ -2462,7 +2464,7 @@ eto_in(char **cmd_argvs, struct rt_db_internal *intern)
 	}
 	eip->eto_r = atof(cmd_argvs[9]) * local2base;
 	eip->eto_rd = atof(cmd_argvs[13]) * local2base;
-	
+
 	if (MAGNITUDE(eip->eto_N) < RT_LEN_TOL
 		|| MAGNITUDE(eip->eto_C) < RT_LEN_TOL
 		|| eip->eto_r <= RT_LEN_TOL || eip->eto_rd <= RT_LEN_TOL) {
@@ -2476,7 +2478,7 @@ eto_in(char **cmd_argvs, struct rt_db_internal *intern)
 	  Tcl_AppendResult(interp, "ERROR, |C| must be greater than |D|!\n", (char *)NULL);
 	  return(1);	/* failure */
 	}
-	
+
 	return(0);	/* success */
 }
 

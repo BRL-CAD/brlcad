@@ -29,6 +29,7 @@
 static char rcs_ident[] = "$Header$";
 #endif
 
+#include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
 #include "rle.h"

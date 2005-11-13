@@ -22,7 +22,7 @@
 
 /*@{*/
 /** @file g_xxx.c
- *	Intersect a ray with a. 
+ *	Intersect a ray with a.
  *
  * Adding a new solid type:
  *	Design disk record
@@ -46,18 +46,18 @@
  *	Then:
  *	go to /cad/libwdb and create mk_xxx() routine
  *	go to /cad/conv and edit g2asc.c and asc2g.c to support the new solid
- *	go to /cad/librt and edit tcl.c to add the new solid to 
+ *	go to /cad/librt and edit tcl.c to add the new solid to
  *		rt_solid_type_lookup[]
  *		also add the interface table and to rt_id_solid() in table.c
  *	go to /cad/mged and create the edit support
  *
  *  Authors -
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5066
- *  
+ *
  */
 /*@}*/
 
@@ -99,15 +99,15 @@ struct xxx_specific {
 
 /**
  *  			R T _ X X X _ P R E P
- *  
+ *
  *  Given a pointer to a GED database record, and a transformation matrix,
  *  determine if this is a valid XXX, and if so, precompute various
  *  terms of the formula.
- *  
+ *
  *  Returns -
  *  	0	XXX is OK
  *  	!0	Error in description
- *  
+ *
  *  Implicit return -
  *  	A struct xxx_specific is created, and it's address is stored in
  *  	stp->st_specific for use by xxx_shot().
@@ -140,11 +140,11 @@ register const struct soltab *stp;
 
 /**
  *  			R T _ X X X _ S H O T
- *  
+ *
  *  Intersect a ray with a xxx.
  *  If an intersection occurs, a struct seg will be acquired
  *  and filled in.
- *  
+ *
  *  Returns -
  *  	0	MISS
  *	>0	HIT
@@ -184,7 +184,7 @@ struct application	*ap;
 
 /**
  *  			R T _ X X X _ N O R M
- *  
+ *
  *  Given ONE ray distance, return the normal and entry/exit point.
  */
 void
@@ -221,7 +221,7 @@ struct soltab		*stp;
 
 /**
  *  			R T _ X X X _ U V
- *  
+ *
  *  For a hit on the surface of an xxx, return the (u,v) coordinates
  *  of the hit point, 0 <= u,v <= 1.
  *  u = azimuth
@@ -424,7 +424,7 @@ const struct db_i		*dbip;
 	xxx_ip->magic = RT_XXX_INTERNAL_MAGIC;
 
 	/* Convert the data in ep->ext_buf into internal format.
-	 * Note the conversion from network data 
+	 * Note the conversion from network data
 	 * (Big Endian ints, IEEE double floating point) to host local data
 	 * representations.
 	 */

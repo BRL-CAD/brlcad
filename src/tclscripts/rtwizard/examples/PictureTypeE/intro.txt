@@ -1,7 +1,7 @@
 Hi!
 
 You have elected to produce a ghost image with a full-color insert. This is a slightly complicated image type. In order to produce this image you will need to do the following:
-    1. Specify the items that you wish to render in the ghost image. 
+    1. Specify the items that you wish to render in the ghost image.
     2. Specify the items to be rendered in full-color
     3. Specify the view parameters.
 

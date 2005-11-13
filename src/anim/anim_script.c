@@ -25,10 +25,10 @@
  *  virtual camera). Some of the available options include rotation
  *  only, translation only, automatic steering, and specifying reference
  *  coordinates.
- *	
+ *
  *  Author -
  *	Carl J. Nuzman
- *  
+ *
  *  Source -
  *      The U. S. Army Research Laboratory
  *      Aberdeen Proving Ground, Maryland  21005-5068  USA
@@ -92,14 +92,14 @@ main(int argc, char **argv)
     yaw = pitch = roll = 0.0;
     MAT_IDN(m_axes);
     MAT_IDN(m_rev_axes);
-    MAT_IDN(a);	
+    MAT_IDN(a);
 
 
     if (!get_args(argc,argv))
 	fprintf(stderr,"anim_script: Get_args error\n");
 
     frame = (steer) ? first_frame -1 : first_frame;
-	
+
     if (view && (viewsize > 0.0))
 	printf("viewsize %.10g;\n", viewsize);
 
@@ -144,7 +144,7 @@ main(int argc, char **argv)
 
 	/* make final matrix, including translation etc */
 	if (axes){ /* add pre-rotation from original axes */
-	    bn_mat_mul(m_x,a,m_rev_axes); 
+	    bn_mat_mul(m_x,a,m_rev_axes);
 	    MAT_MOVE(a,m_x);
 	}
 	anim_add_trans(a,point,rcentroid); /* add translation */
@@ -186,7 +186,7 @@ main(int argc, char **argv)
 
 int get_args(int argc, char **argv)
 {
-	
+
     int c, i, yes;
     double yaw,pch,rll;
     void anim_dx_y_z2mat(fastf_t *, double, double, double), anim_dz_y_x2mat(fastf_t *, double, double, double);

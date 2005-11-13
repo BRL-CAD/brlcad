@@ -23,7 +23,7 @@
  *	build a wall.
  *
  *	Currently builds "wood frame" walls for typical building constructs.
- *	
+ *
  */
 #include "common.h"
 
@@ -58,7 +58,7 @@ int sol_num = 0;
 char *type = "frame";
 char *units = "mm";
 double unit_conv = 1.0;
-matp_t trans_matrix = (matp_t)NULL; 
+matp_t trans_matrix = (matp_t)NULL;
 const double degtorad =  0.01745329251994329573;
 
 int log_cmds = 0;	/* log sessions to a log file */
@@ -140,7 +140,7 @@ set_translate(char *s)
     					"transformation matrix");
     		bcopy( (char *)bn_mat_identity, (char *)trans_matrix, sizeof(mat_t));
     	}
-	
+
     	MAT_DELTAS(trans_matrix, dx*unit_conv, dy*unit_conv, dz*unit_conv);
 }
 
@@ -398,7 +398,7 @@ struct boardseg *seglist;
 			    if (op->sz < seg->e) {
 			    	/* opening covers end of segment */
 			    	seg->e = op->sz;
-			    } 
+			    }
 			    /* else opening entirely after segment */
 			} else {
 				/* there is an opening in the middle of the
@@ -466,7 +466,7 @@ h_segs(double sz, double ez, struct boardseg *seglist, double sx, double ex)
 			    if (op->sx < seg->e) {
 			    	/* opening covers end of segment */
 			    	seg->e = op->sx;
-			    } 
+			    }
 			    /* else opening entirely after segment */
 			} else {
 				/* there is an opening in the middle of the
@@ -502,7 +502,7 @@ void
 mk_h_rpp(struct rt_wdb *fd, struct wmember *wm_hd, double xmin, double xmax, double ymin, double ymax, double zmin, double zmax)
 {
 	point_t pts[8];
-	
+
 	VSET(pts[0], xmin, ymin, zmin);
 	VSET(pts[1], xmin, ymin, zmax);
 	VSET(pts[2], xmin, ymax, zmax);
@@ -519,7 +519,7 @@ void
 mk_v_rpp(struct rt_wdb *fd, struct wmember *wm_hd, double xmin, double xmax, double ymin, double ymax, double zmin, double zmax)
 {
 	point_t pts[8];
-	
+
 	VSET(pts[0], xmin, ymin, zmin);
 	VSET(pts[1], xmax, ymin, zmin);
 	VSET(pts[2], xmax, ymax, zmin);
@@ -551,7 +551,7 @@ frame_o_sides(struct rt_wdb *fd, struct wmember *wm_hd, struct opening *op, doub
 			0.0,	 bd_thick,
 			bd_thin, h);
 
-				
+
 		if (op->sx-bd_thin*2.0 >= 0.0) {
 			/* put in reinforcing board on side */
 
@@ -569,7 +569,7 @@ frame_o_sides(struct rt_wdb *fd, struct wmember *wm_hd, struct opening *op, doub
 	if (op->ex+bd_thin <= WALL_WIDTH) {
 
 		ex = op->ex+bd_thin;
-			
+
 		if (ex > WALL_WIDTH-bd_thin)
 			ex = WALL_WIDTH;
 
@@ -629,7 +629,7 @@ frame_opening(struct rt_wdb *fd, struct wmember *wm_hd, struct opening *op)
 			} else {
 
 				/* multiple support boards */
-				mk_v_rpp(fd, wm_hd, 
+				mk_v_rpp(fd, wm_hd,
 					op->sx, op->sx+bd_thin,
 					0.0, bd_thick,
 					bd_thin, op->sz-bd_thin);
@@ -694,13 +694,13 @@ frame_opening(struct rt_wdb *fd, struct wmember *wm_hd, struct opening *op)
 				WALL_HEIGHT-bd_thin);
 
 			/* put in the offset boards */
-			mk_v_rpp(fd, wm_hd, 
+			mk_v_rpp(fd, wm_hd,
 				op->sx, op->sx+bd_thin,
 			    	0.0, bd_thick,
 				op->ez+bd_thin,
 				WALL_HEIGHT-bd_thin-beam_height);
 
-			mk_v_rpp(fd, wm_hd, 
+			mk_v_rpp(fd, wm_hd,
 				op->ex-bd_thin, op->ex,
 			    	0.0, bd_thick,
 				op->ez+bd_thin,
@@ -709,12 +709,12 @@ frame_opening(struct rt_wdb *fd, struct wmember *wm_hd, struct opening *op)
 
 			span = op->ex - op->sx;
 			span -= bd_thin*2.0;
-			
+
 			studs = (int) (span/stud_spacing);
 			dx = span / ((double)studs+1.0);
 
 			for(pos=op->sx+dx ; studs-- ; pos += dx) {
-				mk_v_rpp(fd, wm_hd, 
+				mk_v_rpp(fd, wm_hd,
 					pos, pos+bd_thin,
 				    	0.0, bd_thick,
 					op->ez+bd_thin,
@@ -741,7 +741,7 @@ frame_opening(struct rt_wdb *fd, struct wmember *wm_hd, struct opening *op)
 				op->ez);
 		}
 	} else {
-		/* There is no top board capping the opening 
+		/* There is no top board capping the opening
 		 * (with the possible exception of the top rail of the wall)
 		 */
 
@@ -777,9 +777,9 @@ frame(struct rt_wdb *fd)
 	/* find the segments of the base-board */
 	s_hd = (struct boardseg *)bu_calloc(1, sizeof(struct boardseg), "s_hd");
 	BU_LIST_INIT(&(s_hd->l));
-	
+
 	h_segs(0.0, bd_thin, s_hd, 0.0, WALL_WIDTH);
-	
+
 	/* make the base-board segments */
 	while (BU_LIST_WHILE(seg, boardseg, &(s_hd->l))) {
 
@@ -856,7 +856,7 @@ frame(struct rt_wdb *fd)
 		}
 
 
-		if (pos < WALL_WIDTH-bd_thin && 
+		if (pos < WALL_WIDTH-bd_thin &&
 		    pos+stud_spacing > WALL_WIDTH-bd_thin)
 		    	pos = WALL_WIDTH - bd_thin - stud_spacing;
 	}
@@ -879,7 +879,7 @@ sheetrock(struct rt_wdb *fd)
 	struct wmember wm_hd;
 	struct opening *op;
 	int i=0;
-	
+
 	if (!color) color = sheetrock_color;
 
 	BU_LIST_INIT(&wm_hd.l);
@@ -929,11 +929,11 @@ mortar_brick(struct rt_wdb *fd)
 	double mortar_height;
 	double mortar_width;
 	point_t pts[8];
-	
+
 	horiz_bricks = (WALL_WIDTH-brick_depth) / (brick_width + min_mortar);
 
 	/* compute excess distance to be used in mortar */
-	mortar_width = WALL_WIDTH - 
+	mortar_width = WALL_WIDTH -
 			(horiz_bricks * (brick_width + min_mortar) +
 			brick_depth);
 
@@ -980,7 +980,7 @@ mortar_brick(struct rt_wdb *fd)
 	VSET(pts[5], 0.0,	  brick_depth,	mortar_height);
 	VSET(pts[6], brick_width, brick_depth,	mortar_height);
 	VSET(pts[7], brick_width, 0.0,		mortar_height);
-		
+
 	(void)sprintf(sol_name, "s.%s.vm", obj_name);
 	mk_arb8(fd, sol_name, &pts[0][X]);
 
@@ -1031,13 +1031,13 @@ brick(struct rt_wdb *fd)
 	double mortar_width;
 	point_t pts[8];
 	char proto_brick[64];
-	
+
 	if (!color) color = brick_color;
 
 	horiz_bricks = (WALL_WIDTH-brick_depth) / brick_width;
 	mortar_width = WALL_WIDTH - horiz_bricks * brick_width;
 	mortar_width /= horiz_bricks;
-		
+
 	vert_bricks = WALL_HEIGHT / brick_height;
 	mortar_height = 0.0;
 

@@ -12,7 +12,7 @@
 # 1. Redistributions of source code must retain the above copyright
 # notice, this list of conditions and the following disclaimer.
 #
-# 2. Redistributions in binary form must reproduce the above 
+# 2. Redistributions in binary form must reproduce the above
 # copyright notice, this list of conditions and the following
 # disclaimer in the documentation and/or other materials provided
 # with the distribution.
@@ -65,10 +65,22 @@ else
 	TITLE="Graphics Editor (MGED)"
 fi
 
+# determine the behavior of head
+case "x`echo 'head' | head -n 1 2>&1`" in
+    *xhead*) HEAD_N="n " ;;
+    *) HEAD_N="" ;;
+esac
+
+# determine the behavior of tail
+case "x`echo 'tail' | tail -n 1 2>&1`" in
+    *xtail*) TAIL_N="n " ;;
+    *) TAIL_N="" ;;
+esac
+
 # Obtain RELEASE number
 if test -r $path_to_vers_sh/../configure.ac ; then
 	for i in 1 2 3 4 ; do
-		version_script="`grep VERSION $path_to_vers_sh/../configure.ac | grep -v SUBST | head -$i | tail -1`"
+		version_script="`grep VERSION $path_to_vers_sh/../configure.ac | grep -v SUBST | head -${HEAD_N}$i | tail -${TAIL_N}1`"
 		eval "$version_script"
 	done
 	if test ! "x$BRLCAD_VERSION" = "x" ; then

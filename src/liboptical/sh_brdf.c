@@ -29,11 +29,11 @@
  *
  *  Authors -
  *	John R. Anderson
- *  
+ *
  *  Source -
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5066
- *  
+ *
  *
  *
  *	Based on the simple Isotropic Gaussian Model presented by Gregory Ward
@@ -262,7 +262,7 @@ brdf_render(register struct application *ap, struct partition *pp, struct shadew
 
 		if ((lp = (struct light_specific *)swp->sw_visible[i]) == LIGHT_NULL )
 			continue;
-	
+
 		/* Light is not shadowed -- add this contribution */
 		intensity = swp->sw_intensity+3*i;
 		to_light = swp->sw_tolight+3*i;

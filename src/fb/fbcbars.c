@@ -20,7 +20,7 @@
  *
  */
 /** @file fbcbars.c
- *  
+ *
  *  Program to make vertical color scales arranged horizontally on screen.
  *  The wonderful thing about standards is that there are so many to
  *  choose from:
@@ -50,7 +50,7 @@
  *	    to be a rare event.
  *  Thus, this bundled version is more efficient, easier to use,
  *  and more likely to have the desired effect.
- *  
+ *
  *  Author -
  *	Michael John Muuss
  *
@@ -64,7 +64,7 @@
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5066
- *  
+ *
  */
 #ifndef lint
 static const char RCSid[] = "@(#)$Header$ (BRL)";
@@ -79,6 +79,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include <stdio.h>
 
 #include "machine.h"
+#include "bu.h"
 #include "fb.h"
 
 #define MAX_LINE	(8*1024)	/* Max pixels/line */
@@ -181,7 +182,7 @@ get_args(int argc, register char **argv)
 {
 	register int c;
 
-	while ( (c = getopt( argc, argv, "efshF:S:W:N:" )) != EOF )  {
+	while ( (c = bu_getopt( argc, argv, "efshF:S:W:N:" )) != EOF )  {
 		switch( c )  {
 		case 'e':
 			mode = M_EIA;
@@ -197,16 +198,16 @@ get_args(int argc, register char **argv)
 			scr_height = scr_width = 1024;
 			break;
 		case 'F':
-			framebuffer = optarg;
+			framebuffer = bu_optarg;
 			break;
 		case 'S':
-			scr_height = scr_width = atoi(optarg);
+			scr_height = scr_width = atoi(bu_optarg);
 			break;
 		case 'W':
-			scr_width = atoi(optarg);
+			scr_width = atoi(bu_optarg);
 			break;
 		case 'N':
-			scr_height = atoi(optarg);
+			scr_height = atoi(bu_optarg);
 			break;
 
 		default:		/* '?' */
@@ -214,7 +215,7 @@ get_args(int argc, register char **argv)
 		}
 	}
 
-	if ( argc > ++optind )
+	if ( argc > ++bu_optind )
 		(void)fprintf( stderr, "fbcbars: excess argument(s) ignored\n" );
 
 	return(1);		/* OK */

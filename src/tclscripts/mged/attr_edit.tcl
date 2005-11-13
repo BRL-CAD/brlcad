@@ -47,7 +47,7 @@ class Attr_editor {
     # the index into cur_vals and cur_attrs for the selected attribute
     private variable cur_index -1
 
-    # the name of the object at start  
+    # the name of the object at start
     private variable old_obj_name ""
 
     # text variable for the "object" entry widget
@@ -124,7 +124,7 @@ class Attr_editor {
 	itk_component add frame_attr {
 	    frame $itk_interior.fr_attr -relief sunken -bd 3
 	}
-	
+
 
 	# frame containing new attribute button and entry widget
 	set fnew [frame $itk_interior.fr_attr.fr_new -relief flat -bd 3]
@@ -148,7 +148,7 @@ class Attr_editor {
 	# paned widget to contain attribute names listbox and values text
 	iwidgets::panedwindow $fr_pane.pane_attrs -orient vertical \
 		-height 150 -width 250 -thickness 3 -sashborderwidth 3
-	
+
 	$fr_pane.pane_attrs add names
 	set name_pane [$fr_pane.pane_attrs childsite names]
 	label $name_pane.lbl -text "Attribute Names"
@@ -177,7 +177,7 @@ class Attr_editor {
 	grid columnconfigure $value_pane 0 -weight 1
 	grid rowconfigure $value_pane 1 -weight 1
 	$fr_pane.pane_attrs fraction 40 60
-	
+
 	grid $fr_pane.pane_attrs -row 0 -column 0\
 		-sticky nsew
 	grid rowconfigure $fr_pane.pane_attrs 0 -weight 1
@@ -291,13 +291,13 @@ class Attr_editor {
 	    {summary "Press this button to save all the pending attribute edits to the currently\n\
 		    selected database object and dismiss the attribute editor window. Remember,\n\
 		    attribute edits are not saved to the database until \"ok\" or \"apply\"\n\
-		    is selected."} 
+		    is selected."}
 	}
 	hoc_register_data $itk_interior.frc.apply "apply" {
 	    {summary "Press this button to save all the pending attribute edits to the currently\n\
 		    selected database object without dismissing the attribute editor window. Remember,\n\
 		    attribute edits are not saved to the database until \"ok\" or \"apply\"\n\
-		    is selected."} 
+		    is selected."}
 	}
 	hoc_register_data $itk_interior.fr_attr.frc1.reset_sel "reset selected" {
 	    {summary "Press this button to reset the value of the local copy of the currently selected\n\

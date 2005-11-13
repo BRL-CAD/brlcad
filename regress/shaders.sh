@@ -224310,7 +224310,7 @@ g all.g light1.r
 
 set radius 256
 
-foreach p {1 2 3 4 5} { 
+foreach p {1 2 3 4 5} {
 
   set sh [expr \$p * 4]
   set y  [expr [expr \$p - 3] * 640]

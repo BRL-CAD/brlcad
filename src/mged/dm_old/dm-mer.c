@@ -36,7 +36,7 @@
  *
  *  Authors -
  *	Michael John Muuss
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
@@ -279,7 +279,7 @@ Mer_open()
 
 /*
  *  			M E R _ C L O S E
- *  
+ *
  *  Gracefully release the display.
  */
 void
@@ -388,7 +388,7 @@ mat_t mat;
 
 /*
  *  			M E R _ O B J E C T
- *  
+ *
  *  Set up for an object, transformed as indicated, and with an
  *  object center as specified.  The ratio of object to screen size
  *  is passed in as a convienience.  Mat is model2view.
@@ -555,7 +555,7 @@ Mer_input( cmd_fd, noblock )
 		return(0);		/* just peripheral stuff */
 }
 
-/* 
+/*
  *			M E R _ L I G H T
  *
  * This function must keep both the light hardware, and the software
@@ -709,7 +709,7 @@ Mer_statechange( a, b )
 	case ST_VIEW:
 		PSndBool(0, 1, "T_track");	/* constant tracking OFF */
 		break;
-		
+
 	case ST_S_PICK:
 	case ST_O_PICK:
 	case ST_O_PATH:
@@ -825,11 +825,11 @@ register struct solid *sp;
 	PBeginS("world");
 	PInst( "", "faceplate" );
 	PViewP( "", -1.0,1.0, -1.0,1.0,	1.0,1.0, "" );
-	PWindow("mmat", -1.0,1.0, -1.0,1.0, 
+	PWindow("mmat", -1.0,1.0, -1.0,1.0,
 		1.0E-7,1.0E7, "");
 	PSetInt( "depth_cue", 1, 0.75, 1.0, "model" );
 	if( b != ST_VIEW )  {
-		PWindow("smat", -1.0,1.0, -1.0,1.0, 
+		PWindow("smat", -1.0,1.0, -1.0,1.0,
 			1.0E-7,1.0E7, "");
 		PSetInt( "sdepth_cue", 1, 1.0, 1.0, "stuff" );
 	}
@@ -862,7 +862,7 @@ static struct rgbtab {
 
 /*
  *  			M E R _ C O L O R C H A N G E
- *  
+ *
  *  Go through the mater table, and allocate color map slots.
  *  With 4096, we shouldn't often run out.
  */
@@ -961,7 +961,7 @@ Message_Disconnect()
 
 /*
  *  			M E S S A G E _ S E N D
- *  
+ *
  *  This routine sends a higher-level message to a process in the Merlin.
  *  Note that at this level, "dest" is a MERLIN "well-known" logical unit.
  *  See Appendix A of the Communications Reference Manual.
@@ -993,7 +993,7 @@ int Message_data_len;	/* length of message returned by eat_chars() */
 
 /*
  *  			M E S S A G E _ R E C E I V E
- *  
+ *
  *  Called by Dlink_Receive() whenever a Data NPDU packet is read.
  *  Returns 0 if there is no application data involved, else returns
  *  a pointer to the first byte of the actual application data.
@@ -1036,7 +1036,7 @@ int count;
 
 /*
  *  			N E T W O R K _ C O N N E C T
- *  
+ *
  *  Attempt to open a network peer-to-peer connection to
  *  carry all message level connections.
  *  Try several times.
@@ -1121,7 +1121,7 @@ Network_Connect()
 		if( ck_input(1) )  (void)eat_chars();
 	}
 	return;			/* FAIL */
-}	
+}
 
 Network_Disconnect(reason)
 int reason;
@@ -1165,11 +1165,11 @@ Network_Discovery()
 	Dlink_Send( buf, cp-buf );
 	/* await reply */
 	if( ck_input(1) )  (void)eat_chars();
-}	
+}
 
 /*
  *  		N E T W O R K _ S U S P E N D
- *  
+ *
  *  Prevent terminal from sending packets, and allow characters
  *  typed at the terminal keyboard to be sent through.  Ie, disable
  *  the MCF (Message Service Communications Facility), and enable
@@ -1194,7 +1194,7 @@ Network_Suspend()
 
 /*
  *  			N E T W O R K _ R E S U M E
- *  
+ *
  *  Permit terminal to send packets again, disabling the DTF
  *  (Data Terminal Facility) and re-enabling the MCF (Message
  *  Service Communications Facility).
@@ -1216,7 +1216,7 @@ Network_Resume()
 
 /*
  *  			N E T W O R K _ S E N D
- *  
+ *
  *  Place a network data transfer header into the area in FRONT
  *  of the buffer pointed to by 'ptr', and send it to the data link.
  */
@@ -1235,7 +1235,7 @@ register int len;
 
 /*
  *  			D L I N K _ S E N D
- *  
+ *
  *  The default state of the line in packet mode is
  *  "packed data" mode, with 4 bits of data encoded as HEX
  *  sent per output byte.  For simplicity, we will keep it
@@ -1261,7 +1261,7 @@ register int count;
 
 /*
  *  			C K _ I N P U T
- *  
+ *
  *  This routine is called to explicitly check for input from the Merlin,
  *  waiting at most "tim" seconds for it to arrive.
  *  However, no input is actually read.  The return is 0 if there is nothing
@@ -1298,7 +1298,7 @@ u_char packetbuf[4096];
 
 /*
  *  			E A T _ C H A R S
- *  
+ *
  *  This routine is called whenever select() has indicated that there
  *  are characters from the Merlin waiting to be read.
  *  The return is the return of Dlink_Receive (indicating that
@@ -1370,11 +1370,11 @@ eat_chars()
 
 /*
  *  			D L I N K _ R E C E I V E
- *  
+ *
  *  Called bye eat_chars() whenever a full link-level packet has been
  *  read.  All link level encapsulation has been stripped before this
  *  routine is called.
- *  
+ *
  *  Returns the return of Message_Receive(), otherwise returns 0,
  *  meaning no application data contained in this packet.
  */

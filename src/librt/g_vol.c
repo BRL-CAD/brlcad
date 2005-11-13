@@ -30,12 +30,12 @@
  *  Authors -
  *	Michael John Muuss
  *	Phil Dykstra
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005
- *  
+ *
  */
 /*@}*/
 
@@ -62,7 +62,7 @@ static const char RCSvol[] = "@(#)$Header$ (BRL)";
 
 /*
 NOTES:
-	Changed small to small1 for win32 compatibility 
+	Changed small to small1 for win32 compatibility
 */
 
 
@@ -95,7 +95,7 @@ const struct bu_structparse rt_vol_parse[] = {
 	{"",	0, (char *)0,	0,			BU_STRUCTPARSE_FUNC_NULL }
 };
 
-RT_EXTERN(void rt_vol_plate,(point_t a, point_t b, point_t c, point_t d,
+BU_EXTERN(void rt_vol_plate,(point_t a, point_t b, point_t c, point_t d,
 	mat_t mat, struct bu_list *vhead, struct rt_vol_internal *vip));
 
 /*
@@ -1278,7 +1278,7 @@ rt_vol_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 
 		if( fu->orientation != OT_SAME )
 			continue;
-		
+
 		for( BU_LIST_FOR( lu , loopuse , &fu->lu_hd ) )
 			(void)nmg_kill_snakes( lu );
 	}

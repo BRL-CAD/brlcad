@@ -49,12 +49,12 @@
  *
  *  Authors -
  *      Robert G. Parker
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005
- *  
+ *
  */
 #ifndef lint
 static char RCSid[] = "@(#)$Header$ (BRL)";
@@ -170,7 +170,7 @@ struct dm dm_glx = {
   0,                    /* no stereo by default */
   IRBOUND,
   "glx",
-  "SGI - mixed mode", 
+  "SGI - mixed mode",
   DM_TYPE_GLX,
   1,
   0,
@@ -268,7 +268,7 @@ char *argv[];
 
 #ifdef DM_OGL
   /* This is a hack to handle the fact that the sgi attach crashes
-   * if a direct OpenGL context has been previously opened in the 
+   * if a direct OpenGL context has been previously opened in the
    * current mged session. This stops the attach before it crashes.
    */
   if (ogl_ogl_used){
@@ -372,7 +372,7 @@ char *argv[];
     if( dmp->dm_height <
 	dmp->dm_width )
       dmp->dm_width = dmp->dm_height;
-    else /* we have a funky shaped monitor */ 
+    else /* we have a funky shaped monitor */
       dmp->dm_height = dmp->dm_width;
   }
 
@@ -427,7 +427,7 @@ char *argv[];
 	  ((struct glx_vars *)dmp->dm_vars)->mvars.rgb = 1;
 	else
 	  ((struct glx_vars *)dmp->dm_vars)->mvars.rgb = 0;
-	
+
 	break;
       case GLX_DOUBLE:
 	if(p->arg)
@@ -558,7 +558,7 @@ Done:
 }
 
 
-/* 
+/*
  *			G L X _ C O N F I G U R E W I N D O W S H A P E
  *
  *  Either initially, or on resize/reshape of the window,
@@ -598,7 +598,7 @@ struct dm *dmp;
 
 /*
  *  			G L X _ C L O S E
- *  
+ *
  *  Gracefully release the display.  Well, mostly gracefully -- see
  *  the comments in the open routine.
  */
@@ -613,7 +613,7 @@ struct dm *dmp;
     lampoff( 0xf );
 
     /* avoids error messages when reattaching */
-    mmode(MVIEWING);	
+    mmode(MVIEWING);
     lmbind(LIGHT2,0);
     lmbind(LIGHT3,0);
     lmbind(LIGHT4,0);
@@ -830,7 +830,7 @@ int which_eye;
 }
 
 static float material_objdef[] = {
-	ALPHA,		1.0,	
+	ALPHA,		1.0,
 	AMBIENT,	0.2, 0.2, 0.2,	/* 0.4 in rt */
 	DIFFUSE,	0.6, 0.6, 0.6,
 	SPECULAR,	0.2, 0.2, 0.2,
@@ -840,7 +840,7 @@ static float material_objdef[] = {
 
 /*
  *  			G L X _ O B J E C T
- *  
+ *
  */
 static int
 glx_drawVList( dmp, vp )
@@ -1164,14 +1164,14 @@ struct dm *dmp;
 
 #if 0
 /* Handy fakeouts when we don't want to link with -lmpc */
-usinit()	{ 
-	bu_log("usinit\n"); 
+usinit()	{
+	bu_log("usinit\n");
 }
-usnewlock()	{ 
-	bu_log("usnewlock\n"); 
+usnewlock()	{
+	bu_log("usnewlock\n");
 }
-taskcreate()	{ 
-	bu_log("taskcreate\n"); 
+taskcreate()	{
+	bu_log("taskcreate\n");
 }
 #endif
 
@@ -1247,7 +1247,7 @@ static float material_default[] = {
 
 /* Something like the RT default phong material */
 static float material_rtdefault[] = {
-	ALPHA,		1.0,	
+	ALPHA,		1.0,
 	AMBIENT,	0.2, 0.2, 0.2,	/* 0.4 in rt */
 	DIFFUSE,	0.6, 0.6, 0.6,
 	SPECULAR,	0.2, 0.2, 0.2,
@@ -1403,8 +1403,8 @@ static float mat_beigeshiny[] = {
  *	POSITION	position of light.  w=0 for infinite lights
  */
 static float default_light[] = {
-	AMBIENT,	0.0, 0.0, 0.0, 
-	LCOLOR,		1.0, 1.0, 1.0, 
+	AMBIENT,	0.0, 0.0, 0.0,
+	LCOLOR,		1.0, 1.0, 1.0,
 	POSITION,	0.0, 0.0, 1.0, 0.0,
 	LMNULL};
 
@@ -1412,106 +1412,106 @@ static float default_light[] = {
 #if 1
 # if 0
 static float white_inf_light[] = {
-	AMBIENT, 0.0, 0.0, 0.0, 
-	LCOLOR,   0.70, 0.70, 0.70, 
-	POSITION, 100.0, -200.0, 100.0, 0.0, 
+	AMBIENT, 0.0, 0.0, 0.0,
+	LCOLOR,   0.70, 0.70, 0.70,
+	POSITION, 100.0, -200.0, 100.0, 0.0,
 	LMNULL};
 
 
 static float red_inf_light[] = {
-	AMBIENT, 0.0, 0.0, 0.0, 
-	LCOLOR,   0.6, 0.1, 0.1, 
-	POSITION, -100.0, -30.0, 100.0, 0.0, 
+	AMBIENT, 0.0, 0.0, 0.0,
+	LCOLOR,   0.6, 0.1, 0.1,
+	POSITION, -100.0, -30.0, 100.0, 0.0,
 	LMNULL};
 
 static float green_inf_light[] = {
-	AMBIENT, 0.0, 0.0, 0.0, 
-	LCOLOR,   0.1, 0.3, 0.1, 
-	POSITION, 100.0, -20.0, 20.0, 0.0, 
+	AMBIENT, 0.0, 0.0, 0.0,
+	LCOLOR,   0.1, 0.3, 0.1,
+	POSITION, 100.0, -20.0, 20.0, 0.0,
 	LMNULL};
 
 
 static float blue_inf_light[] = {
-	AMBIENT, 0.0, 0.0, 0.0, 
-	LCOLOR,   0.1, 0.1, 0.3, 
-	POSITION, 0.0, 100.0, -100.0, 0.0, 
+	AMBIENT, 0.0, 0.0, 0.0,
+	LCOLOR,   0.1, 0.1, 0.3,
+	POSITION, 0.0, 100.0, -100.0, 0.0,
 	LMNULL};
 
 static float white_local_light[] = {
-	AMBIENT, 0.0, 1.0, 0.0, 
-	LCOLOR,   0.75, 0.75, 0.75, 
-	POSITION, 0.0, 10.0, 10.0, 5.0, 
+	AMBIENT, 0.0, 1.0, 0.0,
+	LCOLOR,   0.75, 0.75, 0.75,
+	POSITION, 0.0, 10.0, 10.0, 5.0,
 	LMNULL};
 # else
 static float white_inf_light[] = {
-	AMBIENT, 0.0, 0.0, 0.0, 
-	LCOLOR,   0.70, 0.70, 0.70, 
-	POSITION, 100.0, 200.0, 100.0, 0.0, 
+	AMBIENT, 0.0, 0.0, 0.0,
+	LCOLOR,   0.70, 0.70, 0.70,
+	POSITION, 100.0, 200.0, 100.0, 0.0,
 	LMNULL};
 
 
 static float red_inf_light[] = {
-	AMBIENT, 0.0, 0.0, 0.0, 
-	LCOLOR,   0.6, 0.1, 0.1, 
-	POSITION, 100.0, 30.0, 100.0, 0.0, 
+	AMBIENT, 0.0, 0.0, 0.0,
+	LCOLOR,   0.6, 0.1, 0.1,
+	POSITION, 100.0, 30.0, 100.0, 0.0,
 	LMNULL};
 
 static float green_inf_light[] = {
-	AMBIENT, 0.0, 0.0, 0.0, 
-	LCOLOR,   0.1, 0.3, 0.1, 
-	POSITION, -100.0, 20.0, 20.0, 0.0, 
+	AMBIENT, 0.0, 0.0, 0.0,
+	LCOLOR,   0.1, 0.3, 0.1,
+	POSITION, -100.0, 20.0, 20.0, 0.0,
 	LMNULL};
 
 
 static float blue_inf_light[] = {
-	AMBIENT, 0.0, 0.0, 0.0, 
-	LCOLOR,   0.1, 0.1, 0.3, 
-	POSITION, 0.0, -100.0, -100.0, 0.0, 
+	AMBIENT, 0.0, 0.0, 0.0,
+	LCOLOR,   0.1, 0.1, 0.3,
+	POSITION, 0.0, -100.0, -100.0, 0.0,
 	LMNULL};
 
 static float white_local_light[] = {
-	AMBIENT, 0.0, 1.0, 0.0, 
-	LCOLOR,   0.75, 0.75, 0.75, 
-	POSITION, 0.0, 10.0, 10.0, 5.0, 
+	AMBIENT, 0.0, 1.0, 0.0,
+	LCOLOR,   0.75, 0.75, 0.75,
+	POSITION, 0.0, 10.0, 10.0, 5.0,
 	LMNULL};
 # endif
 
 #else
 static float white_inf_light[] = {
-	AMBIENT, 0.0, 0.0, 0.0, 
-	LCOLOR,   0.70, 0.70, 0.70, 
-	POSITION, 10.0, 50.0, 50.0, 0.0, 
+	AMBIENT, 0.0, 0.0, 0.0,
+	LCOLOR,   0.70, 0.70, 0.70,
+	POSITION, 10.0, 50.0, 50.0, 0.0,
 	LMNULL};
 
 
 static float red_inf_light[] = {
-	AMBIENT, 0.0, 0.0, 0.0, 
-	LCOLOR,   0.5, 0.1, 0.1, 
-	POSITION, -100.0, 0.0, 0.0, 0.0, 
+	AMBIENT, 0.0, 0.0, 0.0,
+	LCOLOR,   0.5, 0.1, 0.1,
+	POSITION, -100.0, 0.0, 0.0, 0.0,
 	LMNULL};
 
 static float green_inf_light[] = {
-	AMBIENT, 0.0, 0.0, 0.0, 
-	LCOLOR,   0.1, 0.5, 0.1, 
-	POSITION, 100.0, 50.0, 0.0, 0.0, 
+	AMBIENT, 0.0, 0.0, 0.0,
+	LCOLOR,   0.1, 0.5, 0.1,
+	POSITION, 100.0, 50.0, 0.0, 0.0,
 	LMNULL};
 
 static float blue_inf_light[] = {
-	AMBIENT, 0.0, 0.0, 0.0, 
-	LCOLOR,   0.1, 0.1, 0.5, 
-	POSITION, 0.0, -50.0, 0.0, 0.0, 
+	AMBIENT, 0.0, 0.0, 0.0,
+	LCOLOR,   0.1, 0.1, 0.5,
+	POSITION, 0.0, -50.0, 0.0, 0.0,
 	LMNULL};
 
 static float orange_inf_light[] = {
-	AMBIENT, 0.0, 0.0, 0.0, 
-	LCOLOR,	0.35, 0.175, 0.0, 
-	POSITION, -50.0, 50.0, 10.0, 0.0, 
+	AMBIENT, 0.0, 0.0, 0.0,
+	LCOLOR,	0.35, 0.175, 0.0,
+	POSITION, -50.0, 50.0, 10.0, 0.0,
 	LMNULL};
 
 static float white_local_light[] = {
-	AMBIENT, 0.0, 0.0, 0.0, 
-	LCOLOR,   0.75, 0.75, 0.75, 
-	POSITION, 0.0, 10.0, 10.0, 5.0, 
+	AMBIENT, 0.0, 0.0, 0.0,
+	LCOLOR,   0.75, 0.75, 0.75,
+	POSITION, 0.0, 10.0, 10.0, 5.0,
 	LMNULL};
 
 
@@ -1528,19 +1528,19 @@ static float white_local_light[] = {
  */
 static float	default_lmodel[] = {
 	AMBIENT,	0.2,  0.2,  0.2,
-	ATTENUATION,	1.0, 0.0, 
-	LOCALVIEWER,	0.0, 
+	ATTENUATION,	1.0, 0.0,
+	LOCALVIEWER,	0.0,
 	LMNULL};
 
 static float infinite[] = {
-	AMBIENT, 0.3,  0.3, 0.3, 
-	LOCALVIEWER, 0.0, 
+	AMBIENT, 0.3,  0.3, 0.3,
+	LOCALVIEWER, 0.0,
 	LMNULL};
 
 static float local[] = {
-	AMBIENT, 0.3,  0.3, 0.3, 
-	LOCALVIEWER, 1.0, 
-	ATTENUATION, 1.0, 0.0, 
+	AMBIENT, 0.3,  0.3, 0.3,
+	LOCALVIEWER, 1.0,
+	ATTENUATION, 1.0, 0.0,
 	LMNULL};
 
 static void
@@ -1659,7 +1659,7 @@ GLXconfig *conf;
 			VisualScreenMask|VisualIDMask, &template, &n);
 }
 
-/* 
+/*
  * Fill the configuration structure with the appropriately
  * created window
  */

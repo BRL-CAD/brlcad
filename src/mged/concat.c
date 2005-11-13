@@ -27,7 +27,7 @@
  *  Authors -
  *	Michael John Muuss
  *	Keith A. Applin
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
@@ -55,6 +55,8 @@ static const char RCSconcat[] = "@(#)$Header$ (BRL)";
 #include "machine.h"
 #include "vmath.h"
 #include "raytrace.h"
+#include "db.h"
+
 #include "./ged.h"
 #include "./sedit.h"
 

@@ -26,7 +26,7 @@
  *  Author -
  *	Michael John Muuss
  *	Kieth A. Applin
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
@@ -39,8 +39,6 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #define USE_OLD_MENUS 0
 
 #include "common.h"
-
-
 
 #include <stdio.h>
 #include <math.h>
@@ -59,7 +57,6 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./titles.h"
 #include "./mged_solid.h"
 #include "./sedit.h"
-#include "./mgedtcl.h"
 #include "./mged_dm.h"
 
 int	state;
@@ -251,7 +248,7 @@ dotitles(struct bu_vls *overlay_vls)
 	  return;
 
 	bu_vls_init(&vls);
-	
+
 	/* Set the Tcl variables to the appropriate values. */
 
 	if (illump != SOLID_NULL) {
@@ -395,7 +392,7 @@ if(mged_variables->mv_faceplate){
 			   GED2PM1(XMIN), GED2PM1(YMIN) );
 
 	  /* Display scroll bars */
-	  scroll_ybot = scroll_display( SCROLLY ); 
+	  scroll_ybot = scroll_display( SCROLLY );
 	  y = MENUY;
 	  x = MENUX;
 

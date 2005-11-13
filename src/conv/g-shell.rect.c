@@ -516,7 +516,7 @@ shrink_hit(register struct application *ap, struct partition *PartHeadp, struct 
 	bzero( &ap2, sizeof( struct application ) );
 	ap2.a_resource = ap->a_resource;
 	ap2.a_ray = ap->a_ray;
-	
+
 	pp = PartHeadp->pt_forw;
 
 	VJOIN1( mhit1, ap->a_ray.r_pt, pp->pt_inhit->hit_dist, ap->a_ray.r_dir )
@@ -1215,7 +1215,7 @@ refine_hit(register struct application *ap, struct partition *PartHeadp, struct 
 			eu = BU_LIST_LAST( edgeuse, &lu->down_hd );
 			vg = eu->vu_p->v_p->vg_p;
 			fprintf( fd_plot, "vdraw write 0 %g %g %g\n", V3ARGS( vg->coord ) );
-			
+
 			for( BU_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
 			{
 				vg = eu->vu_p->v_p->vg_p;
@@ -1228,7 +1228,7 @@ refine_hit(register struct application *ap, struct partition *PartHeadp, struct 
 			eu = BU_LIST_LAST( edgeuse, &lu->down_hd );
 			vg = eu->vu_p->v_p->vg_p;
 			fprintf( fd_plot, "vdraw write 0 %g %g %g\n", V3ARGS( vg->coord ) );
-			
+
 			for( BU_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
 			{
 				vg = eu->vu_p->v_p->vg_p;
@@ -1298,7 +1298,7 @@ refine_hit(register struct application *ap, struct partition *PartHeadp, struct 
 			eu = BU_LIST_LAST( edgeuse, &lu->down_hd );
 			vg = eu->vu_p->v_p->vg_p;
 			fprintf( fd_plot, "vdraw write 0 %g %g %g\n", V3ARGS( vg->coord ) );
-			
+
 			for( BU_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
 			{
 				vg = eu->vu_p->v_p->vg_p;
@@ -1311,7 +1311,7 @@ refine_hit(register struct application *ap, struct partition *PartHeadp, struct 
 			eu = BU_LIST_LAST( edgeuse, &lu->down_hd );
 			vg = eu->vu_p->v_p->vg_p;
 			fprintf( fd_plot, "vdraw write 0 %g %g %g\n", V3ARGS( vg->coord ) );
-			
+
 			for( BU_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
 			{
 				vg = eu->vu_p->v_p->vg_p;
@@ -1725,36 +1725,36 @@ hit(register struct application *ap, struct partition *PartHeadp, struct seg *se
 	switch( cur_dir )
 	{
 		case X:
-			VSET( lpart->in->pt, 
+			VSET( lpart->in->pt,
 				yz_rays[ap->a_user].r_pt[X] + first_pp->pt_inhit->hit_dist,
 				yz_rays[ap->a_user].r_pt[Y],
 				yz_rays[ap->a_user].r_pt[Z] );
 			lpart->out->v = (struct vertex *)NULL;
-			VSET( lpart->out->pt, 
+			VSET( lpart->out->pt,
 				yz_rays[ap->a_user].r_pt[X] + last_pp->pt_outhit->hit_dist,
 				yz_rays[ap->a_user].r_pt[Y],
 				yz_rays[ap->a_user].r_pt[Z] );
 			BU_LIST_INSERT( &yz_parts[ap->a_user].l, &lpart->l )
 			break;
 		case Y:
-			VSET( lpart->in->pt, 
+			VSET( lpart->in->pt,
 				xz_rays[ap->a_user].r_pt[X],
 				xz_rays[ap->a_user].r_pt[Y] + first_pp->pt_inhit->hit_dist,
 				xz_rays[ap->a_user].r_pt[Z] );
 			lpart->out->v = (struct vertex *)NULL;
-			VSET( lpart->out->pt, 
+			VSET( lpart->out->pt,
 				xz_rays[ap->a_user].r_pt[X],
 				xz_rays[ap->a_user].r_pt[Y] + last_pp->pt_outhit->hit_dist,
 				xz_rays[ap->a_user].r_pt[Z] );
 			BU_LIST_INSERT( &xz_parts[ap->a_user].l, &lpart->l )
 			break;
 		case Z:
-			VSET( lpart->in->pt, 
+			VSET( lpart->in->pt,
 				xy_rays[ap->a_user].r_pt[X],
 				xy_rays[ap->a_user].r_pt[Y],
 				xy_rays[ap->a_user].r_pt[Z] + first_pp->pt_inhit->hit_dist );
 			lpart->out->v = (struct vertex *)NULL;
-			VSET( lpart->out->pt, 
+			VSET( lpart->out->pt,
 				xy_rays[ap->a_user].r_pt[X],
 				xy_rays[ap->a_user].r_pt[Y],
 				xy_rays[ap->a_user].r_pt[Z] + last_pp->pt_outhit->hit_dist );
@@ -1940,7 +1940,7 @@ main(int argc, char **argv)
 		}
 	}
 
-	/* Open brl-cad database */
+	/* Open BRL-CAD database */
 	if ((rtip=rt_dirbuild(argv[optind], idbuf, sizeof(idbuf))) == RTI_NULL )
 	{
 		bu_log( "rt_durbuild FAILED on %s\n", argv[optind] );

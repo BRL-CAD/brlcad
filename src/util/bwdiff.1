@@ -1,4 +1,27 @@
 .TH BWDIFF 1 BRL-CAD
+./"                       B W D I F F . 1
+./" BRL-CAD
+./"
+./" Copyright (c) 2005 United States Government as represented by
+./" the U.S. Army Research Laboratory.
+./"
+./" This document is made available under the terms of the GNU Free
+./" Documentation License or, at your option, under the terms of the
+./" GNU General Public License as published by the Free Software
+./" Foundation.  Permission is granted to copy, distribute and/or
+./" modify this document under the terms of the GNU Free Documentation
+./" License, Version 1.2 or any later version published by the Free
+./" Software Foundation; with no Invariant Sections, no Front-Cover
+./" Texts, and no Back-Cover Texts.  Permission is also granted to
+./" redistribute this document under the terms of the GNU General
+./" Public License; either version 2 of the License, or (at your
+./" option) any later version.
+./"
+./" You should have received a copy of the GNU Free Documentation
+./" License and/or the GNU General Public License along with this
+./" document; see the file named COPYING for more information.
+./"
+./"./"./"
 .SH NAME
 bwdiff \- compare two black and white files
 .SH SYNOPSIS
@@ -48,12 +71,12 @@ equal-to, and not-equal-to respectively.  Only one of these
 flags may be used at a time.  In this mode the value of a
 pixel in the first file is compared to the corresponding pixel
 in the second, and if the relation is true, a full-white (255)
-pixel is output.  
+pixel is output.
 This mode is useful for producing masks
 showing pixels which satisfy the given condition.
 The default background is black, unless the
 .B \-b
-option is specified, is which case the background is file1, with a 
+option is specified, is which case the background is file1, with a
 lowered intensity.
 .PP
 .I Bwdiff

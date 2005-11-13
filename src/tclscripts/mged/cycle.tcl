@@ -44,7 +44,7 @@ proc get_refs { refs tree } {
 		set refs [get_refs $refs $subtree]
 		set subtree [lindex $tree 2]
 		set refs [get_refs $refs $subtree]
-		
+
 	}
 
 	# return the final list

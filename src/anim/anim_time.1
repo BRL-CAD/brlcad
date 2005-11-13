@@ -1,4 +1,27 @@
-.TH ANIM_TIME 1 BRL/CAD
+.TH ANIM_TIME 1 BRL-CAD
+./"                    A N I M _ T I M E . 1
+./" BRL-CAD
+./"
+./" Copyright (c) 1996-2005 United States Government as represented by
+./" the U.S. Army Research Laboratory.
+./"
+./" This document is made available under the terms of the GNU Free
+./" Documentation License or, at your option, under the terms of the
+./" GNU General Public License as published by the Free Software
+./" Foundation.  Permission is granted to copy, distribute and/or
+./" modify this document under the terms of the GNU Free Documentation
+./" License, Version 1.2 or any later version published by the Free
+./" Software Foundation; with no Invariant Sections, no Front-Cover
+./" Texts, and no Back-Cover Texts.  Permission is also granted to
+./" redistribute this document under the terms of the GNU General
+./" Public License; either version 2 of the License, or (at your
+./" option) any later version.
+./"
+./" You should have received a copy of the GNU Free Documentation
+./" License and/or the GNU General Public License along with this
+./" document; see the file named COPYING for more information.
+./"
+./"./"./"
 .SH NAME
 anim_time - estimate appropriate time parameters for path
 .SH SYNOPSIS
@@ -7,17 +30,17 @@ anim_time - estimate appropriate time parameters for path
 .B [-e end_speed (absolute)]
 .B [-i initial_speed (relative)]
 .B [-f final_speed (relative)]
-.B [-m max_len] 
+.B [-m max_len]
 .B [-v|q]
-.B < in.table 
+.B < in.table
 .B > out.table
 .SH DESCRIPTION
 This filter is designed to estimate appropriate time parameters for
 an animation curve in 3D space. Given a four-column table specifying
-time and 3D position for an object, 
-.I anim_time 
+time and 3D position for an object,
+.I anim_time
 ignores all but the first and last time specifications and
-calculates reasonable time values for each intermediate point in the table. 
+calculates reasonable time values for each intermediate point in the table.
 The
 output time values are based on the distances between points and the
 calculated speed of the object. Various options allow the user to
@@ -26,7 +49,7 @@ form of the output.
 
 .I Anim_time
 is intended to be used in situations where the user knows what key points
-an object should pass through and how long the entire motion should take, 
+an object should pass through and how long the entire motion should take,
 but doesn't care exactly when the object
 reaches each point. It is also useful for getting objects to accelerate
 smoothly to and from rest.
@@ -74,15 +97,15 @@ will be a number representing the total length of the input path.
 .SH BUGS
 The algorithm fits a cubic polynomial to the distance vs time graph, and then
 uses Newton's method to find the times corresponding to each given distance.
-If for some reason convergence is not reached, 
-.I anim_time 
-will print a warning on standard error. If the 
-.B -d 
+If for some reason convergence is not reached,
+.I anim_time
+will print a warning on standard error. If the
+.B -d
 option is specified, the results of each iteration will be printed.
 .SH AUTHOR
 Carl J. Nuzman
 .SH COPYRIGHT
-This software is Copyright (C) 1996-2005 by the United States 
+This software is Copyright (C) 1996-2005 by the United States
 Government as represented by U.S. Army Research Laboratory.
 .SH "BUG REPORTS"
 Reports of bugs or problems should be submitted via electronic

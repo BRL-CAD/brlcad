@@ -22,7 +22,7 @@
  *			D M - O G L . C
  *
  *  An X/ogl Display Manager.
- *  
+ *
  *  Authors -
  *	Carl Nuzman
  *	Robert G. Parker
@@ -71,7 +71,7 @@
 #define USE_VECTOR_THRESHHOLD 0
 
 #if USE_VECTOR_THRESHHOLD
-extern int vectorThreshold;	/* defined in libdm/tcl.c */ 
+extern int vectorThreshold;	/* defined in libdm/tcl.c */
 #endif
 
 static int ogl_actively_drawing;
@@ -379,7 +379,7 @@ ogl_open(interp, argc, argv)
 #if 0
       Tcl_AppendResult(interp, "open_ogl: Failed to open ",
 		       bu_vls_addr(&dmp->dm_pathName),
-		       ", xtkwin == NULL\n"); 
+		       ", xtkwin == NULL\n");
 #else
       bu_log("open_gl: Failed to open %s\n", bu_vls_addr(&dmp->dm_pathName));
 #endif
@@ -608,8 +608,8 @@ Done:
   glGetDoublev(GL_PROJECTION_MATRIX, ((struct ogl_vars *)dmp->dm_vars.priv_vars)->faceplate_mat);
   glPushMatrix();
   glMatrixMode(GL_MODELVIEW);
-  glLoadIdentity(); 
-  glTranslatef(0.0, 0.0, -1.0); 
+  glLoadIdentity();
+  glTranslatef(0.0, 0.0, -1.0);
   glPushMatrix();
   glLoadIdentity();
   ((struct ogl_vars *)dmp->dm_vars.priv_vars)->face_flag = 1;	/* faceplate matrix is on top of stack */
@@ -745,8 +745,8 @@ struct dm *dmp2;
     glGetDoublev(GL_PROJECTION_MATRIX, ((struct ogl_vars *)dmp1->dm_vars.priv_vars)->faceplate_mat);
     glPushMatrix();
     glMatrixMode(GL_MODELVIEW);
-    glLoadIdentity(); 
-    glTranslatef(0.0, 0.0, -1.0); 
+    glLoadIdentity();
+    glTranslatef(0.0, 0.0, -1.0);
     glPushMatrix();
     glLoadIdentity();
     ((struct ogl_vars *)dmp1->dm_vars.priv_vars)->face_flag = 1; /* faceplate matrix is on top of stack */
@@ -839,8 +839,8 @@ struct dm *dmp2;
     glGetDoublev(GL_PROJECTION_MATRIX, ((struct ogl_vars *)dmp2->dm_vars.priv_vars)->faceplate_mat);
     glPushMatrix();
     glMatrixMode(GL_MODELVIEW);
-    glLoadIdentity(); 
-    glTranslatef(0.0, 0.0, -1.0); 
+    glLoadIdentity();
+    glTranslatef(0.0, 0.0, -1.0);
     glPushMatrix();
     glLoadIdentity();
     ((struct ogl_vars *)dmp2->dm_vars.priv_vars)->face_flag = 1; /* faceplate matrix is on top of stack */
@@ -861,7 +861,7 @@ struct dm *dmp2;
 
 /*
  *  			O G L _ C L O S E
- *  
+ *
  *  Gracefully release the display.
  */
 HIDDEN int
@@ -1077,7 +1077,7 @@ int which_eye;
   register fastf_t *mptr;
   GLfloat gtmat[16];
   mat_t	newm;
-	
+
   if(dmp->dm_debugLevel){
     struct bu_vls tmp_vls;
 
@@ -1101,14 +1101,14 @@ int which_eye;
     break;
   case 1:
     /* R eye */
-    glViewport(0,  0, (XMAXSCREEN)+1, ( YSTEREO)+1); 
+    glViewport(0,  0, (XMAXSCREEN)+1, ( YSTEREO)+1);
     glScissor(0,  0, (XMAXSCREEN)+1, (YSTEREO)+1);
     ogl_drawString2D( dmp, "R", 0.986, 0.0, 0, 1 );
     break;
   case 2:
     /* L eye */
     glViewport(0,  0+YOFFSET_LEFT, ( XMAXSCREEN)+1,
-	       ( YSTEREO+YOFFSET_LEFT)-( YOFFSET_LEFT)+1); 
+	       ( YSTEREO+YOFFSET_LEFT)-( YOFFSET_LEFT)+1);
     glScissor(0,  0+YOFFSET_LEFT, ( XMAXSCREEN)+1,
 	      ( YSTEREO+YOFFSET_LEFT)-( YOFFSET_LEFT)+1);
     break;
@@ -1160,7 +1160,7 @@ int which_eye;
 
 /*
  *  			O G L _ D R A W V L I S T
- *  
+ *
  */
 HIDDEN int
 ogl_drawVList(dmp, vp)
@@ -1345,7 +1345,7 @@ struct dm *dmp;
 fastf_t x1, y1;
 fastf_t x2, y2;
 {
-  
+
   if (dmp->dm_debugLevel)
     bu_log("ogl_drawLine2D()\n");
 
@@ -1366,7 +1366,7 @@ fastf_t x2, y2;
     bu_log("%g %g %g %g\n", pmat[3], pmat[7], pmat[11],pmat[15]);
   }
 
-  glBegin(GL_LINES); 
+  glBegin(GL_LINES);
   glVertex2f(x1, y1);
   glVertex2f(x2, y2);
   glEnd();
@@ -1504,7 +1504,7 @@ int style;
     glEnable(GL_LINE_STIPPLE);
   else
     glDisable(GL_LINE_STIPPLE);
-		
+
   return TCL_OK;
 }
 
@@ -1658,7 +1658,7 @@ ogl_choose_visual(struct dm *dmp,
 	    ((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.zbuf = 1;
 
 	  return (maxvip); /* success */
-	} else { 
+	} else {
 	  /* retry with lesser depth */
 	  baddepth = maxvip->depth;
 	  XFreeColormap(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
@@ -1728,10 +1728,10 @@ ogl_choose_visual(struct dm *dmp,
     ppfd->nSize = sizeof(PIXELFORMATDESCRIPTOR);
     ppfd->nVersion = 1;
     ppfd->dwFlags = PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER;
-    ppfd->iPixelType = PFD_TYPE_RGBA;     
-    ppfd->cColorBits = 24;     
-    ppfd->cDepthBits = 32;     
-    ppfd->iLayerType = PFD_MAIN_PLANE;     
+    ppfd->iPixelType = PFD_TYPE_RGBA;
+    ppfd->cColorBits = 24;
+    ppfd->cDepthBits = 32;
+    ppfd->iLayerType = PFD_MAIN_PLANE;
 
     ((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.zbuf = 1;
     iPixelFormat = ChoosePixelFormat(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, ppfd);
@@ -1747,7 +1747,7 @@ ogl_choose_visual(struct dm *dmp,
 
 
 #ifndef _WIN32
-/* 
+/*
  *			O G L _ C O N F I G U R E W I N
  *
  *  Either initially, or on resize/reshape of the window,
@@ -1761,7 +1761,7 @@ ogl_configureWin_guts(dmp, force)
 struct dm *dmp;
 int force;
 {
-  GLint mm; 
+  GLint mm;
   XWindowAttributes xwa;
   XFontStruct	*newfontstruct;
 
@@ -1783,7 +1783,7 @@ int force;
       dmp->dm_height == xwa.height &&
       dmp->dm_width == xwa.width)
     return TCL_OK;
-    
+
   dmp->dm_height = xwa.height;
   dmp->dm_width = xwa.width;
   dmp->dm_aspect = (fastf_t)dmp->dm_width / (fastf_t)dmp->dm_height;
@@ -1833,7 +1833,7 @@ int force;
     glXUseXFont( ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct->fid,
 		 0, 127, ((struct ogl_vars *)dmp->dm_vars.priv_vars)->fontOffset);
   }
-		
+
 
   /* Always try to choose a the font that best fits the window size.
    */
@@ -1898,7 +1898,7 @@ int force;
   return TCL_OK;
 }
 #else
-/* 
+/*
  *			O G L _ C O N F I G U R E W I N
  *
  *  Either initially, or on resize/reshape of the window,
@@ -1911,7 +1911,7 @@ HIDDEN int
 ogl_configureWin_guts(struct dm *dmp,
 		      int force)
 {
-    GLint mm; 
+    GLint mm;
     HFONT newfontstruct, oldfont;
     LOGFONT logfont;
     HWND hwnd;
@@ -1934,7 +1934,7 @@ ogl_configureWin_guts(struct dm *dmp,
 	dmp->dm_height == (xwa.bottom-xwa.top) &&
 	dmp->dm_width == (xwa.right-xwa.left))
 	return TCL_OK;
-    
+
     dmp->dm_height = xwa.bottom-xwa.top;
     dmp->dm_width = xwa.right-xwa.left;
     dmp->dm_aspect = (fastf_t)dmp->dm_width / (fastf_t)dmp->dm_height;
@@ -1970,19 +1970,19 @@ ogl_configureWin_guts(struct dm *dmp,
 
     /* First time through, load a font or quit */
     if (((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct == NULL) {
-	logfont.lfHeight = 18;    
-	logfont.lfWidth = 0;    
-	logfont.lfEscapement = 0;    
-	logfont.lfOrientation = 10; 
-	logfont.lfWeight = FW_NORMAL;    
-	logfont.lfItalic = FALSE;    
-	logfont.lfUnderline = FALSE;    
-	logfont.lfStrikeOut = FALSE; 
-	logfont.lfCharSet = ANSI_CHARSET ;    
-	logfont.lfOutPrecision = OUT_DEFAULT_PRECIS;    
-	logfont.lfClipPrecision =  CLIP_DEFAULT_PRECIS ; 
-	logfont.lfQuality = DEFAULT_QUALITY;    
-	logfont.lfPitchAndFamily = DEFAULT_PITCH | FF_DONTCARE;    
+	logfont.lfHeight = 18;
+	logfont.lfWidth = 0;
+	logfont.lfEscapement = 0;
+	logfont.lfOrientation = 10;
+	logfont.lfWeight = FW_NORMAL;
+	logfont.lfItalic = FALSE;
+	logfont.lfUnderline = FALSE;
+	logfont.lfStrikeOut = FALSE;
+	logfont.lfCharSet = ANSI_CHARSET ;
+	logfont.lfOutPrecision = OUT_DEFAULT_PRECIS;
+	logfont.lfClipPrecision =  CLIP_DEFAULT_PRECIS ;
+	logfont.lfQuality = DEFAULT_QUALITY;
+	logfont.lfPitchAndFamily = DEFAULT_PITCH | FF_DONTCARE;
 	logfont.lfFaceName[LF_FACESIZE] = (TCHAR) 0;
 
 	if ((((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct =
@@ -2000,29 +2000,29 @@ ogl_configureWin_guts(struct dm *dmp,
 	wglUseFontBitmaps(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc,0,256,((struct ogl_vars *)dmp->dm_vars.priv_vars)->fontOffset);
 	DeleteObject(SelectObject(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc,oldfont));
     }
-		
+
 
     /* Always try to choose a the font that best fits the window size.
      */
 
     if(!GetObject( ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct, sizeof(LOGFONT), &logfont)) {
-	logfont.lfHeight = 18;    
-	logfont.lfWidth = 0;    
-	logfont.lfEscapement = 0;    
-	logfont.lfOrientation = 10; 
-	logfont.lfWeight = FW_NORMAL;    
-	logfont.lfItalic = FALSE;    
-	logfont.lfUnderline = FALSE;    
-	logfont.lfStrikeOut = FALSE; 
-	logfont.lfCharSet = ANSI_CHARSET ;    
-	logfont.lfOutPrecision = OUT_DEFAULT_PRECIS;    
-	logfont.lfClipPrecision =  CLIP_DEFAULT_PRECIS ; 
-	logfont.lfQuality = DEFAULT_QUALITY;    
-	logfont.lfPitchAndFamily = DEFAULT_PITCH | FF_DONTCARE;    
+	logfont.lfHeight = 18;
+	logfont.lfWidth = 0;
+	logfont.lfEscapement = 0;
+	logfont.lfOrientation = 10;
+	logfont.lfWeight = FW_NORMAL;
+	logfont.lfItalic = FALSE;
+	logfont.lfUnderline = FALSE;
+	logfont.lfStrikeOut = FALSE;
+	logfont.lfCharSet = ANSI_CHARSET ;
+	logfont.lfOutPrecision = OUT_DEFAULT_PRECIS;
+	logfont.lfClipPrecision =  CLIP_DEFAULT_PRECIS ;
+	logfont.lfQuality = DEFAULT_QUALITY;
+	logfont.lfPitchAndFamily = DEFAULT_PITCH | FF_DONTCARE;
 	logfont.lfFaceName[LF_FACESIZE] = (TCHAR) 0;
-  
+
 	if ((((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct =
-	     CreateFontIndirect(&logfont)) == NULL ) 
+	     CreateFontIndirect(&logfont)) == NULL )
 	    {
 	    }
 
@@ -2034,8 +2034,8 @@ ogl_configureWin_guts(struct dm *dmp,
 
     if (dmp->dm_width < 582) {
 	if (logfont.lfHeight != 10) {
-	    logfont.lfHeight = 10;    
-	    logfont.lfWidth = 0;    
+	    logfont.lfHeight = 10;
+	    logfont.lfWidth = 0;
 	    if ((newfontstruct = CreateFontIndirect(&logfont)) != NULL) {
 
 		((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct = newfontstruct;
@@ -2046,8 +2046,8 @@ ogl_configureWin_guts(struct dm *dmp,
 	}
     } else if (dmp->dm_width < 679) {
 	if (logfont.lfHeight != 12){
-	    logfont.lfHeight = 12;    
-	    logfont.lfWidth = 0;    
+	    logfont.lfHeight = 12;
+	    logfont.lfWidth = 0;
 
 	    if ((newfontstruct = CreateFontIndirect(&logfont)) != NULL) {
 		((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct = newfontstruct;
@@ -2058,7 +2058,7 @@ ogl_configureWin_guts(struct dm *dmp,
 	}
     } else if (dmp->dm_width < 776) {
 	if (logfont.lfHeight != 14){
-	    logfont.lfHeight = 14;    
+	    logfont.lfHeight = 14;
 	    logfont.lfWidth = 0;
 
 	    if ((newfontstruct = CreateFontIndirect(&logfont)) != NULL) {
@@ -2070,7 +2070,7 @@ ogl_configureWin_guts(struct dm *dmp,
 	}
     } else if (dmp->dm_width < 873) {
 	if (logfont.lfHeight != 15){
-	    logfont.lfHeight = 15;    
+	    logfont.lfHeight = 15;
 	    logfont.lfWidth = 0;
 	    if ((newfontstruct = CreateFontIndirect(&logfont)) != NULL) {
 		((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct = newfontstruct;
@@ -2081,7 +2081,7 @@ ogl_configureWin_guts(struct dm *dmp,
 	}
     } else {
 	if (logfont.lfWidth != 16){
-	    logfont.lfHeight = 16;    
+	    logfont.lfHeight = 16;
 	    logfont.lfWidth = 0;
 	    if ((newfontstruct = CreateFontIndirect(&logfont)) != NULL) {
 		((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct = newfontstruct;
@@ -2144,7 +2144,7 @@ int lighting_on;
     }
 
     return TCL_OK;
-}	
+}
 
 HIDDEN int
 ogl_setTransparency(struct dm *dmp,
@@ -2178,7 +2178,7 @@ ogl_setTransparency(struct dm *dmp,
     }
 
     return TCL_OK;
-}	
+}
 
 HIDDEN int
 ogl_setDepthMask(struct dm *dmp,

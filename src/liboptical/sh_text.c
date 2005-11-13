@@ -19,7 +19,7 @@
  * information.
  */
 /** @file sh_text.c
- *  
+ *
  *  Texture map lookup
  *
  *  Author -
@@ -180,7 +180,7 @@ txt_transp_hook(struct bu_structparse *ptab, char *name, char *cp, char *value)
  *	t x t _ l o a d _ d a t a s o u r c e
  *
  * This is a helper routine used in txt_setup() to load a texture either from
- * a file or from a db object.  The resources are released in txt_free() 
+ * a file or from a db object.  The resources are released in txt_free()
  * (there is no specific unload_datasource function).
  */
 HIDDEN int txt_load_datasource(struct txt_specific *texture, struct db_i *dbInstance, const unsigned long int size) {
@@ -243,7 +243,7 @@ HIDDEN int txt_load_datasource(struct txt_specific *texture, struct db_i *dbInst
 	if ( ( (texture->tx_datasrc==TXT_SRC_AUTO) && (texture->tx_binunifp==NULL) ) || (texture->tx_datasrc==TXT_SRC_FILE) ) {
 
 		texture->tx_mp = bu_open_mapped_file_with_path(dbInstance->dbi_filepath,	bu_vls_addr(&texture->tx_name), NULL);
-		
+
 		if ( texture->tx_mp==NULL )
 			return -1;				/* FAIL */
 
@@ -252,7 +252,7 @@ HIDDEN int txt_load_datasource(struct txt_specific *texture, struct db_i *dbInst
 		} else if (texture->tx_mp->buflen > size) {
 			bu_log("\nWARNING: Texture file size is larger than specified texture size\n\tInput File: %d pixels\n\tSpecified Texture Size: %d pixels\n...continuing to load using image subsection...", texture->tx_mp->buflen, size);
 		}
-		
+
 	}
 
 	bu_log("done.\n");
@@ -263,7 +263,7 @@ HIDDEN int txt_load_datasource(struct txt_specific *texture, struct db_i *dbInst
 
 /*
  *  			T X T _ R E N D E R
- *  
+ *
  *  Given a u,v coordinate within the texture ( 0 <= u,v <= 1.0 ),
  *  return a pointer to the relevant pixel.
  *
@@ -287,7 +287,7 @@ txt_render(struct application *ap, struct partition *pp, struct shadework *swp, 
 	uvc = swp->sw_uv;
 
 	if (rdebug & RDEBUG_SHADE )
-		bu_log( "in txt_render(): du=%g, dv=%g\n", 
+		bu_log( "in txt_render(): du=%g, dv=%g\n",
 			uvc.uv_du, uvc.uv_dv );
 
 	/* take care of scaling U,V coordinates to get the desired amount
@@ -346,7 +346,7 @@ txt_render(struct application *ap, struct partition *pp, struct shadework *swp, 
 		bu_log( "footprint in texture space is (%g %g) <-> (%g %g)\n",
 			xmin * (tp->tx_w-1), ymin * (tp->tx_n-1),
 			xmax * (tp->tx_w-1), ymax * (tp->tx_n-1) );
-			
+
 #if 1
 	dx = (int)(xmax * (tp->tx_w-1)) - (int)(xmin * (tp->tx_w-1));
 	dy = (int)(ymax * (tp->tx_n-1)) - (int)(ymin * (tp->tx_n-1));
@@ -455,7 +455,7 @@ txt_render(struct application *ap, struct partition *pp, struct shadework *swp, 
 		g /= tot_area;
 		b /= tot_area;
 	}
-	
+
 	if (rdebug & RDEBUG_SHADE )
 		bu_log( " average: %g %g %g\n", r, g, b );
 #else
@@ -487,7 +487,7 @@ txt_render(struct application *ap, struct partition *pp, struct shadework *swp, 
 			/* not reachable */
 			bu_bomb("sh_text.c -- Unable to read datasource\n");
 		}
-		
+
 		ep = cp + 3*dx;
 		while( cp < ep )  {
 			if (rdebug & RDEBUG_SHADE )
@@ -540,7 +540,7 @@ opaque:
 
 /*
  *  			B W T X T _ R E N D E R
- *  
+ *
  *  Given a u,v coordinate within the texture ( 0 <= u,v <= 1.0 ),
  *  return the filtered intensity.
  *
@@ -561,7 +561,7 @@ bwtxt_render(struct application *ap, struct partition *pp, struct shadework *swp
 	long tmp;
 
 	uvc = swp->sw_uv;
- 
+
 	/*
 	 * If no texture file present, or if
 	 * texture isn't and can't be read, give debug colors
@@ -621,7 +621,7 @@ bwtxt_render(struct application *ap, struct partition *pp, struct shadework *swp
 	for( line=0; line<dy; line++ )  {
 		register unsigned char *cp=NULL;
 		register unsigned char *ep;
-		
+
 		if (tp->tx_mp) {
 			cp = ((unsigned char *)(tp->tx_mp->buf)) +
 				(y+line) * tp->tx_w  +  x;
@@ -668,7 +668,7 @@ opaque:
 /*
  *			T X T _ S E T U P
  */
-HIDDEN int 
+HIDDEN int
 txt_setup( register struct region *rp, struct bu_vls *matparm, char **dpp, const struct mfuncs *mfp, struct rt_i *rtip ) {
 	register struct txt_specific *tp;
 	int		pixelbytes = 3;
@@ -701,8 +701,8 @@ txt_setup( register struct region *rp, struct bu_vls *matparm, char **dpp, const
 	if (tp->tx_n < 0 ) tp->tx_n = tp->tx_w;
 	if (tp->tx_trans_valid ) rp->reg_transmit = 1;
 	BU_CK_VLS(&tp->tx_name);
-	if (bu_vls_strlen(&tp->tx_name)<=0) return -1; 
-	/*	!?! if (tp->tx_name[0] == '\0' )  return -1;	*//* FAIL, no file */
+	if (bu_vls_strlen(&tp->tx_name)<=0) return -1;
+	/*	!?! if (tp->tx_name[0] == '\0' )  return -1;	*/ /* FAIL, no file */
 
 	if (strcmp( mfp->mf_name, "bwtexture" ) == 0 ) pixelbytes = 1;
 
@@ -806,10 +806,10 @@ ckr_render(struct application *ap, struct partition *pp, register struct shadewo
  */
 HIDDEN int
 ckr_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip)
-                      	     
-             		         
-    			      
-                             
+
+
+
+
                                 /* New since 4.4 release */
 {
 	register struct ckr_specific *ckp;
@@ -917,7 +917,7 @@ star_render(register struct application *ap, register struct partition *pp, stru
 
 /*
  *  			B M P _ R E N D E R
- *  
+ *
  *  Given a u,v coordinate within the texture ( 0 <= u,v <= 1.0 ),
  *  compute a new surface normal.
  *  For now we come up with a local coordinate system, and

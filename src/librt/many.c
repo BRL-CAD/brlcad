@@ -29,7 +29,7 @@
  *  Authors -
  *	Michael John Muuss
  *	Christopher T. Johnson
- *  
+ *
  *  Source -
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
@@ -162,10 +162,10 @@ rt_shoot_many_rays_worker(int cpu, genptr_t arg)
  */
 void
 rt_shoot_many_rays(const struct application *proto_ap, int (*callback) (struct application *, int), int ncpus, long int nrays, struct resource *resources)
-                                   
-   			                                                    
-   			      
-    			      
+
+
+
+
                		           	/* resources[ncpus] */
 {
 	struct rt_many_internal	rmi;

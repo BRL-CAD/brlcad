@@ -28,11 +28,11 @@
  *
  *  Author -
  *	Lee A. Butler
- *  
+ *
  *  Source -
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
- *  
+ *
  */
 #ifndef lint
 static const char RCSid[] = "@(#)$Header$ (ARL)";
@@ -77,7 +77,7 @@ int parse_args(int ac, char **av)
 		progname = *av;
 	else
 		++progname;
-	
+
 	/* Turn off getopt's error messages */
 	opterr = 0;
 
@@ -213,7 +213,7 @@ int main(int ac, char **av)
 			fprintf(stderr, "%s: db_lookup failed\n", progname);
 			exit(-1);
 		}
-		
+
 		MAT_IDN( my_mat );
 		if ((rt_db_get_internal( &ip, dp, dbip, my_mat, &rt_uniresource ))<0) {
 			fprintf(stderr, "%s: rt_db_get_internal() failed\n", progname );

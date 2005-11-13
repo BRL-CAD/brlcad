@@ -22,12 +22,12 @@
  *
  *  Function -
  *	Define surface and curve structures for
- * 	Non Rational Uniform B-Spline (NURB) 
- *	curves and surfaces. 
+ * 	Non Rational Uniform B-Spline (NURB)
+ *	curves and surfaces.
  *
  *  Author -
  *	Paul Randal Stay
- * 
+ *
  *  Source -
  * 	SECAD/VLD Computing Consortium, Bldg 394
  *	The U.S. Army Ballistic Research Laboratory
@@ -39,6 +39,8 @@
 #ifndef NURB_H
 #define NURB_H seen
 
+#include "common.h"
+
 /* make sure all the prerequisite include files have been included
  */
 #ifndef MACHINE_H
@@ -49,9 +51,7 @@
 # include "vmath.h"
 #endif
 
-#ifndef NMG_H
-# include "nmg.h"
-#endif
+#include "nmg.h"
 
 #ifndef RAYTRACE_H
 # include "raytrace.h"
@@ -63,12 +63,12 @@
 #define RT_NURB_SPLIT_COL 1
 #define RT_NURB_SPLIT_FLAT 2
 
-/* Definition of NURB point types and coordinates 
+/* Definition of NURB point types and coordinates
  * Bit:	  8765 4321 0
  *       |nnnn|tttt|h
  *			h     - 1 if Homogeneous
  *			tttt  - point type
- *				1 = XY 
+ *				1 = XY
  *				2 = XYZ
  *				3 = UV
  *				4 = Random data

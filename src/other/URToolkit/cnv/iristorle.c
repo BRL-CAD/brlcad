@@ -24,7 +24,9 @@
  *
  * 				Paul Haeberli - 1990
  */
-#include "stdio.h"
+
+#include <stdlib.h>
+#include <stdio.h>
 #include "image.h"
 #include "rle.h"
 

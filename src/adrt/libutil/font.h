@@ -39,7 +39,7 @@
 static const struct {
   int	width;
   int	height;
-  int	bytes_per_pixel; /* 3:RGB, 4:RGBA */ 
+  int	bytes_per_pixel; /* 3:RGB, 4:RGBA */
   char	pixel_data[1024 * 15 * 4 + 1];
 } util_font = {
   1024, 15, 4,

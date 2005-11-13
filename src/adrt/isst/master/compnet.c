@@ -49,12 +49,12 @@ void isst_compnet_connect(char *host, int port) {
     fprintf(stderr, "cannot create socket for component server connection, exiting.");
     exit(1);
   }
-  
+
   /* client address */
-  master.sin_family = AF_INET;   
+  master.sin_family = AF_INET;
   master.sin_addr.s_addr = INADDR_ANY;
   master.sin_port = htons(0);
-  
+
   compserv.sin_family = hostent.h_addrtype;
   memcpy((char*)&compserv.sin_addr.s_addr, hostent.h_addr_list[0], hostent.h_length);
   compserv.sin_port = htons(port);

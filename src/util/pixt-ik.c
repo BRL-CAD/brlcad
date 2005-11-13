@@ -19,12 +19,12 @@
  * information.
  */
 /** @file pixt-ik.c
- *  
+ *
  *  Dumb little program to take bottom-up pixel files and
  *  send them to the Ikonas.
  *  This version expects the .pix files to be comming from a raw
  *  magtape with a block size of 24k, regardless of resolution.
- *  
+ *
  *  Mike Muuss, BRL.
  *
  *  $Revision$

@@ -29,12 +29,12 @@
  *
  *  Author -
  *	Jim Hunt
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005
- *  
+ *
  */
 
 #include "common.h"
@@ -147,7 +147,7 @@ view_init(register struct application *ap, char *file, char *obj, int minus_o)
     }
 
     /* Read in density in terms of grams/cm^3 */
-    
+
     for (line = 1 ; feof( densityfp ) != EOF ; line++) {
 	int index;
 	float dens;
@@ -182,7 +182,7 @@ view_2init(struct application *ap)
 {
     register struct region *rp;
     register struct rt_i *rtip = ap->a_rt_i;
-	
+
     for( BU_LIST_FOR( rp, region, &(rtip->HeadRegion) ) )  {
 	rp->reg_udata = (genptr_t) NULL;
     }
@@ -252,7 +252,7 @@ void	view_end(struct application *ap)
 	bu_log("Warning: base2mm=%g, using default of %s--%s\n",
 	       dbp->dbi_base2local, units, unit2 );
     }
-	
+
     if( noverlaps )
 	bu_log( "%d overlap%c detected.\n\n", noverlaps,
 		noverlaps==1 ? '\0' : 's' );
@@ -323,7 +323,7 @@ void	view_end(struct application *ap)
 	fprintf(outfp,"---- -------- --------------------\n" );
 	for( BU_LIST_FOR( rp, region, &(rtip->HeadRegion) ) )  {
 	    register int i = rp->reg_regionid;
-	
+
 	    if( item_wt[i] < 0 )
 		item_wt[i] = *(fastf_t *)rp->reg_udata;
 	    else
@@ -351,7 +351,7 @@ void	view_end(struct application *ap)
     sum_x *= (conversion / total_weight) * dbp->dbi_base2local;
     sum_y *= (conversion / total_weight) * dbp->dbi_base2local;
     sum_z *= (conversion / total_weight) * dbp->dbi_base2local;
-	
+
     fprintf( outfp, "RT Weight Program Output:\n" );
     fprintf( outfp, "\nDatabase Title: \"%s\"\n", dbp->dbi_title );
     fprintf( outfp, "Time Stamp: %s\n\n", timeptr );
@@ -414,7 +414,7 @@ hit(struct application *ap, struct partition *PartHeadp, struct seg *segp)
 
 	    /* Compute mass in terms of grams */
 	    dp->weight = depth * density[reg->reg_gmater] *
-		(fastf_t) reg->reg_los * 
+		(fastf_t) reg->reg_los *
 		cell_height * cell_height * 0.00001;
 	    dp->volume = depth * cell_height * cell_width;
 #if 0

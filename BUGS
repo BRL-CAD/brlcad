@@ -15,6 +15,28 @@ on-going issues.
 Recent Bugs
 -----------
 
+* mged's solid illuminate doesn't work when Lighting is turned on
+
+* raytrace of -s64 and remote -F/dev/Xl crashes inside an empty memcpy
+
+* g2asc exports attr lines but will not grok them on asc2g
+
+* mged's matrix selection does not modify the correct matrix if there
+  are multiply referenced non-unique paths (e.g. referencing the same
+  object N times in a combination).
+
+* facetize -t doesn't work (tnurb support)
+
+* on os x, the -fast option results in an odd optimization/aliasing
+  bug where rtip contents are lost in rt after returning from
+  rt_gettrees().
+
+* report of rtwizard hanging at 40% on Debian (from binary distro)
+
+* make extrude crashes
+
+* tra in console mode outputs a warning about mged_players
+
 * mged primitive editor doesn't accept/apply values to disk for
   certain primitives (e.g. sph)
 

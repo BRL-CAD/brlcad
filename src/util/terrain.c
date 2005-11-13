@@ -46,10 +46,10 @@
 #include "vmath.h"
 #include "bn.h"
 
-/* declarations to support use of getopt() system call */
+/* declarations to support use of bu_getopt() system call */
 char *options = "w:n:s:L:H:O:S:V:D:f:co:v";
-extern char *optarg;
-extern int optind, opterr, getopt(int, char *const *, const char *);
+extern char *bu_optarg;
+extern int bu_optind, opterr, bu_getopt(int, char *const *, const char *);
 
 int do_convert = 1;
 char *progname = "(noname)";
@@ -85,7 +85,7 @@ usage(char *s)
 	if (s) (void)fputs(s, stderr);
 
 	(void) fprintf(stderr, "Usage: %s [ flags ] > outfile]\nFlags:\n%s\n",
-		       progname, 
+		       progname,
 "\t-w #\t\tnumber of postings in X direction\n\
 \t-n #\t\tnumber of postings in Y direction\n\
 \t-s #\t\tnumber of postings in X,Y direction\n\
@@ -159,7 +159,7 @@ func_turb(unsigned short *buf)
 
 			xform(t, pt);
 
-			v = bn_noise_turb(t, fbm_h, 
+			v = bn_noise_turb(t, fbm_h,
 					  fbm_lacunarity, fbm_octaves);
 
 			if (v > 1.0 || v < 0.0)
@@ -194,7 +194,7 @@ func_turb_up(short *buf)
 
 			xform(t, pt);
 
-			v = bn_noise_turb(t, fbm_h, 
+			v = bn_noise_turb(t, fbm_h,
 					  fbm_lacunarity, fbm_octaves);
 			CLAMP(v, 0.0, 1.0);
 			v = 1.0 - v;
@@ -236,7 +236,7 @@ func_multi(short *buf)
 
 			xform(t, pt);
 
-			v = bn_noise_mf(t, fbm_h, 
+			v = bn_noise_mf(t, fbm_h,
 					fbm_lacunarity, fbm_octaves,
 					fbm_offset);
 
@@ -283,8 +283,8 @@ func_ridged(unsigned short *buf)
 
 			xform(t, pt);
 
-			v = bn_noise_ridged(t, fbm_h, 
-					  fbm_lacunarity, fbm_octaves, 
+			v = bn_noise_ridged(t, fbm_h,
+					  fbm_lacunarity, fbm_octaves,
 					    fbm_offset);
 			if (v < lo) lo = v;
 			if (v > hi) hi = v;
@@ -426,7 +426,7 @@ land(point_t point, double h, double lacunarity, double octaves, double offset)
 		PSCALE(pt, lacunarity);
 	} while (++i < octaves);
 
-	
+
 	return 1.0 - result;
 }
 /***********************************************************************
@@ -459,7 +459,7 @@ lee(point_t point, double h, double lacunarity, double octaves, double offset)
 		PSCALE(pt, lacunarity);
 	} while (++i < octaves);
 
-	
+
 	return 1.2 - result;
 }
 
@@ -491,8 +491,8 @@ func_lee(unsigned short *buf)
 
 			xform(t, pt);
 
-			v = lee(t, fbm_h, 
-					  fbm_lacunarity, fbm_octaves, 
+			v = lee(t, fbm_h,
+					  fbm_lacunarity, fbm_octaves,
 					    fbm_offset);
 			if (v < lo) lo = v;
 			if (v > hi) hi = v;
@@ -544,8 +544,8 @@ func_lunar(unsigned short *buf)
 5 lee
 
 			*/
-			v = fiord(t, fbm_h, 
-					  fbm_lacunarity, fbm_octaves, 
+			v = fiord(t, fbm_h,
+					  fbm_lacunarity, fbm_octaves,
 					    fbm_offset);
 			if (v < lo) lo = v;
 			if (v > hi) hi = v;
@@ -559,7 +559,7 @@ func_lunar(unsigned short *buf)
 	if (debug) bu_log("min: %g max: %g\n", lo, hi);
 }
 
- 
+
 /* function to call to generate the terrain.  Default noise pattern is fBm */
 void (*terrain_func)() = func_fbm;
 
@@ -578,41 +578,41 @@ parse_args(int ac, char **av)
 	else
 		++progname;
 
-	/* Turn off getopt's error messages */
+	/* Turn off bu_getopt's error messages */
 	opterr = 0;
 
 	/* get all the option flags from the command line */
-	while ((c=getopt(ac,av,options)) != EOF)
+	while ((c=bu_getopt(ac,av,options)) != EOF)
 		switch (c) {
 		case 'v': debug = !debug; break;
 		case 'c': do_convert = !do_convert; break;
-		case 'w': if ((c=atoi(optarg)) > 0) xdim = c;
+		case 'w': if ((c=atoi(bu_optarg)) > 0) xdim = c;
 			break;
-		case 'n': if ((c=atoi(optarg)) > 0) ydim = c;
+		case 'n': if ((c=atoi(bu_optarg)) > 0) ydim = c;
 			break;
 		case 'q' : quiet = !quiet; break;
-		case 's': if ((c=atoi(optarg)) > 0) xdim = ydim = c;
+		case 's': if ((c=atoi(bu_optarg)) > 0) xdim = ydim = c;
 			break;
-		case 'L': if ((v=atof(optarg)) >  0.0) fbm_lacunarity = v;
+		case 'L': if ((v=atof(bu_optarg)) >  0.0) fbm_lacunarity = v;
 			break;
-		case 'H': if ((v=atof(optarg)) >  0.0) fbm_h = v;
+		case 'H': if ((v=atof(bu_optarg)) >  0.0) fbm_h = v;
 			break;
-		case 'O': if ((v=atof(optarg)) >  0.0) fbm_octaves = v;
-			break;
-
-		case 'S': if ((v=atof(optarg)) >  0.0) { VSETALL(fbm_vscale, v); }
+		case 'O': if ((v=atof(bu_optarg)) >  0.0) fbm_octaves = v;
 			break;
 
-		case 'V': sscanf(optarg, "%lg,%lg,%lg",
+		case 'S': if ((v=atof(bu_optarg)) >  0.0) { VSETALL(fbm_vscale, v); }
+			break;
+
+		case 'V': sscanf(bu_optarg, "%lg,%lg,%lg",
 			       &fbm_vscale[0], &fbm_vscale[1], &fbm_vscale[2]);
 			break;
-		case 'D': sscanf(optarg, "%lg,%lg,%lg",
+		case 'D': sscanf(bu_optarg, "%lg,%lg,%lg",
 			       &fbm_delta[0], &fbm_delta[1], &fbm_delta[2]);
 			break;
-		case 'o': fbm_offset = atof(optarg);
+		case 'o': fbm_offset = atof(bu_optarg);
 			break;
 		case 'f':
-			switch (*optarg) {
+			switch (*bu_optarg) {
 			case 'L': terrain_func = func_lunar;
 				break;
 			case 'l': terrain_func = func_lee;
@@ -628,9 +628,9 @@ parse_args(int ac, char **av)
 			case 'r': terrain_func = func_ridged;
 				break;
 			default:
-				fprintf(stderr, 
+				fprintf(stderr,
 					"Unknown noise terrain_function: \"%s\"\n",
-					optarg);
+					bu_optarg);
 				exit(-1);
 				break;
 			}
@@ -640,7 +640,7 @@ parse_args(int ac, char **av)
 		default		: usage("Bad or help flag specified\n"); break;
 		}
 
-	return(optind);
+	return(bu_optind);
 }
 
 /*
@@ -656,9 +656,9 @@ main(int ac, char **av)
 	unsigned short *buf;
 	int in_cookie, out_cookie;
 	int count;
-	 
+
 	arg_count = parse_args(ac, av);
-	
+
 	if (arg_count+1 < ac) usage("Excess arguments on cmd line\n");
 
 	if (isatty(fileno(stdout))) usage("Redirect standard output\n");
@@ -689,7 +689,7 @@ main(int ac, char **av)
 
 		if (bu_cv_optimize(in_cookie) != bu_cv_optimize(out_cookie) ) {
 			if (debug) bu_log("converting to network order\n");
-			bu_cv_w_cookie(buf, out_cookie, count*sizeof(*buf), 
+			bu_cv_w_cookie(buf, out_cookie, count*sizeof(*buf),
 				       buf, in_cookie, count);
 		}
 	}

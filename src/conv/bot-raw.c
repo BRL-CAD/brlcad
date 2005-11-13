@@ -85,7 +85,7 @@ int main(int ac, char *av[])
     struct rt_i *rtip;
     struct directory *dp;
 
-	
+
     if (ac < 2) {
 	fprintf(stderr, "usage: bot-raw geom.g [file.raw]\n");
 	exit(-1);
@@ -127,7 +127,7 @@ int main(int ac, char *av[])
 	    fprintf(stderr, "rt_get_internal failure %d on %s\n", i, dp->d_namep);
 	    continue;
 	}
-	
+
 	if (i != ID_BOT) {
 	    continue;
 	}
@@ -135,7 +135,7 @@ int main(int ac, char *av[])
 	bot = (struct rt_bot_internal *)intern.idb_ptr;
 
 	write_bot(bot, fh, dp->d_namep);
-	    
+
 	FOR_ALL_DIRECTORY_END
     }
     return 0;

@@ -29,7 +29,7 @@
  *  The context is kept in an 'bn_table' structure, and
  *  the data for one particular sample are kept in an 'bn_tabdata'
  *  structure.
- *  tabdata.h provides the data structures, 
+ *  tabdata.h provides the data structures,
  *  librt/tabdata.c provides the routines.
  *
  *  The contents of the spectral sample in val[j] are interpreted
@@ -86,7 +86,7 @@
  *
  *  Author -
  *	Michael John Muuss
- *  
+ *
  *  Source -
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
@@ -115,8 +115,8 @@ RT_EXPORT BU_EXTERN(void			rt_spect_black_body_fast,
 		    (struct bn_tabdata		*data,
 		     double			temp));
 
-RT_EXPORT BU_EXTERN(void			rt_spect_reflectance_rgb, 
-		    (struct bn_tabdata		*curve, 
+RT_EXPORT BU_EXTERN(void			rt_spect_reflectance_rgb,
+		    (struct bn_tabdata		*curve,
 		     const float		rgb[3]));
 
 

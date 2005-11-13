@@ -27,11 +27,11 @@
  *  Authors -
  *	Michael Markowski
  *	Lee A. Butler
- *  
+ *
  *  Source -
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
- *  
+ *
  */
 #ifndef lint
 static const char RCSid[] = "@(#)$Header$ (ARL)";
@@ -103,7 +103,7 @@ main(int argc, char **argv)
 /*
  *	C r e a t e _ B r l c a d _ D b
  *
- *	Write the nmg to a brl-cad style data base.
+ *	Write the nmg to a BRL-CAD style data base.
  */
 void
 create_brlcad_db(struct rt_wdb *fpout, struct model *m, char *reg_name, char *grp_name)

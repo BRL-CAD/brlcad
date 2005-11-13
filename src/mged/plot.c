@@ -19,14 +19,14 @@
  * information.
  */
 /** @file plot.c
- *  
+ *
  *	Provide UNIX-plot output of the current view.
  *
  *  Authors -
  *  	Michael John Muuss	(This version)
  *	Douglas A. Gwyn		(3-D UNIX Plot routines)
  *  	Gary S. Moss		(Original gedplot program)
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
@@ -434,7 +434,7 @@ f_area(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	    }
 	  }
 	}
-	
+
 	fclose(fp_w);
 
 	Tcl_AppendResult(interp, "Presented area from this viewpoint, square ",

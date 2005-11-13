@@ -33,11 +33,11 @@
  *
  *  Author -
  *      Christopher Sean Morrison
- *  
+ *
  *  Source -
  *      The U. S. Army Research Laboratory
  *      Aberdeen Proving Ground, Maryland  21005-5068  USA
- *  
+ *
  ***********************************************************************/
 
 #include "./vegitation.h"
@@ -45,7 +45,7 @@
 
 static void ageStructure(structure_t *structure) {
   int i;
-  
+
   /*
     printf("Aging structure\n");
   */
@@ -65,7 +65,7 @@ static void ageStructure(structure_t *structure) {
 static int getSegmentCount(structure_t *structure, unsigned int minAge, unsigned int maxAge) {
   int i;
   int total;
-  
+
   for (total=i=0; i < structure->subStructureCount; i++) {
     total += getSegmentCount(structure->subStructure[i], minAge, maxAge);
   }
@@ -81,8 +81,8 @@ static int getSegmentCount(structure_t *structure, unsigned int minAge, unsigned
 }
 
 
-/* used 
- * http://geometryalgorithms.com/Archive/algorithm_0106/algorithm_0106.htm#dist3D_Segment_to_Segment() 
+/* used
+ * http://geometryalgorithms.com/Archive/algorithm_0106/algorithm_0106.htm#dist3D_Segment_to_Segment()
  * as reference */
 static float segmentToSegmentDistance( const point_t S1P0, const point_t S1P1, const point_t S2P0, const point_t S2P1) {
   vect_t u;
@@ -110,7 +110,7 @@ static float segmentToSegmentDistance( const point_t S1P0, const point_t S1P1, c
   sc = sN = sD = D;  /* sc = sN / sD, default sD = D >= 0 */
   tc = tN = tD = D;  /* tc = tN / tD, default tD = D >= 0 */
 
-  
+
   /* compute the line parameters of the two closest points */
   if (D < ZERO_TOLERANCE) { /* the lines are almost parallel */
     sN = 0.0;
@@ -131,7 +131,7 @@ static float segmentToSegmentDistance( const point_t S1P0, const point_t S1P1, c
       tD = c;
     }
   }
-  
+
   if (tN < 0) {  /* tc < 0 => the t=0 edge is visible */
     tN = 0.0;
     /* recompute sc for this edge */
@@ -159,12 +159,12 @@ static float segmentToSegmentDistance( const point_t S1P0, const point_t S1P1, c
   /* finally do the division to get sc and tc */
   sc = sN / sD;
   tc = tN / tD;
-  
+
   /* get the difference of the two closest points */
   VCOMB2(dP, 1.0, w, sc, u);
   VSCALE(v, v, tc);
   VSUB2(dP, dP, v);
-  
+
   return MAGNITUDE(dP); /* return the closest distance */
 }
 
@@ -202,7 +202,7 @@ static segmentList_t *findIntersectors(const growthSegment_t * const segment, co
 
   for (i=0; i < structure->subStructureCount; i++) {
     segList = findIntersectors(segment, structure->subStructure[i], exemptList);
-    
+
     /* ensure we have enough room */
     if (bigList->count + segList->count + 1 >= bigList->capacity) {
       if ((bigList->segment = (growthSegment_t **)realloc(bigList->segment, (bigList->count + segList->count + 10) * sizeof(growthSegment_t *))) == NULL) {
@@ -240,7 +240,7 @@ static segmentList_t *findIntersectors(const growthSegment_t * const segment, co
 
     /* skip segments that are in exemption list */
     if (exemptList != NULL) {
-      
+
       for (skip = j = 0; (j < exemptList->count) && (skip == 0) ; j++) {
 	if (structure->segment[i]->id == exemptList->segment[j]->id) {
 	  /*	  printf("Found exempt segment with id %ld\n", exemptList->segment[j]->id); */
@@ -249,7 +249,7 @@ static segmentList_t *findIntersectors(const growthSegment_t * const segment, co
 	}
       }
       /* end iteration over exemption list */
-      
+
       /* see if we got lucky */
       if (skip != 0) {
 	continue;
@@ -321,7 +321,7 @@ static int branchWithProbability(plant_t *plant, structure_t* structure, unsigne
 	      branchPointRadius = structure->segment[i]->endRadius;
 	    }
 	    /*
-	      printf("branching on endpoint: %f  with radius: %f\n", branchPoint, branchPointRadius); 
+	      printf("branching on endpoint: %f  with radius: %f\n", branchPoint, branchPointRadius);
 	    */
 	  } else {
 
@@ -330,8 +330,8 @@ static int branchWithProbability(plant_t *plant, structure_t* structure, unsigne
 	    /*
 	      printf("branching between %f and %f at %f\n", 0.0, structure->segment[i]->length,  branchPoint);
 	    */
-	    
-	    /* detect increasing branches 
+
+	    /* detect increasing branches
 	     *  if (structure->segment[i]->startRadius > structure->segment[i]->endRadius) {
 	     *  minRadius = structure->segment[i]->endRadius;
 	     *  maxRadius = structure->segment[i]->startRadius;
@@ -346,7 +346,7 @@ static int branchWithProbability(plant_t *plant, structure_t* structure, unsigne
 	      printf("branch point radius: %f (between %f and %f)\n", branchPointRadius, structure->segment[i]->startRadius, structure->segment[i]->endRadius);
 	    */
 	  }
-	  /* end endpoint decision */ 
+	  /* end endpoint decision */
 
 	  /* figure out a direction to grow */
 	  VMOVE(direction, structure->segment[i]->direction);
@@ -371,15 +371,15 @@ static int branchWithProbability(plant_t *plant, structure_t* structure, unsigne
 	  newGrowthPoint->length = structure->segment[i]->length - (structure->segment[i]->length * plant->characteristic->lengthDecayRate); /* * drand48(); */
 
 	  /* starting radius is exactly in line with where on the segment we start from */
-	  newGrowthPoint->radius = branchPointRadius; 
+	  newGrowthPoint->radius = branchPointRadius;
 
 	  newGrowthPoint->lengthDecay = plant->characteristic->lengthDecayRate;
 	  newGrowthPoint->radiusDecay = plant->characteristic->radiusDecayRate;
-	  
+
 	  VCOMB2(newGrowthPoint->position, 1.0, structure->segment[i]->position, branchPoint, structure->segment[i]->direction);
 	  VMOVE(newGrowthPoint->direction, direction);
 	  newGrowthPoint->age = 0;
-	  
+
 	  /* associate the point with a new structure */
 	  if ((newGrowthPoint->structure = (structure_t *)calloc(1, sizeof(structure_t))) == NULL) {
 	    fprintf(stderr, "Unable to allocate memory for new structure\n");
@@ -430,23 +430,23 @@ static int branchWithProbability(plant_t *plant, structure_t* structure, unsigne
 static void branchGrowthPoints(plant_t *plant) {
   int totalSegments;
   double segmentProbability;
-  
+
   if (!plant->structure) {
     printf("No structure defined yet -- cannot branch\n");
     return;
   }
-  
+
   /* is there a probability of actually branching */
   if (plant->characteristic->branchingRate > 0.0) {
 
-    /* is the plant even capable of branching yet? 
+    /* is the plant even capable of branching yet?
      * we do not check the max age just because we do not know the youngest segment
      */
     if (plant->characteristic->minBranchingAge <= plant->structure->age) {
 
       /* take the overall rate divided by the number of segments to determine a segment rate */
       totalSegments = getSegmentCount(plant->structure, plant->characteristic->minBranchingAge, plant->characteristic->maxBranchingAge);
-      if (totalSegments <= 0) { 
+      if (totalSegments <= 0) {
 	segmentProbability = 0;
       } else {
 	segmentProbability=plant->characteristic->branchingRate; /* !!! / totalSegments; */
@@ -459,7 +459,7 @@ static void branchGrowthPoints(plant_t *plant) {
       */
     }
   }
-  
+
 }
 
 
@@ -556,7 +556,7 @@ static void growPlant(plant_t *plant) {
 	VUNITIZE(point->direction);
 	/*	VPRINT("Point direction: ", point->direction); */
       }
-      
+
       segment->endRadius = point->radius;
 
       /* done creating the new segment -- check it for intersection validity */
@@ -573,18 +573,18 @@ static void growPlant(plant_t *plant) {
       if (included == NULL || included->count > 0) {
 	/* test for failure and try to retry  */
 	for (retryCount = 0; retryCount < plant->characteristic->regrowthAttempts; retryCount++) {
-	  
+
 	  VMOVE(segment->direction, point->direction);
-	  
+
 	  INIT_GROWTHSEGMENT_T(&startingPoint);
 	  VMOVE(startingPoint.position, segment->position);
 	  VMOVE(startingPoint.direction, segment->direction);
 	  startingPoint.length = ZERO_TOLERANCE;
 	  startingPoint.startRadius = segment->startRadius;
 	  startingPoint.endRadius = segment->startRadius;
-	  
+
 	  included = findIntersectors(segment, plant->structure, excluded);
-	  
+
 	  /* jitter the growth direction */
 	  VSUB2(newGrowthDirection, plant->characteristic->dirMaxVariation, plant->characteristic->dirMinVariation);
 	  if (!VNEAR_ZERO(newGrowthDirection, ZERO_TOLERANCE)) {
@@ -594,7 +594,7 @@ static void growPlant(plant_t *plant) {
 	    VUNITIZE(point->direction);
 	    /*	VPRINT("Point direction: ", point->direction); */
 	  }
-	  
+
 	  if (included != NULL) {
 	    if (included->capacity > 0) {
 	      free(included->segment);
@@ -677,7 +677,7 @@ static void growPlant(plant_t *plant) {
     } /* end growthStep iteration */
     /* still going in same direction */
     point->age++;
-    
+
   } /* end growth point iteration */
 
   return;
@@ -851,7 +851,7 @@ static int writeStructureToDisk(struct rt_wdb *fp, structure_t *structure, outpu
   }
 
   for (i=0; i < structure->subStructureCount; i++) {
-    writeStructureToDisk(fp, structure->subStructure[i], oc);    
+    writeStructureToDisk(fp, structure->subStructure[i], oc);
   }
 
   return 0;
@@ -875,7 +875,7 @@ static int writePlantToDisk(struct rt_wdb *fp, plant_t *plant) {
     fprintf(stderr, "Unable to write region to database\n");
     exit(2);
   }
-  
+
   return 0;
 }
 
@@ -1000,7 +1000,7 @@ int main (int argc, char *argv[]) {
   fp=wdb_fopen("vegitation.g");
 
   mk_id_units(fp, "Vegitation", "mm");
-  
+
   INIT_CHARACTERISTIC_T(&c);
   c.totalHeight = height;
   c.totalRadius = height * 1.0;  /* set to ratio of width to height */

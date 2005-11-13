@@ -34,6 +34,7 @@ rletoppm()			/* Tag. */
 /*-----------------------------------------------------------------------------
  * System includes.
  */
+#include <stdlib.h>
 #include <stdio.h>
 #define NO_DECLARE_MALLOC
 #include "rle.h"

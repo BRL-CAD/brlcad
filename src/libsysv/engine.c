@@ -681,6 +681,7 @@ sopno lev;			/* PLUS nesting level */
 	/* "can't happen" */
 	assert(nope);
 	/* NOTREACHED */
+        return(NULL);
 }
 
 /*
@@ -1023,7 +1024,7 @@ FILE *d;
 	fprintf(d, "\n");
 }
 
-/* 
+/*
  - at - print current situation
  == #ifdef REDEBUG
  == static void at(struct match *m, char *title, char *start, char *stop, \

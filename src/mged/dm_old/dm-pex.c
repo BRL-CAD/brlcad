@@ -232,7 +232,7 @@ XEvent *eventPtr;
 	    (fastf_t)((struct pex_vars *)dmp->dm_vars)->height * 2.0;
 	  bu_vls_printf( &cmd, "iknob aX %f aY %f\n", fx, fy );
 	}
-      }	     
+      }
       break;
     case ALT_MOUSE_MODE_ZOOM:
       bu_vls_printf( &cmd, "iknob aS %f\n",
@@ -261,7 +261,7 @@ end:
 
   return TCL_ERROR;
 }
-	    
+
 void
 Pex_statechange( a, b )
 int	a, b;

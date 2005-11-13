@@ -22,10 +22,10 @@
  *
  * Functions -
  *	dozoom		Compute new zoom/rotation perspectives
- *  
+ *
  *  Author -
  *	Michael John Muuss
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
@@ -203,7 +203,7 @@ bn_mat_print("pmat",pmat);
 }
 
 /*
- *  Map "display plate coordinates" (which can just be the screen viewing cube), 
+ *  Map "display plate coordinates" (which can just be the screen viewing cube),
  *  into [-1,+1] coordinates, with perspective.
  *  Per "High Resolution Virtual Reality" by Michael Deering,
  *  Computer Graphics 26, 2, July 1992, pp 195-201.
@@ -298,7 +298,7 @@ drawSolid(register struct solid *sp,
 		    (short)sp->s_color[2]);
     }
   }
-		
+
 
 #ifdef DO_DISPLAY_LISTS
   if (displaylist && mged_variables->mv_dlist) {
@@ -458,7 +458,7 @@ dozoom(int which_eye)
 		      ratio = sp->s_size * inv_viewsize;
 
 		      /*
-		       * Check for this object being bigger than 
+		       * Check for this object being bigger than
 		       * dmp->dm_bound * the window size, or smaller than a speck.
 		       */
 		      if (ratio < 0.001)
@@ -498,7 +498,7 @@ dozoom(int which_eye)
 		      ratio = sp->s_size * inv_viewsize;
 
 		      /*
-		       * Check for this object being bigger than 
+		       * Check for this object being bigger than
 		       * dmp->dm_bound * the window size, or smaller than a speck.
 		       */
 		      if (ratio < 0.001)

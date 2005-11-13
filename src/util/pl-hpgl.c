@@ -23,12 +23,12 @@
  * Description -
  *	Convert a unix-plot file to hpgl codes.
  *
- * Author -  
- *	Mark Huston Bowden  
- *  
+ * Author -
+ *	Mark Huston Bowden
+ *
  *  Source -
- *	Research Institute, E-47 
- *	University of Alabama in Huntsville  
+ *	Research Institute, E-47
+ *	University of Alabama in Huntsville
  *	Huntsville, AL  35899
  *	(205) 895-6467 UAH
  *	(205) 876-1089 Redstone Arsenal
@@ -127,8 +127,8 @@ main(int argc, char **argv)
 			g = getchar();
 			b = getchar();
 			for (i = 0; i < numcolors; i++)
-				if (r == colors[i][0] 
-				    &&  g == colors[i][1] 
+				if (r == colors[i][0]
+				    &&  g == colors[i][1]
 				    &&  b == colors[i][2])
 					break;
 			if (i < numcolors)
@@ -140,7 +140,7 @@ main(int argc, char **argv)
 					colors[numcolors][2] = b;
 					numcolors++;
 					i++;
-				} 
+				}
 				else
 					i = 8;
 			printf("SP %d;\n",i);

@@ -35,7 +35,7 @@
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005
- *  
+ *
  */
 /*@}*/
 
@@ -80,22 +80,22 @@ const struct bu_structparse rt_tor_parse[] = {
 
 /*
  *  Algorithm:
- *  
+ *
  *  Given V, H, A, and B, there is a set of points on this torus
- *  
+ *
  *  { (x,y,z) | (x,y,z) is on torus defined by V, H, A, B }
- *  
+ *
  *  Through a series of  Transformations, this set will be
  *  transformed into a set of points on a unit torus (R1==1)
  *  centered at the origin
  *  which lies on the X-Y plane (ie, H is on the Z axis).
- *  
+ *
  *  { (x',y',z') | (x',y',z') is on unit torus at origin }
- *  
+ *
  *  The transformation from X to X' is accomplished by:
- *  
+ *
  *  X' = S(R( X - V ))
- *  
+ *
  *  where R(X) =  ( A/(|A|) )
  *  		 (  B/(|B|)  ) . X
  *  		  ( H/(|H|) )
@@ -107,18 +107,18 @@ const struct bu_structparse rt_tor_parse[] = {
  *
  *  To find the intersection of a line with the torus, consider
  *  the parametric line L:
- *  
+ *
  *  	L : { P(n) | P + t(n) . D }
- *  
+ *
  *  Call W the actual point of intersection between L and the torus.
  *  Let W' be the point of intersection between L' and the unit torus.
- *  
+ *
  *  	L' : { P'(n) | P' + t(n) . D' }
- *  
+ *
  *  W = invR( invS( W' ) ) + V
- *  
+ *
  *  Where W' = k D' + P'.
- *  
+ *
  *
  *  Given a line and a ratio, alpha, finds the equation of the
  *  unit torus in terms of the variable 't'.
@@ -136,13 +136,13 @@ const struct bu_structparse rt_tor_parse[] = {
  *
  *  The real roots of the equation in 't' are the intersect points
  *  along the parameteric line.
- *  
+ *
  *  NORMALS.  Given the point W on the torus, what is the vector
  *  normal to the tangent plane at that point?
- *  
+ *
  *  Map W onto the unit torus, ie:  W' = S( R( W - V ) ).
  *  In this case, we find W' by solving the parameteric line given k.
- *  
+ *
  *  The gradient of the torus at W' is in fact the
  *  normal vector.
  *
@@ -177,15 +177,15 @@ struct tor_specific {
 
 /**
  *  			R T _ T O R _ P R E P
- *  
+ *
  *  Given a pointer to a GED database record, and a transformation matrix,
  *  determine if this is a valid torus, and if so, precompute various
  *  terms of the formula.
- *  
+ *
  *  Returns -
  *  	0	TOR is OK
  *  	!0	Error in description
- *  
+ *
  *  Implicit return -
  *  	A struct tor_specific is created, and it's address is stored in
  *  	stp->st_specific for use by rt_tor_shot().
@@ -321,7 +321,7 @@ rt_tor_print(register const struct soltab *stp)
 
 /**
  *  			R T _ T O R _ S H O T
- *  
+ *
  *  Intersect a ray with an torus, where all constant terms have
  *  been precomputed by rt_tor_prep().  If an intersection occurs,
  *  one or two struct seg(s) will be acquired and filled in.
@@ -346,7 +346,7 @@ rt_tor_print(register const struct soltab *stp)
  *  equation using a general polynomial root finder.  Use those
  *  values of 't' to compute the points of intersection in the
  *  original coordinate system.
- *  
+ *
  *  Returns -
  *  	0	MISS
  *	>0	HIT
@@ -527,7 +527,7 @@ rt_tor_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 
 	if( i == 2 )
 		return(2);			/* HIT */
-				
+
 	/* 4 points */
 	/* k[3] is entry point, and k[2] is exit point */
 	RT_GET_SEG(segp, ap->a_resource);
@@ -541,7 +541,7 @@ rt_tor_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 	return(4);			/* HIT */
 }
 
-#define SEG_MISS(SEG)		(SEG).seg_stp=(struct soltab *) 0;	
+#define SEG_MISS(SEG)		(SEG).seg_stp=(struct soltab *) 0;
 /***
  *			R T _ T O R _ V S H O T
  *
@@ -553,7 +553,7 @@ rt_tor_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
            		       /* An array of ray pointers */
                                /* array of segs (results returned) */
    		  	       /* Number of ray/object pairs */
-                  	    
+
 {
 	register int    i;
 	register struct tor_specific *tor;
@@ -631,7 +631,7 @@ rt_tor_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
 				     dprime[Y] * cor_pprime[Y]);
 		X2_Y2.cf[2] = cor_pprime[X] * cor_pprime[X] +
 			      cor_pprime[Y] * cor_pprime[Y];
-	
+
 		/* A = X2_Y2 + Z2 */
 		A.dgr = 2;
 		A.cf[0] = X2_Y2.cf[0] + dprime[Z] * dprime[Z];
@@ -670,7 +670,7 @@ rt_tor_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
 	/* Unfortunately finding the 4th order roots are too ugly to inline */
 	for(i = 0; i < n; i++){
 	    if( segp[i].seg_stp == 0) continue;	/* Skip */
-	    
+
 	    /*  It is known that the equation is 4th order.  Therefore,
 	     *  if the root finder returns other than 4 roots, error.
 	     */
@@ -953,7 +953,7 @@ rt_tor_class(void)
 	return(0);
 }
 
-/** 
+/**
  *			R T _ N U M _ C I R C U L A R _ S E G M E N T S
  *
  *  Given a circle with a specified radius, determine the minimum number

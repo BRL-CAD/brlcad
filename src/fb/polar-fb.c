@@ -25,12 +25,12 @@
  *
  *  Author -
  *	Paul J. Tanenbaum
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5066
- *  
+ *
  */
 #ifndef lint
 static const char RCSid[] = "@(#)$Header$ (BRL)";
@@ -43,6 +43,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include <math.h>
 
 #include "machine.h"
+#include "bu.h"
 #include "fb.h"
 
 void PrintUsage(int ShoOpts);
@@ -99,27 +100,27 @@ int OnGrid(double theta, double rho);
 /* Global variables */
 char		*ProgName;	/* To save argv[0] */
 char		*ExplainOpts[] = {
-    " -F fbfile specifies frame-buffer file\n", 
+    " -F fbfile specifies frame-buffer file\n",
     " -N h      specifies FB height (pixels)\n",
     " -S s      specifies FB height and width (pixels)\n",
     " -W w      specifies FB width (pixels)\n",
-    " -a u v    plots only the part of function between u and v (degrees)\n", 
-    " -b r g b  sets background color (0 .. 255)\n", 
-    " -c        clears FB to background color\n", 
-    " -e        plots no function interior (useful with -p)\n", 
-    " -g        plots no polar grid\n", 
-    " -h        specifies high-resolution mode (same as -S 1024)\n", 
-    " -i r g b  plots function with constant interior color (0 .. 255)\n", 
-    " -l r g b  plots function with a linear ramp (0 .. 255)\n", 
-    " -m        merges plot with current contents of FB\n", 
-    " -n        no-warning mode.  Aborts if any irregular input\n", 
-    " -o x y    translates plot (pixels)\n", 
-    " -p r g b  plots function perimeter (0 .. 255)\n", 
-    " -q q      sets angular quantum (degrees)\n", 
-    " -r        specifies radian input (default is degrees)\n", 
-    " -s s      scales plot (pixels)\n", 
-    " -t t      rotates function (degrees)\n", 
-    " -w        plots function with angular wedges\n", 
+    " -a u v    plots only the part of function between u and v (degrees)\n",
+    " -b r g b  sets background color (0 .. 255)\n",
+    " -c        clears FB to background color\n",
+    " -e        plots no function interior (useful with -p)\n",
+    " -g        plots no polar grid\n",
+    " -h        specifies high-resolution mode (same as -S 1024)\n",
+    " -i r g b  plots function with constant interior color (0 .. 255)\n",
+    " -l r g b  plots function with a linear ramp (0 .. 255)\n",
+    " -m        merges plot with current contents of FB\n",
+    " -n        no-warning mode.  Aborts if any irregular input\n",
+    " -o x y    translates plot (pixels)\n",
+    " -p r g b  plots function perimeter (0 .. 255)\n",
+    " -q q      sets angular quantum (degrees)\n",
+    " -r        specifies radian input (default is degrees)\n",
+    " -s s      scales plot (pixels)\n",
+    " -t t      rotates function (degrees)\n",
+    " -w        plots function with angular wedges\n",
     " -z side   plots only one half of function ('l' or 'r')\n",
     ""
 };
@@ -593,7 +594,7 @@ main (int argc, char **argv)
 	LineLength = unit_r;
     else
 	LineLength = 2 * unit_r;
-    
+
     /* Decide where in the FB the lower-left corner of the output goes */
     if (Half == H_RIGHT)
 	fb_x_loc = ctr_x;
@@ -765,7 +766,7 @@ LoadNPF (char *FileName, double *Table, int Quantum, double convert, double arc_
     /* Initialize the table */
     for (angle = 0; angle < 360; angle += Quantum)
 	*(Table + npf_index(angle)) = -1.0;
-    
+
     /* Fill the table */
     while ((fscanf(fPtr, "%lf", &theta) == 1) &&
 	(fscanf(fPtr, "%lf", &rho) == 1))
@@ -826,7 +827,7 @@ LoadNPF (char *FileName, double *Table, int Quantum, double convert, double arc_
 	else
 	    (void) fprintf(stderr, "theta == %d degrees\n", gap_min);
     }
-    
+
      if (fPtr != stdin)
  	(void) fclose(fPtr);
      return(Warnings);

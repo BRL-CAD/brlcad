@@ -38,8 +38,6 @@ static const char libbu_color_RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "common.h"
 
-
-
 #include <stdio.h>
 #include <math.h>
 #include <ctype.h>
@@ -55,7 +53,7 @@ static const char libbu_color_RCSid[] = "@(#)$Header$ (BRL)";
 #include "machine.h"
 #include "bu.h"
 #include "vmath.h"
-#include "fb.h"
+
 
 /*
  *		Convert between RGB and HSV color models
@@ -71,9 +69,14 @@ static const char libbu_color_RCSid[] = "@(#)$Header$ (BRL)";
  */
 
 #define	ACHROMATIC	-1.0
-#define	HUE		0
-#define	SAT		1
-#define	VAL		2
+
+#define	HUE	0
+#define	SAT	1
+#define	VAL	2
+
+#define	RED	0
+#define	GRN	1
+#define	BLU	2
 
 /*
  *			B U _ R G B _ T O _ H S V
@@ -115,7 +118,7 @@ void bu_rgb_to_hsv (unsigned char *rgb, fastf_t *hsv)
 	*sat = delta / max;
     else
 	*sat = 0.0;
-    
+
     /*
      *	Compute hue
      */
@@ -210,7 +213,7 @@ int bu_str_to_rgb (char *str, unsigned char *rgb)
     r = g = b = -1;
     while (isspace(*str))
 	++str;
-    
+
     if (*str == '#')
     {
 	if (strlen(++str) != 6)

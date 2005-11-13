@@ -1,0 +1,18 @@
+The only issue that comes to mind, is that newer versions of libtool
+have a bug where they do not install the .la files causing libtool to
+report warnings.  If you see messages in the output during install
+such as:
+
+libtool: install: warning: `../../src/libfb/libfb.la' has not been installed in `/usr/brlcad/lib'
+libtool: install: warning: `../../src/libbu/libbu.la' has not been installed in `/usr/brlcad/lib'
+
+Those warnings are not cause for concern.  The install is complete if
+that is all that is being reported.  Regardless, a simple workaround
+to quell the warnings is to manually copy all the .la files in one
+step to the install library directory:
+
+find . -name \*.la -exec cp {} /usr/brlcad/lib/. \;
+
+After that, a 'sudo make install' (or whatever means you use to go
+root) should work just fine and the warnings should go away.
+

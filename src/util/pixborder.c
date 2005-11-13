@@ -24,7 +24,7 @@
  *
  *  Author -
  *	Paul J. Tanenbaum
- *  
+ *
  *  Source -
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
@@ -181,7 +181,7 @@ static void rgb_to_hsv (unsigned char *rgb, fastf_t *hsv)
 	*sat = delta / max;
     else
 	*sat = 0.0;
-    
+
     /*
      *	Compute hue
      */
@@ -361,7 +361,7 @@ static int is_border (unsigned char *prp, unsigned char *trp, unsigned char *nrp
     VMOVE(pix_rgb, prp + (col_nm + 1) * 3);
     if (is_exterior(pix_rgb))
 	return (1);
-    
+
     /*
      *	All four of its neighbors are also in the region
      */
@@ -376,7 +376,7 @@ get_args (int argc, register char **argv)
 {
     register int c;
 
-    while ((c = getopt( argc, argv, OPT_STRING)) != EOF)
+    while ((c = bu_getopt( argc, argv, OPT_STRING)) != EOF)
     {
 	switch (c)
 	{
@@ -384,16 +384,16 @@ get_args (int argc, register char **argv)
 		autosize = 1;
 		break;
 	    case 'b':
-		if (! bu_str_to_rgb(optarg, border_rgb))
+		if (! bu_str_to_rgb(bu_optarg, border_rgb))
 		{
-		    (void) fprintf(stderr, "Illegal color: '%s'\n", optarg);
+		    (void) fprintf(stderr, "Illegal color: '%s'\n", bu_optarg);
 		    return (0);
 		}
 		break;
 	    case 'e':
-		if (! bu_str_to_rgb(optarg, exterior_rgb))
+		if (! bu_str_to_rgb(bu_optarg, exterior_rgb))
 		{
-		    (void) fprintf(stderr, "Illegal color: '%s'\n", optarg);
+		    (void) fprintf(stderr, "Illegal color: '%s'\n", bu_optarg);
 		    return (0);
 		}
 		rgb_to_hsv(exterior_rgb, exterior_hsv);
@@ -404,79 +404,79 @@ get_args (int argc, register char **argv)
 		autosize = 0;
 		break;
 	    case 'i':
-		if (! bu_str_to_rgb(optarg, interior_rgb))
+		if (! bu_str_to_rgb(bu_optarg, interior_rgb))
 		{
-		    (void) fprintf(stderr, "Illegal color: '%s'\n", optarg);
+		    (void) fprintf(stderr, "Illegal color: '%s'\n", bu_optarg);
 		    return (0);
 		}
 		rgb_to_hsv(interior_rgb, interior_hsv);
 		colors_specified |= COLORS_INTERIOR;
 		break;
 	    case 'n':
-		file_height = atoi(optarg);
+		file_height = atoi(bu_optarg);
 		autosize = 0;
 		break;
 	    case 's':
-		file_height = file_width = atol(optarg);
+		file_height = file_width = atol(bu_optarg);
 		autosize = 0;
 		break;
 	    case 't':
-		if (! bu_str_to_rgb(optarg, rgb_tol))
+		if (! bu_str_to_rgb(bu_optarg, rgb_tol))
 		{
-		    (void) fprintf(stderr, "Illegal color: '%s'\n", optarg);
+		    (void) fprintf(stderr, "Illegal color: '%s'\n", bu_optarg);
 		    return (0);
 		}
 		tol_using_rgb = 1;
 		break;
 	    case 'w':
-		file_width = atol(optarg);
+		file_width = atol(bu_optarg);
 		autosize = 0;
 		break;
 	    case 'x':
-		left_edge = atol(optarg);
+		left_edge = atol(bu_optarg);
 		break;
 	    case 'y':
-		bottom_edge = atol(optarg);
+		bottom_edge = atol(bu_optarg);
 		break;
 	    case 'B':
-		if (! read_hsv(border_hsv, optarg))
+		if (! read_hsv(border_hsv, bu_optarg))
 		{
-		    (void) fprintf(stderr, "Illegal color: '%s'\n", optarg);
+		    (void) fprintf(stderr, "Illegal color: '%s'\n", bu_optarg);
 		    return (0);
 		}
 		hsv_to_rgb(border_hsv, border_rgb);
 		break;
 	    case 'E':
-		if (! read_hsv(exterior_hsv, optarg))
+		if (! read_hsv(exterior_hsv, bu_optarg))
 		{
-		    (void) fprintf(stderr, "Illegal color: '%s'\n", optarg);
+		    (void) fprintf(stderr, "Illegal color: '%s'\n", bu_optarg);
 		    return (0);
 		}
 		hsv_to_rgb(exterior_hsv, exterior_rgb);
 		colors_specified |= COLORS_EXTERIOR;
 		break;
 	    case 'I':
-		if (! read_hsv(interior_hsv, optarg))
+		if (! read_hsv(interior_hsv, bu_optarg))
 		{
-		    (void) fprintf(stderr, "Illegal color: '%s'\n", optarg);
+		    (void) fprintf(stderr, "Illegal color: '%s'\n", bu_optarg);
 		    return (0);
 		}
 		hsv_to_rgb(interior_hsv, interior_rgb);
 		colors_specified |= COLORS_INTERIOR;
 		break;
 	    case 'T':
-		if (! read_hsv(hsv_tol, optarg))
+		if (! read_hsv(hsv_tol, bu_optarg))
 		{
-		    (void) fprintf(stderr, "Illegal color: '%s'\n", optarg);
+		    (void) fprintf(stderr, "Illegal color: '%s'\n", bu_optarg);
 		    return (0);
 		}
 		tol_using_rgb = 0;
 		break;
 	    case 'X':
-		right_edge = atoi(optarg);
+		right_edge = atoi(bu_optarg);
 		break;
 	    case 'Y':
-		top_edge = atoi(optarg);
+		top_edge = atoi(bu_optarg);
 		break;
 	    case '?':
 		(void) fputs(usage, stderr);
@@ -486,7 +486,7 @@ get_args (int argc, register char **argv)
 	}
     }
 
-    if (optind >= argc)
+    if (bu_optind >= argc)
     {
 	if(isatty(fileno(stdin)))
 	    return(0);
@@ -495,7 +495,7 @@ get_args (int argc, register char **argv)
     }
     else
     {
-	file_name = argv[optind];
+	file_name = argv[bu_optind];
 	if ((infp = fopen(file_name, "r")) == NULL)
 	{
 	    perror(file_name);
@@ -505,7 +505,7 @@ get_args (int argc, register char **argv)
 	++fileinput;
     }
 
-    if (argc > ++optind)
+    if (argc > ++bu_optind)
 	(void) fprintf(stderr, "pixborder: excess argument(s) ignored\n");
 
     if (left_edge == -1)

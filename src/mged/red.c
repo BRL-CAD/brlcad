@@ -25,7 +25,7 @@
  *
  *  Author -
  *	John Anderson
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium
  *	The U. S. Army Ballistic Research Laboratory
@@ -45,14 +45,19 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #  include <strings.h>
 #endif
 #include <errno.h>
+#include <ctype.h>
+#ifdef HAVE_UNISTD_H
+#  include <unistd.h>
+#endif
 
 #include "machine.h"
 #include "bu.h"
 #include "vmath.h"
 #include "raytrace.h"
+#include "db.h"
+
 #include "./ged.h"
 #include "./sedit.h"
-#include <ctype.h>
 
 extern int cmd_name(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 
@@ -746,7 +751,7 @@ cmd_put_comb(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 		       " is not a combination, so cannot be edited this way\n", (char *)NULL);
       return TCL_ERROR;
     }
-    
+
     if( rt_db_get_internal( &intern, dp, dbip, (fastf_t *)NULL, &rt_uniresource ) < 0 )
       TCL_READ_ERR_return;
 
@@ -1170,7 +1175,7 @@ checkcomb(void)
 				done2 = 1;
 				break;
 			}
-			
+
 			relation = (*ptr);
 			if( relation == '\0' )
 			{
@@ -1592,7 +1597,7 @@ int build_comb(struct rt_comb_internal *comb, struct directory *dp, int node_cou
 					bu_free( name, "name" );
 				name = bu_strdup( ptr );
 			}
-	
+
 			/* Eliminate trailing white space from name */
 			if( dbip->dbi_version < 5 )
 				i = NAMESIZE;
@@ -1689,7 +1694,7 @@ void
 mktemp_comb(char *str)
 {
 /* Make a temporary name for a combination
-	a template name is expected as in "mk_temp()" with 
+	a template name is expected as in "mk_temp()" with
 	5 trailing X's */
 
 	int counter,done;
@@ -1749,7 +1754,7 @@ int save_comb(struct directory *dpold)
 			", no changes made\n", (char *)NULL);
 		return( 1 );
 	}
-	
+
 	return( 0 );
 }
 

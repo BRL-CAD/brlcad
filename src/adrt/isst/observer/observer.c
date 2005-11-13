@@ -38,7 +38,7 @@ void isst_observer_event_loop(void);
 
 /***** GLOBALS *****/
 pthread_t isst_observer_networking_thread;
-pthread_mutex_t isst_observer_gui_mut;
+pthread_mutex_t isst_observer_magnify_mut;
 pthread_mutex_t event_mut;
 
 tienet_sem_t isst_observer_sdlinit_sem;
@@ -50,13 +50,15 @@ int screen_w;
 int screen_h;
 
 short isst_observer_endian;
-
-short isst_observer_event_queue_size;
-SDL_Event isst_observer_event_queue[64];
-int isst_observer_mouse_grab;
+uint8_t isst_observer_event_queue_size;
+isst_event_t isst_observer_event_queue[64];
 int isst_observer_event_loop_alive;
 int isst_observer_display_init;
 int isst_observer_master_socket;
+unsigned int isst_observer_mouse_grab;
+unsigned int isst_observer_magnify;
+
+void *magnify_buffer;
 /*******************/
 
 
@@ -64,7 +66,7 @@ int isst_observer_master_socket;
 void isst_observer(char *host, int port) {
   isst_observer_net_info_t ni;
 
-  /* server address */ 
+  /* server address */
   if(gethostbyname(host)) {
     ni.master = gethostbyname(host)[0];
   } else {
@@ -77,7 +79,8 @@ void isst_observer(char *host, int port) {
   isst_observer_event_loop_alive = 1;
 
   pthread_mutex_init(&event_mut, 0);
-  pthread_mutex_init(&isst_observer_gui_mut, 0);
+  pthread_mutex_init(&isst_observer_magnify_mut, 0);
+  isst_observer_magnify = 1;
 
   tienet_sem_init(&isst_observer_sdlinit_sem, 0);
   tienet_sem_init(&isst_observer_sdlready_sem, 0);
@@ -101,15 +104,14 @@ void* isst_observer_networking(void *ptr) {
   isst_observer_net_info_t *ni;
   struct timeval start, cur;
   struct sockaddr_in my_addr, srv_addr;
-  void *frame;
   unsigned int addrlen;
   unsigned char op;
   tfloat fps;
   int frame_num;
+  void *frame;
 #if ISST_USE_COMPRESSION
   void *comp_buf;
 #endif
-
 
   ni = (isst_observer_net_info_t *)ptr;
 
@@ -153,6 +155,7 @@ void* isst_observer_networking(void *ptr) {
   tienet_sem_post(&isst_observer_sdlinit_sem);
 
   /* Allocate memory for frame buffer */
+  magnify_buffer = malloc(screen_w*screen_h*3);
   frame = malloc(screen_w*screen_h*3);
 #if ISST_USE_COMPRESSION
   comp_buf = malloc(screen_w*screen_h*3);
@@ -170,12 +173,13 @@ void* isst_observer_networking(void *ptr) {
 
     /* Check whether to quit here or not */
     tienet_recv(isst_observer_master_socket, &op, 1, isst_observer_endian);
+
     if(op == ISST_NET_OP_QUIT) {
-      util_display_free();
       free(frame);
 #if isst_USE_COMPRESSION
       free(comp_buf);
 #endif
+      util_display_free();
       close(isst_observer_master_socket);
 
       isst_observer_event_loop_alive = 0;
@@ -186,20 +190,22 @@ void* isst_observer_networking(void *ptr) {
     /* Send Event Queue to Master */
     pthread_mutex_lock(&event_mut);
 
-    tienet_send(isst_observer_master_socket, &isst_observer_event_queue_size, sizeof(short), isst_observer_endian);
+    tienet_send(isst_observer_master_socket, &isst_observer_event_queue_size, sizeof(uint8_t), 0);
     if(isst_observer_event_queue_size)
-      tienet_send(isst_observer_master_socket, isst_observer_event_queue, isst_observer_event_queue_size * sizeof(SDL_Event), isst_observer_endian);
+      tienet_send(isst_observer_master_socket, isst_observer_event_queue, isst_observer_event_queue_size * sizeof(isst_event_t), 0);
     isst_observer_event_queue_size = 0;
 
     pthread_mutex_unlock(&event_mut);
 
     /* get frame data */
+    pthread_mutex_lock(&isst_observer_magnify_mut);
+
 #if ISST_USE_COMPRESSION
     {
       unsigned long dest_len;
-      int comp_size;
+      unsigned int comp_size;
 
-      tienet_recv(isst_observer_master_socket, &comp_size, sizeof(int), 0);
+      tienet_recv(isst_observer_master_socket, &comp_size, sizeof(unsigned int), 0);
       tienet_recv(isst_observer_master_socket, comp_buf, comp_size, 0);
 
       dest_len = screen_w*screen_h*3;
@@ -214,6 +220,29 @@ void* isst_observer_networking(void *ptr) {
       tienet_sem_post(&isst_observer_splash_sem);
       tienet_sem_wait(&isst_observer_sdlready_sem);
     }
+
+
+    /* Magnify the image if magnify > 1 */
+    {
+      unsigned int x, y;
+      unsigned char pixel[6];
+
+      if(isst_observer_magnify == 1) {
+        memcpy(util_display_buffer->pixels, frame, 3*screen_w*screen_h);
+      } else if(isst_observer_magnify == 2) {
+        for(y = 0; y < screen_h; y++) {
+          for(x = 0; x < screen_w; x++) {
+            memcpy(pixel, &((char *)frame)[3*(y*screen_w+x)], 3);
+            pixel[3] = pixel[0];
+            pixel[4] = pixel[1];
+            pixel[5] = pixel[2];
+            memcpy(&((char *)util_display_buffer->pixels)[3*(4*y*screen_w+2*x)], pixel, 6);
+            memcpy(&((char *)util_display_buffer->pixels)[3*(2*screen_w*(2*y+1)+2*x)], pixel, 6);
+          }
+        }
+      }
+    }
+
 
     /* compute frames per second (fps) */
     frame_num++;
@@ -236,7 +265,7 @@ void* isst_observer_networking(void *ptr) {
       pthread_mutex_lock(&isst_observer_console_mut);
 
       /* Draw Frame */
-      util_display_draw(frame);
+      util_display_draw(NULL);
 
       /* Overlay some useful text */
       sprintf(string, "position: %.3f %.3f %.3f", overlay.camera_position.v[0], overlay.camera_position.v[1], overlay. camera_position.v[2]);
@@ -272,6 +301,8 @@ void* isst_observer_networking(void *ptr) {
 
       pthread_mutex_unlock(&isst_observer_console_mut);
     }
+
+    pthread_mutex_unlock(&isst_observer_magnify_mut);
   }
 
   return(NULL);
@@ -322,12 +353,14 @@ void isst_observer_event_loop() {
   util_display_init(isst_logo.width, isst_logo.height);
 
   SDL_WM_SetCaption("ADRT_ISST_Observer Loading...", NULL);
-  util_display_draw((void *)isst_logo.pixel_data);
+  memcpy(util_display_buffer->pixels, isst_logo.pixel_data, 3 * isst_logo.width * isst_logo.height);
+  util_display_draw(NULL);
   util_display_flip();
 
   tienet_sem_wait(&isst_observer_splash_sem);
   util_display_free();
 
+  /* Initialize the display with the size of the render context */
   util_display_init(screen_w, screen_h);
 
   SDL_WM_SetCaption("ADRT_ISST_Observer", NULL);
@@ -337,12 +370,42 @@ void isst_observer_event_loop() {
     switch(event.type) {
       case SDL_KEYDOWN:
         switch(event.key.keysym.sym) {
+          case SDLK_F1: /* screen magnify 1x */
+            /* Set magnification level */
+            pthread_mutex_lock(&isst_observer_magnify_mut);
+            isst_observer_magnify = 1;
+
+            /* Free the existing context */
+            util_display_free();
+
+            /* Initialize the new context */
+            util_display_init(screen_w, screen_h);
+
+            magnify_buffer = realloc(magnify_buffer, screen_w*screen_h*3);
+            pthread_mutex_unlock(&isst_observer_magnify_mut);
+            break;
+
+          case SDLK_F2: /* screen magnify 2x */
+            /* Set magnification level */
+            pthread_mutex_lock(&isst_observer_magnify_mut);
+            isst_observer_magnify = 2;
+
+            /* Free the existing context */
+            util_display_free();
+
+            /* Initialize the new context */
+            util_display_init(2*screen_w, 2*screen_h);
+
+            magnify_buffer = realloc(magnify_buffer, 4*screen_w*screen_h*3);
+            pthread_mutex_unlock(&isst_observer_magnify_mut);
+            break;
+
           case SDLK_f: /* fullscreen mode */
             SDL_WM_ToggleFullScreen(util_display_screen);
             break;
 
           case SDLK_g: /* mouse grabbing */
-            isst_observer_mouse_grab = isst_observer_mouse_grab ^ 1;
+            isst_observer_mouse_grab ^= 1;
             SDL_WM_GrabInput(isst_observer_mouse_grab ? SDL_GRAB_ON : SDL_GRAB_OFF);
             SDL_ShowCursor(!isst_observer_mouse_grab);
             break;
@@ -377,8 +440,15 @@ void isst_observer_event_loop() {
 
     pthread_mutex_lock(&event_mut);
     /* Build up an event queue to send prior to receiving each frame */
-    if(isst_observer_event_queue_size < 64)
-      isst_observer_event_queue[isst_observer_event_queue_size++] = event;
+    if(isst_observer_event_queue_size < 64) {
+      isst_observer_event_queue[isst_observer_event_queue_size].type = event.type;
+      isst_observer_event_queue[isst_observer_event_queue_size].keysym = event.key.keysym.sym;
+      isst_observer_event_queue[isst_observer_event_queue_size].button = event.button.button;
+      isst_observer_event_queue[isst_observer_event_queue_size].motion_state = event.motion.state;
+      isst_observer_event_queue[isst_observer_event_queue_size].motion_xrel = event.motion.xrel;
+      isst_observer_event_queue[isst_observer_event_queue_size].motion_yrel = event.motion.yrel;
+      isst_observer_event_queue_size++;
+    }
     pthread_mutex_unlock(&event_mut);
   }
 

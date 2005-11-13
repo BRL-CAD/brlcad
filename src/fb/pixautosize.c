@@ -20,20 +20,20 @@
  *
  */
 /** @file pixautosize.c
- *  
+ *
  *  Program to determine if a given file is one of the "standard"
  *  sizes as known by the framebuffer library.
  *
  *  Used by pixinfo.sh to determine size of .pix and .bw files.
- *  
+ *
  *  Author -
  *	Michael John Muuss
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5066
- *  
+ *
  */
 #ifndef lint
 static const char RCSid[] = "@(#)$Header$ (BRL)";
@@ -69,23 +69,23 @@ get_args(int argc, register char **argv)
 {
 	register int c;
 
-	while ( (c = getopt( argc, argv, "b:f:l:" )) != EOF )  {
+	while ( (c = bu_getopt( argc, argv, "b:f:l:" )) != EOF )  {
 		switch( c )  {
 		case 'b':
-			bytes_per_sample = atoi(optarg);
+			bytes_per_sample = atoi(bu_optarg);
 			break;
 		case 'f':
-			file_name = optarg;
+			file_name = bu_optarg;
 			break;
 		case 'l':
-			file_length = atoi(optarg);
+			file_length = atoi(bu_optarg);
 			break;
 		default:		/* '?' */
 			return(0);
 		}
 	}
 
-	if ( argc > ++optind )
+	if ( argc > ++bu_optind )
 		(void)fprintf( stderr, "pixautosize: excess argument(s) ignored\n" );
 
 	return(1);		/* OK */

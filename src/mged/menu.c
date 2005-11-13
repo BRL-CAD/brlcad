@@ -29,7 +29,7 @@
  * Authors -
  *	Bob Suckling
  *	Michael John Muuss
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
@@ -40,8 +40,6 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include "common.h"
-
-
 
 #include "tcl.h"
 
@@ -54,7 +52,6 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./titles.h"
 #include "./mged_dm.h"
 
-#include "./mgedtcl.h"
 
 extern struct menu_item second_menu[], sed_menu[];
 
@@ -65,7 +62,7 @@ int
 cmd_mmenu_get(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
     int index;
-    
+
     if (argc > 2) {
 	struct bu_vls vls;
 
@@ -234,7 +231,7 @@ mged_highlight_menu_item(struct menu_item *mptr, int y)
  */
 void
 mmenu_display(int y_top)
-{ 
+{
   static int menu, item;
   register struct menu_item	**m;
   register struct menu_item	*mptr;
@@ -331,7 +328,7 @@ mmenu_display(int y_top)
  */
 int
 mmenu_select( int pen_y, int do_func )
-{ 
+{
 	static int menu, item;
 	struct menu_item	**m;
 	register struct menu_item	*mptr;

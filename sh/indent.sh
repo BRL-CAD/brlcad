@@ -12,7 +12,7 @@
 # 1. Redistributions of source code must retain the above copyright
 # notice, this list of conditions and the following disclaimer.
 #
-# 2. Redistributions in binary form must reproduce the above 
+# 2. Redistributions in binary form must reproduce the above
 # copyright notice, this list of conditions and the following
 # disclaimer in the documentation and/or other materials provided
 # with the distribution.
@@ -37,8 +37,8 @@
 #
 # indent.sh runs emacs in batch mode to automatically indent source.
 #
-# Author - 
-#   Christopher Sean Morrison 
+# Author -
+#   Christopher Sean Morrison
 #
 # Source -
 #   The U.S. Army Research Laboratory
@@ -48,7 +48,7 @@
 # locate ourselves for generating a file list
 findgen="$1"
 
-if [ ! -d "$findgen" ] ; then 
+if [ ! -d "$findgen" ] ; then
 
     if [ -r "`dirname $0`/../configure.ac" ] ; then
 	findgen="`dirname $0`/.."
@@ -60,14 +60,14 @@ if [ ! -d "$findgen" ] ; then
 	    fi
 	done
     fi
-    
+
 # sanity check
     if [ ! -d "$findgen/sh" ] ; then
 	echo "ERROR: Unable to find our path relative to configure.ac"
 	exit 1
     fi
 
-fi  
+fi
 
 bir="batch-indent-region.el"
 bir_dir="."
@@ -116,7 +116,7 @@ files="`find $findgen -type f -and \( \
 
 for file in $files ; do
     echo "=== BEGIN ===> $file"
-    
+
     # sanity checks
     if [ ! -f "$file" ] ; then
 	echo "."

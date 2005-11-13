@@ -46,7 +46,7 @@
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5066
- *  
+ *
  */
 
 #ifndef lint
@@ -62,6 +62,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include <stdio.h>
 
 #include "machine.h"
+#include "bu.h"
 #include "fb.h"
 
 
@@ -136,7 +137,7 @@ main(int argc, char **argv)
 	FBIO *fbp;
 	FILE *fp;
 
-	while ((code = getopt(argc,argv,"vFh")) != EOF){
+	while ((code = bu_getopt(argc,argv,"vFh")) != EOF){
 		switch (code) {
 		case 'h':
 			headers=1;
@@ -145,7 +146,7 @@ main(int argc, char **argv)
 			verbose=1;
 			break;
 		case 'F':
-			framebuffer = optarg;
+			framebuffer = bu_optarg;
 			break;
 		default:	/* '?' */
 			usage(argv);
@@ -153,7 +154,7 @@ main(int argc, char **argv)
 		}
 	}
 
-	if( optind >= argc )  {
+	if( bu_optind >= argc )  {
 		if( isatty(fileno(stdin)) ) {
 			(void) fprintf(stderr, "%s: No input file.\n",argv[0]);
 			usage(argv);
@@ -162,7 +163,7 @@ main(int argc, char **argv)
 		file_name = "-";
 		fp = stdin;
 	} else {
-		file_name = argv[optind];
+		file_name = argv[bu_optind];
 		if( (fp = fopen(file_name, "r")) == NULL )  {
 			(void)fprintf( stderr,
 			    "%s: cannot open \"%s\" for reading\n",argv[0],
@@ -199,7 +200,7 @@ main(int argc, char **argv)
 		    Header.GH_Magic, ScreenWidth, ScreenHeight, GlobalMap,
 		    CR, GlobalPixels, Header.GH_Background);
 	}
-	
+
 	if (Header.GH_EOB) {
 		fprintf(stderr,"%s: missing EOB in header.\n",argv[0]);
 		exit(1);
@@ -309,7 +310,7 @@ main(int argc, char **argv)
 }
 /* getcode - Get a LWZ "code"
  *
- * getcode returns an LWZ code.  The code size is always less than 
+ * getcode returns an LWZ code.  The code size is always less than
  * 12 bits but could be as small as 2 bits.  This implies that reading
  * one code may not "read" anything from a file.
  *

@@ -20,7 +20,6 @@ lgt_SOURCES = \
 	prnt.c \
 	reflect.c \
 	sgi_dep.c \
-	strtok.c \
 	texture.c \
 	trie.c
 
@@ -42,7 +41,8 @@ lgt_LDADD = \
 	${FB} \
 	${TERMIO} \
 	${CURSOR} \
-	${LIBSGIGL}
+	${LIBSGIGL} \
+	${SYSV}
 
 lgt_CFLAGS = -DBEHIND_ME_TOL=0.05
 

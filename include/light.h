@@ -35,6 +35,25 @@
 
 #include "common.h"
 
+#include "machine.h"
+#include "bu.h"
+#include "bn.h"
+#include "raytrace.h"
+
+/* XXX replicated from optical.h */
+#ifndef OPTICAL_EXPORT
+#  if defined(_WIN32) && !defined(__CYGWIN__) && defined(BRLCAD_DLL)
+#    ifdef OPTICAL_EXPORT_DLL
+#      define OPTICAL_EXPORT __declspec(dllexport)
+#    else
+#      define OPTICAL_EXPORT __declspec(dllimport)
+#    endif
+#  else
+#    define OPTICAL_EXPORT
+#  endif
+#endif
+
+
 __BEGIN_DECLS
 
 struct light_pt {
@@ -84,11 +103,7 @@ OPTICAL_EXPORT extern struct light_specific	LightHead;
 OPTICAL_EXPORT extern void light_cleanup(void);
 OPTICAL_EXPORT extern void light_maker(int num, mat_t v2m);
 OPTICAL_EXPORT extern int light_init(struct application *ap);
-
-OPTICAL_EXPORT BU_EXTERN(void light_obs,
-			 (struct application *ap,
-			  struct shadework *swp,
-			  int have));
+OPTICAL_EXPORT extern void light_obs(struct application *ap, struct shadework *swp, int have);
 
 __END_DECLS
 

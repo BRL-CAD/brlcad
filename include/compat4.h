@@ -26,7 +26,7 @@
  *
  *  Author -
  *	Michael John Muuss
- *  
+ *
  *  Source -
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
@@ -364,7 +364,7 @@ __BEGIN_DECLS
  *
  * RES_ACQUIRE( &rt_g.res_syscall )   becomes  bu_semaphore_acquire( BU_SEM_SYSCALL )
  * RES_RELEASE( &rt_g.res_syscall )   becomes  bu_semaphore_release( BU_SEM_SYSCALL )
- * 
+ *
  */
 #undef RES_INIT		/* machine.h may have defined these */
 #undef RES_ACQUIRE

@@ -20,7 +20,7 @@
  */
 /** @file pictsgi.c
  *
- *  This is a program that will raytrace a BRL-CAD mged 
+ *  This is a program that will raytrace a BRL-CAD mged
  *  model and/or display it using the PRISM temperature output
  *  file, using auxiliary program "ir-sgi".
  *

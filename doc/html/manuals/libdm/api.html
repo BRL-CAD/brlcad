@@ -43,7 +43,7 @@
      </DL>
 </DD>
 <HR>
-<BR>     
+<BR>
 <DT><a NAME="close"><I>int</I> <B>DM_CLOSE</B> ( <I>struct dm *dmp</I> )</a></DT><BR><BR>
 <DD><I>DM_CLOSE</I> closes the display manager indicated by <I>dmp</I>.
      <DL>
@@ -53,7 +53,7 @@
     dmp = DM_OPEN(dtype, argc, argv);
 
               .  .  .
-	    
+
     /* close the display manager */
     DM_CLOSE(dmp);
 	    </PRE>
@@ -61,7 +61,7 @@
      </DL>
 </DD>
 <HR>
-     
+
 <DT><a NAME="drawBegin"><I>int</I> <B>DM_DRAW_BEGIN</B> ( <I>struct dm *dmp</I> )</a></DT><BR><BR>
 <DD><I>DM_DRAW_BEGIN</I> prepares the display manager indicated by
      <I>dmp</I> for a round of drawing.
@@ -75,7 +75,7 @@
      </DL>
 </DD>
 <HR>
-     
+
 <DT><a NAME="drawEnd"><I>int</I> <B>DM_DRAW_END</B> ( <I>struct dm *dmp</I> )</a></DT><BR><BR>
 <DD><I>DM_DRAW_END</I> ends the drawing sequence for the display manager indicated by <I>dmp</I>.
      This should be called before the next call to <a href="#DM_DRAW_BEGIN">DM_DRAW_BEGIN</a>
@@ -90,7 +90,7 @@
      </DL>
 </DD>
 <HR>
-     
+
 <DT><a NAME="normal"><I>int</I> <B>DM_NORMAL</B> ( <I>struct dm *dmp</I> )</a></DT><BR><BR>
 <DD><I>DM_NORMAL</I> restores the display manager indicated by <I>dmp</I> to a normal mode
      of operation (i.e. not scaled, rotated, displaced, etc.).
@@ -104,7 +104,7 @@
      </DL>
 </DD>
 <HR>
-     
+
 <DT><a NAME="loadMatrix"><I>int</I> <B>DM_LOADMATRIX</B> ( <I>struct dm *dmp, mat_t mat, int which_eye</I> )</a></DT><BR><BR>
 <DD><I>DM_LOADMATRIX</I> loads the display manager indicated by <I>dmp</I> with a new
      transformation matrix.
@@ -147,7 +147,7 @@
      </DL>
 </DD>
 <HR>
-     
+
 <DT><a NAME="drawLine2D"><I>int</I> <B>DM_DRAW_LINE_2D</B> ( <I>struct dm *dmp, int x1, int y1, int x2, int y2</I> )</a></DT><BR><BR>
 <DD><I>DM_DRAW_LINE_2D</I> is used to draw two-dimensional lines in the display manager
      window indicated by <I>dmp</I>.
@@ -162,7 +162,7 @@
      </DL>
 </DD>
 <HR>
-     
+
 <DT><a NAME="drawPoint2D"><I>int</I> <B>DM_DRAW_POINT_2D</B> ( <I>struct dm *dmp, int x, int y</I> )</a></DT><BR><BR>
 <DD><I>DM_DRAW_POINT_2D</I> draws a point in the display manager window indicated
      by <I>dmp</I>.
@@ -178,7 +178,7 @@
      </DL>
 </DD>
 <HR>
-     
+
 <DT><a NAME="drawVlist"><I>int</I> <B>DM_DRAW_VLIST</B> ( <I>struct dm *dmp, struct rt_vlist *vp</I> )</a></DT><BR><BR>
 <DD><I>DM_DRAW_VLIST</I> takes the vlist pointer <I>vp</I> and interprets it for drawing into
      the display manager window indicated by <I>dmp</I>.
@@ -192,7 +192,7 @@
      </DL>
 </DD>
 <HR>
-     
+
 <DT><a NAME="setFBColor"><I>int</I> <B>DM_SET_FGCOLOR</B> ( <I>struct dm *dmp, short r, short g, short b, int strict</I> )</a></DT><BR><BR>
 <DD><I>DM_SET_FGCOLOR</I> sets the color for drawing in the
      display manager indicated by <I>dmp</I>.
@@ -210,7 +210,7 @@
      </DL>
 </DD>
 <HR>
-     
+
 <DT><a NAME="setBGColor"><I>int</I> <B>DM_SET_BGCOLOR</B> ( <I>struct dm *dmp, short r, short g, short b</I> )</a></DT><BR><BR>
 <DD><I>DM_SET_BGCOLOR</I> sets the background color for the display manager indicated
      by <I>dmp</I>.
@@ -225,7 +225,7 @@
      </DL>
 </DD>
 <HR>
-     
+
 <DT><a NAME="getBGColor"><I>int</I> <B>DM_GET_BGCOLOR</B>
      ( <I>struct dm *dmp, Tcl_Interp *interp</I> )</a></DT><BR><BR>
 <DD><I>DM_SET_BGCOLOR</I> gets the background color for the
@@ -241,7 +241,7 @@
      </DL>
 </DD>
 <HR>
-     
+
 <DT><a NAME="setLineAttr"><I>int</I> <B>DM_SET_LINE_ATTR</B> ( <I>struct dm *dmp, int width, int style</I> )</a></DT><BR><BR>
 <DD><I>DM_SET_LINE_ATTR</I> sets the display managers (i.e. <I>dmp</I>) line width
      to <I>width</I> and sets its line style to <I>style</I>.
@@ -257,7 +257,7 @@
      </DL>
 </DD>
 <HR>
-     
+
 <DT><a NAME="setWinBounds"><I>int</I> <B>DM_SET_WIN_BOUNDS</B> ( <I>struct dm *dmp, int clip[6]</I> )</a></DT><BR><BR>
 <DD><I>DM_SET_WIN_BOUNDS</I> sets the view clipping planes for the display manager indicated
      by <I>dmp</I>.
@@ -274,7 +274,7 @@
      </DL>
 </DD>
 <HR>
-     
+
 <DT><a NAME="debug"><I>int</I> <B>DM_DEBUG</B> ( <I>struct dm *dmp, int lvl</I> )</a></DT><BR><BR>
 <DD><I>DM_DEBUG</I> sets the debug level to <I>lvl</I>.
      Currently, only two levels are recognized. <I>lvl = 0</I> for debugging off and <I>lvl > 0</I>
@@ -289,7 +289,7 @@
      </DL>
 </DD>
 <HR>
-     
+
 <DT><a NAME="beginDList"><I>int</I> <B>DM_BEGINDLIST</B> ( <I>struct dm *dmp, unsigned int list</I> )</a></DT><BR><BR>
 <DD><I>DM_BEGINDLIST</I> starts a display list definition for the display list <I>list</I>
      in the display manager indicated by <I>dmp</I>.
@@ -306,7 +306,7 @@
      </DL>
 </DD>
 <HR>
-     
+
 <DT><a NAME="endDList"><I>int</I> <B>DM_ENDDLIST</B> ( <I>struct dm *dmp</I> )</a></DT><BR><BR>
 <DD><I>DM_ENDDLIST</I> ends the definition of the display list currently being defined
      for the display manager indicated by <I>dmp</I>.
@@ -324,7 +324,7 @@
      </DL>
 </DD>
 <HR>
-     
+
 <DT><a NAME="drawDList"><I>int</I> <B>DM_DRAWDLIST</B> ( <I>struct dm *dmp, unsigned int list</I> )</a></DT><BR><BR>
 <DD><I>DM_DRAWDLIST</I> draws the previously defined display list <I>list</I> in the display
      manager indicated by <I>dmp</I>.
@@ -341,7 +341,7 @@
      </DL>
 </DD>
 <HR>
-     
+
 <DT><a NAME="freeDLists"><I>int</I> <B>DM_FREEDLISTS</B> ( <I>struct dm *dmp, unsigned int list, int range</I> )</a></DT><BR><BR>
 <DD><I>DM_FREEDLISTS</I> frees the display lists indicated by <I>list</I> and <I>range</I>.
      <I>list</I> indicates the display list to start with and <I>range</I> indicates the
@@ -467,7 +467,7 @@
 
     /* f = -1.0 */
     f = dm_wrap(-5.0);
-	    
+
     </PRE>
        </DD>
      </DL>
@@ -532,9 +532,9 @@
      </table>
      </center>
 </DD>
-<BR>     
+<BR>
 <HR>
-<BR>     
+<BR>
 <DT><a NAME="dm_configureWindowShape"><I>void</I> <B>dm_configureWindowShape</B> ( <I>dmp</I> )</a></DT><BR><BR>
 <DD><I>dm_configureWindowShape</I> is used to update the internal state of a
      display manager after it's window has been newly created or
@@ -542,7 +542,7 @@
 </DD>
 <BR>
 <HR>
-<BR>     
+<BR>
 <DT><a NAME="dm_zbuffer"><I>void</I> <B>dm_zbuffer</B>
      ( <I>struct dm *dmp, zbuffer_on</I> )</a></DT><BR><BR>
 <DD><I>dm_zbuffer</I> is used to turn Z-buffering on/off. Note - zbuffering
@@ -558,7 +558,7 @@
      </DL>
 </DD>
 <BR>
-<HR>     
+<HR>
 <DT><a NAME="dm_lighting"><I>void</I> <B>dm_lighting</B>
      ( <I>struct dm *dmp, int lighting_on</I> )</a></DT><BR><BR>
 <DD><I>dm_lighting</I> is used to turn lighting on/off. Note - lighting

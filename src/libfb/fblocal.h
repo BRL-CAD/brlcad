@@ -30,7 +30,7 @@
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5066
- *  
+ *
  *
  *  $Header$
  */
@@ -38,8 +38,6 @@
 
 #ifndef INCL_FBLOCAL
 #define INCL_FBLOCAL
-
-#include "machine.h"
 
 #define Malloc_Bomb( _bytes_ ) \
 		fb_log( "\"%s\"(%d) : allocation of %d bytes failed.\n", \

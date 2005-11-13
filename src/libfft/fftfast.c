@@ -32,11 +32,11 @@
  *
  *  Author -
  *	Phil Dykstra, 12 Oct 84 and beyond.
- *  
+ *
  *  Source -
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
- *  
+ *
  */
 #ifndef lint
 static const char RCSid[] = "@(#)$Header$ (ARL)";
@@ -125,7 +125,7 @@ double	*costab;
  *  where col = 1, 2, 4, ..., N/2
  *          m = 0, 1, 2, ..., col-1
  *
- *  Thus we can subscript by: table[(m / col) * N/2]  
+ *  Thus we can subscript by: table[(m / col) * N/2]
  *   or with twice as many values by: table[m + col]
  *   We chose the later. (but N.B. this doesn't allow sub
  *   _init_size requests to use existing numbers!)
@@ -258,7 +258,7 @@ butterflies(int numpoints, int inverse, COMPLEX *dat)
 				/*csub(&dat[node1], &temp, &dat[node2]);*/
 				node2->re = node1->re - temp.re;
 				node2->im = node1->im - temp.im;
-			
+
 				/*cadd(&dat[node1], &temp, &dat[node1]);*/
 				node1->re += temp.re;
 				node1->im += temp.im;

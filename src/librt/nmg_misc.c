@@ -31,7 +31,7 @@
  *	John R. Anderson
  *	Lee A. Butler
  *	Michael John Muuss
- *  
+ *
  *  Source -
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
@@ -849,7 +849,7 @@ nmg_assoc_void_shells(const struct nmgregion *r, struct bu_ptbl *shells, const s
 				continue;
 			}
 
-			/* This void shell belongs with shell outer_s 
+			/* This void shell belongs with shell outer_s
 			 * add it to the list of shells */
 			bu_ptbl_ins( shells , (long *)void_s );
 		}
@@ -941,7 +941,7 @@ nmg_find_outer_and_void_shells(struct nmgregion *r, struct bu_ptbl ***shells, co
 			"nmg_find_outer_and_void_shells: shells" );
 	for( i=0 ; i<BU_PTBL_END( outer_shells ) ; i++ )
 	{
-		(*shells)[i] = (struct bu_ptbl *)bu_malloc( sizeof( struct bu_ptbl ) , 
+		(*shells)[i] = (struct bu_ptbl *)bu_malloc( sizeof( struct bu_ptbl ) ,
 			"nmg_find_outer_and_void_shells: shells[]" );
 
 		bu_ptbl_init( (*shells)[i] , 64, "(*shells)[i]");
@@ -2089,7 +2089,7 @@ rt_dist_line3_lseg3(fastf_t *dist, const fastf_t *p, const fastf_t *d, const fas
 }
 
 
-/** N M G _ P U R G E _ U N W A N T E D _ I N T E R S E C T I O N _ P O I 
+/** N M G _ P U R G E _ U N W A N T E D _ I N T E R S E C T I O N _ P O I
  *  N T S
  *
  *	Make sure that the list of intersection points doesn't contain
@@ -2245,7 +2245,7 @@ nmg_purge_unwanted_intersection_points(struct bu_ptbl *vert_list, fastf_t *mag_l
  *	references a vertex which is refernced by a vertexuse in the table,
  *	then we return 1.  Otherwise, we return 0.
  */
-int 
+int
 nmg_in_or_ref(struct vertexuse *vu, struct bu_ptbl *b)
 {
 	union {
@@ -2562,7 +2562,7 @@ nmg_close_shell(struct shell *s, const struct bn_tol *tol)
 			/* first, calculate a plane from the first three non-collinear vertices */
 			start_index = 0;
 			end_index = start_index + 3;
-			
+
 			for( i=start_index ; i<end_index ; i++ )
 			{
 				eu = (struct edgeuse *)BU_PTBL_GET( &eu_tbl , index[i] );
@@ -2733,7 +2733,7 @@ nmg_close_shell(struct shell *s, const struct bn_tol *tol)
 				eu2 = (struct edgeuse *)BU_PTBL_GET( &eu_tbl , index[end_index] );
 				bu_ptbl_ins( &vert_tbl , (long *)&eu2->vu_p->v_p );
 
-				edges_used = 2;	
+				edges_used = 2;
 				/* if the edges are collinear, we can't make a face */
 				while( bn_3pts_collinear(
 					eu1->vu_p->v_p->vg_p->coord,
@@ -2763,7 +2763,7 @@ nmg_close_shell(struct shell *s, const struct bn_tol *tol)
 						found_face = 0;
 				}
 #endif
-				
+
 			}
 
 			if( give_up_on_face )
@@ -2906,7 +2906,7 @@ nmg_close_shell(struct shell *s, const struct bn_tol *tol)
 			((*(struct vertex **)BU_PTBL_GET( &vert_tbl , 2 )))->vg_p->coord,
 			tol ) )
 		{
-		
+
 			/* Create last face from remaining 3 edges */
 			fu = nmg_cmface( s , (struct vertex ***)BU_PTBL_BASEADDR(&vert_tbl) , 3 );
 			if( nmg_calc_face_g( fu ) )
@@ -2965,7 +2965,7 @@ nmg_dup_shell(struct shell *s, long int ***trans_tbl, const struct bn_tol *tol)
 	struct bu_ptbl faces;
 	int tbl_size;
 
-	if( rt_g.NMG_debug & DEBUG_BASIC) 
+	if( rt_g.NMG_debug & DEBUG_BASIC)
 		bu_log( "nmg_dup_shell( s = x%x , trans_tbl = x%x )\n" , s , trans_tbl );
 
 	NMG_CK_SHELL( s );
@@ -3766,7 +3766,7 @@ missed:
 
 	if( missed_faces )
 	{
-		bu_log( "nmg_fix_decomposed_shell_normals: missed %d faces in shell x%x (was it decomposed?)\n", 
+		bu_log( "nmg_fix_decomposed_shell_normals: missed %d faces in shell x%x (was it decomposed?)\n",
 			missed_faces, s );
 		rt_bomb( "nmg_fix_decomposed_shell_normals: missed faces in shell (was it decomposed?)\n" );
 	}
@@ -4447,10 +4447,10 @@ nmg_split_loops_into_faces(long int *magic_p, const struct bn_tol *tol)
 	struct model *m;
 	struct nmg_split_loops_state sl_state;
 	int count;
-	static const struct nmg_visit_handlers htab = {NULL, NULL, NULL, NULL, NULL, 
-						       NULL, NULL, NULL, NULL, nmg_split_loops_handler, 
-						       NULL, NULL, NULL, NULL, NULL, 
-						       NULL, NULL, NULL, NULL, NULL, 
+	static const struct nmg_visit_handlers htab = {NULL, NULL, NULL, NULL, NULL,
+						       NULL, NULL, NULL, NULL, nmg_split_loops_handler,
+						       NULL, NULL, NULL, NULL, NULL,
+						       NULL, NULL, NULL, NULL, NULL,
 						       NULL, NULL, NULL, NULL, NULL};
 	/* htab.aft_faceuse = nmg_split_loops_handler; */
 
@@ -4468,7 +4468,7 @@ nmg_split_loops_into_faces(long int *magic_p, const struct bn_tol *tol)
 	sl_state.flags = (long *)bu_calloc( m->maxindex*2 , sizeof( long ) , "nmg_split_loops_into_faces: flags" );
 	sl_state.tol = tol;
 
-	nmg_visit( magic_p , &htab , (genptr_t *)&sl_state );
+	nmg_visit( magic_p , &htab , (genptr_t)&sl_state );
 
 	count = sl_state.split;
 
@@ -4539,7 +4539,7 @@ nmg_decompose_shell(struct shell *s, const struct bn_tol *tol)
 	for( BU_LIST_FOR( lu , loopuse , &fu->lu_hd ) )
 	{
 		NMG_CK_LOOPUSE( lu );
-		if( BU_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )	
+		if( BU_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
 			continue;
 
 		for( BU_LIST_FOR( eu , edgeuse , &lu->down_hd ) )
@@ -5059,7 +5059,7 @@ nmg_unbreak_handler(long int *eup, genptr_t state, int after)
 	NMG_CK_EDGE_G_EITHER(eg);
 
 	/* if the edge geometry doesn't have at least two uses, this
-	 * is not a candidate for unbreaking */		
+	 * is not a candidate for unbreaking */
 	if( bu_list_len( &eg->eu_hd2 ) < 2*2 )  {
 		/* bu_log("nmg_unbreak_handler: usage < 4\n"); */
 		return;
@@ -5109,10 +5109,10 @@ nmg_unbreak_region_edges(long int *magic_p)
 	struct model *m;
 	struct nmg_unbreak_state ub_state;
 	int count;
-	static const struct nmg_visit_handlers htab = {NULL, NULL, NULL, NULL, NULL, 
-						       NULL, NULL, NULL, NULL, NULL, 
-						       NULL, NULL, NULL, NULL, NULL, 
-						       NULL, NULL, nmg_unbreak_handler, NULL, NULL, 
+	static const struct nmg_visit_handlers htab = {NULL, NULL, NULL, NULL, NULL,
+						       NULL, NULL, NULL, NULL, NULL,
+						       NULL, NULL, NULL, NULL, NULL,
+						       NULL, NULL, nmg_unbreak_handler, NULL, NULL,
 						       NULL, NULL, NULL, NULL, NULL};
 	/* htab.aft_edgeuse = nmg_unbreak_handler; */
 
@@ -5120,12 +5120,12 @@ nmg_unbreak_region_edges(long int *magic_p)
 		bu_log( "nmg_unbreak_region_edges( magic_p = x%x )\n" , magic_p );
 
 	m = nmg_find_model( magic_p );
-	NMG_CK_MODEL( m );	
+	NMG_CK_MODEL( m );
 
 	ub_state.unbroken = 0;
 	ub_state.flags = (long *)bu_calloc( m->maxindex*2 , sizeof( long ) , "nmg_unbreak_region_edges: flags" );
 
-	nmg_visit( magic_p , &htab , (genptr_t *)&ub_state );
+	nmg_visit( magic_p , &htab , (genptr_t)&ub_state );
 
 	count = ub_state.unbroken;
 
@@ -5812,7 +5812,7 @@ nmg_get_edge_lines(struct vertex *new_v, struct bu_ptbl *int_faces, const struct
 			/* find the new edge line at the intersection of these two faces
 			 * the line is defined by start and dir */
 
-			ret_val = bn_isect_2planes( start, dir, 
+			ret_val = bn_isect_2planes( start, dir,
 						    fu1->f_p->g.plane_p->N,
 						    fu2->f_p->g.plane_p->N,
 						    new_v->vg_p->coord,
@@ -5891,7 +5891,7 @@ nmg_get_max_edge_inters(const struct vertex *new_v, struct bu_ptbl *int_faces, c
 	struct nmgregion *r;
 	int edge_no;
 
-	if( rt_g.NMG_debug & DEBUG_BASIC ) 
+	if( rt_g.NMG_debug & DEBUG_BASIC )
 		bu_log( "nmg_get_max_edge_inters( new_v = x%x , %d intersect_fus structs , %d faces )\n" , new_v , BU_PTBL_END( int_faces ) , BU_PTBL_END( faces ) );
 
 	NMG_CK_VERTEX( new_v );
@@ -8515,7 +8515,7 @@ nmg_make_connect_faces(struct shell *dst, struct vertex *vpa, struct vertex *vpb
 			face_verts[verts_in_face] = (struct vertex *)BU_PTBL_GET( verts , i );
 			verts_in_face++;
 		}
-			
+
 		if( !still_collinear )
 		{
 			/* make the new face */
@@ -9190,7 +9190,7 @@ nmg_kill_cracks(struct shell *s)
 #if 1
 	/* Loops may be inadvertently connected with a crack,
 	 * this code is to dissconnect them and kill the connecting crack.
-	 * Look for cracks that are two EU's from one loop that 
+	 * Look for cracks that are two EU's from one loop that
 	 * share the same edge, but are not consectutive in the loop.
 	 * This will require a split_lu to handle.
 	 */
@@ -11382,7 +11382,7 @@ nmg_edge_collapse(struct model *m, const struct bn_tol *tol, const fastf_t tol_c
 						break;
 					}
 					eu3 = BU_LIST_PNEXT_CIRC( edgeuse, &eu3->l );
-					
+
 				} while ( eu3 != eu2 );
 				if( free_edge )
 					break;
@@ -11583,7 +11583,7 @@ nmg_edge_collapse(struct model *m, const struct bn_tol *tol, const fastf_t tol_c
 #endif
 					break;
 				}
-				
+
 			}
 
 			/* check if moving v2 to v1 would flip any loops */
@@ -12131,6 +12131,62 @@ nmg_bot(struct shell *s, const struct bn_tol *tol)
 	bu_ptbl_free( &nmg_faces );
 
 	return( bot );
+}
+
+/**	N M G _ V L I S T _ T O _ E U
+ *
+ * create wire edges corresponding to the lines in the vlist. The wire edges are
+ * created in the specified shell
+ *
+ */
+void
+nmg_vlist_to_eu( struct bu_list *vlist, struct shell *s )
+{
+    point_t pt1, pt2;
+    struct bn_vlist *vp;
+    struct edgeuse *eu;
+    struct vertex *v=NULL;
+    struct vertex *polyStartV=NULL;
+
+    for( BU_LIST_FOR( vp, bn_vlist, vlist ) )  {
+	register int	i;
+	register int	nused = vp->nused;
+	register int	*cmd = vp->cmd;
+	register point_t *pt = vp->pt;
+	for( i = 0; i < nused; i++,cmd++,pt++ )  {
+	    switch( *cmd ) {
+	    case BN_VLIST_LINE_MOVE:
+	    case BN_VLIST_POLY_MOVE:
+		VMOVE( pt2, *pt );
+		v = NULL;
+		polyStartV = NULL;
+		break;
+	    case BN_VLIST_LINE_DRAW:
+	    case BN_VLIST_POLY_DRAW:
+		VMOVE( pt1, pt2 );
+		VMOVE( pt2, *pt );
+		eu = nmg_me( v, NULL, s );
+		if( v == NULL ) {
+		    nmg_vertex_gv( eu->vu_p->v_p, pt1 );
+		}
+		nmg_vertex_gv( eu->eumate_p->vu_p->v_p, pt2 );
+		v = eu->eumate_p->vu_p->v_p;
+		if( polyStartV == NULL ) polyStartV = eu->vu_p->v_p;
+		break;
+	    case BN_VLIST_POLY_END:
+		if( v != NULL &&  polyStartV != NULL ) {
+		    eu = nmg_me( v, polyStartV, s );
+		}
+		break;
+	    case BN_VLIST_POLY_START:
+		polyStartV = NULL;
+		v = NULL;
+		break;
+	    default:
+		break;
+	    }
+	}
+    }
 }
 
 /*

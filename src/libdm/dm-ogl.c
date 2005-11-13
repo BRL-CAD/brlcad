@@ -21,7 +21,7 @@
 /** @file dm-ogl.c
  *
  *  An X/ogl Display Manager.
- *  
+ *
  *  Authors -
  *	Carl Nuzman
  *	Robert G. Parker
@@ -34,6 +34,7 @@
 
 #include "common.h"
 
+#ifdef DM_OGL
 
 #include "tk.h"
 
@@ -83,7 +84,7 @@
 #define USE_VECTOR_THRESHHOLD 0
 
 #if USE_VECTOR_THRESHHOLD
-extern int vectorThreshold;	/* defined in libdm/tcl.c */ 
+extern int vectorThreshold;	/* defined in libdm/tcl.c */
 #endif
 
 static int ogl_actively_drawing;
@@ -535,8 +536,8 @@ Done:
   glGetDoublev(GL_PROJECTION_MATRIX, ((struct ogl_vars *)dmp->dm_vars.priv_vars)->faceplate_mat);
   glPushMatrix();
   glMatrixMode(GL_MODELVIEW);
-  glLoadIdentity(); 
-  glTranslatef(0.0, 0.0, -1.0); 
+  glLoadIdentity();
+  glTranslatef(0.0, 0.0, -1.0);
   glPushMatrix();
   glLoadIdentity();
   ((struct ogl_vars *)dmp->dm_vars.priv_vars)->face_flag = 1;	/* faceplate matrix is on top of stack */
@@ -628,8 +629,8 @@ ogl_share_dlist(struct dm *dmp1, struct dm *dmp2)
     glGetDoublev(GL_PROJECTION_MATRIX, ((struct ogl_vars *)dmp1->dm_vars.priv_vars)->faceplate_mat);
     glPushMatrix();
     glMatrixMode(GL_MODELVIEW);
-    glLoadIdentity(); 
-    glTranslatef(0.0, 0.0, -1.0); 
+    glLoadIdentity();
+    glTranslatef(0.0, 0.0, -1.0);
     glPushMatrix();
     glLoadIdentity();
     ((struct ogl_vars *)dmp1->dm_vars.priv_vars)->face_flag = 1; /* faceplate matrix is on top of stack */
@@ -698,8 +699,8 @@ ogl_share_dlist(struct dm *dmp1, struct dm *dmp2)
     glGetDoublev(GL_PROJECTION_MATRIX, ((struct ogl_vars *)dmp2->dm_vars.priv_vars)->faceplate_mat);
     glPushMatrix();
     glMatrixMode(GL_MODELVIEW);
-    glLoadIdentity(); 
-    glTranslatef(0.0, 0.0, -1.0); 
+    glLoadIdentity();
+    glTranslatef(0.0, 0.0, -1.0);
     glPushMatrix();
     glLoadIdentity();
     ((struct ogl_vars *)dmp2->dm_vars.priv_vars)->face_flag = 1; /* faceplate matrix is on top of stack */
@@ -714,7 +715,7 @@ ogl_share_dlist(struct dm *dmp1, struct dm *dmp2)
 
 /*
  *  			O G L _ C L O S E
- *  
+ *
  *  Gracefully release the display.
  */
 HIDDEN int
@@ -875,7 +876,7 @@ ogl_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye)
   register fastf_t *mptr;
   GLfloat gtmat[16];
   mat_t	newm;
-	
+
   if(dmp->dm_debugLevel){
     struct bu_vls tmp_vls;
 
@@ -899,14 +900,14 @@ ogl_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye)
     break;
   case 1:
     /* R eye */
-    glViewport(0,  0, (XMAXSCREEN)+1, ( YSTEREO)+1); 
+    glViewport(0,  0, (XMAXSCREEN)+1, ( YSTEREO)+1);
     glScissor(0,  0, (XMAXSCREEN)+1, (YSTEREO)+1);
     ogl_drawString2D( dmp, "R", 0.986, 0.0, 0, 1 );
     break;
   case 2:
     /* L eye */
     glViewport(0,  0+YOFFSET_LEFT, ( XMAXSCREEN)+1,
-	       ( YSTEREO+YOFFSET_LEFT)-( YOFFSET_LEFT)+1); 
+	       ( YSTEREO+YOFFSET_LEFT)-( YOFFSET_LEFT)+1);
     glScissor(0,  0+YOFFSET_LEFT, ( XMAXSCREEN)+1,
 	      ( YSTEREO+YOFFSET_LEFT)-( YOFFSET_LEFT)+1);
     break;
@@ -958,7 +959,7 @@ ogl_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye)
 
 /*
  *  			O G L _ D R A W V L I S T
- *  
+ *
  */
 HIDDEN int
 ogl_drawVList(struct dm *dmp, register struct bn_vlist *vp)
@@ -1132,7 +1133,7 @@ ogl_drawString2D(struct dm *dmp, register char *str, fastf_t x, fastf_t y, int s
 HIDDEN int
 ogl_drawLine2D(struct dm *dmp, fastf_t x1, fastf_t y1, fastf_t x2, fastf_t y2)
 {
-  
+
   if (dmp->dm_debugLevel)
     bu_log("ogl_drawLine2D()\n");
 
@@ -1153,7 +1154,7 @@ ogl_drawLine2D(struct dm *dmp, fastf_t x1, fastf_t y1, fastf_t x2, fastf_t y2)
     bu_log("%g %g %g %g\n", pmat[3], pmat[7], pmat[11],pmat[15]);
   }
 
-  glBegin(GL_LINES); 
+  glBegin(GL_LINES);
   glVertex2f(x1, y1);
   glVertex2f(x2, y2);
   glEnd();
@@ -1190,7 +1191,7 @@ ogl_setFGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b
   if(strict){
     glColor3ub( (GLubyte)r, (GLubyte)g, (GLubyte)b );
   }else{
-  
+
     if (dmp->dm_light) {
       /* Ambient = .2, Diffuse = .6, Specular = .2 */
 
@@ -1278,7 +1279,7 @@ ogl_setLineAttr(struct dm *dmp, int width, int style)
     glEnable(GL_LINE_STIPPLE);
   else
     glDisable(GL_LINE_STIPPLE);
-		
+
   return TCL_OK;
 }
 
@@ -1426,7 +1427,7 @@ ogl_choose_visual(struct dm *dmp, Tk_Window tkwin)
 	    ((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.zbuf = 1;
 
 	  return (maxvip); /* success */
-	} else { 
+	} else {
 	  /* retry with lesser depth */
 	  baddepth = maxvip->depth;
 	  XFreeColormap(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
@@ -1455,7 +1456,7 @@ ogl_choose_visual(struct dm *dmp, Tk_Window tkwin)
 }
 
 
-/* 
+/*
  *			O G L _ C O N F I G U R E W I N
  *
  *  Either initially, or on resize/reshape of the window,
@@ -1467,7 +1468,7 @@ ogl_choose_visual(struct dm *dmp, Tk_Window tkwin)
 HIDDEN int
 ogl_configureWin_guts(struct dm *dmp, int force)
 {
-  GLint mm; 
+  GLint mm;
   XWindowAttributes xwa;
   XFontStruct	*newfontstruct;
 
@@ -1489,7 +1490,7 @@ ogl_configureWin_guts(struct dm *dmp, int force)
       dmp->dm_height == xwa.height &&
       dmp->dm_width == xwa.width)
     return TCL_OK;
-    
+
   dmp->dm_height = xwa.height;
   dmp->dm_width = xwa.width;
   dmp->dm_aspect = (fastf_t)dmp->dm_width / (fastf_t)dmp->dm_height;
@@ -1539,7 +1540,7 @@ ogl_configureWin_guts(struct dm *dmp, int force)
     glXUseXFont( ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct->fid,
 		 0, 127, ((struct ogl_vars *)dmp->dm_vars.priv_vars)->fontOffset);
   }
-		
+
 
   /* Always try to choose a the font that best fits the window size.
    */
@@ -1644,7 +1645,7 @@ ogl_setLight(struct dm *dmp, int lighting_on)
   }
 
   return TCL_OK;
-}	
+}
 
 HIDDEN int
 ogl_setTransparency(struct dm *dmp,
@@ -1673,7 +1674,7 @@ ogl_setTransparency(struct dm *dmp,
   }
 
   return TCL_OK;
-}	
+}
 
 HIDDEN int
 ogl_setDepthMask(struct dm *dmp,
@@ -1782,6 +1783,8 @@ ogl_freeDLists(struct dm *dmp, unsigned int list, int range)
   glDeleteLists(dmp->dm_displaylist + list, (GLsizei)range);
   return TCL_OK;
 }
+
+#endif /* DM_OGL */
 
 /*
  * Local Variables:

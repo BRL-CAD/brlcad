@@ -26,7 +26,7 @@
  *
  *  Author -
  *      John R. Anderson
- *  
+ *
  *  Source -
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
@@ -134,7 +134,7 @@ Add_solid(int comp_code_num)
 
 /*	T A N K I L L - G
  *
- *	Converts "tankill" format geometry to BRLCAD model
+ *	Converts "tankill" format geometry to BRL-CAD model
  */
 
 static char *usage="Usage: tankill-g [-v] [-p] [-k] [-t tolerance] [-x lvl] [-X lvl] [-i input_tankill_file] [-o output_brlcad_model]\n\

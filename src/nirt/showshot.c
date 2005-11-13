@@ -101,7 +101,7 @@ main (int argc, char **argv)
 		print_usage();
 		exit (1);
 	}
-    
+
     /* Ensure proper command-line syntax */
     if (optind != argc)
     {
@@ -137,12 +137,12 @@ main (int argc, char **argv)
 	/* Skip initial white space */
 	while (isspace(*bp))
 	    ++bp;
-	
+
 	/* Get region name */
 	for (i = 0; ! isspace(*bp) && (*bp != '\0'); ++i, ++bp)
 	    rname[i] = *bp;
 	rname[i] = '\0';
-	
+
 	/* Read entry and exit coordinates for this partition */
 	if (sscanf(bp, "%F%F%F%F%F%F",
 		&entryp[X], &entryp[Y], &entryp[Z],

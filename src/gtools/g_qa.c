@@ -7,7 +7,6 @@
 
  *	Designed to be a framework for 3d sampling of the geometry volume.
  */
-#include <stdlib.h>
 
 #include "common.h"
 
@@ -17,6 +16,7 @@
 #include <strings.h>
 #endif
 
+#include <stdlib.h>
 #include <errno.h>
 #include <stdio.h>
 #include <sys/types.h>
@@ -24,11 +24,14 @@
 #include <stdio.h>
 #include <math.h>
 #include <limits.h>			/* home of INT_MAX aka MAXINT */
+#include <ctype.h>			/* for isblank */
+
 #include "machine.h"
 #include "bu.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "plot3.h"
+
 
 #define SEM_WORK RT_SEM_LAST
 #define SEM_SHOTS RT_SEM_LAST+1
@@ -54,6 +57,18 @@ char *usage_msg = "Usage: %s [options] model object [object...]\n\
 #define ANALYSIS_GAP	16
 #define ANALYSIS_EXP_AIR 32 /* exposed air */
 #define ANALYSIS_BOX 64
+
+#ifndef HUGE
+#  ifdef MAXFLT
+#    define HUGE MAXFLOAT
+#  else
+#    ifdef DBL_MAX
+#      define HUGE DBL_MAX
+#    else
+#      define HUGE ((float)3.40282346638528860e+38)
+#    endif
+#  endif
+#endif
 
 int analysis_flags = ANALYSIS_VOLUME | ANALYSIS_OVERLAPS | ANALYSIS_WEIGHT | \
 	ANALYSIS_EXP_AIR | ANALYSIS_ADJ_AIR | ANALYSIS_GAP ;
@@ -122,7 +137,7 @@ struct cstate {
     double	*m_len;
     double	*m_volume;
     double	*m_weight;
-    unsigned long *shots; 
+    unsigned long *shots;
     int first;		/* this is the first time we've computed a set of views */
 
     vect_t u_dir;		/* direction of U vector for "current view" */
@@ -178,51 +193,59 @@ struct region_pair {
     vect_t		coord;
 };
 
-/* Access to these lists should be in sections 
+/* Access to these lists should be in sections
  * of code protected by SEM_LIST
  */
 
 static struct region_pair gapList = { /* list of gaps */
-    { BU_LIST_HEAD_MAGIC,
-      (struct bu_list *)&gapList,
-      (struct bu_list *)&gapList },
-    "Gaps",
+    {
+	BU_LIST_HEAD_MAGIC,
+	(struct bu_list *)&gapList,
+	(struct bu_list *)&gapList 
+    },
+    { "Gaps" },
     (struct region *)NULL,
     (unsigned long)0,
     (double)0.0,
     {0.0, 0.0, 0.0,}
 };
 static struct region_pair adjAirList = { /* list of adjacent air */
-    { BU_LIST_HEAD_MAGIC,
-      (struct bu_list *)&adjAirList,
-      (struct bu_list *)&adjAirList },
-    (char *)"Adjacent Air",
+    {
+	BU_LIST_HEAD_MAGIC,
+	(struct bu_list *)&adjAirList,
+	(struct bu_list *)&adjAirList
+    },
+    { (char *)"Adjacent Air" },
     (struct region *)NULL,
     (unsigned long)0,
     (double)0.0,
     {0.0, 0.0, 0.0,}
 };
 static struct region_pair exposedAirList = { /* list of exposed air */
-    { BU_LIST_HEAD_MAGIC,
-      (struct bu_list *)&exposedAirList,
-      (struct bu_list *)&exposedAirList },
-    "Exposed Air",
+    {
+	BU_LIST_HEAD_MAGIC,
+	(struct bu_list *)&exposedAirList,
+	(struct bu_list *)&exposedAirList
+    },
+    { "Exposed Air" },
     (struct region *)NULL,
     (unsigned long)0,
     (double)0.0,
     {0.0, 0.0, 0.0,}
 };
 static struct region_pair overlapList = { /* list of overlaps */
-    { BU_LIST_HEAD_MAGIC,
-      (struct bu_list *)&overlapList,
-      (struct bu_list *)&overlapList },
-    "Overlaps",
+    {
+	BU_LIST_HEAD_MAGIC,
+	(struct bu_list *)&overlapList,
+	(struct bu_list *)&overlapList
+    },
+    { "Overlaps" },
     (struct region *)NULL,
     (unsigned long)0,
     (double)0.0,
     {0.0, 0.0, 0.0,}
 };
-    
+
 
 /* XXX this section should be extracted to libbu/units.c */
 
@@ -238,7 +261,7 @@ struct cvt_tab {
 
 static const struct cvt_tab units_tab[3][40] = {
     { /* length, stolen from bu/units.c with the  "none" value removed
-       * Values for converting from given units to mm 
+       * Values for converting from given units to mm
        */
 	{1.0,		"mm"}, /* default */
 	/*	{0.0,		"none"},*/ /* this is removed to force a certain
@@ -280,7 +303,7 @@ static const struct cvt_tab units_tab[3][40] = {
 	{3.085678e+19,	"parsec"},
 	{0.0,		""}			/* LAST ENTRY */
     },
-    {/* volume 
+    {/* volume
       * Values for converting from given units to mm^3
       */
 	{1.0, "cu mm"}, /* default */
@@ -316,7 +339,7 @@ static const struct cvt_tab units_tab[3][40] = {
 
 	{0.0,		""}			/* LAST ENTRY */
     },
-    { /* weight 
+    { /* weight
        * Values for converting given units to grams
        */
 	{1.0, "grams"}, /* default */
@@ -339,12 +362,12 @@ static const struct cvt_tab units_tab[3][40] = {
 };
 
 /* this table keeps track of the "current" or "user selected units and the
- * associated conversion values 
+ * associated conversion values
  */
 #define LINE 0
 #define VOL 1
 #define WGT 2
-static const struct cvt_tab *units[3] = { 
+static const struct cvt_tab *units[3] = {
     &units_tab[0][0],	/* linear */
     &units_tab[1][0],	/* volume */
     &units_tab[2][0]	/* weight */
@@ -364,7 +387,7 @@ int
 read_units_double(double *val, char *buf, const struct cvt_tab *cvt)
 {
     double a;
-    char units_string[256];
+    char units_string[256] = {0};
     int i;
 
 
@@ -380,13 +403,13 @@ read_units_double(double *val, char *buf, const struct cvt_tab *cvt)
     if (i == 2) {
 	*val = a;
 	for ( ; cvt->name[0] != '\0' ; ) {
-	    if (!strcmp(cvt->name, units_string)) {
+	    if (!strncmp(cvt->name, units_string, 256)) {
 		goto found_units;
 	    } else {
 		cvt++;
 	    }
 	}
-	bu_log("Bad units specifier \"%s\" on value \"%s\"\n", units, buf);
+	bu_log("Bad units specifier \"%s\" on value \"%s\"\n", units_string, buf);
 	return 1;
 
     found_units:
@@ -527,11 +550,14 @@ parse_args(int ac, char *av[])
 	    {
 		i = 0;
 
-		if (p = strchr(optarg, '-')) {
-		    *p++ = '\0';
-		}
+		/* find out if we have two or one args 
+		 * user can separate them with , or - delimiter
+		 */
+		if (p = strchr(optarg, ','))  	 *p++ = '\0';
+		else if (p = strchr(optarg, '-')) *p++ = '\0';
 
-		if (read_units_double(&gridSpacing, optarg, &units_tab[0][0])) {
+
+		if (read_units_double(&gridSpacing, optarg, units_tab[0])) {
 		    bu_log("error parsing grid spacing value \"%s\"\n", optarg);
 		    bu_bomb("");
 		}
@@ -543,7 +569,7 @@ parse_args(int ac, char *av[])
 		}
 
 		bu_log("set grid spacing:%g %s limit:%g %s\n",
-		       gridSpacing / units[LINE]->val, units[LINE]->name, 
+		       gridSpacing / units[LINE]->val, units[LINE]->name,
 		       gridSpacingLimit / units[LINE]->val, units[LINE]->name);
 		break;
 	    }
@@ -569,7 +595,7 @@ parse_args(int ac, char *av[])
 	case 'P'	:
 	    /* cannot ask for more cpu's than the machine has */
 	    if ((c=atoi(optarg)) > 0 && c <= max_cpus ) ncpu = c;
-	    break;	
+	    break;
 	case 'r'	:
 	    print_per_region_stats = 1;
 	    break;
@@ -580,7 +606,7 @@ parse_args(int ac, char *av[])
 	    }
 	    Samples_per_model_axis = a + 1;
 	    break;
-	case 't'	: 
+	case 't'	:
 	    if (read_units_double(&overlap_tolerance, optarg, units_tab[0])) {
 		bu_log("error in overlap tolerance distance \"%s\"\n", optarg);
 		bu_bomb("");
@@ -589,20 +615,20 @@ parse_args(int ac, char *av[])
 	case 'v'	:
 	    verbose = 1;
 	    break;
-	case 'V'	: 
+	case 'V'	:
 	    if (read_units_double(&volume_tolerance, optarg, units_tab[1])) {
 		bu_log("error in volume tolerance \"%s\"\n", optarg);
 		exit(-1);
 	    }
 	    break;
-	case 'W'	: 
+	case 'W'	:
 	    if (read_units_double(&weight_tolerance, optarg, units_tab[2])) {
 		bu_log("error in weight tolerance \"%s\"\n", optarg);
 		exit(-1);
 	    }
 	    break;
 
-	case 'U'	: 
+	case 'U'	:
 	    use_air = strtol(optarg, (char **)NULL, 10);
 	    if (errno == ERANGE || errno == EINVAL) {
 		perror("-U argument");
@@ -618,7 +644,7 @@ parse_args(int ac, char *av[])
 
 		for (i=0 ; i < 3 && ptr; i++) {
 		    units_name[i] = strsep(&ptr, ",");
-		
+
 		    /* make sure the unit value is in the table */
 		    if (*units_name[i] != '\0') {
 			for (cv= &units_tab[i][0] ; cv->name[0] != '\0' ; cv++) {
@@ -643,7 +669,7 @@ parse_args(int ac, char *av[])
 
 	case '?'	:
 	case 'h'	:
-	default		: 
+	default		:
 	    fprintf(stderr, "Bad or help flag '%c' specified\n", c);
 	    usage("");
 	    break;
@@ -692,17 +718,17 @@ parse_densities_buffer(char *buf, unsigned long len)
 	    bu_log("bad density (< 0) %g\n", density);
 	    bu_bomb("");
 	}
-	
+
 	while (isblank(*p)) p++;
 
-	if (q = strchr(p, '\n')) {
+	if ((q = strchr(p, '\n'))) {
 	    *q++ = '\0';
 	} else {
 	    q = last;
 	}
 
 	while (idx >= num_densities) {
-	    densities = bu_realloc(densities, sizeof(struct density_entry)*num_densities*2, 
+	    densities = bu_realloc(densities, sizeof(struct density_entry)*num_densities*2,
 				   "density entries");
 	    num_densities *= 2;
 	}
@@ -720,7 +746,7 @@ parse_densities_buffer(char *buf, unsigned long len)
 #ifdef PRINT_DENSITIES
     for (idx=0 ; idx < num_densities ; idx++) {
 	if (densities[idx].magic == DENSITY_MAGIC) {
-	    bu_log("%4d %6g %s\n", 
+	    bu_log("%4d %6g %s\n",
 		   idx,
 		   densities[idx].density,
 		   densities[idx].name
@@ -729,7 +755,7 @@ parse_densities_buffer(char *buf, unsigned long len)
     }
 #endif
 }
-/*	g e t _ d e n s i t i e s _ f r o m _ f i l e 
+/*	g e t _ d e n s i t i e s _ f r o m _ f i l e
  *
  * Returns
  *	 0 on success
@@ -747,7 +773,7 @@ get_densities_from_file(char *name)
 	return 1;
     }
 
-    if (fstat(fileno(fp), &sb)) { 
+    if (fstat(fileno(fp), &sb)) {
 	perror(name);
 	return 1;
     }
@@ -760,7 +786,7 @@ get_densities_from_file(char *name)
     return 0;
 }
 
-/* 
+/*
  *	g e t _ d e n s i t i e s _ f r o m _ d a t a b a s e
  *
  * Returns
@@ -785,7 +811,7 @@ get_densities_from_database(struct rt_i *rtip)
 	return 1;
     }
 
-    if (intern.idb_major_type&DB5_MAJORTYPE_BINARY_MASK == 0) {
+    if ((intern.idb_major_type & DB5_MAJORTYPE_BINARY_MASK) == 0) {
 	return 1;
     }
 
@@ -803,7 +829,7 @@ get_densities_from_database(struct rt_i *rtip)
  *
  *	This routine must be prepared to run in parallel
  *
- *	
+ *
  *
  */
 struct region_pair *
@@ -826,7 +852,7 @@ add_unique_pair(struct region_pair *list, /* list to add into */
 	     * and return.
 	     */
 	    rp->count++;
-	    
+
 	    if (dist > rp->max_dist) {
 		rp->max_dist = dist;
 		VMOVE(rp->coord, pt);
@@ -877,7 +903,7 @@ overlap(struct application *ap,
 	struct partition *pp,
 	struct region *reg1,
 	struct region *reg2)
-{	
+{
 
     register struct xray	*rp = &ap->a_ray;
     register struct hit	*ihitp = pp->pt_inhit;
@@ -910,7 +936,9 @@ overlap(struct application *ap,
     }
 
     if (analysis_flags & ANALYSIS_OVERLAPS) {
-	struct region_pair *rp = 
+#if 0
+	struct region_pair *rp =
+#endif
 	    add_unique_pair(&overlapList, reg1, reg2, depth, ihit);
 
 	if (plot_overlaps) {
@@ -958,7 +986,7 @@ void exposed_air(struct partition *pp,
 
     add_unique_pair(&exposedAirList,
 		    pp->pt_regionp,
-		    (struct region *)NULL, 
+		    (struct region *)NULL,
 		    pp->pt_outhit->hit_dist - pp->pt_inhit->hit_dist, /* thickness */
 		    last_out_point); /* location */
 
@@ -1010,7 +1038,7 @@ hit(register struct application *ap, struct partition *PartHeadp, struct seg *se
 	VJOIN1(opt, ap->a_ray.r_pt, pp->pt_outhit->hit_dist, ap->a_ray.r_dir);
 
 	DLOG("%s %g->%g\n",
-			  pp->pt_regionp->reg_name, 
+			  pp->pt_regionp->reg_name,
 			  pp->pt_inhit->hit_dist,
 			  pp->pt_outhit->hit_dist);
 
@@ -1019,7 +1047,7 @@ hit(register struct application *ap, struct partition *PartHeadp, struct seg *se
 	 * regions sticking out of the model along the ray.
 	 */
 	if (analysis_flags & ANALYSIS_EXP_AIR) {
-	    
+
 	    gap_dist = (pp->pt_inhit->hit_dist - last_out_dist);
 
 	    /* if air is first on the ray, or we're moving from void/gap to air
@@ -1037,7 +1065,7 @@ hit(register struct application *ap, struct partition *PartHeadp, struct seg *se
 	if (analysis_flags & ANALYSIS_GAP) {
 	    if (pp->pt_back != PartHeadp) {
 		/* if this entry point is further than the previous exit point
-		 * then we have a void 
+		 * then we have a void
 		 */
 		gap_dist = pp->pt_inhit->hit_dist - last_out_dist;
 
@@ -1046,7 +1074,7 @@ hit(register struct application *ap, struct partition *PartHeadp, struct seg *se
 		    /* like overlaps, we only want to report unique pairs */
 		    add_unique_pair(&gapList,
 				    pp->pt_regionp,
-				    pp->pt_back->pt_regionp, 
+				    pp->pt_back->pt_regionp,
 				    gap_dist,
 				    pt);
 
@@ -1083,7 +1111,7 @@ hit(register struct application *ap, struct partition *PartHeadp, struct seg *se
 		    struct per_region_data *prd;
 
 		    /* factor in the density of this object
-		     * weight computation, factoring in the LOS 
+		     * weight computation, factoring in the LOS
 		     * percentage material of the object
 		     */
 		    int los = pp->pt_regionp->reg_los;
@@ -1156,7 +1184,7 @@ hit(register struct application *ap, struct partition *PartHeadp, struct seg *se
 
 	/* look for two adjacent air regions */
 	if (analysis_flags & ANALYSIS_ADJ_AIR) {
-	    if (last_air && pp->pt_regionp->reg_aircode && 
+	    if (last_air && pp->pt_regionp->reg_aircode &&
 		pp->pt_regionp->reg_aircode != last_air) {
 
 		double d = pp->pt_outhit->hit_dist - pp->pt_inhit->hit_dist;
@@ -1231,7 +1259,7 @@ get_next_row(struct cstate *state)
 
     if (state->v < state->steps[state->v_axis])
 	v = state->v++;	/* get a row to work on */
-    else 
+    else
 	v = 0; /* signal end of work */
 
     bu_semaphore_release(SEM_WORK);
@@ -1239,7 +1267,7 @@ get_next_row(struct cstate *state)
     return v;
 }
 /*
- *	plane_worker 
+ *	plane_worker
  *
  *
  *	This routine must be prepared to run in parallel
@@ -1273,9 +1301,9 @@ plane_worker (int cpu, genptr_t ptr)
 
     u = -1;
 
-    while (v = get_next_row(state)) {
+    while ((v = get_next_row(state))) {
 
-	v_coord = v * gridSpacing; 
+	v_coord = v * gridSpacing;
 	DLOG("  v = %d v_coord=%g\n", v, v_coord);
 
 	if ( (v&1) || state->first) {
@@ -1325,8 +1353,8 @@ plane_worker (int cpu, genptr_t ptr)
     }
 
     /* There's nothing else left to work on in this view.
-     * It's time to add the values we have accumulated 
-     * to the totals for the view and return.  When all 
+     * It's time to add the values we have accumulated
+     * to the totals for the view and return.  When all
      * threads have been through here, we'll have returned
      * to serial computation.
      */
@@ -1346,7 +1374,9 @@ find_cmd_line_obj(struct per_obj_data *obj_rpt, const char *name)
     char *str = strdup(name);
     char *p;
 
-    if (p=strchr(str, '/')) *p = '\0';
+    if ((p=strchr(str, '/'))) {
+	*p = '\0';
+    }
 
     for (i=0 ; i < num_objects ; i++) {
 	if (!strcmp(obj_rpt[i].o_name, str)) {
@@ -1360,7 +1390,7 @@ find_cmd_line_obj(struct per_obj_data *obj_rpt, const char *name)
     return -1; /* stupid compiler */
 }
 
-/* 
+/*
  * allocate_per_region_data
  *
  *	Allocate data structures for tracking statistics on a per-view basis
@@ -1395,7 +1425,7 @@ allocate_per_region_data(struct cstate *state, int start, int ac, char *av[])
     /* build objects for each region */
     reg_tbl = bu_calloc(rtip->nregions, sizeof(struct per_region_data), "per_region_data");
 
-    
+
     for( i=0 , BU_LIST_FOR( regp, region, &(rtip->HeadRegion) ) , i++)  {
 	regp->reg_udata = &reg_tbl[i];
 
@@ -1478,12 +1508,12 @@ options_prep(struct rt_i *rtip, vect_t span)
 	    }
 	}
     }
-    /* refine the grid spacing if the user has set a 
-     * lower bound on the number of rays per model axis 
+    /* refine the grid spacing if the user has set a
+     * lower bound on the number of rays per model axis
      */
     for (axis=0 ; axis < 3 ; axis++) {
 	if (span[axis] < newGridSpacing*Samples_per_model_axis) {
-	    /* along this axis, the gridSpacing is 
+	    /* along this axis, the gridSpacing is
 	     * larger than the model span.  We need to refine.
 	     */
 	    newGridSpacing = span[axis] / Samples_per_model_axis;
@@ -1611,11 +1641,11 @@ view_reports(struct cstate *state)
 	    /* compute the per-view volume of this object */
 
 	    if (state->shots[view] > 0) {
-		val = obj_tbl[obj].o_volume[view] = 
+		val = obj_tbl[obj].o_volume[view] =
 		    obj_tbl[obj].o_len[view] * (state->area[view] / state->shots[view]);
 
 		if (verbose)
-		    bu_log("\t%s volume %g %s\n", 
+		    bu_log("\t%s volume %g %s\n",
 		       obj_tbl[obj].o_name,
 		       val / units[VOL]->val,
 		       units[VOL]->name);
@@ -1640,10 +1670,10 @@ view_reports(struct cstate *state)
     }
 }
 
-/*	w e i g h t _ v o l u m e _ t e r m i n a t e 
+/*	w e i g h t _ v o l u m e _ t e r m i n a t e
  *
- * These checks are unique because they must both be completed.  
- * Early termination before they are done is not an option.  
+ * These checks are unique because they must both be completed.
+ * Early termination before they are done is not an option.
  * The results computed here are used later
  *
  * Returns:
@@ -1653,7 +1683,13 @@ view_reports(struct cstate *state)
 static int
 weight_volume_terminate(struct cstate *state)
 {
+    /* Both weight and volume computations rely on this routine to compute values
+     * that are printed in summaries.  Hence, both checks must always be done before
+     * this routine exits.  So we store the status (can we terminate processing?)
+     * in this variable and act on it once both volume and weight computations are done
+     */
     int can_terminate = 1;
+
     double low, hi, val, delta;
 
     if (analysis_flags & ANALYSIS_WEIGHT) {
@@ -1663,7 +1699,7 @@ weight_volume_terminate(struct cstate *state)
 	for (obj=0 ; obj < num_objects ; obj++) {
 	    int view = 0;
 	    if (verbose)
-		bu_log("object %d\n", obj); 
+		bu_log("object %d\n", obj);
 	    /* compute weight of object for given view */
 	    val = obj_tbl[obj].o_weight[view] =
 		obj_tbl[obj].o_lenDensity[view] * (state->area[view] / state->shots[view]);
@@ -1673,7 +1709,7 @@ weight_volume_terminate(struct cstate *state)
 	    /* compute the per-view weight of this object */
 	    for (view=1 ; view < num_views ; view++) {
 		obj_tbl[obj].o_weight[view] =
-		    obj_tbl[obj].o_lenDensity[view] * 
+		    obj_tbl[obj].o_lenDensity[view] *
 		    (state->area[view] / state->shots[view]);
 
 		delta = val - obj_tbl[obj].o_weight[view];
@@ -1695,7 +1731,7 @@ weight_volume_terminate(struct cstate *state)
 		/* signal that we cannot terminate */
 		can_terminate = 0;
 		if (verbose)
-		    bu_log("\t%s differs too much in weight per view.\n", 
+		    bu_log("\t%s differs too much in weight per view.\n",
 			   obj_tbl[obj].o_name);
 	    }
 	}
@@ -1714,13 +1750,13 @@ weight_volume_terminate(struct cstate *state)
 
 	    /* compute volume of object for given view */
 	    int view = 0;
-	    val = obj_tbl[obj].o_volume[view] = 
+	    val = obj_tbl[obj].o_volume[view] =
 		obj_tbl[obj].o_len[view] * (state->area[view] / state->shots[view]);
 
 	    low = hi = 0.0;
 	    /* compute the per-view volume of this object */
 	    for (view=1 ; view < num_views ; view++) {
-		obj_tbl[obj].o_volume[view] = 
+		obj_tbl[obj].o_volume[view] =
 		    obj_tbl[obj].o_len[view] * (state->area[view] / state->shots[view]);
 
 		delta = val - obj_tbl[obj].o_volume[view];
@@ -1759,31 +1795,18 @@ weight_volume_terminate(struct cstate *state)
 /*
  *	t e r m i n a t e _ c h e c k
  *
- *	Check to see if we are done processing due to 
+ *	Check to see if we are done processing due to
  *	some user specified limit being achieved.
  *
  *	Returns:
  *	0	Terminate
  *	1	Continue processing
- *
- *	These return values are potentially confusing when reading the "can_terminate"
- *	variable name
  */
-int 
+int
 terminate_check(struct cstate *state)
 {
     struct region *regp;
     unsigned long hits;
-    int obj;
-    int view;
-
-    /* Both weight and volume computations rely on this routine to compute values
-     * that are printed in summaries.  Hence, both checks must always be done before
-     * this routine exits.  So we store the status (can we terminate processing?)
-     * in this variable and act on it once both volume and weight computations are done
-     */
-    int can_terminate; 
-
 
     DLOG("terminate_check\n");
     RT_CK_RTI(state->rtip);
@@ -1850,13 +1873,13 @@ terminate_check(struct cstate *state)
     /* refine the gridSpacing and try again */
     if (gridSpacing < gridSpacingLimit) {
 	if (verbose)
-	    bu_log("grid spacing refined to %g (below lower limit %g)\n", 
+	    bu_log("grid spacing refined to %g (below lower limit %g)\n",
 		   gridSpacing, gridSpacingLimit);
 	return 0;
     }
 
     return 1;
-}	
+}
 
 
 /*
@@ -1875,7 +1898,7 @@ summary_reports(struct cstate *state, int start, int ac, char *av[])
 	bu_log("Summaries:\n");
     else
 	bu_log("Summary:\n");
-	
+
     if (analysis_flags & ANALYSIS_WEIGHT) {
 	bu_log("Weight:\n");
 	for (obj=0 ; obj < num_objects ; obj++) {
@@ -1883,7 +1906,7 @@ summary_reports(struct cstate *state, int start, int ac, char *av[])
 
 	    for (view=0 ; view < num_views ; view++) {
 		/* computed in terminate_check() */
-		avg += obj_tbl[obj].o_weight[view]; 
+		avg += obj_tbl[obj].o_weight[view];
 	    }
 	    avg /= num_views;
 	    bu_log("\t%*s %g %s\n", -max_region_name_len, obj_tbl[obj].o_name,
@@ -1915,11 +1938,11 @@ summary_reports(struct cstate *state, int start, int ac, char *av[])
 		}
 
 		avg /= num_views;
-		bu_log("\t%s %g %s +(%g) -(%g)\n", 
+		bu_log("\t%s %g %s +(%g) -(%g)\n",
 		       regp->reg_name,
-		       avg, 
+		       avg,
 		       units[WGT]->name,
-		       hi - avg, 
+		       hi - avg,
 		       avg - low);
 	    }
 	}
@@ -1928,8 +1951,8 @@ summary_reports(struct cstate *state, int start, int ac, char *av[])
 	/* print grand totals */
 	avg = 0.0;
 	for (view=0 ; view < num_views ; view++) {
-	    avg += state->m_weight[view] = 
-		state->m_lenDensity[view] * 
+	    avg += state->m_weight[view] =
+		state->m_lenDensity[view] *
 		( state->area[view] / state->shots[view]);
 	}
 
@@ -1984,7 +2007,7 @@ summary_reports(struct cstate *state, int start, int ac, char *av[])
 
 		bu_log("\t%s volume:%g %s +(%g) -(%g)\n",
 		       regp->reg_name,
-		       avg, 
+		       avg,
 		       units[VOL]->name,
 		       hi - avg,
 		       avg - low);
@@ -1996,7 +2019,7 @@ summary_reports(struct cstate *state, int start, int ac, char *av[])
 	/* print grand totals */
 	avg = 0.0;
 	for (view=0 ; view < num_views ; view++) {
-	    avg += state->m_volume[view] = 
+	    avg += state->m_volume[view] =
 		state->m_len[view] * ( state->area[view] / state->shots[view]);
 	}
 
@@ -2047,7 +2070,7 @@ main(int ac, char *av[])
 
     /* parse command line arguments */
     arg_count = parse_args(ac, av);
-	
+
     if ((ac-arg_count) < 2) {
 	usage("Error: Must specify model and objects on command line\n");
     }
@@ -2106,7 +2129,7 @@ main(int ac, char *av[])
     state.area[2] = state.span[0] * state.span[1];
 
     if (analysis_flags & ANALYSIS_BOX) {
-	bu_log("bounding box: %g %g %g  %g %g %g\n", 
+	bu_log("bounding box: %g %g %g  %g %g %g\n",
 	       V3ARGS(rtip->mdl_min), V3ARGS(rtip->mdl_max));
 
 	VPRINT("Area:", state.area);
@@ -2129,8 +2152,8 @@ main(int ac, char *av[])
 
 	VSCALE(state.steps, state.span, inv_spacing);
 
-	bu_log("grid spacing %g %s %d x %d x %d\n", 
-	       gridSpacing / units[LINE]->val, 
+	bu_log("grid spacing %g %s %d x %d x %d\n",
+	       gridSpacing / units[LINE]->val,
 	       units[LINE]->name,
 	       state.steps[0]-1,
 	       state.steps[1]-1,
@@ -2145,7 +2168,7 @@ main(int ac, char *av[])
 	    /* gross hack
 	     * By assuming we have <= 3 views, we can let the view # indicate
 	     * a coordinate axis.
-	     *  Note this is used as an index into state.area[] 
+	     *  Note this is used as an index into state.area[]
 	     */
 	    state.i_axis = state.curr_view = view;
 	    state.u_axis = (state.curr_view+1) % 3;

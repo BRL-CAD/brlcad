@@ -24,7 +24,7 @@
  *
  *  Author -
  *	Paul J. Tanenbaum
- *  
+ *
  *  Source -
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5068
@@ -121,13 +121,13 @@ main (int argc, char **argv)
     unsigned long int		height;
     struct stat	stat_buf;
 
-    extern int	optind;			/* index from getopt(3C) */
-    extern char	*optarg;		/* argument from getopt(3C) */
+    extern int	bu_optind;			/* index from bu_getopt(3C) */
+    extern char	*bu_optarg;		/* argument from bu_getopt(3C) */
 
     /*
      *	Process the command line
      */
-    while ((ch = getopt(argc, argv, OPT_STRING)) != EOF)
+    while ((ch = bu_getopt(argc, argv, OPT_STRING)) != EOF)
 	switch (ch)
 	{
 	    case 'n':
@@ -137,9 +137,9 @@ main (int argc, char **argv)
 		how = BELIEVE_STAT;
 		break;
 	    case '#':
-		if (sscanf(optarg, "%d", &bytes_per_pixel) != 1)
+		if (sscanf(bu_optarg, "%d", &bytes_per_pixel) != 1)
 		{
-		    bu_log("Invalid pixel-size value: '%s'\n", optarg);
+		    bu_log("Invalid pixel-size value: '%s'\n", bu_optarg);
 		    print_usage();
 		    exit (1);
 		}
@@ -149,13 +149,13 @@ main (int argc, char **argv)
 		print_usage();
 		exit (ch != '?');
 	}
-    if (argc - optind != 1)
+    if (argc - bu_optind != 1)
     {
 	print_usage();
 	exit (1);
     }
 
-    argument = argv[optind];
+    argument = argv[bu_optind];
     if ((stat(argument, &stat_buf) != 0)
      && (!grab_number(argument, &nm_bytes)))
     {

@@ -1,5 +1,28 @@
-.\" @(#) $Header$ (BRL)
 .TH RTREGIS 1 BRL-CAD
+./"                      R T R E G I S . 1
+./" BRL-CAD
+./"
+./" Copyright (c) 1991-2005 United States Government as represented by
+./" the U.S. Army Research Laboratory.
+./"
+./" This document is made available under the terms of the GNU Free
+./" Documentation License or, at your option, under the terms of the
+./" GNU General Public License as published by the Free Software
+./" Foundation.  Permission is granted to copy, distribute and/or
+./" modify this document under the terms of the GNU Free Documentation
+./" License, Version 1.2 or any later version published by the Free
+./" Software Foundation; with no Invariant Sections, no Front-Cover
+./" Texts, and no Back-Cover Texts.  Permission is also granted to
+./" redistribute this document under the terms of the GNU General
+./" Public License; either version 2 of the License, or (at your
+./" option) any later version.
+./"
+./" You should have received a copy of the GNU Free Documentation
+./" License and/or the GNU General Public License along with this
+./" document; see the file named COPYING for more information.
+./"
+./"./"./"
+.\" @(#) $Header$ (BRL)
 .UC 4
 .SH NAME
 rtregis \(em register overlay of a UNIX-Plot onto a rendered image.
@@ -19,14 +42,14 @@ matrix is produced by \fBrtregis\fR from the
 .B RT
 log files for a UNIX-Plot file and a rendered shaded image file.
 Both the UNIX-Plot image and the rendered shaded image must have been
-ray-traced from the same orientation.  The output from 
+ray-traced from the same orientation.  The output from
 .B rtregis
 is a matrix and a space command that are to be used as input parameters
-to 
+to
 .B plrot.
 They may not be used together with
 .B \-a, \-e, \-s, \-g
-options to 
+options to
 .B plrot.
 Output is written to standard out unless it is redirected.
 The output can often be included directly in a shell script using
@@ -55,7 +78,7 @@ Now the registered plot file can be overlaid onto the rendered shaded image:
 	\fIpl-fb -o file.pl\fR
 .fi
 
-This command pair results in the plot file being overlaid on top of 
+This command pair results in the plot file being overlaid on top of
 the rendered shaded image that was in the framebuffer.
 The result can then be converted to Impress or PostScript and sent
 to a printer:
@@ -68,8 +91,8 @@ to a printer:
 bw-impress(1), bw-ps(1),
 cell-fb(1),
 mged(1),
-pl-fb(1), plrot(1), pl-sgi(1), rt(1), rthide(1), 
-pix-bw(1), pix-fb(1), 
+pl-fb(1), plrot(1), pl-sgi(1), rt(1), rthide(1),
+pix-bw(1), pix-fb(1),
 librt(3), libplot3(3), plot3(5), ray(5V).
 .SH DIAGNOSTICS
 Descriptive messages are printed on standard error (file descriptor 2).

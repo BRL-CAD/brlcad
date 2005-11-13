@@ -23,7 +23,7 @@
  *
  *	Author -
  *		John R. Anderson
- *  
+ *
  *  Source -
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
@@ -65,7 +65,7 @@ main(int argc, char **argv)
 	unsigned char *image;
 	unsigned char **rows;
 
-	while( (c=getopt( argc, argv, "v" ) ) != EOF )
+	while( (c=bu_getopt( argc, argv, "v" ) ) != EOF )
 	{
 		switch( c )
 		{
@@ -79,7 +79,7 @@ main(int argc, char **argv)
 		}
 	}
 
-	if( optind >= argc )  {
+	if( bu_optind >= argc )  {
 		if( isatty(fileno(stdin)) )
 		{
 			bu_log( usage, argv[0] );
@@ -87,16 +87,16 @@ main(int argc, char **argv)
 		}
 		fp_in = stdin;
 	} else {
-		if( (fp_in = fopen(argv[optind], "rb")) == NULL )  {
-			perror(argv[optind]);
+		if( (fp_in = fopen(argv[bu_optind], "rb")) == NULL )  {
+			perror(argv[bu_optind]);
 			(void)fprintf( stderr,
 				"png-pix: cannot open \"%s\" for reading\n",
-				argv[optind] );
+				argv[bu_optind] );
 			exit(1);
 		}
 	}
 
-	if ( argc > ++optind )
+	if ( argc > ++bu_optind )
 		(void)fprintf( stderr, "png-pix: excess argument(s) ignored\n" );
 
 	if( fread( header, 8, 1, fp_in ) != 1 )

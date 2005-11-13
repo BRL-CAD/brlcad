@@ -67,7 +67,10 @@ The BRL-CAD package utilizes and redistributes copies of several 3rd
 party source code, libraries, and/or applications.  Said 3rd party
 source code, libraries, and/or applications all retain their
 respective agreements, licenses, and copyrights and should be referred
-to individually for their specific terms.  
+to individually for their specific terms.  For purposes of
+redistribution and legal compatibility, external component libraries
+should not be under the terms of the GPL or any other license with
+similar legal implications.
 
 When referring to BRL-CAD, its source code, documentation, and/or
 libraries, this is not meant to include or imply 3rd party source

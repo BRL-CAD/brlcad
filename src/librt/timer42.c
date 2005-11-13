@@ -28,7 +28,7 @@
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005
- *  
+ *
  */
 /*@}*/
 
@@ -258,7 +258,7 @@ psecs(long int l, struct bu_vls *vp)
 
 /*
  *			R T _ R E A D _ T I M E R
- * 
+ *
  *  Compatability routine
  */
 double

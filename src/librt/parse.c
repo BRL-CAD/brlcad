@@ -37,7 +37,7 @@
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005
- *  
+ *
  */
 /*@}*/
 
@@ -81,7 +81,7 @@ bu_matprint(const char *name, register const matp_t mat)
 
 	bu_log(" %s=%.-12E %.-12E %.-12E %.-12E\n",
 		name, mat[0], mat[1], mat[2], mat[3]);
-					
+
 	bu_log("%.-12E %.-12E %.-12E %.-12E\n",
 		mat[4], mat[5], mat[6], mat[7]);
 
@@ -100,7 +100,7 @@ bu_matprint(const char *name, register const matp_t mat)
  */
 void
 bu_structprint(const char *title, const struct bu_structparse *parsetab, const char *base)
-          			       
+
                            	          /* structure description */
           			      	  /* base address of users structure */
 {
@@ -257,7 +257,7 @@ bu_parse_double(const char *str, long int count, double *loc)
 	int	dot_seen;
 	const char	*numstart;
 	double	tmp_double;
-	char	buf[128];	
+	char	buf[128];
 	int	len;
 
 	for (i=0 ; i < count && *str ; ++i){
@@ -275,7 +275,7 @@ bu_parse_double(const char *str, long int count, double *loc)
 			}
 			if (!isdigit(*str))
 				break;
-			
+
 		}
 
 		/* If no mantissa seen, then there is no float here */
@@ -396,7 +396,7 @@ bu_struct_lookup(register const struct bu_structparse *sdp, register const char 
 						cp++;
 
 					while (*cp && isdigit(*cp) )
-						cp++; 
+						cp++;
 
 					/* make sure we actually had an
 					 * integer out there
@@ -434,7 +434,7 @@ bu_struct_lookup(register const struct bu_structparse *sdp, register const char 
 						cp++;
 
 					while (*cp && isdigit(*cp) )
-						cp++; 
+						cp++;
 
 					/* make sure we actually had an
 					 * integer out there
@@ -573,7 +573,7 @@ bu_structparse(const struct bu_vls *in_vls, const struct bu_structparse *desc, c
 
 HIDDEN void
 bu_vls_item_print_core(struct bu_vls *vp, const struct bu_structparse *sdp, const char *base, char sep_char)
-                  
+
                                      /* item description */
                                   /* base address of users structure */
                                   /* value separator */
@@ -661,7 +661,7 @@ bu_vls_item_print_core(struct bu_vls *vp, const struct bu_structparse *sdp, cons
 
 void
 bu_vls_item_print(struct bu_vls *vp, const struct bu_structparse *sdp, const char *base)
-                  
+
                                       /* item description */
                                   /* base address of users structure */
 {
@@ -676,7 +676,7 @@ bu_vls_item_print(struct bu_vls *vp, const struct bu_structparse *sdp, const cha
 
 void
 bu_vls_item_print_nc(struct bu_vls *vp, const struct bu_structparse *sdp, const char *base)
-                  
+
                                       /* item description */
                                   /* base address of users structure */
 {
@@ -816,10 +816,10 @@ bu_vls_structprint(struct bu_vls *vls, register const struct bu_structparse *sdp
 				else
 					sprintf(cp, "%s%s=\"%c\"",
 						(vls->vls_len?" ":""),
-						sdp->sp_name, 
+						sdp->sp_name,
 						*loc);
 			} else {
-				register char *p; 
+				register char *p;
 				register int count=0;
 
 				/* count the quote characters */
@@ -871,7 +871,7 @@ bu_vls_structprint(struct bu_vls *vls, register const struct bu_structparse *sdp
 				register short *sp = (short *)loc;
 				register int tmpi;
 
-				bu_vls_extend(vls, 
+				bu_vls_extend(vls,
 					64 * i + strlen(sdp->sp_name) + 3 );
 
 				cp = vls->vls_str + vls->vls_offset + vls->vls_len;
@@ -894,11 +894,11 @@ bu_vls_structprint(struct bu_vls *vls, register const struct bu_structparse *sdp
 				register int *dp = (int *)loc;
 				register int tmpi;
 
-				bu_vls_extend(vls, 
+				bu_vls_extend(vls,
 					64 * i + strlen(sdp->sp_name) + 3 );
 
 				cp = vls->vls_str + vls->vls_offset + vls->vls_len;
-				sprintf(cp, "%s%s=%d", 
+				sprintf(cp, "%s%s=%d",
 					(vls->vls_len?" ":""),
 					sdp->sp_name, *dp++);
 				tmpi = strlen(cp);

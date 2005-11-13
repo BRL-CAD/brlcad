@@ -29,7 +29,7 @@
  *		nmg_m* routines "make" NMG structures.
  *		nmg_k* routines "kill" (delete) NMG structures.
  *
- *	in each of the above cases the letters or words following are an 
+ *	in each of the above cases the letters or words following are an
  *	attempt at a mnemonic representation for what is manipulated
  *
  *	m	Model
@@ -58,7 +58,7 @@
  *  Authors -
  *	Lee A. Butler
  *	Michael John Muuss
- *  
+ *
  *  Source -
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
@@ -71,8 +71,6 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 
 #include "common.h"
 
-
-
 #include <stdio.h>
 #include <math.h>
 #include <string.h>
@@ -82,9 +80,9 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 #include "raytrace.h"
 #include "nurb.h"
 
-static struct vertexuse *nmg_mvu RT_ARGS( (struct vertex *v, long *upptr,
+static struct vertexuse *nmg_mvu BU_ARGS( (struct vertex *v, long *upptr,
 					 struct model *m) );
-static struct vertexuse *nmg_mvvu RT_ARGS( (long *upptr, struct model *m) );
+static struct vertexuse *nmg_mvvu BU_ARGS( (long *upptr, struct model *m) );
 
 
 /************************************************************************
@@ -455,7 +453,7 @@ nmg_mf(struct loopuse *lu1)
 	fu2->fumate_p = fu1;
 	fu1->orientation = fu2->orientation = OT_UNSPEC;
 	fu1->f_p = fu2->f_p = f;
-	fu1->l.magic = 
+	fu1->l.magic =
 	    fu2->l.magic = NMG_FACEUSE_MAGIC; /* Faceuse structs are GOOD */
 
 	/* move the loopuses from the shell to the faceuses */
@@ -483,7 +481,7 @@ nmg_mf(struct loopuse *lu1)
 /**
  *			N M G _ M L V
  *
- * XXX - vertex or vertexuse? or both? ctj 
+ * XXX - vertex or vertexuse? or both? ctj
  *	Make a new loop (with specified orientation) and vertex,
  *	in a shell or face.
  *	If the vertex 'v' is NULL, the shell's lone vertex is used,
@@ -498,7 +496,7 @@ nmg_mf(struct loopuse *lu1)
  *  If a convenient shell does not exist, use s=nmg_msv() to make
  *  the shell and vertex, then call lu=nmg_mlv(s,s->vu_p->v_p,OT_SAME),
  *  followed by nmg_kvu(s->vu_p).
- * 
+ *
  *  Implicit returns -
  *	The new vertexuse can be had by:
  *		BU_LIST_FIRST(vertexuse, &lu->down_hd);
@@ -631,9 +629,9 @@ nmg_mlv(long int *magic, struct vertex *v, int orientation)
  */
 static struct vertexuse *
 nmg_mvu(struct vertex *v, long int *upptr, struct model *m)
-             	   
+
     		       		/* pointer to parent struct */
-            	   
+
 {
 	struct vertexuse *vu;
 
@@ -754,7 +752,7 @@ nmg_me(struct vertex *v1, struct vertex *v2, struct shell *s)
 	/* XXX - why not OT_UNSPEC? ctj */
 	eu1->vu_p = eu2->vu_p = (struct vertexuse *) NULL;
 
-	eu1->l.magic = eu2->l.magic = 
+	eu1->l.magic = eu2->l.magic =
 	    NMG_EDGEUSE_MAGIC;	/* Edgeuse structs are GOOD */
 	/* Not really, edgeuses require vertexuses, but we've got to */
 	/* call nmg_mvvu() or nmg_mvu() before we can set vu_p so we */
@@ -937,13 +935,13 @@ nmg_meonvu(struct vertexuse *vu)
  *	Passed a pointer to a shell.  The wire edgeuse child of the shell
  *	is taken as the head of a list of edge(use)s which will form
  *	the new loop.  The loop is created from the first N contiguous
- *	edges.  Thus the end of the new loop is 
+ *	edges.  Thus the end of the new loop is
  *	delineated by the "next" edge(use)being:
- * 
+ *
  * 	A) the first object in the list (no other edgeuses in
  * 		shell list)
  *	B) non-contiguous with the previous edge
- * 
+ *
  *	A loop is created from this list of edges.  The edges must
  *	form a true circuit, or we dump core on your disk.  If we
  *	succeed, then the edgeuses are moved from the shell edgeuse list
@@ -1104,7 +1102,7 @@ nmg_ml(struct shell *s)
  *  It exists primarily as a support routine for "mopping up" after
  *  nmg_klu(), nmg_keu(), nmg_ks(), and nmg_mv_vu_between_shells().
  *
- *  It is also used in a particularly ugly way in 
+ *  It is also used in a particularly ugly way in
  *  nmg_cut_loop() and nmg_split_lu_at_vu()
  *  as part of their method for obtaining an "empty" loopuse/loop set.
  *
@@ -1446,7 +1444,7 @@ nmg_keu(register struct edgeuse *eu1)
 		NMG_CK_EDGEUSE( e->eu_p );
 	} else {
 		/* since these two edgeuses are the only use of this edge,
-		 * we need to free the edge (since all uses are about 
+		 * we need to free the edge (since all uses are about
 		 * to disappear).
 		 */
 		FREE_EDGE(e);
@@ -1667,14 +1665,14 @@ nmg_vertex_gv(struct vertex *v, const fastf_t *pt)
 /**
  *			N M G _ V E R T E X _ G
  *
- *	a version that can take x, y, z coords and doesn't need a point 
+ *	a version that can take x, y, z coords and doesn't need a point
  *	array.  Mostly useful for quick and dirty programs.
  */
 void
 nmg_vertex_g(register struct vertex *v, fastf_t x, fastf_t y, fastf_t z)
 {
 	point_t pt;
-	
+
 	pt[0] = x;
 	pt[1] = y;
 	pt[2] = z;
@@ -1764,7 +1762,7 @@ nmg_vertexuse_a_cnurb(struct vertexuse *vu, const fastf_t *uvw)
 void
 nmg_edge_g(struct edgeuse *eu)
 {
-	struct model *m;	
+	struct model *m;
 	struct edge_g_lseg *eg_p = (struct edge_g_lseg *)NULL;
 	struct edge	*e;
 	struct edgeuse	*eu2;
@@ -1815,7 +1813,7 @@ nmg_edge_g(struct edgeuse *eu)
 
 		/* compute the direction from the endpoints of the edgeuse(s) */
 		pt = eu->eumate_p->vu_p->v_p->vg_p->coord;
-		VSUB2(eg_p->e_dir, eg_p->e_pt, pt);	
+		VSUB2(eg_p->e_dir, eg_p->e_pt, pt);
 
 		/* If the edge vector is essentially 0 magnitude we're in trouble.
 		 * Warn the user and create an arbitrary vector we can use.
@@ -1933,7 +1931,7 @@ nmg_edge_g_cnurb(struct edgeuse *eu, int order, int n_knots, fastf_t *kv, int n_
 			"cnurb ctl_points[]" );
 
 		/*
-		 * As a courtesy, set first and last point to 
+		 * As a courtesy, set first and last point to
 		 * the PARAMETER values of the edge's vertices.
 		 */
 		NMG_CK_VERTEXUSE_A_CNURB( eu->vu_p->a.cnurb_p );
@@ -2847,7 +2845,7 @@ nmg_je(struct edgeuse *eudst, struct edgeuse *eusrc)
  *			N M G _ U N G L U E E D G E
  *
  *	If edgeuse is part of a shared edge (more than one pair of edgeuses
- *	on the edge), it and its mate are "unglued" from the edge, and 
+ *	on the edge), it and its mate are "unglued" from the edge, and
  *	associated with a new edge structure.
  *
  *	Primarily a support routine for nmg_eusplit()

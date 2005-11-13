@@ -23,7 +23,7 @@
 /*@{*/
 
 /** @file tplot.c
- *	This routine is designed to simplify the creation of 
+ *	This routine is designed to simplify the creation of
  *  X,Y plots for user.
  *
  *
@@ -31,13 +31,13 @@
  *				16 March 1979
  *
  *
- *	This routine is designed to simplify the creation of 
+ *	This routine is designed to simplify the creation of
  * X,Y plots for user. The user need only furnish this program
  * the data arrays to be plotted, the lengths of the respective
  * axis, titles for the axis, and the point on the page corresponding
  * to data point (0,0).
  *	The program will then do everything else required to make
- * the plot appear on the user's terminal including scaling of the 
+ * the plot appear on the user's terminal including scaling of the
  * data, centering of the titles and positioning on the page.
  *
  *
@@ -85,15 +85,15 @@ double	tp_ipow(double x, int n);
 
 void
 tp_plot(FILE *fp, int xp, int yp, int xl, int yl, char *xtitle, char *ytitle, float *x, float *y, int n, double cscale)
-    	    
+
    	   		/* page point desired to be (0,0) for plot */
-   	   
+
    	   		/* lengths of x,y axis */
-   	   
-    	         
-    	         
-     	    
-     	    
+
+
+
+
+
    	  		/* number of points */
       	       		/* character scale factor */
 {

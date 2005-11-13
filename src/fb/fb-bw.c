@@ -27,12 +27,12 @@
  *  Author -
  *	Phillip Dykstra
  *	15 Aug 1985
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5066
- *  
+ *
  */
 #ifndef lint
 static const char RCSid[] = "@(#)$Header$ (BRL)";
@@ -47,6 +47,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include <stdio.h>
 
 #include "machine.h"
+#include "bu.h"
 #include "fb.h"
 
 
@@ -76,7 +77,7 @@ get_args(int argc, register char **argv)
 {
 	register int c;
 
-	while ( (c = getopt( argc, argv, "hiX:Y:s:w:n:" )) != EOF )  {
+	while ( (c = bu_getopt( argc, argv, "hiX:Y:s:w:n:" )) != EOF )  {
 		switch( c )  {
 		case 'h':
 			/* high-res */
@@ -86,20 +87,20 @@ get_args(int argc, register char **argv)
 			inverse = 1;
 			break;
 		case 'X':
-			scr_xoff = atoi(optarg);
+			scr_xoff = atoi(bu_optarg);
 			break;
 		case 'Y':
-			scr_yoff = atoi(optarg);
+			scr_yoff = atoi(bu_optarg);
 			break;
 		case 's':
 			/* square size */
-			height = width = atoi(optarg);
+			height = width = atoi(bu_optarg);
 			break;
 		case 'w':
-			width = atoi(optarg);
+			width = atoi(bu_optarg);
 			break;
 		case 'n':
-			height = atoi(optarg);
+			height = atoi(bu_optarg);
 			break;
 
 		default:		/* '?' */
@@ -107,13 +108,13 @@ get_args(int argc, register char **argv)
 		}
 	}
 
-	if( optind >= argc ) {
+	if( bu_optind >= argc ) {
 		if( isatty(fileno(stdout)) )
 			return(0);
 		file_name = "-";
 		outfp = stdout;
 	} else {
-		file_name = argv[optind];
+		file_name = argv[bu_optind];
 		if( (outfp = fopen(file_name, "w")) == NULL )  {
 			(void)fprintf( stderr,
 				"fb-bw: cannot open \"%s\" for writing\n",
@@ -122,7 +123,7 @@ get_args(int argc, register char **argv)
 		}
 	}
 
-	if ( argc > ++optind )
+	if ( argc > ++bu_optind )
 		(void)fprintf( stderr, "fb-bw: excess argument(s) ignored\n" );
 
 	return(1);		/* OK */

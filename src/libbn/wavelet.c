@@ -71,18 +71,18 @@
  *	- bn_wlt_haar_2d_short_reconstruct2 (tbuffer, buffer, width, height, channels, sub_sz, limit)
  *	- bn_wlt_haar_2d_int_reconstruct2   (tbuffer, buffer, width, height, channels, sub_sz, limit)
  *	- bn_wlt_haar_2d_long_reconstruct2  (tbuffer, buffer, width, height, channels, sub_sz, limit)
- *	
- *  
+ *
+ *
  *  For greatest accuracy, it is preferable to convert everything to "double"
- *  and decompose/reconstruct with that.  However, there are useful 
- *  properties to performing the decomposition and/or reconstruction in 
+ *  and decompose/reconstruct with that.  However, there are useful
+ *  properties to performing the decomposition and/or reconstruction in
  *  various data types (most notably char).
  *
  *  Rather than define all of these routines explicitly, we define
  *  2 macros "decompose" and "reconstruct" which embody the structure of
  *  the function (which is common to all of them).  We then instatiate
  *  these macros once for each of the data types.  It's ugly, but it
- *  assures that a change to the structure of one operation type 
+ *  assures that a change to the structure of one operation type
  *  (decompose or reconstruct) occurs for all data types.
  *
  *
@@ -92,7 +92,7 @@
  *  Parameters:
  *	- tbuffer     a temporary data buffer 1/2 as large as "buffer". See (1) below.
  *	- buffer      pointer to the data to be decomposed
- *	- dimen    the number of samples in the data buffer 
+ *	- dimen    the number of samples in the data buffer
  *	- channels the number of values per sample
  *	- limit    the extent of the decomposition
  *
@@ -102,10 +102,10 @@
  *  The number of original samples in the buffer (parameter "dimen") and the
  *  decomposition limit ("limit") must both be a power of 2 (e.g. 512, 1024).
  *  The buffer is decomposed into "average" and "detail" halves until the
- *  size of the "average" portion reaches "limit".  Simultaneous 
+ *  size of the "average" portion reaches "limit".  Simultaneous
  *  decomposition of multi-plane (e.g. pixel) data, can be performed by
  *  indicating the number of planes in the "channels" parameter.
- *  
+ *
  *  (1) The process requires a temporary buffer which is 1/2 the size of the
  *  longest span to be decomposed.  If the "tbuffer" argument is non-null then
  *  it is a pointer to a temporary buffer.  If the pointer is NULL, then a
@@ -140,11 +140,11 @@
  *
  *  Modifications -
  *      Christopher Sean Morrison
- *  
+ *
  *  Source -
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
- *  
+ *
  */
 /*@}*/
 
@@ -233,7 +233,7 @@ unsigned long limit;	/* extent of decomposition */ \
 }
 
 
-#if defined(__STDC__) 
+#if defined(__STDC__)
 #define reconstruct(DATATYPE ) bn_wlt_haar_1d_ ## DATATYPE ## _reconstruct
 #else
 #define reconstruct(DATATYPE) bn_wlt_haar_1d_/**/DATATYPE/**/_reconstruct

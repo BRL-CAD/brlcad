@@ -31,19 +31,20 @@
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5066
- *  
+ *
  */
 /*@}*/
-
-#define	DEBUGX	0
-#define	CURSOR	1
-
 
 #ifndef lint
 static const char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include "common.h"
+
+#ifdef IF_X
+
+#define	DEBUGX	0
+#define	CURSOR	1
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -223,7 +224,7 @@ static struct modeflags {
 /*
  *	Hardware colormap support
  *
- *	The color map is organized as a 6x6x6 colorcube, with 10 extra  
+ *	The color map is organized as a 6x6x6 colorcube, with 10 extra
  *	entries each for the primary colors and grey values.
  *
  *	entries 0 -> 215 are the color cube
@@ -262,7 +263,7 @@ static unsigned short greyvec[16] = {
 
 static unsigned char convRGB(register const unsigned char *v);
 unsigned long 	*x_pixel_table;
-XColor 		*color_defs; 
+XColor 		*color_defs;
 
 _LOCAL_ int
 X_open(FBIO *ifp, char *file, int width, int height)
@@ -327,9 +328,9 @@ X_open(FBIO *ifp, char *file, int width, int height)
 		width = ifp->if_width;
 	if( height <= 0 )
 		height = ifp->if_height;
-	if ( width > ifp->if_max_width) 
+	if ( width > ifp->if_max_width)
 		width = ifp->if_max_width;
-	if ( height > ifp->if_max_height) 
+	if ( height > ifp->if_max_height)
 		height = ifp->if_max_height;
 
 	/* round width up to a multiple of eight bits */
@@ -1340,14 +1341,14 @@ static void genmap(unsigned char *rmap, unsigned char *gmap, unsigned char *bmap
 		gmap[g] = primary[g-226];	/* green */
 		rmap[g] = bmap[g] = 0;
 	}
-	
+
 	for (b=236 ; b < 246 ; ++b) {
 		bmap[b] = primary[b-236];	/* blue */
 		rmap[b] = gmap[b] = 0;
 	}
 
 	for (r=246 ; r < 256 ; ++r) {		/* grey */
-		rmap[r] = gmap[r] = 
+		rmap[r] = gmap[r] =
 		bmap[r] = primary[r-246];
 	}
 }
@@ -1377,7 +1378,7 @@ x_make_colormap(FBIO *ifp)
 	x_pixel_table = (unsigned long *)
 			malloc( tot_levels * sizeof( unsigned long) );
 
-	color_map = XCreateColormap( XI(ifp)->dpy, 
+	color_map = XCreateColormap( XI(ifp)->dpy,
 		XI(ifp)->win, XI(ifp)->visual, AllocNone);
 
 	if( color_map == (Colormap)NULL)
@@ -1690,9 +1691,9 @@ repaint(FBIO *ifp)
  */
 static void
 slowrect(FBIO *ifp, int xmin, int xmax, int ymin, int ymax)
-          
+
                	/* image bounds */
-               
+
 {
 	int	sxmin;		/* screen versions of above */
 	int	symin;
@@ -1733,7 +1734,7 @@ slowrect(FBIO *ifp, int xmin, int xmax, int ymin, int ymax)
 
 	for( y = 0; y < sylen; y++ ) {
 		sy = symin + y;
-		iy = ymin + y/ifp->if_yzoom; 
+		iy = ymin + y/ifp->if_yzoom;
 		for( x = 0; x < sxlen; x++ ) {
 			ix = xmin + x/ifp->if_xzoom;
 #if 0
@@ -1749,6 +1750,8 @@ slowrect(FBIO *ifp, int xmin, int xmax, int ymin, int ymax)
 		X_scanwrite( ifp, sxmin, sy, &scanbuf[0][0], sxlen, 0 );
 	}
 }
+
+#endif /* II_X */
 
 /*
  * Local Variables:

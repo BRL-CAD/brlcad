@@ -21,7 +21,7 @@
 /** @file dm-generic.c
  *
  * Generic display manager routines.
- * 
+ *
  * Source -
  *	SLAD CAD Team
  *	The U. S. Army Research Laboratory
@@ -105,7 +105,7 @@ dm_share_dlist(struct dm *dmp1, struct dm *dmp2)
     return TCL_ERROR;
 
   /*
-   * Only display managers of the same type and using the 
+   * Only display managers of the same type and using the
    * same OGL server are allowed to share display lists.
    *
    * XXX - need a better way to check if using the same OGL server.

@@ -18,7 +18,7 @@ static void* component_hit(tie_ray_t *ray, tie_id_t *id, tie_tri_t *tri, void *p
   common_triangle_t *t = ((common_triangle_t *)(tri->ptr));
 
   ray->depth++;
-  if(t->mesh->flags == 1)
+  if(t->mesh->flags & 0x3)
     return(t->mesh);
 
   return(0);
@@ -39,9 +39,9 @@ void render_component_work(render_t *render, tie_t *tie, tie_ray_t *ray, TIE_3 *
       math_vec_mul_scalar(id.norm, id.norm, -1.0);
 
     /* shade solid */
-    pixel->v[0] = 1.0;
+    pixel->v[0] = m->flags & 0x1 ? 0.8 : 0.2;
     pixel->v[1] = 0.2;
-    pixel->v[2] = 0.2;
+    pixel->v[2] = m->flags & 0x2 ? 0.8 : 0.2;
     math_vec_sub(vec, ray->pos, id.pos);
     math_vec_unitize(vec);
     math_vec_dot(angle, vec, id.norm);

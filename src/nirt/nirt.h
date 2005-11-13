@@ -28,13 +28,13 @@
 #include "./usrfmt.h"
 
 /*	CONSTANTS	*/
-#define	VAR_NULL	((struct VarTable *) 0) 
+#define	VAR_NULL	((struct VarTable *) 0)
 #define	CT_NULL		((com_table *) 0)
 #define	SILENT_UNSET	0
 #define	SILENT_YES	1
 #define	SILENT_NO	-1
 #define	NIRT_PROMPT	"nirt>  "
-#define	TITLE_LEN	80 
+#define	TITLE_LEN	80
 #if !defined(PI)
 #define	PI		3.141592654
 #endif
@@ -49,7 +49,7 @@
 #define	HORZ		0
 #define	VERT		1
 #define	DIST		2
-#define	POS		1   
+#define	POS		1
 #define	NEG		0
 #define	AIR		1
 #define	NO_AIR		0
@@ -97,9 +97,9 @@ typedef struct {
 	void	(*com_func)();          /* what to do?      	         */
 	char	*com_desc;		/* Help description 	         */
 	char	*com_args;		/* Command arguments for usage   */
-} com_table; 
+} com_table;
 
-struct VarTable 
+struct VarTable
 {
 	double	azimuth;
 	double	elevation;

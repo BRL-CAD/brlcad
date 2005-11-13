@@ -26,7 +26,7 @@
  *
  *  Author -
  *      John R. Anderson
- *  
+ *
  *  Source -
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
@@ -86,7 +86,7 @@ static int	group_id=(-1);		/* Group identification number from SECTION card */
 static int	comp_id=(-1);		/* Component identification number from SECTION card */
 static int	region_id=0;		/* Region id number (group id no X 1000 + component id no) */
 static char	field[9];		/* Space for storing one field from an input line */
-static char	vehicle[17];		/* Title for BRLCAD model from VEHICLE card */
+static char	vehicle[17];		/* Title for BRL-CAD model from VEHICLE card */
 static int	name_count;		/* Count of number of times this name_name has been used */
 static int	pass;			/* Pass number (0 -> only make names, 1-> do geometry ) */
 static int	bot=0;			/* Flag: >0 -> There are BOT's in current component */
@@ -1978,7 +1978,7 @@ do_ccone3(void)
 			}
 			else
 				ro[i] = ri[i];
-			
+
 		}
 		else if( ri[i] == -1.0 )
 			ri[i] = ro[i];
@@ -2263,7 +2263,7 @@ do_hole_wall(int type)
 					list_ptr = (struct hole_list *)bu_malloc( sizeof( struct hole_list ) , "do_hole_wall: list_ptr" );
 					list_start = list_ptr;
 				}
-			
+
 				list_ptr->group = igrp;
 				list_ptr->component = icmp;
 				list_ptr->next = (struct hole_list *)NULL;

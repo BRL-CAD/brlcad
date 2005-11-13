@@ -22,7 +22,7 @@
 ##
 #		I P A T T . T C L
 #
-# Description - GUI for Anderson's pattern replicator tools. 
+# Description - GUI for Anderson's pattern replicator tools.
 #
 # Author - Robert F. Hartley
 #
@@ -30,12 +30,12 @@
 
 class pattern_control {
     inherit itk::Toplevel
-    
+
     constructor {} {}
     destructor {}
-    
+
     public {
-	
+
     }
 
     private {
@@ -60,10 +60,10 @@ class pattern_control {
 	variable obj_r
 
 	variable combovar_s "top"  ;# depth combo box
-	variable group_s           ;# group name       
+	variable group_s           ;# group name
 	variable cpatt_s           ;# patt center
 	variable cobj_s            ;# obj center
-	
+
 	variable azel_s 1          ;# az/el rb
 	variable radii_s 1         ;# radii rb
 	variable rotaz_s           ;# rotate az cb
@@ -86,10 +86,10 @@ class pattern_control {
 	variable increment_s       ;# increment
 
 	variable combovar_c "top"  ;# depth combo box
-	variable group_c           ;# group name       
+	variable group_c           ;# group name
 	variable cbase_c           ;# patt center
 	variable cobj_c            ;# obj center
-	
+
 	variable azel_c 1
 	variable radii_c 1
 	variable rotaz_c
@@ -117,7 +117,7 @@ class pattern_control {
 	variable dnum_c
 	variable lnum_c
 	variable rot_c
-	
+
 	variable helpvar ""
 
 	method update_depth { box level } {}
@@ -127,8 +127,8 @@ class pattern_control {
 	method frame_disable { frame_name } {}
 	method frame_enable { frame_name } {}
 	method switch_states { frame_on frame_off } {}
-	
-	
+
+
     }
 }
 
@@ -151,7 +151,7 @@ body pattern_control::constructor {} {
     set tab1 [$itk_component(tn) childsite 1]
     set tab2 [$itk_component(tn) childsite 2]
     $itk_component(tn) select 0
-    
+
 
 # R E C T _ T A B
 
@@ -162,13 +162,13 @@ body pattern_control::constructor {} {
 
     #Combo Box
     itk_component add f_combo_r {
-	frame $itk_interior.f_combo_r -relief sunken -bd 2 
+	frame $itk_interior.f_combo_r -relief sunken -bd 2
     }
 
     itk_component add e_combo_r {
 	entry $itk_interior.e_combo_r -relief flat -width 20 -textvariable [scope combovar_r]
     }
-    
+
     itk_component add b_combo_r {
 	menubutton $itk_interior.b_combo_r -relief raised -indicatoron 1
     }
@@ -190,7 +190,7 @@ body pattern_control::constructor {} {
 
 
     #Group Name
-    
+
     itk_component add l_group_r {
 	label $itk_interior.l_group_r -text "Group Name:"
     }
@@ -198,13 +198,13 @@ body pattern_control::constructor {} {
     itk_component add e_group_r {
 	entry $itk_interior.e_group_r -relief sunken -textvariable [scope group_r]
     }
-    
+
 
     #Directions
     itk_component add l_xdir_r {
 	label $itk_interior.l_xdir_r -text "X Direction:"
     }
-    
+
     itk_component add l_ydir_r {
 	label $itk_interior.l_ydir_r -text "Y Direction:"
     }
@@ -216,7 +216,7 @@ body pattern_control::constructor {} {
     itk_component add e_xdir_r {
 	entry $itk_interior.e_xdir_r -relief sunken -textvariable [scope xdir_r]
     }
-    
+
     itk_component add e_ydir_r {
 	entry $itk_interior.e_ydir_r -relief sunken -textvariable [scope ydir_r]
     }
@@ -224,7 +224,7 @@ body pattern_control::constructor {} {
     itk_component add e_zdir_r {
 	entry $itk_interior.e_zdir_r -relief sunken -textvariable [scope zdir_r]
     }
-    
+
 
     #Directions
     itk_component add f_dir_r {
@@ -254,7 +254,7 @@ body pattern_control::constructor {} {
     itk_component add e_nydir_r {
 	entry $itk_interior.e_nydir_r -relief sunken -bd 2 -textvariable [scope nydir_r]
     }
-    
+
     itk_component add e_nzdir_r {
 	entry $itk_interior.e_nzdir_r -relief sunken -bd 2 -textvariable [scope nzdir_r]
     }
@@ -286,7 +286,7 @@ body pattern_control::constructor {} {
     grid $itk_component(rb_dir_r)  -in $itk_component(f_dir_r) -row 0 -column 0 -sticky nsw
     grid $itk_component(l_nxdir_r) -in $itk_component(f_dir_r) -row 1 -column 0 -sticky nsw
     grid $itk_component(l_nydir_r) -in $itk_component(f_dir_r) -row 2 -column 0 -sticky nsw
-    grid $itk_component(l_nzdir_r) -in $itk_component(f_dir_r) -row 3 -column 0 -sticky nsw 
+    grid $itk_component(l_nzdir_r) -in $itk_component(f_dir_r) -row 3 -column 0 -sticky nsw
     grid $itk_component(e_nxdir_r) -in $itk_component(f_dir_r) -row 1 -column 1 -padx $pad(x) -pady $pad(y) -sticky nsew
     grid $itk_component(e_nydir_r) -in $itk_component(f_dir_r) -row 2 -column 1 -padx $pad(x) -pady $pad(y) -sticky nsew
     grid $itk_component(e_nzdir_r) -in $itk_component(f_dir_r) -row 3 -column 1 -padx $pad(x) -pady $pad(y) -sticky nsew
@@ -294,7 +294,7 @@ body pattern_control::constructor {} {
     grid $itk_component(l_dydir_r) -in $itk_component(f_dir_r) -row 5 -column 0 -sticky nsw
     grid $itk_component(l_dzdir_r) -in $itk_component(f_dir_r) -row 6 -column 0 -sticky nsw
     grid $itk_component(e_dxdir_r) -in $itk_component(f_dir_r) -row 4 -column 1 -padx $pad(x) -pady $pad(y) -sticky nsew
-    grid $itk_component(e_dydir_r) -in $itk_component(f_dir_r) -row 5 -column 1 -padx $pad(x) -pady $pad(y) -sticky nsew 
+    grid $itk_component(e_dydir_r) -in $itk_component(f_dir_r) -row 5 -column 1 -padx $pad(x) -pady $pad(y) -sticky nsew
     grid $itk_component(e_dzdir_r) -in $itk_component(f_dir_r) -row 6 -column 1 -padx $pad(x) -pady $pad(y) -sticky nsew
 
 
@@ -322,7 +322,7 @@ body pattern_control::constructor {} {
     itk_component add e_xlist_r {
 	entry $itk_interior.e_xlist_r -relief sunken -textvariable [scope xlist_r]
     }
-    
+
     itk_component add e_ylist_r {
 	entry $itk_interior.e_ylist_r -relief sunken -textvariable [scope ylist_r]
     }
@@ -339,12 +339,12 @@ body pattern_control::constructor {} {
     grid $itk_component(e_ylist_r) -in $itk_component(f_list_r) -row 2 -column 1 -padx $pad(x) -pady $pad(y) -sticky nsew
     grid $itk_component(e_zlist_r) -in $itk_component(f_list_r) -row 3 -column 1 -padx $pad(x) -pady $pad(y) -sticky nsew
 
-    
+
     #String Replacement
     itk_component add l_sstring_r {
 	label $itk_interior.l_sstring_r -text "Source String:"
     }
-    
+
     itk_component add l_rstring_r {
 	label $itk_interior.l_rstring_r -text "Replacement String:"
     }
@@ -372,12 +372,12 @@ body pattern_control::constructor {} {
     itk_component add l_obj_r {
 	label $itk_interior.l_obj_r -text "Objects:"
     }
-    
+
     itk_component add e_obj_r {
 	entry $itk_interior.e_obj_r -relief sunken -textvariable [scope obj_r]
     }
 
-    
+
     #Buttons
     itk_component add b_ok_r {
 	button $itk_interior.b_ok_r -text "OK" -command [code $this apply_rect]
@@ -390,7 +390,7 @@ body pattern_control::constructor {} {
 
     #Grids
     grid $itk_component(tn) -sticky nsew
-    
+
     grid $itk_component(l_combo_r)   -in $tab0 -row 0 -column 0 -sticky nsw
     grid $itk_component(l_group_r)   -in $tab0 -row 1 -column 0 -sticky nsw
     grid $itk_component(l_xdir_r)    -in $tab0 -row 2 -column 0 -sticky nsw
@@ -402,7 +402,7 @@ body pattern_control::constructor {} {
     grid $itk_component(l_incr_r)    -in $tab0 -row 7 -column 0 -sticky nsw
     grid $itk_component(l_obj_r)     -in $tab0 -row 8 -column 0 -sticky nsw
     grid $itk_component(b_ok_r)      -in $tab0 -row 9 -column 0 -columnspan 2
-    
+
     grid $itk_component(f_combo_r)   -in $tab0 -row 0 -column 1 -sticky new
     grid $itk_component(e_group_r)   -in $tab0 -row 1 -column 1 -padx $pad(x) -pady $pad(y) -sticky nsew
     grid $itk_component(e_xdir_r)    -in $tab0 -row 2 -column 1 -padx $pad(x) -pady $pad(y) -sticky nsew
@@ -420,7 +420,7 @@ body pattern_control::constructor {} {
     #Row Configure
     grid rowconfigure $itk_interior 0 -weight 1
     grid rowconfigure $itk_component(f_combo_r) 0 -weight 1
-    
+
     set i 1
     while {$i <= 8} {
 	grid rowconfigure $tab0 $i -weight 1
@@ -438,26 +438,26 @@ body pattern_control::constructor {} {
 	grid rowconfigure $itk_component(f_list_r) $i -weight 1
 	incr i
     }
-    
+
 
     #Column Configure
     grid columnconfigure $itk_interior 0 -weight 1
-    
+
     grid columnconfigure $itk_component(f_combo_r) 0 -weight 1
     grid columnconfigure $itk_component(f_combo_r) 1 -weight 1
-    
+
     grid columnconfigure $tab0 0 -weight 1
     grid columnconfigure $tab0 1 -weight 1
     grid columnconfigure $tab0 2 -weight 1
     grid columnconfigure $tab0 3 -weight 1
-    
 
-    grid columnconfigure $itk_component(f_dir_r) 0 -weight 1 
+
+    grid columnconfigure $itk_component(f_dir_r) 0 -weight 1
     grid columnconfigure $itk_component(f_dir_r) 1 -weight 1
-   
 
-    grid columnconfigure $itk_component(f_list_r) 0 -weight 1 
-    grid columnconfigure $itk_component(f_list_r) 1 -weight 1 
+
+    grid columnconfigure $itk_component(f_list_r) 0 -weight 1
+    grid columnconfigure $itk_component(f_list_r) 1 -weight 1
 
 
 
@@ -482,7 +482,7 @@ body pattern_control::constructor {} {
     bind $itk_component(l_xlist_r) <Enter> " set [list [scope helpvar]]   {Enter a list of X values for creation points}"
     bind $itk_component(l_ylist_r) <Enter> " set [list [scope helpvar]]   {Enter a list of Y values for creation points}"
     bind $itk_component(l_zlist_r) <Enter> " set [list [scope helpvar]]   {Enter a list of Z values for creation points}"
-    
+
 
     foreach obj { l_combo_r \
 	          l_group_r \
@@ -507,12 +507,12 @@ body pattern_control::constructor {} {
 
 	bind $itk_component($obj) <Leave> " set [list [scope helpvar]] {} "
     }
-    
-     
+
+
     code $this update_depth top
     update
 
-	
+
 
 # S P H _ T A B
     itk_component add l_combo_s {
@@ -521,13 +521,13 @@ body pattern_control::constructor {} {
 
     #Combo Box
     itk_component add f_combo_s {
-	frame $itk_interior.f_combo_s -relief sunken -bd 2 
+	frame $itk_interior.f_combo_s -relief sunken -bd 2
     }
 
     itk_component add e_combo_s {
 	entry $itk_interior.e_combo_s -relief flat -width 20 -textvariable [scope combovar_s]
     }
-    
+
     itk_component add b_combo_s {
 	menubutton $itk_interior.b_combo_s -relief raised -indicatoron 1
     }
@@ -546,10 +546,10 @@ body pattern_control::constructor {} {
 
     grid $itk_component(e_combo_s) -in $itk_component(f_combo_s) -row 0 -column 0 -sticky nsew
     grid $itk_component(b_combo_s) -in $itk_component(f_combo_s) -row 0 -column 1 -sticky nsew
- 
+
 
     #Group Name
-    
+
     itk_component add l_group_s {
 	label $itk_interior.l_group_s -text "Group Name:"
     }
@@ -574,7 +574,7 @@ body pattern_control::constructor {} {
 
     itk_component add e_cobj_s {
 	entry $itk_interior.e_cobj_s -textvariable [scope cobj_s]
-    }    
+    }
 
     itk_component add cb_rotaz_s {
 	checkbutton $itk_interior.cb_rotaz_s -text "Rotate Azimuth" -font $rb_font -variable [scope rotaz_s]
@@ -583,7 +583,7 @@ body pattern_control::constructor {} {
     itk_component add cb_rotel_s {
 	checkbutton $itk_interior.cb_rotel_s -text "Rotate Elevation" -font $rb_font -variable [scope rotel_s]
     }
-      
+
     itk_component add f_num_s {
 	frame $itk_interior.f_num_s -relief groove -bd 2
     }
@@ -593,11 +593,11 @@ body pattern_control::constructor {} {
     }
 
     itk_component add l_numaz_s {
-	label $itk_interior.l_numaz_s -text "Number of Azimuths:" 
+	label $itk_interior.l_numaz_s -text "Number of Azimuths:"
     }
 
     itk_component add l_numel_s {
-	label $itk_interior.l_numel_s -text "Number of Elevations:" 
+	label $itk_interior.l_numel_s -text "Number of Elevations:"
     }
 
     itk_component add e_numaz_s {
@@ -606,10 +606,10 @@ body pattern_control::constructor {} {
 
     itk_component add e_numel_s {
 	entry $itk_interior.e_numel_s -relief sunken -textvariable [scope numel_s]
-    }    
+    }
 
     itk_component add l_delaz_s {
-	label $itk_interior.l_delaz_s -text "Delta in Azimuth:" 
+	label $itk_interior.l_delaz_s -text "Delta in Azimuth:"
     }
 
     itk_component add l_delel_s {
@@ -628,13 +628,13 @@ body pattern_control::constructor {} {
     grid $itk_component(l_numaz_s) -in $itk_component(f_num_s) -row 1 -column 0 -sticky nsw
     grid $itk_component(e_numaz_s) -in $itk_component(f_num_s) -row 1 -column 1 -sticky nsew -padx $pad(x) -pady $pad(y)
     grid $itk_component(l_numel_s) -in $itk_component(f_num_s) -row 2 -column 0 -sticky nsw
-    grid $itk_component(e_numel_s) -in $itk_component(f_num_s) -row 2 -column 1 -sticky nsew -padx $pad(x) -pady $pad(y)  
+    grid $itk_component(e_numel_s) -in $itk_component(f_num_s) -row 2 -column 1 -sticky nsew -padx $pad(x) -pady $pad(y)
     grid $itk_component(l_delaz_s) -in $itk_component(f_num_s) -row 3 -column 0 -sticky nsw
     grid $itk_component(e_delaz_s) -in $itk_component(f_num_s) -row 3 -column 1 -sticky nsew -padx $pad(x) -pady $pad(y)
     grid $itk_component(l_delel_s) -in $itk_component(f_num_s) -row 4 -column 0 -sticky nsw
     grid $itk_component(e_delel_s) -in $itk_component(f_num_s) -row 4 -column 1 -sticky nsew -padx $pad(x) -pady $pad(y)
 
-    
+
     itk_component add f_list_s {
 	frame $itk_interior.f_list_s -relief groove -bd 2
     }
@@ -714,7 +714,7 @@ body pattern_control::constructor {} {
     itk_component add e_startel_s {
 	entry $itk_interior.e_startel_s -relief sunken -textvariable [scope startel_s]
     }
-    
+
     itk_component add l_startr_s {
 	label $itk_interior.l_startr_s -text "Starting Radius:"
     }
@@ -722,7 +722,7 @@ body pattern_control::constructor {} {
     itk_component add e_startr_s {
 	entry $itk_interior.e_startr_s -relief sunken -textvariable [scope startr_s]
     }
-    
+
     itk_component add l_obj_s {
 	label $itk_interior.l_obj_s -text "Object List:"
     }
@@ -735,7 +735,7 @@ body pattern_control::constructor {} {
     itk_component add l_sstring_s {
 	label $itk_interior.l_sstring_s -text "Source String:"
     }
-    
+
     itk_component add l_rstring_s {
 	label $itk_interior.l_rstring_s -text "Replacement String:"
     }
@@ -768,27 +768,27 @@ body pattern_control::constructor {} {
 	button $itk_interior.b_dismiss_s -text "Dismiss" -command "destroy $itk_interior"
     }
 
-  
+
     grid $itk_component(cb_list_s)     -in $itk_component(f_list_s) -row 0 -column 0 -sticky nsw
     grid $itk_component(l_listaz_s)    -in $itk_component(f_list_s) -row 1 -column 0 -sticky nsw
     grid $itk_component(e_listaz_s)    -in $itk_component(f_list_s) -row 1 -column 1 -sticky nsew -padx $pad(x) -pady $pad(y)
     grid $itk_component(l_listel_s)    -in $itk_component(f_list_s) -row 2 -column 0 -sticky nsw
     grid $itk_component(e_listel_s)    -in $itk_component(f_list_s) -row 2 -column 1 -sticky nsew -padx $pad(x) -pady $pad(y)
 
-    grid $itk_component(rb_radius_s)  -in $itk_component(f_radius_s) -row 0 -column 0 -sticky nsw 
+    grid $itk_component(rb_radius_s)  -in $itk_component(f_radius_s) -row 0 -column 0 -sticky nsw
     grid $itk_component(l_radius_s)   -in $itk_component(f_radius_s) -row 1 -column 0 -sticky nsw
     grid $itk_component(e_radius_s)   -in $itk_component(f_radius_s) -row 1 -column 1 -sticky nsew -padx $pad(x) -pady $pad(y)
     grid $itk_component(l_delta_s)    -in $itk_component(f_radius_s) -row 2 -column 0 -sticky nsw
     grid $itk_component(e_delta_s)    -in $itk_component(f_radius_s) -row 2 -column 1 -sticky nsew -padx $pad(x) -pady $pad(y)
 
-    grid $itk_component(rb_radlist_s)  -in $itk_component(f_radlist_s) -row 0 -column 0 -sticky nsw 
-    grid $itk_component(l_radlist_s)   -in $itk_component(f_radlist_s) -row 1 -column 0 -sticky nsw 
+    grid $itk_component(rb_radlist_s)  -in $itk_component(f_radlist_s) -row 0 -column 0 -sticky nsw
+    grid $itk_component(l_radlist_s)   -in $itk_component(f_radlist_s) -row 1 -column 0 -sticky nsw
     grid $itk_component(e_radlist_s)   -in $itk_component(f_radlist_s) -row 1 -column 1 -sticky nsew -padx $pad(x) -pady $pad(y)
 
     grid $itk_component(f_list_s)    -in $itk_component(f_num_s)    -row 5 -column 0 -columnspan 2  -sticky nsew -padx $pad(x) -pady $pad(y)
     grid $itk_component(f_radlist_s) -in $itk_component(f_radius_s) -row 3 -column 0 -columnspan 2  -sticky nsew -padx $pad(x) -pady $pad(y)
 
-    #Grids 
+    #Grids
     grid $itk_component(l_combo_s)   -in $tab1 -row 0 -column 0 -sticky nsw
     grid $itk_component(f_combo_s)   -in $tab1 -row 0 -column 1 -sticky new
     grid $itk_component(l_group_s)   -in $tab1 -row 1 -column 0 -sticky nsw
@@ -799,24 +799,24 @@ body pattern_control::constructor {} {
     grid $itk_component(e_cobj_s)    -in $tab1 -row 3 -column 1 -sticky nsew -padx $pad(x) -pady $pad(y)
     grid $itk_component(cb_rotaz_s)  -in $tab1 -row 4 -column 0 -sticky nsew -padx $pad(x) -pady $pad(y)
     grid $itk_component(cb_rotel_s)  -in $tab1 -row 4 -column 1 -sticky nsew -padx $pad(x) -pady $pad(y)
-    
+
     grid $itk_component(f_num_s)     -in $tab1 -row 0 -column 2 -columnspan 2  -sticky nsew -padx $pad(x) -pady $pad(y) -rowspan 7
     grid $itk_component(f_radius_s)  -in $tab1 -row 7 -column 2 -columnspan 2  -sticky nsew -padx $pad(x) -pady $pad(y) -rowspan 4
- 
+
     grid $itk_component(l_startaz_s) -in $tab1 -row 5 -column 0 -sticky nsw
     grid $itk_component(e_startaz_s) -in $tab1 -row 5 -column 1 -sticky nsew -padx $pad(x) -pady $pad(y)
     grid $itk_component(l_startel_s) -in $tab1 -row 6 -column 0 -sticky nsw
     grid $itk_component(e_startel_s) -in $tab1 -row 6 -column 1 -sticky nsew -padx $pad(x) -pady $pad(y)
     grid $itk_component(l_startr_s)  -in $tab1 -row 7 -column 0 -sticky nsw
     grid $itk_component(e_startr_s)  -in $tab1 -row 7 -column 1 -sticky nsew -padx $pad(x) -pady $pad(y)
-    
+
     grid $itk_component(l_sstring_s) -in $tab1 -row 8 -column 0 -sticky nsw
     grid $itk_component(e_sstring_s) -in $tab1 -row 8 -column 1 -sticky nsew -padx $pad(x) -pady $pad(y)
     grid $itk_component(l_rstring_s) -in $tab1 -row 9 -column 0 -sticky nsw
     grid $itk_component(e_rstring_s) -in $tab1 -row 9 -column 1 -sticky nsew -padx $pad(x) -pady $pad(y)
     grid $itk_component(l_incr_s)    -in $tab1 -row 10 -column 0 -sticky nsw
-    grid $itk_component(e_incr_s)    -in $tab1 -row 10 -column 1 -sticky nsew -padx $pad(x) -pady $pad(y) 
-    
+    grid $itk_component(e_incr_s)    -in $tab1 -row 10 -column 1 -sticky nsew -padx $pad(x) -pady $pad(y)
+
     grid $itk_component(l_obj_s)     -in $tab1 -row 11 -column 0 -sticky nsw
     grid $itk_component(e_obj_s)     -in $tab1 -row 11 -column 1 -sticky nsew -padx $pad(x) -pady $pad(y)
 
@@ -851,7 +851,7 @@ body pattern_control::constructor {} {
 	grid rowconfigure $itk_component(f_radius_s) $i -weight 1
 	incr i
     }
-    
+
     set i 0
     while {$i <= 1} {
 	grid rowconfigure $itk_component(f_radlist_s) $i -weight 1
@@ -871,7 +871,7 @@ body pattern_control::constructor {} {
     grid columnconfigure $itk_component(f_radlist_s) 0 -weight 1
     grid columnconfigure $itk_component(f_radlist_s) 1 -weight 1
 
-    
+
     #bind $itk_component() <Enter> " set [list [scope helpvar]] {}"
     bind $itk_component(l_combo_s) <Enter> " set [list [scope helpvar]] {Depth of duplication of objects. ``top'' - only build top level objects.\n\t\t``regions'' - duplicate down to and including regions.\n\t\t``primitives'' - duplicate down to and including primitives} "
     bind $itk_component(l_group_s) <Enter> " set [list [scope helpvar]] {Enter the name for the created group} "
@@ -901,25 +901,25 @@ body pattern_control::constructor {} {
     bind $itk_component(l_incr_s) <Enter> " set [list [scope helpvar]] {Enter value to use in incrementing primitive/region numbers (0 is OK)}"
 
     foreach obj {l_combo_s l_group_s l_cpatt_s l_cobj_s cb_rotaz_s cb_rotel_s rb_num_s l_numaz_s l_numel_s l_delaz_s l_delel_s cb_list_s l_listaz_s l_listel_s rb_radius_s l_radius_s l_delta_s rb_radlist_s l_radlist_s l_startaz_s l_startel_s l_obj_s l_sstring_s l_rstring_s l_incr_s } {
-	
+
 	bind $itk_component($obj) <Leave> " set [list [scope helpvar]] {} "
     }
 
 #CYL TAB
-    
+
      itk_component add l_combo_c {
 	label $itk_interior.l_combo_c -text "Depth of Duplication:"
     }
 
     #Combo Box
     itk_component add f_combo_c {
-	frame $itk_interior.f_combo_c -relief sunken -bd 2 
+	frame $itk_interior.f_combo_c -relief sunken -bd 2
     }
 
     itk_component add e_combo_c {
 	entry $itk_interior.e_combo_c -relief flat -width 20 -textvariable [scope combovar_c]
     }
-    
+
     itk_component add b_combo_c {
 	menubutton $itk_interior.b_combo_c -relief raised -indicatoron 1
     }
@@ -938,10 +938,10 @@ body pattern_control::constructor {} {
 
     grid $itk_component(e_combo_c) -in $itk_component(f_combo_c) -row 0 -column 0 -sticky nsew
     grid $itk_component(b_combo_c) -in $itk_component(f_combo_c) -row 0 -column 1 -sticky nsew
- 
+
 
     #Group Name
-    
+
     itk_component add l_group_c {
 	label $itk_interior.l_group_c -text "Group Name:"
     }
@@ -966,14 +966,14 @@ body pattern_control::constructor {} {
 
     itk_component add e_cobj_c {
 	entry $itk_interior.e_cobj_c -textvariable [scope cobj_c]
-    }    
+    }
 
     itk_component add cb_rot_c {
 	checkbutton $itk_interior.cb_rot_c -text "Rotate" -font $rb_font -variable [scope rot_c]
     }
 
 
-      
+
     itk_component add f_num_c {
 	frame $itk_interior.f_num_c -relief groove -bd 2
     }
@@ -984,7 +984,7 @@ body pattern_control::constructor {} {
 
     # Number of azimuths??
     itk_component add l_numaz_c {
-	label $itk_interior.l_numaz_c -text "Number of Azimuths:" 
+	label $itk_interior.l_numaz_c -text "Number of Azimuths:"
     }
 
 
@@ -992,28 +992,28 @@ body pattern_control::constructor {} {
 	entry $itk_interior.e_numaz_c -relief sunken -textvariable [scope numaz_c]
     }
 
-  
+
 
     itk_component add l_delaz_c {
-	label $itk_interior.l_delaz_c -text "Delta in Azimuth:" 
+	label $itk_interior.l_delaz_c -text "Delta in Azimuth:"
     }
 
-  
+
 
     itk_component add e_delaz_c {
 	entry $itk_interior.e_delaz_c -relief sunken -textvariable [scope delaz_c]
     }
 
- 
+
 
     grid $itk_component(rb_num_c)  -in $itk_component(f_num_c) -row 0 -column 0 -sticky nsw
     grid $itk_component(l_numaz_c) -in $itk_component(f_num_c) -row 1 -column 0 -sticky nsw
     grid $itk_component(e_numaz_c) -in $itk_component(f_num_c) -row 1 -column 1 -sticky nsew -padx $pad(x) -pady $pad(y)
-   
+
     grid $itk_component(l_delaz_c) -in $itk_component(f_num_c) -row 3 -column 0 -sticky nsw
     grid $itk_component(e_delaz_c) -in $itk_component(f_num_c) -row 3 -column 1 -sticky nsew -padx $pad(x) -pady $pad(y)
-   
-    
+
+
     itk_component add f_list_c {
 	frame $itk_interior.f_list_c -relief groove -bd 2
     }
@@ -1030,7 +1030,7 @@ body pattern_control::constructor {} {
 	entry $itk_interior.e_listaz_c -relief sunken -textvariable [scope lsaz_c]
     }
 
-    
+
     itk_component add l_startr_c {
 	label $itk_interior.l_startr_c -text "Starting Radius:"
     }
@@ -1105,8 +1105,8 @@ body pattern_control::constructor {} {
 
     itk_component add e_starth_c {
 	entry $itk_interior.e_starth_c -relief sunken -textvariable [scope starth_c]
-    }    
-    
+    }
+
 
     itk_component add l_obj_c {
 	label $itk_interior.l_obj_c -text "Object List:"
@@ -1116,7 +1116,7 @@ body pattern_control::constructor {} {
 	entry $itk_interior.e_obj_c -relief sunken -textvariable [scope obj_c]
     }
 
-    
+
     itk_component add f_height_c {
 	frame $itk_interior.f_height_c -relief groove -bd 2
     }
@@ -1173,7 +1173,7 @@ body pattern_control::constructor {} {
     itk_component add l_sstring_c {
 	label $itk_interior.l_sstring_c -text "Source String:"
     }
-    
+
     itk_component add l_rstring_c {
 	label $itk_interior.l_rstring_c -text "Replacement String:"
     }
@@ -1208,20 +1208,20 @@ body pattern_control::constructor {} {
 
     grid $itk_component(f_list_c)      -in $itk_component(f_num_c)    -row 5 -column 0 -columnspan 2  -sticky nsew -padx $pad(x) -pady $pad(y)
     grid $itk_component(f_radlist_c)   -in $itk_component(f_radius_c) -row 3 -column 0 -columnspan 2  -sticky nsew -padx $pad(x) -pady $pad(y)
-  
+
 
     grid $itk_component(cb_list_c)     -in $itk_component(f_list_c) -row 0 -column 0 -sticky nsw
     grid $itk_component(l_listaz_c)    -in $itk_component(f_list_c) -row 1 -column 0 -sticky nsw
     grid $itk_component(e_listaz_c)    -in $itk_component(f_list_c) -row 1 -column 1 -sticky nsew -padx $pad(x) -pady $pad(y)
 
-    grid $itk_component(rb_radius_c)  -in $itk_component(f_radius_c) -row 0 -column 0 -sticky nsw 
+    grid $itk_component(rb_radius_c)  -in $itk_component(f_radius_c) -row 0 -column 0 -sticky nsw
     grid $itk_component(l_radius_c)   -in $itk_component(f_radius_c) -row 1 -column 0 -sticky nsw
     grid $itk_component(e_radius_c)   -in $itk_component(f_radius_c) -row 1 -column 1 -sticky nsew -padx $pad(x) -pady $pad(y)
     grid $itk_component(l_delta_c)    -in $itk_component(f_radius_c) -row 2 -column 0 -sticky nsw
     grid $itk_component(e_delta_c)    -in $itk_component(f_radius_c) -row 2 -column 1 -sticky nsew -padx $pad(x) -pady $pad(y)
 
-    grid $itk_component(rb_radlist_c)  -in $itk_component(f_radlist_c) -row 0 -column 0 -sticky nsw 
-    grid $itk_component(l_radlist_c)   -in $itk_component(f_radlist_c) -row 1 -column 0 -sticky nsw 
+    grid $itk_component(rb_radlist_c)  -in $itk_component(f_radlist_c) -row 0 -column 0 -sticky nsw
+    grid $itk_component(l_radlist_c)   -in $itk_component(f_radlist_c) -row 1 -column 0 -sticky nsw
     grid $itk_component(e_radlist_c)   -in $itk_component(f_radlist_c) -row 1 -column 1 -sticky nsew -padx $pad(x) -pady $pad(y)
 
     #Grids
@@ -1235,21 +1235,21 @@ body pattern_control::constructor {} {
     grid $itk_component(l_cobj_c)      -in $tab2 -row 3 -column 0 -sticky nsw
     grid $itk_component(e_cobj_c)      -in $tab2 -row 3 -column 1 -sticky nsew -padx $pad(x) -pady $pad(y)
     grid $itk_component(cb_rot_c)      -in $tab2 -row 4 -column 0 -sticky nsew -padx $pad(x) -pady $pad(y)
-    
+
     grid $itk_component(l_startaz_c)   -in $tab2 -row 5 -column 0 -sticky nsw
     grid $itk_component(e_startaz_c)   -in $tab2 -row 5 -column 1 -sticky nsew -padx $pad(x) -pady $pad(y)
-    
+
     grid $itk_component(f_num_c)       -in $tab2 -row 6 -column 0 -columnspan 2   -sticky nsew -padx $pad(x) -pady $pad(y) -rowspan 2
 
     grid $itk_component(l_startr_c)    -in $tab2 -row 6 -column 2 -sticky nsw
     grid $itk_component(e_startr_c)    -in $tab2 -row 6 -column 3 -sticky nsew -padx $pad(x) -pady $pad(y)
-    
+
     grid $itk_component(f_radius_c)    -in $tab2 -row 7 -column 2 -columnspan 2  -sticky nsew -padx $pad(x) -pady $pad(y)
-   
+
 
     grid $itk_component(l_starth_c)    -in $tab2 -row 0 -column 2 -sticky nsw
     grid $itk_component(e_starth_c)    -in $tab2 -row 0 -column 3 -sticky nsew -padx $pad(x) -pady $pad(y)
-    
+
     grid $itk_component(l_heightdir_c) -in $tab2 -row 1 -column 2 -sticky nsw
     grid $itk_component(e_heightdir_c) -in $tab2 -row 1 -column 3 -sticky nsew -padx $pad(x) -pady $pad(y)
 
@@ -1260,8 +1260,8 @@ body pattern_control::constructor {} {
     grid $itk_component(l_rstring_c)   -in $tab2 -row 13 -column 0 -sticky nsw
     grid $itk_component(e_rstring_c)   -in $tab2 -row 13 -column 1 -sticky nsew -padx $pad(x) -pady $pad(y)
     grid $itk_component(l_incr_c)      -in $tab2 -row 12 -column 2 -sticky nsw
-    grid $itk_component(e_incr_c)      -in $tab2 -row 12 -column 3 -sticky nsew -padx $pad(x) -pady $pad(y) 
-    
+    grid $itk_component(e_incr_c)      -in $tab2 -row 12 -column 3 -sticky nsew -padx $pad(x) -pady $pad(y)
+
     grid $itk_component(l_obj_c)       -in $tab2 -row 13 -column 2 -sticky nsw
     grid $itk_component(e_obj_c)       -in $tab2 -row 13 -column 3 -sticky nsew -padx $pad(x) -pady $pad(y)
 
@@ -1296,7 +1296,7 @@ body pattern_control::constructor {} {
 	grid rowconfigure $itk_component(f_radius_c) $i -weight 1
 	incr i
     }
-    
+
     set i 0
     while {$i <= 1} {
 	grid rowconfigure $itk_component(f_radlist_c) $i -weight 1
@@ -1344,7 +1344,7 @@ body pattern_control::constructor {} {
     itk_component add l_help {
 	label $itk_interior.l_help -relief flat -textvariable [scope helpvar] -justify left -height 3 -width 99
     }
-    
+
     itk_component add fb_progress {
 	feedback $itk_interior.fb_progress
     }
@@ -1378,7 +1378,7 @@ body pattern_control::constructor {} {
     bind $itk_component(l_sstring_c) <Enter> " set [list [scope helpvar]] {Enter a string appearing in the objects to duplicate that you want to change (empty is OK)}"
     bind $itk_component(l_rstring_c) <Enter> " set [list [scope helpvar]] {Enter the string you want to replace the above string with (empty is OK)}"
     bind $itk_component(l_incr_c) <Enter> " set [list [scope helpvar]] {Enter value to use in incrementing primitive/region numbers (0 is OK)}"
-    
+
      foreach obj { l_combo_c \
                    l_group_c \
                    l_cbase_c \
@@ -1410,7 +1410,7 @@ body pattern_control::constructor {} {
 
 	bind $itk_component($obj) <Leave> " set [list [scope helpvar]] {} "
     }
-    
+
 
 
     grid $itk_component(l_help) -in $itk_component(f_status) -sticky w -row 0 -column 0
@@ -1452,15 +1452,15 @@ body pattern_control::update_depth { box level } {
 body pattern_control::apply_rect {} {
     set total 1
     if { $dirtype_r == 1 } {
-	
+
 	if { $nxdir_r != 0 } {
 	    set total [expr $total * $nxdir_r]
 	}
-	
+
 	if { $nydir_r != 0 } {
 	    set total [expr $total * $nydir_r]
 	}
-	
+
 	if { $nzdir_r != 0 } {
 	    set total [expr $total * $nzdir_r]
 	}
@@ -1469,12 +1469,12 @@ body pattern_control::apply_rect {} {
 	if { $xlen != 0 } {
 	    set total [expr $total * $xlen]
 	}
-	
+
 	set ylen [llength $ylist_r]
 	if { $ylen != 0 } {
 	    set total [expr $total * $ylen]
 	}
-	
+
 	set zlen [llength $zlist_r]
 	if { $zlen != 0 } {
 	    set total [expr $total * $zlen]
@@ -1488,13 +1488,13 @@ body pattern_control::apply_rect {} {
     lappend cmd -g [string trim $group_r]
 
     lappend cmd -xdir $xdir_r -ydir $ydir_r -zdir $zdir_r
-  
+
     if { $dirtype_r == 1 } {
-	lappend cmd -nx [string trim $nxdir_r] -dx [string trim $dxdir_r] -ny [string trim $nydir_r] -dy [string trim $dydir_r] -nz [string trim $nzdir_r] -dz [string trim $dzdir_r] 
+	lappend cmd -nx [string trim $nxdir_r] -dx [string trim $dxdir_r] -ny [string trim $nydir_r] -dy [string trim $dydir_r] -nz [string trim $nzdir_r] -dz [string trim $dzdir_r]
     } else {
 	lappend cmd -lx $xlist_r -ly $ylist_r -lz $zlist_r
     }
-    
+
     if { [string length [string trim $source_string_r]] != 0 } {
 	lappend cmd -s [string trim $source_string_r] [string trim $rep_string_r]
     }
@@ -1508,7 +1508,7 @@ body pattern_control::apply_rect {} {
     foreach obj $obj_r {
 	lappend cmd $obj
     }
-    
+
     eval $cmd
 }
 
@@ -1529,7 +1529,7 @@ body pattern_control::apply_sph {} {
 
     lappend cmd -center_pat $cpatt_s
     lappend cmd -center_obj $cobj_s
-    
+
     if { $rotaz_s == 1 } {
 	lappend cmd -rotaz
     }
@@ -1577,7 +1577,7 @@ body pattern_control::apply_cyl {} {
     if { [string length [string trim $increment_c]] != 0 } {
 	lappend cmd -i [string trim $increment_c]
     }
-    
+
     if { $rot_c == 1 } {
 	lappend cmd -rot
     }
@@ -1586,7 +1586,7 @@ body pattern_control::apply_cyl {} {
     lappend cmd -center_base [string trim $cbase_c]
     lappend cmd -height_dir [string trim $heightdir_c]
     lappend cmd -start_az_dir [string trim $startaz_c]
-    
+
     if { $azel_c == 1 } {
 	lappend cmd -naz [string trim $numaz_c] -daz [string trim $delaz_c]
 	set total $numaz_c
@@ -1614,7 +1614,7 @@ body pattern_control::apply_cyl {} {
 	set total [expr $total * [llength $lnum_c]]
 	lappend cmd -lh [string trim $lnum_c]
     }
-    
+
     $itk_component(fb_progress) configure -steps $total
 
     lappend cmd -feed_name $itk_component(fb_progress)
@@ -1625,7 +1625,7 @@ body pattern_control::apply_cyl {} {
 
     eval $cmd
 }
-    
+
 body pattern_control::frame_disable { frame_name } {
     switch -- $frame_name {
 	"f_list_r" {
@@ -1700,7 +1700,7 @@ body pattern_control::frame_disable { frame_name } {
 		          e_numaz_c \
 			  l_delaz_c \
 			  e_delaz_c } {
-		      
+
 		$itk_component($obj) configure -state disabled
 	    }
 	}
@@ -1716,7 +1716,7 @@ body pattern_control::frame_disable { frame_name } {
 		          e_hnum_c \
 			  l_dnum_c \
 			  e_dnum_c } {
-		      
+
 		$itk_component($obj) configure -state disabled
 	    }
 	}
@@ -1745,7 +1745,7 @@ body pattern_control::frame_disable { frame_name } {
 	}
 	default {
 	    error "$frame_name not found."
-	} 
+	}
     }
 }
 
@@ -1824,7 +1824,7 @@ body pattern_control::frame_enable { frame_name } {
 		          e_numaz_c \
 			  l_delaz_c \
 			  e_delaz_c } {
-		      
+
 		$itk_component($obj) configure -state normal
 	    }
 	}
@@ -1840,7 +1840,7 @@ body pattern_control::frame_enable { frame_name } {
 		          e_hnum_c \
 			  l_dnum_c \
 			  e_dnum_c } {
-		      
+
 		$itk_component($obj) configure -state normal
 	    }
 	}
@@ -1869,7 +1869,7 @@ body pattern_control::frame_enable { frame_name } {
 	}
 	default {
 	    error "$frame_name not found."
-	} 
+	}
     }
 
 }

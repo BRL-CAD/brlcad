@@ -143,7 +143,7 @@ struct rt_qelem {
 
 #endif
 struct overhead {
-	struct rt_qelem	ov_adj;		/* adjacency chain pointers */ 
+	struct rt_qelem	ov_adj;		/* adjacency chain pointers */
 	struct rt_qelem	ov_buk;		/* bucket chain pointers */
 	long		ov_magic;
 	Size		ov_length;
@@ -182,7 +182,7 @@ extern void (*mlabort)();
 #endif
 
 /*
- * return to the system memory freed adjacent to the break 
+ * return to the system memory freed adjacent to the break
  * default is Off
  */
 char endfree = 0;
@@ -229,7 +229,7 @@ struct rt_pm_res *pmem;
 	    bucket = &pmem->buckets[mlindx(nbytes)];
 	    bucket < &pmem->buckets[RT_PM_NBUCKETS];
 	    bucket++
-	) { 
+	) {
 		register struct rt_qelem *b;
 		for(b = bucket->q_forw; b != bucket; b = b->q_forw) {
 			p = FROMBUK(b);
@@ -525,7 +525,7 @@ register struct rt_pm_res *pmem;
 	/* if beyond current arena it has to be bad */
 	if(mem > (char*)FROMADJ(pmem->adjhead.q_back) + sizeof(struct overhead))
 		return(NULL);
-	
+
 	p = (struct overhead *)(mem - sizeof(struct overhead));
 
 	if (p->ov_magic != MAGIC_BUSY && p->ov_magic != MAGIC_FREE)
@@ -564,7 +564,7 @@ register struct rt_pm_res *pmem;
 	}
 
 	/* if at break, grow in place */
-	
+
 	bu_semaphore_acquire( BU_SEM_SYSCALL );
 	if (p->ov_magic == MAGIC_FREE && ((char *)p + p->ov_length) == (char *)CURBRK) {
 		nbytes += sizeof(struct overhead);

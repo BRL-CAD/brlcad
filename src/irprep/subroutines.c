@@ -22,12 +22,12 @@
  *
  *  Author -
  *	S.Coates - 18 November 1991
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5066
- *  
+ *
  */
 
 /*	18 November 1991 - Put /n/walrus/usr/brlcad/include into includes.  */

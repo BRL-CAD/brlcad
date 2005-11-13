@@ -50,6 +50,7 @@
 static char rcs_ident[] = "$Id$";
 #endif
 
+#include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
 #include "rle.h"

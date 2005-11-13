@@ -54,7 +54,7 @@
  *  Authors -
  *	Phillip Dykstra
  *	Michael John Muuss
- *  
+ *
  *  Source -
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
@@ -419,7 +419,7 @@ main_loop(void)
 
 		tv.tv_sec = 60L;
 		tv.tv_usec = 0L;
-		if( (select( max_fd+1, &infds, (fd_set *)0, (fd_set *)0, 
+		if( (select( max_fd+1, &infds, (fd_set *)0, (fd_set *)0,
 			     (void *)&tv )) == 0 ) {
 			/* Process fb events while waiting for client */
 			/*printf("select timeout waiting for client\n");*/
@@ -640,7 +640,7 @@ va_dcl
 			strncpy( fbuf, sp, len );
 			fbuf[len] = '\0';
 		}
-		
+
 		/* Grab parameter from arg list, and print it */
 		switch( *ep )  {
 		case 'e':

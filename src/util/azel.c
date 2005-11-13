@@ -47,7 +47,7 @@
  *			x  y  z  field_1  field_2  ...  field_n.
  *  Author -
  *	Paul J. Tanenbaum
- *  
+ *
  *  Source -
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5066  USA
@@ -70,7 +70,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "machine.h"
 
 #define		DEG2RAD		0.01745329	/* Convert degrees to radians */
-#define		OPT_STRING	"a:c:e:ipr?"	/* For getopt(3) */
+#define		OPT_STRING	"a:c:e:ipr?"	/* For bu_getopt(3) */
 #define		fpeek(f)	ungetc(fgetc(f), f)
 
 void	PrintUsage(void);
@@ -83,7 +83,7 @@ main (int argc, char **argv)
     char            *outFname = "stdout";  /* Name of output destination */
     char            *Label;             /* Names of input coordinates */
     char            Tail[1024];         /* Rest of input line beyond coords */
-    extern char     *optarg;            /* argument from getopt(3C) */
+    extern char     *bu_optarg;            /* argument from bu_getopt(3C) */
     FILE            *inPtr = stdin;     /* Pointer to input */
     FILE            *outPtr = stdout;   /* Pointer to output */
     double          Azim = 0.0;         /* Azimuth angle (in degrees) */
@@ -114,35 +114,35 @@ main (int argc, char **argv)
     int             LineNm = 0;         /* How far through input? */
     int             Ch;                 /* Input character */
     int             i;                  /* Dummy variable for loop indexing */
-    extern int      optind;             /* index from getopt(3C) */
-    
+    extern int      bu_optind;             /* index from bu_getopt(3C) */
+
     /* Handle command-line options */
-    while ((Ch = getopt(argc, argv, OPT_STRING)) != EOF)
+    while ((Ch = bu_getopt(argc, argv, OPT_STRING)) != EOF)
 	switch (Ch)
 	{
 	    case 'a':
-		if (sscanf(optarg, "%lf", &Azim) != 1)
+		if (sscanf(bu_optarg, "%lf", &Azim) != 1)
 		{
 		    (void) fprintf(stderr,
-			"Bad azimuth specification: '%s'\n", optarg);
+			"Bad azimuth specification: '%s'\n", bu_optarg);
 		    PrintUsage();
 		    exit(1);
 		}
 		break;
 	    case 'c':
-		if (sscanf(optarg, "%lf", &CelSiz) != 1)
+		if (sscanf(bu_optarg, "%lf", &CelSiz) != 1)
 		{
 		    (void) fprintf(stderr,
-			"Bad cell-size specification: '%s'\n", optarg);
+			"Bad cell-size specification: '%s'\n", bu_optarg);
 		    PrintUsage();
 		    exit(1);
 		}
 		break;
 	    case 'e':
-		if (sscanf(optarg, "%lf", &Elev) != 1)
+		if (sscanf(bu_optarg, "%lf", &Elev) != 1)
 		{
 		    (void) fprintf(stderr,
-			"Bad elevation specification: '%s'\n", optarg);
+			"Bad elevation specification: '%s'\n", bu_optarg);
 		    PrintUsage();
 		    exit(1);
 		}
@@ -171,24 +171,24 @@ main (int argc, char **argv)
     }
 
     /* Determine source and destination */
-    if (argc - optind > 0)
+    if (argc - bu_optind > 0)
     {
-	inFname = argv[optind];
+	inFname = argv[bu_optind];
 	if ((inPtr = fopen(inFname, "r")) == NULL)
 	{
 	    fprintf(stderr, "azel:  Cannot open file '%s'\n", inFname);
 	    exit(1);
 	}
-	if (argc - optind > 1)
+	if (argc - bu_optind > 1)
 	{
-	    outFname = argv[optind + 1];
+	    outFname = argv[bu_optind + 1];
 	    if ((outPtr = fopen(outFname, "w")) == NULL)
 	    {
 		fprintf(stderr, "azel:  Cannot create file '%s'\n", outFname);
 		exit(1);
 	    }
 	}
-	if (argc - optind > 2)
+	if (argc - bu_optind > 2)
 	{
 	    PrintUsage();
 	    exit (1);
@@ -301,7 +301,7 @@ GetCoord (FILE *Whence, double *Coord, char Label, int LineNm, char *FileName)
                 LineNm, FileName);
         exit(1);
     }
-    
+
     if (fscanf(Whence, "%lf", Coord) != 1)
     {
         fprintf(stderr, "azel:  Bad %c-coordinate at line %d, file %s\n",

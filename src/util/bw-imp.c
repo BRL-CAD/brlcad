@@ -22,7 +22,7 @@
  *
  */
 
-/* 
+/*
  *			B W - I M P . C
  *
  *  Authors -
@@ -55,6 +55,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include <stdlib.h>
 #include <string.h>
 #include "machine.h"
+#include "bu.h"
 
 typedef int bool;
 #define true 1
@@ -120,7 +121,7 @@ get_args(int argc, register char **argv)
 {
 	register int	c;
 
-	while ( (c = getopt( argc, argv, "hDs:n:w:t:X:Y:" )) != EOF )  {
+	while ( (c = bu_getopt( argc, argv, "hDs:n:w:t:X:Y:" )) != EOF )  {
 		switch( c )  {
 		case 'h':
 			/* high-res */
@@ -132,22 +133,22 @@ get_args(int argc, register char **argv)
 			break;
 		case 's':
 			/* square size */
-			height = width = atoi(optarg);
+			height = width = atoi(bu_optarg);
 			break;
 		case 'n':
-			height = atoi(optarg);
+			height = atoi(bu_optarg);
 			break;
 		case 'w':
-			width = atoi(optarg);
+			width = atoi(bu_optarg);
 			break;
 		case 't':
-			thresh = atoi(optarg);
+			thresh = atoi(bu_optarg);
 			break;
 		case 'X':
-			page_xoff = atoi(optarg);
+			page_xoff = atoi(bu_optarg);
 			break;
 		case 'Y':
-			page_yoff = atoi(optarg);
+			page_yoff = atoi(bu_optarg);
 			break;
 
 		default:		/* '?' */
@@ -155,13 +156,13 @@ get_args(int argc, register char **argv)
 		}
 	}
 
-	if( optind >= argc )  {
+	if( bu_optind >= argc )  {
 		if( isatty(fileno(stdin)) )
 			return(false);
 		file_name = "-";
 		infp = stdin;
 	} else {
-		file_name = argv[optind];
+		file_name = argv[bu_optind];
 		if( (infp = fopen(file_name, "r")) == NULL )  {
 			(void)fprintf( stderr,
 				"bw-imp: cannot open \"%s\" for reading\n",
@@ -170,7 +171,7 @@ get_args(int argc, register char **argv)
 		}
 	}
 
-	if ( argc > ++optind )
+	if ( argc > ++bu_optind )
 		(void)fprintf( stderr, "bw-imp: excess argument(s) ignored\n" );
 
 	return true;

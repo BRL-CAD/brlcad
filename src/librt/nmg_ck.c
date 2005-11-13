@@ -29,7 +29,7 @@
  *	Lee A. Butler
  *	Michael John Muuss
  *	John R. Anderson
- *  
+ *
  *  Source -
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
@@ -357,7 +357,7 @@ nmg_veu(const struct bu_list *hp, const long int *up_magic_p)
 				rt_bomb("nmg_veu() edgeuse and mate don't share geometry\n");
 			if(eu->g.magic_p) nmg_veg(eu->g.magic_p);
 		}
-		
+
 		switch (eu->orientation) {
 		case OT_NONE	: break;
 		case OT_SAME	: break;
@@ -380,7 +380,7 @@ void
 nmg_vlg(const struct loop_g *lg)
 {
 	int i;
-	
+
 	NMG_CK_LOOP_G(lg);
 
 	for (i=0 ; i < ELEMENTS_PER_PT ; ++i)
@@ -406,7 +406,7 @@ nmg_vloop(const struct loop *l, const struct loopuse *lup)
 	{
 	struct loopuse *lu;
 	for (lu=lup ; lu && lu != l->lu_p && lu->next != lup ; lu = lu->next);
-	
+
 	if (l->lu_p != lu)
 		for (lu=lup->lumate_p ; lu && lu != l->lu_p && lu->next != lup->lumate_p ; lu = lu->next);
 
@@ -584,7 +584,7 @@ nmg_vfu(const struct bu_list *hp, const struct shell *s)
 
 		NMG_CK_FACE(fu->f_p);
 		nmg_vface(fu->f_p, fu);
-		
+
 		nmg_vlu( &fu->lu_hd, &fu->l.magic);
 	}
 }
@@ -715,7 +715,7 @@ nmg_ck_e(const struct edgeuse *eu, const struct edge *e, const char *str)
 	struct edgeuse *eparent;
 	errstr = bu_calloc(strlen(str)+128, 1, "nmg_ck_e error str");
 	(void)sprintf(errstr, "%sedge %8lx\n", str, (unsigned long)e);
-	
+
 	NMG_CK_EDGE(e);
 	NMG_CK_EDGEUSE(eu);
 
@@ -745,7 +745,7 @@ nmg_ck_vu(const long int *parent, const struct vertexuse *vu, const char *str)
 
 	errstr = bu_calloc(strlen(str)+128, 1, "nmg_ck_vu error str");
 	(void)sprintf(errstr, "%svertexuse %8lx\n", str, (unsigned long)vu);
-	
+
 	if (vu->up.magic_p != parent) rt_bomb(
 		strcat(errstr, "nmg_ck_vu() Vertexuse denies parentage\n"));
 
@@ -759,7 +759,7 @@ void
 nmg_ck_eu(const long int *parent, const struct edgeuse *eu, const char *str)
 {
 	char *errstr;
-	struct edgeuse *eur, *eu_next, *eu_last;	
+	struct edgeuse *eur, *eu_next, *eu_last;
 
 	errstr = bu_calloc(strlen(str)+128, 1, "nmg_ck_eu error str");
 	(void)sprintf(errstr, "%sedgeuse %8lx\n", str, (unsigned long)eu);
@@ -869,7 +869,7 @@ nmg_ck_lu(const long int *parent, const struct loopuse *lu, const char *str)
 
 	errstr = bu_calloc(strlen(str)+128, 1, "nmg_ck_lu error str");
 	(void)sprintf(errstr, "%sloopuse %8lx\n", str, (unsigned long)lu);
-	
+
 	NMG_CK_LOOPUSE(lu);
 
 	if (lu->up.magic_p != parent) rt_bomb(
@@ -934,7 +934,7 @@ nmg_ck_fg(const struct face *f, const struct face_g_plane *fg, const char *str)
 	bu_free(errstr, "nmg_ck_fg error str");
 }
 
-/** 
+/**
  *			N M G _ C K _ F
  */
 void
@@ -993,7 +993,7 @@ nmg_ck_fu(const struct shell *s, const struct faceuse *fu, const char *str)
 	l = strlen(errstr);
 	for( BU_LIST_FOR( lu, loopuse, &fu->lu_hd ) )  {
 		NMG_CK_LOOPUSE(lu);
-		(void)sprintf(&errstr[l] , "%sloopuse #%d (%8lx)\n", 
+		(void)sprintf(&errstr[l] , "%sloopuse #%d (%8lx)\n",
 			errstr, loop_number++, (unsigned long)lu);
 		nmg_ck_lu(&fu->l.magic, lu, errstr);
 	}
@@ -1334,9 +1334,9 @@ nmg_check_radial(const struct edgeuse *eu, const struct bn_tol *tol)
 
 		    	sprintf(buf, "%g %g %g -> %g %g %g\n",
 				p[0], p[1], p[2], q[0], q[1], q[2]);
-		    	
+
 		    	sprintf(file, "radial%d.g", num++);
-		    	nmg_stash_model_to_file( file, 
+		    	nmg_stash_model_to_file( file,
 		    		nmg_find_model(&(fu->l.magic)), buf);
 
 			nmg_pr_fu_around_eu( eu_orig, tol );
@@ -1661,7 +1661,7 @@ nmg_ck_v_in_fus(long int *vp, genptr_t state, int first)
 					dist = DIST_PT_PLANE( v->vg_p->coord , n );
 					if( !NEAR_ZERO( dist , sp->tol->dist ) )
 					{
-						bu_log( "ERROR - nmg_ck_vs_in_region: vertex x%x ( %g %g %g ) is %g from faceuse x%x\n" , 
+						bu_log( "ERROR - nmg_ck_vs_in_region: vertex x%x ( %g %g %g ) is %g from faceuse x%x\n" ,
 							v , V3ARGS( v->vg_p->coord ) , dist , fu );
 					}
 				}
@@ -1677,10 +1677,10 @@ nmg_ck_vs_in_region(const struct nmgregion *r, const struct bn_tol *tol)
 	struct model			*m;
 	struct v_ck_state		st;
 	struct bu_ptbl			tab;
-	static const struct nmg_visit_handlers handlers = {NULL, NULL, NULL, NULL, NULL, 
-							   NULL, NULL, NULL, NULL, NULL, 
-							   NULL, NULL, NULL, NULL, NULL, 
-							   NULL, NULL, NULL, NULL, NULL, 
+	static const struct nmg_visit_handlers handlers = {NULL, NULL, NULL, NULL, NULL,
+							   NULL, NULL, NULL, NULL, NULL,
+							   NULL, NULL, NULL, NULL, NULL,
+							   NULL, NULL, NULL, NULL, NULL,
 							   NULL, NULL, NULL, nmg_ck_v_in_fus, NULL};
         /* handlers.vis_vertex = nmg_ck_v_in_fus; */
 

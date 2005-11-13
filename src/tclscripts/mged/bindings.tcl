@@ -170,6 +170,8 @@ proc default_key_bindings { w } {
     bind $w <Control-p> "winset $w; _mged_view_ring prev; break"
     bind $w <Control-t> "winset $w; _mged_view_ring toggle; break"
 
+    bind $w <Escape> "winset $w; press reject ; break"
+
     # Throw away other key events
     bind $w <KeyPress> {
 	break
@@ -379,7 +381,7 @@ proc default_mouse_bindings { w } {
 		scale_shift_grip_hints $w Y; break"
 	bind $w <Alt-Shift-Control-ButtonPress-3> "winset $w; dm con s z %x %y; \
 		scale_shift_grip_hints $w Z; break"
-    }   
+    }
 }
 
 proc shift_grip_hints { w hint } {

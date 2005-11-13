@@ -28,12 +28,12 @@
  *
  *  Author -
  *	Michael John Muuss
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005
- *  
+ *
  */
 #ifndef lint
 static const char RCSid[] = "@(#)$Header$ (BRL)";
@@ -165,7 +165,7 @@ ps_open(Tcl_Interp *interp, int argc, char **argv)
 
 	dmp->dm_vars.priv_vars = (genptr_t)bu_calloc(1, sizeof(struct ps_vars), "ps_open: ps_vars");
 	if (dmp->dm_vars.priv_vars == (genptr_t)NULL) {
-		bu_free(dmp, "ps_open: dmp");
+		bu_free((genptr_t)dmp, "ps_open: dmp");
 		return DM_NULL;
 	}
 
@@ -315,7 +315,7 @@ ps_open(Tcl_Interp *interp, int argc, char **argv)
 		Tcl_SetObjResult(interp, obj);
 		return DM_NULL;
 	}
-  
+
 	setbuf(((struct ps_vars *)dmp->dm_vars.priv_vars)->ps_fp,
 	       ((struct ps_vars *)dmp->dm_vars.priv_vars)->ttybuf );
 	fprintf(((struct ps_vars *)dmp->dm_vars.priv_vars)->ps_fp,"%%!PS-Adobe-1.0\n\
@@ -372,7 +372,7 @@ NEWPG\n\
 
 /*
  *  			P S _ C L O S E
- *  
+ *
  *  Gracefully release the display.
  */
 static int
@@ -390,8 +390,8 @@ ps_close(struct dm *dmp)
   bu_vls_free(&((struct ps_vars *)dmp->dm_vars.priv_vars)->font);
   bu_vls_free(&((struct ps_vars *)dmp->dm_vars.priv_vars)->title);
   bu_vls_free(&((struct ps_vars *)dmp->dm_vars.priv_vars)->creator);
-  bu_free(dmp->dm_vars.priv_vars, "ps_close: ps_vars");
-  bu_free(dmp, "ps_close: dmp");
+  bu_free((genptr_t)dmp->dm_vars.priv_vars, "ps_close: ps_vars");
+  bu_free((genptr_t)dmp, "ps_close: dmp");
 
   return TCL_OK;
 }
@@ -463,7 +463,7 @@ ps_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye)
 
 /*
  *  			P S _ O B J E C T
- *  
+ *
  *  Set up for an object, transformed as indicated, and with an
  *  object center as specified.  The ratio of object to screen size
  *  is passed in as a convienience.

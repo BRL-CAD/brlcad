@@ -20,23 +20,23 @@
  *
  */
 /** @file asc2g.c
- *  
+ *
  *  This program generates a GED database from an
  *  ASCII GED data file.
  *
  *  Usage:  asc2g file.asc file.g
- *  
+ *
  *  Authors -
  *  	Charles M Kennedy
  *  	Michael J Muuss
- *	Susanne Muuss, J.D.	 Converted to libwdb, Oct. 1990 
+ *	Susanne Muuss, J.D.	 Converted to libwdb, Oct. 1990
  *
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005
- *  
+ *
  */
 #ifndef lint
 static const char RCSid[] = "@(#)$Header$ (BRL)";
@@ -150,7 +150,7 @@ main(int argc, char **argv)
 
 	ifp = fopen(argv[1],"r");
 	if( !ifp )  perror(argv[1]);
-	
+
 	ofp = wdb_fopen(argv[2]);
 	if( !ofp )  perror(argv[2]);
 	if (ifp == NULL || ofp == NULL) {
@@ -758,7 +758,7 @@ solbld(void)
 		*np++ = *cp++;
 	}
 	*np = '\0';
-	
+
 	cp = nxt_spc( cp );
 	/* Comgeom solid type */
 
@@ -797,7 +797,7 @@ solbld(void)
 			VSET(b, val[9], val[10], val[11]);
 			VSET(c, val[12], val[13], val[14]);
 			VSET(d, val[15], val[16], val[17]);
-			
+
 			mk_tgc(ofp, name, center, height, a, b, c, d);
 			break;
 
@@ -946,7 +946,7 @@ combbld(void)
 		*np++ = *cp++;
 	}
 	*np = '\0';
-	
+
 	cp = nxt_spc( cp );
 
 	regionid = (short)atoi( cp );
@@ -1418,7 +1418,7 @@ bsplbld(void)
 	register char	*np;
 	short		nsurf;		/* number of surfaces */
 	fastf_t		resolution;	/* resolution of flatness */
-	
+
 	cp = buf;
 	cp++;				/* ident */
 	cp = nxt_spc( cp );		/* skip the space */
@@ -1480,17 +1480,17 @@ bsurfbld(void)
 	cp = nxt_spc( cp );
 	record.d.d_nctls = (short)atoi( cp );
 
-	record.d.d_nknots = 
+	record.d.d_nknots =
 		ngran( record.d.d_kv_size[0] + record.d.d_kv_size[1] );
 
-	record.d.d_nctls = 
-		ngran( record.d.d_ctl_size[0] * record.d.d_ctl_size[1] 
+	record.d.d_nctls =
+		ngran( record.d.d_ctl_size[0] * record.d.d_ctl_size[1]
 			* record.d.d_geom_type);
 
 	/* Write out the record */
 	(void)fwrite( (char *)&record, sizeof record, 1, ofp );
 
-	/* 
+	/*
 	 * The b_surf_head record is followed by
 	 * d_nknots granules of knot vectors (first u, then v),
 	 * and then by d_nctls granules of control mesh information.

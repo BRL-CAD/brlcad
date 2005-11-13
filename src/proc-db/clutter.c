@@ -19,18 +19,18 @@
  * information.
  */
 /** @file clutter.c
- * 
+ *
  *  Program to generate procedural clutter out of primitive
  *  geometric objects.
  *
  *  Author -
  *	Michael John Muuss
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5066
- *  
+ *
  */
 #ifndef lint
 static const char RCSid[] = "@(#)$Header$ (BRL)";
@@ -188,9 +188,9 @@ main(int argc, char **argv)
 
 double
 crystal_stack(char *cname, double xc, double yc, double size)
-    	       
+
       	       		/* center coordinates, z=0+ */
-      	     
+
 {
 	int	i;
 	point_t	center;
@@ -253,7 +253,7 @@ crystal_stack(char *cname, double xc, double yc, double size)
 
 double
 crystal_layer(char *crname, fastf_t *center, double radius, fastf_t *maj, fastf_t *min, double var, double ratio, int nsolids)
-    	        
+
        	       		/* center coordinates, (min Z) */
       	       		/* cell radius */
       	    		/* main axis of growth */
@@ -339,9 +339,9 @@ crystal_layer(char *crname, fastf_t *center, double radius, fastf_t *maj, fastf_
 
 void
 do_plate(char *name, double xc, double yc, double size)
-    	      
+
       	       		/* center coordinates, z=0+ */
-      	     
+
 {
 	double	esz;
 	vect_t	minpt, maxpt;
@@ -359,15 +359,15 @@ do_plate(char *name, double xc, double yc, double size)
 	/* Needs to be in a region, with color!  */
 	get_rgb(rgb);
 	i = PICK_MAT;
-	mk_region1( outfp, name, sname, 
+	mk_region1( outfp, name, sname,
 		mtab[i].mt_name, mtab[i].mt_param, rgb );
 }
 
 double
 ball_stack(char *bname, double xc, double yc, double size)
-    	       
+
       	       		/* center coordinates, z=0+ */
-      	     
+
 {
 	point_t	center;
 	double	esz;
@@ -398,9 +398,9 @@ ball_stack(char *bname, double xc, double yc, double size)
 
 double
 prim_stack(char *pname, double xc, double yc, double size)
-    	       
+
       	       		/* center coordinates, z=0+ */
-      	     
+
 {
 	point_t	pt[8];
 	vect_t	min, max;

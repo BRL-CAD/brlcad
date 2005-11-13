@@ -60,11 +60,11 @@ proc fs_dialog {w parent pattern} {
     wm title $w FileDialog
     wm iconname $w FileDialog
 
-    
+
     # The following command means that the dialog won't be posted if
     # [winfo parent $w] is iconified, but it's really needed;  otherwise
     # the dialog can become obscured by other windows in the application,
-    # even though its grab keeps the rest of the application from being 
+    # even though its grab keeps the rest of the application from being
     # used.
     wm transient $w $parent_toplevel
 
@@ -139,7 +139,7 @@ proc fs_dialog {w parent pattern} {
 	button $w.btns.cancel -command {set fs_glob(button) 0}
 	pack $w.btns.cancel -side left -expand 1
     pack  $w.btns -side bottom -expand 1 -fill x -padx 5 -pady 5
-    
+
     update idletasks
 
     scan [wm geometry $parent_toplevel] "%dx%d+%d+%d" p_w p_h p_x p_y
@@ -285,7 +285,7 @@ proc fs_dialog_filterstring {pattern} {
 	set fs_glob(pat_file) [file tail $pattern]
 
 	# get a directory name that ends in "/"
-	regsub {[^/]$} [file dirname $pattern] &/ fs_glob(pat_dir) 
+	regsub {[^/]$} [file dirname $pattern] &/ fs_glob(pat_dir)
     }
 
     set fs_glob(filter) "$fs_glob(pat_dir)$fs_glob(pat_file)"
@@ -313,7 +313,7 @@ proc fs_dialog_click_file {} {
 #
 #  fs_dialog_click_dir
 #
-#  Event routine for mouse events in the "Directories" listbox that aren't 
+#  Event routine for mouse events in the "Directories" listbox that aren't
 #  handled by the listbox widget.
 #
 #  get the selection, build a new pattern, and call fs_dialog_filterstring
@@ -362,7 +362,7 @@ proc fs_dialog_click_dir {y} {
 			set fs_glob(pat_dir) $fs_glob(pat_dir)$newdir/
 		}
 	}
-	
+
 	set fs_glob(filter) $fs_glob(pat_dir)$fs_glob(pat_file)
 
 	fs_dialog_rescan

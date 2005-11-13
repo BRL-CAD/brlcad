@@ -28,7 +28,7 @@
  *
  *  Author -
  *	Michael John Muuss
- *  
+ *
  *  Source -
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
@@ -57,7 +57,7 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 #include "raytrace.h"
 #include "./debug.h"
 
-RT_EXTERN(void		rt_tree_kill_dead_solid_refs, (union tree *tp));
+BU_EXTERN(void		rt_tree_kill_dead_solid_refs, (union tree *tp));
 
 HIDDEN struct region *rt_getregion(struct rt_i *rtip, register const char *reg_name);
 HIDDEN void	rt_tree_region_assign(register union tree *tp, register const struct region *regionp);
@@ -75,20 +75,34 @@ const struct db_tree_state	rt_initial_tree_state = {
 	{
 #endif
 		/* struct mater_info ts_mater */
-		{1.0, 1.0, 1.0},	/* color, RGB */
+#if __STDC__
+		{
+#endif
+		    1.0, 1.0, 1.0
+#if __STDC__
+		}
+#endif
+		,	/* color, RGB */
 		-1.0,			/* Temperature */
 		0,			/* ma_color_valid=0 --> use default */
 		DB_INH_LOWER,		/* color inherit */
 		DB_INH_LOWER,		/* mater inherit */
-		(char *)0		/* shader */
+		NULL			/* shader */
 #if __STDC__
 	}
 #endif
 	,
-	{1.0, 0.0, 0.0, 0.0,
-	0.0, 1.0, 0.0, 0.0,
-	0.0, 0.0, 1.0, 0.0,
-	0.0, 0.0, 0.0, 1.0},
+#if __STDC__
+	{
+#endif
+	    1.0, 0.0, 0.0, 0.0,
+	    0.0, 1.0, 0.0, 0.0,
+	    0.0, 0.0, 1.0, 0.0,
+	    0.0, 0.0, 0.0, 1.0
+#if __STDC__
+	}
+#endif
+	,
 	REGION_NON_FASTGEN,		/* ts_is_fastgen */
 #if __STDC__
 	{
@@ -152,10 +166,10 @@ const struct db_tree_state	rt_initial_tree_state = {
  */
 /* ARGSUSED */
 HIDDEN int rt_gettree_region_start(struct db_tree_state *tsp, struct db_full_path *pathp, const struct rt_comb_internal *combp, genptr_t client_data)
-/*const*/                     	     
-/*const*/                    	       
-                             	       
-        			            
+/*const*/
+/*const*/
+
+
 {
 	RT_CK_RTI(tsp->ts_rtip);
 	RT_CK_RESOURCE(tsp->ts_resp);
@@ -243,7 +257,7 @@ HIDDEN union tree *rt_gettree_region_end(register struct db_tree_state *tsp, str
 		bu_log("rt_gettree_region_end() %s\n", rp->reg_name );
 		rt_pr_tree( curtree, 0 );
 	}
-	
+
 	rp->reg_treetop = curtree;
 	rp->reg_all_unions = db_is_tree_all_unions( curtree );
 
@@ -274,7 +288,7 @@ HIDDEN union tree *rt_gettree_region_end(register struct db_tree_state *tsp, str
 			bn_mat_inv( inv_mat, tsp->ts_mat );
 		else
 			bn_mat_idn( inv_mat );
-		
+
 		bu_semaphore_acquire( RT_SEM_RESULTS );	/* enter critical section */
 
 		entry = Tcl_CreateHashEntry(tbl, (char *)rp->reg_bit, &newentry);
@@ -476,10 +490,10 @@ more_checks:
  *  This routine must be prepared to run in parallel.
  */
 HIDDEN union tree *rt_gettree_leaf(struct db_tree_state *tsp, struct db_full_path *pathp, struct rt_db_internal *ip, genptr_t client_data)
-/*const*/                     	     
-                   		       
-/*const*/                      	    
-        			            
+/*const*/
+
+/*const*/
+
 {
 	register struct soltab	*stp;
 	union tree		*curtree;
@@ -712,7 +726,7 @@ rt_free_soltab(struct soltab *stp)
  *	argc	- number of trees to get
  *	argv	- array of char pointers to the names of the tree tops
  *	ncpus	- number of cpus to use
- *  
+ *
  *  Returns -
  *  	0	Ordinarily
  *	-1	On major error
@@ -891,7 +905,7 @@ again:
  *	RT_SEM_RESULTS	protects HeadRegion, mdl_min/max, d_uses(reg), nregions
  *	RT_SEM_WORKER	(db_walk_dispatcher, from db_walk_tree)
  *	RT_SEM_STATS	nsolids
- *  
+ *
  *  Returns -
  *  	0	Ordinarily
  *	-1	On major error
@@ -909,21 +923,21 @@ rt_gettrees_and_attrs(struct rt_i *rtip, const char **attrs, int argc, const cha
  *  User-called function to add a tree hierarchy to the displayed set.
  *
  *  This function is not multiply re-entrant.
- *  
+ *
  *  Returns -
  *  	0	Ordinarily
  *	-1	On major error
- *      
+ *
  *  Note: -2 returns from rt_gettrees_and_attrs are filtered.
  */
 int
 rt_gettree(struct rt_i *rtip, const char *node)
 {
   int rv;
-  
+
   rv =  rt_gettrees_and_attrs( rtip, NULL, 1, &node, 1 );
 
-  if (rv == 0 || rv == -2) 
+  if (rv == 0 || rv == -2)
     {
       return 0;
     }
@@ -939,7 +953,7 @@ rt_gettrees(struct rt_i *rtip, int argc, const char **argv, int ncpus)
   int rv;
   rv = rt_gettrees_and_attrs( rtip, NULL, argc, argv, ncpus );
 
-  if (rv == 0 || rv == -2) 
+  if (rv == 0 || rv == -2)
     {
       return 0;
     }
@@ -962,7 +976,7 @@ rt_gettrees(struct rt_i *rtip, int argc, const char **argv, int ncpus)
  */
 int
 rt_bound_tree(register const union tree *tp, fastf_t *tree_min, fastf_t *tree_max)
-{	
+{
 	vect_t	r_min, r_max;		/* rpp for right side of tree */
 
 	RT_CK_TREE(tp);
@@ -1035,7 +1049,7 @@ rt_bound_tree(register const union tree *tp, fastf_t *tree_min, fastf_t *tree_ma
  */
 void
 rt_tree_kill_dead_solid_refs(register union tree *tp)
-{	
+{
 
 	RT_CK_TREE(tp);
 
@@ -1191,7 +1205,7 @@ top:
  */
 const char *
 rt_basename(register const char *str)
-{	
+{
 	register const char	*p = str;
 	while( *p != '\0' )
 		if( *p++ == '/' )
@@ -1212,7 +1226,7 @@ rt_basename(register const char *str)
  */
 HIDDEN struct region *
 rt_getregion(struct rt_i *rtip, register const char *reg_name)
-{	
+{
 	register struct region	*regp;
 	register const char *reg_base = rt_basename(reg_name);
 
@@ -1241,7 +1255,7 @@ rt_getregion(struct rt_i *rtip, register const char *reg_name)
  */
 int
 rt_rpp_region(struct rt_i *rtip, const char *reg_name, fastf_t *min_rpp, fastf_t *max_rpp)
-{	
+{
 	register struct region	*regp;
 
 	RT_CHECK_RTI(rtip);
@@ -1256,7 +1270,7 @@ rt_rpp_region(struct rt_i *rtip, const char *reg_name, fastf_t *min_rpp, fastf_t
 /*
  *			R T _ F A S T F _ F L O A T
  *
- *  Convert TO fastf_t FROM 3xfloats (for database) 
+ *  Convert TO fastf_t FROM 3xfloats (for database)
  */
 void
 rt_fastf_float(register fastf_t *ff, register const dbfloat_t *fp, register int n)
@@ -1273,7 +1287,7 @@ rt_fastf_float(register fastf_t *ff, register const dbfloat_t *fp, register int 
 /*
  *			R T _ M A T _ D B M A T
  *
- *  Convert TO fastf_t matrix FROM dbfloats (for database) 
+ *  Convert TO fastf_t matrix FROM dbfloats (for database)
  */
 void
 rt_mat_dbmat(register fastf_t *ff, register const dbfloat_t *dbp)
@@ -1303,7 +1317,7 @@ rt_mat_dbmat(register fastf_t *ff, register const dbfloat_t *dbp)
 /*
  *			R T _ D B M A T _ M A T
  *
- *  Convert FROM fastf_t matrix TO dbfloats (for updating database) 
+ *  Convert FROM fastf_t matrix TO dbfloats (for updating database)
  */
 void
 rt_dbmat_mat(register dbfloat_t *dbp, register const fastf_t *ff)
@@ -1332,7 +1346,7 @@ rt_dbmat_mat(register dbfloat_t *dbp, register const fastf_t *ff)
 
 /*
  *  			R T _ F I N D _ S O L I D
- *  
+ *
  *  Given the (leaf) name of a solid, find the first occurance of it
  *  in the solid list.  Used mostly to find the light source.
  *  Returns soltab pointer, or RT_SOLTAB_NULL.

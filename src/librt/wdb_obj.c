@@ -23,8 +23,8 @@
 /*@{*/
 /** @file wdb_obj.c
  *  A database object contains the attributes and
- *  methods for controlling a BRLCAD database.
- * 
+ *  methods for controlling a BRL-CAD database.
+ *
  *  Authors -
  *	Michael John Muuss
  *      Glenn Durfee
@@ -137,7 +137,7 @@ you should exit now, and resolve the I/O problem, before continuing.\n", (char *
 
 #define WDB_WRITE_ERR { \
 	bu_log("Database write error, aborting.\n"); \
-	WDB_ERROR_RECOVERY_SUGGESTION; }	
+	WDB_ERROR_RECOVERY_SUGGESTION; }
 
 #define WDB_WRITE_ERR_return { \
 	WDB_WRITE_ERR; \
@@ -466,7 +466,7 @@ wdb_create_cmd(Tcl_Interp	*interp,
 
     /* Return new function name as result */
     Tcl_AppendResult(interp, oname, (char *)NULL);
-	
+
     return TCL_OK;
 }
 
@@ -532,7 +532,7 @@ wdb_init_obj(Tcl_Interp		*interp,
 	/* Return new function name as result */
 	Tcl_AppendResult(interp, oname, (char *)NULL);
 #endif
-	
+
 	return TCL_OK;
 }
 
@@ -727,7 +727,7 @@ wdb_close_cmd(struct rt_wdb	*wdbp,
 }
 
 /*
- * Close a BRLCAD database object.
+ * Close a BRL-CAD database object.
  *
  * USAGE:
  *	  procname close
@@ -810,7 +810,7 @@ wdb_match_cmd(struct rt_wdb	*wdbp,
 	struct bu_vls	matches;
 
 	RT_CK_WDB_TCL(interp,wdbp);
-	
+
 	/* Verify that this wdb supports lookup operations
 	   (non-null dbip) */
 	if (wdbp->dbip == 0) {
@@ -1105,7 +1105,7 @@ wdb_put_cmd(struct rt_wdb	*wdbp,
 	}
 
 	name = argv[1];
-    
+
 	/* Verify that this wdb supports lookup operations (non-null dbip).
 	 * stdout/file wdb objects don't, but can still be written to.
 	 * If not, just skip the lookup test and write the object
@@ -1695,7 +1695,7 @@ wdb_showmats_tcl(ClientData	clientData,
 		 char		**argv)
 {
 	struct rt_wdb *wdbp = (struct rt_wdb *)clientData;
-	
+
 	return wdb_showmats_cmd(wdbp, interp, argc-1, argv+1);
 }
 
@@ -2436,7 +2436,7 @@ wdb_scrape_escapes_AppendResult(Tcl_Interp	*interp,
 {
 	char buf[2];
 	buf[1] = '\0';
-    
+
 	while (*str) {
 		buf[0] = *str;
 		if (*str != '\\') {
@@ -2498,7 +2498,7 @@ wdb_expand_cmd(struct rt_wdb	*wdbp,
 			++nummatch;
 			continue;
 		}
-	
+
 		/* Search for pattern matches.
 		 * If any matches are found, we do not have to worry about
 		 * '\' escapes since the match coming from dp->d_namep will be
@@ -2515,7 +2515,7 @@ wdb_expand_cmd(struct rt_wdb	*wdbp,
 				/* Successful match */
 				if (nummatch == 0)
 					Tcl_AppendResult(interp, dp->d_namep, NULL);
-				else 
+				else
 					Tcl_AppendResult(interp, " ", dp->d_namep, NULL);
 				++nummatch;
 				++thismatch;
@@ -2944,6 +2944,9 @@ wdb_move_tcl(ClientData	clientData,
 	return wdb_move_cmd(wdbp, interp, argc-1, argv+1);
 }
 
+/*
+ *
+ */
 int
 wdb_move_all_cmd(struct rt_wdb	*wdbp,
 		 Tcl_Interp	*interp,
@@ -2978,6 +2981,8 @@ wdb_move_all_cmd(struct rt_wdb	*wdbp,
 		return TCL_ERROR;
 	}
 
+
+
 	/* rename the record itself */
 	if ((dp = db_lookup(wdbp->dbip, argv[1], LOOKUP_NOISY )) == DIR_NULL)
 		return TCL_ERROR;
@@ -2985,6 +2990,45 @@ wdb_move_all_cmd(struct rt_wdb	*wdbp,
 	if (db_lookup(wdbp->dbip, argv[2], LOOKUP_QUIET) != DIR_NULL) {
 		Tcl_AppendResult(interp, argv[2], ":  already exists", (char *)NULL);
 		return TCL_ERROR;
+	}
+
+	/* if this was a sketch, we need to look for all the extrude 
+	 * objects that might use it.
+	 *
+	 * This has to be done here, before we rename the (possible) sketch object
+	 * because the extrude will do a rt_db_get on the sketch when we call
+	 * rt_db_get_internal on it.
+	 */
+	if (dp->d_major_type == DB5_MAJORTYPE_BRLCAD && \
+	    dp->d_minor_type == DB5_MINORTYPE_BRLCAD_SKETCH) {
+
+	    struct directory *dirp;
+
+	    for (i = 0; i < RT_DBNHASH; i++) {
+		for (dirp = wdbp->dbip->dbi_Head[i]; dirp != DIR_NULL; dirp = dirp->d_forw) {
+
+		    if (dirp->d_major_type == DB5_MAJORTYPE_BRLCAD && \
+			dirp->d_minor_type == DB5_MINORTYPE_BRLCAD_EXTRUDE) {
+			struct rt_extrude_internal *extrude;
+
+			if (rt_db_get_internal(&intern, dirp, wdbp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
+			    bu_log("Can't get extrude %s?\n", dirp->d_namep);
+			    continue;
+			}
+			extrude = (struct rt_extrude_internal *)intern.idb_ptr;
+			RT_EXTRUDE_CK_MAGIC(extrude);
+
+			if (! strcmp(extrude->sketch_name, argv[1]) ) {
+			    bu_free(extrude->sketch_name, "sketch name");
+			    extrude->sketch_name = bu_strdup(argv[2]);
+
+			    if (rt_db_put_internal(dirp, wdbp->dbip, &intern, &rt_uniresource) < 0) {
+				bu_log("oops\n");
+			    }
+			}
+		    }
+		}
+	    }
 	}
 
 	/*  Change object name in the directory. */
@@ -3007,12 +3051,15 @@ wdb_move_all_cmd(struct rt_wdb	*wdbp,
 
 	bu_ptbl_init(&stack, 64, "combination stack for wdb_mvall_cmd");
 
+
 	/* Examine all COMB nodes */
 	for (i = 0; i < RT_DBNHASH; i++) {
 		for (dp = wdbp->dbip->dbi_Head[i]; dp != DIR_NULL; dp = dp->d_forw) {
 			union tree	*comb_leaf;
 			int		done=0;
 			int		changed=0;
+
+			
 
 			if (!(dp->d_flags & DIR_COMB))
 				continue;
@@ -3181,7 +3228,7 @@ adjust_names(
 		case OP_NOT:
 		case OP_GUARD:
 		case OP_XNOP:
-			adjust_names( interp, trp->tr_b.tb_left, dbip,	
+			adjust_names( interp, trp->tr_b.tb_left, dbip,
 				      name_tbl, used_names_tbl, cc_data );
 			break;
 	}
@@ -3517,7 +3564,7 @@ wdb_copyeval_cmd(struct rt_wdb	*wdbp,
 }
 
 /*
- *  
+ *
  *
  * Usage:
  *        procname copyeval new_solid path_to_solid
@@ -3592,7 +3639,7 @@ wdb_dir_check5(register struct db_i		*input_dbip,
 			(void)bu_vls_strcat( &local, name );
 		}
 	}
-		
+
 	/* Look up this new name in the existing (main) database */
 	if ((dupdp = db_lookup(dcsp->main_dbip, bu_vls_addr( &local ), LOOKUP_QUIET)) != DIR_NULL) {
 		/* Duplicate found, add it to the list */
@@ -3637,7 +3684,7 @@ wdb_dir_check(register struct db_i *input_dbip, register const char *name, long 
 			bu_vls_strcat( &local, name );
 		}
 	}
-		
+
 	/* Look up this new name in the existing (main) database */
 	if ((dupdp = db_lookup(dcsp->main_dbip, bu_vls_addr( &local ), LOOKUP_QUIET)) != DIR_NULL) {
 		/* Duplicate found, add it to the list */
@@ -4360,7 +4407,7 @@ wdb_facetize_cmd(struct rt_wdb	*wdbp,
 		rt_db_free_internal( &intern, &rt_uniresource );
 		return TCL_ERROR;
 	}
-	
+
 	facetize_tree->tr_d.td_r = (struct nmgregion *)NULL;
 
 	/* Free boolean tree, and the regions in it */
@@ -4459,7 +4506,7 @@ wdb_rmap_cmd(struct rt_wdb	*wdbp,
     struct wdb_id_to_names *itnp;
     struct wdb_id_names *inp;
     Tcl_DString ds;
-	
+
 
     if (argc != 1) {
 	struct bu_vls vls;
@@ -4596,7 +4643,7 @@ wdb_which_cmd(struct rt_wdb	*wdbp,
 	struct wdb_id_names *inp;
 	int isAir;
 	int sflag;
-	
+
 
 	if (argc < 2 || MAXARGS < argc) {
 		struct bu_vls vls;
@@ -4990,7 +5037,7 @@ wdb_print_node(struct rt_wdb		*wdbp,
 	       int			pathpos,
 	       char			prefix,
 	       int			cflag)
-{	
+{
 	register int			i;
 	register struct directory	*nextdp;
 	struct rt_db_internal		intern;
@@ -4999,7 +5046,7 @@ wdb_print_node(struct rt_wdb		*wdbp,
 	if (cflag && !(dp->d_flags & DIR_COMB))
 		return;
 
-	for (i=0; i<pathpos; i++) 
+	for (i=0; i<pathpos; i++)
 		Tcl_AppendResult(interp, "\t", (char *)NULL);
 
 	if (prefix) {
@@ -5081,8 +5128,8 @@ wdb_print_node(struct rt_wdb		*wdbp,
 			if ((nextdp = db_lookup(wdbp->dbip, rt_tree_array[i].tl_tree->tr_l.tl_name, LOOKUP_NOISY)) == DIR_NULL) {
 				int j;
 				struct bu_vls tmp_vls;
-  			
-				for (j=0; j<pathpos+1; j++) 
+
+				for (j=0; j<pathpos+1; j++)
 					Tcl_AppendResult(interp, "\t", (char *)NULL);
 
 				bu_vls_init(&tmp_vls);
@@ -5165,7 +5212,7 @@ wdb_tree_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
 /*
  *  			W D B _ C O L O R _ P U T R E C
- *  
+ *
  *  Used to create a database record and get it written out to a granule.
  *  In some cases, storage will need to be allocated.
  */
@@ -5215,7 +5262,7 @@ wdb_color_putrec(register struct mater	*mp,
 
 /*
  *  			W D B _ C O L O R _ Z A P R E C
- *  
+ *
  *  Used to release database resources occupied by a material record.
  */
 static void
@@ -5530,64 +5577,66 @@ wdb_tol_cmd(struct rt_wdb	*wdbp,
 		return TCL_ERROR;
 	}
 
+	/* clamp negative to zero */
+	if (f < 0.0) {
+	    Tcl_AppendResult(interp, "negative tolerance clamped to 0.0\n", (char *)NULL);
+	    f = 0.0;
+	}
+
 	switch (argv[1][0]) {
 	case 'a':
 		/* Absolute tol */
-		if (f <= 0.0)
-			wdbp->wdb_ttol.abs = 0.0;
-		else
-			wdbp->wdb_ttol.abs = f;
-		break;
-	case 'r':
-		if (f < 0.0 || f >= 1.0) {
-			   Tcl_AppendResult(interp,
-					    "relative tolerance must be between 0 and 1, not changed\n",
-					    (char *)NULL);
-			   return TCL_ERROR;
-		}
-		/* Note that a value of 0.0 will disable relative tolerance */
-		wdbp->wdb_ttol.rel = f;
-		break;
-	case 'n':
-		/* Normal tolerance, in degrees */
-		if (f < 0.0 || f > 90.0) {
-			Tcl_AppendResult(interp,
-					 "Normal tolerance must be in positive degrees, < 90.0\n",
-					 (char *)NULL);
-			return TCL_ERROR;
-		}
-		/* Note that a value of 0.0 or 360.0 will disable this tol */
-		wdbp->wdb_ttol.norm = f * bn_degtorad;
-		break;
-	case 'd':
-		/* Calculational distance tolerance */
-		if (f < 0.0) {
-			Tcl_AppendResult(interp,
-					 "Calculational distance tolerance must be positive\n",
-					 (char *)NULL);
-			return TCL_ERROR;
-		}
-		wdbp->wdb_tol.dist = f;
-		wdbp->wdb_tol.dist_sq = wdbp->wdb_tol.dist * wdbp->wdb_tol.dist;
-		break;
-	case 'p':
-		/* Calculational perpendicularity tolerance */
-		if (f < 0.0 || f > 1.0) {
-			Tcl_AppendResult(interp,
-					 "Calculational perpendicular tolerance must be from 0 to 1\n",
-					 (char *)NULL);
-			return TCL_ERROR;
-		}
-		wdbp->wdb_tol.perp = f;
-		wdbp->wdb_tol.para = 1.0 - f;
-		break;
-	default:
+	    if (f < wdbp->wdb_tol.dist) {
 		bu_vls_init(&vls);
-		bu_vls_printf(&vls, "unrecognized tolerance type - %s", argv[1]);
+		bu_vls_printf(&vls, "absolute tolerance cannot be less than distance tolerance, clamped to %f\n", wdbp->wdb_tol.dist);
 		Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
-		bu_vls_free(&vls);
-
+	    }
+	    wdbp->wdb_ttol.abs = f;
+	    break;
+	case 'r':
+	    if (f >= 1.0) {
+		Tcl_AppendResult(interp,
+				 "relative tolerance must be between 0 and 1, not changed\n",
+				 (char *)NULL);
 		return TCL_ERROR;
+	    }
+	    /* Note that a value of 0.0 will disable relative tolerance */
+	    wdbp->wdb_ttol.rel = f;
+	    break;
+	case 'n':
+	    /* Normal tolerance, in degrees */
+	    if (f > 90.0) {
+		Tcl_AppendResult(interp,
+				 "Normal tolerance must be less than 90.0 degrees\n",
+				 (char *)NULL);
+		return TCL_ERROR;
+	    }
+	    /* Note that a value of 0.0 or 360.0 will disable this tol */
+	    wdbp->wdb_ttol.norm = f * bn_degtorad;
+	    break;
+	case 'd':
+	    /* Calculational distance tolerance */
+	    wdbp->wdb_tol.dist = f;
+	    wdbp->wdb_tol.dist_sq = wdbp->wdb_tol.dist * wdbp->wdb_tol.dist;
+	    break;
+	case 'p':
+	    /* Calculational perpendicularity tolerance */
+	    if (f > 1.0) {
+		Tcl_AppendResult(interp,
+				 "Calculational perpendicular tolerance must be from 0 to 1\n",
+				 (char *)NULL);
+		return TCL_ERROR;
+	    }
+	    wdbp->wdb_tol.perp = f;
+	    wdbp->wdb_tol.para = 1.0 - f;
+	    break;
+	default:
+	    bu_vls_init(&vls);
+	    bu_vls_printf(&vls, "unrecognized tolerance type - %s", argv[1]);
+	    Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+	    bu_vls_free(&vls);
+	    
+	    return TCL_ERROR;
 	}
 
 	return TCL_OK;
@@ -5638,7 +5687,7 @@ struct wdb_push_data {
  * This routine must be prepared to run in parallel.
  *
  * This routine is called once for eas leaf (solid) that is to
- * be pushed.  All it does is build at push_id linked list.  The 
+ * be pushed.  All it does is build at push_id linked list.  The
  * linked list could be handled by bu_list macros but it is simple
  * enough to do hear with out them.
  */
@@ -5877,7 +5926,7 @@ wdb_push_cmd(struct rt_wdb	*wdbp,
 }
 
 /*
- * The push command is used to move matrices from combinations 
+ * The push command is used to move matrices from combinations
  * down to the solids. At some point, it is worth while thinking
  * about adding a limit to have the push go only N levels down.
  *
@@ -5951,7 +6000,7 @@ Free_uses( struct db_i *dbip )
 				BU_LIST_DEQUEUE(&use->l);
 				bu_free((genptr_t)use, "Free_uses: use");
 			}
-			
+
 		}
 	}
 
@@ -6555,7 +6604,7 @@ wdb_node_write(struct db_i		*dbip,
 		if( dsp->dsp_datasrc == RT_DSP_SRC_OBJ ) {
 			/* need to keep this object */
 			if( (dp2 = db_lookup( dbip, bu_vls_addr(&dsp->dsp_name),  LOOKUP_QUIET )) != DIR_NULL ) {
-				wdb_node_write( dbip, dp2, ptr );	
+				wdb_node_write( dbip, dp2, ptr );
 			}
 		}
 	}
@@ -6593,7 +6642,7 @@ wdb_keep_cmd(struct rt_wdb	*wdbp,
 	}
 
 	/* Alert user if named file already exists */
-	
+
 	new_dbip = db_open(argv[1], "w");
 
 
@@ -6606,7 +6655,7 @@ wdb_keep_cmd(struct rt_wdb	*wdbp,
 				 (char *)NULL);
 		return TCL_ERROR;
 	    }
-	    
+
 	    if ((keepfp = wdb_dbopen(new_dbip, RT_WDB_TYPE_DB_DISK)) == NULL) {
 		Tcl_AppendResult(interp, "keep:  Error opening '", argv[1],
 				 "'\n", (char *)NULL);
@@ -6627,7 +6676,7 @@ wdb_keep_cmd(struct rt_wdb	*wdbp,
 		return TCL_ERROR;
 	    }
 	}
-	
+
 	/* ident record */
 	bu_vls_init(&title);
 	if (strncmp(wdbp->dbip->dbi_title, "Parts of: ", 10) != 0) {
@@ -6835,6 +6884,7 @@ wdb_make_bb_cmd(struct rt_wdb	*wdbp,
 	struct rt_db_internal	new_intern;
 	struct region		*regp;
 	char			*new_name;
+	int		use_air = 0;
 
 	WDB_TCL_CHECK_READ_ONLY;
 
@@ -6848,13 +6898,21 @@ wdb_make_bb_cmd(struct rt_wdb	*wdbp,
 		return TCL_ERROR;
 	}
 
+	i = 1;
+
+	/* look for a USEAIR option */
+	if ( ! strcmp(argv[i], "-u") ) {
+	    use_air = 1;
+	    i++;
+	}
+
 	/* Since arguments may be paths, make sure first argument isn't */
-	if (strchr(argv[1], '/')) {
-		Tcl_AppendResult(interp, "Do not use '/' in solid names: ", argv[1], "\n", (char *)NULL);
+	if (strchr(argv[i], '/')) {
+		Tcl_AppendResult(interp, "Do not use '/' in solid names: ", argv[i], "\n", (char *)NULL);
 		return TCL_ERROR;
 	}
 
-	new_name = argv[1];
+	new_name = argv[i++];
 	if (db_lookup(wdbp->dbip, new_name, LOOKUP_QUIET) != DIR_NULL) {
 		Tcl_AppendResult(interp, new_name, " already exists\n", (char *)NULL);
 		return TCL_ERROR;
@@ -6867,8 +6925,10 @@ wdb_make_bb_cmd(struct rt_wdb	*wdbp,
 		return TCL_ERROR;
 	}
 
+	rtip->useair = use_air;
+
 	/* Get trees for list of objects/paths */
-	for (i = 2 ; i < argc ; i++) {
+	for ( ; i < argc ; i++) {
 		int gottree;
 
 		/* Get full_path structure for argument */
@@ -6931,7 +6991,7 @@ wdb_make_bb_cmd(struct rt_wdb	*wdbp,
 
 			if (!strcmp( reg_name, argv[i]))
 				goto found;
-				
+
 		}
 		goto not_found;
 
@@ -7185,7 +7245,7 @@ wdb_units_cmd(struct rt_wdb	*wdbp,
 }
 
 /*
- * Set/get the database units. 
+ * Set/get the database units.
  *
  * Usage:
  *        dbobjname units [str]
@@ -7232,7 +7292,7 @@ wdb_hide_cmd(struct rt_wdb	*wdbp,
 
 	RT_CK_DBI( dbip );
 	if( dbip->dbi_version < 5 ) {
-	  Tcl_AppendResult(interp, 
+	  Tcl_AppendResult(interp,
 			   "Database was created with a previous release of BRL-CAD.\nSelect \"Tools->Upgrade Database...\" to enable support for this feature.",
 			   (char *)NULL );
 		return TCL_ERROR;
@@ -7380,7 +7440,7 @@ wdb_unhide_cmd(struct rt_wdb	*wdbp,
 
 	RT_CK_DBI( dbip );
 	if( dbip->dbi_version < 5 ) {
-	  Tcl_AppendResult(interp, 
+	  Tcl_AppendResult(interp,
 			   "Database was created with a previous release of BRL-CAD.\nSelect \"Tools->Upgrade Database...\" to enable support for this feature.",
 			   (char *)NULL );
 		return TCL_ERROR;
@@ -7661,11 +7721,11 @@ wdb_attr_cmd(struct rt_wdb	*wdbp,
 				break;
 			case DB5_MAJORTYPE_BINARY_MIME:
 				bu_vls_printf( &vls, "%s binary(mime):\n", argv[2] );
-				break;	
+				break;
 			case DB5_MAJORTYPE_BINARY_UNIF:
 				bu_vls_printf( &vls, "%s %s:\n", argv[2],
 					       binu_types[dp->d_minor_type] );
-				break;	
+				break;
 			}
 		}
 		if( argc == 3 ) {
@@ -8059,7 +8119,7 @@ wdb_nmg_collapse_cmd(struct rt_wdb	*wdbp,
 	}
 
 	new_name = argv[2];
-	
+
 	if (db_lookup(wdbp->dbip, new_name, LOOKUP_QUIET) != DIR_NULL) {
 		Tcl_AppendResult(interp, new_name, " already exists\n", (char *)NULL);
 		return TCL_ERROR;
@@ -8190,7 +8250,7 @@ wdb_summary_cmd(struct rt_wdb	*wdbp,
 
 /*
  * Usage:
- *        procname 
+ *        procname
  */
 static int
 wdb_summary_tcl(ClientData	clientData,
@@ -8241,7 +8301,7 @@ wdb_pathlist_cmd(struct rt_wdb	*wdbp,
 
 /*
  * Usage:
- *        procname 
+ *        procname
  */
 static int
 wdb_pathlist_tcl(ClientData	clientData,
@@ -8426,7 +8486,7 @@ wdb_binary_cmd(struct rt_wdb	*wdbp,
 				Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
 				bu_vls_free(&vls);
 				return TCL_ERROR;
-				
+
 		}
 	}
 
@@ -8554,7 +8614,7 @@ wdb_binary_cmd(struct rt_wdb	*wdbp,
 
 		obj_name = *argv;
 
-		if( (dp=db_lookup(wdbp->dbip, obj_name, LOOKUP_NOISY )) == DIR_NULL ) { 
+		if( (dp=db_lookup(wdbp->dbip, obj_name, LOOKUP_NOISY )) == DIR_NULL ) {
 			return TCL_ERROR;
 		}
 		if( !( dp->d_major_type & DB5_MAJORTYPE_BINARY_MASK) ) {
@@ -8567,7 +8627,7 @@ wdb_binary_cmd(struct rt_wdb	*wdbp,
 					 (char *)NULL );
 			return TCL_ERROR;
 		}
-		
+
 		if( (fd=fopen( file_name, "w+")) == NULL ) {
 			Tcl_AppendResult(interp, "Error: cannot open file ", file_name,
 					 " for writing", (char *)NULL );
@@ -8676,7 +8736,7 @@ int wdb_bot_face_sort_cmd(struct rt_wdb	*wdbp,
 		if( (id=rt_db_get_internal( &intern, dp, wdbp->dbip, bn_mat_identity, wdbp->wdb_resp )) < 0 ) {
 			bu_vls_printf( &vls,
 			   "Failed to get internal form of %s, not sorting this one\n",
-			    dp->d_namep ); 
+			    dp->d_namep );
 			warnings++;
 			continue;
 		}
@@ -8727,7 +8787,7 @@ int wdb_bot_face_sort_cmd(struct rt_wdb	*wdbp,
 
 /*
  * Usage:
- *        procname 
+ *        procname
  */
 static int
 wdb_bot_face_sort_tcl(ClientData	clientData,
@@ -8770,7 +8830,7 @@ wdb__cmd(struct rt_wdb	*wdbp,
 
 /*
  * Usage:
- *        procname 
+ *        procname
  */
 static int
 wdb__tcl(ClientData	clientData,
@@ -8910,7 +8970,7 @@ wdb_vls_col_pr4v(struct bu_vls		*vls,
 			} else {
 				/*
 				 * Pad to next boundary as there will be
-				 * another entry to the right of this one. 
+				 * another entry to the right of this one.
 				 */
 				while (namelen++ < 20)
 					bu_vls_putc(vls, ' ');
@@ -8927,7 +8987,7 @@ wdb_vls_col_pr4v(struct bu_vls		*vls,
 	      (unsigned)num_in_list, (unsigned)sizeof(struct directory *),
 	      (int (*)())wdb_cmpdirname);
 
-	/* 
+	/*
 	 * Traverse the list of names, find the longest name and set the
 	 * the column width and number of columns accordingly.
 	 * If the longest name is greater than 80 characters, the number of columns
@@ -8940,14 +9000,14 @@ wdb_vls_col_pr4v(struct bu_vls		*vls,
 			maxnamelen = namelen;
 	}
 
-	if (maxnamelen <= 16) 
+	if (maxnamelen <= 16)
 		maxnamelen = 16;
 	cwidth = maxnamelen + 4;
 
 	if (cwidth > 80)
 		cwidth = 80;
 	numcol = RT_TERMINAL_WIDTH / cwidth;
-     
+
 	/*
 	 * For the number of (full and partial) lines that will be needed,
 	 * print in vertical format.
@@ -8987,7 +9047,7 @@ wdb_vls_col_pr4v(struct bu_vls		*vls,
 			} else {
 				/*
 				 * Pad to next boundary as there will be
-				 * another entry to the right of this one. 
+				 * another entry to the right of this one.
 				 */
 				while( namelen++ < cwidth)
 					bu_vls_putc(vls, ' ');
@@ -9072,7 +9132,7 @@ wdb_vls_long_dpp(struct bu_vls		*vls,
 			isSolid = 1;
 			type = rt_functab[list_of_names[i]->d_minor_type].ft_label;
 		} else {
-			switch(list_of_names[i]->d_major_type) { 
+			switch(list_of_names[i]->d_major_type) {
 			case DB5_MAJORTYPE_ATTRIBUTE_ONLY:
 				isSolid = 0;
 				type = "global";
@@ -9086,12 +9146,12 @@ wdb_vls_long_dpp(struct bu_vls		*vls,
 				isSolid = 0;
 				isRegion = 0;
 				type = "binary(mime)";
-				break;	
+				break;
 			case DB5_MAJORTYPE_BINARY_UNIF:
 				isSolid = 0;
 				isRegion = 0;
 				type = binu_types[list_of_names[i]->d_minor_type];
-				break;	
+				break;
 			}
 		}
 
@@ -9252,7 +9312,7 @@ wdb_do_list(struct db_i		*dbip,
 		}
 
 		bu_vls_printf(outstrp, "%s:  ", dp->d_namep);
-		
+
 		if (rt_functab[id].ft_describe(outstrp, &intern,
 					       verbose, dbip->dbi_base2local, &rt_uniresource, dbip) < 0)
 			Tcl_AppendResult(interp, dp->d_namep, ": describe error\n", (char *)NULL);
@@ -9318,7 +9378,7 @@ wdb_combadd(Tcl_Interp			*interp,
 		bu_vls_init(&comb->material);
 		comb->region_id = 0;  /* This makes a comb/group by default */
 		comb->tree = TREE_NULL;
-		
+
 		if (region_flag) {
 			struct bu_vls tmp_vls;
 
@@ -9330,7 +9390,7 @@ wdb_combadd(Tcl_Interp			*interp,
 			bu_vls_init(&tmp_vls);
 			bu_vls_printf(&tmp_vls,
 				      "Creating region id=%d, air=%d, GIFTmaterial=%d, los=%d\n",
-				      ident, air, 
+				      ident, air,
 					wdbp->wdb_mat_default,
 					wdbp->wdb_los_default);
 			Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
@@ -9455,7 +9515,7 @@ wdb_do_identitize(struct db_i		*dbip,
 }
 
 /*
- *			W D B _ I D E N T I T I Z E ( ) 
+ *			W D B _ I D E N T I T I Z E ( )
  *
  *	Traverses an objects paths, setting all member matrices == identity
  *
@@ -9534,7 +9594,7 @@ wdb_dir_summary(struct db_i	*dbip,
 
 	/* Print all names matching the flags parameter */
 	/* THIS MIGHT WANT TO BE SEPARATED OUT BY CATEGORY */
-	
+
 	dirp = wdb_dir_getspace(dbip, 0);
 	dirp0 = dirp;
 	/*
@@ -9745,7 +9805,7 @@ wdb_bot_decimate_cmd(struct rt_wdb	*wdbp,
 
 /*
  * Usage:
- *        procname 
+ *        procname
  */
 static int
 wdb_bot_decimate_tcl(ClientData	clientData,
@@ -10201,7 +10261,7 @@ wdb_rotate_arb_face_cmd(struct rt_wdb	*wdbp,
 	if (rt_arb_vertices[arb_type-4][face*4+i]==5)
 	    pnt5=1;
     }
-		
+
     /* special case for arb7 */
     if (arb_type == ARB7  && pnt5)
 	vi = 4;
@@ -10223,7 +10283,7 @@ wdb_rotate_arb_face_cmd(struct rt_wdb	*wdbp,
 	VMOVE(tempvec, arb->pt[vi]);
 
 	/* set D of planar equation to anchor at fixed vertex */
-	planes[face][3]=VDOT(plane, tempvec);	
+	planes[face][3]=VDOT(plane, tempvec);
     }
 
     /* calculate new points for the arb */

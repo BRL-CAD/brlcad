@@ -34,7 +34,7 @@
  *  Author -
  *	Phillip Dykstra
  *	24 Sep 1986
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
@@ -48,9 +48,9 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include <unistd.h>
 #include <stdlib.h>
 
-extern int	getopt(int, char *const *, const char *);
-extern char	*optarg;
-extern int	optind;
+extern int	bu_getopt(int, char *const *, const char *);
+extern char	*bu_optarg;
+extern int	bu_optind;
 
 /* 4 times bigger than typ. screen */
 /*#define	MAXBUFBYTES	(1280*1024*3*4) */
@@ -84,7 +84,7 @@ get_args(int argc, register char **argv)
 {
 	register int c;
 
-	while ( (c = getopt( argc, argv, "fbrih#:s:w:n:S:W:N:" )) != EOF )  {
+	while ( (c = bu_getopt( argc, argv, "fbrih#:s:w:n:S:W:N:" )) != EOF )  {
 		switch( c )  {
 		case 'f':
 			minus90++;
@@ -99,7 +99,7 @@ get_args(int argc, register char **argv)
 			invert++;
 			break;
 		case '#':
-			pixbytes = atoi(optarg);
+			pixbytes = atoi(bu_optarg);
 			break;
 		case 'h':
 			/* high-res */
@@ -108,15 +108,15 @@ get_args(int argc, register char **argv)
 		case 'S':
 		case 's':
 			/* square size */
-			nxin = nyin = atoi(optarg);
+			nxin = nyin = atoi(bu_optarg);
 			break;
 		case 'W':
 		case 'w':
-			nxin = atoi(optarg);
+			nxin = atoi(bu_optarg);
 			break;
 		case 'N':
 		case 'n':
-			nyin = atoi(optarg);
+			nyin = atoi(bu_optarg);
 			break;
 
 		default:		/* '?' */
@@ -125,17 +125,17 @@ get_args(int argc, register char **argv)
 	}
 
 	/* XXX - backward compatability hack */
-	if( optind+2 == argc ) {
-		nxin = atoi(argv[optind++]);
-		nyin = atoi(argv[optind++]);
+	if( bu_optind+2 == argc ) {
+		nxin = atoi(argv[bu_optind++]);
+		nyin = atoi(argv[bu_optind++]);
 	}
-	if( optind >= argc )  {
+	if( bu_optind >= argc )  {
 		if( isatty(fileno(stdin)) )
 			return(0);
 		file_name = "-";
 		ifp = stdin;
 	} else {
-		file_name = argv[optind];
+		file_name = argv[bu_optind];
 		if( (ifp = fopen(file_name, "r")) == NULL )  {
 			(void)fprintf( stderr,
 				"pixrot: cannot open \"%s\" for reading\n",
@@ -144,7 +144,7 @@ get_args(int argc, register char **argv)
 		}
 	}
 
-	if ( argc > ++optind )
+	if ( argc > ++bu_optind )
 		(void)fprintf( stderr, "pixrot: excess argument(s) ignored\n" );
 
 	return(1);		/* OK */
@@ -237,7 +237,7 @@ main(int argc, char **argv)
 		} else if( invert ) {
 			for( y = lasty; y >= firsty; y-- ) {
 				yout = (nyin - 1) - y;
-				outbyte = yout * scanbytes; 
+				outbyte = yout * scanbytes;
 				if( outplace != outbyte ) {
 					if( fseek( ofp, outbyte, 0 ) < 0 ) {
 						fprintf( stderr, "pixrot: Can't seek on output, yet I need to!\n" );

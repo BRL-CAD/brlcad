@@ -29,7 +29,7 @@
  *	John R. Anderson
  *  Modified -
  *	July 1999 by John P. Williams, QUADRA Enterprises to output VRML2 format
- *  
+ *
  *  Source -
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5066
@@ -442,7 +442,7 @@ static void path_2_vrml_id(struct bu_vls *id, const char *path) {
 	case 0x7f:
 	    /* DEL */
 	    bu_vls_strcat(id, "_DEL_");
-	    break;	
+	    break;
 	default:
 	    bu_vls_putc(id, c);
 	    break;
@@ -529,7 +529,7 @@ static void path_2_vrml_id(struct bu_vls *id, const char *path) {
 	    case 0x7f:
 		/* DEL */
 		bu_vls_strcat(id, "_DEL_");
-		break;	
+		break;
 	    default:
 		bu_vls_putc(id, c);
 		break;
@@ -644,7 +644,7 @@ main(int argc, char **argv)
 	if( !units )
 		units = "mm";
 
-	/* Open brl-cad database */
+	/* Open BRL-CAD database */
 	if ((dbip = db_open( argv[optind] , "r")) == DBI_NULL)
 	{
 		bu_log( "Cannot open %s\n" , argv[optind] );
@@ -672,7 +672,7 @@ main(int argc, char **argv)
 	/* Note we may want to inquire about bounding boxes for the various groups and add Viewpoints nodes that
 	 * point the camera to the center and orient for Top, Side, etc Views
 	 *
-	 * We will add some default Material Color definitions (for thousands groups) before we start defining the geometry 
+	 * We will add some default Material Color definitions (for thousands groups) before we start defining the geometry
 	 */
 	fprintf( fp_out, "Shape { appearance Appearance { material DEF Material_999 Material { diffuseColor 0.78 0.78 0.78 } } }\n");
 	fprintf( fp_out, "Shape { appearance Appearance { material DEF Material_1999 Material { diffuseColor 0.88 0.29 0.29 } } }\n");
@@ -771,7 +771,7 @@ nmg_2_vrml(FILE *fp, struct db_full_path *pathp, struct model *m, struct mater_i
 	point_t ave_pt;
 	struct bu_vls shape_name;
 	char *full_path;
-	/*There may be a better way to capture the region_id, than getting the rt_comb_internal structure, 
+	/*There may be a better way to capture the region_id, than getting the rt_comb_internal structure,
 	 * (and may be a better way to capture the rt_comb_internal struct), but for now I just copied the
 	 * method used in select_lights/select_non_lights above, could have used a global variable but I noticed
 	 * none other were used, so I didn't want to be the first
@@ -1166,7 +1166,7 @@ nmg_2_vrml(FILE *fp, struct db_full_path *pathp, struct model *m, struct mater_i
 
 	bu_vls_free(&vls);
 	bu_vls_free(&shape_name);
-	
+
 	BARRIER_CHECK;
 }
 
@@ -1327,7 +1327,7 @@ union tree *nmg_region_end(register struct db_tree_state *tsp, struct db_full_pa
 		{
 			bu_log("WARNING: tsp->ts_m pointer corrupted, ignoring it.\n");
 		}
-	
+
 		bu_free( name, "db_path_to_string" );
 		/* Now, make a new, clean model structure for next pass. */
 		*tsp->ts_m = nmg_mm();

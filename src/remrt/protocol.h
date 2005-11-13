@@ -21,7 +21,7 @@
 /** @file protocol.h
  *
  *  Definitions pertaining to the Remote RT protocol.
- *  
+ *
  *  Author -
  *	Michael John Muuss
  *
@@ -29,7 +29,7 @@
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005
- *  
+ *
  *
  *  $Header$
  */

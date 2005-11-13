@@ -8,9 +8,9 @@
  *
  *  Note:  Users of this file will need to include "fb.h" first.
  */
-/* 
+/*
  * Runsv.h - Definitions for Run Length Encoding.
- * 
+ *
  * Author:	Spencer W. Thomas
  * 		Computer Science Dept.
  * 		University of Utah

@@ -20,13 +20,13 @@
  */
 /** @file fence.h
  *
- *      This is the header file to the program that generages a 
+ *      This is the header file to the program that generages a
  *      chain-link fence.  Every parameter of the fence may be adjusted
  *      by changing the #defined macros below.
  *
  *  Author -
  *      Christopher Sean Morrison
- *  
+ *
  *  Source -
  *      The U. S. Army Research Laboratory
  *      Aberdeen Proving Ground, Maryland  21005-5068  USA
@@ -56,7 +56,7 @@
 /* these variables control the "behavior" of this program's output
  *   if debug is set, debug information (extra "useful" output is given) is
  *     displayed on stdout.
- *   if verbose is set, then all prompting and output that may be shown 
+ *   if verbose is set, then all prompting and output that may be shown
  *     (such as results and errors) will be sent to stderr.  this should
  *     probably be switched with debug (maybe) but convention was taken
  *     from another db program.
@@ -87,8 +87,8 @@
 #define DEFAULT_ID "Untitled"
 
 /* for all of the default names that are specified, a `.s' or `.r' suffix
- * will automatically get appended where needed for the solid and 
- * region objects that are generated, respectively, and do not need 
+ * will automatically get appended where needed for the solid and
+ * region objects that are generated, respectively, and do not need
  * to be added.
  */
 
@@ -101,7 +101,7 @@
 /* these are the parameters for the main fence object that gets
  * generated.
  *   the name of the entire resulting fence object may be set as a string.
- *   the point at which the fence starts is where the first pole, and 
+ *   the point at which the fence starts is where the first pole, and
  *     the mesh will begin at.  the fence is generated bottom-up (first
  *     quadrant).
  *   the width and height settings here may be overridden by the pole
@@ -142,13 +142,13 @@
 #define DEFAULT_GENERATEPOLES 1
 #define DEFAULT_GENERATEMESH 1
 
-/* these are the parameters for the pole objects that get generated. 
+/* these are the parameters for the pole objects that get generated.
  * every pole object is a separate object and may be individually
  * addressed.
  *   all of the poles are named with the name given plus a numerical
  *     identifier (i.e. "poles4.r").  the format of the name may be
  *     adjusted below under the polebasicparam setting.
- *   the poles may have their material properties set through the 
+ *   the poles may have their material properties set through the
  *     settings of the type, parameters, and color.
  *   the pole's height and radius may also be respectively set
  */
@@ -178,7 +178,7 @@
  */
 #define DEFAULT_MESHPIECECOUNT 20
 
-/* these are the parameters for the basic wires (2) that form the mesh 
+/* these are the parameters for the basic wires (2) that form the mesh
  * object.  there are only two wires, and it is translated across the
  * span of the mesh when the mesh is generated.
  *   the name and radius of the wire may be set.
@@ -186,7 +186,7 @@
  *     given angle.
  *   this angle may be respectively set, as may the name of the wire
  *     segments.
- *   the material properties of the wire be specified by material, 
+ *   the material properties of the wire be specified by material,
  *     parameters, and color
  *   the length of the wire segments and the amount of distance that
  *     that the wire twists back may also be adjusted through segment

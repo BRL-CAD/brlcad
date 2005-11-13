@@ -50,7 +50,7 @@ void rise_dispatcher_generate(common_db_t *db, void *data, int data_len) {
   work.format = COMMON_BIT_DEPTH_128;
   for(i = 0; i < db->env.img_vh; i += db->env.tile_w) {
     for(n = 0; n < db->env.img_vw; n += db->env.tile_h) {
-      /* 
+      /*
       * Check to see if the alpha component of the rise_image_raw is high or low.
       * If the alpha value is low then this tile will get batched for computing.
       */

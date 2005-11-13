@@ -28,10 +28,10 @@
  *
  *  Author -
  *	Christopher Sean Morrison
- *  
+ *
  *  Source -
  *	BRL-CAD Open Source
- *  
+ *
  *  $Header$
  */
 
@@ -45,7 +45,7 @@
 #include <math.h>
 
 /* machine definitions such as smp parameters.  this header will
- * eventually go away. 
+ * eventually go away.
  */
 #include "machine.h"
 

@@ -19,12 +19,12 @@
  * information.
  */
 /** @file double-asc.c
- *  
+ *
  *  		Take a stream of IEEE doubles and make them ASCII
- *  
+ *
  *  Author -
  *	Paul Tanenbaum
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
@@ -81,7 +81,7 @@ get_args(int argc, register char **argv)
 {
     register int ch;
 
-    while ((ch = getopt(argc, argv, OPT_STRING)) != EOF)
+    while ((ch = bu_getopt(argc, argv, OPT_STRING)) != EOF)
     {
 	switch (ch)
 	{
@@ -98,15 +98,15 @@ get_args(int argc, register char **argv)
 		break;
 	    case 's':
 		/* square file size */
-		file_height = file_width = atol(optarg);
+		file_height = file_width = atol(bu_optarg);
 		autosize = 0;
 		break;
 	    case 'n':
-		file_height = atol(optarg);
+		file_height = atol(bu_optarg);
 		autosize = 0;
 		break;
 	    case 'w':
-		file_width = atol(optarg);
+		file_width = atol(bu_optarg);
 		autosize = 0;
 		break;
 	    /*
@@ -119,11 +119,11 @@ get_args(int argc, register char **argv)
 		if (format != 0)
 		    bu_free(format, "format_string");
 		format = (char *)
-			    bu_malloc(strlen(optarg) + 1, "format string");
-		strcpy(format, optarg);
+			    bu_malloc(strlen(bu_optarg) + 1, "format string");
+		strcpy(format, bu_optarg);
 		break;
 	    case '#':
-		d_per_l = atoi(optarg);
+		d_per_l = atoi(bu_optarg);
 		break;
 	    case '?':
 	    default:
@@ -138,14 +138,14 @@ get_args(int argc, register char **argv)
     /*
      *	Establish the input stream
      */
-    switch (argc - optind)
+    switch (argc - bu_optind)
     {
 	case 0:
 	    file_name = "stdin";
 	    infd = 0;
 	    break;
 	case 1:
-	    file_name = argv[optind++];
+	    file_name = argv[bu_optind++];
 	    if ((infd = open(file_name, O_RDONLY)) == -1)
 	    {
 		bu_log ("Cannot open file '%s'\n", file_name);
@@ -158,7 +158,7 @@ get_args(int argc, register char **argv)
 	    exit (1);
     }
 
-    if (argc > ++optind)
+    if (argc > ++bu_optind)
     {
 	print_usage();
 	exit (1);

@@ -26,12 +26,12 @@
  *  Author -
  *	Robert Reschly
  *	Phillip Dykstra
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5066
- *  
+ *
  */
 #ifndef lint
 static const char RCSid[] = "@(#)$Header$ (BRL)";
@@ -50,6 +50,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 #include <ctype.h>
 #include "machine.h"
+#include "bu.h"
 #include "fb.h"
 
 static char *nextsym(register char *b, register char *cp);

@@ -195,7 +195,7 @@ void tie_prep(tie_t *tie) {
  * Shoot a ray at some triangles
  *
  * The user-provided hitfunc is called at each ray/triangle intersection.
- * Calls are guaranteed to be made in the ray-intersection order.  
+ * Calls are guaranteed to be made in the ray-intersection order.
  * The last argument (void *ptr) is passed to the hitfunc as-is, to allow
  * application specific data to be passed to the hitfunc.
  *
@@ -204,7 +204,7 @@ void tie_prep(tie_t *tie) {
  * @param id the intersection data for each intersection
  * @param hitfunc the application routine to be called upon ray/triangle intersection.
  * This function should return 0 if the ray is to continue propagating through the geometry,
- * or non-zero if ray intersection should cease.  
+ * or non-zero if ray intersection should cease.
  * @param ptr a pointer to be passed to the hitfunc when it is called.
  *
  * @return the return value from the user hitfunc() is used.
@@ -367,7 +367,7 @@ void* tie_work(tie_t *tie, tie_ray_t *ray, tie_id_t *id, void *(*hitfunc)(tie_ra
         continue;
 
       /* Triangle Intersected, append it in the list */
-      if(hit_count < 250) {
+      if(hit_count < 0xff) {
         hit_list[hit_count] = tri;
         id_list[hit_count] = t;
         hit_count++;
@@ -438,7 +438,7 @@ void tie_push(tie_t *tie, TIE_3 *tlist, int tnum, void *plist, int pstride) {
     tie->tri_list[tie->tri_num].data[2] = tlist[i*3+2];
     if(plist) {
       tie->tri_list[tie->tri_num].ptr = plist;
-      plist += pstride;
+      plist = (void *)((intptr_t)plist + pstride);
     } else {
       tie->tri_list[tie->tri_num].ptr = NULL;
     }

@@ -32,11 +32,11 @@
  *
  *  Author -
  *	Michael John Muuss
- *  
+ *
  *  Source -
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
- *  
+ *
  *
  *  Inspired by -
  *	Roy Hall and his book "Illumination and Color in Computer
@@ -868,7 +868,7 @@ bn_tabdata_resample_avg(const struct bn_table *newtable, const struct bn_tabdata
 }
 
 /*
- *			B N _ T A B L E _ W R I T E 
+ *			B N _ T A B L E _ W R I T E
  *
  *  Write out the table structure in an ASCII file,
  *  giving the number of values (minus 1), and the

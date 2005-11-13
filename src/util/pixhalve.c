@@ -29,7 +29,7 @@
  *
  *  Author -
  *	Michael John Muuss
- *  
+ *
  *  Source -
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
@@ -75,7 +75,7 @@ get_args(int argc, register char **argv)
 {
 	register int c;
 
-	while ( (c = getopt( argc, argv, "ahs:w:n:" )) != EOF )  {
+	while ( (c = bu_getopt( argc, argv, "ahs:w:n:" )) != EOF )  {
 		switch( c )  {
 		case 'a':
 			autosize = 1;
@@ -87,11 +87,11 @@ get_args(int argc, register char **argv)
 			break;
 		case 's':
 			/* square file size */
-			file_width = atol(optarg);
+			file_width = atol(bu_optarg);
 			autosize = 0;
 			break;
 		case 'w':
-			file_width = atol(optarg);
+			file_width = atol(bu_optarg);
 			autosize = 0;
 			break;
 		case 'n':
@@ -103,13 +103,13 @@ get_args(int argc, register char **argv)
 		}
 	}
 
-	if( optind >= argc )  {
+	if( bu_optind >= argc )  {
 		if( isatty(fileno(stdin)) )
 			return(0);
 		file_name = "-";
 		infp = stdin;
 	} else {
-		file_name = argv[optind];
+		file_name = argv[bu_optind];
 		if( (infp = fopen(file_name, "r")) == NULL )  {
 			perror(file_name);
 			(void)fprintf( stderr,
@@ -120,7 +120,7 @@ get_args(int argc, register char **argv)
 		fileinput++;
 	}
 
-	if ( argc > ++optind )
+	if ( argc > ++bu_optind )
 		(void)fprintf( stderr, "pixhalve: excess argument(s) ignored\n" );
 
 	return(1);		/* OK */
@@ -251,8 +251,8 @@ separate(register int *rop, register int *gop, register int *bop, register unsig
             	     			/* Y */
             	     			/* U */
             	     			/* V */
-                      	    
-   		    
+
+
 {
 	register long int 	i;
 	register int	r, g, b;

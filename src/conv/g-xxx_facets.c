@@ -27,7 +27,7 @@
  *  Authors -
  *	Charles M. Kennedy
  *	John R. Anderson
- *  
+ *
  *  Source -
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5068
@@ -177,7 +177,7 @@ char	*argv[];
 	/* Open output file */
 
 
-	/* Open brl-cad database */
+	/* Open BRL-CAD database */
 	argc -= optind;
 	argv += optind;
 	if ((dbip = db_open(argv[0], "r")) == DBI_NULL) {
@@ -359,11 +359,11 @@ genptr_t		client_data;
 			/* Error, bail out */
 			char *sofar;
 			BU_UNSETJUMP;		/* Relinquish the protection */
-			
+
 			sofar = db_path_to_string(pathp);
 	                bu_log( "FAILED in Boolean evaluation: %s\n", sofar );
                         bu_free( (char *)sofar, "sofar" );
-                                
+
 			/* Sometimes the NMG library adds debugging bits when
 			 * it detects an internal error, before rt_bomb().
 			 */
@@ -464,7 +464,7 @@ genptr_t		client_data;
 				{
 					bu_log("WARNING: tsp->ts_m pointer corrupted, ignoring it.\n");
 				}
-			
+
 				/* Now, make a new, clean model structure for next pass. */
 				*tsp->ts_m = nmg_mm();
 				goto out;

@@ -7,15 +7,15 @@ and a slave.  To generate a framework that RISE can use, look at the
 g-adrt converter.  g-adrt takes a .g file containing bots and creates an
 ADRT framework.
 
-Since RISE is used for generating images, the observer is only supplied 
-to check up on the images progress, which is especially useful for time 
+Since RISE is used for generating images, the observer is only supplied
+to check up on the images progress, which is especially useful for time
 consuming renderings.
 
-Running configure with --enable-optimized is very important as it will 
+Running configure with --enable-optimized is very important as it will
 affect performance by almost doubling it.
 
-To learn more about how the structure of a project file and what 
-geometry files you can feed to isst or rise please check the doc 
+To learn more about how the structure of a project file and what
+geometry files you can feed to isst or rise please check the doc
 directory.
 
 For additional help please check out the #brlcad channel on IRC (freenode).

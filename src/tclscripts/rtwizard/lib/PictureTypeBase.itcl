@@ -34,7 +34,7 @@ package require Itk
 package require Iwidgets
 
 namespace eval RtWizard {
-  
+
     package provide PictureTypeBase 1.0
 
     #
@@ -55,7 +55,7 @@ namespace eval RtWizard {
 	    # These methods handle when a picture type is chosen
 	    # or replaced.
 	    #
-	    method activate {}	    
+	    method activate {}
 	    method deactivate {}
 
 	    #
@@ -78,11 +78,11 @@ namespace eval RtWizard {
 	    }
 
 	    #
-	    # These methods generate pictures. They query the 
+	    # These methods generate pictures. They query the
 	    # individual pages for the information they need.
 	    #
 	    method preview {}
-	    method fullSize {} 
+	    method fullSize {}
 	}
 
 	protected {
@@ -101,18 +101,18 @@ namespace eval RtWizard {
 	    variable introText
 	    variable startPage
 	}
-	
-	private { 
+
+	private {
 	    method runRtCmd {cmd {viewInfo {}}}
 	    method testRead {pipe}
-	    
+
 	    variable waiting ""
 	}
     }
 
     #--------------------#
     #   Public Methods   #
-    #--------------------#    
+    #--------------------#
     #
     # constructor - Loads all of the information necessary
     #               to support this image type. This includes
@@ -129,7 +129,7 @@ namespace eval RtWizard {
 	}
 
 	#
-	# The support directory name is the same as the 
+	# The support directory name is the same as the
 	# class type.
 	#
 
@@ -164,14 +164,14 @@ namespace eval RtWizard {
 
 	#
 	# Load the text that describes the sample.
-	#	
+	#
 	set tmpFile [file join $dir desc.txt]
 	set fd [open $tmpFile r]
 	set descText [read -nonewline $fd]
 	close $fd
 
 	#
-	# Load the help string. 
+	# Load the help string.
 	#
 	set tmpFile [file join $dir helpstr.txt]
 	set fd [open $tmpFile r]
@@ -179,7 +179,7 @@ namespace eval RtWizard {
 	close $fd
 
 	#
-	# Load the introtext. 
+	# Load the introtext.
 	#
 	set tmpFile [file join $dir intro.txt]
 	set fd [open $tmpFile r]
@@ -227,7 +227,7 @@ namespace eval RtWizard {
     # Protected Methods #
     #-------------------#
     #
-    # rtCmd - formats an rt command to generate a picture. 
+    # rtCmd - formats an rt command to generate a picture.
     #         Width, height, and framebuffer are passed in
     #         because they differ for fullSize and preview
     #
@@ -242,7 +242,7 @@ namespace eval RtWizard {
 	# Get the view info
 	#
 	set viewInfo [$viewPage getEyeModel]
-	
+
 	#
 	# Get the background color
 	#
@@ -261,7 +261,7 @@ namespace eval RtWizard {
 	set ar [ expr $width.0 / $height.0 ]
 
 	#
-	# Assemble the rt command - note that it is a 
+	# Assemble the rt command - note that it is a
 	# full-blown script.
 	#
 	set cmd [list rt -M -R -F $fb -w $width \
@@ -277,7 +277,7 @@ namespace eval RtWizard {
     }
 
     #
-    # rtedgeCmd - formats an rtedge command to generate a picture. 
+    # rtedgeCmd - formats an rtedge command to generate a picture.
     #
     itcl::body PictureTypeBase::rtedgeCmd \
 	    {objPage fb width height \
@@ -328,13 +328,13 @@ namespace eval RtWizard {
 	}
 
 	#
-	# Assemble the rtedge command - note that it is a 
+	# Assemble the rtedge command - note that it is a
 	# full-blown script.
 	#
 	if {$occMode != 0} {
 	    #
 	    # If required, get occlusion objects
-	    #	    
+	    #
 	    set occObjects [$occObjsPage getObjects]
 
 	    set cmd [list rtedge -M -R -F $fb -w $width \
@@ -352,7 +352,7 @@ namespace eval RtWizard {
 		    -c "set bg=[lindex $nl 0],[lindex $nl 1],[lindex $nl 2]" \
 		    -c "set ov=$overlay" \
 		    $::RtWizard::dbFile]
-	}	
+	}
 
 	#
 	# Add the objects
@@ -367,7 +367,7 @@ namespace eval RtWizard {
 
 
     #
-    # hexToRGB - converts an RGB color in hex #rrggbb format to 
+    # hexToRGB - converts an RGB color in hex #rrggbb format to
     #            decimal {rrr ggg bbb} format
     #
     itcl::body PictureTypeBase::hexToRGB {hexRGB} {
@@ -375,7 +375,7 @@ namespace eval RtWizard {
 	scan [string range $hexRGB 1 2] "%x" redDec
 	scan [string range $hexRGB 3 4] "%x" greenDec
 	scan [string range $hexRGB 5 6] "%x" blueDec
-	
+
 	return [list $redDec $greenDec $blueDec]
     }
 
@@ -414,7 +414,7 @@ namespace eval RtWizard {
     # TestRead - pipe fileevent callback
     #
     itcl::body PictureTypeBase::testRead {pipe} {
-	
+
 	set waiting "Done"
     }
 }; # end namespace

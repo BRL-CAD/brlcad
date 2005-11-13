@@ -4,7 +4,7 @@
 echo $MAJOR $MINOR $PATCH
 
 # start the build
-case $MYNAME in 
+case $MYNAME in
 wopr)
     export CONF_FLAGS="" ;
     export MAKE_CMD="make" ;

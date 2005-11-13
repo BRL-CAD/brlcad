@@ -29,7 +29,7 @@
  *
  *  Author -
  *	Lee A. Butler
- *  
+ *
  *  Source -
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
@@ -240,10 +240,10 @@ struct mfuncs noise_mfuncs[] = {
  */
 HIDDEN int
 noise_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip)
-                      	    
-             		         
+
+
     			      	/* pointer to reg_udata in *rp */
-             		     
+
            		      	/* New since 4.4 release */
 {
 	register struct noise_specific	*noise_sp;
@@ -309,7 +309,7 @@ found:
 
 	bn_mat_inv(noise_sp->sh_to_m, noise_sp->m_to_sh);
 
-	noise_sp->nsd = 1.0 / 
+	noise_sp->nsd = 1.0 /
 		pow(noise_sp->lacunarity, noise_sp->octaves);
 
 	if (rdebug&RDEBUG_SHADE) {
@@ -346,12 +346,12 @@ noise_free(char *cp)
  */
 static void
 norm_noise(fastf_t *pt, double val, struct noise_specific *noise_sp, double (*func) (/* ??? */), struct shadework *swp, int rescale)
-           
-           
-                                
-                 
+
+
+
+
                 	     	/* defined in material.h */
-            
+
 {
 	vect_t N, tmp;
 	point_t u_pt, v_pt;
@@ -391,7 +391,7 @@ norm_noise(fastf_t *pt, double val, struct noise_specific *noise_sp, double (*fu
 
 	if (rescale) RESCALE_NOISE(v_val);
 
-	/* construct normal rotation about U and V vectors based upon 
+	/* construct normal rotation about U and V vectors based upon
 	 * variation in surface in each direction.  Apply the result to
 	 * the surface normal.
 	 */
@@ -422,8 +422,8 @@ norm_noise(fastf_t *pt, double val, struct noise_specific *noise_sp, double (*fu
  */
 int
 fractal_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp)
-                  	    
-                	    
+
+
                 	     	/* defined in material.h */
     			    	/* ptr to the shader-specific struct */
 {
@@ -440,14 +440,14 @@ fractal_render(struct application *ap, struct partition *pp, struct shadework *s
 	if (rdebug&RDEBUG_SHADE)
 		bu_struct_print( "noise_render Parameters:", noise_print_tab, (char *)noise_sp );
 
-	/* If we are performing the shading in "region" space, we must 
+	/* If we are performing the shading in "region" space, we must
 	 * transform the hit point from "model" space to "region" space.
 	 * See the call to db_region_mat in noise_setup().
 	 */
 	MAT4X3PNT(pt, noise_sp->m_to_sh, swp->sw_hit.hit_point);
 
 	if (rdebug&RDEBUG_SHADE) {
-		bu_log("%s:%d noise_render(%s)  model:(%g %g %g) shader:(%g %g %g)\n", 
+		bu_log("%s:%d noise_render(%s)  model:(%g %g %g) shader:(%g %g %g)\n",
 		__FILE__, __LINE__,
 		noise_mfuncs[noise_sp->shader_number].mf_name,
 		V3ARGS(swp->sw_hit.hit_point),

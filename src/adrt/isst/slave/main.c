@@ -63,7 +63,7 @@ int main(int argc, char **argv) {
 
   /* Parse command line options */
 
-  while((c = 
+  while((c =
 #ifdef HAVE_GETOPT_LONG
 	getopt_long(argc, argv, shortopts, longopts, NULL)
 #else

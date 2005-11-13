@@ -19,7 +19,7 @@
 # information.
 #
 ###
-#			S O L C R E A T E . T C L 
+#			S O L C R E A T E . T C L
 #
 # Author -
 #	Glenn Durfee
@@ -27,7 +27,7 @@
 # Source -
 #	The U. S. Army Ballistic Research Laboratory
 #	Aberdeen Proving Ground, Maryland  21005
-#  
+#
 #
 #
 # Description -
@@ -62,7 +62,7 @@ set solc(default_tgc)  {V {0 0 0} H {0 0 4} A {1 0 0} B {0 .5 0} \
 set solc(descr_rec)  "Right Elliptical Cylinder"
 set solc(default_rec)  {V {0 0 0} H {0 0 4} A {1 0 0} B {0 .5 0} \
 	C {1 0 0} D {0 .5 0}}
-set solc(descr_half) "Halfspace"		 
+set solc(descr_half) "Halfspace"
 set solc(default_half) {N {0 0 1} d -1}
 set solc(descr_rpc)  "Right Parabolic Cylinder"
 set solc(default_rpc)  {V {-1 -1 -1.5} H {0 0 1} B {0 .5 0} r .25}
@@ -73,7 +73,7 @@ set solc(default_epa)  {V {-1 -1 -1.5} H {0 0 1} A {0 1 0} r_1 .5 r_2 .25}
 set solc(descr_ehy)  "Right Hyperbolic Cylinder"
 set solc(default_ehy)  {V {-1 -1 -1.5} H {0 0 1} A {0 1 0} r_1 .5 r_2 .25 \
 	                 c .25}
-set solc(descr_eto)  "Elliptical Torus"		 
+set solc(descr_eto)  "Elliptical Torus"
 set solc(default_eto)  {V {-1 -1 -1} N {0 0 1} C {.1 0 .1} r .5 r_d .05}
 set solc(descr_part) "Particle Primitive"
 set solc(default_part) {V {-1 -1 -.5} H {0 0 1} r_v 0.5 r_h 0.25}
@@ -133,7 +133,7 @@ proc solcreate { id args } {
     frame $w.b
 
     pack $w.t $w.m $w.b -side top -fill x -expand yes
-    
+
     # Top frame contains two frames: l (left) and r (right)
     # Left one is for labels and right one is for entry boxes
 
@@ -178,7 +178,7 @@ proc solcreate { id args } {
     entry $w.t.r.index    -relief sunken -width 16 -textvar $solc($w,indexvar)
     entry $w.t.r.oper     -relief sunken -width 16 -textvar solc($w,oper)
     entry $w.t.r.type     -relief sunken -width 16 -textvar solc($w,type)
-    
+
     bind $w.t.r.indexvar <Return> "solc_newvar $w"
     bind $w.t.r.type     <Return> "solc_defaults $w $w.m"
 
@@ -206,7 +206,7 @@ proc solc_list { w id } {
     global solc
     global $solc($w,indexvar)
     global mged_gui
-    
+
     catch { destroy $w.slist }
     toplevel $w.slist -screen $mged_gui($id,screen)
     wm title $w.slist "Primitive type list"
@@ -250,7 +250,7 @@ proc solc_newvar { w } {
 proc solc_accept { w } {
     global solc
     global $solc($w,indexvar)
-    
+
     $w.accept configure -state disabled
     $w.b.create configure -state normal
     press accept
@@ -270,7 +270,7 @@ proc solc_quit { w } {
 proc solc_create { w } {
     global solc
     global $solc($w,indexvar)
-    
+
     # Perform the formatting of the "name format" supplied by the user
     set name [eval list $solc($w,format)]
 
@@ -313,7 +313,7 @@ proc solc_defaults { w wfr } {
 
     label $wfr.header -text "Default values"
     pack $wfr.header -side top -fill x -expand yes -anchor c
-    
+
     set form [db form $solc($w,type)]
     set len [llength $form]
 
@@ -333,7 +333,7 @@ proc solc_defaults { w wfr } {
     for { set i 0 } { $i<$len } { incr i } {
 	set attr [lindex $form $i]
 	incr i
-	
+
 	frame $wfr.r.f$attr
 	pack $wfr.r.f$attr -side top -fill x -expand yes
 	set solc($w,do) [eval concat \[set solc($w,do)\] $attr \\\[eval list]

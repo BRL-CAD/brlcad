@@ -35,12 +35,12 @@
  *
  *  Author -
  *	Michael John Muuss
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005
- *  
+ *
  */
 /*@}*/
 
@@ -80,7 +80,7 @@ rt_pr_mater(register struct mater *mp)
 
 /*
  *  			R T _ C O L O R _ A D D R E C
- *  
+ *
  *  Called from db_scan() when initially scanning database.
  */
 void

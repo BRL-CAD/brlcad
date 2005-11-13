@@ -2,7 +2,9 @@
 #include "Python.h"
 #undef HAVE_STAT
 #undef HAVE_TM_ZONE
+#include "isst.h"
 #include "master.h"
+#include "tienet.h"
 
 char *isst_python_response;
 
@@ -21,6 +23,8 @@ static PyObject* isst_python_get_spall_angle(PyObject *self, PyObject* args);
 static PyObject* isst_python_set_spall_angle(PyObject *self, PyObject* args);
 static PyObject* isst_python_save(PyObject *self, PyObject* args);
 static PyObject* isst_python_load(PyObject *self, PyObject* args);
+static PyObject* isst_python_select(PyObject *self, PyObject* args);
+static PyObject* isst_python_deselect(PyObject *self, PyObject* args);
 
 
 static PyMethodDef ISST_Methods[] = {
@@ -34,6 +38,8 @@ static PyMethodDef ISST_Methods[] = {
     {"set_spall_angle", isst_python_set_spall_angle, METH_VARARGS, "set spall angle."},
     {"save", isst_python_save, METH_VARARGS, "save shot."},
     {"load", isst_python_load, METH_VARARGS, "load shot."},
+    {"select", isst_python_select, METH_VARARGS, "select geometry."},
+    {"deselect", isst_python_deselect, METH_VARARGS, "deselect geometry."},
     {NULL, NULL, 0, NULL}
 };
 
@@ -47,7 +53,7 @@ void isst_python_init() {
   PyImport_AddModule("adrt");
   Py_InitModule("adrt", ISST_Methods);
   PyRun_SimpleString("import adrt");
-  
+
 
   /* Redirect the output */
   PyRun_SimpleString("\
@@ -200,3 +206,48 @@ static PyObject* isst_python_load(PyObject *self, PyObject *args) {
 
   return PyInt_FromLong(0);
 }
+
+
+/* Select geometry if mesh name contains string */
+static PyObject* isst_python_select(PyObject *self, PyObject *args) {
+  char *string, mesg[256];
+  uint16_t op;
+  uint8_t c, t;
+
+  if(PyArg_ParseTuple(args, "s", &string)) {
+    op = ISST_OP_SELECT;
+    memcpy(mesg, &op, 2);
+    t = 1;
+    memcpy(&mesg[2], &t, 1);
+    c = strlen(string) + 1;
+    memcpy(&mesg[3], &c, 1);
+    memcpy(&mesg[4], string, c);
+    tienet_master_broadcast(mesg, c + 4);
+  }
+
+  strcpy(isst_python_response, "done.\n");
+  return PyInt_FromLong(0);
+}
+
+
+/* Deselect geometry if mesh name contains string */
+static PyObject* isst_python_deselect(PyObject *self, PyObject *args) {
+  char *string, mesg[256];
+  uint16_t op;
+  uint8_t c, t;
+
+  if(PyArg_ParseTuple(args, "s", &string)) {
+    op = ISST_OP_SELECT;
+    memcpy(mesg, &op, 2);
+    t = 0;
+    memcpy(&mesg[2], &t, 1);
+    c = strlen(string) + 1;
+    memcpy(&mesg[3], &c, 1);
+    memcpy(&mesg[4], string, c);
+    tienet_master_broadcast(mesg, c + 4);
+  }
+
+  strcpy(isst_python_response, "done.\n");
+  return PyInt_FromLong(0);
+}
+

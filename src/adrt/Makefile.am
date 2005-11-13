@@ -26,7 +26,7 @@ endif
 EXTRA_DIST = \
 	acinclude.m4 \
 	AUTHORS \
-	ChangeLog
+	ChangeLog \
 	config.h \
 	configure.ac \
 	COPYING \

@@ -31,6 +31,7 @@ char rcsid[] = "$Header$";
 rlehdr()			Tag the file.
 */
 
+#include <stdlib.h>
 #include <stdio.h>
 #include "rle.h"
 #include "../patchlevel.h"

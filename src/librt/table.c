@@ -26,12 +26,12 @@
  *
  *  Author -
  *	Michael John Muuss
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005
- *  
+ *
  */
 /*@}*/
 
@@ -40,8 +40,6 @@ static const char RCStree[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include "common.h"
-
-
 
 #include <stdio.h>
 #ifdef HAVE_STRING_H
@@ -76,7 +74,7 @@ const struct bu_structparse rt_nul_parse[] = {
 			struct rt_piecestate *psp, \
 			struct rt_piecelist *plp, \
 			double dist_corr, \
-			register struct xray *rp, \
+			struct xray *rp, \
 			struct application *ap, \
 			struct seg *seghead )); \
 	BU_EXTERN(void rt_##name##_piece_hitsegs, (\
@@ -144,7 +142,8 @@ const struct bu_structparse rt_nul_parse[] = {
 	BU_EXTERN(int rt_/**/name/**/_piece_shot, (\
 			struct rt_piecestate *psp, \
 			struct rt_piecelist *plp, \
-			struct soltab *stp, struct xray *rp, \
+			double dist_corr, \
+			struct xray *rp, \
 			struct application *ap, \
 			struct seg *seghead )); \
 	BU_EXTERN(void rt_/**/name/**/_piece_hitsegs, (\
@@ -176,15 +175,18 @@ const struct bu_structparse rt_nul_parse[] = {
 			struct model *m, struct rt_db_internal *ip, \
 			const struct bn_tol *tol)); \
 	BU_EXTERN(int rt_/**/name/**/_import5, (struct rt_db_internal *ip, \
-			const struct bu_external *ep, const mat_t mat, const struct db_i *dbip, const int minor_type )); \
+			const struct bu_external *ep, const mat_t mat, \
+			const struct db_i *dbip, struct resource *resp, const int minor_type )); \
 	BU_EXTERN(int rt_/**/name/**/_export5, (struct bu_external *ep, \
 			const struct rt_db_internal *ip, \
-			double local2mm, const struct db_i *dbip, const int minor_type )); \
+			double local2mm, const struct db_i *dbip, struct resource *resp, \
+			const int minor_type )); \
 	BU_EXTERN(int rt_/**/name/**/_import, (struct rt_db_internal *ip, \
-			const struct bu_external *ep, const mat_t mat, const struct db_i *dbip )); \
+			const struct bu_external *ep, const mat_t mat, \
+			const struct db_i *dbip, struct resource *resp )); \
 	BU_EXTERN(int rt_/**/name/**/_export, (struct bu_external *ep, \
 			const struct rt_db_internal *ip, \
-			double local2mm, const struct db_i *dbip )); \
+			double local2mm, const struct db_i *dbip, struct resource *resp )); \
 	BU_EXTERN(void rt_/**/name/**/_ifree, (struct rt_db_internal *ip, \
 			struct resource *resp)); \
 	BU_EXTERN(int rt_/**/name/**/_describe, (struct bu_vls *str, \
@@ -198,7 +200,7 @@ const struct bu_structparse rt_nul_parse[] = {
 	extern const struct bu_structparse rt_/**/name/**/_parse[];
 #endif
 
-/* Note:  no semi-colons at the end of these, please */	
+/* Note:  no semi-colons at the end of these, please */
 RT_DECLARE_INTERFACE(nul)
 
 #define rt_tor_xform rt_generic_xform
@@ -475,7 +477,7 @@ BU_EXTERN(void rt_vstub, (struct soltab *stp[], struct xray *rp[],
 	struct seg segp[], int n, struct application *ap ));
 
 /* From here in table.c */
-BU_EXTERN(int rt_generic_xform, (struct rt_db_internal *op, 
+BU_EXTERN(int rt_generic_xform, (struct rt_db_internal *op,
 	const mat_t mat, struct rt_db_internal *ip,
 	int free, struct db_i *dbip, struct resource *resp));
 
@@ -555,7 +557,7 @@ const struct rt_functab rt_functab[] = {
 		rt_tor_import5, rt_tor_export5,
 		rt_tor_import,	rt_tor_export,	rt_tor_ifree,
 		rt_tor_describe,rt_tor_xform,	rt_tor_parse,
-		sizeof(struct rt_tor_internal),	RT_TOR_INTERNAL_MAGIC,	
+		sizeof(struct rt_tor_internal),	RT_TOR_INTERNAL_MAGIC,
 		rt_parsetab_tclget, rt_parsetab_tcladjust, rt_parsetab_tclform,
 		NULL,
 	},
@@ -894,7 +896,7 @@ const struct rt_functab rt_functab[] = {
 		rt_dsp_import,	rt_dsp_export,	rt_dsp_ifree,
 		rt_dsp_describe,rt_dsp_xform,	rt_dsp_parse,
 		sizeof(struct rt_dsp_internal), RT_DSP_INTERNAL_MAGIC,
-	        rt_dsp_tclget,  rt_dsp_tcladjust, rt_nul_tclform, 
+	        rt_dsp_tclget,  rt_dsp_tcladjust, rt_nul_tclform,
 	        rt_dsp_make,
 	},
 

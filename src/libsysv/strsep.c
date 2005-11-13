@@ -2,7 +2,7 @@
  *			S T R S E P . C
  *
  * Copyright (c) 1990, 1993
- *The Regents of the University of California.  All rights reserved.
+ * The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -35,6 +35,9 @@
 
 #include "common.h"
 
+
+/* quell empty-compilation unit warnings */
+static const int unused = 0;
 
 /*
  *  This BSD version of strsep() is made available to systems that

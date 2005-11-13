@@ -19,7 +19,7 @@
  * information.
  */
 /** @file mater.c
- *  
+ *
  *  Code to deal with establishing and maintaining the tables which
  *  map region ID codes into worthwhile material information
  *  (colors and outboard database "handles").
@@ -32,7 +32,7 @@
  *
  *  Author -
  *	Michael John Muuss
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
@@ -44,14 +44,16 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "common.h"
 
-
-
 #include <stdio.h>
 #ifdef HAVE_STRING_H
-#include <string.h>
+#  include <string.h>
 #else
-#include <strings.h>
+#  include <strings.h>
 #endif
+#ifdef HAVE_UNISTD_H
+#  include <unistd.h>
+#endif
+
 #include "machine.h"
 #include "vmath.h"
 #include "db.h"
@@ -81,7 +83,7 @@ static char	*tmpfil_init = "c:\\GED.aXXXXXX";
 
 /*
  *  			F _ E D C O L O R
- *  
+ *
  *  Print color table in easy to scanf() format,
  *  invoke favorite text editor to allow user to
  *  fiddle, then reload incore structures from file,
@@ -224,7 +226,7 @@ f_edcolor(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
 /*
  *  			C O L O R _ P U T R E C
- *  
+ *
  *  Used to create a database record and get it written out to a granule.
  *  In some cases, storage will need to be allocated.
  */
@@ -263,7 +265,7 @@ color_putrec(register struct mater *mp)
 
 /*
  *  			C O L O R _ Z A P R E C
- *  
+ *
  *  Used to release database resources occupied by a material record.
  */
 void

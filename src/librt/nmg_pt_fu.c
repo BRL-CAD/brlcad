@@ -26,7 +26,7 @@
  *
  *  Author -
  *	Lee A. Butler
- *  
+ *
  *  Source -
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
@@ -45,7 +45,7 @@
 #include "plot3.h"
 
 
-/* vertex/edge distance 
+/* vertex/edge distance
  * Each loop geometry element (edge/vertex) has one of these computed.
  * We keep track of them for the whole face so that this value is computed
  * only once per geometry element.  This way we get consistent answers
@@ -210,7 +210,7 @@ bn_distsq_pt3_lseg3(fastf_t *dist, const fastf_t *a, const fastf_t *b, const fas
 
 
 /**
- *	N M G _ C L A S S _ P T _ V U 
+ *	N M G _ C L A S S _ P T _ V U
  *
  *	Classify a point vs a vertex (touching/missed)
  */
@@ -274,10 +274,10 @@ struct edge_info *ei;
 	static int plot_file_number=0;
 	struct bn_tol tmp_tol;
 
-	NMG_CK_FPI(fpi);	
+	NMG_CK_FPI(fpi);
 	NMG_CK_FACEUSE(fpi->fu_p);
 	NMG_CK_EI(ei);
-	
+
 	sprintf(name, "pt_e%02d.pl", plot_file_number++);
 	if ((fd=fopen(name, "w")) == (FILE *)NULL) {
 		perror(name);
@@ -296,7 +296,7 @@ struct edge_info *ei;
 		fpi->fu_p->f_p->max_pt[0]+1.0,
 		fpi->fu_p->f_p->max_pt[1]+1.0,
 		fpi->fu_p->f_p->max_pt[2]+1.0);
-	
+
 	nmg_pl_eu(fd, ei->eu_p, b, 255, 255, 255);
 
         tmp_tol.magic = BN_TOL_MAGIC;
@@ -626,7 +626,7 @@ nmg_class_pt_eu(struct fpi *fpi, struct edgeuse *eu, struct edge_info *edge_list
 	vect_t		v_to_pt;
 	int		found_data = 0;
 
-	NMG_CK_FPI(fpi);	
+	NMG_CK_FPI(fpi);
 	BN_CK_TOL(fpi->tol);
 
 	if (rt_g.NMG_debug & DEBUG_PT_FU) {
@@ -658,7 +658,7 @@ nmg_class_pt_eu(struct fpi *fpi, struct edgeuse *eu, struct edge_info *edge_list
 			 * of the edge.
 			 */
 			if (rt_g.NMG_debug & DEBUG_PT_FU) {
-				register struct vertex *v_p = 
+				register struct vertex *v_p =
 					(struct vertex *)ed->magic_p;
 				bu_log ("vertex (%g %g %g) of edge previously touched\n",
 					V3ARGS(v_p->vg_p->coord));
@@ -880,7 +880,7 @@ HIDDEN void make_near_list( struct edge_info *edge_list, struct bu_list *near1)
 	NMG_CK_EI(ei);
 	NMG_CK_VED(ei->ved_p);
 	dist = ei->ved_p->dist;
-	
+
 	/* create "near" list with all ei's at this dist */
 	for (BU_LIST_FOR(ei, edge_info, &edge_list->l)) {
 		NMG_CK_EI(ei);
@@ -905,7 +905,7 @@ HIDDEN void make_near_list( struct edge_info *edge_list, struct bu_list *near1)
 			V3ARGS(ei->ved_p->v1->vg_p->coord),
 			V3ARGS(ei->ved_p->v2->vg_p->coord));
 			bu_log( "\tei->ved_p->magic_p=x%x, ei->eu_p->vu_p=x%x, ei->eu_p->eumate_p->vu_p=x%x\n",
-				ei->ved_p->magic_p, ei->eu_p->vu_p, ei->eu_p->eumate_p->vu_p );	
+				ei->ved_p->magic_p, ei->eu_p->vu_p, ei->eu_p->eumate_p->vu_p );
 		}
 	}
 }
@@ -927,7 +927,7 @@ pl_pt_lu(struct fpi *fpi, const struct loopuse *lu, struct edge_info *ei)
 	fastf_t dist;
 	struct bn_tol tmp_tol;
 
-	NMG_CK_FPI(fpi);	
+	NMG_CK_FPI(fpi);
 	NMG_CK_FACEUSE(fpi->fu_p);
 	NMG_CK_LOOPUSE(lu);
 	NMG_CK_EI(ei);
@@ -950,7 +950,7 @@ pl_pt_lu(struct fpi *fpi, const struct loopuse *lu, struct edge_info *ei)
 		fpi->fu_p->f_p->max_pt[0]+1.0,
 		fpi->fu_p->f_p->max_pt[1]+1.0,
 		fpi->fu_p->f_p->max_pt[2]+1.0);
-	
+
 	nmg_pl_lu(fd, lu, b, 255, 255, 255);
 
         tmp_tol.magic = BN_TOL_MAGIC;
@@ -992,7 +992,7 @@ pl_pt_lu(struct fpi *fpi, const struct loopuse *lu, struct edge_info *ei)
  */
 
 static int
-compute_loop_class(struct fpi *fpi, 
+compute_loop_class(struct fpi *fpi,
 		   const struct loopuse *lu,
 		   struct edge_info *edge_list)
 {
@@ -1021,10 +1021,10 @@ bu_log("dist:%g class:%s status:%d\n\tv1(%g %g %g) v2(%g %g %g)\n",
 	while (BU_LIST_IS_EMPTY(&near1) && BU_LIST_NON_EMPTY(&edge_list->l)) {
 		make_near_list(edge_list, &near1);
 	}
-	
+
 	if (BU_LIST_IS_EMPTY(&near1)) {
 		/* This was a "crack" or "snake" loop */
-		
+
 		if (lu->orientation == OT_SAME) {
 			lu_class = NMG_CLASS_AoutB;
 		} else if (lu->orientation == OT_OPPOSITE) {
@@ -1033,7 +1033,7 @@ bu_log("dist:%g class:%s status:%d\n\tv1(%g %g %g) v2(%g %g %g)\n",
 			rt_bomb("bad lu orientation\n");
 
 		if (rt_g.NMG_debug & DEBUG_PT_FU ) {
-			bu_log("list was empty, so class is %s\n", 
+			bu_log("list was empty, so class is %s\n",
 				nmg_class_name(lu_class));
 		}
 		goto departure;
@@ -1058,7 +1058,7 @@ bu_log("dist:%g class:%s status:%d\n\tv1(%g %g %g) v2(%g %g %g)\n",
 		case 5: /* pt pca between v1 and v2 */
 			lu_class = ei->class;
 			if (rt_g.NMG_debug & DEBUG_PT_FU ) {
-				bu_log("found status 5 edge, loop class is %s\n", 
+				bu_log("found status 5 edge, loop class is %s\n",
 					nmg_class_name(lu_class));
 			}
 			if (rt_g.NMG_debug & DEBUG_PT_FU )
@@ -1088,9 +1088,9 @@ departure:
 		BU_LIST_DEQUEUE( &ei->l );
 		bu_free( (char *)ei, "edge_info struct");
 	}
-	
+
 	if (rt_g.NMG_debug & DEBUG_PT_FU ) {
-		bu_log("compute_loop_class() returns %s\n", 
+		bu_log("compute_loop_class() returns %s\n",
 			nmg_class_name(lu_class));
 	}
 
@@ -1122,7 +1122,7 @@ departure:
  *		classify pt WRT remaining edgeuse
  *
  * The "C-clamp" problem:
- *	*---------------* 
+ *	*---------------*
  *	|		|
  *	|  *----*	|
  *	|  |	|   .	|
@@ -1130,7 +1130,7 @@ departure:
  *	|  |	|	|
  *	|  *----*	|
  *	|		|
- *	*---------------* 
+ *	*---------------*
  *
  */
 static int
@@ -1161,7 +1161,7 @@ nmg_class_pt_lu(struct loopuse *lu, struct fpi *fpi, const int in_or_out_only)
 			return NMG_CLASS_AinB;
 		else if (lu->orientation == OT_UNSPEC)
 			return NMG_CLASS_Unknown;
-			
+
 	}
 
 	if (BU_LIST_FIRST_MAGIC(&lu->down_hd) == NMG_EDGEUSE_MAGIC) {
@@ -1259,7 +1259,7 @@ static void
 plot_parity_error(const struct faceuse *fu, const fastf_t *pt)
 {
 	long *b;
-	FILE *fp; 
+	FILE *fp;
 	point_t p1, p2;
 	int i;
 
@@ -1333,15 +1333,15 @@ plot_parity_error(const struct faceuse *fu, const fastf_t *pt)
  */
 int
 nmg_class_pt_fu_except(const fastf_t *pt, const struct faceuse *fu, const struct loopuse *ignore_lu, void (*eu_func) (/* ??? */), void (*vu_func) (/* ??? */), const char *priv, const int call_on_hits, const int in_or_out_only, const struct bn_tol *tol)
-                 
-                         
-                                   
+
+
+
                                         /* func to call when pt on edgeuse */
                                         /* func to call when pt on vertexuse*/
           		                /* private data for [ev]u_func */
-         		             
-         		               
-                             
+
+
+
 {
 	struct fpi	fpi;
 	struct loopuse	*lu;
@@ -1489,7 +1489,7 @@ nmg_class_pt_fu_except(const fastf_t *pt, const struct faceuse *fu, const struct
 
 
 /**
- *	N M G _ C L A S S _ P T _ L U _ E X C E P T 
+ *	N M G _ C L A S S _ P T _ L U _ E X C E P T
  *
  *	Classify a point as being in/on/out of the area bounded by a loop,
  *	ignoring any uses of a particular edge in the loop.

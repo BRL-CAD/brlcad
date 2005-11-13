@@ -34,7 +34,7 @@
  *
  *  Authors -
  *	John R. Anderson
- *  
+ *
  *  Source -
  *	BVLD/VMB Advanced Computer Systems Team
  *	The U. S. Army Research Laboratory

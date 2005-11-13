@@ -21,17 +21,17 @@
 /** @file nirt.c
  *
  *       This program is an Interactive Ray-Tracer
- *       
+ *
  *
  *       Written by:  Natalie L. Barker <barker@brl>
  *                    U.S. Army Ballistic Research Laboratory
  *
  *       Date:  Jan 90 -
- * 
- *       To compile:  /bin/cc -I/usr/include/brlcad nirt.c 
+ *
+ *       To compile:  /bin/cc -I/usr/include/brlcad nirt.c
  *                    /usr/brlcad/lib/librt.a -lm -o nirt
  *
- *       To run:  nirt [-options] file.g object[s] 
+ *       To run:  nirt [-options] file.g object[s]
  *
  *       Help menu:  nirt -?
  *
@@ -76,13 +76,13 @@ char		*db_name;	/* the name of the BRL-CAD geometry file */
 com_table	ComTab[] =
 		{
 		    { "attr", cm_attr, "select attributes", "<-f(flush) | -p(print) | attribute_name>" },
-		    { "ae", az_el, "set/query azimuth and elevation", 
+		    { "ae", az_el, "set/query azimuth and elevation",
 			"azimuth elevation" },
-		    { "dir", dir_vect, "set/query direction vector", 
+		    { "dir", dir_vect, "set/query direction vector",
 			"x-component y-component z-component" },
 		    { "hv", grid_coor, "set/query gridplane coordinates",
 			"horz vert [dist]" },
-		    { "xyz", target_coor, "set/query target coordinates", 
+		    { "xyz", target_coor, "set/query target coordinates",
 			"X Y Z" },
 		    { "s", shoot, "shoot a ray at the target" },
 		    { "backout", backout, "back out of model" },
@@ -174,7 +174,7 @@ attrib_add(char *a)
 	/* make sure we have space */
 	if (!a_tab.attrib || a_tab.attrib_use >= (a_tab.attrib_cnt-1)) {
 	    a_tab.attrib_cnt += 16;
-	    a_tab.attrib = bu_realloc(a_tab.attrib, 
+	    a_tab.attrib = bu_realloc(a_tab.attrib,
 				      a_tab.attrib_cnt * sizeof(char *),
 				      "attrib_tab");
 	}
@@ -212,8 +212,8 @@ struct script_rec
 
 static void enqueue_script (struct bu_list *qp, int type, char *string)
 
-              	    
-   		     
+
+
     		        	/* Literal or file name */
 
 {
@@ -233,7 +233,7 @@ static void enqueue_script (struct bu_list *qp, int type, char *string)
 
 static void show_scripts (struct bu_list *sl, char *text)
 
-              	    
+
     		      		/* for title line */
 
 {
@@ -335,7 +335,7 @@ main (int argc, char **argv)
     void		   ae2dir(void);
     void		   dir2ae(void);
     void	           set_diameter(struct rt_i *rtip);
-    int	           	   str_dbl(char *buf, double *Result);	
+    int	           	   str_dbl(char *buf, double *Result);
     void		   az_el();
     void		   sh_esc();
     void		   grid_coor();
@@ -538,7 +538,7 @@ main (int argc, char **argv)
     /* initialize variables */
     azimuth() = 0.0;
     elevation() = 0.0;
-    direct(X) = -1.0; 
+    direct(X) = -1.0;
     direct(Y) = 0.0;
     direct(Z) = 0.0;
     grid(HORZ) = 0.0;
@@ -593,7 +593,7 @@ main (int argc, char **argv)
 	interact(READING_FILE, stdin);
     return 0;
 }
- 
+
 char	usage[] = "\
 Usage: 'nirt [options] model.g objects...'\n\
 Options:\n\

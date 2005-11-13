@@ -21,7 +21,7 @@
 /** @file knob.c
  *
  * Utilities for dealing with knobs.
- * 
+ *
  * Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *      The U. S. Army Ballistic Research Laboratory

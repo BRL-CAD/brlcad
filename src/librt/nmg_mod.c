@@ -28,12 +28,12 @@
  *  Authors -
  *	Lee A. Butler
  *	Michael John Muuss
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5066
- *  
+ *
  */
 /*@}*/
 
@@ -798,7 +798,7 @@ void
 nmg_js(register struct shell *s1, register struct shell *s2, const struct bn_tol *tol)
                      	    		/* destination */
                      	    		/* source */
-                   	     
+
 {
 	struct faceuse	*fu2;
 	struct faceuse	*nextfu;
@@ -949,7 +949,7 @@ nmg_js(register struct shell *s1, register struct shell *s2, const struct bn_tol
  *
  *  Reverse the surface normals, and invert the orientation state of
  *  all faceuses in a shell.
- * 
+ *
  *  This turns the shell "inside out", such as might be needed for the
  *  right hand side term of a subtraction operation.
  *
@@ -1491,7 +1491,7 @@ nmg_gluefaces(struct faceuse **fulist, int n, const struct bn_tol *tol)
 	struct edgeuse	*eu;
 	int		i;
 	int		f_no;		/* Face number */
-	
+
 	NMG_CK_FACEUSE(fulist[0]);
 	s = fulist[0]->s_p;
 	NMG_CK_SHELL(s);
@@ -1585,16 +1585,16 @@ nmg_simplify_face(struct faceuse *fu)
  *
  *
  *  This routine reverses the direction of the Normal vector which defines
- *  the plane of the face.  
+ *  the plane of the face.
  *
- *  The OT_SAME faceuse becomes the OT_OPPOSITE faceuse, and vice versa.  
+ *  The OT_SAME faceuse becomes the OT_OPPOSITE faceuse, and vice versa.
  *  This preserves the convention that OT_SAME loopuses in the
  *  OT_SAME faceuse are counter-clockwise rotating about the surface normal.
  *
  *
  *	     Before			After
  *
- * 
+ *
  * N	  OT_SAME		  OT_OPPOSITE
  *  \	.<---------.		.<---------.
  *   \	|fu        ^		|fu        ^
@@ -2368,7 +2368,7 @@ nmg_join_2singvu_loops(struct vertexuse *vu1, struct vertexuse *vu2)
  *
  *     Va    eu1  vu1		Vb	       Va   eu1  vu1             Vb
  *	* <---------* <---------*		* <--------*  * <--------*
- *	|					|	      |		 
+ *	|					|	      |
  *	|			^		|	   ^  |		 ^
  *	|	 Original	|		| Original |  |	   New   |
  *	|	   Loopuse	|		| Loopuse  |  |	 Loopuse |
@@ -2571,7 +2571,7 @@ out:
  *	              |       D<_______C        |
  *	              v                         |
  *	              F________________________>G
- *	
+ *
  *  When nmg_split_lu_at_vu(lu, B) is called, the old loopuse continues to
  *  be counter clockwise and OT_SAME, but the new loopuse BCD is now
  *  clockwise.  It needs to be marked OT_OPPOSITE.  Without referring
@@ -2938,7 +2938,7 @@ top:
 
 /**	N M G _ G E T _ T O U C H I N G _ J A U N T S
  *
- * Create a table of EU's. Each EU will be the first EU in 
+ * Create a table of EU's. Each EU will be the first EU in
  * a touching jaunt (edgeuses from vert A->B->A) where vertex B
  * appears elswhere in the loopuse lu.
  *
@@ -3327,7 +3327,7 @@ top:
 		if( rt_g.NMG_debug & DEBUG_CUTLOOP )
 		{
 			bu_log( "\tConsider splitting lu x%x at vu=x%x\n", lu, start_eu1->vu_p );
-			bu_log( "\t\t(jaunt number %d\n" , jaunt_no );	
+			bu_log( "\t\t(jaunt number %d\n" , jaunt_no );
 		}
 
 		/* determine status of jaunts in the proposed new loop */
@@ -3455,7 +3455,7 @@ nmg_simplify_loop(struct loopuse *lu)
 		 * as the loop containing the current edge, and my
 		 * edgeuse mate is radial to my radial`s edgeuse
 		 * mate, and the radial edge is a part of a loop other
-		 * than the one "eu" is a part of 
+		 * than the one "eu" is a part of
 		 * then this is a "worthless" edge between these two loops.
 		 */
 		if (*eu_r->up.magic_p == NMG_LOOPUSE_MAGIC &&
@@ -3493,7 +3493,7 @@ nmg_simplify_loop(struct loopuse *lu)
 
 				nmg_pl_2fu("After_joinloop%d.pl", fno++,
 				    lu->up.fu_p, lu->up.fu_p->fumate_p, 0);
-					
+
 		    	}
 		}
 		eu = BU_LIST_PNEXT(edgeuse, eu);
@@ -3674,9 +3674,9 @@ void nmg_moveltof(struct faceuse *fu, struct shell *s)
  */
 struct loopuse *
 nmg_dup_loop(struct loopuse *lu, long int *parent, long int **trans_tbl)
-                   
+
     	        		/* fu or shell ptr */
-    	            
+
 {
 	struct loopuse *new_lu = (struct loopuse *)NULL;
 	struct vertexuse *new_vu = (struct vertexuse *)NULL;
@@ -4145,7 +4145,7 @@ nmg_eusplit(struct vertex *v, struct edgeuse *oldeu, int share_geom)
 	 *		   /           /
 	 *	   (edge) A ========= V ~~~~~~~ B (new edge)
 	 *			     /         /
-	 *		    <-------.   <-----.	
+	 *		    <-------.   <-----.
 	 *		       eu2      oldeumate		<<<loop<<<
 	 */
 
@@ -4265,8 +4265,8 @@ out:
 struct edgeuse *
 nmg_esplit(struct vertex *v, struct edgeuse *eu, int share_geom)
              	   		/* New vertex, to go in middle */
-              	    
-   		           
+
+
 {
 	struct edge	*e;	/* eu->e_p */
 	struct edgeuse	*teuX,	/* radial edgeuse of eu */
@@ -4309,7 +4309,7 @@ nmg_esplit(struct vertex *v, struct edgeuse *eu, int share_geom)
 		NMG_CK_EDGEUSE(teuY);
 		NMG_TEST_EDGEUSE(teuX);
 		NMG_TEST_EDGEUSE(teuY);
-		
+
 		if (!v)  {
 			/* If "v" parameter was NULL and this is the
 			 * first time through, take note of "v" where
@@ -4320,7 +4320,7 @@ nmg_esplit(struct vertex *v, struct edgeuse *eu, int share_geom)
 		}
 
 		if (teuY->e_p == e || teuX->e_p == e) notdone = 0;
-		
+
 		/*  Are the two edgeuses going in same or opposite directions?
 		 *  Join the newly created temporary edge (teuX, teuY)
 		 *  with the new permanant edge (neu1, neu2).
@@ -4383,7 +4383,7 @@ nmg_esplit(struct vertex *v, struct edgeuse *eu, int share_geom)
 struct edgeuse *
 nmg_ebreak(struct vertex *v, struct edgeuse *eu)
              	   			/* May be NULL */
-              	    
+
 {
 	struct edgeuse	*new_eu;
 
@@ -4419,8 +4419,8 @@ nmg_ebreak(struct vertex *v, struct edgeuse *eu)
 struct edgeuse *
 nmg_ebreaker(struct vertex *v, struct edgeuse *eu, const struct bn_tol *tol)
              		   			/* May be NULL */
-              		    
-                   	     
+
+
 {
 	struct edgeuse	*new_eu;
 	struct edgeuse	*oeu;
@@ -4569,7 +4569,7 @@ nmg_unbreak_edge(struct edgeuse *eu1_first)
 	NMG_CK_EDGE_G_LSEG(eg);
 
 	/* If the edge geometry doesn't have at least four edgeuses, this
-	 * is not a candidate for unbreaking */		
+	 * is not a candidate for unbreaking */
 	if( bu_list_len( &eg->eu_hd2 ) < 2*2 )  {
 		ret = -2;
 		goto out;
@@ -4659,13 +4659,13 @@ nmg_unbreak_edge(struct edgeuse *eu1_first)
 		ret = -9;
 		goto out;
 	}
-		
+
 
 	/* visit all the edgeuse pairs radial to eu1 */
 	for(;;)  {
 		/* Recheck initial conditions */
 		if( eu1->vu_p->v_p != va || eu1->eumate_p->vu_p->v_p != vb )  {
-			bu_log( "nmg_unbreak_edge: eu1 does not got to/from correct vertices, x%x, %x\n", 
+			bu_log( "nmg_unbreak_edge: eu1 does not got to/from correct vertices, x%x, %x\n",
 				eu1->vu_p->v_p, eu1->eumate_p->vu_p->v_p );
 			nmg_pr_eu_briefly( eu1, " " );
 			rt_bomb( "nmg_unbreak_edge 1\n" );
@@ -4875,13 +4875,13 @@ nmg_unbreak_shell_edge_unsafe(struct edgeuse *eu1_first)
 		ret = -9;
 		goto out;
 	}
-		
+
 
 	/* visit all the edgeuse pairs radial to eu1 */
 	for(;;)  {
 		/* Recheck initial conditions */
 		if( eu1->vu_p->v_p != va || eu1->eumate_p->vu_p->v_p != vb )  {
-			bu_log( "nmg_unbreak_edge: eu1 does not got to/from correct vertices, x%x, %x\n", 
+			bu_log( "nmg_unbreak_edge: eu1 does not got to/from correct vertices, x%x, %x\n",
 				eu1->vu_p->v_p, eu1->eumate_p->vu_p->v_p );
 			nmg_pr_eu_briefly( eu1, " " );
 			rt_bomb( "nmg_unbreak_edge 1\n" );
@@ -4974,7 +4974,7 @@ nmg_eins(struct edgeuse *eu)
 	}
 	else {
 		struct loopuse *lu;
-		
+
 		lu = eu->up.lu_p;
 		NMG_CK_LOOPUSE(lu);
 		if (*lu->up.magic_p == NMG_SHELL_MAGIC) {

@@ -11,7 +11,7 @@
 # 1. Redistributions of source code must retain the above copyright
 # notice, this list of conditions and the following disclaimer.
 #
-# 2. Redistributions in binary form must reproduce the above 
+# 2. Redistributions in binary form must reproduce the above
 # copyright notice, this list of conditions and the following
 # disclaimer in the documentation and/or other materials provided
 # with the distribution.
@@ -283,10 +283,10 @@ tar: $(PACKAGE)-$(VERSION).bin.tar
 	@$(ECHO) "Done."
 
 package:
-	@$(ECHO) 
+	@$(ECHO)
 	@$(ECHO) "To build a BRL-CAD package for distribution, there are various make"
 	@$(ECHO) "targets available for various platforms:"
-	@$(ECHO) 
+	@$(ECHO)
 	@$(ECHO) "  make pkg	-	Builds an Installer package for Mac OS X"
 	@$(ECHO) "  make dmg	-	Builds a Disk Image for Mac OS X"
 	@$(ECHO) "  make rpm	-	Builds source and binary RPM for RedHat Linux"
@@ -295,7 +295,7 @@ package:
 	@$(ECHO) "  make tgz	-	Builds a gzip-compressed tape archive"
 	@$(ECHO) "  make bz2	-	Builds a bzip2-compressed tape archive"
 	@$(ECHO) "  make tar	-	Builds a uncompressed tape archive"
-	@$(ECHO) 
+	@$(ECHO)
 
 
 ##########################
@@ -348,11 +348,6 @@ install-data-local:
 	    if test -d "$(DESTDIR)$(datadir)" ; then \
 	      if test "x$(DESTDIR)$(prefix)/share" != "x$(DESTDIR)$(datadir)" ; then \
 	   	$(ECHO) "    find $(DESTDIR)$(prefix)/. -type d -exec chmod go+x {} \;" ; \
-	      fi ; \
-	    fi ; \
-	    if test -d "$(DESTDIR)$(sysconfdir)" ; then \
-	      if test "x$(DESTDIR)$(prefix)/etc" != "x$(DESTDIR)$(sysconfdir)" ; then \
-	   	$(ECHO) "    find $(DESTDIR)$(sysconfdir)/. -type d -exec chmod go+x {} \;" ; \
 	      fi ; \
 	    fi ; \
 	    if test -d "$(DESTDIR)$(libdir)" ; then \
@@ -418,17 +413,11 @@ all-local:
 	  $(ECHO) ;\
 	  line1="  BRL-CAD @BRLCAD_VERSION@ is now installed into $(prefix)" ;\
 	  line2="  Be sure to add $(prefix)/bin to your PATH" ;\
-	  length="`$(ECHO) $(prefix)@BRLCAD_VERSION@ | wc -c`" ;\
-	  length="`expr $$length + 34`" ;\
-	  separator="" ;\
-	  while test $$length -gt 0  ; do \
-	    separator="$${separator}***" ;\
-	    length="`expr $$length - 3`" ;\
-          done ;\
-	  $(ECHO) "$$separator" ;\
+	  separator="`$(ECHO) $$line1 | tr '[a-zA-Z0-9.\-/ ]' '*'`" ;\
+	  $(ECHO) "$${separator}****" ;\
 	  $(ECHO) "$$line1" ;\
 	  $(ECHO) "$$line2" ;\
-	  $(ECHO) "$$separator" ;\
+	  $(ECHO) "$${separator}****" ;\
 	elif test "x$(MAKECMDGOALS)" = "x" -a "x$(.TARGETS)" = "x" ; then \
 	  $(ECHO) $(ECHO_N) "Elapsed time: " ;\
 	  sh $(top_srcdir)/sh/elapsed.sh `cat $(top_builddir)/include/brlcad_version.h | grep Compilation` ;\

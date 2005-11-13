@@ -31,6 +31,7 @@ char rcsid[] = "$Header$";
 rleswap()			Tag the file.
 */
 
+#include <stdlib.h>
 #include <stdio.h>
 #include "rle.h"
 #include "rle_raw.h"

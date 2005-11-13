@@ -24,7 +24,7 @@
 /** @file nurb_flat.c
  *  Tests the NURB surface to see if its flat depending
  *  on the epsilon passed.
- * 
+ *
  * Author -
  *     Paul R. Stay
  *
@@ -49,7 +49,7 @@
 
 int
 rt_nurb_s_flat(struct face_g_snurb *srf, fastf_t epsilon)
-                         
+
                 		/* Epsilon value for flatness testing */
 {
 	register fastf_t 	max_row_dist;
@@ -74,47 +74,47 @@ rt_nurb_s_flat(struct face_g_snurb *srf, fastf_t epsilon)
 
 	max_row_dist = max_col_dist = -INFINITY;
 
-	crv = (fastf_t * ) bu_malloc( sizeof(fastf_t) * 
-	    RT_NURB_EXTRACT_COORDS(srf->pt_type) * srf->s_size[1], 
+	crv = (fastf_t * ) bu_malloc( sizeof(fastf_t) *
+	    RT_NURB_EXTRACT_COORDS(srf->pt_type) * srf->s_size[1],
 	    "rt_nurb_s_flat: crv");
 
-	/* Test Row and RT_NURB_SPLIT_COL curves for flatness, 
+	/* Test Row and RT_NURB_SPLIT_COL curves for flatness,
 	 * If a curve is not flat than get distance to line */
 
 	/* Test Row Curves */
 
 	for (i = 0; i < (srf->s_size[0]); i++) {
 		fastf_t rdist;
-		for (j = 0; 
-		    j < (srf->s_size[1] * 
-			RT_NURB_EXTRACT_COORDS(srf->pt_type)); 
+		for (j = 0;
+		    j < (srf->s_size[1] *
+			RT_NURB_EXTRACT_COORDS(srf->pt_type));
 		    j++)
 			crv[j] = *mesh_ptr++;
 
-		rdist = rt_nurb_crv_flat(crv, srf->s_size[1], 
+		rdist = rt_nurb_crv_flat(crv, srf->s_size[1],
 		    srf->pt_type);
 		max_row_dist = MAX(max_row_dist, rdist);
 	}
 
 	bu_free( (char *)crv, "rt_nurb_s_flat: crv" );
 
-	crv = (fastf_t * ) bu_malloc(sizeof(fastf_t) * 
-	    RT_NURB_EXTRACT_COORDS(srf->pt_type) *  
+	crv = (fastf_t * ) bu_malloc(sizeof(fastf_t) *
+	    RT_NURB_EXTRACT_COORDS(srf->pt_type) *
 	    srf->s_size[0], 	"rt_nurb_s_flat: crv");
 
 	for (i = 0; i < (coords * srf->s_size[1]); i += coords) {
 		fastf_t rdist;
 
 		for (j = 0; j < (srf->s_size[0]); j++) {
-			mesh_elt = 
+			mesh_elt =
 			    (j * (srf->s_size[1] * coords)) + i;
 
 			for (k = 0; k < coords; k++)
-				crv[j * coords + k] = 
+				crv[j * coords + k] =
 				    srf->ctl_points[mesh_elt + k];
 		}
 
-		rdist = rt_nurb_crv_flat(crv, 
+		rdist = rt_nurb_crv_flat(crv,
 		    srf->s_size[0], srf->pt_type);
 
 		max_col_dist = MAX( max_col_dist, rdist);
@@ -135,7 +135,7 @@ rt_nurb_s_flat(struct face_g_snurb *srf, fastf_t epsilon)
 
 	/*
 	 * Extract the four corners and put a plane through three of them and
-	 * see how far the fourth is to the plane. 
+	 * see how far the fourth is to the plane.
 	 */
 
 	mesh_ptr = srf->ctl_points;
@@ -146,14 +146,14 @@ rt_nurb_s_flat(struct face_g_snurb *srf, fastf_t epsilon)
 		VMOVE(p2,
 		    (mesh_ptr + (srf->s_size[1] - 1) * coords));
 		VMOVE(p3,
-		    (mesh_ptr + 
-		    ((srf->s_size[1] * 
-		    (srf->s_size[0] - 1)) + 
+		    (mesh_ptr +
+		    ((srf->s_size[1] *
+		    (srf->s_size[0] - 1)) +
 		    (srf->s_size[1] - 1)) * coords));
 
 		VMOVE(p4,
-		    (mesh_ptr + 
-		    (srf->s_size[1] * 
+		    (mesh_ptr +
+		    (srf->s_size[1] *
 		    (srf->s_size[0] - 1)) * coords));
 	} else
 	 {
@@ -167,15 +167,15 @@ rt_nurb_s_flat(struct face_g_snurb *srf, fastf_t epsilon)
 		HMOVE(h2, mesh_ptr + offset);
 		HDIVIDE( p2, h2 );
 
-	 	offset = 
-		    ((srf->s_size[1] * 
-		    (srf->s_size[0] - 1)) + 
+	 	offset =
+		    ((srf->s_size[1] *
+		    (srf->s_size[0] - 1)) +
 		    (srf->s_size[1] - 1)) * coords;
 		HMOVE(h3, mesh_ptr + offset);
 		HDIVIDE( p3, h3 );
 
-	 	offset = 
-		    (srf->s_size[1] * 
+	 	offset =
+		    (srf->s_size[1] *
 		    (srf->s_size[0] - 1)) * coords;
 		HMOVE(h4, mesh_ptr + offset);
 		HDIVIDE( p4, h4 );
@@ -202,7 +202,7 @@ rt_nurb_s_flat(struct face_g_snurb *srf, fastf_t epsilon)
 }
 
 
-fastf_t 
+fastf_t
 rt_nurb_crv_flat(fastf_t *crv, int size, int pt_type)
 {
 	point_t         p1, p2;
@@ -232,7 +232,7 @@ rt_nurb_crv_flat(fastf_t *crv, int size, int pt_type)
 
 	/*
 	 * loop through all of the points until a line is found which may not
-	 * be the end pts of the curve if the endpoints are the same. 
+	 * be the end pts of the curve if the endpoints are the same.
 	 */
 	for (i = size - 1; (i > 0) && length < SQRT_SMALL_FASTF; i--) {
 		if ( !rational) {

@@ -225,7 +225,7 @@ draw_ticks(fastf_t angle)
   x2 = adc_state->adc_dv_x + d1 -t1;
   y2 = adc_state->adc_dv_y + d2 + t2;
   if(clip(&x1, &Y1, &x2, &y2) == 0){
-    DM_DRAW_LINE_2D(dmp, 
+    DM_DRAW_LINE_2D(dmp,
 		    GED2PM1(x1), GED2PM1(Y1) * dmp->dm_aspect,
 		    GED2PM1(x2), GED2PM1(y2) * dmp->dm_aspect);
   }

@@ -24,7 +24,7 @@
  *
  *  Author -
  *	Lee A. Butler
- *  
+ *
  *  Source -
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
@@ -75,7 +75,7 @@ extern int rr_render(struct application	*ap,
 struct leaf_segment {
 	long	magic;
 	double len;	/* length of blade segment */
-	vect_t blade;	/* direction of blade growth */ 
+	vect_t blade;	/* direction of blade growth */
 	vect_t	N;	/* surface normal of blade segment */
 };
 
@@ -227,7 +227,7 @@ struct mfuncs grass_mfuncs[] = {
 static double
 plants_this_cell(long int *cell, struct grass_specific *grass_sp)
              	/* integer cell number */
-                                
+
 {
 	point_t c;
 	double val;
@@ -237,7 +237,7 @@ plants_this_cell(long int *cell, struct grass_specific *grass_sp)
 
 	val = fabs(bn_noise_fbm(c, grass_sp->h_val, grass_sp->lacunarity,
 			grass_sp->octaves));
-	
+
 	CLAMP(val, 0.0, 1.0);
 
 	return val;
@@ -250,7 +250,7 @@ print_plant(char *str, const struct plant *plant)
 
   bu_log("%s: %d blades\n", str, plant->blades);
   bu_log(" root: %g %g %g\n", V3ARGS(plant->root));
-  
+
   for (blade=0 ; blade < plant->blades ; blade++) {
     bu_log("  blade %d  segs:%d tot_len:%g\n", blade, plant->b[blade].segs, plant->b[blade].tot_len);
     /* this printing is separated in two to avoid a nasty -O bug in gcc 2.95.2 */
@@ -315,7 +315,7 @@ plant_rot(struct plant *pl, double a)
  */
 static void
 plant_scale(struct plant *pl, double w)
-                 
+
          	/* 0..1, */
 {
 	int blade, seg;
@@ -330,7 +330,7 @@ plant_scale(struct plant *pl, double w)
 	if (d < .8) {
 		pl->blades -= d * pl->blades * .5;
 		CLAMP(pl->blades, 1, BLADE_LAST);
-	} 
+	}
 
 	for (blade=0 ; blade < pl->blades ; blade++) {
 		pl->b[blade].tot_len = 0.0;
@@ -387,7 +387,7 @@ make_proto(struct grass_specific *grass_sp)
     grass_sp->proto.b[blade].magic = BLADE_MAGIC;
     grass_sp->proto.b[blade].tot_len = 0.0;
     grass_sp->proto.b[blade].width = grass_sp->blade_width;
-    grass_sp->proto.b[blade].segs = BLADE_SEGS_MAX 
+    grass_sp->proto.b[blade].segs = BLADE_SEGS_MAX
     	/* - (val*BLADE_SEGS_MAX*.25) */   ;
 
 
@@ -446,7 +446,7 @@ make_proto(struct grass_specific *grass_sp)
     tmp = (double)seg / (double)BLADE_SEGS_MAX;
 
     grass_sp->proto.b[blade].leaf[seg].magic = LEAF_MAGIC;
-    
+
     VSET(grass_sp->proto.b[blade].leaf[seg].blade, 0.0, .1, val);
     VUNITIZE(grass_sp->proto.b[blade].leaf[seg].blade);
 
@@ -479,10 +479,10 @@ make_proto(struct grass_specific *grass_sp)
  */
 HIDDEN int
 grass_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip)
-                      	    
-             		         
+
+
     			      	/* pointer to reg_udata in *rp */
-             		     
+
            		      	/* New since 4.4 release */
 {
 	register struct grass_specific	*grass_sp;
@@ -600,12 +600,12 @@ plot_bush(struct plant *pl, struct grass_ray *r)
 }
 static void
 make_bush(struct plant *pl, double seed, const fastf_t *cell_pos, const struct grass_specific *grass_sp, double w, struct grass_ray *r)
-             			    
+
        				     	/* derived from cell_num */
-             			         
-                            	          
+
+
       				   /* cell specific weght for count, height */
-                		   
+
 {
 	point_t pt;
 	int blade, seg;
@@ -659,14 +659,14 @@ make_bush(struct plant *pl, double seed, const fastf_t *cell_pos, const struct g
  */
 static void
 hit_blade(const struct blade *bl, struct grass_ray *r, struct shadework *swp, const struct grass_specific *grass_sp, int seg, double *ldist, int blade_num, double fract)
-                       
-                    
+
+
                 	     	/* defined in material.h */
-                                      
-        
-                
-              
-             
+
+
+
+
+
 {
 	CK_grass_SP(grass_sp);
 	BU_CKMAG(r, GRASSRAY_MAGIC, "grass_ray");
@@ -732,12 +732,12 @@ hit_blade(const struct blade *bl, struct grass_ray *r, struct shadework *swp, co
  */
 static void
 isect_blade(const struct blade *bl, const fastf_t *root, struct grass_ray *r, struct shadework *swp, const struct grass_specific *grass_sp, int blade_num)
-                       
-                   
-                    
+
+
+
                 	     	/* defined in material.h */
-                                      
-              
+
+
 {
 	double ldist[2];
 	point_t pt;
@@ -783,7 +783,7 @@ isect_blade(const struct blade *bl, const fastf_t *root, struct grass_ray *r, st
 			}
 			bu_log("d1:%g d2:%g\n", cond, V2ARGS(ldist));
 		}
-		if (ldist[0] < 0.0 		/* behind ray */ || 
+		if (ldist[0] < 0.0 		/* behind ray */ ||
 		    ldist[0] >= r->d_max	/* beyond out point */ ||
 		    ldist[1] < 0.0 		/* under ground */ ||
 		    ldist[1] > bl->leaf[seg].len/* beyond end of seg */
@@ -798,7 +798,7 @@ isect_blade(const struct blade *bl, const fastf_t *root, struct grass_ray *r, st
 
 
 		/* We want to narrow the blade of grass toward the tip.
-		 * So we scale the width of the blade based upon the 
+		 * So we scale the width of the blade based upon the
 		 * fraction of total blade length to PCA.
 		 */
 		fract = (accum_len + ldist[1]) / bl->tot_len;
@@ -832,10 +832,10 @@ iter:
 
 static void
 isect_plant(const struct plant *pl, struct grass_ray *r, struct shadework *swp, const struct grass_specific *grass_sp)
-                       
-                    
+
+
                 	     	/* defined in material.h */
-                                      
+
 {
 	int i;
 
@@ -859,13 +859,13 @@ isect_plant(const struct plant *pl, struct grass_ray *r, struct shadework *swp, 
 				V3ARGS(pl->pmin),  V3ARGS(pl->pmax));
 			VJOIN1(in_pt, r->r.r_pt, r->r.r_min, r->r.r_dir);
 			VPRINT("\tin_pt", in_pt);
-	
+
 			VJOIN1(out_pt, r->r.r_pt, r->r.r_max, r->r.r_dir);
 			VPRINT("\tout_pt", out_pt);
 			bu_log("MISSED BBox\n");
 		}
 		return;
-	} else { 
+	} else {
 		if (rdebug&RDEBUG_SHADE) {
 			point_t in_pt, out_pt;
 			bu_log("min:%g max:%g\n", r->r.r_min, r->r.r_max);
@@ -876,7 +876,7 @@ isect_plant(const struct plant *pl, struct grass_ray *r, struct shadework *swp, 
 				V3ARGS(pl->pmax));
 			VJOIN1(in_pt, r->r.r_pt, r->r.r_min, r->r.r_dir);
 			VPRINT("\tin_pt", in_pt);
-	
+
 			VJOIN1(out_pt, r->r.r_pt, r->r.r_max, r->r.r_dir);
 			VPRINT("\tout_pt", out_pt);
 			bu_log("HIT BBox\n");
@@ -894,10 +894,10 @@ isect_plant(const struct plant *pl, struct grass_ray *r, struct shadework *swp, 
 static int
 stat_cell(fastf_t *cell_pos, struct grass_ray *r, struct grass_specific *grass_sp, struct shadework *swp, double dist_to_cell, double radius)
                  	/* origin of cell in region coordinates */
-                	   
-                     	          
-                	     
-                    
+
+
+
+
               	/* radius of ray */
 {
 	point_t tmp;
@@ -921,7 +921,7 @@ stat_cell(fastf_t *cell_pos, struct grass_ray *r, struct grass_specific *grass_s
 
 	VSCALE(color, swp->sw_basecolor, 1.0 - h);
 	VJOIN1(color, color, h, grass_sp->brown);
-	
+
 	if (VEQUAL(swp->sw_color, swp->sw_basecolor)) {
 		VSCALE(swp->sw_color, color, ratio);
 		swp->sw_transmit -= ratio;
@@ -952,8 +952,8 @@ stat_cell(fastf_t *cell_pos, struct grass_ray *r, struct grass_specific *grass_s
 static void
 plot_cell(long int *cell, struct grass_ray *r, struct grass_specific *grass_sp)
     			        	/* cell number (such as 5,3) */
-                	   
-                     	          
+
+
 {
 	point_t cell_pos;
 
@@ -984,11 +984,11 @@ plot_cell(long int *cell, struct grass_ray *r, struct grass_specific *grass_sp)
 static void
 isect_cell(long int *cell, struct grass_ray *r, struct shadework *swp, double out_dist, struct grass_specific *grass_sp, double curr_dist)
     			        	/* cell number (such as 5,3) */
-                	   
-       			         
-                	     
-                     	          
-                 
+
+
+
+
+
 {
 	point_t c;		/* float version of cell # */
 	point_t cell_pos;	/* origin of cell in region coordinates */
@@ -1039,7 +1039,7 @@ isect_cell(long int *cell, struct grass_ray *r, struct shadework *swp, double ou
 	VSUB2(v, cell_pos, r->r.r_pt);
 	dist_to_cell = MAGNITUDE(v);
 
-	
+
 
 	/* radius of ray at cell origin */
 	val = r->radius + r->diverge * dist_to_cell;
@@ -1116,13 +1116,13 @@ isect_cell(long int *cell, struct grass_ray *r, struct shadework *swp, double ou
  */
 static void
 do_cells(long int *cell_num, struct grass_ray *r, short int flags, struct shadework *swp, double out_dist, struct grass_specific *grass_sp, double curr_dist)
-    			            
-                	   
+
+
       			      		/* which adj cells need processing */
-       			         
+
                 	     	/* defined in material.h */
-                     	          
-      			          
+
+
 {
 	int x, y;
 	long cell[3];
@@ -1163,8 +1163,8 @@ do_cells(long int *cell_num, struct grass_ray *r, short int flags, struct shadew
  */
 int
 grass_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp)
-                  	    
-                	    
+
+
                 	     	/* defined in material.h */
     			    	/* ptr to the shader-specific struct */
 {
@@ -1201,7 +1201,7 @@ grass_render(struct application *ap, struct partition *pp, struct shadework *swp
 	gr.magic = GRASSRAY_MAGIC;
 	gr.occlusion = 0.0;
 
-		
+
 #if 1
 	gr.tol = ap->a_rt_i->rti_tol;
 #else
@@ -1251,8 +1251,8 @@ grass_render(struct application *ap, struct partition *pp, struct shadework *swp
 	curr_dist = MAGNITUDE(v);
 
 	/* We set up a hit on the out point so that when we get a hit on
-	 * a grass blade in a cell we can tell if it's closer than the 
-	 * previous hits.  This way we end up using the closest hit for 
+	 * a grass blade in a cell we can tell if it's closer than the
+	 * previous hits.  This way we end up using the closest hit for
 	 * the final result.
 	 */
 	VSUB2(v, out_pt, gr.r.r_pt);
@@ -1289,7 +1289,7 @@ grass_render(struct application *ap, struct partition *pp, struct shadework *swp
 	 *
 	 * t_orig[X] is the same as t[X] but won't get changed as we
 	 * march across the grid.  At each X grid line crossing, we recompute
-	 * a new t[X] from t_orig[X], tD[X], tD_iter[X].  The tD_iter[X] is 
+	 * a new t[X] from t_orig[X], tD[X], tD_iter[X].  The tD_iter[X] is
 	 * the number of times we've made a full step in the X direction.
 	 */
 	for (n=X ; n < Z ; n++) {
@@ -1298,7 +1298,7 @@ grass_render(struct application *ap, struct partition *pp, struct shadework *swp
 		else s="Y";
 
 		/* compute distance from cell origin to in_pt */
-		t[n] = in_pt[n] - 
+		t[n] = in_pt[n] -
 			floor(in_pt[n]/grass_sp->cell[n]) *
 				       grass_sp->cell[n];
 		if (rdebug&RDEBUG_SHADE)
@@ -1323,7 +1323,7 @@ grass_render(struct application *ap, struct partition *pp, struct shadework *swp
 		t_orig[n] = t[n];
 		tD_iter[n] = 0;
 	}
-	
+
 
 	if (rdebug&RDEBUG_SHADE) {
 		bu_log("t[X]:%g tD[X]:%g\n", t[X], tD[X]);
@@ -1397,7 +1397,7 @@ grass_render(struct application *ap, struct partition *pp, struct shadework *swp
 		curr_dist = t[n];
 		t[n] = t_orig[n] + tD[n] * ++tD_iter[n];
 
-		if (t[n] > out_dist) t[n] = out_dist; 
+		if (t[n] > out_dist) t[n] = out_dist;
 
 		VJOIN1(curr_pt, gr.r.r_pt, curr_dist, gr.r.r_dir);
 		curr_pt[n] = ((long) ((curr_pt[n] / grass_sp->cell[n]) + .1))
@@ -1428,7 +1428,7 @@ grass_render(struct application *ap, struct partition *pp, struct shadework *swp
 		}
 	} else {
 		/* setting basecolor to 1.0 prevents 'filterglass' effect */
-		VSETALL(swp->sw_basecolor, 1.0); 
+		VSETALL(swp->sw_basecolor, 1.0);
 	}
 
 

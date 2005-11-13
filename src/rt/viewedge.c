@@ -28,7 +28,7 @@
  *  there is a change in region ID, or a significant change in
  *  obliquity or line-of-sight distance.
  *
- *  
+ *
  *  XXX - Add support for detecting changes in specified attributes.
  *
  *  Author -
@@ -95,7 +95,7 @@ int   		nEdges = 0;
 int   		nPixels = 0;
 fastf_t		max_dist; /* min. distance for drawing pits/mountains */
 fastf_t		maxangle; /* Value of the cosine of the angle between
-			   * surface normals that triggers shading 
+			   * surface normals that triggers shading
 			   */
 
 typedef int color[3];
@@ -132,9 +132,9 @@ static int    overlay = OVERLAY_MODE_UNSET;
 
 /*
  * Blend Mode
- * 
+ *
  * If set, and the fbio points to a readable framebuffer, the edge
- * pixels are blended (using some HSV manipulations) with the 
+ * pixels are blended (using some HSV manipulations) with the
  * original framebuffer pixels. The intent is to produce an effect
  * similar to the "bugs" on TV networks.
  *
@@ -144,9 +144,9 @@ int    blend = 0;
 
 /*
  * Region Colors Mode
- * 
+ *
  * If set, the color of edge pixels is set to the region colors.
- * If the edge is determined because of a change from one region 
+ * If the edge is determined because of a change from one region
  * to another, the color selected is the one from the region with
  * the lowest hit distance.
  */
@@ -171,7 +171,7 @@ struct bu_vls occlusion_objects;
 struct rt_i *occlusion_rtip = NULL;
 struct application **occlusion_apps;
 
-static int occlusion_hit (struct application *, 
+static int occlusion_hit (struct application *,
 			  struct partition *, struct seg *);
 static int occlusion_miss (struct application *);
 static int occludes (struct application *, struct cell *);
@@ -186,7 +186,7 @@ static int rayhit (struct application *, struct partition *, struct seg *);
 static int rayhit2 (struct application *, struct partition *, struct seg *);
 static int raymiss (struct application *);
 static int raymiss2 (struct application *);
-static int handle_main_ray(struct application *, struct partition *, 
+static int handle_main_ray(struct application *, struct partition *,
 			   struct seg *);
 static int diffpixel (RGBpixel a, RGBpixel b);
 static void choose_color (RGBpixel col, struct cell *me,
@@ -217,19 +217,19 @@ struct bu_structparse view_parse[] = {
   {"%d", 3, "foreground", bu_byteoffset(fgcolor), BU_STRUCTPARSE_FUNC_NULL},
   {"%d", 3, "fg", bu_byteoffset(fgcolor), BU_STRUCTPARSE_FUNC_NULL},
   {"%d", 3, "background", bu_byteoffset(bgcolor), BU_STRUCTPARSE_FUNC_NULL},
-  {"%d", 3, "bg", bu_byteoffset(bgcolor), BU_STRUCTPARSE_FUNC_NULL},	
+  {"%d", 3, "bg", bu_byteoffset(bgcolor), BU_STRUCTPARSE_FUNC_NULL},
   {"%d", 1, "overlay", bu_byteoffset(overlay), BU_STRUCTPARSE_FUNC_NULL},
   {"%d", 1, "ov", bu_byteoffset(overlay), BU_STRUCTPARSE_FUNC_NULL},
   {"%d", 1, "blend", bu_byteoffset(blend), BU_STRUCTPARSE_FUNC_NULL},
   {"%d", 1, "bl", bu_byteoffset(blend), BU_STRUCTPARSE_FUNC_NULL},
-  {"%d", 1, "region_color", bu_byteoffset(region_colors), 
+  {"%d", 1, "region_color", bu_byteoffset(region_colors),
    BU_STRUCTPARSE_FUNC_NULL},
   {"%d", 1, "rc", bu_byteoffset(region_colors), BU_STRUCTPARSE_FUNC_NULL},
-  {"%S", 1, "occlusion_objects", bu_byteoffset(occlusion_objects), 
+  {"%S", 1, "occlusion_objects", bu_byteoffset(occlusion_objects),
    BU_STRUCTPARSE_FUNC_NULL},
-  {"%S", 1, "oo", bu_byteoffset(occlusion_objects), 
+  {"%S", 1, "oo", bu_byteoffset(occlusion_objects),
    BU_STRUCTPARSE_FUNC_NULL},
-  {"%d", 1, "occlusion_mode", bu_byteoffset(occlusion_mode), 
+  {"%d", 1, "occlusion_mode", bu_byteoffset(occlusion_mode),
    BU_STRUCTPARSE_FUNC_NULL},
   {"%d", 1, "om", bu_byteoffset(occlusion_mode), BU_STRUCTPARSE_FUNC_NULL},
 #endif
@@ -255,7 +255,7 @@ Options:\n\
  -r                 Report overlaps\n\
  -R                 Do not report overlaps\n\
  -c                 Auxillary commands (see man page)\n";
- 
+
 
 /*
  *  Called at the start of a run.
@@ -273,11 +273,10 @@ view_init( struct application *ap, char *file, char *obj, int minus_o, int minus
 
   /*
    * Does the user want occlusion checking?
-   * 
+   *
    * If so, load and prep.
    */
   if (bu_vls_strlen(&occlusion_objects) != 0) {
-    /*    char idbuf[512]; */
     struct db_i *dbip;
     int nObjs;
     const char **objs;
@@ -285,9 +284,9 @@ view_init( struct application *ap, char *file, char *obj, int minus_o, int minus
 
     bu_log ("rtedge: loading occlusion geometry from %s.\n", file);
 
-    if (Tcl_SplitList (NULL, bu_vls_addr (&occlusion_objects), &nObjs, 
+    if (Tcl_SplitList (NULL, bu_vls_addr (&occlusion_objects), &nObjs,
 		       &objs) == TCL_ERROR) {
-      bu_log  ("rtedge: occlusion list = %s\n", 
+      bu_log  ("rtedge: occlusion list = %s\n",
 	       bu_vls_addr(&occlusion_objects));
       bu_bomb ("rtedge: could not parse occlusion objects list.\n");
     }
@@ -295,7 +294,7 @@ view_init( struct application *ap, char *file, char *obj, int minus_o, int minus
     for (i=0; i<nObjs; ++i) {
       bu_log ("rtedge: occlusion object %d = %s\n", i, objs[i]);
     }
-    
+
 
     if( (dbip = db_open( file, "r" )) == DBI_NULL ) {
       bu_bomb ("rtedge: could not open database.\n");
@@ -304,7 +303,7 @@ view_init( struct application *ap, char *file, char *obj, int minus_o, int minus
 
     occlusion_rtip = rt_new_rti( dbip ); /* clones dbip */
 
-    for( i=0; i < MAX_PSW; i++ )  
+    for( i=0; i < MAX_PSW; i++ )
       {
 	rt_init_resource( &occlusion_resources[i], i, occlusion_rtip );
 	bn_rand_init( occlusion_resources[i].re_randptr, i );
@@ -332,10 +331,10 @@ view_init( struct application *ap, char *file, char *obj, int minus_o, int minus
      * geometry. Need one per cpu, the upper half does the per-
      * thread allocation in worker, but that's off limits.
      */
-    occlusion_apps = bu_calloc (npsw, sizeof(struct application *), 
+    occlusion_apps = bu_calloc (npsw, sizeof(struct application *),
 			    "occlusion application structure array");
     for (i=0; i<npsw; ++i) {
-      occlusion_apps[i] = bu_calloc (1, sizeof(struct application), 
+      occlusion_apps[i] = bu_calloc (1, sizeof(struct application),
 				 "occlusion_application structure");
 
       occlusion_apps[i]->a_rt_i = occlusion_rtip;
@@ -349,7 +348,7 @@ view_init( struct application *ap, char *file, char *obj, int minus_o, int minus
 	      occlusion_apps[i]->a_logoverlap = rt_silent_logoverlap;
       }
 
-    }    		       
+    }
     bu_log ("rtedge: will perform occlusion testing.\n");
 
     /*
@@ -360,14 +359,14 @@ view_init( struct application *ap, char *file, char *obj, int minus_o, int minus
       bu_log ("rtedge: occlusion mode = %d\n", occlusion_mode);
     }
 
-    if ((occlusion_mode != OCCLUSION_MODE_NONE) && 
+    if ((occlusion_mode != OCCLUSION_MODE_NONE) &&
 	(overlay == OVERLAY_MODE_UNSET)) {
       bu_log ("rtedge: automagically activating overlay mode.\n");
       overlay = OVERLAY_MODE_DOIT;
     }
 
   }
- 
+
   if (occlusion_mode != OCCLUSION_MODE_NONE &&
       bu_vls_strlen(&occlusion_objects) == 0) {
     bu_bomb ("rtedge: occlusion mode set, but no objects were specified.\n");
@@ -406,12 +405,12 @@ view_init( struct application *ap, char *file, char *obj, int minus_o, int minus
     bu_log ("view_init: deactivating overlay and blending due to -o option.\n");
   }
 
-  if (overlay) {      
+  if (overlay) {
     bu_log ("view_init: will perform simple overlay.\n");
   } else if (blend) {
     bu_log ("view_init: will perform blending.\n");
   }
-  
+
   if (minus_F || (!minus_o && !minus_F)) {
       return 1;		/* we need a framebuffer */
   }
@@ -437,9 +436,9 @@ view_2init( struct application *ap )
    */
   for (i = 0; i < npsw; ++i) {
     if (saved[i] == NULL) {
-      saved[i] = (struct cell *) bu_calloc( 1, sizeof(struct cell), 
+      saved[i] = (struct cell *) bu_calloc( 1, sizeof(struct cell),
 					      "saved cell info" );
-    }	
+    }
   }
 
   /*
@@ -447,40 +446,40 @@ view_2init( struct application *ap )
    */
   for ( i = 0; i < npsw; ++i ) {
     if (writeable[i] == NULL) {
-      writeable[i] = (unsigned char *) bu_calloc( 1, per_processor_chunk, 
+      writeable[i] = (unsigned char *) bu_calloc( 1, per_processor_chunk,
 					      "writeable pixel flag buffer" );
-    }	
+    }
   }
 
   /*
    * Use three bytes per pixel.
    */
   pixsize = 3;
-  
+
   /*
    * Create a scanline buffer for each processor.
    */
   for ( i = 0; i < npsw; ++i ) {
     if (scanline[i] == NULL) {
-      scanline[i] = (unsigned char *) bu_calloc( per_processor_chunk, 
+      scanline[i] = (unsigned char *) bu_calloc( per_processor_chunk,
 						 pixsize, "scanline buffer" );
-    }	
+    }
   }
-  
+
   /*
    * Set the hit distance difference necessary to trigger an edge.
    * This algorythm was stolen from lgt, I may make it settable later.
    */
   max_dist = (cell_width*ARCTAN_87)+2;
-  
+
   /*
    * Determine if the framebuffer is readable.
    */
   if (overlay || blend) {
-    
+
     if (fb_read(fbp,0,0,fb_bg_color,1) < 0) {
       bu_bomb ("rt_edge: specified framebuffer is not readable, cannot merge.\n");
-      
+
     }
   }
 
@@ -491,25 +490,25 @@ view_2init( struct application *ap )
   if (blend) {
     for (i = 0; i < npsw; ++i) {
       if (blendline[i] == NULL) {
-	blendline[i] = (unsigned char *) bu_calloc( per_processor_chunk, 
-						    pixsize, 
+	blendline[i] = (unsigned char *) bu_calloc( per_processor_chunk,
+						    pixsize,
 						    "blend buffer" );
-      }	
+      }
     }
   }
- 
+
   /*
-   * If operating in overlay mode, we want the rtedge background color 
-   * to be the shaded images background. This sets the bg color 
+   * If operating in overlay mode, we want the rtedge background color
+   * to be the shaded images background. This sets the bg color
    * automatically, but assumes that pixel 0,0 is background. If not,
    * the user can set it manually (so long as it isn't 0 0 1!).
    *
    */
   if (overlay) {
-    if (bgcolor[RED] == 0 && 
+    if (bgcolor[RED] == 0 &&
 	bgcolor[GRN] == 0 &&
 	bgcolor[BLU] == 1) {
-      
+
       bgcolor[RED] = fb_bg_color[RED];
       bgcolor[GRN] = fb_bg_color[GRN];
       bgcolor[BLU] = fb_bg_color[BLU];
@@ -543,7 +542,7 @@ view_eol( struct application *ap )
 	 * Write this pixel
 	 */
 	bu_semaphore_acquire (BU_SEM_SYSCALL);
-	fb_write(fbp, i, ap->a_y, &scanline[cpu][i*3], 1);	  
+	fb_write(fbp, i, ap->a_y, &scanline[cpu][i*3], 1);
 	bu_semaphore_release (BU_SEM_SYSCALL);
       }
     }
@@ -562,13 +561,13 @@ view_eol( struct application *ap )
 			   */
     RGBpixel rgb;
     fastf_t hsv[3];
-    
+
     bu_semaphore_acquire (BU_SEM_SYSCALL);
     if (fb_read(fbp,0,ap->a_y,blendline[cpu],per_processor_chunk) < 0) {
       bu_bomb ("rtedge: error reading from framebuffer.\n");
     }
     bu_semaphore_release (BU_SEM_SYSCALL);
-    
+
     for (i=0; i<per_processor_chunk; ++i) {
       /*
        * Is this pixel an edge?
@@ -587,23 +586,23 @@ view_eol( struct application *ap )
 	 * Is the pixel in the blendline array the
 	 * background color? If so, look left and down
 	 * to determine which pixel is the "source" of the
-	 * edge. Unless, of course, we are on the bottom 
+	 * edge. Unless, of course, we are on the bottom
 	 * scanline or the leftmost column (x=y=0)
 	 */
 	if (i != 0 && ap->a_y != 0 && !diffpixel (rgb,fb_bg_color)) {
 	  RGBpixel left;
 	  RGBpixel down;
-	  
+
 	  left[RED] = blendline[cpu][(i-1)*3+RED];
 	  left[GRN] = blendline[cpu][(i-1)*3+GRN];
 	  left[BLU] = blendline[cpu][(i-1)*3+BLU];
 
 	  bu_semaphore_acquire (BU_SEM_SYSCALL);
-	  fb_read (fbp, i, ap->a_y - 1, down, 1);	  
+	  fb_read (fbp, i, ap->a_y - 1, down, 1);
 	  bu_semaphore_release (BU_SEM_SYSCALL);
 
 	  if (diffpixel (left, fb_bg_color)) {
-	    /* 
+	    /*
 	     * Use this one.
 	     */
 	    rgb[RED] = left[RED];
@@ -625,7 +624,7 @@ view_eol( struct application *ap )
 	 * Convert to HSV
 	 */
 	bu_rgb_to_hsv (rgb, hsv);
-      
+
 	/*
 	 * Now perform the manipulations.
 	 */
@@ -634,7 +633,7 @@ view_eol( struct application *ap )
 
 	if (hsv[VAL] > 1.0) {
 	  fastf_t d = hsv[VAL] - 1.0;
-	  
+
 	  hsv[VAL] = 1.0;
 	  hsv[SAT] -= d;
 	  hsv[SAT] = hsv[SAT] >= 0.0 ? hsv[SAT] : 0.0;
@@ -644,10 +643,10 @@ view_eol( struct application *ap )
 	 * Convert back to RGB.
 	 */
 	bu_hsv_to_rgb(hsv,rgb);
-	
+
 	if (replace_down) {
-	  /* 
-	   * Write this pixel immediately, do not put it into 
+	  /*
+	   * Write this pixel immediately, do not put it into
 	   * the blendline since it corresponds to the wrong
 	   * scanline.
 	   */
@@ -656,9 +655,9 @@ view_eol( struct application *ap )
 	  bu_semaphore_release (BU_SEM_SYSCALL);
 
 	  replace_down = 0;
-	} 
+	}
 	else {
-	  /* 
+	  /*
 	   * Put this pixel back into the blendline array.
 	   * We'll push it to the buffer when the entire
 	   * scanline has been processed.
@@ -670,11 +669,11 @@ view_eol( struct application *ap )
       } /* end "if this pixel is an edge" */
     } /* end pixel loop */
 
-    /* 
+    /*
      * Write the blendline to the framebuffer.
      */
     bu_semaphore_acquire (BU_SEM_SYSCALL);
-    fb_write (fbp, 0, ap->a_y, blendline[cpu], per_processor_chunk);	  
+    fb_write (fbp, 0, ap->a_y, blendline[cpu], per_processor_chunk);
     bu_semaphore_release (BU_SEM_SYSCALL);
     return;
   } /* end blend */
@@ -697,8 +696,8 @@ view_eol( struct application *ap )
   }
   else {
     bu_log ("rtedge: strange, no end of line actions taken.\n");
-  } 
-  
+  }
+
   return;
 
 }
@@ -761,7 +760,7 @@ int rayhit2 (struct application *ap, register struct partition *pt,
 	pp->pt_inseg->seg_stp, &(ap->a_ray), pp->pt_inflip);
     c->c_dist = hitp->hit_dist;
 
-    return(1);		
+    return(1);
 }
 
 /*
@@ -774,7 +773,7 @@ int raymiss2( register struct application *ap )
     c->c_ishit    	= 0;
     c->c_region   	= 0;
     c->c_dist     	= MISS_DIST;
-    c->c_id	    	= MISS_ID;	
+    c->c_id	    	= MISS_ID;
     VSETALL(c->c_hit, MISS_DIST);
     VSETALL(c->c_normal, 0);
     VMOVE(c->c_rdir, ap->a_ray.r_dir);
@@ -790,16 +789,16 @@ int is_edge(struct application *ap, struct cell *here,
     if (detect_ids) {
       if (here->c_id != left->c_id || here->c_id != below->c_id) {
 	return 1;
-      } 
-    } 
+      }
+    }
 
     if (detect_regions) {
-      if (here->c_region != left->c_region || 
+      if (here->c_region != left->c_region ||
 	  here->c_region != below->c_region ) {
 	return 1;
       }
     }
-  
+
     if (detect_distance) {
       if (Abs(here->c_dist - left->c_dist) > max_dist ||
 	  Abs(here->c_dist - below->c_dist) > max_dist) {
@@ -810,7 +809,7 @@ int is_edge(struct application *ap, struct cell *here,
     if (detect_normals) {
       if ((VDOT(here->c_normal, left->c_normal) < COSTOL) ||
 	  (VDOT(here->c_normal, below->c_normal)< COSTOL)) {
-	return 1;	
+	return 1;
       }
     }
   }
@@ -819,7 +818,7 @@ int is_edge(struct application *ap, struct cell *here,
       return 1;
     }
   }
-  
+
   return 0;
 }
 
@@ -835,13 +834,13 @@ handle_main_ray( struct application *ap, register struct partition *PartHeadp,
 {
   register struct partition *pp;
   register struct hit	*hitp;		/* which hit */
-  
+
   LOCAL struct application	a2;
   LOCAL struct cell		me;
   LOCAL struct cell		below;
   LOCAL struct cell		left;
   LOCAL int			edge = 0;
-  LOCAL int			cpu;	
+  LOCAL int			cpu;
   LOCAL int                     oc = 1;
 
   RGBpixel                      col;
@@ -850,9 +849,9 @@ handle_main_ray( struct application *ap, register struct partition *PartHeadp,
   memset(&me, 0, sizeof(struct cell));
   memset(&below, 0, sizeof(struct cell));
   memset(&left, 0, sizeof(struct cell));
-  
-  cpu = ap->a_resource->re_cpu;	
-  
+
+  cpu = ap->a_resource->re_cpu;
+
   if (PartHeadp == NULL) {
     /* The main shotline missed.
      * pack the application struct
@@ -866,7 +865,7 @@ handle_main_ray( struct application *ap, register struct partition *PartHeadp,
     VMOVE(me.c_rdir, ap->a_ray.r_dir);
   } else {
     pp = PartHeadp->pt_forw;
-    hitp = pp->pt_inhit;	
+    hitp = pp->pt_inhit;
     /*
      * Stuff the information for this cell.
      */
@@ -877,9 +876,9 @@ handle_main_ray( struct application *ap, register struct partition *PartHeadp,
     VMOVE(me.c_rdir, ap->a_ray.r_dir);
     VJOIN1(me.c_hit, ap->a_ray.r_pt, hitp->hit_dist, ap->a_ray.r_dir );
     RT_HIT_NORMAL(me.c_normal, hitp,
-		  pp->pt_inseg->seg_stp, &(ap->a_ray), pp->pt_inflip);	       
+		  pp->pt_inseg->seg_stp, &(ap->a_ray), pp->pt_inflip);
   }
-  
+
   /*
    * Now, fire a ray for both the cell below and if necessary, the
    * cell to the left.
@@ -890,12 +889,12 @@ handle_main_ray( struct application *ap, register struct partition *PartHeadp,
   a2.a_rt_i = ap->a_rt_i;
   a2.a_resource = ap->a_resource;
   a2.a_logoverlap = ap->a_logoverlap;
-  
+
   VSUB2(a2.a_ray.r_pt, ap->a_ray.r_pt, dy_model); /* below */
   VMOVE(a2.a_ray.r_dir, ap->a_ray.r_dir);
   a2.a_uptr = (genptr_t)&below;
   rt_shootray(&a2);
-  
+
   if (ap->a_x == 0) {
     /*
      * For the first pixel in a scanline, we have to shoot to the left.
@@ -916,7 +915,7 @@ handle_main_ray( struct application *ap, register struct partition *PartHeadp,
     VMOVE (left.c_hit, saved[cpu]->c_hit);
     VMOVE (left.c_normal, saved[cpu]->c_normal);
   }
-  
+
   /*
    * Is this pixel an edge?
    */
@@ -938,7 +937,7 @@ handle_main_ray( struct application *ap, register struct partition *PartHeadp,
    * If a pixel should be written to the fb, writeable is set.
    */
   if (occlusion_mode == OCCLUSION_MODE_EDGES) {
-      
+
     if (edge && oc) {
       writeable[cpu][ap->a_x] = 1;
     } else {
@@ -946,16 +945,16 @@ handle_main_ray( struct application *ap, register struct partition *PartHeadp,
     }
   }
   else if (occlusion_mode == OCCLUSION_MODE_HITS) {
-      
+
     if ( (me.c_ishit || edge) && oc) {
       writeable[cpu][ap->a_x] = 1;
-    } 
+    }
     else {
       writeable[cpu][ap->a_x] = 0;
     }
   }
   else if (occlusion_mode == OCCLUSION_MODE_DITHER) {
-      
+
     if (edge && oc) {
       writeable[cpu][ap->a_x] = 1;
     }
@@ -963,19 +962,19 @@ handle_main_ray( struct application *ap, register struct partition *PartHeadp,
       /*
        * Dither mode.
        *
-       * For occluding non-edges, only write every 
+       * For occluding non-edges, only write every
        * other pixel.
        */
       if (oc == 1 && ((ap->a_x + ap->a_y) % 2) == 0) {
 	writeable[cpu][ap->a_x] = 1;
-      } 
+      }
       else if (oc == 2) {
 	writeable[cpu][ap->a_x] = 1;
       }
       else {
 	writeable[cpu][ap->a_x] = 0;
       }
-    } 
+    }
     else {
       writeable[cpu][ap->a_x] = 0;
     }
@@ -991,16 +990,16 @@ handle_main_ray( struct application *ap, register struct partition *PartHeadp,
   if (edge) {
 
     choose_color (col, &me, &left, &below);
-    
+
     scanline[cpu][ap->a_x*3+RED] = col[RED];
     scanline[cpu][ap->a_x*3+GRN] = col[GRN];
     scanline[cpu][ap->a_x*3+BLU] = col[BLU];
-    
+
   } else {
-    
+
     scanline[cpu][ap->a_x*3+RED] = bgcolor[RED];
     scanline[cpu][ap->a_x*3+GRN] = bgcolor[GRN];
-    scanline[cpu][ap->a_x*3+BLU] = bgcolor[BLU];	  
+    scanline[cpu][ap->a_x*3+BLU] = bgcolor[BLU];
   }
 
   /*
@@ -1017,7 +1016,7 @@ handle_main_ray( struct application *ap, register struct partition *PartHeadp,
   return edge;
 }
 
-void application_init (void) { 
+void application_init (void) {
   bu_vls_init(&occlusion_objects);
 }
 
@@ -1062,26 +1061,26 @@ void choose_color (RGBpixel col, struct cell *me,
   return;
 }
 
-static int occlusion_hit (struct application *ap, struct partition *pt, 
+static int occlusion_hit (struct application *ap, struct partition *pt,
 		      struct seg *segp)
 {
   struct hit		*hitp = pt->pt_forw->pt_inhit;
-  
+
   ap->a_dist = hitp->hit_dist;
-  return 1;		
+  return 1;
 }
 
 static int occlusion_miss (struct application *ap)
 {
   ap->a_dist = MAX_FASTF;
-  return 0;		
+  return 0;
 }
 
 
 
 static int occludes (struct application *ap, struct cell *here)
-{ 
-  int cpu = ap->a_resource->re_cpu;	
+{
+  int cpu = ap->a_resource->re_cpu;
   int oc_hit = 0;
   /*
    * Test the hit distance on the second geometry.
@@ -1096,25 +1095,25 @@ static int occludes (struct application *ap, struct cell *here)
 
   if (!oc_hit) {
     /*
-     * The occlusion ray missed, therefore this 
-     * pixel occludes the second geometry. 
-     * 
+     * The occlusion ray missed, therefore this
+     * pixel occludes the second geometry.
+     *
      * Return 2 so that the fact that there is no
-     * geometry behind can be conveyed to the 
+     * geometry behind can be conveyed to the
      * OCCLUSION_MODE_DITHER section.
      */
     return 2;
   }
 
   if (occlusion_apps[cpu]->a_dist < here->c_dist) {
-    /* 
+    /*
      * The second geometry is close than the edge, therefore it
      * is 'foreground'. Do not draw the edge.
      *
      * - This pixel DOES NOT occlude the second geometry.
      */
-    return 0; 
-  }    
+    return 0;
+  }
   return 1;
 }
 

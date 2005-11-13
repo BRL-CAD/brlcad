@@ -27,12 +27,12 @@
  *
  *  Authors -
  *	Phillip Dykstra
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005
- *  
+ *
  */
 #ifndef lint
 static const char RCScook[] = "@(#)$Header$ (BRL)";
@@ -167,10 +167,10 @@ cook_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struc
  */
 HIDDEN int
 cmirror_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip)
-                           
-             	         
-    	      
-                             
+
+
+
+
                                 /* New since 4.4 release */
 {
 	register struct cook_specific *pp;
@@ -209,10 +209,10 @@ cmirror_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, st
  */
 HIDDEN int
 cglass_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip)
-                           
-             	         
-    	      
-                             
+
+
+
+
                                 /* New since 4.4 release */
 {
 	register struct cook_specific *pp;
@@ -332,7 +332,7 @@ cook_render(register struct application *ap, struct partition *pp, struct shadew
 
 		if ((lp = (struct light_specific *)swp->sw_visible[i]) == LIGHT_NULL )
 			continue;	/* shadowed */
-	
+
 		/* Light is not shadowed -- add this contribution */
 		intensity = swp->sw_intensity+3*i;
 		to_light = swp->sw_tolight+3*i;

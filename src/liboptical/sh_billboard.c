@@ -27,12 +27,11 @@
  */
 #include "common.h"
 
-
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
+
 #include "machine.h"
 #include "vmath.h"
 #include "raytrace.h"
@@ -55,8 +54,8 @@ struct bbd_img {
     double	img_xlen;	/* length of image in u direction */
     vect_t	img_y;		/* v direction in image plane */
     double	img_ylen;	/* length of image in v direction */
-    int		img_width;	/* dimension of image */
-    int 	img_height;
+    long int	img_width;	/* dimension of image */
+    long int 	img_height;
     struct bu_mapped_file *img_mf; /* image data */
 };
 
@@ -72,7 +71,7 @@ struct bbd_specific {
     int img_height;
     double img_scale;
     struct bu_vls img_filename;
-    
+
     /* these are not initialized by the user */
     unsigned	img_count;
     struct bu_list imgs;
@@ -88,8 +87,8 @@ const static
 struct bbd_specific bbd_defaults = {
     bbd_MAGIC,
     10,		/* img_threshold */
-    512,	/* img_width */
-    512,	/* img_height */
+    512L,	/* img_width */
+    512L,	/* img_height */
     100.0	/* img_scale */
 };
 
@@ -108,8 +107,8 @@ void new_image(register const struct bu_structparse	*sdp,
  * structure above
  */
 struct bu_structparse bbd_print_tab[] = {
-    {"%d",  1, "w",	SHDR_O(img_width),	BU_STRUCTPARSE_FUNC_NULL },
-    {"%d",  1, "n",	SHDR_O(img_height),	BU_STRUCTPARSE_FUNC_NULL },
+    {"%ld",  1, "w",	SHDR_O(img_width),	BU_STRUCTPARSE_FUNC_NULL },
+    {"%ld",  1, "n",	SHDR_O(img_height),	BU_STRUCTPARSE_FUNC_NULL },
     {"%d",  1, "t",	SHDR_O(img_threshold),	BU_STRUCTPARSE_FUNC_NULL },
     {"%f",  1, "h",	SHDR_O(img_scale),	BU_STRUCTPARSE_FUNC_NULL },
     {"%S",  1, "f",	SHDR_O(img_filename),	new_image },
@@ -166,7 +165,7 @@ void new_image(register const struct bu_structparse	*sdp,	/*struct desc*/
 
     if (!bn_common_name_size(&(bbdi->img_width), &(bbdi->img_height),
 			     bu_vls_addr(&bbd_sp->img_filename))) {
-	bu_log("---- Warning:  Assuming %dx%d dimension for \"%s\" ----\n",
+	bu_log("---- Warning:  Assuming %ldx%ld dimension for \"%s\" ----\n",
 	       bbdi->img_width,
 	       bbdi->img_height,
 	       bu_vls_addr(&bbd_sp->img_filename));
@@ -184,7 +183,7 @@ void new_image(register const struct bu_structparse	*sdp,	/*struct desc*/
  *	This routine is called (at prep time)
  *	once for each region which uses this shader.
  *	Any shader-specific initialization should be done here.
- * 
+ *
  * 	Returns:
  *	1	success
  *	0	success, but delete region
@@ -488,11 +487,11 @@ do_ray_image(struct application	*ap,
 	    }
 	}
     }
-    if (rdebug&RDEBUG_SHADE) 
+    if (rdebug&RDEBUG_SHADE)
 	bu_log("tot:%d color_count: %d\n", tot, color_count);
 
     if (color_count == 0)  {
-	if (rdebug&RDEBUG_SHADE) 
+	if (rdebug&RDEBUG_SHADE)
 	    bu_log("no color contribution, leaving color as %g %g %g\n",
 		   V3ARGS(swp->sw_color));
 	return;
@@ -558,7 +557,7 @@ bbd_render( ap, pp, swp, dp )
     CK_bbd_SP(bbd_sp);
 
     if (rdebug&RDEBUG_SHADE) {
-	bu_struct_print( "bbd_render Parameters:", 
+	bu_struct_print( "bbd_render Parameters:",
 			 bbd_print_tab, (char *)bbd_sp );
 	bu_log("pixel %d %d\n", ap->a_x, ap->a_y);
 	bu_log("bbd region: %s\n", pp->pt_regionp->reg_name);
@@ -569,7 +568,7 @@ bbd_render( ap, pp, swp, dp )
 	       __FILE__, __LINE__, pp->pt_regionp->reg_name, tp->tr_a.tu_op);
 	bu_bomb("\n");
     }
-    
+
 
     swp->sw_transmit = 1.0;
     VSETALL(swp->sw_color, 0.0);
@@ -585,7 +584,7 @@ bbd_render( ap, pp, swp, dp )
 					 bi->img_plane, &ap->a_rt_i->rti_tol);
 	i++;
     }
-    
+
     qsort(id, bbd_sp->img_count, sizeof(id[0]), &imgdist_compare);
 
     for (i=0 ; i < bbd_sp->img_count && swp->sw_transmit > 0.0 ; i++) {

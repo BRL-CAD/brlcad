@@ -27,7 +27,7 @@
  *  Authors -
  *	Steve Hayman <sahayman@iuvax.cs.indiana.edu>
  *	Michael John Muuss
- *  
+ *
  *  Source -
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
@@ -74,25 +74,25 @@ get_args(int argc, register char **argv)
 {
 	register int c;
 
-	while ( (c = getopt( argc, argv, "a#:s:w:n:" )) != EOF )  {
+	while ( (c = bu_getopt( argc, argv, "a#:s:w:n:" )) != EOF )  {
 		switch( c )  {
 		case '#':
-			pixbytes = atoi(optarg);
+			pixbytes = atoi(bu_optarg);
 			break;
 		case 'a':
 			autosize = 1;
 			break;
 		case 's':
 			/* square file size */
-			file_height = file_width = atol(optarg);
+			file_height = file_width = atol(bu_optarg);
 			autosize = 0;
 			break;
 		case 'w':
-			file_width = atol(optarg);
+			file_width = atol(bu_optarg);
 			autosize = 0;
 			break;
 		case 'n':
-			file_height = atol(optarg);
+			file_height = atol(bu_optarg);
 			autosize = 0;
 			break;
 
@@ -101,13 +101,13 @@ get_args(int argc, register char **argv)
 		}
 	}
 
-	if( optind >= argc )  {
+	if( bu_optind >= argc )  {
 		if( isatty(fileno(stdin)) )
 			return(0);
 		file_name = "-";
 		infp = stdin;
 	} else {
-		file_name = argv[optind];
+		file_name = argv[bu_optind];
 		if( (infp = fopen(file_name, "r")) == NULL )  {
 			perror(file_name);
 			(void)fprintf( stderr,
@@ -118,7 +118,7 @@ get_args(int argc, register char **argv)
 		fileinput++;
 	}
 
-	if ( argc > ++optind )
+	if ( argc > ++bu_optind )
 		(void)fprintf( stderr, "pix-ppm: excess argument(s) ignored\n" );
 
 	return(1);		/* OK */
@@ -180,7 +180,7 @@ main(int argc, char **argv)
 	 * now write them out in the right order, 'cause the
 	 * input is upside down.
 	 */
-	
+
 	for ( i = 0; i < file_height; i++ ) {
 		row = scanbuf + (file_height-1 - i) * ROWSIZE;
 		fwrite(row, 1, ROWSIZE, stdout);

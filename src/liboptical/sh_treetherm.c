@@ -42,11 +42,11 @@
 /*
  * The thermal data file starts with a long indicating the number of
  * "cylinder" structures that follow.  The cyliner structure consists
- * of 18 bytes in 5 entries.  First is a 2 byte short integer indicating the 
- * number of "segments" that follow.  Max Lorenzo promises this value is 
+ * of 18 bytes in 5 entries.  First is a 2 byte short integer indicating the
+ * number of "segments" that follow.  Max Lorenzo promises this value is
  * always "1".  A segment consists of n tuples.  Max Lorenzo promises that
- * "n" is always 8 (it's a compile-time option to treetherm).  Each tuple 
- * consists of 4 (4-byte) float values: x, y, z, temperature.  
+ * "n" is always 8 (it's a compile-time option to treetherm).  Each tuple
+ * consists of 4 (4-byte) float values: x, y, z, temperature.
  *
  * Because there is always 1 segment, the cylinder is a constant 130 bytes.
  *
@@ -114,7 +114,7 @@ struct thrm_seg {
  * to any particular use of the shader.
  */
 struct tthrm_specific {
-	long			magic;	
+	long			magic;
 	char			tt_name[64];
 	long			tt_max_seg;
 	fastf_t			tt_min_temp;
@@ -220,10 +220,10 @@ build_tree(struct bu_list *br, struct region *rp)
  */
 HIDDEN int
 tthrm_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip)
-                      	    
-             		         
+
+
     			      	/* pointer to reg_udata in *rp */
-             		     
+
            		      	/* New since 4.4 release */
 {
 	register struct tthrm_specific	*tthrm_sp;
@@ -289,10 +289,10 @@ tthrm_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, stru
 	/* Compute how big the file should be, so that we can guess
 	 * at the size of the integer at the front of the file
 	 */
-	file_size_int = sizeof(int) + *((int *)tt_data) * 
+	file_size_int = sizeof(int) + *((int *)tt_data) *
 		(sizeof(short) + sizeof(float) * 4 * NUM_NODES);
 
-	file_size_long = sizeof(long) + *((long *)tt_data) * 
+	file_size_long = sizeof(long) + *((long *)tt_data) *
 		(sizeof(short) + sizeof(float) * 4 * NUM_NODES);
 
 	switch (sizeof(long)) {
@@ -322,7 +322,7 @@ tthrm_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, stru
 			}
 
 			long_size = sizeof(long) + 4;
-			tthrm_sp->tt_max_seg = cyl_tot = 
+			tthrm_sp->tt_max_seg = cyl_tot =
 				((int *)tt_data)[1];
 		}
 		break;
@@ -387,7 +387,7 @@ tthrm_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, stru
 		VSCALE(tthrm_sp->tt_segs[tseg].pt, center, inv_nodes);
 
 		if (rdebug&RDEBUG_SHADE) {
-			bu_log("Center: (%g %g %g) (now in mm, not m)\n", 
+			bu_log("Center: (%g %g %g) (now in mm, not m)\n",
 					V3ARGS(tthrm_sp->tt_segs[tseg].pt));
 		}
 
@@ -445,8 +445,8 @@ tthrm_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, stru
 
 	if (rdebug&RDEBUG_SHADE) {
 		bu_log("min_temp: %17.14e  max_temp %17.14e temp_scale: %17.14e\n",
-			tthrm_sp->tt_min_temp, 
-			tthrm_sp->tt_max_temp, 
+			tthrm_sp->tt_min_temp,
+			tthrm_sp->tt_max_temp,
 			tthrm_sp->tt_temp_scale);
 
 		bu_log("tthrm_setup(%s, %s)done\n",
@@ -534,8 +534,8 @@ get_solid_number(struct partition *pp)
  */
 int
 tthrm_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp)
-                  	    
-                	    
+
+
                 	     	/* defined in material.h */
     			    	/* ptr to the shader-specific struct */
 {
@@ -558,7 +558,7 @@ tthrm_render(struct application *ap, struct partition *pp, struct shadework *swp
 	RT_CHECK_PT(pp);
 	CK_tthrm_SP(tthrm_sp);
 
-	/* We are performing the shading in "region" space.  We must 
+	/* We are performing the shading in "region" space.  We must
 	 * transform the hit point from "model" space to "region" space.
 	 * See the call to db_region_mat in tthrm_setup().
 	 */
@@ -597,7 +597,7 @@ tthrm_render(struct application *ap, struct partition *pp, struct shadework *swp
 	if (MAGSQ(v) > 100.0) {
 		double dist;
 		dist = MAGNITUDE(v);
-		/* Distance between particle origin and centroid of themal 
+		/* Distance between particle origin and centroid of themal
 		 * segment nodes is > 10.0mm (1cm).  This suggests that
 		 * they aren't related
 		 */
@@ -616,7 +616,7 @@ too large.  Probable mis-match between geometry and thermal data\n"
 		VUNITIZE(unit_H);
 
 		bu_log("particle rooted at:\n\t(%g %g %g) radius %g\n\tdir: (%g %g %g) (%g %g %g)\n",
-			V3ARGS(part_p->part_V), part_p->part_vrad, 
+			V3ARGS(part_p->part_V), part_p->part_vrad,
 			V3ARGS(unit_H),
 			V3ARGS(part_p->part_H));
 
@@ -627,7 +627,7 @@ too large.  Probable mis-match between geometry and thermal data\n"
 	VSUB2(pt_v, pt, thrm_seg->pt);
 
 	/* The output of treetherm is much too imprecise.  Computed centroid
-	 * from truncated floating point values is off.   We'll try to 
+	 * from truncated floating point values is off.   We'll try to
 	 * compensate by doing a double-vector-cross product to get a vector
 	 * for our point that is in the plane of the thermal node.
 	 */
@@ -657,10 +657,10 @@ too large.  Probable mis-match between geometry and thermal data\n"
 
 	/* set color to temperature */
 	swp->sw_temperature = thrm_seg->temperature[best_idx];
-	best_val = (thrm_seg->temperature[best_idx] - 
+	best_val = (thrm_seg->temperature[best_idx] -
 		    tthrm_sp->tt_min_temp) * tthrm_sp->tt_temp_scale;
 
-	/* We do non-grayscale to indicate values 
+	/* We do non-grayscale to indicate values
 	 * outside the range specified
 	 */
 	if (best_val > 1.0) {
@@ -684,8 +684,8 @@ too large.  Probable mis-match between geometry and thermal data\n"
 			thrm_seg->temperature[best_idx]);
 
 		bu_log("min_temp: %17.14e  max_temp %17.14e temp_scale: %17.14e\n",
-			tthrm_sp->tt_min_temp, 
-			tthrm_sp->tt_max_temp, 
+			tthrm_sp->tt_min_temp,
+			tthrm_sp->tt_max_temp,
 			tthrm_sp->tt_temp_scale);
 
 		bu_log("color: %g (%g)\n", best_val, best_val * 255.0);
@@ -693,7 +693,7 @@ too large.  Probable mis-match between geometry and thermal data\n"
 
 
 	if (rdebug&RDEBUG_SHADE) {
-		bu_log("tthrm_render()\n\t  model:(%g %g %g)\n\t shader:(%g %g %g)\n", 
+		bu_log("tthrm_render()\n\t  model:(%g %g %g)\n\t shader:(%g %g %g)\n",
 		V3ARGS(swp->sw_hit.hit_point),
 		V3ARGS(pt) );
 	}

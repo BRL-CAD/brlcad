@@ -1,47 +1,70 @@
-.TH ANIM_SCRIPT 1 BRL/CAD
+.TH ANIM_SCRIPT 1 BRL-CAD
+./"                  A N I M _ S C R I P T . 1
+./" BRL-CAD
+./"
+./" Copyright (c) 1993-2005 United States Government as represented by
+./" the U.S. Army Research Laboratory.
+./"
+./" This document is made available under the terms of the GNU Free
+./" Documentation License or, at your option, under the terms of the
+./" GNU General Public License as published by the Free Software
+./" Foundation.  Permission is granted to copy, distribute and/or
+./" modify this document under the terms of the GNU Free Documentation
+./" License, Version 1.2 or any later version published by the Free
+./" Software Foundation; with no Invariant Sections, no Front-Cover
+./" Texts, and no Back-Cover Texts.  Permission is also granted to
+./" redistribute this document under the terms of the GNU General
+./" Public License; either version 2 of the License, or (at your
+./" option) any later version.
+./"
+./" You should have received a copy of the GNU Free Documentation
+./" License and/or the GNU General Public License along with this
+./" document; see the file named COPYING for more information.
+./"
+./"./"./"
 .SH NAME
 anim_script - make an animation script for one object
 .SH SYNOPSIS
-.B anim_script 
-.B [-v #] 
-.B [-r|t|s] 
+.B anim_script
+.B [-v #]
+.B [-r|t|s]
 .B [-q][-p]
-.B [-a|b # # #] 
-.B [-c|d # # #] 
+.B [-a|b # # #]
+.B [-c|d # # #]
 .B [-f #]
 .B [-m cmd]
-.B [objectname] 
-.B < in.table 
+.B [objectname]
+.B < in.table
 .B > out.script
 .SH DESCRIPTION
-.I Anim_script 
+.I Anim_script
 is designed to produce an animation script for the
-animation of the virtual camera or one 
-.I brlcad 
+animation of the virtual camera or one
+.I brlcad
 object at a time. It is
-complementary to 
-.I tabsub 
+complementary to
+.I tabsub
 in that it performs a similar
-function, but with a different philosophy. 
+function, but with a different philosophy.
 .PP
-Both 
-.I anim_script 
-and 
-.I tabsub 
+Both
+.I anim_script
+and
+.I tabsub
 use one row of an animation table to
-produce one frame of an animation script. With 
-.I tabsub, 
+produce one frame of an animation script. With
+.I tabsub,
 the user supplies
 a template file which controls the form of the animation frames. This
 allows the maximum user control, but also requires a good understanding
-of the script format. With 
-.I anim_script, 
+of the script format. With
+.I anim_script,
 the user supplies all the necessary
 information on the command line. The range of possible output scripts is
 limited, but the user does not have to deal directly with the details.
 Both routines have special features which make certain common situations
-easy to do. One of the most important special features of 
-.I anim_script 
+easy to do. One of the most important special features of
+.I anim_script
 is the
 ability to specify a reference position and orientation, as explained
 below.
@@ -50,7 +73,7 @@ The objectname is the name of the object which is to be
 animated, as it will appear in the ouput script. For example, if
 "hatch1"
 is a member of "turret" which is a member of "tank" which is one of the
-objects specified on the command line of the call to 
+objects specified on the command line of the call to
 .I rt,
 then the objectname "tank/turret/hatch1" or simply "turret/hatch1" would be used to
 animate the hatch. The tank itself would be referred to by the name,
@@ -58,10 +81,10 @@ animate the hatch. The tank itself would be referred to by the name,
 If view animation is being performed, no objectname
 should be included.
 .PP
-.B in.table 
+.B in.table
 should be a seven-column animation table,
 specifying the time, 3d position, yaw, pitch and roll of the
-object (or camera), although this changes if the 
+object (or camera), although this changes if the
 .BR -r ,
 .BR -t ,
 .BR -s ,
@@ -71,17 +94,17 @@ options are used.
 .SH OPTIONS
 .TP
 .B \-r
-.B in.table 
+.B in.table
 is a four-column file including time and rotation
 information only. No translation will occur.
 .TP
 .B \-t
-.B in.table 
+.B in.table
 is a four-column file including time and translation
 information only. No rotation will occur.
 .TP
 .B \-s
-.B in.table 
+.B in.table
 is a four-column file including time and translation
 information only. The vehicle will be rotated (steered) to face the
 direction of motion.
@@ -89,40 +112,40 @@ direction of motion.
 .B \-q
 Quaternion orientation. Any orientation information in
 .B in.table
-will be in quaternion form, in the order x,y,z,w. The identity quaternion 
-representing no orientation change is (0,0,0,1). 
+will be in quaternion form, in the order x,y,z,w. The identity quaternion
+representing no orientation change is (0,0,0,1).
 .TP
 .B \-p
 Permuted orientation. This option indicates that transformations defined by
-the quaternions should be applied to an object which has first been placed 
-in 
+the quaternions should be applied to an object which has first been placed
+in
 .IR rt 's
 default eye orientation. Thus, the identity quaternion represents yawing the
 object 90 degrees to the left and then pitching it 90 degrees downward.
-The quaternions produced by 
+The quaternions produced by
 .IR mged 's
-saveview command and used by 
+saveview command and used by
 .IR rt 's
 orientation command
-are quaternions of this type. See 
-.I anim_orient 
+are quaternions of this type. See
+.I anim_orient
 for more information.
 .TP
 .B \-v#
 The desired output is a view animation script, rather
 than an object animation script. No object should be specified. The
-argument can be any floating point number. If 
+argument can be any floating point number. If
 the argument
-is positive, the command: 
+is positive, the command:
 .sp
-viewsize #; 
+viewsize #;
 .sp
 will be placed at the beginning of the ouput file. If it is
-zero, the `viewsize' command is omitted from the output script. If it is 
+zero, the `viewsize' command is omitted from the output script. If it is
 negative, then the
 viewsize for each frame is expected to be in the first column after the
-time in 
-.BR in.table . 
+time in
+.BR in.table .
 A `viewsize' command would then be
 included immediately after the `start' command of each frame.
 .TP
@@ -131,76 +154,76 @@ Specify the integer with which to begin
 numbering the frames of the output script. The default is 0.
 .PP
 The remaining options give information about the object which is
-to be animated. 
+to be animated.
 .TP
-.B \-a # # #  
+.B \-a # # #
 or
 .TP
 .B \-b # # #
 These options take three arguments, which are the
 yaw, pitch, and roll of the object's axes with respect to the
-world axes. With 
-.B \-a, 
+world axes. With
+.B \-a,
 rotations specified in the infile will be applied
-with respect to the object's axes. With the 
-.B \-b 
+with respect to the object's axes. With the
+.B \-b
 option, the object is
 rotated so that its axes coincide with the world axes, and then all
 rotations and translations are carried out with respect to the world
-axes. The 
-.B \-b 
-option is particularly useful in conjunction with the 
+axes. The
+.B \-b
+option is particularly useful in conjunction with the
 .B \-s
-option, because it tells 
-.I anim_script 
+option, because it tells
+.I anim_script
 which way the front of the vehicle faces. See
 the examples below.
 .TP
-.B \-c # # #  
+.B \-c # # #
 or
 .TP
 .B \-d # # #
 These options take three arguments, which are the x, y,
 and z coordinates of the point which is to be considered the "centroid"
-of the object. All rotations will occur about this point. If 
-.B \-c 
+of the object. All rotations will occur about this point. If
+.B \-c
 is used,
 translations from the input table will be considered to be relative
-displacements from this point. If 
-.B \-d 
+displacements from this point. If
+.B \-d
 is used, the translations in the
 input table will be interpreted as absolute displacement from the world
 origin. The direction of translation in both cases is along the world
-axes, unless the 
-.B \-a 
+axes, unless the
+.B \-a
 option  has been used, in which case the
 translations are with respect to the object's axes. See the examples below.
 .PP
-When the 
-.B \-v 
+When the
+.B \-v
 option is used, the virtual camera is the object
 being animated, and so the meaning of the preceeding four options
-changes somewhat. The 
-.B \-c 
-and 
-.B \-a 
+changes somewhat. The
+.B \-c
+and
+.B \-a
 options are not useful in this context.
-The 
-.B \-d 
+The
+.B \-d
 option can be thought of as specifying the position and
 orientation of a virtual
-tripod with respect to the camera lens.  The translations and rotations 
+tripod with respect to the camera lens.  The translations and rotations
 specified in
 the input table will be applied to the tripod, to which the camera is
-rigidly attached.  For example, the option 
-.B \-d 10 0 \-2 
+rigidly attached.  For example, the option
+.B \-d 10 0 \-2
 in conjunction with
-the 
+the
 .B \-v#
 option means that the virtual tripod is 10 units in front of the
 camera and 2
-units below the camera's line of sight. The option 
-.B \-b -90 0 0 
+units below the camera's line of sight. The option
+.B \-b -90 0 0
 in this
 context would mean that the front of the virtual tripod faces 90 degrees
 to the right of the virtual camera. As translation and rotation
@@ -210,8 +233,8 @@ of how this might be used.
 .TP
 .B -m cmd
 Specify a matrix command to use in, object animation. The default value
-is "lmul", which means that matrices in the output script are 
-multiplied onto the 
+is "lmul", which means that matrices in the output script are
+multiplied onto the
 left of the matrix between the object being animated and its parent.
 The matrix residing between the object and its parent is referred to as
 the current arc. The possible matrix commands are the following:
@@ -221,33 +244,33 @@ the current arc. The possible matrix commands are the following:
      rmul   - right-multiply the matrix onto the current arc
      rarc   - replace the current arc with the matrix
      rstack - replace the stack of ancestor matrices with the matrix
-     rboth  - replace the current arc with the matrix and replace the 
+     rboth  - replace the current arc with the matrix and replace the
                  stack of ancestor matrices with the identity matrix.
 
 .fi
 This option is intended primarily to give expert users additional
-flexibility, and shouldn't be needed by most animators. 
+flexibility, and shouldn't be needed by most animators.
 .SH EXAMPLES
 To animate a truck which is modeled with the front facing the positive
-x-direction, the position of the center of the truck and its orientation at 
-each time should be in 
-.BR truck.table . 
+x-direction, the position of the center of the truck and its orientation at
+each time should be in
+.BR truck.table .
 If the center of the modeled truck is at
 the  point (234,0,1200) then the following command could be used:
 .sp
 anim_script -d 234 0 1200 /truck < truck.table > truck.script.
 .sp
-If the front of the model truck faces (for some reason) 
+If the front of the model truck faces (for some reason)
 halfway
-between the x and y axes, a 
-.B \-b 
+between the x and y axes, a
+.B \-b
 option is added, to show the relationship
 between world and truck axes:
 .sp
 anim_script -b 45 0 0 -d 234 0 1200 /truck < truck.table > truck.script.
 .sp
-To steer the truck automatically to face the direction of motion, 
-the 
+To steer the truck automatically to face the direction of motion,
+the
 .B \-s
 option is added, and the orientation columns should be removed from
 .BR truck.table .
@@ -258,15 +281,15 @@ anim_script -s -b 45 0 0 -d 234 0 1200 /truck < truck.table > truck.script.
 Animating a steering wheel: Suppose the steering wheel is stored
 in the database so that the axis it turns on is at an yaw of -135
 degrees and an pitch of 30 degrees.  It passes through the point
-(700,800,2400). Then we select "rotation only" with 
-.B \-r 
+(700,800,2400). Then we select "rotation only" with
+.B \-r
 and specify the
-relationship between the steering wheels axes and the world with the 
+relationship between the steering wheels axes and the world with the
 .B \-a
-and 
-.B \-c 
-options. In 
-.B roll.table 
+and
+.B \-c
+options. In
+.B roll.table
 we put the time, two zero columns, and a
 column specifying the roll of the wheel (How much it is to be twisted).
 .sp
@@ -274,8 +297,8 @@ anim_script -r -a -135 30 0 -c 700 800 2400 truck/steering_column/wheel <
 roll.table > steer.table
 .sp
 Alternativly, if the turning of the wheel was stored in the yaw
-(second) column of a file, 
-.BR turn.table , 
+(second) column of a file,
+.BR turn.table ,
 a different set of axes would be
 used to achieve the same effect:
 .sp
@@ -287,8 +310,8 @@ To animate seven little men doing simultaneous backflips in different
 places, you would want to use relative motion. That is, a translation
 vector of (0,0,1) means move one unit upward, instead of move to the
 point (0,0,1). For each little man, we specify his position in the
-model using the 
-.B \-c 
+model using the
+.B \-c
 option. Then we can use the same backflip instuctions
 for each of the little men.
 .sp
@@ -303,8 +326,8 @@ and so on.
 .sp
 .SS Camera examples
 If we know the desired postion of the camera and its orientation
-at each time, it's very simple. The 
-.B -v# 
+at each time, it's very simple. The
+.B -v#
 option indicates that the view is
 being animated; no object is specified.
 .sp
@@ -318,8 +341,8 @@ anim_script -v0 -d 10 0 -4 < truck.table > view.script
 .sp
 To do the same thing but with the camera turned to look at the right
 side of the truck, we specify that the virtual tripod originally faces
-to the right, so that the camera faces its right side. Thus when the 
-virtual tripod is placed in the same position and orientation as the 
+to the right, so that the camera faces its right side. Thus when the
+virtual tripod is placed in the same position and orientation as the
 truck, the camera will be looking at the right side of the
 truck.
 .sp
@@ -331,7 +354,7 @@ option "-d 1 1 1" but not "-d1 1 1".
 .SH AUTHOR
 Carl J. Nuzman
 .SH COPYRIGHT
-	This software is Copyright (C) 1993-2005 by the United States 
+	This software is Copyright (C) 1993-2005 by the United States
 Government as represented by U.S. Army Research Laboratory.
 .SH "BUG REPORTS"
 Reports of bugs or problems should be submitted via electronic

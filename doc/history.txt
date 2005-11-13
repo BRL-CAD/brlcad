@@ -1,9 +1,9 @@
 The History of BRL-CAD
 ======================
-			The BRL CAD PACKAGE
+			The BRL-CAD PACKAGE
 			   Short Summary
 
-In FY87 two major releases of the BRL CAD Package  software  were
+In FY87 two major releases of the BRL-CAD Package  software  were
 made (Feb-87, July-87), along with two editions of the associated
 400 page manual. The package includes a powerful  solid  modeling
 capability and a network-distributed image-processing capability.
@@ -43,7 +43,7 @@ In terms of geometrical representation of data, BRL-CAD supports:
 	base which has been used to model > 150 target descriptions,
 	domestic and foreign
 
-	extensions to include both a Naval Academy spline 
+	extensions to include both a Naval Academy spline
 	(Uniform B-Spline Surface) as well as a U. of
 	Utah spline (Non-Uniform Rational B-Spline [NURB] Surface)
 	developed under NSF and DARPA sponsorship
@@ -100,7 +100,7 @@ BRL-CAD environment is the leading candidate for that role.
 
 ----
 
-To obtain a copy of the BRL CAD Package distribution, you must send
+To obtain a copy of the BRL-CAD Package distribution, you must send
 enough magnetic tape for 20 Mbytes of data. Standard nine-track
 half-inch magtape is the strongly preferred format, and can be written
 at either 1600 or 6250 bpi, in TAR format with 10k byte records. For
@@ -109,7 +109,7 @@ cartridges can also be accommodated. With your tape, you must also
 enclose a letter indicating
 
 (a) who you are,
-(b) what the BRL CAD package is to be used for,
+(b) what the BRL-CAD package is to be used for,
 (c) the equipment and operating system(s) you plan on using,
 (d) that you agree to the conditions listed below.
 

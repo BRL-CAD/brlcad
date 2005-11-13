@@ -23,7 +23,7 @@
 /*@{*/
 /** @file nurb_knot.c
  * Various knot vector routines.
- * 
+ *
  * Author -
  *     Paul R. Stay
  *
@@ -81,8 +81,8 @@ rt_nurb_kvknot(register struct knot_vector *new_knots, int order, fastf_t lower,
 
 /* rt_nurb_kvmult()
  *	Construct a new knot vector which is the same as the passed in
- * knot vector except it has multiplicity of num of val. It checks to see if 
- * val already is a multiple knot. 
+ * knot vector except it has multiplicity of num of val. It checks to see if
+ * val already is a multiple knot.
  */
 void
 rt_nurb_kvmult(struct knot_vector *new_kv, const struct knot_vector *kv, int num, register fastf_t val, struct resource *res)
@@ -115,7 +115,7 @@ rt_nurb_kvmult(struct knot_vector *new_kv, const struct knot_vector *kv, int num
 
 
 /* rt_nurb_kvgen( )
- * 	Generate a knot vector with num knots from lower value to 
+ * 	Generate a knot vector with num knots from lower value to
  * 	the upper  value.
  */
 
@@ -129,7 +129,7 @@ rt_nurb_kvgen(register struct knot_vector *kv, fastf_t lower, fastf_t upper, int
 
 	kv->k_size = num;
 
-	kv->knots = (fastf_t * ) bu_malloc ( sizeof( fastf_t) * num, 
+	kv->knots = (fastf_t * ) bu_malloc ( sizeof( fastf_t) * num,
 		    "rt_nurb_kvgen: kv knots");
 
 	for ( i = 1; i <= num; i++)
@@ -138,7 +138,7 @@ rt_nurb_kvgen(register struct knot_vector *kv, fastf_t lower, fastf_t upper, int
 
 
 /* rt_nurb_kvmerge()
- *	Merge two knot vectors together and return the new resulting 
+ *	Merge two knot vectors together and return the new resulting
  *	knot vector.
  */
 
@@ -151,7 +151,7 @@ rt_nurb_kvmerge(struct knot_vector *new_knots, const struct knot_vector *kv1, co
 
 	new_knots->k_size = kv1->k_size + kv2->k_size;
 
-	new_knots->knots = (fastf_t * ) bu_malloc( 
+	new_knots->knots = (fastf_t * ) bu_malloc(
 		    sizeof (fastf_t) * new_knots->k_size,
 		    "rt_nurb_kvmerge: new knot values");
 
@@ -199,7 +199,7 @@ rt_nurb_kvextract(struct knot_vector *new_kv, register const struct knot_vector 
 	register int	i;
 	register fastf_t *ptr;
 
-	new_kv->knots = (fastf_t * ) bu_malloc ( 
+	new_kv->knots = (fastf_t * ) bu_malloc (
 		    sizeof (fastf_t) * (upper - lower),
 		    "spl_kvextract: nkw kv values" );
 
@@ -222,7 +222,7 @@ rt_nurb_kvcopy(struct knot_vector *new_kv, register const struct knot_vector *ol
 
 	new_kv->k_size = old_kv->k_size;
 
-	new_kv->knots = (fastf_t * ) bu_malloc( sizeof( fastf_t) * 
+	new_kv->knots = (fastf_t * ) bu_malloc( sizeof( fastf_t) *
 		    new_kv->k_size, "spl_kvcopy: new knot values");
 
 	for ( i = 0; i < new_kv->k_size; i++)

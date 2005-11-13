@@ -19,15 +19,15 @@
  * information.
  */
 /** @file sedit.h
- *  
+ *
  *  This header file contains the esolid structure definition,
  *  which holds all the information necessary for solid editing.
  *  Storage is actually allocated in edsol.c
- *  
+ *
  *  Author -
  *	Keith A Applin
  *	Michael John Muuss
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
@@ -209,7 +209,7 @@
 		     es_edflag == ECMD_BOT_PICKE || \
 		     es_edflag == ECMD_BOT_PICKT))
 
-extern vect_t edit_absolute_model_rotate; 
+extern vect_t edit_absolute_model_rotate;
 extern vect_t edit_absolute_object_rotate;
 extern vect_t edit_absolute_view_rotate;
 extern vect_t last_edit_absolute_model_rotate;
@@ -267,7 +267,7 @@ extern int	es_edflag;		/* type of editing for this solid */
 extern int	es_edclass;		/* type of editing class for this solid */
 extern int	es_type;		/* COMGEOM solid type */
 
-extern mat_t	es_mat;			/* accumulated matrix of path */ 
+extern mat_t	es_mat;			/* accumulated matrix of path */
 extern mat_t 	es_invmat;		/* inverse of es_mat   KAA */
 
 extern point_t	es_keypoint;		/* center of editing xforms */

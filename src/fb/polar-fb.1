@@ -1,3 +1,27 @@
+.TH POLAR-FB 1 BRL-CAD
+./"                     P O L A R - F B . 1
+./" BRL-CAD
+./"
+./" Copyright (c) 2005 United States Government as represented by
+./" the U.S. Army Research Laboratory.
+./"
+./" This document is made available under the terms of the GNU Free
+./" Documentation License or, at your option, under the terms of the
+./" GNU General Public License as published by the Free Software
+./" Foundation.  Permission is granted to copy, distribute and/or
+./" modify this document under the terms of the GNU Free Documentation
+./" License, Version 1.2 or any later version published by the Free
+./" Software Foundation; with no Invariant Sections, no Front-Cover
+./" Texts, and no Back-Cover Texts.  Permission is also granted to
+./" redistribute this document under the terms of the GNU General
+./" Public License; either version 2 of the License, or (at your
+./" option) any later version.
+./"
+./" You should have received a copy of the GNU Free Documentation
+./" License and/or the GNU General Public License along with this
+./" document; see the file named COPYING for more information.
+./"
+./"./"./"
 .\"	$Header$
 .\"  define new caret and tilde symbols
 .ds ^ \v'+.15v'\s+2^\s-2\v'-.15v'
@@ -23,7 +47,6 @@
 .\"
 .\" The man page begins...
 .\"
-.TH POLAR-FB 1 BRL-CAD
 .SH NAME
 polar-fb \- produce polar plots on a frame buffer
 .SH SYNOPSIS
@@ -69,7 +92,7 @@ and scaled so that the unit circle just fits in the frame buffer.
 The graph consists of concentric regions colored
 blue, green, yellow, orange, or red,
 depending on distance from
-.I O.\ 
+.I O.\
 Finally,
 .I polar-fb
 superimposes a polar grid in black.
@@ -84,7 +107,7 @@ The options and their meanings are:
 .TP 8
 .BI -F \ fbfile
 Send the results to the frame buffer
-.I fbfile.\ 
+.I fbfile.\
 In the absence of the
 .B -F
 option, if the shell variable
@@ -93,17 +116,17 @@ is defined, its value is used.
 Otherwise, the host's default frame buffer is used.
 .TP 8
 .BI -N \ scr_height
-Set screen (frame-buffer) height to 
+Set screen (frame-buffer) height to
 .I scr_height
 pixels.
 .TP 8
 .BI -S \ scr_size
-Set screen (frame-buffer) height and width to 
+Set screen (frame-buffer) height and width to
 .I scr_size
 pixels.
 .TP 8
 .BI -W \ scr_width
-Set screen (frame-buffer) width to 
+Set screen (frame-buffer) width to
 .I scr_width
 pixels.
 .TP 8
@@ -122,7 +145,7 @@ Clear the frame buffer to the background color.
 .TP 8
 .BI -e
 Use empty-interior mode.
-This is useful with the 
+This is useful with the
 .B -p
 option.
 .TP 8
@@ -132,7 +155,7 @@ Do not plot the polar grid.
 .B -h
 Use high-resolution mode.
 The frame buffer is 1024\(mu1024 pixels.
-This has the same effect as 
+This has the same effect as
 .B -S 1024 .
 .TP 8
 .BI -i \ r\ g\ b
@@ -140,7 +163,7 @@ Display the interior of the npf with constant color
 (\fIr\fR,\ \fIg\fR,\ \fIb\fR).
 .TP 8
 .BI -l \ r\ g\ b
-Display the interior of the npf in annular regions 
+Display the interior of the npf in annular regions
 whose colors are a linear ramp from (0,\ 0,\ 0) at
 .I O,
 to
@@ -173,7 +196,7 @@ Set the angular quantum to
 .IR q \ degrees.
 The graph will consist of circular sectors, with the arc of each sector
 subtending an angle of
-.I q.\ 
+.I q.\
 Default is 1.
 .TP 8
 .B -r

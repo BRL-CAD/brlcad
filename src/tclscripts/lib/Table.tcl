@@ -217,7 +217,7 @@
     if {[llength $rdata] != $cols} {
 	error "Table::insertRow: number of values in row must be $cols"
     }
-	
+
     incr i -1
     if {0 < $i} {
 	set _i [expr {$i - 1}]

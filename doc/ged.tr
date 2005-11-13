@@ -981,18 +981,18 @@ Hence, the GENERAL ARB menu is a list of edges to move:
 .sp
 .ce 13
 GENERAL ARB MENU
-  move edge 12  
-  move edge 23  
-  move edge 34  
-  move edge 14  
-  move edge 15  
-  move edge 26  
-  move edge 56  
-  move edge 67  
-  move edge 78  
-  move edge 58  
-  move edge 37  
-  move edge 48  
+  move edge 12
+  move edge 23
+  move edge 34
+  move edge 14
+  move edge 15
+  move edge 26
+  move edge 56
+  move edge 67
+  move edge 78
+  move edge 58
+  move edge 37
+  move edge 48
 .sp
 The edge to be moved is selected from this menu and is then moved
 using the data tablet and pen.  When the pen is pressed, the line
@@ -1005,7 +1005,7 @@ for edge 58 are planes 4378 and 1265 (see Figure 6).
 The information printed on the bottom of the screen is the x, y, z
 coordinates of the eight vertices:
 .ce 5
- vertex         coordinates    
+ vertex         coordinates
   1,2        x1 y1 z1  x2 y2 y3
   3,4        x3 y3 z3  x4 y4 z4
   5,6        x5 y5 z5  x6 y6 z6
@@ -1074,13 +1074,13 @@ During solid editing, the parameters of the TGC are constantly updated
 on the bottom of the screen:
 
 .ce 7
-V   x y z                 
+V   x y z
 H   x y z |H| a b g rot fb
-A   x y z |A|             
-B   x y z |B|             
-c   |c|                   
-d   |d|                   
-AxB a b g rot fb          
+A   x y z |A|
+B   x y z |B|
+c   |c|
+d   |d|
+AxB a b g rot fb
 
 where "a", "b", "g" are the direction cosines and "rot" and "fb" are
 the rotation and fallback angles of the listed vector.
@@ -1103,9 +1103,9 @@ the menu:
 
 .ce 4
 ELLG MENU
- scale A 
- scale B 
- scale C 
+ scale A
+ scale B
+ scale C
 
 The scaling of these vectors is done using the data tablet and pen in
 exactly the same manner as in object scaling.  The "p" keyboard
@@ -1115,7 +1115,7 @@ The parameters of the ELLG are continually updated on the bottom of
 the screen during solid editing:
 
 .ce 4
-V   x y z                 
+V   x y z
 A   x y z |A| a b g rot fb
 B   x y z |B| a b g rot fb
 C   x y z |C| a b g rot fb
@@ -1141,7 +1141,7 @@ The parameter editing of the TOR consists of scaling the radii, hence
 the menu contains only two members:
 
 .ce 3
-  TORUS MENU  
+  TORUS MENU
 scale radius 1
 scale radius 2
 
@@ -1153,9 +1153,9 @@ The parameters of the TOR are continually updated on the bottom of the
 screen during solid editing:
 
 .ce 4
-V   x y z             
-r1  |r1|              
-r2  |r2|              
+V   x y z
+r1  |r1|
+r2  |r2|
 N   x y z a b g rot fb
 
 where "a", "b", "g" are the direction cosines and "rot" and "fb" are

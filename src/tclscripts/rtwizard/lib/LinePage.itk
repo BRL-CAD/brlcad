@@ -62,7 +62,7 @@ namespace eval RtWizard {
 
 		$itk_component(helpPanel) tag configure HelpTag \
 			-font {helvetica 10 bold}
-		
+
 		configure -onSelectCallback [itcl::code $this onSelect2]
 		configure -onDeselectCallback [itcl::code $this onDeselect2]
 		configure -statusCallback [itcl::code $this statusCallback]
@@ -72,29 +72,29 @@ namespace eval RtWizard {
 
 		eval itk_initialize $args
 
-		$itk_component(helpPanel) configure -state disabled 
+		$itk_component(helpPanel) configure -state disabled
 	    }
 	}
-    
+
 	private {
 	    method onSelect2 {optionsMenu}
 	    method onDeselect2 {}
 	    method statusCallback {}
-	}		
+	}
     }
 
     #--------------------#
     #   Public Methods   #
-    #--------------------#    
+    #--------------------#
 
     #--------------------#
     #  Private Methods   #
-    #--------------------#    
+    #--------------------#
     #
     # onSelect2
     #
     # Derived class extension for the base class onSelect method.
-    #    
+    #
     itcl::body LinePage::onSelect2 {optionsMenu} {
 	#
 	# Do the options menu
@@ -114,7 +114,7 @@ namespace eval RtWizard {
 		-variable "[itcl::scope useRegionColors]" \
 		-offvalue "false" \
 		-onvalue "true"
-	
+
 	$::wizardInstance menubar add command .$optionsMenu.bg \
 		-label "Non-Line Color..." \
 		-helpstr "Set the Non-line color" \
@@ -134,7 +134,7 @@ namespace eval RtWizard {
     #
     itcl::body LinePage::onDeselect2 {} {
 
-    }   
+    }
 
     #
     # statusCallback
@@ -144,7 +144,7 @@ namespace eval RtWizard {
     itcl::body LinePage::statusCallback {} {
 	return 1
     }
-    
+
 }; # end namespace
 
 

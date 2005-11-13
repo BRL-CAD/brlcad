@@ -25,7 +25,7 @@
  *
  *  Author -
  *	Paul J. Tanenbaum
- *  
+ *
  *  Source -
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
@@ -141,12 +141,12 @@ static void _rb_delete (bu_rb_tree *tree, struct bu_rb_node *node, int order)
 	y = node;
     else
 	y = _rb_neighbor(node, order, SENSE_MAX);
-    
+
     if (bu_rb_left_child(y, order) == bu_rb_null(tree))
 	only_child = bu_rb_right_child(y, order);
     else
 	only_child = bu_rb_left_child(y, order);
-    
+
     parent = bu_rb_parent(only_child, order) = bu_rb_parent(y, order);
     if (parent == bu_rb_null(tree))
 	bu_rb_root(tree, order) = only_child;
@@ -154,7 +154,7 @@ static void _rb_delete (bu_rb_tree *tree, struct bu_rb_node *node, int order)
 	bu_rb_left_child(parent, order) = only_child;
     else
 	bu_rb_right_child(parent, order) = only_child;
-    
+
     /*
      *	Splice y out if it's not node
      */
@@ -163,7 +163,7 @@ static void _rb_delete (bu_rb_tree *tree, struct bu_rb_node *node, int order)
 	(node -> rbn_package)[order] = (y -> rbn_package)[order];
 	((node -> rbn_package)[order] -> rbp_node)[order] = node;
     }
-    
+
     if (bu_rb_get_color(y, order) == BU_RB_BLACK)
 	bu_rb_fixup(tree, only_child, order);
 
@@ -206,7 +206,7 @@ void bu_rb_delete (bu_rb_tree *tree, int order)
 
     node = (struct bu_rb_node **)
 	    bu_malloc(nm_orders * sizeof(struct bu_rb_node *), "node list");
-	
+
     for (order = 0; order < nm_orders; ++order)
 	node[order] = (package -> rbp_node)[order];
 

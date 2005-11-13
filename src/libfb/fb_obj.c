@@ -24,7 +24,7 @@
 /** @file fb_obj.c
  * A framebuffer object contains the attributes and
  * methods for controlling  framebuffers.
- * 
+ *
  * Source -
  *	SLAD CAD Team
  *	The U. S. Army Research Laboratory
@@ -41,8 +41,6 @@
 /*@}*/
 
 #include "common.h"
-
-
 
 #include "tcl.h"
 #include "machine.h"
@@ -290,7 +288,7 @@ fbo_clear_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 		 * For now must be in the form of rrr ggg bbb.
 		 */
 		if (fbo_tcllist2color(interp, argv[6], pixel) == TCL_ERROR) {
-			Tcl_AppendResult(interp, "fb_cell: invalid color spec: ", argv[6], ".", 
+			Tcl_AppendResult(interp, "fb_cell: invalid color spec: ", argv[6], ".",
 					 (char *)NULL);
 			return TCL_ERROR;
 		}
@@ -544,9 +542,9 @@ fbo_pixel_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 		 * Decompose the color list into its constituents.
 		 * For now must be in the form of rrr ggg bbb.
 		 */
-    
+
 		if (fbo_tcllist2color(interp, argv[4], pixel) == TCL_ERROR) {
-			Tcl_AppendResult(interp, "fb_pixel: invalid color spec - ", argv[4], ".", 
+			Tcl_AppendResult(interp, "fb_pixel: invalid color spec - ", argv[4], ".",
 					 (char *)NULL);
 			return TCL_ERROR;
 		}
@@ -582,7 +580,7 @@ fbo_cell_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	unsigned char *pp;
 
 
-    
+
 	if (argc != 7) {
 		bu_vls_init(&vls);
 		bu_vls_printf(&vls, "helplib fb_cell");
@@ -590,7 +588,7 @@ fbo_cell_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 		bu_vls_free(&vls);
 		return TCL_ERROR;
 	}
-    
+
 	if (sscanf(argv[2], "%d", &xmin) != 1) {
 		Tcl_AppendResult(interp, "fb_cell: bad xmin value - ",
 				 argv[2], (char *)NULL);
@@ -629,13 +627,13 @@ fbo_cell_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 		Tcl_AppendResult(interp, "fb_cell: width and height must be > 0", (char *)NULL);
 		return TCL_ERROR;
 	}
-    
+
 	/*
 	 * Decompose the color list into its constituents.
 	 * For now must be in the form of rrr ggg bbb.
 	 */
 	if (fbo_tcllist2color(interp, argv[6], pixel) == TCL_ERROR) {
-		Tcl_AppendResult(interp, "fb_cell: invalid color spec: ", argv[6], ".", 
+		Tcl_AppendResult(interp, "fb_cell: invalid color spec: ", argv[6], ".",
 				 (char *)NULL);
 		return TCL_ERROR;
 	}
@@ -649,7 +647,7 @@ fbo_cell_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	fb_writerect(fbop->fbo_fbs.fbs_fbp, xmin, ymin, width, height, pp);
 	free((void *)pp);
 
-	return TCL_OK;    
+	return TCL_OK;
 }
 
 /*
@@ -675,7 +673,7 @@ fbo_flush_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
 	fb_flush(fbop->fbo_fbs.fbs_fbp);
 
-	return TCL_OK;    
+	return TCL_OK;
 }
 
 /*
@@ -702,7 +700,7 @@ fbo_getheight_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **ar
 	Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
 	bu_vls_free(&vls);
 
-	return TCL_OK;    
+	return TCL_OK;
 }
 
 /*
@@ -729,7 +727,7 @@ fbo_getwidth_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **arg
 	Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
 	bu_vls_free(&vls);
 
-	return TCL_OK;    
+	return TCL_OK;
 }
 
 /*
@@ -759,7 +757,7 @@ fbo_getsize_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv
 	bu_vls_free(&vls);
 
 
-	return TCL_OK;    
+	return TCL_OK;
 }
 
 /*
@@ -786,7 +784,7 @@ fbo_rect_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 		bu_vls_free(&vls);
 		return TCL_ERROR;
 	}
-    
+
 	if (sscanf(argv[2], "%d", &xmin) != 1) {
 		Tcl_AppendResult(interp, "fb_rect: bad xmin value - ",
 				 argv[2], (char *)NULL);
@@ -825,13 +823,13 @@ fbo_rect_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 		Tcl_AppendResult(interp, "fb_rect: width and height must be > 0", (char *)NULL);
 		return TCL_ERROR;
 	}
-    
+
 	/*
 	 * Decompose the color list into its constituents.
 	 * For now must be in the form of rrr ggg bbb.
 	 */
 	if (fbo_tcllist2color(interp, argv[6], pixel) == TCL_ERROR) {
-		Tcl_AppendResult(interp, "fb_rect: invalid color spec: ", argv[6], ".", 
+		Tcl_AppendResult(interp, "fb_rect: invalid color spec: ", argv[6], ".",
 				 (char *)NULL);
 		return TCL_ERROR;
 	}
@@ -857,7 +855,7 @@ fbo_rect_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 		fb_write(fbop->fbo_fbs.fbs_fbp, xmax, i, pixel, 1);
 	}
 
-	return TCL_OK;    
+	return TCL_OK;
 }
 
 /*
@@ -896,13 +894,13 @@ fbo_configure_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **ar
 	if (fbop->fbo_fbs.fbs_fbp != FBIO_NULL)
 		fb_configureWindow(fbop->fbo_fbs.fbs_fbp, width, height);
 
-	return TCL_OK;    
+	return TCL_OK;
 }
 #if 0
 /*
  *
  * Usage:
- *	  procname 
+ *	  procname
  */
 int
 fbo__tcl(clientData, interp, argc, argv)
@@ -914,7 +912,7 @@ fbo__tcl(clientData, interp, argc, argv)
 	struct fb_obj *fbop = (struct fb_obj *)clientData;
 	struct bu_vls vls;
 
-	return TCL_OK;    
+	return TCL_OK;
 }
 #endif
 
@@ -931,25 +929,25 @@ fbo_coords_ok(Tcl_Interp *interp, FBIO *fbp, int x, int y)
 	errors = 0;
 
 	if (x < 0) {
-		Tcl_AppendResult(interp, "fbo_coords_ok: Error!: X value < 0\n", 
+		Tcl_AppendResult(interp, "fbo_coords_ok: Error!: X value < 0\n",
 				 (char *)NULL);
 		++errors;
 	}
-    
+
 	if (y < 0) {
-		Tcl_AppendResult(interp, "fbo_coords_ok: Error!: Y value < 0\n", 
+		Tcl_AppendResult(interp, "fbo_coords_ok: Error!: Y value < 0\n",
 				 (char *)NULL);
 		++errors;
 	}
 
 	if (x > width - 1) {
-		Tcl_AppendResult(interp, "fbo_coords_ok: Error!: X value too large\n", 
+		Tcl_AppendResult(interp, "fbo_coords_ok: Error!: X value too large\n",
 				 (char *)NULL);
 		++errors;
 	}
 
 	if (y > height - 1) {
-		Tcl_AppendResult(interp, "fbo_coords_ok: Error!: Y value too large\n", 
+		Tcl_AppendResult(interp, "fbo_coords_ok: Error!: Y value too large\n",
 				 (char *)NULL);
 		++errors;
 	}

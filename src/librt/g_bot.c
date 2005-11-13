@@ -30,7 +30,7 @@
  *  Source -
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5066
- *  
+ *
  */
 /*@}*/
 
@@ -137,7 +137,7 @@ rt_botface_w_normals(struct soltab	*stp,
 #undef NORM_TYPE
 #undef NORMAL_SCALE
 #undef ONE_OVER_SCALE
-					
+
 
 /**
  *			R T _ B O T F A C E
@@ -201,15 +201,15 @@ rt_bot_prep_pieces(struct bot_specific	*bot,
 
 /**
  *  			R T _ B O T _ P R E P
- *  
+ *
  *  Given a pointer to a GED database record, and a transformation matrix,
  *  determine if this is a valid BOT, and if so, precompute various
  *  terms of the formula.
- *  
+ *
  *  Returns -
  *  	0	BOT is OK
  *  	!0	Error in description
- *  
+ *
  *  Implicit return -
  *  	A struct bot_specific is created, and it's address is stored in
  *  	stp->st_specific for use by bot_shot().
@@ -298,7 +298,7 @@ rt_bot_makesegs(struct hit *hits, int nhits, struct soltab *stp, struct xray *rp
 
 /**
  *  			R T _ B O T _ S H O T
- *  
+ *
  *  Intersect a ray with a bot.
  *  If an intersection occurs, a struct seg will be acquired
  *  and filled in.
@@ -306,7 +306,7 @@ rt_bot_makesegs(struct hit *hits, int nhits, struct soltab *stp, struct xray *rp
  *	Notes for rt_bot_norm():
  *		hit_private contains pointer to the tri_specific structure
  *		hit_vpriv[X] contains dot product of ray direction and unit normal from tri_specific
- *  
+ *
  *  Returns -
  *  	0	MISS
  *	>0	HIT
@@ -383,14 +383,14 @@ rt_bot_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
            		       /* An array of ray pointers */
                                /* array of segs (results returned) */
    		  	       /* Number of ray/object pairs */
-                  	    
+
 {
 	rt_vstub( stp, rp, segp, n, ap );
 }
 
 /**
  *  			R T _ B O T _ N O R M
- *  
+ *
  *  Given ONE ray distance, return the normal and entry/exit point.
  */
 void
@@ -422,7 +422,7 @@ rt_bot_curve(register struct curvature *cvp, register struct hit *hitp, struct s
 
 /**
  *  			R T _ B O T _ U V
- *  
+ *
  *  For a hit on the surface of an bot, return the (u,v) coordinates
  *  of the hit point, 0 <= u,v <= 1.
  *  u = azimuth
@@ -975,7 +975,7 @@ rt_bot_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
 	}
 
 	ep->ext_buf = (genptr_t)bu_malloc( ep->ext_nbytes, "BOT external" );
-	
+
 	cp = ep->ext_buf;
 
 	(void)bu_plong( cp, bip->num_vertices );
@@ -1339,7 +1339,7 @@ rt_bot_edge_in_list( const int v1, const int v2, const int edge_list[], const in
 	return( 0 );
 }
 
-/** This routine finds the edge closest to the 2D point "pt2", and 
+/** This routine finds the edge closest to the 2D point "pt2", and
  * returns the edge as two
  * vertex indices (vert1 and vert2). These vertices are ordered (closest to pt2 is first)
  */
@@ -1856,7 +1856,7 @@ rt_bot_tclget(Tcl_Interp *interp, const struct rt_db_internal *intern, const cha
 /**
  *			R T _ B O T _ T C L A D J U S T
  *
- * Examples - 
+ * Examples -
  *	db adjust name fm		set los facemode bit vector
  *	db adjust name fm#		set los face mode of face # (center, append)
  *	db adjust name V		set coords for all vertices
@@ -1958,9 +1958,9 @@ rt_bot_tcladjust(Tcl_Interp *interp, struct rt_db_internal *intern, int argc, ch
 						}
 					}
 				}
-				
+
 			}
-			
+
 		}
 		else if( !strncmp( argv[0], "fn", 2 ) )
 		{
@@ -2463,7 +2463,7 @@ rt_bot_tclform( const struct rt_functab *ftp, Tcl_Interp *interp)
 	Tcl_AppendResult( interp,
 			  "mode {%s} orient {%s} V { {%f %f %f} {%f %f %f} ...} F { {%d %d %d} {%d %d %d} ...} T { %f %f %f ... } fm %s", (char *)NULL );
 
-	return TCL_OK;		  
+	return TCL_OK;
 }
 
 /*************************************************************************
@@ -2472,7 +2472,7 @@ rt_bot_tclform( const struct rt_functab *ftp, Tcl_Interp *interp)
  *
  *************************************************************************/
 
-/**	This routine adjusts the vertex pointers in each face so that 
+/**	This routine adjusts the vertex pointers in each face so that
  *	pointers to duplicate vertices end up pointing to the same vertex.
  *	The unused vertices are removed.
  *	Returns the number of vertices fused.
@@ -2517,7 +2517,7 @@ rt_bot_vertex_fuse( struct rt_bot_internal *bot )
 int
 rt_bot_same_orientation( const int *a, const int *b )
 {
-	int i,j;
+	int i;
 
 	for( i=0 ; i<3 ; i++ )
 	{
@@ -2710,7 +2710,7 @@ rt_bot_condense( struct rt_bot_internal *bot )
 	if( !dead_verts )
 		return( 0 );
 
-	/* Reallocate the vertex array (which should free the space 
+	/* Reallocate the vertex array (which should free the space
 	 * we are no longer using)
 	 */
 	bot->num_vertices -= dead_verts;
@@ -2788,7 +2788,7 @@ Add_unique_verts( int *piece_verts, int *v )
 				break;
 			}
 		}
-		if( piece_verts[i] == -1 ) { 
+		if( piece_verts[i] == -1 ) {
 			piece_verts[i] = (*ptr);
 		}
 		ptr++;
@@ -2796,7 +2796,7 @@ Add_unique_verts( int *piece_verts, int *v )
 }
 
 
-/**	This routine sorts the faces of the BOT such that when they are taken 
+/**	This routine sorts the faces of the BOT such that when they are taken
 in groups of "tris_per_piece",
  *	each group (piece) will consist of adjacent faces
  */
@@ -2907,7 +2907,7 @@ rt_bot_sort_faces( struct rt_bot_internal *bot, int tris_per_piece )
 				if( old_faces[vert_num] < 0 ) {
 					continue;
 				}
-				v0 = old_faces[vert_num];	
+				v0 = old_faces[vert_num];
 				v1 = old_faces[vert_num+1];
 				v2 = old_faces[vert_num+2];
 

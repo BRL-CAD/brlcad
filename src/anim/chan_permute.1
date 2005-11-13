@@ -1,41 +1,64 @@
-.TH CHAN_PERMUTE.C 1 BRL/CAD
+.TH CHAN_PERMUTE.C 1 BRL-CAD
+./"                 C H A N _ P E R M U T E . 1
+./" BRL-CAD
+./"
+./" Copyright (c) 1993-2005 United States Government as represented by
+./" the U.S. Army Research Laboratory.
+./"
+./" This document is made available under the terms of the GNU Free
+./" Documentation License or, at your option, under the terms of the
+./" GNU General Public License as published by the Free Software
+./" Foundation.  Permission is granted to copy, distribute and/or
+./" modify this document under the terms of the GNU Free Documentation
+./" License, Version 1.2 or any later version published by the Free
+./" Software Foundation; with no Invariant Sections, no Front-Cover
+./" Texts, and no Back-Cover Texts.  Permission is also granted to
+./" redistribute this document under the terms of the GNU General
+./" Public License; either version 2 of the License, or (at your
+./" option) any later version.
+./"
+./" You should have received a copy of the GNU Free Documentation
+./" License and/or the GNU General Public License along with this
+./" document; see the file named COPYING for more information.
+./"
+./"./"./"
 .SH NAME
 chan_permute - operate on columns of files.
 .SH SYNOPSIS
-.B chan_permute 
-.B -i infile1 id id ... 
-.B [-i infile2 id ...] 
-.B -o outfile1 id id ... 
+.B chan_permute
+.B -i infile1 id id ...
+.B [-i infile2 id ...]
+.B -o outfile1 id id ...
 .B [-o outfile2 id ...]
 .SH DESCRIPTION
 This program mixes, matches, and merges ASCII files organized in
 channels or columns. Each word, separated by whitespaces, should be less
 than 40 characters long. The channels in each input file are specified
 and then mapped to the desired channels in the output file(s). These are
-the sort of things that can be done using 
-.I cut 
-and 
-.I paste, 
+the sort of things that can be done using
+.I cut
+and
+.I paste,
 but when
 working on animation tables it's often nice to be able to do it in one
 step.
 .PP
-.BR Infile s 
-are files to be read from, 
-.BR outfile s 
+.BR Infile s
+are files to be read from,
+.BR outfile s
 are files to be written
-to, and each 
-.B id 
+to, and each
+.B id
 is a small positive integer identifying a channel. All of the
-input 
-.BR id 's 
-should be distinct integers, or the results are not guaranteed. 
+input
+.BR id 's
+should be distinct integers, or the results are not guaranteed.
 .PP
-.I Chan_permute 
-interprets 
-.B -i stdin 
-as standard input and 
-.B -o stdout 
+.I Chan_permute
+interprets
+.B -i stdin
+as standard input and
+.B -o stdout
 as
 standard output.
 .SH EXAMPLES
@@ -51,19 +74,19 @@ The command
 chan_permute -i file1 0 1 -i file2 2 3 -o file3 2 0 1 -o file4 3 0 1
 .sp
 creates file3 and file4, each containing one of the columns of file2
-followed by both columns of file1. 
-.SH BUGS 
+followed by both columns of file1.
+.SH BUGS
 A given file may be referenced
 more than once for input, but may not be referenced for input and output
 together or output and output together. In the latter case, the second
-output reference overrides the other. 	The 
-.BR id 's 
+output reference overrides the other. 	The
+.BR id 's
 must be integers
 somewhere between 0 and the number of arguments, inclusive.
 .SH AUTHOR
 Carl J. Nuzman
 .SH COPYRIGHT
-	This software is Copyright (C) 1993-2005 by the United States 
+	This software is Copyright (C) 1993-2005 by the United States
 Government as represented by U.S. Army Research Laboratory.
 .SH "BUG REPORTS"
 Reports of bugs or problems should be submitted via electronic

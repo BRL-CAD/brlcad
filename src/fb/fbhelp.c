@@ -26,12 +26,12 @@
  *
  *  Authors -
  *	Phillip Dykstra
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5066
- *  
+ *
  */
 #ifndef lint
 static const char RCSid[] = "@(#)$Header$ (BRL)";
@@ -42,10 +42,11 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif
-                                                                                                                                                                            
+
 #include <stdio.h>
 
 #include "machine.h"
+#include "bu.h"
 #include "fb.h"
 
 static char	*framebuffer = NULL;
@@ -59,17 +60,17 @@ main(int argc, char **argv)
 	register int c;
 	FBIO	*fbp;
 
-	while ( (c = getopt( argc, argv, "F:" )) != EOF ) {
+	while ( (c = bu_getopt( argc, argv, "F:" )) != EOF ) {
 		switch( c ) {
 		case 'F':
-			framebuffer = optarg;
+			framebuffer = bu_optarg;
 			break;
 		default:		/* '?' */
 			(void)fputs(usage, stderr);
 			exit( 1 );
 		}
 	}
-	if ( argc > ++optind ) {
+	if ( argc > ++bu_optind ) {
 		(void)fprintf( stderr, "fbhelp: excess argument(s) ignored\n" );
 	}
 

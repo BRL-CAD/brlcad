@@ -34,6 +34,7 @@
  * top left instead of the bottom.
  */
 
+#include <stdlib.h>
 #include <stdio.h>
 #include "rle.h"
 

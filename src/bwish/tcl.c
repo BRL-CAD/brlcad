@@ -29,7 +29,7 @@
  *  Source -
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
- *  
+ *
  *
  *
  *  Cad_Main --
@@ -183,7 +183,7 @@ Cad_MainLoop(void)
 void
 Cad_Exit(int status)
 {
-    reset_Tty(fileno(stdin)); 
+    reset_Tty(fileno(stdin));
     Tcl_Exit(status);
 }
 

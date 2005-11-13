@@ -20,16 +20,16 @@
  */
 /** @file loop.c
  *
- *	Simple program to output integers or floats between 
- *	"start" and "finish", inclusive.  Default is an increment 
- *	of +1 if start < finish or -1 if start > finish.  User may 
- *	specify an alternate increment.  Also, user may left-pad 
- *	output integers with zeros.  There is no attempt to prevent 
+ *	Simple program to output integers or floats between
+ *	"start" and "finish", inclusive.  Default is an increment
+ *	of +1 if start < finish or -1 if start > finish.  User may
+ *	specify an alternate increment.  Also, user may left-pad
+ *	output integers with zeros.  There is no attempt to prevent
  *	"infinite" loops.
  *
  *  Authors -
  *	John Grosh, Phil Dykstra, and Michael John Muuss
- *  
+ *
  *  Source -
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
@@ -75,7 +75,7 @@ main(int argc, char **argv)
 
 	/* determine if any arguments are real */
 	for (i = 1; i < argc; i++) {
-		if (atof(argv[i]) != ((double)atoi(argv[i]))) {	
+		if (atof(argv[i]) != ((double)atoi(argv[i]))) {
 			status = REAL;
 			break;
 		}
@@ -97,7 +97,7 @@ main(int argc, char **argv)
 		if (dincr >= 0.0)
 			for (d = dstart; d <= dfinish; d += dincr)
 				printf("%g\n", d);
-		else 
+		else
 			for (d = dstart; d >= dfinish; d += dincr)
 				printf("%g\n", d);
 	} else {
@@ -115,20 +115,20 @@ main(int argc, char **argv)
  		/* count leading leading zeros in argv[1] */
 		for (cp = argv[1]; *cp == '0'; cp++)
 			zeros_arg1++;
-		if (*cp == '\0') 
+		if (*cp == '\0')
 			zeros_arg1--;
 
  		/* count leading leading zeros in argv[2] */
 		for (cp = argv[2]; *cp == '0'; cp++)
 			zeros_arg2++;
-		if (*cp == '\0') 
+		if (*cp == '\0')
 			zeros_arg2--;
 
  		/* if argv[3] exists, count leading leading zeros */
 		if (argc == 4 ) {
 			for (cp = argv[3]; *cp == '0'; cp++)
 				zeros_arg3++;
-			if (*cp == '\0') 
+			if (*cp == '\0')
 				zeros_arg3--;
 		}
 
@@ -145,8 +145,8 @@ main(int argc, char **argv)
 		}
 
 		/* printf format string fmt_string */
-		if (zeros > 0) 
-			sprintf(fmt_string,"%%0%dd\n",field_width); 
+		if (zeros > 0)
+			sprintf(fmt_string,"%%0%dd\n",field_width);
 		else
 			strcpy(fmt_string,"%d\n");
 
@@ -165,7 +165,7 @@ main(int argc, char **argv)
 		if (incr >= 0)
 			for (i = start; i <= finish; i += incr)
 				printf(fmt_string, i);
-		else 
+		else
 			for (i = start; i >= finish; i += incr)
 				printf(fmt_string, i);
 	}

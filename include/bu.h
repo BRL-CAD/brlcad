@@ -38,7 +38,7 @@
  *
  *  Author -
  *	Michael John Muuss
- *  
+ *
  *  Source -
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
@@ -141,8 +141,8 @@ extern char	*realloc();
 /**extern void	free(); **/
 #endif
 
-/* 
- * BU_FLSTR   Macro for getting a concatenated string of the current 
+/*
+ * BU_FLSTR   Macro for getting a concatenated string of the current
  * file and line number.  Produces something of the form:
  *   "filename.c"":""1234"
  */
@@ -604,7 +604,7 @@ BU_EXPORT BU_EXTERN(struct bu_list *bu_list_pop, (struct bu_list *hp));
  *  "Bulk transfer" all elements from the list headed by src_hd
  *  onto the list headed by dest_hd, without examining every element
  *  in the list.  src_hd is left with a valid but empty list.
- *  
+ *
  *  BU_LIST_INSERT_LIST places src_hd elements at head of dest_hd list,
  *  BU_LIST_APPEND_LIST places src_hd elements at end of dest_hd list.
  */
@@ -794,7 +794,7 @@ BU_EXPORT BU_EXTERN(struct bu_list *bu_list_pop, (struct bu_list *hp));
  *  eu = BU_LIST_MAIN_PTR( edgeuse, midway, l2 );
  *
  *  eu1 = BU_LIST_MAIN_PTR(edgeuse, BU_LIST_FIRST(bu_list, &eg1->eu_hd2), l2);
- */  
+ */
 #define BU_LIST_MAIN_PTR(_type, _ptr2, _name2)	\
 	((struct _type *)(((char *)(_ptr2)) - offsetof(struct _type, _name2.magic)))
 
@@ -1210,7 +1210,7 @@ BU_EXPORT extern int	bu_debug;
 #define BU_DEBUG_MEM_CHECK	0x00000002	/* 002 Mem barrier & leak checking */
 #define BU_DEBUG_MEM_LOG	0x00000004	/* 003 Print all dynamic memory operations */
 #define BU_DEBUG_DB		0x00000008	/* 004 Database debugging */
-	
+
 #define BU_DEBUG_PARALLEL	0x00000010	/* 005 parallel support */
 #define BU_DEBUG_MEM_QCHECK	0x00000020	/* 006 Fast mem leak checking (won't work with corruption) */
 #define BU_DEBUG_MATH		0x00000100	/* 011 Fundamental math routines (plane.c, mat.c) */
@@ -1293,9 +1293,9 @@ BU_EXPORT extern int	bu_debug;
  *	short	a_short;
  *	int	a_int;
  *	double	a_double;
- * } 
+ * }
  *
- * struct data_structure data_default = 
+ * struct data_structure data_default =
  *	{ 'c', "the default string", 32767, 1, 1.0 };
  *
  * struct data_structure my_values;
@@ -1304,11 +1304,11 @@ BU_EXPORT extern int	bu_debug;
  *
  * {"%c", 1,  "a_char",   bu_offsetof(data_structure, a_char),
  *	BU_STRUCTPARSE_FUNC_NULL,
- *	"a single character",	(void*)&default.a_char }, 
+ *	"a single character",	(void*)&default.a_char },
  *
  * {"%s", 32, "str",      bu_offsetofarray(data_structure, str),
  *	BU_STRUCTPARSE_FUNC_NULL,
- *	"This is a full character string", (void*)default.str }, }, 
+ *	"This is a full character string", (void*)default.str }, },
  *
  * {"%i", 1,  "a_short",  bu_offsetof(data_structure, a_short),
  *	BU_STRUCTPARSE_FUNC_NULL,
@@ -1323,7 +1323,7 @@ BU_EXPORT extern int	bu_debug;
  *	"A double-precision floating point value",  (void*)&default.a_double },
  *
  * { "", 0, (char *)NULL, 0,
- *	BU_STRUCTPARSE_FUNC_NULL, 
+ *	BU_STRUCTPARSE_FUNC_NULL,
  *	(char *)NULL, (void *)NULL }
  *
  * };
@@ -1919,7 +1919,7 @@ BU_EXPORT BU_EXTERN(void bu_struct_wrap_buf,
 		     genptr_t buf));
 BU_EXPORT BU_EXTERN(int bu_struct_parse,
 		    (const struct bu_vls *in_vls,
-		     const struct bu_structparse *desc, 
+		     const struct bu_structparse *desc,
 		     const char *base));
 BU_EXPORT BU_EXTERN(void bu_struct_print,
 		    (const char *title,

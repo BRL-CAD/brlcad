@@ -40,10 +40,6 @@
  *
  *  General Symbols and Types Defined -
  *
- *	CONST  - deprecated - (use const)
- *		A portable way of indicating that the ANSI C "const"
- *		keyword is desired, when compiling on an ANSI compiler.
- *
  *	genptr_t -
  *		A portable way of declaring a "generic" pointer that is
  *		wide enough to point to anything, which can be used on
@@ -51,11 +47,6 @@
  *		On some machines, pointers to functions can be wider than
  *		pointers to data bytes, so a declaration of "char *"
  *		isn't generic enough.
- *
- *	SIGNED - deprecated - (use signed)
- *		A portable way of declaring a signed variable, since
- *		the "signed" keyword is not known in K&R compilers.  e.g.:
- *			register SIGNED int twoway;
  *
  *	fastf_t -
  *		Intended to be the fastest floating point data type on
@@ -179,8 +170,6 @@
  *
  *
  *  Include Sequencing -
- *	#include <stdio.h>
- *	#include <math.h>
  *	#include "machine.h"
  *	#include "bu.h"
  *
@@ -192,6 +181,12 @@
 
 #ifndef MACHINE_H
 #define MACHINE_H seen
+
+#include "common.h"
+
+/* needed for FOPEN_MAX */
+#include <stdio.h>
+
 
 /*
  * Figure out the maximum number of files that can simultaneously be open
@@ -206,6 +201,9 @@
 #endif
 #if !defined(FOPEN_MAX) && defined(OPEN_MAX)
 #	define FOPEN_MAX	OPEN_MAX
+#endif
+#if !defined(FOPEN_MAX) && defined(_SYS_OPEN)
+#	define FOPEN_MAX	_SYS_OPEN
 #endif
 #if !defined(FOPEN_MAX)
 #	define FOPEN_MAX	32
@@ -748,35 +746,25 @@ typedef long	bitv_t;		/* largest integer type */
 #  define GENPTR_NULL	((genptr_t)0)
 #endif
 
-/* A portable way of handling pre-ANSI C: remove const keyword */
+/* A portable way of handling pre-ANSI C: remove const and signed keyword */
 #if !defined(__STDC__)
 #  define	const	/**/
+#  define	signed	/**/
 #endif
-#if defined(CONST)
-#  undef  CONST
-#endif
-#define CONST deprecated
 
 /* Even in C++ not all compilers know the "bool" keyword yet */
 #if !defined(BOOL_T)
 # define BOOL_T	int
 #endif
 
-/* A portable way of handling pre-ANSI C: remove signed keyword */
-#if !defined(__STDC__)
-#  define	signed	/**/
-#endif
-#if defined(SIGNED)
-#  undef SIGNED
-#endif
-#define SIGNED deprecated
 
 /*
  *  Some very common BSD --> SYSV conversion aids
  */
 #if defined(SYSV) && !defined(bzero) && !defined(HAVE_BZERO)
-#	define bzero(str,n)		memset( str, 0, n )
-#	define bcopy(from,to,count)	memcpy( to, from, count )
+#  include <string.h>
+#  define bzero(str,n)		memset( str, 0, n )
+#  define bcopy(from,to,count)	memcpy( to, from, count )
 #endif
 
 /* Functions local to one file should be declared HIDDEN:  (nil)|static */
@@ -798,11 +786,13 @@ typedef long	bitv_t;		/* largest integer type */
 #if defined(__sgi) || defined(__convexc__)
         extern double hypot(double, double);
 #else
-#	define hypot(x,y)      sqrt( (x)*(x)+(y)*(y) )
+#  include <math.h>
+#  define hypot(x,y)      sqrt( (x)*(x)+(y)*(y) )
 #endif
 #endif
 
 #if defined(SUNOS) && SUNOS >= 52
+#  include <math.h>
         extern double hypot(double, double);
 #endif
 

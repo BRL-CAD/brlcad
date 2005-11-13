@@ -28,12 +28,12 @@
 # Source -
 #	The U. S. Army Ballistic Research Laboratory
 #	Aberdeen Proving Ground, Maryland  21005
-#  
+#
 #
 #
 # Description -
-# 	Simple interpreted functions for doing vmath stuff (see ../h/vmath.h 
-#	for the C preprocessor equivalents and comments!  Much of this was 
+# 	Simple interpreted functions for doing vmath stuff (see ../h/vmath.h
+#	for the C preprocessor equivalents and comments!  Much of this was
 #	automatically generated.
 
 # math constants from math.h
@@ -235,7 +235,7 @@ proc v2scale { x c } {
 		     [expr [lindex $c 0]*$x]]
     }
 }
-    
+
 proc vadd2scale { a b s } {
     return [vscale [vadd2 $a $b] $s]
 }
@@ -393,7 +393,7 @@ proc pnt3x4mat { p m } {
                  [expr ([lindex $m 2]*[lindex $p 0] + \
                         [lindex $m 6]*[lindex $p 1] + \
                         [lindex $m 10]*[lindex $p 2] + [lindex $m 14])*$f]]
-}    
+}
 
 proc mat4x4pnt { m h } {
     return [list [hdot [lrange $m 0 3] $h] \
@@ -753,7 +753,7 @@ proc vaddn args {
 			[lindex $args [expr $cur_length-1]]]
 	}
 }
-    
+
 proc vsubn args {
 	set cur_length [llength $args]
 	if { $cur_length==1 } then {
@@ -764,7 +764,7 @@ proc vsubn args {
 			[lindex $args [expr $cur_length-1]]]
 	}
 }
-    
+
 
 proc vscalen { v c n } {
 	set i 0

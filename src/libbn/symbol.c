@@ -29,7 +29,7 @@
  *	This routine is used to plot a string of ASCII symbols
  *  on the plot being generated, using a built-in set of fonts
  *  drawn as vector lists.
- * 
+ *
  *	Internally, the basic font resides in a 10x10 unit square.
  *  Externally, each character can be thought to occupy one square
  *  plotting unit;  the 'scale'
@@ -38,11 +38,11 @@
  *
  *  Author -
  *	Michael John Muuss
- *  
+ *
  *  Source -
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
- *  
+ *
  */
 /*@}*/
 
@@ -72,7 +72,7 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
  */
 void
 tp_3symbol(FILE *fp, char *string, fastf_t *origin, fastf_t *rot, double scale)
-    	    
+
     	        		/* string of chars to be plotted */
        	       			/* lower left corner of 1st char */
      	    			/* Transform matrix (WARNING: may xlate) */
@@ -150,10 +150,10 @@ tp_3symbol(FILE *fp, char *string, fastf_t *origin, fastf_t *rot, double scale)
  */
 void
 tp_2symbol(FILE *fp, char *string, double x, double y, double scale, double theta)
-    	    
+
     	        		/* string of chars to be plotted */
       	  			/* x,y of lower left corner of 1st char */
-      	  
+
       	      			/* scale factor to change 1x1 char sz */
       	      			/* degrees ccw from X-axis */
 {

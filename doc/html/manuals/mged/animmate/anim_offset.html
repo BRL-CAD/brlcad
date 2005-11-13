@@ -13,30 +13,30 @@ another object.
 <h1>DESCRIPTION</h1>
 This filter operates on animation tables of the type used by
 <i>tabsub</i>
-and 
+and
 <i>anim_script.</i>
 Given a table specifying the position and
-orientation of one object at every applicable time, 
+orientation of one object at every applicable time,
 <i>anim_offset</i>
 calculates
-the position of another object which is rigidly attached to it. 
+the position of another object which is rigidly attached to it.
 <p>
 The columns of the input table should be time, three columns of
 position, followed by yaw, pitch, and roll. The output will be
-normally be a four-column file specifying time and position. If the 
+normally be a four-column file specifying time and position. If the
 <b>-r</b>
 option is used, the output is a seven-column file in which the last
 three columns are copies of the orientation information from the input
 file.
 <p>
 The position of the object relative to the rigid body should be
-given on the command line in the order x, y, z, with the 
+given on the command line in the order x, y, z, with the
 <b>-o # # #</b>
 option. These offset values
 should be as measured from the centroid of the rigid  body.
 <h1>EXAMPLES</h1>
 This filter could be used, for example, to do an animation where
-the camera is placed inside a moving vehicle. 
+the camera is placed inside a moving vehicle.
 <p>
 Suppose that truck.table contains the desired position of the
 center of the front axle of the truck as well as its orientation at each
@@ -70,7 +70,7 @@ above would be:
 35.2	11550	-740	1800
 
 </pre>
-With the 
+With the
 <b>-r </b>
 option, the output would have been:
 <pre>
@@ -78,15 +78,15 @@ option, the output would have been:
 35.2	11550	-740	1800	90.0 	0.0	0.0
 
 </pre>
-Now 
+Now
 <i>tabsub </i>
-and/or 
+and/or
 <i>anim_script </i>
 can be used to process these two animation
 tables into an animation script.
 <h1>BUGS</h1>
 	The program will only use orientations specified as yaw,
-pitch, and roll. You can get around this using 
+pitch, and roll. You can get around this using
 <i>anim_orient</i>,
 which converts between different orientation representations.
 <h1>AUTHOR</h1>

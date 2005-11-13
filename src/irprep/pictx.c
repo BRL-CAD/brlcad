@@ -20,11 +20,11 @@
  */
 /** @file pictx.c
  *
- *  This is an X-windows program that will raytrace a BRL-CAD mged  
- *  model and/or diplay it using the PRISM temperature output file. 
+ *  This is an X-windows program that will raytrace a BRL-CAD mged
+ *  model and/or diplay it using the PRISM temperature output file.
  *
- *  S.Coates - 30 September 1994 
- *  Compile:  cc pictx.c -L/usr/X11/lib -lX11 -o pictx 
+ *  S.Coates - 30 September 1994
+ *  Compile:  cc pictx.c -L/usr/X11/lib -lX11 -o pictx
  */
 
 /*  Include files.  */

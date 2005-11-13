@@ -60,6 +60,9 @@
  *  $Header$
  */
 
+#ifndef __GED_H__
+#define __GED_H__
+
 #include "common.h"
 
 #ifdef HAVE_SYS_TIME_H
@@ -76,6 +79,7 @@
 /* Needed to define struct w_dm - RFH */
 #include "./mged_dm.h"
 
+#include "./mgedtcl.h"
 /* Needed to define struct solid - RFH */
 #include "solid.h"
 
@@ -92,34 +96,9 @@ struct rt_nurb_internal {
 };
 #endif
 
-/*	Stuff needed from db.h */
-#ifndef NAMESIZE
-
-#define NAMESIZE 16
-#define NAMEMOVE(from,to)       (void)strncpy(to, from, NAMESIZE)
-
 #define MGED_DB_NAME "db"
 #define MGED_INMEM_NAME ".inmem"
 #define MGED_DG_NAME "dg"
-
-#define ID_NO_UNIT	0		/* unspecified */
-#define ID_MM_UNIT	1		/* millimeters (preferred) */
-#define ID_UM_UNIT	2		/* micrometers */
-#define ID_CM_UNIT	3		/* centimeters */
-#define ID_M_UNIT	4		/* meters */
-#define ID_KM_UNIT	5		/* kilometers */
-#define ID_IN_UNIT	6		/* inches */
-#define ID_FT_UNIT	7		/* feet */
-#define ID_YD_UNIT	8		/* yards */
-#define ID_MI_UNIT	9		/* miles */
-
-#define ARB4	4	/* tetrahedron */
-#define ARB5	5	/* pyramid */
-#define ARB6	6	/* extruded triangle */
-#define ARB7	7	/* weird 7-vertex shape */
-#define ARB8	8	/* hexahedron */
-
-#endif
 
 #if USE_PROTOTYPES
 #	define	MGED_EXTERN(type_and_name,args)	extern type_and_name args
@@ -146,19 +125,19 @@ extern struct dg_obj	*dgop;			/* defined in ged.c */
 /* Some useful constants, if they haven't been defined elsewhere. */
 
 #ifndef FALSE
-# define FALSE 0
+#  define FALSE 0
 #endif
 
 #ifndef TRUE
-# define TRUE 1
+#  define TRUE 1
 #endif
 
 #ifndef False
-# define False (0)
+#  define False (0)
 #endif
 
 #ifndef True
-# define True (1)
+#  define True (1)
 #endif
 
 /* Tolerances */
@@ -284,9 +263,6 @@ void history_setup(void);
 
 extern void start_catching_output(struct bu_vls *vp), stop_catching_output(struct bu_vls *vp);
 
-#ifndef	NULL
-#define	NULL		0
-#endif
 
 /*
  * Pointer to solid in solid table to be illuminated. - defined in usepen.c
@@ -327,23 +303,6 @@ extern char *state_str[];		/* identifying strings */
 #define ST_S_VPICK	7		/* Vertex Pick */
 #define ST_S_NO_EDIT	8		/* Solid edit without Rotate, translate, or scale */
 
-#if 0 /* Using the one provided by bu.h */
-#ifndef GETSTRUCT
-/* Acquire storage for a given struct, eg, GETSTRUCT(ptr,structname); */
-#if __STDC__ && !alliant && !apollo
-# define GETSTRUCT(p,str) \
-	p = (struct str *)rt_calloc(1,sizeof(struct str), "getstruct " #str)
-# define GETUNION(p,unn) \
-	p = (union unn *)rt_calloc(1,sizeof(union unn), "getstruct " #unn)
-#else
-# define GETSTRUCT(p,str) \
-	p = (struct str *)rt_calloc(1,sizeof(struct str), "getstruct str")
-# define GETUNION(p,unn) \
-	p = (union unn *)rt_calloc(1,sizeof(union unn), "getstruct unn")
-#endif
-#endif
-#endif
-
 #define	MAXLINE		RT_MAXLINE	/* Maximum number of chars per line */
 
 /* Cloned mged macros for use in Tcl/Tk */
@@ -358,7 +317,7 @@ extern char *state_str[];		/* identifying strings */
 
 #define TCL_WRITE_ERR { \
 	  Tcl_AppendResult(interp, "Database write error, aborting.\n", (char *)NULL);\
-	  TCL_ERROR_RECOVERY_SUGGESTION; }	
+	  TCL_ERROR_RECOVERY_SUGGESTION; }
 
 #define TCL_WRITE_ERR_return { \
 	  TCL_WRITE_ERR; \
@@ -410,7 +369,7 @@ you should exit MGED now, and resolve the I/O problem, before continuing.\n", (c
 /* For errors from db_put() */
 #define WRITE_ERR { \
 	(void)printf("Database write error, aborting.\n"); \
-	ERROR_RECOVERY_SUGGESTION; }	
+	ERROR_RECOVERY_SUGGESTION; }
 
 #define WRITE_ERR_return	{ \
 	WRITE_ERR; \
@@ -449,7 +408,7 @@ you should exit MGED now, and resolve the I/O problem, before continuing.\n")
 	{ \
 		Tcl_AppendResult(interp, "A database is not open!\n", (char *)NULL); \
 		return TCL_ERROR; \
-	}	
+	}
 
 /* Check if the database is read only, and if so return TCL_ERROR */
 #define	CHECK_READ_ONLY	\
@@ -505,6 +464,7 @@ extern struct run_rt head_run_rt;
 #define CMD_BAD		920
 #define CMD_MORE	921
 #define MORE_ARGS_STR    "more arguments needed::"
+
 
 /* adc.c */
 int f_adc (
@@ -603,11 +563,6 @@ void eraseobjpath(
      char	**argv,
      int	noisy,
      int	all);
-int f_edit(
-	ClientData clientData,
-	Tcl_Interp *interpreter,
-	int	argc,
-	char	**argv);
 int f_erase(
 	ClientData clientData,
 	Tcl_Interp *interpreter,
@@ -940,6 +895,7 @@ int build_tops(char **start, char **end);
 /* mater.c */
 void color_soltab(void);
 
+#endif  /* __GED_H__ */
 
 /*
  * Local Variables:

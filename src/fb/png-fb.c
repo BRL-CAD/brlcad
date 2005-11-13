@@ -20,12 +20,12 @@
  *
  */
 /** @file png-fb.c
- *  
+ *
  *  Program to take PNG (Portable Network Graphics) files and send them to a framebuffer.
- *  
+ *
  *  Author -
  *	John R. Anderson
- *  
+ *
  *  Source -
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
@@ -86,16 +86,16 @@ get_args(int argc, register char **argv)
 {
 	register int c;
 
-	while ( (c = getopt( argc, argv, "1m:g:HhicvzF:s:x:y:X:Y:S:W:N:" )) != EOF )  {
+	while ( (c = bu_getopt( argc, argv, "1m:g:HhicvzF:s:x:y:X:Y:S:W:N:" )) != EOF )  {
 		switch( c )  {
 		case '1':
 			one_line_only = 1;
 			break;
 		case 'm':
-			multiple_lines = atoi(optarg);
+			multiple_lines = atoi(bu_optarg);
 			break;
 		case 'g':
-			def_screen_gamma = atof(optarg);
+			def_screen_gamma = atof(bu_optarg);
 			break;
 		case 'H':
 			header_only = 1;
@@ -117,28 +117,28 @@ get_args(int argc, register char **argv)
 			zoom = 1;
 			break;
 		case 'F':
-			framebuffer = optarg;
+			framebuffer = bu_optarg;
 			break;
 		case 'x':
-			file_xoff = atoi(optarg);
+			file_xoff = atoi(bu_optarg);
 			break;
 		case 'y':
-			file_yoff = atoi(optarg);
+			file_yoff = atoi(bu_optarg);
 			break;
 		case 'X':
-			scr_xoff = atoi(optarg);
+			scr_xoff = atoi(bu_optarg);
 			break;
 		case 'Y':
-			scr_yoff = atoi(optarg);
+			scr_yoff = atoi(bu_optarg);
 			break;
 		case 'S':
-			scr_height = scr_width = atoi(optarg);
+			scr_height = scr_width = atoi(bu_optarg);
 			break;
 		case 'W':
-			scr_width = atoi(optarg);
+			scr_width = atoi(bu_optarg);
 			break;
 		case 'N':
-			scr_height = atoi(optarg);
+			scr_height = atoi(bu_optarg);
 			break;
 
 		default:		/* '?' */
@@ -146,13 +146,13 @@ get_args(int argc, register char **argv)
 		}
 	}
 
-	if( optind >= argc )  {
+	if( bu_optind >= argc )  {
 		if( isatty(fileno(stdin)) )
 			return(0);
 		file_name = "-";
 		fp_in = stdin;
 	} else {
-		file_name = argv[optind];
+		file_name = argv[bu_optind];
 		if( (fp_in = fopen(file_name, "r")) == NULL )  {
 			perror(file_name);
 			(void)fprintf( stderr,
@@ -163,7 +163,7 @@ get_args(int argc, register char **argv)
 		fileinput++;
 	}
 
-	if ( argc > ++optind )
+	if ( argc > ++bu_optind )
 		(void)fprintf( stderr, "png-fb: excess argument(s) ignored\n" );
 
 	return(1);		/* OK */

@@ -25,7 +25,7 @@
  *
  *  Author -
  *	Michael John Muuss
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
@@ -40,7 +40,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #ifdef HAVE_UNISTD_H
 #  include <unistd.h>
 #endif
-#include <stdio.h>	
+#include <stdio.h>
 
 #include "machine.h"
 #include "bu.h"
@@ -73,7 +73,7 @@ get_args(int argc, register char **argv)
 {
 	register int c;
 
-	while ( (c = getopt( argc, argv, "ahs:w:n:t:x:" )) != EOF )  {
+	while ( (c = bu_getopt( argc, argv, "ahs:w:n:t:x:" )) != EOF )  {
 		switch( c )  {
 		case 'a':
 			autosize = 1;
@@ -85,21 +85,21 @@ get_args(int argc, register char **argv)
 			break;
 		case 's':
 			/* square file size */
-			file_width = atol(optarg);
+			file_width = atol(bu_optarg);
 			autosize = 0;
 			break;
 		case 'w':
-			file_width = atol(optarg);
+			file_width = atol(bu_optarg);
 			autosize = 0;
 			break;
 		case 'n':
 			autosize = 0;
 			break;
 		case 't':
-			thresh = atoi(optarg);
+			thresh = atoi(bu_optarg);
 			break;
 		case 'x':
-			bg_x_offset = atoi(optarg);
+			bg_x_offset = atoi(bu_optarg);
 			break;
 
 		default:		/* '?' */
@@ -107,13 +107,13 @@ get_args(int argc, register char **argv)
 		}
 	}
 
-	if( optind >= argc )  {
+	if( bu_optind >= argc )  {
 		if( isatty(fileno(stdin)) )
 			return(0);
 		file_name = "-";
 		infp = stdin;
 	} else {
-		file_name = argv[optind];
+		file_name = argv[bu_optind];
 		if( (infp = fopen(file_name, "r")) == NULL )  {
 			perror(file_name);
 			(void)fprintf( stderr,
@@ -124,7 +124,7 @@ get_args(int argc, register char **argv)
 		fileinput++;
 	}
 
-	if ( argc > ++optind )
+	if ( argc > ++bu_optind )
 		(void)fprintf( stderr, "pixbgstrip: excess argument(s) ignored\n" );
 
 	return(1);		/* OK */

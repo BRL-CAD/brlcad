@@ -60,14 +60,14 @@ int main(ac,av)
 		"%s: Excess command line arguments ignored\n",
 		progname);
 
-	
+
     if ((dsp = dsopen(scsi_device, O_RDWR)) == NULL) {
 	perror(scsi_device);
 	fprintf(stderr, "%s: Cannot open device \"%s\"\n", progname, scsi_device);
 	usage(NULL);
     }
 
-	
+
     printf("%s\n", ipu_inquire(dsp));
     ipu_get_conf(dsp);
 

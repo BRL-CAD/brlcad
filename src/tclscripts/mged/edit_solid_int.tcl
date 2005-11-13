@@ -230,7 +230,7 @@ proc esolint_build_form { id w name type vals state_val do_gui do_cmd do_entries
 	    grid $sform._$attr\L -row $row -column 0 -sticky nsew
 	    grid columnconfigure $sform 0 -weight 0
 	}
-	
+
 	set field [lindex $form $i]
 	set fieldlen [llength $field]
 	for { set num 0 } { $num < $fieldlen } { incr num } {
@@ -285,7 +285,7 @@ proc esolint_build_form { id w name type vals state_val do_gui do_cmd do_entries
 			button $sform._$attr\incB$num -text \+ -command \
 				"esolint_inc_int $id $sform._$attr\E$num"
 			entry $sform._$attr\E$num -width 6 -relief sunken
-			
+
 			grid $sform._$attr\decB$num -row $row -column [expr $tnum * 3 + 1] -sticky nsew
 			grid $sform._$attr\E$num -row $row -column [expr $tnum * 3 + 2] -sticky nsew
 			grid $sform._$attr\incB$num -row $row -column [expr $tnum * 3 + 3] -sticky nsew
@@ -325,7 +325,7 @@ proc esolint_build_form { id w name type vals state_val do_gui do_cmd do_entries
 			button $sform._$attr\incB$num -text \+ -command \
 				"esolint_inc $id $sform._$attr\E$num"
 			entry $sform._$attr\E$num -width 6 -relief sunken
-			
+
 			grid $sform._$attr\decB$num -row $row -column [expr $tnum * 3 + 1] -sticky nsew
 			grid $sform._$attr\E$num -row $row -column [expr $tnum * 3 + 2] -sticky nsew
 			grid $sform._$attr\incB$num -row $row -column [expr $tnum * 3 + 3] -sticky nsew

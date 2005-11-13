@@ -19,13 +19,13 @@
  * information.
  */
 /** @file plrot.c
- *  
+ *
  *  Rotate, Translate, and Scale a Unixplot file.
  *
  *  Authors -
  *	Phillip Dykstra
  *	Michael John Muuss
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
@@ -40,7 +40,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif
-                                                                                                                                                                            
+
 
 #include <stdio.h>
 #ifdef HAVE_STDLIB_H
@@ -220,7 +220,7 @@ get_args(int argc, register char **argv)
 	MAT_IDN( rmat );
 	scale = 1.0;
 
-	while ( (c = getopt( argc, argv, "S:m:vMga:e:x:y:z:X:Y:Z:s:" )) != EOF )  {
+	while ( (c = bu_getopt( argc, argv, "S:m:vMga:e:x:y:z:X:Y:Z:s:" )) != EOF )  {
 		switch( c )  {
 		case 'M':
 			/* take model RPP from space() command */
@@ -233,34 +233,34 @@ get_args(int argc, register char **argv)
 			bn_mat_mul( rmat, tmp, m );
 			break;
 		case 'a':
-			bn_mat_angles( tmp, 0.0, 0.0, -atof(optarg) );
+			bn_mat_angles( tmp, 0.0, 0.0, -atof(bu_optarg) );
 			MAT_COPY( m, rmat );
 			bn_mat_mul( rmat, tmp, m );
 			rpp++;
 			break;
 		case 'e':
-			bn_mat_angles( tmp, 0.0, -atof(optarg), 0.0 );
+			bn_mat_angles( tmp, 0.0, -atof(bu_optarg), 0.0 );
 			MAT_COPY( m, rmat );
 			bn_mat_mul( rmat, tmp, m );
 			rpp++;
 			break;
 		case 'x':
-			bn_mat_angles( tmp, atof(optarg), 0.0, 0.0 );
+			bn_mat_angles( tmp, atof(bu_optarg), 0.0, 0.0 );
 			MAT_COPY( m, rmat );
 			bn_mat_mul( rmat, tmp, m );
 			break;
 		case 'y':
-			bn_mat_angles( tmp, 0.0, atof(optarg), 0.0 );
+			bn_mat_angles( tmp, 0.0, atof(bu_optarg), 0.0 );
 			MAT_COPY( m, rmat );
 			bn_mat_mul( rmat, tmp, m );
 			break;
 		case 'z':
-			bn_mat_angles( tmp, 0.0, 0.0, atof(optarg) );
+			bn_mat_angles( tmp, 0.0, 0.0, atof(bu_optarg) );
 			MAT_COPY( m, rmat );
 			bn_mat_mul( rmat, tmp, m );
 			break;
 		case 'm':
-			num = sscanf(&optarg[0], "%lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf", 
+			num = sscanf(&bu_optarg[0], "%lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf",
 				&mtmp[0], &mtmp[1], &mtmp[2], &mtmp[3],
 				&mtmp[4], &mtmp[5], &mtmp[6], &mtmp[7],
 				&mtmp[8], &mtmp[9], &mtmp[10], &mtmp[11],
@@ -278,24 +278,24 @@ get_args(int argc, register char **argv)
 			break;
 		case 'X':
 			MAT_IDN( tmp );
-			tmp[MDX] = atof(optarg);
+			tmp[MDX] = atof(bu_optarg);
 			MAT_COPY( m, rmat );
 			bn_mat_mul( rmat, tmp, m );
 			break;
 		case 'Y':
 			MAT_IDN( tmp );
-			tmp[MDY] = atof(optarg);
+			tmp[MDY] = atof(bu_optarg);
 			MAT_COPY( m, rmat );
 			bn_mat_mul( rmat, tmp, m );
 			break;
 		case 'Z':
 			MAT_IDN( tmp );
-			tmp[MDZ] = atof(optarg);
+			tmp[MDZ] = atof(bu_optarg);
 			MAT_COPY( m, rmat );
 			bn_mat_mul( rmat, tmp, m );
 			break;
 		case 's':
-			scale *= atof(optarg);
+			scale *= atof(bu_optarg);
 			/*
 			 *  If rpp flag has already been set, defer
 			 *  application of scale until after the
@@ -315,7 +315,7 @@ get_args(int argc, register char **argv)
 			verbose++;
 			break;
 		case 'S':
-			num = sscanf(optarg, "%lf %lf %lf %lf %lf %lf",
+			num = sscanf(bu_optarg, "%lf %lf %lf %lf %lf %lf",
 				&mtmp[0], &mtmp[1], &mtmp[2],
 				&mtmp[3], &mtmp[4], &mtmp[5]);
 			VSET(forced_space_min, mtmp[0], mtmp[1], mtmp[2]);
@@ -332,7 +332,7 @@ get_args(int argc, register char **argv)
 
 
 	if( isatty(fileno(stdout))
-	  || (isatty(fileno(stdin)) && (optind >= argc)) )  {
+	  || (isatty(fileno(stdin)) && (bu_optind >= argc)) )  {
 		return(0);	/* Bad */
 	}
 
@@ -357,18 +357,18 @@ main(int argc, char **argv)
 		bn_mat_print("rmat", rmat);
 	}
 
-	if( optind < argc ) {
-		while( optind < argc ) {
+	if( bu_optind < argc ) {
+		while( bu_optind < argc ) {
 			if( fp != NULL && fp != stdin )
 				fclose( fp );
-			if( strcmp(argv[optind], "-") == 0 )
+			if( strcmp(argv[bu_optind], "-") == 0 )
 				fp = stdin;
-			else if( (fp = fopen(argv[optind],"r")) == NULL ) {
-				fprintf( stderr, "plrot: can't open \"%s\"\n", argv[optind] );
+			else if( (fp = fopen(argv[bu_optind],"r")) == NULL ) {
+				fprintf( stderr, "plrot: can't open \"%s\"\n", argv[bu_optind] );
 				continue;
 			}
 			dofile( fp );
-			optind++;
+			bu_optind++;
 		}
 	} else {
 		dofile( stdin );

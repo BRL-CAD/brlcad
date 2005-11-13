@@ -40,6 +40,8 @@ rlatorle()				Tag the file.
  * System includes.
  */
 #include "rle.h"
+#include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
 #include "rla_header.h"
 #include "rlb_header.h"

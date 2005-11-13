@@ -35,7 +35,7 @@
  *
  *  Author -
  *	Michael John Muuss
- *  
+ *
  *  Source -
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
@@ -65,7 +65,7 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 #define TRUE	1
 
 
-RT_EXTERN(void rt_grow_boolstack, (struct resource *resp) );
+BU_EXTERN(void rt_grow_boolstack, (struct resource *resp) );
 int rt_tree_max_raynum(register const union tree *,
 		       register const struct partition *);
 int rt_bool_partition_eligible(register const struct bu_ptbl *,
@@ -1270,7 +1270,7 @@ b_ok:		;
  * If 2 or more regions claim the partition, then an overlap exists.
  * If the overlap handler gives a non-zero return, then the overlapping
  * partition is kept, with the region ID being the first one encountered.
- * Otherwise, the partition is eliminated from further consideration. 
+ * Otherwise, the partition is eliminated from further consideration.
  *
  *  All partitions in the indicated range of the ray are evaluated.
  *  All partitions which really exist (booleval is true) are appended
@@ -1752,7 +1752,7 @@ out:
 
 /*
  *  			R T _ B O O L E V A L
- *  
+ *
  *  Using a stack to recall state, evaluate a boolean expression
  *  without recursion.
  *
@@ -1921,7 +1921,7 @@ pop:
 
 /*
  *			R T _ F D I F F
- *  
+ *
  *  Compares two floating point numbers.  If they are within "epsilon"
  *  of each other, they are considered the same.
  *  NOTE:  This is a "fuzzy" difference.  It is important NOT to
@@ -2337,7 +2337,7 @@ rt_rebuild_overlaps(struct partition *PartHdp, struct application *ap, int rebui
 						continue;
 					RT_CK_REGION(pp_reg);
 
-					if( rebuild_fastgen_plates_only && 
+					if( rebuild_fastgen_plates_only &&
 						pp_reg->reg_is_fastgen != REGION_FASTGEN_PLATE )
 							continue;
 

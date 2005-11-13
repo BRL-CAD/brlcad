@@ -31,12 +31,12 @@
  *	Paul R. Stay		(Added parallelization and physics code)
  *	From viewpp.c and viewray.c by
  *	Michael John Muuss
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005
- *  
+ *
  */
 #ifndef lint
 static const char RCSppview[] = "@(#)$Header$ (BRL)";
@@ -116,7 +116,7 @@ vect_t cemant;	/* center vector of emanation plane. */
 vect_t uvertp;	/* vertical emanation plane unit vector. */
 fastf_t wavelength = 1.0;	/* Radar wavelength */
 fastf_t xhpol = 0.0;	/* Transmitter vertical polarization */
-fastf_t xvpol = 1.0;	/* Transmitter horizontal polarization */ 
+fastf_t xvpol = 1.0;	/* Transmitter horizontal polarization */
 fastf_t rhpol = 0.0;	/* Receiver vertical polarization */
 fastf_t rvpol = 1.0;	/* Receiver horizontal polarization */
 fastf_t epsilon = 1.0e-07;
@@ -139,7 +139,7 @@ char *file, *obj;
 
 #ifdef SAR
 	sar_init(ap, file, obj, minus_o);
-#endif	
+#endif
 	return(0);		/* no framebuffer needed */
 }
 
@@ -152,7 +152,7 @@ struct application *ap;
 	fastf_t elvang, aziang;
 	vect_t temp, aimpt;
 	fastf_t backoff;
-	
+
 
 	if( numreflect > MAXREFLECT ) {
 		bu_log("Warning: maxreflect too large (%d), using %d\n",
@@ -160,8 +160,8 @@ struct application *ap;
 		numreflect = MAXREFLECT;
 	}
 
-	elvang = elevation * M_PI / 180.0;	
-	aziang = azimuth * M_PI / 180.0;	
+	elvang = elevation * M_PI / 180.0;
+	aziang = azimuth * M_PI / 180.0;
 
 	uhoriz[0] = (fastf_t) sin(aziang);
 	uhoriz[1] = (fastf_t) -cos(aziang);
@@ -240,8 +240,8 @@ struct partition *PartHeadp;
 	LOCAL vect_t	to_eye, work;
 	LOCAL int	depth;
 	LOCAL int	cpu_num;
-	
-	
+
+
 	for( pp=PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw )
 		if( pp->pt_outhit->hit_dist >= 0.0 )  break;
 	if( pp == PartHeadp )  {
@@ -267,7 +267,7 @@ struct partition *PartHeadp;
 	if(R_DEBUG&RDEBUG_HITS)  {
 		rt_pr_hit( " In", hitp );
 	}
-	
+
 	if ( ap->a_resource == RESOURCE_NULL)
 		cpu_num = 0;
 	else
@@ -330,7 +330,7 @@ struct partition *PartHeadp;
 		rayinfo[cpu_num][0].ip[2] = ap->a_ray.r_pt[2];
 		radar_physics( cpu_num, depth + 1 );
 #ifdef SAR
-		dumpall( ap, cpu_num, depth + 1); 
+		dumpall( ap, cpu_num, depth + 1);
 #endif
 	}
 

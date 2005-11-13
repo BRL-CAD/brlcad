@@ -19,7 +19,7 @@
  * information.
  */
 /** @file columns.c
- *  
+ *
  *  A set of routines for printing columns of data.
  *
  * Functions -
@@ -45,20 +45,20 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "common.h"
 
-
-
 #include <stdio.h>
 
 #ifdef HAVE_STRING_H
-#include <string.h>
+#  include <string.h>
 #else
-#include <strings.h>
+#  include <strings.h>
 #endif
 
 #include "machine.h"
 #include "bu.h"
 #include "vmath.h"
 #include "raytrace.h"
+#include "db.h"
+
 #include "./ged.h"
 
 static int	col_count;		/* names listed on current line */
@@ -143,7 +143,7 @@ vls_col_pr4v(struct bu_vls *vls, struct directory **list_of_names, int num_in_li
 	 (unsigned)num_in_list, (unsigned)sizeof(struct directory *),
 	 (int (*)())cmpdirname);
 
-  /* 
+  /*
    * Traverse the list of names, find the longest name and set the
    * the column width and number of columns accordingly.
    * If the longest name is greater than 80 characters, the number of columns
@@ -155,13 +155,13 @@ vls_col_pr4v(struct bu_vls *vls, struct directory **list_of_names, int num_in_li
     if(namelen > maxnamelen)
       maxnamelen = namelen;
   }
-  if(maxnamelen <= 16) 
+  if(maxnamelen <= 16)
     maxnamelen = 16;
   cwidth = maxnamelen + 4;
   if(cwidth > 80)
     cwidth = 80;
   numcol = TERMINAL_WIDTH / cwidth;
-     
+
   /*
    * For the number of (full and partial) lines that will be needed,
    * print in vertical format.
@@ -198,7 +198,7 @@ vls_col_pr4v(struct bu_vls *vls, struct directory **list_of_names, int num_in_li
       } else {
 	/*
 	 * Pad to next boundary as there will be
-	 * another entry to the right of this one. 
+	 * another entry to the right of this one.
 	 */
         while( namelen++ < cwidth)
 	  bu_vls_putc(vls, ' ');
@@ -208,7 +208,7 @@ vls_col_pr4v(struct bu_vls *vls, struct directory **list_of_names, int num_in_li
 }
 
 void
-vls_long_dpp( 
+vls_long_dpp(
 	struct bu_vls *vls,
 	struct directory **list_of_names,
 	int num_in_list,

@@ -21,7 +21,7 @@
 /** @file options.c
  *
  * Option processing routines.
- * 
+ *
  * Source -
  *	SLAD CAD Team
  *	The U. S. Army Research Laboratory

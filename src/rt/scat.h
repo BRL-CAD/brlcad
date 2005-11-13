@@ -71,7 +71,7 @@ struct physics {
 extern fastf_t r_reflections;	/* Number of maximum reflections */
 extern fastf_t wavelength;	/* Radar wavelength */
 extern fastf_t xhpol;	/* Transmitter vertical polarization */
-extern fastf_t xvpol;	/* Transmitter horizontal polarization */ 
+extern fastf_t xvpol;	/* Transmitter horizontal polarization */
 extern fastf_t rhpol;	/* Receiver vertical polarization */
 extern fastf_t rvpol;	/* Receiver horizontal polarization */
 extern vect_t uhoriz;	/* horizontal emanation plane unit vector. */

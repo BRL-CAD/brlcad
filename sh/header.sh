@@ -12,7 +12,7 @@
 # 1. Redistributions of source code must retain the above copyright
 # notice, this list of conditions and the following disclaimer.
 #
-# 2. Redistributions in binary form must reproduce the above 
+# 2. Redistributions in binary form must reproduce the above
 # copyright notice, this list of conditions and the following
 # disclaimer in the documentation and/or other materials provided
 # with the distribution.
@@ -49,8 +49,8 @@
 #
 #   find src -type f \( -name \*.c -or -name \*.h \) -not -regex '.*src/lib.*' -exec sh/header.sh GPL {} \;
 #
-# Author - 
-#   Christopher Sean Morrison 
+# Author -
+#   Christopher Sean Morrison
 #
 # Source -
 #   The U.S. Army Research Laboratory
@@ -82,7 +82,7 @@ case $LICE in
     gpl|GPL)
         LICE=GPL
 	;;
-    gfdl|fdl|GFDL|FDL) 
+    gfdl|fdl|GFDL|FDL)
         LICE=GFDL
     	;;
     *)
@@ -123,7 +123,7 @@ fi
 # wrap is whether or not in needs to be incased in /* */
 # commentprefix is the comment character to prefex each line
 ###
-case $FILE in 
+case $FILE in
     *.sh)
 	echo "$FILE is a shell script"
 	wrap=0
@@ -240,9 +240,9 @@ titleline="${titleline}${title}"
 ###################################
 copyright=""
 currentyear="`date | awk '{print $6}'`"
-copyrightline="`grep -i copyright $FILE | grep -v -i notice | grep -v -i '\.SH' | head -1`"
+copyrightline="`grep -i copyright $FILE | grep -v -i notice | grep -v -i '\.SH' | head -n 1`"
 if [ "x$copyrightline" = "x" ] ; then
-    copyrightline="`grep -i copyright $FILE | grep -v -i united | grep -v -i '\.SH' | head -1`"
+    copyrightline="`grep -i copyright $FILE | grep -v -i united | grep -v -i '\.SH' | head -n 1`"
 fi
 if [ "x$copyrightline" = "x" ] ; then
     startyear="$currentyear"
@@ -300,7 +300,7 @@ $c
 $c 1. Redistributions of source code must retain the above copyright
 $c notice, this list of conditions and the following disclaimer.
 $c
-$c 2. Redistributions in binary form must reproduce the above 
+$c 2. Redistributions in binary form must reproduce the above
 $c copyright notice, this list of conditions and the following
 $c disclaimer in the documentation and/or other materials provided
 $c with the distribution.
@@ -392,13 +392,13 @@ fi
 ###################################
 # see if the license block exists #
 ###################################
-foundtitle="`head -5 $FILE | grep "$title" | wc | awk '{print $1}'`"
+foundtitle="`head -n 5 $FILE | grep "$title" | wc | awk '{print $1}'`"
 prepend=no
 if [ "x$foundtitle" = "x0" ] ; then
     prepend=yes
 else
-    licline="`echo "$block" | tail -7 | head -1`"
-    foundfileheader="`head -50 $FILE | grep "$licline" | wc | awk '{print $1}'`"
+    licline="`echo "$block" | tail -n 7 | head -n 1`"
+    foundfileheader="`head -n 50 $FILE | grep "$licline" | wc | awk '{print $1}'`"
     if [ "x$foundfileheader" = "x0" ] ; then
 	prepend=yes
 	echo "$FILE already has a title"
@@ -424,10 +424,10 @@ mv -f $FILE ${FILE}.backup
 
 closeit=0
 skip=1
-lineone="`cat ${FILE}.backup | head -1`"
-linetwo="`cat ${FILE}.backup | head -2 | tail -1`"
-linethree="`cat ${FILE}.backup | head -3 | tail -1`"
-case "$lineone" in 
+lineone="`cat ${FILE}.backup | head -n 1`"
+linetwo="`cat ${FILE}.backup | head -n 2 | tail -n 1`"
+linethree="`cat ${FILE}.backup | head -n 3 | tail -n 1`"
+case "$lineone" in
     "/*"*${title})
         echo "Found C comment start with file header"
 	skip=2
@@ -550,7 +550,7 @@ case "$lineone" in
 				    skip=5
 				    ;;
 			    esac
-			    
+
 			fi
 			;;
 		esac
@@ -624,7 +624,7 @@ else
     echo "${block}" >> $FILE
 fi
 
-tail +${skip} ${FILE}.backup >> $FILE
+tail -n +${skip} ${FILE}.backup >> $FILE
 
 
 exit 0

@@ -19,7 +19,7 @@
  * information.
  */
 /** @file pixmatte.c
- *  
+ *
  *  Given four streams of data elements,
  *  where element is of arbitrary width,
  *  typically pix(5) or bw(5) images,
@@ -38,10 +38,10 @@
  *
  *  This routine operates on an element-by-element basis, and thus
  *  is independent of the resolution of the image.
- *  
+ *
  *  Author -
  *	Michael John Muuss
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
@@ -66,6 +66,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include "machine.h"
+#include "bu.h"
 
 
 #define NFILES		4		/* Two in, two out */
@@ -104,7 +105,7 @@ void
 usage(char *s, int n)
 {
 	if (s && *s) (void)fputs(s, stderr);
-	
+
 	(void)fputs(usage_msg, stderr);
 	exit(n);
 }
@@ -166,7 +167,7 @@ get_args(int argc, register char **argv)
 	register int	seen_formula = 0;
 	register int	i;
 
-	while ( (c = getopt( argc, argv, "glenaw:" )) != EOF )  {
+	while ( (c = bu_getopt( argc, argv, "glenaw:" )) != EOF )  {
 		switch( c )  {
 		case 'g':
 			wanted |= GT;
@@ -189,7 +190,7 @@ get_args(int argc, register char **argv)
 			/* Formula not seen */
 			break;
 		case 'w':
-			c = atoi(optarg);
+			c = atoi(bu_optarg);
 			if( c >= 1 && c < EL_WIDTH )
 				width = c;
 			else
@@ -201,20 +202,20 @@ get_args(int argc, register char **argv)
 		}
 	}
 
-	if( !seen_formula )  
+	if( !seen_formula )
 		usage("No formula specified\n", 1);
 
 
-	if( optind+NFILES > argc )
+	if( bu_optind+NFILES > argc )
 		usage("insufficient number of input/output channels\n", 1);
 
 
 	for( i=0; i < NFILES; i++ )  {
-		if( open_file( i, argv[optind++] ) < 0 )
+		if( open_file( i, argv[bu_optind++] ) < 0 )
 			usage((char *)NULL, 1);
 	}
 
-	if ( argc > optind )
+	if ( argc > bu_optind )
 		(void)fprintf( stderr, "pixmatte: excess argument(s) ignored\n" );
 
 }
@@ -301,7 +302,7 @@ main(int argc, char **argv)
 				bp = cb1;
 			else
 				bp = &f_const[1][0];
-						
+
 			if( wanted == NE )  {
 				for( ep = ap+width; ap < ep; )  {
 					if( *ap++ != *bp++ )

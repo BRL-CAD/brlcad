@@ -163,7 +163,11 @@ fillItemTree( jobject parent_node,
 	      jclass itemTree_class,
 	      jmethodID itemTree_constructor_id,
 	      jmethodID itemTree_addcomponent_id,
-	      jmethodID itemTree_setMuvesName_id );
+	      jmethodID itemTree_setMuvesName_id,
+	      jmethodID itemTree_setMaterialName_id,
+	      jmethodID itemTree_setIdentNumber_id,
+	      jmethodID itemTree_setLos_id,
+	      jmethodID itemTree_setUseCount_id );
 
 
 /* MACRO to add a ray to a job */
@@ -322,7 +326,7 @@ get_unique_jobid()
 
 	return aJobId;
 }
-                
+
 
 struct rtserver_job *
 rts_get_rtserver_job()
@@ -693,7 +697,7 @@ rts_close_session( int sessionid )
  * Uses "rtserver_data" object in the BRL-CAD model to find object names (see rtserver.h)
  * eliminates any old data
  * creates a new session (sessionid = 0)
- * 
+ *
  * Returns:
  *	sessionid - all is well
  *	negative number - we have a problem
@@ -1340,7 +1344,7 @@ rts_get_any_waiting_result( int sessionid )
 		pthread_mutex_lock( &output_queue_mutex[queue] );
 
 		/* check for a result */
-		
+
 		if( BU_LIST_NON_EMPTY( &output_queue[queue].l ) ) {
 			for( BU_LIST_FOR( aresult, rtserver_result, &output_queue[queue].l ) ) {
 				aresult = BU_LIST_FIRST( rtserver_result, &output_queue[queue].l );
@@ -1896,6 +1900,11 @@ build_Java_RayResult( JNIEnv *env, struct ray_result *ray_res, jobject jstart_pt
 	return( jrayResult );
 }
 
+/*
+ *			F I L L I T E M M E M B E R S
+ *
+ * Routine to descend into a BRL-CAD tree structure and call fillItemTree() at each leaf
+ */
 void
 fillItemMembers( jobject node,
 		 struct db_i *dbip,
@@ -1904,7 +1913,11 @@ fillItemMembers( jobject node,
 		 jclass itemTree_class,
 		 jmethodID itemTree_constructor_id,
 		 jmethodID itemTree_addcomponent_id,
-		 jmethodID itemTree_setMuvesName_id )
+		 jmethodID itemTree_setMuvesName_id,
+		 jmethodID itemTree_setMaterialName_id,
+		 jmethodID itemTree_setIdentNumber_id,
+		 jmethodID itemTree_setLos_id,
+		 jmethodID itemTree_setUseCount_id )
 {
 	switch( tp->tr_op ) {
 	case OP_SOLID:
@@ -1917,21 +1930,29 @@ fillItemMembers( jobject node,
 	case OP_UNION:
 	case OP_INTERSECT:
 		fillItemMembers( node, dbip, env, tp->tr_b.tb_left, itemTree_class,
-				 itemTree_constructor_id, itemTree_addcomponent_id, itemTree_setMuvesName_id );
+				 itemTree_constructor_id, itemTree_addcomponent_id, itemTree_setMuvesName_id,
+				 itemTree_setMaterialName_id, itemTree_setIdentNumber_id, itemTree_setLos_id, itemTree_setUseCount_id);
 		fillItemMembers( node, dbip, env, tp->tr_b.tb_right, itemTree_class,
-				 itemTree_constructor_id, itemTree_addcomponent_id, itemTree_setMuvesName_id );
+				 itemTree_constructor_id, itemTree_addcomponent_id, itemTree_setMuvesName_id,
+				 itemTree_setMaterialName_id, itemTree_setIdentNumber_id, itemTree_setLos_id, itemTree_setUseCount_id);
 		break;
 	case OP_SUBTRACT:
 		fillItemMembers( node, dbip, env, tp->tr_b.tb_left, itemTree_class,
-				 itemTree_constructor_id, itemTree_addcomponent_id, itemTree_setMuvesName_id );
+				 itemTree_constructor_id, itemTree_addcomponent_id, itemTree_setMuvesName_id,
+				 itemTree_setMaterialName_id, itemTree_setIdentNumber_id, itemTree_setLos_id, itemTree_setUseCount_id);
 		break;
 	case OP_DB_LEAF:
 		fillItemTree( node, dbip, env, tp->tr_l.tl_name, itemTree_class,
-				 itemTree_constructor_id, itemTree_addcomponent_id, itemTree_setMuvesName_id );
+			      itemTree_constructor_id, itemTree_addcomponent_id, itemTree_setMuvesName_id,
+				 itemTree_setMaterialName_id, itemTree_setIdentNumber_id, itemTree_setLos_id, itemTree_setUseCount_id);
 		break;
 	}
 }
 
+/*				F I L L I T E M T R E E
+ *
+ * Routine to fill a MUVES3 ItemTree structure based on a leaf node of a BRL-CAD tree structure.
+ */
 void
 fillItemTree( jobject parent_node,
 	      struct db_i *dbip,
@@ -1940,7 +1961,11 @@ fillItemTree( jobject parent_node,
 	      jclass itemTree_class,
 	      jmethodID itemTree_constructor_id,
 	      jmethodID itemTree_addcomponent_id,
-	      jmethodID itemTree_setMuvesName_id )
+	      jmethodID itemTree_setMuvesName_id,
+	      jmethodID itemTree_setMaterialName_id,
+	      jmethodID itemTree_setIdentNumber_id,
+	      jmethodID itemTree_setLos_id,
+	      jmethodID itemTree_setUseCount_id)
 {
 	struct directory *dp;
 	int id;
@@ -1976,6 +2001,9 @@ fillItemTree( jobject parent_node,
 
 
 	if( dp->d_flags & DIR_REGION ) {
+		struct rt_comb_internal *comb;
+		jint ident, los, uses;
+
 		if( (id = rt_db_get_internal( &intern, dp, dbip, NULL, &rt_uniresource ) ) < 0 ) {
 			fprintf( stderr, "Failed to get internal form of BRL-CAD object (%s)\n", name );
 			return;
@@ -1993,8 +2021,44 @@ fillItemTree( jobject parent_node,
 			if( (*env)->ExceptionOccurred(env) ) {
 				fprintf( stderr, "Exception thrown while setting the ItemTree MuvesName\n" );
 				(*env)->ExceptionDescribe(env);
+				rt_db_free_internal( &intern, &rt_uniresource );
 				return;
 			}
+		}
+
+		/* assign ident number */
+		comb = (struct rt_comb_internal *)intern.idb_ptr;
+		RT_CK_COMB( comb );
+		ident = comb->region_id;
+		(*env)->CallVoidMethod( env, node, itemTree_setIdentNumber_id, ident );
+		/* check for any exceptions */
+		if( (*env)->ExceptionOccurred(env) ) {
+			fprintf( stderr, "Exception thrown while setting the ItemTree ident number\n" );
+			(*env)->ExceptionDescribe(env);
+			rt_db_free_internal( &intern, &rt_uniresource );
+			return;
+		}
+
+		/* assign los number */
+		los = comb->los;
+		(*env)->CallVoidMethod( env, node, itemTree_setLos_id, los );
+		/* check for any exceptions */
+		if( (*env)->ExceptionOccurred(env) ) {
+			fprintf( stderr, "Exception thrown while setting the ItemTree los number\n" );
+			(*env)->ExceptionDescribe(env);
+			rt_db_free_internal( &intern, &rt_uniresource );
+			return;
+		}
+
+		/* assign use count */
+		uses = dp->d_uses;
+		(*env)->CallVoidMethod( env, node, itemTree_setUseCount_id, uses );
+		/* check for any exceptions */
+		if( (*env)->ExceptionOccurred(env) ) {
+			fprintf( stderr, "Exception thrown while setting the ItemTree use count\n" );
+			(*env)->ExceptionDescribe(env);
+			rt_db_free_internal( &intern, &rt_uniresource );
+			return;
 		}
 
 		rt_db_free_internal( &intern, &rt_uniresource );
@@ -2034,7 +2098,8 @@ fillItemTree( jobject parent_node,
 
 		/* add members of this combination to the ItemTree */
 		fillItemMembers( node, dbip, env, comb->tree, itemTree_class,
-				 itemTree_constructor_id, itemTree_addcomponent_id, itemTree_setMuvesName_id );
+				 itemTree_constructor_id, itemTree_addcomponent_id, itemTree_setMuvesName_id,
+				 itemTree_setMaterialName_id, itemTree_setIdentNumber_id, itemTree_setLos_id, itemTree_setUseCount_id );
 		rt_db_free_internal( &intern, &rt_uniresource );
 	}
 }
@@ -2042,11 +2107,31 @@ fillItemTree( jobject parent_node,
 
 /* JAVA JNI bindings */
 
+
+/*
+ *				G E T I T E M T R E E
+ *
+ * This is the implementation of the MUVES3 Platform.getItemTree() method for BRL-CAD geometry.
+ * Basically a tree walker that gathers information about the BRL-CAD objects that are prepped
+ * and ready for ray-tracing. The returned tree contains leaf nodes for each BRL-CAD region in the
+ * tree, and non-leaf nodes for BRL-CAD combinations above the regions. The leaf nodes are populated with the
+ * region name, ident, los, material name, number of uses (dp->d_uses), and MUVES Component name (if the
+ * region has a "MUVES_Component" attribute. The only information currently stored
+ * in non-leaf nodes is the combination name and MUVES Component name.
+ *
+ * inputs:
+ *	sessionId - the session identifier
+ *
+ * outputs:
+ *	A Java ItemTree object containing data about the prepped objects in the BRL-CAD model
+ */
+
 JNIEXPORT jobject JNICALL
 Java_mil_army_arl_services_RtService_getItemTree(JNIEnv *env, jobject obj, jint sessionId )
 {
 	jclass itemTree_class;
-	jmethodID itemTree_constructor_id, itemTree_addcomponent_id, itemTree_setMuvesName_id;
+	jmethodID itemTree_constructor_id, itemTree_addcomponent_id, itemTree_setMuvesName_id, itemTree_setIdentNumber_id,
+	    itemTree_setMaterialName_id, itemTree_setLos_id, itemTree_setUseCount_id;
 	jobject rootNode;
 	jstring nodeName;
 	struct db_i *dbip;
@@ -2072,7 +2157,7 @@ Java_mil_army_arl_services_RtService_getItemTree(JNIEnv *env, jobject obj, jint 
 		(*env)->ExceptionDescribe(env);
 		return( (jobject)NULL );
 	}
-	
+
 	/* get the JAVA method id for the ItemTree addSubcomponent method */
 	if( (itemTree_addcomponent_id=(*env)->GetMethodID( env, itemTree_class, "addSubComponent",
 	    "(Lmil/army/arl/muves/rtserver/ItemTree;)V" )) == NULL ) {
@@ -2088,7 +2173,39 @@ Java_mil_army_arl_services_RtService_getItemTree(JNIEnv *env, jobject obj, jint 
 		(*env)->ExceptionDescribe(env);
 		return( (jobject)NULL );
 	}
-	
+
+	/* get the JAVA method id for the ItemTree setIdentNumber method */
+	if( (itemTree_setIdentNumber_id=(*env)->GetMethodID( env, itemTree_class, "setIdentNumber",
+	     "(I)V" )) == NULL ) {
+		fprintf( stderr, "Failed to get method id for ItemTree setIdentNumber method\n" );
+		(*env)->ExceptionDescribe(env);
+		return( (jobject)NULL );
+	}
+
+	/* get the JAVA method id for the ItemTree setLos method */
+	if( (itemTree_setLos_id=(*env)->GetMethodID( env, itemTree_class, "setLos",
+	     "(I)V" )) == NULL ) {
+		fprintf( stderr, "Failed to get method id for ItemTree setLos method\n" );
+		(*env)->ExceptionDescribe(env);
+		return( (jobject)NULL );
+	}
+
+	/* get the JAVA method id for the ItemTree setMaterialName method */
+	if( (itemTree_setMaterialName_id=(*env)->GetMethodID( env, itemTree_class, "setMaterialName",
+	     "(Ljava/lang/String;)V" )) == NULL ) {
+		fprintf( stderr, "Failed to get method id for ItemTree setMaterialName method\n" );
+		(*env)->ExceptionDescribe(env);
+		return( (jobject)NULL );
+	}
+
+	/* get the JAVA method id for the ItemTree setUseCount method */
+	if( (itemTree_setUseCount_id=(*env)->GetMethodID( env, itemTree_class, "setUseCount",
+	     "(I)V" )) == NULL ) {
+		fprintf( stderr, "Failed to get method id for ItemTree setUseCount method\n" );
+		(*env)->ExceptionDescribe(env);
+		return( (jobject)NULL );
+	}
+
 	/* create root node for ItemTree return */
 	nodeName = (*env)->NewStringUTF(env, "root" );
 	rootNode = (*env)->NewObject( env, itemTree_class, itemTree_constructor_id, nodeName );
@@ -2109,13 +2226,14 @@ Java_mil_army_arl_services_RtService_getItemTree(JNIEnv *env, jobject obj, jint 
 
 		for( j=0 ; j<rts_rti->rtrti_num_trees ; j++ ) {
 			fillItemTree( rootNode, dbip, env, rts_rti->rtrti_trees[j], itemTree_class,
-				      itemTree_constructor_id, itemTree_addcomponent_id, itemTree_setMuvesName_id );
+				      itemTree_constructor_id, itemTree_addcomponent_id, itemTree_setMuvesName_id,
+				      itemTree_setMaterialName_id, itemTree_setIdentNumber_id, itemTree_setLos_id, itemTree_setUseCount_id );
 		}
 
 	}
 
 
-	return( rootNode );			      
+	return( rootNode );
 }
 
 /*				R t S e r v e r I m p l _ r t s I n i t
@@ -2132,7 +2250,7 @@ Java_mil_army_arl_services_RtService_getItemTree(JNIEnv *env, jobject obj, jint 
  *	JNI_TRUE - something went wrong
  */
 JNIEXPORT jint JNICALL
-Java_mil_army_arl_services_RtService_rtsInit(JNIEnv *env, jobject obj, jobjectArray args) 
+Java_mil_army_arl_services_RtService_rtsInit(JNIEnv *env, jobject obj, jobjectArray args)
 {
 	jsize len=(*env)->GetArrayLength(env, args);
 	jstring jfile_name, *jobj_name;
@@ -2260,7 +2378,7 @@ Java_mil_army_arl_services_RtService_shootArray( JNIEnv *env, jobject jobj,
 {
    	jclass point_class, vect_class, rayResult_class, arrayClass;
 	jmethodID point_constructorID, arraySetID;
-	jobjectArray resultsArray; 
+	jobjectArray resultsArray;
 	jfieldID fidvx, fidvy, fidvz;
 	jfieldID fidpx, fidpy, fidpz;
 	jobject jrayResult, jray_start_pt;
@@ -2758,7 +2876,7 @@ Java_mil_army_arl_muves_rtserver_RtServerImpl_getItemTree(JNIEnv *env, jobject o
 }
 
 JNIEXPORT jint JNICALL
-Java_mil_army_arl_muves_rtserver_RtServerImpl_rtsInit(JNIEnv *env, jobject obj, jobjectArray args) 
+Java_mil_army_arl_muves_rtserver_RtServerImpl_rtsInit(JNIEnv *env, jobject obj, jobjectArray args)
 {
 	return Java_mil_army_arl_services_RtService_rtsInit(env, obj, args);
 }
@@ -2872,7 +2990,7 @@ main( int argc, char *argv[] )
 			exit( 1 );
 		}
 	}
-	
+
 	/* load geometry */
 	if( BU_PTBL_LEN( &objs ) > 0 ) {
 		char **objects;
@@ -2916,7 +3034,7 @@ main( int argc, char *argv[] )
 		while( names[i] ) {
 			fprintf( stderr, "\t%d - %s\n", i, names[i] );
 			i++;
-		}	
+		}
 	}
 #endif
 	/* start the server threads */

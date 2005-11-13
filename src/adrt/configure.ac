@@ -102,7 +102,7 @@ AC_ARG_ENABLE(optim-xeon-linux,
 AC_MSG_RESULT($want_optim_xeon_linux)
 if test "x$want_optim_xeon_linux" = "xyes"
 then
-	export CFLAGS="-O3 -Wall -Wmissing-prototypes -pedantic -std=c99 -msse -mfpmath=sse -ffast-math -fomit-frame-pointer -pipe"  
+	export CFLAGS="-O3 -Wall -Wmissing-prototypes -pedantic -std=c99 -msse -mfpmath=sse -ffast-math -fomit-frame-pointer -pipe"
 	AC_DEFINE(TIE_SSE, 1, intel SSE simd shtuff)
 fi
 
@@ -121,7 +121,7 @@ AC_ARG_ENABLE(optim-xeon-freebsd,
 AC_MSG_RESULT($want_optim_xeon_freebsd)
 if test "x$want_optim_xeon_freebsd" = "xyes"
 then
-	export CFLAGS="-O3 -Wall -Wmissing-prototypes -pedantic -std=c99 -ffast-math -fomit-frame-pointer -pipe"  
+	export CFLAGS="-O3 -Wall -Wmissing-prototypes -pedantic -std=c99 -ffast-math -fomit-frame-pointer -pipe"
 fi
 
 
@@ -139,7 +139,7 @@ AC_ARG_ENABLE(optim-ppc,
 AC_MSG_RESULT($want_optim_ppc)
 if test "x$want_optim_ppc" = "xyes"
 then
-	export CFLAGS="-O3 -Wall -Wmissing-prototypes -pedantic -std=c99 -ffast-math -fomit-frame-pointer -pipe -faltivec"  
+	export CFLAGS="-O3 -Wall -Wmissing-prototypes -pedantic -std=c99 -ffast-math -fomit-frame-pointer -pipe -faltivec"
 fi
 
 
@@ -174,14 +174,14 @@ AC_CHECK_FUNCS([drand48 getopt_long])
 AC_CHECK_LIB(z, compress, , AC_ERROR(libz is required.))
 
 
-# Compile in BRLCAD support if specified by user
+# Compile in BRL-CAD support if specified by user
 with_brlcadpfx=no
 AC_ARG_WITH(brlcad, AC_HELP_STRING(--with-brlcad=path,
-                [Specify location of BRLCAD Installation]),
+                [Specify location of BRL-CAD Installation]),
         [
                 BRLCAD_CFLAGS="-I$withval/include/brlcad"
 		BRLCAD_LDFLAGS="-L$withval/lib -lbu -ltcl8.4 -lrt"
-                AC_DEFINE(HAVE_BRLCAD,1,Checking for BRLCAD Installation)
+                AC_DEFINE(HAVE_BRLCAD,1,Checking for BRL-CAD Installation)
                 with_brlcadpfx=yes
         ]
 )

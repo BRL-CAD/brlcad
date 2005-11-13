@@ -27,7 +27,7 @@
 static const char RCSid[] = "$Header$";
 #endif
 
-/*	INCLUDES	*/ 
+/*	INCLUDES	*/
 #include "common.h"
 
 

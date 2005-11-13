@@ -41,7 +41,7 @@ the color requested. */
 unsigned long
 dm_get_pixel(unsigned char r, unsigned char g, unsigned char b, long unsigned int *pixels, int cd)
                         /* values assumed to be [0,255] */
-                      
+
         /* cube dimension */
 {
   fastf_t f;
@@ -102,12 +102,12 @@ dm_copy_cmap(Display *dpy, Colormap dest, Colormap src, int low, int hi, int sto
 
 void
 dm_allocate_color_cube(Display *dpy, Colormap cmap, long unsigned int *pixels, int cd, int cmap_base, int store)
-             
-              
-                      
+
+
+
           /* cube dimension */
-              
-          
+
+
 {
   XColor color;
   Colormap default_cmap;
@@ -119,7 +119,7 @@ dm_allocate_color_cube(Display *dpy, Colormap cmap, long unsigned int *pixels, i
    * Copy default colors below cmap_base to private colormap to help
    * reduce flashing. Assuming cmap is private and empty, we can be
    * fairly certain to get the colors we want in the right order even
-   * though cmap may be shared. 
+   * though cmap may be shared.
    */
   default_cmap = DefaultColormap(dpy, DefaultScreen(dpy));
   dm_copy_cmap(dpy, cmap, default_cmap, 0, cmap_base, store);

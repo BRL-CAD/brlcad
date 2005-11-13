@@ -29,24 +29,22 @@
 static const char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
-#ifndef DEBUG
-#define NDEBUG
-#define STATIC static
-#else
-#define STATIC
-#endif
+#include "common.h"
 
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <signal.h>
+
 #include "./burst.h"
 #include "./vecmath.h"
 #include "./extern.h"
-#define DEBUG_IDENTS	false
 
-bool
+
+#define DEBUG_IDENTS	0
+
+boolean
 findIdents( ident, idp )
 int		ident;
 register Ids	*idp;
@@ -63,12 +61,12 @@ register Ids	*idp;
 		if(	ident >= (int) idp->i_lower
 		    &&	ident <= (int) idp->i_upper
 			)
-			return	true;
+			return	1;
 		}
 #if DEBUG_IDENTS
-	brst_log( "returned false\n" );
+	brst_log( "returned 0\n" );
 #endif
-	return	false;
+	return	0;
 	}
 
 Colors *
@@ -101,7 +99,7 @@ register Ids *idp;
 	free( (char *) idp->i_next );
 	}
 
-bool
+boolean
 readIdents( idlist, fp )
 Ids *idlist;
 FILE *fp;
@@ -122,17 +120,17 @@ FILE *fp;
 		if( (idp->i_next = (Ids *) malloc( sizeof(Ids) )) == NULL )
 			{
 			Malloc_Bomb( sizeof(Ids) );
-			return	false;
+			return	0;
 			}
 		idp = idp->i_next;
 		idp->i_lower = lower;
 		idp->i_upper = upper;
 		}
 	idp->i_next = NULL;
-	return	true;
+	return	1;
 	}
 
-bool
+boolean
 readColors( colorlist, fp )
 Colors	*colorlist;
 FILE	*fp;
@@ -164,7 +162,7 @@ FILE	*fp;
 			== NULL )
 			{
 			Malloc_Bomb( sizeof(Colors) );
-			return	false;
+			return	0;
 			}
 		colp = colp->c_next;
 		colp->c_lower = lower;
@@ -172,7 +170,7 @@ FILE	*fp;
 		CopyVec( colp->c_rgb, rgb );
 		}
 	colp->c_next = NULL;
-	return	true;
+	return	1;
 	}
 
 /*

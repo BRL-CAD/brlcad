@@ -1,29 +1,29 @@
 /*
  * This software is copyrighted as noted below.  It may be freely copied,
- * modified, and redistributed, provided that the copyright notice is 
+ * modified, and redistributed, provided that the copyright notice is
  * preserved on all copies.
- * 
+ *
  * There is no warranty or other guarantee of fitness for this software,
  * it is provided solely "as is".  Bug reports or fixes may be sent
  * to the author, who may or may not act on them as he desires.
  *
  * You may not include this software in a program or other software product
- * without supplying the source, or without informing the end-user that the 
+ * without supplying the source, or without informing the end-user that the
  * source is available for no extra charge.
  *
  * If you modify this software, you should include a notice giving the
  * name of the person performing the modification, the date of modification,
  * and the reason for such modification.
  */
-/* 
+/*
  * svfb.h - Definitions and a few global variables for svfb.
- * 
+ *
  * Author:	Spencer W. Thomas
  * 		Computer Science Dept.
  * 		University of Utah
  * Date:	Mon Aug  9 1982
  * Copyright (c) 1982 Spencer W. Thomas
- * 
+ *
  * $Header$
  */
 
@@ -47,7 +47,7 @@ struct sv_dispatch_tab {
 
 extern struct sv_dispatch_tab sv_DTable[];
 
-/* 
+/*
  * These definitions presume the existence of a variable called
  * "fileptr", declared "long * fileptr".  *fileptr should be
  * initialized to 0 before calling Setup().
@@ -65,7 +65,7 @@ extern struct sv_dispatch_tab sv_DTable[];
 #define	    BlockHook()		(*sv_DTable[(int)globals->sv_dispatch].blockHook)(globals)
 #define	    PutEof()		(*sv_DTable[(int)globals->sv_dispatch].putEof)(globals)
 
-/* 
+/*
  * States for run detection
  */
 #define	DATA	0

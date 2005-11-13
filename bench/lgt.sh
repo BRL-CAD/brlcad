@@ -12,7 +12,7 @@
 # 1. Redistributions of source code must retain the above copyright
 # notice, this list of conditions and the following disclaimer.
 #
-# 2. Redistributions in binary form must reproduce the above 
+# 2. Redistributions in binary form must reproduce the above
 # copyright notice, this list of conditions and the following
 # disclaimer in the documentation and/or other materials provided
 # with the distribution.
@@ -94,7 +94,7 @@ G 64 0 0 0.0
 p 0
 # change background to mauve
 b 111 66 66
-# read key frame 
+# read key frame
 j ../db/lgt-test.key
 # display view #3
 R
@@ -153,7 +153,7 @@ o
 # bye
 q
 EOF
-if test $? = 0 ; then	
+if test $? = 0 ; then
   :
 else
   echo "Abnormal lgt exit"
@@ -167,16 +167,16 @@ fi
 
 FAIL=0
 for i in 1 2 3 ; do
-  if ${CMP} "$path_to_lgt_sh/../pix/lgt${i}.pix" lgt${i}a.pix ; then 
+  if ${CMP} "$path_to_lgt_sh/../pix/lgt${i}.pix" lgt${i}a.pix ; then
     :
-  else 
+  else
     echo "Test $i A failed."
     FAIL=1
   fi
   if ${CMP} "$path_to_lgt_sh/../pix/lgt${i}.pix" lgt${i}b.pix
-    then 
+    then
     :
-  else 
+  else
     echo "Test $i B failed."
     FAIL=1
   fi

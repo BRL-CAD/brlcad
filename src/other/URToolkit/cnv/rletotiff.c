@@ -18,6 +18,7 @@
 #define USE_PROTOTYPES 1	/* Needs to have a value for tiffcompat.h. */
 #endif
 
+#include <stdlib.h>
 #include <stdio.h>
 #include "tiffio.h"
 

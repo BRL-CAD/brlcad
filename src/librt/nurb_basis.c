@@ -19,7 +19,7 @@
  * information.
  */
 
-/** \defgroup nurb nurb_ 
+/** \defgroup nurb nurb_
  * \ingroup librt
  */
 
@@ -30,18 +30,18 @@
  */
 /*@}*/
 
-/* 
+/*
  *	N U R B _ B A S I S . C
  *
  * nurb_basis.c - Evaluate the B-Spline Basis Functions.
  *
- * 
+ *
  * Author:  Paul R. Stay
  * Source
  * 	SECAD/VLD Computing Consortium, Bldg 394
  * 	The US Army Ballistic Research Laboratory
  * 	Aberdeen Proving Ground, Maryland 21005
- * 
+ *
  * Date: Mon June 4, 1990
  */
 #ifndef lint
@@ -59,7 +59,7 @@ static const char rcs_ident[] = "$Header$";
 #include "raytrace.h"
 #include "nurb.h"
 
-/* This uses the traditional De Boor-Cox algorithm, 
+/* This uses the traditional De Boor-Cox algorithm,
  *
  *   D[k,i] (u) =
  *
@@ -113,7 +113,7 @@ rt_nurb_basis_eval(register struct knot_vector *knts, int interval, int order, f
 	if ( den == 0.0)
 		b1 = 0.0;
 	else
-		b1 = ((mu - k1) * 
+		b1 = ((mu - k1) *
 		    rt_nurb_basis_eval( knts, interval, order - 1, mu)) / den;
 
 	den = ( k3 - k2);
@@ -121,7 +121,7 @@ rt_nurb_basis_eval(register struct knot_vector *knts, int interval, int order, f
 	if (den == 0.0)
 		b2 = 0.0;
 	else
-		b2 = ((k3 - mu) * 
+		b2 = ((k3 - mu) *
 		    rt_nurb_basis_eval( knts, interval + 1, order - 1, mu)) / den;
 
 	return (b1 + b2);

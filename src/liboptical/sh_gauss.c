@@ -41,7 +41,7 @@
  *
  *  Author -
  *	Lee A. Butler
- *  
+ *
  *  Source -
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
@@ -227,10 +227,10 @@ tree_solids(union tree *tp, struct tree_bark *tb, int op, struct resource *resp)
 		RT_ELL_CK_MAGIC(ell_p);
 
 		if (rdebug&RDEBUG_SHADE) {
-			VPRINT("point", ell_p->v); 
-			VPRINT("a", ell_p->a); 
-			VPRINT("b", ell_p->b); 
-			VPRINT("c", ell_p->c); 
+			VPRINT("point", ell_p->v);
+			VPRINT("a", ell_p->a);
+			VPRINT("b", ell_p->b);
+			VPRINT("c", ell_p->c);
 		}
 
 		/* create the matrix that maps the coordinate system defined
@@ -242,10 +242,10 @@ tree_solids(union tree *tp, struct tree_bark *tb, int op, struct resource *resp)
 		mp[0] = v[0];	mp[4] = v[1];	mp[8] = v[2];
 
 		VMOVE(v, ell_p->b);	VUNITIZE(v);
-		mp[1] = v[0];	mp[5] = v[1];	mp[9] = v[2];		
+		mp[1] = v[0];	mp[5] = v[1];	mp[9] = v[2];
 
 		VMOVE(v, ell_p->c);	VUNITIZE(v);
-		mp[2] = v[0];	mp[6] = v[1];	mp[10] = v[2];		
+		mp[2] = v[0];	mp[6] = v[1];	mp[10] = v[2];
 
 		MAT_DELTAS_VEC(mp, ell_p->v);
 
@@ -305,10 +305,10 @@ tree_solids(union tree *tp, struct tree_bark *tb, int op, struct resource *resp)
  */
 HIDDEN int
 gauss_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip)
-                      	    
-             		         
+
+
     			      	/* pointer to reg_udata in *rp */
-             		     
+
            		      	/* New since 4.4 release */
 {
 	register struct gauss_specific	*gauss_sp;
@@ -405,7 +405,7 @@ gauss_free(char *cp)
  *
  * Evaluate the 3-D gaussian "puff" function:
  *
- * 1.0 / ( (2*PI)^(3/2) * sigmaX*sigmaY*sigmaZ )) * 
+ * 1.0 / ( (2*PI)^(3/2) * sigmaX*sigmaY*sigmaZ )) *
  *      exp( -0.5 * ( (x-ux)^2/sigmaX + (y-uy)^2/sigmaY + (z-uz)^2/sigmaZ ) )
  *
  * for a given point "pt" where the center of the puff is at {ux,uy,uz} and
@@ -495,8 +495,8 @@ eval_seg(struct application *ap, struct reg_db_internals *dbint, struct seg *seg
  */
 int
 gauss_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp)
-                  	    
-                	    
+
+
                 	     	/* defined in material.h */
     			    	/* ptr to the shader-specific struct */
 {

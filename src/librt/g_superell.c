@@ -28,18 +28,18 @@
  *      NOTICE: this primitive is incomplete and should beconsidered
  *              experimental.  this primitive will exhibit several
  *              instabilities in the existing root solver method.
- *       
- *	
+ *
+ *
  *
  *  Authors -
  *      Christopher Sean Morrison (Programming)
  *      Edwin O. Davisson (Mathematics)
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005
- *  
+ *
  */
 /*@}*/
 
@@ -78,73 +78,73 @@ const struct bu_structparse rt_superell_parse[] = {
 
 /*
  *  Algorithm:
- *  
+ *
  *  Given V, A, B, and C, there is a set of points on this superellipsoid
- *  
+ *
  *  { (x,y,z) | (x,y,z) is on superellipsoid defined by V, A, B, C }
- *  
+ *
  *  Through a series of Affine Transformations, this set will be
  *  transformed into a set of points on a unit sphere at the origin
- *  
+ *
  *  { (x',y',z') | (x',y',z') is on Sphere at origin }
- *  
+ *
  *  The transformation from X to X' is accomplished by:
- *  
+ *
  *  X' = S(R( X - V ))
- *  
+ *
  *  where R(X) =  ( A/(|A|) )
  *  		 (  B/(|B|)  ) . X
  *  		  ( C/(|C|) )
- *  
+ *
  *  and S(X) =	 (  1/|A|   0     0   )
  *  		(    0    1/|B|   0    ) . X
  *  		 (   0      0   1/|C| )
- *  
+ *
  *  To find the intersection of a line with the superellipsoid, consider
  *  the parametric line L:
- *  
+ *
  *  	L : { P(n) | P + t(n) . D }
- *  
+ *
  *  Call W the actual point of intersection between L and the superellipsoid.
  *  Let W' be the point of intersection between L' and the unit sphere.
- *  
+ *
  *  	L' : { P'(n) | P' + t(n) . D' }
- *  
+ *
  *  W = invR( invS( W' ) ) + V
- *  
+ *
  *  Where W' = k D' + P'.
- *  
+ *
  *  Let dp = D' dot P'
  *  Let dd = D' dot D'
  *  Let pp = P' dot P'
- *  
+ *
  *  and k = [ -dp +/- sqrt( dp*dp - dd * (pp - 1) ) ] / dd
  *  which is constant.
- *  
+ *
  *  Now, D' = S( R( D ) )
  *  and  P' = S( R( P - V ) )
- *  
+ *
  *  Substituting,
- *  
+ *
  *  W = V + invR( invS[ k *( S( R( D ) ) ) + S( R( P - V ) ) ] )
  *    = V + invR( ( k * R( D ) ) + R( P - V ) )
  *    = V + k * D + P - V
  *    = k * D + P
- *  
+ *
  *  Note that ``k'' is constant, and is the same in the formulations
  *  for both W and W'.
- *  
+ *
  *  NORMALS.  Given the point W on the superellipsoid, what is the vector
  *  normal to the tangent plane at that point?
- *  
+ *
  *  Map W onto the unit sphere, ie:  W' = S( R( W - V ) ).
- *  
+ *
  *  Plane on unit sphere at W' has a normal vector of the same value(!).
  *  N' = W'
- *  
+ *
  *  The plane transforms back to the tangent plane at W, and this
  *  new plane (on the superellipsoid) has a normal vector of N, viz:
- *  
+ *
  *  N = inverse[ transpose( inverse[ S o R ] ) ] ( N' )
  *
  *  because if H is perpendicular to plane Q, and matrix M maps from
@@ -188,15 +188,15 @@ struct superell_specific {
 
 /**
  *  			R T _ S U P E R E L L _ P R E P
- *  
+ *
  *  Given a pointer to a GED database record, and a transformation matrix,
  *  determine if this is a valid superellipsoid, and if so, precompute various
  *  terms of the formula.
- *  
+ *
  *  Returns -
  *  	0	SUPERELL is OK
  *  	!0	Error in description
- *  
+ *
  *  Implicit return -
  *  	A struct superell_specific is created, and it's address is stored in
  *  	stp->st_specific for use by rt_superell_shot().
@@ -204,7 +204,7 @@ struct superell_specific {
 int
 rt_superell_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 {
-  
+
   register struct superell_specific *superell;
   struct rt_superell_internal	*eip;
   LOCAL fastf_t	magsq_a, magsq_b, magsq_c;
@@ -212,31 +212,31 @@ rt_superell_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rti
   LOCAL vect_t	Au, Bu, Cu;	/* A,B,C with unit length */
   LOCAL vect_t	w1, w2, P;	/* used for bounding RPP */
   LOCAL fastf_t	f;
-  
+
   eip = (struct rt_superell_internal *)ip->idb_ptr;
   RT_SUPERELL_CK_MAGIC(eip);
-  
+
   /* Validate that |A| > 0, |B| > 0, |C| > 0 */
   magsq_a = MAGSQ( eip->a );
   magsq_b = MAGSQ( eip->b );
   magsq_c = MAGSQ( eip->c );
-  
+
   if( magsq_a < rtip->rti_tol.dist || magsq_b < rtip->rti_tol.dist || magsq_c < rtip->rti_tol.dist ) {
     bu_log("superell(%s):  near-zero length A(%g), B(%g), or C(%g) vector\n",
 	   stp->st_name, magsq_a, magsq_b, magsq_c );
     return(1);		/* BAD */
   }
   if (eip->n < rtip->rti_tol.dist || eip->e < rtip->rti_tol.dist) {
-    bu_log("superell(%s):  near-zero length <n,e> curvature (%g, %g) causes problems\n", 
+    bu_log("superell(%s):  near-zero length <n,e> curvature (%g, %g) causes problems\n",
 	   stp->st_name, eip->n, eip->e);
     /* BAD */
   }
   if (eip->n > 10000.0 || eip->e > 10000.0) {
-    bu_log("superell(%s):  very large <n,e> curvature (%g, %g) causes problems\n", 
+    bu_log("superell(%s):  very large <n,e> curvature (%g, %g) causes problems\n",
 	   stp->st_name, eip->n, eip->e);
     /* BAD */
   }
-  
+
   /* Create unit length versions of A,B,C */
   f = 1.0/sqrt(magsq_a);
   VSCALE( Au, eip->a, f );
@@ -244,7 +244,7 @@ rt_superell_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rti
   VSCALE( Bu, eip->b, f );
   f = 1.0/sqrt(magsq_c);
   VSCALE( Cu, eip->c, f );
-  
+
   /* Validate that A.B == 0, B.C == 0, A.C == 0 (check dir only) */
   f = VDOT( Au, Bu );
   if( ! NEAR_ZERO(f, rtip->rti_tol.dist) )  {
@@ -261,7 +261,7 @@ rt_superell_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rti
     bu_log("superell(%s):  A not perpendicular to C, f=%f\n",stp->st_name, f);
     return(1);		/* BAD */
   }
-  
+
   /* Solid is OK, compute constant terms now */
 
   BU_GETSTRUCT( superell, superell_specific );
@@ -312,10 +312,10 @@ rt_superell_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rti
   if( magsq_c > f )
     f = magsq_c;
   stp->st_aradius = stp->st_bradius = sqrt(f);
-  
+
   /* Compute bounding RPP */
   VSET( w1, magsq_a, magsq_b, magsq_c );
-  
+
   /* X */
   VSET( P, 1.0, 0, 0 );		/* bounding plane normal */
   MAT3X3VEC( w2, R, P );		/* map plane to local coord syst */
@@ -324,7 +324,7 @@ rt_superell_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rti
   f = sqrt(f);
   stp->st_min[X] = superell->superell_V[X] - f;	/* V.P +/- f */
   stp->st_max[X] = superell->superell_V[X] + f;
-  
+
   /* Y */
   VSET( P, 0, 1.0, 0 );		/* bounding plane normal */
   MAT3X3VEC( w2, R, P );		/* map plane to local coord syst */
@@ -333,7 +333,7 @@ rt_superell_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rti
   f = sqrt(f);
   stp->st_min[Y] = superell->superell_V[Y] - f;	/* V.P +/- f */
   stp->st_max[Y] = superell->superell_V[Y] + f;
-  
+
   /* Z */
   VSET( P, 0, 0, 1.0 );		/* bounding plane normal */
   MAT3X3VEC( w2, R, P );		/* map plane to local coord syst */
@@ -342,7 +342,7 @@ rt_superell_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rti
   f = sqrt(f);
   stp->st_min[Z] = superell->superell_V[Z] - f;	/* V.P +/- f */
   stp->st_max[Z] = superell->superell_V[Z] + f;
-  
+
   return(0);			/* OK */
 }
 
@@ -365,11 +365,11 @@ rt_superell_print(register const struct soltab *stp)
 
 /*
  *  			R T _ S U P E R E L L _ S H O T
- *  
+ *
  *  Intersect a ray with an superellipsoid, where all constant terms have
  *  been precomputed by rt_superell_prep().  If an intersection occurs,
  *  a struct seg will be acquired and filled in.
- *  
+ *
  *  Returns -
  *  	0	MISS
  *	>0	HIT
@@ -408,12 +408,12 @@ rt_superell_shot(struct soltab *stp, register struct xray *rp, struct applicatio
   VUNITIZE(newShotDir);
 
   /* normalize distance from the superell.  substitues a corrected ray
-   * point, which contains a translation along the ray direction to the 
+   * point, which contains a translation along the ray direction to the
    * closest approach to vertex of the superell.  Translating the ray
    * along the direction of the ray to the closest point near the
    * primitives center vertex.  New ray origin is hence, normalized.
    */
-  VSCALE( normalizedShotPoint, newShotDir, 
+  VSCALE( normalizedShotPoint, newShotDir,
 	  VDOT( newShotPoint, newShotDir ));
   VSUB2( normalizedShotPoint, newShotPoint, normalizedShotPoint );
 
@@ -456,21 +456,22 @@ rt_superell_shot(struct soltab *stp, register struct xray *rp, struct applicatio
     if( NEAR_ZERO( complexRoot[j].im, 0.001 ) )
       realRoot[i++] = complexRoot[j].re;
   }
-  
+
   /* reverse above translation by adding distance to all 'k' values. */
-  //  for( j = 0; j < i; ++j )
-  //    realRoot[j] -= VDOT(newShotPoint, newShotDir);
-  
+  /*  for( j = 0; j < i; ++j )
+      realRoot[j] -= VDOT(newShotPoint, newShotDir);
+  */
+
   /* Here, 'i' is number of points found */
   switch( i )  {
   case 0:
     return(0);		/* No hit */
-    
+
   default:
     bu_log("rt_superell_shot: reduced 4 to %d roots\n",i);
     bn_pr_roots( stp->st_name, complexRoot, 4 );
     return(0);		/* No hit */
-    
+
   case 2:
     {
       /* Sort most distant to least distant. */
@@ -486,7 +487,7 @@ rt_superell_shot(struct soltab *stp, register struct xray *rp, struct applicatio
     {
       register short	n;
       register short	lim;
-      
+
       /*  Inline rt_pt_sort().  Sorts realRoot[] into descending order. */
       for( lim = i-1; lim > 0; lim-- )  {
 	for( n = 0; n < lim; n++ )  {
@@ -514,16 +515,16 @@ rt_superell_shot(struct soltab *stp, register struct xray *rp, struct applicatio
   segp->seg_stp = stp;
   segp->seg_in.hit_dist = realRoot[1];
   segp->seg_out.hit_dist = realRoot[0];
-  //  segp->seg_in.hit_surfno = segp->seg_out.hit_surfno = 0;
+  /*  segp->seg_in.hit_surfno = segp->seg_out.hit_surfno = 0; */
   /* Set aside vector for rt_superell_norm() later */
-  //  VJOIN1( segp->seg_in.hit_vpriv, newShotPoint, realRoot[1], newShotDir );
-  //  VJOIN1( segp->seg_out.hit_vpriv, newShotPoint, realRoot[0], newShotDir );
+  /*  VJOIN1( segp->seg_in.hit_vpriv, newShotPoint, realRoot[1], newShotDir ); */
+  /*  VJOIN1( segp->seg_out.hit_vpriv, newShotPoint, realRoot[0], newShotDir ); */
   BU_LIST_INSERT( &(seghead->l), &(segp->l) );
-  
+
   if( i == 2 ) {
     return(2);			/* HIT */
   }
-  
+
   /* 4 points */
   /* realRoot[3] is entry point, and realRoot[2] is exit point */
   RT_GET_SEG(segp, ap->a_resource);
@@ -536,12 +537,12 @@ rt_superell_shot(struct soltab *stp, register struct xray *rp, struct applicatio
   BU_LIST_INSERT( &(seghead->l), &(segp->l) );
   return(4);			/* HIT */
   /* XXX END CUT */
-  
+
   /* Is there any possibility of hitting another segment?  Only when there
    * is a concave curvature (<n,e> > <2.0, 2.0>).
    */
   if ( (superell->superell_n > 2.0) || (superell->superell_e > 2.0) ) {
-    
+
   }
 
   return 1;
@@ -559,7 +560,7 @@ rt_superell_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n
            		       /* An array of ray pointers */
                                /* array of segs (results returned) */
    		  	       /* Number of ray/object pairs */
-                  	    
+
 {
   return;
 }
@@ -567,7 +568,7 @@ rt_superell_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n
 
 /**
  *  			R T _ S U P E R E L L _ N O R M
- *  
+ *
  *  Given ONE ray distance, return the normal and entry/exit point.
  */
 void
@@ -604,7 +605,7 @@ rt_superell_curve(register struct curvature *cvp, register struct hit *hitp, str
 
 /**
  *  			R T _ S U P E R E L L _ U V
- *  
+ *
  *  For a hit on the surface of an SUPERELL, return the (u,v) coordinates
  *  of the hit point, 0 <= u,v <= 1.
  *  u = azimuth

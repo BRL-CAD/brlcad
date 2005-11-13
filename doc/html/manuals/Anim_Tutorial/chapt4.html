@@ -3,9 +3,9 @@
 <H1><A NAME="Making Frames for Video Tape">Making Frames for Video Tape</A></H1>
 <P>
 The use of ``postage-stamp'' animations with ``fbanim'' can provide useful
-visualization capabilities.  
+visualization capabilities.
 Unfortunately,
-if there are enough frames to present a smooth sense of motion, 
+if there are enough frames to present a smooth sense of motion,
 the individual images are so small that details are lost.
 If the images are made larger, the motion is no longer smooth.
 <P>
@@ -29,13 +29,13 @@ to make frames for videotape.  These are:
 <P>
 The television and video industry has not settled upon a world-wide standard
 for the encoding of video pictures.
-Some of the basic elements are common to all the standards 
+Some of the basic elements are common to all the standards
 <A HREF="foot_hdtv.html"><IMG ALT="*|*" SRC="fn.gif"></A>
 Each frame of video is comprised of two ``fields.''
-A field consists of either the even numbered scanlines or the 
+A field consists of either the even numbered scanlines or the
 odd numbered scanlines from the frame.
 <A HREF="foot_ntsc.html"><IMG ALT="*|*" SRC="fn.gif"></A>
-To display the frame, 
+To display the frame,
 first the field made up of the odd numbered scanlines is displayed.
 When this is completed, the field containing the even numbered scanlines is
 displayed.
@@ -50,7 +50,7 @@ SECAM (France & former Soviet Union variant) encoding formats
 display 25 frames per second or 50 fields per second.
 <P>
 <H2><A NAME="Video Tape Formats">Video Tape Formats</A></H2>
-It is worth noting that 
+It is worth noting that
 not all videotape formats are created equal.
 Some are capable of retaining more image detail than others.
 The table below lists the number of side-by-side alternating black-and-white
@@ -165,15 +165,15 @@ Video has a very limited capacity for color.
 It also does not have equal capacity for storing the primary colors
 red, green, and blue.
 This usually comes as a great disappointment to people accustomed to
-looking at computer images in rich detail on workstation monitors.  
+looking at computer images in rich detail on workstation monitors.
 Whenever possible, the colors for objects in a video scene
 should be chosen to match the abilities of the video system being used.
 <P>
 The first rule of thumb is: if an image or scene is going to be
-recorded on video, the colors should be chosen by viewing the scene 
+recorded on video, the colors should be chosen by viewing the scene
 through the video encoder,
 not on the workstation monitor.  A good approach is to
-render several images from your animation sequence, and 
+render several images from your animation sequence, and
 record long runs of them in the same manner that will be used for the
 final animation frames.  View this test recording to see how colors will
 appear in the final result.
@@ -196,7 +196,7 @@ The ``fbcolor'' program makes the viewing and selection of specific colors
 easy.
 It also reports the saturation level of the colors it displays as a
 number from 0 to 255.
-You should avoid using any color which fbcolor reports 
+You should avoid using any color which fbcolor reports
 as having a saturation over 191.
 If you should notice that an object image created by rt lacks depth or
 surface detail (such as a lighted cylinder which shows no shading along
@@ -208,14 +208,14 @@ its appearance.
 <H2><A NAME="Computational Requirements">Computational Requirements</A></H2>
 <P>
 There is a tradeoff to be made between the number of frames computed (and
-hence the computational requirements) for a sequence of a given duration 
+hence the computational requirements) for a sequence of a given duration
 and the quality of the motion in the result.
 Larger numbers of frames (and more CPU time expended in their creation)
 result in smoother motion.  Fewer frames per second
 result in more ``jerky'' movement of the camera and objects.
 <P>
 The smoothest motion is obtained when an image is computed for each field
-of the final animation.  Under NTSC this produces the appearance of 60 
+of the final animation.  Under NTSC this produces the appearance of 60
 separate images per second.  This is just above the threshold at which
 most individuals perceive flicker.
 <P>
@@ -224,7 +224,7 @@ the images.
 The two fields which form a video frame are combined together to create
 the video frames using the pixfields program.
 These are then encoded to video and recorded.
-Besides the computational requirements, the only drawback is that 
+Besides the computational requirements, the only drawback is that
 sequences created in this manner do not look as pleasing when used
 with ``freeze frame'' features common on videotape machines.
 <P>
@@ -233,19 +233,19 @@ of the final result.  There is no requirement for field compositing, and
 the image obtained from a ``freeze frame'' of the videotape machine is
 pleasing.  Under NTSC this produces the effect of 30 frames per second.
 <P>
-If each frame is shown for two or more successive frame times, 
+If each frame is shown for two or more successive frame times,
 the perception of motion begins to suffer.  For any
 finished product it is advisable to use each image
 for three or fewer frame-times.
 <P>
 It can take hours, days, or weeks of time for rt to create
 all of the images in an animation sequence.  As a result, there is a greater
-probability that rt will be interrupted before it can finish the task. 
+probability that rt will be interrupted before it can finish the task.
 If 200 images of a 300 image animation were completed before rt was
 interrupted, it would be a waste to re-create those images when rt is
 restarted.
 Therefore rt was given some heuristics
-to allow it to avoid duplicating results and wasting CPU time.  
+to allow it to avoid duplicating results and wasting CPU time.
 <P>
 Whenever the rt program is asked to create an image, it first looks to see
 if the image already exists.  If the image file exists and is read-only,
@@ -254,7 +254,7 @@ image.  If the image file exists and is writable, then rt looks for
 black pixels (R,G,B color 0,0,0) in the image.
 Since rt never creates image pixels with this exact
 color, any such pixels it finds in the image are recomputed.  If the file
-is smaller than the final image should be, rt computes only 
+is smaller than the final image should be, rt computes only
 the missing portion
 to complete the file.
 <P>
@@ -310,7 +310,7 @@ perform other functions.  For example:
 # start 3;
 # end;
 # ! framedone.sh file.pix 3;
-# 
+#
 if [ $# -ne "2" ] ; then
 	echo "Usage: $0 basename.pix frame_number" ; exit
 fi

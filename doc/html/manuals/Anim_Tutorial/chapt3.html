@@ -36,7 +36,7 @@ graphics.  In BRL-CAD matrices are stored as follows:
 <PRE>
 		<IMG SRC="matrix.gif">
 </PRE>
-As a result, points and vectors in 
+As a result, points and vectors in
 3 dimensional space are represented as 4-tuple <I>column</I> vectors.
 Points and vectors are therefore properly transformed by the matrix equation:
 <Pre>
@@ -84,7 +84,7 @@ with the following matrix equation:
 Each of the matrices in the database can be altered individually during
 the animation.  It is also possible to replace the ``stack'' matrix which
 has been accumulated.
-These operations are achieved with the ``anim'' command in the 
+These operations are achieved with the ``anim'' command in the
 input script to rt.
 The command has the form:
 <PRE>
@@ -134,7 +134,7 @@ Finally, a command of the form:
 </PRE>
 operates on any arc which ends in a node called ``hand'' regardless of where
 it occurs in the model hierarchy.
-Note that element ``hand'' in these examples above 
+Note that element ``hand'' in these examples above
 is  not a leaf node (primitive solid)
 in the model graph (With version 4.2 of BRL-CAD and beyond the user
 will be able to manipulate the matrices
@@ -144,7 +144,7 @@ their parent combinations).
 All object parameters in the database are stored using
 millimeters as the unit of measure.
 As a result, all matrix operations are carried out in units of millimeters.
-It is important to remember this when preparing matrices for 
+It is important to remember this when preparing matrices for
 use with the rt anim command.
 An example rt session will serve to illustrate the proper use of the
 anim command.
@@ -179,7 +179,7 @@ The second image
 is saved in ``trans.pix.2'' and is the same except that the matrix on the arc
 between ``all.g'' and ``tor.r'' is replaced with a new matrix.
 This matrix has the effect of translating the torus 80 millimeters
-along the Y axis of the model coordinate system.  
+along the Y axis of the model coordinate system.
 <P>
 <H2><A NAME="Preparing an Animation with Motion">Preparing an Animation with Motion</A></H2>
 <P>
@@ -237,7 +237,7 @@ the ``ellipse.s'' as it is found in ``all.g'' is at:
 <PRE>
 	<IMG SRC="v_eqn1.gif">
 </PRE>
-Now we subtract this from the origin of ``tor'' to get a vector that 
+Now we subtract this from the origin of ``tor'' to get a vector that
 will translate ``ellipse.s'' to the center of the torus.  This vector is
 scaled by a factor to 2 to get a ``net displacement'' vector for the
 ellipsoid.
@@ -246,7 +246,7 @@ ellipsoid.
 </PRE>
 <P>
 We can now create a new interpolation table with motion values to be
-interpolated.  
+interpolated.
 The ellipse will start moving half a second after the sequence starts.
 It will reach its destination half a second before the end of the sequence.
 Assuming that the time channel is being specified in units of seconds, the
@@ -256,7 +256,7 @@ following table results:
 	0.5     0          0       0
 	7.25  -51.78792  -75.7002 -6.72896
 </PRE>
-The interpolation is done much as it was in Section 2.  
+The interpolation is done much as it was in Section 2.
 The data from ``chans.ellanim'' is read into
 interpolation channels 8, 9, and 10 within
 <A HREF="chapt9.html#tabinterp">tabinterp</A>.
@@ -314,14 +314,14 @@ end;
 </PRE>
 Note the use of the ``clean'' command to rt at the beginning of each frame
 in the template.
-This is required after the ``start'' for each frame in rt animation scripts 
+This is required after the ``start'' for each frame in rt animation scripts
 which use the ``anim'' command.  This command tells rt (librt actually)
 to forget any accumulated animation matrices, thereby restoring the geometry
 to the form it has in the database.
 <P>
 We can preview the path that the ellipse will
 take by creating a plot file which can be used as an overlay in mged.
-(In version 4.2 of BRL-CAD and beyond the 
+(In version 4.2 of BRL-CAD and beyond the
 animation sequence can also be viewed using the mged ``preview'' command.)
 <PRE>
 % <B>awk '{print $2+30.8102 " " $3+5.0479 " " $4+35.07628}' chans.ellanim | \
@@ -331,7 +331,7 @@ xyz-pl > ell.pl</B>
 BRL-CAD Release 4.2   Graphics Editor (MGED)
     Wed Nov 11 00:36:43 EST 1992, Compilation 770
     mike@wolf.arl.mil:/m/cad/.mged.5d
-        
+
 attach (nu|tek|tek4109|ps|plot|sgi|X)[nu]? <B>sgi</B>
 ATTACHING sgi (SGI 4d)
 Gary Moss's "World on a Platter" (units=mm)
@@ -339,7 +339,7 @@ mged> <B>e all.g</B>
 408 vectors in 0.459896 sec
 mged> <B>overlay ell.pl</B>
 db_lookup:  could not find '_PLOT_OVER*'
-mged> 
+mged>
 </PRE>
 The ``overlay'' command creates pseudo entries of the form
 ``_PLOT_OVERLAY_'' in the version of the database in memory.

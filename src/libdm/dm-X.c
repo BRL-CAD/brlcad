@@ -25,12 +25,12 @@
  *  Author -
  *	Phillip Dykstra
  *	Robert G. Parker
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005
- *  
+ *
  */
 #ifndef lint
 static const char RCSid[] = "@(#)$Header$ (BRL)";
@@ -38,6 +38,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "common.h"
 
+#ifdef DM_X
 
 #include <stdio.h>
 #include <limits.h>
@@ -161,9 +162,9 @@ struct dm dm_X = {
 fastf_t min_short = (fastf_t)SHRT_MIN;
 fastf_t max_short = (fastf_t)SHRT_MAX;
 
-extern int vectorThreshold;	/* defined in libdm/tcl.c */ 
+extern int vectorThreshold;	/* defined in libdm/tcl.c */
 
-static void 
+static void
 get_color(Display *dpy, Colormap cmap, XColor *color)
 {
 	Status st;
@@ -174,7 +175,7 @@ get_color(Display *dpy, Colormap cmap, XColor *color)
 
 	st = XAllocColor(dpy, cmap, color);
 	switch (st) {
-	case 1: 
+	case 1:
 #if 0
 		if ( (color->red & CSCK) != (rgb.red & CSCK) ||
 		     (color->green & CSCK) != (rgb.green & CSCK) ||
@@ -189,13 +190,13 @@ get_color(Display *dpy, Colormap cmap, XColor *color)
 #endif
 		break;
 	case BadColor:
-		bu_log("XAllocColor failed (BadColor) for (%3d,%3d,%3d) %04x,%04x,%04x\n", 
+		bu_log("XAllocColor failed (BadColor) for (%3d,%3d,%3d) %04x,%04x,%04x\n",
 		       (rgb.red >> 8), (rgb.green >> 8), (rgb.blue >> 8),
 		       rgb.red, rgb.green, rgb.blue);
 		break;
 
 	default:
-		bu_log("XAllocColor error for (%3d,%3d,%3d) %04x,%04x,%04x\n", 
+		bu_log("XAllocColor error for (%3d,%3d,%3d) %04x,%04x,%04x\n",
 		       (rgb.red >> 8), (rgb.green >> 8), (rgb.blue >> 8),
 		       rgb.red, rgb.green, rgb.blue);
 		break;
@@ -244,14 +245,14 @@ X_open(Tcl_Interp *interp, int argc, char **argv)
 
   dmp->dm_vars.pub_vars = (genptr_t)bu_calloc(1, sizeof(struct dm_xvars), "X_open: dm_xvars");
   if(dmp->dm_vars.pub_vars == (genptr_t)NULL){
-    bu_free(dmp, "X_open: dmp");
+    bu_free((genptr_t)dmp, "X_open: dmp");
     return DM_NULL;
   }
 
   dmp->dm_vars.priv_vars = (genptr_t)bu_calloc(1, sizeof(struct x_vars), "X_open: x_vars");
   if(dmp->dm_vars.priv_vars == (genptr_t)NULL){
-    bu_free(dmp->dm_vars.pub_vars, "X_open: dmp->dm_vars.pub_vars");
-    bu_free(dmp, "X_open: dmp");
+    bu_free((genptr_t)dmp->dm_vars.pub_vars, "X_open: dmp->dm_vars.pub_vars");
+    bu_free((genptr_t)dmp, "X_open: dmp");
     return DM_NULL;
   }
 
@@ -366,7 +367,7 @@ X_open(Tcl_Interp *interp, int argc, char **argv)
   }
 
   Tk_GeometryRequest(((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin,
-		     dmp->dm_width, 
+		     dmp->dm_width,
 		     dmp->dm_height);
 
 #if 0
@@ -426,7 +427,7 @@ X_open(Tcl_Interp *interp, int argc, char **argv)
       dm_get_pixel(DM_RED,
 		   ((struct x_vars *)dmp->dm_vars.priv_vars)->pixels,
 		   CUBE_DIMENSION);
-  }  
+  }
 
   gcv.background = ((struct x_vars *)dmp->dm_vars.priv_vars)->bg;
   gcv.foreground = ((struct x_vars *)dmp->dm_vars.priv_vars)->fg;
@@ -515,7 +516,7 @@ Skip_dials:
 
 /*
  *  			X _ C L O S E
- *  
+ *
  *  Gracefully release the display.
  */
 HIDDEN int
@@ -546,9 +547,9 @@ X_close(struct dm *dmp)
   bu_vls_free(&dmp->dm_pathName);
   bu_vls_free(&dmp->dm_tkName);
   bu_vls_free(&dmp->dm_dName);
-  bu_free(dmp->dm_vars.priv_vars, "X_close: x_vars");
-  bu_free(dmp->dm_vars.pub_vars, "X_close: dm_xvars");
-  bu_free(dmp, "X_close: dmp");
+  bu_free((genptr_t)dmp->dm_vars.priv_vars, "X_close: x_vars");
+  bu_free((genptr_t)dmp->dm_vars.pub_vars, "X_close: dm_xvars");
+  bu_free((genptr_t)dmp, "X_close: dmp");
 
   return TCL_OK;
 }
@@ -640,7 +641,7 @@ X_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye)
 
 /*
  *  			X _ D R A W V L I S T
- *  
+ *
  */
 
 HIDDEN int
@@ -1103,7 +1104,7 @@ X_configureWin_guts(struct dm *dmp, int force)
       dmp->dm_height == xwa.height &&
       dmp->dm_width == xwa.width)
     return TCL_OK;
-    
+
   dmp->dm_height = xwa.height;
   dmp->dm_width = xwa.width;
   dmp->dm_aspect = (fastf_t)dmp->dm_width / (fastf_t)dmp->dm_height;
@@ -1267,7 +1268,7 @@ X_choose_visual(struct dm *dmp)
       }else if (vip->class != PseudoColor)
 	continue;
 #endif
-			
+
       /* this visual meets criteria */
       good[j++] = i;
     }
@@ -1306,7 +1307,7 @@ X_choose_visual(struct dm *dmp)
 	((struct dm_xvars *)dmp->dm_vars.pub_vars)->depth = maxvip->depth;
 
 	return maxvip; /* success */
-      } else { 
+      } else {
 	/* retry with lesser depth */
 	baddepth = maxvip->depth;
 	XFreeColormap(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
@@ -1320,6 +1321,8 @@ X_choose_visual(struct dm *dmp)
       return (XVisualInfo *)NULL; /* failure */
   }
 }
+
+#endif /* DM_X */
 
 /*
  * Local Variables:

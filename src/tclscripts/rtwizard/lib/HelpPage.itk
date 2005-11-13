@@ -35,7 +35,7 @@ namespace eval RtWizard {
     package provide HelpPage 1.0
 
     #
-    # helppage - Provides a lowercased access method for the 
+    # helppage - Provides a lowercased access method for the
     #            HelpPage class
     #
     proc helppage {pathName args} {
@@ -44,13 +44,13 @@ namespace eval RtWizard {
 
     #
     # Add options
-    # 
+    #
     option add *HelpPage.borderWidth 2 widgetDefault
     option add *HelpPage.labelPos wn widgetDefault
     option add *HelpPage.listHeight 150 widgetDefault
     option add *HelpPage.hscrollMode dynamic widgetDefault
     option add *HelpPage.vscrollMode dynamic widgetDefault
-    option add *HelpPage.textBackground #ccccff  
+    option add *HelpPage.textBackground #ccccff
     option add *HelpPage.helpText "Bananas are tasty." widgetDefault
 
     #
@@ -97,13 +97,13 @@ namespace eval RtWizard {
 	    # methods
 	    #
 	    constructor {args} {};
-	    
+
 	    method onSelect {}
 	    method onDeselect {}
 	    method getStepInfo {}
 	}
 
- 
+
 	private {
 	    #
 	    # methods
@@ -118,7 +118,7 @@ namespace eval RtWizard {
 
     #--------------------#
     #   Public Methods   #
-    #--------------------#    
+    #--------------------#
     #
     # constructor - builds the Help Page
     #
@@ -141,17 +141,17 @@ namespace eval RtWizard {
 		    -visibleitems 80x30 \
 		    -textfont {helvetica 10} \
 		    -relief flat
-	    
+
 	} {
 	    usual
 	    ignore -textfont
 	}
-	
+
 	#
 	# Pack it!
 	#
 	pack $itk_component(helpPanel) -fill both -expand 1
-	
+
 	#
 	# Evaluate any additional args.
 	#
@@ -159,7 +159,7 @@ namespace eval RtWizard {
 
 	doHelpText
     }
-    
+
     #
     # helpText
     #
@@ -186,7 +186,7 @@ namespace eval RtWizard {
     #
     # Cleans up when the page is deselected
     #
-    ::itcl::body HelpPage::onDeselect {} {	
+    ::itcl::body HelpPage::onDeselect {} {
 	#
 	# Nothing yet!
 	#
@@ -196,7 +196,7 @@ namespace eval RtWizard {
     # getStepInfo
     #
     # In principal, returns a name for the step, and a variable that
-    # can be queried for state. The Help page is not a 'step', 
+    # can be queried for state. The Help page is not a 'step',
     # so it returns "No Step"
     #
     ::itcl::body HelpPage::getStepInfo {} {
@@ -207,12 +207,12 @@ namespace eval RtWizard {
 
     #--------------------#
     #  Private Methods   #
-    #--------------------#    
+    #--------------------#
     #
     itcl::body HelpPage::doHelpText {} {
 
 	#
-	# A short alias for convenience, 
+	# A short alias for convenience,
 	#
 	set t $itk_component(helpPanel)
 
@@ -245,7 +245,7 @@ namespace eval RtWizard {
 	$t insert insert \
 		"Once the database has been selected, you will be presented with the sample images page. This page allows you to select the type of image you would like to produce. On the left is a widget that allows you to select the type of image. Below that widget is some text that describes the image and what information will be required. To the right is the sample image. To proceed, simply select the image you would like to make and hit \"OK\" \n\n" \
 		NormalTag
-	
+
 	$t insert insert \
 		"The image type can be changed at any time by selecting the \"New Image\" control from the Image menu. You may also select an image type directly from the Image menu. Note that if you change image types during production, any data that is common between the two image types will be conserved.\n\n" \
 		NormalTag
@@ -265,15 +265,15 @@ namespace eval RtWizard {
 	$t insert insert \
 		"The RtWizard uses imbedded MGED objects to allow the user to interact with the BRL-CAD database. These objects are placed are placed on a series of pages. These pages are the Full Color, Line Drawing, Highlighted Image and Ghost Image pages. The purpose of these pages is to select the objects that a rendered in the various modes. For example, the objects selected on the line-drawing page will be rendered as line drawings.\n\n" \
 		NormalTag
-	
+
 	$t insert insert \
 		"The MGED pages that you see depends on the type of picture that the user wishes to create. For example, if you wish to generate a simple line drawing, only the Line Drawing page is activated. However, if you wish to create a ghost image with full-color insert and lines, the ghost, full-color, and line drawing pages will be active.\n\n" \
 		NormalTag
-	
+
 	$t insert insert \
 		"The MGED pages are also used to specify the view parameters, that is, the orientation and size that is used for the image. If multiple MGED pages are active, only one can be used to specify the view parameters. To select a page to define the view parameters, click the \"Use this view for image\" button.\n\n" \
 		NormalTag
-	
+
 	$t insert insert \
 		"Common behaviors for the MGED pages:\n" \
 		Level2Tag
@@ -313,7 +313,7 @@ namespace eval RtWizard {
 	$t insert insert \
 		"Rendering\n\n" \
 		Level1Tag
-	
+
 	$t insert insert \
 		"When all of the MGED pages have been configured, the Render menu becomes active. The Render menu contains two entries, preview and full-size. Selecting full-size will generate an image of the size specified on the framebuffer page to the specified framebuffer device. Selecting preview will generate a one-quarter size image to the screen. For example, a 1024x1024 image will preview at 512x512.\n\nNote that line drawings are always one pixel wide, thus the smaller the image, the more dominant the lines appear.\n\n" \
 		NormalTag

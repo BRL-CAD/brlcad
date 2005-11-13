@@ -27,7 +27,7 @@
  *  Authors -
  *	John R. Anderson
  *	Bill Mermagen Jr.
- *  
+ *
  *  Source -
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5066
@@ -212,7 +212,7 @@ main(int argc, char **argv)
 		exit( 1 );
 	}
 
-	/* Open brl-cad database */
+	/* Open BRL-CAD database */
 	argc -= optind;
 	argv += optind;
 	if ((dbip = db_open(argv[0], "r")) == DBI_NULL) {
@@ -399,7 +399,7 @@ nmg_to_acad(struct nmgregion *r, struct db_full_path *pathp, int region_id, int 
 /* END CHECK SECTION */
 /* Write pertinent info for this region */
 
-	fprintf( fp, "%s\n", (region_name+1)); 
+	fprintf( fp, "%s\n", (region_name+1));
 /* No mirror plane */
 	fprintf( fp, "%d\n", 0);
 /* Number of vertices */
@@ -421,7 +421,7 @@ nmg_to_acad(struct nmgregion *r, struct db_full_path *pathp, int region_id, int 
 /* Number of sub-parts (always 1 with BRL-CAD) */
 	fprintf( fp, "%d\n",1);
 /* Write out name again */
-	fprintf( fp, "%s\n", (region_name+1)); 
+	fprintf( fp, "%s\n", (region_name+1));
 /* Number of triangles, number of vert/tri (3) */
 	fprintf( fp,"%d       %d\n",numtri,3);
 
@@ -490,7 +490,7 @@ nmg_to_acad(struct nmgregion *r, struct db_full_path *pathp, int region_id, int 
 			}
 		}
 	}
-/*	regions_converted++;  
+/*	regions_converted++;
 	printf("Processed region %s\n",region_name);
 	printf("Regions attempted = %d Regions done = %d\n",regions_tried,regions_converted);
 	fflush(stdout);
@@ -539,13 +539,13 @@ union tree *do_region_end(register struct db_tree_state *tsp, struct db_full_pat
 			/* Error, bail out */
 			char *sofar;
 			BU_UNSETJUMP;		/* Relinquish the protection */
-			
+
 			sofar = db_path_to_string(pathp);
 	                bu_log( "FAILED in Boolean evaluation: %s\n", sofar );
 			fprintf(fpe,"Failed Bool. Eval.: %s\n",sofar);
 			fflush(fpe);
                         bu_free( (char *)sofar, "sofar" );
-                                
+
 			/* Sometimes the NMG library adds debugging bits when
 			 * it detects an internal error, before rt_bomb().
 			 */
@@ -585,7 +585,7 @@ union tree *do_region_end(register struct db_tree_state *tsp, struct db_full_pat
 		r = (struct nmgregion *)NULL;
 	}
 /*	regions_done++;  XXX */
-	
+
 	BU_UNSETJUMP;		/* Relinquish the protection */
 	regions_converted++;
 
@@ -650,7 +650,7 @@ union tree *do_region_end(register struct db_tree_state *tsp, struct db_full_pat
 				{
 					bu_log("WARNING: tsp->ts_m pointer corrupted, ignoring it.\n");
 				}
-			
+
 				/* Now, make a new, clean model structure for next pass. */
 				*tsp->ts_m = nmg_mm();
 				goto out;

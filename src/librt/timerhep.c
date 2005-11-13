@@ -53,7 +53,7 @@ rt_prep_timer(void)
 
 /*
  *			R E A D _ T I M E R
- * 
+ *
  */
 double
 rt_read_timer(char *str, int len)

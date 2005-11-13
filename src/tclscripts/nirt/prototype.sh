@@ -111,7 +111,7 @@ proc shoot_a_ray {} {
     printf "Shooting a ray at $time...\n"
 
     exec nirt ~pjt/mged/scene.g scene
-    
+
 }
 
 proc select_an_mged {mgeds} {
@@ -231,7 +231,7 @@ proc calculate_distance {} {
 }
 
 
-    #toplevel .zal 
+    #toplevel .zal
     #wm title .zal "MGED Calipers"
 
 

@@ -1,3 +1,27 @@
+.TH FBSTRETCH \*(ms "BRL-CAD package"
+./"                    F B S T R E T C H . 1
+./" BRL-CAD
+./"
+./" Copyright (c) 2005 United States Government as represented by
+./" the U.S. Army Research Laboratory.
+./"
+./" This document is made available under the terms of the GNU Free
+./" Documentation License or, at your option, under the terms of the
+./" GNU General Public License as published by the Free Software
+./" Foundation.  Permission is granted to copy, distribute and/or
+./" modify this document under the terms of the GNU Free Documentation
+./" License, Version 1.2 or any later version published by the Free
+./" Software Foundation; with no Invariant Sections, no Front-Cover
+./" Texts, and no Back-Cover Texts.  Permission is also granted to
+./" redistribute this document under the terms of the GNU General
+./" Public License; either version 2 of the License, or (at your
+./" option) any later version.
+./"
+./" You should have received a copy of the GNU Free Documentation
+./" License and/or the GNU General Public License along with this
+./" document; see the file named COPYING for more information.
+./"
+./"./"./"
 '\"	@(#)$Header$ (BRL)
 '\" Edit the next two lines to configure for your system:
 .ds ms 1\" utility manual section, normally 1B -- alternatives are 1, 1L, etc.
@@ -11,7 +35,6 @@
 \%\&\\$3\f\*(pf\\$1\fP\&\\$2
 .lg
 ..
-.TH FBSTRETCH \*(ms "BRL CAD package"
 .SH NAME
 fbstretch \- stretch a frame buffer image
 .SH SYNOPSIS
@@ -74,7 +97,7 @@ option.
 .SS Options
 .TP "\w'\f\*(pf-F\fP \fIoutput frame buffer name\fP\ \ \ 'u"
 .CW -h
-(``high resolution'')\ 
+(``high resolution'')\
 Assumes 1024 by 1024 pixels for default input image size
 instead of 512 by 512.
 Explicitly specified sizes override the default,
@@ -105,12 +128,12 @@ Specifies input image width.
 Specifies input image height.
 .TP
 .CW -a
-(``no averaging'')\ 
+(``no averaging'')\
 Specifies that output pixels will be sampled from the input,
 instead of being computed by averaging RGB values.
 .TP
 .CW -v
-(``verbose'')\ 
+(``verbose'')\
 Causes actual sizes and scale factors used
 to be printed on the standard error output.
 .TP

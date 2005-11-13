@@ -60,7 +60,7 @@
  *	Robert S. Miles
  *	Michael John Muuss
  *	Lee A. Butler
- *  
+ *
  *  Source -
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
@@ -83,7 +83,7 @@ static const char bn_RCSmat[] = "@(#)$Header$ (ARL)";
 #include <string.h>
 #else
 #include <strings.h>
-#endif 
+#endif
 
 #include "machine.h"
 #include "bu.h"
@@ -324,7 +324,7 @@ bn_matXvec(register vect_t ov, register const mat_t im, register const vect_t iv
  * The matrix pointed at by "im" is inverted and stored in the area
  * pointed at by "om".
  */
-/* 
+/*
  * Invert a 4-by-4 matrix using Algorithm 120 from ACM.
  * This is a modified Gauss-Jordan alogorithm
  * Note:  Inversion is done in place, with 3 work vectors
@@ -337,7 +337,7 @@ bn_mat_inv(register mat_t output, const mat_t input)
 	LOCAL int	z[4];			/* Temporary */
 	LOCAL fastf_t	b[4];			/* Temporary */
 	LOCAL fastf_t	c[4];			/* Temporary */
-	
+
 	MAT_COPY( output, input );	/* Duplicate */
 
         /* Initialization */
@@ -489,7 +489,7 @@ bn_mat_trn(mat_t om, register const mat_t im)
  *			B N _ M A T _ A E
  *
  *  Compute a 4x4 rotation matrix given Azimuth and Elevation.
- *  
+ *
  *  Azimuth is +X, Elevation is +Z, both in degrees.
  *
  *  Formula due to Doug Gwyn, BRL.
@@ -1403,7 +1403,7 @@ bn_mat_is_non_unif(const mat_t m)
 
 	return 1;
     }
-    
+
     if (m[12] != 0.0 || m[13] != 0.0 || m[14] != 0.0)
 	return 2;
 

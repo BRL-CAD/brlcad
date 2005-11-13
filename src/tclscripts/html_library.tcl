@@ -40,13 +40,13 @@ array set HMtag_map {
 	bq		{style i indent 1 Trindent rindent}
 	cite   {style i}
 	code   {family courier}
-	dfn    {style i}	
+	dfn    {style i}
 	dir    {indent 1}
 	dl     {indent 1}
 	em     {style i}
 	h1     {size 24 weight bold}
-	h2     {size 22}		
-	h3     {size 20}	
+	h2     {size 22}
+	h3     {size 20}
 	h4     {size 18}
 	h5     {size 16}
 	h6     {style i}
@@ -55,12 +55,12 @@ array set HMtag_map {
 	menu     {indent 1}
 	ol     {indent 1}
 	pre    {fill 0 family courier Tnowrap nowrap}
-	samp   {family courier}		
-	strong {weight bold}		
+	samp   {family courier}
+	strong {weight bold}
 	tt     {family courier}
 	u	 {Tunderline underline}
 	ul     {indent 1}
-	var    {style i}	
+	var    {style i}
 }
 
 # These are in common(?) use, but not defined in html2.0
@@ -113,7 +113,7 @@ array set HMlist_elements {
 
 proc HMinit_win {win} {
 	upvar #0 HM$win var
-	
+
 	HMinit_state $win
 	$win tag configure underline -underline 1
 	$win tag configure center -justify center
@@ -314,7 +314,7 @@ proc HMtag_/menu {win param text} {
 	catch {unset var(menu)}
 	catch {unset var(compact)}
 }
-	
+
 proc HMtag_dt {win param text} {
 	upvar #0 HM$win var
 	upvar $text data
@@ -395,7 +395,7 @@ proc HMtag_img {win param text} {
 		pack $label -expand 1 -fill both
 	} else {
 		set label $item
-		label $label 
+		label $label
 	}
 
 	$label configure -relief ridge -fg orange -text $alt
@@ -418,7 +418,7 @@ proc HMtag_img {win param text} {
 		}
 		bind ismap <ButtonRelease-1> "HMlink_callback $win $link?%x,%y"
 		bindtags $label "ismap [bindtags $label]"
-	} 
+	}
 
 	# now callback to the application
 	set src ""
@@ -517,7 +517,7 @@ proc HMextract_param {param key {val ""}} {
 	# now look for valueless names
 	# I should strip out name=value pairs, so we don't end up with "name"
 	# inside the "value" part of some other key word - some day
-	
+
 	set bad \[^a-zA-Z\]+
 	if {[regexp -nocase  "$bad$key$bad" -$param-]} {
 		return 1
@@ -607,7 +607,7 @@ proc HMmap_esc {text} {
 	if {![regexp & $text]} {return $text}
 	regsub -all {([][$\\])} $text {\\\1} new
 	regsub -all {&#([0-9][0-9][0-9]?);?} \
-		$new {[format %c \1]} new 
+		$new {[format %c \1]} new
 	regsub -all {&([^ ;]+);?} $new {[HMdo_map \1]} new
 	return [subst $new]
 }

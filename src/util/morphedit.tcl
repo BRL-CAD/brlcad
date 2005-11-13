@@ -8,7 +8,7 @@
 #	SECAD/VLD Computing Consortium, Bldg 394
 #	The U. S. Army Ballistic Research Laboratory
 #	Aberdeen Proving Ground, Maryland  21005-5066
-#  
+#
 #
 #
 # Description -
@@ -41,7 +41,7 @@ set building ""
 
 proc usage {} {
     global argv0
-    
+
     puts \
  "Usage: [file tail $argv0] \[-w width\] \[-n height\] \[-a align\] picA.pix picB.pix linesfile"
     puts "   where align is one of the following:"
@@ -106,7 +106,7 @@ if { $align=="" } then {
     set maxsize [wm maxsize .]
     set maxwidth [lindex $maxsize 0]
     set maxheight [lindex $maxsize 1]
-    
+
     if { $width<=$height } then {
 	if { [expr 2*$width] > $maxwidth } then {
 	    set align separate
@@ -163,7 +163,7 @@ if [file exists $lfname]>0 then {
     if { [llength $n] < 1 } {
 	set n 0
     }
-    
+
 
     close $lf
 } else {
@@ -265,7 +265,7 @@ foreach line $linesegs {
 
 proc nop_mode {} {
     global canv
-    
+
     foreach i { 0 1 } {
 	bind $canv($i) <ButtonPress-1> {}
 	bind $canv($i) <B1-Motion> {}
@@ -280,7 +280,7 @@ proc nop_mode {} {
 
 proc normal_mode {} {
     global canv
-    
+
     foreach i { 0 1 } {
 	bind $canv($i) <ButtonPress-1> "press_normal $i %x %y"
 	bind $canv($i) <B1-Motion> {}
@@ -295,7 +295,7 @@ proc normal_mode {} {
 
 proc selected_endpt_mode { index pindex item itempair itemrecord } {
     global canv
-    
+
     foreach i { 0 1 } {
 	bind $canv($i) <ButtonPress-1> \
   	 [list press_endpt $i $index $pindex $item $itempair $itemrecord %x %y]
@@ -311,7 +311,7 @@ proc selected_endpt_mode { index pindex item itempair itemrecord } {
 
 proc held_endpt_mode { index pindex item itempair itemrecord deltax deltay } {
     global canv
-    
+
     foreach i { 0 1 } {
 	bind $canv($i) <ButtonPress-1> {}
 	bind $canv($i) <B1-Motion> \
@@ -407,8 +407,8 @@ proc enter_endpt { ci } {
     find_item $ci $tcl_id index pindex itempair itemrecord
 
     if { $index==-1 } then return
-    
-# To prevent infinite loops, disable entry/exit events while raising.    
+
+# To prevent infinite loops, disable entry/exit events while raising.
 
     nop_mode
     foreach pair $itemrecord {
@@ -475,7 +475,7 @@ proc release_endpt { ci index pindex item itempair itemrecord dx dy x y } {
 
     set nx [expr $x-$dx]
     set ny [expr $y-$dy]
-    
+
     if { $index=="building" } then {
 	set building [lreplace $building [expr 2+2*$ci] [expr 3+2*$ci] $nx $ny]
 	$canv(0) itemconfigure [lindex $itempair 0] -fill $colors(highlighted)
@@ -507,13 +507,13 @@ proc enter_lineseg { ci } {
 
     set tcl_id [$canv($ci) find withtag current]
     find_item $ci $tcl_id index pindex itempair itemrecord
-    
+
     if { $index==-1 } then return
 
 # Highlight all parts current item
 
     nop_mode
-    
+
     foreach pair $itemrecord {
 	$canv(0) raise [lindex $pair 0]
 	$canv(1) raise [lindex $pair 1]

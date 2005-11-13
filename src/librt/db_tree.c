@@ -31,12 +31,12 @@
  *
  *  Author -
  *	Michael John Muuss
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5066
- *  
+ *
  */
 /*@}*/
 
@@ -403,7 +403,7 @@ db_apply_state_from_memb(struct db_tree_state *tsp, struct db_full_path *pathp, 
 	 *  lower down in the arc.  So note by sending a NULL pointer.
 	 */
 	db_apply_anims( pathp, mdp, old_xlate, xmat,
-		(tsp->ts_sofar & TS_SOFAR_REGION) ? 
+		(tsp->ts_sofar & TS_SOFAR_REGION) ?
 			(struct mater_info *)NULL :
 			&tsp->ts_mater );
 
@@ -1191,7 +1191,7 @@ db_recurse(struct db_tree_state *tsp, struct db_full_path *pathp, struct combine
 			 *  If handler rejects this region, skip on.
 			 *  This might be used for ignoring air regions.
 			 */
-			if( tsp->ts_region_start_func && 
+			if( tsp->ts_region_start_func &&
 			    tsp->ts_region_start_func( &nts, pathp, comb, client_data ) < 0 )  {
 				if(RT_G_DEBUG&DEBUG_TREEWALK)  {
 					char	*sofar = db_path_to_string(pathp);
@@ -1694,7 +1694,7 @@ db_non_union_push( register union tree *tp, struct resource *resp )
 
 	}
 
-	else if( tp->tr_op == OP_INTERSECT && 
+	else if( tp->tr_op == OP_INTERSECT &&
 		tp->tr_b.tb_right->tr_op == OP_UNION )
 	{
 		/* C + (A u B) -> (C + A) u (C + B) */
@@ -2174,7 +2174,7 @@ db_walk_dispatcher(int cpu, genptr_t arg)
 		RT_CK_TREE(curtree);
 		if( !region_start_statep )  {
 			bu_log("ERROR: db_walk_dispatcher() region %d started with no state\n", mine);
-			if( RT_G_DEBUG&DEBUG_TREEWALK )			
+			if( RT_G_DEBUG&DEBUG_TREEWALK )
 				rt_pr_tree( curtree, 0 );
 			continue;
 		}
@@ -2229,7 +2229,7 @@ db_walk_dispatcher(int cpu, genptr_t arg)
  *			tree, then it returns a non-null (union tree *)
  *			pointer, and that tree is safely freed
  *			in a non-parallel section before we return.
- *  
+ *
  *	leaf_func	Function to process a leaf node.
  *			It is actually invoked from db_recurse() from db_walk_subtree().
  *			Returns (union tree *) representing the leaf, or
@@ -2253,10 +2253,10 @@ db_walk_dispatcher(int cpu, genptr_t arg)
  *	 0	OK
  */
 int
-db_walk_tree(struct db_i *dbip, int argc, const char **argv, int ncpu, const struct db_tree_state *init_state, 
+db_walk_tree(struct db_i *dbip, int argc, const char **argv, int ncpu, const struct db_tree_state *init_state,
 	     int (*reg_start_func) (struct db_tree_state *, struct db_full_path *, const struct rt_comb_internal *, genptr_t),
-	     union tree *(*reg_end_func) (struct db_tree_state *, struct db_full_path *, union tree *, genptr_t), 
-	     union tree *(*leaf_func) (struct db_tree_state *, struct db_full_path *, struct rt_db_internal *, genptr_t), 
+	     union tree *(*reg_end_func) (struct db_tree_state *, struct db_full_path *, union tree *, genptr_t),
+	     union tree *(*leaf_func) (struct db_tree_state *, struct db_full_path *, struct rt_db_internal *, genptr_t),
 	     genptr_t client_data)
 {
 	union tree		*whole_tree = TREE_NULL;
@@ -2294,8 +2294,8 @@ db_walk_tree(struct db_i *dbip, int argc, const char **argv, int ncpu, const str
 		db_full_path_init( &path );
 
 		/* First, establish context from given path */
-		if( db_follow_path_for_state( &ts, &path, argv[i], 
-					      LOOKUP_NOISY ) < 0 ) 
+		if( db_follow_path_for_state( &ts, &path, argv[i],
+					      LOOKUP_NOISY ) < 0 )
 		  {
 		    bu_log ("db_walk_tree: warning - %s not found.\n",
 			    argv[i]);
@@ -2443,8 +2443,8 @@ db_walk_tree(struct db_i *dbip, int argc, const char **argv, int ncpu, const str
 
 	if (something_not_found)
 	  {
-	    bu_log ("db_walk_tree: %d %s not found.\n", 
-		    something_not_found, 
+	    bu_log ("db_walk_tree: %d %s not found.\n",
+		    something_not_found,
 		    (something_not_found > 1) ? "items" : "item" ) ;
 	    return -2;
 	  }
@@ -2525,7 +2525,7 @@ db_apply_anims(struct db_full_path *pathp, struct directory *dp, mat_t stack, ma
 		register int anim_flag;
 
 		j = pathp->fp_len-1;
-		
+
 		RT_CK_ANIMATE(anp);
 		i = anp->an_path.fp_len-1;
 		anim_flag = 1;
@@ -2660,7 +2660,7 @@ db_shader_mat(
 		 */
 		my_rtip = rt_new_rti(rtip->rti_dbip);
 		my_rtip->useair = rtip->useair;
-		
+
 		/* XXX Should have our own semaphore here */
 		bu_semaphore_acquire( RT_SEM_MODEL );
 		if (rt_gettree(my_rtip, reg_name)) bu_bomb(rp->reg_name);
@@ -2681,7 +2681,7 @@ db_shader_mat(
 	bn_mat_mul(m_tmp, m_xlate, model_to_region);
 
 
-	/* 
+	/*
 	 * Scale the bounding box to unit cube
 	 */
 	VSUB2(v_tmp, p_max, p_min);

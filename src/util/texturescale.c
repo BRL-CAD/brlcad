@@ -24,7 +24,7 @@
  *
  *  Author -
  *	Paul J. Tanenbaum
- *  
+ *
  *  Source -
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
@@ -113,7 +113,7 @@ get_args (int argc, register char **argv)
 {
     register int c;
 
-    while ((c = getopt( argc, argv, OPT_STRING)) != EOF)
+    while ((c = bu_getopt( argc, argv, OPT_STRING)) != EOF)
     {
 	switch (c)
 	{
@@ -125,25 +125,25 @@ get_args (int argc, register char **argv)
 		autosize = 0;
 		break;
 	    case 'n':
-		file_height = atol(optarg);
+		file_height = atol(bu_optarg);
 		autosize = 0;
 		break;
 	    case 's':
-		file_height = file_width = atol(optarg);
+		file_height = file_width = atol(bu_optarg);
 		autosize = 0;
 		break;
 	    case 'w':
-		file_width = atol(optarg);
+		file_width = atol(bu_optarg);
 		autosize = 0;
 		break;
 	    case 'S':
 		solid_type = SPHERE;
 		break;
 	    case 'T':
-		if (! read_radii(&r1, &r2, optarg))
+		if (! read_radii(&r1, &r2, bu_optarg))
 		{
 		    (void) fprintf(stderr,
-			"Illegal torus radii: '%s'\n", optarg);
+			"Illegal torus radii: '%s'\n", bu_optarg);
 		    return (0);
 		}
 		solid_type = TORUS;
@@ -156,7 +156,7 @@ get_args (int argc, register char **argv)
 	}
     }
 
-    if (optind >= argc)
+    if (bu_optind >= argc)
     {
 	if(isatty(fileno(stdin)))
 	{
@@ -168,7 +168,7 @@ get_args (int argc, register char **argv)
     }
     else
     {
-	file_name = argv[optind];
+	file_name = argv[bu_optind];
 	if ((infp = fopen(file_name, "r")) == NULL)
 	{
 	    perror(file_name);
@@ -178,7 +178,7 @@ get_args (int argc, register char **argv)
 	++fileinput;
     }
 
-    if (argc > ++optind)
+    if (argc > ++bu_optind)
 	(void) fprintf(stderr, "texturescale: excess argument(s) ignored\n");
 
     return (1);

@@ -19,11 +19,11 @@
  * information.
  */
 
-/** \defgroup g Geometry 
+/** \defgroup g Geometry
  * \ingroup librt
  */
 
-/** \defgroup arb arb 
+/** \defgroup arb arb
  * \ingroup g */
 /*@{*/
 /** @file g_arb.c
@@ -47,15 +47,15 @@
  *  here.
  *
  *  This algorithm is due to Cyrus & Beck, USAF.
- *  
+ *
  *  Author -
  *	Michael John Muuss
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005
- *  
+ *
  */
 /*@}*/
 #ifndef lint
@@ -140,7 +140,7 @@ static const struct arb_info rt_arb_info[6] = {
 	{ "4378", {7, 6, 2, 3} }
 };
 
-RT_EXTERN(void rt_arb_ifree, (struct rt_db_internal *) );
+BU_EXTERN(void rt_arb_ifree, (struct rt_db_internal *) );
 
 const struct bu_structparse rt_arb_parse[] = {
     { "%f", 3, "V1", offsetof(struct rt_arb_internal, pt[0][X]), BU_STRUCTPARSE_FUNC_NULL },
@@ -163,11 +163,11 @@ const int rt_arb_faces[5][24] = {
     {0,1,2,3, 4,5,6,7, 0,4,7,3, 1,2,6,5, 0,1,5,4, 3,2,6,7},		/* ARB8 */
 };
 
-/*  rt_arb_get_cgtype(), rt_arb_std_type(), and rt_arb_centroid() 
+/*  rt_arb_get_cgtype(), rt_arb_std_type(), and rt_arb_centroid()
  *  stolen from mged/arbs.c */
 #define NO	0
 #define YES	1
-	
+
 /**
  *			R T _ A R B _ G E T _ C G T Y P E
  *
@@ -196,15 +196,15 @@ rt_arb_get_cgtype(
 	register int i,j;
 	int	numuvec, unique, done;
 	int	si;
-	
+
 	RT_ARB_CK_MAGIC(arb);
 	BN_CK_TOL(tol);
-	
+
 	done = NO;		/* done checking for like vectors */
-	
+
 	svec[0] = svec[1] = 0;
 	si = 2;
-	
+
 	for(i=0; i<7; i++) {
 		unique = YES;
 		if(done == NO) {
@@ -213,14 +213,14 @@ rt_arb_get_cgtype(
 		for(j=i+1; j<8; j++) {
 			int tmp;
 			vect_t vtmp;
-			
+
 			VSUB2( vtmp, arb->pt[i], arb->pt[j] );
-			
+
 			if( fabs(vtmp[0]) > tol->dist) tmp = 0;
 			else 	if( fabs(vtmp[1]) > tol->dist) tmp = 0;
 			else 	if( fabs(vtmp[2]) > tol->dist) tmp = 0;
 			else tmp = 1;
-			
+
 			if( tmp ) {
 				if( done == NO )
 					svec[++si] = j;
@@ -240,7 +240,7 @@ rt_arb_get_cgtype(
 			}
 		}
 	}
-	
+
 	if( si > 2 && si < 6 ) {
 		svec[0] = si - 1;
 	}
@@ -253,7 +253,7 @@ rt_arb_get_cgtype(
 	for(i=svec[0]+svec[1]+2; i<11; i++) {
 		svec[i] = -1;
 	}
-	
+
 	/* find the unique points */
 	numuvec = 0;
 	for(j=0; j<8; j++) {
@@ -271,7 +271,7 @@ rt_arb_get_cgtype(
 
 	/* Figure out what kind of ARB this is */
 	switch( numuvec ) {
-		
+
 	case 8:
 		*cgtype = ARB8;		/* ARB8 */
 		break;
@@ -347,7 +347,7 @@ rt_arb_std_type( const struct rt_db_internal *ip, const struct bn_tol *tol )
 }
 
 
-/** 
+/**
  *			R T _ A R B _ C E N T R O I D
  *
  * Find the center point for the arb whose values are in the s array,
@@ -385,11 +385,11 @@ rt_arb_centroid( point_t center_pt, const struct rt_arb_internal *arb, int npoin
  */
 HIDDEN int
 rt_arb_add_pt(register pointp_t point, const char *title, struct prep_arb *pap, int ptno, const char *name)
-                        
-          	       
-               	     
+
+
+
    		     	/* current point # on face */
-          	      
+
 {
 	LOCAL vect_t	work;
 	LOCAL vect_t	P_A;		/* new point minus A */
@@ -786,7 +786,7 @@ rt_arb_print(register const struct soltab *stp)
 
 /**
  *			R T _ A R B _ S H O T
- *  
+ *
  * Function -
  *	Shoot a ray at an ARB8.
  *
@@ -794,7 +794,7 @@ rt_arb_print(register const struct soltab *stp)
  * 	The intersection distance is computed for each face.
  *  The largest IN distance and the smallest OUT distance are
  *  used as the entry and exit points.
- *  
+ *
  * Returns -
  *	0	MISS
  *	>0	HIT
@@ -824,7 +824,7 @@ rt_arb_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 		FAST fastf_t	dxbdn;
 		FAST fastf_t	s;
 
-		/* XXX some of this math should be prep work 
+		/* XXX some of this math should be prep work
 		 * (including computing dxbdn/dn ?) *$*/
 		dxbdn = VDOT( afp->peqn, rp->r_pt ) - afp->peqn[3];
 		dn = -VDOT( afp->peqn, rp->r_dir );
@@ -882,7 +882,7 @@ rt_arb_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 	return(2);			/* HIT */
 }
 
-#define SEG_MISS(SEG)		(SEG).seg_stp=(struct soltab *) 0;	
+#define SEG_MISS(SEG)		(SEG).seg_stp=(struct soltab *) 0;
 /**
  *			R T _ A R B _ V S H O T
  *
@@ -894,7 +894,7 @@ rt_arb_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
            		       /* An array of ray pointers */
                                /* array of segs (results returned) */
    		 	       /* Number of ray/object pairs */
-                  	    
+
 {
 	register int    j, i;
 	register struct arb_specific *arbp;
@@ -995,7 +995,7 @@ rt_arb_norm(register struct hit *hitp, struct soltab *stp, register struct xray 
  *			R T _ A R B _ C U R V E
  *
  *  Return the "curvature" of the ARB face.
- *  Pick a principle direction orthogonal to normal, and 
+ *  Pick a principle direction orthogonal to normal, and
  *  indicate no curvature.
  */
 void
@@ -1008,7 +1008,7 @@ rt_arb_curve(register struct curvature *cvp, register struct hit *hitp, struct s
 
 /**
  *  			R T _ A R B _ U V
- *  
+ *
  *  For a hit on a face of an ARB, return the (u,v) coordinates
  *  of the hit point.  0 <= u,v <= 1.
  *  u extends along the arb_U direction defined by B-A,
@@ -1148,7 +1148,7 @@ rt_arb_class(const struct soltab *stp, const fastf_t *min, const fastf_t *max, c
 	register struct arb_specific *arbp =
 		(struct arb_specific *)stp->st_specific;
 	register int i;
-	
+
 	if( arbp == (struct arb_specific *)0 ) {
 		bu_log("arb(%s): no faces\n", stp->st_name);
 		return RT_CLASSIFY_UNIMPLEMENTED;
@@ -1187,7 +1187,7 @@ rt_arb_import(struct rt_db_internal *ip, const struct bu_external *ep, register 
 	register int		i;
 	LOCAL vect_t		work;
 	LOCAL fastf_t		vec[3*8];
-	
+
 	BU_CK_EXTERNAL( ep );
 	rp = (union record *)ep->ext_buf;
 	/* Check record type */
@@ -1795,7 +1795,7 @@ rt_arb_3face_intersect(
  *	-1	Failure
  *	 0	OK
  *
- *  Note - 
+ *  Note -
  *	 This function migrated from mged/edsol.c.
  */
 int
@@ -1852,8 +1852,8 @@ int
 rt_arb_move_edge(Tcl_Interp		*interp,
 		 struct rt_arb_internal	*arb,
 		 vect_t			thru,
-		 int			bp1, 
-		 int			bp2, 
+		 int			bp1,
+		 int			bp2,
 		 int			end1,
 		 int			end2,
 		 const vect_t		dir,
@@ -1878,7 +1878,7 @@ rt_arb_move_edge(Tcl_Interp		*interp,
 
 /**
  *  			E D I T A R B
- *  
+ *
  *  An ARB edge is moved by finding the direction of
  *  the line containing the edge and the 2 "bounding"
  *  planes.  The new edge is found by intersecting the
@@ -2115,7 +2115,7 @@ rt_arb_edit(Tcl_Interp			*interp,
 	/* calculate edge direction */
 	VSUB2(edge_dir, arb->pt[pt2], arb->pt[pt1]);
 
-	if (MAGNITUDE(edge_dir) == 0.0) 
+	if (MAGNITUDE(edge_dir) == 0.0)
 	    goto err;
 
 	/* bounding planes bp1,bp2 */

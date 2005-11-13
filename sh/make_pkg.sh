@@ -12,7 +12,7 @@
 # 1. Redistributions of source code must retain the above copyright
 # notice, this list of conditions and the following disclaimer.
 #
-# 2. Redistributions in binary form must reproduce the above 
+# 2. Redistributions in binary form must reproduce the above
 # copyright notice, this list of conditions and the following
 # disclaimer in the documentation and/or other materials provided
 # with the distribution.
@@ -85,7 +85,7 @@ else
 	echo "ERROR: specified resource path (${RESOURCES}) is not a readable directory"
 	exit 1
     fi
-fi    
+fi
 
 PATH=/bin:/usr/bin:/usr/sbin
 LC_ALL=C
@@ -154,7 +154,7 @@ else
     mkdir "$PKG" > /dev/null 2>&1
     if [ ! -d "$PKG" ] ; then
 	echo "WARNING: unable to create the package directory in `pwd` (perhaps it's an NFS filesystem?)"
-	
+
 	if [ ! -w ${TMPDIR}/. ] ; then
 	    echo "ERROR: unable to write to ${TMPDIR} for creating the package"
 	    exit 1
@@ -179,7 +179,7 @@ else
 		exit 1
 	    fi
 	fi
-	
+
 	if [ ! -d "${RESOURCES}" ] ; then
 	    if [ -d "${PRE_PWD}/${RESOURCES}" ] ; then
 		RESOURCES="${PRE_PWD}/${RESOURCES}"
@@ -232,7 +232,7 @@ if [ -d "$PKG" ] ; then
     echo "ERROR: cannot continue with directory $PKG in the way"
     exit 1
 fi
-    
+
 mkdir "$PKG" > /dev/null 2>&1
 if [ ! -d "$PKG" ] ; then
     echo "ERROR: unable to create the package directory"
@@ -256,7 +256,7 @@ if [ ! "x$RESOURCES" = "xnone>>make_pkg_sh<<none" ] ; then
 	echo "ERROR: sanity check failure -- resources directory disappeared?"
 	exit 1
     fi
-    
+
     cp -R "${RESOURCES}/" "$PKG/Contents/Resources"
     if [ $? != 0 ] ; then
 	echo "ERROR: unable to copy the resource directory contents"

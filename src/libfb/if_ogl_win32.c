@@ -26,8 +26,8 @@
  *
  *  There are several different Frame Buffer modes supported.
  *  Set your environment FB_FILE to the appropriate type.
- *  Note that some of the /dev/sgi modes are not supported, and there are 
- *  some new modes. 
+ *  Note that some of the /dev/sgi modes are not supported, and there are
+ *  some new modes.
  *  (see the modeflag definitions below).
  *	/dev/ogl[options]
  *
@@ -36,11 +36,11 @@
  *  Authors -
  *	Carl Nuzman
  *	Bob Parker
- *  
+ *
  *  Source -
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
- *  
+ *
  */
 /*@}*/
 
@@ -51,8 +51,8 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #include "common.h"
 
 #include <signal.h>
-#include <stdio.h> 
-#include <stdlib.h>  
+#include <stdio.h>
+#include <stdlib.h>
 #include <ctype.h>
 #include <errno.h>
 #ifdef HAVE_GL_GL_H
@@ -71,7 +71,7 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 
 /*WWW these come from Iris gl gl.h*/
 #define XMAXSCREEN	1279
-#define YMAXSCREEN	1023	
+#define YMAXSCREEN	1023
 #define XMAXMEDIUM	1023
 #define YMAXMEDIUM	767
 #define XMAX170		645
@@ -126,11 +126,11 @@ _LOCAL_ int	ogl_open(),
 		ogl_bwwriterect(),
 		ogl_poll(),
 		ogl_flush(),
-		ogl_free(),	
+		ogl_free(),
 		ogl_help();
 
 /* This is the ONLY thing that we normally "export" */
-FBIO ogl_interface =  
+FBIO ogl_interface =
 	{
 	0,			/* magic number slot	*/
 	ogl_open,		/* open device		*/
@@ -187,7 +187,7 @@ struct ogl_cmap {
 	short	cmb[256];
 };
 
-/* 
+/*
  *  This defines the format of the in-memory framebuffer copy.
  *  The alpha component and reverse order are maintained for
  *  compatibility with /dev/sgi
@@ -214,11 +214,11 @@ struct ogl_clip {
 	double	oright;
 	double	otop;
 	double	obottom;
-	
+
 };
 
 /*
- *  Per window state information, overflow area. 
+ *  Per window state information, overflow area.
  *  Structure members have the same meaning as in the if_4d.c code.
  */
 struct sgiinfo {
@@ -386,7 +386,7 @@ _LOCAL_ struct modeflags {
  *  also means that in MEX mode, the previous contents of the frame
  *  buffer still exist, and can be again accessed, even though the
  *  MEX windows are transient, per-process.
- * 
+ *
  *  There are a few oddities, however.  The worst is that System V will
  *  not allow the break (see sbrk(2)) to be set above a shared memory
  *  segment, and shmat(2) does not seem to allow the selection of any
@@ -540,18 +540,18 @@ int		npix;
 			clp->yscrmin - CLIP_XTRA,
 			clp->xscrmax + CLIP_XTRA,
 			clp->yscrmax + CLIP_XTRA);
-		
+
 		/* Blank out area above image */
 		if( clp->yscrmax >= ifp->if_height )  glRecti(
 			clp->xscrmin - CLIP_XTRA,
 			ifp->if_height- CLIP_XTRA,
 			clp->xscrmax + CLIP_XTRA,
 			clp->yscrmax + CLIP_XTRA);
-		
+
 	} else if (OGL(ifp)->front_flag) {
 		/* in COPY mode, always draw full sized image into backbuffer.
 		 * backbuffer_to_screen() is used to update the front buffer
-		 */ 
+		 */
 		glDrawBuffer(GL_BACK);
 		OGL(ifp)->front_flag = 0;
 		glMatrixMode(GL_PROJECTION);
@@ -564,14 +564,14 @@ int		npix;
 	}
 	}
 
-	if( sw_cmap ) { 
+	if( sw_cmap ) {
 		/* Software colormap each line as it's transmitted */
 		register int	x;
 		register struct ogl_pixel	*oglp;
 		register struct ogl_pixel	*op;
 
 		y = ybase;
-		if(CJDEBUG) printf("Doing sw colormap xmit\n");		
+		if(CJDEBUG) printf("Doing sw colormap xmit\n");
 		/* Perform software color mapping into temp scanline */
 		op = SGI(ifp)->mi_scanline;
 		for( n=nlines; n>0; n--, y++ )  {
@@ -583,7 +583,7 @@ int		npix;
 				op[x].green = CMG(ifp)[oglp[x].green];
 				op[x].blue  = CMB(ifp)[oglp[x].blue];
 			}
-			
+
 			glPixelStorei(GL_UNPACK_SKIP_PIXELS,xbase);
 			glRasterPos2i(xbase,y);
 			glDrawPixels(npix,1,GL_BGRA_EXT,GL_UNSIGNED_BYTE,
@@ -597,20 +597,20 @@ int		npix;
 		glPixelStorei(GL_UNPACK_ROW_LENGTH,SGI(ifp)->mi_memwidth);
 		glPixelStorei(GL_UNPACK_SKIP_PIXELS,xbase);
 		glPixelStorei(GL_UNPACK_SKIP_ROWS,ybase);
-		
+
 		glRasterPos2i(xbase,ybase);
 		glDrawPixels(npix,nlines,GL_BGRA_EXT,GL_UNSIGNED_BYTE,
 				(const GLvoid *) ifp->if_mem);
 	}
 }
 
-LONG WINAPI MainWndProc ( 
-    HWND    hWnd, 
-    UINT    uMsg, 
-    WPARAM  wParam, 
-    LPARAM  lParam) 
+LONG WINAPI MainWndProc (
+    HWND    hWnd,
+    UINT    uMsg,
+    WPARAM  wParam,
+    LPARAM  lParam)
 {
-    switch (uMsg) { 
+    switch (uMsg) {
     case WM_PAINT:
 	if(!OGL(saveifp)->use_ext_ctrl)
 	    expose_callback(saveifp,0);
@@ -650,12 +650,12 @@ LONG WINAPI MainWndProc (
 	}
     default:
       return DefWindowProc (hWnd, uMsg, wParam, lParam);
-    }	
+    }
 
     return 1;
 }
 _LOCAL_ int
-ogl_open( ifp, file, width, height ) 
+ogl_open( ifp, file, width, height )
 FBIO	*ifp;
 char	*file;
 int	width, height;
@@ -758,7 +758,7 @@ int	width, height;
 	 * One hack to get around this is to immediately fork
 	 * and create a child process and sleep until the child
 	 * sends a kill signal to the parent process. (in FBCLOSE)
-	 * This allows us to use the traditional fb utility programs 
+	 * This allows us to use the traditional fb utility programs
 	 * as well as allow the frame buffer window to remain around
 	 * until killed by the menu subsystem.
     	 */
@@ -813,17 +813,17 @@ int	width, height;
 	if( ogl_getmem(ifp) < 0 )
 		return(-1);
 
-	/* Register the frame class */ 
+	/* Register the frame class */
     wndclass.style         = 0;
-    wndclass.lpfnWndProc   = (WNDPROC)MainWndProc; 
-    wndclass.cbClsExtra    = 0; 
-    wndclass.cbWndExtra    = 0; 
-    wndclass.hInstance     = Tk_GetHINSTANCE(); 
-    wndclass.hIcon         = LoadIcon (Tk_GetHINSTANCE(), "Win OpenGL"); 
-    wndclass.hCursor       = LoadCursor (NULL,IDC_ARROW); 
-    wndclass.hbrBackground = (HBRUSH)(COLOR_WINDOW+1); 
-    wndclass.lpszMenuName  = "Win OpenGL"; 
-    wndclass.lpszClassName = "Win OpenGL"; 
+    wndclass.lpfnWndProc   = (WNDPROC)MainWndProc;
+    wndclass.cbClsExtra    = 0;
+    wndclass.cbWndExtra    = 0;
+    wndclass.hInstance     = Tk_GetHINSTANCE();
+    wndclass.hIcon         = LoadIcon (Tk_GetHINSTANCE(), "Win OpenGL");
+    wndclass.hCursor       = LoadCursor (NULL,IDC_ARROW);
+    wndclass.hbrBackground = (HBRUSH)(COLOR_WINDOW+1);
+    wndclass.lpszMenuName  = "Win OpenGL";
+    wndclass.lpszClassName = "Win OpenGL";
 
 	ret = RegisterClass (&wndclass);
 
@@ -848,7 +848,7 @@ int	width, height;
 	OGL(ifp)->hdc = GetDC(OGL(ifp)->hwnd);
 	hdc = OGL(ifp)->hdc;
 
-	
+
 
 	/* Choose an appropriate visual. */
 	if( (OGL(ifp)->vip = ogl_choose_visual(ifp)) == NULL ) {
@@ -866,8 +866,8 @@ int	width, height;
 	OGL(ifp)->firstTime = 1;
 
 	ShowWindow(OGL(ifp)->hwnd,SW_SHOW);
-	UpdateWindow(OGL(ifp)->hwnd); 
- 
+	UpdateWindow(OGL(ifp)->hwnd);
+
 
 	/* Loop through events until first exposure event is processed */
 	/*	while (OGL(ifp)->firstTime == 1)
@@ -1005,7 +1005,7 @@ int soft_cmap;
   return 0;
 }
 
-_LOCAL_ int 
+_LOCAL_ int
 ogl_final_close( ifp )
 FBIO	*ifp;
 {
@@ -1023,11 +1023,11 @@ FBIO	*ifp;
   */
 
   if (OGL(ifp)->glxc)
-	  wglDeleteContext(OGL(ifp)->glxc);         
+	  wglDeleteContext(OGL(ifp)->glxc);
   if (OGL(ifp)->hdc)
 	  ReleaseDC(OGL(ifp)->hwnd, OGL(ifp)->hdc);
 	DestroyWindow(OGL(ifp)->hwnd);
- 
+
 
   if( SGIL(ifp) != NULL ) {
     /* free up memory associated with image */
@@ -1083,7 +1083,7 @@ FBIO	*ifp;
 	 *  smashes some window-manager files.  Therefore, we content
 	 *  ourselves with eliminating stdin, stdout, and stderr,
 	 *  (fd 0,1,2), in the hopes that this will successfully
-	 *  terminate any pipes or network connections.  
+	 *  terminate any pipes or network connections.
 	 */
 	fclose( stdin );
 	fclose( stdout );
@@ -1257,7 +1257,7 @@ int	xzoom, yzoom;
 
 	if(CJDEBUG) printf("entering ogl_view\n");
 
-	if( xzoom < 1 ) xzoom = 1; 
+	if( xzoom < 1 ) xzoom = 1;
 	if( yzoom < 1 ) yzoom = 1;
 	if( ifp->if_xcenter == xcenter && ifp->if_ycenter == ycenter
 	  && ifp->if_xzoom == xzoom && ifp->if_yzoom == yzoom )
@@ -1292,7 +1292,7 @@ int	xzoom, yzoom;
 	/* Set clipping matrix  and zoom level */
 	glMatrixMode(GL_PROJECTION);
 	if (OGL(ifp)->copy_flag && !OGL(ifp)->front_flag){
-		/* COPY mode - no changes to backbuffer copy - just 
+		/* COPY mode - no changes to backbuffer copy - just
 		 * need to update front buffer
 		 */
 		glPopMatrix();
@@ -1686,7 +1686,7 @@ ogl_bwwriterect(FBIO *ifp,
 
 
 
-_LOCAL_ int	
+_LOCAL_ int
 ogl_rmap(register FBIO *ifp,
 	 register ColorMap *cmp)
 {
@@ -1747,7 +1747,7 @@ ogl_wmap(register FBIO *ifp,
 {
 	register int	i;
 	int		prev;	/* !0 = previous cmap was non-linear */
-	
+
 	if(CJDEBUG) printf("entering ogl_wmap\n");
 
 	prev = SGI(ifp)->mi_cmap_flag;
@@ -1756,7 +1756,7 @@ ogl_wmap(register FBIO *ifp,
 	} else {
 		for(i = 0; i < 256; i++)  {
 			CMR(ifp)[i] = cmp-> cm_red[i]>>8;
-			CMG(ifp)[i] = cmp-> cm_green[i]>>8; 
+			CMG(ifp)[i] = cmp-> cm_green[i]>>8;
 			CMB(ifp)[i] = cmp-> cm_blue[i]>>8;
 		}
 	}
@@ -1918,7 +1918,7 @@ ogl_flush(FBIO *ifp)
 }
 
 #if 0
-_LOCAL_ int 
+_LOCAL_ int
 fb_cnull(FBIO *ifp)
 {
 	return(0);
@@ -1926,8 +1926,8 @@ fb_cnull(FBIO *ifp)
 #endif
 
 /*
- * O G L _ C L I P P E R ( ) 
- * 
+ * O G L _ C L I P P E R ( )
+ *
  * Given:- the size of the viewport in pixels (vp_width, vp_height)
  *	 - the size of the framebuffer image (if_width, if_height)
  *	 - the current view center (if_xcenter, if_ycenter)
@@ -2012,17 +2012,17 @@ do_event(FBIO *ifp)
 	/* Check and Dispatch any messages. */
 
     if( (bRet = GetMessage( &msg, NULL, 0, 0 )) != 0)
-    { 
+    {
         if (bRet == -1)
         {
             /* handle the error and possibly exit */
         }
         else
         {
-            TranslateMessage(&msg); 
-            DispatchMessage(&msg); 
+            TranslateMessage(&msg);
+            DispatchMessage(&msg);
         }
-    } 
+    }
     /* let's not starve the processor */
     Sleep( 250 );
 }
@@ -2030,7 +2030,7 @@ do_event(FBIO *ifp)
 _LOCAL_ void
 expose_callback(FBIO *ifp,
 		int eventPtr)
-{    
+{
     /*	XWindowAttributes xwa; */
 	struct ogl_clip *clp;
 
@@ -2045,7 +2045,7 @@ expose_callback(FBIO *ifp,
 
 	if( OGL(ifp)->firstTime ) {
 		OGL(ifp)->firstTime = 0;
-		
+
 		/* just in case the configuration is double buffered but
 		 * we want to pretend it's not
 		 */
@@ -2059,9 +2059,9 @@ expose_callback(FBIO *ifp,
 		}
 
 		/* set copy mode if possible and requested */
-		if( SGI(ifp)->mi_doublebuffer && 
+		if( SGI(ifp)->mi_doublebuffer &&
 		    ((ifp->if_mode & MODE_11MASK)==MODE_11COPY) ) {
-			/* Copy mode only works if there are two 
+			/* Copy mode only works if there are two
 			 * buffers to use. It conflicts with
 			 * double buffering
 			 */
@@ -2106,19 +2106,19 @@ expose_callback(FBIO *ifp,
 		glOrtho( clp->oleft, clp->oright, clp->obottom, clp->otop,
 				-1.0,1.0);
 		glPixelZoom((float) ifp->if_xzoom,(float) ifp->if_yzoom);
-	} else if( (OGL(ifp)->win_width > ifp->if_width) || 
+	} else if( (OGL(ifp)->win_width > ifp->if_width) ||
 		   (OGL(ifp)->win_height > ifp->if_height) ) {
 		/* clear whole buffer if window larger than framebuffer */
 	 	if( OGL(ifp)->copy_flag && !OGL(ifp)->front_flag ) {
 	 		glDrawBuffer(GL_FRONT);
 			glViewport(0, 0, OGL(ifp)->win_width,
-				   OGL(ifp)->win_height);      
+				   OGL(ifp)->win_height);
 			glClearColor(0,0,0,0);
 			glClear(GL_COLOR_BUFFER_BIT);
 	 		glDrawBuffer(GL_BACK);
 	 	} else {
 			glViewport(0, 0, OGL(ifp)->win_width,
-				   OGL(ifp)->win_height);      
+				   OGL(ifp)->win_height);
 			glClearColor(0,0,0,0);
 			glClear(GL_COLOR_BUFFER_BIT);
 	 	}
@@ -2160,7 +2160,7 @@ expose_callback(FBIO *ifp,
 	XFlush(OGL(ifp)->dispp);
 	glFlush();
 #endif
-}  
+}
 
 void
 ogl_configureWindow(FBIO *ifp,
@@ -2188,12 +2188,12 @@ ogl_configureWindow(FBIO *ifp,
 }
 
 #if 0
-/* reorder_cursor - reverses the order of the scanlines. 
+/* reorder_cursor - reverses the order of the scanlines.
  * scanlines are byte aligned, the specified cursor is xbits
  * by ybits bits in size.
  *
  */
-_LOCAL_ void	
+_LOCAL_ void
 reorder_cursor(char *dst,
 	       char *src,
 	       int xbits,
@@ -2231,7 +2231,7 @@ backbuffer_to_screen(register FBIO *ifp,
 		glPopMatrix();
 		glPixelZoom((float) ifp->if_xzoom,(float) ifp->if_yzoom);
 	}
-	
+
 	clp = &(OGL(ifp)->clip);
 
 	if (one_y > clp->ypixmax) {
@@ -2262,7 +2262,7 @@ backbuffer_to_screen(register FBIO *ifp,
 			clp->yscrmin - CLIP_XTRA,
 			clp->xscrmax + CLIP_XTRA,
 			clp->yscrmax + CLIP_XTRA);
-		
+
 		/* Blank out area above image */
 		if( clp->yscrmax >= OGL(ifp)->vp_height )  glRecti(
 			clp->xscrmin - CLIP_XTRA,
@@ -2294,20 +2294,20 @@ backbuffer_to_screen(register FBIO *ifp,
 /* 		O G L _ C H O O S E _ V I S U A L
  *
  * Select an appropriate visual, and set flags.
- * 
+ *
  * The user requires support for:
  *    	-OpenGL rendering in RGBA mode
- * 	
+ *
  * The user may desire support for:
  *	-a single-buffered OpenGL context
  *	-a double-buffered OpenGL context
  *	-hardware colormapping (DirectColor)
- *	
+ *
  * We first try to satisfy all requirements and desires. If that fails,
  * we remove the desires one at a time until we succeed or until only
  * requirements are left. If at any stage more than one visual meets the
  * current criteria, the visual with the greatest depth is chosen.
- * 
+ *
  * The following flags are set:
  * 	SGI(ifp)->mi_doublebuffer
  *	OGL(ifp)->soft_cmap_flag
@@ -2317,45 +2317,45 @@ backbuffer_to_screen(register FBIO *ifp,
 _LOCAL_ PIXELFORMATDESCRIPTOR *
 ogl_choose_visual(FBIO *ifp)
 {
-	int iPixelFormat ;	
-    PIXELFORMATDESCRIPTOR pfd, *ppfd; 
+	int iPixelFormat ;
+    PIXELFORMATDESCRIPTOR pfd, *ppfd;
 	BOOL good;
 
-	ppfd = &pfd; 
+	ppfd = &pfd;
 
 /*  ppfd = (PIXELFORMATDESCRIPTOR *)malloc(sizeof(PIXELFORMATDESCRIPTOR)); */
-  iPixelFormat  = GetPixelFormat(OGL(ifp)->hdc);  
-  ppfd->nSize = sizeof(PIXELFORMATDESCRIPTOR);     
-  ppfd->nVersion = 1;     
-  ppfd->dwFlags =  PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER | PFD_TYPE_RGBA | PFD_STEREO; 
-  ppfd->iPixelType = PFD_TYPE_RGBA;     
-  ppfd->cColorBits = 24;     
-  ppfd->cRedBits = 0; 
-  ppfd->cRedShift = 0;     
-  ppfd->cGreenBits = 0;     
-  ppfd->cGreenShift = 0; 
-  ppfd->cBlueBits = 0;     
-  ppfd->cBlueShift = 0;     
-  ppfd->cAlphaBits = 0; 
-  ppfd->cAlphaShift = 0;     
-  ppfd->cAccumBits = 0;     
-  ppfd->cAccumRedBits = 0; 
-  ppfd->cAccumGreenBits = 0;     
-  ppfd->cAccumBlueBits = 0;     
-  ppfd->cAccumAlphaBits = 0; 
-  ppfd->cDepthBits = 32;     
-  ppfd->cStencilBits = 0;     
-  ppfd->cAuxBuffers = 0 ; 
-  ppfd->iLayerType = PFD_MAIN_PLANE;     
-  ppfd->bReserved = 0;     
-  ppfd->dwLayerMask = 0; 
-  ppfd->dwVisibleMask = 0;     
-  ppfd->dwDamageMask = 0; 
+  iPixelFormat  = GetPixelFormat(OGL(ifp)->hdc);
+  ppfd->nSize = sizeof(PIXELFORMATDESCRIPTOR);
+  ppfd->nVersion = 1;
+  ppfd->dwFlags =  PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER | PFD_TYPE_RGBA | PFD_STEREO;
+  ppfd->iPixelType = PFD_TYPE_RGBA;
+  ppfd->cColorBits = 24;
+  ppfd->cRedBits = 0;
+  ppfd->cRedShift = 0;
+  ppfd->cGreenBits = 0;
+  ppfd->cGreenShift = 0;
+  ppfd->cBlueBits = 0;
+  ppfd->cBlueShift = 0;
+  ppfd->cAlphaBits = 0;
+  ppfd->cAlphaShift = 0;
+  ppfd->cAccumBits = 0;
+  ppfd->cAccumRedBits = 0;
+  ppfd->cAccumGreenBits = 0;
+  ppfd->cAccumBlueBits = 0;
+  ppfd->cAccumAlphaBits = 0;
+  ppfd->cDepthBits = 32;
+  ppfd->cStencilBits = 0;
+  ppfd->cAuxBuffers = 0 ;
+  ppfd->iLayerType = PFD_MAIN_PLANE;
+  ppfd->bReserved = 0;
+  ppfd->dwLayerMask = 0;
+  ppfd->dwVisibleMask = 0;
+  ppfd->dwDamageMask = 0;
 
   iPixelFormat = ChoosePixelFormat(OGL(ifp)->hdc, ppfd);
   good = SetPixelFormat(OGL(ifp)->hdc, iPixelFormat, ppfd);
 
-  
+
   SGI(ifp)->mi_doublebuffer = 1;
   OGL(ifp)->soft_cmap_flag = 0;
 

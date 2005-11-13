@@ -7,7 +7,7 @@
 <a href="prep_tut.html">Previous Section: Introduction</a>
 <h1><a name="top">Animating Objects</a></h1>
 In this section of the tutorial, you will animate the moss world
-objects. In the previous section, you opened the geometry database 
+objects. In the previous section, you opened the geometry database
 <var>moss.g</var> with MGED. If you have not done so yet, display the moss
 world objects as follows:
 <pre>
@@ -20,21 +20,21 @@ straightforward than the orientation.
 <h2><a name="EACurves"> Editing Animation Curves</a></h2>
 One of the most convenient ways to specify an object's path through
 space is with AnimMate's curve editor. Select <b>Curve Editor</b> from
-AnimMate's main menu to pop up the 
-<a href="ceditor.gif">curve editor window</a>. 
+AnimMate's main menu to pop up the
+<a href="ceditor.gif">curve editor window</a>.
 <p>
 Click on the <b>ADD</b> button, and a cyan cross should appear
-in the center of the mged display. Use the middle mouse button to center 
-the display on another point, 
+in the center of the mged display. Use the middle mouse button to center
+the display on another point,
 and then click the <b>ADD</b> button
 again. The cyan cross should move to the center of the display, and a
-yellow line should connect the previous center point to the current one. 
+yellow line should connect the previous center point to the current one.
 You have created a curve consisting of two points.
 <p>
 Curves in AnimMate are simply lists of points in space with associated
 time parameters. The time parameter and point together are called a
 node. Curves are displayed by line segments connecting all the
-points. The curve editor allows you to edit curves in several ways, 
+points. The curve editor allows you to edit curves in several ways,
 interpolate them to create smoother curves, and read and write them to
 files.
 <p>
@@ -43,7 +43,7 @@ node.
 Near the top of the curve editor should be the text: <b> Node 1 of
 2</b>, meaning that the current node is node number 1 and that there are
 two nodes in the current curve. Nodes are numbered beginning with zero,
-so node 1 is actually the second node in the list. 
+so node 1 is actually the second node in the list.
 The time parameter of node 1 is 1.0, and its position is marked by the
 cyan cross. Next, click on the smaller left-arrow. This decrements the index
 of the current node, which becomes zero. Notice that the position of node
@@ -54,7 +54,7 @@ As you may have realized, the center point of the MGED display is
 important to the curve editor. This is the active point which is added
 or inserted into the list when those buttons are activated, or the point
 to which the current node is moved when the <b>MOVE</b> button is
-activated. 
+activated.
 Play around with the curve editor buttons. Note that the
 <b>ADD</b> button inserts points into the curve just after the current
 node, while the <b>INSERT</b> button inserts points just before the
@@ -72,7 +72,7 @@ The new curve name should appear next to the <b>Current curve</b> label.
 <p>
 You will want to make the cone fly through the center of the torus.
 Center the display on a point along the bottom
-edge of the large square platform, as seen from the top view, 
+edge of the large square platform, as seen from the top view,
 and press the <b>ADD</b> button. Then
 center the display on the center of the yellow torus, and press the
 <b>ADD</b> button again. Center the display on a point on the other side
@@ -84,9 +84,9 @@ curve</b> from the posted menu, then selecting <b>green</b> from the
 posted color list.
 <p>
 The next step is to interpolate the curve. Press the <b>Spline
-Interpolate</b> button. A 
+Interpolate</b> button. A
 <a href="tut1.png">smooth yellow curve</a> appears connecting the
-three points of your original curve. Although it looks smooth, it 
+three points of your original curve. Although it looks smooth, it
 also consists of straight line segments. The difference is
 that the new curve has 10 points for every second of time. The name of
 the new curve, <code>spl_path</code>, is found next to the <b>into
@@ -97,9 +97,9 @@ on a pleasing shape.
 <h2><a name="MOFACurves"> Making Objects Follow Animation Curves</a></h2>
 The next step is to make the cone follow the path you've described with
 <code>spl_path</code>. If the main menu is hidden from view, raise it to
-the top of the window stack by clicking on the curve editor's 
+the top of the window stack by clicking on the curve editor's
 <b>Up</b> button. Click on the <b>CREATE SCRIPT</b> button and select
-<b>Object</b> from the posted menu to pop up the 
+<b>Object</b> from the posted menu to pop up the
 <a href="oscript.gif">object animation window</a>.
 <p>
 Fill in the entry boxes from top to bottom. The output file defaults to
@@ -112,15 +112,15 @@ parent. Although the name <code>cone.r</code> would also work in this
 case, in general it's best to include the name of a parent to avoid
 confusion. If cone.r were being displayed at the top level (ie by itself
 and not as part of all.g), then the name <code>/cone.r</code> would be
-used. 
+used.
 <p>
 Leave the rest of the
-entries with their default values and click on the 
-<b>OK</b> button to create the script. 
+entries with their default values and click on the
+<b>OK</b> button to create the script.
 From a shell window, take a look at foo.script. It should look something
 like the following:
 <pre>
-%> <b>head -20 foo.script</b>
+%> <b>head -n 20 foo.script</b>
 start 0;
 clean;
 anim all.g/cone.r matrix lmul
@@ -143,7 +143,7 @@ anim all.g/cone.r matrix lmul
 1 0 0 17.4095
 </pre>
 This file demonstrates the basic format of all animation scripts. There
-is a start 
+is a start
 command for each frame, followed by a clean command. Then there are are
 number of animation commands. In this case, there is just one anim
 command which applies the given matrix to the object cone.r in each
@@ -152,11 +152,11 @@ in this case, the matrix is only a translation matrix, with no rotation.
 Finally each frame is terminated with an end command.
 <p>
 To view the results of this animation, click on the <b>Show Script</b>
-button to pop up 
-<a href="sscripts.gif">the corresponding window</a>. 
+button to pop up
+<a href="sscripts.gif">the corresponding window</a>.
 The entry box labeled <b>Script file</b> should already be filled in
 with the name of the script file you just created. Make sure that the
-MGED display window is visible, and press the <b>Show</b> button. 
+MGED display window is visible, and press the <b>Show</b> button.
 <p>
 The magenta cone should move in a smooth curve. However, you should
 notice that the path that the cone follows is offset from the path you
@@ -210,7 +210,7 @@ axis of the ellipse at the narrow end. If
 the cone were in the default orientation, with the narrow end facing the
 x-axis, and the long axis of the ellipse lying flat, it would have to
 yaw 45 degrees and then pitch up 90 degrees to get to its current
-orientation. 
+orientation.
 <a name="oypr">Enter</a> the numbers <code>45 90 0</code> into the <b>Object
 yaw, pitch, roll</b> entry box, and press the <b>OK</b> button to
 recreate the script. This time, when you show the script, the cone
@@ -219,12 +219,12 @@ should move point-first along its trajectory.
 Another option on the Orientation control section is automatic steering
 and banking. To demonstrate this effectively, it might be a good idea to
 add another point or two to the path. Go back to the <b>Curve Editor</b>
-window and 
+window and
 make sure that the curve
-"path" is selected. Press the right arrow button until the last node 
+"path" is selected. Press the right arrow button until the last node
 of the curve is current. Then
 add one or two more points in a zig-zag fashion so that the path curve
-bends one way and then another. 
+bends one way and then another.
 Press the <b>Spline Interpolate</b> button to update the
 <a href="tut2.png">interpolation curve</a>.
 <p>
@@ -239,14 +239,14 @@ without giving much thought to the time. The next step is to look at
 methods of using the time parameter of the animation to your advantage.
 <p>
 Depending on the shape of the path curve that you picked, you may have
-discovered that the interpolating spline curve varied widely in places 
+discovered that the interpolating spline curve varied widely in places
 from the path you had intended. This effect is especially strong when
 the distribution of the curve nodes through space doesn't match their
 distribution through time.
 When a curve is
-first created, AnimMate spaces the nodes of the curve evenly through 
+first created, AnimMate spaces the nodes of the curve evenly through
 time at one-second intervals. This works well only if the nodes are
-evenly distributed through space. 
+evenly distributed through space.
 <p>
 To see more clearly the effects that poor time
 parameters can have, go back to the curve editor and make node 1 of the
@@ -255,7 +255,7 @@ path curve current. The time parameter of this node, visible next to the
 left mouse button, and then key-board edit the entry to read
 <code>0.3</code>. This moves this node much closer in time to node 0 and
 farther from node 2. Be sure to press the <b>Return</b> key to apply the
-new time parameter to the curve. 
+new time parameter to the curve.
 Change the name of the interpolation curve to
 <code>spl_path2</code> and press <b>Spline Interpolate</b> to create a
 new interpolation curve. Use the <b>Current Spline</b> option in the
@@ -264,15 +264,15 @@ visible.
 You should see that spl_path2 strays far from the path
 curve between nodes 1 and 2.
 <p>
-Trying to choose the best time parameters for curve nodes 
-can be difficult and tedious. Fortunately, the table editor 
-contains a tool 
-which helps to automate the process. 
+Trying to choose the best time parameters for curve nodes
+can be difficult and tedious. Fortunately, the table editor
+contains a tool
+which helps to automate the process.
 Press the <b>Up</b> button on one of the windows to pop the main menu to
 the top of the window stack, and select <b>Table Editor</b>. Select
 <b>New editor</b>, the only option on the posted menu.
 <p>
-A large 
+A large
 <a href="./teditor.gif">table editor window</a>
  should appear. The purpose of this window is
 to allow you to edit animation tables, which are tables of data in which
@@ -280,12 +280,12 @@ the columns represent animation parameters and the rows represent
 animation frames. When it first pops up, the table editor is by default
 filled in with the contents of the current curve. There is one row for
 each node of the curve, and there are four columns representing the
-time and the x, y, and z coordinates of each node. 
+time and the x, y, and z coordinates of each node.
 Note that the times for each node are evenly spaced at one second
 intervals, except for node 1 which you just modified.
 <p>
-Click on the 
-table editor's <b>Estimate Time</b> button to pop up the 
+Click on the
+table editor's <b>Estimate Time</b> button to pop up the
 <a href="etime.gif">time estimator window</a>
 <p>
 The time estimator window uses the distances between curve nodes to
@@ -304,7 +304,7 @@ accept them.
 <p>
 Look at the first column of the animation table in the table editor, and
 Note that the time parameters are no
-longer evenly spaced - they have been changed to reflect the distances 
+longer evenly spaced - they have been changed to reflect the distances
 between the points.
 To apply the new time parameters to the path curve, click on the table
 editor's <b>Write</b> button, and then select <b>to Curve</b> from the
@@ -327,7 +327,7 @@ to animate the cone, it should appear to start slowly, accelerate, and
 then slow at the end of its motion.
 Go back to the object animation window and change the name of the source
 curve to <code>spl_path3</code> before recreating and showing
-foo.script. 
+foo.script.
 <p>
 Besides helping to control the speed of animated objects,
 time estimation can give you the freedom to put nodes closer together
@@ -347,7 +347,7 @@ Center the display on the postion of node 1, making sure that you check
 the centering from at least two orthogonal views. Go to a top view, and
 use the MGED's yslew slider to move the display center to the
 edge of the torus closest to the top of the screen. Press the curve
-editor's <b>ADD</b>button to add this point to the curve. 
+editor's <b>ADD</b>button to add this point to the curve.
 Now nodes 1 and 2 should define a straight line perpendicular
 to the center of the torus.
 <p>
@@ -383,7 +383,7 @@ motion at the beginning or end of an object's path.
 <h2><a name="RDAOrientation">Relative Displacement and Orientation</a></h2>
 Backtracking a little bit to the object animation window, the next
 step will demonstrate the <b>Relative Displacement</b> and <b>Relative
-Rotation</b> options. 
+Rotation</b> options.
 Change the name of the <b>Output file</b> from <code>foo.script</code>
 to <code>rel.script</code> so that <code>foo.script</code> is available
 for later use.
@@ -392,7 +392,7 @@ You will use the table editor to create an
 animation table for bobbing the cone sinusoidally up and down.
 Go back to the table editor, and press <b>Clear</b> to empty the table.
 Press the <b>Edit Columns</b> button to pop up the column editing
-window. 
+window.
 On the column editor, press the <b>Add Column</b> button
 three times to make three new entry boxes appear at the top of
 <a href="tut4.gif">the window</a>.
@@ -402,15 +402,15 @@ Each entry box of the column editor corresponds to a column that will be
 produced as output. The box may contain any valid Tcl expression, plus
 some column editor substitutions associated with the <code>@</code>
 symbol. Type <code>@i</code> in the first entry box, type
-<code>@n</code> in the second, and type <code>4*@pi*@i/(@n-1)</code> 
+<code>@n</code> in the second, and type <code>4*@pi*@i/(@n-1)</code>
 in
 the third. In the entry labeled <b>Number of Rows</b>, type
 <code>31</code>. Now press <b>OK</b> to create the table you specified.
 <p>
 The first column now contains the row index (substituted for @i), the second
-column contains the number of rows in the table (substituted for @n). 
+column contains the number of rows in the table (substituted for @n).
 The third column ranged linearly from zero to four times the
-mathematical constant pi (substituted for @pi). 
+mathematical constant pi (substituted for @pi).
 The other possible
 substitutions are @e for the mathematical constant e, and @<i>k</i>, for
 the contents of the <i>k</i>-th column.
@@ -462,9 +462,9 @@ orientation, go back to the table editor and pop up the column editor.
 Press the <b>Add Column</b> button three time and enter
 <code>@0*120</code> into the first new column entry box next to the
 label <b>4:</b>. Enter <code>0</code>
-into entry boxes <b>5:</b> and <b>6:</b>, and press <b>OK</b> 
+into entry boxes <b>5:</b> and <b>6:</b>, and press <b>OK</b>
 to add the three new
-columns. 
+columns.
 <p>
 These columns represent yaw, pitch, and roll for the cone. The
 yaw column will cause the cone to yaw through 360 degrees during the

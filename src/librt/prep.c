@@ -27,12 +27,12 @@
  *
  *  Author -
  *	Michael John Muuss
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005
- *  
+ *
  */
 /*@}*/
 
@@ -208,7 +208,7 @@ rt_free_rti(struct rt_i *rtip)
 
 /*
  *  			R T _ P R E P _ P A R A L L E L
- *  
+ *
  *  This routine should be called just before the first call to rt_shootray().
  *  It should only be called ONCE per execution, unless rt_clean() is
  *  called inbetween.
@@ -373,7 +373,7 @@ rt_prep_parallel(register struct rt_i *rtip, int ncpu)
 
 	/* If region-id expression file exists, process it */
 	rt_regionfix(rtip);
-	
+
 	/* For plotting, compute a slight enlargement of the model RPP,
 	 * to allow room for rays clipped to the model RPP to be depicted.
 	 * Always do this, because application debugging may use it too.
@@ -847,7 +847,7 @@ rt_clean(register struct rt_i *rtip)
 		RT_CK_REGION(regp);
 		db_ck_tree( regp->reg_treetop );
 	}
-	/*  
+	/*
 	 *  Clear out the region table
 	 *  db_free_tree() will delete most soltab structures.
 	 */
@@ -1031,7 +1031,7 @@ rt_del_regtree( struct rt_i *rtip, register struct region *delregp, struct resou
 
 /*
  *  			S O L I D _ B I T F I N D E R
- *  
+ *
  *  Used to walk the boolean tree, setting bits for all the solids in the tree
  *  to the provided bit vector.  Should be called AFTER the region bits
  *  have been assigned.
@@ -1734,7 +1734,7 @@ rt_reprep( struct rt_i *rtip, struct rt_reprep_obj_list *objs, struct resource *
 		rtip->rti_Solids = (struct soltab **)bu_realloc( rtip->rti_Solids,
 								 rtip->nsolids * sizeof( struct soltab *),
 								 "rtip->rti_Solids" );
-		memset( rtip->rti_Solids, 0, rtip->nsolids );
+		memset( rtip->rti_Solids, 0, rtip->nsolids * sizeof(struct soltab *));
 	}
 
 	bitno = 0;
@@ -1742,7 +1742,7 @@ rt_reprep( struct rt_i *rtip, struct rt_reprep_obj_list *objs, struct resource *
 		stp->st_bit = bitno;
 		rtip->rti_Solids[bitno] = stp;
 		bitno++;
-		
+
 	} RT_VISIT_ALL_SOLTABS_END
 
 	for( i=0 ; i<BU_PTBL_LEN( &rtip->rti_new_solids ) ; i++ ) {

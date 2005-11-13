@@ -22,7 +22,7 @@
  *
  */
 
-/*      COMMAND.C       */ 
+/*      COMMAND.C       */
 #ifndef lint
 static const char RCSid[] = "$Header$";
 #endif
@@ -118,10 +118,10 @@ com_table		*ctp;
 	}
 	if (abs(az) > 360)       /* check for valid az value */
 	{
-		bu_log("Error:  |azimuth| <= 360\n"); 
+		bu_log("Error:  |azimuth| <= 360\n");
 		return;
 	}
-	i += rc; 
+	i += rc;
 	while (isspace(*(buffer+i)))
 		++i;
 	if ((rc = str_dbl(buffer+i, &el)) == 0)  /* get el value */
@@ -131,16 +131,16 @@ com_table		*ctp;
 	}
 	if (abs(el) > 90)       /* check for valid el value */
 	{
-		bu_log("Error:  |elevation| <= 90\n"); 
+		bu_log("Error:  |elevation| <= 90\n");
 		return;
 	}
-	i += rc; 
+	i += rc;
 	if (*(buffer+i) != '\0')  /* check for garbage at the end of the line */
 	{
 		com_usage(ctp);
 		return;
 	}
-	azimuth() = az;     
+	azimuth() = az;
 	elevation() = el;
 	ae2dir();
 }
@@ -196,7 +196,7 @@ com_table		*ctp;
 		com_usage(ctp);
 		return;
 	}
-	i += rc; 
+	i += rc;
 	while (isspace(*(buffer+i)))
 		++i;
 	if ((rc = str_dbl(buffer+i, &Gr[VERT])) == 0) /* get vert coor */
@@ -204,7 +204,7 @@ com_table		*ctp;
 		com_usage(ctp);
 		return;
 	}
-	i += rc; 
+	i += rc;
 	while (isspace(*(buffer+i)))
 		++i;
 	if (*(buffer+i) == '\0')   /* if there is no dist coor, set default */
@@ -219,7 +219,7 @@ com_table		*ctp;
 		com_usage(ctp);
 		return;
 	}
-	i += rc; 
+	i += rc;
 	if (*(buffer+i) != '\0') /* check for garbage at the end of the line */
 	{
 		com_usage(ctp);
@@ -255,7 +255,7 @@ com_table		*ctp;
 		com_usage(ctp);
 		return;
 	}
-	i += rc; 
+	i += rc;
 	while (isspace(*(buffer+i)))
 		++i;
 	if ((rc = str_dbl(buffer+i, &Tar[Y])) == 0)  /* get target y coor */
@@ -263,7 +263,7 @@ com_table		*ctp;
 		com_usage(ctp);
 		return;
 	}
-	i += rc; 
+	i += rc;
 	while (isspace(*(buffer+i)))
 		++i;
 	if ((rc = str_dbl(buffer+i, &Tar[Z])) == 0)    /* get target z coor */
@@ -271,7 +271,7 @@ com_table		*ctp;
 		com_usage(ctp);
 		return;
 	}
-	i += rc; 
+	i += rc;
 	if (*(buffer+i) != '\0') /* check for garbage at the end of the line */
 	{
 		com_usage(ctp);
@@ -281,7 +281,7 @@ com_table		*ctp;
 	target(Y) = Tar[Y] * local2base;
 	target(Z) = Tar[Z] * local2base;
 	targ2grid();
-}	
+}
 
 
 void dir_vect(buffer, ctp)
@@ -306,7 +306,7 @@ com_table		*ctp;
 		com_usage(ctp);
 		return;
         }
-	i += rc; 
+	i += rc;
 	while (isspace(*(buffer+i)))
 		++i;
 	if ((rc = str_dbl(buffer+i, &Dir[Y])) == 0)  /* get direct y coor */
@@ -314,7 +314,7 @@ com_table		*ctp;
 		com_usage(ctp);
 		return;
 	}
-	i += rc; 
+	i += rc;
 	while (isspace(*(buffer+i)))
 		++i;
 	if ((rc = str_dbl(buffer+i, &Dir[Z])) == 0)    /* get direct z coor */
@@ -322,7 +322,7 @@ com_table		*ctp;
 		com_usage(ctp);
 		return;
 	}
-	i += rc; 
+	i += rc;
 	if (*(buffer+i) != '\0') /* check for garbage at the end of the line */
 	{
 		com_usage(ctp);
@@ -475,7 +475,7 @@ com_table	*ctp;
 	bu_log("units = '%s'\n", local_u_name);
 	return;
     }
-    
+
     if (strcmp(buffer + i, "?") == 0)
     {
 	com_usage(ctp);
@@ -517,7 +517,7 @@ com_table	*ctp;
 	bu_log("overlap_claims = '%s'\n", ocname[overlap_claims]);
 	return;
     }
-    
+
     if (strcmp(buffer + i, "?") == 0)
     {
 	com_usage(ctp);

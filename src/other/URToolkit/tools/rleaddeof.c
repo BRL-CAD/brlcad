@@ -8,6 +8,7 @@
  * Copyright (c) 1990, The Regents of the University of Michigan
  */
 
+#include <stdlib.h>
 #include <stdio.h>
 #include "rle.h"
 #include "rle_raw.h"

@@ -26,7 +26,7 @@
  * for preparing geometry that is ready (i.e. vlists) for
  * display. Much of this code was extracted from MGED and modified
  * to work herein.
- * 
+ *
  * Source -
  *	SLAD CAD Team
  *	The U. S. Army Research Laboratory
@@ -121,7 +121,7 @@ static int dgo_shaded_mode_tcl();
 	{ \
 		Tcl_AppendResult(_interp, "Not associated with a database!\n", (char *)NULL); \
 		return TCL_ERROR; \
-	}	
+	}
 
 /*
  *  It is expected that entries on this mater list will be sorted
@@ -425,7 +425,7 @@ dgo__cmd(struct dg_obj	*dgop,
 
 /*
  * Usage:
- *        procname 
+ *        procname
  */
 static int
 dgo__tcl(ClientData	clientData,
@@ -955,7 +955,7 @@ dgo_who_cmd(struct dg_obj	*dgop,
 			return TCL_ERROR;
 		}
 	}
-		
+
 
 	/* Find all unique top-level entries.
 	 *  Mark ones already done with s_flag == UP
@@ -1318,17 +1318,17 @@ dgo_get_eyemodel_cmd(struct dg_obj	*dgop,
   struct view_obj * vop;
   quat_t		quat;
   vect_t		eye_model;
-  
+
   if (argc != 2) {
     struct bu_vls vls;
-    
+
     bu_vls_init(&vls);
     bu_vls_printf(&vls, "helplib_alias dgo_get_eyemodel %s", argv[0]);
     Tcl_Eval(interp, bu_vls_addr(&vls));
     bu_vls_free(&vls);
     return TCL_ERROR;
   }
-  
+
   /*
    * Retrieve the view object
    */
@@ -1336,23 +1336,23 @@ dgo_get_eyemodel_cmd(struct dg_obj	*dgop,
     if (strcmp(bu_vls_addr(&vop->vo_name), argv[1]) == 0)
       break;
   }
-  
+
   if (BU_LIST_IS_HEAD(vop, &HeadViewObj.l)) {
-    Tcl_AppendResult(interp, 
-		     "dgo_get_eyemodel: bad view object - ", 
+    Tcl_AppendResult(interp,
+		     "dgo_get_eyemodel: bad view object - ",
 		     argv[2],
 		     "\n", (char *)NULL);
     return TCL_ERROR;
   }
-  
+
   dgo_rt_set_eye_model(dgop, vop, eye_model);
-  
+
   bu_vls_init(&vls);
-  
+
   quat_mat2quat(quat, vop->vo_rotation );
-  
+
   bu_vls_printf(&vls, "viewsize %.15e;\n", vop->vo_size);
-  bu_vls_printf(&vls, "orientation %.15e %.15e %.15e %.15e;\n", 
+  bu_vls_printf(&vls, "orientation %.15e %.15e %.15e %.15e;\n",
 		V4ARGS(quat));
   bu_vls_printf(&vls, "eye_pt %.15e %.15e %.15e;\n",
 		eye_model[X], eye_model[Y], eye_model[Z] );
@@ -1397,11 +1397,7 @@ dgo_rt_cmd(struct dg_obj	*dgop,
 	}
 
 	vp = &dgop->dgo_rt_cmd[0];
-#if 1
 	*vp++ = argv[0];
-#else
-	*vp++ = "rt";
-#endif
 	*vp++ = "-M";
 
 	if (vop->vo_perspective > 0) {
@@ -1838,7 +1834,7 @@ struct rtcheck {
 	FILE			*fp;
 	struct bn_vlblock	*vbp;
 	struct bu_list		*vhead;
-	double			csize;  
+	double			csize;
 	struct dg_obj		*dgop;
 	Tcl_Interp		*interp;
 };
@@ -2057,7 +2053,7 @@ dgo_rtcheck_cmd(struct dg_obj	*dgop,
 	register char **vp;
 	register int i;
 #ifndef _WIN32
-	int	pid; 	 
+	int	pid;
 	int	i_pipe[2];	/* object reads results for building vectors */
 	int	o_pipe[2];	/* object writes view parameters */
 	int	e_pipe[2];	/* object reads textual results */
@@ -2079,11 +2075,7 @@ dgo_rtcheck_cmd(struct dg_obj	*dgop,
 
 #ifndef _WIN32
 	vp = &dgop->dgo_rt_cmd[0];
-# if 1
 	*vp++ = argv[0];
-# else
-	*vp++ = "rtcheck";
-# endif
 	*vp++ = "-M";
 	for (i=1; i < argc; i++)
 		*vp++ = argv[i];
@@ -2142,7 +2134,7 @@ dgo_rtcheck_cmd(struct dg_obj	*dgop,
 
 	/* As parent, send view information down pipe */
 	(void)close(o_pipe[0]);
-	fp = fdopen(o_pipe[1], "w"); 
+	fp = fdopen(o_pipe[1], "w");
 #if 1
 	VSET(temp, 0.0, 0.0, 1.0);
 	MAT4X3PNT(eye_model, vop->vo_view2model, temp);
@@ -2229,34 +2221,34 @@ dgo_rtcheck_cmd(struct dg_obj	*dgop,
 	sa.bInheritHandle = TRUE;
 	sa.lpSecurityDescriptor = NULL;
 
-	// Create a pipe for the child process's STDERR.  
+	/* Create a pipe for the child process's STDERR. */
 	CreatePipe( &e_pipe[0], &e_pipe[1], &sa, 0);
 
-	// Create noninheritable read handle and close the inheritable read handle. 
+	/* Create noninheritable read handle and close the inheritable read handle. */
 	DuplicateHandle( GetCurrentProcess(), e_pipe[0],
-			 GetCurrentProcess(),  &pipe_eDup, 
+			 GetCurrentProcess(),  &pipe_eDup,
 			 0,  FALSE,
 			 DUPLICATE_SAME_ACCESS );
 	CloseHandle( e_pipe[0]);
 
-	// Create a pipe for the child process's STDOUT.  
+	/* Create a pipe for the child process's STDOUT. */
 	CreatePipe( &o_pipe[0], &o_pipe[1], &sa, 0);
 
-	// Create noninheritable write handle and close the inheritable writehandle. 
+	/* Create noninheritable write handle and close the inheritable writehandle. */
 	DuplicateHandle( GetCurrentProcess(), o_pipe[1],
-			 GetCurrentProcess(),  &pipe_oDup , 
+			 GetCurrentProcess(),  &pipe_oDup ,
 			 0,  FALSE,
 			 DUPLICATE_SAME_ACCESS );
 	CloseHandle( o_pipe[1]);
-	
-	// Create a pipe for the child process's STDIN.  
+
+	/* Create a pipe for the child process's STDIN. */
 	CreatePipe(&i_pipe[0], &i_pipe[1], &sa, 0);
 
-	// Duplicate the read handle to the pipe so it is not inherited.  
-	DuplicateHandle(GetCurrentProcess(), i_pipe[0], 
-			GetCurrentProcess(), &pipe_iDup, 
-			0, FALSE,                  // not inherited       
-			DUPLICATE_SAME_ACCESS ); 
+	/* Duplicate the read handle to the pipe so it is not inherited. */
+	DuplicateHandle(GetCurrentProcess(), i_pipe[0],
+			GetCurrentProcess(), &pipe_iDup,
+			0, FALSE,                  /* not inherited */
+			DUPLICATE_SAME_ACCESS );
 	CloseHandle(i_pipe[0]);
 
 
@@ -2528,7 +2520,7 @@ dgo_rtabort_cmd(struct dg_obj	*dgop,
 		char 		**argv)
 {
 	struct run_rt *rrp;
-	HANDLE hProcess;      
+	HANDLE hProcess;
 
 	for (BU_LIST_FOR(rrp, run_rt, &dgop->dgo_headRunRt.l)) {
 		hProcess= OpenProcess(PROCESS_ALL_ACCESS, TRUE,rrp->pid);
@@ -2559,7 +2551,7 @@ dgo_qray_tcl(ClientData	clientData,
 	     char	**argv)
 {
 	struct dg_obj *dgop = (struct dg_obj *)clientData;
-	
+
 	DGO_CHECK_WDBP_NULL(dgop,interp);
 	return dgo_qray_cmd(dgop, interp, argc-1, argv+1);
 }
@@ -2572,7 +2564,7 @@ dgo_nirt_tcl(ClientData	clientData,
 {
 	struct dg_obj	*dgop = (struct dg_obj *)clientData;
 	struct view_obj	*vop;
-	
+
 	if (argc < 3 || MAXARGS < argc) {
 		struct bu_vls vls;
 
@@ -2608,7 +2600,7 @@ dgo_vnirt_tcl(ClientData	clientData,
 {
 	struct dg_obj	*dgop = (struct dg_obj *)clientData;
 	struct view_obj	*vop;
-	
+
 	if (argc < 5 || MAXARGS < argc) {
 		struct bu_vls vls;
 
@@ -2905,7 +2897,7 @@ dgo__cmd(struct dg_obj	*dgop,
 
 /*
  * Usage:
- *        procname 
+ *        procname
  */
 static int
 dgo__tcl(ClientData	clientData,
@@ -3245,7 +3237,7 @@ dgo_nmg_region_end(register struct db_tree_state *tsp, struct db_full_path *path
  *	1	regular wireframes
  *	2	big-E
  *	3	NMG polygons
- *  
+ *
  *  Returns -
  *  	0	Ordinarily
  *	-1	On major error
@@ -3397,7 +3389,7 @@ dgo_drawtrees(struct dg_obj *dgop, Tcl_Interp *interp, int argc, char **argv, in
     }
     argc -= bu_optind;
     argv += bu_optind;
-	
+
     switch (kind) {
       case 1:
 	if (dgop->dgo_shaded_mode && dgcdp->shaded_mode_override < 0) {
@@ -3871,11 +3863,11 @@ dgo_eraseobjpath(struct dg_obj	*dgop,
 			--ac;
 			++av;
 		}
-		
+
 		/* ignore last element if empty */
 		if (*av[ac-1] == '\0')
 			--ac;
-		
+
 		dpp = bu_calloc(ac+1, sizeof(struct directory *), "eraseobjpath: directory pointers");
 		for (j = 0; j < ac; ++j)
 			if ((dp = db_lookup(dgop->dgo_wdbp->dbip, av[j], noisy)) != DIR_NULL)
@@ -4139,7 +4131,7 @@ dgo_build_tops(Tcl_Interp	*interp,
 
 /*
  *  			D G O _ R T _ W R I T E
- *  
+ *
  *  Write out the information that RT's -M option needs to show current view.
  *  Note that the model-space location of the eye is a parameter,
  *  as it can be computed in different ways.
@@ -4292,17 +4284,17 @@ dgo_rt_output_handler(ClientData	clientData,
 	Tcl_Close(drcdp->interp, run_rtp->chan);
 	CloseHandle(run_rtp->fd);
 
-	/* wait for the forked process 
+	/* wait for the forked process
 	 * either EOF has been sent or there was a read error.
 	 * there is no need to block indefinately
 	 */
 	WaitForSingleObject( run_rtp->hProcess, 120 );
 	/* !!! need to observer implications of being non-infinate
-	 *	WaitForSingleObject( run_rtp->hProcess, INFINITE ); 
+	 *	WaitForSingleObject( run_rtp->hProcess, INFINITE );
 	 */
-		
+
 	if(GetLastError() == ERROR_PROCESS_ABORTED) {
-	    run_rtp->aborted = 1; 
+	    run_rtp->aborted = 1;
 	}
 
 	aborted = run_rtp->aborted;
@@ -4421,7 +4413,7 @@ dgo_rt_set_eye_model(struct dg_obj *dgop,
  */
 static int
 dgo_run_rt(struct dg_obj *dgop,
-	   struct view_obj *vop) 
+	   struct view_obj *vop)
 {
 	register int	i;
 	FILE		*fp_in;
@@ -4441,7 +4433,7 @@ dgo_run_rt(struct dg_obj *dgop,
 	struct run_rt	*run_rtp;
 	struct dg_rt_client_data	*drcdp;
 #ifndef _WIN32
-	int		pid; 	 
+	int		pid;
 
 	(void)pipe(pipe_in);
 	(void)pipe(pipe_err);
@@ -4504,25 +4496,25 @@ dgo_run_rt(struct dg_obj *dgop,
 	sa.bInheritHandle = TRUE;
 	sa.lpSecurityDescriptor = NULL;
 
-	// Create a pipe for the child process's STDOUT.  
+	/* Create a pipe for the child process's STDOUT. */
 	CreatePipe( &pipe_err[0], &pipe_err[1], &sa, 0);
 
-	// Create noninheritable read handle and close the inheritable read handle. 
+	/* Create noninheritable read handle and close the inheritable read handle. */
 	DuplicateHandle( GetCurrentProcess(), pipe_err[0],
-        GetCurrentProcess(),  &pipe_errDup , 
+        GetCurrentProcess(),  &pipe_errDup ,
 		0,  FALSE,
         DUPLICATE_SAME_ACCESS );
 	CloseHandle( pipe_err[0] );
-	
-	// Create a pipe for the child process's STDIN.  
+
+	/* Create a pipe for the child process's STDIN. */
 	CreatePipe(&pipe_in[0], &pipe_in[1], &sa, 0);
 
-	// Duplicate the write handle to the pipe so it is not inherited.  
-	DuplicateHandle(GetCurrentProcess(), pipe_in[1], 
-		GetCurrentProcess(), &pipe_inDup, 
-		0, FALSE,                  // not inherited       
-		DUPLICATE_SAME_ACCESS ); 
-	CloseHandle(pipe_in[1]); 
+	/* Duplicate the write handle to the pipe so it is not inherited. */
+	DuplicateHandle(GetCurrentProcess(), pipe_in[1],
+		GetCurrentProcess(), &pipe_inDup,
+		0, FALSE,                  /* not inherited */
+		DUPLICATE_SAME_ACCESS );
+	CloseHandle(pipe_in[1]);
 
 
 	si.cb = sizeof(STARTUPINFO);
@@ -4539,7 +4531,7 @@ dgo_run_rt(struct dg_obj *dgop,
 	for(i=1;i<dgop->dgo_rt_cmd_len;i++) {
 	    sprintf(name,"%s ",dgop->dgo_rt_cmd[i]);
 	    strcat(line,name); }
-	   
+
 
 	CreateProcess(NULL, line, NULL, NULL, TRUE,
 		      DETACHED_PROCESS, NULL, NULL,
@@ -4624,8 +4616,8 @@ dgo_zapall(struct rt_wdb *wdbp, Tcl_Interp *interp)
  */
 static void
 dgo_print_schain(struct dg_obj *dgop, Tcl_Interp *interp, int lvl)
-                  	      
-               		        
+
+
         		    			/* debug level */
 {
 	register struct solid		*sp;
@@ -4827,7 +4819,7 @@ dgo_bot_check_leaf(struct db_tree_state		*tsp,
 	    struct bu_list vhead;
 
 	    BU_LIST_INIT(&vhead);
-	    
+
 	    (void)rt_bot_plot_poly(&vhead, ip, tsp->ts_ttol, tsp->ts_tol);
 	    dgo_drawH_part2(0, &vhead, pathp, tsp, SOLID_NULL, dgcdp);
 	} else if (ip->idb_major_type == DB5_MAJORTYPE_BRLCAD &&
@@ -4835,7 +4827,7 @@ dgo_bot_check_leaf(struct db_tree_state		*tsp,
 	    struct bu_list vhead;
 
 	    BU_LIST_INIT(&vhead);
-	    
+
 	    (void)rt_pg_plot_poly(&vhead, ip, tsp->ts_ttol, tsp->ts_tol);
 	    dgo_drawH_part2(0, &vhead, pathp, tsp, SOLID_NULL, dgcdp);
 	} else {
@@ -4865,7 +4857,7 @@ dgo_bot_check_leaf(struct db_tree_state		*tsp,
 		struct bu_list vhead;
 
 		BU_LIST_INIT(&vhead);
-	    
+
 		(void)rt_bot_plot_poly(&vhead, ip, tsp->ts_ttol, tsp->ts_tol);
 		dgo_drawH_part2(0, &vhead, pathp, tsp, SOLID_NULL, dgcdp);
 	    } else if (ip->idb_minor_type == DB5_MINORTYPE_BRLCAD_POLY) {

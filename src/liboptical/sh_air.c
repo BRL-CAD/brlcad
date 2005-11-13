@@ -51,7 +51,7 @@ struct air_specific {
 
 static struct air_specific air_defaults = {
 	AIR_MAGIC,
-	.1,		/* d_p_mm */	
+	.1,		/* d_p_mm */
 	.01,		/* scale */
 	0.0,		/* delta */
 	};
@@ -93,7 +93,7 @@ struct mfuncs air_mfuncs[] = {
 	{0,		(char *)0,	0,		0,	0,
 	0,		0,		0,		0 }
 };
-static void 
+static void
 dpm_hook(register const struct bu_structparse *sdp, register const char *name, char *base, const char *value)
                                     	     	/* structure description */
                    			      	/* struct member name */
@@ -102,7 +102,7 @@ dpm_hook(register const struct bu_structparse *sdp, register const char *name, c
 {
 #define meters_to_millimeters 0.001
 	struct air_specific *air_sp = (struct air_specific *)base;
-	
+
 	air_sp->d_p_mm *= meters_to_millimeters;
 }
 /*	A I R _ S E T U P
@@ -113,10 +113,10 @@ dpm_hook(register const struct bu_structparse *sdp, register const char *name, c
  */
 HIDDEN int
 air_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip)
-                      	    
-             		         
+
+
     			      	/* pointer to reg_udata in *rp */
-             		     
+
            		      	/* New since 4.4 release */
 {
 	register struct air_specific	*air_sp;
@@ -364,7 +364,7 @@ tmist_render(struct application *ap, struct partition *pp, struct shadework *swp
  * te = dist from pt to end of ray (out hit point)
  * Zo = elevation at ray start
  * Ze = elevation at ray end
- * Zd = Z component of normalized ray vector 
+ * Zd = Z component of normalized ray vector
  * d_p_mm = overall fog density
  * B = density falloff with altitude
  *
@@ -435,7 +435,7 @@ emist_render(struct application *ap, struct partition *pp, struct shadework *swp
  * te = dist from pt to end of ray (out hit point)
  * Zo = elevation at ray start
  * Ze = elevation at ray end
- * Zd = Z component of normalized ray vector 
+ * Zd = Z component of normalized ray vector
  * d_p_mm = overall fog density
  * B = density falloff with altitude
  *
@@ -487,7 +487,7 @@ emist_fbm_render(struct application *ap, struct partition *pp, struct shadework 
 	for (delta=0 ; delta < dist ; delta += 1.0 ) {
 		/* compute the current point in space */
 
-		/* Shoot a ray down the -Z axis to find our current height 
+		/* Shoot a ray down the -Z axis to find our current height
 		 * above the local terrain.
 		 */
 

@@ -22,13 +22,13 @@
 /*@{*/
 /** @file nurb_trim.c
  * Trimming curve routines.
- * 
+ *
  * Author:  Paul R. Stay
  * Source
  * 	SECAD/VLD Computing Consortium, Bldg 394
  * 	The US Army Ballistic Research Laboratory
  * 	Aberdeen Proving Ground, Maryland 21005
- * 
+ *
  * Date: Mon June 1, 1992
  */
 /*@}*/
@@ -86,7 +86,7 @@ int quad_table[16]  = {		/* A = 0, B = 2, C = 3 */
  * q3 or q4. THis handles the case of endpoint problems correctly.
  */
 
-int 
+int
 rt_trim_case(struct edge_g_cnurb *trim, fastf_t u, fastf_t v)
 {
 	int quadrant;
@@ -116,7 +116,7 @@ rt_trim_case(struct edge_g_cnurb *trim, fastf_t u, fastf_t v)
 			qstats |= (1 << quadrant);
 			pts += coords;
 		}
-	else 
+	else
 		for( i = 0; i < trim->c_size; i++)
 		{
 			if(pts[0] > u )
@@ -131,7 +131,7 @@ rt_trim_case(struct edge_g_cnurb *trim, fastf_t u, fastf_t v)
 	return quad_table[qstats];	/* return the special case of the curve */
 }
 
-/* Process Case B curves. 
+/* Process Case B curves.
  *
  * If the two endpoints of the curve lie in different quadrants than
  * the axis crosses the curve an odd number of times (TRIM_IN). Otherwise
@@ -166,7 +166,7 @@ rt_process_caseb(struct edge_g_cnurb *trim, fastf_t u, fastf_t v)
 		else 		 q1 = (pts[1] >= v)?QUAD2:QUAD3;
 
 
-		pts = trim->ctl_points + 
+		pts = trim->ctl_points +
 			RT_NURB_EXTRACT_COORDS(trim->pt_type) 	*
 			(trim->c_size -1);
 		if( pts[0] > u) q2 = (pts[1] >= v)?QUAD1:QUAD4;
@@ -192,7 +192,7 @@ rt_nurb_uv_dist(struct edge_g_cnurb *trim, fastf_t u, fastf_t v)
 	int rat;
 	fastf_t u2, v2;
 
-	ptr = trim->ctl_points;	
+	ptr = trim->ctl_points;
 	coords = RT_NURB_EXTRACT_COORDS(trim->pt_type);
 	rat = RT_NURB_IS_PT_RATIONAL(trim->pt_type);
 
@@ -279,7 +279,7 @@ rt_process_casec(struct edge_g_cnurb *trim, fastf_t u, fastf_t v)
 	while( BU_LIST_WHILE( clip, edge_g_cnurb, &plist ) )
 	{
 		BU_LIST_DEQUEUE( &clip->l );
-		
+
 		caset = rt_trim_case(clip, u,v);
 
 		trim_flag = 0;
@@ -290,7 +290,7 @@ rt_process_casec(struct edge_g_cnurb *trim, fastf_t u, fastf_t v)
 			trim_flag = rt_process_casec(clip, u, v);
 
 		rt_nurb_free_cnurb( clip );
-		
+
 		if( trim_flag == TRIM_IN) jordan_hit++;
 		if( trim_flag == TRIM_ON) break;
 	}
@@ -301,18 +301,18 @@ rt_process_casec(struct edge_g_cnurb *trim, fastf_t u, fastf_t v)
 		rt_nurb_free_cnurb( clip );
 	}
 
-	if( trim_flag == TRIM_ON) 
+	if( trim_flag == TRIM_ON)
 		return TRIM_ON;
 
 	else if( jordan_hit & 01 )
 		return TRIM_IN;
-	else 
+	else
 		return TRIM_OUT;
 }
 
 
 /* This routine will be called several times, once for each portion of
- * the trimming curve. It returns wheter a line extended from the 
+ * the trimming curve. It returns wheter a line extended from the
  * the <u,v> point will cross the trimming curve an even or odd number
  * of times. Or the <u,v> point could be on the curve in which case
  * TRIM_ON will be returned. THe algorithm uses the approach taken
@@ -320,15 +320,15 @@ rt_process_casec(struct edge_g_cnurb *trim, fastf_t u, fastf_t v)
  * curves. If the original trimming curve is a CASE C curve then further
  * processing is required.
  */
-int 
+int
 rt_uv_in_trim(struct edge_g_cnurb *trim, fastf_t u, fastf_t v)
 {
 
 	int quad_case;
 
 	quad_case = rt_trim_case( trim, u, v);	/* determine quadrants */
-	
-							/* CASE A */	
+
+							/* CASE A */
 	if( quad_case == CASE_A )
 		return TRIM_OUT;
 	if( quad_case == CASE_B )			/* CASE B */
@@ -344,10 +344,10 @@ rt_uv_in_trim(struct edge_g_cnurb *trim, fastf_t u, fastf_t v)
 
 
 
-/* This routines is used to determine how far a point is 
+/* This routines is used to determine how far a point is
  * from the u,v quadrant axes.
  *
- *	Equations 3, 4, 5 in Sederberg '90 paper 
+ *	Equations 3, 4, 5 in Sederberg '90 paper
  */
 
 fastf_t
@@ -384,7 +384,7 @@ _SIGN(fastf_t f)
 
 }
 
-/* 
+/*
  *  We try and clip a curve so that it can be either Case A, or Case C.
  *  Sometimes one of the curves is still case C though, but it is much
  *  small than the original, and further clipping will either show that
@@ -412,10 +412,10 @@ rt_clip_cnurb(struct bu_list *plist, struct edge_g_cnurb *crv, fastf_t u, fastf_
 	fastf_t dist[10];
 
 	coords = RT_NURB_EXTRACT_COORDS( crv->pt_type);
-	
+
 	s_line.axis = 0;	s_line.o_dist = v;
 	t_line.axis = 1;	t_line.o_dist = u;
-	
+
 	ds1 = 0.0;
 	dt1 = 0.0;
 
@@ -426,9 +426,9 @@ rt_clip_cnurb(struct bu_list *plist, struct edge_g_cnurb *crv, fastf_t u, fastf_
 
 	for( i = 0; i < crv->c_size; i++, ptr += coords)
 	{
-		ds1 += 
+		ds1 +=
 		    fabs( rt_trim_line_pt_dist( &s_line, ptr, crv->pt_type) );
-		dt1 += 
+		dt1 +=
 		    fabs( rt_trim_line_pt_dist( &t_line, ptr, crv->pt_type) );
 	}
 
@@ -471,7 +471,7 @@ rt_clip_cnurb(struct bu_list *plist, struct edge_g_cnurb *crv, fastf_t u, fastf_
         		d1 = dist[i];
         		d2 = dist[i+1];
                         x0 = (fastf_t) i / (fastf_t) (crv->c_size - 1 );
-                        x1 = (i+1.0) / (crv->c_size - 1);        		
+                        x1 = (i+1.0) / (crv->c_size - 1);
         	}
 
                 if( _SIGN(d1) != _SIGN(d2) )
@@ -510,7 +510,7 @@ rt_clip_cnurb(struct bu_list *plist, struct edge_g_cnurb *crv, fastf_t u, fastf_
 	tmp = (struct edge_g_cnurb *) c1->l.forw;
 	BU_LIST_DEQUEUE( &tmp->l);
 	rt_nurb_free_cnurb( tmp );
-	
+
 	BU_LIST_INIT( plist );
 	BU_LIST_INSERT( &c2->l, plist);
 	BU_LIST_APPEND( plist, &c1->l);

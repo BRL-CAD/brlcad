@@ -56,7 +56,7 @@
     constructor {_labels args} {}
     destructor {}
 
-	variable font 
+    variable font 
     itk_option define -colfont colfont Font {Helvetica 12}
     itk_option define -rowfont rowfont Font {Helvetica 12}
     itk_option define -useTextEntry useTextEntry UseTextEntry 0
@@ -232,7 +232,7 @@
 
 	# label options
 	variable labelOptionList {-activebackground -activeforeground -anchor
-	    -bd -bg -cursor -fg -font 
+	    -bd -bg -cursor -fg -font
 	    -highlightbackground -highlightcolor -highlightthickness
 	    -justify -padx -pady -relief -state}
 
@@ -248,8 +248,8 @@
 	method initColColors {}
 
 	method hscroll {first last}
-	method configureCanvas {} 
-	method configureTable {} 
+	method configureCanvas {}
+	method configureTable {}
 	method checkIfAllColumnsDisabled {}
     }
 
@@ -781,7 +781,7 @@
 }
 
 ::itcl::body TableView::setSepText {i text} {
-    set item1 [$table getEntry $i 1] 
+    set item1 [$table getEntry $i 1]
     if {[lindex $item1 0] == $::Table::SEP_MARK} {
 	if {2 <= [llength $item1]} {
 	    # replace existing text
@@ -855,7 +855,7 @@
 
 ::itcl::body TableView::deleteRowTraces {i} {
     for {set j 1} {$j <= $vcols} {incr j} {
-	foreach vt [trace vinfo evar($i,$j)] { 
+	foreach vt [trace vinfo evar($i,$j)] {
 	    eval trace vdelete evar($i,$j) $vt
 	    set si [lsearch -exact $traces [list evar($i,$j) [lindex $vt 0] [lindex $vt 1]]]
 	    if {$si != -1} {
@@ -1440,7 +1440,7 @@
 	    if {[grid info $itk_component(rl$gi)] != ""} {
 #		grid $itk_component(sl$gi) -row $gi -column 1 -columnspan [expr {$vcols - 1}] -sticky nsew
 		raise $itk_component(sl$gi)
-		    
+
 
 		set j 1
 		foreach val $row {
@@ -1739,7 +1739,7 @@
     for {set j 1} {$j <= $vcols} {incr j} {
 	lappend colColors [list [$itk_component($trow,$j) cget -bg] \
 			       [$itk_component($trow,$j) cget -fg]]
-    }    
+    }
 }
 
 ::itcl::body TableView::hscroll {first last} {
@@ -1753,7 +1753,7 @@
     set sr [$itk_component(canvas) cget -scrollregion]
     set srw [lindex $sr 2]
     set srh [lindex $sr 3]
-    
+
     $itk_component(table) configure -height $srh -width $srw
 }
 
@@ -1762,7 +1762,7 @@
 #
 ::itcl::body TableView::configureTable {} {
     $itk_component(canvas) configure \
-	    -scrollregion [$itk_component(canvas) bbox tableTag] 
+	    -scrollregion [$itk_component(canvas) bbox tableTag]
 }
 
 ::itcl::body TableView::checkIfAllColumnsDisabled {} {
@@ -2232,7 +2232,7 @@
 	    }
 	} else {
 	    incr ri
-	    if {($itk_option(-scrollLimit) <= 0 && $ri <= $drows) || 
+	    if {($itk_option(-scrollLimit) <= 0 && $ri <= $drows) ||
 		($itk_option(-scrollLimit) != 0 && $ri <= $itk_option(-scrollLimit))} {
 		if {$ri <= $lastrow} {
 		    incr i
@@ -2269,7 +2269,7 @@
 	    }
 	} else {
 	    incr ri
-	    if {($itk_option(-scrollLimit) <= 0 && $ri <= $drows) || 
+	    if {($itk_option(-scrollLimit) <= 0 && $ri <= $drows) ||
 		($itk_option(-scrollLimit) != 0 && $ri <= $itk_option(-scrollLimit))} {
 		if {$ri <= $lastrow} {
 		    incr i

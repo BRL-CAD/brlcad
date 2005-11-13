@@ -22,11 +22,11 @@
  *
  *  Author -
  *	S.Coates - 10 February 1993
- *  
+ *
  *  Source -
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5066
- *  
+ *
  *
  *  Notes -
  *
@@ -264,7 +264,7 @@ int main(int argc, char **argv)
     {
       (void)fprintf(stderr,"\nusage:  firpass file.g objects\n\n");
     }
-	
+
   else
     {
 
@@ -343,7 +343,7 @@ int main(int argc, char **argv)
 	  (void)fflush(stdout);
 	  (void)scanf("%s",filegen);
 	}
-	
+
       /*  Get geometric file name.  */
       if( typeout == 2 )
 	{
@@ -420,7 +420,7 @@ int main(int argc, char **argv)
 	   *		   matprop[i].e1,matprop[i].e2);
 	   *		(void)fflush(stdout);
 	   */
- 
+
 	}
       (void)fclose(fp4);
 
@@ -1178,8 +1178,8 @@ int main(int argc, char **argv)
 
 	      if(ifire == 0)
 		{
-		  region[i].cumfs[k][0] = region[i].cumfs[k][0] + 
-		    region[i].cumfs[k][1] + 
+		  region[i].cumfs[k][0] = region[i].cumfs[k][0] +
+		    region[i].cumfs[k][1] +
 		    region[i].cumfs[k][2];
 		  region[i].cumfs[k][0] /= 3.;
 		}
@@ -1256,7 +1256,7 @@ int main(int argc, char **argv)
 			     region[i].cumvol[0]);
 		(void)fflush(stdout);
 	      }
-			
+
 	    if(region[i].surarea[1] == 1.)
 	      {
 		(void)printf("\tarea:  %f - difference is above",
@@ -1270,7 +1270,7 @@ int main(int argc, char **argv)
 			     region[i].surarea[0]);
 		(void)fflush(stdout);
 	      }
-			
+
 	    (void)printf("\tcentroid:  %f, %f, %f\n",region[i].centroid[0],
 			 region[i].centroid[1],region[i].centroid[2]);
 	    (void)fflush(stdout);
@@ -1353,7 +1353,7 @@ int main(int argc, char **argv)
 			      region[i].cumvol[0]);
 		(void)fflush(fp);
 	      }
-			
+
 	    if(region[i].surarea[1] == 1.)
 	      {
 		(void)fprintf(fp,"\tarea:  %f - difference is above",
@@ -1367,7 +1367,7 @@ int main(int argc, char **argv)
 			      region[i].surarea[0]);
 		(void)fflush(fp);
 	      }
-			
+
 	    (void)fprintf(fp,"\tcentroid:  %f, %f, %f\n",
 			  region[i].centroid[0],
 			  region[i].centroid[1],region[i].centroid[2]);
@@ -2661,11 +2661,11 @@ hit(register struct application *ap_p, struct partition *PartHeadp, struct seg *
        */
 
       /*  Continue finding cummulative volume.  */
-      disx=(enterpt[X] - hitp->hit_point[X]) * 
+      disx=(enterpt[X] - hitp->hit_point[X]) *
 	(enterpt[X] - hitp->hit_point[X]);
-      disy=(enterpt[Y] - hitp->hit_point[Y]) * 
+      disy=(enterpt[Y] - hitp->hit_point[Y]) *
 	(enterpt[Y] - hitp->hit_point[Y]);
-      disz=(enterpt[Z] - hitp->hit_point[Z]) * 
+      disz=(enterpt[Z] - hitp->hit_point[Z]) *
 	(enterpt[Z] - hitp->hit_point[Z]);
       distance=sqrt(disx + disy + disz);
       region[icur].cumvol[whichview] =

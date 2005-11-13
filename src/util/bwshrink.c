@@ -28,7 +28,7 @@
  *
  *  Author -
  *	Lee A. Butler
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
@@ -54,9 +54,10 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include "machine.h"
+#include "bu.h"
 
 
-/* declarations to support use of getopt() system call */
+/* declarations to support use of bu_getopt() system call */
 char *options = "uhs:w:n:f:";
 
 char *progname = "(noname)";
@@ -140,43 +141,43 @@ void parse_args(int ac, char **av)
 
 	if (!(progname = strrchr(*av, '/')))
 		progname = *av;
-	
-	/* Turn off getopt's error messages */
+
+	/* Turn off bu_getopt's error messages */
 	opterr = 0;
 
 	/* get all the option flags from the command line */
-	while ((c=getopt(ac,av,options)) != EOF)
+	while ((c=bu_getopt(ac,av,options)) != EOF)
 		switch (c) {
-		case 'f'	: if ((c = atoi(optarg)) > 1)
+		case 'f'	: if ((c = atoi(bu_optarg)) > 1)
 					factor = c;
 				  break;
 		case 'h'	: width = height = 1024; break;
-		case 'n'	: if ((c=atoi(optarg)) > 0)
+		case 'n'	: if ((c=atoi(bu_optarg)) > 0)
 					height = c;
 				  break;
-		case 'w'	: if ((c=atoi(optarg)) > 0)
+		case 'w'	: if ((c=atoi(bu_optarg)) > 0)
 					width = c;
 				  break;
-		case 's'	: if ((c=atoi(optarg)) > 0)
+		case 's'	: if ((c=atoi(bu_optarg)) > 0)
 					height = width = c;
 				  break;
-		case 'u'	: method = METH_UNDERSAMPLE; break; 
+		case 'u'	: method = METH_UNDERSAMPLE; break;
 		case '?'	:
 		default		: usage(); break;
 		}
 
-	if (optind >= ac) {
+	if (bu_optind >= ac) {
 		if (isatty(fileno(stdout)) )
 			usage();
 	}
-	if (optind < ac) {
-		if (freopen(av[optind], "r", stdin) == (FILE *)NULL) {
-			perror(av[optind]);
+	if (bu_optind < ac) {
+		if (freopen(av[bu_optind], "r", stdin) == (FILE *)NULL) {
+			perror(av[bu_optind]);
 			exit(-1);
 		} else
-			filename = av[optind];
+			filename = av[bu_optind];
 	}
-	if (optind+1 < ac)
+	if (bu_optind+1 < ac)
 		(void)fprintf(stderr, "%s: Excess arguments ignored\n", progname);
 
 }
@@ -205,13 +206,13 @@ int main(int ac, char **av)
 	/* get buffer for image */
 	size = width * height;
 	if ((buffer = (unsigned char *)malloc(width*height)) == (unsigned char *)NULL) {
-		(void)fprintf(stderr, "%s: cannot allocate input buffer\n", 
+		(void)fprintf(stderr, "%s: cannot allocate input buffer\n",
 			progname);
 		exit(-1);
 	}
 
 	/* read in entire image */
-	for (t=0 ; t < size && (c=read(0, (char *)&buffer[t], size-t)) >= 0 ; 
+	for (t=0 ; t < size && (c=read(0, (char *)&buffer[t], size-t)) >= 0 ;
 		t += c);
 
 	if (c < 0) {

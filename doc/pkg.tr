@@ -6,7 +6,7 @@ by Peter B. Shames, updated to reflect BRL extensions since the first
 writing.  It is intended that an RFC be published at some point,
 but for now this (plus the source code) is all the documentation we have.
 In the CAD distribution, the remote framebuffer interface (libfb/if_remote.c)
-and server (rfbd), communicate using this protocol.  
+and server (rfbd), communicate using this protocol.
 
 Contributors:
 

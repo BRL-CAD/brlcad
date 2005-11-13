@@ -37,6 +37,7 @@
  * do not need to flip the image.
  */
 
+#include <stdlib.h>
 #include <stdio.h>
 #include <sys/types.h>
 #include "rle.h"

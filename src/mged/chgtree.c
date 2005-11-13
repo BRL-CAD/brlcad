@@ -74,21 +74,14 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./ged.h"
 #include "./mged_solid.h"
 #include "./mged_dm.h"
-#include "./mgedtcl.h"
 #include "./cmd.h"
 
 
 extern void solid_list_callback(void); /* chgview.c */
 extern struct db_tree_state	mged_initial_tree_state;	/* dodraw.c */
 extern struct bn_tol		mged_tol;	/* from ged.c */
-extern struct rt_tess_tol	mged_ttol;	/* XXX needs to replace mged_abs_tol, et.al. from dodraw.c */
+extern struct rt_tess_tol	mged_ttol;	/* from ged.c */
 extern int			classic_mged;
-
-#ifdef DM_X
-extern Tk_Window	tkwin;
-#else
-int tkwin=0;
-#endif
 
 static char *really_delete="tk_messageBox -icon question -title {Are you sure?}\
  -type yesno -message {If you delete the \"_GLOBAL\" object you will be losing some important information\
@@ -388,7 +381,7 @@ f_arced(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	}
 	db_free_1anim( anp );
 	return TCL_OK;
-		
+
 fail:
 	rt_db_free_internal( &intern, &rt_uniresource );
 	db_free_1anim( anp );

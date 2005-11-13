@@ -23,7 +23,7 @@
 # ExamplePage.itk
 #
 # This page provides the user with a set of examples from which they
-# can choose the type of picture they would like to make. 
+# can choose the type of picture they would like to make.
 #
 
 namespace eval RtWizard {
@@ -72,7 +72,7 @@ namespace eval RtWizard {
     #
     # The example page class provides a series of pictures that
     # show examples of the type of pictures that can be made with
-    # the wizard. 
+    # the wizard.
     #
     ::itcl::class ExamplePage {
 	inherit ::iwidgets::Labeledwidget
@@ -80,7 +80,7 @@ namespace eval RtWizard {
 	#
 	# Configuration variables
 	#
-	
+
 	# None!
 
 	#
@@ -112,11 +112,11 @@ namespace eval RtWizard {
 	    method onCancel {}
 	    method insertHelpText {}
 
-	    variable typeObjects 
+	    variable typeObjects
 
 	    variable imageType
 	    variable currentTypeObj ""
-	    
+
 	    variable previewImages
 	    variable descText
 	    variable keyMap
@@ -127,12 +127,12 @@ namespace eval RtWizard {
 
     #--------------------#
     #   Public Methods   #
-    #--------------------#    
+    #--------------------#
     #
     # constructor - builds the Example Page
     #
     itcl::body ExamplePage::constructor {args} {
-	
+
 	set cs [ $this childsite ]
 	$cs configure -relief groove -bd 2
 
@@ -153,7 +153,7 @@ namespace eval RtWizard {
 	}
 
 	#
-	# Create a frame for the center of the panel. On the left 
+	# Create a frame for the center of the panel. On the left
 	# will be the hierachy window, on the right will be the
 	# mged window over its controls
 	#
@@ -162,10 +162,10 @@ namespace eval RtWizard {
 		    -relief flat
 	} {
 	    usual
-	}    
-	
+	}
+
 	#
-	# Build the middle, the left side contains an option menu over 
+	# Build the middle, the left side contains an option menu over
 	# descriptive text, the right is an a sample image
 	#
 	itk_component add leftFrame {
@@ -183,7 +183,7 @@ namespace eval RtWizard {
 	} {
 	    usual
 	}
-	
+
 	#
 	# Add text description
 	#
@@ -199,7 +199,7 @@ namespace eval RtWizard {
 	}
 
 	#
-	# Pack the optionmenu and the descriptive text within 
+	# Pack the optionmenu and the descriptive text within
 	# the left frame
 	#
 	pack $itk_component(picTypes) \
@@ -242,9 +242,9 @@ namespace eval RtWizard {
 
 	$itk_component(bbox) default cancel
 
-	# 
-	# Now pack the left frame and the preview image. 
-	# 
+	#
+	# Now pack the left frame and the preview image.
+	#
 	pack $itk_component(leftFrame) \
 		-side left \
 		-anchor n \
@@ -256,7 +256,7 @@ namespace eval RtWizard {
 		-anchor center \
 		-padx 5 \
 		-pady 5
-	
+
 	#
 	# Pack the top
 	#
@@ -281,7 +281,7 @@ namespace eval RtWizard {
 	eval configure $args
 
     }
-    
+
     #
     # onSelect
     #
@@ -299,7 +299,7 @@ namespace eval RtWizard {
     #
     # Cleans up when the page is deselected
     #
-    itcl::body ExamplePage::onDeselect {} {	
+    itcl::body ExamplePage::onDeselect {} {
 	#
 	# Nothing yet!
 	#
@@ -324,7 +324,7 @@ namespace eval RtWizard {
     # Adds a picture type to the set of supported pictures.
     #
     itcl::body ExamplePage::addType { type token args } {
-	
+
 	#
 	# Create the picture type object. Note that it defines
 	# steps and the "preview" and "fullSize" methods. It
@@ -337,7 +337,7 @@ namespace eval RtWizard {
 	# Set up the arrays that map the option menu.
 	# entries to the sample image and the descriptive
 	# text.
-	# 
+	#
 	# The option menu outputs the "title" string. We
 	# get the token via the keyMap. That then lets us
 	# access the text and image.
@@ -359,7 +359,7 @@ namespace eval RtWizard {
 		-command "[itcl::code $this changePicType]"
 
 	#
-	# Finally, add the new type (title) to the option 
+	# Finally, add the new type (title) to the option
 	# menu
 	#
 	$itk_component(picTypes) insert end  [$typeObj getTitle]
@@ -381,13 +381,13 @@ namespace eval RtWizard {
 	#
 	# call setType
 	#
-	setType 
+	setType
     }
 
     #
     # setType
     #
-    # Sets the current picture type to whatever is specified in the 
+    # Sets the current picture type to whatever is specified in the
     # option menu.
     #
     itcl::body ExamplePage::setType {} {
@@ -401,11 +401,11 @@ namespace eval RtWizard {
 	#
 	# Get the new type selection
 	#
-	set title [ $itk_component(picTypes) get ]	
+	set title [ $itk_component(picTypes) get ]
 	set token $keyMap($title)
 	set typeObj $typeObjects($token)
 	set imageType $title
-	
+
 	#
 	# activate the new type
 	#
@@ -415,9 +415,9 @@ namespace eval RtWizard {
 
     #--------------------#
     #  Private Methods   #
-    #--------------------#    
+    #--------------------#
     #
-    # updatePreview - 
+    # updatePreview -
     #
     # Called whenever the optionmenu is changed, this method updates the
     # sample image and the help text.
@@ -433,14 +433,14 @@ namespace eval RtWizard {
 	# Convert the long string to the key
 	#
 	set key $keyMap($selection)
-	
+
 	$itk_component(previewImg) configure \
 		-image $previewImages($key)
 	$itk_component(descBox) configure -state normal
 	$itk_component(descBox) delete 1.0 end
 	$itk_component(descBox) insert end $descText($key)
-	$itk_component(descBox) configure -state disabled    
-	
+	$itk_component(descBox) configure -state disabled
+
     }
 
     #
@@ -452,7 +452,7 @@ namespace eval RtWizard {
 	# Select the new picture type
 	#
 	$this setType
-	
+
 	#
 	# Activate the introductory page
 	#
@@ -465,9 +465,9 @@ namespace eval RtWizard {
     ::itcl::body ExamplePage::onCancel {} {
 	$::wizardInstance selectPrev
     }
-    
+
     #
-    # insertHelpText - puts in the helpful text at the top of the 
+    # insertHelpText - puts in the helpful text at the top of the
     #                  page
     #
     ::itcl::body ExamplePage::insertHelpText {} {

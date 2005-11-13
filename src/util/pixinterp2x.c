@@ -19,13 +19,13 @@
  * information.
  */
 /** @file pixinterp2x.c
- *  
+ *
  *  Read a .pix file of a given resolution, and produce one with
  *  twice as many pixels by interpolating between the pixels.
  *
  *  Author -
  *	Michael John Muuss
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
@@ -45,6 +45,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include <stdio.h>
 
 #include "machine.h"
+#include "bu.h"
 
 
 FILE	*infp;
@@ -72,7 +73,7 @@ get_args(int argc, register char **argv)
 {
 	register int	c;
 
-	while( (c = getopt( argc, argv, "hs:w:n:" )) != EOF )  {
+	while( (c = bu_getopt( argc, argv, "hs:w:n:" )) != EOF )  {
 		switch( c )  {
 		case 'h':
 			/* high-res */
@@ -80,26 +81,26 @@ get_args(int argc, register char **argv)
 			break;
 		case 's':
 			/* square file size */
-			file_height = file_width = atoi(optarg);
+			file_height = file_width = atoi(bu_optarg);
 			break;
 		case 'w':
-			file_width = atoi(optarg);
+			file_width = atoi(bu_optarg);
 			break;
 		case 'n':
-			file_height = atoi(optarg);
+			file_height = atoi(bu_optarg);
 			break;
 		case '?':
 			return	0;
 		}
 	}
-	if( argv[optind] != NULL )  {
-		if( (infp = fopen( argv[optind], "r" )) == NULL )  {
-			perror(argv[optind]);
+	if( argv[bu_optind] != NULL )  {
+		if( (infp = fopen( argv[bu_optind], "r" )) == NULL )  {
+			perror(argv[bu_optind]);
 			return	0;
 		}
-		optind++;
+		bu_optind++;
 	}
-	if( argc > ++optind )
+	if( argc > ++bu_optind )
 		(void) fprintf( stderr, "Excess arguments ignored\n" );
 
 	if( isatty(fileno(infp)) || isatty(fileno(stdout)) )

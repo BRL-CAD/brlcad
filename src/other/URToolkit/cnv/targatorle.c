@@ -70,6 +70,7 @@
 		and discard the colormap section if the image is in a true-color format.
 */
 
+#include <stdlib.h>
 #include <stdio.h>
 #include <sys/types.h>
 #include "rle.h"

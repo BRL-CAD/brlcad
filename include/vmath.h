@@ -25,7 +25,7 @@
  *
  *  Note that while many people in the computer graphics field use
  *  post-multiplication with row vectors (ie, vector * matrix * matrix ...)
- *  the BRL CAD system uses the more traditional representation of 
+ *  the BRL-CAD system uses the more traditional representation of
  *  column vectors (ie, ... matrix * matrix * vector).  (The matrices
  *  in these two representations are the transposes of each other). Therefore,
  *  when transforming a vector by a matrix, pre-multiplication is used, ie:
@@ -646,7 +646,7 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
  *  If closing your right hand goes from `b' to `c', then your
  *  thumb points in the direction of the cross product.
  *
- *  If the angle from `b' to `c' goes clockwise, then 
+ *  If the angle from `b' to `c' goes clockwise, then
  *  the result vector points "into" the plane (inward normal).
  *  Example:  b=(0,1,0), c=(1,0,0), then bXc=(0,0,-1).
  *
@@ -970,7 +970,7 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
  *  Phillip Dykstra, 26 Sep 1985.
  *  Lee A. Butler, 14 March 1996.
  */
- 
+
 /* Create Quaternion from Vector and Rotation about vector.
  *
  * To produce a quaternion representing a rotation by PI radians about X-axis:

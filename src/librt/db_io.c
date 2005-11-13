@@ -32,12 +32,12 @@
  *
  *  Authors -
  *	Michael John Muuss
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5066
- *  
+ *
  */
 /*@}*/
 
@@ -80,13 +80,15 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 /* should be HIDDEN */
 int
 db_read(const struct db_i *dbip, genptr_t addr, long int count, long int offset)
-                 	      
-        	     
+
+
     		      		/* byte count */
     		       		/* byte offset from start of file */
 {
 	register int	got;
+#ifdef HAVE_UNIX_IO
 	register long	s;
+#endif
 
 	RT_CK_DBI(dbip);
 	if(RT_G_DEBUG&DEBUG_DB)  {
@@ -464,8 +466,8 @@ db_put_external(struct bu_external *ep, struct directory *dp, struct db_i *dbip)
  */
 int
 db_fwrite_external(FILE *fp, const char *name, struct bu_external *ep)
-    			    
-          		      
+
+
                   	    			/* can't be const */
 {
 

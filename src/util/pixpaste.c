@@ -8,12 +8,12 @@
  *  Author -
  *	Christopher T. Johnson
  *	September 12, 1992
- *  
+ *
  *  Source -
  *	Paladin Software
  *	P.O. Box 187
  *	Aberdeen, MD	21001-0187
- *  
+ *
  *  Copyright Notice -
  *	This software is Copyright (C) 1992 by Paladin Software
  *	All rights reserved.
@@ -73,7 +73,7 @@ get_args(register int argc, register char **argv)
 {
 	register int c;
 
-	while ( (c = getopt(argc, argv, "vahHs:w:n:S:W:N:x:y:#:" )) != EOF) {
+	while ( (c = bu_getopt(argc, argv, "vahHs:w:n:S:W:N:x:y:#:" )) != EOF) {
 		switch (c) {
 		case 'v':
 			Verbose = 1;
@@ -93,46 +93,46 @@ get_args(register int argc, register char **argv)
 			paste_autosize = 0;
 			break;
 		case 's':
-			org_width = org_height = atol(optarg);
+			org_width = org_height = atol(bu_optarg);
 			orig_autosize = 0;
 			break;
 		case 'S':
-			paste_width = paste_height = atol(optarg);
+			paste_width = paste_height = atol(bu_optarg);
 			paste_autosize = 0;
 			break;
 		case 'w':
-			org_width = atol(optarg);
+			org_width = atol(bu_optarg);
 			orig_autosize = 0;
 			break;
 		case 'W':
-			paste_width = atol(optarg);
+			paste_width = atol(bu_optarg);
 			paste_autosize = 0;
 			break;
 		case 'n':
-			org_height = atol(optarg);
+			org_height = atol(bu_optarg);
 			orig_autosize = 0;
 			break;
 		case 'N':
-			paste_height = atol(optarg);
+			paste_height = atol(bu_optarg);
 			paste_autosize = 0;
 			break;
 		case 'x':
-			base_x = atol(optarg);
+			base_x = atol(bu_optarg);
 			break;
 		case 'y':
-			base_y = atol(optarg);
+			base_y = atol(bu_optarg);
 			break;
 		case '#':
-			num_bytes = atol(optarg);
+			num_bytes = atol(bu_optarg);
 			break;
 		default:		/* '?' */
 			return(0);
 		}
 	}
-	if (optind >= argc ) {
+	if (bu_optind >= argc ) {
 		return(0);
 	} else {
-		orig_name = argv[optind];
+		orig_name = argv[bu_optind];
 		if (strcmp(orig_name,"-") == 0) {
 			if (isatty(fileno(stdin))) return(0);
 			orig = stdin;
@@ -147,10 +147,10 @@ get_args(register int argc, register char **argv)
 			orig_isfile = 1;
 		}
 	}
-	if (++optind >= argc ) {
+	if (++bu_optind >= argc ) {
 		return(0);
 	} else {
-		paste_name = argv[optind];
+		paste_name = argv[bu_optind];
 		if (strcmp(paste_name, "-") == 0) {
 			if (isatty(fileno(stdin))) return(0);
 			paste = stdin;
@@ -173,7 +173,7 @@ get_args(register int argc, register char **argv)
 	return(1);	/* OK */
 }
 
-			
+
 int
 main(int argc, char **argv)
 {
@@ -330,7 +330,7 @@ pixpaste: new image == original image.\n");
 		}
 		row++;
 	}
-		
+
 /*
  * Output the rest of the original file.
  */

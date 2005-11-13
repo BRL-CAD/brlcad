@@ -2,7 +2,7 @@
 <title>BRL-CAD anim_lookat Man Page</title>
 </head><body>
 <h1>NAME</h1>
-anim_lookat - create a view animation script or table which looks from an eye point to 
+anim_lookat - create a view animation script or table which looks from an eye point to
 a specified point.
 <h1>SYNOPSIS</h1>
 <b>anim_lookat </b>
@@ -20,9 +20,9 @@ a specified point.
 <h1>DESCRIPTION</h1>
 This program takes as input a seven-column animation table
 consisting of time, an eye point, and a "look-at point", and prints a
-view animation script to control the virtual camera. 
-The camera always remains "right-side up"; that is, it yaws and pitches but 
-doesn't roll. In cases where the camera looks vertically up or down, the 
+view animation script to control the virtual camera.
+The camera always remains "right-side up"; that is, it yaws and pitches but
+doesn't roll. In cases where the camera looks vertically up or down, the
 yaw from the previous frame is retained. This avoids sudden jumps as much
 as possible.
 <p>
@@ -38,7 +38,7 @@ numbering frames. The default is 0.
 
 <dd>
 The output will be an animation table rather
-than a view animation script. The output table has 7 columns: 
+than a view animation script. The output table has 7 columns:
 a time column, three
 columns representing position, and three columns representing yaw,
 pitch, and roll.
@@ -46,9 +46,9 @@ pitch, and roll.
 <b>-q</b>
 
 <dd>
-The output will be an animation table rather than a view animation script. 
-The output table has eight columns: 
-a time column, three position columns, and four columns 
+The output will be an animation table rather than a view animation script.
+The output table has eight columns:
+a time column, three position columns, and four columns
 representing the x,y,z, and w coordinates of an orientation quaternion.
 <dt>
 <b>-v</b>

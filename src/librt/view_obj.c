@@ -25,7 +25,7 @@
  * A view object contains the attributes and methods for
  * controlling viewing transformations. Much of this code
  * was extracted from MGED and modified to work herein.
- * 
+ *
  * Source -
  *	SLAD CAD Team
  *	The U. S. Army Research Laboratory
@@ -101,7 +101,7 @@ static void vo_mike_persp_mat(fastf_t *pmat, const fastf_t *eye);
 
 struct view_obj HeadViewObj;		/* head of view object list */
 
-static struct bu_cmdtab vo_cmds[] = 
+static struct bu_cmdtab vo_cmds[] =
 {
 	{"ae",			vo_aet_tcl},
 	{"arot",		vo_arot_tcl},
@@ -263,7 +263,7 @@ vo__cmd(struct view_obj	*vop,
 
 /*
  * Usage:
- *        procname 
+ *        procname
  */
 static int
 vo__tcl(ClientData	clientData,
@@ -379,7 +379,7 @@ vo_invSize_cmd(struct view_obj	*vop,
  * Get the inverse view size.
  *
  * Usage:
- *        procname 
+ *        procname
  */
 static int
 vo_invSize_tcl(ClientData	clientData,
@@ -533,7 +533,7 @@ vo_rmat_cmd(struct view_obj	*vop,
  * Get or set the rotation matrix.
  *
  * Usage:
- *        procname 
+ *        procname
  */
 static int
 vo_rmat_tcl(ClientData	clientData,
@@ -618,7 +618,7 @@ vo_center_cmd(struct view_obj	*vop,
  * Get or set the view center.
  *
  * Usage:
- *        procname 
+ *        procname
  */
 static int
 vo_center_tcl(ClientData	clientData,
@@ -661,7 +661,7 @@ vo_model2view_cmd(struct view_obj	*vop,
  * Get the model2view matrix.
  *
  * Usage:
- *        procname 
+ *        procname
  */
 static int
 vo_model2view_tcl(ClientData	clientData,
@@ -2339,7 +2339,7 @@ vo__cmd(struct view_obj	*vop,
 
 /*
  * Usage:
- *        procname 
+ *        procname
  */
 static int
 vo__tcl(ClientData	clientData,

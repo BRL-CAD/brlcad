@@ -7,7 +7,7 @@
  *  Authors -
  *	Bob Suckling
  *	Mike Muuss
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
@@ -30,7 +30,7 @@ struct	menu_item  {
 
 
 #define MENU_NULL		((struct menu_item *)0)
-	
+
 #define NMENU	3
 
 #define MENU_L1		0	/* top-level solid-edit menu */

@@ -27,7 +27,7 @@
  *
  *  Author -
  *	Michael John Muuss
- *  
+ *
  *  Source -
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
@@ -320,7 +320,7 @@ rt_pr_hitarray_vls(struct bu_vls *v, const char *str, register const struct hit 
  */
 void
 rt_pr_tree(register const union tree *tp, int lvl)
-                              
+
         			/* recursion level */
 {
 	register int i;
@@ -557,14 +557,14 @@ rt_pr_tree_str(const union tree *tree)
 		RT_CK_SOLTAB(tree->tr_a.tu_stp);
 		return bu_strdup(tree->tr_a.tu_stp->st_dp->d_namep);
 	}
-		
+
 
 	return bu_strdup("Unknown:tr_op");
 }
 
 /*
  *  			R T _ P R _ T R E E _ V A L
- *  
+ *
  *  Print the actual values of the terms in a boolean expression.
  *
  *  The values for pr_name determine the printing action:

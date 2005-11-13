@@ -1,4 +1,27 @@
-.TH RT 1 BRL/CAD
+.TH RT 1 BRL-CAD
+./"                           R T . 1
+./" BRL-CAD
+./"
+./" Copyright (c) 1984-2005 United States Government as represented by
+./" the U.S. Army Research Laboratory.
+./"
+./" This document is made available under the terms of the GNU Free
+./" Documentation License or, at your option, under the terms of the
+./" GNU General Public License as published by the Free Software
+./" Foundation.  Permission is granted to copy, distribute and/or
+./" modify this document under the terms of the GNU Free Documentation
+./" License, Version 1.2 or any later version published by the Free
+./" Software Foundation; with no Invariant Sections, no Front-Cover
+./" Texts, and no Back-Cover Texts.  Permission is also granted to
+./" redistribute this document under the terms of the GNU General
+./" Public License; either version 2 of the License, or (at your
+./" option) any later version.
+./"
+./" You should have received a copy of the GNU Free Documentation
+./" License and/or the GNU General Public License along with this
+./" document; see the file named COPYING for more information.
+./"
+./"./"./"
 .SH NAME
 rt \- raytrace an \fBmged\fP model, giving a shaded picture
 .SH SYNOPSIS
@@ -96,12 +119,12 @@ and conflicts with
 .B \-M
 .TP
 .B -f#
-sets the expected playback rate in frames-per-second.  
+sets the expected playback rate in frames-per-second.
 The default is 30fps.
 Several time-evolving shaders
-such as 
+such as
 .I fire
-and 
+and
 .I grass
 need to know the time at which each frame and pixel occurs to drive their
 evolution.
@@ -117,10 +140,10 @@ the grid cell height is \fInot\fR specified,
 the grid cell height defaults to be the same as the width.
 .TP
 .B \-h density,r,g,b
-enables an exponential shading of the void between the eye and the 
+enables an exponential shading of the void between the eye and the
 first hit location.  This allows a cheap simulation of atmospheric haze
 with lower performance impact that explicit modeling of the air volume.
-The haze is computed using the form: 
+The haze is computed using the form:
 .sp
 .br
 f = e^(-dist * density)
@@ -187,7 +210,7 @@ texturing.  It is exactly the same as applying the texture 'testmap'
 to every region.  The U parameter is displayed in the red channel
 and the V parameter is displayed in the blue channel.
 Model 7 is for using photon mapping to simulate global illumination
-and caustics in a given scene.  Options to photon mapping are passed 
+and caustics in a given scene.  Options to photon mapping are passed
 through the -l parameter in the following format: -l7,Num_Photons,Caustics_Percent,
 Irradiance_Rays,Angular_Tolerance,Random_Seed,Importance_Mapping_Toggle,
 Irradiance_Hypersampling_Toggle,Visual_Irradiance_Toggle,Scale_Lumens,Load_Save_File
@@ -336,8 +359,8 @@ while on shared multi-processors, such as SuperComputers,
 usually just one processor is used by default.
 .TP
 .B \-Q x,y
-Query pixel ray with debugging.  The option is used to 
-specify a single pixel for which the debug flags should be turned on.  
+Query pixel ray with debugging.  The option is used to
+specify a single pixel for which the debug flags should be turned on.
 The computation of all other pixels will be performed without debugging.
 This is similar to the \-b option, except that it does not limit rendering
 to the single ray.  The entire image is computed.  This option is useful in

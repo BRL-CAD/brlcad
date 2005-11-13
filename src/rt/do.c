@@ -30,7 +30,7 @@
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005
- *  
+ *
  */
 #ifndef lint
 static const char RCSrt[] = "@(#)$Header$ (BRL)";
@@ -148,7 +148,7 @@ old_frame(FILE *fp)
 
 /*
  *			O L D _ W A Y
- * 
+ *
  *  Determine if input file is old or new format, and if
  *  old format, handle process *  Returns 0 if new way, 1 if old way (and all done).
  *  Note that the rewind() will fail on ttys, pipes, and sockets (sigh).
@@ -455,7 +455,7 @@ int cm_set(int argc, char **argv)
 	return(0);
 }
 
-/* 
+/*
  *			C M _ A E
  */
 int cm_ae( int argc, char **argv)
@@ -754,7 +754,7 @@ do_frame(int framenumber)
 		 */
 		{
 			struct		stat	sb;
-			if( stat( framename, &sb ) >= 0 && 
+			if( stat( framename, &sb ) >= 0 &&
 			    sb.st_size > 0 &&
 			    sb.st_size < width*height*sizeof(RGBpixel))  {
 				/* File exists, with partial results */
@@ -785,7 +785,7 @@ do_frame(int framenumber)
 		}
 #endif /* CRAY_COS */
 		if (rt_verbosity & VERBOSE_OUTPUTFILE)
-			bu_log("Output file is '%s' %dx%d pixels\n", 
+			bu_log("Output file is '%s' %dx%d pixels\n",
 				framename, width, height);
 	}
 
@@ -843,7 +843,7 @@ do_frame(int framenumber)
 		bu_debug &= ~BU_DEBUG_MEM_LOG;
 
 	/*
-	 *  Certain parallel systems (eg, Alliant) count the entire 
+	 *  Certain parallel systems (eg, Alliant) count the entire
 	 *  multi-processor complex as one computer, and charge only once.
 	 *  This matches the desired behavior here.
 	 *  Other vendors (eg, SGI) count each processor separately,

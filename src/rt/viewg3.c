@@ -40,12 +40,12 @@
  *  Authors -
  *	Susanne L. Muuss, J.D.
  *	Michael John Muuss
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005
- *  
+ *
  */
 #ifndef lint
 static const char RCSrayg3[] = "@(#)$Header$ (BRL)";
@@ -141,7 +141,7 @@ view_init(register struct application *ap, char *file, char *obj, int minus_o)
 
 	if( !minus_o )
 		outfp = stdout;
-	
+
 	save_file = file;
 	save_obj = obj;
 
@@ -189,7 +189,7 @@ view_init(register struct application *ap, char *file, char *obj, int minus_o)
  *
  *  View_2init is called by do_frame(), which in turn is called by
  *  main() in rt.c.  It writes the view-specific COVART header.
- * 
+ *
  */
 void
 view_2init(struct application *ap)
@@ -213,7 +213,7 @@ view_2init(struct application *ap)
 	 * by COVART;  this should be investigated.
 	 * NOTE that grid_spacing is assumed to be square (by COVART),
 	 * and that the units have been converted from MM to IN.
-	 * COVART, given the appropriate code, will take, IN, M, 
+	 * COVART, given the appropriate code, will take, IN, M,
 	 * FT, MM, and CM.  However, GIFT  output is expected to be IN.
 	 * NOTE that variables "azimuth and elevation" are not valid
 	 * when the -M flag is used.
@@ -650,7 +650,7 @@ out:
 		 * is generated.  This is processed by plot(1)
 		 * plotting filters such as pl-fb or pl-sgi.
 		 * Portions of a ray passing through air within the
-		 * model are represented in blue, while portions 
+		 * model are represented in blue, while portions
 		 * passing through a solid are assigned green.
 		 * This will always be done single CPU,
 		 * to prevent output garbling.  (See view_init).
@@ -664,7 +664,7 @@ out:
 				ap->a_ray.r_dir);
 				pl_color(plotfp, 0, 255, 0);	/* green */
 			pdv_3line(plotfp, inpt,outpt);
-			
+
 			if(air_thickness > 0) {
 				vect_t     air_end;
 				VJOIN1(air_end, ap->a_ray.r_pt,
@@ -754,7 +754,7 @@ view_end(void)
 	/* An abbreviated component record:  just give item code 0.  This is
 	 * not required since GIFT truncates the above line at the first
 	 * 999.9: putting out the abovementioned 0 caused a lot of oscillation
-	 * over the last year, so the line has been removed. 
+	 * over the last year, so the line has been removed.
 	 */
 
 	fflush(outfp);
@@ -834,7 +834,7 @@ top:		nextpp = pp->pt_forw;
 		 */
 #if 0
 		  bu_log("part_comp: collapsing gap of %e mm between id=%d and id=%d air=%d and air=%d\n",
-		 	gap, pp->pt_regionp->reg_regionid, 
+		 	gap, pp->pt_regionp->reg_regionid,
 		 	nextpp->pt_regionp->reg_regionid, pp->pt_regionp->reg_aircode, nextpp->pt_regionp->reg_aircode);
 #endif
 		  pp->pt_outseg = nextpp->pt_outseg;

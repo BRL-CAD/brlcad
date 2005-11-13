@@ -22,10 +22,10 @@
  *
  *  RT-View-Module for printing out the hit point of a ray and the ray's
  *  direction on a user-specified grid.
- *  
+ *
  *  Author -
  *	Susanne L. Muuss, J.D.
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
@@ -85,7 +85,7 @@ int	rayhit(register struct application *ap, struct partition *PartHeadp), raymis
  *  any other computations take place.  It is called only once per run.
  *  Pointers to rayhit() and raymiss() are set up and are later called from
  *  do_run().
- *  
+ *
  */
 
 int
@@ -179,7 +179,7 @@ void view_cleanup(void) {}
  *  Rayhit() is called by rt_shootray() when a hit is detected.  It
  *  computes the hit distance, the distance traveled by the
  *  ray, and the direction vector.
- *  
+ *
  */
 
  int
@@ -210,8 +210,8 @@ rayhit(struct application *ap, register struct partition *PartHeadp)
 	 * the output can be read by "miss" for use with PCAVAM.
 	 */
 
-	fprintf(stdout, "%g %g %g %g %g %g;\n", 
-	    pp->pt_inhit->hit_point[0], pp->pt_inhit->hit_point[1], pp->pt_inhit->hit_point[2], 
+	fprintf(stdout, "%g %g %g %g %g %g;\n",
+	    pp->pt_inhit->hit_point[0], pp->pt_inhit->hit_point[1], pp->pt_inhit->hit_point[2],
             ap->a_ray.r_dir[0], ap->a_ray.r_dir[1], ap->a_ray.r_dir[2]);
 
 
@@ -230,7 +230,7 @@ rayhit(struct application *ap, register struct partition *PartHeadp)
 
 void	view_eol(struct application *ap)
 {
- 
+
 
 }
 

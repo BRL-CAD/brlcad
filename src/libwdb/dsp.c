@@ -41,7 +41,7 @@ mk_dsp(struct rt_wdb *fp, const char *name, const char *file, int xdim, int ydim
             	    		/* convert solid coords to model space */
 {
 	struct rt_dsp_internal *dsp;
-	
+
 	BU_GETSTRUCT( dsp, rt_dsp_internal );
 	dsp->magic = RT_DSP_INTERNAL_MAGIC;
 	bu_vls_init( &dsp->dsp_name );

@@ -122,7 +122,7 @@ proc prj_add {args} {
 	puts $fd "antialias=$antialias"
 	puts $fd "behind=$behind"
 
-	
+
 
 	puts $fd "viewsize=[expr [view size] * $local2base]"
 	regsub -all { } [vscale [view eye] $local2base] "," eye_pt

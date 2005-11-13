@@ -2,7 +2,7 @@
 /** \addtogroup g */
 
 /*@{*/
-/** \file g_nmg.c 
+/** \file g_nmg.c
  *	Intersect a ray with an NMG solid.
  *
  *  Authors -
@@ -11,7 +11,7 @@
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5066
- *  
+ *
  */
 /*@}*/
 
@@ -62,15 +62,15 @@ struct tmp_v {
 
 /**
  *  			R T _ N M G _ P R E P
- *  
+ *
  *  Given a pointer to a ged database record, and a transformation matrix,
  *  determine if this is a valid nmg, and if so, precompute various
  *  terms of the formula.
- *  
+ *
  *  returns -
  *  	0	nmg is ok
  *  	!0	error in description
- *  
+ *
  *  implicit return -
  *  	a struct nmg_specific is created, and it's address is stored in
  *  	stp->st_specific for use by nmg_shot().
@@ -81,7 +81,7 @@ rt_nmg_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 	struct model		*m;
 	register struct nmg_specific	*nmg_s;
 	struct nmgregion *rp;
-	vect_t work;	
+	vect_t work;
 
 	RT_CK_DB_INTERNAL(ip);
 	m = (struct model *)ip->idb_ptr;
@@ -98,7 +98,7 @@ rt_nmg_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 	VSETALL(stp->st_min, MAX_FASTF);
 	VSETALL(stp->st_max, -MAX_FASTF);
 
-	/* the model bounding box is an amalgam of the 
+	/* the model bounding box is an amalgam of the
 	 * nmgregion bounding boxes.
 	 */
 	for (BU_LIST_FOR(rp, nmgregion, &m->r_hd )) {
@@ -141,20 +141,20 @@ rt_nmg_print(register const struct soltab *stp)
 
 /**
  *  			R T _ N M G _ S H O T
- *  
+ *
  *  Intersect a ray with a nmg.
  *  If an intersection occurs, a struct seg will be acquired
  *  and filled in.
- *  
+ *
  *  Returns -
  *  	0	MISS
  *	>0	HIT
  */
 int
 rt_nmg_shot(struct soltab *stp, register struct xray *rp, struct application *ap, struct seg *seghead)
-             		     
+
                     	    	/* info about the ray */
-                  	    	
+
           		         	/* intersection w/ ray */
 {
 	struct ray_data rd;
@@ -204,7 +204,7 @@ rt_nmg_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 	rd.stp = stp;
 	rd.seghead = seghead;
 	rd.classifying_ray = 0;
-	
+
 	/* create a table to keep track of which elements have been
 	 * processed before and which haven't.  Elements in this table
 	 * will either be:
@@ -245,14 +245,14 @@ rt_nmg_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
            		       /* An array of ray pointers */
                                /* array of segs (results returned) */
    		  	       /* Number of ray/object pairs */
-                  	    
+
 {
 	rt_vstub( stp, rp, segp, n, ap );
 }
 
 /**
  *  			R T _ N M G _ N O R M
- *  
+ *
  *  Given ONE ray distance, return the normal and entry/exit point.
  */
 void
@@ -280,7 +280,7 @@ rt_nmg_curve(register struct curvature *cvp, register struct hit *hitp, struct s
 
 /**
  *  			R T _ N M G _ U V
- *  
+ *
  *  For a hit on the surface of an nmg, return the (u,v) coordinates
  *  of the hit point, 0 <= u,v <= 1.
  *  u = azimuth
@@ -809,10 +809,10 @@ static unsigned int	rt_nmg_cur_fastf_subscript;
  */
 int
 rt_nmg_export_fastf(const fastf_t *fp, int count, int pt_type, double scale)
-             	    
-   		      
+
+
    		        	/* If zero, means literal array of values */
-      		      
+
 {
 	register unsigned char	*cp;
 
@@ -856,12 +856,12 @@ rt_nmg_export_fastf(const fastf_t *fp, int count, int pt_type, double scale)
  */
 fastf_t *
 rt_nmg_import_fastf(const unsigned char *base, struct nmg_exp_counts *ecnt, long int subscript, const matp_t mat, int len, int pt_type)
-                   	      
-                     	      
-    			          
-            		    
+
+
+
+
    			    		/* expected size */
-   			        
+
 {
 	const unsigned char	*cp;
 	register int		count;
@@ -994,9 +994,9 @@ void
 rt_nmg_edisk(genptr_t op, genptr_t ip, struct nmg_exp_counts *ecnt, int index, double local2mm)
         	   		/* base of disk array */
         	   		/* ptr to in-memory structure */
-                     	      
-   		      
-      		         
+
+
+
 {
 	int	oindex;		/* index in op */
 
@@ -1381,10 +1381,10 @@ int
 rt_nmg_idisk(genptr_t op, genptr_t ip, struct nmg_exp_counts *ecnt, int index, long int **ptrs, const fastf_t *mat, const unsigned char *basep)
         	   		/* ptr to in-memory structure */
         	   		/* base of disk array */
-                     	      
-   		      
-    		       
-           	    
+
+
+
+
                    	       	/* base of whole import record */
 {
 	int	iindex;		/* index in ip */
@@ -2476,7 +2476,7 @@ rt_nmg_import5( struct rt_db_internal	*ip,
 	startdata = dp;
 
 	/* Collect overall new subscripts, and structure-specific indices */
-	ecnt = (struct nmg_exp_counts *) bu_calloc( maxindex+3, 
+	ecnt = (struct nmg_exp_counts *) bu_calloc( maxindex+3,
 		sizeof(struct nmg_exp_counts), "ecnt[]");
 	real_ptrs = (long **)bu_calloc( maxindex+3, sizeof(long *), "ptrs[]");
 	/* some safety checking.  Indexing by, -1, 0, n+1, N+2 give interesting results */
@@ -2578,7 +2578,7 @@ rt_nmg_export5(
 	for (i=0; i<NMG_N_KINDS; i++) {
 		kind_counts[i] = 0;
 	}
-	subscript = 1; 
+	subscript = 1;
 	double_count = 0;
 	fastf_byte_count = 0;
 	for (i=0; i< m->maxindex; i++) {
@@ -2591,7 +2591,7 @@ rt_nmg_export5(
 		ecnt[i].per_struct_index = kind_counts[kind]++;
 		ecnt[i].kind = kind;
 
-		/* 
+		/*
 		 * SNURB and CNURBS are variable sized and as such need
 		 * special handling
 		 */
@@ -2614,13 +2614,14 @@ rt_nmg_export5(
 			eg = (struct edge_g_cnurb *)ptrs[i];
 			ecnt[i].first_fastf_relpos =
 			    kind_counts[NMG_KIND_DOUBLE_ARRAY];
-			if (eg->order == 0) break;
-			kind_counts[NMG_KIND_DOUBLE_ARRAY] += 2;
-			ndouble = eg->k.k_size +eg->c_size *
-			    RT_NURB_EXTRACT_COORDS(eg->pt_type);
-			double_count += ndouble;
-			ecnt[i].byte_offset = fastf_byte_count;
-			fastf_byte_count += 2*(4+4) +  8*ndouble;
+			if (eg->order != 0) {
+			    kind_counts[NMG_KIND_DOUBLE_ARRAY] += 2;
+			    ndouble = eg->k.k_size +eg->c_size *
+				RT_NURB_EXTRACT_COORDS(eg->pt_type);
+			    double_count += ndouble;
+			    ecnt[i].byte_offset = fastf_byte_count;
+			    fastf_byte_count += 2*(4+4) +  8*ndouble;
+			}
 		}
 	}
 #if 1	/* Compacting wanted */
@@ -2678,7 +2679,7 @@ rt_nmg_export5(
 	}
 
 	/* Account for variable sized double arrays, at the end */
-	tot_size += kind_counts[NMG_KIND_DOUBLE_ARRAY] * (4+4) + 
+	tot_size += kind_counts[NMG_KIND_DOUBLE_ARRAY] * (4+4) +
 	    double_count*8;
 
 	ecnt[0].byte_offset = subscript; /* implicit arg to rt_nmg_reindex() */
@@ -2933,7 +2934,7 @@ rt_nmg_tcladjust( Tcl_Interp *interp, struct rt_db_internal *intern, int argc, c
 
 	verts = (struct tmp_v *)NULL;
 	for( i=0 ; i<argc ; i += 2 ) {
-		if( !strcmp( argv[i], "V" ) ) { 
+		if( !strcmp( argv[i], "V" ) ) {
 			obj = Tcl_NewStringObj( argv[i+1], -1 );
 			if( Tcl_ListObjGetElements( interp, obj, &num_verts,
 						    &obj_array) != TCL_OK) {
@@ -2957,7 +2958,7 @@ rt_nmg_tcladjust( Tcl_Interp *interp, struct rt_db_internal *intern, int argc, c
 					return( TCL_ERROR );
 				}
 			}
-			
+
 		}
 	}
 

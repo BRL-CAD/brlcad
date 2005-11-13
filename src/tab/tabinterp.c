@@ -36,7 +36,7 @@
  *
  *  Author -
  *	Michael John Muuss
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
@@ -178,7 +178,7 @@ main( int argc, char **argv )
 	if(verbose) bu_log("writing output\n");
 	output();
 
-	exit(0);	
+	exit(0);
 }
 
 /*
@@ -348,7 +348,7 @@ create_chan( char *num, int len, char *itag )
 
 		if( max_chans <= 0 )  {
 			max_chans = 32;
-			chan = (struct chan *)bu_calloc( 1, 
+			chan = (struct chan *)bu_calloc( 1,
 				max_chans * sizeof(struct chan),
 				"chan[]" );
 		} else {
@@ -710,7 +710,7 @@ step_interpolate( struct chan *chp, fastf_t *times )
 
 		/* Find time range in input data. */
 		while( i < chp->c_ilen-1 )  {
-			if( times[t] >= chp->c_itime[i] && 
+			if( times[t] >= chp->c_itime[i] &&
 			    times[t] <  chp->c_itime[i+1] )
 				break;
 			i++;
@@ -754,7 +754,7 @@ linear_interpolate( struct chan *chp, fastf_t *times )
 
 		/* Find time range in input data. */
 		while( i < chp->c_ilen-1 )  {
-			if( times[t] >= chp->c_itime[i] && 
+			if( times[t] >= chp->c_itime[i] &&
 			    times[t] <  chp->c_itime[i+1] )
 				break;
 			i++;
@@ -923,7 +923,7 @@ spline( register struct chan *chp, fastf_t *times )
 		if(i==1) a += konst*hi;
 		if(i==chp->c_ilen-2) a += konst*hi1;
 		diag[i] = d = i==1? a:
-		    a - hi*hi/d; 
+		    a - hi*hi/d;
 	}
 	D2yi = D2yn1 = 0;
 	/* back substitute */
@@ -944,7 +944,7 @@ spline( register struct chan *chp, fastf_t *times )
 				if(i==1) a += konst*hi;
 				if(i==chp->c_ilen-2) a += konst*hi1;
 				d = diag[i-1];
-				s = -s*d/hi; 
+				s = -s*d/hi;
 			}
 		}
 		else D2yi = D2yn1;
@@ -971,7 +971,7 @@ spline( register struct chan *chp, fastf_t *times )
 			x0 = 1 - x1;
 			/* Linear interpolation, with correction */
 			yy = D2yi * (x0 - x0*x0*x0) + D2yi1 * (x1 - x1*x1*x1);
-			yy = chp->c_ival[i] * x0 + chp->c_ival[i+1] * x1 - 
+			yy = chp->c_ival[i] * x0 + chp->c_ival[i+1] * x1 -
 				hi1 * hi1 * yy / 6;
 			chp->c_oval[t] = yy;
 		}
@@ -1070,7 +1070,7 @@ quat_interpolate( struct chan *x, struct chan *y, struct chan *z, struct chan *w
 
 		/* Find time range in input data. */
 		while( i < x->c_ilen-1 )  {
-			if( now >= x->c_itime[i] && 
+			if( now >= x->c_itime[i] &&
 			    now <  x->c_itime[i+1] )
 				break;
 			i++;
@@ -1163,7 +1163,7 @@ quat_interpolate( struct chan *x, struct chan *y, struct chan *z, struct chan *w
 			quat_slerp( qtemp1, q4, q3, 2.0 );
 			quat_slerp( qtemp2, qtemp1, q2, 0.5 );
 			quat_slerp( qb, q3, qtemp2, 0.333333 );
-			
+
 			quat_sberp( qout, q2, qa, qb, q3, f );
 			QPUT( qout );
 		}

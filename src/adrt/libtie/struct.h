@@ -33,7 +33,7 @@
  * $Id$
  */
 /** @addtogroup libtie */ /** @{ */
-  
+
 #ifndef	_TIE_STRUCT_H
 #define _TIE_STRUCT_H
 
@@ -51,7 +51,7 @@ typedef struct TIE_3_s {
   tfloat		v[3];
 } TIE_3;
 
-/** 
+/**
  * @struct tie_ray_s struct.h
  * All the information about a ray.
  *
@@ -64,7 +64,7 @@ typedef struct tie_ray_s {
   short		kdtree_depth;
 } tie_ray_t;
 
-/** 
+/**
  * @struct tie_id_s struct.h
  *
  * Ray intersection data (id)
@@ -79,7 +79,7 @@ typedef struct tie_id_s {
   tfloat	beta;	/* Barycentric Coordinate Beta */
 } tie_id_t;
 
-/** 
+/**
  * @struct tie_tri_s struct.h
  *
  * Everything you need to know about a triangle
@@ -90,7 +90,7 @@ typedef struct tie_tri_s {
   void		*ptr;		/* 4-bytes */
 } tie_tri_t;
 
-/** 
+/**
  * @struct tie_kdtree_s struct.h
  *
  * The binary space partitioning tree
@@ -100,7 +100,7 @@ typedef struct tie_kdtree_s {
   void		*data;
 } tie_kdtree_t;
 
-/** 
+/**
  *
  */
 typedef struct tie_geom_s {
@@ -108,7 +108,7 @@ typedef struct tie_geom_s {
   int		tri_num;
 } tie_geom_t;
 
-/** 
+/**
  *
  */
 typedef struct tie_stack_s {
@@ -117,7 +117,7 @@ typedef struct tie_stack_s {
   tfloat	far;
 } tie_stack_t;
 
-/** 
+/**
  *
  */
 typedef struct tie_s {

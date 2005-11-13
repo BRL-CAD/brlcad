@@ -654,7 +654,7 @@
 		set vsize [expr {[View::local2base] * [View::size]}]
 		set rmat [View::rmat]
 		set model2view [View::model2view]
-	
+
 		if {$itk_option(-viewAxesEnable)} {
 		    set x [lindex $itk_option(-viewAxesPosition) 0]
 		    set y [lindex $itk_option(-viewAxesPosition) 1]

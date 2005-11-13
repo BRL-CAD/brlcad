@@ -17,7 +17,7 @@
 #ifndef lint
 static const char RCSid[] = "$Id$";
 #endif
-#undef DEBUG 
+#undef DEBUG
 
 #include "common.h"
 
@@ -261,15 +261,15 @@ void merge(void)
 		}
 	}
 }
-			
-/* 
+
+/*
  *			M A I N
  */
 int
 main(int argc, char **argv)
 {
 	struct frame *new, *lp;
-	
+
 	int base, count;
 
 	if (!get_args(argc,argv)) {
@@ -332,7 +332,7 @@ main(int argc, char **argv)
 			mask = mask >> bits;
 		}
 	}
-		
+
 	if (globals.text) {
 		fprintf(stdout,"%s", globals.text);
 	}
@@ -351,7 +351,7 @@ squirtframes(int base)
 {
 
 	sf(0, base);	/* start by outputing every base entries at one */
-	
+
 	while (base > 1 ) {
 		sf(base/2, base);
 		base /= 2;

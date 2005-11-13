@@ -1,4 +1,27 @@
-.TH VAS4 1 BRL/CAD
+.TH VAS4 1 BRL-CAD
+./"                         V A S 4 . 1
+./" BRL-CAD
+./"
+./" Copyright (c) 2005 United States Government as represented by
+./" the U.S. Army Research Laboratory.
+./"
+./" This document is made available under the terms of the GNU Free
+./" Documentation License or, at your option, under the terms of the
+./" GNU General Public License as published by the Free Software
+./" Foundation.  Permission is granted to copy, distribute and/or
+./" modify this document under the terms of the GNU Free Documentation
+./" License, Version 1.2 or any later version published by the Free
+./" Software Foundation; with no Invariant Sections, no Front-Cover
+./" Texts, and no Back-Cover Texts.  Permission is also granted to
+./" redistribute this document under the terms of the GNU General
+./" Public License; either version 2 of the License, or (at your
+./" option) any later version.
+./"
+./" You should have received a copy of the GNU Free Documentation
+./" License and/or the GNU General Public License along with this
+./" document; see the file named COPYING for more information.
+./"
+./"./"./"
 .SH NAME
 vas4 \- control Lyon Lamb Video Animation System VAS4 to record videotape
 .SH SYNOPSIS
@@ -14,13 +37,13 @@ The
 command initiates a variety of actions within both the
 VAS IV controller and associated Video Tape Recorder (VTR),
 allowing the animated sequences to be recorded on video tape.
-The specified 
+The specified
 keyword determines the action to be performed.
 Additional options specified are
 dependent upon the keyword selected.
 .SH KEYWORDS
 .TP
-init\ \ \ \ 
+init\ \ \ \
 Initialize the VAS IV
 .TP
 rewind
@@ -28,10 +51,10 @@ Rewind the VTR.  A problem here is that the VAS IV provides no feedback to
 indicate when the rewind is complete.  This command will return immediately
 and it is up to the user to estimate when the rewind is complete.
 .TP
-play\ \ \ \ 
+play\ \ \ \
 Place the VTR into play mode
 .TP
-stop\ \ \ \ 
+stop\ \ \ \
 Stop the VTR
 .TP
 fforward
@@ -46,7 +69,7 @@ title recording identifies and initiates a new scene.  The actual user
 images are recorded using the \fIrecord\fR option.
 .TP
 record [nf]
-Records the currently displayed image by adding frames to the current 
+Records the currently displayed image by adding frames to the current
 scene.  A single option may be specified by specifying the integer
 number of video frames (nf) to record.  A default value of 1 is used if
 the option is not specified.  The \fInew\fR option must be executed to initiate
@@ -72,7 +95,7 @@ or not moving.
 .TP
 search n
 Search for frame #n.
-.TP 
+.TP
 old sn start
 Record over an old scene, given scene number (sn) and starting frame (start).
 
@@ -85,11 +108,11 @@ vas4	new	2	will start a new recording of scene 2
 vas4	record	3	will record 3 video frames of the currently displayed image
 .fi
 .SH TYPICAL SEQUENCE
-The following example illustrates a typical recording sequence using 
-the \fIvas4\fR command.  Suppose the user wants to produce a video consisting 
+The following example illustrates a typical recording sequence using
+the \fIvas4\fR command.  Suppose the user wants to produce a video consisting
 of 10 seconds of color bars, 4 seconds for title, 1 second for each of a
 10-image sequence and 5 seconds of credits, then the following sequence
-of commands would be used.  Comments indicated by "/* */" are explanations not 
+of commands would be used.  Comments indicated by "/* */" are explanations not
 to be included in the command.  Statements enclosed in "( )" describe an
 action to perform, but not a precise command.
 .nf
@@ -116,11 +139,11 @@ action to perform, but not a precise command.
 
 .SH SEQUENCE RECORDING
 Since the typical sequence described above will cover many applications,
-the "sequence" option is provided to perform the described sequence.  To 
+the "sequence" option is provided to perform the described sequence.  To
 make this option general and provide access to a wide range of display
-techniques, the user must provide a program or shell script in the 
+techniques, the user must provide a program or shell script in the
 current directory named "display_image".  The "sequence" option will
-perform the steps described below.  The "sequence" command requires two 
+perform the steps described below.  The "sequence" command requires two
 integer values n and nf to be specified.  The parameter n specifies how many
 images to record and nf specifies the number of frames per recording.
 .LP
@@ -162,7 +185,7 @@ vas4  sequence  30  3  100
 Since a shell script or even a program is used for "display_image", more
 complex methods of displaying the image may be used.  For example, the
 appropriate commands may be included to read an image from magtape and
-display, thus reducing the impact of storing image files on the disk. 
+display, thus reducing the impact of storing image files on the disk.
 
 .SH SPECIAL NOTES
 Page B-1 of the VAS IV Operations Manual states: "The microprocessor in
@@ -200,8 +223,8 @@ has been recorded with the black signal.
 .SH SEE ALSO
 brlcad(1), fbcbars(1), rle-fb(1), pix-fb(1), rle-ik(1)
 .br
-VAS IV Operations Manual, 
-Lyon-Lamb Video Animation Systems, Inc., 4531 Empire Avenue, Burbank, 
+VAS IV Operations Manual,
+Lyon-Lamb Video Animation Systems, Inc., 4531 Empire Avenue, Burbank,
 CA, 91505, (818) 843-4831
 .SH AUTHORS
 Steven G. Satterfield, U.S. Naval Academy

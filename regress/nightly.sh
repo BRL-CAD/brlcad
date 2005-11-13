@@ -82,7 +82,7 @@ while [ ! -f $MYNAME ] ; do
     NOW=`date "+%y%m%d%H%M"`
     DELTA=`expr $START_TIME - $NOW`
 
-    if [ $DELTA -gt 300 ] ; then 
+    if [ $DELTA -gt 300 ] ; then
 	# we should log something here
 	/bin/echo $MYNAME giving up at $NOW >> $LOG_FILE
 
@@ -97,7 +97,7 @@ done
 VERSION=`cat $MYNAME`
 rm $MYNAME
 # start the build
-case $MYNAME in 
+case $MYNAME in
 wopr)
     export CONF_FLAGS="" ;
     export MAKE_CMD="make" ;

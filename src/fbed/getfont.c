@@ -35,9 +35,9 @@
 #if ! defined( lint )
 static const char RCSid[] = "@(#) getfont.c 2.1, modified 12/9/86 at 15:54:45, archive /vld/moss/src/fbed/s.getfont.c";
 #endif
-/* 
+/*
 	getfont.c - Load a new font by reading in the header and directory.
- */ 
+ */
 #include "common.h"
 
 

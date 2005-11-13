@@ -33,7 +33,7 @@ vdraw	open			- with no argument, asks if there is
 		name		- opens the specified vlist
 				  returns 1 if creating new vlist
 				          0 if opening an existing vlist
-	
+
 EDITING COMMANDS - no return value
 
 vdraw	write	i	c x y z	- write params into i-th vector
@@ -57,7 +57,7 @@ vdraw	read	i		- returns contents of i-th vector "c x y z"
 		length		- return number of vectors in list
 		name		- return name of current vlist
 
-DISPLAY COMMAND - 
+DISPLAY COMMAND -
 vdraw	send			- send the current vlist to the display
 				  returns 0 on success, -1 if the name
 				  conflicts with an existing true solid
@@ -71,7 +71,7 @@ All textual arguments can be replaced by their first letter.
 
 In the above listing:
 
-"i" refers to an integer 
+"i" refers to an integer
 "c" is an integer representing one of the following rt_vlist commands:
 	 RT_VLIST_LINE_MOVE	0	/ begin new line /
 	 RT_VLIST_LINE_DRAW	1	/ draw line /
@@ -216,7 +216,7 @@ char **argv;
 
 }
 
-int 
+int
 cmd_viewget(clientData, interp, argc, argv)
 ClientData clientData;
 Tcl_Interp *interp;
@@ -262,11 +262,11 @@ char **argv;
 		bn_mat_trn( mymat, view_state->vs_Viewrot);
 		anim_v_unpermute(mymat);
 		c = anim_mat2ypr(temp, mymat);
-		if (c==2) { 
+		if (c==2) {
 			Tcl_AppendResult(interp, "mat2ypr - matrix is not a rotation matrix", (char *)NULL);
 			return TCL_ERROR;
 		}
-		VSCALE(temp, temp, bn_radtodeg);	
+		VSCALE(temp, temp, bn_radtodeg);
 		sprintf(result_string,"%.12g %.12g %.12g",temp[0],temp[1],temp[2]);
 		Tcl_AppendResult(interp, result_string, (char *)NULL);
 		return TCL_OK;
@@ -274,11 +274,11 @@ char **argv;
 		bn_mat_trn(mymat,view_state->vs_Viewrot);
 		anim_v_unpermute(mymat);
 		c = anim_mat2ypr(temp, mymat);
-		if (c==2) { 
+		if (c==2) {
 			Tcl_AppendResult(interp, "mat2ypr - matrix is not a rotation matrix", (char *)NULL);
 			return TCL_ERROR;
 		}
-		VSCALE(temp, temp, bn_radtodeg);	
+		VSCALE(temp, temp, bn_radtodeg);
 		if (temp[0] >= 180.0 ) temp[0] -= 180;
 		if (temp[0] < 180.0 ) temp[0] += 180;
 		temp[1] = -temp[1];
@@ -291,16 +291,16 @@ char **argv;
 		sprintf(result_string,"%.12g %.12g %.12g %.12g", quat[0],quat[1],quat[2],quat[3]);
 		Tcl_AppendResult(interp, result_string, (char *)NULL);
 		return TCL_OK;
-	default:				
-		Tcl_AppendResult(interp, 
+	default:
+		Tcl_AppendResult(interp,
 			"cmd_viewget: invalid argument. Must be one of center,size,eye,ypr.",
 			(char *)NULL);
 		return TCL_ERROR;
-			
+
 	}
 }
 
-int 
+int
 cmd_viewset(clientData, interp, argc, argv)
 ClientData clientData;
 Tcl_Interp *interp;

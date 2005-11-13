@@ -94,7 +94,7 @@ class Sketch_editor {
 
 			# check if we already have an editor working on this sketch
 			verify_unique_editor
-			
+
 			set sketch_path [lindex $args 1]
 			if { [catch {db get $sketch_name} sketch_info] } {
 				tk_messageBox -icon error -title "Cannot Get Sketch" -type ok \
@@ -286,7 +286,7 @@ class Sketch_editor {
 		} else {
 			do_scale $tmp_scale2
 		}
-			
+
 	    }
 
 	method get_tobase {} {
@@ -350,7 +350,7 @@ class Sketch_editor {
 			$item unhighlight
 			return
 		}
-			
+
 		set dir_list [$item get_tangent_at_vertex $common_vertex]
 		set dir(0) [lindex $dir_list 0]
 		set dir(1) [lindex $dir_list 1]
@@ -372,7 +372,7 @@ class Sketch_editor {
 		set dir(1) $tmp
 
 		set v1 [lindex $VL [lindex $verts0 0]]
-		
+
 		set v2 [lindex $VL [lindex $verts0 1]]
 
 		set diff(0) [expr {[lindex $v1 0] - [lindex $v2 0] } ]
@@ -382,7 +382,7 @@ class Sketch_editor {
 			tk_messageBox -type ok -icon error -title "Impossible Tangency" \
 				-message "Cannot create such an arc (you are asking for a straight line)"
 			return
-			
+
 		}
 		set new_radius [expr { [dot diff diff] / (-2.0 * $dot) } ]
 		if { $new_radius < 0.0 } {
@@ -1921,7 +1921,7 @@ class Sketch_carc {
 					 -extent [expr {$end_ang - $start_ang}] \
 					 -style arc -tags [concat $this segs $atag]
 			}
-		} 
+		}
 	}
 }
 
@@ -1995,7 +1995,7 @@ class Sketch_bezier {
 	set coords ""
 	foreach index $index_list {
 	    set pt [lindex $vlist $index]
-	    lappend coords [expr {$myscale * [lindex $pt 0]}] [expr {-$myscale * [lindex $pt 1]}] 
+	    lappend coords [expr {$myscale * [lindex $pt 0]}] [expr {-$myscale * [lindex $pt 1]}]
 	}
 	if {[lsearch -exact $atag selected ] != -1} {
 	    $canv create bezier $coords -fill red -tags [concat $this segs $atag]

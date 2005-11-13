@@ -526,7 +526,7 @@ If you wish to install the software somewhere else, create your "bin",
 update the definitions for BINDIR,
 LIBDIR, and ETCDIR in the files "Cakefile.defs", "setup.sh",
 "cray.sh", "cake/Makefile", and "cakeaux/Makefile".
-Then, add your choice for BINDIR to your search path. 
+Then, add your choice for BINDIR to your search path.
 Note that the script "newbindir.sh", as described above, will
 update the required files for you, if the BINDIR, LIBDIR, MANDIR, INCDIR,
 and ETCDIR all have the same parent directory.
@@ -599,13 +599,13 @@ by running:
 Be certain that the values which are printed are reasonable.
 First, make sure that the MACHINE variable is appropriate
 for your machine; see the table of supported machine types, above.
-If the MACHINE variable is set properly, 
+If the MACHINE variable is set properly,
 the UNIXTYPE variable should also be set properly:  "BSD" for systems
 based on the Berkeley version of UNIX, "SYSV" for systems based
 on AT&T SystemV.
 Finally, the HAS_TCP variable should be one ("1") if your machine
 supports the TCP/IP network protocols, and zero ("0") otherwise.
-If any of these parameters are not correct, 
+If any of these parameters are not correct,
 see the section on
 <a href="porting">SUPPORTING A NEW MACHINE</a>, below.
 <P>
@@ -885,7 +885,7 @@ Check how you did by running:
 </pre>
 and making any necessary corrections.
 <P>
-If <b>machinetype.sh</b> reports that HAS_TCP=0, ie, 
+If <b>machinetype.sh</b> reports that HAS_TCP=0, ie,
 this is a machine without TCP network capability,
 the <b>gen.sh</b> script will automatically delete
 <b>fbserv</b> and <b>libpkg</b> from the PRODUCTS list,

@@ -19,7 +19,7 @@
  * information.
  */
 /** @file inside.c
- *			I N S I D E 
+ *			I N S I D E
  *
  *	Given an outside solid and desired thicknesses, finds
  *	an inside solid to produce those thicknesses.
@@ -64,6 +64,8 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "nmg.h"
 #include "rtgeom.h"
 #include "raytrace.h"
+#include "db.h"
+
 #include "./ged.h"
 #include "./sedit.h"
 #include "./mged_solid.h"
@@ -418,7 +420,7 @@ f_inside(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	    goto end;
 	  }
 	  break;
-	  
+
 	case ID_RPC:
 	  promp = p_rpcin;
 	  for (i = 0; i < 4; i++) {
@@ -484,7 +486,7 @@ f_inside(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	    thick[i] = atof( argv[arg] ) * local2base;
 	    ++arg;
 	  }
-	  
+
 	  if( ehyin(&intern, thick) ){
 	    status = TCL_ERROR;
 	    goto end;
@@ -533,7 +535,7 @@ f_inside(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
 	/* don't allow interrupts while we update the database! */
 	(void)signal( SIGINT, SIG_IGN);
- 
+
 	/* Add to in-core directory */
 	if( (dp = db_diradd( dbip,  newname, -1, 0, DIR_SOLID, (genptr_t)&intern.idb_type )) == DIR_NULL )  {
 	  (void)signal( SIGINT, SIG_IGN );
@@ -589,7 +591,7 @@ arbin(
 		}
 	}
 
-	if( cgtype == 5 ) 
+	if( cgtype == 5 )
 		num_pts = 4;	/* use rt_arb_3face_intersect for first 4 points */
 	else if( cgtype == 7 )
 		num_pts = 0;	/* don't use rt_arb_3face_intersect for any points */
@@ -616,7 +618,7 @@ arbin(
 	  struct bu_vls tmp_vls;
 
 	  bu_vls_init(&tmp_vls);
-	  
+
 	  /* calculate the four possible intersect points */
 	  if( bn_mkpoint_3planes( pt[0] , planes[1] , planes[2] , planes[3] ) )
 	    {
@@ -662,7 +664,7 @@ arbin(
 	      bu_vls_free(&tmp_vls);
 	      return( 1 );
 	    }
-			
+
 		if( bn_pt3_pt3_equal( pt[0] , pt[1] , &mged_tol ) )
 		{
 			/* if any two of the calculates intersection points are equal,
@@ -1146,7 +1148,7 @@ ellgin(struct rt_db_internal *ip, fastf_t thick[6])
 	fastf_t mag[3], nmag[3];
 	fastf_t ratio;
 
-	if( thick[0] <= 0.0 ) 
+	if( thick[0] <= 0.0 )
 		return(0);
 	thick[2] = thick[1] = thick[0];	/* uniform thickness */
 
@@ -1252,10 +1254,10 @@ rhcin(struct rt_db_internal *ip, fastf_t thick[4])
 	vect_t			Bn, Hn, Bu, Hu, Ru;
 
 	RT_RHC_CK_MAGIC(rhc);
-	
+
 	VMOVE( Bn, rhc->rhc_B );
 	VMOVE( Hn, rhc->rhc_H );
-	
+
 	/* get unit coordinate axes */
 	VMOVE( Bu, Bn );
 	VMOVE( Hu, Hn );
@@ -1280,7 +1282,7 @@ epain(struct rt_db_internal *ip, fastf_t thick[2])
 	vect_t			Hu;
 
 	RT_EPA_CK_MAGIC(epa);
-	
+
 	VMOVE( Hu, epa->epa_H );
 	VUNITIZE( Hu );
 
@@ -1300,10 +1302,10 @@ ehyin(struct rt_db_internal *ip, fastf_t thick[2])
 	vect_t			Hu;
 
 	RT_EHY_CK_MAGIC(ehy);
-	
+
 	VMOVE( Hu, ehy->ehy_H );
 	VUNITIZE( Hu );
-	
+
 	VJOIN1( ehy->ehy_V, ehy->ehy_V, thick[0], Hu );
 	VSCALE( ehy->ehy_H, Hu, MAGNITUDE(ehy->ehy_H) - thick[0] - thick[1] );
 	ehy->ehy_r1 -= thick[1];

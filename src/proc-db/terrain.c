@@ -20,12 +20,12 @@
  */
 /** @file terrain.c
  * Create a random terrain spline model database.
- * Future additions to this program would be to include 
+ * Future additions to this program would be to include
  * random trees and objects to be inserted into the database.
  *
  * Author -
  *	Paul R. Stay
- * 
+ *
  * Source
  *     SECAD/VLD Computing Consortium, Bldg 394
  *     The U.S. Army Ballistic Research Laboratory
@@ -45,10 +45,10 @@
 # include <unistd.h>
 #endif
 
-#include "machine.h"		/* BRLCAD specific machine data types */
+#include "machine.h"		/* BRL-CAD specific machine data types */
 #include "bu.h"
-#include "vmath.h"		/* BRLCAD Vector macros */
-#include "nurb.h"		/* BRLCAD Spline data structures */
+#include "vmath.h"		/* BRL-CAD Vector macros */
+#include "nurb.h"		/* BRL-CAD Spline data structures */
 #include "raytrace.h"
 #include "wdb.h"
 
@@ -101,7 +101,7 @@ main(int argc, char **argv)
 
 	/* Create the database header record.
   	 * this solid will consist of three surfaces
-	 * a top surface, bottom surface, and the sides 
+	 * a top surface, bottom surface, and the sides
 	 * (so that it will be closed).
  	 */
 
@@ -124,7 +124,7 @@ main(int argc, char **argv)
 	interpolate_data();
 
 	mk_bspline( outfp, nurb_name, surfs);
-		
+
 	return 0;
 }
 

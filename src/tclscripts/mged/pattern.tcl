@@ -957,7 +957,7 @@ proc pattern_sph { args } {
 			error "Cannot create group $group_name from list \{${group_list}\}!!!\n$ret"
 		}
 	}
-	
+
 	draw $group_name
 }
 
@@ -1297,7 +1297,7 @@ proc pattern_cyl { args } {
 			error "Cannot create group $group_name from list \{${group_list}\}!!!\n$ret"
 		}
 	}
-	
+
 	draw $group_name
 }
 

@@ -25,7 +25,7 @@
  *
  *  Author -
  *	John R. Anderson
- *  
+ *
  *  Source -
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5066
@@ -193,7 +193,7 @@ char	*argv[];
 		exit(1);
 	}
 
-	/* Open brl-cad database */
+	/* Open BRL-CAD database */
 	if( (dbip = db_open( argv[optind], "r" )) == DBI_NULL )
 	{
 		bu_log( "Cannot open %s\n" , argv[optind] );
@@ -203,7 +203,7 @@ char	*argv[];
 #if 0
 	if( stats )
 	{
-		edge_len_limits = 
+		edge_len_limits =
 	}
 #endif
 	db_dirbuild( dbip );

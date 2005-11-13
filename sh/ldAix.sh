@@ -12,7 +12,7 @@
 # 1. Redistributions of source code must retain the above copyright
 # notice, this list of conditions and the following disclaimer.
 #
-# 2. Redistributions in binary form must reproduce the above 
+# 2. Redistributions in binary form must reproduce the above
 # copyright notice, this list of conditions and the following
 # disclaimer in the documentation and/or other materials provided
 # with the distribution.
@@ -94,8 +94,8 @@ rm -f lib.exp
 echo "#! $outputFile" >lib.exp
 /usr/ccs/bin/nm $nmopts -h $ofiles | sed -e '/:$/d' -e '/ U /d' -e '/[ 	]0|extern/d' -e '/unamex/d' -e 's/^\.//' -e 's/[ 	|].*//' | sort | uniq >>lib.exp
 
-# If we're linking a .a file, then link all the objects together into a 
-# single file "shr.o" and then put that into the archive.  Otherwise link 
+# If we're linking a .a file, then link all the objects together into a
+# single file "shr.o" and then put that into the archive.  Otherwise link
 # the object files directly into the .a file.
 
 outputFile=`echo $args | sed -e 's/.*-o \([^ ]*\).*/\1/'`

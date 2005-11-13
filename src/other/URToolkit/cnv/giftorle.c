@@ -21,6 +21,7 @@
 /* |   don't try to make money off it, or pretend that you wrote it.  | */
 /* +------------------------------------------------------------------+ */
 
+#include	<stdlib.h>
 #include	<stdio.h>
 #include	"rle.h"
 

@@ -26,12 +26,12 @@
  *	Aberdeen Proving Ground
  *	Maryland 21005-5066
  *	(301)278-6647 or AV-298-6647
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5066
- *  
+ *
  */
 #ifndef lint
 static const char RCSid[] = "@(#)$Header$ (BRL)";
@@ -143,14 +143,14 @@ jmp_buf	env;
 
 /* File names and descriptors.						*/
 char	*objfile;
-FILE	*regfp;		
+FILE	*regfp;
 struct bu_vls	rt_vls;
 struct bu_vls	st_vls;
 struct bu_vls	id_vls;
 char	*rt_file;
-FILE	*solfp;		
+FILE	*solfp;
 char	*st_file;
-FILE	*ridfp;		
+FILE	*ridfp;
 char	*id_file;
 
 /* Counters.								*/
@@ -199,8 +199,8 @@ extern int		shell();
 extern int		cgarbs();
 extern int		redoarb();
 
-RT_EXTERN(void ewrite, (FILE *fp, const char *buf, unsigned bytes) );
-RT_EXTERN(void blank_fill, (FILE *fp, int count) );
+BU_EXTERN(void ewrite, (FILE *fp, const char *buf, unsigned bytes) );
+BU_EXTERN(void blank_fill, (FILE *fp, int count) );
 
 /* Head of linked list of solids */
 struct soltab	sol_hd;
@@ -305,7 +305,7 @@ char	*argv[];
 			(void) insert( arg_list, arg_ct );
 			break;
 		case LIST :
-			{	
+			{
 				register int	i;
 				if( arg_list[1] == 0 )
 				{
@@ -651,7 +651,7 @@ genptr_t		client_data;
 			    dp->d_namep );
 		}
 		goto found_it;
-next_one: 
+next_one:
 		;
 	}
 
@@ -763,7 +763,7 @@ vect_t	v1, v2;
 void
 swap_dbl( d1, d2 )
 register double	*d1, *d2;
-{	
+{
 	double	t;
 	t = *d1;
 	*d1 = *d2;
@@ -955,7 +955,7 @@ int			num;
 #define SPH	3
 
 /*
- *			A D D E L L 
+ *			A D D E L L
  *
  *	Process the general ellipsoid.
  */
@@ -1105,7 +1105,7 @@ int			num;
 		}
 	}
 
-	/* Insure that magnitude of A is greater than B, and magnitude of 
+	/* Insure that magnitude of A is greater than B, and magnitude of
 		C is greater than D for the GIFT code (boy, is THIS a shame).
 		This need only be done for the elliptical REC and TEC types.
 	 */
@@ -1287,7 +1287,7 @@ ewrite( fp, buf, bytes )
 FILE		*fp;
 const char	*buf;
 unsigned	bytes;
-{	
+{
 	if( bytes == 0 )  return;
 
 	if( fwrite( buf, bytes, 1, fp ) != 1 )  {
@@ -1311,7 +1311,7 @@ unsigned	bytes;
 void
 deck( prefix )
 register char *prefix;
-{	
+{
 	nns = nnr = 0;
 
 	/* Create file for solid table.					*/
@@ -1520,7 +1520,7 @@ toc()
 void
 list_toc( args )
 char	 *args[];
-{	
+{
 	register int	i, j;
 	(void) fflush( stdout );
 	for( tmp_ct = 0, i = 1; args[i] != NULL; i++ )
@@ -1553,7 +1553,7 @@ int
 col_prt( list, ct )
 register char	*list[];
 register int	ct;
-{	
+{
 	char		buf[MAX_COL+2];
 	register int	i, column, spaces;
 
@@ -1588,7 +1588,7 @@ int
 insert(  args,	ct )
 char		*args[];
 register int	ct;
-{	
+{
 	register int	i, j, nomatch;
 
 	/* For each argument (does not include args[0]).			*/
@@ -1624,7 +1624,7 @@ char	*args[];
 
 	/* for each object in arg list
 	 */
-	for( i = 1; i < arg_ct; i++ ) { 
+	for( i = 1; i < arg_ct; i++ ) {
 		register int	j;
 		nomatch = YES;
 
@@ -1632,7 +1632,7 @@ char	*args[];
 		 */
 		for( j = 0; j < curr_ct; )
 			if( match( args[i], curr_list[j] ) )
-			{	
+			{
 				register int	k;
 
 				nomatch = NO;
@@ -1644,7 +1644,7 @@ char	*args[];
 				 */
 				for( k = j; k < curr_ct; k++ )
 					curr_list[k] = curr_list[k+1];
-			} 
+			}
 			else	++j;
 		if( nomatch )
 			(void) fprintf( stderr,
@@ -1676,8 +1676,8 @@ int   n,    w;
 
 	if( (sign = n) < 0 )	n = -n;
 	i = 0;
-	do	
-		s[i++] = n % 10 + '0';	
+	do
+		s[i++] = n % 10 + '0';
 	while( (n /= 10) > 0 );
 	if( sign < 0 )	s[i++] = '-';
 
@@ -1726,8 +1726,8 @@ register int	w;
 
 	if( (sign = n) < 0 )	n = -n;
 	i = 0;
-	do	
-		s[i++] = n % 10 + '0';	
+	do
+		s[i++] = n % 10 + '0';
 	while( (n /= 10) > 0 );
 	if( sign < 0 )	s[i++] = '-';
 
@@ -1864,7 +1864,7 @@ register int	w, d;
 /*	g e t c m d ( )
 	Return first character read from keyboard,
 	copy command into args[0] and arguments into args[1]...args[n].
-		
+
  */
 char
 getcmd( args, ct )
@@ -1925,7 +1925,7 @@ register char	*str;
 void
 menu( addr )
 char **addr;
-{	
+{
 	register char	**sbuf = addr;
 	while( *sbuf )
 		(void) printf( "%s\n", *sbuf++ );
@@ -1940,7 +1940,7 @@ void
 blank_fill( fp, count )
 FILE		*fp;
 register int	count;
-{	
+{
 	ewrite( fp, BLANKS, (unsigned) count );
 }
 

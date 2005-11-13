@@ -28,11 +28,11 @@
  *  Authors -
  *	Lee A. Butler
  *	Michael John Muuss
- *  
+ *
  *  Source -
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
- *  
+ *
  */
 /*@}*/
 
@@ -58,23 +58,23 @@ bu_badmagic(const long int *ptr, unsigned long int magic, const char *str, const
 {
 	char	buf[512];
 
-	if( !(ptr) )  { 
-		sprintf(buf, "ERROR: NULL %s pointer, file %s, line %d\n", 
-			str, file, line ); 
-		bu_bomb(buf); 
+	if( !(ptr) )  {
+		sprintf(buf, "ERROR: NULL %s pointer, file %s, line %d\n",
+			str, file, line );
+		bu_bomb(buf);
 	}
 	if( ((size_t)(ptr)) & (sizeof(long)-1) )  {
-		sprintf(buf, "ERROR: x%lx mis-aligned %s pointer, file %s, line %d\n", 
-			(long)ptr, str, file, line ); 
-		bu_bomb(buf); 
+		sprintf(buf, "ERROR: x%lx mis-aligned %s pointer, file %s, line %d\n",
+			(long)ptr, str, file, line );
+		bu_bomb(buf);
 	}
-	if( *(ptr) != (long int)(magic) )  { 
-		sprintf(buf, "ERROR: bad pointer x%lx: s/b %s(x%lx), was %s(x%lx), file %s, line %d\n", 
+	if( *(ptr) != (long int)(magic) )  {
+		sprintf(buf, "ERROR: bad pointer x%lx: s/b %s(x%lx), was %s(x%lx), file %s, line %d\n",
 			(long)ptr,
 			str, magic,
 			bu_identify_magic( *(ptr) ), *(ptr),
-			file, line ); 
-		bu_bomb(buf); 
+			file, line );
+		bu_bomb(buf);
 	}
 }
 

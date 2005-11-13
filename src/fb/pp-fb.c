@@ -26,12 +26,12 @@
  *  The plot file has a format similar to TEKTRONIX plots.
  *  All data is represented with printable ASCII characters.
  *  In the file layout, here are the character range uses:
- *  
+ *
  *  	000 - 037	NULL to US	unused
  *  	040 - 057	SPACE to /	command characters
  *  	060 - 077	0 to ?		(0-7) 3 high bits of inten_high
  *  	100 - 137	@ to _		low 5 bits of inten or number.
- *  
+ *
  *  The following are command codes (encoded as code + 040 in the file):
  *	0 NUM	miss target (NUM=how many pixels)
  *  	1	switching to new surface (unused)
@@ -50,12 +50,12 @@
  *	Conversion to generic frame buffer utility using libfb(3).
  *	Gary S. Moss, BRL. 03/14/85
  *	This version: Gary Kuehl, Feb 1987
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5066
- *  
+ *
  */
 #ifndef lint
 static const char RCSid[] = "@(#)$Header$ (BRL)";
@@ -75,6 +75,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include "machine.h"
+#include "bu.h"
 #include "fb.h"
 #include "libtermio.h"
 
@@ -478,7 +479,7 @@ paint(void)
 	inten_high=0;
 	ih=max_h;
 	iw=min_w;
-	fb_p=pix_buf;	
+	fb_p=pix_buf;
 	iwih=(iw+ih)&1;
 	flop=1;
 	while((c=g())!='/'){
@@ -608,7 +609,7 @@ long numb(void)
 	return(n);
 }
 int cclr(char *pc)
-         
+
 /* compare input color to colors available */
 {
 	char *cp;
@@ -619,7 +620,7 @@ int cclr(char *pc)
 		else if(*cp> *pc) return(-1);
 	}
 	return(-1);
-}			
+}
 long ctoi(void)
 /*		change char string to integer */
 {
@@ -631,7 +632,7 @@ long ctoi(void)
 	if(cc=='-'){
 		neg= -1;
 		cc=gc();
-	}	
+	}
 	while(cc>='0'&&cc<='9'){
 		num=10*num+cc-'0';
 		cc=gc();

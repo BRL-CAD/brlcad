@@ -20,11 +20,11 @@
  */
 /** @file sh_flat.c
  *
- * Notes - 
+ * Notes -
  * This is a basic flat shader.  It will display an object with a set color
  * without taking any effects such as curvature, emission, reflection, etc
  * into consideration.  It simply shades an object constantly with either
- * (in order of reverse priority) 1) the default flat color (white), 
+ * (in order of reverse priority) 1) the default flat color (white),
  * 2) it's set region color, 2) the specified flat shader color (given via
  * the color attribute).
  *
@@ -138,7 +138,7 @@ struct mfuncs flat_mfuncs[] = {
  * sdp == structure description
  * name == struct member name
  * base == begining of structure
- * value == string containing value 
+ * value == string containing value
  */
 void
 normalizedInput_hook( register const struct bu_structparse *sdp, register const char *name, char *base, const char *value ) {
@@ -160,7 +160,7 @@ normalizedInput_hook( register const struct bu_structparse *sdp, register const 
 	for (i=0 ; i < sdp->sp_count ; i++, p++) {
 		*p /= 255.0;
 	}
-	
+
 	for (ok=1, i=0 ; i < sdp->sp_count ; i++, p++) {
 		if ( (*p > 1.0) || (*p < 0.0) ) ok = 0;
 	}
@@ -171,12 +171,12 @@ normalizedInput_hook( register const struct bu_structparse *sdp, register const 
 /* singleNormalizedInput_hook
  *
  * same as normalizedInput_hook (in fact it calls it) except that only one input
- * is expected from user input.  the hook takes the single input value, and sets 
+ * is expected from user input.  the hook takes the single input value, and sets
  * it three times.  the value is normalized from 0.0 to 1.0
  */
 void
 singleNormalizedInput_hook( register const struct bu_structparse *sdp, register const char *name, char *base, const char *value ) {
-	
+
 	register double *p = (double *)(base+sdp->sp_offset);
 
 	normalizedInput_hook(sdp, name, base, value);
@@ -224,7 +224,7 @@ flat_setup( register struct region *rp, struct bu_vls *matparm, char **dpp, stru
 	if (rp->reg_mater.ma_color_valid) {
 		VMOVE(flat_sp->color, rp->reg_mater.ma_color);
 	}
-	
+
 	/* parse the user's arguments for this use of the shader. */
 	if (bu_struct_parse( matparm, flat_parse_tab, (char *)flat_sp ) < 0 )
 		return(-1);
@@ -266,8 +266,8 @@ flat_render( struct application *ap, struct partition *pp, struct shadework *swp
 		bu_struct_print( "flat_render Parameters:", flat_parse_tab, (char *)flat_sp );
 
 	/* do the actual flat color shading for the flat object. if the object is
-	 * not transparent, just put the color.  if the object is transparent, do 
-	 * a little more work determining the background pixel, and then blend with 
+	 * not transparent, just put the color.  if the object is transparent, do
+	 * a little more work determining the background pixel, and then blend with
 	 * the flat foreground object.
 	 */
 	if (VNEAR_ZERO(flat_sp->transparency, SMALL_FASTF)) {
@@ -286,7 +286,7 @@ flat_render( struct application *ap, struct partition *pp, struct shadework *swp
 		VELMUL(intensity, intensity, flat_sp->color); /* ??? is there a way to merge this mul->add step? */
 		VADD2(swp->sw_color, swp->sw_color, intensity);
 	}
- 
+
 	return(1);
 }
 

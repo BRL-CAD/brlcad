@@ -12,7 +12,7 @@
 # 1. Redistributions of source code must retain the above copyright
 # notice, this list of conditions and the following disclaimer.
 #
-# 2. Redistributions in binary form must reproduce the above 
+# 2. Redistributions in binary form must reproduce the above
 # copyright notice, this list of conditions and the following
 # disclaimer in the documentation and/or other materials provided
 # with the distribution.
@@ -73,12 +73,12 @@ while [ 1 ] ; do
 		F*|f*)	rm -f $BUG_REPORT ; exit ;;
 		E*|e*)	$REPT_EDITOR $BUG_REPORT ;;
 	esac
-	
+
 	ACTION=S
 	echo "S)end F)orget E)dit : "
 	read ACTION
 done
-	
+
 
 if [ -z "$USER" ] ; then
 	USER=`whoami`

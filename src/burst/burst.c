@@ -29,12 +29,7 @@
 static const char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
-#ifndef DEBUG
-#define NDEBUG
-#define STATIC static
-#else
-#define STATIC
-#endif
+#include "common.h"
 
 #include <assert.h>
 #include <stdio.h>
@@ -50,16 +45,16 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #define DEBUG_BURST	0	/* 1 enables debugging for this module */
 
 /*
-	bool getCommand( char *name, char *buf, int len, FILE *fp )
+	boolean getCommand( char *name, char *buf, int len, FILE *fp )
 
 	Read next command line into buf and stuff the command name into name
 	from input stream fp.  buf must be at least len bytes long.
 
-	RETURN:	true for success
+	RETURN:	1 for success
 
-		false for end of file 
+		0 for end of file
  */
-STATIC bool
+static boolean
 #if STD_C
 getCommand( char *name, char *buf, int len, FILE *fp )
 #else
@@ -80,7 +75,7 @@ FILE *fp;
 			if( sscanf( buf, "%s", name ) == 1 )
 				{
 				buf[strlen(buf)-1] = NUL; /* clobber newline */
-				return	true;
+				return	1;
 				}
 			else /* Skip over blank lines. */
 				continue;
@@ -88,10 +83,10 @@ FILE *fp;
 		else
 			{ /* Generate comment command. */
 			(void) strcpy( name, CMD_COMMENT );
-			return	true;
+			return	1;
 			}
 		}
-	return	false; /* EOF */
+	return	0; /* EOF */
 	}
 
 /*
@@ -99,7 +94,7 @@ FILE *fp;
 
 	Initialize all signal handlers.
  */
-STATIC void
+static void
 #if STD_C
 setupSigs( void )
 #else
@@ -142,7 +137,7 @@ setupSigs()
 
 	Parse program command line.
  */
-STATIC int
+static int
 #if STD_C
 parsArgv( int argc, char **argv )
 #else
@@ -157,13 +152,13 @@ char **argv;
 		switch( c )
 			{
 		case 'b' :
-			tty = false;
+			tty = 0;
 			break;
 		case '?' :
 			return	0;
 			}
 		}
-	return	true;
+	return	1;
 	}
 
 /*
@@ -180,7 +175,7 @@ FILE *fp;
 #endif
 	{
 	assert( fp != (FILE *) NULL );
-	batchmode = true;
+	batchmode = 1;
 	while( getCommand( cmdname, cmdbuf, LNBUFSZ, fp ) )
 		{	Func	*cmdfunc;
 		if( (cmdfunc = getTrie( cmdname, cmdtrie )) == NULL )
@@ -206,7 +201,7 @@ FILE *fp;
 			(*cmdfunc)( (HmItem *) 0 );
 			}
 		}
-	batchmode = false;
+	batchmode = 0;
 	return;
 	}
 

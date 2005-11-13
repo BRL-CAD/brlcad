@@ -39,7 +39,7 @@
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5066
- *  
+ *
  */
 /*@}*/
 
@@ -63,7 +63,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #define PAGE_SCANS	(ifp->if_ppixels/ifp->if_width)
 
 /*_LOCAL_ int	_fb_pgin(), _fb_pgout();*/
- 
+
 /*
  *		F B _ I O I N I T
  *

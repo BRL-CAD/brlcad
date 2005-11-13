@@ -17,18 +17,21 @@ bwish_SOURCES = \
 	main.c \
 	tcl.c
 
-bwish_LDADD = \
-	${TK} \
-	${TCL} \
-	${ITK} \
-	${ITCL} \
+blib_LIBS = \
 	${TCLCAD} \
+	${LIBRT} \
 	${DM} \
 	${FB} \
-	${LIBRT} \
-	${TERMIO} \
 	${BN} \
-	${BU}
+	${BU} \
+	${ITK} \
+	${ITCL} \
+	${TK} \
+	${TCL} \
+	${TERMIO}
+
+bwish_LDADD = \
+	${blib_LIBS}
 
 # static is required to avoid MIPSpro 7.3 long rpath linker bug
 if LINK_STATIC_REQUIRED
@@ -42,14 +45,7 @@ btclsh_SOURCES = \
 	tcl.c
 
 btclsh_LDADD = \
-	${LIBRT} \
-	${ITCL} \
-	${TERMIO} \
-	${TCL} \
-	${TCLCAD} \
-	${BN} \
-	${BU}
-
+	${blib_LIBS}
 
 include $(top_srcdir)/misc/Makefile.defs
 

@@ -25,24 +25,18 @@
 			Maryland 21005-5066
 			(301)278-6651 or DSN 298-6651
 */
-#ifndef lint
-static const char RCSid[] = "@(#)$Header$ (BRL)";
-#endif
-
 #include "common.h"
-
-
 
 #include <stdio.h>
 #ifdef HAVE_STRING_H
-#include <string.h>
+#  include <string.h>
 #else
-#include <strings.h>
+#  include <strings.h>
 #endif
 #ifdef HAVE_STDARG_H
-#include <stdarg.h>
+#  include <stdarg.h>
 #else
-#include <varargs.h>
+#  include <varargs.h>
 #endif
 
 #include "machine.h"
@@ -53,6 +47,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./font.h"
 #include "./try.h"
 #include "./extern.h"
+
 
 #define PIXEL_MOVE()		MvCursor( 7, 1 )
 #define PAINT_MOVE()		MvCursor( 26, 1 )
@@ -78,11 +73,6 @@ static char *usage[] =
 
 void init_Status(void);
 void prnt_Status(void), prnt_Usage(void);
-#if __STDC__
-void prnt_Event(char *fmt, ...);
-#else
-void prnt_Event();
-#endif
 void prnt_Prompt(char *msg);
 void prnt_Macro(register char *bufp);
 void prnt_Rectangle(char *str, register Rectangle *rectp);
@@ -111,7 +101,7 @@ prnt_Status(void)
 	(void) fflush( stdout );
 	return;
 	}
-	
+
 static char *screen_template[] = {
 /*        1         2         3         4         5         6         7         8
 012345678901234567890123456789012345678901234567890123456789012345678901234567890
@@ -119,7 +109,7 @@ static char *screen_template[] = {
 "Pixel[           ] Paint[           ] Stride[    ] Brush Size[    ]",
 "-- FBED 2.1 -------------------------------------------------------------------",
 0
-};		
+};
 
 /*	i n i t _ S t a t u s ( ) */
 void
@@ -260,7 +250,7 @@ Va_Decl( prnt_Scroll )
 		}
 	else
 		{
-		Va_Print( stdout );	
+		Va_Print( stdout );
 		(void) printf( "\n" );
 		}
 	Va_End();

@@ -31,4 +31,4 @@ pruned 64.8%:  51533 model RPP, 0 dups skipped, 205036 solid RPP
 Frame     0:   262144 pixels in    2503.79 sec =     104.70 pixels/sec
 Frame     0:   343042 rays   in    2503.79 sec =     137.01 rays/sec (RTFM)
 
-     4828.3 real      2504.2 user       185.4 sys  
+     4828.3 real      2504.2 user       185.4 sys

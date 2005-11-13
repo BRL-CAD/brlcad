@@ -26,12 +26,12 @@
  *
  *  Author -
  *	Michael John Muuss
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5066
- *  
+ *
  */
 #ifndef lint
 static const char RCSid[] = "@(#)$Header$ (BRL)";
@@ -42,16 +42,17 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif
-                                                                                                                                                                            
-#include <stdio.h>	
+
+#include <stdio.h>
 #ifdef HAVE_STDLIB_H
 #include <stdlib.h>
 #endif
-#include <string.h>	
+#include <string.h>
 #include <math.h>
 #include <sys/time.h>		/* For struct timeval */
 
 #include "machine.h"
+#include "bu.h"
 #include "fb.h"
 
 ColorMap cm1, cm2;
@@ -72,7 +73,7 @@ get_args(int argc, register char **argv)
 {
 	register int c;
 
-	while ( (c = getopt( argc, argv, "hi:" )) != EOF )  {
+	while ( (c = bu_getopt( argc, argv, "hi:" )) != EOF )  {
 		switch( c )  {
 		case 'h':
 			/* high-res */
@@ -80,7 +81,7 @@ get_args(int argc, register char **argv)
 			break;
 		case 'i':
 			/* increment */
-			increment = atoi(optarg);
+			increment = atoi(bu_optarg);
 			break;
 
 		default:		/* '?' */
@@ -88,16 +89,16 @@ get_args(int argc, register char **argv)
 		}
 	}
 
-	if( optind >= argc )  {
+	if( bu_optind >= argc )  {
 		/* no fps specified */
 		fps = 0;
 	} else {
-		fps = atof(argv[optind]);
+		fps = atof(argv[bu_optind]);
 		if( fps == 0 )
 			onestep++;
 	}
 
-	if ( argc > ++optind )
+	if ( argc > ++bu_optind )
 		(void)fprintf( stderr, "fbcmrot: excess argument(s) ignored\n" );
 
 	return(1);		/* OK */

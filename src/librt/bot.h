@@ -39,7 +39,7 @@ struct bot_specific {
     genptr_t bot_facelist;	/* head of linked list */
     genptr_t *bot_facearray;	/* head of face array */
     unsigned int bot_tri_per_piece;	/* log # tri per peice. 1 << bot_ltpp is tri per piece */
-    
+
 };
 
 RT_EXPORT BU_EXTERN(void rt_bot_prep_pieces,

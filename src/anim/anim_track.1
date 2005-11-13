@@ -1,12 +1,35 @@
-.TH ANIM_TRACK 1 BRL/CAD
+.TH ANIM_TRACK 1 BRL-CAD
+./"                   A N I M _ T R A C K . 1
+./" BRL-CAD
+./"
+./" Copyright (c) 1996-2005 United States Government as represented by
+./" the U.S. Army Research Laboratory.
+./"
+./" This document is made available under the terms of the GNU Free
+./" Documentation License or, at your option, under the terms of the
+./" GNU General Public License as published by the Free Software
+./" Foundation.  Permission is granted to copy, distribute and/or
+./" modify this document under the terms of the GNU Free Documentation
+./" License, Version 1.2 or any later version published by the Free
+./" Software Foundation; with no Invariant Sections, no Front-Cover
+./" Texts, and no Back-Cover Texts.  Permission is also granted to
+./" redistribute this document under the terms of the GNU General
+./" Public License; either version 2 of the License, or (at your
+./" option) any later version.
+./"
+./" You should have received a copy of the GNU Free Documentation
+./" License and/or the GNU General Public License along with this
+./" document; see the file named COPYING for more information.
+./"
+./"./"./"
 .SH NAME
 anim_track  - make an script to model or animate the pads and wheels of a
-tracked vehicle. 
+tracked vehicle.
 .SH SYNOPSIS
 .B
 anim_track [options] wheelfile < in.table > out.script
 .SH DESCRIPTION
-.I anim_track 
+.I anim_track
 is designed to produce an animation script for the
 animation of the track pads and/or the wheels which define the track.
 Alternatively, track can output a file which produces a track model
@@ -16,10 +39,10 @@ A track consists of a number of identical pads which
 are wrapped in a chain around two or more ordered wheels. Normally, the
 track is linear between the wheels. The exeption is that between the
 first and last wheels, any extra track length is taken up in a hanging
-caternary arc. 
+caternary arc.
 .PP
-Anim_track requires two input files. The first, referred to above as 
-.BR wheelfile , 
+Anim_track requires two input files. The first, referred to above as
+.BR wheelfile ,
 is a table which
 defines the initial track geometry by describing the wheels around which
 the track is to be wrapped. The first three columns of the table give
@@ -31,13 +54,13 @@ wheels when the vehicle is moving forward.
 .PP
 The track is part of a vehicle which has a front, back, left, right, up,
 and down. By default these directions are +x, -x, +y, -y, +z, and -z,
-respectively, but any orientation can be specified by the user with the 
+respectively, but any orientation can be specified by the user with the
 .B -b
 option.
 The track is always confined to a plane which has no left to right
 variation; that is, the wheels can be in front of, behind, above, and
 below each other, but may not be to the left or right of each other. If
-the wheel positions specified in 
+the wheel positions specified in
 .B wheelfile
 do not lie in such a plane, then the first wheel defines the plane into
 which all of the other wheels are projected.
@@ -45,33 +68,33 @@ which all of the other wheels are projected.
 The track pads are spread evenly along the entire length of the track.
 The track segments between wheels are always linear, except for the
 segment between the first and last wheels. If there is any extra track
-length, it is taken up in a caternary arc which hangs down between the 
-first and last wheels. Thus if the the first wheel in 
+length, it is taken up in a caternary arc which hangs down between the
+first and last wheels. Thus if the the first wheel in
 .B wheelfile
 should be the top front wheel of the vehicle, and the last wheel in
 .B wheelfile
 should be the top back wheel of the vehicle. Depending on the track
-length mode specified with the 
+length mode specified with the
 .B -l
 option, the caternary segment may or may not appear.
 .PP
-The second input file required by 
-.IR anim_track , 
-referred to above as 
+The second input file required by
+.IR anim_track ,
+referred to above as
 .BR in.table ,
 describes the state of the track in every frame of the animation. The
-format of this second file can vary greatly according to the command-line 
+format of this second file can vary greatly according to the command-line
 options. The first column of the file is ignored, but is expected to
 contain the time values corresponding to each frame. Next come one or
 more columns which specify directly or indirectly the distance that the
-track has rolled around the wheels in each frame (see the 
+track has rolled around the wheels in each frame (see the
 .BR -u ,
 .BR -y ,
 and
 .B -s
 options). Finally, the file may specify new wheel position for every
-frame (see the 
-.B -v 
+frame (see the
+.B -v
 option).
 .PP
 .SH MODEL REQUIREMENTS
@@ -82,12 +105,12 @@ all be named
 where
 .I i
 ranges from 0 to one less than the number of wheels.
-.I wheelname 
-is an arbitrary string. 
-.IR wheelname 0 
+.I wheelname
+is an arbitrary string.
+.IR wheelname 0
 must be
-the top front wheel in a given track and 
-.IR wheelname (n-1) 
+the top front wheel in a given track and
+.IR wheelname (n-1)
 must be the top
 back wheel. The central axes of all the wheels should be parallel to
 each other and perpendicular to a plane containing all of the wheel
@@ -96,9 +119,9 @@ centers.
 The pads of the track should be identical instances or copies of a
 prototype pad object, and they all should be named
 .IR padname i,
-where 
+where
 .I i
-ranges from 0 to one less than the number of pads. 
+ranges from 0 to one less than the number of pads.
 The prototype pad should be centered on the origin in the x and y
 directions. In the z direction, the inner, wheel-contacting surface of
 the pad should lie on the z=0 plane. The outer, ground-contacting
@@ -128,7 +151,7 @@ command for each of the track pads.
 .B -w parent/basename
 Animate the track wheels. This option takes one argument: a
 slash-separated path to the wheel basename. The number of wheels is
-obtained from the number of lines in the 
+obtained from the number of lines in the
 .BR wheelfile .
 If there is, for example, a combination named "rwheels" containing 4
 wheels named wheel_0, wheel_1, wheel_2, and wheel_3, then the correct
@@ -142,8 +165,8 @@ command for each of the wheels.
 .B \-b # # #
 Specify the yaw, pitch, and roll of the vehicle's axes
 with respect to the world axes. By default, the vehicle is assumed to
-have a yaw, pitch, and roll of 0, and the track is therefore put into a 
-xz plane. 
+have a yaw, pitch, and roll of 0, and the track is therefore put into a
+xz plane.
 .TP
 .B \-d # # #
 Specify (in world coordinates) the centroid of the vehicle
@@ -152,7 +175,7 @@ centered at the origin.
 .TP
 .B -u
 User-specified track distance. The user
-should provide, in the second column of 
+should provide, in the second column of
 .IR in.table ,
 the distance that the track should be rolled around the wheels in each
 frame. This is the default.
@@ -163,16 +186,16 @@ roll. The second column through the seventh columns of the
 .I in.table
 should contain the position and orientation of the vehicle in every
 frame. The distance that the track should be rolled around the wheels is
-automatically calculated in every frame. If 
+automatically calculated in every frame. If
 .I anim_script
 is being used with the same table to create the animaion script for the
-vehicle itself, the 
-.B -b 
-and 
+vehicle itself, the
+.B -b
+and
 .B -d
-options to 
+options to
 .I anim_script
-and 
+and
 .I anim_track
 should be the same.
 .TP
@@ -187,13 +210,13 @@ always steered to face the direction of motion.
 If
 .I anim_script
 is being used with the same table to create the animaion script for the
-vehicle itself, the 
-.B -b 
-and 
+vehicle itself, the
+.B -b
+and
 .B -d
-options to 
+options to
 .I anim_script
-and 
+and
 .I anim_track
 should be the same.
 .TP
@@ -203,8 +226,8 @@ animations exhibit a strobing effect which may make the track appear to
 slow down or rotate backwards. This is an artifact of the discrete time
 nature of the animations, and occurs when the distance traveled by the
 track in one frame is close to the pad length. If the
-.B -a 
-option is selected, 
+.B -a
+option is selected,
 .I anim_track
 adds random jitter to the track's motion when the track speed is high
 enough to cause strobing. This causes a motion blur effect rather than
@@ -213,7 +236,7 @@ strobing.
 .B -v
 Specify new wheel positions in every frame. This option allows dynamic
 suspensions to be animated. If there are n wheels, then the last 2n
-columns of 
+columns of
 .I in.table
 should contain the front-back and up-down coordinates of each wheel,
 relative to the vehicle center and orientation specified with
@@ -230,7 +253,7 @@ throughout the animation.
 .B -c
 Calculate the track circumference, that is, the length of the shortest
 track that can wrap around a given set of wheels. If the -v option is
-specified, then 
+specified, then
 the output is a table containing the frame number and the track
 circumference in each frame. Otherwise, a single value representing the
 constant track circumference is returned.
@@ -288,7 +311,7 @@ frame of an animation, the specified frame number would be zero.
 .B -mp command
 Specify the animation matrix command to apply to the pads. The default
 value is "rarc", meaning that the matrix between the pad and its parent
-is replaced by a new matrix. See the 
+is replaced by a new matrix. See the
 .I anim_script
 man page for more information.
 .TP
@@ -300,10 +323,10 @@ of the old matrix between the pad and its parent combination. See the
 man page for more information.
 
 .SH EXAMPLES
-A typical use of 
-.I anim_track  
+A typical use of
+.I anim_track
 would be to make an animation of a tank rolling across
-bumpy ground. By some method (such as physical simulation) 
+bumpy ground. By some method (such as physical simulation)
 you obtain the position of the center of
 the tank and its orientation at each time. You also nead to obtain the
 position of the each wheel relative to the vehicle center at each time.
@@ -316,10 +339,10 @@ tank itself is created as follows:
 .PP
 anim_script -d 0 0 1005 -b 90 0 0 /tank < tank.table > tank.script
 .PP
-Here 
+Here
 .B tank.table
-specifies the position and orientation of the tank in each frame; the 
-.B \-d 
+specifies the position and orientation of the tank in each frame; the
+.B \-d
 and
 .B \-b
 options specify the original position and orientation of the tank in the
@@ -329,10 +352,10 @@ To create the model of the track, a prototype track pad is created,
 centered on the origin in the x and y directions, with the
 wheel-contacting surface face-down on the origin. The pad is 100mm
 long and 5mm thick. Ninety-six instances of the pad are created, with names "rpad.0"
-through "rpad.95", and grouped together in a combination called "rtrack". 
+through "rpad.95", and grouped together in a combination called "rtrack".
 .PP
 Now, a file called
-.B rwheelfile 
+.B rwheelfile
 is created, describing the positions and radii of the four wheels in the
 right track:
 .nf
@@ -356,8 +379,8 @@ The following call checks the circumference of the track:
 The 96 100mm-long pads should be sufficient to wrap around the wheels,
 leaving a shallow caternary arc between the idler and driver wheels.
 .PP
-The following call creates a file which can be used by 
-.I mged 
+The following call creates a file which can be used by
+.I mged
 to wrap the pads around the wheels in the model.
 .nf
 
@@ -367,15 +390,15 @@ rwheelfile <<EOF > rtrack.src
 ? EOF
 
 .fi
-In this case, 
+In this case,
 .I in.table
 consisted of only one row and two columns. The two columns represented
 time and the distance the track should be rolled from it's initial
-position. The 
-.B -g 
+position. The
+.B -g
 option was set to 0 since frame zero was the only frame in the
 input table.
-The changes are applied to the geometry in 
+The changes are applied to the geometry in
 .I mged
 with the following command:
 .nf
@@ -394,8 +417,8 @@ anim_track -p 96 rtrack/rpad. -w rwheel/wh. -d 0 0 1005 -b 90 0 0 -y -v -lf
 The in.table contains 15 columns specifying the time, the 3D position and
 yaw, pitch, and roll of the vehicle, and the front-back and up-down
 coordinates of each of the four wheels relative to the vehicle center.
-For example, one row of 
-.B in.table 
+For example, one row of
+.B in.table
 could be:
 .PP
 0.5 234.0 1415.6 1005 45 0 0   2000 0   1500 -950   -1500 -950   -2000 -10
@@ -407,11 +430,11 @@ while the fourth wheel had dropped 10mm.
 Note that the previous step (modeling) wasn't necessary in order for the
 animation to work.
 .PP
-.B rtrack.script 
+.B rtrack.script
 by itself causes the wheels to move and rotate and the
 pads to roll around them. When the entire tank, including to track,
-is moved along across the ground by 
-.BR track.script , 
+is moved along across the ground by
+.BR track.script ,
 the full effect is acheived. The two scripts
 could be combined
 with a script for the left track, using
@@ -427,7 +450,7 @@ anim_script(1)
 .SH AUTHOR
 Carl J. Nuzman
 .SH COPYRIGHT
-	This software is Copyright (C) 1996-2005 by the United States 
+	This software is Copyright (C) 1996-2005 by the United States
 Government as represented by U.S. Army Research Laboratory.
 .SH "BUG REPORTS"
 Reports of bugs or problems should be submitted via electronic

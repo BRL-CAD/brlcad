@@ -46,10 +46,9 @@
 #ifndef Sc_H_INCLUDE
 #define Sc_H_INCLUDE
 #include "./burst.h"
-#include "./Tc.h"
 
 /**
-	bool	ScInit( FILE *fp )
+	boolean	ScInit( FILE *fp )
 
 	ScInit() must be invoked before any other function in the Sc
 	package.  Stream fp must be open for writing and all terminal
@@ -68,7 +67,7 @@
 	are some that don't have individual functions to output them,
 	the ones that DO are below):
 
-	char	*ScBC	(backspace character)	
+	char	*ScBC	(backspace character)
 	char	*ScPC	(padding character)
 	char	*ScUP	(move the cursor up one line)
 	char	*ScTI	(initialize the terminal)
@@ -78,15 +77,15 @@
 	int	ScLI	(number of lines on screen)
 	int	ScCO	(number of columns on screen)
 
-	Returns "true" for success, "false" for failure and prints
+	Returns "1" for success, "0" for failure and prints
 	appropriate diagnostics on STDERR if $TERM is not set or
 	there is a problem in retrieving the corresponding termcap
 	entry.
 **/
 #if _STDC_
-extern bool	ScInit( FILE *fp );
+extern boolean	ScInit( FILE *fp );
 #else
-extern bool	ScInit();
+extern boolean	ScInit();
 #endif
 
 /**
@@ -102,40 +101,40 @@ extern bool	ScInit();
 	be sure of this.
 
 	char	*ScCE 	(clear from under the cursor to end of line)
-	bool	ScClrEOL( void )
+	boolean	ScClrEOL( void )
 
 	char	*ScCS	(change scrolling region)
-	bool	ScClrScrlReg( void )
+	boolean	ScClrScrlReg( void )
 
 	char	*ScSE	(end standout mode)
-	bool	ScClrStandout( void )
+	boolean	ScClrStandout( void )
 
 	char	*ScCL	(clear screen, and home cursor)
-	bool	ScClrText( void )
+	boolean	ScClrText( void )
 
 	char	*ScAL	(insert a line under the cursor)
-	bool	ScInsertLn( void )
+	boolean	ScInsertLn( void )
 
 	char	*ScDL	(delete the line under the cursor)
-	bool	ScDeleteLn( void )
+	boolean	ScDeleteLn( void )
 
 	char	*ScSR	(scroll text backwards 1 line)
-	bool	ScDnScroll( void )
+	boolean	ScDnScroll( void )
 
 	char	*ScHO	(move cursor to top-left corner of screen)
-	bool	ScHmCursor( void )
+	boolean	ScHmCursor( void )
 
 	char	*ScCM	(move cursor to column and row <x,y>)
-	bool	ScMvCursor( x, y )
+	boolean	ScMvCursor( x, y )
 
 	char	*ScCS	(set scrolling region from top to btm incl.)
-	bool	ScSetScrlReg( top, btm )
+	boolean	ScSetScrlReg( top, btm )
 
 	char	*ScSO	(begin standout mode)
-	bool	ScSetStandout( void )
+	boolean	ScSetStandout( void )
 
 	char	*ScSF	(scroll text forwards 1 line)
-	bool	ScUpScroll( void )
+	boolean	ScUpScroll( void )
 
 **/
 extern char	*ScBC;
@@ -157,31 +156,31 @@ extern int	ScLI;
 extern int	ScCO;
 
 #if _STDC_
-extern bool	ScClrEOL( void );
-extern bool	ScClrScrlReg( void );
-extern bool	ScClrStandout( void );
-extern bool	ScClrText( void );
-extern bool	ScDeleteLn( void );
-extern bool	ScDnScroll( void );
-extern bool	ScHmCursor( void );
-extern bool	ScInsertLn( void );
-extern bool	ScMvCursor( int x, int y );
-extern bool	ScSetScrlReg( int top, int btm );
-extern bool	ScSetStandout( void );
-extern bool	ScUpScroll( void );
+extern boolean	ScClrEOL( void );
+extern boolean	ScClrScrlReg( void );
+extern boolean	ScClrStandout( void );
+extern boolean	ScClrText( void );
+extern boolean	ScDeleteLn( void );
+extern boolean	ScDnScroll( void );
+extern boolean	ScHmCursor( void );
+extern boolean	ScInsertLn( void );
+extern boolean	ScMvCursor( int x, int y );
+extern boolean	ScSetScrlReg( int top, int btm );
+extern boolean	ScSetStandout( void );
+extern boolean	ScUpScroll( void );
 #else
-extern bool	ScClrEOL();
-extern bool	ScClrScrlReg();
-extern bool	ScClrStandout();
-extern bool	ScClrText();
-extern bool	ScDeleteLn();
-extern bool	ScDnScroll();
-extern bool	ScHmCursor();
-extern bool	ScInsertLn();
-extern bool	ScMvCursor();
-extern bool	ScSetScrlReg();
-extern bool	ScSetStandout();
-extern bool	ScUpScroll();
+extern boolean	ScClrEOL();
+extern boolean	ScClrScrlReg();
+extern boolean	ScClrStandout();
+extern boolean	ScClrText();
+extern boolean	ScDeleteLn();
+extern boolean	ScDnScroll();
+extern boolean	ScHmCursor();
+extern boolean	ScInsertLn();
+extern boolean	ScMvCursor();
+extern boolean	ScSetScrlReg();
+extern boolean	ScSetStandout();
+extern boolean	ScUpScroll();
 #endif
 
 #define ScTCAPSIZ	1024

@@ -217,8 +217,8 @@ hit( struct application *ap, struct partition *part, struct seg *seg )
 		if( debug ) {
 			bu_log( "\tvertex %d = ( %g %g %g ), norm = (%g %g %g )\n",
 				face[0], x, y, z, nx, ny, nz );
-		}	
-	
+		}
+
 		/* get the second vertex */
 		x = tri->tri_A[X] + tri->tri_BA[X];
 		y = tri->tri_A[Y] + tri->tri_BA[Y];
@@ -242,8 +242,8 @@ hit( struct application *ap, struct partition *part, struct seg *seg )
 		if( debug ) {
 			bu_log( "\tvertex %d = ( %g %g %g ), norm = (%g %g %g )\n",
 				face[1], x, y, z, nx, ny, nz );
-		}	
-	
+		}
+
 		/* get the third vertex */
 		x = tri->tri_A[X] + tri->tri_CA[X];
 		y = tri->tri_A[Y] + tri->tri_CA[Y];
@@ -267,8 +267,8 @@ hit( struct application *ap, struct partition *part, struct seg *seg )
 		if( debug ) {
 			bu_log( "\tvertex %d = ( %g %g %g ), norm = (%g %g %g )\n",
 				face[2], x, y, z, nx, ny, nz );
-		}	
-	
+		}
+
 		/* add this face to our list (Add_face checks for duplicates) */
 		Add_face( face );
 	}
@@ -332,8 +332,8 @@ hit( struct application *ap, struct partition *part, struct seg *seg )
 	if( debug ) {
 		bu_log( "\tvertex %d = ( %g %g %g ), norm = (%g %g %g )\n",
 			face[0], x, y, z, nx, ny, nz );
-	}	
-	
+	}
+
 	/* get the second vertex */
 	x = tri->tri_A[X] + tri->tri_BA[X];
 	y = tri->tri_A[Y] + tri->tri_BA[Y];
@@ -357,8 +357,8 @@ hit( struct application *ap, struct partition *part, struct seg *seg )
 	if( debug ) {
 		bu_log( "\tvertex %d = ( %g %g %g ), norm = (%g %g %g )\n",
 			face[1], x, y, z, nx, ny, nz );
-	}	
-	
+	}
+
 	/* get the first vertex */
 	x = tri->tri_A[X] + tri->tri_CA[X];
 	y = tri->tri_A[Y] + tri->tri_CA[Y];
@@ -382,7 +382,7 @@ hit( struct application *ap, struct partition *part, struct seg *seg )
 	if( debug ) {
 		bu_log( "\tvertex %d = ( %g %g %g ), norm = (%g %g %g )\n",
 			face[2], x, y, z, nx, ny, nz );
-	}	
+	}
 
 	Add_face( face );
 
@@ -461,7 +461,7 @@ char *argv[];
 	else
 		bu_bomb( "Output file must be specified!!!\n" );
 
-	/* Open brl-cad database */
+	/* Open BRL-CAD database */
 	database_index = optind;
 	if ((rtip=rt_dirbuild(argv[optind], idbuf, sizeof(idbuf))) == RTI_NULL )
 	{
@@ -582,7 +582,7 @@ char *argv[];
 				(void)rt_shootray( &ap );
 				tri = tri->tri_forw;
 			}
-		}	
+		}
 }
 
 	/* now write out the results */

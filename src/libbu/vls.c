@@ -34,7 +34,7 @@
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5066
- *  
+ *
  */
 /*@}*/
 
@@ -113,7 +113,7 @@ bu_vls_init_if_uninit(register struct bu_vls *vp)
 struct bu_vls *
 bu_vls_vlsinit(void)
 {
-    register struct bu_vls	*vp;	
+    register struct bu_vls	*vp;
 
     vp = (struct bu_vls *)bu_malloc(sizeof(struct bu_vls), "bu_vls_vlsinit struct");
     bu_vls_init(vp);
@@ -558,7 +558,7 @@ bu_vls_fwrite(FILE *fp, const struct bu_vls *vp)
     status = fwrite( vp->vls_str + vp->vls_offset, vp->vls_len, 1, fp );
     bu_semaphore_release(BU_SEM_SYSCALL);
 
-    if( status != 1 ) {    
+    if( status != 1 ) {
 	perror("fwrite");
 	bu_bomb("bu_vls_fwrite() write error\n");
     }
@@ -583,7 +583,7 @@ bu_vls_write( int fd, const struct bu_vls *vp )
 	status = write( fd, vp->vls_str + vp->vls_offset, vp->vls_len );
 	bu_semaphore_release(BU_SEM_SYSCALL);
 
-	if( status != vp->vls_len ) {    
+	if( status != vp->vls_len ) {
 	    perror("write");
 	    bu_bomb("bu_vls_write() write error\n");
 	}
@@ -716,7 +716,7 @@ bu_vls_trimspace( struct bu_vls *vp )
 
 /*
  *  			B U _ V L S _ V P R I N T F
- *  
+ *
  *  Format a string into a vls.  This version should work on practically
  *  any machine, but it serves to highlight the the grossness of the varargs
  *  package requiring the size of a parameter to be known at compile time.
@@ -782,10 +782,10 @@ bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
 	if (len > sizeof(fbuf)-1) len = sizeof(fbuf)-1;
 	strncpy(fbuf, sp, len);
 	fbuf[len] = '\0'; /* ensure null termination */
-		
+
 	/* Grab parameter from arg list, and print it */
 	switch( *ep ) {
-	    case 's': 
+	    case 's':
 		{
 		    register char *str;
 
@@ -824,7 +824,7 @@ bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
 		    }
 		}
 		break;
-	    case 'S': 
+	    case 'S':
 		{
 		    register struct bu_vls *vp;
 
@@ -898,7 +898,7 @@ bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
 		if (flags & LONGINT) {
 		    /* Long int */
 		    register long ll;
-		
+
 		    ll = va_arg(ap, long);
 		    if (flags & FIELDLEN)
 			sprintf(buf, fbuf, fieldlen, ll);
@@ -917,7 +917,7 @@ bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
 		} else {
 		    /* Regular int */
 		    register int j;
-		
+
 		    j = va_arg(ap, int);
 		    if (flags & FIELDLEN)
 			sprintf(buf, fbuf, fieldlen, j);
@@ -935,7 +935,7 @@ bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
 
 		    /* We hope, whatever it is, it fits in an int and the resulting
 		       stringlet is smaller than sizeof(buf) bytes */
-		
+
 		    j = va_arg(ap, int);
 		    if (flags & FIELDLEN)
 			sprintf(buf, fbuf, fieldlen, j);
@@ -970,7 +970,7 @@ bu_vls_printf(struct bu_vls *vls, char *fmt, ...)  /* ANSI C */
     bu_vls_vprintf(vls, fmt, ap);
     va_end(ap);
 }
-	
+
 #else
 #  if defined(HAVE_VARARGS_H)
 
@@ -1008,7 +1008,7 @@ bu_vls_printf(vls, fmt, a,b,c,d,e,f,g,h,i,j)       /* Cray XMP */
 	       append_buf);
 	bu_bomb("bu_vls_printf buffer overflow\n");
     }
-	
+
     bu_vls_strcat(vls, append_buf);
 }
 

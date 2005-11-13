@@ -21,7 +21,7 @@
 
 /** \addtogroup libfb */
 /*@{*/
-/** \file compress.c 
+/** \file compress.c
  * Data compression program. */
 /*@}*/
 
@@ -35,8 +35,8 @@ char copyright[] =
 static char sccsid[] = "@(#)compress.c	5.10 (Berkeley) 10/15/88";
 #endif /* not lint */
 
-/* 
- * Compress - data compression program 
+/*
+ * Compress - data compression program
  */
 #define	min(a,b)	((a>b) ? b : a)
 
@@ -67,13 +67,13 @@ static char sccsid[] = "@(#)compress.c	5.10 (Berkeley) 10/15/88";
 #ifdef pdp11
 # define BITS 	12	/* max bits/code for 16-bit machine */
 # define NO_UCHAR	/* also if "unsigned char" functions as signed char */
-# undef USERMEM 
+# undef USERMEM
 #endif /* pdp11 */	/* don't forget to compile with -i */
 
 #ifdef z8000
 # define BITS 	12
 # undef vax		/* weird preprocessor */
-# undef USERMEM 
+# undef USERMEM
 #endif /* z8000 */
 
 #ifdef pcxt
@@ -177,6 +177,12 @@ char_type magic_header[] = { "\037\235" };	/* 1F 9D */
  *
  * $Header$
  * $Log$
+ * Revision 14.3  2005/10/23 04:44:34  brlcad
+ * trailing ws
+ *
+ * Revision 14.2  2005/08/12 22:30:12  lbutler
+ * Doxygen changes
+ *
  * Revision 14.1  2004/11/16 19:42:14  morrison
  * dawn of a new revision.  it shall be numbered 14 to match release 7.  begin the convergence by adding emacs/vi local variable footer blocks to encourage consistent formatting.
  *
@@ -188,14 +194,14 @@ char_type magic_header[] = { "\037\235" };	/* 1F 9D */
  *
  * Revision 1.2  91/10/12  07:02:16  cjohnson
  * Started stripping to the bones.
- * 
+ *
  * Revision 1.1  1991/10/12  06:48:44  cjohnson
  * Initial revision
  *
  * Revision 4.0  85/07/30  12:50:00  joe
  * Removed ferror() calls in output routine on every output except first.
  * Prepared for release to the world.
- * 
+ *
  * Revision 3.6  85/07/04  01:22:21  joe
  * Remove much wasted storage by overlaying hash table with the tables
  * used by decompress: tab_suffix[1<<BITS], stack[8000].  Updated USERMEM
@@ -221,9 +227,9 @@ char_type magic_header[] = { "\037\235" };	/* 1F 9D */
  * Revision 3.1  85/05/12  18:56:13  jaw
  * Integrate decompress() stack speedups (from early pointer mods by McKie).
  * Repair multi-file USERMEM gaffe.  Unify 'force' flags to mimic semantics
- * of SVR2 'pack'.  Streamline block-compress table clear logic.  Increase 
+ * of SVR2 'pack'.  Streamline block-compress table clear logic.  Increase
  * output byte count by magic number size.
- * 
+ *
  * Revision 3.0   84/11/27  11:50:00  petsd!joe
  * Set HSIZE depending on BITS.  Set BITS depending on USERMEM.  Unrolled
  * loops in clear routines.  Added "-C" flag for 2.0 compatibility.  Used
@@ -394,7 +400,7 @@ count_int checkpoint = CHECK_GAP;
 /*
  * the next two codes should not be changed lightly, as they must not
  * lie within the contiguous general code space.
- */ 
+ */
 #define FIRST	257	/* first free entry */
 #define	CLEAR	256	/* table clear output code */
 
@@ -471,7 +477,7 @@ long int out_count = 0;			/* # of codes output (for debugging) */
 /*
  * compress stdin to stdout
  *
- * Algorithm:  use open addressing double hashing (no chaining) on the 
+ * Algorithm:  use open addressing double hashing (no chaining) on the
  * prefix code / next character combination.  We do a variant of Knuth's
  * algorithm D (vol. 3, sec. 6.4) along with G. Knott's relatively-prime
  * secondary probe.  Here, the modular division first probe is gives way
@@ -551,7 +557,7 @@ probe:
 	    ent = codetabof (i);
 	    continue;
 	}
-	if ( (long)htabof (i) > 0 ) 
+	if ( (long)htabof (i) > 0 )
 	    goto probe;
 nomatch:
 	output ( (code_int) ent );
@@ -653,7 +659,7 @@ code_int  code;
 	0;	/* Work around for pcc -O bug with asm and if stmt */
 	asm( "insv	4(ap),r11,r10,(r9)" );
 #else /* not a vax */
-/* 
+/*
  * byte/bit numbering on the VAX is simulated by the following code
  */
 	/*
@@ -819,7 +825,7 @@ decompress() {
 	    tab_prefixof(code) = (unsigned short)oldcode;
 	    tab_suffixof(code) = finchar;
 	    free_ent = code+1;
-	} 
+	}
 	/*
 	 * Remember previous code.
 	 */
@@ -976,7 +982,7 @@ dump_tab()	/* dump string table */
 		fprintf(stderr, "%5d: \"", i);
 		de_stack[--stack_top] = '\n';
 		de_stack[--stack_top] = '"';
-		stack_top = in_stack((htabof(sorttab[i])>>maxbits)&0xff, 
+		stack_top = in_stack((htabof(sorttab[i])>>maxbits)&0xff,
                                      stack_top);
 		for(ent=htabof(sorttab[i]) & ((1<<maxbits)-1);
 		    ent > 256;
@@ -1102,7 +1108,7 @@ onintr ( )
 
 oops ( )	/* wild pointer -- assume bad input */
 {
-    if ( do_decomp ) 
+    if ( do_decomp )
     	fprintf ( stderr, "uncompress: corrupt input\n" );
     unlink ( ofname );
     exit ( 1 );

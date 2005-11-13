@@ -30,12 +30,12 @@
  *  Author -
  *	Phillip Dykstra
  *	15 Aug 1985
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5066
- *  
+ *
  */
 #ifndef lint
 static const char RCSid[] = "@(#)$Header$ (BRL)";
@@ -55,6 +55,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include <stdio.h>
 
 #include "machine.h"
+#include "bu.h"
 #include "fb.h"
 
 /* defined in libbn/asize.c */
@@ -99,7 +100,7 @@ get_args(int argc, register char **argv)
 {
 	register int c;
 
-	while ( (c = getopt( argc, argv, "ahiczRGBF:s:w:n:x:y:X:Y:S:W:N:" )) != EOF )  {
+	while ( (c = bu_getopt( argc, argv, "ahiczRGBF:s:w:n:x:y:X:Y:S:W:N:" )) != EOF )  {
 		switch( c )  {
 		case 'a':
 			autosize = 1;
@@ -129,41 +130,41 @@ get_args(int argc, register char **argv)
 			blueflag = 1;
 			break;
 		case 'F':
-			framebuffer = optarg;
+			framebuffer = bu_optarg;
 			break;
 		case 's':
 			/* square file size */
-			file_height = file_width = atoi(optarg);
+			file_height = file_width = atoi(bu_optarg);
 			autosize = 0;
 			break;
 		case 'w':
-			file_width = atoi(optarg);
+			file_width = atoi(bu_optarg);
 			autosize = 0;
 			break;
 		case 'n':
-			file_height = atoi(optarg);
+			file_height = atoi(bu_optarg);
 			autosize = 0;
 			break;
 		case 'x':
-			file_xoff = atoi(optarg);
+			file_xoff = atoi(bu_optarg);
 			break;
 		case 'y':
-			file_yoff = atoi(optarg);
+			file_yoff = atoi(bu_optarg);
 			break;
 		case 'X':
-			scr_xoff = atoi(optarg);
+			scr_xoff = atoi(bu_optarg);
 			break;
 		case 'Y':
-			scr_yoff = atoi(optarg);
+			scr_yoff = atoi(bu_optarg);
 			break;
 		case 'S':
-			scr_height = scr_width = atoi(optarg);
+			scr_height = scr_width = atoi(bu_optarg);
 			break;
 		case 'W':
-			scr_width = atoi(optarg);
+			scr_width = atoi(bu_optarg);
 			break;
 		case 'N':
-			scr_height = atoi(optarg);
+			scr_height = atoi(bu_optarg);
 			break;
 
 		default:		/* '?' */
@@ -171,13 +172,13 @@ get_args(int argc, register char **argv)
 		}
 	}
 
-	if( optind >= argc )  {
+	if( bu_optind >= argc )  {
 		if( isatty(fileno(stdin)) )
 			return(0);
 		file_name = "-";
 		infd = 0;
 	} else {
-		file_name = argv[optind];
+		file_name = argv[bu_optind];
 		if( (infd = open(file_name, 0)) < 0 )  {
 			(void)fprintf( stderr,
 				"bw-fb: cannot open \"%s\" for reading\n",
@@ -187,7 +188,7 @@ get_args(int argc, register char **argv)
 		fileinput++;
 	}
 
-	if ( argc > ++optind )
+	if ( argc > ++bu_optind )
 		(void)fprintf( stderr, "bw-fb: excess argument(s) ignored\n" );
 
 	return(1);		/* OK */
@@ -364,7 +365,7 @@ skipbytes(int fd, off_t num)
 		(void)lseek( fd, num, 1 );
 		return 0;
 	}
-	
+
 	while( num > 0 ) {
 		try = num > MAX_LINE ? MAX_LINE : num;
 		n = read( fd, ibuf, try );

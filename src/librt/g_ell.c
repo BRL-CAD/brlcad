@@ -31,12 +31,12 @@
  *	Peter F. Stiller	(Curvature Analysis)
  *	Phillip Dykstra		(RPPs, Curvature)
  *	Dave Becker		(Vectorization)
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005
- *  
+ *
  */
 /*@}*/
 
@@ -62,7 +62,7 @@ static const char RCSell[] = "@(#)$Header$ (BRL)";
 #include "rtgeom.h"
 #include "./debug.h"
 
-RT_EXTERN(int rt_sph_prep, (struct soltab *stp, struct rt_db_internal *ip,
+BU_EXTERN(int rt_sph_prep, (struct soltab *stp, struct rt_db_internal *ip,
 	struct rt_i *rtip));
 
 const struct bu_structparse rt_ell_parse[] = {
@@ -77,73 +77,73 @@ static void  nmg_sphere_face_snurb(struct faceuse *fu, const matp_t m);
 
 /*
  *  Algorithm:
- *  
+ *
  *  Given V, A, B, and C, there is a set of points on this ellipsoid
- *  
+ *
  *  { (x,y,z) | (x,y,z) is on ellipsoid defined by V, A, B, C }
- *  
+ *
  *  Through a series of Affine Transformations, this set will be
  *  transformed into a set of points on a unit sphere at the origin
- *  
+ *
  *  { (x',y',z') | (x',y',z') is on Sphere at origin }
- *  
+ *
  *  The transformation from X to X' is accomplished by:
- *  
+ *
  *  X' = S(R( X - V ))
- *  
+ *
  *  where R(X) =  ( A/(|A|) )
  *  		 (  B/(|B|)  ) . X
  *  		  ( C/(|C|) )
- *  
+ *
  *  and S(X) =	 (  1/|A|   0     0   )
  *  		(    0    1/|B|   0    ) . X
  *  		 (   0      0   1/|C| )
- *  
+ *
  *  To find the intersection of a line with the ellipsoid, consider
  *  the parametric line L:
- *  
+ *
  *  	L : { P(n) | P + t(n) . D }
- *  
+ *
  *  Call W the actual point of intersection between L and the ellipsoid.
  *  Let W' be the point of intersection between L' and the unit sphere.
- *  
+ *
  *  	L' : { P'(n) | P' + t(n) . D' }
- *  
+ *
  *  W = invR( invS( W' ) ) + V
- *  
+ *
  *  Where W' = k D' + P'.
- *  
+ *
  *  Let dp = D' dot P'
  *  Let dd = D' dot D'
  *  Let pp = P' dot P'
- *  
+ *
  *  and k = [ -dp +/- sqrt( dp*dp - dd * (pp - 1) ) ] / dd
  *  which is constant.
- *  
+ *
  *  Now, D' = S( R( D ) )
  *  and  P' = S( R( P - V ) )
- *  
+ *
  *  Substituting,
- *  
+ *
  *  W = V + invR( invS[ k *( S( R( D ) ) ) + S( R( P - V ) ) ] )
  *    = V + invR( ( k * R( D ) ) + R( P - V ) )
  *    = V + k * D + P - V
  *    = k * D + P
- *  
+ *
  *  Note that ``k'' is constant, and is the same in the formulations
  *  for both W and W'.
- *  
+ *
  *  NORMALS.  Given the point W on the ellipsoid, what is the vector
  *  normal to the tangent plane at that point?
- *  
+ *
  *  Map W onto the unit sphere, ie:  W' = S( R( W - V ) ).
- *  
+ *
  *  Plane on unit sphere at W' has a normal vector of the same value(!).
  *  N' = W'
- *  
+ *
  *  The plane transforms back to the tangent plane at W, and this
  *  new plane (on the ellipsoid) has a normal vector of N, viz:
- *  
+ *
  *  N = inverse[ transpose( inverse[ S o R ] ) ] ( N' )
  *
  *  because if H is perpendicular to plane Q, and matrix M maps from
@@ -181,15 +181,15 @@ struct ell_specific {
 
 /**
  *  			R T _ E L L _ P R E P
- *  
+ *
  *  Given a pointer to a GED database record, and a transformation matrix,
  *  determine if this is a valid ellipsoid, and if so, precompute various
  *  terms of the formula.
- *  
+ *
  *  Returns -
  *  	0	ELL is OK
  *  	!0	Error in description
- *  
+ *
  *  Implicit return -
  *  	A struct ell_specific is created, and it's address is stored in
  *  	stp->st_specific for use by rt_ell_shot().
@@ -349,11 +349,11 @@ rt_ell_print(register const struct soltab *stp)
 
 /**
  *  			R T _ E L L _ S H O T
- *  
+ *
  *  Intersect a ray with an ellipsoid, where all constant terms have
  *  been precomputed by rt_ell_prep().  If an intersection occurs,
  *  a struct seg will be acquired and filled in.
- *  
+ *
  *  Returns -
  *  	0	MISS
  *	>0	HIT
@@ -411,7 +411,7 @@ rt_ell_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
            		       /* An array of ray pointers */
                                /* array of segs (results returned) */
    		  	       /* Number of ray/object pairs */
-                  	    
+
 {
 	register int    i;
 	register struct ell_specific *ell;
@@ -460,7 +460,7 @@ rt_ell_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
 
 /**
  *  			R T _ E L L _ N O R M
- *  
+ *
  *  Given ONE ray distance, return the normal and entry/exit point.
  */
 void
@@ -520,7 +520,7 @@ rt_ell_curve(register struct curvature *cvp, register struct hit *hitp, struct s
 
 /**
  *  			R T _ E L L _ U V
- *  
+ *
  *  For a hit on the surface of an ELL, return the (u,v) coordinates
  *  of the hit point, 0 <= u,v <= 1.
  *  u = azimuth

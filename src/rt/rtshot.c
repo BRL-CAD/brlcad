@@ -118,7 +118,7 @@ main(int argc, char **argv)
 {
 	static struct rt_i *rtip;
 	char *title_file;
-	char idbuf[132];		/* First ID record info */
+	char idbuf[RT_BUFSIZE] = {0};		/* First ID record info */
 	char *ptr;
 	int attr_count=0, i;
 	char **attrs = (char **)NULL;
@@ -523,7 +523,7 @@ int hit(register struct application *ap, struct partition *PartHeadp, struct seg
 					bu_log( "\t\t\tstring rep = %s\n",
 						BU_MRO_GETSTRING(regp->attr_values[i]));
 					bu_log( "\t\t\tlong rep = %d\n",
-						BU_MRO_GETLONG(regp->attr_values[i])); 
+						BU_MRO_GETLONG(regp->attr_values[i]));
 					bu_log( "\t\t\tdouble rep = %f\n",
 						BU_MRO_GETDOUBLE(regp->attr_values[i]));
 					i++;

@@ -23,7 +23,7 @@
  *
  *  Author -
  *	Gary S. Moss
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
@@ -70,7 +70,7 @@ static int	non_linear_cmap = 0;
 /*	m a i n ( )							*/
 int
 main(int argc, char **argv)
-{	
+{
 	register int	scan_ln;
 	register int	fb_size = 512;
 	static RGBpixel	scanbuf[1025];
@@ -139,8 +139,8 @@ main(int argc, char **argv)
 		}
 	}
 
-	{	
-		for( scan_ln = fb_size-1; scan_ln >= 0; scan_ln-- )  {	
+	{
+		for( scan_ln = fb_size-1; scan_ln >= 0; scan_ln-- )  {
 			static int	touched = 1;
 			register int	pix;
 			if( touched && (get_flags & NO_BOX_SAVE) )  {
@@ -167,15 +167,15 @@ main(int argc, char **argv)
 static int
 pars_Argv(int argc, register char **argv)
 {	register int	c;
-		extern int	optind;
-		extern char	*optarg;
+		extern int	bu_optind;
+		extern char	*bu_optarg;
 	/* Parse options.						*/
-	while( (c = getopt( argc, argv, "b:dv" )) != EOF )
+	while( (c = bu_getopt( argc, argv, "b:dv" )) != EOF )
 		{
 		switch( c )
 			{
 		case 'b' : /* User-specified background.		*/
-			bgflag = optarg[0];
+			bgflag = bu_optarg[0];
 			switch( bgflag )
 				{
 			case 'r':
@@ -219,16 +219,16 @@ pars_Argv(int argc, register char **argv)
 			} /* end switch */
 		} /* end while */
 
-	if( argv[optind] != NULL )
-		if( (fp = fopen( argv[optind], "r" )) == NULL )
+	if( argv[bu_optind] != NULL )
+		if( (fp = fopen( argv[bu_optind], "r" )) == NULL )
 			{
 			(void) fprintf( stderr,
 					"Can't open %s for reading!\n",
-					argv[optind]
+					argv[bu_optind]
 					);
 			return	0;
 			}
-	if( argc > ++optind )
+	if( argc > ++bu_optind )
 		{
 		(void) fprintf( stderr, "Too many arguments!\n" );
 		return	0;
@@ -279,7 +279,7 @@ prnt_Cmap(ColorMap *cmap)
 	(void) fprintf( stderr, "Green segment :\n" );
 	for( i = 0, cp = cmap->cm_green; i < 16; ++i, cp += 16 )
 		{
-		(void) fprintf( stderr, 
+		(void) fprintf( stderr,
 	"%4x %4x %4x %4x %4x %4x %4x %4x %4x %4x %4x %4x %4x %4x %4x %4x\n",
 	/* 1   2   3   4   5   6   7   8   9  10  11  12  13  14  15  16 */
 				cp[0],

@@ -27,30 +27,36 @@
 
 	$Header$ (BRL)
  */
+
+#ifndef __EXTERN_H__
+#define __EXTERN_H__
+
 #include "common.h"
 
 #if defined(HAVE_STDARG_H)
-# include <stdarg.h>
+#  include <stdarg.h>
 #else
-#include <varargs.h>
+#  ifdef HAVE_VARARGS_H
+#    include <varargs.h>
+#  endif
 #endif
 
 #if HAVE_UNISTD_H
-#include <unistd.h>
+#  include <unistd.h>
+#endif
+#include <string.h>
+
+/* External functions from C library. */
+#ifdef HAVE_STDLIB_H
+#  include <stdlib.h>
 #endif
 
-#include <string.h>
 #include "machine.h"
 #include "fb.h"
 
 #include "./burst.h"
 #include "./trie.h"
 #include "./Hm.h"
-
-/* External functions from C library. */
-#ifdef HAVE_STDLIB_H
-#  include <stdlib.h>
-#endif
 
 /* External variables from termlib. */
 extern char *CS, *DL;
@@ -60,15 +66,15 @@ extern int CO, LI;
 extern Colors *findColors();
 extern Func *getTrie();
 extern Trie *addTrie();
-extern bool chkEntryNorm();
-extern bool chkExitNorm();
-extern bool closFbDevice();
-extern bool imageInit();
-extern bool initUi();
-extern bool openFbDevice();
-extern bool findIdents();
-extern bool readColors();
-extern bool readIdents();
+extern boolean chkEntryNorm();
+extern boolean chkExitNorm();
+extern boolean closFbDevice();
+extern boolean imageInit();
+extern boolean initUi();
+extern boolean openFbDevice();
+extern boolean findIdents();
+extern boolean readColors();
+extern boolean readIdents();
 extern int notify();
 extern int roundToInt();
 extern void closeUi();
@@ -156,17 +162,17 @@ extern unsigned char pixmiss[3];
 extern unsigned char pixtarg[3];
 extern Trie *cmdtrie;
 
-extern bool batchmode;
-extern bool cantwarhead;
-extern bool deflectcone;
-extern bool dithercells;
-extern bool fatalerror;
-extern bool groundburst;
-extern bool reportoverlaps;
-extern bool reqburstair;
-extern bool shotburst;
-extern bool tty;
-extern bool userinterrupt;
+extern boolean batchmode;
+extern boolean cantwarhead;
+extern boolean deflectcone;
+extern boolean dithercells;
+extern boolean fatalerror;
+extern boolean groundburst;
+extern boolean reportoverlaps;
+extern boolean reqburstair;
+extern boolean shotburst;
+extern boolean tty;
+extern boolean userinterrupt;
 
 extern char airfile[];
 extern char armorfile[];
@@ -250,6 +256,8 @@ extern int units;
 extern int zoom;
 
 extern struct rt_i *rtip;
+
+#endif  /* __EXTERN_H__ */
 
 /*
  * Local Variables:

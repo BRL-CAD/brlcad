@@ -32,12 +32,12 @@
  *
  *  Author -
  *	Michael John Muuss
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005
- *  
+ *
  */
 #ifndef lint
 static const char RCSwray[] = "@(#)$Header$ (BRL)";
@@ -165,7 +165,7 @@ const vect_t	inormal;
 
 /*
  *  			W R A Y P T S
- *  
+ *
  *  Write a VLD-standard ray for a section of a ray specified
  *  by the "in" and "out" distances along the ray.  This is usually
  *  used for logging passage through "air" (ie, no solid).

@@ -20,27 +20,27 @@
  *
  */
 /** @file g2asc.c
- *  
+ *
  *  This program generates an ASCII data file which contains
  *  a GED database.
  *
  *  Usage:  g2asc file.g file.asc
- *  
+ *
  *  Author -
  *  	Charles M Kennedy
  *  	Michael J Muuss
  *	Susanne Muuss, J.D.
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005
- *  
+ *
  */
 #ifndef lint
 static const char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
- 
+
 #include "common.h"
 
 #include <stdio.h>
@@ -730,7 +730,7 @@ particle_dump(void)
 
 	part = (struct rt_part_internal *)intern.idb_ptr;
 	RT_PART_CK_MAGIC(part);
-	
+
 	/* Particle type is picked up on here merely to ensure receiving
 	 * valid data.  The type is not used any further.
 	 */
@@ -800,7 +800,7 @@ arbn_dump(void)
 	db_free_external( &ext );
 }
 
-	
+
 /*
  *			C O M B D U M P
  *
@@ -959,7 +959,7 @@ arsadump(void)	/* Print out ARS record information */
 	(void)fprintf(ofp, "%.12e ", record.a.a_zmax );	/* max z coordinate */
 	(void)fprintf(ofp, "%.12e ", record.a.a_zmin );	/* min z coordinate */
 	(void)fprintf(ofp, "\n");			/* Terminate w/ a newline */
-			
+
 	length = (int)record.a.a_totlen;	/* Get # of ARS B records */
 
 	for( i = 0; i < length; i++ )  {
@@ -971,7 +971,7 @@ void
 arsbdump(void)	/* Print out ARS B record information */
 {
 	register int i;
-	
+
 	/* Read in a member record for processing */
 	(void)fread( (char *)&record, sizeof record, 1, ifp );
 	(void)fprintf(ofp, "%c ", record.b.b_id );		/* B */
@@ -1026,7 +1026,7 @@ bsurfdump(void)	/* Print d-spline surface description record information */
 		record.d.d_geom_type,	/* geom type 3 or 4 */
 		record.d.d_nknots,	/* # granules of knots */
 		record.d.d_nctls );	/* # granules of ctls */
-	/* 
+	/*
 	 * The b_surf_head record is followed by
 	 * d_nknots granules of knot vectors (first u, then v),
 	 * and then by d_nctls granules of control mesh information.

@@ -22,7 +22,7 @@
 #
 # HighlightedPage.itk
 #
-# This page supports selecting options for a full-color image 
+# This page supports selecting options for a full-color image
 # with lines highlighting the edges.
 #
 
@@ -47,7 +47,7 @@ namespace eval RtWizard {
     # Add options
     #
 
-    # None! 
+    # None!
 
     ::itcl::class HighlightedPage {
 	inherit ::RtWizard::MGEDpage
@@ -60,7 +60,7 @@ namespace eval RtWizard {
 		$itk_component(helpPanel) insert insert \
 			"Use this page to select the items that you wish to render as a full-color image with highlight lines." \
 			HelpTag
-		
+
 		$itk_component(helpPanel) tag configure HelpTag \
 			-font {helvetica 10 bold}
 
@@ -73,24 +73,24 @@ namespace eval RtWizard {
 
 		eval itk_initialize $args
 
-		$itk_component(helpPanel) configure -state disabled 
+		$itk_component(helpPanel) configure -state disabled
 	    }
 	}
-    
+
 	private {
 	    method onSelect2 {optionMenu}
 	    method onDeselect2 {}
 	    method statusCallback {}
-	}		
+	}
     }
 
     #--------------------#
     #   Public Methods   #
-    #--------------------#    
+    #--------------------#
 
     #--------------------#
     #  Private Methods   #
-    #--------------------#    
+    #--------------------#
     #
     # onSelect2
     #
@@ -103,8 +103,8 @@ namespace eval RtWizard {
 	$::wizardInstance menubar add command .$optionsMenu.bg \
 		-label "Background Color..." \
 		-helpstr "Set the background color" \
-		-command "[itcl::code $this backgroundColorChooser]"	
-	
+		-command "[itcl::code $this backgroundColorChooser]"
+
 	$::wizardInstance menubar add cascade .$optionsMenu.fgCasc \
 		-label "Line Color"
 
@@ -119,7 +119,7 @@ namespace eval RtWizard {
 		-helpstr "Use the colors assigned to individual regions" \
 		-variable "[itcl::scope useRegionColors]" \
 		-offvalue "false" \
-		-onvalue "true"	
+		-onvalue "true"
     }
 
     #
@@ -129,8 +129,8 @@ namespace eval RtWizard {
     #
     itcl::body HighlightedPage::onDeselect2 {} {
 
-    }    
-    
+    }
+
     #
     # statusCallback
     #

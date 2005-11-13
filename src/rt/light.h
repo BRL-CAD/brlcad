@@ -26,7 +26,7 @@
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5066
- *  
+ *
  *
  *  @(#)$Header$ (BRL)
  */
@@ -77,8 +77,7 @@ extern void light_cleanup(void);
 extern void light_maker(int num, mat_t v2m);
 extern int light_init(struct application *ap);
 
-RT_EXTERN(void light_obs, (struct application *ap,
-				  struct shadework *swp, int have) );
+BU_EXTERN(void light_obs, (struct application *ap, struct shadework *swp, int have) );
 
 
 

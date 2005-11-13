@@ -43,7 +43,7 @@
  *  Author -
  *      Lee Butler
  *      Christopher Sean Morrison
- *  
+ *
  *  Source -
  *      The U. S. Army Research Laboratory
  *      Aberdeen Proving Ground, Maryland  21005-5068  USA
@@ -69,10 +69,10 @@
 #define DECOMPOSE 1
 #define RECONSTRUCT -1
 
-/* declarations to support use of getopt() system call */
+/* declarations to support use of bu_getopt() system call */
 char *options = "W:S:s:w:n:t:#:D:12drR:";
-extern char *optarg;
-extern int optind, opterr, getopt(int, char *const *, const char *);
+extern char *bu_optarg;
+extern int bu_optind, opterr, bu_getopt(int, char *const *, const char *);
 
 char *progname = "(noname)";
 int img_space=1;
@@ -95,7 +95,7 @@ usage(char *s)
 {
 	if (s) (void)fputs(s, stderr);
 
-	(void) fprintf(stderr, 
+	(void) fprintf(stderr,
 "Usage:\n\
 	%s {-d | -r} [-2] [-t datatype] [-# channels]\n\
 	[-w width] [-n scanlines] [-s number_of_samples]\n\
@@ -118,12 +118,12 @@ parse_args(int ac, char **av)
 	else
 		progname = *av;
 
-	
-	/* Turn off getopt's error messages */
+
+	/* Turn off bu_getopt's error messages */
 	opterr = 0;
 
 	/* get all the option flags from the command line */
-	while ((c=getopt(ac,av,options)) != EOF)
+	while ((c=bu_getopt(ac,av,options)) != EOF)
 		switch (c) {
 		case '1': img_space=1; break;
 		case '2': img_space=2; break;
@@ -131,12 +131,12 @@ parse_args(int ac, char **av)
 			break;
 		case 'r': decomp_recon = RECONSTRUCT;
 			break;
-		case 'D': debug=atoi(optarg); break;
-		case 'R': avg_size = atoi(optarg); break;
-		case '#': channels = atoi(optarg);
+		case 'D': debug=atoi(bu_optarg); break;
+		case 'R': avg_size = atoi(bu_optarg); break;
+		case '#': channels = atoi(bu_optarg);
 			break;
 		case 't': {
-			switch (*optarg) {
+			switch (*bu_optarg) {
 			case 'c': value_type = CHAR;
 				value_size = sizeof(char);
 				break;
@@ -158,11 +158,11 @@ parse_args(int ac, char **av)
 			}
 			break;
 		}
-		case 'n': height = atoi(optarg); break;
-		case 'w': width = atoi(optarg); break;
-		case 's': width = height = atoi(optarg); break;
-		case 'W': limit = atoi(optarg); break;
-		case 'S': limit = atoi(optarg); break;
+		case 'n': height = atoi(bu_optarg); break;
+		case 'w': width = atoi(bu_optarg); break;
+		case 's': width = height = atoi(bu_optarg); break;
+		case 'W': limit = atoi(bu_optarg); break;
+		case 'S': limit = atoi(bu_optarg); break;
 		case '?':
 		case 'h':
 		default	: fprintf(stderr, "Bad or help flag specified %c\n", c);
@@ -170,7 +170,7 @@ parse_args(int ac, char **av)
 			 break;
 		}
 
-	return(optind);
+	return(bu_optind);
 }
 
 
@@ -183,7 +183,7 @@ wlt_decompose_1d(void)
 	unsigned long int i, n;
 	unsigned long int sample_size;	/* size of data type x #values/sample */
 	unsigned long int scanline_size;	/* # bytes in a scanline */
-	
+
 	sample_size = value_size * channels;
 	scanline_size = sample_size * width;
 
@@ -194,12 +194,12 @@ wlt_decompose_1d(void)
 		fprintf(stderr, "1D decompose:\n\tdatatype_size:%d channels:%lu width:%lu height:%lu limit:%lu\n",
 			value_size, channels, width, height, limit);
 
-	
+
 	for (i=0 ; i < height ; i++) {
 
 		n = fread(buf, sample_size, width, stdin);
 		if (n  != width ) {
-			fprintf(stderr, 
+			fprintf(stderr,
 				"read failed line %lu got %lu not %lu\n",
 				 i, n, width);
 			exit(-1);
@@ -308,7 +308,7 @@ wlt_reconstruct_1d(void)
 	unsigned long int i, n;
 	unsigned long int sample_size;	/* size of data type x #values/sample */
 	unsigned long int scanline_size;	/* # bytes in a scanline */
-	
+
 	sample_size = value_size * channels;
 	scanline_size = sample_size * width;
 
@@ -325,7 +325,7 @@ wlt_reconstruct_1d(void)
 
 		n = fread(buf, sample_size, width, stdin);
 		if (n  != width ) {
-			fprintf(stderr, 
+			fprintf(stderr,
 				"read failed line %lu got %lu not %lu\n",
 				 i, n, width);
 			exit(-1);

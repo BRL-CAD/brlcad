@@ -29,7 +29,7 @@
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005
- *  
+ *
  */
 static const char RCSid[] = "@(#)$Header$ (BRL)";
 
@@ -247,13 +247,14 @@ main(int argc, char **argv)
 		/* Go into our own process group */
 		n = getpid();
 
-		/* SysV uses setpgrp with no args and it can't fail */
-#if (defined(__STDC__) || defined(SYSV)) && !defined(_BSD_COMPAT)
+#ifdef HAVE_SETPGID
 		if( setpgid( n, n ) < 0 )
 			perror("setpgid");
 #else
-		if( setpgrp( n, n ) < 0 )
-			perror("setpgrp");
+		/* SysV uses setpgrp with no args and it can't fail,
+		 * obsoleted by setpgid.
+		 */
+		setpgrp();
 #endif
 
 		/* Deal with CPU limits on "those kinds" of systems */
@@ -690,7 +691,7 @@ prepare(void)
 
 }
 
-/* 
+/*
  *			P H _ L I N E S
  *
  *
@@ -840,9 +841,12 @@ out:
 
 #if (defined(BSD) && !defined(_sgi3d)) || defined(mips) || defined(CRAY2)
 /*
- *  			R T _ L O G
- *  
- *  Log an RT library event using the Berkeley _doprnt() routine.
+ *  			B U _ L O G
+ *
+ *  Log a library event using the Berkeley _doprnt() routine.
+ *
+ *  Replacement for the LIBBU routine of the same name for
+ *  across-network logging.
  */
 /* VARARGS */
 void
@@ -923,7 +927,7 @@ out:
 
 /*
  *			B U _ B O M B
- *  
+ *
  *  Replacement for the LIBBU routine of the same name.
  */
 int		bu_setjmp_valid = 0;	/* !0 = bu_jmpbuf is valid */

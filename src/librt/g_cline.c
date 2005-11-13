@@ -32,7 +32,7 @@
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5066
- *  
+ *
  */
 /*@}*/
 
@@ -79,15 +79,15 @@ fastf_t rt_cline_radius=-1.0;
 
 /**
  *  			R T _ C L I N E _ P R E P
- *  
+ *
  *  Given a pointer to a GED database record,
  *  determine if this is a valid cline solid, and if so, precompute various
  *  terms of the formula.
- *  
+ *
  *  Returns -
  *  	0	cline is OK
  *  	!0	Error in description
- *  
+ *
  *  Implicit return -
  *  	A struct cline_specific is created, and it's address is stored in
  *  	stp->st_specific for use by rt_cline_shot().
@@ -161,11 +161,11 @@ rt_cline_print(register const struct soltab *stp)
 
 /**
  *  			R T _ C L I N E _ S H O T
- *  
+ *
  *  Intersect a ray with a cline mode solid.
  *  If an intersection occurs, at least one struct seg will be acquired
  *  and filled in.
- *  
+ *
  *  Returns -
  *  	0	MISS
  *	>0	HIT
@@ -360,14 +360,14 @@ rt_cline_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, s
            		       /* An array of ray pointers */
                                /* array of segs (results returned) */
    		  	       /* Number of ray/object pairs */
-                  	    
+
 {
 	rt_vstub( stp, rp, segp, n, ap );
 }
 
 /**
  *  			R T _ C L I N E _ N O R M
- *  
+ *
  *  Given ONE ray distance, return the normal and entry/exit point.
  */
 void
@@ -417,7 +417,7 @@ rt_cline_curve(register struct curvature *cvp, register struct hit *hitp, struct
 
 /**
  *  			R T _ C L I N E_ U V
- *  
+ *
  *  For a hit on the surface of an cline, return the (u,v) coordinates
  *  of the hit point, 0 <= u,v <= 1.
  */
@@ -1043,7 +1043,7 @@ rt_cline_tnurb(struct nmgregion **r, struct model *m, struct rt_db_internal *ip,
 int
 rt_cline_tclget(Tcl_Interp *interp, const struct rt_db_internal *intern, const char *attr)
 {
-	register struct rt_cline_internal *cli = 
+	register struct rt_cline_internal *cli =
 		(struct rt_cline_internal *)intern->idb_ptr;
 	Tcl_DString     ds;
 	struct bu_vls   vls;

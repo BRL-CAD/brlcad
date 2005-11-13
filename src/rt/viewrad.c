@@ -30,12 +30,12 @@
  *	Phillip Dykstra
  *	From viewpp.c and viewray.c by
  *	Michael John Muuss
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005
- *  
+ *
  */
 #ifndef lint
 static const char RCSppview[] = "@(#)$Header$ (BRL)";
@@ -122,7 +122,7 @@ static int radmiss(struct application *ap);
  *  Returns 1 if framebuffer should be opened, else 0.
  */
 int view_init( register struct application *ap,
-	       char *file, 
+	       char *file,
 	       char *obj,
 	       int minus_o)
 {

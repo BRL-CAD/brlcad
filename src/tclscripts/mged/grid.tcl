@@ -500,7 +500,7 @@ The tick spacing will be a power of 10 in local units." } }
 	    -padx $grid_control($id,padx) -pady $grid_control($id,pady)
     grid columnconfigure $top.gridF1 0 -weight 1
     grid rowconfigure $top.gridF1 0 -weight 1
-    
+
     grid $top.anchorL $top.anchorE -sticky nsew -in $top.anchorF
     grid columnconfigure $top.anchorF 1 -weight 1
     grid rowconfigure $top.anchorF 0 -weight 1

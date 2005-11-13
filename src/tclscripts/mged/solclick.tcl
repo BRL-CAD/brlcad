@@ -51,7 +51,7 @@ proc solclick { } {
 	# Reset mouse event handler
 	proc M args {
 	    eval [concat _mged_M $args]
-	}	
+	}
 
 #	set w .solclick$id
 	set w .metasolclick.solclick
@@ -84,7 +84,7 @@ proc init_solclick { id } {
 	mged_dialog .solclick_dialog $mged_gui($id,screen) "In Use" "The primitive click tool is in use by $solclick_user" info 0 OK
 	return
     }
-    
+
 #    catch { destroy $w }
     set solclick_user $id
     toplevel $w -screen $mged_gui($id,screen)

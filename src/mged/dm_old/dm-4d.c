@@ -21,7 +21,7 @@
 /** @file dm-4d.c
  *
  *  This version for the SGI 4-D Iris, both regular and GT versions.
- *  
+ *
  *
  *  Uses library -lgl
  *
@@ -29,7 +29,7 @@
  *	Paul R. Stay
  *	Michael John Muuss
  *	Robert J. Reschly
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
@@ -146,7 +146,7 @@ struct ir_vars {
 };
 
 static int ir_count = 0;
-static int perspective_table[] = { 
+static int perspective_table[] = {
 	30, 45, 60, 90 };
 static int ovec = -1;		/* Old color map entry number */
 static int kblights();
@@ -188,7 +188,7 @@ static int irlimit();			/* provides knob dead spot */
  *  Labels for knobs in help mode.
  */
 char	*kn1_knobs[] = {
-	/* 0 */ "adc <1",	/* 1 */ "zoom", 
+	/* 0 */ "adc <1",	/* 1 */ "zoom",
 	/* 2 */ "adc <2",	/* 3 */ "adc dist",
 	/* 4 */ "adc y",	/* 5 */ "y slew",
 	/* 6 */ "adc x",	/* 7 */	"x slew"
@@ -296,7 +296,7 @@ register int y;
 	return(y);
 }
 
-/* 
+/*
  *			I R _ C O N F I G U R E _ W I N D O W _ S H A P E
  *
  *  Either initially, or on resize/reshape of the window,
@@ -323,7 +323,7 @@ Ir_configure_window_shape()
 
 	if( mvars.zbuf ) establish_zbuffer();
 	establish_lighting();
-	
+
 	if( mvars.doublebuffer)
 	{
 		/* Clear out image from windows underneath */
@@ -442,7 +442,7 @@ Ir_open()
 
 #ifdef DM_OGL
 	/* This is a hack to handle the fact that the sgi attach crashes
-	 * if a direct OpenGL context has been previously opened in the 
+	 * if a direct OpenGL context has been previously opened in the
 	 * current mged session. This stops the attach before it crashes.
 	 */
 	if (ogl_ogl_used){
@@ -775,7 +775,7 @@ Ir_open()
 
 /*
  *  			I R _ C L O S E
- *  
+ *
  *  Gracefully release the display.  Well, mostly gracefully -- see
  *  the comments in the open routine.
  */
@@ -797,7 +797,7 @@ Ir_close()
   lampoff( 0xf );
 
   /* avoids error messages when reattaching */
-  mmode(MVIEWING);	
+  mmode(MVIEWING);
   lmbind(LIGHT2,0);
   lmbind(LIGHT3,0);
   lmbind(LIGHT4,0);
@@ -1005,7 +1005,7 @@ mat_t	mat;
 }
 
 static float material_objdef[] = {
-	ALPHA,		1.0,	
+	ALPHA,		1.0,
 	AMBIENT,	0.2, 0.2, 0.2,	/* 0.4 in rt */
 	DIFFUSE,	0.6, 0.6, 0.6,
 	SPECULAR,	0.2, 0.2, 0.2,
@@ -1015,7 +1015,7 @@ static float material_objdef[] = {
 
 /*
  *  			I R _ O B J E C T
- *  
+ *
  *  Set up for an object, transformed as indicated, and with an
  *  object center as specified.  The ratio of object to screen size
  *  is passed in as a convienience.  Mat is model2view.
@@ -1959,7 +1959,7 @@ continue;
   curr_dm_list = save_dm_list;
 }
 
-/* 
+/*
  *			I R _ L I G H T
  *
  * This function must keep both the light hardware, and the software
@@ -2107,7 +2107,7 @@ int w[];
 
 /*
  *  			I R _ C O L O R C H A N G E
- *  
+ *
  *  Go through the solid table, and allocate color map slots.
  *	8 bit system gives 4 or 8,
  *	24 bit system gives 12 or 24.
@@ -2122,16 +2122,16 @@ Ir_colorchange()
 	  Tcl_AppendResult(interp, "colorchange\n", (char *)NULL);
 
 	/* Program the builtin colors */
-	ir_rgbtab[0].r=0; 
-	ir_rgbtab[0].g=0; 
+	ir_rgbtab[0].r=0;
+	ir_rgbtab[0].g=0;
 	ir_rgbtab[0].b=0;/* Black */
-	ir_rgbtab[1].r=255; 
-	ir_rgbtab[1].g=0; 
+	ir_rgbtab[1].r=255;
+	ir_rgbtab[1].g=0;
 	ir_rgbtab[1].b=0;/* Red */
-	ir_rgbtab[2].r=0; 
-	ir_rgbtab[2].g=0; 
+	ir_rgbtab[2].r=0;
+	ir_rgbtab[2].g=0;
 	ir_rgbtab[2].b=255;/* Blue */
-	ir_rgbtab[3].r=255; 
+	ir_rgbtab[3].r=255;
 	ir_rgbtab[3].g=255;
 	ir_rgbtab[3].b=0;/*Yellow */
 	ir_rgbtab[4].r = ir_rgbtab[4].g = ir_rgbtab[4].b = 255; /* White */
@@ -2222,7 +2222,7 @@ ir_colorit()
 			continue;
 		}
 		sp->s_dmindex = DM_YELLOW;	/* Default color */
-next:		
+next:
 		;
 	}
 }
@@ -2268,7 +2268,7 @@ register char *str;
  * zero is very difficult.  This function can be used to extend the
  * location of "zero" into "the dead zone".
  */
-static 
+static
 int irlimit(i)
 int i;
 {
@@ -2383,14 +2383,14 @@ ir_clear_to_black()
 
 #if 0
 /* Handy fakeouts when we don't want to link with -lmpc */
-usinit()	{ 
-	bu_log("usinit\n"); 
+usinit()	{
+	bu_log("usinit\n");
 }
-usnewlock()	{ 
-	bu_log("usnewlock\n"); 
+usnewlock()	{
+	bu_log("usnewlock\n");
 }
-taskcreate()	{ 
-	bu_log("taskcreate\n"); 
+taskcreate()	{
+	bu_log("taskcreate\n");
 }
 #endif
 
@@ -2458,7 +2458,7 @@ static float material_default[] = {
 
 /* Something like the RT default phong material */
 static float material_rtdefault[] = {
-	ALPHA,		1.0,	
+	ALPHA,		1.0,
 	AMBIENT,	0.2, 0.2, 0.2,	/* 0.4 in rt */
 	DIFFUSE,	0.6, 0.6, 0.6,
 	SPECULAR,	0.2, 0.2, 0.2,
@@ -2614,8 +2614,8 @@ static float mat_beigeshiny[] = {
  *	POSITION	position of light.  w=0 for infinite lights
  */
 static float default_light[] = {
-	AMBIENT,	0.0, 0.0, 0.0, 
-	LCOLOR,		1.0, 1.0, 1.0, 
+	AMBIENT,	0.0, 0.0, 0.0,
+	LCOLOR,		1.0, 1.0, 1.0,
 	POSITION,	0.0, 0.0, 1.0, 0.0,
 	LMNULL};
 
@@ -2623,106 +2623,106 @@ static float default_light[] = {
 #if 1
 # if 0
 static float white_inf_light[] = {
-	AMBIENT, 0.0, 0.0, 0.0, 
-	LCOLOR,   0.70, 0.70, 0.70, 
-	POSITION, 100.0, -200.0, 100.0, 0.0, 
+	AMBIENT, 0.0, 0.0, 0.0,
+	LCOLOR,   0.70, 0.70, 0.70,
+	POSITION, 100.0, -200.0, 100.0, 0.0,
 	LMNULL};
 
 
 static float red_inf_light[] = {
-	AMBIENT, 0.0, 0.0, 0.0, 
-	LCOLOR,   0.6, 0.1, 0.1, 
-	POSITION, -100.0, -30.0, 100.0, 0.0, 
+	AMBIENT, 0.0, 0.0, 0.0,
+	LCOLOR,   0.6, 0.1, 0.1,
+	POSITION, -100.0, -30.0, 100.0, 0.0,
 	LMNULL};
 
 static float green_inf_light[] = {
-	AMBIENT, 0.0, 0.0, 0.0, 
-	LCOLOR,   0.1, 0.3, 0.1, 
-	POSITION, 100.0, -20.0, 20.0, 0.0, 
+	AMBIENT, 0.0, 0.0, 0.0,
+	LCOLOR,   0.1, 0.3, 0.1,
+	POSITION, 100.0, -20.0, 20.0, 0.0,
 	LMNULL};
 
 
 static float blue_inf_light[] = {
-	AMBIENT, 0.0, 0.0, 0.0, 
-	LCOLOR,   0.1, 0.1, 0.3, 
-	POSITION, 0.0, 100.0, -100.0, 0.0, 
+	AMBIENT, 0.0, 0.0, 0.0,
+	LCOLOR,   0.1, 0.1, 0.3,
+	POSITION, 0.0, 100.0, -100.0, 0.0,
 	LMNULL};
 
 static float white_local_light[] = {
-	AMBIENT, 0.0, 1.0, 0.0, 
-	LCOLOR,   0.75, 0.75, 0.75, 
-	POSITION, 0.0, 10.0, 10.0, 5.0, 
+	AMBIENT, 0.0, 1.0, 0.0,
+	LCOLOR,   0.75, 0.75, 0.75,
+	POSITION, 0.0, 10.0, 10.0, 5.0,
 	LMNULL};
 # else
 static float white_inf_light[] = {
-	AMBIENT, 0.0, 0.0, 0.0, 
-	LCOLOR,   0.70, 0.70, 0.70, 
-	POSITION, 100.0, 200.0, 100.0, 0.0, 
+	AMBIENT, 0.0, 0.0, 0.0,
+	LCOLOR,   0.70, 0.70, 0.70,
+	POSITION, 100.0, 200.0, 100.0, 0.0,
 	LMNULL};
 
 
 static float red_inf_light[] = {
-	AMBIENT, 0.0, 0.0, 0.0, 
-	LCOLOR,   0.6, 0.1, 0.1, 
-	POSITION, 100.0, 30.0, 100.0, 0.0, 
+	AMBIENT, 0.0, 0.0, 0.0,
+	LCOLOR,   0.6, 0.1, 0.1,
+	POSITION, 100.0, 30.0, 100.0, 0.0,
 	LMNULL};
 
 static float green_inf_light[] = {
-	AMBIENT, 0.0, 0.0, 0.0, 
-	LCOLOR,   0.1, 0.3, 0.1, 
-	POSITION, -100.0, 20.0, 20.0, 0.0, 
+	AMBIENT, 0.0, 0.0, 0.0,
+	LCOLOR,   0.1, 0.3, 0.1,
+	POSITION, -100.0, 20.0, 20.0, 0.0,
 	LMNULL};
 
 
 static float blue_inf_light[] = {
-	AMBIENT, 0.0, 0.0, 0.0, 
-	LCOLOR,   0.1, 0.1, 0.3, 
-	POSITION, 0.0, -100.0, -100.0, 0.0, 
+	AMBIENT, 0.0, 0.0, 0.0,
+	LCOLOR,   0.1, 0.1, 0.3,
+	POSITION, 0.0, -100.0, -100.0, 0.0,
 	LMNULL};
 
 static float white_local_light[] = {
-	AMBIENT, 0.0, 1.0, 0.0, 
-	LCOLOR,   0.75, 0.75, 0.75, 
-	POSITION, 0.0, 10.0, 10.0, 5.0, 
+	AMBIENT, 0.0, 1.0, 0.0,
+	LCOLOR,   0.75, 0.75, 0.75,
+	POSITION, 0.0, 10.0, 10.0, 5.0,
 	LMNULL};
 # endif
 
 #else
 static float white_inf_light[] = {
-	AMBIENT, 0.0, 0.0, 0.0, 
-	LCOLOR,   0.70, 0.70, 0.70, 
-	POSITION, 10.0, 50.0, 50.0, 0.0, 
+	AMBIENT, 0.0, 0.0, 0.0,
+	LCOLOR,   0.70, 0.70, 0.70,
+	POSITION, 10.0, 50.0, 50.0, 0.0,
 	LMNULL};
 
 
 static float red_inf_light[] = {
-	AMBIENT, 0.0, 0.0, 0.0, 
-	LCOLOR,   0.5, 0.1, 0.1, 
-	POSITION, -100.0, 0.0, 0.0, 0.0, 
+	AMBIENT, 0.0, 0.0, 0.0,
+	LCOLOR,   0.5, 0.1, 0.1,
+	POSITION, -100.0, 0.0, 0.0, 0.0,
 	LMNULL};
 
 static float green_inf_light[] = {
-	AMBIENT, 0.0, 0.0, 0.0, 
-	LCOLOR,   0.1, 0.5, 0.1, 
-	POSITION, 100.0, 50.0, 0.0, 0.0, 
+	AMBIENT, 0.0, 0.0, 0.0,
+	LCOLOR,   0.1, 0.5, 0.1,
+	POSITION, 100.0, 50.0, 0.0, 0.0,
 	LMNULL};
 
 static float blue_inf_light[] = {
-	AMBIENT, 0.0, 0.0, 0.0, 
-	LCOLOR,   0.1, 0.1, 0.5, 
-	POSITION, 0.0, -50.0, 0.0, 0.0, 
+	AMBIENT, 0.0, 0.0, 0.0,
+	LCOLOR,   0.1, 0.1, 0.5,
+	POSITION, 0.0, -50.0, 0.0, 0.0,
 	LMNULL};
 
 static float orange_inf_light[] = {
-	AMBIENT, 0.0, 0.0, 0.0, 
-	LCOLOR,	0.35, 0.175, 0.0, 
-	POSITION, -50.0, 50.0, 10.0, 0.0, 
+	AMBIENT, 0.0, 0.0, 0.0,
+	LCOLOR,	0.35, 0.175, 0.0,
+	POSITION, -50.0, 50.0, 10.0, 0.0,
 	LMNULL};
 
 static float white_local_light[] = {
-	AMBIENT, 0.0, 0.0, 0.0, 
-	LCOLOR,   0.75, 0.75, 0.75, 
-	POSITION, 0.0, 10.0, 10.0, 5.0, 
+	AMBIENT, 0.0, 0.0, 0.0,
+	LCOLOR,   0.75, 0.75, 0.75,
+	POSITION, 0.0, 10.0, 10.0, 5.0,
 	LMNULL};
 
 
@@ -2739,19 +2739,19 @@ static float white_local_light[] = {
  */
 static float	default_lmodel[] = {
 	AMBIENT,	0.2,  0.2,  0.2,
-	ATTENUATION,	1.0, 0.0, 
-	LOCALVIEWER,	0.0, 
+	ATTENUATION,	1.0, 0.0,
+	LOCALVIEWER,	0.0,
 	LMNULL};
 
 static float infinite[] = {
-	AMBIENT, 0.3,  0.3, 0.3, 
-	LOCALVIEWER, 0.0, 
+	AMBIENT, 0.3,  0.3, 0.3,
+	LOCALVIEWER, 0.0,
 	LMNULL};
 
 static float local[] = {
-	AMBIENT, 0.3,  0.3, 0.3, 
-	LOCALVIEWER, 1.0, 
-	ATTENUATION, 1.0, 0.0, 
+	AMBIENT, 0.3,  0.3, 0.3,
+	LOCALVIEWER, 1.0,
+	ATTENUATION, 1.0, 0.0,
 	LMNULL};
 
 
@@ -2842,7 +2842,7 @@ sgi_has_stereo()
 
 /*
  *			I R _ D M
- * 
+ *
  *  Implement display-manager specific commands, from MGED "dm" command.
  */
 int

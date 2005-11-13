@@ -39,7 +39,7 @@
  *  Author -
  *	Phillip Dykstra
  *	24 Sep 1986
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
@@ -54,13 +54,14 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif
-                                                                                                                                                                            
+
 
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
 
 #include "machine.h"
+#include "bu.h"
 
 
 #define	MAXBUFBYTES	(1280*1024)
@@ -95,7 +96,7 @@ get_args(int argc, register char **argv)
 {
 	register int c;
 
-	while ( (c = getopt( argc, argv, "fbrihs:w:n:S:W:N:a:" )) != EOF )  {
+	while ( (c = bu_getopt( argc, argv, "fbrihs:w:n:S:W:N:a:" )) != EOF )  {
 		switch( c )  {
 		case 'f':
 			minus90++;
@@ -116,18 +117,18 @@ get_args(int argc, register char **argv)
 		case 'S':
 		case 's':
 			/* square size */
-			nxin = nyin = atoi(optarg);
+			nxin = nyin = atoi(bu_optarg);
 			break;
 		case 'W':
 		case 'w':
-			nxin = atoi(optarg);
+			nxin = atoi(bu_optarg);
 			break;
 		case 'N':
 		case 'n':
-			nyin = atoi(optarg);
+			nyin = atoi(bu_optarg);
 			break;
 		case 'a':
-			angle = atof(optarg);
+			angle = atof(bu_optarg);
 			break;
 
 		default:		/* '?' */
@@ -136,17 +137,17 @@ get_args(int argc, register char **argv)
 	}
 
 	/* XXX - backward compatability hack */
-	if( optind+2 == argc ) {
-		nxin = atoi(argv[optind++]);
-		nyin = atoi(argv[optind++]);
+	if( bu_optind+2 == argc ) {
+		nxin = atoi(argv[bu_optind++]);
+		nyin = atoi(argv[bu_optind++]);
 	}
-	if( optind >= argc )  {
+	if( bu_optind >= argc )  {
 		if( isatty(fileno(stdin)) )
 			return(0);
 		file_name = "-";
 		ifp = stdin;
 	} else {
-		file_name = argv[optind];
+		file_name = argv[bu_optind];
 		if( (ifp = fopen(file_name, "r")) == NULL )  {
 			(void)fprintf( stderr,
 				"bwrot: cannot open \"%s\" for reading\n",
@@ -155,7 +156,7 @@ get_args(int argc, register char **argv)
 		}
 	}
 
-	if ( argc > ++optind )
+	if ( argc > ++bu_optind )
 		(void)fprintf( stderr, "bwrot: excess argument(s) ignored\n" );
 
 	return(1);		/* OK */
@@ -256,7 +257,7 @@ main(int argc, char **argv)
 		} else if( invert ) {
 			for( y = lasty; y >= firsty; y-- ) {
 				yout = (nyin - 1) - y;
-				outbyte = yout * scanbytes; 
+				outbyte = yout * scanbytes;
 				if( outplace != outbyte ) {
 					if( fseek( ofp, outbyte, 0 ) < 0 ) {
 						fprintf( stderr, "bwrot: Can't seek on output, yet I need to!\n" );

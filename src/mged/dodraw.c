@@ -27,10 +27,10 @@
  *	replot_original_solid	Replot vector list for a solid
  *	replot_modified_solid	Replot solid, given matrix and db record.
  *	invent_solid		Turn list of vectors into phony solid
- *  
+ *
  *  Author -
  *	Michael John Muuss
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
@@ -42,14 +42,13 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "common.h"
 
-
-
 #include <stdio.h>
 #ifdef HAVE_STRING_H
-#include <string.h>
+#  include <string.h>
 #else
-#include <strings.h>
+#  include <strings.h>
 #endif
+
 #include "machine.h"
 #include "bu.h"
 #include "vmath.h"
@@ -57,6 +56,8 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "nmg.h"
 #include "raytrace.h"
 #include "rtgeom.h"		/* for ID_POLY special support */
+#include "db.h"
+
 #include "./ged.h"
 #include "./mged_solid.h"
 #include "./mged_dm.h"
@@ -89,7 +90,14 @@ struct db_tree_state	mged_initial_tree_state = {
 	{
 #endif
 		/* struct mater_info ts_mater */
-		{1.0, 0.0, 0.0},		/* color, RGB */
+#if __STDC__
+		{
+#endif
+		    1.0, 0.0, 0.0
+#if __STDC__
+		}
+#endif
+		,		/* color, RGB */
 		-1.0,			/* Temperature */
 		0,			/* ma_color_valid=0 --> use default */
 		0,			/* color inherit */
@@ -99,10 +107,17 @@ struct db_tree_state	mged_initial_tree_state = {
 	}
 #endif
 	,
-	{1.0, 0.0, 0.0, 0.0,
-	0.0, 1.0, 0.0, 0.0,
-	0.0, 0.0, 1.0, 0.0,
-	0.0, 0.0, 0.0, 1.0},
+#if __STDC__
+	{
+#endif
+	    1.0, 0.0, 0.0, 0.0,
+	    0.0, 1.0, 0.0, 0.0,
+	    0.0, 0.0, 1.0, 0.0,
+	    0.0, 0.0, 0.0, 1.0
+#if __STDC__
+	}
+#endif
+	,
 	REGION_NON_FASTGEN,		/* ts_is_fastgen */
 #if __STDC__
 	{
@@ -139,9 +154,9 @@ static int		mged_shade_per_vertex_normals=0;
 int			mged_wireframe_color_override;
 int			mged_wireframe_color[3];
 static struct model	*mged_nmg_model;
-struct rt_tess_tol	mged_ttol;	/* XXX needs to replace mged_abs_tol, et.al. */
 
 extern struct bn_tol		mged_tol;	/* from ged.c */
+extern struct rt_tess_tol	mged_ttol;	/* from ged.c */
 
 /*
  *		M G E D _ P L O T _ A N I M _ U P C A L L _ H A N D L E R
@@ -154,7 +169,7 @@ extern struct bn_tol		mged_tol;	/* from ged.c */
  */
 void
 mged_plot_anim_upcall_handler(char *file, long int us)
-    	      
+
     	   		/* microseconds of extra delay */
 {
 	char *av[3];
@@ -206,9 +221,9 @@ mged_plot_anim_upcall_handler(char *file, long int us)
  */
 void
 mged_vlblock_anim_upcall_handler(struct bn_vlblock *vbp, long int us, int copy)
-                 	     
+
     		   		/* microseconds of extra delay */
-   		     
+
 {
 
 	cvt_vlblock_to_solids( vbp, "_PLOT_OVERLAY_", copy );
@@ -571,7 +586,7 @@ mged_nmg_region_end(register struct db_tree_state *tsp, struct db_full_path *pat
  *	1	regular wireframes
  *	2	big-E
  *	3	NMG polygons
- *  
+ *
  *  Returns -
  *  	0	Ordinarily
  *	-1	On major error
@@ -978,7 +993,7 @@ Do_getmat(struct db_i *dbip, struct rt_comb_internal *comb, union tree *comb_lea
 
 /*
  *  			P A T H h M A T
- *  
+ *
  *  Find the transformation matrix obtained when traversing
  *  the arc indicated in sp->s_path[] to the indicated depth.
  *
@@ -1528,7 +1543,7 @@ f_facetize(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 		rt_db_free_internal( &intern, &rt_uniresource );
 		TCL_WRITE_ERR_return;
 	}
-	
+
 	mged_facetize_tree->tr_d.td_r = (struct nmgregion *)NULL;
 
 	/* Free boolean tree, and the regions in it */

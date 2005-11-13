@@ -9,46 +9,46 @@ anim_sort - combine concatenated animation scripts into one script
 <b>&lt; mixed.script </b>
 <b>&gt; ordered.script</b>
 <h1>DESCRIPTION</h1>
-Note: 
+Note:
 <i>anim_sort </i>
-has been superceded in BRL-CAD release 5.0 by 
+has been superceded in BRL-CAD release 5.0 by
 <i>scriptsort</i>,
 which sorts scripts much faster.
 <p>
 <i>Anim_sort</i>
 allows the user to combine several animation scripts
-into a single script suitable for input to 
+into a single script suitable for input to
 <i>rt</i>.
 A convenient way to
 prepare a complicated animation script is to develop each part
-separately and then use 
+separately and then use
 <i>anim_sort </i>
 to combine the various parts. For
-example, suppose that 
+example, suppose that
 <b>view.script </b>
 is an animation script controlling the
-movement of the virtual camera and the lighting, 
+movement of the virtual camera and the lighting,
 <b>mill.script </b>
 rotates
-the blades of a windmill, and 
+the blades of a windmill, and
 <b>quixote.script </b>
 controlls the movement of a
 knight. These scripts should first be concatenated together:
 <p>
 cat view.script mill.script quixote.script &gt; mixed.script
 <p>
-Calling 
+Calling
 <i>anim_sort </i>
-with 
+with
 <b>mixed.script </b>
 on standard input would
-reorder the commands in 
+reorder the commands in
 <b>mixed.script </b>
 to make a viable script on standard
 output.
 <p>
 Each of the input files to be concatenated is expected to be a
-viable 
+viable
 <i>rt </i>
 animation script, containing a series of frames of the
 following form:
@@ -63,39 +63,39 @@ any number of post-raytracing commands
 <i>Anim_sort</i>
 reads the framenumber of the first start command, and uses
 this to as the first frame number of the output file. The commands of
-all frames in 
+all frames in
 <b>mixed.script </b>
 with that framenumber are combined in the
 ouput frame. The post-raytracing commands following all frames with that
-framenumber are placed after the 
+framenumber are placed after the
 <b>end; </b>
-command of the output frame. This process is continued for each 
+command of the output frame. This process is continued for each
 successive integer,
 until anim_sort reaches a framenumber which is not included in any of
-the original scripts. 	
+the original scripts.
 <p>
-For example, if 
+For example, if
 <b>view.script </b>
 contained frames numbered from 5 to
-20, 
+20,
 <b>mill.script </b>
-contained frames from 0 to 10, and 
+contained frames from 0 to 10, and
 <b>quixote.script</b>
 contained frames numbered from 15 to 25, the output script would start
-at frame 5 (since 
+at frame 5 (since
 <b>view.script </b>
-comes first in 
+comes first in
 <b>mixed.script</b>
 ) and end with
 frame 25 (since frames 5 through 25 can be found somewhere in
 <b>mixed.script</b>
 ). If the user wanted to include frames 0 through 4, which
-are found only in 
+are found only in
 <b>mill.script</b>
-, then 
+, then
 <b>mill.script </b>
 should be concatenated
-onto the beginning of 
+onto the beginning of
 <b>mixed.script </b>
 instead of the middle. In the
 majority of animation situations, all of the input scripts would have
@@ -113,27 +113,27 @@ specified before the sequence of animations begins.
 <dd>
 Incremental mode. The frames of the output script are printed in a scrambled
 order which incrementally increases the time resolution of the animation.
-For example, the frames of an eight-frame script would be computed in the 
+For example, the frames of an eight-frame script would be computed in the
 order: 0 4 2 6 1 3 5 7.
 
 <dt>
 <b>-c</b>
 
 <dd>
-For most animation purposes, it is desirable to have a 
+For most animation purposes, it is desirable to have a
 <b>clean</b>
-command immediately following the 
+command immediately following the
 <b>start </b>
 command of each frame. The
-default behavior of 
+default behavior of
 <i>anim_sort </i>
-is to include one 
+is to include one
 <b>clean </b>
-command following the 
+command following the
 <b>start </b>
-command of each frame. 
+command of each frame.
 <b>clean </b>
-commands from the input files are ignored. If the 
+commands from the input files are ignored. If the
 <b>-c </b>
 flag is activated, then no clean
 commands are printed.

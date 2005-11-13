@@ -63,7 +63,7 @@ dm_validXType(char	*dpy_string,
 	    XQueryExtension(dpy, "GLX", &return_val, &return_val, &return_val))
 		val = 1;
 	else
-#  endif  
+#  endif
 #  ifdef DM_X
 		if (!strcmp(name, "X"))
 			val = 1;

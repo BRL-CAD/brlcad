@@ -27,7 +27,7 @@
 # Source -
 #	The U. S. Army Ballistic Research Laboratory
 #	Aberdeen Proving Ground, Maryland  21005
-#  
+#
 #
 #
 # Description -
@@ -142,7 +142,7 @@ proc cad_input_dialog { w screen title text entryvar defaultentry default entry_
     upvar $entryvar entrylocal
 
     set entry$w $defaultentry
-    
+
     # The screen parameter can be the pathname of some
     # widget where the screen value can be obtained.
     # Otherwise, it is assumed to be a genuine X DISPLAY

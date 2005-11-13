@@ -25,15 +25,15 @@
  *  This header file describes the plane_specific structure, which
  *  is for ARS processing, and the tri_specific structure,
  *  which is for ARB and PG processing.
- *  
+ *
  *  Author -
  *	Michael John Muuss
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005
- *  
+ *
  *
  *  $Header$
  */

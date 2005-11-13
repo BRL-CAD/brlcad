@@ -453,7 +453,7 @@ bindings." }
 
     label $top.footL -text "Foot" -anchor e
     hoc_register_data $top.footL "Foot Format String"\
-	    { { summary "Enter/edit the foot format string." } 
+	    { { summary "Enter/edit the foot format string." }
               { see_also "nirt" } }
     entry $top.footE -relief sunken -bd 2 -width 80 -textvar qray_control($id,fmt_foot)
     hoc_register_data $top.footE "Foot Format String"\

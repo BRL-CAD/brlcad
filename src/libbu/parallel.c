@@ -28,11 +28,11 @@
  *
  *  Author -
  *	Michael John Muuss
- *  
+ *
  *  Source -
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
- *  
+ *
  */
 /*@}*/
 
@@ -47,6 +47,9 @@ static const char RCSparallel[] = "@(#)$Header$ (ARL)";
 #include <stdio.h>
 #include <ctype.h>
 #include <math.h>
+#ifdef HAVE_SIGNAL_H
+#  include <signal.h>
+#endif
 #ifdef HAVE_STRING_H
 #  include <string.h>
 #else
@@ -74,7 +77,6 @@ static const char RCSparallel[] = "@(#)$Header$ (ARL)";
 #    include <sys/wait.h>
 #  endif
 #  include <sys/stat.h>
-#  include <signal.h>
 #endif
 
 #ifdef __ppc__
@@ -85,7 +87,6 @@ static const char RCSparallel[] = "@(#)$Header$ (ARL)";
 #    include <sys/wait.h>
 #  endif
 #  include <sys/stat.h>
-#  include <signal.h>
 #  ifdef BSD
 #    define __BSDbackup BSD
 #    undef BSD
@@ -151,8 +152,14 @@ static const char RCSparallel[] = "@(#)$Header$ (ARL)";
 #  include <sys/wait.h>
 #endif
 
-#ifdef HAVE_SYS_SCHED_H
-#  include <sys/sched.h>
+#ifdef HAVE_SCHED_H
+#  include <sched.h>
+#else
+#  ifdef HAVE_SYS_SCHED_H
+#    include <sys/sched.h>
+#  endif
+#endif
+#if defined(IRIX64) && IRIX64 >= 64
 static struct sched_param bu_param;
 #endif
 
@@ -211,7 +218,7 @@ bu_nice_set(int newnice)
 #ifdef _WIN32
   if (bu_debug)
     bu_log("bu_nice_set() Priority NOT changed\n");
-  
+
   return;
 
 #else  /* not _WIN32 */
@@ -224,7 +231,7 @@ bu_nice_set(int newnice)
   opri = getpriority( PRIO_PROCESS, 0 );
   setpriority( PRIO_PROCESS, 0, newnice );
   npri = getpriority( PRIO_PROCESS, 0 );
-  
+
 #  else  /* not BSD */
   int bias, chg;
 
@@ -351,7 +358,7 @@ bu_avail_cpus(void)
 	 * 0 when running under a CPU set.  A bug report has been filed with
 	 * SGI.
 	 *
-	 * The sysmp(MP_NPROCS) call returns the number of physically 
+	 * The sysmp(MP_NPROCS) call returns the number of physically
 	 * configured processors.  This will have to suffice until SGI
 	 * comes up with a fix.
 	 */
@@ -430,7 +437,7 @@ bu_avail_cpus(void)
 	  mib[0] = CTL_HW;
 	  mib[1] = HW_NCPU;
 	  len = sizeof(maxproc);
-	  if (sysctl(mib, 2, &maxproc, &len, NULL, NULL == -1)) {
+	  if (sysctl(mib, 2, &maxproc, &len, NULL, 0) == -1) {
 	    ncpu = 1;
 	    perror("sysctl");
 	  } else {
@@ -451,8 +458,8 @@ bu_avail_cpus(void)
 	{
 	  /* old retired linux method */
 	  /*
-	   * Ultra-kludgey way to determine the number of cpus in a 
-	   * linux box--count the number of processor entries in 
+	   * Ultra-kludgey way to determine the number of cpus in a
+	   * linux box--count the number of processor entries in
 	   * /proc/cpuinfo!
 	   */
 
@@ -461,11 +468,11 @@ bu_avail_cpus(void)
 	  char buf[128];
 
 	  ncpu = 0;
-	
+
 	  fp = fopen (CPUINFO_FILE,"r");
-	
+
 	  if (fp == NULL) {
-	    ncpu = 1; 
+	    ncpu = 1;
 	    perror (CPUINFO_FILE);
 	  } else {
 	    while (fgets (buf, 80, fp) != NULL) {
@@ -473,8 +480,8 @@ bu_avail_cpus(void)
 		++ ncpu;
 	      }
 	    }
-	    fclose (fp);	
-	  
+	    fclose (fp);
+
 	    if (ncpu <= 0) {
 	      ncpu = 1;
 	    }
@@ -667,7 +674,7 @@ bu_kill_workers(tbl)
 int tbl[MAX_PSW];
 {
   register int i;
-	
+
   for (i=1 ; i < MAX_PSW ; ++i) {
     if ( tbl[i] ) {
       if( kill(tbl[i], 9) ) {
@@ -678,7 +685,7 @@ int tbl[MAX_PSW];
       }
     }
   }
-  
+
   bzero( (char *)tbl, sizeof(tbl) );
 }
 #  endif   /* end check if sgi_4d defined */
@@ -967,7 +974,7 @@ genptr_t	arg;
 		} else {
 			worker_pid_tbl[x] = new;
 		}
-		
+
 	}
 	(*func)(0,arg);	/* don't waste this thread */
 	{
@@ -975,7 +982,7 @@ genptr_t	arg;
 		int	pstat;
 		int	children;
 
-		/* 
+		/*
 		 * Make sure all children are done.
 		 */
 		while ( children=bu_worker_tbl_not_empty(worker_pid_tbl) ) {
@@ -1154,7 +1161,7 @@ genptr_t	arg;
 	/* XXX How to advise thread library that we need 'ncpu' processors? */
 
 	/* Create the threads */
-	for (x = 0; x < ncpu; x++)  { 
+	for (x = 0; x < ncpu; x++)  {
 		pthread_attr_t attrs;
 		pthread_attr_init(&attrs);
 		pthread_attr_setstacksize(&attrs,10*1024*1024);
@@ -1183,9 +1190,9 @@ genptr_t	arg;
 			bu_log("bu_parallel(): thread_tbl[%d] = %d\n",
 			       i, thread_tbl[i]);
 		}
-#    if defined(__FreeBSD__)
-		/* Is this FreeBSD-only? */
-		_thread_dump_info();
+#    if defined(HAVE_RAISE) && defined(SIGINFO)
+		/* may be BSD-only (calls _thread_dump_info()) */
+		raise(SIGINFO);
 #    endif
 	}
 

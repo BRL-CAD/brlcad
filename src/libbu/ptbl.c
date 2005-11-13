@@ -34,11 +34,11 @@
  *  Authors -
  *	Lee A. Butler
  *	Michael John Muuss
- *  
+ *
  *  Source -
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
- *  
+ *
  */
 /*@}*/
 
@@ -65,9 +65,9 @@ static const char libbu_ptbl_RCSid[] = "@(#)$Header$ (ARL)";
  */
 void
 bu_ptbl_init(struct bu_ptbl *b, int len, const char *str)
-              	   
+
    		    		/* initial len.  Recommend 8 or 64 */
-          	     
+
 {
 	if (bu_debug & BU_DEBUG_PTBL)
 		bu_log("bu_ptbl_init(%8x, len=%d, %s)\n", b, len, str);

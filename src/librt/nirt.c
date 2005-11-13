@@ -36,7 +36,7 @@
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005
- *  
+ *
  *
  *  Description -
  *	This code was imported from MGED's/rtif.c and modified to work as part
@@ -358,43 +358,44 @@ done:
 	sa.bInheritHandle = TRUE;
 	sa.lpSecurityDescriptor = NULL;
 
-	// Create a pipe for the child process's STDOUT.  
+	/* Create a pipe for the child process's STDOUT. */
 	CreatePipe( &pipe_out[0], &pipe_out[1], &sa, 0);
 
-	// Create noninheritable read handle and close the inheritable read handle. 
+	/* Create noninheritable read handle and close the inheritable read handle. */
 	DuplicateHandle(GetCurrentProcess(), pipe_out[0],
-			GetCurrentProcess(),  &pipe_outDup , 
+			GetCurrentProcess(),  &pipe_outDup ,
 			0,  FALSE,
 			DUPLICATE_SAME_ACCESS);
 	CloseHandle(pipe_out[0]);
 
-	// Create a pipe for the child process's STDERR.  
+	/* Create a pipe for the child process's STDERR. */
 	CreatePipe( &pipe_err[0], &pipe_err[1], &sa, 0);
 
-	// Create noninheritable read handle and close the inheritable read handle. 
+	/* Create noninheritable read handle and close the inheritable read handle. */
 	DuplicateHandle(GetCurrentProcess(), pipe_err[0],
-			GetCurrentProcess(),  &pipe_errDup , 
+			GetCurrentProcess(),  &pipe_errDup ,
 			0,  FALSE,
 			DUPLICATE_SAME_ACCESS);
 	CloseHandle(pipe_err[0]);
-	
-	// The steps for redirecting child process's STDIN: 
-	//     1.  Save current STDIN, to be restored later. 
-	//     2.  Create anonymous pipe to be STDIN for child process. 
-	//     3.  Set STDIN of the parent to be the read handle to the 
-	//         pipe, so it is inherited by the child process. 
-	//     4.  Create a noninheritable duplicate of the write handle, 
-	//         and close the inheritable write handle.  
 
-	// Create a pipe for the child process's STDIN.  
+	/* The steps for redirecting child process's STDIN:
+	 *     1.  Save current STDIN, to be restored later.
+	 *     2.  Create anonymous pipe to be STDIN for child process.
+	 *     3.  Set STDIN of the parent to be the read handle to the
+	 *         pipe, so it is inherited by the child process.
+	 *     4.  Create a noninheritable duplicate of the write handle,
+	 *         and close the inheritable write handle.
+	 */
+
+	/* Create a pipe for the child process's STDIN. */
 	CreatePipe(&pipe_in[0], &pipe_in[1], &sa, 0);
 
-	// Duplicate the write handle to the pipe so it is not inherited.  
-	DuplicateHandle(GetCurrentProcess(), pipe_in[1], 
-			GetCurrentProcess(), &pipe_inDup, 
-			0, FALSE,                  // not inherited       
-			DUPLICATE_SAME_ACCESS); 
-	CloseHandle(pipe_in[1]); 
+	/* Duplicate the write handle to the pipe so it is not inherited. */
+	DuplicateHandle(GetCurrentProcess(), pipe_in[1],
+			GetCurrentProcess(), &pipe_inDup,
+			0, FALSE,                  /* not inherited */
+			DUPLICATE_SAME_ACCESS);
+	CloseHandle(pipe_in[1]);
 
 	si.cb = sizeof(STARTUPINFO);
 	si.lpReserved = NULL;
@@ -415,13 +416,13 @@ done:
 	    else { /* append other arguments (i.e. options, file and obj(s)) */
 		sprintf(name,"\"%s\" ", dgop->dgo_rt_cmd[i]);
 		strcat(line1, name);
-	    } 
+	    }
 	}
 
 	CreateProcess(NULL, line1, NULL, NULL, TRUE,
 		      DETACHED_PROCESS, NULL, NULL,
 		      &si, &pi);
- 
+
 	/* use fp_in to feed view info to nirt */
 	CloseHandle(pipe_in[0]);
 	fp_in = _fdopen(_open_osfhandle((HFILE)pipe_inDup,_O_TEXT), "wb");
@@ -518,7 +519,7 @@ done:
 		Tcl_AppendResult(interp, line, (char *)NULL);
 	(void)fclose(fp_err);
 
-	
+
 #ifndef _WIN32
 
 	/* Wait for program to finish */

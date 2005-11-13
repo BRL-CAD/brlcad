@@ -733,7 +733,7 @@ proc muves_read_final_results { fr_file } {
 
     ##################### process shot records ######################
     if [info exists muves_shot_records] {
-	unset muves_shot_records 
+	unset muves_shot_records
     }
     set nthreats [llength $muves_threats]
     set nviews [llength $muves_views]
@@ -963,7 +963,7 @@ proc muves_process_shot_records {} {
 			    set bits [get_bits_from_hex $hex]
 			    for { set bitn 3 } { $n >= 0 && $bitn >= 0 } { incr n -1; incr bitn -1 } {
 				set val [lindex $bits $bitn]
-				
+
 				if { $val < $min($n) } {
 				    set min($n) $val
 				}

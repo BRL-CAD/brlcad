@@ -51,10 +51,10 @@ namespace eval RtWizard {
 
     #
     # Class definition
-    #    
+    #
     ::itcl::class FullColorPage {
 	inherit ::RtWizard::MGEDpage
-	
+
 	public {
 	    constructor {filename args} {
 		MGEDpage::constructor $filename
@@ -65,9 +65,9 @@ namespace eval RtWizard {
 		$itk_component(helpPanel) insert insert \
 			"\nUse this page to select the items that you wish to render in a full-color image." \
 			HelpTag
-		
+
 		$itk_component(helpPanel) tag configure HelpTag \
-			-font {helvetica 10 bold}		
+			-font {helvetica 10 bold}
 
 		configure -onSelectCallback [itcl::code $this onSelect2]
 		configure -onDeselectCallback [itcl::code $this onDeselect2]
@@ -78,9 +78,9 @@ namespace eval RtWizard {
 
 		eval itk_initialize $args
 
-		$itk_component(helpPanel) configure -state disabled 
+		$itk_component(helpPanel) configure -state disabled
 	    }
-	}            
+	}
 
 	private {
 	    method onSelect2 {optionsMenu}
@@ -91,12 +91,12 @@ namespace eval RtWizard {
 
     #--------------------#
     #   Public Methods   #
-    #--------------------#    
+    #--------------------#
 
-    
+
     #--------------------#
     #  Private Methods   #
-    #--------------------#    
+    #--------------------#
     #
     # onSelect2
     #
@@ -109,9 +109,9 @@ namespace eval RtWizard {
 	$::wizardInstance menubar add command .$optionsMenu.bg \
 		-label "Background Color..." \
 		-helpstr "Set the background color" \
-		-command "[itcl::code $this backgroundColorChooser]"	
+		-command "[itcl::code $this backgroundColorChooser]"
     }
-    
+
     #
     # onDeselect2
     #

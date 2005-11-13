@@ -32,6 +32,7 @@ static char rcsid[] = "$Header$";
 rleClock()			Tag the file.
 */
 
+#include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
 #include <ctype.h>
@@ -909,14 +910,14 @@ drawText()
 typedef struct {
     short x, y;
     int dir;
-} stack_t;
+} clock_stack_t;
 
 #define NORTH 0
 #define WEST 1
 #define SOUTH 2
 #define EAST 3
 struct {
-	stack_t *s;
+	clock_stack_t *s;
 	int	top;
 	int allocked;
 } Stack;
@@ -929,9 +930,9 @@ areaFlood(firstX, firstY, mask, match, value)
 int firstX, firstY;
 int mask, match, value;
 {
-    register stack_t *sp;
+    register clock_stack_t *sp;
 
-    Stack.s = (stack_t *) calloc(256, sizeof(stack_t));
+    Stack.s = (clock_stack_t *) calloc(256, sizeof(clock_stack_t));
     Stack.allocked = 256;
     Stack.top = -1;
     stackPush(firstX, firstY, NORTH);
@@ -964,7 +965,7 @@ int x, y, dir;
 {
     if (++Stack.top >= Stack.allocked) {
 	    Stack.allocked += 256;
-	    Stack.s = (stack_t *) realloc(Stack.s, Stack.allocked * sizeof(stack_t));
+	    Stack.s = (clock_stack_t *) realloc(Stack.s, Stack.allocked * sizeof(clock_stack_t));
 if(Debug)fprintf(stderr, "Stack growing to %d\n", Stack.allocked);
     }
 	Stack.s[Stack.top].x = x;

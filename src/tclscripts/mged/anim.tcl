@@ -44,8 +44,8 @@ if ![info exists tk_version] {
 #  sketch_init_*foo* once before making any calls to sketch_popup_*foo*
 #  Currently the choices for *foo* are from the following list:
 #  {draw view table objanim track sort preview}
-# 2.> a "p" argument indicates a parent widget. 
-#  eg. when calling sketch_popup_draw the calling function provides a widget 
+# 2.> a "p" argument indicates a parent widget.
+#  eg. when calling sketch_popup_draw the calling function provides a widget
 #  to be the new widget's parent. Whenever tk is running, there is a toplevel
 #  widget called "." which can be used.
 #-----------------------------------------------------------------
@@ -96,9 +96,9 @@ proc sketch_popup_main { {p .} } {
 	sketch_init_sort
 	sketch_init_preview
 
-	if { $p == "." } { 
-		set root ".sketch" 
-	} else { 
+	if { $p == "." } {
+		set root ".sketch"
+	} else {
 		set root "$p.sketch"
 	}
 	catch {destroy $root}
@@ -138,17 +138,17 @@ proc sketch_post_table_menu {menu} {
 #-----------------------------------------------------------------
 # Curve Editor
 #-----------------------------------------------------------------
-#Comments: 
-#A curve is a list of nodes. Each node contains a time parameter and 
+#Comments:
+#A curve is a list of nodes. Each node contains a time parameter and
 #a 3-D point. The list of points is stored in a vlist using "vdraw".
-#The list of time parameters is stored in a global variable 
+#The list of time parameters is stored in a global variable
 #mged_sketch_time_*name*.
 proc sketch_init_draw {} {
 	#curve
 	uplevel #0 set mged_sketch_init_draw 1
-	uplevel #0 set mged_sketch_node 0		
-	uplevel #0 set mged_sketch_count 0		
-	uplevel #0 set mged_sketch_time 0.0	
+	uplevel #0 set mged_sketch_node 0
+	uplevel #0 set mged_sketch_count 0
+	uplevel #0 set mged_sketch_time 0.0
 	uplevel #0 set mged_sketch_tinc 1.0
 	uplevel #0 set mged_sketch_tinit 0.0
 	uplevel #0 {set mged_sketch_name ""}
@@ -169,9 +169,9 @@ proc sketch_popup_draw { p } {
 		 mged_sketch_name mged_sketch_count mged_sketch_node \
 		mged_sketch_splname mged_sketch_splprefix mged_sketch_defname
 
-	if { $p == "." } { 
-		set root ".draw" 
-	} else { 
+	if { $p == "." } {
+		set root ".draw"
+	} else {
 		set root "$p.draw"
 	}
    	if { [info commands $root] != ""} {
@@ -190,7 +190,7 @@ proc sketch_popup_draw { p } {
 	label  $root.f1.l1 -textvariable mged_sketch_node
 	label  $root.f1.l2 -text " of "
 	label  $root.f1.l3 -textvariable mged_sketch_count
-	frame  $root.f0 
+	frame  $root.f0
 	button $root.f0.b4 -text "-->" -command {sketch_incr 10}
 	button $root.f0.b40 -text "->" -command {sketch_incr 1}
 	button $root.f0.b50 -text "<-" -command {sketch_incr -1}
@@ -258,7 +258,7 @@ proc sketch_popup_draw { p } {
 	$root.mb0.m0 add command -label "Read Curve from File" -command {sketch_popup_load}
 	$root.mb0.m0 add command -label "Write Curve to File" -command {sketch_popup_save curve}
 	$root.mb0.m0 add command -label "Write Spline to File" -command {sketch_popup_save spline}
-	
+
 	pack \
 		$root.f4 $root.f5 $root.f1 $root.f0 \
 		$root.b0 $root.b1 $root.b2 $root.b3 \
@@ -282,13 +282,13 @@ proc sketch_popup_draw { p } {
 		$root.f4.mb0 $root.f4.l1 \
 		$root.f5.l0 $root.f5.e0 \
 		-side left -expand yes
-	
+
 	#initialize name
 	if { [vdraw open] } {
 		sketch_open_curve [vdraw read n]
 	} else {
 		sketch_open_curve $mged_sketch_defname
-	} 
+	}
 	set mged_sketch_splname "$mged_sketch_splprefix[vdraw read n]"
 	sketch_update
 }
@@ -360,7 +360,7 @@ proc sketch_update {} {
 
 	sketch_clip
 
-	upvar #0 [format "mged_sketch_time_%s" [vdraw read n]] tlist 
+	upvar #0 [format "mged_sketch_time_%s" [vdraw read n]] tlist
 
 	if {$mged_sketch_node == ""} {
 		set mged_sketch_time ""
@@ -370,18 +370,18 @@ proc sketch_update {} {
 
 	set mged_sketch_color [sketch_hex_to_rgb [vdraw read c]]
 	set mged_sketch_name  [vdraw read n]
-	
+
 	if { [vdraw send] < 0 } {
 		tk_dialog ._sketch_msg {Can't display curve} \
 		  "Can't create pseudo-solid _VDRW$mged_sketch_name because true solid \
 		   with that name exists. Kill the true solid or choose a \
-		    a different name for this curve." {} 0 {OK} 
+		    a different name for this curve." {} 0 {OK}
 		return -1
 	}
 
-	
+
 	if { $mged_sketch_count > 0 } {
-		sketch_highlight 
+		sketch_highlight
 	} else {
 		kill -f "_VDRW_sketch_hl_"
 	}
@@ -405,7 +405,7 @@ proc sketch_clip {} {
 	}
 	if { $mged_sketch_node >= $mged_sketch_count } {
 		set mged_sketch_node [expr $mged_sketch_count - 1]
-	} 
+	}
 	if { $mged_sketch_node < 0 } {
 		set mged_sketch_node 0
 	}
@@ -428,7 +428,7 @@ proc sketch_highlight { } {
 	sketch_open_curve _sketch_hl_
 	sketch_draw_highlight $v_x $v_y $v_z $offset
 	sketch_open_curve $oldname
-	
+
 }
 
 proc sketch_draw_highlight {v_x v_y v_z offset} {
@@ -465,7 +465,7 @@ proc sketch_add { point n } {
 		set tlist [list $mged_sketch_tinit]
 		sketch_update
 		return
-	} 
+	}
 	if { ($n == "") || ($n < -1) || ($n > $last) } {
 		sketch_update
 		return
@@ -486,7 +486,7 @@ proc sketch_add { point n } {
 	set tlist [linsert $tlist $newn $tn]
 	set mged_sketch_node $newn
 	sketch_update
-}	
+}
 
 #insert current view center before specified node
 proc sketch_insert { point n } {
@@ -553,7 +553,7 @@ proc sketch_add_color_menu {m {type current}} {
 proc sketch_popup_color {type color} {
 	global mged_sketch_color mged_sketch_splname
 	set flag 0
-	if {($color == "other")||($color == "")} { 
+	if {($color == "other")||($color == "")} {
 		set color ""
 		incr flag
 	}
@@ -593,7 +593,7 @@ proc sketch_popup_color {type color} {
 	sketch_popup_input "Color Curve" $entries $buttons
 	return
 }
-		
+
 
 #set current curve color
 proc sketch_color { color } {
@@ -673,14 +673,14 @@ proc sketch_load { filename  curve } {
 	global mged_sketch_splname mged_sketch_splprefix
 	if { [sketch_open_curve $curve] < 0 } {
 		echo "Couldn't open" $curve
-		return	
+		return
 	}
 	set fd [open $filename r]
 	vdraw delete a
 	sketch_read_from_fd $fd
 	close $fd
 	catch {destroy ._sketch_input}
-	sketch_update				
+	sketch_update
 	set mged_sketch_splname "$mged_sketch_splprefix[vdraw read n]"
 }
 
@@ -767,7 +767,7 @@ proc sketch_rename { name } {
 		set ans [tk_dialog ._sketch_msg {Curve exists} \
 		  "A curve with name $name already exists." {} \
 		  1 {Rename anyway} {Cancel} ]
-		if { $ans == 1 } { 
+		if { $ans == 1 } {
 			return -1
 		} else {
 			vdraw vlist d $name
@@ -858,11 +858,11 @@ proc sketch_delete_curve { name } {
 #-----------------------------------------------------------------
 # View Curve Editor
 #-----------------------------------------------------------------
-#Comments: 
+#Comments:
 # A view curve consists of a series of nodes. Each node contains all
-# the information necessary to reproduce a view state. Different 
+# the information necessary to reproduce a view state. Different
 #combinations of parameters are possible - the implemented combinations
-#can be found in the first switch statement of sketch_set_vparams{}. 
+#can be found in the first switch statement of sketch_set_vparams{}.
 #Each view curve is realized as a read-only table widget whose parent is
 #$mged_sketch_vwidget and whose name is $mged_sketch_vprefix*name*.
 proc sketch_init_view {} {
@@ -871,10 +871,10 @@ proc sketch_init_view {} {
 	uplevel #0 set mged_sketch_vapply 0
 	uplevel #0 set mged_sketch_vwidget ".view"
 	uplevel #0 set mged_sketch_vprefix "_v_"
-	uplevel #0 set mged_sketch_vnode 0		
-	uplevel #0 set mged_sketch_vcount 0		
-	uplevel #0 set mged_sketch_vtime 0.0	
-	uplevel #0 set mged_sketch_vtinc 1.0	
+	uplevel #0 set mged_sketch_vnode 0
+	uplevel #0 set mged_sketch_vcount 0
+	uplevel #0 set mged_sketch_vtime 0.0
+	uplevel #0 set mged_sketch_vtinc 1.0
 	uplevel #0 {set mged_sketch_vname ""}
 	uplevel #0 {set mged_sketch_vparams {size eye quat}}
 	uplevel #0 {set mged_sketch_vchoices {
@@ -904,9 +904,9 @@ proc sketch_popup_view { p } {
 		mged_sketch_vparams mged_sketch_vwidget mged_sketch_vprefix \
 		mged_sketch_vchoices
 
-	if { $p == "." } { 
-		set root ".view" 
-	} else { 
+	if { $p == "." } {
+		set root ".view"
+	} else {
 		set root "$p.view"
 	}
 	set mged_sketch_vwidget "$root"
@@ -932,7 +932,7 @@ proc sketch_popup_view { p } {
 	checkbutton $root.cb0 -text "Apply Current Node to View" \
 		-variable mged_sketch_vapply -command "sketch_vupdate"
 	$root.cb0 deselect
-	frame  $root.f0 
+	frame  $root.f0
 	button $root.f0.b4 -text "-->" -command {sketch_vincr 10}
 	button $root.f0.b40 -text "->" -command {sketch_vincr 1}
 	button $root.f0.b50 -text "<-" -command {sketch_vincr -1}
@@ -984,7 +984,7 @@ proc sketch_popup_view { p } {
 	menu $root.mb0.m0
 	$root.mb0.m0 add command -label "Read V-Curve from File" -command {sketch_popup_vload}
 	$root.mb0.m0 add command -label "Write V-Curve to File" -command {sketch_popup_vsave curve}
-	
+
 	pack \
 		$root.f4 $root.f3 $root.f5 $root.f1 $root.cb0 $root.f0 \
 		$root.b0 $root.b1 $root.b2 $root.b3 \
@@ -1001,7 +1001,7 @@ proc sketch_popup_view { p } {
 		$root.f3.mb0 $root.f3.l0 \
 		$root.f5.l0 $root.f5.e0 \
 		-side left -expand yes
-	
+
 	#initialize name
 	sketch_open_vcurve $mged_sketch_vname
 	sketch_vupdate
@@ -1031,7 +1031,7 @@ proc sketch_open_vcurve {name} {
 		$prefix$name.t tag configure current -background white \
 			-relief raised -borderwidth 2
 	}
-	set mged_sketch_vname $name	
+	set mged_sketch_vname $name
 	#create parameter list if need be
 	set vpname "mged_sketch_vparams_$name"
 	uplevel #0 "append $vpname {}"
@@ -1055,7 +1055,7 @@ proc sketch_post_vcurve_list { menu function } {
 		set vcurve [sketch_vcurve_get_label $ved]
 		$menu add command -label $vcurve -command "$command $vcurve"
 	}
-		
+
 }
 
 
@@ -1108,7 +1108,7 @@ proc sketch_set_vparams { newlist } {
 			file delete $mged_sketch_temp1
 		}
 		{eye center} {
-			
+
 			set fd [open "| ${mged_sketch_anim_path}anim_lookat -y -v \
 					> $mged_sketch_temp1" w]
 			sketch_text_to_fd $text $fd all
@@ -1228,9 +1228,9 @@ proc sketch_vadd { n } {
 		$text configure -state normal
 		$text insert "1.0" [sketch_get_view_line $mged_sketch_vtime nl]
 		$text configure -state disabled
-		sketch_vupdate 
-		return		
-	} 
+		sketch_vupdate
+		return
+	}
 	if { ($n == "") || ($n < -1) || ($n > $last) } {
 		sketch_vupdate
 		return
@@ -1238,14 +1238,14 @@ proc sketch_vadd { n } {
 	set line [expr $n + 2]
 	set preline [expr $n + 1]
 	if { $n == -1 } {
-		set time1 [lindex [$text get "$line.0" "$line.0 lineend"] 0] 
+		set time1 [lindex [$text get "$line.0" "$line.0 lineend"] 0]
 		set mged_sketch_vtime [expr $time1 - $mged_sketch_vtinc]
 	} elseif { $n == $last } {
-		set time0 [lindex [$text get "$preline.0" "$preline.0 lineend"] 0] 
+		set time0 [lindex [$text get "$preline.0" "$preline.0 lineend"] 0]
 		set mged_sketch_vtime [expr $time0 + $mged_sketch_vtinc]
 	} else {
-		set time0 [lindex [$text get "$preline.0" "$preline.0 lineend"] 0] 
-		set time1 [lindex [$text get "$line.0" "$line.0 lineend"] 0] 
+		set time0 [lindex [$text get "$preline.0" "$preline.0 lineend"] 0]
+		set time1 [lindex [$text get "$line.0" "$line.0 lineend"] 0]
 		set mged_sketch_vtime [expr ($time0 + $time1)*0.5]
 	}
 	$text configure -state normal
@@ -1275,7 +1275,7 @@ proc sketch_get_view_line { time {mode 0}} {
 	}
 	return $line
 }
-	
+
 #delete specified node
 proc sketch_vdelete { n } {
 	global mged_sketch_vname mged_sketch_vwidget mged_sketch_vprefix
@@ -1306,7 +1306,7 @@ proc sketch_vmove { n } {
 	set mged_sketch_vtime [lindex [$text get "$n.0" "$n.0 lineend"] 0]
 	$text configure -state normal
 	$text delete "$n.0" "$n.0 lineend"
-	$text insert "$n.0" [sketch_get_view_line $mged_sketch_vtime] 			
+	$text insert "$n.0" [sketch_get_view_line $mged_sketch_vtime]
 	$text configure -state disabled
 
 	sketch_vupdate
@@ -1332,9 +1332,9 @@ proc sketch_vinsert2 { n } {
 		set mged_sketch_vtime  [expr 0.5*($t1+$t2)]
 	}
 	$text configure -state normal
-	$text insert "$n.0" [sketch_get_view_line $mged_sketch_vtime nl] 			
+	$text insert "$n.0" [sketch_get_view_line $mged_sketch_vtime nl]
 	$text configure -state disabled
-	
+
 	sketch_vupdate
 }
 
@@ -1367,7 +1367,7 @@ proc sketch_vupdate {} {
 	}
 
 	set mged_sketch_vtime [lindex $line 0]
-	
+
 	if { $mged_sketch_vapply } {
 		set i 1
 		set str ""
@@ -1380,7 +1380,7 @@ proc sketch_vupdate {} {
 		if { $i != $len } {
 			puts "sketch_vupdate: expected $i columns, got $len"
 			return
-		} 
+		}
 		eval view $str
 	}
 
@@ -1416,7 +1416,7 @@ proc sketch_vclip {} {
 	}
 	if { $mged_sketch_vnode >= $mged_sketch_vcount } {
 		set mged_sketch_vnode [expr $mged_sketch_vcount - 1]
-	} 
+	}
 	if { $mged_sketch_vnode < 0 } {
 		set mged_sketch_vnode 0
 	}
@@ -1527,8 +1527,8 @@ proc sketch_vload { filename vcurve cols} {
 	catch {destroy ._sketch_input}
 	sketch_vupdate
 }
-	
-	
+
+
 
 proc sketch_popup_vname {{mode select}} {
 	if { $mode == "select"} {
@@ -1562,7 +1562,7 @@ proc sketch_vname { name } {
 	catch {destroy ._sketch_input}
 	sketch_vupdate
 }
- 
+
 proc sketch_vrename { name mode } {
 	global mged_sketch_vname mged_sketch_vwidget mged_sketch_vprefix \
 		mged_sketch_vparams
@@ -1575,7 +1575,7 @@ proc sketch_vrename { name mode } {
 	}
 	set ntext $mged_sketch_vwidget.$mged_sketch_vprefix$name.t
 	set otext $mged_sketch_vwidget.$mged_sketch_vprefix$oldname.t
-	
+
 	if {[info commands $ntext] != ""} {
 		set ans [tk_dialog ._sketch_msg {View Curve Exists} \
 		   "View curve $name already exists." {} 1 {Overwrite} \
@@ -1595,7 +1595,7 @@ proc sketch_vrename { name mode } {
 	sketch_vupdate
 	catch {destroy ._sketch_input}
 }
-	
+
 proc sketch_popup_delete_vcurve {} {
 	global mged_sketch_vname
 	set entries [list \
@@ -1651,7 +1651,7 @@ proc sketch_vcurve_check_col { vparams incol } {
 	}
 	return 0
 }
-	
+
 proc sketch_vcurve_list {} {
 	global mged_sketch_vwidget mged_sketch_vprefix
 	set prefix $mged_sketch_vwidget.$mged_sketch_vprefix
@@ -1669,9 +1669,9 @@ proc sketch_vcurve_get_label { vcurve} {
 	set j [string length $prefix]
 	return [string range $vcurve $j end]
 }
-	
 
-	
+
+
 
 #-----------------------------------------------------------------
 # Table Editor
@@ -1698,9 +1698,9 @@ proc sketch_init_table {} {
 proc sketch_popup_table { p name args } {
 	global mged_sketch_table_prefix
 
-	if { $p == "." } { 
-		set root ".$mged_sketch_table_prefix$name" 
-	} else { 
+	if { $p == "." } {
+		set root ".$mged_sketch_table_prefix$name"
+	} else {
 		set root "$p.$mged_sketch_table_prefix$name"
 	}
 
@@ -1741,9 +1741,9 @@ proc sketch_popup_table { p name args } {
 #mode	- table (read/write) or vcurve (read only)
 proc sketch_popup_table_create { p suffix label {mode table}} {
 
-	if { $p == "." } { 
-		set name ".$suffix" 
-	} else { 
+	if { $p == "." } {
+		set name ".$suffix"
+	} else {
 		set name "$p.$suffix"
 	}
 	toplevel $name
@@ -1786,7 +1786,7 @@ proc sketch_popup_table_create { p suffix label {mode table}} {
 		-postcommand "sketch_post_write_menu $name.f0.mb1.m $name.t"
 	$name.f0.mb1.m add command -label "dummy"
 	pack $name.f0 $name.s0 -side bottom -fill x
-	pack $name.s1 -side right -fill y	
+	pack $name.s1 -side right -fill y
 	pack $name.f0.mb1 -side left -fill x -expand yes
 	if { $mode == "table" } {
 		pack $name.f0.mb0 \
@@ -1827,7 +1827,7 @@ proc sketch_popup_table_time { w } {
 proc sketch_table_time {w v0 v1 cols } {
 	global mged_sketch_temp1 mged_sketch_temp2 mged_sketch_anim_path \
 		mged_sketch_table_v0 mged_sketch_table_v1 mged_sketch_table_pcols
-	
+
 	set mged_sketch_table_v0 $v0
 	set mged_sketch_table_v1 $v1
 	set mged_sketch_table_pcols $cols
@@ -1861,7 +1861,7 @@ proc sketch_table_time {w v0 v1 cols } {
 	set arg2 "-m $maxlen"
 	set cmd "| ${mged_sketch_anim_path}anim_time $arg0 $arg1 $arg2 > $mged_sketch_temp1"
 	#puts $cmd
-	set f1 [open $cmd w] 
+	set f1 [open $cmd w]
 	set mycols "0,$cols"
 	sketch_text_to_fd $w $f1 $mycols
 	close $f1
@@ -1993,15 +1993,15 @@ proc sketch_popup_table_col {w wbar} {
 		incr i
 	}
 	#append cmd "; sketch_table_bar_reset $w; destroy ._sketch_col"
-	
+
 	if {$i > 0} {
 		bind  ._sketch_col.fr[expr $i-1].e0 <Key-Return> \
 			{._sketch_col.fa.b0 invoke}
 	}
-	button ._sketch_col.fa.b2 -text "Add Column" -command {sketch_table_col_add_one} 
+	button ._sketch_col.fa.b2 -text "Add Column" -command {sketch_table_col_add_one}
 	button ._sketch_col.fa.b0 -text "OK" -command $cmd
 	button ._sketch_col.fa.b1 -text "Cancel" -command {destroy ._sketch_col}
-	label ._sketch_col.fb.l0 -text "Number of Rows:" 
+	label ._sketch_col.fb.l0 -text "Number of Rows:"
 	entry ._sketch_col.fb.e0 -width 5
 	._sketch_col.fb.e0 insert end "all"
 	bind ._sketch_col.fb.e0 <Key-Return> {._sketch_col.fa.b0 invoke}
@@ -2113,7 +2113,7 @@ proc sketch_popup_table_interp {w wbar}	{
 	place_near_mouse ._sketch_col
 	wm title ._sketch_col "Column Interpolator"
 	frame ._sketch_col.fz
-	label ._sketch_col.fz.l0 -text "0:" 
+	label ._sketch_col.fz.l0 -text "0:"
 	label ._sketch_col.fz.l1 -text "Time" -width 20
 	pack ._sketch_col.fz -side top -fill x -expand yes
 	pack ._sketch_col.fz.l0 ._sketch_col.fz.l1 -side left -fill x -expand yes
@@ -2142,21 +2142,21 @@ proc sketch_popup_table_interp {w wbar}	{
 		incr i
 	}
 	#append cmd "; sketch_table_bar_reset $w; destroy ._sketch_col"
-	
+
 	if {$i > 1} {
 		bind  ._sketch_col.fr[expr $i-1].e0 <Key-Return> \
 			{focus ._sketch_col.fb.e0}
 	}
-	button ._sketch_col.fa.b2 -text "Add Column" -command {sketch_table_interp_add_one} 
+	button ._sketch_col.fa.b2 -text "Add Column" -command {sketch_table_interp_add_one}
 	button ._sketch_col.fa.b0 -text "OK" -command $cmd
 	button ._sketch_col.fa.b1 -text "Cancel" -command {destroy ._sketch_col}
-	label ._sketch_col.fb.l0 -text "Start Time:" 
+	label ._sketch_col.fb.l0 -text "Start Time:"
 	entry ._sketch_col.fb.e0 -width 10
 	bind ._sketch_col.fb.e0 <Key-Return> {focus ._sketch_col.fc.e0}
-	label ._sketch_col.fc.l0 -text "End Time:" 
+	label ._sketch_col.fc.l0 -text "End Time:"
 	entry ._sketch_col.fc.e0 -width 10
 	bind ._sketch_col.fc.e0 <Key-Return> {focus ._sketch_col.fd.e0}
-	label ._sketch_col.fd.l0 -text "Frames Per Second:" 
+	label ._sketch_col.fd.l0 -text "Frames Per Second:"
 	entry ._sketch_col.fd.e0 -width 10 -textvariable mged_sketch_fps
 	bind ._sketch_col.fd.e0 <Key-Return> {._sketch_col.fa.b0 invoke}
 	pack ._sketch_col.fa.b2 ._sketch_col.fa.b0 ._sketch_col.fa.b1 \
@@ -2188,7 +2188,7 @@ proc sketch_popup_table_interp {w wbar}	{
 		[lindex [split [$w get 1.0 "1.0 lineend"] \t] 1]
 	._sketch_col.fc.e0 insert end \
 		[lindex [split [$w get $n.0 "$n.0 lineend"] \t] 1]
-	
+
 }
 
 proc sketch_text_interpolate { w start stop fps slist } {
@@ -2201,7 +2201,7 @@ proc sketch_text_interpolate { w start stop fps slist } {
 	foreach script $slist {
 		set type [lindex $script 0]
 		switch $type {
-			step - 
+			step -
 			spline -
 			linear -
 			cspline {
@@ -2269,9 +2269,9 @@ proc sketch_text_interpolate { w start stop fps slist } {
 	#catch can be removed when -q option added to tabinterp
 	catch {close $fd}
 	catch {file delete $mged_sketch_temp1 $mged_sketch_temp2}
-	return 0	
+	return 0
 }
-	
+
 proc sketch_interp_fill { str args} {
 	if { $args == "" } {
 		foreach ent [info commands {._sketch_col.fr[0-9]*.e0}] {
@@ -2280,7 +2280,7 @@ proc sketch_interp_fill { str args} {
 		}
 	} else {
 		set ent [info commands ._sketch_col.fr1.e0]
-		for {set i 1} { $ent != ""} { 
+		for {set i 1} { $ent != ""} {
 			set ent [info commands ._sketch_col.fr$i.e0]} {
 			$ent delete 0 end
 			$ent insert end "$str $i"
@@ -2288,7 +2288,7 @@ proc sketch_interp_fill { str args} {
 		}
 	}
 }
-			
+
 
 proc sketch_table_interp_add { i col cmd flag } {
 		frame ._sketch_col.fr$i
@@ -2316,7 +2316,7 @@ proc sketch_table_interp_entry { entry index } {
 	switch $type {
 		step -
 		linear -
-		spline - 
+		spline -
 		cspline -
 		quat {
 			$entry delete 0 end
@@ -2472,7 +2472,7 @@ proc sketch_text_writevc {w vcurve col} {
 
 	set oldname $mged_sketch_vname
 	sketch_open_vcurve $vcurve
-	#check for correct number of columns	
+	#check for correct number of columns
 	set numcol [sketch_text_cols $w]
 	if { $col == "all" } {
 		set num $numcol
@@ -2534,9 +2534,9 @@ proc sketch_init_objanim {} {
 #control creation of animation scripts
 #mode can be obj or view
 proc sketch_popup_objanim { p {mode obj} } {
-	if { $p == "." } { 
-		set root ".oanim" 
-	} else { 
+	if { $p == "." } {
+		set root ".oanim"
+	} else {
 		set root "$p.oanim"
 	}
 	if { [info commands $root ] != ""} {
@@ -2546,7 +2546,7 @@ proc sketch_popup_objanim { p {mode obj} } {
 		} else {
 			destroy $root
 		}
-	} 
+	}
 
 	#create widget
 	toplevel $root
@@ -2556,7 +2556,7 @@ proc sketch_popup_objanim { p {mode obj} } {
 	frame $root.f1
 	label $root.f1.l0 -text Source
 	tk_optionMenu $root.f1.om0 mged_sketch_objsrctype \
-		"curve:" "view curve:" "table editor:" "file:" 
+		"curve:" "view curve:" "table editor:" "file:"
 	entry $root.f1.e0 -width 20 -textvariable mged_sketch_objsource
 	frame $root.f2
 	place_near_mouse $root
@@ -2729,8 +2729,8 @@ proc sketch_objanim { objorview } {
 
 	#find the source
 	switch $ltype {
-		"curve:" { 
-			set type curve 
+		"curve:" {
+			set type curve
 			set oldcurve [vdraw read n]
 			vdraw send
 			set ret [sketch_open_curve $src]
@@ -2796,7 +2796,7 @@ proc sketch_objanim { objorview } {
 			sketch_open_curve $oldcurve
 			return
 		}
-	} 
+	}
 	"text" {
 		set nsrc [sketch_text_cols $w]
 		if { $nsrc > $ncols } {
@@ -2961,7 +2961,7 @@ proc sketch_objanim { objorview } {
 		set factor [exec $do_bank -b $mged_sketch_objmang < $sfile]
 		eval exec $do_bank -f $factor < $sfile \
 			| ${mged_sketch_anim_path}anim_script $opts $ovname > $mged_sketch_objscript
-			
+
 		if { $type == "curve" } {
 			sketch_open_curve $oldcurve
 			file delete $sfile
@@ -2985,7 +2985,7 @@ proc sketch_objanim { objorview } {
 	if { $mged_sketch_objrotonly } {
 		append opts " -r"
 	}
-	
+
 	#puts "anim_script options: $opts"
 	#puts "anim_script name: $ovname"
 	if { $type == "file"} {
@@ -3041,7 +3041,7 @@ proc sketch_script_update { objorview } {
 	if { $mged_sketch_objrotonly } {
 		set base [lreplace $base 1 3]
 	}
-	
+
 	if { ($mged_sketch_objrv) && ($mged_sketch_objopt != "lookat") } {
 		set base [linsert $base 1 v]
 	}
@@ -3079,9 +3079,9 @@ proc sketch_init_track {} {
 
 #control creation of animation scripts
 proc sketch_popup_track_anim { p } {
-	if { $p == "." } { 
-		set root ".tanim" 
-	} else { 
+	if { $p == "." } {
+		set root ".tanim"
+	} else {
 		set root "$p.tanim"
 	}
 	if { [info commands $root] != ""} {
@@ -3118,7 +3118,7 @@ proc sketch_popup_track_anim { p } {
 	entry $root.f5.e0 -textvariable mged_sketch_track_npads
 	frame $root.f3
 	tk_optionMenu $root.f3.om mged_sketch_track_type \
-		"Minimize" "Elastic" "Rigid"	
+		"Minimize" "Elastic" "Rigid"
 	label $root.f3.l0 -text "Track Length:"
 	entry $root.f3.e0 -width 20 -textvariable mged_sketch_track_len
 	frame $root.f3a
@@ -3144,7 +3144,7 @@ proc sketch_popup_track_anim { p } {
 	button $root.f9.b1 -text "Show Script" -command "sketch_popup_preview $p \$mged_sketch_objscript"
 	button $root.f9.b2 -text "Up" -command "raise $p"
 	button $root.f9.b3 -text "Cancel" -command "destroy $root"
-	
+
 
 	pack	$root.l0 $root.f0 $root.f1 $root.f1a $root.f2 \
 		$root.fw \
@@ -3194,7 +3194,7 @@ proc sketch_popup_track_anim { p } {
 
 proc sketch_track_get_length { tid } {
 	global mged_sketch_temp1 mged_sketch_anim_path mged_sketch_track_len
-	
+
 	set text [sketch_text_from_table $tid 4]
 	if { $text == "" } {return 0}
 	set fd [open $mged_sketch_temp1 w]
@@ -3208,10 +3208,10 @@ proc sketch_track_get_length { tid } {
 	set mged_sketch_track_len $length
 	file delete $mged_sketch_temp1
 }
-	
+
 
 proc sketch_do_track { } {
-	
+
 	global mged_sketch_temp1 mged_sketch_anim_path \
 		mged_sketch_track_vsrc \
 		mged_sketch_track_wsrc \
@@ -3248,7 +3248,7 @@ proc sketch_do_track { } {
 		"-y" {set needcol 7}
 	}
 
-	
+
 	if { ($mged_sketch_track_vsrc == "") && $mged_sketch_track_geom && ($mged_sketch_track_arced == "0") } {
 		set g_except 1
 		set vtext ._sketch_track_vtext
@@ -3312,7 +3312,7 @@ proc sketch_do_track { } {
 	} else {
 		set arccmd ""
 	}
-	
+
 	set tlen [expr $mged_sketch_track_len]
 	if { $tlen == "" } {
 		set tlen 0
@@ -3365,9 +3365,9 @@ proc sketch_init_sort {} {
 }
 
 proc sketch_popup_sort { p } {
-	if { $p == "." } { 
-		set root ".sort" 
-	} else { 
+	if { $p == "." } {
+		set root ".sort"
+	} else {
 		set root "$p.sort"
 	}
 	if { [info commands $root] != ""} {
@@ -3380,7 +3380,7 @@ proc sketch_popup_sort { p } {
 	label $root.l0 -text "Combine Scripts"
 	frame $root.f0
 	label $root.f0.l0 -text "Combine Scripts:"
-	entry $root.f0.e0 -width 20 
+	entry $root.f0.e0 -width 20
 	frame $root.f0.f0
 	listbox $root.f0.f0.lb0 -height 6 -width 20 \
 		-yscrollcommand "$root.f0.f0.s0 set"
@@ -3528,9 +3528,9 @@ proc sketch_init_preview {} {
 
 #control animation previews
 proc sketch_popup_preview { p {filename ""} } {
-	if { $p == "." } { 
-		set root ".prev" 
-	} else { 
+	if { $p == "." } {
+		set root ".prev"
+	} else {
 		set root "$p.prev"
 	}
 	if { [info commands $root] != ""} {
@@ -3576,7 +3576,7 @@ proc sketch_popup_preview { p {filename ""} } {
 		$root.f0 $root.f1 $root.f2 \
 		$root.f3 $root.cb0 $root.f4 \
 		-side top -expand yes -fill x -anchor w
-	
+
 	pack $root.f0.l0 $root.f1.l0 $root.f2.l0 $root.f3.l0 \
 		-side left
 	pack $root.f0.e0 $root.f1.e0 $root.f2.e0 $root.f3.e0 \
@@ -3625,7 +3625,7 @@ proc sketch_preview { filename } {
 		set arg3 [format "-d%s" [expr 1.0 / $fps]]
 	}
 
-	
+
 	eval [concat preview $arg0 $arg1 $arg2 $arg3 $filename]
 	# restore current curves to display
 	if [vdraw open] {
@@ -3649,8 +3649,8 @@ proc sketch_prev_restore {} {
 	eval viewset size $mged_sketch_prev_size \
 		center $mged_sketch_prev_center quat $mged_sketch_prev_quat
 	eval e [who]
-}	
-	
+}
+
 #-----------------------------------------------------------------
 # Quit
 #-----------------------------------------------------------------
@@ -3678,13 +3678,13 @@ proc sketch_quit { p } {
 # write "length" curve nodes to given file descriptor
 proc sketch_write_to_fd { fd length} {
 	upvar #0 [format "mged_sketch_time_%s" [vdraw read n]] tlist
-	if { ![info exists tlist] } { return } 
+	if { ![info exists tlist] } { return }
 	for { set i 0} { $i < $length} {incr i} {
 		puts $fd [concat \
 			[lindex $tlist $i] \
 			[lrange [vdraw read $i] 1 3] ]
 	}
-}	
+}
 
 # read curve nodes from file, return number appended
 proc sketch_read_from_fd { fd } {
@@ -3716,13 +3716,13 @@ proc sketch_text_echoc { w } {
 	if { ! [vdraw open] } { return }
 	set length [vdraw read l]
 	upvar #0 "mged_sketch_time_[vdraw read n]" tlist
-	if { ![info exists tlist] } { return } 
+	if { ![info exists tlist] } { return }
 	for {set i 0} {$i < $length} {incr i} {
 		set temp [vdraw read $i]
 		$w insert end [format "\t%s\t%s\t%s\t%s\n" \
 			[lindex $tlist $i] [lindex $temp 1] \
 			[lindex $temp 2] [lindex $temp 3] ]
-			
+
 	}
 }
 
@@ -3819,7 +3819,7 @@ proc sketch_pos_int {str} {
 	return [regexp {^[0-9]+$} $str]
 }
 
-#str is a list of columns, something like "0-2,5,7,9-" 
+#str is a list of columns, something like "0-2,5,7,9-"
 #num is the number of columns that exist, eg "11"
 #output is an array holding the columns, eg 0,1,2,5,7,9,10
 #returns the number of columns requested, or -1 on error
@@ -3833,11 +3833,11 @@ proc sketch_parse_col {str num output} {
 		set temp1 [split $temp1 -]
 		set len1 [llength $temp1]
 		set start [lindex $temp1 0]
-		if {$len1 > 1} { 
+		if {$len1 > 1} {
 			set end [lindex $temp1 1]
 		} else {
 			set end $start
-		}	
+		}
 		if {$start == "" } {set start 0}
 		if {$end == "" } {set end [expr $num - 1]}
 		if {!(([sketch_pos_int $start])&&([sketch_pos_int $end]))} {
@@ -3850,7 +3850,7 @@ proc sketch_parse_col {str num output} {
 		} else {
 			set test {$j <= $end}
 			set change {incr j 1}
-		}		
+		}
 		for {set j $start} $test $change {
 			if {($j>=0)&&($j<$num)} {
 				set out($k) $j
@@ -3870,7 +3870,7 @@ proc sketch_print {} {
 	for {set i 0} { $i < $length} { incr i} {
 		puts [vdraw read $i]
 	}
-	
+
 }
 
 proc sketch_popup_input {title entries buttons} {
@@ -3890,7 +3890,7 @@ proc sketch_popup_input {title entries buttons} {
 		frame ._sketch_input.f$i
 		pack ._sketch_input.f$i -side top -expand yes -anchor w -fill x
 		set mylabel [lindex $pair 0]
-		set k [string length $mylabel] 
+		set k [string length $mylabel]
 		label ._sketch_input.f$i.l -text $mylabel -width $max -anchor e
 		entry ._sketch_input.f$i.e -width 20
 		if { $i > 0 } {
@@ -3912,8 +3912,8 @@ proc sketch_popup_input {title entries buttons} {
 	}
 	set j 0
 	foreach pair $buttons {
-		if { $j >= $i } { 
-			frame ._sketch_input.f$j 
+		if { $j >= $i } {
+			frame ._sketch_input.f$j
 			pack ._sketch_input.f$j -side top -anchor e
 		}
 		button ._sketch_input.f$j.b -text [lindex $pair 0] \
@@ -3921,13 +3921,13 @@ proc sketch_popup_input {title entries buttons} {
 		pack ._sketch_input.f$j.b -side right
 		incr j
 	}
-	if { $j > $i } { 
-		set max $j; set min $i } else { 
+	if { $j > $i } {
+		set max $j; set min $i } else {
 		set max $i; set min $j }
-	if { $max < 1 } { 
-		destroy ._sketch_input 
+	if { $max < 1 } {
+		destroy ._sketch_input
 		return -1
-	} 
+	}
 	if { $min < 1} {
 		return 0
 	}
@@ -3973,7 +3973,7 @@ proc sketch_text_from_text { wout win col mode {rows all}} {
 				$wout insert "$i.0 $place" "\t$line"
 			}
 			return
-		} 
+		}
 		#else
 		if {[lindex [split [$wout index "end - 1 c"] .] 1] != 0} {
 			$wout insert "end - 1 c" "\n"
@@ -3986,7 +3986,7 @@ proc sketch_text_from_text { wout win col mode {rows all}} {
 			$wout delete 1.0 "prev_end + 1 c"
 		}
 		return
-	} 
+	}
 	#else
 	#note: depends on first row for number of columns
 	sketch_parse_col $col [sketch_text_cols $win] colarray
@@ -4083,13 +4083,13 @@ proc sketch_rgb_clip { rgb } {
 	while { [llength $rgb] < 3 } { lappend rgb "0" }
 	for {set i 0} { $i < 3} { incr i} {
 		set color [expr int([lindex $rgb $i])]
-		if { $color < 0 } { 
+		if { $color < 0 } {
 			set color 0
 		} elseif { $color > 255} {
 			set color 255
 		}
 		lappend result $color
-	}	
+	}
 	return $result
 }
 
@@ -4152,11 +4152,11 @@ proc sketch_text_from_table {tid {needcol -1}} {
 }
 
 
-	
+
 #-------------------------------------------------------------------
 # Go
 #-------------------------------------------------------------------
-# Uncomment the following command in order to run the animator 
+# Uncomment the following command in order to run the animator
 # automatically when anim.tcl is sourced.
 
 proc animmate { id {p .} } {

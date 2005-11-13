@@ -26,7 +26,7 @@
  *
  *  Author -
  *	Keith A Applin
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
@@ -159,7 +159,7 @@ f_analyze(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 		  return TCL_ERROR;
 		}
 
-		bu_vls_trunc( &v, 0 );		
+		bu_vls_trunc( &v, 0 );
 		do_list( &v, ndp, 1 );
 		Tcl_AppendResult(interp, bu_vls_addr(&v), (char *)NULL);
 		bu_vls_trunc( &v, 0 );
@@ -269,7 +269,7 @@ arb_anal(struct bu_vls *vp, const struct rt_db_internal *ip)
 	bu_vls_printf(vp,"|------|---------------|----------------------------------|------------------|\n");
 	rt_arb_centroid( center_pt, arb, cgtype );
 
-	for(i=0; i<6; i++) 
+	for(i=0; i<6; i++)
 		tot_area += anal_face( vp, i, center_pt, arb, type, &mged_tol );
 
 	bu_vls_printf(vp,"------------------------------------------------------------------------------\n");
@@ -382,12 +382,12 @@ findang(register fastf_t *angles, register fastf_t *unitv)
  */
 static double
 anal_face(struct bu_vls *vp, int face, fastf_t *center_pt, const struct rt_arb_internal *arb, int type, const struct bn_tol *tol)
-             	    
-   		     
+
+
        		          		/* reference center point */
-                            	     
-   		     
-                   	     
+
+
+
 {
 	register int i, j, k;
 	int a, b, c, d;		/* 4 points of face to look at */
@@ -482,7 +482,7 @@ anal_edge(struct bu_vls *vp, int edge, const struct rt_arb_internal *arb, int ty
 
 	if( b == -1 ) {
 		/* fill out the line */
-		if( (a = edge%4) == 0 ) 
+		if( (a = edge%4) == 0 )
 			return;
 		if( a == 1 ) {
 			bu_vls_printf(vp,"  |                |                |                |\n  ");
@@ -918,13 +918,13 @@ rpc_anal(struct bu_vls *vp, const struct rt_db_internal *ip)
 	b = MAGNITUDE( rpc->rpc_B );
 	h = MAGNITUDE( rpc->rpc_H );
 	r = rpc->rpc_r;
-	
+
 	/* area of one parabolic side */
 	area_parab = 4./3 * b*r;
-	
+
 	/* volume of rpc */
 	vol_parab = area_parab*h;
-	
+
 	/* surface area of parabolic body */
 	area_body = .5*sqrt(r*r + 4.*b*b) + .25*r*r/b*arcsinh(2.*b/r);
 	area_body *= 2.;
@@ -955,14 +955,14 @@ rhc_anal(struct bu_vls *vp, const struct rt_db_internal *ip)
 	h = MAGNITUDE( rhc->rhc_H );
 	r = rhc->rhc_r;
 	c = rhc->rhc_c;
-	
+
 	/* area of one hyperbolic side (from macsyma) WRONG!!!! */
 	work1 = sqrt(b*(b + 2.*c));
 	area_hyperb = -2.*r*work1*(.5*(b+c) + c*c*log(c/(work1 + b + c)));
 
 	/* volume of rhc */
 	vol_hyperb = area_hyperb*h;
-	
+
 	/* surface area of hyperbolic body */
 	area_body=0.;
 #if 0
@@ -986,7 +986,7 @@ rhc_anal(struct bu_vls *vp, const struct rt_db_internal *ip)
 
 /*
  *  		M A T H E R R
- *  
+ *
  *  Sys-V math-library error catcher.
  *  Some callers of acos trip over DOMAIN errors all the time, so...
  */

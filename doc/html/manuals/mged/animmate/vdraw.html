@@ -11,7 +11,7 @@ args</b>
 <h1>DESCRIPTION</h1>
 <p>
 Solids are displayed in MGED using vlists. These are are lists of
-commands and vectors which draw lines and polygons. 
+commands and vectors which draw lines and polygons.
 The <b>vdraw</b> command allows the user to edit
 vlists from the command line and then display them in the MGED display
 window as "pseudosolids" -- vestigial entries in the
@@ -19,7 +19,7 @@ in-memory list of displayed solids which have a name, color, and a display
 list, but which do not represent geometry.
 <p>
 The
-vectors in the vlist can represent points or normal vectors defining 
+vectors in the vlist can represent points or normal vectors defining
 lines and polygons; the interpretation of each vector depends on the integer
 command which accompanies it. The following commands are defined in
 <file>raytrace.h</file>:
@@ -38,7 +38,7 @@ RT_VLIST_POLY_VERTNORM   6         per-vertex normal (for interpolation)
 operations on the vlists. Note that any textual argument can be
 replaced by its first letter. For example, <b>vdraw d a</b> has the same
 effect as <b>vdraw delete all</b>.
-<p> 
+<p>
 In the following descriptions,
 <i>index</i> is an integer referring to a particular node in a vlist,
 <i>command</i> is an integer representing one of the drawing commands
@@ -48,7 +48,7 @@ color.
 <h1>OPERATIONS</h1>
 
 <pre>
-vdraw open 
+vdraw open
 </pre>
 With no argument, this command asks whether or not any vlist is
 currently open. Returns "1" if yes, "0" if no. The <b>vdraw</b>
@@ -60,14 +60,14 @@ vlist.
 vdraw open <i>name</i>
 </pre>
 Open the named vlist for editing, creating a new vlist if it doesn't
-already exist, and closing the previous vlist. 
+already exist, and closing the previous vlist.
 Returns 1 if creating
 a new vlist, or 0 otherwise.
 <pre>
 vdraw write <i>index command x y z</i>
 </pre>
 Write the given command and vector into the <i>index</i>-th node of the
-current vlist. 
+current vlist.
 The existing nodes are numbered from 0 to
 <i>n-1</i>, where <i>n</i>
 is the length of the vlist. If the index is in the range 0
@@ -133,12 +133,12 @@ Displays the current vlist by creating a pseudosolid. If the name of the
 vlist is <i>name</i>, then <b>vdraw</b> will create a pseudosolid named
 _VDRW<i>name</i>, replacing any existing pseudosolid with the same
 name. If a true solid with that name exists, "-1" is returned and the
-vlist is not displayed. A "0" is returned if the vlist is successfully 
+vlist is not displayed. A "0" is returned if the vlist is successfully
 displayed.
 <pre>
 vdraw vlist list
 </pre>
-Returns a list containing the names of all of the vlists being maintained 
+Returns a list containing the names of all of the vlists being maintained
 by <b>vdraw</b>, or an
 empty string if there are no vlists.
 <pre>

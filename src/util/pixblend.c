@@ -19,22 +19,22 @@
  * information.
  */
 /** @file pixblend.c
- *  
+ *
  *  Given two streams of data, typically pix(5) or bw(5) images,
  *  generate an output stream of the same size, where the value of
  *  each pixel in the output is determined by either:
  *    1) a linear interpolation between the two corresponding pixels in the
  *       input streams; or,
  *    2) the pixel of either the first stream or the second stream, chosen
- *       randomly.  
+ *       randomly.
  *
  *  This routine operates on a pixel-by-pixel basis, and thus
  *  is independent of the resolution of the image.
- *  
+ *
  *  Authors -
  *	Paul Randal Stay
  *      Glenn Durfee
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
@@ -44,20 +44,20 @@
 #include "common.h"
 
 #ifdef HAVE_UNISTD_H
-# include <unistd.h>
+#  include <unistd.h>
 #endif
-                                                                                                                                                                            
-
 #include <sys/time.h>
 #include <stdio.h>
 #ifdef HAVE_STRING_H
-#include <string.h>
+#  include <string.h>
 #else
-#include <strings.h>
+#  include <strings.h>
 #endif
 #include <stdlib.h>
 
 #include "machine.h"
+#include "bu.h"
+
 
 static char	*f1_name;
 static char	*f2_name;
@@ -90,13 +90,13 @@ get_args(int argc, register char **argv)
 {
 	register int c;
 
-	while ( (c = getopt( argc, argv, "r:i:Ss:g:" )) != EOF )  {
+	while ( (c = bu_getopt( argc, argv, "r:i:Ss:g:" )) != EOF )  {
 		switch( c )  {
 		case 'r':
 		    if (iflg)
 			return 0;
 		    else {
-			value = atof( optarg );
+			value = atof( bu_optarg );
 			++rflg;
 		    }
 		    break;
@@ -108,7 +108,7 @@ get_args(int argc, register char **argv)
 			    fprintf(stderr, "The -g and -i options do not make sense together.\n");
 			    return 0;
 			}
-			value = atof( optarg );
+			value = atof( bu_optarg );
 			++iflg;
 		    }
 		    break;
@@ -116,7 +116,7 @@ get_args(int argc, register char **argv)
 		    seed = timeseed();
 		    break;
 		case 's':
-		    seed = atoi( optarg );
+		    seed = atoi( bu_optarg );
 		    break;
 		case 'g':
 		    if (iflg) {
@@ -124,17 +124,17 @@ get_args(int argc, register char **argv)
 			return 0;
 		    }
 		    ++gflg;
-		    gvalue = atof( optarg );
+		    gvalue = atof( bu_optarg );
 		    break;
 		default:		/* '?' */
 		    return(0);
 		}
 	}
 
-	if( optind+2 > argc )
+	if( bu_optind+2 > argc )
 		return(0);
 
-	f1_name = argv[optind++];
+	f1_name = argv[bu_optind++];
 	if( strcmp( f1_name, "-" ) == 0 )
 		f1 = stdin;
 	else if( (f1 = fopen(f1_name, "r")) == NULL )  {
@@ -145,7 +145,7 @@ get_args(int argc, register char **argv)
 		return(0);
 	}
 
-	f2_name = argv[optind++];
+	f2_name = argv[bu_optind++];
 	if( strcmp( f2_name, "-" ) == 0 )
 		f2 = stdin;
 	else if( (f2 = fopen(f2_name, "r")) == NULL )  {
@@ -156,7 +156,7 @@ get_args(int argc, register char **argv)
 		return(0);
 	}
 
-	if ( argc > optind )
+	if ( argc > bu_optind )
 		(void)fprintf( stderr, "pixblend: excess argument(s) ignored\n" );
 
 	/* Adjust value upwards if glitterize option is used */
@@ -173,7 +173,7 @@ main(int argc, char **argv)
 	int gthreshold = 0;
 #endif
         int c = 0;
-	
+
 	if ( !get_args( argc, argv ) || isatty(fileno(stdout)) )  {
 		(void)fputs(usage, stderr);
 		exit( 1 );
@@ -263,7 +263,7 @@ main(int argc, char **argv)
 				if (d >= gvalue) {
 #else
 				if (r >= gthreshold) {
-#endif				    
+#endif
 				    cb3[0] = cb2[0];
 				    cb3[1] = cb2[1];
 				    cb3[2] = cb2[2];

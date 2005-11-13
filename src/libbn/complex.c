@@ -23,18 +23,18 @@
 /*@{*/
 /** @file complex.c
  *  Functions:
- *  - bn_cx_div		Complex Division 
+ *  - bn_cx_div		Complex Division
  *  - bn_cx_sqrt	Complex Square Root
- *  
+ *
  *  Authors -
  *	Douglas A Gwyn		(Original Version)
  *	Michael John Muuss	(Macro Version)
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005
- *  
+ *
  */
 /*@}*/
 

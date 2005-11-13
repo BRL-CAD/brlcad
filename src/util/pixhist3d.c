@@ -31,7 +31,7 @@
  *  Author -
  *	Phillip Dykstra
  *	20 June 1986
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
@@ -81,7 +81,7 @@ int
 main(int argc, char **argv)
 {
 	int	n;
-	
+
 	if( argc > 1 ) {
 		if( (fp = fopen(argv[1], "r")) == NULL ) {
 			fprintf( stderr, "pixhist3d: can't open \"%s\"\n", argv[1] );

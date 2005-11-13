@@ -31,7 +31,7 @@ vdraw	open			- with no argument, asks if there is
 		name		- opens the specified vlist
 				  returns 1 if creating new vlist
 				          0 if opening an existing vlist
-	
+
 EDITING COMMANDS - no return value
 
 vdraw	write	i	c x y z	- write params into i-th vector
@@ -54,7 +54,7 @@ vdraw	read	i		- returns contents of i-th vector "c x y z"
 		length		- return number of vectors in list
 		name		- return name of current vlist
 
-DISPLAY COMMAND - 
+DISPLAY COMMAND -
 vdraw	send			- send the current vlist to the display
 				  returns 0 on success, -1 if the name
 				  conflicts with an existing true solid
@@ -67,7 +67,7 @@ All textual arguments can be replaced by their first letter.
 (e.g. "vdraw d a" instead of "vdraw delete all"
 
 In the above listing:
-"i" refers to an integer 
+"i" refers to an integer
 "c" is an integer representing one of the following rt_vlist commands:
 	 RT_VLIST_LINE_MOVE	0	/ begin new line /
 	 RT_VLIST_LINE_DRAW	1	/ draw line /
@@ -280,7 +280,7 @@ vdraw_insert_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **arg
 	if (sscanf(argv[2], "%d", &uind) < 1) {
 		Tcl_AppendResult(interp, "vdraw: insert index not an integer\n", (char *)NULL);
 		return TCL_ERROR;
-	} 
+	}
 
 	/* uinds hold user specified index */
 	for (BU_LIST_FOR(vp, rt_vlist, &(dgop->dgo_currVHead->vdc_vhd))) {
@@ -323,8 +323,8 @@ vdraw_insert_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **arg
 		vp->cmd[0] = wp->cmd[RT_VLIST_CHUNK-1];
 		VMOVE(vp->pt[0],wp->pt[RT_VLIST_CHUNK-1]);
 		vp = wp;
-	} 
-		
+	}
+
 	for (i=vp->nused-1; i>index; i--) {
 		vp->cmd[i] = vp->cmd[i-1];
 		VMOVE(vp->pt[i],vp->pt[i-1]);
@@ -366,7 +366,7 @@ vdraw_delete_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **arg
 			vp->nused = 0;
 		}
 		return TCL_OK;
-	} 
+	}
 	if (argv[1][0] == 'l') {
 		/* delete last */
 		for (REV_BU_LIST_FOR(vp, rt_vlist, &(dgop->dgo_currVHead->vdc_vhd))) {
@@ -380,7 +380,7 @@ vdraw_delete_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **arg
 	if (sscanf(argv[1], "%d", &uind) < 1) {
 		Tcl_AppendResult(interp, "vdraw: delete index not an integer\n", (char *)NULL);
 		return TCL_ERROR;
-	}  
+	}
 
 	for (BU_LIST_FOR(vp, rt_vlist, &(dgop->dgo_currVHead->vdc_vhd))) {
 		if (uind < RT_VLIST_CHUNK) {
@@ -393,7 +393,7 @@ vdraw_delete_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **arg
 		}
 		uind -= vp->nused;
 	}
-		
+
 	if (uind >= vp->nused) {
 		Tcl_AppendResult(interp, "vdraw: delete out of range\n", (char *)NULL);
 		return TCL_ERROR;
@@ -403,7 +403,7 @@ vdraw_delete_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **arg
 		vp->cmd[i] = vp->cmd[i+1];
 		VMOVE(vp->pt[i],vp->pt[i+1]);
 	}
-		
+
 	wp = BU_LIST_PNEXT(rt_vlist, vp);
 	while (BU_LIST_NOT_HEAD(wp, &(dgop->dgo_currVHead->vdc_vhd))) {
 		if (wp->nused == 0) {
@@ -498,14 +498,14 @@ vdraw_read_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 		}
 		uind -= vp->nused;
 	}
-		
+
 	if (uind >= vp->nused) {
 		Tcl_AppendResult(interp, "vdraw: read out of range\n", (char *)NULL);
 		return TCL_ERROR;
 	}
 
 	bu_vls_init(&vls);
-	bu_vls_printf(&vls, "%d %.12e %.12e %.12e", 
+	bu_vls_printf(&vls, "%d %.12e %.12e %.12e",
 		vp->cmd[uind], vp->pt[uind][0],
 		vp->pt[uind][1],vp->pt[uind][2]);
 	Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);

@@ -27,12 +27,12 @@
  *  Authors -
  *	Michael John Muuss
  *	Paul R. Stay
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5066
- *  
+ *
  */
 #ifndef lint
 static const char RCSid[] = "@(#)$Id$ (BRL)";
@@ -43,11 +43,12 @@ static const char RCSid[] = "@(#)$Id$ (BRL)";
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif
-                                                                                                                                                                            
+
 #include <stdlib.h>
 #include <stdio.h>
 
 #include "machine.h"
+#include "bu.h"
 #include "fb.h"
 #include "rle.h"
 
@@ -58,7 +59,7 @@ static int	background[3];
 static int	override_background;
 
 unsigned char	*rows[4];		/* Character pointers for rle_getrow */
-	
+
 static unsigned char	*scan_buf;		/* single scanline buffer */
 static ColorMap	cmap;
 
@@ -86,7 +87,7 @@ get_args(int argc, register char **argv)
 {
 	register int	c;
 
-	while( (c = getopt( argc, argv, "cOdhs:S:w:W:n:N:C:F:X:Y:" )) != EOF )  {
+	while( (c = bu_getopt( argc, argv, "cOdhs:S:w:W:n:N:C:F:X:Y:" )) != EOF )  {
 		switch( c )  {
 		case 'O':
 			overlay = 1;
@@ -95,7 +96,7 @@ get_args(int argc, register char **argv)
 			r_debug = 1;
 			break;
 		case 'F':
-			framebuffer = optarg;
+			framebuffer = bu_optarg;
 			break;
 		case 'c':
 			crunch = 1;
@@ -107,25 +108,25 @@ get_args(int argc, register char **argv)
 		case 'S':
 		case 's':
 			/* square screen size */
-			screen_height = screen_width = atoi(optarg);
+			screen_height = screen_width = atoi(bu_optarg);
 			break;
 		case 'W':
 		case 'w':
-			screen_width = atoi(optarg);
+			screen_width = atoi(bu_optarg);
 			break;
 		case 'N':
 		case 'n':
-			screen_height = atoi(optarg);
+			screen_height = atoi(bu_optarg);
 			break;
 		case 'X':
-			scr_xoff = atoi(optarg);
+			scr_xoff = atoi(bu_optarg);
 			break;
 		case 'Y':
-			scr_yoff = atoi(optarg);
+			scr_yoff = atoi(bu_optarg);
 			break;
 		case 'C':
 			{
-				register char *cp = optarg;
+				register char *cp = bu_optarg;
 				register int *conp = background;
 
 				/* premature null => atoi gives zeros */
@@ -141,16 +142,16 @@ get_args(int argc, register char **argv)
 			return	0;
 		}
 	}
-	if( argv[optind] != NULL )  {
-		if( (infp = fopen( (infile=argv[optind]), "r" )) == NULL )  {
+	if( argv[bu_optind] != NULL )  {
+		if( (infp = fopen( (infile=argv[bu_optind]), "r" )) == NULL )  {
 			perror(infile);
 			return	0;
 		}
-		optind++;
+		bu_optind++;
 	} else {
 		infile = "-";
 	}
-	if( argc > ++optind )
+	if( argc > ++bu_optind )
 		(void) fprintf( stderr, "rle-fb:  excess arguments ignored\n" );
 
 	if( isatty(fileno(infp)) )

@@ -1,43 +1,66 @@
-.TH ANIM_HARDTRACK 1 BRL/CAD
+.TH ANIM_HARDTRACK 1 BRL-CAD
+./"               A N I M _ H A R D T R A C K . 1
+./" BRL-CAD
+./"
+./" Copyright (c) 1993-2005 United States Government as represented by
+./" the U.S. Army Research Laboratory.
+./"
+./" This document is made available under the terms of the GNU Free
+./" Documentation License or, at your option, under the terms of the
+./" GNU General Public License as published by the Free Software
+./" Foundation.  Permission is granted to copy, distribute and/or
+./" modify this document under the terms of the GNU Free Documentation
+./" License, Version 1.2 or any later version published by the Free
+./" Software Foundation; with no Invariant Sections, no Front-Cover
+./" Texts, and no Back-Cover Texts.  Permission is also granted to
+./" redistribute this document under the terms of the GNU General
+./" Public License; either version 2 of the License, or (at your
+./" option) any later version.
+./"
+./" You should have received a copy of the GNU Free Documentation
+./" License and/or the GNU General Public License along with this
+./" document; see the file named COPYING for more information.
+./"
+./"./"./"
 .SH NAME
 anim_hardtrack - make an animation script for the links and/or wheels of a
 tracked vehicle with rigid axles.
 .SH SYNOPSIS
-.B 
+.B
 anim_hardtrack [-l num_links linkname] [-w wheelname] [options] wheelfile < in.table > out.script
 .SH DESCRIPTION
-.I Anim_hardtrack 
+.I Anim_hardtrack
 is designed to produce an animation script for the
 animation of a track and/or the wheels defining a track, where the wheels
 are rigidly fixed in place with respect to the vehicle. The main
 difference between
 .I anim_hardtrack
-and 
+and
 .I anim_track
-is that 
+is that
 .I anim_track
-handles vehicles with dynamic axles. Both are designed to be use in 
+handles vehicles with dynamic axles. Both are designed to be use in
 conjunction with
-.I anim_script, 
+.I anim_script,
 to achieve the final result.
 .PP
-.B in.table 
+.B in.table
 is the file that will be used to animate the
 vehicle itself. By default, it is assumed that it contains a time column,
 three columns of translation information, and three columns specifying the
 vehicle's yaw, pitch, and roll. If it is desired that the vehicle be steered
 automatically, then the table should contain only time and position, and the
-.B -s 
+.B -s
 option should be used.
 .PP
 The track's
-geometry is defined by 
-.BR wheelfile , 
+geometry is defined by
+.BR wheelfile ,
 a table which contains one row for each wheel defining the track. The
 first three columns of the table specify the x, y, and z coordinates of
 the wheel centers. The fourth column specifies the radius of each wheel.
 .PP
-The order in which the wheels are listed should be the order in which a 
+The order in which the wheels are listed should be the order in which a
 link of the track would move around the wheels when the vehicle is moving
 forward. (clockwise, when looking from the right of the vehicle).
 The wheel centers should all lie in a plane perpendicular to the vehicle's
@@ -47,25 +70,25 @@ uses the first wheel as the standard and projects all the other wheels into
 the same plane as the first wheel. By default, it is assumed that the
 vehicle's left-right axis is the y-axis. If the modeled vehicle has some
 other orientation, this must be specified with the
-.B -b 
+.B -b
 option.
 .PP
 By default, it is
-assumed that 
+assumed that
 all of the link objects are modeled at the model origin,
 with the wheel-contacting surface centered on the origin and the
 ground-contacting surface facing up. The sides of each link which
 connect to other links should face the positive and negative x-axes.
-.I Anim_hardtrack 
+.I Anim_hardtrack
 prints the appropriate
-commands to move the links from 
+commands to move the links from
 the origin to the correct place around the wheels.
 .PP
 If the links are modeled in place around the wheels to begin with, the
-the 
-.B -p 
-and 
-.B -i 
+the
+.B -p
+and
+.B -i
 options are needed.
 
 .SH OPTIONS:
@@ -75,24 +98,24 @@ One or both of the first two options should always be specified.
 .B \-l num linkname
 Print animation scripts to animate the links of the track. Animation
 commands will be printed for
-.I num 
-different links 
-named 
-.IR linkname .0, linkname .1, 
-up through 
-.IR linkname .( num -1). 
+.I num
+different links
+named
+.IR linkname .0, linkname .1,
+up through
+.IR linkname .( num -1).
 A typical example of a linkname might
 be "tank/righttrack/links/link". The full pathname must be specified,
 because anim_hardtrack's method is to roll the links around within
 the vehicle's tree structure so that when the whole vehicle "tank" is
 animated, the complete combination of rolling around and translating is
-achieved. 
+achieved.
 .TP
 .B \-w wheelname
 Print animation
-scripts to rotate each wheel. The wheels are named wheelname.0, wheelname.1, 
-and so on, where wheelname.0 is the first wheel listed in 
-.BR wheelfile . 
+scripts to rotate each wheel. The wheels are named wheelname.0, wheelname.1,
+and so on, where wheelname.0 is the first wheel listed in
+.BR wheelfile .
 As with the links, the full pathname for the wheels should be specified.
 .TP
 .B \-b # # #
@@ -105,15 +128,15 @@ Specify (in world coordinates) the centroid of the vehicle
 of which the track is a part. By default, the vehicle is assumed
 centered at the origin.
 .PP
-When calling 
-.I anim_script 
+When calling
+.I anim_script
 to handle the animation of the vehicle
-itself, the parameters following the 
-.B -b 
-and 
-.B -d 
+itself, the parameters following the
+.B -b
+and
+.B -d
 options should be identical
-to those used for 
+to those used for
 .IR anim_hardtrack .
 .TP
 .B \-r #
@@ -122,14 +145,14 @@ should be omitted from the
 .BR wheelfile .
 .TP
 .B \-s
-Automatic steering. In this case, 
-.B in.table 
-specifies only the time and position 
+Automatic steering. In this case,
+.B in.table
+specifies only the time and position
 of the vehicle. The orientation is calculated to always face the vehicle
 in the direction of motion.
-This should be used when the 
-.B \-s 
-option is used by 
+This should be used when the
+.B \-s
+option is used by
 .I anim_script
 to animate the vehicle.
 .PP
@@ -160,22 +183,22 @@ track from the default position to the actual desired offset. If the
 links are modeled at the origin, the user can choose any offset. This
 can be useful for lining up the links with gears of a drive wheel, for
 example.
-If the 
-.B -p 
+If the
+.B -p
 option is being used to animated pre-placed links, then it is essential
 that the actual offset of the first pre-placed link be specified.
 .SS Output:
 .PP
 The output is a script containing as many frames as there
-are positions in 
-.BR in.table . 
-If there are 
-.I n 
-links and 
-.I k 
+are positions in
+.BR in.table .
+If there are
+.I n
+links and
+.I k
 wheels, each
-frame contains up to 
-.IR  n + k 
+frame contains up to
+.IR  n + k
 anim commands, either:
 .nf
 
@@ -184,8 +207,8 @@ anim linkname.i matrix lmul
 				or
 anim wheelname.j matrix lmul
 [... matrix ...] ;
- 
-for 0<=i<n and 0<=j<k. 
+
+for 0<=i<n and 0<=j<k.
 
 .fi
 .SH EXAMPLES
@@ -201,9 +224,9 @@ anim_script -s -d 0 0 1000 -b 90 0 0 /tank < in.table > tank.script
 .PP
 Suppose that there are two
 roadwheels and a drivewheel (tank/rwheel/wheel.i, 0<=i<3) which define
-the shape of the right track. 
-A file called 
-.B rwheelfile 
+the shape of the right track.
+A file called
+.B rwheelfile
 is created:
 .nf
 
@@ -212,30 +235,30 @@ is created:
 1500   2000     30      30
 
 .fi
-This 
-.B rwheelfile 
+This
+.B rwheelfile
 lists the position and
 radius of each of the three wheels.
 .PP
-There are eighty links which make up the right track 
+There are eighty links which make up the right track
 (tank/rtrack/link.i, 0<=i<80).
 The links of the right track are all modeled
 at the origin with the outer, ground-contacting surface
 facing up and the inner, wheel-contacting surface centered at the
 origin.
 .PP
-The appropriate call to 
-.I anim_hardtrack 
+The appropriate call to
+.I anim_hardtrack
 is now:
 .sp
-anim_hardtrack -d 0 0 1000 -b 90 0 0 -w tank/rwheel -l 80 tank/rtrack/link 
+anim_hardtrack -d 0 0 1000 -b 90 0 0 -w tank/rwheel -l 80 tank/rtrack/link
 	rwheelfile < in.table > rtrack.script
 .sp
 Suppose that the left track is similar to the right track,
 except that all the wheels are of radius 30 units, and the links, rather
 than being stored at the origin, are actually placed in position around
-the left wheels to begin with. The 
-.B lwheelfile 
+the left wheels to begin with. The
+.B lwheelfile
 would be:
 .nf
 
@@ -246,19 +269,19 @@ would be:
 .fi
 and the call would be:
 .sp
-anim_hardtrack -p -r 30 -d 0 0 1000 -b 90 0 0 -w tank/lwheel 
+anim_hardtrack -p -r 30 -d 0 0 1000 -b 90 0 0 -w tank/lwheel
 	-l 80 tank/ltrack/link lwheelfile <in.table > ltrack.script
 .sp
 Here, it is assumed that tank/ltrack/link.0 is initially at the
 beginning of the straight track segment between lwheel.2 and lwheel.0,
 that is, at the point (2000,1500,-1000) in the vehicle's coordinates.
 If, instead, the first link is initially centered halfway between the
-two roadwheels, this must be specified with the 
-.B -i# 
+two roadwheels, this must be specified with the
+.B -i#
 option. If the link's
 actual position is 2000 units farther around the track than expected:
 .sp
-anim_hardtrack -i 2000 -p -r 30 -d 0 0 1000 -b 90 0 0 -w tank/lwheel 
+anim_hardtrack -i 2000 -p -r 30 -d 0 0 1000 -b 90 0 0 -w tank/lwheel
 	-l 80 tank/ltrack/link lwheelfile <in.table > ltrack.script
 .sp
 One final step may remain. The above procedure produces a script with rigid
@@ -268,13 +291,13 @@ should then be used at the end to replace all instances of the
 conventional name with the real name; for example, in this case it may
 be necessary to replace "rwheel.1" with "r_drivewheel".
 .PP
-.BR Tank.script , 
-.BR rtrack.script , 
-and 
-.B ltrack.script 
+.BR Tank.script ,
+.BR rtrack.script ,
+and
+.B ltrack.script
 can be combined
-with 
-.I anim_sort 
+with
+.I anim_sort
 to make the complete script.
 .PP
 .SH BUGS
@@ -285,7 +308,7 @@ anim_script(1), anim_track(1)
 .SH AUTHOR
 Carl J. Nuzman
 .SH COPYRIGHT
-	This software is Copyright (C) 1993-2005 by the United States 
+	This software is Copyright (C) 1993-2005 by the United States
 Government as represented by U.S. Army Research Laboratory.
 
 .SH "BUG REPORTS"

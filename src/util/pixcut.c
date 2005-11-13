@@ -8,12 +8,12 @@
  *  Author -
  *	Christopher T. Johnson
  *	September 12, 1992
- *  
+ *
  *  Source -
  *	Paladin Software
  *	P.O. Box 187
  *	Aberdeen, MD	21001-0187
- *  
+ *
  *  Copyright Notice -
  *	This software is Copyright (C) 1992 by Paladin Software
  *	All rights reserved.
@@ -87,7 +87,7 @@ get_args(register int argc, register char **argv)
 {
 	register int c;
 
-	while ( (c = getopt(argc, argv, "vahHC:s:w:n:S:W:N:x:y:#:" )) != EOF) {
+	while ( (c = bu_getopt(argc, argv, "vahHC:s:w:n:S:W:N:x:y:#:" )) != EOF) {
 		switch (c) {
 		case 'v':
 			Verbose = 1;
@@ -103,48 +103,48 @@ get_args(register int argc, register char **argv)
 			new_width = new_height = 1024L;
 			break;
 		case 's':
-			org_width = org_height = atol(optarg);
+			org_width = org_height = atol(bu_optarg);
 			autosize = 0;
 			break;
 		case 'S':
-			new_width = new_height = atol(optarg);
+			new_width = new_height = atol(bu_optarg);
 			break;
 		case 'w':
-			org_width = atol(optarg);
+			org_width = atol(bu_optarg);
 			autosize = 0;
 			break;
 		case 'W':
-			new_width = atol(optarg);
+			new_width = atol(bu_optarg);
 			break;
 		case 'n':
-			org_height = atol(optarg);
+			org_height = atol(bu_optarg);
 			autosize = 0;
 			break;
 		case 'N':
-			new_height = atol(optarg);
+			new_height = atol(bu_optarg);
 			break;
 		case 'x':
-			base_x = atol(optarg);
+			base_x = atol(bu_optarg);
 			break;
 		case 'y':
-			base_y = atol(optarg);
+			base_y = atol(bu_optarg);
 			break;
 		case 'C':
-			parse_color(background, optarg);
+			parse_color(background, bu_optarg);
 			break;
 		case '#':
-			num_bytes = atol(optarg);
+			num_bytes = atol(bu_optarg);
 			break;
 		default:		/* '?' */
 			return(0);
 		}
 	}
-	if (optind >= argc ) {
+	if (bu_optind >= argc ) {
 		if ( isatty(fileno(stdin))) return(0);
 		in_name = "-";
 		input = stdin;
 	} else {
-		in_name = argv[optind];
+		in_name = argv[bu_optind];
 		if (strcmp(in_name,"-") == 0) {
 			if (isatty(fileno(stdin))) return(0);
 			input = stdin;
@@ -159,13 +159,13 @@ get_args(register int argc, register char **argv)
 			isfile = 1;
 		}
 	}
-	if (argc > ++optind) {
+	if (argc > ++bu_optind) {
 		(void)fprintf(stderr, "pixcut: excess argument(s) ignored\n");
 	}
 	return(1);	/* OK */
 }
 
-			
+
 int
 main(int argc, char **argv)
 {
@@ -224,7 +224,7 @@ main(int argc, char **argv)
 		(void)fprintf(stderr,"pixcut: background color %d/%d/%d\n",
 		    background[0], background[1], background[2]);
 
-		if (base_x < 0 || base_y < 0 || 
+		if (base_x < 0 || base_y < 0 ||
 		    base_x+new_width >org_width ||
 		    base_y+new_height > org_height) {
 		    	int comma=0;

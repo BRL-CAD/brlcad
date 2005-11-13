@@ -23,11 +23,11 @@
  *
  *  Author -
  *	Lee A. Butler
- *  
+ *
  *  Source -
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
- *  
+ *
  */
 #ifndef lint
 static char RCSid[] = "@(#)$Header$ (ARL)";
@@ -114,7 +114,7 @@ static void scsi_perror(int val, struct dsreq *dsp)
  *	is unavailable.
  */
 void
-ipu_acquire(struct dsreq *dsp, 
+ipu_acquire(struct dsreq *dsp,
 	    int timeout)
 {
     int i=0;
@@ -235,7 +235,7 @@ ipu_remote(struct dsreq *dsp)
     p[0] = 0xc7;
 
     CMDLEN(dsp) = 12;
-	
+
     filldsreq(dsp, (u_char *)NULL, 0, DSRQ_SENSE);
 
     if (i=doscsireq(getfd(dsp), dsp)) {
@@ -265,11 +265,11 @@ int ipu_ready(struct dsreq *dsp)
  *	height	file image height
  */
 void
-ipu_create_file(struct dsreq *dsp, 
+ipu_create_file(struct dsreq *dsp,
 		u_char id, 		/* file identifier */
 		u_char type, 		/* file type */
-		int width, 
-		int height, 
+		int width,
+		int height,
 		char clear)		/* boolean: clear file memory */
 {
     char *p;
@@ -310,7 +310,7 @@ ipu_create_file(struct dsreq *dsp,
  *	id	id of file to delete
  */
 void
-ipu_delete_file(struct dsreq *dsp, 
+ipu_delete_file(struct dsreq *dsp,
 		u_char id)
 {
     register char *p;
@@ -342,7 +342,7 @@ ipu_delete_file(struct dsreq *dsp,
  *	No format conversion is performed
  */
 u_char *
-ipu_get_image(struct dsreq *dsp, 
+ipu_get_image(struct dsreq *dsp,
 	      char id, 		/* file  id */
 	      int sx, int sy, 	/* upper left corner of image */
 	      int w, int h)	/* width/height of image portion to retrieve */
@@ -392,7 +392,7 @@ ipu_get_image(struct dsreq *dsp,
  *  No format conversion is performed.
  */
 void
-ipu_put_image_frag(struct dsreq *dsp, 
+ipu_put_image_frag(struct dsreq *dsp,
 		   char id, 		/* file  id */
 		   int sx, int sy, 	/* upper left corner of image */
 		   int w, int h,	/* width/height of image portion to retrieve */
@@ -434,7 +434,7 @@ ipu_put_image_frag(struct dsreq *dsp,
 
 /*	I P U _ P U T _ I M A G E
  *
- *	load a BRLCAD PIX(5) image into an IPU file.
+ *	load a BRL-CAD PIX(5) image into an IPU file.
  *	The entire image must be memory resident.
  *	Format conversion is performed.
  *
@@ -446,9 +446,9 @@ ipu_put_image_frag(struct dsreq *dsp,
  *	img	pointer to image data
  */
 void
-ipu_put_image(struct dsreq *dsp, 
-	      char id, 
-	      int w, int h, 
+ipu_put_image(struct dsreq *dsp,
+	      char id,
+	      int w, int h,
 	      u_char *img)
 {
     u_char *ipubuf;
@@ -622,10 +622,10 @@ static unsigned char pr_mode[12] = {
  *	tray	tray selection
  */
 void
-ipu_print_config(struct dsreq *dsp, 
-		 char units, 
-		 int divisor, 
-		 u_char conv, u_char mosaic, u_char ipu_gamma, 
+ipu_print_config(struct dsreq *dsp,
+		 char units,
+		 int divisor,
+		 u_char conv, u_char mosaic, u_char ipu_gamma,
 		 int tray)
 {
     register u_char *p;
@@ -686,12 +686,12 @@ ipu_print_config(struct dsreq *dsp,
  *	wait	sync/async printing
  */
 void
-ipu_print_file(struct dsreq *dsp, 
-	       char id, 
-	       int copies, 
-	       int wait, 
-	       int sx, int sy, 
-	       int sw, int sh, 
+ipu_print_file(struct dsreq *dsp,
+	       char id,
+	       int copies,
+	       int wait,
+	       int sx, int sy,
+	       int sw, int sh,
 	       union ipu_prsc_param *pr_param)
 {
     register u_char *p;
@@ -702,7 +702,7 @@ ipu_print_file(struct dsreq *dsp,
 			   "ipu_print_file(id=%d copies=%d wait=%d sx=%d sy=%d sw=%d sh=%d\n\
 	0x%x 0x%x 0x%x 0x%x)\n", id, copies, wait, sx, sy, sw, sh,
 			   pr_param->c[0],pr_param->c[1],pr_param->c[2],pr_param->c[3]);
-	                                        
+
 
     bzero(p=(u_char *)CMDBUF(dsp), 16);
     p[0] = 0xc1;
@@ -751,11 +751,11 @@ static unsigned char sc_mode[6] = {
  *	rotation	angle of image rotation (multiple of 90 degrees)
  */
 void
-ipu_scan_config(struct dsreq *dsp, 
-		char units, 
-		int divisor, 
-		char conv, 
-		char field, 
+ipu_scan_config(struct dsreq *dsp,
+		char units,
+		int divisor,
+		char conv,
+		char field,
 		short rotation)
 {
     register u_char *p;
@@ -810,11 +810,11 @@ ipu_scan_config(struct dsreq *dsp,
 /*	I P U _ S C A N _ F I L E
  */
 void
-ipu_scan_file(struct dsreq *dsp, 
-	      char id, 
-	      char wait, 
-	      int sx, int sy, 
-	      int w, int h, 
+ipu_scan_file(struct dsreq *dsp,
+	      char id,
+	      char wait,
+	      int sx, int sy,
+	      int w, int h,
 	      union ipu_prsc_param *sc_param)
 {
     register u_char *p;
@@ -898,7 +898,7 @@ ipu_list_files(struct dsreq *dsp)
 	else if (buf[i+1] == 3) t = 'P';
 	else t = '?';
 
-	sprintf((char *)&p[strlen( (char *)p)], "%1x.%c\t%4dx%4d\n", 
+	sprintf((char *)&p[strlen( (char *)p)], "%1x.%c\t%4dx%4d\n",
 		buf[i], t,
 		((int)buf[i+2]<<8)+(int)buf[i+3],
 		((int)buf[i+4]<<8)+(int)buf[i+5]);
@@ -916,7 +916,7 @@ ipu_list_files(struct dsreq *dsp)
  * returns number of pages which have been printed
  */
 int
-ipu_stop(struct dsreq *dsp, 
+ipu_stop(struct dsreq *dsp,
 	 int halt)
 {
     register char *p;
@@ -971,7 +971,7 @@ ipu_get_conf(struct dsreq *dsp)
 
     if (params[0] == 11 && params[4] == 0x23) {
 	p = & params[4];
-		
+
 	switch (p[2]) {
 	case IPU_UNITS_INCH	:fprintf(stderr, "Units=Inch  ");
 	    break;
@@ -1016,7 +1016,7 @@ ipu_get_conf(struct dsreq *dsp)
 	}
 
 	fprintf(stderr, "Repeat=%d  ", p[3]);
-		
+
 	switch (p[4]) {
 	case IPU_GAMMA_STANDARD: fprintf(stderr, "gamma=std  ");
 	    break;
@@ -1210,7 +1210,7 @@ void usage(s)
 {
     if (s) (void)fputs(s, stderr);
 
-    (void) fprintf(stderr, "Usage: %s [options] [pixfile]\nOptions:\n%s", progname, 
+    (void) fprintf(stderr, "Usage: %s [options] [pixfile]\nOptions:\n%s", progname,
 		   "	[-h] [-n scanlines] [-w width] [-s squareimagesize]\n\
 	[-N outputheight] [-W outputwidth] [-S outputsquaresize]\n\
 	[-X PageXOffset] [-Y PageYOffset] [-# bytes_pixel]\n\

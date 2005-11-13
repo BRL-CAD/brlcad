@@ -20,17 +20,22 @@
  */
 /** @file rtprivate.h
  *
- */
-
-/*	R T P R I V A T E . H  --- header file for the "rt" program
- *
- *
- *
  *	Things to support the "rt" program and the link to liboptical
  *
  */
 
+#ifndef __RTPRIVATE_H__
+#define __RTPRIVATE_H__
+
+#include "common.h"
+
+#include <stdio.h>
+
+#include "raytrace.h"
 #include "optical.h"
+
+/* default parseable title length  (v4 was 132) */
+#define RT_BUFSIZE 1024
 
 /* do.c */
 extern void do_ae(double azim, double elev);
@@ -58,7 +63,7 @@ extern void view_pixel(register struct application *ap);
 extern void view_cleanup(struct rt_i	*rtip);
 extern int view_end(struct application *ap);
 extern int view_init(register struct application *ap,
-		     char *file, 
+		     char *file,
 		     char *obj,
 		     int minus_o);
 #else
@@ -72,6 +77,8 @@ extern void view_end();
 extern int view_init();
 
 #endif
+
+#endif  /* __RTPRIVATE_H__ */
 
 /*
  * Local Variables:

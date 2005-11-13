@@ -159,7 +159,7 @@ X_doevent(ClientData	clientData,
 	/* allow further processing of this event */
 	return TCL_OK;
 }
-	    
+
 static int
 X_dm(int	argc,
      char	*argv[])

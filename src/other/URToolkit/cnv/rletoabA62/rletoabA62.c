@@ -41,6 +41,7 @@ static char rcsid[] = "$Header$";
 rletoabA62()				Tag the file.
 */
 
+#include <stdlib.h>
 #include <stdio.h>
 
 #ifndef TRUE
@@ -101,10 +102,8 @@ extern void dump2();
  * Main entry...
  */
 
-void
-main(argc,argv)
-int argc;
-char **argv;
+int
+main(int argc,char *argv[])
 {
     register int    i, j;
     int             errors, c, file;
@@ -290,7 +289,8 @@ char **argv;
 	    break;
 	}
     }
-    exit(0);
+
+    return 0;
 }
 
 /*

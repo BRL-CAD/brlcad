@@ -28,12 +28,12 @@
  *
  *  Author -
  *	Susanne L. Muuss, J.D.
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005
- *  
+ *
  */
 #ifndef lint
 static const char RCSrayrange[] = "@(#)$Header$";
@@ -157,7 +157,7 @@ view_2init(struct application *ap)
 
 	/* Obtain the maximun distance within the model to use as the
 	 * background distance.  Also get the coordinates of the model's
-	 * bounding box and feed them to 
+	 * bounding box and feed them to
 	 * pdv_3space.  This will allow the image to appear in the plot
 	 * starting with the same size as the model.
 	 */
@@ -223,7 +223,7 @@ void view_cleanup(void) {}
  *  Rayhit() is called by rt_shootray() when a hit is detected.  It
  *  computes the hit distance, the distance traveled by the
  *  ray, and the direction vector.
- *  
+ *
  */
 
 int

@@ -1,4 +1,27 @@
 .TH G-SHELL.RECT 1 BRL-CAD
+./"                 G - S H E L L . R E C T . 1
+./" BRL-CAD
+./"
+./" Copyright (c) 2005 United States Government as represented by
+./" the U.S. Army Research Laboratory.
+./"
+./" This document is made available under the terms of the GNU Free
+./" Documentation License or, at your option, under the terms of the
+./" GNU General Public License as published by the Free Software
+./" Foundation.  Permission is granted to copy, distribute and/or
+./" modify this document under the terms of the GNU Free Documentation
+./" License, Version 1.2 or any later version published by the Free
+./" Software Foundation; with no Invariant Sections, no Front-Cover
+./" Texts, and no Back-Cover Texts.  Permission is also granted to
+./" redistribute this document under the terms of the GNU General
+./" Public License; either version 2 of the License, or (at your
+./" option) any later version.
+./"
+./" You should have received a copy of the GNU Free Documentation
+./" License and/or the GNU General Public License along with this
+./" document; see the file named COPYING for more information.
+./"
+./"./"./"
 .SH NAME
 g-shell.rect \- Produce triangulated shell from BRL-CAD model
 .SH SYNOPSIS
@@ -22,12 +45,12 @@ The initial shell is constructed using only the first and last
 intersections with the
 .I object(s).
 This will typically result in some rather large faces with normals at right angles
-to the ray direction. Unless the 
+to the ray direction. Unless the
 .I \-n
 option is spcified, these faces are then subdivided (according to the
 .I cell_size
 ) and additional rays fired from the other two directions are used to refine their
-shape. 
+shape.
 The resulting NMG solid
 will be named
 .I shell
@@ -43,9 +66,9 @@ Specify the dimensions (in millimeters) of the grid spacing.  The default is 50m
 .B \-i \fIinitial_ray_dir\fR
 Specify the initial ray direction.  Valid values are X, Y, or Z.
 The best results are usually obtained by raytracing in the direction that produces the
-most hits first. 
+most hits first.
 
-.TP 
+.TP
 .B \-d \fIdebug_level\fR
 Set the debugging level.  Higher values produce more debugging information.
 .TP

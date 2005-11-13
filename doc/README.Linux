@@ -1,0 +1,4 @@
+If you happen to be installing on a ppc64 Linux system, the binaries
+will not correctly resolve without being installed first.  Be sure to
+install before testing applications.
+

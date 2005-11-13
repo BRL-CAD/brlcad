@@ -1,26 +1,49 @@
-.TH ANIM_LOOKAT 1 BRL/CAD
+.TH ANIM_LOOKAT 1 BRL-CAD
+./"                  A N I M _ L O O K A T . 1
+./" BRL-CAD
+./"
+./" Copyright (c) 1993-2005 United States Government as represented by
+./" the U.S. Army Research Laboratory.
+./"
+./" This document is made available under the terms of the GNU Free
+./" Documentation License or, at your option, under the terms of the
+./" GNU General Public License as published by the Free Software
+./" Foundation.  Permission is granted to copy, distribute and/or
+./" modify this document under the terms of the GNU Free Documentation
+./" License, Version 1.2 or any later version published by the Free
+./" Software Foundation; with no Invariant Sections, no Front-Cover
+./" Texts, and no Back-Cover Texts.  Permission is also granted to
+./" redistribute this document under the terms of the GNU General
+./" Public License; either version 2 of the License, or (at your
+./" option) any later version.
+./"
+./" You should have received a copy of the GNU Free Documentation
+./" License and/or the GNU General Public License along with this
+./" document; see the file named COPYING for more information.
+./"
+./"./"./"
 .SH NAME
-anim_lookat - create a view animation script or table which looks from an eye point to 
+anim_lookat - create a view animation script or table which looks from an eye point to
 a specified point.
 .SH SYNOPSIS
-.B anim_lookat 
+.B anim_lookat
 .B [\-f #]
-.B \[-v] 
-.B < in.table 
+.B \[-v]
+.B < in.table
 .B > out.script
 .PP
-.B anim_lookat 
+.B anim_lookat
 .B \-[y|q]
-.B \[-v] 
-.B < in.table 
+.B \[-v]
+.B < in.table
 .B > out.table
 
 .SH DESCRIPTION
 This program takes as input a seven-column animation table
 consisting of time, an eye point, and a "look-at point", and prints a
-view animation script to control the virtual camera. 
-The camera always remains "right-side up"; that is, it yaws and pitches but 
-doesn't roll. In cases where the camera looks vertically up or down, the 
+view animation script to control the virtual camera.
+The camera always remains "right-side up"; that is, it yaws and pitches but
+doesn't roll. In cases where the camera looks vertically up or down, the
 yaw from the previous frame is retained. This avoids sudden jumps as much
 as possible.
 .PP
@@ -32,15 +55,15 @@ numbering frames. The default is 0.
 .TP
 .B \-y
 The output will be an animation table rather
-than a view animation script. The output table has 7 columns: 
+than a view animation script. The output table has 7 columns:
 a time column, three
 columns representing position, and three columns representing yaw,
 pitch, and roll.
 .TP
 .B \-q
-The output will be an animation table rather than a view animation script. 
-The output table has eight columns: 
-a time column, three position columns, and four columns 
+The output will be an animation table rather than a view animation script.
+The output table has eight columns:
+a time column, three position columns, and four columns
 representing the x,y,z, and w coordinates of an orientation quaternion.
 .TP
 .B \-v
@@ -51,7 +74,7 @@ in the second column.
 .SH AUTHOR
 Carl J. Nuzman
 .SH COPYRIGHT
-	This software is Copyright (C) 1993-2005 by the United States 
+	This software is Copyright (C) 1993-2005 by the United States
 Government as represented by U.S. Army Research Laboratory.
 .SH "BUG REPORTS"
 Reports of bugs or problems should be submitted via electronic

@@ -25,12 +25,12 @@
  *
  *  Author -
  *	S.Coates - 27 February 1992
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5066
- *  
+ *
  */
 
 /*	23 May 1991       - Take out lvpt that wasn't necessary.  */

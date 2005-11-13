@@ -25,7 +25,7 @@
  *     Refines a surface by inserting knots with respect to the row or
  *     columns of the control points resulting in the same surface with new
  *     control points.
- * 
+ *
  * Author -
  *     Paul R. Stay
  *
@@ -60,11 +60,11 @@ rt_nurb_s_refine(const struct face_g_snurb *srf, int dir, struct knot_vector *kv
         				/* Direction to refine */
 					/* Row = 0, Col = 1 */
                        			/* New knot vector */
-                     
+
 {
 	register struct face_g_snurb * nurb_srf;
 	struct oslo_mat *oslo;	/* oslo refinement matrix */
-	int i;   
+	int i;
 
 	NMG_CK_SNURB(srf);
 
@@ -72,7 +72,7 @@ rt_nurb_s_refine(const struct face_g_snurb *srf, int dir, struct knot_vector *kv
 		GET_SNURB(nurb_srf);
 		nurb_srf->order[0] = srf->order[0];
 		nurb_srf->order[1] = srf->order[1];
-		
+
 		rt_nurb_kvcopy(&nurb_srf->u, kv, res);
 		rt_nurb_kvcopy(&nurb_srf->v, &srf->v, res);
 
@@ -80,7 +80,7 @@ rt_nurb_s_refine(const struct face_g_snurb *srf, int dir, struct knot_vector *kv
 		nurb_srf->s_size[1] = kv->k_size - srf->order[0];
 		nurb_srf->pt_type = srf->pt_type;
 		nurb_srf->ctl_points = (fastf_t *)
-				bu_malloc( sizeof (fastf_t) * 
+				bu_malloc( sizeof (fastf_t) *
 				nurb_srf->s_size[0] *
 				nurb_srf->s_size[1] *
 				RT_NURB_EXTRACT_COORDS( nurb_srf->pt_type),
@@ -95,10 +95,10 @@ rt_nurb_s_refine(const struct face_g_snurb *srf, int dir, struct knot_vector *kv
 			fastf_t * new_mesh_ptr;
 
 			old_mesh_ptr = &srf->ctl_points[
-				i * srf->s_size[1] * 
+				i * srf->s_size[1] *
 				RT_NURB_EXTRACT_COORDS( srf->pt_type)];
 			new_mesh_ptr = &nurb_srf->ctl_points[
-				i * nurb_srf->s_size[1] * 
+				i * nurb_srf->s_size[1] *
 				RT_NURB_EXTRACT_COORDS( nurb_srf->pt_type)];
 			rt_nurb_map_oslo( oslo, old_mesh_ptr, new_mesh_ptr,
 				RT_NURB_EXTRACT_COORDS( srf->pt_type ),
@@ -113,16 +113,16 @@ rt_nurb_s_refine(const struct face_g_snurb *srf, int dir, struct knot_vector *kv
 		GET_SNURB(nurb_srf);
 		nurb_srf->order[0] = srf->order[0];
 		nurb_srf->order[1] = srf->order[1];
-		
+
 		rt_nurb_kvcopy(&nurb_srf->u, &srf->u, res);
 		rt_nurb_kvcopy(&nurb_srf->v, kv, res);
 
-		nurb_srf->s_size[0] = kv->k_size - srf->order[1]; 
+		nurb_srf->s_size[0] = kv->k_size - srf->order[1];
 		nurb_srf->s_size[1] = srf->s_size[1];
 
 		nurb_srf->pt_type = srf->pt_type;
 		nurb_srf->ctl_points = (fastf_t *)
-				bu_malloc( sizeof (fastf_t) * 
+				bu_malloc( sizeof (fastf_t) *
 				nurb_srf->s_size[0] *
 				nurb_srf->s_size[1] *
 				RT_NURB_EXTRACT_COORDS( nurb_srf->pt_type),
@@ -141,15 +141,15 @@ rt_nurb_s_refine(const struct face_g_snurb *srf, int dir, struct knot_vector *kv
 			new_mesh_ptr = &nurb_srf->ctl_points[
 				i * RT_NURB_EXTRACT_COORDS( nurb_srf->pt_type)];
 			rt_nurb_map_oslo( oslo, old_mesh_ptr, new_mesh_ptr,
-				srf->s_size[1] * 
+				srf->s_size[1] *
 				RT_NURB_EXTRACT_COORDS( srf->pt_type ),
-				nurb_srf->s_size[1] * 
+				nurb_srf->s_size[1] *
 				RT_NURB_EXTRACT_COORDS( nurb_srf->pt_type ),
 				0, kv->k_size - nurb_srf->order[1],
 				nurb_srf->pt_type);
 		}
 		rt_nurb_free_oslo( oslo, res );
-	} 
+	}
 	return nurb_srf;
 }
 
@@ -171,9 +171,9 @@ rt_nurb_c_refine(const struct edge_g_cnurb *crv, struct knot_vector *kv)
 	oslo = (struct oslo_mat *) rt_nurb_calc_oslo(
 		crv->order, &crv->k, kv, (struct resource *)NULL);
 
-	rt_nurb_map_oslo( oslo, crv->ctl_points, 
-		new_crv->ctl_points, 
-		coords, coords, 0, 
+	rt_nurb_map_oslo( oslo, crv->ctl_points,
+		new_crv->ctl_points,
+		coords, coords, 0,
 		kv->k_size - new_crv->order,
 		new_crv->pt_type);
 

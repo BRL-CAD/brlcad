@@ -45,12 +45,12 @@
  *	Michael John Muuss
  *	Charles M. Kennedy
  *	Phillip Dykstra
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005
- *  
+ *
  */
 #ifndef lint
 static char RCSid[] = "@(#)$Header$ (BRL)";
@@ -333,7 +333,7 @@ ready:
 
 /*
  *  			P K G _ T R A N S E R V E R
- *  
+ *
  *  Become a one-time server on the open connection.
  *  A client has already called and we have already answered.
  *  This will be a servers starting condition if he was created
@@ -363,7 +363,7 @@ pkg_transerver(struct pkg_switch *switchp, void (*errlog) (/* ??? */))
 
 /*
  *  			P K G _ P E R M S E R V E R
- *  
+ *
  *  We are now going to be a server for the indicated service.
  *  Hang a LISTEN, and return the fd to select() on waiting for
  *  new connections.
@@ -517,7 +517,7 @@ pkg_getclient(int fd, struct pkg_switch *switchp, void (*errlog) (/* ??? */), in
 		}
 	}  while( s2 < 0);
 #ifdef FIONBIO
-	if(nodelay)  {		
+	if(nodelay)  {
 		onoff = 0;
 		if( ioctl(fd, FIONBIO, &onoff) < 0 )
 			pkg_perror( errlog, "pkg_getclient: FIONBIO 2" );
@@ -578,7 +578,7 @@ pkg_makeconn(int fd, struct pkg_switch *switchp, void (*errlog) (/* ??? */))
 
 /*
  *  			P K G _ C L O S E
- *  
+ *
  *  Gracefully release the connection block and close the connection.
  */
 void
@@ -849,7 +849,7 @@ pkg_2send(int type, char *buf1, int len1, char *buf2, int len2, register struct 
 			pkg_perror(pc->pkc_errlog, "pkg_2send: writev");
 			sprintf( errbuf,
 				"pkg_send2(type=%d, buf1=x%lx, len1=%d, buf2=x%lx, len2=%d, pc=x%lx)\n",
-				 type, (unsigned long int)buf1, len1, 
+				 type, (unsigned long int)buf1, len1,
 				 (unsigned long int)buf2, len2, (unsigned long int)pc );
 			(pc->pkc_errlog)(errbuf);
 			return(-1);
@@ -1478,7 +1478,7 @@ pkg_gethdr(register struct pkg_conn *pc, char *buf)
 
 /*
  *  			P K G _ B L O C K
- *  
+ *
  *  This routine blocks, waiting for one complete message to arrive from
  *  the network.  The actual handling of the message is done with
  *  pkg_dispatch(), which invokes the user-supplied message handler.
@@ -1488,7 +1488,7 @@ pkg_gethdr(register struct pkg_conn *pc, char *buf)
  *  or for the arrival of a message of uncertain type.
  *
  *  The companion routine is pkg_process(), which does not block.
- *  
+ *
  *  Control returns to the caller after one full message is processed.
  *  Returns -1 on error, etc.
  */
@@ -1548,8 +1548,8 @@ pkg_perror(void (*errlog) (/* ??? */), char *s)
 	}
 #else
 #  if HAVE_STRERROR
-#  else
 	sprintf( errbuf, "%s: %s\n", s, strerror(errno) );
+#  else
 	sprintf( errbuf, "%s: %s\n", s, sys_errlist[errno] );
 #  endif
 #endif
@@ -1786,9 +1786,9 @@ pkg_checkin(register struct pkg_conn *pc, int nodelay)
 		fflush(pkg_debug);
 	}
 	if( i > 0 )  {
-		for( j = 0; j < FD_SETSIZE; j++ ) 
+		for( j = 0; j < FD_SETSIZE; j++ )
 			if( FD_ISSET( j, &bits ) ) break;
-			
+
 		if( j < FD_SETSIZE )  {
 			/* Some fd is ready for I/O */
 			(void)pkg_suckin(pc);
@@ -1821,7 +1821,7 @@ pkg_inget(register struct pkg_conn *pc, char *buf, int count)
 	register int	todo = count;
 
 	while( todo > 0 )  {
-		
+
 		while( (len = pc->pkc_inend - pc->pkc_incur) <= 0 )  {
 			/* This can block */
 			if( pkg_suckin( pc ) < 1 )

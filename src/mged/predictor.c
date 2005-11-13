@@ -31,7 +31,7 @@
  *
  *  Author -
  *	Michael John Muuss
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium
  *	The U. S. Army Ballistic Research Laboratory
@@ -202,7 +202,7 @@ predictor_kill(void)
  *  Draw the frame itself as four polygons:
  *	ABFE, HGCD, EILH, and JFGK.
  *  The streamers will attach at edges AE, BF, GC, and HD.
- *	
+ *
  *		D --------------- C
  *		|                 |
  *		H -L-----------K- G

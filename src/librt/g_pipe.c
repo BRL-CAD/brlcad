@@ -26,12 +26,12 @@
  *	Intersect a ray with a pipe solid.
  *
  *  Authors -
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5066
- *  
+ *
  */
 /*@}*/
 
@@ -52,7 +52,8 @@ static const char RCSpipe[] = "@(#)$Header$ (BRL)";
 #include <math.h>
 
 #ifdef HAVE_FLOAT_H
-#  include <float.h> //isnan function
+   /* for isnan() function */
+#  include <float.h>
 #endif
 
 #include "tcl.h"
@@ -133,7 +134,7 @@ struct hit_list
 #define	PIPE_BEND_BASE		7
 #define PIPE_BEND_TOP		8
 
-RT_EXTERN( void rt_pipe_ifree, (struct rt_db_internal *ip) );
+BU_EXTERN( void rt_pipe_ifree, (struct rt_db_internal *ip) );
 
 
 HIDDEN int
@@ -296,15 +297,15 @@ rt_linear_pipe_prep(struct soltab *stp, struct bu_list *head, fastf_t *pt1, fast
 
 /**
  *  			R T _ P I P E _ P R E P
- *  
+ *
  *  Given a pointer to a GED database record, and a transformation matrix,
  *  determine if this is a valid pipe solid, and if so, precompute various
  *  terms of the formula.
- *  
+ *
  *  Returns -
  *  	0	pipe solid is OK
  *  	!0	Error in description
- *  
+ *
  *  Implicit return -
  *  	A struct bu_list is created, and it's address is stored in
  *  	stp->st_specific for use by pipe_shot().
@@ -601,7 +602,7 @@ bend_pipe_shot(struct soltab *stp, register struct xray *rp, struct application 
 	    }
 	    return;	/* MISSED */
 	}
-	
+
 	/*  Only real roots indicate an intersection in real space.
 	 *
 	 *  Look at each root returned; if the imaginary part is zero
@@ -1172,7 +1173,7 @@ rt_pipe_hitsort(struct hit_list *h, int *nh, register struct xray *rp, struct so
 
 /**
  *  			R T _ P I P E _ N O R M
- *  
+ *
  *  Given ONE ray distance, return the normal and entry/exit point.
  */
 void
@@ -1257,11 +1258,11 @@ rt_pipe_norm(register struct hit *hitp, struct soltab *stp, register struct xray
 
 /**
  *  			R T _ P I P E _ S H O T
- *  
+ *
  *  Intersect a ray with a pipe.
  *  If an intersection occurs, a struct seg will be acquired
  *  and filled in.
- *  
+ *
  *  Returns -
  *  	0	MISS
  *	>0	HIT
@@ -1377,7 +1378,7 @@ rt_pipe_shot(struct soltab *stp, register struct xray *rp, struct application *a
 		return(0);		/* MISS */
 }
 
-#define SEG_MISS(SEG)		(SEG).seg_stp=(struct soltab *) 0;	
+#define SEG_MISS(SEG)		(SEG).seg_stp=(struct soltab *) 0;
 
 /**
  *			R T_ P I P E _ V S H O T
@@ -1390,7 +1391,7 @@ rt_pipe_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, st
            		       /* An array of ray pointers */
                                /* array of segs (results returned) */
    		  	       /* Number of ray/object pairs */
-                  	    
+
 {
 	rt_vstub( stp, rp, segp, n, ap );
 }
@@ -1414,7 +1415,7 @@ rt_pipe_curve(register struct curvature *cvp, register struct hit *hitp, struct 
 
 /**
  *  			R T _ P I P E _ U V
- *  
+ *
  *  For a hit on the surface of an pipe, return the (u,v) coordinates
  *  of the hit point, 0 <= u,v <= 1.
  *  u = azimuth
@@ -1551,7 +1552,7 @@ draw_linear_seg(struct bu_list *vhead, const fastf_t *p1, const fastf_t or1, con
 }
 
 HIDDEN void
-draw_pipe_bend(struct bu_list *vhead, const fastf_t *center, const fastf_t *end, const fastf_t radius, const fastf_t angle, const fastf_t *v1, const fastf_t *v2, const fastf_t *norm, const fastf_t or, const fastf_t ir, fastf_t *f1, fastf_t *f2, const int 
+draw_pipe_bend(struct bu_list *vhead, const fastf_t *center, const fastf_t *end, const fastf_t radius, const fastf_t angle, const fastf_t *v1, const fastf_t *v2, const fastf_t *norm, const fastf_t or, const fastf_t ir, fastf_t *f1, fastf_t *f2, const int
 seg_count)
 {
 
@@ -2655,7 +2656,7 @@ tesselate_pipe_linear(fastf_t *start_pt,
 }
 
 HIDDEN void
-tesselate_pipe_bend(fastf_t *bend_start, fastf_t *bend_end, fastf_t *bend_center, fastf_t or, fastf_t ir, int arc_segs, double sin_del, double cos_del, struct vertex ***outer_loop, struct vertex ***inner_loop, fastf_t *start_r1, fastf_t *start_r2, struct 
+tesselate_pipe_bend(fastf_t *bend_start, fastf_t *bend_end, fastf_t *bend_center, fastf_t or, fastf_t ir, int arc_segs, double sin_del, double cos_del, struct vertex ***outer_loop, struct vertex ***inner_loop, fastf_t *start_r1, fastf_t *start_r2, struct
 shell *s, const struct bn_tol *tol, const struct rt_tess_tol *ttol)
 {
 	struct vertex **new_outer_loop;
@@ -3114,7 +3115,7 @@ tesselate_pipe_end(struct wdb_pipept *pipe, int arc_segs, double sin_del, double
 	}
 
 	prev = BU_LIST_PREV( wdb_pipept, &pipe->l );
-	
+
 	if( pipe->pp_id > tol->dist )
 	{
 		struct vertex **verts;
@@ -3869,7 +3870,7 @@ rt_pipe_tcladjust(Tcl_Interp *interp, struct rt_db_internal *intern, int argc, c
 	int				curr_seg;
 	fastf_t				tmp;
 	char				*v_str;
-	
+
 
 	RT_CK_DB_INTERNAL( intern );
 	pipe = (struct rt_pipe_internal *)intern->idb_ptr;
@@ -3885,7 +3886,7 @@ rt_pipe_tcladjust(Tcl_Interp *interp, struct rt_db_internal *intern, int argc, c
 		} else {
 			BU_LIST_INIT( &pipe->pipe_segs_head );
 		}
-		
+
 		if( !isdigit( argv[0][1] ) ) {
 			Tcl_SetResult( interp, "no vertex number specified", TCL_STATIC );
 			return( TCL_ERROR );
@@ -3923,7 +3924,7 @@ rt_pipe_tcladjust(Tcl_Interp *interp, struct rt_db_internal *intern, int argc, c
 				break;
 			curr_seg++;
 		}
-		
+
 
 		switch( argv[0][0] ) {
 			case 'V':

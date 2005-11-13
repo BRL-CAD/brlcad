@@ -29,11 +29,11 @@
  *
  *  Author -
  *	Michael John Muuss
- *  
+ *
  *  Source -
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
- *  
+ *
  */
 /*@}*/
 
@@ -60,7 +60,7 @@ static const char RCSstorage[] = "@(#)$Header$ (ARL)";
 
 /*
  *  			R T _ G E T _ S E G
- *  
+ *
  *  This routine is called by the GET_SEG macro when the freelist
  *  is exhausted.  Rather than simply getting one additional structure,
  *  we get a whole batch, saving overhead.  When this routine is called,

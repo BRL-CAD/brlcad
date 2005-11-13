@@ -55,6 +55,7 @@ scripties = \
 	pattern.tcl \
 	pattern_gui.tcl \
 	plot.tcl \
+	points.tcl \
 	prj_add.tcl \
 	ps.tcl \
 	qray.tcl \
@@ -120,7 +121,7 @@ tcl_SCRIPTS = \
 	$(BUILT_SOURCES) \
 	$(scripties)
 
-#	pkgIndex.tcl 
+#	pkgIndex.tcl
 BUILT_SOURCES = \
 	tclIndex
 

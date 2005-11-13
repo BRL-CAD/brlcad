@@ -26,7 +26,7 @@
  *
  *  Author -
  *	John R. Anderson
- *  
+ *
  *  Source -
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5066
@@ -159,7 +159,7 @@ union tree *do_region_end(register struct db_tree_state *tsp, struct db_full_pat
 		{
 			bu_log("WARNING: tsp->ts_m pointer corrupted, ignoring it.\n");
 		}
-	
+
 		/* Now, make a new, clean model structure for next pass. */
 		*tsp->ts_m = nmg_mm();
 		goto out;
@@ -527,7 +527,7 @@ main(int argc, char **argv)
 		exit(1);
 	}
 
-	/* Open brl-cad database */
+	/* Open BRL-CAD database */
 	if ((dbip = db_open( argv[optind] , "r")) == DBI_NULL)
 	{
 		bu_log( "Cannot open %s\n" , argv[optind] );

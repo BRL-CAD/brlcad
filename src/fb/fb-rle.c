@@ -25,12 +25,12 @@
  *
  *  Author -
  *	Michael John Muuss
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5066
- *  
+ *
  */
 #ifndef lint
 static const char RCSid[] = "@(#)$Id$ (BRL)";
@@ -41,7 +41,7 @@ static const char RCSid[] = "@(#)$Id$ (BRL)";
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif
-                                                                                                                                                                            
+
 #include <stdio.h>
 #include <time.h>
 
@@ -95,13 +95,13 @@ get_args(int argc, register char **argv)
 {
 	register int	c;
 
-	while( (c = getopt( argc, argv, "cF:hds:w:n:S:W:N:X:Y:C:" )) != EOF )  {
+	while( (c = bu_getopt( argc, argv, "cF:hds:w:n:S:W:N:X:Y:C:" )) != EOF )  {
 		switch( c )  {
 		case 'c':
 			crunch = 1;
 			break;
 		case 'F':
-			framebuffer = optarg;
+			framebuffer = bu_optarg;
 			break;
 		case 'h':
 			/* high-res */
@@ -109,32 +109,32 @@ get_args(int argc, register char **argv)
 			break;
 		case 's':
 			/* square file size */
-			file_height = file_width = atoi(optarg);
+			file_height = file_width = atoi(bu_optarg);
 			break;
 		case 'S':
-			screen_height = screen_width = atoi(optarg);
+			screen_height = screen_width = atoi(bu_optarg);
 			break;
 		case 'w':
-			file_width = atoi(optarg);
+			file_width = atoi(bu_optarg);
 			break;
 		case 'W':
-			screen_width = atoi(optarg);
+			screen_width = atoi(bu_optarg);
 			break;
 		case 'n':
-			file_height = atoi(optarg);
+			file_height = atoi(bu_optarg);
 			break;
 		case 'N':
-			screen_height = atoi(optarg);
+			screen_height = atoi(bu_optarg);
 			break;
 		case 'X':
-			screen_xoff = atoi(optarg);
+			screen_xoff = atoi(bu_optarg);
 			break;
 		case 'Y':
-			screen_yoff = atoi(optarg);
+			screen_yoff = atoi(bu_optarg);
 			break;
 		case 'C':
 			{
-				register char *cp = optarg;
+				register char *cp = bu_optarg;
 				register int *conp = background;
 
 				/* premature null => atoi gives zeros */
@@ -149,19 +149,19 @@ get_args(int argc, register char **argv)
 			return	0;
 		}
 	}
-	if( argv[optind] != NULL )  {
-		if( access( argv[optind], 0 ) == 0 )  {
+	if( argv[bu_optind] != NULL )  {
+		if( access( argv[bu_optind], 0 ) == 0 )  {
 			(void) fprintf( stderr,
 				"\"%s\" already exists.\n",
-				argv[optind] );
+				argv[bu_optind] );
 			exit( 1 );
 		}
-		if( (outfp = fopen( argv[optind], "w" )) == NULL )  {
-			perror(argv[optind]);
+		if( (outfp = fopen( argv[bu_optind], "w" )) == NULL )  {
+			perror(argv[bu_optind]);
 			return	0;
 		}
 	}
-	if( argc > ++optind )
+	if( argc > ++bu_optind )
 		(void) fprintf( stderr, "fb-rle: Excess arguments ignored\n" );
 
 	if( isatty(fileno(outfp)) )

@@ -27,14 +27,14 @@
  *  White space in the file is ignored.
  *  The input is processed as a byte stream, and need not have a multiple
  *  of three bytes.
- *  
+ *
  *  Author -
  *	Michael John Muuss
- *  
+ *
  *  Source -
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
- *  
+ *
  */
 #ifndef lint
 static const char RCSid[] = "@(#)$Header$ (ARL)";

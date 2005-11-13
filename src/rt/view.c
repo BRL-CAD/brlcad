@@ -42,7 +42,7 @@
  *  Authors -
  *	Michael John Muuss
  *	Gary S. Moss
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
@@ -149,7 +149,7 @@ int a_onehit = -1;
 /*
  * Overlay
  *
- * If in overlay mode, and writeing to a framebuffer, 
+ * If in overlay mode, and writeing to a framebuffer,
  * only write non-background pixels.
  */
 static int overlay = 0;
@@ -171,7 +171,7 @@ struct bu_structparse view_parse[] = {
 
 /*
  *  			V I E W _ P I X E L
- *  
+ *
  *  Arrange to have the pixel output.
  *  a_uptr has region pointer, for reference.
  */
@@ -273,7 +273,7 @@ view_pixel(register struct application *ap)
 #endif
 			/*
 			 *  This pixel was just computed.
-			 *  Look at next pixel on scanline, 
+			 *  Look at next pixel on scanline,
 			 *  and if it is a reprojected old value
 			 *  and hit a different region than this pixel,
 			 *  then recompute it too.
@@ -322,7 +322,7 @@ view_pixel(register struct application *ap)
 #ifdef RTSRV
 	case BUFMODE_RTSRV:
 		/* Multi-pixel buffer */
-		pixelp = scanbuf+ pwidth * 
+		pixelp = scanbuf+ pwidth *
 			((ap->a_y*width) + ap->a_x - srv_startpix);
 		bu_semaphore_acquire( RT_SEM_RESULTS );
 		*pixelp++ = r ;
@@ -522,7 +522,7 @@ view_pixel(register struct application *ap)
 
 /*
  *  			V I E W _ E O L
- *  
+ *
  *  This routine is not used;  view_pixel() determines when the last
  *  pixel of a scanline is really done, for parallel considerations.
  */
@@ -1009,7 +1009,7 @@ int viewit(register struct application *ap,
 			FAST fastf_t f;
 
 			RT_CURVATURE( &cv, hitp, pp->pt_inflip, pp->pt_inseg->seg_stp );
-	
+
 			f = cv.crv_c1;
 			f *= 10;
 			if( f < -0.5 )  f = -0.5;
@@ -1325,7 +1325,7 @@ view_2init(register struct application *ap, char *framename)
 	switch( buf_mode )  {
 	case BUFMODE_UNBUF:
 		bu_log("Single pixel I/O, unbuffered\n");
-		break;	
+		break;
 	case BUFMODE_FULLFLOAT:
 		if( !curr_float_frame )  {
 bu_log("mallocing curr_float_frame\n");
@@ -1446,7 +1446,7 @@ bu_log("mallocing curr_float_frame\n");
 				(long)sb.st_size );
 
 			scanline[yy].sl_buf = bu_calloc( width,
-				sizeof(RGBpixel), 
+				sizeof(RGBpixel),
 				"sl_buf scanline buffer (for continuation scanline)");
 			if( fseek( outfp, yy*width*pwidth, 0 ) != 0 )
 		    		bu_log("fseek error\n");
@@ -1474,7 +1474,7 @@ bu_log("mallocing curr_float_frame\n");
 	case 0:
 		ap->a_hit = colorview;
 
-		/* If user did not specify any light sources then 
+		/* If user did not specify any light sources then
 		 *	create default light sources
 		 */
 		if( BU_LIST_IS_EMPTY( &(LightHead.l) )  ||
@@ -1534,11 +1534,11 @@ bu_log("mallocing curr_float_frame\n");
 		struct region *rp;
 		struct soltab *stp;
 		int j;
-		
+
 
 		rp = (struct region *)BU_PTBL_GET( &ap->a_rt_i->delete_regs, i );
 
-		/* make a list of soltabs containing primitives referenced by 
+		/* make a list of soltabs containing primitives referenced by
 		 * invisible light regions
 		 */
 		collect_soltabs( &stps, rp->reg_treetop );

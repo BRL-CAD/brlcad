@@ -27,6 +27,7 @@ EXTRA_DIST = \
 	make_bz2.sh \
 	make_tgz.sh \
 	make_zip.sh \
+	shtool \
 	vers.sh
 
 

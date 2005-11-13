@@ -12,7 +12,7 @@
 # 1. Redistributions of source code must retain the above copyright
 # notice, this list of conditions and the following disclaimer.
 #
-# 2. Redistributions in binary form must reproduce the above 
+# 2. Redistributions in binary form must reproduce the above
 # copyright notice, this list of conditions and the following
 # disclaimer in the documentation and/or other materials provided
 # with the distribution.
@@ -44,8 +44,8 @@
 # bash arrays are actually used for convenience, hence why bash and
 # not sh.
 #
-# Author - 
-#   Christopher Sean Morrison 
+# Author -
+#   Christopher Sean Morrison
 #
 # Source -
 #   The U.S. Army Research Laboratory
@@ -99,7 +99,7 @@ mode_vars=""
 wrap=0
 commentchar=""
 
-case $FILE in 
+case $FILE in
     *.sh)
 	echo "$FILE is a shell script"
 	mode="sh"
@@ -252,7 +252,7 @@ for var in ${variables[@]} ; do
 	existing_var=`cat $FILE | grep -i "${prefixspace}[${commentchar}] ${var}:" | sed 's/:/ /g' | awk '{print $3}'`
 	existing_suffix=`cat $FILE | grep -i "${prefixspace}[${commentchar}] ${var}:" | sed 's/:/ /g' | awk '{print $4}'`
     fi
-    
+
     if [ "x$existing_var" = "x" ] ; then
 	echo "$var not found"
     else

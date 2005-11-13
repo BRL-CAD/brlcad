@@ -28,11 +28,11 @@
  *
  *  Author -
  *	Michael John Muuss
- *  
+ *
  *  Source -
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
- *  
+ *
  *
  *  Inspired by -
  *	Roy Hall and his book "Illumination and Color in Computer
@@ -231,7 +231,7 @@ rt_spect_reflectance_rgb(struct bn_tabdata *curve, const float *rgb)
 }
 
 #define PLANCK_C1	37415		/* watts um^4 cm^-2 */
-#define PLANCK_C2	14387.86	/* um K */ 	
+#define PLANCK_C2	14387.86	/* um K */
 /* Russ gives these values at 37,415 and 14,388 */
 /* Handbook of Physics and Chem gives these values as 37,403 and 14,384 */
 /* Aircraft Combat Surv gives these values as 37,483.2 and 14,387.86 */
@@ -252,7 +252,7 @@ rt_spect_reflectance_rgb(struct bn_tabdata *curve, const float *rgb)
  */
 void
 rt_spect_black_body(struct bn_tabdata *data, double temp, unsigned int n)
-                 	      
+
       			     		/* Degrees Kelvin */
             		  		/* # wavelengths to eval at */
 {
@@ -311,7 +311,7 @@ rt_spect_black_body(struct bn_tabdata *data, double temp, unsigned int n)
  */
 void
 rt_spect_black_body_fast(struct bn_tabdata *data, double temp)
-                 	      
+
       			     		/* Degrees Kelvin */
 {
 	const struct bn_table	*tabp;
@@ -341,7 +341,7 @@ rt_spect_black_body_fast(struct bn_tabdata *data, double temp)
  */
 void
 rt_spect_black_body_points(struct bn_tabdata *data, double temp)
-                 	      
+
       			     		/* Degrees Kelvin */
 {
 	const struct bn_table	*tabp;

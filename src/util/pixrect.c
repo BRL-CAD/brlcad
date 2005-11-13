@@ -25,7 +25,7 @@
  *  Authors -
  *	Phillip Dykstra
  *	2 Oct 1985
- *  
+ *
  *      Further additions by John Grosh, 1 April 1990
  *
  *  Source -
@@ -48,6 +48,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include <ctype.h>
 
 #include "machine.h"
+#include "bu.h"
 
 
 #define	INTERACTIVE	0
@@ -57,7 +58,7 @@ FILE		*ifp, *ofp;		/* input and output file pointers */
 
 static char	*file_name;
 
-static int 	linelen;		/* input width input file */ 
+static int 	linelen;		/* input width input file */
 static int 	xorig = 0;     		/* Bottom left corner to extract from */
 static int 	yorig = 0;		/* Default at (0,0) pixels     */
 static int 	xnum  = 0;
@@ -77,25 +78,25 @@ get_args(register int argc, register char **argv)
 	register int inputmode = INTERACTIVE;
 
 	/* Get info from command line arguments */
-	while ((c = getopt(argc, argv, "s:w:n:x:y:X:Y:S:W:N:#:")) != EOF) {
+	while ((c = bu_getopt(argc, argv, "s:w:n:x:y:X:Y:S:W:N:#:")) != EOF) {
 		switch(c) {
 		case 's':
-			linelen   = atoi(optarg);
+			linelen   = atoi(bu_optarg);
 			inputmode = COMMAND_LINE;
 			break;
 		case 'w':
-			linelen   = atoi(optarg);
+			linelen   = atoi(bu_optarg);
 			inputmode = COMMAND_LINE;
 			break;
 		case 'n':
 			inputmode = COMMAND_LINE;
 			break;
 		case 'x':
-			xorig     = atoi(optarg);
+			xorig     = atoi(bu_optarg);
 			inputmode = COMMAND_LINE;
 			break;
 		case 'y':
-			yorig     = atoi(optarg);
+			yorig     = atoi(bu_optarg);
 			inputmode = COMMAND_LINE;
 			break;
 		case 'X':
@@ -105,19 +106,19 @@ get_args(register int argc, register char **argv)
 			inputmode = COMMAND_LINE;
 			break;
 		case 'S':
-			xnum = ynum = atoi(optarg);
+			xnum = ynum = atoi(bu_optarg);
 			inputmode = COMMAND_LINE;
 			break;
 		case 'W':
-			xnum      = atoi(optarg);
+			xnum      = atoi(bu_optarg);
 			inputmode = COMMAND_LINE;
 			break;
 		case 'N':
-			ynum      = atoi(optarg);
+			ynum      = atoi(bu_optarg);
 			inputmode = COMMAND_LINE;
 			break;
 		case '#':
-			bytes_per_pixel = atoi(optarg);
+			bytes_per_pixel = atoi(bu_optarg);
 			break;
 		default:		/* '?' */
 			return(0);
@@ -127,9 +128,9 @@ get_args(register int argc, register char **argv)
 	/* If parameters (i.e. xnum, etc.) are not entered on */
         /*    command line, obtain input in the same style as */
         /*    the original version of pixrect.c               */
-	
+
 	if (inputmode == INTERACTIVE) {
-		if (argc != 4 && argc != 3) 
+		if (argc != 4 && argc != 3)
 			return(0);
 
 		/* Obtain file pointers */
@@ -163,7 +164,7 @@ get_args(register int argc, register char **argv)
 	if (inputmode == COMMAND_LINE) {
 		/* Obtain file pointers */
 		ofp = stdout;
-		if (optind >= argc) {
+		if (bu_optind >= argc) {
 			if (isatty(fileno(stdin))) {
 				fprintf(stderr,
 					"pixrect: input from sdtin\n");
@@ -171,7 +172,7 @@ get_args(register int argc, register char **argv)
 			}
 			ifp = stdin;
 		} else {
-			file_name = argv[optind];
+			file_name = argv[bu_optind];
 			if ((ifp = fopen(file_name, "r")) == NULL) {
 				fprintf(stderr,
 					"pixrect: cannot open \"%s\" for reading\n",
@@ -187,7 +188,7 @@ get_args(register int argc, register char **argv)
 	}
 
 #if 0
-	if (argc > ++optind)
+	if (argc > ++bu_optind)
 		fprintf(stderr,"pixrect: excess argument(s) ignored\n");
 #endif
 

@@ -40,7 +40,7 @@
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5066
- *  
+ *
  */
 #ifndef lint
 static const char RCSid[] = "@(#)$Header$ (BRL)";
@@ -400,7 +400,7 @@ get_args(int argc, register char **argv)
 {
 	register int c;
 
-	while ( (c = getopt( argc, argv, "odhcOF:s:S:w:W:n:N:C:" )) != EOF )  {
+	while ( (c = bu_getopt( argc, argv, "odhcOF:s:S:w:W:n:N:C:" )) != EOF )  {
 		switch( c )  {
 		case 'o':
 			output_pix = 1;
@@ -419,23 +419,23 @@ get_args(int argc, register char **argv)
 			clear = 1;
 			break;
 		case 'F':
-			framebuffer = optarg;
+			framebuffer = bu_optarg;
 			break;
 		case 's':
 		case 'S':
-			scr_height = scr_width = atoi(optarg);
+			scr_height = scr_width = atoi(bu_optarg);
 			break;
 		case 'w':
 		case 'W':
-			scr_width = atoi(optarg);
+			scr_width = atoi(bu_optarg);
 			break;
 		case 'n':
 		case 'N':
-			scr_height = atoi(optarg);
+			scr_height = atoi(bu_optarg);
 			break;
 		case 'C':
 			{
-				register char *cp = optarg;
+				register char *cp = bu_optarg;
 				register unsigned char *conp = writing_color;
 
 				/* premature null => atoi gives zeros */
@@ -451,7 +451,7 @@ get_args(int argc, register char **argv)
 		}
 	}
 
-	if( optind >= argc )  {
+	if( bu_optind >= argc )  {
 		/* No file name args */
 		if( isatty(fileno(stdin)) )
 			return(0);
@@ -487,7 +487,7 @@ main(int argc, char **argv)
 
 	readrailmag();
 
-	if( optind >= argc )  {
+	if( bu_optind >= argc )  {
 		/* Process one TROFF file from stdin */
 		if( overlay_from_stdin )  {
 			fprintf(stderr,"cat-fb: -O ignored, stdin used for C/A/T code\n");
@@ -495,10 +495,10 @@ main(int argc, char **argv)
 		}
 		ofile(stdin);
 	} else {
-		for( ; optind < argc; optind++ )  {
+		for( ; bu_optind < argc; bu_optind++ )  {
 			register FILE *fp;
-			if( (fp = fopen(argv[optind], "r")) == NULL )  {
-				perror(argv[optind]);
+			if( (fp = fopen(argv[bu_optind], "r")) == NULL )  {
+				perror(argv[bu_optind]);
 				continue;
 			}
 			ofile(fp);
@@ -817,7 +817,7 @@ relfont(void)
 	lastloaded = newfont;
 	if( fontdes[newfont].vfp != VFONT_NULL )
 		vfont_free(fontdes[newfont].vfp);
-		
+
 	fontdes[newfont].vfp = VFONT_NULL;
 	fontdes[newfont].fnum = -1;
 	fontdes[newfont].psize = -1;
@@ -908,7 +908,7 @@ void
 slop_lines(int nlines)
 {
 	register int rlines;
-	
+
 	rlines = (&buffer[BUFFER_SIZE] - buf0p) / bytes_per_line;
 	if (rlines < nlines) {
 		if (writelines(rlines, (char *)buf0p) < 0)

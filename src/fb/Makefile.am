@@ -44,130 +44,130 @@ bin_PROGRAMS = \
 	rle-fb \
 	spm-fb
 
-fbanim_SOURCES = fbanim.c 
+fbanim_SOURCES = fbanim.c
 fbanim_LDADD = ${FB}
 
-pl_fb_SOURCES = pl-fb.c 
+pl_fb_SOURCES = pl-fb.c
 pl_fb_LDADD = ${FB} ${BN}
 
-fbcbars_SOURCES = fbcbars.c 
+fbcbars_SOURCES = fbcbars.c
 fbcbars_LDADD = ${FB}
 
-png_fb_SOURCES = png-fb.c 
+png_fb_SOURCES = png-fb.c
 png_fb_LDADD = ${FB} ${PNG}
 
-fb_png_SOURCES = fb-png.c cmap-crunch.c 
+fb_png_SOURCES = fb-png.c cmap-crunch.c
 fb_png_LDADD = ${FB} ${PNG}
 
-pix_fb_SOURCES = pix-fb.c 
+pix_fb_SOURCES = pix-fb.c
 pix_fb_LDADD = ${FB} ${BN}
 
-fb_pix_SOURCES = fb-pix.c cmap-crunch.c 
+fb_pix_SOURCES = fb-pix.c cmap-crunch.c
 fb_pix_LDADD = ${FB}
 
-fb_fb_SOURCES = fb-fb.c 
+fb_fb_SOURCES = fb-fb.c
 fb_fb_LDADD = ${FB}
 
-pixflip_fb_SOURCES = pixflip-fb.c 
+pixflip_fb_SOURCES = pixflip-fb.c
 pixflip_fb_LDADD = ${FB}
 
-pp_fb_SOURCES = pp-fb.c 
+pp_fb_SOURCES = pp-fb.c
 pp_fb_LDADD = ${FB} ${TERMIO}
 
-fbclear_SOURCES = fbclear.c 
+fbclear_SOURCES = fbclear.c
 fbclear_LDADD = ${FB}
 
-fbfree_SOURCES = fbfree.c 
+fbfree_SOURCES = fbfree.c
 fbfree_LDADD = ${FB}
 
-fbhelp_SOURCES = fbhelp.c 
+fbhelp_SOURCES = fbhelp.c
 fbhelp_LDADD = ${FB}
 
-fbgrid_SOURCES = fbgrid.c 
+fbgrid_SOURCES = fbgrid.c
 fbgrid_LDADD = ${FB}
 
-pixautosize_SOURCES = pixautosize.c 
+pixautosize_SOURCES = pixautosize.c
 pixautosize_LDADD = ${FB} ${BN}
 
-orle_fb_SOURCES = orle-fb.c 
+orle_fb_SOURCES = orle-fb.c
 orle_fb_LDADD = ${FB} ${ORLE}
 
-fb_orle_SOURCES = fb-orle.c cmap-crunch.c 
+fb_orle_SOURCES = fb-orle.c cmap-crunch.c
 fb_orle_LDADD = ${FB} ${ORLE}
 
-rle_fb_SOURCES = rle-fb.c 
+rle_fb_SOURCES = rle-fb.c
 rle_fb_LDADD = ${FB} ${RLE}
 
-fb_rle_SOURCES = fb-rle.c cmap-crunch.c 
+fb_rle_SOURCES = fb-rle.c cmap-crunch.c
 fb_rle_LDADD = ${FB} ${RLE}
 
-fbcmap_SOURCES = fbcmap.c 
+fbcmap_SOURCES = fbcmap.c
 fbcmap_LDADD = ${FB}
 
-fb_cmap_SOURCES = fb-cmap.c 
+fb_cmap_SOURCES = fb-cmap.c
 fb_cmap_LDADD = ${FB}
 
-cmap_fb_SOURCES = cmap-fb.c 
+cmap_fb_SOURCES = cmap-fb.c
 cmap_fb_LDADD = ${FB}
 
-fbgamma_SOURCES = fbgamma.c 
+fbgamma_SOURCES = fbgamma.c
 fbgamma_LDADD = ${FB}
 
-fbgammamod_SOURCES = fbgammamod.c 
+fbgammamod_SOURCES = fbgammamod.c
 fbgammamod_LDADD = ${FB}
 
-fbscanplot_SOURCES = fbscanplot.c 
+fbscanplot_SOURCES = fbscanplot.c
 fbscanplot_LDADD = ${FB}
 
-fbzoom_SOURCES = fbzoom.c 
+fbzoom_SOURCES = fbzoom.c
 fbzoom_LDADD = ${FB} ${TERMIO}
 
-fbpoint_SOURCES = fbpoint.c 
+fbpoint_SOURCES = fbpoint.c
 fbpoint_LDADD = ${FB} ${TERMIO}
 
-fblabel_SOURCES = fblabel.c 
+fblabel_SOURCES = fblabel.c
 fblabel_LDADD = ${FB}
 
-fbline_SOURCES = fbline.c 
+fbline_SOURCES = fbline.c
 fbline_LDADD = ${FB}
 
-fbcolor_SOURCES = fbcolor.c 
+fbcolor_SOURCES = fbcolor.c
 fbcolor_LDADD = ${FB} ${TERMIO}
 
-fbcmrot_SOURCES = fbcmrot.c 
+fbcmrot_SOURCES = fbcmrot.c
 fbcmrot_LDADD = ${FB}
 
-fbframe_SOURCES = fbframe.c 
+fbframe_SOURCES = fbframe.c
 fbframe_LDADD = ${FB}
 
-bw_fb_SOURCES = bw-fb.c 
-bw_fb_LDADD = ${FB} ${BN} 
+bw_fb_SOURCES = bw-fb.c
+bw_fb_LDADD = ${FB} ${BN}
 
-fb_bw_SOURCES = fb-bw.c 
+fb_bw_SOURCES = fb-bw.c
 fb_bw_LDADD = ${FB}
 
-cat_fb_SOURCES = cat-fb.c 
+cat_fb_SOURCES = cat-fb.c
 cat_fb_LDADD = ${FB} ${BU}
 
-gif2fb_SOURCES = gif2fb.c 
+gif2fb_SOURCES = gif2fb.c
 gif2fb_LDADD = ${FB}
 
-fbfade_SOURCES = fbfade.c 
+fbfade_SOURCES = fbfade.c
 fbfade_LDADD = ${FB}
 
-fbstretch_SOURCES = fbstretch.c 
+fbstretch_SOURCES = fbstretch.c
 fbstretch_LDADD = ${FB}
 
-gif_fb_SOURCES = gif-fb.c 
+gif_fb_SOURCES = gif-fb.c
 gif_fb_LDADD = ${FB}
 
-spm_fb_SOURCES = spm-fb.c 
+spm_fb_SOURCES = spm-fb.c
 spm_fb_LDADD = ${FB} ${BN} ${LIBRT}
 
-polar_fb_SOURCES = polar-fb.c 
+polar_fb_SOURCES = polar-fb.c
 polar_fb_LDADD = ${FB}
 
-cell_fb_SOURCES = cell-fb.c 
+cell_fb_SOURCES = cell-fb.c
 cell_fb_LDADD = ${FB} ${BN}
 
 man_MANS = \

@@ -73,20 +73,20 @@ get_args(int argc, char **argv)
 {
 	int c;
 
-	while ((c=getopt(argc, argv, "as:w:n:")) != EOF ) {
+	while ((c=bu_getopt(argc, argv, "as:w:n:")) != EOF ) {
 		switch(c) {
 		case 'a':
 			autosize = 1;
 			break;
 		case 's':
-			file_width = atol(optarg);
+			file_width = atol(bu_optarg);
 			autosize = 0;
 			break;
 		case 'n':
 			autosize = 0;
 			break;
 		case 'w':
-			file_width = atol(optarg);
+			file_width = atol(bu_optarg);
 			autosize = 0;
 			break;
 		default:		/* '?' */
@@ -94,12 +94,12 @@ get_args(int argc, char **argv)
 		}
 	}
 
-	if (optind >= argc ) {
+	if (bu_optind >= argc ) {
 		if (isatty(fileno(stdin)) ) return(0);
 		file_name = "-";
 		infp = stdin;
 	} else {
-		file_name = argv[optind];
+		file_name = argv[bu_optind];
 		if ((infp = fopen(file_name, "r")) == NULL) {
 			(void) fprintf(stderr,
 			    "bw-a: cannot open \"%s\" for reading\n",
@@ -109,7 +109,7 @@ get_args(int argc, char **argv)
 		fileinput++;
 	}
 
-	if (argc > ++optind) {
+	if (argc > ++bu_optind) {
 		(void) fprintf(stderr, "bw-a: excess argument(s) ignored\n");
 	}
 	return(1);	/* OK */

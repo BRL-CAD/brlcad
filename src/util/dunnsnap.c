@@ -28,7 +28,7 @@
  *  Author -
  *	Don Merritt
  *	August 1985
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
@@ -41,14 +41,15 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "common.h"
 
 #ifdef HAVE_UNISTD_H
-# include <unistd.h>
+#  include <unistd.h>
 #endif
-                                                                                                                                                                            
 #include <stdio.h>
 #include <stdlib.h>
 
 #include "machine.h"
+#include "bu.h"
 #include "fb.h"
+
 
 /* Shared with dunncomm.c */
 extern int	fd;
@@ -76,26 +77,26 @@ get_args(int argc, register char **argv)
 {
 	register int c;
 
-	while ( (c = getopt( argc, argv, "hF:s:S:w:W:n:N:" )) != EOF )  {
+	while ( (c = bu_getopt( argc, argv, "hF:s:S:w:W:n:N:" )) != EOF )  {
 		switch( c )  {
 		case 'h':
 			/* high-res */
 			scr_height = scr_width = 1024;
 			break;
 		case 'F':
-			framebuffer = optarg;
+			framebuffer = bu_optarg;
 			break;
 		case 's':
 		case 'S':
-			scr_height = scr_width = atoi(optarg);
+			scr_height = scr_width = atoi(bu_optarg);
 			break;
 		case 'w':
 		case 'W':
-			scr_width = atoi(optarg);
+			scr_width = atoi(bu_optarg);
 			break;
 		case 'n':
 		case 'N':
-			scr_height = atoi(optarg);
+			scr_height = atoi(bu_optarg);
 			break;
 
 		default:		/* '?' */
@@ -103,10 +104,10 @@ get_args(int argc, register char **argv)
 		}
 	}
 
-	if( optind < argc )  {
-		nframes = atoi( argv[optind] );
+	if( bu_optind < argc )  {
+		nframes = atoi( argv[bu_optind] );
 	}
-	if ( argc > ++optind )
+	if ( argc > ++bu_optind )
 		(void)fprintf( stderr, "dunnsnap: excess argument(s) ignored\n" );
 
 	return(1);		/* OK */
@@ -141,7 +142,7 @@ main(int argc, char **argv)
 		fprintf(stderr,"dunnsnap:  camera not ready at startup\n");
 		goto bad;
 	}
-		
+
 	/* loop until number of frames specified have been exposed */
 
 	while (nframes>0) {
@@ -155,7 +156,7 @@ main(int argc, char **argv)
 			fprintf(stderr,"dunnsnap: badstatus\n");
 			goto bad;
 		}
-		
+
 		/* send expose command to camera */
 		cmd = 'I';	/* expose command */
 		write(fd, &cmd, 1);

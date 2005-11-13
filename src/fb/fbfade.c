@@ -73,7 +73,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif
-                                                                                                                                                                            
+
 #include	<signal.h>
 #include	<stdlib.h>
 #include	<stdio.h>
@@ -89,7 +89,8 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include "machine.h"
-#include "fb.h"			/* BRL CAD package libfb.a interface */
+#include "bu.h"
+#include "fb.h"			/* BRL-CAD package libfb.a interface */
 
 #ifndef EXIT_SUCCESS
 #define	EXIT_SUCCESS	0
@@ -250,7 +251,7 @@ main(int argc, char **argv)
 		register int	c;
 		register bool	errors = false;
 
-		while ( (c = getopt( argc, argv, OPTSTR )) != EOF )
+		while ( (c = bu_getopt( argc, argv, OPTSTR )) != EOF )
 			switch( c )
 				{
 			default:	/* '?': invalid option */
@@ -258,11 +259,11 @@ main(int argc, char **argv)
 				break;
 
 			case 'f':	/* -f in_fb_file */
-				in_fb_file = optarg;
+				in_fb_file = bu_optarg;
 				break;
 
 			case 'F':	/* -F out_fb_file */
-				out_fb_file = optarg;
+				out_fb_file = bu_optarg;
 				break;
 
 			case 'h':	/* -h */
@@ -270,19 +271,19 @@ main(int argc, char **argv)
 				break;
 
 			case 'n':	/* -n height */
-				if ( (src_height = atoi( optarg )) <= 0 )
+				if ( (src_height = atoi( bu_optarg )) <= 0 )
 					errors = true;
 
 				break;
 
 			case 'N':	/* -N height */
-				if ( (dst_height = atoi( optarg )) <= 0 )
+				if ( (dst_height = atoi( bu_optarg )) <= 0 )
 					errors = true;
 
 				break;
 
 			case 's':	/* -s size */
-				if ( (src_height = src_width = atoi( optarg ))
+				if ( (src_height = src_width = atoi( bu_optarg ))
 				  <= 0
 				   )
 					errors = true;
@@ -290,7 +291,7 @@ main(int argc, char **argv)
 				break;
 
 			case 'S':	/* -S size */
-				if ( (dst_height = dst_width = atoi( optarg ))
+				if ( (dst_height = dst_width = atoi( bu_optarg ))
 				  <= 0
 				   )
 					errors = true;
@@ -298,13 +299,13 @@ main(int argc, char **argv)
 				break;
 
 			case 'w':	/* -w width */
-				if ( (src_width = atoi( optarg )) <= 0 )
+				if ( (src_width = atoi( bu_optarg )) <= 0 )
 					errors = true;
 
 				break;
 
 			case 'W':	/* -W width */
-				if ( (dst_width = atoi( optarg )) <= 0 )
+				if ( (dst_width = atoi( bu_optarg )) <= 0 )
 					errors = true;
 
 				break;
@@ -314,15 +315,15 @@ main(int argc, char **argv)
 			Fatal( "Usage: %s\n%s", USAGE1, USAGE2 );
 	}
 
-	if ( optind < argc )		/* out_fb_file */
+	if ( bu_optind < argc )		/* out_fb_file */
 		{
-		if ( optind < argc - 1 || out_fb_file != NULL )
+		if ( bu_optind < argc - 1 || out_fb_file != NULL )
 			{
 			Message( "Usage: %s\n%s", USAGE1, USAGE2 );
 			Fatal( "Can't handle multiple output frame buffers!" );
 			}
 
-		out_fb_file = argv[optind];
+		out_fb_file = argv[bu_optind];
 		}
 
 	/* Open frame buffer for unbuffered input. */

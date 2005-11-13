@@ -26,7 +26,7 @@
  *  Author -
  *	Phillip Dykstra
  *	2 Sept 1986
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory

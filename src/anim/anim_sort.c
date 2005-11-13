@@ -20,15 +20,15 @@
  *
  */
 /** @file anim_sort.c
- *	Combine multiple animation scripts on standard input into a 
+ *	Combine multiple animation scripts on standard input into a
  *  single script on standard output. The output can be in natural order
- *  or in a scrambled order for incrementally increasing time 
+ *  or in a scrambled order for incrementally increasing time
  *  resolution (-i option).
- * 
+ *
  *
  *  Author -
  *	Carl J. Nuzman
- *  
+ *
  *  Source -
  *      The U. S. Army Research Laboratory
  *      Aberdeen Proving Ground, Maryland  21005-5068  USA
@@ -56,8 +56,8 @@ int get_args(int argc, char **argv);
 int
 main(int argc, char **argv)
 {
-    int	length,frame_number, number, success, maxnum; 
-    int 	first_frame,spread,reserve; 
+    int	length,frame_number, number, success, maxnum;
+    int 	first_frame,spread,reserve;
     long	last_pos;
     char	line[MAXLEN];
     char    pbuffer[MAXLEN*MAXLINES];
@@ -193,7 +193,7 @@ int get_args(int argc, char **argv)
     return(1);
 }
 
-		
+
 
 /*
  * Local Variables:

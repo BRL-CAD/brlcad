@@ -26,7 +26,7 @@
  *
  *  Author -
  *	Paul Randal Stay
- * 
+ *
  *  Source -
  * 	SECAD/VLD Computing Consortium, Bldg 394
  *	The U.S. Army Ballistic Research Laboratory
@@ -50,6 +50,7 @@
 #include <ctype.h>
 
 #include "machine.h"
+#include "bu.h"
 #include "fb.h"
 #include "vfont-if.h"
 
@@ -96,7 +97,7 @@ get_args(int argc, register char **argv)
 	pixcolor[GRN]  = 255;
 	pixcolor[BLU]  = 255;
 
-	while ( (c = getopt( argc, argv, "adhcF:f:r:g:b:C:s:S:w:W:n:N:" )) != EOF )  {
+	while ( (c = bu_getopt( argc, argv, "adhcF:f:r:g:b:C:s:S:w:W:n:N:" )) != EOF )  {
 		switch( c )  {
 		case 'a':
 			alias_off = 1;
@@ -111,28 +112,28 @@ get_args(int argc, register char **argv)
 		case 's':
 		case 'S':
 			/* square size */
-			scr_height = scr_width = atoi( optarg );
+			scr_height = scr_width = atoi( bu_optarg );
 			break;
 		case 'w':
 		case 'W':
-			scr_width = atoi( optarg );
+			scr_width = atoi( bu_optarg );
 			break;
 		case 'n':
 		case 'N':
-			scr_height = atoi( optarg );
+			scr_height = atoi( bu_optarg );
 			break;
 		case 'c':
 			clear = 1;
 			break;
 		case 'F':
-			framebuffer = optarg;
+			framebuffer = bu_optarg;
 			break;
 		case 'f':
-			font1 = optarg;
+			font1 = bu_optarg;
 			break;
 		case 'C':
 			{
-				register char *cp = optarg;
+				register char *cp = bu_optarg;
 				register unsigned char *conp
 					= (unsigned char *)pixcolor;
 
@@ -145,27 +146,27 @@ get_args(int argc, register char **argv)
 			break;
 		/* backword compatability */
 		case 'r':
-		        pixcolor[RED] = atoi( optarg );
+		        pixcolor[RED] = atoi( bu_optarg );
 			break;
 		case 'g':
-		        pixcolor[GRN] = atoi( optarg );
+		        pixcolor[GRN] = atoi( bu_optarg );
 			break;
 		case 'b':
-		        pixcolor[BLU] = atoi( optarg );
+		        pixcolor[BLU] = atoi( bu_optarg );
 			break;
 		default:		/* '?' */
 			return(0);
 		}
 	}
 
-	if( optind+3 > argc )
+	if( bu_optind+3 > argc )
 		return(0);
-	xpos = atoi( argv[optind++]);
-	ypos = atoi( argv[optind++]);
-	textstring = argv[optind++];
+	xpos = atoi( argv[bu_optind++]);
+	ypos = atoi( argv[bu_optind++]);
+	textstring = argv[bu_optind++];
 	if(debug) (void)fprintf(stderr,"fblabel %d %d %s\n", xpos, ypos, textstring);
 
-	if ( argc > optind )
+	if ( argc > bu_optind )
 		(void)fprintf( stderr, "fblabel: excess argument(s) ignored\n" );
 
 	return(1);		/* OK */
@@ -256,7 +257,7 @@ do_line(register struct vfont *vfp, register char *line)
 
 void
 do_char(struct vfont *vfp, struct vfont_dispatch *vdp, int x, int y)
-{	
+{
 	register int    i, j;
 	int		base;
 	int     	totwid = width;
@@ -338,11 +339,11 @@ bitx(register char *bitstring, register int posn)
 		return (int) (*bitstring) & (1 << posn);
 }
 
-/* 
+/*
  * squash - Filter super-sampled image for one scan line
  */
 
-/* Cone filtering weights. 
+/* Cone filtering weights.
  * #define CNTR_WT 0.23971778
  * #define MID_WT  0.11985889
  * #define CRNR_WT 0.07021166
@@ -399,7 +400,7 @@ fill_buf(register int wid, register int *buf, register char *bitrow)
 	/*
 	 * For each bit in the row, set the array value to 1 if it's on. The
 	 * bitx routine extracts the bit value.  Can't just use the j-th bit
-	 * because the bytes are backwards. 
+	 * because the bytes are backwards.
 	 */
 	for (j = 0; j < wid; j++)
 		if (bitx(bitrow, (j & ~7) + (7 - (j & 7))))
@@ -409,7 +410,7 @@ fill_buf(register int wid, register int *buf, register char *bitrow)
 
 	/*
 	 * Need two samples worth of background on either end to make the
-	 * filtering come out right without special casing the filtering. 
+	 * filtering come out right without special casing the filtering.
 	 */
 	buf[0] = buf[1] = buf[wid + 2] = buf[wid + 3] = 0;
 }

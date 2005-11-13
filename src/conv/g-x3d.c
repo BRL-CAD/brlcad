@@ -354,7 +354,7 @@ writeX3dHeader(FILE *fp_out,
     /* Note we may want to inquire about bounding boxes for the various groups and add Viewpoints nodes that
      * point the camera to the center and orient for Top, Side, etc Views
      *
-     * We will add some default Material Color definitions (for thousands groups) before we start defining the geometry 
+     * We will add some default Material Color definitions (for thousands groups) before we start defining the geometry
      */
     fprintf( fp_out, "\t<Material DEF=\"Material_999\" diffuseColor=\"0.78 0.78 0.78\"/>\n");
     fprintf( fp_out, "\t<Material DEF=\"Material_1999\" diffuseColor=\"0.88 0.29 0.29\"/>\n");
@@ -480,7 +480,7 @@ main(int argc, char **argv)
 	if( !units )
 		units = "mm";
 
-	/* Open brl-cad database */
+	/* Open BRL-CAD database */
 	if ((dbip = db_open( argv[optind] , "r")) == DBI_NULL)
 	{
 		bu_log( "Cannot open %s\n" , argv[optind] );
@@ -584,7 +584,7 @@ nmg_2_vrml(FILE *fp, struct db_full_path *pathp, struct model *m, struct mater_i
 	float r,g,b;
 	point_t ave_pt;
 	char *full_path;
-	/*There may be a better way to capture the region_id, than getting the rt_comb_internal structure, 
+	/*There may be a better way to capture the region_id, than getting the rt_comb_internal structure,
 	 * (and may be a better way to capture the rt_comb_internal struct), but for now I just copied the
 	 * method used in select_lights/select_non_lights above, could have used a global variable but I noticed
 	 * none other were used, so I didn't want to be the first
@@ -1333,7 +1333,7 @@ union tree *nmg_region_end(register struct db_tree_state *tsp, struct db_full_pa
 		{
 			bu_log("WARNING: tsp->ts_m pointer corrupted, ignoring it.\n");
 		}
-	
+
 		bu_free( name, "db_path_to_string" );
 		/* Now, make a new, clean model structure for next pass. */
 		*tsp->ts_m = nmg_mm();

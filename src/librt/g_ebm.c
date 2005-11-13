@@ -28,12 +28,12 @@
  *
  *  Author -
  *	Michael John Muuss
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005
- *  
+ *
  */
 /*@}*/
 
@@ -66,7 +66,7 @@ static const char RCSebm[] = "@(#)$Header$ (BRL)";
 
 /*
 NOTES:
-	Changed small to small11 for win32 compatibility 
+	Changed small to small11 for win32 compatibility
 */
 
 
@@ -103,12 +103,12 @@ struct ebm_hit_private {
 };
 
 
-RT_EXTERN(int rt_ebm_dda,(struct xray *rp, struct soltab *stp,
+BU_EXTERN(int rt_ebm_dda,(struct xray *rp, struct soltab *stp,
 	struct application *ap, struct seg *seghead));
-RT_EXTERN(int rt_seg_planeclip,(struct seg *out_hd, struct seg *in_hd,
+BU_EXTERN(int rt_seg_planeclip,(struct seg *out_hd, struct seg *in_hd,
 	vect_t out_norm, fastf_t in, fastf_t out,
 	struct xray *rp, struct application *ap));
-RT_EXTERN( void rt_ebm_plate, ( int x1, int y1, int x2, int y2,
+BU_EXTERN( void rt_ebm_plate, ( int x1, int y1, int x2, int y2,
 	double t, mat_t mat, struct bu_list *vhead ) );
 
 /*
@@ -319,14 +319,14 @@ if(RT_G_DEBUG&DEBUG_EBM)bu_log("ray on local Z axis\n");
 		segp->seg_in.hit_dist = 0;
 		segp->seg_out.hit_dist = INFINITY;
 
-		segp->seg_in.hit_vpriv[X] = 
+		segp->seg_in.hit_vpriv[X] =
 			(double) igrid[X] / ebmp->ebm_i.xdim;
-		segp->seg_in.hit_vpriv[Y] = 
+		segp->seg_in.hit_vpriv[Y] =
 			(double) igrid[Y] / ebmp->ebm_i.ydim;
 
-		segp->seg_out.hit_vpriv[X] = 
+		segp->seg_out.hit_vpriv[X] =
 			(double) igrid[X] / ebmp->ebm_i.xdim;
-		segp->seg_out.hit_vpriv[Y] = 
+		segp->seg_out.hit_vpriv[Y] =
 			(double) igrid[Y] / ebmp->ebm_i.ydim;
 
 		if( rp->r_dir[Z] < 0 )  {
@@ -445,9 +445,9 @@ if(RT_G_DEBUG&DEBUG_EBM)bu_log("Exit index is %s, t[X]=%g, t[Y]=%g\n",
 				segp->seg_stp = stp;
 				segp->seg_in.hit_dist = t0;
 
-				segp->seg_in.hit_vpriv[X] = 
+				segp->seg_in.hit_vpriv[X] =
 					(double) igrid[X] / ebmp->ebm_i.xdim;
-				segp->seg_in.hit_vpriv[Y] = 
+				segp->seg_in.hit_vpriv[Y] =
 					(double) igrid[Y] / ebmp->ebm_i.ydim;
 
 				/* Compute entry normal */
@@ -479,9 +479,9 @@ if(RT_G_DEBUG&DEBUG_EBM)bu_log("Exit index is %s, t[X]=%g, t[Y]=%g\n",
 				tail = BU_LIST_LAST( seg, &(seghead->l) );
 				tail->seg_out.hit_dist = t0;
 
-				tail->seg_out.hit_vpriv[X] = 
+				tail->seg_out.hit_vpriv[X] =
 					(double) igrid[X] / ebmp->ebm_i.xdim;
-				tail->seg_out.hit_vpriv[Y] = 
+				tail->seg_out.hit_vpriv[Y] =
 					(double) igrid[Y] / ebmp->ebm_i.ydim;
 
 				/* Compute exit normal */
@@ -1217,7 +1217,7 @@ rt_ebm_edge(int x1, int y1, int x2, int y2, int left, struct ebm_edge *edges)
 {
 	struct ebm_edge *new_edge;
 
-	new_edge = (struct ebm_edge *)bu_malloc( sizeof( struct ebm_edge ) , "rt_ebm_tess: new_edge" );	
+	new_edge = (struct ebm_edge *)bu_malloc( sizeof( struct ebm_edge ) , "rt_ebm_tess: new_edge" );
 
 	/* make all edges go from lower values to larger */
 	if( y1 < y2 || x1 < x2 )
@@ -1406,7 +1406,7 @@ rt_ebm_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	struct rt_ebm_internal	*eip;
 	struct shell	*s;
 	struct faceuse	*fu=(struct faceuse*)NULL;
-	register int	i; 
+	register int	i;
 	struct vertex	***vertp;	/* dynam array of ptrs to pointers */
 	struct vertex	**loop_verts;
 	struct ebm_edge	edges;		/* list of edges */
@@ -1477,7 +1477,7 @@ rt_ebm_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	max_loop_length = rt_ebm_sort_edges( &edges );
 
 	/* Make NMG structures */
-	
+
 	/* make region, shell, vertex */
 	*r = nmg_mrsv( m );
 	s = BU_LIST_FIRST(shell, &(*r)->s_hd);
@@ -1550,7 +1550,7 @@ rt_ebm_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 							loop_length , OT_OPPOSITE );
 
 					/* Assign geometry to new vertices */
-					done = 0;	
+					done = 0;
 					e1 = start_loop;
 					i = loop_length - 1;
 					while( !done )
@@ -1960,7 +1960,7 @@ rt_ebm_tclget(Tcl_Interp *interp, const struct rt_db_internal *intern, const cha
 		Tcl_SetResult( interp,"ERROR: Unknown attribute, choices are F, W, N, or H\n",
 		TCL_STATIC );
 		bu_vls_free( &vls );
-		return( TCL_ERROR );       
+		return( TCL_ERROR );
 	}
 
 	Tcl_DStringAppend( &ds, bu_vls_addr( &vls ), -1 );

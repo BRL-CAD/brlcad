@@ -38,12 +38,12 @@
  *	Michael John Muuss
  *	Paul R. Stay
  *	Susanne Muuss, J.D.
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5066
- *  
+ *
  */
 #ifndef lint
 static const char RCSid[] = "@(#)$Header$ (BRL)";
@@ -92,7 +92,7 @@ mk_half(struct rt_wdb *wdbp, const char *name, const fastf_t *norm, double d)
  *  magnitude.
  */
 int
-mk_grip( 
+mk_grip(
 	struct rt_wdb *wdbp,
 	const char *name,
 	const point_t center,
@@ -157,7 +157,7 @@ mk_wedge(struct rt_wdb *wdbp, const char *name, const fastf_t *vert, const fastf
 	VUNITIZE(x_unitv);
 	VMOVE( z_unitv, zdirv );
 	VUNITIZE(z_unitv);
-	
+
 	/* Make y_unitv */
 	VCROSS(y_unitv, x_unitv, z_unitv);
 
@@ -190,8 +190,8 @@ mk_wedge(struct rt_wdb *wdbp, const char *name, const fastf_t *vert, const fastf
  */
 int
 mk_arb4(struct rt_wdb *wdbp, const char *name, const fastf_t *pts)
-             		      
-          		      
+
+
              	     	/* [4*3] */
 {
 	point_t	pt8[8];
@@ -221,8 +221,8 @@ mk_arb4(struct rt_wdb *wdbp, const char *name, const fastf_t *pts)
  */
 int
 mk_arb8(struct rt_wdb *wdbp, const char *name, const fastf_t *pts)
-             		      
-          		      
+
+
              	     		/* [24] */
 {
 	register int i;

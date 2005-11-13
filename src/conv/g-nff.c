@@ -26,7 +26,7 @@
  *
  *  Authors -
  *	John R. Anderson
- *  
+ *
  *  Source -
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5066
@@ -230,7 +230,7 @@ char	*argv[];
 		exit( 1 );
 	}
 
-	/* Open brl-cad database */
+	/* Open BRL-CAD database */
 	argc -= optind;
 	argv += optind;
 	if ((dbip = db_open(argv[0], "r")) == DBI_NULL) {
@@ -324,7 +324,7 @@ char	*argv[];
 	/* a light */
 	VJOIN1( light_loc, model_center, dist_to_eye + 10.0, view_dir );
 	fprintf( fpf, "l %g %g %g 1 1 1\n", V3ARGS( light_loc ) );
-	
+
 
 	/* copy the temporary file to the final file */
 	rewind( fp );
@@ -453,13 +453,13 @@ genptr_t		client_data;
 			/* Error, bail out */
 			char *sofar;
 			BU_UNSETJUMP;		/* Relinquish the protection */
-			
+
 			sofar = db_path_to_string(pathp);
 	                bu_log( "FAILED in Boolean evaluation: %s\n", sofar );
 			fprintf(fpe,"Failed Bool. Eval.: %s\n",sofar);
 			fflush(fpe);
                         bu_free( (char *)sofar, "sofar" );
-                                
+
 			/* Sometimes the NMG library adds debugging bits when
 			 * it detects an internal error, before rt_bomb().
 			 */
@@ -499,7 +499,7 @@ genptr_t		client_data;
 		r = (struct nmgregion *)NULL;
 	}
 /*	regions_done++;  XXX */
-	
+
 	BU_UNSETJUMP;		/* Relinquish the protection */
 	regions_converted++;
 
@@ -564,14 +564,14 @@ genptr_t		client_data;
 				{
 					bu_log("WARNING: tsp->ts_m pointer corrupted, ignoring it.\n");
 				}
-			
+
 				/* Now, make a new, clean model structure for next pass. */
 				*tsp->ts_m = nmg_mm();
 				goto out;
 			}
 
 			region_name = db_path_to_string( pathp );
-			fprintf( fp, "# %s\n", region_name); 
+			fprintf( fp, "# %s\n", region_name);
 			bu_free( region_name, "region name" );
 
 			/* write the material properties to the NFF file */

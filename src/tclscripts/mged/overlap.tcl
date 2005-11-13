@@ -236,7 +236,7 @@ proc read_output { id } {
 
 # run 'g_lint' and display the frame containing the fixing options
 proc fix_overlaps { id } {
-	global over_cont 
+	global over_cont
 
 	set over_cont($id,glint_ret) ""
 
@@ -263,7 +263,7 @@ proc fix_overlaps { id } {
 		set file_name "| g_lint -s -a $over_cont($id,az) -e $over_cont($id,el) -g $size_in_mm $model $over_cont($id,objs) 2> /tmp/g_lint_error"
 		set over_cont($id,fd) [open $file_name]
 		fconfigure $over_cont($id,fd) -blocking false
-		
+
 		if { $over_cont($id,fd) < 1 } {
 			set fd [open /tmp/g_lint_error]
 			set mess [read $fd]
@@ -346,7 +346,7 @@ proc get_comb_leaf { path } {
 
 #	This routine does the actual "db adjust" to include the subtraction
 #	chosen by the user. The argument "which" must be "12" or "21",
-#	indicating the subtraction should be "obj1 - obj2" or 
+#	indicating the subtraction should be "obj1 - obj2" or
 #	"obj2 - obj1" respectively.
 #	Note that transformations in the path must be taken into acount
 proc do_subtract { id which } {
@@ -704,7 +704,7 @@ proc overlap_tool { id } {
 	grid $over_cont($id,work_frame).b5 -row 6 -column 2
 	vdraw open overlaps
 	vdraw params color ff0000
-	
+
 	set over_cont($id,fd) -1
 	set over_cont($id,pid) ""
 	set over_cont($id,length) 0

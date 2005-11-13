@@ -106,7 +106,7 @@ static char	*winpupstr[] =
 	frame buffer since it doesn't advertise the values returned by
 	fb_gettype().
  */
-STATIC bool
+static bool
 tryGetOrigin( xp, yp )
 long *xp, *yp;
 	{	char *fbtype = fb_gettype( fbiop );
@@ -119,7 +119,7 @@ long *xp, *yp;
 	return true;
 	}
 
-STATIC void
+static void
 sgi_Rect( x0, y0, x1, y1 )
 int	x0, y0, x1, y1;
 	{
@@ -133,7 +133,7 @@ int	x0, y0, x1, y1;
 	return;
 	}
 
-STATIC void
+static void
 sgi_OL_Transparent()
 	{
 #ifdef mips
@@ -144,7 +144,7 @@ sgi_OL_Transparent()
 	return;
 	}
 
-STATIC void
+static void
 sgi_OL_Opaque()
 	{
 #ifdef mips
@@ -155,7 +155,7 @@ sgi_OL_Opaque()
 	return;
 	}
 
-STATIC void
+static void
 sgi_OL_Start()
 	{
 #ifdef mips
@@ -166,7 +166,7 @@ sgi_OL_Start()
 	return;
 	}
 
-STATIC void
+static void
 sgi_OL_End()
 	{
 #ifdef mips
@@ -177,7 +177,7 @@ sgi_OL_End()
 	return;
 	}
 
-STATIC void
+static void
 sgi_OL_Erase()
 	{
 #ifndef mips
@@ -210,10 +210,10 @@ long		two_digit_menu;
 static long	popup_gid = -1;
 
 void		sgi_Animate();
-STATIC void	sgi_Pt_Select();
-STATIC void	sgi_Read_Keyboard();
+static void	sgi_Pt_Select();
+static void	sgi_Read_Keyboard();
 
-STATIC int
+static int
 mips_Animate( fps )
 int	fps;
 	{
@@ -221,7 +221,7 @@ int	fps;
 	return	'#'; /* For backward compatibility with SGI menu interface. */
 	}
 
-STATIC int
+static int
 mips_IR_Flags( flag )
 int	flag;
 	{
@@ -230,7 +230,7 @@ int	flag;
 	return	'#'; /* For backward compatibility with SGI menu interface. */
 	}
 
-STATIC int
+static int
 mips_IR_Paint( flag )
 int	flag;
 	{
@@ -244,7 +244,7 @@ int	flag;
 	return	'#'; /* For backward compatibility with SGI menu interface. */
 	}
 
-STATIC int
+static int
 mips_Mat_Print( flag )
 int	flag;
 	{
@@ -253,18 +253,18 @@ int	flag;
 	return	'#'; /* For backward compatibility with SGI menu interface. */
 	}
 
-STATIC int
+static int
 mips_Max_Ray( flag )
 int	flag;
 	{
 	if( ir_mapping )
 		bu_log( "Multiple bounces disallowed during IR mapping.\n" );
 	else
-		max_bounce = flag;	
+		max_bounce = flag;
 	return	'#'; /* For backward compatibility with SGI menu interface. */
 	}
 
-STATIC int
+static int
 mips_Mat_Edit( flag )
 int	flag;
 	{
@@ -272,7 +272,7 @@ int	flag;
 	return	'#'; /* For backward compatibility with SGI menu interface. */
 	}
 
-STATIC int
+static int
 mips_Lgt_Print( flag )
 int	flag;
 	{
@@ -280,7 +280,7 @@ int	flag;
 	return	'#'; /* For backward compatibility with SGI menu interface. */
 	}
 
-STATIC int
+static int
 mips_Lgt_Edit( flag )
 int	flag;
 	{
@@ -288,7 +288,7 @@ int	flag;
 	return	'#'; /* For backward compatibility with SGI menu interface. */
 	}
 
-STATIC int
+static int
 mips_Buffering( flag )
 int	flag;
 	{
@@ -296,7 +296,7 @@ int	flag;
 	return	'#'; /* For backward compatibility with SGI menu interface. */
 	}
 
-STATIC int
+static int
 mips_Debugging( flag )
 int	flag;
 	{
@@ -308,16 +308,16 @@ int	flag;
 	return	'#'; /* For backward compatibility with SGI menu interface. */
 	}
 
-STATIC int
+static int
 mips_Size_Grid( size )
 int	size;
 	{
 	grid_sz = size;
-	setGridSize( grid_sz );	
+	setGridSize( grid_sz );
 	return	'#'; /* For backward compatibility with SGI menu interface. */
 	}
 
-STATIC void
+static void
 sgi_Pup_Strs()
 	{	register int	i, ypos = PUPHGT-WINBANNER-WINBORDER;
 		long	gid = winget();
@@ -333,7 +333,7 @@ sgi_Pup_Strs()
 	winset( gid );
 	}
 
-STATIC void
+static void
 sgi_Pt_Select( x, y, xp, yp, originp )
 register int	x, y, *xp, *yp, *originp;
 	{	char		*args[3];
@@ -377,7 +377,7 @@ register int	x, y, *xp, *yp, *originp;
 	return;
 	}
 
-STATIC void
+static void
 sgi_Pup_Redraw()
 	{	long	gid = winget();
 	winset( popup_gid );
@@ -387,7 +387,7 @@ sgi_Pup_Redraw()
 	return;
 	}
 
-STATIC int
+static int
 sgi_Tag_Pixel( origin, x, y, x0, y0 )
 int	origin, x, y, x0, y0;
 	{	short	val;
@@ -451,7 +451,7 @@ int	origin, x, y, x0, y0;
 		}
 	}
 
-STATIC int
+static int
 sgi_Sweep_Rect( origin, x, y, x0, y0 )
 int	origin, x, y, x0, y0;
 	{	short	val;
@@ -537,7 +537,7 @@ int	origin, x, y, x0, y0;
 		}
 	}
 
-STATIC int
+static int
 sgi_Window_In( origin, x, y, x0, y0, out_flag )
 int	origin, x, y, x0, y0, out_flag;
 	{	short		val;
@@ -1089,7 +1089,7 @@ int	fps;
 					    ||	qread( &val ) != MENUBUTTON;
 						)
 						;
-					break;	
+					break;
 				case MIDDLEMOUSE :
 					/* Wait for user to let go.	*/
 					for(	;
@@ -1297,7 +1297,7 @@ char	*msg;
 	return	inbuf;
 	}
 
-STATIC void
+static void
 sgi_Read_Keyboard( args )
 char	**args;
 	{	register int	i;

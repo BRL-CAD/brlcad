@@ -4,14 +4,22 @@ bin_PROGRAMS = remrt rtsrv
 
 dist_man_MANS = remrt.1
 
-remrt_LDADD = $(top_builddir)/src/rt/libremrt.a ${FB} ${OPTICAL} ${LIBRT}
+remrt_LDADD = \
+	$(top_builddir)/src/rt/libremrt.a \
+	${FB} \
+	${OPTICAL} \
+	${LIBRT}
 remrt_SOURCES = \
 	ihost.c \
 	remrt.c \
 	vers.c
 
 rtsrv_CFLAGS = -DRTSRV
-rtsrv_LDADD = $(top_builddir)/src/rt/libremrt.a ${OPTICAL} ${PKG} ${LIBRT}
+rtsrv_LDADD = \
+	$(top_builddir)/src/rt/libremrt.a \
+	${OPTICAL} \
+	${PKG} \
+	${LIBRT}
 rtsrv_SOURCES = \
 	rtsrv.c \
 	vers.c

@@ -31,7 +31,7 @@
  *  Authors -
  *	Michael John Muuss
  *	(Christopher T. Johnson, GSI)
- *  
+ *
  *  Source -
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
@@ -212,15 +212,15 @@ rt_hf_to_dsp(struct rt_db_internal *db_intern, struct resource *resp)
 
 /**
  *  			R T _ H F _ P R E P
- *  
+ *
  *  Given a pointer to a GED database record, and a transformation matrix,
  *  determine if this is a valid HF, and if so, precompute various
  *  terms of the formula.
- *  
+ *
  *  Returns -
  *  	0	HF is OK
  *  	!0	Error in description
- *  
+ *
  *  Implicit return -
  *  	A struct hf_specific is created, and it's address is stored in
  *  	stp->st_specific for use by hf_shot().
@@ -435,7 +435,7 @@ rt_hf_cell_shot(struct soltab *stp, register struct xray *rp, struct application
 		/* 0, 1 */
 		VJOIN3(tri_C, hfp->hf_V, *sp*hf2mm, hfp->hf_N, xCell+0, xvect,
 		    yCell+1, yvect);
-		VSUB2(tri_CA2nd, tri_C, tri_A);	
+		VSUB2(tri_CA2nd, tri_C, tri_A);
 
 /*		VMOVE(tri_BA2nd, tri_CA1st); */
 
@@ -443,7 +443,7 @@ rt_hf_cell_shot(struct soltab *stp, register struct xray *rp, struct application
 		VCROSS(tri_wn2nd, tri_BA2nd, tri_CA2nd);
 	} else {
 		register double *fp;
-		fp = (double *)hfp->hf_mp->apbuf + 
+		fp = (double *)hfp->hf_mp->apbuf +
 			yCell * hfp->hf_w + xCell;
 		/* 0,0 -> A */
 		VJOIN3(tri_A, hfp->hf_V, *fp*hf2mm, hfp->hf_N, xCell+0, xvect,
@@ -464,7 +464,7 @@ rt_hf_cell_shot(struct soltab *stp, register struct xray *rp, struct application
 		/* 0, 1 */
 		VJOIN3(tri_C, hfp->hf_V, *fp*hf2mm, hfp->hf_N, xCell+0, xvect,
 		    yCell+1, yvect);
-		VSUB2(tri_CA2nd, tri_C, tri_A);	
+		VSUB2(tri_CA2nd, tri_C, tri_A);
 /*		VMOVE(tri_BA2nd, tri_CA1st); */
 		VSUB2(tri_BA2nd, tri_B, tri_A);
 		VCROSS(tri_wn2nd, tri_BA2nd, tri_CA2nd);
@@ -483,7 +483,7 @@ rt_hf_cell_shot(struct soltab *stp, register struct xray *rp, struct application
 	 *	  |   //
 	 *	  |  //
 	 *	  | //
-	 *	   
+	 *
 	 *	  o  -------->  o
 	 *	0,0	BA1st	1,0
 	 *
@@ -510,7 +510,7 @@ rt_hf_cell_shot(struct soltab *stp, register struct xray *rp, struct application
 	k1st = VDOT(wxb, tri_wn1st) / dn;
 	fnd1 = 1;
 #else
-	/* Ray triangle intersection.  
+	/* Ray triangle intersection.
 	 * See: "Graphics Gems" An Efficient Ray-Polygon Intersection P:390
 	 */
 
@@ -671,7 +671,7 @@ leave:
 
 /*
  *	For the given plane of the bounding box of the hf solid, compute the
- *	hit distance and add it to the list of hits.  If the plane happens 
+ *	hit distance and add it to the list of hits.  If the plane happens
  *	to be the "Zmax" face, then the hit is really in the elevation data,
  *	and we skip it.  That will be handled elsewhere.
  */
@@ -684,7 +684,7 @@ axis_plane_isect(int plane, fastf_t inout, struct xray *rp, struct hf_specific *
 
 	if (plane == -6) return;
 
-	if (plane == -3) { 
+	if (plane == -3) {
 		(*hp)->hit_magic = RT_HIT_MAGIC;
 		(*hp)->hit_dist = inout;
 		(*hp)->hit_surfno = plane;
@@ -774,11 +774,11 @@ bu_log("inout: loc[Z]=%g, answer=%g, left=%g, right=%g, xright=%g, xx=%g\n",
 
 /**
  *  			R T _ H T F _ S H O T
- *  
+ *
  *  Intersect a ray with a height field.
  *  If an intersection occurs, a struct seg will be acquired
  *  and filled in.
- *  
+ *
  *  Returns -
  *  	0	MISS
  *	>0	HIT
@@ -1068,7 +1068,7 @@ bu_log("aray[Y]/aray[X]=%g\n", delta);
 			error += delta;
 		}
 		if (RT_G_DEBUG & DEBUG_HF) {
-			bu_log("hf: delta=%g, error=%g, %d, %d\n", 
+			bu_log("hf: delta=%g, error=%g, %d, %d\n",
 			   delta, error, xCell, yCell);
 		}
 
@@ -1098,7 +1098,7 @@ bu_log("aray[Y]/aray[X]=%g\n", delta);
 				VADD2(curloc, curloc, aray);
 				continue;
 			}
-					
+
 			/*
 			 * Get the min/max of the four corners of
 			 * a given cell.  Since the data in memory
@@ -1148,7 +1148,7 @@ bu_log("aray[Y]/aray[X]=%g\n", delta);
 			}
 
 			if (RT_G_DEBUG & DEBUG_HF) {
-				bu_log("lowest=%g, highest=%g\n", 
+				bu_log("lowest=%g, highest=%g\n",
 				    lowest, highest);
 			}
 
@@ -1340,7 +1340,7 @@ bu_log("aray[X]/aray[Y]=%g\n", delta);
 			error += delta;
 		}
 		if (RT_G_DEBUG & DEBUG_HF) {
-			bu_log("hf: delta=%g, error=%g, %d, %d\n", 
+			bu_log("hf: delta=%g, error=%g, %d, %d\n",
 			   delta, error, xCell, yCell);
 		}
 
@@ -1365,7 +1365,7 @@ bu_log("aray[X]/aray[Y]=%g\n", delta);
 				VADD2(curloc, curloc, aray);
 				continue;
 			}
-					
+
 			if (hf->hf_shorts) {
 				register unsigned short *sp;
 				sp = (unsigned short *)hf->hf_mp->apbuf +
@@ -1408,7 +1408,7 @@ bu_log("aray[X]/aray[Y]=%g\n", delta);
 
 
 			if (RT_G_DEBUG & DEBUG_HF) {
-				bu_log("lowest=%g, highest=%g\n", 
+				bu_log("lowest=%g, highest=%g\n",
 				    lowest, highest);
 			}
 
@@ -1558,7 +1558,7 @@ rt_bomb("Odd number of hits.");
 }
 /**
  *  			R T _ H F _ N O R M
- *  
+ *
  *  Given ONE ray distance, return the normal and entry/exit point.
  */
 void
@@ -1616,7 +1616,7 @@ rt_hf_curve(register struct curvature *cvp, register struct hit *hitp, struct so
 
 /**
  *  			R T _ H F _ U V
- *  
+ *
  *  For a hit on the surface of an hf, return the (u,v) coordinates
  *  of the hit point, 0 <= u,v <= 1.
  *  u = azimuth

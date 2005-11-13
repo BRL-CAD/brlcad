@@ -48,7 +48,7 @@ struct header {
 	short		maxx;
 	short		maxy;
 	short		xtend;
-}; 
+};
 struct dispatch
 	{
 	unsigned short	addr;

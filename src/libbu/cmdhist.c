@@ -35,7 +35,7 @@
  *  Source -
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
- *  
+ *
  */
 /*@}*/
 
@@ -59,9 +59,9 @@
  */
 static void
 history_record(struct bu_cmdhist_obj *chop, struct bu_vls *cmdp, struct timeval *start, struct timeval *finish, int status)
-                                 
-                         
-                                    
+
+
+
                    /* Either TCL_OK or TCL_ERROR */
 {
 	struct bu_cmdhist *new_hist;
@@ -88,7 +88,7 @@ timediff(struct timeval *tvdiff, struct timeval *start, struct timeval *finish)
 		return -1;
 	if (start->tv_sec == 0 && start->tv_usec == 0)
 		return -1;
-    
+
 	tvdiff->tv_sec = finish->tv_sec - start->tv_sec;
 	tvdiff->tv_usec = finish->tv_usec - start->tv_usec;
 	if (tvdiff->tv_usec < 0) {
@@ -297,7 +297,7 @@ bu_cmdhist_next(ClientData clientData, Tcl_Interp *interp, int argc, char **argv
 
 	if (BU_LIST_IS_HEAD(chop->cho_curr, &chop->cho_head.l))
 		return TCL_ERROR;
-    
+
 	chop->cho_curr = BU_LIST_PNEXT(bu_cmdhist, chop->cho_curr);
 	if (BU_LIST_IS_HEAD(chop->cho_curr, &chop->cho_head.l))
 		return TCL_ERROR;
@@ -310,7 +310,7 @@ bu_cmdhist_next(ClientData clientData, Tcl_Interp *interp, int argc, char **argv
 /*
  *	F _ D E L A Y
  *
- * 	Uses select to delay for the specified amount of seconds and 
+ * 	Uses select to delay for the specified amount of seconds and
  *	  microseconds.
  */
 

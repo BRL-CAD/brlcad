@@ -56,7 +56,7 @@ static RGBpixel	black = { 0, 0, 0 };
 static int	ir_max_index = -1;
 RGBpixel	*ir_table = (RGBpixel *)RGBPIXEL_NULL;
 
-STATIC void	temp_To_RGB(unsigned char *rgb, int temp);
+static void	temp_To_RGB(unsigned char *rgb, int temp);
 
 int
 ir_Chk_Table(void)
@@ -81,7 +81,7 @@ ir_Chk_Table(void)
 	return	1;
 	}
 
-STATIC int
+static int
 adjust_Page(int y)
 {	int	scans_per_page = fbiop->if_ppixels/fbiop->if_width;
 		int	newy = y - (y % scans_per_page);
@@ -157,7 +157,7 @@ display_Temps(int xmin, int ymin)
 	return;
 	}
 
-STATIC int
+static int
 get_IR(int x, int y, int *fahp, FILE *fp)
 {
 	if( fseek( fp, (long)((y*IR_DATA_WID + x) * sizeof(int)), 0 ) != 0 )
@@ -190,7 +190,7 @@ read_IR(FILE *fp)
 			ir_min = min;
 			ir_max = max;
 			}
-		else 
+		else
 			{ /* Merge with existing range.			*/
 			ir_min = Min( ir_min, min );
 			ir_max = Max( ir_max, max );
@@ -254,7 +254,7 @@ read_IR(FILE *fp)
 	Douglas A. Gwyn here at BRL, and has been modified slightly
 	to suit the input data.
  */
-STATIC void
+static void
 temp_To_RGB(unsigned char *rgb, int temp)
 {	fastf_t		scale = 4.0 / RANGE;
 		fastf_t		t = temp;
@@ -453,7 +453,7 @@ pixel_To_Temp(register RGBpixel (*pixelp))
 #else
 		register RGBpixel *p;
 		register RGBpixel *q = (RGBpixel *) ir_table[ir_max-ir_min];
-#endif	
+#endif
 		register int	temp = ir_min;
 	for( p = (RGBpixel *) ir_table[0]; p <= q; p++, temp++ )
 		{

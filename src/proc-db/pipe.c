@@ -25,7 +25,7 @@
  * Makes both tubing regions and fluid regions or solid cable.
  * Automatically generates elbow regions (and fluid in the
  * elbows) when the piping changes direction.
- * 
+ *
  * Version 1.0
  * Author:	Earl P. Weaver
  * 		Ballistic Research Labratory
@@ -43,7 +43,7 @@
  * Version 3.1
  * Changes by:	John R. Anderson
  * Date:	Wednesday May 18,1994
- *	included in BRLCAD distribution
+ *	included in BRL-CAD distribution
  */
 
 #ifndef lint
@@ -141,7 +141,7 @@ Readpoints(void)
 {
 	struct points *ptr,*prev;
 	fastf_t x,y,z;
-	
+
 	ptr = root;
 	prev = NULL;
 
@@ -288,7 +288,7 @@ Adjust(void)
 
 	VMOVE( root->p1 , root->p );
 	VMOVE( root->p2 , root->p );
-	
+
 	ptr = root->next;
 	if( ptr == NULL )
 		return;
@@ -302,7 +302,7 @@ Adjust(void)
 
 
 	while( ptr->next != NULL )
-	{	
+	{
 		if( !torus && !mitre )
 		{
 			VMOVE( ptr->p1 , ptr->p );
@@ -310,7 +310,7 @@ Adjust(void)
 		}
 		else if( torus )
 		{
-/*			beta=.5*( pi-ptr->alpha );	
+/*			beta=.5*( pi-ptr->alpha );
 			d=( MINR+1.0 )*radius*tan( beta ); */ /* dist from new endpts to p2 */
 
 			beta = 0.5 * ptr->alpha;
@@ -432,7 +432,7 @@ Pipes(void)
 				comblen++;
 			if( !cable && ptr->prev != NULL )
 				comblen++;
-			
+
 			/* make 'u' member record	   */
 
 			mk_addmember( ptr->tube , &head.l , NULL, WMOP_UNION );
@@ -451,7 +451,7 @@ Pipes(void)
 			if( !cable )
 			{
 				/* make REGION for fluid */
-			
+
 				/* make 'u' member record	*/
 
 				mk_addmember( ptr->tubflu , &head.l , NULL, WMOP_UNION );
@@ -492,7 +492,7 @@ Pipes(void)
 			if( !cable )
 			{
 				/* make REGION for fluid */
-			
+
 				/* make 'u' member record	*/
 
 				mk_addmember( ptr->tubflu , &head.l , NULL, WMOP_UNION );
@@ -527,7 +527,7 @@ Elbows(void)	/* make a tubing elbow and fluid elbow */
 	ptr = root->next;
 	while( ptr->next != NULL )
 	{
-		
+
 		/* Make outside elbow solid */
 		if( torus )
 			mk_tor( fdout , ptr->elbow , ptr->center , ptr->norm , ( MINR+1 )*radius , radius );
@@ -562,7 +562,7 @@ Elbows(void)	/* make a tubing elbow and fluid elbow */
 			VJOIN1( pts[5] , pts[4] , len , RN1 );
 			VJOIN1( pts[6] , pts[4] , -len , ptr->nmitre );
 			VJOIN1( pts[7] , pts[4] , len , RN2 );
-		
+
 			mk_arb8( fdout , ptr->cut , &pts[0][X] );
 		}
 
@@ -587,7 +587,7 @@ Elbows(void)	/* make a tubing elbow and fluid elbow */
 			if( !cable )
 				mk_addmember( ptr->elbflu , &head.l , NULL, WMOP_SUBTRACT );	/* make '-' member record	   */
 			mk_addmember( ptr->tube , &head.l , NULL, WMOP_SUBTRACT );
-			mk_addmember( ptr->prev->tube , &head.l , NULL, WMOP_SUBTRACT );	
+			mk_addmember( ptr->prev->tube , &head.l , NULL, WMOP_SUBTRACT );
 
 			mk_lfcomb( fdout , ptr->elbow_r , &head , REGION );	/* make REGION  comb record	   */
 
@@ -595,7 +595,7 @@ Elbows(void)	/* make a tubing elbow and fluid elbow */
 			{
 				mk_addmember( ptr->elbflu , &head.l , NULL, WMOP_UNION );	/* make 'u' member record	*/
 				mk_addmember( ptr->tube , &head.l , NULL, WMOP_SUBTRACT );
-				mk_addmember( ptr->prev->tube , &head.l , NULL, WMOP_SUBTRACT );	
+				mk_addmember( ptr->prev->tube , &head.l , NULL, WMOP_SUBTRACT );
 				mk_lfcomb( fdout , ptr->elbflu_r , &head , REGION );		/* make REGION comb record	*/
 			}
 		}
@@ -657,10 +657,10 @@ Groups(void)
 			while( ptr->next != NULL )
 			{
 				mk_addmember( ptr->tubflu_r , &head.l , NULL, WMOP_UNION );	/* fluid in tubes */
-				
+
 				if( !nothing && !mitre && ptr != root )
 					mk_addmember( ptr->elbflu_r , &head.l , NULL, WMOP_UNION ); /* fluid in elbows */
-				
+
 				ptr = ptr->next;
 			}
 			mk_lfcomb( fdout , tag , &head , 0 );
@@ -700,7 +700,7 @@ main(int argc, char **argv)
 				Usage();
 				exit( 1 );
 				break;
-		
+
 		}
 	}
 
@@ -740,7 +740,7 @@ main(int argc, char **argv)
 	while( k == 0.0 )
 	{
 		printf( "UNITS? (ft,in,m,cm, default is millimeters) ");
-		fgets(units, sizeof(units), stdin);	
+		fgets(units, sizeof(units), stdin);
 		switch (units[0])
 		{
 
@@ -777,7 +777,7 @@ main(int argc, char **argv)
 	while( !done )
 	{
 		if( !cable ) {
-			printf( "radius and wall thickness: ");	
+			printf( "radius and wall thickness: ");
 			if (scanf("%lf %lf", &radius,&wall) == EOF )
 				exit( 1 );
 			if (radius > wall)
@@ -798,7 +798,7 @@ main(int argc, char **argv)
 	}
 	radius=k*radius;
 	wall=k*wall;
-	
+
 	Readpoints();	/* Read data points */
 
 	Names();	/* Construct names for all solids */

@@ -46,7 +46,7 @@ void dir2ae(void)
 {
 	azimuth() = ((direct(Y) == 0) && (direct(X) == 0)) ? 0.0 :
 			atan2 ( -(direct(Y)), -(direct(X)) ) / deg2rad;
-	elevation() = atan2 ( -(direct(Z)), 
+	elevation() = atan2 ( -(direct(Z)),
 		sqrt(direct(X) * direct(X) + direct(Y) * direct(Y))) / deg2rad;
 }
 

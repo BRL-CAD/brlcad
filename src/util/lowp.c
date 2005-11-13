@@ -20,7 +20,7 @@
  */
 /** @file lowp.c
  *  Read 3 .pix files, and do a 3D low-pass filter on them.
- *  
+ *
  *  Mike Muuss, BRL.
  *
  *  $Revision$

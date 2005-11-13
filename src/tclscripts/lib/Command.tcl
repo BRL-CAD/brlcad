@@ -259,7 +259,7 @@
 
     # remove any instances of prompt2 from the beginning of each secondary line
     regsub -all "\n$itk_option(-prompt2)" $cmd "" cmd
-    
+
     set hcmd $cmd
 
     if {$itk_option(-cmd_prefix) != ""} {

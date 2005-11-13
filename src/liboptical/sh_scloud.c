@@ -24,7 +24,7 @@
  *
  *  Author -
  *	Lee A. Butler
- *  
+ *
  *  Source -
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
@@ -136,11 +136,11 @@ struct mfuncs scloud_mfuncs[] = {
  */
 HIDDEN int
 scloud_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip)
-                           
-             	         
+
+
     	      	/* pointer to reg_udata in *rp */
-             		     
-           		      
+
+
 {
 	register struct scloud_specific *scloud;
 	struct db_full_path full_path;
@@ -290,7 +290,7 @@ scloud_render(struct application *ap, struct partition *pp, struct shadework *sw
 	RT_CK_REGION(pp->pt_regionp);
 
 	/* compute the ray/solid in and out points,
-	 * and transform them into "shader space" coordinates 
+	 * and transform them into "shader space" coordinates
 	 */
 	VJOIN1(pt, ap->a_ray.r_pt, pp->pt_inhit->hit_dist, ap->a_ray.r_dir);
 	MAT4X3PNT(in_pt, scloud_sp->mtos, pt);
@@ -308,7 +308,7 @@ scloud_render(struct application *ap, struct partition *pp, struct shadework *sw
 	/* The noise field used by the bn_noise_turb and bn_noise_fbm routines
 	 * has a maximum frequency of about 1 cycle per integer step in
 	 * noise space.  Each octave increases this frequency by the
-	 * "lacunarity" factor.  To sample this space adequately we need 
+	 * "lacunarity" factor.  To sample this space adequately we need
 	 *
 	 *	4 samples per integer step for the first octave,
 	 *	lacunarity * 4 samples/step for the second octave,
@@ -340,7 +340,7 @@ scloud_render(struct application *ap, struct partition *pp, struct shadework *sw
 		VJOIN1(pt, in_pt, i*step_delta, v_cloud);
 
 		/* get turbulence value (0 .. 1) */
-		val = bn_noise_turb(pt, scloud_sp->h_val, 
+		val = bn_noise_turb(pt, scloud_sp->h_val,
 			scloud_sp->lacunarity, scloud_sp->octaves );
 
 		density = scloud_sp->min_d_p_mm + val * delta_dpmm;
@@ -364,7 +364,7 @@ scloud_render(struct application *ap, struct partition *pp, struct shadework *sw
 			lp = (struct light_specific *)swp->sw_visible[i];
 			if (lp == LIGHT_NULL ) continue;
 
-			/* compute how much light has arrived at 
+			/* compute how much light has arrived at
 			 * this location
 			 */
 			incident_light[0] += sub_sw.sw_intensity[3*i+0] *

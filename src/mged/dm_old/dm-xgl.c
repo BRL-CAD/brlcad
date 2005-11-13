@@ -6,16 +6,16 @@
  *  Authors -
  *	Original XGL 2.0/OpenWindows 2.0:
  *		Saul Wold
- *		John Cummings  
+ *		John Cummings
  *	XGL 3.X/OpenWindows 3.X support and significant other enhancements:
  *		James D. Fiori
  *
  *  Source -
- *	Sun Microsystems, Inc.  
+ *	Sun Microsystems, Inc.
  *	Southern Area Special Projects Group
  *	6716 Alexander Bell Drive, Suite 200
  *	Columbia, MD 21046
- *  
+ *
  *  Copyright Notice -
  *	Copyright (c) 1994 Sun Microsystems, Inc. - All Rights Reserved.
  *
@@ -35,23 +35,23 @@
  *	AND FITNESS FOR A PARTICULAR PURPOSE.  THE SOFTWARE PROVIDED HEREUNDER
  *	IS ON AN "AS IS" BASIS, AND SUN MICROSYSTEMS INC. HAS NO OBLIGATION TO
  *	PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
- *  
+ *
  * History -
  *	Modified 12/94 to support XGL 3.X by Sun Microsystems Computer Company
  *		XView code stripped out for the following reasons:
  *			XView is a 'dead' product
  *			Provide similar interface to X and SGI versions of mged
- *		Uses dm-X event processing code. Knob keys (x,y,z,X,Y,Z) were 
+ *		Uses dm-X event processing code. Knob keys (x,y,z,X,Y,Z) were
  *		 	fixed to perform "knob key .1"). Also, using the
  *			Control key with the knob keys performs "knob key -.1".
  *		Polygon surface color-fill support
  *		SunDials support
- *			The dials can be re-set (ie. "knob zero") by pressing 
+ *			The dials can be re-set (ie. "knob zero") by pressing
  *			the '0' key.
  *		Z-Buffering (done in h/w for SX, ZX, s/w for others)
  *		24-bit color (for SX, ZX, S24)
  *		Lighting, Depth Cueing (for SX, ZX, S24)
- *		Anti-alias support for vectors (done in h/w for SX, ZX, s/w 
+ *		Anti-alias support for vectors (done in h/w for SX, ZX, s/w
  *						for others)
  *		Double-Buffering Support:
  *			Performed in Hardware on TGX, SX, ZX
@@ -65,14 +65,14 @@
  *			F3 - Perspective Toggle (currently not functional)
  *			F4 - Z-Buffer Toggle
  *			F5 - Lighting Toggle
- *			F6 - Perspective Angle Change (30, 45, 60, 90) 
+ *			F6 - Perspective Angle Change (30, 45, 60, 90)
  *						(currently not functional)
  *			F7 - Faceplate Toggle
  *			F8 - Line Anti-alias Toggle
  *
  * 	Known Problems:
  *		monochrome is not supported
- *		The GX amd TGX frame buffers are currently not being used in 
+ *		The GX amd TGX frame buffers are currently not being used in
  *		DGA (Direct Graphics Access) mode. PEX is used instead.
  */
 #ifndef lint
@@ -128,7 +128,7 @@ static int		XGL_debug_level = 0;
 						/* Initialization	*/
 static void		init_globals();			/* init globals */
 static int		init_check_buffering();		/* parent setup */
-static void		XGL_object_init();	
+static void		XGL_object_init();
 static void		init_sundials(), reset_sundials();
 static void		handle_sundials_event(), reposition_light();
 static void		setcolortables();		/* init colortables */
@@ -191,7 +191,7 @@ static unsigned char sundials_ev_type;
  *	Global variables
  */
 					/* miscellaneous */
-static int      	height, width;		/* Maintain window dimensions 
+static int      	height, width;		/* Maintain window dimensions
 						 * here */
 static int		no_2d_flag;		/* ON - no display of 2d ctx */
 
@@ -209,7 +209,7 @@ static Xgl_trans        itrans;
 /*
  * Macro for flushing 3D polylines and polygons.
  */
-#define Flush3D 	XGL_object_flush 
+#define Flush3D 	XGL_object_flush
 
 /*
  * Color Map info
@@ -318,7 +318,7 @@ static int perspective_table[] = {
 #define NUM_PERSPECTIVE_ANGLES (sizeof (perspective_table)/sizeof(int))
 static int perspective_angle = NUM_PERSPECTIVE_ANGLES - 1;
 		        /* Angle of perspective */
-	
+
 
 
 /************************************************************************
@@ -401,7 +401,7 @@ XGL_epilog()
 
 	Flush3D();
 	/*
-	 * Place a "centering dot" in the center of the screen 
+	 * Place a "centering dot" in the center of the screen
 	 */
 	XGL_2d_line( 0, 0, 0, 0, 0 );
 
@@ -423,7 +423,7 @@ apply_matrix(mat_t mat)
 		xgl_mat[i/4][i%4] = (fabs(mat[i]) < 1.0e-15) ? 0.0 : mat[i];
 
 	/*
-	 * Write the matrix into the transform, then transpose it 
+	 * Write the matrix into the transform, then transpose it
 	 */
 	xgl_transform_write_specific (trans, xgl_mat, NULL);
         xgl_transform_transpose(trans, trans);
@@ -446,7 +446,7 @@ mat_t mat;
 
 /*
  * 	XGL_object
- *  
+ *
  *  Set up for an object, transformed as indicated, and with an
  *  object center as specified.  The ratio of object to screen size
  *  is passed in as a convienience.
@@ -486,7 +486,7 @@ static Xgl_pt_list pg_vnorm_list = 	{XGL_PT_NORMAL_F3D, 0, 0, 0, 0};
 
 
 static Xgl_pt_f3d      	 *pg_ptr = pg_pts;	/* ptr into polygon point arr*/
-static Xgl_pt_normal_f3d *pg_vnorm_ptr = pg_vnorm_pts;	/* ptr into polygon 
+static Xgl_pt_normal_f3d *pg_vnorm_ptr = pg_vnorm_pts;	/* ptr into polygon
 						           point arr w/ vertex
 							   normals */
 Xgl_facet_list		facet_list;		/* facet (contains color and
@@ -497,7 +497,7 @@ Xgl_color_normal_facet	cn_facet;
 /*
  * Macros for flushing the polyline and polygon lists
  */
- 
+
 #define FlushPlList() \
 	if (pl_solid_list.num_pts) {\
 		xgl_object_set(ctx_3d,XGL_CTX_LINE_STYLE,XGL_LINE_SOLID,0);\
@@ -533,7 +533,7 @@ Xgl_color_normal_facet	cn_facet;
                                 xgl_ptr->y = pt[0][1]; \
                                 xgl_ptr->z = pt[0][2]; \
 				xgl_ptr++;
-	
+
 /* Macro for bumping the number of polyline points, based on a dashed line */
 #define BumpNumPts() \
 		if (sp->s_soldash)\
@@ -557,11 +557,11 @@ double ratio;
 /*	DPRINTF("XGL_object\n");*/
 
 	/* Set the line color (s_dmindex was set in XGL_colorchange) */
-	if(MONOCHROME) 
+	if(MONOCHROME)
 		color_index = 1;
-	else if(white) 
+	else if(white)
 		color_index = DM_WHITE;
-	else 
+	else
 		color_index = sp->s_dmindex;
 
 	if (color_index != last_color_index) {
@@ -574,9 +574,9 @@ double ratio;
                	 	0);
 		last_color_index = color_index;
 	}
-	/* 
+	/*
 	 * Next, check to see if we filled up the polyline arrays. If so,
-	 * flush. 
+	 * flush.
 	 */
 	if (sp->s_soldash) {
 		num_pts = pl_dash_list.num_pts;
@@ -591,7 +591,7 @@ double ratio;
 		}
 		flag_f3d_ptr = &(pl_solid_list.pts.flag_f3d[num_pts]);
 	}
-		
+
 	for( BU_LIST_FOR( vp, rt_vlist, &(sp->s_vlist) ) )  {
 		int    i;
 		int    nused = vp->nused;
@@ -661,7 +661,7 @@ XGL_object_flush()
 /*
  * Init the 'pts' element of the 3 point lists
  */
-static void 
+static void
 XGL_object_init() {
 	pl_solid_list.pts.flag_f3d = pl_solid_pts;
 	pl_dash_list.pts.flag_f3d = pl_dash_pts;
@@ -672,7 +672,7 @@ XGL_object_init() {
 	facet_list.num_facets = 1;
 	facet_list.facets.color_normal_facets = &cn_facet;
 }
-	
+
 /*
  *	XGL_normal
  *
@@ -859,7 +859,7 @@ int		noblock;
 	return;
 }
 
-/* 
+/*
  *	XGL_light
  */
 void
@@ -913,7 +913,7 @@ int	oldstate, newstate;
 	switch( newstate )  {
 	case ST_VIEW:
 		/* constant tracking OFF */
-		XSelectInput( display, xwin, 
+		XSelectInput( display, xwin,
 			ExposureMask|ButtonPressMask|
 			KeyPressMask|StructureNotifyMask);
 		break;
@@ -921,19 +921,19 @@ int	oldstate, newstate;
 	case ST_O_PICK:
 	case ST_O_PATH:
 		/* constant tracking ON */
-		XSelectInput( display, xwin, 
+		XSelectInput( display, xwin,
 		  	PointerMotionMask|ExposureMask|ButtonPressMask|
 			KeyPressMask|StructureNotifyMask );
 		break;
 	case ST_O_EDIT:
 	case ST_S_EDIT:
 		/* constant tracking OFF */
-		XSelectInput( display, xwin, 
+		XSelectInput( display, xwin,
 			ExposureMask|ButtonPressMask|
 			KeyPressMask|StructureNotifyMask );
 		break;
 	default:
-		bu_log("X_statechange: unknown state %s\n", 
+		bu_log("X_statechange: unknown state %s\n",
 			state_str[newstate]);
 		break;
 	}
@@ -1012,11 +1012,11 @@ XGL_colorchange()
 
 	/* Invalidate the last color since the table may have changed */
 	last_color_index = 0xffffffff;
-		
-	if (color_type == XGL_COLOR_RGB) 
+
+	if (color_type == XGL_COLOR_RGB)
 		return;
 
-	if(CMAPDBUFFERING) 
+	if(CMAPDBUFFERING)
 		setcolortables(color_table_A, color_table_B);
 	xgl_object_set(cmap,
 		XGL_CMAP_COLOR_TABLE,		&cmap_info,
@@ -1071,7 +1071,7 @@ register int windowbounds[];
 		bounds_d3d.ymin = windowbounds[3] / 2048.0;
 
 		bounds_d3d.zmax = windowbounds[4] / 2047.0;
-		bounds_d3d.zmin = windowbounds[5] / 2048.0;	
+		bounds_d3d.zmin = windowbounds[5] / 2048.0;
 
 		xgl_object_set(ctx_3d,
 			XGL_CTX_VIEW_CLIP_BOUNDS, &bounds_d3d,
@@ -1162,23 +1162,23 @@ X_setup( Display **dpy, int *screen, Window *win, int *w, int *h)
 	/* Position window at lower-right side of screen */
 	x = DisplayWidth(*dpy, *screen) - *w - WM_BORDER_WIDTH;
 	y = DisplayHeight(*dpy, *screen) - *h - WM_BORDER_HEIGHT;
-	/* 
+	/*
 	 * If we have a 24-bit display, let's use that visual. Otherwise use
 	 * the default visual
 	 */
 	if (depth != 24) {
-		/* 
+		/*
 		 * If we find 1 24-bit visual, must create a colormap for
 		 * that visual, or CreateWindow will fail
 		 */
-		if (XMatchVisualInfo(*dpy, *screen, 24, TrueColor, 
+		if (XMatchVisualInfo(*dpy, *screen, 24, TrueColor,
 				&visual_info)) {
 			xcmap = XCreateColormap(*dpy, RootWindow(*dpy,*screen),
 				visual_info.visual, AllocNone);
 			depth = 24;
 			visual = visual_info.visual;
 		}
-		else if (XMatchVisualInfo(*dpy, *screen, 24, DirectColor, 
+		else if (XMatchVisualInfo(*dpy, *screen, 24, DirectColor,
                                 &visual_info)) {
 			xcmap = XCreateColormap(*dpy, RootWindow(*dpy,*screen),
 				visual_info.visual, AllocAll);
@@ -1205,34 +1205,34 @@ X_setup( Display **dpy, int *screen, Window *win, int *w, int *h)
 	xsh.width =  *w;
 	xsh.x = x;
 	xsh.y = y;
-	XSetStandardProperties(*dpy, *win, "MGED", "MGED", 
+	XSetStandardProperties(*dpy, *win, "MGED", "MGED",
 			None, NULL, 0, &xsh );
 	XSetWMHints(*dpy, *win, &xwmh );
-        XSelectInput(*dpy, *win, 
+        XSelectInput(*dpy, *win,
 		ExposureMask|ButtonPressMask|
 		KeyPressMask |StructureNotifyMask);
 
 	/* Set up the DELETE_WINDOW handshaking */
 	wm_protocols_atom = XInternAtom(*dpy, "WM_PROTOCOLS", False);
 	wm_delete_win_atom = XInternAtom(*dpy, "WM_DELETE_WINDOW", True);
-	if (wm_delete_win_atom == None || wm_protocols_atom == None) 
+	if (wm_delete_win_atom == None || wm_protocols_atom == None)
 	    bu_log("Couldn't get WM_PROTOCOLS or WM_DELETE_WINDOW atom\n");
-	else 
+	else
 		XSetWMProtocols (*dpy, *win, &wm_delete_win_atom, 1);
 
         XMapWindow(*dpy, *win );
- 
+
         while( 1 ) {
                 XNextEvent(*dpy, &event );
                 if( event.type == Expose && event.xexpose.count == 0 ) {
                         XWindowAttributes xwa;
- 
+
                         /* remove other exposure events */
                         while( XCheckTypedEvent(*dpy, Expose, &event) ) ;
- 
+
                         if( XGetWindowAttributes( *dpy, *win, &xwa ) == 0 )
                                 break;
- 
+
                         *w= xwa.width;
                         *h= xwa.height;
                         break;
@@ -1241,16 +1241,16 @@ X_setup( Display **dpy, int *screen, Window *win, int *w, int *h)
         return  0;
 }
 
-static int 
+static int
 XGL_setup()
 {
-	
+
 	Xgl_bounds_d2d	bounds_d2d;
 	Xgl_bounds_d3d	bounds_d3d;
 	int		bufs;
        	Xgl_inquire     *inq_info;
 	Xgl_color	ln_color, bg_color;
-	
+
 	xgl_x_win.X_display = display;
 	xgl_x_win.X_window = xwin;
 	xgl_x_win.X_screen = screen_num;
@@ -1280,7 +1280,7 @@ XGL_setup()
 	/*
 	 * HACK City!!! 12-23-94
 	 * 	The GX and TGX frame buffers have performance problems
-	 * 	and clipping problems when using DGA that have not yet been 
+	 * 	and clipping problems when using DGA that have not yet been
 	 *	resolved. Until they are, we use PEX or Xlib.
 	 */
 	if (frame_buffer_type == FB_GX || frame_buffer_type == FB_TGX) {
@@ -1305,7 +1305,7 @@ XGL_setup()
 		zbuff_on = 1;
 
 	free(inq_info);
-	
+
     	/* ras MUST be created before init_check_buffering() is called */
     	ras = xgl_object_create(sys_state, XGL_WIN_RAS, &win_desc,
 		NULL);
@@ -1367,7 +1367,7 @@ XGL_setup()
 	bounds_d3d.ymax = 1.;
 	bounds_d3d.ymin = -1.;
 	bounds_d3d.zmax = PLOTBOUND;
-	bounds_d3d.zmin = -PLOTBOUND;	
+	bounds_d3d.zmin = -PLOTBOUND;
 
 	ctx_3d = xgl_object_create (sys_state, XGL_3D_CTX, NULL,
 		XGL_CTX_DEVICE,		ras,
@@ -1421,7 +1421,7 @@ XGL_setup()
 		xgl_object_set(ctx_3d,
 		    XGL_CTX_NEW_FRAME_ACTION,
 			(XGL_CTX_NEW_FRAME_CLEAR
-			    | XGL_CTX_NEW_FRAME_SWITCH_BUFFER 
+			    | XGL_CTX_NEW_FRAME_SWITCH_BUFFER
 			    | XGL_CTX_NEW_FRAME_HLHSR_ACTION),
 		    0);
 
@@ -1435,7 +1435,7 @@ XGL_setup()
 	}
 
 	/*
-	 * Initialize the z-buffer by clearing the frame 
+	 * Initialize the z-buffer by clearing the frame
 	 * (XGL_CTX_NEW_FRAME_HLHSR_ACTION is already turned on). Then
 	 * turn z-buffering back off if we don't have HLHSR in hardware.
 	 */
@@ -1447,7 +1447,7 @@ XGL_setup()
 	/* Get the View transformation */
 
 	xgl_object_get (ctx_3d, XGL_CTX_VIEW_TRANS, &trans);
-	xgl_object_set (trans, XGL_TRANS_DATA_TYPE, XGL_DATA_DBL, NULL); 
+	xgl_object_set (trans, XGL_TRANS_DATA_TYPE, XGL_DATA_DBL, NULL);
 
 	/* Create a transform that we'll use for the inverse of the VIEW */
 	itrans = xgl_object_create(sys_state, XGL_TRANS, NULL,
@@ -1492,7 +1492,7 @@ init_check_buffering( int bufs)
 	xgl_object_get(cmap, XGL_CMAP_MAX_COLOR_TABLE_SIZE, &maxsize);
 
 	if(nbufs > 1) {
-		bu_log("\nA total of %d buffers are supported by this\n", 
+		bu_log("\nA total of %d buffers are supported by this\n",
 				nbufs);
 		bu_log("hardware. Hardware double buffering will be used.\n");
 
@@ -1540,7 +1540,7 @@ init_check_buffering( int bufs)
 			       exit(1);
 			}
 		} else {
-			/* 
+			/*
 			 * We don't have HW double buffering AND we're a
 			 * 24-bit frame buffer (XGL_COLOR_RGB). So let's
 			 * not do double-buffering at all so we can do 24-bit
@@ -1580,16 +1580,16 @@ checkevents()
 		case Expose:
 			if( event.xexpose.count == 0 ) {
 				/*
-				 * If we're colormap double-buffering, we 
-				 * need to work around a bug where the 
+				 * If we're colormap double-buffering, we
+				 * need to work around a bug where the
 				 * window manager paints the background with
 				 * BlackPixel, which corresponds to XGL red.
 				 */
 				if(CMAPDBUFFERING) {
-					if (current_buffer_is_A) 
+					if (current_buffer_is_A)
 						display_buff();
 				}
-				if (frame_buffer_type == FB_TGX || 
+				if (frame_buffer_type == FB_TGX ||
 				    CMAPDBUFFERING) {
 					/* Clear the screen before refresh */
 					display_buff();
@@ -1613,7 +1613,7 @@ checkevents()
 			if (frame_buffer_type == FB_TGX) {
 				/* First, clear the screen. This is necessary
 				 * because any area that was obscured will
-				 * not refresh properly after a window move 
+				 * not refresh properly after a window move
 				 * on the TGX
 				 */
 				display_buff();
@@ -1624,8 +1624,8 @@ checkevents()
 			if (event.xclient.message_type == wm_protocols_atom &&
 			    event.xclient.data.l[0] == wm_delete_win_atom) {
 					/* Must have quit from menu */
-			    		bu_vls_printf( 
-						&dm_values.dv_string, 
+			    		bu_vls_printf(
+						&dm_values.dv_string,
 						"q\n");
 			}
 			break;
@@ -1690,8 +1690,8 @@ checkevents()
 		    	cnt = XLookupString(&event.xkey, keybuf, sizeof(keybuf),
 						&key, &compose_stat);
 
-			if (key >= XK_F1 && key <= XK_F12 || 
-			    key == SunXK_F36 || key == SunXK_F37) 
+			if (key >= XK_F1 && key <= XK_F12 ||
+			    key == SunXK_F36 || key == SunXK_F37)
 				/* F36 and F37 are really F11 and F12! */
 				process_func_key(key);
 			else {
@@ -1732,7 +1732,7 @@ F	Toggle faceplate\n\
 				case 'Y':
 				case 'Z':
 					/* 6 degrees per unit */
-					/* 
+					/*
 					 * Knob keys:
 					 *
 					 * If CTRL key is pressed, move negative.
@@ -1796,7 +1796,7 @@ F	Toggle faceplate\n\
 		    	}
 		    }
 		    break;
-		
+
 		case UnmapNotify:
 		case MapNotify:
 		    /* No need for action here - we'll get the Expose */
@@ -1807,7 +1807,7 @@ F	Toggle faceplate\n\
 	}
 }
 
-/* 
+/*
  * Process the SunDials event
  *
  *	SunDials:
@@ -1824,13 +1824,13 @@ F	Toggle faceplate\n\
  *	The SunDials device reports values in units of 1/64th of a degree.
  *	All values are deltas - there is no concept of absolute positions.
  *	Clockwise turns are reported as positive values, counter-clockwise
- *	as negative. The smallest value returned is 90 units, or a little 
+ *	as negative. The smallest value returned is 90 units, or a little
  *	less than 1.5 degrees.
  *
  *	The mged 'knob' command for rotate and slew wants a floating point
  *	value from -1.0 to 1.0. The greater the absolute value of this number
  *	the larger the delta for the operation. So, what we do with the
- *	SunDials device, assuming we start at 0 (neutral) is treat a 
+ *	SunDials device, assuming we start at 0 (neutral) is treat a
  *	counter-clockwise 360-degree turn as going from 0.0 to -1.0. Any
  *	further turn will be pegged at -1.0. Likewise a clockwise full turn
  *	is treated as going from 0.0 to 1.0.
@@ -1852,7 +1852,7 @@ static float current_val[8] = {0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0};
 				/* negative to left, positive to the right */
 
 static void
-reset_sundials() 
+reset_sundials()
 {
 	int	i;
 	for (i = 0; i < SUNDIALS_NUM_DIALS; i++) {
@@ -1872,12 +1872,12 @@ handle_sundials_event(XDeviceMotionEvent *ev)
 	dial_num = ev->first_axis;
 
 	current_units[dial_num] += ev->axis_data[0];
-	if (current_units[dial_num] > SUNDIALS_UNITS_PER_REVOLUTION) 
+	if (current_units[dial_num] > SUNDIALS_UNITS_PER_REVOLUTION)
 		current_units[dial_num] = SUNDIALS_UNITS_PER_REVOLUTION;
-	if (current_units[dial_num] < -SUNDIALS_UNITS_PER_REVOLUTION) 
+	if (current_units[dial_num] < -SUNDIALS_UNITS_PER_REVOLUTION)
 		current_units[dial_num] = -SUNDIALS_UNITS_PER_REVOLUTION;
 
-	val = (float)current_units[dial_num] / 
+	val = (float)current_units[dial_num] /
 			(float)SUNDIALS_UNITS_PER_REVOLUTION;
 
 	/* if we're between -INCR and +INCR, just call it zero */
@@ -1885,7 +1885,7 @@ handle_sundials_event(XDeviceMotionEvent *ev)
 		/* Close enough to 0 */
 		val = 0.0;
 
-	/* 
+	/*
 	 * Now, if the change in value is less than INCR, let's not send a
 	 * command, UNLESS we've got a 0.0 and the previous value as not 0.0.
 	 * This is so we can turn off (reset) the operation.
@@ -1897,7 +1897,7 @@ handle_sundials_event(XDeviceMotionEvent *ev)
 
 	current_val[dial_num] = val;
 	setting = val*2048;
-	
+
 	if (XGL_debug_level)
 		bu_log( "val = %f, setting = %d\n",val, setting);
 
@@ -1947,11 +1947,11 @@ handle_sundials_event(XDeviceMotionEvent *ev)
 	}
 }
 
-static void fk_depth_cue(), fk_zclip(), fk_perspective(), 
+static void fk_depth_cue(), fk_zclip(), fk_perspective(),
 	   fk_zbuffering(), fk_lighting(), fk_p_angle(), fk_faceplate(),
 	   fk_anti_alias(), fk_zero_knobs(), fk_nop();
-static void 
-process_func_key(KeySym key) 
+static void
+process_func_key(KeySym key)
 {
 
 	switch (key) {
@@ -2002,9 +2002,9 @@ fk_depth_cue()
 	 * perspective. We do this so the screen is not so dark with the
 	 * perspective set
 	 */
-	float scale_factors_non_persp[2] = {1.0, 0.2}; 
+	float scale_factors_non_persp[2] = {1.0, 0.2};
 	float scale_factors_persp[2]     = {1.0, 0.5};
-	
+
 	if (color_type == XGL_COLOR_INDEX) {
 		bu_log(
 		    "Depth-cue support not available for this frame buffer\n");
@@ -2012,17 +2012,17 @@ fk_depth_cue()
 	}
 	SetColor(dc_color, DM_BLACK);
 	if (dcue_on == 0) {
-		xgl_object_set(ctx_3d, 
+		xgl_object_set(ctx_3d,
 			XGL_3D_CTX_DEPTH_CUE_MODE, XGL_DEPTH_CUE_SCALED,
 			XGL_3D_CTX_DEPTH_CUE_REF_PLANES, zvals,
-			XGL_3D_CTX_DEPTH_CUE_SCALE_FACTORS, 
+			XGL_3D_CTX_DEPTH_CUE_SCALE_FACTORS,
 			    perspective_mode ? scale_factors_persp :
 					       scale_factors_non_persp,
 			XGL_3D_CTX_DEPTH_CUE_INTERP, TRUE,
 			XGL_3D_CTX_DEPTH_CUE_COLOR, &dc_color,
 			NULL);
 	} else {
-		xgl_object_set(ctx_3d, 
+		xgl_object_set(ctx_3d,
 			XGL_3D_CTX_DEPTH_CUE_MODE, XGL_DEPTH_CUE_OFF,
 			NULL);
 
@@ -2041,10 +2041,10 @@ fk_zclip()
 	bounds_d3d.ymin = -1.;
 	if (zclip_on) {
 		bounds_d3d.zmax = PLOTBOUND;
-		bounds_d3d.zmin = -PLOTBOUND;	
+		bounds_d3d.zmin = -PLOTBOUND;
 	} else {
 		bounds_d3d.zmax = 1.;
-		bounds_d3d.zmin = -1.;	
+		bounds_d3d.zmin = -1.;
 	}
 	xgl_object_set (ctx_3d, XGL_CTX_VDC_WINDOW, &bounds_d3d, NULL);
 	zclip_on = !zclip_on;
@@ -2072,11 +2072,11 @@ fk_zbuffering()
 {
 
 	if (zbuff_on == 0) {
-		xgl_object_set (ctx_3d, 
+		xgl_object_set (ctx_3d,
 			XGL_3D_CTX_HLHSR_MODE, XGL_HLHSR_Z_BUFFER,
 			NULL);
 	} else {
-		xgl_object_set (ctx_3d, 
+		xgl_object_set (ctx_3d,
 			XGL_3D_CTX_HLHSR_MODE, XGL_HLHSR_NONE,
 			NULL);
 	}
@@ -2093,13 +2093,13 @@ fk_lighting()
 	}
 	if (lighting_on == 0) {
 		/*
-		 * We specify illumination of per-vertex (gouraud shading) 
+		 * We specify illumination of per-vertex (gouraud shading)
 		 * since we now receive vertex normals.
 		 */
 		light_switches[0] = light_switches[1] = TRUE;
 		xgl_object_set(ctx_3d,
 			XGL_3D_CTX_LIGHT_SWITCHES, light_switches,
-			XGL_3D_CTX_SURF_FRONT_ILLUMINATION, 
+			XGL_3D_CTX_SURF_FRONT_ILLUMINATION,
 				XGL_ILLUM_PER_VERTEX,	/* gouraud shading */
 			NULL);
 	} else {
@@ -2124,7 +2124,7 @@ reposition_light()
 	 * gets the VIEW transform applied to it, we must take it through the
 	 * inverse of the current transform.
 	 */
-	
+
 	pos.x = -PLOTBOUND;
 	pos.y = -PLOTBOUND;
 	pos.z = PLOTBOUND;
@@ -2144,9 +2144,9 @@ fk_p_angle()
 {
 	/* 'Borrowed' from dm-4d.c */
 	/* toggle perspective matrix */
-       	if (--perspective_angle < 0) 
+       	if (--perspective_angle < 0)
 		perspective_angle = NUM_PERSPECTIVE_ANGLES-1;
-       	if(perspective_mode) 
+       	if(perspective_mode)
 		bu_vls_printf( &dm_values.dv_string,
        		"set perspective %d\n", perspective_table[perspective_angle] );
 	dmaflag = 1;
@@ -2163,13 +2163,13 @@ fk_anti_alias()
 {
 
 	if (anti_alias_on == 0) {
-		xgl_object_set(ctx_3d, 
+		xgl_object_set(ctx_3d,
 			XGL_CTX_LINE_AA_BLEND_EQ, XGL_BLEND_ARBITRARY_BG,
-			XGL_CTX_LINE_AA_FILTER_WIDTH,3, 
+			XGL_CTX_LINE_AA_FILTER_WIDTH,3,
 			XGL_CTX_LINE_AA_FILTER_SHAPE, XGL_FILTER_GAUSSIAN,
 			NULL);
 	} else {
-		xgl_object_set(ctx_3d, 
+		xgl_object_set(ctx_3d,
 			XGL_CTX_LINE_AA_BLEND_EQ, XGL_BLEND_NONE,
 			XGL_CTX_LINE_AA_FILTER_WIDTH, 1,
 			XGL_CTX_LINE_AA_FILTER_SHAPE, XGL_FILTER_GAUSSIAN,
@@ -2254,7 +2254,7 @@ init_lights()
 static void
 init_sundials()
 {
-	
+
 	int          	major_code, minor_code, firsterr, num_dev;
 	int		i,j;
 	XDeviceInfo	*xdevlist;
@@ -2293,15 +2293,15 @@ init_sundials()
                     if ( ((XValuatorInfo *)(classInfo))->num_axes == 8) {
 			sundials_id = xdevlist[i].id;
 			sundials_device = XOpenDevice(display, sundials_id);
-			if (sundials_device == 0) 
+			if (sundials_device == 0)
 				return;	/* Device must not be present */
 
-			/* 
+			/*
 			 * Finally, get the event type to look for in the
 			 * X event processing loop and register interest
 			 * in these events.
 			 */
-			DeviceMotionNotify(sundials_device, 
+			DeviceMotionNotify(sundials_device,
 				sundials_ev_type, ev_class);
 			XSelectExtensionEvent(display, xwin, &ev_class, 1);
 		    }
@@ -2404,14 +2404,14 @@ stop_ts() {
 static int
 getms(struct timeval tp1, struct timeval tp2)
 {
-	return (((tp2.tv_sec*1000000 + tp2.tv_usec) - 
+	return (((tp2.tv_sec*1000000 + tp2.tv_usec) -
 		 (tp1.tv_sec*1000000 + tp1.tv_usec))/1000 );
 }
 dump_pl(Xgl_pt_list *pl, int n)
 {
- 
+
         int i, j;
- 
+
         for (i = 0; i < n; i++) {
                 bu_log("PL[%d]: (%d pts)\n",i, pl[i].num_pts);
                 for (j = 0; j < pl[i].num_pts; j++) {

@@ -12,10 +12,10 @@ reference
 <i>Anim_cascade</i>
 is designed to enable the user to control the movement of objects relative to
 other objects. In the normal mode of operation, the user supplies
-the position and orientation of a (possibly moving) frame of reference and 
-the position 
+the position and orientation of a (possibly moving) frame of reference and
+the position
 and orientation of an object relative to the frame of reference,
-and 
+and
 <i>anim_cascade</i>
 produces the absolute position and orientation of the object at each
 point in time.
@@ -37,11 +37,11 @@ refers to the absolute position and orientation of the object.
 <b>-or </b>
 
 <dd>
-Output the relative position and orientation. 
-If this option is specified, 
+Output the relative position and orientation.
+If this option is specified,
 <i>anim_cascade</i>
 will expect the absolute position and orientation of the frame of
-reference and the object as input, 
+reference and the object as input,
 and will produce the position and orientation or the object relative to
 the frame as output. The
 input columns should be:
@@ -57,10 +57,10 @@ time rx ry rz ryaw rpitch rroll
 
 <dd>
 Output the frame of reference.
-If this option is specified, 
+If this option is specified,
 <i>anim_cascade</i>
 will expect the absolute and relative positions and orientations of the
-object as input, 
+object as input,
 and will produce the corresponding frame of reference as output.
 The input columns should be:
 <p>
@@ -76,51 +76,51 @@ time fx fy fz fyaw fpitch froll
 <dd>
 Specify a constant position for the frame of reference. The
 columns fx, fy, and fz should be omitted from the input table, and the
-command-line arguments will be used instead. 
+command-line arguments will be used instead.
 This has no effect if used
-in conjunction with 
+in conjunction with
 <b>-of</b>
 <dt>
 <b>-fy # # #</b>
 
 <dd>
 Specify a constant orientation for the frame of reference. The
-columns fyaw, fpitch, and froll should be omitted from the input table, 
+columns fyaw, fpitch, and froll should be omitted from the input table,
 and the command-line arguments will be used instead.
 This has no effect if used
-in conjunction with 
+in conjunction with
 <b>-of</b>.
 <dt>
 <b>-rc # # #</b>
 
 <dd>
 Specify a constant position of the object relative to the frame
-of reference. The 
+of reference. The
 columns rx, ry, and rz should be omitted from the input table, and the
 command-line arguments will be used instead.
 This has no effect if used
-in conjunction with 
+in conjunction with
 <b>-or</b>.
 <dt>
 <b>-ry # # #</b>
 
 <dd>
-Specify a constant orientation of the object relative to the 
+Specify a constant orientation of the object relative to the
 frame of reference. The
-columns ryaw,  rpitch, and rroll should be omitted from the input table, 
+columns ryaw,  rpitch, and rroll should be omitted from the input table,
 and the command-line arguments will be used instead.
 This has no effect if used
-in conjunction with 
+in conjunction with
 <b>-or</b>.
 <dt>
 <b>-ac # # #</b>
 
 <dd>
-Specify a constant absolute position for the object. The 
+Specify a constant absolute position for the object. The
 columns ax, ay, and az should be omitted from the input table, and the
 command-line arguments will be used instead.
-This has no effect unless used 
-in conjunction with 
+This has no effect unless used
+in conjunction with
 <b>-or</b>
 or
 <b>-of</b>.
@@ -129,19 +129,19 @@ or
 
 <dd>
 Specify a constant absolute orientation for the object. The
-columns ayaw, apitch, and aroll should be omitted from the input table, 
+columns ayaw, apitch, and aroll should be omitted from the input table,
 and the
 command-line arguments will be used instead.
-This has no effect unless used 
-in conjunction with 
+This has no effect unless used
+in conjunction with
 <b>-or</b>
-or 
+or
 <b>-of</b>.
 <dt>
 <b>-s</b>
 
 <dd>
-Suppress time column. No time column is read or written. 
+Suppress time column. No time column is read or written.
 <p>
 Note: When all of the input columns are specified with command-line arguments,
 then standard input is not read and
@@ -150,7 +150,7 @@ unless it is suppressed.
 
 </dl>
 <h1>EXAMPLES</h1>
-1. Suppose that you want the virtual camera to pan in a circle around a 
+1. Suppose that you want the virtual camera to pan in a circle around a
 moving vehicle, always staying a fixed distance from the vehicle.
 You should already have an animation table with the time, position,
 and orientation of the vehicle in each frame. This will be the moving
@@ -160,19 +160,19 @@ words, how the camera would
 need to move if the vehicle were  standing still
 at the origin. The columns of the second animation table should be
 appended to the columns of the first table
-(using 
+(using
 <i>paste</i>,<i></i>
 for example), to create the
-input table. 
+input table.
 <i>Anim_cascade </i>
 will produce an absolute animation table for
-the camera, suitable to use as input to 
+the camera, suitable to use as input to
 <a href="anim_script.html">anim_script</a>:
 <p>
 anim_cascade &lt; input.table | anim_script -v500 &gt; view.script
 <p>
 2. Suppose that you have an animation path for an object and you want to
-know when it crosses a given oblique plane. You can use the 
+know when it crosses a given oblique plane. You can use the
 <b>-or </b>
 option to
 find out what the position of the object is relative to the frame of
@@ -199,7 +199,7 @@ object lies below the plane.
 <p>
 3. Suppose that one object is situated at the point (1,2,3) with a yaw,
 pitch, and roll of (45, 25, 10). Suppose further that you want to
-position a camera so that the object is 10 
+position a camera so that the object is 10
 units in front of the camera, facing to the camera's right. In other
 words, you know the absolute position and orientation of the object.
 You know how you want the object to look from the viewpoint (frame of

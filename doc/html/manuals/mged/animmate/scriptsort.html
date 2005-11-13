@@ -18,7 +18,7 @@ scripts into one script, or changing the frame order of an existing script.
 <i>Scriptsort</i>
 organizes the input script into three different categories.
 The first category consists of
-numbered frames. Each frame begins with a 
+numbered frames. Each frame begins with a
 <b>start </b>
 <i>frame_num</i>;
 command, and ends with an
@@ -32,7 +32,7 @@ command is ever printed in a single frame.
 <p>
 The second category consists of shell commands. Any line in the
 animation script which is not inside a frame and which begins with an
-exclamation mark is considered to be a shell command. 
+exclamation mark is considered to be a shell command.
 Typically, each frame of an animation script might have an associated
 shell command following it to process the image just computed.
 The third category
@@ -41,23 +41,23 @@ don't belong to any frame and should be executed before the first frame.
 <p>
 Once the input has been sorted by category, output is produced according
 to the following method. First, all of the global animation commands
-that didn't belong to any frame are printed. Next, 
+that didn't belong to any frame are printed. Next,
 <i>scriptsort </i>
 determines the order in which to print the frames. This
 might be in ascending numerical order, or in a scrambled order which
 incrementally increases the time resolution of the script, depending on
-the 
+the
 <b>-b </b>
 option. Then
 <i>scriptsort </i>
 prints the frames in order. After each frame, the
-shell command 
+shell command
 <pre>
 !end_of_frame.sh <i>frame_num</i>
 </pre>
 is added if any of the input frames which contributed to the frame had
 an associated shell command. When the animation script is run
-as input to 
+as input to
 <i>rt,</i>
 the user should create a shell script called "end_of_frame.sh" to
 perform any desired shell commands. The argument to "end_of_frame.sh" is
@@ -93,13 +93,13 @@ integer, beginning with the frame indexed by zero.
 
 <dd>
 <dt>
-4. Divide the base integer in half and print all of the frames whose 
+4. Divide the base integer in half and print all of the frames whose
 
 <dd>
 indexes are odd multiples of the new base integer. Go to step 3.
 </dl>
 <p>
-The base integer can be set to any power of two with the 
+The base integer can be set to any power of two with the
 <b>-b#</b>
 option. To automatically select the largest possible base integer for
 a given script, a non-positive argument should be used.
@@ -129,9 +129,9 @@ error are suppressed.
 
 <dd>
 frame_offset specifies an integer which should be added to all of the frame
-numbers. For example, suppose that the user wants to concatenate 
-two animation scripts which begin at frame zero and are 300 frames long. 
-He or she should run one script through 
+numbers. For example, suppose that the user wants to concatenate
+two animation scripts which begin at frame zero and are 300 frames long.
+He or she should run one script through
 <i>scriptsort</i>
 with an offset of 300 before doing the concatenation.
 </dl>

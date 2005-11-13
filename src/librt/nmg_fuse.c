@@ -30,7 +30,7 @@
  *  Authors -
  *	Michael John Muuss
  *	John R Anderson
- *  
+ *
  *  Source -
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
@@ -400,7 +400,7 @@ out:
 int
 nmg_snurb_is_planar(const struct face_g_snurb *srf, const struct bn_tol *tol)
 {
-	plane_t pl;
+	plane_t pl = {(fastf_t)0.0};
 	int i;
 	int coords;
 	mat_t matrix;
@@ -459,7 +459,7 @@ nmg_snurb_is_planar(const struct face_g_snurb *srf, const struct bn_tol *tol)
 	matrix[8] = matrix[2];
 	matrix[9] = matrix[6];
 	matrix[15] = 1.0;
-		
+
 	/* Check that we don't have a singular matrix */
 	det = bn_mat_determinant( matrix );
 
@@ -891,7 +891,7 @@ nmg_cnurb_lseg_coincident(const struct edgeuse *eu1, const struct edge_g_cnurb *
 
 		if( *vu1->a.magic_p != NMG_VERTEXUSE_A_CNURB_MAGIC )
 		{
-			bu_log( "nmg_cnurb_lseg_coincident: vu (x%x) from CNURB EU (x%x) is not CNURB\n", 
+			bu_log( "nmg_cnurb_lseg_coincident: vu (x%x) from CNURB EU (x%x) is not CNURB\n",
 				vu1, eu1 );
 			rt_bomb( "nmg_cnurb_lseg_coincident: vu from CNURB EU is not CNURB\n" );
 		}
@@ -910,7 +910,7 @@ nmg_cnurb_lseg_coincident(const struct edgeuse *eu1, const struct edge_g_cnurb *
 
 		if( *vu2->a.magic_p != NMG_VERTEXUSE_A_CNURB_MAGIC )
 		{
-			bu_log( "nmg_cnurb_lseg_coincident: vu (x%x) from CNURB EU (x%x) is not CNURB\n", 
+			bu_log( "nmg_cnurb_lseg_coincident: vu (x%x) from CNURB EU (x%x) is not CNURB\n",
 				vu2, eu1 );
 			rt_bomb( "nmg_cnurb_lseg_coincident: vu from CNURB EU is not CNURB\n" );
 		}
@@ -1397,7 +1397,6 @@ nmg_ck_fu_verts(struct faceuse *fu1, struct face *f2, const struct bn_tol *tol)
 	const struct face_g_plane	*fg2;
 	FAST fastf_t		dist;
 	fastf_t			worst = 0;
-	int			k;
 	int			count = 0;
 	struct loopuse		*lu;
 
@@ -1410,7 +1409,7 @@ nmg_ck_fu_verts(struct faceuse *fu1, struct face *f2, const struct bn_tol *tol)
 
 	for ( BU_LIST_FOR( lu, loopuse, &fu1->lu_hd ) ) {
 		struct edgeuse *eu;
-	
+
 		if (BU_LIST_FIRST_MAGIC(&lu->down_hd) == NMG_VERTEXUSE_MAGIC) {
 			register struct vertexuse *vu = BU_LIST_FIRST( vertexuse, &lu->down_hd );
 			register struct vertex *v = vu->v_p;
@@ -1751,11 +1750,11 @@ nmg_break_all_es_on_v(long int *magic_p, struct vertex *v, const struct bn_tol *
 	if( rt_g.NMG_debug & DEBUG_BOOL )
 		bu_log( "nmg_break_all_es_on_v( magic=x%x, v=x%x )\n", magic_p, v );
 
-	NMG_CK_VERTEX( v );	
+	NMG_CK_VERTEX( v );
 	BN_CK_TOL( tol );
 
 	magic_type = bu_identify_magic( *magic_p );
-	if ( !strcmp( magic_type, "NULL" ) || 
+	if ( !strcmp( magic_type, "NULL" ) ||
 	     !strcmp( magic_type, "Unknown_Magic" )  )
 	{
 		bu_log( "Bad magic pointer passed to nmg_break_all_es_on_v (%s)\n", magic_type );
@@ -2209,13 +2208,13 @@ nmg_insure_radial_list_is_increasing(struct bu_list *hd, fastf_t amin, fastf_t a
  */
 void
 nmg_radial_build_list(struct bu_list *hd, struct bu_ptbl *shell_tbl, int existing, struct edgeuse *eu, const fastf_t *xvec, const fastf_t *yvec, const fastf_t *zvec, const struct bn_tol *tol)
-              		    
+
               		           	/* may be null */
-   			         
-              		    
-            		     
-            		     
-            		     
+
+
+
+
+
                    	     		/* for printing */
 {
 	struct edgeuse		*teu;
@@ -2560,8 +2559,8 @@ nmg_find_radial_eu(const struct bu_list *hd, const struct edgeuse *eu)
  */
 const struct edgeuse *
 nmg_find_next_use_of_2e_in_lu(const struct edgeuse *eu, const struct edge *e1, const struct edge *e2)
-                    	    
-                 	    
+
+
                  	    		/* may be NULL */
 {
 	register const struct edgeuse	*neu;
@@ -2597,10 +2596,10 @@ nmg_find_next_use_of_2e_in_lu(const struct edgeuse *eu, const struct edge *e1, c
  */
 void
 nmg_radial_mark_cracks(struct bu_list *hd, const struct edge *e1, const struct edge *e2, const struct bn_tol *tol)
-              		    
-                 	    
+
+
                  	    		/* may be NULL */
-                   	     
+
 {
 	struct nmg_radial	*rad;
 	struct nmg_radial	*other;
@@ -2899,7 +2898,7 @@ nmg_radial_check_parity(const struct bu_list *hd, const struct bu_ptbl *shells, 
 	BN_CK_TOL(tol);
 
 	for( sp = (struct shell **)BU_PTBL_LASTADDR(shells);
- 	     sp >= (struct shell **)BU_PTBL_BASEADDR(shells); sp-- 
+ 	     sp >= (struct shell **)BU_PTBL_BASEADDR(shells); sp--
 	)  {
 
 		NMG_CK_SHELL(*sp);
@@ -2945,7 +2944,7 @@ nmg_radial_check_parity(const struct bu_list *hd, const struct bu_ptbl *shells, 
  */
 void
 nmg_radial_implement_decisions(struct bu_list *hd, const struct bn_tol *tol, struct edgeuse *eu1, fastf_t *xvec, fastf_t *yvec, fastf_t *zvec)
-              		    
+
                    	     		/* for printing */
               		     	/* temp */
       			                 	/*** temp ***/
@@ -3051,7 +3050,7 @@ nmg_pr_radial(const char *title, const struct nmg_radial *rad)
  */
 void
 nmg_pr_radial_list(const struct bu_list *hd, const struct bn_tol *tol)
-                    	    
+
                    	     		/* for printing */
 {
 	struct nmg_radial	*rad;
@@ -3254,7 +3253,7 @@ top:
 				bu_log( "dest_dir disagrees with eu1ref\n" );
 			else
 				bu_log( "dest_dir agrees with eu1ref\n" );
-			
+
 			if( VDOT( src_dir, ref_dir ) < 0.0 )
 				bu_log( "src_dir disagrees with eu1ref\n" );
 			else
@@ -3431,7 +3430,7 @@ nmg_radial_join_eu_NEW(struct edgeuse *eu1, struct edgeuse *eu2, const struct bn
 	nmg_radial_mark_cracks( &list1, eu1->e_p, eu2->e_p, tol );
 
 	for( sp = (struct shell **)BU_PTBL_LASTADDR(&shell_tbl);
- 	     sp >= (struct shell **)BU_PTBL_BASEADDR(&shell_tbl); sp-- 
+ 	     sp >= (struct shell **)BU_PTBL_BASEADDR(&shell_tbl); sp--
 	)  {
 		nmg_radial_mark_flips( &list1, *sp, tol );
 	}
@@ -3466,7 +3465,7 @@ nmg_radial_join_eu_NEW(struct edgeuse *eu1, struct edgeuse *eu2, const struct bn
  */
 void
 nmg_radial_exchange_marked(struct bu_list *hd, const struct bn_tol *tol)
-              		    
+
                    	     		/* for printing */
 {
 	struct nmg_radial	*rad;

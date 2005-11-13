@@ -50,6 +50,8 @@
 #include "raytrace.h"
 #include "wdb.h"
 
+static int overstrikemode = 0;
+static int underscoremode = 0;
 
 struct insert_data {
 	fastf_t scale[3];
@@ -83,6 +85,7 @@ struct layer {
 	int curr_tri;			/* number of triangles currently being used */
 	int line_count;
 	int point_count;
+        int string_count;
 	struct bu_ptbl solids;
 	struct model *m;
 	struct shell *s;
@@ -126,7 +129,8 @@ static int curr_layer;
 #define CIRCLE_ENTITY_STATE		7
 #define	ARC_ENTITY_STATE		8
 #define DIMENSION_ENTITY_STATE		9
-#define NUM_ENTITY_STATES		10
+#define TEXT_ENTITY_STATE		10
+#define NUM_ENTITY_STATES		11
 
 /* POLYLINE flags */
 static int polyline_flag=0;
@@ -194,6 +198,7 @@ static fastf_t sin_delta, cos_delta;
 static fastf_t delta_angle;
 static point_t *circle_pts;
 static fastf_t scale_factor;
+static struct bu_list free_hd;
 
 #define TRI_BLOCK 512			/* number of triangles to malloc per call */
 
@@ -548,7 +553,7 @@ get_layer()
 			bu_log( "New layer: %s, color number: %d", line, curr_color );
 		}
 		layers[curr_layer]->name = bu_strdup( curr_layer_name );
-		if( curr_state->state == ENTITIES_SECTION && 
+		if( curr_state->state == ENTITIES_SECTION &&
 		    (curr_state->sub_state == POLYLINE_ENTITY_STATE ||
 		     curr_state->sub_state == POLYLINE_VERTEX_ENTITY_STATE) ) {
 			layers[curr_layer]->vert_tree_root = layers[old_layer]->vert_tree_root;
@@ -657,7 +662,7 @@ process_unknown_code( int code )
 			break;
 		} else if( !strncmp( line, "ENTITIES", 8 ) ) {
 			curr_state->state = ENTITIES_SECTION;
-			curr_state->sub_state =UNKNOWN_ENTITY_STATE; 
+			curr_state->sub_state =UNKNOWN_ENTITY_STATE;
 			if( verbose ) {
 				bu_log( "Change state to %d\n", curr_state->state );
 			}
@@ -714,7 +719,7 @@ process_header_code( int code )
 		int_ptr = NULL;
 		break;
 	}
-		
+
 	return( 0 );
 }
 
@@ -735,7 +740,7 @@ process_classes_code( int code )
 		}
 		break;
 	}
-		
+
 	return( 0 );
 }
 
@@ -773,7 +778,7 @@ process_tables_unknown_code( int code )
 		}
 		break;
 	}
-		
+
 	return( 0 );
 }
 
@@ -812,7 +817,7 @@ process_tables_layer_code( int code )
 		curr_state->sub_state = UNKNOWN_TABLE_STATE;
 		return( process_tables_unknown_code( code ) );
 	}
-		
+
 	return( 0 );
 }
 
@@ -879,7 +884,7 @@ process_blocks_code( int code )
 		}
 		break;
 	}
-		
+
 	return( 0 );
 }
 
@@ -1028,7 +1033,7 @@ process_entities_polyline_vertex_code( int code )
 		curr_color = atoi( line );
 		break;
 	}
-		
+
 	return( 0 );
 }
 
@@ -1138,7 +1143,7 @@ process_entities_polyline_code( int code )
 						}
 					}
 				}
-				polyline_vert_indices_count=0;	
+				polyline_vert_indices_count=0;
 				polyline_vertex_count = 0;
 			}
 
@@ -1182,7 +1187,7 @@ process_entities_polyline_code( int code )
 		curr_layer_name = make_brlcad_name( line );
 		break;
 	}
-		
+
 	return( 0 );
 }
 
@@ -1248,6 +1253,11 @@ process_entities_unknown_code( int code )
 				bu_log( "sub_state changed to %d\n", curr_state->sub_state );
 			}
 			break;
+		} else if( !strcmp( line, "TEXT" ) ) {
+			curr_state->sub_state = TEXT_ENTITY_STATE;
+			if( verbose ) {
+			    bu_log( "sub_state changed to %d\n", curr_state->sub_state );
+			}
 		} else if( !strncmp( line, "INSERT", 6 ) ) {
 			curr_state->sub_state = INSERT_ENTITY_STATE;
 			if( verbose ) {
@@ -1278,7 +1288,7 @@ process_entities_unknown_code( int code )
 			break;
 		}
 	}
-		
+
 	return( 0 );
 }
 
@@ -1444,7 +1454,7 @@ process_line_entities_code( int code )
 		process_entities_code[curr_state->sub_state]( code );
 		break;
 	}
-	
+
 	return( 0 );
 }
 
@@ -1535,6 +1545,223 @@ process_circle_entities_code( int code )
 	}
 
 	return( 0 );
+}
+
+/* horizontal alignment codes for text */
+#define LEFT 0
+#define CENTER 1
+#define RIGHT 2
+#define ALIGNED 3
+#define HMIDDLE 4
+#define FIT 5
+
+/* vertical alignment codes */
+#define BASELINE 0
+#define BOTTOM 1
+#define VMIDDLE 2
+#define TOP 3
+
+void
+drawString( char *theText, point_t firstAlignmentPoint, point_t secondAlignmentPoint,
+	    double textHeight, double textScale, double textRotation, int horizAlignment, int vertAlignment, int textFlag )
+{
+    double stringLength=0.0;
+    char *copyOfText;
+    char *c, *cp;
+    vect_t diff;
+    double allowedLength;
+    double xScale=1.0;
+    double yScale=1.0;
+    double scale;
+    struct bu_list vhead;
+
+    BU_LIST_INIT( &vhead );
+
+    copyOfText = bu_calloc( strlen( theText )+1, 1, "copyOfText" );
+    c = theText;
+    cp = copyOfText;
+    while( *c ) {
+	if( *c == '%' && *(c+1) == '%' ) {
+		switch( *(c+2) ) {
+		    case 'o':
+		    case 'O':
+			overstrikemode = !overstrikemode;
+			c += 3;
+			break;
+		    case 'u':
+		    case 'U':
+			underscoremode = !underscoremode;
+			c += 3;
+			break;
+		    case 'd':	/* degree */
+		    case 'D':
+			*cp++ = 8;
+			c += 3;
+			break;
+		    case 'p':	 /* plus/minus */
+		    case 'P':
+			*cp++ = 6;
+			c += 3;
+			break;
+		    case 'c':	/* diameter */
+		    case 'C':
+			*cp++ = 7;
+			c += 3;
+			break;
+		    case '%':
+			*cp++ = '%';
+			c += 3;
+			break;
+		    default:
+			*cp++ = *c;
+			c++;
+			break;
+		}
+	} else {
+	    *cp++ = *c++;
+	}
+    }
+
+    bu_free( theText, "theText" );
+    stringLength = strlen( copyOfText );
+
+    if( horizAlignment == FIT && vertAlignment == BASELINE ) {	/* fit along baseline */
+	VSUB2( diff, firstAlignmentPoint, secondAlignmentPoint );
+	allowedLength = MAGNITUDE( diff );
+	xScale = allowedLength / stringLength;
+	yScale = textHeight;
+	scale = xScale < yScale ? xScale : yScale;
+	bn_vlist_2string( &vhead, &free_hd, copyOfText,
+			  firstAlignmentPoint[X], firstAlignmentPoint[Y],
+			  scale, textRotation );
+	nmg_vlist_to_eu( &vhead,layers[curr_layer]->s );
+	BN_FREE_VLIST( &free_hd, &vhead );
+    } else if( horizAlignment == LEFT && vertAlignment == BASELINE ) {
+	bn_vlist_2string( &vhead, &free_hd, copyOfText,
+			  firstAlignmentPoint[X], firstAlignmentPoint[Y],
+			  textHeight, textRotation );
+	nmg_vlist_to_eu( &vhead,layers[curr_layer]->s );
+	BN_FREE_VLIST( &free_hd, &vhead );
+    } else if( (horizAlignment == CENTER || horizAlignment == HMIDDLE) && vertAlignment == BASELINE ) {
+	double len = stringLength * textHeight;
+	firstAlignmentPoint[X] = secondAlignmentPoint[X] - cos(textRotation) * len / 2.0;
+	firstAlignmentPoint[Y] = secondAlignmentPoint[Y] - sin(textRotation) * len / 2.0;
+	bn_vlist_2string( &vhead, &free_hd, copyOfText,
+			  firstAlignmentPoint[X], firstAlignmentPoint[Y],
+			  textHeight, textRotation );
+	nmg_vlist_to_eu( &vhead,layers[curr_layer]->s );
+	BN_FREE_VLIST( &free_hd, &vhead );
+    } else if( horizAlignment == RIGHT && vertAlignment == BASELINE ) {
+	double len = stringLength * textHeight;
+	firstAlignmentPoint[X] = secondAlignmentPoint[X] - cos(textRotation) * len;
+	firstAlignmentPoint[Y] = secondAlignmentPoint[Y] - sin(textRotation) * len;
+	bn_vlist_2string( &vhead, &free_hd, copyOfText,
+			  firstAlignmentPoint[X], firstAlignmentPoint[Y],
+			  textHeight, textRotation );
+	nmg_vlist_to_eu( &vhead,layers[curr_layer]->s );
+	BN_FREE_VLIST( &free_hd, &vhead );
+    } else {
+	bu_log( "cannot handle this alignment\n" );
+    }
+
+    bu_free( copyOfText, "copyOfText" );
+}
+
+static int
+process_text_entities_code( int code )
+{
+    /* Secret text code used in DXF files:
+     *
+     * %%o - toggle overstrike mode
+     * %%u - toggle underscore mode
+     * %%d - degree symbol
+     * %%p - tolerance symbol (plus/minus)
+     * %%c - diameter symbol (circle with line through it, lower left to upper right
+     * %%% - percent symbol
+     */
+
+    static char *theText=NULL;
+    static int horizAlignment=0;
+    static int vertAlignment=0;
+    static int textFlag=0;
+    static point_t firstAlignmentPoint = {0.0, 0.0, 0.0 };
+    static point_t secondAlignmentPoint = {0.0, 0.0, 0.0 };
+    static double textScale=1.0;
+    static double textHeight;
+    static double textRotation=0.0;
+    int coord;
+
+    switch( code ) {
+	case 1:
+	    theText = bu_strdup( line );
+	    break;
+	case 8:		/* layer name */
+		if( curr_layer_name ) {
+			bu_free( curr_layer_name, "curr_layer_name" );
+		}
+		curr_layer_name = make_brlcad_name( line );
+		break;
+	case 10:
+	case 20:
+	case 30:
+	    coord = (code / 10) - 1;
+	    firstAlignmentPoint[coord] = atof( line ) * units_conv[units] * scale_factor;
+	    break;
+	case 11:
+	case 21:
+	case 31:
+	    coord = (code / 10) - 1;
+	    secondAlignmentPoint[coord] = atof( line ) * units_conv[units] * scale_factor;
+	    break;
+	case 40:
+	    textHeight = atof( line );
+	    break;
+	case 41:
+	    textScale = atof( line );
+	    break;
+	case 50:
+	    textRotation = atof( line );
+	    break;
+	case 62:	/* color number */
+		curr_color = atoi( line );
+		break;
+	case 71:
+	    textFlag = atoi( line );
+	    break;
+	case 72:
+	    horizAlignment = atoi( line );
+	    break;
+	case 73:
+	    vertAlignment = atoi( line );
+	    break;
+	case 0:
+	    if( theText != NULL ) {
+		if( verbose ) {
+		    bu_log( "TEXT (%s), height = %g, scale = %g\n", theText, textHeight, textScale );
+		}
+		/* draw the text */
+		get_layer();
+
+		if( !layers[curr_layer]->m ) {
+			create_nmg();
+		}
+		drawString( theText, firstAlignmentPoint, secondAlignmentPoint,
+			    textHeight, textScale, textRotation, horizAlignment, vertAlignment, textFlag );
+		layers[curr_layer]->string_count++;
+	    }
+	    horizAlignment=0;
+	    vertAlignment=0;
+	    textFlag=0;
+	    VSET( firstAlignmentPoint, 0.0, 0.0, 0.0 );
+	    VSET( secondAlignmentPoint, 0.0, 0.0, 0.0 );
+	    textScale=1.0;
+	    textRotation=0.0;
+	    curr_state->sub_state = UNKNOWN_ENTITY_STATE;
+	    process_entities_code[curr_state->sub_state]( code );
+	   break;
+    }
+
+    return( 0 );
 }
 
 static int
@@ -1821,7 +2048,7 @@ process_3dface_entities_code( int code )
 		process_entities_code[curr_state->sub_state]( code );
 		break;
 	}
-	
+
 	return( 0 );
 }
 
@@ -1848,7 +2075,7 @@ process_objects_code( int code )
 		}
 		break;
 	}
-		
+
 	return( 0 );
 }
 
@@ -1869,7 +2096,7 @@ process_thumbnail_code( int code )
 		}
 		break;
 	}
-		
+
 	return( 0 );
 }
 
@@ -2003,6 +2230,7 @@ main( int argc, char *argv[] )
 	mk_id( out_fp , base_name );
 
 	BU_LIST_INIT( &block_head );
+	BU_LIST_INIT( &free_hd );
 
 	process_code[UNKNOWN_SECTION] = process_unknown_code;
 	process_code[HEADER_SECTION] = process_header_code;
@@ -2023,6 +2251,7 @@ main( int argc, char *argv[] )
 	process_entities_code[CIRCLE_ENTITY_STATE] = process_circle_entities_code;
 	process_entities_code[ARC_ENTITY_STATE] = process_arc_entities_code;
 	process_entities_code[DIMENSION_ENTITY_STATE] = process_dimension_entities_code;
+	process_entities_code[TEXT_ENTITY_STATE] = process_text_entities_code;
 
 	process_tables_sub_code[UNKNOWN_TABLE_STATE] = process_tables_unknown_code;
 	process_tables_sub_code[LAYER_TABLE_STATE] = process_tables_layer_code;
@@ -2070,8 +2299,9 @@ main( int argc, char *argv[] )
 
 		BU_LIST_INIT( &head );
 
+		if( layers[i]->color_number < 0 ) layers[i]->color_number = 7;
 		if( layers[i]->curr_tri || BU_PTBL_END( &layers[i]->solids ) || layers[i]->m ) {
-			bu_log( "LAYER: %s\n", layers[i]->name );
+			bu_log( "LAYER: %s, color = %d (%d %d %d)\n", layers[i]->name, layers[i]->color_number, V3ARGS( &rgb[layers[i]->color_number*3]) );
 		}
 
 		if( layers[i]->curr_tri && layers[i]->vert_tree_root->curr_vert > 2 ) {
@@ -2112,15 +2342,15 @@ main( int argc, char *argv[] )
 			bu_log( "\t%d points\n", layers[i]->point_count );
 		}
 
+		if( layers[i]->string_count ) {
+		    bu_log( "\t%d text strings\n", layers[i]->string_count );
+		}
+
 		if( BU_LIST_NON_EMPTY( &head ) ) {
 			unsigned char *tmp_rgb;
 			struct bu_vls comb_name;
 
-			if( layers[i]->color_number < 0 ) {
-				tmp_rgb = &rgb[7];
-			} else {
-				tmp_rgb = &rgb[layers[i]->color_number*3];
-			}
+			tmp_rgb = &rgb[layers[i]->color_number*3];
 			bu_vls_init( &comb_name );
 			bu_vls_printf( &comb_name, "%s.c.%d", layers[i]->name, i );
 			if( mk_comb( out_fp, bu_vls_addr( &comb_name ), &head, 1, NULL, NULL,

@@ -24,14 +24,14 @@
  *
  *  This filter operates on animation tables. Given the desired position
  *  of the airplane in each frame, anim_fly produces a table including the
- *  plane's position and orientation. A "magic factor" should be supplied 
- *  to control the severity of banking. Looping behavior can be toggled 
+ *  plane's position and orientation. A "magic factor" should be supplied
+ *  to control the severity of banking. Looping behavior can be toggled
  *  with another option.
  *
- * 
+ *
  *  Author -
  *	Carl J. Nuzman
- *  
+ *
  *  Source -
  *      The U. S. Army Research Laboratory
  *      Aberdeen Proving Ground, Maryland  21005-5068  USA
@@ -47,7 +47,7 @@
 #include "machine.h"
 #include "bu.h"
 #include "vmath.h"
-#include "anim.h" 
+#include "anim.h"
 
 #ifndef M_PI
 #define M_PI	3.14159265358979323846
@@ -79,7 +79,7 @@ main(int argc, char **argv)
     fastf_t *points, *cur;
     fastf_t yaw, pch, rll, stepsize, first[4], second[4];
     fastf_t f_prm_0(fastf_t x0, fastf_t x1, fastf_t x2, fastf_t h), f_prm_1(fastf_t x0, fastf_t x1, fastf_t x2, fastf_t h), f_prm_2(fastf_t x0, fastf_t x1, fastf_t x2, fastf_t h);
-    void get_orientation(fastf_t *p0, fastf_t *p1, fastf_t *p2, fastf_t (*function) (/* ??? */), fastf_t *p_yaw, fastf_t *p_pch, fastf_t *p_rll);	
+    void get_orientation(fastf_t *p0, fastf_t *p1, fastf_t *p2, fastf_t (*function) (/* ??? */), fastf_t *p_yaw, fastf_t *p_pch, fastf_t *p_rll);
 
     yaw = pch = rll = 0.0;
 
@@ -92,10 +92,10 @@ main(int argc, char **argv)
     scanf("%lf %lf %lf %lf", second, second+1, second+2, second+3);
     stepsize = second[0]-first[0];
 
-    /* determine n, the number of points to store ahead and behind 
+    /* determine n, the number of points to store ahead and behind
      * the current point. 2n points are stored, minimum enn=2 */
     enn = (int) (desired_step/stepsize);
-    if (enn>MAXN) enn=MAXN;	
+    if (enn>MAXN) enn=MAXN;
     if (enn<1) enn=1;
 
     /* allocate storage */
@@ -212,7 +212,7 @@ get_orientation(fastf_t *p0, fastf_t *p1, fastf_t *p2, fastf_t (*function) (/* ?
 	if (upside_down)
 	    (*p_rll) += 180;
     }
-	
+
     last_yaw = *p_yaw;
     not_first_time = 1;
 }
@@ -238,7 +238,7 @@ fastf_t	xyz2pch(fastf_t *d)
 /* given the 3-d velocity and acceleration of an imaginary aircraft,
    find the amount of bank the aircraft would need to undergo.
    Algorithm: the bank angle is proportional to the cross product
-   of the horizontal velocity and horizontal acceleration, up to a 
+   of the horizontal velocity and horizontal acceleration, up to a
    maximum bank of 90 degrees in either direction. */
 fastf_t bank(fastf_t *acc, fastf_t *vel)
 {

@@ -25,7 +25,7 @@
  *	Duplicate the nurb surface.
  *  Author -
  *	Paul Randal Stay
- * 
+ *
  *  Source -
  * 	SECAD/VLD Computing Consortium, Bldg 394
  *	The U.S. Army Ballistic Research Laboratory
@@ -54,7 +54,7 @@ rt_nurb_scopy(const struct face_g_snurb *srf, struct resource *res)
 	NMG_CK_SNURB(srf);
 
 	n = (struct face_g_snurb *) rt_nurb_new_snurb( srf->order[0], srf->order[1],
-		srf->u.k_size, srf->v.k_size, 
+		srf->u.k_size, srf->v.k_size,
 		srf->s_size[0],srf->s_size[1],
 		srf->pt_type, res);
 
@@ -64,7 +64,7 @@ rt_nurb_scopy(const struct face_g_snurb *srf, struct resource *res)
 	for( i = 0; i < srf->v.k_size; i++)
 		n->v.knots[i] =  srf->v.knots[i];
 
-	for ( i = 0; i <  srf->s_size[0] * srf->s_size[1] * 
+	for ( i = 0; i <  srf->s_size[0] * srf->s_size[1] *
 		RT_NURB_EXTRACT_COORDS(srf->pt_type); i++)
 	{
 
@@ -82,13 +82,13 @@ rt_nurb_crv_copy(const struct edge_g_cnurb *crv)
 
 	NMG_CK_CNURB( crv );
 
-	n = (struct edge_g_cnurb *) rt_nurb_new_cnurb( crv->order, 
+	n = (struct edge_g_cnurb *) rt_nurb_new_cnurb( crv->order,
 		crv->k.k_size, crv->c_size, crv->pt_type);
 
 	for( i = 0; i < crv->k.k_size; i++)
 		n->k.knots[i] = crv->k.knots[i];
 
-	for( i = 0; i < crv->c_size * 
+	for( i = 0; i < crv->c_size *
 		RT_NURB_EXTRACT_COORDS(crv->pt_type); i++)
 		n->ctl_points[i] = crv->ctl_points[i];
 

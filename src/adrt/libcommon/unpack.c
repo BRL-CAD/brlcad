@@ -103,22 +103,18 @@ void common_unpack(common_db_t *db, tie_t *tie, util_camera_t *camera, int sockn
 void common_unpack_free(common_db_t *db) {
   int i;
 
-#if 0
   /* Free texture data */
   for(i = 0; i < texture_num; i++)
     texture_list[i].texture->free(texture_list[i].texture);
   free(texture_list);
 
   /* Free mesh data */
-  for(i = 0; i < mesh_num; i++)
-    free(mesh_list[i]);
-  free(mesh_list);
-
-  /* Free triangle data */
-  for(i = 0; i < tri_num; i++)
-    free(tri_list[i]);
-  free(tri_list);
-#endif
+  for(i = 0; i < db->mesh_num; i++) {
+    /* Free triangle data */
+    free(db->mesh_list[i]->tri_list);
+    free(db->mesh_list[i]);
+  }
+  free(db->mesh_list);
 }
 
 
@@ -163,10 +159,6 @@ void common_unpack_env(common_db_t *db, int socknum) {
                 ind += sizeof(int);
                 render_path_init(&db->env.render, samples);
               }
-              break;
-
-            case RENDER_METHOD_KELOS:
-              render_kelos_init(&db->env.render);
               break;
 
             case RENDER_METHOD_PLANE:
@@ -273,7 +265,7 @@ void common_unpack_texture(int socknum) {
 
   /* size of texture data */
   tienet_recv(socknum, &size, sizeof(int), 0);
-  
+
 
   ind = 0;
   while(ind < size) {
@@ -561,8 +553,10 @@ void common_unpack_mesh(common_db_t *db, int socknum, tie_t *tie) {
     math_mat_invert(db->mesh_list[db->mesh_num-1]->matinv, db->mesh_list[db->mesh_num-1]->matrix, 4);
 
     /* Apply Transformation Matrix to Vertices */
-    for(i = 0; i < vnum; i++)
-      math_vec_transform(vlist[i], vlist[i], db->mesh_list[db->mesh_num-1]->matrix);
+    for(i = 0; i < vnum; i++) {
+      v[0] = vlist[i];
+      math_vec_transform(vlist[i], v[0], db->mesh_list[db->mesh_num-1]->matrix);
+    }
 
     /* Allocate memory for ADRT triangles */
     db->mesh_list[db->mesh_num-1]->tri_num = fnum;
@@ -639,6 +633,7 @@ void common_unpack_mesh_link(char *mesh_name, char *prop_name, common_db_t *db) 
     /* Find Mesh */
     if(!strcmp(mesh_name, db->mesh_list[i]->name)) {
       common_unpack_prop_lookup(prop_name, &(db->mesh_list[i]->prop));
+      db->mesh_list[i]->texture = NULL;
       return;
     }
   }

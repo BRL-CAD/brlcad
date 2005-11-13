@@ -9,14 +9,14 @@ scratch pad for the developers to use for tracking development ideas.
 
 THESE SHOULD HAPPEN BEFORE THE NEXT RELEASE
 
-* test, test, test
+* test and release
 
 
 THESE ARE LOWER PRIORITY OR FOR FUTURE RELEASES
 
-* add legal headers on the manpages (as comments), update header.sh
+* support variable overrides for autogen.sh
 
-* better configure section output
+* M-x indent-region scripts
 
 * ensure successful build on mingw
 
@@ -38,8 +38,6 @@ THESE ARE LOWER PRIORITY OR FOR FUTURE RELEASES
 * investigate why g-iges followed by iges-g on a single box results in
   permuted vertex lists
 
-* have x11/tk mged output a helpful message when DISPLAY is unset
-
 * fix reference to a "Create Solid" submenu on pdf page 18 (page 6) of
   volume II
 
@@ -54,6 +52,13 @@ THESE ARE LOWER PRIORITY OR FOR FUTURE RELEASES
 * add support for filesystem-based geometry collections
 
 * add support for levels of detail
+
+
+ODDITIES
+
+* the scale structure in bn_cmd_noise_slice (bn_tcl.c) was never
+  initialized. it looks like somebody has planned to extend the
+  function but never carried out
 
 
 THESE BREAK PROTOCOL OR ARE BACKWARDS-INCOMPATIBLE

@@ -19,7 +19,7 @@
 # information.
 #
 ###
-#			 I C R E A T E . T C L 
+#			 I C R E A T E . T C L
 #
 # Author -
 #	Glenn Durfee
@@ -27,7 +27,7 @@
 # Source -
 #	The U. S. Army Ballistic Research Laboratory
 #	Aberdeen Proving Ground, Maryland  21005
-#  
+#
 #
 #
 # Description -
@@ -66,7 +66,7 @@ proc icreate { id args } {
     incr ic(winnum)
 
     # Pull the object name out of the argument list if present
-    
+
     if { [llength $args]>0 } then {
 	set ic(default_type) [lindex $args 0]
     }
@@ -77,7 +77,7 @@ proc icreate { id args } {
 
     # Make two frames: top one for entry fields and labels, buttom one for
     # create and quit buttons
-    
+
     frame $w.t
     frame $w.b
 
@@ -85,7 +85,7 @@ proc icreate { id args } {
 
     # Top frame contains two frames: l (left) and r (right)
     # Left one is for labels and right one is for entry boxes
-    
+
     frame $w.t.l
     frame $w.t.r
 
@@ -160,7 +160,7 @@ proc icreate { id args } {
 proc ic_newvar { w } {
     global ic
     global $ic($w,indexvar)
-    
+
     if { [catch { set ic($w,index) [set $ic($w,indexvar)] }] != 0 } then {
 	set ic($w,index) 1
 	set $ic($w,indexvar) 1
@@ -195,7 +195,7 @@ proc ic_quit { w } {
 proc ic_create { w } {
     global ic
     global $ic($w,indexvar)
-    
+
     set $ic($w,indexvar) $ic($w,index)
 
     # Perform the formatting of the "name format" supplied by the user
@@ -232,7 +232,7 @@ proc ic_reflist { w id } {
 	error "Please enter a prototype first."
 	return
     }
-    
+
     toplevel $w.ref -screen $mged_gui($id,screen)
     wm title $w.ref "Reference solid list"
 

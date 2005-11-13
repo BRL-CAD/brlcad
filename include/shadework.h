@@ -19,7 +19,7 @@
  * information.
  */
 /** @file shadework.h
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
@@ -29,6 +29,9 @@
  */
 #ifndef SHADEWORK_H
 #define SHADEWORK_H
+
+/* for light_specific */
+//#include "light.h"
 
 #define SW_NLIGHTS	16		/* Max # of light sources */
 
@@ -57,7 +60,7 @@ struct shadework {
 	fastf_t		sw_intensity[3*SW_NLIGHTS]; /* light intensities */
 #endif
 	fastf_t		sw_tolight[3*SW_NLIGHTS];   /* light directions */
-	char		*sw_visible[SW_NLIGHTS]; /* visibility flags/ptrs */
+	struct light_specific	*sw_visible[SW_NLIGHTS]; /* visibility flags/ptrs */
 	fastf_t		sw_lightfract[SW_NLIGHTS];/* % light visible */
 	int		sw_xmitonly;	/* flag: need sw_transmit only */
 					/* sw_xmitonly=1, compute transmission only */

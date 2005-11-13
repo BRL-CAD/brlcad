@@ -61,8 +61,8 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 			fatal_error = TRUE; \
 			return; \
 			}
-STATIC OcList	*copy_OcList(register OcList *orp);
-STATIC OcList	*match_Trie(register Trie *triep);
+static OcList	*copy_OcList(register OcList *orp);
+static OcList	*match_Trie(register Trie *triep);
 
 void
 append_Octp(Trie *triep, Octree *octp)
@@ -124,7 +124,7 @@ add_Trie(const char *name, register Trie **triepp)
 			{ /* Name is subset of another name.		*/
 			return	add_Trie( name, &(*triepp)->n.t_altr );
 			}
-		else	
+		else
 			; /* Name already inserted, so do nothing.	*/
 		return	*triepp;
 		}
@@ -197,7 +197,7 @@ get_Trie(register char *name, register Trie *triep)
 	return copy_OcList( curp->l.t_octp );
 	}
 
-STATIC OcList	*
+static OcList	*
 match_Trie(register Trie *triep)
 {	OcList	*oclist = OCLIST_NULL;
 		register OcList	**oclistp = &oclist;
@@ -222,7 +222,7 @@ match_Trie(register Trie *triep)
 	}
 
 
-STATIC OcList	*
+static OcList	*
 copy_OcList(register OcList *orp)
                	     			/* Input list read pointer.	*/
 	{	OcList *oclistp = OCLIST_NULL;	/* Output list pointer.	*/
@@ -302,7 +302,7 @@ write_Trie(Trie *triep, int level, FILE *fp)
 			{
 			bu_log( "\"%s\"(%d) Write failed!\n", __FILE__, __LINE__ );
 			return	0;
-			}			
+			}
 		namep = name_buf;
 		}
 	*namep = tp->n.t_char;
@@ -330,7 +330,7 @@ int
 read_Trie(FILE *fp)
 {	static char	name_buf[MAX_TRIE_LEVEL+1];
 		register Trie	*triep;
-		F_Hdr_Ptlist	hdr_ptlist;	
+		F_Hdr_Ptlist	hdr_ptlist;
 		int		min, max;
 		extern Trie	*reg_triep;
 	/* Read temperature range information.				*/
@@ -351,7 +351,7 @@ read_Trie(FILE *fp)
 			ir_min = min;
 			ir_max = max;
 			}
-		else 
+		else
 			{ /* Merge with existing range.			*/
 			ir_min = Min( ir_min, min );
 			ir_max = Max( ir_max, max );

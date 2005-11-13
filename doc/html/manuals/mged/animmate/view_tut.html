@@ -11,22 +11,22 @@ animation tutorial. From the main
 menu, select <b>CREATE SCRIPT</b> and then choose <b>View</b> from the
 posted menu. The object animation window disappears and the view
 animation window appears in its place. Change the name of the <b>Output
-file</b> to <code>view.script</code>. 
+file</b> to <code>view.script</code>.
 <h2><a name="MTEFACurves">Making the Eye Follow Animation Curves</a></h2>
 One simple way to animate the view is to designate a path for the eye to
 follow, and then orient the view using automatic steering or other
-methods. Set the source type to 
+methods. Set the source type to
 <b>Source curve</b>, and type <code>spl_path2</code> in the corresponding entry
 box. You will make the eye follow the path that the cone did through the
 torus. Press the <b>View size</b> button to enter the current view size
-into the appropriate box. 
+into the appropriate box.
 Make sure that the <b>Object center</b>, <b>Object yaw, pitch,
 roll</b>, <b>Eye point</b>, and <b>Eye yaw, pitch, roll</b> entry boxes
 are empty or zero-filled. (A good way to delete the contents of an entry
 box is to click on the box with the left mouse, and then type
 <code>CTRL-k</code>.) Under <b>Orientation Control</b>, select
 <b>No rotation</b>. Finally, press <b>OK</b> to create the view
-script. 
+script.
 <p>
 Before showing the script be sure to put the MGED display into
 perspective mode, with a command such as:
@@ -64,7 +64,7 @@ the script which animates the view to create a script in which they move
 together. (This is why you were supposed to save foo.script, the script
 which flies the cone along the curve spl_path2.) From the main menu,
 select <b>COMBINE SCRIPTS</b> to pop up the
-<a href="cscripts.gif">script-combining window</a>. 
+<a href="cscripts.gif">script-combining window</a>.
 On the right side of the window is a listbox which
 should show all of the script files in the current directory. Find
 foo.script in the list, and click on it with the left mouse button. This
@@ -81,7 +81,7 @@ Press
 the <b>OK</b> button to begin combining the scripts. With the short, simple
 scripts being used here, this process won't take long, but when
 combining long, complicated scripts, the process can take a few seconds
-or even minutes in extreme cases. You can halt the process if necessary 
+or even minutes in extreme cases. You can halt the process if necessary
 with the <b>Halt</b> button that appears while the scripts are being
 combined.
 <p>
@@ -120,23 +120,23 @@ first step is to enter the center point and orientation of the cone.
 These
 should approximately the same values you used when animating the cone.
 Before doing this, press the <b>Restore</b> button on the <b>SHOW SCRIPT</b>
-window, to put the cone back into it's true position in the model. 
+window, to put the cone back into it's true position in the model.
 Turn off perspective viewing
-to make centering the 
+to make centering the
 display on the cone easier.
 Set the object center by centering the display on the cone and pressing
-the <b>Object center</b> button. 
+the <b>Object center</b> button.
 Type <code>45 90 0</code> in the
-<b>Object yaw, pitch, roll</b> entry box as you did in the 
-<a href="./object_tut.html#oypr">previous section</a>. 
+<b>Object yaw, pitch, roll</b> entry box as you did in the
+<a href="./object_tut.html#oypr">previous section</a>.
 The next step is to manipulate
 the display until the desired view of the cone is acheived.
-Turn perspective viewing back on, and manipulate the view until the cone appears as you would like to see it. 
+Turn perspective viewing back on, and manipulate the view until the cone appears as you would like to see it.
 You could try, for example, executing the command:
 <pre>
 mged> <b>viewset ypr 0 -40 120</b>
 </pre>
-to look at the top left of the cone. 
+to look at the top left of the cone.
 When you have the view of the cone that you want, press the <b>Eye
 point</b> and <b>Eye yaw, pitch, roll</b> buttons to enter the current
 values. Now, create the view script and combine it with foo.script to
@@ -144,7 +144,7 @@ create a new both.script. When you show this script, the cone should
 move along its usual path, and the view should be fixed to the cone in
 the way that you specified.
 <p>
-If you need to attach the view to a moving object in more complicated ways, 
+If you need to attach the view to a moving object in more complicated ways,
 you
 should consult the <a href="./anim_cascade.html">anim_cascade man page</a>.
 This routine could be used, for example, to make the eye pan in a circle
@@ -156,7 +156,7 @@ the eye should be and what it should look at in every frame. In this
 example, you will move the eye along an edge of the square platform
 while it looks toward the cone.
 Go to the curve editor and make the last node of the path curve current.
-Make a note of the time for this node, which is displayed 
+Make a note of the time for this node, which is displayed
 in the entry next to the <b>Time</b> label. You will now create an eye
 curve which must end at the same time.
 Open a new curve by clicking on the
@@ -168,10 +168,10 @@ in the eye curve. Center the display on a point just above the bottom
 left corner of the platform, and add this to the eye curve. Click on the
 entry box next to the <b>Time</b> label with the left mouse, and change
 the time parameter of this node to match the last time parameter of the
-path curve. Be sure to press the <code>Return</code> key to apply 
+path curve. Be sure to press the <code>Return</code> key to apply
 the new time value
 to the curve. Press the <b>Spline Interpolate</b> button to create an
-interpolated curve called spl_eye. 
+interpolated curve called spl_eye.
 <p>
 The next step is to create an animation table which contains the eye
 curve and the path curve. Open a new or existing table editor using the
@@ -179,7 +179,7 @@ curve and the path curve. Open a new or existing table editor using the
 button and
 select <b>from curve spl_eye</b> from the posted menu. On the input
 request window which pops up, make sure that <b>Replace</b> mode is
-enabled and that all columns will be read, then press <b>OK</b>. 
+enabled and that all columns will be read, then press <b>OK</b>.
 The table editor should fill up with a four-column table of parameters
 from the eye curve.
 Press
@@ -187,10 +187,10 @@ the <b>Read</b> button again, and this time select <b>from curve
 spl_path2</b>. On the input request window, enable <b>Add Columns</b>
 mode, and next to the <b>which columns</b> label enter <code>1-3</code>.
 This will take columns 1,2 and 3 of the path and add them to the right
-of the existing columns of the table editor. 
+of the existing columns of the table editor.
 Column 0 of spl_path is the time column, which
 is not needed since the table editor already has a time column is
-already present. If all has gone 
+already present. If all has gone
 well, there should be seven columns in every row of the table - these
 are time, three eye columns, and three path columns.
 <p>
@@ -207,17 +207,17 @@ steadily along the edge of the platform as it watches the flying cone.
 <h2><a name="EVCurves">Editing View Curves</a></h2>
 A third useful method for view animation is interpolating between
 saved views. A series of views can be saved in a view curve, much as a
-series of points can be stored in an ordinary curves. 
+series of points can be stored in an ordinary curves.
 Select
-<b>VIEW EDITOR</b> from the main menu to pop up the 
+<b>VIEW EDITOR</b> from the main menu to pop up the
 <a href="./vceditor.gif">view editor window</a>.
 
 <p>
-The view editor is similar in many ways to the curve editor. 
+The view editor is similar in many ways to the curve editor.
 The name of the current view curve, displayed next to the <b>Current
 v-curve</b> label, is initially "view".
 By pressing
-the <b>ADD</b> button, you insert the display's view parameters 
+the <b>ADD</b> button, you insert the display's view parameters
 after the current
 node of the view curve. <b>INSERT</b> inserts the display's view
 parameters before
@@ -227,11 +227,11 @@ display's view parameters, and <b>DELETE</b> deletes the current node.
 Once you have stored a set a views in a view curve, you can interpolate
 between them to create a complete view animation table. Interpolating
 between orientations is more complicated then interpolating between
-positions. 
+positions.
 <p>
 To get experience with view interpolation, you first need to create a
 suitable view curve.
-Center the display on the small white sphere (light.r), 
+Center the display on the small white sphere (light.r),
 and select a right view. Zoom in or out if necessary so the moss world
 objects fill most of the screen.
 Press the <b>ADD</b> button to make this the first view in the
@@ -250,25 +250,25 @@ using the left and right arrow buttons.
 <p>
 The views in the view curve are stored as lists of view parameters.
 The particular combination of parameters stored in a given view curve
-are listed next to the <b>Parameters</b> label; 
+are listed next to the <b>Parameters</b> label;
 by default, the parameters are <b>size</b> (viewsize), <b>eye</b> (the three
 coordinates of the eye point), and <b>quat</b> (four quaternion
 orientation coordinates). To see the view curve contents, click on the
-name of the 
+name of the
 the current view curve, which is displayed next to the <b>Current
-v-curve</b> label. The 
-<a href="./vcdwidget.gif">view curve display window</a> 
-which pops up is similar 
-to a 
+v-curve</b> label. The
+<a href="./vcdwidget.gif">view curve display window</a>
+which pops up is similar
+to a
 table editor, exept that the text can't be edited, and there are
 fewer functions in the menu bar on the bottom line. Each row of the
 table corresponds to one of the saved views, and each column corresponds to
-one of the current view parameters. 
+one of the current view parameters.
 In this case, the
 first column is time, the next is the viewsize, the next three are the
-eye point, and the last four are a quaternion. 
+eye point, and the last four are a quaternion.
 The row of the table
-corresponding to the current node is always highlighted. 
+corresponding to the current node is always highlighted.
 <p>
 Back in the view editor
 window, press the <b>Parameters</b> button and examine the posted menu.
@@ -290,7 +290,7 @@ Press the <b>Interpolate</b> button on the table editor to pop up a
 Each entry at the top of the interpolator window represents a column of
 the output table that will be produced. Each entry box should contain an
 interpolation command, such as spline or linear. All of the possible
-interpolation commands are listed when you post the <b>Active 
+interpolation commands are listed when you post the <b>Active
 Command</b> menu. If the  command <code>spline 1</code> were placed in
 entry box 2, that would mean that column 1
 of the input table will be spline interpolated and placed in column 2
@@ -300,7 +300,7 @@ Since the viewsize, eye point, and yaw, pitch, and roll can all
 be spline interpolated, the default entries are exactly what you want.
 The start
 and end times for the interpolation are by default set to the start and
-end times for the input table. 
+end times for the input table.
 Press <b>OK</b> to do the
 interpolation.
 <p>
@@ -324,13 +324,13 @@ Go back to the view editor and select <b>size eye quat</b> from the
 columns, using <b>Replace</b> mode. Then press the <b>Interpolate</b>
 button. Although the view size and eye point can be interpolated with
 spline interpolation, the quaternions must be interpolated with a
-special quaternion interpolator. 
+special quaternion interpolator.
 Select <b>Quaternion (src)</b> from the <b>Active Command</b> menu, and
 then click on the column labels for entry boxes 5 through 8. This
 replaces
 the interpolation command <code>spline</code> with
-<code>quat</code>, for columns five through eight. 
-Then press <b>OK</b> to do the interpolation. 
+<code>quat</code>, for columns five through eight.
+Then press <b>OK</b> to do the interpolation.
 <p>
 Go
 back to the view animation window, and enable <b>Rotation specified as
@@ -342,7 +342,7 @@ Take a few moments to compare the animations produced by
 <code>view.script</code> and  <code>view2.script</code>..
 In the script created with yaw,
 pitch, and roll, notice how far the view center strays from the small white
-sphere after passing through the top view. 
+sphere after passing through the top view.
 This is an indication that the orientation is swinging too wildly
 between the views you specified.
 Quaternion interpolation
@@ -362,7 +362,7 @@ shere. Press <b>OK</b> to replace the eye path with those constant
 values. Next, go to the view animation window. You will use the <b>Eye
 point</b> entry box to set the eye back a certain distance from the
 white sphere. Note the viewsize from the second column of the table
-editor, divide this number in half, negate it, and enter 
+editor, divide this number in half, negate it, and enter
 the result followed by two space-separated zeros in
 the <b>Eye point</b> entry box. (The distance from the eye to the center
 point is always one half the viewsize.) For example, if you used a
@@ -381,8 +381,8 @@ the others because it always stores a "right-side up" view. The eye
 point and view center are not quite enough to completely specify the
 view, which is still free to twist around the axis defined by those two
 points. To resolve the ambiguity, AnimMate always selects a
-right-side up view when a  
-center point and eye point are stored in a view curve. 
+right-side up view when a
+center point and eye point are stored in a view curve.
 Select <b>eye center</b> to convert the view
 curve to that format. Enable <b>Apply current node to view</b> and step
 back and forth through the saved views. Notice that all of the views are
@@ -391,7 +391,7 @@ probably no longer a normal top view. The <b>eye center</b> orientation
 is ill-conditioned when the axis they define is nearly vertical, because
 slight floating point errors in the coordinates can cause big changes in
 the resulting orientation.
-<p> 
+<p>
 Disable <b>Apply current node to view</b> and execute the command:
 <pre>
 mged> <b>ae -90 80</b>
@@ -399,7 +399,7 @@ mged> <b>ae -90 80</b>
 This is close to a top view, but not close enough to cause ill-
 conditioning problems. Use the view editor arrow buttons to
 make node 1 of the view curve current, and press <b>MOVE</b> to
-overwrite node 1 with the current view. 
+overwrite node 1 with the current view.
 Go back to a table editor and read in the new view curve, replacing the
 old editor contents. Press the <b>Interpolate</b> button and then
 <b>OK</b> to spline interpolate the eye point and center point. Go back
@@ -410,7 +410,7 @@ Click on the <b>Eye point</b> entry box with the left mouse and use
 the keyboard sequence <code>&lt;Ctrl&gt;-a &lt;Ctrl&gt;-k</code> to delete the
 contents of that line. Now re-create and show the view script.
 Note that the view always stays perfectly centered
-on the small white sphere, and the view is always right-side up. 
+on the small white sphere, and the view is always right-side up.
 The <b>eye center</b> interpolation method is
 probably the best in view animations where only right-side up views are
 wanted.
@@ -418,7 +418,7 @@ wanted.
 At this point, you have all the tools you need to use AnimMate for a
 variety of object and view animations. The last and final section of
 this tutorial introduces a specialized tool for animating vehicles with
-articulated tracks. You might also be interested in the 
+articulated tracks. You might also be interested in the
 <a href="./rt_tut.html">appendix</a>, which
 offers some hints on ray-tracing your animation scripts.
 <hr>

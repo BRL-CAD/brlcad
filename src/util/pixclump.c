@@ -25,7 +25,7 @@
  *
  *  Author -
  *	Paul J. Tanenbaum
- *  
+ *
  *  Source -
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5068
@@ -39,7 +39,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif
-                                                                                                                                                                            
+
 
 #include <stdio.h>
 #include <math.h>
@@ -116,7 +116,7 @@ static void fill_table (char *f_name)
 
     if ((fp = fopen(f_name, "r")) == NULL)
     {
-	bu_log ("Cannot open color file '%s'\n", optarg);
+	bu_log ("Cannot open color file '%s'\n", bu_optarg);
 	exit (1);
     }
 
@@ -185,8 +185,8 @@ main (int argc, char **argv)
     int			best_diff;	/* error in best match */
     int			this_diff;	/* pixel-color_tbl difference */
 
-    extern int	optind;			/* index from getopt(3C) */
-    extern char	*optarg;		/* argument from getopt(3C) */
+    extern int	bu_optind;			/* index from bu_getopt(3C) */
+    extern char	*bu_optarg;		/* argument from bu_getopt(3C) */
 
     /*
      *	Initialize the color table
@@ -199,13 +199,13 @@ main (int argc, char **argv)
     /*
      *	Process the command line
      */
-    while ((ch = getopt(argc, argv, OPT_STRING)) != EOF)
+    while ((ch = bu_getopt(argc, argv, OPT_STRING)) != EOF)
 	switch (ch)
 	{
 	    case 'c':
-		if (! bu_str_to_rgb(optarg, rgb))
+		if (! bu_str_to_rgb(bu_optarg, rgb))
 		{
-		    bu_log("Illegal color: '%s'\n", optarg);
+		    bu_log("Illegal color: '%s'\n", bu_optarg);
 		    print_usage();
 		    exit (1);
 		}
@@ -213,13 +213,13 @@ main (int argc, char **argv)
 		cf_name = 0;
 		break;
 	    case 'f':
-		cf_name = optarg;
+		cf_name = bu_optarg;
 		next_color = 0;
 		break;
 	    case 'x':
-		if (sscanf(optarg, "%x", (unsigned int *) &debug) != 1)
+		if (sscanf(bu_optarg, "%x", (unsigned int *) &debug) != 1)
 		{
-		    bu_log("Invalid debug-flag value: '%s'\n", optarg);
+		    bu_log("Invalid debug-flag value: '%s'\n", bu_optarg);
 		    print_usage();
 		    print_debug_usage();
 		    exit (1);
@@ -230,7 +230,7 @@ main (int argc, char **argv)
 		print_usage();
 		exit (ch != '?');
 	}
-    switch (argc - optind)
+    switch (argc - bu_optind)
     {
 	case 0:
 	    inf_name = "stdin";
@@ -252,7 +252,7 @@ main (int argc, char **argv)
      */
     if (infp == NULL)
     {
-	inf_name = argv[optind];
+	inf_name = argv[bu_optind];
 	if ((infp = fopen(inf_name, "r")) == NULL)
 	{
 	    bu_log ("Cannot open input file '%s'\n", inf_name);
@@ -260,7 +260,7 @@ main (int argc, char **argv)
 	}
 	if (outfp == NULL)
 	{
-	    outf_name = argv[++optind];
+	    outf_name = argv[++bu_optind];
 	    if ((outfp = fopen(outf_name, "w")) == NULL)
 	    {
 		bu_log ("Cannot open output file '%s'\n", outf_name);

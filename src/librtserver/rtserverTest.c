@@ -133,7 +133,7 @@ main( int argc, char *argv[] )
 			exit( 1 );
 		}
 	}
-	
+
 	/* load geometry */
 	if( BU_PTBL_LEN( &objs ) > 0 ) {
 		char **objects;

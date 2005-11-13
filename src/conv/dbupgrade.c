@@ -125,7 +125,7 @@ main(int argc, char **argv)
 			bu_log( "db_dbopen() failed for %s\n", argv[out_arg] );
 			return 4;
 		}
-		
+
 	}
 
 	if( !reverse ) {
@@ -164,7 +164,7 @@ main(int argc, char **argv)
 		db5_update_attribute("_GLOBAL", "regionid_colortable", bu_vls_addr(&colortab), fp->dbip);
 		bu_vls_free( &colortab );
 	}
-	
+
 
 	/* Retrieve every item in the input database */
 	FOR_ALL_DIRECTORY_START(dp, dbip)  {

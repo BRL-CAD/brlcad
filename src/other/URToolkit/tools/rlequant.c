@@ -33,6 +33,7 @@ char rcsid[] = "$Header$";
 rlequant()			Tag the file.
 */
 
+#include <stdlib.h>
 #include <stdio.h>
 #include "rle.h"
 #include "colorquant.h"

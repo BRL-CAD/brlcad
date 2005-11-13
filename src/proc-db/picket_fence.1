@@ -1,4 +1,27 @@
 .TH PICKETT_FENCE 1 BRL-CAD
+./"                 P I C K E T _ F E N C E . 1
+./" BRL-CAD
+./"
+./" Copyright (c) 2005 United States Government as represented by
+./" the U.S. Army Research Laboratory.
+./"
+./" This document is made available under the terms of the GNU Free
+./" Documentation License or, at your option, under the terms of the
+./" GNU General Public License as published by the Free Software
+./" Foundation.  Permission is granted to copy, distribute and/or
+./" modify this document under the terms of the GNU Free Documentation
+./" License, Version 1.2 or any later version published by the Free
+./" Software Foundation; with no Invariant Sections, no Front-Cover
+./" Texts, and no Back-Cover Texts.  Permission is also granted to
+./" redistribute this document under the terms of the GNU General
+./" Public License; either version 2 of the License, or (at your
+./" option) any later version.
+./"
+./" You should have received a copy of the GNU Free Documentation
+./" License and/or the GNU General Public License along with this
+./" document; see the file named COPYING for more information.
+./"
+./"./"./"
 .SH NAME
 pickett_fence \- Pickett fence geometry file generator
 .SH SYNOPSIS
@@ -6,7 +29,7 @@ pickett_fence \- Pickett fence geometry file generator
 <filename> <prefix> <height> <spacing> <x0> <y0> <z0> ... <xn> <yn> <zn> [-r]
 .SH DESCRIPTION
 .I pickett_fence\^
-creates a geometry file in 
+creates a geometry file in
 .I <filename>\^
 of a pickett fence.  All parameters for the fence are in mm.  If more than two
 points are specified it will generate a fence with multiple sections connecting
@@ -23,7 +46,7 @@ order.  Parts of the model are named according to the format
 The
 .I <prefix>\^
 above is the second argument to the program.  The
-.I spacing\^ 
+.I spacing\^
 parameter specifies the ammount of space (in mm) between picketts.  The
 .I -r\^
 option specifies round fronts for the picketts.

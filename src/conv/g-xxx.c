@@ -27,7 +27,7 @@
  *
  *  Author -
  *	John R. Anderson
- *  
+ *
  *  Source -
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5066
@@ -83,7 +83,7 @@ char	*argv[];
 	bu_setlinebuf( stderr );
 
 	rt_init_resource(&rt_uniresource, 0, NULL);
-	
+
 	/* calculational tolerances
 	 * mostly used by NMG routines
 	 */
@@ -127,7 +127,7 @@ char	*argv[];
 		exit(1);
 	}
 
-	/* Open brl-cad database */
+	/* Open BRL-CAD database */
 	if ((dbip = db_open( argv[optind] , "r")) == DBI_NULL)
 	{
 		bu_log( "Cannot open %s\n" , argv[optind] );
@@ -502,7 +502,7 @@ genptr_t	ptr;
 					struct rt_grip_internal *grip = (struct rt_grip_internal *)itrn.idb_ptr;
 					break;
 				}
-				
+
 			case ID_SKETCH:
 				{
 					struct rt_sketch_internal *sketch = (struct rt_sketch_internal *)itrn.idb_ptr;
@@ -516,7 +516,7 @@ genptr_t	ptr;
 					struct rt_extrude_internal *extrude = (struct rt_extrude_internal *)itrn.idb_ptr;
 					break;
 				}
-				
+
 			default:
 				bu_log( "Primitive %s is unrecognized type (%d)\n", dp->d_namep, itrn.idb_type );
 				break;

@@ -25,12 +25,12 @@
  *
  *  Author -
  *	Phillip Dykstra
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5066
- *  
+ *
  */
 #ifndef lint
 static const char RCSid[] = "@(#)$Header$ (BRL)";
@@ -52,6 +52,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include <math.h>
 
 #include "machine.h"
+#include "bu.h"
 #include "fb.h"
 
 char *options = "ihoF:";
@@ -146,31 +147,31 @@ main(int argc, char **argv)
 
 	/* check for flags */
 	opterr = 0;
-	while ((i=getopt(argc, argv, options)) != EOF) {
+	while ((i=bu_getopt(argc, argv, options)) != EOF) {
 		switch(i) {
 		case 'h'	: fbsize = 1024; break;
 		case 'o'	: overlay++; break;
 		case 'i'	: image = !image; break;
-		case 'F'	: framebuffer = optarg; break;
+		case 'F'	: framebuffer = bu_optarg; break;
 		default		: break;
 		}
 	}
 
-	if (optind == argc - 1) {
+	if (bu_optind == argc - 1) {
 		/* single value for all channels */
-		f = atof( argv[optind] );
+		f = atof( argv[bu_optind] );
 		checkgamma( f );
 		gamr = gamg = gamb = 1.0 / f;
 		onegamma++;
-	} else if (optind == argc - 4 ) {
+	} else if (bu_optind == argc - 4 ) {
 		/* different RGB values */
-		f = atof( argv[optind] );
+		f = atof( argv[bu_optind] );
 		checkgamma( f );
 		gamr = 1.0 / f;
-		f = atof( argv[optind+1] );
+		f = atof( argv[bu_optind+1] );
 		checkgamma( f );
 		gamg = 1.0 / f;
-		f = atof( argv[optind+2] );
+		f = atof( argv[bu_optind+2] );
 		checkgamma( f );
 		gamb = 1.0 / f;
 	} else {

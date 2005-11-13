@@ -40,7 +40,7 @@ database object named <I>dbName</I>.
 The <B>wdb_open</B> command creates a new Tcl command whose name
 is <I>dbName</I>. This command may be used to invoke various
 operations on the database object. It has the following general
-form: 
+form:
 <P>
 <I>dbName</I> <I>option</I> ?<I>arg</I> <I>arg</I> ...?
 <P>
@@ -138,7 +138,7 @@ database object.
 </DD>
 <P>
 <DT><I>dbName</I> <A NAME="dump"><B>dump</B></A> <I>dbfile</I></DT>
-<DD>Write the current state of the database to <I>dbfile</I>. 
+<DD>Write the current state of the database to <I>dbfile</I>.
 </DD>
 <P>
 <DT><I>dbName</I> <A NAME="dup"><B>dup</B></A> <I>file</I> [<I>prefix</I>]</DT>
@@ -311,7 +311,7 @@ change the names and references of objects.
 <DT><I>dbName</I> <A NAME= "observer"><B>observer</B></A> [<I>subcommand</I>]</DT>
 <DD>This command is used to maintain a list of observers. Observers
 are objects who have registered an interest in this database object and
-are notified when the database changes (i.e. create/destroy geometry objects). 
+are notified when the database changes (i.e. create/destroy geometry objects).
 <P>
 	<DL>
 	<DT><I>dbName observer</I> <B>attach</B> <I>obs</I> [<I>command</I>]</DT>
@@ -444,7 +444,7 @@ then that tolerance setting will be modified. The keywords are:
 		tesselated surface. An <I>absolute</I> tolerance of 0 means that the
 		<I>absolute</I> tolerance should be ignored.</li>
 	<li>rel -- This <I>relative</I> tolerance is specified in terms of a fraction
-		of the solid size. The value is multiplied by the size of the solid to 
+		of the solid size. The value is multiplied by the size of the solid to
 		determine another bound on the maximum
                 allowable error in the distance from the actual solid surface to the
                 tesselated surface. An <I>relative</I> tolerance of 0 means that the

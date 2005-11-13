@@ -42,7 +42,7 @@
  *  Authors -
  *	Lee A. Butler
  *	Michael John Muuss
- *  
+ *
  *  Source -
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
@@ -85,22 +85,22 @@ struct neighbor {
 	int	class;	/* Classification of this neighbor */
 };
 
-static void	joint_hitmiss2 RT_ARGS( (struct neighbor *closest,
+static void	joint_hitmiss2 BU_ARGS( (struct neighbor *closest,
 			const struct edgeuse *eu, const point_t pt,
 			int code) );
-static void	nmg_class_pt_e RT_ARGS( (struct neighbor *closest,
+static void	nmg_class_pt_e BU_ARGS( (struct neighbor *closest,
 			const point_t pt, const struct edgeuse *eu,
 			const struct bn_tol *tol) );
-static void	nmg_class_pt_l RT_ARGS( (struct neighbor *closest, 
+static void	nmg_class_pt_l BU_ARGS( (struct neighbor *closest,
 			const point_t pt, const struct loopuse *lu,
 			const struct bn_tol *tol) );
-static int	class_vu_vs_s RT_ARGS( (struct vertexuse *vu, struct shell *sB,
+static int	class_vu_vs_s BU_ARGS( (struct vertexuse *vu, struct shell *sB,
 			long *classlist[4], const struct bn_tol	*tol) );
-static int	class_eu_vs_s RT_ARGS( (struct edgeuse *eu, struct shell *s,
+static int	class_eu_vs_s BU_ARGS( (struct edgeuse *eu, struct shell *s,
 			long *classlist[4], const struct bn_tol	*tol) );
-static int	class_lu_vs_s RT_ARGS( (struct loopuse *lu, struct shell *s,
+static int	class_lu_vs_s BU_ARGS( (struct loopuse *lu, struct shell *s,
 			long *classlist[4], const struct bn_tol	*tol) );
-static void	class_fu_vs_s RT_ARGS( (struct faceuse *fu, struct shell *s,
+static void	class_fu_vs_s BU_ARGS( (struct faceuse *fu, struct shell *s,
 			long *classlist[4], const struct bn_tol	*tol) );
 
 /**
@@ -143,7 +143,7 @@ nmg_pr_class_status(char *prefix, int status)
  *  Called by -
  *	nmg_class_pt_e
  */
-static void 
+static void
 joint_hitmiss2(struct neighbor *closest, const struct edgeuse *eu, const fastf_t *pt, int code)
 {
 	const struct edgeuse *eu_rinf;
@@ -723,7 +723,7 @@ retry:
 	if (rt_g.NMG_debug & DEBUG_CLASSIFY )
 		bu_log("\tPt=(%g, %g, %g) dir=(%g, %g, %g), reg_diam=%g\n",
 			V3ARGS(pt), V3ARGS(projection_dir), region_diameter);
-	
+
 	VMOVE(rp.r_pt, pt);
 	VMOVE(rp.r_dir, projection_dir);
 
@@ -748,7 +748,7 @@ out:
  *
  *	Classify a loopuse/vertexuse from shell A WRT shell B.
  */
-static int 
+static int
 class_vu_vs_s(struct vertexuse *vu, struct shell *sB, long int **classlist, const struct bn_tol *tol)
 {
 	struct vertexuse *vup;
@@ -792,7 +792,7 @@ class_vu_vs_s(struct vertexuse *vu, struct shell *sB, long int **classlist, cons
 
 		if (*vup->up.magic_p == NMG_LOOPUSE_MAGIC )  {
 			if( nmg_find_s_of_lu(vup->up.lu_p) != sB) continue;
-		    	NMG_INDEX_SET(classlist[NMG_CLASS_AonBshared], 
+		    	NMG_INDEX_SET(classlist[NMG_CLASS_AonBshared],
 		    		vu->v_p );
 		    	reason = "a loopuse of vertex is on shell";
 		    	status = ON_SURF;
@@ -840,7 +840,7 @@ class_vu_vs_s(struct vertexuse *vu, struct shell *sB, long int **classlist, cons
 
 	reason = "of nmg_class_pt_s()";
 	class = nmg_class_pt_s(pt, sB, 1, tol);
-	
+
 	if( class == NMG_CLASS_AoutB )  {
 		NMG_INDEX_SET(classlist[NMG_CLASS_AoutB], vu->v_p);
 		status = OUTSIDE;
@@ -867,7 +867,7 @@ out:
 /**
  *			C L A S S _ E U _ V S _ S
  */
-static int 
+static int
 class_eu_vs_s(struct edgeuse *eu, struct shell *s, long int **classlist, const struct bn_tol *tol)
 {
 	int euv_cl, matev_cl;
@@ -884,10 +884,10 @@ class_eu_vs_s(struct edgeuse *eu, struct shell *s, long int **classlist, const s
 		nmg_euprint("class_eu_vs_s\t", eu);
 	}
 
-	NMG_CK_EDGEUSE(eu);	
-	NMG_CK_SHELL(s);	
+	NMG_CK_EDGEUSE(eu);
+	NMG_CK_SHELL(s);
 	BN_CK_TOL(tol);
-	
+
 	/* As a mandatory consistency measure, check for cached classification */
 	reason = "of cached classification";
 	if( NMG_INDEX_TEST(classlist[NMG_CLASS_AinB], eu->e_p) )  {
@@ -909,7 +909,7 @@ class_eu_vs_s(struct edgeuse *eu, struct shell *s, long int **classlist, const s
 
 	euv_cl = class_vu_vs_s(eu->vu_p, s, classlist, tol);
 	matev_cl = class_vu_vs_s(eu->eumate_p->vu_p, s, classlist, tol);
-	
+
 	/* sanity check */
 	if ((euv_cl == INSIDE && matev_cl == OUTSIDE) ||
 	    (euv_cl == OUTSIDE && matev_cl == INSIDE)) {
@@ -998,7 +998,7 @@ class_eu_vs_s(struct edgeuse *eu, struct shell *s, long int **classlist, const s
 		 *     /   |
 		 *    /    |
 		 *   A--M--E
-		 *   
+		 *
 		 *  This would seem to be an intersector problem.
 		 */
 		class = NMG_CLASS_Unknown;
@@ -1314,7 +1314,7 @@ nmg_2lu_identical(const struct edgeuse *eu1, const struct edgeuse *eu2)
 	NMG_CK_LOOPUSE(lu1);
 	NMG_CK_LOOPUSE(lu2);
 
-    	/* march around the two loops to see if they 
+    	/* march around the two loops to see if they
     	 * are the same all the way around.
     	 */
 	eu1_first = eu1;
@@ -1549,7 +1549,7 @@ class_shared_lu(const struct loopuse *lu, const struct loopuse *lu_ref, const st
 		}
 
 		/* loop is either shared or anti */
-		if( eu->vu_p->v_p == eu_ref->vu_p->v_p ) 
+		if( eu->vu_p->v_p == eu_ref->vu_p->v_p )
 		{
 			if (rt_g.NMG_debug & DEBUG_CLASSIFY)
 				bu_log( "class_shared_lu returning NMG_CLASS_AonBshared\n" );
@@ -1657,7 +1657,7 @@ class_shared_lu(const struct loopuse *lu, const struct loopuse *lu_ref, const st
  *  Called by -
  *	class_fu_vs_s
  */
-static int 
+static int
 class_lu_vs_s(struct loopuse *lu, struct shell *s, long int **classlist, const struct bn_tol *tol)
 {
 	int class;
@@ -1745,7 +1745,7 @@ retry:
 		/* Classify each edgeuse */
 		class = class_eu_vs_s(eu, s, classlist, tol);
 		switch (class) {
-		case INSIDE	: ++in; 
+		case INSIDE	: ++in;
 				break;
 		case OUTSIDE	: ++outside;
 				break;
@@ -2120,12 +2120,12 @@ out:
  *  Called by -
  *	nmg_class_shells()
  */
-static void 
+static void
 class_fu_vs_s(struct faceuse *fu, struct shell *s, long int **classlist, const struct bn_tol *tol)
 {
 	struct loopuse *lu;
 	plane_t		n;
-	
+
 	NMG_CK_FACEUSE(fu);
 	NMG_CK_SHELL(s);
 
@@ -2178,7 +2178,7 @@ nmg_class_shells(struct shell *sA, struct shell *sB, long int **classlist, const
 		else
 			fu = BU_LIST_PNEXT(faceuse, fu);
 	}
-	
+
 	if (rt_g.NMG_debug & DEBUG_CLASSIFY &&
 	    BU_LIST_NON_EMPTY(&sA->lu_hd))
 		bu_log("nmg_class_shells - doing loops\n");

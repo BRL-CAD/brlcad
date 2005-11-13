@@ -42,7 +42,7 @@
  *
  *  Author -
  *	Michael John Muuss
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
@@ -170,7 +170,7 @@ struct rt_grip_internal {
 };
 #define RT_GRIP_INTERNAL_MAGIC	0x31196205
 #define RT_GRIP_CK_MAGIC(_p)	BU_CKMAG(_p,RT_GRIP_INTERNAL_MAGIC,"rt_grip_internal")
-	
+
 /*
  *	ID_POLY
  */
@@ -403,10 +403,10 @@ struct rt_dsp_internal{
 #define DSP_CUT_DIR_llUR	'l'
 #define DSP_CUT_DIR_ULlr	'L'
     unsigned char   dsp_cuttype;		/* type of cut to make */
-        
+
 	mat_t		dsp_mtos;		/* model to solid space */
 	/* END OF USER SETABLE VARIABLES, BEGIN INTERNAL STUFF */
-	mat_t		dsp_stom;		/* solid to model space 
+	mat_t		dsp_stom;		/* solid to model space
 						 * computed from dsp_mtos */
 	unsigned short	*dsp_buf;		/* actual data */
 	struct bu_mapped_file *dsp_mp;		/* mapped file for data */

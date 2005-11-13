@@ -25,15 +25,15 @@
 /** @file g_arbn.c
  *  Intersect a ray with an Arbitrary Regular Polyhedron with
  *	an arbitrary number of faces.
- *  
+ *
  *  Author -
  *	Michael John Muuss
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5066
- *  
+ *
  */
 /*@}*/
 
@@ -60,8 +60,8 @@ static const char RCSarbn[] = "@(#)$Header$ (BRL)";
 #include "rtgeom.h"
 #include "./debug.h"
 
-RT_EXTERN(void rt_arbn_print, (const struct soltab *stp) );
-RT_EXTERN(void rt_arbn_ifree, (struct rt_db_internal *ip) );
+BU_EXTERN(void rt_arbn_print, (const struct soltab *stp) );
+BU_EXTERN(void rt_arbn_ifree, (struct rt_db_internal *ip) );
 
 /**
  *  			R T _ A R B N _ P R E P
@@ -257,7 +257,7 @@ rt_arbn_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, st
            		       /* An array of ray pointers */
                                /* array of segs (results returned) */
    		 	       /* Number of ray/object pairs */
-                  	    
+
 {
 	rt_vstub( stp, rp, segp, n, ap );
 }
@@ -288,7 +288,7 @@ rt_arbn_norm(register struct hit *hitp, struct soltab *stp, register struct xray
  *			R T _ A R B N _ C U R V E
  *
  *  Return the "curvature" of the ARB face.
- *  Pick a principle direction orthogonal to normal, and 
+ *  Pick a principle direction orthogonal to normal, and
  *  indicate no curvature.
  */
 void
@@ -301,7 +301,7 @@ rt_arbn_curve(register struct curvature *cvp, register struct hit *hitp, struct 
 
 /**
  *  			R T _ A R B N _ U V
- *  
+ *
  *  For a hit on a face of an ARB, return the (u,v) coordinates
  *  of the hit point.  0 <= u,v <= 1.
  *  u extends along the arb_U direction defined by B-A,
@@ -778,7 +778,7 @@ fail:
 	bu_free( (char *)edges , "rt_arbn_tess: edges" );
 	bu_free( (char *)edge_count , "rt_arbn_tess: edge_count" );
 	bu_free( (char *)verts , "rt_arbn_tess: verts" );
-	return( -1 );	
+	return( -1 );
 }
 
 /**
@@ -1118,7 +1118,7 @@ rt_arbn_tclget(Tcl_Interp *interp, const struct rt_db_internal *intern, const ch
 		Tcl_SetResult( interp,"ERROR: Unknown attribute, choices are N, P, or P#\n",
 		TCL_STATIC );
 		bu_vls_free( &vls );
-		return( TCL_ERROR );       
+		return( TCL_ERROR );
 	}
 
 	Tcl_DStringAppend( &ds, bu_vls_addr( &vls ), -1 );

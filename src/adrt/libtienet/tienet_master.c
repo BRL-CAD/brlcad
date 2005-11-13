@@ -133,7 +133,7 @@ pthread_mutex_t			tienet_master_broadcast_mut;
 
 #if TN_COMPRESSION
 void				*tienet_master_comp_buf;
-int				tienet_master_comp_max;
+unsigned int			tienet_master_comp_max;
 #endif
 
 /* result data callback */
@@ -198,7 +198,7 @@ void tienet_master_init(int port, void fcb_result(void *res_buf, int res_len), c
   pthread_mutex_init(&tienet_master_send_mut, 0);
   pthread_mutex_init(&tienet_master_push_mut, 0);
   pthread_mutex_init(&tienet_master_broadcast_mut, 0);
-  
+
   /* Start the Listener as a Thread */
   pthread_create(&thread, NULL, tienet_master_listener, NULL);
 }
@@ -298,7 +298,7 @@ void tienet_master_push(void *data, int size) {
     tienet_sem_post(&tienet_master_sem_read);
   }
 
-  
+
   /*
   * Tell any idle slaves to get back to work.
   * This is the case where slaves have exhausted the work buffer,
@@ -625,7 +625,7 @@ void tienet_master_send_work(tienet_master_socket_t *sock) {
   int size;
   short op;
 
-  /* 
+  /*
   * This exists to prevent a collision from tienet_master_push calling this function
   * as a result of a socket being idle and then given work.  If this function were called
   * and 2 threads entered the if(tienet_master_sem_read.val) block and waited on tienet_master_sem_read
@@ -699,9 +699,8 @@ void tienet_master_send_work(tienet_master_socket_t *sock) {
 
 
 void tienet_master_result(tienet_master_socket_t *sock) {
-  int		res_len;
+  unsigned int res_len, comp_len;
 #if TN_COMPRESSION
-  long		comp_len;
   unsigned long	dest_len;
 #endif
 
@@ -718,20 +717,20 @@ void tienet_master_result(tienet_master_socket_t *sock) {
   tienet_recv(sock->num, &sock->rays, sizeof(uint64_t), 0);
 
   /* receive result length */
-  tienet_recv(sock->num, &res_len, sizeof(int), 0);
-  tienet_master_transfer += sizeof(int);
+  tienet_recv(sock->num, &res_len, sizeof(unsigned int), 0);
+  tienet_master_transfer += sizeof(unsigned int);
 
-#if TN_COMPRESSION
   /* allocate memory for result buffer if more is needed */
   if(res_len+32 > tienet_master_res_max) {
     tienet_master_res_max = res_len+32;
     tienet_master_res_buf = realloc(tienet_master_res_buf, tienet_master_res_max);
   }
 
+#if TN_COMPRESSION
   dest_len = res_len+32;
 
   /* receive compressed length */
-  tienet_recv(sock->num, &comp_len, sizeof(long), 0);
+  tienet_recv(sock->num, &comp_len, sizeof(unsigned int), 0);
 
   /* receive compressed result data */
   if(comp_len > tienet_master_comp_max) {
@@ -745,14 +744,8 @@ void tienet_master_result(tienet_master_socket_t *sock) {
   dest_len = res_len+32;	/* some extra padding for zlib to work with */
   uncompress(tienet_master_res_buf, &dest_len, tienet_master_comp_buf, comp_len);
 
-  tienet_master_transfer += comp_len + sizeof(long);
+  tienet_master_transfer += comp_len + sizeof(unsigned int);
 #else
-  /* allocate memory for result buffer if more is needed */
-  if(res_len+32 > tienet_master_res_max) {
-    tienet_master_res_max = res_len+32;
-    tienet_master_res_buf = realloc(tienet_master_res_buf, tienet_master_res_max);
-  }
-
   /* receive result data */
   tienet_recv(sock->num, tienet_master_res_buf, res_len, 0);
   tienet_master_transfer += res_len;

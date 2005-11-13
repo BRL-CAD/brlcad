@@ -31,29 +31,29 @@
  *  Authors -
  *	Michael John Muuss
  *	Paul Tanenbaum
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5066
- *  
+ *
  *
  *  Algorithm for the hemisphere-tipped cylinder and cone cases -
- *  
+ *
  *  Given V, H, vrad, and hrad, there is a set of points on this cylinder
- *  
+ *
  *  { (x,y,z) | (x,y,z) is on cylinder }
- *  
+ *
  *  Through a series of Affine Transformations, this set of points will be
  *  transformed into a set of points on a unit cylinder (or cone)
  *  with the transformed base (V') located at the origin
  *  with a transformed radius of 1 (vrad').
  *  The height of the cylinder (or cone) along the +Z axis is +1
  *  (ie, H' = (0,0,1) ), with a transformed radius of hrad/vrad.
- *  
- *  
+ *
+ *
  *  { (x',y',z') | (x',y',z') is on cylinder at origin }
- *  
+ *
  *  The transformation from X to X' is accomplished by:
  *
  *  finding two unit vectors A and B mutually perpendicular, and perp. to H.
@@ -66,25 +66,25 @@
  *  where R(X) =  ( A/(|A|) )
  *  		 (  B/(|B|)  ) . X
  *  		  ( H/(|H|) )
- *  
+ *
  *  and S(X) =	 (  1/|A|   0     0   )
  *  		(    0    1/|B|   0    ) . X
  *  		 (   0      0   1/|H| )
- *  
+ *
  *  To find the intersection of a line with the surface of the cylinder,
  *  consider the parametric line L:
- *  
+ *
  *  	L : { P(n) | P + t(n) . D }
- *  
+ *
  *  Call W the actual point of intersection between L and the cylinder.
  *  Let W' be the point of intersection between L' and the unit cylinder.
- *  
+ *
  *  	L' : { P'(n) | P' + t(n) . D' }
- *  
+ *
  *  W = invR( invS( W' ) ) + V
- *  
+ *
  *  Where W' = k D' + P'.
- *  
+ *
  *  If Dx' and Dy' are both 0, then there is no hit on the cylinder;
  *  but the end spheres need checking.
  *
@@ -136,34 +136,34 @@
  *
  *  This parameter "t" can be substituted into the formulas for either
  *  L' or L, because affine transformations preserve distances along lines.
- *  
+ *
  *  Now, D' = S( R( D ) )
  *  and  P' = S( R( P - V ) )
- *  
+ *
  *  Substituting,
- *  
+ *
  *  W = V + invR( invS[ k *( S( R( D ) ) ) + S( R( P - V ) ) ] )
  *    = V + invR( ( k * R( D ) ) + R( P - V ) )
  *    = V + k * D + P - V
  *    = k * D + P
- *  
+ *
  *  Note that ``t'' is constant, and is the same in the formulations
  *  for both W and W'.
  *
  *  The hit at ``t'' is a hit on the height=1 unit cylinder IFF
  *  0 <= Wz' <= 1.
- *  
+ *
  *  NORMALS.  Given the point W on the surface of the cylinder,
  *  what is the vector normal to the tangent plane at that point?
- *  
+ *
  *  Map W onto the unit cylinder, ie:  W' = S( R( W - V ) ).
- *  
+ *
  *  Plane on unit cylinder at W' has a normal vector N' of the same value
  *  as W' in x and y, with z set to zero, ie, (Wx', Wy', 0)
- *  
+ *
  *  The plane transforms back to the tangent plane at W, and this
  *  new plane (on the original cylinder) has a normal vector of N, viz:
- *  
+ *
  *  N = inverse[ transpose(invR o invS) ] ( N' )
  *    = inverse[ transpose(invS) o transpose(invR) ] ( N' )
  *    = inverse[ inverse(S) o R ] ( N' )
@@ -230,20 +230,20 @@ const struct bu_structparse rt_part_parse[] = {
     { "%f", 1, "r_h",offsetof(struct rt_part_internal, part_hrad), BU_STRUCTPARSE_FUNC_NULL },
     { {'\0','\0','\0','\0'}, 0, (char *)NULL, 0, BU_STRUCTPARSE_FUNC_NULL }
  };
-	    
-RT_EXTERN( void rt_part_ifree, (struct rt_db_internal *ip) );
+
+BU_EXTERN( void rt_part_ifree, (struct rt_db_internal *ip) );
 
 /**
  *  			R T _ P A R T _ P R E P
- *  
+ *
  *  Given a pointer to a GED database record, and a transformation matrix,
  *  determine if this is a valid particle, and if so, precompute various
  *  terms of the formula.
- *  
+ *
  *  Returns -
  *  	0	particle is OK
  *  	!0	Error in description
- *  
+ *
  *  Implicit return -
  *  	A struct part_specific is created, and it's address is stored in
  *  	stp->st_specific for use by part_shot().
@@ -359,7 +359,7 @@ rt_part_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 	VMOVE( &R[8], Hunit );
 	bn_mat_trn( Rinv, R );
 
-	/* Compute scale matrix S, where |A| = |B| = equiv_Vradius */ 
+	/* Compute scale matrix S, where |A| = |B| = equiv_Vradius */
 	MAT_IDN( S );
 	S[ 0] = 1.0 / part->part_v_erad;
 	S[ 5] = S[0];
@@ -440,11 +440,11 @@ rt_part_print(register const struct soltab *stp)
 
 /**
  *  			R T _ P A R T _ S H O T
- *  
+ *
  *  Intersect a ray with a part.
  *  If an intersection occurs, a struct seg will be acquired
  *  and filled in.
- *  
+ *
  *  Returns -
  *  	0	MISS
  *	>0	HIT
@@ -740,7 +740,7 @@ out:
 	return(2);			/* HIT */
 }
 
-#define SEG_MISS(SEG)		(SEG).seg_stp=(struct soltab *) 0;	
+#define SEG_MISS(SEG)		(SEG).seg_stp=(struct soltab *) 0;
 
 /**
  *			R T _ P A R T _ V S H O T
@@ -753,14 +753,14 @@ rt_part_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, st
            		       /* An array of ray pointers */
                                /* array of segs (results returned) */
    		  	       /* Number of ray/object pairs */
-                  	    
+
 {
-	rt_vstub( stp, rp, segp, n, ap ); 
+	rt_vstub( stp, rp, segp, n, ap );
 }
 
 /**
  *  			R T _ P A R T _ N O R M
- *  
+ *
  *  Given ONE ray distance, return the normal and entry/exit point.
  */
 void
@@ -848,7 +848,7 @@ rt_part_curve(register struct curvature *cvp, register struct hit *hitp, struct 
 
 /**
  *  			R T _ P A R T _ U V
- *  
+ *
  *  For a hit on the surface of a particle, return the (u,v) coordinates
  *  of the hit point, 0 <= u,v <= 1.
  *  u = azimuth
@@ -1619,10 +1619,10 @@ rt_part_import5(struct rt_db_internal *ip, const struct bu_external *ep, registe
 
 	part = (struct rt_part_internal *)ip->idb_ptr;
 	part->part_magic = RT_PART_INTERNAL_MAGIC;
-	
+
 	/* Convert from database (network) to internal (host) format */
 	ntohd( (unsigned char *)vec, ep->ext_buf, 8 );
-	
+
 	/* Apply modeling transformations */
 	MAT4X3PNT( part->part_V, mat, &vec[0*3] );
 	MAT4X3VEC( part->part_H, mat, &vec[1*3] );
@@ -1647,7 +1647,7 @@ rt_part_import5(struct rt_db_internal *ip, const struct bu_external *ep, registe
 		minrad = part->part_vrad;
 	}
 	if( maxrad <= 0 )  {
-	  bu_free( ip->idb_ptr, "rt_part_internal" ); 
+	  bu_free( ip->idb_ptr, "rt_part_internal" );
 	  ip->idb_ptr=NULL;
 	  bu_log("unable to import particle, negative radius\n");
 	  return(-4);

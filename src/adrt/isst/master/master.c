@@ -44,7 +44,7 @@ void isst_master(int port, int obs_port, char *proj, char *list, char *exec, cha
 void* isst_master_networking(void *ptr);
 void isst_master_result(void *res_buf, int res_len);
 void isst_master_update(void);
-void isst_master_process_events(SDL_Event *event_queue, int event_num, isst_master_socket_t *sock);
+void isst_master_process_events(isst_event_t *event_queue, uint8_t event_num, isst_master_socket_t *sock);
 
 
 /***** GLOBALS *****/
@@ -60,18 +60,19 @@ tfloat isst_master_spall_angle;
 tfloat isst_master_camera_azimuth;
 tfloat isst_master_camera_elevation;
 
-void *rgb_frame[2];
-int frame_ind[2];
-short frame_cur_ind;
-short frame_ind_done;
+common_db_t db;
+isst_master_socket_t *isst_master_socklist;
+tienet_sem_t isst_master_frame_wait_sem;
+void *isst_master_observer_frame;
+pthread_mutex_t isst_master_observer_frame_mut;
+void *rgb_frame;
+int frame_ind;
 char isst_master_slave_data[64];
 int isst_master_slave_data_len;
 pthread_t isst_master_networking_thread;
 tfloat isst_master_scale;
 int isst_master_active_connections;
 int isst_master_alive;
-isst_master_socket_t *isst_master_socklist;
-common_db_t db;
 unsigned char isst_master_rm;
 pthread_mutex_t isst_master_update_mut;
 int isst_master_mouse_grab;
@@ -106,19 +107,12 @@ static void isst_master_setup() {
 
   isst_master_rm = RENDER_METHOD_PHONG;
 
-  frame_ind[0] = 0;
-  frame_ind[1] = 0;
-  frame_cur_ind = 0;
-  frame_ind_done = 0;
+  frame_ind = 0;
 
-  rgb_frame[0] = NULL;
-  rgb_frame[1] = NULL;
+  rgb_frame = malloc(3 * db.env.img_w * db.env.img_h);
+  memset(rgb_frame, 0, 3 * db.env.img_w * db.env.img_h);
 
-  rgb_frame[0] = malloc(3 * db.env.img_w * db.env.img_h);
-  rgb_frame[1] = malloc(3 * db.env.img_w * db.env.img_h);
-
-  memset(rgb_frame[0], 0, 3 * db.env.img_w * db.env.img_h);
-  memset(rgb_frame[1], 0, 3 * db.env.img_w * db.env.img_h);
+  isst_master_observer_frame = malloc(3 * db.env.img_w * db.env.img_h);
 }
 
 
@@ -139,6 +133,13 @@ void isst_master(int port, int obs_port, char *proj, char *list, char *exec, cha
 
   /* Mutex for everytime the master builds update data to send to nodes */
   pthread_mutex_init(&isst_master_update_mut, 0);
+
+  /*
+  * This mutex exists to prevent the observer from reading a frame while
+  * the result function is writing to it, which would otherwise result in
+  * the appearance of single buffering behavior for moderately high frame rates.
+  */
+  pthread_mutex_init(&isst_master_observer_frame_mut, 0);
 
   /* Initialize tienet master */
   isst_master_tile_num = (db.env.img_w * db.env.img_h) / (db.env.tile_w * db.env.tile_h);
@@ -165,16 +166,28 @@ void isst_master(int port, int obs_port, char *proj, char *list, char *exec, cha
   frame_num = 0;
   gettimeofday(&start, NULL);
 
+  /*
+  * Double buffer semaphore, never let more than 1 frame into the future
+  * to be computed at any given time.  Without this, for 3 given frames
+  * there is a possibility that while frame_0 and frame_1 are being computed
+  * by the compute nodes, that frame_2 might be worked on by a compute node.
+  * because frame indices are 0 or 1, hence double buffered, frame_0 and frame_2
+  * have the same frame id and can therefore have resulting tiles over-write
+  * one another resulting in a jittery image.
+  */
+  tienet_sem_init(&isst_master_frame_wait_sem, 1);
+
   while(isst_master_alive) {
+    /* Double buffer semaphore, do not get too far ahead */
+    tienet_sem_wait(&isst_master_frame_wait_sem);
+
     /* Update Camera Position */
     isst_master_update();
 
     /* Fill the work buffer */
     isst_dispatcher_generate(&db, isst_master_slave_data, isst_master_slave_data_len);
 
-    frame_cur_ind = 1 - frame_cur_ind;
-
-#if 1
+#if 0
     frame_num++;
     if(!(frame_num % 7)) {
       gettimeofday(&cur, NULL);
@@ -200,8 +213,7 @@ void isst_master(int port, int obs_port, char *proj, char *list, char *exec, cha
   /* Free the dispatcher data */
   isst_dispatcher_free();
 
-  free(rgb_frame[0]);
-  free(rgb_frame[1]);
+  free(rgb_frame);
 
   /* End the networking thread */
   pthread_join(isst_master_networking_thread, NULL);
@@ -277,29 +289,33 @@ printf("component[%d]: %s\n", i, name);
     /* Pointer to RGB Data */
     rgb_data = &((unsigned char *)res_buf)[sizeof(common_work_t)];
 
-    /* Frame index */
-    memcpy(&frame, &((char *)res_buf)[sizeof(common_work_t) + 3 * work.size_x * work.size_y], sizeof(short));
-
-    frame_ind[frame]++;
+    frame_ind++;
 
     /* Copy the tile into the image */
     ind = 0;
     for(i = work.orig_y; i < work.orig_y + work.size_y; i++) {
-      memcpy(&((char *)rgb_frame[frame])[3 * (work.orig_x + i * db.env.img_w)], &rgb_data[ind], 3*work.size_y);
+      memcpy(&((char *)rgb_frame)[3 * (work.orig_x + i * db.env.img_w)], &rgb_data[ind], 3*work.size_y);
       ind += 3*work.size_y;
     }
 
 
     /* Image is complete, draw the frame. */
-    if(frame_ind[frame] == isst_master_tile_num) {
-      frame_ind[frame] = 0;
-      frame_ind_done = frame;
+    if(frame_ind == isst_master_tile_num) {
+      frame_ind = 0;
 
+      /* Copy this frame to the observer frame buffer */
+      pthread_mutex_lock(&isst_master_observer_frame_mut);
+      memcpy(isst_master_observer_frame, rgb_frame, 3 * db.env.img_w * db.env.img_h);
+      pthread_mutex_unlock(&isst_master_observer_frame_mut);
+
+      /* Allow the next frame to be computed */
+      tienet_sem_post(&isst_master_frame_wait_sem);
+
+      /* Alert the observers that a new frame is available for viewing */
       for(sock = isst_master_socklist; sock; sock = sock->next) {
-        if(sock->next) {
+        if(sock->next)
           if(!sock->frame_sem.val)
             tienet_sem_post(&(sock->frame_sem));
-        }
       }
     }
   }
@@ -429,32 +445,36 @@ void* isst_master_networking(void *ptr) {
                 tienet_send(sock->num, &op, 1, 0);
 
                 {
-                  SDL_Event event_queue[64];
-                  short event_num;
+                  isst_event_t event_queue[64];
+                  uint8_t event_num;
 
                   /* Get the event Queue and process it */
-                  tienet_recv(sock->num, &event_num, sizeof(short), 0);
+                  tienet_recv(sock->num, &event_num, sizeof(uint8_t), 0);
                   if(event_num)
-                    tienet_recv(sock->num, event_queue, event_num * sizeof(SDL_Event), 0);
+                    tienet_recv(sock->num, event_queue, event_num * sizeof(isst_event_t), 0);
                   isst_master_process_events(event_queue, event_num, sock);
                 }
 
 #if ISST_USE_COMPRESSION
                 {
                   unsigned long dest_len;
-                  int comp_size;
+                  unsigned int comp_size;
                   dest_len = 3 * db.env.img_w * db.env.img_h + 1024;
 
                   /* frame data */
-                  compress(&((char *)comp_buf)[sizeof(int)], &dest_len, rgb_frame[frame_ind_done], 3 * db.env.img_w * db.env.img_h);
+                  pthread_mutex_lock(&isst_master_observer_frame_mut);
+                  compress(&((char *)comp_buf)[sizeof(unsigned int)], &dest_len, isst_master_observer_frame, 3 * db.env.img_w * db.env.img_h);
+                  pthread_mutex_unlock(&isst_master_observer_frame_mut);
                   comp_size = dest_len;
-                  memcpy(comp_buf, &comp_size, sizeof(int));
+                  memcpy(comp_buf, &comp_size, sizeof(unsigned int));
                   /* int for frame size in bytes followed by actual rgb frame data */
-                  tienet_send(sock->num, comp_buf, comp_size + sizeof(int), 0);
+                  tienet_send(sock->num, comp_buf, comp_size + sizeof(unsigned int), 0);
                 }
 #else
                 /* frame data */
-                tienet_send(sock->num, rgb_frame[frame_ind_done], db.env.img_w * db.env.img_h * 3, 0);
+                pthread_mutex_lock(&isst_master_observer_frame_mut);
+                tienet_send(sock->num, isst_master_observer_frame, db.env.img_w * db.env.img_h * 3, 0);
+                pthread_mutex_unlock(&isst_master_observer_frame_mut);
 #endif
 
                 /* Send overlay data */
@@ -549,10 +569,6 @@ void isst_master_update() {
   memcpy(&((char *)isst_master_slave_data)[isst_master_slave_data_len], &op, 1);
   isst_master_slave_data_len += 1;
 
-  /* Frame Index */
-  memcpy(&((char *)isst_master_slave_data)[isst_master_slave_data_len], &frame_cur_ind, sizeof(short));
-  isst_master_slave_data_len += sizeof(short);
-
   /* Camera Position */
   memcpy(&((char *)isst_master_slave_data)[isst_master_slave_data_len], isst_master_camera_position.v, sizeof(TIE_3));
   isst_master_slave_data_len += sizeof(TIE_3);
@@ -593,7 +609,7 @@ void isst_master_update() {
 }
 
 
-void isst_master_process_events(SDL_Event *event_queue, int event_num, isst_master_socket_t *sock) {
+void isst_master_process_events(isst_event_t *event_queue, uint8_t event_num, isst_master_socket_t *sock) {
   int i, update;
   TIE_3 vec, vec2, vec3;
   tfloat celev;
@@ -605,7 +621,7 @@ void isst_master_process_events(SDL_Event *event_queue, int event_num, isst_mast
       printf("event_type: %d\n", event_queue[i].type);
       case SDL_KEYDOWN:
         update = 1;
-        switch(event_queue[i].key.keysym.sym) {
+        switch(event_queue[i].keysym) {
           case SDLK_LSHIFT:
           case SDLK_RSHIFT:
             isst_master_shift_enabled = 1;
@@ -887,7 +903,7 @@ void isst_master_process_events(SDL_Event *event_queue, int event_num, isst_mast
         break;
 
       case SDL_KEYUP:
-        switch(event_queue[i].key.keysym.sym) {
+        switch(event_queue[i].keysym) {
           case SDLK_LSHIFT:
           case SDLK_RSHIFT:
             isst_master_shift_enabled = 0;
@@ -899,22 +915,22 @@ void isst_master_process_events(SDL_Event *event_queue, int event_num, isst_mast
 
       case SDL_MOUSEBUTTONDOWN:
         update = 1;
-        if(event_queue[i].button.button == SDL_BUTTON_WHEELUP)
+        if(event_queue[i].button == SDL_BUTTON_WHEELUP)
           isst_master_scale *= 1.25;
 
-        if(event_queue[i].button.button == SDL_BUTTON_WHEELDOWN)
+        if(event_queue[i].button == SDL_BUTTON_WHEELDOWN)
           isst_master_scale *= 0.8;
         break;
 
       case SDL_MOUSEMOTION:
-        if(event_queue[i].motion.state && isst_master_mouse_grab) {
+        if(event_queue[i].motion_state && isst_master_mouse_grab) {
 	  int dx, dy;
 
-	  dx = -event_queue[i].motion.xrel;
-	  dy = -event_queue[i].motion.yrel;
+	  dx = -event_queue[i].motion_xrel;
+	  dy = -event_queue[i].motion_yrel;
 
           update = 1;
-          if(event_queue[i].button.button & 1<<(SDL_BUTTON_LEFT-1)) {
+          if(event_queue[i].button & 1<<(SDL_BUTTON_LEFT-1)) {
             /* backward and forward */
             math_vec_sub(vec, isst_master_camera_focus, isst_master_camera_position);
             math_vec_mul_scalar(vec, vec, (isst_master_scale*dy));
@@ -930,7 +946,7 @@ void isst_master_process_events(SDL_Event *event_queue, int event_num, isst_mast
             math_vec_mul_scalar(vec3, vec3, (isst_master_scale*dx));
             math_vec_add(isst_master_camera_position, isst_master_camera_position, vec3);
 #endif
-          } else if(event_queue[i].button.button & 1<<(SDL_BUTTON_RIGHT-1)) {
+          } else if(event_queue[i].button & 1<<(SDL_BUTTON_RIGHT-1)) {
             /* if the shift key is held down then rotate about Center of Rotation */
             if(isst_master_shift_enabled) {
               TIE_3 vec;
@@ -962,7 +978,7 @@ void isst_master_process_events(SDL_Event *event_queue, int event_num, isst_mast
               isst_master_camera_azimuth += 0.035*dx;
               isst_master_camera_elevation -= 0.035*dy;
             }
-          } else if(event_queue[i].button.button & 1<<(SDL_BUTTON_MIDDLE-1)) {
+          } else if(event_queue[i].button & 1<<(SDL_BUTTON_MIDDLE-1)) {
             isst_master_camera_position.v[2] += isst_master_scale*dy;
 
             /* strafe */

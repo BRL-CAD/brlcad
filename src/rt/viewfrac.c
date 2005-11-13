@@ -21,15 +21,15 @@
 /** @file viewfrac.c
  *
  *  An experimental volume fractions code.
- * 
+ *
  *  Author -
  *	Michael John Muuss
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5066
- *  
+ *
  */
 #ifndef lint
 static const char RCSview[] = "@(#)$Header$ (BRL)";
@@ -160,7 +160,7 @@ view_end(register struct application *ap)
 }
 
 /*
- *			V I E W _ S E T U P 
+ *			V I E W _ S E T U P
  *
  *  Called by do_prep(), just before rt_prep() is called, in do.c
  *  This allows the lighting model to get set up for this frame,

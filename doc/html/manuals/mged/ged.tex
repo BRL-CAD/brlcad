@@ -63,7 +63,7 @@ for representing these models.
 The COMGEOM technique uses
 Boolean logic operations to combine basic geometric
 shapes or primitives to produce complex three-dimensional objects.
-The COMGEOM geometric models are processed by 
+The COMGEOM geometric models are processed by
 the Geometric Information
 For Targets (GIFT)
 \cite{gift1,gift2}
@@ -119,7 +119,7 @@ major class of workstations which MGED supports.
 The role of CAD models at BRL differs somewhat from
 that of CAD models being built in the automobile and aerospace industries,
 resulting in some different design choices
-being made in the BRL CAD software.
+being made in the BRL-CAD software.
 Because BRL's main use for these models is to conduct detailed
 performance and survivability analyses of large complex vehicles,
 it is required that the model of an entire vehicle be completely contained
@@ -225,7 +225,7 @@ in a portable language to allow the software to be moved readily from
 processor to processor without requiring the modeling software or users
 to change.
 Then, when it is desirable to
-take advantage of the constantly increasing 
+take advantage of the constantly increasing
 processor capabilities and similarly increasing memory capacity by replacing
 the installed hardware base, there are a minimum of ancillary costs.
 Also, it may be desirable to connect together processors from a variety
@@ -321,8 +321,8 @@ primitives.  Figure \ref{list-of-basic-solids} lists the
 basic solid types, and Figure \ref{list-of-special-case-solids}
 lists special cases of the basic solid types for which support exists.
 The individual parameters of each solid define the solid's
-location, size, and orientation.  A region is a combination of  
-one or more solids and is defined as the volume occupied 
+location, size, and orientation.  A region is a combination of
+one or more solids and is defined as the volume occupied
 by the resulting combination of solids.
 Solids are combined into regions using any of three logic
 operations: union (OR), intersection (+), or difference (-).
@@ -330,7 +330,7 @@ The union of two solids is defined as the volume in either
 of the solids.
 The difference of two solids is defined as the volume of the first
 solid minus the volume of the second solid.
-The intersection of two solids is defined as the volume 
+The intersection of two solids is defined as the volume
 common to both solids.
 %%% XXX Figure 1 presents a graphical representation of these operations.
 
@@ -397,7 +397,7 @@ In order to prevent chaos, most designers at BRL choose to
 design the overall structure of their model in a top-down manner,
 selecting meaningful names for the major structures and sub-structures
 within the model.
-Actual construction of the details of the 
+Actual construction of the details of the
 model generally proceeds in a bottom-up
 manner, where each sub-system is fabricated from component primitives.
 
@@ -525,7 +525,7 @@ The MGED editor uses the standard right-handed
 screen coordinate system,
 as shown in Figure \ref{coord-axes}.
 The Z axis is perpendicular to the screen and the positive Z direction is
-out of the screen.  The directions of positive (+) and negative (-) axis 
+out of the screen.  The directions of positive (+) and negative (-) axis
 rotations are also indicated.  For these rotations, the ``Right
 Hand Rule'' applies:  Point the thumb of the right hand along the direction
 of +X axis and the other fingers will describe the sense of positive
@@ -810,8 +810,8 @@ This is useful to halt a runaway rotation or zoom operation.
 %\begin{figure}[tbp]
 %{\tt \begin{verbatim}
 %          |---------|---------|---------|---------|
-%          |         |         |         |  Zero   |         
-%          |  Help   |   ADC   | Reset   |  Knobs  |         
+%          |         |         |         |  Zero   |
+%          |  Help   |   ADC   | Reset   |  Knobs  |
 %|---------|---------|---------|---------|---------|---------|
 %|   Obj   |   Obj   |   Obj   |   Obj   |         |  Save   |
 %|  Scale  | ScaleX  | ScaleY  | ScaleZ  | empty   |  View   |
@@ -824,7 +824,7 @@ This is useful to halt a runaway rotation or zoom operation.
 %|---------|---------|---------|---------|---------|---------|
 %| REJECT  | Bottom  |  Top    |  Rear   |  90,90  | ACCEPT  |
 %|---------|---------|---------|---------|---------|---------|
-%          |  Right  |  Front  |  Left   |  35,25  |         
+%          |  Right  |  Front  |  Left   |  35,25  |
 %          |---------|---------|---------|---------|
 %\end{verbatim} }
 %\caption{Silicon Graphics Button Layout \label{XXsgi-buttons} }
@@ -890,8 +890,8 @@ Selecting editing menus, edit functions (move faces, move edges
 etc.) and viewing functions (selected from main edit menu); move
 pointer to appropriate edit function and press center mouse button.
 \item
-Pointing functions; interactively positioning solid primitive 
-relative to other solids with positioning or size update being 
+Pointing functions; interactively positioning solid primitive
+relative to other solids with positioning or size update being
 displayed at the same time, position pointer where required and click
 center mouse button.
 \item
@@ -1002,7 +1002,7 @@ All entries are
 terminated by depressing the RETURN key.
 This action immediately precedes the execution of the directive.
 In most cases, lower case letters
-must be used.  A space must be used between the command and its 
+must be used.  A space must be used between the command and its
 arguments.
 Embedded blanks are not allowed.
 Entering Control/H causes cursor to backspace and erase entered
@@ -1131,7 +1131,7 @@ between the mouse and the button box.
 
 Modeling practices using MGED can be quite individual.  The following is a
 suggested modeling method to start with; you may end up developing your own
-style as you become more familiar with MGED.  
+style as you become more familiar with MGED.
 
 First of all, decide how you want to represent your model, including the
 amount of detail, types of solids and regions necessary.  Have an accurate
@@ -1142,7 +1142,7 @@ Where possible it is recommended to start with a large block solid and
 faces of a collection of solids ``unioned'' together.
 
 Next the solids are created using the
-{\em make}, {\em cp}, {\em mirror} or {\em in} 
+{\em make}, {\em cp}, {\em mirror} or {\em in}
 commands.  Depending on the complexity of the model, the solids may be
 created in the desired location or created at the origin and later
 translated to the desired location.  Creation at the origin provides
@@ -2136,7 +2136,7 @@ Key	& Argument[s]	& Description \\
 
 This command is used to produce a copy of an object (solid or comb).
 In this case, the
-object "oldobj" will be copied into an object called "newobj".  
+object "oldobj" will be copied into an object called "newobj".
 
 Examples:
 {\em
@@ -2246,15 +2246,15 @@ Examples:
 \section{Instance an object}
 
 {\em \center
-i object combname 
+i object combname
 }
 
 This command is used to make an instance of an object.
-An instance of an object is produced by creating a combination 
-and making the object a member.   
+An instance of an object is produced by creating a combination
+and making the object a member.
 In this case, an instance of "object" is made by
 creating the combination record "combname" (if "combname" does not
-already exist) and adding "object" as a member.  
+already exist) and adding "object" as a member.
 If "combname" already exists, then "object" is added as the next member.
 
 An instance is used to refer to an object, without making actual copies
@@ -2299,7 +2299,7 @@ This command allows the user to project
 a face(\#\#\#\#) of an arb being edited a normal distance to create a new arb.
 The value of "face" is 4 digits such as 1256. If the face is projected
 in the wrong direction use a negative "distance".
-One common use for this command is 
+One common use for this command is
 for producing armor plates of a desired thickness.
 
 Examples:
@@ -2315,7 +2315,7 @@ Examples:
 rm comb mem1 mem2 .... memN
 }
 
-This command allows one to delete members from a combination (group or region) record. 
+This command allows one to delete members from a combination (group or region) record.
 In this case, members "mem1" through "memn" will be deleted from
 the combination "comb".
 
@@ -2372,7 +2372,7 @@ mirror oldobj newobj axis
 }
 
 This command is used to create a new object which is
-the mirror image of an existing object about an axis.  
+the mirror image of an existing object about an axis.
 The object may be either a solid or a combination.
 In this case, a mirror image of the object "oldobj" will created
 about the axis indicated by "axis" and the new object record will
@@ -3212,7 +3212,7 @@ You will be asked for all necessary input.
 rfarb
 }
 
-This command will produce a "plate mode" arb8 given a point on one face, 
+This command will produce a "plate mode" arb8 given a point on one face,
 rotation and fallback angles for that face, 2 coordinates of the 3
 remaining points on that face, and a thickness.
 The 3rd coordinates of the three points will be solved for, and the other
@@ -3380,7 +3380,7 @@ immediately changing the editor's view.
 In addition, the current viewing transformation and eye position can be
 appended to a file containing a collection of keyframes.
 Most importantly, a file full of keyframe information, either raw keyframe
-positions or smoothly interpolated keyframe sequences, can 
+positions or smoothly interpolated keyframe sequences, can
 by ``played'' in real time using MGED,
 providing a powerful and fast animation preview capability.
 
@@ -3406,7 +3406,7 @@ beginning and after ending the tutorials.
 Each of the tutorials will use the solids contained the MGED database called
 ``prim.g''.
 These can be obtained by making a copy of ``db/prim.g''
-from the BRL CAD Package distribution tree.  It is important to make
+from the BRL-CAD Package distribution tree.  It is important to make
 a copy of the database and work with that, rather than using the
 supplied one.  Changes made during the editing process are written
 to the database when they are {\sl accepted}.
@@ -3471,7 +3471,7 @@ managers, then shows what the default will be (selected if the user answers
 with a carriage return).  In this case, the Silicon Graphics 4d display
 manager was selected, as is noted by the following line.
 Next the title of the database and
-the unit of measurement used in the database are printed, 
+the unit of measurement used in the database are printed,
 and finally, the first prompt is issued.
 At this point MGED has loaded ``prim.g''; attached the SGI display;
 and is awaiting commands.  Attaching a display also causes what
@@ -3484,11 +3484,11 @@ This can be one of six states:  {\bf VIEWING}, {\bf SOL PICK},
 
 Immediately below, is the menu area.  The only menu item initially shown is
 one labeled {\bf BUTTON MENU}.  This menu item toggles the display of the
-button menu entries when {\sl selected} (more on selection later).  
+button menu entries when {\sl selected} (more on selection later).
 
 At the bottom of the display are two status lines.  The first line
 contains information about the current view.
-The entry labeled {\bf cent=} gives the {\sl model space} coordinates 
+The entry labeled {\bf cent=} gives the {\sl model space} coordinates
 of the dot in the center of the display.
 The entry labeled {\bf sz=} reflects the current size in model units of
 the {\sl viewing cube}.  The viewing cube is a mathematical construct
@@ -3499,13 +3499,13 @@ In the {\bf VIEWING} state, it displays the title of the database.
 
 The MGED viewing features are designed to allow the user to examine
 models at different angles.
-Preset views can be invoked at 
+Preset views can be invoked at
 anytime by using either the menu or the button box.
 Selecting a preset view does
 not change the coordinates of the primitives,
 but instead changes the angle from which these primitives are
-displayed.  Five standard views (top, right, front, 35/25, and 45/45) can 
-be obtained by using either the bottom menu on the display screen or the 
+displayed.  Five standard views (top, right, front, 35/25, and 45/45) can
+be obtained by using either the bottom menu on the display screen or the
 control box.
 Three additional views (button, left, and rear) can be obtained
 by using the button box, but not by using the menu.
@@ -3538,7 +3538,7 @@ Rear     &                  270, 0, 90 \\
 {\tt mged> }\\
 
 \mfig t1-top-vw, ``arb8'' Top View.
-The {\bf e} command causes the named object(s) -- a solid named ``arb8'' 
+The {\bf e} command causes the named object(s) -- a solid named ``arb8''
 in this case
 -- to be displayed, and the {\bf size} command sets the size of the
 viewing cube. Figure \ref{t1-top-vw} shows what the display currently
@@ -3740,13 +3740,13 @@ When MGED enters the object edit state, the following occurs:
 \item The reference solid remains illuminated,
 \item The reference solid is labeled,
 \item The information associated with the labels is displayed to the right
-of the menu area, and 
+of the menu area, and
 \item The {\bf *OBJ EDIT*} menu is displayed.
 \end{itemize}
 
 The {\bf OBJ EDIT} state is used to modify the
 Homogeneous Transform Matrix selected during the {\bf OBJ PATH} state.
-Permissible operations include uniform and affine scaling of the objects, 
+Permissible operations include uniform and affine scaling of the objects,
 as well as translation and rotation.
 As with the {\bf SOL EDIT} state, MGED accepts changes entered using
 the keyboard, mouse or knobs.
@@ -3802,7 +3802,7 @@ mged> \\
 The top view is the default view.  The orientation of the axes
 is shown in Figure \ref{plane-top1}.
 The surface of the viewing screen and the graphics tablet is the XY plane.
-Edit changes using the graphics tablet will affect only the X and Y 
+Edit changes using the graphics tablet will affect only the X and Y
 coordinates of the primitive.
 
 \noindent{\tt
@@ -3838,7 +3838,7 @@ The surface of the viewing screen and the mouse or tablet
 are still in the XY plane.
 Edit changes using the graphics tablet will affect only the X and Y
 components of the solid.
-Select different points on the tablet with the mouse and notice the 
+Select different points on the tablet with the mouse and notice the
 changes in the coordinates;
 compare the values of V with those in Figure \ref{plane-bot2}.
 
@@ -3860,7 +3860,7 @@ but now model +Z is at the top of the screen, and model +Y is
 pointing out of the screen.
 This new configuration is depicted in Figure \ref{plane-right1}.
 The surface of the viewing screen and the graphics tablet is the XZ plane.
-Edit changes using the graphics tablet will affect only the X and Z 
+Edit changes using the graphics tablet will affect only the X and Z
 coordinates of the solid.
 Select different points on the tablet with the mouse and notice the
 changes in the V coordinates;  only the X and Z components change,
@@ -3885,9 +3885,9 @@ of the screen, as shown in Figure \ref{plane-front1},
 which has been slightly rotated off the preset view to improve
 the legibility of the axis labels.
 The surface of the viewing screen and the graphics tablet is the YZ
-plane.  Edit changes will affect only the Y and Z 
+plane.  Edit changes will affect only the Y and Z
 coordinates of the primitive, as shown in Figure \ref{plane-front2}.
-Select different points on the tablet with the mouse and notice the 
+Select different points on the tablet with the mouse and notice the
 changes in the coordinates.
 
 {\em Select ``REJECT Edit'' in the Button menu}
@@ -3904,12 +3904,12 @@ mged>
 }
 
 Figure \ref{plane-35a} is the 35,25 view of the axes model.
-The axes are no longer 
+The axes are no longer
 parallel or perpendicular to the viewing surface or to the graphics tablet.
 Edit changes using the graphics tablet will affect all of the coordinates of
 the solid, in a manner that is visually intuitive when the solid
 is moved around on the screen.
-Select different points on the tablet with the mouse and notice the 
+Select different points on the tablet with the mouse and notice the
 changes in the coordinates, such as in Figure \ref{plane-35b}.
 Note how all three components of the V vector have changed.
 
@@ -3940,10 +3940,10 @@ ATTACHING sgi (SGI 4d) \\
 Untitled MGED Database (units=mm) \\
 mged> {\em in arb8 rpp -1 1 -1 1 -1 1} \\
 mged> {\em size 10} \\
-mged> 
+mged>
 }
 
-Figure \ref{es8-top} 
+Figure \ref{es8-top}
 is a top view of the six-sided polyhedron.
 The Z-axis perpendicular to the viewing screen.
 Next, the view is rotated so that all sides can be seen.
@@ -4064,7 +4064,7 @@ or by entering the {\em press srot} command on the keyboard.
 \noindent{\tt
 mged> {\em Select the ``Rotate'' entry in the solid edit menu} \\
 mged> {\em p 45 0 0} \\
-mged> 
+mged>
 }
 
 The parameter {\em p} command is used to make precise rotation changes.
@@ -4090,7 +4090,7 @@ Figure \ref{es8-xrot} shows the rotation of 45 degrees about the X axis.
 %\end{verbatim}
 
 The values entered after the p are absolute - the rotations are applied to
-the primitive as it existed when solid rotation was first selected.  Thus 
+the primitive as it existed when solid rotation was first selected.  Thus
 entering {\em p 0 0 0} will undo any rotations
 performed since solid rotation was begun.
 
@@ -4099,7 +4099,7 @@ performed since solid rotation was begun.
 
 \noindent{\tt
 mged> {\em p 0 45 0} \\
-mged> 
+mged>
 }
 
 Figure \ref{es8-yrot} displays the solid
@@ -4107,7 +4107,7 @@ after it has been rotated about the Y axis.
 
 \noindent{\tt
 mged> {\em p 0 0 45} \\
-mged> 
+mged>
 }
 
 Figure \ref{es8-zrot} displays the solid
@@ -4115,7 +4115,7 @@ after it has been rotated about the Z axis.
 
 \noindent{\tt
 mged> {\em p 0 0 0} \\
-mged> 
+mged>
 }
 
 This restores the original orientation of the solid.
@@ -4126,7 +4126,7 @@ This restores the original orientation of the solid.
 \noindent{\tt
 mged> {\em Select the ``Scale'' entry in the solid edit menu} \\
 mged> {\em p 2} \\
-mged> 
+mged>
 }
 
 Figure \ref{es8-scale} corresponds to the view that is shown on the display.
@@ -4151,7 +4151,7 @@ The size of the primitive may be changed by depressing the mouse at
 different positions.  When the mouse is clicked, the
 edited primitive is scaled about point 1 (the key point)
 by an amount proportional
-to the distance the mouse is from the center of the screen.  If the mouse 
+to the distance the mouse is from the center of the screen.  If the mouse
 is above the center of the screen, the edited primitive will become larger.
 If the
 mouse is below the center, the primitive will become smaller.
@@ -4164,7 +4164,7 @@ to the size it had when the solid scale operation first started.
 
 \noindent{\tt
 mged> {\em p 1} \\
-mged> 
+mged>
 }
 
 \mfig es8-edge1, ARB8 Edge 15 Moved Through (9, -2, -2).
@@ -4306,7 +4306,7 @@ Enter X, Y, Z for point 2: {\em 0 0 1} \\
 Enter X, Y, Z for point 3: {\em 0 1 1} \\
 Enter X, Y, Z for point 4: {\em 0 1 0} \\
 Enter X, Y, Z for point 5: {\em -1 .5 .5} \\
-mged> 
+mged>
 }
 
 Figure \ref{es5-top} is the display of arb5
@@ -4359,19 +4359,19 @@ mged>
 \noindent{\tt
 mged> {\em Select the ``Rotate'' entry in the solid edit menu} \\
 mged> {\em p 45 0 0} \\
-mged> 
+mged>
 }
 
 Figure \ref{es5-xrot} shows a rotation of 45 degrees
-about an axis parallel to the X axis.  
+about an axis parallel to the X axis.
 The rotate command is entered in the form {\em p a b c}
 where {\em a}, {\em b}, and {\em c} are the angles
 (in degrees) of rotation about the x, y, and z axes and intersect at point 1.
-All rotation takes place about point 1. 
+All rotation takes place about point 1.
 
 \noindent{\tt
 mged> {\em p 0 0 0} \\
-mged> 
+mged>
 }
 
 This restores the original orientation of the solid.
@@ -4382,7 +4382,7 @@ This restores the original orientation of the solid.
 \noindent{\tt
 mged> {\em Select the ``Scale'' entry in the solid edit menu} \\
 mged> {\em p 2} \\
-mged> 
+mged>
 }
 
 Figure \ref{es5-scale} shows the change in the primitive.
@@ -4394,7 +4394,7 @@ to the size it had when the solid scale operation first started.
 
 \noindent{\tt
 mged> {\em p 1} \\
-mged> 
+mged>
 }
 
 \subsection{Move Edge Command}
@@ -4464,7 +4464,7 @@ In Figure \ref{es5-edge4},
 the edge 12 is moved so that it passes through the point (2, 1, 2).
 Note that the coordinates correspond to point 2.
 
-The movement of the edges may yield unpredictable results when the edges 
+The movement of the edges may yield unpredictable results when the edges
 are not parallel to one of the axes.
 
 
@@ -4494,7 +4494,7 @@ mged> {\em in cyl rcc} \\
 Enter X, Y, Z of vertex: {\em 0 0 0} \\
 Enter X, Y, Z of height (H) vector: {\em 2 0 0} \\
 Enter radius: {\em 1}
-mged> 
+mged>
 }
 
 Figure \ref{esc-top} is the display of the cylinder solid
@@ -4536,7 +4536,7 @@ Mag = sqrt( x + y + z )
 is perpendicular to plane of the points A, B, and V.  The coordinates of A
 are the coordinates of the vector from V through A.  Mag is the magnitude of
 the vectors from V to A.  The coordinates of B are the coordinates of the
-vectors from V through B.  Mag is the magnitude of the vector from V to B. 
+vectors from V through B.  Mag is the magnitude of the vector from V to B.
 The values for c and d are the magnitudes of the vectors from the tip of
 vector H to the points C
 and D respectively.
@@ -4576,7 +4576,7 @@ This restores the solid to the original location.
 \noindent{\tt
 mged> {\em Select the ``Rotate'' entry in the solid edit menu} \\
 mged> {\em p 45 0 0} \\
-mged> 
+mged>
 }
 
 When viewing in the positive X direction, the cylinder is rotated counter-
@@ -4585,7 +4585,7 @@ See Figure \ref{esc-xrot}.
 
 \noindent{\tt
 mged> {\em p 0 45 0} \\
-mged> 
+mged>
 }
 
 When viewing in the positive Y direction, the cylinder is rotated counter-
@@ -4594,7 +4594,7 @@ See Figure \ref{esc-yrot}.
 
 \noindent{\tt
 mged> {\em p 0 0 45} \\
-mged> 
+mged>
 }
 
 When viewing in the positive Z direction, the cylinder is rotated counter-
@@ -4605,7 +4605,7 @@ The command
 
 \noindent{\tt
 mged> {\em p 0 0 0} \\
-mged> 
+mged>
 }
 
 will restore the cylinder to the original orientation.
@@ -4616,7 +4616,7 @@ will restore the cylinder to the original orientation.
 \noindent{\tt
 mged> {\em Select the ``Scale'' entry in the solid edit menu} \\
 mged> {\em p 1.5} \\
-mged> 
+mged>
 }
 
 The point V remains fixed, the distance H between the two end-plate ellipses
@@ -4627,7 +4627,7 @@ The command
 
 \noindent{\tt
 mged> {\em p 1} \\
-mged> 
+mged>
 }
 
 restores the original scale.
@@ -4639,7 +4639,7 @@ restores the original scale.
 mged> {\em Select the ``edit menu'' entry in the solid edit menu} \\
 mged> {\em Select the ``scale H'' entry in the TGC menu} \\
 mged> {\em p 1} \\
-mged> 
+mged>
 }
 
 The magnitude of the vector H is reduced from 2 to 1.
@@ -4647,7 +4647,7 @@ See Figure \ref{esc-sh}.  The command
 
 \noindent{\tt
 mged> {\em p 2} \\
-mged> 
+mged>
 }
 
 will restore the original shape.
@@ -4658,7 +4658,7 @@ will restore the original shape.
 \noindent{\tt
 mged> {\em Select the ``scale A'' entry in the TGC menu} \\
 mged> {\em p 2} \\
-mged> 
+mged>
 }
 
 The magnitude of the vector through point A is increased to 2, ie,
@@ -4667,7 +4667,7 @@ See Figure \ref{esc-sa}.  The command
 
 \noindent{\tt
 mged> {\em p 1} \\
-mged> 
+mged>
 }
 
 will restore the original shape.
@@ -4678,7 +4678,7 @@ will restore the original shape.
 \noindent{\tt
 mged> {\em Select the ``scale B'' entry in the TGC menu} \\
 mged> {\em p 2} \\
-mged> 
+mged>
 }
 
 The magnitude of the vector through point B is increased to 2, ie,
@@ -4687,7 +4687,7 @@ See Figure \ref{esc-sb}.  The command
 
 \noindent{\tt
 mged> {\em p 1} \\
-mged> 
+mged>
 }
 
 will restore the original shape.
@@ -4698,7 +4698,7 @@ will restore the original shape.
 \noindent{\tt
 mged> {\em Select the ``scale C'' entry in the TGC menu} \\
 mged> {\em p 2} \\
-mged> 
+mged>
 }
 
 The magnitude of the vector through point c is increased to the value of
@@ -4707,7 +4707,7 @@ value of p.  See Figure \ref{esc-sc}.  The command
 
 \noindent{\tt
 mged> {\em p 1} \\
-mged> 
+mged>
 }
 
 will restore the original shape.
@@ -4718,7 +4718,7 @@ will restore the original shape.
 \noindent{\tt
 mged> {\em Select the ``scale D'' entry in the TGC menu} \\
 mged> {\em p 2} \\
-mged> 
+mged>
 }
 
 The magnitude of the vector through point D is changed to the value of p.
@@ -4727,7 +4727,7 @@ value of p.  See Figure \ref{esc-sd}.  The command
 
 \noindent{\tt
 mged> {\em p 1} \\
-mged> 
+mged>
 }
 
 will restore the original shape.
@@ -4744,7 +4744,7 @@ entered by the {\em p} command.
 \noindent{\tt
 mged> {\em Select the ``move end H'' entry in the TGC menu} \\
 mged> {\em p 3} \\
-mged> 
+mged>
 }
 
 The length of the vector H is changed to the value of p.
@@ -4752,7 +4752,7 @@ See Figure \ref{esc-mh}.  The command
 
 \noindent{\tt
 mged> {\em p 2} \\
-mged> 
+mged>
 }
 
 will restore the original shape.
@@ -4763,7 +4763,7 @@ will restore the original shape.
 \noindent{\tt
 mged> {\em Select the ``move end H(rt)'' entry in the TGC menu} \\
 mged> {\em p 3} \\
-mged> 
+mged>
 }
 
 This command is similar to the ``move end H'' command except the vector
@@ -4772,7 +4772,7 @@ See Figure \ref{esc-mhrt}.  The command
 
 \noindent{\tt
 mged> {\em p 2} \\
-mged> 
+mged>
 }
 
 will restore the original shape, but not the original orientation.
@@ -4804,7 +4804,7 @@ Enter X, Y, Z of vertex: {\em 0 0 0} \\
 Enter X, Y, Z of vector A: {\em 1 0 0} \\
 Enter X, Y, Z of vector B: {\em 0 .3536 -0.3536} \\
 Enter X, Y, Z of vector C: {\em 0 .3536  0.3536} \\
-mged> 
+mged>
 }
 
 Figure \ref{ese-top} is the display of the primitive in the viewing state.
@@ -4831,7 +4831,7 @@ The display will be changed from the VIEWING MODE through the SOL PICK to
 the SOL EDIT state.  Figure \ref{ese-sed} is the view that is displayed.
 
 The coordinates of the points A, B, C, are given by the product of the
-magnitude of the vector and the cosine of X, Y, and Z direction cosines.  In 
+magnitude of the vector and the cosine of X, Y, and Z direction cosines.  In
 the display, the coordinates are:
 
 \begin{center}
@@ -4891,7 +4891,7 @@ or by entering the {\em press srot} command on the keyboard.
 \noindent{\tt
 mged> {\em Select the ``Rotate'' entry in the solid edit menu} \\
 mged> {\em p 45 0 0} \\
-mged> 
+mged>
 }
 
 Figure \ref{ese-xrot} shows the rotation of the ellipsoid about its X axis.
@@ -4901,7 +4901,7 @@ direction.  The direction cosines of vectors VB and VC are changed by 45 .
 \noindent{\tt
 mged> {\em Select the ``Rotate'' entry in the solid edit menu} \\
 mged> {\em p 0 45 0} \\
-mged> 
+mged>
 }
 
 Figure \ref{ese-yrot} shows the rotation of the ellipsoid about its Y axis.
@@ -4913,7 +4913,7 @@ not necessary.
 \noindent{\tt
 mged> {\em Select the ``Rotate'' entry in the solid edit menu} \\
 mged> {\em p 0 0 45} \\
-mged> 
+mged>
 }
 
 Figure \ref{ese-zrot} shows the rotation of the ellipsoid about its Z axis.
@@ -4923,7 +4923,7 @@ The command
 
 \noindent{\tt
 mged> {\em p 0 0 0} \\
-mged> 
+mged>
 }
 
 restores the original orientation of the solid.
@@ -4934,7 +4934,7 @@ restores the original orientation of the solid.
 \noindent{\tt
 mged> {\em Select the ``Scale'' entry in the solid edit menu} \\
 mged> {\em p .5} \\
-mged> 
+mged>
 }
 
 Point V is not changed,
@@ -4953,7 +4953,7 @@ The command
 
 \noindent{\tt
 mged> {\em p 1} \\
-mged> 
+mged>
 }
 
 will restore the original scale.
@@ -4974,7 +4974,7 @@ magnitude of that vector to the value of the scale.
 mged> {\em Select the ``edit menu'' entry in the solid edit menu} \\
 mged> {\em Select the ``scale A'' entry in the ellipsoid menu} \\
 mged> {\em p 1.5} \\
-mged> 
+mged>
 }
 
 The magnitude of the vector to point A is set equal to the value of p
@@ -4985,7 +4985,7 @@ parallel to the X axis.  See Figure \ref{ese-sa}.  The command
 \noindent{\tt
 mged> {\em Select the ``scale A'' entry in the TGC menu} \\
 mged> {\em p 1} \\
-mged> 
+mged>
 }
 
 will restore the original shape.
@@ -4996,7 +4996,7 @@ will restore the original shape.
 \noindent{\tt
 mged> {\em Select the ``scale B'' entry in the Ellipsoid menu} \\
 mged> {\em p 1.5} \\
-mged> 
+mged>
 }
 
 The magnitude of the vector to point B is set equal to the value of p
@@ -5006,7 +5006,7 @@ direction cosines of B.  See Figure \ref{ese-sb}.  The command
 
 \noindent{\tt
 mged> {\em p 0.5} \\
-mged> 
+mged>
 }
 
 will restore the original shape.
@@ -5017,7 +5017,7 @@ will restore the original shape.
 \noindent{\tt
 mged> {\em Select the ``scale C'' entry in the Ellipsoid menu} \\
 mged> {\em p 1.5} \\
-mged> 
+mged>
 }
 
 The magnitude of the vector to point C is set equal to the value of p
@@ -5027,7 +5027,7 @@ direction cosines of C.  See Figure \ref{ese-sc}.  The command
 
 \noindent{\tt
 mged> {\em p 0.5} \\
-mged> 
+mged>
 }
 
 will restore the original shape.
@@ -5058,7 +5058,7 @@ Enter X, Y, Z of vertex: {\em 0 0 0} \\
 Enter X, Y, Z of normal vector: {\em 0 1 0} \\
 Enter radius 1: {\em 1} \\
 Enter radius 2: {\em 0.2} \\
-mged> 
+mged>
 }
 
 Figure \ref{est-top} is the display of the torus solid in viewing state.
@@ -5124,7 +5124,7 @@ will restore the original position.
 \noindent{\tt
 mged> {\em Select the ``Rotate'' entry in the solid edit menu} \\
 mged> {\em p 45 0 0} \\
-mged> 
+mged>
 }
 
 The torus is rotated 45 degrees counter-clockwise about the positive X axis.
@@ -5139,7 +5139,7 @@ See Figure \ref{est-xrot}.
 
 \noindent{\tt
 mged> {\em p 0 45 0} \\
-mged> 
+mged>
 }
 
 The torus is rotated 45 degrees counter-clockwise about the positive Y axis.
@@ -5147,7 +5147,7 @@ See Figure \ref{est-yrot}.
 
 \noindent{\tt
 mged> {\em p 0 0 45} \\
-mged> 
+mged>
 }
 
 The torus is rotated 45 degrees counter-clockwise about the positive Z axis.
@@ -5156,7 +5156,7 @@ The original orientation is restored by entering
 
 \noindent{\tt
 mged> {\em p 0 0 0} \\
-mged> 
+mged>
 }
 
 \subsection{Scale Operation}
@@ -5165,7 +5165,7 @@ mged>
 \noindent{\tt
 mged> {\em Select the ``Scale'' entry in the solid edit menu} \\
 mged> {\em p 1.5} \\
-mged> 
+mged>
 }
 
 The vertex remains the same and all distances from the vertex are
@@ -5174,7 +5174,7 @@ To return to the original scale, enter
 
 \noindent{\tt
 mged> {\em p 1} \\
-mged> 
+mged>
 }
 
 \subsection{Scale Radius 1 Command}
@@ -5215,7 +5215,7 @@ The command
 
 \noindent{\tt
 mged> {\em p 0.2} \\
-mged> 
+mged>
 }
 
 will restore the original shape.
@@ -5312,7 +5312,7 @@ changes in both axes.
 changes in the list of vertices).  If {\bf Y move} is selected, all
 three sets of axes are modified.  These operators work in screen space,
 not model space, so using them with an oblique view moves the model in
-more than one axis (Figure \ref{eo-xymove} for example).. 
+more than one axis (Figure \ref{eo-xymove} for example)..
 
 
 \subsection{Rotate Operation}
@@ -5356,7 +5356,7 @@ mged>\\
 Control is again passed from the {\bf OBJ PICK} state through the
 {\bf OBJ PATH} state to the {\bf OBJ EDIT} state.
 When editing a cylinder, ellipsoid, or torus, the coordinates of the
-primitives are set relative to the center of the primitive, and are not 
+primitives are set relative to the center of the primitive, and are not
 changed by any translation of the primitive.  Figure \ref{eo-ellg}
 represents the display.
 
@@ -5370,7 +5370,7 @@ mged>\\
 }
 
 The magnitudes of the vectors from the center V to the points A, B, and C
-are multiplied by the scale factor 2.  The location of the center V is 
+are multiplied by the scale factor 2.  The location of the center V is
 unchanged.  See Figure \ref{eo-ellg2x}.
 
 \subsection{Move Operations}
@@ -5407,7 +5407,7 @@ of primitives may also be edited as a single entity.  This section
 shows how an entire group may be edited without addressing each individual
 primitive.
 
-MGED generally has several ways to achieve a particular result.  In 
+MGED generally has several ways to achieve a particular result.  In
 this section, keyboard commands are used instead of the control buttons and
 the display menu.  The creation and saving of special primitives is
 illustrated.
@@ -5726,7 +5726,7 @@ At this point, the screen should look like Figure \ref{wm-prims}.
 
 \section{Copy Primitives and Set Up for Edit}
 
-Although eight copies of the ellipsoid and two copies of the cylinder 
+Although eight copies of the ellipsoid and two copies of the cylinder
 shall be used in the final solid, fewer copies are made initially since there
 is replication in the editing of these primitives.
 
@@ -5762,7 +5762,7 @@ mged> {\em p 0 45 90} \\
 mged>
 }
 
-This places the cylinder so that the lines BD and AC are at the outer 
+This places the cylinder so that the lines BD and AC are at the outer
 ends of the cylinder.  See Figure \ref{wm-hat1}.
 
 Next, the cylinder is shaped to look like the top of a funnel.
@@ -5799,7 +5799,7 @@ had been immediately followed by an {\em e c.2} command.
 This new solid will be edited to make the neck of the funnel,
 which is the top of the hat.
 The ``c.2'' copy of the cone must be
-scaled down to become a tube and the tube must be placed on top of the 
+scaled down to become a tube and the tube must be placed on top of the
 cone ``c.1''.
 
 \noindent{\tt
@@ -5810,7 +5810,7 @@ mged> {\em p 0.1} \\
 {\em Select ``Translate'' in the Solid Edit menu} \\
 mged> {\em p 0 4.2 0} \\
 {\em Select ``ACCEPT Edit'' in the Button menu} \\
-mged> 
+mged>
 }
 
 Figure \ref{wm-tube} is the new shape of the funnel tube.
@@ -5832,7 +5832,7 @@ mged> {\em in e.1} \\
 Enter solid type: {\em sph} \\
 Enter X, Y, Z of vertex: {\em 0 2 0} \\
 Enter radius: {\em 1} \\
-mged> 
+mged>
 }
 
 \mfig wm-collar, The Woodsman's Collar.
@@ -5874,7 +5874,7 @@ mged>
 \mfig wm-arm2, The Woodsman's Arms.
 \section{Building the Arms}
 
-The ellipsoid primitive (e.2) is used to build the upper and lower parts 
+The ellipsoid primitive (e.2) is used to build the upper and lower parts
 of the left and right arms.
 The original solid ``e.2'' is oriented with the major axis of the ellipse
 oriented along the X axis.
@@ -5985,7 +5985,7 @@ Color = (No color specified) \\
 Color R G B (0..255)? (CR to skip) {\em 95 159 159} \\
 Inherit = 0:  lower nodes (towards leaves) override \\
 Inheritance (0|1)? (CR to skip) {\em [RETURN]} \\
-mged> 
+mged>
 }
 
 Second, a region will be constructed to contain the collar,
@@ -6026,7 +6026,7 @@ Color = 0 0 0 \\
 Color R G B (0..255)? (CR to skip) {\em 255 200 160} \\
 Inherit = 0:  lower nodes (towards leaves) override \\
 Inheritance (0|1)? (CR to skip)  {\em [RETURN]} \\
-mged> 
+mged>
 }
 
 Next, the funnel needs to be placed in a region.
@@ -6049,7 +6049,7 @@ Parameter string? (CR to skip) {\em sh=100} \\
 Color = (No color specified) \\
 Color R G B (0..255)? (CR to skip) {\em 35 107 142} \\
 Inherit = 0:  lower nodes (towards leaves) override \\
-Inheritance (0|1)? (CR to skip) 
+Inheritance (0|1)? (CR to skip)
 mged> {\em l funnel.r} \\
 funnel.r (len 4) REGION id=1003  (air=0, los=100, GIFTmater=1) -- \\
 Material 'plastic' 'sh=100' \\
@@ -6058,7 +6058,7 @@ Color 35 107 142 \\
 \ \ - e.1 \\
 \ \ u c.2 \\
 \ \ - e.1 \\
-mged> 
+mged>
 }
 
 \mfig wm-hat-E, Evaluation of Funnel Hat Region.
@@ -6091,7 +6091,7 @@ run these commands, the effect of which is shown in Figure \ref{wm-hat-E}:
 mged> {\em Z } \\
 mged> {\em E funnel.r } \\
 vectorized in 1 sec \\
-mged> 
+mged>
 }
 
 These regions should be grouped together into a group,
@@ -6138,7 +6138,7 @@ Frame     0:    16384 rays   in       3.73 sec =    4392.49 rays/sec (RTFM)\\
 \\
 Press RETURN to reattach\\
 {\em [RETURN]} \\
-mged> 
+mged>
 }
 \chapter{BUILDING A ROBOT ARM}
 
@@ -6156,7 +6156,7 @@ in rad	rcc	20 -150 0   0 0 6   8
 in cyl	rcc	20 -45 6    0 0 30  20
 in cyl1 rcc	20 -45 0 0 0 36 15.5
 in cyl2 rcc	20 -45 0 0 0 36 12.5
-in hole rcc	8 -8 0   0 0 6   3 
+in hole rcc	8 -8 0   0 0 6   3
 in hole1 rcc	32 -8 0  0 0 6   3
 cp hole1 hole2
 in gus	raw	21.5 -25.3 6  0 0 30  0 25.3 0  -3 0 0
@@ -6165,7 +6165,7 @@ in cnr1	box	34 0 0	0 -6 0	6 0 0	0 0 6
 cp cnr cnr2
 cp cnr1 cnr3
 in rad1 rcc	6 -6 0	0 0 6 6
-in rad2 rcc	34 -6 0	0 0 6 6 
+in rad2 rcc	34 -6 0	0 0 6 6
 in head rcc	20 -45 36 0 0 30 18
 in shaft rcc	20 -45 36 0 0 -50 12.5
 in han	rcc	20 -45 51 0 120 0 6
@@ -6201,7 +6201,7 @@ mged> in btm box 0 0 0 0 -90 0 40 0 0 0 0 6
 mged> in btm1 box
 Enter X, Y, Z of vertex:  0 -90 0
 Enter X, Y, Z of vector H:  0 -61.549 0
-Enter X, Y, Z of vector W:  50 0 0   40 0 0 
+Enter X, Y, Z of vector W:  50 0 0   40 0 0
 Enter X, Y, Z of vector D: 0 0 6
 mged> in rad rcc 20 -150 0 0 0 6 8
 mged> in cyl rcc
@@ -6210,7 +6210,7 @@ Enter X, Y, Z of height (H) vector: 0 0 30
 Enter radius:  20
 mged> in cyl1 rcc 20 -45 0 0 0 36 15.5
 mged> in cyl2 rcc 20 -45 0 0 0 36 12.5
-mged> in hole rcc 8 -8 0 0 0 6 3 
+mged> in hole rcc 8 -8 0 0 0 6 3
 mged> in hl ole 1 rcc 2 32 -8 0 0 0 6 2 3
 mged> cp hole1 hole2
 mged> in gus raw
@@ -6225,7 +6225,7 @@ mged> in cnr1 box 34 0 0 0 -6 0 6 0 0 0 0 6
 mged> cp cnf r cnr2
 mged> in cp cnr1 cnr3
 mged> in rad1 rcc 6 -6 0 0 0 6 6
-mged> in rad2 rcc 34 -6 0 0 0 6 6 
+mged> in rad2 rcc 34 -6 0 0 0 6 6
 mged> in shaft rcc 20 -45 36 0 0 30 18
 mged> in shaft rcc 20 -45 36 0 0 -50 12.5
 mged> in han rcc 20 -45 51 0 120 0 6
@@ -6351,7 +6351,7 @@ mged> canter-0-75 0
 mged> size 300
 mged> tops
 all/     cor1/     cyl2      hole1
-cnr      cut     gus   
+cnr      cut     gus
 cnr1     cyl     head
 cor/     cyl1     hole
 mged> analyze cyl
@@ -6372,7 +6372,7 @@ mged> q
 \chapter{RT MATERIAL TYPE, PROPERTIES, and COLOR}
 
 First the solids must be formed into a "region", eg:
-       
+
 {\em\center
 r ball u torus u tube-hole
 }
@@ -6493,7 +6493,7 @@ material types are:  plastic
                                texture
 
 Shinyness (ie:  sh=16)
-     
+
 Refractive index for:  crown glass = 1.52
                               Flint glass = 1.65
                               Rock salt = 1.54
@@ -6538,7 +6538,7 @@ then the frame buffer starts to appear (the picture window).  The first scaned
 display will be what was previously stored in it, it will then over write it
 with your picture; sometimes two buffer scans are displayed before yours.
 
-The default background color is blue with steel grey colored solids and 
+The default background color is blue with steel grey colored solids and
 objects.  The terminal will beep when the scanned picture is finished; press
 return to get back to the "text and graphic" window.
 
@@ -6553,7 +6553,7 @@ then solid editing this arb8, using move faces to the required thickness,
 then use command "cp"
 (copy command) to make two more copies which you can rotate to their
 respective relationships, then translate all three into the correct positions
-relative to each other and the solids and objects you are displaying.  
+relative to each other and the solids and objects you are displaying.
 
 The advantage of doing this is to give the light source something
 to reflect off, giving back lighting; improving contrast considerably.
@@ -6572,9 +6572,9 @@ three hidden faces.
 
 \chapter{CONCLUSIONS}
 
-MGED performs two basic functions:  
+MGED performs two basic functions:
 viewing and editing.
-The standard viewing capabilities of zooming, slewing, 
+The standard viewing capabilities of zooming, slewing,
 slicing, and rotation are available.
 Likewise, all the standard editing features are also available.
 The user easily traverses the hierarchical data structure, applying

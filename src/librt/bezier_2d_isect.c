@@ -52,7 +52,7 @@
 
 /*
  * CrossingCount :
- *      Count the number of times a Bezier control polygon 
+ *      Count the number of times a Bezier control polygon
  *      crosses the ray. This number is >= the number of roots.
  *
  */
@@ -63,7 +63,7 @@ int CrossingCount(
     point2d_t	ray_dir,	/*  unit ray direction (actually a vector, not a point) */
     point2d_t	ray_perp)	/*  unit vector perpendicular to ray direction */
 {
-    int         i;      
+    int         i;
     int         n_crossings = 0;        /*  Number of crossings    */
     int         sign, old_sign;         /*  Sign of coefficients        */
     point2d_t	to_pt;			/* vector from ray start to a control point */
@@ -162,17 +162,17 @@ ControlPolygonFlatEnough(
 
 	det = a1 * b2 - a2 * b1;
 	dInv = 1.0/det;
-	
+
 	intercept_1 = (b1 * c2 - b2 * c1) * dInv;
 
 	/*  Implicit equation for "below" line */
 	a2 = a;
 	b2 = b;
 	c2 = c + max_distance_below;
-	
+
 	det = a1 * b2 - a2 * b1;
 	dInv = 1.0/det;
-	
+
 	intercept_2 = (b1 * c2 - b2 * c1) * dInv;
     }
 
@@ -180,7 +180,7 @@ ControlPolygonFlatEnough(
     left_intercept = MIN(intercept_1, intercept_2);
     right_intercept = MAX(intercept_1, intercept_2);
 
-    error = 0.5 * (right_intercept-left_intercept);    
+    error = 0.5 * (right_intercept-left_intercept);
 
     if (error < epsilon) {
 		return 1;
@@ -192,11 +192,11 @@ ControlPolygonFlatEnough(
 
 
 /*
- *  Bezier : 
+ *  Bezier :
  *	Evaluate a Bezier curve at a particular parameter value
  *      Fill in control points for resulting sub-curves if "Left" and
  *	"Right" are non-null.
- * 
+ *
  */
 void
 Bezier(
@@ -224,7 +224,7 @@ Bezier(
     }
 
     /* Triangle computation	*/
-    for (i = 1; i <= degree; i++) {	
+    for (i = 1; i <= degree; i++) {
 		for (j =0 ; j <= degree - i; j++) {
 	    	Vtemp[i][j][X] =
 	      		(1.0 - t) * Vtemp[i-1][j][X] + t * Vtemp[i-1][j+1][X];
@@ -232,7 +232,7 @@ Bezier(
 	      		(1.0 - t) * Vtemp[i-1][j][Y] + t * Vtemp[i-1][j+1][Y];
 		}
     }
-    
+
     if (Left != NULL) {
 		for (j = 0; j <= degree; j++) {
 	    	V2MOVE( Left[j], Vtemp[j][0]);
@@ -273,7 +273,7 @@ Bezier(
  *	1 - found an intersection
  *
  *	intercept - contains calculated intercept
- * 
+ *
  */
 static int
 ComputeXIntercept(
@@ -375,7 +375,7 @@ FindRoots(
     point2d_t	ray_perp,	/* Unit vector normal to ray_dir */
     int         depth,          /* The depth of the recursion   */
     fastf_t	epsilon)	/* maximum allowable error */
-{  
+{
     int         i;
     point2d_t   *Left,                  /* New left and right           */
                 *Right;                 /* control polygons             */
@@ -432,7 +432,7 @@ FindRoots(
 	    *intercept = (point2d_t *)bu_calloc( total_count, sizeof( point2d_t ),
 				       "FindRoots: roots compilation" );
 	    *normal = (point2d_t *)bu_calloc( total_count, sizeof( point2d_t ),
-					  "FindRoots: normal compilation" );     
+					  "FindRoots: normal compilation" );
     }
 
     /* Gather solutions together        */

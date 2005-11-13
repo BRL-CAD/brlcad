@@ -29,7 +29,7 @@
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005
- *  
+ *
  */
 #ifndef lint
 static const char RCSmaterial[] = "@(#)$Header$ (BRL)";
@@ -105,7 +105,7 @@ try_load(const char *path, const char *material, const char *shader_name)
 
 
 	if ( ! (handle = dlopen(path, RTLD_NOW)) ) {
-		if (R_DEBUG&RDEBUG_MATERIAL) 
+		if (R_DEBUG&RDEBUG_MATERIAL)
 			bu_log("dlopen failed on \"%s\"\n", path);
 		return (struct mfuncs *)NULL;
 	} else if (R_DEBUG&RDEBUG_MATERIAL) {
@@ -204,10 +204,10 @@ load_dynamic_shader(const char *material,
 	if ( (shader_mfuncs = try_load(libname, material, sh_name)) )
 		goto done;
 
-	/* Look in BRLCAD install dir under lib dir for lib{sh_name}.so */
+	/* Look in BRL-CAD install dir under lib dir for lib{sh_name}.so */
 	sprintf(libpath, "/lib/lib%s.so", sh_name);
 	strcpy(libname, bu_brlcad_root(libpath, 0));
-	if ( (shader_mfuncs = try_load(libname, material, sh_name)) ) 
+	if ( (shader_mfuncs = try_load(libname, material, sh_name)) )
 		goto done;
 
 done:
@@ -279,7 +279,7 @@ retry:
 	}
 
 #ifdef HAVE_DLOPEN
-	/* If we get here, then the shader wasn't found in the list of 
+	/* If we get here, then the shader wasn't found in the list of
 	 * compiled-in (or previously loaded) shaders.  See if we can
 	 * dynamically load it.
 	 */
@@ -298,7 +298,7 @@ retry:
 
 	/* If we get here, then the shader was not found at all (either in
 	 * the compiled-in or dynamically loaded shader sets).  We set the
-	 * shader name to "default" (which should match an entry in the 
+	 * shader name to "default" (which should match an entry in the
 	 * table) and search again.
 	 */
 

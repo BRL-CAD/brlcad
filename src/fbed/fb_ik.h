@@ -110,7 +110,7 @@
  * This group of registers is write-only, and resides at
  * Ikonas address 30,000$0 (FBC).
  *
- * Mike Muuss, BRL, 10/26/83. 
+ * Mike Muuss, BRL, 10/26/83.
  */
 struct ik_fbc  {
 	short	fbc_xviewport, fbc_yviewport;		/* Y<<16 | X */

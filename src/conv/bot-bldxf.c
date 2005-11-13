@@ -23,8 +23,11 @@
  *	Options
  *	h	help
  */
+#include "common.h"
+
 #include <stdio.h>
 #include <string.h>
+
 #include "machine.h"
 #include "vmath.h"
 #include "nmg.h"
@@ -32,7 +35,9 @@
 #include "bu.h"
 #include "raytrace.h"
 #include "wdb.h"
+
 #include "../librt/debug.h"
+
 
 /* declarations to support use of getopt() system call */
 char *options = "hd:";
@@ -66,7 +71,6 @@ void usage(char *s)
 int parse_args(int ac, char *av[])
 {
     int  c;
-    char *strrchr();
 
     if (  ! (progname=strrchr(*av, '/'))  )
 	progname = *av;
@@ -133,7 +137,7 @@ tris_are_planar_quad(struct rt_bot_internal *bot, int faceidx, int vidx[4])
     if (debug&DEBUG_QUAD) {
 	fprintf(stderr, "tris_are_planar_quad()\n");
 	for (i=0 ; i < 6 ;i++) {
-	    fprintf(stderr, "%d: %d   %7g %7g %7g\n", i, vnum[i], 
+	    fprintf(stderr, "%d: %d   %7g %7g %7g\n", i, vnum[i],
 		    V3ARGS(&v[3* vnum[i]]));
 	}
     }
@@ -153,7 +157,7 @@ tris_are_planar_quad(struct rt_bot_internal *bot, int faceidx, int vidx[4])
     VMOVE(A, &v[3*vnum[0]]);
     VMOVE(B, &v[3*vnum[1]]);
     VMOVE(C, &v[3*vnum[2]]);
-    
+
     VSUB2(vAB, B, A);
     VSUB2(vAC, C, A);
     VCROSS(N1, vAB, vAC);
@@ -162,7 +166,7 @@ tris_are_planar_quad(struct rt_bot_internal *bot, int faceidx, int vidx[4])
     VMOVE(A, &v[3*vnum[3]]);
     VMOVE(B, &v[3*vnum[4]]);
     VMOVE(C, &v[3*vnum[5]]);
-    
+
     VSUB2(vAB, B, A);
     VSUB2(vAC, C, A);
     VCROSS(N2, vAB, vAC);
@@ -331,7 +335,7 @@ void write_dxf(struct rt_bot_internal *bot, char *name)
 	 *  16 = 3D polygon mesh
 	 *  32 = polygon mesh closed in the N direction
 	 */
-	fprintf(FH, "56\n");  
+	fprintf(FH, "56\n");
 
 	fprintf(FH, "254\n");
 	fprintf(FH, "10\n0.0\n20\n0.0\n30\n0.0\n"); /* WCS origin */
@@ -435,8 +439,8 @@ union tree *r_end (
     return curtree;
 }
 
-void add_bots(struct rt_bot_internal *bot_dest, 
-	      struct rt_bot_internal *bot_src) 
+void add_bots(struct rt_bot_internal *bot_dest,
+	      struct rt_bot_internal *bot_src)
 {
     int i = bot_dest->num_vertices + bot_src->num_vertices;
     int sz = sizeof(fastf_t) * 3;
@@ -449,19 +453,19 @@ void add_bots(struct rt_bot_internal *bot_dest,
 	   bot_src->num_vertices, bot_src->num_faces);
 
     /* allocate space for extra vertices */
-    bot_dest->vertices = 
+    bot_dest->vertices =
 	bu_realloc(bot_dest->vertices, i * sz, "new vertices");
 
     /* copy new vertices */
     memcpy(&bot_dest->vertices[bot_dest->num_vertices],
-	   bot_src->vertices, 
+	   bot_src->vertices,
 	   bot_src->num_vertices * sz);
 
     /* allocate space for new faces */
     i = bot_dest->num_faces + bot_src->num_faces;
     sz = sizeof(int) * 3;
     bot_dest->faces = bu_realloc(bot_dest->faces, i * sz, "new faces");
-    
+
     /* copy new faces, making sure that we update the vertex indices to
      * point to their new locations
      */
@@ -508,7 +512,7 @@ union tree * l_func (
 
     bot = ip->idb_ptr;
     RT_BOT_CK_MAGIC(bot);
-	
+
     add_bots((struct rt_bot_internal *)client_data, bot);
     return (union tree *)NULL;
 }
@@ -529,7 +533,7 @@ int main(int ac, char *av[])
     struct directory *dp;
 
     arg_count = parse_args(ac, av);
-	
+
     if ((ac - arg_count) < 1) {
 	fprintf(stderr, "usage: %s geom.g [file.dxf] [bot1 bot2 bot3...]\n", progname);
 	exit(-1);
@@ -551,9 +555,9 @@ int main(int ac, char *av[])
 	for ( ; arg_count < ac ; arg_count++ ) {
 	    printf("current: %s\n",av[arg_count]);
 
-	    if (!rt_db_lookup_internal(rtip->rti_dbip, av[arg_count], 
+	    if (!rt_db_lookup_internal(rtip->rti_dbip, av[arg_count],
 				       &dirp,
-				       &intern, 
+				       &intern,
 				       LOOKUP_QUIET,
 				       &rt_uniresource)) {
 		fprintf(stderr, "db_lookup failed on %s\n", av[arg_count]);
@@ -565,7 +569,7 @@ int main(int ac, char *av[])
 		bot = (struct rt_bot_internal *)intern.idb_ptr;
 		write_dxf(bot, av[arg_count]);
 	    } else {
-		/* user has asked for a tree.  Write 1 DXF file for 
+		/* user has asked for a tree.  Write 1 DXF file for
 		 * all the bots in that tree.
 		 */
 		char **sub_av;
@@ -612,7 +616,7 @@ int main(int ac, char *av[])
 	    fprintf(stderr, "rt_get_internal failure %d on %s\n", i, dp->d_namep);
 	    continue;
 	}
-	
+
 	if (i != ID_BOT) {
 	    if (debug&DEBUG_NAMES)
 		fprintf(stderr, "skipping \"%s\" (not a BOT)\n", dp->d_namep);
@@ -622,7 +626,7 @@ int main(int ac, char *av[])
 	bot = (struct rt_bot_internal *)intern.idb_ptr;
 
 	write_dxf(bot, dp->d_namep);
-	    
+
 FOR_ALL_DIRECTORY_END
     }
     return 0;

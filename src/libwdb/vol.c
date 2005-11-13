@@ -19,7 +19,7 @@
  * information.
  */
 /** @file vol.c
- *  
+ *
  */
 
 #include "common.h"

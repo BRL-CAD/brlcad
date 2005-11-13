@@ -25,7 +25,7 @@
  *  Author -
  *	Don Merritt
  *	August 1985
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
@@ -160,9 +160,9 @@ dunnopen(void)
 		close(fd);
 		exit(10);
 	}
-	
+
 	/* set up the camera device */
-	
+
 #ifdef BSD
 	tty.sg_ispeed = tty.sg_ospeed = B9600;
 	tty.sg_flags = RAW | EVENP | ODDP | XTABS;
@@ -253,9 +253,9 @@ goodstatus(void)
 	timeout = &waittime;
 	timeout->tv_sec = 10;
 	timeout->tv_usec = 0;
-	
+
 	cmd = ';';	/* status request cmd */
-	write(fd, &cmd, 1);	
+	write(fd, &cmd, 1);
 	FD_ZERO(&readfds);
 	FD_SET(fd, &readfds);
 	select(fd+1, &readfds, (fd_set *)0, (fd_set *)0, timeout);
@@ -288,7 +288,7 @@ goodstatus(void)
 }
 
 /*
- *			H A N G T E N 
+ *			H A N G T E N
  *
  *	Provides a 10 millisecond delay when called
  *

@@ -55,7 +55,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif
-                                                                                                                                                                            
+
 
 #include <stdio.h>
 #ifdef HAVE_STDLIB_H
@@ -81,24 +81,24 @@ get_args(int argc, register char **argv)
 {
 	register int c;
 
-	while ( (c = getopt( argc, argv, "m:p:f:" )) != EOF )  {
+	while ( (c = bu_getopt( argc, argv, "m:p:f:" )) != EOF )  {
 		switch( c )  {
 		case 'm':
-			max = atoi(optarg);
+			max = atoi(bu_optarg);
 			if ((max < 0) || (max > 255)) {
 				fprintf(stderr,"pixfade: max out of range");
 				exit(1);
 			}
 			break;
 		case 'p':
-			multiplier = atof(optarg) / 100.0;
+			multiplier = atof(bu_optarg) / 100.0;
 			if (multiplier < 0.0) {
 				fprintf(stderr,"pixfade: percent is negitive");
 				exit(1);
 			}
 			break;
 		case 'f':
-			multiplier = atof(optarg);
+			multiplier = atof(bu_optarg);
 			if (multiplier < 0.0) {
 				fprintf(stderr,"pixfade: fraction is negitive");
 				exit(1);
@@ -110,22 +110,22 @@ get_args(int argc, register char **argv)
 		}
 	}
 
-	if( optind >= argc )  {
+	if( bu_optind >= argc )  {
 		if( isatty(fileno(stdin)) )  {
 			fprintf(stderr,"pixfade: stdin is a tty\n");
 			return(0);
 		}
 		inp = stdin;
 	} else {
-		if( (inp = fopen(argv[optind], "r")) == NULL )  {
+		if( (inp = fopen(argv[bu_optind], "r")) == NULL )  {
 			(void)fprintf( stderr,
 				"pixfade: cannot open \"%s\" for reading\n",
-				argv[optind] );
+				argv[bu_optind] );
 			return(0);
 		}
 	}
 
-	if ( argc > ++optind )
+	if ( argc > ++bu_optind )
 		(void)fprintf( stderr, "pixfade: excess argument(s) ignored\n" );
 
 	if( isatty(fileno(stdout)) )  {

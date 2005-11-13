@@ -126,7 +126,7 @@ void bench(char *proj, int cache, int image) {
   client.sin_family = AF_INET;
   client.sin_addr.s_addr = htonl(INADDR_ANY);
   client.sin_port = htons(0);
- 
+
   if(bind(client_socket, (struct sockaddr *)&client, sizeof(client)) < 0) {
     fprintf(stderr, "unable to bind socket, exiting\n");
     exit(1);
@@ -189,6 +189,7 @@ void bench(char *proj, int cache, int image) {
   util_camera_free(&camera);
   free(app_data);
   free(bench_frame);
+  common_unpack_free();
 
   if(cache) {
     void *kdcache;

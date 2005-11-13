@@ -29,7 +29,7 @@ light_hit:  ERROR, nothing hit, sxy=212,66, dtol=5.000000e-03
 00164228: PT floor.s (ARB8#53) magwall11 (ARB8#88) (-0.005,52.0515) Iflip
   InHIT dist=-0.005 (surf 5)
  OutHIT dist=52.0515 (surf 0)
-  Solids: (88, 200, 201) 
+  Solids: (88, 200, 201)
 ------
 SHOT: 6407.1user 681.1sys 3:41:52real 53% 283i+1183d 735maxrss 1+42pf 163+99004csw
 Additional dynamic memory used=33464. bytes
@@ -38,4 +38,4 @@ pruned 43.9%:  0 model RPP, 0 dups skipped, 159358 solid RPP
 Frame     0:   262144 pixels in    6407.16 sec =      40.91 pixels/sec
 Frame     0:   341875 rays   in    6407.16 sec =      53.36 rays/sec (RTFM)
 
-    13330.7 real      6415.4 user       685.5 sys  
+    13330.7 real      6415.4 user       685.5 sys

@@ -27,7 +27,7 @@
  *
  *  Author -
  *	Paul Tanenbaum
- *  
+ *
  *  Source -
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
@@ -82,7 +82,7 @@ struct sol_name_dist
  */
 static int
 sol_comp_name(v1, v2)
-void *v1, *v2;    
+void *v1, *v2;
 {
     struct sol_name_dist	*s1 = v1;
     struct sol_name_dist	*s2 = v2;
@@ -100,7 +100,7 @@ void *v1, *v2;
  */
 static int
 sol_comp_dist(v1, v2)
-void *v1, *v2;    
+void *v1, *v2;
 {
     struct sol_name_dist	*s1 = v1;
     struct sol_name_dist	*s2 = v2;
@@ -279,7 +279,7 @@ struct seg		*finished_segs;
 	BU_CKMAG(pp -> pt_regionp, RT_REGION_MAGIC, "region");
 	printf("    Partition <x%lx> is '%s' ",
 	    (long)pp, pp -> pt_regionp -> reg_name);
-	
+
 	printf("\n--- Primitives hit on this partition ---\n");
 	for (i = 0; i < (pp -> pt_seglist).end; ++i)
 	{
@@ -405,7 +405,7 @@ struct seg		*finished_segs;
 	    segp = (struct seg *) segp -> l.forw)
     {
 	BU_CKMAG(segp, RT_SEG_MAGIC, "seg structure");
-	
+
 	bu_vls_trunc(&sol_path_name, 0);
 	fp = &(segp -> seg_stp -> st_path);
 	printf("At line %d, sol_path_name contains '%s'\n",

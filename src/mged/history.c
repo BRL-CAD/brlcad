@@ -25,7 +25,7 @@
  *	Bob Parker
  *
  *  Functions -
- *      history_record - 
+ *      history_record -
  *
  *  Source -
  *	The U. S. Army Ballistic Research Laboratory
@@ -33,8 +33,6 @@
  */
 
 #include "common.h"
-
-
 
 #include <stdio.h>
 #include <signal.h>
@@ -120,7 +118,7 @@ timediff(struct timeval *tvdiff, struct timeval *start, struct timeval *finish)
 	return -1;
     if (start->tv_sec == 0 && start->tv_usec == 0)
 	return -1;
-    
+
     tvdiff->tv_sec = finish->tv_sec - start->tv_sec;
     tvdiff->tv_usec = finish->tv_usec - start->tv_usec;
     if (tvdiff->tv_usec < 0) {
@@ -211,7 +209,7 @@ f_journal(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 /*
  *	F _ D E L A Y
  *
- * 	Uses select to delay for the specified amount of seconds and 
+ * 	Uses select to delay for the specified amount of seconds and
  *	  microseconds.
  */
 
@@ -353,7 +351,7 @@ history_next(void)
     if (BU_LIST_IS_HEAD(curr_cmd_list->cl_cur_hist, &(mged_hist_head.l))) {
 	return 0;
     }
-    
+
     hp = BU_LIST_NEXT(mged_hist, &(curr_cmd_list->cl_cur_hist->l));
     if (BU_LIST_IS_HEAD(hp, &(mged_hist_head.l))) {
 	curr_cmd_list->cl_cur_hist = hp;

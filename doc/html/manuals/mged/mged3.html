@@ -4,8 +4,8 @@
 <BODY BGCOLOR="#E0D8c8" Text="#000000">
 <a name="ListingObjects"><h3>Listing Objects</h3></a>
 
-Now let's take a look at what we have.  The 
-``<a href="mged_cmds.html#l">l</a>'' 
+Now let's take a look at what we have.  The
+``<a href="mged_cmds.html#l">l</a>''
 command lists the definition of a combination
 or primitive solid.
 
@@ -32,7 +32,7 @@ If we look at cup.c we get:
        rim.s
 </tt></pre>
 Note that this is not a <a href="brlcad_glossary.html#REGION">region</a>
-so there are no material properties.  The boolean tree indicates that the 
+so there are no material properties.  The boolean tree indicates that the
 object consists of: (outside.s - inside.s) u rim.s which in graph form looks
 like:
 <pre>
@@ -46,9 +46,9 @@ like:
 	       rim.s
 </pre>
 The text output of the boolean tree lines up the indentation of the operands
-with the operator.&nbsp So here, becaus outside.s and inside.s are indented 
-together, they are the operands to the subtraction operator.&nbsp 
-The subtraction operator and rim.s are indented the same amount, so the 
+with the operator.&nbsp So here, becaus outside.s and inside.s are indented
+together, they are the operands to the subtraction operator.&nbsp
+The subtraction operator and rim.s are indented the same amount, so the
 result of the subtraction, and rim.s are the operands of the union operator.
 
 
@@ -89,12 +89,12 @@ the plastic shader:
 
 <pre>
    <tt>mged> </tt><B><FONT color="#20a020">mater mug.r</FONT></B><tt>
-   Shader = 
+   Shader =
    Shader?  ('del' to delete, CR to skip) </tt><B><FONT color="#20a020">plastic di=.9 sh=4</FONT></B><tt>
    Color = (No color specified)
    Color R G B (0..255)? ('del' to delete, CR to skip) </tt><B><FONT color="#20a020">32 128 32</FONT></B><tt>
    Inherit = 0:  lower nodes (towards leaves) override
-   Inheritance (0|1)? (CR to skip) 
+   Inheritance (0|1)? (CR to skip)
    mged></tt>
 </pre>
 
@@ -107,27 +107,27 @@ the plastic shader:
 ``stack'' shader was created for this situation.&nbsp For example, we might want
 to apply a blotchy camoflage-like color pattern to the mug.&nbsp The ``camo''
 shader provides the color pattern, while the ``plastic'' shader provides the
-lighting model.&nbsp 
+lighting model.&nbsp
 
 <pre>
    <tt>mged> </tt><B><FONT color="#20a020">mater mug.r</FONT></B><tt>
    Shader = plastic
-   Shader?  ('del' to delete, CR to skip) </tt><B><FONT 
+   Shader?  ('del' to delete, CR to skip) </tt><B><FONT
 color="#20a020">stack camo s=10;plastic</FONT></B><tt>
    Color = 32 128 32
-   Color R G B (0..255)? ('del' to delete, CR to skip) 
+   Color R G B (0..255)? ('del' to delete, CR to skip)
    Inherit = 0:  lower nodes (towards leaves) override
-   Inheritance (0|1)? (CR to skip) 
+   Inheritance (0|1)? (CR to skip)
    mged> </tt>
 </pre>
 
 The ``camo'' shader creates a color pattern using a procedural noise
 technique.&nbsp It computes a fBm value based upon the point being shaded.&nbsp To
-compute this value it needs to be able to map coordinates in model space 
-into a noise space.&nbsp The most important parameter to specify is ``size''.&nbsp 
+compute this value it needs to be able to map coordinates in model space
+into a noise space.&nbsp The most important parameter to specify is ``size''.&nbsp
 This tells the shader what the spacing is (in millimeters) of grid points
 from the noise space.&nbsp It also gives us a rough bound on the size of the blobs
-of color it creates.&nbsp 
+of color it creates.&nbsp
 
 <center>
 <table border=1>
@@ -155,7 +155,7 @@ black.&nbsp We specify this with the -C option:
 
 <p>
 Mged can save a shell script to raytrace the current view.&nbsp This is done with
-the ``saveview'' command.&nbsp 
+the ``saveview'' command.&nbsp
 
 <pre>
 <tt>   mged> </tt><B><FONT color="#20a020">saveview mug_camo</FONT></B>
@@ -165,7 +165,7 @@ If we exit mged we will find a file called ``mug_camo'' in the current
 directory.&nbsp Running this script will start the ``rt'' program to create a file
 called mug_camo.pix.&nbsp If you do not specify the size of the image on the
 command line, it will default to a 512x512 image.&nbsp This file can be displayed
-in your framebuffer server window using the ``pix-fb'' command.&nbsp 
+in your framebuffer server window using the ``pix-fb'' command.&nbsp
 
 <pre>
 <tt>   % </tt><B><FONT color="#20a020">./mug_camo</FONT></B>
@@ -173,6 +173,6 @@ in your framebuffer server window using the ``pix-fb'' command.&nbsp
 </pre>
 
 <p>When you are done with the framebuffer, you can dismiss the window with
-the ``fbfree'' command.&nbsp 
+the ``fbfree'' command.&nbsp
 
 </BODY></HTML>

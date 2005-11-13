@@ -22,7 +22,7 @@
 #
 # rtwizard.tcl
 #
-# This is the main script for the RtWizard. 
+# This is the main script for the RtWizard.
 #
 # The development version codename is "Danube"
 # The final version will be "Defiant" ;-)
@@ -137,10 +137,10 @@ namespace eval RtWizard {
 
 	#
 	# Load the picture types into the example page.
-	# It then forwards the info to the wizard for the 
+	# It then forwards the info to the wizard for the
 	# radiobox in the "Image" menu. The "switch" for
 	# the picture type is maintained by the ExamplePage
-	# 
+	#
 	$::exp addType RtWizard::PictureTypeA typeA
 	$fb inform "Support for image type A loaded." 1
 
@@ -160,7 +160,7 @@ namespace eval RtWizard {
 	$fb inform "Support for image type F loaded." 2
 
 	#
-	# XXX need to disable all menu options 
+	# XXX need to disable all menu options
 	#
 
 	#
@@ -170,8 +170,8 @@ namespace eval RtWizard {
 	$fb inform "Megawidgets packed." 5
 
 	#
-	# Get the database name. If the name was specified on the 
-	# command line, use it and proceed. Otherwise, spin up the 
+	# Get the database name. If the name was specified on the
+	# command line, use it and proceed. Otherwise, spin up the
 	# gui, select the database page, and wait for the database
 	# file to be specified.
 	#
@@ -180,12 +180,12 @@ namespace eval RtWizard {
 	    if { ! [file exists $::RtWizard::dbFile] } {
 		set ::RtWizard::dbFile ""
 	    }
-	} 
-	
+	}
+
 	if { [string length $::RtWizard::dbFile] == 0 } {
 	    #
 	    # select the database page
-	    # 
+	    #
 	    $w select "dbp"
 
 	    #
@@ -206,8 +206,8 @@ namespace eval RtWizard {
 	}
 
 	#
-	# At this point, the database should be specified. 
-	# We load the database ourselves and hand it to the 
+	# At this point, the database should be specified.
+	# We load the database ourselves and hand it to the
 	# pages.
 	#
 	set ::mgedObj [Mged .#auto $::RtWizard::dbFile]
@@ -223,7 +223,7 @@ namespace eval RtWizard {
 	$w add RtWizard::GhostPage ghost $::RtWizard::dbFile
 	$fb inform "Support for ghost images loaded." 5
 
-	$w add RtWizard::LinePage lines $::RtWizard::dbFile 
+	$w add RtWizard::LinePage lines $::RtWizard::dbFile
 	$w select "exp"
 	$fb inform "RtWizard ready!!." 5
 
@@ -243,7 +243,7 @@ namespace eval RtWizard {
 
 #
 # Start main
-# 
+#
 RtWizard::main $argv
 
 

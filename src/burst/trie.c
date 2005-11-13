@@ -29,12 +29,7 @@
 static const char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
-#ifndef DEBUG
-#define NDEBUG
-#define STATIC static
-#else
-#define STATIC
-#endif
+#include "common.h"
 
 #include <assert.h>
 #include <stdio.h>
@@ -45,7 +40,8 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./ascii.h"
 #include "./extern.h"
 
-STATIC Func *matchTrie();
+
+static Func *matchTrie();
 
 /*
 	Trie *addTrie( char *name, Trie **triepp )
@@ -149,7 +145,7 @@ register Trie	*triep;
 
 #define MAX_TRIE_LEVEL	(32*16)
 
-STATIC Func	*
+static Func	*
 matchTrie( triep )
 register Trie	*triep;
 	{	Func	*func;

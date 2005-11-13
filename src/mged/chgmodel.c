@@ -61,6 +61,9 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #else
 #  include <strings.h>
 #endif
+#ifdef HAVE_UNISTD_H
+#  include <unistd.h>
+#endif
 
 #include "machine.h"
 #include "bu.h"
@@ -192,7 +195,7 @@ f_mater(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	  bu_vls_free(&vls);
 	  return TCL_ERROR;
 	}
-	
+
 	if( (dp = db_lookup( dbip,  argv[1], LOOKUP_NOISY )) == DIR_NULL )
 	  return TCL_ERROR;
 	if( (dp->d_flags & DIR_COMB) == 0 )  {
@@ -268,7 +271,7 @@ f_mater(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 color_prompt:
 	  if( comb->rgb_valid ){
 	    struct bu_vls tmp_vls;
-	    
+
 	    bu_vls_init(&tmp_vls);
 	    bu_vls_printf(&tmp_vls, "Color = %d %d %d\n",
 			  comb->rgb[0], comb->rgb[1], comb->rgb[2] );
@@ -331,7 +334,7 @@ color_prompt:
 	default:
 	  Tcl_AppendResult(interp, "Unknown response ignored\n", (char *)NULL);
 	  break;
-	}		
+	}
 
 	if( rt_db_put_internal( dp, dbip, &intern, &rt_uniresource ) < 0 )  {
 		TCL_WRITE_ERR_return;
@@ -349,7 +352,7 @@ f_edmater(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
   int status;
 
   char **av;
-  
+
   CHECK_DBI_NULL;
   CHECK_READ_ONLY;
 
@@ -484,7 +487,7 @@ f_rmater(
   struct rt_comb_internal	*comb;
   char line[LINELEN];
   char name[128];
-  char shader[256]; 
+  char shader[256];
   int r,g,b;
   int override;
   int inherit;
@@ -1090,7 +1093,7 @@ f_mirror(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 					return TCL_ERROR;
 				}
 
-				
+
 			}
 
 			for( BU_LIST_FOR( r, nmgregion, &m->r_hd ) )
@@ -1177,13 +1180,13 @@ f_mirror(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 		case ID_DSP:
 		{
 			struct rt_dsp_internal *dsp;
-			
+
 			dsp = (struct rt_dsp_internal *)internal.idb_ptr;
 			RT_DSP_CK_MAGIC( dsp );
-			
+
 			bn_mat_mul( temp, mirmat, dsp->dsp_mtos);
 			MAT_COPY( dsp->dsp_mtos, temp);
-			
+
 			break;
 		}
 		case ID_VOL:
@@ -1318,7 +1321,7 @@ aexists(char *name)
 
 /*
  *  			F _ M A K E
- *  
+ *
  *  Create a new solid of a given type
  *  (Generic, or explicit)
  */
@@ -1563,7 +1566,7 @@ f_make(ClientData	clientData,
 		arbn_ip->eqn[6][3] = view_state->vs_vop->vo_scale;
 		VSET( arbn_ip->eqn[7], -0.57735, -0.57735, -0.57735 );
 		arbn_ip->eqn[7][3] = view_state->vs_vop->vo_scale;
-		VSET( view_center, 
+		VSET( view_center,
 			-view_state->vs_vop->vo_center[MDX],
 			-view_state->vs_vop->vo_center[MDY],
 		        -view_state->vs_vop->vo_center[MDZ] );
@@ -1582,7 +1585,7 @@ f_make(ClientData	clientData,
 		ars_ip->ncurves = 3;
 		ars_ip->pts_per_curve = 3;
 		ars_ip->curves = (fastf_t **)bu_malloc((ars_ip->ncurves+1) * sizeof(fastf_t **), "ars curve ptrs" );
-		
+
 		for ( curve=0 ; curve < ars_ip->ncurves ; curve++ ) {
 		    ars_ip->curves[curve] = (fastf_t *)bu_calloc(
 			     (ars_ip->pts_per_curve + 1) * 3,
@@ -1609,15 +1612,15 @@ f_make(ClientData	clientData,
 			y = -view_state->vs_vop->vo_center[MDY]+curve*(0.25*view_state->vs_vop->vo_scale);
 			z = -view_state->vs_vop->vo_center[MDZ]+curve*(0.25*view_state->vs_vop->vo_scale);
 
-			VSET(&ars_ip->curves[curve][0], 
+			VSET(&ars_ip->curves[curve][0],
 			      -view_state->vs_vop->vo_center[MDX],
 			      -view_state->vs_vop->vo_center[MDY],
 			     z);
-			VSET(&ars_ip->curves[curve][3], 
+			VSET(&ars_ip->curves[curve][3],
 			     x,
 			      -view_state->vs_vop->vo_center[MDY],
 			     z);
-			VSET(&ars_ip->curves[curve][6], 
+			VSET(&ars_ip->curves[curve][6],
 			     x, y, z);
 		    }
 		}
@@ -1916,8 +1919,11 @@ f_make(ClientData	clientData,
 		av[2] = "sketch";
 		f_make( clientData, interp, 3, av );
 	} else if( strcmp( argv[2], "sketch" ) == 0 ) {
+#if 0
+	    /* used by the now defunct default sketch object */
 		struct carc_seg *csg;
 		struct line_seg *lsg;
+#endif
 
 		internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 		internal.idb_type = ID_SKETCH;
@@ -2115,7 +2121,7 @@ mged_rot_obj(Tcl_Interp *interp, int iflag, fastf_t *argvect)
   }
 
   /*XXX*/ MAT_COPY(acc_rot_sol, temp); /* used to rotate solid/object axis */
-  
+
   /* Record the new rotation matrix into the revised
    *	modelchanges matrix wrt "point"
    */
@@ -2493,7 +2499,7 @@ f_fracture(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
 	/* how many characters of the solid names do we reserve for digits? */
 	nmg_count_shell_kids(m, &tf, &tw, &tp);
-	
+
 	maxdigits = (int)(log10((double)(tf+tw+tp)) + 1.0);
 
 	{

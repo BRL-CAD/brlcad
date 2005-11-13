@@ -72,7 +72,7 @@ typedef struct util_camera_thread_data_s {
   tie_t *tie;
   common_work_t work;
   void *res_buf;
-  unsigned char *scan_map;
+  unsigned int *scanline;
   pthread_mutex_t mut;
 } util_camera_thread_data_t;
 
@@ -80,6 +80,6 @@ typedef struct util_camera_thread_data_s {
 void util_camera_init(util_camera_t *camera, int threads);
 void util_camera_free(util_camera_t *camera);
 void util_camera_prep(util_camera_t *camera, common_db_t *db);
-void util_camera_render(util_camera_t *camera, common_db_t *db, tie_t *tie, void *data, int size, void **res_buf, int *res_len);
+void util_camera_render(util_camera_t *camera, common_db_t *db, tie_t *tie, void *data, unsigned int size, void **res_buf, unsigned int *res_len);
 
 #endif

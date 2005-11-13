@@ -28,14 +28,14 @@
 #ifndef lint
 static char rcsid[] = "$Header$";
 #endif
-#if 0
-pgmtorle()			/* Tag. */
-#endif
+
 /*-----------------------------------------------------
  * System includes.
  */
+#include <stdlib.h>
 #include <stdio.h>
 #include <pgm.h>
+
 #undef abs			/* Screws up stdlib.h. */
 #define NO_DECLARE_MALLOC
 #include "rle.h"

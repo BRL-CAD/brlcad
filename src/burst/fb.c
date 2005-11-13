@@ -37,14 +37,14 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./ascii.h"
 #include "./extern.h"
 
-bool
+boolean
 imageInit()
-	{	bool needopen = false;
+	{	boolean needopen = 0;
 		static char lastfbfile[LNBUFSZ]={0}; /* last fbfile */
 	devwid = 512;
 	devhgt = 512;
 	if( fbfile[0] == NUL )
-		return	true;
+		return	1;
 	zoom = devwid / gridsz - 1;
 	while( zoom < 3  && devwid < MAXDEVWID )
 		{
@@ -59,37 +59,37 @@ imageInit()
 
 	/* Determine whether it is necessary to open fbfile. */
 	if( fbiop == FBIO_NULL || fb_getwidth( fbiop ) != devwid )
-		needopen = true; /* not currently open or size changed */
+		needopen = 1; /* not currently open or size changed */
 	else
 	if( lastfbfile[0] != NUL && strcmp( fbfile, lastfbfile ) != 0 )
-		needopen = true; /* name changed */
+		needopen = 1; /* name changed */
 	(void) strcpy( lastfbfile, fbfile );
 
 	if( needopen )
 		{
 		if( ! openFbDevice( fbfile ) )
-			return	false;
+			return	0;
 		paintGridFb();
 		}
 	else
 	if( !(firemode & FM_SHOT) || (firemode & FM_FILE) )
 		paintGridFb();
-	return	true;
+	return	1;
 	}
 
 /*	openFbDevice( char *devname )
 
 	Must be called after gridInit() so that gridsz is setup.
  */
-bool
+boolean
 openFbDevice( devname )
 char	*devname;
-	{	bool	ret = true;
+	{	boolean	ret = 1;
 	notify( "Opening frame buffer", NOTIFY_APPEND );
 	if( zoom < 1 )
 		{
 		prntScr( "Device is too small to display image." );
-		ret = false;
+		ret = 0;
 		goto	safe_exit;
 		}
 	if(	(	(fbiop != FBIO_NULL && fb_getwidth( fbiop ) != devwid)
@@ -99,7 +99,7 @@ char	*devname;
 		{
 			prntScr( "Memory allocation of %d bytes failed.",
 				sizeof(unsigned char)*devwid );
-			ret = false;
+			ret = 0;
 			goto	safe_exit;
 		}
 	(void) memset( (char *) pixgrid, NUL, sizeof(unsigned char)*devwid*3 );
@@ -109,14 +109,14 @@ char	*devname;
 		if( strncmp( fbiop->if_name, "/dev/sgi", 8 ) == 0 )
 			{
 			prntScr( "IRIS can't change window size." );
-			ret = false;
+			ret = 0;
 			goto	safe_exit;
 			}
 		else
 #endif
 		if( ! closFbDevice() )
 			{
-			ret = false;
+			ret = 0;
 			goto	safe_exit;
 			}
 
@@ -124,7 +124,7 @@ char	*devname;
 	fbiop = fb_open( devname, devwid, devhgt );
 	if( fbiop == NULL )
 		{
-		ret = false;
+		ret = 0;
 		goto	safe_exit;
 		}
 	else if( fb_clear( fbiop, pixblack ) == -1
@@ -134,22 +134,22 @@ char	*devname;
 		 fb_window( fbiop, devwid/2, devhgt/2 ) == -1)
 		)
 		{
-		ret = false;
+		ret = 0;
 		goto	safe_exit;
 		}
 safe_exit : notify( NULL, NOTIFY_DELETE );
 	return	ret;
 	}
 
-bool
+boolean
 closFbDevice()
 	{	int	ret;
 	notify( "Closing frame buffer", NOTIFY_APPEND );
 	if( fb_close( fbiop ) == -1 )
-		ret = false;
+		ret = 0;
 	else
 		{
-		ret = true;
+		ret = 1;
 		fbiop = FBIO_NULL;
 		}
 	notify( NULL, NOTIFY_DELETE );

@@ -88,6 +88,7 @@ static char rcs_id[] = "$Header$";
 vcrtorle()			/* Tag. */
 #endif
 
+#include <stdlib.h>
 #include <assert.h>
 #include <stdio.h>
 #include "rle.h"

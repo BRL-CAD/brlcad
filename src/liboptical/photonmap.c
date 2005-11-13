@@ -25,7 +25,7 @@
  *
  *  Author -
  *	Justin L. Shumaker
- *  
+ *
  *  Source -
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
@@ -81,7 +81,7 @@ int FindMedian(struct Photon *List, int Num, int Axis) {
       Min= List[i].Pos[Axis];
     if (List[i].Pos[Axis] > Max)
       Max= List[i].Pos[Axis];
-  } 
+  }
   Mean= (Min+Max)/2.0;
   i= 0;
   while (List[i].Pos[Axis] < Mean && i < Num)
@@ -616,7 +616,7 @@ int PHit(struct application *ap, struct partition *PartHeadp, struct seg *finish
       } else {
         SpecularReflect(normal,ap -> a_ray.r_dir);
       }
- 
+
       /* Assign pt */
       ap -> a_ray.r_pt[0]= pt[0];
       ap -> a_ray.r_pt[1]= pt[1];
@@ -639,7 +639,7 @@ int PMiss(struct application *ap) {
 
 /* ScalePhotonPower() is used to scale the power of all photons once they
  * have been emitted from the light source.  Scale= 1/(#emitted photons).
- * Call this function after each light source is processed. 
+ * Call this function after each light source is processed.
  * This function also handles setting a default power for the photons based
  * on the size of the scene, i.e power of light source */
 void ScalePhotonPower(int Map) {
@@ -700,7 +700,7 @@ void EmitPhotonsRandom(struct application *ap, double ScaleIndirect) {
   ldir[1]= 0;
   ldir[2]= -1;
 /*
-  for (i= 0; i < 8; i++) 
+  for (i= 0; i < 8; i++)
     bu_log("sample points: [%.3f,%.3f,%.3f]\n",lp -> lt_sample_pts[i].lp_pt[0], lp -> lt_sample_pts[i].lp_pt[1], lp -> lt_sample_pts[i].lp_pt[2]);
 */
   while (1) {
@@ -809,7 +809,7 @@ void Polar2Euclidian(vect_t Dir, vect_t Normal, double Theta, double Phi) {
   BasisX[2]= 0.0;
   VUNITIZE(BasisX);
   VCROSS(BasisY,Normal,BasisX);
-	
+
   for (i= 0; i < 3; i++)
     Dir[i]= sin(Theta)*cos(Phi)*BasisX[i] + sin(Theta)*sin(Phi)*BasisY[i] + cos(Theta)*Normal[i];
 }
@@ -855,7 +855,7 @@ void Irradiance(int pid, struct Photon *P, struct application *ap) {
       lap -> a_purpose= (void*)P -> Irrad;
 
 /*      bu_log("Vec: [%.3f,%.3f,%.3f]\n",ap -> a_ray.r_dir[0],ap -> a_ray.r_dir[1],ap -> a_ray.r_dir[2]);*/
-      rt_shootray(lap);	
+      rt_shootray(lap);
 
 /*      bu_log("[%.3f,%.3f,%.3f] [%.3f,%.3f,%.3f] [%.3f,%.3f,%.3f]\n",P.Pos[0],P.Pos[1],P.Pos[2],P.Normal[0],P.Normal[1],P.Normal[2],IMColor[0],IMColor[1],IMColor[2]);*/
     }
@@ -879,7 +879,7 @@ void BuildIrradianceCache(int pid, struct PNode *Node, struct application *ap) {
   if (!Node)
     return;
 
-  
+
   /* Determine if this pt will be used by calculating a weight */
   bu_semaphore_acquire(PM_SEM);
   if (!Node -> C) {
@@ -1305,7 +1305,7 @@ void LocatePhotons(struct PhotonSearch *Search, struct PNode *Root) {
 
   /* REPLACE, Find Distance between Root Photon and NP -> Pos */
   Dist= (Root -> P.Pos[0] - Search -> Pos[0])*(Root -> P.Pos[0] - Search -> Pos[0]) + (Root -> P.Pos[1] - Search -> Pos[1])*(Root -> P.Pos[1] - Search -> Pos[1]) + (Root -> P.Pos[2] - Search -> Pos[2])*(Root -> P.Pos[2] - Search -> Pos[2]);
-                                                                                                                                                                                                                                                                   
+
   angle= VDOT(Search -> Normal, Root -> P.Normal);
   if (Dist < Search -> RadSq && angle > GPM_ATOL) { /* Check that Result is within Radius and Angular Tolerance */
 /*  if (Dist < NP -> RadSq) {*/

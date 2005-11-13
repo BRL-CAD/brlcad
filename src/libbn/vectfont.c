@@ -29,7 +29,7 @@
  *	This routine is used to plot a string of ASCII symbols
  *  on the plot being generated, using a built-in set of fonts
  *  drawn as vector lists.
- * 
+ *
  *	Internally, the basic font resides in a 10x10 unit square.
  *  Externally, each character can be thought to occupy one square
  *  plotting unit;  the 'scale'
@@ -46,11 +46,11 @@
  *	Bruce Henriksen
  *	Stephen Wolff
  *	Michael John Muuss
- *  
+ *
  *  Source -
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
- *  
+ *
  */
 /*@}*/
 
@@ -70,6 +70,8 @@ static const char tp_RCSid[] = "@(#)$Header$ (ARL)";
 #include "plot3.h"
 #include "vectfont.h"
 
+#define NUM_SYMBOLS	8
+
 TINY		*tp_cindex[256];	/* index to stroke tokens */
 
 /*
@@ -85,15 +87,15 @@ tp_setup(void)
 	p = tp_ctable;		/* pointer to stroke list */
 
 	/* Store start addrs of each stroke list */
-	for( i=040-5; i<128; i++)  {
+	for( i=040-NUM_SYMBOLS; i<128; i++)  {
 		tp_cindex[i+128] = tp_cindex[i] = p;
 		while( (*p++) != LAST );
 	}
-	for( i=6; i<040; i++ )  {
-		tp_cindex[i+128] = tp_cindex[i] = tp_cindex['?'];
+	for( i=1; i<=NUM_SYMBOLS; i++ )  {
+		tp_cindex[i+128] = tp_cindex[i] = tp_cindex[040-NUM_SYMBOLS-1+i];
 	}
-	for( i=1; i<6; i++ )  {
-		tp_cindex[i+128] = tp_cindex[i] = tp_cindex[040-1+i];
+	for( i=NUM_SYMBOLS+1; i<040; i++ )  {
+		tp_cindex[i+128] = tp_cindex[i] = tp_cindex['?'];
 	}
 }
 
@@ -138,6 +140,41 @@ TINY	tp_ctable[] = {
 	brt(0, 2),
 	LAST,
 
+/*	plus-minus	*/
+	drk(5, 7),
+	brt(5, 2),
+	drk(2, 2),
+	brt(8, 2),
+	drk(2, 5),
+	brt(8, 5),
+	LAST,
+
+/*	centerline symbol	*/
+	drk(8, 4),
+	brt(7, 6),
+	brt(4, 7),
+	brt(1, 6),
+	brt(0, 4),
+	brt(1, 2),
+	brt(4, 1),
+	brt(7, 2),
+	brt(8, 4),
+	drk(1, 1),
+	brt(7, 7),
+	LAST,
+
+/*	degree symbol	*/
+	drk(1, 9),
+	brt(2, 9),
+	brt(3, 8),
+	brt(3, 7),
+	brt(2, 6),
+	brt(1, 6),
+	brt(0, 7),
+	brt(0, 8),
+	brt(1, 9),
+	LAST,
+
 /*	table for ascii 040, ' '	*/
 	LAST,
 
@@ -164,6 +201,7 @@ TINY	tp_ctable[] = {
 	brt(6, 7),
 	brt(5, 10),
 	LAST,
+
 
 /*	table for #	*/
 	drk(1, 0),

@@ -22,10 +22,10 @@
 /*@{*/
 /** @file nmg_tri.c
  *  Triangulate the faces of a polygonal NMG.
- * 
+ *
  *  Author -
  *	Lee A. Butler
- *  
+ *
  *  Source -
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
@@ -130,7 +130,7 @@ int PvsV(struct trap *p, struct trap *v)
 }
 
 
-static struct pt2d *find_pt2d(struct bu_list *tbl2d, struct vertexuse *vu);	
+static struct pt2d *find_pt2d(struct bu_list *tbl2d, struct vertexuse *vu);
 static FILE *plot_fd;
 
 static void
@@ -144,7 +144,7 @@ print_2d_eu(char *s, struct edgeuse *eu, struct bu_list *tbl2d)
 	pt_next = find_pt2d(tbl2d, (BU_LIST_PNEXT_CIRC(edgeuse, eu))->vu_p);
 	bu_log("%s: 0x%08x %g %g -> %g %g\n", s, eu,
 		pt->coord[X], pt->coord[Y],
-		pt_next->coord[X], pt_next->coord[Y]);	
+		pt_next->coord[X], pt_next->coord[Y]);
 }
 
 
@@ -166,7 +166,7 @@ print_trap(struct trap *tp, struct bu_list *tbl2d)
 	else {
 		bu_log("\tbot (nil)\n");
 	}
-			
+
 	if (tp->e_left)
 		print_2d_eu("\t\t  e_left", tp->e_left, tbl2d);
 
@@ -219,7 +219,7 @@ nmg_tri_plfu(struct faceuse *fu, struct bu_list *tbl2d)
 
 	NMG_CK_TBL2D(tbl2d);
 	NMG_CK_FACEUSE(fu);
-	
+
 	sprintf(name, "tri%02d.pl", file_number++);
 	if ((fd=fopen(name, "w")) == (FILE *)NULL) {
 		perror(name);
@@ -238,7 +238,7 @@ nmg_tri_plfu(struct faceuse *fu, struct bu_list *tbl2d)
 		fu->f_p->max_pt[0]+1.0,
 		fu->f_p->max_pt[1]+1.0,
 		fu->f_p->max_pt[2]+1.0);
-	
+
 	nmg_pl_fu(fd, fu, b, 255, 255, 255);
 
 	for (BU_LIST_FOR(lu, loopuse, &fu->lu_hd)) {
@@ -436,7 +436,7 @@ map_vu_to_2d(struct vertexuse *vu, struct bu_list *tbl2d, fastf_t *mat, struct f
  *			-----------------------------------
  *			|     struct pt2d.{magic,coord[3]} |
  *			-----------------------------------
- *	
+ *
  *	When the caller is done, nmg_free_2d_map() should be called to dispose
  *	of the map
  */
@@ -513,7 +513,7 @@ is_convex(struct pt2d *a, struct pt2d *b, struct pt2d *c, const struct bn_tol *t
 {
 	vect_t ab, bc, pv, N;
 	double angle;
-	
+
 	NMG_CK_PT2D(a);
 	NMG_CK_PT2D(b);
 	NMG_CK_PT2D(c);
@@ -558,11 +558,11 @@ is_convex(struct pt2d *a, struct pt2d *b, struct pt2d *c, const struct bn_tol *t
  *      /- -\	  -------		-\   /-     \---/  -------
  *     /-- --\	  ---O---	O	--\ /--      \-/   ---O---	O
  *    O--- ---O	  --/ \--      /-\	---O---       O	   -------
- *     \-- --/	  -/   \-     /---\	-------	
- *      \- -/	
+ *     \-- --/	  -/   \-     /---\	-------
+ *      \- -/
  *
  *    Poly Side		    Poly Start 		   Poly End
- *	         Hole Start    		Hole end   
+ *	         Hole Start    		Hole end
  */
 static int
 vtype2d(struct pt2d *v, struct bu_list *tbl2d, const struct bn_tol *tol)
@@ -589,7 +589,7 @@ vtype2d(struct pt2d *v, struct bu_list *tbl2d, const struct bn_tol *tol)
 	}
 
 	if (P_GT_V(n, v) && P_GT_V(p, v)) {
-		/* 
+		/*
 		 *   \   /
 		 *    \ /
 		 *     .
@@ -612,7 +612,7 @@ vtype2d(struct pt2d *v, struct bu_list *tbl2d, const struct bn_tol *tol)
 
 		if (is_convex(p, v, n, tol)) return(POLY_END);
 		else return(HOLE_END);
-		
+
 	}
 
 	if (P_LT_V(n, v) && P_LT_V(p, v)) {
@@ -862,7 +862,7 @@ hole_start_vertex(struct pt2d *pt, struct bu_list *tbl2d, struct bu_list *tlist)
 	NMG_CK_TBL2D(tbl2d);
 	NMG_CK_PT2D(pt);
 	if (rt_g.NMG_debug & DEBUG_TRI)
-		bu_log( "%g %g is hole start vertex\n", 
+		bu_log( "%g %g is hole start vertex\n",
 			pt->coord[X], pt->coord[Y]);
 
 	/* we need to find the un-completed trapezoid which encloses this
@@ -1045,7 +1045,7 @@ hole_end_vertex(struct pt2d *pt, struct bu_list *tbl2d, struct bu_list *tlist)
 		if (tpnext && tpprev)
 			goto gotem;
 	}
-	
+
 	rt_bomb("couldn't find both trapezoids of hole closing vertex\n");
 gotem:
 	NMG_CK_TRAP(tpnext);
@@ -1075,7 +1075,7 @@ gotem:
 
 
 /**
- *	N M G _ T R A P _ F A C E 
+ *	N M G _ T R A P _ F A C E
  *
  *	Produce the trapezoidal decomposition of a face from the set of
  *	2D points.
@@ -1153,7 +1153,7 @@ map_new_vertexuse(struct bu_list *tbl2d, struct vertexuse *vu_p)
 	rt_bomb("Couldn't find mapped vertexuse of vertex!\n");
 }
 
-/** Support routine for 
+/** Support routine for
  * nmg_find_first_last_use_of_v_in_fu
  *
  * The object of the game here is to find uses of the given vertex whose
@@ -1162,12 +1162,12 @@ map_new_vertexuse(struct bu_list *tbl2d, struct vertexuse *vu_p)
  */
 static void
 pick_edges(struct vertex *v, struct vertexuse **vu_first, int *min_dir, struct vertexuse **vu_last, int *max_dir, struct faceuse *fu, const struct bn_tol *tol, fastf_t *dir)
-                 
-                                       
-                   
+
+
+
                        	/* 1: forward -1 reverse */
-                   	     
-           
+
+
 {
 	struct vertexuse *vu;
 	struct edgeuse *eu_next, *eu_last;
@@ -1182,7 +1182,7 @@ pick_edges(struct vertex *v, struct vertexuse **vu_first, int *min_dir, struct v
 			V3ARGS(v->vg_p->coord), V3ARGS(dir));
 
 	/* Look at all the uses of this vertex, and find the uses
-	 * associated with an edgeuse in this faceuse.  
+	 * associated with an edgeuse in this faceuse.
 	 *
 	 * Compute the dot product of the direction vector with the vector
 	 * of the edgeuse, and the PRIOR edgeuse in the loopuse.
@@ -1223,7 +1223,7 @@ pick_edges(struct vertex *v, struct vertexuse **vu_first, int *min_dir, struct v
 			bu_log("\t\tchecking forward edgeuse to %g %g %g\n",
 				V3ARGS(vu_next->v_p->vg_p->coord) );
 
-		if (eu_length_sq >= SMALL_FASTF) { 
+		if (eu_length_sq >= SMALL_FASTF) {
 			if ((vu_dot = VDOT(eu_dir, dir)) > dot_max) {
 				if (rt_g.NMG_debug & DEBUG_TRI) {
 					bu_log("\t\t\teu_dir %g %g %g\n",
@@ -1243,7 +1243,7 @@ pick_edges(struct vertex *v, struct vertexuse **vu_first, int *min_dir, struct v
 				if (rt_g.NMG_debug & DEBUG_TRI) {
 					bu_log("\t\t\teu_dir %g %g %g\n", V3ARGS(eu_dir));
 					bu_log("\t\t\tnew_first/min 0x%08x %g %g %g -> %g %g %g vdot %g\n",
-						vu, 
+						vu,
 						V3ARGS(vu->v_p->vg_p->coord),
 						V3ARGS(vu_next->v_p->vg_p->coord),
 						vu_dot);
@@ -1280,10 +1280,10 @@ pick_edges(struct vertex *v, struct vertexuse **vu_first, int *min_dir, struct v
 		if (eu_length_sq >= SMALL_FASTF) {
 			if ((vu_dot = VDOT(eu_dir, dir)) > dot_max) {
 				if (rt_g.NMG_debug & DEBUG_TRI) {
-					bu_log("\t\t\t-eu_dir %g %g %g\n", 
+					bu_log("\t\t\t-eu_dir %g %g %g\n",
 						V3ARGS(eu_dir));
 					bu_log("\t\t\tnew_last/max 0x%08x %g %g %g <- %g %g %g vdot %g\n",
-						vu, 
+						vu,
 						V3ARGS(vu->v_p->vg_p->coord),
 						V3ARGS(vu_prev->v_p->vg_p->coord),
 						vu_dot);
@@ -1310,11 +1310,11 @@ pick_edges(struct vertex *v, struct vertexuse **vu_first, int *min_dir, struct v
 
 }
 
-/** Support routine for 
+/** Support routine for
  * nmg_find_first_last_use_of_v_in_fu
- * 
+ *
  * Given and edgeuse and a faceuse, pick the use of the edge in the faceuse
- * 	whose left vector has the largest/smallest dot product with the given 
+ * 	whose left vector has the largest/smallest dot product with the given
  *	direction vector.  The parameter "find_max" determines whether we
  *	return the edgeuse with the largest (find_max != 0) or the smallest
  *	(find_max == 0) left-dot-product.
@@ -1605,7 +1605,7 @@ pick_pt2d_for_cutjoin(struct bu_list *tbl2d, struct pt2d **p1, struct pt2d **p2,
 	NMG_CK_PT2D(*p2);
 	NMG_CK_VERTEXUSE((*p1)->vu_p);
 	NMG_CK_VERTEXUSE((*p2)->vu_p);
-	
+
 	cut_vu1 = (*p1)->vu_p;
 	cut_vu2 = (*p2)->vu_p;
 
@@ -1703,7 +1703,7 @@ cut_mapped_loop(struct bu_list *tbl2d, struct pt2d *p1, struct pt2d *p2, const i
 		bu_log("parent loops are not the same %s %d\n", __FILE__, __LINE__);
 		rt_bomb("cut_mapped_loop() goodnight 1\n");
 	}
-	
+
 	pick_pt2d_for_cutjoin(tbl2d, &p1, &p2, tol);
 
 	if (p1->vu_p->up.eu_p->up.lu_p != p2->vu_p->up.eu_p->up.lu_p) {
@@ -1730,7 +1730,7 @@ cut_mapped_loop(struct bu_list *tbl2d, struct pt2d *p1, struct pt2d *p2, const i
 			sprintf(name, "bad_tri_cut%d.g", iter++);
 			if ((fd=fopen("bad_tri_cut.pl", "w")) == (FILE *)NULL)
 				rt_bomb("cut_mapped_loop() goodnight 2\n");
-			
+
 			VSUB2(cut_vect, p2->vu_p->v_p->vg_p->coord, p1->vu_p->v_p->vg_p->coord);
 			/* vector goes past end point by 50% */
 			VJOIN1(cut_end, p2->vu_p->v_p->vg_p->coord, 0.5, cut_vect);
@@ -1974,7 +1974,7 @@ join_mapped_loops(struct bu_list *tbl2d, struct pt2d *p1, struct pt2d *p2, const
 		return;
 
 	/* since we've just made some new vertexuses
-	 * we need to map them to the 2D plane.  
+	 * we need to map them to the 2D plane.
 	 *
 	 * XXX This should be made more direct and efficient.  For now we
 	 * just go looking for vertexuses without a mapping.
@@ -2043,7 +2043,7 @@ skip_cut(struct bu_list *tbl2d, struct pt2d *top, struct pt2d *bot)
 
 		/* if the edge exists, don't try to re-cut it */
 		if (eu_next->vu_p->v_p == vu_bot->v_p)
-			return 1; 
+			return 1;
 	}
 
 	fu = nmg_find_fu_of_vu(vu_bot);
@@ -2065,7 +2065,7 @@ skip_cut(struct bu_list *tbl2d, struct pt2d *top, struct pt2d *bot)
 
 		/* if the edge exists, don't try to re-cut it */
 		if (eu_next->vu_p->v_p == vu_top->v_p)
-			return 1; 
+			return 1;
 	}
 	return 0;
 }
@@ -2088,7 +2088,7 @@ cut_diagonals(struct bu_list *tbl2d, struct bu_list *tlist, const struct faceuse
 
 	/* Convert trap list to unimonotone polygons */
 	for (BU_LIST_FOR(tp, trap, tlist)) {
-		/* if top and bottom points are not on same edge of 
+		/* if top and bottom points are not on same edge of
 		 * trapezoid, we cut across the trapezoid with a new edge.
 		 */
 
@@ -2329,7 +2329,7 @@ cut_unimonotone(struct bu_list *tbl2d, struct bu_list *tlist, struct loopuse *lu
 	}
 	vert_count_sq = verts * verts;
 
-	/* pick the pt which does NOT have the other as a "next" pt in loop 
+	/* pick the pt which does NOT have the other as a "next" pt in loop
 	 * as the place from which we start marching around the uni-monotone
 	 */
 	if (PT2D_NEXT(tbl2d, max) == min)
@@ -2338,12 +2338,12 @@ cut_unimonotone(struct bu_list *tbl2d, struct bu_list *tlist, struct loopuse *lu
 		first = max;
 	else {
 		bu_log("is this a unimonotone loop of just 2 points?:\t%g %g %g and %g %g %g?\n",
-			V3ARGS(min->vu_p->v_p->vg_p->coord), 
+			V3ARGS(min->vu_p->v_p->vg_p->coord),
 			V3ARGS(max->vu_p->v_p->vg_p->coord) );
 
 		rt_bomb("aborting\n");
 	}
-	
+
 	/* */
 	if (rt_g.NMG_debug & DEBUG_TRI)
 		bu_log("%d verts in unimonotone, Min: %g %g  Max: %g %g first:%g %g 0x%08x\n", verts,
@@ -2397,7 +2397,7 @@ cut_unimonotone(struct bu_list *tbl2d, struct bu_list *tlist, struct loopuse *lu
 			if (rt_g.NMG_debug & DEBUG_TRI)
 				nmg_tri_plfu( lu->up.fu_p, tbl2d );
 
-			if (current->vu_p->v_p == first->vu_p->v_p) { 
+			if (current->vu_p->v_p == first->vu_p->v_p) {
 				t = PT2D_NEXT(tbl2d, first);
 				if (rt_g.NMG_debug & DEBUG_TRI)
 					bu_log("\tfirst(0x%08x -> %g %g\n", first, t->coord[X], t->coord[Y]);
@@ -2465,7 +2465,7 @@ nmg_plot_flat_face(struct faceuse *fu, struct bu_list *tbl2d)
 
 			continue;
 		}
-		
+
 		for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd ) ) {
 			register struct edgeuse *eu_pnext;
 
@@ -2637,7 +2637,7 @@ triangulate:
 			nmg_find_model(&fu->s_p->l.magic),
 			"split trangles and unimonotones");
 	}
-	
+
 	/* now we're left with a face that has some triangle loops and some
 	 * uni-monotone loops.  Find the uni-monotone loops and triangulate.
 	 */
@@ -2645,7 +2645,7 @@ triangulate:
 
 		if (BU_LIST_FIRST_MAGIC( &lu->down_hd ) == NMG_VERTEXUSE_MAGIC) {
 			vu = BU_LIST_FIRST(vertexuse, &lu->down_hd);
-			
+
 			bu_log("How did I miss this vertex loop %g %g %g?\n%s\n",
 				V3ARGS(vu->v_p->vg_p->coord),
 				"I'm supposed to be dealing with unimonotone loops now");
@@ -2712,7 +2712,7 @@ nmg_triangulate_model(struct model *m, const struct bn_tol *tol)
 	struct nmgregion *r;
 	struct shell *s;
 	struct faceuse *fu;
-	
+
 	BN_CK_TOL(tol);
 	NMG_CK_MODEL(m);
 	nmg_vmodel(m);

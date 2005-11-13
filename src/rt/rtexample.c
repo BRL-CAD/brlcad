@@ -26,13 +26,14 @@
  */
 #include "common.h"
 
-
-
 #include <stdio.h>
 #include <math.h>
+
 #include "machine.h"		/* machine specific definitions */
 #include "vmath.h"		/* vector math macros */
 #include "raytrace.h"		/* librt interface definitions */
+#include "rtprivate.h"
+
 
 /* every application needs one of these */
 struct application	ap;
@@ -47,7 +48,7 @@ Usage:  rtexample model.g objects...\n";
 main(int argc, char **argv)
 {
 	static struct rt_i *rtip;	/* rt_dirbuild returns this */
-	char idbuf[132];		/* First ID record info */
+	char idbuf[RT_BUFSIZE] = {0};		/* First ID record info */
 
 	if( argc < 3 )  {
 		(void)fputs(usage, stderr);

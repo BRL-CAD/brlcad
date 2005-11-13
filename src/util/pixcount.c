@@ -24,7 +24,7 @@
  *
  *  Author -
  *	Paul J. Tanenbaum
- *  
+ *
  *  Source -
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5068
@@ -204,19 +204,19 @@ main (int argc, char **argv)
     int			ch;		/* current char in command line */
     struct pixel	*pp;
 
-    extern int	optind;			/* index from getopt(3C) */
-    extern char	*optarg;		/* argument from getopt(3C) */
+    extern int	bu_optind;			/* index from bu_getopt(3C) */
+    extern char	*bu_optarg;		/* argument from bu_getopt(3C) */
 
     /*
      *	Process the command line
      */
-    while ((ch = getopt(argc, argv, OPT_STRING)) != EOF)
+    while ((ch = bu_getopt(argc, argv, OPT_STRING)) != EOF)
 	switch (ch)
 	{
 	    case '#':
-		if (sscanf(optarg, "%d", &pixel_size) != 1)
+		if (sscanf(bu_optarg, "%d", &pixel_size) != 1)
 		{
-		    bu_log("Invalid pixel size: '%s'\n", optarg);
+		    bu_log("Invalid pixel size: '%s'\n", bu_optarg);
 		    print_usage();
 		    exit (1);
 		}
@@ -226,7 +226,7 @@ main (int argc, char **argv)
 		print_usage();
 		exit (ch != '?');
 	}
-    switch (argc - optind)
+    switch (argc - bu_optind)
     {
 	case 0:
 	    inf_name = "stdin";
@@ -248,7 +248,7 @@ main (int argc, char **argv)
      */
     if (infp == NULL)
     {
-	inf_name = argv[optind];
+	inf_name = argv[bu_optind];
 	if ((infp = fopen(inf_name, "r")) == NULL)
 	{
 	    bu_log ("Cannot open input file '%s'\n", inf_name);
@@ -256,7 +256,7 @@ main (int argc, char **argv)
 	}
 	if (outfp == NULL)
 	{
-	    outf_name = argv[++optind];
+	    outf_name = argv[++bu_optind];
 	    if ((outfp = fopen(outf_name, "w")) == NULL)
 	    {
 		bu_log ("Cannot open output file '%s'\n", outf_name);

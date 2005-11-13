@@ -28,7 +28,7 @@
  *  Authors -
  *	Michael John Muuss
  *	Gary S. Moss
- *  
+ *
  *  Source -
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
@@ -39,10 +39,9 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 
 #include "common.h"
 
-
-
 #include <stdio.h>
 #include <math.h>
+
 #include "machine.h"
 #include "vmath.h"
 #include "mater.h"
@@ -123,10 +122,10 @@ extern double phg_ipow();
  */
 HIDDEN int
 phong_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip)
-                           
-             	         
-    	      
-                             
+
+
+
+
                                 /* New since 4.4 release */
 {
 	register struct phong_specific *pp;
@@ -160,10 +159,10 @@ phong_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, stru
  */
 HIDDEN int
 mirror_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip)
-                           
-             	         
-    	      
-                             
+
+
+
+
                                 /* New since 4.4 release */
 {
 	register struct phong_specific *pp;
@@ -197,10 +196,10 @@ mirror_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, str
  */
 HIDDEN int
 glass_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip)
-                           
-             	         
-    	      
-                             
+
+
+
+
                                 /* New since 4.4 release */
 {
 	register struct phong_specific *pp;
@@ -296,7 +295,7 @@ phong_free(char *cp)
 
 	Er = Ra(m)*cos(Ia) + Rd(m)*cos(I1) + W(I1,m)*cos(s)^^n
 	where,
- 
+
 	Er	is the energy reflected in the observer's direction.
 	Ra	is the diffuse reflectance coefficient at the point
 		of intersection due to ambient lighting.
@@ -462,7 +461,7 @@ if (!PM_Visualize) {
 			bu_log("phong_render light=%s lightfract=%g\n",
 				lp->lt_name, swp->sw_lightfract[i] );
 		}
-	
+
 		/* Light is not shadowed -- add this contribution */
 #ifndef RT_MULTISPECTRAL
 		intensity = swp->sw_intensity+3*i;
@@ -578,7 +577,7 @@ if (!PM_Visualize) {
 #ifndef PHAST_PHONG
 /*
  *  			I P O W
- *  
+ *
  *  Raise a floating point number to an integer power
  */
 double

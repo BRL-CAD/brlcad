@@ -22,11 +22,11 @@
  *
  *  Author -
  *	S.Coates - 11 February 1993
- *  
+ *
  *  Source -
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5066
- *  
+ *
  *
  *  Notes -
  *	This version ONLY shoots down x-axis.

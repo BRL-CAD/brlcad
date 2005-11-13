@@ -84,7 +84,6 @@ SUBDIRS = \
 	${PNGDIR} \
 	${REGEXDIR} \
 	${TKGLXDIR} \
-	${JOVEDIR} \
 	$(UTAHRLEDIR) \
 	$(URTDIR) \
 	${TCLDIR} \
@@ -92,6 +91,7 @@ SUBDIRS = \
 	${ITCLDIR} \
 	${IWIDGETSDIR} \
 	${TERMLIBDIR} \
+	${JOVEDIR} \
 	awf
 
 endif

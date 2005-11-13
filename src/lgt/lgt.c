@@ -77,12 +77,12 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 int	ready_Output_Device(int frame);
 void	close_Output_Device(int frame);
-STATIC void	intr_sig(int sig);
-STATIC void	init_Lgts(void);
+static void	intr_sig(int sig);
+static void	init_Lgts(void);
 void		exit_Neatly(int status);
 int		key_Frame(void);
 
-STATIC int
+static int
 substr(char *str, char *pattern)
 {
 	if( *str == '\0' )
@@ -133,7 +133,7 @@ main(int argc, char **argv)
 		limit( C_PROC, 0, L_MEM, -1 ) );
 	}
 #endif
-	
+
 	init_Lgts();
 
 	if( ! pars_Argv( argc, argv ) )
@@ -154,7 +154,7 @@ main(int argc, char **argv)
 				);
 		if( get_Input( input_ln, MAX_LN, prompt ) != NULL )
 			sgi_usemouse = input_ln[0] != 'n';
-		if( sgi_usemouse )			
+		if( sgi_usemouse )
 			sgi_Init_Popup_Menu();
 		}
 #endif
@@ -326,7 +326,7 @@ close_Output_Device(int frame)
 	return;
 	}
 
-STATIC void
+static void
 intr_sig(int sig)
 {
 	(void) signal( SIGINT, intr_sig );
@@ -336,7 +336,7 @@ intr_sig(int sig)
 /*	i n i t _ L g t s ( )
 	Set certain default lighting info.
  */
-STATIC void
+static void
 init_Lgts(void)
 {
 	/* Ambient lighting.						*/

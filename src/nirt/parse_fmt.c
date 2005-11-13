@@ -19,7 +19,7 @@
  * information.
  */
 /** @file parse_fmt.c
- *	
+ *
  */
 #ifndef lint
 static const char RCSid[] = "$Header$";
@@ -112,7 +112,7 @@ outval		ValTab[] =
 outitem		*oi_list[FMT_NONE];
 static char	def_dest_string[] = "stdout";
 char		*dest_string = def_dest_string;
-static char	def_sf_name[] = DEF_SF_NAME;	
+static char	def_sf_name[] = DEF_SF_NAME;
 char		*sf_name = def_sf_name;		/* Name of state file */
 
 FILE		*outf = (FILE *)NULL;
@@ -134,7 +134,7 @@ extern char			local_u_name[];
 extern int			overlap_claims;
 extern char			*ocname[];
 
-void 
+void
 format_output (char *buffer, com_table	*ctp)
 {
     char	*bp = buffer;	/* was  + 1; */
@@ -310,7 +310,7 @@ void parse_fmt(char *uoutspec, int outcom_type)
 	    prev_oip -> next = oip;
 	prev_oip = oip;
     }
-    
+
     /* Skip any garbage beyond the close quote */
     for (up = ++uos; (! isspace(*uos)) && (*uos != '\0'); ++uos)
 	;
@@ -327,7 +327,7 @@ void parse_fmt(char *uoutspec, int outcom_type)
     {
 	if (oip -> code_nm == 0)
 	    continue;		/* outitem's format has no conversion spec */
-	
+
 	while (isspace(*uos))
 	    ++uos;
 	if (*uos == '\0')
@@ -529,7 +529,7 @@ FILE *fopenrc(void)
     char	*rc_file_name;
     char	*home;
     FILE	*fPtr;
-    
+
     if ((fPtr = fopen(DEF_RCF_NAME, "r")) == NULL)
     {
 	if ((home = getenv("HOME")) != NULL)
@@ -655,7 +655,7 @@ void direct_output(char *buffer, com_table *ctp)
 	    (openfunc == popen) ? "'| " : "'", dest_string);
 	return;
     }
-    
+
     if (strcmp(buffer + i, "?") == 0)
     {
 	com_usage(ctp);
@@ -712,7 +712,7 @@ void state_file(char *buffer, com_table *ctp)
 	printf("statefile = '%s'\n", sf_name);
 	return;
     }
-    
+
     if (strcmp(buffer + i, "?") == 0)
     {
 	com_usage(ctp);

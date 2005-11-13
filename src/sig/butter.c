@@ -72,7 +72,7 @@ butter(double w)
  */
 void
 cbweights(double *filter, int window, int points)
-      	         
+
    	       		/* Length of FFT to compute relative freq for */
    	       		/* Length of filter kernel wanted */
 {

@@ -1,4 +1,26 @@
 .TH SCRIPTSORT 1 BRL_CAD
+./"                   S C R I P T S O R T . 1
+./" BRL-CAD
+./"
+./" Copyright (c) 1994 Geometric Solutions, Inc.
+./"
+./" This document is made available under the terms of the GNU Free
+./" Documentation License or, at your option, under the terms of the
+./" GNU General Public License as published by the Free Software
+./" Foundation.  Permission is granted to copy, distribute and/or
+./" modify this document under the terms of the GNU Free Documentation
+./" License, Version 1.2 or any later version published by the Free
+./" Software Foundation; with no Invariant Sections, no Front-Cover
+./" Texts, and no Back-Cover Texts.  Permission is also granted to
+./" redistribute this document under the terms of the GNU General
+./" Public License; either version 2 of the License, or (at your
+./" option) any later version.
+./"
+./" You should have received a copy of the GNU Free Documentation
+./" License and/or the GNU General Public License along with this
+./" document; see the file named COPYING for more information.
+./"
+./"./"./"
 .SH NAME
 scriptsort - sort an rt/mged animation script or scripts
 .SH SYNOPSIS
@@ -17,8 +39,8 @@ frames.
 .I Scriptsort
 organizes the input script into three different categories.
 The first category consists of
-numbered frames. Each frame begins with a 
-.B start 
+numbered frames. Each frame begins with a
+.B start
 .IR frame_num ;
 command, and ends with an
 .BR end ;
@@ -31,7 +53,7 @@ command is ever printed in a single frame.
 .PP
 The second category consists of shell commands. Any line in the
 animation script which is not inside a frame and which begins with an
-exclamation mark is considered to be a shell command. 
+exclamation mark is considered to be a shell command.
 Typically, each frame of an animation script might have an associated
 shell command following it to process the image just computed.
 The third category
@@ -40,21 +62,21 @@ don't belong to any frame and should be executed before the first frame.
 .PP
 Once the input has been sorted by category, output is produced according
 to the following method. First, all of the global animation commands
-that didn't belong to any frame are printed. Next, 
-.I scriptsort 
+that didn't belong to any frame are printed. Next,
+.I scriptsort
 determines the order in which to print the frames. This
 might be in ascending numberical order, or in a scrambled order which
 incrementally increases the time resolution of the script, depending on
-the 
-.B \-b 
+the
+.B \-b
 option. Then
-.I scriptsort 
+.I scriptsort
 prints the frames in order. After each frame, the
-shell command 
+shell command
 .BR ! end_of_frame.sh\ frame_num
 is added if any of the input frames which contributed to the frame had
 an associated shell command. When the animation script is run
-as input to 
+as input to
 .IR rt,
 the user should create a shell script called "end_of_frame.sh" to
 perform any desired shell commands. The argument to "end_of_frame.sh" is
@@ -79,16 +101,16 @@ integer, beginning with the frame indexed by zero.
 .TP
 3. If the base integer is one, stop here. Otherwise, go to step 4.
 .TP
-4. Divide the base integer in half and print all of the frames whose 
+4. Divide the base integer in half and print all of the frames whose
 indexes are odd multiples of the new base integer. Go to step 3.
 .PP
-The base integer can be set with the 
+The base integer can be set with the
 .B \-b#
 option. If the specified integer is negative or zero, then the base
 integer is set to the largest power of two which is less than the number
 of frames being printed. Otherwise, if the specified integer is not a
 power of two, a warning is printed and the integer is set to 1. If the specified integer is not a power of two, then a warning
-is printed and the integer is set to the default value, which is one. 
+is printed and the integer is set to the default value, which is one.
 .SH OTHER OPTIONS
 .TP
 .B \-f
@@ -103,11 +125,11 @@ whether or not shell commands were found in the input script.
 enables quiet mode. The status messages normally printed on standard
 error are suppressed.
 .TP
-.B \-o 
+.B \-o
 frame_offset specifies an integer which should be added to all of the frame
-numbers. For example, suppose that the user wants to concatenate 
-two animation scripts which begin at frame zero and are 300 frames long. 
-He or she should run one script through 
+numbers. For example, suppose that the user wants to concatenate
+two animation scripts which begin at frame zero and are 300 frames long.
+He or she should run one script through
 .I scriptsort
 with an offset of 300 before doing the concatenation.
 .SH AUTHORS

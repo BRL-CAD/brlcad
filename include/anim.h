@@ -22,13 +22,13 @@
  *
  *  Author -
  *	Carl J. Nuzman
- *  
+ *
   Source -
  *      The U. S. Army Research Laboratory
  *      Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
 
-/* 
+/*
  	Be sure to include vmath.h before this file.
 */
 
@@ -39,7 +39,7 @@
 
 #define DTOR    M_PI/180.0
 #define RTOD	180.0/M_PI
-				
+
 #define VSUBUNIT(a,b,c) {VSUB2(a,b,c);\
                         VUNITIZE(a);}
 #define FVSCAN(f,a)	fscanf(f,"%lf %lf %lf", (a),(a)+1,(a)+2)

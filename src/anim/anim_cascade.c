@@ -24,10 +24,10 @@
  * along with the position and orientation of another frame with respect
  * to the main frame, give the absolute orientation and position of the
  * second frame.
- *	For example, given the position and orientation of a tank, and of the 
- * turret relative to the tank, you can get the absolute position and 
+ *	For example, given the position and orientation of a tank, and of the
+ * turret relative to the tank, you can get the absolute position and
  * orientation of the turret at each time.
- * 	Or, optionally, given position and orientation of main frame of 
+ * 	Or, optionally, given position and orientation of main frame of
  * reference, and the absolute position and orientation of another frame,
  * find the position and orientation of the second frame in terms of the main
  * frame of reference. (-i option).
@@ -35,13 +35,13 @@
  * Usage:
  *	anim_cascade main.table < relative.table > absolute.table
  *
- * The format of the tables is: 
+ * The format of the tables is:
  *  time x y z yaw pitch roll
  * unless specified otherwise by options.
  *
  *  Author -
  *	Carl J. Nuzman
- *  
+ *
  *  Source -
  *      The U. S. Army Research Laboratory
  *      Aberdeen Proving Ground, Maryland  21005-5068  USA
@@ -170,7 +170,7 @@ main (int argc, char **argv)
 	    val=scanf("%lf",&time);
 	    if (val < 1) break;
 	}
-	if (read_cen1) 
+	if (read_cen1)
 	    val =scanf("%lf %lf %lf",cen1, cen1+1, cen1+2);
 	if (read_rot1) {
 	    val=scanf("%lf %lf %lf", &yaw1, &pitch1, &roll1);
@@ -184,7 +184,7 @@ main (int argc, char **argv)
 	    anim_dy_p_r2mat(m_rot2, yaw2, pitch2, roll2);
 	}
 	if (val<3) break;
-		
+
 	if (output_mode==CASCADE_R) {
 	    anim_tran(m_rot1);
 	    VSUB2(rotated,cen2,cen1);
@@ -209,7 +209,7 @@ main (int argc, char **argv)
 	printf("\t%.12g\t%.12g\t%.12g", cen_ans[0], cen_ans[1], cen_ans[2]);
 	printf("\t%.12g\t%.12g\t%.12g", ang_ans[0], ang_ans[1], ang_ans[2]);
 	printf("\n");
-		
+
 	if (one_time) break;
     }
     return( 0 );

@@ -32,25 +32,25 @@
  * 	Reads device-independent plot data from specified input file;
  * 	for each frame, builds an image file containing raster data then
  * 	sends the frame output to the output device.
- * 
+ *
  * 	Edge-limiting is done here; use "rot" if clipping is desired.
- * 
+ *
  * Method:
  * 	Inputs vector data and builds a rasterization descriptor for
  * 	each visible stroke.  (Strokes are limited to frame boundaries.)
  * 	X goes down the page, Y goes from left to right.  To obtain a
  * 	different orientation, pre-process data with the "rot" filter.
  * 	(Quadrant 1 graphics devices)
- * 
+ *
  * 	The frame image file of SCANS scans is considered artificially
  * 	divided into BANDS bands, each containing lines_per_band scans.
  * 	Each band has a linked list of descriptors for
  * 	not-yet-rasterized strokes that start in the band.
- * 
+ *
  * 	Space for descriptors is obtained via "malloc".  When no more
  * 	space is available, the image file is updated as follows, then
  * 	"malloc" is tried again ("must" work the second time):
- * 
+ *
  * 	Each band in increasing X order becomes "active"; if no
  * 	descriptors exist for the band it is skipped, otherwise its
  * 	existing raster data is re-read from the image file into a
@@ -61,7 +61,7 @@
  * 	empty (must happen), the band's raster data is flushed back to
  * 	the image file and the next band becomes active.  This process
  * 	continues until all vectors have been input and rasterized.
- * 
+ *
  * Acknowledgment:
  * 	Based rather heavily on Doug Gwyn's Versatec PLOT rasterizer VPL.C
  * 	which was based on Mike Muuss's Versatec TIGpack interpreter.
@@ -69,12 +69,12 @@
  *  Note:
  *	UNIX-Plot files are defined to be machine-independent, with
  *	"little-endian" (eg, VAX) byte-ordering.
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5066
- *  
+ *
  */
 #ifndef lint
 static const char RCSid[] = "@(#)$Header$ (BRL)";
@@ -85,7 +85,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif
-                                                                                                                                                                            
+
 #if DEBUG
 # define STATIC	/* nothing, for debugging */
 #else
@@ -101,6 +101,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 #include <ctype.h>
 #include "machine.h"
+#include "bu.h"
 #include "fb.h"
 #include "plot3.h"
 
@@ -310,7 +311,7 @@ STATIC int	sigs[] =		/* signals to be caught */
 	SIGTERM
 	};
 
- 
+
 /*	Externals:	*/
 
 STATIC FILE	*pfin;		/* input file FIO block ptr */
@@ -404,10 +405,10 @@ get_args(int argc, register char **argv)
 {
 	register int c;
 
-	while( (c = getopt( argc, argv, "hdoOit:F:s:S:w:W:n:N:" )) != EOF ) {
+	while( (c = bu_getopt( argc, argv, "hdoOit:F:s:S:w:W:n:N:" )) != EOF ) {
 		switch( c ) {
 		case 't':
-			line_thickness = atoi(optarg);
+			line_thickness = atoi(bu_optarg);
 			if( line_thickness <= 0 )
 				line_thickness = 1;
 			break;
@@ -423,29 +424,29 @@ get_args(int argc, register char **argv)
 			over = 1;
 			break;
 		case 'F':
-			framebuffer = optarg;
+			framebuffer = bu_optarg;
 			break;
 		case 'h':
 			Nscanlines = Npixels = 1024;
 			break;
 		case 'S':
 		case 's':
-			Nscanlines = Npixels = atoi(optarg);
+			Nscanlines = Npixels = atoi(bu_optarg);
 			break;
 		case 'W':
 		case 'w':
-			Npixels = atoi(optarg);
+			Npixels = atoi(bu_optarg);
 			break;
 		case 'N':
 		case 'n':
-			Nscanlines = atoi(optarg);
+			Nscanlines = atoi(bu_optarg);
 			break;
 		default:		/* '?' */
 			return(0);
 		}
 	}
 
-	if( optind >= argc ) {
+	if( bu_optind >= argc ) {
 		/* no file name given, use stdin */
 		if( isatty(fileno(stdin)) )
 			return(0);
@@ -453,7 +454,7 @@ get_args(int argc, register char **argv)
 		pfin = stdin;
 	} else {
 		/* open file */
-		filename = argv[optind];
+		filename = argv[bu_optind];
 		if( (pfin = fopen(filename, "r")) == NULL ) {
 			fprintf( stderr,
 			   "pl-fb: Can't open file \"%s\"\n", filename );
@@ -461,7 +462,7 @@ get_args(int argc, register char **argv)
 		}
 	}
 
-	if( argc > ++optind )
+	if( argc > ++bu_optind )
 		(void)fprintf( stderr, "pl-fb: excess argument(s) ignored\n" );
 
 	return(1);		/* OK */
@@ -589,7 +590,7 @@ DoFile(void)	/* returns vpl status code */
 			{	/* record type */
 			case EOF:
 				if( debug ) fprintf( stderr,"EOF\n");
-					
+
 				if ( plotted )  {
 					/* flush strokes */
 					if( debug ) fprintf( stderr,"flushing\n");
@@ -669,7 +670,7 @@ DoFile(void)	/* returns vpl status code */
 				plotted = true;
 				virpos = newpos;
 				continue;
-			
+
 			case 'l':	/* line */
 			case 'm':	/* move */
 				if ( !GetCoords( &newpos ) )
@@ -733,7 +734,7 @@ DoFile(void)	/* returns vpl status code */
 				plotted = true;
 				virpos = newpos;
 				continue;
-			
+
 			case 'v':	/* line */
 			case 'o':	/* move */
 				if ( !GetDCoords( &newpos ) )
@@ -784,7 +785,7 @@ DoFile(void)	/* returns vpl status code */
 				/* z2 */
 				goto spacend;
 				}
-				
+
 			case 'w':	/* space */
 				{
 				unsigned char	in[4*8];
@@ -819,7 +820,7 @@ DoFile(void)	/* returns vpl status code */
 				/* z2 */
 				goto spacend;
 				}
-				
+
 			case 's':	/* space */
 				if( debug )
 					fprintf( stderr,"space\n");
@@ -861,17 +862,17 @@ spacend:
 						cur_color[GRN],
 						cur_color[BLU]);
 				continue;
-						
+
 			case 't':	/* label */
 				if( debug )
 					fprintf( stderr,"label: ");
 
-				newpos = virpos;			
+				newpos = virpos;
 				while ( (c = getc( pfin )) != EOF && c != '\n'
 				      )  {
 					/* vectorize the characters */
 					put_vector_char( c, &newpos);
-				
+
 					if( debug )
 						putc( c, stderr );
 				      }
@@ -920,7 +921,7 @@ spacend:
 
 			default:
 				fprintf( stderr,"bad command '%c' (0x%02x)\n", c, c );
-					
+
 				return Foo( -12 );	/* bad input */
 			}
 			break;
@@ -944,7 +945,7 @@ put_vector_char(register char c, register coords *pos)
 		c = '?';
 	if( islower(c) )
 		c = toupper(c);
-	
+
 	for( vc = &charset[0]; vc->ascii; vc++)
 		if( vc->ascii == c )
 			break;
@@ -1032,7 +1033,7 @@ GetCoords(register coords *coop)
 
 	if( debug )
 		fprintf( stderr,"Pixel: (%d,%d)\n", coop->x, coop->y);
-		
+
 	return true;
 }
 
@@ -1139,7 +1140,7 @@ Requeue(register struct band *bp, register stroke *vp)
 		bp->last->next = vp;
 	else
 		bp->first = vp;
-		
+
 	bp->last = vp;
 }
 
@@ -1150,7 +1151,7 @@ Requeue(register struct band *bp, register stroke *vp)
  */
 STATIC stroke *
 Dequeue(register struct band *bp, register stroke **hp)
-                         
+
                      		/* *hp -> first descr in list */
 {
 	register stroke *vp;		/* -> descriptor */
@@ -1160,7 +1161,7 @@ Dequeue(register struct band *bp, register stroke **hp)
 
 	if( vp == NULL )
 		bp->last = NULL;
-		
+
 	return vp;			/* may be NULL */
 }
 

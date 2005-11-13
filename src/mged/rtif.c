@@ -62,6 +62,9 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #  include <sys/time.h>		/* For struct timeval */
 #endif
 #include <sys/stat.h>		/* for chmod() */
+#ifdef HAVE_UNISTD_H
+#  include <unistd.h>
+#endif
 
 #include "tcl.h"
 
@@ -74,7 +77,6 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./ged.h"
 #include "./mged_solid.h"
 #include "./mged_dm.h"
-#include "./mgedtcl.h"
 #include "./qray.h"
 #include "./cmd.h"
 
@@ -105,20 +107,14 @@ struct rtcheck {
 	genptr_t chan;
 #  endif
 #else
-       int			fd;    
+       int			fd;
        int			pid;
 #endif
 	   FILE			*fp;
        struct bn_vlblock	*vbp;
        struct bu_list		*vhead;
-       double			csize;  
+       double			csize;
 };
-//Tcl_Channel chan;
-#ifdef TCL_OK
-	Tcl_Channel chan1;
-#else
-	genptr_t chan1;
-#endif
 
 static vect_t	rtif_eye_model;
 static mat_t	rtif_viewrot;
@@ -148,7 +144,7 @@ extern int	cm_null();
 
 /* here we define a minimal table of commands that are supported by the
  * loadview command.  unsupported commands are those that have no bearing on
- * view restoration. 
+ * view restoration.
  */
 struct command_tab view_cmdtab[] = {
 	{"viewsize", "size in mm", "set view size",
@@ -187,7 +183,7 @@ struct command_tab view_cmdtab[] = {
 		cm_null,		2, 999},
 
 	/* this is a quick hack used for quietly parsing the EOF delimiter in the
-	 * script files. 
+	 * script files.
 	 */
 	{"EOF", "", "End of file delimiter",
 		cm_null,		1, 1},
@@ -236,7 +232,7 @@ pr_wait_status(int status)
 
 /*
  *  			R T _ O L D W R I T E
- *  
+ *
  *  Write out the information that RT's -M option needs to show current view.
  *  Note that the model-space location of the eye is a parameter,
  *  as it can be computed in different ways.
@@ -261,7 +257,7 @@ rt_oldwrite(FILE *fp, fastf_t *eye_model)
 
 /*
  *  			R T _ W R I T E
- *  
+ *
  *  Write out the information that RT's -M option needs to show current view.
  *  Note that the model-space location of the eye is a parameter,
  *  as it can be computed in different ways.
@@ -311,7 +307,7 @@ rt_write(FILE *fp, fastf_t *eye_model)
 
 /*
  *  			R T _ R E A D
- *  
+ *
  *  Read in one view in the old RT format.
  */
 HIDDEN int
@@ -469,7 +465,7 @@ rt_output_handler(ClientData clientData, int mask)
 	if ((!ReadFile(run_rtp->fd, line, RT_MAXLINE,&count,0))) {
 #else
 	char line[5120+1];
-	
+
 
 	/* Get data from rt */
 	if ((!ReadFile(run_rtp->fd, line, 5120,&count,0))) {
@@ -482,10 +478,10 @@ rt_output_handler(ClientData clientData, int mask)
 		/* wait for the forked process */
 
 		WaitForSingleObject( run_rtp->hProcess, INFINITE );
-		
+
 		if(GetLastError() == ERROR_PROCESS_ABORTED)
 		{
-			run_rtp->aborted = 1; 
+			run_rtp->aborted = 1;
 		}
 
 		aborted = run_rtp->aborted;
@@ -580,8 +576,12 @@ run_rt(void)
 	int pipe_in[2];
 	int pipe_err[2];
 	vect_t eye_model;
-	int		pid; 	 
+	int		pid;
 	struct run_rt	*run_rtp;
+
+	if (strlen(rt_cmd_vec[0]) <= 0) {
+	    return -1;
+	}
 
 	(void)pipe( pipe_in );
 	(void)pipe( pipe_err );
@@ -655,43 +655,44 @@ run_rt()
     sa.bInheritHandle = TRUE;
     sa.lpSecurityDescriptor = NULL;
 
-	// Save the handle to the current STDOUT.  
-	hSaveStderr = GetStdHandle(STD_ERROR_HANDLE);  
-	
-	// Create a pipe for the child process's STDOUT.  
+	/* Save the handle to the current STDOUT. */
+	hSaveStderr = GetStdHandle(STD_ERROR_HANDLE);
+
+	/* Create a pipe for the child process's STDOUT. */
 	CreatePipe( &pipe_err[0], &pipe_err[1], &sa, 0);
 
-	// Set a write handle to the pipe to be STDOUT.  
-	SetStdHandle(STD_ERROR_HANDLE, pipe_err[1]);  
+	/* Set a write handle to the pipe to be STDOUT. */
+	SetStdHandle(STD_ERROR_HANDLE, pipe_err[1]);
 
-	// Create noninheritable read handle and close the inheritable read handle. 
+	/* Create noninheritable read handle and close the inheritable read handle. */
     DuplicateHandle( GetCurrentProcess(), pipe_err[0],
-        GetCurrentProcess(),  &pipe_errDup , 
+        GetCurrentProcess(),  &pipe_errDup ,
 		0,  FALSE,
         DUPLICATE_SAME_ACCESS );
 	CloseHandle( pipe_err[0] );
-	
-	// The steps for redirecting child process's STDIN: 
-	//     1.  Save current STDIN, to be restored later. 
-	//     2.  Create anonymous pipe to be STDIN for child process. 
-	//     3.  Set STDIN of the parent to be the read handle to the 
-	//         pipe, so it is inherited by the child process. 
-	//     4.  Create a noninheritable duplicate of the write handle, 
-	//         and close the inheritable write handle.  
 
-	// Save the handle to the current STDIN. 
-	hSaveStdin = GetStdHandle(STD_INPUT_HANDLE);  
+	/* The steps for redirecting child process's STDIN:
+	 *     1.  Save current STDIN, to be restored later.
+	 *     2.  Create anonymous pipe to be STDIN for child process.
+	 *     3.  Set STDIN of the parent to be the read handle to the
+	 *         pipe, so it is inherited by the child process.
+	 *     4.  Create a noninheritable duplicate of the write handle,
+	 *         and close the inheritable write handle.
+	 */
 
-	// Create a pipe for the child process's STDIN.  
+	/* Save the handle to the current STDIN. */
+	hSaveStdin = GetStdHandle(STD_INPUT_HANDLE);
+
+	/* Create a pipe for the child process's STDIN. */
 	CreatePipe(&pipe_in[0], &pipe_in[1], &sa, 0);
-	// Set a read handle to the pipe to be STDIN.  
+	/* Set a read handle to the pipe to be STDIN. */
 	SetStdHandle(STD_INPUT_HANDLE, pipe_in[0]);
-	// Duplicate the write handle to the pipe so it is not inherited.  
-	DuplicateHandle(GetCurrentProcess(), pipe_in[1], 
-		GetCurrentProcess(), &pipe_inDup, 
-		0, FALSE,                  // not inherited       
-		DUPLICATE_SAME_ACCESS ); 
-	CloseHandle(pipe_in[1]); 
+	/* Duplicate the write handle to the pipe so it is not inherited. */
+	DuplicateHandle(GetCurrentProcess(), pipe_in[1],
+		GetCurrentProcess(), &pipe_inDup,
+		0, FALSE,                  /* not inherited */
+		DUPLICATE_SAME_ACCESS );
+	CloseHandle(pipe_in[1]);
 
 
    si.cb = sizeof(STARTUPINFO);
@@ -710,7 +711,7 @@ run_rt()
    for(i=1;i<rt_cmd_vec_len;i++) {
 	   sprintf(name,"%s ",rt_cmd_vec[i]);
 	   strcat(line,name); }
-	   
+
 
    if(CreateProcess( NULL,
                      line,
@@ -1008,7 +1009,7 @@ cmd_rtweight(ClientData	clientData,
 
 /*
  *			B A S E N A M E
- *  
+ *
  *  Return basename of path, removing leading slashes and trailing suffix.
  */
 HIDDEN char *
@@ -1022,7 +1023,7 @@ basename_without_suffix(register char *p1, register char *suff)
 		if (*p1++ == '/')
 			p2 = p1;
 	}
-	for(p3=suff; *p3; p3++) 
+	for(p3=suff; *p3; p3++)
 		;
 	while(p1>p2 && p3>suff)
 		if(*--p3 != *--p1)
@@ -1106,7 +1107,7 @@ f_saveview(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
 	(void)fprintf(fp,"\nEOF\n");
 	(void)fclose( fp );
-	
+
 	FOR_ALL_SOLIDS(sp, &dgop->dgo_headSolid)
 		sp->s_wflag = DOWN;
 
@@ -1117,8 +1118,8 @@ f_saveview(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 /*
  *			F _ L O A D V I E W
  *
- *  Load a ray-trace view shell script.  If a database is not open, the 
- *  database listed in the script will attempted to be opened.  If a 
+ *  Load a ray-trace view shell script.  If a database is not open, the
+ *  database listed in the script will attempted to be opened.  If a
  *  database is open, it must match (inode) the one in the saveview
  *  raytrace script for it to get used.
  *
@@ -1149,7 +1150,7 @@ f_loadview(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[])
 	/* for view orientation */
 	vect_t xlate;
 	mat_t new_cent;
-	
+
 	double viewsize;
 	double orientation[4]={0.0, 0.0, 0.0, 0.0};
 	vect_t eye_pt={0.0, 0.0, 0.0};
@@ -1195,17 +1196,17 @@ f_loadview(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[])
 		  sscanf(buffer, "%d", &perspective);
 		  /*      bu_log("perspective=%d\n", perspective);*/
 		  mged_variables->mv_perspective=perspective;
-		  /* !!! this does not update the menu variable.. */	
-		  set_perspective(); 
+		  /* !!! this does not update the menu variable.. */
+		  set_perspective();
 
 		} else if (strncmp(buffer, "$*", 2)==0) {
 		  /* the next read is the file name, the objects come
-		   * after that 
+		   * after that
 		   */
 
 		  memset(dbName, 0, 1024);
 		  fscanf(fp, "%s", dbName);
-		  /* if the last character is a line termination, 
+		  /* if the last character is a line termination,
 		   * remove it (it should always be unless the user
 		   * modifies the file)
 		   */
@@ -1213,7 +1214,7 @@ f_loadview(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[])
 		    memset(dbName+strlen(dbName)-1, 0, 1);
 		  }
 		  /*      bu_log("dbName=%s\n", dbName); */
-		  
+
 		  /* if no database is open, we attempt to open the
 		   * database listed in the script.  if a database is
 		   * open, we compare the open database's inode number
@@ -1226,7 +1227,7 @@ f_loadview(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[])
 
 		    /* XXX could use better path handling instead of
 		     * assuming rooted or . */
-		    
+
 		    /* turn off interactive mode so the f_opendb() call
 		     * doesn't blather or attempt to create a new database
 		     */
@@ -1236,7 +1237,7 @@ f_loadview(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[])
 		    editArgv[2]=(char *)NULL;
 		    if (f_opendb( (ClientData)NULL, interp, 2, editArgv ) == TCL_ERROR) {
 		      Tcl_AppendResult(interp, "Unable to load database: ", dbName, "\n", (char *)NULL);
-		      
+
 		      /* restore state before leaving */
 		      mged_variables->mv_perspective=prevPerspective;
 		      set_perspective();
@@ -1246,29 +1247,29 @@ f_loadview(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[])
 		      Tcl_AppendResult(interp, "Loading database: ", dbName, "\n", (char *)NULL);
 		    }
 		    interactive=prevInteractive;
-		    
+
 		  } else {
 		    /* compare inode numbers */
-		    
+
 		    stat(dbip->dbi_filename, &dbInode);
 		    stat(dbName, &scriptInode);
-		    
+
 		    /* stop here if they are not the same file, otherwise,
 		     * we may proceed as expected, and load the objects.
 		     */
 		    if (dbInode.st_ino != scriptInode.st_ino) {
 		      Tcl_AppendResult(interp, "View script references a different database\nCannot load the view without closing the current database\n(i.e. run \"opendb ", dbName, "\")\n", (char *)NULL);
-		      
+
 		      /* restore state before leaving */
 		      mged_variables->mv_perspective=prevPerspective;
 		      set_perspective();
-		      
+
 		      return TCL_ERROR;
 		    }
-		    
+
 		  }
 		  /* end check for loaded database */
-		  
+
 		  /* get rid of anything that may be displayed, since we
 		   * will load objects that are listed in the script next.
 		   */
@@ -1292,7 +1293,7 @@ f_loadview(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[])
 		    if (edit_com( 2, editArgv, 1, 1 ) != 0) {
 		      Tcl_AppendResult(interp, "Unable to load object: ", objects, "\n", (char *)NULL);
 		    }
-		    
+
 		    /* bu_log("objects=%s\n", objects);*/
 		    fscanf(fp, "%s", objects);
 		  }
@@ -1301,12 +1302,12 @@ f_loadview(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[])
 		} else if (strncmp(buffer, "<<EOF", 5)==0) {
 		  char *cmdBuffer = NULL;
 		  /* we are almost done .. read in the view commands */
-			
+
 		  while ( (cmdBuffer = rt_read_cmd( fp )) != NULL ) {
 		    /* even unsupported commands should return successfully as
 		     * they should be calling cm_null()
 		     */
-		    if ( rt_do_cmd( (struct rt_i *)0, cmdBuffer, view_cmdtab ) < 0 ) { 
+		    if ( rt_do_cmd( (struct rt_i *)0, cmdBuffer, view_cmdtab ) < 0 ) {
 		      Tcl_AppendResult(interp, "command failed: ", cmdBuffer, "\n", (char *)NULL);
 		    }
 		    bu_free( (genptr_t)cmdBuffer, "loadview cmdBuffer" );
@@ -1328,7 +1329,7 @@ f_loadview(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[])
 	MAT_COPY(view_state->vs_vop->vo_rotation, rtif_viewrot);
 	MAT_DELTAS_VEC_NEG(view_state->vs_vop->vo_center, rtif_eye_model);
 	new_mats(); /* actually updates display here (maybe?) */
-	
+
 	/* XXX not sure why the correction factor is needed, but it works -- csm */
 	/*  Second step:  put eye at view 0,0,1.
 	 *  For eye to be at 0,0,1, the old 0,0,-1 needs to become 0,0,0.
@@ -1831,6 +1832,7 @@ f_nirt(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	struct bn_vlblock *vbp;
 	struct qray_dataList *ndlp;
 	struct qray_dataList HeadQRayData;
+	char *ptr, buf[256] = {0};
 
 	CHECK_DBI_NULL;
 
@@ -1843,8 +1845,21 @@ f_nirt(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	  return TCL_ERROR;
 	}
 
+	ptr = bu_brlcad_root("bin", 1);
+	if (ptr) {
+	    /* argv[0] might be nirt or query_ray, so specify nirt
+	     * specifically.
+	     */
+#ifdef _WIN32
+	    sprintf(buf, "\"%s/%s\"", ptr, "nirt");
+#else
+	    sprintf(buf, "%s/%s", ptr, "nirt");
+#endif
+	    argv[0] = buf;
+	}
+
 	vp = &rt_cmd_vec[0];
-	*vp++ = "nirt";
+	*vp++ = argv[0];
 
 	/* swipe x, y, z off the end if present */
 	if(argc > 3){
@@ -2076,59 +2091,60 @@ done:
 	sa.bInheritHandle = TRUE;
 	sa.lpSecurityDescriptor = NULL;
 
-	// Save the handle to the current STDOUT.  
-	hSaveStdout = GetStdHandle(STD_OUTPUT_HANDLE);  
-	
-	// Create a pipe for the child process's STDOUT.  
+	/* Save the handle to the current STDOUT. */
+	hSaveStdout = GetStdHandle(STD_OUTPUT_HANDLE);
+
+	/* Create a pipe for the child process's STDOUT. */
 	CreatePipe( &pipe_out[0], &pipe_out[1], &sa, 0);
 
-	// Set a write handle to the pipe to be STDOUT.  
-	SetStdHandle(STD_OUTPUT_HANDLE, pipe_out[1]);  
+	/* Set a write handle to the pipe to be STDOUT. */
+	SetStdHandle(STD_OUTPUT_HANDLE, pipe_out[1]);
 
-	// Create noninheritable read handle and close the inheritable read handle. 
+	/* Create noninheritable read handle and close the inheritable read handle. */
 	DuplicateHandle( GetCurrentProcess(), pipe_out[0],
-        GetCurrentProcess(),  &pipe_outDup , 
+        GetCurrentProcess(),  &pipe_outDup ,
 		0,  FALSE,
         DUPLICATE_SAME_ACCESS );
 	CloseHandle( pipe_out[0] );
 
-	// Save the handle to the current STDERR.  
-	hSaveStderr = GetStdHandle(STD_ERROR_HANDLE);  
-	
-	// Create a pipe for the child process's STDERR.  
+	/* Save the handle to the current STDERR. */
+	hSaveStderr = GetStdHandle(STD_ERROR_HANDLE);
+
+	/* Create a pipe for the child process's STDERR. */
 	CreatePipe( &pipe_err[0], &pipe_err[1], &sa, 0);
 
-	// Set a write handle to the pipe to be STDERR.  
-	SetStdHandle(STD_ERROR_HANDLE, pipe_err[1]);  
+	/* Set a write handle to the pipe to be STDERR. */
+	SetStdHandle(STD_ERROR_HANDLE, pipe_err[1]);
 
-	// Create noninheritable read handle and close the inheritable read handle. 
+	/* Create noninheritable read handle and close the inheritable read handle. */
 	DuplicateHandle( GetCurrentProcess(), pipe_err[0],
-        GetCurrentProcess(),  &pipe_errDup , 
+        GetCurrentProcess(),  &pipe_errDup ,
 		0,  FALSE,
         DUPLICATE_SAME_ACCESS );
 	CloseHandle( pipe_err[0] );
-	
-	// The steps for redirecting child process's STDIN: 
-	//     1.  Save current STDIN, to be restored later. 
-	//     2.  Create anonymous pipe to be STDIN for child process. 
-	//     3.  Set STDIN of the parent to be the read handle to the 
-	//         pipe, so it is inherited by the child process. 
-	//     4.  Create a noninheritable duplicate of the write handle, 
-	//         and close the inheritable write handle.  
 
-	// Save the handle to the current STDIN. 
-	hSaveStdin = GetStdHandle(STD_INPUT_HANDLE);  
+	/* The steps for redirecting child process's STDIN:
+	 *     1.  Save current STDIN, to be restored later.
+	 *     2.  Create anonymous pipe to be STDIN for child process.
+	 *     3.  Set STDIN of the parent to be the read handle to the
+	 *         pipe, so it is inherited by the child process.
+	 *     4.  Create a noninheritable duplicate of the write handle,
+	 *         and close the inheritable write handle.
+	 */
 
-	// Create a pipe for the child process's STDIN.  
+	/* Save the handle to the current STDIN. */
+	hSaveStdin = GetStdHandle(STD_INPUT_HANDLE);
+
+	/* Create a pipe for the child process's STDIN. */
 	CreatePipe(&pipe_in[0], &pipe_in[1], &sa, 0);
-	// Set a read handle to the pipe to be STDIN.  
+	/* Set a read handle to the pipe to be STDIN. */
 	SetStdHandle(STD_INPUT_HANDLE, pipe_in[0]);
-	// Duplicate the write handle to the pipe so it is not inherited.  
-	DuplicateHandle(GetCurrentProcess(), pipe_in[1], 
-			GetCurrentProcess(), &pipe_inDup, 
-			0, FALSE,                  // not inherited       
-			DUPLICATE_SAME_ACCESS ); 
-	CloseHandle(pipe_in[1]); 
+	/* Duplicate the write handle to the pipe so it is not inherited. */
+	DuplicateHandle(GetCurrentProcess(), pipe_in[1],
+			GetCurrentProcess(), &pipe_inDup,
+			0, FALSE,                  /* not inherited */
+			DUPLICATE_SAME_ACCESS );
+	CloseHandle(pipe_in[1]);
 
 
 	si.cb = sizeof(STARTUPINFO);
@@ -2146,11 +2162,11 @@ done:
 	sprintf(line1,"%s ",rt_cmd_vec[0]);
 	for(i=1;i<rt_cmd_vec_len;i++) {
 	  sprintf(name,"%s ",rt_cmd_vec[i]);
-	  strcat(line1,name); 
+	  strcat(line1,name);
 	  if(strstr(name,"-e") != NULL) {
 	    i++;
 	    sprintf(name,"\"%s\" ",rt_cmd_vec[i]);
-	    strcat(line1,name);} 
+	    strcat(line1,name);}
 	}
 
 	if(CreateProcess( NULL, line1, NULL, NULL,TRUE, DETACHED_PROCESS, NULL, NULL, &si, &pi )) {
@@ -2158,20 +2174,20 @@ done:
 	  SetStdHandle(STD_OUTPUT_HANDLE, hSaveStdout);
 	  SetStdHandle(STD_ERROR_HANDLE, hSaveStderr);
 	}
- 
+
 	/* use fp_in to feed view info to nirt */
 	CloseHandle( pipe_in[0] );
 	fp_in = _fdopen( _open_osfhandle((HFILE)pipe_inDup,_O_TEXT), "w" );
-	//fp_in = fdopen( pipe_in[1], "w" );
+	/*fp_in = fdopen( pipe_in[1], "w" ); */
 
 	/* use fp_out to read back the result */
 	CloseHandle( pipe_out[1] );
-	//fp_out = fdopen( pipe_out[0], "r" );
+	/*fp_out = fdopen( pipe_out[0], "r" ); */
 	fp_out = _fdopen( _open_osfhandle((HFILE)pipe_outDup,_O_TEXT), "r" );
 
 	/* use fp_err to read any error messages */
 	CloseHandle(pipe_err[1]);
-	//fp_err = fdopen( pipe_err[0], "r" );
+	/*fp_err = fdopen( pipe_err[0], "r" ); */
 	fp_err = _fdopen( _open_osfhandle((HFILE)pipe_errDup,_O_TEXT), "r" );
 
 	/* send quit command to nirt */
@@ -2508,7 +2524,7 @@ cm_end(int argc, char **argv)
 	if( rtif_delay > 0 )  {
 		struct timeval tv;
 		fd_set readfds;
-	
+
 		FD_ZERO(&readfds);
 		FD_SET(fileno(stdin), &readfds);
 		tv.tv_sec = (long)rtif_delay;
@@ -2701,7 +2717,7 @@ cmd_solids_on_ray (ClientData clientData, Tcl_Interp *interp, int argc, char **a
      *	Build a list of all the top-level objects currently displayed
      */
     rt_cmd_vec_len = build_tops(&rt_cmd_vec[0], &rt_cmd_vec[MAXARGS]);
-    
+
     bu_vls_init(&vls);
     start_catching_output(&vls);
     snames = skewer_solids(rt_cmd_vec_len, (const char **)rt_cmd_vec, ray_orig, ray_dir, 1);
@@ -2719,7 +2735,7 @@ cmd_solids_on_ray (ClientData clientData, Tcl_Interp *interp, int argc, char **a
 
     for (i = 0; snames[i] != 0; ++i)
 	Tcl_AppendElement(interp, snames[i]);
-    
+
     bu_free((genptr_t) snames, "solid names");
 
     return TCL_OK;
@@ -2729,7 +2745,7 @@ cmd_solids_on_ray (ClientData clientData, Tcl_Interp *interp, int argc, char **a
 /*
  * List the objects currently being drawn.
  */
-int 
+int
 cmd_who (ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
 	CHECK_DBI_NULL;

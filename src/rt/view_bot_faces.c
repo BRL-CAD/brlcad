@@ -24,7 +24,7 @@
  *
  *  Author -
  *	John R. Anderson
- *  
+ *
  *  Source -
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5068
@@ -113,7 +113,7 @@ view_init( struct application *ap, char *file, char *obj, int minus_o )
 
 	if( !minus_o )
 		outfp = stdout;
-	
+
 	ap->a_hit = rayhit;
 	ap->a_miss = raymiss;
 	ap->a_onehit = 1;
@@ -134,7 +134,7 @@ view_init( struct application *ap, char *file, char *obj, int minus_o )
  *
  *  View_2init is called by do_frame(), which in turn is called by
  *  main() in rt.c.
- * 
+ *
  */
 void
 view_2init( struct application *ap, char *framename )
@@ -197,7 +197,7 @@ view_2init( struct application *ap, char *framename )
 			}
 		}
 	}
-	
+
 #endif
 }
 

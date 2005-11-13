@@ -31,7 +31,7 @@
  *  Source -
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5066
- *  
+ *
  */
 /*@}*/
 
@@ -508,7 +508,7 @@ rt_binunif_describe( struct bu_vls		*str,
 }
 
 /**
- *		R T _ B I N U N I F _ F R E E 
+ *		R T _ B I N U N I F _ F R E E
  *
  *	Free the storage associated with a binunif_internal object
  */
@@ -557,7 +557,7 @@ rt_retrieve_binunif(struct rt_db_internal *intern,
 		return -1;
 
 	RT_INIT_DB_INTERNAL(intern);
-	if ( rt_db_get_internal5( intern, dp, dbip, NULL, &rt_uniresource) 
+	if ( rt_db_get_internal5( intern, dp, dbip, NULL, &rt_uniresource)
 	     != ID_BINUNIF     || db_get_external( &ext, dp, dbip ) < 0 )
 		return -1;
 

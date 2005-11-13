@@ -25,7 +25,7 @@
  * A framebuffer server object contains the attributes and
  * methods for implementing an fbserv. This code was developed
  * in large part by modifying the stand-alone version of fbserv.
- * 
+ *
  * Source -
  *	SLAD CAD Team
  *	The U. S. Army Research Laboratory
@@ -142,7 +142,7 @@ HIDDEN void
 new_client(fbsp, pcp)
      struct fbserv_obj *fbsp;
      struct pkg_conn	*pcp;
-{ 
+{
     return;
 }
 

@@ -24,7 +24,7 @@
 	Retrieved: 	12/26/86 at 21:54:35
 	SCCS archive:	/vld/moss/src/fbed/s.pos_pad.c
 
-	Author:		Douglas P. Kingston III	
+	Author:		Douglas P. Kingston III
 			Gary S. Moss
 			U. S. Army Ballistic Research Laboratory
 			Aberdeen Proving Ground
@@ -38,10 +38,15 @@ static const char RCSid[] = "@(#) pos_pad.c 2.1, modified 12/9/86 at 15:54:52, a
 #include "common.h"
 
 
-
 #include <stdio.h>
-#ifdef SYSV
-#include <termio.h>
+#ifdef HAVE_TERMIO_H
+#  include <termio.h>
+#endif
+#ifdef HAVE_FCNTL_H
+#  include <fcntl.h>
+#endif
+#ifdef HAVE_UNISTD_H
+#  include <unistd.h>
 #endif
 
 #include "machine.h"

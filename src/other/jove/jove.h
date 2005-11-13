@@ -7,13 +7,16 @@
 
 #include "common.h"
 
+#ifdef _GNU_SOURCE
+#undef _GNU_SOURCE
+#endif
+
 /* jove.h header file to be included by EVERYONE */
 #include <stdio.h>
 
 #ifdef SYSV
 # define SYS5	1
 #endif
-
 /*
  *  Some very common BSD --> SYSV conversion aids
  */

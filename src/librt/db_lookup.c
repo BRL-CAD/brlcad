@@ -35,12 +35,12 @@
  *
  *  Authors -
  *	Michael John Muuss
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5066
- *  
+ *
  */
 /*@}*/
 
@@ -132,7 +132,7 @@ db_ck_directory(const struct db_i *dbip)
 
 /**
  *			D B _ D I R H A S H
- *  
+ *
  *  Internal function to return pointer to head of hash chain
  *  corresponding to the given string.
  */
@@ -280,11 +280,11 @@ db_lookup(const struct db_i *dbip, register const char *name, int noisy)
  */
 struct directory *
 db_diradd(register struct db_i *dbip, register const char *name, long int laddr, int len, int flags, genptr_t ptr)
-                    	      
-                   	      
-    			      
-   			    
-   			      
+
+
+
+
+
         		    		/* for db version 5, this is a pointer to an unsigned char (minor_type) */
 {
 	struct directory **headp;
@@ -521,7 +521,7 @@ db_pr_dir(register const struct db_i *dbip)
 
 /**
  *  			D B _ G E T _ D I R E C T O R Y
- *  
+ *
  *  This routine is called by the RT_GET_DIRECTORY macro when the freelist
  *  is exhausted.  Rather than simply getting one additional structure,
  *  we get a whole batch, saving overhead.
@@ -569,9 +569,9 @@ db_get_directory(register struct resource *resp)
  */
 struct bu_ptbl *
 db_lookup_by_attr(struct db_i *dbip, int dir_flags, struct bu_attribute_value_set *avs, int op)
-                  
+
               			/* flags of the form used in struct directory (d_flags) */
-                                   
+
        	/* 1 -> all attribute name/value pairs must be present and match */
         /* 2 -> at least one of the name/value pairs must be present and match */
 {

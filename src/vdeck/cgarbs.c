@@ -27,12 +27,12 @@
  *
  *  Author -
  *	Keith Applin
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5066
- *  
+ *
  */
 #ifndef lint
 static const char RCSid[] = "@(#)$Header$ (BRL)";
@@ -160,7 +160,7 @@ arb_mv( pts, gp, p0, p1, p2, p3, p4, p5, p6, p7 )
 register point_t	pts[8];
 register const struct rt_arb_internal	*gp;
 const int		p0, p1, p2, p3, p4, p5, p6, p7;
-{	
+{
 	RT_ARB_CK_MAGIC(gp);
 	VMOVE( pts[0], gp->pt[p0] );
 	VMOVE( pts[1], gp->pt[p1] );

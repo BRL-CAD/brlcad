@@ -26,7 +26,7 @@
  *  RT log files of the two images.  This matrix will permit the translation
  *  and scaling of the plot file so that it can be readily overlaid onto its
  *  pixel image mate.
- *  
+ *
  *  It is expected that the first log file given corresponds to the image
  *  file to be overlaid onto the image that corresponds to the second log
  *  file.  Also for the moment it is expected that the first log will
@@ -35,10 +35,10 @@
  *  by simply concatentating them: "cat file.pl file.pl >> out.pl"
  *
  *  The program conisists of three parts:
- *	1) take view, orientation, eye_position, and size from two rt log 
+ *	1) take view, orientation, eye_position, and size from two rt log
  *          files, and use this information to build up the registration matrix;
  *	2) puts out a registration matrix and a new space command to be
- *	   used by plrot in lieu of -a#, -e#, -g to rotate/transform the 
+ *	   used by plrot in lieu of -a#, -e#, -g to rotate/transform the
  *	   UNIX_Plot file
  *			and
  *	3) involve pix-fb -o to do the overlaying of the actual files.
@@ -122,8 +122,8 @@ main(int argc, char **argv)
 
 	/* Now process the arguments from main: i.e. open the log files
 	 * for reading and send to read_rt_file().
-	 * Send read_rt_file() a pointer to local model matrix 
-	 * and to the appropriate log file. 
+	 * Send read_rt_file() a pointer to local model matrix
+	 * and to the appropriate log file.
 	 * ( Note &view2model[0] can be used, but is not elegant.)
 	 */
 
@@ -167,7 +167,7 @@ main(int argc, char **argv)
 		fprintf(stderr, "regis: can't build registration matrix!\n");
 		exit(-1);
 	}
-	print_info(regismat);	
+	print_info(regismat);
 	exit(0);
 
 }
@@ -208,10 +208,10 @@ mat_build(fastf_t *mat1, fastf_t *mat2, fastf_t *regismat)
 	scale = mat1[15]/mat2[15];
 
 	VPRINT("delta", delta);
-	fprintf(stderr, "scale: %.6f\n", scale);	
+	fprintf(stderr, "scale: %.6f\n", scale);
 
 	/* If the first log corresponds to a UNIX-Plot file, following
-	 * applies.  Since UNIX-Plot files are in model coordinates, the 
+	 * applies.  Since UNIX-Plot files are in model coordinates, the
 	 * mod2view2 ("model2pix") is also the registration matrix.  In
 	 * this case, pl-fb needs to learn that the UNIX-Plot file's space
 	 * runs from -1 -> 1 in x and y.  This can be done by adding an

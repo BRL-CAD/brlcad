@@ -35,7 +35,7 @@ package require Itk
 package require Iwidgets
 
 namespace eval RtWizard {
-  
+
     package require PictureTypeBase 1.0
     package provide PictureTypeA 1.0
 
@@ -47,7 +47,7 @@ namespace eval RtWizard {
 
     #
     # The PictureTypeA class supports a simple Phong-shaded image.
-    # Note that all public methods are specified in the abstract 
+    # Note that all public methods are specified in the abstract
     # base class.
     #
     ::itcl::class PictureTypeA {
@@ -57,10 +57,10 @@ namespace eval RtWizard {
 	    constructor {args} {
 		PictureTypeBase::constructor $args
 	    } {}
-	    
+
 	    #
 	    # Methods that impliment abstract base class methods.
-	    # Unfortunately, I have to redeclare them here. 
+	    # Unfortunately, I have to redeclare them here.
 	    #
 	    method activate {}
 	    method deactivate {}
@@ -75,7 +75,7 @@ namespace eval RtWizard {
 
     #--------------------#
     #   Public Methods   #
-    #--------------------#    
+    #--------------------#
     #
     #
     # activate - called when this picture type is selected.
@@ -127,7 +127,7 @@ namespace eval RtWizard {
 	set h [$::fbp getHeight]
 	set h2 [ expr $h / 2 ]
 
-	#	
+	#
 	# get a framebuffer
 	#
 	set fb [$::fbp getFrameBuffer $w2 $h2 true]
@@ -137,8 +137,8 @@ namespace eval RtWizard {
 	#
 	rtCmd $fcp $fb $w2 $h2
 
-    }    
-    
+    }
+
     #
     # fullSize - generates a fullSize picture.
     #
@@ -149,7 +149,7 @@ namespace eval RtWizard {
 	set w [$::fbp getWidth]
 	set h [$::fbp getHeight]
 
-	#	
+	#
 	# get a framebuffer
 	#
 	set fb [$::fbp getFrameBuffer $w $h]

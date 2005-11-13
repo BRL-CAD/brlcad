@@ -1,59 +1,82 @@
+.TH G_QA 1
+./"                         G _ Q A . 1
+./" BRL-CAD
+./"
+./" Copyright (c) 2005 United States Government as represented by
+./" the U.S. Army Research Laboratory.
+./"
+./" This document is made available under the terms of the GNU Free
+./" Documentation License or, at your option, under the terms of the
+./" GNU General Public License as published by the Free Software
+./" Foundation.  Permission is granted to copy, distribute and/or
+./" modify this document under the terms of the GNU Free Documentation
+./" License, Version 1.2 or any later version published by the Free
+./" Software Foundation; with no Invariant Sections, no Front-Cover
+./" Texts, and no Back-Cover Texts.  Permission is also granted to
+./" redistribute this document under the terms of the GNU General
+./" Public License; either version 2 of the License, or (at your
+./" option) any later version.
+./"
+./" You should have received a copy of the GNU Free Documentation
+./" License and/or the GNU General Public License along with this
+./" document; see the file named COPYING for more information.
+./"
+./"./"./"
 .\" Set the interparagraph spacing to 1 (default is 0.4)
 .PD 1v
 .\"
 .\" The man page begins...
-.TH G_QA 1
 .SH NAME
-g_qa \- a BRL-CAD geometry analysis tool
+g_qa \- a BRL-CAD quantitative geometry analysis tool
 .SH SYNOPSIS
 .BR "g_qa " "[options] model.g objects"
 .SH DESCRIPTION
-The 
-.I g_qa 
+The
+.I g_qa
 program computes and reports a variety of characteristics of the
 .I objects
-specified from the given 
+specified from the given
 .I model.g
 geometric description.
-The characteristics which can be computed include 
-.B weight, volume, overlaps, exposed air, gaps/voids, adjacent air, 
-and 
+The characteristics which can be computed include
+.B weight, volume, overlaps, exposed air, gaps/voids, adjacent air,
+and
 .B interfaces.
-Only the 
+Only the
 .I objects
 from the database specified on the command line are analyzed.
 .P
-It works by shooting grids of rays from the three axis-aligned directions (sometimes called 
-\fIviews\fR).  
+It works by shooting grids of rays from the three axis-aligned directions (sometimes called
+\fIviews\fR).
 The resulting calculations for each view are compared to each other.
 For Volume/Weight calculations the grid of rays is progressively refined until the results from all three views
 agree within a user-specifiable tolerance, or a limit on grid refinement is reached.
 For error and interface calculations, the grid is refined until an error is found or the grid refinement
 limit is reached.
 .SH VOLUME AND WEIGHT CALCULATION
-If volume or weight calculation is selected, for each 
+If volume or weight calculation is selected, for each
 .I object
 specified on the command line, value is calculated and reported.
 Note that if there are overlaps in the geometry the values reported will be invalid.
 
 .P
-For weight computation, the density of every region must be specified.  
+For weight computation, the density of every region must be specified.
 Densities are specified as an index in a table of density values.
-This index is stored in the 
-.I GIFTmater 
+This index is stored in the
+.I GIFTmater
 attribute of each region (typically set with the
 .I edcodes
 or
 .I adjust
 commands in MGED).
 .P
-The density table consists of three columns: 
+The density table consists of three columns:
 .IP
 .B An integer index value.
 This is the value the to which the \fIGIFTmater\fR attribute will be set to select this material for the region.
 .IP
 .B A floating point density value.
-This is the density for the material, and is specified in \fBgrams/cc\fR. 
+This is the density for the material, and is specified in \fBgrams/cc\fR.
 .IP
 .B A name string
 This is a name or description the material.
@@ -79,41 +102,41 @@ An example file might look like the following:
 .br
 10	7.84		Carbon Steel
 .P
-The table is typically created in an external file using a text editor.  
+The table is typically created in an external file using a text editor.
 
-The geometry editor MGED automatically assigns an index value of 
+The geometry editor MGED automatically assigns an index value of
 .B 1
 to a newly created region.
 While this default can be handy when a vast majority of objects are made from the same
-material, it can lead to surprising errors when objects which are supposed to have a 
-certain weight are computed to have different weight because one or two regions 
-were not set to the correct, non-default index value.  As a result, it is advised that the index value 
+material, it can lead to surprising errors when objects which are supposed to have a
+certain weight are computed to have different weight because one or two regions
+were not set to the correct, non-default index value.  As a result, it is advised that the index value
 .B 1
-never be used.  If this practice is followed, then an error message will be generated for any 
+never be used.  If this practice is followed, then an error message will be generated for any
 regions which have not had their material index set to something other than the default.
 .P
-The user will typically want to run g_qa and verify the results using the 
+The user will typically want to run g_qa and verify the results using the
 .I \-f
 option (see below)
-before importing the table into the database.  
-For example, if a material index is left out of the table, 
-it is easier to rectify the situation using the external file. 
+before importing the table into the database.
+For example, if a material index is left out of the table,
+it is easier to rectify the situation using the external file.
 Once the table has been verified as correct and complete, it is imported to the database as the binary object
 \fB_DENSITIES\fR.
 To import the text file into the database, the following comand is used:
 .IP
 mged>
-.B dbbinary \-i u c _DENSITIES 
+.B dbbinary \-i u c _DENSITIES
 .I filename
 
 .SH OVERLAP DETECTION
-For each pair of regions that overlap, the tool reports the two regions that overlap, the maximum line-of-sight thickness of the overlap, and the in-hit location of the ray that caused that maximum overlap thickness.  
+For each pair of regions that overlap, the tool reports the two regions that overlap, the maximum line-of-sight thickness of the overlap, and the in-hit location of the ray that caused that maximum overlap thickness.
 
 .SH OPTIONS
 .TP
 .B \-A \fR\fIanalysis_flags\fR
 Specifies which computations are to be performed and reported.
-The 
+The
 .I analysis_flags
 parameter is one or more of the following:
 .in +5
@@ -137,28 +160,28 @@ v		Volume
 w		Weight
 .sp
 .in -5
-Only those reports requested will be provided.  The default is 
+Only those reports requested will be provided.  The default is
 .B -AA
 to produce all reports.
 
 .B Adjacent different air (a):
-Detects air volumes which are next to each other but have different air_code values applied to the region.  
-This would typically indicate that the regions are different types of air, 
+Detects air volumes which are next to each other but have different air_code values applied to the region.
+This would typically indicate that the regions are different types of air,
 such as crew_air (which fills the crew compartment of a vehicle) and engine_air (which surrounds the engine).
 When these different types of air adjoin each other, it is generally considered a modeling error.
 
 .B Bounding box dimensions (b):
-Reports the dimensions of an axis-aligned box which fully encloses the 
+Reports the dimensions of an axis-aligned box which fully encloses the
 \fIobjects\fR.
 
 .B Exposed air (e):
-This causes checks to be made to see if the ray encounters air regions before 
+This causes checks to be made to see if the ray encounters air regions before
 (or after all) solid objects.
 It also checks to see if the ray moves from a void to an air region.
-Typically, only the air inside a building or vehicle is modeled if the 
+Typically, only the air inside a building or vehicle is modeled if the
 purpose of the model is to support analysis of
 that single structure/vehicle.
-There are exceptions, such as when modeling larger environments for more 
+There are exceptions, such as when modeling larger environments for more
 extended analysis purposes.
 
 .B Gaps/voids (g):
@@ -167,72 +190,75 @@ This reports when there is more than
 (see the
 .B \-t
 option below)
-between objects on the ray path.  Note that not all gaps are errors.  
+between objects on the ray path.  Note that not all gaps are errors.
 For example, gaps between a wheel and a fender are expected (unless external air is modeled).
 Typically, users should perform gap analysis on contained subsets of a model (such as passenger compartments)
 rather than on whole vehicles.
 
 .B Overlaps (o):
-are two regions which occupy the same space.  
-In the real world, two objects may not occupy the same space.  
+are two regions which occupy the same space.
+In the real world, two objects may not occupy the same space.
 This check is sometimes also known as \fIinterference checking\fR.
-Two objects must overlap by at least 
+Two objects must overlap by at least
 .I overlap_tol_dist
 (see the
 .B \-t
 option below)
 to be considered to overlap.  Overlap testing causes the grid spacing to
 be refined until the limit is reached, or an overlap is detected.
-See the 
-.B \-g 
+See the
+.B \-g
 option below for details on setting the grid spacing.
 Once overlaps have been detected, grid refinement is not done, and processing stops.
 
 .B Volume (v):
-Computes the volume of the 
+Computes the volume of the
 .I objects
 specified on the command line.
 
 .B Weight (w):
-Computes the weight of the 
+Computes the weight of the
 .I objects
 specified on the command line.
 .TP
 .B \-a \fR\fIazimuth_deg\fR
 .B Not Implemented.
 .br
-Sets a rotation (in degrees) of the coordinate system by a given amount about the Z axis.  
-The default is 0. 
+Sets a rotation (in degrees) of the coordinate system by a given amount about the Z axis.
+The default is 0.
 See also:
 .B \-e
 .TP
 .B \-e \fR\fIelevation_deg\fR
 .B Not Implemented.
 .br
-Sets a rotation (in degrees) of the coordinate system by a given elevation from the XY plane (rotation about X axis?).  
+Sets a rotation (in degrees) of the coordinate system by a given elevation from the XY plane (rotation about X axis?).
 The default is 0.
 See also
 .B \-a
 .TP
 .B \-f \fR\fIfilename\fR
-Specifies that density values should be taken from an external file instead of from the 
-.B _DENSITIES 
+Specifies that density values should be taken from an external file instead of from the
+.B _DENSITIES
 object in the database.
 This option can be useful when developing the density table with a text editor, prior to importing it to the geometric database.
 .TP
 .B \-g \fR\fIgrid_spacing[-lim]\fR
 Specifies the initial spacing between rays in the grids,
 and optionally a limit on how far the grid can be refined.
-The first value indicates the inital spacing between grid rays.  
+The first value indicates the inital spacing between grid rays.
 If the optional second argument, "\fIlim\fR",
 is specified, it indicates a lower bound on how fine the gridspacing may get before computation is terminated.
 The grid spacing may be specified with units.  For example:
 .B 5 mm
-or 
+or
 .B 10 in.
 If units are not provided, millimeters are presumed to be the units.
 .IP
+
 The default values are 50.0 mm and 0.5 mm, which is equivalent to specifying: 
+.B \-g 50.0mm-0.5mm
+or
 .B \-g 50.0mm,0.5mm
 on the command line.
 This is a hard limit.  If other analysis constraints are not met, the grid
@@ -240,7 +266,7 @@ spacing will never be refined smaller than the minimum grid size to satisfy
 another constraint.
 The initial grid spacing is divided in half at each refinement step.  As a
 result, if you desire a lower limit to actually be tested, then the initial
-grid size must be a power of 2 greater.  For example, specifying -g10mm-1mm
+grid size must be a power of 2 greater.  For example, specifying -g10mm,1mm
 would result in grid spacings of 10, 5, 2.5, 1.25 being used.  If the goal was
 to exactly end at a 1mm grid, then values such as 8 or 16 should have been
 chosen for the initial values.  This would result in testing 16, 8, 4, 2, 1
@@ -251,15 +277,15 @@ grid spacing values.
 .br
 .B Not Implemented.
 .br
-Specifies that the program should create new 
+Specifies that the program should create new
 .I assembly combinations
-in the geometry database to represent the overlap pairs.  
-This flag is meaningless if overlap reporting is not turned on with the 
+in the geometry database to represent the overlap pairs.
+This flag is meaningless if overlap reporting is not turned on with the
 .B \-A
 option.
-If regions 
+If regions
 .I rod.r
-and 
+and
 .I disk.r
 overlap, this option will cause the creation of an assembly called _OVERLAP_rod.r_disk.r which includes the following items:
 .in +5
@@ -271,11 +297,11 @@ overlap, this option will cause the creation of an assembly called _OVERLAP_rod.
 .I _OVERLAP_lines_rod.r_disk.r
 .in -5
 
-The last item is an object to represent the overlapping area so that it can be easily seen.  
+The last item is an object to represent the overlapping area so that it can be easily seen.
 The default is that no groups are created.
 .TP
 .B \-n \fR\fInum_hits\fR
-Specifies that the grid be refined until each region has at least 
+Specifies that the grid be refined until each region has at least
 .I num_hits
 ray intersections.
 This limit is not applied per-view, but rather per-analysis.
@@ -290,11 +316,11 @@ Specifies that only the first
 should be computed.  This is principly a debugging option.
 .TP
 .B \-p
-Specifies that 
+Specifies that
 .I g_qa
-should produce plot files for each of the analysis it performs.  These can be overlaid on the geometry in 
+should produce plot files for each of the analysis it performs.  These can be overlaid on the geometry in
 .I mged
-with the 
+with the
 .I overlay
 command to help visualize the analysis results.
 Each of the different analysis types write to a separate plot file and use different colors for drawing.
@@ -302,15 +328,15 @@ Each of the different analysis types write to a separate plot file and use diffe
 .B \-P \fR\fIncpu\fR
 Specifies that
 .I ncpu
-CPUs should be used for performing the calculation.  
-By default, all local CPUs are utilized.  
+CPUs should be used for performing the calculation.
+By default, all local CPUs are utilized.
 This option exists primarily to reduce the number of
 computation threads from the machine maximum.
 Note that specifying more CPUs than are present on the machine does not increase
-the number of computation threads.  
+the number of computation threads.
 .TP
 .B \-r
-Indicates that 
+Indicates that
 .I g_qa
 should print per-region statistics for weight and volume as well as the values for the objects specified on the command line.
 .TP
@@ -329,7 +355,7 @@ Specifies the Boolean value (0 or 1) for
 .I use_air
 which indicates whether regions which are marked as "air" should be retained and included in the raytrace.
 .B Unlike other BRL-CAD raytracing applications the default is to retain air in the raytracing.
-The 
+The
 .B \-U 0
 option causes air regions to be discarded prior to raytracing.
 If you turn off use_air, and request any analysis that requires it (see
@@ -337,7 +363,7 @@ If you turn off use_air, and request any analysis that requires it (see
 above) then the program will exit with an error message.
 .TP
 .B \-u \fR\fIdistane,volume,weight\fR
-Specify the units used when reporting values.  Values must be comma delimited and provided in the order 
+Specify the units used when reporting values.  Values must be comma delimited and provided in the order
 \fIdistance\fR,\fIvolume\fR,\fIweight\fR.  For example:
 .B \-u ``cm,cu ft,kg''
 or \fB\-u ,,kg\fR (the latter example sets only the weight units).
@@ -353,43 +379,44 @@ learning how the computation is progressing, and what tolerances are causing
 further computation to be necessary.
 .TP
 .B \-V \fR\fIvolume_tolerance[units]\fR
-Specifies a volumetric tolerance value that the three view computations must be within for computation to complete.  
-If volume calculation is selected and this option is not set, then the tolerance is set to 
+Specifies a volumetric tolerance value that the three view computations must be within for computation to complete.
+If volume calculation is selected and this option is not set, then the tolerance is set to
 1/10,000 of the volume of the model.
-For large, complex objets (such as entire vehicles), this value might need to be 
-set larger to achieve reasonable runtimes (or even completion).  
+For large, complex objets (such as entire vehicles), this value might need to be
+set larger to achieve reasonable runtimes (or even completion).
 Given the approximate sampling nature of the algorithm, the
 three separate view computations will not usually produce identical results.
 .TP
 .B \-W \fR\fIweight_tolerance[units]\fR
 This is like the volume tolerance, \fB\-T\fR, but is applied to the weight computation results,
-not the volume computation results.  
+not the volume computation results.
 
 The weight computation tolerance is probably more appropriate when doing whole-vehicle analysis.
-If weight computation is selected, it is set to a value equal to the weight of an object 1/100 
+If weight computation is selected, it is set to a value equal to the weight of an object 1/100
 the size of the model, which is made of the most dense material in the table.
 
 .SH EXAMPLES
 .P
-The following command computes the weight of an object called 
+The following command computes the weight of an object called
 .I wheel.r
-from the geometry database 
+from the geometry database
 .I model.g
 and reports the weight and volume, and checks for overlaps.
 .IP
 g_qa model.g wheel.r
 .P
 The following will check objects hull, turret, and suspension for overlaps
-and report exposed air.  
+and report exposed air.
 The grid starts at 1 cm and is refined to 1mm unless overlaps or exposed air is detected
 before the grid is refined to 1mm
 
 .IP
-g_qa -g 1cm,1mm -A oe model.g hull turret suspension 
+g_qa -g 1cm-1mm -A oe model.g hull turret suspension 
+
 .P
 The following computes volume and weight of hull, turret, and suspension.  Results are reported in cubic centimeters (cc) and ounces (oz).  The grid spacing starts at 5in and will not be refined below 0.3mm spacing.
 .IP
-g_qa -g5in,0.3mm -Avw -u ft,cc,oz test.g hull turret suspension
+g_qa -g5in-0.3mm -Avw -u ft,cc,oz test.g hull turret suspension
 .P
 For an example of each independent analysis type, consider the following:
 .IP

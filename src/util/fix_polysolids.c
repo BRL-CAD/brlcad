@@ -25,7 +25,7 @@
  *
  *  Author -
  *	John R. Anderson
- *  
+ *
  *  Source -
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5066
@@ -96,16 +96,16 @@ char	*argv[];
 	RT_LIST_INIT( &rt_g.rtg_vlfree );	/* for vlist macros */
 
 	/* Get command line arguments. */
-	while ((c = getopt(argc, argv, "vx:X:")) != EOF) {
+	while ((c = bu_getopt(argc, argv, "vx:X:")) != EOF) {
 		switch (c) {
 		case 'v':
 			verbose++;
 			break;
 		case 'x':
-			sscanf( optarg, "%x", &rt_g.debug );
+			sscanf( bu_optarg, "%x", &rt_g.debug );
 			break;
 		case 'X':
-			sscanf( optarg, "%x", &rt_g.NMG_debug );
+			sscanf( bu_optarg, "%x", &rt_g.NMG_debug );
 			break;
 		default:
 			fprintf(stderr, usage, argv[0]);

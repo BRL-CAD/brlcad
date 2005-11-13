@@ -1,4 +1,27 @@
-.TH LIBWDB 3 BRL/CAD
+.TH LIBWDB 3 BRL-CAD
+./"                       L I B W D B . 3
+./" BRL-CAD
+./"
+./" Copyright (c) 1987-2005 United States Government as represented by
+./" the U.S. Army Research Laboratory.
+./"
+./" This document is made available under the terms of the GNU Free
+./" Documentation License or, at your option, under the terms of the
+./" GNU General Public License as published by the Free Software
+./" Foundation.  Permission is granted to copy, distribute and/or
+./" modify this document under the terms of the GNU Free Documentation
+./" License, Version 1.2 or any later version published by the Free
+./" Software Foundation; with no Invariant Sections, no Front-Cover
+./" Texts, and no Back-Cover Texts.  Permission is also granted to
+./" redistribute this document under the terms of the GNU General
+./" Public License; either version 2 of the License, or (at your
+./" option) any later version.
+./"
+./" You should have received a copy of the GNU Free Documentation
+./" License and/or the GNU General Public License along with this
+./" document; see the file named COPYING for more information.
+./"
+./"./"./"
 .SH NAME
 libwdb \- library for procedural generation of MGED databases
 .SH SYNOPSIS
@@ -31,7 +54,7 @@ vect_t	zdir;
 fastf_t	xlen;
 fastf_t	ylen;
 fastf_t	zlen;
-fastf_t	x_top_len;	
+fastf_t	x_top_len;
 .sp
 mk_arb4( fp, name, pts )
 FILE	*fp;
@@ -249,7 +272,7 @@ the radius of the solid part.
 .PP
 .I mk_cone\^
 makes a right circular cone called ``name''
-specified by the center point of the base, a direction or height vector, 
+specified by the center point of the base, a direction or height vector,
 a height scalar, and a radius for each end of the cone.
 The direction vector is unitized and serves to derive a vector
 ``a'', which is orthogonal to the direction vector and itself.  This vector
@@ -326,24 +349,24 @@ by boolean operation ``op'', chosen from
 the list of:  UNION, INTERSECT, SUBTRACT, from <brlcad/db.h>.
 .PP
 .I mk_addmember\^
-is used to obtain dynamic storage for a new wmember structure 
+is used to obtain dynamic storage for a new wmember structure
 (see
 .IR wdb.h\^
-).  Then 
+).  Then
 .I mk_lcomb\^
-can be used in the same way as 
+can be used in the same way as
 .I mk_comb\^
 to make a combination of a linked list of wmember structures.
 This is the only recommended way to create combinations,
-because it collects up the details in memory, and produces the 
+because it collects up the details in memory, and produces the
 combination and member records all at once, rather than in multiple
-calls, as in 
+calls, as in
 .I mk_comb\^
 and
 .I mk_memb\^.
 The ``op'' argument must be one of
 WMOP_UNION, WMOP_SUBTRACT, or WMOP_INTERSECT.
-In the future, 
+In the future,
 .I mk_comb\^
 and
 .I mk_memb\^
@@ -382,13 +405,13 @@ The routine
 .I mk_bsolid\^
 writes the header for a b-spline solid ``name'', with ``nsurf'' surfaces,
 at ``res'' resolution.  This call must be followed by ``nsurf''
-calls to 
+calls to
 .I mk_bsurf\^
-which enters the respective surfaces into the combination.  This pair 
-work much like the 
+which enters the respective surfaces into the combination.  This pair
+work much like the
 .I mk_comb\^
-and 
-.I mk_memb\^ 
+and
+.I mk_memb\^
 pair.
 .PP
 The global variable

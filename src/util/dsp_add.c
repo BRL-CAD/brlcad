@@ -39,12 +39,12 @@
 #include "bn.h"
 
 
-/* declarations to support use of getopt() system call */
+/* declarations to support use of bu_getopt() system call */
 char *options = "h";
-extern char *optarg;
-extern int optind, opterr; 
+extern char *bu_optarg;
+extern int bu_optind, opterr;
 
-/* , getopt(int, char *const *, const char *);*/ 
+/* , bu_getopt(int, char *const *, const char *);*/
 
 char *progname = "(noname)";
 
@@ -77,18 +77,18 @@ int parse_args(int ac, char *av[])
 	else
 		++progname;
 
-	/* Turn off getopt's error messages */
+	/* Turn off bu_getopt's error messages */
 	opterr = 0;
 
 	/* get all the option flags from the command line */
-	while ((c=getopt(ac,av,options)) != EOF)
+	while ((c=bu_getopt(ac,av,options)) != EOF)
 		switch (c) {
 		case '?'	:
 		case 'h'	:
 		default		: usage("Bad or help flag specified\n"); break;
 		}
 
-	return(optind);
+	return(bu_optind);
 }
 
 
@@ -104,7 +104,7 @@ swap_bytes(unsigned short *buf, unsigned long count)
 
 /*
  *  A D D _ F L O A T
- *  
+ *
  *  Perform floating point addition and re-normalization of the data.
  *
  */
@@ -143,7 +143,7 @@ add_float(unsigned short *buf1, unsigned short *buf2, unsigned long count)
 /*
  *  A D D _ I N T
  *
- *  Perform simple integer addition to the input streams.  
+ *  Perform simple integer addition to the input streams.
  *  Issue warning on overflow.
  *
  *  Result:	buf1 contents modified
@@ -187,7 +187,7 @@ main(int ac, char *av[])
 	struct stat sb;
 
 	next_arg = parse_args(ac, av);
-	
+
 	if (isatty(fileno(stdout))) usage("Redirect standard output\n");
 
 	if (next_arg >= ac) usage("No files specified\n");
@@ -200,7 +200,7 @@ main(int ac, char *av[])
 		perror(av[next_arg]);
 		return -1;
 	}
-	    
+
 	count = (unsigned long)sb.st_size;
 	buf1 = bu_malloc((size_t)sb.st_size, "buf1");
 
@@ -211,7 +211,7 @@ main(int ac, char *av[])
 		perror(av[next_arg]);
 		return -1;
 	}
-	    
+
 	if (sb.st_size != count)
 		bu_bomb("**** ERROR **** file size mis-match\n");
 

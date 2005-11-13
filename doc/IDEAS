@@ -1,0 +1,56 @@
+Ideas for new BRL-CAD contributors
+==================================
+
+If someone is interested in contributing to BRL-CAD and doesn't have
+an idea of where to begin, included below is a list of ideas of
+interest for people to work on.  Each idea has been given a value
+between 0 and 9 as a broad indicator of the difficulty and a rough
+relative estimate of the expected time involved.
+
+D            
+i
+f
+f
+i 
+c
+u  T
+l  i
+t  m
+y  e  
+----------------------------------------------------------------------
+0  0  Install and setup BRL-CAD
+0  2  Go through the modeling tutorials
+0  1  Render pictures
+2  2  Model something real
+3  1  Make an animation
+0  1  Run and collect BRL-CAD Benchmark results
+1  4  Run, document, and categorize commands
+2  5  Work on the Materials Database
+2  5  Work on the Geometry Repository
+2  5  Work on the Benchmark Results Database
+3  3  Create a Java-based 3D geometry viewer
+4  3  Write a SWIG interface to the modeling commands
+2  6  Convert documentation to Docbook
+1  5  Translate documentation to other languages
+2  2  Add Griffen knob support to MGED
+3  2  Add SGI knob and button box support to MGED on MacOSX
+4  4  Write a new geometry converter
+3  3  Write a new image converter
+3  3  Write a new data processing utility
+4  3  Write a new shader to RT
+4  4  Implement a new primitive
+2  6  Work on the BRL-CAD website
+1  2  Make an overview diagram of BRL-CAD
+1  2  Write a BRL-CAD tutorial
+2  2  Write a new manual page
+3  4  Write a system information tool for the benchmark
+
+*  *  Fix one of the bugs listed in the BUGS file
+*  *  Fix one of the bugs listed in the bug tracker
+*  *  Implement one of the items listed in the TODO file
+*  *  Implement a requested feature from the RFE tracker
+
+---
+There may be more tasks and ideas available in the Tasks section of
+the project website at
+http://sourceforge.net/pm/task.php?group_project_id=35563&group_id=105292

@@ -24,6 +24,15 @@
 #ifndef SEEN_DM_XVARS
 #define SEEN_DM_XVARS
 
+#include "common.h"
+
+#ifdef HAVE_X11_XLIB_H
+#  include <X11/Xlib.h>
+#  include <X11/Xutil.h>
+#endif
+
+#include "tk.h"
+
 #define XVARS_MV_O(_m) offsetof(struct dm_xvars, _m)
 
 #ifdef _WIN32

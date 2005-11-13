@@ -28,12 +28,12 @@
  *
  *  Author -
  *	Michael John Muuss
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5066
- *  
+ *
  */
 /*@}*/
 #ifndef lint
@@ -168,7 +168,7 @@ rt_vlblock_find(struct bn_vlblock *vbp, int r, int g, int b)
 
 	/* re-initialize pointers in lower half */
 	for (n=0; n < omax; n++) {
-		/* 
+		/*
 		 * Check to see if list is empty
 		 * (i.e. yellow and/or white are not used).
 		 * Note - we can't use BU_LIST_IS_EMPTY here because

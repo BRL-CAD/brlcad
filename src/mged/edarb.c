@@ -32,7 +32,7 @@
  *
  *  Author -
  *	Keith A. Applin
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
@@ -57,6 +57,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "bu.h"
 #include "vmath.h"
 #include "raytrace.h"
+#include "db.h"
 
 #include "./sedit.h"
 #include "./ged.h"
@@ -81,7 +82,7 @@ extern short earb4[5][18];
 
 /*
  *  			E D I T A R B
- *  
+ *
  *  An ARB edge is moved by finding the direction of
  *  the line containing the edge and the 2 "bounding"
  *  planes.  The new edge is found by intersecting the
@@ -176,7 +177,7 @@ editarb( vect_t pos_model )
 			/* must calculate edge direction */
 			VSUB2(edge_dir, arb->pt[pt2], arb->pt[pt1]);
 		}
-		if(MAGNITUDE(edge_dir) == 0.0) 
+		if(MAGNITUDE(edge_dir) == 0.0)
 			goto err;
 		/* bounding planes bp1,bp2 */
 		bp1 = *edptr++;
@@ -536,7 +537,7 @@ a4toa6:
 
 	/* copy local copy back to original */
 	bcopy( (char *)&larb , (char *)es_int.idb_ptr , sizeof( struct rt_arb_internal ) );
-		
+
 	/* draw the updated solid */
 	replot_editing_solid();
 	update_views = 1;
@@ -874,7 +875,7 @@ f_edgedir(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 		slope[0] = cos(fb) * cos(rot);
 		slope[1] = cos(fb) * sin(rot);
 		slope[2] = sin(fb);
-	} 
+	}
 	else {
 		for(i=0; i<3; i++) {
 			/* put edge slope in slope[] array */
@@ -1065,7 +1066,7 @@ f_permute(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     if ((es_type < 4) || (es_type > 8))
     {
       struct bu_vls tmp_vls;
-      
+
       bu_vls_init(&tmp_vls);
       bu_vls_printf(&tmp_vls, "Permute: es_type=%d\nThis shouldn't happen\n", es_type);
       Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
@@ -1107,7 +1108,7 @@ f_permute(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 		    argv[1], es_type, face_size);
       Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
       bu_vls_free(&tmp_vls);
-      
+
       return TCL_ERROR;
     }
     vertex = argv[1][0] - '1';

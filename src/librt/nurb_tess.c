@@ -28,7 +28,7 @@
  *
  *  Author -
  *	Paul Randal Stay
- * 
+ *
  *  Source -
  * 	SECAD/VLD Computing Consortium, Bldg 394
  *	The U.S. Army Ballistic Research Laboratory
@@ -54,14 +54,14 @@
  * See paper in Computer Aided Design (CAD) Volumne 27, Number 1, January 1995
  *	TESSELATING TRIMMMED NURBS SURFACES, Leslie A Piegl and Arnaud Richard.
  *
- * There is a slight deviation from the paper, Since libnurb (rt_nurb_s_diff) 
+ * There is a slight deviation from the paper, Since libnurb (rt_nurb_s_diff)
  * differentiation correctly handles rational surfaces, no special processing for
- * rational is needed. 
+ * rational is needed.
  *
  * The idea is to compute the longest edge size in parametric space such that
  * a the edge (or curve) in real space is within epsilon tolerance. The mapping
  * from parametric space is done as a separate step.
- * 
+ *
  */
 
 fastf_t
@@ -71,7 +71,7 @@ rt_nurb_par_edge(const struct face_g_snurb *srf, fastf_t epsilon)
 	fastf_t d1,d2,d3;
 	int i;
 	fastf_t *pt;
-	
+
 
 	us = rt_nurb_s_diff(srf, RT_NURB_SPLIT_ROW);
 	vs = rt_nurb_s_diff(srf, RT_NURB_SPLIT_COL);
@@ -82,7 +82,7 @@ rt_nurb_par_edge(const struct face_g_snurb *srf, fastf_t epsilon)
 	d1 = 0.0;
 	d2 = 0.0;
 	d3 = 0.0;
-	
+
 	pt = (fastf_t *) uus->ctl_points;
 
 	/* Find the maximum value of the 2nd derivative in U */
@@ -92,7 +92,7 @@ rt_nurb_par_edge(const struct face_g_snurb *srf, fastf_t epsilon)
 		fastf_t mag;
 
 		mag = MAGNITUDE( pt );
-		
+
 		if ( mag > d1) d1 = mag;
 
 		pt += RT_NURB_EXTRACT_COORDS(uus->pt_type);
@@ -108,7 +108,7 @@ rt_nurb_par_edge(const struct face_g_snurb *srf, fastf_t epsilon)
 		fastf_t mag;
 
 		mag = MAGNITUDE( pt );
-		
+
 		if ( mag > d2) d2 = mag;
 
 		pt += RT_NURB_EXTRACT_COORDS(uvs->pt_type);
@@ -124,7 +124,7 @@ rt_nurb_par_edge(const struct face_g_snurb *srf, fastf_t epsilon)
 		fastf_t mag;
 
 		mag = MAGNITUDE( pt );
-		
+
 		if ( mag > d3) d3 = mag;
 
 		pt += RT_NURB_EXTRACT_COORDS(vvs->pt_type);

@@ -24,7 +24,7 @@
  *
  *  Author -
  *	Carl J. Nuzman
- *  
+ *
  *  Source -
  *      The U. S. Army Research Laboratory
  *      Aberdeen Proving Ground, Maryland  21005-5068  USA
@@ -56,7 +56,7 @@ main(int argc, char **argv)
     count = 0;
     while (!feof(stdin)){
 	val = scanf("%lf",&temp);
-	if (val<1) 
+	if (val<1)
 	    ;
 	else {
 	    doit = 0;

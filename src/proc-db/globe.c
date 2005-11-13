@@ -87,8 +87,8 @@ main(int ac, char *av[])
 	BU_LIST_INIT(&wm_hd.l);
 	BU_LIST_INIT(&bigList.l);
 
-	/* 
-	 * make the CORE of the globe with a given color 
+	/*
+	 * make the CORE of the globe with a given color
 	 ***************/
 	VSET(p1, 0.0, 0.0, 0.0);
 	VSET(rgb, 130, 253, 194); /* some green */
@@ -100,8 +100,8 @@ main(int ac, char *av[])
 	mk_addmember("land.s", &wm_hd.l, NULL, WMOP_UNION);
 	mk_lcomb(db_fp, "land.r", &wm_hd, is_region, "plastic", "di=.8 sp=.2", rgb, 0);
 
-	/* 
-	 * make the AIR of the globe with a given color 
+	/*
+	 * make the AIR of the globe with a given color
 	 ***************/
 	VSET(rgb, 130, 194, 253); /* a light blue */
 	sprintf(prevSolid, "land.s");
@@ -123,7 +123,7 @@ main(int ac, char *av[])
 
 		/* make the spatial region */
 	  sprintf(name, "air.%d.r", counter);
-		sprintf(shaderparams, "{tr %f}", (float)currentSize/(float)finalSize); 
+		sprintf(shaderparams, "{tr %f}", (float)currentSize/(float)finalSize);
 	  mk_lcomb(db_fp,
 						 name,	/* Name of the db element created */
 						 &wm_hd,		/* list of elements & boolean operations */
@@ -132,17 +132,17 @@ main(int ac, char *av[])
 						 shaderparams, /* shader parameters */
 						 rgb,		/* item color */
 						 0);		/* inherit (override) flag */
-		
+
 		/* add the region to a master region list */
 	  mk_addmember(name, &bigList.l, NULL, WMOP_UNION);
-		
+
 		/* keep track of the last combination we made for the next iteration */
 	  sprintf(prevSolid, "%s", solidName);
 	}
-	
+
 	/* make one final air region that comprises all the air regions */
 	mk_lcomb(db_fp, "air.c", &bigList, 0, NULL, NULL, NULL, 0);
-	
+
 	/* Create the master globe region
 	 *
 	 * In this case we are going to make it a region (hence the
@@ -152,12 +152,12 @@ main(int ac, char *av[])
 	 * argument is 0, and the strings for optical shader, and shader
 	 * parameters should (in general) be null pointers.
 	 */
-	
+
 	/* add the land to the main globe object that gets created at the end */
 	BU_LIST_INIT(&wm_hd.l);
 	mk_addmember("land.r", &wm_hd.l, NULL, WMOP_UNION);
 	mk_addmember("air.c", &wm_hd.l, NULL, WMOP_UNION);
-	
+
 	mk_lcomb(db_fp,
 					 "globe.r",	/* Name of the db element created */
 					 &wm_hd,		/* list of elements & boolean operations */
@@ -166,7 +166,7 @@ main(int ac, char *av[])
 					 NULL, /* shader parameters */
 					 NULL,		/* item color */
 					 0);		/* inherit (override) flag */
-	
+
 	wdb_close(db_fp);
 	return 0;
 }

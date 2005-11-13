@@ -48,7 +48,7 @@ char *progname ="pix2g";
 /* procedure variable start */
 struct rt_wdb *db_fp;
 int is_region=1;
-/*	struct wmember allPixelList; */ /* defined in wdb.h */ 
+/*	struct wmember allPixelList; */ /* defined in wdb.h */
 struct wmember allScanlineList; /* defined in wdb.h */
 int width=512;
 int height=512;
@@ -74,7 +74,7 @@ void computeScanline( int pid, genptr_t arg ) {
 	int i=0;
 	/* working pixel component value */
 	unsigned char *value = image->buf;
- 
+
 	/*	struct wmember *allScanlineList = (struct wmember *)arg;*/
 	fflush(stdout);
 	sync();
@@ -84,7 +84,7 @@ void computeScanline( int pid, genptr_t arg ) {
 		char scratch[256]="";
 		struct wmember scanlineList;
 		BU_LIST_INIT(&scanlineList.l);
-		
+
 		bu_semaphore_acquire(P2G_WORKER);
 		i=nextAvailableRow;
 		nextAvailableRow++;
@@ -115,9 +115,9 @@ void computeScanline( int pid, genptr_t arg ) {
 			BU_LIST_INIT(&wm_hd.l);
 
 			/*			bu_log("[%f:%f]", (float)i*cellSize,(float)j*cellSize);*/
-			
+
 			VSET(p1,(float)i*cellSize, (float)j*cellSize, 0.0);
-			
+
 			/* make the primitive */
 			/* we do not need to make a bazillion objects if they are not going to
 			 * be modified.  as such, we created one prototypical object, and all
@@ -132,11 +132,11 @@ void computeScanline( int pid, genptr_t arg ) {
 			/* make the region */
 			mk_addmember(prototype, &wm_hd.l, NULL, WMOP_UNION);
 			/* mk_addmember(solidName, &wm_hd.l, NULL, WMOP_UNION); */
-			
+
 			/* get the rgb color values */
 			r = *(value+(i*width*3)+(j*3));
 			g = *(value+(i*width*3)+(j*3)+1);
-			b = *(value+(i*width*3)+(j*3)+2);			
+			b = *(value+(i*width*3)+(j*3)+2);
 			VSET(rgb, r, g, b);
 			/* VSET(rgb, 200 , 200, 200); */
 
@@ -145,18 +145,18 @@ void computeScanline( int pid, genptr_t arg ) {
 			MAT_DELTAS(matrix, p1[0], p1[1], 0.0);
 
 			bu_semaphore_acquire(P2G_WORKER);
-			mk_lcomb(db_fp, scratch, &wm_hd, is_region, NULL, NULL, rgb, 0);			
+			mk_lcomb(db_fp, scratch, &wm_hd, is_region, NULL, NULL, rgb, 0);
 			bu_semaphore_release(P2G_WORKER);
-			
+
 			mk_addmember(scratch, &scanlineList.l, matrix, WMOP_UNION);
 		}
-		
+
 		/* write out a combination for each scanline */
 		sprintf(scratch, "%d.c", i+1);
 		bu_semaphore_acquire(P2G_WORKER);
 		mk_lcomb(db_fp, scratch, &scanlineList, 0, NULL, NULL, NULL, 0);
 		bu_semaphore_release(P2G_WORKER);
-		
+
 		/* all threads keep track of the scan line (in case they get to the end first */
 		sprintf(scratch, "%d.c", i+1);
 		mk_addmember(scratch, &allScanlineList.l, NULL, WMOP_UNION);
@@ -208,7 +208,7 @@ main(int ac, char *av[])
 
 	bu_log("Image size is %dx%d (%d bytes)\n", width, height, image->buflen);
 	bu_log("Objects are %f with %f spacing\n", objectSize, cellSize);
-	
+
 
 	sprintf(scratch, "%s Geometry Image", imageFileName);
 	mk_id(db_fp, scratch); /* create the database header record */
@@ -221,19 +221,19 @@ main(int ac, char *av[])
 	/*	BU_LIST_INIT(&allPixelList.l); */
 	BU_LIST_INIT(&allScanlineList.l);
 
-	/* 
+	/*
 	 * write out the image primitives
 	 ***************/
 	is_region = 1;
-		
+
 	ncpu=bu_avail_cpus();
 
 	if (ncpu > 1) {
 		bu_log("Found %d cpu\'s!  Sweet.\n", ncpu);
 	}
-			
+
 	/* the first critical section semaphore is for coordinating work, the
-	 * second for writing out the final record and cleaning up. 
+	 * second for writing out the final record and cleaning up.
 	 */
 	/* XXX must use RT_SEM_LAST if we plan on calling bu_parallel since the
 	 * semaphore count is held in a global
@@ -250,21 +250,21 @@ main(int ac, char *av[])
 	 * space. but forking on our own is just as bad (need IPC)
 	 */
 	bu_parallel(computeScanline, ncpu, &allScanlineList);
-		
+
 	/* XXX We cannot write out one BIG combination of all the pixels due to
-	 * library stack limitations and tree build implementation 
+	 * library stack limitations and tree build implementation
 	 */
 	/*	mk_lcomb(db_fp, "image.c", &allPixelList, 0, NULL, NULL, NULL, 0); */
 	/* write out the main image combination */
-		
+
 	mk_lcomb(db_fp, "image.c", &allScanlineList, 0, NULL, NULL, NULL, 0);
-		
+
 	bu_log("\n...done! (see %s)\n", databaseFileName);
-	
+
 	bu_close_mapped_file(image);
-	
+
 	wdb_close(db_fp);
-	
+
 	return 0;
 }
 

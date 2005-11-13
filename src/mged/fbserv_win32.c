@@ -30,7 +30,7 @@
  *  Authors of the stand-alone fbserv -
  *	Phillip Dykstra
  *	Michael John Muuss
- *  
+ *
  *  Source -
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA

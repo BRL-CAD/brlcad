@@ -23,7 +23,7 @@
 # FrameBufferDialog.itk
 #
 # A frame buffer dialog is a top-level window that contains a frame
-# buffer. 
+# buffer.
 #
 
 package require Itcl
@@ -35,7 +35,7 @@ namespace eval RtWizard {
     package provide FrameBufferDialog 1.0
 
     #
-    # framebufferdialog - Provides a lowercased access method for the 
+    # framebufferdialog - Provides a lowercased access method for the
     #                     FrameBufferDialog class
     #
     proc framebufferdialog {pathName args} {
@@ -83,20 +83,20 @@ namespace eval RtWizard {
 	public {
 	    #
 	    # methods
-	    # 
+	    #
 	    constructor {args} {}
 	    destructor {}
-	    method fb {args}	    
+	    method fb {args}
 	}
 
 	private {
 	    variable servePort 0
 	}
     }
-    
+
     #--------------------#
     #   Public Methods   #
-    #--------------------#    
+    #--------------------#
     #
     # constructor - builds the FrameBuffer widget
     #
@@ -110,14 +110,14 @@ namespace eval RtWizard {
 	itk_component add fb {
 	    Display $itk_interior.fb
 	} {
-	    keep -dmsize 
+	    keep -dmsize
 	}
 
 	eval itk_initialize $args
 
 	fb listen 0
 	fb fb_active 2
-	pack $itk_component(fb)	
+	pack $itk_component(fb)
 	wm iconify [namespace tail $this]
     }
 

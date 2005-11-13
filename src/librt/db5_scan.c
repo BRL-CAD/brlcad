@@ -26,11 +26,11 @@
  *
  *  Author -
  *	Michael John Muuss
- *  
+ *
  *  Source -
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
- *  
+ *
  */
 /*@}*/
 
@@ -308,7 +308,7 @@ db5_diradd_handler(
 		rt_memfree( &(dbip->dbi_freep), rip->object_length, laddr );
 		return;
 	}
-	
+
 	/* If somehow it doesn't have a name, ignore it */
 	if( rip->name.ext_buf == NULL )  return;
 
@@ -363,9 +363,6 @@ db_dirbuild( struct db_i *dbip )
 		bu_avs_init_empty(&avs);
 
 		/* File is v5 format */
-#if 0
-		bu_log("NOTICE:  %s is BRL-CAD v5 format.\n", dbip->dbi_filename);
-#endif
 		dbip->dbi_version = 5;
 		if( db5_scan( dbip, db5_diradd_handler, NULL ) < 0 )  {
 			bu_log("db_dirbuild(%s): db5_scan() failed\n",
@@ -464,7 +461,7 @@ db_get_version(struct db_i *dbip)
 		return( 4 );
 	else
 		return( -1 );
-	
+
 }
 
 /*

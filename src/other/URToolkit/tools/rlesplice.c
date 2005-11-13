@@ -25,6 +25,8 @@
  * Date:	Mon Apr 23 1990 (The Apocalypse)
  * Copyright (c) 1990, Martin R. Friedmann
  */
+
+#include <stdlib.h>
 #include <stdio.h>
 #include "rle.h"
 

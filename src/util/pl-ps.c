@@ -148,8 +148,8 @@ char	strarg[512];		/* string buffer */
 
 #define	DEFAULT_SIZE	6.75	/* default output size in inches */
 
-extern char	*optarg;
-extern int	optind;
+extern char	*bu_optarg;
+extern int	bu_optind;
 
 int	encapsulated = 0;	/* encapsulated postscript */
 int	center = 0;		/* center output on 8.5 x 11 page */
@@ -173,7 +173,7 @@ get_args(int argc, register char **argv)
 {
 	register int c;
 
-	while ( (c = getopt( argc, argv, "ecs:w:n:S:W:N:" )) != EOF )  {
+	while ( (c = bu_getopt( argc, argv, "ecs:w:n:S:W:N:" )) != EOF )  {
 		switch( c )  {
 		case 'e':
 			/* Encapsulated PostScript */
@@ -185,15 +185,15 @@ get_args(int argc, register char **argv)
 		case 'S':
 		case 's':
 			/* square file size */
-			outheight = outwidth = atof(optarg);
+			outheight = outwidth = atof(bu_optarg);
 			break;
 		case 'W':
 		case 'w':
-			outwidth = atof(optarg);
+			outwidth = atof(bu_optarg);
 			break;
 		case 'N':
 		case 'n':
-			outheight = atof(optarg);
+			outheight = atof(bu_optarg);
 			break;
 
 		default:		/* '?' */
@@ -201,13 +201,13 @@ get_args(int argc, register char **argv)
 		}
 	}
 
-	if( optind >= argc )  {
+	if( bu_optind >= argc )  {
 		if( isatty(fileno(stdin)) )
 			return(0);
 		file_name = "[stdin]";
 		infp = stdin;
 	} else {
-		file_name = argv[optind];
+		file_name = argv[bu_optind];
 		if( (infp = fopen(file_name, "r")) == NULL )  {
 			(void)fprintf( stderr,
 				"pl-ps: cannot open \"%s\" for reading\n",
@@ -217,7 +217,7 @@ get_args(int argc, register char **argv)
 		/*fileinput++;*/
 	}
 
-	if ( argc > ++optind )
+	if ( argc > ++bu_optind )
 		(void)fprintf( stderr, "pl-ps: excess argument(s) ignored\n" );
 
 	return(1);		/* OK */
@@ -504,8 +504,8 @@ NV\n\
 
 void
 prolog(FILE *fp, char *name, int width, int height)
-    	    
-    	      
+
+
    	              		/* in points */
 {
 	time_t	ltime;
@@ -535,7 +535,7 @@ prolog(FILE *fp, char *name, int width, int height)
 
 void
 scaleinfo(FILE *fp, int width, int height)
-    	    
+
    	              		/* in points */
 {
 	/*

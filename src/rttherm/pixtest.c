@@ -27,11 +27,11 @@
  *
  *  Author -
  *	Michael John Muuss
- *  
+ *
  *  Source -
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
- *  
+ *
  */
 #ifndef lint
 static char RCSid[] = "@(#)$Header$ (ARL)";
@@ -50,7 +50,6 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #include "bu.h"
 #include "bn.h"
 #include "vmath.h"
-//#include "tabdata.h"
 #include "spectrum.h"
 
 

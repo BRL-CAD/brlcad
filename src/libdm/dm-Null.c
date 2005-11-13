@@ -37,6 +37,7 @@
 #include "dm.h"
 #include "dm-Null.h"
 
+
 void	Nu_void(void);
 int	Nu_int0(void);
 struct dm *Nu_open(void);

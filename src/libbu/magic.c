@@ -33,12 +33,12 @@
  *  Authors -
  *	Lee A. Butler
  *	Michael John Muuss
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5066
- *  
+ *
  */
 /*@}*/
 
@@ -47,8 +47,6 @@ static const char RCSmagic[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include "common.h"
-
-
 
 #include <stdio.h>
 #include "machine.h"
@@ -258,7 +256,7 @@ bu_identify_magic(register long int magic)
 		return("wdb.h wdb_pipeseg_magic");
 
 	/*
-	 * fb.h -- not a good idea to include for real.
+	 * fb.h -- not a good idea to include for real. (lib dependency)
 	 */
 	case 0xfbfb00fb /* FB_MAGIC */:
 		return("fb.h fb_magic");

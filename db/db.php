@@ -23,7 +23,7 @@
  *
  * Really Simple Syndication of BRL-CAD Geometry Databases
  *
- * Description - 
+ * Description -
  *   This script will publish an rss feed of BRL-CAD geometry
  *   databases.  For convenience, a path alias should be set up for
  *   the * script with a web server.  For Apache, adding something
@@ -34,7 +34,7 @@
  *
  * Author -
  *   Sean Morrison
- * 
+ *
  * Source -
  *   The U.S. Army Research Laboratory
  *   Aberdeen Proving Ground, Maryland  21005-5068  USA
@@ -196,7 +196,7 @@ if ($mimeType) {
 
 /* just return the file if it exists  */
 if ($physicalFile) {
-  
+
   /* sanity check */
   if (isset($_SERVER['PATH_INFO'])) {
     $fileWithPath = $PATH_TO_DB . "/" . $_SERVER['PATH_INFO'];
@@ -211,7 +211,7 @@ if ($physicalFile) {
       header("Content-Length: " . filesize($fileWithPath));
 
       readfile($fileWithPath);
-      
+
     } else {
       debug("ERROR: $fileWithPath does not exist\n");
       die("ERROR: File $fileWithPath not found.");

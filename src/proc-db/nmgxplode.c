@@ -60,7 +60,7 @@ char *av[];
 		progname = *av;
 	else
 		++progname;
-	
+
 	/* Turn off getopt's error messages */
 	opterr = 0;
 
@@ -87,7 +87,7 @@ char *av[];
 {
 	int arg_index;
 	struct db_i	*dbip;
-	
+
 
 	/* parse command flags, and make sure there are arguments
 	 * left over for processing.

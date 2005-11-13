@@ -21,54 +21,54 @@
 
 /** \defgroup ellipsoids Ellipsoids
  * \ingroup g */
- 
+
 /** \addtogroup ellipsoids */
 /*@{*/
 /** @file g_ehy.c
  *	Intersect a ray with a Right Hyperbolic Cylinder.
  *
  *  Algorithm -
- *  
+ *
  *  Given V, H, R, and B, there is a set of points on this ehy
- *  
+ *
  *  { (x,y,z) | (x,y,z) is on ehy }
- *  
+ *
  *  Through a series of Affine Transformations, this set of points will be
  *  transformed into a set of points on an ehy located at the origin
  *  with a semi-major axis R1 along the +Y axis, a semi-minor axis R2
  *  along the -X axis, a height H along the -Z axis, a vertex V at
  *  the origin, and a distance c between the tip of the hyperboloid and
  *  vertex of the asymptotic cone.
- *  
- *  
+ *
+ *
  *  { (x',y',z') | (x',y',z') is on ehy at origin }
  *
  *  The transformation from X to X' is accomplished by:
- *  
+ *
  *  X' = S(R( X - V ))
- *  
+ *
  *  where R(X) =  ( R2/(-|R2|) )
  *  		 (  R1/( |R1|)  ) . X
  *  		  ( H /(-|H |) )
- *  
+ *
  *  and S(X) =	 (  1/|R2|   0     0   )
  *  		(    0    1/|R1|   0    ) . X
  *  		 (   0      0   1/|H | )
- *  
+ *
  *  To find the intersection of a line with the surface of the ehy,
  *  consider the parametric line L:
- *  
+ *
  *  	L : { P(n) | P + t(n) . D }
- *  
+ *
  *  Call W the actual point of intersection between L and the ehy.
  *  Let W' be the point of intersection between L' and the unit ehy.
- *  
+ *
  *  	L' : { P'(n) | P' + t(n) . D' }
- *  
+ *
  *  W = invR( invS( W' ) ) + V
- *  
+ *
  *  Where W' = k D' + P'.
- *  
+ *
  *  If Dy' and Dz' are both 0, then there is no hit on the ehy;
  *  but the end plates need checking.  If there is now only 1 hit
  *  point, the top plate needs to be checked as well.
@@ -86,21 +86,21 @@
  *  h = |Height| = 1.0
  *  r = 1.0
  *  c' = c / |Breadth|
- *  
+ *
  *  The quadratic formula yields k (which is constant):
  *
  *  k = [ -B +/- sqrt( B**2 - 4 * A * C )] / (2.0 * A)
- *  
+ *
  *  Now, D' = S( R( D ) )
  *  and  P' = S( R( P - V ) )
- *  
+ *
  *  Substituting,
- *  
+ *
  *  W = V + invR( invS[ k *( S( R( D ) ) ) + S( R( P - V ) ) ] )
  *    = V + invR( ( k * R( D ) ) + R( P - V ) )
  *    = V + k * D + P - V
  *    = k * D + P
- *  
+ *
  *  Note that ``k'' is constant, and is the same in the formulations
  *  for both W and W'.
  *
@@ -109,16 +109,16 @@
  *
  *  NORMALS.  Given the point W on the surface of the ehy,
  *  what is the vector normal to the tangent plane at that point?
- *  
+ *
  *  Map W onto the unit ehy, ie:  W' = S( R( W - V ) ).
- *  
+ *
  *  Plane on unit ehy at W' has a normal vector N' where
  *
  *  N' = <Wx', Wy', -(z + c + 1) / (2*c + 1)>
- *  
+ *
  *  The plane transforms back to the tangent plane at W, and this
  *  new plane (on the original ehy) has a normal vector of N, viz:
- *  
+ *
  *  N = inverse[ transpose( inverse[ S o R ] ) ] ( N' )
  *
  *  because if H is perpendicular to plane Q, and matrix M maps from
@@ -150,12 +150,12 @@
  *
  *  Authors -
  *	Michael J. Markowski
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5066
- *  
+ *
  */
 /*@}*/
 
@@ -202,15 +202,15 @@ const struct bu_structparse rt_ehy_parse[] = {
 
 /**
  *  			R T _ E H Y _ P R E P
- *  
+ *
  *  Given a pointer to a GED database record, and a transformation matrix,
  *  determine if this is a valid EHY, and if so, precompute various
  *  terms of the formula.
- *  
+ *
  *  Returns -
  *  	0	EHY is OK
  *  	!0	Error in description
- *  
+ *
  *  Implicit return -
  *  	A struct ehy_specific is created, and it's address is stored in
  *  	stp->st_specific for use by ehy_shot().
@@ -298,7 +298,7 @@ rt_ehy_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 	stp->st_bradius = sqrt(0.25*magsq_h + r2*r2 + r1*r1);
 	/* approximate bounding radius */
 	stp->st_aradius = stp->st_bradius;
-	
+
 	/* cheat, make bounding RPP by enclosing bounding sphere */
 	stp->st_min[X] = stp->st_center[X] - stp->st_bradius;
 	stp->st_max[X] = stp->st_center[X] + stp->st_bradius;
@@ -334,11 +334,11 @@ rt_ehy_print(register const struct soltab *stp)
 
 /**
  *  			R T _ E H Y _ S H O T
- *  
+ *
  *  Intersect a ray with a ehy.
  *  If an intersection occurs, a struct seg will be acquired
  *  and filled in.
- *  
+ *
  *  Returns -
  *  	0	MISS
  *	>0	HIT
@@ -368,7 +368,7 @@ rt_ehy_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 	{
 		FAST fastf_t	a, b, c;	/* coeffs of polynomial */
 		FAST fastf_t	disc;		/* discriminant */
-		
+
 		a = dp[Z] * dp[Z]
 			- (2 * cp + 1) * (dp[X] * dp[X] + dp[Y] * dp[Y]);
 		b = 2.0 * (dp[Z] * (pp[Z] + cp + 1)
@@ -438,7 +438,7 @@ check_plates:
 			hitp++;
 		}
 	}
-	
+
 	if( hitp != &hits[2] )
 		return(0);	/* MISS */
 
@@ -477,14 +477,14 @@ rt_ehy_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
            		       /* An array of ray pointers */
                                /* array of segs (results returned) */
    		  	       /* Number of ray/object pairs */
-                  	    
+
 {
 	rt_vstub( stp, rp, segp, n, ap );
 }
 
 /**
  *  			R T _ E H Y _ N O R M
- *  
+ *
  *  Given ONE ray distance, return the normal and entry/exit point.
  */
 void
@@ -543,7 +543,7 @@ rt_ehy_curve(register struct curvature *cvp, register struct hit *hitp, struct s
 		 */
 		bn_vec_ortho( u, hitp->hit_normal );
 		VCROSS( v, hitp->hit_normal, u );
-		
+
 		/* get the saved away scale factor */
 		scale = - hitp->hit_vpriv[X];
 
@@ -581,7 +581,7 @@ rt_ehy_curve(register struct curvature *cvp, register struct hit *hitp, struct s
 
 /**
  *  			R T _ E H Y _ U V
- *  
+ *
  *  For a hit on the surface of an ehy, return the (u,v) coordinates
  *  of the hit point, 0 <= u,v <= 1.
  *  u = azimuth
@@ -675,7 +675,7 @@ rt_ehy_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 	/*
 	 *	make sure ehy description is valid
 	 */
-	 
+
 	/* compute |A| |H| */
 	mag_a = MAGSQ( xip->ehy_Au );	/* should already be unit vector */
 	mag_h = MAGNITUDE( xip->ehy_H );
@@ -739,7 +739,7 @@ rt_ehy_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 	/*
 	 *	build ehy from 2 hyperbolas
 	 */
-	 
+
 	/* approximate positive half of hyperbola along semi-minor axis */
 	pts_b = rt_ptalloc();
 	pts_b->next = rt_ptalloc();
@@ -776,7 +776,7 @@ rt_ehy_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 		pos_b = pos_b->next;
 	}
 	pos_a->next = NULL;
-	
+
 	/* see if any segments need further breaking up */
 	recalc_b = 0;
 	pos_a = pts_a;
@@ -825,7 +825,7 @@ rt_ehy_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 		}
 		pos_b->next = NULL;
 	}
-	
+
 	/* make array of ptrs to ehy ellipses */
 	ellipses = (fastf_t **)bu_malloc( nell * sizeof(fastf_t *), "fastf_t ell[]");
 	/* keep track of whether pts in each ellipse are doubled or not */
@@ -857,7 +857,7 @@ rt_ehy_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 		ellipses[i] = (fastf_t *)bu_malloc(3*(nseg+1)*sizeof(fastf_t),
 			"pts ell");
 		rt_ell( ellipses[i], V, A, B, nseg );
-		
+
 		i++;
 		pos_a = pos_a->next;
 		pos_b = pos_b->next;
@@ -965,7 +965,7 @@ rt_ehy_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	/*
 	 *	make sure ehy description is valid
 	 */
-	 
+
 	/* compute |A| |H| */
 	mag_a = MAGSQ( xip->ehy_Au );	/* should already be unit vector */
 	mag_h = MAGNITUDE( xip->ehy_H );
@@ -1040,7 +1040,7 @@ rt_ehy_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	/*
 	 *	build ehy from 2 hyperbolas
 	 */
-	 
+
 	/* approximate positive half of hyperbola along semi-minor axis */
 	pts_b = rt_ptalloc();
 	pts_b->next = rt_ptalloc();
@@ -1077,7 +1077,7 @@ rt_ehy_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 		pos_b = pos_b->next;
 	}
 	pos_a->next = NULL;
-	
+
 	/* see if any segments need further breaking up */
 	recalc_b = 0;
 	pos_a = pts_a;
@@ -1125,13 +1125,13 @@ rt_ehy_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 		}
 		pos_b->next = NULL;
 	}
-	
+
 	/* make array of ptrs to ehy ellipses */
 	ellipses = (fastf_t **)bu_malloc( nell * sizeof(fastf_t *), "fastf_t ell[]");
 
 	/* keep track of whether pts in each ellipse are doubled or not */
 	pts_dbl = (int *)bu_malloc( nell * sizeof(int), "dbl ints" );
-	
+
 	/* make ellipses at each z level */
 	i = 0;
 	nseg = 0;
@@ -1164,7 +1164,7 @@ rt_ehy_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 		ellipses[i] = (fastf_t *)bu_malloc(3*(nseg+1)*sizeof(fastf_t),
 			"pts ell");
 		rt_ell( ellipses[i], V, A, B, nseg );
-		
+
 		i++;
 		pos_a = pos_a->next;
 		pos_b = pos_b->next;
@@ -1173,10 +1173,10 @@ rt_ehy_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	/*
 	 *	put ehy geometry into nmg data structures
 	 */
-	 
+
 	*r = nmg_mrsv( m );	/* Make region, empty shell, vertex */
 	s = BU_LIST_FIRST(shell, &(*r)->s_hd);
-	
+
 	/* vertices of ellipses of ehy */
 	vells = (struct vertex ***)
 		bu_malloc(nell*sizeof(struct vertex **), "vertex [][]");
@@ -1221,7 +1221,7 @@ rt_ehy_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 		NMG_CK_VERTEX( vells[nell-1][i] );
 		nmg_vertex_gv( vells[nell-1][i], &ellipses[nell-1][3*i] );
 	}
-	
+
 	/* connect ellipses with triangles */
 	for (i = nell-2; i >= 0; i--) {	/* skip top ellipse */
 		int bottom, top;
@@ -1235,7 +1235,7 @@ rt_ehy_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 		/* make triangular faces */
 		for (j = 0; j < nseg; j++) {
 			jj = j + j;	/* top ellipse index */
-		
+
 			if (pts_dbl[top]) {
 				/* first triangle */
 			        vertp[1] = vells[top][jj+1];
@@ -1332,7 +1332,7 @@ rt_ehy_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 			goto fail;
 		}
 	}
-	
+
 	/* Associate the face geometry */
 	for (i=0 ; i < face ; i++) {
 		if( nmg_fu_planeeqn( outfaceuses[i], tol ) < 0 )
@@ -1497,12 +1497,12 @@ rt_ehy_export(struct bu_external *ep, const struct rt_db_internal *ip, double lo
 		bu_log("rt_ehy_export: not all dimensions positive!\n");
 		return(-1);
 	}
-	
+
 	if ( !NEAR_ZERO( VDOT(xip->ehy_Au, xip->ehy_H), RT_DOT_TOL) ) {
 		bu_log("rt_ehy_export: Au and H are not perpendicular!\n");
 		return(-1);
 	}
-	
+
 	if (xip->ehy_r2 > xip->ehy_r1) {
 		bu_log("rt_ehy_export: semi-minor axis cannot be longer than semi-major axis!\n");
 		return(-1);
@@ -1599,12 +1599,12 @@ rt_ehy_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
 		bu_log("rt_ehy_export: not all dimensions positive!\n");
 		return(-1);
 	}
-	
+
 	if ( !NEAR_ZERO( VDOT(xip->ehy_Au, xip->ehy_H), RT_DOT_TOL) ) {
 		bu_log("rt_ehy_export: Au and H are not perpendicular!\n");
 		return(-1);
 	}
-	
+
 	if (xip->ehy_r2 > xip->ehy_r1) {
 		bu_log("rt_ehy_export: semi-minor axis cannot be longer than semi-major axis!\n");
 		return(-1);
@@ -1654,7 +1654,7 @@ rt_ehy_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
 		xip->ehy_H[Z] * mm2local,
 		MAGNITUDE(xip->ehy_H) * mm2local);
 	bu_vls_strcat( str, buf );
-	
+
 	sprintf(buf, "\tA=%g\n", xip->ehy_r1 * mm2local);
 	bu_vls_strcat( str, buf );
 

@@ -1,53 +1,76 @@
-.TH ANIM_SORT 1 BRL/CAD
+.TH ANIM_SORT 1 BRL-CAD
+./"                    A N I M _ S O R T . 1
+./" BRL-CAD
+./"
+./" Copyright (c) 1993-2005 United States Government as represented by
+./" the U.S. Army Research Laboratory.
+./"
+./" This document is made available under the terms of the GNU Free
+./" Documentation License or, at your option, under the terms of the
+./" GNU General Public License as published by the Free Software
+./" Foundation.  Permission is granted to copy, distribute and/or
+./" modify this document under the terms of the GNU Free Documentation
+./" License, Version 1.2 or any later version published by the Free
+./" Software Foundation; with no Invariant Sections, no Front-Cover
+./" Texts, and no Back-Cover Texts.  Permission is also granted to
+./" redistribute this document under the terms of the GNU General
+./" Public License; either version 2 of the License, or (at your
+./" option) any later version.
+./"
+./" You should have received a copy of the GNU Free Documentation
+./" License and/or the GNU General Public License along with this
+./" document; see the file named COPYING for more information.
+./"
+./"./"./"
 .SH NAME
 anim_sort - combine concatenated animation scripts into one script
 .SH SYNOPSIS
-.B anim_sort 
-.B [-ic] 
-.B < mixed.script 
+.B anim_sort
+.B [-ic]
+.B < mixed.script
 .B > ordered.script
 .SH DESCRIPTION
-Note: 
-.I anim_sort 
-has been preempted in release 5.0 by 
+Note:
+.I anim_sort
+has been preempted in release 5.0 by
 .IR scriptsort ,
 which sorts scripts much faster.
 .PP
 .I Anim_sort
 allows the user to combine several animation scripts
-into a single script suitable for input to 
+into a single script suitable for input to
 .IR rt .
 A convenient way to
 prepare a complicated animation script is to develop each part
-separately and then use 
-.I anim_sort 
+separately and then use
+.I anim_sort
 to combine the various parts. For
-example, suppose that 
-.B view.script 
+example, suppose that
+.B view.script
 is an animation script controlling the
-movement of the virtual camera and the lighting, 
-.B mill.script 
+movement of the virtual camera and the lighting,
+.B mill.script
 rotates
-the blades of a windmill, and 
-.B quixote.script 
+the blades of a windmill, and
+.B quixote.script
 controlls the movement of a
 knight. These scripts should first be concatenated together:
 .sp
 cat view.script mill.script quixote.script > mixed.script
 .sp
-Calling 
-.I anim_sort 
-with 
-.B mixed.script 
+Calling
+.I anim_sort
+with
+.B mixed.script
 on standard input would
-reorder the commands in 
-.B mixed.script 
+reorder the commands in
+.B mixed.script
 to make a viable script on standard
 output.
 .sp
 Each of the input files to be concatenated is expected to be a
-viable 
-.I rt 
+viable
+.I rt
 animation script, containing a series of frames of the
 following form:
 .sp
@@ -61,40 +84,40 @@ any number of post-raytracing commands
 .I Anim_sort
 reads the framenumber of the first start command, and uses
 this to as the first frame number of the output file. The commands of
-all frames in 
-.B mixed.script 
+all frames in
+.B mixed.script
 with that framenumber are combined in the
 ouput frame. The post-raytracing commands following all frames with that
-framenumber are placed after the 
-.B end; 
-command of the output frame. This process is continued for each 
+framenumber are placed after the
+.B end;
+command of the output frame. This process is continued for each
 successive integer,
 until anim_sort reaches a framenumber which is not included in any of
-the original scripts. 	
+the original scripts.
 .sp
-For example, if 
-.B view.script 
+For example, if
+.B view.script
 contained frames numbered from 5 to
-20, 
-.B mill.script 
-contained frames from 0 to 10, and 
+20,
+.B mill.script
+contained frames from 0 to 10, and
 .B quixote.script
 contained frames numbered from 15 to 25, the output script would start
-at frame 5 (since 
-.B view.script 
-comes first in 
+at frame 5 (since
+.B view.script
+comes first in
 .B mixed.script
 ) and end with
 frame 25 (since frames 5 through 25 can be found somewhere in
 .B mixed.script
 ). If the user wanted to include frames 0 through 4, which
-are found only in 
+are found only in
 .B mill.script
-, then 
-.B mill.script 
+, then
+.B mill.script
 should be concatenated
-onto the beginning of 
-.B mixed.script 
+onto the beginning of
+.B mixed.script
 instead of the middle. In the
 majority of animation situations, all of the input scripts would have
 identical frame numbers anyway.
@@ -109,26 +132,26 @@ specified before the sequence of animations begins.
 .B \-i
 Incremental mode. The frames of the output script are printed in a scrambled
 order which incrementally increases the time resolution of the animation.
-For example, the frames of an eight-frame script would be printed in the 
+For example, the frames of an eight-frame script would be printed in the
 order: 0 4 2 6 1 3 5 7.
 
 .TP
 .B \-c
-For most animation purposes, it is desirable to have a 
+For most animation purposes, it is desirable to have a
 .B clean
-command immediately following the 
-.B start 
+command immediately following the
+.B start
 command of each frame. The
-default behavior of 
-.I anim_sort 
-is to include one 
-.B clean 
-command following the 
-.B start 
-command of each frame. 
-.B clean 
-commands from the input files are ignored. If the 
-.B -c 
+default behavior of
+.I anim_sort
+is to include one
+.B clean
+command following the
+.B start
+command of each frame.
+.B clean
+commands from the input files are ignored. If the
+.B -c
 flag is activated, then no clean
 commands are printed.
 .SH SEE ALSO
@@ -136,7 +159,7 @@ rt(1), tabsub(1), anim_script(1)
 .SH AUTHOR
 Carl J. Nuzman
 .SH COPYRIGHT
-	This software is Copyright (C) 1993-2005 by the United States 
+	This software is Copyright (C) 1993-2005 by the United States
 Government as represented by U.S. Army Research Laboratory.
 .SH "BUG REPORTS"
 Reports of bugs or problems should be submitted via electronic

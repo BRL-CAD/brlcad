@@ -23,7 +23,7 @@
  * Description -
  *	Routines for interfacing with the LIBBU struct parsing
  *	utilities.
- *	
+ *
  * Source -
  *      SLAD CAD Team
  *      The U. S. Army Research Laboratory

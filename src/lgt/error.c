@@ -62,7 +62,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./screen.h"
 /*
  *  		B U _ B O M B
- *  
+ *
  *  Abort the LIBRT library
  */
 int		bu_setjmp_valid = 0;	/* !0 = bu_jmpbuf is valid */
@@ -132,7 +132,7 @@ fb_log( char *fmt, ... )
 	bu_semaphore_release( BU_SEM_SYSCALL );		/* unlock */
 	return;
 	}
-#else 
+#else
 
 #if !defined( HAVE_VARARGS_H )
 /* VARARGS */
@@ -178,11 +178,11 @@ char *fmt;
 		(void) fprintf( stderr, fmt, a,b,c,d,e,f,g,h,i );
 	bu_semaphore_release( BU_SEM_SYSCALL );		/* unlock */
 	}
-#else 
+#else
 
 /*
  *  		R T _  L O G
- *  
+ *
  *  Log an RT library event
  */
 /* VARARGS */

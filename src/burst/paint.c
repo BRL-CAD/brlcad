@@ -29,19 +29,12 @@
 static const char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
-#ifndef DEBUG
-#define NDEBUG
-#define STATIC static
-#else
-#define STATIC
-#endif
+#include "common.h"
 
 #include <assert.h>
-
 #include <stdio.h>
 
 #include "common.h"
-
 
 #include "./vecmath.h"
 #include "machine.h"
@@ -50,6 +43,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "fb.h"
 
 #include "./extern.h"
+
 
 #define DEBUG_CELLFB	0
 #define DEBUG_SPALLFB	0

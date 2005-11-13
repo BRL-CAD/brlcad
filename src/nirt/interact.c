@@ -27,7 +27,7 @@
 static const char RCSid[] = "$Header$";
 #endif
 
-/*	INCLUDES	*/ 
+/*	INCLUDES	*/
 #include "common.h"
 
 
@@ -134,7 +134,7 @@ void interact(int input_source, void *sPtr)
 	key_len = 0;
 	if ((input_source == READING_FILE) && (sPtr == stdin)
 	 && (silent_flag != SILENT_YES) && (! more_on_line))
-	    (void) fputs(NIRT_PROMPT, stdout);     
+	    (void) fputs(NIRT_PROMPT, stdout);
 
 	more_on_line = 0;
 	while (((Ch = next_char(sPtr)) == ' ') || (Ch == '\t'))
@@ -182,7 +182,7 @@ void interact(int input_source, void *sPtr)
 		bu_log("line_buffer[%d] = '%c' (o%o)\n", i, Ch, Ch);
 	    Ch = next_char(sPtr);
 	}
-	if (key_len == 0)      /* length of key word */ 
+	if (key_len == 0)      /* length of key word */
 	{
 	    if (in_cmt)
 		continue;
@@ -196,7 +196,7 @@ void interact(int input_source, void *sPtr)
 	if ((ctp = get_comtab_ent(line_buffer, key_len)) == CT_NULL)
 	{
 	    line_buffer[key_len] = '\0';
-	    fprintf(stderr, 
+	    fprintf(stderr,
 		"Invalid command name '%s'.  Enter '?' for help\n",
 		line_buffer);
 	}

@@ -14,6 +14,7 @@ static char rcsid[] = "$Header$";
 rlecat()		Make a tag.
 */
 
+#include <stdlib.h>
 #include <stdio.h>
 #include "rle.h"
 #include "rle_raw.h"

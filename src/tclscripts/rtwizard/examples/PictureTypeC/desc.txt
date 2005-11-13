@@ -1,4 +1,4 @@
-This image type produces an full-color image that is overlaid with a line drawing. The line drawing highlights the edges of the full-color objects. 
+This image type produces an full-color image that is overlaid with a line drawing. The line drawing highlights the edges of the full-color objects.
 
 To produce this image, you will need to specify the objects you want to render, and the view information (e.g. azimuth and elevation). You may also specify the color of the lines. To change the colors of the objects, you must use 'mged' to change the shader parameters for the objects.
 

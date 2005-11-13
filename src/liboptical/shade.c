@@ -29,12 +29,12 @@
  *  Authors -
  *	Michael John Muuss
  *	Phil Dykstra
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005
- *  
+ *
  */
 #ifndef lint
 static const char RCSview[] = "@(#)$Header";
@@ -46,11 +46,15 @@ static const char RCSview[] = "@(#)$Header";
 #include <math.h>
 
 #include "machine.h"
+#include "bu.h"
+#include "bn.h"
 #include "vmath.h"
 #include "raytrace.h"
+#include "optical.h"
 #include "rtprivate.h"
 #include "light.h"
 #include "plot3.h"
+
 
 
 /*
@@ -69,12 +73,12 @@ register const struct shadework *swp;
 	bu_printb( " sw_inputs", swp->sw_inputs, MFI_FORMAT );
 	if (swp->sw_inputs && MFI_HIT)
 		bu_log( " sw_hit.dist:%g  sw_hit.point(%g %g %g)\n",
-			swp->sw_hit.hit_dist, 
+			swp->sw_hit.hit_dist,
 			V3ARGS(swp->sw_hit.hit_point));
 	else
 		bu_log( " sw_hit.dist:%g\n", swp->sw_hit.hit_dist);
 
-	if (swp->sw_inputs && MFI_NORMAL) 
+	if (swp->sw_inputs && MFI_NORMAL)
 		bu_log(" sw_hit.normal(%g %g %g)\n",
 			V3ARGS(swp->sw_hit.hit_normal));
 
@@ -95,7 +99,7 @@ register const struct shadework *swp;
 	bu_log( " sw_xmitonly %d\n", swp->sw_xmitonly );
 	bu_log( "\n");
 	if( swp->sw_inputs & MFI_LIGHT ) for( i=0; i < SW_NLIGHTS; i++ )  {
-		if( swp->sw_visible[i] == (char *)0 )  continue;
+		if( swp->sw_visible[i] == (struct light_specific *)NULL )  continue;
 		RT_CK_LIGHT( swp->sw_visible[i] );
 #ifdef RT_MULTISPECTRAL
 		bu_log("   light %d visible, dir=(%g,%g,%g)\n",
@@ -129,11 +133,7 @@ register const struct shadework *swp;
  *  array is not needed, or has been handled elsewhere.
  */
 void
-shade_inputs( ap, pp, swp, want )
-struct application *ap;
-register const struct partition *pp;
-register struct shadework *swp;
-register int	want;
+shade_inputs( struct application *ap, const struct partition *pp, struct shadework *swp, int want )
 {
 	register int	have;
 
@@ -175,17 +175,25 @@ register int	want;
 			f = VDOT(ap->a_ray.r_dir,swp->sw_hit.hit_normal);
 			if (f > 0.0 &&
 			    !BN_VECT_ARE_PERP(f, &(ap->a_rt_i->rti_tol))) {
+			    static int counter = 0;
+			    if (counter++ < 100 || (R_DEBUG&RDEBUG_SHADE)) {
 				bu_log("shade_inputs(%s) flip N xy=%d,%d %s surf=%d dot=%g\n",
 				       pp->pt_inseg->seg_stp->st_name,
 				       ap->a_x, ap->a_y,
-				       rt_functab[
-                                         pp->pt_inseg->seg_stp->st_id
-				       ].ft_name,
+				       rt_functab[pp->pt_inseg->seg_stp->st_id].ft_name,
 				       swp->sw_hit.hit_surfno, f);
-				if( R_DEBUG&RDEBUG_SHADE ) {
-					VPRINT("Dir ", ap->a_ray.r_dir);
-					VPRINT("Norm", swp->sw_hit.hit_normal);
+			    } else {
+				if (counter++ == 101) {
+				    bu_log("shade_inputs(%s) flipped normals detected, additional reporting suppressed\n",
+					   pp->pt_inseg->seg_stp->st_name);
 				}
+			    }
+			    if( R_DEBUG&RDEBUG_SHADE ) {
+				VPRINT("Dir ", ap->a_ray.r_dir);
+				VPRINT("Norm", swp->sw_hit.hit_normal);
+			    }
+			    /* reverse the normal so it's lit */
+			    VREVERSE(swp->sw_hit.hit_normal, swp->sw_hit.hit_normal);
 			}
 		}
 		if( R_DEBUG&(RDEBUG_RAYPLOT|RDEBUG_SHADE) )  {
@@ -269,14 +277,11 @@ hit pt: %g %g %g end pt: %g %g %g\n",
  *	Everyone calls us as (void)viewshade()
  */
 int
-viewshade( ap, pp, swp )
-struct application *ap;
-register const struct partition *pp;
-register struct shadework *swp;
+viewshade( struct application *ap, const struct partition *pp, struct shadework *swp )
 {
 	register const struct mfuncs *mfp;
 	register const struct region *rp;
-	register const struct light_specific *lp;
+	struct light_specific *lp;
 	register int	want;
 
 	RT_AP_CHECK(ap);
@@ -332,10 +337,10 @@ register struct shadework *swp;
 		i=0;
 		for( BU_LIST_FOR( lp, light_specific, &(LightHead.l) ) )  {
 			RT_CK_LIGHT(lp);
-			swp->sw_visible[i++] = (char *)lp;
+			swp->sw_visible[i++] = lp;
 		}
 		for( ; i < SW_NLIGHTS; i++ )  {
-			swp->sw_visible[i] = (char *)NULL;
+			swp->sw_visible[i] = (struct light_specific *)NULL;
 		}
 	}
 
@@ -352,7 +357,7 @@ register struct shadework *swp;
 
 		/* sanity */
 		for( i = SW_NLIGHTS-1; i >= 0; i-- )  {
-			swp->sw_visible[i] = (char *)NULL;
+			swp->sw_visible[i] = (struct light_specific *)NULL;
 		}
 	}
 

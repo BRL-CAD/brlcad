@@ -19,7 +19,7 @@
  * information.
  */
 
-/** \defgroup fb Framebuffer 
+/** \defgroup fb Framebuffer
  * \ingroup libfb */
 /*@{*/
 /** @file fb_generic.c
@@ -33,7 +33,7 @@
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5066
- *  
+ *
  */
 /*@}*/
 
@@ -84,48 +84,6 @@ int fb_null_setcursor(FBIO *ifp, const unsigned char *bits, int xbits, int ybits
 	return	0;
 }
 
-#ifdef IF_REMOTE
-extern FBIO remote_interface;	/* not in list[] */
-#endif
-
-#ifdef IF_ADAGE
-extern FBIO adage_interface;
-#endif
-#ifdef IF_SUN
-extern FBIO sun_interface;
-#endif
-#if defined(IF_SGI) || defined(IF_4D)
-extern FBIO sgi_interface;
-#endif
-/* Carl Nuzman experimental version */
-#ifdef IF_OGL
-extern FBIO ogl_interface;
-#endif
-#ifdef IF_RAT
-extern FBIO rat_interface;
-#endif
-#ifdef IF_UG
-extern FBIO ug_interface;
-#endif
-#ifdef IF_X
-#ifndef _WIN32 
-extern FBIO X24_interface;
-extern FBIO X_interface;
-#endif
-#endif
-#ifdef IF_PTTY
-extern FBIO ptty_interface;
-#endif
-#ifdef IF_AB
-extern FBIO abekas_interface;
-#endif
-#ifdef IF_TS
-extern FBIO ts_interface;
-#endif
-
-/* Always included */
-extern FBIO debug_interface, disk_interface, stk_interface;
-extern FBIO memory_interface, null_interface;
 
 /* First element of list is default device when no name given */
 static
@@ -139,7 +97,7 @@ FBIO *_if_list[] = {
 #if defined(IF_SGI) || defined(IF_4D) || defined(IF_5D)
 	&sgi_interface,
 #endif
-/* Carl Nuzman experimental version */
+
 #ifdef IF_OGL
 	&ogl_interface,
 #endif
@@ -150,10 +108,10 @@ FBIO *_if_list[] = {
 	&ug_interface,
 #endif
 #ifdef IF_X
-#ifndef _WIN32
+#  ifndef _WIN32
 	&X24_interface,
 	&X_interface,
-#endif
+#  endif
 #endif
 
 	&debug_interface,

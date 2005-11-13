@@ -30,7 +30,7 @@
  *
  *  Author -
  *	Michael John Muuss
- *  
+ *
  *  Source -
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005 USA
@@ -71,9 +71,7 @@
 #include "db5.h"
 #include "tcl.h"
 
-#ifndef NMG_H
 #include "nmg.h"
-#endif
 
 __BEGIN_DECLS
 
@@ -93,7 +91,7 @@ __BEGIN_DECLS
 
 /*
  *				D E B U G
- *  
+ *
  *  Each type of debugging support is independently controled,
  *  by a separate bit in the word RT_G_DEBUG
  *
@@ -218,21 +216,6 @@ struct rt_tess_tol  {
 #define RT_TESS_TOL_MAGIC	0xb9090dab
 #define RT_CK_TESS_TOL(_p)	BU_CKMAG(_p, RT_TESS_TOL_MAGIC, "rt_tess_tol")
 
-/*
- *  Macros for providing function prototypes, regardless of whether
- *  the compiler understands them or not.
- *  It is vital that the argument list given for "args" be enclosed
- *  in parens.
- *  The setting of USE_PROTOTYPES is done in machine.h
- *  XXX These have been replaced by BU_EXTERN() and BU_ARGS()
- */
-#if USE_PROTOTYPES
-#	define	RT_EXTERN(type_and_name,args)	extern type_and_name args
-#	define	RT_ARGS(args)			args
-#else
-#	define	RT_EXTERN(type_and_name,args)	extern type_and_name()
-#	define	RT_ARGS(args)			()
-#endif
 
 /*
  *			R T _ D B _ I N T E R N A L
@@ -552,7 +535,7 @@ struct soltab {
 #define	ID_BOT		30	/* Bag o' triangles */
 
   /* Add a new primitive id above here (this is will break v5 format)
-   * XXX must update the non-geometric object id's below XXX 
+   * XXX must update the non-geometric object id's below XXX
    */
 #define	ID_MAX_SOLID	36	/* Maximum defined ID_xxx for solids */
 
@@ -670,7 +653,7 @@ struct partition {
 		BU_LIST_DEQUEUE((struct bu_list *)(p)); \
 		bu_ptbl_reset( &(p)->pt_seglist ); \
 	} else { \
-		(p) = (struct partition *)bu_malloc(sizeof(struct partition), "struct partition"); \
+		(p) = (struct partition *)bu_calloc(1, sizeof(struct partition), "struct partition"); \
 		(p)->pt_magic = PT_MAGIC; \
 		bu_ptbl_init( &(p)->pt_seglist, 42, "pt_seglist ptbl" ); \
 		(res)->re_partlen++; \
@@ -720,7 +703,7 @@ union cutter  {
 #define CUT_CUTNODE	1
 #define CUT_BOXNODE	2
 #define CUT_NUGRIDNODE	3
-#define	CUT_MAXIMUM	3	
+#define	CUT_MAXIMUM	3
 	int	cut_type;
 	union cutter *cut_forw;		/* Freelist forward link */
 	struct cutnode  {
@@ -920,7 +903,7 @@ struct directory  {
 	BU_LIST_INIT( &((_p)->d_use_hd) ); }
 #endif
 
-	
+
 
 /*
  *			R T _ C O M B _ I N T E R N A L
@@ -1025,11 +1008,7 @@ struct db_tree_state {
 			));
 	const struct rt_tess_tol *ts_ttol;	/* Tessellation tolerance */
 	const struct bn_tol	*ts_tol;	/* Math tolerance */
-#if defined(NMG_H)
 	struct model		**ts_m;		/* ptr to ptr to NMG "model" */
-#else
-	genptr_t		*ts_m;		/* ptr to genptr */
-#endif
 	struct rt_i		*ts_rtip;	/* Helper for rt_gettrees() */
 	struct resource		*ts_resp;	/* Per-CPU data */
 };
@@ -1100,11 +1079,7 @@ union tree {
 		long		magic;
 		int		td_op;		/* leaf, OP_NMG_TESS */
 		const char	*td_name;	/* If non-null, dynamic string describing heritage of this region */
-#if defined(NMG_H)
 		struct nmgregion *td_r;		/* ptr to NMG region */
-#else
-		genptr_t	td_r;
-#endif
 	} tr_d;
 	struct tree_db_leaf  {
 		long		magic;
@@ -1146,7 +1121,7 @@ struct rt_tree_array
  *  allowing application programs to read and write BRL-CAD databases.
  *  Many different access styles are supported.
  */
- 
+
 struct rt_wdb  {
 	struct bu_list	l;
 	int		type;
@@ -1182,7 +1157,7 @@ struct rt_wdb  {
 #define RT_WDB_TYPE_DB_INMEM			4
 #define RT_WDB_TYPE_DB_INMEM_APPEND_ONLY	5
 
-RT_EXPORT extern struct rt_wdb HeadWDB;		/* head of BRLCAD database object list */
+RT_EXPORT extern struct rt_wdb HeadWDB;		/* head of BRL-CAD database object list */
 
 /*
  * Carl's vdraw stuff.
@@ -1218,7 +1193,7 @@ struct run_rt {
 #else
 	int			fd;
 	int			pid;
-#endif	
+#endif
 	int			aborted;
 };
 
@@ -1553,8 +1528,8 @@ struct rt_reprep_obj_list {
  *  model coordinates of the prism behind the pixel being rendered.
  *
  *  The r_pt values of the rays indicate the dimensions and location in model
- *  space of the ray origin (usually the pixel to be rendered). 
- *  The r_dir vectors indicate the edges (and thus the shape) of the prism 
+ *  space of the ray origin (usually the pixel to be rendered).
+ *  The r_dir vectors indicate the edges (and thus the shape) of the prism
  *  which is formed from the projection of the pixel into space.
  */
 #define CORNER_PTS 4
@@ -1822,7 +1797,7 @@ struct rt_i {
 
 #define RT_NU_GFACTOR_DEFAULT	1.5	 /* see rt_cut_it() for a description
 					    of this */
-	
+
 #define RTI_NULL	((struct rt_i *)0)
 #define RTI_MAGIC	0x99101658	/* magic # for integrity check */
 
@@ -1833,7 +1808,7 @@ struct rt_i {
 
 #define	RT_PART_NUBSPT	0
 #define RT_PART_NUGRID	1
-	
+
 /*
  *  Macros to painlessly visit all the active solids.  Serving suggestion:
  *
@@ -2022,7 +1997,6 @@ struct rt_functab {
 			struct xray *[] /*rp*/,
 			struct seg [] /*segp*/, int /*n*/,
 			struct application * /*ap*/ ));
-#if defined(NMG_H)
 	int	(*ft_tessellate) BU_ARGS((
 			struct nmgregion ** /*r*/,
 			struct model * /*m*/,
@@ -2034,19 +2008,6 @@ struct rt_functab {
 			struct model * /*m*/,
 			struct rt_db_internal * /*ip*/,
 			const struct bn_tol * /*tol*/));
-#else
-	int	(*ft_tessellate) BU_ARGS((
-			genptr_t * /*r*/,
-			genptr_t /*m*/,
-			struct rt_db_internal * /*ip*/,
-			const struct rt_tess_tol * /*ttol*/,
-			const struct bn_tol * /*tol*/));
-	int	(*ft_tnurb) BU_ARGS((
-			genptr_t * /*r*/,
-			genptr_t /*m*/,
-			struct rt_db_internal * /*ip*/,
-			const struct bn_tol * /*tol*/));
-#endif
 	int	(*ft_import5) BU_ARGS((struct rt_db_internal * /*ip*/,
 			const struct bu_external * /*ep*/,
 			const mat_t /*mat*/,
@@ -2125,7 +2086,7 @@ struct rt_shootray_status {
 	fastf_t			dist_corr;	/* correction distance */
 	fastf_t			odist_corr;
 	fastf_t			box_start;
-	fastf_t			obox_start; 
+	fastf_t			obox_start;
 	fastf_t			box_end;
 	fastf_t			obox_end;
 	fastf_t			model_start;
@@ -2174,11 +2135,11 @@ struct rt_shootray_status {
  *
  *  Author -
  *	Lee A. Butler
- *  
+ *
  *  Source -
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
- *  
+ *
  *
  *
  *  $Header$
@@ -2328,11 +2289,11 @@ struct ray_data {
 	/* the "face_subhit" element is a boolean used by isect_ray_face
 	 * and [e|v]u_touch_func to record the fact that the ray/(plane/face)
 	 * intercept point was within tolerance of an edge/vertex of the face.
-	 * In such instances, isect_ray_face does NOT need to generate a hit 
-	 * point for the face, as the hit point for the edge/vertex will 
+	 * In such instances, isect_ray_face does NOT need to generate a hit
+	 * point for the face, as the hit point for the edge/vertex will
 	 * suffice.
 	 */
-	int		face_subhit;	
+	int		face_subhit;
 
 	/* the "classifying_ray" flag indicates that this ray is being used to
 	 * classify a point, so that the "eu_touch" and "vu_touch" functions
@@ -2638,7 +2599,7 @@ RT_EXPORT BU_EXTERN(int	rt_defoverlap,
 		     struct region *reg1,
 		     struct region *reg2,
 		     struct partition *pheadp));
-	
+
 
 
 /* mater.c */
@@ -2869,7 +2830,7 @@ RT_EXPORT BU_EXTERN(int db5_realloc,
 
 /* db5_io.c */
 RT_EXPORT BU_EXTERN(void db5_export_object3,
-		    (struct bu_external *out, 
+		    (struct bu_external *out,
 		     int			dli,
 		     const char			*name,
 		     const unsigned char	hidden,
@@ -3072,7 +3033,7 @@ RT_EXPORT BU_EXTERN(int db_fwrite_external,
 
 /* It is normal to test for __STDC__ when using *_DEFINED tests but in
  * in this case "union record" is used for db_getmrec's return type.  This
- * requires that the "union_record *db_getmrec" be used whenever 
+ * requires that the "union_record *db_getmrec" be used whenever
  * RECORD_DEFINED is defined.
  */
 #if defined(RECORD_DEFINED)
@@ -3516,8 +3477,8 @@ RT_EXPORT BU_EXTERN(int rt_arb_move_edge,
 		    (Tcl_Interp		*interp,
 		     struct rt_arb_internal	*arb,
 		     vect_t			thru,
-		     int			bp1, 
-		     int			bp2, 
+		     int			bp1,
+		     int			bp2,
 		     int			end1,
 		     int			end2,
 		     const vect_t		dir,
@@ -3608,7 +3569,7 @@ RT_EXPORT BU_EXTERN(int rt_pg_plot,
 		    (struct bu_list		*vhead,
 		     struct rt_db_internal	*ip,
 		     const struct rt_tess_tol *ttol,
-		     const struct bn_tol	*tol)); 
+		     const struct bn_tol	*tol));
 RT_EXPORT BU_EXTERN(int rt_pg_plot_poly,
 		    (struct bu_list		*vhead,
 		     struct rt_db_internal	*ip,
@@ -4817,7 +4778,7 @@ RT_EXPORT BU_EXTERN(int rt_bot_plot_poly,
 		    (struct bu_list		*vhead,
 		     struct rt_db_internal	*ip,
 		     const struct rt_tess_tol *ttol,
-		     const struct bn_tol	*tol)); 
+		     const struct bn_tol	*tol));
 #ifdef SEEN_RTGEOM_H
 RT_EXPORT BU_EXTERN(int rt_bot_find_v_nearest_pt2,
 		    (const struct rt_bot_internal *bot,
@@ -5002,7 +4963,7 @@ RT_EXPORT BU_EXTERN(int nmg_class_pt_fu_except,
 
 /* From nmg_plot.c */
 RT_EXPORT BU_EXTERN(void nmg_pl_shell,
-		    (FILE *fp, 
+		    (FILE *fp,
 		     const struct shell *s,
 		     int fancy));
 
@@ -5059,7 +5020,7 @@ RT_EXPORT BU_EXTERN(void nmg_pl_eu,
 		     int blue));
 RT_EXPORT BU_EXTERN(void nmg_pl_lu,
 		    (FILE *fp,
-		     const struct loopuse *fu, 
+		     const struct loopuse *fu,
 		     long *b,
 		     int red,
 		     int green,
@@ -5215,7 +5176,7 @@ RT_EXPORT BU_EXTERN(int rt_nurb_knot_index,
 /* nurb_trim.c */
 RT_EXPORT BU_EXTERN(int nmg_uv_in_lu,
 		    (const fastf_t u,
-		     const fastf_t v, 
+		     const fastf_t v,
 		     const struct loopuse *lu));
 
 
@@ -5717,7 +5678,7 @@ RT_EXPORT BU_EXTERN(void nmg_m_reindex,
 RT_EXPORT BU_EXTERN(void nmg_vls_struct_counts,
 		    (struct bu_vls *str,
 		     const struct nmg_struct_counts *ctr));
-RT_EXPORT BU_EXTERN(void nmg_pr_struct_counts, 
+RT_EXPORT BU_EXTERN(void nmg_pr_struct_counts,
 		    (const struct nmg_struct_counts *ctr,
 		     const char *str));
 RT_EXPORT BU_EXTERN(long **nmg_m_struct_count,
@@ -5979,51 +5940,51 @@ RT_EXPORT BU_EXTERN(struct edge_g_lseg	*nmg_pick_best_edge_g,
 RT_EXPORT BU_EXTERN(void nmg_visit_vertex,
 		    (struct vertex			*v,
 		     const struct nmg_visit_handlers	*htab,
-		     genptr_t			*state));
+		     genptr_t			state));
 RT_EXPORT BU_EXTERN(void nmg_visit_vertexuse,
 		    (struct vertexuse		*vu,
 		     const struct nmg_visit_handlers	*htab,
-		     genptr_t			*state));
+		     genptr_t			state));
 RT_EXPORT BU_EXTERN(void nmg_visit_edge,
 		    (struct edge			*e,
 		     const struct nmg_visit_handlers	*htab,
-		     genptr_t			*state));
+		     genptr_t			state));
 RT_EXPORT BU_EXTERN(void nmg_visit_edgeuse,
 		    (struct edgeuse			*eu,
 		     const struct nmg_visit_handlers	*htab,
-		     genptr_t			*state));
+		     genptr_t			state));
 RT_EXPORT BU_EXTERN(void nmg_visit_loop,
 		    (struct loop			*l,
 		     const struct nmg_visit_handlers	*htab,
-		     genptr_t			*state));
+		     genptr_t			state));
 RT_EXPORT BU_EXTERN(void nmg_visit_loopuse,
 		    (struct loopuse			*lu,
 		     const struct nmg_visit_handlers	*htab,
-		     genptr_t			*state));
+		     genptr_t			state));
 RT_EXPORT BU_EXTERN(void nmg_visit_face,
 		    (struct face			*f,
 		     const struct nmg_visit_handlers	*htab,
-		     genptr_t			*state));
+		     genptr_t			state));
 RT_EXPORT BU_EXTERN(void nmg_visit_faceuse,
 		    (struct faceuse			*fu,
 		     const struct nmg_visit_handlers	*htab,
-		     genptr_t			*state));
+		     genptr_t			state));
 RT_EXPORT BU_EXTERN(void nmg_visit_shell,
 		    (struct shell			*s,
 		     const struct nmg_visit_handlers	*htab,
-		     genptr_t			*state));
+		     genptr_t			state));
 RT_EXPORT BU_EXTERN(void nmg_visit_region,
 		    (struct nmgregion		*r,
 		     const struct nmg_visit_handlers	*htab,
-		     genptr_t			*state));
+		     genptr_t			state));
 RT_EXPORT BU_EXTERN(void nmg_visit_model,
 		    (struct model			*model,
 		     const struct nmg_visit_handlers	*htab,
-		     genptr_t			*state));
+		     genptr_t			state));
 RT_EXPORT BU_EXTERN(void nmg_visit,
 		    (const long			*magicp,
 		     const struct nmg_visit_handlers	*htab,
-		     genptr_t			*state));
+		     genptr_t			state));
 
 /* db5_types.c */
 RT_EXPORT BU_EXTERN(int db5_type_tag_from_major,

@@ -1,11 +1,27 @@
-#ifndef SEEN_MGED_DM_H
-#define SEEN_MGED_DM_H
-
-/*
- *			M G E D _ D M . H
+/*			M G E D _ D M . H
+ * BRL-CAD
+ *
+ * Copyright (C) 1985-2005 United States Government as represented by
+ * the U.S. Army Research Laboratory.
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of the
+ * License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this file; see the file named COPYING for more
+ * information.
+ */
+/** @file mged_dm.h
  *
  * Header file for communication with the display manager.
- *  
+ *
  * Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
@@ -14,11 +30,19 @@
  *  $Header$
  */
 
+#ifndef SEEN_MGED_DM_H
+#define SEEN_MGED_DM_H
+
 #include "dm.h"	/* struct dm */
 #include "./menu.h" /* struct menu_item */
 #include "./scroll.h" /* struct scroll_item */
 #include "fb.h" /* FBIO */
 #include "pkg.h" /* struct pkg_conn */
+
+/* mgedtcl.h must come before the #define statements below (pathName
+ * in particular as it's in the tk.h header)
+ */
+#include "./mgedtcl.h"
 
 #define DO_NEW_EDIT_MATS
 
@@ -42,7 +66,7 @@
 #define SL_TOL 0.03125  /* size of dead spot - 64/2048 */
 
 #define AMM_IDLE 0
-#define AMM_ROT 1 
+#define AMM_ROT 1
 #define AMM_TRAN 2
 #define AMM_SCALE 3
 #define AMM_ADC_ANG1 4
@@ -57,7 +81,7 @@
 #define AMM_CON_TRAN_Z 13
 #define AMM_CON_SCALE_X 14
 #define AMM_CON_SCALE_Y 15
-#define AMM_CON_SCALE_Z 16 
+#define AMM_CON_SCALE_Z 16
 #define AMM_CON_XADC 17
 #define AMM_CON_YADC 18
 #define AMM_CON_ANG1 19
@@ -238,7 +262,7 @@ struct _view_state {
   int		vs_rateflag_rotate;
   vect_t	vs_rate_rotate;
   char		vs_rate_origin;
-	
+
   int		vs_rateflag_scale;
   fastf_t	vs_rate_scale;
 
@@ -471,7 +495,7 @@ struct dm_list {
 #define scroll_y curr_dm_list->dml_scroll_y
 #define scroll_array curr_dm_list->dml_scroll_array
 
-#define MINVIEW		0.001				
+#define MINVIEW		0.001
 #define VIEWSIZE	(2.0*view_state->vs_Viewscale)	/* Width of viewing cube */
 #define VIEWFACTOR	(1/view_state->vs_Viewscale)	/* 2.0 / VIEWSIZE */
 
@@ -565,7 +589,7 @@ extern struct w_dm which_dm[];  /* defined in attach.c */
 
 
 /* Flags indicating whether the ogl and sgi display managers have been
- * attached. Defined in dm-ogl.c. 
+ * attached. Defined in dm-ogl.c.
  * These are necessary to decide whether or not to use direct rendering
  * with ogl.
  */

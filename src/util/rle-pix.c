@@ -24,7 +24,7 @@
  *
  *  Author -
  *	Michael John Muuss
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
@@ -50,6 +50,7 @@ static const char RCSid[] = "@(#)$Id$ (BRL)";
 #endif
 
 #include "machine.h"
+#include "bu.h"
 #include "fb.h"
 #include "rle.h"
 
@@ -62,7 +63,7 @@ static int	background[3];
 static int	override_background;
 
 unsigned char	*rows[4];		/* Character pointers for rle_getrow */
-	
+
 static RGBpixel	*scan_buf;		/* single scanline buffer */
 static RGBpixel	*bg_buf;		/* single scanline of background */
 static ColorMap	cmap;
@@ -88,7 +89,7 @@ get_args(int argc, register char **argv)
 {
 	register int	c;
 
-	while( (c = getopt( argc, argv, "cdhHs:S:w:W:n:N:C:" )) != EOF )  {
+	while( (c = bu_getopt( argc, argv, "cdhHs:S:w:W:n:N:C:" )) != EOF )  {
 		switch( c )  {
 		case 'd':
 			r_debug = 1;
@@ -106,19 +107,19 @@ get_args(int argc, register char **argv)
 		case 'S':
 		case 's':
 			/* square screen size */
-			screen_height = screen_width = atoi(optarg);
+			screen_height = screen_width = atoi(bu_optarg);
 			break;
 		case 'W':
 		case 'w':
-			screen_width = atoi(optarg);
+			screen_width = atoi(bu_optarg);
 			break;
 		case 'N':
 		case 'n':
-			screen_height = atoi(optarg);
+			screen_height = atoi(bu_optarg);
 			break;
 		case 'C':
 			{
-				register char *cp = optarg;
+				register char *cp = bu_optarg;
 				register int *conp = background;
 
 				/* premature null => atoi gives zeros */
@@ -134,28 +135,28 @@ get_args(int argc, register char **argv)
 			return	0;
 		}
 	}
-	if( argv[optind] != NULL )  {
-		if( (infp = fopen( (infile=argv[optind]), "r" )) == NULL )  {
+	if( argv[bu_optind] != NULL )  {
+		if( (infp = fopen( (infile=argv[bu_optind]), "r" )) == NULL )  {
 			perror(infile);
 			return	0;
 		}
-		optind++;
+		bu_optind++;
 	} else {
 		infile = "-";
 	}
-	if( argv[optind] != NULL )  {
-		if( access( argv[optind], 0 ) == 0 )  {
+	if( argv[bu_optind] != NULL )  {
+		if( access( argv[bu_optind], 0 ) == 0 )  {
 			(void) fprintf( stderr,
 				"rle-pix: \"%s\" already exists.\n",
-				argv[optind] );
+				argv[bu_optind] );
 			exit( 1 );
 		}
-		if( (outfp = fopen( argv[optind], "w" )) == NULL )  {
-			perror(argv[optind]);
+		if( (outfp = fopen( argv[bu_optind], "w" )) == NULL )  {
+			perror(argv[bu_optind]);
 			return	0;
 		}
 	}
-	if( argc > ++optind )
+	if( argc > ++bu_optind )
 		(void) fprintf( stderr, "rle-pix:  excess arguments ignored\n" );
 
 	if( isatty(fileno(infp)) )

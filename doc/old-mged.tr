@@ -177,7 +177,7 @@ _
 cp oldobj newobj
 .sp 2
 This command is used to produce a copy of an object (solid or comb).  In this case, the
-object "oldobj" will be copied into an object called "newobj".  
+object "oldobj" will be copied into an object called "newobj".
 NOTE: in VGED one could only copy solids.
 .sp 2
 Examples:
@@ -288,8 +288,8 @@ Examples:
 i object combname brname
 .sp 2
 This command is used to make an instance of an object.
-An instance of an object is produced by creating a combination 
-and making the object a member.   
+An instance of an object is produced by creating a combination
+and making the object a member.
 In this case, an instance of "object" is made by
 creating the combination record "combname" (if "combname" does not
 already exist) and adding "object" as a member.  This member also
@@ -337,7 +337,7 @@ extrude #### distance
 This command allows the user to project
 a face(####) of an arb being edited a normal distance to create a new arb.
 The value of "face" is 4 digits such as 1256. If the face is projected
-in the wrong direction use a negative "distance".  One use for this command is 
+in the wrong direction use a negative "distance".  One use for this command is
 for producing armor plates of a desired thickness.
 .sp 2
 .nf
@@ -353,14 +353,14 @@ Examples:
 .ce
 rm comb mem1 mem2 .... memn
 .sp 2
-This command allows one to delete members from a combination (group or region) record. 
+This command allows one to delete members from a combination (group or region) record.
 In this case, members "mem1" through "memn" will be deleted from
 the combination "comb".
 .sp
 Examples:
               rm tank hull wheels
               rm region1 solid8 solid112
-              rm turtop.r tursidel.s tursider.s 
+              rm turtop.r tursidel.s tursider.s
 .bp
 .sp 10
 .ce
@@ -407,7 +407,7 @@ being edited will be analyzed.
 mirror oldobj newobj axis
 .sp 2
 This command is used to create a new object which is
-the mirror image of an existing object about an axis.  
+the mirror image of an existing object about an axis.
 In this case, a mirror image of the object "oldobj" will created
 about the axis indicated by "axis" and the new object record will
 be called "newobj".
@@ -513,7 +513,7 @@ to these objects still will exist.
 ------------------------------------------------------------------------------------------------------
 .sp 3
 .ce
-t 
+t
 .sp 2
 This is the table of contents command, and will produce a list of all
 objects presently included in the file.
@@ -839,7 +839,7 @@ q
 This is the normal quit (halt) command.
 
 .bp
-  
+
 .sp 10
 .PP
 Using the Vector General terminals has changed very little.
@@ -933,8 +933,8 @@ goes on the left.
 .nf
 .cs
                |----------|----------|----------|----------|
-               |          |          |          |   Zero   |          
-               |   Help   |    ADC   |  Reset   |   Knobs  |          
+               |          |          |          |   Zero   |
+               |   Help   |    ADC   |  Reset   |   Knobs  |
     |----------|----------|----------|----------|----------|----------|
     |    Obj   |    Obj   |    Obj   |    Obj   |          |   Save   |
     |   Scale  |  ScaleX  |  ScaleY  |  ScaleZ  |  empty   |   View   |
@@ -947,5 +947,5 @@ goes on the left.
     |----------|----------|----------|----------|----------|----------|
     |  REJECT  |  Bottom  |   Top    |   Rear   |   90,90  |  ACCEPT  |
     |----------|----------|----------|----------|----------|----------|
-               |   Right  |   Front  |   Left   |   35,25  |          
+               |   Right  |   Front  |   Left   |   35,25  |
                |----------|----------|----------|----------|

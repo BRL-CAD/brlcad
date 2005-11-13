@@ -1,7 +1,7 @@
 /*
  *  			W O O D . C
- * 
- *	Simple wood-grain texture 
+ *
+ *	Simple wood-grain texture
  *
  *  Author -
  *	Bill Laut, Gull Island Consultants, Inc.
@@ -68,8 +68,6 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 
 #include "common.h"
 
-
-
 #include <stdio.h>
 #include <ctype.h>
 #include <math.h>
@@ -77,7 +75,7 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 #include "vmath.h"
 #include "raytrace.h"
 #include "rtprivate.h"
-/*#include "../rt/mathtab.h"*/
+
 
 /*
  *	Sundry external references
@@ -90,10 +88,10 @@ extern	fastf_t	turb_table[20][20][20];
 
 HIDDEN int	wood_init(void), wood_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip), wood_render(struct application *ap, struct partition *partp, struct shadework *swp, char *dp);
 HIDDEN void	wood_print(register struct region *rp);
-HIDDEN void	wood_free RT_ARGS(( char * ));
+HIDDEN void	wood_free BU_ARGS(( char * ));
 
-HIDDEN void	wood_V_set RT_ARGS((const struct bu_structparse *, const char *, const char *, char *));
-HIDDEN void	wood_D_set RT_ARGS((const struct bu_structparse *, const char *, const char *, char *));
+HIDDEN void	wood_V_set BU_ARGS((const struct bu_structparse *, const char *, const char *, char *));
+HIDDEN void	wood_D_set BU_ARGS((const struct bu_structparse *, const char *, const char *, char *));
 
 /*
  *	functions block for the shader
@@ -157,7 +155,7 @@ struct wood_specific {
 	vect_t			V;
 };
 
-HIDDEN void	wood_setup_2 RT_ARGS((struct wood_specific *));
+HIDDEN void	wood_setup_2 BU_ARGS((struct wood_specific *));
 
 /*
  *	Flags and useful offset declarations
@@ -217,7 +215,7 @@ struct bu_structparse wood_parse[] = {
  *	Noise Table.  Based upon work by Tom DiGiacinto.  This table gives us
  *	a linearly-interpolated noise function for dithering location of rings
  *	within the wood surface.  It is approximately four times bigger than is
- *	actually needed, so that we can dither the starting position on a 
+ *	actually needed, so that we can dither the starting position on a
  *	per-region basis, and thus make each region look unique.
  */
 
@@ -230,7 +228,7 @@ static	int	wood_done = 0;
  *			W O O D _ I N I T
  *
  *	This routine is called at the beginning of RT's cycle to initialize
- *	the noise table. 
+ *	the noise table.
  */
 
 HIDDEN int wood_init (void)
@@ -276,10 +274,10 @@ HIDDEN void wood_D_set (const struct bu_structparse *sdp, const char *name, cons
  *			W O O D _ S E T U P
  */
 HIDDEN int wood_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip)
-                      	    
-             		         
-    			      
-                             
+
+
+
+
                                 /* New since 4.4 release */
 {
 	register int i;
@@ -470,7 +468,7 @@ HIDDEN void wood_setup_2 (struct wood_specific *wd)
 	register struct resource	*resp = &rt_uniresource;
 
 	/*
-	 *	See if the user specified absolute coordinates for the vertex and 
+	 *	See if the user specified absolute coordinates for the vertex and
 	 *	direction.  If so, use those instead of the RPP.
 	 */
 
@@ -487,16 +485,16 @@ HIDDEN void wood_setup_2 (struct wood_specific *wd)
 				a_dir[i] = wd->b_max[i];
 				}
 			/* Z component is [2] */
-			a_vertex[2] = ((wd->b_max[2] - wd->b_min[2]) * 
+			a_vertex[2] = ((wd->b_max[2] - wd->b_min[2]) *
 					(bn_rand0to1(resp->re_randptr) * wd->dz)) + wd->b_min[2];
-			a_dir[2]    = ((wd->b_max[2] - wd->b_min[2]) * 
+			a_dir[2]    = ((wd->b_max[2] - wd->b_min[2]) *
 					(bn_rand0to1(resp->re_randptr) * wd->dz)) + wd->b_min[2];
 			}
 		   else {
 			for (i=0; i<3; i++) {
-				a_vertex[i] = ((wd->b_max[i] - wd->b_min[i]) * 
+				a_vertex[i] = ((wd->b_max[i] - wd->b_min[i]) *
 						(bn_rand0to1(resp->re_randptr) * wd->dd)) + wd->b_min[i];
-				a_dir[i]    = ((wd->b_max[i] - wd->b_min[i]) * 
+				a_dir[i]    = ((wd->b_max[i] - wd->b_min[i]) *
 						(bn_rand0to1(resp->re_randptr) * wd->dd)) + wd->b_max[i];
 				}
 			}
@@ -571,7 +569,7 @@ HIDDEN double wood_noise (double x, double y, double z, struct wood_specific *wd
 	zi = z * IPOINTS;
 	zr = (z * IPOINTS) - zi;
 
-	n1     = (1 - xr) * turb_table[xi][yi][zi] + 
+	n1     = (1 - xr) * turb_table[xi][yi][zi] +
 		       xr * turb_table[xi + 1][yi][zi];
 	n2     = (1 - xr) * turb_table[xi][yi + 1][zi] +
 		       xr * turb_table[xi + 1][yi + 1][zi];
@@ -620,7 +618,7 @@ HIDDEN double wood_turb (double x, double y, double z, struct wood_specific *wd)
 
 /*
  *  			W O O D _ R E N D E R
- *  
+ *
  *  Given an XYZ hit point, compute the concentric ring structure.  We do
  *  this by computing the dot-product of the hit point vs the ring vertex,
  *  which is then used to compute the distance from the ring center.  This
@@ -664,7 +662,7 @@ HIDDEN int wood_render(struct application *ap, struct partition *partp, struct s
 	c = fabs (VDOT (g, wd->dir));
 	A = MAGNITUDE (h) + wt;
 	B = c * A;				/* abscissa */
-	C = sqrt (pow (A, 2.0) - pow (B, 2.0));	/* ordinate */ 
+	C = sqrt (pow (A, 2.0) - pow (B, 2.0));	/* ordinate */
 
 	/*
 	 *	Divide the ordinate by the spacing coefficient, and

@@ -28,12 +28,12 @@
  *  Author -
  *	Mike Muuss
  *	August 01, 1978
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5066
- *  
+ *
  */
 /*@}*/
 
@@ -52,10 +52,10 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 void
 tp_2number(FILE *fp, double input, int x, int y, int cscale, double theta, int digits)
-    	    
+
       	      		/* number to be plotted */
    	  		/* first char position */
-   	  
+
    	       		/* char scale */
       	      		/* degrees ccw from X-axis */
    	       		/* # digits wide */

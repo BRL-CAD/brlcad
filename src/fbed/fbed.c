@@ -43,6 +43,9 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include <signal.h>
 #include <fcntl.h>
 #include <errno.h>
+#ifdef HAVE_UNISTD_H
+#  include <unistd.h>
+#endif
 
 #include "machine.h"
 #include "fb.h"
@@ -92,7 +95,7 @@ bool AproxEqColor(unsigned char a, unsigned char b, int t)
 	(AproxEqColor((a)[RED],(b)[RED],t) && \
 	 AproxEqColor((a)[GRN],(b)[GRN],t) && \
 	 AproxEqColor((a)[BLU],(b)[BLU],t))
-	
+
 #define Fgets_Bomb() \
 		fb_log( "\%s\"(%d) EOF encountered prematurely.\n", \
 				__FILE__, __LINE__ ); \
@@ -343,7 +346,7 @@ main(int argc, char **argv)
 		prnt_Usage();
 		return 1;
 		}
-	setbuf( stdout, malloc( BUFSIZ ) );	
+	setbuf( stdout, malloc( BUFSIZ ) );
 	tty = isatty( 1 );
 	if( ! InitTermCap( stdout ) )
 		{
@@ -547,7 +550,7 @@ popPoint(Point *pt, register PtStack **spp)
 	*spp = next;
 	return true;
 	}
-		
+
 /*	i n i t _ T r y ( )
 	Initialize "try" tree of function names, with key bindings.
  */
@@ -730,7 +733,7 @@ f_Nop(char *buf)
 STATIC int
 /*ARGSUSED*/
 f_Win_Lft(char *buf) /* Move window left. */
-          
+
 	{
 	windo_center.p_x += gain;
 	reposition_cursor = true;
@@ -741,7 +744,7 @@ f_Win_Lft(char *buf) /* Move window left. */
 STATIC int
 /*ARGSUSED*/
 f_Win_Dwn(char *buf) /* Move window down. */
-          
+
 	{
 	windo_center.p_y -= gain;
 	reposition_cursor = true;
@@ -752,7 +755,7 @@ f_Win_Dwn(char *buf) /* Move window down. */
 STATIC int
 /*ARGSUSED*/
 f_Win_Up(char *buf) /* Move window up. */
-          
+
 	{
 	windo_center.p_y += gain;
 	reposition_cursor = true;
@@ -763,7 +766,7 @@ f_Win_Up(char *buf) /* Move window up. */
 STATIC int
 /*ARGSUSED*/
 f_Win_Rgt(char *buf) /* Move window right. */
-          
+
 	{
 	windo_center.p_x -= gain;
 	reposition_cursor = true;
@@ -774,7 +777,7 @@ f_Win_Rgt(char *buf) /* Move window right. */
 STATIC int
 /*ARGSUSED*/
 f_Reset_View(char *buf) /* Restore normal view. */
-          
+
 	{
 	cursor_pos.p_x = image_center.p_x;
 	cursor_pos.p_y = image_center.p_y;
@@ -787,7 +790,7 @@ f_Reset_View(char *buf) /* Restore normal view. */
 STATIC int
 /*ARGSUSED*/
 f_Redraw(char *buf) /* Redraw screen. */
-          
+
 	{
 	init_Status();
 	prnt_Status();
@@ -797,7 +800,7 @@ f_Redraw(char *buf) /* Redraw screen. */
 STATIC int
 /*ARGSUSED*/
 f_Stop(char *buf) /* Stop program. */
-          
+
 	{	int pid = getpid();
 		int sig;
 #ifdef SIGSTOP
@@ -841,7 +844,7 @@ f_Exec_Function(char *buf)
 STATIC int
 /*ARGSUSED*/
 f_Iterations(char *buf) /* Specify number of iterations of next command. */
-          
+
 	{	char iterate_buf[MAX_DIGITS+1];
 		int iterate;
 		register int c=0, i;
@@ -880,7 +883,7 @@ f_Press(char *buf)
 STATIC int
 /*ARGSUSED*/
 f_Comment(char *buf) /* Print comment. */
-          
+
 	{	static char comment[MAX_LN];
 	if( ! get_Input( comment, MAX_LN, "Enter comment : " ) )
 		return 0;
@@ -891,7 +894,7 @@ f_Comment(char *buf) /* Print comment. */
 STATIC int
 /*ARGSUSED*/
 f_Dec_Brush_Size(char *buf) /* Decrement brush size. */
-          
+
 	{
 	if( brush_sz > 0 )
 		brush_sz -= 2;
@@ -901,7 +904,7 @@ f_Dec_Brush_Size(char *buf) /* Decrement brush size. */
 STATIC int
 /*ARGSUSED*/
 f_Inc_Brush_Size(char *buf) /* Increment brush size. */
-          
+
 	{
 	if( brush_sz < size_viewport )
 		brush_sz += 2;
@@ -911,7 +914,7 @@ f_Inc_Brush_Size(char *buf) /* Increment brush size. */
 STATIC int
 /*ARGSUSED*/
 f_Menu(char *buf) /* Print menu. */
-          
+
 	{	register int lines = (PROMPT_LINE-BOTTOM_STATUS_AREA)-1;
 		register int done = false;
 		register int key;
@@ -961,7 +964,7 @@ f_Menu(char *buf) /* Print menu. */
 STATIC int
 /*ARGSUSED*/
 f_Dec_Step_Size(char *buf) /* Decrement gain on move operations. */
-          
+
 	{
 	if( gain > 1 )
 		gain--;
@@ -971,7 +974,7 @@ f_Dec_Step_Size(char *buf) /* Decrement gain on move operations. */
 STATIC int
 /*ARGSUSED*/
 f_Inc_Step_Size(char *buf) /* Increment gain on move operations. */
-          
+
 	{
 	if( gain < size_viewport )
 		gain++;
@@ -1148,7 +1151,7 @@ f_Name_Keyboard_Macro(char *buf)
 STATIC int
 /*ARGSUSED*/
 f_Crunch_Image(char *buf) /* Average image to half its size. */
-          
+
 	{	char answer[2];
 		register int x, y;
 		register RGBpixel *p1, *p2;
@@ -1234,7 +1237,7 @@ f_DrawLine(char *buf)
 	for( x = lineseg.r_origin.p_x; x <= lineseg.r_corner.p_x; )
 		{
 		(void) fb_write(	fbp,
-					x, lineseg.r_origin.p_y, 
+					x, lineseg.r_origin.p_y,
 					(unsigned char *) paint,
 					1
 					);
@@ -1261,7 +1264,7 @@ f_DrawLine(char *buf)
 STATIC int
 /*ARGSUSED*/
 f_DrawRectangle(char *buf) /* Draw current rectangle with "paint" color. */
-          
+
 	{
 	return drawRectangle( &current, (unsigned char *) paint ) ? 1 : 0;
 	}
@@ -1269,7 +1272,7 @@ f_DrawRectangle(char *buf) /* Draw current rectangle with "paint" color. */
 STATIC int
 /*ARGSUSED*/
 f_Fill_Panel(char *buf) /* Fill current rectangle with "paint" color. */
-          
+
 	{
 	fillRectangle( &current, (RGBpixel *) paint );
 	return 1;
@@ -1278,7 +1281,7 @@ f_Fill_Panel(char *buf) /* Fill current rectangle with "paint" color. */
 STATIC int
 /*ARGSUSED*/
 f_Bind_Key_To_Key(char *buf) /* Bind new key to same function as old key. */
-          
+
 	{	char old_key[2], new_key[2];
 	if( ! get_Input( new_key, 2, "Bind new key : " ) )
 		return 0;
@@ -1299,7 +1302,7 @@ f_Bind_Key_To_Key(char *buf) /* Bind new key to same function as old key. */
 STATIC int
 /*ARGSUSED*/
 f_Bind_Name_To_Key(char *buf) /* Bind key to function or macro. */
-          
+
 	{	char key[2];
 		static char name[MAX_LN];
 		Func_Tab	*ftbl;
@@ -1333,7 +1336,7 @@ f_Bind_Name_To_Key(char *buf) /* Bind key to function or macro. */
 STATIC int
 /*ARGSUSED*/
 f_Erase_Fb(char *buf) /* Erase (clear) framebuffer. */
-          
+
 	{	char answer[2];
 	if( ! get_Input( answer, 2, "Clear framebuffer [n=no] ? " ) )
 		return 0;
@@ -1348,7 +1351,7 @@ f_Erase_Fb(char *buf) /* Erase (clear) framebuffer. */
 STATIC int
 /*ARGSUSED*/
 f_Flip_Resolution(char *buf) /* Flip framebuffer resolution. */
-          
+
 	{	char answer[2];
 		int is_hires = fb_getwidth(fbp) > 512;
 	if( ! get_Input(	answer,
@@ -1374,7 +1377,7 @@ f_Flip_Resolution(char *buf) /* Flip framebuffer resolution. */
 STATIC int
 /*ARGSUSED*/
 f_Get_Panel(char *buf) /* Grab panel from framebuffer. */
-          
+
 	{
 	if( panel.n_buf != (RGBpixel *) NULL )
 		free( (char *) panel.n_buf );
@@ -1383,13 +1386,13 @@ f_Get_Panel(char *buf) /* Grab panel from framebuffer. */
 	panel.n_wid  = current.r_corner.p_x - current.r_origin.p_x;
 	panel.n_hgt = current.r_corner.p_y - current.r_origin.p_y;
 	fb_log( "Rectangle saved.\n" );
-	return 1; 
+	return 1;
 	}
 
 STATIC int
 /*ARGSUSED*/
 f_Jump_Lft(char *buf) /* Move cursor left (big steps). */
-          
+
 	{
 	if( cursor_pos.p_x >= JUMP )
 		cursor_pos.p_x -= JUMP;
@@ -1402,7 +1405,7 @@ f_Jump_Lft(char *buf) /* Move cursor left (big steps). */
 STATIC int
 /*ARGSUSED*/
 f_Jump_Dwn(char *buf) /* Move cursor down. */
-          
+
 	{
 	if( cursor_pos.p_y >= JUMP )
 		cursor_pos.p_y -= JUMP;
@@ -1415,7 +1418,7 @@ f_Jump_Dwn(char *buf) /* Move cursor down. */
 STATIC int
 /*ARGSUSED*/
 f_Jump_Up(char *buf) /* Move cursor up. */
-          
+
 	{
 	if( cursor_pos.p_y < fb_getheight(fbp) - JUMP )
 		cursor_pos.p_y += JUMP;
@@ -1428,7 +1431,7 @@ f_Jump_Up(char *buf) /* Move cursor up. */
 STATIC int
 /*ARGSUSED*/
 f_Jump_Rgt(char *buf) /* Move cursor right. */
-          
+
 	{
 	if( cursor_pos.p_x <= fb_getwidth(fbp) - JUMP )
 		cursor_pos.p_x += JUMP;
@@ -1441,7 +1444,7 @@ f_Jump_Rgt(char *buf) /* Move cursor right. */
 STATIC int
 /*ARGSUSED*/
 f_Put_Panel(char *buf) /* Put grabbed panel to framebuffer. */
-          
+
 	{
 	if( panel.n_buf == (RGBpixel *) NULL )
 		{
@@ -1458,7 +1461,7 @@ f_Put_Panel(char *buf) /* Put grabbed panel to framebuffer. */
 STATIC int
 /*ARGSUSED*/
 f_Restore_RLE(char *buf) /* Restore Run-Length Encoded image. */
-          
+
 	{	static char rle_file_nm[MAX_LN];
 		static FILE	*rle_fp;
 		static char *args[] =
@@ -1496,7 +1499,7 @@ f_Restore_RLE(char *buf) /* Restore Run-Length Encoded image. */
 STATIC int
 /*ARGSUSED*/
 f_Save_RLE(char *buf) /* Save framebuffer image with Run-Length Encoding. */
-          
+
 	{	static char rle_file_nm[MAX_LN];
 		static char *args[4] =
 			{
@@ -1520,7 +1523,7 @@ f_Save_RLE(char *buf) /* Save framebuffer image with Run-Length Encoding. */
 		(void) sprintf( question,
 				"File \"%s\" exists, remove [n=no] ? ",
 				rle_file_nm
-				); 
+				);
 		if( ! get_Input( answer, 2, question ) )
 			return 0;
 		if( answer[0] == 'n' )
@@ -1543,7 +1546,7 @@ f_Save_RLE(char *buf) /* Save framebuffer image with Run-Length Encoding. */
 STATIC int
 /*ARGSUSED*/
 f_Transliterate(char *buf) /* Transliterate pixels of color1 to target color2.*/
-          
+
 	{	RGBpixel old, new, cur;
 		static char oldbuf[CLR_LEN];
 		static char newbuf[CLR_LEN];
@@ -1646,7 +1649,7 @@ f_Enter_Macro_Definition(char *buf)
 STATIC int
 /*ARGSUSED*/
 f_Set_Rectangle(char *buf) /* Set current rectangle. */
-          
+
 	{
 	get_Rectangle( "rectangle", &current );
 	return 1;
@@ -1655,7 +1658,7 @@ f_Set_Rectangle(char *buf) /* Set current rectangle. */
 STATIC int
 /*ARGSUSED*/
 f_Center_Window(char *buf) /* Center window around cursor. */
-          
+
 	{
 	fb_Wind();
 	reposition_cursor = true;
@@ -1665,7 +1668,7 @@ f_Center_Window(char *buf) /* Center window around cursor. */
 STATIC int
 /*ARGSUSED*/
 f_Rd_Font(char *buf) /* Set current font. */
-          
+
 	{	static char fontname[FONTNAMESZ];
 	if( ! get_Input( fontname, FONTNAMESZ, "Enter font name : " ) )
 		return 0;
@@ -1676,7 +1679,7 @@ f_Rd_Font(char *buf) /* Set current font. */
 STATIC int
 /*ARGSUSED*/
 f_Set_Pixel(char *buf) /* Set "paint" pixel color. */
-          
+
 	{
 	fb_Get_Pixel( paint );
 	return 1;
@@ -1685,7 +1688,7 @@ f_Set_Pixel(char *buf) /* Set "paint" pixel color. */
 STATIC int
 /*ARGSUSED*/
 f_Move_Lft(char *buf) /* Move cursor left. */
-          
+
 	{
 	if( cursor_pos.p_x >= step )
 		cursor_pos.p_x -= step;
@@ -1698,7 +1701,7 @@ f_Move_Lft(char *buf) /* Move cursor left. */
 STATIC int
 /*ARGSUSED*/
 f_Zoom_In(char *buf) /* Halve window size. */
-          
+
 	{
 	if( size_viewport > fb_getwidth(fbp) / 16 )
 		{
@@ -1712,7 +1715,7 @@ f_Zoom_In(char *buf) /* Halve window size. */
 STATIC int
 /*ARGSUSED*/
 f_Move_Dwn(char *buf) /* Move cursor down. */
-          
+
 	{
 	if( cursor_pos.p_y >= step )
 		cursor_pos.p_y -= step;
@@ -1725,7 +1728,7 @@ f_Move_Dwn(char *buf) /* Move cursor down. */
 STATIC int
 /*ARGSUSED*/
 f_Move_Up(char *buf) /* Move cursor up. */
-          
+
 	{
 	if( cursor_pos.p_y <= fb_getheight(fbp) - step )
 		cursor_pos.p_y += step;
@@ -1738,7 +1741,7 @@ f_Move_Up(char *buf) /* Move cursor up. */
 STATIC int
 /*ARGSUSED*/
 f_Move_Rgt(char *buf) /* Move cursor right. */
-          
+
 	{
 	if( cursor_pos.p_x <= fb_getwidth(fbp) - step )
 		cursor_pos.p_x += step;
@@ -1751,7 +1754,7 @@ f_Move_Rgt(char *buf) /* Move cursor right. */
 STATIC int
 /*ARGSUSED*/
 f_Status_Monitor(char *buf) /* Toggle status monitoring. */
-          
+
 	{
 	Toggle( report_status );
 	if( report_status )
@@ -1762,7 +1765,7 @@ f_Status_Monitor(char *buf) /* Toggle status monitoring. */
 STATIC int
 /*ARGSUSED*/
 f_Zoom_Out(char *buf) /* Double window size. */
-          
+
 	{
 	if( size_viewport < fb_getwidth(fbp) )
 		{
@@ -1776,7 +1779,7 @@ f_Zoom_Out(char *buf) /* Double window size. */
 STATIC int
 /*ARGSUSED*/
 f_Key_Set_Pixel(char *buf) /* User types in paint color. */
-          
+
 	{	static char buffer[CLR_LEN];
 	if( ! getColor( paint, "Enter color", buffer ) )
 		return 0;
@@ -1796,7 +1799,7 @@ f_Quit(char *buf)
 STATIC int
 /*ARGSUSED*/
 f_Rd_Fb(char *buf) /* Read frame buffer image from file. */
-          
+
 	{	static char image[MAX_LN];
 		static FBIO *imp;
 	if( ! get_Input( image, MAX_LN, "Enter framebuffer name : " ) )
@@ -1844,7 +1847,7 @@ f_Rd_Fb(char *buf) /* Read frame buffer image from file. */
 STATIC int
 /*ARGSUSED*/
 f_String(char *buf) /* Place label on picture. */
-          
+
 	{	static char label[MAX_LN];
 	if( ! get_Input( label, MAX_LN, "Enter text string : " ) )
 		return 0;
@@ -1856,7 +1859,7 @@ f_String(char *buf) /* Place label on picture. */
 STATIC int
 /*ARGSUSED*/
 f_Put_Pixel(char *buf) /* Put pixel. */
-          
+
 	{	register int rectwid = brush_sz / 2;
 	/* If brush size is 2 or more, fill rectangle. */
 	if( rectwid == 0 )
@@ -1881,7 +1884,7 @@ f_Put_Pixel(char *buf) /* Put pixel. */
 STATIC int
 /*ARGSUSED*/
 f_Set_X_Pos(char *buf) /* Move cursor's X location (image space). */
-          
+
 	{	static char x_str[5];
 	if( ! get_Input( x_str, 5, "Enter X coordinate : " ) )
 		return 0;
@@ -1909,7 +1912,7 @@ f_Set_X_Pos(char *buf) /* Move cursor's X location (image space). */
 STATIC int
 /*ARGSUSED*/
 f_Set_Y_Pos(char *buf) /* Move cursor's Y location (image space). */
-          
+
 	{	static char y_str[5];
 	if( ! get_Input( y_str, 5, "Enter Y coordinate : " ) )
 		return 0;
@@ -2012,7 +2015,7 @@ fb_Paint(register int x0, register int y0, register int x1, register int y1, RGB
 	clipped_rect.r_origin.p_y = y0;
 	clipped_rect.r_corner.p_y = y1;
 	clip_Rectangle( &clipped_rect );
-	fillRectangle( &clipped_rect, color ); 
+	fillRectangle( &clipped_rect, color );
 	return;
 	}
 
@@ -2364,7 +2367,7 @@ do_Bitpad(register Point *pointp)
 	if( ! pad_flag )
 		return -1;
 	if( (press = getpos( &bitpad )) != -1 )
-		{		
+		{
 		pointp->p_x = windo_anchor.p_x +
 				(bitpad.p_x-image_center.p_x)/zoom_factor;
 		pointp->p_y = windo_anchor.p_y +

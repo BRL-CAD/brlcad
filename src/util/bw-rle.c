@@ -24,7 +24,7 @@
  *
  *  Author -
  *	Michael John Muuss
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
@@ -39,7 +39,7 @@ static const char RCSid[] = "@(#)$Id$ (BRL)";
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif
-                                                                                                                                                                            
+
 #include <stdio.h>
 #include <stdlib.h>
 #ifdef HAVE_STRING_H
@@ -50,7 +50,7 @@ static const char RCSid[] = "@(#)$Id$ (BRL)";
 #include <time.h>
 
 #include "machine.h"
-
+#include "bu.h"
 #include "fb.h"
 #include "rle.h"
 
@@ -88,7 +88,7 @@ get_args(int argc, register char **argv)
 {
 	register int	c;
 
-	while( (c = getopt( argc, argv, "hs:w:n:C:" )) != EOF )  {
+	while( (c = bu_getopt( argc, argv, "hs:w:n:C:" )) != EOF )  {
 		switch( c )  {
 		case 'h':
 			/* high-res */
@@ -96,17 +96,17 @@ get_args(int argc, register char **argv)
 			break;
 		case 's':
 			/* square file size */
-			file_height = file_width = atoi(optarg);
+			file_height = file_width = atoi(bu_optarg);
 			break;
 		case 'w':
-			file_width = atoi(optarg);
+			file_width = atoi(bu_optarg);
 			break;
 		case 'n':
-			file_height = atoi(optarg);
+			file_height = atoi(bu_optarg);
 			break;
 		case 'C':
 			{
-				register char *cp = optarg;
+				register char *cp = bu_optarg;
 				register int *conp = background;
 
 				/* premature null => atoi gives zeros */
@@ -121,28 +121,28 @@ get_args(int argc, register char **argv)
 			return	0;
 		}
 	}
-	if( argv[optind] != NULL )  {
-		if( (infp = fopen( (infile=argv[optind]), "r" )) == NULL )  {
+	if( argv[bu_optind] != NULL )  {
+		if( (infp = fopen( (infile=argv[bu_optind]), "r" )) == NULL )  {
 			perror(infile);
 			return	0;
 		}
-		optind++;
+		bu_optind++;
 	} else {
 		infile = "-";
 	}
-	if( argv[optind] != NULL )  {
-		if( access( argv[optind], 0 ) == 0 )  {
+	if( argv[bu_optind] != NULL )  {
+		if( access( argv[bu_optind], 0 ) == 0 )  {
 			(void) fprintf( stderr,
 				"\"%s\" already exists.\n",
-				argv[optind] );
+				argv[bu_optind] );
 			exit( 1 );
 		}
-		if( (outfp = fopen( argv[optind], "w" )) == NULL )  {
-			perror(argv[optind]);
+		if( (outfp = fopen( argv[bu_optind], "w" )) == NULL )  {
+			perror(argv[bu_optind]);
 			return	0;
 		}
 	}
-	if( argc > ++optind )
+	if( argc > ++bu_optind )
 		(void) fprintf( stderr, "pix-rle: Excess arguments ignored\n" );
 
 	if( isatty(fileno(infp)) || isatty(fileno(outfp)) )

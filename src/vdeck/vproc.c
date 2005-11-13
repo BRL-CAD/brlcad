@@ -36,7 +36,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 		4:  String Processing Routines
 		5:  Input/Output Routines
 		6:  Interrupt Handlers
-	  
+
  */
 #include <stdio.h>
 #include <signal.h>
@@ -71,7 +71,7 @@ void		blank_fill();
  */
 deck( prefix )
 register char *prefix;
-{	
+{
 	register int	i;
 
 	nns = nnr = 0;
@@ -144,7 +144,7 @@ register char *prefix;
 
 	/* Check integrity of list against directory and build card deck.	*/
 	for( i = 0; i < curr_ct; i++ )
-	{	
+	{
 		struct directory	*dirp;
 		if( (dirp = db_lookup( dbip, curr_list[i], LOOKUP_NOISY )) != DIR_NULL )  {
 #if 1
@@ -269,7 +269,7 @@ toc()
 void
 list_toc( args )
 char	 *args[];
-{	
+{
 	register int	i, j;
 	(void) fflush( stdout );
 	for( tmp_ct = 0, i = 1; args[i] != NULL; i++ )
@@ -301,7 +301,7 @@ char	 *args[];
 col_prt( list, ct )
 register char	*list[];
 register int	ct;
-{	
+{
 	char		buf[MAX_COL+2];
 	register int	i, column, spaces;
 
@@ -336,7 +336,7 @@ int
 insert(  args,	ct )
 char		*args[];
 register int	ct;
-{	
+{
 	register int	i, j, nomatch;
 
 	/* For each argument (does not include args[0]).			*/
@@ -372,7 +372,7 @@ char	*args[];
 
 	/* for each object in arg list
 	 */
-	for( i = 1; i < arg_ct; i++ ) { 
+	for( i = 1; i < arg_ct; i++ ) {
 		register int	j;
 		nomatch = YES;
 
@@ -380,7 +380,7 @@ char	*args[];
 		 */
 		for( j = 0; j < curr_ct; )
 			if( match( args[i], curr_list[j] ) )
-			{	
+			{
 				register int	k;
 
 				nomatch = NO;
@@ -392,7 +392,7 @@ char	*args[];
 				 */
 				for( k = j; k < curr_ct; k++ )
 					curr_list[k] = curr_list[k+1];
-			} 
+			}
 			else	++j;
 		if( nomatch )
 			(void) fprintf( stderr,
@@ -423,8 +423,8 @@ int   n,    w;
 
 	if( (sign = n) < 0 )	n = -n;
 	i = 0;
-	do	
-		s[i++] = n % 10 + '0';	
+	do
+		s[i++] = n % 10 + '0';
 	while( (n /= 10) > 0 );
 	if( sign < 0 )	s[i++] = '-';
 
@@ -471,8 +471,8 @@ register int	w;
 
 	if( (sign = n) < 0 )	n = -n;
 	i = 0;
-	do	
-		s[i++] = n % 10 + '0';	
+	do
+		s[i++] = n % 10 + '0';
 	while( (n /= 10) > 0 );
 	if( sign < 0 )	s[i++] = '-';
 
@@ -605,7 +605,7 @@ register int	w, d;
 /*	g e t c m d ( )
 	Return first character read from keyboard,
 	copy command into args[0] and arguments into args[1]...args[n].
-		
+
  */
 char
 getcmd( args, ct )
@@ -666,7 +666,7 @@ register char	*str;
 void
 menu( addr )
 char **addr;
-{	
+{
 	register char	**sbuf = addr;
 	while( *sbuf )
 		(void) printf( "%s\n", *sbuf++ );
@@ -680,7 +680,7 @@ char **addr;
 void
 blank_fill( fildes, count )
 register int	fildes,	count;
-{	
+{
 	register char	*blank_buf = BLANKS;
 	ewrite( fildes, blank_buf, (unsigned) count );
 	return;

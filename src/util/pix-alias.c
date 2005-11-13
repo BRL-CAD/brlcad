@@ -42,7 +42,7 @@
  *	16bit-depth-count (a 16 bit int containing the number of bits per pixel)
  *	run-length encoded pixel data.  Each entry of the form:
  *	1byte run length, B, G, R
- *	
+ *
  *	Run length of 0 seems to be meaningless.
  */
 
@@ -62,9 +62,10 @@
 #endif
 
 #include "machine.h"
+#include "bu.h"
 
 
-/* declarations to support use of getopt() system call */
+/* declarations to support use of bu_getopt() system call */
 char *options = "hs:w:n:";
 char optflags[sizeof(options)];
 char *progname = "(noname)";
@@ -112,7 +113,7 @@ void doit(void)
 	/* the weird output style is to circumvent differences in
 	 * machine architectures
 	 */
-	
+
 	(void) putchar( (x & 0x0ff00) >> 8);
 	(void) putchar( (x & 0x0ff));
 	(void) putchar( (y & 0x0ff00) >> 8);
@@ -156,27 +157,27 @@ main(int ac, char **av)
 
 	progname = *av;
 	if (isatty(fileno(stdin))) usage();
-	
+
 	/* Get # of options & turn all the option flags off
 	 */
 	optlen = strlen(options);
 
 	for (c=0 ; c < optlen ; optflags[c++] = '\0');
-	
-	/* Turn off getopt's error messages */
+
+	/* Turn off bu_getopt's error messages */
 	opterr = 0;
 
 	/* get all the option flags from the command line
 	 */
-	while ((c=getopt(ac,av,options)) != EOF)
+	while ((c=bu_getopt(ac,av,options)) != EOF)
 		switch (c) {
-		case 'w' : x = atoi(optarg); break;
-		case 'n' : y = atoi(optarg); break;
-		case 's' : x = atoi(optarg); y = atoi(optarg); break;
+		case 'w' : x = atoi(bu_optarg); break;
+		case 'n' : y = atoi(bu_optarg); break;
+		case 's' : x = atoi(bu_optarg); y = atoi(bu_optarg); break;
 		default	: usage(); break;
 		}
 
-	if (optind >= ac) doit();
+	if (bu_optind >= ac) doit();
 	else usage();
 
 	return 0;

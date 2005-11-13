@@ -7,8 +7,13 @@ SUBDIRS = \
 documentationdir = $(BRLCAD_DATA)/doc
 
 documentation_DATA = \
+	README.AIX \
+	README.BSD \
 	README.IRIX \
+	README.Linux \
 	README.MacOSX \
+	README.Solaris \
+	README.Windows \
 	anim.txt \
 	benchmark.tr \
 	cvs.txt \

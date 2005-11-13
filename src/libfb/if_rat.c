@@ -162,7 +162,7 @@ rat_open(FBIO *ifp, char *file, int width, int height)
 
 _LOCAL_ int
 rat_close(FBIO *ifp)
-    	     
+
 /*	_ r a t _ c l o s e ( )
 	Issue quit command, and close connection.
  */
@@ -180,8 +180,8 @@ rat_close(FBIO *ifp)
 
 _LOCAL_ int
 rat_clear(FBIO *ifp, RGBpixel (*pp))
-    	     
-        	    
+
+
 /*	_ r a t _ c l e a r ( )
 	Clear the Raster Tech. to the background color.
  */
@@ -198,10 +198,10 @@ rat_clear(FBIO *ifp, RGBpixel (*pp))
 
 _LOCAL_ int
 rat_read(FBIO *ifp, int x, int y, RGBpixel (*pixelp), int count)
-    	     
-   	     
-        	        
-   	      
+
+
+
+
 /*	_ r a t _ r e a d ( )
  */
 {
@@ -231,7 +231,7 @@ rat_read(FBIO *ifp, int x, int y, RGBpixel (*pixelp), int count)
 			if( bytes > MAX_RAT_READ )
 				load = MAX_RAT_READ;
 			else
-				load = bytes;		
+				load = bytes;
 			if( read( ifp->if_fd, p, load ) < load )
 				{
 				(void) fprintf( stderr,
@@ -266,7 +266,7 @@ rat_read(FBIO *ifp, int x, int y, RGBpixel (*pixelp), int count)
 			if( bytes > MAX_RAT_READ )
 				load = MAX_RAT_READ;
 			else
-				load = bytes;		
+				load = bytes;
 			{ register int	ii;
 			for( ii = 0; ii < load; ii++ )
 				p[ii] = 100;
@@ -307,7 +307,7 @@ rat_read(FBIO *ifp, int x, int y, RGBpixel (*pixelp), int count)
 			if( bytes > MAX_RAT_READ )
 				load = MAX_RAT_READ;
 			else
-				load = bytes;		
+				load = bytes;
 			if( read( ifp->if_fd, p, load ) < load )
 				{
 				(void) fprintf( stderr,
@@ -328,10 +328,10 @@ rat_read(FBIO *ifp, int x, int y, RGBpixel (*pixelp), int count)
 
 _LOCAL_ int
 rat_write(FBIO *ifp, int x, int y, RGBpixel (*pixelp), int count)
-    	     
-   	     
-        	        
-   	      
+
+
+
+
 /*	_ r a t _ w r i t e ( )
  */
 {
@@ -409,15 +409,15 @@ rat_rmap(FBIO *ifp, ColorMap *cmp)
 
 _LOCAL_ int
 rat_wmap(FBIO *ifp, ColorMap *cmp)
-    	     
-        	     
+
+
 /*	_ r a t _ w m a p ( )
 	Load the color map into the frame buffer.
  */
 {
 	{
 	register int	i;
-	
+
 	/* If cmp is NULL, write standard map.				*/
 	if( cmp == (ColorMap *) NULL )
 /*		if( ! lutrmp( 7, 0, 255, 0, 255 ) )       */
@@ -428,7 +428,7 @@ rat_wmap(FBIO *ifp, ColorMap *cmp)
 		{
 /*		for( i = 0; i < 256; i++ )
 			if( ! lut8(	i,
-					cmp->cm_red[i], 
+					cmp->cm_red[i],
 					cmp->cm_green[i],
 					cmp->cm_blue[i]
 					)
@@ -451,8 +451,8 @@ rat_view(FBIO *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
 
 _LOCAL_ int
 rat_window_set(FBIO *ifp, int x, int y)
-    	     
-   	     
+
+
 /*	_ r a t _ w i n d o w ( )
 	This routine takes advantage of the fact that there is only 1
 	scaling parameter available (equal scaling in x and y).
@@ -465,8 +465,8 @@ rat_window_set(FBIO *ifp, int x, int y)
 
 _LOCAL_ int
 rat_zoom_set(FBIO *ifp, int x, int y)
-    	     
-   	     
+
+
 /*	_ r a t _ z o o m ( )
 	 The Raster Tech does not scale independently in x and y.
 		Also addressing is the same in low and high res. so
@@ -492,9 +492,9 @@ _LOCAL_ int
 rat_cursor(FBIO *ifp, int mode, int x, int y)
 /*	Place cursor at image (pixel) coordinates x & y
  */
-    	     
-   	     
-   	     
+
+
+
 {
 	fb_sim_cursor(ifp, mode, x, y);
 /*	if(   !	cload( 5, x, y )  ||  ! xhair( 0, mode ) )
@@ -671,7 +671,7 @@ static int
 movabs(register int x, register int y)
 {
 	u_char	buff[8];
-	
+
 	Rat_Cvt( x, y );
 	buff[0] = 0x1;
 	buff[1] = (x>>8)&0x0FF;		/* high_x, low_x.	*/
@@ -772,7 +772,7 @@ readf(int func)
 	Rat_Write( "readf", buff );
 	return	1;
 	}
-	
+
 static int
 readvr(int vreg)
 {

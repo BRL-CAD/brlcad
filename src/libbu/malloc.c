@@ -41,7 +41,7 @@
  *  Author -
  *	Michael John Muuss
  *      Christopher Sean Morrison
- *  
+ *
  *  Source -
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
@@ -506,7 +506,7 @@ bu_realloc(register genptr_t ptr, unsigned int cnt, const char *str)
 
 /*
  *			B U _ P R M E M
- * 
+ *
  *  Print map of memory currently in use.
  */
 void
@@ -662,7 +662,7 @@ bu_dirname(const char *cp)
 
 /*
  *  			B U _ M A L L O C _ L E N _ R O U N D U P
- *  
+ *
  *  On systems with the CalTech malloc(), the amount of storage
  *  ACTUALLY ALLOCATED is the amount requested rounded UP to the
  *  nearest power of two.  For structures which are acquired and
@@ -672,7 +672,7 @@ bu_dirname(const char *cp)
  *  Here, we round up a byte size to the nearest power of two,
  *  leaving off the malloc header, so as to ask for storage without
  *  wasting any.
- *  
+ *
  *  On systems with the traditional malloc(), this strategy will just
  *  consume the memory in somewhat larger chunks, but overall little
  *  unused memory will be consumed.

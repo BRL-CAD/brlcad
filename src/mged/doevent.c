@@ -49,10 +49,10 @@
 #  include "tcl.h"
 #endif
 
-
 #if HAVE_GL_DEVICE_H
 #  include <gl/device.h>
 #endif
+
 
 #include "machine.h"
 #include "bu.h"
@@ -99,7 +99,7 @@ static unsigned char bmap[IR_BUTTONS] = {
  *  Labels for knobs in help mode.
  */
 static char	*kn1_knobs[] = {
-	/* 0 */ "adc <1",	/* 1 */ "zoom", 
+	/* 0 */ "adc <1",	/* 1 */ "zoom",
 	/* 2 */ "adc <2",	/* 3 */ "adc dist",
 	/* 4 */ "adc y",	/* 5 */ "y slew",
 	/* 6 */ "adc x",	/* 7 */	"x slew"

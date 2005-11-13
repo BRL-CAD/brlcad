@@ -23,12 +23,12 @@
  *
  *  Author -
  *	Phil Dykstra
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5066
- *  
+ *
  */
 #ifndef lint
 static const char RCSid[] = "@(#)$Header$ (BRL)";
@@ -39,11 +39,12 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif
-#include <stdlib.h>                                                                                                                                                                            
+#include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
 
 #include "machine.h"
+#include "bu.h"
 #include "fb.h"
 #include "spm.h"
 
@@ -70,26 +71,26 @@ get_args(int argc, register char **argv)
 {
 	register int c;
 
-	while ( (c = getopt( argc, argv, "hF:sS:W:N:" )) != EOF )  {
+	while ( (c = bu_getopt( argc, argv, "hF:sS:W:N:" )) != EOF )  {
 		switch( c )  {
 		case 'h':
 			/* high-res */
 			scr_height = scr_width = 1024;
 			break;
 		case 'F':
-			framebuffer = optarg;
+			framebuffer = bu_optarg;
 			break;
 		case 's':
 			square = 1;
 			break;
 		case 'S':
-			scr_height = scr_width = atoi(optarg);
+			scr_height = scr_width = atoi(bu_optarg);
 			break;
 		case 'W':
-			scr_width = atoi(optarg);
+			scr_width = atoi(bu_optarg);
 			break;
 		case 'N':
-			scr_height = atoi(optarg);
+			scr_height = atoi(bu_optarg);
 			break;
 
 		default:		/* '?' */
@@ -97,19 +98,19 @@ get_args(int argc, register char **argv)
 		}
 	}
 
-	if( optind >= argc )
+	if( bu_optind >= argc )
 		return(0);		/* missing positional arg */
-	vsize = atoi( argv[optind++] );
+	vsize = atoi( argv[bu_optind++] );
 
-	if( optind >= argc )  {
+	if( bu_optind >= argc )  {
 		if( isatty(fileno(stdin)) )
 			return(0);
 		file_name = "-";
 	} else {
-		file_name = argv[optind];
+		file_name = argv[bu_optind];
 	}
 
-	if ( argc > ++optind )
+	if ( argc > ++bu_optind )
 		(void)fprintf( stderr, "spm-fb: excess argument(s) ignored\n" );
 
 	return(1);		/* OK */

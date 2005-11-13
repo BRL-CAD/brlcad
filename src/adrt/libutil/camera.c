@@ -61,7 +61,7 @@ int get_nprocs(void);
 
 #ifndef HAVE_SYS_SYSINFO_H
 #ifdef HAVE_SYS_SYSCTL_H
-int get_nprocs() {   
+int get_nprocs() {
   int mib[2], maxproc;
   size_t len;
 
@@ -70,7 +70,7 @@ int get_nprocs() {
   len = sizeof(maxproc);
   sysctl(mib, 2, &maxproc, &len, NULL, 0);
   return maxproc;
-}  
+}
 #else
 int get_nprocs() {
   return 1;
@@ -79,11 +79,7 @@ int get_nprocs() {
 #endif
 
 
-void	util_camera_init(util_camera_t *camera, int threads);
-void	util_camera_free(util_camera_t *camera);
-void	util_camera_prep(util_camera_t *camera, common_db_t *db);
-void*	util_camera_render_thread(void *ptr);
-void	util_camera_render(util_camera_t *camera, common_db_t *db, tie_t *tie, void *data, int size, void **res_buf, int *res_len);
+void* util_camera_render_thread(void *ptr);
 
 
 void util_camera_init(util_camera_t *camera, int threads) {
@@ -340,11 +336,11 @@ void util_camera_prep(util_camera_t *camera, common_db_t *db) {
 
 
 void* util_camera_render_thread(void *ptr) {
-  util_camera_thread_data_t	*td;
-  int				d, i, n, res_ind, compute;
-  TIE_3				pixel, accum, v;
-  tie_ray_t			ray;
-  tfloat			view_inv;
+  util_camera_thread_data_t *td;
+  int d, n, res_ind, scanline, v_scanline;
+  TIE_3 pixel, accum, v1, v2;
+  tie_ray_t ray;
+  tfloat view_inv;
 
 
   td = (util_camera_thread_data_t *)ptr;
@@ -352,22 +348,46 @@ void* util_camera_render_thread(void *ptr) {
 
 
   res_ind = 0;
-  for(i = td->work.orig_y; i < td->work.orig_y + td->work.size_y; i++) {	/* row, vertical */
+  /*  for(i = td->work.orig_y; i < td->work.orig_y + td->work.size_y; i++) { */	/* row, vertical */
+  while(1) {
     /* Determine if this scanline should be computed by this thread */
     pthread_mutex_lock(&td->mut);
-    compute = td->scan_map[i-td->work.orig_y];
-    td->scan_map[i-td->work.orig_y] = 0;
+    if(*td->scanline == td->work.size_y) {
+      pthread_mutex_unlock(&td->mut);
+      return(0);
+    } else {
+      scanline = *td->scanline;
+      (*td->scanline)++;
+    }
     pthread_mutex_unlock(&td->mut);
 
-    if(compute) {
-      for(n = td->work.orig_x; n < td->work.orig_x + td->work.size_x; n++) {	/* scanline, horizontal, each pixel */
+    v_scanline = scanline + td->work.orig_y;
+    if(td->work.format == COMMON_BIT_DEPTH_24) {
+      res_ind = 3*scanline*td->work.size_x;
+    } else if(td->work.format == COMMON_BIT_DEPTH_128) {
+      res_ind = 4*scanline*td->work.size_x;
+    }
 
-        accum.v[0] = accum.v[1] = accum.v[2] = 0;
-        for(d = 0; d < td->camera->view_num; d++) {	/* depth of view samples */
-          math_vec_mul_scalar(v, td->camera->view_list[d].step_x, n);
-          math_vec_add(ray.dir, td->camera->view_list[d].top_l, v);
-          math_vec_mul_scalar(v, td->camera->view_list[d].step_y, i);
-          math_vec_add(ray.dir, ray.dir, v);
+
+    /* optimization if there is no depth of field being applied */
+    if(td->camera->view_num == 1) {
+      math_vec_mul_scalar(v1, td->camera->view_list[0].step_y, v_scanline);
+      math_vec_add(v1, v1, td->camera->view_list[0].top_l);
+    }
+
+
+    /* scanline, horizontal, each pixel */
+    for(n = td->work.orig_x; n < td->work.orig_x + td->work.size_x; n++) {
+
+      /* depth of view samples */
+      if(td->camera->view_num > 1) {
+        math_vec_set(accum, 0, 0, 0);
+
+        for(d = 0; d < td->camera->view_num; d++) {
+          math_vec_mul_scalar(ray.dir, td->camera->view_list[d].step_y, v_scanline);
+          math_vec_add(ray.dir, ray.dir, td->camera->view_list[d].top_l);
+          math_vec_mul_scalar(v1, td->camera->view_list[d].step_x, n);
+          math_vec_add(ray.dir, ray.dir, v1);
 
           math_vec_set(pixel, 0, 0, 0);
 
@@ -383,40 +403,43 @@ void* util_camera_render_thread(void *ptr) {
 
         /* Find Mean value of all views */
         math_vec_mul_scalar(pixel, accum, view_inv);
+      } else {
+        math_vec_mul_scalar(v2, td->camera->view_list[0].step_x, n);
+        math_vec_add(ray.dir, v1, v2);
 
-        if(td->work.format == COMMON_BIT_DEPTH_24) {
-          unsigned char rgb_24[3];
+        math_vec_set(pixel, 0, 0, 0);
 
-          if(pixel.v[0] > 1) pixel.v[0] = 1;
-          if(pixel.v[1] > 1) pixel.v[1] = 1;
-          if(pixel.v[2] > 1) pixel.v[2] = 1;
-          rgb_24[0] = (unsigned char)(255 * pixel.v[0]);
-          rgb_24[1] = (unsigned char)(255 * pixel.v[1]);
-          rgb_24[2] = (unsigned char)(255 * pixel.v[2]);
+        ray.pos = td->camera->view_list[0].pos;
+        ray.depth = 0;
+        math_vec_unitize(ray.dir);
 
-          /* Pack pixel into result buffer */
-          memcpy(&((char *)(td->res_buf))[res_ind], rgb_24, 3);
-          res_ind += 3;
-        } else if(td->work.format == COMMON_BIT_DEPTH_128) {
-          tfloat rgb_128[4];
+        /* Compute pixel value using this ray */
+        td->db->env.render.work(&td->db->env.render, td->tie, &ray, &pixel);
+      }
 
-          rgb_128[0] = pixel.v[0];
-          rgb_128[1] = pixel.v[1];
-          rgb_128[2] = pixel.v[2];
-          rgb_128[3] = 1.0;
 
-          memcpy(&((char *)(td->res_buf))[res_ind], rgb_128, 4*sizeof(tfloat));
-          res_ind += 4*sizeof(tfloat);
-        }
+      if(td->work.format == COMMON_BIT_DEPTH_24) {
+        if(pixel.v[0] > 1) pixel.v[0] = 1;
+        if(pixel.v[1] > 1) pixel.v[1] = 1;
+        if(pixel.v[2] > 1) pixel.v[2] = 1;
+        ((char *)(td->res_buf))[res_ind+0] = (unsigned char)(255 * pixel.v[0]);
+        ((char *)(td->res_buf))[res_ind+1] = (unsigned char)(255 * pixel.v[1]);
+        ((char *)(td->res_buf))[res_ind+2] = (unsigned char)(255 * pixel.v[2]);
+        res_ind += 3;
+      } else if(td->work.format == COMMON_BIT_DEPTH_128) {
+        tfloat alpha;
+
+        alpha = 1.0;
+
+        ((tfloat *)(td->res_buf))[res_ind + 0] = pixel.v[0];
+        ((tfloat *)(td->res_buf))[res_ind + 1] = pixel.v[1];
+        ((tfloat *)(td->res_buf))[res_ind + 2] = pixel.v[2];
+        ((tfloat *)(td->res_buf))[res_ind + 3] = alpha;
+
+        res_ind += 4;
+      }
 /*          printf("Pixel: [%d, %d, %d]\n", rgb[0], rgb[1], rgb[2]); */
 
-      }
-    } else {
-      if(td->work.format == COMMON_BIT_DEPTH_24) {
-        res_ind += 3*td->work.size_x;
-      } else if(td->work.format == COMMON_BIT_DEPTH_128) {
-        res_ind += 4*sizeof(tfloat)*td->work.size_x;
-      }
     }
   }
 
@@ -424,12 +447,12 @@ void* util_camera_render_thread(void *ptr) {
 }
 
 
-void util_camera_render(util_camera_t *camera, common_db_t *db, tie_t *tie, void *data, int size, void **res_buf, int *res_len) {
+void util_camera_render(util_camera_t *camera, common_db_t *db, tie_t *tie, void *data, unsigned int size, void **res_buf, unsigned int *res_len) {
   common_work_t work;
   util_camera_thread_data_t td;
   unsigned char *scan_map;
   TIE_3 vec;
-  int i;
+  unsigned int i, scanline;
 
 
   /* Format incoming data into a work structure */
@@ -443,10 +466,6 @@ void util_camera_render(util_camera_t *camera, common_db_t *db, tie_t *tie, void
     tienet_flip(&work.size_y, &work.size_y, sizeof(short));
     tienet_flip(&work.format, &work.format, sizeof(short));
   }
-
-  /* allocate memory for scanmap */
-  scan_map = (unsigned char *)malloc(work.size_y);
-  memset(scan_map, 1, work.size_y);
 
 
   if(work.format == COMMON_BIT_DEPTH_24) {
@@ -463,7 +482,8 @@ void util_camera_render(util_camera_t *camera, common_db_t *db, tie_t *tie, void
   td.db = db;
   td.work = work;
   td.res_buf = &((char *)*res_buf)[sizeof(common_work_t)];
-  td.scan_map = scan_map;
+  scanline = 0;
+  td.scanline = &scanline;
   pthread_mutex_init(&td.mut, 0);
 
   /* Launch Render threads */
@@ -476,6 +496,5 @@ void util_camera_render(util_camera_t *camera, common_db_t *db, tie_t *tie, void
     util_camera_render_thread(&td);
   }
 
-  free(scan_map);
   pthread_mutex_destroy(&td.mut);
 }

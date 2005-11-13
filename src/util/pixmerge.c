@@ -19,7 +19,7 @@
  * information.
  */
 /** @file pixmerge.c
- *  
+ *
  *  Given two streams of data, typically pix(5) or bw(5) images,
  *  generate an output stream of the same size, where the value of
  *  the output is determined by a formula involving the first
@@ -28,10 +28,10 @@
  *
  *  This routine operates on a pixel-by-pixel basis, and thus
  *  is independent of the resolution of the image.
- *  
+ *
  *  Author -
  *	Michael John Muuss
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
@@ -56,6 +56,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include "machine.h"
+#include "bu.h"
 
 
 static char	*f1_name;
@@ -92,7 +93,7 @@ get_args(int argc, register char **argv)
 {
 	register int c;
 
-	while ( (c = getopt( argc, argv, "glenw:C:c:" )) != EOF )  {
+	while ( (c = bu_getopt( argc, argv, "glenw:C:c:" )) != EOF )  {
 		switch( c )  {
 		case 'g':
 			wanted |= GT;
@@ -111,14 +112,14 @@ get_args(int argc, register char **argv)
 			seen_formula = 1;
 			break;
 		case 'w':
-			c = atoi(optarg);
+			c = atoi(bu_optarg);
 			if( c > 1 && c < sizeof(pconst) )
 				width = c;
 			break;
 		case 'C':
 		case 'c':	/* backword compatability */
 			{
-				register char *cp = optarg;
+				register char *cp = bu_optarg;
 				register unsigned char *conp = pconst;
 
 				/* premature null => atoi gives zeros */
@@ -135,10 +136,10 @@ get_args(int argc, register char **argv)
 		}
 	}
 
-	if( optind+2 > argc )
+	if( bu_optind+2 > argc )
 		return(0);
 
-	f1_name = argv[optind++];
+	f1_name = argv[bu_optind++];
 	if( strcmp( f1_name, "-" ) == 0 )
 		f1 = stdin;
 	else if( (f1 = fopen(f1_name, "r")) == NULL )  {
@@ -149,7 +150,7 @@ get_args(int argc, register char **argv)
 		return(0);
 	}
 
-	f2_name = argv[optind++];
+	f2_name = argv[bu_optind++];
 	if( strcmp( f2_name, "-" ) == 0 )
 		f2 = stdin;
 	else if( (f2 = fopen(f2_name, "r")) == NULL )  {
@@ -160,7 +161,7 @@ get_args(int argc, register char **argv)
 		return(0);
 	}
 
-	if ( argc > optind )
+	if ( argc > bu_optind )
 		(void)fprintf( stderr, "pixmerge: excess argument(s) ignored\n" );
 
 	return(1);		/* OK */

@@ -45,6 +45,7 @@ static char rcsid[] = "$Header$";
 rastorle()			/* Tag. */
 #endif
 
+#include <stdlib.h>
 #include <stdio.h>
 #include <rasterfile.h>
 #include <sysexits.h>
