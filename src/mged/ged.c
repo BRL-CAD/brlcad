@@ -609,7 +609,6 @@ main(int argc, char **argv)
 	    }
 	}
 #endif
-		mged_finish(1);
 
 	/* --- Now safe to process commands. --- */
 	if(interactive){
