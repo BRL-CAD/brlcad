@@ -580,7 +580,7 @@ main(int argc, char **argv)
 		bu_log( "Opened in READ ONLY mode\n" );
 	}
 
-#if defined(HAVE_GETENV) && defined (HAVE_PUTENV)
+#if 0 && defined(HAVE_GETENV) && defined (HAVE_PUTENV)
 	/* append our own bin dir to (the end of) our search path */
 	{
 	    struct bu_vls newpath;
