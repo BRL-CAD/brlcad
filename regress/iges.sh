@@ -17,10 +17,10 @@ kill box.s
 q
 EOF
 
-../src/conv/iges/g-iges -o iges_file.iges iges.g box.nmg 2>> iges.log> /dev/null
-../src/conv/iges/g-iges iges.g box.nmg > iges_stdout.iges 2>> iges.log
+../src/iges/g-iges -o iges_file.iges iges.g box.nmg 2>> iges.log> /dev/null
+../src/iges/g-iges iges.g box.nmg > iges_stdout.iges 2>> iges.log
 
-../src/conv/iges/iges-g -o iges_new.g -p iges_file.iges 2>> iges.log
+../src/iges/iges-g -o iges_new.g -p iges_file.iges 2>> iges.log
 
 if [ $? != 0 ] ; then
     /bin/echo g-iges/iges-g FAILED
@@ -30,7 +30,7 @@ else
 fi
 
 
-../src/conv/iges/iges-g -o iges_stdout_new.g -p iges_stdout.iges 2>> iges.log
+../src/iges/iges-g -o iges_stdout_new.g -p iges_stdout.iges 2>> iges.log
 
 if [ $? != 0 ] ; then
     /bin/echo g-iges/iges-g FAILED
