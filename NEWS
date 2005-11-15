@@ -20,7 +20,7 @@ to factilitate the generation of geometry models.  Collection
 techniques are recognized for polygonal plates, cylinders, spheres,
 point clouds, and more.
 
-* auto-locate mged external apps regardless of PATH - Sean Morrion
+* auto-locate mged external apps regardless of PATH - Sean Morrison
 * mged utilizes a local display if unspecified/unset - Sean Morrison
 * set default mged Escape key binding to reject - Sean Morrison
 * fixed 'benchmark' tool resource searching - Sean Morrison
