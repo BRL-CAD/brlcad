@@ -33,8 +33,6 @@
 	method drawTank {}
 	method buildTank {}
 	method buildTankXML {}
-	proc vectorAdd {u v}
-	proc vectorScale {u s}
     }
 
     protected {
@@ -2725,18 +2723,3 @@
     set zoneIdInitial $rid
     set zoneId $zoneIdInitial
 }
-
-######################## Class Methods ########################
-#
-::itcl::body TankWizardIA::vectorAdd {u v} {
-    return [list [expr {[lindex $u 0]+[lindex $v 0]}] \
-		 [expr {[lindex $u 1]+[lindex $v 1]}] \
-		 [expr {[lindex $u 2]+[lindex $v 2]}]]
-}
-
-::itcl::body TankWizardIA::vectorScale {u s} {
-    return [list [expr {[lindex $u 0] * $s}] \
-		 [expr {[lindex $u 1] * $s}] \
-		 [expr {[lindex $u 2] * $s}]]
-}
-
