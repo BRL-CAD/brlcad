@@ -112,6 +112,7 @@ namespace eval Archer {
 	method exit                {args}
 	method exportFg4	   {}
 	method exportStl	   {}
+	method exportVrml	   {}
 	method find                {args}
 	method hide                {args}
 	method g                   {args}
@@ -345,7 +346,7 @@ namespace eval Archer {
 	variable archerCommands { \
 	    adjust adjustNormals blast c cd clear comb compact concat \
             copy copyeval cp dbExpand delete draw E erase \
-	    erase_all ev exit exportFg4 exportStl find hide g group \
+	    erase_all ev exit exportFg4 exportStl exportVrml find hide g group \
             importFg4 importStl i importFg4Sections kill killall \
             killtree ls make_bb move mv mvall push put pwd \
             r report reverseNormals rm track unhide units vdraw whichid \
@@ -3960,6 +3961,9 @@ Popup Menu    Right or Ctrl-Left
     $itk_component(exportMenu) add command \
 	-label "STL Export..." \
 	-command [::itcl::code $this exportStl]
+    $itk_component(exportMenu) add command \
+	-label "VRML Export..." \
+	-command [::itcl::code $this exportVrml]
 
     # Populate File menu
     $itk_component(filemenu) add command \
@@ -4455,6 +4459,9 @@ Popup Menu    Right or Ctrl-Left
 		command exportStl \
 		    -label "STL Export..." \
 		    -helpstr "Export to STL"
+		command exportVrml \
+		    -label "VRML Export..." \
+		    -helpstr "Export to VRML"
 	    }
 	separator sep0
 #	command rt -label "Raytrace Control Panel..." \
@@ -4489,6 +4496,8 @@ Popup Menu    Right or Ctrl-Left
 	-command [::itcl::code $this exportFg4]
     $itk_component(menubar) menuconfigure .file.export.exportStl \
 	-command [::itcl::code $this exportStl]
+    $itk_component(menubar) menuconfigure .file.export.exportVrml \
+	-command [::itcl::code $this exportVrml]
 #    $itk_component(menubar) menuconfigure .file.rt \
 	-command [::itcl::code $this _ray_trace_panel] \
 	-state disabled
@@ -8193,7 +8202,7 @@ Popup Menu    Right or Ctrl-Left
 
     # alter color of subnodes
     _alter_treenode_children $element "-color" \
-	    [$itk_component(tree) query -color $element]
+	[$itk_component(tree) query -color $element]
 }
 
 ::itcl::body Archer::_fill_tree {{node ""}} {
@@ -9749,7 +9758,7 @@ Popup Menu    Right or Ctrl-Left
 
     set savePwd [pwd]
     cd /
-    adjustNormals $comp
+    eval sdbWrapper adjustNormals 0 1 1 0 $comp
     set renderMode [dbCmd how -b $comp]
     cd $savePwd
 
@@ -9764,7 +9773,7 @@ Popup Menu    Right or Ctrl-Left
 
     set savePwd [pwd]
     cd /
-    reverseNormals $comp
+    eval sdbWrapper reverseNormals 0 1 1 0 $comp
     set renderMode [dbCmd how -b $comp]
     cd $savePwd
 
@@ -10078,6 +10087,8 @@ Popup Menu    Right or Ctrl-Left
     dbCmd configure -primitiveLabels {}
     _refresh_tree
     SetNormalCursor
+
+    return $ret
 }
 
 ::itcl::body Archer::E {args} {
@@ -10214,6 +10225,35 @@ Popup Menu    Right or Ctrl-Left
     cd /
 
     $itk_component(sdb) exportStl $stlDir
+    cd $savePwd
+
+    SetNormalCursor
+}
+
+::itcl::body Archer::exportVrml {} {
+    if {![info exists itk_component(sdb)]} {
+	return
+    }
+
+    set typelist {
+	{"VRML" {".vrml"}}
+	{"All Files" {*}}
+    }
+
+    set target [tk_getSaveFile -parent $itk_interior \
+	    -title "Open VRML" -filetypes $typelist]
+
+    if {$target == ""} {
+	return
+    }
+
+    SetWaitCursor
+
+    # Make sure we're in the root directory/group
+    set savePwd [pwd]
+    cd /
+
+    $itk_component(sdb) exportVrml $target
     cd $savePwd
 
     SetNormalCursor
