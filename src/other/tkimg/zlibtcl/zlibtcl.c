@@ -104,7 +104,11 @@ Z_SafeInit (interp)
 #endif
       Tcl_Interp *interp; /* Interpreter to initialise. */
 {
+#ifdef _DEBUG
+    return Z_d_Init(interp);
+#else
     return Z_Init(interp);
+#endif
 }
 
 /*

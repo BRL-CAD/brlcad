@@ -110,7 +110,11 @@ Png_SafeInit (interp)
 #endif
       Tcl_Interp *interp; /* Interpreter to initialise. */
 {
+#ifdef _DEBUG
+    return Png_d_Init(interp);
+#else
     return Png_Init(interp);
+#endif
 }
 
 /*

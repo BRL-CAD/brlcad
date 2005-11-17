@@ -40,8 +40,13 @@
 # endif
 #endif
 
+#ifdef _DEBUG
+EXTERN int Tkimg_d_Init     _ANSI_ARGS_((Tcl_Interp *interp));
+EXTERN int Tkimg_d_SafeInit _ANSI_ARGS_((Tcl_Interp *interp));
+#else
 EXTERN int Tkimg_Init     _ANSI_ARGS_((Tcl_Interp *interp));
 EXTERN int Tkimg_SafeInit _ANSI_ARGS_((Tcl_Interp *interp));
+#endif
 
 #undef  TCL_STORAGE_CLASS
 #define TCL_STORAGE_CLASS DLLIMPORT
@@ -195,7 +200,11 @@ Tkimg_SafeInit (interp)
 #endif
       Tcl_Interp *interp; /* Interpreter to initialise. */
 {
+#ifdef _DEBUG
+    return Tkimg_d_Init(interp);
+#else
     return Tkimg_Init(interp);
+#endif
 }
 
 /*
