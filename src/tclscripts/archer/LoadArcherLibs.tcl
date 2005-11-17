@@ -1,9 +1,17 @@
+##
+#
+# Author(s):
+#    Bob Parker (SURVICE Engineering Company)
+#
+# Description:
+#    Code to load Archer's shared libraries.
+#
 
 proc LoadArcherLibs {dir} {
     global tcl_platform
 
     if {$tcl_platform(os) == "Windows NT"} {
-	if {[info exists $Archer::debug] && $Archer::debug} {
+	if {[info exists Archer::debug] && $Archer::debug} {
 	    load [file join $dir bin itcl33_d.dll]
 	    load [file join $dir bin itk33_d.dll]
 	    load [file join $dir bin BLT24_d.dll]
