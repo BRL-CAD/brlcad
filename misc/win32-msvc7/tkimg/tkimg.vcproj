@@ -91,8 +91,8 @@ copy &quot;$(TargetDir)&quot;tkimg.lib ..\..\..\lib
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="../../../include,../../../src/other/libtcl/generic,../../../src/other/libtcl/win,../../../src/other/libtk/generic,../../../src/other/libtk/win,../../../src/other/libtk/xlib,../../../src/other/tkimg/base"
-				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;BUILD_tkimg;TKIMG_VERSIKON=\&quot;1.3\&quot;;TKIMG_PACKAGE_NAME=\&quot;Tkimg\&quot;;TKIMG_PNG_PACKAGE_NAME=\&quot;Tkimgpng\&quot;;PNG_PACKAGE_NAME=\&quot;libpng\&quot;"
+				AdditionalIncludeDirectories="../../../include;../../../src/other/libtcl/generic;../../../src/other/libtcl/win;../../../src/other/libtk/generic;../../../src/other/libtk/win;../../../src/other/libtk/xlib;../../../src/other/tkimg/base;../../../src/other/tkimg/png;../../../src/other/tkimg/pngtcl;../../../src/other/tkimg/zlibtcl"
+				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;BUILD_tkimg;BUILD_pngtcl;BUILD_zlibtcl;TKIMG_VERSION=\&quot;1.3\&quot;;TKIMG_PACKAGE_NAME=\&quot;Tkimg\&quot;;TKIMG_PNG_PACKAGE_NAME=\&quot;Tkimgpng\&quot;;ZLIBTCL_PACKAGE_NAME=\&quot;Zlibtcl\&quot;;PNGTCL_PACKAGE_NAME=\&quot;Pngtcl\&quot;"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
 				UsePrecompiledHeader="2"
@@ -108,7 +108,7 @@ copy &quot;$(TargetDir)&quot;tkimg.lib ..\..\..\lib
 				Name="VCCustomBuildTool"/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="tcl84_d.lib tk84_d.lib tclstub_d.lib"
+				AdditionalDependencies="tcl84_d.lib tk84_d.lib tclstub84_d.lib libpng_d.lib libz_d.lib"
 				OutputFile="Debug/tkimg_d.dll"
 				LinkIncremental="1"
 				SuppressStartupBanner="TRUE"
@@ -183,7 +183,7 @@ copy &quot;$(TargetDir)&quot;tkimg_d.lib ..\..\..\lib
 						Name="VCCLCompilerTool"
 						Optimization="0"
 						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_MBCS;BUILD_tkimg;PACKAGE_NAME=\&quot;tkimg\&quot;;VERSION=\&quot;1.3\&quot;;TKIMG_VERSION=\&quot;1.3\&quot;;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_MBCS;BUILD_tkimg;PACKAGE_NAME=\&quot;tkimg\&quot;;VERSION=\&quot;1.3\&quot;;TKIMG_VERSION=\&quot;1.3\&quot;"
 						BasicRuntimeChecks="3"/>
 				</FileConfiguration>
 			</File>
@@ -202,7 +202,7 @@ copy &quot;$(TargetDir)&quot;tkimg_d.lib ..\..\..\lib
 						Name="VCCLCompilerTool"
 						Optimization="0"
 						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_MBCS;BUILD_tkimg;PACKAGE_NAME=\&quot;tkimg\&quot;;VERSION=\&quot;1.3\&quot;;TKIMG_VERSION=\&quot;1.3\&quot;;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_MBCS;BUILD_tkimg;PACKAGE_NAME=\&quot;tkimg\&quot;;VERSION=\&quot;1.3\&quot;;TKIMG_VERSION=\&quot;1.3\&quot;"
 						BasicRuntimeChecks="3"/>
 				</FileConfiguration>
 			</File>
@@ -221,7 +221,7 @@ copy &quot;$(TargetDir)&quot;tkimg_d.lib ..\..\..\lib
 						Name="VCCLCompilerTool"
 						Optimization="0"
 						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_MBCS;BUILD_tkimg;PACKAGE_NAME=\&quot;tkimg\&quot;;VERSION=\&quot;1.3\&quot;;TKIMG_VERSION=\&quot;1.3\&quot;;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_MBCS;BUILD_tkimg;PACKAGE_NAME=\&quot;tkimg\&quot;;VERSION=\&quot;1.3\&quot;;TKIMG_VERSION=\&quot;1.3\&quot;"
 						BasicRuntimeChecks="3"/>
 				</FileConfiguration>
 			</File>
@@ -240,7 +240,7 @@ copy &quot;$(TargetDir)&quot;tkimg_d.lib ..\..\..\lib
 						Name="VCCLCompilerTool"
 						Optimization="0"
 						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_MBCS;BUILD_tkimg;PACKAGE_NAME=\&quot;tkimg\&quot;;VERSION=\&quot;1.3\&quot;;TKIMG_VERSION=\&quot;1.3\&quot;;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_MBCS;BUILD_tkimg;PACKAGE_NAME=\&quot;tkimg\&quot;;VERSION=\&quot;1.3\&quot;;TKIMG_VERSION=\&quot;1.3\&quot;"
 						BasicRuntimeChecks="3"/>
 				</FileConfiguration>
 			</File>
@@ -259,7 +259,7 @@ copy &quot;$(TargetDir)&quot;tkimg_d.lib ..\..\..\lib
 						Name="VCCLCompilerTool"
 						Optimization="0"
 						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_MBCS;BUILD_tkimg;PACKAGE_NAME=\&quot;tkimg\&quot;;VERSION=\&quot;1.3\&quot;;TKIMG_VERSION=\&quot;1.3\&quot;;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_MBCS;BUILD_tkimg;PACKAGE_NAME=\&quot;tkimg\&quot;;VERSION=\&quot;1.3\&quot;;TKIMG_VERSION=\&quot;1.3\&quot;"
 						BasicRuntimeChecks="3"/>
 				</FileConfiguration>
 			</File>
@@ -278,7 +278,7 @@ copy &quot;$(TargetDir)&quot;tkimg_d.lib ..\..\..\lib
 						Name="VCCLCompilerTool"
 						Optimization="0"
 						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_MBCS;BUILD_tkimg;PACKAGE_NAME=\&quot;tkimg\&quot;;VERSION=\&quot;1.3\&quot;;TKIMG_VERSION=\&quot;1.3\&quot;;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_MBCS;BUILD_tkimg;PACKAGE_NAME=\&quot;tkimg\&quot;;VERSION=\&quot;1.3\&quot;;TKIMG_VERSION=\&quot;1.3\&quot;"
 						BasicRuntimeChecks="3"/>
 				</FileConfiguration>
 			</File>
