@@ -216,7 +216,7 @@ static int AddClause(interp, filterPtr, patternsStr, ostypesStr, isWindows)
     CONST char ** globList = NULL;
     int globCount;
     CONST char ** ostypeList = NULL;
-    int ostypeCount;
+    int ostypeCount = 0;
     FileFilterClause * clausePtr;
     int i;
     int code = TCL_OK;

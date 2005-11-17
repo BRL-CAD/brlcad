@@ -21,6 +21,13 @@
 
 #include "tkInt.h"
 
+#ifdef WIN32
+#ifdef _DEBUG
+#define _CRTDBG_MAP_ALLOC
+#include <crtdbg.h>
+#endif
+#endif
+
 /*
  * The following declarations refer to internal Tk routines.  These
  * interfaces are available for use, but are not supported.
@@ -91,6 +98,22 @@ WinMain(hInstance, hPrevInstance, lpszCmdLine, nCmdShow)
     int argc;
     char buffer[MAX_PATH+1];
     char *p;
+
+#ifdef WIN32
+#ifdef _DEBUG
+#if 1
+    _CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF |
+		   _CRTDBG_CHECK_EVERY_1024_DF);
+#else
+    _CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF |
+		   _CRTDBG_CHECK_EVERY_1024_DF |
+		   _CRTDBG_LEAK_CHECK_DF);
+#endif
+#if 0
+    _CrtSetBreakAlloc(123456);
+#endif
+#endif
+#endif
 
     Tcl_SetPanicProc(WishPanic);
 

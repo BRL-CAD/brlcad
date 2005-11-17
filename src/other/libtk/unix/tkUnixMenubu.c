@@ -76,7 +76,7 @@ TkpDisplayMenuButton(clientData)
 				 * compiler warning. */
     int y = 0;
     register Tk_Window tkwin = mbPtr->tkwin;
-    int width, height, fullWidth, fullHeight;
+    int width = 0, height = 0, fullWidth, fullHeight;
     int textXOffset, textYOffset;
     int imageWidth, imageHeight;
     int imageXOffset, imageYOffset; /* image information that will be used to
