@@ -129,6 +129,7 @@ itcl::class swidgets::Tree {
     itk_option define -nodeimage nodeImage Image ""
 
     itk_option define -querycmd queryCmd Command {}
+    itk_option define -selectmode selectMode Mode "single"
     itk_option define -selectcmd selectCmd Command {}
     itk_option define -dblselectcmd dblSelectCmd Command {}
     itk_option define -textmenuloadcommand textMenuLoadCommand Command {}
@@ -177,6 +178,7 @@ itcl::class swidgets::Tree {
 	method _bind_cross {event script}
 
 	method _call_selectcmd {tag}
+	method _call_multiselectcmd {type tag}
 	method _call_dblselectcmd {tag}
 
 	method _draw_node {node x y}
@@ -252,6 +254,10 @@ proc ::swidgets::tree {args} {
     _bind_image <Button-1> [list eval [::itcl::code $this _call_selectcmd]]
     _bind_text  <Double-Button-1> [list eval [::itcl::code $this _call_dblselectcmd]]
     _bind_image <Double-Button-1> [list eval [::itcl::code $this _call_dblselectcmd]]
+    _bind_text  <Control-Button-1> [list eval [::itcl::code $this _call_multiselectcmd "control"]]
+    _bind_image <Control-Button-1> [list eval [::itcl::code $this _call_multiselectcmd "control"]]
+    _bind_text  <Shift-Button-1> [list eval [::itcl::code $this _call_multiselectcmd "shift"]]
+    _bind_image <Shift-Button-1> [list eval [::itcl::code $this _call_multiselectcmd "shift"]]
 
     _bind_text  <Button-3> [list eval [::itcl::code $this _item_popup]]
     _bind_image <Button-3> [list eval [::itcl::code $this _item_popup]]
@@ -265,6 +271,15 @@ proc ::swidgets::tree {args} {
 #                        OPTIONS
 # ------------------------------------------------------------
 ::itcl::configbody swidgets::Tree::querycmd {}
+::itcl::configbody swidgets::Tree::selectmode {
+    switch -- $itk_option(-selectmode) {
+	"single" -
+	"multiple" {}
+	default {
+	    error "Tree::selectmode option must be 'single' or 'multiple'."
+	}
+    }
+}
 ::itcl::configbody swidgets::Tree::selectcmd {}
 ::itcl::configbody swidgets::Tree::dblselectcmd {}
 ::itcl::configbody swidgets::Tree::textmenuloadcommand {}
@@ -347,6 +362,7 @@ proc ::swidgets::tree {args} {
     }
     set inSelectCmd 1
 
+    selection clear
     selection set $tag
 
     # execute user defined select command
@@ -358,6 +374,24 @@ proc ::swidgets::tree {args} {
 	uplevel #0 $cmd
 
 	#eval $itk_option(-selectcmd)
+    }
+
+    set inSelectCmd 0
+}
+
+::itcl::body swidgets::Tree::_call_multiselectcmd {type tag} {
+    if {$inSelectCmd} {
+	return
+    }
+    set inSelectCmd 1
+
+    switch -- $type {
+	"control" {
+	    selection set $tag
+	}
+	"shift" {
+	    selection to $tag
+	}
     }
 
     set inSelectCmd 0
@@ -546,6 +580,8 @@ proc ::swidgets::tree {args} {
 	    set saveFill ""
 	    set selectBox ""
 	}
+    } else {
+	set saveFill ""
     }
 }
 
@@ -685,86 +721,159 @@ proc ::swidgets::tree {args} {
 }
 
 ::itcl::body swidgets::Tree::selection {cmd {node ""}} {
-    if {$selectBox == ""} {
-	# Create the selection box
-	set selectBox [$itk_component(canvas) create rectangle -10 -10 -10 -10 \
-			   -tags selectBox \
-			   -fill $itk_option(-foreground) \
-			   -outline $itk_option(-foreground)]
-    }
-
     switch -- $cmd {
 	set {
 	    if {$node == ""} {
 		return
 	    }
-
-	    set oldSelNode $selnode
-
+	    
 	    if {[string first "n:" $node] == -1} {
-		set selnode "n:$node"
-	    } else {
-		set selnode $node
+		set node "n:$node"
 	    }
 
-	    if {$oldSelNode != $selnode} {
-		# Unhighlight oldSelNode
-		if {$oldSelNode != {}} {
-		    if {$saveFill == ""} {
-			set fill $itk_option(-foreground)
-		    } else {
-			set fill $saveFill
-		    }
-		    $itk_component(canvas) itemconfigure $oldSelNode\
-			-fill $fill
+	    # clear selection list if in single select mode
+	    if {$itk_option(-selectmode) == "single"} {
+		selection clear
+	    }
+
+	    set snode [lindex [split $node :] 1]
+	    set color [$snode get -color]
+
+	    if {$selnode != {}} {
+		# check to see if node is already in select list ...
+		# if so, then remove ... if not add it
+		if [selection includes $node] {
+		    selection remove $node
+		    return
+		} else {
+		    # add to list
+		    lappend selnode $node
+		    lappend saveFill $color
 		}
-
-		# Save the fill color
-		set saveFill [$itk_component(canvas) itemcget $selnode -fill]
+	    } else {
+		# add to list
+		set selnode $node
+		set saveFill $color
 	    }
 
-	    # Save the fill color
-	    if {$saveFill == ""} {
-		set saveFill [$itk_component(canvas) itemcget $selnode -fill]
-	    }
+
+	    # deal with drawing selection box
+
+	    # Create the selection box
+	    set selectBox [$itk_component(canvas) create rectangle -10 -10 -10 -10 \
+		    -tags selectBox_$node \
+		    -fill $itk_option(-foreground) \
+		    -outline $itk_option(-foreground)]
+
 
 	    # Highlight selnode
-	    set coords [$itk_component(canvas) bbox $selnode]
-	    eval $itk_component(canvas) coords selectBox $coords
-	    $itk_component(canvas) itemconfigure $selnode \
+	    set coords [$itk_component(canvas) bbox $node]
+	    eval $itk_component(canvas) coords selectBox_$node $coords
+	    $itk_component(canvas) itemconfigure $node \
 		-fill $itk_option(-background)
-	    $itk_component(canvas) itemconfigure selectBox \
-		-fill $itk_option(-foreground) \
-		-outline $itk_option(-foreground)
-	    $itk_component(canvas) lower selectBox
+	    $itk_component(canvas) lower selectBox_$node
+	}
+	to {
+	    if {$node == ""} {
+		return
+	    }
+	    
+	    if {[string first "n:" $node] == -1} {
+		set node "n:$node"
+	    }
+    
+	    if {$itk_option(-selectmode) == "single" ||
+	    $selnode == {}} {
+		selection set $node
+		return
+	    }
+
+	    # getting bounding boxes of start and end stuff
+	    set start [lindex $selnode end]
+	    set startbox [$itk_component(canvas) bbox $start]
+	    set endbox [$itk_component(canvas) bbox $node]
+
+	    # get the biggest bounding box possible
+	    set coords ""
+	    if {[lindex $startbox 0] < [lindex $endbox 0]} {
+		lappend coords [lindex $startbox 0]
+	    } else {
+		lappend coords [lindex $endbox 0]
+	    }
+	    if {[lindex $startbox 1] < [lindex $endbox 1]} {
+		lappend coords [lindex $startbox 1]
+	    } else {
+		lappend coords [lindex $endbox 1]
+	    }
+	    if {[lindex $startbox 2] > [lindex $endbox 2]} {
+		lappend coords [lindex $startbox 2]
+	    } else {
+		lappend coords [lindex $endbox 2]
+	    }
+	    if {[lindex $startbox 3] > [lindex $endbox 3]} {
+		lappend coords [lindex $startbox 3]
+	    } else {
+		lappend coords [lindex $endbox 3]
+	    }
+
+	    # clear the current selection and select the desired nodes
+	    selection clear
+	    foreach id [eval $itk_component(canvas) find overlapping $coords] {
+		set tnode [lindex [$itk_component(canvas) gettags $id] 1]
+		selection set $tnode
+	    }
+	}
+	remove {
+	    if {$node == ""} {
+		return
+	    }
+	    
+	    if {[string first "n:" $node] == -1} {
+		set node "n:$node"
+	    }
+    
+	    # remove from list
+	    set idx [lsearch -exact $selnode $node]
+	    if {$idx < 0} {return}
+
+	    if {[lindex $saveFill $idx] == ""} {
+		set fill $itk_option(-foreground)
+	    } else {
+		set fill [lindex $saveFill $idx]
+	    }
+
+	    set selnode [lreplace $selnode $idx $idx]
+	    set saveFill [lreplace $saveFill $idx $idx]
+	    if {$selnode == ""} {
+		set selnode {}
+		set saveFill ""
+	    }
+
+	    # remove hilight box
+	    $itk_component(canvas) delete selectBox_$node
+	    $itk_component(canvas) itemconfigure $node \
+		-fill $fill
 	}
 	clear {
 	    # Unhighlight selnode
 	    if {$selnode != {}} {
-		if {$saveFill == ""} {
-		    set fill $itk_option(-foreground)
-		} else {
-		    set fill $saveFill
+		foreach node $selnode {
+		    selection remove $node
 		}
-		$itk_component(canvas) itemconfigure $selnode\
-		    -fill $fill
 	    }
-
-	    $itk_component(canvas) itemconfigure selectBox \
-		-fill $itk_option(-background) \
-		-outline $itk_option(-background)
-	    $itk_component(canvas) lower selectBox
-
-	    set selnode {}
-	    set saveFill ""
 	}
 	get {
-	    return [lindex $selnode 0]
+	    return $selnode
 	}
 	includes {
 	    if {$node == ""} {
 		return
 	    }
+	    
+	    if {[string first "n:" $node] == -1} {
+		set node "n:$node"
+	    }
+    
 	    return [expr {[lsearch -exact $selnode $node] != -1}]
 	}
 	toggle -
@@ -773,12 +882,10 @@ proc ::swidgets::tree {args} {
 }
 
 ::itcl::body swidgets::Tree::toggle {node} {
-    if {[string first "n:" $node] == -1} {
-	set selnode "n:$node"
-    } else {
-	set selnode $node
-    }
-    selection set $selnode
+    # ensures only one selnode
+    selection clear
+    selection set $node
+
     set node [lindex [split $selnode ":"] 1]
 
     switch -- [$node open] {
