@@ -1598,7 +1598,7 @@
     set y2 [expr {$y1 + $vshown}]
 
     # This is lame (i.e. having to use "after idle ...")
-    after idle "$itk_component(vscroll) set $y1 $y2"
+    after idle "catch {$itk_component(vscroll) set $y1 $y2}"
 }
 
 ::itcl::body TableView::activateTraces {} {
