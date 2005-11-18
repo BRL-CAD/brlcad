@@ -541,7 +541,7 @@ if [ "x$reconfigure_manually" = "xyes" ] ; then
     $VERBOSE_ECHO "$aclocal_output"
 
     if [ ! $ret = 0 ] ; then
-	if [ ! "x`echo $aclocal_output | grep cache`" = "x" ] ; then
+	if [ ! "x`echo $aclocal_output | grep autom4te`" = "x" ] ; then
 	    # retry without an autom4te.cache directory if it exists
 
 	    if test -d autom4te.cache ; then
