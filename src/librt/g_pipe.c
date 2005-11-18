@@ -3651,9 +3651,11 @@ rt_pipe_ifree(struct rt_db_internal *ip)
 	pipe = (struct rt_pipe_internal*)ip->idb_ptr;
 	RT_PIPE_CK_MAGIC(pipe);
 
-	while( BU_LIST_WHILE( ptp, wdb_pipept, &pipe->pipe_segs_head ) )  {
+	if (pipe->pipe_segs_head.magic != 0) {
+	    while( BU_LIST_WHILE( ptp, wdb_pipept, &pipe->pipe_segs_head ) )  {
 		BU_LIST_DEQUEUE( &(ptp->l) );
 		bu_free( (char *)ptp, "wdb_pipept" );
+	    }
 	}
 	bu_free( ip->idb_ptr, "pipe ifree" );
 	ip->idb_ptr = GENPTR_NULL;
