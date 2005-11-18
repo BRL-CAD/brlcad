@@ -3423,6 +3423,9 @@ rt_pipe_export(struct bu_external *ep, const struct rt_db_internal *ip, double l
 	pip = (struct rt_pipe_internal *)ip->idb_ptr;
 	RT_PIPE_CK_MAGIC(pip);
 
+	if (pip->pipe_segs_head.magic == 0) {
+	    return -1; /* no segments provided, empty pipe is bogus */
+	}
 	headp = &pip->pipe_segs_head;
 
 	/* Count number of points */
@@ -3543,6 +3546,9 @@ rt_pipe_export5(struct bu_external *ep, const struct rt_db_internal *ip, double 
 	pip = (struct rt_pipe_internal *)ip->idb_ptr;
 	RT_PIPE_CK_MAGIC(pip);
 
+	if (pip->pipe_segs_head.magic == 0) {
+	    return -1; /* no segments provided, empty pipe is bogus */
+	}
 	headp = &pip->pipe_segs_head;
 
 	/* Count number of points */
