@@ -6,6 +6,7 @@ set pipe_number 0
 set arb_number 0
 set cyl_number 0
 set sph_number 0
+set point_number 0
 
 
 
@@ -106,8 +107,9 @@ proc cyls  {pts} {
 
 }
 
+
 #
-#	S P H
+#       S P H
 #
 #
 proc sph {pts} {
@@ -115,10 +117,31 @@ proc sph {pts} {
 
     # get an index for this primitive so we have a unique name
     while {[catch {db get sph$sph_number} v] == 0} {
-	incr sph_number
+        incr sph_number
     }
 
 
+
+}
+
+
+#
+#	P O I N T S
+#
+#
+proc points {pts} {
+    global point_number
+
+    # get an index for this primitive so we have a unique name
+    while {[catch {db get sph$point_number} v] == 0} {
+	incr point_number
+    }
+
+    set last [expr [llength $pts] - 1]
+    for {set i 0} {$i < $last} {incr i 3} {
+	eval "put point$point_number sph V { [lindex $pts $i] [lindex $pts [expr $i + 1]] [lindex $pts [expr $i + 2]] } A {1.0 0.0 0.0} B {0.0 1.0 0.0} C {0.0 0.0 1.0}"
+	incr point_number
+    }
 
 }
 
