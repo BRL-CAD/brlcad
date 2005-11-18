@@ -51,6 +51,23 @@ extern Tcl_Interp *twerp;
 #define PRINT_SCRIPT 1
 
 
+static int print_array(point_line_t **plta, int count) {
+    int i;
+    point_line_t *plt = NULL;
+    
+    for (i = 0; i < count; i++) {
+	plt = &(*plta)[i];
+	if (plt && plt->type) {
+	    printf("\t%s %d: (%f,%f,%f)\n", plt->type, plt->index, plt->val[X], plt->val[Y], plt->val[Z]);
+	} else {
+	    printf("\tNULL POINT\n");
+	}
+    }
+
+    return 1;
+}
+
+
 void process_value(point_line_t *plt, double value)
 {
     if (!plt) {
@@ -122,7 +139,7 @@ void process_point(point_line_t *plt) {
 }
 
 
-int condense_points(point_line_t **plta, int count, double tolerance) {
+int condense_points(point_line_t **plta, int count) {
     int i;
     point_line_t *plt = NULL;
     int valid_count = 0;
@@ -146,7 +163,10 @@ int condense_points(point_line_t **plta, int count, double tolerance) {
 	
     }
 
-    bu_log("valid points left are %d, deleted %d\n", valid_count, count - valid_count);
+#if PRINT_SCRIPT
+    bu_log("Valid points left are %d, started with %d\n", valid_count, count);
+#endif
+
     return valid_count;
 }
 
@@ -172,7 +192,6 @@ int delete_points(point_line_t **plta, int count, double tolerance) {
     }
 
     INITIALIZE_POINT_LINE_T(average_plt);
-
     previous_plt = &(*plta)[0];
 
     for (i=1; i < count; i++) {
@@ -187,7 +206,7 @@ int delete_points(point_line_t **plta, int count, double tolerance) {
 	    if (repeats >= 4) {
 		/* 5+ repeated values in a row */
 		repeat_counter = 1;
-		while (repeats > 0 && repeat_counter <= count) {
+		while (repeats >= 0 && repeat_counter <= count) {
 		    plt = &(*plta)[i-repeat_counter];
 		    if (plt && plt->type) {
 			/* zap */
@@ -201,7 +220,7 @@ int delete_points(point_line_t **plta, int count, double tolerance) {
 		}
 
 		/* we're not necessarily condensed, so search for the
-		 * first non-null point and delete it aas well.
+		 * first non-null point and delete it as well.
 		 */
 		plt = &(*plta)[i-repeat_counter];
 		while (!plt || !plt->type) {
@@ -220,8 +239,18 @@ int delete_points(point_line_t **plta, int count, double tolerance) {
 	previous_plt = plt;
     }
 
+#if PRINT_SCRIPT
+    bu_log("Found and removed %d invalid points\n", removed);
+#endif
+
+    bu_log("--- BEFORE ---\n");
+    print_array(plta, count);
+
     /* resort the list, put nulls at the end */
-    condense_points(plta, count, tolerance);
+    condense_points(plta, count);
+
+    bu_log("--- AFTER ---\n");
+    print_array(plta, count);
 
     return removed;
 }
@@ -247,7 +276,7 @@ void process_multi_group(point_line_t **plta, int count, double tolerance) {
     }
 
     /* remove points marked as bogus, 5-identical points in succession */
-    //    count = delete_points(plta, count, tolerance);
+    count = delete_points(plta, count, tolerance);
 
     /* isolate groups and pass them on to the group processing routine */
     for (i = 0; i < count; i++) {
@@ -294,12 +323,17 @@ void process_multi_group(point_line_t **plta, int count, double tolerance) {
 		marker = 0;
 		continue;
 	    } else {
-		/*		printf("process_group returned 0\n");*/
+		/* process_group is allowed to return non-zero if
+		   there are not enough points -- they get returned to
+		   the stack for processing again */
+		/*		printf("warning, process_group returned 0\n"); */
 	    }
 
 	    marker = 0;
 	}
 
+	/* FIXME: shouldn't just average to the average, later points
+	   get weighted too much.. */
 	if (DIST_PT_PT(prev_plt->val, plt->val) < tolerance) {
 	    /*	    printf("%d: CLOSE DISTANCE of %f\n", plt->index, DIST_PT_PT(prev_plt->val, plt->val));*/
 	    marker = points - 1;
@@ -331,18 +365,8 @@ int process_group(point_line_t **plta, int count) {
 
     bu_log("processing a group!\n");
 
-    /* count valid points and compress the array down */
-    for (i = 0; i < count; i++) {
-	plt = &(*plta)[i];
-
-	if (plt && plt->type) {
-	    if (valid_count != i) {
-		COPY_POINT_LINE_T((*plta)[valid_count], *plt);
-		INITIALIZE_POINT_LINE_T(*plt);
-	    }
-	    valid_count++;
-	}
-    }
+    /* resort the list, put nulls at the end */
+    valid_count = condense_points(plta, count);
 
     /* ignore insufficient counts */
     if (valid_count <= 2) {
@@ -359,6 +383,10 @@ int process_group(point_line_t **plta, int count) {
 	}
     }
 
+    /* FIXME: callbacks should really be registered in the lexer or
+       parser when a point-line of that particular type is
+       encountered
+    */
     switch((*plta)[0].code) {
 	case(PLATE):
 	    return create_plate(plta, valid_count);
@@ -380,25 +408,6 @@ int process_group(point_line_t **plta, int count) {
 
     printf("WARNING, unsupported point code encountered (%d)\n", (*plta)[0].code);
     return 0;
-}
-
-
-static int print_array(point_line_t **plta, int count) {
-    int i;
-    point_line_t *plt = NULL;
-    
-    printf("\tBEGIN %s GROUP\n", (*plta)[0].type);
-    for (i = 0; i < count; i++) {
-	plt = &(*plta)[i];
-	if (plt && plt->type) {
-	    printf("\t\t%s %d: (%f,%f,%f)\n", plt->type, plt->index, plt->val[X], plt->val[Y], plt->val[Z]);
-	} else {
-	    printf("\t\tBOGUS POINT FOUND??\n");
-	}
-    }
-    printf("\tEND %s GROUP\n", (*plta)[0].type);
-
-    return 1;
 }
 
 
