@@ -137,9 +137,9 @@ proc points {pts} {
 	incr point_number
     }
 
-    set last [expr [llength $pts] - 1]
-    for {set i 0} {$i < $last} {incr i 3} {
-	eval "put point$point_number sph V { [lindex $pts $i] [lindex $pts [expr $i + 1]] [lindex $pts [expr $i + 2]] } A {1.0 0.0 0.0} B {0.0 1.0 0.0} C {0.0 0.0 1.0}"
+    set last [llength $pts]
+    for {set i 0} {$i < $last} {incr i} {
+	eval "put point$point_number sph V { [lindex $pts $i] } A {0.5 0.0 0.0} B {0.0 0.5 0.0} C {0.0 0.0 0.5}"
 	incr point_number
     }
 
