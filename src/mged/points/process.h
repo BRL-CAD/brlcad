@@ -93,10 +93,10 @@ void process_type(point_line_t *plt, const char *type, int code);
 void process_point(point_line_t *plt);
 
 /**
- * remove nullified points, condensing the point array by collaping
+ * remove nullified points, condensing the point array by collapsing
  * the invalid points.
  */
-int condense_points(point_line_t **plta, int count, double tolerance);
+int condense_points(point_line_t **plta, int count);
 
 /**
  * remove points marked as "bogus".  this is conventionally done by
