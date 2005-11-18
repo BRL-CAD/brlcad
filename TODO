@@ -9,6 +9,8 @@ scratch pad for the developers to use for tracking development ideas.
 
 THESE SHOULD HAPPEN BEFORE THE NEXT RELEASE
 
+* autogen.sh cache dir corruption (remove cache dir regardless)
+
 * test and release
 
 
