@@ -343,7 +343,7 @@ void process_multi_group(point_line_t **plta, int count, double tolerance) {
 		continue;
 	    }
 
-	    if (process_group(&pltg, points - 1)) {
+	    if (process_group(&pltg, points)) {
 		bu_free((genptr_t)pltg, "end point_line_t subgroup");
 		pltg = NULL;
 		prev_plt = NULL;
@@ -378,7 +378,7 @@ void process_multi_group(point_line_t **plta, int count, double tolerance) {
     /* make sure we're not at the end of a list (i.e. no end marker,
        but we're at the end of this group */
     if (points > 0) {
-	if (process_group(&pltg, points - 1)) {
+	if (process_group(&pltg, points)) {
 	    bu_free((genptr_t)pltg, "end point_line_t subgroup");
 	    pltg = NULL;
 	    prev_plt = NULL;
@@ -441,6 +441,13 @@ int process_group(point_line_t **plta, int count) {
 	case(CYL):
 	    return create_cyl(plta, valid_count);
 	case(POINTS):
+#if 0
+    static int print_counter = 0;
+    if (print_counter == 0) {
+	bu_log("--- POINTS ---\n");
+	print_array(plta, count);
+    }
+#endif
 	    return create_points(plta, valid_count);
 	case(SYMMETRY):
 	    return create_points(plta, valid_count);
@@ -538,7 +545,7 @@ int create_cylinder(point_line_t **plta, int count) {
 	    bu_vls_printf(&vls, "{ %f %f %f } ", plt->val[X], plt->val[Y], plt->val[Z]);
 	}
     }
-    bu_vls_printf(&vls2, "cylinder { %S }", &vls);
+    bu_vls_printf(&vls2, "cyls { %S }", &vls);
 #if PRINT_SCRIPT
     fprintf(stderr, "%s\n", bu_vls_addr(&vls2));
 #endif
@@ -570,7 +577,7 @@ int create_cyl(point_line_t **plta, int count) {
 	    bu_vls_printf(&vls, "{ %f %f %f } ", plt->val[X], plt->val[Y], plt->val[Z]);
 	}
     }
-    bu_vls_printf(&vls2, "cyl { %S }", &vls);
+    bu_vls_printf(&vls2, "cylinder { %S }", &vls);
 #if PRINT_SCRIPT
     fprintf(stderr, "%s\n", bu_vls_addr(&vls2));
 #endif
@@ -633,7 +640,7 @@ int create_sphere(point_line_t **plta, int count) {
 	    bu_vls_printf(&vls, "{ %f %f %f } ", plt->val[X], plt->val[Y], plt->val[Z]);
 	}
     }
-    bu_vls_printf(&vls2, "sphere { %S }", &vls);
+    bu_vls_printf(&vls2, "sph { %S }", &vls);
 #if PRINT_SCRIPT
     fprintf(stderr, "%s\n", bu_vls_addr(&vls2));
 #endif
