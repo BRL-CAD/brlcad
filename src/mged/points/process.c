@@ -48,7 +48,7 @@ extern Tcl_Interp *twerp;
 
 #define TOL 2.0
 
-#define PRINT_SCRIPT 0
+#define PRINT_SCRIPT 1
 
 
 void process_value(point_line_t *plt, double value)
@@ -146,6 +146,7 @@ int condense_points(point_line_t **plta, int count, double tolerance) {
 	
     }
 
+    bu_log("valid points left are %d, deleted %d\n", valid_count, count - valid_count);
     return valid_count;
 }
 
@@ -171,7 +172,6 @@ int delete_points(point_line_t **plta, int count, double tolerance) {
     }
 
     INITIALIZE_POINT_LINE_T(average_plt);
-    INITIALIZE_POINT_LINE_T(*previous_plt);
 
     previous_plt = &(*plta)[0];
 
@@ -191,7 +191,9 @@ int delete_points(point_line_t **plta, int count, double tolerance) {
 		    plt = &(*plta)[i-repeat_counter];
 		    if (plt && plt->type) {
 			/* zap */
+#if PRINT_SCRIPT
 			bu_log("removed point: %d\n", plt->index);
+#endif
 			INITIALIZE_POINT_LINE_T(*plt);
 			repeats--;
 		    }
@@ -245,9 +247,9 @@ void process_multi_group(point_line_t **plta, int count, double tolerance) {
     }
 
     /* remove points marked as bogus, 5-identical points in succession */
-    count = delete_points(plta, count, tolerance);
+    //    count = delete_points(plta, count, tolerance);
 
-    /* condense triplicates and pass on to the group processing routine */
+    /* isolate groups and pass them on to the group processing routine */
     for (i = 0; i < count; i++) {
 	plt = &(*plta)[i];
 	if (!plt || !plt->type) {
@@ -327,6 +329,8 @@ int process_group(point_line_t **plta, int count) {
     } 
     plt = &(*plta)[0]; /* use first for reference */
 
+    bu_log("processing a group!\n");
+
     /* count valid points and compress the array down */
     for (i = 0; i < count; i++) {
 	plt = &(*plta)[i];
@@ -362,12 +366,16 @@ int process_group(point_line_t **plta, int count) {
 	    return create_arb(plta, valid_count);
 	case(CYLINDER):
 	    return create_cylinder(plta, valid_count);
+	case(CYL):
+	    return create_cyl(plta, valid_count);
 	case(POINTS):
 	    return create_points(plta, valid_count);
 	case(SYMMETRY):
 	    return create_points(plta, valid_count);
 	case(PIPE):
 	    return create_pipe(plta, valid_count);
+	case(SPHERE):
+	    return create_sphere(plta, valid_count);
     }
 
     printf("WARNING, unsupported point code encountered (%d)\n", (*plta)[0].code);
@@ -489,6 +497,37 @@ int create_cylinder(point_line_t **plta, int count) {
 
     return 1;
 }
+/* FIXME: not verified in the least bit */
+int create_cyl(point_line_t **plta, int count) {
+    int i;
+    point_line_t *plt = NULL;
+
+    struct bu_vls vls;
+    struct bu_vls vls2;
+
+    bu_vls_init(&vls);
+    bu_vls_init(&vls2);
+
+    for (i = 0; i < count; i++) {
+	plt = &(*plta)[i];
+	if (plt && plt->type) {
+	    bu_vls_printf(&vls, "{ %f %f %f } ", plt->val[X], plt->val[Y], plt->val[Z]);
+	}
+    }
+    bu_vls_printf(&vls2, "cyl { %S }", &vls);
+#if PRINT_SCRIPT
+    fprintf(stderr, "%s\n", bu_vls_addr(&vls2));
+#else
+    Tcl_Eval(twerp, bu_vls_addr(&vls2));
+    if (twerp->result[0] != '\0') {
+	bu_log("create_cyl failure: %s\n", twerp->result);
+    } else {
+	bu_log("create_cyl created\n");
+    }
+#endif
+
+    return 1;
+}
 int create_pipe(point_line_t **plta, int count) {
     int i;
     point_line_t *plt = NULL;
@@ -514,6 +553,37 @@ int create_pipe(point_line_t **plta, int count) {
 	bu_log("create_pipe failure: %s\n", twerp->result);
     } else {
 	bu_log("create_pipe created\n");
+    }
+#endif
+
+    return 1;
+}
+/* FIXME: takes a list of points, not triplets */
+int create_sphere(point_line_t **plta, int count) {
+    int i;
+    point_line_t *plt = NULL;
+
+    struct bu_vls vls;
+    struct bu_vls vls2;
+
+    bu_vls_init(&vls);
+    bu_vls_init(&vls2);
+
+    for (i = 0; i < count; i++) {
+	plt = &(*plta)[i];
+	if (plt && plt->type) {
+	    bu_vls_printf(&vls, "{ %f %f %f } ", plt->val[X], plt->val[Y], plt->val[Z]);
+	}
+    }
+    bu_vls_printf(&vls2, "sphere { %S }", &vls);
+#if PRINT_SCRIPT
+    fprintf(stderr, "%s\n", bu_vls_addr(&vls2));
+#else
+    Tcl_Eval(twerp, bu_vls_addr(&vls2));
+    if (twerp->result[0] != '\0') {
+	bu_log("create_cylinder failure: %s\n", twerp->result);
+    } else {
+	bu_log("create_cylinder created\n");
     }
 #endif
 

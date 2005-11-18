@@ -92,7 +92,7 @@ extern char linebuffer[];
 %token INT FLT
 
 /* geometry */
-%token PLATE ARB SYMMETRY POINTS CYLINDER PIPE
+%token PLATE ARB SYMMETRY POINTS CYL CYLINDER PIPE SPHERE
 
 %start file
 %%
@@ -154,7 +154,21 @@ cylinder_line: INT COMMA point COMMA CYLINDER eol
 	INITIALIZE_POINT_LINE_T(yylval);
     };
 
+cyl_line: INT COMMA point COMMA CYL eol
+    {
+	point_line_t *plt = &yylval;
+	process_point(plt);
+	INITIALIZE_POINT_LINE_T(yylval);
+    };
+
 pipe_line: INT COMMA point COMMA PIPE eol
+    {
+	point_line_t *plt = &yylval;
+	process_point(plt);
+	INITIALIZE_POINT_LINE_T(yylval);
+    };
+
+sphere_line: INT COMMA point COMMA SPHERE eol
     {
 	point_line_t *plt = &yylval;
 	process_point(plt);
@@ -173,7 +187,9 @@ file_top_level_element: NL
   | symmetry_line
   | points_line
   | cylinder_line
+  | cyl_line
   | pipe_line
+  | sphere_line
   ;
    
 file: 

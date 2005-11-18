@@ -158,10 +158,20 @@ COMMA	[,]
     process_type(&yylval, "CYLINDER", CYLINDER);
     COUNT(CYLINDER);
 }
+<LINE>"CYL" {
+    BEGIN(INITIAL);
+    process_type(&yylval, "CYL", CYL);
+    COUNT(CYL);
+}
 <LINE>"PIPE" {
     BEGIN(INITIAL);
     process_type(&yylval, "PIPE", PIPE);
     COUNT(PIPE);
+}
+<LINE>"SPHERE" {
+    BEGIN(INITIAL);
+    process_type(&yylval, "SPHERE", SPHERE);
+    COUNT(SPHERE);
 }
 
 %{
