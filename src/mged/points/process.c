@@ -46,7 +46,7 @@
 
 extern Tcl_Interp *twerp;
 
-#define TOL 1.2
+#define TOL 1.5
 
 #define PRINT_DEBUG 1
 #define PRINT_SCRIPT 1
@@ -312,23 +312,14 @@ void process_multi_group(point_line_t **plta, int count, double tolerance) {
 	    continue;
 	}
 
-	/* if this is the first point of a set, allocate and initialize */
+	/* if this is the first point of a group, allocate and initialize */
 	if (!prev_plt) {
 	    prev_plt = &(*plta)[i];
 	    pltg = (point_line_t *) bu_malloc(sizeof(point_line_t), "begin point_line_t subgroup");
 	    COPY_POINT_LINE_T(*pltg, *prev_plt);
-	    points++;
 	    marker = 0;
 	    continue;
 	}
-
-	/* should only hit the else, but allocate room for the current point regardless */
-	if (!pltg) {
-	    pltg = (point_line_t *) bu_malloc(sizeof(point_line_t), "begin point_line_t subgroup");
-	} else {
-	    pltg = (point_line_t *) bu_realloc(pltg, sizeof(point_line_t) * (points + 1), "add subgroup point_line_t");
-	}
-	COPY_POINT_LINE_T(pltg[points], *plt);
 
 	if (marker) {
 	    /* gobble up repeats points used as a marker, average new point */
@@ -337,22 +328,22 @@ void process_multi_group(point_line_t **plta, int count, double tolerance) {
 		prev_plt->val[Y] = (prev_plt->val[Y] + plt->val[Y]) / 2.0;
 		prev_plt->val[Z] = (prev_plt->val[Z] + plt->val[Z]) / 2.0;
 		INITIALIZE_POINT_LINE_T(*plt); /* poof */
-		points++;
 		continue;
 	    }
 
-	    if (process_group(&pltg, marker+1)) {
-		bu_free((genptr_t)pltg, "end point_line_t subgroup");
+	    if (process_group(&pltg, points+1)) {
+		bu_free((genptr_t)pltg, "end subgroup: point_line_t");
 		pltg = NULL;
 		prev_plt = NULL;
 		points = 0;
 		marker = 0;
+		--i;
 		continue;
 	    } else {
 		/* process_group is allowed to return non-zero if
 		   there are not enough points -- they get returned to
 		   the stack for processing again */
-		/*		printf("warning, process_group returned 0\n"); */
+		printf("warning, process_group returned 0\n"); 
 	    }
 
 	    marker = 0;
@@ -363,21 +354,30 @@ void process_multi_group(point_line_t **plta, int count, double tolerance) {
 	   get weighted too much.. */
 	if (DIST_PT_PT(prev_plt->val, plt->val) < tolerance) {
 	    /*	    printf("%d: CLOSE DISTANCE of %f\n", plt->index, DIST_PT_PT(prev_plt->val, plt->val));*/
-	    marker = points - 1;
+	    marker = points;
 	    (pltg[marker]).val[X] = (prev_plt->val[X] + plt->val[X]) / 2.0;
 	    (pltg[marker]).val[Y] = (prev_plt->val[Y] + plt->val[Y]) / 2.0;
 	    (pltg[marker]).val[Z] = (prev_plt->val[Z] + plt->val[Z]) / 2.0;
-	    INITIALIZE_POINT_LINE_T(pltg[points]); /* poof */
+	    continue;
 	}
 
-	prev_plt = plt;
+	if (!pltg) {
+	    printf("Blah! Error. Group array is null. Shouldn't be here!\n");
+	    return;
+	}
+	
+	pltg = (point_line_t *) bu_realloc(pltg, sizeof(point_line_t) * (points + 2), "add subgroup: point_line_t");
+
 	points++;
+	COPY_POINT_LINE_T(pltg[points], *plt);
+	prev_plt = plt;
     }
+    printf("i: %d, count: %d", i, count);
 
     /* make sure we're not at the end of a list (i.e. no end marker,
        but we're at the end of this group */
     if (points > 0) {
-	if (process_group(&pltg, points)) {
+	if (process_group(&pltg, points+1)) {
 	    bu_free((genptr_t)pltg, "end point_line_t subgroup");
 	    pltg = NULL;
 	    prev_plt = NULL;
