@@ -294,9 +294,7 @@ void process_multi_group(point_line_t **plta, int count, double tolerance) {
 #endif
 
     /* remove points marked as bogus, 5-identical points in succession */
-    printf("COUNT Before %d\n", count);
     count = delete_points(plta, count, tolerance);
-    printf("COUNT after %d\n", count);
 
 #if 0
     if (print_counter == 0) {
@@ -343,7 +341,7 @@ void process_multi_group(point_line_t **plta, int count, double tolerance) {
 		continue;
 	    }
 
-	    if (process_group(&pltg, points)) {
+	    if (process_group(&pltg, marker+1)) {
 		bu_free((genptr_t)pltg, "end point_line_t subgroup");
 		pltg = NULL;
 		prev_plt = NULL;
@@ -358,6 +356,7 @@ void process_multi_group(point_line_t **plta, int count, double tolerance) {
 	    }
 
 	    marker = 0;
+	    continue;
 	}
 
 	/* FIXME: shouldn't just average to the average, later points
