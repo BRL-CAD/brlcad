@@ -46,10 +46,11 @@
 
 extern Tcl_Interp *twerp;
 
-#define TOL 2.0
+#define TOL 1.2
 
+#define PRINT_DEBUG 1
 #define PRINT_SCRIPT 1
-
+#define RUN_SCRIPT 1
 
 static int print_array(point_line_t **plta, int count) {
     int i;
@@ -163,8 +164,10 @@ int condense_points(point_line_t **plta, int count) {
 	
     }
 
-#if PRINT_SCRIPT
-    bu_log("Valid points left are %d, started with %d\n", valid_count, count);
+#if PRINT_DEBUG
+    if (valid_count != count) {
+	bu_log("Started with %d points, condensed to %d points\n", count, valid_count);
+    }
 #endif
 
     return valid_count;
@@ -210,7 +213,7 @@ int delete_points(point_line_t **plta, int count, double tolerance) {
 		    plt = &(*plta)[i-repeat_counter];
 		    if (plt && plt->type) {
 			/* zap */
-#if PRINT_SCRIPT
+#if PRINT_DEBUG
 			bu_log("removed point: %d\n", plt->index);
 #endif
 			INITIALIZE_POINT_LINE_T(*plt);
@@ -239,20 +242,27 @@ int delete_points(point_line_t **plta, int count, double tolerance) {
 	previous_plt = plt;
     }
 
-#if PRINT_SCRIPT
-    bu_log("Found and removed %d invalid points\n", removed);
+#if PRINT_DEBUG
+    if (removed > 0) {
+	bu_log("Found and removed %d invalid points\n", removed);
+    }
 #endif
 
+
+#if 0
     bu_log("--- BEFORE ---\n");
     print_array(plta, count);
+#endif
 
     /* resort the list, put nulls at the end */
-    condense_points(plta, count);
+    count = condense_points(plta, count);
 
+#if 0
     bu_log("--- AFTER ---\n");
     print_array(plta, count);
+#endif
 
-    return removed;
+    return count;
 }
 
 
@@ -275,14 +285,32 @@ void process_multi_group(point_line_t **plta, int count, double tolerance) {
 	return;
     }
 
+#if 0
+    static int print_counter = 0;
+    if (print_counter == 0) {
+	bu_log("--- BEFORE ---\n");
+	print_array(plta, count);
+    }
+#endif
+
     /* remove points marked as bogus, 5-identical points in succession */
+    printf("COUNT Before %d\n", count);
     count = delete_points(plta, count, tolerance);
+    printf("COUNT after %d\n", count);
+
+#if 0
+    if (print_counter == 0) {
+	print_counter++;
+	bu_log("--- AFTER ---\n");
+	print_array(plta, count);
+    }
+#endif
 
     /* isolate groups and pass them on to the group processing routine */
     for (i = 0; i < count; i++) {
 	plt = &(*plta)[i];
 	if (!plt || !plt->type) {
-	    printf("WARNING: Unexpected NULL encountered while processing a point array\n");
+	    printf("WARNING: Unexpected NULL encountered while processing a point array (%d of %d)\n", i, count);
 	    continue;
 	}
 
@@ -346,6 +374,22 @@ void process_multi_group(point_line_t **plta, int count, double tolerance) {
 	prev_plt = plt;
 	points++;
     }
+
+    /* make sure we're not at the end of a list (i.e. no end marker,
+       but we're at the end of this group */
+    if (points > 0) {
+	if (process_group(&pltg, points - 1)) {
+	    bu_free((genptr_t)pltg, "end point_line_t subgroup");
+	    pltg = NULL;
+	    prev_plt = NULL;
+	    points = 0;
+	    marker = 0;
+	} else {
+	    /* this one shouldn't return zero, we're at the end of a multiblock */
+	    printf("ERROR, process_group returned 0\n");
+	}
+    }
+
 }
 
 
@@ -434,7 +478,8 @@ int create_plate(point_line_t **plta, int count) {
     bu_vls_printf(&vls2, "plate { %S }", &vls);
 #if PRINT_SCRIPT
     fprintf(stderr, "%s\n", bu_vls_addr(&vls2));
-#else
+#endif
+#if RUN_SCRIPT
     Tcl_Eval(twerp, bu_vls_addr(&vls2));
     if (twerp->result[0] != '\0') {
 	bu_log("create_plate failure: %s\n", twerp->result);
@@ -465,7 +510,8 @@ int create_arb(point_line_t **plta, int count) {
     bu_vls_printf(&vls2, "arb { %S }", &vls);
 #if PRINT_SCRIPT
     fprintf(stderr, "%s\n", bu_vls_addr(&vls2));
-#else
+#endif
+#if RUN_SCRIPT
     Tcl_Eval(twerp, bu_vls_addr(&vls2));
     if (twerp->result[0] != '\0') {
 	bu_log("create_arb failure: %s\n", twerp->result);
@@ -495,7 +541,8 @@ int create_cylinder(point_line_t **plta, int count) {
     bu_vls_printf(&vls2, "cylinder { %S }", &vls);
 #if PRINT_SCRIPT
     fprintf(stderr, "%s\n", bu_vls_addr(&vls2));
-#else
+#endif
+#if RUN_SCRIPT
     Tcl_Eval(twerp, bu_vls_addr(&vls2));
     if (twerp->result[0] != '\0') {
 	bu_log("create_cylinder failure: %s\n", twerp->result);
@@ -526,7 +573,8 @@ int create_cyl(point_line_t **plta, int count) {
     bu_vls_printf(&vls2, "cyl { %S }", &vls);
 #if PRINT_SCRIPT
     fprintf(stderr, "%s\n", bu_vls_addr(&vls2));
-#else
+#endif
+#if RUN_SCRIPT
     Tcl_Eval(twerp, bu_vls_addr(&vls2));
     if (twerp->result[0] != '\0') {
 	bu_log("create_cyl failure: %s\n", twerp->result);
@@ -556,7 +604,8 @@ int create_pipe(point_line_t **plta, int count) {
     bu_vls_printf(&vls2, "pipe { %S }", &vls);
 #if PRINT_SCRIPT
     fprintf(stderr, "%s\n", bu_vls_addr(&vls2));
-#else
+#endif
+#if RUN_SCRIPT
     Tcl_Eval(twerp, bu_vls_addr(&vls2));
     if (twerp->result[0] != '\0') {
 	bu_log("create_pipe failure: %s\n", twerp->result);
@@ -587,7 +636,8 @@ int create_sphere(point_line_t **plta, int count) {
     bu_vls_printf(&vls2, "sphere { %S }", &vls);
 #if PRINT_SCRIPT
     fprintf(stderr, "%s\n", bu_vls_addr(&vls2));
-#else
+#endif
+#if RUN_SCRIPT
     Tcl_Eval(twerp, bu_vls_addr(&vls2));
     if (twerp->result[0] != '\0') {
 	bu_log("create_cylinder failure: %s\n", twerp->result);
@@ -617,7 +667,8 @@ int create_points(point_line_t **plta, int count) {
     bu_vls_printf(&vls2, "points { %S }", &vls);
 #if PRINT_SCRIPT
     fprintf(stderr, "%s\n", bu_vls_addr(&vls2));
-#else
+#endif
+#if RUN_SCRIPT
     Tcl_Eval(twerp, bu_vls_addr(&vls2));
     if (twerp->result[0] != '\0') {
 	bu_log("create_points failure: %s\n", twerp->result);
