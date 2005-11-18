@@ -23,6 +23,12 @@ int parse_point_file(ClientData clientData, Tcl_Interp *interp, int argc, char *
     if (argc > 0) {
 	printf("Reading from %s\n", argv[0]);
 	yyin = fopen(argv[0], "r");
+	if (!yyin)
+	{
+	    perror("Unable to open file");
+	    return -1;
+	}
+	    
     } else {
 	printf("Reading from stdin\n");
 	yyin = stdin;
@@ -33,6 +39,11 @@ int parse_point_file(ClientData clientData, Tcl_Interp *interp, int argc, char *
 
     while (!feof(yyin)) {
 	yyparse();
+    }
+    
+    if (yyin)
+    {
+	fclose(yyin);
     }
 
     datapoints = 
@@ -53,6 +64,8 @@ int parse_point_file(ClientData clientData, Tcl_Interp *interp, int argc, char *
 
     printf("\n\tData points: %ld\n\tComments: %ld\n\tLines: %ld\n\tWords: %ld\n\tBytes: %ld\n\n", datapoints, count_get_token(COMMENT), get_lines(), get_words(), get_bytes());
 
+
+    
     return 0;
 }
 
