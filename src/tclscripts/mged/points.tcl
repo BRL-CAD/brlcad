@@ -205,6 +205,16 @@ proc pipe {pts} {
 	incr pipe_number
     }
 
+    set fd [open pipe$pipe_number.plasc w]
+    puts $fd "C 255 255 0"
+    set t "O"
+
+    foreach i $pts {
+	puts $fd "$t $i"
+	set t "Q"
+    }
+
+
     # find diameter and center of the pipe
     set idx [expr [llength $pts] - 1]
     
@@ -242,12 +252,17 @@ proc pipe {pts} {
 	    continue
 	}
 
-
+	
 
 	# curved line segment
 	set bend_center [lindex $l 0]
 	set bend_radius [lindex $l 1]
 	set bend_plane [lindex $l 2]
+
+	puts $fd "C 255 0 0"
+	puts $fd "V $a $bend_center"
+	puts $fd "V $b $bend_center"
+	puts $fd "V $c $bend_center"
 
 	puts "bend_center $bend_center"
 	puts "bend_radius $bend_radius"
@@ -311,13 +326,14 @@ proc pipe {pts} {
 	set bend_radius [lindex $l 1]
 	set bend_plane [lindex $l 2]
 
+	puts $fd "C 128 255 128"
+	puts $fd "V $a $bend_center"
+	puts $fd "V $b $bend_center"
+	puts $fd "V $c $bend_center"
+
 	puts "final bend_center $bend_center"
 	puts "final bend_radius $bend_radius"
 	puts "final bend_plane $bend_plane"
-
-
-
-
 
 
 	# Find the point for the pipe bend by projecting from A and C
@@ -337,14 +353,16 @@ proc pipe {pts} {
 	    #oops
 	    puts "ooops"
 	} else {
+	    puts $fd "C 255 64 255"
+	    puts $fd "V $a $pt"
+	    puts $fd "V $c $pt"
+
 	    lappend verts [list $pt [expr $bend_radius ]]
 	}
     }
 
 
     # add in the last point for completeness
-
-    
 
     lappend verts [list [vadd [lindex $pts 0] $center_vec] $dia]
 
@@ -360,6 +378,9 @@ proc pipe {pts} {
     }
 
     eval "$cmd"
+
+    close $fd
+    exec "asc-pl < pipe$pipe_number.plasc > pipe$pipe_nubmer.pl"
 
     incr pipe_number
 
