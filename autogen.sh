@@ -495,6 +495,16 @@ for dir in m4 ; do
 done
 
 
+#######################################
+# remove the autom4te.cache directory #
+#######################################
+if test -d autom4te.cache ; then
+    $VERBOSE_ECHO "Found an autom4te.cache directory, deleting it"
+    $VERBOSE_ECHO "rm -f autom4te.cache"
+    rm -rf autom4te.cache
+fi
+
+
 ############################################
 # prepare build via autoreconf or manually #
 ############################################
@@ -539,41 +549,6 @@ if [ "x$reconfigure_manually" = "xyes" ] ; then
     aclocal_output="`$ACLOCAL $SEARCH_DIRS 2>&1`"
     ret=$?
     $VERBOSE_ECHO "$aclocal_output"
-
-    if [ ! $ret = 0 ] ; then
-	if [ ! "x`echo $aclocal_output | grep autom4te`" = "x" ] ; then
-	    # retry without an autom4te.cache directory if it exists
-
-	    if test -d autom4te.cache ; then
-		if test -d autom4te.cache.backup ; then
-		    $ECHO "ERROR: $ACLOCAL failed"
-		    $VERBOSE_ECHO
-		    $VERBOSE_ECHO "Unable to retry aclocal without autom4te.cache"
-		    $VERBOSE_ECHO "There is an autom4te.cache.backup directory in the way"
-		    $VERBOSE_ECHO "Suggest running: rm -rf *cache*"
-		    exit 2
-		else
-		    $VERBOSE_ECHO "mv autom4te.cache autom4te.cache.backup"
-		    mv autom4te.cache autom4te.cache.backup
-		fi
-		$VERBOSE_ECHO "Retrying aclocal without the autom4te.cache directory"
-		$VERBOSE_ECHO "$ACLOCAL $SEARCH_DIRS"
-		aclocal_output="`$ACLOCAL $SEARCH_DIRS 2>&1`"
-		ret=$?
-		$VERBOSE_ECHO "$aclocal_output"
-
-		if [ ! $ret = 0 ] ; then
-		    # still did not work after we removed the backup, so restore it
-		    $VERBOSE_ECHO "mv autom4te.cache.backup autom4te.cache"
-		    mv autom4te.cache.backup autom4te.cache
-		else
-		    # worked after we removed the backup, so remove the backup
-		    $VERBOSE_ECHO "rm -rf autom4te.cache.backup"
-		    rm -rf autom4te.cache.backup
-		fi
-	    fi
-	fi
-    fi
 
     if [ ! $ret = 0 ] ; then $ECHO "ERROR: $ACLOCAL failed" && exit 2 ; fi
     if [ "x$HAVE_LIBTOOLIZE" = "xyes" ] ; then
@@ -620,40 +595,6 @@ if [ "x$reconfigure_manually" = "xyes" ] ; then
     autoconf_output="`$AUTOCONF -f 2>&1`"
     ret=$?
     $VERBOSE_ECHO "$autoconf_output"
-
-    if [ ! $ret = 0 ] ; then
- 	# retry without an autom4te.cache directory if it exists
-	if [ ! "x`echo $autoconf_output | grep autom4te`" = "x" ] ; then
-	    if test -d autom4te.cache ; then
-		if test -d autom4te.cache.backup ; then
-		    $ECHO "ERROR: $AUTOCONF failed"
-		    $VERBOSE_ECHO
-		    $VERBOSE_ECHO "Unable to retry autoconf without autom4te.cache"
-		    $VERBOSE_ECHO "There is an autom4te.cache.backup directory in the way"
-		    $VERBOSE_ECHO "Suggest running: rm -rf *cache*"
-		    exit 2
-		else
-		    $VERBOSE_ECHO "mv autom4te.cache autom4te.cache.backup"
-		    mv autom4te.cache autom4te.cache.backup
-		fi
-		$VERBOSE_ECHO "Retrying autoconf without the autom4te.cache directory"
-		$VERBOSE_ECHO "$AUTOCONF -f"
-		autoconf_output="`$AUTOCONF -f 2>&1`"
-		ret=$?
-		$VERBOSE_ECHO "$autoconf_output"
-
-		if [ ! $ret = 0 ] ; then
-		    # still did not work after we removed the backup, so restore it
-		    $VERBOSE_ECHO "mv autom4te.cache.backup autom4te.cache"
-		    mv autom4te.cache.backup autom4te.cache
-		else
-		    # worked after we removed the backup, so remove the backup
-		    $VERBOSE_ECHO "rm -rf autom4te.cache.backup"
-		    rm -rf autom4te.cache.backup
-		fi
-	    fi
-	fi
-    fi
 
     if [ ! $ret = 0 ] ; then
 	# retry without the -f and with backwards support for missing macros
