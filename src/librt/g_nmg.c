@@ -1,8 +1,26 @@
-#define DEBUG	0
+/*                         G _ N M G . C
+ * BRL-CAD
+ *
+ * Copyright (c) 2005 United States Government as represented by
+ * the U.S. Army Research Laboratory.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public License
+ * as published by the Free Software Foundation; either version 2 of
+ * the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this file; see the file named COPYING for more
+ * information.
+ */
 /** \addtogroup g */
-
 /*@{*/
-/** \file g_nmg.c
+/** @file g_nmg.c
  *	Intersect a ray with an NMG solid.
  *
  *  Authors -
@@ -1782,9 +1800,6 @@ rt_nmg_ialloc(long int **ptrs, struct nmg_exp_counts *ecnt, int *kind_counts)
 
 	subscript = 1;
 	for( kind = 0; kind < NMG_N_KINDS; kind++ )  {
-#if DEBUG
-bu_log("%d  %s\n", kind_counts[kind], rt_nmg_kind_names[kind] );
-#endif
 		if( kind == NMG_KIND_DOUBLE_ARRAY )  continue;
 		for( j = 0; j < kind_counts[kind]; j++ )  {
 			ecnt[subscript].kind = kind;
@@ -1974,11 +1989,7 @@ bu_log("%d  %s\n", kind_counts[kind], rt_nmg_kind_names[kind] );
 				ptrs[subscript] = (long *)0;
 				break;
 			}
-#if DEBUG
-bu_log("   disk_index=%d, kind=%s, ptr=x%x, final_index=%d\n",
-subscript, rt_nmg_kind_names[kind],
-ptrs[subscript], nmg_index_of_struct(ptrs[subscript]) );
-#endif
+
 			/* new_subscript unused on import except for printf()s */
 			ecnt[subscript].new_subscript = nmg_index_of_struct(ptrs[subscript]);
 			subscript++;
@@ -2022,9 +2033,6 @@ rt_nmg_i2alloc(struct nmg_exp_counts *ecnt, unsigned char *cp, int *kind_counts,
 
 	/* Should have found the first one now */
 	RT_CK_DISKMAGIC( cp + offset, DISK_DOUBLE_ARRAY_MAGIC );
-#if DEBUG
-bu_log("rt_nmg_i2alloc() first one at cp=x%x, offset=%d, subscript=%d\n", cp, offset, subscript );
-#endif
 	for( i=0; i < nkind; i++ )  {
 		int	ndouble;
 		RT_CK_DISKMAGIC( cp + offset, DISK_DOUBLE_ARRAY_MAGIC );
@@ -2089,9 +2097,6 @@ rt_nmg_import_internal(struct rt_db_internal *ip, const struct bu_external *ep, 
 		kind_counts[kind] = bu_glong( rp->nmg.N_structs+4*kind );
 		maxindex += kind_counts[kind];
 	}
-#if DEBUG
-	bu_log("import maxindex=%d\n", maxindex);
-#endif
 
 	/* Collect overall new subscripts, and structure-specific indices */
 	ecnt = (struct nmg_exp_counts *)bu_calloc( maxindex+3,
@@ -2216,9 +2221,6 @@ rt_nmg_export_internal(struct bu_external *ep, const struct rt_db_internal *ip, 
 	/* As a by-product, this fills in the ptrs[] array! */
 	bzero( (char *)&cntbuf, sizeof(cntbuf) );
 	ptrs = nmg_m_struct_count( &cntbuf, m );
-#if DEBUG
-	nmg_pr_struct_counts( &cntbuf, "Counts in rt_nmg_export" );
-#endif
 
 	/* Collect overall new subscripts, and structure-specific indices */
 	ecnt = (struct nmg_exp_counts *)bu_calloc( m->maxindex+1,
@@ -2305,16 +2307,8 @@ rt_nmg_export_internal(struct bu_external *ep, const struct rt_db_internal *ip, 
 	subscript += kind_counts[NMG_KIND_DOUBLE_ARRAY];
 
 	/* Sanity checking */
-#if DEBUG
-bu_log("Mapping of old index to new index, and kind\n");
-#endif
 	for( i=0; i < m->maxindex; i++ )  {
 		if( ptrs[i] == (long *)0 )  continue;
-#if DEBUG
-		bu_log(" %4d %4d %s (%d)\n",
-			i, ecnt[i].new_subscript,
-			rt_nmg_kind_names[ecnt[i].kind], ecnt[i].kind);
-#endif
 		if( nmg_index_of_struct(ptrs[i]) != i )  {
 			bu_log("***ERROR, ptrs[%d]->index = %d\n",
 				i, nmg_index_of_struct(ptrs[i]) );
@@ -2328,10 +2322,6 @@ bu_log("Mapping of old index to new index, and kind\n");
 
 	tot_size = 0;
 	for( i = 0; i < NMG_N_KINDS; i++ )  {
-#if DEBUG
-		bu_log("%d of kind %s (%d)\n",
-			kind_counts[i], rt_nmg_kind_names[i], i);
-#endif
 		if( kind_counts[i] <= 0 )  {
 			disk_arrays[i] = GENPTR_NULL;
 			continue;
