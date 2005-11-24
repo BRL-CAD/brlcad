@@ -83,53 +83,53 @@
 
 #include "common.h"
 
+/* for sqrt(), sin(), cos(), rint(), etc */
+#ifdef HAVE_MATH_H
+#  include <math.h>
+#endif
+
+/* for floating point tolerances and other math constants */
+#ifdef HAVE_FLOAT_H
+#  include <float.h>
+#endif
+
 __BEGIN_DECLS
 
 #ifndef M_PI
-
-# define M_E		2.7182818284590452354	/* e */
-# define M_LOG2E	1.4426950408889634074	/* log_2 e */
-# define M_LOG10E	0.43429448190325182765	/* log_10 e */
-# define M_LN2		0.69314718055994530942	/* log_e 2 */
-# define M_LN10		2.30258509299404568402	/* log_e 10 */
-# define M_PI		3.14159265358979323846	/* pi */
-# define M_PI_2		1.57079632679489661923	/* pi/2 */
-# define M_PI_4		0.78539816339744830962	/* pi/4 */
-# define M_1_PI		0.31830988618379067154	/* 1/pi */
-# define M_2_PI		0.63661977236758134308	/* 2/pi */
-# define M_2_SQRTPI	1.12837916709551257390	/* 2/sqrt(pi) */
-# define M_SQRT2	1.41421356237309504880	/* sqrt(2) */
-# define M_SQRT1_2	0.70710678118654752440	/* 1/sqrt(2) */
-# define M_SQRT2_DIV2   0.70710678118654752440  /* 1/sqrt(2) */
+#  define M_E		2.7182818284590452354	/* e */
+#  define M_LOG2E	1.4426950408889634074	/* log_2 e */
+#  define M_LOG10E	0.43429448190325182765	/* log_10 e */
+#  define M_LN2		0.69314718055994530942	/* log_e 2 */
+#  define M_LN10	2.30258509299404568402	/* log_e 10 */
+#  define M_PI		3.14159265358979323846	/* pi */
+#  define M_PI_2	1.57079632679489661923	/* pi/2 */
+#  define M_PI_4	0.78539816339744830962	/* pi/4 */
+#  define M_1_PI	0.31830988618379067154	/* 1/pi */
+#  define M_2_PI	0.63661977236758134308	/* 2/pi */
+#  define M_2_SQRTPI	1.12837916709551257390	/* 2/sqrt(pi) */
+#  define M_SQRT2	1.41421356237309504880	/* sqrt(2) */
+#  define M_SQRT1_2	0.70710678118654752440	/* 1/sqrt(2) */
+#  define M_SQRT2_DIV2	0.70710678118654752440  /* 1/sqrt(2) */
 #endif
 #ifndef PI
 #  define PI M_PI
 #endif
 
-#ifndef sqrt
-	/* In case <math.h> has not been included, define sqrt() here */
-#	if __STDC__
-		extern double sqrt(double);
-#	else
-#		if (defined(sgi) && defined(mips) && !defined(SGI4D_Rel2))
-			/* What could SGI have been thinking of? */
-			extern double sqrt(double);
-#		else
-			extern double sqrt();
-#		endif
-#	endif
-#endif
-
-#define NEAR_ZERO(val,epsilon)	( ((val) > -epsilon) && ((val) < epsilon) )
-
-#define CLAMP(_v, _l, _h) if (_v < _l) _v = _l; else if (_v > _h) _v = _h
-
+/* minimum computation tolerances */
 #ifdef vax
-#	define VDIVIDE_TOL	(1.0e-10)
-#	define VUNITIZE_TOL	(1.0e-7)
+#  define VDIVIDE_TOL	( 1.0e-10 )
+#  define VUNITIZE_TOL	( 1.0e-7 )
 #else
-#	define VDIVIDE_TOL	(1.0e-20)
-#	define VUNITIZE_TOL	(1.0e-15)
+#  ifdef DBL_EPSILON
+#    define VDIVIDE_TOL		( DBL_EPSILON )
+#  else
+#    define VDIVIDE_TOL		( 1.0e-20 )
+#  endif
+#  ifdef FLT_EPSILON
+#    define VUNITIZE_TOL	( FLT_EPSILON )
+#  else
+#    define VUNITIZE_TOL	( 1.0e-15 )
+#  endif
 #endif
 
 #define ELEMENTS_PER_VECT	3	/* # of fastf_t's per vect_t */
@@ -157,6 +157,16 @@ typedef fastf_t hvect_t[HVECT_LEN];
 typedef fastf_t hpoint_t[HPT_LEN];
 
 #define quat_t	hvect_t		/* 4-element quaternion */
+
+/**
+ * return truthfully whether a value is within some epsilon from zero
+ */
+#define NEAR_ZERO(val,epsilon)	( ((val) > -epsilon) && ((val) < epsilon) )
+
+/**
+ * clamp a value to a low/high number
+ */
+#define CLAMP(_v, _l, _h) if ((_v) < (_l)) _v = _l; else if ((_v) > (_h)) _v = _h
 
 /*
  *  Definition of a plane equation:
@@ -691,6 +701,14 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
 #define CPP_HPRINT( _os, _title, _p )	(_os) << (_title) << "=(" << \
 	(_p)[X] << ", " << (_p)[Y] << ", " << (_p)[Z] << "," << (_p)[W]<< ")\n";
 #endif
+
+/**
+ * if a value is within computation tolerance of an integer, clamp the
+ * value to that integer.  XXX - should use VDIVIDE_TOL here, but
+ * cannot yet until floats are replaced universally with fastf_t's
+ * since their epsilon is considerably less than that of a double.
+ */
+#define INTCLAMP(_a)	( NEAR_ZERO((_a) - rint(_a), VUNITIZE_TOL) ? rint(_a) : (_a) )
 
 /* Vector element multiplication.  Really: diagonal matrix X vect */
 #ifdef SHORT_VECTORS
