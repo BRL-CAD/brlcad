@@ -1003,12 +1003,12 @@ rt_cline_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbo
 	if( cline_ip->thickness > 0.0 )
 	{
 		sprintf( buf, "\tV (%g %g %g)\n\tH (%g %g %g)\n\tradius %g\n\tplate mode thickness %g",
-				V3ARGS( local_v ), V3ARGS( local_h ), cline_ip->radius*mm2local, cline_ip->thickness*mm2local );
+				V3INTCLAMPARGS( local_v ), V3INTCLAMPARGS( local_h ), INTCLAMP(cline_ip->radius*mm2local), INTCLAMP(cline_ip->thickness*mm2local) );
 	}
 	else
 	{
 		sprintf( buf, "\tV (%g %g %g)\n\tH (%g %g %g)\n\tradius %g\n\tVolume mode\n",
-				V3ARGS( local_v ), V3ARGS( local_h ), cline_ip->radius*mm2local );
+				V3INTCLAMPARGS( local_v ), V3INTCLAMPARGS( local_h ), INTCLAMP(cline_ip->radius*mm2local) );
 	}
 	bu_vls_strcat( str, buf );
 

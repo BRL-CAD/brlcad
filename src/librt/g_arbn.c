@@ -1024,10 +1024,10 @@ rt_arbn_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbos
 	for( i=0; i < aip->neqn; i++ )  {
 		sprintf(buf, "\t%d: (%g, %g, %g) %g\n",
 			i,
-			aip->eqn[i][X],		/* should have unit length */
-			aip->eqn[i][Y],
-			aip->eqn[i][Z],
-			aip->eqn[i][3] * mm2local );
+			INTCLAMP(aip->eqn[i][X]),		/* should have unit length */
+			INTCLAMP(aip->eqn[i][Y]),
+			INTCLAMP(aip->eqn[i][Z]),
+			INTCLAMP(aip->eqn[i][3] * mm2local) );
 		bu_vls_strcat( str, buf );
 	}
 	return(0);

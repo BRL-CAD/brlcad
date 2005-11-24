@@ -706,16 +706,16 @@ rt_vol_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
 	bu_vls_init( &substr );
 	bu_vls_printf( &substr, "  file=\"%s\" w=%d n=%d d=%d lo=%d hi=%d size=%g %g %g\n   mat=",
 		vip->file, vip->xdim, vip->ydim, vip->zdim, vip->lo, vip->hi,
-		V3ARGS( local ) );
+		V3INTCLAMPARGS( local ) );
 	bu_vls_vlscat( str, &substr );
 	for( i=0 ; i<15 ; i++ )
 	{
 		bu_vls_trunc2( &substr, 0 );
-		bu_vls_printf( &substr, "%g,", vip->mat[i] );
+		bu_vls_printf( &substr, "%g,", INTCLAMP(vip->mat[i]) );
 		bu_vls_vlscat( str, &substr );
 	}
 	bu_vls_trunc2( &substr, 0 );
-	bu_vls_printf( &substr, "%g\n", vip->mat[i] );
+	bu_vls_printf( &substr, "%g\n", INTCLAMP(vip->mat[i]) );
 	bu_vls_vlscat( str, &substr );
 
 	bu_vls_free( &substr );

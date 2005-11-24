@@ -3615,20 +3615,20 @@ rt_pipe_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbos
 	for( BU_LIST_FOR( ptp, wdb_pipept, &pip->pipe_segs_head ) )  {
 		sprintf(buf, "\t%d ", segno++ );
 		bu_vls_strcat( str, buf );
-		sprintf( buf, "\tbend radius = %g", ptp->pp_bendradius * mm2local );
+		sprintf( buf, "\tbend radius = %g", INTCLAMP(ptp->pp_bendradius * mm2local) );
 		bu_vls_strcat( str, buf );
-		sprintf(buf, "  od=%g", ptp->pp_od * mm2local );
+		sprintf(buf, "  od=%g", INTCLAMP(ptp->pp_od * mm2local) );
 		bu_vls_strcat( str, buf );
 		if( ptp->pp_id > 0 )  {
-			sprintf(buf, ", id  = %g", ptp->pp_id * mm2local );
+			sprintf(buf, ", id  = %g", INTCLAMP(ptp->pp_id * mm2local) );
 			bu_vls_strcat( str, buf );
 		}
 		bu_vls_strcat( str, "\n" );
 
 		sprintf(buf, "\t  at=(%g, %g, %g)\n",
-			ptp->pp_coord[X] * mm2local,
-			ptp->pp_coord[Y] * mm2local,
-			ptp->pp_coord[Z] * mm2local );
+			INTCLAMP(ptp->pp_coord[X] * mm2local),
+			INTCLAMP(ptp->pp_coord[Y] * mm2local),
+			INTCLAMP(ptp->pp_coord[Z] * mm2local) );
 		bu_vls_strcat( str, buf );
 
 	}

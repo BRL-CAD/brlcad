@@ -1175,19 +1175,19 @@ rt_nurb_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbos
 			np->s_size[0], np->s_size[1]);
 
 		bu_vls_printf( str, "\t\tVert (%g, %g, %g)\n",
-			mp[X] * mm2local,
-			mp[Y] * mm2local,
-			mp[Z] * mm2local);
+			INTCLAMP(mp[X] * mm2local),
+			INTCLAMP(mp[Y] * mm2local),
+			INTCLAMP(mp[Z] * mm2local) );
 
 		if( verbose < 3 ) continue;
 
 		/* Print out the knot vectors */
 		bu_vls_printf( str, "\tU: ");
 		for( i=0; i < np->u.k_size; i++ )
-			bu_vls_printf( str, "%g, ", np->u.knots[i] );
+			bu_vls_printf( str, "%g, ", INTCLAMP(np->u.knots[i]) );
 		bu_vls_printf( str, "\n\tV: ");
 		for( i=0; i < np->v.k_size; i++ )
-			bu_vls_printf( str, "%g, ", np->v.knots[i] );
+			bu_vls_printf( str, "%g, ", INTCLAMP(np->v.knots[i]) );
 		bu_vls_printf( str, "\n");
 
 		/* print out all the points */
@@ -1198,15 +1198,15 @@ rt_nurb_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbos
 			{
 				if( ncoord == 3 ) {
 					bu_vls_printf( str, "\t\t(%g, %g, %g)\n",
-						mp[X] * mm2local,
-						mp[Y] * mm2local,
-						mp[Z] * mm2local);
+						INTCLAMP(mp[X] * mm2local),
+						INTCLAMP(mp[Y] * mm2local),
+						INTCLAMP(mp[Z] * mm2local) );
 				} else {
 					bu_vls_printf( str, "\t\t(%g, %g, %g, %g)\n",
-						mp[X] * mm2local,
-						mp[Y] * mm2local,
-						mp[Z] * mm2local,
-						mp[W] );
+						INTCLAMP(mp[X] * mm2local),
+						INTCLAMP(mp[Y] * mm2local),
+						INTCLAMP(mp[Z] * mm2local),
+						INTCLAMP(mp[W]) );
 				}
 				mp += ncoord;
 			}

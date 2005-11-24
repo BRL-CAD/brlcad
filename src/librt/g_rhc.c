@@ -1393,29 +1393,29 @@ rt_rhc_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
 	bu_vls_strcat( str, "Right Hyperbolic Cylinder (RHC)\n");
 
 	sprintf(buf, "\tV (%g, %g, %g)\n",
-		xip->rhc_V[X] * mm2local,
-		xip->rhc_V[Y] * mm2local,
-		xip->rhc_V[Z] * mm2local );
+		INTCLAMP(xip->rhc_V[X] * mm2local),
+		INTCLAMP(xip->rhc_V[Y] * mm2local),
+		INTCLAMP(xip->rhc_V[Z] * mm2local) );
 	bu_vls_strcat( str, buf );
 
 	sprintf(buf, "\tB (%g, %g, %g) mag=%g\n",
-		xip->rhc_B[X] * mm2local,
-		xip->rhc_B[Y] * mm2local,
-		xip->rhc_B[Z] * mm2local,
-		MAGNITUDE(xip->rhc_B) * mm2local);
+		INTCLAMP(xip->rhc_B[X] * mm2local),
+		INTCLAMP(xip->rhc_B[Y] * mm2local),
+		INTCLAMP(xip->rhc_B[Z] * mm2local),
+		INTCLAMP(MAGNITUDE(xip->rhc_B) * mm2local));
 	bu_vls_strcat( str, buf );
 
 	sprintf(buf, "\tH (%g, %g, %g) mag=%g\n",
-		xip->rhc_H[X] * mm2local,
-		xip->rhc_H[Y] * mm2local,
-		xip->rhc_H[Z] * mm2local,
-		MAGNITUDE(xip->rhc_H) * mm2local);
+		INTCLAMP(xip->rhc_H[X] * mm2local),
+		INTCLAMP(xip->rhc_H[Y] * mm2local),
+		INTCLAMP(xip->rhc_H[Z] * mm2local),
+		INTCLAMP(MAGNITUDE(xip->rhc_H) * mm2local));
 	bu_vls_strcat( str, buf );
 
-	sprintf(buf, "\tr=%g\n", xip->rhc_r * mm2local);
+	sprintf(buf, "\tr=%g\n", INTCLAMP(xip->rhc_r * mm2local));
 	bu_vls_strcat( str, buf );
 
-	sprintf(buf, "\tc=%g\n", xip->rhc_c * mm2local);
+	sprintf(buf, "\tc=%g\n", INTCLAMP(xip->rhc_c * mm2local));
 	bu_vls_strcat( str, buf );
 
 	return(0);

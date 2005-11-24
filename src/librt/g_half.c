@@ -736,8 +736,8 @@ rt_hlf_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
 	bu_vls_strcat( str, "halfspace\n");
 
 	sprintf(buf, "\tN (%g, %g, %g) d=%g\n",
-		V3ARGS(hip->eqn),		/* should have unit length */
-		hip->eqn[3] * mm2local );
+		V3INTCLAMPARGS(hip->eqn),		/* should have unit length */
+		INTCLAMP(hip->eqn[3] * mm2local) );
 	bu_vls_strcat( str, buf );
 
 	return(0);

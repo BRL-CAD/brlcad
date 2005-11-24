@@ -1402,28 +1402,28 @@ rt_eto_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
 	bu_vls_strcat( str, "Elliptical Torus (ETO)\n");
 
 	sprintf(buf, "\tV (%g, %g, %g)\n",
-		tip->eto_V[X] * mm2local,
-		tip->eto_V[Y] * mm2local,
-		tip->eto_V[Z] * mm2local);
+		INTCLAMP(tip->eto_V[X] * mm2local),
+		INTCLAMP(tip->eto_V[Y] * mm2local),
+		INTCLAMP(tip->eto_V[Z] * mm2local) );
 	bu_vls_strcat( str, buf );
 
 	sprintf(buf, "\tN=(%g, %g, %g)\n",
-		tip->eto_N[X] * mm2local,
-		tip->eto_N[Y] * mm2local,
-		tip->eto_N[Z] * mm2local );
+		INTCLAMP(tip->eto_N[X] * mm2local),
+		INTCLAMP(tip->eto_N[Y] * mm2local),
+		INTCLAMP(tip->eto_N[Z] * mm2local) );
 	bu_vls_strcat( str, buf );
 
 	sprintf(buf, "\tC=(%g, %g, %g) mag=%g\n",
-		tip->eto_C[X] * mm2local,
-		tip->eto_C[Y] * mm2local,
-		tip->eto_C[Z] * mm2local,
-		MAGNITUDE(tip->eto_C) * mm2local);
+		INTCLAMP(tip->eto_C[X] * mm2local),
+		INTCLAMP(tip->eto_C[Y] * mm2local),
+		INTCLAMP(tip->eto_C[Z] * mm2local),
+		INTCLAMP(MAGNITUDE(tip->eto_C) * mm2local) );
 	bu_vls_strcat( str, buf );
 
-	sprintf(buf, "\tr=%g\n", tip->eto_r * mm2local);
+	sprintf(buf, "\tr=%g\n", INTCLAMP(tip->eto_r * mm2local));
 	bu_vls_strcat( str, buf );
 
-	sprintf(buf, "\td=%g\n", tip->eto_rd * mm2local);
+	sprintf(buf, "\td=%g\n", INTCLAMP(tip->eto_rd * mm2local));
 	bu_vls_strcat( str, buf );
 
 	return(0);

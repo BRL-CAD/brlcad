@@ -1133,9 +1133,9 @@ rt_bot_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
 				VSCALE( pt[j], &bot_ip->vertices[bot_ip->faces[i*3+j]*3], mm2local );
 			if( (bot_ip->bot_flags & RT_BOT_HAS_SURFACE_NORMALS) && bot_ip->num_normals > 0 ) {
 				sprintf( buf, "\tface %d: (%g %g %g), (%g %g %g), (%g %g %g) normals: ", i,
-					 V3ARGS( pt[0] ),
-					 V3ARGS( pt[1] ),
-					 V3ARGS( pt[2] ) );
+					 V3INTCLAMPARGS( pt[0] ),
+					 V3INTCLAMPARGS( pt[1] ),
+					 V3INTCLAMPARGS( pt[2] ) );
 				bu_vls_strcat( str, buf );
 				for( k=0 ; k<3 ; k++ ) {
 					int index;
@@ -1144,16 +1144,16 @@ rt_bot_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
 					if( bot_ip->face_normals[index] < 0 ||  bot_ip->face_normals[index] >= bot_ip->num_normals ) {
 						bu_vls_strcat( str, "none " );
 					} else {
-						sprintf( buf, "(%g %g %g) ", V3ARGS( &bot_ip->normals[bot_ip->face_normals[index]*3]));
+						sprintf( buf, "(%g %g %g) ", V3INTCLAMPARGS( &bot_ip->normals[bot_ip->face_normals[index]*3]));
 						bu_vls_strcat( str, buf );
 					}
 				}
 				bu_vls_strcat( str, "\n" );
 			} else {
 				sprintf( buf, "\tface %d: (%g %g %g), (%g %g %g), (%g %g %g)\n", i,
-					 V3ARGS( pt[0] ),
-					 V3ARGS( pt[1] ),
-					 V3ARGS( pt[2] ) );
+					 V3INTCLAMPARGS( pt[0] ),
+					 V3INTCLAMPARGS( pt[1] ),
+					 V3INTCLAMPARGS( pt[2] ) );
 				bu_vls_strcat( str, buf );
 			}
 			if( bot_ip->mode == RT_BOT_PLATE || bot_ip->mode == RT_BOT_PLATE_NOCOS )
@@ -1164,7 +1164,7 @@ rt_bot_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
 					face_mode = "appended to hit point";
 				else
 					face_mode = "centered about hit point";
-				sprintf( buf, "\t\tthickness = %g, %s\n", mm2local*bot_ip->thickness[i], face_mode );
+				sprintf( buf, "\t\tthickness = %g, %s\n", INTCLAMP(mm2local*bot_ip->thickness[i]), face_mode );
 				bu_vls_strcat( str, buf );
 			}
 		}

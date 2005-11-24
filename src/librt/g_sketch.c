@@ -1491,9 +1491,9 @@ rt_sketch_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verb
 	VSCALE( v, sketch_ip->v_vec, mm2local );
 
 	sprintf(buf, "\tV = (%g %g %g),  A = (%g %g %g), B = (%g %g %g)\n\t%d vertices\n",
-		V3ARGS( V ),
-		V3ARGS( u ),
-		V3ARGS( v ),
+		V3INTCLAMPARGS( V ),
+		V3INTCLAMPARGS( u ),
+		V3INTCLAMPARGS( v ),
 		sketch_ip->vert_count );
 	bu_vls_strcat( str, buf );
 
@@ -1505,7 +1505,7 @@ rt_sketch_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verb
 		bu_vls_strcat( str, "\tVertices:\n\t" );
 		for( i=0 ; i<sketch_ip->vert_count ; i++ )
 		{
-			sprintf( buf, " %d-(%g %g)", i, V2ARGS( sketch_ip->verts[i] ) );
+			sprintf( buf, " %d-(%g %g)", i, V2INTCLAMPARGS( sketch_ip->verts[i] ) );
 			bu_vls_strcat( str, buf );
 			if( i && (i+1)%3 == 0 )
 				bu_vls_strcat( str, "\n\t" );
@@ -1541,12 +1541,12 @@ rt_sketch_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verb
 				{
 					if( sketch_ip->skt_curve.reverse[seg_no] )
 						sprintf( buf, "\t\tLine segment (%g %g) <-> (%g %g)\n",
-							V2ARGS( sketch_ip->verts[lsg->end] ),
-							V2ARGS( sketch_ip->verts[lsg->start] ) );
+							V2INTCLAMPARGS( sketch_ip->verts[lsg->end] ),
+							V2INTCLAMPARGS( sketch_ip->verts[lsg->start] ) );
 					else
 						sprintf( buf, "\t\tLine segment (%g %g) <-> (%g %g)\n",
-							V2ARGS( sketch_ip->verts[lsg->start] ),
-							V2ARGS( sketch_ip->verts[lsg->end] ) );
+							V2INTCLAMPARGS( sketch_ip->verts[lsg->start] ),
+							V2INTCLAMPARGS( sketch_ip->verts[lsg->end] ) );
 				}
 				bu_vls_strcat( str, buf );
 				break;
@@ -1568,10 +1568,10 @@ rt_sketch_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verb
 					else
 					{
 						sprintf( buf, "\t\t\tcenter: (%g %g)\n",
-							V2ARGS( sketch_ip->verts[csg->end] ) );
+							V2INTCLAMPARGS( sketch_ip->verts[csg->end] ) );
 						bu_vls_strcat( str, buf );
 						sprintf( buf, "\t\t\tpoint on circle: (%g %g)\n",
-							V2ARGS( sketch_ip->verts[csg->start] ) );
+							V2INTCLAMPARGS( sketch_ip->verts[csg->start] ) );
 					}
 					bu_vls_strcat( str, buf );
 				}
@@ -1592,10 +1592,10 @@ rt_sketch_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verb
 					else
 					{
 						sprintf( buf, "\t\t\tstart: (%g, %g)\n",
-							V2ARGS( sketch_ip->verts[csg->start] ) );
+							V2INTCLAMPARGS( sketch_ip->verts[csg->start] ) );
 						bu_vls_strcat( str, buf );
 						sprintf( buf, "\t\t\tend: (%g, %g)\n",
-							V2ARGS( sketch_ip->verts[csg->end] ) );
+							V2INTCLAMPARGS( sketch_ip->verts[csg->end] ) );
 						bu_vls_strcat( str, buf );
 					}
 					sprintf( buf, "\t\t\tradius: %g\n", csg->radius*mm2local );
@@ -1639,16 +1639,16 @@ rt_sketch_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verb
 				{
 					if( sketch_ip->skt_curve.reverse[seg_no] )
 						sprintf( buf, "\t\t\tstarts at (%g %g)\n\t\t\tends at (%g %g)\n",
-							V2ARGS( sketch_ip->verts[nsg->ctl_points[nsg->c_size-1]] ),
-							V2ARGS( sketch_ip->verts[nsg->ctl_points[0]] ) );
+							V2INTCLAMPARGS( sketch_ip->verts[nsg->ctl_points[nsg->c_size-1]] ),
+							V2INTCLAMPARGS( sketch_ip->verts[nsg->ctl_points[0]] ) );
 					else
 						sprintf( buf, "\t\t\tstarts at (%g %g)\n\t\t\tends at (%g %g)\n",
-							V2ARGS( sketch_ip->verts[nsg->ctl_points[0]] ),
-							V2ARGS( sketch_ip->verts[nsg->ctl_points[nsg->c_size-1]] ) );
+							V2INTCLAMPARGS( sketch_ip->verts[nsg->ctl_points[0]] ),
+							V2INTCLAMPARGS( sketch_ip->verts[nsg->ctl_points[nsg->c_size-1]] ) );
 				}
 				bu_vls_strcat( str, buf );
 				sprintf( buf, "\t\t\tknot values are %g to %g\n",
-					nsg->k.knots[0], nsg->k.knots[nsg->k.k_size-1] );
+					INTCLAMP(nsg->k.knots[0]), INTCLAMP(nsg->k.knots[nsg->k.k_size-1]) );
 				bu_vls_strcat( str, buf );
 				break;
 			case CURVE_BEZIER_MAGIC:
@@ -1670,12 +1670,12 @@ rt_sketch_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verb
 				} else {
 					if( sketch_ip->skt_curve.reverse[seg_no] )
 						sprintf( buf, "\t\t\tstarts at (%g %g)\n\t\t\tends at (%g %g)\n",
-							V2ARGS( sketch_ip->verts[bsg->ctl_points[bsg->degree]]),
-							V2ARGS( sketch_ip->verts[bsg->ctl_points[0]] ) );
+							V2INTCLAMPARGS( sketch_ip->verts[bsg->ctl_points[bsg->degree]]),
+							V2INTCLAMPARGS( sketch_ip->verts[bsg->ctl_points[0]] ) );
 					else
 						sprintf( buf, "\t\t\tstarts at (%g %g)\n\t\t\tends at (%g %g)\n",
-							V2ARGS( sketch_ip->verts[bsg->ctl_points[0]] ),
-							V2ARGS( sketch_ip->verts[bsg->ctl_points[bsg->degree]]));
+							V2INTCLAMPARGS( sketch_ip->verts[bsg->ctl_points[0]] ),
+							V2INTCLAMPARGS( sketch_ip->verts[bsg->ctl_points[bsg->degree]]));
 				}
 				bu_vls_strcat( str, buf );
 				break;

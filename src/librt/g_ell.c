@@ -1277,9 +1277,9 @@ rt_ell_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
 	bu_vls_strcat( str, "ellipsoid (ELL)\n");
 
 	sprintf(buf, "\tV (%g, %g, %g)\n",
-		tip->v[X] * mm2local,
-		tip->v[Y] * mm2local,
-		tip->v[Z] * mm2local );
+		INTCLAMP(tip->v[X] * mm2local),
+		INTCLAMP(tip->v[Y] * mm2local),
+		INTCLAMP(tip->v[Z] * mm2local) );
 	bu_vls_strcat( str, buf );
 
 	mag_a = MAGNITUDE(tip->a);
@@ -1287,24 +1287,24 @@ rt_ell_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
 	mag_c = MAGNITUDE(tip->c);
 
 	sprintf(buf, "\tA (%g, %g, %g) mag=%g\n",
-		tip->a[X] * mm2local,
-		tip->a[Y] * mm2local,
-		tip->a[Z] * mm2local,
-		mag_a * mm2local);
+		INTCLAMP(tip->a[X] * mm2local),
+		INTCLAMP(tip->a[Y] * mm2local),
+		INTCLAMP(tip->a[Z] * mm2local),
+		INTCLAMP(mag_a * mm2local) );
 	bu_vls_strcat( str, buf );
 
 	sprintf(buf, "\tB (%g, %g, %g) mag=%g\n",
-		tip->b[X] * mm2local,
-		tip->b[Y] * mm2local,
-		tip->b[Z] * mm2local,
-		mag_b * mm2local);
+		INTCLAMP(tip->b[X] * mm2local),
+		INTCLAMP(tip->b[Y] * mm2local),
+		INTCLAMP(tip->b[Z] * mm2local),
+		INTCLAMP(mag_b * mm2local) );
 	bu_vls_strcat( str, buf );
 
 	sprintf(buf, "\tC (%g, %g, %g) mag=%g\n",
-		tip->c[X] * mm2local,
-		tip->c[Y] * mm2local,
-		tip->c[Z] * mm2local,
-		mag_c * mm2local);
+		INTCLAMP(tip->c[X] * mm2local),
+		INTCLAMP(tip->c[Y] * mm2local),
+		INTCLAMP(tip->c[Z] * mm2local),
+		INTCLAMP(mag_c * mm2local) );
 	bu_vls_strcat( str, buf );
 
 	if( !verbose )  return(0);

@@ -2398,10 +2398,10 @@ rt_extrude_describe(struct bu_vls *str, const struct rt_db_internal *ip, int ver
 	VSCALE( u, extrude_ip->u_vec, mm2local );
 	VSCALE( v, extrude_ip->v_vec, mm2local );
 	sprintf( buf, "\tV = (%g %g %g)\n\tH = (%g %g %g)\n\tu_dir = (%g %g %g)\n\tv_dir = (%g %g %g)\n",
-		V3ARGS( V ),
-		V3ARGS( h ),
-		V3ARGS( u ),
-		V3ARGS( v ) );
+		V3INTCLAMPARGS( V ),
+		V3INTCLAMPARGS( h ),
+		V3INTCLAMPARGS( u ),
+		V3INTCLAMPARGS( v ) );
 	bu_vls_strcat( str, buf );
 	sprintf( buf, "\tsketch name: %s\n",
 		extrude_ip->sketch_name );

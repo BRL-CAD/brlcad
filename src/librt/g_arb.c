@@ -1317,114 +1317,104 @@ rt_arb_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
 int
 rt_arb_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose, double mm2local)
 {
-	register struct rt_arb_internal	*aip =
-		(struct rt_arb_internal *)ip->idb_ptr;
-	char	buf[256];
-	int	i;
-	int	arb_type;
-	struct bn_tol tmp_tol;	/* temporay tolerance */
-
-	RT_ARB_CK_MAGIC(aip);
-
-	tmp_tol.magic = BN_TOL_MAGIC;
-	tmp_tol.dist = 0.0001; /* to get old behavior of rt_arb_std_type() */
-	tmp_tol.dist_sq = tmp_tol.dist * tmp_tol.dist;
-	tmp_tol.perp = 1e-5;
-	tmp_tol.para = 1 - tmp_tol.perp;
-
-	arb_type = rt_arb_std_type( ip, &tmp_tol );
-
-	if( !arb_type )
-	{
-
-		bu_vls_strcat( str, "ARB8\n");
-
-		/* Use 1-based numbering, to match vertex labels in MGED */
-		sprintf(buf, "\t1 (%g, %g, %g)\n",
-			aip->pt[0][X] * mm2local,
-			aip->pt[0][Y] * mm2local,
-			aip->pt[0][Z] * mm2local );
-		bu_vls_strcat( str, buf );
-
-		if( !verbose )  return(0);
-
-		for( i=1; i < 8; i++ )  {
-			sprintf(buf, "\t%d (%g, %g, %g)\n", i+1,
-				aip->pt[i][X] * mm2local,
-				aip->pt[i][Y] * mm2local,
-				aip->pt[i][Z] * mm2local );
-			bu_vls_strcat( str, buf );
-		}
+    register struct rt_arb_internal *aip = (struct rt_arb_internal *)ip->idb_ptr;
+    char buf[256];
+    int	i;
+    int	arb_type;
+    struct bn_tol tmp_tol;	/* temporay tolerance */
+    
+    RT_ARB_CK_MAGIC(aip);
+    
+    tmp_tol.magic = BN_TOL_MAGIC;
+    tmp_tol.dist = 0.0001; /* to get old behavior of rt_arb_std_type() */
+    tmp_tol.dist_sq = tmp_tol.dist * tmp_tol.dist;
+    tmp_tol.perp = 1e-5;
+    tmp_tol.para = 1 - tmp_tol.perp;
+    
+    arb_type = rt_arb_std_type( ip, &tmp_tol );
+    
+    if( !arb_type ) {
+	
+	bu_vls_strcat( str, "ARB8\n");
+	
+	/* Use 1-based numbering, to match vertex labels in MGED */		
+	sprintf( buf, "\t1 (%g, %g, %g)\n",
+		 INTCLAMP(aip->pt[0][X] * mm2local),
+		 INTCLAMP(aip->pt[0][Y] * mm2local),
+		 INTCLAMP(aip->pt[0][Z] * mm2local) );
+	bu_vls_strcat( str, buf );
+	
+	if( !verbose )  return(0);
+	
+	for( i=1; i < 8; i++ )  {
+	    sprintf( buf, "\t%d (%g, %g, %g)\n", i+1,
+		     INTCLAMP(aip->pt[i][X] * mm2local),
+		     INTCLAMP(aip->pt[i][Y] * mm2local),
+		     INTCLAMP(aip->pt[i][Z] * mm2local) );
+	    bu_vls_strcat( str, buf );
 	}
-	else
-	{
-		sprintf( buf, "ARB%d\n", arb_type );
-		bu_vls_strcat( str, buf );
-		switch( arb_type )
-		{
-			case ARB8:
-				for( i=0 ; i<8 ; i++ )
-				{
-					sprintf( buf, "\t%d (%g, %g, %g)\n", i+1,
-						aip->pt[i][X] * mm2local,
-						aip->pt[i][Y] * mm2local,
-						aip->pt[i][Z] * mm2local );
-						bu_vls_strcat( str, buf );
-				}
-				break;
-			case ARB7:
-				for( i=0 ; i<7 ; i++ )
-				{
-					sprintf( buf, "\t%d (%g, %g, %g)\n", i+1,
-						aip->pt[i][X] * mm2local,
-						aip->pt[i][Y] * mm2local,
-						aip->pt[i][Z] * mm2local );
-						bu_vls_strcat( str, buf );
-				}
-				break;
-			case ARB6:
-				for( i=0 ; i<5 ; i++ )
-				{
-					sprintf( buf, "\t%d (%g, %g, %g)\n", i+1,
-						aip->pt[i][X] * mm2local,
-						aip->pt[i][Y] * mm2local,
-						aip->pt[i][Z] * mm2local );
-						bu_vls_strcat( str, buf );
-				}
-				sprintf( buf, "\t6 (%g, %g, %g)\n",
-					aip->pt[6][X] * mm2local,
-					aip->pt[6][Y] * mm2local,
-					aip->pt[6][Z] * mm2local );
-				bu_vls_strcat( str, buf );
-				break;
-			case ARB5:
-				for( i=0 ; i<5 ; i++ )
-				{
-					sprintf( buf, "\t%d (%g, %g, %g)\n", i+1,
-						aip->pt[i][X] * mm2local,
-						aip->pt[i][Y] * mm2local,
-						aip->pt[i][Z] * mm2local );
-						bu_vls_strcat( str, buf );
-				}
-				break;
-			case ARB4:
-				for( i=0 ; i<3 ; i++ )
-				{
-					sprintf( buf, "\t%d (%g, %g, %g)\n", i+1,
-						aip->pt[i][X] * mm2local,
-						aip->pt[i][Y] * mm2local,
-						aip->pt[i][Z] * mm2local );
-						bu_vls_strcat( str, buf );
-				}
-				sprintf( buf, "\t4 (%g, %g, %g)\n",
-					aip->pt[4][X] * mm2local,
-					aip->pt[4][Y] * mm2local,
-					aip->pt[4][Z] * mm2local );
-				bu_vls_strcat( str, buf );
-				break;
+    } else {
+	sprintf( buf, "ARB%d\n", arb_type );
+	bu_vls_strcat( str, buf );
+	switch( arb_type ) {
+	    case ARB8:
+		for( i=0 ; i<8 ; i++ ) {
+		    sprintf( buf, "\t%d (%g, %g, %g)\n", i+1, 
+			     INTCLAMP(aip->pt[i][X] * mm2local),
+			     INTCLAMP(aip->pt[i][Y] * mm2local),
+			     INTCLAMP(aip->pt[i][Z] * mm2local) );
+		    bu_vls_strcat( str, buf );
 		}
+		break;
+	    case ARB7:
+		for( i=0 ; i<7 ; i++ ) {
+		    sprintf( buf, "\t%d (%g, %g, %g)\n", i+1,
+			     INTCLAMP(aip->pt[i][X] * mm2local),
+			     INTCLAMP(aip->pt[i][Y] * mm2local),
+			     INTCLAMP(aip->pt[i][Z] * mm2local) );
+		    bu_vls_strcat( str, buf );
+		}
+		break;
+	    case ARB6:
+		for( i=0 ; i<5 ; i++ ) {
+		    sprintf( buf, "\t%d (%g, %g, %g)\n", i+1,
+			     INTCLAMP(aip->pt[i][X] * mm2local),
+			     INTCLAMP(aip->pt[i][Y] * mm2local),
+			     INTCLAMP(aip->pt[i][Z] * mm2local) );
+		    bu_vls_strcat( str, buf );
+		}
+		sprintf( buf, "\t6 (%g, %g, %g)\n",
+			 INTCLAMP(aip->pt[6][X] * mm2local),
+			 INTCLAMP(aip->pt[6][Y] * mm2local),
+			 INTCLAMP(aip->pt[6][Z] * mm2local) );
+		bu_vls_strcat( str, buf );
+		break;
+	    case ARB5:
+		for( i=0 ; i<5 ; i++ ) {
+		    sprintf( buf, "\t%d (%g, %g, %g)\n", i+1,
+			     INTCLAMP(aip->pt[i][X] * mm2local),
+			     INTCLAMP(aip->pt[i][Y] * mm2local),
+			     INTCLAMP(aip->pt[i][Z] * mm2local) );
+		    bu_vls_strcat( str, buf );
+		}
+		break;
+	    case ARB4:
+		for( i=0 ; i<3 ; i++ ) {
+		    sprintf( buf, "\t%d (%g, %g, %g)\n", i+1,
+			     INTCLAMP(aip->pt[i][X] * mm2local),
+			     INTCLAMP(aip->pt[i][Y] * mm2local),
+			     INTCLAMP(aip->pt[i][Z] * mm2local) );
+		    bu_vls_strcat( str, buf );
+		}
+		sprintf( buf, "\t4 (%g, %g, %g)\n",
+			 INTCLAMP(aip->pt[4][X] * mm2local),
+			 INTCLAMP(aip->pt[4][Y] * mm2local),
+			 INTCLAMP(aip->pt[4][Z] * mm2local) );
+		bu_vls_strcat( str, buf );
+		break;
 	}
-	return(0);
+    }
+    return(0);
 }
 
 /**

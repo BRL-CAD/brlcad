@@ -427,13 +427,15 @@ rt_grp_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
 	bu_vls_strcat( str, "grip\n");
 
 	sprintf(buf, "\tN (%g, %g, %g)\n",
-		V3ARGS(gip->normal));		/* should have unit length */
+		V3INTCLAMPARGS(gip->normal));		/* should have unit length */
 
 	bu_vls_strcat( str, buf );
 
 	sprintf(buf, "\tC (%g %g %g) mag=%g\n",
-		gip->center[0]*mm2local, gip->center[1]*mm2local,
-		gip->center[2]*mm2local, gip->mag*mm2local);
+		INTCLAMP(gip->center[0]*mm2local), 
+		INTCLAMP(gip->center[1]*mm2local),
+		INTCLAMP(gip->center[2]*mm2local),
+		INTCLAMP(gip->mag*mm2local) );
 
 	bu_vls_strcat( str, buf);
 	return(0);

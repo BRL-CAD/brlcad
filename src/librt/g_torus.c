@@ -1566,39 +1566,40 @@ rt_tor_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
 	bu_vls_strcat( str, "torus (TOR)\n");
 
 	bu_vls_printf( str, "\tV (%g, %g, %g), r1=%g (A), r2=%g (H)\n",
-		tip->v[X] * mm2local,
-		tip->v[Y] * mm2local,
-		tip->v[Z] * mm2local,
-		tip->r_a * mm2local, tip->r_h * mm2local );
+		       INTCLAMP(tip->v[X] * mm2local),
+		       INTCLAMP(tip->v[Y] * mm2local),
+		       INTCLAMP(tip->v[Z] * mm2local),
+		       INTCLAMP(tip->r_a * mm2local),
+		       INTCLAMP(tip->r_h * mm2local) );
 
 	bu_vls_printf( str, "\tN=(%g, %g, %g)\n",
-		tip->h[X] * mm2local,
-		tip->h[Y] * mm2local,
-		tip->h[Z] * mm2local );
+		INTCLAMP(tip->h[X] * mm2local),
+		INTCLAMP(tip->h[Y] * mm2local),
+		INTCLAMP(tip->h[Z] * mm2local) );
 
 	if( !verbose )  return(0);
 
 	bu_vls_printf( str, "\tA=(%g, %g, %g)\n",
-		tip->a[X] * mm2local / tip->r_a,
-		tip->a[Y] * mm2local / tip->r_a,
-		tip->a[Z] * mm2local / tip->r_a );
+		INTCLAMP(tip->a[X] * mm2local / tip->r_a),
+		INTCLAMP(tip->a[Y] * mm2local / tip->r_a),
+		INTCLAMP(tip->a[Z] * mm2local / tip->r_a) );
 
 	bu_vls_printf( str, "\tB=(%g, %g, %g)\n",
-		tip->b[X] * mm2local / tip->r_b,
-		tip->b[Y] * mm2local / tip->r_b,
-		tip->b[Z] * mm2local / tip->r_b );
+		INTCLAMP(tip->b[X] * mm2local / tip->r_b),
+		INTCLAMP(tip->b[Y] * mm2local / tip->r_b),
+		INTCLAMP(tip->b[Z] * mm2local / tip->r_b) );
 
 	r3 = tip->r_a - tip->r_h;
 	bu_vls_printf( str, "\tvector to inner edge = (%g, %g, %g)\n",
-		tip->a[X] * mm2local / tip->r_a * r3,
-		tip->a[Y] * mm2local / tip->r_a * r3,
-		tip->a[Z] * mm2local / tip->r_a * r3 );
+		INTCLAMP(tip->a[X] * mm2local / tip->r_a * r3),
+		INTCLAMP(tip->a[Y] * mm2local / tip->r_a * r3),
+		INTCLAMP(tip->a[Z] * mm2local / tip->r_a * r3) );
 
 	r4 = tip->r_a + tip->r_h;
 	bu_vls_printf( str, "\tvector to outer edge = (%g, %g, %g)\n",
-		tip->a[X] * mm2local / tip->r_a * r4,
-		tip->a[Y] * mm2local / tip->r_a * r4,
-		tip->a[Z] * mm2local / tip->r_a * r4 );
+		INTCLAMP(tip->a[X] * mm2local / tip->r_a * r4),
+		INTCLAMP(tip->a[Y] * mm2local / tip->r_a * r4),
+		INTCLAMP(tip->a[Z] * mm2local / tip->r_a * r4) );
 
 	return(0);
 }

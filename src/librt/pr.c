@@ -68,8 +68,8 @@ rt_pr_soltab(register const struct soltab *stp)
 		stp->st_dp->d_namep, stp->st_bit,
 		rt_functab[id].ft_name );
 	VPRINT("Bound Sph CENTER", stp->st_center);
-	bu_log("Approx Sph Radius = %g\n", stp->st_aradius);
-	bu_log("Bounding Sph Radius = %g\n", stp->st_bradius);
+	bu_log("Approx Sph Radius = %g\n", INTCLAMP(stp->st_aradius));
+	bu_log("Bounding Sph Radius = %g\n", INTCLAMP(stp->st_bradius));
 	VPRINT("Bound RPP min", stp->st_min);
 	VPRINT("Bound RPP max", stp->st_max);
 	bu_pr_ptbl( "st_regions", &stp->st_regions, 1 );
@@ -102,7 +102,7 @@ rt_pr_region(register const struct region *rp)
 			(int)rp->reg_mater.ma_color[1]*255.,
 			(int)rp->reg_mater.ma_color[2]*255. );
 	if( rp->reg_mater.ma_temperature > 0 )
-		bu_log("Temperature %g degrees K\n", rp->reg_mater.ma_temperature );
+		bu_log("Temperature %g degrees K\n", INTCLAMP(rp->reg_mater.ma_temperature) );
 	if( rp->reg_mater.ma_shader && rp->reg_mater.ma_shader[0] != '\0' )
 		bu_log("Shader '%s'\n", rp->reg_mater.ma_shader );
 
@@ -681,10 +681,10 @@ rt_pr_fallback_angle(struct bu_vls *str, const char *prefix, const double *angle
 	BU_CK_VLS(str);
 
 	bu_vls_printf(str, "%s direction cosines=(%1.f, %1.f, %1.f)\n",
-		prefix, angles[0], angles[1], angles[2] );
+		prefix, INTCLAMP(angles[0]), INTCLAMP(angles[1]), INTCLAMP(angles[2]) );
 
 	bu_vls_printf(str, "%s rotation angle=%1.f, fallback angle=%1.f\n",
-		prefix, angles[3], angles[4] );
+		prefix, INTCLAMP(angles[3]), INTCLAMP(angles[4]) );
 }
 
 /*
@@ -779,8 +779,8 @@ void
 rt_pr_uvcoord(const struct uvcoord *uvp)
 {
 	bu_log("%8.8x u,v=(%g, %g), du,dv=(%g, %g)\n",
-		uvp->uv_u, uvp->uv_v,
-		uvp->uv_du, uvp->uv_dv );
+		INTCLAMP(uvp->uv_u), INTCLAMP(uvp->uv_v),
+		INTCLAMP(uvp->uv_du), INTCLAMP(uvp->uv_dv) );
 }
 
 /*

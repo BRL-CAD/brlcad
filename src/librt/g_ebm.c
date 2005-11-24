@@ -845,16 +845,16 @@ rt_ebm_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
 	bu_vls_strcat( str, "\n" );	*/
 
 	bu_vls_printf( &substr, "  file=\"%s\" w=%d n=%d depth=%g\n   mat=",
-		eip->file, eip->xdim, eip->ydim, eip->tallness*mm2local );
+		eip->file, eip->xdim, eip->ydim, INTCLAMP(eip->tallness*mm2local) );
 	bu_vls_vlscat( str, &substr );
 	for( i=0 ; i<15 ; i++ )
 	{
 		bu_vls_trunc2( &substr, 0 );
-		bu_vls_printf( &substr, "%g,", eip->mat[i] );
+		bu_vls_printf( &substr, "%g,", INTCLAMP(eip->mat[i]) );
 		bu_vls_vlscat( str, &substr );
 	}
 	bu_vls_trunc2( &substr, 0 );
-	bu_vls_printf( &substr, "%g\n", eip->mat[15] );
+	bu_vls_printf( &substr, "%g\n", INTCLAMP(eip->mat[15]) );
 	bu_vls_vlscat( str, &substr );
 
 	bu_vls_free( &substr );

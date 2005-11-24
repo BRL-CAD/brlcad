@@ -1679,22 +1679,22 @@ rt_epa_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
 	bu_vls_strcat( str, "Elliptical Paraboloid (EPA)\n");
 
 	sprintf(buf, "\tV (%g, %g, %g)\n",
-		xip->epa_V[X] * mm2local,
-		xip->epa_V[Y] * mm2local,
-		xip->epa_V[Z] * mm2local );
+		INTCLAMP(xip->epa_V[X] * mm2local),
+		INTCLAMP(xip->epa_V[Y] * mm2local),
+		INTCLAMP(xip->epa_V[Z] * mm2local) );
 	bu_vls_strcat( str, buf );
 
 	sprintf(buf, "\tH (%g, %g, %g) mag=%g\n",
-		xip->epa_H[X] * mm2local,
-		xip->epa_H[Y] * mm2local,
-		xip->epa_H[Z] * mm2local,
-		MAGNITUDE(xip->epa_H) * mm2local);
+		INTCLAMP(xip->epa_H[X] * mm2local),
+		INTCLAMP(xip->epa_H[Y] * mm2local),
+		INTCLAMP(xip->epa_H[Z] * mm2local),
+		INTCLAMP(MAGNITUDE(xip->epa_H) * mm2local) );
 	bu_vls_strcat( str, buf );
 
-	sprintf(buf, "\tA=%g\n", xip->epa_r1 * mm2local);
+	sprintf(buf, "\tA=%g\n", INTCLAMP(xip->epa_r1 * mm2local));
 	bu_vls_strcat( str, buf );
 
-	sprintf(buf, "\tB=%g\n", xip->epa_r2 * mm2local);
+	sprintf(buf, "\tB=%g\n", INTCLAMP(xip->epa_r2 * mm2local));
 	bu_vls_strcat( str, buf );
 
 	return(0);

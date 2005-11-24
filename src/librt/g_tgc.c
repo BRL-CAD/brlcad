@@ -1694,23 +1694,23 @@ rt_tgc_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
 	bu_vls_strcat( str, "truncated general cone (TGC)\n");
 
 	sprintf(buf, "\tV (%g, %g, %g)\n",
-	    tip->v[X] * mm2local,
-	    tip->v[Y] * mm2local,
-	    tip->v[Z] * mm2local );
+	    INTCLAMP(tip->v[X] * mm2local),
+	    INTCLAMP(tip->v[Y] * mm2local),
+	    INTCLAMP(tip->v[Z] * mm2local) );
 	bu_vls_strcat( str, buf );
 
 	sprintf(buf, "\tTop (%g, %g, %g)\n",
-	    (tip->v[X] + tip->h[X]) * mm2local,
-	    (tip->v[Y] + tip->h[Y]) * mm2local,
-	    (tip->v[Z] + tip->h[Z]) * mm2local );
+	    INTCLAMP((tip->v[X] + tip->h[X]) * mm2local),
+	    INTCLAMP((tip->v[Y] + tip->h[Y]) * mm2local),
+	    INTCLAMP((tip->v[Z] + tip->h[Z]) * mm2local) );
 	bu_vls_strcat( str, buf );
 
 	Hmag = MAGNITUDE(tip->h);
 	sprintf(buf, "\tH (%g, %g, %g) mag=%g\n",
-	    tip->h[X] * mm2local,
-	    tip->h[Y] * mm2local,
-	    tip->h[Z] * mm2local,
-	    Hmag * mm2local);
+	    INTCLAMP(tip->h[X] * mm2local),
+	    INTCLAMP(tip->h[Y] * mm2local),
+	    INTCLAMP(tip->h[Z] * mm2local),
+	    INTCLAMP(Hmag * mm2local) );
 	bu_vls_strcat( str, buf );
 	if( Hmag < VDIVIDE_TOL )  {
 		bu_vls_strcat( str, "H vector is zero!\n");
@@ -1722,31 +1722,31 @@ rt_tgc_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
 	}
 
 	sprintf(buf, "\tA (%g, %g, %g) mag=%g\n",
-	    tip->a[X] * mm2local,
-	    tip->a[Y] * mm2local,
-	    tip->a[Z] * mm2local,
-	    MAGNITUDE(tip->a) * mm2local);
+	    INTCLAMP(tip->a[X] * mm2local),
+	    INTCLAMP(tip->a[Y] * mm2local),
+	    INTCLAMP(tip->a[Z] * mm2local),
+	    INTCLAMP(MAGNITUDE(tip->a) * mm2local) );
 	bu_vls_strcat( str, buf );
 
 	sprintf(buf, "\tB (%g, %g, %g) mag=%g\n",
-	    tip->b[X] * mm2local,
-	    tip->b[Y] * mm2local,
-	    tip->b[Z] * mm2local,
-	    MAGNITUDE(tip->b) * mm2local);
+	    INTCLAMP(tip->b[X] * mm2local),
+	    INTCLAMP(tip->b[Y] * mm2local),
+	    INTCLAMP(tip->b[Z] * mm2local),
+	    INTCLAMP(MAGNITUDE(tip->b) * mm2local) );
 	bu_vls_strcat( str, buf );
 
 	sprintf(buf, "\tC (%g, %g, %g) mag=%g\n",
-	    tip->c[X] * mm2local,
-	    tip->c[Y] * mm2local,
-	    tip->c[Z] * mm2local,
-	    MAGNITUDE(tip->c) * mm2local);
+	    INTCLAMP(tip->c[X] * mm2local),
+	    INTCLAMP(tip->c[Y] * mm2local),
+	    INTCLAMP(tip->c[Z] * mm2local),
+	    INTCLAMP(MAGNITUDE(tip->c) * mm2local) );
 	bu_vls_strcat( str, buf );
 
 	sprintf(buf, "\tD (%g, %g, %g) mag=%g\n",
-	    tip->d[X] * mm2local,
-	    tip->d[Y] * mm2local,
-	    tip->d[Z] * mm2local,
-	    MAGNITUDE(tip->d) * mm2local);
+	    INTCLAMP(tip->d[X] * mm2local),
+	    INTCLAMP(tip->d[Y] * mm2local),
+	    INTCLAMP(tip->d[Z] * mm2local),
+	    INTCLAMP(MAGNITUDE(tip->d) * mm2local) );
 	bu_vls_strcat( str, buf );
 
 	VCROSS( unitv, tip->c, tip->d );

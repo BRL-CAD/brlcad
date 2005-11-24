@@ -1643,25 +1643,25 @@ rt_ehy_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
 	bu_vls_strcat( str, "Elliptical Hyperboloid (EHY)\n");
 
 	sprintf(buf, "\tV (%g, %g, %g)\n",
-		xip->ehy_V[X] * mm2local,
-		xip->ehy_V[Y] * mm2local,
-		xip->ehy_V[Z] * mm2local );
+		INTCLAMP(xip->ehy_V[X] * mm2local),
+		INTCLAMP(xip->ehy_V[Y] * mm2local),
+		INTCLAMP(xip->ehy_V[Z] * mm2local) );
 	bu_vls_strcat( str, buf );
 
 	sprintf(buf, "\tH (%g, %g, %g) mag=%g\n",
-		xip->ehy_H[X] * mm2local,
-		xip->ehy_H[Y] * mm2local,
-		xip->ehy_H[Z] * mm2local,
-		MAGNITUDE(xip->ehy_H) * mm2local);
+		INTCLAMP(xip->ehy_H[X] * mm2local),
+		INTCLAMP(xip->ehy_H[Y] * mm2local),
+		INTCLAMP(xip->ehy_H[Z] * mm2local),
+		INTCLAMP(MAGNITUDE(xip->ehy_H) * mm2local) );
 	bu_vls_strcat( str, buf );
 
-	sprintf(buf, "\tA=%g\n", xip->ehy_r1 * mm2local);
+	sprintf(buf, "\tA=%g\n", INTCLAMP(xip->ehy_r1 * mm2local));
 	bu_vls_strcat( str, buf );
 
-	sprintf(buf, "\tB=%g\n", xip->ehy_r2 * mm2local);
+	sprintf(buf, "\tB=%g\n", INTCLAMP(xip->ehy_r2 * mm2local));
 	bu_vls_strcat( str, buf );
 
-	sprintf(buf, "\tc=%g\n", xip->ehy_c * mm2local);
+	sprintf(buf, "\tc=%g\n", INTCLAMP(xip->ehy_c * mm2local));
 	bu_vls_strcat( str, buf );
 
 	return(0);

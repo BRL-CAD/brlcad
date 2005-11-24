@@ -533,20 +533,20 @@ dsp_print_v4(struct bu_vls *vls, const struct rt_dsp_internal *dsp_ip)
 
     MAT4X3PNT(v, dsp_ip->dsp_stom, pt);
 
-    bu_vls_printf( vls, " (origin at %g %g %g)mm\n", V3ARGS(v));
+    bu_vls_printf( vls, " (origin at %g %g %g)mm\n", V3INTCLAMPARGS(v));
 
     bu_vls_printf( vls, "  stom=\n");
     bu_vls_printf( vls, "  %8.3f %8.3f %8.3f %8.3f\n",
-		   V4ARGS(dsp_ip->dsp_stom) );
+		   V4INTCLAMPARGS(dsp_ip->dsp_stom) );
 
     bu_vls_printf( vls, "  %8.3f %8.3f %8.3f %8.3f\n",
-		   V4ARGS( &dsp_ip->dsp_stom[4]) );
+		   V4INTCLAMPARGS( &dsp_ip->dsp_stom[4]) );
 
     bu_vls_printf( vls, "  %8.3f %8.3f %8.3f %8.3f\n",
-		   V4ARGS( &dsp_ip->dsp_stom[8]) );
+		   V4INTCLAMPARGS( &dsp_ip->dsp_stom[8]) );
 
     bu_vls_printf( vls, "  %8.3f %8.3f %8.3f %8.3f\n",
-		   V4ARGS( &dsp_ip->dsp_stom[12]) );
+		   V4INTCLAMPARGS( &dsp_ip->dsp_stom[12]) );
 }
 
 /**	D S P _ P R I N T _ V 5
@@ -604,20 +604,13 @@ dsp_print_v5(struct bu_vls *vls,
 
     MAT4X3PNT(v, dsp_ip->dsp_stom, pt);
 
-    bu_vls_printf( vls, " (origin at %g %g %g)mm\n", V3ARGS(v));
+    bu_vls_printf( vls, " (origin at %g %g %g)mm\n", V3INTCLAMPARGS(v));
 
     bu_vls_printf( vls, "  stom=\n");
-    bu_vls_printf( vls, "  %8.3f %8.3f %8.3f %8.3f\n",
-									 V4ARGS(dsp_ip->dsp_stom) );
-
-    bu_vls_printf( vls, "  %8.3f %8.3f %8.3f %8.3f\n",
-									 V4ARGS( &dsp_ip->dsp_stom[4]) );
-
-    bu_vls_printf( vls, "  %8.3f %8.3f %8.3f %8.3f\n",
-									 V4ARGS( &dsp_ip->dsp_stom[8]) );
-
-    bu_vls_printf( vls, "  %8.3f %8.3f %8.3f %8.3f\n",
-									 V4ARGS( &dsp_ip->dsp_stom[12]) );
+    bu_vls_printf( vls, "  %8.3f %8.3f %8.3f %8.3f\n", V4INTCLAMPARGS(dsp_ip->dsp_stom) );
+    bu_vls_printf( vls, "  %8.3f %8.3f %8.3f %8.3f\n", V4INTCLAMPARGS( &dsp_ip->dsp_stom[4]) );
+    bu_vls_printf( vls, "  %8.3f %8.3f %8.3f %8.3f\n", V4INTCLAMPARGS( &dsp_ip->dsp_stom[8]) );
+    bu_vls_printf( vls, "  %8.3f %8.3f %8.3f %8.3f\n", V4INTCLAMPARGS( &dsp_ip->dsp_stom[12]) );
 }
 
 /**

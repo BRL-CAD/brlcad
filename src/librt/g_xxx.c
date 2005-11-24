@@ -499,9 +499,9 @@ double			mm2local;
 	bu_vls_strcat( str, "truncated general xxx (XXX)\n");
 
 	sprintf(buf, "\tV (%g, %g, %g)\n",
-		xxx_ip->v[X] * mm2local,
-		xxx_ip->v[Y] * mm2local,
-		xxx_ip->v[Z] * mm2local );
+		INTCLAMP(xxx_ip->v[X] * mm2local),
+		INTCLAMP(xxx_ip->v[Y] * mm2local),
+		INTCLAMP(xxx_ip->v[Z] * mm2local) );
 	bu_vls_strcat( str, buf );
 
 	return(0);

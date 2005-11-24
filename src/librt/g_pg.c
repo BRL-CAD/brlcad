@@ -810,9 +810,9 @@ rt_pg_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose,
 	if( pgp->npoly )
 	{
 		sprintf(buf, "\tFirst vertex (%g, %g, %g)\n",
-			pgp->poly[0].verts[X] * mm2local,
-			pgp->poly[0].verts[Y] * mm2local,
-			pgp->poly[0].verts[Z] * mm2local );
+			INTCLAMP(pgp->poly[0].verts[X] * mm2local),
+			INTCLAMP(pgp->poly[0].verts[Y] * mm2local),
+			INTCLAMP(pgp->poly[0].verts[Z] * mm2local) );
 		bu_vls_strcat( str, buf );
 	}
 
@@ -828,12 +828,12 @@ rt_pg_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose,
 		bu_vls_strcat( str, buf );
 		for( j=0; j < pgp->poly[i].npts; j++ )  {
 			sprintf(buf, "\t\tV (%g, %g, %g)\n\t\t N (%g, %g, %g)\n",
-				v[X] * mm2local,
-				v[Y] * mm2local,
-				v[Z] * mm2local,
-				n[X] * mm2local,
-				n[Y] * mm2local,
-				n[Z] * mm2local );
+				INTCLAMP(v[X] * mm2local),
+				INTCLAMP(v[Y] * mm2local),
+				INTCLAMP(v[Z] * mm2local),
+				INTCLAMP(n[X] * mm2local),
+				INTCLAMP(n[Y] * mm2local),
+				INTCLAMP(n[Z] * mm2local) );
 			bu_vls_strcat( str, buf );
 			v += ELEMENTS_PER_VECT;
 			n += ELEMENTS_PER_VECT;

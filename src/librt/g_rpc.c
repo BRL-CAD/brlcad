@@ -1388,26 +1388,26 @@ rt_rpc_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
 	bu_vls_strcat( str, "Right Parabolic Cylinder (RPC)\n");
 
 	sprintf(buf, "\tV (%g, %g, %g)\n",
-		xip->rpc_V[X] * mm2local,
-		xip->rpc_V[Y] * mm2local,
-		xip->rpc_V[Z] * mm2local );
+		INTCLAMP(xip->rpc_V[X] * mm2local),
+		INTCLAMP(xip->rpc_V[Y] * mm2local),
+		INTCLAMP(xip->rpc_V[Z] * mm2local) );
 	bu_vls_strcat( str, buf );
 
 	sprintf(buf, "\tB (%g, %g, %g) mag=%g\n",
-		xip->rpc_B[X] * mm2local,
-		xip->rpc_B[Y] * mm2local,
-		xip->rpc_B[Z] * mm2local,
-		MAGNITUDE(xip->rpc_B) * mm2local);
+		INTCLAMP(xip->rpc_B[X] * mm2local),
+		INTCLAMP(xip->rpc_B[Y] * mm2local),
+		INTCLAMP(xip->rpc_B[Z] * mm2local),
+		INTCLAMP(MAGNITUDE(xip->rpc_B) * mm2local));
 	bu_vls_strcat( str, buf );
 
 	sprintf(buf, "\tH (%g, %g, %g) mag=%g\n",
-		xip->rpc_H[X] * mm2local,
-		xip->rpc_H[Y] * mm2local,
-		xip->rpc_H[Z] * mm2local,
-		MAGNITUDE(xip->rpc_H) * mm2local);
+		INTCLAMP(xip->rpc_H[X] * mm2local),
+		INTCLAMP(xip->rpc_H[Y] * mm2local),
+		INTCLAMP(xip->rpc_H[Z] * mm2local),
+		INTCLAMP(MAGNITUDE(xip->rpc_H) * mm2local));
 	bu_vls_strcat( str, buf );
 
-	sprintf(buf, "\tr=%g\n", xip->rpc_r * mm2local);
+	sprintf(buf, "\tr=%g\n", INTCLAMP(xip->rpc_r * mm2local));
 	bu_vls_strcat( str, buf );
 
 	return(0);
