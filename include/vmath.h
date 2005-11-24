@@ -685,6 +685,11 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
 #define V3ARGS(a)	(a)[X], (a)[Y], (a)[Z]
 #define V4ARGS(a)	(a)[X], (a)[Y], (a)[Z], (a)[W]
 
+/* integer clamped versions of the previous arg macros */
+#define V2INTCLAMPARGS(a)	INTCLAMP((a)[X]), INTCLAMP((a)[Y])
+#define V3INTCLAMPARGS(a)	INTCLAMP((a)[X]), INTCLAMP((a)[Y]), INTCLAMP((a)[Z])
+#define V4INTCLAMPARGS(a)	INTCLAMP((a)[X]), INTCLAMP((a)[Y]), INTCLAMP((a)[Z]), INTCLAMP((a)[W])
+
 /* Print vector name and components on stderr */
 #define V2PRINT(a,b)	\
 	(void)fprintf(stderr,"%s (%g, %g)\n", a, V2ARGS(b) );
@@ -692,6 +697,14 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
 	(void)fprintf(stderr,"%s (%g, %g, %g)\n", a, V3ARGS(b) );
 #define HPRINT(a,b)	\
 	(void)fprintf(stderr,"%s (%g, %g, %g, %g)\n", a, V4ARGS(b) );
+
+/* integer clamped versions of the previous print macros */
+#define V2INTCLAMPPRINT(a,b)	\
+	(void)fprintf(stderr,"%s (%g, %g)\n", a, V2INTCLAMPARGS(b) );
+#define VINTCLAMPPRINT(a,b)	\
+	(void)fprintf(stderr,"%s (%g, %g, %g)\n", a, V3INTCLAMPARGS(b) );
+#define HINTCLAMPPRINT(a,b)	\
+	(void)fprintf(stderr,"%s (%g, %g, %g, %g)\n", a, V4INTCLAMPARGS(b) );
 
 #ifdef __cplusplus
 #define CPP_V3PRINT( _os, _title, _p )	(_os) << (_title) << "=(" << \
