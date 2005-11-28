@@ -31,7 +31,7 @@
 #define SHADEWORK_H
 
 /* for light_specific */
-//#include "light.h"
+/* #include "light.h" */
 
 #define SW_NLIGHTS	16		/* Max # of light sources */
 
