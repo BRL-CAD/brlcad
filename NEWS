@@ -13,6 +13,9 @@ entire history of the project is available through CVS.
 * added another text alignment handler to dxf-g - John Anderson
 * clamped integer value printing of primitives in mged - Sean Morrison
 * removed gratuitous nmg debug printing from mged - Sean Morrison
+* fixed grouping bug, mged point importer - Jason Owens, Sean Morrison
+* improved mged point import support - Lee Butler, Sean Morrison
+* fixed bug in plate orientation of mged point importer - Lee Butler
 
 
 ----------------------------------------------------------------------
