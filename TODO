@@ -9,6 +9,8 @@ scratch pad for the developers to use for tracking development ideas.
 
 THESE SHOULD HAPPEN BEFORE THE NEXT RELEASE
 
+* test pic/nonpic build problems with librtms/libmultispectral
+
 * fix perf.sh pathing issue
 
 * initialize application structures
