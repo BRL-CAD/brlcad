@@ -9,6 +9,8 @@ scratch pad for the developers to use for tracking development ideas.
 
 THESE SHOULD HAPPEN BEFORE THE NEXT RELEASE
 
+* fix perf.sh pathing issue
+
 * initialize application structures
 
 * mged path foo
