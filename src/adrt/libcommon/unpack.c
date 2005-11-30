@@ -108,6 +108,9 @@ void common_unpack_free(common_db_t *db) {
     texture_list[i].texture->free(texture_list[i].texture);
   free(texture_list);
 
+  if (!db)
+    return;
+
   /* Free mesh data */
   for(i = 0; i < db->mesh_num; i++) {
     /* Free triangle data */
