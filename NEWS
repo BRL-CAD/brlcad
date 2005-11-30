@@ -10,6 +10,7 @@ entire history of the project is available through CVS.
 --- 2005-12-XX  Release 7.6.5                                      ---
 ----------------------------------------------------------------------
 
+* fixed adrt/isst client crash bug - Mike Caruso, Razak Arunaugun
 * fixed modified env(PATH) startup issue in mged - Sean Morrison
 * fixed benchmark tool default resource location bug - Sean Morrison
 * added another text alignment handler to dxf-g - John Anderson
