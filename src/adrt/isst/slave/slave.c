@@ -48,7 +48,7 @@ void isst_slave_init(tie_t *tie, int socknum) {
 
 void isst_slave_free() {
   util_camera_free(&camera);
-  common_unpack_free();
+  common_unpack_free(&db);
 }
 
 
