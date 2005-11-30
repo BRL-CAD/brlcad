@@ -68,6 +68,6 @@ typedef struct common_unpack_mesh_node_s {
 
 
 extern	void	common_unpack(common_db_t *db, tie_t *tie, util_camera_t *camera, int socknum);
-extern	void	common_unpack_free();
+extern	void	common_unpack_free(common_db_t *db);
 
 #endif
