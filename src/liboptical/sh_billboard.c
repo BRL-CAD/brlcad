@@ -190,12 +190,12 @@ void new_image(register const struct bu_structparse	*sdp,	/*struct desc*/
  *	-1	failure
  */
 HIDDEN int
-bbd_setup( rp, matparm, dpp, mfp, rtip)
-     register struct region	*rp;
-     struct bu_vls		*matparm;
-     char			**dpp;	/* pointer to reg_udata in *rp */
-     struct mfuncs		*mfp;
-     struct rt_i		*rtip;	/* New since 4.4 release */
+bbd_setup( struct region *rp,
+	   struct bu_vls *matparm,
+	   char **dpp, /* pointer to reg_udata in *rp */
+	   struct mfuncs *mfp,
+	   struct rt_i *rtip
+	   )
 {
     register struct bbd_specific	*bbd_sp;
     struct rt_db_internal intern;
@@ -322,9 +322,7 @@ bbd_setup( rp, matparm, dpp, mfp, rtip)
  *	B I L L B O A R D _ P R I N T
  */
 HIDDEN void
-bbd_print( rp, dp )
-     register struct region *rp;
-     char	*dp;
+bbd_print( struct region *rp, char *dp )
 {
     bu_struct_print( rp->reg_name, bbd_print_tab, (char *)dp );
 }
@@ -333,8 +331,7 @@ bbd_print( rp, dp )
  *	B I L L B O A R D _ F R E E
  */
 HIDDEN void
-bbd_free( cp )
-     char *cp;
+bbd_free( char *cp )
 {
     bu_free( cp, "bbd_specific" );
 }
@@ -537,13 +534,11 @@ imgdist_compare(const void *a, const void *b)
  *	This is called (from viewshade() in shade.c) once for each hit point
  *	to be shaded.  The purpose here is to fill in values in the shadework
  *	structure.
+ *
+ *  dp is a pointer to the shader-specific struct
  */
 int
-bbd_render( ap, pp, swp, dp )
-     struct application	*ap;
-     struct partition	*pp;
-     struct shadework	*swp;	/* defined in ../h/shadework.h */
-     char		*dp;	/* ptr to the shader-specific struct */
+bbd_render( struct application *ap, struct partition *pp, struct shadework *swp, char *dp )
 {
     register struct bbd_specific *bbd_sp = (struct bbd_specific *)dp;
     union tree *tp;
