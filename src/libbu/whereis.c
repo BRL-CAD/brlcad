@@ -41,6 +41,9 @@
 #  include <sys/types.h>
 #endif
 #ifdef HAVE_SYS_SYSCTL_H
+#  ifdef HAVE_SYS_PARAM_H
+#    include <sys/param.h>
+#  endif
 #  include <sys/sysctl.h>
 #endif
 
