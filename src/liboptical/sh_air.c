@@ -304,6 +304,8 @@ tmist_render(struct application *ap, struct partition *pp, struct shadework *swp
 	RT_CHECK_PT(pp);
 	CK_AIR_SP(air_sp);
 
+	RT_APPLICATION_INIT(&my_ap);
+
 	/* Get entry point */
 	if (pp->pt_inhit->hit_dist < 0.0) {
 		VMOVE(in_pt, ap->a_ray.r_pt);
