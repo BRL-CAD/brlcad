@@ -681,6 +681,8 @@ struct partition *PartHeadp;
 
 	RT_AP_CHECK(ap);
 
+	RT_APPLICATION_INIT(&appl);
+
 	for( pp=PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw )
 		if( pp->pt_outhit->hit_dist > 0.0 )  break;
 	if( pp == PartHeadp )  {
