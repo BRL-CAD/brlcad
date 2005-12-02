@@ -105,6 +105,8 @@ rr_render(register struct application *ap,
 #endif
 
 	RT_AP_CHECK(ap);
+	
+	RT_APPLICATION_INIT(&sub_ap);
 
 #ifdef RT_MULTISPECTRAL
 	sub_ap.a_spectrum = BN_TABDATA_NULL;
