@@ -269,6 +269,7 @@ main (int argc, char **argv)
     rt_g.debug = DEBUG_MEM_FULL;
 
     /* Initialize the application structure */
+    RT_APPLICATION_INIT(&ap);
     ap.a_hit = rpt_hit;
     ap.a_miss = no_op;
     ap.a_resource = RESOURCE_NULL;
