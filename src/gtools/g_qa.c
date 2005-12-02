@@ -1281,8 +1281,6 @@ plane_worker (int cpu, genptr_t ptr)
     double v_coord;
     struct cstate *state = (struct cstate *)ptr;
 
-
-
     RT_APPLICATION_INIT(&ap);
     ap.a_rt_i = (struct rt_i *)state->rtip;	/* application uses this instance */
     ap.a_hit = hit;			/* where to go on a hit */
