@@ -1030,7 +1030,7 @@ main (int argc, char **argv)
     /*
      *	Initialize the application structure
      */
-    bzero((void *) &ap, sizeof(struct application));
+    RT_APPLICATION_INIT(&ap);
     ap.a_hit =
 	(control.glc_what_to_report & ~G_LINT_OVLP) ? rpt_hit
 						    : no_op_hit;
