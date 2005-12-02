@@ -61,7 +61,6 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 #define ZTOL 1.e-20	/*  Zero tolerance.  */
 
-struct application ap;  /*  Structure passed between functions.  */
 
 extern int hit(register struct application *ap_p, struct partition *PartHeadp, struct seg *segp);       /*  User supplied hit function.  */
 extern int miss(struct application *ap);      /*  User supplied miss function.  */
@@ -92,6 +91,7 @@ double drand48() {
 
 int main(int argc, char **argv)
 {							/*  START # 99  */
+   struct application ap;  /*  Structure passed between functions.  */
    struct rt_i *rtip;	/*  Used to build directory.  */
    int index;		/*  Index for rt_dirbuild & rt_gettree.  */
    char idbuf[32];	/*  Contains data base info.  */
@@ -335,6 +335,7 @@ int main(int argc, char **argv)
 	(void)fflush(stdout);
 
 	/*  Set up parameters for rt_shootray.  */
+	RT_APPLICATION_INIT(&ap);
 	ap.a_hit = hit;			/*  User supplied hit func.  */
 	ap.a_miss = miss;		/*  User supplied miss func.  */
 	ap.a_overlap = overlap;		/*  User supplied overlap func.  */
