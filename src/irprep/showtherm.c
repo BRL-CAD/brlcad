@@ -83,8 +83,6 @@ struct table		/*  Table for region name & temperature.  */
 };
 struct table *info;	/*  Dimension later with malloc.  */
 
-/*  Variables needed for rt_shootray.  */
-struct application ap;	/*  Application struct, passed between functions.  */
 extern int hit(register struct application *ap_p, struct partition *PartHeadp, struct seg *segp);	/*  User supplied hit function.  */
 extern int miss(register struct application *ap_p);	/*  User supplied miss function.  */
 extern int overlap(register struct application *ap_p, register struct partition *PartHeadp);	/*  User supplied overlap function.  */
@@ -92,6 +90,8 @@ extern int overlap(register struct application *ap_p, register struct partition 
 
 int main(int argc, char **argv)
 {							/*  START # 1  */
+  struct application ap;	/*  Application struct, passed between functions.  */
+
   int index;		/*  Index for rt_dirbuild & rt_gettree.  */
   static struct rt_i *rtip;/*  Used for building directory, ect.  */
   char idbuf[132];	/*  First id record in .g file.  */
@@ -479,6 +479,7 @@ int main(int argc, char **argv)
       radius = radius * multi;
 
       /*  Set up parameters for rt_shootray.  */
+      RT_APPLICATION_INIT(&ap);
       ap.a_hit = hit;		/*  User supplied hit function.  */
       ap.a_miss = miss;		/*  User supplied miss function.  */
       ap.a_overlap = overlap;	/*  User supplied overlap function.  */

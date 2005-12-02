@@ -95,7 +95,6 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #define GAMMA 35.	/*  Rotation about x-axis.  */
 
 
-struct application ap;	/*  Structure passed between functions.  */
 extern int hit(register struct application *ap_p, struct partition *PartHeadp, struct seg *segp);	/*  User supplied hit function.  */
 extern int miss(register struct application *ap_p);	/*  User supplied miss function.  */
 extern int ovrlap(register struct application *ap_p, struct partition *PartHeadp, struct region *reg1, struct region *reg2);	/*  User supplied overlap function.  */
@@ -150,6 +149,7 @@ struct structovr *overlaps;	/*  name of structovr structure  */
 
 int main(int argc, char **argv)
 {
+  struct application ap;	/*  Structure passed between functions.  */
   int i,j,k,ii;	/*  variables used in loops  */
   int ia;		/*  variable used to set short to int  */
 
@@ -625,6 +625,7 @@ int main(int argc, char **argv)
 	}
 
       /*  Set up other parameters for rt_shootray.  */
+      RT_APPLICATION_INIT(&ap);
       ap.a_hit=hit;	/*  User supplied hit function.  */
       ap.a_miss=miss;	/*  User supplied miss function.  */
       ap.a_overlap=ovrlap;	/*  User supplied overlap function.  */

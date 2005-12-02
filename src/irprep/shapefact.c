@@ -91,8 +91,6 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #define MAXREG 200	/*  Maximum number of regions.  */
 
 
-struct application ap;	/*  Structure passed between functions.  */
-
 extern int hit(register struct application *ap_p, struct partition *PartHeadp, struct seg *segp);	/*  User supplied hit function.  */
 extern int miss(struct application *ap);	/*  User supplied miss function.  */
 extern int overlap(void);	/*  User supplied overlap function.  */
@@ -126,6 +124,7 @@ double drand48() {
 
 int main(int argc, char **argv)
 {
+  struct application ap;	/*  Structure passed between functions.  */
   extern struct table info[];	/*  Structure is external.  */
   struct rt_i *rtip;
   int index;		/*  Index for rt_dirbuild & rt_gettree.  */
@@ -370,6 +369,7 @@ int main(int argc, char **argv)
        */
 
       /*  Set up parameters for rt_shootray.  */
+      RT_APPLICATION_INIT(&ap);
       ap.a_hit = hit;		/*  User supplied hit function.  */
       ap.a_miss = miss;	/*  User supplied miss function.  */
       ap.a_overlap = overlap;	/*  User supplied overlap function.  */
