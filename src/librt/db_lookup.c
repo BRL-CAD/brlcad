@@ -50,13 +50,11 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "common.h"
 
-
-
 #include <stdio.h>
 #ifdef HAVE_STRING_H
-#include <string.h>
+#  include <string.h>
 #else
-#include <strings.h>
+#  include <strings.h>
 #endif
 
 #include "machine.h"
@@ -277,15 +275,11 @@ db_lookup(const struct db_i *dbip, register const char *name, int noisy)
  * Add an entry to the directory.
  * Try to make the regular path through the code as fast as possible,
  * to speed up building the table of contents.
+ *
+ * for db version 5, ptr is a pointer to an unsigned char (minor_type)
  */
 struct directory *
 db_diradd(register struct db_i *dbip, register const char *name, long int laddr, int len, int flags, genptr_t ptr)
-
-
-
-
-
-        		    		/* for db version 5, this is a pointer to an unsigned char (minor_type) */
 {
 	struct directory **headp;
 	register struct directory *dp;
@@ -556,24 +550,26 @@ db_get_directory(register struct resource *resp)
 /**
  *			D B _ L O O K U P _ B Y _ A T T R
  *
- *	lookup directory entries based on directory flags (dp->d_flags) and attributes
- *	the "dir_flags" arg is a mask for the directory flags
- *	the "avs" is an attribute value set used to select from the objects that pass
- *	the flags mask. if "op" is 1, then the object must have all the attributes and
- *	values that appear in "avs" in order to be selected. If "op" is 2, then the object
- *	must have at least one of the attribute/value pairs from "avs".
+ * lookup directory entries based on directory flags (dp->d_flags) and
+ * attributes the "dir_flags" arg is a mask for the directory flags
+ * the *"avs" is an attribute value set used to select from the
+ * objects that *pass the flags mask. if "op" is 1, then the object
+ * must have all the *attributes and values that appear in "avs" in
+ * order to be *selected. If "op" is 2, then the object must have at
+ * least one of *the attribute/value pairs from "avs".
  *
- *	returns a ptbl list of selected directory pointers
- *		an empty list means nothing met the requirements
- *		a NULL return means something went wrong
+ * dir_flags are in the form used in struct directory (d_flags)
+ *
+ * for op:
+ * 1 -> all attribute name/value pairs must be present and match
+ * 2 -> at least one of the name/value pairs must be present and match
+ *
+ * returns a ptbl list of selected directory pointers an empty list
+ * means nothing met the requirements a NULL return means something
+ * went wrong.
  */
 struct bu_ptbl *
 db_lookup_by_attr(struct db_i *dbip, int dir_flags, struct bu_attribute_value_set *avs, int op)
-
-              			/* flags of the form used in struct directory (d_flags) */
-
-       	/* 1 -> all attribute name/value pairs must be present and match */
-        /* 2 -> at least one of the name/value pairs must be present and match */
 {
 	struct bu_attribute_value_set obj_avs;
 	struct directory *dp;
