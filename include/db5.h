@@ -114,6 +114,7 @@ struct db5_ondisk_header {
  *	Minor types
  */
 /* BRL-CAD */
+#define DB5_MINORTYPE_RESERVED			 0
 #define DB5_MINORTYPE_BRLCAD_TOR		 1
 #define DB5_MINORTYPE_BRLCAD_TGC		 2
 #define DB5_MINORTYPE_BRLCAD_ELL		 3
