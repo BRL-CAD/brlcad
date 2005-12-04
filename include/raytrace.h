@@ -857,6 +857,7 @@ struct directory  {
 #define d_addr	d_un.file_offset
 #define RT_DIR_PHONY_ADDR	(-1L)	/* Special marker for d_addr field */
 
+/* flags for db_diradd() and friends */
 #define DIR_SOLID	0x1		/* this name is a solid */
 #define DIR_COMB	0x2		/* combination */
 #define DIR_REGION	0x4		/* region */
