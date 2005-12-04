@@ -276,7 +276,15 @@ db_lookup(const struct db_i *dbip, register const char *name, int noisy)
  * Try to make the regular path through the code as fast as possible,
  * to speed up building the table of contents.
  *
- * for db version 5, ptr is a pointer to an unsigned char (minor_type)
+ * dbip is a pointer to a valid/opened database instance
+ * name is the string name of the object being added
+ * laddr is the long offset into the file to the object
+ * len is the length of the object, number of db granules used
+ * flags are defined in raytrace.h (DIR_SOLID, DIR_COMB, DIR_REGION, RT_DIR_INMEM, etc)
+ * for db version 5, ptr is the minor_type (pointer to unsigned char code)
+ *
+ * an laddr of RT_DIR_PHONY_ADDR (-1L) means that database storage has
+ * not been allocated yet.
  */
 struct directory *
 db_diradd(register struct db_i *dbip, register const char *name, long int laddr, int len, int flags, genptr_t ptr)
