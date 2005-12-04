@@ -297,8 +297,8 @@ db_diradd(register struct db_i *dbip, register const char *name, long int laddr,
     RT_CK_DBI(dbip);
 
     if(RT_G_DEBUG&DEBUG_DB)  {
-	bu_log("db_diradd(dbip=x%x, name='%s', addr=x%x, len=%d, flags=x%x)\n",
-	       dbip, name, laddr, len, flags );
+	bu_log("db_diradd(dbip=0x%x, name='%s', addr=0x%x, len=%d, flags=0x%x, ptr=0x%x)\n",
+	       dbip, name, laddr, len, flags, ptr );
     }
 
     if( (tmp_ptr=strchr( name, '/' )) != NULL )  {
@@ -326,7 +326,6 @@ db_diradd(register struct db_i *dbip, register const char *name, long int laddr,
     RT_GET_DIRECTORY(dp, &rt_uniresource);
     RT_CK_DIR(dp);
     RT_DIR_SET_NAMEP(dp, bu_vls_addr(&local));	/* sets d_namep */
-    bu_vls_free(&local);
     dp->d_un.file_offset = laddr;
     dp->d_flags = flags & ~(RT_DIR_INMEM);
     dp->d_len = len;
@@ -338,8 +337,13 @@ db_diradd(register struct db_i *dbip, register const char *name, long int laddr,
     dp->d_uses = 0;
     if( dbip->dbi_version > 4 ) {
 	dp->d_major_type = DB5_MAJORTYPE_BRLCAD;
+	if (!ptr) {
+	    bu_log("ERROR: db_diradd called with a null minor type pointer for object %s", bu_vls_addr(&local));
+	    bu_bomb("must specify minor type");
+	}
 	dp->d_minor_type = *(unsigned char *)ptr;
     }
+    bu_vls_free(&local);
     return( dp );
 }
 
