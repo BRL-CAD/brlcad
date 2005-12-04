@@ -281,7 +281,7 @@ db_lookup(const struct db_i *dbip, register const char *name, int noisy)
  * laddr is the long offset into the file to the object
  * len is the length of the object, number of db granules used
  * flags are defined in raytrace.h (DIR_SOLID, DIR_COMB, DIR_REGION, RT_DIR_INMEM, etc)
- * for db version 5, ptr is the minor_type (pointer to unsigned char code)
+ * for db version 5, ptr is the minor_type (non-null pointer to valid unsigned char code)
  *
  * an laddr of RT_DIR_PHONY_ADDR (-1L) means that database storage has
  * not been allocated yet.
@@ -315,6 +315,12 @@ db_diradd(register struct db_i *dbip, register const char *name, long int laddr,
     if( dbip->dbi_version < 5 ) {
 	bu_vls_strncpy(&local, name, NAMESIZE);
     } else {
+	/* must provide a valid minor type */
+	if (!ptr) {
+	    bu_log("WARNING: db_diradd() called with a null minor type pointer for object %s\nIgnoring %s\n", name, name);
+	    bu_vls_free(&local);
+	    return DIR_NULL;
+	}
 	bu_vls_strcpy(&local, name);
     }
     if (db_dircheck(dbip, &local, 0, &headp) < 0) {
@@ -337,10 +343,6 @@ db_diradd(register struct db_i *dbip, register const char *name, long int laddr,
     dp->d_uses = 0;
     if( dbip->dbi_version > 4 ) {
 	dp->d_major_type = DB5_MAJORTYPE_BRLCAD;
-	if (!ptr) {
-	    bu_log("ERROR: db_diradd called with a null minor type pointer for object %s", bu_vls_addr(&local));
-	    bu_bomb("must specify minor type");
-	}
 	dp->d_minor_type = *(unsigned char *)ptr;
     }
     bu_vls_free(&local);
