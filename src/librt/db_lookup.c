@@ -76,15 +76,15 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 int
 db_is_directory_non_empty(const struct db_i	*dbip)
 {
-	register int	i;
+    register int	i;
 
-	RT_CK_DBI(dbip);
+    RT_CK_DBI(dbip);
 
-	for (i = 0; i < RT_DBNHASH; i++)  {
-		if( dbip->dbi_Head[i] != DIR_NULL )
-			return 1;
-	}
-	return 0;
+    for (i = 0; i < RT_DBNHASH; i++)  {
+	if( dbip->dbi_Head[i] != DIR_NULL )
+	    return 1;
+    }
+    return 0;
 }
 
 /**
@@ -95,17 +95,17 @@ db_is_directory_non_empty(const struct db_i	*dbip)
 int
 db_get_directory_size(const struct db_i *dbip)
 {
-	register struct directory *dp;
-	register int	count = 0;
-	int		i;
+    register struct directory *dp;
+    register int	count = 0;
+    int		i;
 
-	RT_CK_DBI(dbip);
+    RT_CK_DBI(dbip);
 
-	for (i = 0; i < RT_DBNHASH; i++)  {
-		for (dp = dbip->dbi_Head[i]; dp != DIR_NULL; dp = dp->d_forw)
-			count++;
-	}
-	return count;
+    for (i = 0; i < RT_DBNHASH; i++)  {
+	for (dp = dbip->dbi_Head[i]; dp != DIR_NULL; dp = dp->d_forw)
+	    count++;
+    }
+    return count;
 }
 
 /**
@@ -117,15 +117,15 @@ db_get_directory_size(const struct db_i *dbip)
 void
 db_ck_directory(const struct db_i *dbip)
 {
-	register struct directory *dp;
-	int		i;
+    register struct directory *dp;
+    int		i;
 
-	RT_CK_DBI(dbip);
+    RT_CK_DBI(dbip);
 
-	for (i = 0; i < RT_DBNHASH; i++)  {
-		for (dp = dbip->dbi_Head[i]; dp != DIR_NULL; dp = dp->d_forw)
-			RT_CK_DIR(dp);
-	}
+    for (i = 0; i < RT_DBNHASH; i++)  {
+	for (dp = dbip->dbi_Head[i]; dp != DIR_NULL; dp = dp->d_forw)
+	    RT_CK_DIR(dp);
+    }
 }
 
 /**
@@ -137,16 +137,16 @@ db_ck_directory(const struct db_i *dbip)
 int
 db_dirhash(const char *str)
 {
-	register const unsigned char *s = (unsigned char *)str;
-	register long sum;
-	register int i;
+    register const unsigned char *s = (unsigned char *)str;
+    register long sum;
+    register int i;
 
-	sum = 0;
-	/* BSD namei hashing starts i=0, discarding first char.  why? */
-	for( i=1; *s; )
-		sum += *s++ * i++;
+    sum = 0;
+    /* BSD namei hashing starts i=0, discarding first char.  why? */
+    for( i=1; *s; )
+	sum += *s++ * i++;
 
-	return( RT_DBHASH(sum) );
+    return( RT_DBHASH(sum) );
 }
 
 /**
@@ -178,45 +178,45 @@ db_dircheck(struct db_i		*dbip,
 	    int			noisy,
 	    struct directory	***headp)
 {
-	register struct directory	*dp;
-	register char			*cp = bu_vls_addr(ret_name);
-	register char			n0 = cp[0];
-	register char			n1 = cp[1];
+    register struct directory	*dp;
+    register char			*cp = bu_vls_addr(ret_name);
+    register char			n0 = cp[0];
+    register char			n1 = cp[1];
 
-	/* Compute hash only once (almost always the case) */
-	*headp = &(dbip->dbi_Head[db_dirhash(cp)]);
+    /* Compute hash only once (almost always the case) */
+    *headp = &(dbip->dbi_Head[db_dirhash(cp)]);
 
-	for (dp = **headp; dp != DIR_NULL; dp=dp->d_forw) {
-		register char	*this;
-		if (n0 == *(this=dp->d_namep)  &&	/* speed */
-		    n1 == this[1]  &&			/* speed */
-		    strcmp(cp, this) == 0) {
-			/* Name exists in directory already */
-			register int	c;
+    for (dp = **headp; dp != DIR_NULL; dp=dp->d_forw) {
+	register char	*this;
+	if (n0 == *(this=dp->d_namep)  &&	/* speed */
+	    n1 == this[1]  &&			/* speed */
+	    strcmp(cp, this) == 0) {
+	    /* Name exists in directory already */
+	    register int	c;
 
-			bu_vls_strcpy(ret_name, "A_");
-			bu_vls_strcat(ret_name, this);
+	    bu_vls_strcpy(ret_name, "A_");
+	    bu_vls_strcat(ret_name, this);
 
-			for (c = 'A'; c <= 'Z'; c++) {
-				*cp = c;
-				if (db_lookup(dbip, cp, noisy) == DIR_NULL)
-					break;
-			}
-			if (c > 'Z') {
-				bu_log("db_dircheck: Duplicate of name '%s', ignored\n",
-				       cp);
-				return -1;	/* fail */
-			}
-			bu_log("db_dircheck: Duplicate of '%s', given temporary name '%s'\n",
-			       cp+2, cp);
+	    for (c = 'A'; c <= 'Z'; c++) {
+		*cp = c;
+		if (db_lookup(dbip, cp, noisy) == DIR_NULL)
+		    break;
+	    }
+	    if (c > 'Z') {
+		bu_log("db_dircheck: Duplicate of name '%s', ignored\n",
+		       cp);
+		return -1;	/* fail */
+	    }
+	    bu_log("db_dircheck: Duplicate of '%s', given temporary name '%s'\n",
+		   cp+2, cp);
 
-			/* no need to recurse, simply recompute the hash and break */
-			*headp = &(dbip->dbi_Head[db_dirhash(cp)]);
-			break;
-		}
+	    /* no need to recurse, simply recompute the hash and break */
+	    *headp = &(dbip->dbi_Head[db_dirhash(cp)]);
+	    break;
 	}
+    }
 
-	return 0;	/* success */
+    return 0;	/* success */
 }
 
 
@@ -238,35 +238,35 @@ db_dircheck(struct db_i		*dbip,
 struct directory *
 db_lookup(const struct db_i *dbip, register const char *name, int noisy)
 {
-	register struct directory *dp;
-	register char	n0;
-	register char	n1;
+    register struct directory *dp;
+    register char	n0;
+    register char	n1;
 
-	if (!name) {
-	  bu_log("db_lookup received NULL name\n");
-	  return (DIR_NULL);
+    if (!name) {
+	bu_log("db_lookup received NULL name\n");
+	return (DIR_NULL);
+    }
+
+    n0 = name[0];
+    n1 = name[1];
+
+    RT_CK_DBI(dbip);
+
+    dp = dbip->dbi_Head[db_dirhash(name)];
+    for(; dp != DIR_NULL; dp=dp->d_forw )  {
+	register char	*this;
+	if(
+	   n0 == *(this=dp->d_namep)  &&	/* speed */
+	   n1 == this[1]  &&	/* speed */
+	   strcmp( name, this ) == 0
+	   )  {
+	    if(RT_G_DEBUG&DEBUG_DB) bu_log("db_lookup(%s) x%x\n", name, dp);
+	    return(dp);
 	}
+    }
 
-	n0 = name[0];
-	n1 = name[1];
-
-	RT_CK_DBI(dbip);
-
-	dp = dbip->dbi_Head[db_dirhash(name)];
-	for(; dp != DIR_NULL; dp=dp->d_forw )  {
-		register char	*this;
-		if(
-			n0 == *(this=dp->d_namep)  &&	/* speed */
-			n1 == this[1]  &&	/* speed */
-			strcmp( name, this ) == 0
-		)  {
-			if(RT_G_DEBUG&DEBUG_DB) bu_log("db_lookup(%s) x%x\n", name, dp);
-			return(dp);
-		}
-	}
-
-	if(noisy || RT_G_DEBUG&DEBUG_DB) bu_log("db_lookup(%s) failed: %s does not exist\n", name, name);
-	return( DIR_NULL );
+    if(noisy || RT_G_DEBUG&DEBUG_DB) bu_log("db_lookup(%s) failed: %s does not exist\n", name, name);
+    return( DIR_NULL );
 }
 
 /**
@@ -281,58 +281,58 @@ db_lookup(const struct db_i *dbip, register const char *name, int noisy)
 struct directory *
 db_diradd(register struct db_i *dbip, register const char *name, long int laddr, int len, int flags, genptr_t ptr)
 {
-	struct directory **headp;
-	register struct directory *dp;
-	char *tmp_ptr;
-	struct bu_vls	local;
+    struct directory **headp;
+    register struct directory *dp;
+    char *tmp_ptr;
+    struct bu_vls	local;
 
-	RT_CK_DBI(dbip);
+    RT_CK_DBI(dbip);
 
-	if(RT_G_DEBUG&DEBUG_DB)  {
-		bu_log("db_diradd(dbip=x%x, name='%s', addr=x%x, len=%d, flags=x%x)\n",
-			dbip, name, laddr, len, flags );
+    if(RT_G_DEBUG&DEBUG_DB)  {
+	bu_log("db_diradd(dbip=x%x, name='%s', addr=x%x, len=%d, flags=x%x)\n",
+	       dbip, name, laddr, len, flags );
+    }
+
+    if( (tmp_ptr=strchr( name, '/' )) != NULL )  {
+	/* if this is a version 4 database and the offending char is beyond NAMESIZE
+	 * then it is not really a problem
+	 */
+	if( dbip->dbi_version < 5 && (tmp_ptr - name) < 16 ) {
+	    bu_log("db_diradd() object named '%s' is illegal, ignored\n", name );
+	    return DIR_NULL;
 	}
+    }
 
-	if( (tmp_ptr=strchr( name, '/' )) != NULL )  {
-		/* if this is a version 4 database and the offending char is beyond NAMESIZE
-		 * then it is not really a problem
-		 */
-		if( dbip->dbi_version < 5 && (tmp_ptr - name) < 16 ) {
-			bu_log("db_diradd() object named '%s' is illegal, ignored\n", name );
-			return DIR_NULL;
-		}
-	}
-
-	bu_vls_init(&local);
-	if( dbip->dbi_version < 5 ) {
-		bu_vls_strncpy(&local, name, NAMESIZE);
-	} else {
-		bu_vls_strcpy(&local, name);
-	}
-	if (db_dircheck(dbip, &local, 0, &headp) < 0) {
-		bu_vls_free(&local);
-		return DIR_NULL;
-	}
-
-	/* 'name' not found in directory, add it */
-	RT_GET_DIRECTORY(dp, &rt_uniresource);
-	RT_CK_DIR(dp);
-	RT_DIR_SET_NAMEP(dp, bu_vls_addr(&local));	/* sets d_namep */
+    bu_vls_init(&local);
+    if( dbip->dbi_version < 5 ) {
+	bu_vls_strncpy(&local, name, NAMESIZE);
+    } else {
+	bu_vls_strcpy(&local, name);
+    }
+    if (db_dircheck(dbip, &local, 0, &headp) < 0) {
 	bu_vls_free(&local);
-	dp->d_un.file_offset = laddr;
-	dp->d_flags = flags & ~(RT_DIR_INMEM);
-	dp->d_len = len;
-	dp->d_forw = *headp;
-	BU_LIST_INIT( &dp->d_use_hd );
-	*headp = dp;
-	dp->d_animate = NULL;
-	dp->d_nref = 0;
-	dp->d_uses = 0;
-	if( dbip->dbi_version > 4 ) {
-		dp->d_major_type = DB5_MAJORTYPE_BRLCAD;
-		dp->d_minor_type = *(unsigned char *)ptr;
-	}
-	return( dp );
+	return DIR_NULL;
+    }
+
+    /* 'name' not found in directory, add it */
+    RT_GET_DIRECTORY(dp, &rt_uniresource);
+    RT_CK_DIR(dp);
+    RT_DIR_SET_NAMEP(dp, bu_vls_addr(&local));	/* sets d_namep */
+    bu_vls_free(&local);
+    dp->d_un.file_offset = laddr;
+    dp->d_flags = flags & ~(RT_DIR_INMEM);
+    dp->d_len = len;
+    dp->d_forw = *headp;
+    BU_LIST_INIT( &dp->d_use_hd );
+    *headp = dp;
+    dp->d_animate = NULL;
+    dp->d_nref = 0;
+    dp->d_uses = 0;
+    if( dbip->dbi_version > 4 ) {
+	dp->d_major_type = DB5_MAJORTYPE_BRLCAD;
+	dp->d_minor_type = *(unsigned char *)ptr;
+    }
+    return( dp );
 }
 
 /**
@@ -344,22 +344,22 @@ db_diradd(register struct db_i *dbip, register const char *name, long int laddr,
 void
 db_inmem(struct directory *dp, struct bu_external *ext, int flags, struct db_i *dbip)
 {
-	BU_CK_EXTERNAL(ext);
-	RT_CK_DIR(dp);
+    BU_CK_EXTERNAL(ext);
+    RT_CK_DIR(dp);
 
-	if( dp->d_flags & RT_DIR_INMEM )
-		bu_free( dp->d_un.ptr, "db_inmem() ext ptr" );
-	dp->d_un.ptr = ext->ext_buf;
-	if( dbip->dbi_version < 5 ) {
-		dp->d_len = ext->ext_nbytes / 128;	/* DB_MINREC granule size */
-	} else {
-		dp->d_len = ext->ext_nbytes;
-	}
-	dp->d_flags = flags | RT_DIR_INMEM;
+    if( dp->d_flags & RT_DIR_INMEM )
+	bu_free( dp->d_un.ptr, "db_inmem() ext ptr" );
+    dp->d_un.ptr = ext->ext_buf;
+    if( dbip->dbi_version < 5 ) {
+	dp->d_len = ext->ext_nbytes / 128;	/* DB_MINREC granule size */
+    } else {
+	dp->d_len = ext->ext_nbytes;
+    }
+    dp->d_flags = flags | RT_DIR_INMEM;
 
-	/* Empty out the external structure, but leave it w/valid magic */
-	ext->ext_buf = (genptr_t)NULL;
-	ext->ext_nbytes = 0;
+    /* Empty out the external structure, but leave it w/valid magic */
+    ext->ext_buf = (genptr_t)NULL;
+    ext->ext_nbytes = 0;
 }
 
 /**
@@ -378,41 +378,41 @@ db_inmem(struct directory *dp, struct bu_external *ext, int flags, struct db_i *
 int
 db_dirdelete(register struct db_i *dbip, register struct directory *dp)
 {
-	register struct directory *findp;
-	register struct directory **headp;
+    register struct directory *findp;
+    register struct directory **headp;
 
-	RT_CK_DBI(dbip);
-	RT_CK_DIR(dp);
+    RT_CK_DBI(dbip);
+    RT_CK_DIR(dp);
 
-	headp = &(dbip->dbi_Head[db_dirhash(dp->d_namep)]);
+    headp = &(dbip->dbi_Head[db_dirhash(dp->d_namep)]);
 
-	if( dp->d_flags & RT_DIR_INMEM )
+    if( dp->d_flags & RT_DIR_INMEM )
 	{
-		if( dp->d_un.ptr != NULL )
-			bu_free( dp->d_un.ptr, "db_dirdelete() inmem ptr" );
+	    if( dp->d_un.ptr != NULL )
+		bu_free( dp->d_un.ptr, "db_dirdelete() inmem ptr" );
 	}
 
-	if( *headp == dp )  {
-		RT_DIR_FREE_NAMEP(dp);	/* frees d_namep */
-		*headp = dp->d_forw;
+    if( *headp == dp )  {
+	RT_DIR_FREE_NAMEP(dp);	/* frees d_namep */
+	*headp = dp->d_forw;
 
-		/* Put 'dp' back on the freelist */
-		dp->d_forw = rt_uniresource.re_directory_hd;
-		rt_uniresource.re_directory_hd = dp;
-		return(0);
-	}
-	for( findp = *headp; findp != DIR_NULL; findp = findp->d_forw )  {
-		if( findp->d_forw != dp )
-			continue;
-		RT_DIR_FREE_NAMEP(dp);	/* frees d_namep */
-		findp->d_forw = dp->d_forw;
+	/* Put 'dp' back on the freelist */
+	dp->d_forw = rt_uniresource.re_directory_hd;
+	rt_uniresource.re_directory_hd = dp;
+	return(0);
+    }
+    for( findp = *headp; findp != DIR_NULL; findp = findp->d_forw )  {
+	if( findp->d_forw != dp )
+	    continue;
+	RT_DIR_FREE_NAMEP(dp);	/* frees d_namep */
+	findp->d_forw = dp->d_forw;
 
-		/* Put 'dp' back on the freelist */
-		dp->d_forw = rt_uniresource.re_directory_hd;
-		rt_uniresource.re_directory_hd = dp;
-		return(0);
-	}
-	return(-1);
+	/* Put 'dp' back on the freelist */
+	dp->d_forw = rt_uniresource.re_directory_hd;
+	rt_uniresource.re_directory_hd = dp;
+	return(0);
+    }
+    return(-1);
 }
 
 /**
@@ -428,38 +428,38 @@ db_dirdelete(register struct db_i *dbip, register struct directory *dp)
 int
 db_rename(register struct db_i *dbip, register struct directory *dp, const char *newname)
 {
-	register struct directory *findp;
-	register struct directory **headp;
+    register struct directory *findp;
+    register struct directory **headp;
 
-	RT_CK_DBI(dbip);
-	RT_CK_DIR(dp);
+    RT_CK_DBI(dbip);
+    RT_CK_DIR(dp);
 
-	/* Remove from linked list */
-	headp = &(dbip->dbi_Head[db_dirhash(dp->d_namep)]);
-	if( *headp == dp )  {
-		/* Was first on list, dequeue */
-		*headp = dp->d_forw;
-	} else {
-		for( findp = *headp; findp != DIR_NULL; findp = findp->d_forw )  {
-			if( findp->d_forw != dp )
-				continue;
-			/* Dequeue */
-			findp->d_forw = dp->d_forw;
-			goto out;
-		}
-		return(-1);		/* ERROR: can't find */
+    /* Remove from linked list */
+    headp = &(dbip->dbi_Head[db_dirhash(dp->d_namep)]);
+    if( *headp == dp )  {
+	/* Was first on list, dequeue */
+	*headp = dp->d_forw;
+    } else {
+	for( findp = *headp; findp != DIR_NULL; findp = findp->d_forw )  {
+	    if( findp->d_forw != dp )
+		continue;
+	    /* Dequeue */
+	    findp->d_forw = dp->d_forw;
+	    goto out;
 	}
+	return(-1);		/* ERROR: can't find */
+    }
 
-out:
-	/* Effect new name */
-	RT_DIR_FREE_NAMEP(dp);			/* frees d_namep */
-	RT_DIR_SET_NAMEP( dp, newname );	/* sets d_namep */
+ out:
+    /* Effect new name */
+    RT_DIR_FREE_NAMEP(dp);			/* frees d_namep */
+    RT_DIR_SET_NAMEP( dp, newname );	/* sets d_namep */
 
-	/* Add to new linked list */
-	headp = &(dbip->dbi_Head[db_dirhash(newname)]);
-	dp->d_forw = *headp;
-	*headp = dp;
-	return(0);
+    /* Add to new linked list */
+    headp = &(dbip->dbi_Head[db_dirhash(newname)]);
+    dp->d_forw = *headp;
+    *headp = dp;
+    return(0);
 }
 
 /**
@@ -470,46 +470,46 @@ out:
 void
 db_pr_dir(register const struct db_i *dbip)
 {
-	register const struct directory *dp;
-	register char		*flags;
-	register int		i;
+    register const struct directory *dp;
+    register char		*flags;
+    register int		i;
 
-	RT_CK_DBI(dbip);
+    RT_CK_DBI(dbip);
 
-	bu_log("db_pr_dir(x%x):  Dump of directory for file %s [%s]\n",
-		dbip, dbip->dbi_filename,
-		dbip->dbi_read_only ? "READ-ONLY" : "Read/Write" );
+    bu_log("db_pr_dir(x%x):  Dump of directory for file %s [%s]\n",
+	   dbip, dbip->dbi_filename,
+	   dbip->dbi_read_only ? "READ-ONLY" : "Read/Write" );
 
-	bu_log("Title = %s\n", dbip->dbi_title);
-	/* units ? */
+    bu_log("Title = %s\n", dbip->dbi_title);
+    /* units ? */
 
-	for( i = 0; i < RT_DBNHASH; i++ )  {
-		for( dp = dbip->dbi_Head[i]; dp != DIR_NULL; dp=dp->d_forw )  {
-			if( dp->d_flags & DIR_SOLID )
-				flags = "SOL";
-			else if( (dp->d_flags & (DIR_COMB|DIR_REGION)) ==
-			    (DIR_COMB|DIR_REGION) )
-				flags = "REG";
-			else if( (dp->d_flags & (DIR_COMB|DIR_REGION)) ==
-			    DIR_COMB )
-				flags = "COM";
-			else
-				flags = "Bad";
-			bu_log("x%.8x %s %s=x%.8x len=%.5d use=%.2d nref=%.2d %s",
-				dp,
-				flags,
-				dp->d_flags & RT_DIR_INMEM ? "  ptr " : "d_addr",
-				dp->d_addr,
-				dp->d_len,
-				dp->d_uses,
-				dp->d_nref,
-				dp->d_namep );
-			if( dp->d_animate )
-				bu_log(" anim=x%x\n", dp->d_animate );
-			else
-				bu_log("\n");
-		}
+    for( i = 0; i < RT_DBNHASH; i++ )  {
+	for( dp = dbip->dbi_Head[i]; dp != DIR_NULL; dp=dp->d_forw )  {
+	    if( dp->d_flags & DIR_SOLID )
+		flags = "SOL";
+	    else if( (dp->d_flags & (DIR_COMB|DIR_REGION)) ==
+		     (DIR_COMB|DIR_REGION) )
+		flags = "REG";
+	    else if( (dp->d_flags & (DIR_COMB|DIR_REGION)) ==
+		     DIR_COMB )
+		flags = "COM";
+	    else
+		flags = "Bad";
+	    bu_log("x%.8x %s %s=x%.8x len=%.5d use=%.2d nref=%.2d %s",
+		   dp,
+		   flags,
+		   dp->d_flags & RT_DIR_INMEM ? "  ptr " : "d_addr",
+		   dp->d_addr,
+		   dp->d_len,
+		   dp->d_uses,
+		   dp->d_nref,
+		   dp->d_namep );
+	    if( dp->d_animate )
+		bu_log(" anim=x%x\n", dp->d_animate );
+	    else
+		bu_log("\n");
 	}
+    }
 }
 
 
@@ -523,28 +523,28 @@ db_pr_dir(register const struct db_i *dbip)
 void
 db_get_directory(register struct resource *resp)
 {
-	register struct directory	*dp;
-	register int		bytes;
+    register struct directory	*dp;
+    register int		bytes;
 
-	RT_RESOURCE_CHECK(resp);
-	BU_CK_PTBL( &resp->re_directory_blocks );
+    RT_RESOURCE_CHECK(resp);
+    BU_CK_PTBL( &resp->re_directory_blocks );
 
-	BU_ASSERT_PTR( resp->re_directory_hd, ==, NULL );
+    BU_ASSERT_PTR( resp->re_directory_hd, ==, NULL );
 
-	/* Get a BIG block */
-	bytes = bu_malloc_len_roundup(1024*sizeof(struct directory));
-	dp = (struct directory *)bu_malloc(bytes, "db_get_directory()");
+    /* Get a BIG block */
+    bytes = bu_malloc_len_roundup(1024*sizeof(struct directory));
+    dp = (struct directory *)bu_malloc(bytes, "db_get_directory()");
 
-	/* Record storage for later */
-	bu_ptbl_ins( &resp->re_directory_blocks, (long *)dp );
+    /* Record storage for later */
+    bu_ptbl_ins( &resp->re_directory_blocks, (long *)dp );
 
-	while( bytes >= sizeof(struct directory) )  {
-		dp->d_magic = RT_DIR_MAGIC;
-		dp->d_forw = resp->re_directory_hd;
-		resp->re_directory_hd = dp;
-		dp++;
-		bytes -= sizeof(struct directory);
-	}
+    while( bytes >= sizeof(struct directory) )  {
+	dp->d_magic = RT_DIR_MAGIC;
+	dp->d_forw = resp->re_directory_hd;
+	resp->re_directory_hd = dp;
+	dp++;
+	bytes -= sizeof(struct directory);
+    }
 }
 
 /**
@@ -571,57 +571,57 @@ db_get_directory(register struct resource *resp)
 struct bu_ptbl *
 db_lookup_by_attr(struct db_i *dbip, int dir_flags, struct bu_attribute_value_set *avs, int op)
 {
-	struct bu_attribute_value_set obj_avs;
-	struct directory *dp;
-	struct bu_ptbl *tbl;
-	int match_count=0;
-	int attr_count;
-	int i,j;
-	int draw;
+    struct bu_attribute_value_set obj_avs;
+    struct directory *dp;
+    struct bu_ptbl *tbl;
+    int match_count=0;
+    int attr_count;
+    int i,j;
+    int draw;
 
-	RT_CK_DBI(dbip);
+    RT_CK_DBI(dbip);
 
-	if( avs ) {
-		BU_CK_AVS( avs );
-		attr_count = avs->count;
-	} else {
-		attr_count = 0;
+    if( avs ) {
+	BU_CK_AVS( avs );
+	attr_count = avs->count;
+    } else {
+	attr_count = 0;
+    }
+    tbl = (struct bu_ptbl *)bu_malloc( sizeof( struct bu_ptbl ), "wdb_get_by_attr ptbl" );
+    bu_ptbl_init( tbl, 128, "wdb_get_by_attr ptbl_init" );
+    FOR_ALL_DIRECTORY_START(dp,dbip)
+	if( (dp->d_flags & dir_flags) == 0 ) continue;
+    if(attr_count ) {
+	if( db5_get_attributes( dbip, &obj_avs, dp ) < 0 ) {
+	    bu_log( "ERROR: failed to get attributes for %s\n", dp->d_namep );
+	    return( (struct bu_ptbl *)NULL );
 	}
-	tbl = (struct bu_ptbl *)bu_malloc( sizeof( struct bu_ptbl ), "wdb_get_by_attr ptbl" );
-	bu_ptbl_init( tbl, 128, "wdb_get_by_attr ptbl_init" );
-	FOR_ALL_DIRECTORY_START(dp,dbip)
-		if( (dp->d_flags & dir_flags) == 0 ) continue;
-		if(attr_count ) {
-			if( db5_get_attributes( dbip, &obj_avs, dp ) < 0 ) {
-				bu_log( "ERROR: failed to get attributes for %s\n", dp->d_namep );
-				return( (struct bu_ptbl *)NULL );
-			}
 
-			draw = 0;
-			match_count = 0;
-			for( i=0 ; i<avs->count ; i++ ) {
-				for( j=0 ; j<obj_avs.count ; j++ ) {
-					if( !strcmp( avs->avp[i].name, obj_avs.avp[j].name ) ) {
-						if( !strcmp( avs->avp[i].value, obj_avs.avp[j].value ) ) {
-							if( op == 2 ) {
-								draw = 1;
-								break;
-							} else {
-								match_count++;
-							}
-						}
-					}
-				}
-				if( draw ) break;
+	draw = 0;
+	match_count = 0;
+	for( i=0 ; i<avs->count ; i++ ) {
+	    for( j=0 ; j<obj_avs.count ; j++ ) {
+		if( !strcmp( avs->avp[i].name, obj_avs.avp[j].name ) ) {
+		    if( !strcmp( avs->avp[i].value, obj_avs.avp[j].value ) ) {
+			if( op == 2 ) {
+			    draw = 1;
+			    break;
+			} else {
+			    match_count++;
 			}
-			bu_avs_free( &obj_avs );
-		} else {
-			draw = 1;
+		    }
 		}
-		if( draw || match_count == attr_count ) {
-			bu_ptbl_ins( tbl , (long *)dp );
-		}
-	FOR_ALL_DIRECTORY_END
+	    }
+	    if( draw ) break;
+	}
+	bu_avs_free( &obj_avs );
+    } else {
+	draw = 1;
+    }
+    if( draw || match_count == attr_count ) {
+	bu_ptbl_ins( tbl , (long *)dp );
+    }
+    FOR_ALL_DIRECTORY_END
 
 	return( tbl );
 }
