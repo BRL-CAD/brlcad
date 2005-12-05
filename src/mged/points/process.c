@@ -46,6 +46,16 @@
 
 extern Tcl_Interp *twerp;
 
+/* some os's (like OpenBSD) lack an INT32_MAX define. Cross fingers and hope 
+ * that INT_MAX exists and is 32b...  */
+#ifndef INT32_MAX
+#  ifdef INT_MAX
+#    define INT32_MAX INT_MAX
+#  else
+#    define INT32_MAX 0x7fffffff
+#  endif
+#endif
+
 #define TOL 1.5
 
 #define PRINT_DEBUG 1
