@@ -61,6 +61,8 @@ dnl
 dnl Strive to tame the chaos that is so easily achieved.
 dnl
 
+dnl minimum version of autoconf required.  should coincide with
+dnl setting in autogen.sh script.
 AC_PREREQ(2.52)
 
 AC_INIT(BRL-CAD, 7.6.5, [http://brlcad.org], brlcad)
@@ -263,6 +265,9 @@ BC_CONFIGURE_STAGE([arguments], [1 of 9])
 
 dnl *** enable options ***
 
+# enable everything 
+BC_ARG_ENABLE([everything], [everything], [Turn on compilation of everything], [auto])
+
 # automatic flag updates
 BC_ARG_ENABLE([auto_flags], [automatic-flags], [Automatically configure build flags], [yes])
 
@@ -362,6 +367,12 @@ BC_ARG_WITH([with_python], [python], [Specify use of or path to python], [auto])
 # they need to go below here in order for --help to consolidate the
 # blank line that it inserts to exactly one line in the right place
 ###
+
+# aliases for enabling configuration of everything (help uses everything)
+BC_ARG_ALIAS([everything], [all])
+BC_ARG_ALIAS([everything], [everything-build])
+AC_MSG_CHECKING(whether to compile everything was requested)
+AC_MSG_RESULT($bc_everything)
 
 # aliases for allowing configure to modify the flags automatically (help uses automatic-flags)
 BC_ARG_ALIAS([auto_flags], [auto-flags])
