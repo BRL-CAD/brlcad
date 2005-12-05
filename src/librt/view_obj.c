@@ -92,6 +92,9 @@ static int vo_setview_tcl(ClientData clientData, Tcl_Interp *interp, int argc, c
 static int vo_arot_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 static int vo_vrot_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 static int vo_mrot_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
+static int vo_mrotPoint_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
+static int vo_m2vPoint_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
+static int vo_v2mPoint_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 
 static int vo_cmd(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 void vo_update(struct view_obj *vop, Tcl_Interp *interp, int oflag);
@@ -114,8 +117,10 @@ static struct bu_cmdtab vo_cmds[] =
 	{"keypoint",		vo_keypoint_tcl},
 	{"local2base",		vo_local2base_tcl},
 	{"lookat",		vo_lookat_tcl},
+	{"m2vPoint",		vo_m2vPoint_tcl},
 	{"model2view",		vo_model2view_tcl},
 	{"mrot",		vo_mrot_tcl},
+	{"mrotPoint",		vo_mrotPoint_tcl},
 	{"observer",		vo_observer_tcl},
 	{"orientation",		vo_orientation_tcl},
 	{"perspective",		vo_perspective_tcl},
@@ -132,6 +137,7 @@ static struct bu_cmdtab vo_cmds[] =
 	{"tra",			vo_tra_tcl},
 	{"units",		vo_units_tcl},
 	{"view2model",		vo_view2model_tcl},
+	{"v2mPoint",		vo_v2mPoint_tcl},
 	{"vrot",		vo_vrot_tcl},
 	{"zoom",		vo_zoom_tcl},
 #if 0
@@ -2262,6 +2268,251 @@ vo_mrot_tcl(ClientData	clientData,
 	struct view_obj *vop = (struct view_obj *)clientData;
 
 	return vo_mrot_cmd(vop, interp, argc-1, argv+1, (int (*)())0);
+}
+
+int
+vo_mrotPoint_cmd(struct view_obj	*vop,
+		       Tcl_Interp	*interp,
+		       int		argc,
+		       char 		**argv)
+{
+    struct bu_vls	vls;
+
+    /* Parse the incoming point */
+    if (argc == 2 || argc == 4) {
+	point_t viewPt;
+	point_t modelPt;
+	mat_t invRot;
+
+	if (argc == 2) {
+	    if (bn_decode_vect(viewPt, argv[1]) != 3)
+		goto bad;
+	} else {
+	    if (sscanf(argv[1], "%lf", &viewPt[X]) != 1) {
+		Tcl_AppendResult(interp,
+				 "vo_mrotPoint: bad X value - ",
+				 argv[1],
+				 "\n",
+				 (char *)0);
+		return TCL_ERROR;
+	    }
+
+	    if (sscanf(argv[2], "%lf", &viewPt[Y]) != 1) {
+		Tcl_AppendResult(interp,
+				 "vo_mrotPoint: bad Y value - ",
+				 argv[2],
+				 "\n",
+				 (char *)0);
+		return TCL_ERROR;
+	    }
+
+	    if (sscanf(argv[3], "%lf", &viewPt[Z]) != 1) {
+		Tcl_AppendResult(interp,
+				 "vo_mrotPoint: bad Z value - ",
+				 argv[3],
+				 "\n",
+				 (char *)0);
+		return TCL_ERROR;
+	    }
+	}
+
+	bu_vls_init(&vls);
+	bn_mat_inv(invRot, vop->vo_rotation);
+	MAT4X3PNT(modelPt, invRot, viewPt);
+	bn_encode_vect(&vls, modelPt);
+	Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+	bu_vls_free(&vls);
+
+	return TCL_OK;
+    }
+
+ bad:
+    /* compose error message */
+    bu_vls_init(&vls);
+    bu_vls_printf(&vls, "helplib_alias vo_mrotPoint %s", argv[0]);
+    Tcl_Eval(interp, bu_vls_addr(&vls));
+    bu_vls_free(&vls);
+
+    return TCL_ERROR;
+}
+
+/*
+ * Convert view point to a model point (rotation only).
+ *
+ * Usage:
+ *        procname mrotPoint vx vy vz
+ */
+static int
+vo_mrotPoint_tcl(ClientData	clientData,
+		     Tcl_Interp	*interp,
+		     int	argc,
+		     char	**argv)
+{
+    struct view_obj *vop = (struct view_obj *)clientData;
+
+    return vo_mrotPoint_cmd(vop, interp, argc-1, argv+1);
+}
+
+int
+vo_m2vPoint_cmd(struct view_obj	*vop,
+		Tcl_Interp	*interp,
+		int		argc,
+		char 		**argv)
+{
+    struct bu_vls	vls;
+
+    /* Parse the incoming point */
+    if (argc == 2 || argc == 4) {
+	point_t viewPt;
+	point_t modelPt;
+
+	if (argc == 2) {
+	    if (bn_decode_vect(viewPt, argv[1]) != 3)
+		goto bad;
+	} else {
+	    if (sscanf(argv[1], "%lf", &modelPt[X]) != 1) {
+		Tcl_AppendResult(interp,
+				 "vo_m2vPoint: bad X value - ",
+				 argv[1],
+				 "\n",
+				 (char *)0);
+		return TCL_ERROR;
+	    }
+
+	    if (sscanf(argv[2], "%lf", &modelPt[Y]) != 1) {
+		Tcl_AppendResult(interp,
+				 "vo_m2vPoint: bad Y value - ",
+				 argv[2],
+				 "\n",
+				 (char *)0);
+		return TCL_ERROR;
+	    }
+
+	    if (sscanf(argv[3], "%lf", &modelPt[Z]) != 1) {
+		Tcl_AppendResult(interp,
+				 "vo_m2vPoint: bad Z value - ",
+				 argv[3],
+				 "\n",
+				 (char *)0);
+		return TCL_ERROR;
+	    }
+	}
+
+	bu_vls_init(&vls);
+	MAT4X3PNT(viewPt, vop->vo_model2view, modelPt);
+	bn_encode_vect(&vls, viewPt);
+	Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+	bu_vls_free(&vls);
+
+	return TCL_OK;
+    }
+
+ bad:
+    /* compose error message */
+    bu_vls_init(&vls);
+    bu_vls_printf(&vls, "helplib_alias vo_m2vPoint %s", argv[0]);
+    Tcl_Eval(interp, bu_vls_addr(&vls));
+    bu_vls_free(&vls);
+
+    return TCL_ERROR;
+}
+
+/*
+ * Convert model point to a view point.
+ *
+ * Usage:
+ *        procname m2vPoint vx vy vz
+ */
+static int
+vo_m2vPoint_tcl(ClientData	clientData,
+		Tcl_Interp	*interp,
+		int		argc,
+		char		**argv)
+{
+    struct view_obj *vop = (struct view_obj *)clientData;
+
+    return vo_m2vPoint_cmd(vop, interp, argc-1, argv+1);
+}
+
+int
+vo_v2mPoint_cmd(struct view_obj	*vop,
+		Tcl_Interp	*interp,
+		int		argc,
+		char 		**argv)
+{
+    struct bu_vls	vls;
+
+    /* Parse the incoming point */
+    if (argc == 2 || argc == 4) {
+	point_t viewPt;
+	point_t modelPt;
+
+	if (argc == 2) {
+	    if (bn_decode_vect(viewPt, argv[1]) != 3)
+		goto bad;
+	} else {
+	    if (sscanf(argv[1], "%lf", &viewPt[X]) != 1) {
+		Tcl_AppendResult(interp,
+				 "vo_v2mPoint: bad X value - ",
+				 argv[1],
+				 "\n",
+				 (char *)0);
+		return TCL_ERROR;
+	    }
+
+	    if (sscanf(argv[2], "%lf", &viewPt[Y]) != 1) {
+		Tcl_AppendResult(interp,
+				 "vo_v2mPoint: bad Y value - ",
+				 argv[2],
+				 "\n",
+				 (char *)0);
+		return TCL_ERROR;
+	    }
+
+	    if (sscanf(argv[3], "%lf", &viewPt[Z]) != 1) {
+		Tcl_AppendResult(interp,
+				 "vo_v2mPoint: bad Z value - ",
+				 argv[3],
+				 "\n",
+				 (char *)0);
+		return TCL_ERROR;
+	    }
+	}
+
+	bu_vls_init(&vls);
+	MAT4X3PNT(modelPt, vop->vo_view2model, viewPt);
+	bn_encode_vect(&vls, modelPt);
+	Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+	bu_vls_free(&vls);
+
+	return TCL_OK;
+    }
+
+ bad:
+    /* compose error message */
+    bu_vls_init(&vls);
+    bu_vls_printf(&vls, "helplib_alias vo_v2mPoint %s", argv[0]);
+    Tcl_Eval(interp, bu_vls_addr(&vls));
+    bu_vls_free(&vls);
+
+    return TCL_ERROR;
+}
+
+/*
+ * Convert view point to a model point.
+ *
+ * Usage:
+ *        procname v2mPoint vx vy vz
+ */
+static int
+vo_v2mPoint_tcl(ClientData	clientData,
+		Tcl_Interp	*interp,
+		int		argc,
+		char		**argv)
+{
+    struct view_obj *vop = (struct view_obj *)clientData;
+
+    return vo_v2mPoint_cmd(vop, interp, argc-1, argv+1);
 }
 
 int
