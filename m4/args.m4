@@ -36,10 +36,11 @@
 #
 # BC_ARG_ENABLE
 #
-# creates a configure --enable argument that simply sets a variable as
+# creates a configure --enable argument that simply sets a VARIABLE as
 # to whether the feature is enabled or not.  The arguments expected
 # include the variable name, the --enable-FEATURE name, a help string,
-# and a default value.
+# and a default value.  provides bc_VARIABLE and bc_VARIABLE_default
+# variables.
 #
 #
 # BC_ARG_ALIAS
@@ -51,16 +52,17 @@
 #
 # BC_ARG_WITH
 #
-# creates a configure --with argument setting one FEATURE variable if
-# the value was with or without (yes/no) and another FEATURE_var for
-# the actual value.
+# creates a configure --with argument setting one FEATURE VARIABLE if
+# the value was with or without (yes/no) and another FEATURE_val for
+# the actual value. provides bc_VARIABLE and bc_VARIABLE_default
+# variables.
 #
 #
 # BC_ARG_WITH_ALIAS
 #
-# same as BC_ARG_ALIAS except that it sets the FEATURE_var variable
+# same as BC_ARG_ALIAS except that it sets the FEATURE_val VARIABLE
 # too.  BC_ARG_ALIAS will work as a simplified alternative if the
-# FEATURE_var variable is not used (i.e. only a yes/no matters)
+# FEATURE_val variable is not used (i.e. only a yes/no matters)
 #
 #
 # BC_WITH_FLAG_ARGS
@@ -83,6 +85,7 @@ dnl)
 
 # BC_ARG_ENABLE 1:[$1] 2:[$2] 3:[$3] 4:[$4]
 bc_[$1]=[$4]
+bc_[$1]_default=[$4]
 AC_ARG_ENABLE([$2], AC_HELP_STRING([--enable-$2], [$3 (default=$4)]),
 	[
 	case "x$enableval" in
@@ -134,6 +137,7 @@ AC_DEFUN([BC_ARG_WITH], [
 # BC_ARG_WITH 1:[$1] 2:[$2] 3:[$3] 4:[$4] 5:[$5]
 bc_[$1]=[$4]
 bc_[$1]_val=[$5]
+bc_[$1]_default=[$4]
 AC_ARG_WITH([$2], AC_HELP_STRING([--with-$2], [$3]),
 	[
 	case "x$withval" in
