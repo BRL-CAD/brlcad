@@ -182,14 +182,22 @@
 
     public method idle_mode {}
     public method rotate_mode {x y}
-    public method translate_mode {x y}
     public method scale_mode {x y}
+    public method translate_mode {x y}
+    public method orotate_mode {x y func obj kx ky kz}
+    public method oscale_mode {x y func obj kx ky kz}
+    public method otranslate_mode {x y func obj}
+    public method screen2model {x y}
+    public method screen2view {x y}
 
     protected method constrain_rmode {coord x y}
     protected method constrain_tmode {coord x y}
     protected method handle_rotation {x y}
     protected method handle_translation {x y}
     protected method handle_scale {x y}
+    protected method handle_orotation {x y}
+    protected method handle_oscale {x y}
+    protected method handle_otranslation {x y}
     protected method handle_constrain_rot {coord x y}
     protected method handle_constrain_tran {coord x y}
     protected method handle_configure {}
@@ -202,11 +210,20 @@
     protected variable minAxesLineWidth 0
     protected variable minAxesTickLength 1
     protected variable minAxesTickMajorLength 1
-    protected variable minMouse -20
-    protected variable maxMouse 20
+    protected variable minMouseDelta -20
+    protected variable maxMouseDelta 20
 
-    private variable x ""
-    private variable y ""
+    protected {
+	variable keyPointX 0
+	variable keyPointY 0
+	variable keyPointZ 0
+
+	variable object ""
+	variable mouseFunc ""
+    }
+
+    private variable prevMouseX ""
+    private variable prevMouseY ""
     private variable geolist ""
     private variable perspective_angle_index 0
     private variable perspective_angles {90 60 45 30}
@@ -1184,111 +1201,163 @@ if {$tcl_platform(os) != "Windows NT"} {
 }
 
 ::itcl::body Display::rotate_mode {_x _y} {
-    set x $_x
-    set y $_y
+    set prevMouseX $_x
+    set prevMouseY $_y
 
     # start receiving motion events
     bind $itk_component(dm) <Motion> "[::itcl::code $this handle_rotation %x %y]; break"
 }
 
 ::itcl::body Display::translate_mode {_x _y} {
-    set x $_x
-    set y $_y
+    set prevMouseX $_x
+    set prevMouseY $_y
 
     # start receiving motion events
     bind $itk_component(dm) <Motion> "[::itcl::code $this handle_translation %x %y]; break"
 }
 
 ::itcl::body Display::scale_mode {_x _y} {
-    set x $_x
-    set y $_y
+    set prevMouseX $_x
+    set prevMouseY $_y
 
     # start receiving motion events
     bind $itk_component(dm) <Motion> "[::itcl::code $this handle_scale %x %y]; break"
 }
 
+::itcl::body Display::orotate_mode {_x _y func obj kx ky kz} {
+    set mouseFunc $func
+    set object $obj
+    set keyPointX $kx
+    set keyPointY $ky
+    set keyPointZ $kz
+
+    set prevMouseX $_x
+    set prevMouseY $_y
+
+    # start receiving motion events
+    bind $itk_component(dm) <Motion> "[::itcl::code $this handle_orotation %x %y]; break"
+}
+
+::itcl::body Display::oscale_mode {_x _y func obj kx ky kz} {
+    set mouseFunc $func
+    set object $obj
+    set keyPointX $kx
+    set keyPointY $ky
+    set keyPointZ $kz
+
+    set prevMouseX $_x
+    set prevMouseY $_y
+
+    # start receiving motion events
+    bind $itk_component(dm) <Motion> "[::itcl::code $this handle_oscale %x %y]; break"
+}
+
+::itcl::body Display::otranslate_mode {_x _y func obj} {
+    set mouseFunc $func
+    set object $obj
+
+    set prevMouseX $_x
+    set prevMouseY $_y
+
+    # start receiving motion events
+    bind $itk_component(dm) <Motion> "[::itcl::code $this handle_otranslation %x %y]; break"
+}
+
+::itcl::body Display::screen2model {x y} {
+    return [eval v2mPoint [screen2view $x $y]]
+}
+
+::itcl::body Display::screen2view {x y} {
+    set vx [expr {$x * $invWidth * 2.0 - 1.0}]
+    set vy [expr {(-$y * $invHeight * 2.0 + 1.0) * $invAspect}]
+
+    return [list $vx $vy 0]
+}
+
 ::itcl::body Display::constrain_rmode {coord _x _y} {
-    set x $_x
-    set y $_y
+    set prevMouseX $_x
+    set prevMouseY $_y
 
     # start receiving motion events
     bind $itk_component(dm) <Motion> "[::itcl::code $this handle_constrain_rot $coord %x %y]; break"
 }
 
 ::itcl::body Display::constrain_tmode {coord _x _y} {
-    set x $_x
-    set y $_y
+    set prevMouseX $_x
+    set prevMouseY $_y
 
     # start receiving motion events
     bind $itk_component(dm) <Motion> "[::itcl::code $this handle_constrain_tran $coord %x %y]; break"
 }
 
 ::itcl::body Display::handle_rotation {_x _y} {
-    set dx [expr {$y - $_y}]
-    set dy [expr {$x - $_x}]
+    set dx [expr {$prevMouseY - $_y}]
+    set dy [expr {$prevMouseX - $_x}]
 
-    if {$dx < $minMouse} {
-	set dx $minMouse
-    } elseif {$maxMouse < $dx} {
-	set dx $maxMouse
+    set prevMouseX $_x
+    set prevMouseY $_y
+
+    if {$dx < $minMouseDelta} {
+	set dx $minMouseDelta
+    } elseif {$maxMouseDelta < $dx} {
+	set dx $maxMouseDelta
     }
 
-    if {$dy < $minMouse} {
-	set dy $minMouse
-    } elseif {$maxMouse < $dy} {
-	set dy $maxMouse
+    if {$dy < $minMouseDelta} {
+	set dy $minMouseDelta
+    } elseif {$maxMouseDelta < $dy} {
+	set dy $maxMouseDelta
     }
 
     set dx [expr {$dx * $itk_option(-rscale)}]
     set dy [expr {$dy * $itk_option(-rscale)}]
 
     catch {vrot $dx $dy 0}
-
-    #update instance variables x and y
-    set x $_x
-    set y $_y
 }
 
 ::itcl::body Display::handle_translation {_x _y} {
-    set dx [expr {$x - $_x}]
-    set dy [expr {$_y - $y}]
+    set dx [expr {$prevMouseX - $_x}]
+    set dy [expr {$_y - $prevMouseY}]
 
-    if {$dx < $minMouse} {
-	set dx $minMouse
-    } elseif {$maxMouse < $dx} {
-	set dx $maxMouse
+    set prevMouseX $_x
+    set prevMouseY $_y
+
+    if {$dx < $minMouseDelta} {
+	set dx $minMouseDelta
+    } elseif {$maxMouseDelta < $dx} {
+	set dx $maxMouseDelta
     }
 
-    if {$dy < $minMouse} {
-	set dy $minMouse
-    } elseif {$maxMouse < $dy} {
-	set dy $maxMouse
+    if {$dy < $minMouseDelta} {
+	set dy $minMouseDelta
+    } elseif {$maxMouseDelta < $dy} {
+	set dy $maxMouseDelta
     }
 
-    set dx [expr {$dx * $invWidth * [View::size]}]
-    set dy [expr {$dy * $invWidth * [View::size]}]
+    set size [View::size]
+    set dx [expr {$dx * $invWidth * $size}]
+    set dy [expr {$dy * $invWidth * $size}]
 
     catch {vtra $dx $dy 0}
-
-    #update instance variables x and y
-    set x $_x
-    set y $_y
 }
 
 ::itcl::body Display::handle_scale {_x _y} {
-    set dx [expr {$_x - $x}]
-    set dy [expr {$y - $_y}]
+    set dx [expr {$_x - $prevMouseX}]
+    set dy [expr {$prevMouseY - $_y}]
 
-    if {$dx < $minMouse} {
-	set dx $minMouse
-    } elseif {$maxMouse < $dx} {
-	set dx $maxMouse
+    set prevMouseX $_x
+    set prevMouseY $_y
+
+    if {$dx < $minMouseDelta} {
+	set dx $minMouseDelta
+    } elseif {$maxMouseDelta < $dx} {
+	set dx $maxMouseDelta
     }
 
-    if {$dy < $minMouse} {
-	set dy $minMouse
-    } elseif {$maxMouse < $dy} {
-	set dy $maxMouse
+    if {$dy < $minMouseDelta} {
+	set dy $minMouseDelta
+    } elseif {$maxMouseDelta < $dy} {
+	set dy $maxMouseDelta
     }
 
     set dx [expr {$dx * $invWidth * $itk_option(-sscale)}]
@@ -1301,26 +1370,115 @@ if {$tcl_platform(os) != "Windows NT"} {
     }
 
     catch {zoom $f}
+}
 
-    #update instance variables x and y
-    set x $_x
-    set y $_y
+::itcl::body Display::handle_orotation {_x _y} {
+    set dx [expr {$_y - $prevMouseY}]
+    set dy [expr {$_x - $prevMouseX}]
+
+    set prevMouseX $_x
+    set prevMouseY $_y
+
+    if {$dx < $minMouseDelta} {
+	set dx $minMouseDelta
+    } elseif {$maxMouseDelta < $dx} {
+	set dx $maxMouseDelta
+    }
+
+    if {$dy < $minMouseDelta} {
+	set dy $minMouseDelta
+    } elseif {$maxMouseDelta < $dy} {
+	set dy $maxMouseDelta
+    }
+
+    set dx [expr {$dx * $itk_option(-rscale)}]
+    set dy [expr {$dy * $itk_option(-rscale)}]
+    set model [mrotPoint $dx $dy 0]
+    set mx [lindex $model 0]
+    set my [lindex $model 1]
+    set mz [lindex $model 2]
+
+    catch {$mouseFunc $object $mx $my $mz $keyPointX $keyPointY $keyPointZ}
+}
+
+::itcl::body Display::handle_oscale {_x _y} {
+    set dx [expr {$_x - $prevMouseX}]
+    set dy [expr {$prevMouseY - $_y}]
+
+    set prevMouseX $_x
+    set prevMouseY $_y
+
+    if {$dx < $minMouseDelta} {
+	set dx $minMouseDelta
+    } elseif {$maxMouseDelta < $dx} {
+	set dx $maxMouseDelta
+    }
+
+    if {$dy < $minMouseDelta} {
+	set dy $minMouseDelta
+    } elseif {$maxMouseDelta < $dy} {
+	set dy $maxMouseDelta
+    }
+
+    set dx [expr {$dx * $invWidth * $itk_option(-sscale)}]
+    set dy [expr {$dy * $invWidth * $itk_option(-sscale)}]
+
+    if {[expr {abs($dx) > abs($dy)}]} {
+	set sf [expr 1.0 + $dx]
+    } else {
+	set sf [expr 1.0 + $dy]
+    }
+
+    catch {$mouseFunc $object $sf $keyPointX $keyPointY $keyPointZ}
+}
+
+::itcl::body Display::handle_otranslation {_x _y} {
+    set dx [expr {$_x - $prevMouseX}]
+    set dy [expr {$prevMouseY - $_y}]
+
+    set prevMouseX $_x
+    set prevMouseY $_y
+
+    if {$dx < $minMouseDelta} {
+	set dx $minMouseDelta
+    } elseif {$maxMouseDelta < $dx} {
+	set dx $maxMouseDelta
+    }
+
+    if {$dy < $minMouseDelta} {
+	set dy $minMouseDelta
+    } elseif {$maxMouseDelta < $dy} {
+	set dy $maxMouseDelta
+    }
+
+    set size [View::size]
+    set dx [expr {$dx * $invWidth * $size}]
+    set dy [expr {$dy * $invWidth * $size}]
+    set model [mrotPoint $dx $dy 0]
+    set mx [lindex $model 0]
+    set my [lindex $model 1]
+    set mz [lindex $model 2]
+
+    catch {$mouseFunc $object $mx $my $mz}
 }
 
 ::itcl::body Display::handle_constrain_rot {coord _x _y} {
-    set dx [expr {$x - $_x}]
-    set dy [expr {$_y - $y}]
+    set dx [expr {$prevMouseX - $_x}]
+    set dy [expr {$_y - $prevMouseY}]
 
-    if {$dx < $minMouse} {
-	set dx $minMouse
-    } elseif {$maxMouse < $dx} {
-	set dx $maxMouse
+    set prevMouseX $_x
+    set prevMouseY $_y
+
+    if {$dx < $minMouseDelta} {
+	set dx $minMouseDelta
+    } elseif {$maxMouseDelta < $dx} {
+	set dx $maxMouseDelta
     }
 
-    if {$dy < $minMouse} {
-	set dy $minMouse
-    } elseif {$maxMouse < $dy} {
-	set dy $maxMouse
+    if {$dy < $minMouseDelta} {
+	set dy $minMouseDelta
+    } elseif {$maxMouseDelta < $dy} {
+	set dy $maxMouseDelta
     }
 
     set dx [expr {$dx * $itk_option(-rscale)}]
@@ -1342,26 +1500,25 @@ if {$tcl_platform(os) != "Windows NT"} {
 	    catch {rot 0 0 $f}
 	}
     }
-
-    #update instance variables x and y
-    set x $_x
-    set y $_y
 }
 
 ::itcl::body Display::handle_constrain_tran {coord _x _y} {
-    set dx [expr {$x - $_x}]
-    set dy [expr {$_y - $y}]
+    set dx [expr {$prevMouseX - $_x}]
+    set dy [expr {$_y - $prevMouseY}]
 
-    if {$dx < $minMouse} {
-	set dx $minMouse
-    } elseif {$maxMouse < $dx} {
-	set dx $maxMouse
+    set prevMouseX $_x
+    set prevMouseY $_y
+
+    if {$dx < $minMouseDelta} {
+	set dx $minMouseDelta
+    } elseif {$maxMouseDelta < $dx} {
+	set dx $maxMouseDelta
     }
 
-    if {$dy < $minMouse} {
-	set dy $minMouse
-    } elseif {$maxMouse < $dy} {
-	set dy $maxMouse
+    if {$dy < $minMouseDelta} {
+	set dy $minMouseDelta
+    } elseif {$maxMouseDelta < $dy} {
+	set dy $maxMouseDelta
     }
 
     set dx [expr {$dx * $invWidth * [View::size]}]
@@ -1383,10 +1540,6 @@ if {$tcl_platform(os) != "Windows NT"} {
 	    catch {tra 0 0 $f}
 	}
     }
-
-    #update instance variables x and y
-    set x $_x
-    set y $_y
 }
 
 ::itcl::body Display::handle_configure {} {
