@@ -171,6 +171,7 @@ you should exit now, and resolve the I/O problem, before continuing.\n"
 #define WDB_CPEVAL	0
 #define WDB_LISTPATH	1
 #define WDB_LISTEVAL	2
+#define WDB_EVAL_ONLY	3
 
 struct wdb_trace_data {
 	Tcl_Interp		*wtd_interp;
@@ -284,9 +285,10 @@ static int wdb_rmap_tcl(ClientData clientData, Tcl_Interp *interp, int argc, cha
 #ifdef IMPORT_FASTGEN4_SECTION
 static int wdb_importFg4Section_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 #endif
-static int wdb_erotate_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-static int wdb_etranslate_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-static int wdb_escale_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
+static int wdb_orotate_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
+static int wdb_oscale_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
+static int wdb_otranslate_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
+static int wdb_ocenter_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 
 void wdb_deleteProc(ClientData clientData);
 static void wdb_deleteProc_rt(ClientData clientData);
@@ -330,9 +332,6 @@ static struct bu_cmdtab wdb_cmds[] = {
 	{"dbip",	wdb_dbip_tcl},
 	{"dump",	wdb_dump_tcl},
 	{"dup",		wdb_dup_tcl},
-	{"erotate",	wdb_erotate_tcl},
-	{"escale",	wdb_escale_tcl},
-	{"etranslate",	wdb_etranslate_tcl},
 	{"expand",	wdb_expand_tcl},
 	{"facetize",	wdb_facetize_tcl},
 	{"find",	wdb_find_tcl},
@@ -360,9 +359,13 @@ static struct bu_cmdtab wdb_cmds[] = {
 	{"move_arb_face",	wdb_move_arb_face_tcl},
 	{"mv",		wdb_move_tcl},
 	{"mvall",	wdb_move_all_tcl},
-	{"nmg_collapse",	wdb_nmg_collapse_tcl},
-	{"nmg_simplify",	wdb_nmg_simplify_tcl},
+	{"nmg_collapse",wdb_nmg_collapse_tcl},
+	{"nmg_simplify",wdb_nmg_simplify_tcl},
 	{"observer",	wdb_observer_tcl},
+	{"ocenter",	wdb_ocenter_tcl},
+	{"orotate",	wdb_orotate_tcl},
+	{"oscale",	wdb_oscale_tcl},
+	{"otranslate",	wdb_otranslate_tcl},
 	{"open",	wdb_reopen_tcl},
 	{"pathlist",	wdb_pathlist_tcl},
 	{"paths",	wdb_pathsum_tcl},
@@ -2215,11 +2218,33 @@ wdb_do_trace(struct db_i		*dbip,
 	old_xlate = (matp_t)user_ptr2;
 	wtdp = (struct wdb_trace_data *)user_ptr3;
 
+	/* 
+	 * In WDB_EVAL_ONLY mode we're collecting the matrices along
+	 * the path in order to perform some type of edit where the object
+	 * lives (i.e. after applying the accumulated transforms). So, if
+	 * we're doing a matrix edit (i.e. the last object in the path is
+	 * a combination), we skip its leaf matrices because those are the
+	 * one's we'll be editing.
+	 */
+#if 0
+	/*XXX Remove this section of code */
 	if (comb_leaf->tr_l.tl_mat) {
-		bn_mat_mul(new_xlate, old_xlate, comb_leaf->tr_l.tl_mat);
+	    bn_mat_mul(new_xlate, old_xlate, comb_leaf->tr_l.tl_mat);
 	} else {
-		MAT_COPY(new_xlate, old_xlate);
+	    MAT_COPY(new_xlate, old_xlate);
 	}
+#else
+	if (wtdp->wtd_flag != WDB_EVAL_ONLY ||
+	    (*pathpos)+1 < wtdp->wtd_objpos) {
+	    if (comb_leaf->tr_l.tl_mat) {
+		bn_mat_mul(new_xlate, old_xlate, comb_leaf->tr_l.tl_mat);
+	    } else {
+		MAT_COPY(new_xlate, old_xlate);
+	    }
+	} else {
+	    MAT_COPY(new_xlate, old_xlate);
+	}
+#endif
 
 	wdb_trace(nextdp, (*pathpos)+1, new_xlate, wtdp);
 }
@@ -2301,7 +2326,8 @@ wdb_trace(register struct directory	*dp,
 	MAT_COPY(wtdp->wtd_xform, old_xlate);
 	wtdp->wtd_prflag = 1;
 
-	if (wtdp->wtd_flag == WDB_CPEVAL)
+	if (wtdp->wtd_flag == WDB_CPEVAL ||
+	    wtdp->wtd_flag == WDB_EVAL_ONLY)
 		return;
 
 	/* print the path */
@@ -6854,19 +6880,290 @@ wdb_observer_tcl(ClientData	clientData,
 }
 
 int
+wdb_get_objpath_mat(struct rt_wdb		*wdbp,
+		    Tcl_Interp			*interp,
+		    int				argc,
+		    char			**argv,
+		    struct wdb_trace_data	*wtdp)
+{
+    int i, pos_in;
+
+    /*
+     *	paths are matched up to last input member
+     *      ANY path the same up to this point is considered as matching
+     */
+
+    /* initialize wtd */
+    wtdp->wtd_interp = interp;
+    wtdp->wtd_dbip = wdbp->dbip;
+    wtdp->wtd_flag = WDB_EVAL_ONLY;
+    wtdp->wtd_prflag = 0;
+
+    pos_in = 0;
+
+    if (argc == 1 && strchr(argv[0], '/')) {
+	char *tok;
+	char *av0;
+	wtdp->wtd_objpos = 0;
+
+	av0 = strdup(argv[0]);
+	tok = strtok(av0, "/");
+	while (tok) {
+	    if ((wtdp->wtd_obj[wtdp->wtd_objpos++] =
+		 db_lookup(wdbp->dbip, tok, LOOKUP_NOISY)) == DIR_NULL) {
+		Tcl_AppendResult(interp,
+				 "wdb_get_objpath_mat: Failed to find ",
+				 tok,
+				 "\n",
+				 (char *)0);
+		free(av0);
+		return TCL_ERROR;
+	    }
+
+	    tok = strtok((char *)0, "/");
+	}
+
+	free(av0);
+    } else {
+	wtdp->wtd_objpos = argc;
+
+	/* build directory pointer array for desired path */
+	for (i=0; i<wtdp->wtd_objpos; i++) {
+	    if ((wtdp->wtd_obj[i] =
+		 db_lookup(wdbp->dbip, argv[pos_in+i], LOOKUP_NOISY)) == DIR_NULL) {
+		Tcl_AppendResult(interp,
+				 "wdb_get_objpath_mat: Failed to find ",
+				 argv[pos_in+i],
+				 "\n",
+				 (char *)0);
+		return TCL_ERROR;
+	    }
+	}
+    }
+
+    MAT_IDN(wtdp->wtd_xform);
+    wdb_trace(wtdp->wtd_obj[0], 0, bn_mat_identity, wtdp);
+
+    return TCL_OK;
+}
+
+/*
+ * This version works if the last member of the path is a primitive.
+ */
+int
+wdb_get_obj_bounds2(struct rt_wdb		*wdbp,
+		    Tcl_Interp			*interp,
+		    int				argc,
+		    char			**argv,
+		    struct wdb_trace_data	*wtdp,
+		    point_t			rpp_min,
+		    point_t			rpp_max)
+{
+    register struct directory *dp;
+    struct rt_db_internal intern;
+    struct rt_i *rtip;
+    struct soltab *stp;
+    mat_t imat;
+
+    /* initialize RPP bounds */
+    VSETALL(rpp_min, MAX_FASTF);
+    VREVERSE(rpp_max, rpp_min);
+
+    if (wdb_get_objpath_mat(wdbp, interp, argc, argv, wtdp) == TCL_ERROR)
+	return TCL_ERROR;
+
+    dp = wtdp->wtd_obj[wtdp->wtd_objpos-1];
+    if (rt_db_get_internal(&intern,
+			   dp,
+			   wdbp->dbip,
+			   wtdp->wtd_xform,
+			   &rt_uniresource) < 0) {
+	Tcl_AppendResult(interp,
+			 "rt_db_get_internal(",
+			 dp->d_namep,
+			 ") failure",
+			 (char *)0);
+	return TCL_ERROR;
+    }
+
+    /* Make a new rt_i instance from the existing db_i structure */
+    if ((rtip=rt_new_rti(wdbp->dbip)) == RTI_NULL) {
+	Tcl_AppendResult(interp,
+			 "rt_new_rti failure for ",
+			 wdbp->dbip->dbi_filename,
+			 "\n",
+			 (char *)0);
+	return TCL_ERROR;
+    }
+
+    BU_GETSTRUCT(stp, soltab);
+    stp->l.magic = RT_SOLTAB_MAGIC;
+    stp->l2.magic = RT_SOLTAB2_MAGIC;
+    stp->st_dp = dp;
+    MAT_IDN(imat);
+    stp->st_matp = imat;
+
+    /* Get bounds from internal object */
+    VMOVE(stp->st_min, rpp_min);
+    VMOVE(stp->st_max, rpp_max);
+    intern.idb_meth->ft_prep(stp, &intern, rtip);
+    VMOVE(rpp_min, stp->st_min);
+    VMOVE(rpp_max, stp->st_max);
+
+    rt_clean(rtip);
+    bu_free((genptr_t)rtip, "wdb_get_obj_bounds2: rtip");
+    rt_db_free_internal(&intern, &rt_uniresource);
+    bu_free( (char *)stp, "struct soltab" );
+
+    return TCL_OK;
+}
+
+
+int
+wdb_get_obj_bounds(struct rt_wdb	*wdbp,
+		   Tcl_Interp		*interp,
+		   int			argc,
+		   char			**argv,
+		   point_t		rpp_min,
+		   point_t		rpp_max)
+{
+    register int	i;
+    struct rt_i		*rtip;
+    struct db_full_path	path;
+    struct region	*regp;
+
+    /* Make a new rt_i instance from the existing db_i sructure */
+    if ((rtip=rt_new_rti(wdbp->dbip)) == RTI_NULL) {
+	Tcl_AppendResult(interp, "rt_new_rti failure for ", wdbp->dbip->dbi_filename,
+			 "\n", (char *)NULL);
+	return TCL_ERROR;
+    }
+
+    /* Get trees for list of objects/paths */
+    for (i = 0; i < argc; i++) {
+	int gottree;
+
+	/* Get full_path structure for argument */
+	db_full_path_init(&path);
+	if (db_string_to_path(&path,  rtip->rti_dbip, argv[i])) {
+	    Tcl_AppendResult(interp, "db_string_to_path failed for ",
+			     argv[i], "\n", (char *)NULL );
+	    rt_clean(rtip);
+	    bu_free((genptr_t)rtip, "wdb_get_obj_bounds: rtip");
+	    return TCL_ERROR;
+	}
+
+	/* check if we already got this tree */
+	gottree = 0;
+	for (BU_LIST_FOR(regp, region, &(rtip->HeadRegion))) {
+	    struct db_full_path tmp_path;
+
+	    db_full_path_init(&tmp_path);
+	    if (db_string_to_path(&tmp_path, rtip->rti_dbip, regp->reg_name)) {
+		Tcl_AppendResult(interp, "db_string_to_path failed for ",
+				 regp->reg_name, "\n", (char *)NULL);
+		rt_clean(rtip);
+		bu_free((genptr_t)rtip, "wdb_get_obj_bounds: rtip");
+		return TCL_ERROR;
+	    }
+	    if (path.fp_names[0] == tmp_path.fp_names[0])
+		gottree = 1;
+	    db_free_full_path(&tmp_path);
+	    if (gottree)
+		break;
+	}
+
+	/* if we don't already have it, get it */
+	if (!gottree && rt_gettree(rtip, path.fp_names[0]->d_namep)) {
+	    Tcl_AppendResult(interp, "rt_gettree failed for ",
+			     argv[i], "\n", (char *)NULL );
+	    rt_clean(rtip);
+	    bu_free((genptr_t)rtip, "wdb_get_obj_bounds: rtip");
+	    return TCL_ERROR;
+	}
+	db_free_full_path(&path);
+    }
+
+    /* prep calculates bounding boxes of solids */
+    rt_prep(rtip);
+
+    /* initialize RPP bounds */
+    VSETALL(rpp_min, MAX_FASTF);
+    VREVERSE(rpp_max, rpp_min);
+    for (i = 0; i < argc; i++) {
+	vect_t reg_min, reg_max;
+	struct region *regp;
+	const char *reg_name;
+
+	/* check if input name is a region */
+	for (BU_LIST_FOR(regp, region, &(rtip->HeadRegion))) {
+	    reg_name = regp->reg_name;
+	    if (*argv[i] != '/' && *reg_name == '/')
+		reg_name++;
+
+	    if (!strcmp( reg_name, argv[i]))
+		goto found;
+	}
+	goto not_found;
+
+found:
+	if (regp != REGION_NULL) {
+	    /* input name was a region  */
+	    if (rt_bound_tree(regp->reg_treetop, reg_min, reg_max)) {
+		Tcl_AppendResult(interp, "rt_bound_tree failed for ",
+				 regp->reg_name, "\n", (char *)NULL);
+		rt_clean(rtip);
+		bu_free((genptr_t)rtip, "wdb_get_obj_bounds: rtip");
+		return TCL_ERROR;
+	    }
+	    VMINMAX(rpp_min, rpp_max, reg_min);
+	    VMINMAX(rpp_min, rpp_max, reg_max);
+	} else {
+	    int name_len;
+not_found:
+
+	    /* input name may be a group, need to check all regions under
+	     * that group
+	     */
+	    name_len = strlen( argv[i] );
+	    for (BU_LIST_FOR( regp, region, &(rtip->HeadRegion))) {
+		reg_name = regp->reg_name;
+		if (*argv[i] != '/' && *reg_name == '/')
+		    reg_name++;
+
+		if (strncmp(argv[i], reg_name, name_len))
+		    continue;
+
+		/* This is part of the group */
+		if (rt_bound_tree(regp->reg_treetop, reg_min, reg_max)) {
+		    Tcl_AppendResult(interp, "rt_bound_tree failed for ",
+				     regp->reg_name, "\n", (char *)NULL);
+		    rt_clean(rtip);
+		    bu_free((genptr_t)rtip, "wdb_get_obj_bounds: rtip");
+		    return TCL_ERROR;
+		}
+		VMINMAX(rpp_min, rpp_max, reg_min);
+		VMINMAX(rpp_min, rpp_max, reg_max);
+	    }
+	}
+    }
+
+    rt_clean(rtip);
+    bu_free((genptr_t)rtip, "wdb_get_obj_bounds: rtip");
+
+    return TCL_OK;
+}
+
+int
 wdb_make_bb_cmd(struct rt_wdb	*wdbp,
 		Tcl_Interp	*interp,
 		int		argc,
 		char 		**argv)
 {
-	struct rt_i		*rtip;
-	int			i;
 	point_t			rpp_min,rpp_max;
-	struct db_full_path	path;
 	struct directory	*dp;
 	struct rt_arb_internal	*arb;
 	struct rt_db_internal	new_intern;
-	struct region		*regp;
 	char			*new_name;
 
 	WDB_TCL_CHECK_READ_ONLY;
@@ -6893,122 +7190,8 @@ wdb_make_bb_cmd(struct rt_wdb	*wdbp,
 		return TCL_ERROR;
 	}
 
-	/* Make a new rt_i instance from the existing db_i sructure */
-	if ((rtip=rt_new_rti(wdbp->dbip)) == RTI_NULL) {
-		Tcl_AppendResult(interp, "rt_new_rti failure for ", wdbp->dbip->dbi_filename,
-				 "\n", (char *)NULL);
-		return TCL_ERROR;
-	}
-
-	/* Get trees for list of objects/paths */
-	for (i = 2 ; i < argc ; i++) {
-		int gottree;
-
-		/* Get full_path structure for argument */
-		db_full_path_init(&path);
-		if (db_string_to_path(&path,  rtip->rti_dbip, argv[i])) {
-			Tcl_AppendResult(interp, "db_string_to_path failed for ",
-					 argv[i], "\n", (char *)NULL );
-			rt_clean(rtip);
-			bu_free((genptr_t)rtip, "wdb_make_bb_cmd: rtip");
-			return TCL_ERROR;
-		}
-
-		/* check if we alerady got this tree */
-		gottree = 0;
-		for (BU_LIST_FOR(regp, region, &(rtip->HeadRegion))) {
-			struct db_full_path tmp_path;
-
-			db_full_path_init(&tmp_path);
-			if (db_string_to_path(&tmp_path, rtip->rti_dbip, regp->reg_name)) {
-				Tcl_AppendResult(interp, "db_string_to_path failed for ",
-						 regp->reg_name, "\n", (char *)NULL);
-				rt_clean(rtip);
-				bu_free((genptr_t)rtip, "wdb_make_bb_cmd: rtip");
-				return TCL_ERROR;
-			}
-			if (path.fp_names[0] == tmp_path.fp_names[0])
-				gottree = 1;
-			db_free_full_path(&tmp_path);
-			if (gottree)
-				break;
-		}
-
-		/* if we don't already have it, get it */
-		if (!gottree && rt_gettree(rtip, path.fp_names[0]->d_namep)) {
-			Tcl_AppendResult(interp, "rt_gettree failed for ",
-					 argv[i], "\n", (char *)NULL );
-			rt_clean(rtip);
-			bu_free((genptr_t)rtip, "wdb_make_bb_cmd: rtip");
-			return TCL_ERROR;
-		}
-		db_free_full_path(&path);
-	}
-
-	/* prep calculates bounding boxes of solids */
-	rt_prep(rtip);
-
-	/* initialize RPP bounds */
-	VSETALL(rpp_min, MAX_FASTF);
-	VREVERSE(rpp_max, rpp_min);
-	for (i = 2 ; i < argc ; i++) {
-		vect_t reg_min, reg_max;
-		struct region *regp;
-		const char *reg_name;
-
-		/* check if input name is a region */
-		for (BU_LIST_FOR(regp, region, &(rtip->HeadRegion))) {
-			reg_name = regp->reg_name;
-			if (*argv[i] != '/' && *reg_name == '/')
-				reg_name++;
-
-			if (!strcmp( reg_name, argv[i]))
-				goto found;
-				
-		}
-		goto not_found;
-
-found:
-		if (regp != REGION_NULL) {
-			/* input name was a region  */
-			if (rt_bound_tree(regp->reg_treetop, reg_min, reg_max)) {
-				Tcl_AppendResult(interp, "rt_bound_tree failed for ",
-						 regp->reg_name, "\n", (char *)NULL);
-				rt_clean(rtip);
-				bu_free((genptr_t)rtip, "wdb_make_bb_cmd: rtip");
-				return TCL_ERROR;
-			}
-			VMINMAX(rpp_min, rpp_max, reg_min);
-			VMINMAX(rpp_min, rpp_max, reg_max);
-		} else {
-			int name_len;
-not_found:
-
-			/* input name may be a group, need to check all regions under
-			 * that group
-			 */
-			name_len = strlen( argv[i] );
-			for (BU_LIST_FOR( regp, region, &(rtip->HeadRegion))) {
-				reg_name = regp->reg_name;
-				if (*argv[i] != '/' && *reg_name == '/')
-					reg_name++;
-
-				if (strncmp(argv[i], reg_name, name_len))
-					continue;
-
-				/* This is part of the group */
-				if (rt_bound_tree(regp->reg_treetop, reg_min, reg_max)) {
-					Tcl_AppendResult(interp, "rt_bound_tree failed for ",
-							 regp->reg_name, "\n", (char *)NULL);
-					rt_clean(rtip);
-					bu_free((genptr_t)rtip, "wdb_make_bb_cmd: rtip");
-					return TCL_ERROR;
-				}
-				VMINMAX(rpp_min, rpp_max, reg_min);
-				VMINMAX(rpp_min, rpp_max, reg_max);
-			}
-		}
-	}
+	if (wdb_get_obj_bounds(wdbp, interp, argc-2, argv+2, rpp_min, rpp_max) == TCL_ERROR)
+	    return TCL_ERROR;
 
 	/* build bounding RPP */
 	arb = (struct rt_arb_internal *)bu_malloc(sizeof(struct rt_arb_internal), "arb");
@@ -7040,8 +7223,6 @@ not_found:
 		return TCL_ERROR;
 	}
 
-	rt_clean(rtip);
-	bu_free((genptr_t)rtip, "wdb_make_bb_cmd: rtip");
 	return TCL_OK;
 }
 
@@ -10303,37 +10484,34 @@ wdb_rotate_arb_face_tcl(ClientData	clientData,
 }
 
 int
-wdb_erotate_cmd(struct rt_wdb	*wdbp,
+wdb_orotate_cmd(struct rt_wdb	*wdbp,
 		Tcl_Interp	*interp,
 		int		argc,
 		char 		**argv)
 {
-    Tcl_DString ds;
     register struct directory *dp;
+    struct wdb_trace_data wtd;
     struct rt_db_internal intern;
     fastf_t xrot, yrot, zrot;
-    point_t keypoint;
     mat_t rmat;
-    mat_t mat;
+    mat_t pmat;
+    mat_t emat;
+    mat_t tmpMat;
+    mat_t invXform;
+    point_t rpp_min;
+    point_t rpp_max;
+    point_t keypoint;
+    Tcl_DString ds;
 
-    if (argc != 8) {
+    WDB_TCL_CHECK_READ_ONLY;
+
+    if (argc != 5 && argc != 8) {
 	struct bu_vls vls;
 
 	bu_vls_init(&vls);
-	bu_vls_printf(&vls, "helplib wdb_erotate");
+	bu_vls_printf(&vls, "helplib wdb_orotate");
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
-
-	return TCL_ERROR;
-    }
-
-    if ((dp = db_lookup(wdbp->dbip,  argv[1],  LOOKUP_QUIET)) == DIR_NULL) {
-	Tcl_DStringInit(&ds);
-	Tcl_DStringAppend(&ds, argv[0], -1);
-	Tcl_DStringAppend(&ds, ": ", -1);
-	Tcl_DStringAppend(&ds, argv[1], -1);
-	Tcl_DStringAppend(&ds, " not found", -1);
-	Tcl_DStringResult(interp, &ds);
 
 	return TCL_ERROR;
     }
@@ -10368,43 +10546,79 @@ wdb_erotate_cmd(struct rt_wdb	*wdbp,
 	return TCL_ERROR;
     }
 
-    if (sscanf(argv[5], "%lf", &keypoint[X]) != 1) {
-	Tcl_DStringInit(&ds);
-	Tcl_DStringAppend(&ds, argv[0], -1);
-	Tcl_DStringAppend(&ds, ": bad kx value - ", -1);
-	Tcl_DStringAppend(&ds, argv[5], -1);
-	Tcl_DStringResult(interp, &ds);
+    if (argc == 5) {
+	/* Use the object's center as the keypoint. */
 
-	return TCL_ERROR;
+	if (wdb_get_obj_bounds2(wdbp, interp, 1, argv+1, &wtd, rpp_min, rpp_max) == TCL_ERROR)
+	    return TCL_ERROR;
+
+	dp = wtd.wtd_obj[wtd.wtd_objpos-1];
+	if (!(dp->d_flags & DIR_SOLID)) {
+	    if (wdb_get_obj_bounds(wdbp, interp, 1, argv+1, rpp_min, rpp_max) == TCL_ERROR)
+		return TCL_ERROR;
+	}
+
+	VADD2(keypoint, rpp_min, rpp_max);
+	VSCALE(keypoint, keypoint, 0.5);
+    } else {
+	/* The user has provided the keypoint. */
+
+	if (sscanf(argv[5], "%lf", &keypoint[X]) != 1) {
+	    Tcl_DStringInit(&ds);
+	    Tcl_DStringAppend(&ds, argv[0], -1);
+	    Tcl_DStringAppend(&ds, ": bad kx value - ", -1);
+	    Tcl_DStringAppend(&ds, argv[5], -1);
+	    Tcl_DStringResult(interp, &ds);
+
+	    return TCL_ERROR;
+	}
+
+	if (sscanf(argv[6], "%lf", &keypoint[Y]) != 1) {
+	    Tcl_DStringInit(&ds);
+	    Tcl_DStringAppend(&ds, argv[0], -1);
+	    Tcl_DStringAppend(&ds, ": bad ky value - ", -1);
+	    Tcl_DStringAppend(&ds, argv[6], -1);
+	    Tcl_DStringResult(interp, &ds);
+
+	    return TCL_ERROR;
+	}
+
+	if (sscanf(argv[7], "%lf", &keypoint[Z]) != 1) {
+	    Tcl_DStringInit(&ds);
+	    Tcl_DStringAppend(&ds, argv[0], -1);
+	    Tcl_DStringAppend(&ds, ": bad kz value - ", -1);
+	    Tcl_DStringAppend(&ds, argv[7], -1);
+	    Tcl_DStringResult(interp, &ds);
+
+	    return TCL_ERROR;
+	}
+
+	VSCALE(keypoint, keypoint, wdbp->dbip->dbi_local2base);
+
+	if ((dp = db_lookup(wdbp->dbip,  argv[1],  LOOKUP_QUIET)) == DIR_NULL) {
+	    Tcl_DStringInit(&ds);
+	    Tcl_DStringAppend(&ds, argv[0], -1);
+	    Tcl_DStringAppend(&ds, ": ", -1);
+	    Tcl_DStringAppend(&ds, argv[1], -1);
+	    Tcl_DStringAppend(&ds, " not found", -1);
+	    Tcl_DStringResult(interp, &ds);
+
+	    return TCL_ERROR;
+	}
     }
 
-    if (sscanf(argv[6], "%lf", &keypoint[Y]) != 1) {
-	Tcl_DStringInit(&ds);
-	Tcl_DStringAppend(&ds, argv[0], -1);
-	Tcl_DStringAppend(&ds, ": bad ky value - ", -1);
-	Tcl_DStringAppend(&ds, argv[6], -1);
-	Tcl_DStringResult(interp, &ds);
-
-	return TCL_ERROR;
-    }
-
-    if (sscanf(argv[7], "%lf", &keypoint[Z]) != 1) {
-	Tcl_DStringInit(&ds);
-	Tcl_DStringAppend(&ds, argv[0], -1);
-	Tcl_DStringAppend(&ds, ": bad kz value - ", -1);
-	Tcl_DStringAppend(&ds, argv[7], -1);
-	Tcl_DStringResult(interp, &ds);
-
-	return TCL_ERROR;
-    }
-
+#if 0
     MAT_IDN(rmat);
     MAT_IDN(mat);
-    VSCALE(keypoint, keypoint, wdbp->dbip->dbi_local2base);
+#endif
     bn_mat_angles(rmat, xrot, yrot, zrot);
-    bn_mat_xform_about_pt(mat, rmat, keypoint);
+    bn_mat_xform_about_pt(pmat, rmat, keypoint);
 
-    if (rt_db_get_internal(&intern, dp, wdbp->dbip, mat, &rt_uniresource) < 0) {
+    bn_mat_inv(invXform, wtd.wtd_xform);
+    bn_mat_mul(tmpMat, invXform, pmat);
+    bn_mat_mul(emat, tmpMat, wtd.wtd_xform);
+
+    if (rt_db_get_internal(&intern, dp, wdbp->dbip, emat, &rt_uniresource) < 0) {
 	Tcl_DStringInit(&ds);
 	Tcl_DStringAppend(&ds, argv[0], -1);
 	Tcl_DStringAppend(&ds, ": ", -1);
@@ -10442,50 +10656,47 @@ wdb_erotate_cmd(struct rt_wdb	*wdbp,
  * Rotate obj about the keypoint by xrot yrot zrot.
  *
  * Usage:
- *        procname erotate obj xrot yrot zrot kx ky kz
+ *        procname orotate obj xrot yrot zrot [kx ky kz]
  */
 static int
-wdb_erotate_tcl(ClientData	clientData,
+wdb_orotate_tcl(ClientData	clientData,
 		Tcl_Interp	*interp,
 		int		argc,
 		char		**argv)
 {
     struct rt_wdb *wdbp = (struct rt_wdb *)clientData;
 
-    return wdb_erotate_cmd(wdbp, interp, argc-1, argv+1);
+    return wdb_orotate_cmd(wdbp, interp, argc-1, argv+1);
 }
 
 int
-wdb_escale_cmd(struct rt_wdb	*wdbp,
+wdb_oscale_cmd(struct rt_wdb	*wdbp,
 	       Tcl_Interp	*interp,
 	       int		argc,
 	       char 		**argv)
 {
-    Tcl_DString ds;
     register struct directory *dp;
+    struct wdb_trace_data wtd;
     struct rt_db_internal intern;
+    mat_t smat;
+    mat_t emat;
+    mat_t tmpMat;
+    mat_t invXform;
+    point_t rpp_min;
+    point_t rpp_max;
     fastf_t sf;
     point_t keypoint;
-    mat_t mat;
+    Tcl_DString ds;
 
-    if (argc != 6) {
+    WDB_TCL_CHECK_READ_ONLY;
+
+    if (argc != 3 && argc != 6) {
 	struct bu_vls vls;
 
 	bu_vls_init(&vls);
-	bu_vls_printf(&vls, "helplib wdb_escale");
+	bu_vls_printf(&vls, "helplib wdb_oscale");
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
-
-	return TCL_ERROR;
-    }
-
-    if ((dp = db_lookup(wdbp->dbip,  argv[1],  LOOKUP_QUIET)) == DIR_NULL) {
-	Tcl_DStringInit(&ds);
-	Tcl_DStringAppend(&ds, argv[0], -1);
-	Tcl_DStringAppend(&ds, ": ", -1);
-	Tcl_DStringAppend(&ds, argv[1], -1);
-	Tcl_DStringAppend(&ds, " not found", -1);
-	Tcl_DStringResult(interp, &ds);
 
 	return TCL_ERROR;
     }
@@ -10500,41 +10711,71 @@ wdb_escale_cmd(struct rt_wdb	*wdbp,
 	return TCL_ERROR;
     }
 
-    if (sscanf(argv[3], "%lf", &keypoint[X]) != 1) {
-	Tcl_DStringInit(&ds);
-	Tcl_DStringAppend(&ds, argv[0], -1);
-	Tcl_DStringAppend(&ds, ": bad kx value - ", -1);
-	Tcl_DStringAppend(&ds, argv[3], -1);
-	Tcl_DStringResult(interp, &ds);
+    if (argc == 3) {
+	if (wdb_get_obj_bounds2(wdbp, interp, 1, argv+1, &wtd, rpp_min, rpp_max) == TCL_ERROR)
+	    return TCL_ERROR;
 
-	return TCL_ERROR;
+	dp = wtd.wtd_obj[wtd.wtd_objpos-1];
+	if (!(dp->d_flags & DIR_SOLID)) {
+	    if (wdb_get_obj_bounds(wdbp, interp, 1, argv+1, rpp_min, rpp_max) == TCL_ERROR)
+		return TCL_ERROR;
+	}
+
+	VADD2(keypoint, rpp_min, rpp_max);
+	VSCALE(keypoint, keypoint, 0.5);
+    } else {
+	if (sscanf(argv[3], "%lf", &keypoint[X]) != 1) {
+	    Tcl_DStringInit(&ds);
+	    Tcl_DStringAppend(&ds, argv[0], -1);
+	    Tcl_DStringAppend(&ds, ": bad kx value - ", -1);
+	    Tcl_DStringAppend(&ds, argv[3], -1);
+	    Tcl_DStringResult(interp, &ds);
+
+	    return TCL_ERROR;
+	}
+
+	if (sscanf(argv[4], "%lf", &keypoint[Y]) != 1) {
+	    Tcl_DStringInit(&ds);
+	    Tcl_DStringAppend(&ds, argv[0], -1);
+	    Tcl_DStringAppend(&ds, ": bad ky value - ", -1);
+	    Tcl_DStringAppend(&ds, argv[4], -1);
+	    Tcl_DStringResult(interp, &ds);
+
+	    return TCL_ERROR;
+	}
+
+	if (sscanf(argv[5], "%lf", &keypoint[Z]) != 1) {
+	    Tcl_DStringInit(&ds);
+	    Tcl_DStringAppend(&ds, argv[0], -1);
+	    Tcl_DStringAppend(&ds, ": bad kz value - ", -1);
+	    Tcl_DStringAppend(&ds, argv[5], -1);
+	    Tcl_DStringResult(interp, &ds);
+
+	    return TCL_ERROR;
+	}
+
+	VSCALE(keypoint, keypoint, wdbp->dbip->dbi_local2base);
+
+	if ((dp = db_lookup(wdbp->dbip,  argv[1],  LOOKUP_QUIET)) == DIR_NULL) {
+	    Tcl_DStringInit(&ds);
+	    Tcl_DStringAppend(&ds, argv[0], -1);
+	    Tcl_DStringAppend(&ds, ": ", -1);
+	    Tcl_DStringAppend(&ds, argv[1], -1);
+	    Tcl_DStringAppend(&ds, " not found", -1);
+	    Tcl_DStringResult(interp, &ds);
+
+	    return TCL_ERROR;
+	}
     }
 
-    if (sscanf(argv[4], "%lf", &keypoint[Y]) != 1) {
-	Tcl_DStringInit(&ds);
-	Tcl_DStringAppend(&ds, argv[0], -1);
-	Tcl_DStringAppend(&ds, ": bad ky value - ", -1);
-	Tcl_DStringAppend(&ds, argv[4], -1);
-	Tcl_DStringResult(interp, &ds);
+    MAT_IDN(smat);
+    bn_mat_scale_about_pt(smat, keypoint, sf);
 
-	return TCL_ERROR;
-    }
+    bn_mat_inv(invXform, wtd.wtd_xform);
+    bn_mat_mul(tmpMat, invXform, smat);
+    bn_mat_mul(emat, tmpMat, wtd.wtd_xform);
 
-    if (sscanf(argv[5], "%lf", &keypoint[Z]) != 1) {
-	Tcl_DStringInit(&ds);
-	Tcl_DStringAppend(&ds, argv[0], -1);
-	Tcl_DStringAppend(&ds, ": bad kz value - ", -1);
-	Tcl_DStringAppend(&ds, argv[5], -1);
-	Tcl_DStringResult(interp, &ds);
-
-	return TCL_ERROR;
-    }
-
-    MAT_IDN(mat);
-    VSCALE(keypoint, keypoint, wdbp->dbip->dbi_local2base);
-    bn_mat_scale_about_pt(mat, keypoint, sf);
-
-    if (rt_db_get_internal(&intern, dp, wdbp->dbip, mat, &rt_uniresource) < 0) {
+    if (rt_db_get_internal(&intern, dp, wdbp->dbip, emat, &rt_uniresource) < 0) {
 	Tcl_DStringInit(&ds);
 	Tcl_DStringAppend(&ds, argv[0], -1);
 	Tcl_DStringAppend(&ds, ": ", -1);
@@ -10572,51 +10813,57 @@ wdb_escale_cmd(struct rt_wdb	*wdbp,
  * Scale obj about the keypoint by sf.
  *
  * Usage:
- *        procname escale obj sf kx ky kz
+ *        procname oscale obj sf kx ky kz
  */
 static int
-wdb_escale_tcl(ClientData	clientData,
+wdb_oscale_tcl(ClientData	clientData,
 	       Tcl_Interp	*interp,
 	       int		argc,
 	       char		**argv)
 {
     struct rt_wdb *wdbp = (struct rt_wdb *)clientData;
 
-    return wdb_escale_cmd(wdbp, interp, argc-1, argv+1);
+    return wdb_oscale_cmd(wdbp, interp, argc-1, argv+1);
 }
 
 int
-wdb_etranslate_cmd(struct rt_wdb	*wdbp,
+wdb_otranslate_cmd(struct rt_wdb	*wdbp,
 		   Tcl_Interp		*interp,
 		   int			argc,
 		   char 		**argv)
 {
-    Tcl_DString ds;
     register struct directory *dp;
+    struct wdb_trace_data wtd;
     struct rt_db_internal intern;
     vect_t delta;
-    mat_t mat;
+    mat_t dmat;
+    mat_t emat;
+    mat_t tmpMat;
+    mat_t invXform;
+    point_t rpp_min;
+    point_t rpp_max;
+    Tcl_DString ds;
+
+    WDB_TCL_CHECK_READ_ONLY;
 
     if (argc != 5) {
 	struct bu_vls vls;
 
 	bu_vls_init(&vls);
-	bu_vls_printf(&vls, "helplib wdb_etranslate");
+	bu_vls_printf(&vls, "helplib wdb_otranslate");
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 
 	return TCL_ERROR;
     }
 
-    if ((dp = db_lookup(wdbp->dbip,  argv[1],  LOOKUP_QUIET)) == DIR_NULL) {
-	Tcl_DStringInit(&ds);
-	Tcl_DStringAppend(&ds, argv[0], -1);
-	Tcl_DStringAppend(&ds, ": ", -1);
-	Tcl_DStringAppend(&ds, argv[1], -1);
-	Tcl_DStringAppend(&ds, " not found", -1);
-	Tcl_DStringResult(interp, &ds);
-
+    if (wdb_get_obj_bounds2(wdbp, interp, 1, argv+1, &wtd, rpp_min, rpp_max) == TCL_ERROR)
 	return TCL_ERROR;
+
+    dp = wtd.wtd_obj[wtd.wtd_objpos-1];
+    if (!(dp->d_flags & DIR_SOLID)) {
+	if (wdb_get_obj_bounds(wdbp, interp, 1, argv+1, rpp_min, rpp_max) == TCL_ERROR)
+	    return TCL_ERROR;
     }
 
     if (sscanf(argv[2], "%lf", &delta[X]) != 1) {
@@ -10649,11 +10896,15 @@ wdb_etranslate_cmd(struct rt_wdb	*wdbp,
 	return TCL_ERROR;
     }
 
-    MAT_IDN(mat);
+    MAT_IDN(dmat);
     VSCALE(delta, delta, wdbp->dbip->dbi_local2base);
-    MAT_DELTAS_VEC(mat, delta);
+    MAT_DELTAS_VEC(dmat, delta);
 
-    if (rt_db_get_internal(&intern, dp, wdbp->dbip, mat, &rt_uniresource) < 0) {
+    bn_mat_inv(invXform, wtd.wtd_xform);
+    bn_mat_mul(tmpMat, invXform, dmat);
+    bn_mat_mul(emat, tmpMat, wtd.wtd_xform);
+
+    if (rt_db_get_internal(&intern, dp, wdbp->dbip, emat, &rt_uniresource) < 0) {
 	Tcl_DStringInit(&ds);
 	Tcl_DStringAppend(&ds, argv[0], -1);
 	Tcl_DStringAppend(&ds, ": ", -1);
@@ -10691,17 +10942,167 @@ wdb_etranslate_cmd(struct rt_wdb	*wdbp,
  * Translate obj by dx dy dz.
  *
  * Usage:
- *        procname etranslate obj dx dy dz
+ *        procname otranslate obj dx dy dz
  */
 static int
-wdb_etranslate_tcl(ClientData	clientData,
+wdb_otranslate_tcl(ClientData	clientData,
 		Tcl_Interp	*interp,
 		int		argc,
 		char		**argv)
 {
     struct rt_wdb *wdbp = (struct rt_wdb *)clientData;
 
-    return wdb_etranslate_cmd(wdbp, interp, argc-1, argv+1);
+    return wdb_otranslate_cmd(wdbp, interp, argc-1, argv+1);
+}
+
+int
+wdb_ocenter_cmd(struct rt_wdb	*wdbp,
+		Tcl_Interp	*interp,
+		int		argc,
+		char 		**argv)
+{
+    register struct directory *dp;
+    struct wdb_trace_data wtd;
+    struct rt_db_internal intern;
+    mat_t dmat;
+    mat_t emat;
+    mat_t tmpMat;
+    mat_t invXform;
+    point_t rpp_min;
+    point_t rpp_max;
+    point_t oldCenter;
+    point_t center;
+    point_t delta;
+    struct bu_vls vls;
+    Tcl_DString ds;
+
+    if (argc != 2 && argc !=5) {
+	bu_vls_init(&vls);
+	bu_vls_printf(&vls, "helplib wdb_ocenter");
+	Tcl_Eval(interp, bu_vls_addr(&vls));
+	bu_vls_free(&vls);
+
+	return TCL_ERROR;
+    }
+
+    /*
+     * One of the get bounds routines needs to be fixed to
+     * work with all cases. In the meantime...
+     */
+    if (wdb_get_obj_bounds2(wdbp, interp, 1, argv+1, &wtd, rpp_min, rpp_max) == TCL_ERROR)
+	return TCL_ERROR;
+
+    dp = wtd.wtd_obj[wtd.wtd_objpos-1];
+    if (!(dp->d_flags & DIR_SOLID)) {
+	if (wdb_get_obj_bounds(wdbp, interp, 1, argv+1, rpp_min, rpp_max) == TCL_ERROR)
+	    return TCL_ERROR;
+    }
+
+    VADD2(oldCenter, rpp_min, rpp_max);
+    VSCALE(oldCenter, oldCenter, 0.5);
+
+    if (argc == 2) {
+	VSCALE(center, oldCenter, wdbp->dbip->dbi_base2local);
+
+	bu_vls_init(&vls);
+	bn_encode_vect(&vls, center);
+	Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)0);
+	bu_vls_free(&vls);
+
+	return TCL_OK;
+    }
+
+    WDB_TCL_CHECK_READ_ONLY;
+
+    /* Read in the new center */
+    if (sscanf(argv[2], "%lf", &center[X]) != 1) {
+	Tcl_DStringInit(&ds);
+	Tcl_DStringAppend(&ds, argv[0], -1);
+	Tcl_DStringAppend(&ds, ": bad x value - ", -1);
+	Tcl_DStringAppend(&ds, argv[2], -1);
+	Tcl_DStringResult(interp, &ds);
+
+	return TCL_ERROR;
+    }
+
+    if (sscanf(argv[3], "%lf", &center[Y]) != 1) {
+	Tcl_DStringInit(&ds);
+	Tcl_DStringAppend(&ds, argv[0], -1);
+	Tcl_DStringAppend(&ds, ": bad y value - ", -1);
+	Tcl_DStringAppend(&ds, argv[3], -1);
+	Tcl_DStringResult(interp, &ds);
+
+	return TCL_ERROR;
+    }
+
+    if (sscanf(argv[4], "%lf", &center[Z]) != 1) {
+	Tcl_DStringInit(&ds);
+	Tcl_DStringAppend(&ds, argv[0], -1);
+	Tcl_DStringAppend(&ds, ": bad x value - ", -1);
+	Tcl_DStringAppend(&ds, argv[4], -1);
+	Tcl_DStringResult(interp, &ds);
+
+	return TCL_ERROR;
+    }
+
+    VSCALE(center, center, wdbp->dbip->dbi_local2base);
+    VSUB2(delta, center, oldCenter);
+    MAT_IDN(dmat);
+    MAT_DELTAS_VEC(dmat, delta);
+
+    bn_mat_inv(invXform, wtd.wtd_xform);
+    bn_mat_mul(tmpMat, invXform, dmat);
+    bn_mat_mul(emat, tmpMat, wtd.wtd_xform);
+
+    if (rt_db_get_internal(&intern, dp, wdbp->dbip, emat, &rt_uniresource) < 0) {
+	Tcl_DStringInit(&ds);
+	Tcl_DStringAppend(&ds, argv[0], -1);
+	Tcl_DStringAppend(&ds, ": ", -1);
+	Tcl_DStringAppend(&ds, " rt_db_get_internal(", -1);
+	Tcl_DStringAppend(&ds, argv[1], -1);
+	Tcl_DStringAppend(&ds, ") failure", -1);
+	Tcl_DStringResult(interp, &ds);
+
+	return TCL_ERROR;
+    }
+    RT_CK_DB_INTERNAL(&intern);
+
+    if (rt_db_put_internal(dp,
+			   wdbp->dbip,
+			   &intern,
+			   &rt_uniresource) < 0) {
+	rt_db_free_internal(&intern, &rt_uniresource);
+
+	Tcl_DStringInit(&ds);
+	Tcl_DStringAppend(&ds, argv[0], -1);
+	Tcl_DStringAppend(&ds, ": Database write error, aborting", -1);
+	Tcl_DStringResult(interp, &ds);
+
+	return TCL_ERROR;
+    }
+    rt_db_free_internal(&intern, &rt_uniresource);
+
+    /* notify observers */
+    bu_observer_notify(interp, &wdbp->wdb_observers, bu_vls_addr(&wdbp->wdb_name));
+
+    return TCL_OK;
+}
+
+/*
+ * Set/get the center of the specified object.
+ *
+ * Usage:
+ *        procname ocenter object [x y z]
+ */
+static int
+wdb_ocenter_tcl(ClientData	clientData,
+		Tcl_Interp	*interp,
+		int		argc,
+		char		**argv)
+{
+    struct rt_wdb *wdbp = (struct rt_wdb *)clientData;
+
+    return wdb_ocenter_cmd(wdbp, interp, argc-1, argv+1);
 }
 
 /*
