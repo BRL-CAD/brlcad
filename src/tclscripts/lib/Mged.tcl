@@ -72,9 +72,6 @@ option add *Mged.height 400 widgetDefault
 	method E {args}
 	method erase {args}
 	method erase_all {args}
-	method erotate {args}
-	method escale {args}
-	method etranslate {args}
 	method ev {args}
 	method expand {args}
 	method facetize {args}
@@ -107,6 +104,10 @@ option add *Mged.height 400 widgetDefault
 	method mvall {args}
 	method nmg_collapse {args}
 	method nmg_simplify {args}
+	method ocenter {args}
+	method orotate {args}
+	method oscale {args}
+	method otranslate {args}
 	method opendb {args}
 	method overlay {args}
 	method pathlist {args}
@@ -329,6 +330,21 @@ option add *Mged.height 400 widgetDefault
     eval $db nmg_simplify $args
 }
 
+::itcl::body Mged::ocenter {args} {
+    eval $db ocenter $args
+}
+
+::itcl::body Mged::orotate {args} {
+    eval $db orotate $args
+}
+::itcl::body Mged::oscale {args} {
+    eval $db oscale $args
+}
+
+::itcl::body Mged::otranslate {args} {
+    eval $db otranslate $args
+}
+
 ::itcl::body Mged::copyeval {args} {
     eval $db copyeval $args
 }
@@ -339,17 +355,6 @@ option add *Mged.height 400 widgetDefault
 
 ::itcl::body Mged::dup {args} {
     eval $db dup $args
-}
-
-::itcl::body Mged::erotate {args} {
-    eval $db erotate $args
-}
-::itcl::body Mged::escale {args} {
-    eval $db escale $args
-}
-
-::itcl::body Mged::etranslate {args} {
-    eval $db etranslate $args
 }
 
 ::itcl::body Mged::g {args} {

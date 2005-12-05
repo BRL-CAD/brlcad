@@ -52,9 +52,6 @@
 	method dbip {args}
 	method dump {args}
 	method dup {args}
-	method erotate {args}
-	method escale {args}
-	method etranslate {args}
 	method expand {args}
 	method facetize {args}
 	method find {args}
@@ -84,6 +81,10 @@
 	method nmg_collapse {args}
 	method nmg_simplify {args}
 	method observer {args}
+	method ocenter {args}
+	method orotate {args}
+	method oscale {args}
+	method otranslate {args}
 	method open {args}
 	method pathlist {args}
 	method paths {args}
@@ -162,6 +163,21 @@
 
 ::itcl::body Db::observer {args} {
     eval $db observer $args
+}
+
+::itcl::body Db::ocenter {args} {
+    eval $db ocenter $args
+}
+
+::itcl::body Db::orotate {args} {
+    eval $db orotate $args
+}
+::itcl::body Db::oscale {args} {
+    eval $db oscale $args
+}
+
+::itcl::body Db::otranslate {args} {
+    eval $db otranslate $args
 }
 
 ::itcl::body Db::match {args} {
@@ -306,17 +322,6 @@
 
 ::itcl::body Db::dup {args} {
     eval $db dup $args
-}
-
-::itcl::body Db::erotate {args} {
-    eval $db erotate $args
-}
-::itcl::body Db::escale {args} {
-    eval $db escale $args
-}
-
-::itcl::body Db::etranslate {args} {
-    eval $db etranslate $args
 }
 
 ::itcl::body Db::g {args} {
@@ -529,6 +534,8 @@
     $help add nmg_collapse    {{nmg_solid new_solid maximum_error_distance [minimum_allowed_angle]}	{decimate NMG solid via edge collapse}}
     $help add nmg_simplify    {{[arb|tgc|ell|poly] new_solid nmg_solid}	{simplify nmg_solid, if possible}}
     $help add open	{{?dbfile?} {open a database}}
+    $help add ocenter 	{{obj(s)} {get center for obj(s)}}
+    $help add ocrotate	{{obj x y z} {rotate object about its center by x, y, z degrees}}
     $help add pathlist	{{name(s)}	{list all paths from name(s) to leaves}}
     $help add paths	{{pattern} {lists all paths matching input path}}
     $help add prcolor	{{} {print color&material table}}
