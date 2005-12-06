@@ -71,6 +71,7 @@
 #define HAVE_GL_GL_H	1
 #define HAVE_IO_H	1
 #define HAVE_LIMITS_H	1
+#define HAVE_MATH_H     1
 #define HAVE_MATHERR	1
 #define HAVE_MEMORY_H	1
 #define HAVE_OFF_T	1
@@ -137,6 +138,7 @@
 #define pipe _pipe
 #define popen _popen
 #define read _read
+#define rint(_X) (floor((_X) + 0.5))
 #define setmode _setmode
 #define snprintf _snprintf
 #define sopen _sopen
