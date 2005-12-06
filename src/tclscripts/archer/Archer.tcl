@@ -105,9 +105,6 @@ namespace eval Archer {
 	method E                   {args}
 	method erase               {args}
 	method erase_all           {args}
-	method erotate		   {args}
-	method escale		   {args}
-	method etranslate	   {args}
 	method ev                  {args}
 	method exit                {args}
 	method exportFg4	   {}
@@ -130,6 +127,10 @@ namespace eval Archer {
 	method move                {args}
 	method mv                  {args}
 	method mvall               {args}
+	method ocenter		   {args}
+	method orotate		   {obj rx ry rz kx ky kz}
+	method oscale		   {obj sf kx ky kz}
+	method otranslate	   {obj dx dy dz}
 	method push                {args}
 	method put                 {args}
 	method pwd                 {}
@@ -333,8 +334,8 @@ namespace eval Archer {
 	variable SCALE_MODE 2
 	variable CENTER_MODE 3
 	variable OBJECT_ROTATE_MODE 4
-	variable OBJECT_TRANSLATE_MODE 5
-	variable OBJECT_SCALE_MODE 6
+	variable OBJECT_SCALE_MODE 5
+	variable OBJECT_TRANSLATE_MODE 6
 	variable OBJECT_CENTER_MODE 7
 
 	variable OBJ_EDIT_VIEW_MODE 0
@@ -348,7 +349,9 @@ namespace eval Archer {
             copy copyeval cp dbExpand delete draw E erase \
 	    erase_all ev exit exportFg4 exportStl exportVrml find hide g group \
             importFg4 importStl i importFg4Sections kill killall \
-            killtree ls make_bb move mv mvall push put pwd \
+            killtree ls make_bb move mv mvall \
+            ocenter orotate oscale otranslate \
+            push put pwd \
             r report reverseNormals rm track unhide units vdraw whichid \
             who Z zap \
 	}
@@ -439,7 +442,7 @@ Popup Menu    Right or Ctrl-Left
 	method _goto_prev_obj {}
 	method _goto_next_obj {}
 	method _update_obj_history {obj}
-	method _redraw_obj {obj}
+	method _redraw_obj {obj {wflag 1}}
 
 	method _create_obj {type}
 	method _create_arb4 {name}
@@ -556,6 +559,11 @@ Popup Menu    Right or Ctrl-Left
 
 	method launchDisplayMenuBegin {w m x y}
 	method launchDisplayMenuEnd {}
+
+	method handleObjCenter {obj x y}
+	method handleObjRotate {obj rx ry rz kx ky kz}
+	method handleObjScale {obj sf kx ky kz}
+	method handleObjTranslate {obj dx dy dz}
     }
 
     private {
@@ -623,10 +631,6 @@ Popup Menu    Right or Ctrl-Left
 	method _toggle_view_axes   {pane}
 	method _toggle_ground_plane   {}
 
-	method _rotate_mode {dm}
-	method _translate_mode {dm}
-	method _scale_mode {dm}
-
 	# private mged commands
 	method _alter_obj          {operation obj}
 	method _delete_obj         {obj}
@@ -636,14 +640,29 @@ Popup Menu    Right or Ctrl-Left
 
 	method _build_view_toolbar {}
 	method _update_view_toolbar_for_edit {}
-	method _init_rotate_mode {}
-	method _init_translate_mode {}
-	method _init_scale_mode {}
+
+	method beginViewRotate {}
+	method endViewRotate {dm}
+
+	method beginViewScale {}
+	method endViewScale {dm}
+
+	method beginViewTranslate {}
+	method endViewTranslate {dm}
+
 	method _init_center_mode {}
-	method _init_edit_rotate_mode {}
-	method _init_edit_translate_mode {}
-	method _init_edit_scale_mode {}
-	method _init_edit_center_mode {}
+
+	method beginObjRotate {}
+	method endObjRotate {dm obj}
+
+	method beginObjScale {}
+	method endObjScale {dm obj}
+
+	method beginObjTranslate {}
+	method endObjTranslate {dm obj}
+
+	method beginObjCenter {}
+	method endObjCenter {dm obj}
 
 	method _init_default_bindings {}
 	method _init_brlcad_bindings {}
@@ -2808,7 +2827,7 @@ Popup Menu    Right or Ctrl-Left
 	-state disabled
 }
 
-::itcl::body Archer::_redraw_obj {obj} {
+::itcl::body Archer::_redraw_obj {obj {wflag 1}} {
     if {![info exists itk_component(mged)] &&
 	![info exists itk_component(sdb)]} {
 	return
@@ -2825,7 +2844,7 @@ Popup Menu    Right or Ctrl-Left
 	return
     }
 
-    _render $obj $renderMode $renderTrans 0
+    _render $obj $renderMode $renderTrans 0 $wflag
 }
 
 ::itcl::body Archer::_update_prev_obj_button {obj} {
@@ -5321,19 +5340,19 @@ Popup Menu    Right or Ctrl-Left
 	-helpstr "Rotate view" \
 	-variable [::itcl::scope mDefaultBindingMode] \
 	-value $ROTATE_MODE \
-	-command [::itcl::code $this _init_rotate_mode]
+	-command [::itcl::code $this beginViewRotate]
     $itk_component(viewToolbar) add radiobutton translate \
 	-balloonstr "Translate view" \
 	-helpstr "Translate view" \
 	-variable [::itcl::scope mDefaultBindingMode] \
 	-value $TRANSLATE_MODE \
-	-command [::itcl::code $this _init_translate_mode]
+	-command [::itcl::code $this beginViewTranslate]
     $itk_component(viewToolbar) add radiobutton scale \
 	-balloonstr "Scale view" \
 	-helpstr "Scale view" \
 	-variable [::itcl::scope mDefaultBindingMode] \
 	-value $SCALE_MODE \
-	-command [::itcl::code $this _init_scale_mode]
+	-command [::itcl::code $this beginViewScale]
     $itk_component(viewToolbar) add radiobutton center \
 	-balloonstr "Center view" \
 	-helpstr "Center view" \
@@ -5364,7 +5383,7 @@ Popup Menu    Right or Ctrl-Left
 	    -helpstr "Rotate selected object" \
 	    -variable [::itcl::scope mDefaultBindingMode] \
 	    -value $OBJECT_ROTATE_MODE \
-	    -command [::itcl::code $this _init_edit_rotate_mode] \
+	    -command [::itcl::code $this beginObjRotate] \
 	    -image [image create photo \
 			-file [file join $_imgdir Themes $mTheme edit_rotate.png]]
 	$itk_component(viewToolbar) add radiobutton edit_translate \
@@ -5372,7 +5391,7 @@ Popup Menu    Right or Ctrl-Left
 	    -helpstr "Translate selected object" \
 	    -variable [::itcl::scope mDefaultBindingMode] \
 	    -value $OBJECT_TRANSLATE_MODE \
-	    -command [::itcl::code $this _init_edit_translate_mode] \
+	    -command [::itcl::code $this beginObjTranslate] \
 	    -image [image create photo \
 			-file [file join $_imgdir Themes $mTheme edit_translate.png]]
 	$itk_component(viewToolbar) add radiobutton edit_scale \
@@ -5380,7 +5399,7 @@ Popup Menu    Right or Ctrl-Left
 	    -helpstr "Scale selected object" \
 	    -variable [::itcl::scope mDefaultBindingMode] \
 	    -value $OBJECT_SCALE_MODE \
-	    -command [::itcl::code $this _init_edit_scale_mode] \
+	    -command [::itcl::code $this beginObjScale] \
 	    -image [image create photo \
 			-file [file join $_imgdir Themes $mTheme edit_scale.png]]
 	$itk_component(viewToolbar) add radiobutton edit_center \
@@ -5388,7 +5407,7 @@ Popup Menu    Right or Ctrl-Left
 	    -helpstr "Center selected object" \
 	    -variable [::itcl::scope mDefaultBindingMode] \
 	    -value $OBJECT_CENTER_MODE \
-	    -command [::itcl::code $this _init_edit_center_mode] \
+	    -command [::itcl::code $this beginObjCenter] \
 	    -image [image create photo \
 			-file [file join $_imgdir Themes $mTheme edit_select.png]]
 
@@ -5399,7 +5418,7 @@ Popup Menu    Right or Ctrl-Left
     }
 }
 
-::itcl::body Archer::_init_rotate_mode {} {
+::itcl::body Archer::beginViewRotate {} {
     if {[info exists itk_component(mged)]} {
 	set _comp $itk_component(mged)
     } elseif {[info exists itk_component(sdb)]} {
@@ -5412,11 +5431,13 @@ Popup Menu    Right or Ctrl-Left
 	set dm [$_comp component $dname]
 	set win [$dm component dm]
 	bind $win <1> "$dm rotate_mode %x %y; break"
-	bind $win <ButtonRelease-1> "[::itcl::code $this _rotate_mode $dm]; break"
+	bind $win <ButtonRelease-1> "[::itcl::code $this endViewRotate $dm]; break"
     }
 }
 
-::itcl::body Archer::_init_translate_mode {} {
+::itcl::body Archer::endViewRotate {dsp} {
+    $dsp idle_mode
+
     if {[info exists itk_component(mged)]} {
 	set _comp $itk_component(mged)
     } elseif {[info exists itk_component(sdb)]} {
@@ -5425,15 +5446,11 @@ Popup Menu    Right or Ctrl-Left
 	return
     }
 
-    foreach dname {ul ur ll lr} {
-	set dm [$_comp component $dname]
-	set win [$dm component dm]
-	bind $win <1> "$dm translate_mode %x %y; break"
-	bind $win <ButtonRelease-1> "[::itcl::code $this _translate_mode $dm]; break"
-    }
+    set ae [$_comp ae]
+    _add_history "ae $ae"
 }
 
-::itcl::body Archer::_init_scale_mode {} {
+::itcl::body Archer::beginViewScale {} {
     if {[info exists itk_component(mged)]} {
 	set _comp $itk_component(mged)
     } elseif {[info exists itk_component(sdb)]} {
@@ -5446,8 +5463,55 @@ Popup Menu    Right or Ctrl-Left
 	set dm [$_comp component $dname]
 	set win [$dm component dm]
 	bind $win <1> "$dm scale_mode %x %y; break"
-	bind $win <ButtonRelease-1> "[::itcl::code $this _scale_mode $dm]; break"
+	bind $win <ButtonRelease-1> "[::itcl::code $this endViewScale $dm]; break"
     }
+}
+
+::itcl::body Archer::endViewScale {dsp} {
+    $dsp idle_mode
+
+    if {[info exists itk_component(mged)]} {
+	set _comp $itk_component(mged)
+    } elseif {[info exists itk_component(sdb)]} {
+	set _comp $itk_component(sdb)
+    } else {	
+	return
+    }
+
+    set size [$_comp size]
+    _add_history "size $size"
+}
+
+::itcl::body Archer::beginViewTranslate {} {
+    if {[info exists itk_component(mged)]} {
+	set _comp $itk_component(mged)
+    } elseif {[info exists itk_component(sdb)]} {
+	set _comp $itk_component(sdb)
+    } else {	
+	return
+    }
+
+    foreach dname {ul ur ll lr} {
+	set dm [$_comp component $dname]
+	set win [$dm component dm]
+	bind $win <1> "$dm translate_mode %x %y; break"
+	bind $win <ButtonRelease-1> "[::itcl::code $this endViewTranslate $dm]; break"
+    }
+}
+
+::itcl::body Archer::endViewTranslate {dsp} {
+    $dsp idle_mode
+
+    if {[info exists itk_component(mged)]} {
+	set _comp $itk_component(mged)
+    } elseif {[info exists itk_component(sdb)]} {
+	set _comp $itk_component(sdb)
+    } else {	
+	return
+    }
+
+    set center [$_comp center]
+    _add_history "center $center"
 }
 
 ::itcl::body Archer::_init_center_mode {} {
@@ -5463,42 +5527,170 @@ Popup Menu    Right or Ctrl-Left
 	set dm [$_comp component $dname]
 	set win [$dm component dm]
 	bind $win <1> "$dm slew %x %y; break"
+	bind $win <ButtonRelease-1> "[::itcl::code $this endViewTranslate $dm]; break"
     }
 }
 
-::itcl::body Archer::_init_edit_rotate_mode {} {
+::itcl::body Archer::beginObjRotate {} {
     if {[info exists itk_component(mged)]} {
 	set _comp $itk_component(mged)
     } elseif {[info exists itk_component(sdb)]} {
 	set _comp $itk_component(sdb)
     } else {	
+	return
+    }
+
+    set obj $mSelectedObjPath
+
+    if {$obj == ""} {
+	::sdialogs::Stddlgs::errordlg "User Error" \
+		"You must first select an object to rotate!"
+	return
+    }
+
+    if {[info exists itk_component(sdb)]} {
+	set center [ocenter $obj]
+	set x [lindex $center 0]
+	set y [lindex $center 1]
+	set z [lindex $center 2]
+    } else {
+	# These values are insignificant (i.e. they will be ignored by the callback)
+	set x 0
+	set y 0
+	set z 0
+    }
+
+    foreach dname {ul ur ll lr} {
+	set dm [$_comp component $dname]
+	set win [$dm component dm]
+	bind $win <1> "$dm orotate_mode %x %y [list [::itcl::code $this handleObjRotate]] $obj $x $y $z; break"
+	bind $win <ButtonRelease-1> "[::itcl::code $this endObjRotate $dm $obj]; break"
+    }
+}
+
+::itcl::body Archer::endObjRotate {dsp obj} {
+    $dsp idle_mode
+
+    #XXX Need code to track overall transformation
+    if {[info exists itk_component(mged)]} {
+	#_add_history "orotate obj rx ry rz"
+    } else {
+	#_add_history "orotate obj rx ry rz kx ky kz"
+    }
+}
+
+::itcl::body Archer::beginObjScale {} {
+    if {[info exists itk_component(mged)]} {
+	set _comp $itk_component(mged)
+    } elseif {[info exists itk_component(sdb)]} {
+	set _comp $itk_component(sdb)
+    } else {	
+	return
+    }
+
+    set obj $mSelectedObjPath
+
+    if {$obj == ""} {
+	::sdialogs::Stddlgs::errordlg "User Error" \
+		"You must first select an object to scale!"
+	return
+    }
+
+    if {[info exists itk_component(sdb)]} {
+	set center [ocenter $obj]
+	set x [lindex $center 0]
+	set y [lindex $center 1]
+	set z [lindex $center 2]
+    } else {
+	# These values are insignificant (i.e. they will be ignored by the callback)
+	set x 0
+	set y 0
+	set z 0
+    }
+
+    foreach dname {ul ur ll lr} {
+	set dm [$_comp component $dname]
+	set win [$dm component dm]
+	bind $win <1> "$dm oscale_mode %x %y [list [::itcl::code $this handleObjScale]] $obj $x $y $z; break"
+	bind $win <ButtonRelease-1> "[::itcl::code $this endObjScale $dm $obj]; break"
+    }
+}
+
+::itcl::body Archer::endObjScale {dsp obj} {
+    $dsp idle_mode
+
+    #XXX Need code to track overall transformation
+    if {[info exists itk_component(mged)]} {
+	#_add_history "oscale obj sf"
+    } else {
+	#_add_history "oscale obj sf kx ky kz"
+    }
+}
+
+::itcl::body Archer::beginObjTranslate {} {
+    if {[info exists itk_component(mged)]} {
+	set _comp $itk_component(mged)
+    } elseif {[info exists itk_component(sdb)]} {
+	set _comp $itk_component(sdb)
+    } else {	
+	return
+    }
+
+    set obj $mSelectedObjPath
+
+    if {$obj == ""} {
+	::sdialogs::Stddlgs::errordlg "User Error" \
+		"You must first select an object to translate!"
 	return
     }
 
     foreach dname {ul ur ll lr} {
 	set dm [$_comp component $dname]
 	set win [$dm component dm]
-	bind $win <1> ""
+	bind $win <1> "$dm otranslate_mode %x %y [list [::itcl::code $this handleObjTranslate]] $obj; break"
+	bind $win <ButtonRelease-1> "[::itcl::code $this endObjTranslate $dm $obj]; break"
     }
 }
 
-::itcl::body Archer::_init_edit_translate_mode {} {
+::itcl::body Archer::endObjTranslate {dsp obj} {
+    $dsp idle_mode
+
+    #XXX Need code to track overall transformation
+    if {[info exists itk_component(mged)]} {
+	#_add_history "otranslate obj dx dy dz"
+    } else {
+	#_add_history "otranslate obj dx dy dz"
+    }
+}
+
+::itcl::body Archer::beginObjCenter {} {
     if {[info exists itk_component(mged)]} {
 	set _comp $itk_component(mged)
     } elseif {[info exists itk_component(sdb)]} {
 	set _comp $itk_component(sdb)
     } else {	
+	return
+    }
+
+    set obj $mSelectedObjPath
+
+    if {$obj == ""} {
+	::sdialogs::Stddlgs::errordlg "User Error" \
+		"You must first select an object to move!"
 	return
     }
 
     foreach dname {ul ur ll lr} {
 	set dm [$_comp component $dname]
 	set win [$dm component dm]
-	bind $win <1> ""
+	bind $win <1> "[::itcl::code $this handleObjCenter $obj %x %y]; break"
+	bind $win <ButtonRelease-1> "[::itcl::code $this endObjCenter $dm $obj]; break"
     }
 }
 
-::itcl::body Archer::_init_edit_scale_mode {} {
+::itcl::body Archer::endObjCenter {dsp obj} {
+    $dsp idle_mode
+
     if {[info exists itk_component(mged)]} {
 	set _comp $itk_component(mged)
     } elseif {[info exists itk_component(sdb)]} {
@@ -5507,31 +5699,8 @@ Popup Menu    Right or Ctrl-Left
 	return
     }
 
-    foreach dname {ul ur ll lr} {
-	set dm [$_comp component $dname]
-	set win [$dm component dm]
-	bind $win <1> ""
-    }
-}
-
-::itcl::body Archer::_init_edit_center_mode {} {
-    if {[info exists itk_component(mged)]} {
-	set _comp $itk_component(mged)
-    } elseif {[info exists itk_component(sdb)]} {
-	set _comp $itk_component(sdb)
-    } else {	
-	return
-    }
-    if {![info exists itk_component(mged)] &&
-	![info exists itk_component(sdb)]} {
-	return
-    }
-
-    foreach dname {ul ur ll lr} {
-	set dm [$itk_component(mged) component $dname]
-	set win [$dm component dm]
-	bind $win <1> ""
-    }
+    set center [$_comp ocenter $obj]
+    _add_history "ocenter $center"
 }
 
 ::itcl::body Archer::_init_default_bindings {} {
@@ -5607,9 +5776,9 @@ Popup Menu    Right or Ctrl-Left
 	bind $win <Shift-ButtonPress-3> "$_comp translate_mode %x %y; break"
 	bind $win <Control-Shift-ButtonPress-3> "$_comp slew %x %y; break"
 
-	bind $win <Shift-ButtonRelease-1> "[::itcl::code $this _rotate_mode $dm]; break"
-	bind $win <Shift-ButtonRelease-2> "[::itcl::code $this _scale_mode $dm]; break"
-	bind $win <Shift-ButtonRelease-3> "[::itcl::code $this _translate_mode $dm]; break"
+	bind $win <Shift-ButtonRelease-1> "[::itcl::code $this endViewRotate $dm]; break"
+	bind $win <Shift-ButtonRelease-2> "[::itcl::code $this endViewScale $dm]; break"
+	bind $win <Shift-ButtonRelease-3> "[::itcl::code $this endViewTranslate $dm]; break"
 
 	if {!$mViewOnly} {
 	    if {$Archer::inheritFromToplevel} {
@@ -5628,12 +5797,12 @@ Popup Menu    Right or Ctrl-Left
 
     $itk_component(viewToolbar) configure -state normal
     if {$mMode != 0} {
-	$itk_component(viewToolbar) itemconfigure edit_rotate -state disabled
-	$itk_component(viewToolbar) itemconfigure edit_translate -state disabled
-	$itk_component(viewToolbar) itemconfigure edit_scale -state disabled
-	$itk_component(viewToolbar) itemconfigure edit_center -state disabled
+	$itk_component(viewToolbar) itemconfigure edit_rotate -state normal
+	$itk_component(viewToolbar) itemconfigure edit_translate -state normal
+	$itk_component(viewToolbar) itemconfigure edit_scale -state normal
+	$itk_component(viewToolbar) itemconfigure edit_center -state normal
     }
-    eval [$itk_component(viewToolbar) itemcget $mDefaultBindingMode -command]
+    catch {eval [$itk_component(viewToolbar) itemcget $mDefaultBindingMode -command]}
 }
 
 ::itcl::body Archer::_init_brlcad_bindings {} {
@@ -8078,50 +8247,7 @@ Popup Menu    Right or Ctrl-Left
     dbCmd toggle_viewAxesEnable $pane
 }
 
-::itcl::body Archer::_rotate_mode {dsp} {
-    if {[info exists itk_component(mged)]} {
-	set _comp $itk_component(mged)
-    } elseif {[info exists itk_component(sdb)]} {
-	set _comp $itk_component(sdb)
-    } else {	
-	return
-    }
 
-    $dsp idle_mode
-
-    set ae [$_comp ae]
-    _add_history "ae $ae"
-}
-
-::itcl::body Archer::_scale_mode {dsp} {
-    if {[info exists itk_component(mged)]} {
-	set _comp $itk_component(mged)
-    } elseif {[info exists itk_component(sdb)]} {
-	set _comp $itk_component(sdb)
-    } else {	
-	return
-    }
-
-    $dsp idle_mode
-
-    set size [$_comp size]
-    _add_history "size $size"
-}
-
-::itcl::body Archer::_translate_mode {dsp} {
-    if {[info exists itk_component(mged)]} {
-	set _comp $itk_component(mged)
-    } elseif {[info exists itk_component(sdb)]} {
-	set _comp $itk_component(sdb)
-    } else {	
-	return
-    }
-
-    $dsp idle_mode
-
-    set center [$_comp center]
-    _add_history "center $center"
-}
 
 # ------------------------------------------------------------
 #                     TREE COMMANDS
@@ -8227,7 +8353,7 @@ Popup Menu    Right or Ctrl-Left
 		set cname [string trim $cname " /\\"]
 
 		# need to get rid of any "/R" left
-		set t [string trimright $cname "/R"]
+		set cname [string trimright $cname "/R"]
 		if {$cname == "_GLOBAL"} {
 		    continue
 		}
@@ -8334,6 +8460,28 @@ Popup Menu    Right or Ctrl-Left
     }
 
     if {$mPrevSelectedObj != $mSelectedObj} {
+	if {!$mViewOnly} {
+	    if {$mObjViewMode == $OBJ_ATTR_VIEW_MODE} {
+		_init_obj_attr_view
+	    } else {
+		_init_obj_edit_view
+
+		switch -- $mDefaultBindingMode \
+		    $OBJECT_ROTATE_MODE { \
+		        beginObjRotate
+	            } \
+		    $OBJECT_SCALE_MODE { \
+		        beginObjScale
+	            } \
+		    $OBJECT_TRANSLATE_MODE { \
+		        beginObjTranslate 
+	            } \
+		    $OBJECT_CENTER_MODE { \
+		        beginObjCenter
+	            }
+	    }
+	}
+
 	# label the object if it's being drawn
 	set mRenderMode [dbCmd how $node]
 
@@ -8345,14 +8493,6 @@ Popup Menu    Right or Ctrl-Left
 
 	if {$rflag} {
 	    dbCmd refresh
-	}
-
-	if {!$mViewOnly} {
-	    if {$mObjViewMode == $OBJ_ATTR_VIEW_MODE} {
-		_init_obj_attr_view
-	    } else {
-		_init_obj_edit_view
-	    }
 	}
 
 	set mPrevSelectedObjPath $mSelectedObjPath
@@ -8724,6 +8864,9 @@ Popup Menu    Right or Ctrl-Left
 	_apply_preferences
 	_do_lighting
     }
+
+    set mDefaultBindingMode $ROTATE_MODE
+    beginViewRotate
 }
 
 ::itcl::body Archer::GetUserCmds {} {
@@ -9319,7 +9462,7 @@ Popup Menu    Right or Ctrl-Left
 
 ::itcl::body Archer::_delete_target_old_copy {} {
     if {$mTargetOldCopy != ""} {
-	file delete -force $mTargetOldCopy
+	catch {file delete -force $mTargetOldCopy}
 
 	# sanity
 	set mTargetOldCopy ""
@@ -10149,18 +10292,6 @@ Popup Menu    Right or Ctrl-Left
     eval mgedWrapper erase_all 1 0 0 1 $args
 }
 
-::itcl::body Archer::erotate {args} {
-    eval archerWrapper erotate $args
-}
-
-::itcl::body Archer::escale {args} {
-    eval archerWrapper escale $args
-}
-
-::itcl::body Archer::etranslate {args} {
-    eval archerWrapper etranslate $args
-}
-
 ::itcl::body Archer::ev {args} {
     eval mgedWrapper ev 1 0 0 1 $args
 }
@@ -10645,6 +10776,74 @@ Popup Menu    Right or Ctrl-Left
 
 ::itcl::body Archer::mvall {args} {
     eval mgedWrapper mvall 0 0 1 1 $args
+}
+
+::itcl::body Archer::ocenter {args} {
+    if {[llength $args] == 4} {
+	eval archerWrapper ocenter 0 0 1 0 $args
+	_redraw_obj $mSelectedObjPath 0
+    } else {
+	eval archerWrapper ocenter 0 0 0 0 $args
+    }
+}
+
+::itcl::body Archer::handleObjTranslate {obj dx dy dz} {
+    eval archerWrapper otranslate 0 0 1 0 $obj $dx $dy $dz
+    _redraw_obj $mSelectedObjPath 0
+}
+
+::itcl::body Archer::handleObjCenter {obj x y} {
+    set vcenter [dbCmd screen2view $x $y]
+    set ocenter [dbCmd ocenter $obj]
+    set ovcenter [eval dbCmd m2vPoint $ocenter]
+
+    # This is the update view center (i.e. we keep the original view Z)
+    set vcenter [list [lindex $vcenter 0] [lindex $vcenter 1] [lindex $ovcenter 2]]
+
+    set ocenter [eval dbCmd v2mPoint $vcenter]
+
+    eval archerWrapper ocenter 0 0 1 0 $obj $ocenter
+    _redraw_obj $mSelectedObjPath 0
+}
+
+::itcl::body Archer::handleObjRotate {obj rx ry rz kx ky kz} {
+    if {[info exists itk_component(mged)]} {
+	eval archerWrapper orotate 0 0 1 0 $obj $rx $ry $rz
+    } else {
+	eval archerWrapper orotate 0 0 1 0 $obj $rx $ry $rz $kx $ky $kz
+    }
+
+    _redraw_obj $mSelectedObjPath 0
+}
+
+::itcl::body Archer::handleObjScale {obj sf kx ky kz} {
+    if {[info exists itk_component(mged)]} {
+	eval archerWrapper oscale 0 0 1 0 $obj $sf
+    } else {
+	eval archerWrapper oscale 0 0 1 0 $obj $sf $kx $ky $kz
+    }
+
+    _redraw_obj $mSelectedObjPath 0
+}
+
+::itcl::body Archer::handleObjTranslate {obj dx dy dz} {
+    eval archerWrapper otranslate 0 0 1 0 $obj $dx $dy $dz
+    _redraw_obj $mSelectedObjPath 0
+}
+
+::itcl::body Archer::orotate {obj rx ry rz kx ky kz} {
+    eval archerWrapper orotate 0 0 1 0 $obj $rx $ry $rz $kx $ky $kz
+    _redraw_obj $mSelectedObjPath 0
+}
+
+::itcl::body Archer::oscale {obj sf kx ky kz} {
+    eval archerWrapper oscale 0 0 1 0 $obj $sf $kx $ky $kz
+    _redraw_obj $mSelectedObjPath 0
+}
+
+::itcl::body Archer::otranslate {obj dx dy dz} {
+    eval archerWrapper otranslate 0 0 1 0 $obj $dx $dy $dz
+    _redraw_obj $mSelectedObjPath 0
 }
 
 ::itcl::body Archer::push {args} {
