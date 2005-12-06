@@ -39,25 +39,37 @@ specified from the given
 .I model.g
 geometric description.
 The characteristics which can be computed include
-.B weight, volume, overlaps, exposed air, gaps/voids, adjacent air,
+.B weight, volume, overlaps, exposed air, gaps/voids, 
 and
-.B interfaces.
+.B adjacent air.
+./"and
+./".B interfaces.
 Only the
 .I objects
 from the database specified on the command line are analyzed.
 .P
 It works by shooting grids of rays from the three axis-aligned directions (sometimes called
 \fIviews\fR).
-The resulting calculations for each view are compared to each other.
-For Volume/Weight calculations the grid of rays is progressively refined until the results from all three views
+
+
+For Volume/Weight calculations the resulting calculations for each view are compared to each other.
+The grid of rays is progressively refined until the results from all three views
 agree within a user-specifiable tolerance, or a limit on grid refinement is reached.
+.P
 For error and interface calculations, the grid is refined until an error is found or the grid refinement
 limit is reached.
+.P
+When multiple calculations are performed, the most extensive path is taken.
+For example, if weight and overlap calculations are performed, then the grid
+will be refined until the refinement limit is reached, or an overlap is
+detected.
+
 .SH VOLUME AND WEIGHT CALCULATION
-If volume or weight calculation is selected, for each
+If volume or weight calculation is selected a value is calculated and reported
+For each
 .I object
-specified on the command line, value is calculated and reported.
-Note that if there are overlaps in the geometry the values reported will be invalid.
+specified on the command line.
+.B Note that if there are overlaps or other errors in the geometry the values reported will be invalid.
 
 .P
 For weight computation, the density of every region must be specified.
@@ -129,9 +141,17 @@ mged>
 .B dbbinary \-i u c _DENSITIES
 .I filename
 
+.SH GEOMETRY ERROR DETECTION
+.P
+All of these calculations run until an error is detected, or until the grid
+refinement limit is reached.
 .SH OVERLAP DETECTION
-For each pair of regions that overlap, the tool reports the two regions that overlap, the maximum line-of-sight thickness of the overlap, and the in-hit location of the ray that caused that maximum overlap thickness.
-
+For each pair of regions that overlap, the tool reports the two regions that
+overlap, 
+the maximum line-of-sight thickness of the overlap, and the in-hit location 
+of the ray that caused that maximum overlap thickness.
+.P
+Other analysis in the error detection category behave in a similar manner.
 .SH OPTIONS
 .TP
 .B \-A \fR\fIanalysis_flags\fR
@@ -243,12 +263,18 @@ Specifies that density values should be taken from an external file instead of f
 object in the database.
 This option can be useful when developing the density table with a text editor, prior to importing it to the geometric database.
 .TP
-.B \-g \fR\fIgrid_spacing[-lim]\fR
-Specifies the initial spacing between rays in the grids,
-and optionally a limit on how far the grid can be refined.
-The first value indicates the inital spacing between grid rays.
-If the optional second argument, "\fIlim\fR",
-is specified, it indicates a lower bound on how fine the gridspacing may get before computation is terminated.
+.B \-g \fR\fI[initial_grid_spacing-]grid_spacing_limit\fR
+Specifies a limit on how far the grid can be refined
+and optionally the initial spacing between rays in the grids.
+The first value (if present) indicates the inital spacing between grid rays.
+The mandatory argument, "\fIgrid_spacing_limit\fR",
+indicates a lower bound on how fine the gridspacing may get before computation is terminated.
+In general, the \fIinitial_grid_spacing\fR value should be an integer power of
+the \fIgrid_spacing_limit\fR.  So for example, if \fIgrid_spacing_limit\fR has
+the value 1, then any \fIinitial_grid_spacing\fR specified should be in the
+sequence 2, 4, 8, 16, 32... so that the grid will refine to precisely the
+lower limit.
+./" Should the code force this issue?"
 The grid spacing may be specified with units.  For example:
 .B 5 mm
 or
@@ -303,12 +329,12 @@ The default is that no groups are created.
 .B \-n \fR\fInum_hits\fR
 Specifies that the grid be refined until each region has at least
 .I num_hits
-ray intersections.
+ray intersections.  Applies only when Weight or Volume calculations are being performed.
 This limit is not applied per-view, but rather per-analysis.
 So for example, it is accepted that a thin object might not be hit from one view at all, but hit when shooting from other views.
 .IP
-The default is 1.  This indicates that each region must be intersected by a ray at least once during the analysis.
-If the grid spacing limit is reached, processing will end even if this criteria has not been met.
+The default is 1.  
+Hence, each region must be intersected by a ray at least once during the analysis.
 .TP
 .B \-N \fR\fInum_views\fR
 Specifies that only the first

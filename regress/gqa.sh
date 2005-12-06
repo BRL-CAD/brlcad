@@ -48,6 +48,7 @@ g adj_air.g closed_box.r adj_air1.r adj_air2.r
 g gap.g closed_box.r adj_air2.r
 
 r overlap_obj.r u box3.s
+adjust overlap_obj.r GIFTMater 5
 g overlaps closed_box.r overlap_obj.r
 
 
@@ -118,6 +119,13 @@ $CMD >> gqa.log 2>&1
 
 echo >> gqa.log
 CMD="$GQA -r -Avw gqa.g adj_air.g"
+echo $CMD
+echo $CMD >> gqa.log 2>&1
+$CMD >> gqa.log 2>&1
+
+
+echo >> gqa.log
+CMD="$GQA -r -v -g 0.25m-25mm -Awo gqa.g closed_box.r"
 echo $CMD
 echo $CMD >> gqa.log 2>&1
 $CMD >> gqa.log 2>&1

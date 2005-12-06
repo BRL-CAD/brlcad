@@ -57,6 +57,7 @@ char *usage_msg = "Usage: %s [options] model object [object...]\n\
 #define ANALYSIS_GAP	16
 #define ANALYSIS_EXP_AIR 32 /* exposed air */
 #define ANALYSIS_BOX 64
+#define ANALYSIS_INTERFACES 128
 
 #ifndef HUGE
 #  ifdef MAXFLT
@@ -87,7 +88,7 @@ double Samples_per_model_axis = 2.0;
 double overlap_tolerance;
 double volume_tolerance = -1.0;
 double weight_tolerance = -1.0;
-/*double *grams;*/
+
 int print_per_region_stats;
 int max_region_name_len;
 int use_air = 1;
@@ -461,7 +462,7 @@ parse_args(int ac, char *av[])
     opterr = 0;
 
     /* get all the option flags from the command line */
-    while ((c=getopt(ac,av,options)) != EOF)
+    while ((c=getopt(ac,av,options)) != EOF) {
 	switch (c) {
 	case 'A'	:
 	    {
@@ -674,6 +675,7 @@ parse_args(int ac, char *av[])
 	    usage("");
 	    break;
 	}
+    }
 
     return(optind);
 }
@@ -1782,8 +1784,6 @@ weight_volume_terminate(struct cstate *state)
     }
 
     if (can_terminate) {
-	if (verbose)
-	    bu_log("Volume/Weight tolerance met. Terminate\n", BU_FLSTR);
 	return 0; /* signal we don't want to go onward */
     }
     return 1;
@@ -1803,8 +1803,7 @@ weight_volume_terminate(struct cstate *state)
 int
 terminate_check(struct cstate *state)
 {
-    struct region *regp;
-    unsigned long hits;
+    int wv_status;
 
     DLOG("terminate_check\n");
     RT_CK_RTI(state->rtip);
@@ -1816,32 +1815,26 @@ terminate_check(struct cstate *state)
     if (plot_gaps) fflush(plot_gaps);
     if (plot_expair) fflush(plot_expair);
 
-    if (require_num_hits > 0) {
-	/* check to make sure every region was hit at least once */
-	for( BU_LIST_FOR( regp, region, &(state->rtip->HeadRegion) ) )  {
-	    RT_CK_REGION(regp);
 
-	    hits = ((struct per_region_data *)regp->reg_udata)->hits;
-	    if ( hits < require_num_hits) {
-		if (verbose) {
-		    if (hits == 0) {
-			bu_log("%s was not hit\n", regp->reg_name);
-		    } else {
-			bu_log("%s hit only %u times (< %u)\n",
-			       regp->reg_name, hits, require_num_hits);
-		    }
-		}
+    /* this computation is done first, because there are
+     * side effects that must be obtained whether we terminate or not
+     */
+    wv_status = weight_volume_terminate(state);
 
-		return 1;
-	    }
-	}
+
+    /* if we've reached the grid limit, we're done, no matter what */
+    if (gridSpacing < gridSpacingLimit) {
+	if (verbose)
+	    bu_log("grid spacing refined to %g (below lower limit %g)\n",
+		   gridSpacing, gridSpacingLimit);
+	return 0;
     }
 
-    if (analysis_flags & (ANALYSIS_WEIGHT|ANALYSIS_VOLUME))
-	if (weight_volume_terminate(state) == 0)
-	    return 0; /* terminate */
-
-
+    /* if we are doing one of the "Error" checking operations:
+     * Overlap, gap, adj_air, exp_air, then we ALWAYS go to the 
+     * grid spacing limit and we ALWAYS terminate on first 
+     * error/list-entry
+     */
     if ( (analysis_flags & ANALYSIS_OVERLAPS)) {
 	if (BU_LIST_NON_EMPTY(&overlapList.l)) {
 	    /* since we've found an overlap, we can quit */
@@ -1868,14 +1861,53 @@ terminate_check(struct cstate *state)
 	    return 0;
 	}
     }
-    /* refine the gridSpacing and try again */
-    if (gridSpacing < gridSpacingLimit) {
-	if (verbose)
-	    bu_log("grid spacing refined to %g (below lower limit %g)\n",
-		   gridSpacing, gridSpacingLimit);
-	return 0;
-    }
 
+
+    if (analysis_flags & (ANALYSIS_WEIGHT|ANALYSIS_VOLUME)) {
+	/* volume/weight checks only get to terminate processing if there
+	 * are no "error" check computations being done
+	 */
+	if (analysis_flags & (ANALYSIS_GAP|ANALYSIS_ADJ_AIR|ANALYSIS_OVERLAPS|ANALYSIS_EXP_AIR)) {
+	    if (verbose)
+		bu_log("Volume/Weight tolerance met.  Cannot terminate calculation due to error computations\n");
+	} else {
+	    struct region *regp;
+	    int all_hit = 1;
+	    unsigned long hits;
+
+	    if (require_num_hits > 0) {
+		/* check to make sure every region was hit at least once */
+		for( BU_LIST_FOR( regp, region, &(state->rtip->HeadRegion) ) )  {
+		    RT_CK_REGION(regp);
+
+		    hits = ((struct per_region_data *)regp->reg_udata)->hits;
+		    if ( hits < require_num_hits) {
+			all_hit = 0;
+			if (verbose) {
+			    if (hits == 0) {
+				bu_log("%s was not hit\n", regp->reg_name);
+			    } else {
+				bu_log("%s hit only %u times (< %u)\n",
+				       regp->reg_name, hits, require_num_hits);
+			    }
+			}
+		    }
+		}
+
+		if (all_hit && wv_status == 0) {
+		    if (verbose)
+			bu_log("%s: Volume/Weight tolerance met. Terminate\n", BU_FLSTR);
+		    return 0; /* terminate */
+		}
+	    } else {
+		if (wv_status == 0) {
+		    if (verbose)
+			bu_log("%s: Volume/Weight tolerance met. Terminate\n", BU_FLSTR);
+		    return 0; /* terminate */
+		}
+	    }
+	}
+    }
     return 1;
 }
 
