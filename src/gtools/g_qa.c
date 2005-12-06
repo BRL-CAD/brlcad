@@ -550,6 +550,8 @@ parse_args(int ac, char *av[])
 	case 'g'	:
 	    {
 		i = 0;
+		double value1, value2;
+
 
 		/* find out if we have two or one args 
 		 * user can separate them with , or - delimiter
@@ -558,15 +560,22 @@ parse_args(int ac, char *av[])
 		else if (p = strchr(optarg, '-')) *p++ = '\0';
 
 
-		if (read_units_double(&gridSpacing, optarg, units_tab[0])) {
+		if (read_units_double(&value1, optarg, units_tab[0])) {
 		    bu_log("error parsing grid spacing value \"%s\"\n", optarg);
 		    bu_bomb("");
 		}
 		if (p) {
-		    if (read_units_double(&gridSpacingLimit, p, units_tab[0])) {
+		    /* we've got 2 values, they are upper limit and lower limit */
+		    if (read_units_double(&value2, p, units_tab[0])) {
 			bu_log("error parsing grid spacing limit value \"%s\"\n", p);
 			bu_bomb("");
 		    }
+		    gridSpacing = value1;
+		    gridSpacingLimit = value2;
+		} else {
+		    gridSpacingLimit = value1;
+		    
+		    gridSpacing = 0.0; /* flag it */
 		}
 
 		bu_log("set grid spacing:%g %s limit:%g %s\n",
@@ -2166,6 +2175,26 @@ main(int ac, char *av[])
     }
     if (verbose) bu_log("ncpu: %d\n", ncpu);
 
+    /* if the user did not specify the initial grid spacing limit, we need
+     * to compute a reasonable one for them.
+     */
+    if (gridSpacing == 0.0) {
+	double min_span = MAX_FASTF;
+	VPRINT("span", state.span);
+
+	V_MIN(min_span, state.span[X]);
+	V_MIN(min_span, state.span[Y]);
+	V_MIN(min_span, state.span[Z]);
+
+	gridSpacing = gridSpacingLimit;
+	do {
+	    gridSpacing *= 2.0;
+	} while (gridSpacing < min_span);
+	gridSpacing *= 0.25;
+	if (gridSpacing < gridSpacingLimit) gridSpacing = gridSpacingLimit;
+	bu_log("initial spacing %g\n", gridSpacing);
+
+    }
 
     if (options_prep(rtip, state.span)) return -1;
 

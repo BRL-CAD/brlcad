@@ -131,3 +131,7 @@ echo $CMD >> gqa.log 2>&1
 $CMD >> gqa.log 2>&1
 
 
+CMD="$GQA -g 50mm -Ao gqa.g closed_box.r"
+echo $CMD
+echo $CMD >> gqa.log 2>&1
+$CMD >> gqa.log 2>&1
