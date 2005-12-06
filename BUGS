@@ -15,6 +15,11 @@ on-going issues.
 Recent Bugs
 -----------
 
+* rtwizard/rtedge creates incorrect "fuzzy" edge overlay when creating
+  a "Ghost Image with Insert and Lines" that includes a light source
+  and object close to surface (e.g. moss.g; select plane, light, and
+  cone for ghost; select cone for insert and lines.)
+
 * rtwizard doesn't work with perspective
 
 * mged's solid illuminate doesn't work when Lighting is turned on
