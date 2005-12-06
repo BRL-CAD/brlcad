@@ -11,6 +11,8 @@ entire history of the project is available through CVS.
 --- 2005-12-XX  Release 7.6.5                                      ---
 ----------------------------------------------------------------------
 
+* updated g_qa manual page documentation - Lee Butler
+* early termination grid spacing limit bug in g_qa fixed - Lee Butler
 * fixed Jove sandbox installation issue - Sean Morrison
 * fixed adrt/isst client crash bug - Mike Caruso, Razak Arunaugun
 * fixed modified env(PATH) startup issue in mged - Sean Morrison
