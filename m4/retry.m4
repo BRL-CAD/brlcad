@@ -106,6 +106,7 @@ fi
 ###
 AC_DEFUN([BC_RETRY_CONFIGURE], [
 bc_configure="$1"
+bc_configure_args="$2"
 if test "x$BC_RETRY" = "x" ; then
 	if test "x$bc_configure" = "x" ; then
 		bc_configure="${srcdir}/configure"
@@ -133,7 +134,8 @@ if test "x$BC_RETRY" = "x" ; then
 		AC_MSG_NOTICE([Restarting with LDFLAGS=$LDFLAGS])
 		AC_MSG_NOTICE([Restarting with PATH=$PATH])
 		export CFLAGS CPPFLAGS LDFLAGS PATH
-		exec $bc_configure BC_RETRY=no
+		AC_MSG_NOTICE([Running: $bc_configure $bc_configure_args])
+		exec $bc_configure BC_RETRY=no $bc_configure_args
 		exit $?
 	else
 		AC_MSG_ERROR([*** Unable to find configure ***])
