@@ -1,0 +1,8 @@
+The Windows build of MGED does not currently have a functioning
+display manager so raytracing directly into the Graphics Window is not
+possible.  To raytrace, users should either render directly to a
+window by utilizing the 'rt' command, or by launching a framebuffer
+server via 'fbserv' on the command-line.  The framebuffer can be "set
+default" by adding a -F# (e.g. -F0) to the "Other Options" field of
+the "Advanced Settings..." panel of the Raytrace Control Panel,
+selected via File->Raytrace.
