@@ -20,6 +20,8 @@ THESE SHOULD HAPPEN BEFORE THE NEXT RELEASE
 
 THESE ARE LOWER PRIORITY OR FOR FUTURE RELEASES
 
+* support for fillets and chamfers as object/combination operations
+
 * support variable overrides for autogen.sh
 
 * M-x indent-region scripts
