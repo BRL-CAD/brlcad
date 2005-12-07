@@ -638,14 +638,13 @@ HIDDEN const point_t delta = {0.5, 0.5, 0.0};
 
 #if 0
 HIDDEN int
-project_antialiased(sh_color, img_sp, prj_sp, ap, r_pe, r_N, r_pt)
-point_t sh_color;
-const struct img_specific *img_sp;
-const struct prj_specific *prj_sp;
-const struct application *ap;
-const struct pixel_ext *r_pe;	/* pts on plane of hit */
-const plane_t r_N;
-const point_t r_pt;
+project_antialiased(point_t sh_color,
+		    const struct img_specific *img_sp,
+		    const struct prj_specific *prj_sp,
+		    const struct application *ap,
+		    const struct pixel_ext *r_pe, /* pts on plane of hit */
+		    const plane_t br_N,
+		    const point_t r_pt)
 {
 	int i, x, y;
 	point_t sh_pts[CORNER_PTS];
