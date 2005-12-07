@@ -11,8 +11,7 @@ clobber:
 	rm -f *.log *.pix	# last try
 
 dist_bin_SCRIPTS = \
-	benchmark \
-	perf.sh
+	benchmark
 
 EXTRA_DIST = \
 	${dist_bin_SCRIPTS} \
