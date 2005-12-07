@@ -54,6 +54,7 @@
 #   RT - the rt binary (e.g. ../src/rt/rt or /usr/brlcad/bin/rt)
 #   DB - the directory containing the reference geometry (e.g. ../db)
 #   PIX - the directory containing the reference images (e.g. ../pix)
+#   LOG - the directory containing the reference logs (e.g. ../pix)
 #   CMP - the name of a pixcmp tool (e.g. ./pixcmp)
 #   ELP - the name of an elapsed time tool (e.g. ../sh/elapsed.sh)
 #   TIMEFRAME - the minimum number of seconds each trace needs to take
@@ -91,6 +92,7 @@
 #
 # Authors -
 #  Mike Muuss
+#  Susan Muuss
 #  Christopher Sean Morrison
 #
 #  @(#)$Header$ (BRL)
@@ -98,6 +100,7 @@
 
 # Ensure /bin/sh
 export PATH || (echo "This isn't sh."; sh $0 $*; kill $$)
+name_of_this=`basename $0`
 path_to_this=`dirname $0`
 
 
@@ -200,6 +203,16 @@ look_for directory "a benchmark geometry directory" DB \
     ./db
 
 look_for directory "a benchmark reference image directory" PIX \
+    ${path_to_this}/../share/brlcad/*.*.*/pix \
+    ${path_to_this}/share/brlcad/*.*.*/pix \
+    ${path_to_this}/share/brlcad/pix \
+    ${path_to_this}/share/pix \
+    ${path_to_this}/../pix \
+    ${path_to_this}/pix \
+    ./pix
+
+look_for directory "a benchmark reference log directory" LOG \
+    $PIX \
     ${path_to_this}/../share/brlcad/*.*.*/pix \
     ${path_to_this}/share/brlcad/*.*.*/pix \
     ${path_to_this}/share/brlcad/pix \
@@ -336,9 +349,9 @@ else
 fi
 
 
-#########################
-# run and compute stats #
-#########################
+#################################
+# run and computation functions #
+#################################
 
 #
 # run file_prefix geometry hypersample [..rt args..]
@@ -709,7 +722,132 @@ EOF
 }
 
 
-# Run the actual tests
+#
+# perf test_name geometry [..rt args..]
+#
+perf ( ) {
+    perf_tests="$1" ; shift
+    perf_args="$*"
+
+    if test "x$perf_tests" = "x" ; then
+	echo "ERROR: no tests specified for calculating performance" 1>&2
+	exit 1
+    fi
+
+    # figure out what machine this is
+    perf_host=$HOSTNAME
+    if test "x$perf_host" = "x" ; then
+	perf_host="`hostname`"
+    fi
+    if test "x$perf_host" = "x" ; then
+	perf_host="`uname -n`"
+    fi
+    if test "x$perf_host" = "x" ; then
+	perf_host="unknown"
+    fi
+
+    # when did we do this thing
+    perf_date="`date`"
+
+    # make sure the log files exist
+    perf_ref_files=""
+    perf_cur_files=""
+    for perf_test in $perf_tests ; do
+	perf_ref_log=${LOG}/${perf_test}.log
+	perf_cur_log=${perf_test}.log
+	for perf_log in "$perf_cur_log" "$perf_ref_log" ; do
+	    if test ! "x$perf_log" = "x" ; then
+		if test ! -f "$perf_log" ; then
+		    echo "ERROR: file $perf_log does not exist" 1>&2
+		fi
+	    fi
+	done
+	perf_ref_files="$perf_ref_files $perf_ref_log"
+	perf_cur_files="$perf_cur_files $perf_cur_log"
+    done
+
+    # extract the RTFM values from the log files, use TR to convert
+    # newlines to tabs.  the trailing tab is signficant in case there
+    # are not enough results.
+    perf_VGRREF=`grep RTFM $perf_ref_files | sed -n -e 's/^.*= *//' -e 's/ rays.*//p' | tr '\012' '\011' `
+    perf_CURVALS=`grep RTFM $perf_cur_files | sed -n -e 's/^.*= *//' -e 's/ rays.*//p' | tr '\012' '\011' `
+
+    # if there were no reference values, we cannot compute timings
+    if test "x$perf_VGRREF" = "x" ; then
+	echo "ERROR: Cannot locate VGR reference values" 1>&2
+    fi
+
+    # report 0 if no RTFM values were found in the current run (likely
+    # crashing), values are tab-delimited.
+    if test "x$perf_CURVALS" = "x" ; then
+	perf_CURVALS="0	0	0	0	0	0	"
+    fi
+
+    # Trick: Force args $1 through $6 to the numbers in $perf_CURVALS
+    # This should be "set -- $perf_CURVALS", but 4.2BSD /bin/sh can't
+    # handle it, and perf_CURVALS are all positive (ie, no leading
+    # dashes), so this is safe.
+
+    set $perf_CURVALS
+
+    while test $# -lt 6 ; do
+	echo "WARNING: only $# RTFM times found, adding a zero result." 1>&2
+	perf_CURVALS="${perf_CURVALS}0	"
+	set $perf_CURVALS
+    done
+
+    # see if we have a calculator
+    perf_have_dc=yes
+    echo "1 1 + p" | dc 2>&1 >/dev/null
+    if test ! x$? = x0 ; then
+	perf_have_dc=no
+    fi
+
+    for perf_ref in $perf_VGRREF ; do
+	perf_cur=$1
+	shift
+	
+	if test "x$perf_have_dc" = "xyes" ; then
+	    perf_RATIO=`echo "2k $perf_cur $perf_ref / p" | dc`
+	else
+	    # presume bc as an alternate (tsk tsk)
+	    perf_RATIO=`echo "scale=2; $perf_cur / $perf_ref" | bc`
+	fi
+        # Note: append new value and a trail TAB to existing list.
+	perf_RATIO_LIST="${perf_RATIO_LIST}$perf_RATIO	"
+    done
+
+    # The number of plus signs must be one less than the number of elements.
+    if test "x$perf_have_dc" = "xyes" ; then
+	perf_MEAN_ABS=`echo 2k $perf_CURVALS +++++ 6/ p | dc`
+	perf_MEAN_REL=`echo 2k $perf_RATIO_LIST +++++ 6/ p | dc`
+    else
+	perf_expr="scale=2; ( 0"
+	for perf_val in $perf_CURVALS ; do
+	    perf_expr="$perf_expr + $perf_val"
+	done
+	perf_expr="$perf_expr ) / 6"
+	perf_MEAN_ABS=`echo $perf_expr | bc`
+
+	perf_expr="scale=2; ( 0"
+	for perf_val in $perf_RATIO_LIST ; do
+	    perf_expr="$perf_expr + $perf_val"
+	done
+	perf_expr="$perf_expr ) / 6"
+	perf_MEAN_REL=`echo $perf_expr | bc`
+    fi
+
+    # Note: Both perf_RATIO_LIST and perf_CURVALS have an extra
+    # trailing tab.  The question mark is for the mean field.
+
+    echo "Abs  ${perf_host} ${perf_CURVALS}${perf_MEAN_ABS}	$perf_date"
+    echo "*vgr ${perf_host} ${perf_RATIO_LIST}${perf_MEAN_REL}	$perf_args"
+}
+
+
+########################
+# Run the actual tests #
+########################
 
 start="`date '+%H %M %S'`"
 echo "Running the BRL-CAD Benchmark tests... please wait ..."
@@ -776,33 +914,13 @@ echo "Total testing time elapsed: `$ELP $start`"
 # compute and output results #
 ##############################
 
-HOST="`hostname`"
-if test $? != 0 ; then
-    HOST="`uname -n`"
-    if test $? != 0 ; then
-	HOST="unknown"
-    fi
-fi
 
-case "x`echo 'tail' | tail -n 1 2>&1`" in
-    *xtail*) TAIL_N="n " ;;
-    *) TAIL_N="" ;;
-esac
-
-if test -f "$path_to_this/perf.sh" ; then
-    PERF="$path_to_this/perf.sh"
-elif test -f "$path_to_this/../bench/perf.sh" ; then
-    PERF="$path_to_this/../bench/perf.sh"
-else
-    # see if it is in our path
-    PERF="perf.sh"
-    $PERF > /dev/null 2>&1
-    if test "x$?" != "x1" ; then
-	PERF="false"
-    fi
+performance="`perf 'moss world star bldg391 m35 sphflake' $ARGS`"
+if test $? = 0 ; then
+    cat >> summary <<EOF
+$performance
+EOF
 fi
-sh "$PERF" "$HOST" "`date`" "$*" >> summary
-perf_ret=$?
 
 echo
 echo "The following files have been generated and/or modified:"
@@ -811,16 +929,16 @@ echo "  *.pix ..... final pix image files for each individual raytrace test"
 echo "  *.log.* ... log files for previous frames and raytrace tests"
 echo "  *.pix.* ... pix image files for previous frames and raytrace tests"
 echo "  summary ... performance results summary, 2 lines per run"
+echo
 
-if test $perf_ret != 0 ; then
-    tail -${TAIL_N}1 summary
-    exit $perf_ret
-else
-    echo
-    tail -${TAIL_N}2 summary
-fi
+echo "Summary:"
+cat <<EOF
+$performance
+EOF
 
-vgr="`tail -${TAIL_N}1 summary | awk '{print int($9+0.5)}'`"
+vgr="`cat <<EOF | grep vgr | awk '{print int($9+0.5)}'
+$performance
+EOF`"
 if test ! "x$vgr" = "x" ; then
     echo
     echo "#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#"
