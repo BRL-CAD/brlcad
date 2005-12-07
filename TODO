@@ -9,14 +9,14 @@ scratch pad for the developers to use for tracking development ideas.
 
 THESE SHOULD HAPPEN BEFORE THE NEXT RELEASE
 
-* test pic/nonpic build problems with librtms/libmultispectral
-
 * initialize application structures
 
 * mged path foo
 
 
 THESE ARE LOWER PRIORITY OR FOR FUTURE RELEASES
+
+* test pic/nonpic build problems with librtms/libmultispectral
 
 * support for fillets and chamfers as object/combination operations
 
