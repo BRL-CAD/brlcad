@@ -640,9 +640,7 @@ out:
  */
 HIDDEN int
 /*ARGSUSED*/
-rr_miss( ap, PartHeadp )
-register struct application *ap;
-struct partition *PartHeadp;
+rr_miss( struct application *ap, struct partition *PartHeadp )
 {
 	RT_AP_CHECK(ap);
 	return(1);	/* treat as escaping ray */
@@ -667,9 +665,7 @@ struct partition *PartHeadp;
  *			a_refrac_index	RI of *next* material
  */
 HIDDEN int
-rr_hit( ap, PartHeadp )
-register struct application *ap;
-struct partition *PartHeadp;
+rr_hit( struct application *ap, struct partition *PartHeadp )
 {
 	register struct partition *pp;
 	register struct hit	*hitp;
@@ -888,11 +884,7 @@ out:
  *  Note:  output (v_2) can be same storage as an input.
  */
 HIDDEN int
-rr_refract( v_1, norml, ri_1, ri_2, v_2 )
-register vect_t	v_1;
-register vect_t	norml;
-double	ri_1, ri_2;
-register vect_t	v_2;
+rr_refract( vect_t v_1, vect_t norml, double ri_1, double ri_2, vect_t v_2 )
 {
 	LOCAL vect_t	w, u;
 	FAST fastf_t	beta;
