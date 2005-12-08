@@ -564,14 +564,9 @@ XGLUE(rt_bot_unoriented_segs_,TRI_TYPE)(struct hit		*hits,
  *  Exactly how this is to be done depends on the mode of the BoT.
  */
 HIDDEN int
-XGLUE(rt_bot_makesegs_,TRI_TYPE)( hits, nhits, stp, rp, ap, seghead, psp )
-struct hit		*hits;
-int			nhits;
-struct soltab		*stp;
-struct xray		*rp;
-struct application	*ap;
-struct seg		*seghead;
-struct rt_piecestate	*psp;
+XGLUE(rt_bot_makesegs_,TRI_TYPE)( struct hit *hits, int nhits, struct soltab *stp,
+				  struct xray *rp, struct application *ap,
+				  struct seg *seghead, struct rt_piecestate *psp )
 {
     struct bot_specific *bot = (struct bot_specific *)stp->st_specific;
     register struct seg *segp;
@@ -956,11 +951,7 @@ struct rt_piecestate	*psp;
  *	>0	HIT
  */
 int
-XGLUE(rt_bot_shot_,TRI_TYPE)( stp, rp, ap, seghead )
-struct soltab		*stp;
-register struct xray	*rp;
-struct application	*ap;
-struct seg		*seghead;
+XGLUE(rt_bot_shot_,TRI_TYPE)( struct soltab *stp, struct xray *rp, struct application *ap, struct seg *seghead )
 {
 	struct bot_specific *bot = (struct bot_specific *)stp->st_specific;
 	register XGLUE(tri_specific_,TRI_TYPE) *trip = bot->bot_facelist;
@@ -1060,13 +1051,8 @@ struct seg		*seghead;
  *  Generally the hits are stashed between invocations in psp.
  */
 int
-XGLUE(rt_bot_piece_shot_,TRI_TYPE)( psp, plp, dist_corr, rp, ap, seghead )
-struct rt_piecestate	*psp;
-struct rt_piecelist	*plp;
-double			dist_corr;
-register struct xray	*rp;
-struct application	*ap;
-struct seg		*seghead;
+XGLUE(rt_bot_piece_shot_,TRI_TYPE)( struct rt_piecestate *psp, struct rt_piecelist *plp,
+				    double dist_corr, struct xray *rp, struct application *ap, struct seg *seghead )
 {
 	struct resource		*resp;
 	long		*sol_piece_subscr_p;
