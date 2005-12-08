@@ -81,8 +81,7 @@ struct sol_name_dist
  *	The function to order solids alphabetically by name
  */
 static int
-sol_comp_name(v1, v2)
-void *v1, *v2;
+sol_comp_name(void *v1, void *v2)
 {
     struct sol_name_dist	*s1 = v1;
     struct sol_name_dist	*s2 = v2;
@@ -99,8 +98,7 @@ void *v1, *v2;
  *	The function to order solids by distance along the ray
  */
 static int
-sol_comp_dist(v1, v2)
-void *v1, *v2;
+sol_comp_dist(void *v1, void *v2)
 {
     struct sol_name_dist	*s1 = v1;
     struct sol_name_dist	*s2 = v2;
@@ -120,9 +118,7 @@ void *v1, *v2;
  *			M K _ S O L I D
  */
 static struct sol_name_dist *
-mk_solid(name, dist)
-char	*name;
-fastf_t	dist;
+mk_solid(char *name, fastf_t dist)
 {
     struct sol_name_dist	*sp;
 
@@ -144,10 +140,7 @@ fastf_t	dist;
  *	also be freed.
  */
 static void
-free_solid(sol, free_name)
-struct sol_name_dist	*sol;
-int			free_name;
-
+free_solid(struct sol_name_dist *sol, int free_name)
 {
     BU_CKMAG(sol, SOL_NAME_DIST_MAGIC, "sol_name_dist structure");
 
@@ -160,9 +153,7 @@ int			free_name;
  *			P R I N T _ S O L I D
  */
 static void
-print_solid(vp, depth)
-void	*vp;
-int	depth;
+print_solid(void *vp, int depth)
 {
     struct sol_name_dist	*sol = vp;
     struct bu_vls tmp_vls;
@@ -226,10 +217,7 @@ static int			(*rpt_solids_orders[])() =
 				};
 
 static int
-rpt_solids(ap, ph, finished_segs)
-struct application	*ap;
-struct partition	*ph;
-struct seg		*finished_segs;
+rpt_solids(struct application *ap, struct partition *ph, struct seg *finished_segs)
 {
     char			**result;
     struct db_full_path		*fp;
@@ -560,6 +548,7 @@ char **skewer_solids (int argc, const char **argv, fastf_t *ray_orig, fastf_t *r
     /*
      *	Initialize the application
      */
+    RT_APPLICATION_INIT(&ap);
     ap.a_magic = RT_AP_MAGIC;
     ap.a_ray.magic = RT_RAY_MAGIC;
     ap.a_hit = rpt_hits_mike;
