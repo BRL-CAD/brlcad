@@ -188,7 +188,7 @@ BU_FORTRAN(frshot,FRSHOT)(int			*nloc,		/* input & output */
 		return;
 	}
 
-	bzero( (char *)&ap, sizeof(ap));
+	RT_APPLICATION_INIT(&ap);
 	ap.a_ray.r_pt[X] = pt[0];
 	ap.a_ray.r_pt[Y] = pt[1];
 	ap.a_ray.r_pt[Z] = pt[2];

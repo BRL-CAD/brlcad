@@ -3763,8 +3763,9 @@ rt_smooth_bot( struct rt_bot_internal *bot, char *bot_name, struct db_i *dbip, f
 
 	if( bot->orientation == RT_BOT_UNORIENTED ) {
 		/* need to do raytracing, do prepping */
-		bzero( &ap, sizeof( struct application ) );
 		rtip = rt_new_rti( dbip );
+
+		RT_APPLICATION_INIT(&ap);
 		ap.a_rt_i = rtip;
 		ap.a_hit = smooth_bot_hit;
 		ap.a_miss = smooth_bot_miss;
