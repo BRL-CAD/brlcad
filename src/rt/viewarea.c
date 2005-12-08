@@ -149,8 +149,7 @@ view_init( register struct application *ap, char *file, char *obj )
  *
  */
 void
-view_2init( ap )
-struct application	*ap;
+view_2init( struct application *ap )
 {
     register struct region *rp;
     register struct rt_i *rtip = ap->a_rt_i;
