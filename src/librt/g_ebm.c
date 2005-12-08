@@ -1623,14 +1623,12 @@ FILE			*plotfp;
 
 struct soltab		Tsolid;
 struct directory	Tdir;
-struct application	Tappl;
 struct rt_ebm_specific	*bmsp;
 struct resource		resource;
 mat_t			Tmat;
+struct application	Tappl;
 
-main( argc, argv )
-int	argc;
-char	**argv;
+main( int argc, char * *argv )
 {
 	point_t	pt1;
 	point_t	pt2;
@@ -1642,6 +1640,7 @@ char	**argv;
 	FILE		*fp;
 	union record	rec;
 
+
 	if( argc > 1 )  {
 		rt_g.debug |= DEBUG_EBM;
 		arg = atoi(argv[1]);
@@ -1651,6 +1650,9 @@ char	**argv;
 
 	RT_DIR_SET_NAMEP(&Tdir, "Tsolid");
 	Tsolid.st_dp = &Tdir;
+
+	RT_APPLICATION_INIT(&Tappl);
+
 	Tappl.a_purpose = "testing";
 	Tappl.a_resource = &resource;
 	Tsolid.st_matp = &Tmat;
