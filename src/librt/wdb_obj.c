@@ -1526,7 +1526,7 @@ wdb_rt_gettrees_cmd(struct rt_wdb	*wdbp,
 	rt_init_resource(resp, 0, rtip);
 	BU_ASSERT_PTR( BU_PTBL_GET(&rtip->rti_resources, 0), !=, NULL );
 
-	BU_GETSTRUCT(ap, application);
+	RT_APPLICATION_INIT(ap);
 	ap->a_magic = RT_AP_MAGIC;
 	ap->a_resource = resp;
 	ap->a_rt_i = rtip;
