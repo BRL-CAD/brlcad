@@ -523,6 +523,7 @@ main (int argc, char **argv)
     rt_init_resource( &res_tab, 0, rtip );
 
     /* initialization of the application structure */
+    RT_APPLICATION_INIT(&ap);
     ap.a_hit = if_hit;        /* branch to if_hit routine            */
     ap.a_miss = if_miss;      /* branch to if_miss routine           */
     ap.a_overlap = if_overlap;/* branch to if_overlap routine        */

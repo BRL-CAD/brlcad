@@ -68,9 +68,7 @@
 
 /* these will be defined later */
 
-int hit(struct application *ap,
-	struct partition *PartHeadp,
-	struct seg *segp);
+int hit(struct application *ap, struct partition *PartHeadp, struct seg *segp);
 int miss(register struct application *ap);
 
 
@@ -92,8 +90,7 @@ int main(int argc, char **argv)
     struct application ap;
 
     /* by default, all values in application struct should be zeroed */
-    memset((void *)&ap, 0, sizeof(ap));
-
+    RT_APPLICATION_INIT(&ap);
 
     /* Check for command-line arguments.  Make sure we have at least a
      * geometry file and one geometry object on the command line.
