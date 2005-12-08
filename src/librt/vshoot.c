@@ -93,8 +93,7 @@ struct resource rt_uniresource;		/* Resources for uniprocessor */
  *  of the statistics variables.
  */
 int
-rt_shootray( ap )
-register struct application *ap;
+rt_shootray( struct application *ap )
 {
 	struct seg		*HeadSeg;
 	int		ret;
@@ -358,12 +357,11 @@ out:
 
 /* Stub function which will "similate" a call to a vector shot routine */
 /*void*/
-rt_vstub( stp, rp, segp, n, resp )
-struct soltab	       *stp[]; /* An array of solid pointers */
-struct xray		*rp[]; /* An array of ray pointers */
-struct  seg            segp[]; /* array of segs (results returned) */
-int		  	    n; /* Number of ray/object pairs */
-struct resource		*resp;
+rt_vstub(struct soltab *stp[],	/* An array of solid pointers */
+	 struct xray *rp[],	/* An array of ray pointers */
+	 struct seg segp[],	/* array of segs (results returned) */
+	 int n, 		/* Number of ray/object pairs */
+	 struct resource *resp)
 {
 	register int    i;
 	register struct seg *tmp_seg;
@@ -406,15 +404,13 @@ struct resource		*resp;
  *	 0  if ray does not hit RPP,
  *	!0  if ray hits RPP.
  *
+ *  invdir is the inverses of rp->r_dir[]
+ *
  *  Implicit return -
  *	rp->r_min = dist from start of ray to point at which ray ENTERS solid
  *	rp->r_max = dist from start of ray to point at which ray LEAVES solid
  */
-rt_in_rpp( rp, invdir, min, max )
-register struct xray *rp;
-register fastf_t *invdir;	/* inverses of rp->r_dir[] */
-register fastf_t *min;
-register fastf_t *max;
+rt_in_rpp( struct xray *rp, fastf_t *invdir, fastf_t *min, fastf_t *max )
 {
 	register fastf_t *pt = &rp->r_pt[0];
 	FAST fastf_t sv;
@@ -505,10 +501,7 @@ register fastf_t *max;
  *			R T _ B I T V _ O R
  */
 void
-rt_bitv_or( out, in, nbits )
-register bitv_t *out;
-register bitv_t *in;
-int nbits;
+rt_bitv_or( bitv_t *out, bitv_t *in, int nbits )
 {
 	register int words;
 
@@ -536,9 +529,7 @@ int nbits;
  *  the *real* size of be_v[] array is determined at runtime, here.
  */
 void
-rt_get_bitv(rtip, res)
-struct rt_i		*rtip;
-register struct resource *res;
+rt_get_bitv(struct rt_i *rtip, struct resource *res)
 {
 	register char *cp;
 	register int bytes;
