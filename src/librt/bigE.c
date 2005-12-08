@@ -2345,7 +2345,7 @@ dgo_E_cmd(struct dg_obj	*dgop,
 	dgop->dgo_wdbp->wdb_ttol.rel = 0.01;
 #endif
 
-	dgcdp->ap = (struct application *)bu_calloc(1, sizeof(struct application), "Big E app");
+	dgcdp->ap = (struct application *)bu_malloc(sizeof(struct application), "Big E app");
 	RT_APPLICATION_INIT(dgcdp->ap);
 	dgcdp->ap->a_resource = &rt_uniresource;
 	rt_uniresource.re_magic = RESOURCE_MAGIC;
