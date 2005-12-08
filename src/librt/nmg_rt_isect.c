@@ -2830,7 +2830,7 @@ nmg_class_ray_vs_shell(struct xray *rp, const struct shell *s, const int in_or_o
 			V3ARGS(rp->r_pt), V3ARGS(rp->r_dir));
 	}
 
-	memset(&ap, 0, sizeof(struct application));
+	RT_APPLICATION_INIT(&ap);
 
 	ap.a_resource = &rt_uniresource;
 	rt_uniresource.re_magic = RESOURCE_MAGIC;
