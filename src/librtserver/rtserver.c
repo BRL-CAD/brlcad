@@ -1097,7 +1097,7 @@ rtserver_thread( void *num )
 	}
 
 	/* set up our own application structure */
-	bzero( &ap, sizeof( struct application ) );
+	RT_APPLICATION_INIT(&ap);
 	ap.a_hit = rts_hit;
 	ap.a_miss = rts_miss;
 	ap.a_logoverlap = rt_silent_logoverlap;
