@@ -97,9 +97,7 @@ struct solid *sp;
  */
 
 static int
-hit_headon(ap,PartHeadp)
-register struct application *ap;
-struct partition *PartHeadp;
+hit_headon(struct application *ap, struct partition *PartHeadp)
 {
 	register char diff_solid;
 	vect_t	diff;
@@ -137,9 +135,7 @@ struct partition *PartHeadp;
  */
 
 static int
-hit_tangent(ap,PartHeadp)
-register struct application *ap;
-struct partition *PartHeadp;
+hit_tangent(struct application *ap, struct partition *PartHeadp)
 {
 	return(1);		/* always a hit */
 }
@@ -149,9 +145,7 @@ struct partition *PartHeadp;
  */
 
 static int
-hit_overlap(ap,PartHeadp)
-register struct application *ap;
-struct partition *PartHeadp;
+hit_overlap(struct application *ap, struct partition *PartHeadp)
 {
 	return(0);		/* never a hit */
 }
@@ -160,11 +154,7 @@ struct partition *PartHeadp;
  *			F _ H I D E L I N E
  */
 int
-f_hideline(clientData, interp, argc, argv)
-ClientData clientData;
-Tcl_Interp *interp;
-int	argc;
-char	**argv;
+f_hideline(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
 	FILE 	*plotfp;
 	char 	visible;
