@@ -67,17 +67,21 @@ static const char RCSxxx[] = "@(#)$Header$ (BRL)";
 
 #include "common.h"
 
-
-
+/* system headers */
 #include <stdio.h>
 #include <math.h>
+
+/* interface headers */
 #include "machine.h"
 #include "vmath.h"
 #include "db.h"
 #include "nmg.h"
 #include "raytrace.h"
 #include "rtgeom.h"
+
+/* local headers */
 #include "./debug.h"
+
 
 #if 0
 /* parameters for solid, internal representation
@@ -88,14 +92,15 @@ struct rt_xxx_internal {
 	long	magic;
 	vect_t	v;
 };
-#define RT_XXX_INTERNAL_MAGIC	0xxx
-#define RT_XXX_CK_MAGIC(_p)	BU_CKMAG(_p,RT_XXX_INTERNAL_MAGIC,"rt_xxx_internal")
+#  define RT_XXX_INTERNAL_MAGIC	0xxx
+#  define RT_XXX_CK_MAGIC(_p)	BU_CKMAG(_p,RT_XXX_INTERNAL_MAGIC,"rt_xxx_internal")
 #endif
 
 /* ray tracing form of solid, including precomputed terms */
 struct xxx_specific {
 	vect_t	xxx_V;
 };
+
 
 /**
  *  			R T _ X X X _ P R E P
@@ -113,10 +118,7 @@ struct xxx_specific {
  *  	stp->st_specific for use by xxx_shot().
  */
 int
-rt_xxx_prep( stp, ip, rtip )
-struct soltab		*stp;
-struct rt_db_internal	*ip;
-struct rt_i		*rtip;
+rt_xxx_prep( struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip )
 {
 	struct rt_xxx_internal		*xxx_ip;
 	register struct xxx_specific	*xxx;
@@ -131,8 +133,7 @@ struct rt_i		*rtip;
  *			R T _ X X X _ P R I N T
  */
 void
-rt_xxx_print( stp )
-register const struct soltab *stp;
+rt_xxx_print( const struct soltab *stp )
 {
 	register const struct xxx_specific *xxx =
 		(struct xxx_specific *)stp->st_specific;
@@ -150,11 +151,7 @@ register const struct soltab *stp;
  *	>0	HIT
  */
 int
-rt_xxx_shot( stp, rp, ap, seghead )
-struct soltab		*stp;
-register struct xray	*rp;
-struct application	*ap;
-struct seg		*seghead;
+rt_xxx_shot( struct soltab *stp, struct xray *rp, struct application *ap, struct seg *seghead )
 {
 	register struct xxx_specific *xxx =
 		(struct xxx_specific *)stp->st_specific;
@@ -172,12 +169,11 @@ struct seg		*seghead;
  *  Vectorized version.
  */
 void
-rt_xxx_vshot( stp, rp, segp, n, ap )
-struct soltab	       *stp[]; /* An array of solid pointers */
-struct xray		*rp[]; /* An array of ray pointers */
-struct  seg            segp[]; /* array of segs (results returned) */
-int		  	    n; /* Number of ray/object pairs */
-struct application	*ap;
+rt_xxx_vshot(struct soltab *stp[],	/* An array of solid pointers */
+	     struct xray *rp[],		/* An array of ray pointers */
+	     struct seg segp[],		/* array of segs (results returned) */
+	     int n,			/* Number of ray/object pairs */
+	     struct application *ap)
 {
 	rt_vstub( stp, rp, segp, n, ap );
 }
@@ -188,10 +184,7 @@ struct application	*ap;
  *  Given ONE ray distance, return the normal and entry/exit point.
  */
 void
-rt_xxx_norm( hitp, stp, rp )
-register struct hit	*hitp;
-struct soltab		*stp;
-register struct xray	*rp;
+rt_xxx_norm( struct hit *hitp, struct soltab *stp, struct xray *rp )
 {
 	register struct xxx_specific *xxx =
 		(struct xxx_specific *)stp->st_specific;
@@ -205,10 +198,7 @@ register struct xray	*rp;
  *  Return the curvature of the xxx.
  */
 void
-rt_xxx_curve( cvp, hitp, stp )
-register struct curvature *cvp;
-register struct hit	*hitp;
-struct soltab		*stp;
+rt_xxx_curve( struct curvature *cvp, struct hit *hitp, struct soltab *stp )
 {
 	register struct xxx_specific *xxx =
 		(struct xxx_specific *)stp->st_specific;
@@ -228,11 +218,7 @@ struct soltab		*stp;
  *  v = elevation
  */
 void
-rt_xxx_uv( ap, stp, hitp, uvp )
-struct application	*ap;
-struct soltab		*stp;
-register struct hit	*hitp;
-register struct uvcoord	*uvp;
+rt_xxx_uv( struct application *ap, struct soltab *stp, struct hit *hitp, struct uvcoord *uvp )
 {
 	register struct xxx_specific *xxx =
 		(struct xxx_specific *)stp->st_specific;
@@ -242,8 +228,7 @@ register struct uvcoord	*uvp;
  *		R T _ X X X _ F R E E
  */
 void
-rt_xxx_free( stp )
-register struct soltab *stp;
+rt_xxx_free( struct soltab *stp )
 {
 	register struct xxx_specific *xxx =
 		(struct xxx_specific *)stp->st_specific;
@@ -255,10 +240,7 @@ register struct soltab *stp;
  *			R T _ X X X _ C L A S S
  */
 int
-rt_xxx_class( stp, min, max, tol )
-const struct soltab    *stp;
-const vect_t		min, max;
-const struct bn_tol    *tol;
+rt_xxx_class( const struct soltab *stp, const vect_t min, const vect_t max, const struct bn_tol *tol )
 {
 	return RT_CLASSIFY_UNIMPLEMENTED;
 }
@@ -267,11 +249,7 @@ const struct bn_tol    *tol;
  *			R T _ X X X _ P L O T
  */
 int
-rt_xxx_plot( vhead, ip, ttol, tol )
-struct bu_list		*vhead;
-struct rt_db_internal	*ip;
-const struct rt_tess_tol *ttol;
-const struct bn_tol	*tol;
+rt_xxx_plot( struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol )
 {
 	LOCAL struct rt_xxx_internal	*xxx_ip;
 
@@ -290,12 +268,7 @@ const struct bn_tol	*tol;
  *	 0	OK.  *r points to nmgregion that holds this tessellation.
  */
 int
-rt_xxx_tess( r, m, ip, ttol, tol )
-struct nmgregion	**r;
-struct model		*m;
-struct rt_db_internal	*ip;
-const struct rt_tess_tol *ttol;
-const struct bn_tol	*tol;
+rt_xxx_tess( struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol )
 {
 	LOCAL struct rt_xxx_internal	*xxx_ip;
 
@@ -313,11 +286,7 @@ const struct bn_tol	*tol;
  *  Apply modeling transformations as well.
  */
 int
-rt_xxx_import( ip, ep, mat, dbip )
-struct rt_db_internal		*ip;
-const struct bu_external	*ep;
-register const mat_t		mat;
-const struct db_i		*dbip;
+rt_xxx_import( struct rt_db_internal *ip, const struct bu_external *ep, const mat_t mat, const struct db_i *dbip )
 {
 	LOCAL struct rt_xxx_internal	*xxx_ip;
 	union record			*rp;
@@ -349,11 +318,7 @@ const struct db_i		*dbip;
  *  The name is added by the caller, in the usual place.
  */
 int
-rt_xxx_export( ep, ip, local2mm, dbip )
-struct bu_external		*ep;
-const struct rt_db_internal	*ip;
-double				local2mm;
-const struct db_i		*dbip;
+rt_xxx_export( struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip )
 {
 	struct rt_xxx_internal	*xxx_ip;
 	union record		*rec;
@@ -401,11 +366,7 @@ const struct db_i		*dbip;
  *
  */
 int
-rt_xxx_import5( ip, ep, mat, dbip )
-struct rt_db_internal		*ip;
-const struct bu_external	*ep;
-register const mat_t		mat;
-const struct db_i		*dbip;
+rt_xxx_import5( struct rt_db_internal  *ip, const struct bu_external *ep, const mat_t mat, const struct db_i *dbip )
 {
 	LOCAL struct rt_xxx_internal	*xxx_ip;
 	fastf_t				vv[ELEMENTS_PER_VECT*1];
@@ -446,11 +407,7 @@ const struct db_i		*dbip;
  *  Apply the transformation to mm units as well.
  */
 int
-rt_xxx_export5( ep, ip, local2mm, dbip )
-struct bu_external		*ep;
-const struct rt_db_internal	*ip;
-double				local2mm;
-const struct db_i		*dbip;
+rt_xxx_export5( struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip )
 {
 	struct rt_xxx_internal	*xxx_ip;
 	fastf_t			vec[ELEMENTS_PER_VECT];
@@ -485,11 +442,7 @@ const struct db_i		*dbip;
  *  Additional lines are indented one tab, and give parameter values.
  */
 int
-rt_xxx_describe( str, ip, verbose, mm2local )
-struct bu_vls		*str;
-const struct rt_db_internal	*ip;
-int			verbose;
-double			mm2local;
+rt_xxx_describe( struct bu_vls *str, const struct rt_db_internal *ip, int verbose, double mm2local )
 {
 	register struct rt_xxx_internal	*xxx_ip =
 		(struct rt_xxx_internal *)ip->idb_ptr;
@@ -513,8 +466,7 @@ double			mm2local;
  *  Free the storage associated with the rt_db_internal version of this solid.
  */
 void
-rt_xxx_ifree( ip )
-struct rt_db_internal	*ip;
+rt_xxx_ifree( struct rt_db_internal *ip )
 {
 	register struct rt_xxx_internal	*xxx_ip;
 
@@ -534,11 +486,7 @@ struct rt_db_internal	*ip;
  *  Implement this if it's faster than doing an export/import cycle.
  */
 int
-rt_xxx_xform( op, mat, ip, free )
-struct rt_db_internal	*op;
-const mat_t		mat;
-struct rt_db_internal	*ip;
-int			free;
+rt_xxx_xform( struct rt_db_internal *op, const mat_t mat, struct rt_db_internal *ip, int free )
 {
 }
 
