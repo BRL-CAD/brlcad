@@ -98,14 +98,14 @@ db_read(const struct db_i *dbip, genptr_t addr, long int count, long int offset)
 	if( count <= 0 || offset < 0 )  {
 		return(-1);
 	}
+	if( offset+count > dbip->dbi_eof )  {
+	    /* Attempt to read off the end of the file */
+	    bu_log("db_read(%s) ERROR offset=%d, count=%d, dbi_eof=%d\n",
+		   dbip->dbi_filename,
+		   offset, count, dbip->dbi_eof );
+	    return -1;
+	}
 	if( dbip->dbi_inmem )  {
-		if( offset+count > dbip->dbi_eof )  {
-			/* Attempt to read off the end of the (mapped) file */
-			bu_log("db_read(%s) ERROR offset=%d, count=%d, dbi_eof=%d\n",
-				dbip->dbi_filename,
-				offset, count, dbip->dbi_eof );
-			return -1;
-		}
 		memcpy( addr, ((char *)dbip->dbi_inmem) + offset, count );
 		return(0);
 	}
