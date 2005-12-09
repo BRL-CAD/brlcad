@@ -1162,7 +1162,6 @@ db_recurse(struct db_tree_state *tsp, struct db_full_path *pathp, struct combine
 		struct db_tree_state	nts;
 		int			is_region;
 
-	    	RT_INIT_DB_INTERNAL(&intern);
 		if( rt_db_get_internal( &intern, dp, tsp->ts_dbip, NULL, tsp->ts_resp ) < 0 )  {
 			bu_log("db_recurse() rt_db_get_internal(%s) FAIL\n", dp->d_namep);
 			curtree = TREE_NULL;		/* FAIL */
