@@ -148,25 +148,6 @@ cmd_import_body(ClientData clientData, Tcl_Interp *interp, int argc, char **argv
 	bu_vls_free( &vls );
 	mged_print_result( TCL_ERROR );
 	return TCL_ERROR;
-
-#if 0
-	/* Update the in-core directory */
-	if( (dp = db_diradd( dbip, argv[1], -1, 0, 0, NULL ))
-		== DIR_NULL ) {
-	  Tcl_AppendResult(interp, "An error has occured while adding '",
-			   argv[1], "' to the database.\n", (char *)NULL);
-	  TCL_ERROR_RECOVERY_SUGGESTION;
-	  return TCL_ERROR;
-	}
-
-	BU_GETSTRUCT( comb, rt_comb_internal );
-	comb->magic = RT_COMB_MAGIC;
-	bu_vls_init( &comb->shader );
-	bu_vls_init( &comb->material );
-	comb->region_id = -1;
-	comb->tree = TREE_NULL;
-#endif
-
     } else {
 	RT_INIT_DB_INTERNAL( &intern );
     }
