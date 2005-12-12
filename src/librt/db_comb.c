@@ -886,19 +886,21 @@ rt_comb_ifree( struct rt_db_internal *ip, struct resource *resp )
 	RT_CK_DB_INTERNAL(ip);
 	RT_CK_RESOURCE(resp);
 	comb = (struct rt_comb_internal *)ip->idb_ptr;
-	RT_CK_COMB(comb);
 
-	/* If tree hasn't been stolen, release it */
-	if(comb->tree) db_free_tree( comb->tree, resp );
-	comb->tree = NULL;
-
-	bu_vls_free( &comb->shader );
-	bu_vls_free( &comb->material );
-
-	comb->magic = 0;			/* sanity */
-	bu_free( (genptr_t)comb, "comb ifree" );
+	if (comb) {
+	    /* If tree hasn't been stolen, release it */
+	    if(comb->tree) db_free_tree( comb->tree, resp );
+	    comb->tree = NULL;
+	    
+	    bu_vls_free( &comb->shader );
+	    bu_vls_free( &comb->material );
+	    
+	    comb->magic = 0;			/* sanity */
+	    bu_free( (genptr_t)comb, "comb ifree" );
+	}
 	ip->idb_ptr = GENPTR_NULL;	/* sanity */
 }
+
 
 /**
  *			R T _ C O M B _ D E S C R I B E
