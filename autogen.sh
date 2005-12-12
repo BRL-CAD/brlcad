@@ -283,11 +283,14 @@ $VERBOSE_ECHO "Checking libtoolize version: $LIBTOOLIZE --version"
 $LIBTOOLIZE --version > /dev/null 2>&1
 if [ ! $? = 0 ] ; then
     HAVE_LIBTOOLIZE=no
+    $ECHO
     if [ "x$HAVE_AUTORECONF" = "xno" ] ; then
 	$ECHO "Warning:  libtoolize does not appear to be available."
     else
 	$ECHO "Warning:  libtoolize does not appear to be available.  This means that"
-	$ECHO "autoreconf cannot be used."
+	$ECHO "the automatic build preparation via autoreconf will probably not work."
+	$ECHO "Preparing the build by running each step individually, however, should"
+	$ECHO "work and will be done automatically for you if autoreconf fails."
     fi
 
     # look for some alternates
@@ -509,7 +512,7 @@ fi
 # prepare build via autoreconf or manually #
 ############################################
 reconfigure_manually=no
-if [ "x$HAVE_AUTORECONF" = "xyes" ] && [ "x$HAVE_LIBTOOLIZE" = "xyes" ] ; then
+if [ "x$HAVE_AUTORECONF" = "xyes" ] ; then
     $ECHO
     $ECHO $ECHO_N "Automatically preparing build ... $ECHO_C"
 
