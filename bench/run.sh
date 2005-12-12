@@ -261,6 +261,12 @@ if test "x${PIX}" = "x" ; then
 else
     echo "Using [$PIX] for PIX"
 fi
+if test "x${LOG}" = "x" ; then
+    echo "ERROR:  Could not find the BRL-CAD reference logs"
+    exit 1
+else
+    echo "Using [$LOG] for LOG"
+fi
 if test "x${CMP}" = "x" ; then
     echo "ERROR:  Could not find the BRL-CAD pixel comparison utility"
     exit 1
