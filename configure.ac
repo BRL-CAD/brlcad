@@ -1538,6 +1538,7 @@ AC_CHECK_FUNCS(\
 	rmdir \
 	sbrk \
 	select \
+	setenv \
 	setlocale \
 	setpgid \
 	socket \
