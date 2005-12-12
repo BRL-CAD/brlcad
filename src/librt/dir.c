@@ -257,7 +257,9 @@ rt_db_free_internal( struct rt_db_internal *ip, struct resource *resp )
 	 */
 	if (ip->idb_meth) {
 	    RT_CK_FUNCTAB(ip->idb_meth);
-	    ip->idb_meth->ft_ifree(ip, resp);
+	    if (ip->idb_ptr) {
+		ip->idb_meth->ft_ifree(ip, resp);
+	    }
 	}
 
 	/* resp is not checked, since most ifree's don't take/need it
