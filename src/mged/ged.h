@@ -206,6 +206,7 @@ extern int	menuflag;	/* flag indicating if a menu item is selected */
 extern FILE *infile;
 extern FILE *outfile;
 extern jmp_buf jmp_env;
+extern Tcl_Interp *interp;
 
 /*
  *	GED functions referenced in more than one source file:
@@ -230,6 +231,9 @@ extern int		clip(fastf_t *, fastf_t *, fastf_t *, fastf_t *), getname(), use_pen
 extern int              mged_cmd_arg_check(), release(char *name, int need_close);
 extern struct directory	*combadd(), **dir_getspace();
 extern void		ellipse();
+
+/* ged.c */
+extern void mged_view_obj_callback(genptr_t clientData, struct view_obj *vop);
 
 /* rt_memalloc.c */
 MGED_EXTERN(unsigned long rt_memalloc, (struct mem_map **pp, unsigned size) );
