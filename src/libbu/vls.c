@@ -80,10 +80,18 @@ bu_vls_init(register struct bu_vls *vp)
     if (vp == (struct bu_vls  *)NULL)
 	bu_bomb("bu_vls_init() passed NULL pointer");
 
+    /* if it's already a vls, make sure we free any associated
+     * string space allocated.
+     */
+    if (vp->vls_magic == BU_VLS_MAGIC) {
+	if (vp->vls_str) {
+	    vp->vls_str[0] = '?'; /* sanity */
+	    bu_free(vp->vls_str, "bu_vls_init");
+	}
+    }
     vp->vls_magic = BU_VLS_MAGIC;
     vp->vls_str = (char *)0;
-    vp->vls_len = vp->vls_max = 0;
-    vp->vls_offset = 0;
+    vp->vls_len = vp->vls_max = vp->vls_offset = 0;
 }
 
 /*
