@@ -107,20 +107,21 @@ as represented by the U.S. Army Research Laboratory.  All rights reserved.";
 #include "./cmd.h"
 
 #ifdef _WIN32
-#define R_OK 2
-#define W_OK 4
+#  define R_OK 2
+#  define W_OK 4
 #endif
 
 #ifndef _WIN32
-#ifndef	LOGFILE
-#define LOGFILE	"/vld/lib/gedlog"	/* usage log */
-#endif
+#  ifndef LOGFILE
+#    define LOGFILE	"/vld/lib/gedlog"	/* usage log */
+#  endif
 #else
-#ifndef	LOGFILE
-#define LOGFILE	"C:\\gedlog"	/* usage log */
-#endif
+#  ifndef LOGFILE
+#    define LOGFILE	"C:\\gedlog"		/* usage log */
+#  endif
 #endif
 
+extern void mged_setup(void); /* setup.c */
 
 extern void view_ring_init(struct _view_state *vsp1, struct _view_state *vsp2); /* defined in chgview.c */
 
@@ -138,9 +139,6 @@ extern void paint_rect_area(void);
 
 /* defined in predictor.c */
 extern void predictor_init(void);
-
-/* defined in cmd.c */
-extern Tcl_Interp *interp;
 
 /* defined in attach.c */
 extern int mged_link_vars(struct dm_list *p);
@@ -168,6 +166,9 @@ extern struct _axes_state default_axes_state;
 
 /* defined in rect.c */
 extern struct _rubber_band default_rubber_band;
+
+
+Tcl_Interp *interp = NULL;
 
 int pipe_out[2];
 int pipe_err[2];
@@ -404,7 +405,6 @@ main(int argc, char **argv)
 		}
 	}
 
-
 	/* If multiple processors might be used, initialize for it.
 	 * Do not run any commands before here.
 	 * Do not use bu_log() or bu_malloc() before here.
@@ -509,7 +509,7 @@ main(int argc, char **argv)
 	bu_vls_init(&mged_prompt);
 	input_str_index = 0;
 
-	/* Get set up to use Tcl */
+	/* Initialize mged, adjust our path, get set up to use Tcl */
 	mged_setup();
 	new_mats();
 
@@ -579,36 +579,6 @@ main(int argc, char **argv)
 		dbip->dbi_read_only = 1;
 		bu_log( "Opened in READ ONLY mode\n" );
 	}
-
-#if 0 && defined(HAVE_GETENV) && defined (HAVE_PUTENV)
-	/* append our own bin dir to (the end of) our search path */
-	{
-	    struct bu_vls newpath;
-	    const char *path = getenv("PATH");
-	    const char *binpath = bu_brlcad_root("bin", 1);
-
-	    if (binpath) {
-		
-		bu_vls_init(&newpath);
-		
-		if (path) {
-		    if (path[strlen(path)-1] == ':') {
-		    bu_vls_printf(&newpath, "PATH=%s%s", path, binpath);
-		    } else {
-			bu_vls_printf(&newpath, "PATH=%s:%s", path, binpath);
-		    }
-		} else {
-		    bu_vls_printf(&newpath, "PATH=%s", binpath);
-		}
-		
-		if (putenv(bu_vls_addr(&newpath)) != 0) {
-		    perror("putenv:");
-		}
-		
-		bu_vls_free(&newpath);
-	    }
-	}
-#endif
 
 	/* --- Now safe to process commands. --- */
 	if(interactive){
