@@ -48,9 +48,12 @@
 
 
 #define TOL 1E-12
-#define CLONE_VERSION "Clone ver 2.0\n8-25-99\n"
+#define CLONE_VERSION "Clone ver 3.0\n2005-12-12\n"
 
 
+/** state structure used to keep track of what actions the user
+ *  requested and values necessary to perform the cloning operation.
+ */
 struct clone_state {
     struct directory	*src;		/* Source object */
     int			incr;		/* Amount to increment between copies */
@@ -63,11 +66,16 @@ struct clone_state {
     fastf_t		mirpos;		/* Point on axis to mirror copy */
 };
 
+/* XXX change from NAMESIZE to bu_vls */
 struct name {
     char src[NAMESIZE];	/* source object name */
     char **dest;		/* dest object names */
 };
 
+/** structure used to store the names of objects that are to be
+ *  cloned.  space is preallocated via names with len and used keeping
+ *  track of space available and used.
+ */
 struct nametbl {
     struct name *names;
     int name_size;
@@ -77,11 +85,15 @@ struct nametbl {
 
 struct nametbl obj_list;
 
+/** a polynamial value for representing knots */
 struct knot {
     vect_t pt;
     fastf_t c[3][4];
 };
 
+/** a spline path with various segments, break points, and polynamial
+ *  values.
+ */
 struct spline {
     int n_segs;
     fastf_t *t; /* break points */
@@ -95,16 +107,17 @@ struct link {
 };
 
 
+/** initialize the name list used for stashing destination names */
 void
 init_list(struct nametbl *l, int s)
 {
     int i, j;
 
-    l->names = (struct name *)bu_malloc(sizeof(struct name)*10, "alloc l->names");
+    l->names = (struct name *)bu_calloc(10, sizeof(struct name), "alloc l->names");
     for (i = 0; i < 10; i++) {
-	l->names[i].dest = (char **)bu_malloc(sizeof(char *)*s, "alloc l->names.dest");
+	l->names[i].dest = (char **)bu_calloc(s, sizeof(char *), "alloc l->names.dest");
 	for (j = 0; j < s; j++) {
-	    l->names[i].dest[j] = (char *)bu_malloc(sizeof(char)*NAMESIZE, "alloc l->names.desti");
+	    l->names[i].dest[j] = (char *)bu_calloc(NAMESIZE, sizeof(char), "alloc l->names.dest[j]");
 	}
     }
     l->name_size = s;
@@ -113,28 +126,50 @@ init_list(struct nametbl *l, int s)
 }
 
 
+/** add a new name to the name list */
 int
 add_to_list(struct nametbl *l, char name[NAMESIZE])
 {
     int i, j;
 
+    /* add more slots if adding 1 more new name will fill up all the
+     * available slots.
+     */
     if (l->names_len == (l->names_used+1)) {
 	l->names_len += 10;
-	l->names = (struct name *)bu_realloc(l->names, sizeof(struct name)*(l->names_len+1), "realloc names");
+	l->names = (struct name *)bu_realloc(l->names, sizeof(struct name)*(l->names_len+1), "realloc l->names");
 	for (i = l->names_used; i < l->names_len; i++) {
-	    l->names[i].dest = (char **)bu_malloc(sizeof(char *)*l->name_size, "alloc l->names.dest");
+	    l->names[i].dest = (char **)bu_calloc(l->name_size, sizeof(char *), "alloc l->names.dest");
 	    for (j = 0; j < l->name_size; j++) {
-		l->names[i].dest[j] = (char *)bu_malloc(sizeof(char)*NAMESIZE, "alloc l->names.desti");
+		l->names[i].dest[j] = (char *)bu_calloc(NAMESIZE, sizeof(char), "alloc l->names.dest[j]");
 	    }
 	}
     }
-    strcpy(l->names[l->names_used++].src, name);
-    return l->names_used-1;
+    strncpy(l->names[l->names_used++].src, name, NAMESIZE);
+    return l->names_used-1; /* return number of available slots */
 }
 
 
+/** returns truthfully if 'name' exists in the list */
 int
 is_in_list(struct nametbl l, char name[NAMESIZE])
+{
+    int i;
+
+    for (i = 0; i < l.names_used; i++) {
+	if (!strcmp(l.names[i].src, name)) {
+	    return 1;
+	}
+    }
+    return 0;
+}
+
+
+/** returns the location of 'name' in the list if it exists, returns
+ * -1 otherwise.
+ */
+int
+index_in_list(struct nametbl l, char name[NAMESIZE])
 {
     int i;
 
@@ -147,15 +182,19 @@ is_in_list(struct nametbl l, char name[NAMESIZE])
 }
 
 
+/** returns the next available/unused name, using a naming convention
+ *  that increments a trailing or first embedded number.  state.incr
+ *  is used for each number level increase.
+ */
 char *
 get_name(struct directory *dp, struct clone_state state, int iter)
 {
     static char *newname = NULL;
-    char tag[NAMESIZE], post[NAMESIZE], buf[NAMESIZE];
+    char tag[NAMESIZE] = {0}, post[NAMESIZE] = {0}, buf[NAMESIZE] = {0};
     int num = 0, i, j;
 
     if (!newname) {
-	newname = (char *)bu_malloc(sizeof(char)*NAMESIZE, "alloc newname");
+	newname = (char *)bu_calloc(NAMESIZE, sizeof(char), "alloc newname");
     }
     sscanf(dp->d_namep, "%[!-/,:-~]%d%[!-/,:-~]", &tag, &num, &post);
 
@@ -163,20 +202,22 @@ get_name(struct directory *dp, struct clone_state state, int iter)
     if ((dp->d_flags & DIR_SOLID) || (dp->d_flags & DIR_REGION)) {
 	do {
 	    if (post[0] == '.') {
-		if ((i == 1) && ((j = is_in_list(obj_list, buf)) != -1)) {
-		    sprintf(buf, "%s%d", tag, num);
-		    sprintf(newname, "%s%s", obj_list.names[j].dest[iter], post);
+		
+		if ((i == 1) && is_in_list(obj_list, buf)) {
+		    j = index_in_list(obj_list, buf);
+		    snprintf(buf, NAMESIZE, "%s%d", tag, num);
+		    snprintf(newname, NAMESIZE, "%s%s", obj_list.names[j].dest[iter], post);
 		} else {
-		    sprintf(newname, "%s%d%s", tag, num+i*state.incr, post);
+		    snprintf(newname, NAMESIZE, "%s%d%s", tag, num+i*state.incr, post);
 		}
 	    } else {
-		sprintf(newname, "%s%d", tag, num+i*state.incr);
+		snprintf(newname, NAMESIZE, "%s%d", tag, num+i*state.incr);
 	    }
 	    i++;
 	} while (db_lookup(dbip, newname, LOOKUP_QUIET) != NULL);
     } else {
 	do {
-	    sprintf(newname, "%s%d", tag, (num==0)?2:num+i);
+	    snprintf(newname, NAMESIZE, "%s%d", tag, (num==0)?2:num+i);
 	    i++;
 	} while (db_lookup(dbip, newname, LOOKUP_QUIET) != NULL);
     }
@@ -184,6 +225,9 @@ get_name(struct directory *dp, struct clone_state state, int iter)
 }
 
 
+/** make a copy of a combination by adding it to our book-keeping list,
+ *  adding it to the db directory, then writing it out to the db.
+ */
 struct directory *
 copy_comb(struct directory *proto, struct clone_state state)
 {
@@ -191,33 +235,61 @@ copy_comb(struct directory *proto, struct clone_state state)
     union record *rp;
     int i, j, idx;
 
-    if (is_in_list(obj_list, proto->d_namep) != -1) {
+    if (is_in_list(obj_list, proto->d_namep)) {
+	bu_log("Combination %s already cloned?\n", proto->d_namep);
 	return NULL;
     }
     idx = add_to_list(&obj_list, proto->d_namep);
 
+    /* sanity check that the item was really added */
+    if ((idx < 0) || !is_in_list(obj_list, proto->d_namep)) {
+	bu_log("ERROR: clone internal error copying %s\n", proto->d_namep);
+	return NULL;
+    }
+
+
+    /* make n copies */
     for (i = 0; i < state.n_copies; i++) {
+
+	/* get an in-memory reference to the object being copied */
 	if ((rp = db_getmrec(dbip, proto)) == (union record *)0) {
 	    TCL_READ_ERR;
 	    return NULL;
 	}
+
 	if (proto->d_flags & DIR_REGION) {
-	    strcpy(obj_list.names[idx].dest[i], obj_list.names[is_in_list(obj_list, rp[1].M.m_instname)].dest[i]);
+	    if (!is_in_list(obj_list, rp[1].M.m_instname)) {
+		bu_log("ERROR: clone internal error looking up %s\n", rp[1].M.m_instname);
+		return NULL;
+	    }
+	    strncpy(obj_list.names[idx].dest[i], obj_list.names[index_in_list(obj_list, rp[1].M.m_instname)].dest[i], NAMESIZE);
 	    obj_list.names[idx].dest[i][0] = 'r';
-	    strcpy(rp[0].c.c_name, obj_list.names[idx].dest[i]);
 	} else {
-	    strcpy(obj_list.names[idx].dest[i], get_name(((i==0) ? proto : db_lookup(dbip, obj_list.names[idx].dest[i-1], LOOKUP_QUIET)), state, i));
-	    strcpy(rp[0].c.c_name, obj_list.names[idx].dest[i]);
+	    strncpy(obj_list.names[idx].dest[i], get_name(((i==0) ? proto : db_lookup(dbip, obj_list.names[idx].dest[i-1], LOOKUP_QUIET)), state, i), NAMESIZE);
 	}
-	if ((dp = db_diradd(dbip, rp->c.c_name, RT_DIR_PHONY_ADDR, proto->d_len, proto->d_flags, NULL)) == DIR_NULL || 
-	    db_alloc(dbip, dp, proto->d_len) < 0) {
+	strncpy(rp[0].c.c_name, obj_list.names[idx].dest[i], NAMESIZE);
+
+	/* add the object to the directory */
+	dp = db_diradd(dbip, rp->c.c_name, RT_DIR_PHONY_ADDR, proto->d_len, proto->d_flags, &proto->d_minor_type);
+	if ((dp == NULL) || (db_alloc(dbip, dp, proto->d_len) < 0)) {
 	    TCL_ALLOC_ERR;
 	    return NULL;
 	}
+
 	for (j = 1; j < proto->d_len; j++) {
-	    sprintf(rp[j].M.m_instname, "%s", obj_list.names[is_in_list(obj_list, rp[j].M.m_instname)].dest[i]);
+	    if (!is_in_list(obj_list, rp[j].M.m_instname)) {
+		bu_log("ERROR: clone internal error looking up %s\n", rp[j].M.m_instname);
+		return NULL;
+	    }
+	    snprintf(rp[j].M.m_instname, NAMESIZE, "%s", obj_list.names[index_in_list(obj_list, rp[j].M.m_instname)].dest[i]);
 	}
-	db_put(dbip, dp, rp, 0, dp->d_len);
+
+	/* write the object to disk */
+	if (db_put(dbip, dp, rp, 0, dp->d_len) < 0) {
+	    bu_log("ERROR: clone internal error writing to the database\n");
+	    return NULL;
+	}
+
 	rt_free((char *)rp, "copy_comb record[]");
     }
 
@@ -225,6 +297,9 @@ copy_comb(struct directory *proto, struct clone_state state)
 }
 
 
+/** make a copy of a solid by adding it to our book-keeping list,
+ *  adding it to the db directory, and writing it out to disk.
+ */
 struct directory *
 copy_solid(struct directory *proto, struct clone_state state)
 {
@@ -232,25 +307,37 @@ copy_solid(struct directory *proto, struct clone_state state)
     union record *rp;
     int i, j, idx;
 
-    if (is_in_list(obj_list, proto->d_namep) != -1) {
+    if (is_in_list(obj_list, proto->d_namep)) {
+	bu_log("Primitive solid %s already cloned?\n", proto->d_namep);
 	return NULL;
     }
     idx = add_to_list(&obj_list, proto->d_namep);
 
-    if ((rp = db_getmrec(dbip, proto)) == (union record *)0) {
-	TCL_READ_ERR;
+    /* sanity check that the item was really added */
+    if ((idx < 0) || !is_in_list(obj_list, proto->d_namep)) {
+	bu_log("ERROR: clone internal error copying %s\n", proto->d_namep);
 	return NULL;
     }
-    for (i = 0; i < state.n_copies; i++) {
-	strcpy(obj_list.names[idx].dest[i], get_name(((i==0) ? proto : db_lookup(dbip, obj_list.names[idx].dest[i-1], LOOKUP_QUIET)), state, i));
 
-	if ((dp = db_diradd(dbip, obj_list.names[idx].dest[i], RT_DIR_PHONY_ADDR, proto->d_len, proto->d_flags, NULL)) == DIR_NULL ||
-	    db_alloc(dbip, dp, proto->d_len) < 0) {
+    /* make n copies */
+    for (i = 0; i < state.n_copies; i++) {
+
+	/* get an in-memory reference to the object being copied */
+	if ((rp = db_getmrec(dbip, proto)) == (union record *)0) {
+	    TCL_READ_ERR;
+	    return NULL;
+	}
+
+	strncpy(obj_list.names[idx].dest[i], get_name(((i==0) ? proto : db_lookup(dbip, obj_list.names[idx].dest[i-1], LOOKUP_QUIET)), state, i), NAMESIZE);
+
+	/* add the object to the directory */
+	dp = db_diradd(dbip, obj_list.names[idx].dest[i], RT_DIR_PHONY_ADDR, proto->d_len, proto->d_flags, &proto->d_minor_type);
+	if ((dp == DIR_NULL) || (db_alloc(dbip, dp, proto->d_len) < 0)) {
 	    TCL_ALLOC_ERR;
 	    return NULL;
 	}
 	if (rp->u_id == ID_SOLID) {
-	    strcpy(rp->s.s_name, dp->d_namep);
+	    strncpy(rp->s.s_name, dp->d_namep, NAMESIZE);
 	    if (state.miraxis != W) {
 		rp->s.s_values[state.miraxis] += 2 * (state.mirpos - rp->s.s_values[state.miraxis]);
 		for (j = 3+state.miraxis; i < 24; i++) {
@@ -279,16 +366,23 @@ copy_solid(struct directory *proto, struct clone_state state)
 		}
 	    }
 	} else {
-	    fprintf(stdout, "mods not available on %s\n", proto->d_namep);
+	    bu_log("mods not available on %s\n", proto->d_namep);
 	}
-	db_put(dbip, dp, rp, 0, dp->d_len);
+
+	/* write the object to disk */
+	if (db_put(dbip, dp, rp, 0, dp->d_len) < 0) {
+	    bu_log("ERROR: clone internal error writing to the database\n");
+	    return NULL;
+	}
+
+	rt_free((char *)rp, "copy_solid record[]");
     }
 
-    rt_free((char *)rp, "copy_solid record[]");
     return dp;
 }
 
 
+/** recursively copy a tree of geometry */
 struct directory *
 copy_tree(ClientData clientData, Tcl_Interp *interp, struct clone_state state, struct directory *dp)
 {
@@ -296,12 +390,16 @@ copy_tree(ClientData clientData, Tcl_Interp *interp, struct clone_state state, s
     register int            i;
     register struct directory *mdp, *copy;
 
+    /* get an in-memory record of this object */
     if ((rp = db_getmrec(dbip, dp)) == (union record *)0) {
 	TCL_READ_ERR;
 	return NULL;
     }
 
+    /* copy the object */
     if (dp->d_flags & DIR_COMB) {
+	/* if it is a combination/region, recursively copy the objects
+	   that make up the object */
 	for (i = 1; i < dp->d_len; i++ ) {
 	    if ((mdp = db_lookup(dbip, rp[i].M.m_instname, LOOKUP_NOISY)) == DIR_NULL) {
 		continue;
@@ -309,8 +407,10 @@ copy_tree(ClientData clientData, Tcl_Interp *interp, struct clone_state state, s
 	    copy = copy_tree(clientData, interp, state, mdp);
 	}
 
+	/* copy the combination itself */
 	copy = copy_comb(dp, state);
     } else if (dp->d_flags & DIR_SOLID) {
+	/* leaf node -- make a copy the object */
 	copy = copy_solid(dp, state);
     } else {
 	Tcl_AppendResult(interp, "clone:  ", dp->d_namep, " is neither COMB nor SOLID?\n", (char *)NULL);
@@ -320,6 +420,9 @@ copy_tree(ClientData clientData, Tcl_Interp *interp, struct clone_state state, s
 }
 
 
+/** copy an object, recursivley copying all of the object's contents
+ *  if it's a combination/region.
+ */
 struct directory *
 copy_object(ClientData clientData, Tcl_Interp *interp, struct clone_state state)
 {
@@ -329,27 +432,36 @@ copy_object(ClientData clientData, Tcl_Interp *interp, struct clone_state state)
 
     init_list(&obj_list, state.n_copies);
 
+    /* do the actual copying */
     copy = copy_tree(clientData, interp, state, state.src);
 
-    if (state.draw_obj) {
-	char *av[3];
+    /* make sure it made what we hope/think it made */
+    if (!copy || !is_in_list(obj_list, state.src->d_namep)) {
+	bu_log("ERROR: clone internal error, cannot find %s for editing\n", state.src->d_namep);
+	return copy;
+    }
 
-	av[0] = "e";
-	av[2] = NULL;
-	idx = is_in_list(obj_list, state.src->d_namep);
+    /* display the cloned object(s) */
+    if (state.draw_obj) {
+	char *av[3] = {"e", NULL, NULL};
+
+	idx = index_in_list(obj_list, state.src->d_namep);
 	for (i = 0; i < state.n_copies; i++) {
 	    av[1] = obj_list.names[idx].dest[i];
 	    cmd_draw( clientData, interp, 2, av );
 	}
     }
 
+    /* release our name allocations */
     for (i = 0; i < obj_list.names_len; i++) {
 	for (j = 0; j < obj_list.name_size; j++) {
-	    bu_free((char *)obj_list.names[i].dest[j], "free destj");
+	    bu_free((char *)obj_list.names[i].dest[j], "free dest[j]");
 	}
 	bu_free((char **)obj_list.names[i].dest, "free dest");
     }
     bu_free((struct name *)obj_list.names, "free names");
+
+    /* better safe than sorry */
     obj_list.names = NULL;
     obj_list.name_size = obj_list.names_used = obj_list.names_len = 0;
 
@@ -357,6 +469,7 @@ copy_object(ClientData clientData, Tcl_Interp *interp, struct clone_state state)
 }
 
 
+/** how to use clone.  blissfully simple interface. */
 void
 print_usage(ClientData clientData, Tcl_Interp *interp)
 {
@@ -372,9 +485,13 @@ print_usage(ClientData clientData, Tcl_Interp *interp)
     Tcl_AppendResult(interp, "-r <x> <y> <z>\t\t- Specifies the rotation around x, y, and z axes.\n", (char*)NULL);
     Tcl_AppendResult(interp, "-t <x> <y> <z>\t\t- Specifies translation between each copy.\n", (char*)NULL);
     Tcl_AppendResult(interp, "-v\t\t\t- Prints version info.\n", (char*)NULL);
+    return;
 }
 
 
+/** process the user-provided arguments. stash their operations into
+ *  our state structure.
+ */
 int
 get_args(ClientData clientData, Tcl_Interp *interp, int argc, char **argv, struct clone_state *state)
 {
@@ -382,7 +499,7 @@ get_args(ClientData clientData, Tcl_Interp *interp, int argc, char **argv, struc
 
     bu_optind = 1;
 
-    state->incr = 500;
+    state->incr = 100;
     state->n_copies = 1;
     state->draw_obj = 1;
     state->rot[W] = 0;
@@ -450,6 +567,7 @@ get_args(ClientData clientData, Tcl_Interp *interp, int argc, char **argv, struc
     }
 
     if (argv[bu_optind]) {
+	/* XXX should make sure the lookup succeeded */
 	state->src = db_lookup(dbip, argv[bu_optind], LOOKUP_QUIET);
     } else {
 	return TCL_ERROR;
@@ -463,11 +581,13 @@ get_args(ClientData clientData, Tcl_Interp *interp, int argc, char **argv, struc
 }
 
 
+/** master hook function for the 'clone' command. */
 int
 f_clone(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
     struct clone_state	state;
 
+    /* allow interrupts */
     if( setjmp( jmp_env ) == 0 ) {
 	(void)signal( SIGINT, sig3);
     } else {
@@ -479,10 +599,12 @@ f_clone(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	return TCL_ERROR;
     }
 
+    /* validate user options */
     if (get_args(clientData, interp, argc, argv, &state) == TCL_ERROR) {
 	return TCL_ERROR;
     }
 
+    /* do it (if we can) */
     if (state.src) {
 	copy_object(clientData, interp, state);
     } else {
@@ -494,17 +616,10 @@ f_clone(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 }
 
 
-fastf_t
-dist(vect_t pt1, vect_t pt2)
-{
-    return sqrt(pow(pt1[X]-pt2[X], 2) + pow(pt1[Y]-pt2[Y], 2) + pow(pt1[Z]-pt2[Z], 2));
-}
-
-
-/*
- * INTERP_SPL
+/** helper function that computes where a point is along a spline
+ * given some distance 't'.
  *
- * sets pt = Q(t) for the specified spline
+ * i.e. sets pt = Q(t) for the specified spline
  */
 void
 interp_spl(fastf_t t, struct spline spl, vect_t pt)
@@ -516,16 +631,25 @@ interp_spl(fastf_t t, struct spline spl, vect_t pt)
 	t -= TOL;
     }
 
-    while (t >= spl.t[i+1]) {i++;}
+    /* traverse to the spline segment interval */
+    while (t >= spl.t[i+1]) {
+	i++;
+    }
+
+    /* compute the t offset */
     t -= spl.t[i];
     s = t; s2 = t*t; s3 = t*t*t;
 
+    /* solve for the position */
     pt[X] = spl.k[i].c[X][0] + spl.k[i].c[X][1]*s + spl.k[i].c[X][2]*s2 + spl.k[i].c[X][3]*s3;
     pt[Y] = spl.k[i].c[Y][0] + spl.k[i].c[Y][1]*s + spl.k[i].c[Y][2]*s2 + spl.k[i].c[Y][3]*s3;
     pt[Z] = spl.k[i].c[Z][0] + spl.k[i].c[Z][1]*s + spl.k[i].c[Z][2]*s2 + spl.k[i].c[Z][3]*s3;
 }
 
 
+/** master hook function for the 'tracker' command used to create
+ *  copies of objects along a spline path.
+ */
 int
 f_tracker(clientData, interp, argc, argv)
      ClientData clientData;
@@ -539,16 +663,16 @@ f_tracker(clientData, interp, argc, argv)
     int i, j, k, inc;
     int n_verts, n_links, arg = 1;
     FILE *points;
-    char tok[81], line[81];
+    char tok[81] = {0}, line[81] = {0};
     char ch;
     fastf_t totlen = 0.0;
     fastf_t len, olen;
     fastf_t dist_to_next;
     fastf_t min, max, mid;
-    fastf_t pt[3], rot[3];
+    fastf_t pt[3] = {0}, rot[3] = {0};
     int no_draw = 0;
 
-
+    /* allow interrupts */
     if( setjmp( jmp_env ) == 0 ) {
 	(void)signal( SIGINT, sig3 );
     } else {
@@ -663,7 +787,7 @@ f_tracker(clientData, interp, argc, argv)
 
     /* Interpolate link vertices *********************/
     for (i = 0; i < s.n_segs; i++) { /* determine initial track length */
-	totlen += dist(s.k[i].pt, s.k[i+1].pt);
+	totlen += DIST_PT_PT(s.k[i].pt, s.k[i+1].pt);
     }
     len = totlen/(n_verts-1);
     VMOVE(verts[0], s.k[0].pt);
@@ -687,8 +811,8 @@ f_tracker(clientData, interp, argc, argv)
 		mid = (min+max)/2;
 		interp_spl(mid, s, pt);
 		dist_to_next = (k > 0) ? links[k-1].len : links[n_links-1].len; /* links[k].len;*/
-		while (fabs(dist(verts[n_links*j+k-1], pt) - dist_to_next) >= TOL) {
-		    if (dist(verts[n_links*j+k-1], pt) > dist_to_next) {
+		while (fabs(DIST_PT_PT(verts[n_links*j+k-1], pt) - dist_to_next) >= TOL) {
+		    if (DIST_PT_PT(verts[n_links*j+k-1], pt) > dist_to_next) {
 			max = mid;
 			mid = (min+max)/2;
 		    } else {
@@ -705,7 +829,7 @@ f_tracker(clientData, interp, argc, argv)
 	interp_spl(s.t[s.n_segs], s, verts[n_verts*n_links-1]);
 	totlen = 0.0;
 	for (j = 0; j < n_verts*n_links-1; j++) {
-	    totlen += dist(verts[j], verts[j+1]);
+	    totlen += DIST_PT_PT(verts[j], verts[j+1]);
 	}
 	olen = len;
 	len = totlen/(n_verts-1);
@@ -768,7 +892,7 @@ f_tracker(clientData, interp, argc, argv)
 		state.src = dps[j];
 		dps[j] = copy_object(clientData, interp, state);
 		strcpy(vargs[1], dps[j]->d_namep);
-		/*				strcpy(vargs[1], obj_list.names[is_in_list(obj_list, links[j].name)].dest[0]);*/
+		/*				strcpy(vargs[1], obj_list.names[index_in_list(obj_list, links[j].name)].dest[0]);*/
 
 		if (!no_draw || !is_dm_null()) {
 		    drawtrees(2, vargs, 1);
