@@ -228,7 +228,7 @@ f_edcolor(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
  *  			C O L O R _ P U T R E C
  *
  *  Used to create a database record and get it written out to a granule.
- *  In some cases, storage will need to be allocated.
+ *  In some cases, storage will need to be allocated. v4 db only.
  */
 void
 color_putrec(register struct mater *mp)
@@ -241,6 +241,12 @@ color_putrec(register struct mater *mp)
 
 	if( dbip->dbi_read_only )
 		return;
+
+	if (dbip->dbi_version >= 5) {
+	    bu_log("color_putrec does not work on db5 or later databases");
+	    return;
+	}
+
 	rec.md.md_id = ID_MATERIAL;
 	rec.md.md_low = mp->mt_low;
 	rec.md.md_hi = mp->mt_high;
