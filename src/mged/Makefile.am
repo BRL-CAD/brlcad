@@ -105,6 +105,7 @@ mged_SOURCES = \
 	rtif.c \
 	scroll.c \
 	set.c \
+	setup.c \
 	share.c \
 	solids_on_ray.c \
 	tedit.c \
