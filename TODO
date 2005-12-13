@@ -4,17 +4,38 @@ BRL-CAD to do list
 Included below is a list of things that are scheduled or desirable to
 be done at some point.  Most recently added items are on top, older
 topics are on the bottom.  This is not an official list, it's more a
-scratch pad for the developers to use for tracking development ideas.
+scratch pad for the developers to use for tracking development ideas
+and informal plans.
+
+The items listed for release should not ever hinder, stop, or
+otherwise delay a release from being made.  The items listed are
+merely to give an estimate of what was expected to be done.  See the
+project task tracker for more to do items and future planning efforts.
+http://sf.net/pm/?group_id=105292
 
 
 THESE SHOULD HAPPEN BEFORE THE NEXT RELEASE
+-------------------------------------------
 
-* mged path foo
+* test and ship it
+
+
+THESE SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
+-------------------------------------------------
+
+* begin merging of windows branch
+
+* test pic/nonpic build problems with librtms/libmultispectral
+
+* clone and tracker
+
+* add geometry examples for toy jeep and building
 
 
 THESE ARE LOWER PRIORITY OR FOR FUTURE RELEASES
+-----------------------------------------------
 
-* test pic/nonpic build problems with librtms/libmultispectral
+* rt annotation support
 
 * support for fillets and chamfers as object/combination operations
 
@@ -59,6 +80,7 @@ THESE ARE LOWER PRIORITY OR FOR FUTURE RELEASES
 
 
 ODDITIES
+--------
 
 * the scale structure in bn_cmd_noise_slice (bn_tcl.c) was never
   initialized. it looks like somebody has planned to extend the
@@ -66,6 +88,7 @@ ODDITIES
 
 
 THESE BREAK PROTOCOL OR ARE BACKWARDS-INCOMPATIBLE
+--------------------------------------------------
 
 * fix the database I/O writing to properly support the addition of new
   primitive types.  this includes modifying the major/minor code or
