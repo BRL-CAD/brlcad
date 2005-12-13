@@ -155,7 +155,7 @@ int output_as_return = 1;
 /* The following is for GUI output hooks: contains name of function to
  * run with output.
  */
-static struct bu_vls *tcl_output_hook = NULL;
+static struct bu_vls tcl_output_hook;
 
 #if DM_X
 Tk_Window tkwin = NULL;
@@ -585,7 +585,7 @@ gui_output(genptr_t clientData, genptr_t str)
 	}
 
 	Tcl_DStringInit(&tclcommand);
-	(void)Tcl_DStringAppendElement(&tclcommand, bu_vls_addr(tcl_output_hook));
+	(void)Tcl_DStringAppendElement(&tclcommand, bu_vls_addr(&tcl_output_hook));
 	(void)Tcl_DStringAppendElement(&tclcommand, str);
 
 	save_result = Tcl_GetObjResult(interp);
@@ -679,11 +679,8 @@ cmd_output_hook(ClientData clientData, Tcl_Interp *interp, int argc, char **argv
 	}
 
 	/* Set up the hook! */
-
-	if (!tcl_output_hook) {
-	    bu_vls_init(tcl_output_hook);
-	}
-	bu_vls_strcpy(tcl_output_hook, argv[1]);
+	bu_vls_init(&tcl_output_hook);
+	bu_vls_strcpy(&tcl_output_hook, argv[1]);
 	bu_log_add_hook(gui_output, (genptr_t)interp);
 
 	Tcl_ResetResult(interp);
