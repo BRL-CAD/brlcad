@@ -113,7 +113,8 @@ int be_o_xscale(ClientData clientData, Tcl_Interp *interp, int argc, char **argv
 int be_o_yscale(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 int be_o_zscale(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 
-void mged_setup(void), cmd_setup(void), mged_compat(struct bu_vls *dest, struct bu_vls *src, int use_first);
+void cmd_setup(void);
+void mged_compat(struct bu_vls *dest, struct bu_vls *src, int use_first);
 void mged_print_result(int status);
 void mged_global_variable_setup(Tcl_Interp *interp);
 int f_bot_fuse(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
@@ -121,7 +122,9 @@ int f_bot_condense(ClientData clientData, Tcl_Interp *interp, int argc, char **a
 int f_bot_face_fuse(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 int f_bot_merge(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 int f_bot_split(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-extern int f_hide(), f_unhide();
+
+extern int f_hide();
+extern int f_unhide();
 
 
 #ifndef HAVE_UNISTD_H
@@ -138,8 +141,6 @@ extern int cmd_smooth_bot();
 struct cmd_list head_cmd_list;
 struct cmd_list *curr_cmd_list;
 
-extern void mged_view_obj_callback(genptr_t clientData, struct view_obj *vop);
-
 extern int db_warn;	/* defined in ged.c */
 extern int db_upgrade;	/* defined in ged.c */
 extern int db_version;	/* defined in ged.c */
@@ -150,13 +151,17 @@ extern struct bn_tol	      mged_tol; /* ged.c */
 int glob_compat_mode = 1;
 int output_as_return = 1;
 
-int mged_cmd(int argc, char **argv, struct funtab *in_functions);
-struct bu_vls tcl_output_hook;
 
-Tcl_Interp *interp = NULL;
+/* The following is for GUI output hooks: contains name of function to
+ * run with output.
+ */
+static struct bu_vls *tcl_output_hook = NULL;
+
 #if DM_X
 Tk_Window tkwin = NULL;
 #endif
+
+int mged_cmd(int argc, char **argv, struct funtab *in_functions);
 
 #ifdef _WIN32
 void gettimeofday(struct timeval *tp, struct timezone *tzp);
@@ -580,7 +585,7 @@ gui_output(genptr_t clientData, genptr_t str)
 	}
 
 	Tcl_DStringInit(&tclcommand);
-	(void)Tcl_DStringAppendElement(&tclcommand, bu_vls_addr(&tcl_output_hook));
+	(void)Tcl_DStringAppendElement(&tclcommand, bu_vls_addr(tcl_output_hook));
 	(void)Tcl_DStringAppendElement(&tclcommand, str);
 
 	save_result = Tcl_GetObjResult(interp);
@@ -675,7 +680,10 @@ cmd_output_hook(ClientData clientData, Tcl_Interp *interp, int argc, char **argv
 
 	/* Set up the hook! */
 
-	bu_vls_strcpy(&tcl_output_hook, argv[1]);
+	if (!tcl_output_hook) {
+	    bu_vls_init(tcl_output_hook);
+	}
+	bu_vls_strcpy(tcl_output_hook, argv[1]);
 	bu_log_add_hook(gui_output, (genptr_t)interp);
 
 	Tcl_ResetResult(interp);
@@ -710,84 +718,6 @@ cmd_get_ptr(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	return TCL_OK;
 }
 
-/*
- *
- * Sets up the Tcl interpreter
- */
-void
-mged_setup(void)
-{
-	struct bu_vls str;
-
-	/* The following is for GUI output hooks: contains name of function to
-	   run with output */
-	bu_vls_init(&tcl_output_hook);
-
-	Tcl_FindExecutable(bu_argv0(NULL));
-
-	/* Create the interpreter */
-	interp = Tcl_CreateInterp();
-
-	/* This runs the init.tcl script */
-	if( Tcl_Init(interp) == TCL_ERROR )
-		bu_log("Tcl_Init error %s\n", interp->result);
-
-	/* Initialize [incr Tcl] */
-	if (Itcl_Init(interp) == TCL_ERROR)
-	  bu_log("Itcl_Init error %s\n", interp->result);
-
-	/* Import [incr Tcl] commands into the global namespace. */
-	if (Tcl_Import(interp, Tcl_GetGlobalNamespace(interp),
-		       "::itcl::*", /* allowOverwrite */ 1) != TCL_OK)
-	  bu_log("Tcl_Import error %s\n", interp->result);
-
-
-	/* Initialize libbu */
-	Bu_Init(interp);
-
-	/* Initialize libbn */
-	Bn_Init(interp);
-
-	/* Initialize librt (includes database, drawable geometry and view objects) */
-	if (Rt_Init(interp) == TCL_ERROR) {
-		bu_log("Rt_Init error %s\n", interp->result);
-	}
-
-	/* initialize MGED's drawable geometry object */
-	dgop = dgo_open_cmd("mged", wdbp);
-
-	view_state->vs_vop = vo_open_cmd("");
-	view_state->vs_vop->vo_callback = mged_view_obj_callback;
-	view_state->vs_vop->vo_clientData = view_state;
-	view_state->vs_vop->vo_scale = 500;
-	view_state->vs_vop->vo_size = 2.0 * view_state->vs_vop->vo_scale;
-	view_state->vs_vop->vo_invSize = 1.0 / view_state->vs_vop->vo_size;
-	MAT_DELTAS_GET_NEG(view_state->vs_orig_pos, view_state->vs_vop->vo_center);
-
-	/* register commands */
-	cmd_setup();
-
-	history_setup();
-	mged_global_variable_setup(interp);
-#if !TRY_NEW_MGED_VARS
-	mged_variable_setup(interp);
-#endif
-
-	/* Locate the BRL-CAD-specific Tcl scripts, set the auto_path */
-	tclcad_auto_path(interp);
-
-	/* Tcl needs to write nulls onto subscripted variable names */
-	bu_vls_init(&str);
-	bu_vls_printf( &str, "%s(state)", MGED_DISPLAY_VAR );
-	Tcl_SetVar(interp, bu_vls_addr(&str), state_str[state], TCL_GLOBAL_ONLY);
-
-	/* initialize "Query Ray" variables */
-	init_qray();
-
-	Tcl_ResetResult(interp);
-
-	bu_vls_free(&str);
-}
 
 /* 			C M D _ S E T U P
  * Register all the MGED commands.
