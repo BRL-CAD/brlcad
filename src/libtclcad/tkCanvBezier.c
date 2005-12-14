@@ -1030,7 +1030,13 @@ static int FindRoots(w, degree, t, depth)
 	    }
 	    break;
 	}
-}
+    }
+    
+    /* prevent infinite recursion */
+    if (depth >= MAXDEPTH * MAXDEPTH) {
+      t[0] = (w[0].x + w[degree].x) / 2.0;
+      return 1;
+    }
 
     /* Otherwise, solve recursively after	*/
     /* subdividing control polygon		*/
