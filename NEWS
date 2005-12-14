@@ -11,6 +11,7 @@ entire history of the project is available through CVS.
 --- 2005-12-XX  Release 7.6.5                                      ---
 ----------------------------------------------------------------------
 
+* fixed sketch primitive bezier path computation bug - Sean Morrison
 * cleaned up erroneous rtedge end of line output - Sean Morrison
 * configure --enable/disable-everything option - Sean Morrison
 * updated g_qa manual page documentation - Lee Butler
