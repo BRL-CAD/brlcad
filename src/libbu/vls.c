@@ -84,7 +84,7 @@ bu_vls_init(register struct bu_vls *vp)
      * string space allocated.
      */
     if (vp->vls_magic == BU_VLS_MAGIC) {
-	if (vp->vls_str) {
+	if (vp->vls_str && vp->vls_len > 0 && vp->vls_max > 0) {
 	    vp->vls_str[0] = '?'; /* sanity */
 	    bu_free(vp->vls_str, "bu_vls_init");
 	}
