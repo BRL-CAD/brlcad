@@ -695,7 +695,7 @@ view_eol( struct application *ap )
 	fwrite( scanline[cpu], pixsize, per_processor_chunk, outfp );
 	bu_semaphore_release (BU_SEM_SYSCALL);
     }
-    else {
+    if (fbp == FBIO_NULL && outfp == NULL) {
 	bu_log ("rtedge: strange, no end of line actions taken.\n");
     }
 
