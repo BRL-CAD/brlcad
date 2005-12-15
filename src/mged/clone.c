@@ -446,7 +446,7 @@ copy_object(ClientData clientData, Tcl_Interp *interp, struct clone_state state)
 	char *av[3] = {"e", NULL, NULL};
 
 	idx = index_in_list(obj_list, state.src->d_namep);
-	for (i = 0; i < state.n_copies; i++) {
+	for (i = 0; i < (state.n_copies > obj_list.names_used ? obj_list.names_used : state.n_copies) ; i++) {
 	    av[1] = obj_list.names[idx].dest[i];
 	    cmd_draw( clientData, interp, 2, av );
 	}
