@@ -35,6 +35,9 @@ THESE SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE LOWER PRIORITY OR FOR FUTURE RELEASES
 -----------------------------------------------
 
+* rtedge-style tracer that outputs tool paths (splines/segments, etc)
+  for CNC/CAM style toolpath cutting descriptions (g-code files).
+
 * run-time path identification of mged resources was never completed,
   complete it.
 
