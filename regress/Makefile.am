@@ -1,36 +1,44 @@
-.PHONY : regression regress test moss.pix lights.pix solids.pix shaders.pix spdi.pix iges weight \
-	gqa.log
+.PHONY : regression regress test moss lights solids shaders spdi iges weight gqa
 
-regression: solids.pix shaders.pix spdi.pix moss.pix lights.pix Makefile iges weight \
-	gqa.log
+regression: clean solids shaders spdi moss lights Makefile iges weight gqa
+	@${ECHO} ---
+	@${ECHO} Regression testing completed successfully.
 
 regress: regression
 
 test: regression
 
-moss.pix: $(top_srcdir)/regress/moss.sh
+moss: $(top_srcdir)/regress/moss.sh
 	${SH} $(top_srcdir)/regress/moss.sh $(top_srcdir)
+	@${ECHO} +++ $@ test complete.
 
-lights.pix: $(top_srcdir)/regress/lights.sh
+lights: $(top_srcdir)/regress/lights.sh
 	${SH} $(top_srcdir)/regress/lights.sh $(top_srcdir)
+	@${ECHO} +++ $@ test complete.
 
-solids.pix: $(top_srcdir)/regress/solids.sh
+solids: $(top_srcdir)/regress/solids.sh
 	${SH} $(top_srcdir)/regress/solids.sh $(top_srcdir)
+	@${ECHO} +++ $@ test complete.
 
-shaders.pix: $(top_srcdir)/regress/shaders.sh
+shaders: $(top_srcdir)/regress/shaders.sh
 	${SH} $(top_srcdir)/regress/shaders.sh $(top_srcdir)
+	@${ECHO} +++ $@ test complete.
 
-spdi.pix: $(top_srcdir)/regress/spdi.sh
+spdi: $(top_srcdir)/regress/spdi.sh
 	${SH} $(top_srcdir)/regress/spdi.sh $(top_srcdir)
+	@${ECHO} +++ $@ test complete.
 
-iges:$(top_srcdir)/regress/iges.sh
+iges: $(top_srcdir)/regress/iges.sh
 	${SH} $(top_srcdir)/regress/iges.sh $(top_srcdir)
+	@${ECHO} +++ $@ test complete.
 
 weight: $(top_srcdir)/regress/weight.sh
 	${SH} $(top_srcdir)/regress/weight.sh $(top_srcdir)
+	@${ECHO} +++ $@ test complete.
 
-gqa.log: $(top_srcdir)/regress/gqa.sh
+gqa: $(top_srcdir)/regress/gqa.sh
 	${SH} $(top_srcdir)/regress/gqa.sh
+	@${ECHO} +++ $@ test complete.
 
 # these are here because they go in the distribution but are not installed
 EXTRA_DIST = \
@@ -51,8 +59,11 @@ EXTRA_DIST = \
 CLEANFILES = \
 	.density \
 	adj_air.pl \
+	density_table.txt \
 	dsp.dat \
 	exp_air.pl \
+	gaps.pl \
+	gqa.g \
 	iges.g \
 	iges.log \
 	iges_file.iges \
@@ -77,6 +88,7 @@ CLEANFILES = \
 	moss2.pix \
 	moss_png.diff \
 	moss_ref.pix \
+	overlaps.pl \
 	shaders.pix \
 	shaders.pix.diff \
 	shaders_ref.pix \
@@ -94,18 +106,15 @@ CLEANFILES = \
 	spdi_diff.pix \
 	spdi_mged.log \
 	spdi_ref.pix \
-	weight.log \
+	volume.pl \
 	weight.g \
+	weight.log \
 	weight.out \
 	weight.ref \
-	wgt.out \
-	gqa.g \
-	overlaps.pl \
-	gaps.pl \
-	volume.pl \
-	density_table.txt
+	wgt.out
 
 MOSTLYCLEANFILES = \
+	gqa.log \
 	lights.log \
 	mged_shaders.log \
 	mged_solids.log \
@@ -114,8 +123,7 @@ MOSTLYCLEANFILES = \
 	moss.log \
 	solids.log \
 	spdi.log \
-	weight.log \
-	gqa.log
+	weight.log
 
 MAINTAINERCLEANFILES = Makefile.in
 
