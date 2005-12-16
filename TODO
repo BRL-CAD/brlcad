@@ -35,6 +35,9 @@ THESE SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE LOWER PRIORITY OR FOR FUTURE RELEASES
 -----------------------------------------------
 
+* run-time path identification of mged resources was never completed,
+  complete it.
+
 * rt annotation support
 
 * support for fillets and chamfers as object/combination operations
