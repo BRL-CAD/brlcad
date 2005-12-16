@@ -372,6 +372,7 @@ BC_ARG_WITH([with_python], [python], [Specify use of or path to python], [auto])
 # aliases for enabling configuration of everything (help uses everything)
 BC_ARG_ALIAS([everything], [all])
 BC_ARG_ALIAS([everything], [everything-build])
+BC_ARG_ALIAS([everything], [build-everything])
 
 # aliases for allowing configure to modify the flags automatically (help uses automatic-flags)
 BC_ARG_ALIAS([auto_flags], [auto-flags])
