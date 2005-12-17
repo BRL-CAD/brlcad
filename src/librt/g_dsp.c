@@ -3396,6 +3396,8 @@ get_file_data(struct rt_dsp_internal	*dsp_ip,
     struct bu_mapped_file		*mf;
     int				count, in_cookie, out_cookie;
 
+    RT_DSP_CK_MAGIC(dsp_ip);
+    RT_CK_DBI(dbip);
 
     /* get file */
     mf = dsp_ip->dsp_mp =
