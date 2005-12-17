@@ -20,6 +20,7 @@ majority of known contributors to BRL-CAD over the project's
 existence.  This is part of an on-going effort to document the history
 of BRL-CAD over the past 20 years.
 
+* improved mged resource searching when not installed - Sean Morrison
 * significant AUTHORS file updates, all names filed - Sean Morrison
 * fixed sketch primitive bezier path computation bug - Sean Morrison
 * cleaned up erroneous rtedge end of line output - Sean Morrison
