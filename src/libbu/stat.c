@@ -58,27 +58,44 @@ static const char RCS_stat[] = "@(#)$Header$";
 int
 bu_file_exists(const char *path)
 {
-	struct	stat	sbuf;
+    struct stat sbuf;
 
-	if( path == NULL )  return 0;			/* FAIL */
+    if (bu_debug) {
+	printf("Does %s exist? ", path);
+    }
 
-	/* defined in unistd.h */
+    if( path == NULL )  return 0;			/* FAIL */
+
+    /* defined in unistd.h */
 #if defined(HAVE_ACCESS) && defined(F_OK)
 #  define bu_file_exists_method 1
-	if( access( path, F_OK )  == 0 )  return 1;	/* OK */
+    if( access( path, F_OK )  == 0 ) {
+	if (bu_debug) {
+	    printf("YES\n");
+	}
+	return 1;	/* OK */
+    }
 #endif
 
-	/* does it exist as a filesystem entity? */
+    /* does it exist as a filesystem entity? */
 #if defined(HAVE_STAT)
 #  define bu_file_exists_method 1
-	if( stat( path, &sbuf ) == 0 )  return 1;	/* OK */
+    if( stat( path, &sbuf ) == 0 ) {
+	if (bu_debug) {
+	    printf("YES\n");
+	}
+	return 1;	/* OK */
+    }
 #endif
 
 #ifndef bu_file_exists_method
 #  error "Do not know how to check whether a file exists on this system"
 #endif
 
-	return 0;					/* FAIL */
+    if (bu_debug) {
+	printf("NO\n");
+    }
+    return 0;					/* FAIL */
 }
 
 /*
