@@ -58,7 +58,7 @@ tclcad_auto_path(Tcl_Interp *interp)
 	 * installed yet.  must go at least as many levels deep as the
 	 * src/tclscripts hierarchy.
 	 */
-	bu_log("WARNING: BRL-CAD %s is not apparently installed yet.\n", BRLCAD_VERSION);
+	bu_log("WARNING: BRL-CAD %s is apparently not installed yet.\n", BRLCAD_VERSION);
 
 	bu_vls_init(&prefix);
 	bu_vls_init(&base);
