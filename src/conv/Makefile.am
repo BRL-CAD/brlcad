@@ -80,6 +80,11 @@ EXTRA_DIST = dbclean.sh
 endif
 # end ONLY_BENCHMARK
 
+# static is required to avoid MIPSpro 7.3 long rpath linker bug
+if LINK_STATIC_REQUIRED
+asc2g_LDFLAGS = -static
+endif
+
 asc2g_LDADD = ${WDB} ${LIBRT} ${BN} ${BU} ${SYSV} ${TCL}
 asc_nmg_LDADD = ${WDB} ${LIBRT} ${BN} ${BU}
 bot_bldxf_LDADD = ${LIBRT} ${BN} ${BU}
