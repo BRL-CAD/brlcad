@@ -36,162 +36,206 @@
 void
 tclcad_auto_path(Tcl_Interp *interp)
 {
+    static const int SEARCH_DEPTH = 7;
     struct bu_vls str;
     char *pathname;
 
-    /* Locate the BRL-CAD-specific Tcl scripts quietly. */
-    pathname = bu_brlcad_data( "tclscripts", 1 );
-
-#ifdef _WIN32
-    {
-	/* XXX - nasty little hack to convert paths */
-	int i;
-	strcat(pathname,"/");
-	for (i=0;i<strlen(pathname);i++) {
-	    if(pathname[i]=='\\')
-		pathname[i]='/'; }
-    }
-#endif
-
     bu_vls_init(&str);
+
+    /****************************************************/
+    /* Locate the BRL-CAD-specific Tcl scripts quietly. */
+    /****************************************************/
+    pathname = bu_brlcad_data( "tclscripts", 1 );
     if (pathname) {
-	bu_vls_printf(&str, "lappend auto_path \"%s\" \"%s/lib\" \"%s/util\" \"%s/mged\" \"%s/geometree\"",
+	bu_vls_sprintf(&str, "lappend auto_path \"%s\" \"%s/lib\" \"%s/util\" \"%s/mged\" \"%s/geometree\"",
 		      pathname, pathname, pathname, pathname, pathname);
 	(void)Tcl_Eval(interp, bu_vls_addr(&str));
     } else {
-	/* hunt for the tclscripts since we're probably just not installed yet */
+	int i, j;
+	struct bu_vls prefix, base;
+
+	/* hunt for the tclscripts since we're probably just not
+	 * installed yet.  must go at least as many levels deep as the
+	 * src/tclscripts hierarchy.
+	 */
 	bu_log("WARNING: BRL-CAD %s is not apparently installed yet.\n", BRLCAD_VERSION);
-	if (bu_file_exists("./tclscripts")) {
-	    (void)Tcl_Eval(interp, "lappend auto_path tclscripts tclscripts/lib tclscripts/util tclscripts/mged tclscripts/geometree");
-	} else if (bu_file_exists("../tclscripts")) {
-	    (void)Tcl_Eval(interp, "lappend auto_path ../tclscripts ../tclscripts/lib ../tclscripts/util ../tclscripts/mged ../tclscripts/geometree");
-	} else if (bu_file_exists("src/tclscripts")) {
-	    (void)Tcl_Eval(interp, "lappend auto_path src/tclscripts src/tclscripts/lib src/tclscripts/util src/tclscripts/mged src/tclscripts/geometree");
-	} else if (bu_file_exists("../src/tclscripts")) {
-	    (void)Tcl_Eval(interp, "lappend auto_path ../src/tclscripts ../src/tclscripts/lib ../src/tclscripts/util ../src/tclscripts/mged ../src/tclscripts/geometree");
-	} else if (bu_file_exists("../../src/tclscripts")) {
-	    (void)Tcl_Eval(interp, "lappend auto_path ../../src/tclscripts ../../src/tclscripts/lib ../../src/tclscripts/util ../../src/tclscripts/mged ../../src/tclscripts/geometree");
-	} else if (bu_file_exists("../../../src/tclscripts")) {
-	    (void)Tcl_Eval(interp, "lappend auto_path ../../../src/tclscripts ../../../src/tclscripts/lib ../../../src/tclscripts/util ../../../src/tclscripts/mged ../../../src/tclscripts/geometree");
-	} else {
+
+	bu_vls_init(&prefix);
+	bu_vls_init(&base);
+
+	/* go up to SEARCH_DEPTH levels deep */
+	bu_vls_sprintf(&base, "src/tclscripts");
+	for (i = 0; i < SEARCH_DEPTH; i++) {
+	    bu_vls_trunc(&prefix, 0);
+	    for (j=0; j < i; j++) {
+		bu_vls_printf(&prefix, "../");
+	    }
+	    bu_vls_sprintf(&str, "%S%S", &prefix, &base);
+	    if (bu_file_exists(bu_vls_addr(&str))) {
+		bu_vls_sprintf(&str, "lappend auto_path \"%S%S\" \"%S%S/lib\" \"%S%S/util\" \"%S%S/mged\" \"%S%S/geometree\" \"%S%S/rtwizard\"",
+			      &prefix, &base, &prefix, &base, &prefix, &base, &prefix, &base, &prefix, &base, &prefix, &base);
+		/* make sure tcl's scripts are in the path */
+		(void)Tcl_Eval(interp, bu_vls_addr(&str)); 
+		break;
+	    }
+	}
+
+	if (i >= SEARCH_DEPTH) {
 	    /* fail noisily */
 	    (void)bu_brlcad_data("tclscripts", 0);
 	}
+	bu_vls_free(&prefix);
+	bu_vls_free(&base);
     }
 
+
+    /*******************************************/
     /* make sure tcl's scripts are in the path */
-    bu_vls_trunc(&str, 0);
-    bu_vls_printf(&str, "lib/tcl%s", TCL_VERSION);
+    /*******************************************/
+    bu_vls_sprintf(&str, "lib/tcl%s", TCL_VERSION);
     pathname = bu_brlcad_root( bu_vls_addr(&str), 1 );
     if (pathname) {
-	bu_vls_printf(&str, "lappend auto_path \"%s\"", pathname);
+	bu_vls_sprintf(&str, "lappend auto_path \"%s\"", pathname);
 	(void)Tcl_Eval(interp, bu_vls_addr(&str));
-	bu_vls_printf(&str, "set tcl_library %s", pathname);
+	bu_vls_sprintf(&str, "set tcl_library %s", pathname);
 	(void)Tcl_Eval(interp, bu_vls_addr(&str));
     } else {
-	/* hunt for the tclscripts since we're probably just not installed yet */
-	if (bu_file_exists("./other/libtcl/library")) {
-	    (void)Tcl_Eval(interp, "lappend auto_path ./other/libtcl/library");
-	    (void)Tcl_Eval(interp, "set tcl_library ./other/libtcl/library");
-	} else if (bu_file_exists("../other/libtcl/library")) {
-	    (void)Tcl_Eval(interp, "lappend auto_path ../other/libtcl/library");
-	    (void)Tcl_Eval(interp, "set tcl_library ../other/libtcl/library");
-	} else if (bu_file_exists("src/other/libtcl/library")) {
-	    (void)Tcl_Eval(interp, "lappend auto_path src/other/libtcl/library");
-	    (void)Tcl_Eval(interp, "set tcl_library src/other/libtcl/library");
-	} else if (bu_file_exists("../src/other/libtcl/library")) {
-	    (void)Tcl_Eval(interp, "lappend auto_path ../src/other/libtcl/library");
-	    (void)Tcl_Eval(interp, "set tcl_library ../src/other/libtcl/library");
-	} else if (bu_file_exists("../../src/other/libtcl/library")) {
-	    (void)Tcl_Eval(interp, "lappend auto_path ../../src/other/libtcl/library");
-	    (void)Tcl_Eval(interp, "set tcl_library ../../src/other/libtcl/library");
-	} else if (bu_file_exists("../../../src/other/libtcl/library")) {
-	    (void)Tcl_Eval(interp, "lappend auto_path ../../../src/other/libtcl/library");
-	    (void)Tcl_Eval(interp, "set tcl_library ../../../src/other/libtcl/library");
-	} else {
+	int i, j;
+	struct bu_vls prefix, base;
+
+	/* hunt for the tcl library since we're probably just not
+	 * installed yet.
+	 */
+
+	bu_vls_init(&prefix);
+	bu_vls_init(&base);
+
+	/* go up to SEARCH_DEPTH levels deep */
+	bu_vls_sprintf(&base, "src/other/libtcl/library");
+	for (i = 0; i < SEARCH_DEPTH; i++) {
+	    bu_vls_trunc(&prefix, 0);
+	    for (j=0; j < i; j++) {
+		bu_vls_printf(&prefix, "../");
+	    }
+	    bu_vls_sprintf(&str, "%S%S", &prefix, &base);
+	    if (bu_file_exists(bu_vls_addr(&str))) {
+		bu_vls_sprintf(&str, "lappend auto_path \"%S%S\"", &prefix, &base);
+		(void)Tcl_Eval(interp, bu_vls_addr(&str)); 
+		bu_vls_sprintf(&str, "set tcl_library \"%S%S\"", &prefix, &base);
+		(void)Tcl_Eval(interp, bu_vls_addr(&str)); 
+		break;
+	    }
+	}
+
+	if (i >= SEARCH_DEPTH) {
 	    /* fail noisily */
-	    bu_vls_printf(&str, "lib/tcl%s", TCL_VERSION);
+	    bu_vls_sprintf(&str, "lib/tcl%s", TCL_VERSION);
 	    (void)bu_brlcad_data(bu_vls_addr(&str), 0);
 	}
+	bu_vls_free(&prefix);
+	bu_vls_free(&base);
     }
-    bu_vls_printf(&str, "set tcl_version %s", TCL_VERSION);
+    bu_vls_sprintf(&str, "set tcl_version %s", TCL_VERSION);
     (void)Tcl_Eval(interp, bu_vls_addr(&str));
 
 
+    /******************************************/
     /* make sure tk's scripts are in the path */
-    bu_vls_trunc(&str, 0);
-    bu_vls_printf(&str, "lib/tk%s", TK_VERSION);
+    /******************************************/
+    bu_vls_sprintf(&str, "lib/tk%s", TK_VERSION);
     pathname = bu_brlcad_root( bu_vls_addr(&str), 1 );
     if (pathname) {
-	bu_vls_printf(&str, "lappend auto_path \"%s\"", pathname);
+	bu_vls_sprintf(&str, "lappend auto_path \"%s\"", pathname);
 	(void)Tcl_Eval(interp, bu_vls_addr(&str));
-	bu_vls_printf(&str, "set tk_library %s", pathname);
+	bu_vls_sprintf(&str, "set tk_library %s", pathname);
 	(void)Tcl_Eval(interp, bu_vls_addr(&str));
     } else {
-	/* hunt for the tclscripts since we're probably just not installed yet */
-	if (bu_file_exists("./other/libtk/library")) {
-	    (void)Tcl_Eval(interp, "lappend auto_path ./other/libtk/library");
-	    (void)Tcl_Eval(interp, "set tk_library ./other/libtk/library");
-	} else if (bu_file_exists("../other/libtk/library")) {
-	    (void)Tcl_Eval(interp, "lappend auto_path ../other/libtk/library");
-	    (void)Tcl_Eval(interp, "set tk_library ../other/libtk/library");
-	} else if (bu_file_exists("src/other/libtk/library")) {
-	    (void)Tcl_Eval(interp, "lappend auto_path src/other/libtk/library");
-	    (void)Tcl_Eval(interp, "set tk_library src/other/libtk/library");
-	} else if (bu_file_exists("../src/other/libtk/library")) {
-	    (void)Tcl_Eval(interp, "lappend auto_path ../src/other/libtk/library");
-	    (void)Tcl_Eval(interp, "set tk_library ../src/other/libtk/library");
-	} else if (bu_file_exists("../../src/other/libtk/library")) {
-	    (void)Tcl_Eval(interp, "lappend auto_path ../../src/other/libtk/library");
-	    (void)Tcl_Eval(interp, "set tk_library ../../src/other/libtk/library");
-	} else if (bu_file_exists("../../../src/other/libtk/library")) {
-	    (void)Tcl_Eval(interp, "lappend auto_path ../../../src/other/libtk/library");
-	    (void)Tcl_Eval(interp, "set tk_library ../../../src/other/libtk/library");
-	} else {
+	int i, j;
+	struct bu_vls prefix, base;
+
+	/* hunt for the tk library since we're probably just not
+	 * installed yet.
+	 */
+
+	bu_vls_init(&prefix);
+	bu_vls_init(&base);
+
+	/* go up to SEARCH_DEPTH levels deep */
+	bu_vls_sprintf(&base, "src/other/libtk/library");
+	for (i = 0; i < SEARCH_DEPTH; i++) {
+	    bu_vls_trunc(&prefix, 0);
+	    for (j=0; j < i; j++) {
+		bu_vls_printf(&prefix, "../");
+	    }
+	    bu_vls_sprintf(&str, "%S%S", &prefix, &base);
+	    if (bu_file_exists(bu_vls_addr(&str))) {
+		bu_vls_sprintf(&str, "lappend auto_path \"%S%S\"", &prefix, &base);
+		(void)Tcl_Eval(interp, bu_vls_addr(&str)); 
+		bu_vls_sprintf(&str, "set tk_library \"%S%S\"", &prefix, &base);
+		(void)Tcl_Eval(interp, bu_vls_addr(&str)); 
+		break;
+	    }
+	}
+
+	if (i >= SEARCH_DEPTH) {
 	    /* fail noisily */
-	    bu_vls_printf(&str, "lib/tk%s", TK_VERSION);
+	    bu_vls_sprintf(&str, "lib/tk%s", TK_VERSION);
 	    (void)bu_brlcad_data(bu_vls_addr(&str), 0);
 	}
+	bu_vls_free(&prefix);
+	bu_vls_free(&base);
     }
-    bu_vls_printf(&str, "set tk_version %s", TK_VERSION);
+    bu_vls_sprintf(&str, "set tk_version %s", TK_VERSION);
     (void)Tcl_Eval(interp, bu_vls_addr(&str));
 
+
+    /***********************************************/
     /* make sure iwidget's scripts are in the path */
-    bu_vls_trunc(&str, 0);
-    bu_vls_printf(&str, "lib/iwidgets%s", IWIDGETS_VERSION);
+    /***********************************************/
+    bu_vls_sprintf(&str, "lib/iwidgets%s", IWIDGETS_VERSION);
     pathname = bu_brlcad_root( bu_vls_addr(&str), 1 );
     if (pathname) {
-	bu_vls_printf(&str, "lappend auto_path \"%s\"", pathname);
+	bu_vls_sprintf(&str, "lappend auto_path \"%s\"", pathname);
 	(void)Tcl_Eval(interp, bu_vls_addr(&str));
-	bu_vls_printf(&str, "set iwidgets_library %s", pathname);
+	bu_vls_sprintf(&str, "set iwidgets_library %s", pathname);
 	(void)Tcl_Eval(interp, bu_vls_addr(&str));
     } else {
-	/* hunt for the tclscripts since we're probably just not installed yet */
-	if (bu_file_exists("./other/iwidgets")) {
-	    (void)Tcl_Eval(interp, "lappend auto_path ./other/iwidgets");
-	    (void)Tcl_Eval(interp, "set iwidgets_library ./other/iwidgets");
-	} else if (bu_file_exists("../other/iwidgets")) {
-	    (void)Tcl_Eval(interp, "lappend auto_path ../other/iwidgets");
-	    (void)Tcl_Eval(interp, "set iwidgets_library ../other/iwidgets");
-	} else if (bu_file_exists("src/other/iwidgets")) {
-	    (void)Tcl_Eval(interp, "lappend auto_path src/other/iwidgets");
-	    (void)Tcl_Eval(interp, "set iwidgets_library src/other/iwidgets");
-	} else if (bu_file_exists("../src/other/iwidgets")) {
-	    (void)Tcl_Eval(interp, "lappend auto_path ../src/other/iwidgets");
-	    (void)Tcl_Eval(interp, "set iwidgets_library ../src/other/iwidgets");
-	} else if (bu_file_exists("../../src/other/iwidgets")) {
-	    (void)Tcl_Eval(interp, "lappend auto_path ../../src/other/iwidgets");
-	    (void)Tcl_Eval(interp, "set iwidgets_library ../../src/other/iwidgets");
-	} else if (bu_file_exists("../../../src/other/iwidgets")) {
-	    (void)Tcl_Eval(interp, "lappend auto_path ../../../src/other/iwidgets");
-	    (void)Tcl_Eval(interp, "set iwidgets_library ../../../src/other/iwidgets");
-	} else {
+	int i, j;
+	struct bu_vls prefix, base;
+
+	/* hunt for the tk library since we're probably just not
+	 * installed yet.
+	 */
+
+	bu_vls_init(&prefix);
+	bu_vls_init(&base);
+
+	/* go up to SEARCH_DEPTH levels deep */
+	bu_vls_sprintf(&base, "src/other/iwidgets");
+	for (i = 0; i < SEARCH_DEPTH; i++) {
+	    bu_vls_trunc(&prefix, 0);
+	    for (j=0; j < i; j++) {
+		bu_vls_printf(&prefix, "../");
+	    }
+	    bu_vls_sprintf(&str, "%S%S", &prefix, &base);
+	    if (bu_file_exists(bu_vls_addr(&str))) {
+		bu_vls_sprintf(&str, "lappend auto_path \"%S%S\"", &prefix, &base);
+		(void)Tcl_Eval(interp, bu_vls_addr(&str)); 
+		bu_vls_sprintf(&str, "set iwidgets_library \"%S%S\"", &prefix, &base);
+		(void)Tcl_Eval(interp, bu_vls_addr(&str)); 
+		break;
+	    }
+	}
+
+	if (i >= SEARCH_DEPTH) {
 	    /* fail noisily */
-	    bu_vls_printf(&str, "lib/iwidgets%s", IWIDGETS_VERSION);
+	    bu_vls_sprintf(&str, "lib/iwidgets%s", IWIDGETS_VERSION);
 	    (void)bu_brlcad_data(bu_vls_addr(&str), 0);
 	}
+	bu_vls_free(&prefix);
+	bu_vls_free(&base);
     }
-    bu_vls_printf(&str, "set iwidgets_version %s", IWIDGETS_VERSION);
+    bu_vls_sprintf(&str, "set iwidgets_version %s", IWIDGETS_VERSION);
     (void)Tcl_Eval(interp, bu_vls_addr(&str));
 
     bu_vls_free(&str);
