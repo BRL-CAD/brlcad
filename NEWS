@@ -11,6 +11,15 @@ entire history of the project is available through CVS.
 --- 2005-12-15  Release 7.6.6                                      ---
 ----------------------------------------------------------------------
 
+Continuing with the newly added point collection and reverse modeling
+techniques provide in the previous release, this iteration improves
+upon that support fixing several issues and refining the modeling
+techniques.  Additionally, after more than a year of passively
+researching and investigating, this release now accounts for the
+majority of known contributors to BRL-CAD over the project's
+existence.  This is part of an on-going effort to document the history
+of BRL-CAD over the past 20 years.
+
 * significant AUTHORS file updates, all names filed - Sean Morrison
 * fixed sketch primitive bezier path computation bug - Sean Morrison
 * cleaned up erroneous rtedge end of line output - Sean Morrison
