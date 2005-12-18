@@ -29,8 +29,6 @@
  */
 #include "common.h"
 
-
-
 #include <stdio.h>
 #include <fcntl.h>
 #include <string.h>
@@ -38,6 +36,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <math.h>
+
 #include "machine.h"
 #include "bu.h"
 #include "vmath.h"
@@ -45,6 +44,7 @@
 #include "rtprivate.h"
 #include "../rt/ext.h"
 #include "plot3.h"
+
 
 #define prj_MAGIC 0x70726a00	/* "prj" */
 #define CK_prj_SP(_p) BU_CKMAG(_p, prj_MAGIC, "prj_specific")
@@ -76,7 +76,8 @@ struct img_specific {
 };
 #define img_MAGIC	0x696d6700	/* "img" */
 
-/*
+
+/**
  * the shader specific structure contains all variables which are unique
  * to any particular use of the shader.
  */
@@ -87,7 +88,8 @@ struct prj_specific {
 	FILE			*prj_plfd;
 };
 
-/*
+
+/**
  *  img_source_hook() is used to record where the image datasource is coming from
  *  so that the image may be loaded automatically as needed from either a file or
  *  from a database-embedded binary object.
@@ -104,7 +106,7 @@ HIDDEN void img_source_hook(const struct bu_structparse *ip, const char *sp_name
 }
 
 
-/*
+/**
  *	i m g _ l o a d _ d a t a s o u r c e
  *
  * This is a helper routine used in prj_setup() to load a projection image
@@ -119,7 +121,7 @@ HIDDEN int img_load_datasource(struct img_specific *image, struct db_i *dbInstan
 		bu_bomb("ERROR: img_load_datasource() received NULL arg (struct img_specific *)\n");
 	}
 
-	bu_log("Loading image %s [%S]...", image->i_datasrc==IMG_SRC_AUTO?"from auto-determined datasource":image->i_datasrc==IMG_SRC_OBJECT?"from a database object":image->i_datasrc==IMG_SRC_FILE?"from a file":"from an unknown source (ERROR)", &image->i_name);
+	bu_log("Loading image %s [%s]...", image->i_datasrc==IMG_SRC_AUTO?"from auto-determined datasource":image->i_datasrc==IMG_SRC_OBJECT?"from a database object":image->i_datasrc==IMG_SRC_FILE?"from a file":"from an unknown source (ERROR)", bu_vls_addr(&image->i_name));
 
 	/* if the source is auto or object, we try to load the object */
 	if ((image->i_datasrc==IMG_SRC_AUTO) || (image->i_datasrc==IMG_SRC_OBJECT)) {
@@ -192,10 +194,8 @@ HIDDEN int img_load_datasource(struct img_specific *image, struct db_i *dbInstan
 }
 
 
-/*
- *
+/**
  *  Bounds checking on perspective angle
- *
  */
 HIDDEN void
 persp_hook(register const struct bu_structparse *sdp, register const char *name, char *base, const char *value)
@@ -221,9 +221,8 @@ persp_hook(register const struct bu_structparse *sdp, register const char *name,
 }
 
 
-/*
+/**
  * Check for value < 0.0
- *
  */
 HIDDEN void
 dimen_hook(register const struct bu_structparse *sdp, register const char *name, char *base, const char *value)
@@ -269,7 +268,8 @@ const char				*value;	/* string containing value */
 	BU_CK_VLS(&img_sp->i_name);
 }
 #endif
-/*
+
+/**
  * This routine is responsible for duplicating the image list head to make
  * a new list element.  It used to read in pixel data for an image (this is
  * now done in the prj_setup() routine), and computes the matrix from the view
@@ -387,7 +387,7 @@ orient_hook(register const struct bu_structparse *sdp, register const char *name
 #define IMG_AO(m)	bu_offsetofarray(struct img_specific, m)
 
 
-/* description of how to parse/print the arguments to the shader
+/** description of how to parse/print the arguments to the shader.
  * There is at least one line here for each variable in the shader specific
  * structure above
  */
@@ -418,7 +418,8 @@ struct bu_structparse img_print_tab[] = {
 HIDDEN int	prj_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip), prj_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp);
 HIDDEN void	prj_print(register struct region *rp, char *dp), prj_free(char *cp);
 
-/* The "mfuncs" structure defines the external interface to the shader.
+/**
+ * The "mfuncs" structure defines the external interface to the shader.
  * Note that more than one shader "name" can be associated with a given
  * shader by defining more than one mfuncs struct in this array.
  * See sh_phong.c for an example of building more than one shader "name"
@@ -435,7 +436,7 @@ struct mfuncs prj_mfuncs[] = {
 };
 
 
-/*	P R J _ S E T U P
+/**	P R J _ S E T U P
  *
  *	This routine is called (at prep time)
  *	once for each region which uses this shader.
@@ -544,7 +545,9 @@ prj_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct
         /* load the image data for any specified images */
         for (BU_LIST_FOR(img_sp, img_specific, &prj_sp->prj_images.l)) {
 	  if (img_load_datasource(img_sp, rtip->rti_dbip, img_sp->i_width * img_sp->i_height * 3) < 0) {
-	    bu_log("\nERROR: prj_setup() %s %s could not be loaded [source was %s]\n", rp->reg_name, bu_vls_addr(&img_sp->i_name), img_sp->i_datasrc==IMG_SRC_OBJECT?"object":img_sp->i_datasrc==IMG_SRC_FILE?"file":"auto");
+	    bu_log("\nERROR: prj_setup() %s %s could not be loaded [source was %s]\n",
+		   rp->reg_name, bu_vls_addr(&img_sp->i_name),
+		   img_sp->i_datasrc==IMG_SRC_OBJECT?"object":img_sp->i_datasrc==IMG_SRC_FILE?"file":"auto");
 
 	    /* skip this one */
 	    img_sp->i_through=0;
@@ -588,7 +591,7 @@ prj_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct
 	return(1);
 }
 
-/*
+/**
  *	P R J _ P R I N T
  */
 HIDDEN void
@@ -602,7 +605,7 @@ prj_print(register struct region *rp, char *dp)
 	}
 }
 
-/*
+/**
  *	P R J _ F R E E
  */
 HIDDEN void
@@ -713,7 +716,7 @@ project_point(point_t sh_color, struct img_specific *img_sp, struct prj_specific
 }
 
 
-/*
+/**
  *	P R J _ R E N D E R
  *
  *	This is called (from viewshade() in shade.c) once for each hit point
