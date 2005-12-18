@@ -83,11 +83,13 @@ bu_vls_init(register struct bu_vls *vp)
     /* if it's already a vls, perform a sanity check that we're not
      * leaking memory.
      */
+#if defined(DEBUG) && 0
     if (vp->vls_magic == BU_VLS_MAGIC) {
 	if (vp->vls_str && vp->vls_len > 0 && vp->vls_max > 0) {
-	    bu_log("bu_vls_init potential leak [%s]", vp->vls_str);
+	    bu_log("bu_vls_init potential leak [%s] (vls_len=%d)\n", vp->vls_str, vp->vls_len);
 	}
     }
+#endif
     vp->vls_magic = BU_VLS_MAGIC;
     vp->vls_str = (char *)0;
     vp->vls_len = vp->vls_max = vp->vls_offset = 0;
