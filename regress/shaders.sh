@@ -224407,7 +224407,7 @@ EOF
 
 if [ ! -f shaders ] ; then
 	echo 'mged failed'
-	exit -1
+	exit 1
 fi
 mv shaders shaders.orig
 sed "s,^rt,../src/rt/rt -P 1 -B -U 1," < shaders.orig > shaders
@@ -224419,7 +224419,7 @@ echo 'rendering shaders...'
 NUMBER_WRONG=1
 if [ ! -f shaders.pix ] ; then
 	echo shaders raytrace failed
-	exit -1
+	exit 1
 else
 	if [ ! -f $TOP_SRCDIR/regress/shaderspix.asc ] ; then
 		echo No reference file for $TOP_SRCDIR/regress/ref/shaders.pix

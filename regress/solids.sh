@@ -733,9 +733,9 @@ EOF
 
 
 # Trim 1025 byte sequence down to exactly 1024.
-../src/util/gencolor -r205 0 16 32 64 128 | dd of=ebm.bw bs=1024 count=1 >/dev/null 2>&1
+../src/util/gencolor -r205 0 16 32 64 128 | dd of=ebm.bw bs=1024 count=1 > mged_solids.log 2>&1
 
-../src/mged/mged -c > mged_solids.log 2>&1 << EOF
+../src/mged/mged -c >> mged_solids.log 2>&1 << EOF
 opendb solids.g y
 
 
@@ -888,11 +888,11 @@ echo 'rendering solids...'
 ./solids
 if [ ! -f solids.pix ] ; then
 	echo raytrace failed
-	exit -1
+	exit 1
 fi
 if [ ! -f $1/regress/solidspix.asc ] ; then
 	echo No reference file for solids.pix
-	exit -1
+	exit 1
 fi
 ../src/conv/asc2pix < $1/regress/solidspix.asc > solids_ref.pix
 ../src/util/pixdiff solids.pix solids_ref.pix > solids.pix.diff \

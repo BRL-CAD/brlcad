@@ -31,7 +31,7 @@ cvs -z3 -d:ext:lbutler@cvs.sourceforge.net:/cvsroot/brlcad co -P brlcad
 
 if [ ! -d brlcad ] ; then
     /bin/echo "unable to extract source from CVS repository"
-    exit -1
+    exit 1
 fi
 
 #

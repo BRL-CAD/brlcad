@@ -24,7 +24,7 @@ if [ X$MYNAME == X$MASTERHOST ] ; then
 
     if [ ! -d brlcad ] ; then
 	/bin/echo "unable to extract source from CVS repository"
-	exit -1
+	exit 1
     fi
 
 
@@ -86,7 +86,7 @@ while [ ! -f $MYNAME ] ; do
 	# we should log something here
 	/bin/echo $MYNAME giving up at $NOW >> $LOG_FILE
 
-	exit
+	exit 1
     fi
 
     sleep 10
@@ -122,7 +122,7 @@ cocoa)
     export MAKE_OPTS="-j2" ;;
 *)
     echo hostname \"$MYNAME\" not recognized
-    exit
+    exit 1
 esac
 
 BUILD_DIR=`pwd`/${MYNAME}_${START_TIME}.dir
@@ -130,7 +130,7 @@ rm -f $BUILD_DIR
 mkdir $BUILD_DIR
 if [ ! -d $BUILD_DIR ] ; then
     echo create $BUILD_DIR failed
-    exit -1
+    exit 1
 fi
 
 cd $BUILD_DIR
@@ -151,12 +151,12 @@ $MAKE_CMD $MAKE_OPTS > build.log 2>&1
 STATUS=$?
 if [ $STATUS != 0 ] ; then
     echo build failed status $STATUS
-    exit -1
+    exit 1
 fi
 if [ -s build.log ] ; then
     cd regress
     make test > test.log 2>&1
 else
     echo build failed zero length log
-    exit -1
+    exit 1
 fi
