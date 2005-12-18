@@ -80,13 +80,12 @@ bu_vls_init(register struct bu_vls *vp)
     if (vp == (struct bu_vls  *)NULL)
 	bu_bomb("bu_vls_init() passed NULL pointer");
 
-    /* if it's already a vls, make sure we free any associated
-     * string space allocated.
+    /* if it's already a vls, perform a sanity check that we're not
+     * leaking memory.
      */
     if (vp->vls_magic == BU_VLS_MAGIC) {
 	if (vp->vls_str && vp->vls_len > 0 && vp->vls_max > 0) {
-	    vp->vls_str[0] = '?'; /* sanity */
-	    bu_free(vp->vls_str, "bu_vls_init");
+	    bu_log("bu_vls_init potential leak [%s]", vp->vls_str);
 	}
     }
     vp->vls_magic = BU_VLS_MAGIC;
@@ -749,7 +748,7 @@ bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
 
     int flags;
     int fieldlen=-1;
-    char fbuf[64], buf[1024];			/* % format buffer */
+    char fbuf[64] = {0}, buf[1024] = {0};			/* % format buffer */
 
     BU_CK_VLS(vls);
     bu_vls_extend(vls, 96);
