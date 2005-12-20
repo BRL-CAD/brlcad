@@ -456,21 +456,21 @@ pop_space_stack:
 		while( cutp->cut_type == CUT_CUTNODE ) {
 			switch( cutp->cn.cn_axis )  {
 			case X:
-				if( px >= cutp->cn.cn_point )  {
+				if( !(px < cutp->cn.cn_point) )  {
 					cutp=cutp->cn.cn_r;
 				}  else  {
 					cutp=cutp->cn.cn_l;
 				}
 				break;
 			case Y:
-				if( py >= cutp->cn.cn_point )  {
+				if( !(py < cutp->cn.cn_point) )  {
 					cutp=cutp->cn.cn_r;
 				}  else  {
 					cutp=cutp->cn.cn_l;
 				}
 				break;
 			case Z:
-				if( pz >= cutp->cn.cn_point )  {
+				if( !(pz < cutp->cn.cn_point) )  {
 					cutp=cutp->cn.cn_r;
 				}  else  {
 					cutp=cutp->cn.cn_l;
