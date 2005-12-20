@@ -100,6 +100,10 @@ namespace eval Archer {
 	method copyeval            {args}
 	method cp                  {args}
 	method dbExpand	           {args}
+	method decimate            {args}
+	method decimate2           {args}
+	method decimateAttr        {args}
+	method decimateAttr2       {args}
 	method delete              {args}
 	method draw                {args}
 	method E                   {args}
@@ -116,7 +120,7 @@ namespace eval Archer {
 	method get                 {args}
 	method group               {args}
 	method importFg4	   {}
-	method importStl	   {}
+	method importStl	   {importDir}
 	method i                   {args}
 	method importFg4Sections   {slist wlist delta}
 	method kill                {args}
@@ -346,13 +350,16 @@ namespace eval Archer {
 
 	variable archerCommands { \
 	    adjust adjustNormals blast c cd clear comb compact concat \
-            copy copyeval cp dbExpand delete draw E erase \
+            copy copyeval cp dbExpand \
+	    decimate decimate2 decimateAttr decimateAttr2 \
+	    delete draw E erase \
 	    erase_all ev exit exportFg4 exportStl exportVrml find hide g group \
             importFg4 importStl i importFg4Sections kill killall \
             killtree ls make_bb move mv mvall \
             ocenter orotate oscale otranslate \
             push put pwd \
-            r report reverseNormals rm track unhide units vdraw whichid \
+            r report reverseNormals rm \
+	    track unhide units vdraw whichid \
             who Z zap \
 	}
 	variable dbCommands {}
@@ -2840,6 +2847,7 @@ Popup Menu    Right or Ctrl-Left
     set renderData [dbCmd how -b $obj]
     set renderMode [lindex $renderData 0]
     set renderTrans [lindex $renderData 1]
+
     if {$renderMode == -1} {
 	return
     }
@@ -3964,8 +3972,11 @@ Popup Menu    Right or Ctrl-Left
 	-label "Fastgen 4 Import..." \
 	-command [::itcl::code $this importFg4]
     $itk_component(importMenu) add command \
-	-label "STL Import..." \
-	-command [::itcl::code $this importStl]
+	-label "STL Import Directory..." \
+	-command [::itcl::code $this importStl 1]
+    $itk_component(importMenu) add command \
+	-label "STL Import File..." \
+	-command [::itcl::code $this importStl 0]
 
     # Export
     itk_component add exportMenu {
@@ -4465,8 +4476,11 @@ Popup Menu    Right or Ctrl-Left
 		command importFg4 \
 		    -label "Fastgen 4 Import..." \
 		    -helpstr "Import from Fastgen 4"
-		command importStl \
-		    -label "STL Import..." \
+		command importStlDir \
+		    -label "STL Import Directory..." \
+		    -helpstr "Import from STL"
+		command importStlFile \
+		    -label "STL Import File..." \
 		    -helpstr "Import from STL"
 	    }
 	cascade export \
@@ -4507,8 +4521,10 @@ Popup Menu    Right or Ctrl-Left
 	-state disabled
     $itk_component(menubar) menuconfigure .file.import.importFg4 \
 	-command [::itcl::code $this importFg4]
-    $itk_component(menubar) menuconfigure .file.import.importStl \
-	-command [::itcl::code $this importStl]
+    $itk_component(menubar) menuconfigure .file.import.importStlDir \
+	-command [::itcl::code $this importStl 1]
+    $itk_component(menubar) menuconfigure .file.import.importStlFile \
+	-command [::itcl::code $this importStl 0]
     $itk_component(menubar) menuconfigure .file.export \
 	-state disabled
     $itk_component(menubar) menuconfigure .file.export.exportFg4 \
@@ -8717,6 +8733,9 @@ Popup Menu    Right or Ctrl-Left
 	    -command [::itcl::code $this adjustCompNormals $node]
 	$menu add command -label "Reverse Normals" \
 	    -command [::itcl::code $this reverseCompNormals $node]
+	$menu add separator
+	$menu add command -label "Decimate" \
+	    -command [::itcl::code $this decimate2 $node]
     }
 
     # set up bindings for status
@@ -10041,6 +10060,23 @@ Popup Menu    Right or Ctrl-Left
     eval archerWrapper cp 0 0 1 1 $args
 }
 
+::itcl::body Archer::decimate {args} {
+    eval sdbWrapper decimate 0 0 1 1 $args
+    _redraw_obj [lindex $args end]
+}
+::itcl::body Archer::decimate2 {args} {
+    eval sdbWrapper decimate2 0 0 1 1 $args
+    _redraw_obj [lindex $args end]
+}
+
+::itcl::body Archer::decimateAttr {args} {
+    eval sdbWrapper decimateAttr 0 0 0 1 $args
+}
+
+::itcl::body Archer::decimateAttr2 {args} {
+    eval sdbWrapper decimateAttr2 0 0 0 1 $args
+}
+
 ::itcl::body Archer::dbExpand {args} {
     # parse out preceeding options
     set searchType "-glob"
@@ -10437,7 +10473,7 @@ Popup Menu    Right or Ctrl-Left
     }
 
     set target [tk_getOpenFile -parent $itk_interior \
-	    -title "Open Fastgen 4" -filetypes $typelist]
+	    -title "Import Fastgen 4" -filetypes $typelist]
 
     if {$target == ""} {
 	return
@@ -10469,28 +10505,48 @@ Popup Menu    Right or Ctrl-Left
     SetNormalCursor
 }
 
-::itcl::body Archer::importStl {} {
+::itcl::body Archer::importStl {importDir} {
     if {![info exists itk_component(sdb)]} {
 	return
     }
 
-    set stlDir [tk_chooseDirectory -parent $itk_interior \
-		    -title "Open STL Directory"]
+    if {$importDir} {
+	set stlDir [tk_chooseDirectory -parent $itk_interior \
+			-title "Import STL Directory"]
 
-    if {$stlDir == ""} {
-	return
-    }
+	if {$stlDir == ""} {
+	    return
+	}
 
-    if {![file exists $stlDir]} {
-	::sdialogs::Stddlgs::errordlg "STL Error" \
+	if {![file exists $stlDir]} {
+	    ::sdialogs::Stddlgs::errordlg "STL Error" \
 		"$stlDir does not exist"
-	return
-    }
+	    return
+	}
 
-    if {[file type $stlDir] != "directory"} {
-	::sdialogs::Stddlgs::errordlg "STL Error" \
+	if {[file type $stlDir] != "directory"} {
+	    ::sdialogs::Stddlgs::errordlg "STL Error" \
 		"$stlDir must be a directory"
-	return
+	    return
+	}
+    } else {
+	set typelist {
+	    {"STL" {".stl"}}
+	    {"All Files" {*}}
+	}
+
+	set stlDir [tk_getOpenFile -parent $itk_interior \
+			-title "Import STL" -filetypes $typelist]
+
+	if {$stlDir == ""} {
+	    return
+	}
+
+	if {![file exists $stlDir]} {
+	    ::sdialogs::Stddlgs::errordlg "STL Error" \
+		"$stlDir does not exist"
+	    return
+	}
     }
 
     SetWaitCursor
@@ -10582,7 +10638,7 @@ Popup Menu    Right or Ctrl-Left
 		$itk_component(mged) units $savedUnits
 		error "importFg4Sections: $ret"
 	    }
-	    eval $itk_component(mged) etranslate $solidName $delta
+	    eval $itk_component(mged) otranslate $solidName $delta
 
 	    # Add to the region
 	    $itk_component(mged) r $regionName u $solidName
