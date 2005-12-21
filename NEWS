@@ -15,7 +15,7 @@ This release marks the one year anniversary of BRL-CAD being released
 as Open Source software.  Thank you to everyone for your support and
 contributions.
 
-* 
+* fixed benchmark sqrt of negative numbers error - Sean Morrison
 
 
 ----------------------------------------------------------------------
