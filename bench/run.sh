@@ -484,7 +484,10 @@ variance ( ) {
     variance_counted="$?"
 
     if test $variance_counted -eq 0 ; then
-	echo "ERROR: unexpected zero count in variance" 1>&2
+	echo "ERROR: unexpected zero count of numbers in variance" 1>&2
+	exit 1
+    elif test $variance_counted -lt 0 ; then
+	echo "ERROR: unexpected negative count of numbers in variance" 1>&2
 	exit 1
     fi
 
@@ -497,6 +500,11 @@ variance ( ) {
 	variance_err_sq="`expr \( $variance_num - $variance_average \) \* \( $variance_num - $variance_average \)`"
 	variance_error="`expr $variance_error + $variance_err_sq`"
     done
+
+    # make sure the error is non-negative
+    if test $variance_error -lt 0 ; then
+	variance_error="`expr 0 - $variance_error`"
+    fi
 
     # echo the variance result
     echo "`expr $variance_error / $variance_counted`"
