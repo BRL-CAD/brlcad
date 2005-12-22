@@ -36,6 +36,8 @@ THESE SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 * run-time path identification of mged resources was never completed,
   complete it.
 
+* use environ for run-time path tracing lookups
+
 * support variable overrides for autogen.sh
 
 * write scripts that parse the sf.net tracker data and generate
