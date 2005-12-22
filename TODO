@@ -19,6 +19,8 @@ THESE SHOULD HAPPEN BEFORE THE NEXT RELEASE
 
 * begin merging of windows branch
 
+* write .g in-memory transfer example
+
 * clone and tracker
 
 * add geometry examples for toy jeep and building
