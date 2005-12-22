@@ -837,7 +837,9 @@ rt_shootray(register struct application *ap)
 	RT_RESOURCE_CHECK(resp);
 	ss.resp = resp;
 
-	if(RT_G_DEBUG&(DEBUG_ALLRAYS|DEBUG_SHOOT|DEBUG_PARTITION|DEBUG_ALLHITS)) {
+	if(RT_G_DEBUG) {
+	    /* only test extensively if something in run-time debug is enabled */
+	    if (RT_G_DEBUG & (DEBUG_ALLRAYS|DEBUG_SHOOT|DEBUG_PARTITION|DEBUG_ALLHITS)) {
 		bu_log_indent_delta(2);
 		bu_log("\n**********shootray cpu=%d  %d,%d lvl=%d a_onehit=%d (%s)\n",
 			resp->re_cpu,
@@ -848,6 +850,7 @@ rt_shootray(register struct application *ap)
 		bu_log("Pnt (%.20G, %.20G, %.20G)\nDir (%.20G, %.20G, %.20G)\n",
 			V3ARGS(ap->a_ray.r_pt),
 			V3ARGS(ap->a_ray.r_dir) );
+	    }
 	}
 #ifndef NO_BADRAY_CHECKING
 	if(RT_BADVEC(ap->a_ray.r_pt)||RT_BADVEC(ap->a_ray.r_dir))  {
