@@ -17,19 +17,27 @@ http://sf.net/pm/?group_id=105292
 THESE SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------
 
-* test and ship it
+* begin merging of windows branch
+
+* clone and tracker
+
+* add geometry examples for toy jeep and building
+
+* ensure successful build on mingw
 
 
 THESE SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------
 
-* begin merging of windows branch
-
 * test pic/nonpic build problems with librtms/libmultispectral
 
-* clone and tracker
+* run-time path identification of mged resources was never completed,
+  complete it.
 
-* add geometry examples for toy jeep and building
+* support variable overrides for autogen.sh
+
+* write scripts that parse the sf.net tracker data and generate
+  automatic reports for release.
 
 
 THESE ARE LOWER PRIORITY OR FOR FUTURE RELEASES
@@ -38,27 +46,17 @@ THESE ARE LOWER PRIORITY OR FOR FUTURE RELEASES
 * rtedge-style tracer that outputs tool paths (splines/segments, etc)
   for CNC/CAM style toolpath cutting descriptions (g-code files).
 
-* run-time path identification of mged resources was never completed,
-  complete it.
-
 * rt annotation support
 
 * support for fillets and chamfers as object/combination operations
 
-* support variable overrides for autogen.sh
-
 * M-x indent-region scripts
-
-* ensure successful build on mingw
 
 * provide installation and post configuration support scripts
 
 * make the DSP primitive use less memory when data is coming from
   a binunif. allocating 160 times binunif size is a bit extravagant
   (which comes from sizeof(struct dsp_bb)).
-
-* write scripts that parse the sf.net tracker data and generate
-  automatic reports for release.
 
 * add dynamic geometry support. i.e. the ability to modify the parsed
   in-memory geometry tree on the fly via api calls (e.g. to add holes)
