@@ -696,9 +696,9 @@ do_frame(int framenumber)
 	}
 
 	/* Allocate data for pixel map for rerendering of black pixels */
-	pixmap= (unsigned char*)bu_malloc(sizeof(RGBpixel)*width*height, "pixmap allocate");
-	for (i= 0; i < width*height*sizeof(RGBpixel); i++)
-		pixmap[i]= 0;
+	if (pixmap == NULL) {
+	    pixmap = (unsigned char*)bu_calloc(sizeof(RGBpixel), width*height, "pixmap allocate");
+	}
 
 	/*
 	 *  If this image is unlikely to be for debugging,
