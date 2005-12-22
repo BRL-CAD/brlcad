@@ -257,6 +257,13 @@ int main(int argc, char **argv)
 	if( height <= 0 && cell_height <= 0 )
 		height = 512;
 
+	/* If user didn't provide an aspect ratio, use the image
+	 * dimensions ratio as a default.
+	 */
+	if (aspect <= 0.0) {
+	    aspect = (fastf_t)width / (fastf_t)height;
+	}
+
 	if( sub_grid_mode ) {
 		/* check that we have a legal subgrid */
 		if( sub_xmax >= width || sub_ymax >= height ) {

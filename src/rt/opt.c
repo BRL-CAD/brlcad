@@ -79,7 +79,7 @@ int		stereo = 0;		/* stereo viewing */
 int		hypersample=0;		/* number of extra rays to fire */
 unsigned int	jitter=0;		/* ray jitter control variable */
 fastf_t		rt_perspective=0;	/* presp (degrees X) 0 => ortho */
-fastf_t		aspect = 1;		/* view aspect ratio X/Y */
+fastf_t		aspect = (fastf_t)0.0;	/* view aspect ratio X/Y */
 vect_t		dx_model;		/* view delta-X as model-space vect */
 vect_t		dy_model;		/* view delta-Y as model-space vect */
 vect_t		dx_unit;		/* view delta-X as unit-len vect */
@@ -501,9 +501,9 @@ int get_args( int argc, register char **argv )
 					aspect = xx;
 				else
 					aspect = xx/yy;
-				if( aspect == 0 ) {
+				if( aspect <= 0.0 ) {
 					fprintf(stderr,"Bogus aspect %g, using 1.0\n", aspect);
-					aspect = 1;
+					aspect = 1.0;
 				}
 			}
 			break;
