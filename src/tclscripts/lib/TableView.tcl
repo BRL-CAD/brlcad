@@ -56,9 +56,6 @@
     constructor {_labels args} {}
     destructor {}
 
-    variable font 
-    itk_option define -colfont colfont Font {Helvetica 12}
-    itk_option define -rowfont rowfont Font {Helvetica 12}
     itk_option define -useTextEntry useTextEntry UseTextEntry 0
     itk_option define -textEntryWidth textEntryWidth TextEntryWidth 20
     itk_option define -textEntryHeight textEntryHeight TextEntryHeight 3
@@ -67,6 +64,32 @@
     itk_option define -lostFocusCallback lostFocusCallback LostFocusCallback ""
 
     public {
+	common SystemWindowFont
+	common SystemWindowText
+	common SystemWindow
+	common SystemHighlight
+	common SystemHighlightText
+	common SystemButtonFace
+	common SystemButtonText
+
+	if {$tcl_platform(os) != "Windows NT"} {
+	    set SystemWindowFont Helvetica
+	    set SystemWindowText black
+	    set SystemWindow \#d9d9d9
+	    set SystemHighlight black
+	    set SystemHighlightText \#ececec
+	    set SystemButtonFace \#d9d9d9
+	    set SystemButtonText black
+	} else {
+	    set SystemWindowFont SystemWindowText
+	    set SystemWindowText SystemWindowText
+	    set SystemWindow SystemWindow
+	    set SystemHighlight SystemHighlight
+	    set SystemHighlightText SystemHighlightText
+	    set SystemButtonFace SystemButtonFace
+	    set SystemButtonText SystemButtonText
+	}
+
 	# methods that change/query table values
 	method getEntry {i j}
 	method setEntry {i j val {allowScroll 1}}
@@ -165,6 +188,8 @@
 	method sortByCol_win {w type order}
 	method searchCol {j i str}
 	method flashRow {i n interval}
+
+	method errorMessage {title msg}
     }
 
     protected {
@@ -263,6 +288,7 @@
 	variable doingConfigure 0
 	variable doBreak 0
 	variable savedColState {}
+	variable ignoreLostFocus 0
 
 	method packRow {i}
 	method packAll {}
@@ -289,6 +315,9 @@
 	method enableColState {}
 	method resetColState {}
     }
+
+    itk_option define -colfont colfont Font [list $SystemWindowFont 8]
+    itk_option define -rowfont rowfont Font [list $SystemWindowFont 8]
 }
 
 ::itcl::configbody TableView::colfont {
@@ -1398,6 +1427,12 @@
     unhighlightRow
 }
 
+::itcl::body TableView::errorMessage {title msg} {
+    incr ignoreLostFocus
+
+    ::sdialogs::Stddlgs::errordlg $title $msg
+}
+
 ################################ Protected Methods ################################
 
 ## - updateTable
@@ -1563,7 +1598,7 @@
     set y2 [expr {$y1 + $vshown}]
 
     # This is lame (i.e. having to use "after idle ...")
-    after idle "$itk_component(vscroll) set $y1 $y2"
+    after idle "catch {$itk_component(vscroll) set $y1 $y2}"
 }
 
 ::itcl::body TableView::activateTraces {} {
@@ -1895,14 +1930,18 @@
 		-width 4 \
 		-height $textEntryHeight \
 		-state disabled \
-		-relief flat
+		-relief flat \
+		-background $SystemButtonFace \
+		-foreground $SystemButtonText
 	} else {
 	    ::entry $itk_component(rowLabels).rl$i \
 		-textvariable [::itcl::scope rlvar($i)] \
 		-width 4 \
 		-justify right \
 		-state disabled \
-		-relief flat
+		-relief flat \
+		-disabledbackground $SystemButtonFace \
+		-disabledforeground $SystemButtonText
 	}
     } {
 	rename -borderwidth -rlborderwidth rlborderwidth Rlborderwidth
@@ -2062,10 +2101,12 @@
 ::itcl::body TableView::handleTextEntryKeyPress {W K} {
     switch -- $K {
 	"Return" {
+	    incr ignoreLostFocus
 	    handleTextEntryReturn $W
 	    set doBreak 1
 	}
 	"Tab" {
+	    incr ignoreLostFocus
 	    handleTextEntryTab $W
 	    set doBreak 1
 	}
@@ -2083,10 +2124,12 @@
 ::itcl::body TableView::handleTextEntryShiftKeyPress {W K} {
     switch -- $K {
 	"Return" {
+	    incr ignoreLostFocus
 	    handleTextEntryShiftReturn $W
 	    set doBreak 1
 	}
 	"Tab" {
+	    incr ignoreLostFocus
 	    handleTextEntryShiftTab $W
 	    set doBreak 1
 	}
@@ -2378,6 +2421,11 @@
 }
 
 ::itcl::body TableView::handleLostFocus {w} {
+    if {$ignoreLostFocus} {
+	incr ignoreLostFocus -1
+	return
+    }
+
     if {$itk_option(-lostFocusCallback) != ""} {
 	if {[catch {getDataRowIndex $w} ri]} {
 	    return
@@ -2385,7 +2433,7 @@
 
 	set i [expr {$ri - $firstrow + 1}]
 	set j [getColIndex $w]
-	$itk_option(-lostFocusCallback) $i $j $evar($i,$j)
+	$itk_option(-lostFocusCallback) $ri $j $evar($i,$j)
     }
 }
 

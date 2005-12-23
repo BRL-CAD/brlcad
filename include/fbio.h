@@ -37,6 +37,19 @@
 #	define	FB_ARGS(args)			()
 #endif
 
+#ifndef FB_EXPORT
+#   if defined(_WIN32) && !defined(__CYGWIN__) && defined(BRLCAD_DLL)
+#      ifdef FB_EXPORT_DLL
+#         define FB_EXPORT __declspec(dllexport)
+#      else
+#         define FB_EXPORT __declspec(dllimport)
+#      endif
+#   else
+#      define FB_EXPORT
+#   endif
+#endif
+
+
 /*
  *			R G B p i x e l
  *
@@ -141,22 +154,55 @@ typedef struct FBIO_ {
 } FBIO;
 
 /* declare all the possible interfaces */
-extern FBIO remote_interface;	/* not in list[] */
-extern FBIO adage_interface;
-extern FBIO sun_interface;
-extern FBIO sgi_interface;
-extern FBIO ogl_interface;
-extern FBIO rat_interface;
-extern FBIO ug_interface;
-extern FBIO X24_interface;
-extern FBIO X_interface;
-extern FBIO ptty_interface;
-extern FBIO abekas_interface;
-extern FBIO ts_interface;
+#ifdef IF_REMOTE
+  FB_EXPORT extern FBIO remote_interface;	/* not in list[] */
+#endif
+
+#ifdef IF_ADAGE
+  FB_EXPORT extern FBIO adage_interface;
+#endif
+
+#ifdef IF_SUN
+  FB_EXPORT extern FBIO sun_interface;
+#endif
+
+#if defined(IF_SGI) || defined(IF_4D) || defined(IF_5D)
+  FB_EXPORT extern FBIO sgi_interface;
+#endif
+
+#ifdef IF_OGL
+  FB_EXPORT extern FBIO ogl_interface;
+#endif
+
+#ifdef IF_RAT
+  FB_EXPORT extern FBIO rat_interface;
+#endif
+
+#ifdef IF_UG
+  FB_EXPORT extern FBIO ug_interface;
+#endif
+
+#ifdef IF_X
+  FB_EXPORT extern FBIO X24_interface;
+  FB_EXPORT extern FBIO X_interface;
+#endif
+
+#ifdef IF_PTTY
+  FB_EXPORT extern FBIO ptty_interface;
+#endif
+
+#ifdef IF_AB
+  FB_EXPORT extern FBIO abekas_interface;
+#endif
+
+#ifdef IF_TS
+  FB_EXPORT extern FBIO ts_interface;
+#endif
+
 
 /* Always included */
-extern FBIO debug_interface, disk_interface, stk_interface;
-extern FBIO memory_interface, null_interface;
+FB_EXPORT extern FBIO debug_interface, disk_interface, stk_interface;
+FB_EXPORT extern FBIO memory_interface, null_interface;
 
 #endif  /* __FBIO_H__ */
 

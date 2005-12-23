@@ -40,10 +40,9 @@ static const char RCSid[] = "";
 #include "bu.h"
 #include "vmath.h"
 #include "raytrace.h"
+#include "fb.h"
 #include "./ged.h"
 #include "./mged_dm.h"
-
-extern int fb_refresh();  /* from libfb/tcl.c */
 
 extern void mged_center(fastf_t *center); /* from chgview.c */
 extern int mged_vscale(fastf_t sfactor);

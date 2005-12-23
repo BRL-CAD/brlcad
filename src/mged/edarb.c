@@ -56,6 +56,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "machine.h"
 #include "bu.h"
 #include "vmath.h"
+#include "rtgeom.h"
 #include "raytrace.h"
 #include "db.h"
 
@@ -70,15 +71,6 @@ void	ext4to6(int pt1, int pt2, int pt3, register struct rt_arb_internal *arb),ol
 extern struct rt_db_internal	es_int;
 extern struct rt_db_internal	es_int_orig;
 extern struct bn_tol		mged_tol;		/* from ged.c */
-
-/* from librt */
-extern const int rt_arb_faces[5][24];
-extern short earb8[12][18];
-extern short earb7[12][18];
-extern short earb6[10][18];
-extern short earb5[9][18];
-extern short earb4[5][18];
-
 
 /*
  *  			E D I T A R B
@@ -196,7 +188,7 @@ bu_log("moving edge: %d%d  bound planes: %d %d\n",pt1+1,pt2+1,bp1+1,bp2+1);
 	newp = *edptr++; 	/* plane to redo */
 
 	if( newp == 9 )	/* special flag --> redo all the planes */
-		if( rt_arb_calc_planes( es_peqn , arb , es_type , &mged_tol ) )
+		if (rt_arb_calc_planes(interp, arb, es_type, es_peqn, &mged_tol))
 			goto err;
 
 	if(newp >= 0 && newp < 6) {
@@ -528,7 +520,7 @@ a4toa6:
 	}
 
 	/* redo the plane equations */
-	if( rt_arb_calc_planes( es_peqn , &larb , es_type , &mged_tol ) )
+	if (rt_arb_calc_planes(interp, &larb, es_type, es_peqn, &mged_tol))
 	{
 	  Tcl_AppendResult(interp, "Cannot calculate new plane equations for faces\n",
 			   (char *)NULL);
@@ -816,7 +808,7 @@ f_mirface(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	}
 
 	/* redo the plane equations */
-	if( rt_arb_calc_planes( es_peqn , &larb , es_type , &mged_tol ) )
+	if (rt_arb_calc_planes(interp, &larb, es_type, es_peqn, &mged_tol))
 	  return TCL_ERROR;
 
 	/* copy to original */

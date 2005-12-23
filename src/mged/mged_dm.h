@@ -122,8 +122,14 @@ struct trail {
 #endif
 
 struct client {
-  int			c_fd;
-  struct pkg_conn	*c_pkg;
+#ifdef _WIN32
+    HANDLE		c_fd;
+    Tcl_Channel         c_chan;
+    Tcl_FileProc        *c_handler;
+#else
+    int			c_fd;
+#endif
+    struct pkg_conn	*c_pkg;
 };
 
 /* mged command variables for affecting the user environment */
@@ -396,6 +402,9 @@ struct dm_list {
   struct dm		*dml_dmp;
   FBIO			*dml_fbp;
   int			dml_netfd;			/* socket used to listen for connections */
+#ifdef _WIN32
+  Tcl_Channel		dml_netchan;
+#endif
   struct client		dml_clients[MAX_CLIENTS];
   int			dml_dirty;			/* true if received an expose or configuration event */
   int			dml_mapped;
@@ -452,6 +461,9 @@ struct dm_list {
 #define dmp curr_dm_list->dml_dmp
 #define fbp curr_dm_list->dml_fbp
 #define netfd curr_dm_list->dml_netfd
+#ifdef _WIN32
+#define netchan curr_dm_list->dml_netchan
+#endif
 #define clients curr_dm_list->dml_clients
 #define pathName dmp->dm_pathName
 #define tkName dmp->dm_tkName

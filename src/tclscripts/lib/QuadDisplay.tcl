@@ -70,8 +70,10 @@ option add *QuadDisplay.height 400 widgetDefault
     public method keypoint {args}
     public method local2base {}
     public method lookat {args}
+    public method m2vPoint {args}
     public method model2view {args}
     public method mrot {args}
+    public method mrotPoint {args}
     public method orientation {args}
     public method pmat {args}
     public method pmodel2view {args}
@@ -85,6 +87,7 @@ option add *QuadDisplay.height 400 widgetDefault
     public method slew {args}
     public method tra {args}
     public method units {args}
+    public method v2mPoint {args}
     public method view2model {args}
     public method vrot {args}
     public method vtra {args}
@@ -118,8 +121,8 @@ option add *QuadDisplay.height 400 widgetDefault
     public method qray {args}
     public method rt {args}
     public method rtabort {{gi 0}}
-    public method rtcheck {args}
     public method rtarea {args}
+    public method rtcheck {args}
     public method rtedge {args}
     public method rtweight {args}
     public method transparency {args}
@@ -169,6 +172,11 @@ option add *QuadDisplay.height 400 widgetDefault
     public method rotate_mode {x y}
     public method translate_mode {x y}
     public method scale_mode {x y}
+    public method orotate_mode {x y func obj kx ky kz}
+    public method oscale_mode {x y func obj kx ky kz}
+    public method otranslate_mode {x y func obj}
+    public method screen2model {x y}
+    public method screen2view {x y}
 
     public method resetBindings {}
     public method resetBindingsAll {}
@@ -477,12 +485,20 @@ option add *QuadDisplay.height 400 widgetDefault
     eval $itk_component($itk_option(-pane)) lookat $args
 }
 
+::itcl::body QuadDisplay::m2vPoint {args} {
+    eval $itk_component($itk_option(-pane)) m2vPoint $args
+}
+
 ::itcl::body QuadDisplay::model2view {args} {
     eval $itk_component($itk_option(-pane)) model2view $args
 }
 
 ::itcl::body QuadDisplay::mrot {args} {
     eval $itk_component($itk_option(-pane)) mrot $args
+}
+
+::itcl::body QuadDisplay::mrotPoint {args} {
+    eval $itk_component($itk_option(-pane)) mrotPoint $args
 }
 
 ::itcl::body QuadDisplay::orientation {args} {
@@ -538,6 +554,10 @@ option add *QuadDisplay.height 400 widgetDefault
     eval $itk_component(ur) units $args
     eval $itk_component(ll) units $args
     eval $itk_component(lr) units $args
+}
+
+::itcl::body QuadDisplay::v2mPoint {args} {
+    eval $itk_component($itk_option(-pane)) v2mPoint $args
 }
 
 ::itcl::body QuadDisplay::view2model {args} {
@@ -802,6 +822,26 @@ option add *QuadDisplay.height 400 widgetDefault
     eval $itk_component($itk_option(-pane)) scale_mode $x $y
 }
 
+::itcl::body QuadDisplay::orotate_mode {x y func obj kx ky kz} {
+    eval $itk_component($itk_option(-pane)) orotate_mode $x $y $func $obj $kx $ky $kz
+}
+
+::itcl::body QuadDisplay::oscale_mode {x y func obj kx ky kz} {
+    eval $itk_component($itk_option(-pane)) oscale_mode $x $y $func $obj $kx $ky $kz
+}
+
+::itcl::body QuadDisplay::otranslate_mode {x y func obj} {
+    eval $itk_component($itk_option(-pane)) otranslate_mode $x $y $func $obj
+}
+
+::itcl::body QuadDisplay::screen2model {x y} {
+    eval $itk_component($itk_option(-pane)) screen2model $x $y
+}
+
+::itcl::body QuadDisplay::screen2view {x y} {
+    eval $itk_component($itk_option(-pane)) screen2view $x $y
+}
+
 ::itcl::body QuadDisplay::transparency {args} {
     eval $itk_component($itk_option(-pane)) transparency $args
 }
@@ -923,12 +963,20 @@ if {$tcl_platform(os) != "Windows NT"} {
     $itk_component($itk_option(-pane)) rtabort $gi
 }
 
+::itcl::body QuadDisplay::rtarea {args} {
+    eval $itk_component($itk_option(-pane)) rtarea $args
+}
+
 ::itcl::body QuadDisplay::rtcheck {args} {
     eval $itk_component($itk_option(-pane)) rtcheck $args
 }
 
 ::itcl::body QuadDisplay::rtedge {args} {
     eval $itk_component($itk_option(-pane)) rtedge $args
+}
+
+::itcl::body QuadDisplay::rtweight {args} {
+    eval $itk_component($itk_option(-pane)) rtweight $args
 }
 
 ::itcl::body QuadDisplay::resetAll {} {

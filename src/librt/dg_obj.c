@@ -138,10 +138,6 @@ extern int	dgo_qray_cmd(struct dg_obj *dgop, Tcl_Interp *interp, int argc, char 
 extern void	dgo_init_qray(struct dg_obj *dgop);
 extern void	dgo_free_qray(struct dg_obj *dgop);
 
-/* declared in nirt.c */
-extern int	dgo_nirt_cmd(struct dg_obj *dgop, struct view_obj *vop, Tcl_Interp *interp, int argc, char **argv);
-extern int	dgo_vnirt_cmd(struct dg_obj *dgop, struct view_obj *vop, Tcl_Interp *interp, int argc, char **argv);
-
 int dgo_cmd(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 
 static int dgo_open_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
@@ -4556,7 +4552,7 @@ dgo_run_rt(struct dg_obj *dgop,
 	run_rtp->hProcess = pi.hProcess;
 	run_rtp->pid = pi.dwProcessId;
 	run_rtp->aborted=0;
-	run_rtp->chan = Tcl_MakeFileChannel(run_rtp->fd,TCL_READABLE);
+	run_rtp->chan = Tcl_MakeFileChannel(run_rtp->fd, TCL_READABLE);
 
 	BU_GETSTRUCT(drcdp, dg_rt_client_data);
 	drcdp->dgop = dgop;

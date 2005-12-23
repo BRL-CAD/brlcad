@@ -78,12 +78,6 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 extern struct bn_tol    mged_tol;       /* from ged.c */
 
-/* bu_getopt parameters */
-extern int	bu_opterr;
-extern int	bu_optind;
-extern int	bu_optopt;
-extern char	*bu_optarg;
-
 int readcodes(), writecodes();
 int loadcodes(), printcodes(FILE *fp, struct directory *dp, int pathpos);
 void		tables(), edcodes(), changes(), prfield();

@@ -53,8 +53,8 @@ struct fbserv_obj {
   genptr_t			fbs_clientData;
 };
 
-extern int fbs_open();
-extern int fbs_close();
+FB_EXPORT extern int fbs_open();
+FB_EXPORT extern int fbs_close();
 
 #endif  /* __FBSERV_OBJ_H__ */
 

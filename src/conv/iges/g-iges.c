@@ -238,7 +238,7 @@ char	*argv[];
 	prog_name = argv[0];
 
 	/* Get command line arguments. */
-	while ((c = getopt(argc, argv, "ftsmd:a:n:o:p:r:vx:P:X:")) != EOF) {
+	while ((c = bu_getopt(argc, argv, "ftsmd:a:n:o:p:r:vx:P:X:")) != EOF) {
 		switch (c) {
 		case 'f':		/* Select facetized output */
 			mode = FACET_MODE;
@@ -252,19 +252,19 @@ char	*argv[];
 			do_nurbs = 1;
 			break;
 		case 'a':		/* Absolute tolerance. */
-			ttol.abs = atof(optarg);
+			ttol.abs = atof(bu_optarg);
 			break;
 		case 'n':		/* Surface normal tolerance. */
-			ttol.norm = atof(optarg);
+			ttol.norm = atof(bu_optarg);
 			break;
 		case 'o':		/* Output file name. */
-			output_file = optarg;
+			output_file = bu_optarg;
 			break;
 		case 'r':		/* Relative tolerance. */
-			ttol.rel = atof(optarg);
+			ttol.rel = atof(bu_optarg);
 			break;
 		case 'd':		/* distance tolerance */
-			tol.dist = atof( optarg );
+			tol.dist = atof( bu_optarg );
 			tol.dist_sq = tol.dist * tol.dist;
 			break;
 		case 'm':		/* multi-file mode */
@@ -275,14 +275,14 @@ char	*argv[];
 			verbose++;
 			break;
 		case 'P':
-			ncpu = atoi( optarg );
+			ncpu = atoi( bu_optarg );
 			rt_g.debug = 1;	/* XXX DEBUG_ALLRAYS -- to get core dumps */
 			break;
 		case 'x':
-			sscanf( optarg, "%x", (unsigned int *)&rt_g.debug );
+			sscanf( bu_optarg, "%x", (unsigned int *)&rt_g.debug );
 			break;
 		case 'X':
-			sscanf( optarg, "%x", (unsigned int *)&rt_g.NMG_debug );
+			sscanf( bu_optarg, "%x", (unsigned int *)&rt_g.NMG_debug );
 			NMG_debug = rt_g.NMG_debug;
 			break;
 		default:
@@ -292,14 +292,14 @@ char	*argv[];
 		}
 	}
 
-	if (optind+1 >= argc) {
+	if (bu_optind+1 >= argc) {
 		bu_log( usage, argv[0]);
 		exit(1);
 	}
 
 	/* Open BRL-CAD database */
-	argc -= optind;
-	argv += optind;
+	argc -= bu_optind;
+	argv += bu_optind;
 	db_name = argv[0];
 	if ((dbip = db_open(db_name, "r")) == DBI_NULL) {
 		perror("g-iges");
@@ -318,7 +318,11 @@ char	*argv[];
 		if( output_file == NULL )
 			fp_dir = stdout;
 		else {
+#ifdef _WIN32
+			if( (fp_dir=fopen( output_file , "wb" )) == NULL ) {
+#else
 			if( (fp_dir=fopen( output_file , "w" )) == NULL ) {
+#endif
 				bu_log( "Cannot open output file: %s\n" , output_file );
 				perror( output_file );
 				exit( 1 );
@@ -617,7 +621,11 @@ genptr_t		client_data;
 					strcat( multi_name, suffix );
 					strcat( multi_name, ".igs" );
 				}
+#ifdef _WIN32
+				if( (fp_dir=fopen( multi_name , "wb" )) == NULL ) {
+#else
 				if( (fp_dir=fopen( multi_name , "w" )) == NULL ) {
+#endif
 					bu_log( "Cannot open output file: %s\n" , multi_name );
 					perror( "g-iges" );
 					exit( 1 );

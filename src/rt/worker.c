@@ -680,10 +680,12 @@ void do_pixel(int cpu,
 	    /********************/
 	} /* for samplenum <= hypersample */
 
-	/* scale the hypersampled results */
-	FAST fastf_t f;
-	f = 1.0 / (hypersample+1);
-	VSCALE( a.a_color, colorsum, f );
+	{
+	    /* scale the hypersampled results */
+	    FAST fastf_t f;
+	    f = 1.0 / (hypersample+1);
+	    VSCALE( a.a_color, colorsum, f );
+	}
     } /* end unrolling else case */
 
     /* bu_log("2: [%d,%d] : [%.2f,%.2f,%.2f]\n",pixelnum%width,pixelnum/width,a.a_color[0],a.a_color[1],a.a_color[2]); */

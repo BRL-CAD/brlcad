@@ -70,7 +70,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "tcl.h"
 #include "machine.h"
-#include "bu.h"
+#include "cmd.h"			/* includes bu.h */
 #include "vmath.h"
 #include "raytrace.h"
 #include "solid.h"
@@ -555,6 +555,17 @@ dgo_vnirt_cmd(struct dg_obj	*dgop,
     struct bu_vls y_vls;
     struct bu_vls z_vls;
     char **av;
+
+    if (argc < 3 || MAXARGS < argc) {
+	struct bu_vls vls;
+
+	bu_vls_init(&vls);
+	bu_vls_printf(&vls, "helplib_alias dgo_vnirt %s", argv[0]);
+	Tcl_Eval(interp, bu_vls_addr(&vls));
+	bu_vls_free(&vls);
+
+	return TCL_ERROR;
+    }
 
     /*
      * The last two arguments are expected to be x,y in view coordinates.

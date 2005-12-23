@@ -79,8 +79,6 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 BU_EXTERN(union tree *do_region_end, (struct db_tree_state *tsp, struct db_full_path *pathp, union tree *curtree, genptr_t client_data));
 
-extern double nmg_eue_dist;		/* from nmg_plot.c */
-
 static char	usage[] = "\
 Usage: %s [-b][-v][-i][-xX lvl][-a abs_tess_tol][-r rel_tess_tol][-n norm_tess_tol]\n\
 [-D dist_calc_tol] [-o output_file_name.stl | -m directory_name] brlcad_db.g object(s)\n";
@@ -164,46 +162,46 @@ char	*argv[];
 	BU_LIST_INIT( &rt_g.rtg_vlfree );	/* for vlist macros */
 
 	/* Get command line arguments. */
-	while ((c = getopt(argc, argv, "a:bm:n:o:r:vx:D:P:X:i:")) != EOF) {
+	while ((c = bu_getopt(argc, argv, "a:bm:n:o:r:vx:D:P:X:i:")) != EOF) {
 		switch (c) {
 		case 'a':		/* Absolute tolerance. */
-			ttol.abs = atof(optarg);
+			ttol.abs = atof(bu_optarg);
 			ttol.rel = 0.0;
 			break;
 		case 'b':		/* Binary output file */
 			binary=1;
 			break;
 		case 'n':		/* Surface normal tolerance. */
-			ttol.norm = atof(optarg);
+			ttol.norm = atof(bu_optarg);
 			ttol.rel = 0.0;
 			break;
 		case 'o':		/* Output file name. */
-			output_file = optarg;
+			output_file = bu_optarg;
 			break;
 		case 'm':
-			output_directory = optarg;
+			output_directory = bu_optarg;
 			bu_vls_init( &file_name );
 			break;
 		case 'r':		/* Relative tolerance. */
-			ttol.rel = atof(optarg);
+			ttol.rel = atof(bu_optarg);
 			break;
 		case 'v':
 			verbose++;
 			break;
 		case 'P':
-			ncpu = atoi( optarg );
+			ncpu = atoi( bu_optarg );
 			rt_g.debug = 1;	/* XXX DEBUG_ALLRAYS -- to get core dumps */
 			break;
 		case 'x':
-			sscanf( optarg, "%x", (unsigned int *)&rt_g.debug );
+			sscanf( bu_optarg, "%x", (unsigned int *)&rt_g.debug );
 			break;
 		case 'D':
-			tol.dist = atof(optarg);
+			tol.dist = atof(bu_optarg);
 			tol.dist_sq = tol.dist * tol.dist;
 			rt_pr_tol( &tol );
 			break;
 		case 'X':
-			sscanf( optarg, "%x", (unsigned int *)&rt_g.NMG_debug );
+			sscanf( bu_optarg, "%x", (unsigned int *)&rt_g.NMG_debug );
 			NMG_debug = rt_g.NMG_debug;
 			break;
 		case 'i':
@@ -216,7 +214,7 @@ char	*argv[];
 		}
 	}
 
-	if (optind+1 >= argc) {
+	if (bu_optind+1 >= argc) {
 		bu_log( usage, argv[0]);
 		exit(1);
 	}
@@ -244,7 +242,11 @@ char	*argv[];
 			}
 		} else {
 			/* Open binary output file */
+#ifdef _WIN32
+			if ((bfd=open(output_file, _O_WRONLY|_O_CREAT|_O_TRUNC|_O_BINARY, _S_IREAD|_S_IWRITE)) < 0)
+#else
 			if( (bfd=open( output_file, O_WRONLY|O_CREAT|O_TRUNC, S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH)) < 0 )
+#endif
 			{
 				bu_log( "Cannot open binary output file (%s) for writing\n", output_file );
 				perror( argv[0] );
@@ -253,9 +255,9 @@ char	*argv[];
 		}
 	}
 
-	/* Open BRL-CAD database */
-	argc -= optind;
-	argv += optind;
+	/* Open brl-cad database */
+	argc -= bu_optind;
+	argv += bu_optind;
 	if ((dbip = db_open(argv[0], "r")) == DBI_NULL) {
 		perror(argv[0]);
 		exit(1);
@@ -398,7 +400,11 @@ int material_id;
 			char buf[81];	/* need exactly 80 char for header */
 
 			/* Open binary output file */
+#ifdef _WIN32
+			if ((bfd=open(bu_vls_addr(&file_name), _O_WRONLY|_O_CREAT|_O_TRUNC, _S_IREAD|_S_IWRITE)) < 0)
+#else
 			if( (bfd=open( bu_vls_addr( &file_name ), O_WRONLY|O_CREAT|O_TRUNC, S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH)) < 0 )
+#endif
 			{
 				bu_log( "Cannot open binary output file (%s) for writing\n", bu_vls_addr( &file_name ) );
 				perror( "g-stl" );

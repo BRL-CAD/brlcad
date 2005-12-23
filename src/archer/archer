@@ -1,0 +1,241 @@
+#!/bin/sh
+#\
+ARCHER_HOME=`dirname $0`/..
+#\
+export ARCHER_HOME
+# restart using bwish \
+exec ${ARCHER_HOME}/bin/bwish $0 $@
+#exec ${ARCHER_HOME}/bin/bwish_d $0 $@
+
+##
+# Portions Copyright (c) 2002 SURVICE Engineering Company. All Rights Reserved.
+# This file contains Original Code and/or Modifications of Original Code as
+# defined in and that are subject to the SURVICE Public Source License
+# (Version 1.3, dated March 12, 2002).
+#
+# Archer
+#
+# Author(s):
+#    Bob Parker
+#    Doug Howard
+#
+# Description:
+#    Main for Archer.
+#
+
+#auto_mkindex_parser::slavehook { _%@namespace import -force ::itcl::* }
+
+# Set the auto_path in order to constrain
+# where Archer finds its files.
+if {[info exists env(ARCHER_HOME)]} {
+    set dir [file normalize $env(ARCHER_HOME)]
+} else {
+    set dir [file normalize [file join [file dir $argv0] ..]]
+}
+
+set env(ARCHER_HOME) $dir
+
+if {$tcl_platform(os) == "Windows NT"} {
+    set brlcadDataPath $env(ARCHER_HOME)
+} else {
+    set brlcadDataPath [bu_brlcad_data ""]
+}
+
+
+set auto_path $dir
+lappend auto_path [file join $env(ARCHER_HOME) lib]
+lappend auto_path [file join $env(ARCHER_HOME) lib tcl8.4]
+lappend auto_path [file join $env(ARCHER_HOME) lib tk8.4]
+lappend auto_path [file join $env(ARCHER_HOME) lib itcl3.3]
+lappend auto_path [file join $env(ARCHER_HOME) lib itk3.3]
+lappend auto_path [file join $env(ARCHER_HOME) lib iwidgets4.0.2]
+lappend auto_path [file join $env(ARCHER_HOME) lib iwidgets4.0.2 scripts]
+lappend auto_path [file join $env(ARCHER_HOME) lib blt2.4]
+lappend auto_path [file join $env(ARCHER_HOME) lib blt2.4 dd_protocols]
+lappend auto_path [file join $env(ARCHER_HOME) lib sdb]
+lappend auto_path [file join $brlcadDataPath tclscripts]
+lappend auto_path [file join $brlcadDataPath tclscripts sdialogs]
+lappend auto_path [file join $brlcadDataPath tclscripts sdialogs scripts]
+lappend auto_path [file join $brlcadDataPath tclscripts swidgets]
+lappend auto_path [file join $brlcadDataPath tclscripts swidgets scripts]
+lappend auto_path [file join $brlcadDataPath tclscripts lib]
+lappend auto_path [file join $brlcadDataPath tclscripts archer]
+
+# Initialize bgerror
+initBgerror
+
+# Decide on a parent class for Archer
+namespace eval Archer {
+    if {1} {
+	set parentClass itk::Toplevel
+	set inheritFromToplevel 1
+    } else {
+	set parentClass TabWindow
+	set inheritFromToplevel 0
+    }
+}
+
+set Archer::debug 0
+package require Archer 1.0
+package require Iwidgets
+package require Swidgets
+
+# This must be done after loading BLT (that potentially gets it wrong)
+set blt_library [file join $env(ARCHER_HOME) lib blt2.4]
+lappend auto_path $blt_library
+
+# PROCEDURE: showMainWindow
+#
+# Show the main window.
+#
+# Arguments:
+#       None
+#
+# Results:
+#       No return.
+#
+proc showMainWindow {} {
+    if {$::Archer::inheritFromToplevel} {
+	wm deiconify $::Archer::archer
+	raise $::Archer::archer
+	focus -force $::Archer::archer
+    } else {
+	wm deiconify .
+	raise .
+	focus -force .
+    }
+}
+
+# PROCEDURE: createSplashScreen
+#
+# Create the proper splash screen based on gui mode.
+#
+# Arguments:
+#       None
+#
+# Results:
+#       No return.
+#
+proc createSplashScreen {} {
+    global env
+    global brlcadDataPath
+
+    set useImage 1
+
+    if {$useImage} {
+	set image [image create photo -file [file join $brlcadDataPath tclscripts archer images aboutArcher.png]]
+	set ::Archer::splash [Splash .splash -image $image]
+    } else {
+	set ::Archer::splash [Splash .splash -message "Loading Archer..."]
+    }
+
+    update idletasks
+    $::Archer::splash configure -background $::Archer::SystemWindow
+    $::Archer::splash center
+    update idletasks
+    $::Archer::splash activate
+    after 3000 destroySplashScreen; # 3 more sec
+    update
+}
+
+# PROCEDURE: destroySplashScreen
+#
+# Makes sure the gui is ready to go and then
+# destroys the splash screen.
+#
+# Arguments:
+#       None
+#
+# Results:
+#       No return.
+#
+proc destroySplashScreen {} {
+    # check to see if main gui is ready
+    if {$::Archer::showWindow == 0} {
+        after 1000 destroySplashScreen; # 1 more sec
+        return
+    }
+
+    if {$::Archer::splash == ""} {
+	return
+    }
+    $::Archer::splash deactivate
+    itcl::delete object $::Archer::splash
+    set ::Archer::splash ""
+    showMainWindow
+}
+
+proc exitArcher {archer} {
+    $archer askToSave
+
+    if {$::Archer::inheritFromToplevel} {
+	wm withdraw $archer
+    } else {
+	wm withdraw .
+    }
+
+    if {$archer != ""} {
+	::itcl::delete object $archer
+    }
+
+    exit
+}
+
+# *************** Main Function ***************
+
+# PROCEDURE: main
+#
+# Main procedure for AJEM/MUVES GUI.  Sets up and handles initialization.
+#
+# Arguments:
+#       None
+#
+# Results:
+#       No return.
+#
+proc main {} {
+    global env
+    global brlcadDataPath
+    global tcl_platform
+
+    if {$::Archer::inheritFromToplevel} {
+	set ::Archer::archer [Archer .\#auto]
+	wm title $::Archer::archer "Archer"
+	if {$tcl_platform(os) == "Windows NT"} {
+	    wm iconbitmap $::Archer::archer -default \
+		[file join $brlcadDataPath doc html manuals archer archer.ico]
+	}
+	set size [wm maxsize $::Archer::archer]
+        set width [expr {[lindex $size 0] - 8}]
+        set height [expr {[lindex $size 1] - 40}]
+	wm geometry $::Archer::archer "$width\x$height+0+0"
+	wm protocol $::Archer::archer WM_DELETE_WINDOW {exitArcher $::Archer::archer}
+    } else {
+	wm title . "Archer"
+	if {$tcl_platform(os) == "Windows NT"} {
+	    wm iconbitmap . -default \
+		[file join $brlcadDataPath doc html manuals archer archer.ico]
+	}
+	set ::Archer::archer [Archer .\#auto]
+	set size [wm maxsize .]
+        set width [expr {[lindex $size 0] - 8}]
+        set height [expr {[lindex $size 1] - 40}]
+	pack $::Archer::archer -expand yes -fill both
+	wm geometry . "$width\x$height+0+0"
+	wm protocol . WM_DELETE_WINDOW [list exitArcher $::Archer::archer]
+    }
+
+    $::Archer::archer configure -quitcmd [list exitArcher $::Archer::archer]
+
+    update
+}
+
+# TCL script execution start HERE!
+wm withdraw .
+
+# start splash screen
+createSplashScreen
+ 
+# do main procedure
+main
+set ::Archer::showWindow 1

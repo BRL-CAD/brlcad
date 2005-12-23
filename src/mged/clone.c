@@ -45,6 +45,7 @@
 #include "db.h"
 #include "raytrace.h"
 #include "./ged.h"
+#include "./cmd.h"
 
 
 #define TOL 1E-12

@@ -78,14 +78,6 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 extern struct bn_tol		mged_tol;	/* from ged.c */
 
-/* from librt */
-extern const int rt_arb_faces[5][24];
-extern short earb4[5][18];
-extern short earb5[9][18];
-extern short earb6[10][18];
-extern short earb7[12][18];
-extern short earb8[12][18];
-
 static void	arb8_edge(int arg), ars_ed(int arg), ell_ed(int arg), tgc_ed(int arg), tor_ed(int arg), spline_ed(int arg);
 static void	nmg_ed(int arg), pipe_ed(int arg), vol_ed(int arg), ebm_ed(int arg), dsp_ed(int arg), cline_ed(int arg), bot_ed(int arg), extr_ed(int arg);
 static void	rpc_ed(int arg), rhc_ed(int arg), part_ed(int arg), epa_ed(int arg), ehy_ed(int arg), eto_ed(int arg);
@@ -2370,7 +2362,7 @@ init_sedit(void)
 		type = rt_arb_std_type( &es_int , &mged_tol );
 		es_type = type;
 
-		if( rt_arb_calc_planes( es_peqn , arb , es_type , &mged_tol ) )
+		if (rt_arb_calc_planes(interp, arb, es_type, es_peqn, &mged_tol))
 		{
 		  Tcl_AppendResult(interp,"Cannot calculate plane equations for ARB8\n",
 				   (char *)NULL);
@@ -5649,7 +5641,7 @@ sedit(void)
 		arb = (struct rt_arb_internal *)es_int.idb_ptr;
 		RT_ARB_CK_MAGIC( arb );
 
-		(void)rt_arb_calc_planes( es_peqn , arb , es_type , &mged_tol );
+		(void)rt_arb_calc_planes(interp, arb, es_type, es_peqn, &mged_tol);
 	}
 
 	/* If the keypoint changed location, find about it here */
@@ -8701,6 +8693,7 @@ label_edited_solid(
 	pl[npl].str[0] = '\0';	/* Mark ending */
 }
 
+#if 0
 #ifndef HIDE_MGEDS_ARB_ROUTINES
 /* -------------------------------- */
 /*
@@ -8748,6 +8741,7 @@ rt_arb_calc_planes(
 	}
 	return 0;
 }
+#endif
 #endif
 
 /* -------------------------------- */
@@ -9348,7 +9342,7 @@ f_put_sedit(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     arb = (struct rt_arb_internal *)es_int.idb_ptr;
     RT_ARB_CK_MAGIC( arb );
 
-    (void)rt_arb_calc_planes( es_peqn , arb , es_type , &mged_tol );
+    (void)rt_arb_calc_planes(interp, arb, es_type, es_peqn, &mged_tol);
   }
 
   if(!es_keyfixed)

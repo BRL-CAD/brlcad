@@ -57,8 +57,10 @@
     public method keypoint {args}
     public method local2base {args}
     public method lookat {args}
+    public method m2vPoint {args}
     public method model2view {args}
     public method mrot {args}
+    public method mrotPoint {args}
     public method observer {args}
     public method orientation {args}
     public method perspective {args}
@@ -74,6 +76,7 @@
     public method slew {args}
     public method tra {args}
     public method units {args}
+    public method v2mPoint {args}
     public method view2model {args}
     public method vrot {args}
     public method vtra {args}
@@ -233,6 +236,10 @@
     return
 }
 
+::itcl::body View::m2vPoint {args} {
+    eval $view m2vPoint $args
+}
+
 ::itcl::body View::model2view {args} {
     eval $view model2view $args
 }
@@ -243,6 +250,10 @@
     set ae [$view ae]
     set center [$view center]
     return
+}
+
+::itcl::body View::mrotPoint {args} {
+    eval $view mrotPoint $args
 }
 
 ::itcl::body View::observer {args} {
@@ -363,6 +374,10 @@
     set units $args
 }
 
+::itcl::body View::v2mPoint {args} {
+    eval $view v2mPoint $args
+}
+
 ::itcl::body View::view2model {args} {
     eval $view view2model
 }
@@ -432,6 +447,7 @@
     $help add lookat		{{x y z} {adjust view to look at given coordinates}}
     $help add model2view	{{} {returns the model2view matrix}}
     $help add mrot		{{x y z} {rotate view using model x,y,z}}
+    $help add mrotPoint		{{x y z} {rotate point into model space}}
     $help add orientation	{{x y z w} {set view direction from quaternion}}
     $help add perspective	{{[angle]} {set/get the perspective angle}}
     $help add pmat		{{} {get the perspective matrix}}

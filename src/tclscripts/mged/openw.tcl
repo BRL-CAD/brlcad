@@ -64,7 +64,10 @@ if {![info exists mged_default(tran_factor)]} {
 }
 
 if {![info exists mged_default(html_dir)]} {
-	set mged_default(html_dir) [bu_brlcad_data html/manuals/mged]
+    set mged_default(html_dir) [bu_brlcad_data html/manuals/mged]
+    if {![file exists $mged_default(html_dir)]} {
+	set mged_default(html_dir) [bu_brlcad_data doc/html/manuals/mged]
+    }
 }
 
 if {[info exists env(MGED_HTML_DIR)]} {
@@ -271,6 +274,7 @@ proc gui { args } {
 	global vi_state
 	global mged_color_scheme
 	global mged_Priv
+        global tcl_platform
 
         # configure the stdout chanel for this platform
         # this is supposedly done automatically by Tcl, but not
@@ -1850,7 +1854,7 @@ hoc_register_menu_data "ViewRing" "Add View" "Add View"\
 	.$id.menubar.tools add separator
 
 	.$id.menubar.tools add command -label "Build Pattern Tool" -underline 0\
-			-command "pattern_control .#auto"
+			-command "pattern_control .\#auto"
 	hoc_register_menu_data "Tools" "Build Pattern Tool" "Build Pattern Tool"\
 			{ { summary "A tool for building a repetitive pattern from an existing object." } }
 
@@ -2073,8 +2077,13 @@ hoc_register_menu_data "ViewRing" "Add View" "Add View"\
 	MGED's commands." }
 	{ see_also "apropos" } }
 
-	set web_cmd "exec \$mged_browser -display $screen \
+	if {$tcl_platform(os) == "Windows NT"} {
+		set web_cmd "exec \$mged_browser \
+			\$mged_html_dir/index.html &"
+	} else {
+		set web_cmd "exec \$mged_browser -display $screen \
 			\$mged_html_dir/index.html 2> /dev/null &"
+        }
 
 	.$id.menubar.help add command -label "Manual" -underline 0 -command $web_cmd
 	hoc_register_menu_data "Help" "Manual" "Manual"\
@@ -2403,9 +2412,6 @@ proc update_mged_vars { id } {
 	set mged_gui($id,view_draw) [rset ax view_draw]
 	set mged_gui($id,edit_draw) [rset ax edit_draw]
 	set mged($id,use_air) $use_air
-	set mged_gui($id,fb) $fb
-	set mged_gui($id,fb_all) $fb_all
-	set mged_gui($id,fb_overlay) $fb_overlay
 	set mged_gui($id,dlist) $dlist
 	set mged_gui($id,rubber_band) [rset rb draw]
 	set mged_gui($id,mouse_behavior) $mouse_behavior
@@ -2426,8 +2432,12 @@ proc update_mged_vars { id } {
 		set mged_gui($id,lighting) [dm set lighting]
 	}
 
-	set mged_gui($id,listen) $listen
 	set_mged_v_axes_pos $id
+
+	set mged_gui($id,listen) $listen
+	set mged_gui($id,fb) $fb
+	set mged_gui($id,fb_all) $fb_all
+	set mged_gui($id,fb_overlay) $fb_overlay
 }
 
 proc set_mged_v_axes_pos { id } {

@@ -99,8 +99,9 @@ extern int Glx_dm_init();
 extern int Pex_dm_init();
 #endif
 
-extern void share_dlist(struct dm_list *dlp2);	/* defined in share.c */
 extern void set_port(void);		/* defined in fbserv.c */
+
+extern void share_dlist(struct dm_list *dlp2);	/* defined in share.c */
 extern void predictor_init(void);	/* defined in predictor.c */
 extern void view_ring_init(struct _view_state *vsp1, struct _view_state *vsp2); /* defined in chgview.c */
 
@@ -122,6 +123,7 @@ void mged_link_vars(struct dm_list *p);
 #if 0
 static int do_2nd_attach_prompt();
 #endif
+
 void mged_fb_open(void);
 void mged_fb_close(void);
 
@@ -532,11 +534,19 @@ gui_setup(char *dstr)
 #endif
 
 
+#ifdef BRLCAD_DEBUG
+  /* Initialize libdm */
+  (void)Dm_d_Init(interp);
+
+  /* Initialize libfb */
+  (void)Fb_d_Init(interp);
+#else
   /* Initialize libdm */
   (void)Dm_Init(interp);
 
   /* Initialize libfb */
   (void)Fb_Init(interp);
+#endif
 
   if((tkwin = Tk_MainWindow(interp)) == NULL){
     bu_vls_free(&vls);

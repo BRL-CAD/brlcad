@@ -28,6 +28,7 @@ kitchensink_dirs = \
 	libtclcad \
 	libtermio \
 	anim \
+	archer \
 	brlman \
 	burst \
 	bwish \

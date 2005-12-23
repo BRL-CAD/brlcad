@@ -85,14 +85,8 @@
 #endif /* DM_OGL */
 
 #ifdef USE_FBSERV
-/* XXX - shouldn't be coupled to libfb, but necessary for calling the
- * _open_existing interface calls.
- */
-#  define IF_X 1
-#  define IF_OGL 1
 #  include "fb.h"
-#endif /* USE_FBSERV */
-
+#endif
 
 static int dmo_open_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 #if 0

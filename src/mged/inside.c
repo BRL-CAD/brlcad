@@ -72,8 +72,6 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./mged_dm.h"
 #include "./cmd.h"
 
-BU_EXTERN( void nmg_invert_shell , ( struct shell *s , const struct bn_tol *tol ) );
-
 extern struct rt_db_internal	es_int;	/* from edsol.c */
 extern struct bn_tol		mged_tol;	/* from ged.c */
 
@@ -265,7 +263,7 @@ f_inside(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	  /* must find new plane equations to account for
 	   * any editing in the es_mat matrix or path to this solid.
 	   */
-	  if( rt_arb_calc_planes( planes, intern.idb_ptr, cgtype, &mged_tol ) < 0 )  {
+	  if (rt_arb_calc_planes(interp, intern.idb_ptr, cgtype, planes, &mged_tol) < 0)  {
 	    Tcl_AppendResult(interp, "rt_arb_calc_planes(", outdp->d_namep,
 			     "): failed\n", (char *)NULL);
 	    status = TCL_ERROR;

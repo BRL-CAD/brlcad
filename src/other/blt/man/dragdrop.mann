@@ -1,0 +1,456 @@
+'\"
+'\" Copyright 1991-1997 by Bell Labs Innovations for Lucent Technologies.
+'\"
+'\" Permission to use, copy, modify, and distribute this software and its
+'\" documentation for any purpose and without fee is hereby granted, provided
+'\" that the above copyright notice appear in all copies and that both that the
+'\" copyright notice and warranty disclaimer appear in supporting documentation,
+'\" and that the names of Lucent Technologies any of their entities not be used
+'\" in advertising or publicity pertaining to distribution of the software
+'\" without specific, written prior permission.
+'\"
+'\" Lucent Technologies disclaims all warranties with regard to this software,
+'\" including all implied warranties of merchantability and fitness.  In no event
+'\" shall Lucent Technologies be liable for any special, indirect or
+'\" consequential damages or any damages whatsoever resulting from loss of use,
+'\" data or profits, whether in an action of contract, negligence or other
+'\" tortuous action, arising out of or in connection with the use or performance
+'\" of this software.  
+'\"
+'\"
+.so man.macros
+.TH drag&drop n BLT_VERSION BLT "BLT Built-In Commands"
+.BS
+'\" Note:  do not modify the .SH NAME line immediately below!
+.SH NAME
+drag&drop \- facilities for handling drag&drop data transfers
+.SH SYNOPSIS
+\fBdrag&drop source
+.br
+\fBdrag&drop source \fIwindow \fR?\fIoptions\fR?
+.br
+\fBdrag&drop source \fIwindow \fBhandler \fR?\fIdataType\fR? ?\fIcommand arg arg...\fR?
+.sp
+\fBdrag&drop target
+.br
+\fBdrag&drop target \fIwindow \fBhandler \fR?\fIdataType command arg arg...\fR?
+.sp
+\fBdrag&drop target \fIwindow \fBhandle \fIdataType\fR ?\fIvalue\fR?
+.sp
+\fBdrag&drop token \fIwindow
+.sp
+\fBdrag&drop drag \fIwindow x y
+.br
+\fBdrag&drop drop \fIwindow x y
+.br
+\fBdrag&drop active
+.br
+\fBdrag&drop errors \fR?\fIproc\fR?
+.br
+\fBdrag&drop location \fR?\fIx y\fR?
+.BE
+
+.SH DESCRIPTION
+.PP
+The \fBdrag&drop\fR command provides access to a set of facilities
+for managing drag-and-drop data transfers.  Any of the usual Tk widgets can
+be registered to participate in the drag-and-drop process.  Widgets
+registered as a drag&drop \fIsource\fP can export data to other widgets
+registered as a drag&drop \fItarget\fP.  Note that a particular widget
+can be registered as a source, as a target, or as both.
+.PP
+The drag-and-drop process begins when the user clicks and holds a mouse
+button in a source window; a token window appears with an icon or message
+to represent the data being transferred.  As the user moves the mouse pointer,
+the token window follows along, acting as a movable packet of data.
+Whenever the mouse pointer falls on a valid target window, the border of the
+token window is changed to a raised (active) state.  When the mouse button is
+released over the target window, a Tcl routine is invoked to send the data
+to the desired application, and the target window is asked to "handle"
+the data.  If this communication process fails, a rejection symbol (a
+circle with a line through it) is displayed on the token window to
+indicate failure.
+.PP
+The details of the communication process are fully configurable by the
+application developer.  In the simplest case, the value that is sent
+to the target window is a simple string.  The target window is simply
+asked to "handle" that string value.  In general, the source window
+can have a special "handler" procedure to transfer a particular data
+type by issuing a series of "send" commands.  After this, the target
+window is again asked to "handle" the result.
+.PP
+Both sources and targets can have a list of "handlers" for different
+data types.  As a token window is dragged from its source to various
+targets, each target is checked to see if it recognizes a handler
+offered by the source.  If it does, it is treated as a valid target.
+Otherwise, it is ignored.  This scheme allows the same source to
+interact with many different kinds of targets.  For example, a source
+for RGB color samples might have "color" and "string" handlers.  This
+would allow it to communicate with "color" targets (sending RGB data)
+as well as entry widgets (sending strings of the form "#rrggbb").
+.PP
+This introduction was presented as a brief overview of the communication
+process; further details are presented below:
+.TP
+\fBdrag&drop source\fR 
+Returns a list of path names for widgets registered as drag&drop
+sources.  Returns an empty string if no widgets have been registered.
+.TP
+\fBdrag&drop source \fIwindow \fR?\fIoptions\fR?
+Registers a new drag&drop source window with the given options, or
+modifies the options for an existing window:
+.RS
+.LP
+.nf
+Name:	\fBbuttonBinding\fR
+Class:	\fBButtonBinding\fR
+Switch:	\fB\-button\fR \fIn\fR
+.fi
+.IP
+Specifies the mouse button (integer 1-5) that will invoke the drag&drop
+operation on the source window.  This causes the following bindings to
+be added to the widget:
+.sp
+.nf
+.RS
+\f(CWbind \fIwin\fP <ButtonPress-\fIn\fP> {drag&drop drag %W %X %Y}
+\f(CWbind \fIwin\fP <B\fIn\fP-Motion> {drag&drop drag %W %X %Y}
+\f(CWbind \fIwin\fP <ButtonRelease-\fIn\fP> {drag&drop drop %W %X %Y}\fR
+.RE
+.fi
+.sp
+The default value is button 3.  If the value "0" is specified, then no
+bindings are added; this enables the user to establish bindings
+manually.
+.LP
+.nf
+Name:	\fBpackageCommand\fR
+Class:	\fBCommand\fR
+Switch:	\fB\-packagecmd \fIcommand\fR
+.fi
+.IP
+Specifies a Tcl command used to establish the appearance of the token
+window at the start of each drag&drop operation.  This command is
+automatically invoked by the \fBdrag&drop drag\fP command whenever the
+token window is about to be mapped for a drag operation.  It should
+update the appearance of the token window to represent the data that
+is being moved.
+.PP
+The following substitutions are made in the \fIcommand\fR string
+before it is executed:
+.RS
+.TP
+\fB%t\fR
+Replaced with the window path name for the token which represents
+the data being dragged.
+.TP
+\fB%W\fR
+Replaced with the window path name for the drag&drop source.
+.RE
+.LP
+The return value from the package command represents the data being
+transferred.  If the package command returns an empty string, the
+drag operation is quietly aborted.  This can be used to disallow
+drag&drop operations from certain parts of a widget, if the drag
+position is inappropriate.
+.LP
+For example, the following package routine will select an item
+from a listbox and configure the token window to display the selected
+string.  It uses the \fBdrag&drop location\fR command to
+determine the entry in the listbox that the user has selected
+and it returns this as the data value:
+.sp
+.nf
+.RS
+\f(CWproc package_list_item {lbox token} {
+    set xy [drag&drop location]
+    set y  [expr [lindex $xy 1]-[winfo rooty $lbox]]
+
+    set str [$lbox get [$lbox nearest $y]]
+    $token.value configure -text $str
+    return $str
+}\fR
+.RE
+.fi
+.sp
+The return value is available later when the source and target
+communicate.  If the source has a command associated with its
+data handler, then this value is substituted in place of "%v"
+in the source handler.  Otherwise, it is substituted in place
+of "%v" in the target handler.
+.LP
+.nf
+Name:	\fBrejectBackground\fR
+Class:	\fBBackground\fR
+Switch:	\fB\-rejectbg \fIcolor\fR
+.fi
+.IP
+Specifies the color used to draw the background of the rejection symbol
+on the token window.  The rejection symbol (a circle with a line through
+it--the international "no") appears whenever communication fails.
+.LP
+.nf
+Name:	\fBrejectForeground\fR
+Class:	\fBForeground\fR
+Switch:	\fB\-rejectfg \fIcolor\fR
+.fi
+.IP
+Specifies the color used to draw the foreground of the rejection symbol
+on the token window.
+.LP
+.nf
+Name:	\fBrejectStipple\fR
+Class:	\fBStipple\fR
+Switch:	\fB\-rejectstipple \fIpattern\fR
+.fi
+.IP
+Specifies a stipple pattern used to draw the foreground of the rejection
+symbol on the token window.  Any of the forms acceptable to Tk_GetBitmap
+can be used.
+.LP
+.nf
+Name:	\fBselfTarget\fR
+Class:	\fBSelfTarget\fR
+Switch:	\fB\-selftarget \fIboolean\fR
+.fi
+.IP
+If the \fIboolean\fR value is true, and if a source widget is also
+registered as a compatible target, then the source will be able to transmit
+to itself during drag&drop operations.  This is primarily useful for
+complex sources such as a canvas widget, where items may be moved from
+place to place within the same widget.  By default, this option is disabled.
+.LP
+.nf
+Name:	\fBsend\fR
+Class:	\fBSend\fR
+Switch:	\fB\-send \fIlist\fR
+.fi
+.IP
+Specifies a \fIlist\fR of \fIdataTypes\fR enabled for communication.  Only
+\fIdataTypes\fR defined by commands of the form "\fBdrag&drop source
+\fIwindow \fBhandler \fR?\fIdataType\fR ?\fIcommand arg arg...\fR?" are
+allowed.  This list also determines the priority of the various
+\fIdataTypes\fR.
+When a token window is over a potential drag&drop target, this list is
+searched from start to finish for a \fIdataType\fR that is also recognized
+by the target.  The first matching \fIdataType\fR found determines the
+value that will be sent if the token is dropped.  If no matching \fIdataType\fR
+is found, then the target is incompatible, and is ignored.  By default,
+this option has the value "all", indicating that all \fIdataTypes\fR should
+be considered in the order that they were defined for the source.
+.LP
+Note that this option makes it easy to control a drag&drop source.  Setting
+the value to an empty string disables the source; setting the value back
+to "all" restores communication.
+.LP
+.nf
+Name:	\fBsiteCommand\fR
+Class:	\fBCommand\fR
+Switch:	\fB\-sitecmd \fIcommand\fR
+.fi
+.IP
+Specifies a Tcl command used to update the appearance of the token window.
+If specified, this command is automatically invoked by the
+\fBdrag&drop drag\fP command whenever the token window is over a
+compatible drag&drop target.
+.PP
+The following substitutions are made in the \fIcommand\fR string
+before it is executed:
+.RS
+.TP
+\fB%s\fR
+Replaced with "1" if the token window is over a compatible target,
+and "0" otherwise.
+.TP
+\fB%t\fR
+Replaced with the window path name for the token which represents
+the data being dragged.
+.RE
+.LP
+Regardless of this command, border of the token window will become
+raised whenever the token is over a valid target.  This command
+can be used to display other visual cues.
+.LP
+.nf
+Name:	\fBtokenAnchor\fR
+Class:	\fBAnchor\fR
+Switch:	\fB\-tokenanchor \fIanchor\fR
+.fi
+.IP
+Specifies how the token window is positioned relative to the mouse
+pointer coordinates passed to the \fBdrag&drop drag\fP command.
+Must be one of the values n, s, e, w, center, nw, ne, sw or se.
+For example, "nw" means to position the token such that its upper-left
+corner is at the mouse pointer.  The default value is "center".
+.LP
+.nf
+Name:	\fBtokenBackground\fR
+Class:	\fBBackground\fR
+Switch:	\fB\-tokenbg \fIcolor\fR
+.fi
+.IP
+Specifies the color used to draw the background of the token window.
+.LP
+.nf
+Name:	\fBtokenBorderWidth\fR
+Class:	\fBBorderWidth\fR
+Switch:	\fB\-tokenborderwidth \fIsize\fR
+.fi
+.IP
+Specifies the width in pixels of the border around the token window.
+This border becomes raised to indicate when the token is over a compatible
+drag&drop target site.  The value may have any of the forms acceptable
+to Tk_GetPixels.  The default value is "3".
+.LP
+.nf
+Name:	\fBtokenCursor\fR
+Class:	\fBCursor\fR
+Switch:	\fB\-tokencursor \fIcursor\fR
+.fi
+.IP
+Specifies the cursor used when a token window is active.  The value
+may have any of the forms acceptable to Tk_GetCursor.  The default
+value is "center_ptr".
+.RE
+.TP
+\fBdrag&drop source \fIwindow \fBhandler \fR?\fIdataType\fR? ?\fIcommand arg arg...\fR?
+With no extra arguments, this command returns a list of all \fIdataType\fR
+names that have been registered for the source \fIwindow\fR.  If only the
+\fIdataType\fR is specified, then the \fIdataType\fR is created if
+necessary, and the command associated with the \fIdataType\fR is returned.
+Otherwise, it concatenates the \fIcommand\fR and any extra \fIarg\fR strings,
+and registers a new \fIdataType\fR with this command.
+.PP
+The following substitutions are made in the \fIcommand\fR string
+before it is executed:
+.RS
+.TP
+\fB%i\fR
+Replaced with the name of the interpreter for the target application.
+.TP
+\fB%v\fR
+Replaced with the value returned from the "-packagecmd" command.
+.TP
+\fB%w\fR
+Replaced with the window path name for the target window.
+.RE
+.LP
+A typical source handler contains one or more "send" commands which
+transfer data to the remote application.  The target window is then
+asked to handle the new data.  Whatever value is returned by the
+source \fIcommand\fR handler is automatically substituted into the
+"%v" fields of the target handler.
+.LP
+This separation between the transfer and the handling of the data is
+important.  It allows the same source handler to transfer data for
+many different targets, and it allows each of the targets to handle
+the incoming data differently.  If an error is encountered during the
+communication process, the rejection symbol is posted on the token window
+to indicate failure.
+.RE
+.sp
+.TP
+\fBdrag&drop target\fR
+Returns a list of path names for widgets registered as drag&drop
+targets.  Returns an empty string if no widgets have been registered.
+.TP
+\fBdrag&drop target \fIwindow \fBhandler \fR?\fIdataType command arg arg...\fR?
+Registers a new drag&drop target window with a given handler, or
+modifies the handlers for an existing window.  If no \fIdataType\fR
+is specified, this command returns the current list of recognized
+\fIdataType\fR strings.  Each \fIdataType\fR is a symbolic name
+representing a form of data, and the corresponding \fIcommand\fR is
+a Tcl command that specifies how the target will make use of the data.
+This command is invoked indirectly after a source has transferred data
+to a target application.
+.PP
+The following substitutions are made in the \fIcommand\fR string
+before it is executed:
+.RS
+.TP
+\fB%v\fR
+In the simplest case, the source window does not have a handler command
+for the selected \fIdataType\fR, and this field is replaced with the
+result from the "-packagecmd" command.  When the source does have a
+handler command, the result from the "-packagecmd" command is substituted
+into its "%v" field, and the result from this command is substituted
+into this field in the target command.
+.TP
+\fB%W\fR
+Replaced with the window path name for the target window.
+.RE
+.TP
+\fBdrag&drop target \fIwindow \fRhandle \fIdataType\fR ?\fIvalue\fR?
+Searches for the given \fIdataType\fR name among the handlers registered
+for the target \fIwindow\fR, and invokes the appropriate \fIcommand\fR.
+If a \fIvalue\fR is specified, it is substituted into any "%v" fields
+in the handler command associated with the \fIdataType\fR.  If the
+\fIdataType\fR name is not recognized, this command returns an error.
+This command is invoked automatically by the drag&drop facility when
+data is being transferred from a source to a target.
+.TP
+\fBdrag&drop token \fIwindow\fR
+Returns the token window associated with a drag&drop source \fIwindow\fR.
+The token window is used to represent data as it is being dragged from
+the source to a target.  When a source is first established, its token
+window must be filled with widgets to display the source data.  For
+example,
+.sp
+.nf
+.RS
+\f(CWdrag&drop source .foo
+
+set win [drag&drop token .foo]
+label $win.label -text "Data"
+pack $win.label\fR
+.RE
+.fi
+.sp
+.TP
+\fBdrag&drop drag \fIwindow x y\fR
+Marks the start of (or movement during) a drag&drop operation.  If
+the token window is unmapped when this command is invoked, then the
+\fB\-packagecmd\fR for the source \fIwindow\fR is executed.  If this
+command is successful and returns a non-null string, the token window
+is mapped.  On subsequent calls, the token window is moved to the new
+\fIx y\fR location.  Unless the "\fB\-button 0\fR" option is specified for
+the source, this command is automatically bound to <ButtonPress-\fIn\fR>
+and <B\fIn\fR-Motion> events for "\fB\-button \fIn\fR" of the source widget.
+.TP
+\fBdrag&drop drop \fIwindow x y\fR
+Marks the end of a drag&drop operation.  If the mouse pointer is
+over a compatible target window, then the appropriate send handler for
+the first compatible \fIdataType\fR is invoked to handle the data transfer.
+If the data transfer is successful, then the token window is unmapped;
+otherwise, a rejection symbol is drawn on the token window, and the window
+is unmapped after a small delay.  Unless the "\fB\-button 0\fR" option is
+specified for the source, this command is automatically bound to the
+<ButtonRelease-\fIn\fR> event for "\fB\-button \fIn\fR" of the source widget.
+.TP
+\fBdrag&drop active\fR
+Returns "1" if a drag&drop operation is in progress, and "0" otherwise.
+A drag&drop operation officially starts after the package command has
+been executed successfully, and ends after the send handler has been
+executed (successfully or otherwise).
+.TP
+\fBdrag&drop errors \fR?\fIproc\fR?
+Specifies a Tcl \fIproc\fR used to handle errors encountered during
+drag&drop operations.  If a \fIproc\fR is not specified, this command
+returns the current error handler.  By default, all errors are sent
+to the usual \fBtkerror\fR command, and therefore appear in a dialog
+box to the user.  This behavior is quite useful when debugging
+communication protocols, but may not be desirable in a finished
+application.  Errors can be suppressed entirely (leaving the rejection
+symbol as the only error indicator) by specifying a null string in
+place of the \fIproc\fR name.
+.TP
+\fBdrag&drop location \fR?\fIx y\fR?
+Used to set or query the pointer location during a drag&drop operation.
+The \fIx y\fR arguments specify the current location; if these arguments
+are missing, then the last reported (x,y) location is returned as a list
+with two elements.  This command is issued automatically within the
+\fBdrag&drop drag\fR and \fBdrag&drop drop\fR commands, to
+keep track of pointer movement.
+
+.SH KEYWORDS
+drag&drop, send, bind, widget

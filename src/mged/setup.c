@@ -46,6 +46,9 @@
 #include "./ged.h"
 
 
+extern void cmd_setup(void);
+extern void init_qray(void);
+
 /*
  * Initialize mged, configure the path, set up the tcl interpreter.
  */
@@ -98,7 +101,19 @@ mged_setup(void)
     }
 #endif
 
+#if 1
+#ifdef _WIN32
+#  ifdef _DEBUG
+	Tcl_FindExecutable("mged_d");
+#  else
+	Tcl_FindExecutable("mged");
+#  endif
+#else
+	Tcl_FindExecutable("mged");
+#endif
+#else
     Tcl_FindExecutable(bu_argv0(NULL));
+#endif
 
     /* Create the interpreter */
     interp = Tcl_CreateInterp();
@@ -117,6 +132,18 @@ mged_setup(void)
 	bu_log("Tcl_Import error %s\n", interp->result);
 
 
+#ifdef BRLCAD_DEBUG
+    /* Initialize libbu */
+    Bu_d_Init(interp);
+
+    /* Initialize libbn */
+    Bn_d_Init(interp);
+
+    /* Initialize librt (includes database, drawable geometry and view objects) */
+    if (Rt_d_Init(interp) == TCL_ERROR) {
+	bu_log("Rt_d_Init error %s\n", interp->result);
+    }
+#else
     /* Initialize libbu */
     Bu_Init(interp);
 
@@ -127,6 +154,7 @@ mged_setup(void)
     if (Rt_Init(interp) == TCL_ERROR) {
 	bu_log("Rt_Init error %s\n", interp->result);
     }
+#endif
 
     /* initialize MGED's drawable geometry object */
     dgop = dgo_open_cmd("mged", wdbp);

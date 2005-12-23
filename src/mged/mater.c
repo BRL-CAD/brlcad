@@ -68,8 +68,6 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
  *  in strictly ascending order, with no overlaps (ie, monotonicly
  * increasing).
  */
-extern struct mater *rt_material_head;	/* now defined in librt/mater.c */
-extern void rt_insert_color( struct mater *newp );
 
 void color_soltab(void);
 void color_putrec(register struct mater *mp), color_zaprec(register struct mater *mp);

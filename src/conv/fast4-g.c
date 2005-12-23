@@ -3445,7 +3445,7 @@ main(int argc, char **argv)
 	char *plot_file=NULL;
 	char *color_file=NULL;
 
-	while( (c=getopt( argc , argv , "qm:o:c:dwx:b:X:C:" ) ) != EOF )
+	while( (c=bu_getopt( argc , argv , "qm:o:c:dwx:b:X:C:" ) ) != EOF )
 	{
 		switch( c )
 		{
@@ -3453,18 +3453,18 @@ main(int argc, char **argv)
 				quiet = 1;
 				break;
 			case 'm':
-				if( (fd_muves=fopen( optarg, "w" )) == (FILE *)NULL )
+				if( (fd_muves=fopen( bu_optarg, "w" )) == (FILE *)NULL )
 				{
 					bu_log( "Unable to open MUVES file (%s)\n\tno MUVES file created\n",
-						optarg );
+						bu_optarg );
 				}
 				break;
 			case 'o':	/* output a plotfile of original FASTGEN4 elements */
 				do_plot = 1;
-				plot_file = optarg;
+				plot_file = bu_optarg;
 				break;
 			case 'c':	/* convert only the specified components */
-				make_region_list( optarg );
+				make_region_list( bu_optarg );
 				break;
 			case 'd':	/* debug option */
 				debug = 1;
@@ -3473,14 +3473,14 @@ main(int argc, char **argv)
 				warnings = 1;
 				break;
 			case 'x':
-				sscanf( optarg, "%x", (unsigned int *)&rt_debug );
+				sscanf( bu_optarg, "%x", (unsigned int *)&rt_debug );
 				bu_debug = rt_debug;
 				break;
 			case 'b':
-				sscanf( optarg, "%x", (unsigned int *)&bu_debug );
+				sscanf( bu_optarg, "%x", (unsigned int *)&bu_debug );
 				break;
 			case 'C':
-				color_file = optarg;
+				color_file = bu_optarg;
 				break;
 			default:
 				bu_log( "Unrecognzed option (%c)\n", c );
@@ -3492,23 +3492,23 @@ main(int argc, char **argv)
 	if( bu_debug & BU_DEBUG_MEM_CHECK )
 		bu_log( "doing memory checking\n" );
 
-	if( argc-optind != 2 ) {
+	if( argc-bu_optind != 2 ) {
 		bu_log( usage );
 		exit( 1 );
 	}
 
 	rt_init_resource( &rt_uniresource, 0, NULL );
 
-	if( (fdin=fopen( argv[optind] , "r" )) == (FILE *)NULL )
+	if( (fdin=fopen( argv[bu_optind] , "r" )) == (FILE *)NULL )
 	{
-		bu_log( "Cannot open FASTGEN4 file (%s)\n" , argv[optind] );
+		bu_log( "Cannot open FASTGEN4 file (%s)\n" , argv[bu_optind] );
 		perror( "fast4-g" );
 		exit( 1 );
 	}
 
-	if( (fdout=wdb_fopen( argv[optind+1] )) == NULL )
+	if( (fdout=wdb_fopen( argv[bu_optind+1] )) == NULL )
 	{
-		bu_log( "Cannot open file for output (%s)\n" , argv[optind+1] );
+		bu_log( "Cannot open file for output (%s)\n" , argv[bu_optind+1] );
 		perror( "fast4-g" );
 		exit( 1 );
 	}
@@ -3578,7 +3578,7 @@ main(int argc, char **argv)
 
 	/* Make an ID record if no vehicle card was found */
 	if( !vehicle[0] )
-		mk_id_units( fdout , argv[optind] , "in" );
+		mk_id_units( fdout , argv[bu_optind] , "in" );
 
 	if( !quiet )
 		bu_log( "Building components....\n" );

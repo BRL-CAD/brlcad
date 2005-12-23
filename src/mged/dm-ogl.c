@@ -68,8 +68,6 @@ static const char RCSid[] = "@(#)$Header";
 #include "./sedit.h"
 #include "./mged_dm.h"
 
-
-extern int _ogl_open_existing();	/* defined in libfb/if_ogl.c */
 extern int common_dm();			/* defined in dm-generic.c */
 extern void dm_var_init();		/* defined in attach.c */
 extern void cs_set_bg();		/* defined in color_scheme.c */

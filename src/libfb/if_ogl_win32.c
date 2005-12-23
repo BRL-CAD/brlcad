@@ -64,6 +64,10 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #include "tkPlatDecls.h"
 #include "machine.h"
 #include "bu.h"
+#include "vmath.h"
+#include "bn.h"
+#include "rtgeom.h"
+#include "raytrace.h"
 #include "fb.h"
 #include "./fblocal.h"
 
@@ -612,6 +616,9 @@ LONG WINAPI MainWndProc (
 {
     switch (uMsg) {
     case WM_PAINT:
+#if 0
+	fprintf(stderr, "XXXMainWndProc: msg - WM_PAINT\n");
+#endif
 	if(!OGL(saveifp)->use_ext_ctrl)
 	    expose_callback(saveifp,0);
 	break;
@@ -622,7 +629,10 @@ LONG WINAPI MainWndProc (
     case WM_MBUTTONDOWN:
 	break;
     case WM_CLOSE:
-	OGL(saveifp)->alive = 0;
+#if 0
+	fprintf(stderr, "XXXMainWndProc: msg - WM_CLOSE\n");
+#endif
+	OGL(saveifp)->alive = -1;
 	break;
     case WM_LBUTTONUP:
 	OGL(saveifp)->alive = 0;
@@ -636,6 +646,9 @@ LONG WINAPI MainWndProc (
     case WM_KEYDOWN:
 	break;
     case WM_KEYUP:
+#if 0
+	fprintf(stderr, "XXXMainWndProc: msg - WM_KEYUP\n");
+#endif
 	OGL(saveifp)->alive = 0;
 	break;
     case WM_SIZE:
@@ -929,8 +942,7 @@ char **argv;
 			    glxc, double_buffer, soft_cmap);
 }
 
-int
-_ogl_open_existing(ifp, dpy, win, cmap, vip, width, height, glxc, double_buffer, soft_cmap)
+#if 0
 FBIO *ifp;
 Display *dpy;
 Window win;
@@ -941,6 +953,19 @@ int height;
 HGLRC glxc;
 int double_buffer;
 int soft_cmap;
+#endif
+
+int
+_ogl_open_existing(FBIO *ifp,
+		   Display *dpy,
+		   Window win,
+		   Colormap cmap,
+		   PIXELFORMATDESCRIPTOR *vip,
+		   int width,
+		   int height,
+		   HGLRC glxc,
+		   int double_buffer,
+		   int soft_cmap)
 {
 
   /*XXX for now use private memory */
@@ -1099,15 +1124,14 @@ FBIO	*ifp;
 	  (void)signal( SIGALRM, SIG_IGN );
 	*/
 
-	while( OGL(ifp)->alive )
+	while (0 < OGL(ifp)->alive)
 	    do_event(ifp);
 
 	return 0;
 }
 
 int
-ogl_close_existing(ifp)
-FBIO *ifp;
+ogl_close_existing(FBIO *ifp)
 {
     /*
       if(OGL(ifp)->cursor)
@@ -1141,7 +1165,11 @@ ogl_poll(ifp)
 FBIO	*ifp;
 {
 	do_event(ifp);
-	return(0);
+
+	if (OGL(saveifp)->alive < 0)
+	    return(1);
+	else
+	    return(0);
 }
 
 /*
@@ -2021,8 +2049,9 @@ do_event(FBIO *ifp)
         {
             TranslateMessage(&msg);
             DispatchMessage(&msg);
-        }
-    }
+	}
+    } 
+
     /* let's not starve the processor */
     Sleep( 250 );
 }

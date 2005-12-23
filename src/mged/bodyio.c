@@ -67,9 +67,6 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./ged.h"
 #include "./sedit.h"
 
-/* defined in librt/db5_bin.c */
-extern void rt_binunif_dump();
-
 /*
  *		C M D _ I M P O R T _ B O D Y ( )
  *

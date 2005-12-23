@@ -1797,6 +1797,23 @@ f_preview(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 int
 f_nirt(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
+#if 1
+    char *ptr, buf[256];
+	CHECK_DBI_NULL;
+
+	ptr = bu_brlcad_root("bin", 1);
+	if (ptr) {
+#ifdef _WIN32
+	    sprintf(buf, "\"%s/%s\"", ptr, argv[0]);
+#else
+	    sprintf(buf, "%s/%s", ptr, argv[0]);
+#endif
+	    argv[0] = buf;
+	}
+
+
+	return dgo_nirt_cmd(dgop, view_state->vs_vop, interp, argc, argv);
+#else
 	register char **vp;
 	FILE *fp_in;
 	FILE *fp_out, *fp_err;
@@ -2282,11 +2299,29 @@ done:
 		sp->s_wflag = DOWN;
 
 	return TCL_OK;
+#endif
 }
 
 int
 f_vnirt(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
+#if 1
+    char *ptr, buf[256];
+	CHECK_DBI_NULL;
+
+	ptr = bu_brlcad_root("bin", 1);
+	if (ptr) {
+#ifdef _WIN32
+	    sprintf(buf, "\"%s/%s\"", ptr, argv[0]);
+#else
+	    sprintf(buf, "%s/%s", ptr, argv[0]);
+#endif
+	    argv[0] = buf;
+	}
+
+
+	return dgo_vnirt_cmd(dgop, view_state->vs_vop, interp, argc, argv);
+#else
   register int i;
   int status;
   fastf_t sf = 1.0 * INV_GED;
@@ -2361,6 +2396,7 @@ f_vnirt(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
   bu_free((genptr_t)av, "f_vnirt: av");
 
   return status;
+#endif
 }
 
 int

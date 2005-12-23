@@ -1,0 +1,14 @@
+2004-08-16  Andreas Kupries  <andreask@activestate.com>
+
+	* png.c: Replaced the hardwired version number of wrapper pngtcl
+	  with macro PNGTCL_VERSION.
+
+2002-12-06  Andreas Kupries  <andreask@activestate.com>
+
+	* png.c (SetupPngLibrary): Missed return TCL_OK for success. This
+	  prevented the loading of this handler.
+
+2002-11-20  Andreas Kupries <andreas_kupries@users.sourceforge.net>
+
+	* Start of logging.
+	* tkimg/png: PNG photo image type.

@@ -1,0 +1,115 @@
+This file describes how to compile and install the BLT library for UNIX.
+[See the file ./win/README for details on how to build under Win32.]
+
+1. Uncompress and untar the distribution file.  
+
+	zcat BLT2.4.tar.gz | tar -xvf - 
+
+   This will create a directory "blt2.4" with the following subdirectories:
+
+     		   blt2.4
+      	______________|_____________________________
+     	|       |       |      |      |    | 	   |
+      demos  examples  html library  man  src	  win
+        |		      	           |       |
+     scripts			         shared   X11
+
+2. Run ./configure
+
+   Go into the "blt2.4" directory 
+
+        cd blt2.4
+
+   and run the auto-configuration script "./configure".  Tell where to find 
+   the Tcl and Tk header files and libraries with the "--with-tcl" switch.
+
+        ./configure --with-tcl=/util/lang/tcl
+
+       Switches:
+
+       --prefix=path	Specifies the path where "bltwish", the BLT
+     			header files, libraries, scripts, and manual
+     			pages are installed. The default is 
+			"/usr/local/blt".  
+
+                        This switch also indicates where to find the 
+			Tcl/Tk header files and libraries. You can use 
+			the --with-tcl and --with-tk switches to override 
+			this value if the location of the Tcl/Tk files 
+			is different.
+
+       --with-tcl=dir	Directory where Tcl and/or Tk is installed.
+
+       --with-tk=dir	Directory where Tk is installed	if different 
+			from "--with-tcl".
+
+       --with-cc=program  Lets you specify the C compiler, such as 
+     			  "acc" or "gcc". 
+
+  The configure script creates a header file "src/bltConfig.h". It will also 
+  generate new Makefiles from their respective templates (Makefile.in).
+
+        Makefile.in 	        ==> Makefile
+        src/Makefile.in	        ==> src/Makefile
+        src/shared/Makefile.in	==> src/shared/Makefile
+        man/Makefile.in		==> man/Makefile
+        library/Makefile.in	==> library/Makefile
+
+3. Compile the libraries and build the demonstration program "bltwish".
+
+        make 
+
+   The program "bltwish" will be created in the ./src directory.
+
+4. Test by running the demos. 
+
+   Go into the demos directory 
+
+        cd demos
+
+   and run the test scripts.  
+
+        ./graph1.tcl
+
+   If your system doesn't support "#!" in shell scripts, then it's
+
+        ../src/bltwish ./graph1.tcl
+
+
+5. Installing BLT
+
+       make install
+
+   The following directories will be created when BLT is installed.  
+   By default, the top directory is /usr/local/blt.  
+                  
+           ___________|__________
+           |     |        |     |
+          bin  include   lib   man
+                          |
+                        blt2.4   
+                      ____|____
+                      |       |
+                    demos   dd_protocols
+
+   You can change the top directory by supplying the "--prefix=dir" switch 
+   to ./configure.
+
+*6. (Optional) Compiling BLT into your own custom "wish".
+
+   [If your version of "wish" supports dynamic loading of packages
+   you can simply add
+
+         package require BLT 
+
+   to the start of your script.]
+
+   Add the following lines to your program's Tcl_AppInit routine in
+   tkAppInit.c
+
+        if (Blt_Init(interp) != TCL_OK) {
+            return TCL_ERROR;
+        }
+
+   then link with libBLT.a.  And that's all there's to it.
+     

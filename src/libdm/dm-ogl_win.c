@@ -1721,8 +1721,10 @@ ogl_choose_visual(struct dm *dmp,
 	LocalFree(buf);
 
 	return (PIXELFORMATDESCRIPTOR *)NULL;
+#if 0
     } else {
 	bu_log("ogl_choose_visual: iPixelFormat - %d\n");
+#endif
     }
 
     ppfd->nSize = sizeof(PIXELFORMATDESCRIPTOR);
@@ -1735,7 +1737,9 @@ ogl_choose_visual(struct dm *dmp,
 
     ((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.zbuf = 1;
     iPixelFormat = ChoosePixelFormat(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, ppfd);
+#if 0
     bu_log("ogl_choose_visual: iPixelFormat (after ChoosePixelFormat) - %d\n");
+#endif
     good = SetPixelFormat(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, iPixelFormat, ppfd);
 
     if (good)
@@ -1970,65 +1974,70 @@ ogl_configureWin_guts(struct dm *dmp,
 
     /* First time through, load a font or quit */
     if (((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct == NULL) {
-	logfont.lfHeight = 18;
-	logfont.lfWidth = 0;
-	logfont.lfEscapement = 0;
-	logfont.lfOrientation = 10;
-	logfont.lfWeight = FW_NORMAL;
-	logfont.lfItalic = FALSE;
-	logfont.lfUnderline = FALSE;
-	logfont.lfStrikeOut = FALSE;
-	logfont.lfCharSet = ANSI_CHARSET ;
-	logfont.lfOutPrecision = OUT_DEFAULT_PRECIS;
-	logfont.lfClipPrecision =  CLIP_DEFAULT_PRECIS ;
-	logfont.lfQuality = DEFAULT_QUALITY;
-	logfont.lfPitchAndFamily = DEFAULT_PITCH | FF_DONTCARE;
-	logfont.lfFaceName[LF_FACESIZE] = (TCHAR) 0;
+	logfont.lfHeight = 18;    
+	logfont.lfWidth = 0;    
+	logfont.lfEscapement = 0;    
+	logfont.lfOrientation = 10; 
+	logfont.lfWeight = FW_NORMAL;    
+	logfont.lfItalic = FALSE;    
+	logfont.lfUnderline = FALSE;    
+	logfont.lfStrikeOut = FALSE; 
+	logfont.lfCharSet = ANSI_CHARSET;    
+	logfont.lfOutPrecision = OUT_DEFAULT_PRECIS;    
+	logfont.lfClipPrecision =  CLIP_DEFAULT_PRECIS; 
+	logfont.lfQuality = DEFAULT_QUALITY;    
+	logfont.lfPitchAndFamily = DEFAULT_PITCH | FF_DONTCARE;    
+	logfont.lfFaceName[0] = (TCHAR)0;
 
 	if ((((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct =
 	     CreateFontIndirect(&logfont)) == NULL ) {
 	    /* ????? add backup later */
 	    /* Try hardcoded backup font */
 	    /*     if ((((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct =
-		   (HFONT *)CreateFontIndirect(&logfont)) == NULL) */{
-		       bu_log("ogl_configureWin_guts: Can't open font '%s' or '%s'\n", FONT9, FONTBACK);
-		       return TCL_ERROR;
-		   }
+		   (HFONT *)CreateFontIndirect(&logfont)) == NULL) */
+	    {
+		bu_log("ogl_configureWin_guts: Can't open font '%s' or '%s'\n", FONT9, FONTBACK);
+		return TCL_ERROR;
+	    }
 	}
 
 	oldfont = SelectObject(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc,((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct);
 	wglUseFontBitmaps(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc,0,256,((struct ogl_vars *)dmp->dm_vars.priv_vars)->fontOffset);
-	DeleteObject(SelectObject(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc,oldfont));
-    }
 
+	if (oldfont != NULL)
+	    DeleteObject(SelectObject(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc,oldfont));
+    }
 
     /* Always try to choose a the font that best fits the window size.
      */
 
     if(!GetObject( ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct, sizeof(LOGFONT), &logfont)) {
-	logfont.lfHeight = 18;
-	logfont.lfWidth = 0;
-	logfont.lfEscapement = 0;
-	logfont.lfOrientation = 10;
-	logfont.lfWeight = FW_NORMAL;
-	logfont.lfItalic = FALSE;
-	logfont.lfUnderline = FALSE;
-	logfont.lfStrikeOut = FALSE;
-	logfont.lfCharSet = ANSI_CHARSET ;
-	logfont.lfOutPrecision = OUT_DEFAULT_PRECIS;
-	logfont.lfClipPrecision =  CLIP_DEFAULT_PRECIS ;
-	logfont.lfQuality = DEFAULT_QUALITY;
-	logfont.lfPitchAndFamily = DEFAULT_PITCH | FF_DONTCARE;
-	logfont.lfFaceName[LF_FACESIZE] = (TCHAR) 0;
-
+	logfont.lfHeight = 18;    
+	logfont.lfWidth = 0;    
+	logfont.lfEscapement = 0;    
+	logfont.lfOrientation = 10; 
+	logfont.lfWeight = FW_NORMAL;    
+	logfont.lfItalic = FALSE;    
+	logfont.lfUnderline = FALSE;    
+	logfont.lfStrikeOut = FALSE; 
+	logfont.lfCharSet = ANSI_CHARSET ;    
+	logfont.lfOutPrecision = OUT_DEFAULT_PRECIS;    
+	logfont.lfClipPrecision =  CLIP_DEFAULT_PRECIS ; 
+	logfont.lfQuality = DEFAULT_QUALITY;    
+	logfont.lfPitchAndFamily = DEFAULT_PITCH | FF_DONTCARE;    
+	logfont.lfFaceName[0] = (TCHAR) 0;
+  
 	if ((((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct =
-	     CreateFontIndirect(&logfont)) == NULL )
-	    {
-	    }
+	     CreateFontIndirect(&logfont)) == NULL ) {
+	    bu_log("ogl_configureWin_guts: Can't open font '%s' or '%s'\n", FONT9, FONTBACK);
+	    return TCL_ERROR;
+	}
 
 	oldfont = SelectObject(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc,((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct);
 	wglUseFontBitmaps(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc,0,256,((struct ogl_vars *)dmp->dm_vars.priv_vars)->fontOffset);
-	DeleteObject(SelectObject(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc,oldfont));
+
+	if (oldfont != NULL)
+	    DeleteObject(SelectObject(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc,oldfont));
     }
 
 
@@ -2041,7 +2050,9 @@ ogl_configureWin_guts(struct dm *dmp,
 		((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct = newfontstruct;
 		oldfont = SelectObject(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc,((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct);
 		wglUseFontBitmaps(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc,0,256,((struct ogl_vars *)dmp->dm_vars.priv_vars)->fontOffset);
-		DeleteObject(SelectObject(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc,oldfont));
+
+		if (oldfont != NULL)
+		    DeleteObject(SelectObject(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc,oldfont));
 	    }
 	}
     } else if (dmp->dm_width < 679) {
@@ -2053,7 +2064,9 @@ ogl_configureWin_guts(struct dm *dmp,
 		((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct = newfontstruct;
 		oldfont = SelectObject(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc,((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct);
 		wglUseFontBitmaps(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc,0,256,((struct ogl_vars *)dmp->dm_vars.priv_vars)->fontOffset);
-		DeleteObject(SelectObject(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc,oldfont));
+
+		if (oldfont != NULL)
+		    DeleteObject(SelectObject(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc,oldfont));
 	    }
 	}
     } else if (dmp->dm_width < 776) {
@@ -2076,7 +2089,9 @@ ogl_configureWin_guts(struct dm *dmp,
 		((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct = newfontstruct;
 		oldfont = SelectObject(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc,((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct);
 		wglUseFontBitmaps(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc,0,256,((struct ogl_vars *)dmp->dm_vars.priv_vars)->fontOffset);
-		DeleteObject(SelectObject(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc,oldfont));
+
+		if (oldfont != NULL)
+		    DeleteObject(SelectObject(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc,oldfont));
 	    }
 	}
     } else {
@@ -2087,7 +2102,9 @@ ogl_configureWin_guts(struct dm *dmp,
 		((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct = newfontstruct;
 		oldfont = SelectObject(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc,((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct);
 		wglUseFontBitmaps(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc,0,256,((struct ogl_vars *)dmp->dm_vars.priv_vars)->fontOffset);
-		DeleteObject(SelectObject(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc,oldfont));
+
+		if (oldfont != NULL)
+		    DeleteObject(SelectObject(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc,oldfont));
 	    }
 	}
     }

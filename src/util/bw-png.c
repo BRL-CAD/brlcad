@@ -79,7 +79,7 @@ get_args(int argc, register char **argv)
 			autosize = 0;
 			break;
 		case 'n':
-			file_height = atoi(bu_optarg);
+			file_height = atol(bu_optarg);
 			autosize = 0;
 			break;
 

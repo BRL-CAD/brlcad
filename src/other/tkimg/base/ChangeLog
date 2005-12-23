@@ -1,0 +1,40 @@
+2002-11-26  Andreas Kupries <andreas_kupries@users.sourceforge.net>
+
+	* pkgIndex.tcl.in: Added index script to load all format handlers
+	  when requiring 'Img', i.e. the old package.
+
+2002-11-21  Andreas Kupries <andreas_kupries@users.sourceforge.net>
+
+	* tkimgUtils.c (tkimg_FixObjMatchProc): 
+	* tkimgUtils.c (tkimg_FixChanMatchProc): Changed bit-negation to
+	  logical negation. This fixes a bug intriduced by the rewrite to
+	  use version info to distinguish between calls from 8.3.2 and
+	  8.3. The bug caused the procedure to bail out without rotating
+	  the arguments, causing the remainder to end up with the argument
+	  in the wrong places, crashing the system when trying to read
+	  from the channel or data object.
+
+	  Looking at the signatures I believe that the inherited code is
+	  still wrong for calls from 8.3.2.
+
+2002-11-20  Andreas Kupries <andreas_kupries@users.sourceforge.net>
+
+	* Makefile.in: The configure variable TK_XINCLUDES has to placed
+	  in variable, to avoid problem on platforms placing a shell
+	  comment into it. More in the Makefile.
+
+2002-11-19  Andreas Kupries  <andreas_kupries@users.sourceforge.net>
+
+	* tkimg.h (tkimg_PhotoPutBlockTk): Added a convenience macro
+	  dealing with the change of the signature of Tk_PhotoPutBlock
+	  between 8.3.5 and 8.4 [see TIP 98]. This is a compile time
+	  decision. I.e. 'tkimg' and format handlers can be compiled for
+	  8.3 and earlier, or 8.4. The result will run only with the core
+	  it was compiled for. This might change before the release of Img
+	  2.0.
+
+2002-11-18  Andreas Kupries  <andreask@activestate.com>
+
+	* Start of logging.
+
+	* tkimg: The base package for the format handlers to draw upon.

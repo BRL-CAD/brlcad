@@ -37,6 +37,20 @@
 #ifndef DB5_H
 #define DB5_H seen
 
+__BEGIN_DECLS
+
+#ifndef DB5_EXPORT
+#  if defined(_WIN32) && !defined(__CYGWIN__) && defined(BRLCAD_DLL)
+#    ifdef DB5_EXPORT_DLL
+#      define DB5_EXPORT __declspec(dllexport)
+#    else
+#      define DB5_EXPORT __declspec(dllimport)
+#    endif
+#  else
+#    define DB5_EXPORT
+#  endif
+#endif
+
 /*
  * The format of an object's header as it exists on disk,
  * as best we can describe its variable size with a "C" structure.
@@ -196,16 +210,18 @@ struct db5_raw_internal {
 #define DB5_RAW_INTERNAL_MAGIC	0x64357269	/* "d5ri" */
 #define RT_CK_RIP(_ptr)		BU_CKMAG( _ptr, DB5_RAW_INTERNAL_MAGIC, "db5_raw_internal" )
 
-extern const int db5_enc_len[4];	/* convert wid to nbytes */
+DB5_EXPORT extern const int db5_enc_len[4];	/* convert wid to nbytes */
 
-extern unsigned char *db5_encode_length(
-	unsigned char	*cp,
-	long		val,
-	int		format);
-const unsigned char *db5_get_raw_internal_ptr(
-	struct db5_raw_internal *rip,
-	const unsigned char *ip);
+DB5_EXPORT BU_EXTERN(unsigned char *db5_encode_length,
+		     (unsigned char	*cp,
+		      long		val,
+		      int		format));
+DB5_EXPORT BU_EXTERN(const unsigned char *db5_get_raw_internal_ptr,
+		     (struct db5_raw_internal *rip,
+		      const unsigned char *ip));
 
+
+__END_DECLS
 
 #endif	/* DB5_H */
 

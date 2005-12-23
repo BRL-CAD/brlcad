@@ -45,6 +45,13 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "bu.h"
 #include "fb.h"
 
+#include "pkg.h"
+
+#ifdef _WIN32
+#  include <winsock.h>
+#  include <fcntl.h>
+#endif
+
 static png_color_16 def_backgrd={ 0,0,0,0,0 };
 static unsigned char **scanline;	/* 1 scanline pixel buffer */
 static int	scanbytes;		/* # of bytes of scanline */
@@ -153,7 +160,11 @@ get_args(int argc, register char **argv)
 		fp_in = stdin;
 	} else {
 		file_name = argv[bu_optind];
+#ifdef _WIN32
+		if( (fp_in = fopen(file_name, "rb")) == NULL )  {
+#else
 		if( (fp_in = fopen(file_name, "r")) == NULL )  {
+#endif
 			perror(file_name);
 			(void)fprintf( stderr,
 				"png-fb: cannot open \"%s\" for reading\n",
@@ -191,19 +202,30 @@ main(int argc, char **argv)
 		exit( 1 );
 	}
 
-	if( fread( header, 8, 1, fp_in ) != 1 )
-		bu_bomb( "ERROR: Failed while reading file header!!!\n" );
+	if (pkg_init() != 0)
+	    exit(1);
 
-	if( !png_check_sig( (png_bytep)header, 8 ) )
+	if (fread(header, 8, 1, fp_in) != 1) {
+		pkg_terminate();
+		bu_bomb( "ERROR: Failed while reading file header!!!\n" );
+	}
+
+	if (!png_check_sig((png_bytep)header, 8)) {
+		pkg_terminate();
 		bu_bomb( "This is not a PNG file!!!\n" );
+	}
 
 	png_p = png_create_read_struct( PNG_LIBPNG_VER_STRING, NULL, NULL, NULL );
-	if( !png_p )
+	if (!png_p) {
+		pkg_terminate();
 		bu_bomb( "png_create_read_struct() failed!!\n" );
+	}
 
 	info_p = png_create_info_struct( png_p );
-	if( !info_p )
+	if (!info_p) {
+		pkg_terminate();
 		bu_bomb( "png_create_info_struct() failed!!\n" );
+	}
 
 	png_init_io( png_p, fp_in );
 
@@ -253,6 +275,7 @@ main(int argc, char **argv)
 
 	if( header_only )  {
 		fprintf(stdout, "WIDTH=%d HEIGHT=%d\n", file_width, file_height);
+		pkg_terminate();
 		exit(0);
 	}
 
@@ -426,6 +449,7 @@ main(int argc, char **argv)
 	if( fb_close( fbp ) < 0 )  {
 		fprintf(stderr, "png-fb: Warning: fb_close() error\n");
 	}
+	pkg_terminate();
 	exit(0);
 }
 

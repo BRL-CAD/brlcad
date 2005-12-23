@@ -106,11 +106,6 @@ as represented by the U.S. Army Research Laboratory.  All rights reserved.";
 #include "./mged_dm.h"
 #include "./cmd.h"
 
-#ifdef _WIN32
-#  define R_OK 2
-#  define W_OK 4
-#endif
-
 #ifndef _WIN32
 #  ifndef LOGFILE
 #    define LOGFILE	"/vld/lib/gedlog"	/* usage log */
@@ -129,9 +124,6 @@ extern void draw_e_axes(void);
 extern void draw_m_axes(void);
 extern void draw_v_axes(void);
 
-extern void fb_tclInit();  /* from in libfb/tcl.c */
-extern int fb_refresh();
-
 extern void draw_grid(void);		/* grid.c */
 
 extern void draw_rect(void);		/* rect.c */
@@ -142,15 +134,13 @@ extern void predictor_init(void);
 
 /* defined in attach.c */
 extern int mged_link_vars(struct dm_list *p);
+extern int is_dm_null(void);
 
 /* defined in chgmodel.c */
 extern void set_localunit_TclVar(void);
 
 /* defined in dodraw.c */
 extern unsigned char geometry_default_color[];
-
-/* defined in libdm/dm-Null.c */
-extern struct dm dm_Null;
 
 /* defined in set.c */
 extern struct _mged_variables default_mged_variables;
@@ -269,8 +259,10 @@ main(int argc, char **argv)
 	int	c;
 	int	read_only_flag=0;
 
+#ifndef _WIN32
 	pid_t	pid;
-	int	parent_pipe[2] = {0};
+#endif
+	int	parent_pipe[2];
 	int	use_pipe = 0;
 
 #ifdef _WIN32
@@ -337,16 +329,17 @@ main(int argc, char **argv)
 #ifndef COMMAND_LINE_EDITING
 #define COMMAND_LINE_EDITING 1
 #endif
+#ifndef _WIN32
 	      /* Set up for character-at-a-time terminal IO. */
 	      cbreak_mode = COMMAND_LINE_EDITING;
 	      save_Tty(fileno(stdin));
+#endif
 	    }
 	  }
 	}
 
 #ifndef _WIN32
 	(void)signal( SIGPIPE, SIG_IGN );
-#endif
 
 	/*
 	 *  Sample and hold current SIGINT setting, so any commands that
@@ -404,6 +397,7 @@ main(int argc, char **argv)
 		    exit( 0 );
 		}
 	}
+#endif
 
 	/* If multiple processors might be used, initialize for it.
 	 * Do not run any commands before here.
@@ -554,9 +548,11 @@ main(int argc, char **argv)
 	  }
 
 	  if (status != TCL_OK) {
+#ifndef _WIN32
 	      if( !run_in_foreground && use_pipe ) {
 		  notify_parent_done(parent_pipe[1]);
 	      }
+#endif
 	      bu_log("%s\nMGED Aborted.\n", bu_vls_addr(&error));
 	      mged_finish(1);
 	  }
@@ -580,6 +576,8 @@ main(int argc, char **argv)
 		bu_log( "Opened in READ ONLY mode\n" );
 	}
 
+	pkg_init();
+
 	/* --- Now safe to process commands. --- */
 	if(interactive){
 	  /* This is an interactive mged, process .mgedrc */
@@ -598,9 +596,10 @@ main(int argc, char **argv)
 	    struct bu_vls vls;
 	    int status;
 
-
+#ifndef _WIN32
 	    /* make this a process group leader */
 	    setpgid(0, 0);
+#endif
 
 	    bu_vls_init(&vls);
 	    bu_vls_strcpy(&vls, "gui");
@@ -611,13 +610,16 @@ main(int argc, char **argv)
 	     * parent process know that we are done initializing so
 	     * that it may exit.
 	     */
+#ifndef _WIN32
 	    if( !run_in_foreground && use_pipe ) {
 		notify_parent_done(parent_pipe[1]);
 	    }
+#endif
 
 	    if (status != TCL_OK) {
-	      bu_log("%s\nMGED Aborted.\n", interp->result);
-	      mged_finish(1);
+		bu_log("%s\nMGED Aborted.\n", interp->result);
+		pkg_terminate();
+		mged_finish(1);
 	    }
 
 #ifndef _WIN32
@@ -667,6 +669,7 @@ main(int argc, char **argv)
 	  /* NOTREACHED */
 	}
 
+#ifndef _WIN32
 	if(classic_mged || !interactive){
 #ifndef _WIN32
 	  Tcl_CreateFileHandler(STDIN_FILENO, TCL_READABLE,
@@ -685,7 +688,9 @@ main(int argc, char **argv)
 	    set_Cbreak(fileno(stdin));
 	    clr_Echo(fileno(stdin));
 	  }
-	}else{
+	} else
+#endif
+	{
 	  struct bu_vls vls;
 
 	  bu_vls_init(&vls);
@@ -759,6 +764,7 @@ extern struct bu_vls *history_prev(void), *history_cur(void), *history_next(void
  * (or an entire line if the terminal is not in cbreak mode.)
  */
 
+#ifndef _WIN32
 void
 stdin_input(ClientData clientData, int mask)
 {
@@ -1319,6 +1325,7 @@ mged_insert_char(char ch)
     bu_vls_free(&temp);
   }
 }
+#endif
 
 
 /* Stuff a string to stdout while leaving the current command-line alone */
@@ -1728,6 +1735,7 @@ refresh(void)
   double elapsed_time;
   int do_time = 0;
 
+  bu_vls_init(&tmp_vls);
   rt_prep_timer();
 
   FOR_ALL_DISPLAYS(p, &head_dm_list.l)
@@ -1758,7 +1766,6 @@ refresh(void)
       if(dbip != DBI_NULL){
 	if(do_overlay){
 	  bu_vls_init(&overlay_vls);
-	  bu_vls_init(&tmp_vls);
 	  create_text_overlay(&overlay_vls);
 	  do_overlay = 0;
 	}
@@ -1772,6 +1779,7 @@ refresh(void)
 
       DM_DRAW_BEGIN(dmp);	/* update displaylist prolog */
 
+#ifndef _WIN32
       if (dbip != DBI_NULL) {
 	      /* do framebuffer underlay */
 	      if (mged_variables->mv_fb && !mged_variables->mv_fb_overlay) {
@@ -1853,6 +1861,59 @@ refresh(void)
 			     color_scheme->cs_center_dot[2], 1, 1.0);
 	      DM_DRAW_POINT_2D(dmp, 0.0, 0.0);
       }
+#else
+      if (dbip != DBI_NULL) {
+	  /*  Draw each solid in it's proper place on the screen
+	   *  by applying zoom, rotation, & translation.
+	   *  Calls DM_LOADMATRIX() and DM_DRAW_VLIST().
+	   */
+
+	  if (dmp->dm_stereo == 0 ||
+	      mged_variables->mv_eye_sep_dist <= 0) {
+	      /* Normal viewing */
+	      dozoom(0);
+	  } else {
+	      /* Stereo viewing */
+	      dozoom(1);
+	      dozoom(2);
+	  }
+
+	  /* Restore to non-rotated, full brightness */
+	  DM_NORMAL(dmp);
+
+	  if (rubber_band->rb_active || rubber_band->rb_draw)
+	      draw_rect();
+
+	  if (grid_state->gr_draw)
+	      draw_grid();
+
+	  /* Compute and display angle/distance cursor */
+	  if (adc_state->adc_draw)
+	      adcursor();
+
+	  if (axes_state->ax_view_draw)
+	      draw_v_axes();
+
+	  if (axes_state->ax_model_draw)
+	      draw_m_axes();
+
+	  if (axes_state->ax_edit_draw &&
+	      (state == ST_S_EDIT || state == ST_O_EDIT))
+	      draw_e_axes();
+
+	  /* Display titles, etc., if desired */
+	  bu_vls_strcpy(&tmp_vls, bu_vls_addr(&overlay_vls));
+	  dotitles(&tmp_vls);
+	  bu_vls_trunc(&tmp_vls, 0);
+
+	  /* Draw center dot */
+	  DM_SET_FGCOLOR(dmp,
+			 color_scheme->cs_center_dot[0],
+			 color_scheme->cs_center_dot[1],
+			 color_scheme->cs_center_dot[2], 1, 1.0);
+	  DM_DRAW_POINT_2D(dmp, 0.0, 0.0);
+      }
+#endif
 
       DM_DRAW_END(dmp);
     }
@@ -1870,10 +1931,10 @@ refresh(void)
 
   curr_dm_list = save_dm_list;
 
-  if(!do_overlay){
-    bu_vls_free(&overlay_vls);
-    bu_vls_free(&tmp_vls);
-  }
+  if (!do_overlay)
+      bu_vls_free(&overlay_vls);
+
+  bu_vls_free(&tmp_vls);
 }
 
 /*
@@ -1972,9 +2033,12 @@ mged_finish(int exitcode)
 		db_close(dbip);
 #endif
 
+#ifndef _WIN32
 	if (cbreak_mode > 0)
 	    reset_Tty(fileno(stdin));
-
+#endif
+	    
+	pkg_terminate();
 	exit( exitcode );
 }
 
@@ -2495,6 +2559,20 @@ f_opendb(
 
 	bu_vls_free(&vls);
 	bu_vls_free(&msg);
+
+#ifdef _WIN32
+	/*XXX
+	 *    This combined with the mged.bat (which contains "mged.exe 2>&1 nul")
+	 *    causes Windows to pass the stdout/stderr to mged's command window.
+	 *    There must be a better way, but, I've run out of time (for now).
+	 */
+       if (!strcmp(argv[1], "nul")) {
+	   Tcl_Eval(interp, "rename db \"\"; rename .inmem \"\"");
+	   dbip = DBI_NULL;
+	   rt_material_head = MATER_NULL;
+       }
+#endif
+
 	return TCL_OK;
 }
 

@@ -67,9 +67,6 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 void		cvt_vlblock_to_solids(struct bn_vlblock *vbp, const char *name, int copy);
 void		drawH_part2(int dashflag, struct bu_list *vhead, struct db_full_path *pathp, struct db_tree_state *tsp, struct solid *existing_sp);
-extern void	(*nmg_plot_anim_upcall)();
-extern void	(*nmg_vlblock_anim_upcall)();
-extern void	(*nmg_mged_debug_display_hack)();
 long	nvectors;	/* number of vectors drawn so far */
 
 unsigned char geometry_default_color[] = { 255, 0, 0 };

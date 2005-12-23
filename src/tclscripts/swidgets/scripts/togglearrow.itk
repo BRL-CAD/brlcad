@@ -1,0 +1,223 @@
+# TYPE: tcltk
+##############################################################
+# 
+# togglearrow.itk
+#
+##############################################################
+#
+# Description:
+#    An arrow that toggle things open an closed.
+#
+##############################################################
+
+#
+# Default resources.
+#
+
+
+#
+# Usual options.
+#
+itk::usual swidgets::Togglearrow {
+#    keep -togglestate
+#    keep -color -outline -disabledcolor -disabledoutline \
+#	    -state \
+#	    -borderwidth -relief
+}
+
+
+# ------------------------------------------------------------
+#                     TOGGLEARROW
+# ------------------------------------------------------------
+itcl::class swidgets::Togglearrow {
+    inherit itk::Widget
+
+    constructor {args} {}
+    destructor {}
+
+    itk_option define -color color Color "blue"
+    itk_option define -outline outline Outline "grey"
+    itk_option define -disabledcolor disabledColor DisalbledColor "grey"
+    itk_option define -disabledoutline disabledOutline DisalbledOutline "black"
+
+    itk_option define -command command Command {}
+    itk_option define -state state State normal
+    itk_option define -togglestate toggleState ToggleState "closed"
+
+    public {
+    }
+
+    private {
+	method _cleararrows {}
+	method _createpolys {}
+	method _open {}
+	method _close {}
+    }
+}
+
+#
+# Provide a lowercased access method for the Togglearrow class.
+#
+proc ::swidgets::togglearrow {args} {
+    uplevel ::swidgets::Togglearrow $args
+}
+
+# ------------------------------------------------------------
+#                      CONSTRUCTOR
+# ------------------------------------------------------------
+::itcl::body swidgets::Togglearrow::constructor {args} {
+
+    itk_component add frame {
+	frame $itk_interior.frame
+    } {
+	usual
+	keep -borderwidth -relief
+    }
+
+    itk_component add closed {
+	canvas $itk_component(frame).closed -width 16 -height 16 \
+		-highlightthickness 1
+    }
+
+    itk_component add open {
+	canvas $itk_component(frame).open -width 16 -height 16 \
+		-highlightthickness 1
+    }
+
+    #
+    # Initialize the widget based on the command line options
+    #
+    eval itk_initialize $args
+
+    _createpolys
+    pack $itk_component(frame) -fill both -expand yes
+}
+
+# ------------------------------------------------------------
+#                       DESTRUCTOR
+# ------------------------------------------------------------
+::itcl::body swidgets::Togglearrow::destructor {} {
+}
+
+# ------------------------------------------------------------
+#                        OPTIONS 
+# ------------------------------------------------------------
+::itcl::configbody swidgets::Togglearrow::color {
+    _cleararrows
+    _createpolys
+}
+
+::itcl::configbody swidgets::Togglearrow::outline {
+    _cleararrows
+    _createpolys
+}
+
+::itcl::configbody swidgets::Togglearrow::command {}
+
+::itcl::configbody swidgets::Togglearrow::state {
+    switch $itk_option(-state) {
+	normal -
+	disabled {
+	    _cleararrows
+	    _createpolys
+	}
+	default {
+	    error "bad state option \"$itk_option(-state)\":\
+		    should be disabled or normal"
+	}
+    }
+}
+
+::itcl::configbody swidgets::Togglearrow::togglestate {
+    switch $itk_option(-togglestate) {
+	"open" {
+	    _open
+	}
+	"closed" {
+	    _close
+	}
+	default {
+	    error "bad togglestate option \"$itk_option(-togglestate)\":\
+		    should be open or closed"
+	}
+    }
+}
+
+# ------------------------------------------------------------
+#                        METHODS 
+# ------------------------------------------------------------
+::itcl::body swidgets::Togglearrow::_cleararrows {} {
+    # clear canvases
+    foreach tag [$itk_component(closed) find all] {
+	$itk_component(closed) delete $tag
+    }
+    foreach tag [$itk_component(open) find all] {
+	$itk_component(open) delete $tag
+    }
+}
+
+::itcl::body swidgets::Togglearrow::_createpolys {} {
+    # pick appropriate colors
+    set color $itk_option(-color)
+    set outline $itk_option(-outline)
+    if {$itk_option(-state) == "disabled"} {
+	set color $itk_option(-disabledcolor)
+	set outline $itk_option(-disabledoutline)
+    }
+
+    # create closed arrow
+    $itk_component(closed) create polygon 2 2 14 8 2 14 2 2 \
+	    -fill $color -outline $outline \
+	    -width 1 -tag closed
+    
+    # bind click for closed arrow
+    bind $itk_component(closed) <ButtonPress-1> [::itcl::code $this _open]
+
+    # create open arrow
+    $itk_component(open) create polygon 2 2 14 2 8 14 2 2 \
+	    -fill $color -outline $outline \
+	    -width 1 -tag open
+	    
+    # bind click for open arrow
+    bind $itk_component(open) <ButtonPress-1> [::itcl::code $this _close]
+
+    # decide which one to show
+    switch -- $itk_option(-togglestate) {
+	"closed" {pack $itk_component(closed) -fill both}
+	"open"   {pack $itk_component(open) -fill both}
+    }
+}
+
+::itcl::body swidgets::Togglearrow::_open {} {
+    # if disabled ... do nothing
+    if {$itk_option(-state) == "disabled"} {return}
+
+    # remove closed arrow and replace with open arrow
+    pack forget $itk_component(closed)
+    pack $itk_component(open) -fill both
+
+    # set proper toggle state
+    set itk_option(-togglestate) "open"
+
+    # perform command
+    if {$itk_option(-command) != {}} {
+	eval $itk_option(-command)
+    }
+}
+
+::itcl::body swidgets::Togglearrow::_close {} {
+    # if disabled ... do nothing
+    if {$itk_option(-state) == "disabled"} {return}
+
+    # remove open arrow and replace with open arrow
+    pack forget $itk_component(open)
+    pack $itk_component(closed) -fill both
+
+    # set proper toggle state
+    set itk_option(-togglestate) "closed"
+
+    # perform command
+    if {$itk_option(-command) != {}} {
+	eval $itk_option(-command)
+    }
+}

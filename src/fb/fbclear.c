@@ -49,6 +49,11 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "machine.h"
 #include "bu.h"
 #include "fb.h"
+#include "pkg.h"
+
+#ifdef _WIN32
+#  include <winsock.h>
+#endif
 
 
 static char	*framebuffer = NULL;
@@ -109,8 +114,13 @@ main(int argc, char **argv)
 		exit( 1 );
 	}
 
-	if( (fbp = fb_open( framebuffer, scr_width, scr_height )) == NULL )
-		exit(2);
+	if (pkg_init() != 0)
+	    exit(1);
+
+	if ((fbp = fb_open(framebuffer, scr_width, scr_height)) == NULL) {
+	    pkg_terminate();
+	    exit(2);
+	}
 
 	/* Get the screen size we were given */
 	scr_width = fb_getwidth(fbp);
@@ -151,6 +161,7 @@ main(int argc, char **argv)
 		fb_clear( fbp, PIXEL_NULL );
 	}
 	(void)fb_close( fbp );
+	pkg_terminate();
 	return(0);
 }
 

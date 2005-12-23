@@ -1,0 +1,387 @@
+# TYPE: tcltk
+##############################################################
+# 
+# selectlists.itk
+#
+##############################################################
+#
+# Description:
+#    Dual list boxes for selecting items.
+#
+##############################################################
+
+#
+# Default resources.
+#
+
+
+#
+# Usual options.
+#
+
+
+# ------------------------------------------------------------
+#                     SELECTLISTS
+# ------------------------------------------------------------
+itcl::class swidgets::Selectlists {
+    inherit itk::Widget
+
+    constructor {args} {}
+    destructor {}
+
+    itk_option define -sortlist1 sortList1 SortList1 true
+    itk_option define -sortlist2 sortList2 SortList2 true
+    itk_option define -numlines numlines Height 10
+    itk_option define -lbwidth lbwidth Width 20
+    itk_option define -state state State normal
+    itk_option define -unique unique Unique false
+    itk_option define -command command Command {}
+
+    public {
+	method component {name}
+	method insert {index args}
+	method clear {}
+	method select {index}
+	method unselect {index}
+	method get {}
+    }
+
+    private {
+	method _dblclick {list}
+	method _add {}
+	method _remove {}
+	method _addall {}
+	method _removeall {}
+    }
+}
+
+#
+# Provide a lowercased access method for the Selectlists class.
+#
+proc ::swidgets::selectlists {args} {
+    uplevel ::swidgets::Selectlists $args
+}
+
+# ------------------------------------------------------------
+#                      CONSTRUCTOR
+# ------------------------------------------------------------
+::itcl::body swidgets::Selectlists::constructor {args} {
+    
+    set frame [frame $itk_interior.frame]
+
+    # LISTBOX 1
+    itk_component add listbox1 {
+	iwidgets::scrolledlistbox $frame.lstbox1 -vscrollmode static \
+		-hscrollmode dynamic -selectmode single \
+		-dblclickcommand [::itcl::code $this _dblclick "listbox1"]
+    } {
+	keep -textbackground
+	rename -labelpos -labelpos1 labelPos1 Position
+	rename -labeltext -labeltext1 labeltext1 Text
+    }
+
+    # LISTBOX 2
+    itk_component add listbox2 {
+	iwidgets::scrolledlistbox $frame.lstbox2 -vscrollmode static \
+		-hscrollmode dynamic -selectmode single \
+		-dblclickcommand [::itcl::code $this _dblclick "listbox2"]
+    } {
+	keep -textbackground 
+	rename -labelpos -labelpos2 labelPos2 Position
+	rename -labeltext -labeltext2 labelText2 Text
+    }
+
+    set bbox [frame $frame.bbox]
+    # ADD BUTTON
+    itk_component add btn_add {
+	button $bbox.add -text ">> Add >>" -command [::itcl::code $this _add]
+    }
+    itk_component add btn_all {
+	button $bbox.all -text "Select All" -command [::itcl::code $this _addall]
+    }
+    itk_component add btn_del {
+	button $bbox.del -text "<< Remove <<" -command [::itcl::code $this _remove]
+    }
+
+    grid $itk_component(btn_add) -column 0 -row 0 -padx 2 -pady 2 -sticky ew
+    grid $itk_component(btn_all) -column 0 -row 1 -padx 2 -pady 2 -sticky ew
+    grid $itk_component(btn_del) -column 0 -row 2 -padx 2 -pady 2 -sticky ew
+
+    grid $itk_component(listbox1) -column 0 -row 0 -padx 2 -pady 2 -sticky nsew
+    grid $bbox -column 1 -row 0 -sticky ns
+    grid $itk_component(listbox2) -column 2 -row 0 -padx 2 -pady 2 -sticky nsew
+    grid columnconfigure $frame {0 2} -weight 1
+    grid rowconfigure $frame 0 -weight 1
+    pack $frame -fill both -expand yes
+    
+
+    #
+    # Initialize the widget based on the command line options
+    #
+    eval itk_initialize $args
+}
+
+::itcl::body swidgets::Selectlists::destructor {} {
+}
+
+# ------------------------------------------------------------
+#                        OPTIONS 
+# ------------------------------------------------------------
+::itcl::configbody swidgets::Selectlists::sortlist1 {
+    switch $itk_option(-sortlist1) {
+	true -
+	false {
+	}
+	default {
+	    error "bad sortlist1 option \"$itk_option(-sortlist1)\":\
+		    should be true or false"
+	}
+    }
+}
+
+::itcl::configbody swidgets::Selectlists::sortlist2 {
+    switch $itk_option(-sortlist2) {
+	true -
+	false {
+	}
+	default {
+	    error "bad sortlist2 option \"$itk_option(-sortlist2)\":\
+		    should be true or false"
+	}
+    }
+}
+
+::itcl::configbody swidgets::Selectlists::unique {
+    switch $itk_option(-unique) {
+	true -
+	false {
+	}
+	default {
+	    error "bad unique option \"$itk_option(-unique)\":\
+		    should be true or false"
+	}
+    }
+}
+
+::itcl::configbody swidgets::Selectlists::numlines {
+    [$itk_component(listbox1) component listbox] configure -height $itk_option(-numlines)
+    [$itk_component(listbox2) component listbox] configure -height $itk_option(-numlines)
+}
+
+::itcl::configbody swidgets::Selectlists::lbwidth {
+    [$itk_component(listbox1) component listbox] configure -width $itk_option(-lbwidth)
+    [$itk_component(listbox2) component listbox] configure -width $itk_option(-lbwidth)
+}
+
+::itcl::configbody swidgets::Selectlists::state {
+    switch $itk_option(-state) {
+	normal -
+	disabled {
+	    $itk_component(listbox1) configure -state $itk_option(-state)
+	    $itk_component(listbox2) configure -state $itk_option(-state)
+	    $itk_component(btn_add)  configure -state $itk_option(-state)
+	    $itk_component(btn_all)  configure -state $itk_option(-state)
+	    $itk_component(btn_del)  configure -state $itk_option(-state)
+	}
+	default {
+	    error "bad state option \"$itk_option(-state)\":\
+		    should be disabled or normal"
+	}
+    }
+}
+
+# ------------------------------------------------------------
+#                        METHODS 
+# ------------------------------------------------------------
+::itcl::body swidgets::Selectlists::_dblclick {list} {
+    switch $list {
+	"listbox1" {_add}
+	"listbox2" {_remove}
+    }
+}
+
+::itcl::body swidgets::Selectlists::_add {} {
+    set selected [$itk_component(listbox1) curselection]
+    if {$selected == ""} {return}
+    foreach item $selected {
+	$itk_component(listbox2) insert end [$itk_component(listbox1) get $item]
+    }
+    
+    foreach item [lsort -decreasing $selected] {
+	$itk_component(listbox1) delete $item
+    }
+
+    # check for empty listbox1
+    if {[$itk_component(listbox1) get 0] == ""} {
+	$itk_component(btn_all) configure -text "Remove All" \
+		-command [::itcl::code $this _removeall]
+    } else {
+	$itk_component(btn_all) configure -text "Select All" \
+		-command [::itcl::code $this _addall]
+    }
+
+    if {$itk_option(-sortlist2) == "true"} {
+	$itk_component(listbox2) sort ascending
+    }
+
+    # execute user command
+    if {$itk_option(-command) != {}} {
+	eval $itk_option(-command)
+    }
+}
+
+::itcl::body swidgets::Selectlists::_remove {} {
+    set selected [$itk_component(listbox2) curselection]
+    if {$selected == ""} {return}
+    foreach item $selected {
+	$itk_component(listbox1) insert end [$itk_component(listbox2) get $item]
+    }
+    
+    foreach item [lsort -decreasing $selected] {
+	$itk_component(listbox2) delete $item
+    }	
+
+    # check for empty listbox1
+    if {[$itk_component(listbox1) get 0] == ""} {
+	$itk_component(btn_all) configure -text "Remove All" \
+		-command [::itcl::code $this _removeall]
+    } else {
+	$itk_component(btn_all) configure -text "Select All" \
+		-command [::itcl::code $this _addall]
+    }
+
+    if {$itk_option(-sortlist1) == "true"} {
+	$itk_component(listbox1) sort ascending
+    }
+
+    # execute user command
+    if {$itk_option(-command) != {}} {
+	eval $itk_option(-command)
+    }
+}
+
+::itcl::body swidgets::Selectlists::_addall {} {
+    if {[$itk_component(listbox1) get 0] == ""} {return}
+    while {[$itk_component(listbox1) get 0] != ""} {
+	$itk_component(listbox2) insert end [$itk_component(listbox1) get 0]
+	$itk_component(listbox1) delete 0
+    }
+
+    $itk_component(btn_all) configure -text "Remove All" \
+	    -command [::itcl::code $this _removeall]
+
+    if {$itk_option(-sortlist2) == "true"} {
+	$itk_component(listbox2) sort ascending
+    }
+
+    # execute user command
+    if {$itk_option(-command) != {}} {
+	eval $itk_option(-command)
+    }
+}
+
+::itcl::body swidgets::Selectlists::_removeall {} { 
+    if {[$itk_component(listbox2) get 0] == ""} {return}
+    while {[$itk_component(listbox2) get 0] != ""} {
+	$itk_component(listbox1) insert end [$itk_component(listbox2) get 0]
+	$itk_component(listbox2) delete 0
+    }
+
+    $itk_component(btn_all) configure -text "Select All" \
+	    -command [::itcl::code $this _addall]
+
+    if {$itk_option(-sortlist1) == "true"} {
+	$itk_component(listbox1) sort ascending
+    }
+
+    # execute user command
+    if {$itk_option(-command) != {}} {
+	eval $itk_option(-command)
+    }
+}
+
+::itcl::body swidgets::Selectlists::component {name} {
+    switch -- $name {
+	"add"      {return $itk_component(btn_add)}
+	"all"      {return $itk_component(btn_all)}
+	"remove"   {return $itk_component(btn_del)}
+	"listbox1" {return $itk_component(listbox1)}
+	"listbox2" {return $itk_component(listbox2)}
+	default {
+	    error "bad component name \"$name\""
+	}
+    }
+}
+
+::itcl::body swidgets::Selectlists::insert {index args} {
+    if {$itk_option(-state) == "disabled"} {return}
+    if {[llength $args] < 2} {
+	set args [lindex $args 0]
+    }
+
+    switch $index {
+	"end" {
+	    foreach item $args {
+		# eliminate non-unique items if necessary
+		if {$itk_option(-unique) == "true"} {
+		    if {[lsearch [$itk_component(listbox1) get 0 end] $item] != -1 ||
+		    [lsearch [$itk_component(listbox2) get 0 end] $item] != -1} {
+			continue
+		    }
+		}
+
+		$itk_component(listbox1) insert end $item
+	    }
+	}
+	default {
+	    for {set i [expr [llength $args] -1]} {$i >= 0} {incr i -1} {
+		set item [lindex $args $i]
+
+		# eliminate non-unique items if necessary
+		if {$itk_option(-unique) == "true"} {
+		    if {[lsearch [$itk_component(listbox1) get 0 end] $item] != -1 ||
+		    [lsearch [$itk_component(listbox2) get 0 end] $item] != -1} {
+			continue
+		    }
+		}
+
+		$itk_component(listbox1) insert $index $item
+	    }
+	}
+    }
+
+    if {$itk_option(-sortlist1) == "true"} {
+	$itk_component(listbox1) sort ascending
+    }
+}
+
+::itcl::body swidgets::Selectlists::clear {} {
+    if {$itk_option(-state) == "disabled"} {return}
+    _removeall;  # move all elements to one list
+    $itk_component(listbox1) delete 0 end
+}
+
+::itcl::body swidgets::Selectlists::unselect {index} {
+    if {$itk_option(-state) == "disabled"} {return}
+    set items [$itk_component(listbox2) get 0 end]
+    if {[lsearch $items $index] > -1} {
+	$itk_component(listbox2) selection set [lsearch $items $index]
+	_remove
+    }
+}
+
+::itcl::body swidgets::Selectlists::select {index} {
+    if {$itk_option(-state) == "disabled"} {return}
+    set items [$itk_component(listbox1) get 0 end]
+    if {[lsearch $items $index] > -1} {
+	$itk_component(listbox1) selection set [lsearch $items $index]
+	_add
+    } else {
+	error "bad index $index"
+    }
+}
+
+::itcl::body swidgets::Selectlists::get {} {
+    return [$itk_component(listbox2) get 0 end]
+}
+

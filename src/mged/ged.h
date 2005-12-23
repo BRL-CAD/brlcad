@@ -227,7 +227,7 @@ extern void		(*cur_sigint)();	/* Current SIGINT status */
 extern void		sig2(int), sig3(int);
 
 extern void		aexists(char *name);
-extern int		clip(fastf_t *, fastf_t *, fastf_t *, fastf_t *), getname(), use_pen(), dir_print();
+extern int		getname(), use_pen(), dir_print();
 extern int              mged_cmd_arg_check(), release(char *name, int need_close);
 extern struct directory	*combadd(), **dir_getspace();
 extern void		ellipse();
@@ -235,6 +235,7 @@ extern void		ellipse();
 /* ged.c */
 extern void mged_view_obj_callback(genptr_t clientData, struct view_obj *vop);
 
+#if 0
 /* rt_memalloc.c */
 MGED_EXTERN(unsigned long rt_memalloc, (struct mem_map **pp, unsigned size) );
 MGED_EXTERN(unsigned long rt_memget, (struct mem_map **pp, unsigned int size,
@@ -242,6 +243,7 @@ MGED_EXTERN(unsigned long rt_memget, (struct mem_map **pp, unsigned int size,
 MGED_EXTERN(void rt_memfree, (struct mem_map **pp, unsigned size, unsigned long addr) );
 MGED_EXTERN(void rt_mempurge, (struct mem_map **pp) );
 MGED_EXTERN(void rt_memprint, (struct mem_map **pp) );
+#endif
 
 /* buttons.c */
 MGED_EXTERN(void button, (int bnum) );
@@ -829,6 +831,8 @@ void label_edited_solid(
 	struct rt_db_internal	*ip);
 void init_oedit(void);
 void init_sedit(void);
+
+#if 0
 #ifdef HIDE_MGEDS_ARB_ROUTINES
 #  define rt_arb_calc_planes(planes,arb,type,tol) \
 rt_arb_calc_planes(interp,arb,type,planes,tol)
@@ -838,6 +842,7 @@ int rt_arb_calc_planes(
 	struct rt_arb_internal	*arb,
 	int			type,
 	const struct bn_tol	*tol);
+#endif
 #endif
 
 

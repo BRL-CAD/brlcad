@@ -29,8 +29,11 @@
 
 #include "common.h"
 
+#include <stdio.h>
 #include "machine.h"
 #include "bu.h"
+#include "tclcad.h"
+#include "tk.h"
 
 
 void
@@ -40,13 +43,26 @@ tclcad_auto_path(Tcl_Interp *interp)
     struct bu_vls str;
     char *pathname;
 
-    bu_vls_init(&str);
-
     /****************************************************/
     /* Locate the BRL-CAD-specific Tcl scripts quietly. */
     /****************************************************/
     pathname = bu_brlcad_data( "tclscripts", 1 );
+    
+    bu_vls_init(&str);
     if (pathname) {
+#ifdef _WIN32
+    {
+	/* XXX - nasty little hack to convert paths */
+	register int i;
+
+	strcat(pathname,"/");
+	for (i = 0; i < strlen(pathname); i++) {
+	    if (pathname[i]=='\\') 
+		pathname[i]='/';
+	}
+    }
+#endif
+
 	bu_vls_sprintf(&str, "lappend auto_path \"%s\" \"%s/lib\" \"%s/util\" \"%s/mged\" \"%s/geometree\"",
 		      pathname, pathname, pathname, pathname, pathname);
 	(void)Tcl_Eval(interp, bu_vls_addr(&str));
@@ -94,7 +110,21 @@ tclcad_auto_path(Tcl_Interp *interp)
     /*******************************************/
     bu_vls_sprintf(&str, "lib/tcl%s", TCL_VERSION);
     pathname = bu_brlcad_root( bu_vls_addr(&str), 1 );
+
     if (pathname) {
+#ifdef _WIN32
+    {
+	/* XXX - nasty little hack to convert paths */
+	register int i;
+
+	strcat(pathname,"/");
+	for (i = 0; i < strlen(pathname); i++) {
+	    if (pathname[i]=='\\') 
+		pathname[i]='/';
+	}
+    }
+#endif
+
 	bu_vls_sprintf(&str, "lappend auto_path \"%s\"", pathname);
 	(void)Tcl_Eval(interp, bu_vls_addr(&str));
 	bu_vls_sprintf(&str, "set tcl_library %s", pathname);
@@ -145,6 +175,19 @@ tclcad_auto_path(Tcl_Interp *interp)
     bu_vls_sprintf(&str, "lib/tk%s", TK_VERSION);
     pathname = bu_brlcad_root( bu_vls_addr(&str), 1 );
     if (pathname) {
+#ifdef _WIN32
+    {
+	/* XXX - nasty little hack to convert paths */
+	int i;
+
+	strcat(pathname,"/");
+	for (i=0;i<strlen(pathname);i++) {
+	    if(pathname[i]=='\\') 
+		pathname[i]='/';
+	}
+    }
+#endif
+
 	bu_vls_sprintf(&str, "lappend auto_path \"%s\"", pathname);
 	(void)Tcl_Eval(interp, bu_vls_addr(&str));
 	bu_vls_sprintf(&str, "set tk_library %s", pathname);
@@ -195,6 +238,19 @@ tclcad_auto_path(Tcl_Interp *interp)
     bu_vls_sprintf(&str, "lib/iwidgets%s", IWIDGETS_VERSION);
     pathname = bu_brlcad_root( bu_vls_addr(&str), 1 );
     if (pathname) {
+#ifdef _WIN32
+    {
+	/* XXX - nasty little hack to convert paths */
+	int i;
+
+	strcat(pathname,"/");
+	for (i = 0; i < strlen(pathname); i++) {
+	    if (pathname[i]=='\\') 
+		pathname[i]='/';
+	}
+    }
+#endif
+
 	bu_vls_sprintf(&str, "lappend auto_path \"%s\"", pathname);
 	(void)Tcl_Eval(interp, bu_vls_addr(&str));
 	bu_vls_sprintf(&str, "set iwidgets_library %s", pathname);

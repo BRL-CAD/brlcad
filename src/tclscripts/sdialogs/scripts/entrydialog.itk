@@ -1,0 +1,114 @@
+# TYPE: tcltk
+##############################################################
+#
+# entrydialog.itk
+#
+##############################################################
+#****c* Entrydialog/Entrydialog
+# NAME
+#    Entrydialog
+#
+# DESCRIPTION
+#    Standard entry dialog.  Part of standard dialogs.
+#
+# COPYRIGHT
+#    Portions Copyright (c) 2002 SURVICE Engineering Company.
+#    All Rights Reserved. This file contains Original Code 
+#    and/or Modifications of Original Code as defined in and 
+#    that are subject to the SURVICE Public Source License
+#    (Version 1.3, dated March 12, 2002).
+#
+# AUTHOR
+#    Keith Bowman
+#    Doug Howard
+#    Bob Parker
+#
+#***
+##############################################################
+
+#
+# Usual options.
+#
+itk::usual Entrydialog {
+    keep -background -cursor -foreground -modality 
+    keep -master -title -height -width
+}
+
+::itcl::class sdialogs::Entrydialog {
+    inherit ::iwidgets::Dialog
+
+    itk_option define -label label Label ""
+    
+    constructor {args} {}
+    destructor {}
+
+    public {
+	method activate {}
+	method get {}
+	method insert {index string}
+    }
+
+    protected {
+    }
+
+    private {
+    }
+}
+
+#
+# Provide a lowercased access method for the Dialog class.
+# 
+proc ::sdialogs::entrydialog {pathName args} {
+    uplevel ::sdialogs::Entrydialog $pathName $args
+}
+
+# ------------------------------------------------------------
+#                      CONSTRUCTOR
+# ------------------------------------------------------------
+::itcl::body sdialogs::Entrydialog::constructor {args} {
+
+    # remove unneeded buttons
+    delete Apply
+    delete Help
+
+    # configure OK & Cancel
+    buttonconfigure OK \
+	-defaultring yes \
+	-defaultringpad 1 \
+	-borderwidth 1 \
+	-pady 0
+    buttonconfigure Cancel \
+	-defaultring no \
+	-borderwidth 1 \
+	-pady 0
+
+    # add entry widget
+    set csite [childsite]
+
+    itk_component add entryfield {
+	::iwidgets::entryfield $csite.entryfield \
+		-labelvariable [::itcl::scope itk_option(-label)]
+    } {
+	keep -textbackground -labelpos -labelfont
+	rename -width -textwidth textWidth Width
+    }
+
+    pack $itk_component(entryfield) -padx 2 -pady 2 -fill x
+    eval itk_initialize $args
+}
+
+::itcl::body sdialogs::Entrydialog::destructor {} {
+}
+
+::itcl::body sdialogs::Entrydialog::activate {} {
+    focus -force [$itk_component(entryfield) component entry]
+    iwidgets::Shell::activate
+}
+
+::itcl::body sdialogs::Entrydialog::get {} {
+    return [$itk_component(entryfield) get]
+}
+
+::itcl::body sdialogs::Entrydialog::insert {index string} {
+    $itk_component(entryfield) insert $index $string
+}

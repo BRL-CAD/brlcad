@@ -3,13 +3,13 @@
 lib_LTLIBRARIES = libdm.la
 
 if WITH_OPENGL
-DM_OGL_CFLAGS = -DDM_OGL
+DM_OGL_CFLAGS = -DDM_OGL -DIF_OGL
 else
 DM_OGL_CFLAGS =
 endif
 
 if WITH_X11
-DM_X_CFLAGS = -DDM_X
+DM_X_CFLAGS = -DDM_X -DIF_X
 else
 DM_X_CFLAGS =
 endif

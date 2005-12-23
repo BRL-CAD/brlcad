@@ -715,7 +715,6 @@ cmd_get_ptr(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	return TCL_OK;
 }
 
-
 /* 			C M D _ S E T U P
  * Register all the MGED commands.
  */
@@ -753,20 +752,20 @@ cmd_setup(void)
 	pathname = bu_brlcad_data("tclscripts", 1);
 
 #ifdef _WIN32
-	{
+	if (pathname) {
 	    /* XXXXXXXXXXXXXXX UGLY XXXXXXXXXXXXXXXXXX*/
 	    int i;
 	    strcat(pathname,"/");
 	    for (i=0;i<strlen(pathname);i++) {
 		if(pathname[i]=='\\')
 		    pathname[i]='/'; }
+
+	    bu_vls_init(&vls);
+	    bu_vls_printf(&vls, "source %s/mged/tree.tcl", pathname);
+	    (void)Tcl_Eval(interp, bu_vls_addr(&vls));
+	    bu_vls_free(&vls);
 	}
 #endif
-
-	bu_vls_init(&vls);
-	bu_vls_printf(&vls, "source %s/mged/tree.tcl", pathname);
-	(void)Tcl_Eval(interp, bu_vls_addr(&vls));
-	bu_vls_free(&vls);
 
 	bu_vls_strcpy(&temp, "glob_compat_mode");
 	Tcl_LinkVar(interp, bu_vls_addr(&temp), (char *)&glob_compat_mode,
@@ -776,9 +775,15 @@ cmd_setup(void)
 		    TCL_LINK_BOOLEAN);
 
 	/* Provide Tcl interfaces to the fundamental BRL-CAD libraries */
+#ifdef BRLCAD_DEBUG
+	Bu_d_Init(interp);
+	bn_tcl_setup( interp );
+	Rt_d_Init(interp);
+#else
 	Bu_Init(interp);
 	bn_tcl_setup( interp );
 	Rt_Init(interp);
+#endif
 
 	tkwin = NULL;
 
@@ -3520,7 +3525,12 @@ cmd_parse_points(ClientData	clientData,
 	return TCL_ERROR;
     }
 
+#ifdef _WIN32
+    /*XXX Temporary, until this is working on Windows */
+    return TCL_OK;
+#else
     return parse_point_file(clientData, interp, argc-1, &(argv[1]));
+#endif
 }
 
 /*

@@ -45,7 +45,8 @@ static void ItclDeleteStub _ANSI_ARGS_((ClientData cdata));
  * directory and loads it in.
  */
 
-static char initScript[] = "\n\
+static char *initScript;
+static char initScriptA[] = "\n\
 namespace eval ::itcl {\n\
     proc _find_init {} {\n\
         global env tcl_library\n\
@@ -78,6 +79,8 @@ namespace eval ::itcl {\n\
             lappend dirs [file join $bindir .. .. .. .. src other incrTcl itcl library]\n\
             lappend dirs [file join $bindir .. .. .. .. .. src other incrTcl itcl library]\n\
         }\n\
+";
+static char initScriptB[] = "\n\
         foreach i $dirs {\n\
             set library $i\n\
             set itclfile [file join $i itcl.tcl]\n\
@@ -410,6 +413,13 @@ int
 Itcl_Init(interp)
     Tcl_Interp *interp;  /* interpreter to be updated */
 {
+    int lenA = strlen(initScriptA);
+    int lenB = strlen(initScriptB);
+
+    initScript = ckalloc(lenA + lenB + 1);
+    strcpy(initScript, initScriptA);
+    strcpy(initScript+lenA, initScriptB);
+
     if (Initialize(interp) != TCL_OK) {
 	return TCL_ERROR;
     }

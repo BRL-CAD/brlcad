@@ -1,0 +1,553 @@
+#########################################################
+# Directory Selector TCL version 1.5
+#
+# Daniel Roche, <daniel.roche@bigfoot.com>
+#
+# thanks to :
+#  Cyrille Artho <cartho@netlink.ch> for the 'saving pwd fix'
+#  Terry Griffin <terryg@axian.com> for <Return> key bindings on buttons.
+#  Kenneth Kehl  <Kenneth.Kehl@marconiastronics.com> for blocking at end of dir tree
+#  Michael Barth <m.barth@de.bosch.com> for finding the "-fill on image" problem 
+#  Mike Avery <avery@loran.com> for finding the "myfont already exist" problem
+#  Branko Rogic <b.rogic@lectra.com> for gif icons, parent and background options
+#  Reinhard Holler <rones@augusta.de> for colors ,font and autovalid options
+#
+# tranformed into swidget by:
+#  Douglas Howard <doug@survice.com> SURVICE Engineering
+#
+#########################################################
+
+#########################################################
+# 
+# tkgetdir name [option value ...]
+#
+#  options are :
+#   [-initialdir dir]           display in dir
+#   [-title string]             make string title of dialog window
+#   [-ok string]                make string the label of OK button
+#   [-open string]              make string the label of OPEN button
+#   [-cancel string]            make string the label of CANCEL button
+#   [-msg1 string]              make string the label of the first directory message
+#   [-msg2 string]              make string the label of the second directory message
+#   [-parent string]            make string the parent of tkgetdir for transient window
+#   [-geometry string]          make string the geometry (WxH+X+Y)
+#   [-textbackground string]    make string the list and entry background color
+#   [-textforeground string]    make string the list and entry foreground color
+#   [-selectbackground string]  make string the background color for selected directory
+#   [-selectforeground string]  make string the foreground color for selected directory
+#   [-hilightbackground string] make string the background color for highlighted dir
+#   [-hilightforeground string] make string the foreground color for highlighted dir
+#   [-endcolor string]          make string the color for the last directory flag
+#   [-autovalid]                if it is set : selecting no directory in the window
+#                                will return the directory the window shows currently
+#   [-font string]              make string the font name or font description
+#                                for directory window
+#
+#########################################################
+
+# initialization -- create these things once per application
+#  this will be done when the file is sourced
+image create photo b_up -data {
+    R0lGODlhFgATAMIAAHt7e9/fX////gAAAK6uSv///////////yH+Dk1hZGUgd2l0aCBHSU1QACH5
+    BAEAAAcALAAAAAAWABMAAANVeArcoDBKEKoNT2p6b9ZLJzrkAQhoqq4qMJxi3LnwRcjeK9jDjWM6
+    C2FA9Mlou8CQWMQhO4Nf5XmJSqkW6w9bYXqZFq40HBzPymYyac1uDA7fuJyZAAA7
+}
+
+image create photo b_dir -data {
+    R0lGODlhEAAQAMIAAHB/cN/fX////gAAAP///////////////yH+Dk1hZGUgd2l0aCBHSU1QACH5
+    BAEAAAQALAAAAAAQABAAAAM2SLrc/jA2QKkEIWcAsdZVpQBCaZ4lMBDk525r+34qK8x0fOOwzfcy
+(op    Xi2IG4aOoRVhwGw6nYQEADs=
+}
+
+event add <<RetEnt>> <Return> <KP_Enter>
+
+itcl::class swidgets::tkgetdir {
+    inherit itk::Toplevel
+
+    constructor {args} {}
+    destructor  {}
+
+    itk_option define -initialdir initialDir InitialDir ""
+    itk_option define -ok ok Text " OK "
+    itk_option define -open open Text "Open"
+    itk_option define -cancel cancel Text "Cancel"
+    itk_option define -msg1 msg1 Text "Directory:"
+    itk_option define -msg2 msg2 Text "Directory Name:"
+    itk_option define -parent parent Parent ""
+    itk_option define -geometry geometry Geometry "500x250"
+    itk_option define -canvasfont canvasFont Font {-family courier -size 10}
+    itk_option define -textforeground textForeground Foreground "#000000"
+    itk_option define -selectforeground selectForeground Foreground "#FFFFFF"
+    itk_option define -selectbackground selectBackground Background "#000080"
+    itk_option define -highlightforeground highlightForeground Foreground "#FFFF00"
+    itk_option define -highlightbackground highlightBackground Background "#808080"
+    itk_option define -endcolor endColor Color "#FF8000"
+    itk_option define -autovalid autoValid AutoValid 0
+    itk_option define -upimg upImg Image "b_up"
+    itk_option define -dirimg dirImg Image "b_dir"
+
+    itk_option define -okcommand okCommand Command {}
+    itk_option define -quitcommand quitCommand Command {}
+
+    private {
+	variable svwd ""
+	variable drives
+	variable font ""
+	variable curdir ""
+
+	method _ok {}
+	method _up_dir {}
+	method _down_dir {}
+	method _enter_item {}
+	method _leave_item {}
+	method _click_item {}
+	method _dblclick_item {}
+
+	method _show_dir {dir}
+	method _change_menu {}
+    }
+
+    public {
+	method Activate {}
+	method Hide {}
+	method get {}
+	method Close {}
+    }
+}
+
+# ------------------------------------------------------------
+#                        OPTIONS 
+# ------------------------------------------------------------
+::itcl::configbody swidgets::tkgetdir::ok {
+    $itk_component(ok) configure -text $itk_option(-ok)
+}
+
+::itcl::configbody swidgets::tkgetdir::open {
+    $itk_component(open) configure -text $itk_option(-open)
+}
+
+::itcl::configbody swidgets::tkgetdir::cancel {
+    $itk_component(cancel) configure -text $itk_option(-cancel)
+}
+
+::itcl::configbody swidgets::tkgetdir::msg1 {
+    $itk_component(directory) configure -labeltext $itk_option(-msg1)
+}
+
+::itcl::configbody swidgets::tkgetdir::msg2 {
+    $itk_component(chosen) configure -labeltext $itk_option(-msg2)
+}
+
+::itcl::configbody swidgets::tkgetdir::parent {
+    if {$itk_option(-parent) != ""} {
+	wm transient $itk_interior $itk_option(-parent)
+    }
+}
+
+::itcl::configbody swidgets::tkgetdir::geometry {
+    wm geometry $itk_interior $itk_option(-geometry)
+}
+
+::itcl::configbody swidgets::tkgetdir::canvasfont {
+    if {[lsearch -exact $font -family] >= 0} {
+	# search for previous font and destroy
+	set wt [font names]
+	set name [namespace tail $this]
+	if {[lsearch -exact $wt "font_$name"] >= 0} {
+	    font delete "font_$name"
+	}
+
+	# create the font
+	eval font create "font_$name" $itk_option(-canvasfont)
+	set font "font_$name"
+    } else {
+	# user gives an already created font
+	set font $itk_option(-canvasfont)
+    }
+}
+
+::itcl::configbody swidgets::tkgetdir::textforeground {
+    # set canvas items
+    foreach item [$itk_component(canvas) find withtag TXT] {
+	$itk_component(canvas) itemconfigure $item -fill $itk_option(-textforeground)
+    }
+
+    # set text field
+    [$itk_component(chosen) component entry] configure \
+	    -foreground $itk_option(-textforeground)
+}
+
+::itcl::configbody swidgets::tkgetdir::upimg {
+    $itk_component(up) configure -image $itk_option(-upimg)
+}
+
+::itcl::configbody swidgets::tkgetdir::dirimg {
+    if {$curdir != ""} {
+	_show_dir $curdir
+    }
+}
+
+# ------------------------------------------------------------
+#                      CONSTRUCTOR
+# ------------------------------------------------------------
+::itcl::body swidgets::tkgetdir::constructor {args} {
+
+    Hide
+    set svwd [pwd]
+    configure -title "Directory Selector"
+
+    # FRAME 1
+    set frame [frame $itk_interior.frame1 -relief flat -borderwidth 0]
+    itk_component add directory {
+	iwidgets::optionmenu $frame.dir -labelpos w
+    }
+    itk_component add up {
+	button $frame.up -command [::itcl::code $this _up_dir]
+    }
+    pack $itk_component(up) -side right -padx 4 -pady 4
+    pack $itk_component(directory) -side right -padx 4 \
+	    -pady 4 -fill x -expand true
+    pack $frame -fill x
+
+    # FRAME 2
+    set frame [frame $itk_interior.frame2 -relief sunken -borderwidth 2]
+    itk_component add canvas {
+	canvas $frame.cv -borderwidth 0 -yscrollcommand "$frame.sb set"
+    } {
+	rename -background -textbackground textBackground Background
+    }
+    itk_component add scroll {
+	scrollbar $frame.sb -command "$itk_component(canvas) yview"
+    }
+    set scw 16
+    place $itk_component(canvas) -x 0 -relwidth 1.0 -width [expr -$scw] -y 0 \
+	    -relheight 1.0
+    place $itk_component(scroll) -relx 1.0 -x [expr -$scw] -width $scw -y 0 \
+	    -relheight 1.0
+    unset scw
+    pack $frame -fill both -expand true -padx 6 -pady 6
+
+    $itk_component(canvas) bind TXT <Any-Enter> [::itcl::code $this _enter_item]
+    $itk_component(canvas) bind TXT <Any-Leave> [::itcl::code $this _leave_item]
+    $itk_component(canvas) bind TXT <Any-Button> [::itcl::code $this _click_item]
+    $itk_component(canvas) bind TXT <Double-Button> [::itcl::code $this _dblclick_item]
+    $itk_component(canvas) bind IMG <Any-Enter> [::itcl::code $this _enter_item]
+    $itk_component(canvas) bind IMG <Any-Leave> [::itcl::code $this _leave_item]
+    $itk_component(canvas) bind IMG <Any-Button> [::itcl::code $this _click_item]
+    $itk_component(canvas) bind IMG <Double-Button> [::itcl::code $this _dblclick_item]
+
+    # FRAME 3
+    set frame [frame $itk_interior.frame3 -relief flat -borderwidth 0]
+    itk_component add chosen {
+	iwidgets::entryfield $frame.chosen
+    } {
+	keep -textbackground
+    }
+    pack $itk_component(chosen) -fill x -padx 4 -pady 4
+    pack $frame -fill x
+
+    # FRAME 4
+    set frame [frame $itk_interior.frame4 -relief flat -borderwidth 0]
+    itk_component add ok {
+	button $frame.ok -command [::itcl::code $this _ok]
+    }
+    bind $itk_component(ok) <<RetEnt>> "$itk_component(ok) invoke"
+
+    itk_component add open {
+	button $frame.open -command [::itcl::code $this _down_dir]
+    }
+    bind $itk_component(open) <<RetEnt>> "$itk_component(open) invoke"
+
+    itk_component add cancel {
+	button $frame.cancel -command [::itcl::code $this Close]
+    }
+    bind $itk_component(cancel) <<RetEnt>> "$itk_component(cancel) invoke"
+
+    pack $itk_component(ok) $itk_component(open) -side left -padx 10 -pady 4
+    pack $itk_component(cancel) -side right -padx 10 -pady 4
+    pack $frame -fill x
+
+    eval itk_initialize $args
+
+    # set starting directory
+    if {$itk_option(-initialdir) != ""} {
+	set dir $itk_option(-initialdir)
+
+	# handle relative paths given in the -initialdir option
+	switch -- [file pathtype $itk_option(-initialdir)] {
+	    "relative" {
+		# disassemble the parts
+		set dir [file split [pwd]]
+		set idir [file split $itk_option(-initialdir)]
+		
+		# back off ony back-directory parts
+		foreach part $idir {
+		    switch -- $part {
+			"."  {continue}
+			".." {set dir [lrange $dir 0 [expr [llength $dir] -2]]}
+			default {lappend dir $part}
+		    }
+		}
+		
+		# reassemble
+		set idir $dir
+		set dir ""
+		foreach part $idir {set dir [file join $dir $part]}
+	    }
+	    default {
+	    }
+	}
+    } else {
+	set dir [pwd]
+    }
+	
+    _show_dir $dir
+    update idletasks
+}
+
+::itcl::body swidgets::tkgetdir::destructor {} {
+    # search for previous font and destroy
+    set wt [font names]
+    set name [namespace tail $this]
+    if {[lsearch -exact $wt "font_$name"] >= 0} {
+	font delete "font_$name"
+    }
+}
+
+# ------------------------------------------------------------
+#                        METHODS
+# ------------------------------------------------------------
+::itcl::body swidgets::tkgetdir::_ok {} {
+    set tmp [$itk_component(chosen) get]
+    if {([string length $tmp]) || ($itk_option(-autovalid) == 1)} {
+	# do ok command
+	if {$itk_option(-okcommand) != {}} {
+	    eval $itk_option(-okcommand)
+	}
+    }
+
+    # close window
+    Close
+}
+
+::itcl::body swidgets::tkgetdir::_show_dir {dir} {
+    global tcl_platform
+
+    set curdir $dir
+    cd $dir
+    
+    # breakup directory path
+    $itk_component(directory) configure -command {}
+    $itk_component(directory) delete 0 end
+    $itk_component(directory) insert end $dir
+    $itk_component(open) configure -state disabled
+    $itk_component(chosen) delete 0 end; # added 4/2/02, if removed need to copy this line
+                                         # before all _show_dir func calls except constructor
+    $itk_component(chosen) insert 0 $dir; # added 4/2/02
+
+    set curlst [file split $dir]
+    set nbr [llength $curlst]
+
+    incr nbr -2
+    for {set ind $nbr} {$ind >= 0} {incr ind -1} {
+	set tmplst [lrange $curlst 0 $ind]
+	set tmpdir [eval file join $tmplst]
+	$itk_component(directory) insert end $tmpdir
+    }
+
+    # insert windows drive letters
+    if {[info exist drives] == 0} {
+	set drives [file volume]
+    }
+    if ![string compare $tcl_platform(platform) windows] {
+	foreach drive $drives {
+	    $itk_component(directory) insert end $drive
+	}
+    }
+
+    # handle canvas drawing
+    set hi1 [font metrics $font -linespace]
+    set hi2 [image height $itk_option(-dirimg)]
+    if {$hi1 > $hi2} {
+	set hi $hi1
+    } else {
+	set hi $hi2
+    }
+    set wi1 [image width $itk_option(-dirimg)]
+    incr wi1 4
+    set wi2 [winfo width $itk_component(canvas)]
+    
+    set lidir [list]
+    foreach file [glob -nocomplain *] {
+	if [file isdirectory [string trim $file "~"]] { 
+	    lappend lidir $file
+	}
+    }
+    set sldir [lsort $lidir]
+    
+    $itk_component(canvas) delete all
+    set ind 0
+    # Adjust the position of the text wi1 with an offset.
+    if {$hi1 < $hi2} {
+	set offset [expr $hi2 - $hi1]
+    } else {
+	set offset 0
+    }
+    foreach file $sldir {
+	if [file isdirectory $file] { 
+	    $itk_component(canvas) create image 2 [expr $ind * $hi] \
+		    -anchor nw -image $itk_option(-dirimg) -tags IMG
+	    $itk_component(canvas) create text $wi1 [expr ($ind * $hi) + $offset] \
+		    -anchor nw -text $file \
+		    -fill $itk_option(-textforeground) \
+		    -font $font -tags TXT
+	    set ind [expr $ind + 1]
+	}
+    }
+
+    set ha [expr $ind * $hi]
+    $itk_component(canvas) configure -scrollregion [list 0 0 $wi2 $ha]
+
+    # set the change menu command
+    $itk_component(directory) configure -command [::itcl::code $this _change_menu]
+}
+
+::itcl::body swidgets::tkgetdir::_change_menu {} {
+    _show_dir [$itk_component(directory) get]
+}
+
+::itcl::body swidgets::tkgetdir::_up_dir {} {
+    set curlst [file split $curdir]
+
+    set nbr [llength $curlst]
+    if {$nbr < 2} {return}
+    set tmp [expr $nbr - 2]
+    
+    set newlst [lrange $curlst 0 $tmp]
+    set newdir [eval file join $newlst]
+
+    _show_dir $newdir
+}
+
+::itcl::body swidgets::tkgetdir::_down_dir {} {
+    set nnam [$itk_component(chosen) get]
+
+    set newdir [file join $curdir $nnam]
+
+    # change 07/19/99
+    # If there are more dirs, permit display of one level down.
+    # Otherwise, block display and hilight selection in red.
+    set areDirs 0
+    foreach f [glob -nocomplain [file join $newdir *]] {
+	if {[file isdirectory $f]} {
+	    set areDirs 1
+	    break
+	}
+    }
+ 
+    if {$areDirs} {
+	_show_dir $newdir
+    } else {
+	set id [$itk_component(canvas) find withtag HASBOX]
+	$itk_component(canvas) itemconfigure $id -fill $itk_option(-endcolor)
+    }
+}
+
+::itcl::body swidgets::tkgetdir::_enter_item {} {
+    set id [$itk_component(canvas) find withtag current]
+    set wt [$itk_component(canvas) itemcget $id -tags]
+    if {[lsearch -exact $wt IMG] >= 0} {
+	set id [$itk_component(canvas) find above $id]
+    }
+
+    $itk_component(canvas) itemconfigure $id -fill $itk_option(-highlightforeground)
+    set bxr [$itk_component(canvas) bbox $id]
+    eval $itk_component(canvas) create rectangle $bxr \
+	    -fill $itk_option(-highlightbackground) \
+	    -outline $itk_option(-highlightbackground) \
+	    -tags HILIT
+    $itk_component(canvas) lower HILIT
+}
+
+::itcl::body swidgets::tkgetdir::_leave_item {} {
+    $itk_component(canvas) delete HILIT
+    set id [$itk_component(canvas) find withtag current]
+    set wt [$itk_component(canvas) itemcget $id -tags]
+    if {[lsearch -exact $wt IMG] >= 0} {
+	set id [$itk_component(canvas) find above $id]
+    }
+    set wt [$itk_component(canvas) itemcget $id -tags]
+    if {[lsearch -exact $wt HASBOX] >= 0} {
+	$itk_component(canvas) itemconfigure $id -fill $itk_option(-selectforeground)
+    } else {
+	$itk_component(canvas) itemconfigure $id -fill $itk_option(-textforeground)
+    }
+}
+
+::itcl::body swidgets::tkgetdir::_click_item {} {
+    $itk_component(canvas) delete HILIT
+    # put old selected item in normal state
+    $itk_component(canvas) delete BOX
+    set id [$itk_component(canvas) find withtag HASBOX]
+    $itk_component(canvas) itemconfigure $id -fill $itk_option(-textforeground)
+    $itk_component(open) configure -state disabled
+    $itk_component(canvas) dtag HASBOX HASBOX
+    # put new selected item in selected state
+    set id [$itk_component(canvas) find withtag current]
+    set wt [$itk_component(canvas) itemcget $id -tags]
+    if {[lsearch -exact $wt IMG] >= 0} {
+	set id [$itk_component(canvas) find above $id]
+    }
+    set bxr [$itk_component(canvas) bbox $id]
+    $itk_component(canvas) addtag HASBOX withtag $id
+    $itk_component(canvas) itemconfigure $id -fill $itk_option(-selectforeground)
+    eval $itk_component(canvas) create rectangle $bxr \
+	    -fill $itk_option(-selectbackground) \
+	    -outline $itk_option(-selectbackground) \
+	    -tags BOX
+    $itk_component(open) configure -state normal
+    $itk_component(canvas) lower BOX
+    set nam [$itk_component(canvas) itemcget $id -text]
+    $itk_component(chosen) delete 0 end
+    $itk_component(chosen) insert 0 [file join $curdir $nam]; # added 4/2/02
+}
+
+::itcl::body swidgets::tkgetdir::_dblclick_item {} {
+    set id [$itk_component(canvas) find withtag current]
+    _down_dir
+}
+
+::itcl::body swidgets::tkgetdir::Activate {} {
+    wm deiconify $itk_interior
+    raise $itk_interior
+    focus $itk_interior
+}
+
+::itcl::body swidgets::tkgetdir::Hide {} {
+    wm withdraw $itk_interior
+}
+
+::itcl::body swidgets::tkgetdir::get {} {
+    return [$itk_component(chosen) get]
+# altered 4/2/02
+#    set nnam [$itk_component(chosen) get]
+#    if {[string trim $nnam] == ""} {
+#	switch $itk_option(-autovalid) {
+#	    0 {return ""}
+#	    1 {return $curdir}
+#	}
+#    } else {
+#	return [file join $curdir $nnam]
+#    }
+}
+
+::itcl::body swidgets::tkgetdir::Close {} {
+    Hide
+    cd $svwd
+
+    if {$itk_option(-quitcommand) != {}} {
+	catch {eval $itk_option(-quitcommand)}
+    }
+
+    destroy object [namespace tail $this]
+}

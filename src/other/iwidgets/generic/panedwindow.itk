@@ -137,7 +137,9 @@ itcl::body iwidgets::Panedwindow::constructor {args} {
     bindtags $itk_component(hull) \
 	    [linsert [bindtags $itk_component(hull)] 0 pw-config-$this]
     
-    array set _relief {0 sunken 1 raised}
+    #array set _relief {0 sunken 1 raised}
+    # Bob Modification
+    array set _relief {0 raised 1 raised}
 
     eval itk_initialize $args
 }
@@ -443,7 +445,14 @@ itcl::body iwidgets::Panedwindow::fraction {args} {
         for {set i 0; set j 1} {$j < [llength $_activePanes]} {incr i; incr j} {
             lappend _ret [expr {round(($_frac($j) - $_frac($i))*100)}]
         }
-	lappend _ret [eval expr {100 - ([join $_ret +])}]
+	#lappend _ret [eval expr {100 - ([join $_ret +])}]
+	# Bob Modification
+	if {[info exists _ret]} {
+	    set _tmp $_ret
+	} else {
+	    set _tmp 0
+	}
+	lappend _ret [eval expr {100 - ([join $_tmp +])}]
 
         return $_ret
     } else {
@@ -638,7 +647,8 @@ itcl::body iwidgets::Panedwindow::_startGrip {where num} {
     raise $itk_component(separator$num)
     raise $itk_component(sash$num)
     
-    $itk_component(sash$num) configure -relief sunken
+    # Bob Modification (commented the line below)
+    #$itk_component(sash$num) configure -relief sunken
 }
 
 # ------------------------------------------------------------------

@@ -46,6 +46,12 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "bu.h"
 #include "fb.h"
 
+#include "pkg.h"
+
+#ifdef _WIN32
+#  include <winsock.h>
+#  include <fcntl.h>
+#endif
 
 static unsigned char	*scanline;	/* scanline pixel buffers */
 static int	scanbytes;		/* # of bytes of scanline */
@@ -121,7 +127,11 @@ get_args(int argc, register char **argv)
 		outfp = stdout;
 	} else {
 		file_name = argv[bu_optind];
+#ifdef _WIN32
+		if( (outfp = fopen(file_name, "wb")) == NULL )  {
+#else
 		if( (outfp = fopen(file_name, "w")) == NULL )  {
+#endif
 			(void)fprintf( stderr,
 				"fb-png: cannot open \"%s\" for writing\n",
 				file_name );
@@ -152,16 +162,25 @@ main(int argc, char **argv)
 		exit( 1 );
 	}
 
+	if (pkg_init() != 0)
+	    exit(1);
+
 	png_p = png_create_write_struct( PNG_LIBPNG_VER_STRING, NULL, NULL, NULL );
-	if( !png_p )
+	if (!png_p) {
+		pkg_terminate();
 		bu_bomb( "Could not create PNG write structure\n" );
+	}
 
 	info_p = png_create_info_struct( png_p );
-	if( !info_p )
+	if (!info_p) {
+		pkg_terminate();
 		bu_bomb( "Could not create PNG info structure\n" );
+	}
 
-	if( (fbp = fb_open( framebuffer, screen_width, screen_height )) == NULL )
+	if ((fbp = fb_open(framebuffer, screen_width, screen_height)) == NULL) {
+		pkg_terminate();
 		exit(12);
+	}
 
 	/* If actual screen is smaller than requested size, trim down */
 	if( screen_height > fb_getheight(fbp) )
@@ -243,6 +262,7 @@ main(int argc, char **argv)
 	}
 	fb_close( fbp );
 	png_write_end( png_p, NULL );
+	pkg_terminate();
 	exit(0);
 }
 

@@ -51,9 +51,9 @@ static const char RCSell[] = "@(#)$Header$ (BRL)";
 #include "vmath.h"
 #include "db5.h"
 #include "nmg.h"
+#include "rtgeom.h"
 #include "raytrace.h"
 #include "nurb.h"
-#include "rtgeom.h"
 #include "./debug.h"
 
 

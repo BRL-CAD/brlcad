@@ -1,0 +1,68 @@
+
+tkimg_Fix*Proc's
+
+Signature of photo image type functions
+
+
+			Tk 8.3.2 or earlier		Tk 8.3 or later
+==============================================================================
+Tk_ImageStringWriteProc	int				int
+			------------------------------------------------------
+			Tcl_Interp *interp,		Tcl_Interp *interp,
+			Tcl_DString *dataPtr,		Tcl_Obj *format,
+			char *formatString,		Tk_PhotoImageBlock *blockPtr
+			Tk_PhotoImageBlock *blockPtr
+==============================================================================
+Tk_ImageFileMatchProc	int				int
+			------------------------------------------------------
+			Tcl_Channel chan,		Tcl_Channel chan,
+			char *fileName,			CONST char *fileName,
+			char *formatString,		Tcl_Obj *format,
+			int *widthPtr,			int *widthPtr,
+			int *heightPtr			int *heightPtr,
+							Tcl_Interp *interp
+==============================================================================
+Tk_ImageStringMatchProc	int				int
+			------------------------------------------------------
+			char *string,			Tcl_Obj *dataObj, 
+			char *formatString,		Tcl_Obj *format, 
+			int *widthPtr,			int *widthPtr, 
+			int *heightPtr			int *heightPtr,
+							Tcl_Interp *interp
+==============================================================================
+
+Different number of arguments, with different types, and the arguments
+are permuted.
+
+A Tk 8.3 core takes special steps so that a specially written photo
+image can distinguish between the two possible types of calls using
+the arguments alone.
+
+It always calls the function with the maximal number of arguments
+possible, padding with NULLs if the 8.3 signature has not enough
+arguments. See 'Tk_ImageStringWriteProc' (tkImgPhoto.c, line 962).
+
+In the case of the other two procedures the photo image type can check
+the integrity of the last argument to distinguish between the two
+cores. When called from an 8.3.2 or earlier core the last argument
+will be bogus (random data).
+
+This is actually the method used by Img 1.2.4. It checks that
+interp->result == interp->resultSpace. There are two problems with
+that approach:
+
+(1)	The pointer stored in 'interp' is random, and might not be
+	dereferencable. In other words, a segementation fault can
+	happen. Just assume 'interp == NULL' for example.
+
+(2)	It requires access to private definitions of the core
+	(Definition of 'struct Interp').
+
+Because this Img 2.0 will use a different approach. When loaded into
+the system it will ask for the current version of Tk, and modify its
+behaviour accordingly.
+
+
+	tkimg_FixChanMatchProc  (interp, chan, file, format, width, height)
+	tkimg_FixObjMatchProc   (interp, data, format, width, height)
+	tkimg_FixStringWriteProc(data, interp, dataPtr, format, blockPtr)

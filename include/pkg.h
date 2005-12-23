@@ -101,6 +101,8 @@ struct pkg_conn {
 	pkg_send( (type), bu_vls_addr((vlsp)), bu_vls_strlen((vlsp))+1, (pkg) )
 
 
+PKG_EXPORT extern int pkg_init();
+PKG_EXPORT extern void pkg_terminate();
 PKG_EXPORT extern int pkg_process(register struct pkg_conn *);
 PKG_EXPORT extern int pkg_suckin(register struct pkg_conn *);
 PKG_EXPORT extern struct pkg_conn *pkg_open();

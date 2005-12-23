@@ -2109,6 +2109,47 @@ DrawTearoffEntry(menuPtr, mePtr, d, gc, tkfont, fmPtr, x, y, width, height)
     int width;
     int height;
 {
+#ifdef DOUBLE_BAR_TEAROFF
+    XPoint points[5];
+    int maxX;
+    Tk_3DBorder border;
+    int yCenter;
+
+    if (menuPtr->menuType != MASTER_MENU) {
+	return;
+    }
+
+    yCenter = y + height/2;
+    maxX  = width - 1;
+
+    points[0].x = x;
+    points[0].y = yCenter - 3;
+    points[1].x = x;
+    points[1].y = yCenter - 1;
+    points[2].x = maxX;
+    points[2].y = points[1].y;
+    points[3].x = maxX;
+    points[3].y = points[0].y;
+    points[4].x = points[0].x;
+    points[4].y = points[0].y;
+    border = Tk_Get3DBorderFromObj(menuPtr->tkwin, menuPtr->borderPtr);
+    Tk_Draw3DPolygon(menuPtr->tkwin, d, border, points, 5, 1,
+		     TK_RELIEF_RAISED);
+
+    points[0].x = x;
+    points[0].y = yCenter + 1;
+    points[1].x = x;
+    points[1].y = yCenter + 3;
+    points[2].x = maxX;
+    points[2].y = points[1].y;
+    points[3].x = maxX;
+    points[3].y = points[0].y;
+    points[4].x = points[0].x;
+    points[4].y = points[0].y;
+    border = Tk_Get3DBorderFromObj(menuPtr->tkwin, menuPtr->borderPtr);
+    Tk_Draw3DPolygon(menuPtr->tkwin, d, border, points, 5, 1,
+		     TK_RELIEF_RAISED);
+#else    
     XPoint points[2];
     int segmentWidth, maxX;
     Tk_3DBorder border;
@@ -2133,6 +2174,7 @@ DrawTearoffEntry(menuPtr, mePtr, d, gc, tkfont, fmPtr, x, y, width, height)
 		TK_RELIEF_RAISED);
 	points[0].x += 2*segmentWidth;
     }
+#endif
 }
 
 /*

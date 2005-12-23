@@ -193,7 +193,7 @@ rt_mk_bot_w_normals(
 		bot->face_normals = (int *)NULL;
 	}
 
-	return wdb_export(fp, name, (genptr_t)bot, ID_BOT, fp->dbip->dbi_local2base);
+	return wdb_export(fp, name, (genptr_t)bot, ID_BOT, 1.0);
 }
 
 static int

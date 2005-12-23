@@ -24,6 +24,7 @@
 #ifndef CONFIG_H
 #define CONFIG_H seen
 
+#ifndef IGNORE_CONFIG_H
 #if defined(_WIN32)
 /* XXX - This is temporary (atleast until a brlcad_config.h is
  * auto-generated on windows)
@@ -59,6 +60,7 @@
 #define BRLCAD_DATA          ""
 
 #define INSTALL_DIRECTORY    "C:/brlcad" MAJOR_VERSION_STRING "_" MINOR_VERSION_STRING "_" PATCH_VERSION_STRING
+#define IWIDGETS_VERSION  "4.0.2"
 
 #define HAS_OPENGL	1
 #define HAVE_ACCESS     1
@@ -67,6 +69,7 @@
 #define HAVE_FCNTL_H	1
 #define HAVE_FLOAT_H	1
 #define HAVE_GETENV     1
+#define HAVE_PUTENV     1
 #define HAVE_GETHOSTNAME	1
 #define HAVE_GL_GL_H	1
 #define HAVE_IO_H	1
@@ -75,7 +78,9 @@
 #define HAVE_MATHERR	1
 #define HAVE_MEMORY_H	1
 #define HAVE_OFF_T	1
+#if 0
 #define HAVE_PWD_H	1
+#endif
 #define HAVE_REGEX_H	1
 #define HAVE_STAT       1
 #define HAVE_STDARG_H	1
@@ -87,6 +92,7 @@
 #define HAVE_STRING_H	1
 #define HAVE_SYS_STAT_H 1
 #define HAVE_SYS_TIME	1
+#define HAVE_SYS_TYPES_H 1
 #define HAVE_TIME	1
 #define HAVE_TIME_H	1
 #define HAVE_VARARGS_H	1
@@ -109,10 +115,20 @@
 #define R_OK 4
 #define W_OK 2
 #define MAXPATHLEN _MAX_PATH
+#define O_APPEND _O_APPEND
 #define O_CREAT _O_CREAT
 #define O_EXCL _O_EXCL
 #define O_RDONLY _O_RDONLY
 #define O_RDWR _O_RDWR
+#define O_TRUNC _O_TRUNC
+#define O_WRONLY _O_WRONLY
+#define S_IFMT _S_IFMT
+#define S_IFDIR _S_IFDIR
+#define S_IFCHR _S_IFCHR
+#define S_IFREG _S_IFREG
+#define S_IREAD _S_IREAD
+#define S_IWRITE _S_IWRITE
+#define S_IEXEC _S_IEXEC
 #define access _access
 #define chmod _chmod
 #define close _close
@@ -120,7 +136,9 @@
 #define creat _creat
 #define dup _dup
 #define dup2 _dup2
+#if 0
 #define eof _eof
+#endif
 #define fdopen _fdopen
 #define fileno _fileno
 #define fstat _fstat
@@ -137,6 +155,7 @@
 #define pclose _pclose
 #define pipe _pipe
 #define popen _popen
+#define putenv _putenv
 #define read _read
 #define rint(_X) (floor((_X) + 0.5))
 #define setmode _setmode
@@ -147,6 +166,7 @@
 #define strdup _strdup
 #define sys_errlist _sys_errlist
 #define sys_nerr _sys_nerr
+#define snprintf _snprintf
 #define umask _umask
 #define unlink _unlink
 #define write _write
@@ -158,6 +178,7 @@
 #undef rad2
 
 #endif /* if defined(_WIN32) */
+#endif /* ifndef IGNORE_CONFIG_H */
 
 #endif /* CONFIG_H */
 

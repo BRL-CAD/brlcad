@@ -56,7 +56,10 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include <sys/uio.h>		/* for struct iovec */
 #endif
 
-#include <netinet/in.h>		/* for htons(), etc */
+#ifndef _WIN32
+#  include <netinet/in.h>		/* for htons(), etc */
+#else
+#endif
 
 #ifdef HAVE_SYS_SOCKET_H
 # include <sys/socket.h>

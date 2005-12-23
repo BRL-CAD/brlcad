@@ -1,0 +1,38 @@
+'\"
+'\" Copyright 1991-1997 by Bell Labs Innovations for Lucent Technologies.
+'\"
+'\" Permission to use, copy, modify, and distribute this software and its
+'\" documentation for any purpose and without fee is hereby granted, provided
+'\" that the above copyright notice appear in all copies and that both that the
+'\" copyright notice and warranty disclaimer appear in supporting documentation,
+'\" and that the names of Lucent Technologies any of their entities not be used
+'\" in advertising or publicity pertaining to distribution of the software
+'\" without specific, written prior permission.
+'\"
+'\" Lucent Technologies disclaims all warranties with regard to this software,
+'\" including all implied warranties of merchantability and fitness.  In no event
+'\" shall Lucent Technologies be liable for any special, indirect or
+'\" consequential damages or any damages whatsoever resulting from loss of use,
+'\" data or profits, whether in an action of contract, negligence or other
+'\" tortuous action, arising out of or in connection with the use or performance
+'\" of this software.  
+'\"
+.so man.macros
+.TH bltdebug n BLT_VERSION BLT "BLT Built-In Commands"
+.BS
+'\" Note:  do not modify the .SH NAME line immediately below!
+.SH NAME
+bltdebug \- print Tcl commands before execution
+.SH SYNOPSIS
+\fBbltdebug\fR ?\fIlevel\fR?
+.BE
+.SH DESCRIPTION
+The \fBbltdebug\fR command is a simple tracing facility for Tcl commands.
+Each command line is printed before it is executed on standard error.
+The output consists of the command line both before and after
+substitutions have occurred.  \fILevel\fR indicates at what level to
+stop tracing commands.  If \fIlevel\fR is \f(CW0\fR, no tracing is
+performed. This is the default.  If no \fIlevel\fR argument is given,
+the current level is printed.
+.SH KEYWORDS
+debug

@@ -43,7 +43,7 @@ option add *Mged.height 400 widgetDefault
     itk_option define -unitsCallback unitsCallback UnitsCallback ""
     itk_option define -autoViewEnable autoViewEnable AutoViewEnable 1
 
-    constructor {file args} {
+    constructor {dbOrFile args} {
 	eval QuadDisplay::constructor
     } {}
     destructor {}
@@ -104,6 +104,10 @@ option add *Mged.height 400 widgetDefault
 	method mvall {args}
 	method nmg_collapse {args}
 	method nmg_simplify {args}
+	method ocenter {args}
+	method orotate {args}
+	method oscale {args}
+	method otranslate {args}
 	method opendb {args}
 	method overlay {args}
 	method pathlist {args}
@@ -120,6 +124,7 @@ option add *Mged.height 400 widgetDefault
 	method set_outputHandler {args}
 	method set_transparency {args}
 	method shaded_mode {args}
+	method shareDb {_db}
 	method shells {args}
 	method showmats {args}
 	method summary {args}
@@ -153,8 +158,8 @@ option add *Mged.height 400 widgetDefault
     }
 }
 
-::itcl::body Mged::constructor {file args} {
-    set db [Database #auto $file]
+::itcl::body Mged::constructor {dbOrFile args} {
+    set db [Database \#auto $dbOrFile]
     set dg [$db Drawable::get_dgname]
     addAll $dg
 
@@ -241,6 +246,10 @@ option add *Mged.height 400 widgetDefault
     eval $db shaded_mode $args
 }
 
+::itcl::body Mged::shareDb {_db} {
+    $db shareDb $_db
+}
+
 ::itcl::body Mged::dump {args} {
     eval $db dump $args
 }
@@ -319,6 +328,21 @@ option add *Mged.height 400 widgetDefault
 
 ::itcl::body Mged::nmg_simplify {args} {
     eval $db nmg_simplify $args
+}
+
+::itcl::body Mged::ocenter {args} {
+    eval $db ocenter $args
+}
+
+::itcl::body Mged::orotate {args} {
+    eval $db orotate $args
+}
+::itcl::body Mged::oscale {args} {
+    eval $db oscale $args
+}
+
+::itcl::body Mged::otranslate {args} {
+    eval $db otranslate $args
 }
 
 ::itcl::body Mged::copyeval {args} {

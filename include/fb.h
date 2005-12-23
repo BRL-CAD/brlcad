@@ -35,19 +35,24 @@
 
 #include "fbio.h"
 
-
-#ifndef FB_EXPORT
-#   if defined(_WIN32) && !defined(__CYGWIN__) && defined(BRLCAD_DLL)
-#      ifdef FB_EXPORT_DLL
-#         define FB_EXPORT __declspec(dllexport)
-#      else
-#         define FB_EXPORT __declspec(dllimport)
-#      endif
-#   else
-#      define FB_EXPORT
-#   endif
+/* Needed for fd_set */
+#if defined (HAVE_SYS_SELECT_H)
+#  include <sys/select.h>
+#else
+#  if defined(HAVE_SYS_TYPES_H)
+#    include <sys/types.h>
+#  endif
+#  if defined(HAVE_SYS_TIME_H)
+#    include <sys/time.h>
+#  endif
+#  if defined(HAVE_UNISTD_H)
+#    include <unistd.h>
+#  else
+#    if defined(HAVE_SYS_UNISTD_H)
+#      include <sys/unistd.h>
+#    endif
+#  endif
 #endif
-
 
 /* Library entry points which are macros. */
 #define fb_gettype(_ifp)		(_ifp->if_type)
@@ -165,6 +170,16 @@ FB_EXPORT extern int	fb_sim_cursor();
 FB_EXPORT extern int	fb_sim_getcursor();
 #endif
 
+#ifdef IF_X
+  FB_EXPORT extern int _X24_open_existing();
+  FB_EXPORT extern int X24_close_existing();
+#endif
+
+#ifdef IF_OGL
+  FB_EXPORT extern int _ogl_open_existing();
+  FB_EXPORT extern int ogl_close_existing();
+#endif
+
 /*
  * Copy one RGB pixel to another.
  */
@@ -203,10 +218,25 @@ FB_EXPORT extern int	fb_sim_getcursor();
 /* tcl.c */
 /* The presence of Tcl_Interp as an arg prevents giving arg list */
 FB_EXPORT extern void fb_tcl_setup();
+#ifdef BRLCAD_DEBUG
+FB_EXPORT extern int Fb_d_Init();
+#else
 FB_EXPORT extern int Fb_Init();
+#endif
+FB_EXPORT extern int fb_refresh(FBIO *ifp, int x, int y, int w, int h);
 
 /* vers.c (created by libfb/Cakefile) */
 FB_EXPORT extern char fb_version[];
+
+/* server.c */
+FB_EXPORT extern FBIO	*fb_server_fbp;
+FB_EXPORT extern fd_set	*fb_server_select_list;
+FB_EXPORT extern int	*fb_server_max_fd;
+FB_EXPORT extern int	fb_server_got_fb_free;       /* !0 => we have received an fb_free */
+FB_EXPORT extern int	fb_server_refuse_fb_free;    /* !0 => don't accept fb_free() */
+FB_EXPORT extern int	fb_server_retain_on_close;   /* !0 => we are holding a reusable FB open */
+FB_EXPORT extern const struct pkg_switch fb_server_pkg_switch[];
+
 
 #endif /* FB_H */
 

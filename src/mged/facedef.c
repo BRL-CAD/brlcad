@@ -131,7 +131,7 @@ f_facedef(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	RT_ARB_CK_MAGIC(arb);
 
 	/* find new planes to account for any editing */
-	if( rt_arb_calc_planes( planes, arb, es_type, &mged_tol ) < 0 )  {
+	if (rt_arb_calc_planes(interp, arb, es_type, planes, &mged_tol)) {
 	  Tcl_AppendResult(interp, "Unable to determine plane equations\n", (char *)NULL);
 	  status = TCL_ERROR;
 	  goto end;

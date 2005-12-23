@@ -3493,6 +3493,12 @@ RT_EXPORT BU_EXTERN(int rt_arb_edit,
 		     plane_t			planes[6],
 		     const struct bn_tol	*tol));
 #endif
+RT_EXPORT extern const int rt_arb_faces[5][24];
+RT_EXPORT extern short earb8[12][18];
+RT_EXPORT extern short earb7[12][18];
+RT_EXPORT extern short earb6[10][18];
+RT_EXPORT extern short earb5[9][18];
+RT_EXPORT extern short earb4[5][18];
 
 /* g_epa.c */
 RT_EXPORT BU_EXTERN(void rt_ell,
@@ -5162,6 +5168,10 @@ RT_EXPORT BU_EXTERN(void nmg_cnurb_to_vlist,
 		     const struct edgeuse *eu,
 		     int n_interior,
 		     int cmd));
+RT_EXPORT extern void (*nmg_plot_anim_upcall)();
+RT_EXPORT extern void (*nmg_vlblock_anim_upcall)();
+RT_EXPORT extern void (*nmg_mged_debug_display_hack)();
+RT_EXPORT extern double nmg_eue_dist;
 
 /* nurb_util.c */
 RT_EXPORT BU_EXTERN(void rt_nurb_clean_cnurb,
@@ -6500,6 +6510,21 @@ RT_EXPORT BU_EXTERN(void dgo_notify,
 RT_EXPORT BU_EXTERN(void dgo_zapall,
 		    ());
 
+/* defined in nirt.c */
+RT_EXPORT BU_EXTERN(int	dgo_nirt_cmd,
+		    (struct dg_obj *dgop,
+		     struct view_obj *vop,
+		     Tcl_Interp *interp,
+		     int argc,
+		     char **argv));
+RT_EXPORT BU_EXTERN(int	dgo_vnirt_cmd,
+		    (struct dg_obj *dgop,
+		     struct view_obj *vop,
+		     Tcl_Interp *interp,
+		     int argc,
+		     char **argv));
+
+
 /* defined in bigE.c */
 RT_EXPORT BU_EXTERN(int	dg_E_cmd,
 		    (struct dg_obj *dgop,
@@ -6735,6 +6760,8 @@ RT_EXPORT BU_EXTERN(void rt_vol_ifree,
 
 /* defined in db5_bin.c */
 RT_EXPORT BU_EXTERN(void rt_binunif_free,
+		    (struct rt_binunif_internal *bip));
+RT_EXPORT BU_EXTERN(void rt_binunif_dump,
 		    (struct rt_binunif_internal *bip));
 
 /* defined in g_cline.c */

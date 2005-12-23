@@ -1,0 +1,59 @@
+DEBUG=0
+SHARED=1
+
+v1 = 8.4
+v2 = 84
+v3 = 8.4.6
+
+#v1 = 8.3
+#v2 = 83
+#v3 = 8.3.4
+
+#v1 = 8.3
+#v2 = 83
+#v3 = 8.3.2
+
+#v1 = 8.2
+#v2 = 82
+#v3 = 8.2.3
+
+#v1 = 8.1
+#v2 = 81
+#v3 = 8.1.1
+
+#v1 = 8.0
+#v2 = 80
+#v3 = 8.0.5
+
+#Use Independent JPEG Group (IJG) library or Intel JPEG Library (IJL)
+# 0 = None.
+# 1 = IJG
+# 2 = IJL
+WITH_JPEG=0
+
+# ------------------------------------------------------------------------
+#       You shouldn't need to edit anything beyond this point
+# ------------------------------------------------------------------------
+
+BLT_MAJOR_VERSION = 	2
+BLT_MINOR_VERSION = 	4
+BLT_VERSION =		2.4
+
+prefix =		C:/Tcl
+exec_prefix =		$(prefix)
+includedir =		$(prefix)/include
+bindir =		$(prefix)/bin
+libdir =		$(prefix)/lib
+scriptdir =		$(libdir)/blt$(BLT_VERSION)
+BLT_LIBRARY =		$(libdir)/blt$(BLT_VERSION)
+TCLLIBPATH =		$(libdir)/tcl$(v1)
+
+AUX_LIBS = 
+SHLIB_SUFFIX =		.dll
+
+INSTALL =		install -m 0755
+INSTALL_DATA =		install -m 0444
+RANLIB =		:
+SHELL =			bash.exe
+RM =			rm -f
+

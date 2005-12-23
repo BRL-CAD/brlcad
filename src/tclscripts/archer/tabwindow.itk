@@ -1,0 +1,35 @@
+# TYPE: tcltk
+##############################################################
+# 
+# tabwindow.tcl
+#
+##############################################################
+#
+# Description:
+#    This is an pseudo abstract base class for all tabwindows
+#    to inherit from.
+#
+##############################################################
+
+itcl::class TabWindow {
+    inherit itk::Widget
+
+    constructor {args} {
+	set timestamp ""
+	eval itk_initialize $args
+    }
+    destructor  {}
+
+    private {
+	variable timestamp
+    }
+
+    method Refresh {} {}
+    method WhatsOpen {} {return ""}
+    method GetTimeStamp {} {return $timestamp}
+    method SetTimeStamp {time} {set timestamp $time}
+    method ResizeByFont {{fsize "Default"}} {}
+    method GetUserCmds {} {}
+    method Update {{type "all"}} {}
+    method Close {} {}
+}

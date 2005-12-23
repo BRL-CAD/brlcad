@@ -33,8 +33,6 @@
 #	The Drawable class wraps LIBRT's drawable geometry object.
 #
 ::itcl::class Drawable {
-    protected variable dg ""
-
     constructor {db} {}
     destructor {}
 
@@ -61,8 +59,8 @@
 	method qray {args}
 	method rt {args}
 	method rtabort {args}
-	method rtcheck {args}
 	method rtarea {args}
+	method rtcheck {args}
 	method rtedge {args}
 	method rtweight {args}
 	method set_outputHandler {args}
@@ -76,6 +74,10 @@
 	method apropos {key}
 	method help {args}
 	method getUserCmds {}
+    }
+
+    protected {
+	variable dg ""
     }
 
     private {
@@ -186,12 +188,12 @@
     $dg rtabort
 }
 
-::itcl::body Drawable::rtcheck {args} {
-    eval $dg rtcheck $args
-}
-
 ::itcl::body Drawable::rtarea {args} {
     eval $dg rtarea $args
+}
+
+::itcl::body Drawable::rtcheck {args} {
+    eval $dg rtcheck $args
 }
 
 ::itcl::body Drawable::rtedge {args} {

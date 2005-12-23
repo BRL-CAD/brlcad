@@ -1,0 +1,45 @@
+# This file is a Tcl script to test out PNG reading and writing.
+# It is organized in the standard fasion for Tcl tests.
+#
+
+puts "img::png [package require img::png]"
+
+set pngdata \
+{iVBORw0KGgoAAAANSUhEUgAAABAAAAAMCAIAAAGTgppAAAAABGdBTUEAAYagMeiWXwAAAHxJ
+REFUeJyVUMERgDAIC54D+HMDmanbuI0zxQ38uYE+uALW66N5UUISqJCE4X52ACBZS2umPkCS
+pPjAdZYJCUJy3Q57LLK7vURChdEfeWulqh4dRLa6zhJEE+B0N2OcEFtGVXNYvrQV9JwauH7G
+76f+WCQGurv2MCwYvuEFQANGc1+HFcEAAAAASUVORK5CYII=}
+
+test png-1.1 {} {
+    catch {image delete i}
+    image create photo i -file [file join $tcltest::testsDirectory folder.png]
+    i data -format png
+} $pngdata
+test png-1.2 {} {
+    catch {image delete i}
+    image create photo i -data $pngdata
+    set data [i data -format png]
+} $pngdata
+test png-1.3 {} {
+    i blank
+    i put $data
+    set data [i data -format png]
+} $pngdata
+test png-1.4 {} {
+    i blank
+    i put $data -format png
+    set data [i data -format png]
+} $pngdata
+
+if {[info tclversion] < 8.0} {
+    return
+}
+
+test png-2.0 {Binary I/O with PNG images} {
+    i blank
+    set f [open [file join $tcltest::testsDirectory folder.png] r]
+    fconfigure $f -translation binary
+    set return [catch {i put [read $f]} msg]
+    close $f
+    lappend return $msg
+} {0 {}}

@@ -67,7 +67,6 @@ static const char RCStgc[] = "@(#)$Header$ (BRL)";
 #include "./debug.h"
 #include "nurb.h"
 
-
 BU_EXTERN(int rt_rec_prep, (struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip));
 
 struct  tgc_specific {

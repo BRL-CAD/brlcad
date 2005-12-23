@@ -77,9 +77,9 @@ static const char RCSarb[] = "@(#)$Header$ (BRL)";
 #include "bn.h"
 #include "nmg.h"
 #include "db.h"
+#include "rtgeom.h"
 #include "raytrace.h"
 #include "nurb.h"
-#include "rtgeom.h"
 #include "./debug.h"
 
 

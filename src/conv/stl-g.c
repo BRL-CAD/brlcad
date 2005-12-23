@@ -56,9 +56,6 @@ static const char RCSid[] = "$Header$";
 #include "raytrace.h"
 #include "wdb.h"
 
-extern char *optarg;
-extern int optind,opterr,optopt;
-
 static struct vert_root *tree_root;
 static struct wmember all_head;
 static char *input_file;	/* name of the input file */
@@ -641,7 +638,7 @@ char	*argv[];
 	}
 
 	/* Get command line arguments. */
-	while ((c = getopt(argc, argv, "bt:i:I:m:dx:N:c:")) != EOF) {
+	while ((c = bu_getopt(argc, argv, "bt:i:I:m:dx:N:c:")) != EOF) {
 		double tmp;
 
 		switch (c) {
@@ -649,7 +646,7 @@ char	*argv[];
 			binary = 1;
 			break;
 		case 't':	/* tolerance */
-			tmp = atof( optarg );
+			tmp = atof( bu_optarg );
 			if( tmp <= 0.0 ) {
 				bu_log( "Tolerance must be greater then zero, using default (%g)\n",
 					tol.dist );
@@ -659,23 +656,23 @@ char	*argv[];
 			tol.dist_sq = tmp * tmp;
 			break;
 		case 'c':	/* convert from units */
-			conv_factor = bu_units_conversion( optarg );
+			conv_factor = bu_units_conversion( bu_optarg );
 			if( conv_factor == 0.0 )
 			{
-				bu_log( "Illegal units: (%s)\n", optarg );
+				bu_log( "Illegal units: (%s)\n", bu_optarg );
 				bu_bomb( "Illegal units!!\n" );
 			}
 			else
-				bu_log( "Converting units from %s to mm (conversion factor is %g)\n", optarg, conv_factor );
+				bu_log( "Converting units from %s to mm (conversion factor is %g)\n", bu_optarg, conv_factor );
 			break;
 		case 'N':	/* force a name on this object */
-			forced_name = optarg;
+			forced_name = bu_optarg;
 			break;
 		case 'i':
-			id_no = atoi( optarg );
+			id_no = atoi( bu_optarg );
 			break;
 		case  'I':
-			const_id = atoi( optarg );
+			const_id = atoi( bu_optarg );
 			if( const_id < 0 )
 			{
 				bu_log( "Illegal value for '-I' option, must be zero or greater!!!\n" );
@@ -684,13 +681,13 @@ char	*argv[];
 			}
 			break;
 		case 'm':
-			mat_code = atoi( optarg );
+			mat_code = atoi( bu_optarg );
 			break;
 		case 'd':
 			debug = 1;
 			break;
 		case 'x':
-			sscanf( optarg, "%x", (unsigned int *)&rt_g.debug );
+			sscanf( bu_optarg, "%x", (unsigned int *)&rt_g.debug );
 			bu_printb( "librt RT_G_DEBUG", RT_G_DEBUG, DEBUG_FORMAT );
 			bu_log("\n");
 			break;
@@ -703,15 +700,15 @@ char	*argv[];
 
 	rt_init_resource( &rt_uniresource, 0, NULL );
 
-	input_file = argv[optind];
+	input_file = argv[bu_optind];
 	if( (fd_in=fopen( input_file, "r")) == NULL )
 	{
 		bu_log( "Cannot open input file (%s)\n" , input_file );
 		perror( argv[0] );
 		exit( 1 );
 	}
-	optind++;
-	brlcad_file = argv[optind];
+	bu_optind++;
+	brlcad_file = argv[bu_optind];
 	if( (fd_out=wdb_fopen( brlcad_file)) == NULL )
 	{
 		bu_log( "Cannot open BRL-CAD file (%s)\n" , brlcad_file );

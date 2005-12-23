@@ -35,7 +35,11 @@ namespace eval ::tk::panedwindow {}
 #   None
 #
 proc ::tk::panedwindow::MarkSash {w x y proxy} {
-    set what [$w identify $x $y]
+#    set what [$w identify $x $y]
+    if {[catch {[$w identify $x $y]} what]} {
+	return
+    }
+
     if { [llength $what] == 2 } {
 	foreach {index which} $what break
 	if { !$::tk_strictMotif || [string equal $which "handle"] } {
@@ -108,7 +112,12 @@ proc ::tk::panedwindow::ReleaseSash {w proxy} {
 #
 proc ::tk::panedwindow::Motion {w x y} {
     variable ::tk::Priv
-    set id [$w identify $x $y]
+
+#    set id [$w identify $x $y]
+    if {[catch {[$w identify $x $y]} id]} {
+	return
+    }
+
     if {([llength $id] == 2) && \
 	    (!$::tk_strictMotif || [string equal [lindex $id 1] "handle"])} {
 	if { ![info exists Priv($w,panecursor)] } {

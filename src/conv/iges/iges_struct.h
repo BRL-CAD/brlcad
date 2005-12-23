@@ -217,7 +217,7 @@ struct iges_edge_list
 				__FILE__, __LINE__ );\
 		}\
 	}
-
+	
 
 BU_EXTERN( char *iges_type, (int type_no ) );
 BU_EXTERN( char *Make_unique_brl_name, (char *name ) );
@@ -238,17 +238,14 @@ BU_EXTERN( struct edge_g_cnurb *Get_cnurb_curve, (int curve_de, int *linear ) );
 BU_EXTERN( struct faceuse *Add_face_to_shell , ( struct shell *s , int entityno , int face_orient) );
 BU_EXTERN( struct faceuse *Make_nurb_face, ( struct shell *s, int surf_entityno ) );
 BU_EXTERN( struct faceuse *Make_planar_face , ( struct shell *s , int entityno , int face_orient ) );
-BU_EXTERN( struct faceuse *nmg_cmface , ( struct shell *s, struct vertex ***verts, int no_of_edges ) );
 BU_EXTERN( struct iges_edge_list *Get_edge_list , (struct iges_edge_use *edge ) );
 BU_EXTERN( struct iges_edge_list *Read_edge_list , ( struct iges_edge_use *edge ) );
 BU_EXTERN( struct iges_vertex *Get_iges_vertex, (struct vertex *v ) );
 BU_EXTERN( struct iges_vertex_list *Get_vertex_list , (int vert_de ) );
 BU_EXTERN( struct iges_vertex_list *Read_vertex_list , ( int vert_de ) );
 BU_EXTERN( struct loopuse *Make_loop, (int entity_no, int orientation, int on_surf_de, struct face_g_snurb *surf, struct faceuse *fu ) );
-BU_EXTERN( struct model *nmg_mmr , () );
 BU_EXTERN( struct shell *Add_inner_shell , ( struct nmgregion *r, int entityno, int shell_orient ) );
 BU_EXTERN( struct shell *Get_outer_shell , ( struct nmgregion *r, int entityno, int shell_orient ) );
-BU_EXTERN( struct shell *nmg_msv , (struct nmgregion *r) );
 BU_EXTERN( struct face_g_snurb *Get_nurb_surf, (int entity_no, struct model *m ) );
 BU_EXTERN( struct vertex **Get_vertex , (struct iges_edge_use *edge ) );
 BU_EXTERN( union tree *do_nmg_region_end , (struct db_tree_state *tsp, struct db_full_path *pathp, union tree *curtree));

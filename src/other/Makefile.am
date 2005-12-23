@@ -68,6 +68,18 @@ else !BUILD_TERMLIB
 TERMLIBDIR=
 endif
 
+if BUILD_TKIMG
+TKIMGDIR=tkimg
+else
+TKIMGDIR=
+endif
+
+if BUILD_BLT
+BLTDIR=blt
+else
+BLTDIR=
+endif
+
 
 if ONLY_BENCHMARK
 SUBDIRS = ${TCLDIR}
@@ -92,6 +104,8 @@ SUBDIRS = \
 	${IWIDGETSDIR} \
 	${TERMLIBDIR} \
 	${JOVEDIR} \
+	${TKIMGDIR} \
+	${BLTDIR} \
 	awf
 
 endif

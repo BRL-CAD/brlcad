@@ -103,14 +103,6 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 #include "../libfb/pkgtypes.h"
 
 
-/* These symbols are provided by libfb/server.c */
-extern struct pkg_switch fb_server_pkg_switch[];
-extern FBIO	*fb_server_fbp;
-extern fd_set	*fb_server_select_list;			/* master copy */
-extern int	*fb_server_max_fd;
-extern	int	fb_server_retain_on_close;	/* !0 => we are holding a reusable FB open */
-extern	int	fb_server_got_fb_free;	/* !0 => we have received an fb_free */
-
 fd_set	select_list;			/* master copy */
 int	max_fd;
 

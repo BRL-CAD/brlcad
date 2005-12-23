@@ -15,6 +15,7 @@ documentation_DATA = \
 	README.Solaris \
 	README.Windows \
 	anim.txt \
+	archer_ack.txt \
 	benchmark.tr \
 	cvs.txt \
 	description.txt \

@@ -470,7 +470,7 @@ bu_brlcad_data(const char *rhs, int fail_quietly)
 
     /* bu_brlcad_root/share/brlcad path */
     lhs = bu_brlcad_root("share/brlcad", 1);
-    if (lhs) {
+    if (lhs) {	
 	snprintf(where, MAXPATHLEN + 64, "\tBRLCAD_ROOT common data path  [%s]\n", lhs);
 	if (bu_find_path(result, lhs, rhs, &searched, where)) {
 	    if (bu_debug) {
@@ -482,7 +482,7 @@ bu_brlcad_data(const char *rhs, int fail_quietly)
 
     /* bu_brlcad_root/share path */
     lhs = bu_brlcad_root("share", 1);
-    if (lhs) {
+    if (lhs) {	
 	snprintf(where, MAXPATHLEN + 64, "\tBRLCAD_ROOT common data path  [%s]\n", lhs);
 	if (bu_find_path(result, lhs, rhs, &searched, where)) {
 	    if (bu_debug) {
@@ -494,7 +494,7 @@ bu_brlcad_data(const char *rhs, int fail_quietly)
 
     /* bu_brlcad_root path */
     lhs = bu_brlcad_root("", 1);
-    if (lhs) {
+    if (lhs) {	
 	snprintf(where, MAXPATHLEN + 64, "\tBRLCAD_ROOT common data path  [%s]\n", lhs);
 	if (bu_find_path(result, lhs, rhs, &searched, where)) {
 	    if (bu_debug) {
