@@ -174,8 +174,7 @@ copy &quot;$(TargetDir)&quot;itcl33.lib ..\..\..\lib
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_MBCS;_USRDLL;TCL_THREADS=1;BUILD_itcl;IGNORE_CONFIG_H;$(NoInherit)"/>
+						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
 			<File
@@ -194,8 +193,7 @@ copy &quot;$(TargetDir)&quot;itcl33.lib ..\..\..\lib
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_MBCS;_USRDLL;TCL_THREADS=1;BUILD_itcl;IGNORE_CONFIG_H;$(NoInherit)"/>
+						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
 			<File
@@ -214,8 +212,7 @@ copy &quot;$(TargetDir)&quot;itcl33.lib ..\..\..\lib
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_MBCS;_USRDLL;TCL_THREADS=1;BUILD_itcl;IGNORE_CONFIG_H;$(NoInherit)"/>
+						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
 			<File
@@ -234,8 +231,7 @@ copy &quot;$(TargetDir)&quot;itcl33.lib ..\..\..\lib
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_MBCS;_USRDLL;TCL_THREADS=1;BUILD_itcl;IGNORE_CONFIG_H;$(NoInherit)"/>
+						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
 			<File
@@ -254,8 +250,7 @@ copy &quot;$(TargetDir)&quot;itcl33.lib ..\..\..\lib
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_MBCS;_USRDLL;TCL_THREADS=1;BUILD_itcl;IGNORE_CONFIG_H;$(NoInherit)"/>
+						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
 			<File
@@ -274,8 +269,7 @@ copy &quot;$(TargetDir)&quot;itcl33.lib ..\..\..\lib
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_MBCS;_USRDLL;TCL_THREADS=1;BUILD_itcl;IGNORE_CONFIG_H;$(NoInherit)"/>
+						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
 			<File
@@ -294,8 +288,7 @@ copy &quot;$(TargetDir)&quot;itcl33.lib ..\..\..\lib
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_MBCS;_USRDLL;TCL_THREADS=1;BUILD_itcl;IGNORE_CONFIG_H;$(NoInherit)"/>
+						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
 			<File
@@ -314,8 +307,7 @@ copy &quot;$(TargetDir)&quot;itcl33.lib ..\..\..\lib
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_MBCS;_USRDLL;TCL_THREADS=1;BUILD_itcl;IGNORE_CONFIG_H;$(NoInherit)"/>
+						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
 			<File
@@ -334,8 +326,7 @@ copy &quot;$(TargetDir)&quot;itcl33.lib ..\..\..\lib
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_MBCS;_USRDLL;TCL_THREADS=1;BUILD_itcl;IGNORE_CONFIG_H;$(NoInherit)"/>
+						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
 			<File
@@ -354,8 +345,7 @@ copy &quot;$(TargetDir)&quot;itcl33.lib ..\..\..\lib
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_MBCS;_USRDLL;TCL_THREADS=1;BUILD_itcl;IGNORE_CONFIG_H;$(NoInherit)"/>
+						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
 			<File
@@ -374,8 +364,7 @@ copy &quot;$(TargetDir)&quot;itcl33.lib ..\..\..\lib
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_MBCS;_USRDLL;TCL_THREADS=1;BUILD_itcl;IGNORE_CONFIG_H;$(NoInherit)"/>
+						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
 			<File
@@ -394,8 +383,7 @@ copy &quot;$(TargetDir)&quot;itcl33.lib ..\..\..\lib
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_MBCS;_USRDLL;TCL_THREADS=1;BUILD_itcl;IGNORE_CONFIG_H;$(NoInherit)"/>
+						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
 			<File
@@ -414,8 +402,7 @@ copy &quot;$(TargetDir)&quot;itcl33.lib ..\..\..\lib
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_MBCS;_USRDLL;TCL_THREADS=1;BUILD_itcl;IGNORE_CONFIG_H;$(NoInherit)"/>
+						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
 		</Filter>

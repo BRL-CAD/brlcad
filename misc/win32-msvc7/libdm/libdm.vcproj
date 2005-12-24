@@ -162,8 +162,7 @@ copy &quot;$(TargetDir)&quot;libdm_d.lib ..\..\..\lib
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_MBCS;_USRDLL;DM_EXPORT_DLL;DM_OGL;IF_X;IF_OGL;IF_REMOTE;TCL_THREADS=1;__win32;BRLCAD_DLL;HAVE_CONFIG_H;USE_FBSERV;$(NoInherit)"/>
+						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 				<FileConfiguration
 					Name="Debug|Win32">
@@ -182,8 +181,7 @@ copy &quot;$(TargetDir)&quot;libdm_d.lib ..\..\..\lib
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_MBCS;_USRDLL;DM_EXPORT_DLL;DM_OGL;IF_X;IF_OGL;IF_REMOTE;TCL_THREADS=1;__win32;BRLCAD_DLL;HAVE_CONFIG_H;USE_FBSERV;$(NoInherit)"/>
+						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 				<FileConfiguration
 					Name="Debug|Win32">
@@ -202,8 +200,7 @@ copy &quot;$(TargetDir)&quot;libdm_d.lib ..\..\..\lib
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_MBCS;_USRDLL;DM_EXPORT_DLL;DM_OGL;IF_X;IF_OGL;IF_REMOTE;TCL_THREADS=1;__win32;BRLCAD_DLL;HAVE_CONFIG_H;USE_FBSERV;$(NoInherit)"/>
+						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 				<FileConfiguration
 					Name="Debug|Win32">
@@ -222,8 +219,7 @@ copy &quot;$(TargetDir)&quot;libdm_d.lib ..\..\..\lib
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_MBCS;_USRDLL;DM_EXPORT_DLL;DM_OGL;IF_X;IF_OGL;IF_REMOTE;TCL_THREADS=1;__win32;BRLCAD_DLL;HAVE_CONFIG_H;USE_FBSERV;$(NoInherit)"/>
+						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 				<FileConfiguration
 					Name="Debug|Win32">
@@ -242,8 +238,7 @@ copy &quot;$(TargetDir)&quot;libdm_d.lib ..\..\..\lib
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_MBCS;_USRDLL;DM_EXPORT_DLL;DM_OGL;IF_X;IF_OGL;IF_REMOTE;TCL_THREADS=1;__win32;BRLCAD_DLL;HAVE_CONFIG_H;USE_FBSERV;$(NoInherit)"/>
+						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 				<FileConfiguration
 					Name="Debug|Win32">
@@ -262,8 +257,7 @@ copy &quot;$(TargetDir)&quot;libdm_d.lib ..\..\..\lib
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_MBCS;_USRDLL;DM_EXPORT_DLL;DM_OGL;IF_X;IF_OGL;IF_REMOTE;TCL_THREADS=1;__win32;BRLCAD_DLL;HAVE_CONFIG_H;USE_FBSERV;$(NoInherit)"/>
+						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 				<FileConfiguration
 					Name="Debug|Win32">
@@ -282,8 +276,7 @@ copy &quot;$(TargetDir)&quot;libdm_d.lib ..\..\..\lib
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_MBCS;_USRDLL;DM_EXPORT_DLL;DM_OGL;IF_X;IF_OGL;IF_REMOTE;TCL_THREADS=1;__win32;BRLCAD_DLL;HAVE_CONFIG_H;USE_FBSERV;$(NoInherit)"/>
+						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 				<FileConfiguration
 					Name="Debug|Win32">
@@ -302,8 +295,7 @@ copy &quot;$(TargetDir)&quot;libdm_d.lib ..\..\..\lib
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_MBCS;_USRDLL;DM_EXPORT_DLL;DM_OGL;IF_X;IF_OGL;IF_REMOTE;TCL_THREADS=1;__win32;BRLCAD_DLL;HAVE_CONFIG_H;USE_FBSERV;$(NoInherit)"/>
+						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 				<FileConfiguration
 					Name="Debug|Win32">
@@ -322,8 +314,7 @@ copy &quot;$(TargetDir)&quot;libdm_d.lib ..\..\..\lib
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_MBCS;_USRDLL;DM_EXPORT_DLL;DM_OGL;IF_X;IF_OGL;IF_REMOTE;TCL_THREADS=1;__win32;BRLCAD_DLL;HAVE_CONFIG_H;USE_FBSERV;$(NoInherit)"/>
+						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 				<FileConfiguration
 					Name="Debug|Win32">
@@ -342,8 +333,7 @@ copy &quot;$(TargetDir)&quot;libdm_d.lib ..\..\..\lib
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_MBCS;_USRDLL;DM_EXPORT_DLL;DM_OGL;IF_X;IF_OGL;IF_REMOTE;TCL_THREADS=1;__win32;BRLCAD_DLL;HAVE_CONFIG_H;USE_FBSERV;$(NoInherit)"/>
+						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 				<FileConfiguration
 					Name="Debug|Win32">
@@ -362,8 +352,7 @@ copy &quot;$(TargetDir)&quot;libdm_d.lib ..\..\..\lib
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_MBCS;_USRDLL;DM_EXPORT_DLL;DM_OGL;IF_X;IF_OGL;IF_REMOTE;TCL_THREADS=1;__win32;BRLCAD_DLL;HAVE_CONFIG_H;USE_FBSERV;$(NoInherit)"/>
+						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 				<FileConfiguration
 					Name="Debug|Win32">
@@ -382,8 +371,7 @@ copy &quot;$(TargetDir)&quot;libdm_d.lib ..\..\..\lib
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_MBCS;_USRDLL;DM_EXPORT_DLL;DM_OGL;IF_X;IF_OGL;IF_REMOTE;TCL_THREADS=1;__win32;BRLCAD_DLL;HAVE_CONFIG_H;USE_FBSERV;$(NoInherit)"/>
+						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 				<FileConfiguration
 					Name="Debug|Win32">

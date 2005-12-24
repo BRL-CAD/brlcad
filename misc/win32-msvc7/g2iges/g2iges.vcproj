@@ -144,10 +144,10 @@
 			Name="Source Files"
 			Filter="cpp;c;cxx;rc;def;r;odl;idl;hpj;bat;f90;for;f;fpp">
 			<File
-				RelativePath="..\..\..\src\conv\iges\g-iges.c">
+				RelativePath="..\..\..\src\conv\iges\g-iges-vers_win.c">
 			</File>
 			<File
-				RelativePath="..\..\..\src\conv\iges\iges-g-vers_win.c">
+				RelativePath="..\..\..\src\conv\iges\g-iges.c">
 			</File>
 			<File
 				RelativePath="..\..\..\src\conv\iges\iges.c">

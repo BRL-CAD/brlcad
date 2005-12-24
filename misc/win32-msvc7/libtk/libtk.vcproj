@@ -177,8 +177,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_MBCS;_USRDLL;USE_TCL_STUBS;TCL_THREADS=1;BUILD_tk;DOUBLE_BAR_TEAROFF;IGNORE_CONFIG_H;$(NoInherit)"/>
+						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
 			<File
@@ -198,8 +197,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_MBCS;_USRDLL;USE_TCL_STUBS;TCL_THREADS=1;BUILD_tk;DOUBLE_BAR_TEAROFF;IGNORE_CONFIG_H;$(NoInherit)"/>
+						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
 			<File
@@ -219,8 +217,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_MBCS;_USRDLL;USE_TCL_STUBS;TCL_THREADS=1;BUILD_tk;DOUBLE_BAR_TEAROFF;IGNORE_CONFIG_H;$(NoInherit)"/>
+						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
 			<File
@@ -240,8 +237,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_MBCS;_USRDLL;USE_TCL_STUBS;TCL_THREADS=1;BUILD_tk;DOUBLE_BAR_TEAROFF;IGNORE_CONFIG_H;$(NoInherit)"/>
+						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
 			<File
@@ -261,8 +257,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_MBCS;_USRDLL;USE_TCL_STUBS;TCL_THREADS=1;BUILD_tk;DOUBLE_BAR_TEAROFF;IGNORE_CONFIG_H;$(NoInherit)"/>
+						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
 			<File
@@ -282,8 +277,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_MBCS;_USRDLL;USE_TCL_STUBS;TCL_THREADS=1;BUILD_tk;DOUBLE_BAR_TEAROFF;IGNORE_CONFIG_H;$(NoInherit)"/>
+						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
 			<File
@@ -303,8 +297,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_MBCS;_USRDLL;USE_TCL_STUBS;TCL_THREADS=1;BUILD_tk;DOUBLE_BAR_TEAROFF;IGNORE_CONFIG_H;$(NoInherit)"/>
+						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
 			<File
@@ -324,8 +317,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_MBCS;_USRDLL;USE_TCL_STUBS;TCL_THREADS=1;BUILD_tk;DOUBLE_BAR_TEAROFF;IGNORE_CONFIG_H;$(NoInherit)"/>
+						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
 			<File
@@ -345,8 +337,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_MBCS;_USRDLL;USE_TCL_STUBS;TCL_THREADS=1;BUILD_tk;DOUBLE_BAR_TEAROFF;IGNORE_CONFIG_H;$(NoInherit)"/>
+						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
 			<File
@@ -366,8 +357,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_MBCS;_USRDLL;USE_TCL_STUBS;TCL_THREADS=1;BUILD_tk;DOUBLE_BAR_TEAROFF;IGNORE_CONFIG_H;$(NoInherit)"/>
+						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
 			<File
@@ -387,8 +377,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_MBCS;_USRDLL;USE_TCL_STUBS;TCL_THREADS=1;BUILD_tk;DOUBLE_BAR_TEAROFF;IGNORE_CONFIG_H;$(NoInherit)"/>
+						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
 			<File
@@ -408,8 +397,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_MBCS;_USRDLL;USE_TCL_STUBS;TCL_THREADS=1;BUILD_tk;DOUBLE_BAR_TEAROFF;IGNORE_CONFIG_H;$(NoInherit)"/>
+						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
 			<File
@@ -429,8 +417,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_MBCS;_USRDLL;USE_TCL_STUBS;TCL_THREADS=1;BUILD_tk;DOUBLE_BAR_TEAROFF;IGNORE_CONFIG_H;$(NoInherit)"/>
+						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
 			<File
@@ -450,8 +437,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_MBCS;_USRDLL;USE_TCL_STUBS;TCL_THREADS=1;BUILD_tk;DOUBLE_BAR_TEAROFF;IGNORE_CONFIG_H;$(NoInherit)"/>
+						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
 			<File
@@ -471,8 +457,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_MBCS;_USRDLL;USE_TCL_STUBS;TCL_THREADS=1;BUILD_tk;DOUBLE_BAR_TEAROFF;IGNORE_CONFIG_H;$(NoInherit)"/>
+						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
 			<File
@@ -492,8 +477,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_MBCS;_USRDLL;USE_TCL_STUBS;TCL_THREADS=1;BUILD_tk;DOUBLE_BAR_TEAROFF;IGNORE_CONFIG_H;$(NoInherit)"/>
+						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
 			<File
@@ -513,8 +497,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_MBCS;_USRDLL;USE_TCL_STUBS;TCL_THREADS=1;BUILD_tk;DOUBLE_BAR_TEAROFF;IGNORE_CONFIG_H;$(NoInherit)"/>
+						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
 			<File
@@ -534,8 +517,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_MBCS;_USRDLL;USE_TCL_STUBS;TCL_THREADS=1;BUILD_tk;DOUBLE_BAR_TEAROFF;IGNORE_CONFIG_H;$(NoInherit)"/>
+						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
 			<File
@@ -555,8 +537,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_MBCS;_USRDLL;USE_TCL_STUBS;TCL_THREADS=1;BUILD_tk;DOUBLE_BAR_TEAROFF;IGNORE_CONFIG_H;$(NoInherit)"/>
+						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
 			<File
@@ -576,8 +557,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_MBCS;_USRDLL;USE_TCL_STUBS;TCL_THREADS=1;BUILD_tk;DOUBLE_BAR_TEAROFF;IGNORE_CONFIG_H;$(NoInherit)"/>
+						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
 			<File
@@ -597,8 +577,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_MBCS;_USRDLL;USE_TCL_STUBS;TCL_THREADS=1;BUILD_tk;DOUBLE_BAR_TEAROFF;IGNORE_CONFIG_H;$(NoInherit)"/>
+						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
 			<File
@@ -618,8 +597,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_MBCS;_USRDLL;USE_TCL_STUBS;TCL_THREADS=1;BUILD_tk;DOUBLE_BAR_TEAROFF;IGNORE_CONFIG_H;$(NoInherit)"/>
+						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
 			<File
@@ -639,8 +617,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_MBCS;_USRDLL;USE_TCL_STUBS;TCL_THREADS=1;BUILD_tk;DOUBLE_BAR_TEAROFF;IGNORE_CONFIG_H;$(NoInherit)"/>
+						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
 			<File
@@ -660,8 +637,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_MBCS;_USRDLL;USE_TCL_STUBS;TCL_THREADS=1;BUILD_tk;DOUBLE_BAR_TEAROFF;IGNORE_CONFIG_H;$(NoInherit)"/>
+						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
 			<File
@@ -681,8 +657,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_MBCS;_USRDLL;USE_TCL_STUBS;TCL_THREADS=1;BUILD_tk;DOUBLE_BAR_TEAROFF;IGNORE_CONFIG_H;$(NoInherit)"/>
+						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
 			<File
@@ -702,8 +677,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_MBCS;_USRDLL;USE_TCL_STUBS;TCL_THREADS=1;BUILD_tk;DOUBLE_BAR_TEAROFF;IGNORE_CONFIG_H;$(NoInherit)"/>
+						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
 			<File
@@ -723,8 +697,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_MBCS;_USRDLL;USE_TCL_STUBS;TCL_THREADS=1;BUILD_tk;DOUBLE_BAR_TEAROFF;IGNORE_CONFIG_H;$(NoInherit)"/>
+						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
 			<File
@@ -744,8 +717,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_MBCS;_USRDLL;USE_TCL_STUBS;TCL_THREADS=1;BUILD_tk;DOUBLE_BAR_TEAROFF;IGNORE_CONFIG_H;$(NoInherit)"/>
+						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
 			<File
@@ -765,8 +737,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_MBCS;_USRDLL;USE_TCL_STUBS;TCL_THREADS=1;BUILD_tk;DOUBLE_BAR_TEAROFF;IGNORE_CONFIG_H;$(NoInherit)"/>
+						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
 			<File
@@ -786,8 +757,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_MBCS;_USRDLL;USE_TCL_STUBS;TCL_THREADS=1;BUILD_tk;DOUBLE_BAR_TEAROFF;IGNORE_CONFIG_H;$(NoInherit)"/>
+						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
 			<File
@@ -807,8 +777,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_MBCS;_USRDLL;USE_TCL_STUBS;TCL_THREADS=1;BUILD_tk;DOUBLE_BAR_TEAROFF;IGNORE_CONFIG_H;$(NoInherit)"/>
+						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
 			<File
@@ -828,8 +797,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_MBCS;_USRDLL;USE_TCL_STUBS;TCL_THREADS=1;BUILD_tk;DOUBLE_BAR_TEAROFF;IGNORE_CONFIG_H;$(NoInherit)"/>
+						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
 			<File
@@ -849,8 +817,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_MBCS;_USRDLL;USE_TCL_STUBS;TCL_THREADS=1;BUILD_tk;DOUBLE_BAR_TEAROFF;IGNORE_CONFIG_H;$(NoInherit)"/>
+						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
 			<File
@@ -870,8 +837,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_MBCS;_USRDLL;USE_TCL_STUBS;TCL_THREADS=1;BUILD_tk;DOUBLE_BAR_TEAROFF;IGNORE_CONFIG_H;$(NoInherit)"/>
+						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
 			<File
@@ -891,8 +857,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_MBCS;_USRDLL;USE_TCL_STUBS;TCL_THREADS=1;BUILD_tk;DOUBLE_BAR_TEAROFF;IGNORE_CONFIG_H;$(NoInherit)"/>
+						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
 			<File
@@ -912,8 +877,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_MBCS;_USRDLL;USE_TCL_STUBS;TCL_THREADS=1;BUILD_tk;DOUBLE_BAR_TEAROFF;IGNORE_CONFIG_H;$(NoInherit)"/>
+						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
 			<File
@@ -933,8 +897,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_MBCS;_USRDLL;USE_TCL_STUBS;TCL_THREADS=1;BUILD_tk;DOUBLE_BAR_TEAROFF;IGNORE_CONFIG_H;$(NoInherit)"/>
+						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
 			<File
@@ -954,8 +917,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_MBCS;_USRDLL;USE_TCL_STUBS;TCL_THREADS=1;BUILD_tk;DOUBLE_BAR_TEAROFF;IGNORE_CONFIG_H;$(NoInherit)"/>
+						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
 			<File
@@ -975,8 +937,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_MBCS;_USRDLL;USE_TCL_STUBS;TCL_THREADS=1;BUILD_tk;DOUBLE_BAR_TEAROFF;IGNORE_CONFIG_H;$(NoInherit)"/>
+						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
 			<File
@@ -996,8 +957,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_MBCS;_USRDLL;USE_TCL_STUBS;TCL_THREADS=1;BUILD_tk;DOUBLE_BAR_TEAROFF;IGNORE_CONFIG_H;$(NoInherit)"/>
+						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
 			<File
@@ -1017,8 +977,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_MBCS;_USRDLL;USE_TCL_STUBS;TCL_THREADS=1;BUILD_tk;DOUBLE_BAR_TEAROFF;IGNORE_CONFIG_H;$(NoInherit)"/>
+						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
 			<File
@@ -1038,8 +997,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_MBCS;_USRDLL;USE_TCL_STUBS;TCL_THREADS=1;BUILD_tk;DOUBLE_BAR_TEAROFF;IGNORE_CONFIG_H;$(NoInherit)"/>
+						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
 			<File
@@ -1059,8 +1017,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_MBCS;_USRDLL;USE_TCL_STUBS;TCL_THREADS=1;BUILD_tk;DOUBLE_BAR_TEAROFF;IGNORE_CONFIG_H;$(NoInherit)"/>
+						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
 			<File
@@ -1080,8 +1037,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_MBCS;_USRDLL;USE_TCL_STUBS;TCL_THREADS=1;BUILD_tk;DOUBLE_BAR_TEAROFF;IGNORE_CONFIG_H;$(NoInherit)"/>
+						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
 			<File
@@ -1101,8 +1057,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_MBCS;_USRDLL;USE_TCL_STUBS;TCL_THREADS=1;BUILD_tk;DOUBLE_BAR_TEAROFF;IGNORE_CONFIG_H;$(NoInherit)"/>
+						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
 			<File
@@ -1122,8 +1077,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_MBCS;_USRDLL;USE_TCL_STUBS;TCL_THREADS=1;BUILD_tk;DOUBLE_BAR_TEAROFF;IGNORE_CONFIG_H;$(NoInherit)"/>
+						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
 			<File
@@ -1143,8 +1097,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_MBCS;_USRDLL;USE_TCL_STUBS;TCL_THREADS=1;BUILD_tk;DOUBLE_BAR_TEAROFF;IGNORE_CONFIG_H;$(NoInherit)"/>
+						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
 			<File
@@ -1164,8 +1117,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_MBCS;_USRDLL;USE_TCL_STUBS;TCL_THREADS=1;BUILD_tk;DOUBLE_BAR_TEAROFF;IGNORE_CONFIG_H;$(NoInherit)"/>
+						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
 			<File
@@ -1185,8 +1137,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_MBCS;_USRDLL;USE_TCL_STUBS;TCL_THREADS=1;BUILD_tk;DOUBLE_BAR_TEAROFF;IGNORE_CONFIG_H;$(NoInherit)"/>
+						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
 			<File
@@ -1206,8 +1157,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_MBCS;_USRDLL;USE_TCL_STUBS;TCL_THREADS=1;BUILD_tk;DOUBLE_BAR_TEAROFF;IGNORE_CONFIG_H;$(NoInherit)"/>
+						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
 			<File
@@ -1227,8 +1177,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_MBCS;_USRDLL;USE_TCL_STUBS;TCL_THREADS=1;BUILD_tk;DOUBLE_BAR_TEAROFF;IGNORE_CONFIG_H;$(NoInherit)"/>
+						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
 			<File
@@ -1248,8 +1197,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_MBCS;_USRDLL;USE_TCL_STUBS;TCL_THREADS=1;BUILD_tk;DOUBLE_BAR_TEAROFF;IGNORE_CONFIG_H;$(NoInherit)"/>
+						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
 			<File
@@ -1269,8 +1217,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_MBCS;_USRDLL;USE_TCL_STUBS;TCL_THREADS=1;BUILD_tk;DOUBLE_BAR_TEAROFF;IGNORE_CONFIG_H;$(NoInherit)"/>
+						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
 			<File
@@ -1290,8 +1237,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_MBCS;_USRDLL;USE_TCL_STUBS;TCL_THREADS=1;BUILD_tk;DOUBLE_BAR_TEAROFF;IGNORE_CONFIG_H;$(NoInherit)"/>
+						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
 			<File
@@ -1311,8 +1257,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_MBCS;_USRDLL;USE_TCL_STUBS;TCL_THREADS=1;BUILD_tk;DOUBLE_BAR_TEAROFF;IGNORE_CONFIG_H;$(NoInherit)"/>
+						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
 			<File
@@ -1332,8 +1277,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_MBCS;_USRDLL;USE_TCL_STUBS;TCL_THREADS=1;BUILD_tk;DOUBLE_BAR_TEAROFF;IGNORE_CONFIG_H;$(NoInherit)"/>
+						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
 			<File
@@ -1353,8 +1297,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_MBCS;_USRDLL;USE_TCL_STUBS;TCL_THREADS=1;BUILD_tk;DOUBLE_BAR_TEAROFF;IGNORE_CONFIG_H;$(NoInherit)"/>
+						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
 			<File
@@ -1374,8 +1317,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_MBCS;_USRDLL;USE_TCL_STUBS;TCL_THREADS=1;BUILD_tk;DOUBLE_BAR_TEAROFF;IGNORE_CONFIG_H;$(NoInherit)"/>
+						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
 			<File
@@ -1395,8 +1337,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_MBCS;_USRDLL;USE_TCL_STUBS;TCL_THREADS=1;BUILD_tk;DOUBLE_BAR_TEAROFF;IGNORE_CONFIG_H;$(NoInherit)"/>
+						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
 			<File
@@ -1416,8 +1357,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_MBCS;_USRDLL;USE_TCL_STUBS;TCL_THREADS=1;BUILD_tk;DOUBLE_BAR_TEAROFF;IGNORE_CONFIG_H;$(NoInherit)"/>
+						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
 			<File
@@ -1437,8 +1377,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_MBCS;_USRDLL;USE_TCL_STUBS;TCL_THREADS=1;BUILD_tk;DOUBLE_BAR_TEAROFF;IGNORE_CONFIG_H;$(NoInherit)"/>
+						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
 			<File
@@ -1458,8 +1397,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_MBCS;_USRDLL;USE_TCL_STUBS;TCL_THREADS=1;BUILD_tk;DOUBLE_BAR_TEAROFF;IGNORE_CONFIG_H;$(NoInherit)"/>
+						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
 			<File
@@ -1479,8 +1417,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_MBCS;_USRDLL;USE_TCL_STUBS;TCL_THREADS=1;BUILD_tk;DOUBLE_BAR_TEAROFF;IGNORE_CONFIG_H;$(NoInherit)"/>
+						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
 			<File
@@ -1500,8 +1437,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_MBCS;_USRDLL;USE_TCL_STUBS;TCL_THREADS=1;BUILD_tk;DOUBLE_BAR_TEAROFF;IGNORE_CONFIG_H;$(NoInherit)"/>
+						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
 			<File
@@ -1521,8 +1457,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_MBCS;_USRDLL;USE_TCL_STUBS;TCL_THREADS=1;BUILD_tk;DOUBLE_BAR_TEAROFF;IGNORE_CONFIG_H;$(NoInherit)"/>
+						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
 			<File
@@ -1542,8 +1477,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_MBCS;_USRDLL;USE_TCL_STUBS;TCL_THREADS=1;BUILD_tk;DOUBLE_BAR_TEAROFF;IGNORE_CONFIG_H;$(NoInherit)"/>
+						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
 			<File
@@ -1563,8 +1497,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_MBCS;_USRDLL;USE_TCL_STUBS;TCL_THREADS=1;BUILD_tk;DOUBLE_BAR_TEAROFF;IGNORE_CONFIG_H;$(NoInherit)"/>
+						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
 			<File
@@ -1584,8 +1517,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_MBCS;_USRDLL;USE_TCL_STUBS;TCL_THREADS=1;BUILD_tk;DOUBLE_BAR_TEAROFF;IGNORE_CONFIG_H;$(NoInherit)"/>
+						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
 			<File
@@ -1605,8 +1537,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_MBCS;_USRDLL;USE_TCL_STUBS;TCL_THREADS=1;BUILD_tk;DOUBLE_BAR_TEAROFF;IGNORE_CONFIG_H;$(NoInherit)"/>
+						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
 			<File
@@ -1626,8 +1557,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_MBCS;_USRDLL;USE_TCL_STUBS;TCL_THREADS=1;BUILD_tk;DOUBLE_BAR_TEAROFF;IGNORE_CONFIG_H;$(NoInherit)"/>
+						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
 			<File
@@ -1647,8 +1577,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_MBCS;_USRDLL;USE_TCL_STUBS;TCL_THREADS=1;BUILD_tk;DOUBLE_BAR_TEAROFF;IGNORE_CONFIG_H;$(NoInherit)"/>
+						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
 			<File
@@ -1668,8 +1597,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_MBCS;_USRDLL;USE_TCL_STUBS;TCL_THREADS=1;BUILD_tk;DOUBLE_BAR_TEAROFF;IGNORE_CONFIG_H;$(NoInherit)"/>
+						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
 			<File
@@ -1689,8 +1617,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_MBCS;_USRDLL;USE_TCL_STUBS;TCL_THREADS=1;BUILD_tk;DOUBLE_BAR_TEAROFF;IGNORE_CONFIG_H;$(NoInherit)"/>
+						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
 			<File
@@ -1710,8 +1637,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_MBCS;_USRDLL;USE_TCL_STUBS;TCL_THREADS=1;BUILD_tk;DOUBLE_BAR_TEAROFF;IGNORE_CONFIG_H;$(NoInherit)"/>
+						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
 			<File
@@ -1731,8 +1657,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_MBCS;_USRDLL;USE_TCL_STUBS;TCL_THREADS=1;BUILD_tk;DOUBLE_BAR_TEAROFF;IGNORE_CONFIG_H;$(NoInherit)"/>
+						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
 			<File
@@ -1752,8 +1677,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_MBCS;_USRDLL;USE_TCL_STUBS;TCL_THREADS=1;BUILD_tk;DOUBLE_BAR_TEAROFF;IGNORE_CONFIG_H;$(NoInherit)"/>
+						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
 			<File
@@ -1773,8 +1697,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_MBCS;_USRDLL;USE_TCL_STUBS;TCL_THREADS=1;BUILD_tk;DOUBLE_BAR_TEAROFF;IGNORE_CONFIG_H;$(NoInherit)"/>
+						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
 			<File
@@ -1794,8 +1717,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_MBCS;_USRDLL;USE_TCL_STUBS;TCL_THREADS=1;BUILD_tk;DOUBLE_BAR_TEAROFF;IGNORE_CONFIG_H;$(NoInherit)"/>
+						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
 			<File
@@ -1815,8 +1737,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_MBCS;_USRDLL;USE_TCL_STUBS;TCL_THREADS=1;BUILD_tk;DOUBLE_BAR_TEAROFF;IGNORE_CONFIG_H;$(NoInherit)"/>
+						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
 			<File
@@ -1836,8 +1757,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_MBCS;_USRDLL;USE_TCL_STUBS;TCL_THREADS=1;BUILD_tk;DOUBLE_BAR_TEAROFF;IGNORE_CONFIG_H;$(NoInherit)"/>
+						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
 			<File
@@ -1857,8 +1777,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_MBCS;_USRDLL;USE_TCL_STUBS;TCL_THREADS=1;BUILD_tk;DOUBLE_BAR_TEAROFF;IGNORE_CONFIG_H;$(NoInherit)"/>
+						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
 			<File
@@ -1878,8 +1797,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_MBCS;_USRDLL;USE_TCL_STUBS;TCL_THREADS=1;BUILD_tk;DOUBLE_BAR_TEAROFF;IGNORE_CONFIG_H;$(NoInherit)"/>
+						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
 			<File
@@ -1899,8 +1817,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_MBCS;_USRDLL;USE_TCL_STUBS;TCL_THREADS=1;BUILD_tk;DOUBLE_BAR_TEAROFF;IGNORE_CONFIG_H;$(NoInherit)"/>
+						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
 			<File
@@ -1920,8 +1837,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_MBCS;_USRDLL;USE_TCL_STUBS;TCL_THREADS=1;BUILD_tk;DOUBLE_BAR_TEAROFF;IGNORE_CONFIG_H;$(NoInherit)"/>
+						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
 			<File
@@ -1941,8 +1857,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_MBCS;_USRDLL;USE_TCL_STUBS;TCL_THREADS=1;BUILD_tk;DOUBLE_BAR_TEAROFF;IGNORE_CONFIG_H;$(NoInherit)"/>
+						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
 			<File
@@ -1962,8 +1877,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_MBCS;_USRDLL;USE_TCL_STUBS;TCL_THREADS=1;BUILD_tk;DOUBLE_BAR_TEAROFF;IGNORE_CONFIG_H;$(NoInherit)"/>
+						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
 			<File
@@ -1983,8 +1897,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_MBCS;_USRDLL;USE_TCL_STUBS;TCL_THREADS=1;BUILD_tk;DOUBLE_BAR_TEAROFF;IGNORE_CONFIG_H;$(NoInherit)"/>
+						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
 			<File
@@ -2004,8 +1917,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_MBCS;_USRDLL;USE_TCL_STUBS;TCL_THREADS=1;BUILD_tk;DOUBLE_BAR_TEAROFF;IGNORE_CONFIG_H;$(NoInherit)"/>
+						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
 			<File
@@ -2025,8 +1937,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_MBCS;_USRDLL;USE_TCL_STUBS;TCL_THREADS=1;BUILD_tk;DOUBLE_BAR_TEAROFF;IGNORE_CONFIG_H;$(NoInherit)"/>
+						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
 			<File
@@ -2046,8 +1957,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_MBCS;_USRDLL;USE_TCL_STUBS;TCL_THREADS=1;BUILD_tk;DOUBLE_BAR_TEAROFF;IGNORE_CONFIG_H;$(NoInherit)"/>
+						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
 			<File
@@ -2067,8 +1977,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_MBCS;_USRDLL;USE_TCL_STUBS;TCL_THREADS=1;BUILD_tk;DOUBLE_BAR_TEAROFF;IGNORE_CONFIG_H;$(NoInherit)"/>
+						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
 			<File
@@ -2088,8 +1997,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_MBCS;_USRDLL;USE_TCL_STUBS;TCL_THREADS=1;BUILD_tk;DOUBLE_BAR_TEAROFF;IGNORE_CONFIG_H;$(NoInherit)"/>
+						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
 			<File
@@ -2109,8 +2017,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_MBCS;_USRDLL;USE_TCL_STUBS;TCL_THREADS=1;BUILD_tk;DOUBLE_BAR_TEAROFF;IGNORE_CONFIG_H;$(NoInherit)"/>
+						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
 			<File
@@ -2130,8 +2037,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_MBCS;_USRDLL;USE_TCL_STUBS;TCL_THREADS=1;BUILD_tk;DOUBLE_BAR_TEAROFF;IGNORE_CONFIG_H;$(NoInherit)"/>
+						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
 			<File
@@ -2151,8 +2057,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_MBCS;_USRDLL;USE_TCL_STUBS;TCL_THREADS=1;BUILD_tk;DOUBLE_BAR_TEAROFF;IGNORE_CONFIG_H;$(NoInherit)"/>
+						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
 			<File
@@ -2172,8 +2077,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_MBCS;_USRDLL;USE_TCL_STUBS;TCL_THREADS=1;BUILD_tk;DOUBLE_BAR_TEAROFF;IGNORE_CONFIG_H;$(NoInherit)"/>
+						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
 			<File
@@ -2193,8 +2097,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_MBCS;_USRDLL;USE_TCL_STUBS;TCL_THREADS=1;BUILD_tk;DOUBLE_BAR_TEAROFF;IGNORE_CONFIG_H;$(NoInherit)"/>
+						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
 			<File
@@ -2214,8 +2117,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_MBCS;_USRDLL;USE_TCL_STUBS;TCL_THREADS=1;BUILD_tk;DOUBLE_BAR_TEAROFF;IGNORE_CONFIG_H;$(NoInherit)"/>
+						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
 			<File
@@ -2235,8 +2137,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_MBCS;_USRDLL;USE_TCL_STUBS;TCL_THREADS=1;BUILD_tk;DOUBLE_BAR_TEAROFF;IGNORE_CONFIG_H;$(NoInherit)"/>
+						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
 			<File
@@ -2256,8 +2157,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_MBCS;_USRDLL;USE_TCL_STUBS;TCL_THREADS=1;BUILD_tk;DOUBLE_BAR_TEAROFF;IGNORE_CONFIG_H;$(NoInherit)"/>
+						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
 			<File
@@ -2277,8 +2177,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_MBCS;_USRDLL;USE_TCL_STUBS;TCL_THREADS=1;BUILD_tk;DOUBLE_BAR_TEAROFF;IGNORE_CONFIG_H;$(NoInherit)"/>
+						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
 			<File
@@ -2298,8 +2197,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_MBCS;_USRDLL;USE_TCL_STUBS;TCL_THREADS=1;BUILD_tk;DOUBLE_BAR_TEAROFF;IGNORE_CONFIG_H;$(NoInherit)"/>
+						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
 			<File
@@ -2319,8 +2217,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_MBCS;_USRDLL;USE_TCL_STUBS;TCL_THREADS=1;BUILD_tk;DOUBLE_BAR_TEAROFF;IGNORE_CONFIG_H;$(NoInherit)"/>
+						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
 			<File
@@ -2340,8 +2237,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_MBCS;_USRDLL;USE_TCL_STUBS;TCL_THREADS=1;BUILD_tk;DOUBLE_BAR_TEAROFF;IGNORE_CONFIG_H;$(NoInherit)"/>
+						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
 			<File
@@ -2361,8 +2257,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_MBCS;_USRDLL;USE_TCL_STUBS;TCL_THREADS=1;BUILD_tk;DOUBLE_BAR_TEAROFF;IGNORE_CONFIG_H;$(NoInherit)"/>
+						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
 		</Filter>
