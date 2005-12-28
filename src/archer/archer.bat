@@ -3,10 +3,16 @@
 REM	Author:		Bob Parker
 REM	Company:	Survice Engineering
 
-SET WISH=.\wish
+SETLOCAL
+SET SAVE_CD=%CD%
+SET PATH=%~dp0
+SET ARCHER=%~dp0archer
+CD %PATH%
+CD ..
+SET BRLCAD_DATA=%CD%
+CD %SAVE_CD%
 
-REM START /B %WISH% %1
-START /B %WISH% .\archer
+START /B wish "%ARCHER%"
 
 CLS
 EXIT
