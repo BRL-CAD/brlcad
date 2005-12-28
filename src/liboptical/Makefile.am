@@ -47,7 +47,7 @@ liboptical_la_SOURCES = \
 
 noinst_LTLIBRARIES = librtms.la
 
-librtms_la_CFLAGS = -DRT_MULTISPECTRAL
+librtms_la_CFLAGS = -DRT_MULTISPECTRAL -fPIC
 librtms_la_LDFLAGS = -static
 librtms_la_LIBADD = ${BU} ${BN} ${TCL} ${LIBRT}
 librtms_la_SOURCES = \
