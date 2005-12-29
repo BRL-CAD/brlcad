@@ -35,22 +35,23 @@
 
 #include "fbio.h"
 
-/* Needed for fd_set */
-#if defined (HAVE_SYS_SELECT_H)
-#  include <sys/select.h>
+/* Needed for fd_set, avoid including sys/select.h outright since it
+ * conflicts on some systems (e.g. freebsd4).
+ *
+ * XXX would be nice to decouple this interface from fd_set as it's
+ * only used in one place right now.
+ */
+#if defined(HAVE_SYS_TYPES_H)
+#  include <sys/types.h>
+#endif
+#if defined(HAVE_SYS_TIME_H)
+#  include <sys/time.h>
+#endif
+#if defined(HAVE_UNISTD_H)
+#  include <unistd.h>
 #else
-#  if defined(HAVE_SYS_TYPES_H)
-#    include <sys/types.h>
-#  endif
-#  if defined(HAVE_SYS_TIME_H)
-#    include <sys/time.h>
-#  endif
-#  if defined(HAVE_UNISTD_H)
-#    include <unistd.h>
-#  else
-#    if defined(HAVE_SYS_UNISTD_H)
-#      include <sys/unistd.h>
-#    endif
+#  if defined(HAVE_SYS_UNISTD_H)
+#    include <sys/unistd.h>
 #  endif
 #endif
 
