@@ -49,26 +49,24 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "common.h"
 
-
-
 #include <stdio.h>
 #ifdef HAVE_WRITEV
-#include <sys/uio.h>		/* for struct iovec */
+#  include <sys/uio.h>		/* for struct iovec */
 #endif
 
-#ifndef _WIN32
+#ifdef HAVE_NETINET_IN_H
 #  include <netinet/in.h>		/* for htons(), etc */
 #else
 #endif
 
 #ifdef HAVE_SYS_SOCKET_H
-# include <sys/socket.h>
+#  include <sys/socket.h>
 #endif
 
 #ifdef HAVE_STRING_H
-#include <string.h>
+#  include <string.h>
 #else
-#include <strings.h>
+#  include <strings.h>
 #endif
 
 #include "machine.h"
@@ -76,6 +74,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./pkgtypes.h"
 #include "fb.h"
 #include "./fblocal.h"
+
 
 #define NET_LONG_LEN	4	/* # bytes to network long */
 
