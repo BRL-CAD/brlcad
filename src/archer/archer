@@ -4,8 +4,31 @@ ARCHER_HOME=`dirname $0`/..
 #\
 export ARCHER_HOME
 # restart using bwish \
-exec ${ARCHER_HOME}/bin/bwish $0 $@
-#exec ${ARCHER_HOME}/bin/bwish_d $0 $@
+WISH="wish"
+#\
+for ish in bwish bwish_d wish wish_d ; do
+# see if we're installed \
+    if test -f ${ARCHER_HOME}/bin/$ish ; then
+#\
+	WISH="${ARCHER_HOME}/bin/$ish"
+#\
+	break;
+#\
+    fi
+# see if we're not installed yet \
+    if test -f ${ARCHER_HOME}/bwish/$ish ; then
+#\
+	WISH="${ARCHER_HOME}/bwish/$ish"
+#\
+	break;
+#\
+    fi
+#\
+done
+#\
+echo $WISH $0 $@
+#\
+exec $WISH $0 $@
 
 ##
 # Portions Copyright (c) 2002 SURVICE Engineering Company. All Rights Reserved.
