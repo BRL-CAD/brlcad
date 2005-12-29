@@ -2824,6 +2824,54 @@ AC_CONFIG_FILES([
 	misc/win32-msvc/Makefile
 	misc/win32-msvc/Dll/Makefile
 	misc/win32-msvc7/Makefile
+	misc/win32-msvc7/Makefile
+	misc/win32-msvc7/all/Makefile
+	misc/win32-msvc7/asc2g/Makefile
+	misc/win32-msvc7/brlcad/Makefile
+	misc/win32-msvc7/dbupgrade/Makefile
+	misc/win32-msvc7/fast42g/Makefile
+	misc/win32-msvc7/fb2pix/Makefile
+	misc/win32-msvc7/fb2png/Makefile
+	misc/win32-msvc7/fbclear/Makefile
+	misc/win32-msvc7/fbserv/Makefile
+	misc/win32-msvc7/g2asc/Makefile
+	misc/win32-msvc7/g2iges/Makefile
+	misc/win32-msvc7/g2stl/Makefile
+	misc/win32-msvc7/iges2g/Makefile
+	misc/win32-msvc7/itclstub/Makefile
+	misc/win32-msvc7/itkstub/Makefile
+	misc/win32-msvc7/libBLT/Makefile
+	misc/win32-msvc7/libbn/Makefile
+	misc/win32-msvc7/libbu/Makefile
+	misc/win32-msvc7/libdm/Makefile
+	misc/win32-msvc7/libfb/Makefile
+	misc/win32-msvc7/libItcl/Makefile
+	misc/win32-msvc7/libItk/Makefile
+	misc/win32-msvc7/liboptical/Makefile
+	misc/win32-msvc7/libpkg/Makefile
+	misc/win32-msvc7/libpng/Makefile
+	misc/win32-msvc7/librt/Makefile
+	misc/win32-msvc7/libsysv/Makefile
+	misc/win32-msvc7/libtcl/Makefile
+	misc/win32-msvc7/libtclcad/Makefile
+	misc/win32-msvc7/libtk/Makefile
+	misc/win32-msvc7/libwdb/Makefile
+	misc/win32-msvc7/libz/Makefile
+	misc/win32-msvc7/mged/Makefile
+	misc/win32-msvc7/nirt/Makefile
+	misc/win32-msvc7/pix2fb/Makefile
+	misc/win32-msvc7/png2fb/Makefile
+	misc/win32-msvc7/rt/Makefile
+	misc/win32-msvc7/rtcheck/Makefile
+	misc/win32-msvc7/rtedge/Makefile
+	misc/win32-msvc7/stl2g/Makefile
+	misc/win32-msvc7/tclpipe/Makefile
+	misc/win32-msvc7/tclsh/Makefile
+	misc/win32-msvc7/tclstub/Makefile
+	misc/win32-msvc7/tkimg/Makefile
+	misc/win32-msvc7/tkimgpng/Makefile
+	misc/win32-msvc7/tkstub/Makefile
+	misc/win32-msvc7/wish/Makefile
 	pix/Makefile
 	sh/Makefile
 	src/Makefile
