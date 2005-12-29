@@ -4005,6 +4005,10 @@ Popup Menu    Right or Ctrl-Left
     $itk_component(filemenu) add command \
 	-label "Save..." \
 	-command [::itcl::code $this _save_db]
+    $itk_component(filemenu) add command \
+	-label "Compact" \
+	-command [::itcl::code $this compact] \
+	-state disabled
     $itk_component(filemenu) add cascade \
 	-label "Import" \
 	-menu $itk_component(importMenu) \
@@ -4470,6 +4474,9 @@ Popup Menu    Right or Ctrl-Left
 	command save \
 	    -label "Save..." \
 	    -helpstr "Save target description"
+	command compact \
+	    -label "Compact" \
+	    -helpstr "Compact the target description"
 	cascade import \
 	    -label "Import" \
 	    -menu {
@@ -4517,6 +4524,9 @@ Popup Menu    Right or Ctrl-Left
 	-command [::itcl::code $this _open_db]
     $itk_component(menubar) menuconfigure .file.save \
 	-command [::itcl::code $this _save_db]
+    $itk_component(menubar) menuconfigure .file.compact \
+	-command [::itcl::code $this compact] \
+	-state disabled
     $itk_component(menubar) menuconfigure .file.import \
 	-state disabled
     $itk_component(menubar) menuconfigure .file.import.importFg4 \
@@ -4823,6 +4833,7 @@ Popup Menu    Right or Ctrl-Left
 	if {$Archer::inheritFromToplevel} {
 	    #$itk_component(filemenu) entryconfigure "Raytrace Control Panel..." -state normal
 	    #$itk_component(filemenu) entryconfigure "Export Geometry to PNG..." -state normal
+	    $itk_component(filemenu) entryconfigure "Compact" -state disabled
 	    $itk_component(filemenu) entryconfigure "Import" -state disabled
 	    $itk_component(filemenu) entryconfigure "Export" -state disabled
 	    $itk_component(displaymenu) entryconfigure "Standard Views" -state normal
@@ -4836,6 +4847,7 @@ Popup Menu    Right or Ctrl-Left
 	} else {
 	    #$itk_component(menubar) menuconfigure .file.rt  -state normal
 	    #$itk_component(menubar) menuconfigure .file.png -state normal
+	    $itk_component(menubar) menuconfigure .file.compact -state disabled
 	    $itk_component(menubar) menuconfigure .file.import -state disabled
 	    $itk_component(menubar) menuconfigure .file.export -state disabled
 	    $itk_component(menubar) menuconfigure .display.standard -state normal
@@ -4945,6 +4957,7 @@ Popup Menu    Right or Ctrl-Left
 	if {$Archer::inheritFromToplevel} {
 	    #$itk_component(filemenu) entryconfigure "Raytrace Control Panel..." -state normal
 	    #$itk_component(filemenu) entryconfigure "Export Geometry to PNG..." -state normal
+	    $itk_component(filemenu) entryconfigure "Compact" -state normal
 	    $itk_component(filemenu) entryconfigure "Import" -state normal
 	    $itk_component(filemenu) entryconfigure "Export" -state normal
 	    $itk_component(displaymenu) entryconfigure "Standard Views" -state normal
@@ -4956,6 +4969,7 @@ Popup Menu    Right or Ctrl-Left
 	} else {
 	    #$itk_component(menubar) menuconfigure .file.rt  -state normal
 	    #$itk_component(menubar) menuconfigure .file.png -state normal
+	    $itk_component(menubar) menuconfigure .file.compact -state normal
 	    $itk_component(menubar) menuconfigure .file.import -state normal
 	    $itk_component(menubar) menuconfigure .file.export -state normal
 	    $itk_component(menubar) menuconfigure .display.standard -state normal
