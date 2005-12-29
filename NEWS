@@ -8,13 +8,15 @@ see that file and the CVS log for more historic information.  The
 entire history of the project is available through CVS.
 
 ----------------------------------------------------------------------
---- 2006-01-XX  Release 7.6.7                                      ---
+--- 2006-01-XX  Release 7.7.0                                      ---
 ----------------------------------------------------------------------
 
 This release marks the one year anniversary of BRL-CAD being released
 as Open Source software.  Thank you to everyone for your support and
 contributions.
 
+* extensive Windows build support enhancements - Bob Parker
+* new Archer modeling and visualization tool - Bob Parker, Doug Howard
 * raytracers use image size for default aspect ratio - Sean Morrison
 * fixed benchmark sqrt of negative numbers error - Sean Morrison
 
