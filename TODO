@@ -17,6 +17,8 @@ http://sf.net/pm/?group_id=105292
 THESE SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------
 
+* test intel compiler performance on Altix, add performance options
+
 * write .g in-memory transfer example
 
 * clone and tracker
