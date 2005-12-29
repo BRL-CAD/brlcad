@@ -106,6 +106,7 @@
     private method doLeft {}
     private method doRight {}
 
+    private variable slaveInterp
     private variable hist ""
     private variable cmdlist ""
     private variable scratchline ""
@@ -146,6 +147,15 @@
 	set cmdlist [eval $itk_option(-cmd_prefix) getUserCmds]
     }
 
+    # Delete old aliases
+    foreach alias [$slaveInterp aliases] {
+	catch {$slaveInterp alias $cmd {}}
+    }
+
+    # Create new aliases
+    foreach cmd $cmdlist {
+	eval $slaveInterp alias $cmd $itk_option(-cmd_prefix) $cmd
+    }
 }
 
 ::itcl::configbody Command::selection_color {
@@ -177,6 +187,8 @@
 ::itcl::body Command::constructor {args} {
     eval itk_initialize $args
 
+    set slaveInterp [interp create]
+
     doBindings
 
     # create command history object
@@ -199,6 +211,8 @@
 }
 
 ::itcl::body Command::destructor {} {
+    interp delete $slaveInterp 
+
     # destroy command history object
     rename $hist ""
 }
@@ -262,19 +276,8 @@
 
     set hcmd $cmd
 
-    if {$itk_option(-cmd_prefix) != ""} {
-	# get command name
-	if {[regexp {^[ \t]*([^\]\[ \t\n\r{}]+)} $cmd match cname]} {
-	    set cindex [lsearch -exact $cmdlist $cname]
-	    if {$cindex != -1} {
-		# found command name in cmdlist, so prepend cmd_prefix to cmd
-		set cmd [concat $itk_option(-cmd_prefix) $cmd]
-	    }
-	}
-    }
-
-    if [info complete $cmd] {
-	set result [catch {uplevel #0 $cmd} msg]
+    if {[$slaveInterp eval info complete [list $cmd]]} {
+	set result [catch {$slaveInterp eval uplevel \#0 [list $cmd]} msg]
 
 	if {$result != 0} {
 	    $w tag add oldcmd promptEnd insert
