@@ -82,7 +82,8 @@ EXTRA_DIST = \
 	if_ug.c \
 	libfb.dsp \
 	pkgswitch.c \
-	sgiselect.s
+	sgiselect.s \
+	vers_win.c
 
 BUILT_SOURCES = vers.c
 

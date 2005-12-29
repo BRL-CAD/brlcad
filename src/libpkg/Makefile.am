@@ -18,7 +18,8 @@ vers.c: $(SRCS)
 	@SH@ $(top_srcdir)/sh/vers.sh pkg_version "The BRL-CAD Network Package (PKG) Library" > $@
 
 EXTRA_DIST = \
-	libpkg.dsp
+	libpkg.dsp \
+	vers_win.c
 
 CLEANFILES = $(BUILT_SOURCES)
 DISTCLEANFILES = version

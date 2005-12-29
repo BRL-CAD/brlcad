@@ -18,7 +18,8 @@ libsysv_la_SOURCES = \
 
 EXTRA_DIST = \
 	bsdselect.c \
-	libsysv.dsp
+	libsysv.dsp \
+	vers_win.c
 
 BUILT_SOURCES = vers.c
 vers.c:

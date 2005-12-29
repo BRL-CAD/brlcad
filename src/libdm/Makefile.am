@@ -47,7 +47,8 @@ EXTRA_DIST = \
 	dm-glx.c \
 	dm-ogl_win.c \
 	dm-pex.c \
-	libdm.dsp
+	libdm.dsp \
+	vers_win.c
 
 BUILT_SOURCES = vers.c
 

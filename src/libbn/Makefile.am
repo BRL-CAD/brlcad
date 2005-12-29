@@ -48,7 +48,8 @@ EXTRA_DIST = \
 	$(man_MANS) \
 	htester.c \
 	libbn.dsp \
-	plot3.doc
+	plot3.doc \
+	vers_win.c
 
 BUILT_SOURCES = vers.c
 

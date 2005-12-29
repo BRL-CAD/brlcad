@@ -59,7 +59,8 @@ librtms_la_SOURCES = \
 	shade.c
 
 EXTRA_DIST = \
-	liboptical.dsp
+	liboptical.dsp \
+	vers_win.c
 
 BUILT_SOURCES = vers.c
 

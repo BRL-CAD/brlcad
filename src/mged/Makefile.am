@@ -162,7 +162,8 @@ EXTRA_DIST = \
 	fbserv_win32.c \
 	hideline.c \
 	memalloc.c \
-	mged.dsp
+	mged.dsp \
+	vers_win.c
 
 CLEANFILES = $(BUILT_SOURCES)
 DISTCLEANFILES = version

@@ -189,6 +189,7 @@ EXTRA_DIST = \
 	timercos.c \
 	timerhep.c \
 	timerunix.c \
+	vers_win.c \
 	vshoot.c
 
 BUILT_SOURCES = vers.c

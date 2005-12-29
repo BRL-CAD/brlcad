@@ -271,7 +271,8 @@ sample_applications_DATA = rtexample.c
 EXTRA_DIST = \
 	$(ALLSRCS) \
 	$(man_MANS) \
-	rt.dsp
+	rt.dsp \
+	vers_win.c
 
 CLEANFILES = $(BUILT_SOURCES)
 DISTCLEANFILES = version

@@ -39,7 +39,8 @@ EXTRA_DIST = \
 	libwdb.dsp \
 	poly.c \
 	reg4.c \
-	spl.c
+	spl.c \
+	vers_win.c
 
 BUILT_SOURCES = vers.c
 vers.c: $(SRCS)
