@@ -898,8 +898,8 @@ BC_CONFIGURE_STAGE([libraries], [3 of 9])
 
 dnl check if there is a threading library that links, the order of
 dnl these checks is consistent with libbu's bu_parallel()
-dnl implementation preference.  this is usually in 
-
+dnl implementation preference.  this is usually in order of highest
+dnl performing threading interface.
 thread_link_works=no
 LIBTHREAD=""
 dnl try sgi sproc first
