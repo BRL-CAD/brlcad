@@ -24,7 +24,8 @@ SUBDIRS = \
 	$(PROE_DIR) \
 	macosx \
 	vfont \
-	win32-msvc
+	win32-msvc \
+	win32-msvc7
 
 DISTCLEANFILES = \
 	COPYING.backup \
