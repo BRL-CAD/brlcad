@@ -1205,9 +1205,8 @@ ogl_close(FBIO *ifp)
     (void)signal( SIGQUIT, SIG_IGN );
     (void)signal( SIGALRM, SIG_IGN );
 
-    while( OGL(ifp)->alive ) {
+    while( 0 < OGL(ifp)->alive ) {
 	do_event(ifp);
-	sleep(1);
     }
 
     return 0;
@@ -1255,7 +1254,11 @@ _LOCAL_ int
 ogl_poll(FBIO *ifp)
 {
     do_event(ifp);
-    return(0);
+
+    if (OGL(saveifp)->alive < 0)
+	return(1);
+    else
+	return(0);
 }
 
 
