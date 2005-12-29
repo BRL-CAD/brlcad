@@ -896,7 +896,10 @@ dnl ***************************
 
 BC_CONFIGURE_STAGE([libraries], [3 of 9])
 
-dnl check if there is a threading library that links
+dnl check if there is a threading library that links, the order of
+dnl these checks is consistent with libbu's bu_parallel()
+dnl implementation preference.  this is usually in 
+
 thread_link_works=no
 LIBTHREAD=""
 dnl try sgi sproc first
@@ -911,6 +914,23 @@ AC_CHECK_LIB(c, sproc, thread_link_works=yes ; LIBTHREAD="-lc",
 	)]
     )]
 )
+
+dnl check whether we ended up with functioning posix threading.
+AC_MSG_CHECKING([whether we are using POSIX threading])
+posix_threading=no
+PRELDFLAGS="$LDFLAGS"
+LDFLAGS="$LDFLAGS $LIBTHREAD"
+AC_TRY_LINK([#include <pthread.h>], [
+    pthread_t th;
+    pthread_join(th, 0);
+    pthread_attr_init(0);
+    pthread_cleanup_push(0,0);
+    pthread_create(0,0,0,0);
+    pthread_cleanup_pop(0);
+], [posix_threading=yes])
+LDFLAGS="$PRELDFLAGS"
+AC_MSG_RESULT($posix_threading)
+
 
 dnl find a curses or other terminal library
 LIBTERMLIB=""
