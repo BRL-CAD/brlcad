@@ -2823,6 +2823,7 @@ AC_CONFIG_FILES([
 	misc/vfont/Makefile
 	misc/win32-msvc/Makefile
 	misc/win32-msvc/Dll/Makefile
+	misc/win32-msvc7/Makefile
 	pix/Makefile
 	sh/Makefile
 	src/Makefile
