@@ -110,10 +110,6 @@ You will need to add /usr/brlcad/bin to your path (or whatever was
 used as a --prefix during configure) in order for the BRL-CAD binaries
 to be in your path.
 
-Warning: Libtool 1.5.x may be incompatible due to changes the libtool
-project made that were backwards-incompatible.  Using an earlier 1.4.x
-version is recommended for the time being.
-
 
 BENCHMARK
 ---------
