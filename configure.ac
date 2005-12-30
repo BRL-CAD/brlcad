@@ -311,9 +311,6 @@ BC_ARG_ENABLE([build_tcl], [tcl-build], [Build the included Tcl], [auto])
 # installed.
 BC_ARG_ENABLE([build_tk], [tk-build], [Build the included Tk], [yes])
 
-# tkimg
-BC_ARG_ENABLE([build_tkimg], [tkimg-build], [Build the included tkimg], [auto])
-
 # force enable/disable building of incrTcl
 BC_ARG_ENABLE([build_itcl], [itcl-build], [Build the included incrTcl], [auto])
 
@@ -321,7 +318,10 @@ BC_ARG_ENABLE([build_itcl], [itcl-build], [Build the included incrTcl], [auto])
 BC_ARG_ENABLE([build_iwidgets], [iwidgets-build], [Install the included iwidgets], [auto])
 
 # force enable/disable building of blt
-BC_ARG_ENABLE([build_blt], [blt-build], [Build the included blt], [auto])
+BC_ARG_ENABLE([build_blt], [blt-build], [Build the included BLT], [auto])
+
+# tkimg
+BC_ARG_ENABLE([build_tkimg], [tkimg-build], [Build the included tkImg], [auto])
 
 # doxygen - XXX unimplemented
 #BC_ARG_ENABLE([use_doxygen], [doxygen], [Enable documentation generation with doxygen], [no])
@@ -626,6 +626,12 @@ if test "x$set_everything" != "x" ; then
 	if test "x$bc_build_iwidgets" = "x$bc_build_iwidgets_default" ; then
 		bc_build_iwidgets="$set_everything"
 	fi
+	if test "x$bc_build_blt" = "x$bc_build_blt_default" ; then
+		bc_build_blt="$set_everything"
+	fi
+	if test "x$bc_build_tkimg" = "x$bc_build_tkimg_default" ; then
+		bc_build_tkimg="$set_everything"
+	fi
 	if test "x$bc_build_jove" = "x$bc_build_jove_default" ; then
 		bc_build_jove="$set_everything"
 	fi
@@ -693,7 +699,7 @@ AC_MSG_RESULT($bc_build_iwidgets)
 AC_MSG_CHECKING(whether to build the BLT library)
 AC_MSG_RESULT($bc_build_blt)
 
-AC_MSG_CHECKING(whether to build the Tkimg library)
+AC_MSG_CHECKING(whether to build the tkImg library)
 AC_MSG_RESULT($bc_build_tkimg)
 
 AC_MSG_CHECKING(whether to build the termlib library)
@@ -2024,18 +2030,6 @@ else
 fi
 AC_SUBST(TK)
 
-dnl figure out whether we need to build Tkimg
-TKIMG_VERSION="1.3"
-AC_SUBST(TKIMG_VERSION)
-if test "x$bc_build_tkimg" = "xyes" ; then
-   build_brlcad_tkimg=yes
-   TKIMG='${top_builddir}/src/other/tkimg/tkimg${TKIMG_VERSION}.la'
-   AC_MSG_RESULT(yes)
-else
-   build_brlcad_tkimg=no
-   TKIMG=""
-   AC_MSG_RESULT(no)
-fi
 
 dnl *** incrTcl ***
 dnl See if libitcl and libitk seem to work, make sure it's not dependant upon libtcl
@@ -2173,12 +2167,15 @@ IWIDGETS_VERSION="4.0.1"
 AC_DEFINE_UNQUOTED([IWIDGETS_VERSION], "$IWIDGETS_VERSION", "Version of iWidgets")
 AC_SUBST(IWIDGETS_VERSION)
 
-dnl figure out whether we need to build Blt
+
+dnl *** BLT ***
+dnl figure out whether we need to build BLT
 BLT_VERSION="2.4"
 AC_SUBST(BLT_VERSION)
 BLT_LIBRARY='${prefix}/lib/blt${BLT_VERSION}'
 AC_SUBST(BLT_LIBRARY)
-if test "x$bc_build_blt" = "xyes" ; then
+AC_MSG_CHECKING(whether to build libblt)
+if test ! "x$bc_build_blt" = "xno" ; then
    build_brlcad_blt=yes
    BLT='${top_builddir}/src/other/blt/libblt${BLT_VERSION}.la'
    AC_MSG_RESULT(yes)
@@ -2187,6 +2184,23 @@ else
    BLT=""
    AC_MSG_RESULT(no)
 fi
+
+
+dnl *** tkImg ***
+dnl figure out whether we need to build tkImg
+TKIMG_VERSION="1.3"
+AC_SUBST(TKIMG_VERSION)
+AC_MSG_CHECKING(whether to build tkimg)
+if test ! "x$bc_build_tkimg" = "xno" ; then
+   build_brlcad_tkimg=yes
+   TKIMG='${top_builddir}/src/other/tkimg/tkimg${TKIMG_VERSION}.la'
+   AC_MSG_RESULT(yes)
+else
+   build_brlcad_tkimg=no
+   TKIMG=""
+   AC_MSG_RESULT(no)
+fi
+
 
 dnl *** libthread ***
 AC_MSG_CHECKING(for threading library availability)
@@ -2597,10 +2611,10 @@ BC_CONFIGURE_STAGE([output], [9 of 9])
 
 AM_CONDITIONAL(BUILD_TCL, [test "x$build_brlcad_tcl" = "xyes"])
 AM_CONDITIONAL(BUILD_TK, [test "x$build_brlcad_tk" = "xyes"])
-AM_CONDITIONAL(BUILD_TKIMG, [test "x$build_brlcad_tkimg" = "xyes"])
 AM_CONDITIONAL(BUILD_ITCL, [test "x$build_brlcad_itcl" = "xyes"])
 AM_CONDITIONAL(BUILD_IWIDGETS, [test "x$build_brlcad_iwidgets" = "xyes"])
 AM_CONDITIONAL(BUILD_BLT, [test "x$build_brlcad_blt" = "xyes"])
+AM_CONDITIONAL(BUILD_TKIMG, [test "x$build_brlcad_tkimg" = "xyes"])
 AM_CONDITIONAL(BUILD_PNG, [test "x$build_brlcad_png" = "xyes"])
 AM_CONDITIONAL(BUILD_REGEX, [test "x$build_brlcad_regex" = "xyes"])
 AM_CONDITIONAL(BUILD_ZLIB, [test "x$build_brlcad_zlib" = "xyes"])
@@ -3104,10 +3118,10 @@ AC_MSG_RESULT([LIBS     = ${LIBS}])
 AC_MSG_RESULT([])
 AC_MSG_RESULT([Build Tcl ............................: $build_brlcad_tcl])
 AC_MSG_RESULT([Build Tk .............................: $build_brlcad_tk])
-AC_MSG_RESULT([Build Tkimg ..........................: $build_brlcad_tkimg])
 AC_MSG_RESULT([Build Itcl/Itk .......................: $build_brlcad_itcl])
 AC_MSG_RESULT([Build IWidgets .......................: $build_brlcad_iwidgets])
-AC_MSG_RESULT([Build Blt ............................: $build_brlcad_blt])
+AC_MSG_RESULT([Build BLT ............................: $build_brlcad_blt])
+AC_MSG_RESULT([Build Tkimg ..........................: $build_brlcad_tkimg])
 AC_MSG_RESULT([Build libpng .........................: $build_brlcad_png])
 AC_MSG_RESULT([Build libregex .......................: $build_brlcad_regex])
 AC_MSG_RESULT([Build zlib ...........................: $build_brlcad_zlib])
