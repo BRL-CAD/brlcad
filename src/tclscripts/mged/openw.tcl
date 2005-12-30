@@ -26,12 +26,8 @@
 #	The U. S. Army Research Laboratory
 #	Aberdeen Proving Ground, Maryland	 21005
 #
-#
-#
 # Description -
 #	MGED's default Tcl/Tk interface.
-#
-# $Revision
 #
 
 check_externs "_mged_attach _mged_tie _mged_view_ring"
