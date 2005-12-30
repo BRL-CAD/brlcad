@@ -35,10 +35,11 @@
 set extern_commands "M _mged_M"
 foreach cmd $extern_commands {
     if {[expr [string compare [info command $cmd] $cmd] != 0]} {
-	puts stderr "Application fails to provide command '$cmd'"
+	puts stderr "[info script]: Application fails to provide command '$cmd'"
 	return
     }
 }
+
 
 proc solclick { } {
     echo \nShoot a ray by clicking the middle mouse button.
