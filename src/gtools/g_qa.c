@@ -1,21 +1,43 @@
-/*	G _ Q A . C --- perform quality assurance checks on geometry
+/*                          G _ Q A . C
+ * BRL-CAD
  *
+ * Copyright (c) 2005 United States Government as represented by
+ * the U.S. Army Research Laboratory.
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of the
+ * License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this file; see the file named COPYING for more
+ * information.
+ */
+/** @file g_qa.c
+ *
+ * Author: Lee Butler
+ *
+ * perform quality assurance checks on geometry
  *
  * XXX need to look at gap computation
-
- plot the points where overlaps start/stop
-
+ *
+ * plot the points where overlaps start/stop
+ *
  *	Designed to be a framework for 3d sampling of the geometry volume.
  */
 
 #include "common.h"
 
 #ifdef HAVE_STRING_H
-#include <string.h>
+#  include <string.h>
 #else
-#include <strings.h>
+#  include <strings.h>
 #endif
-
 #include <stdlib.h>
 #include <errno.h>
 #include <stdio.h>
@@ -39,10 +61,8 @@
 #define SEM_LIST RT_SEM_LAST+3
 #define TOTAL_SEMAPHORES SEM_LIST+1
 
-/* declarations to support use of getopt() system call */
+/* bu_getopt() options */
 char *options = "A:a:de:f:g:Gn:N:pP:rS:s:t:U:u:vV:W:";
-extern char *optarg;
-extern int optind, opterr, getopt();
 
 /* variables set by command line flags */
 char *progname = "(noname)";
@@ -459,17 +479,17 @@ parse_args(int ac, char *av[])
 	++progname;
 
     /* Turn off getopt's error messages */
-    opterr = 0;
+    bu_opterr = 0;
 
     /* get all the option flags from the command line */
-    while ((c=getopt(ac,av,options)) != EOF) {
+    while ((c=bu_getopt(ac,av,options)) != EOF) {
 	switch (c) {
 	case 'A'	:
 	    {
 		char *p;
 		analysis_flags = 0;
 		multiple_analyses = 0;
-		for (p = optarg; *p ; p++) {
+		for (p = bu_optarg; *p ; p++) {
 		    switch (*p) {
 		    case 'A' :
 			analysis_flags = ANALYSIS_VOLUME | ANALYSIS_WEIGHT | \
@@ -531,21 +551,21 @@ parse_args(int ac, char *av[])
 	    }
 	case 'a'	:
 	    bu_log("azimuth not implemented\n");
-	    if (sscanf(optarg, "%lg", &azimuth_deg) != 1) {
-		bu_log("error parsing azimuth \"%s\"\n", optarg);
+	    if (sscanf(bu_optarg, "%lg", &azimuth_deg) != 1) {
+		bu_log("error parsing azimuth \"%s\"\n", bu_optarg);
 		bu_bomb("");
 	    }
 	    break;
 	case 'e'	:
 	    bu_log("elevation not implemented\n");
-	    if (sscanf(optarg, "%lg", &elevation_deg) != 1) {
-		bu_log("error parsing elevation \"%s\"\n", optarg);
+	    if (sscanf(bu_optarg, "%lg", &elevation_deg) != 1) {
+		bu_log("error parsing elevation \"%s\"\n", bu_optarg);
 		bu_bomb("");
 	    }
 	    break;
 	case 'd'	: debug = 1; break;
 
-	case 'f'	: densityFileName = optarg; break;
+	case 'f'	: densityFileName = bu_optarg; break;
 
 	case 'g'	:
 	    {
@@ -556,12 +576,12 @@ parse_args(int ac, char *av[])
 		/* find out if we have two or one args 
 		 * user can separate them with , or - delimiter
 		 */
-		if (p = strchr(optarg, ','))  	 *p++ = '\0';
-		else if (p = strchr(optarg, '-')) *p++ = '\0';
+		if (p = strchr(bu_optarg, ','))  	 *p++ = '\0';
+		else if (p = strchr(bu_optarg, '-')) *p++ = '\0';
 
 
-		if (read_units_double(&value1, optarg, units_tab[0])) {
-		    bu_log("error parsing grid spacing value \"%s\"\n", optarg);
+		if (read_units_double(&value1, bu_optarg, units_tab[0])) {
+		    bu_log("error parsing grid spacing value \"%s\"\n", bu_optarg);
 		    bu_bomb("");
 		}
 		if (p) {
@@ -589,36 +609,36 @@ parse_args(int ac, char *av[])
 	    bu_bomb("");
 	    break;
 	case 'n'	:
-	    if (sscanf(optarg, "%d", &c) != 1 || c < 0) {
-		bu_log("num_hits must be integer value >= 0, not \"%s\"\n", optarg);
+	    if (sscanf(bu_optarg, "%d", &c) != 1 || c < 0) {
+		bu_log("num_hits must be integer value >= 0, not \"%s\"\n", bu_optarg);
 		bu_bomb("");
 	    }
 	    require_num_hits = c;
 	    break;
 
 	case 'N'	:
-	    num_views = atoi(optarg);
+	    num_views = atoi(bu_optarg);
 	    break;
 	case 'p'	:
 	    plot_files = ! plot_files;
 	    break;
 	case 'P'	:
 	    /* cannot ask for more cpu's than the machine has */
-	    if ((c=atoi(optarg)) > 0 && c <= max_cpus ) ncpu = c;
+	    if ((c=atoi(bu_optarg)) > 0 && c <= max_cpus ) ncpu = c;
 	    break;
 	case 'r'	:
 	    print_per_region_stats = 1;
 	    break;
 	case 'S'	:
-	    if (sscanf(optarg, "%lg", &a) != 1 || a <= 1.0) {
-		bu_log("error in specifying minimum samples per model axis: \"%s\"\n", optarg);
+	    if (sscanf(bu_optarg, "%lg", &a) != 1 || a <= 1.0) {
+		bu_log("error in specifying minimum samples per model axis: \"%s\"\n", bu_optarg);
 		break;
 	    }
 	    Samples_per_model_axis = a + 1;
 	    break;
 	case 't'	:
-	    if (read_units_double(&overlap_tolerance, optarg, units_tab[0])) {
-		bu_log("error in overlap tolerance distance \"%s\"\n", optarg);
+	    if (read_units_double(&overlap_tolerance, bu_optarg, units_tab[0])) {
+		bu_log("error in overlap tolerance distance \"%s\"\n", bu_optarg);
 		bu_bomb("");
 	    }
 	    break;
@@ -626,20 +646,20 @@ parse_args(int ac, char *av[])
 	    verbose = 1;
 	    break;
 	case 'V'	:
-	    if (read_units_double(&volume_tolerance, optarg, units_tab[1])) {
-		bu_log("error in volume tolerance \"%s\"\n", optarg);
+	    if (read_units_double(&volume_tolerance, bu_optarg, units_tab[1])) {
+		bu_log("error in volume tolerance \"%s\"\n", bu_optarg);
 		exit(-1);
 	    }
 	    break;
 	case 'W'	:
-	    if (read_units_double(&weight_tolerance, optarg, units_tab[2])) {
-		bu_log("error in weight tolerance \"%s\"\n", optarg);
+	    if (read_units_double(&weight_tolerance, bu_optarg, units_tab[2])) {
+		bu_log("error in weight tolerance \"%s\"\n", bu_optarg);
 		exit(-1);
 	    }
 	    break;
 
 	case 'U'	:
-	    use_air = strtol(optarg, (char **)NULL, 10);
+	    use_air = strtol(bu_optarg, (char **)NULL, 10);
 	    if (errno == ERANGE || errno == EINVAL) {
 		perror("-U argument");
 		bu_bomb("");
@@ -647,7 +667,7 @@ parse_args(int ac, char *av[])
 	    break;
 	case 'u'	:
 	    {
-		char *ptr = optarg;
+		char *ptr = bu_optarg;
 		const struct cvt_tab *cv;
 		static const char *dim[3] = {"length", "volume", "weight"};
 		char *units_name[3];
@@ -686,7 +706,7 @@ parse_args(int ac, char *av[])
 	}
     }
 
-    return(optind);
+    return(bu_optind);
 }
 
 
@@ -2099,7 +2119,7 @@ main(int ac, char *av[])
 {
     int arg_count;
     struct rt_i *rtip;
-#define IDBUFSIZE 132
+#define IDBUFSIZE 2048
     char idbuf[IDBUFSIZE];
     int i;
     struct cstate state;
