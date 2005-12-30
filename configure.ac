@@ -2824,7 +2824,6 @@ AC_CONFIG_FILES([
 	misc/win32-msvc/Makefile
 	misc/win32-msvc/Dll/Makefile
 	misc/win32-msvc7/Makefile
-	misc/win32-msvc7/Makefile
 	misc/win32-msvc7/all/Makefile
 	misc/win32-msvc7/asc2g/Makefile
 	misc/win32-msvc7/brlcad/Makefile
