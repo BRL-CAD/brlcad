@@ -15,6 +15,9 @@ This release marks the one year anniversary of BRL-CAD being released
 as Open Source software.  Thank you to everyone for your support and
 contributions.
 
+* reid mged command, recursively assign region IDs - Sean Morrison
+* remat mged command, recursively assign a material ID - Sean Morrison
+* get_regions mged command, list assembly regions - Sean Morrison
 * extensive Windows build support enhancements - Bob Parker
 * new Archer modeling and visualization tool - Bob Parker, Doug Howard
 * raytracers use image size for default aspect ratio - Sean Morrison
