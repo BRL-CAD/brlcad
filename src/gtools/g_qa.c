@@ -22,7 +22,7 @@
  *
  * Author: Lee Butler
  *
- * perform quality assurance checks on geometry
+ * perform quantitative analysis checks on geometry
  *
  * XXX need to look at gap computation
  *
