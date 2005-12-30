@@ -118,6 +118,7 @@ set mged_help_data(fracture)	{{NMGsolid [prefix]}	{fracture an NMG solid into ma
 set mged_help_data(g)		$helplib_data(wdb_group)
 set mged_help_data(garbage_collect)	{{}	{eliminate unused space in database file}}
 set mged_help_data(get)		$helplib_data(wdb_get)
+set mged_help_data(get_regions)	{{combination}	{returns the names of all regions under a given combination/assembly}}
 set mged_help_data(gui)	{{[-config b|c|g] [-d display_string]
         [-gd graphics_display_string] [-dt graphics_type]
         [-id name] [-c -h -j -s]}	{create display/command window pair}}
@@ -210,7 +211,9 @@ set mged_help_data(refresh)	{{}	{send new control list}}
 set mged_help_data(regdebug)	{{[number]}	{toggle display manager debugging or set debug level}}
 set mged_help_data(regdef)	{{ident [air [los [material]]]}	{change next region default codes}}
 set mged_help_data(regions)	{{file object(s)}	{make ascii summary of regions}}
+set mged_help_data(reid)	{{assembly regionID}	{assign region IDs to all regions under some assembly/combination starting with the given region ID number}}
 set mged_help_data(release)	{{[name]}	{release display processor}}
+set mged_help_data(remat)	{{assembly GIFTmater}	{assign a given material ID number to all regions under some assembly/combination}}
 set mged_help_data(rfarb)	{{}	{makes arb given point, 2 coord of 3 pts, rot, fb, thickness}}
 set mged_help_data(rm)		$helplib_data(wdb_remove)
 set mged_help_data(rmater)	{{filename}	{read combination materials from filename}}
