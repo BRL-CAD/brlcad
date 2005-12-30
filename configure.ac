@@ -303,22 +303,25 @@ BC_ARG_ENABLE([build_urt], [urt-build], [Build the included Utah Raster Toolkit]
 BC_ARG_ENABLE([build_termlib], [termlib-build], [Build the included termlib library], [auto])
 
 # force enable/disable building of Tcl
-BC_ARG_ENABLE([build_tcl], [tcl-build], [Build the included Tcl], [yes])
+BC_ARG_ENABLE([build_tcl], [tcl-build], [Build the included Tcl], [auto])
 
 # force enable/disable building of Tk
+# XXX - set to yes due to the bezier canvas tk patch that was moved to
+# libtclcad yet still uses tk internal headers that don't get
+# installed.
 BC_ARG_ENABLE([build_tk], [tk-build], [Build the included Tk], [yes])
 
 # tkimg
-BC_ARG_ENABLE([build_tkimg], [tkimg-build], [Build the included tkimg], [yes])
+BC_ARG_ENABLE([build_tkimg], [tkimg-build], [Build the included tkimg], [auto])
 
 # force enable/disable building of incrTcl
-BC_ARG_ENABLE([build_itcl], [itcl-build], [Build the included incrTcl], [yes])
+BC_ARG_ENABLE([build_itcl], [itcl-build], [Build the included incrTcl], [auto])
 
 # force enable/disable building of iwidgets
-BC_ARG_ENABLE([build_iwidgets], [iwidgets-build], [Install the included iwidgets], [yes])
+BC_ARG_ENABLE([build_iwidgets], [iwidgets-build], [Install the included iwidgets], [auto])
 
 # force enable/disable building of blt
-BC_ARG_ENABLE([build_blt], [blt-build], [Build the included blt], [yes])
+BC_ARG_ENABLE([build_blt], [blt-build], [Build the included blt], [auto])
 
 # doxygen - XXX unimplemented
 #BC_ARG_ENABLE([use_doxygen], [doxygen], [Enable documentation generation with doxygen], [no])
@@ -457,12 +460,6 @@ BC_ARG_ALIAS([build_tk], [tk])
 BC_ARG_ALIAS([build_tk], [libtk])
 BC_ARG_ALIAS([build_tk], [libtk-build])
 
-# aliases to force building tkimg (help uses tkimg-build)
-BC_ARG_ALIAS([build_tkimg], [tkimg])
-BC_ARG_ALIAS([build_tkimg], [tkimg-build])
-AC_MSG_CHECKING(whether to build the Tkimg library)
-AC_MSG_RESULT($bc_build_tkimg)
-
 # aliases to force building itcl (help uses itcl-build)
 BC_ARG_ALIAS([build_itcl], [itcl])
 BC_ARG_ALIAS([build_itcl], [itk])
@@ -481,10 +478,12 @@ BC_ARG_ALIAS([build_iwidgets], [install-iwidgets])
 # aliases to force building blt (help uses blt-build)
 BC_ARG_ALIAS([build_blt], [blt])
 BC_ARG_ALIAS([build_blt], [libblt])
-BC_ARG_ALIAS([build_blt], [blt-build])
 BC_ARG_ALIAS([build_blt], [libblt-build])
-AC_MSG_CHECKING(whether to build the Blt library)
-AC_MSG_RESULT($bc_build_blt)
+
+# aliases to force building tkimg (help uses tkimg-build)
+BC_ARG_ALIAS([build_tkimg], [tkimg])
+BC_ARG_ALIAS([build_tkimg], [libtkimg])
+BC_ARG_ALIAS([build_tkimg], [libtkimg-build])
 
 # aliases to force building termlib (help uses termlib-build)
 BC_ARG_ALIAS([build_termlib], [termlib])
@@ -690,6 +689,12 @@ AC_MSG_RESULT($bc_build_itcl)
 
 AC_MSG_CHECKING(whether to install the iwidgets library)
 AC_MSG_RESULT($bc_build_iwidgets)
+
+AC_MSG_CHECKING(whether to build the BLT library)
+AC_MSG_RESULT($bc_build_blt)
+
+AC_MSG_CHECKING(whether to build the Tkimg library)
+AC_MSG_RESULT($bc_build_tkimg)
 
 AC_MSG_CHECKING(whether to build the termlib library)
 AC_MSG_RESULT($bc_build_termlib)
