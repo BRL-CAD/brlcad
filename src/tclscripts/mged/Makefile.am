@@ -61,6 +61,8 @@ scripties = \
 	qray.tcl \
 	ray.tcl \
 	raypick.tcl \
+	reid.tcl \
+	remat.tcl \
 	rt.tcl \
 	rt_script.tcl \
 	sample.tcl \
@@ -121,8 +123,8 @@ tcl_SCRIPTS = \
 	$(BUILT_SOURCES) \
 	$(scripties)
 
-#	pkgIndex.tcl
 BUILT_SOURCES = \
+	pkgIndex.tcl \
 	tclIndex
 
 EXTRA_DIST = \
