@@ -43,14 +43,15 @@
 #define __COMMON_H__
 
 /* include the venerable config.h file.  use a pregenerated one for
- * windows when we cannot autogenerate it easily. */
-#ifdef _WIN32
+ * windows when we cannot autogenerate it easily. do not include
+ * config.h if this file has been installed.  (public header files
+ * should not use config defines)
+ */
+#ifdef HAVE_CONFIG_H
+#  ifdef _WIN32
 #    include "config_win.h"
-#else
-#  ifdef HAVE_CONFIG_H
-#    include "brlcad_config.h"
 #  else
-#    include <brlcad/brlcad_config.h>
+#    include "brlcad_config.h"
 #  endif
 #endif  /* _WIN32 */
 
