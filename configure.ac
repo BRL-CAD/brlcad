@@ -270,7 +270,7 @@ BC_CONFIGURE_STAGE([arguments], [1 of 9])
 dnl *** enable options ***
 
 # enable everything 
-BC_ARG_ENABLE([everything], [everything], [Turn on compilation of everything], [auto])
+BC_ARG_ENABLE([everything], [almost-everything], [Turn on compilation of almost everything], [auto])
 
 # automatic flag updates
 BC_ARG_ENABLE([auto_flags], [automatic-flags], [Automatically configure build flags], [yes])
@@ -327,10 +327,10 @@ BC_ARG_ENABLE([build_tkimg], [tkimg-build], [Build the included tkImg], [auto])
 #BC_ARG_ENABLE([use_doxygen], [doxygen], [Enable documentation generation with doxygen], [no])
 
 # jove
-BC_ARG_ENABLE([build_jove], [jove], [Enable compilation of jove], [auto])
+BC_ARG_ENABLE([build_jove], [jove-build], [Enable compilation of jove], [auto])
 
 # pro/e plugin
-BC_ARG_ENABLE([build_proe], [pro-engineer-plugin], [Enable compilation of Pro/Engineer plugin], [no])
+BC_ARG_ENABLE([build_proe], [proe-plugin-build], [Enable compilation of Pro/Engineer plugin], [no])
 
 # example geometry
 BC_ARG_ENABLE([install_geometry], [models-install], [Enable installation of example geometry models], [yes])
@@ -378,8 +378,12 @@ BC_ARG_WITH([with_python], [python], [Specify use of or path to python], [auto])
 # blank line that it inserts to exactly one line in the right place
 ###
 
-# aliases for enabling configuration of everything (help uses everything)
+# aliases for enabling configuration of everything (help uses almost-everything)
 BC_ARG_ALIAS([everything], [all])
+BC_ARG_ALIAS([everything], [all-build])
+BC_ARG_ALIAS([everything], [build-all])
+BC_ARG_ALIAS([everything], [all-builds])
+BC_ARG_ALIAS([everything], [everything])
 BC_ARG_ALIAS([everything], [everything-build])
 BC_ARG_ALIAS([everything], [build-everything])
 
@@ -494,13 +498,17 @@ BC_ARG_ALIAS([build_termlib], [termcap-build])
 BC_ARG_ALIAS([build_termlib], [libtermlib-build])
 BC_ARG_ALIAS([build_termlib], [libtermcap-build])
 
-# jove aliases (help uses jove)
-BC_ARG_ALIAS([build_jove], [jove-build])
+# jove aliases (help uses jove-build)
+BC_ARG_ALIAS([build_jove], [jove])
 
-# pro/e plugin aliases (help uses pro-engineer-plugin)
+# pro/e plugin aliases (help uses proe-plugin-build)
 BC_ARG_ALIAS([build_proe], [pro-engineer])
+BC_ARG_ALIAS([build_proe], [pro-engineer-plugin])
 BC_ARG_ALIAS([build_proe], [proe])
 BC_ARG_ALIAS([build_proe], [proe-plugin])
+BC_ARG_ALIAS([build_proe], [pro-engineer-build])
+BC_ARG_ALIAS([build_proe], [pro-engineer-plugin-build])
+BC_ARG_ALIAS([build_proe], [proe-build])
 
 # install geometry aliases (help uses models-install)
 BC_ARG_ALIAS([install_geometry], [models])
@@ -523,7 +531,6 @@ BC_ARG_ALIAS([use_optimized], [optimizations])
 # verbose warning aliases (help uses warnings)
 BC_ARG_ALIAS([use_warnings], [verbose])
 BC_ARG_ALIAS([use_warnings], [warning])
-BC_ARG_ALIAS([use_warnings], [warnings])
 BC_ARG_ALIAS([use_warnings], [verbose-warnings])
 BC_ARG_ALIAS([use_warnings], [warnings-verbose])
 
@@ -3121,7 +3128,7 @@ AC_MSG_RESULT([Build Tk .............................: $build_brlcad_tk])
 AC_MSG_RESULT([Build Itcl/Itk .......................: $build_brlcad_itcl])
 AC_MSG_RESULT([Build IWidgets .......................: $build_brlcad_iwidgets])
 AC_MSG_RESULT([Build BLT ............................: $build_brlcad_blt])
-AC_MSG_RESULT([Build Tkimg ..........................: $build_brlcad_tkimg])
+AC_MSG_RESULT([Build tkImg ..........................: $build_brlcad_tkimg])
 AC_MSG_RESULT([Build libpng .........................: $build_brlcad_png])
 AC_MSG_RESULT([Build libregex .......................: $build_brlcad_regex])
 AC_MSG_RESULT([Build zlib ...........................: $build_brlcad_zlib])
