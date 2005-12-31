@@ -105,7 +105,9 @@ EXTRA_DIST = \
 	arrange.c \
 	bubbleup.c \
 	copytree.c \
+	g-iges-vers_win.c \
 	ge6.igs \
+	iges-g-vers_win.c \
 	spl.c \
 	treecheck.c \
 	wing128.igs \
