@@ -36,6 +36,8 @@ THESE SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 
 * use environ for run-time path tracing lookups
 
+* add support to restore the backups when an autogen.sh step aborts
+
 * support variable overrides for autogen.sh
 
 * write scripts that parse the sf.net tracker data and generate
