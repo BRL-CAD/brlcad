@@ -20,9 +20,16 @@
  */
 /** @file rtexample.c
  *
- *  A trivial example of a program that uses librt.  With comments.
+ *  A trivial example of a program that uses librt to shoot a single
+ *  ray at some geometry in a .g database.  With lots of comments.
  *
- *    cc -I/usr/include/brlcad -o rtexample rtexample.c librt.a -lm
+ *  This file is part of the default compile in source distributions
+ *  of BRL-CAD and is usually installed or provided via binary and
+ *  source distributions.  To compile this example from a binary
+ *  install:
+ *
+ *  cc -I/usr/brlcad/include/brlcad -L/usr/brlcad/lib -o rtexample rtexample.c -lbu -lrt -lm
+ *
  */
 #include "common.h"
 
