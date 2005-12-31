@@ -272,6 +272,8 @@ EXTRA_DIST = \
 	$(ALLSRCS) \
 	$(man_MANS) \
 	rt.dsp \
+	rtcheck_vers_win.c \
+	rtedge_vers_win.c \
 	vers_win.c
 
 CLEANFILES = $(BUILT_SOURCES)
