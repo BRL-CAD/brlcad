@@ -1049,7 +1049,9 @@ itcl_link_works=no
 LIBITCL=""
 AC_CHECK_LIB(itcl3.3, Itcl_Init, itcl_link_works=yes ; LIBITCL="-litcl3.3",
     [AC_CHECK_LIB(itcl3.2, Itcl_Init, itcl_link_works=yes ; LIBITCL="-litcl3.2",
-        [AC_CHECK_LIB(itcl, Itcl_Init, itcl_link_works=yes ; LIBITCL="-litcl")]
+        [AC_CHECK_LIB(itcl32, Itcl_Init, itcl_link_works=yes ; LIBITCL="-litcl32",
+            [AC_CHECK_LIB(itcl, Itcl_Init, itcl_link_works=yes ; LIBITCL="-litcl")]
+	)]
     )]
 )
 
@@ -1058,7 +1060,9 @@ itk_link_works=no
 LIBITK=""
 AC_CHECK_LIB(itk3.3, Itk_Init, itk_link_works=yes ; LIBITK="-litk3.3",
     [AC_CHECK_LIB(itk3.2, Itk_Init, itk_link_works=yes ; LIBITK="-litk3.2",
-        [AC_CHECK_LIB(itk, Itk_Init, itk_link_works=yes ; LIBITK="-litk")]
+        [AC_CHECK_LIB(itk32, Itk_Init, itk_link_works=yes ; LIBITK="-litk32",
+            [AC_CHECK_LIB(itk, Itk_Init, itk_link_works=yes ; LIBITK="-litk")]
+        )]
     )]
 )
 
