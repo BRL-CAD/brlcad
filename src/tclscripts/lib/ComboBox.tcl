@@ -46,21 +46,25 @@
     constructor {args} {}
     destructor {}
 
-    # menu stuff
-    public method add {args}
-    public method delete {args}
-    public method menuConfigure {args}
-    public method menuEntryConfigure {args}
-    public method index {args}
-    public method insert {args}
-    public method type {index}
+    public {
+	# menu stuff
+	method add {args}
+	method delete {args}
+	method menuConfigure {args}
+	method menuEntryConfigure {args}
+	method index {args}
+	method insert {args}
+	method type {index}
 
-    # entry stuff
-    public method entryConfigure {args}
-    public method getText {}
-    public method setText {val}
+	# entry stuff
+	method entryConfigure {args}
+	method getText {}
+	method setText {val}
+    }
 
-    private variable entrytext ""
+    private {
+	variable entrytext ""
+    }
 }
 
 ::itcl::configbody cadwidgets::ComboBox::text {
@@ -144,15 +148,17 @@
 }
 
 ::itcl::body cadwidgets::ComboBox::getText {} {
-    set ev [cget -entryvariable]
+#    set ev [cget -entryvariable]
 
     # $-substitution should work, but doesn't
-    return [set $ev]
+#    return [set $ev]
+    return $entrytext
 }
 
 ::itcl::body cadwidgets::ComboBox::setText {val} {
-    set ev [cget -entryvariable]
-    set $ev $val
+#    set ev [cget -entryvariable]
+#    set $ev $val
+    set entrytext $val
 }
 
 ::itcl::body cadwidgets::ComboBox::type {index} {

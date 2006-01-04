@@ -347,28 +347,30 @@ namespace eval Archer {
 	variable mPrevObjViewMode 0
 	variable mObjViewMode 0
 
-
 	variable archerCommands { \
-	    adjust adjustNormals blast c cd clear comb compact concat \
-            copy copyeval cp dbExpand \
-	    decimate decimate2 decimateAttr decimateAttr2 \
-	    delete draw E erase \
-	    erase_all ev exit exportFg4 exportStl exportVrml find hide g group \
-            importFg4 importStl i importFg4Sections kill killall \
-            killtree ls make_bb move mv mvall \
-            ocenter orotate oscale otranslate \
-            push put pwd \
-            r report reverseNormals rm \
-	    track unhide units vdraw whichid \
-            who Z zap \
+	    cd clear copy cp dbExpand delete draw exit \
+	    g get group kill ls move mv ocenter orotate \
+	    otranslate pwd rm units whichid who Z zap
 	}
-	variable dbCommands {}
-	variable bannedDbCommands { \
-	    dbip nmg_collapse nmb_simplify \
-	    open move_arb_edge move_arb_face \
-	    shells xpush illum label qray \
-	    rotate_arb_face rtabort \
-	    shaded_mode png \
+	variable mgedCommands { \
+	    adjust blast c comb concat copyeval E erase_all \
+	    ev find hide importFg4Sections killall killtree \
+	    make_bb mvall push put r report track unhide vdraw
+	}
+	variable sdbCommands { \
+	    adjustNormals compact decimate decimate2 \
+	    decimateAttr decimateAttr2 erase exportFg4 \
+	    exportStl exportVrml  importFg4 importStl \
+	    reverseNormals
+	}
+	variable dbSpecificCommands {}
+	variable unwrappedDbCommands {}
+	variable bannedDbCommands {
+	    dbip nmg_collapse nmb_simplify
+	    open move_arb_edge move_arb_face
+	    shells xpush illum label qray
+	    rotate_arb_face rtabort
+	    shaded_mode png
 	}
 
 	variable mAboutInfo "
@@ -4765,12 +4767,15 @@ Popup Menu    Right or Ctrl-Left
 	keep -sashindent -thickness
     }
     set tmp_dbCommands [$itk_component(mged) getUserCmds]
-    set dbCommands {}
+    set unwrappedDbCommands {}
     foreach cmd $tmp_dbCommands {
 	if {[lsearch $bannedDbCommands $cmd] == -1} {
-	    lappend dbCommands $cmd
+	    lappend unwrappedDbCommands $cmd
 	}
     }
+
+    set dbSpecificCommands $mgedCommands
+
 
     if {!$mViewOnly} {
 	$itk_component(mged) set_outputHandler "$itk_component(cmd) putstring"
@@ -4924,12 +4929,14 @@ Popup Menu    Right or Ctrl-Left
 	keep -sashindent -thickness
     }
     set tmp_dbCommands [$itk_component(sdb) getUserCmds]
-    set dbCommands {}
+    set unwrappedDbCommands {}
     foreach cmd $tmp_dbCommands {
 	if {[lsearch $bannedDbCommands $cmd] == -1} {
-	    lappend dbCommands $cmd
+	    lappend unwrappedDbCommands $cmd
 	}
     }
+
+    set dbSpecificCommands $sdbCommands
 
     $itk_component(sdb) transparencyAll 1
     $itk_component(sdb) bounds "-4096 4095 -4096 4095 -4096 4095"
@@ -7783,14 +7790,15 @@ Popup Menu    Right or Ctrl-Left
 	    function {
 		if {[llength $args] == 3} {
 		    set subcmd [lindex $args 2]
-		    if {[lsearch $subcmd $dbCommands] == -1 &&
+		    if {[lsearch $subcmd $unwrappedDbCommands] == -1 &&
+			[lsearch $subcmd $dbSpecificCommands] == -1 &&
 			[lsearch $subcmd $archerCommands] == -1} {
 			 error "Archer::cmd: unrecognized command - $subcmd"
 		     } else {
 			 return
 		     }
 		} else {
-		    return [eval list $archerCommands $dbCommands]
+		    return [eval list $archerCommands $dbSpecificCommands $unwrappedDbCommands]
 		}
 	    }
 	    class {
@@ -7808,7 +7816,13 @@ Popup Menu    Right or Ctrl-Left
 	return [eval $args]
     }
 
-    set i [lsearch $dbCommands $cmd]
+    set i [lsearch $dbSpecificCommands $cmd]
+    if {$i != -1} {
+	_add_history $args
+	return [eval $args]
+    }
+
+    set i [lsearch $unwrappedDbCommands $cmd]
     if {$i != -1} {
 	_add_history $args
 	return [eval dbCmd $args]
@@ -8903,7 +8917,7 @@ Popup Menu    Right or Ctrl-Left
 }
 
 ::itcl::body Archer::GetUserCmds {} {
-    return $dbCommands
+    return $unwrappedDbCommands
 }
 
 ::itcl::body Archer::WhatsOpen {} {
@@ -10074,23 +10088,6 @@ Popup Menu    Right or Ctrl-Left
     eval archerWrapper cp 0 0 1 1 $args
 }
 
-::itcl::body Archer::decimate {args} {
-    eval sdbWrapper decimate 0 0 1 1 $args
-    _redraw_obj [lindex $args end]
-}
-::itcl::body Archer::decimate2 {args} {
-    eval sdbWrapper decimate2 0 0 1 1 $args
-    _redraw_obj [lindex $args end]
-}
-
-::itcl::body Archer::decimateAttr {args} {
-    eval sdbWrapper decimateAttr 0 0 0 1 $args
-}
-
-::itcl::body Archer::decimateAttr2 {args} {
-    eval sdbWrapper decimateAttr2 0 0 0 1 $args
-}
-
 ::itcl::body Archer::dbExpand {args} {
     # parse out preceeding options
     set searchType "-glob"
@@ -10199,6 +10196,24 @@ Popup Menu    Right or Ctrl-Left
     }
 
     return [list $options $objects]
+}
+
+::itcl::body Archer::decimate {args} {
+    eval sdbWrapper decimate 0 0 1 1 $args
+    _redraw_obj [lindex $args end]
+}
+
+::itcl::body Archer::decimate2 {args} {
+    eval sdbWrapper decimate2 0 0 1 1 $args
+    _redraw_obj [lindex $args end]
+}
+
+::itcl::body Archer::decimateAttr {args} {
+    eval sdbWrapper decimateAttr 0 0 0 1 $args
+}
+
+::itcl::body Archer::decimateAttr2 {args} {
+    eval sdbWrapper decimateAttr2 0 0 0 1 $args
 }
 
 ::itcl::body Archer::delete {args} {
