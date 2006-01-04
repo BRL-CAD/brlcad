@@ -181,6 +181,13 @@ case $FILE in
 	indentation=8
 	tab_width=8
 	;;
+    *.bat)
+	echo "$FILE is a batch shell script"
+	mode="sh"
+	mode_vars="sh-indentation sh-basic-offset"
+	wrap=0
+	commentchar="REM"
+	;;
     *)
 	echo "ERROR: $FILE has an unknown filetype"
 	exit 0
