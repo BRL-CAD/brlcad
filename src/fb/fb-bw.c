@@ -63,12 +63,13 @@ int	width;
 int	inverse;
 int	scr_xoff, scr_yoff;
 
+char *framebuffer = NULL;
 char *file_name;
 FILE *outfp;
 
 /* XXX -R -G -B */
 char	usage[] = "\
-Usage: fb-bw [-h -i]\n\
+Usage: fb-bw [-h -i] [-F framebuffer]\n\
 	[-X scr_xoff] [-Y scr_yoff]\n\
 	[-s squaresize] [-w width] [-n height] [file.bw]\n";
 
@@ -77,7 +78,7 @@ get_args(int argc, register char **argv)
 {
 	register int c;
 
-	while ( (c = bu_getopt( argc, argv, "hiX:Y:s:w:n:" )) != EOF )  {
+	while ( (c = bu_getopt( argc, argv, "hiF:X:Y:s:w:n:" )) != EOF )  {
 		switch( c )  {
 		case 'h':
 			/* high-res */
@@ -85,6 +86,9 @@ get_args(int argc, register char **argv)
 			break;
 		case 'i':
 			inverse = 1;
+			break;
+		case 'F':
+			framebuffer = bu_optarg;
 			break;
 		case 'X':
 			scr_xoff = atoi(bu_optarg);
@@ -143,7 +147,7 @@ main(int argc, char **argv)
 	}
 
 	/* Open Display Device */
-	if ((fbp = fb_open( NULL, width, height )) == NULL ) {
+	if ((fbp = fb_open(framefubber, width, height )) == NULL ) {
 		fprintf( stderr, "fb_open failed\n");
 		exit( 1 );
 	}

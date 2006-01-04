@@ -27,6 +27,7 @@ fb\(hybw \- save a framebuffer image in a black and white bw file
 .SH SYNOPSIS
 .B fb-bw
 .RB [ \-hi ]
+.RB [ \-F framebuffer]
 .RB [ \-X\  scr_xoff]
 .RB [ \-Y\  scr_yoff]
 .RB [ \-s\  squaresize]
@@ -47,6 +48,11 @@ is used to select the display device (see
 .IR brlcad (1)).
 If this variable is not set, the default device for your system will
 be used.
+Alternatively, the framebuffer may be explicitly specified
+by using the
+.B \-F
+flag.
+.PP
 By default, the output file will be made size 512x512 pixels.
 Specifying the
 .B \-h
