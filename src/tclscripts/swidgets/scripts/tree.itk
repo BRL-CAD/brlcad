@@ -135,7 +135,7 @@ itcl::class swidgets::Tree {
     itk_option define -textmenuloadcommand textMenuLoadCommand Command {}
 
     public {
-	method component {name}
+	method component {{name ""}}
 	method insert {index parent text {type ""} {color ""} {clientData ""}}
 	method find {text {parent "root"} {firstOnly 1}}
 	method remove {node {redraw 1}}
@@ -603,8 +603,11 @@ proc ::swidgets::tree {args} {
     tk_popup $itk_component(popupmenu) $rx $ry
 }
 
-::itcl::body swidgets::Tree::component {name} {
+::itcl::body swidgets::Tree::component {{name ""}} {
     switch -- $name {
+	""          {
+	    # this was put here to keep the itk::Widget destructor from barfing
+	}
 	"canvas"    {return $itk_component(canvas)}
 	"frame"     {return $itk_component(frame)}
 	"popupmenu" {return $itk_component(popupmenu)}
@@ -726,7 +729,7 @@ proc ::swidgets::tree {args} {
 	    if {$node == ""} {
 		return
 	    }
-	    
+
 	    if {[string first "n:" $node] == -1} {
 		set node "n:$node"
 	    }
@@ -735,9 +738,6 @@ proc ::swidgets::tree {args} {
 	    if {$itk_option(-selectmode) == "single"} {
 		selection clear
 	    }
-
-	    set snode [lindex [split $node :] 1]
-	    set color [$snode get -color]
 
 	    if {$selnode != {}} {
 		# check to see if node is already in select list ...
@@ -748,16 +748,11 @@ proc ::swidgets::tree {args} {
 		} else {
 		    # add to list
 		    lappend selnode $node
-		    lappend saveFill $color
 		}
 	    } else {
 		# add to list
 		set selnode $node
-		set saveFill $color
 	    }
-
-
-	    # deal with drawing selection box
 
 	    # Create the selection box
 	    set selectBox [$itk_component(canvas) create rectangle -10 -10 -10 -10 \
@@ -765,6 +760,9 @@ proc ::swidgets::tree {args} {
 		    -fill $itk_option(-foreground) \
 		    -outline $itk_option(-foreground)]
 
+	    # Save the fill color
+	    set snode [lindex [split $node :] 1]
+	    set saveFill [$snode get -color]
 
 	    # Highlight selnode
 	    set coords [$itk_component(canvas) bbox $node]
@@ -836,23 +834,25 @@ proc ::swidgets::tree {args} {
 	    set idx [lsearch -exact $selnode $node]
 	    if {$idx < 0} {return}
 
-	    if {[lindex $saveFill $idx] == ""} {
-		set fill $itk_option(-foreground)
-	    } else {
-		set fill [lindex $saveFill $idx]
-	    }
-
 	    set selnode [lreplace $selnode $idx $idx]
-	    set saveFill [lreplace $saveFill $idx $idx]
 	    if {$selnode == ""} {
 		set selnode {}
-		set saveFill ""
 	    }
 
+	    if {$saveFill == ""} {
+		set fill $itk_option(-foreground)
+	    } else {
+		set fill $saveFill
+	    }
+	    $itk_component(canvas) itemconfigure $selnode \
+		-fill $fill
+	    
 	    # remove hilight box
 	    $itk_component(canvas) delete selectBox_$node
 	    $itk_component(canvas) itemconfigure $node \
 		-fill $fill
+
+	    set saveFill ""
 	}
 	clear {
 	    # Unhighlight selnode
