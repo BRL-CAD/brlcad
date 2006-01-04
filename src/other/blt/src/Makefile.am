@@ -1,3 +1,4 @@
+# $Id$
 
 noinst_LTLIBRARIES = libblts.la
 
@@ -79,6 +80,51 @@ AM_CPPFLAGS = \
 	-DTCL_LIBRARY="\"${TCL_LIBRARY}\"" \
 	-DTCL_PACKAGE_PATH="\"${TCL_PACKAGE_PATH}\"" \
 	-DUSE_TCLALLOC=0
+
+EXTRA_DIST = \
+	bltWinDde.c \
+	bltWindow.c \
+	bltWinDraw.c \
+	bltWinImage.c \
+	bltWinMain.c \
+	bltWinop.c \
+	bltWinPipe.c \
+	bltWinPrnt.c \
+	bltWinUtil.c \
+	pure_api.c \
+	tkScrollbar.c \
+	blt.h \
+	bltBind.h \
+	bltChain.h \
+	bltConfig.h \
+	bltGraph.h \
+	bltGrAxis.h \
+	bltGrElem.h \
+	bltGrLegd.h \
+	bltHash.h \
+	bltImage.h \
+	bltInterp.h \
+	bltInt.h \
+	bltList.h \
+	bltMath.h \
+	bltNsUtil.h \
+	bltObjConfig.h \
+	bltPool.h \
+	bltPs.h \
+	bltSwitch.h \
+	bltTable.h \
+	bltText.h \
+	bltTile.h \
+	bltTkInt.h \
+	bltTree.h \
+	bltTreeView.h \
+	bltTuple.h \
+	bltVecInt.h \
+	bltVector.h \
+	bltWait.h \
+	bltWinConfig.h \
+	bltWin.h \
+	missing.h
 
 MAINTAINERCLEANFILES = Makefile.in
 
