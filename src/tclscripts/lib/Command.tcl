@@ -55,6 +55,7 @@
     public method putstring {str}
 
     private method invoke {}
+    private method invokeMaster {hcmd}
     private method first_char_in_line {}
     private method beginning_of_line {}
     private method end_of_line {}
@@ -147,12 +148,11 @@
 	set cmdlist [eval $itk_option(-cmd_prefix) getUserCmds]
     }
 
-    # Delete old aliases
-    foreach alias [$slaveInterp aliases] {
-	catch {$slaveInterp alias $cmd {}}
-    }
+    # Create new slave interp
+    interp delete $slaveInterp 
+    set slaveInterp [interp create]
 
-    # Create new aliases
+    # Create slave interp's aliases
     foreach cmd $cmdlist {
 	eval $slaveInterp alias $cmd $itk_option(-cmd_prefix) $cmd
     }
@@ -274,7 +274,12 @@
     # remove any instances of prompt2 from the beginning of each secondary line
     regsub -all "\n$itk_option(-prompt2)" $cmd "" cmd
 
-    set hcmd $cmd
+    set cname [lindex $cmd 0]
+    if {$cname == "master"} {
+	invokeMaster $cmd
+
+	return
+    }
 
     if {[$slaveInterp eval info complete [list $cmd]]} {
 	set result [catch {$slaveInterp eval uplevel \#0 [list $cmd]} msg]
@@ -291,7 +296,7 @@
 	}
 
 	if {$do_history} {
-	    $hist add $hcmd
+	    $hist add $cmd
 	}
 	print_prompt
 
@@ -304,6 +309,43 @@
 	print_prompt2
     }
     $w see insert
+}
+
+::itcl::body Command::invokeMaster {hcmd} {
+    set cmd [lrange $hcmd 1 end]
+
+    if {$cmd == ""} {
+	return ""
+    }
+
+    if {[info complete $cmd]} {
+	set result [catch {uplevel #0 $cmd} msg]
+
+	if {$result != 0} {
+	    $itk_component(text) tag add oldcmd promptEnd insert
+	    print_tag "Error: $msg\n" result
+	} else {
+	    $itk_component(text) tag add oldcmd promptEnd insert
+
+	    if {$msg != ""} {
+		print_tag $msg\n result
+	    }
+	}
+
+	if {$do_history} {
+	    $hist add $hcmd
+	}
+	print_prompt
+
+	# get rid of oldest output
+	set nlines [expr int([$itk_component(text) index end])]
+	if {$nlines > $itk_option(-maxlines)} {
+	    $itk_component(text) delete 1.0 [expr $nlines - $itk_option(-maxlines)].end
+	}
+    } else {
+	print_promt2
+    }
+    $itk_component(text) see insert
 }
 
 ::itcl::body Command::first_char_in_line {} {
