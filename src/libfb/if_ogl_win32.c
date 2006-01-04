@@ -1166,7 +1166,7 @@ FBIO	*ifp;
 {
 	do_event(ifp);
 
-	if (OGL(saveifp)->alive < 0)
+	if (OGL(ifp)->alive < 0)
 	    return(1);
 	else
 	    return(0);
