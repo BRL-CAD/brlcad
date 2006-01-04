@@ -181,6 +181,7 @@ EXTRA_DIST = \
 	g_bot_include.c \
 	librt.dsp \
 	nmg_junk.c \
+	parse.c \
 	pmalloc.c \
 	sqrt.gould.s \
 	sqrt.vax.s \

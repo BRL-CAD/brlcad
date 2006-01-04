@@ -18,8 +18,17 @@ libsysv_la_SOURCES = \
 
 EXTRA_DIST = \
 	bsdselect.c \
-	libsysv.dsp \
-	vers_win.c
+	engine.c \
+	regcomp.c \
+	regerror.c \
+	regfree.c \
+	regexec.c \
+	vers_win.c \
+	cclass.h \
+	cname.h \
+	regex2.h \
+	utils.h \
+	libsysv.dsp
 
 BUILT_SOURCES = vers.c
 vers.c:
