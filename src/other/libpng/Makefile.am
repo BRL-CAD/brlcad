@@ -56,7 +56,8 @@ EXTRA_DIST = \
 	pngbar.jpg \
 	pngbar.png \
 	pngnow.png \
-	pngtest.png
+	pngtest.png \
+	scripts
 
 .PHONY : test
 test:	pngtest
