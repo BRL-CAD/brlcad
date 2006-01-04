@@ -3040,9 +3040,12 @@ AC_CONFIG_FILES([
 	src/other/tkimg/pngtcl/Makefile
 	src/other/tkimg/zlibtcl/Makefile
 	src/other/blt/Makefile
+	src/other/blt/demos/Makefile
+	src/other/blt/demos/bitmaps/Makefile
 	src/other/blt/src/Makefile
 	src/other/blt/library/Makefile
 	src/other/blt/library/dd_protocols/Makefile
+	src/other/blt/win/Makefile
 	src/proc-db/Makefile
 	src/remrt/Makefile
 	src/rt/Makefile
