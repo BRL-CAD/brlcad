@@ -507,9 +507,6 @@
     $help add dbip	{{} {get dbip}}
     $help add dump	{{file} {write current state of database object to file}}
     $help add dup	{{file [prefix]} {check for dup names in 'file'}}
-    $help add erotate	{{x y z} {rotate object}}
-    $help add escale	{{sf} {scale object}}
-    $help add etranslate {{x y z} {translate object}}
     $help add expand	{{expression} {globs expression against database objects}}
     $help add find	{{[-s] <objects>} {find all references to objects}}
     $help add form	{{objType} {returns form of objType}}
@@ -536,6 +533,9 @@
     $help add open	{{?dbfile?} {open a database}}
     $help add ocenter 	{{obj(s)} {get center for obj(s)}}
     $help add ocrotate	{{obj x y z} {rotate object about its center by x, y, z degrees}}
+    $help add orotate	{{x y z} {rotate object}}
+    $help add oscale	{{sf} {scale object}}
+    $help add otranslate {{x y z} {translate object}}
     $help add pathlist	{{name(s)}	{list all paths from name(s) to leaves}}
     $help add paths	{{pattern} {lists all paths matching input path}}
     $help add prcolor	{{} {print color&material table}}
