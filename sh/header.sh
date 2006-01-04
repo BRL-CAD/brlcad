@@ -184,6 +184,11 @@ case $FILE in
 	wrap=0
 	commentprefix="#"
 	;;
+    *.bat)
+	echo "$FILE is a batch shell script"
+	wrap=0
+	commentprefix="REM "
+	;;
     *.[0-9])
 	echo "$FILE is a manual page"
 	wrap=0
@@ -601,6 +606,14 @@ case "$lineone" in
         echo "found comment line"
 	skip=0
 	closeit=1
+	;;
+    \@*)
+        echo "found batch command"
+	skip=0
+	;;
+    \REM*)
+        echo "found batch comment"
+	skip=0
 	;;
     *)
         echo "${FILE}:1 ERROR: Unknown line one: $lineone"
