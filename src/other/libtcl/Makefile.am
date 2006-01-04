@@ -127,7 +127,8 @@ EXTRA_DIST = \
 	mac \
 	macosx \
 	tests \
-	tools
+	tools \
+	win
 
 MAINTAINERCLEANFILES = Makefile.in
 
