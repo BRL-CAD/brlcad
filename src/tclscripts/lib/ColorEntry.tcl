@@ -43,13 +43,17 @@
     constructor {args} {}
     destructor {}
 
-    public method rgbValid {r g b}
-    public method getColor {}
-    public method setColor {r g b}
+    public {
+	method getColor {}
+	method setColor {r g b}
 
-    private method chooser {}
-    private method updateColor {}
-    private method colorOK {}
+	proc rgbValid {r g b}
+    }
+
+    private {
+	method chooser {}
+	method updateColor {}
+    }
 }
 
 ::itcl::body cadwidgets::ColorEntry::constructor {args} {
@@ -75,14 +79,23 @@
 
     eval itk_initialize $args
     bind $itk_component(entry) <Return> [::itcl::code $this updateColor]
+
+    setColor 200 200 200
 }
 
 ::itcl::body cadwidgets::ColorEntry::chooser {} {
-    cadColorWidget dialog $itk_interior color \
-	    -title "Color Chooser" \
-	    -initialcolor [$itk_component(menubutton) cget -background] \
-	    -ok [::itcl::code $this colorOK] \
-	    -cancel "cadColorWidget_destroy $itk_interior.color"
+    set ic [getColor]
+    set ic [format "#%02x%02x%02x" [lindex $ic 0] [lindex $ic 1] [lindex $ic 2]]
+    set c [tk_chooseColor -initialcolor $ic -title "Color Choose"]
+
+    if {$c == ""} {
+	return
+    }
+
+    regexp {\#([0-9a-fA-F][0-9a-fA-F])([0-9a-fA-F][0-9a-fA-F])([0-9a-fA-F][0-9a-fA-F])} \
+	$c rgb r g b
+
+    setColor [format "%i" 0x$r] [format "%i" 0x$g] [format "%i" 0x$b]
 }
 
 ::itcl::body cadwidgets::ColorEntry::getColor {} {
@@ -101,12 +114,6 @@
 
 ::itcl::body cadwidgets::ColorEntry::updateColor {} {
     eval setColor [getText]
-}
-
-::itcl::body cadwidgets::ColorEntry::colorOK {} {
-    upvar #0 $itk_interior.color data
-    setColor $data(red) $data(green) $data(blue)
-    cadColorWidget_destroy $itk_interior.color
 }
 
 ::itcl::body cadwidgets::ColorEntry::rgbValid {r g b} {
