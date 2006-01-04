@@ -1,3 +1,4 @@
+# $Id$
 
 noinst_LTLIBRARIES = tkimgp.la
 
@@ -16,6 +17,11 @@ AM_CPPFLAGS = \
 	-DTCL_LIBRARY="\"${TCL_LIBRARY}\"" \
 	-DTCL_PACKAGE_PATH="\"${TCL_PACKAGE_PATH}\"" \
 	-DUSE_TCLALLOC=0
+
+EXTRA_DIST = \
+	init.c \
+	pkgIndex.tcl.in \
+	tests
 
 MAINTAINERCLEANFILES = Makefile.in
 

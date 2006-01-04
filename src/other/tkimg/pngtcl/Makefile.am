@@ -1,3 +1,4 @@
+# $Id$
 
 noinst_LTLIBRARIES = pngtcl.la
 
@@ -14,6 +15,13 @@ AM_CPPFLAGS = \
 	-DTCL_LIBRARY="\"${TCL_LIBRARY}\"" \
 	-DTCL_PACKAGE_PATH="\"${TCL_PACKAGE_PATH}\"" \
 	-DUSE_TCLALLOC=0
+
+EXTRA_DIST = \
+	pkgIndex.tcl.in \
+	pngtcl.h \
+	pngtclDecls.h \
+	pngtclDeclsMask.h \
+	pngtclDeclsUnmask.h
 
 MAINTAINERCLEANFILES = Makefile.in
 
