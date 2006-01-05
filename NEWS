@@ -15,6 +15,7 @@ This release marks the one year anniversary of BRL-CAD being released
 as Open Source software.  Thank you to everyone for your support and
 contributions.
 
+* new reshoot program to reshoot rays & compare results - Lee Butler
 * added support for -F framebuffer option to fb-bw - Sean Morrison
 * reid mged command, recursively assign region IDs - Sean Morrison
 * remat mged command, recursively assign a material ID - Sean Morrison
