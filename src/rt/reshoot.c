@@ -1,0 +1,425 @@
+/*                     S H O T L I N E S . C
+ * BRL-CAD
+ *
+ * Copyright (C) 2004-2005 United States Government as represented by
+ * the U.S. Army Research Laboratory.
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of the
+ * License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this file; see the file named COPYING for more
+ * information.
+ */
+/** @file reshoot.c
+ *
+ * A program to shoot reshoot and compare results to previous runs.
+ *
+ * This program is geared towards performing regression tests of the
+ * BRL-CAD libraries.  A candidate application is run with 
+ * the RT_G_DEBUG flag DEBUG_ALLHITS set.  This causes the application
+ * to log all calls to the application hit() routine, and print the 
+ * contents of the struct partition.  The log is processed to 
+ * eliminate extraneous information to produce the input to this 
+ * program.  The following awk program, will suffice:  \verbatim
+
+	/Pnt/ { START=index($0,"(") + 1
+	       STR=substr($0, START, index($0,")") - START)
+	       gsub(  ", "  , "," , STR)
+	       printf "Pnt=%s\n",STR
+	
+	       }
+	
+	
+	/Dir/ { START=index($0,"(") + 1
+	       STR=substr($0, START, index($0,")") - START)
+	       gsub(  ", "  , "," , STR)
+	       printf "Dir=%s\n",STR
+	       }
+	/PT/  { PARTIN=$3
+	       PARTOUT=$5
+	       }
+	/InHIT/ { INHIT=$2 }
+	/OutHIT/ { OUTHIT=$2 }
+	/Region/ { printf "\tregion=%s in=%s in%s out=%s out%s\n",$2,PARTIN,INHIT,PARTOUT,OUTHIT}
+	
+\endverbatim
+ * If this awk program is stored in the file p.awk then: \verbatim
+ 	awk -f p.awk < logfile > inputfile
+\endverbatim
+ * will produce a suitable input file for this program.  The form is as 
+ * follows: \verbatim
+ 	Pnt=1,2,3
+ 	Dir=4,5,6
+		region=/all.g/platform.r in=platform.s indist=10016.8 out=platform.s outdist=10023.8
+\endverbatim
+ * where the line begining with "region" may be repeated any number of times, representing each
+ * region encountered along the ray.
+ * now run this program as follows: \verbatim
+ 	reshoot geom.g obj [obj...] < inputfile
+\endverbatim
+ * and this  will re-shoot all of the rays that the original program
+ * shot, and compare the results.
+ *
+ * One of the basic assumptions is that the application structure 
+ * field a_onehit is set to zero in the original application, causing 
+ * all rays to be shot all the way through the geometry
+ */
+#include "common.h"
+
+#include <stdio.h>
+#include <strings.h>
+#include <math.h>
+
+#include "machine.h"		/* machine specific definitions */
+#include "vmath.h"		/* vector math macros */
+#include "bu.h"
+#include "raytrace.h"		/* librt interface definitions */
+#include "rtprivate.h"
+
+
+
+char *progname = "(noname)";
+
+/**
+ * \struct shot
+ * A description of a single shotline, and all the regions that were
+ * hit by the shotline.
+ */
+struct shot {
+    point_t pt;
+    vect_t dir;
+    struct bu_list regions;
+};
+
+/**
+ * \struct shot_sp
+ * The parse table for a struct shot
+ */
+static const struct bu_structparse shot_sp[] = {
+    { "%f", 3, "Pnt", bu_offsetofarray(struct shot, pt)},
+    { "%f", 3, "Dir", bu_offsetofarray(struct shot, dir)},
+    {"",	0, (char *)0,		0,			BU_STRUCTPARSE_FUNC_NULL }
+};
+
+/**
+ * \struct reg_hit
+ *
+ * This describes the interaction of the ray with a single region
+ */
+struct reg_hit {
+    struct bu_list l; /* linked list membership */
+    struct bu_vls regname; /* name of the region */
+    struct bu_vls in_primitive; /* name of the primitive for the inbound hit */
+    double indist; /* distance along ray to the inbound hit */
+    struct bu_vls out_primitive; /* name of the primitive for the outbound hit */
+    double outdist; /* distance along ray to the outbound hit */
+};
+
+static const struct bu_structparse reg_sp[] = {
+    {"%S", 1, "region", offsetof(struct reg_hit, regname) },
+    {"%S", 1, "in", offsetof(struct reg_hit, in_primitive)},
+    {"%S", 1, "out", offsetof(struct reg_hit, out_primitive)},
+    {"%f", 1, "indist", offsetof(struct reg_hit, indist)},
+    {"%f", 1, "outdist", offsetof(struct reg_hit, outdist)},
+    {"",	0, (char *)0,		0,			BU_STRUCTPARSE_FUNC_NULL }
+};
+
+
+/**
+ *	U S A G E --- tell user how to invoke this program, then exit
+ */
+void
+usage(char *s)
+{
+	if (s) (void)fputs(s, stderr);
+
+	(void) fprintf(stderr, "Usage: %s geom.g obj [obj...] < rayfile \n",
+			progname);
+	exit(1);
+}
+
+
+
+/**
+ *  Process a single ray intersection list.
+ *  A pointer to this function is in the application structure a_hit field.
+ *  rt_shootray() calls this if geometry is hit by the ray.  It passes the
+ *  application structure which describes the state of the world
+ *  (see raytrace.h), and a circular linked list of partitions,
+ *  each one describing one in and out segment of one region.
+ * \return
+ *	integer value, typically 1.  This value becomes the return value to rtshootray()
+ */
+int
+hit(register struct application *ap, struct partition *PartHeadp, struct seg *segs)
+{
+    /* see raytrace.h for all of these guys */
+    register struct partition *pp;
+    struct shot *sh = (struct shot *)ap->a_uptr;
+    int status = 0;
+    struct reg_hit *rh;
+    struct bu_vls v;
+    bu_vls_init(&v);
+    struct valstruct {
+	double val;
+    } vs;
+    static struct bu_structparse val_sp[] = {
+	{"%f", 1, "val", offsetof(struct valstruct, val)},
+    };
+
+
+    /* examine each partition until we get back to the head */
+    rh = BU_LIST_FIRST(reg_hit, &sh->regions);
+    for( pp=PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw )  {
+
+	/* since the values were printed out using a %g format, 
+	 * we have to do the same thing to the result to compare them
+	 */
+	bu_vls_trunc(&v, 0);
+	bu_vls_printf(&v, "val=%g", pp->pt_inhit->hit_dist);
+	bu_struct_parse(&v, val_sp, (const char *)&vs);
+
+	if (vs.val != rh->indist) {
+	    bu_log("inhit mismatch %g %g\n", pp->pt_inhit->hit_dist, rh->indist);
+	    status = 1;
+	}
+
+	bu_vls_trunc(&v, 0);
+	bu_vls_printf(&v, "val=%g", pp->pt_outhit->hit_dist);
+	bu_struct_parse(&v, val_sp, (const char *)&vs);
+
+
+	if (vs.val != rh->outdist) {
+	    bu_log("outhit mismatch %g %g\n", pp->pt_outhit->hit_dist, rh->outdist);
+	    status = 1;
+	}
+
+	/* check the region name */
+	if (strcmp( pp->pt_regionp->reg_name, bu_vls_addr(&rh->regname) )) {
+	    /* region names don't match */
+	    bu_log("region name mismatch %s %s\n", pp->pt_regionp->reg_name, bu_vls_addr(&rh->regname) );
+	    status = 1;
+	}
+
+	if ( strcmp(pp->pt_inseg->seg_stp->st_dp->d_namep, bu_vls_addr(&rh->in_primitive))) {
+	    bu_log("primitive name mismatch %s %s\n",pp->pt_inseg->seg_stp->st_dp->d_namep, bu_vls_addr(&rh->in_primitive));
+	    status = 1;
+	}
+	if ( strcmp(pp->pt_outseg->seg_stp->st_dp->d_namep, bu_vls_addr(&rh->out_primitive))) {
+	    bu_log("primitive name mismatch %s %s\n",pp->pt_outseg->seg_stp->st_dp->d_namep, bu_vls_addr(&rh->out_primitive));
+	    status = 1;
+	}
+
+
+	rh = BU_LIST_NEXT(reg_hit, &rh->l);
+    }
+
+    /*
+     * This value is returned by rt_shootray
+     * a hit usually returns 1, miss 0.
+     */
+    return status;
+}
+
+
+/**
+ * Function called when ray misses all geometry
+ * A pointer to this function is stored in the application structure 
+ * field a_miss.  rt_shootray() will call this when the ray misses all geometry.
+ * it passees the application structure.
+ * \return
+ *	Typically 0, and becomes the return value from rt_shootray()
+ */
+int
+miss(register struct application *ap)
+{
+    return(0);
+}
+
+/**
+ * Print a shot.  Mostly a debugging routine.
+ *
+ */
+void
+pr_shot(struct shot *sh)
+{
+    struct reg_hit *rh;
+    /* shoot the old ray */
+    bu_struct_print("shooting", shot_sp, (const char *)sh);
+    for (BU_LIST_FOR(rh, reg_hit, &sh->regions)) {
+	bu_struct_print("", reg_sp, (const char *)rh);
+    }
+}
+
+/**
+ *	Re-shoot a ray
+ *	The ray described by the parametry sh
+ *
+ *	\param sh  a pointer to a struct shot describing the ray to shoot and expected results
+ *	\param ap  a pointer to a struct application
+ *	\return
+ *	integer value indicating if there was a difference
+ */
+int
+do_shot(struct shot *sh, struct application *ap)
+{
+    struct reg_hit *rh;
+    int status;
+
+
+    VMOVE(ap->a_ray.r_pt, sh->pt);
+    VMOVE(ap->a_ray.r_dir, sh->dir);
+    ap->a_uptr = (genptr_t)sh;
+
+    ap->a_hit = hit;
+    ap->a_miss = miss;
+    status = rt_shootray( ap );	/* do it */
+
+    /* clean up */		
+    while (BU_LIST_WHILE(rh, reg_hit, &sh->regions)) {
+	BU_LIST_DEQUEUE( &(rh->l) );
+	bu_vls_free(&rh->regname);
+	bu_vls_free(&rh->in_primitive);
+	bu_vls_free(&rh->out_primitive);
+	bu_free(rh, "");
+    }
+    return status;
+}
+
+
+/**
+ *	Load the database, parse the input, and shoot the rays
+ * \return
+ * integer flag value indicating whether any differences were detected.  0 = none, !0 = different
+ */
+int
+main(int argc, char **argv)
+{
+    /* every application needs one of these */
+    struct application	ap;
+    static struct rt_i *rtip;	/* rt_dirbuild returns this */
+    char idbuf[RT_BUFSIZE] = {0};		/* First ID record info */
+
+    int arg_count;
+    int status = 0;
+    struct bu_vls buf;
+    struct shot sh;
+    char *p;
+
+
+    progname = argv[0];
+
+    if( argc < 3 )  {
+	usage("insufficient args\n");
+	exit(1);
+    }
+
+    
+
+
+
+    /*
+     *  Load database.
+     *  rt_dirbuild() returns an "instance" pointer which describes
+     *  the database to be ray traced.  It also gives you back the
+     *  title string in the header (ID) record.
+     */
+    if( (rtip=rt_dirbuild(argv[1], idbuf, sizeof(idbuf))) == RTI_NULL ) {
+	fprintf(stderr,"rtexample: rt_dirbuild failure\n");
+	exit(2);
+    }
+
+    /* intialize the application structure to all zeros */
+    RT_APPLICATION_INIT(&ap);
+
+    ap.a_rt_i = rtip;	/* your application uses this instance */
+
+    /* Walk trees.
+     * Here you identify any object trees in the database that you
+     * want included in the ray trace.
+     */
+    while( argc > 2 )  {
+	if( rt_gettree(rtip, argv[2]) < 0 )
+	    fprintf(stderr,"rt_gettree(%s) FAILED\n", argv[0]);
+	argc--;
+	argv++;
+    }
+    /*
+     * This next call gets the database ready for ray tracing.
+     * (it precomputes some values, sets up space partitioning, etc.)
+     */
+    rt_prep_parallel(rtip,1);
+
+
+
+
+    bu_vls_init(&buf);
+
+
+    bzero((void *)&sh, sizeof(sh));
+    BU_LIST_INIT(&sh.regions);
+
+    while (bu_vls_gets(&buf, stdin) >= 0) {
+	p = bu_vls_addr(&buf);
+
+	switch (*p) {
+	case 'P' : {
+
+	    if (BU_LIST_NON_EMPTY(&sh.regions)) {
+		status |= do_shot(&sh, &ap);
+	    }
+
+	    if (bu_struct_parse(&buf, shot_sp, (const char *)&sh)) {
+		bu_bomb("error parsing pt");
+	    }
+
+	    break;
+	}
+	case 'D' : {
+	    if (bu_struct_parse(&buf, shot_sp, (const char *)&sh)) {
+		bu_bomb("error parsing dir");
+	    }
+	    break;
+	}
+	case '\t' : {
+	    struct reg_hit *rh = bu_calloc(1, sizeof (struct reg_hit), "");
+
+
+	    if (bu_struct_parse(&buf, reg_sp, (const char *)rh)) {
+		bu_bomb("errror parsing region");
+	    }
+	    BU_LIST_APPEND(&sh.regions, &rh->l);
+
+	    break;
+	}
+	default: 
+	    bu_log("%s skipping: %s\n", BU_FLSTR, p);
+	    break;
+	}
+	bu_vls_trunc(&buf, 0);
+    }
+    status |= do_shot(&sh, &ap);
+
+
+    return status;
+}
+
+
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

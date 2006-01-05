@@ -1,0 +1,81 @@
+.TH RT 1 BRL-CAD
+./"                           R T . 1
+./" BRL-CAD
+./"
+./" Copyright (c) 1984-2005 United States Government as represented by
+./" the U.S. Army Research Laboratory.
+./"
+./" This document is made available under the terms of the GNU Free
+./" Documentation License or, at your option, under the terms of the
+./" GNU General Public License as published by the Free Software
+./" Foundation.  Permission is granted to copy, distribute and/or
+./" modify this document under the terms of the GNU Free Documentation
+./" License, Version 1.2 or any later version published by the Free
+./" Software Foundation; with no Invariant Sections, no Front-Cover
+./" Texts, and no Back-Cover Texts.  Permission is also granted to
+./" redistribute this document under the terms of the GNU General
+./" Public License; either version 2 of the License, or (at your
+./" option) any later version.
+./"
+./" You should have received a copy of the GNU Free Documentation
+./" License and/or the GNU General Public License along with this
+./" document; see the file named COPYING for more information.
+./"
+./"./"./"
+.SH NAME
+reshoot \- re-shoot rays and compare results
+.SH SYNOPSIS
+.B reshoot
+model.g objects ... < raylist
+.SH DESCRIPTION
+This program is designed to shoot a set of rays and compare the results with previous results.
+The program exits with a non-zero status if any rays are different from the previous run, 
+and a 0 status if no differences were found.
+.P
+Typically, an application (probably other than 
+.I reshoot\fR)
+is run with the RT_G_DEBUG flag DEBUG_ALLHITS set.
+This will cause librt to log all calls to the application \fIhit\fR routine to the standard error.
+The logged output can be processed by an 
+.I awk 
+program to produce input to 
+.I reshoot\fR.
+Consider the file p.awk with the following contents:
+.P
+.nf
+/Pnt/ { START=index($0,"(") + 1
+       STR=substr($0, START, index($0,")") - START)
+       gsub(  ", "  , "," , STR)
+       printf "Pnt=%s\n",STR
+       }
+/Dir/ { START=index($0,"(") + 1
+       STR=substr($0, START, index($0,")") - START)
+       gsub(  ", "  , "," , STR)
+       printf "Dir=%s\n",STR
+       }
+/PT/  { PARTIN=$3; PARTOUT=$5 }
+/InHIT/ { INHIT=$2 }
+/OutHIT/ { OUTHIT=$2 }
+/Region/ { printf "\tregion=%s in=%s in%s out=%s out%s\n",$2,PARTIN,INHIT,PARTOUT,OUTHIT}
+.fi
+.P
+Given this 
+.I awk 
+program The log file from the application can be processed as follows:
+.IP
+awk -f p.awk < logfile > shotlist
+.P
+to produce input for 
+.I reshoot\fR.
+Then 
+.I reshoot
+can be run as follows:
+.IP
+reshoot geom.g obj ... < shotlist
+
+.SH COPYRIGHT
+This software is Copyright (C) 1984-2006 United States Government as
+represented by the U.S. Army Research Laboratory. All rights reserved.
+.SH "BUG REPORTS"
+Reports of bugs or problems should be submitted via electronic
+mail to <devs@brlcad.org>, or via the "cadbug.sh" script.
