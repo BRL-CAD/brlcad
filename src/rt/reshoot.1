@@ -73,6 +73,14 @@ can be run as follows:
 .IP
 reshoot geom.g obj ... < shotlist
 
+.SH BUGS
+The floating point values logged when the DEBUG_ALLHITS flag is set in RT_G_DEBUG are printed with a %g format.
+This causes some truncation of precision.  This is accounted for by
+.I reshoot
+by re-formatting the numbers to ascii and re-parsing them back in.
+This causes the same amount of precision loss as the original values
+have undergone.  However, small actual differences are also overlooked
+as a result.
 .SH COPYRIGHT
 This software is Copyright (C) 1984-2006 United States Government as
 represented by the U.S. Army Research Laboratory. All rights reserved.
