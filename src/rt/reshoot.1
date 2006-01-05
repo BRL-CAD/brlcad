@@ -31,6 +31,9 @@ model.g objects ... < raylist
 This program is designed to shoot a set of rays and compare the results with previous results.
 The program exits with a non-zero status if any rays are different from the previous run, 
 and a 0 status if no differences were found.
+
+
+
 .P
 Typically, an application (probably other than 
 .I reshoot\fR)
@@ -42,6 +45,7 @@ program to produce input to
 .I reshoot\fR.
 Consider the file p.awk with the following contents:
 .P
+.in +5
 .nf
 /Pnt/ { START=index($0,"(") + 1
        STR=substr($0, START, index($0,")") - START)
@@ -53,10 +57,12 @@ Consider the file p.awk with the following contents:
        gsub(  ", "  , "," , STR)
        printf "Dir=%s\n",STR
        }
-/PT/  { PARTIN=$3; PARTOUT=$5 }
+/PT/  { PIN=$3; POUT=$5 }
 /InHIT/ { INHIT=$2 }
 /OutHIT/ { OUTHIT=$2 }
-/Region/ { printf "\tregion=%s in=%s in%s out=%s out%s\n",$2,PARTIN,INHIT,PARTOUT,OUTHIT}
+/Region/ { printf "\tregion=%s in=%s in%s out=%s out%s\n",
+	$2,PIN,INHIT,POUT,OUTHIT
+	}
 .fi
 .P
 Given this 
@@ -67,17 +73,52 @@ awk -f p.awk < logfile > shotlist
 .P
 to produce input for 
 .I reshoot\fR.
+An example of the input file format for 
+.I reshoot
+is:
+.P
+.in +5
+.nf
+Pnt=0,0,1
+Dir=0,0,-1
+	region=r1.r in=p1.s indist=10016.8 out=p2.s outdist=10017.8
+	region=r2.r in=p3.s indist=10018.8 out=p4.s outdist=10019.8
+	\fI... (arbitrary many region lines)\fR
+Pnt=0,0,10
+Dir=0,0,-1
+	region=r1.r in=p1.s indist=10016.8 out=p2.s outdist=10017.8
+	region=r2.r in=p3.s indist=10018.8 out=p4.s outdist=10019.8
+	\fI... (arbitrary many region lines)\fR
+.fi
+.P
+There can be an arbitrary number of rays specified in the file.
+There must not be whitespace between the values of Pnt and Dir.
+It is best to comma separate the three coordinat values.
+The keywords "Pnt" and "Dir" must occur atthe begining of a line.
+There can be an arbitrary number of regions along the ray path.
+Each region must be described on a single line.
+A new ray is started by a "Pnt" value.
 Then 
 .I reshoot
 can be run as follows:
 .IP
 reshoot geom.g obj ... < shotlist
+.P
+Differences are reported for each ray as they are found:
+
+.in +5
+Ray Pt 0,0,1 Dir 0,0,-1
+        inhit mismatch 17.8177 16.8
+        outhit mismatch 24.7685 23.8
+        region name mismatch /oops.r sb r1.r
+        in primitive name mismatch p8.s sb p1.s
+
 
 .SH BUGS
 The floating point values logged when the DEBUG_ALLHITS flag is set in RT_G_DEBUG are printed with a %g format.
 This causes some truncation of precision.  This is accounted for by
 .I reshoot
-by re-formatting the numbers to ascii and re-parsing them back in.
+by re-formatting the numbers computed into ascii and re-parsing them back in.
 This causes the same amount of precision loss as the original values
 have undergone.  However, small actual differences are also overlooked
 as a result.

@@ -222,7 +222,7 @@ hit(register struct application *ap, struct partition *PartHeadp, struct seg *se
 	    status = 1;
 	}
 	if (bu_vls_strlen(&result) > 0) {
- 	    bu_log("Ray Pt %g %g %g Dir %g %g %g\n%S", 
+ 	    bu_log("Ray Pt %g,%g,%g Dir %g,%g,%g\n%S", 
  		   V3ARGS(sh->pt),
  		   V3ARGS(sh->dir),
  		   &result);
@@ -321,7 +321,6 @@ main(int argc, char **argv)
     int status = 0;
     struct bu_vls buf;
     struct shot sh;
-    char *p;
 
 
     progname = argv[0];
@@ -377,41 +376,43 @@ main(int argc, char **argv)
     BU_LIST_INIT(&sh.regions);
 
     while (bu_vls_gets(&buf, stdin) >= 0) {
-	p = bu_vls_addr(&buf);
+	char *p = bu_vls_addr(&buf);
 
 	switch (*p) {
-	case 'P' : {
+	case 'P' :
+	    {
 
-	    if (BU_LIST_NON_EMPTY(&sh.regions)) {
-		status |= do_shot(&sh, &ap);
+		if (BU_LIST_NON_EMPTY(&sh.regions)) {
+		    status |= do_shot(&sh, &ap);
+		}
+
+		if (bu_struct_parse(&buf, shot_sp, (const char *)&sh)) {
+		    bu_bomb("error parsing pt");
+		}
+
+		break;
+	    }
+	case 'D' :
+	    {
+		if (bu_struct_parse(&buf, shot_sp, (const char *)&sh)) {
+		    bu_bomb("error parsing dir");
+		}
+		break;
 	    }
 
-	    if (bu_struct_parse(&buf, shot_sp, (const char *)&sh)) {
-		bu_bomb("error parsing pt");
-	    }
-
-	    break;
-	}
-	case 'D' : {
-	    if (bu_struct_parse(&buf, shot_sp, (const char *)&sh)) {
-		bu_bomb("error parsing dir");
-	    }
-	    break;
-	}
-	case '\t' : {
-	    struct reg_hit *rh = bu_calloc(1, sizeof (struct reg_hit), "");
-
-
-	    if (bu_struct_parse(&buf, reg_sp, (const char *)rh)) {
-		bu_bomb("errror parsing region");
-	    }
-	    BU_LIST_APPEND(&sh.regions, &rh->l);
-
-	    break;
-	}
 	default: 
-	    bu_log("%s skipping: %s\n", BU_FLSTR, p);
-	    break;
+	    {
+		struct reg_hit *rh = bu_calloc(1, sizeof (struct reg_hit), "");
+
+
+		if (bu_struct_parse(&buf, reg_sp, (const char *)rh)) {
+		    bu_log("Error parsing region %s\nSkipping to next line\n",
+			   bu_vls_addr(&buf));
+		}
+		BU_LIST_APPEND(&sh.regions, &rh->l);
+
+		break;
+	    }
 	}
 	bu_vls_trunc(&buf, 0);
     }
