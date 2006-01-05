@@ -139,11 +139,11 @@ static const struct bu_structparse reg_sp[] = {
 void
 usage(char *s)
 {
-	if (s) (void)fputs(s, stderr);
+    if (s) (void)fputs(s, stderr);
 
-	(void) fprintf(stderr, "Usage: %s geom.g obj [obj...] < rayfile \n",
-			progname);
-	exit(1);
+    (void) fprintf(stderr, "Usage: %s geom.g obj [obj...] < rayfile \n",
+		   progname);
+    exit(1);
 }
 
 
@@ -167,7 +167,7 @@ hit(register struct application *ap, struct partition *PartHeadp, struct seg *se
     int status = 0;
     struct reg_hit *rh;
     struct bu_vls v;
-    bu_vls_init(&v);
+    struct bu_vls result;
     struct valstruct {
 	double val;
     } vs;
@@ -175,10 +175,14 @@ hit(register struct application *ap, struct partition *PartHeadp, struct seg *se
 	{"%f", 1, "val", offsetof(struct valstruct, val)},
     };
 
+    bu_vls_init(&v);
+    bu_vls_init(&result);
 
     /* examine each partition until we get back to the head */
     rh = BU_LIST_FIRST(reg_hit, &sh->regions);
     for( pp=PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw )  {
+
+ 	bu_vls_trunc(&result, 0);
 
 	/* since the values were printed out using a %g format, 
 	 * we have to do the same thing to the result to compare them
@@ -188,7 +192,7 @@ hit(register struct application *ap, struct partition *PartHeadp, struct seg *se
 	bu_struct_parse(&v, val_sp, (const char *)&vs);
 
 	if (vs.val != rh->indist) {
-	    bu_log("inhit mismatch %g %g\n", pp->pt_inhit->hit_dist, rh->indist);
+	    bu_vls_printf(&result, "\tinhit mismatch %g %g\n", pp->pt_inhit->hit_dist, rh->indist);
 	    status = 1;
 	}
 
@@ -198,26 +202,31 @@ hit(register struct application *ap, struct partition *PartHeadp, struct seg *se
 
 
 	if (vs.val != rh->outdist) {
-	    bu_log("outhit mismatch %g %g\n", pp->pt_outhit->hit_dist, rh->outdist);
+	    bu_vls_printf(&result, "\touthit mismatch %g %g\n", pp->pt_outhit->hit_dist, rh->outdist);
 	    status = 1;
 	}
 
 	/* check the region name */
 	if (strcmp( pp->pt_regionp->reg_name, bu_vls_addr(&rh->regname) )) {
 	    /* region names don't match */
-	    bu_log("region name mismatch %s %s\n", pp->pt_regionp->reg_name, bu_vls_addr(&rh->regname) );
+	    bu_vls_printf(&result, "\tregion name mismatch %s %s\n", pp->pt_regionp->reg_name, bu_vls_addr(&rh->regname) );
 	    status = 1;
 	}
 
 	if ( strcmp(pp->pt_inseg->seg_stp->st_dp->d_namep, bu_vls_addr(&rh->in_primitive))) {
-	    bu_log("primitive name mismatch %s %s\n",pp->pt_inseg->seg_stp->st_dp->d_namep, bu_vls_addr(&rh->in_primitive));
+	    bu_vls_printf(&result,"\tin primitive name mismatch %s %s\n",pp->pt_inseg->seg_stp->st_dp->d_namep, bu_vls_addr(&rh->in_primitive));
 	    status = 1;
 	}
 	if ( strcmp(pp->pt_outseg->seg_stp->st_dp->d_namep, bu_vls_addr(&rh->out_primitive))) {
-	    bu_log("primitive name mismatch %s %s\n",pp->pt_outseg->seg_stp->st_dp->d_namep, bu_vls_addr(&rh->out_primitive));
+	    bu_vls_printf(&result, "\tout primitive name mismatch %s %s\n",pp->pt_outseg->seg_stp->st_dp->d_namep, bu_vls_addr(&rh->out_primitive));
 	    status = 1;
 	}
-
+	if (bu_vls_strlen(&result) > 0) {
+ 	    bu_log("Ray Pt %g %g %g Dir %g %g %g\n%S", 
+ 		   V3ARGS(sh->pt),
+ 		   V3ARGS(sh->dir),
+ 		   &result);
+	}
 
 	rh = BU_LIST_NEXT(reg_hit, &rh->l);
     }
