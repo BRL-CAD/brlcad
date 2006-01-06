@@ -21,13 +21,13 @@ THESE SHOULD HAPPEN BEFORE THE NEXT RELEASE
 
 * clone and tracker
 
-* add geometry examples for toy jeep and building
-
 * ensure successful build on mingw
 
 
 THESE SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------
+
+* add geometry examples for toy jeep and building
 
 * test pic/nonpic build problems with librtms/libmultispectral
 
