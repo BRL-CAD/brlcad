@@ -147,7 +147,7 @@ main(int argc, char **argv)
 	}
 
 	/* Open Display Device */
-	if ((fbp = fb_open(framefubber, width, height )) == NULL ) {
+	if ((fbp = fb_open(framebuffer, width, height )) == NULL ) {
 		fprintf( stderr, "fb_open failed\n");
 		exit( 1 );
 	}
