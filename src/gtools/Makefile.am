@@ -1,14 +1,18 @@
 # $Id$
 
 bin_PROGRAMS = \
+	g_diff \
 	g_lint \
 	g_qa \
-	g_diff \
+	g_transfer \
 	solshoot \
 	testfree
 
 g_diff_SOURCES = g_diff.c
 g_diff_LDADD = ${LIBRT} ${TCL}
+
+g_transfer_SOURCES = g_transfer.c
+g_transfer_LDADD = ${LIBRT} ${BU} ${PKG}
 
 g_lint_SOURCES = g_lint.c
 g_lint_LDADD = ${LIBRT}
