@@ -652,6 +652,12 @@ days of the iteration, only minor bug and build fixes.  A release
 should then be made within the first couple days of the next month's
 iteration.  Repeat, rinse, recycle.
 
+In addition to the monthly iteration release, additional releases may
+be made on an as-needed basis.  This is particularly relevant for
+emergency bug-fix releases and in response to security issues.  The
+December/January timeframe is considered a single iteration with only
+one iteration release necessarily being made in that timeframe.
+
 When making a release, certain public repositories, mailing lists, and
 news outlets require updating and notification.  Especially when the
 major or minor version of BRL-CAD is going to be updated, it is very
