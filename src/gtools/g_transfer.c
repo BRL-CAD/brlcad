@@ -47,7 +47,7 @@
 #include "pkg.h"
 
 
-/** print a usage statement
+/** print a usage statement when invoked with bad, help, or no arguments
  */
 void
 usage(const char *msg, const char *argv0)
@@ -55,7 +55,7 @@ usage(const char *msg, const char *argv0)
     if (msg) {
 	bu_log("%s\n", msg);
     }
-    bu_log("Usage: %s [-t] [-p#] host gfile\n\t-p#\tport number to send to (default 2000)\n\thost\thostname or IP address of receiving server\n\tgfile\tBRL-CAD .g database file\n", argv0 ? argv0 : "g_transfer");
+    bu_log("Usage: %s [-t] [-p#] host gfile [geometry ...]\n\t-p#\tport number to send to (default 2000)\n\thost\thostname or IP address of receiving server\n\tgfile\tBRL-CAD .g database file\n\tgeometry\tname(s) of geometry to send (OPTIONAL)\n", argv0 ? argv0 : "g_transfer");
     bu_log("Usage: %s -r [-p#]\n\t-p#\tport number to listen on (default 2000)\n", argv0 ? argv0 : "g_transfer");
     exit(1);
 }
@@ -118,33 +118,43 @@ run_client(const char *server, int port, struct db_i *dbip)
  */
 int
 main(int argc, char *argv[]) {
-    const char *argv0 = argv[0];
+    const char * const argv0 = argv[0];
     int c;
     int server = 0; /* not a server by default */
     int port = 2000;
 
     /* client stuff */
-    const char *server_name;
-    const char *geometry_file;
-    struct db_i *dbip;
+    const char *server_name = NULL;
+    const char *geometry_file = NULL;
+    const char ** geometry = NULL;
+    int ngeometry = 0;
+    struct db_i *dbip = NULL;
 
     if (argc < 2) {
 	usage("ERROR: Missing arguments", argv[0]);
     }
 
     /* process the command-line arguments after the application name */
-    while ((c = bu_getopt(argc, argv, "trp:")) != EOF) {
+    while ((c = bu_getopt(argc, argv, "tTrRp:P:hH")) != EOF) {
 	switch (c) {
 	    case 't':
+	    case 'T':
 		/* sending */
 		server = 0;
 		break;
 	    case 'r':
+	    case 'R':
 		/* receiving */
 		server = 1;
 		break;
 	    case 'p':
+	    case 'P':
 		port = atoi(bu_optarg);
+		break;
+	    case 'h':
+	    case 'H':
+		/* help */
+		usage(NULL, argv0);
 		break;
 	    default:
 		usage("ERROR: Unknown argument", argv0);
@@ -155,6 +165,10 @@ main(int argc, char *argv[]) {
     argv += bu_optind;
 
     if (server) {
+	if (argc > 0) {
+	    usage("ERROR: Unexpected extra arguments", argv0);
+	}
+
 	/* ignore broken pipes */
 	(void)signal(SIGPIPE, SIG_IGN);
 
@@ -166,11 +180,14 @@ main(int argc, char *argv[]) {
     }
 
     /* prep up the client */
-    if (argc < 2) {
-	usage("ERROR: Missing hostname and/or geometry file arguments", argv0);
-    } else if (argc > 2) {
-	usage("ERROR: Unexpected extra arguments", argv0);
+    if (argc < 1) {
+	usage("ERROR: Missing hostname and geometry file arguments", argv0);
+    } else if (argc < 2) {
+	usage("ERROR: Missing geometry file argument", argv0);
+    } else {
+	geometry = (const char **)(argv + 2);
     }
+    
 
     server_name = *argv++;
     geometry_file = *argv++;
