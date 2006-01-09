@@ -111,34 +111,18 @@ run_server(int port) {
 }
 
 
+/** base routine that the client uses to send an object to the server.
+ * this is the hook callback function for both the primitives and
+ * combinations encountered during a db_functree() traversal.
+ */
 void
-comb_func(struct db_i *dbip, struct directory *dp, genptr_t connection)
+send_to_server(struct db_i *dbip, struct directory *dp, genptr_t connection)
 {
     struct bu_external ext;
     my_data *stash;
 
-    stash = (my_data *)connection;
-
-    if (db_get_external(&ext, dp, dbip) < 0) {
-	bu_log("Failed to read %s, skipping\n", dp->d_namep);
-	return;
-    }
-    
-    /* send the external representation over the wire */
-    bu_log("Sending %s\n",dp->d_namep);
-
-    /* our responsibility to free the stuff we got */
-    bu_free_external(&ext);
-
-    return;
-}
-
-
-void
-leaf_func(struct db_i *dbip, struct directory *dp, genptr_t connection)
-{
-    struct bu_external ext;
-    my_data *stash;
+    RT_CK_DBI(dbip);
+    RT_CK_DIR(dp);
 
     stash = (my_data *)connection;
 
@@ -158,7 +142,8 @@ leaf_func(struct db_i *dbip, struct directory *dp, genptr_t connection)
 
 
 /** start up a client that connects to the given server, and sends
- *  serialized .g data.
+ *  serialized .g data.  if the user specified geometry, only that
+ *  geometry is sent via send_to_server().
  */
 void
 run_client(const char *server, int port, struct db_i *dbip, int geomc, const char **geomv)
@@ -174,40 +159,35 @@ run_client(const char *server, int port, struct db_i *dbip, int geomc, const cha
     /* open a connection to the server */
     validate_port(port);
 
+    stash.fd = 0;
+    stash.server = server;
+    stash.port = port;
+
     bu_log("Database title is:\n%s\n", dbip->dbi_title);
     bu_log("Units: %s\n", rt_units_string(dbip->dbi_local2base));
 
     /* send geometry to the server */
     if (geomc > 0) {
-	/* geometry was specified, look it up and process */
-	stash.fd = 0;
-	stash.server = server;
-	stash.port = port;
-
+	/* geometry was specified. look it up and process the
+	 * hierarchy using db_functree() where all combinations and
+	 * primitives are sent that get encountered.
+	 */
 	for (i = 0; i < geomc; i++) {
 	    dp = db_lookup(dbip, geomv[i], LOOKUP_NOISY);
 	    if (dp == DIR_NULL) {
-		bu_log("Unable to lookup %s, skipping\n", geomv[i]);
-		continue;
+		bu_log("Unable to lookup %s\n", geomv[i]);
+		bu_bomb("ERROR: requested geometry could not be found\n");
 	    }
-	    db_functree(dbip, dp, comb_func, leaf_func, &rt_uniresource, (genptr_t)&stash);
+	    db_functree(dbip, dp, send_to_server, send_to_server, &rt_uniresource, (genptr_t)&stash);
 	}
     } else {
-	/* no geometry was specified so send everything */
+	/* no geometry was specified so traverse the array of linked
+	 * lists contained in the database instance and send
+	 * everything.
+	 */
 	for (i = 0; i < RT_DBNHASH; i++) {
 	    for (dp = dbip->dbi_Head[i]; dp != DIR_NULL; dp = dp->d_forw) {
-		RT_CK_DIR(dp);
-
-		if (db_get_external(&ext, dp, dbip) < 0) {
-		    bu_log("Failed to read %s, skipping\n", dp->d_namep);
-		    continue;
-		}
-
-		/* send the external representation over the wire */
-		bu_log("Sending %s\n", dp->d_namep);
-
-		/* our responsibility to free the external we got */
-		bu_free_external(&ext);
+		(void)send_to_server(dbip, dp, (genptr_t)&stash);
 	    }
 	}
     }
