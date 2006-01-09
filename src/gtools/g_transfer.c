@@ -47,6 +47,15 @@
 #include "pkg.h"
 
 
+/* used by the client to pass the dbip and opened transfer file
+ * descriptor.
+ */
+typedef struct _my_data_ {
+    struct db_i *dbip;
+    int fd;
+} my_data;
+
+
 /** print a usage statement when invoked with bad, help, or no arguments
  */
 void
@@ -101,16 +110,177 @@ run_server(int port) {
 }
 
 
+int 
+send_region(struct db_tree_state *tsp, struct db_full_path *pathp, const struct rt_comb_internal *combp, genptr_t connection)
+{
+    const char *name;
+    RT_CK_FULL_PATH(pathp);
+    name = db_path_to_string(pathp);
+
+    bu_log("BEGIN %s\n", name);
+
+    bu_free((void *)name, "string from db_path_to_string");
+
+    return 0;
+}
+
+union tree *
+send_region_end(struct db_tree_state *tsp, struct db_full_path *pathp, union tree *curtree, genptr_t connection)
+{
+    const char *name;
+    RT_CK_FULL_PATH(pathp);
+    name = db_path_to_string(pathp);
+
+    bu_log("END %s\n", name);
+
+    bu_free((void *)name, "string from db_path_to_string");
+
+    return curtree;
+}
+
+
+union tree *
+send_leaf(struct db_tree_state *tsp, struct db_full_path *pathp, struct rt_db_internal *ip, genptr_t connection)
+{
+    const char *name;
+    struct directory *dp;
+    struct bu_external ext;
+    my_data *stash;
+
+    stash = (my_data *)connection;
+
+    RT_CK_FULL_PATH(pathp);
+    name = db_path_to_string(pathp);
+
+    dp = db_lookup(stash->dbip, name, LOOKUP_NOISY);
+    if (dp == DIR_NULL) {
+	bu_log("Unable to lookup %s, skipping\n", name);
+	return (union tree *)NULL;
+    }
+
+    if (db_get_external(&ext, dp, stash->dbip) < 0) {
+	bu_log("Failed to read %s, skipping\n", dp->d_namep);
+	return (union tree *)NULL;
+    }
+    
+    /* send the external representation over the wire */
+    bu_log("Sending %s\n", name);
+
+    /* our responsibility to free the stuff we got */
+    bu_free_external(&ext);
+    bu_free((void *)name, "string from db_path_to_string");
+
+    return (union tree *)NULL;
+}
+
+void
+comb_func(struct db_i *dbip, struct directory *dp, genptr_t connection)
+{
+    struct bu_external ext;
+    my_data *stash;
+
+    stash = (my_data *)connection;
+
+    if (db_get_external(&ext, dp, dbip) < 0) {
+	bu_log("Failed to read %s, skipping\n", dp->d_namep);
+	return;
+    }
+    
+    /* send the external representation over the wire */
+    bu_log("Sending %s\n",dp->d_namep);
+
+    /* our responsibility to free the stuff we got */
+    bu_free_external(&ext);
+
+    return;
+}
+
+void
+leaf_func(struct db_i *dbip, struct directory *dp, genptr_t connection)
+{
+    struct bu_external ext;
+    my_data *stash;
+
+    stash = (my_data *)connection;
+
+    if (db_get_external(&ext, dp, dbip) < 0) {
+	bu_log("Failed to read %s, skipping\n", dp->d_namep);
+	return;
+    }
+    
+    /* send the external representation over the wire */
+    bu_log("Sending %s\n",dp->d_namep);
+
+    /* our responsibility to free the stuff we got */
+    bu_free_external(&ext);
+
+    return;
+}
+
+
 /** start up a client that connects to the given server, and sends
  *  serialized .g data.
  */
 void
-run_client(const char *server, int port, struct db_i *dbip)
+run_client(const char *server, int port, struct db_i *dbip, int geomc, const char **geomv)
 {
+    int i;
+    struct directory *dp;
+    struct bu_external ext;
+    struct db_tree_state init_state; /* state table for the heirarchy walker */
+    my_data stash;
+
+    RT_CK_DBI(dbip);
+
+    /* open a connection to the server */
     validate_port(port);
 
     bu_log("Database title is:\n%s\n", dbip->dbi_title);
     bu_log("Units: %s\n", rt_units_string(dbip->dbi_local2base));
+
+    /* send geometry to the server */
+    if (geomc > 0) {
+	/* geometry was specified, look it up and process */
+	init_state = rt_initial_tree_state;
+	stash.dbip = dbip;
+#if 0
+	db_walk_tree(dbip, geomc, geomv,
+		     1, 		/* ncpu */
+		     &init_state,	/* initial tree state */
+		     send_region,	/* region start callback */
+		     send_region_end, 		/* region end callback */
+		     send_leaf,		/* leaf callback */
+		     (genptr_t)&stash);
+#endif
+	for (i = 0; i < geomc; i++) {
+	    dp = db_lookup(dbip, geomv[i], LOOKUP_NOISY);
+	    if (dp == DIR_NULL) {
+		bu_log("Unable to lookup %s, skipping\n", geomv[i]);
+		continue;
+	    }
+	    db_functree(dbip, dp, comb_func, leaf_func, &rt_uniresource, NULL);
+	}
+    } else {
+	/* no geometry was specified so send everything */
+	for (i = 0; i < RT_DBNHASH; i++) {
+	    for (dp = dbip->dbi_Head[i]; dp != DIR_NULL; dp = dp->d_forw) {
+		RT_CK_DIR(dp);
+
+		if (db_get_external(&ext, dp, dbip) < 0) {
+		    bu_log("Failed to read %s, skipping\n", dp->d_namep);
+		    continue;
+		}
+
+		/* send the external representation over the wire */
+		bu_log("Sending %s\n", dp->d_namep);
+
+		/* our responsibility to free the external we got */
+		bu_free_external(&ext);
+	    }
+	}
+    }
+
+    return;
 }
 
 
@@ -186,8 +356,8 @@ main(int argc, char *argv[]) {
 	usage("ERROR: Missing geometry file argument", argv0);
     } else {
 	geometry = (const char **)(argv + 2);
+	ngeometry = argc - 2;
     }
-    
 
     server_name = *argv++;
     geometry_file = *argv++;
@@ -199,15 +369,13 @@ main(int argc, char *argv[]) {
     }
 
     /* make sure the geometry file is a geometry database, get a
-       raytrace instance pointer */
-    /*    rtip = rt_dirbuild(geometry_file, NULL, 0); */
+       database instance pointer */
     dbip = db_open(geometry_file, "r");
     if (dbip == DBI_NULL) {
 	bu_log("Cannot open %s\n", geometry_file);
 	perror(argv0);
 	bu_bomb("Need a geometry file");
     }
-    RT_CK_DBI(dbip);
 
     /* load the database directory into memory */
     if (db_dirbuild(dbip) < 0) {
@@ -218,7 +386,7 @@ main(int argc, char *argv[]) {
 
     /* fire up the client */
     bu_log("Connecting to %s, port %d\n", server_name, port);
-    run_client(server_name, port, dbip);
+    run_client(server_name, port, dbip, ngeometry, geometry);
 
     /* done with the database */
     db_close(dbip);
