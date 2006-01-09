@@ -51,8 +51,9 @@
  * descriptor.
  */
 typedef struct _my_data_ {
-    struct db_i *dbip;
     int fd;
+    const char *server;
+    int port;
 } my_data;
 
 
@@ -110,69 +111,6 @@ run_server(int port) {
 }
 
 
-int 
-send_region(struct db_tree_state *tsp, struct db_full_path *pathp, const struct rt_comb_internal *combp, genptr_t connection)
-{
-    const char *name;
-    RT_CK_FULL_PATH(pathp);
-    name = db_path_to_string(pathp);
-
-    bu_log("BEGIN %s\n", name);
-
-    bu_free((void *)name, "string from db_path_to_string");
-
-    return 0;
-}
-
-union tree *
-send_region_end(struct db_tree_state *tsp, struct db_full_path *pathp, union tree *curtree, genptr_t connection)
-{
-    const char *name;
-    RT_CK_FULL_PATH(pathp);
-    name = db_path_to_string(pathp);
-
-    bu_log("END %s\n", name);
-
-    bu_free((void *)name, "string from db_path_to_string");
-
-    return curtree;
-}
-
-
-union tree *
-send_leaf(struct db_tree_state *tsp, struct db_full_path *pathp, struct rt_db_internal *ip, genptr_t connection)
-{
-    const char *name;
-    struct directory *dp;
-    struct bu_external ext;
-    my_data *stash;
-
-    stash = (my_data *)connection;
-
-    RT_CK_FULL_PATH(pathp);
-    name = db_path_to_string(pathp);
-
-    dp = db_lookup(stash->dbip, name, LOOKUP_NOISY);
-    if (dp == DIR_NULL) {
-	bu_log("Unable to lookup %s, skipping\n", name);
-	return (union tree *)NULL;
-    }
-
-    if (db_get_external(&ext, dp, stash->dbip) < 0) {
-	bu_log("Failed to read %s, skipping\n", dp->d_namep);
-	return (union tree *)NULL;
-    }
-    
-    /* send the external representation over the wire */
-    bu_log("Sending %s\n", name);
-
-    /* our responsibility to free the stuff we got */
-    bu_free_external(&ext);
-    bu_free((void *)name, "string from db_path_to_string");
-
-    return (union tree *)NULL;
-}
-
 void
 comb_func(struct db_i *dbip, struct directory *dp, genptr_t connection)
 {
@@ -194,6 +132,7 @@ comb_func(struct db_i *dbip, struct directory *dp, genptr_t connection)
 
     return;
 }
+
 
 void
 leaf_func(struct db_i *dbip, struct directory *dp, genptr_t connection)
@@ -241,24 +180,17 @@ run_client(const char *server, int port, struct db_i *dbip, int geomc, const cha
     /* send geometry to the server */
     if (geomc > 0) {
 	/* geometry was specified, look it up and process */
-	init_state = rt_initial_tree_state;
-	stash.dbip = dbip;
-#if 0
-	db_walk_tree(dbip, geomc, geomv,
-		     1, 		/* ncpu */
-		     &init_state,	/* initial tree state */
-		     send_region,	/* region start callback */
-		     send_region_end, 		/* region end callback */
-		     send_leaf,		/* leaf callback */
-		     (genptr_t)&stash);
-#endif
+	stash.fd = 0;
+	stash.server = server;
+	stash.port = port;
+
 	for (i = 0; i < geomc; i++) {
 	    dp = db_lookup(dbip, geomv[i], LOOKUP_NOISY);
 	    if (dp == DIR_NULL) {
 		bu_log("Unable to lookup %s, skipping\n", geomv[i]);
 		continue;
 	    }
-	    db_functree(dbip, dp, comb_func, leaf_func, &rt_uniresource, NULL);
+	    db_functree(dbip, dp, comb_func, leaf_func, &rt_uniresource, (genptr_t)&stash);
 	}
     } else {
 	/* no geometry was specified so send everything */
