@@ -87,6 +87,30 @@ validate_port(int port) {
 }
 
 
+void
+server_helo(struct pkg_conn *connection, char *buf)
+{
+    /* should not encounter since we listened for it specifically
+     * before beginning processing of packets.
+     */	
+    bu_log("Unexpected HELO encountered\n");
+}
+
+
+void
+server_geom(struct pkg_conn *connection, char *buf)
+{
+    bu_log("GEOM encountered\n");
+}
+
+
+void
+server_ciao(struct pkg_conn *connection, char *buf)
+{
+    bu_log("CIAO encountered\n");
+}
+
+
 /** start up a server that listens for a single client.
  */
 void
@@ -94,34 +118,67 @@ run_server(int port) {
     struct pkg_conn *client;
     int netfd;
     char portname[64] = {0};
+    int pkg_result  = 0;
+
+    struct pkg_switch callbacks[] = {
+	{MSG_HELO, server_helo, "HELO"},
+	{MSG_GEOM, server_geom, "GEOM"},
+	{MSG_CIAO, server_ciao, "CIAO"},
+	{0, 0, (char *)0}
+    };
     
     validate_port(port);
 
     /* start up the server on the given port */
     snprintf(portname, 64, "%d", port);
-    netfd = pkg_permserver(portname, 0, 0, NULL);
+    netfd = pkg_permserver(portname, "tcp", 0, 0);
     if (netfd < 0) {
 	bu_bomb("Unable to start the server");
     }
 
     /* listen for a good client indefinitely */
     do {
-	client = pkg_getclient(netfd, NULL, NULL, 0);
+	client = pkg_getclient(netfd, callbacks, (void(*)())bu_log, 0);
+	if (client == PKC_NULL) {
+	    bu_log("Connection seems to be busy, waiting...\n");
+	    sleep(10);
+	    continue;
+	} else if (client == PKC_ERROR) {
+	    bu_log("Fatal error accepting client connection.\n");
+	    pkg_close(client);
+	    return;
+	}
 
 	/* got a connection, process it */
 	if (pkg_bwaitfor(MSG_HELO, client) == NULL) {
 	    bu_log("Failed to process the client connection, still waiting\n");
 	    pkg_close(client);
-	    client = NULL;
 	}
-    } while (client == NULL);
+    } while (client <= 0);
 
     /* read from the connection */
-    bu_log("Processing packets\n");
-    while (pkg_suckin(client)) {
-	bu_log("Processed a packet\n");
-    }	
+    bu_log("Processing objects from client\n");
+    do {
+	/* suck in data from the network */
+	pkg_result = pkg_suckin(client);
+	if (pkg_result < 0) {
+	    bu_log("Seemed to have trouble sucking in packets.\n");
+	    break;
+	} else if (pkg_result == 0) {
+	    bu_log("Client closed the connection.\n");
+	    break;
+	}
 
+	/* process packets received */
+	pkg_result = pkg_process(client);
+	if (pkg_result < 0) {
+	    bu_log("Unable to process packets? Wierd.\n");
+	} else {
+	    bu_log("Processed %d packet%s\n", pkg_result, pkg_result > 1 ? "s" : "");
+	}
+    } while (client != NULL);
+
+    /* shut down the server */
     pkg_close(client);
 }
 
@@ -133,8 +190,9 @@ run_server(int port) {
 void
 send_to_server(struct db_i *dbip, struct directory *dp, genptr_t connection)
 {
-    struct bu_external ext;
     my_data *stash;
+    struct bu_external ext;
+    int bytes_sent = 0;
 
     RT_CK_DBI(dbip);
     RT_CK_DIR(dp);
@@ -148,6 +206,12 @@ send_to_server(struct db_i *dbip, struct directory *dp, genptr_t connection)
     
     /* send the external representation over the wire */
     bu_log("Sending %s\n",dp->d_namep);
+
+    bytes_sent = pkg_send(MSG_GEOM, ext.ext_buf, ext.ext_nbytes, stash->connection);
+    if (bytes_sent < 0) {	
+	pkg_close(stash->connection);
+	bu_log("Unable to successfully send %s to %s, port %d.\n", dp->d_namep, stash->server, stash->port);
+    }
 
     /* our responsibility to free the stuff we got */
     bu_free_external(&ext);
@@ -229,6 +293,7 @@ run_client(const char *server, int port, struct db_i *dbip, int geomc, const cha
 	bu_log("Unable to cleanly disconnect from %s, port %d.\n", server, port);
     }
 
+    /* flush output and close */
     pkg_close(stash.connection);
 
     return;
