@@ -51,10 +51,18 @@
  * descriptor.
  */
 typedef struct _my_data_ {
-    int fd;
+    struct pkg_conn *connection;
     const char *server;
     int port;
 } my_data;
+
+/* simple network transport protocol. connection starts with a HELO,
+ * then a variable number of GEOM messages, then a CIAO when done.
+ */
+#define MAGIC_ID	"G_TRANSFER"
+#define MSG_HELO	1
+#define MSG_GEOM	2
+#define MSG_CIAO	3
 
 
 /** print a usage statement when invoked with bad, help, or no arguments
@@ -96,16 +104,23 @@ run_server(int port) {
 	bu_bomb("Unable to start the server");
     }
 
-    /* listen for a client indefinitely */
-    client = pkg_getclient(netfd, NULL, NULL, 0);
+    /* listen for a good client indefinitely */
+    do {
+	client = pkg_getclient(netfd, NULL, NULL, 0);
 
-    /* got a connection, process it */
-    if (pkg_process(client) < 0) {
-	bu_bomb("Failed to process the client connection\n");
-    }
+	/* got a connection, process it */
+	if (pkg_bwaitfor(MSG_HELO, client) == NULL) {
+	    bu_log("Failed to process the client connection, still waiting\n");
+	    pkg_close(client);
+	    client = NULL;
+	}
+    } while (client == NULL);
 
     /* read from the connection */
-    /* pkg_bwaitfor() */
+    bu_log("Processing packets\n");
+    while (pkg_suckin(client)) {
+	bu_log("Processed a packet\n");
+    }	
 
     pkg_close(client);
 }
@@ -148,20 +163,35 @@ send_to_server(struct db_i *dbip, struct directory *dp, genptr_t connection)
 void
 run_client(const char *server, int port, struct db_i *dbip, int geomc, const char **geomv)
 {
+    my_data stash;
     int i;
     struct directory *dp;
     struct bu_external ext;
     struct db_tree_state init_state; /* state table for the heirarchy walker */
-    my_data stash;
+    char s_port[32] = {0};
+    int bytes_sent = 0;
 
     RT_CK_DBI(dbip);
 
     /* open a connection to the server */
     validate_port(port);
 
-    stash.fd = 0;
+    snprintf(s_port, 32, "%d", port);
+    stash.connection = pkg_open(server, s_port, "tcp", NULL, NULL, NULL, bu_log);
+    if (stash.connection == PKC_ERROR) {
+	bu_log("Connection to %s, port %d, failed.\n", server, port);
+	bu_bomb("ERROR: Unable to open a connection to the server\n");
+    }
     stash.server = server;
     stash.port = port;
+
+    /* let the server know we're cool. */
+    bytes_sent = pkg_send(MSG_HELO, MAGIC_ID, strlen(MAGIC_ID) + 1, stash.connection);
+    if (bytes_sent < 0) {
+	pkg_close(stash.connection);
+	bu_log("Connection to %s, port %d, seems faulty.\n", server, port);
+	bu_bomb("ERROR: Unable to communicate with the server\n");
+    }
 
     bu_log("Database title is:\n%s\n", dbip->dbi_title);
     bu_log("Units: %s\n", rt_units_string(dbip->dbi_local2base));
@@ -175,6 +205,7 @@ run_client(const char *server, int port, struct db_i *dbip, int geomc, const cha
 	for (i = 0; i < geomc; i++) {
 	    dp = db_lookup(dbip, geomv[i], LOOKUP_NOISY);
 	    if (dp == DIR_NULL) {
+		pkg_close(stash.connection);
 		bu_log("Unable to lookup %s\n", geomv[i]);
 		bu_bomb("ERROR: requested geometry could not be found\n");
 	    }
@@ -191,6 +222,14 @@ run_client(const char *server, int port, struct db_i *dbip, int geomc, const cha
 	    }
 	}
     }
+
+    /* let the server know we're done.  not necessary, but polite. */
+    bytes_sent = pkg_send(MSG_CIAO, "BYE", 4, stash.connection);
+    if (bytes_sent < 0) {
+	bu_log("Unable to cleanly disconnect from %s, port %d.\n", server, port);
+    }
+
+    pkg_close(stash.connection);
 
     return;
 }
@@ -281,7 +320,8 @@ main(int argc, char *argv[]) {
     }
 
     /* make sure the geometry file is a geometry database, get a
-       database instance pointer */
+     * database instance pointer.
+     */
     dbip = db_open(geometry_file, "r");
     if (dbip == DBI_NULL) {
 	bu_log("Cannot open %s\n", geometry_file);
