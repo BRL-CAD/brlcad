@@ -102,20 +102,32 @@
     $itk_component(pane) add upper
     $itk_component(pane) add lower
 
-    set parent [$itk_component(pane) childsite upper]
-    itk_component add upper {
-	::iwidgets::Scrolledframe $parent.upper
-    } {
-	keep -vscrollmode
-	keep -hscrollmode
-    }
+    if {1} {
+	set parent [$itk_component(pane) childsite upper]
+	itk_component add upper {
+	    ::frame $parent.upper
+	} {}
 
-    set parent [$itk_component(pane) childsite lower]
-    itk_component add lower {
-	::iwidgets::Scrolledframe $parent.lower
-    } {
-	keep -vscrollmode
-	keep -hscrollmode
+	set parent [$itk_component(pane) childsite lower]
+	itk_component add lower {
+	    ::frame $parent.lower
+	} {}
+    } else {
+	set parent [$itk_component(pane) childsite upper]
+	itk_component add upper {
+	    ::iwidgets::Scrolledframe $parent.upper
+	} {
+	    keep -vscrollmode
+	    keep -hscrollmode
+	}
+
+	set parent [$itk_component(pane) childsite lower]
+	itk_component add lower {
+	    ::iwidgets::Scrolledframe $parent.lower
+	} {
+	    keep -vscrollmode
+	    keep -hscrollmode
+	}
     }
 
     itk_component add valueSeparator {
@@ -278,11 +290,19 @@
 	    return $itk_component(valueCS)
 	}
 	"lower" {
-	    return [$itk_component(lower) childsite]
+	    if {1} {
+		return $itk_component(lower)
+	    } else {
+		return [$itk_component(lower) childsite]
+	    }
 	}
 	default -
 	"upper" {
-	    return [$itk_component(upper) childsite]
+	    if {1} {
+		return $itk_component(upper)
+	    } else {
+		return [$itk_component(upper) childsite]
+	    }
 	}
     }
 }
@@ -297,7 +317,7 @@
     # The scrollmode options are needed so that the
     # scrollbars dynamically appear/disappear. Sheesh!
     update
-    after idle $this configure \
+    #after idle $this configure \
 	-vscrollmode dynamic \
 	-hscrollmode none
 
