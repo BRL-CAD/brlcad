@@ -56,6 +56,9 @@ namespace eval Archer {
     destructor {}
 
     public {
+	proc packTree              {data}
+	proc unpackTree            {tree}
+
 	# public window commands
 	method dockarea            {{position "south"}}
 	method primary_toolbar_add_btn     {name {args ""}}
@@ -214,6 +217,8 @@ namespace eval Archer {
     }
 
     protected {
+	proc unpackTreeGuts      {tree}
+
 	variable wizardXmlCallbacks ""
 
 	variable mFontArrowsName "arrowFont"
@@ -350,7 +355,8 @@ namespace eval Archer {
 	variable archerCommands { \
 	    cd clear copy cp dbExpand delete draw exit \
 	    g get group kill ls move mv ocenter orotate \
-	    otranslate pwd rm units whichid who Z zap
+	    otranslate packTree pwd rm units whichid who \
+	    unpackTree Z zap
 	}
 	variable mgedCommands { \
 	    adjust blast c comb concat copyeval E erase_all \
@@ -3443,10 +3449,11 @@ Popup Menu    Right or Ctrl-Left
     set parent $itk_component(objEditView)
     itk_component add combView {
 	CombEditFrame $parent.combview \
-	    -vscrollmode dynamic \
-	    -hscrollmode none \
 	    -units "mm"
     } {}
+
+#	    -vscrollmode dynamic
+#	    -hscrollmode none
 }
 
 ::itcl::body Archer::_build_ehy_edit_view {} {
@@ -10981,6 +10988,95 @@ Popup Menu    Right or Ctrl-Left
     }
 
     eval mgedWrapper units 0 0 1 0 $args
+}
+
+::itcl::body Archer::packTree {data} {
+    if {$data == ""} {
+	return ""
+    }
+
+    set lines [split $data "\n"]
+    set nlines [llength $lines]
+
+    if {$nlines == 1} {
+	set line [lindex $lines 0]
+
+	set len [llength $line]
+
+	if {$len == 2} {
+	    return "l [lindex $line 1]"
+	} elseif {$len == 3} {
+	    return "l [lindex $line 1] [list [lindex $line 2]]"
+	}
+
+	error "packTree: malformed data - $data"
+    }
+
+    set tree ""
+
+    set line [lindex $lines 0]
+    set len [llength $line]
+    if {$len == 2} {
+	set tree "l [lindex $line 1]"
+    } elseif {$len == 18} {
+	set tree "l [lindex $line 1] [lrange $line 2 end]"
+    } else {
+	error "packTree: malformed line - $line"
+    }
+
+    for {set n 1} {$n < $nlines} {incr n} {
+	set line [string trim [lindex $lines $n]]
+
+	# Ignore blank lines
+	if {$line == ""} {
+	    continue
+	}
+
+	set len [llength $line]
+	if {$len == 2} {
+	    set tree "[lindex $line 0] [list $tree] [list [list l [lindex $line 1]]]"
+	} elseif {$len == 18} {
+	    set tree "[lindex $line 0] [list $tree] [list [list l [lindex $line 1] [lrange $line 2 end]]]"
+	} else {
+	    error "packTree: malformed line - $line"
+	}
+    }
+
+    return $tree
+}
+
+::itcl::body Archer::unpackTree {tree} {
+    return " u [unpackTreeGuts $tree]"
+}
+
+::itcl::body Archer::unpackTreeGuts {tree} {
+    if {$tree == ""} {
+	return ""
+    }
+
+    if {[llength $tree] == 2} {
+	return [lindex $tree 1]
+    }
+
+    if {[llength $tree] != 3} {
+	error "unpackTree: tree is malformed - $tree!"
+    }
+
+    set op [lindex $tree 0]
+
+    if {$op == "l"} {
+	return "[lindex $tree 1]\t[lindex $tree 2]"
+    } else {
+	if {$op == "n"} {
+	    set op "+"
+	}
+
+	set partA [unpackTreeGuts [lindex $tree 1]]
+	set partB [unpackTreeGuts [lindex $tree 2]]
+
+	return "$partA
+ $op $partB"
+    }
 }
 
 ::itcl::body Archer::vdraw {args} {
