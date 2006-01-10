@@ -94,6 +94,7 @@ server_helo(struct pkg_conn *connection, char *buf)
      * before beginning processing of packets.
      */	
     bu_log("Unexpected HELO encountered\n");
+    free(buf);
 }
 
 
@@ -101,6 +102,7 @@ void
 server_geom(struct pkg_conn *connection, char *buf)
 {
     bu_log("GEOM encountered\n");
+    free(buf);
 }
 
 
@@ -108,6 +110,7 @@ void
 server_ciao(struct pkg_conn *connection, char *buf)
 {
     bu_log("CIAO encountered\n");
+    free(buf);
 }
 
 
