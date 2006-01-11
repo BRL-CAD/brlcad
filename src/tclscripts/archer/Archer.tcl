@@ -2780,7 +2780,6 @@ Popup Menu    Right or Ctrl-Left
 	}
 	"comb" {
 	    $itk_component(combView) updateGeometry
-	    _refresh_tree
 	}
 	"ell" {
 	    $itk_component(ellView) updateGeometry
