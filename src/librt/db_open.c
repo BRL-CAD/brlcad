@@ -101,7 +101,7 @@ db_open(const char *name,
 
 	if(RT_G_DEBUG&DEBUG_DB) bu_log("db_open(%s, %s)\n", name, mode );
 
-	if( mode[0] == 'r' && mode[1] == '\0' )  {
+	if( mode && mode[0] == 'r' && mode[1] == '\0' )  {
 		struct bu_mapped_file	*mfp;
 		/* Read-only mode */
 		mfp = bu_open_mapped_file( name, "db_i" );
