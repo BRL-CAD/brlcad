@@ -118,7 +118,6 @@ db_open(const char *name,
 		}
 
 		BU_GETSTRUCT( dbip, db_i );
-		dbip->dbi_eof = -1L;
 		dbip->dbi_mf = mfp;
 		dbip->dbi_eof = mfp->buflen;
 		dbip->dbi_inmem = mfp->buf;
