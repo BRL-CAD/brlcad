@@ -1135,20 +1135,25 @@ db5_fwrite_ident(FILE *fp, const char *title, double local2mm)
 	struct bu_vls		units;
 	struct bu_external	out;
 	struct bu_external	attr;
+	int result;
 
 	if( local2mm <= 0 )  {
-		bu_log("db5_fwrite_ident(%s, %g) local2mm <= 0\n",
-			title, local2mm );
-		return -1;
+	    bu_log("db5_fwrite_ident(%s, %g) local2mm <= 0\n",
+		   title, local2mm );
+	    return -1;
 	}
 
 	/* First, write the header object */
 	db5_export_object3( &out, DB5HDR_HFLAGS_DLI_HEADER_OBJECT,
-		NULL, 0, NULL, NULL,
-		DB5_MAJORTYPE_RESERVED, 0,
-		DB5_ZZZ_UNCOMPRESSED, DB5_ZZZ_UNCOMPRESSED );
-	if( bu_fwrite_external( fp, &out ) < 0 )  return -1;
+			    NULL, 0, NULL, NULL,
+			    DB5_MAJORTYPE_RESERVED, 0,
+			    DB5_ZZZ_UNCOMPRESSED, DB5_ZZZ_UNCOMPRESSED );
+
+	result = bu_fwrite_external( fp, &out );
 	bu_free_external( &out );
+	if (result < 0) {
+	    return -1;
+	}
 
 	/* Second, create the attribute-only object */
 	bu_vls_init( &units );
@@ -1160,15 +1165,18 @@ db5_fwrite_ident(FILE *fp, const char *title, double local2mm)
 
 	db5_export_attributes( &attr, &avs );
 	db5_export_object3( &out, DB5HDR_HFLAGS_DLI_APPLICATION_DATA_OBJECT,
-		DB5_GLOBAL_OBJECT_NAME, DB5HDR_HFLAGS_HIDDEN_OBJECT, &attr, NULL,
-		DB5_MAJORTYPE_ATTRIBUTE_ONLY, 0,
-		DB5_ZZZ_UNCOMPRESSED, DB5_ZZZ_UNCOMPRESSED );
-	if( bu_fwrite_external( fp, &out ) < 0 )  return -1;
+			    DB5_GLOBAL_OBJECT_NAME, DB5HDR_HFLAGS_HIDDEN_OBJECT, &attr, NULL,
+			    DB5_MAJORTYPE_ATTRIBUTE_ONLY, 0,
+			    DB5_ZZZ_UNCOMPRESSED, DB5_ZZZ_UNCOMPRESSED );
+
+	result = bu_fwrite_external( fp, &out );
 	bu_free_external( &out );
 	bu_free_external( &attr );
 	bu_avs_free( &avs );
-
 	bu_vls_free( &units );
+	if (result < 0) {
+	    return -1;
+	}
 
 	return 0;
 }
