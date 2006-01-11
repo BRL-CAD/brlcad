@@ -40,7 +40,7 @@
 	    {"Bump Map" bump}
 	    {Checker checker}
 	    {"Test Map" testmap}
-	    {"Fake Star Patter" fakestar}
+	    {"Fake Star Pattern" fakestar}
 	    {Cloud cloud}
 	    {Stack stack}
 	    {"Env Map" envmap}
@@ -967,6 +967,10 @@
     }
 
     set shaderSpec "plastic [list $newSpec]"
+
+    if {$allowCallbacks && $itk_option(-shaderChangedCallback) != ""} {
+	$itk_option(-shaderChangedCallback)
+    }
 }
 
 ::itcl::body ShaderEdit::validateDouble_mirror {id d} {
@@ -1049,6 +1053,10 @@
     }
 
     set shaderSpec "mirror [list $newSpec]"
+
+    if {$allowCallbacks && $itk_option(-shaderChangedCallback) != ""} {
+	$itk_option(-shaderChangedCallback)
+    }
 }
 
 ::itcl::body ShaderEdit::validateDouble_glass {id d} {
@@ -1131,11 +1139,19 @@
     }
 
     set shaderSpec "glass [list $newSpec]"
+
+    if {$allowCallbacks && $itk_option(-shaderChangedCallback) != ""} {
+	$itk_option(-shaderChangedCallback)
+    }
 }
 
 
 ::itcl::body ShaderEdit::updateUnlistedSpec {id} {
     set shaderSpec "$unlistedName($id) $unlistedParams($id)"
+
+    if {$allowCallbacks && $itk_option(-shaderChangedCallback) != ""} {
+	$itk_option(-shaderChangedCallback)
+    }
 }
 
 ::itcl::body ShaderEdit::validateDouble {d} {
