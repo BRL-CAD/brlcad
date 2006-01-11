@@ -75,6 +75,9 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 # define SEEK_SET	0
 #endif
 
+#define DEFAULT_DB_TITLE "Untitled BRL-CAD Database"
+
+
 /**
  *  			D B _ O P E N
  *
@@ -219,48 +222,42 @@ db_create(const char *name,
 {
 	FILE	*fp;
 	struct db_i	*dbip;
+	int result;
 
-	if(RT_G_DEBUG&DEBUG_DB) bu_log("db_create(%s, %d)\n", name, version );
+	if (RT_G_DEBUG & DEBUG_DB)
+	    bu_log("db_create(%s, %d)\n", name, version );
 
 #if defined(_WIN32) && !defined(__CYGWIN__)
-	if( (fp = fopen( name, "w+b" )) == NULL )  {
-		perror(name);
-		return(DBI_NULL);
-	}
+	fp = fopen( name, "w+b" );
 #else
-	if( (fp = fopen( name, "w" )) == NULL )  {
-		perror(name);
-		return(DBI_NULL);
-	}
+	fp = fopen( name, "w" );
 #endif
-
-	switch( version )  {
-	default:
-	case 5:
-		/* Create a v5 database */
-		if( db5_fwrite_ident(fp,"Untitled BRL-CAD Database",1.0)<0){
-			(void)fclose(fp);
-			return DBI_NULL;
-		}
-		break;
-	case 4:
-		/* Create a v4 database */
-		if(db_fwrite_ident(fp,"Untitled BRL-CAD Database",1.0)<0) {
-			(void)fclose(fp);
-			return DBI_NULL;
-		}
-		break;
+	if (fp == NULL )  {
+	    perror(name);
+	    return(DBI_NULL);
 	}
 
+	if (version == 5) {
+	    result = db5_fwrite_ident(fp, DEFAULT_DB_TITLE, 1.0);
+	} else if (version == 4) {
+	    result = db_fwrite_ident(fp, DEFAULT_DB_TITLE, 1.0);
+	} else {
+	    bu_log("WARNING: db_create() was provided an unrecognized version number: %d\n", version);
+	    result = db5_fwrite_ident(fp, DEFAULT_DB_TITLE, 1.0);
+	}
+	    
 	(void)fclose(fp);
 
-	if( (dbip = db_open( name, "r+w" ) ) == DBI_NULL )
-		return DBI_NULL;
+	if (result < 0)
+	    return DBI_NULL;
 
+	if( (dbip = db_open( name, "r+w" ) ) == DBI_NULL )
+	    return DBI_NULL;
 
 	/* Do a quick scan to determine version, find _GLOBAL, etc. */
 	if( db_dirbuild( dbip ) < 0 )
-		return DBI_NULL;
+	    return DBI_NULL;
+
 	return dbip;
 }
 
