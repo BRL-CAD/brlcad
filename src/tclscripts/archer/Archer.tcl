@@ -2604,7 +2604,6 @@ Popup Menu    Right or Ctrl-Left
     }
 
     _update_obj_edit $hname 1 0
-    _refresh_tree
 
     # Disable the apply and reset buttons
     $itk_component(objEditToolbar) itemconfigure apply \
@@ -3386,50 +3385,55 @@ Popup Menu    Right or Ctrl-Left
     set parent $itk_component(objEditView)
     itk_component add arb4View {
 	Arb4EditFrame $parent.arb4view \
-	    -vscrollmode dynamic \
-	    -hscrollmode none \
 	    -units "mm"
     } {}
+
+#	    -vscrollmode dynamic
+#	    -hscrollmode none
 }
 
 ::itcl::body Archer::_build_arb5_edit_view {} {
     set parent $itk_component(objEditView)
     itk_component add arb5View {
 	Arb5EditFrame $parent.arb5view \
-	    -vscrollmode dynamic \
-	    -hscrollmode none \
 	    -units "mm"
     } {}
+
+#	    -vscrollmode dynamic
+#	    -hscrollmode none
 }
 
 ::itcl::body Archer::_build_arb6_edit_view {} {
     set parent $itk_component(objEditView)
     itk_component add arb6View {
 	Arb6EditFrame $parent.arb6view \
-	    -vscrollmode dynamic \
-	    -hscrollmode none \
 	    -units "mm"
     } {}
+
+#	    -vscrollmode dynamic
+#	    -hscrollmode none
 }
 
 ::itcl::body Archer::_build_arb7_edit_view {} {
     set parent $itk_component(objEditView)
     itk_component add arb7View {
 	Arb7EditFrame $parent.arb7view \
-	    -vscrollmode dynamic \
-	    -hscrollmode none \
 	    -units "mm"
     } {}
+
+#	    -vscrollmode dynamic
+#	    -hscrollmode none
 }
 
 ::itcl::body Archer::_build_arb8_edit_view {} {
     set parent $itk_component(objEditView)
     itk_component add arb8View {
 	Arb8EditFrame $parent.arb8view \
-	    -vscrollmode dynamic \
-	    -hscrollmode none \
 	    -units "mm"
     } {}
+
+#	    -vscrollmode dynamic
+#	    -hscrollmode none
 }
 
 ::itcl::body Archer::_build_bot_edit_view {} {
@@ -3439,10 +3443,11 @@ Popup Menu    Right or Ctrl-Left
     set parent $itk_component(objEditView)
     itk_component add botView {
 	BotEditFrame $parent.botview \
-	    -vscrollmode dynamic \
-	    -hscrollmode none \
 	    -units "mm"
     } {}
+
+#	    -vscrollmode dynamic
+#	    -hscrollmode none
 }
 
 ::itcl::body Archer::_build_comb_edit_view {} {
@@ -3460,80 +3465,88 @@ Popup Menu    Right or Ctrl-Left
     set parent $itk_component(objEditView)
     itk_component add ehyView {
 	EhyEditFrame $parent.ehyview \
-	    -vscrollmode dynamic \
-	    -hscrollmode none \
 	    -units "mm"
     } {}
+
+#	    -vscrollmode dynamic
+#	    -hscrollmode none
 }
 
 ::itcl::body Archer::_build_ell_edit_view {} {
     set parent $itk_component(objEditView)
     itk_component add ellView {
 	EllEditFrame $parent.ellview \
-	    -vscrollmode dynamic \
-	    -hscrollmode none \
 	    -units "mm"
     } {}
+
+#	    -vscrollmode dynamic
+#	    -hscrollmode none
 }
 
 ::itcl::body Archer::_build_epa_edit_view {} {
     set parent $itk_component(objEditView)
     itk_component add epaView {
 	EpaEditFrame $parent.epaview \
-	    -vscrollmode dynamic \
-	    -hscrollmode none \
 	    -units "mm"
     } {}
+
+#	    -vscrollmode dynamic
+#	    -hscrollmode none
 }
 
 ::itcl::body Archer::_build_eto_edit_view {} {
     set parent $itk_component(objEditView)
     itk_component add etoView {
 	EtoEditFrame $parent.etoview \
-	    -vscrollmode dynamic \
-	    -hscrollmode none \
 	    -units "mm"
     } {}
+
+#	    -vscrollmode dynamic
+#	    -hscrollmode none
 }
 
 ::itcl::body Archer::_build_extrude_edit_view {} {
     set parent $itk_component(objEditView)
     itk_component add extrudeView {
 	ExtrudeEditFrame $parent.extrudeview \
-	    -vscrollmode dynamic \
-	    -hscrollmode none \
 	    -units "mm"
     } {}
+
+#	    -vscrollmode dynamic
+#	    -hscrollmode none
 }
 
 ::itcl::body Archer::_build_grip_edit_view {} {
     set parent $itk_component(objEditView)
     itk_component add gripView {
 	GripEditFrame $parent.gripview \
-	    -vscrollmode dynamic \
-	    -hscrollmode none \
 	    -units "mm"
     } {}
+
+#	    -vscrollmode dynamic
+#	    -hscrollmode none
 }
 
 ::itcl::body Archer::_build_half_edit_view {} {
     set parent $itk_component(objEditView)
     itk_component add halfView {
 	HalfEditFrame $parent.halfview \
-	    -vscrollmode dynamic \
-	    -hscrollmode none \
 	    -units "mm"
     } {}
+
+#	    -vscrollmode dynamic
+#	    -hscrollmode none
 }
 
 ::itcl::body Archer::_build_part_edit_view {} {
     set parent $itk_component(objEditView)
     itk_component add partView {
 	PartEditFrame $parent.partview \
-	    -vscrollmode dynamic \
-	    -hscrollmode none \
 	    -units "mm"
     } {}
+
+#	    -vscrollmode dynamic
+#	    -hscrollmode none
 }
 
 ::itcl::body Archer::_build_pipe_edit_view {} {
@@ -3543,30 +3556,33 @@ Popup Menu    Right or Ctrl-Left
     set parent $itk_component(objEditView)
     itk_component add pipeView {
 	PipeEditFrame $parent.pipeview \
-	    -vscrollmode dynamic \
-	    -hscrollmode none \
 	    -units "mm"
     } {}
+
+#	    -vscrollmode dynamic
+#	    -hscrollmode none
 }
 
 ::itcl::body Archer::_build_rhc_edit_view {} {
     set parent $itk_component(objEditView)
     itk_component add rhcView {
 	RhcEditFrame $parent.rhcview \
-	    -vscrollmode dynamic \
-	    -hscrollmode none \
 	    -units "mm"
     } {}
+
+#	    -vscrollmode dynamic
+#	    -hscrollmode none
 }
 
 ::itcl::body Archer::_build_rpc_edit_view {} {
     set parent $itk_component(objEditView)
     itk_component add rpcView {
 	RpcEditFrame $parent.rpcview \
-	    -vscrollmode dynamic \
-	    -hscrollmode none \
 	    -units "mm"
     } {}
+
+#	    -vscrollmode dynamic
+#	    -hscrollmode none
 }
 
 ::itcl::body Archer::_build_sketch_edit_view {} {
@@ -3576,40 +3592,44 @@ Popup Menu    Right or Ctrl-Left
     set parent $itk_component(objEditView)
     itk_component add sketchView {
 	SketchEditFrame $parent.sketchview \
-	    -vscrollmode dynamic \
-	    -hscrollmode none \
 	    -units "mm"
     } {}
+
+#	    -vscrollmode dynamic
+#	    -hscrollmode none
 }
 
 ::itcl::body Archer::_build_sphere_edit_view {} {
     set parent $itk_component(objEditView)
     itk_component add sphView {
 	SphereEditFrame $parent.sphview \
-	    -vscrollmode dynamic \
-	    -hscrollmode none \
 	    -units "mm"
     } {}
+
+#	    -vscrollmode dynamic
+#	    -hscrollmode none
 }
 
 ::itcl::body Archer::_build_tgc_edit_view {} {
     set parent $itk_component(objEditView)
     itk_component add tgcView {
 	TgcEditFrame $parent.tgcview \
-	    -vscrollmode dynamic \
-	    -hscrollmode none \
 	    -units "mm"
     } {}
+
+#	    -vscrollmode dynamic
+#	    -hscrollmode none
 }
 
 ::itcl::body Archer::_build_torus_edit_view {} {
     set parent $itk_component(objEditView)
     itk_component add torView {
 	TorusEditFrame $parent.torview \
-	    -vscrollmode dynamic \
-	    -hscrollmode none \
 	    -units "mm"
     } {}
+
+#	    -vscrollmode dynamic
+#	    -hscrollmode none
 }
 
 ::itcl::body Archer::_init_arb4_edit_view {odata} {
@@ -8510,15 +8530,14 @@ Popup Menu    Right or Ctrl-Left
 	return
     }
 
-    if {$mPrevSelectedObj != $mSelectedObj} {
-	if {!$mViewOnly} {
-	    if {$mObjViewMode == $OBJ_ATTR_VIEW_MODE} {
-		_init_obj_attr_view
-	    } else {
-		_init_obj_edit_view
+    if {!$mViewOnly} {
+	if {$mObjViewMode == $OBJ_ATTR_VIEW_MODE} {
+	    _init_obj_attr_view
+	} else {
+	    _init_obj_edit_view
 
-		switch -- $mDefaultBindingMode \
-		    $OBJECT_ROTATE_MODE { \
+	    switch -- $mDefaultBindingMode \
+		$OBJECT_ROTATE_MODE { \
 		        beginObjRotate
 	            } \
 		    $OBJECT_SCALE_MODE { \
@@ -8530,25 +8549,24 @@ Popup Menu    Right or Ctrl-Left
 		    $OBJECT_CENTER_MODE { \
 		        beginObjCenter
 	            }
-	    }
 	}
-
-	# label the object if it's being drawn
-	set mRenderMode [dbCmd how $node]
-
-	if {0 <= $mRenderMode} {
-	    dbCmd configure -primitiveLabels $node
-	} else {
-	    dbCmd configure -primitiveLabels {}
-	}
-
-	if {$rflag} {
-	    dbCmd refresh
-	}
-
-	set mPrevSelectedObjPath $mSelectedObjPath
-	set mPrevSelectedObj $mSelectedObj
     }
+
+    # label the object if it's being drawn
+    set mRenderMode [dbCmd how $node]
+
+    if {0 <= $mRenderMode} {
+	dbCmd configure -primitiveLabels $node
+    } else {
+	dbCmd configure -primitiveLabels {}
+    }
+
+    if {$rflag} {
+	dbCmd refresh
+    }
+
+    set mPrevSelectedObjPath $mSelectedObjPath
+    set mPrevSelectedObj $mSelectedObj
 
     if {$savePwd != ""} {
 	cd $savePwd
