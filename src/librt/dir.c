@@ -111,7 +111,7 @@ rt_db_get_internal(
 	struct rt_db_internal	*ip,
 	const struct directory	*dp,
 	const struct db_i	*dbip,
-	const mat_t		mat = NULL,
+	const mat_t		mat,
 	struct resource		*resp)
 {
 	struct bu_external	ext;
