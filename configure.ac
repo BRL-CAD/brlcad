@@ -323,14 +323,14 @@ BC_ARG_ENABLE([build_blt], [blt-build], [Build the included BLT], [auto])
 # tkimg
 BC_ARG_ENABLE([build_tkimg], [tkimg-build], [Build the included tkImg], [auto])
 
-# doxygen - XXX unimplemented
-#BC_ARG_ENABLE([use_doxygen], [doxygen], [Enable documentation generation with doxygen], [no])
-
 # jove
 BC_ARG_ENABLE([build_jove], [jove-build], [Enable compilation of jove], [auto])
 
 # pro/e plugin
 BC_ARG_ENABLE([build_proe], [proe-plugin-build], [Enable compilation of Pro/Engineer plugin], [no])
+
+# ADRT (enables SDL and Python with options if they're not enabled)
+BC_ARG_ENABLE([build_adrt], [adrt-build], [Enable compilation of ADRT], [auto])
 
 # example geometry
 BC_ARG_ENABLE([install_geometry], [models-install], [Enable installation of example geometry models], [yes])
@@ -510,6 +510,9 @@ BC_ARG_ALIAS([build_proe], [pro-engineer-build])
 BC_ARG_ALIAS([build_proe], [pro-engineer-plugin-build])
 BC_ARG_ALIAS([build_proe], [proe-build])
 
+# ADRT (help uses adrt-build)
+BC_ARG_ALIAS([build_adrt], [adrt])
+
 # install geometry aliases (help uses models-install)
 BC_ARG_ALIAS([install_geometry], [models])
 BC_ARG_ALIAS([install_geometry], [install-models])
@@ -559,43 +562,15 @@ BC_ARG_WITH_ALIAS([with_python], [py])
 
 
 ###
-# argument sanity checks
+# argument sanity checks and meta-argument settings
 # here go checks to warn or abort when conflicting options specified
 ###
-
-# make sure multiple "only" options were not given
-if test "x$bc_only_benchmark" != "xno" ; then
-	if test "x$bc_only_rts" != "xno" ; then
-		AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
-		AC_MSG_WARN([Requesting BOTH benchmark and librtserver "only"?])
-		AC_MSG_WARN([Building both benchmark and librtserver])
-		AC_MSG_NOTICE([{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{])
-	fi
-	if test "x$bc_everything" = "xyes" ; then
-		AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
-		AC_MSG_WARN([Requesting ONLY benchmark and EVERYTHING?])
-		AC_MSG_WARN([Building everything])
-		AC_MSG_NOTICE([{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{])
-		bc_only_benchmark=no
-	fi
-fi
-
-# the opengl interface is presently tied to the x11 interface
-if test "x$bc_with_opengl" = "xyes" ; then
-	if test "x$bc_with_x11" = "xno" ; then
-		AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
-		AC_MSG_WARN([OpenGL interface presently requires X11 support])
-		AC_MSG_WARN([Presuming X11 availability for the OpenGL interface])
-		AC_MSG_WARN([The X11 interface will not be built])
-		AC_MSG_NOTICE([{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{])
-	fi
-fi
-
 
 # handle enabling/disabling all the packages and codes that ship with
 # the package.  if something is changed from a default, leave it alone
 # so that the user may specify everything and then disable specific
-# ones.
+# ones.  specifically only test yes/no as default 'auto' is to leave
+# the options alone.
 set_everything=""
 if test "x$bc_everything" = "xyes" ; then
 	set_everything=yes
@@ -650,16 +625,85 @@ if test "x$set_everything" != "x" ; then
 			bc_build_proe="$set_everything"
 		fi
 	fi
+	# ADRT is known to not build right now on most platforms, so
+	# only allow it to be disabled and not enabled.
+	if test "x$bc_build_adrt" = "x$bc_build_adrt_default" ; then
+		if test "x$set_everything" = "xno" ; then
+			bc_build_adrt="no"
+		fi
+	fi
+fi
+
+
+# make sure multiple "only" options were not given
+if test "x$bc_only_benchmark" != "xno" ; then
+	if test "x$bc_only_rts" != "xno" ; then
+		AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
+		AC_MSG_WARN([Requesting BOTH benchmark and librtserver "only"?])
+		AC_MSG_WARN([Building both benchmark and librtserver])
+		AC_MSG_NOTICE([{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{])
+	fi
+	if test "x$bc_everything" = "xyes" ; then
+		AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
+		AC_MSG_WARN([Requesting ONLY benchmark and EVERYTHING?])
+		AC_MSG_WARN([Building everything])
+		AC_MSG_NOTICE([{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{])
+		bc_only_benchmark=no
+	fi
+fi
+
+# the opengl interface is presently tied to the x11 interface
+if test "x$bc_with_opengl" = "xyes" ; then
+	if test "x$bc_with_x11" = "xno" ; then
+		AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
+		AC_MSG_WARN([OpenGL interface presently requires X11 support])
+		AC_MSG_WARN([Presuming X11 availability for the OpenGL interface])
+		AC_MSG_WARN([The X11 interface will not be built])
+		AC_MSG_NOTICE([{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{])
+	fi
+fi
+
+# enabling/disabling ADRT implies enabling/disabling the SDL and Python options
+if test "x$bc_build_adrt" = "xyes" ; then
+	if test "x$bc_with_sdl" = "xauto" ; then
+		bc_with_sdl=yes
+	elif test "x$bc_with_sdl" = "xno" ; then
+		AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
+		AC_MSG_WARN([ADRT presently requires SDL support])
+		AC_MSG_WARN([The SDL option has been enabled (--with-sdl=yes)])
+		AC_MSG_NOTICE([{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{])
+		bc_with_sdl=yes
+	fi
+	if test "x$bc_with_python" = "xauto" ; then
+		bc_with_python=yes
+	elif test "x$bc_with_python" = "xno" ; then
+		AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
+		AC_MSG_WARN([ADRT presently requires Python support])
+		AC_MSG_WARN([The Python option has been enabled (--with-python=yes)])
+		AC_MSG_NOTICE([{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{])
+		bc_with_python=yes
+	fi
+elif test "x$bc_build_adrt" = "xno" ; then
+	if test "x$bc_with_sdl" = "xyes" ; then
+		AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
+		AC_MSG_WARN([SDL was requested, yet ADRT was disabled.])
+		AC_MSG_WARN([Since only ADRT utilizes SDL, it will not be utilized (--with-sdl=no)])
+		AC_MSG_NOTICE([{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{])
+	fi
+	if test "x$bc_with_python" = "xyes" ; then
+		AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
+		AC_MSG_WARN([Python was requested, yet ADRT was disabled.])
+		AC_MSG_WARN([Since only ADRT utilizes Python, it will not be utilized (--with-python=no)])
+		AC_MSG_NOTICE([{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{])
+	fi
+	bc_with_sdl=no
+	bc_with_python=no
 fi
 
 
 ###
 # argument summary printing
 ###
-
-bc_use_doxygen=no
-#AC_MSG_CHECKING(whether to generate documentation with doxygen)
-#AC_MSG_RESULT($bc_use_doxygen)
 
 AC_MSG_CHECKING(whether to compile everything was requested)
 AC_MSG_RESULT($bc_everything)
@@ -718,6 +762,9 @@ AC_MSG_RESULT($bc_build_jove)
 AC_MSG_CHECKING(whether to compile the Pro-Engineer plugin)
 AC_MSG_RESULT($bc_build_proe)
 
+AC_MSG_CHECKING(whether to compile ADRT)
+AC_MSG_RESULT($bc_build_adrt)
+
 AC_MSG_CHECKING(whether to install example geometry databases)
 AC_MSG_RESULT($bc_install_geometry)
 
@@ -742,10 +789,10 @@ AC_MSG_RESULT($bc_with_x11)
 AC_MSG_CHECKING(whether to compile the OpenGL interfaces)
 AC_MSG_RESULT($bc_with_opengl)
 
-AC_MSG_CHECKING(whether to compile the SDL interface to ADRT)
+AC_MSG_CHECKING(whether to compile against SDL for ADRT)
 AC_MSG_RESULT($bc_with_sdl)
 
-AC_MSG_CHECKING(whether to compile the Python interface to ADRT)
+AC_MSG_CHECKING(whether to compile against Python for ADRT)
 AC_MSG_RESULT($bc_with_python)
 
 
@@ -856,36 +903,28 @@ fi
 
 AC_DEFINE(EXTERN_STDOUT,,[Stdout is extern])
 
-if test "x$bc_use_doxygen" != "xno" ; then
-	AC_PATH_PROG(DOXYGEN, doxygen, , $PATH)
-	if test "x$DOXYGEN" = "x" ; then
-		AC_MSG_RESULT([no])
-		if test "x$bc_use_doxygen" = "xyes" ; then
-			BC_RETRY_CONFIGURE([$this], [$args])
-			AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
-			AC_MSG_ERROR([*** Unable to find doxygen ***])
-		fi
-	fi
-fi
-
+# test for sdl-config, auto for with-sdl is 'no'
 SDL_CONFIG=""
-if test "x$bc_use_sdl" != "xno" ; then
+if test "x$bc_with_sdl" = "xyes" ; then
 	AC_PATH_PROG(SDL_CONFIG, sdl-config, , $PATH)
 	if test "x$SDL_CONFIG" = "x" ; then
-		if test "x$bc_use_sdl" = "xyes" ; then
-			# BC_RETRY_CONFIGURE([$this], [$args])
+		if test "x$bc_with_sdl" = "xyes" ; then
+			AC_MSG_NOTICE([sdl-config is presently required, searching more extensively])
+			BC_RETRY_CONFIGURE([$this], [$args])
 			AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
 			AC_MSG_WARN([Unable to find sdl-config])
 		fi
 	fi
 fi
 
+# test for python interpreter, auto for with-python is 'no'
 PYTHON=""
-if test "x$bc_use_python" != "xno" ; then
+if test "x$bc_with_python" = "xyes" ; then
 	AC_PATH_PROG(PYTHON, python, , $PATH)
 	if test "x$PYTHON" = "x" ; then
-		if test "x$bc_use_sdl" = "xyes" ; then
-			# BC_RETRY_CONFIGURE([$this], [$args])
+		if test "x$bc_with_python" = "xyes" ; then
+			AC_MSG_NOTICE([Unable to find a python interpreter, searching more extensively])
+			BC_RETRY_CONFIGURE([$this], [$args])
 			AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
 			AC_MSG_WARN([Unable to find a python interpreter])
 		fi
@@ -894,16 +933,12 @@ fi
 
 dnl if building jove wasn't specifically requested and wasn't
 dnl disabled, see if there is either emacs or jove available.
+dnl i.e. auto for jove is dependant on what is installed
 BCEDITOR=""
 if test "x$bc_build_jove" = "xauto" ; then
 	AC_PATH_PROG(BCEDITOR, emacs, , $PATH)
 	if test "x$BCEDITOR" = "x" ; then
 		AC_PATH_PROG(BCEDITOR, jove, , $PATH)
-	fi
-	if test "x$BCEDITOR" = "x" ; then
-		bc_build_jove=yes
-	else
-		bc_build_jove=no
 	fi
 fi
 
@@ -1681,6 +1716,7 @@ if test "x$bc_build_png" = "xyes" ; then
 else
 	if test "x$bc_build_png" = "xno" ; then
 		if test "x$png_works" != "xyes" ; then
+			AC_MSG_NOTICE([libpng was disabled, but no system png library was found])
 			BC_RETRY_CONFIGURE([$this], [$args])
 			AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
 			AC_MSG_NOTICE([Try adding --enable-png-build])
@@ -1737,6 +1773,7 @@ if test "x$bc_build_regex" = "xyes" ; then
 else
 	if test "x$bc_build_regex" = "xno" ; then
 		if test "x$regex_works" != "xyes" ; then
+			AC_MSG_NOTICE([libregex was disabled, but no system regular expression library was found])
 			BC_RETRY_CONFIGURE([$this], [$args])
 			AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
 			AC_MSG_NOTICE([Try adding --enable-regex-build])
@@ -1786,10 +1823,11 @@ if test "x$bc_build_zlib" = "xyes" ; then
 else
 	if test "x$bc_build_zlib" = "xno" ; then
 		if test "x$zlib_works" != "xyes" ; then
+			AC_MSG_NOTICE([libz was disabled, but no system zlib compression library was found])
 			BC_RETRY_CONFIGURE([$this], [$args])
 			AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
 			AC_MSG_NOTICE([Try adding --enable-zlib-build])
-			AC_MSG_ERROR([*** Building libz was disabled, yet no system zlib compression was found ***])
+			AC_MSG_ERROR([*** Building libz was disabled, yet no system zlib compression library was found ***])
 		fi
 	else
 		dnl automatic detection
@@ -1841,6 +1879,7 @@ if test "x$bc_build_urt" = "xyes" ; then
 else
 	if test "x$bc_build_urt" = "xno" ; then
 		if test "x$urt_works" != "xyes" ; then
+			AC_MSG_NOTICE([Utah Raster Toolkit was disabled, but no system URT/RLE library was found ***])
 			BC_RETRY_CONFIGURE([$this], [$args])
 			AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
 			AC_MSG_NOTICE([Try adding --enable-urt-build])
@@ -1920,6 +1959,7 @@ if test "x$bc_build_tcl" = "xyes" ; then
 else
 	if test "x$bc_build_tcl" = "xno" ; then
 		if test "x$tcl_works" = "xno" ; then
+			AC_MSG_NOTICE([libtcl was disabled, but no system Tcl library was found])
 			BC_RETRY_CONFIGURE([$this], [$args])
 			AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
 			AC_MSG_NOTICE([Try adding --enable-tcl-build])
@@ -2013,6 +2053,7 @@ if test "x$bc_build_tk" = "xyes" ; then
 else
 	if test "x$bc_build_tk" = "xno" ; then
 		if test "x$tk_works" = "xno" ; then
+			AC_MSG_NOTICE([libtk was disabled, but no system Tk library was found])
 			BC_RETRY_CONFIGURE([$this], [$args])
 			AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
 			AC_MSG_NOTICE([Try adding --enable-tk-build])
@@ -2086,6 +2127,7 @@ if test "x$bc_build_itcl" = "xyes" ; then
 else
 	if test "x$bc_build_itcl" = "xno" ; then
 		if test "x$itcl_works" = "xno" ; then
+			AC_MSG_NOTICE([incrTcl was disabled, but no system incrTcl library was found])		
 			BC_RETRY_CONFIGURE([$this], [$args])
 			AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
 			AC_MSG_NOTICE([Try adding --enable-itcl-build])
@@ -2160,6 +2202,7 @@ if test "x$bc_build_iwidgets" = "xyes" ; then
 else
 	if test "x$bc_build_iwidgets" = "xno" ; then
 		if test "x$iwidgets_works" = "xno" ; then
+			AC_MSG_NOTICE([iwidgets was disabled, but no system iwidgets package was found])
 			BC_RETRY_CONFIGURE([$this], [$args])
 			AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
 			AC_MSG_NOTICE([Try adding --enable-iwidgets-build])
@@ -2290,6 +2333,7 @@ if test "x$bc_build_termlib" = "xyes" ; then
 else
 	if test "x$bc_build_termlib" = "xno" ; then
 		if test "x$termlib_works" != "xyes" ; then
+			AC_MSG_NOTICE([termlib was disabled, but no system terminal library was found])
 			BC_RETRY_CONFIGURE([$this], [$args])
 			AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
 			AC_MSG_NOTICE([Try adding --enable-termlib-build])
@@ -2393,12 +2437,25 @@ else
 fi
 
 
+dnl *** Jove compilation ***
+build_brlcad_jove=no
+if test "x$bc_build_jove" = "xyes" ; then
+	build_brlcad_jove=yes
+else
+	# enable jove if no suitable system emacs/jove was found
+	if test "x$BCEDITOR" = "x" ; then
+		build_brlcad_jove=yes
+	fi
+fi
+
+
 dnl *** Java interface compilation ***
 build_against_java=no
 AC_MSG_CHECKING(for Java functionality)
 if test "x$found_jni_h" = "xno" ; then
 	if test "x$bc_only_rts" != "xno" ; then
 		AC_MSG_RESULT(no)
+		AC_MSG_NOTICE([searching more extensively])
 		BC_RETRY_CONFIGURE([$this], [$args])
 		AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
 		AC_MSG_NOTICE([Try adding --with-jdk=/path/to/jdk to find jni.h])
@@ -2406,6 +2463,7 @@ if test "x$found_jni_h" = "xno" ; then
 	fi
 	if test "x$bc_with_java" = "xyes" ; then
 		AC_MSG_RESULT(no)
+		AC_MSG_NOTICE([searching more extensively])
 		BC_RETRY_CONFIGURE([$this], [$args])
 		AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
 		AC_MSG_ERROR([Failed to locate a functioning jni.h for Java])
@@ -2457,6 +2515,7 @@ if test "x$bc_with_opengl" != "xno" ; then
 		build_against_opengl="yes"
 	else
 		if test "x$bc_with_opengl" = "xyes" ; then
+			AC_MSG_NOTICE([OpenGL was requested, but no system OpenGL libraries were found])
 			BC_RETRY_CONFIGURE([$this], [$args])
 			AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
 			AC_MSG_NOTICE([Try adding --without-opengl])
@@ -2506,6 +2565,7 @@ if test "x$bc_with_x11" != "xno" ; then
 	else
 		if test "x$bc_with_x11" = "xyes" ; then
 			BC_RETRY_CONFIGURE([$this], [$args])
+			AC_MSG_NOTICE([X11 was requested, but no system X11 libraries were found])
 			AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
 			AC_MSG_NOTICE([Try adding --without-x11])
 			AC_MSG_ERROR([*** Using X11 was requested, yet no system X11 was found ***])
@@ -2520,7 +2580,7 @@ AC_MSG_RESULT($build_against_x11)
 
 dnl *** SDL availability  ***
 sdl_works="no"
-if test "x$bc_use_sdl" != "xno" ; then
+if test "x$bc_with_sdl" != "xno" ; then
 	if test "x$SDL_CONFIG" != "x" ; then
 		AM_PATH_SDL(1.2.0,,AC_MSG_ERROR([Cannot find SDL.]))
 		AC_SUBST(SDL_CFLAGS)
@@ -2535,7 +2595,7 @@ AC_MSG_RESULT($sdl_works)
 dnl *** Python availability ***
 python_works="no"
 AC_MSG_CHECKING(for Python functionality)
-if test "x$bc_use_python" != "xno" ; then
+if test "x$bc_with_python" != "xno" ; then
 	if test "x$PYTHON" != "x" ; then
 		python_works="yes"
 	fi
@@ -2547,21 +2607,36 @@ dnl *** ADRT compilation ***
 dnl figure out whether we have everything we need to build ADRT
 dnl requires sdl and python
 build_brlcad_adrt="no"
-if test "x$python_works" = "xyes" ; then
-	if test "x$sdl_works" = "xyes" ; then
-		build_brlcad_adrt="yes"
+if test "x$bc_build_adrt" = "xauto" ; then
+	if test "x$python_works" = "xyes" ; then
+		if test "x$sdl_works" = "xyes" ; then
+			build_brlcad_adrt="yes"
+		else
+			build_brlcad_adrt="no (need sdl)"
+		fi
 	else
-		build_brlcad_adrt="no (need sdl)"
+		if test "x$sdl_works" = "xyes" ; then
+			build_brlcad_adrt="no (need python)"
+		else
+			build_brlcad_adrt="no (need python and sdl)"
+		fi
 	fi
-else
+elif test "x$bc_build_adrt" = "xyes" ; then
+	build_brlcad_adrt="yes"
 	if test "x$sdl_works" = "xyes" ; then
-		build_brlcad_adrt="no (need python)"
-	else
-		build_brlcad_adrt="no (need python and sdl)"
+		AC_MSG_NOTICE([ADRT requires SDL (and Python)])
+		BC_RETRY_CONFIGURE([$this], [$args])
+		AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
+		AC_MSG_NOTICE([Try adding --disable-adrt-build])
+		AC_MSG_ERROR([*** Using ADRT was requested, yet no system SDL library was found ***])
+	elif test "x$python_works" = "xno" ; then
+		AC_MSG_NOTICE([ADRT requires Python (and SDL)])
+		BC_RETRY_CONFIGURE([$this], [$args])
+		AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
+		AC_MSG_NOTICE([Try adding --disable-adrt-build])
+		AC_MSG_ERROR([*** Using ADRT was requested, yet no system Python interpreter was found ***])
 	fi
 fi
-# force adrt off until the makefiles are fixed in src/adrt
-build_brlcad_adrt="no"
 
 
 dnl *** Knobs availability ***
@@ -2631,7 +2706,7 @@ AM_CONDITIONAL(BUILD_REGEX, [test "x$build_brlcad_regex" = "xyes"])
 AM_CONDITIONAL(BUILD_ZLIB, [test "x$build_brlcad_zlib" = "xyes"])
 AM_CONDITIONAL(BUILD_URT, [test "x$build_brlcad_urt" = "xyes"])
 AM_CONDITIONAL(BUILD_TERMLIB, [test "x$build_brlcad_termlib" = "xyes"])
-AM_CONDITIONAL(BUILD_JOVE, [test "x$bc_build_jove" = "xyes"])
+AM_CONDITIONAL(BUILD_JOVE, [test "x$build_brlcad_jove" = "xyes"])
 AM_CONDITIONAL(BUILD_PROE, [test "x$bc_build_proe" = "xyes"])
 AM_CONDITIONAL(BUILD_ADRT, [test "x$build_brlcad_adrt" = "xyes"])
 AM_CONDITIONAL(INSTALL_MODELS, [test "x$bc_install_geometry" = "xyes"])
@@ -3141,12 +3216,12 @@ AC_MSG_RESULT([Build libregex .......................: $build_brlcad_regex])
 AC_MSG_RESULT([Build zlib ...........................: $build_brlcad_zlib])
 AC_MSG_RESULT([Build termlib ........................: $build_brlcad_termlib])
 AC_MSG_RESULT([Build Utah Raster Toolkit.............: $build_brlcad_urt])
-AC_MSG_RESULT([Build jove ...........................: $bc_build_jove])
+AC_MSG_RESULT([Build jove ...........................: $build_brlcad_jove])
 AC_MSG_RESULT([])
 AC_MSG_RESULT([ADRT support .........................: $build_brlcad_adrt])
-AC_MSG_RESULT([Java Developer Kit support ...........: $build_against_java])
 AC_MSG_RESULT([X11 support ..........................: $build_against_x11])
 AC_MSG_RESULT([OpenGL support .......................: $build_against_opengl])
+AC_MSG_RESULT([Java Developer Kit support ...........: $build_against_java])
 AC_MSG_RESULT([Enable run-time debugging ............: $bc_build_runtime_debug])
 AC_MSG_RESULT([])
 AC_MSG_RESULT([Build 64-bit release .................: $build_brlcad_64bit])
@@ -3159,7 +3234,6 @@ AC_MSG_RESULT([Print verbose compilation warnings ...: $bc_use_warnings])
 AC_MSG_RESULT([])
 AC_MSG_RESULT([Only build benchmark suite ...........: $bc_only_benchmark])
 AC_MSG_RESULT([Only build librtserver ...............: $bc_only_rts])
-AC_MSG_RESULT([Generate doxygen documentation .......: $bc_use_doxygen])
 AC_MSG_RESULT([Install example geometry models ......: $bc_install_geometry])
 AC_MSG_RESULT([])
 if test "x$time_elapsed" != "xunknown" ; then
