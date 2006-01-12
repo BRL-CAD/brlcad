@@ -39,6 +39,7 @@
 /* system headers */
 #include <stdlib.h>
 #include <signal.h>
+#include <string.h>
 
 /* interface headers */
 #include "machine.h"
@@ -64,6 +65,9 @@ typedef struct _my_data_ {
 #define MSG_GEOM	2
 #define MSG_CIAO	3
 
+/* static size used for temporary string buffers */
+#define MAX_DIGITS	32
+
 
 /** print a usage statement when invoked with bad, help, or no arguments
  */
@@ -87,6 +91,87 @@ validate_port(int port) {
 }
 
 
+#define DEFAULT_DB_TITLE "Untitled BRL-CAD Database"
+
+struct db_i *
+db_open_inmem(void)
+{
+    register struct db_i *dbip = DBI_NULL;
+    register int i;
+
+    BU_GETSTRUCT( dbip, db_i );
+    dbip->dbi_eof = -1L;
+    dbip->dbi_fd = -1;
+    dbip->dbi_fp = NULL;
+    dbip->dbi_mf = NULL; /* fake mapped file for contents? */
+    dbip->dbi_read_only = 1;
+
+    /* Initialize fields */
+    for( i=0; i<RT_DBNHASH; i++ ) {
+	dbip->dbi_Head[i] = DIR_NULL;
+    }
+
+    dbip->dbi_local2base = 1.0;		/* mm */
+    dbip->dbi_base2local = 1.0;
+    dbip->dbi_title = DEFAULT_DB_TITLE;
+    dbip->dbi_uses = 1;
+    dbip->dbi_filename = NULL;
+    dbip->dbi_filepath = NULL;
+    dbip->dbi_version = 5;
+
+    /* XXX need to stash an ident record so it's valid maybe? */
+    /* see db_fwrite_ident() */
+
+    bu_ptbl_init( &dbip->dbi_clients, 128, "dbi_clients[]" );
+    dbip->dbi_magic = DBI_MAGIC;		/* Now it's valid */
+
+    return dbip;
+}
+
+
+struct db_i *
+db_create_inmem(void) {
+    struct db_i *dbip;
+    struct bu_external obj;
+    struct bu_attribute_value_set avs;
+    struct bu_vls units;
+    struct bu_external attr;
+    int result;
+
+    dbip = db_open_inmem();
+
+    /* create the header record */
+    db5_export_object3(&obj, DB5HDR_HFLAGS_DLI_HEADER_OBJECT,
+		       NULL, 0, NULL, NULL,
+		       DB5_MAJORTYPE_RESERVED, 0,
+		       DB5_ZZZ_UNCOMPRESSED, DB5_ZZZ_UNCOMPRESSED );
+    /* XXX add objdata to mapped file pointer */
+
+    /* Second, create the attribute-only _GLOBAL object */
+    bu_vls_init( &units );
+    bu_vls_printf( &units, "%.25e", dbip->dbi_local2base );
+    
+    bu_avs_init( &avs, 4, "db_create_inmem" );
+    bu_avs_add( &avs, "title", dbip->dbi_title );
+    bu_avs_add( &avs, "units", bu_vls_addr(&units) );
+
+    db5_export_attributes( &attr, &avs );
+    db5_export_object3(&obj, DB5HDR_HFLAGS_DLI_APPLICATION_DATA_OBJECT,
+		       DB5_GLOBAL_OBJECT_NAME, DB5HDR_HFLAGS_HIDDEN_OBJECT, &attr, NULL,
+		       DB5_MAJORTYPE_ATTRIBUTE_ONLY, 0,
+		       DB5_ZZZ_UNCOMPRESSED, DB5_ZZZ_UNCOMPRESSED );
+    /* XXX add objdata to mapped file pointer */
+
+    bu_free_external( &obj );
+    bu_free_external( &attr );
+    bu_avs_free( &avs );
+    bu_vls_free( &units );
+
+    return dbip;
+}
+
+
+
 void
 server_helo(struct pkg_conn *connection, char *buf)
 {
@@ -101,7 +186,28 @@ server_helo(struct pkg_conn *connection, char *buf)
 void
 server_geom(struct pkg_conn *connection, char *buf)
 {
+    struct bu_external ext;
+
+    /* length was stashed as string in first 32 bytes for
+     * convenience only, more efficient methods possible.
+     */
+    int buflen = atoi(buf);
+
+    BU_INIT_EXTERNAL(&ext);
+    ext.ext_buf = buf + 32;
+    ext.ext_nbytes = buflen;
+
     bu_log("GEOM encountered\n");
+    bu_log("data is %d bytes long\n", buflen);
+
+#if 0
+    wdb_decode_dbip(interp, argv[3], &dbip);
+or
+    dbip = wdb_prep_dbip(interp, argv[i]);
+then
+    wdbp = wdb_dbopen(dbip, RT_WDB_TYPE_DB_INMEM);
+#endif
+
     free(buf);
 }
 
@@ -120,7 +226,7 @@ void
 run_server(int port) {
     struct pkg_conn *client;
     int netfd;
-    char portname[64] = {0};
+    char portname[MAX_DIGITS] = {0};
     int pkg_result  = 0;
 
     struct pkg_switch callbacks[] = {
@@ -133,7 +239,7 @@ run_server(int port) {
     validate_port(port);
 
     /* start up the server on the given port */
-    snprintf(portname, 64, "%d", port);
+    snprintf(portname, MAX_DIGITS - 1, "%d", port);
     netfd = pkg_permserver(portname, "tcp", 0, 0);
     if (netfd < 0) {
 	bu_bomb("Unable to start the server");
@@ -141,7 +247,7 @@ run_server(int port) {
 
     /* listen for a good client indefinitely */
     do {
-	client = pkg_getclient(netfd, callbacks, (void(*)())bu_log, 0);
+	client = pkg_getclient(netfd, callbacks, NULL, 0);
 	if (client == PKC_NULL) {
 	    bu_log("Connection seems to be busy, waiting...\n");
 	    sleep(10);
@@ -189,12 +295,16 @@ run_server(int port) {
 /** base routine that the client uses to send an object to the server.
  * this is the hook callback function for both the primitives and
  * combinations encountered during a db_functree() traversal.
+ *
+ * returns 0 if unsuccessful 
+ * returns 1 if successful
  */
 void
 send_to_server(struct db_i *dbip, struct directory *dp, genptr_t connection)
 {
     my_data *stash;
     struct bu_external ext;
+    char length[MAX_DIGITS] = {0};
     int bytes_sent = 0;
 
     RT_CK_DBI(dbip);
@@ -206,20 +316,21 @@ send_to_server(struct db_i *dbip, struct directory *dp, genptr_t connection)
 	bu_log("Failed to read %s, skipping\n", dp->d_namep);
 	return;
     }
+    snprintf(length, MAX_DIGITS - 1, "%d", ext.ext_nbytes);
     
     /* send the external representation over the wire */
     bu_log("Sending %s\n",dp->d_namep);
 
-    bytes_sent = pkg_send(MSG_GEOM, ext.ext_buf, ext.ext_nbytes, stash->connection);
+    /* pad the data with the length in ascii for convenience */
+    bytes_sent = pkg_2send(MSG_GEOM, length, MAX_DIGITS, ext.ext_buf, ext.ext_nbytes, stash->connection);
     if (bytes_sent < 0) {	
 	pkg_close(stash->connection);
 	bu_log("Unable to successfully send %s to %s, port %d.\n", dp->d_namep, stash->server, stash->port);
+	return;
     }
 
     /* our responsibility to free the stuff we got */
     bu_free_external(&ext);
-
-    return;
 }
 
 
@@ -235,7 +346,7 @@ run_client(const char *server, int port, struct db_i *dbip, int geomc, const cha
     struct directory *dp;
     struct bu_external ext;
     struct db_tree_state init_state; /* state table for the heirarchy walker */
-    char s_port[32] = {0};
+    char s_port[MAX_DIGITS] = {0};
     int bytes_sent = 0;
 
     RT_CK_DBI(dbip);
@@ -243,8 +354,8 @@ run_client(const char *server, int port, struct db_i *dbip, int geomc, const cha
     /* open a connection to the server */
     validate_port(port);
 
-    snprintf(s_port, 32, "%d", port);
-    stash.connection = pkg_open(server, s_port, "tcp", NULL, NULL, NULL, bu_log);
+    snprintf(s_port, MAX_DIGITS - 1, "%d", port);
+    stash.connection = pkg_open(server, s_port, "tcp", NULL, NULL, NULL, NULL);
     if (stash.connection == PKC_ERROR) {
 	bu_log("Connection to %s, port %d, failed.\n", server, port);
 	bu_bomb("ERROR: Unable to open a connection to the server\n");
@@ -285,7 +396,7 @@ run_client(const char *server, int port, struct db_i *dbip, int geomc, const cha
 	 */
 	for (i = 0; i < RT_DBNHASH; i++) {
 	    for (dp = dbip->dbi_Head[i]; dp != DIR_NULL; dp = dp->d_forw) {
-		(void)send_to_server(dbip, dp, (genptr_t)&stash);
+		send_to_server(dbip, dp, (genptr_t)&stash);
 	    }
 	}
     }
@@ -358,6 +469,9 @@ main(int argc, char *argv[]) {
 	    usage("ERROR: Unexpected extra arguments", argv0);
 	}
 
+	/* mark the database as in-memory only */
+	//	XXX = wdb_dbopen(dbip, RT_WDB_TYPE_DB_INMEM);
+
 	/* ignore broken pipes */
 	(void)signal(SIGPIPE, SIG_IGN);
 
@@ -386,6 +500,10 @@ main(int argc, char *argv[]) {
 	bu_log("Geometry file does not exist: %s\n", geometry_file);
 	bu_bomb("Need a BRL-CAD .g geometry database file\n");
     }
+
+    /* XXX fixed in latest db_open(), but call for now just in case
+       until 7.8.0 release */
+    rt_init_resource( &rt_uniresource, 0, NULL );
 
     /* make sure the geometry file is a geometry database, get a
      * database instance pointer.
