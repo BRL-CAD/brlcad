@@ -3866,6 +3866,7 @@ ComputeVisibleEntries(TreeView *tvPtr)
 	assert(tvPtr->visibleArr);
     }
     tvPtr->nVisible = 0;
+    tvPtr->visibleArr[0] = NULL;
 
     if (tvPtr->rootPtr->flags & ENTRY_HIDDEN) {
 	return TCL_OK;		/* Root node is hidden. */
@@ -4631,6 +4632,9 @@ DrawTitle(
     int width;
     int x0, cx, xOffset;
 
+    if (tvPtr->titleHeight < 1) {
+	return;
+    }
     columnWidth = columnPtr->width;
     cx = x;
     if (columnPtr->position == Blt_ChainGetLength(tvPtr->colChainPtr)) {

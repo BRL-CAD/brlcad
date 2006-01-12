@@ -1424,59 +1424,62 @@ LogScaleAxis(axisPtr, min, max)
     double majorStep, minorStep;
     int nMajor, nMinor;
 
-    min = (min != 0.0) ? log10(FABS(min)) : 0.0;
-    max = (max != 0.0) ? log10(FABS(max)) : 1.0;
-
-    tickMin = floor(min);
-    tickMax = ceil(max);
-    range = tickMax - tickMin;
-
-    if (range > 10) {
-	/* There are too many decades to display a major tick at every
-	 * decade.  Instead, treat the axis as a linear scale.  */
-	range = NiceNum(range, 0);
-	majorStep = NiceNum(range / DEF_NUM_TICKS, 1);
-	tickMin = UFLOOR(tickMin, majorStep);
-	tickMax = UCEIL(tickMax, majorStep);
-	nMajor = (int)((tickMax - tickMin) / majorStep) + 1;
-	minorStep = EXP10(floor(log10(majorStep)));
-	if (minorStep == majorStep) {
-	    nMinor = 4, minorStep = 0.2;
+    nMajor = nMinor = 0;
+    majorStep = minorStep = 0.0;
+    if (min < max) {
+	min = (min != 0.0) ? log10(FABS(min)) : 0.0;
+	max = (max != 0.0) ? log10(FABS(max)) : 1.0;
+	
+	tickMin = floor(min);
+	tickMax = ceil(max);
+	range = tickMax - tickMin;
+	
+	if (range > 10) {
+	    /* There are too many decades to display a major tick at every
+	     * decade.  Instead, treat the axis as a linear scale.  */
+	    range = NiceNum(range, 0);
+	    majorStep = NiceNum(range / DEF_NUM_TICKS, 1);
+	    tickMin = UFLOOR(tickMin, majorStep);
+	    tickMax = UCEIL(tickMax, majorStep);
+	    nMajor = (int)((tickMax - tickMin) / majorStep) + 1;
+	    minorStep = EXP10(floor(log10(majorStep)));
+	    if (minorStep == majorStep) {
+		nMinor = 4, minorStep = 0.2;
+	    } else {
+		nMinor = Round(majorStep / minorStep) - 1;
+	    }
 	} else {
-	    nMinor = Round(majorStep / minorStep) - 1;
-	}
-    } else {
-	if (tickMin == tickMax) {
-	    tickMax++;
-	}
-	majorStep = 1.0;
-	nMajor = (int)(tickMax - tickMin + 1); /* FIXME: Check this. */
-
-	minorStep = 0.0;	/* This is a special hack to pass
+	    if (tickMin == tickMax) {
+		tickMax++;
+	    }
+	    majorStep = 1.0;
+	    nMajor = (int)(tickMax - tickMin + 1); /* FIXME: Check this. */
+	    
+	    minorStep = 0.0;	/* This is a special hack to pass
 				 * information to the GenerateTicks
 				 * routine. An interval of 0.0 tells
 				 *	1) this is a minor sweep and 
 				 *	2) the axis is log scale.  
 				 */
-	nMinor = 10;
-    }
-    if ((axisPtr->looseMin == TICK_RANGE_TIGHT) ||
-	((axisPtr->looseMin == TICK_RANGE_LOOSE) && 
-	 (DEFINED(axisPtr->reqMin)))) {
-	tickMin = min;
-	nMajor++;
-    }
-    if ((axisPtr->looseMax == TICK_RANGE_TIGHT) ||
-	((axisPtr->looseMax == TICK_RANGE_LOOSE) &&
-	 (DEFINED(axisPtr->reqMax)))) {
-	tickMax = max;
+	    nMinor = 10;
+	}
+	if ((axisPtr->looseMin == TICK_RANGE_TIGHT) ||
+	    ((axisPtr->looseMin == TICK_RANGE_LOOSE) && 
+	     (DEFINED(axisPtr->reqMin)))) {
+	    tickMin = min;
+	    nMajor++;
+	}
+	if ((axisPtr->looseMax == TICK_RANGE_TIGHT) ||
+	    ((axisPtr->looseMax == TICK_RANGE_LOOSE) &&
+	     (DEFINED(axisPtr->reqMax)))) {
+	    tickMax = max;
+	}
     }
     axisPtr->majorSweep.step = majorStep;
     axisPtr->majorSweep.initial = floor(tickMin);
     axisPtr->majorSweep.nSteps = nMajor;
     axisPtr->minorSweep.initial = axisPtr->minorSweep.step = minorStep;
     axisPtr->minorSweep.nSteps = nMinor;
-
     SetAxisRange(&axisPtr->axisRange, tickMin, tickMax);
 }
 
@@ -1551,31 +1554,35 @@ LinearScaleAxis(axisPtr, min, max)
     double axisMin, axisMax;
     int nTicks;
 
-    range = max - min;
-
-    /* Calculate the major tick stepping. */
-    if (axisPtr->reqStep > 0.0) {
-	/* An interval was designated by the user.  Keep scaling it
-	 * until it fits comfortably within the current range of the
-	 * axis.  */
-	step = axisPtr->reqStep;
-	while ((2 * step) >= range) {
-	    step *= 0.5;
+    nTicks = 0;
+    tickMin = tickMax = 0.0;
+    if (min < max) {
+	range = max - min;
+	
+	/* Calculate the major tick stepping. */
+	if (axisPtr->reqStep > 0.0) {
+	    /* An interval was designated by the user.  Keep scaling it
+	     * until it fits comfortably within the current range of the
+	     * axis.  */
+	    step = axisPtr->reqStep;
+	    while ((2 * step) >= range) {
+		step *= 0.5;
+	    }
+	} else {
+	    range = NiceNum(range, 0);
+	    step = NiceNum(range / DEF_NUM_TICKS, 1);
 	}
-    } else {
-	range = NiceNum(range, 0);
-	step = NiceNum(range / DEF_NUM_TICKS, 1);
+	
+	/* Find the outer tick values. Add 0.0 to prevent getting -0.0. */
+	axisMin = tickMin = floor(min / step) * step + 0.0;
+	axisMax = tickMax = ceil(max / step) * step + 0.0;
+	
+	nTicks = Round((tickMax - tickMin) / step) + 1;
     }
-
-    /* Find the outer tick values. Add 0.0 to prevent getting -0.0. */
-    axisMin = tickMin = floor(min / step) * step + 0.0;
-    axisMax = tickMax = ceil(max / step) * step + 0.0;
-
-    nTicks = Round((tickMax - tickMin) / step) + 1;
     axisPtr->majorSweep.step = step;
     axisPtr->majorSweep.initial = tickMin;
     axisPtr->majorSweep.nSteps = nTicks;
-
+    
     /*
      * The limits of the axis are either the range of the data
      * ("tight") or at the next outer tick interval ("loose").  The
@@ -1596,9 +1603,9 @@ LinearScaleAxis(axisPtr, min, max)
 	axisMax = max;
     }
     SetAxisRange(&axisPtr->axisRange, axisMin, axisMax);
-
+    
     /* Now calculate the minor tick step and number. */
-
+    
     if ((axisPtr->reqNumMinorTicks > 0) && 
 	((axisPtr->flags & AXIS_CONFIG_MAJOR) == 0)) {
 	nTicks = axisPtr->reqNumMinorTicks - 1;
@@ -1613,7 +1620,6 @@ LinearScaleAxis(axisPtr, min, max)
     axisPtr->minorSweep.initial = axisPtr->minorSweep.step = step;
     axisPtr->minorSweep.nSteps = nTicks;
 }
-
 
 static void
 SweepTicks(axisPtr)
@@ -1684,9 +1690,11 @@ Blt_ResetAxes(graphPtr)
     for (linkPtr = Blt_ChainFirstLink(graphPtr->elements.displayList);
 	linkPtr != NULL; linkPtr = Blt_ChainNextLink(linkPtr)) {
 	elemPtr = Blt_ChainGetValue(linkPtr);
-	(*elemPtr->procsPtr->extentsProc) (elemPtr, &exts);
-	GetDataLimits(elemPtr->axes.x, exts.left, exts.right);
-	GetDataLimits(elemPtr->axes.y, exts.top, exts.bottom);
+	if (!elemPtr->hidden) {
+	    (*elemPtr->procsPtr->extentsProc) (elemPtr, &exts);
+	    GetDataLimits(elemPtr->axes.x, exts.left, exts.right);
+	    GetDataLimits(elemPtr->axes.y, exts.top, exts.bottom);
+	}
     }
     /*
      * Step 3:  Now that we know the range of data values for each axis,
