@@ -1,8 +1,15 @@
 # $Id$
 
+AM_CPPFLAGS = \
+	-I${top_srcdir}/src/other/blt/src \
+	-DNO_MOUNTAIN \
+	-DTCL_LIBRARY="\"${TCL_LIBRARY}\"" \
+	-DTCL_PACKAGE_PATH="\"${TCL_PACKAGE_PATH}\"" \
+	-DUSE_TCLALLOC=0
+
 noinst_LTLIBRARIES = libblts.la
 
-libblts_la_LDFLAGS = -module -static
+# libblts_la_LDFLAGS = -module -static
 libblts_la_SOURCES = \
 	bltAlloc.c \
 	bltArrayObj.c \
@@ -74,13 +81,6 @@ libblts_la_SOURCES = \
 	tkConsole.c \
 	tkFrame.c
 
-AM_CPPFLAGS = \
-	-I${top_srcdir}/src/other/blt/src \
-	-DNO_MOUNTAIN \
-	-DTCL_LIBRARY="\"${TCL_LIBRARY}\"" \
-	-DTCL_PACKAGE_PATH="\"${TCL_PACKAGE_PATH}\"" \
-	-DUSE_TCLALLOC=0
-
 EXTRA_DIST = \
 	bltWinDde.c \
 	bltWindow.c \
@@ -93,10 +93,13 @@ EXTRA_DIST = \
 	bltWinUtil.c \
 	pure_api.c \
 	tkScrollbar.c \
+	bltConfig.h \
+	bltWinConfig.h
+
+include_HEADERS = \
 	blt.h \
 	bltBind.h \
 	bltChain.h \
-	bltConfig.h \
 	bltGraph.h \
 	bltGrAxis.h \
 	bltGrElem.h \
@@ -122,9 +125,11 @@ EXTRA_DIST = \
 	bltVecInt.h \
 	bltVector.h \
 	bltWait.h \
-	bltWinConfig.h \
 	bltWin.h \
 	missing.h
+
+brlcadincludedir = $(includedir)/brlcad
+brlcadinclude_HEADERS = $(include_HEADERS)
 
 MAINTAINERCLEANFILES = Makefile.in
 
