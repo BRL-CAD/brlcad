@@ -47,6 +47,8 @@ THESE SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE LOWER PRIORITY OR FOR FUTURE RELEASES
 -----------------------------------------------
 
+* add callback data parameters to libpkg hook functions
+
 * test intel compiler performance on Altix, add performance options
 
 * pix-png should make sure output is not to a terminal
