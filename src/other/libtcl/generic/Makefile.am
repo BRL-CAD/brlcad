@@ -1,5 +1,11 @@
 # $Id$
 
+AM_CPPFLAGS = \
+	-I${top_srcdir}/src/other/libtcl/generic \
+	-DTCL_LIBRARY="\"${TCL_LIBRARY}\"" \
+	-DTCL_PACKAGE_PATH="\"${TCL_PACKAGE_PATH}\"" \
+	-DUSE_TCLALLOC=0
+
 lib_LTLIBRARIES = \
 	libtclstub.la \
 	libtclstub@TCL_VERSION@.la
@@ -115,12 +121,6 @@ EXTRA_DIST = \
 
 brlcadincludedir = $(includedir)/brlcad
 brlcadinclude_HEADERS = $(include_HEADERS)
-
-AM_CPPFLAGS = \
-	-I${top_srcdir}/src/other/libtcl/generic \
-	-DTCL_LIBRARY="\"${TCL_LIBRARY}\"" \
-	-DTCL_PACKAGE_PATH="\"${TCL_PACKAGE_PATH}\"" \
-	-DUSE_TCLALLOC=0
 
 MAINTAINERCLEANFILES = Makefile.in
 

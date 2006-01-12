@@ -6,6 +6,13 @@ SUBDIRS = \
 	library \
 	unix
 
+AM_CFLAGS =
+AM_CPPFLAGS = \
+	-I${top_srcdir}/src/other/libtcl/generic \
+	-DTCL_LIBRARY="\"${TCL_LIBRARY}\"" \
+	-DTCL_PACKAGE_PATH="\"${TCL_PACKAGE_PATH}\"" \
+	-DUSE_TCLALLOC=0
+
 lib_LTLIBRARIES = \
 	libtcl.la \
 	libtcl@TCL_VERSION@.la
@@ -110,13 +117,6 @@ tclsh_LDADD = \
 	libtcl.la
 
 tcllibdir = ${libdir}
-
-AM_CFLAGS =
-AM_CPPFLAGS = \
-	-I${top_srcdir}/src/other/libtcl/generic \
-	-DTCL_LIBRARY="\"${TCL_LIBRARY}\"" \
-	-DTCL_PACKAGE_PATH="\"${TCL_PACKAGE_PATH}\"" \
-	-DUSE_TCLALLOC=0
 
 EXTRA_DIST = \
 	ChangeLog.1999 \
