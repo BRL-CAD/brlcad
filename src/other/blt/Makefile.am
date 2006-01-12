@@ -11,7 +11,7 @@ lib_LTLIBRARIES = \
 	libblt@BLT_VERSION@.la
 
 libblt_la_SOURCES =
-libblt_la_LDFLAGS = -module
+# libblt_la_LDFLAGS = -module
 libblt_la_LIBADD = \
 	src/bltAlloc.lo \
 	src/bltArrayObj.lo \
@@ -79,13 +79,11 @@ libblt_la_LIBADD = \
 	src/bltWatch.lo \
 	src/bltWindow.lo \
 	src/bltWinop.lo \
-	src/tkButton.lo \
-	src/tkConsole.lo \
-	src/tkFrame.lo \
 	${TCL} \
 	${TK}
 
 libblt@BLT_VERSION@_la_SOURCES = $(libblt_la_SOURCES)
+libblt@BLT_VERSION@_la_LDFLAGS = $(libblt_la_LDFLAGS)
 libblt@BLT_VERSION@_la_LIBADD = $(libblt_la_LIBADD)
 
 AM_CPPFLAGS = \
