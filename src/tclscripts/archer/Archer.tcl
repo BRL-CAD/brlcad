@@ -275,6 +275,7 @@ namespace eval Archer {
 	variable mShowModelAxes 0
 	variable mShowModelAxesTicks 1
 	variable mShowGroundPlane 0
+	variable mShowPrimitiveLabels 0
 
 	# variables for preference state
 	variable mBindingMode 0
@@ -553,6 +554,7 @@ Popup Menu    Right or Ctrl-Left
 	method _get_vdraw_color {color}
 	method _build_ground_plane {}
 	method _show_ground_plane {}
+	method _show_primitive_labels {}
 
 	# pane commands
 	method _toggle_tree_view {state}
@@ -4315,6 +4317,12 @@ Popup Menu    Right or Ctrl-Left
 	    -onvalue 1 \
 	    -variable [::itcl::scope mShowGroundPlane] \
 	    -command [::itcl::code $this _show_ground_plane]
+	$itk_component(modesmenu) add checkbutton \
+	    -label "Primitive Labels" \
+	    -offvalue 0 \
+	    -onvalue 1 \
+	    -variable [::itcl::scope mShowPrimitiveLabels] \
+	    -command [::itcl::code $this _show_primitive_labels]
 
 	if {![info exists itk_component(mged)] &&
 	    ![info exists itk_component(sdb)]} {
@@ -4388,6 +4396,8 @@ Popup Menu    Right or Ctrl-Left
 			-helpstr "Hide/Show model Axes"
 		    checkbutton groundplane -label "Ground Plane" \
 			-helpstr "Hide/Show ground plane"
+		    checkbutton groundplane -label "Primitive Labels" \
+			-helpstr "Hide/Show primitive labels"
 		}
 	}
 
@@ -4468,6 +4478,11 @@ Popup Menu    Right or Ctrl-Left
 	    -onvalue 1 \
 	    -variable [::itcl::scope mShowGroundPlane] \
 	    -command [::itcl::code $this _show_ground_plane]
+	$itk_component(menubar) menuconfigure .modes.primitiveLabels \
+	    -offvalue 0 \
+	    -onvalue 1 \
+	    -variable [::itcl::scope mShowPrimitiveLabels] \
+	    -command [::itcl::code $this _show_primitive_labels]
     }
 }
 
@@ -7937,20 +7952,26 @@ Popup Menu    Right or Ctrl-Left
 	set mShowNormals 0
     }
 
+    if {$mShowPrimitiveLabels} {
+	set plnode $node
+    } else {
+	set plnode {}
+    }
+
     if {$mShowNormals} {
 	if {[catch {dbCmd attr get \
 			$tnode displayColor} displayColor]} {
 	    switch -exact -- $state {
 		"0" {
-		    dbCmd configure -primitiveLabels $node
+		    dbCmd configure -primitiveLabels $plnode
 		    dbCmd draw -m0 -n -x $trans $node
 		}
 		"1" {
-		    dbCmd configure -primitiveLabels $node
+		    dbCmd configure -primitiveLabels $plnode
 		    dbCmd draw -m1 -n -x $trans $node
 		}
 		"2" {
-		    dbCmd configure -primitiveLabels $node
+		    dbCmd configure -primitiveLabels $plnode
 		    dbCmd draw -m2 -n -x $trans $node
 		}
 		"-1" {
@@ -7961,17 +7982,17 @@ Popup Menu    Right or Ctrl-Left
 	} else {
 	    switch -exact -- $state {
 		"0" {
-		    dbCmd configure -primitiveLabels $node
+		    dbCmd configure -primitiveLabels $plnode
 		    dbCmd draw -m0 -n -x $trans \
 			-C $displayColor $node
 		}
 		"1" {
-		    dbCmd configure -primitiveLabels $node
+		    dbCmd configure -primitiveLabels $plnode
 		    dbCmd draw -m1 -n -x $trans \
 			-C $displayColor $node
 		}
 		"2" {
-		    dbCmd configure -primitiveLabels $node
+		    dbCmd configure -primitiveLabels $plnode
 		    dbCmd draw -m2 -n -x $trans \
 			-C $displayColor $node
 		}
@@ -7986,15 +8007,15 @@ Popup Menu    Right or Ctrl-Left
 			$tnode displayColor} displayColor]} {
 	    switch -exact -- $state {
 		"0" {
-		    dbCmd configure -primitiveLabels $node
+		    dbCmd configure -primitiveLabels $plnode
 		    dbCmd draw -m0 -x $trans $node
 		}
 		"1" {
-		    dbCmd configure -primitiveLabels $node
+		    dbCmd configure -primitiveLabels $plnode
 		    dbCmd draw -m1 -x $trans $node
 		}
 		"2" {
-		    dbCmd configure -primitiveLabels $node
+		    dbCmd configure -primitiveLabels $plnode
 		    dbCmd draw -m2 -x $trans $node
 		}
 		"-1" {
@@ -8005,17 +8026,17 @@ Popup Menu    Right or Ctrl-Left
 	} else {
 	    switch -exact -- $state {
 		"0" {
-		    dbCmd configure -primitiveLabels $node
+		    dbCmd configure -primitiveLabels $plnode
 		    dbCmd draw -m0 -x $trans \
 			-C $displayColor $node
 		}
 		"1" {
-		    dbCmd configure -primitiveLabels $node
+		    dbCmd configure -primitiveLabels $plnode
 		    dbCmd draw -m1 -x $trans \
 			-C $displayColor $node
 		}
 		"2" {
-		    dbCmd configure -primitiveLabels $node
+		    dbCmd configure -primitiveLabels $plnode
 		    dbCmd draw -m2 -x $trans \
 			-C $displayColor $node
 		}
@@ -8554,7 +8575,7 @@ Popup Menu    Right or Ctrl-Left
     # label the object if it's being drawn
     set mRenderMode [dbCmd how $node]
 
-    if {0 <= $mRenderMode} {
+    if {$mShowPrimitiveLabels && 0 <= $mRenderMode} {
 	dbCmd configure -primitiveLabels $node
     } else {
 	dbCmd configure -primitiveLabels {}
@@ -9681,6 +9702,15 @@ Popup Menu    Right or Ctrl-Left
     if {$savePwd != ""} {
 	cd $savePwd
     }
+}
+
+::itcl::body Archer::_show_primitive_labels {} {
+    if {![info exists itk_component(mged)] &&
+	![info exists itk_component(sdb)]} {
+	return
+    }
+
+    _redraw_obj $mSelectedObjPath
 }
 
 ::itcl::body Archer::_toggle_tree_view {state} {
