@@ -692,6 +692,10 @@
     if {$stype != ""} {
 	build_$stype $itk_component(shaderBody) 0
     }
+
+    if {$allowCallbacks && $itk_option(-shaderChangedCallback) != ""} {
+	$itk_option(-shaderChangedCallback)
+    }
 }
 
 ::itcl::body ShaderEdit::updateShader {stype} {
