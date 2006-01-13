@@ -2606,6 +2606,7 @@ Popup Menu    Right or Ctrl-Left
     }
 
     _update_obj_edit $hname 1 0
+    _refresh_tree
 
     # Disable the apply and reset buttons
     $itk_component(objEditToolbar) itemconfigure apply \
@@ -2831,6 +2832,7 @@ Popup Menu    Right or Ctrl-Left
     }
 
     _update_obj_history $mSelectedObj
+    _refresh_tree
 
     set mNeedSave 1
     _update_save_mode	
@@ -11068,7 +11070,7 @@ Popup Menu    Right or Ctrl-Left
     } elseif {$len == 18} {
 	set tree "l [lindex $line 1] [lrange $line 2 end]"
     } else {
-	error "packTree: malformed line - $line"
+#	error "packTree: malformed line - $line"
     }
 
     for {set n 1} {$n < $nlines} {incr n} {
@@ -11085,7 +11087,8 @@ Popup Menu    Right or Ctrl-Left
 	} elseif {$len == 18} {
 	    set tree "[lindex $line 0] [list $tree] [list [list l [lindex $line 1] [lrange $line 2 end]]]"
 	} else {
-	    error "packTree: malformed line - $line"
+#	    error "packTree: malformed line - $line"
+	    continue
 	}
     }
 
