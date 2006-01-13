@@ -4374,6 +4374,8 @@ Popup Menu    Right or Ctrl-Left
 			-helpstr "Hide/Show model Axes"
 		    checkbutton groundplane -label "Ground Plane" \
 			-helpstr "Hide/Show ground plane"
+		    checkbutton primitiveLabels -label "Primitive Labels" \
+			-helpstr "Hide/Show primitive labels"
 		}
 	} else {
 	    $itk_component(menubar) menuconfigure .modes \
@@ -4398,7 +4400,7 @@ Popup Menu    Right or Ctrl-Left
 			-helpstr "Hide/Show model Axes"
 		    checkbutton groundplane -label "Ground Plane" \
 			-helpstr "Hide/Show ground plane"
-		    checkbutton groundplane -label "Primitive Labels" \
+		    checkbutton primitiveLabels -label "Primitive Labels" \
 			-helpstr "Hide/Show primitive labels"
 		}
 	}
