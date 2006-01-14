@@ -325,7 +325,7 @@ main(int argc, char **argv)
     rtip->useair = use_air;
 
     /* Walk trees */
-    if( rt_gettrees_muves( rtip, (const char **)attrs, argc, (const char **)argv, 1 ) ) {
+    if( rt_gettrees_and_attrs( rtip, (const char **)attrs, argc, (const char **)argv, 1 ) ) {
 	fprintf(stderr,"rt_gettrees FAILED\n");
 	exit( 1 );
     }
