@@ -1556,6 +1556,8 @@ AC_C_BIGENDIAN(AC_DEFINE(NATURAL_IEEE,,64b floating point storage technique),
 	       AC_DEFINE(REVERSE_IEEE,,64b floating point storage technique),
 	       AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
 	       AC_MSG_ERROR([*** Don't know the endian of this machine! ***]) )
+dnl conditionally define WORDS_BIGENDIAN for blt
+AC_C_BIGENDIAN
 
 dnl AC_C_PROTOTYPES
 AM_C_PROTOTYPES
@@ -1563,8 +1565,20 @@ AM_C_PROTOTYPES
 AC_DEFINE(USE_PROTOTYPES,1,heh)
 
 # figure out what size pointers the compiler is actually generating
+AC_CHECK_SIZEOF(int)
+AC_CHECK_SIZEOF(long)
 AC_CHECK_SIZEOF(void *, 4)
 pointer_size="$ac_cv_sizeof_void_p"
+
+# determine the minimum single-precision floating point tolerance
+# value at compile time such that: 1.0 + value != 1.0
+# ANSI defines this as FLT_EPSILON but float.h may not provide it.
+BC_FLOAT_EPSILON
+
+# determine the minimum double-precision floating point tolerance
+# value at compile time such that: 1.0 + value != 1.0
+# ANSI defines this as DBL_EPSILON but float.h may not provide it.
+BC_DOUBLE_EPSILON
 
 dnl Last step is to make sure that we can actually compile
 AC_MSG_CHECKING(compiler and flags for sanity)
