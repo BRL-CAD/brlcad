@@ -503,7 +503,7 @@ done
 #######################################
 if test -d autom4te.cache ; then
     $VERBOSE_ECHO "Found an autom4te.cache directory, deleting it"
-    $VERBOSE_ECHO "rm -f autom4te.cache"
+    $VERBOSE_ECHO "rm -rf autom4te.cache"
     rm -rf autom4te.cache
 fi
 
@@ -602,10 +602,12 @@ if [ "x$reconfigure_manually" = "xyes" ] ; then
     if [ ! $ret = 0 ] ; then
 	# retry without the -f and with backwards support for missing macros
 	configure_ac_changed="no"
+	configure_ac_backupd="no"
 	if test "x$HAVE_SED" = "xyes" ; then
 	    if test ! -f configure.ac.backup ; then
 		$VERBOSE_ECHO cp $_configure_file configure.ac.backup
 		cp $_configure_file configure.ac.backup
+		configure_ac_backupd="yes"
 	    fi
 
 	    ac2_59_macros="AC_C_RESTRICT AC_INCLUDES_DEFAULT AC_LANG_ASSERT AC_LANG_WERROR AS_SET_CATFILE"
@@ -654,8 +656,11 @@ if [ "x$reconfigure_manually" = "xyes" ] ; then
 
 	    # failed so restore the backup
 	    if test -f configure.ac.backup ; then
-		$VERBOSE_ECHO cp configure.ac.bacukp $_configure_file
-		cp configure.ac.backup $_configure_file
+		# make sure we made the backup file
+		if test "x$configure_ac_backupd" = "xyes" ; then
+		    $VERBOSE_ECHO cp configure.ac.backup $_configure_file
+		    cp configure.ac.backup $_configure_file
+		fi
 	    fi
 
 	    # test if libtool is busted
