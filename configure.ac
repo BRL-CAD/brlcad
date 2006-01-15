@@ -1580,6 +1580,14 @@ BC_FLOAT_EPSILON
 # ANSI defines this as DBL_EPSILON but float.h may not provide it.
 BC_DOUBLE_EPSILON
 
+# determine whether the single-precision floating point implementation
+# seems IEEE 754 compliant.
+BC_COMPLIANT_FLOAT
+
+# determine whether the double-precision floating point implementation
+# seems IEEE 754 compliant.
+BC_COMPLIANT_DOUBLE
+
 dnl Last step is to make sure that we can actually compile
 AC_MSG_CHECKING(compiler and flags for sanity)
 AC_TRY_RUN([
