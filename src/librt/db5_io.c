@@ -248,10 +248,10 @@ db5_crack_disk_header(struct db5_raw_internal *rip, const unsigned char *cp)
 	if( cp[0] != DB5HDR_MAGIC1 )  {
 		bu_log("db5_crack_disk_header() bad magic1 -- database has become corrupted\n expected x%x, got x%x\n",
 			DB5HDR_MAGIC1, cp[0]);
-		if( cp[0] == 'I' )
+		if( cp[0] == 'I' ) {
 		  bu_log ("Concatenation of different database versions detected.\n");
 		  bu_log ("Run 'dbupgrade' on all databases before concatenation (cat command).\n");
-
+		}
 		return 0;
 	}
 
