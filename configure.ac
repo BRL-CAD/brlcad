@@ -1179,6 +1179,7 @@ AC_CHECK_HEADERS( \
 	float.h \
 	getopt.h \
 	gl/device.h \
+	ieeefp.h \
 	inttypes.h \
 	io.h \
 	itcl.h \
@@ -1197,6 +1198,7 @@ AC_CHECK_HEADERS( \
 	pwd.h \
 	rle.h \
 	sched.h \
+	setjmp.h \
 	sgtty.h \
 	signal.h \
 	socket.h \
@@ -1241,6 +1243,7 @@ AC_CHECK_HEADERS( \
 	utime.h \
 	values.h \
 	varargs.h \
+	waitflags.h \
 	wchar.h \
 	xosdefs.h \
 )
@@ -1567,6 +1570,7 @@ AC_DEFINE(USE_PROTOTYPES,1,heh)
 # figure out what size pointers the compiler is actually generating
 AC_CHECK_SIZEOF(int)
 AC_CHECK_SIZEOF(long)
+AC_CHECK_SIZEOF(long long)
 AC_CHECK_SIZEOF(void *, 4)
 pointer_size="$ac_cv_sizeof_void_p"
 
@@ -1624,6 +1628,7 @@ AC_CHECK_FUNCS(\
 	endgrent \
 	endpwent \
 	fabs  \
+	finite \
 	floor \
 	ftime \
 	ftruncate \
@@ -1638,6 +1643,7 @@ AC_CHECK_FUNCS(\
 	gettimeofday \
 	inet_ntoa \
 	isascii \
+	isfinite \
 	localtime_r \
 	memchr \
 	memmove \
