@@ -349,8 +349,7 @@ db_get_external(register struct bu_external *ep, const struct directory *dp, con
 		ep->ext_nbytes = dp->d_len * sizeof(union record);
 	else
 		ep->ext_nbytes = dp->d_len;
-	ep->ext_buf = (genptr_t)bu_malloc(
-		ep->ext_nbytes, "db_get_ext ext_buf");
+	ep->ext_buf = (genptr_t)bu_malloc(ep->ext_nbytes, "db_get_ext ext_buf");
 
 	if( dp->d_flags & RT_DIR_INMEM )  {
 		bcopy( dp->d_un.ptr, (char *)ep->ext_buf, ep->ext_nbytes );
