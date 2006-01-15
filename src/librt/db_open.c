@@ -322,7 +322,9 @@ db_close(register struct db_i *dbip)
 #ifdef HAVE_UNIX_IO
 	(void)close( dbip->dbi_fd );
 #endif
-	fclose( dbip->dbi_fp );
+	if (dbip->dbi_fp) {
+	    fclose( dbip->dbi_fp );
+	}
 	if( dbip->dbi_title )
 		bu_free( dbip->dbi_title, "dbi_title" );
 	if( dbip->dbi_filename )
