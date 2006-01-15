@@ -79,6 +79,9 @@ libblt_la_LIBADD = \
 	src/bltWatch.lo \
 	src/bltWindow.lo \
 	src/bltWinop.lo \
+	${LIBSOCKET} \
+	${LIBM} \
+	${LIBNSL} \
 	${TCL} \
 	${TK}
 
