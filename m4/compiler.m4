@@ -45,6 +45,7 @@
 #
 # BC_PREPROCESSOR_RECOGNIZES
 # checks if the preprocessor will work with the specified cppflags
+#
 ###
 
 AC_DEFUN([BC_COMPILER_AND_LINKER_RECOGNIZES], [
