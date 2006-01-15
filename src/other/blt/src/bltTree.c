@@ -96,15 +96,15 @@ static Value *TreeNextValue _ANSI_ARGS_((Blt_TreeKeySearch *srchPtr));
 
 #define REBUILD_MULTIPLIER	3
 
-#if (SIZEOF_VOID_P == 8)
-#define RANDOM_INDEX(i)		HashOneWord(mask, downshift, i)
-#define BITSPERWORD		64
-#else 
-
 #define START_LOGSIZE		5 /* Initial hash table size is 32. */
 #define MAX_LIST_VALUES		20 /* Convert to hash table when node
 				    * value list gets bigger than this
 				    * many values. */
+
+#if (SIZEOF_VOID_P == 8)
+#define RANDOM_INDEX(i)		HashOneWord(mask, downshift, i)
+#define BITSPERWORD		64
+#else 
 
 /*
  * The following macro takes a preliminary integer hash value and
