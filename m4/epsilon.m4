@@ -44,6 +44,14 @@
 # BC_DOUBLE_EPSILON
 # determine the double-precision floating point tolerance epsilon
 #
+# BC_COMPLIANT_FLOAT
+# determine whether the single-precision floating point epsilon seems
+# IEEE 754 compliant by computing the power of -23
+#
+# BC_COMPLIANT_DOUBLE
+# determine whether the double-precision floating point epsilon seems
+# IEEE 754 compliant by computing the power of -52
+#
 ###
 
 dnl BC_TRY_RUN_OUTPUT(VARIABLE, PROGRAM)
@@ -55,11 +63,11 @@ cat > conftest.$ac_ext <<EOF
 [$2]
 EOF
 if AC_TRY_EVAL(ac_link) && test -s conftest${ac_exeext} && (./conftest > conftest.stdout; exit) 2>/dev/null ; then
-	[$1]=`cat ./conftest.stdout`
+	$1=`cat ./conftest.stdout`
 else
 	echo "configure: failed program was:" >&AC_FD_CC
 	cat conftest.$ac_ext >&AC_FD_CC
-	[$1]=""
+	$1=""
 fi
 rm -fr conftest*
 ])
@@ -67,7 +75,6 @@ rm -fr conftest*
 
 # BC_FLOAT_EPSILON()
 AC_DEFUN([BC_FLOAT_EPSILON], [
-AC_REQUIRE([BC_TRY_RUN_OUTPUT])
 dnl determine the minimum single-precision floating point tolerance
 dnl value at compile time such that: 1.0 + value != 1.0
 dnl ANSI defines this as FLT_EPSILON but float.h may not provide it.
@@ -90,7 +97,6 @@ AC_MSG_RESULT([$bc_flt_epsilon])
 
 # BC_DOUBLE_EPSILON()
 AC_DEFUN([BC_DOUBLE_EPSILON], [
-AC_REQUIRE([BC_TRY_RUN_OUTPUT])
 dnl determine the minimum double-precision floating point tolerance
 dnl value at compile time such that: 1.0 + value != 1.0
 dnl ANSI defines this as DBL_EPSILON but float.h may not provide it.
@@ -108,4 +114,92 @@ int main (int ac, char *av[]) {
 }
 ])
 AC_MSG_RESULT([$bc_dbl_epsilon])
+])
+
+
+# BC_COMPLIANT_FLOAT()
+AC_DEFUN([BC_COMPLIANT_FLOAT], [
+dnl determine whether the floating point implementation seems to be
+dnl IEEE 754 compliant by checking whether -23 power matches the
+dnl tolerance epsilon.  make sure 0 == -0 too.
+AC_MSG_CHECKING([whether floats conform to IEEE 754])
+AC_TRY_RUN([
+typedef union {
+    float f;
+    unsigned short int i[2];
+} S;
+int main (int ac, char *av[]) {
+    /* must be volatile to avoid long registers */
+    volatile float tol = 1.0f;
+    volatile float power = 1.0f;
+    int n = 23;
+    S f;
+    while (1.0f + (tol * 0.5f) != 1.0f) {
+	tol *= 0.5f;
+    }
+    while (n-- > 0) {
+	power *= 0.5f;
+    }
+    if (tol != power) {
+	return 1;
+    }
+    /* make sure 0 == -0 */
+    tol = 0.0f; power = -tol;
+    if (tol != power) {
+	return 2;
+    }
+    /* make sure -0 is implemented */
+    f.f = power;
+    n = (f.i[0] != 0) ? 0 : 1;
+    if (f.i[n] != 0x8000) {
+	return 3;
+    }
+    return 0;
+}
+], [ AC_MSG_RESULT(yes) ], [ AC_MSG_RESULT(no) ]
+)
+])
+
+
+# BC_COMPLIANT_DOUBLE()
+AC_DEFUN([BC_COMPLIANT_DOUBLE], [
+dnl determine whether the floating point implementation seems to be
+dnl IEEE 754 compliant by checking whether -52 power matches the
+dnl tolerance epsilon.  make sure 0 == -0 too.
+AC_MSG_CHECKING([whether doubles conform to IEEE 754])
+AC_TRY_RUN([
+typedef union {
+    double d;
+    unsigned short int i[4];
+} D;
+int main (int ac, char *av[]) {
+    /* must be volatile to avoid long registers */
+    volatile double tol = 1.0;
+    volatile double power = 1.0;
+    int n = 52;
+    D d;
+    while (1.0f + (tol * 0.5) != 1.0) {
+	tol *= 0.5;
+    }
+    while (n-- > 0) {
+	power *= 0.5;
+    }
+    if (tol != power) {
+	return 1;
+    }
+    /* make sure 0 == -0 */
+    tol = 0.0; power = -tol;
+    if (tol != power) {
+	return 2;
+    }
+    /* make sure -0 is implemented */
+    d.d = power;
+    n = (d.i[0] != 0) ? 0 : (d.i[1] != 0) ? 1 : (d.i[2] != 0) ? 2 : 3;
+    if (d.i[n] != 0x8000) {
+	return 3;
+    }
+    return 0;
+}
+], [ AC_MSG_RESULT(yes) ], [ AC_MSG_RESULT(no) ]
+)
 ])
