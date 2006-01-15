@@ -25,9 +25,9 @@
  * Relatively simple example database transfer program that shows how
  * to open a database, extract a serialized version of specified
  * geometry objects, transfer those objects to a remove host, and
- * utiling standard librt routines on the remote objects.  The
- * transfer program interface is designed in a simple ttcp fashion
- * using libpkg.
+ * utiling standard librt routines on the remote objects while keeping
+ * the remote geometry in memory only.  The transfer program interface
+ * is designed in a simple ttcp fashion using libpkg.
  *
  * To compile from an install:
  * gcc -I/usr/brlcad/include -L/usr/brlcad/lib -o g_transfer g_transfer.c -lrt -lbu
@@ -58,15 +58,25 @@ typedef struct _my_data_ {
 } my_data;
 
 /* simple network transport protocol. connection starts with a HELO,
- * then a variable number of GEOM messages, then a CIAO when done.
+ * then a variable number of GEOM/ARGS messages, then a CIAO to end.
  */
 #define MAGIC_ID	"G_TRANSFER"
 #define MSG_HELO	1
-#define MSG_GEOM	2
-#define MSG_CIAO	3
+#define MSG_ARGS	2
+#define MSG_GEOM	3
+#define MSG_CIAO	4
 
 /* static size used for temporary string buffers */
 #define MAX_DIGITS	32
+
+/* in-memory geometry database filled in by the server as it receives
+ * geometry from the client.
+ */
+struct db_i *dbip = NULL;
+
+/* used by server to stash what it should shoot at */
+int srv_argc = 0;
+char **srv_argv = NULL;
 
 
 /** print a usage statement when invoked with bad, help, or no arguments
@@ -125,6 +135,9 @@ db_open_inmem(void)
     bu_ptbl_init( &dbip->dbi_clients, 128, "dbi_clients[]" );
     dbip->dbi_magic = DBI_MAGIC;		/* Now it's valid */
 
+    /* mark the wdb structure as in-memory. */
+    dbip->dbi_wdbp = wdb_dbopen(dbip, RT_WDB_TYPE_DB_INMEM);
+
     return dbip;
 }
 
@@ -171,6 +184,81 @@ db_create_inmem(void) {
 }
 
 
+/* should use in db5_diradd() */
+int
+db_flags_raw_internal(struct db5_raw_internal *raw)
+{
+    struct bu_attribute_value_set avs;
+
+    if (raw->major_type != DB5_MAJORTYPE_BRLCAD) {
+	return DIR_NON_GEOM;
+    }
+    if (raw->minor_type == DB5_MINORTYPE_BRLCAD_COMBINATION) {
+	if (raw->attributes.ext_buf) {
+	    bu_avs_init_empty(&avs);
+	    if (db5_import_attributes(&avs, &raw->attributes) < 0) {
+		/* could not load attributes, so presume not a region */
+		return DIR_COMB;
+	    }
+	    if (avs.count == 0) {
+		return DIR_COMB;
+	    }
+	    if (bu_avs_get( &avs, "region" ) != NULL) {
+		return DIR_COMB|DIR_REGION;
+	    }
+	}
+	return DIR_COMB;
+    }
+
+    /* anything else is a solid? */
+    return DIR_SOLID;
+}
+
+int
+hit(struct application *ap, struct partition *p, struct seg *s)
+{
+    bu_log("HIT!\n");
+    return 0;
+}
+int
+miss(struct application *ap)
+{
+    bu_log("MISSED!\n");
+    return 0;
+}
+void
+do_something() {
+    /* shoot a ray at some geometry just to show that we can */
+    struct application ap;
+    struct rt_i *rtip;
+    int i;
+
+    RT_APPLICATION_INIT(&ap);
+    rtip = rt_new_rti(dbip); /* clone dbip */
+    if (!rtip) {
+	bu_log("Unable to create a database instance off of the raytrace instance\n");
+	return;
+    }
+    rt_ck(rtip); /* gratuitous sanity check, test for corruption */
+    ap.a_rt_i = rtip;
+    ap.a_hit = hit;
+    ap.a_miss = miss;
+    VSET(ap.a_ray.r_pt, 0, 0, 10000);
+    VSET(ap.a_ray.r_dir, 0, 0, -1);
+
+    /* shoot at any geometry specified */
+    for (i = 0; i < srv_argc; i++) {
+	if (rt_gettree(rtip, srv_argv[i]) != 0) {
+	    bu_log("Unable to validate %s for raytracing\n", srv_argv[i]);
+	    continue;
+	}
+	rt_prep(rtip);
+	bu_log("Shooting at %s from (0, 0, 10000) in the (0, 0, -1) direction\n", srv_argv[i]);
+	(void)rt_shootray(&ap);
+    }
+    rt_free_rti(rtip);
+}
+
 
 void
 server_helo(struct pkg_conn *connection, char *buf)
@@ -184,29 +272,60 @@ server_helo(struct pkg_conn *connection, char *buf)
 
 
 void
+server_args(struct pkg_conn *connection, char *buf)
+{    
+    /* updates the srv_argc and srv_argv application globals used to
+     * show that we can shoot at geometry in-memory.
+     */
+    srv_argc++;
+    if (!srv_argv) {
+	srv_argv = bu_calloc(1, sizeof(char *), "server_args() srv_argv calloc");
+    } else {
+	srv_argv = bu_realloc(srv_argv, srv_argc * sizeof(char *), "server_args() srv_argv realloc");
+    }
+    srv_argv[srv_argc - 1] = bu_calloc(1, sizeof(buf) + 1, "server_args() srv_argv[] calloc");
+    strcpy(srv_argv[srv_argc - 1], buf);
+
+    bu_log("Planning to shoot at %s\n", buf);
+   
+    free(buf);
+}
+
+
+void
 server_geom(struct pkg_conn *connection, char *buf)
 {
     struct bu_external ext;
+    struct directory *dp;
+    struct db5_raw_internal raw;
+    int flags;
 
     /* length was stashed as string in first 32 bytes for
      * convenience only, more efficient methods possible.
      */
     int buflen = atoi(buf);
 
+    if (dbip == NULL) {
+	/* first geometry received, initialize */
+	dbip = db_open_inmem();
+    }
+
+    if (db5_get_raw_internal_ptr(&raw, buf) == NULL) {
+	bu_log("Corrupted serialized geometry?  Could not deserialize.\n");
+	free(buf);
+	return;
+    }
+
+    /* initialize an external structure since the data seems valid and add/export
+     * it to the directory.
+     */
     BU_INIT_EXTERNAL(&ext);
-    ext.ext_buf = buf + 32;
-    ext.ext_nbytes = buflen;
+    ext.ext_buf = buf;
+    ext.ext_nbytes = raw.object_length;
+    flags = db_flags_raw_internal(&raw) | RT_DIR_INMEM;
+    wdb_export_external(dbip->dbi_wdbp, &ext, raw.name.ext_buf, flags, raw.minor_type);
 
-    bu_log("GEOM encountered\n");
-    bu_log("data is %d bytes long\n", buflen);
-
-#if 0
-    wdb_decode_dbip(interp, argv[3], &dbip);
-or
-    dbip = wdb_prep_dbip(interp, argv[i]);
-then
-    wdbp = wdb_dbopen(dbip, RT_WDB_TYPE_DB_INMEM);
-#endif
+    bu_log("Received %s (MAJOR=%d, MINOR=%d)\n", raw.name.ext_buf, raw.major_type, raw.minor_type);
 
     free(buf);
 }
@@ -216,6 +335,11 @@ void
 server_ciao(struct pkg_conn *connection, char *buf)
 {
     bu_log("CIAO encountered\n");
+
+    if (dbip != NULL) {
+	/*	db_close(dbip); */
+    }
+
     free(buf);
 }
 
@@ -228,9 +352,11 @@ run_server(int port) {
     int netfd;
     char portname[MAX_DIGITS] = {0};
     int pkg_result  = 0;
+    char *title;
 
     struct pkg_switch callbacks[] = {
 	{MSG_HELO, server_helo, "HELO"},
+	{MSG_ARGS, server_args, "ARGS"},
 	{MSG_GEOM, server_geom, "GEOM"},
 	{MSG_CIAO, server_ciao, "CIAO"},
 	{0, 0, (char *)0}
@@ -255,19 +381,40 @@ run_server(int port) {
 	} else if (client == PKC_ERROR) {
 	    bu_log("Fatal error accepting client connection.\n");
 	    pkg_close(client);
-	    return;
+	    client = PKC_NULL;
+	    continue;
 	}
 
 	/* got a connection, process it */
-	if (pkg_bwaitfor(MSG_HELO, client) == NULL) {
+	title = pkg_bwaitfor(MSG_HELO, client);
+	if (title == NULL) {
 	    bu_log("Failed to process the client connection, still waiting\n");
 	    pkg_close(client);
+	    client = PKC_NULL;
+	} else {
+	    /* validate magic header */
+	    if (strcmp(title, MAGIC_ID) != 0) {
+		bu_log("Bizarre corruption, received a HELO without at matching MAGIC ID!\n");
+		pkg_close(client);
+		client = PKC_NULL;
+	    } else {
+		title += strlen(MAGIC_ID) + 1;
+		bu_log("Preparing to receive data for geometry from a database with the following title:\n%s\n", title);
+	    }
 	}
-    } while (client <= 0);
+    } while (client == PKC_NULL);
 
     /* read from the connection */
     bu_log("Processing objects from client\n");
     do {
+	/* process packets potentially received in a processing callback */
+	pkg_result = pkg_process(client);
+	if (pkg_result < 0) {
+	    bu_log("Unable to process packets? Wierd.\n");
+	} else {
+	    bu_log("Processed %d packet%s\n", pkg_result, pkg_result == 1 ? "" : "s");
+	}
+
 	/* suck in data from the network */
 	pkg_result = pkg_suckin(client);
 	if (pkg_result < 0) {
@@ -283,7 +430,7 @@ run_server(int port) {
 	if (pkg_result < 0) {
 	    bu_log("Unable to process packets? Wierd.\n");
 	} else {
-	    bu_log("Processed %d packet%s\n", pkg_result, pkg_result > 1 ? "s" : "");
+	    bu_log("Processed %d packet%s\n", pkg_result, pkg_result == 1 ? "" : "s");
 	}
     } while (client != NULL);
 
@@ -304,7 +451,6 @@ send_to_server(struct db_i *dbip, struct directory *dp, genptr_t connection)
 {
     my_data *stash;
     struct bu_external ext;
-    char length[MAX_DIGITS] = {0};
     int bytes_sent = 0;
 
     RT_CK_DBI(dbip);
@@ -316,13 +462,12 @@ send_to_server(struct db_i *dbip, struct directory *dp, genptr_t connection)
 	bu_log("Failed to read %s, skipping\n", dp->d_namep);
 	return;
     }
-    snprintf(length, MAX_DIGITS - 1, "%d", ext.ext_nbytes);
     
     /* send the external representation over the wire */
     bu_log("Sending %s\n",dp->d_namep);
 
     /* pad the data with the length in ascii for convenience */
-    bytes_sent = pkg_2send(MSG_GEOM, length, MAX_DIGITS, ext.ext_buf, ext.ext_nbytes, stash->connection);
+    bytes_sent = pkg_send(MSG_GEOM, ext.ext_buf, ext.ext_nbytes, stash->connection);
     if (bytes_sent < 0) {	
 	pkg_close(stash->connection);
 	bu_log("Unable to successfully send %s to %s, port %d.\n", dp->d_namep, stash->server, stash->port);
@@ -363,8 +508,10 @@ run_client(const char *server, int port, struct db_i *dbip, int geomc, const cha
     stash.server = server;
     stash.port = port;
 
-    /* let the server know we're cool. */
-    bytes_sent = pkg_send(MSG_HELO, MAGIC_ID, strlen(MAGIC_ID) + 1, stash.connection);
+    /* let the server know we're cool.  also, send the database title
+     * along with the MAGIC ident just because we can.
+     */
+    bytes_sent = pkg_2send(MSG_HELO, MAGIC_ID, strlen(MAGIC_ID) + 1, dbip->dbi_title, strlen(dbip->dbi_title), stash.connection);
     if (bytes_sent < 0) {
 	pkg_close(stash.connection);
 	bu_log("Connection to %s, port %d, seems faulty.\n", server, port);
@@ -381,6 +528,16 @@ run_client(const char *server, int port, struct db_i *dbip, int geomc, const cha
 	 * primitives are sent that get encountered.
 	 */
 	for (i = 0; i < geomc; i++) {
+	    /* send the geometry as an ARGS packet so the server can
+	     * know what to shoot at.
+	     */
+	    bytes_sent = pkg_send(MSG_ARGS, geomv[i], strlen(geomv[i]) + 1, stash.connection);
+	    if (bytes_sent < 0) {	
+		pkg_close(stash.connection);
+		bu_log("Unable to request server shot at %s\n", geomv[i]);
+		bu_bomb("ERROR: Unable to communicate request to server\n");
+	    }
+
 	    dp = db_lookup(dbip, geomv[i], LOOKUP_NOISY);
 	    if (dp == DIR_NULL) {
 		pkg_close(stash.connection);
@@ -478,6 +635,11 @@ main(int argc, char *argv[]) {
 	/* fire up the server */
 	bu_log("Listening on port %d\n", port);
 	run_server(port);
+	
+	/* shoot some rays just to show that we can if server was
+	 * invoked with specific geometry.
+	 */
+	do_something();
 
 	return 0;
     }
