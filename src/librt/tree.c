@@ -934,8 +934,12 @@ int
 rt_gettree(struct rt_i *rtip, const char *node)
 {
   int rv;
+  const char *argv[2];
 
-  rv =  rt_gettrees_and_attrs( rtip, NULL, 1, &node, 1 );
+  argv[0] = node;
+  argv[1] = (const char *)NULL;
+
+  rv =  rt_gettrees_and_attrs( rtip, NULL, 1, argv, 1 );
 
   if (rv == 0 || rv == -2)
     {
