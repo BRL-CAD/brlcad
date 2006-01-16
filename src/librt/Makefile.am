@@ -20,6 +20,8 @@ SRCS = \
 	db_alloc.c \
 	db_anim.c \
 	db_comb.c \
+	db_flags.c \
+	db_inmem.c \
 	db_io.c \
 	db_lookup.c \
 	db_match.c \
