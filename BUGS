@@ -17,8 +17,6 @@ Recent Bugs
 
 * the findfont directive in gv postscript is reporting font not found
 
-* our awf doesn't understand ./" manpage comments
-
 * concave arbs give correct wireframe but do not raytrace correctly.
 
 * rtwizard/rtedge creates incorrect "fuzzy" edge overlay when creating
