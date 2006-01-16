@@ -907,8 +907,11 @@ rt_clean(register struct rt_i *rtip)
 	/* Free array of solid table pointers indexed by solid ID */
 	for( i=0; i <= ID_MAX_SOLID; i++ )  {
 		if( rtip->rti_nsol_by_type[i] <= 0 )  continue;
-		bu_free( (char *)rtip->rti_sol_by_type[i], "sol_by_type" );
+		if (rtip->rti_sol_by_type[i]) {
+		    bu_free( (char *)rtip->rti_sol_by_type[i], "sol_by_type" );
+		}
 		rtip->rti_sol_by_type[i] = (struct soltab **)0;
+		rtip->rti_nsol_by_type[i] = 0;
 	}
 	if( rtip->rti_Solids )  {
 		bu_free( (char *)rtip->rti_Solids, "rtip->rti_Solids[]" );
