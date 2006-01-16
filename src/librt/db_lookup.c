@@ -349,32 +349,6 @@ db_diradd(register struct db_i *dbip, register const char *name, long int laddr,
     return( dp );
 }
 
-/**
- *			D B _ I N M E M
- *
- *  Transmogrify an existing directory entry to be an in-memory-only
- *  one, stealing the external representation from 'ext'.
- */
-void
-db_inmem(struct directory *dp, struct bu_external *ext, int flags, struct db_i *dbip)
-{
-    BU_CK_EXTERNAL(ext);
-    RT_CK_DIR(dp);
-
-    if( dp->d_flags & RT_DIR_INMEM )
-	bu_free( dp->d_un.ptr, "db_inmem() ext ptr" );
-    dp->d_un.ptr = ext->ext_buf;
-    if( dbip->dbi_version < 5 ) {
-	dp->d_len = ext->ext_nbytes / 128;	/* DB_MINREC granule size */
-    } else {
-	dp->d_len = ext->ext_nbytes;
-    }
-    dp->d_flags = flags | RT_DIR_INMEM;
-
-    /* Empty out the external structure, but leave it w/valid magic */
-    ext->ext_buf = (genptr_t)NULL;
-    ext->ext_nbytes = 0;
-}
 
 /**
  *  			D B _ D I R D E L E T E
