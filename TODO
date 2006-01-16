@@ -17,8 +17,6 @@ http://sf.net/pm/?group_id=105292
 THESE SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------
 
-* write .g in-memory transfer example
-
 * clone and tracker
 
 * ensure successful build on mingw
