@@ -3150,17 +3150,22 @@ RT_EXPORT BU_EXTERN(int rt_extrude_import5,
 		     const int			minor_type));
 
 
-/* db_lookup.c */
-RT_EXPORT BU_EXTERN(int db_get_directory_size,
-		    (const struct db_i	*dbip));
-RT_EXPORT BU_EXTERN(void db_ck_directory,
-		    (const struct db_i *dbip));
+/* db_inmem.c */
+RT_EXPORT BU_EXTERN(struct db_i * db_open_inmem, (void));
+
+RT_EXPORT BU_EXTERN(struct db_i * db_create_inmem, (void));
 
 RT_EXPORT BU_EXTERN(void db_inmem,
 		    (struct directory	*dp,
 		     struct bu_external	*ext,
 		     int		flags,
 		     struct db_i	*dbip));
+
+/* db_lookup.c */
+RT_EXPORT BU_EXTERN(int db_get_directory_size,
+		    (const struct db_i	*dbip));
+RT_EXPORT BU_EXTERN(void db_ck_directory,
+		    (const struct db_i *dbip));
 
 RT_EXPORT BU_EXTERN(int db_is_directory_non_empty,
 		    (const struct db_i	*dbip));
@@ -3230,9 +3235,14 @@ RT_EXPORT BU_EXTERN(int db_regexp_match_all,
 		     struct db_i *dbip,
 		     const char *pattern));
 
-/* db_alloc.c */
+/* db_flags.c */
 RT_EXPORT BU_EXTERN(int db_flags_internal,
 		    (const struct rt_db_internal *intern));
+
+RT_EXPORT BU_EXTERN(int db_flags_raw_internal,
+		    (const struct db5_raw_internal *intern));
+
+/* db_alloc.c */
 
 /* allocate "count" granules */
 RT_EXPORT BU_EXTERN(int db_alloc,
