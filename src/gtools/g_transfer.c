@@ -72,7 +72,7 @@ typedef struct _my_data_ {
 /* in-memory geometry database filled in by the server as it receives
  * geometry from the client.
  */
-struct db_i *dbip = NULL;
+struct db_i *DBIP = NULL;
 
 /* used by server to stash what it should shoot at */
 int srv_argc = 0;
@@ -101,119 +101,6 @@ validate_port(int port) {
 }
 
 
-#define DEFAULT_DB_TITLE "Untitled BRL-CAD Database"
-
-struct db_i *
-db_open_inmem(void)
-{
-    register struct db_i *dbip = DBI_NULL;
-    register int i;
-
-    BU_GETSTRUCT( dbip, db_i );
-    dbip->dbi_eof = -1L;
-    dbip->dbi_fd = -1;
-    dbip->dbi_fp = NULL;
-    dbip->dbi_mf = NULL; /* fake mapped file for contents? */
-    dbip->dbi_read_only = 1;
-
-    /* Initialize fields */
-    for( i=0; i<RT_DBNHASH; i++ ) {
-	dbip->dbi_Head[i] = DIR_NULL;
-    }
-
-    dbip->dbi_local2base = 1.0;		/* mm */
-    dbip->dbi_base2local = 1.0;
-    dbip->dbi_title = bu_strdup(DEFAULT_DB_TITLE);
-    dbip->dbi_uses = 1;
-    dbip->dbi_filename = NULL;
-    dbip->dbi_filepath = NULL;
-    dbip->dbi_version = 5;
-
-    /* XXX need to stash an ident record so it's valid maybe? */
-    /* see db_fwrite_ident() */
-
-    bu_ptbl_init( &dbip->dbi_clients, 128, "dbi_clients[]" );
-    dbip->dbi_magic = DBI_MAGIC;		/* Now it's valid */
-
-    /* mark the wdb structure as in-memory. */
-    dbip->dbi_wdbp = wdb_dbopen(dbip, RT_WDB_TYPE_DB_INMEM);
-
-    return dbip;
-}
-
-
-struct db_i *
-db_create_inmem(void) {
-    struct db_i *dbip;
-    struct bu_external obj;
-    struct bu_attribute_value_set avs;
-    struct bu_vls units;
-    struct bu_external attr;
-    int result;
-
-    dbip = db_open_inmem();
-
-    /* create the header record */
-    db5_export_object3(&obj, DB5HDR_HFLAGS_DLI_HEADER_OBJECT,
-		       NULL, 0, NULL, NULL,
-		       DB5_MAJORTYPE_RESERVED, 0,
-		       DB5_ZZZ_UNCOMPRESSED, DB5_ZZZ_UNCOMPRESSED );
-    /* XXX add objdata to mapped file pointer */
-
-    /* Second, create the attribute-only _GLOBAL object */
-    bu_vls_init( &units );
-    bu_vls_printf( &units, "%.25e", dbip->dbi_local2base );
-    
-    bu_avs_init( &avs, 4, "db_create_inmem" );
-    bu_avs_add( &avs, "title", dbip->dbi_title );
-    bu_avs_add( &avs, "units", bu_vls_addr(&units) );
-
-    db5_export_attributes( &attr, &avs );
-    db5_export_object3(&obj, DB5HDR_HFLAGS_DLI_APPLICATION_DATA_OBJECT,
-		       DB5_GLOBAL_OBJECT_NAME, DB5HDR_HFLAGS_HIDDEN_OBJECT, &attr, NULL,
-		       DB5_MAJORTYPE_ATTRIBUTE_ONLY, 0,
-		       DB5_ZZZ_UNCOMPRESSED, DB5_ZZZ_UNCOMPRESSED );
-    /* XXX add objdata to mapped file pointer */
-
-    bu_free_external( &obj );
-    bu_free_external( &attr );
-    bu_avs_free( &avs );
-    bu_vls_free( &units );
-
-    return dbip;
-}
-
-
-/* should use in db5_diradd() */
-int
-db_flags_raw_internal(struct db5_raw_internal *raw)
-{
-    struct bu_attribute_value_set avs;
-
-    if (raw->major_type != DB5_MAJORTYPE_BRLCAD) {
-	return DIR_NON_GEOM;
-    }
-    if (raw->minor_type == DB5_MINORTYPE_BRLCAD_COMBINATION) {
-	if (raw->attributes.ext_buf) {
-	    bu_avs_init_empty(&avs);
-	    if (db5_import_attributes(&avs, &raw->attributes) < 0) {
-		/* could not load attributes, so presume not a region */
-		return DIR_COMB;
-	    }
-	    if (avs.count == 0) {
-		return DIR_COMB;
-	    }
-	    if (bu_avs_get( &avs, "region" ) != NULL) {
-		return DIR_COMB|DIR_REGION;
-	    }
-	}
-	return DIR_COMB;
-    }
-
-    /* anything else is a solid? */
-    return DIR_SOLID;
-}
-
 int
 hit(struct application *ap, struct partition *p, struct seg *s)
 {
@@ -233,12 +120,12 @@ do_something() {
     struct rt_i *rtip;
     int i;
 
-    if (!dbip) {
+    if (!DBIP) {
 	return;
     }
 
     RT_APPLICATION_INIT(&ap);
-    rtip = rt_new_rti(dbip); /* clone dbip */
+    rtip = rt_new_rti(DBIP); /* clone dbip */
     if (!rtip) {
 	bu_log("Unable to create a database instance off of the raytrace instance\n");
 	return;
@@ -305,9 +192,9 @@ server_geom(struct pkg_conn *connection, char *buf)
     struct db5_raw_internal raw;
     int flags;
 
-    if (dbip == NULL) {
+    if (DBIP == NULL) {
 	/* first geometry received, initialize */
-	dbip = db_open_inmem();
+	DBIP = db_create_inmem();
     }
 
     if (db5_get_raw_internal_ptr(&raw, buf) == NULL) {
@@ -323,7 +210,7 @@ server_geom(struct pkg_conn *connection, char *buf)
     ext.ext_buf = buf;
     ext.ext_nbytes = raw.object_length;
     flags = db_flags_raw_internal(&raw) | RT_DIR_INMEM;
-    wdb_export_external(dbip->dbi_wdbp, &ext, raw.name.ext_buf, flags, raw.minor_type);
+    wdb_export_external(DBIP->dbi_wdbp, &ext, raw.name.ext_buf, flags, raw.minor_type);
 
     bu_log("Received %s (MAJOR=%d, MINOR=%d)\n", raw.name.ext_buf, raw.major_type, raw.minor_type);
 }
@@ -339,11 +226,11 @@ server_ciao(struct pkg_conn *connection, char *buf)
      */
     do_something();
 
-    if (dbip != NULL) {
+    if (DBIP != NULL) {
 	/* uncomment to avoid an in-mem dbip close bug */
-	/* dbip->dbi_fp = fopen("/dev/null", "r");*/
-	db_close(dbip);
-	dbip = NULL;
+	/* DBIP->dbi_fp = fopen("/dev/null", "r");*/
+	db_close(DBIP);
+	DBIP = NULL;
     }
 
     free(buf);
