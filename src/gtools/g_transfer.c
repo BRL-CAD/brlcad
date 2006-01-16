@@ -123,7 +123,7 @@ db_open_inmem(void)
 
     dbip->dbi_local2base = 1.0;		/* mm */
     dbip->dbi_base2local = 1.0;
-    dbip->dbi_title = DEFAULT_DB_TITLE;
+    dbip->dbi_title = bu_strdup(DEFAULT_DB_TITLE);
     dbip->dbi_uses = 1;
     dbip->dbi_filename = NULL;
     dbip->dbi_filepath = NULL;
@@ -233,6 +233,10 @@ do_something() {
     struct rt_i *rtip;
     int i;
 
+    if (!dbip) {
+	return;
+    }
+
     RT_APPLICATION_INIT(&ap);
     rtip = rt_new_rti(dbip); /* clone dbip */
     if (!rtip) {
@@ -255,6 +259,7 @@ do_something() {
 	rt_prep(rtip);
 	bu_log("Shooting at %s from (0, 0, 10000) in the (0, 0, -1) direction\n", srv_argv[i]);
 	(void)rt_shootray(&ap);
+	rt_clean(rtip);
     }
     rt_free_rti(rtip);
 }
@@ -300,11 +305,6 @@ server_geom(struct pkg_conn *connection, char *buf)
     struct db5_raw_internal raw;
     int flags;
 
-    /* length was stashed as string in first 32 bytes for
-     * convenience only, more efficient methods possible.
-     */
-    int buflen = atoi(buf);
-
     if (dbip == NULL) {
 	/* first geometry received, initialize */
 	dbip = db_open_inmem();
@@ -326,8 +326,6 @@ server_geom(struct pkg_conn *connection, char *buf)
     wdb_export_external(dbip->dbi_wdbp, &ext, raw.name.ext_buf, flags, raw.minor_type);
 
     bu_log("Received %s (MAJOR=%d, MINOR=%d)\n", raw.name.ext_buf, raw.major_type, raw.minor_type);
-
-    free(buf);
 }
 
 
@@ -336,8 +334,16 @@ server_ciao(struct pkg_conn *connection, char *buf)
 {
     bu_log("CIAO encountered\n");
 
+    /* shoot some rays just to show that we can if server was
+     * invoked with specific geometry.
+     */
+    do_something();
+
     if (dbip != NULL) {
-	/*	db_close(dbip); */
+	/* uncomment to avoid an in-mem dbip close bug */
+	/* dbip->dbi_fp = fopen("/dev/null", "r");*/
+	db_close(dbip);
+	dbip = NULL;
     }
 
     free(buf);
@@ -635,11 +641,6 @@ main(int argc, char *argv[]) {
 	/* fire up the server */
 	bu_log("Listening on port %d\n", port);
 	run_server(port);
-	
-	/* shoot some rays just to show that we can if server was
-	 * invoked with specific geometry.
-	 */
-	do_something();
 
 	return 0;
     }
