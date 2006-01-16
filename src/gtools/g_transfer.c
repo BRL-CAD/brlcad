@@ -194,7 +194,7 @@ server_geom(struct pkg_conn *connection, char *buf)
 
     if (DBIP == NULL) {
 	/* first geometry received, initialize */
-	DBIP = db_create_inmem();
+	DBIP = db_open_inmem();
     }
 
     if (db5_get_raw_internal_ptr(&raw, buf) == NULL) {
