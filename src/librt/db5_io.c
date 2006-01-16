@@ -1064,6 +1064,7 @@ int db5_update_ident( struct db_i *dbip, const char *title, double local2mm )
 	struct directory		*dp;
 	struct bu_vls			units;
 	int				ret;
+	char *old_title = NULL;
 
 	RT_CK_DBI(dbip);
 
@@ -1101,7 +1102,15 @@ int db5_update_ident( struct db_i *dbip, const char *title, double local2mm )
 	ret = db5_update_attributes( dp, &avs, dbip );
 	bu_vls_free( &units );
 
+	/* protect from loosing memory and from freeing what we are
+	   about to dup */
+	if(dbip->dbi_title) {
+	    old_title = dbip->dbi_title;
+	}
 	dbip->dbi_title = bu_strdup(title);
+	if (old_title) {
+	    bu_free(old_title, "replaced dbi_title with new");
+	}
 
 	return ret;
 }
