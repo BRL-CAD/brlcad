@@ -526,7 +526,7 @@ sub pretty_file_list {
     my $b = substr ($qunkref->filename, length ($common_dir));
     # todo: Shlomo's change was this:
     # $beauty .= substr ($qunkref->filename,
-    #              (($common_dir eq ".\") ? '' : length ($common_dir)));
+    #              (($common_dir eq "./") ? '' : length ($common_dir)));
     $qunkref->{'printed'} = 1;  # Set a mark bit.
 
     if ($Show_Revisions || $Show_Tags || $Show_Dead)
@@ -1476,7 +1476,7 @@ sub _pretty_file_list {
 
         if ((! (defined ($dir)))  # this first case is sheer paranoia
             or ($dir eq '')
-            or ($dir eq ".\")
+            or ($dir eq "./")
             or ($dir eq ".\\"))
         {
           $common_dir = '';
