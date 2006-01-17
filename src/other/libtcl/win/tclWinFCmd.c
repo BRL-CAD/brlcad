@@ -1670,7 +1670,7 @@ ConvertFileNameFormat(
 	    Tcl_WinTCharToUtf(nativeName, -1, &dsTemp);
 	    /* Deal with issues of tildes being absolute */
 	    if (Tcl_DStringValue(&dsTemp)[0] == '~') {
-		tempPath = Tcl_NewStringObj(".\",2);
+		tempPath = Tcl_NewStringObj("./",2);
 		Tcl_AppendToObj(tempPath, Tcl_DStringValue(&dsTemp), 
 				Tcl_DStringLength(&dsTemp));
 	    } else {

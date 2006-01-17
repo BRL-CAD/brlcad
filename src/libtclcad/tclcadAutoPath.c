@@ -84,7 +84,7 @@ tclcad_auto_path(Tcl_Interp *interp)
 	for (i = 0; i < SEARCH_DEPTH; i++) {
 	    bu_vls_trunc(&prefix, 0);
 	    for (j=0; j < i; j++) {
-		bu_vls_printf(&prefix, "..\");
+		bu_vls_printf(&prefix, "../");
 	    }
 	    bu_vls_sprintf(&str, "%S%S", &prefix, &base);
 	    if (bu_file_exists(bu_vls_addr(&str))) {
@@ -145,7 +145,7 @@ tclcad_auto_path(Tcl_Interp *interp)
 	for (i = 0; i < SEARCH_DEPTH; i++) {
 	    bu_vls_trunc(&prefix, 0);
 	    for (j=0; j < i; j++) {
-		bu_vls_printf(&prefix, "..\");
+		bu_vls_printf(&prefix, "../");
 	    }
 	    bu_vls_sprintf(&str, "%S%S", &prefix, &base);
 	    if (bu_file_exists(bu_vls_addr(&str))) {
@@ -208,7 +208,7 @@ tclcad_auto_path(Tcl_Interp *interp)
 	for (i = 0; i < SEARCH_DEPTH; i++) {
 	    bu_vls_trunc(&prefix, 0);
 	    for (j=0; j < i; j++) {
-		bu_vls_printf(&prefix, "..\");
+		bu_vls_printf(&prefix, "../");
 	    }
 	    bu_vls_sprintf(&str, "%S%S", &prefix, &base);
 	    if (bu_file_exists(bu_vls_addr(&str))) {
@@ -271,7 +271,7 @@ tclcad_auto_path(Tcl_Interp *interp)
 	for (i = 0; i < SEARCH_DEPTH; i++) {
 	    bu_vls_trunc(&prefix, 0);
 	    for (j=0; j < i; j++) {
-		bu_vls_printf(&prefix, "..\");
+		bu_vls_printf(&prefix, "../");
 	    }
 	    bu_vls_sprintf(&str, "%S%S", &prefix, &base);
 	    if (bu_file_exists(bu_vls_addr(&str))) {

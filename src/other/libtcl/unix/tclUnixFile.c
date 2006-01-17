@@ -86,7 +86,7 @@ TclpFindExecutable(argv0)
 	 * An empty path is equivalent to ".".
 	 */
 
-	p = ".\";
+	p = "./";
     }
 
     /*
@@ -126,7 +126,7 @@ TclpFindExecutable(argv0)
 	if (*p == '\0') {
 	    break;
 	} else if (*(p+1) == 0) {
-	    p = ".\";
+	    p = "./";
 	} else {
 	    p++;
 	}
@@ -153,7 +153,7 @@ gotName:
 
     /*
      * The name is relative to the current working directory.  First
-     * strip off a leading ".\", if any, then add the full path name of
+     * strip off a leading "./", if any, then add the full path name of
      * the current working directory.
      */
 
