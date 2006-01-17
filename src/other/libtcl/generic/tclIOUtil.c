@@ -3254,7 +3254,7 @@ Tcl_FSSplitPath(pathPtr, lenPtr)
 	if (length > 0) {
 	    Tcl_Obj *nextElt;
 	    if (elementStart[0] == '~') {
-		nextElt = Tcl_NewStringObj(".\",2);
+		nextElt = Tcl_NewStringObj("./",2);
 		Tcl_AppendToObj(nextElt, elementStart, length);
 	    } else {
 		nextElt = Tcl_NewStringObj(elementStart, length);

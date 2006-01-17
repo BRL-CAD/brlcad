@@ -713,7 +713,7 @@ SplitUnixPath(path)
 
     /*
      * Split on slashes.  Embedded elements that start with tilde will be
-     * prefixed with ".\" so they are not affected by tilde substitution.
+     * prefixed with "./" so they are not affected by tilde substitution.
      */
 
     for (;;) {
@@ -725,7 +725,7 @@ SplitUnixPath(path)
 	if (length > 0) {
 	    Tcl_Obj *nextElt;
 	    if ((elementStart[0] == '~') && (elementStart != path)) {
-		nextElt = Tcl_NewStringObj(".\",2);
+		nextElt = Tcl_NewStringObj("./",2);
 		Tcl_AppendToObj(nextElt, elementStart, length);
 	    } else {
 		nextElt = Tcl_NewStringObj(elementStart, length);
@@ -783,7 +783,7 @@ SplitWinPath(path)
     
     /*
      * Split on slashes.  Embedded elements that start with tilde will be
-     * prefixed with ".\" so they are not affected by tilde substitution.
+     * prefixed with "./" so they are not affected by tilde substitution.
      */
 
     do {
@@ -795,7 +795,7 @@ SplitWinPath(path)
 	if (length > 0) {
 	    Tcl_Obj *nextElt;
 	    if ((elementStart[0] == '~') && (elementStart != path)) {
-		nextElt = Tcl_NewStringObj(".\",2);
+		nextElt = Tcl_NewStringObj("./",2);
 		Tcl_AppendToObj(nextElt, elementStart, length);
 	    } else {
 		nextElt = Tcl_NewStringObj(elementStart, length);

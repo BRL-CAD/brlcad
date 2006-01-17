@@ -346,7 +346,7 @@ proc fs_dialog_click_dir {y} {
 			set fs_glob(pat_dir) $fs_glob(pat_dir)$newdir/
 		}
 	} else {
-		# Relative Path (Begins with ".\" or "..\"
+		# Relative Path (Begins with "./" or "../"
 
 		set pat_minus_one [file dirname $fs_glob(pat_dir)]/
 		set pat_plus_one $fs_glob(pat_dir)$newdir/
