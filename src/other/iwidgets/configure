@@ -798,7 +798,7 @@ if test "$ac_init_help" = "recursive"; then
 
 if test "$ac_dir" != .; then
   ac_dir_suffix=/`echo "$ac_dir" | sed 's,^\.[\\/],,'`
-  # A "../" for each directory in $ac_dir_suffix.
+  # A "..\" for each directory in $ac_dir_suffix.
   ac_top_builddir=`echo "$ac_dir_suffix" | sed 's,/[^\\/]*,../,g'`
 else
   ac_dir_suffix= ac_top_builddir=
@@ -2323,7 +2323,7 @@ echo "$as_me: error: cannot create directory \"$ac_dir\"" >&2;}
 
 if test "$ac_dir" != .; then
   ac_dir_suffix=/`echo "$ac_dir" | sed 's,^\.[\\/],,'`
-  # A "../" for each directory in $ac_dir_suffix.
+  # A "..\" for each directory in $ac_dir_suffix.
   ac_top_builddir=`echo "$ac_dir_suffix" | sed 's,/[^\\/]*,../,g'`
 else
   ac_dir_suffix= ac_top_builddir=

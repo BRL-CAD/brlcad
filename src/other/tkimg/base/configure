@@ -6027,7 +6027,7 @@ DEFS=`sed -f conftest.defs confdefs.h | tr '\012' ' '`
 rm -f conftest.defs
 
 
-# Without the "./", some shells look in PATH for config.status.
+# Without the ".\", some shells look in PATH for config.status.
 : ${CONFIG_STATUS=./config.status}
 
 echo creating $CONFIG_STATUS
@@ -6234,7 +6234,7 @@ for ac_file in .. $CONFIG_FILES; do if test "x$ac_file" != x..; then
     # The file is in a subdirectory.
     test ! -d "$ac_dir" && mkdir "$ac_dir"
     ac_dir_suffix="/`echo $ac_dir|sed 's%^\./%%'`"
-    # A "../" for each directory in $ac_dir_suffix.
+    # A "..\" for each directory in $ac_dir_suffix.
     ac_dots=`echo $ac_dir_suffix|sed 's%/[^/]*%../%g'`
   else
     ac_dir_suffix= ac_dots=
