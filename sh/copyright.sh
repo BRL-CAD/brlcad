@@ -2,7 +2,7 @@
 #                    C O P Y R I G H T . S H
 # BRL-CAD
 #
-# Copyright (C) 2004-2005 United States Government as represented by
+# Copyright (c) 2004-2006 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -123,7 +123,7 @@ for file in $files ; do
   echo -n "."
 
   year=`date +%Y`
-  sed -E "s/[cC]opyright ?\([cC]\) ?([0-9][0-9][0-9][0-9]) ?-? ?[0-9]?[0-9]?[0-9]?[0-9]?([ .;]+)(.*United +States)/Copyright (C) \1-$year\2\3/" < $file > $file.copyright.new
+  sed "s/[cC]opyright \{0,1\}([cC]) \{0,1\}\([0-9][0-9][0-9][0-9]\) \{0,1\}-\{0,1\} \{0,1\}[0-9]\{0,1\}[0-9]\{0,1\}[0-9]\{0,1\}[0-9]\{0,1\}\([ .;]\{1,\}\)\(.*United \{1,\}States\)/Copyright (c) \1-$year\2\3/" < $file > $file.copyright.new
 
   filediff="`diff $file $file.copyright.new`"
   if [ "x$filediff" = "x" ] ; then
@@ -141,7 +141,7 @@ for file in $files ; do
     mv $file.copyright.new $file
   fi
 
-  sed -E "s/Copyright \(c\) $year-$year/Copyright (c) $year/" < $file > $file.copyright.new
+  sed "s/Copyright ([cC]) $year-$year/Copyright (c) $year/" < $file > $file.copyright.new
 
   filediff="`diff $file $file.copyright.new`"
   if [ "x$filediff" = "x" ] ; then
