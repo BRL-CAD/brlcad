@@ -1,7 +1,7 @@
 #                  C O L O R E N T R Y . T C L
 # BRL-CAD
 #
-# Copyright (C) 1998-2005 United States Government as represented by
+# Copyright (c) 1998-2006 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or

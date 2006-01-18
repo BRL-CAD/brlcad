@@ -1,7 +1,7 @@
 /*                   N U R B _ R E F I N E . C
  * BRL-CAD
  *
- * Copyright (C) 1986-2005 United States Government as represented by
+ * Copyright (c) 1986-2006 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or

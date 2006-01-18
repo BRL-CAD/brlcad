@@ -1,7 +1,7 @@
 #                       C A C H E . M 4
 # BRL-CAD
 #
-# Copyright (C) 2005 United States Government as represented by
+# Copyright (c) 2005-2006 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without

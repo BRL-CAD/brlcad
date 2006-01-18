@@ -1,7 +1,7 @@
 /*                  P I X H I S T 3 D - P L . C
  * BRL-CAD
  *
- * Copyright (C) 1986-2005 United States Government as represented by
+ * Copyright (c) 1986-2006 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or

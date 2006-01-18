@@ -1,7 +1,7 @@
 /*                        R A W B O T . C
  * BRL-CAD
  *
- * Copyright (C) 1999-2005 United States Government as represented by
+ * Copyright (c) 1999-2006 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
