@@ -46,6 +46,9 @@ THESE SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE LOWER PRIORITY OR FOR FUTURE RELEASES
 -----------------------------------------------
 
+* system identifier application with sysctl-style information
+  database, with some back-end functionality placed into libbu.
+
 * write scripts that parse the sf.net tracker data and generate
   automatic reports for release.
 
