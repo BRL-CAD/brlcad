@@ -20,9 +20,9 @@ AM_CPPFLAGS = \
 	-DUSE_TCLALLOC=0
 
 EXTRA_DIST = \
-	tkimg.h \
-	tkimgDecls.h
 	tclconfig \
+	tkimg.h \
+	tkimgDecls.h \
 	tools
 
 MAINTAINERCLEANFILES = Makefile.in
