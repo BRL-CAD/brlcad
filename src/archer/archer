@@ -85,8 +85,7 @@ if {$tcl_platform(os) == "Windows NT"} {
     set brlcadDataPath [bu_brlcad_data ""]
 }
 
-
-set auto_path $dir
+lappend auto_path $dir
 lappend auto_path [file join $env(ARCHER_HOME) lib]
 lappend auto_path [file join $env(ARCHER_HOME) lib tcl8.4]
 lappend auto_path [file join $env(ARCHER_HOME) lib tk8.4]
@@ -104,6 +103,13 @@ lappend auto_path [file join $brlcadDataPath tclscripts swidgets]
 lappend auto_path [file join $brlcadDataPath tclscripts swidgets scripts]
 lappend auto_path [file join $brlcadDataPath tclscripts lib]
 lappend auto_path [file join $brlcadDataPath tclscripts archer]
+lappend auto_path [file join $dir tclscripts]
+lappend auto_path [file join $dir tclscripts sdialogs]
+lappend auto_path [file join $dir tclscripts sdialogs scripts]
+lappend auto_path [file join $dir tclscripts swidgets]
+lappend auto_path [file join $dir tclscripts swidgets scripts]
+lappend auto_path [file join $dir tclscripts lib]
+lappend auto_path [file join $dir tclscripts archer]
 
 # Initialize bgerror
 initBgerror
