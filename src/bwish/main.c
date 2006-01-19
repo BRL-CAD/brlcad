@@ -92,6 +92,9 @@ Cad_AppInit(Tcl_Interp *interp)
 	return TCL_ERROR;
     }
 
+    /* Locate the BRL-CAD-specific Tcl scripts, set the auto_path */
+    tclcad_auto_path(interp);
+
 #ifdef BWISH
     /* Initialize Tk */
     if (Tk_Init(interp) == TCL_ERROR) {
@@ -207,9 +210,6 @@ Cad_AppInit(Tcl_Interp *interp)
     /* Add Bezier Curves to the canvas widget */
     Tk_CreateCanvasBezierType();
 #endif
-
-    /* Locate the BRL-CAD-specific Tcl scripts, set the auto_path */
-    tclcad_auto_path(interp);
 
     /* register bwish/btclsh commands */
     cmdInit(interp);
