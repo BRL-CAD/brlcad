@@ -2027,13 +2027,8 @@ Popup Menu    Right or Ctrl-Left
     dbCmd erase $oname
     dbCmd killtree $oname
     dbCmd configure -autoViewEnable 0
-    #tk_messageBox -message "Invoke wizard: action - $action"
     set obj [$wizard $action]
-    #tk_messageBox -message "Invoke wizard: action complete"
     dbCmd configure -autoViewEnable 1
-
-    _refresh_tree
-    _select_node [$itk_component(tree) find $obj]
 
     set mNeedSave 1
     _update_save_mode
@@ -2045,6 +2040,9 @@ Popup Menu    Right or Ctrl-Left
 	    $callback $xml
 	}
     }
+
+    _refresh_tree
+    _select_node [$itk_component(tree) find $obj]
 }
 
 ::itcl::body Archer::_build_db_attr_view {} {
@@ -2338,6 +2336,14 @@ Popup Menu    Right or Ctrl-Left
 	return
     }
 
+    # If the required wizard is already loaded,
+    # initialize and return
+    if {$mWizardClass != "" &&
+	$mPrevSelectedObj == $mSelectedObj} {
+	#XXX place holder for code to initialize the wizard
+	return
+    }
+
     if {$mPendingEdits} {
 	_finalize_obj_edit $mPrevSelectedObj $mPrevSelectedObjPath
     }
@@ -2351,6 +2357,7 @@ Popup Menu    Right or Ctrl-Left
     catch {pack forget $itk_component(noWizard)}
     set mNoWizardActive 0
 
+	
     # delete the previous wizard instance
     if {$mWizardClass != ""} {
 	::destroy $itk_component($mWizardClass)
