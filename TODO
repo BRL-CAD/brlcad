@@ -109,6 +109,9 @@ ODDITIES
 THESE BREAK PROTOCOL OR ARE BACKWARDS-INCOMPATIBLE
 --------------------------------------------------
 
+* support for features either as primitives or operations or both
+  e.g. chamfer, fillet, round, etc
+
 * fix the database I/O writing to properly support the addition of new
   primitive types.  this includes modifying the major/minor code or
   combinations/regions and binary objects
