@@ -120,8 +120,8 @@ AC_MSG_RESULT([$bc_dbl_epsilon])
 # BC_COMPLIANT_FLOAT()
 AC_DEFUN([BC_COMPLIANT_FLOAT], [
 dnl determine whether the floating point implementation seems to be
-dnl IEEE 754 compliant by checking whether -23 power matches the
-dnl tolerance epsilon.  make sure 0 == -0 too.
+dnl IEEE 754 compliant by checking whether the tolerance epsilon 
+dnl matches or is better than -23 power.  make sure 0 == -0 too.
 AC_MSG_CHECKING([whether floats conform to IEEE 754])
 AC_TRY_RUN([
 typedef union {
@@ -140,7 +140,7 @@ int main (int ac, char *av[]) {
     while (n-- > 0) {
 	power *= 0.5f;
     }
-    if (tol != power) {
+    if (tol > power) {
 	return 1;
     }
     /* make sure 0 == -0 */
@@ -164,8 +164,8 @@ int main (int ac, char *av[]) {
 # BC_COMPLIANT_DOUBLE()
 AC_DEFUN([BC_COMPLIANT_DOUBLE], [
 dnl determine whether the floating point implementation seems to be
-dnl IEEE 754 compliant by checking whether -52 power matches the
-dnl tolerance epsilon.  make sure 0 == -0 too.
+dnl IEEE 754 compliant by checking whether the tolerance epsilon 
+dnl matches or is better than -23 power.  make sure 0 == -0 too.
 AC_MSG_CHECKING([whether doubles conform to IEEE 754])
 AC_TRY_RUN([
 typedef union {
@@ -184,7 +184,7 @@ int main (int ac, char *av[]) {
     while (n-- > 0) {
 	power *= 0.5;
     }
-    if (tol != power) {
+    if (tol > power) {
 	return 1;
     }
     /* make sure 0 == -0 */
