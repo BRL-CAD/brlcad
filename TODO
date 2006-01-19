@@ -17,13 +17,15 @@ http://sf.net/pm/?group_id=105292
 THESE SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------
 
-* clone and tracker
+* get archer working
 
-* ensure successful build on mingw
+* clone and tracker
 
 
 THESE SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------
+
+* ensure successful build on mingw
 
 * Mac OS X SGI dial knobs support
 
