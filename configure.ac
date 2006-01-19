@@ -1068,6 +1068,19 @@ AC_CHECK_LIB(tcl8.6, Tcl_Main, tcl_link_works=yes ; LIBTCL="-ltcl8.6",
     )]
 )
 
+dnl check if libtclstub library links
+tclstub_link_works=no
+LIBTCLSTUB=""
+AC_CHECK_LIB(tclstub8.6, Tcl_InitStubs, tclstub_link_works=yes ; LIBTCLSTUB="-ltclstub8.6",
+    [AC_CHECK_LIB(tclstub8.5, Tcl_InitStubs, tclstub_link_works=yes ; LIBTCLSTUB="-ltclstub8.5",
+	[AC_CHECK_LIB(tclstub8.4, Tcl_InitStubs, tclstub_link_works=yes ; LIBTCLSTUB="-ltclstub8.4",
+	    [AC_CHECK_LIB(tclstub84, Tcl_InitStubs, tclstub_link_works=yes ; LIBTCLSTUB="-ltclstub84",
+		[AC_CHECK_LIB(tclstub, Tcl_InitStubs, tclstub_link_works=yes ; LIBTCLSTUB="-ltclstub")]
+	    )]
+	)]
+    )]
+)
+
 dnl check if libtk library links
 tk_link_works=no
 LIBTK=""
@@ -1078,6 +1091,20 @@ AC_CHECK_LIB(tk8.6, Tk_MainLoop, tk_link_works=yes ; LIBTK="-ltk8.6",
 	)]
     )]
 )
+
+dnl check if libtkstub library links
+tkstub_link_works=no
+LIBTKSTUB=""
+AC_CHECK_LIB(tkstub8.6, Tk_InitStubs, tkstub_link_works=yes ; LIBTKSTUB="-ltkstub8.6",
+    [AC_CHECK_LIB(tkstub8.5, Tk_InitStubs, tkstub_link_works=yes ; LIBTKSTUB="-ltkstub8.5",
+	[AC_CHECK_LIB(tkstub8.4, Tk_InitStubs, tkstub_link_works=yes ; LIBTKSTUB="-ltkstub8.4",
+	    [AC_CHECK_LIB(tkstub84, Tk_InitStubs, tkstub_link_works=yes ; LIBTKSTUB="-ltkstub84",
+		[AC_CHECK_LIB(tkstub, Tk_InitStubs, tkstub_link_works=yes ; LIBTKSTUB="-ltkstub")]
+	    )]
+	)]
+    )]
+)
+
 
 dnl check if libitcl library links
 itcl_link_works=no
@@ -2011,16 +2038,26 @@ AC_SUBST(TCL_MINOR_VERSION)
 TCL_PATCH_LEVEL=".6"
 AC_SUBST(TCL_PATCH_LEVEL)
 TCL=""
+TCLSTUB=""
 if test "x$build_brlcad_tcl" = "xyes" ; then
-	TCL='${top_builddir}/src/other/libtcl/libtcl${TCL_VERSION}.la '"${SOCKET}"
 	AC_MSG_RESULT(yes)
+	TCL='${top_builddir}/src/other/libtcl/libtcl${TCL_VERSION}.la '"${SOCKET}"
+	TCLSTUB='${top_builddir}/src/other/libtcl/generic/libtclstub.la'
 else
+	AC_MSG_RESULT(no)
 	if test "x$tcl_link_works" = "xyes" ; then
 		TCL="$LIBTCL"
+	else
+		AC_MSG_WARN([Unable to link against a system Tcl library])
 	fi
-	AC_MSG_RESULT(no)
+	if test "x$tclstub_link_works" = "xyes" ; then
+		TCLSTUB="$LIBTCLSTUB"
+	else
+		AC_MSG_WARN([Unable to link against a system Tclstub library])
+	fi
 fi
 AC_SUBST(TCL)
+AC_SUBST(TCLSTUB)
 
 
 dnl *** Tk ***
@@ -2101,14 +2138,27 @@ AC_DEFINE_UNQUOTED([TK_VERSION], "$TK_VERSION", "Version of Tk")
 AC_SUBST(TK_VERSION)
 TK_LIBRARY='${prefix}/lib/tk${TK_VERSION}'
 AC_SUBST(TK_LIBRARY)
+TK=""
+TKSTUB=""
 if test "x$build_brlcad_tk" = "xyes" ; then
-	TK='${top_builddir}/src/other/libtk/libtk${TK_VERSION}.la'
 	AC_MSG_RESULT(yes)
+	TK='${top_builddir}/src/other/libtk/libtk${TK_VERSION}.la'
+	TKSTUB='${top_builddir}/src/other/libtk/generic/libtkstub.la'
 else
-	TK="$LIBTK"
 	AC_MSG_RESULT(no)
+	if test "x$tk_link_works" = "xyes" ; then
+		TK="$LIBTK"
+	else
+		AC_MSG_WARN([Unable to link against a system Tk library])
+	fi
+	if test "x$tkstub_link_works" = "xyes" ; then
+		TKSTUB="$LIBTKSTUB"
+	else
+		AC_MSG_WARN([Unable to link against a system Tkstub library])
+	fi
 fi
 AC_SUBST(TK)
+AC_SUBST(TKSTUB)
 
 
 dnl *** incrTcl ***
@@ -2850,8 +2900,6 @@ TCL_LIBRARY='${prefix}/lib/tcl${TCL_VERSION}'
 AC_SUBST(TCL_LIBRARY)
 TCL_PACKAGE_PATH="'${libdir}'"
 AC_SUBST(TCL_PACKAGE_PATH)
-TCLSTUB='${top_builddir}/src/other/libtcl/generic/libtclstub.la'
-AC_SUBST(TCLSTUB)
 
 dnl XXX - hack for justins g.c file
 AM_CONDITIONAL(HAVE_BRLCAD, true)
@@ -2911,8 +2959,6 @@ AC_SUBST(TCL_STUB_LIB_PATH)
 TCL_THREADS=0
 AC_SUBST(TCL_THREADS)
 
-TKSTUB='${top_builddir}/src/other/libtk/generic/libtkstub.la'
-AC_SUBST(TKSTUB)
 
 dnl sample applications
 SAMPLE_APPLICATIONS_DIR='$(BRLCAD_DATA)/sample_applications'
