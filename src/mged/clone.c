@@ -48,7 +48,6 @@
 #include "./cmd.h"
 
 
-#define TOL 1E-12
 #define CLONE_VERSION "Clone ver 3.0\n2005-12-12\n"
 
 
@@ -629,7 +628,7 @@ interp_spl(fastf_t t, struct spline spl, vect_t pt)
     fastf_t s, s2, s3;
 
     if (t == spl.t[spl.n_segs]) {
-	t -= TOL;
+	t -= VUNITIZE_TOL;
     }
 
     /* traverse to the spline segment interval */
@@ -794,7 +793,7 @@ f_tracker(clientData, interp, argc, argv)
     VMOVE(verts[0], s.k[0].pt);
     olen = 2*len;
 
-    for (i = 0; (fabs(olen-len) >= TOL) && (i < 250); i++) { /* number of track iterations */
+    for (i = 0; (fabs(olen-len) >= VUNITIZE_TOL) && (i < 250); i++) { /* number of track iterations */
 	fprintf(stdout, ".");
 	fflush(stdout);
 	for (j = 0; j < n_links; j++) { /* set length of each link based on current track length */
@@ -812,7 +811,7 @@ f_tracker(clientData, interp, argc, argv)
 		mid = (min+max)/2;
 		interp_spl(mid, s, pt);
 		dist_to_next = (k > 0) ? links[k-1].len : links[n_links-1].len; /* links[k].len;*/
-		while (fabs(DIST_PT_PT(verts[n_links*j+k-1], pt) - dist_to_next) >= TOL) {
+		while (fabs(DIST_PT_PT(verts[n_links*j+k-1], pt) - dist_to_next) >= VUNITIZE_TOL) {
 		    if (DIST_PT_PT(verts[n_links*j+k-1], pt) > dist_to_next) {
 			max = mid;
 			mid = (min+max)/2;
@@ -821,7 +820,7 @@ f_tracker(clientData, interp, argc, argv)
 			mid = (min+max)/2;
 		    }
 		    interp_spl(mid, s, pt);
-		    if (fabs(min-max) <= TOL) {break;}
+		    if (fabs(min-max) <= VUNITIZE_TOL) {break;}
 		}
 		interp_spl(mid, s, verts[n_links*j+k]);
 	    }
