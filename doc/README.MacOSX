@@ -27,6 +27,9 @@ system, they are generally unmaintained.  Due to a variety of
 significant application programming interface issues in early releases
 of Mac OS X, versions prior to 10.2 are unsupported.
 
+Compiling on Mac OS X 10.2 directly is a known issue and will likely
+fail due to various minor build issues.
+
 Parallel Builds
 ---------------
 
