@@ -130,8 +130,7 @@ union tree *do_region_end(register struct db_tree_state *tsp, struct db_full_pat
 
 	regions_tried++;
 	/* Begin rt_bomb() protection */
-	if( BU_SETJUMP )
-	{
+	if( BU_SETJUMP ) {
 		/* Error, bail out */
 		BU_UNSETJUMP;		/* Relinquish the protection */
 
@@ -151,12 +150,9 @@ union tree *do_region_end(register struct db_tree_state *tsp, struct db_full_pat
 		db_free_tree(curtree, &rt_uniresource);	/* Does an nmg_kr() */
 
 		/* Get rid of (m)any other intermediate structures */
-		if( (*tsp->ts_m)->magic == NMG_MODEL_MAGIC )
-		{
+		if( (*tsp->ts_m)->magic == NMG_MODEL_MAGIC ) {
 			nmg_km(*tsp->ts_m);
-		}
-		else
-		{
+		} else {
 			bu_log("WARNING: tsp->ts_m pointer corrupted, ignoring it.\n");
 		}
 
@@ -166,12 +162,13 @@ union tree *do_region_end(register struct db_tree_state *tsp, struct db_full_pat
 	}
 	ret_tree = nmg_booltree_evaluate(curtree, tsp->ts_tol, &rt_uniresource);	/* librt/nmg_bool.c */
 
-	if( ret_tree )
+	if( ret_tree ) {
 		r = ret_tree->tr_d.td_r;
-	else
+		if( do_bots ) {
+		    bot = nmg_bot( BU_LIST_FIRST( shell, &r->s_hd ), tsp->ts_tol );
+		}	
+	} else {
 		r = (struct nmgregion *)NULL;
-	if( do_bots ) {
-		bot = nmg_bot( BU_LIST_FIRST( shell, &r->s_hd ), tsp->ts_tol );
 	}
 
 	BU_UNSETJUMP;		/* Relinquish the protection */
@@ -180,34 +177,28 @@ union tree *do_region_end(register struct db_tree_state *tsp, struct db_full_pat
 	shader = strtok( tsp->ts_mater.ma_shader, tok_sep );
 	matparm = strtok( (char *)NULL, tok_sep );
 	bu_vls_init( &shader_params );
-	if( matparm )
-	{
+	if( matparm ) {
 		bu_vls_strcpy( &shader_params, matparm );
 		matparm = strtok( (char *)NULL, tok_sep );
-		while( matparm )
-		{
+		while( matparm ) {
 			bu_vls_putc( &shader_params, ' ' );
 			bu_vls_strcat( &shader_params, matparm );
 			matparm = strtok( (char *)NULL, tok_sep );
 		}
 	}
-	if (r != 0)
-	{
+	if (r != (struct nmgregion *)NULL) {
 		struct shell *s;
 		int empty_region=0;
 		int empty_model=0;
 
 		/* Kill cracks */
 		s = BU_LIST_FIRST( shell, &r->s_hd );
-		while( BU_LIST_NOT_HEAD( &s->l, &r->s_hd ) )
-		{
+		while( BU_LIST_NOT_HEAD( &s->l, &r->s_hd ) ) {
 			struct shell *next_s;
 
 			next_s = BU_LIST_PNEXT( shell, &s->l );
-			if( nmg_kill_cracks( s ) )
-			{
-				if( nmg_ks( s ) )
-				{
+			if( nmg_kill_cracks( s ) ) {
+				if( nmg_ks( s ) ) {
 					empty_region = 1;
 					break;
 				}
@@ -216,13 +207,11 @@ union tree *do_region_end(register struct db_tree_state *tsp, struct db_full_pat
 		}
 
 		/* kill zero length edgeuses */
-		if( !empty_region )
-		{
+		if( !empty_region ) {
 			 empty_model = nmg_kill_zero_length_edgeuses( *tsp->ts_m );
 		}
 
-		if( !empty_region && !empty_model )
-		{
+		if( !empty_region && !empty_model ) {
 			/* Write the nmgregion to the output file */
 			nmg_count++;
 			sprintf( nmg_name , "nmg.%d" , nmg_count );
@@ -235,8 +224,7 @@ union tree *do_region_end(register struct db_tree_state *tsp, struct db_full_pat
 		}
 
 		/* Now make a normal brlcad region */
-		if( tsp->ts_mater.ma_color_valid )
-		{
+		if( tsp->ts_mater.ma_color_valid ) {
 			rgb[0] = (int)(tsp->ts_mater.ma_color[0] * 255.0);
 			rgb[1] = (int)(tsp->ts_mater.ma_color[1] * 255.0);
 			rgb[2] = (int)(tsp->ts_mater.ma_color[2] * 255.0);
@@ -251,20 +239,16 @@ union tree *do_region_end(register struct db_tree_state *tsp, struct db_full_pat
 		    pathp->fp_names[pathp->fp_len-1]->d_namep, &headp, 1,
 		    shader, bu_vls_addr( &shader_params ), color,
 		    tsp->ts_regionid, tsp->ts_aircode, tsp->ts_gmater,
-		    tsp->ts_los, tsp->ts_mater.ma_cinherit ) )
-		{
+		    tsp->ts_los, tsp->ts_mater.ma_cinherit ) ) {
 			bu_log( "G-nmg: error in making region (%s)\n" , pathp->fp_names[pathp->fp_len-1]->d_namep );
 		}
-	}
-	else
-	{
+	} else {
 		BU_LIST_INIT( &headp.l );
 		if( mk_lrcomb( fp_out,
 		    pathp->fp_names[pathp->fp_len-1]->d_namep, &headp, 1,
 		    shader, bu_vls_addr( &shader_params ), color,
 		    tsp->ts_regionid, tsp->ts_aircode, tsp->ts_gmater,
-		    tsp->ts_los, tsp->ts_mater.ma_cinherit ) )
-		{
+		    tsp->ts_los, tsp->ts_mater.ma_cinherit ) ) {
 			bu_log( "G-nmg: error in making region (%s)\n" , pathp->fp_names[pathp->fp_len-1]->d_namep );
 		}
 	}
@@ -312,8 +296,7 @@ csg_comb_func(struct db_i *dbip, struct directory *dp, genptr_t ptr)
 
 	dp->d_uses = (-1);
 
-	if( dp->d_flags & DIR_REGION )
-	{
+	if( dp->d_flags & DIR_REGION ) {
 		char **name;
 
 		/* convert a region to NMG's */
@@ -342,8 +325,7 @@ csg_comb_func(struct db_i *dbip, struct directory *dp, genptr_t ptr)
 
 	/* have a combination that is not a region */
 
-	if( rt_db_get_internal( &intern, dp, dbip, (fastf_t *)NULL, &rt_uniresource ) < 0 )
-	{
+	if( rt_db_get_internal( &intern, dp, dbip, (fastf_t *)NULL, &rt_uniresource ) < 0 ) {
 		bu_log( "Cannot get internal form of combination (%s)\n", dp->d_namep );
 		return;
 	}
@@ -353,32 +335,27 @@ csg_comb_func(struct db_i *dbip, struct directory *dp, genptr_t ptr)
 	if( verbose )
 		bu_log( "Combination - %s\n" , dp->d_namep );
 
-	if( comb->tree && db_ck_v4gift_tree( comb->tree ) < 0 )
-	{
+	if( comb->tree && db_ck_v4gift_tree( comb->tree ) < 0 )	{
 		db_non_union_push( comb->tree, &rt_uniresource );
-		if( db_ck_v4gift_tree( comb->tree ) < 0 )
-		{
+		if( db_ck_v4gift_tree( comb->tree ) < 0 ) {
 			bu_log( "Cannot flatten tree (%s) for editing\n", dp->d_namep );
 			return;
 		}
 	}
 	node_count = db_tree_nleaves( comb->tree );
-	if( node_count > 0 )
-	{
+	if( node_count > 0 ) {
 		tree_list = (struct rt_tree_array *)bu_calloc( node_count,
 			sizeof( struct rt_tree_array ), "tree list" );
 		actual_count = (struct rt_tree_array *)db_flatten_tree( tree_list,
 			comb->tree, OP_UNION, 0, &rt_uniresource ) - tree_list;
 		BU_ASSERT_LONG( actual_count, ==, node_count );
 	}
-	else
-	{
+	else {
 		tree_list = (struct rt_tree_array *)NULL;
 		actual_count = 0;
 	}
 
-	if( actual_count < 1 )
-	{
+	if( actual_count < 1 ) {
 		bu_log( "Warning: empty combination (%s)\n" , dp->d_namep );
 		dp->d_uses = 0;
 		rt_db_free_internal( &intern , &rt_uniresource);
@@ -387,12 +364,10 @@ csg_comb_func(struct db_i *dbip, struct directory *dp, genptr_t ptr)
 
 	BU_LIST_INIT( &headp.l );
 
-	for( i=0 ; i<actual_count ; i++ )
-	{
+	for( i=0 ; i<actual_count ; i++ ) {
 		char op;
 
-		switch( tree_list[i].tl_op )
-		{
+		switch( tree_list[i].tl_op ) {
 			case OP_UNION:
 				op = 'u';
 				break;
@@ -419,15 +394,13 @@ csg_comb_func(struct db_i *dbip, struct directory *dp, genptr_t ptr)
 		color = (unsigned char *)NULL;
 
 	endp = strchr( bu_vls_addr(&comb->shader), ' ' );
-	if( endp )
-	{
+	if( endp ) {
 		len = endp - bu_vls_addr(&comb->shader);
 		if( len > 32 ) len = 32;
 		strncpy( matname, bu_vls_addr(&comb->shader), len );
 		strncpy( matparm, endp+1, 60 );
 	}
-	else
-	{
+	else {
 		strncpy( matname, bu_vls_addr(&comb->shader), 32 );
 		matparm[0] = '\0';
 	}
@@ -436,10 +409,9 @@ csg_comb_func(struct db_i *dbip, struct directory *dp, genptr_t ptr)
 	    matname, matparm,
 	    color, comb->region_id,
 	    comb->aircode, comb->GIFTmater,comb->los,
-	    comb->inherit ) )
-		{
-			bu_log( "G-nmg: error in making region (%s)\n" , dp->d_namep );
-		}
+	    comb->inherit ) ) {
+	    bu_log( "G-nmg: error in making region (%s)\n" , dp->d_namep );
+	}
 }
 
 /*
@@ -528,16 +500,14 @@ main(int argc, char **argv)
 	}
 
 	/* Open BRL-CAD database */
-	if ((dbip = db_open( argv[optind] , "r")) == DBI_NULL)
-	{
+	if ((dbip = db_open( argv[optind] , "r")) == DBI_NULL) {
 		bu_log( "Cannot open %s\n" , argv[optind] );
 		perror(argv[0]);
 		exit(1);
 	}
 	db_dirbuild( dbip );
 
-	if ((fp_out = wdb_fopen( out_file )) == NULL)
-	{
+	if ((fp_out = wdb_fopen( out_file )) == NULL) {
 		perror( out_file );
 		bu_log( "g-nng: Cannot open %s\n" , out_file );
 		return 2;
@@ -548,13 +518,11 @@ main(int argc, char **argv)
 	mk_id_editunits( fp_out , dbip->dbi_title , dbip->dbi_local2base );
 
 	/* Walk the trees outputting regions and combinations */
-	for( i=optind ; i<argc ; i++ )
-	{
+	for( i=optind ; i<argc ; i++ ) {
 		struct directory *dp;
 
 		dp = db_lookup( dbip , argv[i] , 0 );
-		if( dp == DIR_NULL )
-		{
+		if( dp == DIR_NULL ) {
 			bu_log( "WARNING!!! Could not find %s, skipping\n", argv[i] );
 			continue;
 		}
