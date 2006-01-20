@@ -566,10 +566,26 @@ get_args(ClientData clientData, Tcl_Interp *interp, int argc, char **argv, struc
 	}
     }
 
-    if (argv[bu_optind]) {
-	/* XXX should make sure the lookup succeeded */
-	state->src = db_lookup(dbip, argv[bu_optind], LOOKUP_QUIET);
-    } else {
+    /* make sure not too few/many args */
+    if ((argc - bu_optind) == 0) {
+	Tcl_AppendResult(interp, "clone:  Need to specify an <object> to be cloned.\n", (char*)NULL);
+	print_usage(clientData, interp);
+	return TCL_ERROR;
+    } else if (bu_optind + 1 < argc) {
+	Tcl_AppendResult(interp, "clone:  Can only clone exactly one <object> at a time right now.\n", (char*)NULL);
+	print_usage(clientData, interp);
+	return TCL_ERROR;
+    }
+
+    /* sanity */
+    if (!argv[bu_optind]) {
+	return TCL_ERROR;
+    }
+    
+    /* we make sure the lookup succeeded in f_clone() */
+    state->src = db_lookup(dbip, argv[bu_optind], LOOKUP_QUIET);
+    if (!state->src) {
+	Tcl_AppendResult(interp, "clone:  Cannot find source object\n", (char*)NULL);
 	return TCL_ERROR;
     }
 
@@ -604,12 +620,8 @@ f_clone(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	return TCL_ERROR;
     }
 
-    /* do it (if we can) */
-    if (state.src) {
-	copy_object(clientData, interp, state);
-    } else {
-	Tcl_AppendResult(interp, "clone:  Cannot find source object\n", (char*)NULL);
-    }
+    /* do it */
+    (void)copy_object(clientData, interp, state);
 
     (void)signal( SIGINT, SIG_IGN );
     return TCL_OK;
