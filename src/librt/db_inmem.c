@@ -123,7 +123,6 @@ db_create_inmem(void) {
     struct bu_vls units;
     struct bu_external attr;
     int flags;
-    int result;
 
     dbip = db_open_inmem();
 
