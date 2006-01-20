@@ -15,6 +15,21 @@ on-going issues.
 Recent Bugs
 -----------
 
+* mged doesn't check if html_dir does not exist when searching for
+  docs/browser.
+
+* permute then translate doesn't refresh the graphics window
+    permute 4378
+    translate menus
+    p 0 0 0
+    p 0 0 0
+
+* constrained axis translation bindings on OS X don't work
+    object/matrix edit
+    shift-alt mouse (left/mid/right for x/y/z respectively) should work
+
+* mged documentation doesn't open on OS X
+   
 * the findfont directive in gv postscript is reporting font not found
 
 * concave arbs give correct wireframe but do not raytrace correctly.
@@ -99,6 +114,16 @@ Older Bugs
 * X11 framebuffer often fails to display on certain middle bit depth
   displays. (e.g. 15 or 16 bit depth)
 
+
+Annoyances
+----------
+
+* matrix edits on objects in mged require you to select a primitive
+  for a coordinate system reference.  this can be counterintuitive and
+  confusing.
+
+* there are frequently modality errors when entering edit mode as
+  control and middle mouse rebind to model edit instead of view edit.
 
 ---
 Bugs should be reported to the bug tracker on the project website at
