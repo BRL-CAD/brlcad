@@ -50,6 +50,7 @@ extern int miss(register struct application *ap);
 char	usage[] = "\
 Usage:  rtexample model.g objects...\n";
 
+int
 main(int argc, char **argv)
 {
     /* every application needs one of these */
