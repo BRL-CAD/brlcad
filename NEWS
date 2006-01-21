@@ -15,7 +15,7 @@ This release marks the one year anniversary of BRL-CAD being released
 as Open Source software.  Thank you to everyone for your support and
 contributions.
 
-* new example root solving sample application - Sean Morrison
+* new roots_example root solving sample application - Sean Morrison
 * prevent g-nmg segfault during tesselation- Sean Morrison
 * fixed brlman/awf `./"' unsupported or unknown issue - Sean Morrison
 * new g_transfer in-memory geometry example program - Sean Morrison
