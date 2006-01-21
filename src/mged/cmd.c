@@ -3520,7 +3520,7 @@ cmd_parse_points(ClientData	clientData,
 		char    	**argv)
 {
 
-#ifdef BC_WITH_PARSERS
+#ifndef BC_WITH_PARSERS
     bu_log("parse_points was disabled in this compilation of mged due to system limitations\n");
     return TCL_ERROR;
 #else
