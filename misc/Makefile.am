@@ -40,6 +40,9 @@ DISTCLEANFILES = \
 	ltmain.sh.backup \
 	mkinstalldirs
 
+dist-hook:
+	rm -rf `find $(distdir)/enigma -name CVS`
+
 MAINTAINERCLEANFILES = Makefile.in
 
 include $(top_srcdir)/misc/Makefile.defs
