@@ -123,6 +123,7 @@ bin_PROGRAMS = \
 
 # XXX - doesn't work, needs to be updated to newer dm interface
 # noinst_PROGRAMS = pl-dm
+noinst_PROGRAMS = roots_example
 
 dist_bin_SCRIPTS = rtwizard morphedit.tcl
 
@@ -363,6 +364,8 @@ remapid_LDADD = ${LIBRT}
 remapid_SOURCES = remapid.c
 rle_pix_LDADD = ${RLE} ${BU} ${SYSV}
 rle_pix_SOURCES = rle-pix.c
+roots_example_LDADD = ${LIBRT} ${BN} ${BU}
+roots_example_SOURCES = roots_example.c
 sgi_pix_LDADD = ${LIBSGIGL}
 sgi_pix_SOURCES = sgi-pix.c
 sun_pix_LDADD = ${BU}
@@ -487,7 +490,9 @@ man_MANS = \
 
 sample_applicationsdir = $(SAMPLE_APPLICATIONS_DIR)
 
-sample_applications_DATA = pl-dm.c
+sample_applications_DATA = \
+	pl-dm.c \
+	roots_example.c
 
 # XXX need to investigate why these .c are not being built
 EXTRA_DIST = \
