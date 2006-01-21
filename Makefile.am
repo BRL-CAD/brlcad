@@ -38,11 +38,6 @@
 AUTOMAKE_OPTIONS = 1.6 dist-zip dist-bzip2
 ACLOCAL_AMFLAGS = -I m4
 
-# this shouldn't be here, but rather in the include directory
-# for some reason, putting it there doesn't work
-dist-hook:
-	rm -f $(distdir)/include/brlcad_config.h
-
 required_dirs = \
 	include \
 	src
@@ -297,6 +292,11 @@ package:
 	@$(ECHO) "  make tar	-	Builds a uncompressed tape archive"
 	@$(ECHO)
 
+# delete files that should not be in the distribution
+dist-hook:
+	rm -f $(distdir)/include/brlcad_config.h
+	rm -rf `find $(distdir) -type d -name CVS`
+
 
 ##########################
 # summaries and warnings #
@@ -427,6 +427,7 @@ all-local:
 	  $(ECHO) "Run 'make benchmark' to run the BRL-CAD Benchmark Suite" ;\
 	fi
 	@$(ECHO)
+
 
 include $(top_srcdir)/misc/Makefile.defs
 
