@@ -3519,16 +3519,16 @@ cmd_parse_points(ClientData	clientData,
 		int     	argc,
 		char    	**argv)
 {
+
+#ifdef BC_WITH_PARSERS
+    bu_log("parse_points was disabled in this compilation of mged due to system limitations\n");
+    return TCL_ERROR;
+#else
     if (argc != 2) {
 	bu_log("parse_points only supports a single file name right now\n");
 	bu_log("doing nothing\n");
 	return TCL_ERROR;
     }
-
-#ifdef _WIN32
-    /*XXX Temporary, until this is working on Windows */
-    return TCL_OK;
-#else
     return parse_point_file(clientData, interp, argc-1, &(argv[1]));
 #endif
 }
