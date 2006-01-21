@@ -15,6 +15,7 @@ This release marks the one year anniversary of BRL-CAD being released
 as Open Source software.  Thank you to everyone for your support and
 contributions.
 
+* new example root solving sample application - Sean Morrison
 * prevent g-nmg segfault during tesselation- Sean Morrison
 * fixed brlman/awf `./"' unsupported or unknown issue - Sean Morrison
 * new g_transfer in-memory geometry example program - Sean Morrison
@@ -42,7 +43,6 @@ majority of known contributors to BRL-CAD over the project's
 existence.  This is part of an on-going effort to document the history
 of BRL-CAD over the past 20 years.
 
-* new example root solving sample application - Sean Morrison
 * improved mged resource searching when not installed - Sean Morrison
 * significant AUTHORS file updates, all names filed - Sean Morrison
 * fixed sketch primitive bezier path computation bug - Sean Morrison
