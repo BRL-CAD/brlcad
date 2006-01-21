@@ -28,6 +28,7 @@ contributions.
 * new Archer modeling and visualization tool - Bob Parker, Doug Howard
 * raytracers use image size for default aspect ratio - Sean Morrison
 * fixed benchmark sqrt of negative numbers error - Sean Morrison
+* raytracer performance enhancements - Sean Morrison
 
 
 ----------------------------------------------------------------------
