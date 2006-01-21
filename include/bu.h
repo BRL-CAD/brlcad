@@ -82,14 +82,6 @@ __BEGIN_DECLS
 
 #define BU_H_VERSION	"@(#)$Header$ (BRL)"
 
-#ifdef HAVE_TIME_H
-# include <time.h>
-#endif
-
-#ifdef HAVE_SYS_TIME_H
-# include <sys/time.h>
-#endif
-
 
 /** define BU_DIR_SEPARATOR to the directory separator character
  */
@@ -1039,7 +1031,7 @@ struct bu_mapped_file {
 	char		*appl;		/* bu_strdup() of tag for application using 'apbuf' */
 	genptr_t	apbuf;		/* opt: application-specific buffer */
 	long		apbuflen;	/* opt: application-specific buflen */
-	time_t		modtime;	/* date stamp, in case file is modified */
+	long		modtime;	/* date stamp, in case file is modified */
 	int		uses;		/* # ptrs to this struct handed out */
 	int		dont_restat;	/* 1=on subsequent opens, don't re-stat() */
 };
