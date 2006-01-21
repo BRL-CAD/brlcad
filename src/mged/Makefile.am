@@ -1,9 +1,5 @@
 # $Id$
 
-SUBDIRS = \
-	dm_old \
-	points
-
 if WITH_OPENGL
 OGL_SRCS = dm-ogl.c
 OGL_CFLAGS = -DDM_OGL -DIF_OGL
@@ -19,6 +15,25 @@ else
 X11_SRCS =
 X11_CFLAGS =
 endif
+
+points_dir = points
+if WITH_PARSERS
+POINTS = ${points_dir}
+POINTS_CFLAGS = -DENABLE_POINTS
+POINTS_LDADD = $(top_builddir)/src/mged/points/libpoints.la
+else
+POINTS_DIR =
+POINTS_CFLAGS =
+POINTS_LDADD =
+endif
+
+SUBDIRS = \
+	$(POINTS) \
+	dm_old
+
+DIST_SUBDIRS = \
+	${points_dir} \
+	dm_old
 
 bin_PROGRAMS = \
 	cad_boundp \
@@ -121,10 +136,10 @@ mged_SOURCES = \
 	vparse.c \
 	vrlink.c
 
-mged_CFLAGS = $(OGL_CFLAGS) $(X11_CFLAGS)
+mged_CFLAGS = $(OGL_CFLAGS) $(X11_CFLAGS) $(POINTS_CFLAGS)
 mged_LINK = $(LIBTOOL) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) -o $@
 mged_LDADD = \
-	$(top_builddir)/src/mged/points/libpoints.la \
+	${POINTS_LDADD} \
 	${TERMIO} \
 	${WDB} \
 	${DM} \
