@@ -27,7 +27,10 @@
  */
 /*@}*/
 
-#include "./pkg.h"
+/* interface header */
+#include "pkg.h"
+
+/* message types */
 #include "./pkgtypes.h"
 
 /*
