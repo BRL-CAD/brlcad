@@ -57,7 +57,8 @@
 #include "vmath.h"
 #include "raytrace.h"
 #include "dm.h"
-#include "../libfb/pkgtypes.h"
+
+#include "./pkgtypes.h"
 
 int fbs_open(Tcl_Interp *interp, struct fbserv_obj *fbsp, int port);
 int fbs_close(Tcl_Interp *interp, struct fbserv_obj *fbsp);
