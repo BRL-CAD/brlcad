@@ -55,6 +55,10 @@
 #  endif
 #endif
 
+/* XXX should change return type to not be coupled to libpkg */
+#include "pkg.h"
+
+
 /* Library entry points which are macros. */
 #define fb_gettype(_ifp)		(_ifp->if_type)
 #define fb_getwidth(_ifp)		(_ifp->if_width)
