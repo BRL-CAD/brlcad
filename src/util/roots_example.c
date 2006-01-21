@@ -46,6 +46,40 @@ main(int argc, char *argv[])
 
 
     /*********************************************
+     * Linear polynomial (1st degree equation):
+     *  A*X + B = 0 
+     * [0]   [1]     <=coefficients
+     */
+    equation.dgr = 1;
+    equation.cf[0] = 1;  /* A */
+    equation.cf[1] = -2;  /* B */
+
+    /* print the equation */
+    bu_log("\n*** LINEAR ***\n");
+    bn_pr_poly("Solving for Linear", &equation);
+
+    /* solve for the roots */
+    num_roots = rt_poly_roots(&equation, roots, "My Linear Polynomial");
+    if (num_roots == 0) {
+	bu_log("No roots found!\n");
+	return 0;
+    } else if (num_roots < 0) {
+	bu_log("The root solver failed to converge on a solution\n");
+	return 1;
+    }
+
+    /*  A*X + B = 0 
+     *  1*X + -2 = 0
+     *    X -  2 = 0
+     *    X      = 2
+     */ 
+    /* print the roots */
+    bu_log("The root should be 2\n");
+    bn_pr_roots("My Linear Polynomial", roots, num_roots);
+
+
+
+    /*********************************************
      * Quadratic polynomial (2nd degree equation):
      *  A*X^2 + B*X + C = 0 
      * [0]     [1]   [2]     <=coefficients
@@ -60,7 +94,7 @@ main(int argc, char *argv[])
     bn_pr_poly("Solving for Quadratic", &equation);
 
     /* solve for the roots */
-    num_roots = rt_poly_roots(&equation, &roots, "My Quadratic Polynomial");
+    num_roots = rt_poly_roots(&equation, roots, "My Quadratic Polynomial");
     if (num_roots == 0) {
 	bu_log("No roots found!\n");
 	return 0;
@@ -77,7 +111,7 @@ main(int argc, char *argv[])
      *  X = 2, X = -2
      */ 
     /* print the roots */
-    bu_log("Exact roots should be 2 and -2\n");
+    bu_log("The roots should be 2 and -2\n");
     bn_pr_roots("My Quadratic Polynomial", roots, num_roots);
 
 
@@ -98,7 +132,7 @@ main(int argc, char *argv[])
     bn_pr_poly("Solving for Cubic", &equation);
 
     /* solve for the roots */
-    num_roots = rt_poly_roots(&equation, &roots, "My Cubic Polynomial");
+    num_roots = rt_poly_roots(&equation, roots, "My Cubic Polynomial");
     if (num_roots == 0) {
 	bu_log("No roots found!\n");
 	return 0;
@@ -108,7 +142,7 @@ main(int argc, char *argv[])
     }
 
     /* print the roots */
-    bu_log("Exact roots should be 1/3, -1/5, and -2/3\n");
+    bu_log("The roots should be 1/3, -1/5, and -2/3\n");
     bn_pr_roots("My Cubic Polynomial", roots, num_roots);
  
     
@@ -129,7 +163,7 @@ main(int argc, char *argv[])
     bn_pr_poly("Solving for Quartic", &equation);
 
     /* solve for the roots */
-    num_roots = rt_poly_roots(&equation, &roots, "My Quartic Polynomial");
+    num_roots = rt_poly_roots(&equation, roots, "My Quartic Polynomial");
     if (num_roots == 0) {
 	bu_log("No roots found!\n");
 	return 0;
@@ -139,7 +173,7 @@ main(int argc, char *argv[])
     }
 
     /* print the roots */
-    bu_log("Exact roots should be 3, 1, -2, -4\n");
+    bu_log("The roots should be 3, 1, -2, -4\n");
     bn_pr_roots("My Quartic Polynomial", roots, num_roots);
  
     return 0;
