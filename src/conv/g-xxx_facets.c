@@ -397,15 +397,16 @@ genptr_t		client_data;
 		r = ret_tree->tr_d.td_r;
 	else
 	{
-		if( verbose )
-			bu_log( "\tNothing left of this region after Boolean evaluation!!!\n" );
-		regions_written++; /* don't count as a failure */
-		r = (struct nmgregion *)NULL;
+	    if( verbose ) {
+		bu_log( "\tNothing left of this region after Boolean evaluation\n" );
+	    }
+	    regions_written++; /* don't count as a failure */
+	    r = (struct nmgregion *)NULL;
 	}
 
 	regions_converted++;
 
-	if (r != NULL)
+	if (r != (struct nmgregion *)NULL)
 	{
 		struct shell *s;
 		int empty_region=0;

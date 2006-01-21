@@ -577,19 +577,21 @@ union tree *do_region_end(register struct db_tree_state *tsp, struct db_full_pat
 		r = ret_tree->tr_d.td_r;
 	else
 	{
-		printf( "\tNothing left of this region after Boolean evaluation!!!\n" );
+	    if (verbose) {
+		printf( "\tNothing left of this region after Boolean evaluation\n" );
 		fprintf( fpe, "WARNING: Nothing left after Boolean evaluation: %s\n",
-			db_path_to_string( pathp ));
+			 db_path_to_string( pathp ));
 		fflush(fpe);
-		regions_written++; /* don't count as a failure */
-		r = (struct nmgregion *)NULL;
+	    }
+	    regions_written++; /* don't count as a failure */
+	    r = (struct nmgregion *)NULL;
 	}
 /*	regions_done++;  XXX */
 
 	BU_UNSETJUMP;		/* Relinquish the protection */
 	regions_converted++;
 
-	if (r != 0)
+	if (r != (struct nmgregion *)NULL)
 	{
 		struct shell *s;
 		int empty_region=0;

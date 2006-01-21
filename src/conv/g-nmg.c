@@ -166,9 +166,12 @@ union tree *do_region_end(register struct db_tree_state *tsp, struct db_full_pat
 		r = ret_tree->tr_d.td_r;
 		if( do_bots && r ) {
 		    bot = nmg_bot( BU_LIST_FIRST( shell, &r->s_hd ), tsp->ts_tol );
-		}	
+		}
 	} else {
-		r = (struct nmgregion *)NULL;
+	    if (verbose) {
+		printf( "\tNothing left of this region after Boolean evaluation\n" );
+	    }
+	    r = (struct nmgregion *)NULL;
 	}
 
 	BU_UNSETJUMP;		/* Relinquish the protection */

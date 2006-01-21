@@ -758,7 +758,7 @@ union tree *do_region_end(register struct db_tree_state *tsp, struct db_full_pat
 
 	BU_UNSETJUMP;		/* Relinquish the protection */
 	regions_converted++;
-	if (r != 0)
+	if (r != (struct nmgregion *)NULL)
 	{
 		struct shell *s;
 		int empty_region=0;
