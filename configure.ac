@@ -818,9 +818,11 @@ AC_PROG_AWK
 AC_PROG_INSTALL
 AC_PROG_LN_S
 AC_PROG_MAKE_SET
-AC_PROG_LEX
-AC_PROG_YACC
 AM_PROG_MKDIR_P
+
+# automake 'requires' AM_PROG_LEX, not AC_PROG_LEX
+AM_PROG_LEX
+AC_PROG_YACC
 
 # libtool's configuration check has a bug that causes a /lib/cpp
 # sanity check failure if a C++ compiler is not installed.  This makes
@@ -1746,6 +1748,44 @@ dnl *** Check for system services ***
 dnl *********************************
 
 BC_CONFIGURE_STAGE([services], [8 of 9])
+
+dnl *** check for bison/yacc or flex/lex ***
+# scanner and parser are optionally needed for mged and other tools
+# that utilize a parser.  if both are found, provide a make var so we
+# can conditionally compile the parsers.
+build_parsers=no
+if test "x$ac_cv_prog_LEX" != "x" ; then
+    if test "x$ac_cv_prog_YACC" != "x" ; then
+	# we have both
+	build_parsers=yes
+    else
+	AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
+	AC_MSG_WARN([A YACC-style parser was not found so dependant portions])
+	AC_MSG_WARN([of the package (various MGED commands) will be disabled.])
+	AC_MSG_NOTICE([Installation of GNU Bison or Yacc before continuing is recommended.])
+	AC_MSG_NOTICE([{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{])
+    fi
+else
+    AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
+    if test "x$ac_cv_prog_YACC" != "x" ; then
+	AC_MSG_WARN([A LEX-style scanner was not found so dependant portions])
+	AC_MSG_WARN([of the package (various MGED commands) will be disabled.])
+	AC_MSG_NOTICE([Installation of GNU Flex or Lex before continuing is recommended.])
+    else
+	AC_MSG_WARN([Neither a YACC-style parser or a LEX-style scanner was found.])
+	AC_MSG_WARN([Dependant portions of the package will be disabled.])
+	AC_MSG_NOTICE([Installation of Bison/Yacc and Flex/Lex before continuing is recommended.])
+    fi
+    AC_MSG_NOTICE([{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{])
+fi
+AC_MSG_CHECKING([whether we have the essentials to make parsers])
+if test "x$build_parsers" = "xyes" ; then
+    AC_DEFINE(BC_WITH_PARSERS, 1, [Define to enable compilation of parsers])
+    AC_MSG_RESULT(yes)
+else
+    AC_MSG_RESULT(no)
+fi
+
 
 dnl *** libpng ***
 png_works=no
@@ -2792,6 +2832,7 @@ AM_CONDITIONAL(INSTALL_MODELS, [test "x$bc_install_geometry" = "xyes"])
 AM_CONDITIONAL(WITH_JAVA, [test "x$build_against_java" != "xno"])
 AM_CONDITIONAL(WITH_X11, [test "x$build_against_x11" != "xno"])
 AM_CONDITIONAL(WITH_OPENGL, [test "x$build_against_opengl" != "xno"])
+AM_CONDITIONAL(WITH_PARSERS, [test "x$build_parsers" != "xno"])
 
 AM_CONDITIONAL(ONLY_BENCHMARK, [test "x$bc_only_benchmark" != "xno"])
 AM_CONDITIONAL(ONLY_RTS, [test "x$bc_only_rts" != "xno"])
