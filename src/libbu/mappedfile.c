@@ -142,7 +142,7 @@ bu_open_mapped_file(const char *name, const char *appl)
 					name, (long)mp->buflen, (long)sb.st_size );
 				goto dont_reuse;
 			}
-			if( sb.st_mtime != mp->modtime )  {
+			if( (long)sb.st_mtime != mp->modtime )  {
 				bu_log("bu_open_mapped_file(%s) WARNING: File modified since last mapped, opening new version.\n",
 					name);
 				goto dont_reuse;
@@ -200,7 +200,7 @@ dont_reuse:
 
 #ifdef HAVE_UNIX_IO
 	mp->buflen = (size_t)sb.st_size;
-	mp->modtime = sb.st_mtime;
+	mp->modtime = (long)sb.st_mtime;
 #  ifdef HAVE_SYS_MMAN_H
 
 	/* Attempt to access as memory-mapped file */
