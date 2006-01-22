@@ -18,7 +18,6 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-
 /** \addtogroup libbn */
 /*@{*/
 /** @file bn_tcl.c
@@ -37,17 +36,14 @@
 static const char RCSid[] = "@(#)$Header$ (ARL)";
 #endif
 
-
 #include "common.h"
-
-
 
 #include <stdio.h>
 #include <math.h>
 #ifdef HAVE_STRING_H
-#include <string.h>
+#  include <string.h>
 #else
-#include <strings.h>
+#  include <strings.h>
 #endif
 
 #include "tcl.h"
@@ -678,7 +674,7 @@ static struct math_func_link {
 int
 bn_cmd_common_file_size(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
-    int width, height;
+    long int width, height;
     int pixel_size = 3;
 
     if (argc != 2 && argc != 3) {
