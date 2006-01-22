@@ -56,15 +56,15 @@
  *  $Header$
  */
 
-#ifndef SEEN_BU_H
-#define SEEN_BU_H seen
+#ifndef __BU_H__
+#define __BU_H__
 
 #include "common.h"
 
+__BEGIN_DECLS
+
 /* Included for Tcl_Interp definition */
 #include "tcl.h"
-
-__BEGIN_DECLS
 
 #ifndef BU_EXPORT
 #  if defined(_WIN32) && !defined(__CYGWIN__) && defined(BRLCAD_DLL)
@@ -115,23 +115,6 @@ __BEGIN_DECLS
 #  endif  /* _WIN32 */
 #endif  /* PATH_SEPARATOR */
 
-
-/*----------------------------------------------------------------------*/
-/*
- *  System library routines used by LIBBS.
- *  If header files are to be included, this should happen first,
- *  to prevent accidentally redefining important stuff.
- */
-#if HAVE_STDLIB_H
-/*	NOTE:  Nested includes, gets malloc(), offsetof(), etc */
-#	include <stdlib.h>
-#	include <stddef.h>
-#else
-extern char	*malloc();
-extern char	*calloc();
-extern char	*realloc();
-/**extern void	free(); **/
-#endif
 
 /*
  * BU_FLSTR   Macro for getting a concatenated string of the current
@@ -786,6 +769,8 @@ BU_EXPORT BU_EXTERN(struct bu_list *bu_list_pop, (struct bu_list *hp));
  *  eu = BU_LIST_MAIN_PTR( edgeuse, midway, l2 );
  *
  *  eu1 = BU_LIST_MAIN_PTR(edgeuse, BU_LIST_FIRST(bu_list, &eg1->eu_hd2), l2);
+ *
+ *  Files using BU_LIST_MAIN_PTR will need to include stddef.h
  */
 #define BU_LIST_MAIN_PTR(_type, _ptr2, _name2)	\
 	((struct _type *)(((char *)(_ptr2)) - offsetof(struct _type, _name2.magic)))
@@ -1228,24 +1213,34 @@ BU_EXPORT extern int	bu_debug;
  *  Definitions and data structures needed for routines that assign values
  *  to elements of arbitrary data structures, the layout of which is
  *  described by tables of "bu_structparse" structures.
+ */
+
+/**
+ * b u _ o f f s e t o f
+ * b u _ o f f s e t o f a r r a y
  *
- *  The general problem of word-addressed hardware
- *  where (int *) and (char *) have different representations
- *  is handled in the parsing routines that use sp_offset,
- *  because of the limitations placed on compile-time initializers.
+ * The general problem of word-addressed hardware where (int *) and
+ * (char *) have different representations is handled in the parsing
+ * routines that use sp_offset, because of the limitations placed on
+ * compile-time initializers.
+ *
+ * Files using bu_offsetof or bu_offsetofarray will need to include
+ * stddef.h
  */
 #if __STDC__ && !defined(ipsc860)
 #	define bu_offsetofarray(_t, _m)	offsetof(_t, _m[0])
 #else
-#	if !defined(offsetof)
-#		define bu_offsetof(_t, _m)		(int)(&(((_t *)0)->_m))
-#	else
-#		define bu_offsetof(_t, _m)	offsetof(_t, _m)
-#	endif
 #	define bu_offsetofarray(_t, _m)	(int)( (((_t *)0)->_m))
 #endif
+#if !defined(offsetof)
+#	define bu_offsetof(_t, _m) (int)(&(((_t *)0)->_m))
+#else
+#	define bu_offsetof(_t, _m) offsetof(_t, _m)
+#endif
 
-/*
+/**
+ *  b u _ b y t e o f f s e t
+ *
  *  Convert address of global data object into byte "offset" from address 0.
  *
  *  Strictly speaking, the C language only permits initializers of the
@@ -2552,7 +2547,7 @@ BU_EXPORT BU_EXTERN(struct bu_hash_entry *bu_hash_tbl_next,
 
 __END_DECLS
 
-#endif /* SEEN_BU_H */
+#endif  /* __BU_H__ */
 
 /*
  * Local Variables:
