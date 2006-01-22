@@ -132,7 +132,7 @@ int pkg_nochecking = 0;	/* set to disable extra checking for input */
 int pkg_permport = 0;	/* TCP port that pkg_permserver() is listening on XXX */
 
 /* Internal Functions */
-static struct pkg_conn *pkg_makeconn(int fd, struct pkg_switch *switchp, void (*errlog) (/* ??? */));
+static struct pkg_conn *pkg_makeconn(int fd, const struct pkg_switch *switchp, void (*errlog) (/* ??? */));
 static void pkg_errlog(char *s);
 static void pkg_perror(void (*errlog) (/* ??? */), char *s);
 static int pkg_dispatch(register struct pkg_conn *pc);
@@ -258,7 +258,7 @@ pkg_plong(unsigned char *msgp, long unsigned int l)
  *  Returns PKC_ERROR on error.
  */
 struct pkg_conn *
-pkg_open(char *host, char *service, char *protocol, char *uname, char *passwd, struct pkg_switch *switchp, void (*errlog) (/* ??? */))
+pkg_open(char *host, char *service, char *protocol, char *uname, char *passwd, const struct pkg_switch *switchp, void (*errlog) (/* ??? */))
 {
 #ifdef _WIN32
 	LPHOSTENT lpHostEntry;
@@ -413,7 +413,7 @@ ready:
  *  Returns PKC_ERROR or a pointer to a pkg_conn structure.
  */
 struct pkg_conn *
-pkg_transerver(struct pkg_switch *switchp, void (*errlog) (/* ??? */))
+pkg_transerver(const struct pkg_switch *switchp, void (*errlog) (/* ??? */))
 {
 	pkg_ck_debug();
 	if( pkg_debug )  {
@@ -597,7 +597,7 @@ ready:
  *	PKC_ERROR	fatal error
  */
 struct pkg_conn *
-pkg_getclient(int fd, struct pkg_switch *switchp, void (*errlog) (/* ??? */), int nodelay)
+pkg_getclient(int fd, const struct pkg_switch *switchp, void (*errlog) (/* ??? */), int nodelay)
 {
 	struct sockaddr_in from;
 	register int s2;
@@ -670,7 +670,7 @@ pkg_getclient(int fd, struct pkg_switch *switchp, void (*errlog) (/* ??? */), in
  */
 static
 struct pkg_conn *
-pkg_makeconn(int fd, struct pkg_switch *switchp, void (*errlog) (/* ??? */))
+pkg_makeconn(int fd, const struct pkg_switch *switchp, void (*errlog) (/* ??? */))
 {
 	register struct pkg_conn *pc;
 

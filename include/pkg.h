@@ -73,7 +73,7 @@ struct pkg_header {
 #define	PKG_STREAMLEN	(32*1024)
 struct pkg_conn {
 	int		pkc_fd;		/* TCP connection fd */
-	struct pkg_switch *pkc_switch;	/* Array of message handlers */
+	const struct pkg_switch *pkc_switch;	/* Array of message handlers */
 	void		(*pkc_errlog)(); /* Error message logger */
 	struct pkg_header pkc_hdr;	/* hdr of cur msg */
 	long		pkc_len;	/* pkg_len, in host order */
@@ -108,7 +108,7 @@ PKG_EXPORT extern int pkg_suckin(register struct pkg_conn *);
 PKG_EXPORT extern struct pkg_conn *pkg_open();
 PKG_EXPORT extern struct pkg_conn *pkg_transerver();
 PKG_EXPORT extern int pkg_permserver();
-PKG_EXPORT extern struct pkg_conn *pkg_getclient(int fd, struct pkg_switch *switchp, void (*errlog) (/* ??? */), int nodelay);
+PKG_EXPORT extern struct pkg_conn *pkg_getclient(int fd, const struct pkg_switch *switchp, void (*errlog) (/* ??? */), int nodelay);
 PKG_EXPORT extern void pkg_close();
 PKG_EXPORT extern int pkg_send();
 PKG_EXPORT extern int pkg_2send();
