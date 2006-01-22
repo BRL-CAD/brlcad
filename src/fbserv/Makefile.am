@@ -1,13 +1,17 @@
 # $Id$
 
 bin_PROGRAMS = fbserv
-fbserv_SOURCES = fbserv.c
+
 fbserv_LDADD = ${FB}
+
+fbserv_SOURCES = \
+	fbserv.c \
+	server.c
 
 man_MANS = fbserv.1
 EXTRA_DIST = \
-	fbserv_win.c \
-	$(man_MANS)
+	$(man_MANS) \
+	fbserv_win.c
 
 include $(top_srcdir)/misc/Makefile.defs
 
