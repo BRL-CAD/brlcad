@@ -42,6 +42,7 @@ static const char RCSprep[] = "@(#)$Header$ (BRL)";
 
 #include "common.h"
 
+#include <stddef.h>
 #include <stdio.h>
 #include <math.h>
 #ifdef HAVE_STRING_H

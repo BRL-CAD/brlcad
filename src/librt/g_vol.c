@@ -45,12 +45,12 @@ static const char RCSvol[] = "@(#)$Header$ (BRL)";
 
 #include "common.h"
 
-
-
+#include <stddef.h>
 #include <stdio.h>
 #include <ctype.h>
 #include <math.h>
 #include <string.h>
+
 #include "machine.h"
 #include "vmath.h"
 #include "db.h"
@@ -77,7 +77,7 @@ struct rt_vol_specific {
 };
 #define VOL_NULL	((struct rt_vol_specific *)0)
 
-#define VOL_O(m)	offsetof(struct rt_vol_internal, m)
+#define VOL_O(m)	bu_offsetof(struct rt_vol_internal, m)
 
 const struct bu_structparse rt_vol_parse[] = {
 #if CRAY && !__STDC__

@@ -42,13 +42,15 @@ static const char RCSeto[] = "@(#)$Header$ (BRL)";
 
 #include "common.h"
 
-
-
+#include <stddef.h>
 #include <stdio.h>
 #ifdef HAVE_STRING_H
-#include <string.h>
+#  include <string.h>
+#else
+#  include <strings.h>
 #endif
 #include <math.h>
+
 #include "machine.h"
 #include "vmath.h"
 #include "db.h"
@@ -154,11 +156,11 @@ struct eto_specific {
 };
 
 const struct bu_structparse rt_eto_parse[] = {
-    { "%f", 3, "V",   offsetof(struct rt_eto_internal, eto_V[X]), BU_STRUCTPARSE_FUNC_NULL },
-    { "%f", 3, "N",   offsetof(struct rt_eto_internal, eto_N[X]), BU_STRUCTPARSE_FUNC_NULL },
-    { "%f", 3, "C",   offsetof(struct rt_eto_internal, eto_C[X]), BU_STRUCTPARSE_FUNC_NULL },
-    { "%f", 1, "r",   offsetof(struct rt_eto_internal, eto_r),    BU_STRUCTPARSE_FUNC_NULL },
-    { "%f", 1, "r_d", offsetof(struct rt_eto_internal, eto_rd),   BU_STRUCTPARSE_FUNC_NULL },
+    { "%f", 3, "V",   bu_offsetof(struct rt_eto_internal, eto_V[X]), BU_STRUCTPARSE_FUNC_NULL },
+    { "%f", 3, "N",   bu_offsetof(struct rt_eto_internal, eto_N[X]), BU_STRUCTPARSE_FUNC_NULL },
+    { "%f", 3, "C",   bu_offsetof(struct rt_eto_internal, eto_C[X]), BU_STRUCTPARSE_FUNC_NULL },
+    { "%f", 1, "r",   bu_offsetof(struct rt_eto_internal, eto_r),    BU_STRUCTPARSE_FUNC_NULL },
+    { "%f", 1, "r_d", bu_offsetof(struct rt_eto_internal, eto_rd),   BU_STRUCTPARSE_FUNC_NULL },
     { {'\0','\0','\0','\0'}, 0, (char *)NULL, 0, BU_STRUCTPARSE_FUNC_NULL }
  };
 

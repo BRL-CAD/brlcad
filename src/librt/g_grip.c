@@ -28,10 +28,10 @@ static const char RCSgrip[] = "@(#)$Header$ (BRL)";
 
 #include "common.h"
 
-
-
+#include <stddef.h>
 #include <stdio.h>
 #include <math.h>
+
 #include "machine.h"
 #include "vmath.h"
 #include "raytrace.h"
@@ -49,9 +49,9 @@ struct grip_specific {
 #define	GRIP_NULL	((struct grip_specific *)0)
 
 const struct bu_structparse rt_grp_parse[] = {
-	{ "%f", 3, "V", offsetof(struct rt_grip_internal, center[X]), BU_STRUCTPARSE_FUNC_NULL },
-	{ "%f", 3, "N", offsetof(struct rt_grip_internal, normal[X]), BU_STRUCTPARSE_FUNC_NULL },
-	{ "%f", 1, "L", offsetof(struct rt_grip_internal, mag), BU_STRUCTPARSE_FUNC_NULL },
+	{ "%f", 3, "V", bu_offsetof(struct rt_grip_internal, center[X]), BU_STRUCTPARSE_FUNC_NULL },
+	{ "%f", 3, "N", bu_offsetof(struct rt_grip_internal, normal[X]), BU_STRUCTPARSE_FUNC_NULL },
+	{ "%f", 1, "L", bu_offsetof(struct rt_grip_internal, mag), BU_STRUCTPARSE_FUNC_NULL },
 	{ {'\0','\0','\0','\0'}, 0, (char *)NULL, 0, BU_STRUCTPARSE_FUNC_NULL }
 };
 

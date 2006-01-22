@@ -190,13 +190,15 @@ static const char RCSpart[] = "@(#)$Header$ (BRL)";
 
 #include "common.h"
 
-
-
+#include <stddef.h>
 #include <stdio.h>
 #ifdef HAVE_STRING_H
-#include <string.h>
+#  include <string.h>
+#else
+#  include <strings.h>
 #endif
 #include <math.h>
+
 #include "machine.h"
 #include "vmath.h"
 #include "db.h"
@@ -224,10 +226,10 @@ struct part_specific {
 #define RT_PARTICLE_SURF_HSPHERE	3
 
 const struct bu_structparse rt_part_parse[] = {
-    { "%f", 3, "V",  offsetof(struct rt_part_internal, part_V[X]), BU_STRUCTPARSE_FUNC_NULL },
-    { "%f", 3, "H",  offsetof(struct rt_part_internal, part_H[X]), BU_STRUCTPARSE_FUNC_NULL },
-    { "%f", 1, "r_v",offsetof(struct rt_part_internal, part_vrad), BU_STRUCTPARSE_FUNC_NULL },
-    { "%f", 1, "r_h",offsetof(struct rt_part_internal, part_hrad), BU_STRUCTPARSE_FUNC_NULL },
+    { "%f", 3, "V",  bu_offsetof(struct rt_part_internal, part_V[X]), BU_STRUCTPARSE_FUNC_NULL },
+    { "%f", 3, "H",  bu_offsetof(struct rt_part_internal, part_H[X]), BU_STRUCTPARSE_FUNC_NULL },
+    { "%f", 1, "r_v",bu_offsetof(struct rt_part_internal, part_vrad), BU_STRUCTPARSE_FUNC_NULL },
+    { "%f", 1, "r_h",bu_offsetof(struct rt_part_internal, part_hrad), BU_STRUCTPARSE_FUNC_NULL },
     { {'\0','\0','\0','\0'}, 0, (char *)NULL, 0, BU_STRUCTPARSE_FUNC_NULL }
  };
 

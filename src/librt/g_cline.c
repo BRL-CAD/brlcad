@@ -42,8 +42,7 @@ static const char RCScline[] = "@(#)$Header$ (BRL)";
 
 #include "common.h"
 
-
-
+#include <stddef.h>
 #include <stdio.h>
 #include <math.h>
 #include "tcl.h"
@@ -64,7 +63,7 @@ struct cline_specific {
 	vect_t h;	/* unitized height */
 };
 
-#define	RT_CLINE_O(m)	offsetof( struct rt_cline_internal, m )
+#define	RT_CLINE_O(m)	bu_offsetof( struct rt_cline_internal, m )
 
 const struct bu_structparse rt_cline_parse[] = {
 	{ "%f", 3, "V", RT_CLINE_O( v ),  BU_STRUCTPARSE_FUNC_NULL },

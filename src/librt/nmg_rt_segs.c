@@ -38,8 +38,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "common.h"
 
-
-
+#include <stddef.h>
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
@@ -62,21 +61,21 @@ struct ef_data {
 #if 0
 static const
 struct bu_structparse rt_ef_parsetab[] = {
-	{"%f", 1, "fdotr", offsetof(struct ef_data, fdotr), BU_STRUCTPARSE_FUNC_NULL},
-	{"%f", 1, "fdotl", offsetof(struct ef_data, fdotl), BU_STRUCTPARSE_FUNC_NULL},
-	{"%f", 1, "ndotr", offsetof(struct ef_data, ndotr), BU_STRUCTPARSE_FUNC_NULL},
-	{"%x", 1, "eu",   offsetof(struct ef_data, eu),   BU_STRUCTPARSE_FUNC_NULL},
+	{"%f", 1, "fdotr", bu_offsetof(struct ef_data, fdotr), BU_STRUCTPARSE_FUNC_NULL},
+	{"%f", 1, "fdotl", bu_offsetof(struct ef_data, fdotl), BU_STRUCTPARSE_FUNC_NULL},
+	{"%f", 1, "ndotr", bu_offsetof(struct ef_data, ndotr), BU_STRUCTPARSE_FUNC_NULL},
+	{"%x", 1, "eu",   bu_offsetof(struct ef_data, eu),   BU_STRUCTPARSE_FUNC_NULL},
 	{"", 0, (char *)NULL,	  0,			  BU_STRUCTPARSE_FUNC_NULL}
 };
 
 static const
 struct bu_structparse rt_hit_parsetab[] = {
-{"%f", 1, "hit_dist", offsetof(struct hit, hit_dist), BU_STRUCTPARSE_FUNC_NULL},
+{"%f", 1, "hit_dist", bu_offsetof(struct hit, hit_dist), BU_STRUCTPARSE_FUNC_NULL},
 {"%f", 3, "hit_point", bu_offsetofarray(struct hit, hit_point), BU_STRUCTPARSE_FUNC_NULL},
 {"%f", 4, "hit_normal", bu_offsetofarray(struct hit, hit_normal), BU_STRUCTPARSE_FUNC_NULL},
 {"%f", 3, "hit_vpriv", bu_offsetofarray(struct hit, hit_vpriv), BU_STRUCTPARSE_FUNC_NULL},
-{"%x", 1, "hit_private", offsetof(struct hit, hit_private), BU_STRUCTPARSE_FUNC_NULL},
-{"%d", 1, "hit_surfno", offsetof(struct hit, hit_surfno), BU_STRUCTPARSE_FUNC_NULL},
+{"%x", 1, "hit_private", bu_offsetof(struct hit, hit_private), BU_STRUCTPARSE_FUNC_NULL},
+{"%d", 1, "hit_surfno", bu_offsetof(struct hit, hit_surfno), BU_STRUCTPARSE_FUNC_NULL},
 {"", 0, (char *)NULL,	  0,			  BU_STRUCTPARSE_FUNC_NULL}
 };
 #endif

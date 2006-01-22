@@ -43,8 +43,7 @@ static const char RCSebm[] = "@(#)$Header$ (BRL)";
 
 #include "common.h"
 
-
-
+#include <stddef.h>
 #include <stdio.h>
 #include <ctype.h>
 #include <math.h>
@@ -82,7 +81,7 @@ struct rt_ebm_specific {
 };
 #define RT_EBM_NULL	((struct rt_ebm_specific *)0)
 
-#define RT_EBM_O(m)	offsetof(struct rt_ebm_internal, m)
+#define RT_EBM_O(m)	bu_offsetof(struct rt_ebm_internal, m)
 
 const struct bu_structparse rt_ebm_parse[] = {
 #if CRAY && !__STDC__

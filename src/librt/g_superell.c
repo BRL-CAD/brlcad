@@ -49,13 +49,15 @@ static const char RCSsuperell[] = "@(#)$Header$ (BRL)";
 
 #include "common.h"
 
-
-
+#include <stddef.h>
 #include <stdio.h>
 #ifdef HAVE_STRING_H
-#include <string.h>
+#  include <string.h>
+#else
+#  include <strings.h>
 #endif
 #include <math.h>
+
 #include "machine.h"
 #include "vmath.h"
 #include "db.h"
@@ -66,12 +68,12 @@ static const char RCSsuperell[] = "@(#)$Header$ (BRL)";
 #include "./debug.h"
 
 const struct bu_structparse rt_superell_parse[] = {
-    { "%f", 3, "V", offsetof(struct rt_superell_internal, v[X]), BU_STRUCTPARSE_FUNC_NULL },
-    { "%f", 3, "A", offsetof(struct rt_superell_internal, a[X]), BU_STRUCTPARSE_FUNC_NULL },
-    { "%f", 3, "B", offsetof(struct rt_superell_internal, b[X]), BU_STRUCTPARSE_FUNC_NULL },
-    { "%f", 3, "C", offsetof(struct rt_superell_internal, c[X]), BU_STRUCTPARSE_FUNC_NULL },
-    { "%f", 1, "n", offsetof(struct rt_superell_internal, n), BU_STRUCTPARSE_FUNC_NULL },
-    { "%f", 1, "e", offsetof(struct rt_superell_internal, e), BU_STRUCTPARSE_FUNC_NULL },
+    { "%f", 3, "V", bu_offsetof(struct rt_superell_internal, v[X]), BU_STRUCTPARSE_FUNC_NULL },
+    { "%f", 3, "A", bu_offsetof(struct rt_superell_internal, a[X]), BU_STRUCTPARSE_FUNC_NULL },
+    { "%f", 3, "B", bu_offsetof(struct rt_superell_internal, b[X]), BU_STRUCTPARSE_FUNC_NULL },
+    { "%f", 3, "C", bu_offsetof(struct rt_superell_internal, c[X]), BU_STRUCTPARSE_FUNC_NULL },
+    { "%f", 1, "n", bu_offsetof(struct rt_superell_internal, n), BU_STRUCTPARSE_FUNC_NULL },
+    { "%f", 1, "e", bu_offsetof(struct rt_superell_internal, e), BU_STRUCTPARSE_FUNC_NULL },
     { {'\0','\0','\0','\0'}, 0, (char *)NULL, 0, BU_STRUCTPARSE_FUNC_NULL }
  };
 

@@ -52,9 +52,12 @@ static const char RCStgc[] = "@(#)$Header$ (BRL)";
 
 #include "common.h"
 
+#include <stddef.h>
 #include <stdio.h>
 #ifdef HAVE_STRING_H
 #  include <string.h>
+#else
+#  include <strings.h>
 #endif
 #include <math.h>
 
@@ -98,12 +101,12 @@ void rt_pt_sort(register fastf_t *t, int npts);
 #define	ALPHA(x,y,c,d)	( (x)*(x)*(c) + (y)*(y)*(d) )
 
 const struct bu_structparse rt_tgc_parse[] = {
-    { "%f", 3, "V", offsetof(struct rt_tgc_internal, v[X]), BU_STRUCTPARSE_FUNC_NULL },
-    { "%f", 3, "H", offsetof(struct rt_tgc_internal, h[X]), BU_STRUCTPARSE_FUNC_NULL },
-    { "%f", 3, "A", offsetof(struct rt_tgc_internal, a[X]), BU_STRUCTPARSE_FUNC_NULL },
-    { "%f", 3, "B", offsetof(struct rt_tgc_internal, b[X]), BU_STRUCTPARSE_FUNC_NULL },
-    { "%f", 3, "C", offsetof(struct rt_tgc_internal, c[X]), BU_STRUCTPARSE_FUNC_NULL },
-    { "%f", 3, "D", offsetof(struct rt_tgc_internal, d[X]), BU_STRUCTPARSE_FUNC_NULL },
+    { "%f", 3, "V", bu_offsetof(struct rt_tgc_internal, v[X]), BU_STRUCTPARSE_FUNC_NULL },
+    { "%f", 3, "H", bu_offsetof(struct rt_tgc_internal, h[X]), BU_STRUCTPARSE_FUNC_NULL },
+    { "%f", 3, "A", bu_offsetof(struct rt_tgc_internal, a[X]), BU_STRUCTPARSE_FUNC_NULL },
+    { "%f", 3, "B", bu_offsetof(struct rt_tgc_internal, b[X]), BU_STRUCTPARSE_FUNC_NULL },
+    { "%f", 3, "C", bu_offsetof(struct rt_tgc_internal, c[X]), BU_STRUCTPARSE_FUNC_NULL },
+    { "%f", 3, "D", bu_offsetof(struct rt_tgc_internal, d[X]), BU_STRUCTPARSE_FUNC_NULL },
     { {'\0','\0','\0','\0'}, 0, (char *)NULL, 0, BU_STRUCTPARSE_FUNC_NULL }
 };
 

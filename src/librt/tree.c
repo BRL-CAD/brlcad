@@ -40,21 +40,22 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 
 #include "common.h"
 
-
-
+#include <stddef.h>
 #include <stdio.h>
 #include <math.h>
 #ifdef HAVE_STRING_H
-#include <string.h>
+#  include <string.h>
 #else
-#include <strings.h>
+#  include <strings.h>
 #endif
+
 #include "machine.h"
 #include "bu.h"
 #include "vmath.h"
 #include "bn.h"
 #include "db.h"
 #include "raytrace.h"
+
 #include "./debug.h"
 
 BU_EXTERN(void		rt_tree_kill_dead_solid_refs, (union tree *tp));

@@ -44,19 +44,17 @@ static char rt_hf_RcSid[] = "@(#)$Header$ (ARL)";
 
 #include "common.h"
 
-
-
+#include <stddef.h>
 #include <stdio.h>
 #include <math.h>
 #include <fcntl.h>
 #ifdef HAVE_STRING_H
-#include <string.h>
+#  include <string.h>
 #else
-#include <strings.h>
+#  include <strings.h>
 #endif
 
 #include "machine.h"
-
 #include "vmath.h"
 #include "db.h"
 #include "nmg.h"
@@ -82,7 +80,7 @@ static char rt_hf_RcSid[] = "@(#)$Header$ (ARL)";
  *  parsed second, and any parameters specified in the cfile override
  *  the values taken from the string solid.
  */
-#define HF_O(m)			offsetof(struct rt_hf_internal, m)
+#define HF_O(m)			bu_offsetof(struct rt_hf_internal, m)
 
 /* All fields valid in string solid */
 const struct bu_structparse rt_hf_parse[] = {

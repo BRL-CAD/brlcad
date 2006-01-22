@@ -161,13 +161,15 @@ static const char RCSepa[] = "@(#)$Header$ (BRL)";
 
 #include "common.h"
 
-
-
+#include <stddef.h>
 #include <stdio.h>
 #ifdef HAVE_STRING_H
-#include <string.h>
+#  include <string.h>
+#else
+#  include <strings.h>
 #endif
 #include <math.h>
+
 #include "machine.h"
 #include "vmath.h"
 #include "db.h"
@@ -189,11 +191,11 @@ struct epa_specific {
 };
 
 const struct bu_structparse rt_epa_parse[] = {
-    { "%f", 3, "V",   offsetof(struct rt_epa_internal, epa_V[X]),  BU_STRUCTPARSE_FUNC_NULL },
-    { "%f", 3, "H",   offsetof(struct rt_epa_internal, epa_H[X]),  BU_STRUCTPARSE_FUNC_NULL },
-    { "%f", 3, "A",   offsetof(struct rt_epa_internal, epa_Au[X]), BU_STRUCTPARSE_FUNC_NULL },
-    { "%f", 1, "r_1", offsetof(struct rt_epa_internal, epa_r1),    BU_STRUCTPARSE_FUNC_NULL },
-    { "%f", 1, "r_2", offsetof(struct rt_epa_internal, epa_r2),    BU_STRUCTPARSE_FUNC_NULL },
+    { "%f", 3, "V",   bu_offsetof(struct rt_epa_internal, epa_V[X]),  BU_STRUCTPARSE_FUNC_NULL },
+    { "%f", 3, "H",   bu_offsetof(struct rt_epa_internal, epa_H[X]),  BU_STRUCTPARSE_FUNC_NULL },
+    { "%f", 3, "A",   bu_offsetof(struct rt_epa_internal, epa_Au[X]), BU_STRUCTPARSE_FUNC_NULL },
+    { "%f", 1, "r_1", bu_offsetof(struct rt_epa_internal, epa_r1),    BU_STRUCTPARSE_FUNC_NULL },
+    { "%f", 1, "r_2", bu_offsetof(struct rt_epa_internal, epa_r2),    BU_STRUCTPARSE_FUNC_NULL },
     { {'\0','\0','\0','\0'}, 0, (char *)NULL, 0, BU_STRUCTPARSE_FUNC_NULL }
 };
 

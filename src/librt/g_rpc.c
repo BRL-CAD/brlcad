@@ -171,13 +171,15 @@ static const char RCSrpc[] = "@(#)$Header$ (BRL)";
 
 #include "common.h"
 
-
-
+#include <stddef.h>
 #include <stdio.h>
 #ifdef HAVE_STRING_H
-#include <string.h>
+#  include <string.h>
+#else
+#  include <strings.h>
 #endif
 #include <math.h>
+
 #include "machine.h"
 #include "vmath.h"
 #include "db.h"
@@ -198,10 +200,10 @@ struct rpc_specific {
 };
 
 const struct bu_structparse rt_rpc_parse[] = {
-    { "%f", 3, "V", offsetof(struct rt_rpc_internal, rpc_V[X]), BU_STRUCTPARSE_FUNC_NULL },
-    { "%f", 3, "H", offsetof(struct rt_rpc_internal, rpc_H[X]), BU_STRUCTPARSE_FUNC_NULL },
-    { "%f", 3, "B", offsetof(struct rt_rpc_internal, rpc_B[X]), BU_STRUCTPARSE_FUNC_NULL },
-    { "%f", 1, "r", offsetof(struct rt_rpc_internal, rpc_r),    BU_STRUCTPARSE_FUNC_NULL },
+    { "%f", 3, "V", bu_offsetof(struct rt_rpc_internal, rpc_V[X]), BU_STRUCTPARSE_FUNC_NULL },
+    { "%f", 3, "H", bu_offsetof(struct rt_rpc_internal, rpc_H[X]), BU_STRUCTPARSE_FUNC_NULL },
+    { "%f", 3, "B", bu_offsetof(struct rt_rpc_internal, rpc_B[X]), BU_STRUCTPARSE_FUNC_NULL },
+    { "%f", 1, "r", bu_offsetof(struct rt_rpc_internal, rpc_r),    BU_STRUCTPARSE_FUNC_NULL },
     { {'\0','\0','\0','\0'}, 0, (char *)NULL, 0, BU_STRUCTPARSE_FUNC_NULL }
  };
 

@@ -165,13 +165,15 @@ static const char RCSehy[] = "@(#)$Header$ (BRL)";
 
 #include "common.h"
 
-
-
+#include <stddef.h>
 #include <stdio.h>
 #ifdef HAVE_STRING_H
-#include <string.h>
+#  include <string.h>
+#else
+#  include <strings.h>
 #endif
 #include <math.h>
+
 #include "machine.h"
 #include "vmath.h"
 #include "db.h"
@@ -191,12 +193,12 @@ struct ehy_specific {
 };
 
 const struct bu_structparse rt_ehy_parse[] = {
-    { "%f", 3, "V",   offsetof(struct rt_ehy_internal, ehy_V[X]),  BU_STRUCTPARSE_FUNC_NULL },
-    { "%f", 3, "H",   offsetof(struct rt_ehy_internal, ehy_H[X]),  BU_STRUCTPARSE_FUNC_NULL },
-    { "%f", 3, "A",   offsetof(struct rt_ehy_internal, ehy_Au[X]), BU_STRUCTPARSE_FUNC_NULL },
-    { "%f", 1, "r_1", offsetof(struct rt_ehy_internal, ehy_r1),    BU_STRUCTPARSE_FUNC_NULL },
-    { "%f", 1, "r_2", offsetof(struct rt_ehy_internal, ehy_r2),    BU_STRUCTPARSE_FUNC_NULL },
-    { "%f", 1, "c",   offsetof(struct rt_ehy_internal, ehy_c),     BU_STRUCTPARSE_FUNC_NULL },
+    { "%f", 3, "V",   bu_offsetof(struct rt_ehy_internal, ehy_V[X]),  BU_STRUCTPARSE_FUNC_NULL },
+    { "%f", 3, "H",   bu_offsetof(struct rt_ehy_internal, ehy_H[X]),  BU_STRUCTPARSE_FUNC_NULL },
+    { "%f", 3, "A",   bu_offsetof(struct rt_ehy_internal, ehy_Au[X]), BU_STRUCTPARSE_FUNC_NULL },
+    { "%f", 1, "r_1", bu_offsetof(struct rt_ehy_internal, ehy_r1),    BU_STRUCTPARSE_FUNC_NULL },
+    { "%f", 1, "r_2", bu_offsetof(struct rt_ehy_internal, ehy_r2),    BU_STRUCTPARSE_FUNC_NULL },
+    { "%f", 1, "c",   bu_offsetof(struct rt_ehy_internal, ehy_c),     BU_STRUCTPARSE_FUNC_NULL },
     { {'\0','\0','\0','\0'}, 0, (char *)NULL, 0, BU_STRUCTPARSE_FUNC_NULL }
  };
 

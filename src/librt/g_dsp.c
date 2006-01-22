@@ -45,11 +45,12 @@ static const char RCSdsp[] = "@(#)$Header$ (BRL)";
 
 #include "common.h"
 
-
-
+#include <stddef.h>
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
+#include <setjmp.h>
+
 #include "machine.h"
 #include "vmath.h"
 #include "db.h"
@@ -58,7 +59,6 @@ static const char RCSdsp[] = "@(#)$Header$ (BRL)";
 #include "rtgeom.h"
 #include "./debug.h"
 #include "plot3.h"
-#include <setjmp.h>
 
 #define ORDERED_ISECT 1
 /* #define FULL_DSP_DEBUGGING 1 */
@@ -246,7 +246,7 @@ hook_file(
     dsp_ip->dsp_bip = (struct rt_db_internal *)NULL;
 }
 
-#define DSP_O(m) offsetof(struct rt_dsp_internal, m)
+#define DSP_O(m) bu_offsetof(struct rt_dsp_internal, m)
 #define DSP_AO(a) bu_offsetofarray(struct rt_dsp_internal, a)
 
 /*

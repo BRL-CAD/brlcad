@@ -46,11 +46,11 @@ static const char RCSsubmodel[] = "@(#)$Header$ (BRL)";
 
 #include "common.h"
 
-
-
+#include <stddef.h>
 #include <stdio.h>
 #include <math.h>
 #include <string.h>
+
 #include "machine.h"
 #include "vmath.h"
 #include "db.h"
@@ -58,7 +58,7 @@ static const char RCSsubmodel[] = "@(#)$Header$ (BRL)";
 #include "raytrace.h"
 #include "rtgeom.h"
 
-#define RT_SUBMODEL_O(m)	offsetof(struct rt_submodel_internal, m)
+#define RT_SUBMODEL_O(m)	bu_offsetof(struct rt_submodel_internal, m)
 
 const struct bu_structparse rt_submodel_parse[] = {
 	{"%S",	1, "file",	RT_SUBMODEL_O(file),		BU_STRUCTPARSE_FUNC_NULL },

@@ -43,10 +43,11 @@ static const char RCSnmg_index[] = "@(#)$Header$ (BRL)";
 
 #include "common.h"
 
-
+#include <stddef.h>
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
+
 #include "machine.h"
 #include "vmath.h"
 #include "nmg.h"
