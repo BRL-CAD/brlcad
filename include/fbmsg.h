@@ -1,4 +1,4 @@
-/*                      P K G T Y P E S . H
+/*                          F B M S G . H
  * BRL-CAD
  *
  * Copyright (c) 2004-2006 United States Government as represented by
@@ -18,13 +18,11 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-
 /** \addtogroup libfb */
 /*@{*/
-
-/** @file pkgtypes.h
+/** @file fbmsg.h
  *  Types of packages used for the remote frame buffer
- *  communication between libfb/if_remote.c and rfbd/rfbd.c.
+ *  communication between libfb/if_remote.c and fbserv/fbserv.c.
  *  This file is shared by those two modules.
  *
  *  Authors -
@@ -35,8 +33,6 @@
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005
- *
- *  $Header$
  */
 /*@}*/
 
