@@ -32,6 +32,7 @@ static const char libbu_hash_RCSid[] = "@(#) $Header$";
 
 #include "common.h"
 
+#include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
 #ifdef HAVE_STRING_H
