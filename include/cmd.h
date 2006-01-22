@@ -21,11 +21,13 @@
 /** @file cmd.h
  *
  */
-#ifndef SEEN_CMD_H
-#define SEEN_CMD_H
+#ifndef __CMD_H__
+#define __CMD_H__
 
-#ifdef USE_SYS_TIME_H
-#include <sys/time.h>
+#include "common.h"
+
+#ifdef HAVE_SYS_TIME_H
+#  include <sys/time.h>
 #endif
 #include <time.h>
 #include "bu.h"
@@ -70,7 +72,7 @@ BU_EXPORT BU_EXTERN(int bu_cmdhist_prev,
 BU_EXPORT BU_EXTERN(int cho_open_tcl,
 		    ());
 
-#endif /* SEEN_CMD_H */
+#endif  /* __CMD_H__ */
 
 /*
  * Local Variables:
