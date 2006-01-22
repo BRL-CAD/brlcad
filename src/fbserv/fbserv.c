@@ -98,9 +98,8 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 
 #include "machine.h"
 #include "fb.h"
+#include "fbmsg.h"
 #include "pkg.h"
-
-#include "../libfb/pkgtypes.h"
 
 
 fd_set	select_list;			/* master copy */
@@ -126,6 +125,9 @@ static 	int	netfd;
 struct pkg_conn	*clients[MAX_CLIENTS];
 
 int	verbose = 0;
+
+/* from server.c */
+extern const struct pkg_switch fb_server_pkg_switch[];
 
 
 /* Hidden args: -p<port_num> -F<frame_buffer> */
