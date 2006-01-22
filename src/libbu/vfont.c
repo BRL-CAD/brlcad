@@ -43,8 +43,6 @@ static const char libbu_vfont_RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "common.h"
 
-
-
 #include <stdio.h>
 #include "machine.h"
 #include "vfont-if.h"
@@ -116,25 +114,25 @@ vfont_get(char *font)
 		return(VFONT_NULL);
 	}
 
-	if( (vfp = (struct vfont *)malloc(sizeof(struct vfont))) == VFONT_NULL )  {
+	if( (vfp = (struct vfont *)bu_malloc(sizeof(struct vfont), "vfont")) == VFONT_NULL )  {
 		fprintf(stderr,"vfont_get(%s):  malloc failure 1\n", fname );
 		fclose(fp);
 		return(VFONT_NULL);
 	}
 
 	/* Read in the bit maps */
-	if( (vfp->vf_bits = malloc(size)) == (char *)0 )  {
+	if( (vfp->vf_bits = (char *)bu_malloc(size, "vfont bits")) == (char *)0 )  {
 		fprintf(stderr,"vfont_get(%s):  malloc failure 2 (%d)\n",
 			fname, size);
 		fclose(fp);
-		free( (char *)vfp);
+		bu_free( (char *)vfp, "vfont");
 		return(VFONT_NULL);
 	}
 	if( fread( vfp->vf_bits, size, 1, fp ) != 1 )  {
 		fprintf(stderr,"vfont_get(%s):  bitmap read error\n", fname );
 		fclose(fp);
-		free( vfp->vf_bits );
-		free( (char *)vfp );
+		bu_free( vfp->vf_bits, "vfont bits" );
+		bu_free( (char *)vfp, "vfont" );
 		return(VFONT_NULL);
 	}
 
@@ -187,8 +185,8 @@ vax_gshort(unsigned char *msgp)
 void
 vfont_free(register struct vfont *vfp)
 {
-	free( vfp->vf_bits );
-	free( (char *)vfp );
+	bu_free( vfp->vf_bits, "vfont bits" );
+	bu_free( (char *)vfp, "vfont" );
 }
 
 /*
