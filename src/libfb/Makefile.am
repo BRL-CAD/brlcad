@@ -33,7 +33,6 @@ SRCS = \
 	if_ogl.c \
 	if_remote.c \
 	if_stack.c \
-	server.c \
 	tcl.c
 
 libfb_la_SOURCES = \
@@ -49,7 +48,7 @@ libfb_la_LIBADD = \
 	${X_LIBS} \
 	${LIBGL}
 
-include_HEADERS = \
+noinst_HEADERS = \
 	adage.h \
 	adagecursor.h \
 	adageframe.h \
@@ -57,7 +56,6 @@ include_HEADERS = \
 	fblocal.h \
 	nilcursor.h \
 	oglcursor.h \
-	pkgtypes.h \
 	sgicursor.h
 
 dist_man_MANS = libfb.3
@@ -81,7 +79,6 @@ EXTRA_DIST = \
 	if_ts.c \
 	if_ug.c \
 	libfb.dsp \
-	pkgswitch.c \
 	sgiselect.s \
 	vers_win.c
 
