@@ -18,7 +18,6 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-
 /** \defgroup cmd command
  * \ingroup libbu */
 /*@{*/
@@ -35,18 +34,12 @@
  *
  */
 /*@}*/
-
-#ifndef lint
-static const char RCSid[] = "";
-#endif
-
 #include "common.h"
 
-
 #ifdef HAVE_STRING_H
-#include <string.h>
+#  include <string.h>
 #else
-#include <strings.h>
+#  include <strings.h>
 #endif
 
 #include "tcl.h"
