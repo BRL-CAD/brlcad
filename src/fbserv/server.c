@@ -18,12 +18,8 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-
-/** \addtogroup libfb */
-/*@{*/
-
 /** @file server.c
- *  Remote libfb server event handlers (originally rfbd).
+ *  Remote framebuffer server event handlers.
  *
  *  Authors -
  *	Phillip Dykstra
@@ -33,9 +29,6 @@
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
-/*@}*/
-
-
 #ifndef lint
 static const char RCSid[] = "@(#)$Header$ (ARL)";
 #endif
@@ -66,9 +59,9 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 #endif
 #include "machine.h"
 #include "fb.h"
+#include "fbmsg.h"
 #include "pkg.h"
 
-#include "./pkgtypes.h"
 
 #define NET_LONG_LEN	4	/* # bytes to network long */
 
