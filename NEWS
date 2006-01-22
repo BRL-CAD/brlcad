@@ -16,7 +16,7 @@ as Open Source software.  Thank you to everyone for your support and
 contributions.
 
 * new roots_example root solving sample application - Sean Morrison
-* prevent g-nmg segfault during tesselation- Sean Morrison
+* prevent g-nmg segfault during tesselation - Sean Morrison
 * fixed brlman/awf `./"' unsupported or unknown issue - Sean Morrison
 * new g_transfer in-memory geometry example program - Sean Morrison
 * new reshoot program to reshoot rays & compare results - Lee Butler
