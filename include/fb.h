@@ -55,9 +55,6 @@
 #  endif
 #endif
 
-/* XXX should change return type to not be coupled to libpkg */
-#include "pkg.h"
-
 
 /* Library entry points which are macros. */
 #define fb_gettype(_ifp)		(_ifp->if_type)
@@ -240,8 +237,6 @@ FB_EXPORT extern int	*fb_server_max_fd;
 FB_EXPORT extern int	fb_server_got_fb_free;       /* !0 => we have received an fb_free */
 FB_EXPORT extern int	fb_server_refuse_fb_free;    /* !0 => don't accept fb_free() */
 FB_EXPORT extern int	fb_server_retain_on_close;   /* !0 => we are holding a reusable FB open */
-FB_EXPORT extern const struct pkg_switch fb_server_pkg_switch[];
-
 
 #endif /* FB_H */
 
