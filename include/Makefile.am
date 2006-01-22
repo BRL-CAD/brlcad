@@ -123,6 +123,10 @@ brlcadinclude_wanted = \
 	zconf.h \
 	zlib.h
 
+# headers used by multiple packages but still considered private
+noinst_HEADERS = \
+	fbmsg.h
+
 EXTRA_DIST = \
 	sed4
 
