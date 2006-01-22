@@ -18,7 +18,6 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-
 /** \addtogroup fb */
 /*@{*/
 /** @file fbserv_obj_win32.c
@@ -40,10 +39,7 @@
  *
  */
 /*@}*/
-
 #include "common.h"
-
-
 
 #include <stdio.h>
 #include <ctype.h>
@@ -54,17 +50,17 @@
 #include "vmath.h"
 #include "raytrace.h"
 #include "dm.h"
-#include "../libfb/pkgtypes.h"
+#include "fbmsg.h"
 
 int fbs_open();
 int fbs_close();
 
-HIDDEN void new_client();
-HIDDEN void drop_client();
-HIDDEN void new_client_handler();
-HIDDEN void existing_client_handler();
-HIDDEN void comm_error();
-HIDDEN void setup_socket();
+static void new_client();
+static void drop_client();
+static void new_client_handler();
+static void existing_client_handler();
+static void comm_error();
+static void setup_socket();
 
 /*
  * Package Handlers.
@@ -116,7 +112,7 @@ static struct pkg_switch pkg_switch[] = {
 	{ 0,			NULL,		NULL }
 };
 
-HIDDEN FBIO *curr_fbp;		/* current framebuffer pointer */
+static FBIO *curr_fbp;		/* current framebuffer pointer */
 
 int
 fbs_open(interp, fbsp, port)
@@ -138,7 +134,7 @@ fbs_close(interp, fbsp)
 /*
  *			N E W _ C L I E N T
  */
-HIDDEN void
+static void
 new_client(fbsp, pcp)
      struct fbserv_obj *fbsp;
      struct pkg_conn	*pcp;
@@ -149,7 +145,7 @@ new_client(fbsp, pcp)
 /*
  *			D R O P _ C L I E N T
  */
-HIDDEN void
+static void
 drop_client(fbsp, sub)
      struct fbserv_obj *fbsp;
      int sub;
@@ -160,7 +156,7 @@ drop_client(fbsp, sub)
 /*
  * Accept any new client connections.
  */
-HIDDEN void
+static void
 new_client_handler(clientData, mask)
 ClientData clientData;
 int mask;
@@ -171,7 +167,7 @@ int mask;
 /*
  * Process arrivals from existing clients.
  */
-HIDDEN void
+static void
 existing_client_handler(clientData, mask)
 ClientData clientData;
 int mask;
@@ -179,7 +175,7 @@ int mask;
 	return;
 }
 
-HIDDEN void
+static void
 setup_socket(fd)
 int	fd;
 {
@@ -191,7 +187,7 @@ int	fd;
  *
  *  Communication error.  An error occured on the PKG link.
  */
-HIDDEN void
+static void
 comm_error(str)
 char *str;
 {
