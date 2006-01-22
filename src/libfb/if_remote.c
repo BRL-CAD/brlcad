@@ -71,10 +71,11 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "machine.h"
 #include "pkg.h"
-#include "./pkgtypes.h"
+
 #include "fb.h"
 #include "./fblocal.h"
 
+#include "fbmsg.h"
 
 #define NET_LONG_LEN	4	/* # bytes to network long */
 
