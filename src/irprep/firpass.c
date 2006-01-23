@@ -478,18 +478,18 @@ int main(int argc, char **argv)
       (void)printf("Mallocing arrays.\n");
       (void)fflush(stdout);
 
-      region = (struct table *)malloc(num * sizeof (*region) );
-      overlaps = (struct structovr *)malloc(num * sizeof (*overlaps) );
+      region = (struct table *)bu_malloc(num * sizeof (*region), "region" );
+      overlaps = (struct structovr *)bu_malloc(num * sizeof (*overlaps), "overlaps" );
 
       for(i=0; i<num; i++)
 	{
-	  region[i].adjreg = (int *)malloc(num * sizeof (int) );
-	  region[i].ssurarea[0] = (double *)malloc(num * sizeof (double) );
-	  region[i].ssurarea[1] = (double *)malloc(num * sizeof (double) );
-	  region[i].ssurarea[2] = (double *)malloc(num * sizeof (double) );
+	  region[i].adjreg = (int *)bu_malloc(num * sizeof (int), "region[i]adjreg" );
+	  region[i].ssurarea[0] = (double *)bu_malloc(num * sizeof (double), "region[i].ssurarea[0]" );
+	  region[i].ssurarea[1] = (double *)bu_malloc(num * sizeof (double), "region[i].ssurarea[1]" );
+	  region[i].ssurarea[2] = (double *)bu_malloc(num * sizeof (double), "region[i].ssurarea[2]" );
 
-	  overlaps[i].ovrreg = (int *)malloc(num * sizeof (int) );
-	  overlaps[i].ovrdep = (double *)malloc(num * sizeof (double) );
+	  overlaps[i].ovrreg = (int *)bu_malloc(num * sizeof (int), "overlaps[i].ovrreg" );
+	  overlaps[i].ovrdep = (double *)bu_malloc(num * sizeof (double), "overlaps[i].ovrdep" );
 	}
 
       /*  Now that the arrays are 'dimensioned' zero ALL variables.  */
@@ -2283,15 +2283,15 @@ int main(int argc, char **argv)
 
       for(i=0; i<num; i++)
 	{
-	  free(region[i].adjreg);
-	  free(region[i].ssurarea[0]);
-	  free(region[i].ssurarea[1]);
-	  free(region[i].ssurarea[2]);
-	  free(overlaps[i].ovrreg);
-	  free(overlaps[i].ovrdep);
+	  bu_free(region[i].adjreg);
+	  bu_free(region[i].ssurarea[0], "region[i].ssurarea[0]");
+	  bu_free(region[i].ssurarea[1], "region[i].ssurarea[1]");
+	  bu_free(region[i].ssurarea[2], "region[i].ssurarea[2]");
+	  bu_free(overlaps[i].ovrreg, "overlaps[i].ovrreg");
+	  bu_free(overlaps[i].ovrdep, "overlaps[i].ovrdep");
 	}
-      free(region);
-      free(overlaps);
+      bu_free(region, "region");
+      bu_free(overlaps, "overlaps");
 
     }
   return(0);

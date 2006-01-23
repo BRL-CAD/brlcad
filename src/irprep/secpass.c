@@ -366,21 +366,21 @@ int main(int argc, char **argv)
       (void)fprintf(stdout,"Mallocing arrays.\n");
       (void)fflush(stdout);
 
-      cond = (struct table *)malloc( nmged * sizeof(struct table) );
+      cond = (struct table *)bu_malloc( nmged * sizeof(struct table), "cond" );
       (void)fprintf(stdout,"cond malloced\n");
       (void)fflush(stdout);
       for(i=0; i<nmged; i++)
 	{
-	  cond[i].shrarea = (double *)malloc( nmged * sizeof(double) );
-	  cond[i].avglen = (double *)malloc( nmged * sizeof(double) );
-	  cond[i].rmslen = (double *)malloc( nmged * sizeof(double) );
-	  cond[i].minlen = (double *)malloc( nmged * sizeof(double) );
-	  cond[i].maxlen = (double *)malloc( nmged * sizeof(double) );
-	  cond[i].numcal = (double *)malloc( nmged * sizeof(double) );
-	  cond[i].rkavg = (double *)malloc( nmged * sizeof(double) );
-	  cond[i].rkrms = (double *)malloc( nmged * sizeof(double) );
-	  cond[i].rkmin = (double *)malloc( nmged * sizeof(double) );
-	  cond[i].rkmax = (double *)malloc( nmged * sizeof(double) );
+	  cond[i].shrarea = (double *)bu_malloc( nmged * sizeof(double), "cond[i].shrarea" );
+	  cond[i].avglen = (double *)bu_malloc( nmged * sizeof(double), "cond[i].avglen" );
+	  cond[i].rmslen = (double *)bu_malloc( nmged * sizeof(double), "cond[i].rmslen" );
+	  cond[i].minlen = (double *)bu_malloc( nmged * sizeof(double), "cond[i].minlen" );
+	  cond[i].maxlen = (double *)bu_malloc( nmged * sizeof(double), "cond[i].maxlen" );
+	  cond[i].numcal = (double *)bu_malloc( nmged * sizeof(double), "cond[i].numcal" );
+	  cond[i].rkavg = (double *)bu_malloc( nmged * sizeof(double), "cond[i].rkavg" );
+	  cond[i].rkrms = (double *)bu_malloc( nmged * sizeof(double), "cond[i].rkrms" );
+	  cond[i].rkmin = (double *)bu_malloc( nmged * sizeof(double), "cond[i].rkmin" );
+	  cond[i].rkmax = (double *)bu_malloc( nmged * sizeof(double), "cond[i].rkmax" );
 	}
       (void)fprintf(stdout,"loop malloced\n");
       (void)fflush(stdout);
@@ -1150,18 +1150,18 @@ int main(int argc, char **argv)
       (void)fflush(stdout);
       for(i=0; i<nmged; i++)
 	{
-	  free(cond[i].shrarea);
-	  free(cond[i].avglen);
-	  free(cond[i].rmslen);
-	  free(cond[i].minlen);
-	  free(cond[i].maxlen);
-	  free(cond[i].numcal);
-	  free(cond[i].rkavg);
-	  free(cond[i].rkrms);
-	  free(cond[i].rkmin);
-	  free(cond[i].rkmax);
+	  bu_free(cond[i].shrarea, "cond[i].shrarea");
+	  bu_free(cond[i].avglen, "cond[i].avglen");
+	  bu_free(cond[i].rmslen, "cond[i].rmslen");
+	  bu_free(cond[i].minlen, "cond[i].minlen");
+	  bu_free(cond[i].maxlen, "cond[i].maxlen");
+	  bu_free(cond[i].numcal, "cond[i].numcal");
+	  bu_free(cond[i].rkavg, "cond[i].rkavg");
+	  bu_free(cond[i].rkrms, "cond[i].rkrms");
+	  bu_free(cond[i].rkmin, "cond[i].rkmin");
+	  bu_free(cond[i].rkmax, "cond[i].rkmax");
 	}
-      free(cond);
+      bu_free(cond, "cond");
 
     }	/*  END # 2  */
   return(0);
