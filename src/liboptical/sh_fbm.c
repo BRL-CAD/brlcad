@@ -32,10 +32,10 @@ static char RCSsh_fbm[] = "@(#)$Header$ (ARL)";
 
 #include "common.h"
 
-
-
+#include <stddef.h>
 #include <stdio.h>
 #include <math.h>
+
 #include "machine.h"
 #include "vmath.h"
 #include "raytrace.h"
@@ -66,7 +66,7 @@ static struct fbm_specific fbm_defaults = {
 	};
 
 #define FBM_NULL	((struct fbm_specific *)0)
-#define FBM_O(m)	offsetof(struct fbm_specific, m)
+#define FBM_O(m)	bu_offsetof(struct fbm_specific, m)
 #define FBM_AO(m)	bu_offsetofarray(struct fbm_specific, m)
 
 struct bu_structparse fbm_parse[] = {

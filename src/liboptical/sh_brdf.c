@@ -46,10 +46,10 @@ static const char RCSbrdf[] = "@(#)$Header$ (BRL)";
 
 #include "common.h"
 
-
-
+#include <stddef.h>
 #include <stdio.h>
 #include <math.h>
+
 #include "machine.h"
 #include "vmath.h"
 #include "mater.h"
@@ -78,7 +78,7 @@ struct brdf_specific {
 };
 #define BRDF_MAGIC	0xbeef00d
 #define BRDF_NULL	((struct brdf_specific *)0)
-#define BRDF_O(m)	offsetof(struct brdf_specific, m)
+#define BRDF_O(m)	bu_offsetof(struct brdf_specific, m)
 
 struct bu_structparse brdf_parse[] = {
 	{"%f",	1, "specular",		BRDF_O(specular_refl),	BU_STRUCTPARSE_FUNC_NULL },

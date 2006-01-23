@@ -45,13 +45,15 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "common.h"
 
-
-
+#include <stddef.h>
 #include <stdio.h>
 #ifdef HAVE_STRING_H
-#include <string.h>
+#  include <string.h>
+#else
+#  include <strings.h>
 #endif
 #include <math.h>
+
 #include "machine.h"
 #include "vmath.h"
 #include "raytrace.h"
@@ -66,7 +68,7 @@ struct points_specific {
 	spm_map_t *pt_map;	/* stuff */
 };
 #define POINTS_NULL	((struct points_specific *)0)
-#define POINTS_O(m)	offsetof(struct points_specific, m)
+#define POINTS_O(m)	bu_offsetof(struct points_specific, m)
 
 struct bu_structparse points_parse[] = {
 	{"%s",	PT_NAME_LEN, "file", bu_offsetofarray(struct points_specific, pt_file),	BU_STRUCTPARSE_FUNC_NULL },

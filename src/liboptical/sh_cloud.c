@@ -39,10 +39,10 @@ static const char RCScloud[] = "@(#)$Header$ (BRL)";
 
 #include "common.h"
 
-
-
+#include <stddef.h>
 #include <stdio.h>
 #include <math.h>
+
 #include "machine.h"
 #include "vmath.h"
 #include "raytrace.h"
@@ -53,7 +53,7 @@ struct cloud_specific {
 	fastf_t	cl_range;
 };
 #define CL_NULL	((struct cloud_specific *)0)
-#define CL_O(m)	offsetof(struct cloud_specific, m)
+#define CL_O(m)	bu_offsetof(struct cloud_specific, m)
 
 struct bu_structparse cloud_parse[] = {
 	{"%f",	1, "thresh",	CL_O(cl_thresh),	BU_STRUCTPARSE_FUNC_NULL },

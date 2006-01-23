@@ -27,8 +27,8 @@
  */
 #include "common.h"
 
+#include <stddef.h>
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
 #include <math.h>
 
@@ -93,7 +93,7 @@ struct bbd_specific bbd_defaults = {
 };
 
 #define SHDR_NULL	((struct bbd_specific *)0)
-#define SHDR_O(m)	offsetof(struct bbd_specific, m)
+#define SHDR_O(m)	bu_offsetof(struct bbd_specific, m)
 #define SHDR_AO(m)	bu_offsetofarray(struct bbd_specific, m)
 
 void new_image(register const struct bu_structparse	*sdp,

@@ -67,13 +67,15 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 
 #include "common.h"
 
-
-
+#include <stddef.h>
 #include <stdio.h>
 #ifdef HAVE_STRING_H
-#include <string.h>
+#  include <string.h>
+#else
+#  include <strings.h>
 #endif
 #include <math.h>
+
 #include "machine.h"
 #include "vmath.h"
 #include "raytrace.h"
@@ -142,7 +144,7 @@ struct fire_specific fire_defaults = {
 	};
 
 #define SHDR_NULL	((struct fire_specific *)0)
-#define SHDR_O(m)	offsetof(struct fire_specific, m)
+#define SHDR_O(m)	bu_offsetof(struct fire_specific, m)
 #define SHDR_AO(m)	bu_offsetofarray(struct fire_specific, m)
 
 

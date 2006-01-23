@@ -35,13 +35,15 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 
 #include "common.h"
 
-
-
+#include <stddef.h>
 #include <stdio.h>
 #ifdef HAVE_STRING_H
-#include <string.h>
+#  include <string.h>
+#else
+#  include <strings.h>
 #endif
 #include <ctype.h>
+
 #include "machine.h"
 #include "vmath.h"
 #include "raytrace.h"
@@ -66,7 +68,7 @@ struct txt_specific {
 	struct bu_mapped_file	*tx_mp;    /* mapped file when TXT_SRC_FILE */
 };
 #define TX_NULL	((struct txt_specific *)0)
-#define TX_O(m)	offsetof(struct txt_specific, m)
+#define TX_O(m)	bu_offsetof(struct txt_specific, m)
 #define TX_AO(m)	bu_offsetofarray(struct txt_specific, m)
 
 struct region	env_region;  /* initialized in the app code view handler */
@@ -752,12 +754,12 @@ struct ckr_specific  {
 	double	ckr_scale;
 };
 #define CKR_NULL	((struct ckr_specific *)0)
-#define CKR_O(m)	offsetof(struct ckr_specific, m)
+#define CKR_O(m)	bu_offsetof(struct ckr_specific, m)
 
 struct bu_structparse ckr_parse[] = {
 	{"%d",	3, "a",	bu_offsetofarray(struct ckr_specific, ckr_a), BU_STRUCTPARSE_FUNC_NULL },
 	{"%d",	3, "b",	bu_offsetofarray(struct ckr_specific, ckr_b), BU_STRUCTPARSE_FUNC_NULL },
-	{"%f",	1, "s", offsetof(struct ckr_specific, ckr_scale), BU_STRUCTPARSE_FUNC_NULL },
+	{"%f",	1, "s", bu_offsetof(struct ckr_specific, ckr_scale), BU_STRUCTPARSE_FUNC_NULL },
 	{"",	0, (char *)0,	0,			BU_STRUCTPARSE_FUNC_NULL }
 };
 

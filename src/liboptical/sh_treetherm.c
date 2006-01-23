@@ -23,12 +23,11 @@
  */
 #include "common.h"
 
-
-
+#include <stddef.h>
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
 #include <math.h>
+
 #include "machine.h"
 #include "vmath.h"
 #include "raytrace.h"
@@ -129,7 +128,7 @@ struct tthrm_specific {
 
 /* The default values for the variables in the shader specific structure */
 #define SHDR_NULL	((struct tthrm_specific *)0)
-#define SHDR_O(m)	offsetof(struct tthrm_specific, m)
+#define SHDR_O(m)	bu_offsetof(struct tthrm_specific, m)
 #define SHDR_AO(m)	bu_offsetofarray(struct tthrm_specific, m)
 
 

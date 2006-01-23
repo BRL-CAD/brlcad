@@ -40,11 +40,11 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "common.h"
 
-
-
+#include <stddef.h>
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
+
 #include "machine.h"
 #include "vmath.h"
 #include "raytrace.h"
@@ -70,7 +70,7 @@ struct	stxt_specific  {
 };
 #define STXT_MAGIC	0xfeedbaad
 #define SOL_NULL	((struct stxt_specific *)0)
-#define SOL_O(m)	offsetof(struct stxt_specific, m)
+#define SOL_O(m)	bu_offsetof(struct stxt_specific, m)
 
 struct	bu_structparse stxt_parse[] = {
 #if CRAY && !__STDC__

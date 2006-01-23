@@ -38,10 +38,10 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "common.h"
 
-
-
+#include <stddef.h>
 #include <stdio.h>
 #include <math.h>
+
 #include "machine.h"
 #include "vmath.h"
 #include "raytrace.h"
@@ -56,7 +56,7 @@ struct spm_specific {
 	spm_map_t *sp_map;	/* stuff */
 };
 #define SP_NULL	((struct spm_specific *)0)
-#define SP_O(m)	offsetof(struct spm_specific, m)
+#define SP_O(m)	bu_offsetof(struct spm_specific, m)
 
 struct bu_structparse spm_parse[] = {
 	{"%s",	SPM_NAME_LEN, "file",		bu_offsetofarray(struct spm_specific, sp_file),	BU_STRUCTPARSE_FUNC_NULL },

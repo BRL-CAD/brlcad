@@ -68,9 +68,11 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 
 #include "common.h"
 
+#include <stddef.h>
 #include <stdio.h>
 #include <ctype.h>
 #include <math.h>
+
 #include "machine.h"
 #include "vmath.h"
 #include "raytrace.h"
@@ -162,7 +164,7 @@ HIDDEN void	wood_setup_2 BU_ARGS((struct wood_specific *));
  */
 
 #define WOOD_NULL	((struct wood_specific *)0)
-#define WOOD_O(m)	offsetof(struct wood_specific, m)
+#define WOOD_O(m)	bu_offsetof(struct wood_specific, m)
 #define WOOD_OA(m)	bu_offsetofarray(struct wood_specific, m)
 
 #define	EXPLICIT_VERTEX		1

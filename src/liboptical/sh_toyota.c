@@ -44,15 +44,15 @@
 
 #include "common.h"
 
-
-
+#include <stddef.h>
 #include <stdio.h>
 #include <math.h>
 #ifdef HAVE_STRING_H
-#include <string.h>
+#  include <string.h>
 #else
-#include <strings.h>
+#  include <strings.h>
 #endif
+
 #include "machine.h"
 #include "vmath.h"
 #include "mater.h"
@@ -87,7 +87,7 @@ struct toyota_specific {
 	int	glass;		/* Boolean, is it glass?		*/
 };
 #define CK_NULL	((struct toyota_specific *)0)
-#define CL_O(m)	offsetof(struct toyota_specific, m)
+#define CL_O(m)	bu_offsetof(struct toyota_specific, m)
 
 struct bu_structparse toyota_parse[] = {
 	{"%f", 1, "alpha",	CL_O(alpha),		BU_STRUCTPARSE_FUNC_NULL },

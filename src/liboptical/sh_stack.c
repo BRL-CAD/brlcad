@@ -39,10 +39,10 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "common.h"
 
-
-
+#include <stddef.h>
 #include <stdio.h>
 #include <string.h>
+
 #include "machine.h"
 #include "vmath.h"
 #include "raytrace.h"
@@ -68,7 +68,7 @@ struct stk_specific {
 	char	*udata[16];
 };
 #define STK_NULL	((struct stk_specific *)0)
-#define STK_O(m)	offsetof(struct stk_specific, m)
+#define STK_O(m)	bu_offsetof(struct stk_specific, m)
 
 struct bu_structparse stk_parse[] = {
 	{"",	0,	(char *)0,	0,			BU_STRUCTPARSE_FUNC_NULL }

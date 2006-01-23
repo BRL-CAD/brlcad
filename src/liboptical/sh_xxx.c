@@ -57,10 +57,10 @@
  */
 #include "common.h"
 
-
-
+#include <stddef.h>
 #include <stdio.h>
 #include <math.h>
+
 #include "machine.h"
 #include "vmath.h"
 #include "raytrace.h"
@@ -104,7 +104,7 @@ struct xxx_specific xxx_defaults = {
 	};
 
 #define SHDR_NULL	((struct xxx_specific *)0)
-#define SHDR_O(m)	offsetof(struct xxx_specific, m)
+#define SHDR_O(m)	bu_offsetof(struct xxx_specific, m)
 #define SHDR_AO(m)	bu_offsetofarray(struct xxx_specific, m)
 
 

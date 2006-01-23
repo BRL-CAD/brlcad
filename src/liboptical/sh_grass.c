@@ -35,6 +35,7 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 
 #include "common.h"
 
+#include <stddef.h>
 #include <stdio.h>
 #ifdef HAVE_STRING_H
 #  include <string.h>
@@ -168,7 +169,7 @@ static const struct grass_specific grass_defaults = {
 };
 
 #define SHDR_NULL	((struct grass_specific *)0)
-#define SHDR_O(m)	offsetof(struct grass_specific, m)
+#define SHDR_O(m)	bu_offsetof(struct grass_specific, m)
 #define SHDR_AO(m)	bu_offsetofarray(struct grass_specific, m)
 
 /* description of how to parse/print the arguments to the shader

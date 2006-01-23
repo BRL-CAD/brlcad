@@ -29,6 +29,7 @@
  */
 #include "common.h"
 
+#include <stddef.h>
 #include <stdio.h>
 #include <fcntl.h>
 #include <string.h>
@@ -341,7 +342,7 @@ orient_hook(register const struct bu_structparse *sdp, register const char *name
 			VDOT(img_new->i_plane, img_new->i_eye_pt);
 #endif
 		prj_sp = (struct prj_specific *)
-			(base - (offsetof(struct prj_specific, prj_images)));
+			(base - (bu_offsetof(struct prj_specific, prj_images)));
 		CK_prj_SP(prj_sp);
 
 		if (!prj_sp->prj_plfd)
@@ -383,7 +384,7 @@ orient_hook(register const struct bu_structparse *sdp, register const char *name
 	BU_LIST_APPEND(&img_sp->l, &img_new->l);
 }
 
-#define IMG_O(m)	offsetof(struct img_specific, m)
+#define IMG_O(m)	bu_offsetof(struct img_specific, m)
 #define IMG_AO(m)	bu_offsetofarray(struct img_specific, m)
 
 

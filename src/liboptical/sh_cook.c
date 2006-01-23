@@ -40,10 +40,10 @@ static const char RCScook[] = "@(#)$Header$ (BRL)";
 
 #include "common.h"
 
-
-
+#include <stddef.h>
 #include <stdio.h>
 #include <math.h>
+
 #include "machine.h"
 #include "vmath.h"
 #include "mater.h"
@@ -72,7 +72,7 @@ struct cook_specific {
 	double	rd[3];		/* Diffuse reflection coefficient */
 };
 #define CK_NULL	((struct cook_specific *)0)
-#define CL_O(m)	offsetof(struct cook_specific, m)
+#define CL_O(m)	bu_offsetof(struct cook_specific, m)
 
 struct bu_structparse cook_parse[] = {
 	{"%f", 1, "m",		CL_O(m),		BU_STRUCTPARSE_FUNC_NULL },

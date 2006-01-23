@@ -36,9 +36,12 @@ static const char RCSsh_light[] = "@(#)$Header$ (ARL)";
 
 #include "common.h"
 
+#include <stddef.h>
 #include <stdio.h>
 #ifdef HAVE_STRING_H
 #  include <string.h>
+#else
+#  include <strings.h>
 #endif
 #include <math.h>
 
@@ -61,7 +64,7 @@ extern const struct bn_table	*spectrum;
 #endif
 
 
-#define LIGHT_O(m)	offsetof(struct light_specific, m)
+#define LIGHT_O(m)	bu_offsetof(struct light_specific, m)
 #define LIGHT_OA(m)	bu_offsetofarray(struct light_specific, m)
 
 BU_EXTERN(void	aim_set, (const struct bu_structparse *sdp, const char *name,
