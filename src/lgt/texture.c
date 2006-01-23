@@ -130,7 +130,7 @@ init_Icon_Texture(char *file, Mat_Db_Entry *entry)
 		return	NULL;
 		}
 	iconp =	(struct icon_texture *) bu_malloc( sizeof( struct icon_texture ), "iconp" );
-	iconp->filenm = malloc( strlen(file)+1, "iconp->filenm");
+	iconp->filenm = bu_malloc( strlen(file)+1, "iconp->filenm");
 
 	(void) strcpy( iconp->filenm, file );
 	iconp->map = iconmap;
