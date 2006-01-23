@@ -2283,7 +2283,7 @@ int main(int argc, char **argv)
 
       for(i=0; i<num; i++)
 	{
-	  bu_free(region[i].adjreg);
+	  bu_free(region[i].adjreg, "region[i].adjreg");
 	  bu_free(region[i].ssurarea[0], "region[i].ssurarea[0]");
 	  bu_free(region[i].ssurarea[1], "region[i].ssurarea[1]");
 	  bu_free(region[i].ssurarea[2], "region[i].ssurarea[2]");
