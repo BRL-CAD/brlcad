@@ -48,16 +48,16 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "common.h"
 
+#include <stdio.h>
 #ifdef HAVE_UNISTD_H
-# include <unistd.h>
+#  include <unistd.h>
+#endif
+#ifdef HAVE_STRING_H
+#  include <string.h>
+#else
+#  include <strings.h>
 #endif
 
-#include <stdio.h>
-#ifdef HAVE_STRING_H
-#include <string.h>
-#else
-#include <strings.h>
-#endif
 #include "machine.h"
 #include "bu.h"
 #include "fb.h"
@@ -478,8 +478,7 @@ main(int argc, char **argv)
 		scr_width = fb_getwidth(fbp);
 		scr_height = fb_getheight(fbp);
 	}
-	if( (cp = malloc(scr_width*sizeof(RGBpixel))) == (char *)0 )
-		exit(42);
+	cp = bu_malloc(scr_width*sizeof(RGBpixel), "cp pixels");
 	scanline = (unsigned char *)cp;
 	bytes_per_line = (scr_width+7)/8;
 
@@ -508,7 +507,8 @@ main(int argc, char **argv)
 	slop_lines(NLINES);		/* Flush bitmap buffer */
 	if( fbp )
 		fb_close(fbp);
-	exit(0);
+	bu_free(cp, "cp pixels");
+	return 0;
 }
 
 /*
