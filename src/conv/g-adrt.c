@@ -190,7 +190,7 @@ static int reg_start_func(struct db_tree_state *tsp,
     prop_list[prop_num].color[0] = color[0] / 255.0;
     prop_list[prop_num].color[1] = color[1] / 255.0;
     prop_list[prop_num].color[2] = color[2] / 255.0;
-    if(strstr(bu_vls_strgrab((struct vu_vls *)&(combp->shader)), "light")) {
+    if(strstr(bu_vls_strgrab((struct bu_vls *)&(combp->shader)), "light")) {
       prop_list[prop_num].emission = 1.0;
     } else {
       prop_list[prop_num].emission = 0.0;
