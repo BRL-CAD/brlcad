@@ -164,8 +164,8 @@ read_data(void)
 void
 process_sphere(int id, fastf_t *center, double rad, int sph_type)
 {
-	struct sphere * new = (struct sphere *)
-	    malloc( sizeof ( struct sphere) );
+	struct sphere * newsph = (struct sphere *)
+	    bu_malloc( sizeof ( struct sphere), "newsph" );
 	char nm[128], nm1[128];
 	unsigned char rgb[3];
 	struct wmember	reg_head;
@@ -186,20 +186,20 @@ process_sphere(int id, fastf_t *center, double rad, int sph_type)
 	/* Include this region in the larger group */
 	(void)mk_addmember( nm, &head.l, NULL, WMOP_UNION );
 
-	new->next = ( struct sphere *)0;
-	new->s_id = id;
-	strncpy(new->s_name, nm1, sizeof(nm1) );
-	VMOVE( new->s_center, center );
-	new->s_rad = rad;
-	new->s_atom_type = sph_type;
+	newsph->next = ( struct sphere *)0;
+	newsph->s_id = id;
+	strncpy(newsph->s_name, nm1, sizeof(nm1) );
+	VMOVE( newsph->s_center, center );
+	newsph->s_rad = rad;
+	newsph->s_atom_type = sph_type;
 
 	if ( s_head == (struct sphere *) 0 )
 	{
-		s_head = s_list = new;
+		s_head = s_list = newsph;
 	} else
 	{
-		s_list->next = new;
-		s_list = new;
+		s_list->next = newsph;
+		s_list = newsph;
 	}
 }
 

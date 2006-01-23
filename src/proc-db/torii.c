@@ -196,20 +196,13 @@ main(int ac, char *av[])
 
   /* init the levels array */
   torii.levels = levels;
-  if ((torii.level = calloc(levels, sizeof(torusArray_t))) == NULL) {
-    bu_log("Unable to allocate memory for the torus array container\n");
-    perror("torusArray_t allocation failed");
-    return 1;
-  }
+  torii.level = bu_calloc(levels, sizeof(torusArray_t), "torii");
+
   /* initialize at least a few torus to minimize allocation calls */
   for (i=0; i<levels; i++) {
-    if ((torii.level[i].torus = calloc(6, sizeof(torus_t))) == NULL) {
-      bu_log("Unable to allocate memory for torii\n");
-      perror("torus_t allocation failed");
-      return 2;
-    }
-    torii.level[i].count=0;
-    torii.level[i].max=6;
+      torii.level[i].torus = bu_calloc(6, sizeof(torus_t), "torii.level[i].torus");
+      torii.level[i].count=0;
+      torii.level[i].max=6;
   }
 
   /* create the mofosunavabish */

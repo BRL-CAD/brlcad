@@ -151,12 +151,12 @@ Readpoints(void)
 	{
 		if( ptr == NULL )
 		{
-			ptr = (struct points *)malloc( sizeof( struct points ) );
+			ptr = (struct points *)bu_malloc( sizeof( struct points ), "ptr" );
 			root = ptr;
 		}
 		else
 		{
-			ptr->next = (struct points *)malloc( sizeof( struct points ) );
+			ptr->next = (struct points *)bu_malloc( sizeof( struct points ), "ptr->next" );
 			ptr = ptr->next;
 		}
 		ptr->next = NULL;

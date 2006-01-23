@@ -99,12 +99,7 @@ int main( int argc, char *argv[] )
 		return 1;
 	}
 
-	vertices = calloc(128 * 3, sizeof(fastf_t));
-	if (vertices == NULL) {
-		perror("unable to calloc memory");
-		fprintf(stderr, "Unable to allocate space for the initial vertices\n");
-		return 2;
-	}
+	vertices = bu_calloc(128 * 3, sizeof(fastf_t), "vertices");
 	maxTriangleCapacity = 128;
 
 	triangleCount=0;
@@ -130,12 +125,7 @@ int main( int argc, char *argv[] )
 		inputZ = atof(inputString);
 
 		if (triangleCount >= maxTriangleCapacity) {
-			vertices = realloc(vertices, ((maxTriangleCapacity + 128) * 3) * sizeof(fastf_t));
-			if (vertices == NULL) {
-				perror("unable to calloc memory");
-				fprintf(stderr, "Unable to reallocate space for more triangles\n");
-				return 2;
-			}
+			vertices = bu_realloc(vertices, ((maxTriangleCapacity + 128) * 3) * sizeof(fastf_t), "vertices");
 			maxTriangleCapacity += 128;
 		}
 
@@ -153,7 +143,7 @@ int main( int argc, char *argv[] )
 	/* make sure we found some vertices */
 	if (triangleCount <= 0) {
 	  fprintf(stderr, "There were no triangles found in the input file\n");
-		free(vertices);
+		bu_free(vertices, "vertices");
 	  return 0;
 	} else {
 		printf("Found %ld triangles\n", triangleCount);
@@ -162,21 +152,8 @@ int main( int argc, char *argv[] )
 	/* allocate memory for faces and thickness arrays */
 	/* XXX unfortunately we are limited to sizeof(int) since mk_bot takes
 	 * an int array */
-	faces = (int *)calloc(triangleCount * 3, sizeof(int));
-	if (faces == NULL) {
-		perror("unable to allocate memory");
-		fprintf(stderr, "Unable to allocate memory for the faces array\n");
-		free(vertices);
-		return 3;
-	}
-	thickness = (fastf_t *)calloc(triangleCount * 3, sizeof(int));
-	if (thickness == NULL) {
-		perror("unable to allocate memory");
-		fprintf(stderr, "Unable to allocate memory for the thickness array\n");
-		free(vertices);
-		free(faces);
-		return 3;
-	}
+	faces = (int *)bu_calloc(triangleCount * 3, sizeof(int), "faces");
+	thickness = (fastf_t *)bu_calloc(triangleCount * 3, sizeof(int), "thickness");
 	for (j=0; j<triangleCount; j++) {
 		faces[(j*3)] = (j*3);
 		faces[(j*3)+1] = (j*3) + 1;
@@ -191,15 +168,7 @@ int main( int argc, char *argv[] )
 	}
 	*/
 
-	outputObjectName = (char *)calloc(512, sizeof(char));
-	if (outputObjectName == NULL) {
-	  perror("unable to allocate memory");
-	  fprintf(stderr, "Unable to allocate memory for the output object name\n");
-		free(vertices);
-		free(faces);
-		free(thickness);
-	  return 4;
-	}
+	outputObjectName = (char *)bu_calloc(512, sizeof(char), "outputObjectName");
 
 	snprintf(outputObjectName, 512, "%s.surface.s", argv[1]);
 	mk_bot( outfp, outputObjectName, RT_BOT_SURFACE, RT_BOT_UNORIENTED, 0, triangleCount*3, triangleCount, vertices,  faces, (fastf_t *)NULL, (struct bu_bitv *)NULL );
@@ -210,9 +179,9 @@ int main( int argc, char *argv[] )
 	/*	snprintf(outputObjectName, 512, "%s.plate.s", argv[1]);*/
 	/*	mk_bot( outfp, "bot_u_plate", RT_BOT_PLATE, RT_BOT_UNORIENTED, 0, triangleCount, triangleCount, vertices, faces, thickness, NULL ); */
 
-	free(vertices);
-	free(faces);
-	free(thickness);
+	bu_free(vertices, "vertices");
+	bu_free(faces, "faces");
+	bu_free(thickness, "thickness");
 
 	wdb_close(outfp);
 

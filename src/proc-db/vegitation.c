@@ -186,17 +186,11 @@ static segmentList_t *findIntersectors(const growthSegment_t * const segment, co
     return NULL;
   }
   if (bigList == NULL) {
-    if ((bigList = (segmentList_t *)calloc(1, sizeof(segmentList_t))) == NULL) {
-      fprintf(stderr, "Unable to allocate memory for the segment intersection list\n");
-      exit(1);
-    }
+    bigList = (segmentList_t *)bu_calloc(1, sizeof(segmentList_t), "bigList");
     INIT_GROWTHSEGMENTLIST_T(bigList);
 
     /* allocate 10 initial segment slots */
-    if ((bigList->segment = (growthSegment_t **)calloc(10, sizeof(growthSegment_t *))) == NULL) {
-      fprintf(stderr, "Unable to allocate memory for the segment list\n");
-      exit(1);
-    }
+    bigList->segment = (growthSegment_t **)bu_calloc(10, sizeof(growthSegment_t *), "bigList->segment");
     bigList->capacity = 10;
   }
 
@@ -205,10 +199,7 @@ static segmentList_t *findIntersectors(const growthSegment_t * const segment, co
 
     /* ensure we have enough room */
     if (bigList->count + segList->count + 1 >= bigList->capacity) {
-      if ((bigList->segment = (growthSegment_t **)realloc(bigList->segment, (bigList->count + segList->count + 10) * sizeof(growthSegment_t *))) == NULL) {
-	fprintf(stderr, "Unable to reallocate memory for the intersection list\n");
-	exit(1);
-      }
+      bigList->segment = (growthSegment_t **)bu_realloc(bigList->segment, (bigList->count + segList->count + 10) * sizeof(growthSegment_t *), "bigList->segment");
       bigList->capacity = bigList->count + segList->count + 10; /* a few extra so not to do this so often */
     }
 
@@ -270,11 +261,8 @@ static segmentList_t *findIntersectors(const growthSegment_t * const segment, co
     */
     if (distance < (maxFromRadius + maxOntoRadius)) {
       if (bigList->count >= bigList->capacity) {
-	if ((bigList->segment = (growthSegment_t **)realloc(bigList->segment, (bigList->count + 10) * sizeof(growthSegment_t *))) == NULL) {
-	  fprintf(stderr, "Unable to reallocate memory for the intersection list\n");
-	  exit(1);
-	}
-	bigList->capacity = bigList->count + 10;
+	  bigList->segment = (growthSegment_t **)bu_realloc(bigList->segment, (bigList->count + 10) * sizeof(growthSegment_t *), "bigList->segment");
+	  bigList->capacity = bigList->count + 10;
       }
       bigList->segment[bigList->count] = structure->segment[i];
       bigList->count++;
@@ -359,10 +347,7 @@ static int branchWithProbability(plant_t *plant, structure_t* structure, unsigne
 	  */
 
 	  /* create and fill in the the growth point */
-	  if ((newGrowthPoint = (growthPoint_t *)calloc(1, sizeof(growthPoint_t))) == NULL) {
-	    fprintf(stderr, "Unable to allocate memory for growth point\n");
-	    exit(1);
-	  }
+	  newGrowthPoint = (growthPoint_t *)bu_calloc(1, sizeof(growthPoint_t), "newGrowthPoint");
 	  INIT_GROWTHPOINT_T(newGrowthPoint);
 	  newGrowthPoint->growthEnergy = plant->characteristic->growthEnergy;
 
@@ -381,30 +366,21 @@ static int branchWithProbability(plant_t *plant, structure_t* structure, unsigne
 	  newGrowthPoint->age = 0;
 
 	  /* associate the point with a new structure */
-	  if ((newGrowthPoint->structure = (structure_t *)calloc(1, sizeof(structure_t))) == NULL) {
-	    fprintf(stderr, "Unable to allocate memory for new structure\n");
-	    return -1;
-	  }
+	  newGrowthPoint->structure = (structure_t *)bu_calloc(1, sizeof(structure_t), "newGrowthPoint->structure");
 	  INIT_STRUCTURE_T(newGrowthPoint->structure);
 
 	  /* make sure the growth point is linked back to his parent branch */
 	  if (structure->subStructureCount >= structure->subStructureCapacity) {
-	    if ((structure->subStructure = (structure_t **)realloc(structure->subStructure, (structure->subStructureCount + 10) * sizeof(structure_t *))) == NULL) {
-	      fprintf(stderr, "Unable to reallocate more room for new sub structure\n");
-	      exit(1);
-	    }
-	    structure->subStructureCapacity += 10;
+	      structure->subStructure = (structure_t **)bu_realloc(structure->subStructure, (structure->subStructureCount + 10) * sizeof(structure_t *), "structure->subStructure");
+	      structure->subStructureCapacity += 10;
 	  }
 	  structure->subStructure[structure->subStructureCount] = newGrowthPoint->structure;
 	  structure->subStructureCount++;
 
 	  /* see if we need to add more room for growth points */
 	  if (plant->growth->count >= plant->growth->capacity) {
-	    if ((plant->growth->point = (growthPoint_t **)realloc(plant->growth->point, (plant->growth->capacity + 10) * sizeof(growthPoint_t *))) == NULL) {
-	      fprintf(stderr, "Unable to reallocate more room for growth points\n");
-	      exit(1);
-	    }
-	    plant->growth->capacity += 10;
+	      plant->growth->point = (growthPoint_t **)bu_realloc(plant->growth->point, (plant->growth->capacity + 10) * sizeof(growthPoint_t *), "plant->growth->point");
+	      plant->growth->capacity += 10;
 	  }
 
 	  plant->growth->point[plant->growth->count] = newGrowthPoint;
@@ -504,10 +480,7 @@ static void growPlant(plant_t *plant) {
 	continue;
       }
 
-      if ((segment = (growthSegment_t *)calloc(1, sizeof(growthSegment_t))) == NULL) {
-	fprintf(stderr, "Unable to allocate memory for growth segment\n");
-	exit(1);
-      }
+      segment = (growthSegment_t *)bu_calloc(1, sizeof(growthSegment_t), "segment");
 
       INIT_GROWTHSEGMENT_T(segment);
       VMOVE(segment->position, point->position);
@@ -653,20 +626,14 @@ static void growPlant(plant_t *plant) {
 
       /* what if there is no structure yet? -- make one */
       if (point->structure == NULL) {
-	if ((plant->structure = (structure_t *)calloc(1, sizeof(structure_t))) == NULL) {
-	  fprintf(stderr, "Unable to allocate memory for new structure\n");
-	  exit(1);
-	}
-	INIT_STRUCTURE_T(plant->structure);
+	  plant->structure = (structure_t *)bu_calloc(1, sizeof(structure_t), "plant->structure");
+	  INIT_STRUCTURE_T(plant->structure);
       }
 
       /* add segment to list of segments for this growth point structure*/
       if ( point->structure->segmentCount >= point->structure->segmentCapacity ) {
-	if ((point->structure->segment = (growthSegment_t **)realloc(point->structure->segment, (point->structure->segmentCapacity + 10) * sizeof(growthSegment_t *))) == NULL) {
-	  fprintf(stderr, "Unable to reallocate more room for segment list\n");
-	  exit(1);
-	}
-	point->structure->segmentCapacity+=10;
+	  point->structure->segment = (growthSegment_t **)bu_realloc(point->structure->segment, (point->structure->segmentCapacity + 10) * sizeof(growthSegment_t *), "point->structure->segment");
+	  point->structure->segmentCapacity+=10;
       }
 
       segment->id = plant->segmentCount++;
@@ -700,91 +667,27 @@ static plant_t *createPlant(unsigned int age, vect_t position, double radius, ve
   }
 
   /* not our responsibility to release this sucker in here -- it is what we return */
-  if ((plant = (plant_t *)calloc(1, sizeof(plant_t))) == NULL) {
-    fprintf(stderr, "Unable to allocate memory for plant\n");
-    return (plant_t *)NULL;
-  }
+  plant = (plant_t *)bu_calloc(1, sizeof(plant_t), "plant");
   INIT_PLANT_T(plant);
   VMOVE(plant->position, position);
   plant->radius = radius;
   VMOVE(plant->direction, direction);
   plant->characteristic = characteristic;
 
-  if ((plant->structure = (structure_t *)calloc(1, sizeof(structure_t))) == NULL) {
-    fprintf(stderr, "Unable to allocate memory for initial structure\n");
-    free(plant);
-    plant=NULL;
-    return (plant_t *)NULL;
-  }
+  plant->structure = (structure_t *)bu_calloc(1, sizeof(structure_t), "plant->structure");
   INIT_STRUCTURE_T(plant->structure);
-  if ((plant->structure->segment = (growthSegment_t **)calloc(1, sizeof(growthSegment_t *))) == NULL) {
-    fprintf(stderr, "Unable to allocate memory for initial segment\n");
-    free(plant->structure);
-    plant->structure=NULL;
-    free(plant);
-    plant=NULL;
-    return (plant_t *)NULL;
-  }
+  plant->structure->segment = (growthSegment_t **)bu_calloc(1, sizeof(growthSegment_t *), "plant->structure->segment");
   plant->structure->segmentCapacity=1;
 
-  if ((plant->structure->subStructure = (structure_t **)calloc(1, sizeof(structure_t *))) == NULL) {
-    fprintf(stderr, "Unable to allocate memory for inital subStructure\n");
-    free(plant->structure->segment);
-    plant->structure->segment=NULL;
-    free(plant->structure);
-    plant->structure=NULL;
-    free(plant);
-    plant=NULL;
-    return (plant_t *)NULL;
-  }
+  plant->structure->subStructure = (structure_t **)bu_calloc(1, sizeof(structure_t *), "plant->structure->subStructure");
   plant->structure->subStructureCapacity=1;
 
-  if ((gpoints = (growthPointList_t *)calloc(1, sizeof(growthPointList_t))) == NULL) {
-    fprintf(stderr, "Unable to allocate memory for groth pointer list\n");
-    free(plant->structure->subStructure);
-    plant->structure->subStructure=NULL;
-    free(plant->structure->segment);
-    plant->structure->segment=NULL;
-    free(plant->structure);
-    plant->structure=NULL;
-    free(plant);
-    plant=NULL;
-    return (plant_t *)NULL;
-  }
+  gpoints = (growthPointList_t *)bu_calloc(1, sizeof(growthPointList_t), "gpoints");
   INIT_GROWTHPOINTLIST_T(gpoints);
 
-  if ((gpoints->point = (growthPoint_t **)calloc(10, sizeof(growthPoint_t *))) == NULL) {
-    fprintf(stderr, "Unable to allocate memory for initial growth pointers\n");
-    free(gpoints);
-    gpoints=NULL;
-    free(plant->structure->subStructure);
-    plant->structure->subStructure=NULL;
-    free(plant->structure->segment);
-    plant->structure->segment=NULL;
-    free(plant->structure);
-    plant->structure=NULL;
-    free(plant);
-    plant=NULL;
-    return (plant_t *)NULL;
-  }
+  gpoints->point = (growthPoint_t **)bu_calloc(10, sizeof(growthPoint_t *), "gpoints->point");
   gpoints->capacity=10;
-  if ((gpoints->point[0] = (growthPoint_t *)calloc(1, sizeof(growthPoint_t))) == NULL) {
-    fprintf(stderr, "Unable to allocate memory for initial growth pointer\n");
-    gpoints->capacity=0;
-    free(gpoints->point);
-    gpoints->point=NULL;
-    free(gpoints);
-    gpoints=NULL;
-    free(plant->structure->subStructure);
-    plant->structure->subStructure=NULL;
-    free(plant->structure->segment);
-    plant->structure->segment=NULL;
-    free(plant->structure);
-    plant->structure=NULL;
-    free(plant);
-    plant=NULL;
-    return (plant_t *)NULL;
-  }
+  gpoints->point[0] = (growthPoint_t *)bu_calloc(1, sizeof(growthPoint_t), "gpoints->point[0]");
   gpoints->count=1;
   INIT_GROWTHPOINT_T(gpoints->point[0]);
 
