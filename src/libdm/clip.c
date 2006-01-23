@@ -49,7 +49,8 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "vmath.h"
 #include "dm.h"
 
-static int	code(fastf_t x, fastf_t y);
+
+static int	code();
 
 int
 clip (fastf_t *xp1, fastf_t *yp1, fastf_t *xp2, fastf_t *yp2)
@@ -82,20 +83,20 @@ clip (fastf_t *xp1, fastf_t *yp1, fastf_t *xp2, fastf_t *yp2)
 		}
 
 		if (code1 & 01)  {	/* Push toward left edge */
-			*yp1 = *yp1 + (*yp2-*yp1)*(-2048.0-*xp1)/(*xp2-*xp1);
-			*xp1 = -2048.0;
+			*yp1 = *yp1 + (*yp2-*yp1)*(GED_MIN-*xp1)/(*xp2-*xp1);
+			*xp1 = GED_MIN;
 		}
 		else if (code1 & 02)  {	/* Push toward right edge */
-			*yp1 = *yp1 + (*yp2-*yp1)*(2047.0-*xp1)/(*xp2-*xp1);
-			*xp1 = 2047.0;
+			*yp1 = *yp1 + (*yp2-*yp1)*(GED_MAX-*xp1)/(*xp2-*xp1);
+			*xp1 = GED_MAX;
 		}
 		else if (code1 & 04)  {	/* Push toward bottom edge */
-			*xp1 = *xp1 + (*xp2-*xp1)*(-2048.0-*yp1)/(*yp2-*yp1);
-			*yp1 = -2048.0;
+			*xp1 = *xp1 + (*xp2-*xp1)*(GED_MIN-*yp1)/(*yp2-*yp1);
+			*yp1 = GED_MIN;
 		}
 		else if (code1 & 010)  {	/* Push toward top edge */
-			*xp1 = *xp1 + (*xp2-*xp1)*(2047.0-*yp1)/(*yp2-*yp1);
-			*yp1 = 2047.0;
+			*xp1 = *xp1 + (*xp2-*xp1)*(GED_MAX-*yp1)/(*yp2-*yp1);
+			*yp1 = GED_MAX;
 		}
 
 		code1 = code (*xp1, *yp1);
@@ -110,14 +111,14 @@ code (fastf_t x, fastf_t y)
 	int cval;
 
 	cval = 0;
-	if (x < -2048.0)
+	if (x < GED_MIN)
 		cval |= 01;
-	else if (x > 2047.0)
+	else if (x > GED_MAX)
 		cval |= 02;
 
-	if (y < -2048.0)
+	if (y < GED_MIN)
 		cval |= 04;
-	else if (y > 2047.0)
+	else if (y > GED_MAX)
 		cval |= 010;
 
 	return (cval);
@@ -141,8 +142,7 @@ code (fastf_t x, fastf_t y)
  *  Implicit Return -
  *	if !0 was returned, "a" and "b" have been clipped to the RPP.
  */
-int
-vclip(fastf_t *a, fastf_t *b, register fastf_t *min, register fastf_t *max)
+int vclip( vect_t a, vect_t b, register fastf_t *min, register fastf_t *max )
 {
 	static vect_t diff;
 	static double sv;
