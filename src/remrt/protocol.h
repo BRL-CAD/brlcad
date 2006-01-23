@@ -33,6 +33,8 @@
  *
  *  $Header$
  */
+#ifndef __PROTOCOL_H__
+#define __PROTOCOL_H__
 
 /* For use in MSG_VERSION exchanges */
 #define PROTOCOL_VERSION	"BRL-CAD REMRT Protocol v2.0"
@@ -70,7 +72,7 @@ struct line_info  {
 	/* A scanline is attached after here */
 };
 
-#define LINE_O(x)	offsetof(struct  line_info, x)
+#define LINE_O(x)	bu_offsetof(struct  line_info, x)
 
 struct bu_structparse desc_line_info[] =  {
 	{"%d", 1, "li_startpix", LINE_O(li_startpix),	FUNC_NULL },
@@ -82,6 +84,7 @@ struct bu_structparse desc_line_info[] =  {
 	{"",	0,			0 }
 };
 
+#endif  /* __PROTOCOL_H__ */
 /*
  * Local Variables:
  * mode: C
